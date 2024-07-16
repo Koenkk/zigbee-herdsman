@@ -29,15 +29,19 @@ export class ZBOSSReader extends Transform {
                     // emit the frame via 'data' event
                     this.push(frame);
 
+                    // if position not 1 - try to convert buffer before position to text - chip console output
+                    if (position > 1) {
+                        logger.debug(`<<< CONSOLE:\n\r${data.subarray(0, position-1).toString()}`, NS);
+                    }
                     // remove the frame from internal buffer (set below)
                     data = data.subarray(position + 1 + len);
                     if (data.length) logger.debug(`<<< TAIL [${data.toString('hex')}]`, NS);
                 } else {
-                    logger.debug(`<<< Not enough data. Length=${data.length}, frame length=${len}`, NS);
+                    logger.debug(`<<< Not enough data. Length=${data.length}, frame length=${len}. Waiting`, NS);
                     break;
                 }
             } else {
-                logger.debug(`<<< Not enough data. Length=${data.length}`, NS);
+                logger.debug(`<<< Not enough data. Length=${data.length}. Waiting`, NS);
                 break;
             }
         }

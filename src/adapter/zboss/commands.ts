@@ -1299,4 +1299,16 @@ export const FRAMES: {[key in CommandId]?: ZBOSSFrameDesc} = {
             ...commonResponse,
         ],
     },
+
+    ///////////////////
+    [CommandId.UNKNOWN_1]: {
+        request: [
+        ],
+        response: [
+            ...commonResponse,
+        ],
+        indication: [
+            {name: 'data', type:  DataType.UINT8},
+        ],
+    },
 };

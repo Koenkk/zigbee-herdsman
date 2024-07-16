@@ -62,8 +62,7 @@ export class ZBOSSDriver extends EventEmitter {
 
     public async reset(): Promise<void> {
         logger.info(`Driver reset`, NS);
-        this.execCommand(CommandId.NCP_RESET, {options: ResetOptions.NoOptions});
-        
+        await this.execCommand(CommandId.NCP_RESET, {options: ResetOptions.NoOptions});
     }
 
     public async stop(): Promise<void> {
@@ -77,7 +76,7 @@ export class ZBOSSDriver extends EventEmitter {
     }
 
     public async execCommand(commandId: number, params: KeyValue = null): Promise<ZBOSSFrame> {
-        logger.debug(`==> ${commandId}: ${JSON.stringify(params)}`, NS);
+        logger.debug(`==> ${CommandId[commandId]}(${commandId}): ${JSON.stringify(params)}`, NS);
 
         if (!this.port.portOpen) {
             throw new Error('Connection not initialized');
@@ -90,6 +89,7 @@ export class ZBOSSDriver extends EventEmitter {
             this.cmdSeq = (this.cmdSeq + 1) & 255;
 
             try {
+                logger.debug(`==> FRAME: ${JSON.stringify(frame)}`, NS);
                 await this.port.sendFrame(frame);
 
                 const response = await waiter.start().promise;

@@ -20,7 +20,7 @@ import {
 } from "../../events";
 import {BroadcastAddress} from '../../../zspec/enums';
 import {ZBOSSDriver} from '../driver';
-
+import {CommandId, ResetOptions} from "../enums";
 import {logger} from "../../../utils/logger";
 const NS = 'zh:zboss';
 
@@ -49,8 +49,8 @@ export class ZBOSSAdapter extends Adapter {
     public async start(): Promise<TsType.StartResult> {
         logger.info(`ZBOSS Adapter starting`, NS);
 
-        this.driver.start();
-        this.driver.reset();
+        await this.driver.start();
+        // await this.driver.reset();
 
         return 'resumed';
     }
@@ -64,6 +64,15 @@ export class ZBOSSAdapter extends Adapter {
     public async getCoordinator(): Promise<TsType.Coordinator> {
         return this.queue.execute<Coordinator>(async () => {
             const networkAddress = 0x0000;
+
+            const message = await this.driver.execCommand(
+                CommandId.ZDO_ACTIVE_EP_REQ, {nwk: networkAddress}
+            );
+                //     networkAddress, EmberZDOCmd.Active_EP_req, EmberZDOCmd.Active_EP_rsp,
+                //     {dstaddr: networkAddress}
+                // );
+            const activeEndpoints = message.payload.endpoints;
+            
             // 
             // const message = await this.driver.zdoRequest(
             //     networkAddress, EmberZDOCmd.Active_EP_req, EmberZDOCmd.Active_EP_rsp,

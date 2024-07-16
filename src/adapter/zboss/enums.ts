@@ -291,6 +291,9 @@ export enum CommandId {
     SECUR_GET_IC_LIST = 0x0518,
     SECUR_GET_IC_BY_IDX = 0x0519,
     SECUR_REMOVE_ALL_IC = 0x051a,
+
+    ///////////////////
+    UNKNOWN_1 = 0x0a02,
 };
 
 export enum Status {

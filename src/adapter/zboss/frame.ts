@@ -44,15 +44,12 @@ export function readZBOSSFrame(buffer: Buffer): ZBOSSFrame {
 
 
 export function writeZBOSSFrame(frame: ZBOSSFrame): Buffer {
-    const buf = new BuffaloZcl(Buffer.alloc(250));
-    const flags = frame.version & 0x0F + (frame.type << 4);
-    buf.writeInt16(flags);
+    const buf = new BuffaloZcl(Buffer.alloc(247));
+    buf.writeInt8(frame.version);
+    buf.writeInt8(frame.type);
     buf.writeUInt16(frame.commandId);
     buf.writeUInt8(frame.sequence);
-    const pos = buf.getPosition();
-    buf.writeUInt16(0);
-    const len = writePayload(frame.type, frame.commandId, frame.payload, buf);
-    buf.getBuffer().writeUInt16LE(len, pos);
+    writePayload(frame.type, frame.commandId, frame.payload, buf);
     return buf.getWritten();
 }
 

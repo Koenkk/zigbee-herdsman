@@ -9,7 +9,7 @@ import {ZBOSSReader} from "./reader";
 import {ZBOSSFrame, readZBOSSFrame, writeZBOSSFrame} from "./frame";
 import {crc8, crc16} from "./utils";
 import {Queue, Waitress, Wait} from '../../utils';
-import {SIGNATURE, ZBOSS_NCP_API_HL} from "./consts";
+import {SIGNATURE, ZBOSS_NCP_API_HL, ZBOSS_FLAG_FIRST_FRAGMENT, ZBOSS_FLAG_LAST_FRAGMENT} from "./consts";
 
 const NS = 'zh:zboss:uart';
 
@@ -219,7 +219,7 @@ export class ZBOSSUart extends EventEmitter {
         logger.debug(`<-- package type ${pType}, flags ${pFlags.toString(16)}`+
             `${JSON.stringify({isACK, retransmit, sequence, ACKseq, isFirst, isLast})}`, NS);
         
-        if (pType !== 0x06) {
+        if (pType !== ZBOSS_NCP_API_HL) {
             logger.error(`<-- Wrong package type: ${pType}`, NS);
             return;
         }
@@ -244,8 +244,15 @@ export class ZBOSSUart extends EventEmitter {
         if (bCRC !== bodyCRC16) {
             logger.error(`<-- Wrong package body crc: is ${bCRC}, expected ${bodyCRC16}`, NS);
             return;
-       }
+        }
+
+        this.recvSeq = sequence;
+        // Send ACK
+        logger.debug(`--> ACK (${this.recvSeq})`, NS);
+        this.sendACK(this.recvSeq);
+
         try {
+            logger.debug(`<-- FRAME: ${body.toString('hex')}`, NS);
             const frame = readZBOSSFrame(body);
             if (frame) {
                 this.emit('frame', frame);
@@ -258,46 +265,53 @@ export class ZBOSSUart extends EventEmitter {
     public async sendFrame(frame: ZBOSSFrame): Promise<void> {
         try {
             const buf = writeZBOSSFrame(frame);
+            logger.debug(`--> FRAME: ${buf.toString('hex')}`, NS);
             let flags = (this.sendSeq & 0x03 << 2); // sequence
+            flags = flags | ZBOSS_FLAG_FIRST_FRAGMENT | ZBOSS_FLAG_LAST_FRAGMENT;
             const pack = this.makePack(flags, buf);
+            logger.debug(`--> PACK: ${pack.toString('hex')}`, NS);
             await this.sendDATA(pack);
         } catch (error) {
             logger.debug(`--> error ${error.stack}`, NS);
         }
     }
 
-    private async sendDATA(data: Buffer): Promise<void> {
+    private async sendDATA(data: Buffer, isACK: boolean = false): Promise<void> {
         const seq = this.sendSeq;
-        this.sendSeq = (seq + 1) % 8; // next
         const nextSeq = this.sendSeq;
         const ackSeq = this.recvSeq;
 
         return this.queue.execute<void>(async (): Promise<void> => {
             try {
-                const waiter = this.waitFor(nextSeq);
                 logger.debug(`--> DATA (${seq},${ackSeq},0): ${data.toString('hex')}`, NS);
-                this.writeBuffer(data);
-                logger.debug(`-?- waiting (${nextSeq})`, NS);
-                await waiter.start().promise;
-                logger.debug(`-+- waiting (${nextSeq}) success`, NS);
+                if (!isACK) {
+                    const waiter = this.waitFor(nextSeq);
+                    this.writeBuffer(data);
+                    logger.debug(`-?- waiting (${nextSeq})`, NS);
+                    await waiter.start().promise;
+                    logger.debug(`-+- waiting (${nextSeq}) success`, NS);
+                } else {
+                    this.writeBuffer(data);
+                }
             } catch (e1) {
                 logger.error(`--> Error: ${e1}`, NS);
                 logger.error(`-!- break waiting (${nextSeq})`, NS);
                 logger.error(`Can't send DATA frame (${seq},${ackSeq},0): ${data.toString('hex')}`, NS);
-                try {
-                    await Wait(500);
-                    const waiter = this.waitFor(nextSeq);
-                    logger.debug(`->> DATA (${seq},${ackSeq},1): ${data.toString('hex')}`, NS);
-                    this.writeBuffer(data);
-                    logger.debug(`-?- rewaiting (${nextSeq})`, NS);
-                    await waiter.start().promise;
-                    logger.debug(`-+- rewaiting (${nextSeq}) success`, NS);
-                } catch (e2) {
-                    logger.error(`--> Error: ${e2}`, NS);
-                    logger.error(`-!- break rewaiting (${nextSeq})`, NS);
-                    logger.error(`Can't resend DATA frame (${seq},${ackSeq},1): ${data.toString('hex')}`, NS);
-                    throw new Error(`sendDATA error: try 1: ${e1}, try 2: ${e2}`);
-                }
+                throw new Error(`sendDATA error: try 1: ${e1}`);
+                // try {
+                //     await Wait(500);
+                //     const waiter = this.waitFor(nextSeq);
+                //     logger.debug(`->> DATA (${seq},${ackSeq},1): ${data.toString('hex')}`, NS);
+                //     this.writeBuffer(data);
+                //     logger.debug(`-?- rewaiting (${nextSeq})`, NS);
+                //     await waiter.start().promise;
+                //     logger.debug(`-+- rewaiting (${nextSeq}) success`, NS);
+                // } catch (e2) {
+                //     logger.error(`--> Error: ${e2}`, NS);
+                //     logger.error(`-!- break rewaiting (${nextSeq})`, NS);
+                //     logger.error(`Can't resend DATA frame (${seq},${ackSeq},1): ${data.toString('hex')}`, NS);
+                //     throw new Error(`sendDATA error: try 1: ${e1}, try 2: ${e2}`);
+                // }
             }
         });
     }
@@ -306,7 +320,7 @@ export class ZBOSSUart extends EventEmitter {
         /* Handle an acknowledgement package */
         // next number after the last accepted package
         this.ackSeq = ackSeq & 0x03;
-
+        
         logger.debug(`<-- ACK (${this.ackSeq})`, NS);
 
         const handled = this.waitress.resolve(this.ackSeq);
@@ -316,6 +330,8 @@ export class ZBOSSUart extends EventEmitter {
             // This happens when the chip has not yet received of the packet {sendSeq} from us,
             // but has already sent us the next one.
             logger.debug(`Unexpected packet sequence ${this.ackSeq} | ${this.sendSeq}`, NS);
+        } else {
+            this.sendSeq = this.sendSeq + 1;
         }
 
         return handled;
@@ -330,7 +346,8 @@ export class ZBOSSUart extends EventEmitter {
             flags |= 0x02; // retransmit
         }
         let ackPackage = this.makePack(flags, null);
-        this.sendDATA(ackPackage);
+        logger.debug(`-->  ACK: ${ackPackage.toString('hex')}`, NS);
+        this.sendDATA(ackPackage, true);
     }
 
     private writeBuffer(buffer: Buffer): void {
@@ -341,12 +358,23 @@ export class ZBOSSUart extends EventEmitter {
     private makePack(flags: number, data?: Buffer): Buffer {
         /* Construct a package */
         const packLen = 5 + ((data) ? data.length + 2 : 0);
-        const header = Buffer.from([packLen, ZBOSS_NCP_API_HL, flags]);
-        const pack = Buffer.from([SIGNATURE, ...header, crc8(header)]);
-        return (data) ? Buffer.concat([pack, Buffer.from([crc16(data), ...data])]) : pack;
+        const header = Buffer.alloc(7);
+        header.writeUint16BE(SIGNATURE);
+        header.writeUint16LE(packLen, 2);
+        header.writeUint8(ZBOSS_NCP_API_HL, 4);
+        header.writeUint8(flags, 5);
+        const hCRC8 = crc8(header.subarray(2, 6));
+        header.writeUint8(hCRC8, 6);
+        if (data) {
+            const pCRC16 = Buffer.alloc(2);
+            pCRC16.writeUint16LE(crc16(data));
+            return Buffer.concat([header, pCRC16, data]);
+        } else {
+            return header;
+        }
     }
 
-    private waitFor(sequence: number, timeout = 500): {start: () => {promise: Promise<number>; ID: number}; ID: number} {
+    private waitFor(sequence: number, timeout = 2000): {start: () => {promise: Promise<number>; ID: number}; ID: number} {
         return this.waitress.waitFor(sequence, timeout);
     }
 
