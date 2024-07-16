@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.54.0](https://github.com/Koenkk/zigbee-herdsman/compare/v0.53.1...v0.54.0) (2024-07-16)
+
+
+### Features
+
+* Add `pm1Measurement` and `pm10Measurement` clusters, update `pm25Measurement` ([#1116](https://github.com/Koenkk/zigbee-herdsman/issues/1116)) ([802dfc1](https://github.com/Koenkk/zigbee-herdsman/commit/802dfc1becdd26319a296ebf2e547aad0c5af59e))
+* Support channel change for z-stack ([#1110](https://github.com/Koenkk/zigbee-herdsman/issues/1110)) ([9c9b58a](https://github.com/Koenkk/zigbee-herdsman/commit/9c9b58aebb4efbc43d20ce54abdaa2320fde0ef0))
+
+
+### Bug Fixes
+
+* Add IEEE -&gt; NWK Addr translation on RX for Conbee 3 ([#1114](https://github.com/Koenkk/zigbee-herdsman/issues/1114)) ([14b7b53](https://github.com/Koenkk/zigbee-herdsman/commit/14b7b537f15f8dfbeb6b615fec55cbd2805ddff3))
+* **ignore:** update dependencies ([#1113](https://github.com/Koenkk/zigbee-herdsman/issues/1113)) ([f73f65f](https://github.com/Koenkk/zigbee-herdsman/commit/f73f65fc0494555dac88a60266ed3c021e8e5bea))
+
 ## [0.53.1](https://github.com/Koenkk/zigbee-herdsman/compare/v0.53.0...v0.53.1) (2024-07-12)
 
 
