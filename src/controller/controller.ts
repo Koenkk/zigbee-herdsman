@@ -442,10 +442,6 @@ class Controller extends events.EventEmitter {
      * Broadcast a network-wide channel change.
      */
     private async changeChannel(oldChannel: number, newChannel: number): Promise<void> {
-        if (!this.adapter.supportsChangeChannel()) {
-            throw new Error(`Channel change requested from '${oldChannel}' to '${newChannel}' but adapter does not support it`);
-        }
-
         logger.warning(`Changing channel from '${oldChannel}' to '${newChannel}'`, NS);
         await this.adapter.changeChannel(newChannel);
         logger.info(`Channel changed to '${newChannel}'`, NS);

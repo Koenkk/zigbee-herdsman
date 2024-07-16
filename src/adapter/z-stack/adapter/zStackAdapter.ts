@@ -1070,10 +1070,6 @@ class ZStackAdapter extends Adapter {
         });
     }
 
-    public supportsChangeChannel(): boolean {
-        return true;
-    }
-
     public async changeChannel(newChannel: number): Promise<void> {
         return this.queue.execute<void>(async () => {
             this.checkInterpanLock();

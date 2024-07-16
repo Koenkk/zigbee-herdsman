@@ -2278,12 +2278,6 @@ describe('zstack-adapter', () => {
         expect(mockZnpRequest).toBeCalledWith(Subsystem.SYS, 'resetReq', {type: 0});
     });
 
-    it('Supports change channel', async () => {
-        basicMocks();
-        await adapter.start();
-        expect(await adapter.supportsChangeChannel()).toBeTruthy();
-    });
-
     it('Change channel', async () => {
         basicMocks();
         await adapter.start();
