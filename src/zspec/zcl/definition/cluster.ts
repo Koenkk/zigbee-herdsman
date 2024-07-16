@@ -18,6 +18,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             powerSource: {ID: 7, type: DataType.ENUM8},
             appProfileVersion: {ID: 8, type: DataType.ENUM8},
             swBuildId: {ID: 16384, type: DataType.CHAR_STR},
+            serialNumber: {ID: 13, type: DataType.CHAR_STR},
             locationDesc: {ID: 16, type: DataType.CHAR_STR},
             physicalEnv: {ID: 17, type: DataType.ENUM8},
             deviceEnabled: {ID: 18, type: DataType.BOOLEAN},
