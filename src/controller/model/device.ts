@@ -515,10 +515,11 @@ class Device extends Entity {
             // default for devices that support genPollCtrl cluster (RX off when idle): 1 day
             pendingRequestTimeout = 86400000;
             /* istanbul ignore else */
-            if (entry.hasOwnProperty('checkinInterval')) {
-                // if the checkin interval is known, messages expire by default after one checkin interval
-                pendingRequestTimeout = entry.checkinInterval * 1000; // milliseconds
-            }
+        }
+        // always load value from database available (modernExtend.quirkCheckinInterval() exists for devices without genPollCtl)
+        if (entry.hasOwnProperty('checkinInterval')) {
+            // if the checkin interval is known, messages expire by default after one checkin interval
+            pendingRequestTimeout = entry.checkinInterval * 1000; // milliseconds
         }
         logger.debug(`Request Queue (${ieeeAddr}): default expiration timeout set to ${pendingRequestTimeout}`, NS);
 
