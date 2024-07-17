@@ -8409,7 +8409,7 @@ describe('Controller', () => {
                     powerSource: {ID: 7, type: 48, name: 'powerSource'},
                     appProfileVersion: {ID: 8, type: 48, name: 'appProfileVersion'},
                     swBuildId: {ID: 16384, type: 66, name: 'swBuildId'},
-                    serialNumber: {ID: 13, type 66, name: 'serialNumber'},
+                    serialNumber: {ID: 13, type: 66, name: 'serialNumber'},
                     locationDesc: {ID: 16, type: 66, name: 'locationDesc'},
                     physicalEnv: {ID: 17, type: 48, name: 'physicalEnv'},
                     deviceEnabled: {ID: 18, type: 16, name: 'deviceEnabled'},
