@@ -51,6 +51,7 @@ export class ZBOSSAdapter extends Adapter {
 
         await this.driver.start();
         // await this.driver.reset();
+        await this.driver.execCommand(CommandId.GET_ZIGBEE_ROLE, {});
 
         return 'resumed';
     }
@@ -65,13 +66,13 @@ export class ZBOSSAdapter extends Adapter {
         return this.queue.execute<Coordinator>(async () => {
             const networkAddress = 0x0000;
 
-            const message = await this.driver.execCommand(
-                CommandId.ZDO_ACTIVE_EP_REQ, {nwk: networkAddress}
-            );
-                //     networkAddress, EmberZDOCmd.Active_EP_req, EmberZDOCmd.Active_EP_rsp,
-                //     {dstaddr: networkAddress}
-                // );
-            const activeEndpoints = message.payload.endpoints;
+            // const message = await this.driver.execCommand(
+            //     CommandId.ZDO_ACTIVE_EP_REQ, {nwk: networkAddress}
+            // );
+            //     //     networkAddress, EmberZDOCmd.Active_EP_req, EmberZDOCmd.Active_EP_rsp,
+            //     //     {dstaddr: networkAddress}
+            //     // );
+            // const activeEndpoints = message.payload.endpoints;
             
             // 
             // const message = await this.driver.zdoRequest(

@@ -266,7 +266,7 @@ export class ZBOSSUart extends EventEmitter {
         try {
             const buf = writeZBOSSFrame(frame);
             logger.debug(`--> FRAME: ${buf.toString('hex')}`, NS);
-            let flags = (this.sendSeq & 0x03 << 2); // sequence
+            let flags = (this.sendSeq & 0x03) << 2; // sequence
             flags = flags | ZBOSS_FLAG_FIRST_FRAGMENT | ZBOSS_FLAG_LAST_FRAGMENT;
             const pack = this.makePack(flags, buf);
             logger.debug(`--> PACK: ${pack.toString('hex')}`, NS);
@@ -340,7 +340,7 @@ export class ZBOSSUart extends EventEmitter {
     private sendACK(ackNum: number, retransmit: boolean = false): void {
         /* Construct a acknowledgement package */
         
-        let flags = (ackNum & 0x03 << 4); // ACKseq
+        let flags = (ackNum & 0x03) << 4; // ACKseq
         flags |= 0x01; // isACK
         if (retransmit) {
             flags |= 0x02; // retransmit

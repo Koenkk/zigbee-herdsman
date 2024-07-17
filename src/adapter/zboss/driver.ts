@@ -23,7 +23,7 @@ export class ZBOSSDriver extends EventEmitter {
     public ieee: EUI64;
     private waitress: Waitress<ZBOSSFrame, ZBOSSWaitressMatcher>;
     private queue: Queue;
-    cmdSeq = 0;  // command sequence
+    cmdSeq = 1;  // command sequence
 
     constructor(options: TsType.SerialPortOptions) {
         super();
@@ -73,6 +73,12 @@ export class ZBOSSDriver extends EventEmitter {
 
     private onFrame(frame: ZBOSSFrame): void {
         logger.info(`<== Frame: ${JSON.stringify(frame)}`, NS);
+
+        const handled = this.waitress.resolve(frame);
+
+        if (!handled) {
+            this.emit('frame', frame);
+        }
     }
 
     public async execCommand(commandId: number, params: KeyValue = null): Promise<ZBOSSFrame> {
