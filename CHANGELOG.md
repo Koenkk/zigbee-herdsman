@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.54.1](https://github.com/Koenkk/zigbee-herdsman/compare/v0.54.0...v0.54.1) (2024-07-17)
+
+
+### Bug Fixes
+
+* Ember: Fix launch bootloader command ([#1118](https://github.com/Koenkk/zigbee-herdsman/issues/1118)) ([276359e](https://github.com/Koenkk/zigbee-herdsman/commit/276359e69f9957959089f17a59892c15cee6edcc))
+* Fix no `checkinInterval` after restart if device has no `genPollCtl` cluster ([#1119](https://github.com/Koenkk/zigbee-herdsman/issues/1119)) ([ca1dd1f](https://github.com/Koenkk/zigbee-herdsman/commit/ca1dd1f775b1edc6a92240e3e797f2e428d213d2))
+
 ## [0.54.0](https://github.com/Koenkk/zigbee-herdsman/compare/v0.53.1...v0.54.0) (2024-07-16)
 
 
