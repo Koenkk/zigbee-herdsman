@@ -7683,19 +7683,14 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
     //-----------------------------------------------------------------------------
 
     /**
-     * Quits the current application and launches the standalone bootloader (if
-     * installed) The function returns an error if the standalone bootloader is not
-     * present
-     * @param mode uint8_t Controls the mode in which the standalone bootloader will run. See the app. note for full details.
-     *        Options are: STANDALONE_BOOTLOADER_NORMAL_MODE: Will listen for an over-the-air image transfer on the current
-     *        channel with current power settings. STANDALONE_BOOTLOADER_RECOVERY_MODE: Will listen for an over-the-air image
-     *        transfer on the default channel with default power settings. Both modes also allow an image transfer to begin
-     *        with XMODEM over the serial protocol's Bootloader Frame.
+     * Quits the current application and launches the standalone bootloader (if installed).
+     * The function returns an error if the standalone bootloader is not present.
+     * @param enabled If true, launch the standalone bootloader. If false, do nothing.
      * @returns An SLStatus value indicating success or the reason for failure.
      */
-    async ezspLaunchStandaloneBootloader(mode: number): Promise<SLStatus> {
+    async ezspLaunchStandaloneBootloader(enabled: boolean): Promise<SLStatus> {
         const sendBuffalo = this.startCommand(EzspFrameID.LAUNCH_STANDALONE_BOOTLOADER);
-        sendBuffalo.writeUInt8(mode);
+        sendBuffalo.writeUInt8(enabled ? 1 : 0);
 
         const sendStatus = await this.sendCommand(sendBuffalo);
 
@@ -7703,7 +7698,8 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
             throw new EzspError(sendStatus);
         }
 
-        const status = this.buffalo.readStatus(this.version);
+        // XXX: SDK says this is SLStatus, but received frame has just 1 byte, so, still EmberStatus
+        const status = this.buffalo.readStatus(0);
 
         return status;
     }
