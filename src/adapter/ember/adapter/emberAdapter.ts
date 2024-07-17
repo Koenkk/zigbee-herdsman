@@ -2343,7 +2343,7 @@ export class EmberAdapter extends Adapter {
             }
 
             return {neighbors};
-        });
+        }, networkAddress);
     }
 
     // queued, non-InterPAN
@@ -2399,7 +2399,7 @@ export class EmberAdapter extends Adapter {
             }
 
             return {table};
-        });
+        }, networkAddress);
     }
 
     // queued, non-InterPAN
@@ -2453,7 +2453,7 @@ export class EmberAdapter extends Adapter {
             }
 
             return {type, manufacturerCode: result.manufacturerCode};
-        });
+        }, networkAddress);
     }
 
     // queued, non-InterPAN
@@ -2483,7 +2483,7 @@ export class EmberAdapter extends Adapter {
             );
 
             return {endpoints: result.endpointList};
-        });
+        }, networkAddress);
     }
 
     // queued, non-InterPAN
@@ -2521,7 +2521,7 @@ export class EmberAdapter extends Adapter {
                 inputClusters: result.inClusterList,
                 outputClusters: result.outClusterList,
             };
-        });
+        }, networkAddress);
     }
 
     // queued, non-InterPAN
@@ -2570,7 +2570,7 @@ export class EmberAdapter extends Adapter {
                     },
                     DEFAULT_ZDO_REQUEST_TIMEOUT,
                 );
-            });
+            }, destinationNetworkAddress);
         } else if (typeof destinationAddressOrGroup === 'number' && type === 'group') {
             // dest is group num, so type should always be group (multicast)
             return this.queue.execute<void>(async () => {
@@ -2607,7 +2607,7 @@ export class EmberAdapter extends Adapter {
                     },
                     DEFAULT_ZDO_REQUEST_TIMEOUT,
                 );
-            });
+            }, destinationNetworkAddress);
         }
     }
 
@@ -2657,10 +2657,10 @@ export class EmberAdapter extends Adapter {
                     },
                     DEFAULT_ZDO_REQUEST_TIMEOUT,
                 );
-            });
+            }, destinationNetworkAddress);
         } else if (typeof destinationAddressOrGroup === 'number' && type === 'group') {
             // dest is group num, so type should always be group (multicast)
-            return new Promise<void>(async () => {
+            return this.queue.execute<void>(async () => {
                 this.checkInterpanLock();
 
                 const zdoPayload = BuffaloZdo.buildUnbindRequest(
@@ -2694,7 +2694,7 @@ export class EmberAdapter extends Adapter {
                     },
                     DEFAULT_ZDO_REQUEST_TIMEOUT,
                 );
-            });
+            }, destinationNetworkAddress);
         }
     }
 
@@ -2720,7 +2720,7 @@ export class EmberAdapter extends Adapter {
                 },
                 DEFAULT_ZDO_REQUEST_TIMEOUT,
             );
-        });
+        }, networkAddress);
     }
 
     //---- ZCL
@@ -2819,7 +2819,7 @@ export class EmberAdapter extends Adapter {
             }
 
             return null;
-        });
+        }, networkAddress);
     }
 
     // queued, non-InterPAN
