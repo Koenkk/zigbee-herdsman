@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.55.0](https://github.com/Koenkk/zigbee-herdsman/compare/v0.54.1...v0.55.0) (2024-07-18)
+
+
+### Features
+
+* Add `serialNumber` to `genBasic` cluster ([#1117](https://github.com/Koenkk/zigbee-herdsman/issues/1117)) ([c2de0be](https://github.com/Koenkk/zigbee-herdsman/commit/c2de0bec0eb2278bf0ea30c8ecd3e17321398fad))
+
+
+### Bug Fixes
+
+* Ember: Add keys to adapter queue executors ([#1121](https://github.com/Koenkk/zigbee-herdsman/issues/1121)) ([9bec23a](https://github.com/Koenkk/zigbee-herdsman/commit/9bec23aab314261374ebdec41c94d5b25202d6f7))
+
 ## [0.54.1](https://github.com/Koenkk/zigbee-herdsman/compare/v0.54.0...v0.54.1) (2024-07-17)
 
 
