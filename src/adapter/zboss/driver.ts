@@ -20,14 +20,12 @@ type ZBOSSWaitressMatcher = {
 
 export class ZBOSSDriver extends EventEmitter {
     public readonly port: ZBOSSUart;
-    public ieee: EUI64;
     private waitress: Waitress<ZBOSSFrame, ZBOSSWaitressMatcher>;
     private queue: Queue;
     cmdSeq = 1;  // command sequence
 
     constructor(options: TsType.SerialPortOptions) {
         super();
-        const ieee = '0xFFFFFFFFFFFFFFFF';
         this.queue = new Queue();
         this.waitress = new Waitress<ZBOSSFrame, ZBOSSWaitressMatcher>(
             this.waitressValidator, this.waitressTimeoutFormatter);
@@ -122,5 +120,40 @@ export class ZBOSSDriver extends EventEmitter {
             (matcher.sequence == null || payload.sequence === matcher.sequence) &&
             (matcher.commandId == payload.commandId)
         );
+    }
+
+    public async getCoordinator(): Promise<TsType.Coordinator> {
+        const res = await this.execCommand(CommandId.GET_LOCAL_IEEE_ADDR, {mac: 0});
+        const ieeeAddr = res.payload.ieee;
+        // const message = await this.execCommand(CommandId.ZDO_ACTIVE_EP_REQ, {nwk: 0x0000});
+        // const activeEndpoints = message.payload.endpoints;
+        return {
+            ieeeAddr,
+            networkAddress: 0x0000,
+            manufacturerID: 0x0000,
+            endpoints:[],
+        };
+    }
+
+    public async getCoordinatorVersion(): Promise<TsType.CoordinatorVersion> {
+        const ver = await this.execCommand(CommandId.GET_MODULE_VERSION, {});
+        const cver = await this.execCommand(CommandId.GET_COORDINATOR_VERSION, {});
+        const ver2str = (version: number) => {
+            const major = (version >> 24 & 0xFF);
+            const minor = (version >> 16 & 0xFF);
+            const revision = (version >> 8 & 0xFF);
+            const commit = (version & 0xFF);
+            return `${major}.${minor}.${revision}.${commit}`;
+        };
+        
+        return {
+            type: `zboss`,
+            meta: {
+                coordinator: cver.payload.version,
+                stack: ver2str(ver.payload.stackVersion),
+                protocol: ver2str(ver.payload.protocolVersion),
+                revision: ver2str(ver.payload.fwVersion),
+            },
+        };
     }
 };

@@ -50,8 +50,8 @@ export class ZBOSSAdapter extends Adapter {
         logger.info(`ZBOSS Adapter starting`, NS);
 
         await this.driver.start();
-        // await this.driver.reset();
-        await this.driver.execCommand(CommandId.GET_ZIGBEE_ROLE, {});
+        //await this.driver.reset();
+        // await this.driver.execCommand(CommandId.GET_ZIGBEE_ROLE, {});
 
         return 'resumed';
     }
@@ -62,25 +62,10 @@ export class ZBOSSAdapter extends Adapter {
         logger.info(`ZBOSS Adapter stopped`, NS);
     }
 
-    public async getCoordinator(): Promise<TsType.Coordinator> {
+    public async getCoordinator(): Promise<Coordinator> {
         return this.queue.execute<Coordinator>(async () => {
-            const networkAddress = 0x0000;
-
-            // const message = await this.driver.execCommand(
-            //     CommandId.ZDO_ACTIVE_EP_REQ, {nwk: networkAddress}
-            // );
-            //     //     networkAddress, EmberZDOCmd.Active_EP_req, EmberZDOCmd.Active_EP_rsp,
-            //     //     {dstaddr: networkAddress}
-            //     // );
-            // const activeEndpoints = message.payload.endpoints;
+            const info = await this.driver.getCoordinator();
             
-            // 
-            // const message = await this.driver.zdoRequest(
-            //     networkAddress, EmberZDOCmd.Active_EP_req, EmberZDOCmd.Active_EP_rsp,
-            //     {dstaddr: networkAddress}
-            // );
-            // const activeEndpoints = message.activeeplist;
-
             const endpoints = [];
             endpoints.push({
                 profileID: 0,
@@ -104,16 +89,16 @@ export class ZBOSSAdapter extends Adapter {
             // }
 
             return {
-                networkAddress: networkAddress,
+                networkAddress: info.networkAddress,
                 manufacturerID: 0,
-                ieeeAddr: this.driver.ieee,
-                endpoints,
+                ieeeAddr: info.ieeeAddr,
+                endpoints: info.endpoints,
             };
         });
     }
 
     public async getCoordinatorVersion(): Promise<TsType.CoordinatorVersion> {
-        return {type: `zboss`, meta: {}};
+        return this.driver.getCoordinatorVersion();
     }
 
     public async reset(type: "soft" | "hard"): Promise<void> {

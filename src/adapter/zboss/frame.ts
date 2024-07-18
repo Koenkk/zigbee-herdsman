@@ -95,6 +95,8 @@ function readPayload(type: FrameType, commandId: CommandId, buffalo: BuffaloZcl)
     const payload: ZBOSSFrameData = {};
 
     for (const parameter of frameDesc) {
+        if (!buffalo.isMore()) break;
+        
         const options: BuffaloZclOptions = {payload};
 
         if (parameter.condition && !parameter.condition(payload, buffalo)) {

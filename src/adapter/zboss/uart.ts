@@ -331,7 +331,8 @@ export class ZBOSSUart extends EventEmitter {
             // but has already sent us the next one.
             logger.debug(`Unexpected packet sequence ${this.ackSeq} | ${this.sendSeq}`, NS);
         } else {
-            this.sendSeq = this.sendSeq + 1;
+            // next 
+            this.sendSeq = {0: 1, 1: 2, 2: 3, 3: 1}[this.sendSeq];
         }
 
         return handled;
