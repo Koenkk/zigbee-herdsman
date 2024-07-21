@@ -2782,8 +2782,7 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      */
     ezspNetworkFoundHandler(networkFound: EmberZigbeeNetwork, lastHopLqi: number, lastHopRssi: number): void {
         logger.debug(
-            `ezspNetworkFoundHandler(): callback called with: [networkFound=${JSON.stringify(networkFound)}], ` +
-                `[lastHopLqi=${lastHopLqi}], [lastHopRssi=${lastHopRssi}]`,
+            `ezspNetworkFoundHandler(): callback called with: [networkFound=${JSON.stringify(networkFound)}], [lastHopLqi=${lastHopLqi}], [lastHopRssi=${lastHopRssi}]`,
             NS,
         );
     }
@@ -3042,8 +3041,7 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      */
     ezspChildJoinHandler(index: number, joining: boolean, childId: NodeId, childEui64: EUI64, childType: EmberNodeType): void {
         logger.debug(
-            `ezspChildJoinHandler(): callback called with: [index=${index}], [joining=${joining}], ` +
-                `[childId=${childId}], [childEui64=${childEui64}], [childType=${childType}]`,
+            `ezspChildJoinHandler(): callback called with: [index=${index}], [joining=${joining}], [childId=${childId}], [childEui64=${childEui64}], [childType=${childType}]`,
             NS,
         );
     }
@@ -4221,8 +4219,7 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
         arrayOfDeviceDutyCycles: EmberPerDeviceDutyCycle[],
     ): void {
         logger.debug(
-            `ezspDutyCycleHandler(): callback called with: [channelPage=${channelPage}], [channel=${channel}], ` +
-                `[state=${state}], [totalDevices=${totalDevices}], [arrayOfDeviceDutyCycles=${arrayOfDeviceDutyCycles}]`,
+            `ezspDutyCycleHandler(): callback called with: [channelPage=${channelPage}], [channel=${channel}], [state=${state}], [totalDevices=${totalDevices}], [arrayOfDeviceDutyCycles=${arrayOfDeviceDutyCycles}]`,
             NS,
         );
     }
@@ -4712,8 +4709,7 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      */
     ezspRemoteSetBindingHandler(entry: EmberBindingTableEntry, index: number, policyDecision: SLStatus): void {
         logger.debug(
-            `ezspRemoteSetBindingHandler(): callback called with: [entry=${JSON.stringify(entry)}], [index=${index}], ` +
-                `[policyDecision=${SLStatus[policyDecision]}]`,
+            `ezspRemoteSetBindingHandler(): callback called with: [entry=${JSON.stringify(entry)}], [index=${index}], [policyDecision=${SLStatus[policyDecision]}]`,
             NS,
         );
     }
@@ -5392,8 +5388,7 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
         relayList: number[],
     ): void {
         logger.debug(
-            `ezspIncomingRouteRecordHandler(): callback called with: [source=${source}], [sourceEui=${sourceEui}], ` +
-                `[lastHopLqi=${lastHopLqi}], [lastHopRssi=${lastHopRssi}], [relayCount=${relayCount}], [relayList=${relayList}]`,
+            `ezspIncomingRouteRecordHandler(): callback called with: [source=${source}], [sourceEui=${sourceEui}], [lastHopLqi=${lastHopLqi}], [lastHopRssi=${lastHopRssi}], [relayCount=${relayCount}], [relayList=${relayList}]`,
             NS,
         );
         // XXX: could at least trigger a `Events.lastSeenChanged` but this is not currently being listened to at the adapter level
@@ -5731,7 +5726,7 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      */
     ezspIdConflictHandler(id: NodeId): void {
         logger.debug(`ezspIdConflictHandler(): callback called with: [id=${id}]`, NS);
-        logger.warning(`An ID conflict was detected for network address "${id}". Corresponding devices kicked from the network.`, NS);
+        logger.warning(`An ID conflict was detected for network address '${id}'. Corresponding devices kicked from the network.`, NS);
 
         // XXX: this is currently causing more problems than not doing it, so disabled for now.
         //      devices should rejoin on ID conflict anyway, so the database isn't out of sync for very long.
@@ -5794,8 +5789,7 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      */
     ezspMacPassthroughMessageHandler(messageType: EmberMacPassthroughType, packetInfo: EmberRxPacketInfo, messageContents: Buffer): void {
         logger.debug(
-            `ezspMacPassthroughMessageHandler(): callback called with: [messageType=${messageType}], ` +
-                `[packetInfo=${JSON.stringify(packetInfo)}], [messageContents=${messageContents.toString('hex')}]`,
+            `ezspMacPassthroughMessageHandler(): callback called with: [messageType=${messageType}], [packetInfo=${JSON.stringify(packetInfo)}], [messageContents=${messageContents.toString('hex')}]`,
             NS,
         );
     }
@@ -5816,9 +5810,8 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
         messageContents: Buffer,
     ): void {
         logger.debug(
-            `ezspMacFilterMatchMessageHandler(): callback called with: [filterIndexMatch=${filterIndexMatch}], ` +
-                `[legacyPassthroughType=${legacyPassthroughType}], [packetInfo=${JSON.stringify(packetInfo)}], ` +
-                `[messageContents=${messageContents.toString('hex')}]`,
+            `ezspMacFilterMatchMessageHandler(): callback called with: [filterIndexMatch=${filterIndexMatch}], [legacyPassthroughType=${legacyPassthroughType}], ` +
+                `[packetInfo=${JSON.stringify(packetInfo)}], [messageContents=${messageContents.toString('hex')}]`,
             NS,
         );
 
@@ -5838,7 +5831,7 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
             destAddress = msgBuffalo.readUInt16();
         } else {
-            logger.debug(`ezspMacFilterMatchMessageHandler INVALID InterPAN macFrameControl "${macFrameControl}".`, NS);
+            logger.debug(`ezspMacFilterMatchMessageHandler INVALID InterPAN macFrameControl '${macFrameControl}'.`, NS);
             return;
         }
 
@@ -5849,7 +5842,7 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
         let remainingLength = msgBuffalo.getBufferLength() - msgBuffalo.getPosition();
 
         if (remainingLength < STUB_NWK_SIZE + MIN_STUB_APS_SIZE) {
-            logger.debug(`ezspMacFilterMatchMessageHandler INVALID InterPAN length "${remainingLength}".`, NS);
+            logger.debug(`ezspMacFilterMatchMessageHandler INVALID InterPAN length '${remainingLength}'.`, NS);
             return;
         }
 
@@ -5857,7 +5850,7 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
         remainingLength -= 2; // read 2 more bytes before APS stuff
 
         if (nwkFrameControl !== STUB_NWK_FRAME_CONTROL) {
-            logger.debug(`ezspMacFilterMatchMessageHandler INVALID InterPAN nwkFrameControl "${nwkFrameControl}".`, NS);
+            logger.debug(`ezspMacFilterMatchMessageHandler INVALID InterPAN nwkFrameControl '${nwkFrameControl}'.`, NS);
             return;
         }
 
@@ -5867,7 +5860,7 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
             (apsFrameControl & ~INTERPAN_APS_FRAME_DELIVERY_MODE_MASK & ~INTERPAN_APS_FRAME_SECURITY) !==
             INTERPAN_APS_FRAME_CONTROL_NO_DELIVERY_MODE
         ) {
-            logger.debug(`ezspMacFilterMatchMessageHandler INVALID InterPAN apsFrameControl "${apsFrameControl}".`, NS);
+            logger.debug(`ezspMacFilterMatchMessageHandler INVALID InterPAN apsFrameControl '${apsFrameControl}'.`, NS);
             return;
         }
 
@@ -5878,14 +5871,14 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
             case EmberInterpanMessageType.UNICAST:
             case EmberInterpanMessageType.BROADCAST: {
                 if (remainingLength < INTERPAN_APS_UNICAST_BROADCAST_SIZE) {
-                    logger.debug(`ezspMacFilterMatchMessageHandler INVALID InterPAN length "${remainingLength}".`, NS);
+                    logger.debug(`ezspMacFilterMatchMessageHandler INVALID InterPAN length '${remainingLength}'.`, NS);
                     return;
                 }
                 break;
             }
             case EmberInterpanMessageType.MULTICAST: {
                 if (remainingLength < INTERPAN_APS_MULTICAST_SIZE) {
-                    logger.debug(`ezspMacFilterMatchMessageHandler INVALID InterPAN length "${remainingLength}".`, NS);
+                    logger.debug(`ezspMacFilterMatchMessageHandler INVALID InterPAN length '${remainingLength}'.`, NS);
                     return;
                 }
 
@@ -5893,7 +5886,7 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
                 break;
             }
             default: {
-                logger.debug(`ezspMacFilterMatchMessageHandler INVALID InterPAN messageType "${messageType}".`, NS);
+                logger.debug(`ezspMacFilterMatchMessageHandler INVALID InterPAN messageType '${messageType}'.`, NS);
                 return;
             }
         }
@@ -5918,8 +5911,7 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      */
     ezspRawTransmitCompleteHandler(messageContents: Buffer, status: SLStatus): void {
         logger.debug(
-            `ezspRawTransmitCompleteHandler(): callback called with: [messageContents=${messageContents.toString('hex')}], ` +
-                `[status=${SLStatus[status]}]`,
+            `ezspRawTransmitCompleteHandler(): callback called with: [messageContents=${messageContents.toString('hex')}], [status=${SLStatus[status]}]`,
             NS,
         );
     }
@@ -6904,8 +6896,7 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
     ): void {
         logger.debug(
             `ezspTrustCenterJoinHandler(): callback called with: [newNodeId=${newNodeId}], [newNodeEui64=${newNodeEui64}], ` +
-                `[status=${EmberDeviceUpdate[status]}], [policyDecision=${EmberJoinDecision[policyDecision]}], ` +
-                `[parentOfNewNodeId=${parentOfNewNodeId}]`,
+                `[status=${EmberDeviceUpdate[status]}], [policyDecision=${EmberJoinDecision[policyDecision]}], [parentOfNewNodeId=${parentOfNewNodeId}]`,
             NS,
         );
         // NOTE: this is mostly just passing stuff up to Z2M, so use only one emit for all, let adapter do the rest, no parsing needed
@@ -7124,8 +7115,7 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      */
     ezspCalculateSmacsHandler(status: SLStatus, initiatorSmac: EmberSmacData, responderSmac: EmberSmacData): void {
         logger.debug(
-            `ezspCalculateSmacsHandler(): callback called with: [status=${SLStatus[status]}], [initiatorSmac=${initiatorSmac}], ` +
-                `[responderSmac=${responderSmac}]`,
+            `ezspCalculateSmacsHandler(): callback called with: [status=${SLStatus[status]}], [initiatorSmac=${initiatorSmac}], [responderSmac=${responderSmac}]`,
             NS,
         );
     }
@@ -7160,7 +7150,7 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      */
     ezspGenerateCbkeKeysHandler283k1(status: SLStatus, ephemeralPublicKey: EmberPublicKey283k1Data): void {
         logger.debug(
-            `ezspGenerateCbkeKeysHandler283k1(): callback called with: [status=${SLStatus[status]}], ` + `[ephemeralPublicKey=${ephemeralPublicKey}]`,
+            `ezspGenerateCbkeKeysHandler283k1(): callback called with: [status=${SLStatus[status]}], [ephemeralPublicKey=${ephemeralPublicKey}]`,
             NS,
         );
     }
@@ -7209,8 +7199,7 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      */
     ezspCalculateSmacsHandler283k1(status: SLStatus, initiatorSmac: EmberSmacData, responderSmac: EmberSmacData): void {
         logger.debug(
-            `ezspCalculateSmacsHandler283k1(): callback called with: [status=${SLStatus[status]}], [initiatorSmac=${initiatorSmac}], ` +
-                `[responderSmac=${responderSmac}]`,
+            `ezspCalculateSmacsHandler283k1(): callback called with: [status=${SLStatus[status]}], [initiatorSmac=${initiatorSmac}], [responderSmac=${responderSmac}]`,
             NS,
         );
     }
@@ -7672,8 +7661,7 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      */
     ezspMfglibRxHandler(linkQuality: number, rssi: number, packetContents: Buffer): void {
         logger.debug(
-            `ezspMfglibRxHandler(): callback called with: [linkQuality=${linkQuality}], [rssi=${rssi}], ` +
-                `[packetContents=${packetContents.toString('hex')}]`,
+            `ezspMfglibRxHandler(): callback called with: [linkQuality=${linkQuality}], [rssi=${rssi}], [packetContents=${packetContents.toString('hex')}]`,
             NS,
         );
     }
@@ -7771,8 +7759,7 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      */
     ezspIncomingBootloadMessageHandler(longId: EUI64, packetInfo: EmberRxPacketInfo, messageContents: Buffer): void {
         logger.debug(
-            `ezspIncomingBootloadMessageHandler(): callback called with: [longId=${longId}], [packetInfo=${JSON.stringify(packetInfo)}], ` +
-                `[messageContents=${messageContents.toString('hex')}]`,
+            `ezspIncomingBootloadMessageHandler(): callback called with: [longId=${longId}], [packetInfo=${JSON.stringify(packetInfo)}], [messageContents=${messageContents.toString('hex')}]`,
             NS,
         );
     }
@@ -7788,8 +7775,7 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      */
     ezspBootloadTransmitCompleteHandler(status: SLStatus, messageContents: Buffer): void {
         logger.debug(
-            `ezspBootloadTransmitCompleteHandler(): callback called with: [status=${SLStatus[status]}], ` +
-                `[messageContents=${messageContents.toString('hex')}]`,
+            `ezspBootloadTransmitCompleteHandler(): callback called with: [status=${SLStatus[status]}], [messageContents=${messageContents.toString('hex')}]`,
             NS,
         );
     }
@@ -7826,8 +7812,7 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      */
     ezspIncomingMfgTestMessageHandler(messageType: number, messageContents: Buffer): void {
         logger.debug(
-            `ezspIncomingMfgTestMessageHandler(): callback called with: [messageType=${messageType}], ` +
-                `[messageContents=${messageContents.toString('hex')}]`,
+            `ezspIncomingMfgTestMessageHandler(): callback called with: [messageType=${messageType}], [messageContents=${messageContents.toString('hex')}]`,
             NS,
         );
     }
@@ -8127,8 +8112,7 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
         packetInfo: EmberRxPacketInfo,
     ): void {
         logger.debug(
-            `ezspZllNetworkFoundHandler(): callback called with: [networkInfo=${networkInfo}], [isDeviceInfoNull=${isDeviceInfoNull}], ` +
-                `[deviceInfo=${deviceInfo}], [packetInfo=${JSON.stringify(packetInfo)}]`,
+            `ezspZllNetworkFoundHandler(): callback called with: [networkInfo=${networkInfo}], [isDeviceInfoNull=${isDeviceInfoNull}], [deviceInfo=${deviceInfo}], [packetInfo=${JSON.stringify(packetInfo)}]`,
             NS,
         );
     }
@@ -8151,7 +8135,7 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      */
     ezspZllAddressAssignmentHandler(addressInfo: EmberZllAddressAssignment, packetInfo: EmberRxPacketInfo): void {
         logger.debug(
-            `ezspZllAddressAssignmentHandler(): callback called with: [addressInfo=${addressInfo}], ` + `[packetInfo=${JSON.stringify(packetInfo)}]`,
+            `ezspZllAddressAssignmentHandler(): callback called with: [addressInfo=${addressInfo}], [packetInfo=${JSON.stringify(packetInfo)}]`,
             NS,
         );
     }

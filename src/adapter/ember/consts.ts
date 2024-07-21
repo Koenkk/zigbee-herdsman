@@ -5,7 +5,6 @@
 export const INVALID_CONFIG_VALUE = 0xffff;
 /** Serves to initialize cache */
 export const INVALID_RADIO_CHANNEL = 0xff;
-export const UNKNOWN_NETWORK_STATE = 0xff;
 /**
  * A distinguished network ID that will never be assigned to any node.
  * This value is returned when getting the remote node ID from the binding table and the given binding table index refers
