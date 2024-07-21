@@ -13,37 +13,13 @@ import {
 } from '../../../src/adapter/ember/ezsp/consts';
 import {EzspStatus} from '../../../src/adapter/ember/enums';
 import {EzspBuffer} from '../../../src/adapter/ember/uart/queues';
-import {UartAsh} from '../../../src/adapter/ember/uart/ash';
+import {UartAsh, CONFIG_TX_K} from '../../../src/adapter/ember/uart/ash';
 import {EZSP_HOST_RX_POOL_SIZE, TX_POOL_BUFFERS} from '../../../src/adapter/ember/uart/consts';
 import {RECD_RSTACK_BYTES, SEND_RST_BYTES, SEND_ACK_FIRST_BYTES, adapterSONOFFDongleE, ASH_ACK_FIRST_BYTES} from './consts';
 import {EzspBuffalo} from '../../../src/adapter/ember/ezsp/buffalo.ts';
 import {lowByte} from '../../../src/adapter/ember/utils/math';
 import {EzspFrameID} from '../../../src/adapter/ember/ezsp/enums.ts';
 import {Wait} from '../../../src/utils/';
-
-// XXX: Below are copies from uart>ash.ts, should be kept in sync (avoids export)
-/** max frames sent without being ACKed (1-7) */
-const CONFIG_TX_K = 3;
-/** enables randomizing DATA frame payloads */
-const CONFIG_RANDOMIZE = true;
-/** adaptive rec'd ACK timeout initial value */
-const CONFIG_ACK_TIME_INIT = 800;
-/**  "     "     "     "     " minimum value */
-const CONFIG_ACK_TIME_MIN = 400;
-/**  "     "     "     "     " maximum value */
-const CONFIG_ACK_TIME_MAX = 2400;
-/** time allowed to receive RSTACK after ncp is reset */
-const CONFIG_TIME_RST = 2500;
-/** time between checks for received RSTACK (CONNECTED status) */
-const CONFIG_TIME_RST_CHECK = 100;
-/** if free buffers < limit, host receiver isn't ready, will hold off the ncp from sending normal priority frames */
-const CONFIG_NR_LOW_LIMIT = 8; // RX_FREE_LW
-/** if free buffers > limit, host receiver is ready */
-const CONFIG_NR_HIGH_LIMIT = 12; // RX_FREE_HW
-/** time until a set nFlag must be resent (max 2032) */
-const CONFIG_NR_TIME = 480;
-/** Read/write max bytes count at stream level */
-const CONFIG_HIGHWATER_MARK = 256;
 
 const mockSerialPortCloseEvent = jest.fn();
 const mockSerialPortErrorEvent = jest.fn();
@@ -74,9 +50,11 @@ describe('Ember UART ASH Protocol', () => {
     beforeAll(async () => {
         jest.useRealTimers(); // messes with serialport promise handling otherwise?
     });
+
     afterAll(async () => {
         jest.useRealTimers();
     });
+
     beforeEach(() => {
         for (const mock of mocks) {
             mock.mockClear();
@@ -89,6 +67,7 @@ describe('Ember UART ASH Protocol', () => {
 
         buffalo.setPosition(0);
     });
+
     afterEach(async () => {
         await uartAsh.stop();
         MockBinding.reset();

@@ -27,9 +27,7 @@ import {
     ASH_MAX_TIMEOUTS,
     ASH_MIN_DATA_FIELD_LEN,
     ASH_MIN_FRAME_WITH_CRC_LEN,
-    ASH_NFLAG_BIT,
     ASH_NFLAG_MASK,
-    ASH_RFLAG_BIT,
     ASH_RFLAG_MASK,
     ASH_SHFRAME_MASK,
     ASH_VERSION,
@@ -49,11 +47,9 @@ import {AshWriter} from './writer';
 const NS = 'zh:ember:uart:ash';
 
 /** ASH get rflag in control byte */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const ashGetRFlag = (ctrl: number): number => (ctrl & ASH_RFLAG_MASK) >> ASH_RFLAG_BIT;
+// const ashGetRFlag = (ctrl: number): number => (ctrl & ASH_RFLAG_MASK) >> ASH_RFLAG_BIT;
 /** ASH get nflag in control byte */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const ashGetNFlag = (ctrl: number): number => (ctrl & ASH_NFLAG_MASK) >> ASH_NFLAG_BIT;
+// const ashGetNFlag = (ctrl: number): number => (ctrl & ASH_NFLAG_MASK) >> ASH_NFLAG_BIT;
 /** ASH get frmnum in control byte */
 const ashGetFrmNum = (ctrl: number): number => (ctrl & ASH_FRMNUM_MASK) >> ASH_FRMNUM_BIT;
 /** ASH get acknum in control byte */
@@ -152,7 +148,7 @@ enum Flag {
 }
 
 /** max frames sent without being ACKed (1-7) */
-const CONFIG_TX_K = 3;
+export const CONFIG_TX_K = 3;
 /** enables randomizing DATA frame payloads */
 const CONFIG_RANDOMIZE = true;
 /** adaptive rec'd ACK timeout initial value */
