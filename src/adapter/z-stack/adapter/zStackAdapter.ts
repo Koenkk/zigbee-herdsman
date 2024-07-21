@@ -796,23 +796,16 @@ class ZStackAdapter extends Adapter {
         type: 'endpoint' | 'group',
         destinationEndpoint?: number,
     ): Promise<void> {
-        return this.queue.execute<void>(async () => {
-            this.checkInterpanLock();
-            const responsePayload = {srcaddr: destinationNetworkAddress};
-            const response = this.znp.waitFor(Type.AREQ, Subsystem.ZDO, 'bindRsp', responsePayload);
-            const payload = {
-                dstaddr: destinationNetworkAddress,
-                srcaddr: sourceIeeeAddress,
-                srcendpoint: sourceEndpoint,
-                clusterid: clusterID,
-                dstaddrmode: type === 'group' ? AddressMode.ADDR_GROUP : AddressMode.ADDR_64BIT,
-                dstaddress: this.toAddressString(destinationAddressOrGroup),
-                dstendpoint: type === 'group' ? 0xff : destinationEndpoint,
-            };
-
-            await this.znp.request(Subsystem.ZDO, 'bindReq', payload, response.ID);
-            await response.start().promise;
-        }, destinationNetworkAddress);
+        await this.bindInternal(
+            'bind',
+            destinationNetworkAddress,
+            sourceIeeeAddress,
+            sourceEndpoint,
+            clusterID,
+            destinationAddressOrGroup,
+            type,
+            destinationEndpoint,
+        );
     }
 
     public async unbind(
@@ -824,22 +817,51 @@ class ZStackAdapter extends Adapter {
         type: 'endpoint' | 'group',
         destinationEndpoint: number,
     ): Promise<void> {
+        await this.bindInternal(
+            'unbind',
+            destinationNetworkAddress,
+            sourceIeeeAddress,
+            sourceEndpoint,
+            clusterID,
+            destinationAddressOrGroup,
+            type,
+            destinationEndpoint,
+        );
+    }
+
+    private async bindInternal(
+        bindType: 'bind' | 'unbind',
+        destinationNetworkAddress: number,
+        sourceIeeeAddress: string,
+        sourceEndpoint: number,
+        clusterID: number,
+        destinationAddressOrGroup: string | number,
+        targetType: 'endpoint' | 'group',
+        destinationEndpoint: number,
+    ): Promise<void> {
         return this.queue.execute<void>(async () => {
             this.checkInterpanLock();
-            const response = this.znp.waitFor(Type.AREQ, Subsystem.ZDO, 'unbindRsp', {srcaddr: destinationNetworkAddress});
+            const response = this.znp.waitFor(Type.AREQ, Subsystem.ZDO, `${bindType}Rsp`, {srcaddr: destinationNetworkAddress});
 
             const payload = {
                 dstaddr: destinationNetworkAddress,
                 srcaddr: sourceIeeeAddress,
                 srcendpoint: sourceEndpoint,
                 clusterid: clusterID,
-                dstaddrmode: type === 'group' ? AddressMode.ADDR_GROUP : AddressMode.ADDR_64BIT,
+                dstaddrmode: targetType === 'group' ? AddressMode.ADDR_GROUP : AddressMode.ADDR_64BIT,
                 dstaddress: this.toAddressString(destinationAddressOrGroup),
-                dstendpoint: type === 'group' ? 0xff : destinationEndpoint,
+                dstendpoint: targetType === 'group' ? 0xff : destinationEndpoint,
             };
 
-            await this.znp.request(Subsystem.ZDO, 'unbindReq', payload, response.ID);
-            await response.start().promise;
+            await this.znp.request(Subsystem.ZDO, `${bindType}Req`, payload, response.ID);
+            const result = await response.start().promise;
+            if (result.payload.status !== 0) {
+                // Z-Stack only returns status 0 or 1, so not the actual error code
+                throw new Error(
+                    `Failed to ${bindType} '${clusterID}' from '${destinationAddressOrGroup}/${destinationEndpoint}' ` +
+                        `to '${sourceIeeeAddress}/${sourceEndpoint}' (${result.payload.status})`,
+                );
+            }
         }, destinationNetworkAddress);
     }
 
