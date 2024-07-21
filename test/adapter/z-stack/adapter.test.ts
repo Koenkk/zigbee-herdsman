@@ -1186,6 +1186,8 @@ const mockZnpWaitForStateChangeIndTimeout = () => {
     });
 };
 
+let bindStatusResponse = 0;
+
 const basicMocks = () => {
     mockZnpRequestWith(commissioned3x0AlignedRequestMock);
     mockZnpWaitFor.mockImplementation((type, subsystem, command, payload) => {
@@ -1304,9 +1306,9 @@ const basicMocks = () => {
         } else if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'mgmtRtgRsp' && equals(payload, {srcaddr: 206})) {
             return waitForResult({payload: {status: 1}});
         } else if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'bindRsp' && equals(payload, {srcaddr: 301})) {
-            return waitForResult({});
+            return waitForResult({payload: {status: bindStatusResponse}});
         } else if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'unbindRsp' && equals(payload, {srcaddr: 301})) {
-            return waitForResult({});
+            return waitForResult({payload: {status: bindStatusResponse}});
         } else if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'mgmtLeaveRsp' && equals(payload, {srcaddr: 401})) {
             return waitForResult({});
         } else if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'nwkAddrRsp' && payload.ieeeaddr === '0x03') {
@@ -1446,6 +1448,7 @@ describe('zstack-adapter', () => {
         dataConfirmCode = 0;
         dataRequestCode = 0;
         dataRequestExtCode = 0;
+        bindStatusResponse = 0;
         assocGetWithAddressNodeRelation = 1;
         networkOptions.networkKeyDistribute = false;
         dataConfirmCodeReset = false;
@@ -3490,12 +3493,20 @@ describe('zstack-adapter', () => {
         );
     });
 
+    it('Bind fails', async () => {
+        basicMocks();
+        await adapter.start();
+        mockZnpRequest.mockClear();
+        bindStatusResponse = 1;
+        await expect(adapter.bind(301, '0x129', 1, 1, 4, 'endpoint', 9)).rejects.toThrow(`Failed to bind '1' from '4/9' to '0x129/1' (1)`);
+    });
+
     it('Bind group', async () => {
         basicMocks();
         await adapter.start();
         mockZnpRequest.mockClear();
 
-        const result = await adapter.bind(301, '0x129', 1, 1, 4, 'group', null);
+        const result = await adapter.bind(301, '0x129', 1, 1, 4, 'group', undefined);
         expect(mockQueueExecute.mock.calls[0][1]).toBe(301);
         expect(mockZnpRequest).toBeCalledTimes(1);
         expect(mockZnpRequest).toBeCalledWith(
