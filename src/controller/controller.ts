@@ -688,7 +688,7 @@ class Controller extends events.EventEmitter {
         let endpoint = device.getEndpoint(payload.endpoint);
         if (!endpoint) {
             logger.debug(
-                `Data is from unknown endpoint '${payload.endpoint}' from device with ` + `network address '${payload.address}', creating it...`,
+                `Data is from unknown endpoint '${payload.endpoint}' from device with network address '${payload.address}', creating it...`,
                 NS,
             );
             endpoint = device.createEndpoint(payload.endpoint);
