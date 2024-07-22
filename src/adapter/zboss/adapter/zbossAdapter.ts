@@ -20,7 +20,7 @@ import {
 } from "../../events";
 import {BroadcastAddress} from '../../../zspec/enums';
 import {ZBOSSDriver} from '../driver';
-import {CommandId, ResetOptions} from "../enums";
+import {CommandId} from "../enums";
 import {logger} from "../../../utils/logger";
 const NS = 'zh:zboss';
 
@@ -50,8 +50,6 @@ export class ZBOSSAdapter extends Adapter {
         logger.info(`ZBOSS Adapter starting`, NS);
 
         await this.driver.start();
-        //await this.driver.reset();
-        // await this.driver.execCommand(CommandId.GET_ZIGBEE_ROLE, {});
 
         return 'resumed';
     }

@@ -10,6 +10,7 @@ import {ZBOSSFrame, readZBOSSFrame, writeZBOSSFrame} from "./frame";
 import {crc8, crc16} from "./utils";
 import {Queue, Waitress, Wait} from '../../utils';
 import {SIGNATURE, ZBOSS_NCP_API_HL, ZBOSS_FLAG_FIRST_FRAGMENT, ZBOSS_FLAG_LAST_FRAGMENT} from "./consts";
+import wait from "../../utils/wait";
 
 const NS = 'zh:zboss:uart';
 
@@ -25,6 +26,7 @@ export class ZBOSSUart extends EventEmitter {
     private ackSeq = 0; // next number after the last accepted frame
     private waitress: Waitress<number, number>;
     private queue: Queue;
+    public inReset = false;
 
     constructor(options: SerialPortOptions) {
         super();
@@ -200,6 +202,11 @@ export class ZBOSSUart extends EventEmitter {
 
     private async onPortClose(err: boolean | Error): Promise<void> {
         logger.info(`Port closed. Error? ${err ?? 'no'}`, NS);
+        if (this.inReset) {
+            await wait(3000);
+            await this.openPort();
+            this.inReset = false;
+        }
     }
 
     private async onPortError(error: Error): Promise<void> {

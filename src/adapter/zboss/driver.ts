@@ -51,6 +51,7 @@ export class ZBOSSDriver extends EventEmitter {
 
             if (status) {
                 logger.info(`Driver started`, NS);
+                await this.reset();
                 return status;
             }
         }
@@ -60,7 +61,8 @@ export class ZBOSSDriver extends EventEmitter {
 
     public async reset(): Promise<void> {
         logger.info(`Driver reset`, NS);
-        await this.execCommand(CommandId.NCP_RESET, {options: ResetOptions.NoOptions});
+        this.port.inReset = true;
+        await this.execCommand(CommandId.NCP_RESET, {options: ResetOptions.NoOptions}, 10000);
     }
 
     public async stop(): Promise<void> {
@@ -79,7 +81,7 @@ export class ZBOSSDriver extends EventEmitter {
         }
     }
 
-    public async execCommand(commandId: number, params: KeyValue = null): Promise<ZBOSSFrame> {
+    public async execCommand(commandId: number, params: KeyValue = null, timeout: number = null): Promise<ZBOSSFrame> {
         logger.debug(`==> ${CommandId[commandId]}(${commandId}): ${JSON.stringify(params)}`, NS);
 
         if (!this.port.portOpen) {
@@ -89,7 +91,7 @@ export class ZBOSSDriver extends EventEmitter {
         return this.queue.execute<ZBOSSFrame>(async (): Promise<ZBOSSFrame> => {
             const frame = makeFrame(FrameType.REQUEST, commandId, params);
             frame.sequence = this.cmdSeq;
-            const waiter = this.waitFor(commandId, this.cmdSeq);
+            const waiter = this.waitFor(commandId, (commandId == CommandId.NCP_RESET) ? null : this.cmdSeq, timeout);
             this.cmdSeq = (this.cmdSeq + 1) & 255;
 
             try {
