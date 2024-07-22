@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.55.1](https://github.com/Koenkk/zigbee-herdsman/compare/v0.55.0...v0.55.1) (2024-07-21)
+
+
+### Bug Fixes
+
+* **ignore:** Ember: Add tests for adapter layer ([#1126](https://github.com/Koenkk/zigbee-herdsman/issues/1126)) ([6318333](https://github.com/Koenkk/zigbee-herdsman/commit/63183339bf1a38caa8d21f9e24def2d89cec71ff))
+* **ignore:** update dependencies ([#1123](https://github.com/Koenkk/zigbee-herdsman/issues/1123)) ([cb6448c](https://github.com/Koenkk/zigbee-herdsman/commit/cb6448c4aab734c995acc2cfb9d63e36a6b7f486))
+* ZStack: throw error when bind/unbind fails ([#1125](https://github.com/Koenkk/zigbee-herdsman/issues/1125)) ([db2d9a5](https://github.com/Koenkk/zigbee-herdsman/commit/db2d9a5f563bdb4a741ce77c49e0fd3a686f3fd1))
+
 ## [0.55.0](https://github.com/Koenkk/zigbee-herdsman/compare/v0.54.1...v0.55.0) (2024-07-18)
 
 
