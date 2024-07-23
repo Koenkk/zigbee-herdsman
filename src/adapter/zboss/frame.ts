@@ -27,9 +27,9 @@ export function readZBOSSFrame(buffer: Buffer): ZBOSSFrame {
     const version = buf.readUInt8();
     const type = buf.readUInt8();
     const commandId = buf.readUInt16();
-    let sequence = 0;
+    let tsn = 0;
     if ([FrameType.REQUEST, FrameType.RESPONSE].includes(type)) {
-        sequence = buf.readUInt8();
+        tsn = buf.readUInt8();
     }
     const payload = readPayload(type, commandId, buf);
 
@@ -37,7 +37,7 @@ export function readZBOSSFrame(buffer: Buffer): ZBOSSFrame {
         version,
         type,
         commandId,
-        sequence,
+        tsn,
         payload,
     };
 }
@@ -48,7 +48,7 @@ export function writeZBOSSFrame(frame: ZBOSSFrame): Buffer {
     buf.writeInt8(frame.version);
     buf.writeInt8(frame.type);
     buf.writeUInt16(frame.commandId);
-    buf.writeUInt8(frame.sequence);
+    buf.writeUInt8(frame.tsn);
     writePayload(frame.type, frame.commandId, frame.payload, buf);
     return buf.getWritten();
 }
@@ -65,7 +65,7 @@ export interface ZBOSSFrame {
     version: number;
     type: FrameType;
     commandId: CommandId;
-    sequence?: number;
+    tsn?: number;
     payload?: ZBOSSFrameData;
 }
 
@@ -85,7 +85,7 @@ export function makeFrame(type: FrameType, commandId: CommandId, params: KeyValu
         version: 0,
         type: type,
         commandId: commandId,
-        sequence: 0,
+        tsn: 0,
         payload: payload,
     }
 }

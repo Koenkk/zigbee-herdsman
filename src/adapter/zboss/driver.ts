@@ -3,10 +3,10 @@ import {TsType} from "..";
 import {logger} from "../../utils/logger";
 import {ZBOSSUart} from "./uart";
 import {ZBOSSFrame, makeFrame, FrameType} from "./frame";
-import {KeyValue} from "../../controller/tstype";
+import {KeyValue,} from "../../controller/tstype";
 import {ClusterId, EUI64, NodeId, ProfileId} from '../../zspec/tstypes';
 import {Queue, Waitress, Wait} from '../../utils';
-import {CommandId, ResetOptions} from "./enums";
+import {CommandId, ResetOptions, PolicyType} from "./enums";
 
 const NS = 'zh:zboss:driv';
 
@@ -14,7 +14,7 @@ const MAX_INIT_ATTEMPTS = 5;
 
 
 type ZBOSSWaitressMatcher = {
-    sequence: number | null,
+    tsn: number | null,
     commandId: number,
 };
 
@@ -22,7 +22,7 @@ export class ZBOSSDriver extends EventEmitter {
     public readonly port: ZBOSSUart;
     private waitress: Waitress<ZBOSSFrame, ZBOSSWaitressMatcher>;
     private queue: Queue;
-    cmdSeq = 1;  // command sequence
+    tsn = 1;  // command sequence
 
     constructor(options: TsType.SerialPortOptions) {
         super();
@@ -59,10 +59,25 @@ export class ZBOSSDriver extends EventEmitter {
         return status;
     }
 
-    public async reset(): Promise<void> {
+    private async reset(): Promise<void> {
         logger.info(`Driver reset`, NS);
         this.port.inReset = true;
         await this.execCommand(CommandId.NCP_RESET, {options: ResetOptions.NoOptions}, 10000);
+    }
+
+    public async startup(): Promise<TsType.StartResult> {
+        logger.info(`Driver startup`, NS);
+        let result: TsType.StartResult = 'resumed';
+        await this.execCommand(CommandId.SET_TC_POLICY, {type: PolicyType.LINK_KEY_REQUIRED, value: 0});
+        await this.execCommand(CommandId.SET_TC_POLICY, {type: PolicyType.IC_REQUIRED, value: 0});
+        await this.execCommand(CommandId.SET_TC_POLICY, {type: PolicyType.TC_REJOIN_ENABLED, value: 1});
+        await this.execCommand(CommandId.SET_TC_POLICY, {type: PolicyType.IGNORE_TC_REJOIN, value: 0});
+        await this.execCommand(CommandId.SET_TC_POLICY, {type: PolicyType.APS_INSECURE_JOIN, value: 0});
+        await this.execCommand(CommandId.SET_TC_POLICY, {type: PolicyType.DISABLE_NWK_MGMT_CHANNEL_UPDATE, value: 0});
+
+        await this.execCommand(CommandId.GET_ZIGBEE_ROLE, {});
+
+        return result;
     }
 
     public async stop(): Promise<void> {
@@ -81,7 +96,7 @@ export class ZBOSSDriver extends EventEmitter {
         }
     }
 
-    public async execCommand(commandId: number, params: KeyValue = null, timeout: number = null): Promise<ZBOSSFrame> {
+    public async execCommand(commandId: number, params: KeyValue = null, timeout: number = 10000): Promise<ZBOSSFrame> {
         logger.debug(`==> ${CommandId[commandId]}(${commandId}): ${JSON.stringify(params)}`, NS);
 
         if (!this.port.portOpen) {
@@ -90,9 +105,9 @@ export class ZBOSSDriver extends EventEmitter {
 
         return this.queue.execute<ZBOSSFrame>(async (): Promise<ZBOSSFrame> => {
             const frame = makeFrame(FrameType.REQUEST, commandId, params);
-            frame.sequence = this.cmdSeq;
-            const waiter = this.waitFor(commandId, (commandId == CommandId.NCP_RESET) ? null : this.cmdSeq, timeout);
-            this.cmdSeq = (this.cmdSeq + 1) & 255;
+            frame.tsn = this.tsn;
+            const waiter = this.waitFor(commandId, (commandId == CommandId.NCP_RESET) ? null : this.tsn, timeout);
+            this.tsn = (this.tsn + 1) & 255;
 
             try {
                 logger.debug(`==> FRAME: ${JSON.stringify(frame)}`, NS);
@@ -103,14 +118,15 @@ export class ZBOSSDriver extends EventEmitter {
                 return response;
             } catch (error) {
                 this.waitress.remove(waiter.ID);
+                logger.error(`==> Error: ${error}`, NS);
                 throw new Error(`Failure send ${commandId}:` + JSON.stringify(frame));
             }
         });
     }
 
-    public waitFor(commandId: number, sequence: number | null, timeout = 10000)
+    public waitFor(commandId: number, tsn: number | null, timeout = 10000)
         : { start: () => { promise: Promise<ZBOSSFrame>; ID: number }; ID: number } {
-        return this.waitress.waitFor({commandId, sequence}, timeout);
+        return this.waitress.waitFor({commandId, tsn}, timeout);
     }
 
     private waitressTimeoutFormatter(matcher: ZBOSSWaitressMatcher, timeout: number): string {
@@ -119,7 +135,7 @@ export class ZBOSSDriver extends EventEmitter {
 
     private waitressValidator(payload: ZBOSSFrame, matcher: ZBOSSWaitressMatcher): boolean {
         return (
-            (matcher.sequence == null || payload.sequence === matcher.sequence) &&
+            (matcher.tsn == null || payload.tsn === matcher.tsn) &&
             (matcher.commandId == payload.commandId)
         );
     }

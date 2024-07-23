@@ -276,6 +276,14 @@ export class ZBOSSUart extends EventEmitter {
             let flags = (this.sendSeq & 0x03) << 2; // sequence
             flags = flags | ZBOSS_FLAG_FIRST_FRAGMENT | ZBOSS_FLAG_LAST_FRAGMENT;
             const pack = this.makePack(flags, buf);
+            const isACK = (flags & 0x1) === 1;
+            const retransmit = (flags >> 1 & 0x1) === 1;
+            const sequence = flags >> 2 & 0x3;
+            const ACKseq = flags >> 4 & 0x3;
+            const isFirst = (flags >> 6 & 0x1) === 1;
+            const isLast = (flags >> 7 & 0x1) === 1;
+            logger.debug(`--> package type ${ZBOSS_NCP_API_HL}, flags ${flags.toString(16)}`+
+                `${JSON.stringify({isACK, retransmit, sequence, ACKseq, isFirst, isLast})}`, NS);
             logger.debug(`--> PACK: ${pack.toString('hex')}`, NS);
             await this.sendDATA(pack);
         } catch (error) {
@@ -354,6 +362,13 @@ export class ZBOSSUart extends EventEmitter {
             flags |= 0x02; // retransmit
         }
         let ackPackage = this.makePack(flags, null);
+        const isACK = (flags & 0x1) === 1;
+        const sequence = flags >> 2 & 0x3;
+        const ACKseq = flags >> 4 & 0x3;
+        const isFirst = (flags >> 6 & 0x1) === 1;
+        const isLast = (flags >> 7 & 0x1) === 1;
+        logger.debug(`--> package type ${ZBOSS_NCP_API_HL}, flags ${flags.toString(16)}`+
+            `${JSON.stringify({isACK, retransmit, sequence, ACKseq, isFirst, isLast})}`, NS);
         logger.debug(`-->  ACK: ${ackPackage.toString('hex')}`, NS);
         this.sendDATA(ackPackage, true);
     }
