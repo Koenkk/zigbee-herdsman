@@ -14,6 +14,7 @@ import {ZclPayload} from '../../../src/adapter/events';
 import {UnifiedBackupStorage} from '../../../src/models';
 import {setLogger} from '../../../src/utils/logger';
 import {BroadcastAddress} from '../../../src/zspec/enums';
+import {Status} from '../../../src/zspec/zdo';
 
 const mockLogger = {
     debug: jest.fn(),
@@ -32,7 +33,7 @@ const waitForResult = (payload, ID = null) => {
     ID = ID || 1;
     return {
         start: () => {
-            return {promise: payload, ID};
+            return {promise: new Promise((r) => r(payload)), ID};
         },
         ID,
     };
@@ -1159,7 +1160,7 @@ const mockZnpWaitForDefault = () => {
         };
 
         if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'activeEpRsp') {
-            return waitForResult({payload: {activeeplist: []}});
+            return waitForResult({payload: {status: Status.SUCCESS, activeeplist: []}});
         } else if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'stateChangeInd') {
             return waitForResult({payload: {state: 9}});
         } else {
@@ -1177,7 +1178,7 @@ const mockZnpWaitForStateChangeIndTimeout = () => {
         };
 
         if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'activeEpRsp') {
-            return waitForResult({payload: {activeeplist: []}});
+            return waitForResult({payload: {status: Status.SUCCESS, activeeplist: []}});
         } else if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'stateChangeInd') {
             return;
         } else {
@@ -1198,16 +1199,29 @@ const basicMocks = () => {
         };
 
         if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'activeEpRsp') {
-            return waitForResult({payload: {activeeplist: [1, 2, 3, 4, 5, 6, 8, 10, 11, 110, 12, 13, 47, 242]}});
+            return waitForResult({payload: {status: Status.SUCCESS, activeeplist: [1, 2, 3, 4, 5, 6, 8, 10, 11, 110, 12, 13, 47, 242]}});
         } else if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'stateChangeInd') {
             return waitForResult({payload: {}});
         } else if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'simpleDescRsp') {
             if (equals(payload, {endpoint: 1})) {
-                return waitForResult({payload: {endpoint: 1, profileid: 123, deviceid: 5, inclusterlist: [1], outclusterlist: [2]}});
+                return waitForResult({
+                    payload: {status: Status.SUCCESS, endpoint: 1, profileid: 123, deviceid: 5, inclusterlist: [1], outclusterlist: [2]},
+                });
             } else if (equals(payload, {endpoint: 99})) {
-                return waitForResult({payload: {endpoint: 99, profileid: 123, deviceid: 5, inclusterlist: [1], outclusterlist: [2]}});
+                return waitForResult({
+                    payload: {status: Status.SUCCESS, endpoint: 99, profileid: 123, deviceid: 5, inclusterlist: [1], outclusterlist: [2]},
+                });
             } else {
-                return waitForResult({payload: {endpoint: payload.endpoint, profileid: 124, deviceid: 7, inclusterlist: [8], outclusterlist: [9]}});
+                return waitForResult({
+                    payload: {
+                        status: Status.SUCCESS,
+                        endpoint: payload.endpoint,
+                        profileid: 124,
+                        deviceid: 7,
+                        inclusterlist: [8],
+                        outclusterlist: [9],
+                    },
+                });
             }
         } else if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'nodeDescRsp') {
             if (nodeDescRspErrorOnce) {
@@ -1224,7 +1238,9 @@ const basicMocks = () => {
                 };
             }
 
-            return waitForResult({payload: {manufacturercode: payload.nwkaddr * 2, logicaltype_cmplxdescavai_userdescavai: payload.nwkaddr - 1}});
+            return waitForResult({
+                payload: {status: Status.SUCCESS, manufacturercode: payload.nwkaddr * 2, logicaltype_cmplxdescavai_userdescavai: payload.nwkaddr - 1},
+            });
         } else if (type === Type.AREQ && subsystem === Subsystem.AF && command === 'dataConfirm') {
             const status = dataConfirmCode;
             if (dataConfirmCodeReset) {
@@ -1274,7 +1290,7 @@ const basicMocks = () => {
                 });
             }
         } else if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'mgmtLqiRsp' && equals(payload, {srcaddr: 204})) {
-            return waitForResult({payload: {status: 1}});
+            return waitForResult({payload: {status: Status.NOT_AUTHORIZED}});
         } else if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'mgmtRtgRsp' && equals(payload, {srcaddr: 205})) {
             if (lastStartIndex === 0) {
                 return waitForResult({
@@ -1304,17 +1320,17 @@ const basicMocks = () => {
                 });
             }
         } else if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'mgmtRtgRsp' && equals(payload, {srcaddr: 206})) {
-            return waitForResult({payload: {status: 1}});
+            return waitForResult({payload: {status: Status.INSUFFICIENT_SPACE}});
         } else if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'bindRsp' && equals(payload, {srcaddr: 301})) {
             return waitForResult({payload: {status: bindStatusResponse}});
         } else if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'unbindRsp' && equals(payload, {srcaddr: 301})) {
             return waitForResult({payload: {status: bindStatusResponse}});
         } else if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'mgmtLeaveRsp' && equals(payload, {srcaddr: 401})) {
-            return waitForResult({});
+            return waitForResult({payload: {status: Status.SUCCESS}});
         } else if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'nwkAddrRsp' && payload.ieeeaddr === '0x03') {
-            return waitForResult({payload: {nwkaddr: 3, ieeeaddr: '0x03'}});
+            return waitForResult({payload: {status: Status.SUCCESS, nwkaddr: 3, ieeeaddr: '0x03'}});
         } else if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'nwkAddrRsp' && payload.ieeeaddr === '0x02') {
-            return waitForResult({payload: {nwkaddr: 2, ieeeaddr: '0x02'}});
+            return waitForResult({payload: {status: Status.SUCCESS, nwkaddr: 2, ieeeaddr: '0x02'}});
         } else {
             missing();
         }
@@ -1958,7 +1974,7 @@ describe('zstack-adapter', () => {
             };
 
             if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'activeEpRsp') {
-                return waitForResult({payload: {activeeplist: [1, 2, 3]}});
+                return waitForResult({payload: {status: Status.SUCCESS, activeeplist: [1, 2, 3]}});
             } else if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'stateChangeInd') {
                 return waitForResult({payload: {state: 9}});
             } else {
@@ -3431,7 +3447,7 @@ describe('zstack-adapter', () => {
         } catch (e) {
             error = e;
         }
-        expect(error).toStrictEqual(new Error("LQI for '204' failed with error: 'FAILURE' (1)"));
+        expect(error).toStrictEqual(new Error("ZDO error: mgmtLqi failed with status 'NOT_AUTHORIZED' (141)"));
         expect(mockQueueExecute.mock.calls[0][1]).toBe(204);
         expect(mockZnpRequest).toBeCalledTimes(1);
         expect(mockZnpRequest).toBeCalledWith(Subsystem.ZDO, 'mgmtLqiReq', {dstaddr: 204, startindex: 0}, 1);
@@ -3471,7 +3487,7 @@ describe('zstack-adapter', () => {
         } catch (e) {
             error = e;
         }
-        expect(error).toStrictEqual(new Error("Routing table for '206' failed with error: 'FAILURE' (1)"));
+        expect(error).toStrictEqual(new Error("ZDO error: mgmtRtg failed with status 'INSUFFICIENT_SPACE' (138)"));
         expect(mockQueueExecute.mock.calls[0][1]).toBe(206);
         expect(mockZnpRequest).toBeCalledTimes(1);
         expect(mockZnpRequest).toBeCalledWith(Subsystem.ZDO, 'mgmtRtgReq', {dstaddr: 206, startindex: 0}, 1);
@@ -3497,8 +3513,10 @@ describe('zstack-adapter', () => {
         basicMocks();
         await adapter.start();
         mockZnpRequest.mockClear();
-        bindStatusResponse = 1;
-        await expect(adapter.bind(301, '0x129', 1, 1, 4, 'endpoint', 9)).rejects.toThrow(`Failed to bind '1' from '4/9' to '0x129/1' (1)`);
+        bindStatusResponse = 0x8e;
+        await expect(adapter.bind(301, '0x129', 1, 1, 4, 'endpoint', 9)).rejects.toThrow(
+            `ZDO error: bind failed with status 'DEVICE_BINDING_TABLE_FULL' (142)`,
+        );
     });
 
     it('Bind group', async () => {
