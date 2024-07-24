@@ -593,6 +593,10 @@ class Device extends Entity {
         }
     }
 
+    public static clearLoadedDatabaseDevices(): void {
+        Device.devices = null;
+    }
+
     public static find(ieeeOrNwkAddress: string | number, includeDeleted: boolean = false): Device {
         return typeof ieeeOrNwkAddress === 'string'
             ? Device.byIeeeAddr(ieeeOrNwkAddress, includeDeleted)

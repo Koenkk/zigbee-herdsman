@@ -334,6 +334,8 @@ class Controller extends events.EventEmitter {
 
             this.adapterDisconnected = true;
         }
+
+        Device.clearLoadedDatabaseDevices();
     }
 
     private databaseSave(): void {
