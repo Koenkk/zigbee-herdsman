@@ -44,6 +44,13 @@ class Group extends Entity {
      * CRUD
      */
 
+    /**
+     * Reset runtime lookups.
+     */
+    public static resetCache(): void {
+        Group.groups = null;
+    }
+
     private static fromDatabaseEntry(entry: DatabaseEntry): Group {
         const members = new Set<Endpoint>();
 

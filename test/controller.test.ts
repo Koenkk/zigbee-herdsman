@@ -699,9 +699,9 @@ describe('Controller', () => {
         enroll170 = true;
         options.network.channelList = [15];
         Object.keys(events).forEach((key) => (events[key] = []));
-        Device['devices'] = null;
-        Device['deletedDevices'] = {};
-        Group['groups'] = null;
+        Device.resetCache();
+        Group.resetCache();
+
         if (fs.existsSync(options.databasePath)) {
             fs.unlinkSync(options.databasePath);
         }
@@ -785,6 +785,27 @@ describe('Controller', () => {
         expect(JSON.parse(fs.readFileSync(options.backupPath).toString())).toStrictEqual(JSON.parse(JSON.stringify(dummyBackup)));
         expect(mockAdapterStop).toHaveBeenCalledTimes(1);
         expect(databaseSaveSpy).toHaveBeenCalledTimes(1);
+    });
+
+    it('Controller stop, should reset runtime lookups', async () => {
+        await controller.start();
+
+        await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
+        await mockAdapterEvents['deviceJoined']({networkAddress: 128, ieeeAddr: '0x128'});
+        await mockAdapterEvents['deviceLeave']({networkAddress: 128, ieeeAddr: '0x128'});
+        controller.createGroup(1);
+        expect(Device.byIeeeAddr('0x129', false)).toBeInstanceOf(Device);
+        expect(Device.byIeeeAddr('0x128', true)).toBeInstanceOf(Device);
+        expect(Group.byGroupID(1)).toBeInstanceOf(Group);
+
+        await controller.stop();
+
+        // @ts-expect-error private
+        expect(Device.devices).toStrictEqual(null);
+        // @ts-expect-error private
+        expect(Device.deletedDevices).toStrictEqual({});
+        // @ts-expect-error private
+        expect(Group.groups).toStrictEqual(null);
     });
 
     it('Controller start', async () => {

@@ -334,6 +334,9 @@ class Controller extends events.EventEmitter {
 
             this.adapterDisconnected = true;
         }
+
+        Device.resetCache();
+        Group.resetCache();
     }
 
     private databaseSave(): void {

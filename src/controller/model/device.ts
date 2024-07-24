@@ -498,6 +498,14 @@ class Device extends Entity {
      * CRUD
      */
 
+    /**
+     * Reset runtime lookups.
+     */
+    public static resetCache(): void {
+        Device.devices = null;
+        Device.deletedDevices = {};
+    }
+
     private static fromDatabaseEntry(entry: DatabaseEntry): Device {
         const networkAddress = entry.nwkAddr;
         const ieeeAddr = entry.ieeeAddr;
