@@ -684,7 +684,7 @@ describe('Controller', () => {
 
     afterAll(async () => {
         jest.useRealTimers();
-        fs.rmSync(TEMP_PATH, { recursive: true, force: true });
+        fs.rmSync(TEMP_PATH, {recursive: true, force: true});
     });
 
     beforeEach(async () => {
@@ -1791,7 +1791,7 @@ describe('Controller', () => {
             devices += 1;
         }
 
-        expect(devices).toStrictEqual(2);// + coordinator
+        expect(devices).toStrictEqual(2); // + coordinator
     });
 
     it('Iterates over devices with predicate', async () => {

@@ -42,7 +42,7 @@ class Database {
         return new Database(entries, path);
     }
 
-    public* getEntriesIterator(type: EntityType[]): Generator<DatabaseEntry> {
+    public *getEntriesIterator(type: EntityType[]): Generator<DatabaseEntry> {
         for (const id in this.entries) {
             const entry = this.entries[id];
 
@@ -101,7 +101,7 @@ class Database {
 
         const tmpPath = this.path + '.tmp';
 
-        fs.writeFileSync(tmpPath, lines.slice(0, -1));// remove last newline, no effect if empty string
+        fs.writeFileSync(tmpPath, lines.slice(0, -1)); // remove last newline, no effect if empty string
         // Ensure file is on disk https://github.com/Koenkk/zigbee2mqtt/issues/11759
         const fd = fs.openSync(tmpPath, 'r+');
         fs.fsyncSync(fd);

@@ -90,7 +90,7 @@ class Group extends Entity {
         return Object.values(Group.groups);
     }
 
-    public static* allIterator(predicate?: (value: Group) => boolean): Generator<Group> {
+    public static *allIterator(predicate?: (value: Group) => boolean): Generator<Group> {
         Group.loadFromDatabaseIfNecessary();
 
         for (const ieeeAddr in Group.groups) {

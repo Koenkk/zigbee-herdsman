@@ -607,7 +607,7 @@ class Device extends Entity {
     public static byIeeeAddr(ieeeAddr: string, includeDeleted: boolean = false): Device {
         Device.loadFromDatabaseIfNecessary();
 
-        return includeDeleted ? Device.deletedDevices[ieeeAddr] ?? Device.devices[ieeeAddr] : Device.devices[ieeeAddr];
+        return includeDeleted ? (Device.deletedDevices[ieeeAddr] ?? Device.devices[ieeeAddr]) : Device.devices[ieeeAddr];
     }
 
     public static byNetworkAddress(networkAddress: number, includeDeleted: boolean = false): Device {
@@ -649,7 +649,7 @@ class Device extends Entity {
         return Object.values(Device.devices);
     }
 
-    public static* allIterator(predicate?: (value: Device) => boolean): Generator<Device> {
+    public static *allIterator(predicate?: (value: Device) => boolean): Generator<Device> {
         Device.loadFromDatabaseIfNecessary();
 
         for (const ieeeAddr in Device.devices) {
