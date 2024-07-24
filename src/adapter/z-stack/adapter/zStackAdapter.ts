@@ -6,7 +6,7 @@ import {Queue, Waitress, Wait} from '../../../utils';
 import {logger} from '../../../utils/logger';
 import {BroadcastAddress} from '../../../zspec/enums';
 import * as Zcl from '../../../zspec/zcl';
-import {Status} from '../../../zspec/zdo';
+import {Status as ZdoStatus} from '../../../zspec/zdo';
 import Adapter from '../../adapter';
 import * as Events from '../../events';
 import {
@@ -1106,10 +1106,11 @@ class ZStackAdapter extends Adapter {
                         // Even though according to the Z-Stack docs the status is `0` or `1`, the actual code
                         // shows it sets the `zstack_ZdpStatus` which contains the ZDO status.
                         const code = response.payload.status;
-                        if (code !== Status.SUCCESS) {
-                            reject(new Error(`ZDO error: ${command.replace('Rsp', '')} failed with status '${Status[code]}' (${code})`));
+                        if (code !== ZdoStatus.SUCCESS) {
+                            reject(new Error(`ZDO error: ${command.replace('Rsp', '')} failed with status '${ZdoStatus[code]}' (${code})`));
+                        } else {
+                            resolve(response);
                         }
-                        resolve(response);
                     })
                     .catch(reject);
             });
