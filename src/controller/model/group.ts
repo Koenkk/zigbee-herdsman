@@ -30,7 +30,7 @@ class Group extends Entity {
 
     // This lookup contains all groups that are queried from the database, this is to ensure that always
     // the same instance is returned.
-    private static groups: {[groupID: number]: Group} = null;
+    private static groups: {[groupID: number]: Group} | null = null;
 
     private constructor(databaseID: number, groupID: number, members: Set<Endpoint>, meta: KeyValue) {
         super();
@@ -46,8 +46,10 @@ class Group extends Entity {
 
     private static fromDatabaseEntry(entry: DatabaseEntry): Group {
         const members = new Set<Endpoint>();
+
         for (const member of entry.members) {
             const device = Device.byIeeeAddr(member.deviceIeeeAddr);
+
             if (device) {
                 const endpoint = device.getEndpoint(member.endpointID);
                 members.add(endpoint);
@@ -58,9 +60,11 @@ class Group extends Entity {
     }
 
     private toDatabaseRecord(): DatabaseEntry {
-        const members = Array.from(this.members).map((member) => {
-            return {deviceIeeeAddr: member.getDevice().ieeeAddr, endpointID: member.ID};
-        });
+        const members: DatabaseEntry['members'] = [];
+
+        for (const member of this.members) {
+            members.push({deviceIeeeAddr: member.getDevice().ieeeAddr, endpointID: member.ID});
+        }
 
         return {id: this.databaseID, type: 'Group', groupID: this.groupID, members, meta: this.meta};
     }
@@ -68,8 +72,8 @@ class Group extends Entity {
     private static loadFromDatabaseIfNecessary(): void {
         if (!Group.groups) {
             Group.groups = {};
-            const entries = Entity.database.getEntries(['Group']);
-            for (const entry of entries) {
+
+            for (const entry of Entity.database.getEntriesIterator(['Group'])) {
                 const group = Group.fromDatabaseEntry(entry);
                 Group.groups[group.groupID] = group;
             }
@@ -86,12 +90,27 @@ class Group extends Entity {
         return Object.values(Group.groups);
     }
 
+    public static* allIterator(predicate?: (value: Group) => boolean): Generator<Group> {
+        Group.loadFromDatabaseIfNecessary();
+
+        for (const ieeeAddr in Group.groups) {
+            const group = Group.groups[ieeeAddr];
+
+            /* istanbul ignore else */
+            if (!predicate || predicate(group)) {
+                yield group;
+            }
+        }
+    }
+
     public static create(groupID: number): Group {
         assert(typeof groupID === 'number', 'GroupID must be a number');
         // Don't allow groupID 0, from the spec:
         // "Scene identifier 0x00, along with group identifier 0x0000, is reserved for the global scene used by the OnOff cluster"
         assert(groupID >= 1, 'GroupID must be at least 1');
+
         Group.loadFromDatabaseIfNecessary();
+
         if (Group.groups[groupID]) {
             throw new Error(`Group with groupID '${groupID}' already exists`);
         }
@@ -148,6 +167,7 @@ class Group extends Entity {
         options = this.getOptionsWithDefaults(options, Zcl.Direction.CLIENT_TO_SERVER);
         const cluster = Zcl.Utils.getCluster(clusterKey, null, {});
         const payload: {attrId: number; dataType: number; attrData: number | string | boolean}[] = [];
+
         for (const [nameOrID, value] of Object.entries(attributes)) {
             if (cluster.hasAttribute(nameOrID)) {
                 const attribute = cluster.getAttribute(nameOrID);
@@ -175,6 +195,7 @@ class Group extends Entity {
                 {},
                 options.reservedBits,
             );
+
             await Entity.adapter.sendZclFrameToGroup(this.groupID, frame, options.srcEndpoint);
         } catch (error) {
             error.message = `${log} failed (${error.message})`;
@@ -187,6 +208,7 @@ class Group extends Entity {
         options = this.getOptionsWithDefaults(options, Zcl.Direction.CLIENT_TO_SERVER);
         const cluster = Zcl.Utils.getCluster(clusterKey, null, {});
         const payload: {attrId: number}[] = [];
+
         for (const attribute of attributes) {
             payload.push({attrId: typeof attribute === 'number' ? attribute : cluster.getAttribute(attribute).ID});
         }
@@ -237,6 +259,7 @@ class Group extends Entity {
                 {},
                 options.reservedBits,
             );
+
             await Entity.adapter.sendZclFrameToGroup(this.groupID, frame, options.srcEndpoint);
         } catch (error) {
             error.message = `${log} failed (${error.message})`;
@@ -246,14 +269,13 @@ class Group extends Entity {
     }
 
     private getOptionsWithDefaults(options: Options, direction: Zcl.Direction): Options {
-        const providedOptions = options || {};
         return {
             direction,
             srcEndpoint: null,
             reservedBits: 0,
             manufacturerCode: null,
             transactionSequenceNumber: null,
-            ...providedOptions,
+            ...(options || {}),
         };
     }
 }

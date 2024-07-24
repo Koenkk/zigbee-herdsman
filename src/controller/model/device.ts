@@ -57,7 +57,6 @@ class Device extends Entity {
     private _linkquality?: number;
     private _skipDefaultResponse: boolean;
     private _customReadResponse?: CustomReadResponse;
-    private _deleted: boolean;
     private _lastDefaultResponseSequenceNumber: number;
     private _checkinInterval: number;
     private _pendingRequestTimeout: number;
@@ -92,7 +91,7 @@ class Device extends Entity {
         return this._manufacturerID;
     }
     get isDeleted(): boolean {
-        return this._deleted;
+        return Boolean(Device.deletedDevices[this.ieeeAddr]);
     }
     set type(type: DeviceType) {
         this._type = type;
@@ -129,6 +128,7 @@ class Device extends Entity {
     }
     set networkAddress(networkAddress: number) {
         this._networkAddress = networkAddress;
+
         for (const endpoint of this._endpoints) {
             endpoint.deviceNetworkAddress = networkAddress;
         }
@@ -180,6 +180,7 @@ class Device extends Entity {
     }
     set checkinInterval(checkinInterval: number) {
         this._checkinInterval = checkinInterval;
+
         this.resetPendingRequestTimeout();
     }
     get pendingRequestTimeout(): number {
@@ -196,7 +197,8 @@ class Device extends Entity {
 
     // This lookup contains all devices that are queried from the database, this is to ensure that always
     // the same instance is returned.
-    private static devices: {[ieeeAddr: string]: Device} = null;
+    private static devices: {[ieeeAddr: string]: Device} | null = null;
+    private static deletedDevices: {[ieeeAddr: string]: Device} = {};
 
     public static readonly ReportablePropertiesMapping: {
         [s: string]: {
@@ -499,9 +501,11 @@ class Device extends Entity {
     private static fromDatabaseEntry(entry: DatabaseEntry): Device {
         const networkAddress = entry.nwkAddr;
         const ieeeAddr = entry.ieeeAddr;
-        const endpoints = Object.values(entry.endpoints).map((e): Endpoint => {
-            return Endpoint.fromDatabaseRecord(e, networkAddress, ieeeAddr);
-        });
+        const endpoints: Endpoint[] = [];
+
+        for (const id in entry.endpoints) {
+            endpoints.push(Endpoint.fromDatabaseRecord(entry.endpoints[id], networkAddress, ieeeAddr));
+        }
 
         const meta = entry.meta ? entry.meta : {};
 
@@ -550,6 +554,7 @@ class Device extends Entity {
     private toDatabaseEntry(): DatabaseEntry {
         const epList = this.endpoints.map((e): number => e.ID);
         const endpoints: KeyValue = {};
+
         for (const endpoint of this.endpoints) {
             endpoints[endpoint.ID] = endpoint.toDatabaseRecord();
         }
@@ -585,8 +590,8 @@ class Device extends Entity {
     private static loadFromDatabaseIfNecessary(): void {
         if (!Device.devices) {
             Device.devices = {};
-            const entries = Entity.database.getEntries(['Coordinator', 'EndDevice', 'Router', 'GreenPower', 'Unknown']);
-            for (const entry of entries) {
+
+            for (const entry of Entity.database.getEntriesIterator(['Coordinator', 'EndDevice', 'Router', 'GreenPower', 'Unknown'])) {
                 const device = Device.fromDatabaseEntry(entry);
                 Device.devices[device.ieeeAddr] = device;
             }
@@ -601,28 +606,69 @@ class Device extends Entity {
 
     public static byIeeeAddr(ieeeAddr: string, includeDeleted: boolean = false): Device {
         Device.loadFromDatabaseIfNecessary();
-        const device = Device.devices[ieeeAddr];
-        return device?._deleted && !includeDeleted ? undefined : device;
+
+        return includeDeleted ? Device.deletedDevices[ieeeAddr] ?? Device.devices[ieeeAddr] : Device.devices[ieeeAddr];
     }
 
     public static byNetworkAddress(networkAddress: number, includeDeleted: boolean = false): Device {
         Device.loadFromDatabaseIfNecessary();
-        return Object.values(Device.devices).find((d) => (includeDeleted || !d._deleted) && d.networkAddress === networkAddress);
+
+        if (includeDeleted) {
+            for (const ieeeAddress in Device.deletedDevices) {
+                const device = Device.deletedDevices[ieeeAddress];
+
+                /* istanbul ignore else */
+                if (device.networkAddress === networkAddress) {
+                    return device;
+                }
+            }
+        }
+
+        for (const ieeeAddress in Device.devices) {
+            const device = Device.devices[ieeeAddress];
+
+            /* istanbul ignore else */
+            if (device.networkAddress === networkAddress) {
+                return device;
+            }
+        }
     }
 
     public static byType(type: DeviceType): Device[] {
-        return Device.all().filter((d) => d.type === type);
+        const devices: Device[] = [];
+
+        for (const device of Device.allIterator((d) => d.type === type)) {
+            devices.push(device);
+        }
+
+        return devices;
     }
 
     public static all(): Device[] {
         Device.loadFromDatabaseIfNecessary();
-        return Object.values(Device.devices).filter((d) => !d._deleted);
+        return Object.values(Device.devices);
+    }
+
+    public static* allIterator(predicate?: (value: Device) => boolean): Generator<Device> {
+        Device.loadFromDatabaseIfNecessary();
+
+        for (const ieeeAddr in Device.devices) {
+            const device = Device.devices[ieeeAddr];
+
+            if (!predicate || predicate(device)) {
+                yield device;
+            }
+        }
     }
 
     public undelete(interviewCompleted?: boolean): void {
-        assert(this._deleted, `Device '${this.ieeeAddr}' is not deleted`);
-        this._deleted = false;
+        assert(Device.deletedDevices[this.ieeeAddr], `Device '${this.ieeeAddr}' is not deleted`);
+
+        Device.devices[this.ieeeAddr] = this;
+        delete Device.deletedDevices[this.ieeeAddr];
+
         this._interviewCompleted = interviewCompleted ?? this._interviewCompleted;
+
         Entity.database.insert(this.toDatabaseEntry());
     }
 
@@ -644,8 +690,9 @@ class Device extends Entity {
         }[],
     ): Device {
         Device.loadFromDatabaseIfNecessary();
-        if (Device.devices[ieeeAddr] && !Device.devices[ieeeAddr]._deleted) {
-            throw new Error(`Device with ieeeAddr '${ieeeAddr}' already exists`);
+
+        if (Device.devices[ieeeAddr]) {
+            throw new Error(`Device with IEEE address '${ieeeAddr}' already exists`);
         }
 
         const endpointsMapped = endpoints.map((e): Endpoint => {
@@ -1006,7 +1053,8 @@ class Device extends Entity {
             Entity.database.remove(this.ID);
         }
 
-        this._deleted = true;
+        Device.deletedDevices[this.ieeeAddr] = this;
+        delete Device.devices[this.ieeeAddr];
 
         // Clear all data in case device joins again
         this._interviewCompleted = false;

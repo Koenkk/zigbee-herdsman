@@ -20,15 +20,21 @@ class Database {
         const entries: {[id: number]: DatabaseEntry} = {};
 
         if (fs.existsSync(path)) {
-            const rows = fs
-                .readFileSync(path, 'utf-8')
-                .split('\n')
-                .map((r) => r.trim())
-                .filter((r) => r != '');
-            for (const row of rows) {
-                const json = JSON.parse(row);
-                if (json.hasOwnProperty('id')) {
-                    entries[json.id] = json;
+            const file = fs.readFileSync(path, 'utf-8');
+
+            for (const row of file.split('\n')) {
+                if (!row) {
+                    continue;
+                }
+
+                try {
+                    const json = JSON.parse(row);
+
+                    if (json.id != undefined) {
+                        entries[json.id] = json;
+                    }
+                } catch (error) {
+                    logger.error(`Corrupted database line, ignoring. ${error}`, NS);
                 }
             }
         }
@@ -36,42 +42,48 @@ class Database {
         return new Database(entries, path);
     }
 
-    public getEntries(type: EntityType[]): DatabaseEntry[] {
-        return Object.values(this.entries).filter((e) => type.includes(e.type));
+    public* getEntriesIterator(type: EntityType[]): Generator<DatabaseEntry> {
+        for (const id in this.entries) {
+            const entry = this.entries[id];
+
+            if (type.includes(entry.type)) {
+                yield entry;
+            }
+        }
     }
 
-    public insert(DatabaseEntry: DatabaseEntry): void {
-        if (this.entries[DatabaseEntry.id]) {
-            throw new Error(`DatabaseEntry with ID '${DatabaseEntry.id}' already exists`);
+    public insert(databaseEntry: DatabaseEntry): void {
+        if (this.entries[databaseEntry.id]) {
+            throw new Error(`DatabaseEntry with ID '${databaseEntry.id}' already exists`);
         }
 
-        this.entries[DatabaseEntry.id] = DatabaseEntry;
+        this.entries[databaseEntry.id] = databaseEntry;
         this.write();
     }
 
-    public update(DatabaseEntry: DatabaseEntry, write: boolean): void {
-        if (!this.entries[DatabaseEntry.id]) {
-            throw new Error(`DatabaseEntry with ID '${DatabaseEntry.id}' does not exist`);
+    public update(databaseEntry: DatabaseEntry, write: boolean): void {
+        if (!this.entries[databaseEntry.id]) {
+            throw new Error(`DatabaseEntry with ID '${databaseEntry.id}' does not exist`);
         }
 
-        this.entries[DatabaseEntry.id] = DatabaseEntry;
+        this.entries[databaseEntry.id] = databaseEntry;
 
         if (write) {
             this.write();
         }
     }
 
-    public remove(ID: number): void {
-        if (!this.entries[ID]) {
-            throw new Error(`DatabaseEntry with ID '${ID}' does not exist`);
+    public remove(id: number): void {
+        if (!this.entries[id]) {
+            throw new Error(`DatabaseEntry with ID '${id}' does not exist`);
         }
 
-        delete this.entries[ID];
+        delete this.entries[id];
         this.write();
     }
 
-    public has(ID: number): boolean {
-        return this.entries.hasOwnProperty(ID);
+    public has(id: number): boolean {
+        return Boolean(this.entries[id]);
     }
 
     public newID(): number {
@@ -81,13 +93,15 @@ class Database {
 
     public write(): void {
         logger.debug(`Writing database to '${this.path}'`, NS);
-        const lines = [];
-        for (const DatabaseEntry of Object.values(this.entries)) {
-            const json = JSON.stringify(DatabaseEntry);
-            lines.push(json);
+        let lines = '';
+
+        for (const id in this.entries) {
+            lines += JSON.stringify(this.entries[id]) + `\n`;
         }
+
         const tmpPath = this.path + '.tmp';
-        fs.writeFileSync(tmpPath, lines.join('\n'));
+
+        fs.writeFileSync(tmpPath, lines.slice(0, -1));// remove last newline, no effect if empty string
         // Ensure file is on disk https://github.com/Koenkk/zigbee2mqtt/issues/11759
         const fd = fs.openSync(tmpPath, 'r+');
         fs.fsyncSync(fd);

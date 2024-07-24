@@ -600,13 +600,14 @@ jest.mock('../src/adapter/zigate/adapter/zigateAdapter', () => {
     });
 });
 
-const getTempFile = (filename) => {
-    const tempPath = path.resolve('temp');
-    if (!fs.existsSync(tempPath)) {
-        fs.mkdirSync(tempPath);
+const TEMP_PATH = path.resolve('temp');
+
+const getTempFile = (filename: string): string => {
+    if (!fs.existsSync(TEMP_PATH)) {
+        fs.mkdirSync(TEMP_PATH);
     }
 
-    return path.join(tempPath, filename);
+    return path.join(TEMP_PATH, filename);
 };
 
 // Mock static methods
@@ -683,6 +684,7 @@ describe('Controller', () => {
 
     afterAll(async () => {
         jest.useRealTimers();
+        fs.rmSync(TEMP_PATH, { recursive: true, force: true });
     });
 
     beforeEach(async () => {
@@ -698,6 +700,7 @@ describe('Controller', () => {
         options.network.channelList = [15];
         Object.keys(events).forEach((key) => (events[key] = []));
         Device['devices'] = null;
+        Device['deletedDevices'] = {};
         Group['groups'] = null;
         if (fs.existsSync(options.databasePath)) {
             fs.unlinkSync(options.databasePath);
@@ -1777,6 +1780,66 @@ describe('Controller', () => {
         expect(mockAdapterGetNetworkParameters).toHaveBeenCalledTimes(1);
     });
 
+    it('Iterates over all devices', async () => {
+        await controller.start();
+        await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
+        let devices = 0;
+
+        for (const device of controller.getDevicesIterator()) {
+            expect(device).toBeInstanceOf(Device);
+
+            devices += 1;
+        }
+
+        expect(devices).toStrictEqual(2);// + coordinator
+    });
+
+    it('Iterates over devices with predicate', async () => {
+        await controller.start();
+        await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
+        let devices = 0;
+
+        for (const device of controller.getDevicesIterator((d) => d.networkAddress === 129)) {
+            expect(device).toBeInstanceOf(Device);
+
+            devices += 1;
+        }
+
+        expect(devices).toStrictEqual(1);
+    });
+
+    it('Iterates over all groups', async () => {
+        await controller.start();
+        controller.createGroup(1);
+        controller.createGroup(2);
+
+        let groups = 0;
+
+        for (const group of controller.getGroupsIterator()) {
+            expect(group).toBeInstanceOf(Group);
+
+            groups += 1;
+        }
+
+        expect(groups).toStrictEqual(2);
+    });
+
+    it('Iterates over groups with predicate', async () => {
+        await controller.start();
+        controller.createGroup(1);
+        controller.createGroup(2);
+
+        let groups = 0;
+
+        for (const group of controller.getGroupsIterator((d) => d.groupID === 1)) {
+            expect(group).toBeInstanceOf(Group);
+
+            groups += 1;
+        }
+
+        expect(groups).toStrictEqual(1);
+    });
+
     it('Join a device', async () => {
         await controller.start();
         expect(databaseContents().includes('0x129')).toBeFalsy();
@@ -2070,6 +2133,7 @@ describe('Controller', () => {
         expect(events.deviceLeave.length).toBe(1);
         expect(events.deviceLeave[0]).toStrictEqual({ieeeAddr: '0x129'});
         expect(controller.getDeviceByNetworkAddress(129)).toBeUndefined();
+        expect(Device.byNetworkAddress(129, true)).toBeInstanceOf(Device);
 
         // leaves another time when not in database
         await mockAdapterEvents['deviceLeave']({networkAddress: 129, ieeeAddr: null});
@@ -2089,16 +2153,13 @@ describe('Controller', () => {
         expect(databaseContents().includes('0x129')).toBeTruthy();
         expect(databaseContents().includes('groupID')).toBeTruthy();
         await controller.stop();
+
         mockAdapterStart.mockReturnValueOnce('reset');
         await controller.start();
         expect(controller.getDevices().length).toBe(1);
         expect(controller.getDevicesByType('Coordinator')[0].type).toBe('Coordinator');
         expect(controller.getDeviceByIeeeAddr('0x129')).toBeUndefined();
         expect(controller.getGroupByID(1)).toBeUndefined();
-        // Items are marked as delete but still appear as lines in database, therefore we need to restart once
-        // database will then remove deleted items.
-        await controller.stop();
-        await controller.start();
         expect(databaseContents().includes('0x129')).toBeFalsy();
         expect(databaseContents().includes('groupID')).toBeFalsy();
     });
@@ -4077,7 +4138,7 @@ describe('Controller', () => {
         expect(error).toStrictEqual(new Error("Device '0x129' already has an endpoint '1'"));
     });
 
-    it('Throw error when device with ieeeAddr already exists', async () => {
+    it('Throw error when device with IEEE address already exists', async () => {
         await controller.start();
         await mockAdapterEvents['deviceJoined']({networkAddress: 140, ieeeAddr: '0x129'});
         let error;
@@ -4086,7 +4147,7 @@ describe('Controller', () => {
         } catch (e) {
             error = e;
         }
-        expect(error).toStrictEqual(new Error("Device with ieeeAddr '0x129' already exists"));
+        expect(error).toStrictEqual(new Error("Device with IEEE address '0x129' already exists"));
     });
 
     it('Should allow to set type', async () => {
@@ -8310,7 +8371,6 @@ describe('Controller', () => {
             _modelID: 'GreenPower_2',
             _networkAddress: 0x71f8,
             _type: 'GreenPower',
-            _deleted: true,
             meta: {},
         });
 
@@ -8359,7 +8419,6 @@ describe('Controller', () => {
             _modelID: 'GreenPower_2',
             _networkAddress: 0x71f8,
             _type: 'GreenPower',
-            _deleted: false,
             meta: {},
         });
     });
