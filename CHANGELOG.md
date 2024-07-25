@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.55.2](https://github.com/Koenkk/zigbee-herdsman/compare/v0.55.1...v0.55.2) (2024-07-25)
+
+
+### Bug Fixes
+
+* **ignore:** move eslint config and plugins to devDependencies ([#1129](https://github.com/Koenkk/zigbee-herdsman/issues/1129)) ([c4e7395](https://github.com/Koenkk/zigbee-herdsman/commit/c4e7395d42cbd0deb1d21fcc0962f0fdc9feac13))
+* **ignore:** Remove some unecessary string concatenations ([557ec54](https://github.com/Koenkk/zigbee-herdsman/commit/557ec54b89c1ec6f6a209726473267163bd44ee3))
+* Improve loops performance ([#1130](https://github.com/Koenkk/zigbee-herdsman/issues/1130)) ([b2e9778](https://github.com/Koenkk/zigbee-herdsman/commit/b2e9778748ba3b86c2da614fc6bee5fabaad5f29))
+
 ## [0.55.1](https://github.com/Koenkk/zigbee-herdsman/compare/v0.55.0...v0.55.1) (2024-07-21)
 
 
