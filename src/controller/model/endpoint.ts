@@ -213,13 +213,14 @@ class Endpoint extends Entity {
 
     public static fromDatabaseRecord(record: KeyValue, deviceNetworkAddress: number, deviceIeeeAddress: string): Endpoint {
         // Migrate attrs to attributes
-        for (const entry of Object.values(record.clusters).filter((e) => e.hasOwnProperty('attrs'))) {
-            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-            // @ts-ignore
-            entry.attributes = entry.attrs;
-            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-            // @ts-ignore
-            delete entry.attrs;
+        for (const entryKey in record.clusters) {
+            const entry = record.clusters[entryKey];
+
+            /* istanbul ignore else */
+            if (entry.attrs != undefined) {
+                entry.attributes = entry.attrs;
+                delete entry.attrs;
+            }
         }
 
         return new Endpoint(
@@ -821,7 +822,7 @@ class Endpoint extends Entity {
     }
 
     public removeFromAllGroupsDatabase(): void {
-        for (const group of Group.all()) {
+        for (const group of Group.allIterator()) {
             if (group.hasMember(this)) {
                 group.removeMember(this);
             }

@@ -705,7 +705,6 @@ export class BuffaloZdo extends Buffalo {
 
             const length = this.readUInt8() + 1; // add offset (spec quirk...)
 
-            console.log(this.position, length);
             // validation: invalid if not at least ${length} bytes to read
             if (!this.isMoreBy(length)) {
                 throw new Error(`Malformed TLV. Invalid data length for tagId=${tagId}, expected ${length}.`);

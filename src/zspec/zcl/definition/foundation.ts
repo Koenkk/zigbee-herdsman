@@ -28,7 +28,7 @@ export type FoundationCommandName =
     | 'discoverExt'
     | 'discoverExtRsp';
 
-interface FoundationDefinition {
+export interface FoundationDefinition {
     ID: number;
     parseStrategy: 'repetitive' | 'flat' | 'oneof';
     parameters: readonly ParameterDefinition[];
