@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.55.3](https://github.com/Koenkk/zigbee-herdsman/compare/v0.55.2...v0.55.3) (2024-07-26)
+
+
+### Bug Fixes
+
+* ZStack: throw errors when ZDO calls fail ([#1128](https://github.com/Koenkk/zigbee-herdsman/issues/1128)) ([e47812b](https://github.com/Koenkk/zigbee-herdsman/commit/e47812b8cac79f93aed2b35b9ceab29310302212))
+
 ## [0.55.2](https://github.com/Koenkk/zigbee-herdsman/compare/v0.55.1...v0.55.2) (2024-07-25)
 
 
