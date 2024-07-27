@@ -1,3 +1,4 @@
+import {ClusterId as ZdoClusterId} from '../../../zspec/zdo';
 import ParameterType from './parameterType';
 
 type MtType = number | number[] | string | Buffer | {[s: string]: number | string}[];
@@ -15,6 +16,10 @@ interface MtCmd {
     response?: MtParameter[];
 }
 
+interface MtCmdZdo extends MtCmd {
+    zdo: {cluterId: ZdoClusterId};
+}
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type ZpiObjectPayload = any;
 
@@ -23,4 +28,4 @@ interface BuffaloZnpOptions {
     startIndex?: number;
 }
 
-export {ZpiObjectPayload, MtParameter, MtCmd, MtType, BuffaloZnpOptions};
+export {ZpiObjectPayload, MtParameter, MtCmd, MtType, BuffaloZnpOptions, MtCmdZdo};

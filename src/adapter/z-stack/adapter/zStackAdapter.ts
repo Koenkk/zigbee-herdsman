@@ -870,19 +870,19 @@ class ZStackAdapter extends Adapter {
     }
 
     public onZnpRecieved(object: ZpiObject): void {
-        if (object.type !== UnpiConstants.Type.AREQ) {
+        if (object.command.type !== UnpiConstants.Type.AREQ) {
             return;
         }
 
         if (object.subsystem === Subsystem.ZDO) {
-            if (object.command === 'tcDeviceInd') {
+            if (object.command.name === 'tcDeviceInd') {
                 const payload: Events.DeviceJoinedPayload = {
                     networkAddress: object.payload.nwkaddr,
                     ieeeAddr: object.payload.extaddr,
                 };
 
                 this.emit(Events.Events.deviceJoined, payload);
-            } else if (object.command === 'endDeviceAnnceInd') {
+            } else if (object.command.name === 'endDeviceAnnceInd') {
                 const payload: Events.DeviceAnnouncePayload = {
                     networkAddress: object.payload.nwkaddr,
                     ieeeAddr: object.payload.ieeeaddr,
@@ -912,14 +912,14 @@ class ZStackAdapter extends Adapter {
                 }
 
                 this.emit(Events.Events.deviceAnnounce, payload);
-            } else if (object.command === 'nwkAddrRsp') {
+            } else if (object.command.name === 'nwkAddrRsp') {
                 const payload: Events.NetworkAddressPayload = {
                     networkAddress: object.payload.nwkaddr,
                     ieeeAddr: object.payload.ieeeaddr,
                 };
 
                 this.emit(Events.Events.networkAddress, payload);
-            } else if (object.command === 'concentratorIndCb') {
+            } else if (object.command.name === 'concentratorIndCb') {
                 // Some routers may change short addresses and the announcement
                 // is missed by the coordinator. This can happen when there are
                 // power outages or other interruptions in service. They may
@@ -938,7 +938,7 @@ class ZStackAdapter extends Adapter {
                 this.emit(Events.Events.networkAddress, payload);
             } else {
                 /* istanbul ignore else */
-                if (object.command === 'leaveInd') {
+                if (object.command.name === 'leaveInd') {
                     if (object.payload.rejoin) {
                         logger.debug(`Device leave: Got leave indication with rejoin=true, nothing to do`, NS);
                     } else {
@@ -955,7 +955,7 @@ class ZStackAdapter extends Adapter {
             /* istanbul ignore else */
             if (object.subsystem === Subsystem.AF) {
                 /* istanbul ignore else */
-                if (object.command === 'incomingMsg' || object.command === 'incomingMsgExt') {
+                if (object.command.name === 'incomingMsg' || object.command.name === 'incomingMsgExt') {
                     const payload: Events.ZclPayload = {
                         clusterID: object.payload.clusterid,
                         data: object.payload.data,

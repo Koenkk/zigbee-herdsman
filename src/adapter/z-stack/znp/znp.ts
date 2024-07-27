@@ -86,8 +86,8 @@ class Znp extends events.EventEmitter {
     private onUnpiParsed(frame: UnpiFrame): void {
         try {
             const object = ZpiObject.fromUnpiFrame(frame);
-            const message = `<-- ${Subsystem[object.subsystem]} - ${object.command} - ${JSON.stringify(object.payload)}`;
-            this.log(object.type, message);
+            const message = `<-- ${Subsystem[object.subsystem]} - ${object.command.name} - ${JSON.stringify(object.payload)}`;
+            this.log(object.command.type, message);
             this.waitress.resolve(object);
             this.emit('received', object);
         } catch (error) {
@@ -286,17 +286,15 @@ class Znp extends events.EventEmitter {
         }
 
         const object = ZpiObject.createRequest(subsystem, command, payload);
-        const message = `--> ${Subsystem[object.subsystem]} - ${object.command} - ${JSON.stringify(payload)}`;
+        const message = `--> ${Subsystem[object.subsystem]} - ${object.command.name} - ${JSON.stringify(payload)}`;
 
         return this.queue.execute<ZpiObject>(async (): Promise<ZpiObject> => {
-            this.log(object.type, message);
+            this.log(object.command.type, message);
 
-            const frame = object.toUnpiFrame();
-
-            if (object.type === Type.SREQ) {
-                const t = object.command === 'bdbStartCommissioning' || object.command === 'startupFromApp' ? 40000 : timeouts.SREQ;
-                const waiter = this.waitress.waitFor({type: Type.SRSP, subsystem: object.subsystem, command: object.command}, timeout || t);
-                this.unpiWriter.writeFrame(frame);
+            if (object.command.type === Type.SREQ) {
+                const t = object.command.name === 'bdbStartCommissioning' || object.command.name === 'startupFromApp' ? 40000 : timeouts.SREQ;
+                const waiter = this.waitress.waitFor({type: Type.SRSP, subsystem: object.subsystem, command: object.command.name}, timeout || t);
+                this.unpiWriter.writeFrame(object.unpiFrame);
                 const result = await waiter.start().promise;
                 if (result && result.payload.hasOwnProperty('status') && !expectedStatuses.includes(result.payload.status)) {
                     if (typeof waiterID === 'number') {
@@ -311,18 +309,18 @@ class Znp extends events.EventEmitter {
                 } else {
                     return result;
                 }
-            } else if (object.type === Type.AREQ && object.isResetCommand()) {
+            } else if (object.command.type === Type.AREQ && object.isResetCommand()) {
                 const waiter = this.waitress.waitFor({type: Type.AREQ, subsystem: Subsystem.SYS, command: 'resetInd'}, timeout || timeouts.reset);
                 this.queue.clear();
-                this.unpiWriter.writeFrame(frame);
+                this.unpiWriter.writeFrame(object.unpiFrame);
                 return waiter.start().promise;
             } else {
                 /* istanbul ignore else */
-                if (object.type === Type.AREQ) {
-                    this.unpiWriter.writeFrame(frame);
+                if (object.command.type === Type.AREQ) {
+                    this.unpiWriter.writeFrame(object.unpiFrame);
                     return undefined;
                 } else {
-                    throw new Error(`Unknown type '${object.type}'`);
+                    throw new Error(`Unknown type '${object.command.type}'`);
                 }
             }
         });
@@ -343,7 +341,8 @@ class Znp extends events.EventEmitter {
     }
 
     private waitressValidator(zpiObject: ZpiObject, matcher: WaitressMatcher): boolean {
-        const requiredMatch = matcher.type === zpiObject.type && matcher.subsystem == zpiObject.subsystem && matcher.command === zpiObject.command;
+        const requiredMatch =
+            matcher.type === zpiObject.command.type && matcher.subsystem == zpiObject.subsystem && matcher.command === zpiObject.command.name;
         let payloadMatch = true;
 
         if (matcher.payload) {

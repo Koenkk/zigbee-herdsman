@@ -1,9 +1,10 @@
+import {ClusterId as ZdoClusterId} from '../../../zspec/zdo';
 import {Subsystem, Type as CommandType} from '../unpi/constants';
 import ParameterType from './parameterType';
-import {MtCmd} from './tstype';
+import {MtCmd, MtCmdZdo} from './tstype';
 
 const Definition: {
-    [s: number]: MtCmd[];
+    [s: number]: (MtCmd | MtCmdZdo)[];
 } = {
     [Subsystem.SYS]: [
         {
@@ -1538,6 +1539,7 @@ const Definition: {
             name: 'unbindRsp',
             ID: 162,
             type: CommandType.AREQ,
+            zdo: {cluterId: ZdoClusterId.BIND_RESPONSE},
             request: [
                 {name: 'srcaddr', parameterType: ParameterType.UINT16},
                 {name: 'status', parameterType: ParameterType.UINT8},
