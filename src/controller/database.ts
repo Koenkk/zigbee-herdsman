@@ -101,9 +101,9 @@ class Database {
 
         const tmpPath = this.path + '.tmp';
 
-        fs.writeFileSync(tmpPath, lines.slice(0, -1)); // remove last newline, no effect if empty string
         // Ensure file is on disk https://github.com/Koenkk/zigbee2mqtt/issues/11759
-        const fd = fs.openSync(tmpPath, 'r+');
+        const fd = fs.openSync(tmpPath, 'wx');
+        fs.writeFileSync(fd, lines.slice(0, -1)); // remove last newline, no effect if empty string
         fs.fsyncSync(fd);
         fs.closeSync(fd);
         fs.renameSync(tmpPath, this.path);
