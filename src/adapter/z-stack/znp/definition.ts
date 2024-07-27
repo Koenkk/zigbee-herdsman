@@ -1539,7 +1539,7 @@ const Definition: {
             name: 'unbindRsp',
             ID: 162,
             type: CommandType.AREQ,
-            zdo: {cluterId: ZdoClusterId.BIND_RESPONSE},
+            zdo: {cluterId: ZdoClusterId.BIND_RESPONSE, skip: 2},
             request: [
                 {name: 'srcaddr', parameterType: ParameterType.UINT16},
                 {name: 'status', parameterType: ParameterType.UINT8},

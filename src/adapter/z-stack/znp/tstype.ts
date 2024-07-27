@@ -17,7 +17,7 @@ interface MtCmd {
 }
 
 interface MtCmdZdo extends MtCmd {
-    zdo: {cluterId: ZdoClusterId};
+    zdo: {cluterId: ZdoClusterId; skip: number};
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
