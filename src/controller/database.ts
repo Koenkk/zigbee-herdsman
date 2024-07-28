@@ -101,7 +101,18 @@ class Database {
 
         const tmpPath = this.path + '.tmp';
 
-        const fd = fs.openSync(tmpPath, 'wx');
+        try {
+            // If there already exsits a database.db.tmp, rename it to database.db.tmp.<now>
+            const dateTmpPath = tmpPath + '.' + new Date().toISOString().replaceAll(':', '-');
+            fs.renameSync(tmpPath, dateTmpPath);
+
+            // If we got this far, we succeeded! Warn the user about this
+            logger.warning(`Found '${tmpPath}' when writing database, indicating past write failure; renamed it to '${dateTmpPath}'`, NS);
+        } catch {
+            // Nothing to catch; if the renameSync fails, we ignore that exception
+        }
+
+        const fd = fs.openSync(tmpPath, 'w');
         fs.writeFileSync(fd, lines.slice(0, -1)); // remove last newline, no effect if empty string
         // Ensure file is on disk https://github.com/Koenkk/zigbee2mqtt/issues/11759
         fs.fsyncSync(fd);
