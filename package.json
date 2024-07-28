@@ -53,11 +53,11 @@
     "babel-jest": "*",
     "eslint": "*",
     "eslint-config-prettier": "^9.1.0",
-    "eslint-plugin-perfectionist": "^2.11.0",
+    "eslint-plugin-perfectionist": "^3.0.0",
     "jest": "*",
     "prettier": "^3.3.3",
     "regenerator-runtime": "*",
-    "typedoc": "^0.26.4",
+    "typedoc": "^0.26.5",
     "typedoc-plugin-markdown": "*",
     "typedoc-plugin-no-inherit": "*",
     "typescript": "*"
