@@ -11,9 +11,7 @@
         "allowJs": true,
         "resolveJsonModule": true,
         "paths": {
-            "*": [
-                "node_modules/*"
-            ]
+            "*": ["node_modules/*"]
         }
     },
     "files": [
@@ -24,7 +22,6 @@
         "src/controller/model/device.ts",
         "src/controller/model/group.ts",
         "src/controller/model/endpoint.ts"
-
     ],
     "typedocOptions": {
         "name": "zigbee-herdsman",

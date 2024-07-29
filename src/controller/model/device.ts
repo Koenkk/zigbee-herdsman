@@ -615,7 +615,7 @@ class Device extends Entity {
     public static byIeeeAddr(ieeeAddr: string, includeDeleted: boolean = false): Device {
         Device.loadFromDatabaseIfNecessary();
 
-        return includeDeleted ? (Device.deletedDevices[ieeeAddr] ?? Device.devices[ieeeAddr]) : Device.devices[ieeeAddr];
+        return includeDeleted ? Device.deletedDevices[ieeeAddr] ?? Device.devices[ieeeAddr] : Device.devices[ieeeAddr];
     }
 
     public static byNetworkAddress(networkAddress: number, includeDeleted: boolean = false): Device {
