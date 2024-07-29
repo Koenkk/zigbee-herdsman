@@ -6,7 +6,9 @@ import {ZBOSSFrame, makeFrame, FrameType} from "./frame";
 import {KeyValue,} from "../../controller/tstype";
 import {ClusterId, EUI64, NodeId, ProfileId} from '../../zspec/tstypes';
 import {Queue, Waitress, Wait} from '../../utils';
-import {CommandId, ResetOptions, PolicyType} from "./enums";
+import {CommandId, ResetOptions, PolicyType, DeviceType} from "./enums";
+import {NetworkParameters} from "../tstype";
+import equals from 'fast-deep-equal/es6';
 
 const NS = 'zh:zboss:driv';
 
@@ -18,14 +20,24 @@ type ZBOSSWaitressMatcher = {
     commandId: number,
 };
 
+type ZBOSSNetworkInfo = {
+    joined: boolean,
+    nodeType: DeviceType,
+    ieeeAddr: string,
+    network: NetworkParameters,
+};
+
 export class ZBOSSDriver extends EventEmitter {
     public readonly port: ZBOSSUart;
     private waitress: Waitress<ZBOSSFrame, ZBOSSWaitressMatcher>;
     private queue: Queue;
-    tsn = 1;  // command sequence
+    private tsn = 1;  // command sequence
+    private nwkOpt: TsType.NetworkOptions;
+    public netInfo: ZBOSSNetworkInfo;
 
-    constructor(options: TsType.SerialPortOptions) {
+    constructor(options: TsType.SerialPortOptions, nwkOpt: TsType.NetworkOptions) {
         super();
+        this.nwkOpt = nwkOpt;
         this.queue = new Queue();
         this.waitress = new Waitress<ZBOSSFrame, ZBOSSWaitressMatcher>(
             this.waitressValidator, this.waitressTimeoutFormatter);
@@ -59,15 +71,49 @@ export class ZBOSSDriver extends EventEmitter {
         return status;
     }
 
-    private async reset(): Promise<void> {
+    private async reset(options = ResetOptions.NoOptions): Promise<void> {
         logger.info(`Driver reset`, NS);
         this.port.inReset = true;
-        await this.execCommand(CommandId.NCP_RESET, {options: ResetOptions.NoOptions}, 10000);
+        await this.execCommand(CommandId.NCP_RESET, {options}, 10000);
     }
 
     public async startup(): Promise<TsType.StartResult> {
         logger.info(`Driver startup`, NS);
         let result: TsType.StartResult = 'resumed';
+        
+        if (await this.needsToBeInitialised(this.nwkOpt)) {
+            // need to check the backup
+            // const restore = await this.needsToBeRestore(this.nwkOpt);
+            const restore = false;
+
+            // const res = await this.ezsp.execCommand('networkState');
+
+            // logger.debug(`Network state ${res.status}`, NS);
+
+            if (this.netInfo.joined) {
+                logger.info(`Leaving current network and forming new network`, NS);
+                await this.reset(ResetOptions.FactoryReset);
+            //     const st = await this.ezsp.leaveNetwork();
+
+            //     if (st != EmberStatus.NETWORK_DOWN) {
+            //         logger.error(`leaveNetwork returned unexpected status: ${st}`, NS);
+            //     }
+            }
+
+            if (restore) {
+                // // restore
+                // logger.info('Restore network from backup', NS);
+                // await this.formNetwork(true);
+                // result = 'restored';
+            } else {
+                // reset
+                logger.info('Form network', NS);
+                await this.formNetwork(false);
+                result = 'reset';
+            }
+        } else {
+            await this.execCommand(CommandId.NWK_START_WITHOUT_FORMATION, {});
+        }
         await this.execCommand(CommandId.SET_TC_POLICY, {type: PolicyType.LINK_KEY_REQUIRED, value: 0});
         await this.execCommand(CommandId.SET_TC_POLICY, {type: PolicyType.IC_REQUIRED, value: 0});
         await this.execCommand(CommandId.SET_TC_POLICY, {type: PolicyType.TC_REJOIN_ENABLED, value: 1});
@@ -75,9 +121,110 @@ export class ZBOSSDriver extends EventEmitter {
         await this.execCommand(CommandId.SET_TC_POLICY, {type: PolicyType.APS_INSECURE_JOIN, value: 0});
         await this.execCommand(CommandId.SET_TC_POLICY, {type: PolicyType.DISABLE_NWK_MGMT_CHANNEL_UPDATE, value: 0});
 
-        await this.execCommand(CommandId.GET_ZIGBEE_ROLE, {});
+        await this.addEndpoint(
+            1,
+            260,
+            0xbeef, 
+            [0x0000, 0x0003, 0x0006, 0x000a, 0x0019, 0x001a, 0x0300],
+            [0x0000, 0x0003, 0x0004, 0x0005, 0x0006, 0x0008, 0x0020, 0x0300, 0x0400, 0x0402, 0x0405, 0x0406, 0x0500, 0x0b01, 0x0b03, 0x0b04, 0x0702, 0x1000, 0xfc01, 0xfc02],
+        );
+        await this.addEndpoint(
+            242,
+            0xa1e0,
+            0x61,
+            [],
+            [0x0021],
+        );
 
         return result;
+    }
+
+    private async needsToBeInitialised(options: TsType.NetworkOptions): Promise<boolean> {
+        let valid = true;
+        this.netInfo = await this.getNetworkInfo();
+        logger.debug(`Current network parameters: ${JSON.stringify(this.netInfo)}`, NS);
+        if (this.netInfo) {
+            valid = valid && this.netInfo.nodeType == DeviceType.COORDINATOR;
+            valid = valid && options.panID == this.netInfo.network.panID;
+            valid = valid && options.channelList.includes(this.netInfo.network.channel);
+            valid = valid && equals(options.extendedPanID, this.netInfo.network.extendedPanID);
+        } else {
+            valid = false;
+        }
+        return !valid;
+    }
+
+    private async getNetworkInfo(): Promise<ZBOSSNetworkInfo | null> {
+        let result = await this.execCommand(CommandId.GET_JOINED, {});
+        const joined = result.payload.joined == 1;
+        if (!joined) {
+            logger.debug('Network not formed', NS);
+        }
+
+        result = await this.execCommand(CommandId.GET_ZIGBEE_ROLE, {});
+        const nodeType = result.payload.role;
+        
+        result = await this.execCommand(CommandId.GET_LOCAL_IEEE_ADDR, {mac: 0});
+        const ieeeAddr = result.payload.ieee;
+
+        result = await this.execCommand(CommandId.GET_EXTENDED_PAN_ID, {});
+        const extendedPanID = result.payload.extendedPanID;
+
+        result = await this.execCommand(CommandId.GET_PAN_ID, {});
+        const panID = result.payload.GET_PAN_ID;
+
+        result = await this.execCommand(CommandId.GET_ZIGBEE_CHANNEL, {});
+        const channel = result.payload.channel;
+
+        return {
+            joined,
+            nodeType,
+            ieeeAddr,
+            network: {
+                panID,
+                extendedPanID,
+                channel,
+            }
+        };
+    }
+
+    private async addEndpoint(endpoint: number, profileId: number, deviceId: number, inputClusters: number[], outputClusters: number[]): Promise<void> {
+        const res = await this.execCommand(CommandId.AF_SET_SIMPLE_DESC, {
+            endpoint: endpoint,
+            profileID: profileId,
+            deviceID: deviceId,
+            version: 0,
+            inputClusterCount: inputClusters.length,
+            outputClusterCount: outputClusters.length,
+            inputClusterList: inputClusters,
+            outputClusterList: outputClusters,
+        });
+
+        logger.debug(`Adding endpoint: ${JSON.stringify(res)}`, NS);
+    }
+
+    private getChannelMask(channels: number[]): number[] {
+        const value = channels.reduce((mask, channel) => mask | (1 << channel), 0);
+    
+        return [value & 0xff, (value >> 8) & 0xff, (value >> 16) & 0xff, (value >> 24) & 0xff];
+    }
+
+    private async formNetwork(restore: boolean): Promise<void> {
+        let result = await this.execCommand(CommandId.SET_ZIGBEE_ROLE, {role: DeviceType.COORDINATOR});
+        result = await this.execCommand(CommandId.SET_EXTENDED_PAN_ID, {extendedPanID: this.nwkOpt.extendedPanID});
+        result = await this.execCommand(CommandId.SET_ZIGBEE_CHANNEL_MASK, {page: 0, mask: this.getChannelMask(this.nwkOpt.channelList)});
+
+        const res = await this.execCommand(CommandId.NWK_FORMATION, {
+            len: 1,
+            channels: [
+                {page: 0, mask: 0x07fff800},
+            ],
+            duration: 0x05,
+            distribFlag: 0x00,
+            distribNwk: 0x0000,
+        });
+        logger.debug(`Forming network: ${JSON.stringify(res)}`, NS);
+        result = await this.execCommand(CommandId.SET_PAN_ID, {panID: this.nwkOpt.panID});
     }
 
     public async stop(): Promise<void> {
@@ -141,12 +288,10 @@ export class ZBOSSDriver extends EventEmitter {
     }
 
     public async getCoordinator(): Promise<TsType.Coordinator> {
-        const res = await this.execCommand(CommandId.GET_LOCAL_IEEE_ADDR, {mac: 0});
-        const ieeeAddr = res.payload.ieee;
         // const message = await this.execCommand(CommandId.ZDO_ACTIVE_EP_REQ, {nwk: 0x0000});
         // const activeEndpoints = message.payload.endpoints;
         return {
-            ieeeAddr,
+            ieeeAddr: this.netInfo.ieeeAddr,
             networkAddress: 0x0000,
             manufacturerID: 0x0000,
             endpoints:[],

@@ -81,6 +81,26 @@ export const FRAMES: {[key in CommandId]?: ZBOSSFrameDesc} = {
             ]},
         ],
     },
+    // Set Zigbee channels page and mask
+    [CommandId.SET_ZIGBEE_CHANNEL_MASK]: {
+        request: [
+            {name: 'page', type: DataType.UINT8},
+            {name: 'mask', type: DataType.UINT32},
+        ],
+        response: [
+            ...commonResponse,
+        ],
+    },
+    // Get Zigbee channel
+    [CommandId.GET_ZIGBEE_CHANNEL]: {
+        request: [
+        ],
+        response: [
+            ...commonResponse,
+            {name: 'page', type: DataType.UINT8},
+            {name: 'channel', type: DataType.UINT8},
+        ],
+    },
     // Requests current short PAN ID
     [CommandId.GET_PAN_ID]: {
         request: [

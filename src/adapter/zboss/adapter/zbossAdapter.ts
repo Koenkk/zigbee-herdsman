@@ -35,7 +35,7 @@ export class ZBOSSAdapter extends Adapter {
         logger.debug(`Adapter concurrent: ${concurrent}`, NS);
         this.queue = new Queue(concurrent);
         
-        this.driver = new ZBOSSDriver(serialPortOptions);
+        this.driver = new ZBOSSDriver(serialPortOptions, networkOptions);
     }
 
     public static async isValidPath(path: string): Promise<boolean> {
