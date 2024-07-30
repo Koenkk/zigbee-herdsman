@@ -1,11 +1,77 @@
-import {crc16} from "./utils";
-import { CommandId } from "./enums";
-import { FRAMES } from "./commands";
+import { CommandId, BuffaloZBOSSDataType } from "./enums";
+import { FRAMES, ParamsDesc } from "./commands";
 import {KeyValue} from "../../controller/tstype";
-import {BuffaloZcl} from "../../zspec/zcl/buffaloZcl";
+import { BuffaloZcl } from "../../zspec/zcl/buffaloZcl";
+import { BuffaloZclDataType } from "../../zspec/zcl/definition/enums";
 import {BuffaloZclOptions} from '../../zspec/zcl/definition/tstype';
 import {DataType} from "../../zspec/zcl";
 
+export class ZBOSSBuffaloZcl extends BuffaloZcl {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    public write(type: DataType | BuffaloZclDataType | BuffaloZBOSSDataType, value: any, options: BuffaloZclOptions): void {
+        switch (type) {
+            case BuffaloZBOSSDataType.EXTENDED_PAN_ID: {
+                return this.writeBuffer(value, 8);
+            }
+            default: {
+                return super.write(type as DataType | BuffaloZclDataType, value, options);
+            }
+        }
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    public read(type: DataType | BuffaloZclDataType | BuffaloZBOSSDataType, options: BuffaloZclOptions): any {
+        switch (type) {
+            case BuffaloZBOSSDataType.EXTENDED_PAN_ID: {
+                return this.readBuffer(8);
+            }
+            default: {
+                return super.read(type as DataType | BuffaloZclDataType, options);
+            }
+        }
+    }
+
+    public writeByDesc(payload: KeyValue, params: ParamsDesc[]): number {
+        const start = this.getPosition();
+        for (const parameter of params) {
+            const options: BuffaloZclOptions = {};
+    
+            if (parameter.condition && !parameter.condition(payload, this)) {
+                continue;
+            }
+            if (parameter.options) parameter.options(payload, options);
+    
+            if (parameter.type == BuffaloZBOSSDataType.LIST_TYPED && parameter.typed) {
+                const internalPaload = payload[parameter.name];
+                for (const value of internalPaload) {
+                    this.writeByDesc(value, parameter.typed);
+                }
+            } else {
+                this.write(parameter.type as DataType, payload[parameter.name], options);
+            }
+        }
+        return this.getPosition()-start;
+    }
+
+    public readByDesc(params: ParamsDesc[]): KeyValue {
+        const payload: KeyValue = {};
+    
+        for (const parameter of params) {
+            if (!this.isMore()) break;
+            
+            const options: BuffaloZclOptions = {payload};
+    
+            if (parameter.condition && !parameter.condition(payload, this)) {
+                continue;
+            }
+            if (parameter.options) parameter.options(payload, options);
+    
+            payload[parameter.name] = this.read(parameter.type as DataType, options);
+        }
+    
+        return payload;
+    }
+}
 
 function getFrameDesc(type: FrameType, key: CommandId) {
     const frameDesc = FRAMES[key];
@@ -23,7 +89,7 @@ function getFrameDesc(type: FrameType, key: CommandId) {
 }
 
 export function readZBOSSFrame(buffer: Buffer): ZBOSSFrame {
-    const buf = new BuffaloZcl(buffer);
+    const buf = new ZBOSSBuffaloZcl(buffer);
     const version = buf.readUInt8();
     const type = buf.readUInt8();
     const commandId = buf.readUInt16();
@@ -44,7 +110,7 @@ export function readZBOSSFrame(buffer: Buffer): ZBOSSFrame {
 
 
 export function writeZBOSSFrame(frame: ZBOSSFrame): Buffer {
-    const buf = new BuffaloZcl(Buffer.alloc(247));
+    const buf = new ZBOSSBuffaloZcl(Buffer.alloc(247));
     buf.writeInt8(frame.version);
     buf.writeInt8(frame.type);
     buf.writeUInt16(frame.commandId);
@@ -90,38 +156,12 @@ export function makeFrame(type: FrameType, commandId: CommandId, params: KeyValu
     }
 }
 
-function readPayload(type: FrameType, commandId: CommandId, buffalo: BuffaloZcl): ZBOSSFrameData {
+function readPayload(type: FrameType, commandId: CommandId, buffalo: ZBOSSBuffaloZcl): ZBOSSFrameData {
     const frameDesc = getFrameDesc(type, commandId);
-    const payload: ZBOSSFrameData = {};
-
-    for (const parameter of frameDesc) {
-        if (!buffalo.isMore()) break;
-        
-        const options: BuffaloZclOptions = {payload};
-
-        if (parameter.condition && !parameter.condition(payload, buffalo)) {
-            continue;
-        }
-        if (parameter.options) parameter.options(payload, options);
-
-        payload[parameter.name] = buffalo.read(parameter.type as DataType, options);
-    }
-
-    return payload;
+    return buffalo.readByDesc(frameDesc);
 }
 
-function writePayload(type: FrameType, commandId: CommandId, payload: ZBOSSFrameData, buffalo: BuffaloZcl): number {
+function writePayload(type: FrameType, commandId: CommandId, payload: ZBOSSFrameData, buffalo: ZBOSSBuffaloZcl): number {
     const frameDesc = getFrameDesc(type, commandId);
-    const start = buffalo.getPosition();
-    for (const parameter of frameDesc) {
-        const options: BuffaloZclOptions = {};
-
-        if (parameter.condition && !parameter.condition(payload, buffalo)) {
-            continue;
-        }
-        if (parameter.options) parameter.options(payload, options);
-
-        buffalo.write(parameter.type as DataType, payload[parameter.name], options);
-    }
-    return buffalo.getPosition()-start;
+    return buffalo.writeByDesc(payload, frameDesc);
 }

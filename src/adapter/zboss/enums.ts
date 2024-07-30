@@ -330,6 +330,7 @@ export enum PolicyType {
 
 export enum BuffaloZBOSSDataType {
     LIST_TYPED = 3000,
+    EXTENDED_PAN_ID = 3001,
 }
 
 

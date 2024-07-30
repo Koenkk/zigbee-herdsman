@@ -262,7 +262,7 @@ export const FRAMES: {[key in CommandId]?: ZBOSSFrameDesc} = {
         ],
         response: [
             ...commonResponse,
-            {name: 'extendedPanID', type: DataType.IEEE_ADDR},
+            {name: 'extendedPanID', type: BuffaloZBOSSDataType.EXTENDED_PAN_ID},
         ],
     },
     // Get Coordinator version
@@ -355,7 +355,7 @@ export const FRAMES: {[key in CommandId]?: ZBOSSFrameDesc} = {
     // Sets an extended PAN ID
     [CommandId.SET_EXTENDED_PAN_ID]: {
         request: [
-            {name: 'extendedPanID', type: DataType.IEEE_ADDR},
+            {name: 'extendedPanID', type: BuffaloZBOSSDataType.EXTENDED_PAN_ID},
         ],
         response: [
             ...commonResponse,
@@ -614,7 +614,7 @@ export const FRAMES: {[key in CommandId]?: ZBOSSFrameDesc} = {
     // Rejoin to remote network even if joined already. If joined, clear internal data structures prior to joining. That call is useful for rejoin after parent loss.
     [CommandId.ZDO_REJOIN]: {
         request: [
-            {name: 'extendedPanID', type: DataType.IEEE_ADDR},
+            {name: 'extendedPanID', type: BuffaloZBOSSDataType.EXTENDED_PAN_ID},
             {name: 'len', type: DataType.UINT8},
             {name: 'channels', type: BuffaloZBOSSDataType.LIST_TYPED, typed: [
                 {name: 'page', type: DataType.UINT8},
@@ -930,7 +930,7 @@ export const FRAMES: {[key in CommandId]?: ZBOSSFrameDesc} = {
         ],
         response: [
             ...commonResponse,
-            {name: 'extendedPanID', type: DataType.IEEE_ADDR},
+            {name: 'extendedPanID', type: BuffaloZBOSSDataType.EXTENDED_PAN_ID},
             {name: 'panID', type: DataType.UINT16},
             {name: 'nwkUpdateID', type: DataType.UINT8},
             {name: 'page', type: DataType.UINT8},
@@ -943,7 +943,7 @@ export const FRAMES: {[key in CommandId]?: ZBOSSFrameDesc} = {
     // Join network, do basic post-join actions
     [CommandId.NWK_NLME_JOIN]: {
         request: [
-            {name: 'extendedPanID', type: DataType.IEEE_ADDR},
+            {name: 'extendedPanID', type: BuffaloZBOSSDataType.EXTENDED_PAN_ID},
             {name: 'rejoin', type: DataType.UINT8},
             {name: 'len', type: DataType.UINT8},
             {name: 'channels', type: BuffaloZBOSSDataType.LIST_TYPED, typed: [
@@ -954,7 +954,7 @@ export const FRAMES: {[key in CommandId]?: ZBOSSFrameDesc} = {
         response: [
             ...commonResponse,
             {name: 'nwk', type: DataType.UINT16},
-            {name: 'extendedPanID', type: DataType.IEEE_ADDR},
+            {name: 'extendedPanID', type: BuffaloZBOSSDataType.EXTENDED_PAN_ID},
             {name: 'page', type: DataType.UINT8},
             {name: 'channel', type: DataType.UINT8},
             {name: 'beacon', type: DataType.UINT8},
@@ -1019,7 +1019,7 @@ export const FRAMES: {[key in CommandId]?: ZBOSSFrameDesc} = {
         response: [],
         indication: [
             {name: 'nwk', type: DataType.UINT16},
-            {name: 'extendedPanID', type: DataType.IEEE_ADDR},
+            {name: 'extendedPanID', type: BuffaloZBOSSDataType.EXTENDED_PAN_ID},
             {name: 'page', type: DataType.UINT8},
             {name: 'channel', type: DataType.UINT8},
             {name: 'beacon', type: DataType.UINT8},

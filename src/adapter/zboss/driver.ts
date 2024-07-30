@@ -63,7 +63,7 @@ export class ZBOSSDriver extends EventEmitter {
 
             if (status) {
                 logger.info(`Driver started`, NS);
-                await this.reset();
+                // await this.reset();
                 return status;
             }
         }
@@ -171,7 +171,7 @@ export class ZBOSSDriver extends EventEmitter {
         const extendedPanID = result.payload.extendedPanID;
 
         result = await this.execCommand(CommandId.GET_PAN_ID, {});
-        const panID = result.payload.GET_PAN_ID;
+        const panID = result.payload.panID;
 
         result = await this.execCommand(CommandId.GET_ZIGBEE_CHANNEL, {});
         const channel = result.payload.channel;
@@ -196,17 +196,17 @@ export class ZBOSSDriver extends EventEmitter {
             version: 0,
             inputClusterCount: inputClusters.length,
             outputClusterCount: outputClusters.length,
-            inputClusterList: inputClusters,
-            outputClusterList: outputClusters,
+            inputClusters: inputClusters,
+            outputClusters: outputClusters,
         });
 
         logger.debug(`Adding endpoint: ${JSON.stringify(res)}`, NS);
     }
 
-    private getChannelMask(channels: number[]): number[] {
-        const value = channels.reduce((mask, channel) => mask | (1 << channel), 0);
+    private getChannelMask(channels: number[]): number {
+        return channels.reduce((mask, channel) => mask | (1 << channel), 0);
     
-        return [value & 0xff, (value >> 8) & 0xff, (value >> 16) & 0xff, (value >> 24) & 0xff];
+        // return [value & 0xff, (value >> 8) & 0xff, (value >> 16) & 0xff, (value >> 24) & 0xff];
     }
 
     private async formNetwork(restore: boolean): Promise<void> {
@@ -288,8 +288,8 @@ export class ZBOSSDriver extends EventEmitter {
     }
 
     public async getCoordinator(): Promise<TsType.Coordinator> {
-        // const message = await this.execCommand(CommandId.ZDO_ACTIVE_EP_REQ, {nwk: 0x0000});
-        // const activeEndpoints = message.payload.endpoints;
+        const message = await this.execCommand(CommandId.ZDO_ACTIVE_EP_REQ, {nwk: 0x0000});
+        const activeEndpoints = message.payload.endpoints;
         return {
             ieeeAddr: this.netInfo.ieeeAddr,
             networkAddress: 0x0000,
