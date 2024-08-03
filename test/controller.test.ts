@@ -2185,6 +2185,25 @@ describe('Controller', () => {
         expect(databaseContents().includes('groupID')).toBeFalsy();
     });
 
+    it('Existing database.tmp should not be overwritten', async () => {
+        const databaseTmpPath = options.databasePath + '.tmp';
+        fs.writeFileSync(databaseTmpPath, 'Hello, World!');
+
+        await controller.start();
+        await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
+        controller.createGroup(1);
+
+        // The old database.db.tmp should be gone
+        expect(fs.existsSync(databaseTmpPath)).toBeFalsy();
+
+        // There should still be a database.db.tmp.<something>
+        const dbtmp = fs.readdirSync(TEMP_PATH).filter((value) => value.startsWith('database.tmp'));
+        expect(dbtmp.length).toBe(1);
+
+        // The database.db.tmp.<something> should still have our "Hello, World!"
+        expect(fs.readFileSync(getTempFile(dbtmp[0])).toString().startsWith('Hello, World!')).toBeTruthy();
+    });
+
     it('Should create backup of databse before clearing when datbaseBackupPath is provided', async () => {
         const databaseBackupPath = getTempFile('database.backup');
         if (fs.existsSync(databaseBackupPath)) fs.unlinkSync(databaseBackupPath);
