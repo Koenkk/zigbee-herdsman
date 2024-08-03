@@ -1,6 +1,6 @@
 import {BuffaloZcl} from './buffaloZcl';
 import {Direction, DataType, BuffaloZclDataType, FrameType, ParameterCondition} from './definition/enums';
-import {FoundationCommandName, Foundation} from './definition/foundation';
+import {FoundationCommandName} from './definition/foundation';
 import {Status} from './definition/status';
 import {BuffaloZclOptions, Cluster, Command, ClusterName, CustomClusters, ParameterDefinition} from './definition/tstype';
 import * as Utils from './utils';
@@ -83,7 +83,7 @@ export class ZclFrame {
     }
 
     private writePayloadGlobal(buffalo: BuffaloZcl): void {
-        const command = Object.values(Foundation).find((c): boolean => c.ID === this.command.ID);
+        const command = Utils.getFoundationCommand(this.command.ID);
 
         if (command.parseStrategy === 'repetitive') {
             for (const entry of this.payload) {
@@ -110,11 +110,7 @@ export class ZclFrame {
             /* istanbul ignore else */
             if (command.parseStrategy === 'oneof') {
                 /* istanbul ignore else */
-                if (
-                    [Foundation.discoverRsp, Foundation.discoverCommandsRsp, Foundation.discoverCommandsGenRsp, Foundation.discoverExtRsp].includes(
-                        command,
-                    )
-                ) {
+                if (Utils.isFoundationDiscoverRsp(command.ID)) {
                     buffalo.writeUInt8(this.payload.discComplete);
 
                     for (const entry of this.payload.attrInfos) {
@@ -208,7 +204,7 @@ export class ZclFrame {
     }
 
     private static parsePayloadGlobal(header: ZclHeader, buffalo: BuffaloZcl): ZclPayload {
-        const command = Object.values(Foundation).find((c): boolean => c.ID === header.commandIdentifier);
+        const command = Utils.getFoundationCommand(header.commandIdentifier);
 
         if (command.parseStrategy === 'repetitive') {
             const payload = [];
@@ -261,11 +257,7 @@ export class ZclFrame {
             /* istanbul ignore else */
             if (command.parseStrategy === 'oneof') {
                 /* istanbul ignore else */
-                if (
-                    [Foundation.discoverRsp, Foundation.discoverCommandsRsp, Foundation.discoverCommandsGenRsp, Foundation.discoverExtRsp].includes(
-                        command,
-                    )
-                ) {
+                if (Utils.isFoundationDiscoverRsp(command.ID)) {
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     const payload: {discComplete: number; attrInfos: {[k: string]: any}[]} = {
                         discComplete: buffalo.readUInt8(),

@@ -1531,7 +1531,6 @@ describe('Ember Adapter Layer', () => {
         it('Triggers watchdog counters', async () => {
             await jest.advanceTimersByTimeAsync(3610000);
             expect(mockEzspReadAndClearCounters).toHaveBeenCalledTimes(1);
-            console.log(loggerSpies.info.mock.calls);
             expect(loggerSpies.info).toHaveBeenCalledTimes(2);
             expect(loggerSpies.info.mock.calls[0][0]).toMatch(/[NCP COUNTERS]/);
             expect(loggerSpies.info.mock.calls[1][0]).toMatch(/[ASH COUNTERS]/);

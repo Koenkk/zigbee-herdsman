@@ -2389,7 +2389,6 @@ export class EmberAdapter extends Adapter {
                 destinationAddressOrGroup as number, // not used with UNICAST_BINDING
                 destinationEndpoint, // not used with MULTICAST_BINDING
             );
-            console.log(zdoPayload);
             const [status, apsFrame] = await this.sendZDORequest(
                 destinationNetworkAddress,
                 Zdo.ClusterId.BIND_REQUEST,

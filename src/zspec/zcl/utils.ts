@@ -1,7 +1,6 @@
 import {Clusters} from './definition/cluster';
 import {DataType, DataTypeClass} from './definition/enums';
-import {Foundation} from './definition/foundation';
-import {FoundationCommandName} from './definition/foundation';
+import {Foundation, FoundationDefinition, FoundationCommandName} from './definition/foundation';
 import {Attribute, Cluster, ClusterDefinition, ClusterName, Command, CustomClusters} from './definition/tstype';
 
 const DATA_TYPE_CLASS_DISCRETE = [
@@ -59,6 +58,13 @@ const DATA_TYPE_CLASS_ANALOG = [
     DataType.TOD,
     DataType.DATE,
     DataType.UTC,
+];
+
+const FOUNDATION_DISCOVER_RSP_IDS = [
+    Foundation.discoverRsp.ID,
+    Foundation.discoverCommandsRsp.ID,
+    Foundation.discoverCommandsGenRsp.ID,
+    Foundation.discoverExtRsp.ID,
 ];
 
 export function getDataTypeClass(dataType: DataType): DataTypeClass {
@@ -307,4 +313,18 @@ export function getGlobalCommand(key: number | string): Command {
 
 export function isClusterName(name: string): name is ClusterName {
     return name in Clusters;
+}
+
+export function getFoundationCommand(id: number): FoundationDefinition {
+    for (const commandName in Foundation) {
+        const command = Foundation[commandName as FoundationCommandName];
+
+        if (command.ID === id) {
+            return command;
+        }
+    }
+}
+
+export function isFoundationDiscoverRsp(id: number): boolean {
+    return FOUNDATION_DISCOVER_RSP_IDS.includes(id);
 }
