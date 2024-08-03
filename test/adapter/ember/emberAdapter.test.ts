@@ -2140,6 +2140,17 @@ describe('Ember Adapter Layer', () => {
             expect(mockEzspSendBroadcast).toHaveBeenCalledTimes(1);
         });
 
+        it('Adapter impl: Set transmit power on startup', async () => {
+            adapter = new EmberAdapter(DEFAULT_NETWORK_OPTIONS, DEFAULT_SERIAL_PORT_OPTIONS, backupPath, {
+                ...DEFAULT_ADAPTER_OPTIONS,
+                transmitPower: 10,
+            });
+            const result = adapter.start();
+            await jest.advanceTimersByTimeAsync(5000);
+            await expect(result).resolves.toStrictEqual('resumed');
+            expect(mockEzspSetRadioPower).toHaveBeenCalledTimes(1);
+        });
+
         it('Adapter impl: setTransmitPower', async () => {
             await expect(adapter.setTransmitPower(10)).resolves.toStrictEqual(undefined);
             expect(mockEzspSetRadioPower).toHaveBeenCalledTimes(1);

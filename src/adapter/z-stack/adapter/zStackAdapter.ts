@@ -157,6 +157,10 @@ class ZStackAdapter extends Adapter {
             await this.setLED('disable');
         }
 
+        if (this.adapterOptions.transmitPower != null) {
+            await this.setTransmitPower(this.adapterOptions.transmitPower);
+        }
+
         return startResult;
     }
 

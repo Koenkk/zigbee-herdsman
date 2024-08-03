@@ -1757,6 +1757,10 @@ export class EmberAdapter extends Adapter {
 
         const result = await this.initEzsp();
 
+        if (this.adapterOptions.transmitPower != null) {
+            await this.setTransmitPower(this.adapterOptions.transmitPower);
+        }
+
         return result;
     }
 
