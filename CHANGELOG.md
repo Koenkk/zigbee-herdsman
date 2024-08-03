@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.55.4](https://github.com/Koenkk/zigbee-herdsman/compare/v0.55.3...v0.55.4) (2024-08-03)
+
+
+### Bug Fixes
+
+* call fsync before rename ([#1134](https://github.com/Koenkk/zigbee-herdsman/issues/1134)) ([1c9190a](https://github.com/Koenkk/zigbee-herdsman/commit/1c9190a373c4e878f36cc23e399add3523c616ec))
+* **ignore:** update dependencies ([#1135](https://github.com/Koenkk/zigbee-herdsman/issues/1135)) ([1fd87d6](https://github.com/Koenkk/zigbee-herdsman/commit/1fd87d6a98811b1dbb4951fc6b3103ec0a6ad288))
+* Move Deconz change network paramters to `start` from `getNetworkParameters` ([#1138](https://github.com/Koenkk/zigbee-herdsman/issues/1138)) ([b207c73](https://github.com/Koenkk/zigbee-herdsman/commit/b207c730dc1439ce9e8d3fcaf12ec6b2c24e9c20))
+
 ## [0.55.3](https://github.com/Koenkk/zigbee-herdsman/compare/v0.55.2...v0.55.3) (2024-07-26)
 
 
