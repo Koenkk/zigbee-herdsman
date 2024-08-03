@@ -18,6 +18,7 @@ import Bonjour, {BrowserConfig, Service} from 'bonjour-service';
 import {setLogger} from '../src/utils/logger';
 import {BroadcastAddress} from '../src/zspec/enums';
 import ZclTransactionSequenceNumber from '../src/controller/helpers/zclTransactionSequenceNumber';
+import exp from 'constants';
 const globalSetImmediate = setImmediate;
 const flushPromises = () => new Promise(globalSetImmediate);
 
@@ -2185,8 +2186,8 @@ describe('Controller', () => {
         expect(databaseContents().includes('groupID')).toBeFalsy();
     });
 
-    it('Write with database.db.tmp in place should emit warning', async () => {
-        const databaseTmpPath = getTempFile('database.db.tmp');
+    it('Existing database.tmp should not be overwritten', async () => {
+        const databaseTmpPath = options.databasePath + '.tmp';
         fs.writeFileSync(databaseTmpPath, 'Hello, World!');
 
         await controller.start();
@@ -2197,14 +2198,11 @@ describe('Controller', () => {
         expect(fs.existsSync(databaseTmpPath)).toBeFalsy();
 
         // There should still be a database.db.tmp.<something>
-        const dbtmp = fs.readdirSync(TEMP_PATH).filter((value, index) => value.startsWith('database.db.tmp'));
-        expect(dbtmp.length == 1).toBeTruthy();
+        const dbtmp = fs.readdirSync(TEMP_PATH).filter(value => value.startsWith('database.tmp'));
+        expect(dbtmp.length).toBe(1);
 
         // The database.db.tmp.<something> should still have our "Hello, World!"
-        expect(fs.readFileSync(dbtmp[0]).toString().startsWith('Hello, World!')).toBeTruthy();
-
-        // Clean up
-        fs.unlinkSync(dbtmp[0]);
+        expect(fs.readFileSync(getTempFile(dbtmp[0])).toString().startsWith('Hello, World!')).toBeTruthy();
     });
 
     it('Should create backup of databse before clearing when datbaseBackupPath is provided', async () => {
@@ -9375,3 +9373,4 @@ describe('Controller', () => {
         );
     });
 });
+
