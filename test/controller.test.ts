@@ -2198,7 +2198,7 @@ describe('Controller', () => {
         expect(fs.existsSync(databaseTmpPath)).toBeFalsy();
 
         // There should still be a database.db.tmp.<something>
-        const dbtmp = fs.readdirSync(TEMP_PATH).filter(value => value.startsWith('database.tmp'));
+        const dbtmp = fs.readdirSync(TEMP_PATH).filter((value) => value.startsWith('database.tmp'));
         expect(dbtmp.length).toBe(1);
 
         // The database.db.tmp.<something> should still have our "Hello, World!"
@@ -9373,4 +9373,3 @@ describe('Controller', () => {
         );
     });
 });
-
