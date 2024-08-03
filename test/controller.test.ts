@@ -18,7 +18,6 @@ import Bonjour, {BrowserConfig, Service} from 'bonjour-service';
 import {setLogger} from '../src/utils/logger';
 import {BroadcastAddress} from '../src/zspec/enums';
 import ZclTransactionSequenceNumber from '../src/controller/helpers/zclTransactionSequenceNumber';
-import exp from 'constants';
 const globalSetImmediate = setImmediate;
 const flushPromises = () => new Promise(globalSetImmediate);
 
