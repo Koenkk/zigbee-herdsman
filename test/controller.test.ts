@@ -2187,7 +2187,7 @@ describe('Controller', () => {
 
     it('Write with database.db.tmp in place should emit warning', async () => {
         const databaseTmpPath = getTempFile('database.db.tmp');
-        fs.writeFileSync(databaseTmpPath, "Hello, World!");
+        fs.writeFileSync(databaseTmpPath, 'Hello, World!');
 
         await controller.start();
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
@@ -2197,11 +2197,11 @@ describe('Controller', () => {
         expect(fs.existsSync(databaseTmpPath)).toBeFalsy();
 
         // There should still be a database.db.tmp.<something>
-        const dbtmp = fs.readdirSync(TEMP_PATH).filter((value, index) => value.startsWith("database.db.tmp"));
+        const dbtmp = fs.readdirSync(TEMP_PATH).filter((value, index) => value.startsWith('database.db.tmp'));
         expect(dbtmp.length == 1).toBeTruthy();
 
         // The database.db.tmp.<something> should still have our "Hello, World!"
-        expect(fs.readFileSync(dbtmp[0]).toString().startsWith("Hello, World!")).toBeTruthy();
+        expect(fs.readFileSync(dbtmp[0]).toString().startsWith('Hello, World!')).toBeTruthy();
 
         // Clean up
         fs.unlinkSync(dbtmp[0]);
