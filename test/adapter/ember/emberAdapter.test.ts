@@ -684,7 +684,7 @@ describe('Ember Adapter Layer', () => {
         expect(mockEzspFormNetwork).toHaveBeenCalledWith({
             panId: 1234,
             extendedPanId: DEFAULT_NETWORK_OPTIONS.extendedPanID!,
-            radioTxPower: 5,// default when setting `transmitPower` is null/zero
+            radioTxPower: 5, // default when setting `transmitPower` is null/zero
             radioChannel: DEFAULT_NETWORK_OPTIONS.channelList[0],
             joinMethod: EmberJoinMethod.MAC_ASSOCIATION,
             nwkManagerId: ZSpec.COORDINATOR_ADDRESS,
