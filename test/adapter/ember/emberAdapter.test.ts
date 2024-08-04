@@ -16,6 +16,7 @@ import {
     EmberDeviceUpdate,
     EmberIncomingMessageType,
     EmberJoinDecision,
+    EmberJoinMethod,
     EmberKeyStructBitmask,
     EmberNetworkStatus,
     EmberNodeType,
@@ -622,20 +623,17 @@ describe('Ember Adapter Layer', () => {
     it('Starts with restored when network key mismatch but backup available', async () => {
         adapter = new EmberAdapter(DEFAULT_NETWORK_OPTIONS, DEFAULT_SERIAL_PORT_OPTIONS, backupPath, DEFAULT_ADAPTER_OPTIONS);
 
-        mockEzspGetNetworkParameters.mockResolvedValueOnce([
-            SLStatus.OK,
-            EmberNodeType.COORDINATOR,
-            {
-                extendedPanId: DEFAULT_NETWORK_OPTIONS.extendedPanID!,
-                panId: DEFAULT_NETWORK_OPTIONS.panID,
-                radioTxPower: 5,
-                radioChannel: DEFAULT_NETWORK_OPTIONS.channelList[0],
-                joinMethod: 0,
-                nwkManagerId: 0,
-                nwkUpdateId: 0,
-                channels: ZSpec.ALL_802_15_4_CHANNELS_MASK,
-            } as EmberNetworkParameters,
-        ]);
+        const expectedNetParams: EmberNetworkParameters = {
+            extendedPanId: DEFAULT_NETWORK_OPTIONS.extendedPanID!,
+            panId: DEFAULT_NETWORK_OPTIONS.panID,
+            radioTxPower: 5,
+            radioChannel: DEFAULT_NETWORK_OPTIONS.channelList[0],
+            joinMethod: 0,
+            nwkManagerId: 0,
+            nwkUpdateId: 0,
+            channels: ZSpec.ALL_802_15_4_CHANNELS_MASK,
+        };
+        mockEzspGetNetworkParameters.mockResolvedValueOnce([SLStatus.OK, EmberNodeType.COORDINATOR, expectedNetParams]);
         const contents = Buffer.from(DEFAULT_BACKUP.network_key.key, 'hex').fill(0xff);
         mockEzspExportKey.mockResolvedValueOnce([SLStatus.OK, {contents} as SecManKey]);
 
@@ -643,6 +641,7 @@ describe('Ember Adapter Layer', () => {
 
         await jest.advanceTimersByTimeAsync(5000);
         await expect(result).resolves.toStrictEqual('restored');
+        expect(mockEzspFormNetwork).toHaveBeenCalledWith(expectedNetParams);
     });
 
     it('Starts with reset when networks mismatch but no backup available', async () => {
@@ -682,6 +681,86 @@ describe('Ember Adapter Layer', () => {
 
         await jest.advanceTimersByTimeAsync(5000);
         await expect(result).resolves.toStrictEqual('reset');
+        expect(mockEzspFormNetwork).toHaveBeenCalledWith({
+            panId: 1234,
+            extendedPanId: DEFAULT_NETWORK_OPTIONS.extendedPanID!,
+            radioTxPower: 5, // default when setting `transmitPower` is null/zero
+            radioChannel: DEFAULT_NETWORK_OPTIONS.channelList[0],
+            joinMethod: EmberJoinMethod.MAC_ASSOCIATION,
+            nwkManagerId: ZSpec.COORDINATOR_ADDRESS,
+            nwkUpdateId: 0,
+            channels: ZSpec.ALL_802_15_4_CHANNELS_MASK,
+        } as EmberNetworkParameters);
+    });
+
+    it('Starts with reset and forms with given transmit power', async () => {
+        adapter = new EmberAdapter(
+            Object.assign({}, DEFAULT_NETWORK_OPTIONS, {panID: 1234}),
+            DEFAULT_SERIAL_PORT_OPTIONS,
+            backupPath,
+            Object.assign({}, DEFAULT_ADAPTER_OPTIONS, {transmitPower: 10}),
+        );
+
+        const result = adapter.start();
+
+        await jest.advanceTimersByTimeAsync(5000);
+        await expect(result).resolves.toStrictEqual('reset');
+        expect(mockEzspFormNetwork).toHaveBeenCalledWith({
+            panId: 1234,
+            extendedPanId: DEFAULT_NETWORK_OPTIONS.extendedPanID!,
+            radioTxPower: 10,
+            radioChannel: DEFAULT_NETWORK_OPTIONS.channelList[0],
+            joinMethod: EmberJoinMethod.MAC_ASSOCIATION,
+            nwkManagerId: ZSpec.COORDINATOR_ADDRESS,
+            nwkUpdateId: 0,
+            channels: ZSpec.ALL_802_15_4_CHANNELS_MASK,
+        } as EmberNetworkParameters);
+    });
+
+    it('Starts with mismatching transmit power', async () => {
+        adapter = new EmberAdapter(
+            DEFAULT_NETWORK_OPTIONS,
+            DEFAULT_SERIAL_PORT_OPTIONS,
+            backupPath,
+            Object.assign({}, DEFAULT_ADAPTER_OPTIONS, {transmitPower: 10}),
+        );
+
+        const result = adapter.start();
+
+        await jest.advanceTimersByTimeAsync(5000);
+        await expect(result).resolves.toStrictEqual('resumed');
+        expect(mockEzspSetRadioPower).toHaveBeenCalledTimes(1);
+        expect(mockEzspSetRadioPower).toHaveBeenCalledWith(10);
+    });
+
+    it('Starts with matching transmit power after form', async () => {
+        adapter = new EmberAdapter(
+            DEFAULT_NETWORK_OPTIONS,
+            DEFAULT_SERIAL_PORT_OPTIONS,
+            backupPath,
+            Object.assign({}, DEFAULT_ADAPTER_OPTIONS, {transmitPower: 10}),
+        );
+        mockEzspNetworkInit.mockResolvedValueOnce(SLStatus.NOT_JOINED);
+        mockEzspGetNetworkParameters.mockResolvedValueOnce([
+            SLStatus.OK,
+            EmberNodeType.COORDINATOR,
+            {
+                extendedPanId: DEFAULT_NETWORK_OPTIONS.extendedPanID!,
+                panId: DEFAULT_NETWORK_OPTIONS.panID,
+                radioTxPower: 10,
+                radioChannel: DEFAULT_NETWORK_OPTIONS.channelList[0],
+                joinMethod: 0,
+                nwkManagerId: 0,
+                nwkUpdateId: 0,
+                channels: ZSpec.ALL_802_15_4_CHANNELS_MASK,
+            } as EmberNetworkParameters,
+        ]);
+
+        const result = adapter.start();
+
+        await jest.advanceTimersByTimeAsync(5000);
+        await expect(result).resolves.toStrictEqual('restored');
+        expect(mockEzspSetRadioPower).toHaveBeenCalledTimes(0);
     });
 
     it('Fails to start when EZSP layer fails to start', async () => {

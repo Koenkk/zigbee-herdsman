@@ -19,8 +19,6 @@ import SocketPortUtils from '../../socketPortUtils';
 import {
     EMBER_INSTALL_CODE_CRC_SIZE,
     EMBER_INSTALL_CODE_SIZES,
-    EMBER_NUM_802_15_4_CHANNELS,
-    EMBER_MIN_802_15_4_CHANNEL_NUMBER,
     LONG_DEST_FRAME_CONTROL,
     MAC_ACK_REQUIRED,
     MAXIMUM_INTERPAN_LENGTH,
@@ -32,7 +30,6 @@ import {
     STACK_PROFILE_ZIGBEE_PRO,
     SECURITY_LEVEL_Z3,
     INVALID_RADIO_CHANNEL,
-    EMBER_ALL_802_15_4_CHANNELS_MASK,
     ZIGBEE_PROFILE_INTEROPERABILITY_LINK_KEY,
     EMBER_MIN_BROADCAST_ADDRESS,
 } from '../consts';
@@ -790,6 +787,10 @@ export class EmberAdapter extends Adapter {
             throw new Error(`Failed to get network parameters with status=${SLStatus[status]}.`);
         }
 
+        if (this.adapterOptions.transmitPower != null && parameters.radioTxPower !== this.adapterOptions.transmitPower) {
+            await this.setTransmitPower(this.adapterOptions.transmitPower);
+        }
+
         this.networkCache.parameters = parameters;
         this.networkCache.eui64 = await this.ezsp.ezspGetEui64();
 
@@ -1143,12 +1144,12 @@ export class EmberAdapter extends Adapter {
         const netParams: EmberNetworkParameters = {
             panId,
             extendedPanId,
-            radioTxPower: 5,
+            radioTxPower: this.adapterOptions.transmitPower || 5,
             radioChannel,
             joinMethod: EmberJoinMethod.MAC_ASSOCIATION,
             nwkManagerId: ZSpec.COORDINATOR_ADDRESS,
             nwkUpdateId: 0,
-            channels: EMBER_ALL_802_15_4_CHANNELS_MASK,
+            channels: ZSpec.ALL_802_15_4_CHANNELS_MASK,
         };
 
         logger.info(`[INIT FORM] Forming new network with: ${JSON.stringify(netParams)}`, NS);
@@ -1853,7 +1854,7 @@ export class EmberAdapter extends Adapter {
                 throw new Error(`[BACKUP] Failed to export Network Key with status=${SLStatus[nkStatus]}.`);
             }
 
-            const zbChannels = Array.from(Array(EMBER_NUM_802_15_4_CHANNELS), (e, i) => i + EMBER_MIN_802_15_4_CHANNEL_NUMBER);
+            const zbChannels = Array.from(Array(ZSpec.NUM_802_15_4_CHANNELS), (e, i) => i + ZSpec.MIN_802_15_4_CHANNEL_NUMBER);
 
             return {
                 networkOptions: {

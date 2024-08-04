@@ -2313,6 +2313,13 @@ describe('zstack-adapter', () => {
         });
     });
 
+    it('Start with transmit power set', async () => {
+        basicMocks();
+        adapter = new ZStackAdapter(networkOptions, serialPortOptions, 'backup.json', {transmitPower: 2, disableLED: false});
+        await adapter.start();
+        expect(mockZnpRequest).toBeCalledWith(Subsystem.SYS, 'stackTune', {operation: 0, value: 2});
+    });
+
     it('Set transmit power', async () => {
         basicMocks();
         await adapter.start();
