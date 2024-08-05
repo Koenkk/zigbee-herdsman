@@ -1,10 +1,21 @@
 import {ClusterId as ZdoClusterId} from '../../../zspec/zdo';
 import {Subsystem, Type as CommandType} from '../unpi/constants';
 import ParameterType from './parameterType';
-import {MtCmd, MtCmdZdo} from './tstype';
+import {MtCmd, MtCmdZdoReq, MtCmdZdoResp} from './tstype';
 
 const Definition: {
-    [s: number]: (MtCmd | MtCmdZdo)[];
+    [Subsystem.SYS]: MtCmd[];
+    [Subsystem.MAC]: MtCmd[];
+    [Subsystem.AF]: MtCmd[];
+    [Subsystem.ZDO]: (MtCmdZdoReq | MtCmdZdoResp)[];
+    [Subsystem.SAPI]: MtCmd[];
+    [Subsystem.UTIL]: MtCmd[];
+    [Subsystem.DEBUG]: MtCmd[];
+    [Subsystem.APP]: MtCmd[];
+    [Subsystem.APP_CNF]: MtCmd[];
+    [Subsystem.GREENPOWER]: MtCmd[];
+    [Subsystem.RESERVED]: MtCmd[];
+    [Subsystem.NWK]: MtCmd[];
 } = {
     [Subsystem.SYS]: [
         {
@@ -1377,19 +1388,21 @@ const Definition: {
             name: 'nwkAddrRsp',
             ID: 128,
             type: CommandType.AREQ,
-            request: [
-                {name: 'status', parameterType: ParameterType.UINT8},
-                {name: 'ieeeaddr', parameterType: ParameterType.IEEEADDR},
-                {name: 'nwkaddr', parameterType: ParameterType.UINT16},
-                {name: 'startindex', parameterType: ParameterType.UINT8},
-                {name: 'numassocdev', parameterType: ParameterType.UINT8},
-                {name: 'assocdevlist', parameterType: ParameterType.LIST_ASSOC_DEV},
-            ],
+            zdo: {cluterId: ZdoClusterId.NETWORK_ADDRESS_RESPONSE},
+            // request: [
+            //     {name: 'status', parameterType: ParameterType.UINT8},
+            //     {name: 'ieeeaddr', parameterType: ParameterType.IEEEADDR},
+            //     {name: 'nwkaddr', parameterType: ParameterType.UINT16},
+            //     {name: 'startindex', parameterType: ParameterType.UINT8},
+            //     {name: 'numassocdev', parameterType: ParameterType.UINT8},
+            //     {name: 'assocdevlist', parameterType: ParameterType.LIST_ASSOC_DEV},
+            // ],
         },
         {
             name: 'ieeeAddrRsp',
             ID: 129,
             type: CommandType.AREQ,
+            zdo: {cluterId: ZdoClusterId.IEEE_ADDRESS_RESPONSE},
             request: [
                 {name: 'status', parameterType: ParameterType.UINT8},
                 {name: 'ieeeaddr', parameterType: ParameterType.IEEEADDR},
@@ -2656,6 +2669,8 @@ const Definition: {
             response: [{name: 'status', parameterType: ParameterType.UINT8}],
         },
     ],
+    [Subsystem.RESERVED]: [],
+    [Subsystem.NWK]: [],
 };
 
 export default Definition;

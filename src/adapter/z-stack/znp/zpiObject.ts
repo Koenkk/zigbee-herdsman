@@ -18,7 +18,6 @@ const BufferAndListTypes = [
     ParameterType.LIST_BIND_TABLE,
     ParameterType.LIST_NEIGHBOR_LQI,
     ParameterType.LIST_NETWORK,
-    ParameterType.LIST_ASSOC_DEV,
     ParameterType.LIST_UINT8,
 ];
 
@@ -99,17 +98,6 @@ class ZpiObject {
                 /* istanbul ignore else */
                 if (typeof length === 'number') {
                     options.length = length;
-                }
-
-                if (parameter.parameterType === ParameterType.LIST_ASSOC_DEV) {
-                    // For LIST_ASSOC_DEV, we also need to grab the startindex which is right before the length
-                    const startIndexParameter = parameters[parameters.indexOf(parameter) - 2];
-                    const startIndex: MtType = result[startIndexParameter.name];
-
-                    /* istanbul ignore else */
-                    if (typeof startIndex === 'number') {
-                        options.startIndex = startIndex;
-                    }
                 }
             }
 

@@ -1536,6 +1536,7 @@ export class BuffaloZdo extends Buffalo {
             let assocDevList: number[] = [];
 
             if (this.isMore()) {
+                // TODO: wrong logic?
                 assocDevCount = this.readUInt8();
                 startIndex = this.readUInt8();
 

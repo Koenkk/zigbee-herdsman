@@ -128,29 +128,6 @@ class BuffaloZnp extends Buffalo {
         return value;
     }
 
-    private readListAssocDev(options: BuffaloZnpOptions): number[] {
-        if (options.length == null) {
-            throw new Error('Cannot read LIST_ASSOC_DEV without length option specified');
-        }
-        if (options.startIndex == null) {
-            throw new Error('Cannot read LIST_ASSOC_DEV without startIndex option specified');
-        }
-
-        const value: number[] = [];
-        const listLength = options.length - options.startIndex;
-
-        for (let i = 0; i < listLength; i++) {
-            // There are max 70 bytes in the list (= 35 uint16)
-            if (i === 35) {
-                break;
-            }
-
-            value.push(this.readUInt16());
-        }
-
-        return value;
-    }
-
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     public write(type: ParameterType, value: any, options: BuffaloZnpOptions): void {
         switch (type) {
@@ -198,7 +175,6 @@ class BuffaloZnp extends Buffalo {
             // case ParameterType.LIST_BIND_TABLE:
             // case ParameterType.LIST_NEIGHBOR_LQI:
             // case ParameterType.LIST_NETWORK:
-            // case ParameterType.LIST_ASSOC_DEV:
             case ParameterType.INT8: {
                 return this.writeInt8(value);
             }
@@ -289,16 +265,10 @@ class BuffaloZnp extends Buffalo {
 
                 return this.readListNetwork(options.length);
             }
-            case ParameterType.LIST_ASSOC_DEV: {
-                return this.readListAssocDev(options);
-            }
             case ParameterType.INT8: {
                 return this.readInt8();
             }
         }
-
-        // unreachable detected in TS, but not in JS when typing ignored for "type", so kept for good measure
-        throw new Error(`Read for '${type}' not available`);
     }
 }
 
