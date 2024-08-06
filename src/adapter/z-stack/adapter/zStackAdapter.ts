@@ -124,7 +124,7 @@ class ZStackAdapter extends Adapter {
         // Old firmware did not support version, assume it's Z-Stack 1.2 for now.
         try {
             this.version = (await this.znp.request(Subsystem.SYS, 'version', {})).payload;
-        } catch (e) {
+        } catch {
             logger.debug(`Failed to get zStack version, assuming 1.2`, NS);
             this.version = {transportrev: 2, product: 0, majorrel: 2, minorrel: 0, maintrel: 0, revision: ''};
         }
