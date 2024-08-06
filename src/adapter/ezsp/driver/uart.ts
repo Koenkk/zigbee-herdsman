@@ -295,7 +295,7 @@ export class SerialDriver extends EventEmitter {
 
         try {
             code = NcpResetCode[frame.buffer[2]];
-        } catch (e) {
+        } catch {
             code = NcpResetCode.ERROR_UNKNOWN_EM3XX_ERROR;
         }
 

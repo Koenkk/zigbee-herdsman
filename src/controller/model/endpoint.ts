@@ -337,7 +337,7 @@ class Endpoint extends Entity {
         } catch (error) {
             // If we got a failed transaction, the device is likely sleeping.
             // Queue for transmission later.
-            logger.debug(logPrefix + `queue request (transaction failed)`, NS);
+            logger.debug(logPrefix + `queue request (transaction failed) (${error.message})`, NS);
             return this.pendingRequests.queue(request);
         }
     }

@@ -1185,7 +1185,7 @@ export class EmberAdapter extends Adapter {
         try {
             data = JSON.parse(readFileSync(this.backupPath).toString());
         } catch (error) {
-            throw new Error(`[BACKUP] Coordinator backup is corrupted.`);
+            throw new Error(`[BACKUP] Coordinator backup is corrupted. (${error.message})`);
         }
 
         if (data.metadata?.format === 'zigpy/open-coordinator-backup' && data.metadata?.version) {

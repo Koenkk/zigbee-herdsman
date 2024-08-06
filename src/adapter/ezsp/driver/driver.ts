@@ -639,7 +639,7 @@ export class Driver extends EventEmitter {
             const seq = (apsFrame.sequence + 1) & 0xff;
             await this.ezsp.sendMulticast(apsFrame, seq, data);
             return true;
-        } catch (e) {
+        } catch {
             return false;
         }
     }
@@ -674,7 +674,7 @@ export class Driver extends EventEmitter {
             const seq = (apsFrame.sequence + 1) & 0xff;
             await this.ezsp.sendBroadcast(destination, apsFrame, seq, data);
             return true;
-        } catch (e) {
+        } catch {
             return false;
         }
     }

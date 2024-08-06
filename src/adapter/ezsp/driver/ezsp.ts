@@ -670,7 +670,7 @@ export class Ezsp extends EventEmitter {
                 const response = await waiter.start().promise;
 
                 return response.payload;
-            } catch (error) {
+            } catch {
                 this.waitress.remove(waiter.ID);
                 throw new Error(`Failure send ${name}:` + JSON.stringify(data));
             }

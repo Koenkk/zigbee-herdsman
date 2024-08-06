@@ -1,6 +1,6 @@
 /* istanbul ignore file */
 import {Buffer} from 'buffer';
-/* eslint-disable-next-line @typescript-eslint/ban-types*/
+// eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
 function defineCrc(model: string, calc: Function): Function {
     /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
     const fn = (buf: any, previous: any): number => calc(buf, previous) >>> 0;
