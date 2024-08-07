@@ -269,6 +269,9 @@ class BuffaloZnp extends Buffalo {
                 return this.readInt8();
             }
         }
+
+        // unreachable detected in TS, but not in JS when typing ignored for "type", so kept for good measure
+        throw new Error(`Read for '${type}' not available`);
     }
 }
 
