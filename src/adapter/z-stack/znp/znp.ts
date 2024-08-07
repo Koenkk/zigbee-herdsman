@@ -193,7 +193,7 @@ class Znp extends events.EventEmitter {
     private async skipBootloader(): Promise<void> {
         try {
             await this.request(Subsystem.SYS, 'ping', {capabilities: 1}, null, 250);
-        } catch (error) {
+        } catch {
             // Skip bootloader on CC2530/CC2531
             // Send magic byte: https://github.com/Koenkk/zigbee2mqtt/issues/1343 to bootloader
             // and give ZNP 1 second to start.
@@ -202,7 +202,7 @@ class Znp extends events.EventEmitter {
                 this.unpiWriter.writeBuffer(Buffer.from([0xef]));
                 await Wait(1000);
                 await this.request(Subsystem.SYS, 'ping', {capabilities: 1}, null, 250);
-            } catch (error) {
+            } catch {
                 // Skip bootloader on some CC2652 devices (e.g. zzh-p)
                 logger.info('Skip bootloader for CC2652/CC1352', NS);
                 if (this.serialPort) {

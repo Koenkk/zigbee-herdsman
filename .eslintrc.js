@@ -12,7 +12,6 @@ module.exports = {
         '@typescript-eslint/no-empty-function': 'off',
         '@typescript-eslint/no-explicit-any': 'error',
         '@typescript-eslint/no-unused-vars': 'error',
-        '@typescript-eslint/semi': ['error'],
         'array-bracket-spacing': ['error', 'never'],
         'no-return-await': 'error',
         'object-curly-spacing': ['error', 'never'],

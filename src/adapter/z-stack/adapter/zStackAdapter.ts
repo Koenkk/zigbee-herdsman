@@ -126,7 +126,7 @@ class ZStackAdapter extends Adapter {
         // Old firmware did not support version, assume it's Z-Stack 1.2 for now.
         try {
             this.version = (await this.znp.request(Subsystem.SYS, 'version', {})).payload;
-        } catch (e) {
+        } catch {
             logger.debug(`Failed to get zStack version, assuming 1.2`, NS);
             this.version = {transportrev: 2, product: 0, majorrel: 2, minorrel: 0, maintrel: 0, revision: ''};
         }
@@ -157,6 +157,10 @@ class ZStackAdapter extends Adapter {
             // Wait a bit for adapter to startup, otherwise led doesn't disable (tested with CC2531)
             await Wait(200);
             await this.setLED('disable');
+        }
+
+        if (this.adapterOptions.transmitPower != null) {
+            await this.setTransmitPower(this.adapterOptions.transmitPower);
         }
 
         return startResult;

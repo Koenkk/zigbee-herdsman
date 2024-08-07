@@ -415,7 +415,7 @@ class Device extends Entity {
                         srcEndpoint: dataPayload.destinationEndpoint,
                     });
                 } catch (error) {
-                    logger.error(`Read response to ${this.ieeeAddr} failed`, NS);
+                    logger.error(`Read response to ${this.ieeeAddr} failed (${error.message})`, NS);
                 }
             }
         }
@@ -453,7 +453,7 @@ class Device extends Entity {
                 }
             } catch (error) {
                 /* istanbul ignore next */
-                logger.error(`Handling of poll check-in from ${this.ieeeAddr} failed`, NS);
+                logger.error(`Handling of poll check-in from ${this.ieeeAddr} failed (${error.message})`, NS);
             }
         }
 
@@ -489,7 +489,7 @@ class Device extends Entity {
                       : Zcl.Direction.CLIENT_TO_SERVER;
                 await endpoint.defaultResponse(frame.command.ID, 0, frame.cluster.ID, frame.header.transactionSequenceNumber, {direction});
             } catch (error) {
-                logger.debug(`Default response to ${this.ieeeAddr} failed`, NS);
+                logger.debug(`Default response to ${this.ieeeAddr} failed (${error.message})`, NS);
             }
         }
     }
@@ -903,7 +903,7 @@ class Device extends Entity {
                 activeEndpoints = await Entity.adapter.activeEndpoints(this.networkAddress);
                 break;
             } catch (error) {
-                logger.debug(`Interview - active endpoints request failed for '${this.ieeeAddr}', attempt ${attempt + 1}`, NS);
+                logger.debug(`Interview - active endpoints request failed for '${this.ieeeAddr}', attempt ${attempt + 1} (${error.message})`, NS);
             }
         }
         if (!activeEndpoints) {

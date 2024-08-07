@@ -362,7 +362,9 @@ export class ZnpAdapterManager {
             try {
                 await started.start().promise;
             } catch (error) {
-                throw new Error(`network commissioning timed out - most likely network with the same panId or extendedPanId already exists nearby`);
+                throw new Error(
+                    `network commissioning timed out - most likely network with the same panId or extendedPanId already exists nearby (${error.message})`,
+                );
             }
         } else {
             /* Z-Stack 1.2 requires startup to be performed instead of BDB commissioning */

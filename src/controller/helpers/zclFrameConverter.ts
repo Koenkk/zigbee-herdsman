@@ -26,7 +26,7 @@ function attributeKeyValue(frame: Zcl.Frame, deviceManufacturerID: number, custo
         try {
             const attribute = cluster.getAttribute(item.attrId);
             payload[attribute.name] = item.attrData;
-        } catch (error) {
+        } catch {
             payload[item.attrId] = item.attrData;
         }
     }
@@ -41,7 +41,7 @@ function attributeList(frame: Zcl.Frame, deviceManufacturerID: number, customClu
         try {
             const attribute = cluster.getAttribute(item.attrId);
             payload.push(attribute.name);
-        } catch (error) {
+        } catch {
             payload.push(item.attrId);
         }
     }

@@ -117,7 +117,7 @@ export function deserialize(payload: any, schema: any[]): any[] {
     return [result, data];
 }
 
-/* eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/ban-types*/
+/* eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-function-type*/
 export function serialize(data: any[], schema: {serialize: Function}[]): Buffer {
     return Buffer.concat(schema.map((s, idx) => s.serialize(s, data[idx])));
 }
