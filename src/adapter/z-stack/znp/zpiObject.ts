@@ -18,26 +18,20 @@ const BufferAndListTypes = [
     ParameterType.LIST_BIND_TABLE,
     ParameterType.LIST_NEIGHBOR_LQI,
     ParameterType.LIST_NETWORK,
-    ParameterType.LIST_ASSOC_DEV,
     ParameterType.LIST_UINT8,
 ];
 
 class ZpiObject {
     public readonly subsystem: Subsystem;
-    public readonly command: string;
-    public readonly commandID: number;
+    public readonly command: MtCmd;
     public readonly payload: ZpiObjectPayload;
-    public readonly type: Type;
+    public readonly unpiFrame: UnpiFrame;
 
-    private readonly parameters: MtParameter[];
-
-    private constructor(type: Type, subsystem: Subsystem, command: string, commandID: number, payload: ZpiObjectPayload, parameters: MtParameter[]) {
+    private constructor(subsystem: Subsystem, command: MtCmd, payload: ZpiObjectPayload, unpiFrame: UnpiFrame) {
         this.subsystem = subsystem;
         this.command = command;
-        this.commandID = commandID;
         this.payload = payload;
-        this.type = type;
-        this.parameters = parameters;
+        this.unpiFrame = unpiFrame;
     }
 
     public static createRequest(subsystem: Subsystem, command: string, payload: ZpiObjectPayload): ZpiObject {
@@ -51,12 +45,20 @@ class ZpiObject {
             throw new Error(`Command '${command}' from subsystem '${subsystem}' not found`);
         }
 
-        return new ZpiObject(cmd.type, subsystem, command, cmd.ID, payload, cmd.request);
+        const upiFrame = this.createUnpiFrame(cmd, subsystem, payload);
+        return new ZpiObject(subsystem, cmd, payload, upiFrame);
     }
 
-    public toUnpiFrame(): UnpiFrame {
-        const buffer = this.createPayloadBuffer();
-        return new UnpiFrame(this.type, this.subsystem, this.commandID, buffer);
+    private static createUnpiFrame(command: MtCmd, subsystem: Subsystem, payload: ZpiObjectPayload): UnpiFrame {
+        const buffalo = new BuffaloZnp(Buffer.alloc(MaxDataSize));
+
+        for (const parameter of command.request) {
+            const value = payload[parameter.name];
+            buffalo.write(parameter.parameterType, value, {});
+        }
+
+        const buffer = buffalo.getWritten();
+        return new UnpiFrame(command.type, subsystem, command.ID, buffer);
     }
 
     public static fromUnpiFrame(frame: UnpiFrame): ZpiObject {
@@ -77,7 +79,7 @@ class ZpiObject {
         }
 
         const payload = this.readParameters(frame.data, parameters);
-        return new ZpiObject(frame.type, frame.subsystem, cmd.name, cmd.ID, payload, parameters);
+        return new ZpiObject(frame.subsystem, cmd, payload, frame);
     }
 
     private static readParameters(buffer: Buffer, parameters: MtParameter[]): ZpiObjectPayload {
@@ -97,17 +99,6 @@ class ZpiObject {
                 if (typeof length === 'number') {
                     options.length = length;
                 }
-
-                if (parameter.parameterType === ParameterType.LIST_ASSOC_DEV) {
-                    // For LIST_ASSOC_DEV, we also need to grab the startindex which is right before the length
-                    const startIndexParameter = parameters[parameters.indexOf(parameter) - 2];
-                    const startIndex: MtType = result[startIndexParameter.name];
-
-                    /* istanbul ignore else */
-                    if (typeof startIndex === 'number') {
-                        options.startIndex = startIndex;
-                    }
-                }
             }
 
             result[parameter.name] = buffalo.read(parameter.parameterType, options);
@@ -116,20 +107,10 @@ class ZpiObject {
         return result;
     }
 
-    private createPayloadBuffer(): Buffer {
-        const buffalo = new BuffaloZnp(Buffer.alloc(MaxDataSize));
-
-        for (const parameter of this.parameters) {
-            const value = this.payload[parameter.name];
-            buffalo.write(parameter.parameterType, value, {});
-        }
-
-        return buffalo.getWritten();
-    }
-
     public isResetCommand(): boolean {
         return (
-            (this.command === 'resetReq' && this.subsystem === Subsystem.SYS) || (this.command === 'systemReset' && this.subsystem === Subsystem.SAPI)
+            (this.command.name === 'resetReq' && this.subsystem === Subsystem.SYS) ||
+            (this.command.name === 'systemReset' && this.subsystem === Subsystem.SAPI)
         );
     }
 }

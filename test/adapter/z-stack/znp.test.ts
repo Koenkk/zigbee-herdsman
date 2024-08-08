@@ -1109,37 +1109,6 @@ describe('ZNP', () => {
         ]);
     });
 
-    it('LIST_ASSOC_DEV write', () => {
-        expect(() => {
-            const bufallo = new BuffaloZnp(Buffer.alloc(10), 1);
-            bufallo.write(ParameterType.LIST_ASSOC_DEV, [], {});
-        }).toThrow();
-    });
-
-    it('LIST_ASSOC_DEV read 3', () => {
-        const buffer = Buffer.from([0x05, 0x10, 0x10, 0x09, 0x31, 0x13]);
-
-        const buffalo = new BuffaloZnp(buffer);
-        const value = buffalo.read(ParameterType.LIST_ASSOC_DEV, {length: 3, startIndex: 0});
-        expect(buffalo.getPosition()).toStrictEqual(6);
-        expect(value).toStrictEqual([4101, 2320, 4913]);
-    });
-
-    it('LIST_ASSOC_DEV read 75', () => {
-        const payload35 = duplicateArray(35, [0x10, 0x10]);
-        const payload5 = duplicateArray(5, [0x10, 0x10]);
-
-        const buffalo1 = new BuffaloZnp(Buffer.from(payload35));
-        const value1 = buffalo1.read(ParameterType.LIST_ASSOC_DEV, {length: 40, startIndex: 0});
-        expect(buffalo1.getPosition()).toStrictEqual(70);
-        expect(value1).toStrictEqual(duplicateArray(35, [4112]));
-
-        const buffalo2 = new BuffaloZnp(Buffer.from(payload5));
-        const value2 = buffalo2.read(ParameterType.LIST_ASSOC_DEV, {length: 40, startIndex: 35});
-        expect(buffalo2.getPosition()).toStrictEqual(10);
-        expect(value2).toStrictEqual(duplicateArray(5, [4112]));
-    });
-
     it('BUFFER8 write', () => {
         const buffalo = new BuffaloZnp(Buffer.alloc(9), 1);
         const payload = Buffer.from([0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07]);
@@ -1282,18 +1251,10 @@ describe('ZNP', () => {
         ParameterType.LIST_BIND_TABLE,
         ParameterType.LIST_NEIGHBOR_LQI,
         ParameterType.LIST_NETWORK,
-        ParameterType.LIST_ASSOC_DEV,
     ])('Throws when read is missing required length option - param %s', (type) => {
         expect(() => {
             const buffalo = new BuffaloZnp(Buffer.alloc(1));
             buffalo.read(type, {});
         }).toThrow(`Cannot read ${ParameterType[type]} without length option specified`);
-    });
-
-    it('Throws when read LIST_ASSOC_DEV is missing required start index option', () => {
-        expect(() => {
-            const buffalo = new BuffaloZnp(Buffer.alloc(1));
-            buffalo.read(ParameterType.LIST_ASSOC_DEV, {length: 1});
-        }).toThrow(`Cannot read LIST_ASSOC_DEV without startIndex option specified`);
     });
 });
