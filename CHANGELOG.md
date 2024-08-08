@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.55.5](https://github.com/Koenkk/zigbee-herdsman/compare/v0.55.4...v0.55.5) (2024-08-06)
+
+
+### Bug Fixes
+
+* Allow to set adapter transmit power on startup ([#1139](https://github.com/Koenkk/zigbee-herdsman/issues/1139)) ([036a2d5](https://github.com/Koenkk/zigbee-herdsman/commit/036a2d5d6b15345de448fafadec371dcf5d3c535))
+* **ignore:** update dependencies ([#1140](https://github.com/Koenkk/zigbee-herdsman/issues/1140)) ([515e855](https://github.com/Koenkk/zigbee-herdsman/commit/515e855148d7f8cae0084a91775cbd838f1bf864))
+* **ignore:** update dependencies ([#1142](https://github.com/Koenkk/zigbee-herdsman/issues/1142)) ([738c43e](https://github.com/Koenkk/zigbee-herdsman/commit/738c43e6d509f45f21d3adb8cede69218a9cbbb5))
+
 ## [0.55.4](https://github.com/Koenkk/zigbee-herdsman/compare/v0.55.3...v0.55.4) (2024-08-03)
 
 
