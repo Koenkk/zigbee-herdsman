@@ -453,6 +453,10 @@ class Endpoint extends Entity {
         );
     }
 
+    public hasBind(clusterId: number, target: Endpoint | Group): boolean {
+        return this.getBindIndex(clusterId, target) !== -1;
+    }
+
     public getBindIndex(clusterId: number, target: Endpoint | Group): number {
         return this.binds.findIndex((b) => b.cluster.ID === clusterId && b.target === target);
     }
@@ -468,7 +472,7 @@ class Endpoint extends Entity {
     }
 
     private addBindingInternal(cluster: ZclTypes.Cluster, target: Endpoint | Group): void {
-        if (this.getBindIndex(cluster.ID, target) === -1) {
+        if (!this.hasBind(cluster.ID, target)) {
             if (target instanceof Group) {
                 this._binds.push({cluster: cluster.ID, groupID: target.groupID, type: 'group'});
             } else {
