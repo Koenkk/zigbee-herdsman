@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.55.6](https://github.com/Koenkk/zigbee-herdsman/compare/v0.55.5...v0.55.6) (2024-08-09)
+
+
+### Bug Fixes
+
+* Improve bind/unbind logic ([#1144](https://github.com/Koenkk/zigbee-herdsman/issues/1144)) ([a3aeb33](https://github.com/Koenkk/zigbee-herdsman/commit/a3aeb33c7ec687acb55c5e5d3b93d0566f24a0ba))
+
 ## [0.55.5](https://github.com/Koenkk/zigbee-herdsman/compare/v0.55.4...v0.55.5) (2024-08-06)
 
 
