@@ -7542,34 +7542,61 @@ describe('Controller', () => {
         expect(error.message).toStrictEqual(`Use parameter`);
     });
 
-    it('Unbind error', async () => {
+    it('Skip unbind if not bound', async () => {
         await controller.start();
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
-        const device = controller.getDeviceByIeeeAddr('0x129');
-        const endpoint = device.getEndpoint(1);
-        mockAdapterUnbind.mockRejectedValueOnce(new Error('timeout occurred'));
+        await mockAdapterEvents['deviceJoined']({networkAddress: 170, ieeeAddr: '0x170'});
+        const endpoint = controller.getDeviceByIeeeAddr('0x129').getEndpoint(1);
+        const target = controller.getDeviceByIeeeAddr('0x170').getEndpoint(1);
+        mockAdapterUnbind.mockClear();
+        await endpoint.unbind('genOnOff', target);
+        expect(mockAdapterUnbind).toHaveBeenCalledTimes(0);
+    });
+
+    it('Handle unbind with number not matching any group', async () => {
+        await controller.start();
+        await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
+        const endpoint = controller.getDeviceByIeeeAddr('0x129').getEndpoint(1);
         let error;
         try {
             await endpoint.unbind('genOnOff', 1);
         } catch (e) {
             error = e;
         }
-        expect(error).toStrictEqual(new Error(`Unbind 0x129/1 genOnOff from '1' failed (timeout occurred)`));
+        expect(error).toStrictEqual(new Error(`Unbind 0x129/1 genOnOff invalid target '1' (no group with this ID exists).`));
+    });
+
+    it('Unbind error', async () => {
+        await controller.start();
+        await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
+        await mockAdapterEvents['deviceJoined']({networkAddress: 170, ieeeAddr: '0x170'});
+        const endpoint = controller.getDeviceByIeeeAddr('0x129').getEndpoint(1);
+        const target = controller.getDeviceByIeeeAddr('0x170').getEndpoint(1);
+        await endpoint.bind('genOnOff', target);
+        mockAdapterUnbind.mockRejectedValueOnce(new Error('timeout occurred'));
+        let error;
+        try {
+            await endpoint.unbind('genOnOff', target);
+        } catch (e) {
+            error = e;
+        }
+        expect(error).toStrictEqual(new Error(`Unbind 0x129/1 genOnOff from '0x170/1' failed (timeout occurred)`));
     });
 
     it('Bind error', async () => {
         await controller.start();
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
-        const device = controller.getDeviceByIeeeAddr('0x129');
-        const endpoint = device.getEndpoint(1);
+        await mockAdapterEvents['deviceJoined']({networkAddress: 170, ieeeAddr: '0x170'});
+        const endpoint = controller.getDeviceByIeeeAddr('0x129').getEndpoint(1);
+        const target = controller.getDeviceByIeeeAddr('0x170').getEndpoint(1);
         mockAdapterBind.mockRejectedValueOnce(new Error('timeout occurred'));
         let error;
         try {
-            await endpoint.bind('genOnOff', 1);
+            await endpoint.bind('genOnOff', target);
         } catch (e) {
             error = e;
         }
-        expect(error).toStrictEqual(new Error(`Bind 0x129/1 genOnOff from '1' failed (timeout occurred)`));
+        expect(error).toStrictEqual(new Error(`Bind 0x129/1 genOnOff from '0x170/1' failed (timeout occurred)`));
     });
 
     it('ReadResponse error', async () => {
