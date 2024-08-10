@@ -13,9 +13,6 @@ import * as Models from '../models';
  * @param backup Backup to create unified backup format from.
  */
 export const toUnifiedBackup = async (backup: Models.Backup): Promise<Models.UnifiedBackupStorage> => {
-    const panIdBuffer = Buffer.alloc(2);
-    panIdBuffer.writeUInt16BE(backup.networkOptions.panId);
-
     const packageInfo = JSON.parse((await fs.readFile(path.join(__dirname, '../../', 'package.json'))).toString());
 
     /* istanbul ignore next */
@@ -26,39 +23,19 @@ export const toUnifiedBackup = async (backup: Models.Backup): Promise<Models.Uni
             source: `${packageInfo.name}@${packageInfo.version}`,
             internal: {
                 date: new Date().toISOString(),
-                ...(backup.znp
-                    ? {
-                          znpVersion: [null, undefined].includes(backup.znp?.version) ? undefined : backup.znp?.version,
-                      }
-                    : undefined),
-                ...(backup.ezsp
-                    ? {
-                          ezspVersion: [null, undefined].includes(backup.ezsp?.version) ? undefined : backup.ezsp?.version,
-                      }
-                    : undefined),
+                ...(backup.znp ? {znpVersion: backup.znp?.version ?? undefined} : undefined),
+                ...(backup.ezsp ? {ezspVersion: backup.ezsp?.version ?? undefined} : undefined),
             },
         },
         stack_specific: {
-            ...(backup.znp
-                ? {
-                      zstack: {
-                          tclk_seed: backup.znp?.trustCenterLinkKeySeed?.toString('hex') || undefined,
-                      },
-                  }
-                : undefined),
-            ...(backup.ezsp
-                ? {
-                      ezsp: {
-                          hashed_tclk: backup.ezsp?.hashed_tclk?.toString('hex') || undefined,
-                      },
-                  }
-                : undefined),
+            ...(backup.znp ? {zstack: {tclk_seed: backup.znp?.trustCenterLinkKeySeed?.toString('hex') || undefined}} : undefined),
+            ...(backup.ezsp ? {ezsp: {hashed_tclk: backup.ezsp?.hashed_tclk?.toString('hex') || undefined}} : undefined),
         },
-        coordinator_ieee: backup.coordinatorIeeeAddress?.toString('hex') || null,
-        pan_id: panIdBuffer.toString('hex'),
+        coordinator_ieee: backup.coordinatorIeeeAddress.toString('hex'),
+        pan_id: backup.networkOptions.panId.toString(16),
         extended_pan_id: backup.networkOptions.extendedPanId.toString('hex'),
         nwk_update_id: backup.networkUpdateId || 0,
-        security_level: backup.securityLevel || null,
+        security_level: backup.securityLevel,
         channel: backup.logicalChannel,
         channel_mask: backup.networkOptions.channelList,
         network_key: {
@@ -67,19 +44,13 @@ export const toUnifiedBackup = async (backup: Models.Backup): Promise<Models.Uni
             frame_counter: backup.networkKeyInfo.frameCounter,
         },
         devices: backup.devices.map((device) => {
-            const nwkAddressBuffer = Buffer.alloc(2);
-            nwkAddressBuffer.writeUInt16BE(device.networkAddress);
             return {
-                nwk_address: nwkAddressBuffer.toString('hex'),
+                nwk_address: device.networkAddress !== null ? device.networkAddress.toString(16) : null,
                 ieee_address: device.ieeeAddress.toString('hex'),
                 is_child: device.isDirectChild,
-                link_key: !device.linkKey
-                    ? undefined
-                    : {
-                          key: device.linkKey.key.toString('hex'),
-                          rx_counter: device.linkKey.rxCounter,
-                          tx_counter: device.linkKey.txCounter,
-                      },
+                link_key: device.linkKey
+                    ? {key: device.linkKey.key.toString('hex'), rx_counter: device.linkKey.rxCounter, tx_counter: device.linkKey.txCounter}
+                    : undefined,
             };
         }),
     };
@@ -91,11 +62,12 @@ export const toUnifiedBackup = async (backup: Models.Backup): Promise<Models.Uni
  * @param backup Unified format to convert to internal backup format.
  */
 export const fromUnifiedBackup = (backup: Models.UnifiedBackupStorage): Models.Backup => {
-    const tclkSeedString = backup.stack_specific?.zstack?.tclk_seed || null;
+    const tclkSeedString = backup.stack_specific?.zstack?.tclk_seed || undefined;
+
     /* istanbul ignore next */
     return {
         networkOptions: {
-            panId: Buffer.from(backup.pan_id, 'hex').readUInt16BE(),
+            panId: Number.parseInt(backup.pan_id, 16),
             extendedPanId: Buffer.from(backup.extended_pan_id, 'hex'),
             channelList: backup.channel_mask,
             networkKey: Buffer.from(backup.network_key.key, 'hex'),
@@ -106,20 +78,16 @@ export const fromUnifiedBackup = (backup: Models.UnifiedBackupStorage): Models.B
             sequenceNumber: backup.network_key.sequence_number,
             frameCounter: backup.network_key.frame_counter,
         },
-        coordinatorIeeeAddress: backup.coordinator_ieee ? Buffer.from(backup.coordinator_ieee, 'hex') : null,
-        securityLevel: backup.security_level || null,
-        networkUpdateId: backup.nwk_update_id || null,
+        coordinatorIeeeAddress: Buffer.from(backup.coordinator_ieee, 'hex'),
+        securityLevel: backup.security_level,
+        networkUpdateId: backup.nwk_update_id,
         devices: backup.devices.map((device) => ({
-            networkAddress: device.nwk_address ? Buffer.from(device.nwk_address, 'hex').readUInt16BE() : Buffer.from('fffe', 'hex').readUInt16BE(),
+            networkAddress: device.nwk_address ? Number.parseInt(device.nwk_address, 16) : null,
             ieeeAddress: Buffer.from(device.ieee_address, 'hex'),
             isDirectChild: typeof device.is_child === 'boolean' ? device.is_child : true,
-            linkKey: !device.link_key
-                ? undefined
-                : {
-                      key: Buffer.from(device.link_key.key, 'hex'),
-                      rxCounter: device.link_key.rx_counter,
-                      txCounter: device.link_key.tx_counter,
-                  },
+            linkKey: device.link_key
+                ? {key: Buffer.from(device.link_key.key, 'hex'), rxCounter: device.link_key.rx_counter, txCounter: device.link_key.tx_counter}
+                : undefined,
         })),
         znp: {
             version: backup.metadata.internal?.znpVersion || undefined,
@@ -149,6 +117,7 @@ export const fromLegacyBackup = (backup: Models.LegacyBackupStorage): Models.Bac
     } else if (!backup.data.ZCD_NV_EXTADDR) {
         throw new Error('Backup corrupted - missing adapter IEEE address NV entry');
     }
+
     const ieeeAddress = Buffer.from(backup.data.ZCD_NV_EXTADDR.value).reverse();
     const nib = ZStackStructs.nib(Buffer.from(backup.data.ZCD_NV_NIB.value));
     const activeKeyInfo = ZStackStructs.nwkKeyDescriptor(Buffer.from(backup.data.ZCD_NV_NWK_ACTIVE_KEY_INFO.value));

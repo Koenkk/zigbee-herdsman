@@ -2038,7 +2038,7 @@ export class EmberAdapter extends Adapter {
     //---- ZDO
 
     // queued, non-InterPAN
-    public async permitJoin(seconds: number, networkAddress: number): Promise<void> {
+    public async permitJoin(seconds: number, networkAddress?: number): Promise<void> {
         const preJoining = async (): Promise<void> => {
             if (seconds) {
                 const plaintextKey: SecManKey = {contents: Buffer.from(ZIGBEE_PROFILE_INTEROPERABILITY_LINK_KEY)};

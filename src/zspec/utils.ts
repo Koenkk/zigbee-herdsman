@@ -16,7 +16,15 @@ export const channelsToUInt32Mask = (channels: number[]): number => {
  * @returns
  */
 export const uint32MaskToChannels = (mask: number): number[] => {
-    return ALL_802_15_4_CHANNELS.map((c: number) => ((2 ** c) & mask ? c : null)).filter((x) => x);
+    const channels: number[] = [];
+
+    for (const channel of ALL_802_15_4_CHANNELS) {
+        if ((2 ** channel) & mask) {
+            channels.push(channel);
+        }
+    }
+
+    return channels;
 };
 
 export const isBroadcastAddress = (address: number): boolean => {

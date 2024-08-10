@@ -210,8 +210,8 @@ class ZStackAdapter extends Adapter {
         });
     }
 
-    public async permitJoin(seconds: number, networkAddress: number): Promise<void> {
-        const addrmode = networkAddress === null ? 0x0f : 0x02;
+    public async permitJoin(seconds: number, networkAddress?: number): Promise<void> {
+        const addrmode = networkAddress === undefined ? 0x0f : 0x02;
         const dstaddr = networkAddress || 0xfffc;
         await this.queue.execute<void>(async () => {
             this.checkInterpanLock();

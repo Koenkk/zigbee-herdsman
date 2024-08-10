@@ -50,7 +50,7 @@ class RequestQueue extends Set<Request> {
                 } catch (error) {
                     logger.debug(
                         `Request Queue (${this.deviceIeeeAddress}/${this.ID}): send failed, expires in ` +
-                            `${(request.expires - now) / 1000} seconds (${error.message})`,
+                            `${(request.expires - now) / 1000} seconds (${(error as Error).message})`,
                         NS,
                     );
                 }
@@ -85,9 +85,11 @@ class RequestQueue extends Set<Request> {
             if (request?.frame?.cluster?.ID === undefined || !request.frame.command) {
                 continue;
             }
-            if (['bulk', 'queue', 'immediate'].includes(request.sendPolicy)) {
+
+            if (request.sendPolicy === 'bulk' || request.sendPolicy === 'queue' || request.sendPolicy === 'immediate') {
                 continue;
             }
+
             /* istanbul ignore else */
             if (request.frame.cluster.ID === clusterID && request.frame.command.ID === commandID) {
                 /* istanbul ignore else */

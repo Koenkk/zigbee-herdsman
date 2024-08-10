@@ -1,7 +1,7 @@
 interface Job {
-    key: string | number;
+    key?: string | number;
     running: boolean;
-    start: () => void;
+    start?: () => void;
 }
 
 class Queue {
@@ -13,18 +13,19 @@ class Queue {
         this.concurrent = concurrent;
     }
 
-    public async execute<T>(func: () => Promise<T>, key: string | number = null): Promise<T> {
-        const job: Job = {key, running: false, start: null};
-        // Minor optimization/workaround: various tests like the idea that a job that is
-        // immediately runnable is run without an event loop spin. This also helps with stack
-        // traces in some cases, so avoid an `await` if we can help it.
+    public async execute<T>(func: () => Promise<T>, key?: string | number): Promise<T> {
+        const job: Job = {key, running: false};
         this.jobs.push(job);
+
+        // Minor optimization/workaround: various tests like the idea that a job that is immediately runnable is run without an event loop spin.
+        // This also helps with stack traces in some cases, so avoid an `await` if we can help it.
         if (this.getNext() !== job) {
-            await new Promise((resolve): void => {
+            await new Promise<void>((resolve): void => {
                 job.start = (): void => {
                     job.running = true;
-                    resolve(null);
+                    resolve();
                 };
+
                 this.executeNext();
             });
         } else {
@@ -43,13 +44,14 @@ class Queue {
         const job = this.getNext();
 
         if (job) {
-            job.start();
+            // if we get here, start is always defined for job
+            job.start!();
         }
     }
 
-    private getNext(): Job {
+    private getNext(): Job | undefined {
         if (this.jobs.filter((j) => j.running).length > this.concurrent - 1) {
-            return null;
+            return undefined;
         }
 
         for (let i = 0; i < this.jobs.length; i++) {
@@ -60,7 +62,7 @@ class Queue {
             }
         }
 
-        return null;
+        return undefined;
     }
 
     public clear(): void {

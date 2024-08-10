@@ -4,8 +4,8 @@ import {Adapter} from '../../adapter';
 import Database from '../database';
 
 abstract class Entity extends events.EventEmitter {
-    protected static database: Database = null;
-    protected static adapter: Adapter = null;
+    protected static database?: Database;
+    protected static adapter?: Adapter;
 
     public static injectDatabase(database: Database): void {
         Entity.database = database;

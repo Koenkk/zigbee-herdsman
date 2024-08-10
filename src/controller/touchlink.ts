@@ -1,6 +1,7 @@
 import {Adapter} from '../adapter';
-import {Wait, AssertString} from '../utils';
+import {Wait} from '../utils';
 import {logger} from '../utils/logger';
+import {assertString} from '../utils/utils';
 import * as Zcl from '../zspec/zcl';
 
 const NS = 'zh:controller:touchlink';
@@ -40,7 +41,7 @@ class Touchlink {
                     // TODO: multiple responses are not handled yet.
                     const response = await this.adapter.sendZclFrameInterPANBroadcast(this.createScanRequestFrame(this.transactionNumber()), 500);
                     logger.debug(`Got scan response on channel '${channel}' of '${response.address}'`, NS);
-                    AssertString(response.address);
+                    assertString(response.address);
                     result.push({ieeeAddr: response.address, channel});
                 } catch (error) {
                     logger.warning(`Scan request failed or was not answered: '${error}'`, NS);
@@ -116,7 +117,7 @@ class Touchlink {
 
                     const response = await this.adapter.sendZclFrameInterPANBroadcast(this.createScanRequestFrame(transaction), 500);
                     logger.debug(`Got scan response on channel '${channel}'`, NS);
-                    AssertString(response.address);
+                    assertString(response.address);
 
                     // Device answered (if not it will fall in the catch below),
                     // identify it (this will make e.g. the bulb flash)
@@ -147,7 +148,7 @@ class Touchlink {
             Zcl.FrameType.SPECIFIC,
             Zcl.Direction.CLIENT_TO_SERVER,
             true,
-            null,
+            undefined,
             0,
             'scanRequest',
             Zcl.Clusters.touchlink.ID,
@@ -161,7 +162,7 @@ class Touchlink {
             Zcl.FrameType.SPECIFIC,
             Zcl.Direction.CLIENT_TO_SERVER,
             true,
-            null,
+            undefined,
             0,
             'identifyRequest',
             Zcl.Clusters.touchlink.ID,
@@ -175,7 +176,7 @@ class Touchlink {
             Zcl.FrameType.SPECIFIC,
             Zcl.Direction.CLIENT_TO_SERVER,
             true,
-            null,
+            undefined,
             0,
             'resetToFactoryNew',
             Zcl.Clusters.touchlink.ID,

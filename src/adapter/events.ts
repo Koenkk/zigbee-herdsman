@@ -24,15 +24,7 @@ type NetworkAddressPayload = {
     ieeeAddr: string;
 };
 
-type DeviceLeavePayload =
-    | {
-          networkAddress?: number;
-          ieeeAddr: string;
-      }
-    | {
-          networkAddress: number;
-          ieeeAddr?: string;
-      };
+type DeviceLeavePayload = {networkAddress?: number; ieeeAddr: string} | {networkAddress: number; ieeeAddr?: string};
 
 interface ZclPayload {
     clusterID: number;

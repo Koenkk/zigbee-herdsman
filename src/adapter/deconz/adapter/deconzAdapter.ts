@@ -286,7 +286,7 @@ class DeconzAdapter extends Adapter {
         };
     }
 
-    public async permitJoin(seconds: number, networkAddress: number): Promise<void> {
+    public async permitJoin(seconds: number, networkAddress?: number): Promise<void> {
         const transactionID = this.nextTransactionID();
         const request: ApsDataRequest = {};
         const zdpFrame = [transactionID, seconds, 0]; // tc_significance 1 or 0 ?

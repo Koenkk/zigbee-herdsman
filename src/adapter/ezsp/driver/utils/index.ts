@@ -10,45 +10,6 @@ if (!Symbol.asyncIterator) {
     (<any>Symbol).asyncIterator = Symbol.for('Symbol.asyncIterator');
 }
 
-export class Deferred<T> {
-    public promise: Promise<T>;
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
-    public _resolve: Function;
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
-    public _reject: Function;
-    _isResolved = false;
-    _isRejected = false;
-
-    constructor() {
-        this.promise = new Promise((resolve, reject) => {
-            this._resolve = resolve;
-            this._reject = reject;
-        });
-    }
-
-    public resolve(value: T): void {
-        this._isResolved = true;
-        this._resolve(value);
-    }
-
-    public reject(value: T): void {
-        this._isResolved = true;
-        this.reject(value);
-    }
-
-    get isResolved(): boolean {
-        return this._isResolved;
-    }
-
-    get isRejected(): boolean {
-        return this._isRejected;
-    }
-
-    get isFullfilled(): boolean {
-        return this._isResolved || this._isRejected;
-    }
-}
-
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
 function ember_security(networkKey: Buffer): EmberInitialSecurityState {
     const isc: EmberInitialSecurityState = new EmberInitialSecurityState();
@@ -68,9 +29,4 @@ function ember_security(networkKey: Buffer): EmberInitialSecurityState {
     return isc;
 }
 
-const allChannels = [11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26];
-function channelsMask2list(channelMask: number): number[] {
-    return allChannels.map((channel: number) => ((2 ** channel) & channelMask ? channel : null)).filter((x) => x);
-}
-
-export {crc16ccitt, ember_security, channelsMask2list};
+export {crc16ccitt, ember_security};

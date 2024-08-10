@@ -140,7 +140,7 @@ class ZiGateAdapter extends Adapter {
             });
     }
 
-    public async permitJoin(seconds: number, networkAddress: number): Promise<void> {
+    public async permitJoin(seconds: number, networkAddress?: number): Promise<void> {
         const result = await this.driver.sendCommand(ZiGateCommandCode.PermitJoin, {
             targetShortAddress: networkAddress || 0xfffc,
             interval: seconds,

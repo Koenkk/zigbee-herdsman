@@ -249,7 +249,7 @@ class EZSPAdapter extends Adapter {
         });
     }
 
-    public async permitJoin(seconds: number, networkAddress: number): Promise<void> {
+    public async permitJoin(seconds: number, networkAddress?: number): Promise<void> {
         if (this.driver.ezsp.isInitialized()) {
             return this.queue.execute<void>(async () => {
                 this.checkInterpanLock();

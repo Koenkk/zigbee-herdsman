@@ -1341,10 +1341,10 @@ const touchlinkScanRequest = Zcl.Frame.create(
     Zcl.FrameType.SPECIFIC,
     Zcl.Direction.CLIENT_TO_SERVER,
     false,
-    null,
+    undefined,
     12,
     'scanRequest',
-    Zcl.Utils.getCluster('touchlink', null, {}).ID,
+    Zcl.Utils.getCluster('touchlink', undefined, {}).ID,
     {transactionID: 1, zigbeeInformation: 4, touchlinkInformation: 18},
     {},
 );
@@ -1353,10 +1353,10 @@ const touchlinkScanResponse = Zcl.Frame.create(
     Zcl.FrameType.SPECIFIC,
     Zcl.Direction.SERVER_TO_CLIENT,
     false,
-    null,
+    undefined,
     12,
     'scanResponse',
-    Zcl.Utils.getCluster('touchlink', null, {}).ID,
+    Zcl.Utils.getCluster('touchlink', undefined, {}).ID,
     {
         transactionID: 1,
         rssiCorrection: 10,
@@ -1379,10 +1379,10 @@ const touchlinkIdentifyRequest = Zcl.Frame.create(
     Zcl.FrameType.SPECIFIC,
     Zcl.Direction.CLIENT_TO_SERVER,
     false,
-    null,
+    undefined,
     12,
     'identifyRequest',
-    Zcl.Utils.getCluster('touchlink', null, {}).ID,
+    Zcl.Utils.getCluster('touchlink', undefined, {}).ID,
     {transactionID: 1, duration: 65535},
     {},
 );
@@ -2055,26 +2055,26 @@ describe('zstack-adapter', () => {
         basicMocks();
         adapter = new ZStackAdapter(networkOptions, serialPortOptions, 'backup.json', {disableLED: true});
         await adapter.start();
-        expect(mockZnpRequest).toBeCalledWith(Subsystem.UTIL, 'ledControl', {ledid: 3, mode: 0}, null, 500);
+        expect(mockZnpRequest).toHaveBeenCalledWith(Subsystem.UTIL, 'ledControl', {ledid: 3, mode: 0}, null, 500);
         mockZnpRequest.mockClear();
         await adapter.permitJoin(255, 0);
-        expect(mockZnpRequest).not.toBeCalledWith(Subsystem.UTIL, 'ledControl', expect.any(Object), null, 500);
+        expect(mockZnpRequest).not.toHaveBeenCalledWith(Subsystem.UTIL, 'ledControl', expect.any(Object), null, 500);
         mockZnpRequest.mockClear();
         await adapter.permitJoin(0, 0);
-        expect(mockZnpRequest).not.toBeCalledWith(Subsystem.UTIL, 'ledControl', expect.any(Object), null, 500);
+        expect(mockZnpRequest).not.toHaveBeenCalledWith(Subsystem.UTIL, 'ledControl', expect.any(Object), null, 500);
     });
 
     it('LED behaviour: disable LED false, firmware not handling leds', async () => {
         basicMocks();
         adapter = new ZStackAdapter(networkOptions, serialPortOptions, 'backup.json', {disableLED: false});
         await adapter.start();
-        expect(mockZnpRequest).not.toBeCalledWith(Subsystem.UTIL, 'ledControl', expect.any(Object), null, 500);
+        expect(mockZnpRequest).not.toHaveBeenCalledWith(Subsystem.UTIL, 'ledControl', expect.any(Object), null, 500);
         mockZnpRequest.mockClear();
         await adapter.permitJoin(255, 0);
-        expect(mockZnpRequest).toBeCalledWith(Subsystem.UTIL, 'ledControl', {ledid: 3, mode: 1}, null, 500);
+        expect(mockZnpRequest).toHaveBeenCalledWith(Subsystem.UTIL, 'ledControl', {ledid: 3, mode: 1}, null, 500);
         mockZnpRequest.mockClear();
         await adapter.permitJoin(0, 0);
-        expect(mockZnpRequest).toBeCalledWith(Subsystem.UTIL, 'ledControl', {ledid: 3, mode: 0}, null, 500);
+        expect(mockZnpRequest).toHaveBeenCalledWith(Subsystem.UTIL, 'ledControl', {ledid: 3, mode: 0}, null, 500);
     });
 
     it('LED behaviour: disable LED true, firmware handling leds', async () => {
@@ -2085,13 +2085,13 @@ describe('zstack-adapter', () => {
         );
         adapter = new ZStackAdapter(networkOptions, serialPortOptions, 'backup.json', {disableLED: true});
         await adapter.start();
-        expect(mockZnpRequest).toBeCalledWith(Subsystem.UTIL, 'ledControl', {ledid: 0xff, mode: 5}, null, 500);
+        expect(mockZnpRequest).toHaveBeenCalledWith(Subsystem.UTIL, 'ledControl', {ledid: 0xff, mode: 5}, null, 500);
         mockZnpRequest.mockClear();
         await adapter.permitJoin(255, 0);
-        expect(mockZnpRequest).not.toBeCalledWith(Subsystem.UTIL, 'ledControl', expect.any(Object), null, 500);
+        expect(mockZnpRequest).not.toHaveBeenCalledWith(Subsystem.UTIL, 'ledControl', expect.any(Object), null, 500);
         mockZnpRequest.mockClear();
         await adapter.permitJoin(0, 0);
-        expect(mockZnpRequest).not.toBeCalledWith(Subsystem.UTIL, 'ledControl', expect.any(Object), null, 500);
+        expect(mockZnpRequest).not.toHaveBeenCalledWith(Subsystem.UTIL, 'ledControl', expect.any(Object), null, 500);
     });
 
     it('LED behaviour: disable LED false, firmware handling leds', async () => {
@@ -2102,13 +2102,13 @@ describe('zstack-adapter', () => {
         );
         adapter = new ZStackAdapter(networkOptions, serialPortOptions, 'backup.json', {disableLED: false});
         await adapter.start();
-        expect(mockZnpRequest).not.toBeCalledWith(Subsystem.UTIL, 'ledControl', expect.any(Object), null, 500);
+        expect(mockZnpRequest).not.toHaveBeenCalledWith(Subsystem.UTIL, 'ledControl', expect.any(Object), null, 500);
         mockZnpRequest.mockClear();
         await adapter.permitJoin(255, 0);
-        expect(mockZnpRequest).not.toBeCalledWith(Subsystem.UTIL, 'ledControl', expect.any(Object), null, 500);
+        expect(mockZnpRequest).not.toHaveBeenCalledWith(Subsystem.UTIL, 'ledControl', expect.any(Object), null, 500);
         mockZnpRequest.mockClear();
         await adapter.permitJoin(0, 0);
-        expect(mockZnpRequest).not.toBeCalledWith(Subsystem.UTIL, 'ledControl', expect.any(Object), null, 500);
+        expect(mockZnpRequest).not.toHaveBeenCalledWith(Subsystem.UTIL, 'ledControl', expect.any(Object), null, 500);
     });
 
     /* Original Tests */
@@ -2125,14 +2125,14 @@ describe('zstack-adapter', () => {
     });
 
     it('Call znp constructor', async () => {
-        expect(Znp).toBeCalledWith('dummy', 800, false);
+        expect(Znp).toHaveBeenCalledWith('dummy', 800, false);
     });
 
     it('Close adapter', async () => {
         basicMocks();
         await adapter.start();
         await adapter.stop();
-        expect(mockZnpClose).toBeCalledTimes(1);
+        expect(mockZnpClose).toHaveBeenCalledTimes(1);
     });
 
     it('Get coordinator', async () => {
@@ -2251,15 +2251,15 @@ describe('zstack-adapter', () => {
         basicMocks();
         await adapter.start();
         mockZnpRequest.mockClear();
-        await adapter.permitJoin(100, null);
-        expect(mockZnpRequest).toBeCalledTimes(2);
-        expect(mockZnpRequest).toBeCalledWith(Subsystem.ZDO, 'mgmtPermitJoinReq', {
+        await adapter.permitJoin(100);
+        expect(mockZnpRequest).toHaveBeenCalledTimes(2);
+        expect(mockZnpRequest).toHaveBeenCalledWith(Subsystem.ZDO, 'mgmtPermitJoinReq', {
             addrmode: 0x0f,
             dstaddr: 0xfffc,
             duration: 100,
             tcsignificance: 0,
         });
-        expect(mockZnpRequest).toBeCalledWith(Subsystem.UTIL, 'ledControl', {ledid: 3, mode: 1}, null, 500);
+        expect(mockZnpRequest).toHaveBeenCalledWith(Subsystem.UTIL, 'ledControl', {ledid: 3, mode: 1}, null, 500);
     });
 
     it('Permit join specific networkAddress', async () => {
@@ -2267,9 +2267,14 @@ describe('zstack-adapter', () => {
         await adapter.start();
         mockZnpRequest.mockClear();
         await adapter.permitJoin(102, 42102);
-        expect(mockZnpRequest).toBeCalledTimes(2);
-        expect(mockZnpRequest).toBeCalledWith(Subsystem.ZDO, 'mgmtPermitJoinReq', {addrmode: 2, dstaddr: 42102, duration: 102, tcsignificance: 0});
-        expect(mockZnpRequest).toBeCalledWith(Subsystem.UTIL, 'ledControl', {ledid: 3, mode: 1}, null, 500);
+        expect(mockZnpRequest).toHaveBeenCalledTimes(2);
+        expect(mockZnpRequest).toHaveBeenCalledWith(Subsystem.ZDO, 'mgmtPermitJoinReq', {
+            addrmode: 2,
+            dstaddr: 42102,
+            duration: 102,
+            tcsignificance: 0,
+        });
+        expect(mockZnpRequest).toHaveBeenCalledWith(Subsystem.UTIL, 'ledControl', {ledid: 3, mode: 1}, null, 500);
     });
 
     it('Get coordinator version', async () => {
@@ -2284,8 +2289,8 @@ describe('zstack-adapter', () => {
         await adapter.start();
         mockZnpRequest.mockClear();
         await adapter.reset('soft');
-        expect(mockZnpRequest).toBeCalledTimes(1);
-        expect(mockZnpRequest).toBeCalledWith(Subsystem.SYS, 'resetReq', {type: 1});
+        expect(mockZnpRequest).toHaveBeenCalledTimes(1);
+        expect(mockZnpRequest).toHaveBeenCalledWith(Subsystem.SYS, 'resetReq', {type: 1});
     });
 
     it('Hard reset', async () => {
@@ -2293,8 +2298,8 @@ describe('zstack-adapter', () => {
         await adapter.start();
         mockZnpRequest.mockClear();
         await adapter.reset('hard');
-        expect(mockZnpRequest).toBeCalledTimes(1);
-        expect(mockZnpRequest).toBeCalledWith(Subsystem.SYS, 'resetReq', {type: 0});
+        expect(mockZnpRequest).toHaveBeenCalledTimes(1);
+        expect(mockZnpRequest).toHaveBeenCalledWith(Subsystem.SYS, 'resetReq', {type: 0});
     });
 
     it('Change channel', async () => {
@@ -2317,7 +2322,7 @@ describe('zstack-adapter', () => {
         basicMocks();
         adapter = new ZStackAdapter(networkOptions, serialPortOptions, 'backup.json', {transmitPower: 2, disableLED: false});
         await adapter.start();
-        expect(mockZnpRequest).toBeCalledWith(Subsystem.SYS, 'stackTune', {operation: 0, value: 2});
+        expect(mockZnpRequest).toHaveBeenCalledWith(Subsystem.SYS, 'stackTune', {operation: 0, value: 2});
     });
 
     it('Set transmit power', async () => {
@@ -2325,8 +2330,8 @@ describe('zstack-adapter', () => {
         await adapter.start();
         mockZnpRequest.mockClear();
         await adapter.setTransmitPower(15);
-        expect(mockZnpRequest).toBeCalledTimes(1);
-        expect(mockZnpRequest).toBeCalledWith(Subsystem.SYS, 'stackTune', {operation: 0, value: 15});
+        expect(mockZnpRequest).toHaveBeenCalledTimes(1);
+        expect(mockZnpRequest).toHaveBeenCalledWith(Subsystem.SYS, 'stackTune', {operation: 0, value: 15});
     });
 
     it('Support LED should go to false when LED request fails', async () => {
@@ -2341,10 +2346,10 @@ describe('zstack-adapter', () => {
                 }),
         );
         await adapter.permitJoin(0, 0);
-        expect(mockZnpRequest).toBeCalledWith(Subsystem.UTIL, 'ledControl', {ledid: 3, mode: 0}, null, 500);
+        expect(mockZnpRequest).toHaveBeenCalledWith(Subsystem.UTIL, 'ledControl', {ledid: 3, mode: 0}, null, 500);
         mockZnpRequest.mockClear();
         await adapter.permitJoin(0, 0);
-        expect(mockZnpRequest).not.toBeCalledWith(Subsystem.UTIL, 'ledControl', {ledid: 3, mode: 0}, null, 500);
+        expect(mockZnpRequest).not.toHaveBeenCalledWith(Subsystem.UTIL, 'ledControl', {ledid: 3, mode: 0}, null, 500);
     });
 
     it('Node descriptor', async () => {
@@ -2354,9 +2359,9 @@ describe('zstack-adapter', () => {
 
         mockZnpRequest.mockClear();
         result = await adapter.nodeDescriptor(2);
-        expect(mockZnpWaitFor).toBeCalledWith(Type.AREQ, Subsystem.ZDO, 'nodeDescRsp', {nwkaddr: 2});
-        expect(mockZnpRequest).toBeCalledTimes(1);
-        expect(mockZnpRequest).toBeCalledWith(Subsystem.ZDO, 'nodeDescReq', {dstaddr: 2, nwkaddrofinterest: 2}, 1);
+        expect(mockZnpWaitFor).toHaveBeenCalledWith(Type.AREQ, Subsystem.ZDO, 'nodeDescRsp', {nwkaddr: 2});
+        expect(mockZnpRequest).toHaveBeenCalledTimes(1);
+        expect(mockZnpRequest).toHaveBeenCalledWith(Subsystem.ZDO, 'nodeDescReq', {dstaddr: 2, nwkaddrofinterest: 2}, 1);
         expect(mockQueueExecute.mock.calls[0][1]).toBe(2);
         expect(result).toStrictEqual({manufacturerCode: 4, type: 'Router'});
 
@@ -2414,7 +2419,7 @@ describe('zstack-adapter', () => {
             Zcl.FrameType.GLOBAL,
             Zcl.Direction.CLIENT_TO_SERVER,
             true,
-            null,
+            undefined,
             100,
             'writeNoRsp',
             0,
@@ -2423,8 +2428,8 @@ describe('zstack-adapter', () => {
         );
         await adapter.sendZclFrameToEndpoint('0x02', 2, 20, frame, 10000, false, false);
         expect(mockQueueExecute.mock.calls[0][1]).toBe(2);
-        expect(mockZnpRequest).toBeCalledTimes(1);
-        expect(mockZnpRequest).toBeCalledWith(
+        expect(mockZnpRequest).toHaveBeenCalledTimes(1);
+        expect(mockZnpRequest).toHaveBeenCalledWith(
             4,
             'dataRequest',
             {clusterid: 0, data: frame.toBuffer(), destendpoint: 20, dstaddr: 2, len: 6, options: 0, radius: 30, srcendpoint: 1, transid: 1},
@@ -2442,7 +2447,7 @@ describe('zstack-adapter', () => {
             Zcl.FrameType.GLOBAL,
             Zcl.Direction.CLIENT_TO_SERVER,
             true,
-            null,
+            undefined,
             100,
             'writeNoRsp',
             0,
@@ -2451,8 +2456,8 @@ describe('zstack-adapter', () => {
         );
         await adapter.sendZclFrameToEndpoint('0x02', 2, 20, frame, 10000, false, false);
         expect(mockQueueExecute.mock.calls[0][1]).toBe(2);
-        expect(mockZnpRequest).toBeCalledTimes(2);
-        expect(mockZnpRequest).toBeCalledWith(
+        expect(mockZnpRequest).toHaveBeenCalledTimes(2);
+        expect(mockZnpRequest).toHaveBeenCalledWith(
             4,
             'dataRequest',
             {clusterid: 0, data: frame.toBuffer(), destendpoint: 20, dstaddr: 2, len: 6, options: 0, radius: 30, srcendpoint: 1, transid: 1},
@@ -2469,7 +2474,7 @@ describe('zstack-adapter', () => {
             Zcl.FrameType.GLOBAL,
             Zcl.Direction.CLIENT_TO_SERVER,
             true,
-            null,
+            undefined,
             100,
             'writeNoRsp',
             0,
@@ -2492,7 +2497,7 @@ describe('zstack-adapter', () => {
             Zcl.FrameType.GLOBAL,
             Zcl.Direction.SERVER_TO_CLIENT,
             true,
-            null,
+            undefined,
             100,
             'defaultRsp',
             0,
@@ -2510,7 +2515,7 @@ describe('zstack-adapter', () => {
             Zcl.FrameType.GLOBAL,
             Zcl.Direction.CLIENT_TO_SERVER,
             false,
-            null,
+            undefined,
             100,
             'writeNoRsp',
             0,
@@ -2521,8 +2526,8 @@ describe('zstack-adapter', () => {
         znpReceived(object);
         await request;
         expect(mockQueueExecute.mock.calls[0][1]).toBe(2);
-        expect(mockZnpRequest).toBeCalledTimes(1);
-        expect(mockZnpRequest).toBeCalledWith(
+        expect(mockZnpRequest).toHaveBeenCalledTimes(1);
+        expect(mockZnpRequest).toHaveBeenCalledWith(
             4,
             'dataRequest',
             {clusterid: 0, data: frame.toBuffer(), destendpoint: 20, dstaddr: 2, len: 6, options: 0, radius: 30, srcendpoint: 1, transid: 1},
@@ -2539,7 +2544,7 @@ describe('zstack-adapter', () => {
             Zcl.FrameType.GLOBAL,
             Zcl.Direction.CLIENT_TO_SERVER,
             true,
-            null,
+            undefined,
             100,
             'writeNoRsp',
             0,
@@ -2555,7 +2560,7 @@ describe('zstack-adapter', () => {
         }
 
         expect(error.message).toStrictEqual("Data request failed with error: 'MAC transaction expired' (240)");
-        expect(mockZnpRequest).toBeCalledTimes(10);
+        expect(mockZnpRequest).toHaveBeenCalledTimes(10);
         expect(mockZnpRequest).toHaveBeenNthCalledWith(
             1,
             4,
@@ -2608,7 +2613,7 @@ describe('zstack-adapter', () => {
             Zcl.FrameType.GLOBAL,
             Zcl.Direction.CLIENT_TO_SERVER,
             true,
-            null,
+            undefined,
             100,
             'writeNoRsp',
             0,
@@ -2624,7 +2629,7 @@ describe('zstack-adapter', () => {
         }
 
         expect(error.message).toStrictEqual("Data request failed with error: 'MAC transaction expired' (240)");
-        expect(mockZnpRequest).toBeCalledTimes(8);
+        expect(mockZnpRequest).toHaveBeenCalledTimes(8);
         expect(mockZnpRequest).toHaveBeenNthCalledWith(
             1,
             4,
@@ -2674,7 +2679,7 @@ describe('zstack-adapter', () => {
             Zcl.FrameType.GLOBAL,
             Zcl.Direction.CLIENT_TO_SERVER,
             true,
-            null,
+            undefined,
             100,
             'writeNoRsp',
             0,
@@ -2690,7 +2695,7 @@ describe('zstack-adapter', () => {
         }
 
         expect(error.message).toStrictEqual("Data request failed with error: 'MAC no ack' (233)");
-        expect(mockZnpRequest).toBeCalledTimes(7);
+        expect(mockZnpRequest).toHaveBeenCalledTimes(7);
         expect(mockZnpRequest).toHaveBeenNthCalledWith(
             1,
             4,
@@ -2739,7 +2744,7 @@ describe('zstack-adapter', () => {
             Zcl.FrameType.GLOBAL,
             Zcl.Direction.CLIENT_TO_SERVER,
             true,
-            null,
+            undefined,
             100,
             'writeNoRsp',
             0,
@@ -2755,7 +2760,7 @@ describe('zstack-adapter', () => {
         }
 
         expect(error.message).toStrictEqual("Data request failed with error: 'MAC no ack' (233)");
-        expect(mockZnpRequest).toBeCalledTimes(8);
+        expect(mockZnpRequest).toHaveBeenCalledTimes(8);
         expect(mockZnpRequest).toHaveBeenNthCalledWith(
             1,
             4,
@@ -2805,14 +2810,14 @@ describe('zstack-adapter', () => {
             Zcl.FrameType.GLOBAL,
             Zcl.Direction.CLIENT_TO_SERVER,
             true,
-            null,
+            undefined,
             100,
             'writeNoRsp',
             0,
             [{attrId: 0, dataType: 0, attrData: null}],
             {},
         );
-        const response = adapter.sendZclFrameToEndpoint('0x03', 2, 20, frame, 10000, false, true, null);
+        const response = adapter.sendZclFrameToEndpoint('0x03', 2, 20, frame, 10000, false, true, undefined);
         let error;
         try {
             await response;
@@ -2821,7 +2826,7 @@ describe('zstack-adapter', () => {
         }
 
         expect(error.message).toStrictEqual("Data request failed with error: 'MAC no ack' (233)");
-        expect(mockZnpRequest).toBeCalledTimes(1);
+        expect(mockZnpRequest).toHaveBeenCalledTimes(1);
     });
 
     it('Send zcl frame network address should retry on dataconfirm timeout', async () => {
@@ -2834,7 +2839,7 @@ describe('zstack-adapter', () => {
             Zcl.FrameType.GLOBAL,
             Zcl.Direction.CLIENT_TO_SERVER,
             true,
-            null,
+            undefined,
             100,
             'writeNoRsp',
             0,
@@ -2849,7 +2854,7 @@ describe('zstack-adapter', () => {
             error = e;
         }
         expect(error.message).toStrictEqual("Data request failed with error: 'Timeout' (9999)");
-        expect(mockZnpRequest).toBeCalledTimes(1);
+        expect(mockZnpRequest).toHaveBeenCalledTimes(1);
         expect(mockZnpRequest).toHaveBeenNthCalledWith(
             1,
             4,
@@ -2864,11 +2869,11 @@ describe('zstack-adapter', () => {
         await adapter.start();
 
         mockZnpRequest.mockClear();
-        const frame = Zcl.Frame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, true, null, 100, 'read', 0, [{attrId: 0}], {});
+        const frame = Zcl.Frame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, true, undefined, 100, 'read', 0, [{attrId: 0}], {});
         await adapter.sendZclFrameToGroup(25, frame, 1);
         expect(mockQueueExecute.mock.calls[0][1]).toBe(undefined);
-        expect(mockZnpRequest).toBeCalledTimes(1);
-        expect(mockZnpRequest).toBeCalledWith(
+        expect(mockZnpRequest).toHaveBeenCalledTimes(1);
+        expect(mockZnpRequest).toHaveBeenCalledWith(
             4,
             'dataRequestExt',
             {
@@ -2898,7 +2903,7 @@ describe('zstack-adapter', () => {
             Zcl.FrameType.GLOBAL,
             Zcl.Direction.CLIENT_TO_SERVER,
             false,
-            null,
+            undefined,
             100,
             'writeNoRsp',
             0,
@@ -2907,8 +2912,8 @@ describe('zstack-adapter', () => {
         );
         await adapter.sendZclFrameToGroup(25, frame, 1);
         expect(mockQueueExecute.mock.calls[0][1]).toBe(undefined);
-        expect(mockZnpRequest).toBeCalledTimes(2);
-        expect(mockZnpRequest).toBeCalledWith(
+        expect(mockZnpRequest).toHaveBeenCalledTimes(2);
+        expect(mockZnpRequest).toHaveBeenCalledWith(
             4,
             'dataRequestExt',
             {
@@ -2933,11 +2938,11 @@ describe('zstack-adapter', () => {
         await adapter.start();
 
         mockZnpRequest.mockClear();
-        const frame = Zcl.Frame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, true, null, 100, 'read', 0, [{attrId: 0}], {});
+        const frame = Zcl.Frame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, true, undefined, 100, 'read', 0, [{attrId: 0}], {});
         await adapter.sendZclFrameToAll(242, frame, 250, BroadcastAddress.DEFAULT);
         expect(mockQueueExecute.mock.calls[0][1]).toBe(undefined);
-        expect(mockZnpRequest).toBeCalledTimes(1);
-        expect(mockZnpRequest).toBeCalledWith(
+        expect(mockZnpRequest).toHaveBeenCalledTimes(1);
+        expect(mockZnpRequest).toHaveBeenCalledWith(
             4,
             'dataRequestExt',
             {
@@ -2962,11 +2967,11 @@ describe('zstack-adapter', () => {
         await adapter.start();
 
         mockZnpRequest.mockClear();
-        const frame = Zcl.Frame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, true, null, 100, 'read', 0, [{attrId: 0}], {});
+        const frame = Zcl.Frame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, true, undefined, 100, 'read', 0, [{attrId: 0}], {});
         await adapter.sendZclFrameToAll(255, frame, 1, BroadcastAddress.RX_ON_WHEN_IDLE);
         expect(mockQueueExecute.mock.calls[0][1]).toBe(undefined);
-        expect(mockZnpRequest).toBeCalledTimes(1);
-        expect(mockZnpRequest).toBeCalledWith(
+        expect(mockZnpRequest).toHaveBeenCalledTimes(1);
+        expect(mockZnpRequest).toHaveBeenCalledWith(
             4,
             'dataRequestExt',
             {
@@ -2991,11 +2996,11 @@ describe('zstack-adapter', () => {
         await adapter.start();
 
         mockZnpRequest.mockClear();
-        const frame = Zcl.Frame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, true, null, 100, 'read', 0, [{attrId: 0}], {});
+        const frame = Zcl.Frame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, true, undefined, 100, 'read', 0, [{attrId: 0}], {});
         await adapter.sendZclFrameToAll(255, frame, 1, BroadcastAddress.SLEEPY);
         expect(mockQueueExecute.mock.calls[0][1]).toBe(undefined);
-        expect(mockZnpRequest).toBeCalledTimes(1);
-        expect(mockZnpRequest).toBeCalledWith(
+        expect(mockZnpRequest).toHaveBeenCalledTimes(1);
+        expect(mockZnpRequest).toHaveBeenCalledWith(
             4,
             'dataRequestExt',
             {
@@ -3031,7 +3036,7 @@ describe('zstack-adapter', () => {
                 Zcl.FrameType.GLOBAL,
                 Zcl.Direction.CLIENT_TO_SERVER,
                 true,
-                null,
+                undefined,
                 100,
                 'writeNoRsp',
                 0,
@@ -3051,7 +3056,7 @@ describe('zstack-adapter', () => {
         expect(got.find((g) => g > 255)).toBe(undefined);
         expect(got.filter((g) => g === 1).length).toBe(2);
         expect(got.filter((g) => g === 255).length).toBe(1);
-        expect(mockZnpRequest).toBeCalledTimes(300);
+        expect(mockZnpRequest).toHaveBeenCalledTimes(300);
     });
 
     it('Send zcl frame group dataConfirm fails', async () => {
@@ -3060,15 +3065,15 @@ describe('zstack-adapter', () => {
         dataConfirmCode = 184;
         let error;
         mockZnpRequest.mockClear();
-        const frame = Zcl.Frame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, true, null, 100, 'read', 0, [{attrId: 0}], {});
+        const frame = Zcl.Frame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, true, undefined, 100, 'read', 0, [{attrId: 0}], {});
         try {
             await adapter.sendZclFrameToGroup(25, frame);
         } catch (e) {
             error = e;
         }
         expect(mockQueueExecute.mock.calls[0][1]).toBe(undefined);
-        expect(mockZnpRequest).toBeCalledTimes(1);
-        expect(mockZnpRequest).toBeCalledWith(
+        expect(mockZnpRequest).toHaveBeenCalledTimes(1);
+        expect(mockZnpRequest).toHaveBeenCalledWith(
             4,
             'dataRequestExt',
             {
@@ -3099,7 +3104,7 @@ describe('zstack-adapter', () => {
             Zcl.FrameType.GLOBAL,
             Zcl.Direction.SERVER_TO_CLIENT,
             true,
-            null,
+            undefined,
             102,
             'readRsp',
             0,
@@ -3110,14 +3115,14 @@ describe('zstack-adapter', () => {
             Zcl.FrameType.GLOBAL,
             Zcl.Direction.SERVER_TO_CLIENT,
             true,
-            null,
+            undefined,
             100,
             'readRsp',
             0,
             [{attrId: 0, attrData: 2, dataType: 32, status: 0}],
             {},
         );
-        const frame = Zcl.Frame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, true, null, 100, 'read', 0, [{attrId: 0}], {});
+        const frame = Zcl.Frame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, true, undefined, 100, 'read', 0, [{attrId: 0}], {});
         const object = {
             type: Type.AREQ,
             subsystem: Subsystem.AF,
@@ -3135,14 +3140,14 @@ describe('zstack-adapter', () => {
         znpReceived(object);
         const result = await response;
 
-        expect(mockZnpRequest).toBeCalledWith(
+        expect(mockZnpRequest).toHaveBeenCalledWith(
             4,
             'dataRequest',
             {clusterid: 0, data: frame.toBuffer(), destendpoint: 20, dstaddr: 2, len: 5, options: 0, radius: 30, srcendpoint: 1, transid: 1},
             99,
         );
         expect(mockQueueExecute.mock.calls[0][1]).toBe(2);
-        expect(mockZnpRequest).toBeCalledTimes(1);
+        expect(mockZnpRequest).toHaveBeenCalledTimes(1);
         expect(result.endpoint).toStrictEqual(20);
         expect(result.groupID).toStrictEqual(12);
         expect(result.linkquality).toStrictEqual(101);
@@ -3161,7 +3166,7 @@ describe('zstack-adapter', () => {
             Zcl.FrameType.GLOBAL,
             Zcl.Direction.SERVER_TO_CLIENT,
             true,
-            null,
+            undefined,
             102,
             'readRsp',
             0,
@@ -3172,14 +3177,14 @@ describe('zstack-adapter', () => {
             Zcl.FrameType.GLOBAL,
             Zcl.Direction.SERVER_TO_CLIENT,
             true,
-            null,
+            undefined,
             100,
             'readRsp',
             0,
             [{attrId: 0, attrData: 2, dataType: 32, status: 0}],
             {},
         );
-        const frame = Zcl.Frame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, false, null, 100, 'read', 0, [{attrId: 0}], {});
+        const frame = Zcl.Frame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, false, undefined, 100, 'read', 0, [{attrId: 0}], {});
         const object = {
             type: Type.AREQ,
             subsystem: Subsystem.AF,
@@ -3196,7 +3201,7 @@ describe('zstack-adapter', () => {
             Zcl.FrameType.GLOBAL,
             Zcl.Direction.SERVER_TO_CLIENT,
             true,
-            null,
+            undefined,
             100,
             'defaultRsp',
             0,
@@ -3215,14 +3220,14 @@ describe('zstack-adapter', () => {
         znpReceived(object);
         const result = await response;
 
-        expect(mockZnpRequest).toBeCalledWith(
+        expect(mockZnpRequest).toHaveBeenCalledWith(
             4,
             'dataRequest',
             {clusterid: 0, data: frame.toBuffer(), destendpoint: 20, dstaddr: 2, len: 5, options: 0, radius: 30, srcendpoint: 1, transid: 1},
             99,
         );
         expect(mockQueueExecute.mock.calls[0][1]).toBe(2);
-        expect(mockZnpRequest).toBeCalledTimes(1);
+        expect(mockZnpRequest).toHaveBeenCalledTimes(1);
         expect(result.endpoint).toStrictEqual(20);
         expect(result.groupID).toStrictEqual(12);
         expect(result.linkquality).toStrictEqual(101);
@@ -3235,7 +3240,7 @@ describe('zstack-adapter', () => {
         basicMocks();
         await adapter.start();
         dataConfirmCode = 201;
-        const frame = Zcl.Frame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, false, null, 100, 'read', 0, [{attrId: 0}], {});
+        const frame = Zcl.Frame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, false, undefined, 100, 'read', 0, [{attrId: 0}], {});
         let error;
         try {
             await adapter.sendZclFrameToEndpoint('0x02', 2, 20, frame, 10000, false, false);
@@ -3249,7 +3254,7 @@ describe('zstack-adapter', () => {
         basicMocks();
         await adapter.start();
         dataConfirmCode = 201;
-        const frame = Zcl.Frame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, true, null, 100, 'read', 0, [{attrId: 0}], {});
+        const frame = Zcl.Frame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, true, undefined, 100, 'read', 0, [{attrId: 0}], {});
         let error;
         try {
             await adapter.sendZclFrameToEndpoint('0x02', 2, 20, frame, 10000, false, false);
@@ -3269,14 +3274,14 @@ describe('zstack-adapter', () => {
             Zcl.FrameType.GLOBAL,
             Zcl.Direction.SERVER_TO_CLIENT,
             true,
-            null,
+            undefined,
             102,
             'readRsp',
             0,
             [{attrId: 0, attrData: 5, dataType: 32, status: 0}],
             {},
         );
-        const frame = Zcl.Frame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, false, null, 100, 'read', 0, [{attrId: 0}], {});
+        const frame = Zcl.Frame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, false, undefined, 100, 'read', 0, [{attrId: 0}], {});
         const objectMismatch = {
             type: Type.AREQ,
             subsystem: Subsystem.AF,
@@ -3294,7 +3299,7 @@ describe('zstack-adapter', () => {
         }
 
         expect(mockQueueExecute.mock.calls[0][1]).toBe(2);
-        expect(mockZnpRequest).toBeCalledTimes(4);
+        expect(mockZnpRequest).toHaveBeenCalledTimes(4);
         expect(mockZnpRequest).toHaveBeenNthCalledWith(
             1,
             4,
@@ -3324,14 +3329,14 @@ describe('zstack-adapter', () => {
             Zcl.FrameType.GLOBAL,
             Zcl.Direction.SERVER_TO_CLIENT,
             true,
-            null,
+            undefined,
             102,
             'readRsp',
             0,
             [{attrId: 0, attrData: 5, dataType: 32, status: 0}],
             {},
         );
-        const frame = Zcl.Frame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, false, null, 100, 'read', 0, [{attrId: 0}], {});
+        const frame = Zcl.Frame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, false, undefined, 100, 'read', 0, [{attrId: 0}], {});
         const objectMismatch = {
             type: Type.AREQ,
             subsystem: Subsystem.AF,
@@ -3349,7 +3354,7 @@ describe('zstack-adapter', () => {
         }
 
         expect(mockQueueExecute.mock.calls[0][1]).toBe(2);
-        expect(mockZnpRequest).toBeCalledTimes(6);
+        expect(mockZnpRequest).toHaveBeenCalledTimes(6);
         expect(mockZnpRequest).toHaveBeenNthCalledWith(
             1,
             4,
@@ -3380,14 +3385,14 @@ describe('zstack-adapter', () => {
             Zcl.FrameType.GLOBAL,
             Zcl.Direction.SERVER_TO_CLIENT,
             true,
-            null,
+            undefined,
             100,
             'readRsp',
             0,
             [{attrId: 0, attrData: 2, dataType: 32, status: 0}],
             {},
         );
-        const frame = Zcl.Frame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, false, null, 100, 'read', 0, [{attrId: 0}], {});
+        const frame = Zcl.Frame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, false, undefined, 100, 'read', 0, [{attrId: 0}], {});
         const object = {
             type: Type.AREQ,
             subsystem: Subsystem.AF,
@@ -3403,14 +3408,14 @@ describe('zstack-adapter', () => {
         } catch (e) {
             error = e;
         }
-        expect(mockZnpRequest).toBeCalledWith(
+        expect(mockZnpRequest).toHaveBeenCalledWith(
             4,
             'dataRequest',
             {clusterid: 0, data: frame.toBuffer(), destendpoint: 20, dstaddr: 2, len: 5, options: 0, radius: 30, srcendpoint: 1, transid: 1},
             99,
         );
         expect(mockQueueExecute.mock.calls[0][1]).toBe(2);
-        expect(mockZnpRequest).toBeCalledTimes(1);
+        expect(mockZnpRequest).toHaveBeenCalledTimes(1);
         expect(error).toStrictEqual(null);
     });
 
@@ -3427,10 +3432,10 @@ describe('zstack-adapter', () => {
 
         const result = await adapter.lqi(203);
         expect(mockQueueExecute.mock.calls[0][1]).toBe(203);
-        expect(mockZnpRequest).toBeCalledTimes(3);
-        expect(mockZnpRequest).toBeCalledWith(Subsystem.ZDO, 'mgmtLqiReq', {dstaddr: 203, startindex: 0}, 1);
-        expect(mockZnpRequest).toBeCalledWith(Subsystem.ZDO, 'mgmtLqiReq', {dstaddr: 203, startindex: 2}, 1);
-        expect(mockZnpRequest).toBeCalledWith(Subsystem.ZDO, 'mgmtLqiReq', {dstaddr: 203, startindex: 4}, 1);
+        expect(mockZnpRequest).toHaveBeenCalledTimes(3);
+        expect(mockZnpRequest).toHaveBeenCalledWith(Subsystem.ZDO, 'mgmtLqiReq', {dstaddr: 203, startindex: 0}, 1);
+        expect(mockZnpRequest).toHaveBeenCalledWith(Subsystem.ZDO, 'mgmtLqiReq', {dstaddr: 203, startindex: 2}, 1);
+        expect(mockZnpRequest).toHaveBeenCalledWith(Subsystem.ZDO, 'mgmtLqiReq', {dstaddr: 203, startindex: 4}, 1);
         expect(result).toStrictEqual({
             neighbors: [
                 {linkquality: 10, networkAddress: 2, ieeeAddr: 3, relationship: 3, depth: 1},
@@ -3456,8 +3461,8 @@ describe('zstack-adapter', () => {
         }
         expect(error).toStrictEqual(new Error("ZDO error: mgmtLqi failed with status 'NOT_AUTHORIZED' (141)"));
         expect(mockQueueExecute.mock.calls[0][1]).toBe(204);
-        expect(mockZnpRequest).toBeCalledTimes(1);
-        expect(mockZnpRequest).toBeCalledWith(Subsystem.ZDO, 'mgmtLqiReq', {dstaddr: 204, startindex: 0}, 1);
+        expect(mockZnpRequest).toHaveBeenCalledTimes(1);
+        expect(mockZnpRequest).toHaveBeenCalledWith(Subsystem.ZDO, 'mgmtLqiReq', {dstaddr: 204, startindex: 0}, 1);
     });
 
     it('Routing table', async () => {
@@ -3467,10 +3472,10 @@ describe('zstack-adapter', () => {
 
         const result = await adapter.routingTable(205);
         expect(mockQueueExecute.mock.calls[0][1]).toBe(205);
-        expect(mockZnpRequest).toBeCalledTimes(3);
-        expect(mockZnpRequest).toBeCalledWith(Subsystem.ZDO, 'mgmtRtgReq', {dstaddr: 205, startindex: 0}, 1);
-        expect(mockZnpRequest).toBeCalledWith(Subsystem.ZDO, 'mgmtRtgReq', {dstaddr: 205, startindex: 2}, 1);
-        expect(mockZnpRequest).toBeCalledWith(Subsystem.ZDO, 'mgmtRtgReq', {dstaddr: 205, startindex: 4}, 1);
+        expect(mockZnpRequest).toHaveBeenCalledTimes(3);
+        expect(mockZnpRequest).toHaveBeenCalledWith(Subsystem.ZDO, 'mgmtRtgReq', {dstaddr: 205, startindex: 0}, 1);
+        expect(mockZnpRequest).toHaveBeenCalledWith(Subsystem.ZDO, 'mgmtRtgReq', {dstaddr: 205, startindex: 2}, 1);
+        expect(mockZnpRequest).toHaveBeenCalledWith(Subsystem.ZDO, 'mgmtRtgReq', {dstaddr: 205, startindex: 4}, 1);
         expect(result).toStrictEqual({
             table: [
                 {destinationAddress: 10, status: 'OK', nextHop: 3},
@@ -3496,8 +3501,8 @@ describe('zstack-adapter', () => {
         }
         expect(error).toStrictEqual(new Error("ZDO error: mgmtRtg failed with status 'INSUFFICIENT_SPACE' (138)"));
         expect(mockQueueExecute.mock.calls[0][1]).toBe(206);
-        expect(mockZnpRequest).toBeCalledTimes(1);
-        expect(mockZnpRequest).toBeCalledWith(Subsystem.ZDO, 'mgmtRtgReq', {dstaddr: 206, startindex: 0}, 1);
+        expect(mockZnpRequest).toHaveBeenCalledTimes(1);
+        expect(mockZnpRequest).toHaveBeenCalledWith(Subsystem.ZDO, 'mgmtRtgReq', {dstaddr: 206, startindex: 0}, 1);
     });
 
     it('Bind endpoint', async () => {
@@ -3507,8 +3512,8 @@ describe('zstack-adapter', () => {
 
         const result = await adapter.bind(301, '0x01', 1, 1, '0x02', 'endpoint', 1);
         expect(mockQueueExecute.mock.calls[0][1]).toBe(301);
-        expect(mockZnpRequest).toBeCalledTimes(1);
-        expect(mockZnpRequest).toBeCalledWith(
+        expect(mockZnpRequest).toHaveBeenCalledTimes(1);
+        expect(mockZnpRequest).toHaveBeenCalledWith(
             Subsystem.ZDO,
             'bindReq',
             {clusterid: 1, dstaddr: 301, dstaddress: '0x02', dstaddrmode: 3, dstendpoint: 1, srcaddr: '0x01', srcendpoint: 1},
@@ -3533,8 +3538,8 @@ describe('zstack-adapter', () => {
 
         const result = await adapter.bind(301, '0x129', 1, 1, 4, 'group', undefined);
         expect(mockQueueExecute.mock.calls[0][1]).toBe(301);
-        expect(mockZnpRequest).toBeCalledTimes(1);
-        expect(mockZnpRequest).toBeCalledWith(
+        expect(mockZnpRequest).toHaveBeenCalledTimes(1);
+        expect(mockZnpRequest).toHaveBeenCalledWith(
             Subsystem.ZDO,
             'bindReq',
             {clusterid: 1, dstaddr: 301, dstaddress: '0x0000000000000004', dstaddrmode: 1, dstendpoint: 0xff, srcaddr: '0x129', srcendpoint: 1},
@@ -3549,8 +3554,8 @@ describe('zstack-adapter', () => {
 
         const result = await adapter.unbind(301, '0x01', 1, 1, '0x02', 'endpoint', 1);
         expect(mockQueueExecute.mock.calls[0][1]).toBe(301);
-        expect(mockZnpRequest).toBeCalledTimes(1);
-        expect(mockZnpRequest).toBeCalledWith(
+        expect(mockZnpRequest).toHaveBeenCalledTimes(1);
+        expect(mockZnpRequest).toHaveBeenCalledWith(
             Subsystem.ZDO,
             'unbindReq',
             {clusterid: 1, dstaddr: 301, dstaddress: '0x02', dstaddrmode: 3, dstendpoint: 1, srcaddr: '0x01', srcendpoint: 1},
@@ -3565,8 +3570,8 @@ describe('zstack-adapter', () => {
 
         const result = await adapter.unbind(301, '0x129', 1, 1, 4, 'group', null);
         expect(mockQueueExecute.mock.calls[0][1]).toBe(301);
-        expect(mockZnpRequest).toBeCalledTimes(1);
-        expect(mockZnpRequest).toBeCalledWith(
+        expect(mockZnpRequest).toHaveBeenCalledTimes(1);
+        expect(mockZnpRequest).toHaveBeenCalledWith(
             Subsystem.ZDO,
             'unbindReq',
             {clusterid: 1, dstaddr: 301, dstaddress: '0x0000000000000004', dstaddrmode: 1, dstendpoint: 0xff, srcaddr: '0x129', srcendpoint: 1},
@@ -3581,8 +3586,8 @@ describe('zstack-adapter', () => {
 
         const result = await adapter.removeDevice(401, '0x01');
         expect(mockQueueExecute.mock.calls[0][1]).toBe(401);
-        expect(mockZnpRequest).toBeCalledTimes(1);
-        expect(mockZnpRequest).toBeCalledWith(Subsystem.ZDO, 'mgmtLeaveReq', {deviceaddress: '0x01', dstaddr: 401, removechildrenRejoin: 0}, 1);
+        expect(mockZnpRequest).toHaveBeenCalledTimes(1);
+        expect(mockZnpRequest).toHaveBeenCalledWith(Subsystem.ZDO, 'mgmtLeaveReq', {deviceaddress: '0x01', dstaddr: 401, removechildrenRejoin: 0}, 1);
     });
 
     it('Incoming message extended', async () => {
@@ -3593,7 +3598,7 @@ describe('zstack-adapter', () => {
             Zcl.FrameType.GLOBAL,
             Zcl.Direction.SERVER_TO_CLIENT,
             true,
-            null,
+            undefined,
             100,
             'readRsp',
             0,
@@ -3692,7 +3697,7 @@ describe('zstack-adapter', () => {
         });
         znpReceived(object);
         expect(deviceAnnounce).toStrictEqual({ieeeAddr: '0x123', networkAddress: 123});
-        expect(mockZnpRequest).toBeCalledTimes(0);
+        expect(mockZnpRequest).toHaveBeenCalledTimes(0);
     });
 
     it('Device announce should discover route to end devices', async () => {
@@ -3711,14 +3716,14 @@ describe('zstack-adapter', () => {
         });
         znpReceived(object);
         expect(deviceAnnounce).toStrictEqual({ieeeAddr: '0x123', networkAddress: 123});
-        expect(mockZnpRequest).toBeCalledTimes(1);
-        expect(mockZnpRequest).toBeCalledWith(Subsystem.ZDO, 'extRouteDisc', {dstAddr: 123, options: 0, radius: 30});
+        expect(mockZnpRequest).toHaveBeenCalledTimes(1);
+        expect(mockZnpRequest).toHaveBeenCalledWith(Subsystem.ZDO, 'extRouteDisc', {dstAddr: 123, options: 0, radius: 30});
 
         // Should debounce route discovery.
         znpReceived(object);
         expect(deviceAnnounce).toStrictEqual({ieeeAddr: '0x123', networkAddress: 123});
-        expect(mockZnpRequest).toBeCalledTimes(1);
-        expect(mockZnpRequest).toBeCalledWith(Subsystem.ZDO, 'extRouteDisc', {dstAddr: 123, options: 0, radius: 30});
+        expect(mockZnpRequest).toHaveBeenCalledTimes(1);
+        expect(mockZnpRequest).toHaveBeenCalledWith(Subsystem.ZDO, 'extRouteDisc', {dstAddr: 123, options: 0, radius: 30});
     });
 
     it('Network address response', async () => {
@@ -3786,8 +3791,8 @@ describe('zstack-adapter', () => {
         await adapter.start();
         mockZnpRequest.mockClear();
         const result = await adapter.getNetworkParameters();
-        expect(mockZnpRequest).toBeCalledTimes(1);
-        expect(mockZnpRequest).toBeCalledWith(Subsystem.ZDO, 'extNwkInfo', {});
+        expect(mockZnpRequest).toHaveBeenCalledTimes(1);
+        expect(mockZnpRequest).toHaveBeenCalledWith(Subsystem.ZDO, 'extNwkInfo', {});
         expect(result).toStrictEqual({channel: 21, extendedPanID: '0x00124b0009d69f77', panID: 123});
     });
 
@@ -3796,14 +3801,14 @@ describe('zstack-adapter', () => {
         await adapter.start();
         mockZnpRequest.mockClear();
         await adapter.setChannelInterPAN(14);
-        expect(mockZnpRequest).toBeCalledTimes(2);
-        expect(mockZnpRequest).toBeCalledWith(Subsystem.AF, 'interPanCtl', {cmd: 1, data: [14]});
-        expect(mockZnpRequest).toBeCalledWith(Subsystem.AF, 'interPanCtl', {cmd: 2, data: [12]});
+        expect(mockZnpRequest).toHaveBeenCalledTimes(2);
+        expect(mockZnpRequest).toHaveBeenCalledWith(Subsystem.AF, 'interPanCtl', {cmd: 1, data: [14]});
+        expect(mockZnpRequest).toHaveBeenCalledWith(Subsystem.AF, 'interPanCtl', {cmd: 2, data: [12]});
 
         mockZnpRequest.mockClear();
         await adapter.setChannelInterPAN(15);
-        expect(mockZnpRequest).toBeCalledTimes(1);
-        expect(mockZnpRequest).toBeCalledWith(Subsystem.AF, 'interPanCtl', {cmd: 1, data: [15]});
+        expect(mockZnpRequest).toHaveBeenCalledTimes(1);
+        expect(mockZnpRequest).toHaveBeenCalledWith(Subsystem.AF, 'interPanCtl', {cmd: 1, data: [15]});
     });
 
     it('Restore interpan channel', async () => {
@@ -3811,8 +3816,8 @@ describe('zstack-adapter', () => {
         await adapter.start();
         mockZnpRequest.mockClear();
         const result = await adapter.restoreChannelInterPAN();
-        expect(mockZnpRequest).toBeCalledTimes(1);
-        expect(mockZnpRequest).toBeCalledWith(Subsystem.AF, 'interPanCtl', {cmd: 0, data: []});
+        expect(mockZnpRequest).toHaveBeenCalledTimes(1);
+        expect(mockZnpRequest).toHaveBeenCalledWith(Subsystem.AF, 'interPanCtl', {cmd: 0, data: []});
     });
 
     it('Send zcl frame interpan', async () => {
@@ -3820,8 +3825,8 @@ describe('zstack-adapter', () => {
         await adapter.start();
         mockZnpRequest.mockClear();
         const result = await adapter.sendZclFrameInterPANToIeeeAddr(touchlinkIdentifyRequest, '0x0017880104c9cd33');
-        expect(mockZnpRequest).toBeCalledTimes(1);
-        expect(mockZnpRequest).toBeCalledWith(
+        expect(mockZnpRequest).toHaveBeenCalledTimes(1);
+        expect(mockZnpRequest).toHaveBeenCalledWith(
             4,
             'dataRequestExt',
             {
@@ -3856,8 +3861,8 @@ describe('zstack-adapter', () => {
         znpReceived(object);
         result = await result;
 
-        expect(mockZnpRequest).toBeCalledTimes(1);
-        expect(mockZnpRequest).toBeCalledWith(
+        expect(mockZnpRequest).toHaveBeenCalledTimes(1);
+        expect(mockZnpRequest).toHaveBeenCalledWith(
             4,
             'dataRequestExt',
             {
@@ -3883,7 +3888,6 @@ describe('zstack-adapter', () => {
             },
             header: {
                 frameControl: {frameType: 1, manufacturerSpecific: false, direction: 1, disableDefaultResponse: false, reservedBits: 0},
-                manufacturerCode: null,
                 transactionSequenceNumber: 12,
                 commandIdentifier: 1,
             },
@@ -3954,7 +3958,7 @@ describe('zstack-adapter', () => {
             Zcl.FrameType.GLOBAL,
             Zcl.Direction.SERVER_TO_CLIENT,
             true,
-            null,
+            undefined,
             100,
             'readRsp',
             0,
@@ -3983,7 +3987,7 @@ describe('zstack-adapter', () => {
             Zcl.FrameType.GLOBAL,
             Zcl.Direction.CLIENT_TO_SERVER,
             true,
-            null,
+            undefined,
             100,
             'writeNoRsp',
             0,
@@ -4002,12 +4006,12 @@ describe('zstack-adapter', () => {
             error = e;
         }
         expect(error).toStrictEqual(new Error('Cannot execute command, in Inter-PAN mode'));
-        expect(mockZnpRequest).toBeCalledTimes(0);
+        expect(mockZnpRequest).toHaveBeenCalledTimes(0);
 
         await adapter.restoreChannelInterPAN();
         mockZnpRequest.mockClear();
 
         await adapter.sendZclFrameToEndpoint('0x02', 2, 20, frame, 10000, false, false);
-        expect(mockZnpRequest).toBeCalledTimes(1);
+        expect(mockZnpRequest).toHaveBeenCalledTimes(1);
     });
 });

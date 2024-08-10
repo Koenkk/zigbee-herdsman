@@ -49,8 +49,9 @@ abstract class Adapter extends events.EventEmitter {
 
         let adapters: AdapterImplementation[];
         const adapterLookup = {zstack: ZStackAdapter, deconz: DeconzAdapter, zigate: ZiGateAdapter, ezsp: EZSPAdapter, ember: EmberAdapter};
+
         if (serialPortOptions.adapter && serialPortOptions.adapter !== 'auto') {
-            if (adapterLookup.hasOwnProperty(serialPortOptions.adapter)) {
+            if (adapterLookup[serialPortOptions.adapter]) {
                 adapters = [adapterLookup[serialPortOptions.adapter]];
             } else {
                 throw new Error(`Adapter '${serialPortOptions.adapter}' does not exists, possible options: ${Object.keys(adapterLookup).join(', ')}`);
@@ -79,13 +80,16 @@ abstract class Adapter extends events.EventEmitter {
             }
         } else if (serialPortOptions.path.startsWith('mdns://')) {
             const mdnsDevice = serialPortOptions.path.substring(7);
+
             if (mdnsDevice.length == 0) {
                 throw new Error(`No mdns device specified. You must specify the coordinator mdns service type after mdns://, e.g. mdns://my-adapter`);
             }
+
             const bj = new Bonjour();
             const mdnsTimeout = 2000; // timeout for mdns scan
 
             logger.info(`Starting mdns discovery for coordinator: ${mdnsDevice}`, NS);
+
             await new Promise((resolve, reject) => {
                 bj.findOne({type: mdnsDevice}, mdnsTimeout, function (service: Service) {
                     if (service) {
@@ -96,16 +100,22 @@ abstract class Adapter extends events.EventEmitter {
                                 service.txt.radio_type == 'znp' ? 'zstack' : service.txt.radio_type
                             ) as TsType.SerialPortOptions['adapter'];
                             const mdnsBaud = parseInt(service.txt.baud_rate);
+
                             logger.info(`Coordinator Ip: ${mdnsIp}`, NS);
                             logger.info(`Coordinator Port: ${mdnsPort}`, NS);
                             logger.info(`Coordinator Radio: ${mdnsAdapter}`, NS);
                             logger.info(`Coordinator Baud: ${mdnsBaud}\n`, NS);
                             bj.destroy();
+
                             serialPortOptions.path = `tcp://${mdnsIp}:${mdnsPort}`;
                             serialPortOptions.adapter = mdnsAdapter;
                             serialPortOptions.baudRate = mdnsBaud;
 
-                            if (adapterLookup.hasOwnProperty(serialPortOptions.adapter) && serialPortOptions.adapter !== 'auto') {
+                            if (
+                                serialPortOptions.adapter &&
+                                serialPortOptions.adapter !== 'auto' &&
+                                adapterLookup[serialPortOptions.adapter] !== undefined
+                            ) {
                                 adapter = adapterLookup[serialPortOptions.adapter];
                                 resolve(new adapter(networkOptions, serialPortOptions, backupPath, adapterOptions));
                             } else {
@@ -184,7 +194,7 @@ abstract class Adapter extends events.EventEmitter {
      * ZDO
      */
 
-    public abstract permitJoin(seconds: number, networkAddress: number): Promise<void>;
+    public abstract permitJoin(seconds: number, networkAddress?: number): Promise<void>;
 
     public abstract lqi(networkAddress: number): Promise<TsType.LQI>;
 
@@ -213,7 +223,7 @@ abstract class Adapter extends events.EventEmitter {
         clusterID: number,
         destinationAddressOrGroup: string | number,
         type: 'endpoint' | 'group',
-        destinationEndpoint: number,
+        destinationEndpoint?: number,
     ): Promise<void>;
 
     public abstract removeDevice(networkAddress: number, ieeeAddr: string): Promise<void>;
@@ -223,11 +233,11 @@ abstract class Adapter extends events.EventEmitter {
      */
 
     public abstract sendZclFrameToEndpoint(
-        ieeeAddr: string,
+        ieeeAddr: string | undefined,
         networkAddress: number,
         endpoint: number,
         zclFrame: Zcl.Frame,
-        timeout: number,
+        timeout: number | undefined,
         disableResponse: boolean,
         disableRecovery: boolean,
         sourceEndpoint?: number,

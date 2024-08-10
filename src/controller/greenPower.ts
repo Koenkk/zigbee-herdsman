@@ -68,7 +68,7 @@ class GreenPower extends events.EventEmitter {
             Zcl.FrameType.SPECIFIC,
             Zcl.Direction.SERVER_TO_CLIENT,
             true,
-            null,
+            undefined,
             ZclTransactionSequenceNumber.next(),
             'pairing',
             Zcl.Clusters.greenPower.ID,
@@ -83,7 +83,7 @@ class GreenPower extends events.EventEmitter {
         if (dataPayload.wasBroadcast) {
             return this.adapter.sendZclFrameToAll(242, replyFrame, 242, BroadcastAddress.RX_ON_WHEN_IDLE);
         } else {
-            return this.adapter.sendZclFrameToEndpoint(null, frame.payload.gppNwkAddr, 242, replyFrame, 10000, false, false, 242);
+            return this.adapter.sendZclFrameToEndpoint(undefined, frame.payload.gppNwkAddr, 242, replyFrame, 10000, false, false, 242);
         }
     }
 
@@ -133,7 +133,7 @@ class GreenPower extends events.EventEmitter {
                             Zcl.FrameType.SPECIFIC,
                             Zcl.Direction.SERVER_TO_CLIENT,
                             true,
-                            null,
+                            undefined,
                             ZclTransactionSequenceNumber.next(),
                             'response',
                             Zcl.Clusters.greenPower.ID,
@@ -203,7 +203,7 @@ class GreenPower extends events.EventEmitter {
                         Zcl.FrameType.SPECIFIC,
                         Zcl.Direction.SERVER_TO_CLIENT,
                         true,
-                        null,
+                        undefined,
                         ZclTransactionSequenceNumber.next(),
                         'response',
                         Zcl.Clusters.greenPower.ID,
@@ -222,13 +222,13 @@ class GreenPower extends events.EventEmitter {
             }
         } catch (error) {
             /* istanbul ignore next */
-            logger.error(error, NS);
+            logger.error(error as Error, NS);
         }
     }
 
-    public async permitJoin(time: number, networkAddress: number): Promise<void> {
+    public async permitJoin(time: number, networkAddress?: number): Promise<void> {
         const payload = {
-            options: time ? (networkAddress === null ? 0x0b : 0x2b) : 0x0a,
+            options: time ? (networkAddress === undefined ? 0x0b : 0x2b) : 0x0a,
             commisioningWindow: time,
         };
 
@@ -236,7 +236,7 @@ class GreenPower extends events.EventEmitter {
             Zcl.FrameType.SPECIFIC,
             Zcl.Direction.SERVER_TO_CLIENT,
             true,
-            null,
+            undefined,
             ZclTransactionSequenceNumber.next(),
             'commisioningMode',
             Zcl.Clusters.greenPower.ID,
@@ -244,10 +244,10 @@ class GreenPower extends events.EventEmitter {
             {},
         );
 
-        if (networkAddress === null) {
+        if (networkAddress === undefined) {
             await this.adapter.sendZclFrameToAll(242, frame, 242, BroadcastAddress.RX_ON_WHEN_IDLE);
         } else {
-            await this.adapter.sendZclFrameToEndpoint(null, networkAddress, 242, frame, 10000, false, false, 242);
+            await this.adapter.sendZclFrameToEndpoint(undefined, networkAddress, 242, frame, 10000, false, false, 242);
         }
     }
 }

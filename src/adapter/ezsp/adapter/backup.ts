@@ -4,9 +4,9 @@ import {fs} from 'mz';
 import * as Models from '../../../models';
 import {BackupUtils} from '../../../utils';
 import {logger} from '../../../utils/logger';
+import {uint32MaskToChannels} from '../../../zspec/utils';
 import {Driver} from '../driver';
 import {EmberKeyType, EmberKeyStruct, EmberNetworkParameters, EmberSecurityManagerNetworkKeyInfo, EmberKeyData} from '../driver/types';
-import {channelsMask2list} from '../driver/utils';
 
 const NS = 'zh:ezsp:backup';
 
@@ -57,7 +57,7 @@ export class EZSPAdapterBackup {
             networkOptions: {
                 panId: networkParams.panId,
                 extendedPanId: Buffer.from(networkParams.extendedPanId),
-                channelList: channelsMask2list(networkParams.channels),
+                channelList: uint32MaskToChannels(networkParams.channels),
                 networkKey: netKey,
                 networkKeyDistribute: true,
             },

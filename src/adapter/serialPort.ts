@@ -43,9 +43,9 @@ export class SerialPort<T extends AutoDetectTypes = AutoDetectTypes> extends Ser
         await this.asyncClose();
     }
 
-    public async asyncGet(): Promise<object> {
+    public async asyncGet(): Promise<{cts: boolean; dsr: boolean; dcd: boolean}> {
         return new Promise((resolve, reject): void => {
-            this.get((err, options?): void => (err ? reject(err) : resolve(options)));
+            this.get((err, options?): void => (err ? reject(err) : resolve(options!)));
         });
     }
 }
