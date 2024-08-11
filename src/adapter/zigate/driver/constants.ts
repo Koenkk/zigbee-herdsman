@@ -293,7 +293,7 @@ export enum PDMEventType {
 }
 
 /* istanbul ignore next */
-const coordinatorEndpoints: readonly {ID: number; profileID: number; deviceID: number; inputClusters: number[]; outputClusters: number[];}[] = [
+const coordinatorEndpoints: readonly {ID: number; profileID: number; deviceID: number; inputClusters: number[]; outputClusters: number[]}[] = [
     {
         ID: 0x01,
         profileID: 0x0104,

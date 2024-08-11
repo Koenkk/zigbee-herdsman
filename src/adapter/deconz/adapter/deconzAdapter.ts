@@ -377,7 +377,9 @@ class DeconzAdapter extends Adapter {
             }
         };
 
-        const request = async (startIndex: number): Promise<{
+        const request = async (
+            startIndex: number,
+        ): Promise<{
             status: number;
             tableEntrys: number;
             startIndex: number;
@@ -400,7 +402,9 @@ class DeconzAdapter extends Adapter {
 
             try {
                 await this.driver.enqueueSendDataRequest(req);
-            } catch {/* nothing */}
+            } catch {
+                /* nothing */
+            }
 
             try {
                 const d = await this.waitForData(networkAddress, 0, 0x8031);
@@ -489,7 +493,9 @@ class DeconzAdapter extends Adapter {
             }
         };
 
-        const request = async (startIndex: number): Promise<{
+        const request = async (
+            startIndex: number,
+        ): Promise<{
             status: number;
             tableEntrys: number;
             startIndex: number;
@@ -513,7 +519,9 @@ class DeconzAdapter extends Adapter {
 
             try {
                 await this.driver.enqueueSendDataRequest(req);
-            } catch {/* nothing */}
+            } catch {
+                /* nothing */
+            }
 
             try {
                 const d = await this.waitForData(networkAddress, 0, 0x8032);
@@ -600,7 +608,9 @@ class DeconzAdapter extends Adapter {
 
         try {
             await this.driver.enqueueSendDataRequest(request);
-        } catch {/* nothing */}
+        } catch {
+            /* nothing */
+        }
 
         try {
             const d = await this.waitForData(networkAddress, 0, 0x8002);
@@ -650,7 +660,9 @@ class DeconzAdapter extends Adapter {
 
         try {
             await this.driver.enqueueSendDataRequest(request);
-        } catch {/* nothing */}
+        } catch {
+            /* nothing */
+        }
 
         try {
             const d = await this.waitForData(networkAddress, 0, 0x8005);
@@ -693,7 +705,9 @@ class DeconzAdapter extends Adapter {
 
         try {
             await this.driver.enqueueSendDataRequest(request);
-        } catch {/* nothing */}
+        } catch {
+            /* nothing */
+        }
 
         try {
             const d = await this.waitForData(networkAddress, 0, 0x8004);
@@ -860,19 +874,13 @@ class DeconzAdapter extends Adapter {
         request.timeout = timeout;
 
         const command = zclFrame.command;
-        
+
         try {
             await this.driver.enqueueSendDataRequest(request);
 
             logger.debug(`sendZclFrameToEndpoint - message send with transSeq Nr.: ${zclFrame.header.transactionSequenceNumber}`, NS);
             logger.debug(
-                command.response +
-                    ', ' +
-                    zclFrame.header.frameControl.disableDefaultResponse +
-                    ', ' +
-                    disableResponse +
-                    ', ' +
-                    request.timeout,
+                command.response + ', ' + zclFrame.header.frameControl.disableDefaultResponse + ', ' + disableResponse + ', ' + request.timeout,
                 NS,
             );
 
@@ -1017,7 +1025,9 @@ class DeconzAdapter extends Adapter {
 
         try {
             await this.driver.enqueueSendDataRequest(request);
-        } catch {/* nothing */}
+        } catch {
+            /* nothing */
+        }
 
         try {
             const d = await this.waitForData(destinationNetworkAddress, 0, 0x8021);
@@ -1075,7 +1085,9 @@ class DeconzAdapter extends Adapter {
 
         try {
             await this.driver.enqueueSendDataRequest(request);
-        } catch {/* nothing */}
+        } catch {
+            /* nothing */
+        }
 
         try {
             const d = await this.waitForData(destinationNetworkAddress, 0, 0x8022);
@@ -1112,7 +1124,9 @@ class DeconzAdapter extends Adapter {
 
         try {
             await this.driver.enqueueSendDataRequest(request);
-        } catch {/* nothing */}
+        } catch {
+            /* nothing */
+        }
 
         try {
             const d = await this.waitForData(networkAddress, 0, 0x8034);

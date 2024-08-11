@@ -189,7 +189,7 @@ class ZiGateAdapter extends Adapter {
 
     public async setTransmitPower(value: number): Promise<void> {
         try {
-            await this.driver.sendCommand(ZiGateCommandCode.SetTXpower, {value: value})
+            await this.driver.sendCommand(ZiGateCommandCode.SetTXpower, {value: value});
         } catch (error) {
             throw new Error(`Set transmitpower failed ${error}`);
         }
@@ -213,7 +213,9 @@ class ZiGateAdapter extends Adapter {
                 }
             };
 
-            const request = async (startIndex: number): Promise<{
+            const request = async (
+                startIndex: number,
+            ): Promise<{
                 status: number;
                 tableEntrys: number;
                 startIndex: number;
@@ -401,7 +403,7 @@ class ZiGateAdapter extends Adapter {
 
                     return resultPayload;
                 }
-                
+
                 throw new Error(`Invalid buffer length ${buf.length}.`);
             } catch (error) {
                 const msg = 'RECEIVING SIMPLE_DESCRIPTOR FAILED - addr: 0x' + networkAddress.toString(16) + ' EP:' + endpointID + ' ' + error;
@@ -489,7 +491,7 @@ class ZiGateAdapter extends Adapter {
             };
 
             try {
-                await this.driver.sendCommand(ZiGateCommandCode.ManagementLeaveRequest, payload)
+                await this.driver.sendCommand(ZiGateCommandCode.ManagementLeaveRequest, payload);
             } catch (error) {
                 new Error(`ManagementLeaveRequest failed ${error}`);
             }
@@ -813,13 +815,13 @@ class ZiGateAdapter extends Adapter {
     private waitressValidator(payload: Events.ZclPayload, matcher: WaitressMatcher): boolean {
         return Boolean(
             payload.header &&
-            (!matcher.address || payload.address === matcher.address) &&
-            matcher.endpoint === payload.endpoint &&
-            (!matcher.transactionSequenceNumber || payload.header.transactionSequenceNumber === matcher.transactionSequenceNumber) &&
-            matcher.clusterID === payload.clusterID &&
-            matcher.frameType === payload.header.frameControl.frameType &&
-            matcher.commandIdentifier === payload.header.commandIdentifier &&
-            matcher.direction === payload.header.frameControl.direction
+                (!matcher.address || payload.address === matcher.address) &&
+                matcher.endpoint === payload.endpoint &&
+                (!matcher.transactionSequenceNumber || payload.header.transactionSequenceNumber === matcher.transactionSequenceNumber) &&
+                matcher.clusterID === payload.clusterID &&
+                matcher.frameType === payload.header.frameControl.frameType &&
+                matcher.commandIdentifier === payload.header.commandIdentifier &&
+                matcher.direction === payload.header.frameControl.direction,
         );
     }
 
