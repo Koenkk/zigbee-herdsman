@@ -823,7 +823,7 @@ class DeconzAdapter extends Adapter {
     }
 
     public async sendZclFrameToEndpoint(
-        ieeeAddr: string,
+        ieeeAddr: string | undefined,
         networkAddress: number,
         endpoint: number,
         zclFrame: Zcl.Frame,
@@ -831,7 +831,7 @@ class DeconzAdapter extends Adapter {
         disableResponse: boolean,
         disableRecovery: boolean,
         sourceEndpoint?: number,
-    ): Promise<Events.ZclPayload> {
+    ): Promise<Events.ZclPayload | void> {
         const transactionID = this.nextTransactionID();
         const request: ApsDataRequest = {};
 
@@ -902,7 +902,6 @@ class DeconzAdapter extends Adapter {
                 return response;
             } else {
                 logger.debug(`no response expected (${zclFrame.header.transactionSequenceNumber})`, NS);
-                return null;
             }
         } catch (error) {
             throw new Error(`no response received (${zclFrame.header.transactionSequenceNumber})`);
@@ -1033,7 +1032,7 @@ class DeconzAdapter extends Adapter {
         clusterID: number,
         destinationAddressOrGroup: string | number,
         type: 'endpoint' | 'group',
-        destinationEndpoint: number,
+        destinationEndpoint?: number,
     ): Promise<void> {
         const transactionID = this.nextTransactionID();
         const clid1 = clusterID & 0xff;

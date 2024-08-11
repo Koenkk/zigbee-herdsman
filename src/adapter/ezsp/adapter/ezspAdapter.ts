@@ -430,7 +430,7 @@ class EZSPAdapter extends Adapter {
     }
 
     public async sendZclFrameToEndpoint(
-        ieeeAddr: string,
+        ieeeAddr: string | undefined,
         networkAddress: number,
         endpoint: number,
         zclFrame: Zcl.Frame,
@@ -438,8 +438,8 @@ class EZSPAdapter extends Adapter {
         disableResponse: boolean,
         disableRecovery: boolean,
         sourceEndpoint?: number,
-    ): Promise<Events.ZclPayload> {
-        return this.queue.execute<Events.ZclPayload>(async () => {
+    ): Promise<Events.ZclPayload | void> {
+        return this.queue.execute<Events.ZclPayload | void>(async () => {
             this.checkInterpanLock();
             return this.sendZclFrameToEndpointInternal(
                 ieeeAddr,
@@ -547,8 +547,6 @@ class EZSPAdapter extends Adapter {
                     throw error;
                 }
             }
-        } else {
-            return null;
         }
     }
 
@@ -635,7 +633,7 @@ class EZSPAdapter extends Adapter {
         clusterID: number,
         destinationAddressOrGroup: string | number,
         type: 'endpoint' | 'group',
-        destinationEndpoint: number,
+        destinationEndpoint?: number,
     ): Promise<void> {
         return this.queue.execute<void>(async () => {
             this.checkInterpanLock();

@@ -107,7 +107,6 @@ import {
     EmberRxPacketInfo,
 } from '../types';
 import {AshEvents, UartAsh} from '../uart/ash';
-import {EzspBuffer} from '../uart/queues';
 import {initSecurityManagerContext} from '../utils/initters';
 import {highByte, highLowToInt, lowByte} from '../utils/math';
 import {EzspBuffalo} from './buffalo';
@@ -211,7 +210,7 @@ interface EzspEventMap {
         sender: NodeId,
         messageContents: Buffer,
     ];
-    [EzspEvents.TOUCHLINK_MESSAGE]: [sourcePanId: PanId, sourceAddress: EUI64, groupId: number | null, lastHopLqi: number, messageContents: Buffer];
+    [EzspEvents.TOUCHLINK_MESSAGE]: [sourcePanId: PanId, sourceAddress: EUI64, groupId: number, lastHopLqi: number, messageContents: Buffer];
     [EzspEvents.STACK_STATUS]: [status: SLStatus];
     [EzspEvents.TRUST_CENTER_JOIN]: [
         newNodeId: NodeId,
@@ -269,8 +268,8 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
     /** Sequence used for EZSP send() tagging. static uint8_t */
     private sendSequence: number;
     private readonly queue: Queue;
-    /** Awaiting response resolve/timer struct. Null if not waiting for response. */
-    private responseWaiter: EzspWaiter | null;
+    /** Awaiting response resolve/timer struct. undefined if not waiting for response. */
+    private responseWaiter?: EzspWaiter;
 
     /** Counter for Queue Full errors */
     public counterErrQueueFull: number;
@@ -279,12 +278,20 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
         super();
 
         this.frameContents = Buffer.alloc(EZSP_MAX_FRAME_LENGTH);
-        this.buffalo = new EzspBuffalo(this.frameContents);
+        this.buffalo = new EzspBuffalo(this.frameContents, 0);
         this.callbackFrameContents = Buffer.alloc(EZSP_MAX_FRAME_LENGTH);
-        this.callbackBuffalo = new EzspBuffalo(this.callbackFrameContents);
+        this.callbackBuffalo = new EzspBuffalo(this.callbackFrameContents, 0);
 
         this.queue = new Queue(1);
         this.ash = new UartAsh(options);
+
+        this.version = 0;
+        this.frameLength = 0;
+        this.callbackFrameLength = 0;
+        this.initialVersionSent = false;
+        this.frameSequence = -1; // start at 0
+        this.sendSequence = 0; // start at 1
+        this.counterErrQueueFull = 0;
     }
 
     /**
@@ -312,29 +319,10 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
         return `[CBFRAME: ID=${id}:"${EzspFrameID[id]}" Seq=${this.callbackFrameContents[EZSP_SEQUENCE_INDEX]} Len=${this.callbackFrameLength}]`;
     }
 
-    private initVariables(): void {
-        this.ash.removeAllListeners(AshEvents.FATAL_ERROR);
-        this.ash.removeAllListeners(AshEvents.FRAME);
-        this.queue.clear();
-
-        this.frameContents.fill(0);
-        this.frameLength = 0;
-        this.buffalo.setPosition(0);
-        this.callbackFrameContents.fill(0);
-        this.callbackFrameLength = 0;
-        this.callbackBuffalo.setPosition(0);
-        this.initialVersionSent = false;
-        this.frameSequence = -1; // start at 0
-        this.sendSequence = 0; // start at 1
-        this.counterErrQueueFull = 0;
-    }
-
     public async start(): Promise<EzspStatus> {
         logger.info(`======== EZSP starting ========`, NS);
 
-        this.initVariables();
-
-        let status: EzspStatus;
+        let status: EzspStatus = EzspStatus.HOST_FATAL_ERROR;
 
         for (let i = 0; i < MAX_INIT_ATTEMPTS; i++) {
             status = await this.ash.resetNcp();
@@ -365,8 +353,8 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
      */
     public async stop(): Promise<void> {
         await this.ash.stop();
+        this.ash.removeAllListeners();
 
-        this.initVariables();
         logger.info(`======== EZSP stopped ========`, NS);
     }
 
@@ -402,7 +390,7 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
         // trigger housekeeping in ASH layer
         this.ash.sendExec();
 
-        const buffer: EzspBuffer = this.ash.rxQueue.getPrecedingEntry(null);
+        const buffer = this.ash.rxQueue.getPrecedingEntry();
 
         if (buffer == null) {
             // something is seriously wrong
@@ -441,13 +429,13 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
 
             this.ash.rxFree.freeBuffer(buffer); // always
 
-            if (this.responseWaiter != null) {
+            if (this.responseWaiter !== undefined) {
                 const status = this.validateReceivedFrame(this.buffalo);
 
                 clearTimeout(this.responseWaiter.timer);
                 this.responseWaiter.resolve(status);
 
-                this.responseWaiter = null; // done, gc
+                this.responseWaiter = undefined; // done, gc
             } else {
                 logger.debug(`Received response while not expecting one. Ignoring.`, NS);
             }
@@ -601,7 +589,7 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
                     throw new EzspError(status);
                 }
             } catch (error) {
-                this.responseWaiter = null;
+                this.responseWaiter = undefined;
 
                 logger.debug(`=x=> ${frameString} ${error}`, NS);
 
@@ -1171,7 +1159,7 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
                         apsFrame.destinationEndpoint === ZSpec.GP_ENDPOINT &&
                         apsFrame.options & EmberApsOption.USE_ALIAS_SEQUENCE_NUMBER)
                 ) {
-                    nwkRadius = apsFrame.radius;
+                    nwkRadius = apsFrame.radius ?? nwkRadius;
                     nwkAlias = alias;
                 }
 
@@ -1194,7 +1182,7 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
                         apsFrame.destinationEndpoint == ZSpec.GP_ENDPOINT &&
                         apsFrame.options & EmberApsOption.USE_ALIAS_SEQUENCE_NUMBER)
                 ) {
-                    nwkRadius = apsFrame.radius;
+                    nwkRadius = apsFrame.radius ?? nwkRadius;
                     nwkAlias = alias;
                 }
 
@@ -1209,8 +1197,6 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
                 );
                 break;
             }
-            default:
-                break;
         }
 
         apsFrame.sequence = apsSequence;
@@ -5004,7 +4990,7 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
         indexOrDestination: number,
         apsFrame: EmberApsFrame,
         messageTag: number,
-        messageContents: Buffer = undefined,
+        messageContents?: Buffer,
     ): void {
         logger.debug(
             `ezspMessageSentHandler(): callback called with: [status=${SLStatus[status]}], [type=${EmberOutgoingMessageType[type]}], ` +
@@ -5865,7 +5851,7 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
         }
 
         const messageType = apsFrameControl & INTERPAN_APS_FRAME_DELIVERY_MODE_MASK;
-        let groupId: number = null;
+        let groupId: number = 0;// XXX: looks fine from z2m code?
 
         switch (messageType) {
             case EmberInterpanMessageType.UNICAST:
@@ -6615,7 +6601,7 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
             const keyData = this.buffalo.readSecManAPSKeyMetadata();
             const status = this.buffalo.readUInt32();
 
-            return [status, , plaintextKey, keyData];
+            return [status, context, plaintextKey, keyData];
         } else {
             const status = this.buffalo.readUInt32();
             const context = this.buffalo.readSecManContext();

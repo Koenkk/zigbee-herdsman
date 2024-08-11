@@ -1107,6 +1107,18 @@ describe('Ember Adapter Layer', () => {
             clearMocks();
         });
 
+        it('Stops Ezsp layer on stop', async () => {
+            // @ts-expect-error private
+            const ezspStopSpy = jest.spyOn(adapter.ezsp, 'stop');
+            // @ts-expect-error private
+            const ezspRemoveAllListenersSpy = jest.spyOn(adapter.ezsp, 'removeAllListeners');
+
+            await adapter.stop();
+
+            expect(ezspStopSpy).toHaveBeenCalledTimes(1);
+            expect(ezspRemoveAllListenersSpy).toHaveBeenCalledTimes(1);
+        });
+
         it('Retrieves parameters from cache when cache valid', async () => {
             await expect(adapter.emberGetEui64()).resolves.toStrictEqual(DEFAULT_COORDINATOR_IEEE);
             expect(mockEzspGetEui64).toHaveBeenCalledTimes(0);
@@ -1415,7 +1427,7 @@ describe('Ember Adapter Layer', () => {
             const sourcePanId: PanId = 0x1234;
             const sourceAddress: EUI64 = '0x1122334455aabbcc';
             const lastHopLqi = 252;
-            const groupId: number | null = null;
+            const groupId: number = 0;
             const messageContents = Buffer.from('1803010000002003', 'hex');
 
             mockEzspEmitter.emit(EzspEvents.TOUCHLINK_MESSAGE, sourcePanId, sourceAddress, groupId, lastHopLqi, messageContents);
@@ -1428,7 +1440,6 @@ describe('Ember Adapter Layer', () => {
                 data: messageContents,
                 endpoint: 1,
                 linkquality: lastHopLqi,
-                // @ts-expect-error improper typing
                 groupID: groupId,
                 wasBroadcast: true,
                 destinationEndpoint: FIXED_ENDPOINTS[0].endpoint,
@@ -1959,15 +1970,12 @@ describe('Ember Adapter Layer', () => {
 
         it('Handles NCP needing reset & init', async () => {
             const spyEmit = jest.spyOn(adapter, 'emit');
-            const spyStop = jest.spyOn(adapter, 'stop');
-            const spyStart = jest.spyOn(adapter, 'start');
 
             mockEzspEmitter.emit(EzspEvents.NCP_NEEDS_RESET_AND_INIT, EzspStatus.ERROR_SERIAL_INIT);
             await jest.advanceTimersByTimeAsync(5000);
 
-            expect(spyEmit).toHaveBeenCalledTimes(0);
-            expect(spyStop).toHaveBeenCalledTimes(1);
-            expect(spyStart).toHaveBeenCalledTimes(1);
+            expect(spyEmit).toHaveBeenCalledTimes(1);
+            expect(spyEmit).toHaveBeenCalledWith(Events.disconnected);
         });
 
         it('Emits adapter disconnected when NCP needs reset & init but queue is too high', async () => {
@@ -1999,7 +2007,7 @@ describe('Ember Adapter Layer', () => {
             ['getNetworkParameters', []],
             ['changeChannel', [15]],
             ['permitJoin', [250, 1234]],
-            ['permitJoin', [250, null]],
+            ['permitJoin', [250]],
             ['lqi', [1234]],
             ['routingTable', [1234]],
             ['nodeDescriptor', [1234]],
@@ -2017,19 +2025,19 @@ describe('Ember Adapter Layer', () => {
                     '0x1122334455667788',
                     1234,
                     1,
-                    Zcl.Frame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.SERVER_TO_CLIENT, true, null, 1, 1, 0, [{}], {}),
+                    Zcl.Frame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.SERVER_TO_CLIENT, true, undefined, 1, 1, 0, [{}], {}),
                     10000,
                     true,
                     false,
                     1,
                 ],
             ],
-            ['sendZclFrameToGroup', [32, Zcl.Frame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.SERVER_TO_CLIENT, true, null, 1, 1, 0, [{}], {}), 1]],
+            ['sendZclFrameToGroup', [32, Zcl.Frame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.SERVER_TO_CLIENT, true, undefined, 1, 1, 0, [{}], {}), 1]],
             [
                 'sendZclFrameToAll',
                 [
                     1,
-                    Zcl.Frame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.SERVER_TO_CLIENT, true, null, 1, 1, 0, [{}], {}),
+                    Zcl.Frame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.SERVER_TO_CLIENT, true, undefined, 1, 1, 0, [{}], {}),
                     1,
                     ZSpec.BroadcastAddress.DEFAULT,
                 ],
@@ -2295,15 +2303,13 @@ describe('Ember Adapter Layer', () => {
                 'resolveEvent',
             );
 
-            // @ts-expect-error improper typing
-            await adapter.permitJoin(250, null);
+            await adapter.permitJoin(250);
             await jest.advanceTimersByTimeAsync(1000);
             expect(mockEzspPermitJoining).toHaveBeenCalledWith(250);
             expect(mockEzspSendBroadcast).toHaveBeenCalledTimes(1);
             expect(spyResolveEvent).toHaveBeenCalledWith(OneWaitressEvents.STACK_STATUS_NETWORK_OPENED);
 
-            // @ts-expect-error improper typing
-            await adapter.permitJoin(0, null);
+            await adapter.permitJoin(0);
             await jest.advanceTimersByTimeAsync(1000);
             expect(mockEzspPermitJoining).toHaveBeenCalledWith(0);
             expect(mockEzspSendBroadcast).toHaveBeenCalledTimes(2);
@@ -2463,8 +2469,7 @@ describe('Ember Adapter Layer', () => {
             mockEzspImportTransientKey.mockResolvedValueOnce(SLStatus.FAIL);
 
             await expect(
-                // @ts-expect-error improper typing
-                adapter.permitJoin(250, null),
+                adapter.permitJoin(250),
             ).rejects.toThrow(`[ZDO] Failed import transient key with status=${SLStatus[SLStatus.FAIL]}.`);
         });
 
@@ -2472,8 +2477,7 @@ describe('Ember Adapter Layer', () => {
             mockEzspSetPolicy.mockResolvedValueOnce(SLStatus.FAIL);
 
             await expect(
-                // @ts-expect-error improper typing
-                adapter.permitJoin(250, null),
+                adapter.permitJoin(250),
             ).rejects.toThrow(`[ZDO] Failed set join policy with status=${SLStatus[SLStatus.FAIL]}.`);
         });
 
@@ -2481,8 +2485,7 @@ describe('Ember Adapter Layer', () => {
             mockEzspSetPolicy.mockResolvedValueOnce(SLStatus.FAIL);
 
             await expect(
-                // @ts-expect-error improper typing
-                adapter.permitJoin(0, null),
+                adapter.permitJoin(0),
             ).rejects.toThrow(`[ZDO] Failed set join policy with status=${SLStatus[SLStatus.FAIL]}.`);
         });
 
@@ -3159,14 +3162,12 @@ describe('Ember Adapter Layer', () => {
                     Zcl.Clusters.genBasic.ID,
                     groupId,
                     'group',
-                    // @ts-expect-error improper typing
-                    null,
                 ),
             );
 
             await jest.advanceTimersByTimeAsync(5000);
             await expect(p).rejects.toThrow(
-                `[ZDO] Failed bind request for '${sender}' destination '${groupId}' endpoint 'null' with status=${SLStatus[SLStatus.FAIL]}.`,
+                `[ZDO] Failed bind request for '${sender}' destination '${groupId}' endpoint 'undefined' with status=${SLStatus[SLStatus.FAIL]}.`,
             );
         });
 
@@ -3302,14 +3303,12 @@ describe('Ember Adapter Layer', () => {
                     Zcl.Clusters.genBasic.ID,
                     groupId,
                     'group',
-                    // @ts-expect-error improper typing
-                    null,
                 ),
             );
 
             await jest.advanceTimersByTimeAsync(5000);
             await expect(p).rejects.toThrow(
-                `[ZDO] Failed unbind request for '${sender}' destination '${groupId}' endpoint 'null' with status=${SLStatus[SLStatus.FAIL]}.`,
+                `[ZDO] Failed unbind request for '${sender}' destination '${groupId}' endpoint 'undefined' with status=${SLStatus[SLStatus.FAIL]}.`,
             );
         });
 
@@ -3362,7 +3361,7 @@ describe('Ember Adapter Layer', () => {
                 Zcl.FrameType.GLOBAL,
                 Zcl.Direction.CLIENT_TO_SERVER,
                 true,
-                null,
+                undefined,
                 3,
                 'read',
                 'genBasic',
@@ -3423,7 +3422,7 @@ describe('Ember Adapter Layer', () => {
                 Zcl.FrameType.GLOBAL,
                 Zcl.Direction.CLIENT_TO_SERVER,
                 true,
-                null,
+                undefined,
                 3,
                 'read',
                 'genBasic',
@@ -3484,7 +3483,7 @@ describe('Ember Adapter Layer', () => {
                 Zcl.FrameType.GLOBAL,
                 Zcl.Direction.CLIENT_TO_SERVER,
                 true,
-                null,
+                undefined,
                 3,
                 'read',
                 'genBasic',
@@ -3548,7 +3547,7 @@ describe('Ember Adapter Layer', () => {
                 Zcl.FrameType.GLOBAL,
                 Zcl.Direction.CLIENT_TO_SERVER,
                 true,
-                null,
+                undefined,
                 3,
                 'read',
                 'genBasic',
@@ -3614,7 +3613,7 @@ describe('Ember Adapter Layer', () => {
                 Zcl.FrameType.GLOBAL,
                 Zcl.Direction.CLIENT_TO_SERVER,
                 true,
-                null,
+                undefined,
                 3,
                 'read',
                 'genBasic',
@@ -3676,7 +3675,7 @@ describe('Ember Adapter Layer', () => {
                 Zcl.FrameType.GLOBAL,
                 Zcl.Direction.CLIENT_TO_SERVER,
                 true,
-                null,
+                undefined,
                 3,
                 'read',
                 'genBasic',
@@ -3722,7 +3721,7 @@ describe('Ember Adapter Layer', () => {
                 Zcl.FrameType.GLOBAL,
                 Zcl.Direction.CLIENT_TO_SERVER,
                 true,
-                null,
+                undefined,
                 3,
                 'read',
                 'genBasic',
@@ -3768,7 +3767,7 @@ describe('Ember Adapter Layer', () => {
                 Zcl.FrameType.GLOBAL,
                 Zcl.Direction.CLIENT_TO_SERVER,
                 true,
-                null,
+                undefined,
                 3,
                 'read',
                 'genBasic',
@@ -3817,7 +3816,7 @@ describe('Ember Adapter Layer', () => {
                 Zcl.FrameType.GLOBAL,
                 Zcl.Direction.CLIENT_TO_SERVER,
                 true,
-                null,
+                undefined,
                 3,
                 'read',
                 'genBasic',
@@ -3863,7 +3862,7 @@ describe('Ember Adapter Layer', () => {
                 Zcl.FrameType.GLOBAL,
                 Zcl.Direction.CLIENT_TO_SERVER,
                 false,
-                null,
+                undefined,
                 3,
                 'read',
                 'genBasic',
@@ -3924,7 +3923,7 @@ describe('Ember Adapter Layer', () => {
                 Zcl.FrameType.GLOBAL,
                 Zcl.Direction.CLIENT_TO_SERVER,
                 true,
-                null,
+                undefined,
                 3,
                 'read',
                 'genBasic',
@@ -3935,7 +3934,7 @@ describe('Ember Adapter Layer', () => {
             const p = adapter.sendZclFrameToEndpoint('0x1122334455667788', networkAddress, endpoint, zclFrame, 10000, true, false, sourceEndpoint);
 
             await jest.advanceTimersByTimeAsync(5000);
-            await expect(p).resolves.toStrictEqual(null);
+            await expect(p).resolves.toStrictEqual(undefined);
 
             const apsFrame: EmberApsFrame = {
                 profileId: FIXED_ENDPOINTS[0].profileId,
@@ -3952,7 +3951,7 @@ describe('Ember Adapter Layer', () => {
 
         it('Adapter impl: sendZclFrameToGroup with source endpoint', async () => {
             const groupId: number = 32;
-            const zclFrame = Zcl.Frame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.SERVER_TO_CLIENT, true, null, 1, 1, 0, [{}], {});
+            const zclFrame = Zcl.Frame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.SERVER_TO_CLIENT, true, undefined, 1, 1, 0, [{}], {});
             const p = adapter.sendZclFrameToGroup(groupId, zclFrame, 2);
 
             await jest.advanceTimersByTimeAsync(5000);
@@ -3973,7 +3972,7 @@ describe('Ember Adapter Layer', () => {
 
         it('Adapter impl: sendZclFrameToGroup with default source endpoint', async () => {
             const groupId: number = 32;
-            const zclFrame = Zcl.Frame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.SERVER_TO_CLIENT, true, null, 1, 1, 0, [{}], {});
+            const zclFrame = Zcl.Frame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.SERVER_TO_CLIENT, true, undefined, 1, 1, 0, [{}], {});
             const p = adapter.sendZclFrameToGroup(groupId, zclFrame);
 
             await jest.advanceTimersByTimeAsync(5000);
@@ -3996,7 +3995,7 @@ describe('Ember Adapter Layer', () => {
             mockEzspSend.mockResolvedValueOnce([SLStatus.FAIL, 0]);
 
             const groupId: number = 32;
-            const zclFrame = Zcl.Frame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.SERVER_TO_CLIENT, true, null, 1, 1, 0, [{}], {});
+            const zclFrame = Zcl.Frame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.SERVER_TO_CLIENT, true, undefined, 1, 1, 0, [{}], {});
             const p = defuseRejection(adapter.sendZclFrameToGroup(groupId, zclFrame, 1));
 
             await jest.advanceTimersByTimeAsync(5000);
@@ -4006,7 +4005,7 @@ describe('Ember Adapter Layer', () => {
 
         it('Adapter impl: sendZclFrameToAll with fixed endpoint', async () => {
             const endpoint: number = 32;
-            const zclFrame = Zcl.Frame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.SERVER_TO_CLIENT, true, null, 1, 1, 0, [{}], {});
+            const zclFrame = Zcl.Frame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.SERVER_TO_CLIENT, true, undefined, 1, 1, 0, [{}], {});
             const sourceEndpoint = FIXED_ENDPOINTS[0].endpoint;
             const p = adapter.sendZclFrameToAll(endpoint, zclFrame, sourceEndpoint, ZSpec.BroadcastAddress.DEFAULT);
 
@@ -4035,7 +4034,7 @@ describe('Ember Adapter Layer', () => {
 
         it('Adapter impl: sendZclFrameToAll with other endpoint', async () => {
             const endpoint: number = 32;
-            const zclFrame = Zcl.Frame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.SERVER_TO_CLIENT, true, null, 1, 1, 0, [{}], {});
+            const zclFrame = Zcl.Frame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.SERVER_TO_CLIENT, true, undefined, 1, 1, 0, [{}], {});
             const sourceEndpoint = 3;
             const p = adapter.sendZclFrameToAll(endpoint, zclFrame, sourceEndpoint, ZSpec.BroadcastAddress.DEFAULT);
 
@@ -4066,7 +4065,7 @@ describe('Ember Adapter Layer', () => {
             mockEzspSend.mockResolvedValueOnce([SLStatus.FAIL, 0]);
 
             const endpoint: number = 32;
-            const zclFrame = Zcl.Frame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.SERVER_TO_CLIENT, true, null, 1, 1, 0, [{}], {});
+            const zclFrame = Zcl.Frame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.SERVER_TO_CLIENT, true, undefined, 1, 1, 0, [{}], {});
             const p = defuseRejection(adapter.sendZclFrameToAll(endpoint, zclFrame, 1, ZSpec.BroadcastAddress.DEFAULT));
 
             await jest.advanceTimersByTimeAsync(5000);
@@ -4094,7 +4093,7 @@ describe('Ember Adapter Layer', () => {
                 Zcl.FrameType.GLOBAL,
                 Zcl.Direction.CLIENT_TO_SERVER,
                 false,
-                null,
+                undefined,
                 3,
                 'read',
                 'genBasic',
@@ -4115,7 +4114,7 @@ describe('Ember Adapter Layer', () => {
                 Zcl.FrameType.GLOBAL,
                 Zcl.Direction.CLIENT_TO_SERVER,
                 false,
-                null,
+                undefined,
                 3,
                 'read',
                 'genBasic',
@@ -4135,7 +4134,7 @@ describe('Ember Adapter Layer', () => {
                 Zcl.FrameType.SPECIFIC,
                 Zcl.Direction.CLIENT_TO_SERVER,
                 true,
-                null,
+                undefined,
                 0,
                 'scanRequest',
                 Zcl.Clusters.touchlink.ID,
@@ -4185,7 +4184,7 @@ describe('Ember Adapter Layer', () => {
                 Zcl.FrameType.GLOBAL,
                 Zcl.Direction.CLIENT_TO_SERVER,
                 false,
-                null,
+                undefined,
                 3,
                 commandName,
                 'genBasic',
@@ -4206,7 +4205,7 @@ describe('Ember Adapter Layer', () => {
                 Zcl.FrameType.GLOBAL,
                 Zcl.Direction.CLIENT_TO_SERVER,
                 false,
-                null,
+                undefined,
                 3,
                 'read',
                 'genBasic',

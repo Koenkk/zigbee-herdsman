@@ -466,7 +466,7 @@ class ZiGateAdapter extends Adapter {
         clusterID: number,
         destinationAddressOrGroup: string | number,
         type: 'endpoint' | 'group',
-        destinationEndpoint: number,
+        destinationEndpoint?: number,
     ): Promise<void> {
         return this.queue.execute<void>(async () => {
             logger.debug(`unbind ${JSON.stringify(arguments)}`, NS);
@@ -515,7 +515,7 @@ class ZiGateAdapter extends Adapter {
     }
 
     public async sendZclFrameToEndpoint(
-        ieeeAddr: string,
+        ieeeAddr: string | undefined,
         networkAddress: number,
         endpoint: number,
         zclFrame: Zcl.Frame,
@@ -523,8 +523,8 @@ class ZiGateAdapter extends Adapter {
         disableResponse: boolean,
         disableRecovery: boolean,
         sourceEndpoint?: number,
-    ): Promise<Events.ZclPayload> {
-        return this.queue.execute<Events.ZclPayload>(async () => {
+    ): Promise<Events.ZclPayload | void> {
+        return this.queue.execute<Events.ZclPayload | void>(async () => {
             return this.sendZclFrameToEndpointInternal(
                 ieeeAddr,
                 networkAddress,

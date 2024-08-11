@@ -237,11 +237,11 @@ abstract class Adapter extends events.EventEmitter {
         networkAddress: number,
         endpoint: number,
         zclFrame: Zcl.Frame,
-        timeout: number | undefined,
+        timeout: number,
         disableResponse: boolean,
         disableRecovery: boolean,
         sourceEndpoint?: number,
-    ): Promise<ZclPayload>;
+    ): Promise<ZclPayload | void>;
 
     public abstract sendZclFrameToGroup(groupID: number, zclFrame: Zcl.Frame, sourceEndpoint?: number): Promise<void>;
 

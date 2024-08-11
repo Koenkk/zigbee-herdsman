@@ -362,7 +362,7 @@ class ZStackAdapter extends Adapter {
     }
 
     public async sendZclFrameToEndpoint(
-        ieeeAddr: string,
+        ieeeAddr: string | undefined,
         networkAddress: number,
         endpoint: number,
         zclFrame: Zcl.Frame,
@@ -370,8 +370,8 @@ class ZStackAdapter extends Adapter {
         disableResponse: boolean,
         disableRecovery: boolean,
         sourceEndpoint?: number,
-    ): Promise<Events.ZclPayload> {
-        return this.queue.execute<Events.ZclPayload>(async () => {
+    ): Promise<Events.ZclPayload | void> {
+        return this.queue.execute<Events.ZclPayload | void>(async () => {
             this.checkInterpanLock();
             return this.sendZclFrameToEndpointInternal(
                 ieeeAddr,
@@ -407,7 +407,7 @@ class ZStackAdapter extends Adapter {
         discoveredRoute: boolean,
         assocRemove: boolean,
         assocRestore: {ieeeadr: string; nwkaddr: number; noderelation: number},
-    ): Promise<Events.ZclPayload> {
+    ): Promise<Events.ZclPayload | void> {
         logger.debug(
             `sendZclFrameToEndpointInternal ${ieeeAddr}:${networkAddress}/${endpoint} ` +
                 `(${responseAttempt},${dataRequestAttempt},${this.queue.count()})`,
@@ -635,8 +635,6 @@ class ZStackAdapter extends Adapter {
                     throw error;
                 }
             }
-        } else {
-            return null;
         }
     }
 
@@ -805,7 +803,7 @@ class ZStackAdapter extends Adapter {
         clusterID: number,
         destinationAddressOrGroup: string | number,
         type: 'endpoint' | 'group',
-        destinationEndpoint: number,
+        destinationEndpoint?: number,
     ): Promise<void> {
         await this.bindInternal(
             'unbind',
@@ -827,7 +825,7 @@ class ZStackAdapter extends Adapter {
         clusterID: number,
         destinationAddressOrGroup: string | number,
         targetType: 'endpoint' | 'group',
-        destinationEndpoint: number,
+        destinationEndpoint?: number,
     ): Promise<void> {
         return this.queue.execute<void>(async () => {
             this.checkInterpanLock();
