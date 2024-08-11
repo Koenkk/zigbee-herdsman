@@ -5851,7 +5851,7 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
         }
 
         const messageType = apsFrameControl & INTERPAN_APS_FRAME_DELIVERY_MODE_MASK;
-        let groupId: number = 0;// XXX: looks fine from z2m code?
+        let groupId: number = 0; // XXX: looks fine from z2m code?
 
         switch (messageType) {
             case EmberInterpanMessageType.UNICAST:

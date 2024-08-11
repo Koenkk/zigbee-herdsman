@@ -806,7 +806,7 @@ export class UartAsh extends EventEmitter<UartAshEventMap> {
                 } else {
                     this.stopAckTimer();
                 }
-            }/* else {
+            } /* else {
                 this.hostDisconnect(EzspStatus.ASH_ERROR_RESET_FAIL);
             }*/
             // let Ezsp layer retry logic handle timeout

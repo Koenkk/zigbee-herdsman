@@ -666,21 +666,23 @@ export type EmberGpSourceId = number;
  * GPD Address for sending and receiving a GPDF.
  * EmberGpAddress_gpdIeeeAddress | EmberGpAddress_sourceId;
  */
-export type EmberGpAddress = {
-    /** The 32-bit source identifier is used when the application identifier is ::EMBER_GP_APPLICATION_SOURCE_ID. */
-    sourceId: EmberGpSourceId;
-    /** Application identifier of the GPD. */
-    applicationId: EmberGpApplicationId.SOURCE_ID;
-    /** Application endpoint, only used when application identifier is ::EMBER_GP_APPLICATION_IEEE_ADDRESS. uint8_t */
-    endpoint: number;
-} | {
-    /** The IEEE address is used when the application identifier is ::EMBER_GP_APPLICATION_IEEE_ADDRESS. */
-    gpdIeeeAddress: EUI64;
-    /** Application identifier of the GPD. */
-    applicationId: EmberGpApplicationId.IEEE_ADDRESS;
-    /** Application endpoint, only used when application identifier is ::EMBER_GP_APPLICATION_IEEE_ADDRESS. uint8_t */
-    endpoint: number;
-};
+export type EmberGpAddress =
+    | {
+          /** The 32-bit source identifier is used when the application identifier is ::EMBER_GP_APPLICATION_SOURCE_ID. */
+          sourceId: EmberGpSourceId;
+          /** Application identifier of the GPD. */
+          applicationId: EmberGpApplicationId.SOURCE_ID;
+          /** Application endpoint, only used when application identifier is ::EMBER_GP_APPLICATION_IEEE_ADDRESS. uint8_t */
+          endpoint: number;
+      }
+    | {
+          /** The IEEE address is used when the application identifier is ::EMBER_GP_APPLICATION_IEEE_ADDRESS. */
+          gpdIeeeAddress: EUI64;
+          /** Application identifier of the GPD. */
+          applicationId: EmberGpApplicationId.IEEE_ADDRESS;
+          /** Application endpoint, only used when application identifier is ::EMBER_GP_APPLICATION_IEEE_ADDRESS. uint8_t */
+          endpoint: number;
+      };
 
 /** 32-bit security frame counter uint32_t */
 export type EmberGpSecurityFrameCounter = number;
@@ -726,17 +728,19 @@ export type EmberGpSinkGroup = {
 };
 
 /** GP Sink List Entry. */
-export type EmberGpSinkListEntry = {
-    /** Sink Type */
-    type: EmberGpSinkType.FULL_UNICAST | EmberGpSinkType.LW_UNICAST | EmberGpSinkType.UNUSED;
-    unicast: EmberGpSinkAddress;
-} | {
-    /** Sink Type */
-    type: EmberGpSinkType.D_GROUPCAST | EmberGpSinkType.GROUPCAST;
-    groupcast: EmberGpSinkGroup;
-    /** Entry for Sink Group List */
-    groupList?: EmberGpSinkGroup;
-};
+export type EmberGpSinkListEntry =
+    | {
+          /** Sink Type */
+          type: EmberGpSinkType.FULL_UNICAST | EmberGpSinkType.LW_UNICAST | EmberGpSinkType.UNUSED;
+          unicast: EmberGpSinkAddress;
+      }
+    | {
+          /** Sink Type */
+          type: EmberGpSinkType.D_GROUPCAST | EmberGpSinkType.GROUPCAST;
+          groupcast: EmberGpSinkGroup;
+          /** Entry for Sink Group List */
+          groupList?: EmberGpSinkGroup;
+      };
 
 /** The internal representation of a sink table entry. */
 export type EmberGpSinkTableEntry = {

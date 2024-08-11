@@ -2032,7 +2032,10 @@ describe('Ember Adapter Layer', () => {
                     1,
                 ],
             ],
-            ['sendZclFrameToGroup', [32, Zcl.Frame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.SERVER_TO_CLIENT, true, undefined, 1, 1, 0, [{}], {}), 1]],
+            [
+                'sendZclFrameToGroup',
+                [32, Zcl.Frame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.SERVER_TO_CLIENT, true, undefined, 1, 1, 0, [{}], {}), 1],
+            ],
             [
                 'sendZclFrameToAll',
                 [
@@ -2468,25 +2471,19 @@ describe('Ember Adapter Layer', () => {
         it('Adapter impl: throws when permitJoin fails to import ZIGBEE_PROFILE_INTEROPERABILITY_LINK_KEY', async () => {
             mockEzspImportTransientKey.mockResolvedValueOnce(SLStatus.FAIL);
 
-            await expect(
-                adapter.permitJoin(250),
-            ).rejects.toThrow(`[ZDO] Failed import transient key with status=${SLStatus[SLStatus.FAIL]}.`);
+            await expect(adapter.permitJoin(250)).rejects.toThrow(`[ZDO] Failed import transient key with status=${SLStatus[SLStatus.FAIL]}.`);
         });
 
         it('Adapter impl: throws when permitJoin fails to set TC policy', async () => {
             mockEzspSetPolicy.mockResolvedValueOnce(SLStatus.FAIL);
 
-            await expect(
-                adapter.permitJoin(250),
-            ).rejects.toThrow(`[ZDO] Failed set join policy with status=${SLStatus[SLStatus.FAIL]}.`);
+            await expect(adapter.permitJoin(250)).rejects.toThrow(`[ZDO] Failed set join policy with status=${SLStatus[SLStatus.FAIL]}.`);
         });
 
         it('Adapter impl: throws when stop permitJoin fails to restore TC policy', async () => {
             mockEzspSetPolicy.mockResolvedValueOnce(SLStatus.FAIL);
 
-            await expect(
-                adapter.permitJoin(0),
-            ).rejects.toThrow(`[ZDO] Failed set join policy with status=${SLStatus[SLStatus.FAIL]}.`);
+            await expect(adapter.permitJoin(0)).rejects.toThrow(`[ZDO] Failed set join policy with status=${SLStatus[SLStatus.FAIL]}.`);
         });
 
         it('Adapter impl: lqi', async () => {
@@ -3154,16 +3151,7 @@ describe('Ember Adapter Layer', () => {
 
             mockEzspSendUnicast.mockResolvedValueOnce([SLStatus.FAIL, 0]);
 
-            const p = defuseRejection(
-                adapter.bind(
-                    sender,
-                    '0x1122334455667788',
-                    1,
-                    Zcl.Clusters.genBasic.ID,
-                    groupId,
-                    'group',
-                ),
-            );
+            const p = defuseRejection(adapter.bind(sender, '0x1122334455667788', 1, Zcl.Clusters.genBasic.ID, groupId, 'group'));
 
             await jest.advanceTimersByTimeAsync(5000);
             await expect(p).rejects.toThrow(
@@ -3295,16 +3283,7 @@ describe('Ember Adapter Layer', () => {
 
             mockEzspSendUnicast.mockResolvedValueOnce([SLStatus.FAIL, 0]);
 
-            const p = defuseRejection(
-                adapter.unbind(
-                    sender,
-                    '0x1122334455667788',
-                    1,
-                    Zcl.Clusters.genBasic.ID,
-                    groupId,
-                    'group',
-                ),
-            );
+            const p = defuseRejection(adapter.unbind(sender, '0x1122334455667788', 1, Zcl.Clusters.genBasic.ID, groupId, 'group'));
 
             await jest.advanceTimersByTimeAsync(5000);
             await expect(p).rejects.toThrow(

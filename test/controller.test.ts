@@ -752,7 +752,7 @@ describe('Controller', () => {
             backupPath,
             {disableLED: false},
         );
-    }, 10000);// randomly times out for some reason
+    }, 10000); // randomly times out for some reason
 
     it('Call controller constructor error on invalid channel', async () => {
         options.network.channelList = [10];
