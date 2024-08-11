@@ -36,7 +36,7 @@ const autoDetectDefinitions = [
 ];
 
 interface WaitressMatcher {
-    address: number | string;
+    address?: number | string;
     endpoint: number;
     transactionSequenceNumber?: number;
     clusterID: number;
@@ -49,7 +49,7 @@ class EZSPAdapter extends Adapter {
     private interpanLock: boolean;
     private queue: Queue;
     private closing: boolean;
-    private deprecatedTimer: NodeJS.Timeout;
+    private deprecatedTimer?: NodeJS.Timeout;
 
     public constructor(networkOptions: NetworkOptions, serialPortOptions: SerialPortOptions, backupPath: string, adapterOptions: AdapterOptions) {
         super(networkOptions, serialPortOptions, backupPath, adapterOptions);
@@ -89,7 +89,7 @@ class EZSPAdapter extends Adapter {
                 address: frame.sender,
                 endpoint: frame.apsFrame.sourceEndpoint,
                 linkquality: frame.lqi,
-                groupID: frame.apsFrame.groupId,
+                groupID: frame.apsFrame.groupId ?? 0,
                 wasBroadcast: false, // TODO
                 destinationEndpoint: frame.apsFrame.destinationEndpoint,
             };
@@ -105,9 +105,9 @@ class EZSPAdapter extends Adapter {
                 address: `0x${frame.senderEui64.toString()}`,
                 endpoint: 0xfe,
                 linkquality: frame.lqi,
-                groupID: null,
+                groupID: 0,
                 wasBroadcast: false,
-                destinationEndpoint: null,
+                destinationEndpoint: 1,
             };
 
             this.waitress.resolve(payload);
@@ -125,7 +125,7 @@ class EZSPAdapter extends Adapter {
                     address: frame.sender,
                     endpoint: frame.apsFrame.sourceEndpoint,
                     linkquality: frame.lqi,
-                    groupID: null,
+                    groupID: 0,
                     wasBroadcast: true,
                     destinationEndpoint: frame.apsFrame.sourceEndpoint,
                 };
@@ -210,10 +210,10 @@ class EZSPAdapter extends Adapter {
         }
     }
 
-    public static async autoDetectPath(): Promise<string> {
+    public static async autoDetectPath(): Promise<string | undefined> {
         const paths = await SerialPortUtils.find(autoDetectDefinitions);
         paths.sort((a, b) => (a < b ? -1 : 1));
-        return paths.length > 0 ? paths[0] : null;
+        return paths.length > 0 ? paths[0] : undefined;
     }
 
     public async getCoordinator(): Promise<Coordinator> {
@@ -452,16 +452,12 @@ class EZSPAdapter extends Adapter {
                 disableRecovery,
                 0,
                 0,
-                false,
-                false,
-                false,
-                null,
             );
         }, networkAddress);
     }
 
     private async sendZclFrameToEndpointInternal(
-        ieeeAddr: string,
+        ieeeAddr: string | undefined,
         networkAddress: number,
         endpoint: number,
         sourceEndpoint: number,
@@ -471,11 +467,7 @@ class EZSPAdapter extends Adapter {
         disableRecovery: boolean,
         responseAttempt: number,
         dataRequestAttempt: number,
-        checkedNetworkAddress: boolean,
-        discoveredRoute: boolean,
-        assocRemove: boolean,
-        assocRestore: {ieeeadr: string; nwkaddr: number; noderelation: number},
-    ): Promise<Events.ZclPayload> {
+    ): Promise<Events.ZclPayload | void> {
         if (ieeeAddr == null) {
             ieeeAddr = `0x${this.driver.ieee.toString()}`;
         }
@@ -486,7 +478,7 @@ class EZSPAdapter extends Adapter {
         );
         let response = null;
         const command = zclFrame.command;
-        if (command.hasOwnProperty('response') && disableResponse === false) {
+        if (command.response != undefined && disableResponse === false) {
             response = this.waitForInternal(
                 networkAddress,
                 endpoint,
@@ -538,10 +530,6 @@ class EZSPAdapter extends Adapter {
                         disableRecovery,
                         responseAttempt + 1,
                         dataRequestAttempt,
-                        checkedNetworkAddress,
-                        discoveredRoute,
-                        assocRemove,
-                        assocRestore,
                     );
                 } else {
                     throw error;
@@ -691,6 +679,8 @@ class EZSPAdapter extends Adapter {
         if (this.driver.ezsp.isInitialized()) {
             return this.driver.backupMan.createBackup();
         }
+
+        // TODO: this cannot be undefined
     }
 
     public async restoreChannelInterPAN(): Promise<void> {
@@ -735,11 +725,12 @@ class EZSPAdapter extends Adapter {
         return this.queue.execute<Events.ZclPayload>(async () => {
             logger.debug(`sendZclFrameInterPANBroadcast`, NS);
             const command = zclFrame.command;
-            if (!command.hasOwnProperty('response')) {
+
+            if (command.response == undefined) {
                 throw new Error(`Command '${command.name}' has no response, cannot wait for response`);
             }
 
-            const response = this.waitForInternal(null, 0xfe, null, zclFrame.cluster.ID, command.response, timeout);
+            const response = this.waitForInternal(undefined, 0xfe, undefined, zclFrame.cluster.ID, command.response, timeout);
 
             try {
                 const frame = this.driver.makeEmberRawFrame();
@@ -783,22 +774,23 @@ class EZSPAdapter extends Adapter {
     }
 
     private waitForInternal(
-        networkAddress: number,
+        networkAddress: number | undefined,
         endpoint: number,
-        transactionSequenceNumber: number,
+        transactionSequenceNumber: number | undefined,
         clusterID: number,
         commandIdentifier: number,
         timeout: number,
     ): {start: () => {promise: Promise<Events.ZclPayload>}; cancel: () => void} {
-        const payload = {
-            address: networkAddress,
-            endpoint,
-            clusterID,
-            commandIdentifier,
-            transactionSequenceNumber,
-        };
-
-        const waiter = this.waitress.waitFor(payload, timeout);
+        const waiter = this.waitress.waitFor(
+            {
+                address: networkAddress,
+                endpoint,
+                clusterID,
+                commandIdentifier,
+                transactionSequenceNumber,
+            },
+            timeout,
+        );
         const cancel = (): void => this.waitress.remove(waiter.ID);
         return {start: waiter.start, cancel};
     }
@@ -827,13 +819,13 @@ class EZSPAdapter extends Adapter {
     }
 
     private waitressValidator(payload: Events.ZclPayload, matcher: WaitressMatcher): boolean {
-        return (
+        return Boolean(
             payload.header &&
-            (!matcher.address || payload.address === matcher.address) &&
-            payload.endpoint === matcher.endpoint &&
-            (!matcher.transactionSequenceNumber || payload.header.transactionSequenceNumber === matcher.transactionSequenceNumber) &&
-            payload.clusterID === matcher.clusterID &&
-            matcher.commandIdentifier === payload.header.commandIdentifier
+                (!matcher.address || payload.address === matcher.address) &&
+                payload.endpoint === matcher.endpoint &&
+                (!matcher.transactionSequenceNumber || payload.header.transactionSequenceNumber === matcher.transactionSequenceNumber) &&
+                payload.clusterID === matcher.clusterID &&
+                matcher.commandIdentifier === payload.header.commandIdentifier,
         );
     }
 }

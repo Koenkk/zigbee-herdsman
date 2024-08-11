@@ -1,12 +1,12 @@
 /* istanbul ignore file */
 import {Buffer} from 'buffer';
 
-type calcFn = (buf: Buffer, previous: number) => number;
+type calcFn = (buf: Buffer | number[], previous: number) => number;
 
 // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
 function defineCrc(model: string, calc: calcFn): calcFn {
     /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
-    const fn = (buf: Buffer, previous: number): number => calc(buf, previous) >>> 0;
+    const fn = (buf: Buffer | number[], previous: number): number => calc(buf, previous) >>> 0;
     fn.signed = calc;
     fn.unsigned = fn;
     fn.model = model;
@@ -51,7 +51,7 @@ const TABLE: number[] = [
     0x6e17, 0x7e36, 0x4e55, 0x5e74, 0x2e93, 0x3eb2, 0x0ed1, 0x1ef0
 ];
 
-const crc16ccitt = defineCrc('ccitt', function (buf: Buffer, previous: number): number {
+const crc16ccitt = defineCrc('ccitt', function (buf: Buffer | number[], previous: number): number {
     let crc = ~~previous;
     for (const byte of buf) {
         crc = (TABLE[((crc >> 8) ^ byte) & 0xff] ^ (crc << 8)) & 0xffff;

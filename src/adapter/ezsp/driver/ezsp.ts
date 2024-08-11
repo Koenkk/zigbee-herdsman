@@ -150,12 +150,12 @@ export class EZSPFrameData {
             try {
                 frm = new EZSPFrameData(frameName, isRequest, params);
             } catch (error) {
-                logger.error(`Frame ${frameName} parsing error: ${error.stack}`, NS);
+                logger.error(`Frame ${frameName} parsing error: ${error}`, NS);
                 return true;
             }
             return false;
         });
-        return frm;
+        return frm!;
     }
 
     static getFrame(name: string): EZSPFrameDesc {
@@ -164,7 +164,7 @@ export class EZSPFrameData {
         return frameDesc;
     }
 
-    constructor(key: string, isRequest: boolean, params: ParamsDesc | Buffer) {
+    constructor(key: string, isRequest: boolean, params: ParamsDesc | Buffer | undefined) {
         this._cls_ = key;
         this._id_ = FRAMES[this._cls_].ID;
 
@@ -178,7 +178,7 @@ export class EZSPFrameData {
             }
         } else {
             for (const prop of Object.getOwnPropertyNames(frameDesc)) {
-                this[prop] = params[prop];
+                this[prop] = params![prop]; // XXX: assumed defined with logic
             }
         }
     }
@@ -320,7 +320,7 @@ export class Ezsp extends EventEmitter {
     private serialDriver: SerialDriver;
     private waitress: Waitress<EZSPFrame, EZSPWaitressMatcher>;
     private queue: Queue;
-    private watchdogTimer: NodeJS.Timeout;
+    private watchdogTimer?: NodeJS.Timeout;
     private failures = 0;
     private inResetingProcess = false;
 
@@ -347,7 +347,7 @@ export class Ezsp extends EventEmitter {
                 await this.serialDriver.connect(options);
                 break;
             } catch (error) {
-                logger.error(`Connection attempt ${i} error: ${error.stack}`, NS);
+                logger.error(`Connection attempt ${i} error: ${error}`, NS);
 
                 if (i < MAX_SERIAL_CONNECT_ATTEMPTS) {
                     await Wait(SERIAL_CONNECT_NEW_ATTEMPT_MIN_DELAY * i);
@@ -607,7 +607,7 @@ export class Ezsp extends EventEmitter {
             try {
                 await this.setConfigurationValue(confName, value);
             } catch (error) {
-                logger.error(`setConfigurationValue(${confName}, ${value}) error: ${error} ${error.stack}`, NS);
+                logger.error(`setConfigurationValue(${confName}, ${value}) error: ${error}`, NS);
             }
         }
     }
@@ -620,7 +620,7 @@ export class Ezsp extends EventEmitter {
             try {
                 await this.setPolicy(policy, value);
             } catch (error) {
-                logger.error(`setPolicy(${policy}, ${value}) error: ${error} ${error.stack}`, NS);
+                logger.error(`setPolicy(${policy}, ${value}) error: ${error}`, NS);
             }
         }
     }
@@ -630,7 +630,7 @@ export class Ezsp extends EventEmitter {
         return frmData.serialize();
     }
 
-    private makeFrame(name: string, params: ParamsDesc, seq: number): Buffer {
+    private makeFrame(name: string, params: ParamsDesc | undefined, seq: number): Buffer {
         const frmData = new EZSPFrameData(name, true, params);
 
         logger.debug(`==> ${JSON.stringify(frmData)}`, NS);
@@ -652,7 +652,7 @@ export class Ezsp extends EventEmitter {
         return Buffer.concat([Buffer.from(frame), frmData.serialize()]);
     }
 
-    public async execCommand(name: string, params: ParamsDesc = null): Promise<EZSPFrameData> {
+    public async execCommand(name: string, params?: ParamsDesc): Promise<EZSPFrameData> {
         logger.debug(`==> ${name}: ${JSON.stringify(params)}`, NS);
 
         if (!this.serialDriver.isInitialized()) {
@@ -780,7 +780,7 @@ export class Ezsp extends EventEmitter {
         try {
             await this.execCommand('nop');
         } catch (error) {
-            logger.error(`Watchdog heartbeat timeout ${error.stack}`, NS);
+            logger.error(`Watchdog heartbeat timeout ${error}`, NS);
 
             if (!this.inResetingProcess) {
                 this.failures += 1;
