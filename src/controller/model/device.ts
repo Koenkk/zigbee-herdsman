@@ -464,7 +464,7 @@ class Device extends Entity {
 
         // Send a default response if necessary.
         const isDefaultResponse = frame.header.isGlobal && frame.command.name === 'defaultRsp';
-        const commandHasResponse = frame.command.hasOwnProperty('response');
+        const commandHasResponse = frame.command.response != undefined;
         const disableDefaultResponse = frame.header.frameControl.disableDefaultResponse;
         /* istanbul ignore next */
         const disableTuyaDefaultResponse = endpoint.getDevice().manufacturerName?.startsWith('_TZ') && process.env['DISABLE_TUYA_DEFAULT_RESPONSE'];

@@ -1,7 +1,7 @@
 /* istanbul ignore file */
 import Device from '../../../controller/model/device';
 import * as Models from '../../../models';
-import {Queue, Waitress, Wait} from '../../../utils';
+import {Queue, Waitress} from '../../../utils';
 import {logger} from '../../../utils/logger';
 import {BroadcastAddress} from '../../../zspec/enums';
 import * as Zcl from '../../../zspec/zcl';
@@ -32,7 +32,7 @@ import processFrame, {frameParserEvents} from '../driver/frameParser';
 const NS = 'zh:deconz';
 
 interface WaitressMatcher {
-    address: number | string;
+    address?: number | string;
     endpoint: number;
     transactionSequenceNumber?: number;
     frameType: Zcl.FrameType;
@@ -78,10 +78,10 @@ class DeconzAdapter extends Adapter {
         this.joinPermitted = false;
         this.fwVersion = undefined;
 
-        this.frameParserEvent.on('receivedDataPayload', (data: any) => {
+        this.frameParserEvent.on('receivedDataPayload', (data) => {
             this.checkReceivedDataPayload(data);
         });
-        this.frameParserEvent.on('receivedGreenPowerIndication', (data: any) => {
+        this.frameParserEvent.on('receivedGreenPowerIndication', (data) => {
             this.checkReceivedGreenPowerIndication(data);
         });
 
@@ -820,11 +820,11 @@ class DeconzAdapter extends Adapter {
     }
 
     public waitFor(
-        networkAddress: number,
+        networkAddress: number | undefined,
         endpoint: number,
         frameType: Zcl.FrameType,
         direction: Zcl.Direction,
-        transactionSequenceNumber: number,
+        transactionSequenceNumber: number | undefined,
         clusterID: number,
         commandIdentifier: number,
         timeout: number,
@@ -895,7 +895,7 @@ class DeconzAdapter extends Adapter {
 
         try {
             let data = null;
-            if ((command.hasOwnProperty('response') && !disableResponse) || !zclFrame.header.frameControl.disableDefaultResponse) {
+            if ((command.response != undefined && !disableResponse) || !zclFrame.header.frameControl.disableDefaultResponse) {
                 data = await this.waitForData(networkAddress, 0x104, zclFrame.cluster.ID, zclFrame.header.transactionSequenceNumber, request.timeout);
             }
 

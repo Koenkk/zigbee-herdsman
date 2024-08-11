@@ -886,7 +886,7 @@ class Endpoint extends Entity {
         const device = this.getDevice();
         const cluster = this.getCluster(clusterKey, device);
         const command = frameType == Zcl.FrameType.GLOBAL ? Zcl.Utils.getGlobalCommand(commandKey) : cluster.getCommand(commandKey);
-        const hasResponse = frameType == Zcl.FrameType.GLOBAL ? true : command.hasOwnProperty('response');
+        const hasResponse = frameType == Zcl.FrameType.GLOBAL ? true : command.response != undefined;
         const optionsWithDefaults = this.getOptionsWithDefaults(options, hasResponse, Zcl.Direction.CLIENT_TO_SERVER, cluster.manufacturerCode);
 
         const frame = Zcl.Frame.create(
