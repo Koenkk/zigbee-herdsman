@@ -57,9 +57,11 @@ export class SerialDriver extends EventEmitter {
     }
 
     async connect(options: SerialPortOptions): Promise<void> {
-        SocketPortUtils.isTcpPath(options.path!)
-            ? await this.openSocketPort(options.path!)
-            : await this.openSerialPort(options.path!, options.baudRate!, options.rtscts!);
+        if (SocketPortUtils.isTcpPath(options.path!)) {
+            await this.openSocketPort(options.path!);
+        } else {
+            await this.openSerialPort(options.path!, options.baudRate!, options.rtscts!);
+        }
     }
 
     private async openSerialPort(path: string, baudRate: number, rtscts: boolean): Promise<void> {

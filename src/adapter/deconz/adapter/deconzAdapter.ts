@@ -762,7 +762,7 @@ class DeconzAdapter extends Adapter {
         if (skip === false) {
             try {
                 simpleDesc = await this.simpleDescriptor(0x0, 1);
-            } catch (error) {}
+            } catch {}
 
             if (simpleDesc == undefined) {
                 await this.checkCoordinatorSimpleDescriptor(false);
@@ -812,7 +812,7 @@ class DeconzAdapter extends Adapter {
             const sd1 = sd.reverse();
             await this.driver.writeParameterRequest(PARAM.PARAM.STK.Endpoint, sd1);
         } catch (error) {
-            logger.debug('error setting simple descriptor - try again', NS);
+            logger.debug(`error setting simple descriptor: ${error} - try again`, NS);
             await this.checkCoordinatorSimpleDescriptor(true);
             return;
         }
@@ -920,7 +920,7 @@ class DeconzAdapter extends Adapter {
                 logger.debug(`no response expected (${zclFrame.header.transactionSequenceNumber})`, NS);
             }
         } catch (error) {
-            throw new Error(`no response received (${zclFrame.header.transactionSequenceNumber})`);
+            throw new Error(`no response received (${zclFrame.header.transactionSequenceNumber}) ${error}`);
         }
     }
 

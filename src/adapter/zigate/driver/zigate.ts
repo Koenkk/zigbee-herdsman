@@ -327,7 +327,7 @@ export default class ZiGate extends EventEmitter {
                 }
                 const receivedValue = resolve(rule.receivedProperty, ziGateObject);
                 return rule.matcher(expectedValue, receivedValue);
-            } catch (e) {
+            } catch {
                 return false;
             }
         };
