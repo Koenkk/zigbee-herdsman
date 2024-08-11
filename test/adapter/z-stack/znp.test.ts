@@ -15,7 +15,7 @@ const mockSerialPortOpen = jest.fn().mockImplementation((cb) => cb());
 const mockSerialPortAsyncOpen = jest.fn();
 const mockSerialPortConstructor = jest.fn();
 const mockSerialPortOnce = jest.fn();
-const mockSerialPortSet = jest.fn().mockImplementation((opts, cb) => cb());
+const mockSerialPortAsyncSet = jest.fn();
 const mockSerialPortWrite = jest.fn((buffer, cb) => cb());
 let mockSerialPortIsOpen = false;
 
@@ -34,12 +34,12 @@ jest.mock('../../../src/adapter/serialPort', () => {
                 once: mockSerialPortOnce,
                 open: mockSerialPortOpen,
                 pipe: mockSerialPortPipe,
-                set: mockSerialPortSet,
                 write: mockSerialPortWrite,
                 flush: mockSerialPortFlush,
                 isOpen: mockSerialPortIsOpen,
                 asyncOpen: mockSerialPortAsyncOpen,
                 asyncFlushAndClose: mockSerialPortAsyncFlushAndClose,
+                asyncSet: mockSerialPortAsyncSet,
             };
         }),
     };
@@ -207,7 +207,7 @@ describe('ZNP', () => {
             {manufacturer: 'Not texas instruments', vendorId: '0451', productId: '16a8', path: '/dev/autodetected2'},
         ]);
 
-        expect(await Znp.autoDetectPath()).toBeNull();
+        expect(await Znp.autoDetectPath()).toBeUndefined();
     });
 
     it('Open and close tcp port', async () => {

@@ -11,7 +11,7 @@ import {Znp} from '../znp';
  * writing and deleting keys to extended table manipulation.
  */
 export class AdapterNvMemory {
-    public memoryAlignment: Structs.StructMemoryAlignment = null;
+    public memoryAlignment?: Structs.StructMemoryAlignment;
 
     private znp: Znp;
 
@@ -109,7 +109,7 @@ export class AdapterNvMemory {
                     'osalNvItemInit',
                     {id, len: buffer.length, initlen: initLength, initvalue: buffer.slice(0, initLength)},
                     undefined,
-                    null,
+                    undefined,
                     [ZnpCommandStatus.SUCCESS, ZnpCommandStatus.NV_ITEM_INITIALIZED],
                 ),
             );
@@ -432,7 +432,7 @@ export class AdapterNvMemory {
      */
     private checkMemoryAlignmentSetup(): void {
         /* istanbul ignore next */
-        if (this.memoryAlignment === null) {
+        if (this.memoryAlignment === undefined) {
             throw new Error('adapter memory alignment unknown - has nv memory driver been initialized?');
         }
     }

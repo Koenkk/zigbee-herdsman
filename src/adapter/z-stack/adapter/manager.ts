@@ -274,7 +274,7 @@ export class ZnpAdapterManager {
         if (deviceInfo.payload.devicestate !== DevStates.ZB_COORD) {
             logger.debug('starting adapter as coordinator', NS);
             const started = this.znp.waitFor(UnpiConstants.Type.AREQ, Subsystem.ZDO, 'stateChangeInd', {state: 9}, 60000);
-            await this.znp.request(Subsystem.ZDO, 'startupFromApp', {startdelay: 100}, null, null, [
+            await this.znp.request(Subsystem.ZDO, 'startupFromApp', {startdelay: 100}, undefined, undefined, [
                 ZnpCommandStatus.SUCCESS,
                 ZnpCommandStatus.FAILURE,
             ]);
@@ -363,7 +363,7 @@ export class ZnpAdapterManager {
                 await started.start().promise;
             } catch (error) {
                 throw new Error(
-                    `network commissioning timed out - most likely network with the same panId or extendedPanId already exists nearby (${error.message})`,
+                    `network commissioning timed out - most likely network with the same panId or extendedPanId already exists nearby (${(error as Error).message})`,
                 );
             }
         } else {
@@ -469,7 +469,7 @@ export class ZnpAdapterManager {
      * @param group Target group index.
      */
     private async addToGroup(endpoint: number, group: number): Promise<void> {
-        const result = await this.znp.request(5, 'extFindGroup', {endpoint, groupid: group}, null, null, [
+        const result = await this.znp.request(5, 'extFindGroup', {endpoint, groupid: group}, undefined, undefined, [
             ZnpCommandStatus.SUCCESS,
             ZnpCommandStatus.FAILURE,
         ]);
@@ -513,9 +513,9 @@ export class ZnpAdapterManager {
         const parsed: Models.NetworkOptions = {
             channelList: channelList,
             panId: options.panID,
-            extendedPanId: Buffer.from(options.extendedPanID),
-            networkKey: Buffer.from(options.networkKey),
-            networkKeyDistribute: options.networkKeyDistribute,
+            extendedPanId: Buffer.from(options.extendedPanID!),
+            networkKey: Buffer.from(options.networkKey!),
+            networkKeyDistribute: Boolean(options.networkKeyDistribute),
         };
         if (parsed.extendedPanId.equals(Buffer.alloc(8, 0xdd))) {
             const adapterIeeeAddressResponse = await this.znp.request(Subsystem.SYS, 'getExtAddr', {});

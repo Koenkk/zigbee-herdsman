@@ -45,9 +45,8 @@ class Znp extends events.EventEmitter {
     private baudRate: number;
     private rtscts: boolean;
 
-    private portType: 'serial' | 'socket';
-    private serialPort: SerialPort;
-    private socketPort: net.Socket;
+    private serialPort?: SerialPort;
+    private socketPort?: net.Socket;
     private unpiWriter: UnpiWriter;
     private unpiParser: UnpiParser;
     private initialized: boolean;
@@ -60,12 +59,13 @@ class Znp extends events.EventEmitter {
         this.path = path;
         this.baudRate = typeof baudRate === 'number' ? baudRate : 115200;
         this.rtscts = typeof rtscts === 'boolean' ? rtscts : false;
-        this.portType = SocketPortUtils.isTcpPath(path) ? 'socket' : 'serial';
 
         this.initialized = false;
 
         this.queue = new Queue();
         this.waitress = new Waitress<ZpiObject, WaitressMatcher>(this.waitressValidator, this.waitressTimeoutFormatter);
+        this.unpiWriter = new UnpiWriter();
+        this.unpiParser = new UnpiParser();
     }
 
     private log(type: Type, message: string): void {
@@ -91,7 +91,7 @@ class Znp extends events.EventEmitter {
             this.waitress.resolve(object);
             this.emit('received', object);
         } catch (error) {
-            logger.error(`Error while parsing to ZpiObject '${error.stack}'`, NS);
+            logger.error(`Error while parsing to ZpiObject '${error}'`, NS);
         }
     }
 
@@ -110,7 +110,7 @@ class Znp extends events.EventEmitter {
     }
 
     public async open(): Promise<void> {
-        return this.portType === 'serial' ? this.openSerialPort() : this.openSocketPort();
+        return SocketPortUtils.isTcpPath(this.path) ? this.openSocketPort() : this.openSerialPort();
     }
 
     private async openSerialPort(): Promise<void> {
@@ -119,12 +119,7 @@ class Znp extends events.EventEmitter {
         logger.info(`Opening SerialPort with ${JSON.stringify(options)}`, NS);
         this.serialPort = new SerialPort(options);
 
-        this.unpiWriter = new UnpiWriter();
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        // @ts-ignore
         this.unpiWriter.pipe(this.serialPort);
-
-        this.unpiParser = new UnpiParser();
         this.serialPort.pipe(this.unpiParser);
         this.unpiParser.on('parsed', this.onUnpiParsed.bind(this));
 
@@ -154,45 +149,42 @@ class Znp extends events.EventEmitter {
         logger.info(`Opening TCP socket with ${info.host}:${info.port}`, NS);
 
         this.socketPort = new net.Socket();
+
         this.socketPort.setNoDelay(true);
         this.socketPort.setKeepAlive(true, 15000);
-
-        this.unpiWriter = new UnpiWriter();
         this.unpiWriter.pipe(this.socketPort);
-
-        this.unpiParser = new UnpiParser();
         this.socketPort.pipe(this.unpiParser);
         this.unpiParser.on('parsed', this.onUnpiParsed.bind(this));
 
         return new Promise((resolve, reject): void => {
-            this.socketPort.on('connect', function () {
+            this.socketPort!.on('connect', function () {
                 logger.info('Socket connected', NS);
             });
 
             // eslint-disable-next-line @typescript-eslint/no-this-alias
             const self = this;
-            this.socketPort.on('ready', async function () {
+            this.socketPort!.on('ready', async function () {
                 logger.info('Socket ready', NS);
                 await self.skipBootloader();
                 self.initialized = true;
                 resolve();
             });
 
-            this.socketPort.once('close', this.onPortClose.bind(this));
+            this.socketPort!.once('close', this.onPortClose.bind(this));
 
-            this.socketPort.on('error', function () {
+            this.socketPort!.on('error', function () {
                 logger.info('Socket error', NS);
                 reject(new Error(`Error while opening socket`));
                 self.initialized = false;
             });
 
-            this.socketPort.connect(info.port, info.host);
+            this.socketPort!.connect(info.port, info.host);
         });
     }
 
     private async skipBootloader(): Promise<void> {
         try {
-            await this.request(Subsystem.SYS, 'ping', {capabilities: 1}, null, 250);
+            await this.request(Subsystem.SYS, 'ping', {capabilities: 1}, undefined, 250);
         } catch {
             // Skip bootloader on CC2530/CC2531
             // Send magic byte: https://github.com/Koenkk/zigbee2mqtt/issues/1343 to bootloader
@@ -201,28 +193,20 @@ class Znp extends events.EventEmitter {
                 logger.info('Writing CC2530/CC2531 skip bootloader payload', NS);
                 this.unpiWriter.writeBuffer(Buffer.from([0xef]));
                 await Wait(1000);
-                await this.request(Subsystem.SYS, 'ping', {capabilities: 1}, null, 250);
+                await this.request(Subsystem.SYS, 'ping', {capabilities: 1}, undefined, 250);
             } catch {
                 // Skip bootloader on some CC2652 devices (e.g. zzh-p)
                 logger.info('Skip bootloader for CC2652/CC1352', NS);
                 if (this.serialPort) {
-                    await this.setSerialPortOptions({dtr: false, rts: false});
+                    await this.serialPort.asyncSet({dtr: false, rts: false});
                     await Wait(150);
-                    await this.setSerialPortOptions({dtr: false, rts: true});
+                    await this.serialPort.asyncSet({dtr: false, rts: true});
                     await Wait(150);
-                    await this.setSerialPortOptions({dtr: false, rts: false});
+                    await this.serialPort.asyncSet({dtr: false, rts: false});
                     await Wait(150);
                 }
             }
         }
-    }
-
-    private async setSerialPortOptions(options: {dtr?: boolean; rts?: boolean}): Promise<void> {
-        return new Promise((resolve): void => {
-            this.serialPort.set(options, () => {
-                resolve();
-            });
-        });
     }
 
     public static async isValidPath(path: string): Promise<boolean> {
@@ -239,7 +223,7 @@ class Znp extends events.EventEmitter {
         }
     }
 
-    public static async autoDetectPath(): Promise<string> {
+    public static async autoDetectPath(): Promise<string | undefined> {
         const paths = await SerialPortUtils.find(autoDetectDefinitions);
 
         // CC1352P_2 and CC26X2R1 lists as 2 USB devices with same manufacturer, productId and vendorId
@@ -247,7 +231,7 @@ class Znp extends events.EventEmitter {
         // The chip is always exposed on the first one after alphabetical sorting.
         paths.sort((a, b) => (a < b ? -1 : 1));
 
-        return paths.length > 0 ? paths[0] : null;
+        return paths.length > 0 ? paths[0] : undefined;
     }
 
     public async close(): Promise<void> {
@@ -257,7 +241,7 @@ class Znp extends events.EventEmitter {
         if (this.initialized) {
             this.initialized = false;
 
-            if (this.portType === 'serial') {
+            if (this.serialPort) {
                 try {
                     await this.serialPort.asyncFlushAndClose();
                 } catch (error) {
@@ -266,7 +250,7 @@ class Znp extends events.EventEmitter {
                     throw error;
                 }
             } else {
-                this.socketPort.destroy();
+                this.socketPort!.destroy();
             }
         }
 
@@ -277,10 +261,10 @@ class Znp extends events.EventEmitter {
         subsystem: Subsystem,
         command: string,
         payload: ZpiObjectPayload,
-        waiterID: number = null,
-        timeout: number = null,
+        waiterID?: number,
+        timeout?: number,
         expectedStatuses: Constants.COMMON.ZnpCommandStatus[] = [ZnpCommandStatus.SUCCESS],
-    ): Promise<ZpiObject> {
+    ): Promise<ZpiObject | void> {
         if (!this.initialized) {
             throw new Error('Cannot request when znp has not been initialized yet');
         }
@@ -288,7 +272,7 @@ class Znp extends events.EventEmitter {
         const object = ZpiObject.createRequest(subsystem, command, payload);
         const message = `--> ${Subsystem[object.subsystem]} - ${object.command} - ${JSON.stringify(payload)}`;
 
-        return this.queue.execute<ZpiObject>(async (): Promise<ZpiObject> => {
+        return this.queue.execute<ZpiObject | void>(async () => {
             this.log(object.type, message);
 
             const frame = object.toUnpiFrame();
@@ -320,7 +304,6 @@ class Znp extends events.EventEmitter {
                 /* istanbul ignore else */
                 if (object.type === Type.AREQ) {
                     this.unpiWriter.writeFrame(frame);
-                    return undefined;
                 } else {
                     throw new Error(`Unknown type '${object.type}'`);
                 }

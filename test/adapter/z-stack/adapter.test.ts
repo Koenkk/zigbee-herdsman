@@ -2055,26 +2055,26 @@ describe('zstack-adapter', () => {
         basicMocks();
         adapter = new ZStackAdapter(networkOptions, serialPortOptions, 'backup.json', {disableLED: true});
         await adapter.start();
-        expect(mockZnpRequest).toHaveBeenCalledWith(Subsystem.UTIL, 'ledControl', {ledid: 3, mode: 0}, null, 500);
+        expect(mockZnpRequest).toHaveBeenCalledWith(Subsystem.UTIL, 'ledControl', {ledid: 3, mode: 0}, undefined, 500);
         mockZnpRequest.mockClear();
         await adapter.permitJoin(255, 0);
-        expect(mockZnpRequest).not.toHaveBeenCalledWith(Subsystem.UTIL, 'ledControl', expect.any(Object), null, 500);
+        expect(mockZnpRequest).not.toHaveBeenCalledWith(Subsystem.UTIL, 'ledControl', expect.any(Object), undefined, 500);
         mockZnpRequest.mockClear();
         await adapter.permitJoin(0, 0);
-        expect(mockZnpRequest).not.toHaveBeenCalledWith(Subsystem.UTIL, 'ledControl', expect.any(Object), null, 500);
+        expect(mockZnpRequest).not.toHaveBeenCalledWith(Subsystem.UTIL, 'ledControl', expect.any(Object), undefined, 500);
     });
 
     it('LED behaviour: disable LED false, firmware not handling leds', async () => {
         basicMocks();
         adapter = new ZStackAdapter(networkOptions, serialPortOptions, 'backup.json', {disableLED: false});
         await adapter.start();
-        expect(mockZnpRequest).not.toHaveBeenCalledWith(Subsystem.UTIL, 'ledControl', expect.any(Object), null, 500);
+        expect(mockZnpRequest).not.toHaveBeenCalledWith(Subsystem.UTIL, 'ledControl', expect.any(Object), undefined, 500);
         mockZnpRequest.mockClear();
         await adapter.permitJoin(255, 0);
-        expect(mockZnpRequest).toHaveBeenCalledWith(Subsystem.UTIL, 'ledControl', {ledid: 3, mode: 1}, null, 500);
+        expect(mockZnpRequest).toHaveBeenCalledWith(Subsystem.UTIL, 'ledControl', {ledid: 3, mode: 1}, undefined, 500);
         mockZnpRequest.mockClear();
         await adapter.permitJoin(0, 0);
-        expect(mockZnpRequest).toHaveBeenCalledWith(Subsystem.UTIL, 'ledControl', {ledid: 3, mode: 0}, null, 500);
+        expect(mockZnpRequest).toHaveBeenCalledWith(Subsystem.UTIL, 'ledControl', {ledid: 3, mode: 0}, undefined, 500);
     });
 
     it('LED behaviour: disable LED true, firmware handling leds', async () => {
@@ -2085,13 +2085,13 @@ describe('zstack-adapter', () => {
         );
         adapter = new ZStackAdapter(networkOptions, serialPortOptions, 'backup.json', {disableLED: true});
         await adapter.start();
-        expect(mockZnpRequest).toHaveBeenCalledWith(Subsystem.UTIL, 'ledControl', {ledid: 0xff, mode: 5}, null, 500);
+        expect(mockZnpRequest).toHaveBeenCalledWith(Subsystem.UTIL, 'ledControl', {ledid: 0xff, mode: 5}, undefined, 500);
         mockZnpRequest.mockClear();
         await adapter.permitJoin(255, 0);
-        expect(mockZnpRequest).not.toHaveBeenCalledWith(Subsystem.UTIL, 'ledControl', expect.any(Object), null, 500);
+        expect(mockZnpRequest).not.toHaveBeenCalledWith(Subsystem.UTIL, 'ledControl', expect.any(Object), undefined, 500);
         mockZnpRequest.mockClear();
         await adapter.permitJoin(0, 0);
-        expect(mockZnpRequest).not.toHaveBeenCalledWith(Subsystem.UTIL, 'ledControl', expect.any(Object), null, 500);
+        expect(mockZnpRequest).not.toHaveBeenCalledWith(Subsystem.UTIL, 'ledControl', expect.any(Object), undefined, 500);
     });
 
     it('LED behaviour: disable LED false, firmware handling leds', async () => {
@@ -2259,7 +2259,7 @@ describe('zstack-adapter', () => {
             duration: 100,
             tcsignificance: 0,
         });
-        expect(mockZnpRequest).toHaveBeenCalledWith(Subsystem.UTIL, 'ledControl', {ledid: 3, mode: 1}, null, 500);
+        expect(mockZnpRequest).toHaveBeenCalledWith(Subsystem.UTIL, 'ledControl', {ledid: 3, mode: 1}, undefined, 500);
     });
 
     it('Permit join specific networkAddress', async () => {
@@ -2274,7 +2274,7 @@ describe('zstack-adapter', () => {
             duration: 102,
             tcsignificance: 0,
         });
-        expect(mockZnpRequest).toHaveBeenCalledWith(Subsystem.UTIL, 'ledControl', {ledid: 3, mode: 1}, null, 500);
+        expect(mockZnpRequest).toHaveBeenCalledWith(Subsystem.UTIL, 'ledControl', {ledid: 3, mode: 1}, undefined, 500);
     });
 
     it('Get coordinator version', async () => {
@@ -2342,14 +2342,14 @@ describe('zstack-adapter', () => {
             (_, cmd) =>
                 new Promise((resolve, reject) => {
                     if (cmd == 'ledControl') reject('FAILED');
-                    else resolve(null);
+                    else resolve(undefined);
                 }),
         );
         await adapter.permitJoin(0, 0);
-        expect(mockZnpRequest).toHaveBeenCalledWith(Subsystem.UTIL, 'ledControl', {ledid: 3, mode: 0}, null, 500);
+        expect(mockZnpRequest).toHaveBeenCalledWith(Subsystem.UTIL, 'ledControl', {ledid: 3, mode: 0}, undefined, 500);
         mockZnpRequest.mockClear();
         await adapter.permitJoin(0, 0);
-        expect(mockZnpRequest).not.toHaveBeenCalledWith(Subsystem.UTIL, 'ledControl', {ledid: 3, mode: 0}, null, 500);
+        expect(mockZnpRequest).not.toHaveBeenCalledWith(Subsystem.UTIL, 'ledControl', {ledid: 3, mode: 0}, undefined, 500);
     });
 
     it('Node descriptor', async () => {
@@ -2958,7 +2958,7 @@ describe('zstack-adapter', () => {
                 dstaddrmode: 2,
                 dstpanid: 0,
             },
-            null,
+            undefined,
         );
     });
 
@@ -2987,7 +2987,7 @@ describe('zstack-adapter', () => {
                 dstaddrmode: 2,
                 dstpanid: 0,
             },
-            null,
+            undefined,
         );
     });
 
@@ -3016,7 +3016,7 @@ describe('zstack-adapter', () => {
                 dstaddrmode: 2,
                 dstpanid: 0,
             },
-            null,
+            undefined,
         );
     });
 
@@ -3842,7 +3842,7 @@ describe('zstack-adapter', () => {
                 dstaddrmode: 3,
                 dstpanid: 65535,
             },
-            null,
+            undefined,
         );
     });
 
@@ -3878,7 +3878,7 @@ describe('zstack-adapter', () => {
                 dstaddrmode: 2,
                 dstpanid: 65535,
             },
-            null,
+            undefined,
         );
         expect(deepClone(result)).toStrictEqual({
             clusterID: 4096,

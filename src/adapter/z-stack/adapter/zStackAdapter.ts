@@ -50,7 +50,7 @@ const DataConfirmErrorCodeLookup: {[k: number]: string} = {
 };
 
 interface WaitressMatcher {
-    address: number | string;
+    address?: number | string;
     endpoint: number;
     transactionSequenceNumber?: number;
     frameType: Zcl.FrameType;
@@ -83,14 +83,14 @@ class ZStackAdapter extends Adapter {
     };
     private closing: boolean;
     private queue: Queue;
-    private supportsLED: boolean = null;
+    private supportsLED?: boolean;
     private interpanLock: boolean;
     private interpanEndpointRegistered: boolean;
     private waitress: Waitress<Events.ZclPayload, WaitressMatcher>;
 
     public constructor(networkOptions: NetworkOptions, serialPortOptions: SerialPortOptions, backupPath: string, adapterOptions: AdapterOptions) {
         super(networkOptions, serialPortOptions, backupPath, adapterOptions);
-        this.znp = new Znp(this.serialPortOptions.path, this.serialPortOptions.baudRate, this.serialPortOptions.rtscts);
+        this.znp = new Znp(this.serialPortOptions.path!, this.serialPortOptions.baudRate!, this.serialPortOptions.rtscts!);
 
         this.transactionID = 0;
         this.deviceAnnounceRouteDiscoveryDebouncers = new Map();
@@ -173,7 +173,7 @@ class ZStackAdapter extends Adapter {
         return Znp.isValidPath(path);
     }
 
-    public static async autoDetectPath(): Promise<string> {
+    public static async autoDetectPath(): Promise<string | undefined> {
         return Znp.autoDetectPath();
     }
 
@@ -234,7 +234,7 @@ class ZStackAdapter extends Adapter {
     }
 
     private async setLED(action: 'disable' | 'on' | 'off'): Promise<void> {
-        if (this.supportsLED == null) {
+        if (this.supportsLED == undefined) {
             // Only zStack3x0 with 20210430 and greater support LED
             const zStack3x0 = this.version.product === ZnpVersion.zStack3x0;
             this.supportsLED = !zStack3x0 || (zStack3x0 && parseInt(this.version.revision) >= 20210430);
@@ -254,7 +254,7 @@ class ZStackAdapter extends Adapter {
 
         const payload = lookup[action];
         if (payload) {
-            this.znp.request(Subsystem.UTIL, 'ledControl', payload, null, 500).catch(() => {
+            this.znp.request(Subsystem.UTIL, 'ledControl', payload, undefined, 500).catch(() => {
                 // We cannot 100% correctly determine if an adapter supports LED. E.g. the zStack 1.2 20190608
                 // fw supports led on the CC2531 but not on the CC2530. Therefore if a led request fails never thrown
                 // an error but instead mark the led as unsupported.
@@ -387,13 +387,13 @@ class ZStackAdapter extends Adapter {
                 false,
                 false,
                 false,
-                null,
+                undefined,
             );
         }, networkAddress);
     }
 
     private async sendZclFrameToEndpointInternal(
-        ieeeAddr: string,
+        ieeeAddr: string | undefined,
         networkAddress: number,
         endpoint: number,
         sourceEndpoint: number,
@@ -406,7 +406,7 @@ class ZStackAdapter extends Adapter {
         checkedNetworkAddress: boolean,
         discoveredRoute: boolean,
         assocRemove: boolean,
-        assocRestore: {ieeeadr: string; nwkaddr: number; noderelation: number},
+        assocRestore?: {ieeeadr: string; nwkaddr: number; noderelation: number},
     ): Promise<Events.ZclPayload | void> {
         logger.debug(
             `sendZclFrameToEndpointInternal ${ieeeAddr}:${networkAddress}/${endpoint} ` +
@@ -415,7 +415,7 @@ class ZStackAdapter extends Adapter {
         );
         let response = null;
         const command = zclFrame.command;
-        if (command.hasOwnProperty('response') && disableResponse === false) {
+        if (command.response != undefined && disableResponse === false) {
             response = this.waitForInternal(
                 networkAddress,
                 endpoint,
@@ -462,7 +462,7 @@ class ZStackAdapter extends Adapter {
             if (assocRemove && assocRestore && this.supportsAssocAdd()) {
                 logger.debug(`assocAdd(${assocRestore.ieeeadr})`, NS);
                 await this.znp.request(Subsystem.UTIL, 'assocAdd', assocRestore);
-                assocRestore = null;
+                assocRestore = undefined;
             }
 
             const recoverableErrors = [
@@ -1027,16 +1027,16 @@ class ZStackAdapter extends Adapter {
     public async sendZclFrameInterPANBroadcast(zclFrame: Zcl.Frame, timeout: number): Promise<Events.ZclPayload> {
         return this.queue.execute<Events.ZclPayload>(async () => {
             const command = zclFrame.command;
-            if (!command.hasOwnProperty('response')) {
+            if (command.response == undefined) {
                 throw new Error(`Command '${command.name}' has no response, cannot wait for response`);
             }
 
             const response = this.waitForInternal(
-                null,
+                undefined,
                 0xfe,
                 zclFrame.header.frameControl.frameType,
                 Zcl.Direction.SERVER_TO_CLIENT,
-                null,
+                undefined,
                 zclFrame.cluster.ID,
                 command.response,
                 timeout,
@@ -1121,11 +1121,11 @@ class ZStackAdapter extends Adapter {
     }
 
     private waitForInternal(
-        networkAddress: number,
+        networkAddress: number | undefined,
         endpoint: number,
         frameType: Zcl.FrameType,
         direction: Zcl.Direction,
-        transactionSequenceNumber: number,
+        transactionSequenceNumber: number | undefined,
         clusterID: number,
         commandIdentifier: number,
         timeout: number,
@@ -1146,11 +1146,11 @@ class ZStackAdapter extends Adapter {
     }
 
     public waitFor(
-        networkAddress: number,
+        networkAddress: number | undefined,
         endpoint: number,
         frameType: Zcl.FrameType,
         direction: Zcl.Direction,
-        transactionSequenceNumber: number,
+        transactionSequenceNumber: number | undefined,
         clusterID: number,
         commandIdentifier: number,
         timeout: number,
@@ -1224,9 +1224,9 @@ class ZStackAdapter extends Adapter {
         timeout: number,
         confirmation: boolean,
         attemptsLeft = 5,
-    ): Promise<ZpiObject> {
+    ): Promise<ZpiObject | void> {
         const transactionID = this.nextTransactionID();
-        const response = confirmation ? this.znp.waitFor(Type.AREQ, Subsystem.AF, 'dataConfirm', {transid: transactionID}, timeout) : null;
+        const response = confirmation ? this.znp.waitFor(Type.AREQ, Subsystem.AF, 'dataConfirm', {transid: transactionID}, timeout) : undefined;
 
         await this.znp.request(
             Subsystem.AF,
@@ -1244,10 +1244,10 @@ class ZStackAdapter extends Adapter {
                 len: data.length,
                 data: data,
             },
-            response ? response.ID : null,
+            response?.ID,
         );
 
-        if (confirmation) {
+        if (confirmation && response) {
             const dataConfirm = await response.start().promise;
             if (dataConfirm.payload.status !== ZnpCommandStatus.SUCCESS) {
                 if (
@@ -1316,15 +1316,15 @@ class ZStackAdapter extends Adapter {
     }
 
     private waitressValidator(payload: Events.ZclPayload, matcher: WaitressMatcher): boolean {
-        return (
+        return Boolean(
             payload.header &&
-            (!matcher.address || payload.address === matcher.address) &&
-            payload.endpoint === matcher.endpoint &&
-            (!matcher.transactionSequenceNumber || payload.header.transactionSequenceNumber === matcher.transactionSequenceNumber) &&
-            payload.clusterID === matcher.clusterID &&
-            matcher.frameType === payload.header.frameControl.frameType &&
-            matcher.commandIdentifier === payload.header.commandIdentifier &&
-            matcher.direction === payload.header.frameControl.direction
+                (!matcher.address || payload.address === matcher.address) &&
+                payload.endpoint === matcher.endpoint &&
+                (!matcher.transactionSequenceNumber || payload.header.transactionSequenceNumber === matcher.transactionSequenceNumber) &&
+                payload.clusterID === matcher.clusterID &&
+                matcher.frameType === payload.header.frameControl.frameType &&
+                matcher.commandIdentifier === payload.header.commandIdentifier &&
+                matcher.direction === payload.header.frameControl.direction,
         );
     }
 

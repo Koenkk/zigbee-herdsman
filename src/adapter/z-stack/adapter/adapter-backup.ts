@@ -32,17 +32,17 @@ export class AdapterBackup {
     /**
      * Loads currently stored backup and returns it in internal backup model.
      */
-    public async getStoredBackup(): Promise<Models.Backup> {
+    public async getStoredBackup(): Promise<Models.Backup | undefined> {
         try {
             await fs.access(this.defaultPath);
         } catch {
-            return null;
+            return undefined;
         }
         let data;
         try {
             data = JSON.parse((await fs.readFile(this.defaultPath)).toString());
         } catch (error) {
-            throw new Error(`Coordinator backup is corrupted (${error.message})`);
+            throw new Error(`Coordinator backup is corrupted (${error})`);
         }
         if (data.metadata?.format === 'zigpy/open-coordinator-backup' && data.metadata?.version) {
             if (data.metadata?.version !== 1) {
@@ -123,7 +123,7 @@ export class AdapterBackup {
 
         /* examine network security material table */
         const genericExtendedPanId = Buffer.alloc(8, 0xff);
-        let secMaterialDescriptor: ReturnType<typeof Structs.nwkSecMaterialDescriptorEntry> = null;
+        let secMaterialDescriptor: ReturnType<typeof Structs.nwkSecMaterialDescriptorEntry> | undefined;
         /* istanbul ignore next */
         for (const entry of secMaterialTable.used) {
             if (entry.extendedPanID.equals(nib.extendedPANID)) {
@@ -188,8 +188,8 @@ export class AdapterBackup {
                                 const tclkTableEntry = tclkTable.used.find((e) => e.extAddr.equals(ame.extAddr));
                                 if (tclkTableEntry) {
                                     const rotatedSeed = Buffer.concat([
-                                        tclkSeed.key.slice(tclkTableEntry.SeedShift_IcIndex),
-                                        tclkSeed.key.slice(0, tclkTableEntry.SeedShift_IcIndex),
+                                        tclkSeed.key.subarray(tclkTableEntry.SeedShift_IcIndex),
+                                        tclkSeed.key.subarray(0, tclkTableEntry.SeedShift_IcIndex),
                                     ]);
                                     const extAddrReversed = Buffer.from(ame.extAddr).reverse();
                                     const extAddrRepeated = Buffer.concat([extAddrReversed, extAddrReversed]);
