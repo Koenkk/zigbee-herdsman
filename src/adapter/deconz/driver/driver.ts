@@ -9,7 +9,7 @@ import {SerialPort} from '../../serialPort';
 import SerialPortUtils from '../../serialPortUtils';
 import SocketPortUtils from '../../socketPortUtils';
 import PARAM from './constants';
-import {Command, Request, parameterT, ApsDataRequest, ReceivedDataResponse} from './constants';
+import {Request, parameterT, ApsDataRequest, ReceivedDataResponse} from './constants';
 import {frameParserEvents} from './frameParser';
 import Parser from './parser';
 import Writer from './writer';
@@ -295,7 +295,7 @@ class Driver extends events.EventEmitter {
         });
     }
 
-    public readParameterRequest(parameterId: number): Promise<Command> {
+    public readParameterRequest(parameterId: number): Promise<unknown> {
         const seqNumber = this.nextSeqNumber();
         return new Promise((resolve, reject): void => {
             //logger.debug(`push read parameter request to queue. seqNr: ${seqNumber} paramId: ${parameterId}`, NS);
