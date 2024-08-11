@@ -50,7 +50,7 @@ class DeconzAdapter extends Adapter {
     private transactionID: number;
     private frameParserEvent = frameParser.frameParserEvents;
     private joinPermitted: boolean;
-    private fwVersion: CoordinatorVersion;
+    private fwVersion?: CoordinatorVersion;
     private waitress: Waitress<Events.ZclPayload, WaitressMatcher>;
     private TX_OPTIONS = 0x00; // No APS ACKS
 
@@ -64,7 +64,7 @@ class DeconzAdapter extends Adapter {
 
         this.waitress = new Waitress<Events.ZclPayload, WaitressMatcher>(this.waitressValidator, this.waitressTimeoutFormatter);
 
-        this.driver = new Driver(serialPortOptions.path);
+        this.driver = new Driver(serialPortOptions.path!);
         this.driver.setDelay(delay);
 
         if (delay >= 200) {
@@ -78,7 +78,7 @@ class DeconzAdapter extends Adapter {
         this.transactionID = 0;
         this.openRequestsQueue = [];
         this.joinPermitted = false;
-        this.fwVersion = null;
+        this.fwVersion = undefined;
 
         this.frameParserEvent.on('receivedDataPayload', (data: any) => {
             this.checkReceivedDataPayload(data);
@@ -100,7 +100,7 @@ class DeconzAdapter extends Adapter {
         return Driver.isValidPath(path);
     }
 
-    public static async autoDetectPath(): Promise<string> {
+    public static async autoDetectPath(): Promise<string | undefined> {
         return Driver.autoDetectPath();
     }
 
@@ -208,10 +208,10 @@ class DeconzAdapter extends Adapter {
         }
 
         // check current extended_panid against configuration.yaml
-        if (this.driver.generalArrayToString(this.networkOptions.extendedPanID, 8) !== expanid) {
+        if (this.driver.generalArrayToString(this.networkOptions.extendedPanID!, 8) !== expanid) {
             logger.debug(
                 'extended panid in configuration.yaml (' +
-                    this.driver.macAddrArrayToString(this.networkOptions.extendedPanID) +
+                    this.driver.macAddrArrayToString(this.networkOptions.extendedPanID!) +
                     ') differs from current extended panid (' +
                     expanid +
                     '). Changing extended panid.',
@@ -219,7 +219,7 @@ class DeconzAdapter extends Adapter {
             );
 
             try {
-                await this.driver.writeParameterRequest(PARAM.PARAM.Network.APS_EXT_PAN_ID, this.networkOptions.extendedPanID);
+                await this.driver.writeParameterRequest(PARAM.PARAM.Network.APS_EXT_PAN_ID, this.networkOptions.extendedPanID!);
                 await this.sleep(500);
                 changed = true;
             } catch (error) {
@@ -228,14 +228,14 @@ class DeconzAdapter extends Adapter {
         }
 
         // check current network key against configuration.yaml
-        if (this.driver.generalArrayToString(this.networkOptions.networkKey, 16) !== networkKey) {
+        if (this.driver.generalArrayToString(this.networkOptions.networkKey!, 16) !== networkKey) {
             logger.debug(
                 'network key in configuration.yaml (hidden) differs from current network key (' + networkKey + '). Changing network key.',
                 NS,
             );
 
             try {
-                await this.driver.writeParameterRequest(PARAM.PARAM.Network.NETWORK_KEY, this.networkOptions.networkKey);
+                await this.driver.writeParameterRequest(PARAM.PARAM.Network.NETWORK_KEY, this.networkOptions.networkKey!);
                 await this.sleep(500);
                 changed = true;
             } catch (error) {
@@ -325,7 +325,7 @@ class DeconzAdapter extends Adapter {
 
     public async getCoordinatorVersion(): Promise<CoordinatorVersion> {
         // product: number; transportrev: number; majorrel: number; minorrel: number; maintrel: number; revision: string;
-        if (this.fwVersion != null) {
+        if (this.fwVersion != undefined) {
             return this.fwVersion;
         } else {
             try {
@@ -344,7 +344,7 @@ class DeconzAdapter extends Adapter {
                 this.fwVersion = {type: type, meta: meta};
                 return {type: type, meta: meta};
             } catch (error) {
-                logger.debug('Get coordinator version Error: ' + error, NS);
+                throw new Error('Get coordinator version Error: ' + error);
             }
         }
     }
@@ -400,7 +400,7 @@ class DeconzAdapter extends Adapter {
 
             try {
                 const d = await this.waitForData(networkAddress, 0, 0x8031);
-                const data = d.asduPayload;
+                const data = d.asduPayload!;
 
                 if (data[1] !== 0) {
                     // status
@@ -508,7 +508,7 @@ class DeconzAdapter extends Adapter {
 
             try {
                 const d = await this.waitForData(networkAddress, 0, 0x8032);
-                const data = d.asduPayload;
+                const data = d.asduPayload!;
 
                 if (data[1] !== 0) {
                     // status
@@ -596,7 +596,7 @@ class DeconzAdapter extends Adapter {
 
         try {
             const d = await this.waitForData(networkAddress, 0, 0x8002);
-            const data = d.asduPayload;
+            const data = d.asduPayload!;
 
             const buf = Buffer.from(data);
             const logicaltype = data[4] & 7;
@@ -649,7 +649,7 @@ class DeconzAdapter extends Adapter {
             const d = await this.waitForData(networkAddress, 0, 0x8005);
             const data = d.asduPayload;
 
-            const buf = Buffer.from(data);
+            const buf = Buffer.from(data!);
             const epCount = buf.readUInt8(4);
             const epList = [];
             for (let i = 5; i < epCount + 5; i++) {
@@ -691,7 +691,7 @@ class DeconzAdapter extends Adapter {
 
         try {
             const d = await this.waitForData(networkAddress, 0, 0x8004);
-            const data = d.asduPayload;
+            const data = d.asduPayload!;
 
             const buf = Buffer.from(data);
             const inCount = buf.readUInt8(11);
@@ -884,19 +884,19 @@ class DeconzAdapter extends Adapter {
             }
 
             if (data !== null) {
-                const asdu = data.asduPayload;
+                const asdu = data.asduPayload!;
                 const buffer = Buffer.from(asdu);
 
                 const response: Events.ZclPayload = {
-                    address: data.srcAddrMode === 0x02 ? data.srcAddr16 : null,
+                    address: data.srcAddrMode === 0x02 ? data.srcAddr16 : undefined, // TODO: can't be undefined
                     data: buffer,
                     clusterID: zclFrame.cluster.ID,
                     header: Zcl.Header.fromBuffer(buffer),
-                    endpoint: data.srcEndpoint,
-                    linkquality: data.lqi,
-                    groupID: data.srcAddrMode === 0x01 ? data.srcAddr16 : null,
+                    endpoint: data.srcEndpoint!,
+                    linkquality: data.lqi!,
+                    groupID: data.srcAddrMode === 0x01 ? data.srcAddr16! : 0,
                     wasBroadcast: data.srcAddrMode === 0x01 || data.srcAddrMode === 0xf,
-                    destinationEndpoint: data.destEndpoint,
+                    destinationEndpoint: data.destEndpoint!,
                 };
                 logger.debug(`response received (${zclFrame.header.transactionSequenceNumber})`, NS);
                 return response;
@@ -934,7 +934,7 @@ class DeconzAdapter extends Adapter {
             return this.driver.enqueueSendDataRequest(request) as Promise<void>;
         } catch (error) {
             //logger.debug(`sendZclFrameToGroup ERROR: ${error}`, NS);
-            throw new Error(error);
+            throw error;
         }
     }
 
@@ -963,7 +963,7 @@ class DeconzAdapter extends Adapter {
             return this.driver.enqueueSendDataRequest(request) as Promise<void>;
         } catch (error) {
             //logger.debug(`sendZclFrameToAll ERROR: ${error}`, NS);
-            throw new Error(error);
+            throw error;
         }
     }
 
@@ -984,7 +984,7 @@ class DeconzAdapter extends Adapter {
 
         if (type === 'endpoint') {
             destArray = this.driver.macAddrStringToArray(destinationAddressOrGroup as string);
-            destArray = destArray.concat([destinationEndpoint]);
+            destArray = destArray.concat([destinationEndpoint]); // TODO: what's the proper logic here?
         } else {
             destArray = [destinationAddressOrGroup as number & 0xff, ((destinationAddressOrGroup as number) >> 8) & 0xff];
         }
@@ -1014,14 +1014,14 @@ class DeconzAdapter extends Adapter {
 
         try {
             const d = await this.waitForData(destinationNetworkAddress, 0, 0x8021);
-            const data = d.asduPayload;
+            const data = d.asduPayload!;
             logger.debug('BIND RESPONSE - addr: 0x' + destinationNetworkAddress.toString(16) + ' status: ' + data[1], NS);
             if (data[1] !== 0) {
                 throw new Error('status: ' + data[1]);
             }
         } catch (error) {
             logger.debug('BIND FAILED - addr: 0x' + destinationNetworkAddress.toString(16) + ' ' + error, NS);
-            throw new Error(error);
+            throw error;
         }
     }
 
@@ -1042,7 +1042,7 @@ class DeconzAdapter extends Adapter {
 
         if (type === 'endpoint') {
             destArray = this.driver.macAddrStringToArray(destinationAddressOrGroup as string);
-            destArray = destArray.concat([destinationEndpoint]);
+            destArray = destArray.concat([destinationEndpoint]); // TODO: what the proper logic here?
         } else {
             destArray = [destinationAddressOrGroup as number & 0xff, ((destinationAddressOrGroup as number) >> 8) & 0xff];
         }
@@ -1073,14 +1073,14 @@ class DeconzAdapter extends Adapter {
 
         try {
             const d = await this.waitForData(destinationNetworkAddress, 0, 0x8022);
-            const data = d.asduPayload;
+            const data = d.asduPayload!;
             logger.debug('UNBIND RESPONSE - addr: 0x' + destinationNetworkAddress.toString(16) + ' status: ' + data[1], NS);
             if (data[1] !== 0) {
                 throw new Error('status: ' + data[1]);
             }
         } catch (error) {
             logger.debug('UNBIND FAILED - addr: 0x' + destinationNetworkAddress.toString(16) + ' ' + error, NS);
-            throw new Error(error);
+            throw error;
         }
     }
 
@@ -1111,7 +1111,7 @@ class DeconzAdapter extends Adapter {
 
         try {
             const d = await this.waitForData(networkAddress, 0, 0x8034);
-            const data = d.asduPayload;
+            const data = d.asduPayload!;
             logger.debug('REMOVE_DEVICE - addr: 0x' + networkAddress.toString(16) + ' status: ' + data[1], NS);
             const payload: Events.DeviceLeavePayload = {
                 networkAddress: networkAddress,
@@ -1123,7 +1123,7 @@ class DeconzAdapter extends Adapter {
             this.emit(Events.Events.deviceLeave, payload);
         } catch (error) {
             logger.debug('REMOVE_DEVICE FAILED - addr: 0x' + networkAddress.toString(16) + ' ' + error, NS);
-            throw new Error(error);
+            throw error;
         }
     }
 
@@ -1209,31 +1209,31 @@ class DeconzAdapter extends Adapter {
     private checkReceivedGreenPowerIndication(ind: gpDataInd) {
         ind.clusterId = 0x21;
 
-        let gpFrame = [
-            ind.rspId,
-            ind.seqNr,
-            ind.id,
+        const gpFrame = [
+            ind.rspId!,
+            ind.seqNr!,
+            ind.id!,
             0,
             0, // 0, 0 for options is a temp fix until https://github.com/Koenkk/zigbee-herdsman/pull/536 is merged.
             // ind.options & 0xff, (ind.options >> 8) & 0xff,
-            ind.srcId & 0xff,
-            (ind.srcId >> 8) & 0xff,
-            (ind.srcId >> 16) & 0xff,
-            (ind.srcId >> 24) & 0xff,
-            ind.frameCounter & 0xff,
-            (ind.frameCounter >> 8) & 0xff,
-            (ind.frameCounter >> 16) & 0xff,
-            (ind.frameCounter >> 24) & 0xff,
-            ind.commandId,
-            ind.commandFrameSize,
-        ].concat(ind.commandFrame);
+            ind.srcId! & 0xff,
+            (ind.srcId! >> 8) & 0xff,
+            (ind.srcId! >> 16) & 0xff,
+            (ind.srcId! >> 24) & 0xff,
+            ind.frameCounter! & 0xff,
+            (ind.frameCounter! >> 8) & 0xff,
+            (ind.frameCounter! >> 16) & 0xff,
+            (ind.frameCounter! >> 24) & 0xff,
+            ind.commandId!,
+            ind.commandFrameSize!,
+        ].concat(ind.commandFrame!);
 
         const payBuf = Buffer.from(gpFrame);
         const payload: Events.ZclPayload = {
             header: Zcl.Header.fromBuffer(payBuf),
             data: payBuf,
             clusterID: ind.clusterId,
-            address: ind.srcId,
+            address: ind.srcId!,
             endpoint: 242, // GP endpoint
             linkquality: 127,
             groupID: 0x0b84,
@@ -1245,10 +1245,10 @@ class DeconzAdapter extends Adapter {
         this.emit(Events.Events.zclPayload, payload);
     }
 
-    private checkReceivedDataPayload(resp: ReceivedDataResponse) {
+    private checkReceivedDataPayload(resp: ReceivedDataResponse | null) {
         let srcAddr: any = null;
-        let header: Zcl.Header = null;
-        const payBuf = resp != null ? Buffer.from(resp.asduPayload) : null;
+        let header: Zcl.Header | undefined;
+        const payBuf = resp != null ? Buffer.from(resp.asduPayload!) : undefined;
 
         if (resp != null) {
             if (resp.srcAddr16 != null) {
@@ -1271,24 +1271,26 @@ class DeconzAdapter extends Adapter {
                 resp.srcAddr16 = srcAddr;
             }
             if (resp.profileId != 0x00) {
-                header = Zcl.Header.fromBuffer(payBuf);
+                header = Zcl.Header.fromBuffer(payBuf!); // valid from check
             }
         }
 
         let i = this.openRequestsQueue.length;
+
         while (i--) {
             const req: WaitForDataRequest = this.openRequestsQueue[i];
-            if (srcAddr != null && req.addr === srcAddr && req.clusterId === resp.clusterId && req.profileId === resp.profileId) {
-                if (header !== null && req.transactionSequenceNumber !== null && req.transactionSequenceNumber !== undefined) {
+
+            if (srcAddr != null && req.addr === srcAddr && req.clusterId === resp?.clusterId && req.profileId === resp?.profileId) {
+                if (header !== undefined && req.transactionSequenceNumber != undefined) {
                     if (req.transactionSequenceNumber === header.transactionSequenceNumber) {
                         logger.debug('resolve data request with transSeq Nr.: ' + req.transactionSequenceNumber, NS);
                         this.openRequestsQueue.splice(i, 1);
-                        req.resolve(resp);
+                        req.resolve?.(resp);
                     }
                 } else {
                     logger.debug('resolve data request without a transSeq Nr.', NS);
                     this.openRequestsQueue.splice(i, 1);
-                    req.resolve(resp);
+                    req.resolve?.(resp);
                 }
             }
 
@@ -1296,11 +1298,11 @@ class DeconzAdapter extends Adapter {
 
             // Default timeout: 60 seconds.
             // Comparison is negated to prevent orphans when invalid timeout is entered (resulting in NaN).
-            if (!(now - req.ts <= (req.timeout ?? 60000))) {
+            if (!(now - req.ts! <= (req.timeout ?? 60000))) {
                 //logger.debug("Timeout for request in openRequestsQueue addr: " + req.addr.toString(16) + " clusterId: " + req.clusterId.toString(16) + " profileId: " + req.profileId.toString(16), NS);
                 //remove from busyQueue
                 this.openRequestsQueue.splice(i, 1);
-                req.reject('waiting for response TIMEOUT');
+                req.reject?.('waiting for response TIMEOUT');
             }
         }
 
@@ -1308,8 +1310,8 @@ class DeconzAdapter extends Adapter {
         if (resp != null && resp.profileId === 0x00 && resp.clusterId === 0x13) {
             // device Annce
             const payload: Events.DeviceJoinedPayload = {
-                networkAddress: payBuf.readUInt16LE(1),
-                ieeeAddr: this.driver.macAddrArrayToString(resp.asduPayload.slice(3, 11)),
+                networkAddress: payBuf!.readUInt16LE(1), // valid from check
+                ieeeAddr: this.driver.macAddrArrayToString(resp.asduPayload!.slice(3, 11)),
             };
             if (this.joinPermitted === true) {
                 this.emit(Events.Events.deviceJoined, payload);
@@ -1320,15 +1322,15 @@ class DeconzAdapter extends Adapter {
 
         if (resp != null && resp.profileId != 0x00) {
             const payload: Events.ZclPayload = {
-                clusterID: resp.clusterId,
+                clusterID: resp.clusterId!,
                 header,
-                data: payBuf,
-                address: resp.destAddrMode === 0x03 ? resp.srcAddr64 : resp.srcAddr16,
-                endpoint: resp.srcEndpoint,
-                linkquality: resp.lqi,
-                groupID: resp.destAddrMode === 0x01 ? resp.destAddr16 : null,
+                data: payBuf!, // valid from check
+                address: resp.destAddrMode === 0x03 ? resp.srcAddr64! : resp.srcAddr16!,
+                endpoint: resp.srcEndpoint!,
+                linkquality: resp.lqi!,
+                groupID: resp.destAddrMode === 0x01 ? resp.destAddr16! : 0,
                 wasBroadcast: resp.destAddrMode === 0x01 || resp.destAddrMode === 0xf,
-                destinationEndpoint: resp.destEndpoint,
+                destinationEndpoint: resp.destEndpoint!,
             };
 
             this.waitress.resolve(payload);
@@ -1355,15 +1357,15 @@ class DeconzAdapter extends Adapter {
     }
 
     private waitressValidator(payload: Events.ZclPayload, matcher: WaitressMatcher): boolean {
-        return (
+        return Boolean(
             payload.header &&
-            (!matcher.address || payload.address === matcher.address) &&
-            payload.endpoint === matcher.endpoint &&
-            (!matcher.transactionSequenceNumber || payload.header.transactionSequenceNumber === matcher.transactionSequenceNumber) &&
-            payload.clusterID === matcher.clusterID &&
-            matcher.frameType === payload.header.frameControl.frameType &&
-            matcher.commandIdentifier === payload.header.commandIdentifier &&
-            matcher.direction === payload.header.frameControl.direction
+                (!matcher.address || payload.address === matcher.address) &&
+                payload.endpoint === matcher.endpoint &&
+                (!matcher.transactionSequenceNumber || payload.header.transactionSequenceNumber === matcher.transactionSequenceNumber) &&
+                payload.clusterID === matcher.clusterID &&
+                matcher.frameType === payload.header.frameControl.frameType &&
+                matcher.commandIdentifier === payload.header.commandIdentifier &&
+                matcher.direction === payload.header.frameControl.direction,
         );
     }
 }

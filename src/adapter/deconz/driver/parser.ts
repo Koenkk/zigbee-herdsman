@@ -1,15 +1,12 @@
 /* istanbul ignore file */
-/* eslint-disable */
-import * as stream from 'stream';
-// @ts-ignore
 import slip from 'slip';
-import Frame from './frame';
+import {Transform, TransformCallback} from 'stream';
+
 import {logger} from '../../../utils/logger';
 
 const NS = 'zh:deconz:driver:parser';
 
-class Parser extends stream.Transform {
-    private buffer: Buffer;
+class Parser extends Transform {
     private decoder: slip.Decoder;
 
     public constructor() {
@@ -20,6 +17,7 @@ class Parser extends stream.Transform {
 
         this.decoder = new slip.Decoder({
             onMessage: this.onMessage,
+            onError: this.onError,
             maxMessageSize: 1000000,
             bufferSize: 2048,
         });
@@ -34,7 +32,7 @@ class Parser extends stream.Transform {
         logger.debug(`<-- error '${error}'`, NS);
     }
 
-    public _transform(chunk: Buffer, _: string, cb: Function): void {
+    public _transform(chunk: Buffer, _: string, cb: TransformCallback): void {
         //logger.debug(`<-- [${[...chunk]}]`, NS);
         this.decoder.decode(chunk);
         //logger.debug(`<-- [${[...chunk]}]`, NS);
