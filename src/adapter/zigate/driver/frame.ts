@@ -1,6 +1,4 @@
 /* istanbul ignore file */
-/* eslint-disable */
-
 import {logger} from '../../../utils/logger';
 
 const NS = 'zh:zigate:frame';
@@ -90,8 +88,8 @@ export default class ZiGateFrame {
 
             try {
                 if (this.readMsgCode() !== 0x8001) logger.debug(`${JSON.stringify(this)}`, NS);
-            } catch (e) {
-                logger.error(e, NS);
+            } catch (error) {
+                logger.error(error as Error, NS);
             }
 
             if (this.readChecksum() !== this.calcChecksum()) {

@@ -1,5 +1,3 @@
-/* istanbul ignore file */
-/* eslint-disable */
 import {ZiGateCommandCode, ZiGateMessageCode, ZiGateObjectPayload} from './constants';
 import ParameterType from './parameterType';
 
@@ -41,16 +39,19 @@ export interface ZiGateResponseMatcherRule {
     value?: string | number | ZiGateMessageCode;
 }
 
+/* istanbul ignore next */
 export function equal(expected: string | number | ZiGateMessageCode, received: string | number | ZiGateMessageCode): boolean {
     return expected === received;
 }
 
+/* istanbul ignore next */
 export function notEqual(expected: string | number | ZiGateMessageCode, received: string | number | ZiGateMessageCode): boolean {
     return expected !== received;
 }
 
 export type ZiGateResponseMatcher = ZiGateResponseMatcherRule[];
 
+/* istanbul ignore next */
 export const ZiGateCommand: {[key: string]: ZiGateCommandType} = {
     [ZiGateCommandCode.SetDeviceType]: {
         // 0x0023
