@@ -5281,7 +5281,11 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
 
         if (apsFrame.profileId === Zdo.ZDO_PROFILE_ID) {
             this.emit(EzspEvents.ZDO_RESPONSE, apsFrame, packetInfo.senderShortId, messageContents);
-        } else if (apsFrame.profileId === ZSpec.HA_PROFILE_ID || apsFrame.profileId === ZSpec.WILDCARD_PROFILE_ID || apsFrame.profileId === ZSpec.GP_PROFILE_ID) {
+        } else if (
+            apsFrame.profileId === ZSpec.HA_PROFILE_ID ||
+            apsFrame.profileId === ZSpec.WILDCARD_PROFILE_ID ||
+            apsFrame.profileId === ZSpec.GP_PROFILE_ID
+        ) {
             this.emit(EzspEvents.INCOMING_MESSAGE, type, apsFrame, packetInfo.lastHopLqi, packetInfo.senderShortId, messageContents);
         }
     }
