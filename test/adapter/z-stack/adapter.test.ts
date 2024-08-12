@@ -1421,6 +1421,7 @@ jest.mock('../../../src/adapter/z-stack/znp/znp', () => {
             },
             open: mockZnpOpen,
             request: mockZnpRequest,
+            requestWithReply: mockZnpRequest,
             waitFor: mockZnpWaitFor,
             close: mockZnpClose,
         };

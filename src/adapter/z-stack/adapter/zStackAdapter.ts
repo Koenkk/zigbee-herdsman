@@ -4,6 +4,7 @@ import debounce from 'debounce';
 import * as Models from '../../../models';
 import {Queue, Waitress, Wait} from '../../../utils';
 import {logger} from '../../../utils/logger';
+import {assertNotUndefined} from '../../../utils/utils';
 import {BroadcastAddress} from '../../../zspec/enums';
 import * as Zcl from '../../../zspec/zcl';
 import {Status as ZdoStatus} from '../../../zspec/zdo';
@@ -71,18 +72,20 @@ class DataConfirmError extends Error {
 class ZStackAdapter extends Adapter {
     private deviceAnnounceRouteDiscoveryDebouncers: Map<number, () => void>;
     private znp: Znp;
-    private adapterManager: ZnpAdapterManager;
+    private adapterManager: ZnpAdapterManager | undefined;
     private transactionID: number;
-    private version: {
-        product: number;
-        transportrev: number;
-        majorrel: number;
-        minorrel: number;
-        maintrel: number;
-        revision: string;
-    };
+    private version:
+        | {
+              product: number;
+              transportrev: number;
+              majorrel: number;
+              minorrel: number;
+              maintrel: number;
+              revision: string;
+          }
+        | undefined;
     private closing: boolean;
-    private queue: Queue;
+    private queue: Queue | undefined;
     private supportsLED?: boolean;
     private interpanLock: boolean;
     private interpanEndpointRegistered: boolean;
@@ -123,12 +126,13 @@ class ZStackAdapter extends Adapter {
 
         // Old firmware did not support version, assume it's Z-Stack 1.2 for now.
         try {
-            this.version = (await this.znp.request(Subsystem.SYS, 'version', {})).payload;
+            this.version = (await this.znp.requestWithReply(Subsystem.SYS, 'version', {})).payload;
         } catch {
             logger.debug(`Failed to get zStack version, assuming 1.2`, NS);
             this.version = {transportrev: 2, product: 0, majorrel: 2, minorrel: 0, maintrel: 0, revision: ''};
         }
 
+        assertNotUndefined(this.version);
         const concurrent =
             this.adapterOptions && this.adapterOptions.concurrent
                 ? this.adapterOptions.concurrent
@@ -178,13 +182,14 @@ class ZStackAdapter extends Adapter {
     }
 
     public async getCoordinator(): Promise<Coordinator> {
+        assertNotUndefined(this.queue);
         return this.queue.execute<Coordinator>(async () => {
             this.checkInterpanLock();
             const activeEpRsp = this.waitForAreqZdo('activeEpRsp');
             await this.znp.request(Subsystem.ZDO, 'activeEpReq', {dstaddr: 0, nwkaddrofinterest: 0}, activeEpRsp.ID);
             const activeEp = await activeEpRsp.start();
 
-            const deviceInfo = await this.znp.request(Subsystem.UTIL, 'getDeviceInfo', {});
+            const deviceInfo = await this.znp.requestWithReply(Subsystem.UTIL, 'getDeviceInfo', {});
 
             const endpoints = [];
             for (const endpoint of activeEp.payload.activeeplist) {
@@ -211,6 +216,7 @@ class ZStackAdapter extends Adapter {
     }
 
     public async permitJoin(seconds: number, networkAddress?: number): Promise<void> {
+        assertNotUndefined(this.queue);
         const addrmode = networkAddress === undefined ? 0x0f : 0x02;
         const dstaddr = networkAddress || 0xfffc;
         await this.queue.execute<void>(async () => {
@@ -222,6 +228,7 @@ class ZStackAdapter extends Adapter {
     }
 
     public async getCoordinatorVersion(): Promise<CoordinatorVersion> {
+        assertNotUndefined(this.version);
         return {type: ZnpVersion[this.version.product], meta: this.version};
     }
 
@@ -234,6 +241,7 @@ class ZStackAdapter extends Adapter {
     }
 
     private async setLED(action: 'disable' | 'on' | 'off'): Promise<void> {
+        assertNotUndefined(this.version);
         if (this.supportsLED == undefined) {
             // Only zStack3x0 with 20210430 and greater support LED
             const zStack3x0 = this.version.product === ZnpVersion.zStack3x0;
@@ -278,10 +286,12 @@ class ZStackAdapter extends Adapter {
     }
 
     private supportsAssocRemove(): boolean {
+        assertNotUndefined(this.version);
         return this.version.product === ZnpVersion.zStack3x0 && parseInt(this.version.revision) >= 20200805;
     }
 
     private supportsAssocAdd(): boolean {
+        assertNotUndefined(this.version);
         return this.version.product === ZnpVersion.zStack3x0 && parseInt(this.version.revision) >= 20201026;
     }
 
@@ -296,6 +306,7 @@ class ZStackAdapter extends Adapter {
     }
 
     public async nodeDescriptor(networkAddress: number): Promise<NodeDescriptor> {
+        assertNotUndefined(this.queue);
         return this.queue.execute<NodeDescriptor>(async () => {
             this.checkInterpanLock();
             try {
@@ -333,6 +344,7 @@ class ZStackAdapter extends Adapter {
     }
 
     public async activeEndpoints(networkAddress: number): Promise<ActiveEndpoints> {
+        assertNotUndefined(this.queue);
         return this.queue.execute<ActiveEndpoints>(async () => {
             this.checkInterpanLock();
             const response = this.waitForAreqZdo('activeEpRsp', {nwkaddr: networkAddress});
@@ -344,6 +356,7 @@ class ZStackAdapter extends Adapter {
     }
 
     public async simpleDescriptor(networkAddress: number, endpointID: number): Promise<SimpleDescriptor> {
+        assertNotUndefined(this.queue);
         return this.queue.execute<SimpleDescriptor>(async () => {
             this.checkInterpanLock();
             const responsePayload = {nwkaddr: networkAddress, endpoint: endpointID};
@@ -371,6 +384,7 @@ class ZStackAdapter extends Adapter {
         disableRecovery: boolean,
         sourceEndpoint?: number,
     ): Promise<Events.ZclPayload | void> {
+        assertNotUndefined(this.queue);
         return this.queue.execute<Events.ZclPayload | void>(async () => {
             this.checkInterpanLock();
             return this.sendZclFrameToEndpointInternal(
@@ -408,6 +422,7 @@ class ZStackAdapter extends Adapter {
         assocRemove: boolean,
         assocRestore?: {ieeeadr: string; nwkaddr: number; noderelation: number},
     ): Promise<Events.ZclPayload | void> {
+        assertNotUndefined(this.queue);
         logger.debug(
             `sendZclFrameToEndpointInternal ${ieeeAddr}:${networkAddress}/${endpoint} ` +
                 `(${responseAttempt},${dataRequestAttempt},${this.queue.count()})`,
@@ -510,6 +525,7 @@ class ZStackAdapter extends Adapter {
                     assocRestore,
                 );
             } else {
+                assertNotUndefined(ieeeAddr);
                 let doAssocRemove = false;
                 if (
                     !assocRemove &&
@@ -517,7 +533,10 @@ class ZStackAdapter extends Adapter {
                     dataRequestAttempt >= 1 &&
                     this.supportsAssocRemove()
                 ) {
-                    const match = await this.znp.request(Subsystem.UTIL, 'assocGetWithAddress', {extaddr: ieeeAddr, nwkaddr: networkAddress});
+                    const match = await this.znp.requestWithReply(Subsystem.UTIL, 'assocGetWithAddress', {
+                        extaddr: ieeeAddr,
+                        nwkaddr: networkAddress,
+                    });
 
                     if (match.payload.nwkaddr !== 0xfffe && match.payload.noderelation !== 255) {
                         doAssocRemove = true;
@@ -594,7 +613,10 @@ class ZStackAdapter extends Adapter {
                     // No response could be because the radio of the end device is turned off:
                     // Sometimes the coordinator does not properly set the PENDING flag.
                     // Try to rewrite the device entry in the association table, this fixes it sometimes.
-                    const match = await this.znp.request(Subsystem.UTIL, 'assocGetWithAddress', {extaddr: ieeeAddr, nwkaddr: networkAddress});
+                    const match = await this.znp.requestWithReply(Subsystem.UTIL, 'assocGetWithAddress', {
+                        extaddr: ieeeAddr,
+                        nwkaddr: networkAddress,
+                    });
                     logger.debug(
                         `Response timeout recovery: Node relation ${match.payload.noderelation} (${ieeeAddr} / ${match.payload.nwkaddr})`,
                         NS,
@@ -639,6 +661,7 @@ class ZStackAdapter extends Adapter {
     }
 
     public async sendZclFrameToGroup(groupID: number, zclFrame: Zcl.Frame, sourceEndpoint?: number): Promise<void> {
+        assertNotUndefined(this.queue);
         return this.queue.execute<void>(async () => {
             this.checkInterpanLock();
             await this.dataRequestExtended(
@@ -664,6 +687,7 @@ class ZStackAdapter extends Adapter {
     }
 
     public async sendZclFrameToAll(endpoint: number, zclFrame: Zcl.Frame, sourceEndpoint: number, destination: BroadcastAddress): Promise<void> {
+        assertNotUndefined(this.queue);
         return this.queue.execute<void>(async () => {
             this.checkInterpanLock();
             await this.dataRequestExtended(
@@ -690,6 +714,7 @@ class ZStackAdapter extends Adapter {
     }
 
     public async lqi(networkAddress: number): Promise<LQI> {
+        assertNotUndefined(this.queue);
         return this.queue.execute<LQI>(async (): Promise<LQI> => {
             this.checkInterpanLock();
             const neighbors: LQINeighbor[] = [];
@@ -731,6 +756,7 @@ class ZStackAdapter extends Adapter {
     }
 
     public async routingTable(networkAddress: number): Promise<RoutingTable> {
+        assertNotUndefined(this.queue);
         return this.queue.execute<RoutingTable>(async (): Promise<RoutingTable> => {
             this.checkInterpanLock();
             const table: RoutingTableEntry[] = [];
@@ -770,6 +796,7 @@ class ZStackAdapter extends Adapter {
     }
 
     public async addInstallCode(ieeeAddress: string, key: Buffer): Promise<void> {
+        assertNotUndefined(this.version);
         assert(this.version.product !== ZnpVersion.zStack12, 'Install code is not supported for ZStack 1.2 adapter');
         const payload = {installCodeFormat: key.length === 18 ? 1 : 2, ieeeaddr: ieeeAddress, installCode: key};
         await this.znp.request(Subsystem.APP_CNF, 'bdbAddInstallCode', payload);
@@ -827,6 +854,7 @@ class ZStackAdapter extends Adapter {
         targetType: 'endpoint' | 'group',
         destinationEndpoint?: number,
     ): Promise<void> {
+        assertNotUndefined(this.queue);
         return this.queue.execute<void>(async () => {
             this.checkInterpanLock();
             const response = this.waitForAreqZdo(`${bindType}Rsp`, {srcaddr: destinationNetworkAddress});
@@ -847,6 +875,7 @@ class ZStackAdapter extends Adapter {
     }
 
     public removeDevice(networkAddress: number, ieeeAddr: string): Promise<void> {
+        assertNotUndefined(this.queue);
         return this.queue.execute<void>(async () => {
             this.checkInterpanLock();
             const response = this.waitForAreqZdo('mgmtLeaveRsp', {srcaddr: networkAddress});
@@ -898,6 +927,7 @@ class ZStackAdapter extends Adapter {
                         // to rediscover the route every time.
                         const debouncer = debounce(
                             () => {
+                                assertNotUndefined(this.queue);
                                 // eslint-disable-next-line @typescript-eslint/no-floating-promises
                                 this.queue.execute<void>(async () => {
                                     /* istanbul ignore next */
@@ -910,7 +940,9 @@ class ZStackAdapter extends Adapter {
                         this.deviceAnnounceRouteDiscoveryDebouncers.set(payload.networkAddress, debouncer);
                     }
 
-                    this.deviceAnnounceRouteDiscoveryDebouncers.get(payload.networkAddress)();
+                    const debouncer = this.deviceAnnounceRouteDiscoveryDebouncers.get(payload.networkAddress);
+                    assertNotUndefined(debouncer);
+                    debouncer();
                 }
 
                 this.emit(Events.Events.deviceAnnounce, payload);
@@ -978,7 +1010,7 @@ class ZStackAdapter extends Adapter {
     }
 
     public async getNetworkParameters(): Promise<NetworkParameters> {
-        const result = await this.znp.request(Subsystem.ZDO, 'extNwkInfo', {});
+        const result = await this.znp.requestWithReply(Subsystem.ZDO, 'extNwkInfo', {});
         return {
             panID: result.payload.panid,
             extendedPanID: result.payload.extendedpanid,
@@ -991,10 +1023,12 @@ class ZStackAdapter extends Adapter {
     }
 
     public async backup(ieeeAddressesInDatabase: string[]): Promise<Models.Backup> {
+        assertNotUndefined(this.adapterManager);
         return this.adapterManager.backup.createBackup(ieeeAddressesInDatabase);
     }
 
     public async setChannelInterPAN(channel: number): Promise<void> {
+        assertNotUndefined(this.queue);
         return this.queue.execute<void>(async () => {
             this.interpanLock = true;
             await this.znp.request(Subsystem.AF, 'interPanCtl', {cmd: 1, data: [channel]});
@@ -1008,6 +1042,7 @@ class ZStackAdapter extends Adapter {
     }
 
     public async sendZclFrameInterPANToIeeeAddr(zclFrame: Zcl.Frame, ieeeAddr: string): Promise<void> {
+        assertNotUndefined(this.queue);
         return this.queue.execute<void>(async () => {
             await this.dataRequestExtended(
                 AddressMode.ADDR_64BIT,
@@ -1025,6 +1060,7 @@ class ZStackAdapter extends Adapter {
     }
 
     public async sendZclFrameInterPANBroadcast(zclFrame: Zcl.Frame, timeout: number): Promise<Events.ZclPayload> {
+        assertNotUndefined(this.queue);
         return this.queue.execute<Events.ZclPayload>(async () => {
             const command = zclFrame.command;
             if (command.response == undefined) {
@@ -1065,6 +1101,7 @@ class ZStackAdapter extends Adapter {
     }
 
     public async restoreChannelInterPAN(): Promise<void> {
+        assertNotUndefined(this.queue);
         return this.queue.execute<void>(async () => {
             await this.znp.request(Subsystem.AF, 'interPanCtl', {cmd: 0, data: []});
             // Give adapter some time to restore, otherwise stuff crashes
@@ -1074,6 +1111,7 @@ class ZStackAdapter extends Adapter {
     }
 
     public async changeChannel(newChannel: number): Promise<void> {
+        assertNotUndefined(this.queue);
         return this.queue.execute<void>(async () => {
             this.checkInterpanLock();
 
@@ -1093,6 +1131,7 @@ class ZStackAdapter extends Adapter {
     }
 
     public async setTransmitPower(value: number): Promise<void> {
+        assertNotUndefined(this.queue);
         return this.queue.execute<void>(async () => {
             await this.znp.request(Subsystem.SYS, 'stackTune', {operation: 0, value});
         });

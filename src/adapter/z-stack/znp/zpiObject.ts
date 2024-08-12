@@ -1,3 +1,4 @@
+import {assertNotUndefined} from '../../../utils/utils';
 import {Frame as UnpiFrame} from '../unpi';
 import {Subsystem, Type, MaxDataSize} from '../unpi/constants';
 import BuffaloZnp from './buffaloZnp';
@@ -46,10 +47,7 @@ class ZpiObject {
         }
 
         const cmd = Definition[subsystem].find((c: MtCmd): boolean => c.name === command);
-
-        if (!cmd) {
-            throw new Error(`Command '${command}' from subsystem '${subsystem}' not found`);
-        }
+        assertNotUndefined(cmd?.request, `Command request '${command}' from subsystem '${subsystem}' not found`);
 
         return new ZpiObject(cmd.type, subsystem, command, cmd.ID, payload, cmd.request);
     }

@@ -2,6 +2,7 @@
 import * as Models from '../../../models';
 import {Queue, Waitress, Wait, RealpathSync} from '../../../utils';
 import {logger} from '../../../utils/logger';
+import {assertTrue} from '../../../utils/utils';
 import {BroadcastAddress} from '../../../zspec/enums';
 import * as Zcl from '../../../zspec/zcl';
 import Adapter from '../../adapter';
@@ -676,11 +677,8 @@ class EZSPAdapter extends Adapter {
     }
 
     public async backup(): Promise<Models.Backup> {
-        if (this.driver.ezsp.isInitialized()) {
-            return this.driver.backupMan.createBackup();
-        }
-
-        // TODO: this cannot be undefined
+        assertTrue(this.driver.ezsp.isInitialized(), 'Cannot make backup when ezsp is not initialized');
+        return this.driver.backupMan.createBackup();
     }
 
     public async restoreChannelInterPAN(): Promise<void> {

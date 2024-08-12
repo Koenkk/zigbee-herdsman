@@ -3,6 +3,7 @@ import Device from '../../../controller/model/device';
 import * as Models from '../../../models';
 import {Queue, Waitress} from '../../../utils';
 import {logger} from '../../../utils/logger';
+import {assertNotUndefined} from '../../../utils/utils';
 import {BroadcastAddress} from '../../../zspec/enums';
 import * as Zcl from '../../../zspec/zcl';
 import Adapter from '../../adapter';
@@ -999,8 +1000,9 @@ class DeconzAdapter extends Adapter {
         let destArray: number[];
 
         if (type === 'endpoint') {
+            assertNotUndefined(destinationEndpoint, 'Destination endpoint must be defined when `type === endpoint`');
             destArray = this.driver.macAddrStringToArray(destinationAddressOrGroup as string);
-            destArray = destArray.concat([destinationEndpoint]); // TODO: what's the proper logic here?
+            destArray = destArray.concat([destinationEndpoint]);
         } else {
             destArray = [destinationAddressOrGroup as number & 0xff, ((destinationAddressOrGroup as number) >> 8) & 0xff];
         }
@@ -1058,8 +1060,9 @@ class DeconzAdapter extends Adapter {
         let destArray: number[];
 
         if (type === 'endpoint') {
+            assertNotUndefined(destinationEndpoint, 'Destination endpoint must be defined when `type === endpoint`');
             destArray = this.driver.macAddrStringToArray(destinationAddressOrGroup as string);
-            destArray = destArray.concat([destinationEndpoint]); // TODO: what the proper logic here?
+            destArray = destArray.concat([destinationEndpoint]);
         } else {
             destArray = [destinationAddressOrGroup as number & 0xff, ((destinationAddressOrGroup as number) >> 8) & 0xff];
         }
@@ -1272,7 +1275,7 @@ class DeconzAdapter extends Adapter {
     }
 
     private checkReceivedDataPayload(resp: ReceivedDataResponse | null): void {
-        let srcAddr = null;
+        let srcAddr: number | undefined = undefined;
         let header: Zcl.Header | undefined;
         const payBuf = resp != null ? Buffer.from(resp.asduPayload!) : undefined;
 
@@ -1287,11 +1290,10 @@ class DeconzAdapter extends Adapter {
                 if (resp.srcAddr64 != null) {
                     logger.debug(`Try to find network address of ${resp.srcAddr64}`, NS);
                     // Note: Device expects addresses with a 0x prefix...
-                    const device = Device.byIeeeAddr('0x' + resp.srcAddr64, false);
-                    if (device != undefined) {
-                        srcAddr = device.networkAddress;
-                    }
+                    srcAddr = Device.byIeeeAddr('0x' + resp.srcAddr64, false)?.networkAddress;
                 }
+
+                assertNotUndefined(srcAddr, 'Failed to find srcAddr of message');
                 // apperantly some functions furhter up in the protocol stack expect this to be set.
                 // so let's make sure they get the network address
                 resp.srcAddr16 = srcAddr; // TODO: can't be undefined

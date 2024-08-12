@@ -64,8 +64,8 @@ export class AdapterBackup {
         const version: ZnpVersion = await this.getAdapterVersion();
 
         /* get adapter ieee address */
-        const ieeeAddressResponse = await this.znp.request(Subsystem.SYS, 'getExtAddr', {});
-        if (!ieeeAddressResponse || !ieeeAddressResponse.payload.extaddress || !ieeeAddressResponse.payload.extaddress.startsWith('0x')) {
+        const ieeeAddressResponse = await this.znp.requestWithReply(Subsystem.SYS, 'getExtAddr', {});
+        if (!ieeeAddressResponse.payload.extaddress || !ieeeAddressResponse.payload.extaddress.startsWith('0x')) {
             throw new Error('Failed to read adapter IEEE address');
         }
         const ieeeAddress = Buffer.from(ieeeAddressResponse.payload.extaddress.split('0x')[1], 'hex');
@@ -435,7 +435,7 @@ export class AdapterBackup {
      * and restore procedures are not supported.*
      */
     private async getAdapterVersion(): Promise<ZnpVersion> {
-        const versionResponse = await this.znp.request(Subsystem.SYS, 'version', {});
+        const versionResponse = await this.znp.requestWithReply(Subsystem.SYS, 'version', {});
         const version: ZnpVersion = versionResponse.payload.product;
         return version;
     }

@@ -270,7 +270,7 @@ export class ZnpAdapterManager {
      * Internal method to perform regular adapter startup in coordinator mode.
      */
     private async beginStartup(): Promise<void> {
-        const deviceInfo = await this.znp.request(Subsystem.UTIL, 'getDeviceInfo', {});
+        const deviceInfo = await this.znp.requestWithReply(Subsystem.UTIL, 'getDeviceInfo', {});
         if (deviceInfo.payload.devicestate !== DevStates.ZB_COORD) {
             logger.debug('starting adapter as coordinator', NS);
             const started = this.znp.waitFor(UnpiConstants.Type.AREQ, Subsystem.ZDO, 'stateChangeInd', {state: 9}, 60000);
@@ -385,7 +385,7 @@ export class ZnpAdapterManager {
         }
 
         /* validate provisioned PAN ID */
-        const extNwkInfo = await this.znp.request(Subsystem.ZDO, 'extNwkInfo', {});
+        const extNwkInfo = await this.znp.requestWithReply(Subsystem.ZDO, 'extNwkInfo', {});
         if (extNwkInfo.payload.panid !== nwkOptions.panId && failOnCollision) {
             throw new Error(
                 `network commissioning failed - panId collision detected (expected=${nwkOptions.panId}, actual=${extNwkInfo.payload.panid})`,
@@ -469,7 +469,7 @@ export class ZnpAdapterManager {
      * @param group Target group index.
      */
     private async addToGroup(endpoint: number, group: number): Promise<void> {
-        const result = await this.znp.request(5, 'extFindGroup', {endpoint, groupid: group}, undefined, undefined, [
+        const result = await this.znp.requestWithReply(5, 'extFindGroup', {endpoint, groupid: group}, undefined, undefined, [
             ZnpCommandStatus.SUCCESS,
             ZnpCommandStatus.FAILURE,
         ]);
@@ -518,7 +518,7 @@ export class ZnpAdapterManager {
             networkKeyDistribute: Boolean(options.networkKeyDistribute),
         };
         if (parsed.extendedPanId.equals(Buffer.alloc(8, 0xdd))) {
-            const adapterIeeeAddressResponse = await this.znp.request(Subsystem.SYS, 'getExtAddr', {});
+            const adapterIeeeAddressResponse = await this.znp.requestWithReply(Subsystem.SYS, 'getExtAddr', {});
             parsed.extendedPanId = Buffer.from(adapterIeeeAddressResponse.payload.extaddress.split('0x')[1], 'hex');
             parsed.hasDefaultExtendedPanId = true;
         }

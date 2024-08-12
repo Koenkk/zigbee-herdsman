@@ -257,6 +257,21 @@ class Znp extends events.EventEmitter {
         this.emit('close');
     }
 
+    public async requestWithReply(
+        subsystem: Subsystem,
+        command: string,
+        payload: ZpiObjectPayload,
+        waiterID?: number,
+        timeout?: number,
+        expectedStatuses: Constants.COMMON.ZnpCommandStatus[] = [ZnpCommandStatus.SUCCESS],
+    ): Promise<ZpiObject> {
+        const reply = await this.request(subsystem, command, payload, waiterID, timeout, expectedStatuses);
+        if (reply === undefined) {
+            throw new Error(`Command ${command} has no reply`);
+        }
+        return reply;
+    }
+
     public request(
         subsystem: Subsystem,
         command: string,

@@ -671,7 +671,7 @@ describe('ZNP', () => {
             error = e;
         }
 
-        expect(error).toEqual(new Error("Command 'nonExisting' from subsystem '6' not found"));
+        expect(error).toEqual(new Error("Command request 'nonExisting' from subsystem '6' not found"));
     });
 
     it('znp request timeout', async () => {
