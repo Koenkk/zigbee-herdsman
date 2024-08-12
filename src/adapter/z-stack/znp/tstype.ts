@@ -22,7 +22,7 @@ interface MtCmdZdoReq extends MtCmd {
 }
 
 interface MtCmdZdoResp extends Omit<MtCmd, 'request'> {
-    zdo: {cluterId: ZdoClusterId; convert: (buffer: Buffer) => Buffer};
+    zdo: {cluterId: ZdoClusterId; convert?: (buffer: Buffer) => Buffer};
     type: CommandType.AREQ;
 }
 
