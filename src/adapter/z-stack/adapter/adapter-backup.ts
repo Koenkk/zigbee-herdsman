@@ -1,4 +1,5 @@
 /* eslint-disable max-len */
+import assert from 'assert';
 import {fs} from 'mz';
 
 import * as Models from '../../../models';
@@ -81,7 +82,9 @@ export class AdapterBackup {
         /* get adapter active key information */
         let activeKeyInfo;
         if (version === ZnpVersion.zStack12) {
-            const key = Structs.nwkKey((await this.znp.request(Subsystem.SAPI, 'readConfiguration', {configid: NvItemsIds.PRECFGKEY})).payload.value);
+            const key = Structs.nwkKey(
+                (await this.znp.requestWithReply(Subsystem.SAPI, 'readConfiguration', {configid: NvItemsIds.PRECFGKEY})).payload.value,
+            );
             activeKeyInfo = Structs.nwkKeyDescriptor();
             activeKeyInfo.key = key.key;
         } else {
@@ -224,6 +227,7 @@ export class AdapterBackup {
              * Below we don't remove any devices from the backup which have a linkkey and are still in the database (=ieeeAddressesInDatabase)
              */
             const oldBackup = await this.getStoredBackup();
+            assert(oldBackup, "Old backup doesn't exist");
             const missing = oldBackup.devices.filter(
                 (d) =>
                     d.linkKey &&

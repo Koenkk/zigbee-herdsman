@@ -35,6 +35,7 @@ export class ZnpAdapterManager {
 
     private znp: Znp;
     private options: ZStackModels.StartupOptions;
+    // @ts-expect-error initialized in `start()`
     private nwkOptions: Models.NetworkOptions;
 
     public constructor(znp: Znp, options: ZStackModels.StartupOptions) {
@@ -113,7 +114,9 @@ export class ZnpAdapterManager {
         const nib = await this.nv.readItem(NvItemsIds.NIB, 0, Structs.nib);
         const preconfiguredKey =
             this.options.version === ZnpVersion.zStack12
-                ? Structs.nwkKey((await this.znp.request(Subsystem.SAPI, 'readConfiguration', {configid: NvItemsIds.PRECFGKEY})).payload.value)
+                ? Structs.nwkKey(
+                      (await this.znp.requestWithReply(Subsystem.SAPI, 'readConfiguration', {configid: NvItemsIds.PRECFGKEY})).payload.value,
+                  )
                 : await this.nv.readItem(NvItemsIds.PRECFGKEY, 0, Structs.nwkKey);
         let activeKeyInfo = await this.nv.readItem(NvItemsIds.NWK_ACTIVE_KEY_INFO, 0, Structs.nwkKeyDescriptor);
         let alternateKeyInfo = await this.nv.readItem(NvItemsIds.NWK_ALTERN_KEY_INFO, 0, Structs.nwkKeyDescriptor);
@@ -374,7 +377,7 @@ export class ZnpAdapterManager {
         /* wait for NIB to settle (takes different amount of time of different platforms */
         logger.debug('waiting for NIB to settle', NS);
         let reads = 0;
-        let nib: ReturnType<typeof Structs.nib> = null;
+        let nib: ReturnType<typeof Structs.nib>;
         do {
             await Wait(3000);
             nib = await this.nv.readItem(NvItemsIds.NIB, 0, Structs.nib);
