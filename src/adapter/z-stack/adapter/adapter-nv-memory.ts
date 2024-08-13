@@ -1,4 +1,6 @@
 /* eslint-disable max-len */
+import assert from 'assert';
+
 import {NvItemsIds, NvSystemIds, ZnpCommandStatus} from '../constants/common';
 import * as Structs from '../structs';
 import {BuiltTable} from '../structs';
@@ -53,11 +55,11 @@ export class AdapterNvMemory {
         id: NvItemsIds,
         offset = 0,
         useStruct?: Structs.MemoryObjectFactory<T>,
-    ): Promise<Buffer | T> {
+    ): Promise<Buffer | T | null> {
         if (useStruct) {
             this.checkMemoryAlignmentSetup();
         }
-        const lengthResponse = await this.retry(() => this.znp.request(Subsystem.SYS, 'osalNvLength', {id}));
+        const lengthResponse = await this.retry(() => this.znp.requestWithReply(Subsystem.SYS, 'osalNvLength', {id}));
         if (!lengthResponse?.payload?.length || lengthResponse?.payload?.length === 0) {
             return null;
         }
@@ -95,7 +97,7 @@ export class AdapterNvMemory {
     public async writeItem(id: NvItemsIds, data: Buffer | Structs.SerializableMemoryObject, offset = 0, autoInit = true): Promise<void> {
         this.checkMemoryAlignmentSetup();
         const buffer = Buffer.isBuffer(data) ? data : data.serialize(this.memoryAlignment);
-        const lengthResponse = await this.retry(() => this.znp.request(Subsystem.SYS, 'osalNvLength', {id}));
+        const lengthResponse = await this.retry(() => this.znp.requestWithReply(Subsystem.SYS, 'osalNvLength', {id}));
         const exists = lengthResponse.payload.length && lengthResponse.payload.length > 0;
         /* istanbul ignore next */
         if (!exists) {
@@ -104,7 +106,7 @@ export class AdapterNvMemory {
                 throw new Error(`Cannot write NV memory item which does not exist (id=${id})`);
             }
             const initResponse = await this.retry(() =>
-                this.znp.request(
+                this.znp.requestWithReply(
                     Subsystem.SYS,
                     'osalNvItemInit',
                     {id, len: buffer.length, initlen: initLength, initvalue: buffer.slice(0, initLength)},
@@ -126,7 +128,7 @@ export class AdapterNvMemory {
             const dataOffset = buffer.length - remaining;
             const writeData = buffer.slice(dataOffset, dataOffset + writeLength);
             const writeResponse = await this.retry(() =>
-                this.znp.request(Subsystem.SYS, 'osalNvWriteExt', {id, offset: dataOffset, len: writeLength, value: writeData}),
+                this.znp.requestWithReply(Subsystem.SYS, 'osalNvWriteExt', {id, offset: dataOffset, len: writeLength, value: writeData}),
             );
             /* istanbul ignore next */
             if (writeResponse.payload.status !== 0) {
@@ -158,11 +160,13 @@ export class AdapterNvMemory {
      */
     public async deleteItem(id: NvItemsIds): Promise<void> {
         this.checkMemoryAlignmentSetup();
-        const lengthResponse = await this.retry(() => this.znp.request(Subsystem.SYS, 'osalNvLength', {id}));
+        const lengthResponse = await this.retry(() => this.znp.requestWithReply(Subsystem.SYS, 'osalNvLength', {id}));
         const exists = lengthResponse.payload.length && lengthResponse.payload.length > 0;
         /* istanbul ignore next */
         if (exists) {
-            const deleteResponse = await this.retry(() => this.znp.request(Subsystem.SYS, 'osalNvDelete', {id, len: lengthResponse.payload.length}));
+            const deleteResponse = await this.retry(() =>
+                this.znp.requestWithReply(Subsystem.SYS, 'osalNvDelete', {id, len: lengthResponse.payload.length}),
+            );
             if (!deleteResponse || ![ZnpCommandStatus.SUCCESS, ZnpCommandStatus.NV_ITEM_INITIALIZED].includes(deleteResponse.payload.status)) {
                 /* istanbul ignore next */
                 throw new Error(`Received non-success status while deleting NV (id=${id}, status=${deleteResponse.payload.status})`);
@@ -193,13 +197,13 @@ export class AdapterNvMemory {
         subId: number,
         offset?: number,
         useStruct?: Structs.MemoryObjectFactory<T>,
-    ): Promise<Buffer | T> {
+    ): Promise<Buffer | T | null> {
         this.checkMemoryAlignmentSetup();
-        const lengthResponse = await this.retry(() => this.znp.request(Subsystem.SYS, 'nvLength', {sysid: sysId, itemid: id, subid: subId}));
+        const lengthResponse = await this.retry(() => this.znp.requestWithReply(Subsystem.SYS, 'nvLength', {sysid: sysId, itemid: id, subid: subId}));
         const exists = lengthResponse.payload.len && lengthResponse.payload.len > 0;
         if (exists) {
             const readResponse = await this.retry(() =>
-                this.znp.request(Subsystem.SYS, 'nvRead', {
+                this.znp.requestWithReply(Subsystem.SYS, 'nvRead', {
                     sysid: sysId,
                     itemid: id,
                     subid: subId,
@@ -243,7 +247,7 @@ export class AdapterNvMemory {
         autoInit = true,
     ): Promise<void> {
         this.checkMemoryAlignmentSetup();
-        const lengthResponse = await this.retry(() => this.znp.request(Subsystem.SYS, 'nvLength', {sysid: sysId, itemid: id, subid: subId}));
+        const lengthResponse = await this.retry(() => this.znp.requestWithReply(Subsystem.SYS, 'nvLength', {sysid: sysId, itemid: id, subid: subId}));
         const exists = lengthResponse.payload.len && lengthResponse.payload.len > 0;
         /* istanbul ignore if */
         if (!exists) {
@@ -259,7 +263,14 @@ export class AdapterNvMemory {
             }
         }
         const writeResponse = await this.retry(() =>
-            this.znp.request(Subsystem.SYS, 'nvWrite', {sysid: sysId, itemid: id, subid: subId, offset: offset || 0, len: data.length, value: data}),
+            this.znp.requestWithReply(Subsystem.SYS, 'nvWrite', {
+                sysid: sysId,
+                itemid: id,
+                subid: subId,
+                offset: offset || 0,
+                len: data.length,
+                value: data,
+            }),
         );
         /* istanbul ignore next */
         if (writeResponse.payload.status !== 0) {
@@ -349,6 +360,7 @@ export class AdapterNvMemory {
         } else {
             /* istanbul ignore next */
             do {
+                assert(sysId !== undefined);
                 rawEntry = await this.readExtendedTableEntry(sysId, id, entryOffset++);
                 if (rawEntry) {
                     rawEntries.push(rawEntry);
@@ -395,6 +407,7 @@ export class AdapterNvMemory {
                 await this.writeItem(id + index, entry.serialize(this.memoryAlignment));
             }
         } else {
+            assert(sysId !== undefined);
             for (const [index, entry] of table.entries.entries()) {
                 await this.writeExtendedTableEntry(sysId, id, index, entry.serialize(this.memoryAlignment));
             }
@@ -409,7 +422,9 @@ export class AdapterNvMemory {
      * @param fn Function to retry.
      * @param retries Maximum number of retries.
      */
+    // @ts-expect-error always returns something or throws an error as retries >= 1
     private async retry<R>(fn: () => Promise<R>, retries = 3): Promise<R> {
+        assert(retries >= 1);
         let i = 0;
         while (i < retries) {
             try {

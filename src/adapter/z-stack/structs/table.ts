@@ -1,4 +1,6 @@
 /* eslint-disable max-len */
+import assert from 'assert';
+
 import {SerializableMemoryObject} from './serializable-memory-object';
 import {BuiltStruct, StructFactorySignature, StructMemoryAlignment} from './struct';
 
@@ -17,11 +19,14 @@ export class Table<R extends BuiltStruct> implements SerializableMemoryObject {
         return new Table();
     }
 
+    // @ts-expect-error initialized in `build()`
     private data: R[];
+    // @ts-expect-error initialized in `struct()`
     private emptyEntry: R;
     private hasInlineLengthHeader = false;
+    // @ts-expect-error initialized in `struct()`
     private entryStructFactory: StructFactorySignature<R>;
-    private entryOccupancyFunction: (entry: R) => boolean = null;
+    private entryOccupancyFunction: ((entry: R) => boolean) | undefined;
 
     private constructor() {}
 
@@ -43,22 +48,18 @@ export class Table<R extends BuiltStruct> implements SerializableMemoryObject {
      * Returns all used entries.
      */
     public get used(): R[] {
-        /* istanbul ignore next */
-        if (!this.entryOccupancyFunction) {
-            throw new Error('Table usage cannot be determined without occupancy function when header is not present.');
-        }
-        return this.entries.filter((e) => this.entryOccupancyFunction(e));
+        assert(this.entryOccupancyFunction, 'Table usage cannot be determined without occupancy function when header is not present.');
+        const fun = this.entryOccupancyFunction;
+        return this.entries.filter((e) => fun(e));
     }
 
     /**
      * Returns all unused entries.
      */
     public get free(): R[] {
-        /* istanbul ignore next */
-        if (!this.entryOccupancyFunction) {
-            throw new Error('Table usage cannot be determined without occupancy function when header is not present.');
-        }
-        return this.entries.filter((e) => !this.entryOccupancyFunction(e));
+        assert(this.entryOccupancyFunction, 'Table usage cannot be determined without occupancy function when header is not present.');
+        const fun = this.entryOccupancyFunction;
+        return this.entries.filter((e) => !fun(e));
     }
 
     /**

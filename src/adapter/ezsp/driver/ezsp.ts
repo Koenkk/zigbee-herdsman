@@ -14,7 +14,6 @@ import {
     ZDORESPONSES,
     ZDORESPONSE_NAME_BY_ID,
 } from './commands';
-/* eslint-disable @typescript-eslint/explicit-module-boundary-types */
 import * as t from './types';
 import {
     EmberStatus,

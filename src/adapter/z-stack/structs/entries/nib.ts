@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
 import {Struct} from '../struct';
-/* eslint-disable @typescript-eslint/explicit-module-boundary-types */
 import {nwkKeyDescriptor} from './nwk-key-descriptor';
 
 /**
