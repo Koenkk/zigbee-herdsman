@@ -174,7 +174,7 @@ export class AdapterBackup {
                                 /* istanbul ignore next */
                                 return null;
                             }
-                            let linkKeyInfo: {key: Buffer; rxCounter: number; txCounter: number} = null;
+                            let linkKeyInfo: {key: Buffer; rxCounter: number; txCounter: number} | undefined;
                             const sme = securityManagerTable.used.find((e) => e.ami === ami);
                             if (sme) {
                                 const apsKeyDataIndex =
@@ -190,6 +190,7 @@ export class AdapterBackup {
                             } else {
                                 const tclkTableEntry = tclkTable.used.find((e) => e.extAddr.equals(ame.extAddr));
                                 if (tclkTableEntry) {
+                                    assert(tclkSeed, 'Cannot be undefined because this is only called for ZStack 3');
                                     const rotatedSeed = Buffer.concat([
                                         tclkSeed.key.subarray(tclkTableEntry.SeedShift_IcIndex),
                                         tclkSeed.key.subarray(0, tclkTableEntry.SeedShift_IcIndex),
@@ -214,7 +215,7 @@ export class AdapterBackup {
                                 linkKey: !linkKeyInfo ? undefined : linkKeyInfo,
                             };
                         })
-                        .filter((e) => e)) ||
+                        .filter((e) => e != null)) ||
                 [],
         };
 
@@ -308,6 +309,7 @@ export class AdapterBackup {
         /* populate device & security tables and write them */
         for (const device of backup.devices) {
             const ame = addressManagerTable.getNextFree();
+            assert(device.networkAddress, 'Device networkAddress can never be `null` for ZStack backups'); // TODO, check with Nerivec
             ame.nwkAddr = device.networkAddress;
             ame.extAddr = device.ieeeAddress;
             ame.user = device.isDirectChild ? AddressManagerUser.Assoc : AddressManagerUser.Default;
@@ -371,11 +373,13 @@ export class AdapterBackup {
                     if (!sme) {
                         throw new Error(`target adapter security manager table size insufficient (size=${securityManagerTable.capacity})`);
                     }
-                    sme.ami = addressManagerTable.indexOf(ame);
-                    sme.keyNvId =
-                        version === ZnpVersion.zStack3x0
-                            ? apsLinkKeyDataTable.indexOf(apsKeyDataEntry)
-                            : NvItemsIds.APS_LINK_KEY_DATA_START + apsLinkKeyDataTable.indexOf(apsKeyDataEntry);
+                    const ameIndex = addressManagerTable.indexOf(ame);
+                    assert(ameIndex != null);
+                    sme.ami = ameIndex;
+
+                    const apsKeyDataEntryIndex = apsLinkKeyDataTable.indexOf(apsKeyDataEntry);
+                    assert(apsKeyDataEntryIndex != null);
+                    sme.keyNvId = version === ZnpVersion.zStack3x0 ? apsKeyDataEntryIndex : NvItemsIds.APS_LINK_KEY_DATA_START + apsKeyDataEntryIndex;
                     sme.authenticationOption = SecurityManagerAuthenticationOption.AuthenticatedCBCK;
 
                     linkKeyProcessed = true;

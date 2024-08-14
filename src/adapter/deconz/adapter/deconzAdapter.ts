@@ -1,4 +1,6 @@
 /* istanbul ignore file */
+import assert from 'assert';
+
 import Device from '../../../controller/model/device';
 import * as Models from '../../../models';
 import {Queue, Waitress} from '../../../utils';
@@ -904,8 +906,10 @@ class DeconzAdapter extends Adapter {
                 const asdu = data.asduPayload!;
                 const buffer = Buffer.from(asdu);
 
+                assert(data.srcAddr16 != null);
                 const response: Events.ZclPayload = {
-                    address: data.srcAddrMode === 0x02 ? data.srcAddr16 : undefined, // TODO: can't be undefined
+                    // address: data.srcAddrMode === 0x02 ? data.srcAddr16 : undefined, // TODO: can't be undefined
+                    address: data.srcAddr16, // TODO: can't be undefined
                     data: buffer,
                     clusterID: zclFrame.cluster.ID,
                     header: Zcl.Header.fromBuffer(buffer),

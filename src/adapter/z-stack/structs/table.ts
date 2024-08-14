@@ -4,7 +4,7 @@ import assert from 'assert';
 import {SerializableMemoryObject} from './serializable-memory-object';
 import {BuiltStruct, StructFactorySignature, StructMemoryAlignment} from './struct';
 
-type TableBuildOmitKeys = 'struct' | 'header' | 'occupancy' | 'load' | 'build';
+type TableBuildOmitKeys = 'struct' | 'header' | 'occupancy' | 'load' | 'build' | 'inlineHeader';
 export type BuiltTable<R extends BuiltStruct, T = Table<R>> = Omit<T, TableBuildOmitKeys>;
 export type TableFactorySignature<R extends BuiltStruct, T = Table<R>> = (data?: Buffer) => T;
 
