@@ -24,7 +24,11 @@ type ZBOSSNetworkInfo = {
     joined: boolean,
     nodeType: DeviceType,
     ieeeAddr: string,
-    network: NetworkParameters,
+    network: {
+        panID: number;
+        extendedPanID: number[];
+        channel: number;
+    },
 };
 
 export class ZBOSSDriver extends EventEmitter {
@@ -147,7 +151,7 @@ export class ZBOSSDriver extends EventEmitter {
             valid = valid && this.netInfo.nodeType == DeviceType.COORDINATOR;
             valid = valid && options.panID == this.netInfo.network.panID;
             valid = valid && options.channelList.includes(this.netInfo.network.channel);
-            valid = valid && equals(options.extendedPanID, this.netInfo.network.extendedPanID);
+            valid = valid && equals(Buffer.from(options.extendedPanID),Buffer.from(this.netInfo.network.extendedPanID));
         } else {
             valid = false;
         }
@@ -211,20 +215,22 @@ export class ZBOSSDriver extends EventEmitter {
 
     private async formNetwork(restore: boolean): Promise<void> {
         let result = await this.execCommand(CommandId.SET_ZIGBEE_ROLE, {role: DeviceType.COORDINATOR});
-        result = await this.execCommand(CommandId.SET_EXTENDED_PAN_ID, {extendedPanID: this.nwkOpt.extendedPanID});
         result = await this.execCommand(CommandId.SET_ZIGBEE_CHANNEL_MASK, {page: 0, mask: this.getChannelMask(this.nwkOpt.channelList)});
-
+        result = await this.execCommand(CommandId.SET_PAN_ID, {panID: this.nwkOpt.panID});
+        // result = await this.execCommand(CommandId.SET_EXTENDED_PAN_ID, {extendedPanID: this.nwkOpt.extendedPanID});
+        result = await this.execCommand(CommandId.SET_NWK_KEY, {nwkKey: this.nwkOpt.networkKey, index: 0});
+        
         const res = await this.execCommand(CommandId.NWK_FORMATION, {
             len: 1,
             channels: [
-                {page: 0, mask: 0x07fff800},
+                {page: 0, mask: this.getChannelMask(this.nwkOpt.channelList)},
             ],
             duration: 0x05,
             distribFlag: 0x00,
             distribNwk: 0x0000,
-        });
+            extendedPanID: this.nwkOpt.extendedPanID,
+        }, 20000);
         logger.debug(`Forming network: ${JSON.stringify(res)}`, NS);
-        result = await this.execCommand(CommandId.SET_PAN_ID, {panID: this.nwkOpt.panID});
     }
 
     public async stop(): Promise<void> {

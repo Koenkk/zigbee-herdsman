@@ -109,7 +109,7 @@ export class ZBOSSAdapter extends Adapter {
 
             return {
                 panID,
-                extendedPanID,
+                extendedPanID: parseInt(Buffer.from(extendedPanID).toString('hex'), 16),
                 channel,
             };
         });

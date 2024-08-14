@@ -910,6 +910,7 @@ export const FRAMES: {[key in CommandId]?: ZBOSSFrameDesc} = {
             {name: 'duration', type: DataType.UINT8},
             {name: 'distribFlag', type: DataType.UINT8},
             {name: 'distribNwk', type: DataType.UINT16},
+            {name: 'extendedPanID', type: BuffaloZBOSSDataType.EXTENDED_PAN_ID},
         ],
         response: [
             ...commonResponse,
