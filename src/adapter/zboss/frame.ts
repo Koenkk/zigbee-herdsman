@@ -1,10 +1,10 @@
-import { CommandId, BuffaloZBOSSDataType } from "./enums";
-import { FRAMES, ParamsDesc } from "./commands";
 import {KeyValue} from "../../controller/tstype";
-import { BuffaloZcl } from "../../zspec/zcl/buffaloZcl";
-import { BuffaloZclDataType } from "../../zspec/zcl/definition/enums";
-import {BuffaloZclOptions} from '../../zspec/zcl/definition/tstype';
 import {DataType} from "../../zspec/zcl";
+import {BuffaloZcl} from "../../zspec/zcl/buffaloZcl";
+import {BuffaloZclDataType} from "../../zspec/zcl/definition/enums";
+import {BuffaloZclOptions} from '../../zspec/zcl/definition/tstype';
+import {FRAMES, ParamsDesc} from "./commands";
+import {CommandId, BuffaloZBOSSDataType} from "./enums";
 
 export class ZBOSSBuffaloZcl extends BuffaloZcl {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -73,7 +73,7 @@ export class ZBOSSBuffaloZcl extends BuffaloZcl {
     }
 }
 
-function getFrameDesc(type: FrameType, key: CommandId) {
+function getFrameDesc(type: FrameType, key: CommandId): ParamsDesc[] {
     const frameDesc = FRAMES[key];
     if (!frameDesc) throw new Error(`Unrecognized frame type from FrameID ${key}`);
     switch (type) {
@@ -125,21 +125,19 @@ export enum FrameType {
     INDICATION = 2,
 }
 
-export interface ZBOSSFrameData extends KeyValue {};
-
 export interface ZBOSSFrame {
     version: number;
     type: FrameType;
     commandId: CommandId;
     tsn?: number;
-    payload?: ZBOSSFrameData;
+    payload?: KeyValue;
 }
 
 export function makeFrame(type: FrameType, commandId: CommandId, params: KeyValue): ZBOSSFrame {
     const frameDesc = getFrameDesc(type, commandId);
-    const payload: ZBOSSFrameData = {};
+    const payload: KeyValue = {};
     for (const parameter of frameDesc) {
-        const options: BuffaloZclOptions = {payload};
+        // const options: BuffaloZclOptions = {payload};
 
         if (parameter.condition && !parameter.condition(payload, undefined)) {
             continue;
@@ -156,12 +154,12 @@ export function makeFrame(type: FrameType, commandId: CommandId, params: KeyValu
     }
 }
 
-function readPayload(type: FrameType, commandId: CommandId, buffalo: ZBOSSBuffaloZcl): ZBOSSFrameData {
+function readPayload(type: FrameType, commandId: CommandId, buffalo: ZBOSSBuffaloZcl): KeyValue {
     const frameDesc = getFrameDesc(type, commandId);
     return buffalo.readByDesc(frameDesc);
 }
 
-function writePayload(type: FrameType, commandId: CommandId, payload: ZBOSSFrameData, buffalo: ZBOSSBuffaloZcl): number {
+function writePayload(type: FrameType, commandId: CommandId, payload: KeyValue, buffalo: ZBOSSBuffaloZcl): number {
     const frameDesc = getFrameDesc(type, commandId);
     return buffalo.writeByDesc(payload, frameDesc);
 }

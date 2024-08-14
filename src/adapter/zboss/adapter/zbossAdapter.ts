@@ -1,26 +1,15 @@
-import {existsSync, readFileSync} from 'fs';
-import path from 'path';
-import SerialPortUtils from '../../serialPortUtils';
-import SocketPortUtils from '../../socketPortUtils';
-import {BackupUtils, RealpathSync, Wait, Queue} from "../../../utils";
-import {Adapter, TsType} from "../..";
-import {Backup, UnifiedBackupStorage} from "../../../models";
+import { Queue } from "../../../utils";
+import { Adapter, TsType } from "../..";
+import { Backup } from "../../../models";
 import * as Zcl from "../../../zspec/zcl";
 import {
-    NetworkOptions, SerialPortOptions, Coordinator, CoordinatorVersion, NodeDescriptor,
-    ActiveEndpoints, SimpleDescriptor, LQI, RoutingTable, NetworkParameters,
-    StartResult, LQINeighbor, RoutingTableEntry, AdapterOptions
+    Coordinator,
 } from '../../tstype';
 import {
-    DeviceAnnouncePayload,
-    DeviceJoinedPayload,
-    DeviceLeavePayload,
-    Events,
     ZclPayload
 } from "../../events";
 import {BroadcastAddress} from '../../../zspec/enums';
 import {ZBOSSDriver} from '../driver';
-import {CommandId} from "../enums";
 import {logger} from "../../../utils/logger";
 const NS = 'zh:zboss';
 

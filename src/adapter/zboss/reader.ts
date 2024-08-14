@@ -1,6 +1,7 @@
 import {Transform, TransformCallback, TransformOptions} from "stream";
-import {SIGNATURE} from "./consts";
+
 import {logger} from "../../utils/logger";
+import {SIGNATURE} from "./consts";
 
 const NS = 'zh:zboss:read';
 

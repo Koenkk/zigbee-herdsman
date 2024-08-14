@@ -1,14 +1,14 @@
 import EventEmitter from "events";
-import {TsType} from "..";
-import {logger} from "../../utils/logger";
-import {ZBOSSUart} from "./uart";
-import {ZBOSSFrame, makeFrame, FrameType} from "./frame";
-import {KeyValue,} from "../../controller/tstype";
-import {ClusterId, EUI64, NodeId, ProfileId} from '../../zspec/tstypes';
-import {Queue, Waitress, Wait} from '../../utils';
-import {CommandId, ResetOptions, PolicyType, DeviceType} from "./enums";
-import {NetworkParameters} from "../tstype";
 import equals from 'fast-deep-equal/es6';
+
+import {TsType} from "..";
+import {KeyValue,} from "../../controller/tstype";
+import {Queue, Waitress} from '../../utils';
+import {logger} from "../../utils/logger";
+import {NetworkParameters} from "../tstype";
+import {CommandId, ResetOptions, PolicyType, DeviceType} from "./enums";
+import {ZBOSSFrame, makeFrame, FrameType} from "./frame";
+import {ZBOSSUart} from "./uart";
 
 const NS = 'zh:zboss:driv';
 
@@ -301,7 +301,7 @@ export class ZBOSSDriver extends EventEmitter {
     public async getCoordinatorVersion(): Promise<TsType.CoordinatorVersion> {
         const ver = await this.execCommand(CommandId.GET_MODULE_VERSION, {});
         const cver = await this.execCommand(CommandId.GET_COORDINATOR_VERSION, {});
-        const ver2str = (version: number) => {
+        const ver2str = (version: number): string => {
             const major = (version >> 24 & 0xFF);
             const minor = (version >> 16 & 0xFF);
             const revision = (version >> 8 & 0xFF);

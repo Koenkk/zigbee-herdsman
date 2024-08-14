@@ -1,16 +1,17 @@
-import EventEmitter from "stream";
 import {Socket} from "net";
-import SocketPortUtils from "../socketPortUtils";
-import {SerialPort} from "../serialPort";
-import {SerialPortOptions} from "../tstype";
+import EventEmitter from "stream";
+
+import {Queue, Waitress} from '../../utils';
 import {logger} from "../../utils/logger";
-import {ZBOSSWriter} from "./writer";
-import {ZBOSSReader} from "./reader";
-import {ZBOSSFrame, readZBOSSFrame, writeZBOSSFrame} from "./frame";
-import {crc8, crc16} from "./utils";
-import {Queue, Waitress, Wait} from '../../utils';
-import {SIGNATURE, ZBOSS_NCP_API_HL, ZBOSS_FLAG_FIRST_FRAGMENT, ZBOSS_FLAG_LAST_FRAGMENT} from "./consts";
 import wait from "../../utils/wait";
+import {SerialPort} from "../serialPort";
+import SocketPortUtils from "../socketPortUtils";
+import {SerialPortOptions} from "../tstype";
+import {SIGNATURE, ZBOSS_NCP_API_HL, ZBOSS_FLAG_FIRST_FRAGMENT, ZBOSS_FLAG_LAST_FRAGMENT} from "./consts";
+import {ZBOSSFrame, readZBOSSFrame, writeZBOSSFrame} from "./frame";
+import {ZBOSSReader} from "./reader";
+import {crc8, crc16} from "./utils";
+import {ZBOSSWriter} from "./writer";
 
 const NS = 'zh:zboss:uart';
 
@@ -213,8 +214,8 @@ export class ZBOSSUart extends EventEmitter {
         logger.info(`Port error: ${error}`, NS);
     }
 
-    private onPackage(data: Buffer): void {
-        const len = data.readUInt16LE(0);
+    private async onPackage(data: Buffer): Promise<void> {
+        //const len = data.readUInt16LE(0);
         const pType = data.readUInt8(2);
         const pFlags = data.readUInt8(3);
         const isACK = (pFlags & 0x1) === 1;
@@ -256,7 +257,7 @@ export class ZBOSSUart extends EventEmitter {
         this.recvSeq = sequence;
         // Send ACK
         logger.debug(`--> ACK (${this.recvSeq})`, NS);
-        this.sendACK(this.recvSeq);
+        await this.sendACK(this.recvSeq);
 
         try {
             logger.debug(`<-- FRAME: ${body.toString('hex')}`, NS);
@@ -353,7 +354,7 @@ export class ZBOSSUart extends EventEmitter {
         return handled;
     }
 
-    private sendACK(ackNum: number, retransmit: boolean = false): void {
+    private async sendACK(ackNum: number, retransmit: boolean = false): Promise<void> {
         /* Construct a acknowledgement package */
         
         let flags = (ackNum & 0x03) << 4; // ACKseq
@@ -361,7 +362,7 @@ export class ZBOSSUart extends EventEmitter {
         if (retransmit) {
             flags |= 0x02; // retransmit
         }
-        let ackPackage = this.makePack(flags, null);
+        const ackPackage = this.makePack(flags, null);
         const isACK = (flags & 0x1) === 1;
         const sequence = flags >> 2 & 0x3;
         const ACKseq = flags >> 4 & 0x3;
@@ -370,7 +371,7 @@ export class ZBOSSUart extends EventEmitter {
         logger.debug(`--> package type ${ZBOSS_NCP_API_HL}, flags ${flags.toString(16)}`+
             `${JSON.stringify({isACK, retransmit, sequence, ACKseq, isFirst, isLast})}`, NS);
         logger.debug(`-->  ACK: ${ackPackage.toString('hex')}`, NS);
-        this.sendDATA(ackPackage, true);
+        await this.sendDATA(ackPackage, true);
     }
 
     private writeBuffer(buffer: Buffer): void {
