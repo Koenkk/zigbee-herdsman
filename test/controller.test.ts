@@ -54,7 +54,6 @@ const mockAdapterReset = jest.fn();
 const mockAdapterStop = jest.fn();
 const mockAdapterStart = jest.fn().mockReturnValue('resumed');
 const mockAdapterSetTransmitPower = jest.fn();
-const mockAdapterSupportsChangeChannel = jest.fn().mockReturnValue(false);
 const mockAdapterChangeChannel = jest.fn();
 const mockAdapterGetCoordinator = jest.fn().mockReturnValue({
     ieeeAddr: '0x0000012300000000',
@@ -64,6 +63,30 @@ const mockAdapterGetCoordinator = jest.fn().mockReturnValue({
         {ID: 1, profileID: 2, deviceID: 3, inputClusters: [10], outputClusters: [11]},
         {ID: 2, profileID: 3, deviceID: 5, inputClusters: [1], outputClusters: [0]},
     ],
+});
+const mockAdapterNodeDescriptor = jest.fn().mockImplementation(async (networkAddress) => {
+    const descriptor = mockDevices[networkAddress].nodeDescriptor;
+    if (typeof descriptor === 'string' && descriptor.startsWith('xiaomi')) {
+        const frame = mockZclFrame.create(0, 1, true, null, 10, 'readRsp', 0, [{attrId: 5, status: 0, dataType: 66, attrData: 'lumi.occupancy'}]);
+        await mockAdapterEvents['zclPayload']({
+            wasBroadcast: false,
+            address: networkAddress,
+            clusterID: frame.cluster.ID,
+            data: frame.toBuffer(),
+            header: frame.header,
+            endpoint: 1,
+            linkquality: 50,
+            groupID: 1,
+        });
+
+        if (descriptor.endsWith('error')) {
+            throw new Error('failed');
+        } else {
+            return {type: 'EndDevice', manufacturerCode: 1219};
+        }
+    } else {
+        return descriptor;
+    }
 });
 
 const mockAdapterGetNetworkParameters = jest.fn().mockReturnValue({panID: 1, extendedPanID: 3, channel: 15});
@@ -187,6 +210,7 @@ const mocksClear = [
     mockAdapterReset,
     mocksendZclFrameToGroup,
     mockSetChannelInterPAN,
+    mockAdapterNodeDescriptor,
     mocksendZclFrameInterPANToIeeeAddr,
     mocksendZclFrameInterPANBroadcast,
     mockRestoreChannelInterPAN,
@@ -505,34 +529,8 @@ jest.mock('../src/adapter/z-stack/adapter/zStackAdapter', () => {
             getNetworkParameters: mockAdapterGetNetworkParameters,
             waitFor: mockAdapterWaitFor,
             setTransmitPower: mockAdapterSetTransmitPower,
-            supportsChangeChannel: mockAdapterSupportsChangeChannel,
             changeChannel: mockAdapterChangeChannel,
-            nodeDescriptor: async (networkAddress) => {
-                const descriptor = mockDevices[networkAddress].nodeDescriptor;
-                if (typeof descriptor === 'string' && descriptor.startsWith('xiaomi')) {
-                    const frame = mockZclFrame.create(0, 1, true, null, 10, 'readRsp', 0, [
-                        {attrId: 5, status: 0, dataType: 66, attrData: 'lumi.occupancy'},
-                    ]);
-                    await mockAdapterEvents['zclPayload']({
-                        wasBroadcast: false,
-                        address: networkAddress,
-                        clusterID: frame.cluster.ID,
-                        data: frame.toBuffer(),
-                        header: frame.header,
-                        endpoint: 1,
-                        linkquality: 50,
-                        groupID: 1,
-                    });
-
-                    if (descriptor.endsWith('error')) {
-                        throw new Error('failed');
-                    } else {
-                        return {type: 'EndDevice', manufacturerCode: 1219};
-                    }
-                } else {
-                    return descriptor;
-                }
-            },
+            nodeDescriptor: mockAdapterNodeDescriptor,
             activeEndpoints: (networkAddress) => {
                 if (mockDevices[networkAddress].activeEndpoints === 'error') {
                     throw new Error('timeout');
@@ -602,13 +600,14 @@ jest.mock('../src/adapter/zigate/adapter/zigateAdapter', () => {
     });
 });
 
-const getTempFile = (filename) => {
-    const tempPath = path.resolve('temp');
-    if (!fs.existsSync(tempPath)) {
-        fs.mkdirSync(tempPath);
+const TEMP_PATH = path.resolve('temp');
+
+const getTempFile = (filename: string): string => {
+    if (!fs.existsSync(TEMP_PATH)) {
+        fs.mkdirSync(TEMP_PATH);
     }
 
-    return path.join(tempPath, filename);
+    return path.join(TEMP_PATH, filename);
 };
 
 // Mock static methods
@@ -685,6 +684,7 @@ describe('Controller', () => {
 
     afterAll(async () => {
         jest.useRealTimers();
+        fs.rmSync(TEMP_PATH, {recursive: true, force: true});
     });
 
     beforeEach(async () => {
@@ -699,8 +699,9 @@ describe('Controller', () => {
         enroll170 = true;
         options.network.channelList = [15];
         Object.keys(events).forEach((key) => (events[key] = []));
-        Device['devices'] = null;
-        Group['groups'] = null;
+        Device.resetCache();
+        Group.resetCache();
+
         if (fs.existsSync(options.databasePath)) {
             fs.unlinkSync(options.databasePath);
         }
@@ -784,6 +785,27 @@ describe('Controller', () => {
         expect(JSON.parse(fs.readFileSync(options.backupPath).toString())).toStrictEqual(JSON.parse(JSON.stringify(dummyBackup)));
         expect(mockAdapterStop).toHaveBeenCalledTimes(1);
         expect(databaseSaveSpy).toHaveBeenCalledTimes(1);
+    });
+
+    it('Controller stop, should reset runtime lookups', async () => {
+        await controller.start();
+
+        await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
+        await mockAdapterEvents['deviceJoined']({networkAddress: 128, ieeeAddr: '0x128'});
+        await mockAdapterEvents['deviceLeave']({networkAddress: 128, ieeeAddr: '0x128'});
+        controller.createGroup(1);
+        expect(Device.byIeeeAddr('0x129', false)).toBeInstanceOf(Device);
+        expect(Device.byIeeeAddr('0x128', true)).toBeInstanceOf(Device);
+        expect(Group.byGroupID(1)).toBeInstanceOf(Group);
+
+        await controller.stop();
+
+        // @ts-expect-error private
+        expect(Device.devices).toStrictEqual(null);
+        // @ts-expect-error private
+        expect(Device.deletedDevices).toStrictEqual({});
+        // @ts-expect-error private
+        expect(Group.groups).toStrictEqual(null);
     });
 
     it('Controller start', async () => {
@@ -1726,16 +1748,14 @@ describe('Controller', () => {
 
     it('Change channel', async () => {
         await controller.start();
-        controller.options.network.channelList[0] = 20;
-        await controller.changeChannel();
+        await controller.changeChannel(10, 20);
         expect(mockAdapterChangeChannel).toHaveBeenCalledWith(20);
         mockAdapterGetNetworkParameters.mockReturnValueOnce({panID: 1, extendedPanID: 3, channel: 20});
         expect(await controller.getNetworkParameters()).toEqual({panID: 1, channel: 20, extendedPanID: 3});
     });
 
-    it('Change channel on start if supported', async () => {
+    it('Change channel on start', async () => {
         mockAdapterStart.mockReturnValueOnce('resumed');
-        mockAdapterSupportsChangeChannel.mockReturnValueOnce(true);
         mockAdapterGetNetworkParameters.mockReturnValueOnce({panID: 1, extendedPanID: 3, channel: 25});
         await controller.start();
         expect(mockAdapterGetNetworkParameters).toHaveBeenCalledTimes(1);
@@ -1745,7 +1765,6 @@ describe('Controller', () => {
 
     it('Does not change channel on start if not changed', async () => {
         mockAdapterStart.mockReturnValueOnce('resumed');
-        mockAdapterSupportsChangeChannel.mockReturnValueOnce(true);
         await controller.start();
         expect(mockAdapterGetNetworkParameters).toHaveBeenCalledTimes(1);
         expect(mockAdapterChangeChannel).toHaveBeenCalledTimes(0);
@@ -1753,11 +1772,13 @@ describe('Controller', () => {
 
     it('Does not change channel on start if not supported', async () => {
         mockAdapterStart.mockReturnValueOnce('resumed');
-        mockAdapterSupportsChangeChannel.mockReturnValueOnce(false);
+        mockAdapterChangeChannel.mockImplementationOnce(() => {
+            throw new Error('Not supported');
+        });
         mockAdapterGetNetworkParameters.mockReturnValueOnce({panID: 1, extendedPanID: 3, channel: 25});
-        await controller.start();
-        expect(mockAdapterGetNetworkParameters).toHaveBeenCalledTimes(0);
-        expect(mockAdapterChangeChannel).toHaveBeenCalledTimes(0);
+        await expect(controller.start()).rejects.toThrow(`Not supported`);
+        expect(mockAdapterGetNetworkParameters).toHaveBeenCalledTimes(1);
+        expect(mockAdapterChangeChannel).toHaveBeenCalledTimes(1);
         // get rid of the mockReturnValueOnce that was never called
         mockAdapterGetNetworkParameters();
     });
@@ -1778,6 +1799,66 @@ describe('Controller', () => {
         expect(await controller.getNetworkParameters()).toEqual({panID: 1, channel: 15, extendedPanID: 3});
         expect(await controller.getNetworkParameters()).toEqual({panID: 1, channel: 15, extendedPanID: 3});
         expect(mockAdapterGetNetworkParameters).toHaveBeenCalledTimes(1);
+    });
+
+    it('Iterates over all devices', async () => {
+        await controller.start();
+        await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
+        let devices = 0;
+
+        for (const device of controller.getDevicesIterator()) {
+            expect(device).toBeInstanceOf(Device);
+
+            devices += 1;
+        }
+
+        expect(devices).toStrictEqual(2); // + coordinator
+    });
+
+    it('Iterates over devices with predicate', async () => {
+        await controller.start();
+        await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
+        let devices = 0;
+
+        for (const device of controller.getDevicesIterator((d) => d.networkAddress === 129)) {
+            expect(device).toBeInstanceOf(Device);
+
+            devices += 1;
+        }
+
+        expect(devices).toStrictEqual(1);
+    });
+
+    it('Iterates over all groups', async () => {
+        await controller.start();
+        controller.createGroup(1);
+        controller.createGroup(2);
+
+        let groups = 0;
+
+        for (const group of controller.getGroupsIterator()) {
+            expect(group).toBeInstanceOf(Group);
+
+            groups += 1;
+        }
+
+        expect(groups).toStrictEqual(2);
+    });
+
+    it('Iterates over groups with predicate', async () => {
+        await controller.start();
+        controller.createGroup(1);
+        controller.createGroup(2);
+
+        let groups = 0;
+
+        for (const group of controller.getGroupsIterator((d) => d.groupID === 1)) {
+            expect(group).toBeInstanceOf(Group);
+
+            groups += 1;
+        }
+
+        expect(groups).toStrictEqual(1);
     });
 
     it('Join a device', async () => {
@@ -2073,6 +2154,7 @@ describe('Controller', () => {
         expect(events.deviceLeave.length).toBe(1);
         expect(events.deviceLeave[0]).toStrictEqual({ieeeAddr: '0x129'});
         expect(controller.getDeviceByNetworkAddress(129)).toBeUndefined();
+        expect(Device.byNetworkAddress(129, true)).toBeInstanceOf(Device);
 
         // leaves another time when not in database
         await mockAdapterEvents['deviceLeave']({networkAddress: 129, ieeeAddr: null});
@@ -2092,18 +2174,34 @@ describe('Controller', () => {
         expect(databaseContents().includes('0x129')).toBeTruthy();
         expect(databaseContents().includes('groupID')).toBeTruthy();
         await controller.stop();
+
         mockAdapterStart.mockReturnValueOnce('reset');
         await controller.start();
         expect(controller.getDevices().length).toBe(1);
         expect(controller.getDevicesByType('Coordinator')[0].type).toBe('Coordinator');
         expect(controller.getDeviceByIeeeAddr('0x129')).toBeUndefined();
         expect(controller.getGroupByID(1)).toBeUndefined();
-        // Items are marked as delete but still appear as lines in database, therefore we need to restart once
-        // database will then remove deleted items.
-        await controller.stop();
-        await controller.start();
         expect(databaseContents().includes('0x129')).toBeFalsy();
         expect(databaseContents().includes('groupID')).toBeFalsy();
+    });
+
+    it('Existing database.tmp should not be overwritten', async () => {
+        const databaseTmpPath = options.databasePath + '.tmp';
+        fs.writeFileSync(databaseTmpPath, 'Hello, World!');
+
+        await controller.start();
+        await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
+        controller.createGroup(1);
+
+        // The old database.db.tmp should be gone
+        expect(fs.existsSync(databaseTmpPath)).toBeFalsy();
+
+        // There should still be a database.db.tmp.<something>
+        const dbtmp = fs.readdirSync(TEMP_PATH).filter((value) => value.startsWith('database.tmp'));
+        expect(dbtmp.length).toBe(1);
+
+        // The database.db.tmp.<something> should still have our "Hello, World!"
+        expect(fs.readFileSync(getTempFile(dbtmp[0])).toString().startsWith('Hello, World!')).toBeTruthy();
     });
 
     it('Should create backup of databse before clearing when datbaseBackupPath is provided', async () => {
@@ -3741,6 +3839,21 @@ describe('Controller', () => {
         });
     });
 
+    it('Should use cached node descriptor when device is re-interviewed, but retrieve it when ignoreCache=true', async () => {
+        await controller.start();
+        await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
+        expect(mockAdapterNodeDescriptor).toHaveBeenCalledTimes(1);
+
+        // Re-join should use cached node descriptor
+        await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
+        expect(mockAdapterNodeDescriptor).toHaveBeenCalledTimes(1);
+
+        // Interview with ignoreCache=true should read node descriptor
+        const device = controller.getDeviceByIeeeAddr('0x129');
+        device.interview(true);
+        expect(mockAdapterNodeDescriptor).toHaveBeenCalledTimes(2);
+    });
+
     it('Receive zclData report from unkown attribute', async () => {
         await controller.start();
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
@@ -4065,7 +4178,7 @@ describe('Controller', () => {
         expect(error).toStrictEqual(new Error("Device '0x129' already has an endpoint '1'"));
     });
 
-    it('Throw error when device with ieeeAddr already exists', async () => {
+    it('Throw error when device with IEEE address already exists', async () => {
         await controller.start();
         await mockAdapterEvents['deviceJoined']({networkAddress: 140, ieeeAddr: '0x129'});
         let error;
@@ -4074,7 +4187,7 @@ describe('Controller', () => {
         } catch (e) {
             error = e;
         }
-        expect(error).toStrictEqual(new Error("Device with ieeeAddr '0x129' already exists"));
+        expect(error).toStrictEqual(new Error("Device with IEEE address '0x129' already exists"));
     });
 
     it('Should allow to set type', async () => {
@@ -4289,6 +4402,7 @@ describe('Controller', () => {
                     powerSource: {ID: 7, type: 48, name: 'powerSource'},
                     appProfileVersion: {ID: 8, type: 48, name: 'appProfileVersion'},
                     swBuildId: {ID: 16384, type: 66, name: 'swBuildId'},
+                    serialNumber: {ID: 13, type: 66, name: 'serialNumber'},
                     locationDesc: {ID: 16, type: 66, name: 'locationDesc'},
                     physicalEnv: {ID: 17, type: 48, name: 'physicalEnv'},
                     deviceEnabled: {ID: 18, type: 16, name: 'deviceEnabled'},
@@ -5750,6 +5864,7 @@ describe('Controller', () => {
                     powerSource: {ID: 7, type: 48, name: 'powerSource'},
                     appProfileVersion: {ID: 8, type: 48, name: 'appProfileVersion'},
                     swBuildId: {ID: 16384, type: 66, name: 'swBuildId'},
+                    serialNumber: {ID: 13, type: 66, name: 'serialNumber'},
                     locationDesc: {ID: 16, type: 66, name: 'locationDesc'},
                     physicalEnv: {ID: 17, type: 48, name: 'physicalEnv'},
                     deviceEnabled: {ID: 18, type: 16, name: 'deviceEnabled'},
@@ -5855,6 +5970,7 @@ describe('Controller', () => {
                     powerSource: {ID: 7, type: 48, name: 'powerSource'},
                     appProfileVersion: {ID: 8, type: 48, name: 'appProfileVersion'},
                     swBuildId: {ID: 16384, type: 66, name: 'swBuildId'},
+                    serialNumber: {ID: 13, type: 66, name: 'serialNumber'},
                     locationDesc: {ID: 16, type: 66, name: 'locationDesc'},
                     physicalEnv: {ID: 17, type: 48, name: 'physicalEnv'},
                     deviceEnabled: {ID: 18, type: 16, name: 'deviceEnabled'},
@@ -5947,6 +6063,7 @@ describe('Controller', () => {
                     powerSource: {ID: 7, type: 48, name: 'powerSource'},
                     appProfileVersion: {ID: 8, type: 48, name: 'appProfileVersion'},
                     swBuildId: {ID: 16384, type: 66, name: 'swBuildId'},
+                    serialNumber: {ID: 13, type: 66, name: 'serialNumber'},
                     locationDesc: {ID: 16, type: 66, name: 'locationDesc'},
                     physicalEnv: {ID: 17, type: 48, name: 'physicalEnv'},
                     deviceEnabled: {ID: 18, type: 16, name: 'deviceEnabled'},
@@ -6054,6 +6171,7 @@ describe('Controller', () => {
                     powerSource: {ID: 7, type: 48, name: 'powerSource'},
                     appProfileVersion: {ID: 8, type: 48, name: 'appProfileVersion'},
                     swBuildId: {ID: 16384, type: 66, name: 'swBuildId'},
+                    serialNumber: {ID: 13, type: 66, name: 'serialNumber'},
                     locationDesc: {ID: 16, type: 66, name: 'locationDesc'},
                     physicalEnv: {ID: 17, type: 48, name: 'physicalEnv'},
                     deviceEnabled: {ID: 18, type: 16, name: 'deviceEnabled'},
@@ -6132,6 +6250,7 @@ describe('Controller', () => {
                     powerSource: {ID: 7, type: 48, name: 'powerSource'},
                     appProfileVersion: {ID: 8, type: 48, name: 'appProfileVersion'},
                     swBuildId: {ID: 16384, type: 66, name: 'swBuildId'},
+                    serialNumber: {ID: 13, type: 66, name: 'serialNumber'},
                     locationDesc: {ID: 16, type: 66, name: 'locationDesc'},
                     physicalEnv: {ID: 17, type: 48, name: 'physicalEnv'},
                     deviceEnabled: {ID: 18, type: 16, name: 'deviceEnabled'},
@@ -6227,6 +6346,7 @@ describe('Controller', () => {
                     powerSource: {ID: 7, type: 48, name: 'powerSource'},
                     appProfileVersion: {ID: 8, type: 48, name: 'appProfileVersion'},
                     swBuildId: {ID: 16384, type: 66, name: 'swBuildId'},
+                    serialNumber: {ID: 13, type: 66, name: 'serialNumber'},
                     locationDesc: {ID: 16, type: 66, name: 'locationDesc'},
                     physicalEnv: {ID: 17, type: 48, name: 'physicalEnv'},
                     deviceEnabled: {ID: 18, type: 16, name: 'deviceEnabled'},
@@ -6279,6 +6399,7 @@ describe('Controller', () => {
                     powerSource: {ID: 7, type: 48, name: 'powerSource'},
                     appProfileVersion: {ID: 8, type: 48, name: 'appProfileVersion'},
                     swBuildId: {ID: 16384, type: 66, name: 'swBuildId'},
+                    serialNumber: {ID: 13, type: 66, name: 'serialNumber'},
                     locationDesc: {ID: 16, type: 66, name: 'locationDesc'},
                     physicalEnv: {ID: 17, type: 48, name: 'physicalEnv'},
                     deviceEnabled: {ID: 18, type: 16, name: 'deviceEnabled'},
@@ -7421,34 +7542,61 @@ describe('Controller', () => {
         expect(error.message).toStrictEqual(`Use parameter`);
     });
 
-    it('Unbind error', async () => {
+    it('Skip unbind if not bound', async () => {
         await controller.start();
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
-        const device = controller.getDeviceByIeeeAddr('0x129');
-        const endpoint = device.getEndpoint(1);
-        mockAdapterUnbind.mockRejectedValueOnce(new Error('timeout occurred'));
+        await mockAdapterEvents['deviceJoined']({networkAddress: 170, ieeeAddr: '0x170'});
+        const endpoint = controller.getDeviceByIeeeAddr('0x129').getEndpoint(1);
+        const target = controller.getDeviceByIeeeAddr('0x170').getEndpoint(1);
+        mockAdapterUnbind.mockClear();
+        await endpoint.unbind('genOnOff', target);
+        expect(mockAdapterUnbind).toHaveBeenCalledTimes(0);
+    });
+
+    it('Handle unbind with number not matching any group', async () => {
+        await controller.start();
+        await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
+        const endpoint = controller.getDeviceByIeeeAddr('0x129').getEndpoint(1);
         let error;
         try {
             await endpoint.unbind('genOnOff', 1);
         } catch (e) {
             error = e;
         }
-        expect(error).toStrictEqual(new Error(`Unbind 0x129/1 genOnOff from '1' failed (timeout occurred)`));
+        expect(error).toStrictEqual(new Error(`Unbind 0x129/1 genOnOff invalid target '1' (no group with this ID exists).`));
+    });
+
+    it('Unbind error', async () => {
+        await controller.start();
+        await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
+        await mockAdapterEvents['deviceJoined']({networkAddress: 170, ieeeAddr: '0x170'});
+        const endpoint = controller.getDeviceByIeeeAddr('0x129').getEndpoint(1);
+        const target = controller.getDeviceByIeeeAddr('0x170').getEndpoint(1);
+        await endpoint.bind('genOnOff', target);
+        mockAdapterUnbind.mockRejectedValueOnce(new Error('timeout occurred'));
+        let error;
+        try {
+            await endpoint.unbind('genOnOff', target);
+        } catch (e) {
+            error = e;
+        }
+        expect(error).toStrictEqual(new Error(`Unbind 0x129/1 genOnOff from '0x170/1' failed (timeout occurred)`));
     });
 
     it('Bind error', async () => {
         await controller.start();
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
-        const device = controller.getDeviceByIeeeAddr('0x129');
-        const endpoint = device.getEndpoint(1);
+        await mockAdapterEvents['deviceJoined']({networkAddress: 170, ieeeAddr: '0x170'});
+        const endpoint = controller.getDeviceByIeeeAddr('0x129').getEndpoint(1);
+        const target = controller.getDeviceByIeeeAddr('0x170').getEndpoint(1);
         mockAdapterBind.mockRejectedValueOnce(new Error('timeout occurred'));
         let error;
         try {
-            await endpoint.bind('genOnOff', 1);
+            await endpoint.bind('genOnOff', target);
         } catch (e) {
             error = e;
         }
-        expect(error).toStrictEqual(new Error(`Bind 0x129/1 genOnOff from '1' failed (timeout occurred)`));
+        expect(error).toStrictEqual(new Error(`Bind 0x129/1 genOnOff from '0x170/1' failed (timeout occurred)`));
     });
 
     it('ReadResponse error', async () => {
@@ -8290,7 +8438,6 @@ describe('Controller', () => {
             _modelID: 'GreenPower_2',
             _networkAddress: 0x71f8,
             _type: 'GreenPower',
-            _deleted: true,
             meta: {},
         });
 
@@ -8339,7 +8486,6 @@ describe('Controller', () => {
             _modelID: 'GreenPower_2',
             _networkAddress: 0x71f8,
             _type: 'GreenPower',
-            _deleted: false,
             meta: {},
         });
     });
@@ -8397,6 +8543,7 @@ describe('Controller', () => {
                     powerSource: {ID: 7, type: 48, name: 'powerSource'},
                     appProfileVersion: {ID: 8, type: 48, name: 'appProfileVersion'},
                     swBuildId: {ID: 16384, type: 66, name: 'swBuildId'},
+                    serialNumber: {ID: 13, type: 66, name: 'serialNumber'},
                     locationDesc: {ID: 16, type: 66, name: 'locationDesc'},
                     physicalEnv: {ID: 17, type: 48, name: 'physicalEnv'},
                     deviceEnabled: {ID: 18, type: 16, name: 'deviceEnabled'},

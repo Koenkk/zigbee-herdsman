@@ -1,8 +1,8 @@
 /* istanbul ignore file */
 import * as ZSpec from '../../../zspec';
 import {NetworkCache} from '../adapter/emberAdapter';
-import {UNKNOWN_NETWORK_STATE, ZB_PSA_ALG, INVALID_RADIO_CHANNEL, EMBER_ALL_802_15_4_CHANNELS_MASK} from '../consts';
-import {EmberJoinMethod, EmberNetworkStatus, SecManDerivedKeyType, SecManFlag, SecManKeyType} from '../enums';
+import {ZB_PSA_ALG, INVALID_RADIO_CHANNEL} from '../consts';
+import {EmberJoinMethod, SecManDerivedKeyType, SecManFlag, SecManKeyType} from '../enums';
 import {EMBER_AES_HASH_BLOCK_SIZE} from '../ezsp/consts';
 import {EmberAesMmoHashContext, SecManContext} from '../types';
 
@@ -21,9 +21,8 @@ export const initNetworkCache = (): NetworkCache => {
             joinMethod: EmberJoinMethod.MAC_ASSOCIATION,
             nwkManagerId: ZSpec.NULL_NODE_ID,
             nwkUpdateId: 0,
-            channels: EMBER_ALL_802_15_4_CHANNELS_MASK,
+            channels: ZSpec.ALL_802_15_4_CHANNELS_MASK,
         },
-        status: UNKNOWN_NETWORK_STATE as EmberNetworkStatus,
     };
 };
 

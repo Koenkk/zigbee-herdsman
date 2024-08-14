@@ -35,14 +35,14 @@ export class AdapterBackup {
     public async getStoredBackup(): Promise<Models.Backup> {
         try {
             await fs.access(this.defaultPath);
-        } catch (error) {
+        } catch {
             return null;
         }
         let data;
         try {
             data = JSON.parse((await fs.readFile(this.defaultPath)).toString());
         } catch (error) {
-            throw new Error('Coordinator backup is corrupted');
+            throw new Error(`Coordinator backup is corrupted (${error.message})`);
         }
         if (data.metadata?.format === 'zigpy/open-coordinator-backup' && data.metadata?.version) {
             if (data.metadata?.version !== 1) {

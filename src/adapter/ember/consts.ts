@@ -5,7 +5,6 @@
 export const INVALID_CONFIG_VALUE = 0xffff;
 /** Serves to initialize cache */
 export const INVALID_RADIO_CHANNEL = 0xff;
-export const UNKNOWN_NETWORK_STATE = 0xff;
 /**
  * A distinguished network ID that will never be assigned to any node.
  * This value is returned when getting the remote node ID from the binding table and the given binding table index refers
@@ -42,35 +41,6 @@ export const SOURCE_ROUTE_OVERHEAD_UNKNOWN = 0xff;
 // 0xFFF9 indicates a non-memory-constrained many-to-one route request
 // 0xFFF8 indicates a memory-constrained many-to-one route request
 export const EMBER_MIN_BROADCAST_ADDRESS = 0xfff8;
-
-/** The maximum 802.15.4 channel number is 26. */
-export const EMBER_MAX_802_15_4_CHANNEL_NUMBER = 26;
-/** The minimum 2.4GHz 802.15.4 channel number is 11. */
-export const EMBER_MIN_802_15_4_CHANNEL_NUMBER = 11;
-/** The minimum SubGhz channel number is 0. */
-export const EMBER_MIN_SUBGHZ_CHANNEL_NUMBER = 0;
-
-/**
- * ZigBee protocol specifies that active scans have a duration of 3 (138 msec).
- * See documentation for emberStartScan in include/network-formation.h
- * for more info on duration values.
- */
-export const EMBER_ACTIVE_SCAN_DURATION = 3;
-/** The SubGhz scan duration is 5. */
-export const EMBER_SUB_GHZ_SCAN_DURATION = 5;
-/** There are sixteen 802.15.4 channels. */
-export const EMBER_NUM_802_15_4_CHANNELS = EMBER_MAX_802_15_4_CHANNEL_NUMBER - EMBER_MIN_802_15_4_CHANNEL_NUMBER + 1;
-/** A bitmask to scan all 2.4 GHz 802.15.4 channels. */
-export const EMBER_ALL_802_15_4_CHANNELS_MASK = 0x07fff800;
-/** The channels that the plugin will preferentially scan when forming and joining. */
-export const NETWORK_FIND_CHANNEL_MASK = 0x0318c800;
-/**
- * Cut-off value (dBm) <-128..127>
- * The maximum noise allowed on a channel to consider for forming a network.
- * If the noise on all preferred channels is above this limit and "Enable scanning all channels" is ticked, the scan continues on all channels.
- * Use emberAfPluginNetworkFindGetEnergyThresholdForChannelCallback() to override this value.
- */
-export const NETWORK_FIND_CUT_OFF_VALUE = -48;
 
 /**
  * The additional overhead required for network source routing (relay count = 1, relay index = 1).

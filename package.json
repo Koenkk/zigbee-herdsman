@@ -1,110 +1,108 @@
 {
-  "author": {
-    "name": "Koen Kanters",
-    "email": "koenkanters94@gmail.com"
-  },
-  "bugs": {
-    "url": "https://github.com/koenkk/zigbee-herdsman/issues"
-  },
-  "contributors": [
-    {
-      "name": "Koen Kanters",
-      "email": "koenkanters94@gmail.com"
+    "author": {
+        "name": "Koen Kanters",
+        "email": "koenkanters94@gmail.com"
     },
-    {
-      "name": "Hedy Wang",
-      "email": "hedywings@gmail.com"
+    "bugs": {
+        "url": "https://github.com/koenkk/zigbee-herdsman/issues"
     },
-    {
-      "name": "Simen Li",
-      "email": "simenkid@gmail.com"
+    "contributors": [
+        {
+            "name": "Koen Kanters",
+            "email": "koenkanters94@gmail.com"
+        },
+        {
+            "name": "Hedy Wang",
+            "email": "hedywings@gmail.com"
+        },
+        {
+            "name": "Simen Li",
+            "email": "simenkid@gmail.com"
+        },
+        {
+            "name": "Jack Wu",
+            "email": "jackchased@gmail.com"
+        }
+    ],
+    "dependencies": {
+        "@serialport/bindings-cpp": "^12.0.1",
+        "@serialport/parser-delimiter": "^12.0.0",
+        "@serialport/stream": "^12.0.0",
+        "bonjour-service": "^1.2.1",
+        "debounce": "^2.1.0",
+        "fast-deep-equal": "^3.1.3",
+        "mixin-deep": "^2.0.1",
+        "mz": "^2.7.0",
+        "slip": "^1.0.2"
     },
-    {
-      "name": "Jack Wu",
-      "email": "jackchased@gmail.com"
+    "deprecated": false,
+    "description": "An open source ZigBee gateway solution with node.js.",
+    "devDependencies": {
+        "@babel/cli": "^7.24.8",
+        "@babel/core": "^7.25.2",
+        "@babel/preset-env": "^7.25.3",
+        "@babel/preset-typescript": "^7.24.7",
+        "@serialport/binding-mock": "^10.2.2",
+        "@types/debounce": "^1.2.4",
+        "@types/jest": "^29.5.12",
+        "@types/mz": "^2.7.8",
+        "@types/nedb": "^1.8.16",
+        "@types/node": "^22.2.0",
+        "@typescript-eslint/eslint-plugin": "^8.0.1",
+        "@typescript-eslint/parser": "^8.0.1",
+        "babel-jest": "^29.7.0",
+        "eslint": "^8.57.0",
+        "eslint-config-prettier": "^9.1.0",
+        "eslint-plugin-perfectionist": "^3.1.3",
+        "jest": "^29.7.0",
+        "prettier": "^3.3.3",
+        "regenerator-runtime": "^0.14.1",
+        "typedoc": "^0.26.5",
+        "typedoc-plugin-markdown": "^4.2.3",
+        "typedoc-plugin-no-inherit": "^1.4.0",
+        "typescript": "^5.5.4"
+    },
+    "homepage": "https://github.com/Koenkk/zigbee-herdsman",
+    "keywords": [
+        "zigbee",
+        "zstack",
+        "emberznet",
+        "deconz",
+        "zigate"
+    ],
+    "license": "MIT",
+    "main": "dist/index.js",
+    "types": "dist/index.d.ts",
+    "name": "zigbee-herdsman",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/Koenkk/zigbee-herdsman.git"
+    },
+    "scripts": {
+        "build": "tsc",
+        "start": "tsc -w",
+        "test": "jest test --silent --maxWorkers=50%",
+        "test-with-coverage": "jest test --silent --maxWorkers=50% --coverage",
+        "test-watch": "jest test --silent --maxWorkers=25% --watch",
+        "eslint": "eslint . --ext .ts --max-warnings=0",
+        "pretty:write": "prettier --write .",
+        "pretty:check": "prettier --check .",
+        "docs": "typedoc --tsconfig typedoc-tsconfig.json",
+        "clean": "rimraf temp coverage dist",
+        "prepack": "npm run clean && npm run build"
+    },
+    "version": "0.55.5",
+    "jest": {
+        "coverageThreshold": {
+            "global": {
+                "branches": 100,
+                "functions": 100,
+                "lines": 100,
+                "statements": 100
+            }
+        },
+        "collectCoverageFrom": [
+            "src/**/*.ts"
+        ]
     }
-  ],
-  "dependencies": {
-    "@serialport/bindings-cpp": "^12.0.1",
-    "@serialport/parser-delimiter": "^12.0.0",
-    "@serialport/stream": "^12.0.0",
-    "bonjour-service": "^1.2.1",
-    "debounce": "^2.1.0",
-    "debug": "^4.3.5",
-    "eslint-config-prettier": "^9.1.0",
-    "eslint-plugin-perfectionist": "^2.11.0",
-    "fast-deep-equal": "^3.1.3",
-    "mixin-deep": "^2.0.1",
-    "mz": "^2.7.0",
-    "prettier": "^3.3.2",
-    "slip": "^1.0.2"
-  },
-  "deprecated": false,
-  "description": "An open source ZigBee gateway solution with node.js.",
-  "devDependencies": {
-    "@babel/cli": "*",
-    "@babel/core": "*",
-    "@babel/preset-env": "*",
-    "@babel/preset-typescript": "*",
-    "@serialport/binding-mock": "^10.2.2",
-    "@types/debounce": "^1.2.4",
-    "@types/debug": "*",
-    "@types/jest": "*",
-    "@types/mz": "^2.7.8",
-    "@types/nedb": "*",
-    "@types/node": "*",
-    "@typescript-eslint/eslint-plugin": "*",
-    "@typescript-eslint/parser": "*",
-    "babel-jest": "*",
-    "eslint": "*",
-    "jest": "*",
-    "regenerator-runtime": "*",
-    "typedoc": "^0.26.3",
-    "typedoc-plugin-markdown": "*",
-    "typedoc-plugin-no-inherit": "*",
-    "typescript": "*"
-  },
-  "homepage": "https://github.com/Koenkk/zigbee-herdsman",
-  "keywords": [
-    "zigbee",
-    "zstack",
-    "emberznet",
-    "deconz",
-    "zigate"
-  ],
-  "license": "MIT",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
-  "name": "zigbee-herdsman",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/Koenkk/zigbee-herdsman.git"
-  },
-  "scripts": {
-    "build": "tsc",
-    "start": "tsc -w",
-    "test": "jest test --silent --maxWorkers=50%",
-    "test-with-coverage": "jest test --silent --maxWorkers=50% --coverage",
-    "test-watch": "jest test --silent --maxWorkers=25% --watch",
-    "eslint": "eslint . --ext .ts --max-warnings=0",
-    "pretty:write": "prettier --write src test",
-    "pretty:check": "prettier --check src test",
-    "docs": "typedoc --tsconfig typedoc-tsconfig.json",
-    "clean": "rimraf temp coverage dist",
-    "prepack": "npm run clean && npm run build"
-  },
-  "version": "0.51.0",
-  "jest": {
-    "coverageThreshold": {
-      "global": {
-        "branches": 100,
-        "functions": 100,
-        "lines": 100,
-        "statements": 100
-      }
-    },
-    "collectCoverageFrom": [
-      "src/**/*.ts"
-    ]
-  }
 }

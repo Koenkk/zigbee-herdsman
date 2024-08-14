@@ -54,9 +54,7 @@ abstract class Adapter extends events.EventEmitter {
             if (adapterLookup.hasOwnProperty(serialPortOptions.adapter)) {
                 adapters = [adapterLookup[serialPortOptions.adapter]];
             } else {
-                throw new Error(
-                    `Adapter '${serialPortOptions.adapter}' does not exists, possible ` + `options: ${Object.keys(adapterLookup).join(', ')}`,
-                );
+                throw new Error(`Adapter '${serialPortOptions.adapter}' does not exists, possible options: ${Object.keys(adapterLookup).join(', ')}`);
             }
         } else {
             adapters = Object.values(adapterLookup);
@@ -83,9 +81,7 @@ abstract class Adapter extends events.EventEmitter {
         } else if (serialPortOptions.path.startsWith('mdns://')) {
             const mdnsDevice = serialPortOptions.path.substring(7);
             if (mdnsDevice.length == 0) {
-                throw new Error(
-                    `No mdns device specified. ` + `You must specify the coordinator mdns service type after mdns://, e.g. mdns://my-adapter`,
-                );
+                throw new Error(`No mdns device specified. You must specify the coordinator mdns service type after mdns://, e.g. mdns://my-adapter`);
             }
             const bj = new Bonjour();
             const mdnsTimeout = 2000; // timeout for mdns scan
@@ -167,8 +163,6 @@ abstract class Adapter extends events.EventEmitter {
     public abstract backup(ieeeAddressesInDatabase: string[]): Promise<Models.Backup>;
 
     public abstract getNetworkParameters(): Promise<TsType.NetworkParameters>;
-
-    public abstract supportsChangeChannel(): Promise<boolean>;
 
     public abstract changeChannel(newChannel: number): Promise<void>;
 

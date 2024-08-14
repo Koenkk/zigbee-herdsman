@@ -131,11 +131,14 @@ class Controller extends events.EventEmitter {
         // Check if we have to change the channel, only do this when adapter `resumed` because:
         // - `getNetworkParameters` might be return wrong info because it needs to propogate after backup restore
         // - If result is not `resumed` (`reset` or `restored`), the adapter should comission with the channel from `this.options.network`
-        if (startResult === 'resumed' && (await this.adapter.supportsChangeChannel())) {
+        if (startResult === 'resumed') {
             const netParams = await this.getNetworkParameters();
+            const configuredChannel = this.options.network.channelList[0];
+            const adapterChannel = netParams.channel;
 
-            if (this.options.network.channelList[0] !== netParams.channel) {
-                await this.changeChannel();
+            if (configuredChannel != adapterChannel) {
+                logger.info(`Configured channel '${configuredChannel}' does not match adapter channel '${adapterChannel}', changing channel`, NS);
+                await this.changeChannel(adapterChannel, configuredChannel);
             }
         }
 
@@ -161,11 +164,11 @@ class Controller extends events.EventEmitter {
             }
 
             logger.debug('Clearing database...', NS);
-            for (const group of Group.all()) {
+            for (const group of Group.allIterator()) {
                 group.removeFromDatabase();
             }
 
-            for (const device of Device.all()) {
+            for (const device of Device.allIterator()) {
                 device.removeFromDatabase();
             }
         }
@@ -331,14 +334,17 @@ class Controller extends events.EventEmitter {
 
             this.adapterDisconnected = true;
         }
+
+        Device.resetCache();
+        Group.resetCache();
     }
 
     private databaseSave(): void {
-        for (const device of Device.all()) {
+        for (const device of Device.allIterator()) {
             device.save(false);
         }
 
-        for (const group of Group.all()) {
+        for (const group of Group.allIterator()) {
             group.save(false);
         }
 
@@ -349,7 +355,7 @@ class Controller extends events.EventEmitter {
         this.databaseSave();
         if (this.options.backupPath && (await this.adapter.supportsBackup())) {
             logger.debug('Creating coordinator backup', NS);
-            const backup = await this.adapter.backup(Device.all().map((d) => d.ieeeAddr));
+            const backup = await this.adapter.backup(this.getDeviceIeeeAddresses());
             const unifiedBackup = await BackupUtils.toUnifiedBackup(backup);
             const tmpBackupPath = this.options.backupPath + '.tmp';
             fs.writeFileSync(tmpBackupPath, JSON.stringify(unifiedBackup, null, 2));
@@ -360,9 +366,14 @@ class Controller extends events.EventEmitter {
 
     public async coordinatorCheck(): Promise<{missingRouters: Device[]}> {
         if (await this.adapter.supportsBackup()) {
-            const backup = await this.adapter.backup(Device.all().map((d) => d.ieeeAddr));
+            const backup = await this.adapter.backup(this.getDeviceIeeeAddresses());
             const devicesInBackup = backup.devices.map((d) => `0x${d.ieeeAddress.toString('hex')}`);
-            const missingRouters = this.getDevices().filter((d) => d.type === 'Router' && !devicesInBackup.includes(d.ieeeAddr));
+            const missingRouters = [];
+
+            for (const device of this.getDevicesIterator((d) => d.type === 'Router' && !devicesInBackup.includes(d.ieeeAddr))) {
+                missingRouters.push(device);
+            }
+
             return {missingRouters};
         } else {
             throw new Error("Coordinator does not coordinator check because it doesn't support backups");
@@ -394,6 +405,13 @@ class Controller extends events.EventEmitter {
     }
 
     /**
+     * Get iterator for all devices
+     */
+    public getDevicesIterator(predicate?: (value: Device) => boolean): Generator<Device> {
+        return Device.allIterator(predicate);
+    }
+
+    /**
      * Get all devices with a specific type
      */
     public getDevicesByType(type: DeviceType): Device[] {
@@ -415,6 +433,19 @@ class Controller extends events.EventEmitter {
     }
 
     /**
+     * Get IEEE address for all devices
+     */
+    public getDeviceIeeeAddresses(): string[] {
+        const deviceIeeeAddresses = [];
+
+        for (const device of Device.allIterator()) {
+            deviceIeeeAddresses.push(device.ieeeAddr);
+        }
+
+        return deviceIeeeAddresses;
+    }
+
+    /**
      * Get group by ID
      */
     public getGroupByID(groupID: number): Group {
@@ -429,6 +460,13 @@ class Controller extends events.EventEmitter {
     }
 
     /**
+     * Get iterator for all groups
+     */
+    public getGroupsIterator(predicate?: (value: Group) => boolean): Generator<Group> {
+        return Group.allIterator(predicate);
+    }
+
+    /**
      * Create a Group
      */
     public createGroup(groupID: number): Group {
@@ -438,9 +476,10 @@ class Controller extends events.EventEmitter {
     /**
      * Broadcast a network-wide channel change.
      */
-    private async changeChannel(): Promise<void> {
-        logger.info(`Broadcasting change channel to '${this.options.network.channelList[0]}'.`, NS);
-        await this.adapter.changeChannel(this.options.network.channelList[0]);
+    private async changeChannel(oldChannel: number, newChannel: number): Promise<void> {
+        logger.warning(`Changing channel from '${oldChannel}' to '${newChannel}'`, NS);
+        await this.adapter.changeChannel(newChannel);
+        logger.info(`Channel changed to '${newChannel}'`, NS);
 
         this.networkParametersCached = null; // invalidate cache
     }
@@ -684,7 +723,7 @@ class Controller extends events.EventEmitter {
         let endpoint = device.getEndpoint(payload.endpoint);
         if (!endpoint) {
             logger.debug(
-                `Data is from unknown endpoint '${payload.endpoint}' from device with ` + `network address '${payload.address}', creating it...`,
+                `Data is from unknown endpoint '${payload.endpoint}' from device with network address '${payload.address}', creating it...`,
                 NS,
             );
             endpoint = device.createEndpoint(payload.endpoint);

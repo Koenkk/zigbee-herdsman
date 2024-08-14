@@ -16,11 +16,6 @@
         "resolveJsonModule": true,
         "incremental": true
     },
-    "include": [
-        "src/**/*.ts",
-        "src/**/*.json"
-    ],
-    "exclude": [
-        "src/deprecated"
-    ]
+    "include": ["src/**/*.ts", "src/**/*.json"],
+    "exclude": ["src/deprecated"]
 }

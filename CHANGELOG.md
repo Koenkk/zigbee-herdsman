@@ -1,5 +1,114 @@
 # Changelog
 
+## [0.55.5](https://github.com/Koenkk/zigbee-herdsman/compare/v0.55.4...v0.55.5) (2024-08-06)
+
+
+### Bug Fixes
+
+* Allow to set adapter transmit power on startup ([#1139](https://github.com/Koenkk/zigbee-herdsman/issues/1139)) ([036a2d5](https://github.com/Koenkk/zigbee-herdsman/commit/036a2d5d6b15345de448fafadec371dcf5d3c535))
+* **ignore:** update dependencies ([#1140](https://github.com/Koenkk/zigbee-herdsman/issues/1140)) ([515e855](https://github.com/Koenkk/zigbee-herdsman/commit/515e855148d7f8cae0084a91775cbd838f1bf864))
+* **ignore:** update dependencies ([#1142](https://github.com/Koenkk/zigbee-herdsman/issues/1142)) ([738c43e](https://github.com/Koenkk/zigbee-herdsman/commit/738c43e6d509f45f21d3adb8cede69218a9cbbb5))
+
+## [0.55.4](https://github.com/Koenkk/zigbee-herdsman/compare/v0.55.3...v0.55.4) (2024-08-03)
+
+
+### Bug Fixes
+
+* call fsync before rename ([#1134](https://github.com/Koenkk/zigbee-herdsman/issues/1134)) ([1c9190a](https://github.com/Koenkk/zigbee-herdsman/commit/1c9190a373c4e878f36cc23e399add3523c616ec))
+* **ignore:** update dependencies ([#1135](https://github.com/Koenkk/zigbee-herdsman/issues/1135)) ([1fd87d6](https://github.com/Koenkk/zigbee-herdsman/commit/1fd87d6a98811b1dbb4951fc6b3103ec0a6ad288))
+* Move Deconz change network paramters to `start` from `getNetworkParameters` ([#1138](https://github.com/Koenkk/zigbee-herdsman/issues/1138)) ([b207c73](https://github.com/Koenkk/zigbee-herdsman/commit/b207c730dc1439ce9e8d3fcaf12ec6b2c24e9c20))
+
+## [0.55.3](https://github.com/Koenkk/zigbee-herdsman/compare/v0.55.2...v0.55.3) (2024-07-26)
+
+
+### Bug Fixes
+
+* ZStack: throw errors when ZDO calls fail ([#1128](https://github.com/Koenkk/zigbee-herdsman/issues/1128)) ([e47812b](https://github.com/Koenkk/zigbee-herdsman/commit/e47812b8cac79f93aed2b35b9ceab29310302212))
+
+## [0.55.2](https://github.com/Koenkk/zigbee-herdsman/compare/v0.55.1...v0.55.2) (2024-07-25)
+
+
+### Bug Fixes
+
+* **ignore:** move eslint config and plugins to devDependencies ([#1129](https://github.com/Koenkk/zigbee-herdsman/issues/1129)) ([c4e7395](https://github.com/Koenkk/zigbee-herdsman/commit/c4e7395d42cbd0deb1d21fcc0962f0fdc9feac13))
+* **ignore:** Remove some unecessary string concatenations ([557ec54](https://github.com/Koenkk/zigbee-herdsman/commit/557ec54b89c1ec6f6a209726473267163bd44ee3))
+* Improve loops performance ([#1130](https://github.com/Koenkk/zigbee-herdsman/issues/1130)) ([b2e9778](https://github.com/Koenkk/zigbee-herdsman/commit/b2e9778748ba3b86c2da614fc6bee5fabaad5f29))
+
+## [0.55.1](https://github.com/Koenkk/zigbee-herdsman/compare/v0.55.0...v0.55.1) (2024-07-21)
+
+
+### Bug Fixes
+
+* **ignore:** Ember: Add tests for adapter layer ([#1126](https://github.com/Koenkk/zigbee-herdsman/issues/1126)) ([6318333](https://github.com/Koenkk/zigbee-herdsman/commit/63183339bf1a38caa8d21f9e24def2d89cec71ff))
+* **ignore:** update dependencies ([#1123](https://github.com/Koenkk/zigbee-herdsman/issues/1123)) ([cb6448c](https://github.com/Koenkk/zigbee-herdsman/commit/cb6448c4aab734c995acc2cfb9d63e36a6b7f486))
+* ZStack: throw error when bind/unbind fails ([#1125](https://github.com/Koenkk/zigbee-herdsman/issues/1125)) ([db2d9a5](https://github.com/Koenkk/zigbee-herdsman/commit/db2d9a5f563bdb4a741ce77c49e0fd3a686f3fd1))
+
+## [0.55.0](https://github.com/Koenkk/zigbee-herdsman/compare/v0.54.1...v0.55.0) (2024-07-18)
+
+
+### Features
+
+* Add `serialNumber` to `genBasic` cluster ([#1117](https://github.com/Koenkk/zigbee-herdsman/issues/1117)) ([c2de0be](https://github.com/Koenkk/zigbee-herdsman/commit/c2de0bec0eb2278bf0ea30c8ecd3e17321398fad))
+
+
+### Bug Fixes
+
+* Ember: Add keys to adapter queue executors ([#1121](https://github.com/Koenkk/zigbee-herdsman/issues/1121)) ([9bec23a](https://github.com/Koenkk/zigbee-herdsman/commit/9bec23aab314261374ebdec41c94d5b25202d6f7))
+
+## [0.54.1](https://github.com/Koenkk/zigbee-herdsman/compare/v0.54.0...v0.54.1) (2024-07-17)
+
+
+### Bug Fixes
+
+* Ember: Fix launch bootloader command ([#1118](https://github.com/Koenkk/zigbee-herdsman/issues/1118)) ([276359e](https://github.com/Koenkk/zigbee-herdsman/commit/276359e69f9957959089f17a59892c15cee6edcc))
+* Fix no `checkinInterval` after restart if device has no `genPollCtl` cluster ([#1119](https://github.com/Koenkk/zigbee-herdsman/issues/1119)) ([ca1dd1f](https://github.com/Koenkk/zigbee-herdsman/commit/ca1dd1f775b1edc6a92240e3e797f2e428d213d2))
+
+## [0.54.0](https://github.com/Koenkk/zigbee-herdsman/compare/v0.53.1...v0.54.0) (2024-07-16)
+
+
+### Features
+
+* Add `pm1Measurement` and `pm10Measurement` clusters, update `pm25Measurement` ([#1116](https://github.com/Koenkk/zigbee-herdsman/issues/1116)) ([802dfc1](https://github.com/Koenkk/zigbee-herdsman/commit/802dfc1becdd26319a296ebf2e547aad0c5af59e))
+* Support channel change for z-stack ([#1110](https://github.com/Koenkk/zigbee-herdsman/issues/1110)) ([9c9b58a](https://github.com/Koenkk/zigbee-herdsman/commit/9c9b58aebb4efbc43d20ce54abdaa2320fde0ef0))
+
+
+### Bug Fixes
+
+* Add IEEE -&gt; NWK Addr translation on RX for Conbee 3 ([#1114](https://github.com/Koenkk/zigbee-herdsman/issues/1114)) ([14b7b53](https://github.com/Koenkk/zigbee-herdsman/commit/14b7b537f15f8dfbeb6b615fec55cbd2805ddff3))
+* **ignore:** update dependencies ([#1113](https://github.com/Koenkk/zigbee-herdsman/issues/1113)) ([f73f65f](https://github.com/Koenkk/zigbee-herdsman/commit/f73f65fc0494555dac88a60266ed3c021e8e5bea))
+
+## [0.53.1](https://github.com/Koenkk/zigbee-herdsman/compare/v0.53.0...v0.53.1) (2024-07-12)
+
+
+### Bug Fixes
+
+* Allow to ignore cache for device interview ([#1109](https://github.com/Koenkk/zigbee-herdsman/issues/1109)) ([3b55e54](https://github.com/Koenkk/zigbee-herdsman/commit/3b55e5469d0827ef8ab09f1f4cd08158e10cb524))
+
+## [0.53.0](https://github.com/Koenkk/zigbee-herdsman/compare/v0.52.0...v0.53.0) (2024-07-10)
+
+
+### Features
+
+* Inovelli Adding P26 For VZM36 ([#1096](https://github.com/Koenkk/zigbee-herdsman/issues/1096)) ([4adfea3](https://github.com/Koenkk/zigbee-herdsman/commit/4adfea37dab7bd193d5fc3793da774c4e1002933))
+
+
+### Bug Fixes
+
+* Ember: Always set `TRUST_CENTER_ADDRESS_CACHE_SIZE` ([#1108](https://github.com/Koenkk/zigbee-herdsman/issues/1108)) ([72b7f55](https://github.com/Koenkk/zigbee-herdsman/commit/72b7f55a146ce17a1c59a6b41f3f6e438553f027))
+
+## [0.52.0](https://github.com/Koenkk/zigbee-herdsman/compare/v0.51.0...v0.52.0) (2024-07-08)
+
+
+### Features
+
+* Ember: Implement requests concurrency ([#1106](https://github.com/Koenkk/zigbee-herdsman/issues/1106)) ([a737f9b](https://github.com/Koenkk/zigbee-herdsman/commit/a737f9b6caff62b3d18ecee6a9cd1836798a6121))
+
+
+### Bug Fixes
+
+* **ignore:** Implement prettier ([#1103](https://github.com/Koenkk/zigbee-herdsman/issues/1103)) ([2b2bd5b](https://github.com/Koenkk/zigbee-herdsman/commit/2b2bd5be1e372d02a73dcb257ce7a9dbf6cee9b1))
+* **ignore:** update dependencies ([#1105](https://github.com/Koenkk/zigbee-herdsman/issues/1105)) ([039fd3e](https://github.com/Koenkk/zigbee-herdsman/commit/039fd3efb776232fe5491639c28977ad0f78d891))
+
 ## [0.51.0](https://github.com/Koenkk/zigbee-herdsman/compare/v0.50.1...v0.51.0) (2024-07-01)
 
 

@@ -67,8 +67,8 @@ export class Multicast {
             this._multicast[entry.multicastId] = [entry, idx];
             logger.debug(`Set MulticastTableEntry #${idx} for ${entry.multicastId} multicast id: ${status}`, NS);
             return status;
-        } catch (e) {
-            logger.error('No more available slots MulticastId subscription', NS);
+        } catch (error) {
+            logger.error(`No more available slots MulticastId subscription (${error.message})`, NS);
             return EmberStatus.INDEX_OUT_OF_RANGE;
         }
     }

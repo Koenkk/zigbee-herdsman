@@ -28,6 +28,7 @@ import {WaitForDataRequest, ApsDataRequest, ReceivedDataResponse, gpDataInd} fro
 import * as Models from '../../../models';
 import {logger} from '../../../utils/logger';
 import {BroadcastAddress} from '../../../zspec/enums';
+import Device from '../../../controller/model/device';
 
 const NS = 'zh:deconz';
 var frameParser = require('../driver/frameParser');
@@ -109,6 +110,146 @@ class DeconzAdapter extends Adapter {
     public async start(): Promise<StartResult> {
         let baudrate = this.serialPortOptions.baudRate || 38400;
         await this.driver.open(baudrate);
+
+        let changed: boolean = false;
+        let panid: any = await this.driver.readParameterRequest(PARAM.PARAM.Network.PAN_ID);
+        let expanid: any = await this.driver.readParameterRequest(PARAM.PARAM.Network.APS_EXT_PAN_ID);
+        let channel: any = await this.driver.readParameterRequest(PARAM.PARAM.Network.CHANNEL);
+        let networkKey: any = await this.driver.readParameterRequest(PARAM.PARAM.Network.NETWORK_KEY);
+
+        // check current channel against configuration.yaml
+        if (this.networkOptions.channelList[0] !== channel) {
+            logger.debug(
+                'Channel in configuration.yaml (' +
+                    this.networkOptions.channelList[0] +
+                    ') differs from current channel (' +
+                    channel +
+                    '). Changing channel.',
+                NS,
+            );
+
+            let setChannelMask = 0;
+            switch (this.networkOptions.channelList[0]) {
+                case 11:
+                    setChannelMask = 0x800;
+                    break;
+                case 12:
+                    setChannelMask = 0x1000;
+                    break;
+                case 13:
+                    setChannelMask = 0x2000;
+                    break;
+                case 14:
+                    setChannelMask = 0x4000;
+                    break;
+                case 15:
+                    setChannelMask = 0x8000;
+                    break;
+                case 16:
+                    setChannelMask = 0x10000;
+                    break;
+                case 17:
+                    setChannelMask = 0x20000;
+                    break;
+                case 18:
+                    setChannelMask = 0x40000;
+                    break;
+                case 19:
+                    setChannelMask = 0x80000;
+                    break;
+                case 20:
+                    setChannelMask = 0x100000;
+                    break;
+                case 21:
+                    setChannelMask = 0x200000;
+                    break;
+                case 22:
+                    setChannelMask = 0x400000;
+                    break;
+                case 23:
+                    setChannelMask = 0x800000;
+                    break;
+                case 24:
+                    setChannelMask = 0x1000000;
+                    break;
+                case 25:
+                    setChannelMask = 0x2000000;
+                    break;
+                case 26:
+                    setChannelMask = 0x4000000;
+                    break;
+                default:
+                    break;
+            }
+
+            try {
+                await this.driver.writeParameterRequest(PARAM.PARAM.Network.CHANNEL_MASK, setChannelMask);
+                await this.sleep(500);
+                changed = true;
+            } catch (error) {
+                logger.debug('Could not set channel: ' + error, NS);
+            }
+        }
+
+        // check current panid against configuration.yaml
+        if (this.networkOptions.panID !== panid) {
+            logger.debug(
+                'panid in configuration.yaml (' + this.networkOptions.panID + ') differs from current panid (' + panid + '). Changing panid.',
+                NS,
+            );
+
+            try {
+                await this.driver.writeParameterRequest(PARAM.PARAM.Network.PAN_ID, this.networkOptions.panID);
+                await this.sleep(500);
+                changed = true;
+            } catch (error) {
+                logger.debug('Could not set panid: ' + error, NS);
+            }
+        }
+
+        // check current extended_panid against configuration.yaml
+        if (this.driver.generalArrayToString(this.networkOptions.extendedPanID, 8) !== expanid) {
+            logger.debug(
+                'extended panid in configuration.yaml (' +
+                    this.driver.macAddrArrayToString(this.networkOptions.extendedPanID) +
+                    ') differs from current extended panid (' +
+                    expanid +
+                    '). Changing extended panid.',
+                NS,
+            );
+
+            try {
+                await this.driver.writeParameterRequest(PARAM.PARAM.Network.APS_EXT_PAN_ID, this.networkOptions.extendedPanID);
+                await this.sleep(500);
+                changed = true;
+            } catch (error) {
+                logger.debug('Could not set extended panid: ' + error, NS);
+            }
+        }
+
+        // check current network key against configuration.yaml
+        if (this.driver.generalArrayToString(this.networkOptions.networkKey, 16) !== networkKey) {
+            logger.debug(
+                'network key in configuration.yaml (hidden) differs from current network key (' + networkKey + '). Changing network key.',
+                NS,
+            );
+
+            try {
+                await this.driver.writeParameterRequest(PARAM.PARAM.Network.NETWORK_KEY, this.networkOptions.networkKey);
+                await this.sleep(500);
+                changed = true;
+            } catch (error) {
+                logger.debug('Could not set network key: ' + error, NS);
+            }
+        }
+
+        if (changed) {
+            await this.driver.changeNetworkStateRequest(PARAM.PARAM.Network.NET_OFFLINE);
+            await this.sleep(2000);
+            await this.driver.changeNetworkStateRequest(PARAM.PARAM.Network.NET_CONNECTED);
+            await this.sleep(2000);
+        }
+
         return 'resumed';
     }
 
@@ -997,150 +1138,9 @@ class DeconzAdapter extends Adapter {
 
     public async getNetworkParameters(): Promise<NetworkParameters> {
         try {
-            let changed: boolean = false;
             let panid: any = await this.driver.readParameterRequest(PARAM.PARAM.Network.PAN_ID);
             let expanid: any = await this.driver.readParameterRequest(PARAM.PARAM.Network.APS_EXT_PAN_ID);
             let channel: any = await this.driver.readParameterRequest(PARAM.PARAM.Network.CHANNEL);
-            let networkKey: any = await this.driver.readParameterRequest(PARAM.PARAM.Network.NETWORK_KEY);
-
-            // check current channel against configuration.yaml
-            if (this.networkOptions.channelList[0] !== channel) {
-                logger.debug(
-                    'Channel in configuration.yaml (' +
-                        this.networkOptions.channelList[0] +
-                        ') differs from current channel (' +
-                        channel +
-                        '). Changing channel.',
-                    NS,
-                );
-
-                let setChannelMask = 0;
-                switch (this.networkOptions.channelList[0]) {
-                    case 11:
-                        setChannelMask = 0x800;
-                        break;
-                    case 12:
-                        setChannelMask = 0x1000;
-                        break;
-                    case 13:
-                        setChannelMask = 0x2000;
-                        break;
-                    case 14:
-                        setChannelMask = 0x4000;
-                        break;
-                    case 15:
-                        setChannelMask = 0x8000;
-                        break;
-                    case 16:
-                        setChannelMask = 0x10000;
-                        break;
-                    case 17:
-                        setChannelMask = 0x20000;
-                        break;
-                    case 18:
-                        setChannelMask = 0x40000;
-                        break;
-                    case 19:
-                        setChannelMask = 0x80000;
-                        break;
-                    case 20:
-                        setChannelMask = 0x100000;
-                        break;
-                    case 21:
-                        setChannelMask = 0x200000;
-                        break;
-                    case 22:
-                        setChannelMask = 0x400000;
-                        break;
-                    case 23:
-                        setChannelMask = 0x800000;
-                        break;
-                    case 24:
-                        setChannelMask = 0x1000000;
-                        break;
-                    case 25:
-                        setChannelMask = 0x2000000;
-                        break;
-                    case 26:
-                        setChannelMask = 0x4000000;
-                        break;
-                    default:
-                        break;
-                }
-
-                try {
-                    await this.driver.writeParameterRequest(PARAM.PARAM.Network.CHANNEL_MASK, setChannelMask);
-                    await this.sleep(500);
-                    changed = true;
-                } catch (error) {
-                    logger.debug('Could not set channel: ' + error, NS);
-                }
-            }
-
-            // check current panid against configuration.yaml
-            if (this.networkOptions.panID !== panid) {
-                logger.debug(
-                    'panid in configuration.yaml (' + this.networkOptions.panID + ') differs from current panid (' + panid + '). Changing panid.',
-                    NS,
-                );
-
-                try {
-                    await this.driver.writeParameterRequest(PARAM.PARAM.Network.PAN_ID, this.networkOptions.panID);
-                    await this.sleep(500);
-                    changed = true;
-                } catch (error) {
-                    logger.debug('Could not set panid: ' + error, NS);
-                }
-            }
-
-            // check current extended_panid against configuration.yaml
-            if (this.driver.generalArrayToString(this.networkOptions.extendedPanID, 8) !== expanid) {
-                logger.debug(
-                    'extended panid in configuration.yaml (' +
-                        this.driver.macAddrArrayToString(this.networkOptions.extendedPanID) +
-                        ') differs from current extended panid (' +
-                        expanid +
-                        '). Changing extended panid.',
-                    NS,
-                );
-
-                try {
-                    await this.driver.writeParameterRequest(PARAM.PARAM.Network.APS_EXT_PAN_ID, this.networkOptions.extendedPanID);
-                    await this.sleep(500);
-                    changed = true;
-                } catch (error) {
-                    logger.debug('Could not set extended panid: ' + error, NS);
-                }
-            }
-
-            // check current network key against configuration.yaml
-            if (this.driver.generalArrayToString(this.networkOptions.networkKey, 16) !== networkKey) {
-                logger.debug(
-                    'network key in configuration.yaml (hidden) differs from current network key (' + networkKey + '). Changing network key.',
-                    NS,
-                );
-
-                try {
-                    await this.driver.writeParameterRequest(PARAM.PARAM.Network.NETWORK_KEY, this.networkOptions.networkKey);
-                    await this.sleep(500);
-                    changed = true;
-                } catch (error) {
-                    logger.debug('Could not set network key: ' + error, NS);
-                }
-            }
-
-            if (changed) {
-                await this.driver.changeNetworkStateRequest(PARAM.PARAM.Network.NET_OFFLINE);
-                await this.sleep(2000);
-                await this.driver.changeNetworkStateRequest(PARAM.PARAM.Network.NET_CONNECTED);
-                await this.sleep(2000);
-
-                panid = await this.driver.readParameterRequest(PARAM.PARAM.Network.PAN_ID);
-                expanid = await this.driver.readParameterRequest(PARAM.PARAM.Network.APS_EXT_PAN_ID);
-                channel = await this.driver.readParameterRequest(PARAM.PARAM.Network.CHANNEL);
-                networkKey = await this.driver.readParameterRequest(PARAM.PARAM.Network.NETWORK_KEY);
-            }
-
             return {
                 panID: panid,
                 extendedPanID: expanid,
@@ -1173,12 +1173,8 @@ class DeconzAdapter extends Adapter {
         throw new Error('not supported');
     }
 
-    public async supportsChangeChannel(): Promise<boolean> {
-        return false;
-    }
-
     public async changeChannel(newChannel: number): Promise<void> {
-        throw new Error('not supported');
+        throw new Error(`Channel change is not supported for 'deconz'`);
     }
 
     public async setTransmitPower(value: number): Promise<void> {
@@ -1256,7 +1252,25 @@ class DeconzAdapter extends Adapter {
         const payBuf = resp != null ? Buffer.from(resp.asduPayload) : null;
 
         if (resp != null) {
-            srcAddr = resp.srcAddr16 != null ? resp.srcAddr16 : resp.srcAddr64;
+            if (resp.srcAddr16 != null) {
+                srcAddr = resp.srcAddr16;
+            } else {
+                // For some devices srcAddr64 is reported by ConBee 3, even if the frame contains both
+                // srcAddr16 and srcAddr64. This happens even if the request was sent to a short address.
+                // At least some parts, e.g. the while loop below, only work with srcAddr16 (i.e. the network
+                // address) being set. So we try to look up the network address in the list of know devices.
+                if (resp.srcAddr64 != null) {
+                    logger.debug(`Try to find network address of ${resp.srcAddr64}`, NS);
+                    // Note: Device expects addresses with a 0x prefix...
+                    let device = Device.byIeeeAddr('0x' + resp.srcAddr64, false);
+                    if (device != undefined) {
+                        srcAddr = device.networkAddress;
+                    }
+                }
+                // apperantly some functions furhter up in the protocol stack expect this to be set.
+                // so let's make sure they get the network address
+                resp.srcAddr16 = srcAddr;
+            }
             if (resp.profileId != 0x00) {
                 header = Zcl.Header.fromBuffer(payBuf);
             }

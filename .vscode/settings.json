@@ -1,9 +1,6 @@
 {
     "eslint.enable": true,
-    "eslint.validate": [
-        "javascript",
-        "typescript",
-    ],
+    "eslint.validate": ["javascript", "typescript"],
     "javascript.format.insertSpaceAfterOpeningAndBeforeClosingNonemptyBraces": false,
     "javascript.format.insertSpaceAfterOpeningAndBeforeClosingEmptyBraces": false,
     "editor.defaultFormatter": "dbaeumer.vscode-eslint",
@@ -15,5 +12,5 @@
         "editor.codeActionsOnSave": {
             "source.organizeImports": "never"
         }
-    },
+    }
 }

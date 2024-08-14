@@ -639,7 +639,7 @@ export class Driver extends EventEmitter {
             const seq = (apsFrame.sequence + 1) & 0xff;
             await this.ezsp.sendMulticast(apsFrame, seq, data);
             return true;
-        } catch (e) {
+        } catch {
             return false;
         }
     }
@@ -674,7 +674,7 @@ export class Driver extends EventEmitter {
             const seq = (apsFrame.sequence + 1) & 0xff;
             await this.ezsp.sendBroadcast(destination, apsFrame, seq, data);
             return true;
-        } catch (e) {
+        } catch {
             return false;
         }
     }
@@ -897,10 +897,7 @@ export class Driver extends EventEmitter {
             const keyInfo = await this.ezsp.execCommand('exportKey', {context: smc});
 
             if (keyInfo.status !== SLStatus.SL_STATUS_OK) {
-                logger.error(
-                    `exportKey(${EmberKeyType.valueToName(EmberKeyType, keyType)}) ` + `returned unexpected SL status: ${keyInfo.status}`,
-                    NS,
-                );
+                logger.error(`exportKey(${EmberKeyType.valueToName(EmberKeyType, keyType)}) returned unexpected SL status: ${keyInfo.status}`, NS);
             }
             return keyInfo;
         }
@@ -952,10 +949,7 @@ export class Driver extends EventEmitter {
                     `backup=${Buffer.from(networkParams.extendedPanId).toString('hex')}`,
                 NS,
             );
-            logger.error(
-                `- Channel: configured=${options.channelList}, adapter=${networkParams.radioChannel}, ` + `backup=${backup.logicalChannel}`,
-                NS,
-            );
+            logger.error(`- Channel: configured=${options.channelList}, adapter=${networkParams.radioChannel}, backup=${backup.logicalChannel}`, NS);
             logger.error(
                 `- Network key: configured=${Buffer.from(options.networkKey).toString('hex')}, ` +
                     `adapter=${Buffer.from(netKey).toString('hex')}, ` +

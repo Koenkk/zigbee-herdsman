@@ -669,7 +669,7 @@ export class BuffaloZcl extends Buffalo {
                 const len_lo = this.readUInt8();
                 const data = this.readBuffer(len_lo + (len_hi << 8));
                 value.push({dp, datatype, data});
-            } catch (error) {
+            } catch {
                 break;
             }
         }

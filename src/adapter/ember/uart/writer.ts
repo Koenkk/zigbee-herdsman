@@ -1,6 +1,7 @@
 /* istanbul ignore file */
 import {Readable, ReadableOptions} from 'stream';
-// import {logger} from "../../../utils/logger";
+
+// import {logger} from '../../../utils/logger';
 
 // const NS = 'zh:ember:uart:ash:writer';
 
