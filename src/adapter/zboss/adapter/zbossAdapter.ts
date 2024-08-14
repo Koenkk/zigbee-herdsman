@@ -102,7 +102,17 @@ export class ZBOSSAdapter extends Adapter {
     }
 
     public async getNetworkParameters(): Promise<TsType.NetworkParameters> {
-        return null;
+        return this.queue.execute<TsType.NetworkParameters>(async () => {
+            const channel = this.driver.netInfo.network.channel;
+            const panID = this.driver.netInfo.network.panID;
+            const extendedPanID = this.driver.netInfo.network.extendedPanID;
+
+            return {
+                panID,
+                extendedPanID,
+                channel,
+            };
+        });
     }
 
     public async supportsChangeChannel(): Promise<boolean> {
