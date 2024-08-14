@@ -5,6 +5,7 @@ import {fs} from 'mz';
 import * as Models from '../../../models';
 import {BackupUtils} from '../../../utils';
 import {logger} from '../../../utils/logger';
+import {NULL_NODE_ID} from '../../../zspec';
 import {NvItemsIds, NvSystemIds} from '../constants/common';
 import * as Structs from '../structs';
 import {AddressManagerUser, SecurityManagerAuthenticationOption} from '../structs';
@@ -309,8 +310,7 @@ export class AdapterBackup {
         /* populate device & security tables and write them */
         for (const device of backup.devices) {
             const ame = addressManagerTable.getNextFree();
-            assert(device.networkAddress, 'Device networkAddress can never be `null` for ZStack backups'); // TODO, check with Nerivec
-            ame.nwkAddr = device.networkAddress;
+            ame.nwkAddr = device.networkAddress != null ? device.networkAddress : NULL_NODE_ID;
             ame.extAddr = device.ieeeAddress;
             ame.user = device.isDirectChild ? AddressManagerUser.Assoc : AddressManagerUser.Default;
             if (device.linkKey) {

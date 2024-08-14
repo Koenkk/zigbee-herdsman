@@ -81,7 +81,7 @@ export class Table<R extends BuiltStruct> implements SerializableMemoryObject {
      * Return next free entry or `null` if no entries are free within the table.
      */
     public getNextFree(): R {
-        return this.free[0] || null;
+        return this.free[0] ?? null;
     }
 
     /**
@@ -90,7 +90,8 @@ export class Table<R extends BuiltStruct> implements SerializableMemoryObject {
      * @param entry Entry to resolve index for.
      */
     public indexOf(entry: R): number | null {
-        return this.entries.findIndex((e) => e.serialize().equals(entry.serialize())) || null;
+        /* istanbul ignore next */
+        return this.entries.findIndex((e) => e.serialize().equals(entry.serialize())) ?? null;
     }
 
     /**

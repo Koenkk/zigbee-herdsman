@@ -475,7 +475,7 @@ describe('ZNP', () => {
         await znp.open();
         requestSpy.mockRestore();
 
-        const result = await znp.request(UnpiConstants.Subsystem.SYS, 'osalNvRead', {id: 1, offset: 2});
+        const result = await znp.requestWithReply(UnpiConstants.Subsystem.SYS, 'osalNvRead', {id: 1, offset: 2});
 
         const frame = mockUnpiWriterWriteFrame.mock.calls[0][0];
         expect(mockUnpiWriterWriteFrame).toHaveBeenCalledTimes(1);
@@ -800,6 +800,17 @@ describe('ZNP', () => {
 
             jest.runOnlyPendingTimers();
         });
+    });
+
+    it('znp requestWithReply should throw error when request as no reply', async () => {
+        await znp.open();
+
+        try {
+            await znp.requestWithReply(UnpiConstants.Subsystem.ZDO, 'autoFindDestination', {});
+            fail('Should throw error');
+        } catch (error) {
+            expect(error).toStrictEqual(new Error('Command autoFindDestination has no reply'));
+        }
     });
 
     it('ZpiObject throw error on missing write parser', async () => {

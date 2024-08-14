@@ -5,7 +5,6 @@ import Device from '../../../controller/model/device';
 import * as Models from '../../../models';
 import {Queue, Waitress} from '../../../utils';
 import {logger} from '../../../utils/logger';
-import {assertNotUndefined} from '../../../utils/utils';
 import {BroadcastAddress} from '../../../zspec/enums';
 import * as Zcl from '../../../zspec/zcl';
 import Adapter from '../../adapter';
@@ -1004,7 +1003,7 @@ class DeconzAdapter extends Adapter {
         let destArray: number[];
 
         if (type === 'endpoint') {
-            assertNotUndefined(destinationEndpoint, 'Destination endpoint must be defined when `type === endpoint`');
+            assert(destinationEndpoint, 'Destination endpoint must be defined when `type === endpoint`');
             destArray = this.driver.macAddrStringToArray(destinationAddressOrGroup as string);
             destArray = destArray.concat([destinationEndpoint]);
         } else {
@@ -1064,7 +1063,7 @@ class DeconzAdapter extends Adapter {
         let destArray: number[];
 
         if (type === 'endpoint') {
-            assertNotUndefined(destinationEndpoint, 'Destination endpoint must be defined when `type === endpoint`');
+            assert(destinationEndpoint, 'Destination endpoint must be defined when `type === endpoint`');
             destArray = this.driver.macAddrStringToArray(destinationAddressOrGroup as string);
             destArray = destArray.concat([destinationEndpoint]);
         } else {
@@ -1297,7 +1296,7 @@ class DeconzAdapter extends Adapter {
                     srcAddr = Device.byIeeeAddr('0x' + resp.srcAddr64, false)?.networkAddress;
                 }
 
-                assertNotUndefined(srcAddr, 'Failed to find srcAddr of message');
+                assert(srcAddr, 'Failed to find srcAddr of message');
                 // apperantly some functions furhter up in the protocol stack expect this to be set.
                 // so let's make sure they get the network address
                 resp.srcAddr16 = srcAddr; // TODO: can't be undefined

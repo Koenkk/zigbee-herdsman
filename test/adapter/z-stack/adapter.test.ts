@@ -77,563 +77,319 @@ const serialPortOptions = {
     path: 'dummy',
 };
 
-const backupMatchingConfig = JSON.parse(`
-{
-    "metadata": {
-      "format": "zigpy/open-coordinator-backup",
-      "version": 1,
-      "source": "zigbee-herdsman@0.13.65",
-      "internal": {
-        "date": "2021-03-03T19:15:40.524Z",
-        "znpVersion": 2
-      }
+const backupMatchingConfig = {
+    metadata: {
+        format: 'zigpy/open-coordinator-backup',
+        version: 1,
+        source: 'zigbee-herdsman@0.13.65',
+        internal: {
+            date: '2021-03-03T19:15:40.524Z',
+            znpVersion: 2,
+        },
     },
-    "stack_specific": {
-      "zstack": {
-        "tclk_seed": "928a2c479e72a9a53e3b5133fc55021f"
-      }
+    stack_specific: {
+        zstack: {
+            tclk_seed: '928a2c479e72a9a53e3b5133fc55021f',
+        },
     },
-    "coordinator_ieee": "00124b0009d80ba7",
-    "pan_id": "007b",
-    "extended_pan_id": "00124b0009d69f77",
-    "nwk_update_id": 0,
-    "security_level": 5,
-    "channel": 21,
-    "channel_mask": [
-      21
+    coordinator_ieee: '00124b0009d80ba7',
+    pan_id: '007b',
+    extended_pan_id: '00124b0009d69f77',
+    nwk_update_id: 0,
+    security_level: 5,
+    channel: 21,
+    channel_mask: [21],
+    network_key: {
+        key: '01030507090b0d0f00020406080a0c0d',
+        sequence_number: 0,
+        frame_counter: 16754,
+    },
+    devices: [
+        {
+            nwk_address: 'ddf6',
+            ieee_address: '00124b002226ef87',
+        },
+        {
+            nwk_address: 'c2dc',
+            ieee_address: '04cf8cdf3c79455f',
+            link_key: {
+                key: '0e768569dd935d8e7302e74e7629f13f',
+                rx_counter: 0,
+                tx_counter: 275,
+            },
+        },
+        {
+            nwk_address: '740a',
+            ieee_address: '680ae2fffeae5647',
+            link_key: {
+                key: '7c079d02aae015facd7ae9608d4baf56',
+                rx_counter: 0,
+                tx_counter: 275,
+            },
+        },
+        {
+            nwk_address: '19fa',
+            ieee_address: '00158d00024fa79b',
+            link_key: {
+                key: 'cea550908aa1529ee90eea3c3bdc26fc',
+                rx_counter: 0,
+                tx_counter: 44,
+            },
+        },
+        {
+            nwk_address: '6182',
+            ieee_address: '00158d00024f4518',
+            link_key: {
+                key: '267e1e31fcd8171f8acf63459effbca5',
+                rx_counter: 0,
+                tx_counter: 44,
+            },
+        },
+        {
+            nwk_address: '4285',
+            ieee_address: '00158d00024f810d',
+            is_child: false,
+            link_key: {
+                key: '55ba1e31fcd8171f9f0b63459effbca5',
+                rx_counter: 0,
+                tx_counter: 44,
+            },
+        },
+        {
+            // "nwk_address": "4286", commented because `nwk_address` is optional in the backup
+            ieee_address: '00158d00024f810e',
+            is_child: true,
+            link_key: {
+                key: '55ba1e31fcd8171fee0b63459effeea5',
+                rx_counter: 24,
+                tx_counter: 91,
+            },
+        },
     ],
-    "network_key": {
-      "key": "01030507090b0d0f00020406080a0c0d",
-      "sequence_number": 0,
-      "frame_counter": 16754
-    },
-    "devices": [
-      {
-        "nwk_address": "ddf6",
-        "ieee_address": "00124b002226ef87"
-      },
-      {
-        "nwk_address": "c2dc",
-        "ieee_address": "04cf8cdf3c79455f",
-        "link_key": {
-          "key": "0e768569dd935d8e7302e74e7629f13f",
-          "rx_counter": 0,
-          "tx_counter": 275
-        }
-      },
-      {
-        "nwk_address": "740a",
-        "ieee_address": "680ae2fffeae5647",
-        "link_key": {
-          "key": "7c079d02aae015facd7ae9608d4baf56",
-          "rx_counter": 0,
-          "tx_counter": 275
-        }
-      },
-      {
-        "nwk_address": "19fa",
-        "ieee_address": "00158d00024fa79b",
-        "link_key": {
-          "key": "cea550908aa1529ee90eea3c3bdc26fc",
-          "rx_counter": 0,
-          "tx_counter": 44
-        }
-      },
-      {
-        "nwk_address": "6182",
-        "ieee_address": "00158d00024f4518",
-        "link_key": {
-          "key": "267e1e31fcd8171f8acf63459effbca5",
-          "rx_counter": 0,
-          "tx_counter": 44
-        }
-      },
-      {
-        "nwk_address": "4285",
-        "ieee_address": "00158d00024f810d",
-        "is_child": false,
-        "link_key": {
-          "key": "55ba1e31fcd8171f9f0b63459effbca5",
-          "rx_counter": 0,
-          "tx_counter": 44
-        }
-      },
-      {
-        "nwk_address": "4286",
-        "ieee_address": "00158d00024f810e",
-        "is_child": true,
-        "link_key": {
-          "key": "55ba1e31fcd8171fee0b63459effeea5",
-          "rx_counter": 24,
-          "tx_counter": 91
-        }
-      }
-    ]
-  }
-`);
+};
 
-const backupMatchingConfig12 = JSON.parse(`
-{
-    "metadata": {
-      "format": "zigpy/open-coordinator-backup",
-      "version": 1,
-      "source": "zigbee-herdsman@0.13.65",
-      "internal": {
-        "date": "2021-03-03T19:15:40.524Z",
-        "znpVersion": 0
-      }
+const backupMatchingConfig12 = {
+    metadata: {
+        format: 'zigpy/open-coordinator-backup',
+        version: 1,
+        source: 'zigbee-herdsman@0.13.65',
+        internal: {
+            date: '2021-03-03T19:15:40.524Z',
+            znpVersion: 0,
+        },
     },
-    "stack_specific": {
-      "zstack": {}
+    stack_specific: {
+        zstack: {},
     },
-    "coordinator_ieee": "00124b0009d80ba7",
-    "pan_id": "007b",
-    "extended_pan_id": "00124b0009d69f77",
-    "nwk_update_id": 0,
-    "security_level": 5,
-    "channel": 21,
-    "channel_mask": [
-      21
+    coordinator_ieee: '00124b0009d80ba7',
+    pan_id: '007b',
+    extended_pan_id: '00124b0009d69f77',
+    nwk_update_id: 0,
+    security_level: 5,
+    channel: 21,
+    channel_mask: [21],
+    network_key: {
+        key: '01030507090b0d0f00020406080a0c0d',
+        sequence_number: 0,
+        frame_counter: 0,
+    },
+    devices: [
+        {
+            nwk_address: 'ddf6',
+            ieee_address: '00124b002226ef87',
+        },
     ],
-    "network_key": {
-      "key": "01030507090b0d0f00020406080a0c0d",
-      "sequence_number": 0,
-      "frame_counter": 0
-    },
-    "devices": [
-      {
-        "nwk_address": "ddf6",
-        "ieee_address": "00124b002226ef87"
-      }
-    ]
-  }
-`);
+};
 
-const backupNotMatchingConfig = JSON.parse(`
-{
-    "metadata": {
-      "format": "zigpy/open-coordinator-backup",
-      "version": 1,
-      "source": "zigbee-herdsman@0.13.65",
-      "internal": {
-        "date": "2021-03-03T19:15:40.524Z",
-        "znpVersion": 2
-      }
+const backupNotMatchingConfig = {
+    metadata: {
+        format: 'zigpy/open-coordinator-backup',
+        version: 1,
+        source: 'zigbee-herdsman@0.13.65',
+        internal: {
+            date: '2021-03-03T19:15:40.524Z',
+            znpVersion: 2,
+        },
     },
-    "stack_specific": {
-      "zstack": {
-        "tclk_seed": "928a2c479e72a9a53e3b5133fc55021f"
-      }
+    stack_specific: {
+        zstack: {
+            tclk_seed: '928a2c479e72a9a53e3b5133fc55021f',
+        },
     },
-    "coordinator_ieee": "00124b0009d80ba7",
-    "pan_id": "007c",
-    "extended_pan_id": "00124b0009d69f77",
-    "nwk_update_id": 0,
-    "security_level": 5,
-    "channel": 21,
-    "channel_mask": [
-      21
+    coordinator_ieee: '00124b0009d80ba7',
+    pan_id: '007c',
+    extended_pan_id: '00124b0009d69f77',
+    nwk_update_id: 0,
+    security_level: 5,
+    channel: 21,
+    channel_mask: [21],
+    network_key: {
+        key: '01030507090b0d0f00020406080a0c0d',
+        sequence_number: 0,
+        frame_counter: 16754,
+    },
+    devices: [
+        {
+            nwk_address: 'ddf6',
+            ieee_address: '00124b002226ef87',
+        },
+        {
+            nwk_address: 'c2dc',
+            ieee_address: '04cf8cdf3c79455f',
+            link_key: {
+                key: '0e768569dd935d8e7302e74e7629f13f',
+                rx_counter: 0,
+                tx_counter: 275,
+            },
+        },
+        {
+            nwk_address: '740a',
+            ieee_address: '680ae2fffeae5647',
+            link_key: {
+                key: '7c079d02aae015facd7ae9608d4baf56',
+                rx_counter: 0,
+                tx_counter: 275,
+            },
+        },
+        {
+            nwk_address: '19fa',
+            ieee_address: '00158d00024fa79b',
+            link_key: {
+                key: 'cea550908aa1529ee90eea3c3bdc26fc',
+                rx_counter: 0,
+                tx_counter: 44,
+            },
+        },
+        {
+            nwk_address: '6182',
+            ieee_address: '00158d00024f4518',
+            link_key: {
+                key: '267e1e31fcd8171f8acf63459effbca5',
+                rx_counter: 0,
+                tx_counter: 44,
+            },
+        },
+        {
+            nwk_address: '4285',
+            ieee_address: '00158d00024f810d',
+            link_key: {
+                key: '55ba1e31fcd8171f9f0b63459effbca5',
+                rx_counter: 0,
+                tx_counter: 44,
+            },
+        },
     ],
-    "network_key": {
-      "key": "01030507090b0d0f00020406080a0c0d",
-      "sequence_number": 0,
-      "frame_counter": 16754
-    },
-    "devices": [
-      {
-        "nwk_address": "ddf6",
-        "ieee_address": "00124b002226ef87"
-      },
-      {
-        "nwk_address": "c2dc",
-        "ieee_address": "04cf8cdf3c79455f",
-        "link_key": {
-          "key": "0e768569dd935d8e7302e74e7629f13f",
-          "rx_counter": 0,
-          "tx_counter": 275
-        }
-      },
-      {
-        "nwk_address": "740a",
-        "ieee_address": "680ae2fffeae5647",
-        "link_key": {
-          "key": "7c079d02aae015facd7ae9608d4baf56",
-          "rx_counter": 0,
-          "tx_counter": 275
-        }
-      },
-      {
-        "nwk_address": "19fa",
-        "ieee_address": "00158d00024fa79b",
-        "link_key": {
-          "key": "cea550908aa1529ee90eea3c3bdc26fc",
-          "rx_counter": 0,
-          "tx_counter": 44
-        }
-      },
-      {
-        "nwk_address": "6182",
-        "ieee_address": "00158d00024f4518",
-        "link_key": {
-          "key": "267e1e31fcd8171f8acf63459effbca5",
-          "rx_counter": 0,
-          "tx_counter": 44
-        }
-      },
-      {
-        "nwk_address": "4285",
-        "ieee_address": "00158d00024f810d",
-        "link_key": {
-          "key": "55ba1e31fcd8171f9f0b63459effbca5",
-          "rx_counter": 0,
-          "tx_counter": 44
-        }
-      }
-    ]
-  }
-`);
+};
 
-const legacyBackup = JSON.parse(`
-{
-    "adapterType": "zStack",
-    "time": "Thu, 04 Mar 2021 10:55:12 GMT",
-    "meta": {
-        "product": 2
+const legacyBackup = {
+    adapterType: 'zStack',
+    time: 'Thu, 04 Mar 2021 10:55:12 GMT',
+    meta: {
+        product: 2,
     },
-    "data": {
-        "ZCD_NV_EXTADDR": {
-            "id": 1,
-            "offset": 0,
-            "osal": true,
-            "product": -1,
-            "value": [
-                167,
-                11,
-                216,
-                9,
-                0,
-                75,
-                18,
-                0
-            ],
-            "len": 8
+    data: {
+        ZCD_NV_EXTADDR: {
+            id: 1,
+            offset: 0,
+            osal: true,
+            product: -1,
+            value: [167, 11, 216, 9, 0, 75, 18, 0],
+            len: 8,
         },
-        "ZCD_NV_NIB": {
-            "id": 33,
-            "offset": 0,
-            "osal": true,
-            "product": -1,
-            "value": [
-                145,
-                5,
-                2,
-                16,
-                20,
-                16,
-                0,
-                20,
-                0,
-                0,
-                0,
-                1,
-                5,
-                1,
-                143,
-                7,
-                0,
-                2,
-                5,
-                30,
-                0,
-                0,
-                11,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                123,
-                0,
-                8,
-                0,
-                0,
-                32,
-                0,
-                15,
-                15,
-                4,
-                0,
-                1,
-                0,
-                0,
-                0,
-                1,
-                0,
-                0,
-                0,
-                0,
-                119,
-                159,
-                214,
-                9,
-                0,
-                75,
-                18,
-                0,
-                1,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                60,
-                3,
-                0,
-                1,
-                120,
-                10,
-                1,
-                0,
-                0,
-                146,
-                235,
-                0
+        ZCD_NV_NIB: {
+            id: 33,
+            offset: 0,
+            osal: true,
+            product: -1,
+            value: [
+                145, 5, 2, 16, 20, 16, 0, 20, 0, 0, 0, 1, 5, 1, 143, 7, 0, 2, 5, 30, 0, 0, 11, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 123, 0, 8, 0, 0, 32, 0,
+                15, 15, 4, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 119, 159, 214, 9, 0, 75, 18, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 60, 3, 0, 1, 120, 10, 1, 0, 0, 146, 235, 0,
             ],
-            "len": 110
+            len: 110,
         },
-        "ZCD_NV_PANID": {
-            "id": 131,
-            "offset": 0,
-            "osal": true,
-            "product": -1,
-            "value": [
-                123,
-                0
-            ],
-            "len": 2
+        ZCD_NV_PANID: {
+            id: 131,
+            offset: 0,
+            osal: true,
+            product: -1,
+            value: [123, 0],
+            len: 2,
         },
-        "ZCD_NV_EXTENDED_PAN_ID": {
-            "id": 45,
-            "offset": 0,
-            "osal": true,
-            "product": -1,
-            "value": [
-                221,
-                221,
-                221,
-                221,
-                221,
-                221,
-                221,
-                221
-            ],
-            "len": 8
+        ZCD_NV_EXTENDED_PAN_ID: {
+            id: 45,
+            offset: 0,
+            osal: true,
+            product: -1,
+            value: [221, 221, 221, 221, 221, 221, 221, 221],
+            len: 8,
         },
-        "ZCD_NV_NWK_ACTIVE_KEY_INFO": {
-            "id": 58,
-            "offset": 0,
-            "osal": true,
-            "product": -1,
-            "value": [
-                0,
-                1,
-                3,
-                5,
-                7,
-                9,
-                11,
-                13,
-                15,
-                0,
-                2,
-                4,
-                6,
-                8,
-                10,
-                12,
-                13
-            ],
-            "len": 17
+        ZCD_NV_NWK_ACTIVE_KEY_INFO: {
+            id: 58,
+            offset: 0,
+            osal: true,
+            product: -1,
+            value: [0, 1, 3, 5, 7, 9, 11, 13, 15, 0, 2, 4, 6, 8, 10, 12, 13],
+            len: 17,
         },
-        "ZCD_NV_NWK_ALTERN_KEY_INFO": {
-            "id": 59,
-            "offset": 0,
-            "osal": true,
-            "product": -1,
-            "value": [
-                0,
-                1,
-                3,
-                5,
-                7,
-                9,
-                11,
-                13,
-                15,
-                0,
-                2,
-                4,
-                6,
-                8,
-                10,
-                12,
-                13
-            ],
-            "len": 17
+        ZCD_NV_NWK_ALTERN_KEY_INFO: {
+            id: 59,
+            offset: 0,
+            osal: true,
+            product: -1,
+            value: [0, 1, 3, 5, 7, 9, 11, 13, 15, 0, 2, 4, 6, 8, 10, 12, 13],
+            len: 17,
         },
-        "ZCD_NV_APS_USE_EXT_PANID": {
-            "id": 71,
-            "offset": 0,
-            "osal": true,
-            "product": -1,
-            "value": [
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0
-            ],
-            "len": 8
+        ZCD_NV_APS_USE_EXT_PANID: {
+            id: 71,
+            offset: 0,
+            osal: true,
+            product: -1,
+            value: [0, 0, 0, 0, 0, 0, 0, 0],
+            len: 8,
         },
-        "ZCD_NV_PRECFGKEY": {
-            "id": 98,
-            "offset": 0,
-            "osal": true,
-            "product": -1,
-            "value": [
-                1,
-                3,
-                5,
-                7,
-                9,
-                11,
-                13,
-                15,
-                0,
-                2,
-                4,
-                6,
-                8,
-                10,
-                12,
-                13
-            ],
-            "len": 16
+        ZCD_NV_PRECFGKEY: {
+            id: 98,
+            offset: 0,
+            osal: true,
+            product: -1,
+            value: [1, 3, 5, 7, 9, 11, 13, 15, 0, 2, 4, 6, 8, 10, 12, 13],
+            len: 16,
         },
-        "ZCD_NV_PRECFGKEY_ENABLE": {
-            "id": 99,
-            "offset": 0,
-            "osal": true,
-            "product": -1,
-            "value": [
-                0
-            ],
-            "len": 1
+        ZCD_NV_PRECFGKEY_ENABLE: {
+            id: 99,
+            offset: 0,
+            osal: true,
+            product: -1,
+            value: [0],
+            len: 1,
         },
-        "ZCD_NV_CHANLIST": {
-            "id": 132,
-            "offset": 0,
-            "osal": true,
-            "product": -1,
-            "value": [
-                0,
-                20,
-                0,
-                0
-            ],
-            "len": 4
+        ZCD_NV_CHANLIST: {
+            id: 132,
+            offset: 0,
+            osal: true,
+            product: -1,
+            value: [0, 20, 0, 0],
+            len: 4,
         },
-        "ZCD_NV_LEGACY_TCLK_TABLE_START": {
-            "id": 273,
-            "product": 2,
-            "offset": 0,
-            "osal": true,
-            "value": [
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                255,
-                0,
-                0
-            ],
-            "len": 19
+        ZCD_NV_LEGACY_TCLK_TABLE_START: {
+            id: 273,
+            product: 2,
+            offset: 0,
+            osal: true,
+            value: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255, 0, 0],
+            len: 19,
         },
-        "ZCD_NV_LEGACY_NWK_SEC_MATERIAL_TABLE_START": {
-            "id": 117,
-            "product": 2,
-            "offset": 0,
-            "osal": true,
-            "value": [
-                83,
-                144,
-                14,
-                0,
-                134,
-                114,
-                56,
-                25,
-                0,
-                75,
-                18,
-                0
-            ],
-            "len": 12
-        }
-    }
-}
-`);
+        ZCD_NV_LEGACY_NWK_SEC_MATERIAL_TABLE_START: {
+            id: 117,
+            product: 2,
+            offset: 0,
+            osal: true,
+            value: [83, 144, 14, 0, 134, 114, 56, 25, 0, 75, 18, 0],
+            len: 12,
+        },
+    },
+};
 
 class ZnpRequestMockBuilder {
     public responders: {subsystem: Subsystem; command: string; exec: (payload: any, handler?: ZnpRequestMockBuilder) => any}[] = [];

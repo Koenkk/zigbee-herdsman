@@ -4,7 +4,6 @@ import debounce from 'debounce';
 import * as Models from '../../../models';
 import {Queue, Waitress, Wait} from '../../../utils';
 import {logger} from '../../../utils/logger';
-import {assertNotUndefined} from '../../../utils/utils';
 import {BroadcastAddress} from '../../../zspec/enums';
 import * as Zcl from '../../../zspec/zcl';
 import {Status as ZdoStatus} from '../../../zspec/zdo';
@@ -514,7 +513,7 @@ class ZStackAdapter extends Adapter {
                     assocRestore,
                 );
             } else {
-                assertNotUndefined(ieeeAddr);
+                assert(ieeeAddr);
                 let doAssocRemove = false;
                 if (
                     !assocRemove &&
@@ -922,7 +921,7 @@ class ZStackAdapter extends Adapter {
                     }
 
                     const debouncer = this.deviceAnnounceRouteDiscoveryDebouncers.get(payload.networkAddress);
-                    assertNotUndefined(debouncer);
+                    assert(debouncer);
                     debouncer();
                 }
 

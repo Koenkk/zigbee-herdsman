@@ -1,8 +1,9 @@
 /* istanbul ignore file */
+import assert from 'assert';
+
 import * as Models from '../../../models';
 import {Queue, Waitress, Wait, RealpathSync} from '../../../utils';
 import {logger} from '../../../utils/logger';
-import {assertTrue} from '../../../utils/utils';
 import {BroadcastAddress} from '../../../zspec/enums';
 import * as Zcl from '../../../zspec/zcl';
 import Adapter from '../../adapter';
@@ -677,7 +678,7 @@ class EZSPAdapter extends Adapter {
     }
 
     public async backup(): Promise<Models.Backup> {
-        assertTrue(this.driver.ezsp.isInitialized(), 'Cannot make backup when ezsp is not initialized');
+        assert(this.driver.ezsp.isInitialized(), 'Cannot make backup when ezsp is not initialized');
         return this.driver.backupMan.createBackup();
     }
 
