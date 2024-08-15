@@ -53,29 +53,7 @@ export class ZBOSSAdapter extends Adapter {
     public async getCoordinator(): Promise<Coordinator> {
         return this.queue.execute<Coordinator>(async () => {
             const info = await this.driver.getCoordinator();
-            
-            const endpoints = [];
-            endpoints.push({
-                profileID: 0,
-                ID: 0,
-                deviceID: 0,
-                inputClusters: [],
-                outputClusters: [],
-            });
-            // for (const endpoint of activeEndpoints) {
-                // const descriptor = await this.driver.zdoRequest(
-                //     networkAddress, EmberZDOCmd.Simple_Desc_req, EmberZDOCmd.Simple_Desc_rsp,
-                //     {dstaddr: networkAddress, targetEp: endpoint}
-                // );
-                // endpoints.push({
-                //     profileID: descriptor.descriptor.profileid,
-                //     ID: descriptor.descriptor.endpoint,
-                //     deviceID: descriptor.descriptor.deviceid,
-                //     inputClusters: descriptor.descriptor.inclusterlist,
-                //     outputClusters: descriptor.descriptor.outclusterlist,
-                // });
-            // }
-
+            logger.debug(`ZBOSS Adapter Coordinator description:\n${JSON.stringify(info)}`, NS);
             return {
                 networkAddress: info.networkAddress,
                 manufacturerID: 0,

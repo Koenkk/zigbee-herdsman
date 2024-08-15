@@ -5,8 +5,7 @@ import {TsType} from "..";
 import {KeyValue,} from "../../controller/tstype";
 import {Queue, Waitress} from '../../utils';
 import {logger} from "../../utils/logger";
-import {NetworkParameters} from "../tstype";
-import {CommandId, ResetOptions, PolicyType, DeviceType} from "./enums";
+import {CommandId, ResetOptions, PolicyType, DeviceType, StatusCodeGeneric} from "./enums";
 import {ZBOSSFrame, makeFrame, FrameType} from "./frame";
 import {ZBOSSUart} from "./uart";
 
@@ -214,11 +213,11 @@ export class ZBOSSDriver extends EventEmitter {
     }
 
     private async formNetwork(restore: boolean): Promise<void> {
-        let result = await this.execCommand(CommandId.SET_ZIGBEE_ROLE, {role: DeviceType.COORDINATOR});
-        result = await this.execCommand(CommandId.SET_ZIGBEE_CHANNEL_MASK, {page: 0, mask: this.getChannelMask(this.nwkOpt.channelList)});
-        result = await this.execCommand(CommandId.SET_PAN_ID, {panID: this.nwkOpt.panID});
-        // result = await this.execCommand(CommandId.SET_EXTENDED_PAN_ID, {extendedPanID: this.nwkOpt.extendedPanID});
-        result = await this.execCommand(CommandId.SET_NWK_KEY, {nwkKey: this.nwkOpt.networkKey, index: 0});
+        await this.execCommand(CommandId.SET_ZIGBEE_ROLE, {role: DeviceType.COORDINATOR});
+        await this.execCommand(CommandId.SET_ZIGBEE_CHANNEL_MASK, {page: 0, mask: this.getChannelMask(this.nwkOpt.channelList)});
+        await this.execCommand(CommandId.SET_PAN_ID, {panID: this.nwkOpt.panID});
+        // await this.execCommand(CommandId.SET_EXTENDED_PAN_ID, {extendedPanID: this.nwkOpt.extendedPanID});
+        await this.execCommand(CommandId.SET_NWK_KEY, {nwkKey: this.nwkOpt.networkKey, index: 0});
         
         const res = await this.execCommand(CommandId.NWK_FORMATION, {
             len: 1,
@@ -267,6 +266,9 @@ export class ZBOSSDriver extends EventEmitter {
                 await this.port.sendFrame(frame);
 
                 const response = await waiter.start().promise;
+                if (response?.payload?.status !== StatusCodeGeneric.OK) {
+                    throw new Error(`Error on command ${CommandId[commandId]}(${commandId}): ${JSON.stringify(response)}`);
+                }
 
                 return response;
             } catch (error) {
@@ -295,12 +297,23 @@ export class ZBOSSDriver extends EventEmitter {
 
     public async getCoordinator(): Promise<TsType.Coordinator> {
         const message = await this.execCommand(CommandId.ZDO_ACTIVE_EP_REQ, {nwk: 0x0000});
-        const activeEndpoints = message.payload.endpoints;
+        const activeEndpoints = message.payload.endpoints || [];
+        const ap = [];
+        for (const ep in activeEndpoints) {
+            const nd = await this.execCommand(CommandId.ZDO_SIMPLE_DESC_REQ, {nwk: 0x0000, endpoint: activeEndpoints[ep]});
+            ap.push({
+                ID: nd.payload.endpoint,
+                profileID: nd.payload.profileID,
+                deviceID: nd.payload.deviceID,
+                inputClusters: nd.payload.inputClusters,
+                outputClusters: nd.payload.outputClusters,
+            });
+        };
         return {
             ieeeAddr: this.netInfo.ieeeAddr,
             networkAddress: 0x0000,
             manufacturerID: 0x0000,
-            endpoints:[],
+            endpoints: ap,
         };
     }
 
