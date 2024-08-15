@@ -230,10 +230,14 @@ class Controller extends events.EventEmitter {
 
     public async addInstallCode(installCode: string): Promise<void> {
         const aqaraMatch = installCode.match(/^G\$M:.+\$A:(.+)\$I:(.+)$/);
+        const pipeMatch = installCode.match(/^(.+)\|(.+)$/);
         let ieeeAddr, key;
         if (aqaraMatch) {
             ieeeAddr = aqaraMatch[1];
             key = aqaraMatch[2];
+        } else if (pipeMatch) {
+            ieeeAddr = pipeMatch[1];
+            key = pipeMatch[2];
         } else {
             assert(
                 installCode.length === 95 || installCode.length === 91,
