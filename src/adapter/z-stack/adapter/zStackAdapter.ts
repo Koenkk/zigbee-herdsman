@@ -365,7 +365,7 @@ class ZStackAdapter extends Adapter {
     }
 
     public async sendZclFrameToEndpoint(
-        ieeeAddr: string | undefined,
+        ieeeAddr: string,
         networkAddress: number,
         endpoint: number,
         zclFrame: Zcl.Frame,
@@ -396,7 +396,7 @@ class ZStackAdapter extends Adapter {
     }
 
     private async sendZclFrameToEndpointInternal(
-        ieeeAddr: string | undefined,
+        ieeeAddr: string,
         networkAddress: number,
         endpoint: number,
         sourceEndpoint: number,
@@ -513,7 +513,6 @@ class ZStackAdapter extends Adapter {
                     assocRestore,
                 );
             } else {
-                assert(ieeeAddr);
                 let doAssocRemove = false;
                 if (
                     !assocRemove &&

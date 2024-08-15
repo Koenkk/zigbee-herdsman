@@ -432,7 +432,7 @@ class EZSPAdapter extends Adapter {
     }
 
     public async sendZclFrameToEndpoint(
-        ieeeAddr: string | undefined,
+        ieeeAddr: string,
         networkAddress: number,
         endpoint: number,
         zclFrame: Zcl.Frame,

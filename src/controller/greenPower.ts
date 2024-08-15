@@ -1,3 +1,4 @@
+import assert from 'assert';
 import crypto from 'crypto';
 import events from 'events';
 
@@ -6,6 +7,7 @@ import {logger} from '../utils/logger';
 import {BroadcastAddress} from '../zspec/enums';
 import * as Zcl from '../zspec/zcl';
 import ZclTransactionSequenceNumber from './helpers/zclTransactionSequenceNumber';
+import {Device} from './model';
 import {GreenPowerEvents, GreenPowerDeviceJoinedPayload} from './tstype';
 
 const NS = 'zh:controller:greenpower';
@@ -83,7 +85,9 @@ class GreenPower extends events.EventEmitter {
         if (dataPayload.wasBroadcast) {
             return this.adapter.sendZclFrameToAll(242, replyFrame, 242, BroadcastAddress.RX_ON_WHEN_IDLE);
         } else {
-            return this.adapter.sendZclFrameToEndpoint(undefined, frame.payload.gppNwkAddr, 242, replyFrame, 10000, false, false, 242);
+            const device = Device.byNetworkAddress(frame.payload.gppNwkAddr);
+            assert(device, 'Failed to find green power proxy device');
+            return this.adapter.sendZclFrameToEndpoint(device.ieeeAddr, frame.payload.gppNwkAddr, 242, replyFrame, 10000, false, false, 242);
         }
     }
 
@@ -247,7 +251,9 @@ class GreenPower extends events.EventEmitter {
         if (networkAddress === undefined) {
             await this.adapter.sendZclFrameToAll(242, frame, 242, BroadcastAddress.RX_ON_WHEN_IDLE);
         } else {
-            await this.adapter.sendZclFrameToEndpoint(undefined, networkAddress, 242, frame, 10000, false, false, 242);
+            const device = Device.byNetworkAddress(networkAddress);
+            assert(device, 'Failed to find device to permit GP join on');
+            await this.adapter.sendZclFrameToEndpoint(device.ieeeAddr, networkAddress, 242, frame, 10000, false, false, 242);
         }
     }
 }

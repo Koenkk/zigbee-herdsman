@@ -233,7 +233,7 @@ abstract class Adapter extends events.EventEmitter {
      */
 
     public abstract sendZclFrameToEndpoint(
-        ieeeAddr: string | undefined,
+        ieeeAddr: string,
         networkAddress: number,
         endpoint: number,
         zclFrame: Zcl.Frame,
