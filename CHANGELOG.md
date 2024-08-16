@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.56.0](https://github.com/Koenkk/zigbee-herdsman/compare/v0.55.5...v0.56.0) (2024-08-16)
+
+
+### Features
+
+* Enforce TS `strict` type checking and other improvements ([#1146](https://github.com/Koenkk/zigbee-herdsman/issues/1146)) ([98e3384](https://github.com/Koenkk/zigbee-herdsman/commit/98e3384b74429d94a81c4d84938f133c4b9f6078))
+
+
+### Bug Fixes
+
+* **ignore:** update dependencies ([#1147](https://github.com/Koenkk/zigbee-herdsman/issues/1147)) ([16d5cfe](https://github.com/Koenkk/zigbee-herdsman/commit/16d5cfe058ccb20af0e0d48356b577a0d31ce64b))
+* Improve bind/unbind logic ([#1144](https://github.com/Koenkk/zigbee-herdsman/issues/1144)) ([a3aeb33](https://github.com/Koenkk/zigbee-herdsman/commit/a3aeb33c7ec687acb55c5e5d3b93d0566f24a0ba))
+* Support install code format with pipe delimiter ([#1150](https://github.com/Koenkk/zigbee-herdsman/issues/1150)) ([3a5b075](https://github.com/Koenkk/zigbee-herdsman/commit/3a5b075d90e0e9652e53794ba1391a4ec6c04f83))
+
 ## [0.55.5](https://github.com/Koenkk/zigbee-herdsman/compare/v0.55.4...v0.55.5) (2024-08-06)
 
 
