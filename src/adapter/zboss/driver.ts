@@ -49,8 +49,8 @@ export class ZBOSSDriver extends EventEmitter {
         this.port.on('frame', this.onFrame.bind(this));
     }
 
-    public async start(): Promise<boolean> {
-        logger.info(`Driver starting`, NS);
+    public async connect(): Promise<boolean> {
+        logger.info(`Driver connecting`, NS);
 
         let status: boolean;
 
@@ -65,8 +65,7 @@ export class ZBOSSDriver extends EventEmitter {
             status = await this.port.start();
 
             if (status) {
-                logger.info(`Driver started`, NS);
-                // await this.reset();
+                logger.info(`Driver connected`, NS);
                 return status;
             }
         }
@@ -139,6 +138,10 @@ export class ZBOSSDriver extends EventEmitter {
             [0x0021],
         );
 
+        await this.execCommand(CommandId.SET_RX_ON_WHEN_IDLE, {rxOn: 1});
+        //await this.execCommand(CommandId.SET_ED_TIMEOUT, {timeout: 8});
+        //await this.execCommand(CommandId.SET_MAX_CHILDREN, {children: 100});
+
         return result;
     }
 
@@ -208,13 +211,12 @@ export class ZBOSSDriver extends EventEmitter {
 
     private getChannelMask(channels: number[]): number {
         return channels.reduce((mask, channel) => mask | (1 << channel), 0);
-    
-        // return [value & 0xff, (value >> 8) & 0xff, (value >> 16) & 0xff, (value >> 24) & 0xff];
     }
 
     private async formNetwork(restore: boolean): Promise<void> {
+        const channelMask = this.getChannelMask(this.nwkOpt.channelList);
         await this.execCommand(CommandId.SET_ZIGBEE_ROLE, {role: DeviceType.COORDINATOR});
-        await this.execCommand(CommandId.SET_ZIGBEE_CHANNEL_MASK, {page: 0, mask: this.getChannelMask(this.nwkOpt.channelList)});
+        await this.execCommand(CommandId.SET_ZIGBEE_CHANNEL_MASK, {page: 0, mask: channelMask});
         await this.execCommand(CommandId.SET_PAN_ID, {panID: this.nwkOpt.panID});
         // await this.execCommand(CommandId.SET_EXTENDED_PAN_ID, {extendedPanID: this.nwkOpt.extendedPanID});
         await this.execCommand(CommandId.SET_NWK_KEY, {nwkKey: this.nwkOpt.networkKey, index: 0});
@@ -222,7 +224,7 @@ export class ZBOSSDriver extends EventEmitter {
         const res = await this.execCommand(CommandId.NWK_FORMATION, {
             len: 1,
             channels: [
-                {page: 0, mask: this.getChannelMask(this.nwkOpt.channelList)},
+                {page: 0, mask: channelMask},
             ],
             duration: 0x05,
             distribFlag: 0x00,
@@ -246,6 +248,10 @@ export class ZBOSSDriver extends EventEmitter {
         if (!handled) {
             this.emit('frame', frame);
         }
+    }
+
+    public isInitialized(): boolean {
+        return this.port.portOpen && !this.port.inReset;
     }
 
     public async execCommand(commandId: number, params: KeyValue = null, timeout: number = 10000): Promise<ZBOSSFrame> {
@@ -296,17 +302,17 @@ export class ZBOSSDriver extends EventEmitter {
     }
 
     public async getCoordinator(): Promise<TsType.Coordinator> {
-        const message = await this.execCommand(CommandId.ZDO_ACTIVE_EP_REQ, {nwk: 0x0000});
+        const message = await this.activeEndpoints(0x0000);
         const activeEndpoints = message.payload.endpoints || [];
         const ap = [];
         for (const ep in activeEndpoints) {
-            const nd = await this.execCommand(CommandId.ZDO_SIMPLE_DESC_REQ, {nwk: 0x0000, endpoint: activeEndpoints[ep]});
+            const sd = await this.simpleDescriptor(0x0000, activeEndpoints[ep]);
             ap.push({
-                ID: nd.payload.endpoint,
-                profileID: nd.payload.profileID,
-                deviceID: nd.payload.deviceID,
-                inputClusters: nd.payload.inputClusters,
-                outputClusters: nd.payload.outputClusters,
+                ID: sd.payload.endpoint,
+                profileID: sd.payload.profileID,
+                deviceID: sd.payload.deviceID,
+                inputClusters: sd.payload.inputClusters,
+                outputClusters: sd.payload.outputClusters,
             });
         };
         return {
@@ -337,5 +343,49 @@ export class ZBOSSDriver extends EventEmitter {
                 revision: ver2str(ver.payload.fwVersion),
             },
         };
+    }
+
+    public async permitJoin(nwk: number, duration: number): Promise<void> {
+        await this.execCommand(CommandId.ZDO_PERMIT_JOINING_REQ, {nwk: nwk, duration: duration, tcSignificance: 1});
+    }
+
+    public async setTXPower(value: number): Promise<void> {
+        await this.execCommand(CommandId.SET_TX_POWER, {txPower: value});
+    }
+
+    public async lqi(nwk: number, index: number): Promise<ZBOSSFrame> {
+        return await this.execCommand(CommandId.ZDO_MGMT_LQI_REQ, {nwk: nwk, startIndex: index});
+    }
+
+    public async nodeDescriptor(nwk: number): Promise<ZBOSSFrame> {
+        return await this.execCommand(CommandId.ZDO_NODE_DESC_REQ, {nwk: nwk});
+    }
+
+    public async activeEndpoints(nwk: number): Promise<ZBOSSFrame> {
+        return await this.execCommand(CommandId.ZDO_ACTIVE_EP_REQ, {nwk: nwk});
+    }
+
+    public async simpleDescriptor(nwk: number, ep: number): Promise<ZBOSSFrame> {
+        return await this.execCommand(CommandId.ZDO_SIMPLE_DESC_REQ, {nwk: nwk, endpoint: ep});
+    }
+
+    public async request(ieee: string, profileID: number, clusterID: number, dstEp: number, srcEp: number, data: Buffer): Promise<ZBOSSFrame> {
+        const payload = {
+            paramLength: 21,
+            dataLength: data.length,
+            ieee: ieee,
+            profileID: profileID,
+            clusterID: clusterID,
+            dstEndpoint: dstEp,
+            srcEndpoint: srcEp,
+            radius: 3,
+            dstAddrMode: 3, // ADDRESS MODE ieee
+            txOptions: 2, // ROUTE DISCOVERY 
+            useAlias: 0,
+            aliasAddr: 0,
+            aliasSequence: 0,
+            data: data,
+        };
+        return await this.execCommand(CommandId.APSDE_DATA_REQ, payload, 30000);
     }
 };
