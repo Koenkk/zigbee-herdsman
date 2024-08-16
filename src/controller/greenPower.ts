@@ -16,7 +16,7 @@ const zigBeeLinkKey = Buffer.from([0x5a, 0x69, 0x67, 0x42, 0x65, 0x65, 0x41, 0x6
 
 interface GreenPowerEventMap {
     [GreenPowerEvents.deviceJoined]: [payload: GreenPowerDeviceJoinedPayload];
-};
+}
 
 class GreenPower extends events.EventEmitter<GreenPowerEventMap> {
     private adapter: Adapter;

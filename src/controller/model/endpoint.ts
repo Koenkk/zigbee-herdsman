@@ -83,7 +83,7 @@ interface ConfiguredReporting {
     reportableChange: number;
 }
 
-interface EndpointEventMap {};
+interface EndpointEventMap {}
 
 class Endpoint extends Entity<EndpointEventMap> {
     public deviceID?: number;

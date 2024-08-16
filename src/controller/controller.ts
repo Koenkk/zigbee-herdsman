@@ -65,7 +65,7 @@ export interface ControllerEventMap {
     deviceLeave: [data: Events.DeviceLeavePayload];
     permitJoinChanged: [data: Events.PermitJoinChangedPayload];
     lastSeenChanged: [data: Events.LastSeenChangedPayload];
-};
+}
 
 /**
  * @noInheritDoc
@@ -604,7 +604,11 @@ class Controller extends events.EventEmitter<ControllerEventMap> {
         }
     }
 
-    private selfAndDeviceEmit<K extends keyof ControllerEventMap>(device: Device, event: K, ...args: K extends keyof ControllerEventMap ? ControllerEventMap[K] : never): void {
+    private selfAndDeviceEmit<K extends keyof ControllerEventMap>(
+        device: Device,
+        event: K,
+        ...args: K extends keyof ControllerEventMap ? ControllerEventMap[K] : never
+    ): void {
         device?.emit(event, ...args);
         this.emit(event, ...args);
     }

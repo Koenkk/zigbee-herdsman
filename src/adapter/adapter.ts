@@ -17,7 +17,7 @@ interface AdapterEventMap {
     deviceAnnounce: [payload: AdapterEvents.DeviceAnnouncePayload];
     deviceLeave: [payload: AdapterEvents.DeviceLeavePayload];
     networkAddress: [payload: AdapterEvents.NetworkAddressPayload];
-};
+}
 
 abstract class Adapter extends events.EventEmitter<AdapterEventMap> {
     public readonly greenPowerGroup = 0x0b84;

@@ -23,7 +23,7 @@ interface OptionsWithDefaults extends Options {
     reservedBits: number;
 }
 
-interface GroupEventMap {};
+interface GroupEventMap {}
 
 class Group extends Entity<GroupEventMap> {
     private databaseID: number;

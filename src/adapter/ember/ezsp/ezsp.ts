@@ -187,13 +187,7 @@ export interface EmberEzspEventMap {
     /** @see Ezsp.ezspIncomingMessageHandler */
     zdoResponse: [apsFrame: EmberApsFrame, sender: NodeId, messageContents: Buffer];
     /** ezspIncomingMessageHandler */
-    incomingMessage: [
-        type: EmberIncomingMessageType,
-        apsFrame: EmberApsFrame,
-        lastHopLqi: number,
-        sender: NodeId,
-        messageContents: Buffer,
-    ];
+    incomingMessage: [type: EmberIncomingMessageType, apsFrame: EmberApsFrame, lastHopLqi: number, sender: NodeId, messageContents: Buffer];
     /** @see Ezsp.ezspMacFilterMatchMessageHandler */
     touchlinkMessage: [sourcePanId: PanId, sourceAddress: EUI64, groupId: number, lastHopLqi: number, messageContents: Buffer];
     /** @see Ezsp.ezspStackStatusHandler */
@@ -207,13 +201,7 @@ export interface EmberEzspEventMap {
         parentOfNewNodeId: NodeId,
     ];
     /** @see Ezsp.ezspMessageSentHandler */
-    messageSent: [
-        status: SLStatus,
-        type: EmberOutgoingMessageType,
-        indexOrDestination: number,
-        apsFrame: EmberApsFrame,
-        messageTag: number,
-    ];
+    messageSent: [status: SLStatus, type: EmberOutgoingMessageType, indexOrDestination: number, apsFrame: EmberApsFrame, messageTag: number];
     /** @see Ezsp.ezspGpepIncomingMessageHandler */
     greenpowerMessage: [
         sequenceNumber: number,

@@ -658,8 +658,8 @@ export class EmberAdapter extends Adapter {
             this.oneWaitress.resolveZCL(payload);
             this.emit('zclPayload', payload);
         } catch (err) {
+            /* istanbul ignore next */
             logger.error(`<~x~ [GP] Failed creating ZCL payload. Skipping. ${err}`, NS);
-            return;
         }
     }
 

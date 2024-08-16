@@ -1346,12 +1346,7 @@ describe('Ember Adapter Layer', () => {
                 sequence: 0,
             };
 
-            mockEzspEmitter.emit(
-                'zdoResponse',
-                apsFrame,
-                sender,
-                Buffer.from([1, 0xd2, 0x04, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0x11, 0x22, 0x33, 6]),
-            );
+            mockEzspEmitter.emit('zdoResponse', apsFrame, sender, Buffer.from([1, 0xd2, 0x04, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0x11, 0x22, 0x33, 6]));
 
             await flushPromises();
 

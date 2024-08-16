@@ -67,7 +67,7 @@ const mockAdapterGetCoordinator = jest.fn().mockReturnValue({
 const mockAdapterNodeDescriptor = jest.fn().mockImplementation(async (networkAddress) => {
     const descriptor = mockDevices[networkAddress].nodeDescriptor;
     if (typeof descriptor === 'string' && descriptor.startsWith('xiaomi')) {
-        const frame = mockZclFrame.create(
+        const frame = Zcl.Frame.create(
             0,
             1,
             true,
@@ -144,12 +144,12 @@ const restoreMocksendZclFrameToEndpoint = () => {
                 }
             }
 
-            const responseFrame = mockZclFrame.create(0, 1, true, undefined, 10, 'readRsp', frame.cluster.ID, payload, {});
+            const responseFrame = Zcl.Frame.create(0, 1, true, undefined, 10, 'readRsp', frame.cluster.ID, payload, {});
             return {clusterID: responseFrame.cluster.ID, header: responseFrame.header, data: responseFrame.toBuffer()};
         }
 
         if (frame.header.isSpecific && (frame.isCommand('add') || frame.isCommand('remove')) && frame.isCluster('genGroups')) {
-            const responseFrame = mockZclFrame.create(
+            const responseFrame = Zcl.Frame.create(
                 1,
                 1,
                 true,
@@ -201,7 +201,7 @@ const restoreMocksendZclFrameToEndpoint = () => {
                 payload.push({attrId: item.attrId, status: 0});
             }
 
-            const responseFrame = mockZclFrame.create(0, 1, true, undefined, 10, 'writeRsp', 0, payload, {});
+            const responseFrame = Zcl.Frame.create(0, 1, true, undefined, 10, 'writeRsp', 0, payload, {});
             return {clusterID: responseFrame.cluster.ID, header: responseFrame.header, data: responseFrame.toBuffer()};
         }
 
@@ -219,7 +219,7 @@ const restoreMocksendZclFrameToEndpoint = () => {
                 }
             }
 
-            const responseFrame = mockZclFrame.create(0, 1, true, undefined, 10, cmd, 0, payload, {});
+            const responseFrame = Zcl.Frame.create(0, 1, true, undefined, 10, cmd, 0, payload, {});
             return {clusterID: responseFrame.cluster.ID, header: responseFrame.header, data: responseFrame.toBuffer()};
         }
     });
@@ -468,8 +468,6 @@ const mockDevices = {
         },
     },
 };
-
-const mockZclFrame = Zcl.Frame;
 
 // Mock realPathSync
 jest.mock('../src/utils/realpathSync', () => {
@@ -1738,17 +1736,7 @@ describe('Controller', () => {
     });
 
     it('Device should update properties when reported', async () => {
-        const frame = mockZclFrame.create(
-            0,
-            1,
-            true,
-            undefined,
-            10,
-            'readRsp',
-            0,
-            [{attrId: 5, status: 0, dataType: 66, attrData: 'new.model.id'}],
-            {},
-        );
+        const frame = Zcl.Frame.create(0, 1, true, undefined, 10, 'readRsp', 0, [{attrId: 5, status: 0, dataType: 66, attrData: 'new.model.id'}], {});
         await controller.start();
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
         expect(Device.byIeeeAddr('0x129').modelID).toBe('myModelID');
@@ -2282,17 +2270,7 @@ describe('Controller', () => {
 
         // Green power
         expect(mocksendZclFrameToAll).toHaveBeenCalledTimes(1);
-        const commisionFrameEnable = mockZclFrame.create(
-            1,
-            1,
-            true,
-            undefined,
-            2,
-            'commisioningMode',
-            33,
-            {options: 0x0b, commisioningWindow: 254},
-            {},
-        );
+        const commisionFrameEnable = Zcl.Frame.create(1, 1, true, undefined, 2, 'commisioningMode', 33, {options: 0x0b, commisioningWindow: 254}, {});
         expect(mocksendZclFrameToAll.mock.calls[0][0]).toBe(242);
         expect(deepClone(mocksendZclFrameToAll.mock.calls[0][1])).toStrictEqual(deepClone(commisionFrameEnable));
         expect(mocksendZclFrameToAll.mock.calls[0][2]).toBe(242);
@@ -2323,17 +2301,7 @@ describe('Controller', () => {
 
         // Green power
         expect(mocksendZclFrameToAll).toHaveBeenCalledTimes(4);
-        const commissionFrameDisable = mockZclFrame.create(
-            1,
-            1,
-            true,
-            undefined,
-            5,
-            'commisioningMode',
-            33,
-            {options: 0x0a, commisioningWindow: 0},
-            {},
-        );
+        const commissionFrameDisable = Zcl.Frame.create(1, 1, true, undefined, 5, 'commisioningMode', 33, {options: 0x0a, commisioningWindow: 0}, {});
         expect(mocksendZclFrameToAll.mock.calls[3][0]).toBe(242);
         expect(deepClone(mocksendZclFrameToAll.mock.calls[3][1])).toStrictEqual(deepClone(commissionFrameDisable));
         expect(mocksendZclFrameToAll.mock.calls[3][2]).toBe(242);
@@ -4174,7 +4142,7 @@ describe('Controller', () => {
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
         const device = controller.getDeviceByIeeeAddr('0x129');
         device.getEndpoint(1).zclCommandBroadcast(255, BroadcastAddress.SLEEPY, Zcl.Clusters.ssIasZone.ID, 'initTestMode', {});
-        const sentFrame = mockZclFrame.create(
+        const sentFrame = Zcl.Frame.create(
             Zcl.FrameType.SPECIFIC,
             Zcl.Direction.CLIENT_TO_SERVER,
             true,
@@ -4207,7 +4175,7 @@ describe('Controller', () => {
         device
             .getEndpoint(1)
             .zclCommandBroadcast(255, BroadcastAddress.SLEEPY, Zcl.Clusters.ssIasZone.ID, 'boschSmokeAlarmSiren', {data: 0x0000}, options);
-        const sentFrame = mockZclFrame.create(
+        const sentFrame = Zcl.Frame.create(
             Zcl.FrameType.SPECIFIC,
             Zcl.Direction.CLIENT_TO_SERVER,
             true,
@@ -4522,7 +4490,7 @@ describe('Controller', () => {
         mocksendZclFrameToEndpoint.mockReturnValueOnce(null);
         mocksendZclFrameToEndpoint.mockImplementationOnce((ieeeAddr, networkAddress, endpoint, frame: ZclFrame) => {
             const payload = [{attrId: 0, status: 0, dataType: 35, attrData: 204}];
-            const responseFrame = mockZclFrame.create(0, 1, true, undefined, 10, 'readRsp', frame.cluster.ID, payload, {});
+            const responseFrame = Zcl.Frame.create(0, 1, true, undefined, 10, 'readRsp', frame.cluster.ID, payload, {});
             return {header: responseFrame.header, data: responseFrame.toBuffer(), clusterID: frame.cluster.ID};
         });
         mocksendZclFrameToEndpoint.mockImplementationOnce(() => jest.advanceTimersByTime(10));
@@ -7834,7 +7802,7 @@ describe('Controller', () => {
                 outgoingCounter: 0x000004e4,
             },
         };
-        const frame = mockZclFrame.create(1, 0, true, undefined, 10, 'commissioningNotification', 33, data, {});
+        const frame = Zcl.Frame.create(1, 0, true, undefined, 10, 'commissioningNotification', 33, data, {});
         jest.spyOn(Zcl.Frame, 'fromBuffer').mockReturnValueOnce(frame); // Mock because no Buffalo write for 0xe0 is implemented
         await mockAdapterEvents['zclPayload']({
             wasBroadcast: true,
@@ -7855,7 +7823,7 @@ describe('Controller', () => {
             frameCounter: 1252,
             gpdKey: [29, 213, 18, 52, 213, 52, 152, 88, 183, 49, 101, 110, 209, 248, 244, 140],
         };
-        const frameResponse = mockZclFrame.create(1, 1, true, undefined, 2, 'pairing', 33, dataResponse, {});
+        const frameResponse = Zcl.Frame.create(1, 1, true, undefined, 2, 'pairing', 33, dataResponse, {});
 
         expect(mocksendZclFrameToAll.mock.calls[0][0]).toBe(242);
         expect(deepClone(mocksendZclFrameToAll.mock.calls[0][1])).toStrictEqual(deepClone(frameResponse));
@@ -7945,7 +7913,7 @@ describe('Controller', () => {
             payloadSize: 255,
             commandFrame: {},
         };
-        const frameToggle = mockZclFrame.create(1, 0, true, undefined, 10, 'notification', 33, dataToggle, {});
+        const frameToggle = Zcl.Frame.create(1, 0, true, undefined, 10, 'notification', 33, dataToggle, {});
         jest.spyOn(Zcl.Frame, 'fromBuffer').mockReturnValueOnce(frameToggle); // Mock because no Buffalo write for 0x22 is implemented
         await mockAdapterEvents['zclPayload']({
             wasBroadcast: false,
@@ -8082,7 +8050,7 @@ describe('Controller', () => {
                 nextNextChannel: 15,
             },
         };
-        const frame = mockZclFrame.create(1, 0, true, undefined, 10, 'commissioningNotification', 33, data, {});
+        const frame = Zcl.Frame.create(1, 0, true, undefined, 10, 'commissioningNotification', 33, data, {});
         jest.spyOn(Zcl.Frame, 'fromBuffer').mockReturnValueOnce(frame); // Mock because no Buffalo write for 0xe3 is implemented
         await mockAdapterEvents['zclPayload']({
             wasBroadcast: true,
@@ -8107,7 +8075,7 @@ describe('Controller', () => {
             },
         };
 
-        const frameResponse = mockZclFrame.create(1, 1, true, undefined, 2, 'response', 33, commissioningReply, {});
+        const frameResponse = Zcl.Frame.create(1, 1, true, undefined, 2, 'response', 33, commissioningReply, {});
 
         expect(mocksendZclFrameToAll).toHaveBeenCalledTimes(1);
         expect(mocksendZclFrameToAll.mock.calls[0][0]).toBe(242);
@@ -8133,7 +8101,7 @@ describe('Controller', () => {
                 outgoingCounter: 0x000004e4,
             },
         };
-        const frame = mockZclFrame.create(1, 0, true, undefined, 10, 'commissioningNotification', 33, data, {});
+        const frame = Zcl.Frame.create(1, 0, true, undefined, 10, 'commissioningNotification', 33, data, {});
         jest.spyOn(Zcl.Frame, 'fromBuffer').mockReturnValueOnce(frame); // Mock because no Buffalo write for 0xe0 is implemented
         await mockAdapterEvents['zclPayload']({
             wasBroadcast: true,
@@ -8161,7 +8129,7 @@ describe('Controller', () => {
             },
         };
 
-        const frameResponse = mockZclFrame.create(1, 1, true, undefined, 2, 'response', 33, commissioningReply, {});
+        const frameResponse = Zcl.Frame.create(1, 1, true, undefined, 2, 'response', 33, commissioningReply, {});
 
         expect(mocksendZclFrameToAll).toHaveBeenCalledTimes(2);
         expect(mocksendZclFrameToAll.mock.calls[0][0]).toBe(242);
@@ -8174,7 +8142,7 @@ describe('Controller', () => {
             sinkGroupID: 0x0b84,
             deviceID: 2,
         };
-        const pairing = mockZclFrame.create(1, 1, true, undefined, 3, 'pairing', 33, pairingData, {});
+        const pairing = Zcl.Frame.create(1, 1, true, undefined, 3, 'pairing', 33, pairingData, {});
 
         expect(mocksendZclFrameToAll.mock.calls[1][0]).toBe(242);
         expect(deepClone(mocksendZclFrameToAll.mock.calls[1][1])).toStrictEqual(deepClone(pairing));
@@ -8199,7 +8167,7 @@ describe('Controller', () => {
             disableDefaultResponse: true,
         });
 
-        const response = mockZclFrame.create(1, 1, true, undefined, 4, 'response', 33, payload, {});
+        const response = Zcl.Frame.create(1, 1, true, undefined, 4, 'response', 33, payload, {});
 
         expect(mocksendZclFrameToAll).toHaveBeenCalledTimes(1);
         expect(mocksendZclFrameToAll.mock.calls[0][0]).toBe(242);
@@ -8209,6 +8177,8 @@ describe('Controller', () => {
 
     it('Green power unicast', async () => {
         await controller.start();
+        await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
+        const gppDevice = controller.getDeviceByIeeeAddr('0x129')!;
         const data = {
             options: 0x800, // Proxy info present
             srcID: 0x017171f8,
@@ -8232,11 +8202,11 @@ describe('Controller', () => {
                 numGdpCommands: 17,
                 gpdCommandIdList: Buffer.from([0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x22, 0x60, 0x62, 0x63, 0x64, 0x65, 0x66, 0x67, 0x68]),
             },
-            gppNwkAddr: 129,
+            gppNwkAddr: gppDevice.networkAddress,
             gppGddLink: 0xd8,
         };
 
-        const expectedFrame = mockZclFrame.create(1, 0, true, undefined, 100, 'commissioningNotification', 33, data, {});
+        const expectedFrame = Zcl.Frame.create(1, 0, true, undefined, 100, 'commissioningNotification', 33, data, {});
 
         const buffer = Buffer.from([
             0x11, 0x64, 0x04, 0x00, 0x08, 0xf8, 0x71, 0x71, 0x01, 0xf8, 0x00, 0x00, 0x00, 0xe0, 0x2e, 0x02, 0xc5, 0xf2, 0x21, 0x7f, 0x8c, 0xb2, 0x90,
@@ -8249,7 +8219,7 @@ describe('Controller', () => {
         jest.spyOn(Zcl.Frame, 'fromBuffer').mockReturnValueOnce(expectedFrame); // Mock because no Buffalo write for 0xe0 is implemented
         await mockAdapterEvents['zclPayload']({
             wasBroadcast: false,
-            address: 129,
+            address: gppDevice.networkAddress,
             clusterID: expectedFrame.cluster.ID,
             data: expectedFrame.toBuffer(),
             header: expectedFrame.header,
@@ -8267,17 +8237,21 @@ describe('Controller', () => {
             frameCounter: 4600,
             gpdKey: [0x09, 0x3c, 0xed, 0x1d, 0xbf, 0x25, 0x63, 0xf9, 0x29, 0x5c, 0x0d, 0x3d, 0x9f, 0xc5, 0x76, 0xe1],
         };
-        const frameResponse = mockZclFrame.create(1, 1, true, undefined, 2, 'pairing', 33, dataResponse, {});
+        const frameResponse = Zcl.Frame.create(1, 1, true, undefined, 11, 'pairing', 33, dataResponse, {});
 
-        expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(1);
-        expect(mocksendZclFrameToEndpoint.mock.calls[0][0]).toBe(undefined);
-        expect(mocksendZclFrameToEndpoint.mock.calls[0][1]).toBe(129);
-        expect(mocksendZclFrameToEndpoint.mock.calls[0][2]).toBe(242);
-        expect(deepClone(mocksendZclFrameToEndpoint.mock.calls[0][3])).toStrictEqual(deepClone(frameResponse));
-        expect(mocksendZclFrameToEndpoint.mock.calls[0][4]).toBe(10000);
-        expect(mocksendZclFrameToEndpoint.mock.calls[0][5]).toBe(false);
-        expect(mocksendZclFrameToEndpoint.mock.calls[0][6]).toBe(false);
-        expect(mocksendZclFrameToEndpoint.mock.calls[0][7]).toBe(242);
+        expect(mocksendZclFrameToEndpoint).toHaveBeenLastCalledWith(
+            gppDevice.ieeeAddr,
+            gppDevice.networkAddress,
+            242,
+            expect.any(Object),
+            10000,
+            false,
+            false,
+            242,
+        );
+        expect(deepClone(mocksendZclFrameToEndpoint.mock.calls[mocksendZclFrameToEndpoint.mock.calls.length - 1][3])).toStrictEqual(
+            deepClone(frameResponse),
+        );
 
         // When joins again, shouldnt emit duplicate event
         jest.spyOn(Zcl.Frame, 'fromBuffer').mockReturnValueOnce(expectedFrame); // Mock because no Buffalo write for 0xe0 is implemented
@@ -8292,10 +8266,10 @@ describe('Controller', () => {
             groupID: 0,
         });
 
-        expect(events.deviceJoined.length).toBe(1);
-        expect(deepClone(events.deviceJoined[0])).toStrictEqual({
+        expect(events.deviceJoined.length).toBe(2); // gpp + gpd
+        expect(deepClone(events.deviceJoined[1])).toStrictEqual({
             device: {
-                ID: 2,
+                ID: 3,
                 _events: {},
                 _eventsCount: 0,
                 _pendingRequestTimeout: 0,
@@ -8328,11 +8302,12 @@ describe('Controller', () => {
                 meta: {},
             },
         });
-        expect(events.deviceInterview.length).toBe(1);
-        expect(deepClone(events.deviceInterview[0])).toStrictEqual({
+        console.log(events.deviceInterview);
+        expect(events.deviceInterview.length).toBe(3); // gpp[started] + gpp[successful] + gpd
+        expect(deepClone(events.deviceInterview[2])).toStrictEqual({
             status: 'successful',
             device: {
-                ID: 2,
+                ID: 3,
                 _events: {},
                 _eventsCount: 0,
                 _pendingRequestTimeout: 0,
@@ -8348,7 +8323,7 @@ describe('Controller', () => {
                 meta: {},
             },
         });
-        expect(controller.getDeviceByIeeeAddr('0x00000000017171f8').networkAddress).toBe(0x71f8);
+        expect(controller.getDeviceByIeeeAddr('0x00000000017171f8')!.networkAddress).toBe(0x71f8);
         expect(events.message.length).toBe(2);
 
         // Green power device send message
@@ -8364,7 +8339,7 @@ describe('Controller', () => {
             gppNwkAddr: 129,
             gppGddLink: 0xd8,
         };
-        const frameScene = mockZclFrame.create(1, 0, true, undefined, 10, 'notification', 33, dataScene, {});
+        const frameScene = Zcl.Frame.create(1, 0, true, undefined, 10, 'notification', 33, dataScene, {});
         await mockAdapterEvents['zclPayload']({
             wasBroadcast: false,
             address: 0x017171f8,
@@ -8382,7 +8357,7 @@ describe('Controller', () => {
             device: {
                 _events: {},
                 _eventsCount: 0,
-                ID: 2,
+                ID: 3,
                 _type: 'GreenPower',
                 _ieeeAddr: '0x00000000017171f8',
                 _networkAddress: 29176,
@@ -8451,10 +8426,10 @@ describe('Controller', () => {
             options: 0x002550,
             srcID: 0x017171f8,
         };
-        const removeFrame = mockZclFrame.create(1, 1, true, undefined, 4, 'pairing', 33, removeCommand, {});
+        const removeFrame = Zcl.Frame.create(1, 1, true, undefined, 13, 'pairing', 33, removeCommand, {});
 
         events.message = [];
-        const device = controller.getDeviceByIeeeAddr('0x00000000017171f8');
+        const device = controller.getDeviceByIeeeAddr('0x00000000017171f8')!;
         await device.removeFromNetwork();
         expect(mocksendZclFrameToAll.mock.calls[0][0]).toBe(242);
         expect(deepClone(mocksendZclFrameToAll.mock.calls[0][1])).toStrictEqual(deepClone(removeFrame));
@@ -8464,7 +8439,7 @@ describe('Controller', () => {
 
         expect(Device.byIeeeAddr('0x00000000017171f8')).toBeUndefined();
         expect(deepClone(Device.byIeeeAddr('0x00000000017171f8', true))).toStrictEqual({
-            ID: 2,
+            ID: 3,
             _events: {},
             _eventsCount: 0,
             _pendingRequestTimeout: 0,
@@ -8511,7 +8486,7 @@ describe('Controller', () => {
         });
 
         expect(deepClone(Device.byIeeeAddr('0x00000000017171f8'))).toStrictEqual({
-            ID: 2,
+            ID: 3,
             _events: {},
             _eventsCount: 0,
             _pendingRequestTimeout: 0,
@@ -8854,7 +8829,7 @@ describe('Controller', () => {
         });
 
         const createResponse = (attrData: number) => {
-            const frame = mockZclFrame.create(
+            const frame = Zcl.Frame.create(
                 0,
                 1,
                 true,
