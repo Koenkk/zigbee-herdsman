@@ -314,7 +314,6 @@ export class EmberAdapter extends Adapter {
         this.ezsp.on('stackStatus', this.onStackStatus.bind(this));
         this.ezsp.on('trustCenterJoin', this.onTrustCenterJoin.bind(this));
         this.ezsp.on('messageSent', this.onMessageSent.bind(this));
-        this.ezsp.on('greenpowerMessage', this.onGreenpowerMessage.bind(this));
         this.ezsp.once('ncpNeedsResetAndInit', this.onNcpNeedsResetAndInit.bind(this));
     }
 
@@ -545,7 +544,7 @@ export class EmberAdapter extends Adapter {
     }
 
     /**
-     * Emitted from @see Ezsp.ezspIncomingMessageHandler
+     * Emitted from @see Ezsp.ezspIncomingMessageHandler @see Ezsp.ezspGpepIncomingMessageHandler
      *
      * @param type
      * @param apsFrame
@@ -607,60 +606,6 @@ export class EmberAdapter extends Adapter {
 
         this.oneWaitress.resolveZCL(payload);
         this.emit('zclPayload', payload);
-    }
-
-    /**
-     * Emitted from @see Ezsp.ezspGpepIncomingMessageHandler
-     *
-     * @param sequenceNumber
-     * @param commandIdentifier
-     * @param sourceId
-     * @param frameCounter
-     * @param gpdCommandId
-     * @param gpdCommandPayload
-     * @param gpdLink
-     */
-    private async onGreenpowerMessage(
-        sequenceNumber: number,
-        commandIdentifier: number,
-        sourceId: number,
-        frameCounter: number,
-        gpdCommandId: number,
-        gpdCommandPayload: Buffer,
-        gpdLink: number,
-    ): Promise<void> {
-        try {
-            const gpdHeader = Buffer.alloc(15);
-            gpdHeader.writeUInt8(0b00000001, 0); // frameControl: FrameType.SPECIFIC + Direction.CLIENT_TO_SERVER + disableDefaultResponse=false
-            gpdHeader.writeUInt8(sequenceNumber, 1); // transactionSequenceNumber
-            gpdHeader.writeUInt8(commandIdentifier, 2); // commandIdentifier
-            gpdHeader.writeUInt16LE(0, 3); // options XXX: bypassed, same as deconz https://github.com/Koenkk/zigbee-herdsman/pull/536
-            gpdHeader.writeUInt32LE(sourceId, 5); // srcID
-            // omitted: gpdIEEEAddr ieeeAddr
-            // omitted: gpdEndpoint uint8
-            gpdHeader.writeUInt32LE(frameCounter, 9); // frameCounter
-            gpdHeader.writeUInt8(gpdCommandId, 13); // commandID
-            gpdHeader.writeUInt8(gpdCommandPayload.length, 14); // payloadSize
-
-            const data = Buffer.concat([gpdHeader, gpdCommandPayload]);
-            const payload: ZclPayload = {
-                header: Zcl.Header.fromBuffer(data),
-                data,
-                clusterID: Zcl.Clusters.greenPower.ID,
-                address: sourceId,
-                endpoint: ZSpec.GP_ENDPOINT,
-                linkquality: gpdLink,
-                groupID: this.greenPowerGroup,
-                wasBroadcast: true,
-                destinationEndpoint: ZSpec.GP_ENDPOINT,
-            };
-
-            this.oneWaitress.resolveZCL(payload);
-            this.emit('zclPayload', payload);
-        } catch (err) {
-            /* istanbul ignore next */
-            logger.error(`<~x~ [GP] Failed creating ZCL payload. Skipping. ${err}`, NS);
-        }
     }
 
     /**
