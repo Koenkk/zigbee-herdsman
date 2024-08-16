@@ -609,7 +609,7 @@ class Controller extends events.EventEmitter<ControllerEventMap> {
         event: K,
         ...args: K extends keyof ControllerEventMap ? ControllerEventMap[K] : never
     ): void {
-        device?.emit(event, ...args);
+        device.emit(event, ...args);
         this.emit(event, ...args);
     }
 
