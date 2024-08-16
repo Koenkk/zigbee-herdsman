@@ -1,3 +1,4 @@
+import assert from 'assert';
 import crypto from 'crypto';
 import events from 'events';
 
@@ -6,13 +7,18 @@ import {logger} from '../utils/logger';
 import {BroadcastAddress} from '../zspec/enums';
 import * as Zcl from '../zspec/zcl';
 import ZclTransactionSequenceNumber from './helpers/zclTransactionSequenceNumber';
-import {GreenPowerEvents, GreenPowerDeviceJoinedPayload} from './tstype';
+import {Device} from './model';
+import {GreenPowerDeviceJoinedPayload} from './tstype';
 
 const NS = 'zh:controller:greenpower';
 
 const zigBeeLinkKey = Buffer.from([0x5a, 0x69, 0x67, 0x42, 0x65, 0x65, 0x41, 0x6c, 0x6c, 0x69, 0x61, 0x6e, 0x63, 0x65, 0x30, 0x39]);
 
-class GreenPower extends events.EventEmitter {
+interface GreenPowerEventMap {
+    deviceJoined: [payload: GreenPowerDeviceJoinedPayload];
+}
+
+class GreenPower extends events.EventEmitter<GreenPowerEventMap> {
     private adapter: Adapter;
 
     public constructor(adapter: Adapter) {
@@ -68,7 +74,7 @@ class GreenPower extends events.EventEmitter {
             Zcl.FrameType.SPECIFIC,
             Zcl.Direction.SERVER_TO_CLIENT,
             true,
-            null,
+            undefined,
             ZclTransactionSequenceNumber.next(),
             'pairing',
             Zcl.Clusters.greenPower.ID,
@@ -83,7 +89,9 @@ class GreenPower extends events.EventEmitter {
         if (dataPayload.wasBroadcast) {
             return this.adapter.sendZclFrameToAll(242, replyFrame, 242, BroadcastAddress.RX_ON_WHEN_IDLE);
         } else {
-            return this.adapter.sendZclFrameToEndpoint(null, frame.payload.gppNwkAddr, 242, replyFrame, 10000, false, false, 242);
+            const device = Device.byNetworkAddress(frame.payload.gppNwkAddr);
+            assert(device, 'Failed to find green power proxy device');
+            return this.adapter.sendZclFrameToEndpoint(device.ieeeAddr, frame.payload.gppNwkAddr, 242, replyFrame, 10000, false, false, 242);
         }
     }
 
@@ -133,7 +141,7 @@ class GreenPower extends events.EventEmitter {
                             Zcl.FrameType.SPECIFIC,
                             Zcl.Direction.SERVER_TO_CLIENT,
                             true,
-                            null,
+                            undefined,
                             ZclTransactionSequenceNumber.next(),
                             'response',
                             Zcl.Clusters.greenPower.ID,
@@ -170,12 +178,11 @@ class GreenPower extends events.EventEmitter {
                         await this.sendPairingCommand(payload, dataPayload, frame);
                     }
 
-                    const eventData: GreenPowerDeviceJoinedPayload = {
+                    this.emit('deviceJoined', {
                         sourceID: frame.payload.srcID,
                         deviceID: frame.payload.commandFrame.deviceID,
                         networkAddress: frame.payload.srcID & 0xffff,
-                    };
-                    this.emit(GreenPowerEvents.deviceJoined, eventData);
+                    });
 
                     break;
                 /* istanbul ignore next */
@@ -203,7 +210,7 @@ class GreenPower extends events.EventEmitter {
                         Zcl.FrameType.SPECIFIC,
                         Zcl.Direction.SERVER_TO_CLIENT,
                         true,
-                        null,
+                        undefined,
                         ZclTransactionSequenceNumber.next(),
                         'response',
                         Zcl.Clusters.greenPower.ID,
@@ -222,13 +229,13 @@ class GreenPower extends events.EventEmitter {
             }
         } catch (error) {
             /* istanbul ignore next */
-            logger.error(error, NS);
+            logger.error((error as Error).stack!, NS);
         }
     }
 
-    public async permitJoin(time: number, networkAddress: number): Promise<void> {
+    public async permitJoin(time: number, networkAddress?: number): Promise<void> {
         const payload = {
-            options: time ? (networkAddress === null ? 0x0b : 0x2b) : 0x0a,
+            options: time ? (networkAddress === undefined ? 0x0b : 0x2b) : 0x0a,
             commisioningWindow: time,
         };
 
@@ -236,7 +243,7 @@ class GreenPower extends events.EventEmitter {
             Zcl.FrameType.SPECIFIC,
             Zcl.Direction.SERVER_TO_CLIENT,
             true,
-            null,
+            undefined,
             ZclTransactionSequenceNumber.next(),
             'commisioningMode',
             Zcl.Clusters.greenPower.ID,
@@ -244,10 +251,12 @@ class GreenPower extends events.EventEmitter {
             {},
         );
 
-        if (networkAddress === null) {
+        if (networkAddress === undefined) {
             await this.adapter.sendZclFrameToAll(242, frame, 242, BroadcastAddress.RX_ON_WHEN_IDLE);
         } else {
-            await this.adapter.sendZclFrameToEndpoint(null, networkAddress, 242, frame, 10000, false, false, 242);
+            const device = Device.byNetworkAddress(networkAddress);
+            assert(device, 'Failed to find device to permit GP join on');
+            await this.adapter.sendZclFrameToEndpoint(device.ieeeAddr, networkAddress, 242, frame, 10000, false, false, 242);
         }
     }
 }

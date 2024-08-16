@@ -35,12 +35,11 @@ type EZSPPacketMatcher = {
 };
 
 export class SerialDriver extends EventEmitter {
-    private serialPort: SerialPort;
-    private socketPort: net.Socket;
+    private serialPort?: SerialPort;
+    private socketPort?: net.Socket;
     private writer: Writer;
     private parser: Parser;
     private initialized: boolean;
-    private portType: 'serial' | 'socket';
     private sendSeq = 0; // next frame number to send
     private recvSeq = 0; // next frame number to receive
     private ackSeq = 0; // next number after the last accepted frame
@@ -53,14 +52,15 @@ export class SerialDriver extends EventEmitter {
         this.initialized = false;
         this.queue = new Queue(1);
         this.waitress = new Waitress<EZSPPacket, EZSPPacketMatcher>(this.waitressValidator, this.waitressTimeoutFormatter);
+        this.writer = new Writer();
+        this.parser = new Parser();
     }
 
     async connect(options: SerialPortOptions): Promise<void> {
-        this.portType = SocketPortUtils.isTcpPath(options.path) ? 'socket' : 'serial';
-        if (this.portType === 'serial') {
-            await this.openSerialPort(options.path, options.baudRate, options.rtscts);
+        if (SocketPortUtils.isTcpPath(options.path!)) {
+            await this.openSocketPort(options.path!);
         } else {
-            await this.openSocketPort(options.path);
+            await this.openSerialPort(options.path!, options.baudRate!, options.rtscts!);
         }
     }
 
@@ -88,10 +88,8 @@ export class SerialDriver extends EventEmitter {
         // @ts-ignore
         this.serialPort = new SerialPort(options);
 
-        this.writer = new Writer();
         this.writer.pipe(this.serialPort);
 
-        this.parser = new Parser(!options.rtscts); // flag unhandled XON/XOFF in logs if software flow control enabled
         this.serialPort.pipe(this.parser);
         this.parser.on('parsed', this.onParsed.bind(this));
 
@@ -125,10 +123,8 @@ export class SerialDriver extends EventEmitter {
         this.socketPort.setNoDelay(true);
         this.socketPort.setKeepAlive(true, 15000);
 
-        this.writer = new Writer();
         this.writer.pipe(this.socketPort);
 
-        this.parser = new Parser();
         this.socketPort.pipe(this.parser);
         this.parser.on('parsed', this.onParsed.bind(this));
 
@@ -139,14 +135,14 @@ export class SerialDriver extends EventEmitter {
                 reject(err);
             };
 
-            this.socketPort.on('connect', () => {
+            this.socketPort!.on('connect', () => {
                 logger.debug('Socket connected', NS);
             });
-            this.socketPort.on('ready', async (): Promise<void> => {
+            this.socketPort!.on('ready', async (): Promise<void> => {
                 logger.debug('Socket ready', NS);
-                this.socketPort.removeListener('error', openError);
-                this.socketPort.once('close', this.onPortClose.bind(this));
-                this.socketPort.on('error', this.onPortError.bind(this));
+                this.socketPort!.removeListener('error', openError);
+                this.socketPort!.once('close', this.onPortClose.bind(this));
+                this.socketPort!.on('error', this.onPortError.bind(this));
 
                 // reset
                 await this.reset();
@@ -155,9 +151,9 @@ export class SerialDriver extends EventEmitter {
 
                 resolve();
             });
-            this.socketPort.once('error', openError);
+            this.socketPort!.once('error', openError);
 
-            this.socketPort.connect(info.port, info.host);
+            this.socketPort!.connect(info.port, info.host);
         });
     }
 
@@ -192,8 +188,8 @@ export class SerialDriver extends EventEmitter {
             }
         } catch (error) {
             this.rejectCondition = true;
-            logger.error(error, NS);
-            logger.error(`Error while parsing to NpiFrame '${error.stack}'`, NS);
+            logger.error(`Error while parsing to NpiFrame '${error}'`, NS);
+            logger.debug((error as Error).stack!, NS);
         }
 
         // We send NAK only if the rejectCondition was set in the current processing
@@ -355,7 +351,7 @@ export class SerialDriver extends EventEmitter {
         if (this.initialized) {
             this.initialized = false;
 
-            if (this.portType === 'serial') {
+            if (this.serialPort) {
                 try {
                     await this.serialPort.asyncFlushAndClose();
                 } catch (error) {
@@ -366,7 +362,7 @@ export class SerialDriver extends EventEmitter {
                     throw error;
                 }
             } else {
-                this.socketPort.destroy();
+                this.socketPort!.destroy();
             }
         }
 

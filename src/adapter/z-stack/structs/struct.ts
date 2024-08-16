@@ -1,3 +1,5 @@
+import assert from 'assert';
+
 import {SerializableMemoryObject} from './serializable-memory-object';
 
 /* Helper Types */
@@ -22,8 +24,9 @@ export class Struct implements SerializableMemoryObject {
         return new Struct();
     }
 
+    // @ts-expect-error initialized in `build()`
     private buffer: Buffer;
-    private defaultData: Buffer;
+    private defaultData: Buffer | undefined;
     private members: {key: string; offset: number; type: StructMemberType; length?: number}[] = [];
     private childStructs: {[key: string]: StructChild} = {};
     private length = 0;
@@ -68,6 +71,7 @@ export class Struct implements SerializableMemoryObject {
                             break;
                         case 'uint8array':
                         case 'uint8array-reversed':
+                            assert(member.length !== undefined);
                             aligned.set(this.buffer.slice(member.offset, member.offset + member.length), offset);
                             offset += member.length;
                             break;
@@ -109,6 +113,7 @@ export class Struct implements SerializableMemoryObject {
                             break;
                         case 'uint8array':
                         case 'uint8array-reversed':
+                            assert(member.length !== undefined);
                             offset += member.length;
                             break;
                         case 'struct':
@@ -187,7 +192,7 @@ export class Struct implements SerializableMemoryObject {
     ): R {
         const offset = this.length;
         const structFactory = type === 'struct' ? (lengthOrStructFactory as StructFactorySignature<T>) : undefined;
-        const length = type === 'struct' ? (structFactory() as unknown as Struct).length : (lengthOrStructFactory as number);
+        const length = structFactory ? (structFactory() as unknown as Struct).length : (lengthOrStructFactory as number);
 
         switch (type) {
             case 'uint8': {
@@ -245,6 +250,7 @@ export class Struct implements SerializableMemoryObject {
                 break;
             }
             case 'struct': {
+                assert(structFactory);
                 this.childStructs[name] = {offset, struct: structFactory() as unknown as Struct};
                 Object.defineProperty(this, name, {
                     enumerable: true,
@@ -271,6 +277,7 @@ export class Struct implements SerializableMemoryObject {
             enumerable: true,
             configurable: false,
             writable: false,
+            // @ts-expect-error ignore because we are using `this`
             value: () => body.bind(this)(this),
         });
         return this as unknown as R;
@@ -336,6 +343,7 @@ export class Struct implements SerializableMemoryObject {
                             break;
                         case 'uint8array':
                         case 'uint8array-reversed':
+                            assert(member.length !== undefined);
                             this.buffer.set(data.slice(offset, offset + member.length), member.offset);
                             offset += member.length;
                             break;

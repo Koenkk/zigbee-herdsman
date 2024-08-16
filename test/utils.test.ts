@@ -1,5 +1,5 @@
 import 'regenerator-runtime/runtime';
-import {IsNumberArray, Wait, Queue, Waitress, AssertString} from '../src/utils';
+import {Utils, Wait, Queue, Waitress} from '../src/utils';
 import {logger, setLogger} from '../src/utils/logger';
 
 const mockLogger = {
@@ -10,30 +10,30 @@ const mockLogger = {
 };
 
 describe('Utils', () => {
-    it('IsNumberArray valid', () => {
-        expect(IsNumberArray([1, 2, 3])).toBeTruthy();
+    it('Is Number Array', () => {
+        expect(Utils.isNumberArray([1, 2, 3])).toBeTruthy();
+        expect(Utils.isNumberArray([1, 2, '3'])).toBeFalsy();
+        expect(Utils.isNumberArray('nonarray')).toBeFalsy();
     });
 
-    it('IsNumberArray invalid (partial)', () => {
-        expect(IsNumberArray([1, 2, '3'])).toBeFalsy();
+    it('Is Number Array of length', () => {
+        expect(Utils.isNumberArrayOfLength([1, 2, 3], 3)).toBeTruthy();
+        expect(Utils.isNumberArrayOfLength([1, 2], 3)).toBeFalsy();
+        expect(Utils.isNumberArrayOfLength([1, 2, '3'], 3)).toBeFalsy();
+        expect(Utils.isNumberArrayOfLength('nonarray', 3)).toBeFalsy();
     });
 
-    it('IsNumberArray with non array type', () => {
-        expect(IsNumberArray('nonarray')).toBeFalsy();
+    it('Is object empty', () => {
+        expect(Utils.isObjectEmpty({})).toBeTruthy();
+        expect(Utils.isObjectEmpty({a: 1})).toBeFalsy();
     });
 
-    it('Assert string true', () => {
-        AssertString('bla');
-    });
+    it('Assert string', () => {
+        expect(Utils.assertString('bla')).toBeUndefined();
 
-    it('Assert string false', () => {
-        let error;
-        try {
-            AssertString(1);
-        } catch (e) {
-            error = e;
-        }
-        expect(error).toStrictEqual(new Error('Input must be a string!'));
+        expect(() => {
+            Utils.assertString(1);
+        }).toThrow('Input must be a string!');
     });
 
     it('Test wait', async () => {

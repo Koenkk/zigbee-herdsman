@@ -10,7 +10,7 @@ interface KeyValue {
 // This leads to incorrect reported attribute names.
 // Remap the attributes using the target device's manufacturer ID
 // if the header is lacking the information.
-function getCluster(frame: Zcl.Frame, deviceManufacturerID: number, customClusters: CustomClusters): Cluster {
+function getCluster(frame: Zcl.Frame, deviceManufacturerID: number | undefined, customClusters: CustomClusters): Cluster {
     let cluster = frame.cluster;
     if (!frame?.header?.manufacturerCode && frame?.cluster && deviceManufacturerID == Zcl.ManufacturerCode.LEGRAND_GROUP) {
         cluster = Zcl.Utils.getCluster(frame.cluster.ID, deviceManufacturerID, customClusters);
@@ -18,7 +18,7 @@ function getCluster(frame: Zcl.Frame, deviceManufacturerID: number, customCluste
     return cluster;
 }
 
-function attributeKeyValue(frame: Zcl.Frame, deviceManufacturerID: number, customClusters: CustomClusters): KeyValue {
+function attributeKeyValue(frame: Zcl.Frame, deviceManufacturerID: number | undefined, customClusters: CustomClusters): KeyValue {
     const payload: KeyValue = {};
     const cluster = getCluster(frame, deviceManufacturerID, customClusters);
 
@@ -33,7 +33,7 @@ function attributeKeyValue(frame: Zcl.Frame, deviceManufacturerID: number, custo
     return payload;
 }
 
-function attributeList(frame: Zcl.Frame, deviceManufacturerID: number, customClusters: CustomClusters): Array<string | number> {
+function attributeList(frame: Zcl.Frame, deviceManufacturerID: number | undefined, customClusters: CustomClusters): Array<string | number> {
     const payload: Array<string | number> = [];
     const cluster = getCluster(frame, deviceManufacturerID, customClusters);
 

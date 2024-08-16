@@ -90,8 +90,8 @@ export interface ParamsDesc {
 
 export interface EZSPFrameDesc {
     ID: number;
-    request: ParamsDesc;
-    response: ParamsDesc;
+    request?: ParamsDesc;
+    response?: ParamsDesc;
     minV?: number;
     maxV?: number;
 }
@@ -209,8 +209,8 @@ export const FRAMES: {[key: string]: EZSPFrameDesc} = {
     // Utilities Frames
     nop: {
         ID: 0x0005,
-        request: null,
-        response: null,
+        request: undefined,
+        response: undefined,
     },
     echo: {
         ID: 0x0081, // 129
@@ -223,20 +223,20 @@ export const FRAMES: {[key: string]: EZSPFrameDesc} = {
     },
     invalidCommand: {
         ID: 0x0058, // 88
-        request: null,
+        request: undefined,
         response: {
             reason: EzspStatus,
         },
     },
     callback: {
         ID: 0x0006,
-        request: null,
-        response: null,
+        request: undefined,
+        response: undefined,
     },
     noCallbacks: {
         ID: 0x0007,
-        request: null,
-        response: null,
+        request: undefined,
+        response: undefined,
     },
     setToken: {
         ID: 0x0009,
@@ -280,14 +280,14 @@ export const FRAMES: {[key: string]: EZSPFrameDesc} = {
     },
     stackTokenChangedHandler: {
         ID: 0x000d, // 13
-        request: null,
+        request: undefined,
         response: {
             tokenAddress: uint16_t,
         },
     },
     getRandomNumber: {
         ID: 0x0049, // 73
-        request: null,
+        request: undefined,
         response: {
             status: EmberStatus,
             value: uint16_t,
@@ -318,7 +318,7 @@ export const FRAMES: {[key: string]: EZSPFrameDesc} = {
     },
     timerHandler: {
         ID: 0x000f, // 15
-        request: null,
+        request: undefined,
         response: {
             timerId: uint8_t,
         },
@@ -335,21 +335,21 @@ export const FRAMES: {[key: string]: EZSPFrameDesc} = {
     },
     readAndClearCounters: {
         ID: 0x0065, // 101
-        request: null,
+        request: undefined,
         response: {
             values: fixed_list(EmberCounterType.COUNTER_TYPE_COUNT, uint16_t),
         },
     },
     readCounters: {
         ID: 0x00f1, // 241
-        request: null,
+        request: undefined,
         response: {
             values: fixed_list(EmberCounterType.COUNTER_TYPE_COUNT, uint16_t),
         },
     },
     counterRolloverHandler: {
         ID: 0x00f2, // 242
-        request: null,
+        request: undefined,
         response: {
             type: EmberCounterType,
         },
@@ -359,7 +359,7 @@ export const FRAMES: {[key: string]: EZSPFrameDesc} = {
         request: {
             delay: uint16_t,
         },
-        response: null,
+        response: undefined,
     },
     getLibraryStatus: {
         ID: 0x0001,
@@ -372,7 +372,7 @@ export const FRAMES: {[key: string]: EZSPFrameDesc} = {
     },
     getXncpInfo: {
         ID: 0x0013, // 19
-        request: null,
+        request: undefined,
         response: {
             status: EmberStatus,
             manufacturerId: uint16_t,
@@ -391,21 +391,21 @@ export const FRAMES: {[key: string]: EZSPFrameDesc} = {
     },
     customFrameHandler: {
         ID: 0x0054, // 84
-        request: null,
+        request: undefined,
         response: {
             payload: LVBytes,
         },
     },
     getEui64: {
         ID: 0x0026, // 38
-        request: null,
+        request: undefined,
         response: {
             eui64: EmberEUI64,
         },
     },
     getNodeId: {
         ID: 0x0027, // 39
-        request: null,
+        request: undefined,
         response: {
             nodeId: EmberNodeId,
         },
@@ -417,18 +417,18 @@ export const FRAMES: {[key: string]: EZSPFrameDesc} = {
         request: {
             code: uint16_t,
         },
-        response: null,
+        response: undefined,
     },
     setPowerDescriptor: {
         ID: 0x0016, // 22
         request: {
             descriptor: uint16_t,
         },
-        response: null,
+        response: undefined,
     },
     networkInit: {
         ID: 0x0017, // 23
-        request: null,
+        request: undefined,
         response: {
             status: EmberStatus,
         },
@@ -444,14 +444,14 @@ export const FRAMES: {[key: string]: EZSPFrameDesc} = {
     },
     networkState: {
         ID: 0x0018, // 24
-        request: null,
+        request: undefined,
         response: {
             status: EmberNetworkStatus,
         },
     },
     stackStatusHandler: {
         ID: 0x0019, // 25
-        request: null,
+        request: undefined,
         response: {
             status: EmberStatus,
         },
@@ -469,7 +469,7 @@ export const FRAMES: {[key: string]: EZSPFrameDesc} = {
     },
     energyScanResultHandler: {
         ID: 0x0048, // 72
-        request: null,
+        request: undefined,
         response: {
             channel: uint8_t,
             maxRssiValue: int8s,
@@ -477,7 +477,7 @@ export const FRAMES: {[key: string]: EZSPFrameDesc} = {
     },
     networkFoundHandler: {
         ID: 0x001b, // 27
-        request: null,
+        request: undefined,
         response: {
             networkFound: EmberZigbeeNetwork,
             lastHopLqi: uint8_t,
@@ -486,7 +486,7 @@ export const FRAMES: {[key: string]: EZSPFrameDesc} = {
     },
     scanCompleteHandler: {
         ID: 0x001c, // 28
-        request: null,
+        request: undefined,
         response: {
             channel: uint8_t,
             status: EmberStatus,
@@ -494,7 +494,7 @@ export const FRAMES: {[key: string]: EZSPFrameDesc} = {
     },
     unusedPanIdFoundHandler: {
         ID: 0x00d2,
-        request: null,
+        request: undefined,
         response: {
             panId: EmberPanId,
             channel: uint8_t,
@@ -512,7 +512,7 @@ export const FRAMES: {[key: string]: EZSPFrameDesc} = {
     },
     stopScan: {
         ID: 0x001d, // 29
-        request: null,
+        request: undefined,
         response: {
             status: EmberStatus,
         },
@@ -550,7 +550,7 @@ export const FRAMES: {[key: string]: EZSPFrameDesc} = {
     // },
     leaveNetwork: {
         ID: 0x0020, // 32
-        request: null,
+        request: undefined,
         response: {
             status: EmberStatus,
         },
@@ -576,7 +576,7 @@ export const FRAMES: {[key: string]: EZSPFrameDesc} = {
     },
     childJoinHandler: {
         ID: 0x0023, // 35
-        request: null,
+        request: undefined,
         response: {
             index: uint8_t,
             joining: Bool,
@@ -599,7 +599,7 @@ export const FRAMES: {[key: string]: EZSPFrameDesc} = {
     },
     getNetworkParameters: {
         ID: 0x0028, // 40
-        request: null,
+        request: undefined,
         response: {
             status: EmberStatus,
             nodeType: EmberNodeType,
@@ -619,7 +619,7 @@ export const FRAMES: {[key: string]: EZSPFrameDesc} = {
     },
     getParentChildParameters: {
         ID: 0x0029, // 41
-        request: null,
+        request: undefined,
         response: {
             childCount: uint8_t,
             parentEui64: EmberEUI64,
@@ -650,7 +650,7 @@ export const FRAMES: {[key: string]: EZSPFrameDesc} = {
     },
     neighborCount: {
         ID: 0x007a, // 122
-        request: null,
+        request: undefined,
         response: {
             value: uint8_t,
         },
@@ -702,7 +702,7 @@ export const FRAMES: {[key: string]: EZSPFrameDesc} = {
     // Binding Frames
     clearBindingTable: {
         ID: 0x002a, // 42
-        request: null,
+        request: undefined,
         response: {
             status: EmberStatus,
         },
@@ -760,11 +760,11 @@ export const FRAMES: {[key: string]: EZSPFrameDesc} = {
             index: uint8_t,
             nodeId: EmberNodeId,
         },
-        response: null,
+        response: undefined,
     },
     remoteSetBindingHandler: {
         ID: 0x0031, // 49
-        request: null,
+        request: undefined,
         response: {
             entry: EmberBindingTableEntry,
             index: uint8_t,
@@ -773,7 +773,7 @@ export const FRAMES: {[key: string]: EZSPFrameDesc} = {
     },
     remoteDeleteBindingHandler: {
         ID: 0x0032, // 50
-        request: null,
+        request: undefined,
         response: {
             index: uint8_t,
             policyDecision: EmberStatus,
@@ -783,7 +783,7 @@ export const FRAMES: {[key: string]: EZSPFrameDesc} = {
     // Messaging Frames
     maximumPayloadLength: {
         ID: 0x0033, // 51
-        request: null,
+        request: undefined,
         response: {
             apsLength: uint8_t,
         },
@@ -875,7 +875,7 @@ export const FRAMES: {[key: string]: EZSPFrameDesc} = {
     },
     messageSentHandler: {
         ID: 0x003f, // 63
-        request: null,
+        request: undefined,
         response: {
             type: EmberOutgoingMessageType,
             indexOrDestination: uint16_t,
@@ -908,28 +908,28 @@ export const FRAMES: {[key: string]: EZSPFrameDesc} = {
     },
     pollCompleteHandler: {
         ID: 0x0043, // 67
-        request: null,
+        request: undefined,
         response: {
             status: EmberStatus,
         },
     },
     pollHandler: {
         ID: 0x0044, // 68
-        request: null,
+        request: undefined,
         response: {
             childId: EmberNodeId,
         },
     },
     incomingSenderEui64Handler: {
         ID: 0x0062, // 98
-        request: null,
+        request: undefined,
         response: {
             senderEui64: EmberEUI64,
         },
     },
     incomingMessageHandler: {
         ID: 0x0045, // 69
-        request: null,
+        request: undefined,
         response: {
             type: EmberIncomingMessageType,
             apsFrame: EmberApsFrame,
@@ -943,7 +943,7 @@ export const FRAMES: {[key: string]: EZSPFrameDesc} = {
     },
     incomingRouteRecordHandler: {
         ID: 0x0059, // 89
-        request: null,
+        request: undefined,
         response: {
             source: EmberNodeId,
             longId: EmberEUI64,
@@ -954,7 +954,7 @@ export const FRAMES: {[key: string]: EZSPFrameDesc} = {
     },
     incomingManyToOneRouteRequestHandler: {
         ID: 0x007d, // 125
-        request: null,
+        request: undefined,
         response: {
             source: EmberNodeId,
             longId: EmberEUI64,
@@ -963,7 +963,7 @@ export const FRAMES: {[key: string]: EZSPFrameDesc} = {
     },
     incomingRouteErrorHandler: {
         ID: 0x0080, // 128
-        request: null,
+        request: undefined,
         response: {
             status: EmberStatus,
             target: EmberNodeId,
@@ -1005,7 +1005,7 @@ export const FRAMES: {[key: string]: EZSPFrameDesc} = {
             addressTableIndex: uint8_t,
             id: EmberNodeId,
         },
-        response: null,
+        response: undefined,
     },
     getAddressTableRemoteEui64: {
         ID: 0x005e, // 94
@@ -1031,7 +1031,7 @@ export const FRAMES: {[key: string]: EZSPFrameDesc} = {
             remoteEui64: EmberEUI64,
             extendedTimeout: Bool,
         },
-        response: null,
+        response: undefined,
     },
     getExtendedTimeout: {
         ID: 0x007f, // 127,
@@ -1097,7 +1097,7 @@ export const FRAMES: {[key: string]: EZSPFrameDesc} = {
     },
     idConflictHandler: {
         ID: 0x007c, // 124
-        request: null,
+        request: undefined,
         response: {
             id: EmberNodeId,
         },
@@ -1133,7 +1133,7 @@ export const FRAMES: {[key: string]: EZSPFrameDesc} = {
     },
     macPassthroughMessageHandler: {
         ID: 0x0097, // 151
-        request: null,
+        request: undefined,
         response: {
             messageType: EmberMacPassthroughType,
             lastHopLqi: uint8_t,
@@ -1143,7 +1143,7 @@ export const FRAMES: {[key: string]: EZSPFrameDesc} = {
     },
     macFilterMatchMessageHandler: {
         ID: 0x0046, // 70
-        request: null,
+        request: undefined,
         response: {
             filterIndexMatch: uint8_t,
             legacyPassthroughType: EmberMacPassthroughType,
@@ -1154,7 +1154,7 @@ export const FRAMES: {[key: string]: EZSPFrameDesc} = {
     },
     rawTransmitCompleteHandler: {
         ID: 0x0098, // 152
-        request: null,
+        request: undefined,
         response: {
             status: EmberStatus,
         },
@@ -1172,7 +1172,7 @@ export const FRAMES: {[key: string]: EZSPFrameDesc} = {
     },
     getCurrentSecurityState: {
         ID: 0x0069, // 105
-        request: null,
+        request: undefined,
         response: {
             status: EmberStatus,
             state: EmberCurrentSecurityState,
@@ -1200,7 +1200,7 @@ export const FRAMES: {[key: string]: EZSPFrameDesc} = {
     },
     getNetworkKeyInfo: {
         ID: 0x0116,
-        request: null,
+        request: undefined,
         response: {
             status: SLStatus,
             networkKeyInfo: EmberSecurityManagerNetworkKeyInfo,
@@ -1208,7 +1208,7 @@ export const FRAMES: {[key: string]: EZSPFrameDesc} = {
     },
     switchNetworkKeyHandler: {
         ID: 0x006e, // 110
-        request: null,
+        request: undefined,
         response: {
             sequenceNumber: uint8_t,
         },
@@ -1277,7 +1277,7 @@ export const FRAMES: {[key: string]: EZSPFrameDesc} = {
     },
     clearKeyTable: {
         ID: 0x00b1, // 177
-        request: null,
+        request: undefined,
         response: {
             status: EmberStatus,
         },
@@ -1302,7 +1302,7 @@ export const FRAMES: {[key: string]: EZSPFrameDesc} = {
     },
     zigbeeKeyEstablishmentHandler: {
         ID: 0x009b, // 155
-        request: null,
+        request: undefined,
         response: {
             partner: EmberEUI64,
             status: EmberKeyStatus,
@@ -1331,8 +1331,8 @@ export const FRAMES: {[key: string]: EZSPFrameDesc} = {
     },
     clearTransientLinkKeys: {
         ID: 0x006b, // 107
-        request: null,
-        response: null,
+        request: undefined,
+        response: undefined,
     },
     // getTransientLinkKey: {
     //     ID: 0x00CE,
@@ -1369,14 +1369,14 @@ export const FRAMES: {[key: string]: EZSPFrameDesc} = {
     },
     resetToFactoryDefaults: {
         ID: 0x00cc, // 204
-        request: null,
+        request: undefined,
         response: {
             status: EzspStatus,
         },
     },
     getSecurityKeyStatus: {
         ID: 0x00cd, // 205
-        request: null,
+        request: undefined,
         response: {
             status: EzspStatus,
             returnSecurityType: SecureEzspSecurityType,
@@ -1386,7 +1386,7 @@ export const FRAMES: {[key: string]: EZSPFrameDesc} = {
     // Trust Center Frames
     trustCenterJoinHandler: {
         ID: 0x0024, // 36
-        request: null,
+        request: undefined,
         response: {
             newNodeId: EmberNodeId,
             newNodeEui64: EmberEUI64,
@@ -1406,7 +1406,7 @@ export const FRAMES: {[key: string]: EZSPFrameDesc} = {
     },
     broadcastNetworkKeySwitch: {
         ID: 0x0074, // 116
-        request: null,
+        request: undefined,
         response: {
             status: EmberStatus,
         },
@@ -1458,14 +1458,14 @@ export const FRAMES: {[key: string]: EZSPFrameDesc} = {
     // Certificate Based Key Exchange (CBKE) Frames
     generateCbkeKeys: {
         ID: 0x00a4, // 164
-        request: null,
+        request: undefined,
         response: {
             status: EmberStatus,
         },
     },
     generateCbkeKeysHandler: {
         ID: 0x009e, // 158
-        request: null,
+        request: undefined,
         response: {
             status: EmberStatus,
             ephemeralPublicKey: EmberPublicKeyData,
@@ -1484,7 +1484,7 @@ export const FRAMES: {[key: string]: EZSPFrameDesc} = {
     },
     calculateSmacsHandler: {
         ID: 0x00a0, // 160
-        request: null,
+        request: undefined,
         response: {
             status: EmberStatus,
             initiatorSmac: EmberSmacData,
@@ -1493,14 +1493,14 @@ export const FRAMES: {[key: string]: EZSPFrameDesc} = {
     },
     generateCbkeKeys283k1: {
         ID: 0x00e8, // 232
-        request: null,
+        request: undefined,
         response: {
             status: EmberStatus,
         },
     },
     generateCbkeKeysHandler283k1: {
         ID: 0x00e9, // 233
-        request: null,
+        request: undefined,
         response: {
             status: EmberStatus,
             ephemeralPublicKey: EmberPublicKey283k1Data,
@@ -1519,7 +1519,7 @@ export const FRAMES: {[key: string]: EZSPFrameDesc} = {
     },
     calculateSmacsHandler283k1: {
         ID: 0x00eb, // 235
-        request: null,
+        request: undefined,
         response: {
             status: EmberStatus,
             initiatorSmac: EmberSmacData,
@@ -1546,7 +1546,7 @@ export const FRAMES: {[key: string]: EZSPFrameDesc} = {
     },
     getCertificate: {
         ID: 0x00a5, // 165
-        request: null,
+        request: undefined,
         response: {
             status: EmberStatus,
             localCert: EmberCertificateData,
@@ -1554,7 +1554,7 @@ export const FRAMES: {[key: string]: EZSPFrameDesc} = {
     },
     getCertificate283k1: {
         ID: 0x00ec, // 236
-        request: null,
+        request: undefined,
         response: {
             status: EmberStatus,
             localCert: EmberCertificate283k1Data,
@@ -1571,7 +1571,7 @@ export const FRAMES: {[key: string]: EZSPFrameDesc} = {
     },
     dsaSignHandler: {
         ID: 0x00a7, // 167
-        request: null,
+        request: undefined,
         response: {
             status: EmberStatus,
             message: LVBytes,
@@ -1590,7 +1590,7 @@ export const FRAMES: {[key: string]: EZSPFrameDesc} = {
     },
     dsaVerifyHandler: {
         ID: 0x0078, // 120
-        request: null,
+        request: undefined,
         response: {
             status: EmberStatus,
         },
@@ -1641,35 +1641,35 @@ export const FRAMES: {[key: string]: EZSPFrameDesc} = {
     },
     mfglibEnd: {
         ID: 0x0084, // 132
-        request: null,
+        request: undefined,
         response: {
             status: EmberStatus,
         },
     },
     mfglibStartTone: {
         ID: 0x0085, // 133
-        request: null,
+        request: undefined,
         response: {
             status: EmberStatus,
         },
     },
     mfglibStopTone: {
         ID: 0x0086, // 134
-        request: null,
+        request: undefined,
         response: {
             status: EmberStatus,
         },
     },
     mfglibStartStream: {
         ID: 0x0087, // 135
-        request: null,
+        request: undefined,
         response: {
             status: EmberStatus,
         },
     },
     mfglibStopStream: {
         ID: 0x0088, // 136
-        request: null,
+        request: undefined,
         response: {
             status: EmberStatus,
         },
@@ -1694,7 +1694,7 @@ export const FRAMES: {[key: string]: EZSPFrameDesc} = {
     },
     mfglibGetChannel: {
         ID: 0x008b, // 139
-        request: null,
+        request: undefined,
         response: {
             channel: uint8_t,
         },
@@ -1711,14 +1711,14 @@ export const FRAMES: {[key: string]: EZSPFrameDesc} = {
     },
     mfglibGetPower: {
         ID: 0x008d, // 141
-        request: null,
+        request: undefined,
         response: {
             power: int8s,
         },
     },
     mfglibRxHandler: {
         ID: 0x008e, // 142
-        request: null,
+        request: undefined,
         response: {
             linkQuality: uint8_t,
             rssi: int8s,
@@ -1749,7 +1749,7 @@ export const FRAMES: {[key: string]: EZSPFrameDesc} = {
     },
     getStandaloneBootloaderVersionPlatMicroPhy: {
         ID: 0x0091, // 145
-        request: null,
+        request: undefined,
         response: {
             bootloader_version: uint16_t,
             nodePlat: uint8_t,
@@ -1759,7 +1759,7 @@ export const FRAMES: {[key: string]: EZSPFrameDesc} = {
     },
     incomingBootloadMessageHandler: {
         ID: 0x0092, // 146
-        request: null,
+        request: undefined,
         response: {
             longId: EmberEUI64,
             lastHopLqi: uint8_t,
@@ -1769,7 +1769,7 @@ export const FRAMES: {[key: string]: EZSPFrameDesc} = {
     },
     bootloadTransmitCompleteHandler: {
         ID: 0x0093, // 147
-        request: null,
+        request: undefined,
         response: {
             status: EmberStatus,
             message: LVBytes,
@@ -1839,7 +1839,7 @@ export const FRAMES: {[key: string]: EZSPFrameDesc} = {
     },
     zllNetworkFoundHandler: {
         ID: 0x00b6, // 182
-        request: null,
+        request: undefined,
         response: {
             networkInfo: EmberZllNetwork,
             isDeviceInfoNull: Bool,
@@ -1850,14 +1850,14 @@ export const FRAMES: {[key: string]: EZSPFrameDesc} = {
     },
     zllScanCompleteHandler: {
         ID: 0x00b7, // 183
-        request: null,
+        request: undefined,
         response: {
             status: EmberStatus,
         },
     },
     zllAddressAssignmentHandler: {
         ID: 0x00b8, // 184
-        request: null,
+        request: undefined,
         response: {
             addressInfo: EmberZllAddressAssignment,
             lastHopLqi: uint8_t,
@@ -1875,21 +1875,21 @@ export const FRAMES: {[key: string]: EZSPFrameDesc} = {
     },
     getLogicalChannel: {
         ID: 0x00ba, // 186
-        request: null,
+        request: undefined,
         response: {
             logicalChannel: uint8_t,
         },
     },
     zllTouchLinkTargetHandler: {
         ID: 0x00bb, // 187
-        request: null,
+        request: undefined,
         response: {
             networkInfo: EmberZllNetwork,
         },
     },
     zllGetTokens: {
         ID: 0x00bc, // 188
-        request: null,
+        request: undefined,
         response: {
             data: EmberTokTypeStackZllData,
             security: EmberTokTypeStackZllSecurity,
@@ -1900,16 +1900,16 @@ export const FRAMES: {[key: string]: EZSPFrameDesc} = {
         request: {
             data: EmberTokTypeStackZllData,
         },
-        response: null,
+        response: undefined,
     },
     zllSetNonZllNetwork: {
         ID: 0x00bf, // 191
-        request: null,
-        response: null,
+        request: undefined,
+        response: undefined,
     },
     isZllNetwork: {
         ID: 0x00be, // 190
-        request: null,
+        request: undefined,
         response: {
             isZllNetwork: Bool,
         },
@@ -1969,7 +1969,7 @@ export const FRAMES: {[key: string]: EZSPFrameDesc} = {
     // },
     // rf4ceIncomingMessageHandler: {
     //     ID: 213,
-    //     request: null,
+    //     request: undefined,
     //     response: {
     //         attr: uint8_t,
     //         attr: uint8_t,
@@ -1980,7 +1980,7 @@ export const FRAMES: {[key: string]: EZSPFrameDesc} = {
     // },
     // rf4ceMessageSentHandler: {
     //     ID: 214,
-    //     request: null,
+    //     request: undefined,
     //     response: {
     //         attr: EmberStatus,
     //         attr: uint8_t,
@@ -2004,7 +2004,7 @@ export const FRAMES: {[key: string]: EZSPFrameDesc} = {
     // },
     // rf4ceStop: {
     //     ID: 216,
-    //     request: null,
+    //     request: undefined,
     //     response: {
     //         attr: EmberStatus
     //     },
@@ -2024,14 +2024,14 @@ export const FRAMES: {[key: string]: EZSPFrameDesc} = {
     // },
     // rf4ceDiscoveryCompleteHandler: {
     //     ID: 218,
-    //     request: null,
+    //     request: undefined,
     //     response: {
     //         attr: EmberStatus
     //     },
     // },
     // rf4ceDiscoveryRequestHandler: {
     //     ID: 219,
-    //     request: null,
+    //     request: undefined,
     //     response: {
     //         attr: EmberEUI64,
     //         attr: uint8_t,
@@ -2043,7 +2043,7 @@ export const FRAMES: {[key: string]: EZSPFrameDesc} = {
     // },
     // rf4ceDiscoveryResponseHandler: {
     //     ID: 220,
-    //     request: null,
+    //     request: undefined,
     //     response: {
     //         attr: Bool,
     //         attr: uint8_t,
@@ -2067,7 +2067,7 @@ export const FRAMES: {[key: string]: EZSPFrameDesc} = {
     // },
     // rf4ceAutoDiscoveryResponseCompleteHandler: {
     //     ID: 222,
-    //     request: null,
+    //     request: undefined,
     //     response: {
     //         attr: EmberStatus,
     //         attr: EmberEUI64,
@@ -2091,7 +2091,7 @@ export const FRAMES: {[key: string]: EZSPFrameDesc} = {
     // },
     // rf4cePairCompleteHandler: {
     //     ID: 224,
-    //     request: null,
+    //     request: undefined,
     //     response: {
     //         attr: EmberStatus,
     //         attr: uint8_t,
@@ -2101,7 +2101,7 @@ export const FRAMES: {[key: string]: EZSPFrameDesc} = {
     // },
     // rf4cePairRequestHandler: {
     //     ID: 225,
-    //     request: null,
+    //     request: undefined,
     //     response: {
     //         attr: EmberStatus,
     //         attr: uint8_t,
@@ -2123,14 +2123,14 @@ export const FRAMES: {[key: string]: EZSPFrameDesc} = {
     // },
     // rf4ceUnpairHandler: {
     //     ID: 227,
-    //     request: null,
+    //     request: undefined,
     //     response: {
     //         attr: uint8_t
     //     },
     // },
     // rf4ceUnpairCompleteHandler: {
     //     ID: 228,
-    //     request: null,
+    //     request: undefined,
     //     response: {
     //         attr: uint8_t
     //     },
@@ -2169,7 +2169,7 @@ export const FRAMES: {[key: string]: EZSPFrameDesc} = {
     // },
     // rf4ceGetApplicationInfo: {
     //     ID: 239,
-    //     request: null,
+    //     request: undefined,
     //     response: {
     //         attr: EmberStatus,
     //         attr: EmberRf4ceApplicationInfo
@@ -2187,7 +2187,7 @@ export const FRAMES: {[key: string]: EZSPFrameDesc} = {
     // },
     // rf4ceGetNetworkParameters: {
     //     ID: 244,
-    //     request: null,
+    //     request: undefined,
     //     response: {
     //         attr: EmberStatus,
     //         attr: EmberNodeType,
@@ -2231,7 +2231,7 @@ export const FRAMES: {[key: string]: EZSPFrameDesc} = {
     },
     dGpSentHandler: {
         ID: 0x00c7, // 199
-        request: null,
+        request: undefined,
         response: {
             status: EmberStatus,
             gpepHandle: uint8_t,
@@ -2239,7 +2239,7 @@ export const FRAMES: {[key: string]: EZSPFrameDesc} = {
     },
     gpepIncomingMessageHandler: {
         ID: 0x00c5, // 197
-        request: null,
+        request: undefined,
         response: {
             status: EmberStatus,
             gpdLink: uint8_t,
@@ -2261,7 +2261,7 @@ export const FRAMES: {[key: string]: EZSPFrameDesc} = {
     },
     changeSourceRouteHandler: {
         ID: 0x00c4,
-        request: null,
+        request: undefined,
         response: {
             newChildId: EmberNodeId,
             newParentId: EmberNodeId,
@@ -2270,7 +2270,7 @@ export const FRAMES: {[key: string]: EZSPFrameDesc} = {
     },
     incomingNetworkStatusHandler: {
         ID: 0x00c4,
-        request: null,
+        request: undefined,
         response: {
             errorCode: EmberStackError,
             target: EmberNodeId,

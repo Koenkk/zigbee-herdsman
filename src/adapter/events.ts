@@ -1,14 +1,5 @@
 import {Header as ZclHeader} from '../zspec/zcl';
 
-enum Events {
-    networkAddress = 'networkAddress',
-    deviceJoined = 'deviceJoined',
-    zclPayload = 'zclPayload',
-    disconnected = 'disconnected',
-    deviceAnnounce = 'deviceAnnounce',
-    deviceLeave = 'deviceLeave',
-}
-
 type DeviceJoinedPayload = {
     networkAddress: number;
     ieeeAddr: string;
@@ -24,15 +15,7 @@ type NetworkAddressPayload = {
     ieeeAddr: string;
 };
 
-type DeviceLeavePayload =
-    | {
-          networkAddress?: number;
-          ieeeAddr: string;
-      }
-    | {
-          networkAddress: number;
-          ieeeAddr?: string;
-      };
+type DeviceLeavePayload = {networkAddress?: number; ieeeAddr: string} | {networkAddress: number; ieeeAddr?: string};
 
 interface ZclPayload {
     clusterID: number;
@@ -47,4 +30,4 @@ interface ZclPayload {
     destinationEndpoint: number;
 }
 
-export {Events, DeviceJoinedPayload, ZclPayload, DeviceAnnouncePayload, NetworkAddressPayload, DeviceLeavePayload};
+export {DeviceJoinedPayload, ZclPayload, DeviceAnnouncePayload, NetworkAddressPayload, DeviceLeavePayload};

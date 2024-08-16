@@ -1,5 +1,4 @@
 /* istanbul ignore file */
-/* eslint-disable @typescript-eslint/explicit-module-boundary-types */
 import * as basic from './basic';
 import {fixed_list} from './basic';
 

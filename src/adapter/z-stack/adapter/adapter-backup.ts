@@ -1,9 +1,11 @@
 /* eslint-disable max-len */
+import assert from 'assert';
 import {fs} from 'mz';
 
 import * as Models from '../../../models';
 import {BackupUtils} from '../../../utils';
 import {logger} from '../../../utils/logger';
+import {NULL_NODE_ID} from '../../../zspec';
 import {NvItemsIds, NvSystemIds} from '../constants/common';
 import * as Structs from '../structs';
 import {AddressManagerUser, SecurityManagerAuthenticationOption} from '../structs';
@@ -32,17 +34,17 @@ export class AdapterBackup {
     /**
      * Loads currently stored backup and returns it in internal backup model.
      */
-    public async getStoredBackup(): Promise<Models.Backup> {
+    public async getStoredBackup(): Promise<Models.Backup | undefined> {
         try {
             await fs.access(this.defaultPath);
         } catch {
-            return null;
+            return undefined;
         }
         let data;
         try {
             data = JSON.parse((await fs.readFile(this.defaultPath)).toString());
         } catch (error) {
-            throw new Error(`Coordinator backup is corrupted (${error.message})`);
+            throw new Error(`Coordinator backup is corrupted (${error})`);
         }
         if (data.metadata?.format === 'zigpy/open-coordinator-backup' && data.metadata?.version) {
             if (data.metadata?.version !== 1) {
@@ -64,8 +66,8 @@ export class AdapterBackup {
         const version: ZnpVersion = await this.getAdapterVersion();
 
         /* get adapter ieee address */
-        const ieeeAddressResponse = await this.znp.request(Subsystem.SYS, 'getExtAddr', {});
-        if (!ieeeAddressResponse || !ieeeAddressResponse.payload.extaddress || !ieeeAddressResponse.payload.extaddress.startsWith('0x')) {
+        const ieeeAddressResponse = await this.znp.requestWithReply(Subsystem.SYS, 'getExtAddr', {});
+        if (!ieeeAddressResponse.payload.extaddress || !ieeeAddressResponse.payload.extaddress.startsWith('0x')) {
             throw new Error('Failed to read adapter IEEE address');
         }
         const ieeeAddress = Buffer.from(ieeeAddressResponse.payload.extaddress.split('0x')[1], 'hex');
@@ -81,7 +83,9 @@ export class AdapterBackup {
         /* get adapter active key information */
         let activeKeyInfo;
         if (version === ZnpVersion.zStack12) {
-            const key = Structs.nwkKey((await this.znp.request(Subsystem.SAPI, 'readConfiguration', {configid: NvItemsIds.PRECFGKEY})).payload.value);
+            const key = Structs.nwkKey(
+                (await this.znp.requestWithReply(Subsystem.SAPI, 'readConfiguration', {configid: NvItemsIds.PRECFGKEY})).payload.value,
+            );
             activeKeyInfo = Structs.nwkKeyDescriptor();
             activeKeyInfo.key = key.key;
         } else {
@@ -123,7 +127,7 @@ export class AdapterBackup {
 
         /* examine network security material table */
         const genericExtendedPanId = Buffer.alloc(8, 0xff);
-        let secMaterialDescriptor: ReturnType<typeof Structs.nwkSecMaterialDescriptorEntry> = null;
+        let secMaterialDescriptor: ReturnType<typeof Structs.nwkSecMaterialDescriptorEntry> | undefined;
         /* istanbul ignore next */
         for (const entry of secMaterialTable.used) {
             if (entry.extendedPanID.equals(nib.extendedPANID)) {
@@ -171,7 +175,7 @@ export class AdapterBackup {
                                 /* istanbul ignore next */
                                 return null;
                             }
-                            let linkKeyInfo: {key: Buffer; rxCounter: number; txCounter: number} = null;
+                            let linkKeyInfo: {key: Buffer; rxCounter: number; txCounter: number} | undefined;
                             const sme = securityManagerTable.used.find((e) => e.ami === ami);
                             if (sme) {
                                 const apsKeyDataIndex =
@@ -187,9 +191,10 @@ export class AdapterBackup {
                             } else {
                                 const tclkTableEntry = tclkTable.used.find((e) => e.extAddr.equals(ame.extAddr));
                                 if (tclkTableEntry) {
+                                    assert(tclkSeed, 'Cannot be undefined because this is only called for ZStack 3');
                                     const rotatedSeed = Buffer.concat([
-                                        tclkSeed.key.slice(tclkTableEntry.SeedShift_IcIndex),
-                                        tclkSeed.key.slice(0, tclkTableEntry.SeedShift_IcIndex),
+                                        tclkSeed.key.subarray(tclkTableEntry.SeedShift_IcIndex),
+                                        tclkSeed.key.subarray(0, tclkTableEntry.SeedShift_IcIndex),
                                     ]);
                                     const extAddrReversed = Buffer.from(ame.extAddr).reverse();
                                     const extAddrRepeated = Buffer.concat([extAddrReversed, extAddrReversed]);
@@ -211,7 +216,7 @@ export class AdapterBackup {
                                 linkKey: !linkKeyInfo ? undefined : linkKeyInfo,
                             };
                         })
-                        .filter((e) => e)) ||
+                        .filter((e) => e != null)) ||
                 [],
         };
 
@@ -224,6 +229,7 @@ export class AdapterBackup {
              * Below we don't remove any devices from the backup which have a linkkey and are still in the database (=ieeeAddressesInDatabase)
              */
             const oldBackup = await this.getStoredBackup();
+            assert(oldBackup, "Old backup doesn't exist");
             const missing = oldBackup.devices.filter(
                 (d) =>
                     d.linkKey &&
@@ -304,7 +310,7 @@ export class AdapterBackup {
         /* populate device & security tables and write them */
         for (const device of backup.devices) {
             const ame = addressManagerTable.getNextFree();
-            ame.nwkAddr = device.networkAddress;
+            ame.nwkAddr = device.networkAddress != null ? device.networkAddress : NULL_NODE_ID;
             ame.extAddr = device.ieeeAddress;
             ame.user = device.isDirectChild ? AddressManagerUser.Assoc : AddressManagerUser.Default;
             if (device.linkKey) {
@@ -367,11 +373,13 @@ export class AdapterBackup {
                     if (!sme) {
                         throw new Error(`target adapter security manager table size insufficient (size=${securityManagerTable.capacity})`);
                     }
-                    sme.ami = addressManagerTable.indexOf(ame);
-                    sme.keyNvId =
-                        version === ZnpVersion.zStack3x0
-                            ? apsLinkKeyDataTable.indexOf(apsKeyDataEntry)
-                            : NvItemsIds.APS_LINK_KEY_DATA_START + apsLinkKeyDataTable.indexOf(apsKeyDataEntry);
+                    const ameIndex = addressManagerTable.indexOf(ame);
+                    assert(ameIndex != null);
+                    sme.ami = ameIndex;
+
+                    const apsKeyDataEntryIndex = apsLinkKeyDataTable.indexOf(apsKeyDataEntry);
+                    assert(apsKeyDataEntryIndex != null);
+                    sme.keyNvId = version === ZnpVersion.zStack3x0 ? apsKeyDataEntryIndex : NvItemsIds.APS_LINK_KEY_DATA_START + apsKeyDataEntryIndex;
                     sme.authenticationOption = SecurityManagerAuthenticationOption.AuthenticatedCBCK;
 
                     linkKeyProcessed = true;
@@ -435,7 +443,7 @@ export class AdapterBackup {
      * and restore procedures are not supported.*
      */
     private async getAdapterVersion(): Promise<ZnpVersion> {
-        const versionResponse = await this.znp.request(Subsystem.SYS, 'version', {});
+        const versionResponse = await this.znp.requestWithReply(Subsystem.SYS, 'version', {});
         const version: ZnpVersion = versionResponse.payload.product;
         return version;
     }

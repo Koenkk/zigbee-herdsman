@@ -9,21 +9,14 @@ const NS = 'zh:ezsp:uart';
 
 export class Parser extends stream.Transform {
     private tail: Buffer[];
-    private flagXONXOFF: boolean;
 
-    public constructor(flagXONXOFF: boolean = false) {
+    public constructor() {
         super();
 
-        this.flagXONXOFF = flagXONXOFF;
         this.tail = [];
     }
 
     public _transform(chunk: Buffer, _: string, cb: () => void): void {
-        if (this.flagXONXOFF && (chunk.indexOf(consts.XON) >= 0 || chunk.indexOf(consts.XOFF) >= 0)) {
-            // XXX: should really throw, but just assert for now to flag potential problematic setups
-            logger.error(`Host driver did not remove XON/XOFF from input stream. Driver not setup for XON/XOFF?`, NS);
-        }
-
         if (chunk.indexOf(consts.CANCEL) >= 0) {
             this.reset();
             chunk = chunk.subarray(chunk.lastIndexOf(consts.CANCEL) + 1);
@@ -50,7 +43,7 @@ export class Parser extends stream.Transform {
                     this.emit('parsed', frame);
                 }
             } catch (error) {
-                logger.debug(`<-- error ${error.stack}`, NS);
+                logger.debug(`<-- error ${error}`, NS);
             }
 
             chunk = chunk.subarray(delimiterPlace + 1);

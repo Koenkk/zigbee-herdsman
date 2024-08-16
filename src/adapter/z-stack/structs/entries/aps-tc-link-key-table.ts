@@ -1,4 +1,5 @@
-/* eslint-disable @typescript-eslint/explicit-module-boundary-types */
+import assert from 'assert';
+
 import {StructMemoryAlignment} from '../struct';
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
 import {Table} from '../table';
@@ -16,5 +17,6 @@ export const apsTcLinkKeyTable = (dataOrCapacity?: Buffer | Buffer[] | number, a
     const table = Table.new<ReturnType<typeof apsTcLinkKeyEntry>>()
         .struct(apsTcLinkKeyEntry)
         .occupancy((e) => !e.extAddr.equals(emptyAddress));
+    assert(dataOrCapacity !== undefined, 'dataOrCapacity cannot be undefined');
     return typeof dataOrCapacity === 'number' ? table.build(dataOrCapacity) : table.build(dataOrCapacity, alignment);
 };

@@ -46,9 +46,8 @@ class ZpiObject {
         }
 
         const cmd = Definition[subsystem].find((c: MtCmd): boolean => c.name === command);
-
-        if (!cmd) {
-            throw new Error(`Command '${command}' from subsystem '${subsystem}' not found`);
+        if (cmd?.request === undefined) {
+            throw new Error(`Command request '${command}' from subsystem '${subsystem}' not found`);
         }
 
         return new ZpiObject(cmd.type, subsystem, command, cmd.ID, payload, cmd.request);

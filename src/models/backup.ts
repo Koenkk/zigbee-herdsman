@@ -17,7 +17,7 @@ export interface Backup {
     networkUpdateId: number;
     coordinatorIeeeAddress: Buffer;
     devices: {
-        networkAddress: number;
+        networkAddress: number | null;
         ieeeAddress: Buffer;
         isDirectChild: boolean;
         linkKey?: {

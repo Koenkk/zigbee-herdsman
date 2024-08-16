@@ -24,11 +24,11 @@ const HEADER_CTRL_RESERVED_BIT = 5;
 
 export class ZclHeader {
     public readonly frameControl: FrameControl;
-    public readonly manufacturerCode: number | null;
+    public readonly manufacturerCode: number | undefined;
     public readonly transactionSequenceNumber: number;
     public readonly commandIdentifier: number;
 
-    constructor(frameControl: FrameControl, manufacturerCode: number | null, transactionSequenceNumber: number, commandIdentifier: number) {
+    constructor(frameControl: FrameControl, manufacturerCode: number | undefined, transactionSequenceNumber: number, commandIdentifier: number) {
         this.frameControl = frameControl;
         this.manufacturerCode = manufacturerCode;
         this.transactionSequenceNumber = transactionSequenceNumber;
@@ -37,7 +37,7 @@ export class ZclHeader {
 
     /** Returns the amount of bytes used by this header */
     get length(): number {
-        return this.manufacturerCode === null ? HEADER_MINIMAL_LENGTH : HEADER_WITH_MANUF_LENGTH;
+        return this.manufacturerCode === undefined ? HEADER_MINIMAL_LENGTH : HEADER_WITH_MANUF_LENGTH;
     }
 
     get isGlobal(): boolean {
@@ -58,7 +58,7 @@ export class ZclHeader {
 
         buffalo.writeUInt8(frameControl);
 
-        if (this.frameControl.manufacturerSpecific) {
+        if (this.frameControl.manufacturerSpecific && this.manufacturerCode) {
             buffalo.writeUInt16(this.manufacturerCode);
         }
 
@@ -83,7 +83,8 @@ export class ZclHeader {
             reservedBits: (frameControlValue & HEADER_CTRL_RESERVED_MASK) >> HEADER_CTRL_RESERVED_BIT,
         };
 
-        let manufacturerCode: number | null = null;
+        let manufacturerCode: number | undefined;
+
         if (frameControl.manufacturerSpecific) {
             if (buffer.length < HEADER_WITH_MANUF_LENGTH) {
                 logger.debug(`ZclHeader is too short for control with manufacturer-specific.`, NS);

@@ -1,5 +1,3 @@
-/* istanbul ignore file */
-/* eslint-disable */
 import {ZiGateMessageCode} from './constants';
 import ParameterType from './parameterType';
 
@@ -13,6 +11,7 @@ export interface ZiGateMessageType {
     response: ZiGateMessageParameter[];
 }
 
+/* istanbul ignore next */
 export const ZiGateMessage: {[k: number]: ZiGateMessageType} = {
     [ZiGateMessageCode.GetTimeServer]: {
         response: [

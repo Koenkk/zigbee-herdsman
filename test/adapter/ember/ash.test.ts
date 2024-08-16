@@ -80,10 +80,6 @@ describe('Ember UART ASH Protocol', () => {
         expect(uartAsh.txFree).toBeDefined();
         expect(uartAsh.rxQueue).toBeDefined();
         expect(uartAsh.rxFree).toBeDefined();
-
-        //@ts-expect-error private
-        uartAsh.initVariables();
-
         expect(uartAsh.ncpSleepEnabled).toStrictEqual(false);
         expect(uartAsh.ncpHasCallbacks).toStrictEqual(false);
         expect(uartAsh.txQueue.length).toStrictEqual(0);
@@ -91,13 +87,13 @@ describe('Ember UART ASH Protocol', () => {
         expect(uartAsh.txFree.length).toStrictEqual(TX_POOL_BUFFERS);
         expect(uartAsh.rxQueue.length).toStrictEqual(0);
         expect(uartAsh.rxFree.length).toStrictEqual(EZSP_HOST_RX_POOL_SIZE);
-        expect(uartAsh.txQueue.tail).toStrictEqual(null);
-        expect(uartAsh.reTxQueue.tail).toStrictEqual(null);
+        expect(uartAsh.txQueue.tail).toStrictEqual(undefined);
+        expect(uartAsh.reTxQueue.tail).toStrictEqual(undefined);
         expect(uartAsh.txFree.link).toBeInstanceOf(EzspBuffer);
-        expect(uartAsh.txFree.link.data.length).toStrictEqual(EZSP_MAX_FRAME_LENGTH);
-        expect(uartAsh.rxQueue.tail).toStrictEqual(null);
+        expect(uartAsh.txFree.link!.data.length).toStrictEqual(EZSP_MAX_FRAME_LENGTH);
+        expect(uartAsh.rxQueue.tail).toStrictEqual(undefined);
         expect(uartAsh.rxFree.link).toBeInstanceOf(EzspBuffer);
-        expect(uartAsh.rxFree.link.data.length).toStrictEqual(EZSP_MAX_FRAME_LENGTH);
+        expect(uartAsh.rxFree.link!.data.length).toStrictEqual(EZSP_MAX_FRAME_LENGTH);
 
         for (const c in uartAsh.counters) {
             expect(uartAsh.counters[c]).toStrictEqual(0);
@@ -105,15 +101,15 @@ describe('Ember UART ASH Protocol', () => {
 
         // this is mostly Queues testing, but make sure it works in "real" context
         const link = uartAsh.txFree.link;
-        const buffer: EzspBuffer = uartAsh.txFree.allocBuffer();
+        const buffer = uartAsh.txFree.allocBuffer();
 
         expect(buffer).toStrictEqual(link);
-        expect(uartAsh.txFree.link).toStrictEqual(buffer.link);
+        expect(uartAsh.txFree.link).toStrictEqual(buffer!.link);
         expect(uartAsh.txFree.length).toStrictEqual(TX_POOL_BUFFERS - 1);
 
-        uartAsh.txQueue.addTail(buffer);
+        uartAsh.txQueue.addTail(buffer!);
 
-        expect(buffer.link).toStrictEqual(null);
+        expect(buffer!.link).toStrictEqual(undefined);
         expect(uartAsh.txQueue.tail).toStrictEqual(buffer);
         expect(uartAsh.txQueue.length).toStrictEqual(1);
 
@@ -121,21 +117,19 @@ describe('Ember UART ASH Protocol', () => {
 
         expect(head).toStrictEqual(buffer);
         expect(head).toStrictEqual(link);
-        expect(uartAsh.txQueue.tail).toStrictEqual(null);
+        expect(uartAsh.txQueue.tail).toStrictEqual(undefined);
         expect(uartAsh.txQueue.length).toStrictEqual(0);
 
         uartAsh.txFree.freeBuffer(head);
 
-        uartAsh.txQueue.addTail(uartAsh.txFree.allocBuffer());
-        uartAsh.txQueue.addTail(uartAsh.txFree.allocBuffer());
+        uartAsh.txQueue.addTail(uartAsh.txFree.allocBuffer()!);
+        uartAsh.txQueue.addTail(uartAsh.txFree.allocBuffer()!);
 
         expect(uartAsh.txQueue.length).toStrictEqual(2);
         expect(uartAsh.txFree.length).toStrictEqual(TX_POOL_BUFFERS - 2);
     });
 
     it('Reaches CONNECTED state', async () => {
-        //@ts-expect-error private
-        const initVariablesSpy = jest.spyOn(uartAsh, 'initVariables');
         //@ts-expect-error private
         const initPortSpy = jest.spyOn(uartAsh, 'initPort');
         const resetNcpSpy = jest.spyOn(uartAsh, 'resetNcp');
@@ -151,7 +145,6 @@ describe('Ember UART ASH Protocol', () => {
         expect(uartAsh.serialPort.settings.binding).toBe(MockBinding); // just making sure mock was registered
         expect(resetResult).toStrictEqual(EzspStatus.SUCCESS);
         expect(resetNcpSpy).toHaveBeenCalledTimes(1);
-        expect(initVariablesSpy).toHaveBeenCalledTimes(1);
         expect(initPortSpy).toHaveBeenCalledTimes(1);
         //@ts-expect-error private
         expect(uartAsh.flags).toStrictEqual(48); // RST|CAN
@@ -187,7 +180,6 @@ describe('Ember UART ASH Protocol', () => {
 
         await uartAsh.stop();
 
-        expect(initVariablesSpy).toHaveBeenCalledTimes(2); // always called on stop
         expect(onPortErrorSpy).toHaveBeenCalledTimes(0);
         expect(onPortCloseSpy).toHaveBeenCalledTimes(1);
     });

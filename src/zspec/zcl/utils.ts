@@ -84,10 +84,14 @@ function hasCustomClusters(customClusters: CustomClusters): boolean {
     return false;
 }
 
-function findClusterNameByID(id: number, manufacturerCode: number | null, clusters: CustomClusters): [name: string, partialMatch: boolean] {
-    let name: string;
+function findClusterNameByID(
+    id: number,
+    manufacturerCode: number | undefined,
+    clusters: CustomClusters,
+): [name: string | undefined, partialMatch: boolean] {
+    let name: string | undefined;
     // if manufacturer code is given, consider partial match if didn't match against manufacturer code
-    let partialMatch: boolean = manufacturerCode != null;
+    let partialMatch = Boolean(manufacturerCode);
 
     for (const clusterName in clusters) {
         const cluster = clusters[clusterName as ClusterName];
@@ -115,10 +119,10 @@ function findClusterNameByID(id: number, manufacturerCode: number | null, cluste
 
 function getClusterDefinition(
     key: string | number,
-    manufacturerCode: number | null,
+    manufacturerCode: number | undefined,
     customClusters: CustomClusters,
 ): {name: string; cluster: ClusterDefinition} {
-    let name: string;
+    let name: string | undefined;
 
     if (typeof key === 'number') {
         let partialMatch: boolean;
@@ -129,11 +133,11 @@ function getClusterDefinition(
         if (!name) {
             [name, partialMatch] = findClusterNameByID(key, manufacturerCode, Clusters);
         } else if (partialMatch) {
-            let zclName: string;
+            let zclName: string | undefined;
             [zclName, partialMatch] = findClusterNameByID(key, manufacturerCode, Clusters);
 
             // Zcl clusters contain a better match, use that one
-            if (zclName != undefined && !partialMatch) {
+            if (zclName !== undefined && !partialMatch) {
                 name = zclName;
             }
         }
@@ -142,7 +146,7 @@ function getClusterDefinition(
     }
 
     let cluster =
-        name != undefined && hasCustomClusters(customClusters)
+        name !== undefined && hasCustomClusters(customClusters)
             ? {
                   ...Clusters[name as ClusterName],
                   ...customClusters[name], // should override Zcl clusters
@@ -152,16 +156,20 @@ function getClusterDefinition(
     if (!cluster) {
         if (typeof key === 'number') {
             name = key.toString();
-            cluster = {attributes: {}, commands: {}, commandsResponse: {}, manufacturerCode: null, ID: key};
+            cluster = {attributes: {}, commands: {}, commandsResponse: {}, manufacturerCode: undefined, ID: key};
         } else {
-            throw new Error(`Cluster with name '${key}' does not exist`);
+            name = undefined;
         }
+    }
+
+    if (!name) {
+        throw new Error(`Cluster with name '${key}' does not exist`);
     }
 
     return {name, cluster};
 }
 
-function createCluster(name: string, cluster: ClusterDefinition, manufacturerCode: number = null): Cluster {
+function createCluster(name: string, cluster: ClusterDefinition, manufacturerCode?: number): Cluster {
     const attributes: {[s: string]: Attribute} = Object.assign({}, ...Object.entries(cluster.attributes).map(([k, v]) => ({[k]: {...v, name: k}})));
     const commands: {[s: string]: Command} = Object.assign({}, ...Object.entries(cluster.commands).map(([k, v]) => ({[k]: {...v, name: k}})));
     const commandsResponse: {[s: string]: Command} = Object.assign(
@@ -169,9 +177,9 @@ function createCluster(name: string, cluster: ClusterDefinition, manufacturerCod
         ...Object.entries(cluster.commandsResponse).map(([k, v]) => ({[k]: {...v, name: k}})),
     );
 
-    const getAttributeInternal = (key: number | string): Attribute => {
+    const getAttributeInternal = (key: number | string): Attribute | undefined => {
         if (typeof key === 'number') {
-            let partialMatchAttr: Attribute = null;
+            let partialMatchAttr: Attribute | undefined;
 
             for (const attrKey in attributes) {
                 const attr = attributes[attrKey];
@@ -181,7 +189,7 @@ function createCluster(name: string, cluster: ClusterDefinition, manufacturerCod
                         return attr;
                     }
 
-                    if (attr.manufacturerCode == null) {
+                    if (attr.manufacturerCode == undefined) {
                         partialMatchAttr = attr;
                     }
                 }
@@ -198,7 +206,7 @@ function createCluster(name: string, cluster: ClusterDefinition, manufacturerCod
             }
         }
 
-        return null;
+        return undefined;
     };
 
     const getAttribute = (key: number | string): Attribute => {
@@ -273,25 +281,23 @@ function createCluster(name: string, cluster: ClusterDefinition, manufacturerCod
     };
 }
 
-export function getCluster(key: string | number, manufacturerCode: number | null, customClusters: CustomClusters): Cluster {
+export function getCluster(key: string | number, manufacturerCode: number | undefined, customClusters: CustomClusters): Cluster {
     const {name, cluster} = getClusterDefinition(key, manufacturerCode, customClusters);
     return createCluster(name, cluster, manufacturerCode);
 }
 
-export function getGlobalCommand(key: number | string): Command {
-    let name: FoundationCommandName;
-
-    if (typeof key === 'number') {
-        for (const commandName in Foundation) {
-            if (Foundation[commandName as FoundationCommandName].ID === key) {
-                name = commandName as FoundationCommandName;
-                break;
-            }
+function getGlobalCommandNameById(id: number): FoundationCommandName {
+    for (const commandName in Foundation) {
+        if (Foundation[commandName as FoundationCommandName].ID === id) {
+            return commandName as FoundationCommandName;
         }
-    } else {
-        name = key as FoundationCommandName;
     }
 
+    throw new Error(`Global command with id '${id}' does not exist.`);
+}
+
+export function getGlobalCommand(key: number | string): Command {
+    const name = typeof key === 'number' ? getGlobalCommandNameById(key) : (key as FoundationCommandName);
     const command = Foundation[name];
 
     if (!command) {
@@ -323,6 +329,8 @@ export function getFoundationCommand(id: number): FoundationDefinition {
             return command;
         }
     }
+
+    throw new Error(`Foundation command '${id}' does not exist.`);
 }
 
 export function isFoundationDiscoverRsp(id: number): boolean {

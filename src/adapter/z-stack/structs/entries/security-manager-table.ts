@@ -1,5 +1,6 @@
 /* eslint-disable max-len */
-/* eslint-disable @typescript-eslint/explicit-module-boundary-types */
+import assert from 'assert';
+
 import {StructMemoryAlignment} from '../struct';
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
 import {Table} from '../table';
@@ -18,5 +19,6 @@ export const securityManagerTable = (dataOrCapacity?: Buffer | Buffer[] | number
             (e) => ![0xfffe, 0xffff].includes(e.ami) && !(e.ami === 0x0000 && e.authenticationOption === SecurityManagerAuthenticationOption.Default),
         )
         .inlineHeader();
+    assert(dataOrCapacity !== undefined, 'dataOrCapacity cannot be undefined');
     return typeof dataOrCapacity === 'number' ? table.build(dataOrCapacity) : table.build(dataOrCapacity, alignment);
 };

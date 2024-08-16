@@ -6,10 +6,10 @@ class Frame {
     public readonly commandID: number;
     public readonly data: Buffer;
 
-    public readonly length: number;
-    public readonly fcs: number;
+    public readonly length?: number;
+    public readonly fcs?: number;
 
-    public constructor(type: Type, subsystem: Subsystem, commandID: number, data: Buffer, length: number = null, fcs: number = null) {
+    public constructor(type: Type, subsystem: Subsystem, commandID: number, data: Buffer, length?: number, fcs?: number) {
         this.type = type;
         this.subsystem = subsystem;
         this.commandID = commandID;

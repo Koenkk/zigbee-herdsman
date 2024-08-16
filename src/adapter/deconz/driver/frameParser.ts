@@ -1,9 +1,8 @@
 /* istanbul ignore file */
-/* eslint-disable */
-const MIN_BUFFER_SIZE = 3;
-const littleEndian = true;
+import {EventEmitter} from 'stream';
+
+import {logger} from '../../../utils/logger';
 import PARAM from './constants';
-import {busyQueue, apsBusyQueue, readyToSend, enableRTS, disableRTS, enableRtsTimeout} from './driver';
 import {
     Request,
     ReceivedDataResponse,
@@ -16,11 +15,9 @@ import {
     ParamChannel,
     ParamChannelMask,
     ParamPermitJoin,
-    ParamNetworkKey,
     gpDataInd,
 } from './constants';
-import * as Events from '../../events';
-import {logger} from '../../../utils/logger';
+import {busyQueue, apsBusyQueue, enableRTS, enableRtsTimeout} from './driver';
 
 const NS = 'zh:deconz:frameparser';
 
@@ -30,12 +27,12 @@ interface lastReceivedGpInd {
     frameCounter: number;
 }
 
-var lastReceivedGpInd = {srcId: 0, commandId: 0, frameCounter: 0};
-var events = require('events');
-var frameParserEvents = new events.EventEmitter();
-module.exports.frameParserEvents = frameParserEvents;
+const MIN_BUFFER_SIZE = 3;
+const littleEndian = true;
+const lastReceivedGpInd = {srcId: 0, commandId: 0, frameCounter: 0};
+export const frameParserEvents = new EventEmitter();
 
-function parseReadParameterResponse(view: DataView): Command {
+function parseReadParameterResponse(view: DataView): Command | null {
     const parameterId = view.getUint8(7);
 
     switch (parameterId) {
@@ -130,10 +127,9 @@ function parseChangeNetworkStateResponse(view: DataView): number {
     return state;
 }
 
-function parseQuerySendDataStateResponse(view: DataView): object {
+function parseQuerySendDataStateResponse(view: DataView): object | null {
     try {
         const response: DataStateResponse = {};
-        let buf2, buf3;
 
         response.commandId = view.getUint8(0);
         response.seqNr = view.getUint8(1);
@@ -143,6 +139,7 @@ function parseQuerySendDataStateResponse(view: DataView): object {
             if (response.status !== 5) {
                 logger.debug('DATA_CONFIRM RESPONSE - seqNr.: ' + response.seqNr + ' status: ' + response.status, NS);
             }
+
             return null;
         }
 
@@ -160,11 +157,13 @@ function parseQuerySendDataStateResponse(view: DataView): object {
                 res = '0' + res;
             }
             response.destAddr64 = res;
-            buf2 = view.buffer.slice(18, view.buffer.byteLength);
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            const buf2 = view.buffer.slice(18, view.buffer.byteLength);
             destAddr = response.destAddr64;
         } else {
             response.destAddr16 = view.getUint16(10, littleEndian);
-            buf2 = view.buffer.slice(12, view.buffer.byteLength);
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            const buf2 = view.buffer.slice(12, view.buffer.byteLength);
             destAddr = response.destAddr16.toString(16);
         }
         if (response.destAddrMode === 0x02 || response.destAddrMode === 0x03) {
@@ -181,9 +180,11 @@ function parseQuerySendDataStateResponse(view: DataView): object {
 
         // resolve send data request promise
         const i = apsBusyQueue.findIndex((r: Request) => r.request && r.request.requestId === response.requestId);
+
         if (i < 0) {
-            return;
+            return null;
         }
+
         clearTimeout(enableRtsTimeout);
         enableRTS(); // enable ReadyToSend because confirm received
         const req: Request = apsBusyQueue[i];
@@ -192,10 +193,10 @@ function parseQuerySendDataStateResponse(view: DataView): object {
         if (response.confirmStatus !== 0) {
             // reject if status is not SUCCESS
             //logger.debug("REJECT APS_REQUEST - request id: " + response.requestId + " confirm status: " + response.confirmStatus, NS);
-            req.reject(response.confirmStatus);
+            req.reject?.(response.confirmStatus);
         } else {
             //logger.debug("RESOLVE APS_REQUEST - request id: " + response.requestId + " confirm status: " + response.confirmStatus, NS);
-            req.resolve(response.confirmStatus);
+            req.resolve?.(response.confirmStatus);
         }
 
         //remove from busyqueue
@@ -214,7 +215,7 @@ function parseQuerySendDataStateResponse(view: DataView): object {
     }
 }
 
-function parseReadReceivedDataResponse(view: DataView): object {
+function parseReadReceivedDataResponse(view: DataView): object | null {
     // min 28 bytelength
     try {
         const response: ReceivedDataResponse = {};
@@ -272,13 +273,13 @@ function parseReadReceivedDataResponse(view: DataView): object {
             srcAddr = response.srcAddr64;
         }
 
-        view = new DataView(buf3);
+        view = new DataView(buf3!); // XXX: not validated?
         response.srcEndpoint = view.getUint8(0);
         response.profileId = view.getUint16(1, littleEndian);
         response.clusterId = view.getUint16(3, littleEndian);
         response.asduLength = view.getUint16(5, littleEndian);
 
-        let payload = [];
+        const payload = [];
         let i = 0;
         for (let u = 7; u < response.asduLength + 7; u++) {
             payload[i] = view.getUint8(u);
@@ -318,7 +319,7 @@ function parseReadReceivedDataResponse(view: DataView): object {
     }
 }
 
-function parseEnqueueSendDataResponse(view: DataView): number {
+function parseEnqueueSendDataResponse(view: DataView): number | null {
     try {
         const status = view.getUint8(2);
         const requestId = view.getUint8(8);
@@ -332,7 +333,7 @@ function parseEnqueueSendDataResponse(view: DataView): number {
     }
 }
 
-function parseWriteParameterResponse(view: DataView): number {
+function parseWriteParameterResponse(view: DataView): number | null {
     try {
         const parameterId = view.getUint8(7);
         logger.debug(`write parameter response - parameter id: ${parameterId} - status: ${view.getUint8(2)}`, NS);
@@ -343,7 +344,7 @@ function parseWriteParameterResponse(view: DataView): number {
     }
 }
 
-function parseReceivedDataNotification(view: DataView): number {
+function parseReceivedDataNotification(view: DataView): number | null {
     try {
         const deviceState = view.getUint8(5);
         logger.debug('DEVICE_STATE changed: ' + deviceState.toString(2), NS);
@@ -355,7 +356,7 @@ function parseReceivedDataNotification(view: DataView): number {
     }
 }
 
-function parseGreenPowerDataIndication(view: DataView): object {
+function parseGreenPowerDataIndication(view: DataView): object | null {
     try {
         const ind: gpDataInd = {};
         ind.seqNr = view.getUint8(1);
@@ -371,7 +372,7 @@ function parseGreenPowerDataIndication(view: DataView): object {
             ind.commandId = view.getUint8(17);
             ind.commandFrameSize = view.byteLength - 18 - 6; // cut 18 from begin and 4 (sec mic) and 2 from end (cfc)
 
-            let payload = [];
+            const payload = [];
             let i = 0;
             for (let u = 18; u < ind.commandFrameSize + 18; u++) {
                 payload[i] = view.getUint8(u);
@@ -388,7 +389,7 @@ function parseGreenPowerDataIndication(view: DataView): object {
             ind.commandId = view.getUint8(12);
             ind.commandFrameSize = view.byteLength - 13 - 2; // cut 13 from begin and 2 from end (cfc)
 
-            let payload = [];
+            const payload = [];
             let i = 0;
             for (let u = 13; u < ind.commandFrameSize + 13; u++) {
                 payload[i] = view.getUint8(u);
@@ -421,11 +422,13 @@ function parseGreenPowerDataIndication(view: DataView): object {
     }
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function parseMacPollCommand(view: DataView): number {
     //logger.debug("Received command MAC_POLL", NS);
     return 28;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function parseBeaconRequest(view: DataView): number {
     logger.debug('Received Beacon Request', NS);
     return 31;
@@ -436,7 +439,7 @@ function parseUnknownCommand(view: DataView): number {
     logger.debug(`received unknown command - id ${id}`, NS);
     return id;
 }
-function getParserForCommandId(id: Number): Function {
+function getParserForCommandId(id: number): (view: DataView) => Command | object | number | null {
     switch (id) {
         case PARAM.PARAM.FrameType.ReadParameter:
             return parseReadParameterResponse;
@@ -468,8 +471,8 @@ function getParserForCommandId(id: Number): Function {
     }
 }
 
-async function processFrame(frame: Uint8Array): Promise<void> {
-    const [seqNumber, status, command, commandId] = await parseFrame(frame);
+function processFrame(frame: Uint8Array): void {
+    const [seqNumber, status, command, commandId] = parseFrame(frame);
     //logger.debug(`process frame with seq: ${seqNumber} status: ${status}`, NS);
 
     let queue = busyQueue;
@@ -495,17 +498,18 @@ async function processFrame(frame: Uint8Array): Promise<void> {
 
     //remove from busyqueue
     queue.splice(i, 1);
+
     if (status !== 0) {
         // reject if status is not SUCCESS
         //logger.debug("REJECT REQUEST", NS);
-        req.reject({status});
+        req.reject?.({status});
     } else {
         //logger.debug("RESOLVE REQUEST", NS);
-        req.resolve(command);
+        req.resolve?.(command);
     }
 }
 
-function parseFrame(frame: Uint8Array): [number, number, Command, number] {
+function parseFrame(frame: Uint8Array): [number | null, number | null, ReturnType<ReturnType<typeof getParserForCommandId>>, number | null] {
     if (frame.length < MIN_BUFFER_SIZE) {
         logger.debug('received frame size to small - discard frame', NS);
         return [null, null, null, null];
