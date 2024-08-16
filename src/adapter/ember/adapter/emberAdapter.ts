@@ -504,7 +504,7 @@ export class EmberAdapter extends Adapter {
                     } catch (error) {
                         // remove to allow retry on next occurrence
                         this.multicastTable.splice(tableIdx, 1);
-                        logger.error((error as Error).stack!, NS);
+                        logger.error((error as Error).message, NS);
                     }
                 }
 

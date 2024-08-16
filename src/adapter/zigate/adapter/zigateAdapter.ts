@@ -88,7 +88,7 @@ class ZiGateAdapter extends Adapter {
                 groupAddress: default_bind_group,
             });
         } catch (error) {
-            throw new Error('failed to connect to zigate adapter ' + (error as Error).stack);
+            throw new Error('failed to connect to zigate adapter ' + (error as Error).message);
         }
 
         return startResult; // 'resumed' | 'reset' | 'restored'
@@ -615,7 +615,7 @@ class ZiGateAdapter extends Adapter {
 
                 // @todo discover route
             } catch (error) {
-                logger.error(`Response error ${(error as Error).stack} (${ieeeAddr}:${networkAddress},${responseAttempt})`, NS);
+                logger.error(`Response error ${(error as Error).message} (${ieeeAddr}:${networkAddress},${responseAttempt})`, NS);
                 if (responseAttempt < 1 && !disableRecovery) {
                     return this.sendZclFrameToEndpointInternal(
                         ieeeAddr,
