@@ -59,15 +59,15 @@ export class ZBOSSAdapter extends Adapter {
 
             this.emit(Events.deviceLeave, payload);
         }
-        // if (frame.type == FrameType.INDICATION && frame.commandId == CommandId.NWK_LEAVE_IND) {
-        //     logger.debug(`Device left network request received from ${frame.payload.ieee}`, NS);
-        //     const payload: DeviceLeavePayload = {
-        //         networkAddress: frame.payload.nwk,
-        //         ieeeAddr: frame.payload.ieee,
-        //     };
+        if (frame.type == FrameType.INDICATION && frame.commandId == CommandId.NWK_LEAVE_IND) {
+            logger.debug(`Device left network request received from ${frame.payload.ieee}`, NS);
+            const payload: DeviceLeavePayload = {
+                networkAddress: frame.payload.nwk,
+                ieeeAddr: frame.payload.ieee,
+            };
 
-        //     this.emit(Events.deviceLeave, payload);
-        // }
+            this.emit(Events.deviceLeave, payload);
+        }
         if (frame.type == FrameType.INDICATION && frame.commandId == CommandId.ZDO_DEV_ANNCE_IND) {
             logger.debug(`Device join request received: ${frame.payload.nwk} ${frame.payload.ieee}`, NS);
             const payload: DeviceJoinedPayload = {
@@ -285,38 +285,44 @@ export class ZBOSSAdapter extends Adapter {
 
     public async bind(destinationNetworkAddress: number, sourceIeeeAddress: string, sourceEndpoint: number, clusterID: number,
         destinationAddressOrGroup: string | number, type: "endpoint" | "group", destinationEndpoint?: number): Promise<void> {
-        return null;
+        return this.queue.execute<void>(async () => {
+            await this.driver.bind(destinationNetworkAddress, sourceIeeeAddress, sourceEndpoint, clusterID, destinationAddressOrGroup, type, destinationEndpoint);
+        }, destinationNetworkAddress);
     }
 
     public async unbind(destinationNetworkAddress: number, sourceIeeeAddress: string, sourceEndpoint: number, clusterID: number,
         destinationAddressOrGroup: string | number, type: "endpoint" | "group", destinationEndpoint: number): Promise<void> {
-        return null;
+        return this.queue.execute<void>(async () => {
+            await this.driver.unbind(destinationNetworkAddress, sourceIeeeAddress, sourceEndpoint, clusterID, destinationAddressOrGroup, type, destinationEndpoint);
+        }, destinationNetworkAddress);
     }
 
     public async removeDevice(networkAddress: number, ieeeAddr: string): Promise<void> {
-        return null;
+        return this.queue.execute<void>(async () => {
+            await this.driver.removeDevice(networkAddress, ieeeAddr);
+        }, networkAddress);
     }
 
     public async sendZclFrameToEndpoint(ieeeAddr: string, networkAddress: number, endpoint: number, zclFrame: Zcl.Frame, timeout: number,
         disableResponse: boolean, disableRecovery: boolean, sourceEndpoint?: number): Promise<ZclPayload> {
-            return this.queue.execute<ZclPayload>(async () => {
-                return this.sendZclFrameToEndpointInternal(
-                    ieeeAddr,
-                    networkAddress,
-                    endpoint,
-                    sourceEndpoint || 1,
-                    zclFrame,
-                    timeout,
-                    disableResponse,
-                    disableRecovery,
-                    0,
-                    0,
-                    false,
-                    false,
-                    false,
-                    null,
-                );
-            }, networkAddress);
+        return this.queue.execute<ZclPayload>(async () => {
+            return this.sendZclFrameToEndpointInternal(
+                ieeeAddr,
+                networkAddress,
+                endpoint,
+                sourceEndpoint || 1,
+                zclFrame,
+                timeout,
+                disableResponse,
+                disableRecovery,
+                0,
+                0,
+                false,
+                false,
+                false,
+                null,
+            );
+        }, networkAddress);
     }
 
     private async sendZclFrameToEndpointInternal(

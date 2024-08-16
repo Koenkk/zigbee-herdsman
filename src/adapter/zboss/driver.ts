@@ -369,6 +369,10 @@ export class ZBOSSDriver extends EventEmitter {
         return await this.execCommand(CommandId.ZDO_SIMPLE_DESC_REQ, {nwk: nwk, endpoint: ep});
     }
 
+    public async removeDevice(nwk: number, ieee: string): Promise<ZBOSSFrame> {
+        return await this.execCommand(CommandId.ZDO_MGMT_LEAVE_REQ, {nwk: nwk, ieee: ieee, flags: 0});
+    }
+
     public async request(ieee: string, profileID: number, clusterID: number, dstEp: number, srcEp: number, data: Buffer): Promise<ZBOSSFrame> {
         const payload = {
             paramLength: 21,
@@ -386,6 +390,32 @@ export class ZBOSSDriver extends EventEmitter {
             aliasSequence: 0,
             data: data,
         };
-        return await this.execCommand(CommandId.APSDE_DATA_REQ, payload, 30000);
+        return await this.execCommand(CommandId.APSDE_DATA_REQ, payload);
+    }
+
+    public async bind(destinationNetworkAddress: number, sourceIeeeAddress: string, sourceEndpoint: number, clusterID: number,
+        destinationAddressOrGroup: string | number, type: "endpoint" | "group", destinationEndpoint?: number): Promise<ZBOSSFrame> {
+        return await this.execCommand(CommandId.ZDO_BIND_REQ, {
+            target: destinationNetworkAddress,
+            srcIeee: sourceIeeeAddress,
+            srcEP: sourceEndpoint,
+            clusterID: clusterID,
+            addrMode: (type == 'endpoint') ? 3 /* ieee */ : 1 /* group */,
+            dstIeee: destinationAddressOrGroup,
+            dstEP: destinationEndpoint || 1,
+        });
+    }
+
+    public async unbind(destinationNetworkAddress: number, sourceIeeeAddress: string, sourceEndpoint: number, clusterID: number,
+        destinationAddressOrGroup: string | number, type: "endpoint" | "group", destinationEndpoint?: number): Promise<ZBOSSFrame> {
+        return await this.execCommand(CommandId.ZDO_UNBIND_REQ, {
+            target: destinationNetworkAddress,
+            srcIeee: sourceIeeeAddress,
+            srcEP: sourceEndpoint,
+            clusterID: clusterID,
+            addrMode: (type == 'endpoint') ? 3 /* ieee */ : 1 /* group */,
+            dstIeee: destinationAddressOrGroup,
+            dstEP: destinationEndpoint || 1,
+        });
     }
 };
