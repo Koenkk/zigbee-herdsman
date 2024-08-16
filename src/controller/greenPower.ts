@@ -8,14 +8,14 @@ import {BroadcastAddress} from '../zspec/enums';
 import * as Zcl from '../zspec/zcl';
 import ZclTransactionSequenceNumber from './helpers/zclTransactionSequenceNumber';
 import {Device} from './model';
-import {GreenPowerEvents, GreenPowerDeviceJoinedPayload} from './tstype';
+import {GreenPowerDeviceJoinedPayload} from './tstype';
 
 const NS = 'zh:controller:greenpower';
 
 const zigBeeLinkKey = Buffer.from([0x5a, 0x69, 0x67, 0x42, 0x65, 0x65, 0x41, 0x6c, 0x6c, 0x69, 0x61, 0x6e, 0x63, 0x65, 0x30, 0x39]);
 
 interface GreenPowerEventMap {
-    [GreenPowerEvents.deviceJoined]: [payload: GreenPowerDeviceJoinedPayload];
+    deviceJoined: [payload: GreenPowerDeviceJoinedPayload];
 }
 
 class GreenPower extends events.EventEmitter<GreenPowerEventMap> {
@@ -178,7 +178,7 @@ class GreenPower extends events.EventEmitter<GreenPowerEventMap> {
                         await this.sendPairingCommand(payload, dataPayload, frame);
                     }
 
-                    this.emit(GreenPowerEvents.deviceJoined, {
+                    this.emit('deviceJoined', {
                         sourceID: frame.payload.srcID,
                         deviceID: frame.payload.commandFrame.deviceID,
                         networkAddress: frame.payload.srcID & 0xffff,

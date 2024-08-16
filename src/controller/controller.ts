@@ -16,7 +16,7 @@ import {ZclFrameConverter} from './helpers';
 import {Entity, Device} from './model';
 import Group from './model/group';
 import Touchlink from './touchlink';
-import {KeyValue, DeviceType, GreenPowerEvents, GreenPowerDeviceJoinedPayload} from './tstype';
+import {KeyValue, DeviceType, GreenPowerDeviceJoinedPayload} from './tstype';
 
 const NS = 'zh:controller';
 
@@ -158,7 +158,7 @@ class Controller extends events.EventEmitter<ControllerEventMap> {
         logger.debug(`Injected database: ${this.database != undefined}, adapter: ${this.adapter != undefined}`, NS);
 
         this.greenPower = new GreenPower(this.adapter);
-        this.greenPower.on(GreenPowerEvents.deviceJoined, this.onDeviceJoinedGreenPower.bind(this));
+        this.greenPower.on('deviceJoined', this.onDeviceJoinedGreenPower.bind(this));
 
         // Register adapter events
         this.adapter.on('deviceJoined', this.onDeviceJoined.bind(this));
@@ -330,11 +330,7 @@ class Controller extends events.EventEmitter<ControllerEventMap> {
         this.stopping = true;
 
         // Unregister adapter events
-        this.adapter.removeAllListeners('deviceJoined');
-        this.adapter.removeAllListeners('zclPayload');
-        this.adapter.removeAllListeners('disconnected');
-        this.adapter.removeAllListeners('deviceAnnounce');
-        this.adapter.removeAllListeners('deviceLeave');
+        this.adapter.removeAllListeners();
 
         clearInterval(this.backupTimer);
         clearInterval(this.databaseSaveTimer);
