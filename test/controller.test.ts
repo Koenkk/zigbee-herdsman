@@ -2251,6 +2251,17 @@ describe('Controller', () => {
         );
     });
 
+    it('Add install code pipe', async () => {
+        await controller.start();
+        const code = '54EF44100006E7DF|3313A005E177A647FC7925620AB207C4BEF5';
+        await controller.addInstallCode(code);
+        expect(mockAddInstallCode).toHaveBeenCalledTimes(1);
+        expect(mockAddInstallCode).toHaveBeenCalledWith(
+            '0x54EF44100006E7DF',
+            Buffer.from([0x33, 0x13, 0xa0, 0x05, 0xe1, 0x77, 0xa6, 0x47, 0xfc, 0x79, 0x25, 0x62, 0x0a, 0xb2, 0x07, 0xc4, 0xbe, 0xf5]),
+        );
+    });
+
     it('Controller permit joining', async () => {
         await controller.start();
         await controller.permitJoin(true);
