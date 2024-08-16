@@ -86,7 +86,7 @@ export class EZSPAdapterBackup {
         try {
             data = JSON.parse((await fs.readFile(this.defaultPath)).toString());
         } catch (error) {
-            throw new Error(`Coordinator backup is corrupted (${(error as Error).message})`);
+            throw new Error(`Coordinator backup is corrupted (${(error as Error).stack})`);
         }
         if (data.metadata?.format === 'zigpy/open-coordinator-backup' && data.metadata?.version) {
             if (data.metadata?.version !== 1) {

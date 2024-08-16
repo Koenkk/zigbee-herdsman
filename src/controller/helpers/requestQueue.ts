@@ -50,7 +50,7 @@ class RequestQueue extends Set<Request> {
                 } catch (error) {
                     logger.debug(
                         `Request Queue (${this.deviceIeeeAddress}/${this.ID}): send failed, expires in ` +
-                            `${(request.expires - now) / 1000} seconds (${(error as Error).message})`,
+                            `${(request.expires - now) / 1000} seconds (${(error as Error).stack})`,
                         NS,
                     );
                 }

@@ -229,7 +229,7 @@ class GreenPower extends events.EventEmitter<GreenPowerEventMap> {
             }
         } catch (error) {
             /* istanbul ignore next */
-            logger.error(error as Error, NS);
+            logger.error((error as Error).stack!, NS);
         }
     }
 

@@ -189,7 +189,7 @@ export class SerialDriver extends EventEmitter {
         } catch (error) {
             this.rejectCondition = true;
             logger.error(`Error while parsing to NpiFrame '${error}'`, NS);
-            logger.debug(error as Error, NS);
+            logger.debug((error as Error).stack!, NS);
         }
 
         // We send NAK only if the rejectCondition was set in the current processing

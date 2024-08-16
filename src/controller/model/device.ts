@@ -420,7 +420,7 @@ class Device extends Entity<ControllerEventMap> {
                         srcEndpoint: dataPayload.destinationEndpoint,
                     });
                 } catch (error) {
-                    logger.error(`Read response to ${this.ieeeAddr} failed (${(error as Error).message})`, NS);
+                    logger.error(`Read response to ${this.ieeeAddr} failed (${(error as Error).stack})`, NS);
                 }
             }
         }
@@ -459,7 +459,7 @@ class Device extends Entity<ControllerEventMap> {
                 }
             } catch (error) {
                 /* istanbul ignore next */
-                logger.error(`Handling of poll check-in from ${this.ieeeAddr} failed (${(error as Error).message})`, NS);
+                logger.error(`Handling of poll check-in from ${this.ieeeAddr} failed (${(error as Error).stack})`, NS);
             }
         }
 

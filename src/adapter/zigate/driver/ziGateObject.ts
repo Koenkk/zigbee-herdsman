@@ -106,7 +106,7 @@ class ZiGateObject {
             try {
                 result[parameter.name] = buffalo.read(parameter.parameterType, options);
             } catch (error) {
-                logger.error(error as Error, NS);
+                logger.error((error as Error).stack!, NS);
             }
         }
 

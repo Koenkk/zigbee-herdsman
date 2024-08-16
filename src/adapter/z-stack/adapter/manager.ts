@@ -366,7 +366,7 @@ export class ZnpAdapterManager {
                 await started.start().promise;
             } catch (error) {
                 throw new Error(
-                    `network commissioning timed out - most likely network with the same panId or extendedPanId already exists nearby (${(error as Error).message})`,
+                    `network commissioning timed out - most likely network with the same panId or extendedPanId already exists nearby (${(error as Error).stack})`,
                 );
             }
         } else {

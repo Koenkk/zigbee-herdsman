@@ -218,7 +218,7 @@ class Group extends Entity {
         } catch (error) {
             const err = error as Error;
             err.message = `${log} failed (${err.message})`;
-            logger.debug(err, NS);
+            logger.debug((err as Error).stack!, NS);
 
             throw error;
         }
@@ -254,7 +254,7 @@ class Group extends Entity {
         } catch (error) {
             const err = error as Error;
             err.message = `${log} failed (${err.message})`;
-            logger.debug(err, NS);
+            logger.debug((err as Error).stack!, NS);
 
             throw error;
         }
@@ -286,7 +286,7 @@ class Group extends Entity {
         } catch (error) {
             const err = error as Error;
             err.message = `${log} failed (${err.message})`;
-            logger.debug(err, NS);
+            logger.debug((err as Error).stack!, NS);
 
             throw error;
         }

@@ -1,8 +1,8 @@
 export interface Logger {
-    debug: (message: string | Error, namespace: string) => void;
+    debug: (message: string, namespace: string) => void;
     info: (message: string, namespace: string) => void;
     warning: (message: string, namespace: string) => void;
-    error: (message: string | Error, namespace: string) => void;
+    error: (message: string, namespace: string) => void;
 }
 
 export let logger: Logger = {

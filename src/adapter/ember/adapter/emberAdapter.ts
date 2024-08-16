@@ -504,7 +504,7 @@ export class EmberAdapter extends Adapter {
                     } catch (error) {
                         // remove to allow retry on next occurrence
                         this.multicastTable.splice(tableIdx, 1);
-                        logger.error(error as Error, NS);
+                        logger.error((error as Error).stack!, NS);
                     }
                 }
 
@@ -1185,7 +1185,7 @@ export class EmberAdapter extends Adapter {
         try {
             data = JSON.parse(readFileSync(this.backupPath).toString());
         } catch (error) {
-            throw new Error(`[BACKUP] Coordinator backup is corrupted. (${(error as Error).message})`);
+            throw new Error(`[BACKUP] Coordinator backup is corrupted. (${(error as Error).stack})`);
         }
 
         if (data.metadata?.format === 'zigpy/open-coordinator-backup' && data.metadata?.version) {
