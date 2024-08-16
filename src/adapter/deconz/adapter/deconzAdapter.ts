@@ -1145,7 +1145,7 @@ class DeconzAdapter extends Adapter {
             if (data[1] !== 0) {
                 throw new Error('status: ' + data[1]);
             }
-            this.emit(Events.Events.deviceLeave, payload);
+            this.emit('deviceLeave', payload);
         } catch (error) {
             logger.debug('REMOVE_DEVICE FAILED - addr: 0x' + networkAddress.toString(16) + ' ' + error, NS);
             throw error;
@@ -1274,7 +1274,7 @@ class DeconzAdapter extends Adapter {
         };
 
         this.waitress.resolve(payload);
-        this.emit(Events.Events.zclPayload, payload);
+        this.emit('zclPayload', payload);
     }
 
     private checkReceivedDataPayload(resp: ReceivedDataResponse | null): void {
@@ -1345,9 +1345,9 @@ class DeconzAdapter extends Adapter {
                 ieeeAddr: this.driver.macAddrArrayToString(resp.asduPayload!.slice(3, 11)),
             };
             if (this.joinPermitted === true) {
-                this.emit(Events.Events.deviceJoined, payload);
+                this.emit('deviceJoined', payload);
             } else {
-                this.emit(Events.Events.deviceAnnounce, payload);
+                this.emit('deviceAnnounce', payload);
             }
         }
 
@@ -1365,7 +1365,7 @@ class DeconzAdapter extends Adapter {
             };
 
             this.waitress.resolve(payload);
-            this.emit(Events.Events.zclPayload, payload);
+            this.emit('zclPayload', payload);
         }
     }
 

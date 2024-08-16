@@ -773,9 +773,9 @@ class ZiGateAdapter extends Adapter {
         // @todo debounce
         const payload: Events.DeviceAnnouncePayload = {networkAddress, ieeeAddr};
         if (this.joinPermitted === true) {
-            this.emit(Events.Events.deviceJoined, payload);
+            this.emit('deviceJoined', payload);
         } else {
-            this.emit(Events.Events.deviceAnnounce, payload);
+            this.emit('deviceAnnounce', payload);
         }
     }
 
@@ -792,7 +792,7 @@ class ZiGateAdapter extends Adapter {
             destinationEndpoint: <number>data.ziGateObject.payload.destinationEndpoint,
         };
         this.waitress.resolve(payload);
-        this.emit(Events.Events.zclPayload, payload);
+        this.emit('zclPayload', payload);
     }
 
     private leaveIndicationListener(data: {ziGateObject: ZiGateObject}): void {
@@ -801,7 +801,7 @@ class ZiGateAdapter extends Adapter {
             networkAddress: <number>data.ziGateObject.payload.extendedAddress,
             ieeeAddr: <string>data.ziGateObject.payload.extendedAddress,
         };
-        this.emit(Events.Events.deviceLeave, payload);
+        this.emit('deviceLeave', payload);
     }
 
     private waitressTimeoutFormatter(matcher: WaitressMatcher, timeout: number): string {
@@ -827,7 +827,7 @@ class ZiGateAdapter extends Adapter {
 
     private onZiGateClose(): void {
         if (!this.closing) {
-            this.emit(Events.Events.disconnected);
+            this.emit('disconnected');
         }
     }
 }

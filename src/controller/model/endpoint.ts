@@ -83,7 +83,9 @@ interface ConfiguredReporting {
     reportableChange: number;
 }
 
-class Endpoint extends Entity {
+interface EndpointEventMap {};
+
+class Endpoint extends Entity<EndpointEventMap> {
     public deviceID?: number;
     public inputClusters: number[];
     public outputClusters: number[];

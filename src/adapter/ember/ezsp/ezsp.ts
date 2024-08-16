@@ -106,7 +106,7 @@ import {
     EmberMultiprotocolPriorities,
     EmberRxPacketInfo,
 } from '../types';
-import {AshEvents, UartAsh} from '../uart/ash';
+import {UartAsh} from '../uart/ash';
 import {initSecurityManagerContext} from '../utils/initters';
 import {highByte, highLowToInt, lowByte} from '../utils/math';
 import {EzspBuffalo} from './buffalo';
@@ -181,52 +181,41 @@ const ZA_MAX_HOPS = 12;
  */
 const MESSAGE_TAG_MASK = 0x7f;
 
-export enum EzspEvents {
-    //-- An error was detected that requires resetting the NCP.
-    NCP_NEEDS_RESET_AND_INIT = 'NCP_NEEDS_RESET_AND_INIT',
-
-    //-- ezspIncomingMessageHandler
-    ZDO_RESPONSE = 'ZDO_RESPONSE',
-    INCOMING_MESSAGE = 'INCOMING_MESSAGE',
-    //-- ezspMacFilterMatchMessageHandler
-    TOUCHLINK_MESSAGE = 'TOUCHLINK_MESSAGE',
-    //-- ezspStackStatusHandler
-    STACK_STATUS = 'STACK_STATUS',
-    //-- ezspTrustCenterJoinHandler
-    TRUST_CENTER_JOIN = 'TRUST_CENTER_JOIN',
-    //-- ezspMessageSentHandler
-    MESSAGE_SENT = 'MESSAGE_SENT',
-    //-- ezspGpepIncomingMessageHandler
-    GREENPOWER_MESSAGE = 'GREENPOWER_MESSAGE',
-}
-
-interface EzspEventMap {
-    [EzspEvents.NCP_NEEDS_RESET_AND_INIT]: [status: EzspStatus];
-    [EzspEvents.ZDO_RESPONSE]: [apsFrame: EmberApsFrame, sender: NodeId, messageContents: Buffer];
-    [EzspEvents.INCOMING_MESSAGE]: [
+export interface EmberEzspEventMap {
+    /** An error was detected that requires resetting the NCP. */
+    ncpNeedsResetAndInit: [status: EzspStatus];
+    /** @see Ezsp.ezspIncomingMessageHandler */
+    zdoResponse: [apsFrame: EmberApsFrame, sender: NodeId, messageContents: Buffer];
+    /** ezspIncomingMessageHandler */
+    incomingMessage: [
         type: EmberIncomingMessageType,
         apsFrame: EmberApsFrame,
         lastHopLqi: number,
         sender: NodeId,
         messageContents: Buffer,
     ];
-    [EzspEvents.TOUCHLINK_MESSAGE]: [sourcePanId: PanId, sourceAddress: EUI64, groupId: number, lastHopLqi: number, messageContents: Buffer];
-    [EzspEvents.STACK_STATUS]: [status: SLStatus];
-    [EzspEvents.TRUST_CENTER_JOIN]: [
+    /** @see Ezsp.ezspMacFilterMatchMessageHandler */
+    touchlinkMessage: [sourcePanId: PanId, sourceAddress: EUI64, groupId: number, lastHopLqi: number, messageContents: Buffer];
+    /** @see Ezsp.ezspStackStatusHandler */
+    stackStatus: [status: SLStatus];
+    /** @see Ezsp.ezspTrustCenterJoinHandler */
+    trustCenterJoin: [
         newNodeId: NodeId,
         newNodeEui64: EUI64,
         status: EmberDeviceUpdate,
         policyDecision: EmberJoinDecision,
         parentOfNewNodeId: NodeId,
     ];
-    [EzspEvents.MESSAGE_SENT]: [
+    /** @see Ezsp.ezspMessageSentHandler */
+    messageSent: [
         status: SLStatus,
         type: EmberOutgoingMessageType,
         indexOrDestination: number,
         apsFrame: EmberApsFrame,
         messageTag: number,
     ];
-    [EzspEvents.GREENPOWER_MESSAGE]: [
+    /** @see Ezsp.ezspGpepIncomingMessageHandler */
+    greenpowerMessage: [
         sequenceNumber: number,
         commandIdentifier: number,
         sourceId: number,
@@ -248,7 +237,7 @@ interface EzspEventMap {
  *   - They will throw `EzspStatus` if `sendCommand` fails or the returned value(s) by NCP are invalid (wrong length, etc).
  *   - Most will return `EmberStatus` given by NCP (some `EzspStatus`, some `SLStatus`...).
  */
-export class Ezsp extends EventEmitter<EzspEventMap> {
+export class Ezsp extends EventEmitter<EmberEzspEventMap> {
     private version: number;
     public readonly ash: UartAsh;
     private readonly buffalo: EzspBuffalo;
@@ -337,8 +326,8 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
             if (status === EzspStatus.SUCCESS) {
                 logger.info(`======== EZSP started ========`, NS);
                 // registered after reset sequence
-                this.ash.on(AshEvents.FRAME, this.onAshFrame.bind(this));
-                this.ash.on(AshEvents.FATAL_ERROR, this.onAshFatalError.bind(this));
+                this.ash.on('frame', this.onAshFrame.bind(this));
+                this.ash.on('fatalError', this.onAshFatalError.bind(this));
 
                 return status;
             }
@@ -377,14 +366,14 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
     }
 
     /**
-     * Triggered by @see AshEvents.FATAL_ERROR
+     * Triggered by @see 'FATAL_ERROR'
      */
     private onAshFatalError(status: EzspStatus): void {
-        this.emit(EzspEvents.NCP_NEEDS_RESET_AND_INIT, status);
+        this.emit('ncpNeedsResetAndInit', status);
     }
 
     /**
-     * Triggered by @see AshEvents.FRAME
+     * Triggered by @see 'FRAME'
      */
     private onAshFrame(): void {
         // trigger housekeeping in ASH layer
@@ -477,7 +466,7 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
             status !== EzspStatus.ERROR_QUEUE_FULL &&
             status !== EzspStatus.ERROR_WRONG_DIRECTION
         ) {
-            this.emit(EzspEvents.NCP_NEEDS_RESET_AND_INIT, status);
+            this.emit('ncpNeedsResetAndInit', status);
         }
     }
 
@@ -2707,7 +2696,7 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
     ezspStackStatusHandler(status: SLStatus): void {
         logger.debug(`ezspStackStatusHandler(): callback called with: [status=${SLStatus[status]}]`, NS);
 
-        this.emit(EzspEvents.STACK_STATUS, status);
+        this.emit('stackStatus', status);
     }
 
     /**
@@ -4999,7 +4988,7 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
             NS,
         );
 
-        this.emit(EzspEvents.MESSAGE_SENT, status, type, indexOrDestination, apsFrame, messageTag);
+        this.emit('messageSent', status, type, indexOrDestination, apsFrame, messageTag);
     }
 
     /**
@@ -5266,9 +5255,9 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
         );
 
         if (apsFrame.profileId === Zdo.ZDO_PROFILE_ID) {
-            this.emit(EzspEvents.ZDO_RESPONSE, apsFrame, packetInfo.senderShortId, messageContents);
+            this.emit('zdoResponse', apsFrame, packetInfo.senderShortId, messageContents);
         } else if (apsFrame.profileId === ZSpec.HA_PROFILE_ID || apsFrame.profileId === ZSpec.WILDCARD_PROFILE_ID) {
-            this.emit(EzspEvents.INCOMING_MESSAGE, type, apsFrame, packetInfo.lastHopLqi, packetInfo.senderShortId, messageContents);
+            this.emit('incomingMessage', type, apsFrame, packetInfo.lastHopLqi, packetInfo.senderShortId, messageContents);
         } else if (apsFrame.profileId === ZSpec.GP_PROFILE_ID) {
             // only broadcast loopback in here
         }
@@ -5717,7 +5706,7 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
         // XXX: this is currently causing more problems than not doing it, so disabled for now.
         //      devices should rejoin on ID conflict anyway, so the database isn't out of sync for very long.
         // hijacking the event from `ezspTrustCenterJoinHandler`, and forging a DEVICE_LEFT to avoid another event ending up doing the same logic
-        // this.emit(EzspEvents.TRUST_CENTER_JOIN, id, null, EmberDeviceUpdate.DEVICE_LEFT, EmberJoinDecision.NO_ACTION, NULL_NODE_ID);
+        // this.emit('trustCenterJoin', id, null, EmberDeviceUpdate.DEVICE_LEFT, EmberJoinDecision.NO_ACTION, NULL_NODE_ID);
     }
 
     /**
@@ -5882,7 +5871,7 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
         const payload = msgBuffalo.readRest();
 
         if (profileId === ZSpec.TOUCHLINK_PROFILE_ID && clusterId === Clusters.touchlink.ID) {
-            this.emit(EzspEvents.TOUCHLINK_MESSAGE, sourcePanId, sourceAddress, groupId, packetInfo.lastHopLqi, payload);
+            this.emit('touchlinkMessage', sourcePanId, sourceAddress, groupId, packetInfo.lastHopLqi, payload);
         }
     }
 
@@ -6886,7 +6875,7 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
             NS,
         );
         // NOTE: this is mostly just passing stuff up to Z2M, so use only one emit for all, let adapter do the rest, no parsing needed
-        this.emit(EzspEvents.TRUST_CENTER_JOIN, newNodeId, newNodeEui64, status, policyDecision, parentOfNewNodeId);
+        this.emit('trustCenterJoin', newNodeId, newNodeEui64, status, policyDecision, parentOfNewNodeId);
     }
 
     /**
@@ -8556,7 +8545,7 @@ export class Ezsp extends EventEmitter<EzspEventMap> {
         }
 
         this.emit(
-            EzspEvents.GREENPOWER_MESSAGE,
+            'greenpowerMessage',
             sequenceNumber,
             commandIdentifier,
             addr.sourceId,

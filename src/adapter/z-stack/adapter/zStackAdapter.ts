@@ -876,7 +876,7 @@ class ZStackAdapter extends Adapter {
      */
     public onZnpClose(): void {
         if (!this.closing) {
-            this.emit(Events.Events.disconnected);
+            this.emit('disconnected');
         }
     }
 
@@ -892,7 +892,7 @@ class ZStackAdapter extends Adapter {
                     ieeeAddr: object.payload.extaddr,
                 };
 
-                this.emit(Events.Events.deviceJoined, payload);
+                this.emit('deviceJoined', payload);
             } else if (object.command === 'endDeviceAnnceInd') {
                 const payload: Events.DeviceAnnouncePayload = {
                     networkAddress: object.payload.nwkaddr,
@@ -924,14 +924,14 @@ class ZStackAdapter extends Adapter {
                     debouncer();
                 }
 
-                this.emit(Events.Events.deviceAnnounce, payload);
+                this.emit('deviceAnnounce', payload);
             } else if (object.command === 'nwkAddrRsp') {
                 const payload: Events.NetworkAddressPayload = {
                     networkAddress: object.payload.nwkaddr,
                     ieeeAddr: object.payload.ieeeaddr,
                 };
 
-                this.emit(Events.Events.networkAddress, payload);
+                this.emit('networkAddress', payload);
             } else if (object.command === 'concentratorIndCb') {
                 // Some routers may change short addresses and the announcement
                 // is missed by the coordinator. This can happen when there are
@@ -948,7 +948,7 @@ class ZStackAdapter extends Adapter {
                     ieeeAddr: object.payload.extaddr,
                 };
 
-                this.emit(Events.Events.networkAddress, payload);
+                this.emit('networkAddress', payload);
             } else {
                 /* istanbul ignore else */
                 if (object.command === 'leaveInd') {
@@ -960,7 +960,7 @@ class ZStackAdapter extends Adapter {
                             ieeeAddr: object.payload.extaddr,
                         };
 
-                        this.emit(Events.Events.deviceLeave, payload);
+                        this.emit('deviceLeave', payload);
                     }
                 }
             }
@@ -982,7 +982,7 @@ class ZStackAdapter extends Adapter {
                     };
 
                     this.waitress.resolve(payload);
-                    this.emit(Events.Events.zclPayload, payload);
+                    this.emit('zclPayload', payload);
                 }
             }
         }

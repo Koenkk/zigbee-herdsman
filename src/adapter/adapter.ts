@@ -5,12 +5,21 @@ import * as Models from '../models';
 import {logger} from '../utils/logger';
 import {BroadcastAddress} from '../zspec/enums';
 import * as Zcl from '../zspec/zcl';
-import {ZclPayload} from './events';
+import * as AdapterEvents from './events';
 import * as TsType from './tstype';
 
 const NS = 'zh:adapter';
 
-abstract class Adapter extends events.EventEmitter {
+interface AdapterEventMap {
+    deviceJoined: [payload: AdapterEvents.DeviceJoinedPayload];
+    zclPayload: [payload: AdapterEvents.ZclPayload];
+    disconnected: [];
+    deviceAnnounce: [payload: AdapterEvents.DeviceAnnouncePayload];
+    deviceLeave: [payload: AdapterEvents.DeviceLeavePayload];
+    networkAddress: [payload: AdapterEvents.NetworkAddressPayload];
+};
+
+abstract class Adapter extends events.EventEmitter<AdapterEventMap> {
     public readonly greenPowerGroup = 0x0b84;
     protected networkOptions: TsType.NetworkOptions;
     protected adapterOptions: TsType.AdapterOptions;
@@ -188,7 +197,7 @@ abstract class Adapter extends events.EventEmitter {
         clusterID: number,
         commandIdentifier: number,
         timeout: number,
-    ): {promise: Promise<ZclPayload>; cancel: () => void};
+    ): {promise: Promise<AdapterEvents.ZclPayload>; cancel: () => void};
 
     /**
      * ZDO
@@ -241,7 +250,7 @@ abstract class Adapter extends events.EventEmitter {
         disableResponse: boolean,
         disableRecovery: boolean,
         sourceEndpoint?: number,
-    ): Promise<ZclPayload | void>;
+    ): Promise<AdapterEvents.ZclPayload | void>;
 
     public abstract sendZclFrameToGroup(groupID: number, zclFrame: Zcl.Frame, sourceEndpoint?: number): Promise<void>;
 
@@ -255,7 +264,7 @@ abstract class Adapter extends events.EventEmitter {
 
     public abstract sendZclFrameInterPANToIeeeAddr(zclFrame: Zcl.Frame, ieeeAddress: string): Promise<void>;
 
-    public abstract sendZclFrameInterPANBroadcast(zclFrame: Zcl.Frame, timeout: number): Promise<ZclPayload>;
+    public abstract sendZclFrameInterPANBroadcast(zclFrame: Zcl.Frame, timeout: number): Promise<AdapterEvents.ZclPayload>;
 
     public abstract restoreChannelInterPAN(): Promise<void>;
 }

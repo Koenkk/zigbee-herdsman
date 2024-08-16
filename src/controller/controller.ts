@@ -55,10 +55,22 @@ const DefaultOptions: Pick<Options, 'network' | 'serialPort' | 'adapter'> = {
     adapter: {disableLED: false},
 };
 
+export interface ControllerEventMap {
+    message: [data: Events.MessagePayload];
+    adapterDisconnected: [];
+    deviceJoined: [data: Events.DeviceJoinedPayload];
+    deviceInterview: [data: Events.DeviceInterviewPayload];
+    deviceAnnounce: [data: Events.DeviceAnnouncePayload];
+    deviceNetworkAddressChanged: [data: Events.DeviceNetworkAddressChangedPayload];
+    deviceLeave: [data: Events.DeviceLeavePayload];
+    permitJoinChanged: [data: Events.PermitJoinChangedPayload];
+    lastSeenChanged: [data: Events.LastSeenChangedPayload];
+};
+
 /**
  * @noInheritDoc
  */
-class Controller extends events.EventEmitter {
+class Controller extends events.EventEmitter<ControllerEventMap> {
     private options: Options;
     // @ts-expect-error assigned and validated in start()
     private database: Database;
@@ -149,12 +161,12 @@ class Controller extends events.EventEmitter {
         this.greenPower.on(GreenPowerEvents.deviceJoined, this.onDeviceJoinedGreenPower.bind(this));
 
         // Register adapter events
-        this.adapter.on(AdapterEvents.Events.deviceJoined, this.onDeviceJoined.bind(this));
-        this.adapter.on(AdapterEvents.Events.zclPayload, this.onZclPayload.bind(this));
-        this.adapter.on(AdapterEvents.Events.disconnected, this.onAdapterDisconnected.bind(this));
-        this.adapter.on(AdapterEvents.Events.deviceAnnounce, this.onDeviceAnnounce.bind(this));
-        this.adapter.on(AdapterEvents.Events.deviceLeave, this.onDeviceLeave.bind(this));
-        this.adapter.on(AdapterEvents.Events.networkAddress, this.onNetworkAddress.bind(this));
+        this.adapter.on('deviceJoined', this.onDeviceJoined.bind(this));
+        this.adapter.on('zclPayload', this.onZclPayload.bind(this));
+        this.adapter.on('disconnected', this.onAdapterDisconnected.bind(this));
+        this.adapter.on('deviceAnnounce', this.onDeviceAnnounce.bind(this));
+        this.adapter.on('deviceLeave', this.onDeviceLeave.bind(this));
+        this.adapter.on('networkAddress', this.onNetworkAddress.bind(this));
 
         if (startResult === 'reset') {
             if (this.options.databaseBackupPath && fs.existsSync(this.options.databasePath)) {
@@ -283,24 +295,18 @@ class Controller extends events.EventEmitter {
                     if (this.permitJoinTimeout! <= 0) {
                         await this.permitJoinInternal(false, 'timer_expired');
                     } else {
-                        const data: Events.PermitJoinChangedPayload = {permitted: true, timeout: this.permitJoinTimeout, reason};
-
-                        this.emit(Events.Events.permitJoinChanged, data);
+                        this.emit('permitJoinChanged', {permitted: true, timeout: this.permitJoinTimeout, reason});
                     }
                 }, 1000);
             }
 
-            const data: Events.PermitJoinChangedPayload = {permitted: true, reason, timeout: this.permitJoinTimeout};
-
-            this.emit(Events.Events.permitJoinChanged, data);
+            this.emit('permitJoinChanged', {permitted: true, reason, timeout: this.permitJoinTimeout});
         } else {
             logger.debug('Disable joining', NS);
             await this.greenPower.permitJoin(0);
             await this.adapter.permitJoin(0);
 
-            const data: Events.PermitJoinChangedPayload = {permitted: false, reason, timeout: this.permitJoinTimeout};
-
-            this.emit(Events.Events.permitJoinChanged, data);
+            this.emit('permitJoinChanged', {permitted: false, reason, timeout: this.permitJoinTimeout});
         }
     }
 
@@ -324,11 +330,11 @@ class Controller extends events.EventEmitter {
         this.stopping = true;
 
         // Unregister adapter events
-        this.adapter.removeAllListeners(AdapterEvents.Events.deviceJoined);
-        this.adapter.removeAllListeners(AdapterEvents.Events.zclPayload);
-        this.adapter.removeAllListeners(AdapterEvents.Events.disconnected);
-        this.adapter.removeAllListeners(AdapterEvents.Events.deviceAnnounce);
-        this.adapter.removeAllListeners(AdapterEvents.Events.deviceLeave);
+        this.adapter.removeAllListeners('deviceJoined');
+        this.adapter.removeAllListeners('zclPayload');
+        this.adapter.removeAllListeners('disconnected');
+        this.adapter.removeAllListeners('deviceAnnounce');
+        this.adapter.removeAllListeners('deviceLeave');
 
         clearInterval(this.backupTimer);
         clearInterval(this.databaseSaveTimer);
@@ -509,15 +515,14 @@ class Controller extends events.EventEmitter {
         }
 
         device.updateLastSeen();
-        this.selfAndDeviceEmit(device, Events.Events.lastSeenChanged, {device, reason: 'networkAddress'} as Events.LastSeenChangedPayload);
+        this.selfAndDeviceEmit(device, 'lastSeenChanged', {device, reason: 'networkAddress'});
 
         if (device.networkAddress !== payload.networkAddress) {
             logger.debug(`Device '${payload.ieeeAddr}' got new networkAddress '${payload.networkAddress}'`, NS);
             device.networkAddress = payload.networkAddress;
             device.save();
 
-            const data: Events.DeviceNetworkAddressChangedPayload = {device};
-            this.selfAndDeviceEmit(device, Events.Events.deviceNetworkAddressChanged, data);
+            this.selfAndDeviceEmit(device, 'deviceNetworkAddressChanged', {device});
         }
     }
 
@@ -531,7 +536,7 @@ class Controller extends events.EventEmitter {
         }
 
         device.updateLastSeen();
-        this.selfAndDeviceEmit(device, Events.Events.lastSeenChanged, {device, reason: 'deviceAnnounce'} as Events.LastSeenChangedPayload);
+        this.selfAndDeviceEmit(device, 'lastSeenChanged', {device, reason: 'deviceAnnounce'});
         device.implicitCheckin();
 
         if (device.networkAddress !== payload.networkAddress) {
@@ -540,8 +545,7 @@ class Controller extends events.EventEmitter {
             device.save();
         }
 
-        const data: Events.DeviceAnnouncePayload = {device};
-        this.selfAndDeviceEmit(device, Events.Events.deviceAnnounce, data);
+        this.selfAndDeviceEmit(device, 'deviceAnnounce', {device});
     }
 
     private onDeviceLeave(payload: AdapterEvents.DeviceLeavePayload): void {
@@ -558,8 +562,7 @@ class Controller extends events.EventEmitter {
         logger.debug(`Removing device from database '${device.ieeeAddr}'`, NS);
         device.removeFromDatabase();
 
-        const data: Events.DeviceLeavePayload = {ieeeAddr: device.ieeeAddr};
-        this.selfAndDeviceEmit(device, Events.Events.deviceLeave, data);
+        this.selfAndDeviceEmit(device, 'deviceLeave', {ieeeAddr: device.ieeeAddr});
     }
 
     private async onAdapterDisconnected(): Promise<void> {
@@ -569,7 +572,7 @@ class Controller extends events.EventEmitter {
 
         await catcho(() => this.adapter.stop(), 'Failed to stop adapter on disconnect');
 
-        this.emit(Events.Events.adapterDisconnected);
+        this.emit('adapterDisconnected');
     }
 
     private async onDeviceJoinedGreenPower(payload: GreenPowerDeviceJoinedPayload): Promise<void> {
@@ -589,25 +592,21 @@ class Controller extends events.EventEmitter {
             device = Device.create('GreenPower', ieeeAddr, payload.networkAddress, undefined, undefined, undefined, modelID, true, []);
             device.save();
 
-            this.selfAndDeviceEmit(device, Events.Events.deviceJoined, {device} as Events.DeviceJoinedPayload);
-
-            const deviceInterviewPayload: Events.DeviceInterviewPayload = {status: 'successful', device};
-            this.selfAndDeviceEmit(device, Events.Events.deviceInterview, deviceInterviewPayload);
+            this.selfAndDeviceEmit(device, 'deviceJoined', {device});
+            this.selfAndDeviceEmit(device, 'deviceInterview', {status: 'successful', device});
         } else if (device.isDeleted) {
             logger.debug(`Deleted green power device '${ieeeAddr}' joined, undeleting`, NS);
 
             device.undelete(true);
 
-            this.selfAndDeviceEmit(device, Events.Events.deviceJoined, {device} as Events.DeviceJoinedPayload);
-
-            const deviceInterviewPayload: Events.DeviceInterviewPayload = {status: 'successful', device};
-            this.selfAndDeviceEmit(device, Events.Events.deviceInterview, deviceInterviewPayload);
+            this.selfAndDeviceEmit(device, 'deviceJoined', {device});
+            this.selfAndDeviceEmit(device, 'deviceInterview', {status: 'successful', device});
         }
     }
 
-    private selfAndDeviceEmit(device: Device, event: string, data: KeyValue): void {
-        device?.emit(event, data);
-        this.emit(event, data);
+    private selfAndDeviceEmit<K extends keyof ControllerEventMap>(device: Device, event: K, ...args: K extends keyof ControllerEventMap ? ControllerEventMap[K] : never): void {
+        device?.emit(event, ...args);
+        this.emit(event, ...args);
     }
 
     private async onDeviceJoined(payload: AdapterEvents.DeviceJoinedPayload): Promise<void> {
@@ -628,11 +627,11 @@ class Controller extends events.EventEmitter {
             logger.debug(`New device '${payload.ieeeAddr}' joined`, NS);
             logger.debug(`Creating device '${payload.ieeeAddr}'`, NS);
             device = Device.create('Unknown', payload.ieeeAddr, payload.networkAddress, undefined, undefined, undefined, undefined, false, []);
-            this.selfAndDeviceEmit(device, Events.Events.deviceJoined, {device} as Events.DeviceJoinedPayload);
+            this.selfAndDeviceEmit(device, 'deviceJoined', {device});
         } else if (device.isDeleted) {
             logger.debug(`Deleted device '${payload.ieeeAddr}' joined, undeleting`, NS);
             device.undelete();
-            this.selfAndDeviceEmit(device, Events.Events.deviceJoined, {device} as Events.DeviceJoinedPayload);
+            this.selfAndDeviceEmit(device, 'deviceJoined', {device});
         }
 
         if (device.networkAddress !== payload.networkAddress) {
@@ -642,23 +641,20 @@ class Controller extends events.EventEmitter {
         }
 
         device.updateLastSeen();
-        this.selfAndDeviceEmit(device, Events.Events.lastSeenChanged, {device, reason: 'deviceJoined'} as Events.LastSeenChangedPayload);
+        this.selfAndDeviceEmit(device, 'lastSeenChanged', {device, reason: 'deviceJoined'});
         device.implicitCheckin();
 
         if (!device.interviewCompleted && !device.interviewing) {
-            const payloadStart: Events.DeviceInterviewPayload = {status: 'started', device};
             logger.info(`Interview for '${device.ieeeAddr}' started`, NS);
-            this.selfAndDeviceEmit(device, Events.Events.deviceInterview, payloadStart);
+            this.selfAndDeviceEmit(device, 'deviceInterview', {status: 'started', device});
 
             try {
                 await device.interview();
                 logger.info(`Succesfully interviewed '${device.ieeeAddr}'`, NS);
-                const event: Events.DeviceInterviewPayload = {status: 'successful', device};
-                this.selfAndDeviceEmit(device, Events.Events.deviceInterview, event);
+                this.selfAndDeviceEmit(device, 'deviceInterview', {status: 'successful', device});
             } catch (error) {
                 logger.error(`Interview failed for '${device.ieeeAddr} with error '${error}'`, NS);
-                const event: Events.DeviceInterviewPayload = {status: 'failed', device};
-                this.selfAndDeviceEmit(device, Events.Events.deviceInterview, event);
+                this.selfAndDeviceEmit(device, 'deviceInterview', {status: 'failed', device});
             }
         } else {
             logger.debug(
@@ -820,7 +816,8 @@ class Controller extends events.EventEmitter {
         if (type && data) {
             const linkquality = payload.linkquality;
             const groupID = payload.groupID;
-            const eventData: Events.MessagePayload = {
+
+            this.selfAndDeviceEmit(device, 'message', {
                 type,
                 device,
                 endpoint,
@@ -829,12 +826,10 @@ class Controller extends events.EventEmitter {
                 groupID,
                 cluster: clusterName,
                 meta,
-            };
-
-            this.selfAndDeviceEmit(device, Events.Events.message, eventData);
-            this.selfAndDeviceEmit(device, Events.Events.lastSeenChanged, {device, reason: 'messageEmitted'} as Events.LastSeenChangedPayload);
+            });
+            this.selfAndDeviceEmit(device, 'lastSeenChanged', {device, reason: 'messageEmitted'});
         } else {
-            this.selfAndDeviceEmit(device, Events.Events.lastSeenChanged, {device, reason: 'messageNonEmitted'} as Events.LastSeenChangedPayload);
+            this.selfAndDeviceEmit(device, 'lastSeenChanged', {device, reason: 'messageNonEmitted'});
         }
 
         if (frame) {

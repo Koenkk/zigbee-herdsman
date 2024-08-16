@@ -14,7 +14,11 @@ const NS = 'zh:controller:greenpower';
 
 const zigBeeLinkKey = Buffer.from([0x5a, 0x69, 0x67, 0x42, 0x65, 0x65, 0x41, 0x6c, 0x6c, 0x69, 0x61, 0x6e, 0x63, 0x65, 0x30, 0x39]);
 
-class GreenPower extends events.EventEmitter {
+interface GreenPowerEventMap {
+    [GreenPowerEvents.deviceJoined]: [payload: GreenPowerDeviceJoinedPayload];
+};
+
+class GreenPower extends events.EventEmitter<GreenPowerEventMap> {
     private adapter: Adapter;
 
     public constructor(adapter: Adapter) {
@@ -174,12 +178,11 @@ class GreenPower extends events.EventEmitter {
                         await this.sendPairingCommand(payload, dataPayload, frame);
                     }
 
-                    const eventData: GreenPowerDeviceJoinedPayload = {
+                    this.emit(GreenPowerEvents.deviceJoined, {
                         sourceID: frame.payload.srcID,
                         deviceID: frame.payload.commandFrame.deviceID,
                         networkAddress: frame.payload.srcID & 0xffff,
-                    };
-                    this.emit(GreenPowerEvents.deviceJoined, eventData);
+                    });
 
                     break;
                 /* istanbul ignore next */

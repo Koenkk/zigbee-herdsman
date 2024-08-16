@@ -6,6 +6,7 @@ import {logger} from '../../utils/logger';
 import {BroadcastAddress} from '../../zspec/enums';
 import * as Zcl from '../../zspec/zcl';
 import {ClusterDefinition, CustomClusters} from '../../zspec/zcl/definition/tstype';
+import {ControllerEventMap} from '../controller';
 import {ZclFrameConverter} from '../helpers';
 import ZclTransactionSequenceNumber from '../helpers/zclTransactionSequenceNumber';
 import {KeyValue, DatabaseEntry, DeviceType} from '../tstype';
@@ -35,7 +36,7 @@ interface RoutingTable {
 
 type CustomReadResponse = (frame: Zcl.Frame, endpoint: Endpoint) => boolean;
 
-class Device extends Entity {
+class Device extends Entity<ControllerEventMap> {
     private readonly ID: number;
     private _applicationVersion?: number;
     private _dateCode?: string;

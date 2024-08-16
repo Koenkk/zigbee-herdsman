@@ -13,7 +13,7 @@ import * as Zcl from '../../../zspec/zcl';
 import * as Zdo from '../../../zspec/zdo';
 import {BuffaloZdo} from '../../../zspec/zdo/buffaloZdo';
 import * as ZdoTypes from '../../../zspec/zdo/definition/tstypes';
-import {DeviceAnnouncePayload, DeviceJoinedPayload, DeviceLeavePayload, Events, NetworkAddressPayload, ZclPayload} from '../../events';
+import {DeviceAnnouncePayload, DeviceJoinedPayload, DeviceLeavePayload, NetworkAddressPayload, ZclPayload} from '../../events';
 import SerialPortUtils from '../../serialPortUtils';
 import SocketPortUtils from '../../socketPortUtils';
 import {
@@ -56,7 +56,7 @@ import {
 import {EzspBuffalo} from '../ezsp/buffalo';
 import {EMBER_ENCRYPTION_KEY_SIZE, EZSP_MIN_PROTOCOL_VERSION, EZSP_PROTOCOL_VERSION, EZSP_STACK_TYPE_MESH} from '../ezsp/consts';
 import {EzspConfigId, EzspDecisionBitmask, EzspDecisionId, EzspPolicyId, EzspValueId} from '../ezsp/enums';
-import {Ezsp, EzspEvents} from '../ezsp/ezsp';
+import {Ezsp} from '../ezsp/ezsp';
 import {EzspError} from '../ezspError';
 import {
     EmberApsFrame,
@@ -308,14 +308,14 @@ export class EmberAdapter extends Adapter {
 
         this.ezsp = new Ezsp(serialPortOptions);
 
-        this.ezsp.on(EzspEvents.ZDO_RESPONSE, this.onZDOResponse.bind(this));
-        this.ezsp.on(EzspEvents.INCOMING_MESSAGE, this.onIncomingMessage.bind(this));
-        this.ezsp.on(EzspEvents.TOUCHLINK_MESSAGE, this.onTouchlinkMessage.bind(this));
-        this.ezsp.on(EzspEvents.STACK_STATUS, this.onStackStatus.bind(this));
-        this.ezsp.on(EzspEvents.TRUST_CENTER_JOIN, this.onTrustCenterJoin.bind(this));
-        this.ezsp.on(EzspEvents.MESSAGE_SENT, this.onMessageSent.bind(this));
-        this.ezsp.on(EzspEvents.GREENPOWER_MESSAGE, this.onGreenpowerMessage.bind(this));
-        this.ezsp.once(EzspEvents.NCP_NEEDS_RESET_AND_INIT, this.onNcpNeedsResetAndInit.bind(this));
+        this.ezsp.on('zdoResponse', this.onZDOResponse.bind(this));
+        this.ezsp.on('incomingMessage', this.onIncomingMessage.bind(this));
+        this.ezsp.on('touchlinkMessage', this.onTouchlinkMessage.bind(this));
+        this.ezsp.on('stackStatus', this.onStackStatus.bind(this));
+        this.ezsp.on('trustCenterJoin', this.onTrustCenterJoin.bind(this));
+        this.ezsp.on('messageSent', this.onMessageSent.bind(this));
+        this.ezsp.on('greenpowerMessage', this.onGreenpowerMessage.bind(this));
+        this.ezsp.once('ncpNeedsResetAndInit', this.onNcpNeedsResetAndInit.bind(this));
     }
 
     private loadStackConfig(): StackConfig {
@@ -529,12 +529,12 @@ export class EmberAdapter extends Adapter {
             this.oneWaitress.resolveZDO(sender, apsFrame, payload);
 
             if (apsFrame.clusterId === Zdo.ClusterId.NETWORK_ADDRESS_RESPONSE) {
-                this.emit(Events.networkAddress, {
+                this.emit('networkAddress', {
                     networkAddress: (payload as ZdoTypes.NetworkAddressResponse).nwkAddress,
                     ieeeAddr: (payload as ZdoTypes.NetworkAddressResponse).eui64,
                 } as NetworkAddressPayload);
             } else if (apsFrame.clusterId === Zdo.ClusterId.END_DEVICE_ANNOUNCE) {
-                this.emit(Events.deviceAnnounce, {
+                this.emit('deviceAnnounce', {
                     networkAddress: (payload as ZdoTypes.EndDeviceAnnounce).nwkAddress,
                     ieeeAddr: (payload as ZdoTypes.EndDeviceAnnounce).eui64,
                 } as DeviceAnnouncePayload);
@@ -573,7 +573,7 @@ export class EmberAdapter extends Adapter {
         };
 
         this.oneWaitress.resolveZCL(payload);
-        this.emit(Events.zclPayload, payload);
+        this.emit('zclPayload', payload);
     }
 
     /**
@@ -606,7 +606,7 @@ export class EmberAdapter extends Adapter {
         };
 
         this.oneWaitress.resolveZCL(payload);
-        this.emit(Events.zclPayload, payload);
+        this.emit('zclPayload', payload);
     }
 
     /**
@@ -656,7 +656,7 @@ export class EmberAdapter extends Adapter {
             };
 
             this.oneWaitress.resolveZCL(payload);
-            this.emit(Events.zclPayload, payload);
+            this.emit('zclPayload', payload);
         } catch (err) {
             logger.error(`<~x~ [GP] Failed creating ZCL payload. Skipping. ${err}`, NS);
             return;
@@ -686,7 +686,7 @@ export class EmberAdapter extends Adapter {
                 ieeeAddr: newNodeEui64,
             };
 
-            this.emit(Events.deviceLeave, payload);
+            this.emit('deviceLeave', payload);
         } else {
             if (policyDecision !== EmberJoinDecision.DENY_JOIN) {
                 const payload: DeviceJoinedPayload = {
@@ -704,10 +704,10 @@ export class EmberAdapter extends Adapter {
 
                         this.manufacturerCode = joinManufCode;
 
-                        this.emit(Events.deviceJoined, payload);
+                        this.emit('deviceJoined', payload);
                     });
                 } else {
-                    this.emit(Events.deviceJoined, payload);
+                    this.emit('deviceJoined', payload);
                 }
             } else {
                 logger.warning(`[TRUST CENTER] Device ${newNodeId}:${newNodeEui64} was denied joining via ${parentOfNewNodeId}.`, NS);
@@ -1340,7 +1340,7 @@ export class EmberAdapter extends Adapter {
      */
     private async onNcpNeedsResetAndInit(status: EzspStatus): Promise<void> {
         logger.error(`Adapter fatal error: ${EzspStatus[status]}`, NS);
-        this.emit(Events.disconnected);
+        this.emit('disconnected');
     }
 
     //---- START Events

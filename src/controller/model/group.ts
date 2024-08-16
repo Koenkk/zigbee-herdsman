@@ -23,7 +23,9 @@ interface OptionsWithDefaults extends Options {
     reservedBits: number;
 }
 
-class Group extends Entity {
+interface GroupEventMap {};
+
+class Group extends Entity<GroupEventMap> {
     private databaseID: number;
     public readonly groupID: number;
     private readonly _members: Set<Endpoint>;

@@ -170,16 +170,9 @@ const CONFIG_NR_TIME = 480;
 /** Read/write max bytes count at stream level */
 const CONFIG_HIGHWATER_MARK = 256;
 
-export enum AshEvents {
-    /** When the ASH protocol detects a fatal error (bubbles up to restart adapter). */
-    FATAL_ERROR = 'fatalError',
-    /** When a frame has been parsed and queued in the rxQueue. */
-    FRAME = 'frame',
-}
-
 interface UartAshEventMap {
-    [AshEvents.FATAL_ERROR]: [status: EzspStatus];
-    [AshEvents.FRAME]: [];
+    fatalError: [status: EzspStatus];
+    frame: [];
 }
 
 /**
@@ -555,7 +548,7 @@ export class UartAsh extends EventEmitter<UartAshEventMap> {
         if (error && this.flags !== 0) {
             logger.info(`Port close ${error}`, NS);
             this.flags = 0;
-            this.emit(AshEvents.FATAL_ERROR, EzspStatus.ERROR_SERIAL_INIT);
+            this.emit('fatalError', EzspStatus.ERROR_SERIAL_INIT);
         }
     }
 
@@ -566,7 +559,7 @@ export class UartAsh extends EventEmitter<UartAshEventMap> {
     private async onPortError(error: Error): Promise<void> {
         logger.info(`Port ${error}`, NS);
         this.flags = 0;
-        this.emit(AshEvents.FATAL_ERROR, EzspStatus.ERROR_SERIAL_INIT);
+        this.emit('fatalError', EzspStatus.ERROR_SERIAL_INIT);
     }
 
     /**
@@ -601,7 +594,7 @@ export class UartAsh extends EventEmitter<UartAshEventMap> {
 
         if (status !== EzspStatus.SUCCESS && status !== EzspStatus.ASH_IN_PROGRESS && status !== EzspStatus.NO_RX_DATA) {
             logger.error(`Error while parsing received frame, status=${EzspStatus[status]}.`, NS);
-            this.emit(AshEvents.FATAL_ERROR, EzspStatus.HOST_FATAL_ERROR);
+            this.emit('fatalError', EzspStatus.HOST_FATAL_ERROR);
             return;
         }
     }
@@ -1172,7 +1165,7 @@ export class UartAsh extends EventEmitter<UartAshEventMap> {
 
                     this.counters.rxData += this.rxDataBuffer.len;
 
-                    setImmediate(() => this.emit(AshEvents.FRAME));
+                    setImmediate(() => this.emit('frame'));
                     return EzspStatus.SUCCESS;
                 } else {
                     // frame is out of sequence

@@ -20,7 +20,6 @@ import {
     SET_POLICY_REPLY_FN1_ASH_RAW,
 } from './consts';
 import {EzspStatus} from '../../../src/adapter/ember/enums';
-import {AshEvents} from '../../../src/adapter/ember/uart/ash';
 import {logger} from '../../../src/utils/logger';
 
 const emitFromSerial = async (ezsp: Ezsp, data: Buffer, skipAdvanceTimers: boolean = false): Promise<void> => {
@@ -162,7 +161,7 @@ describe('Ember Ezsp Layer', () => {
         await expect(restart).resolves.toStrictEqual(EzspStatus.SUCCESS);
         //@ts-expect-error private
         expect(ezsp.ash.serialPort.port.recording).toStrictEqual(POST_RSTACK_SERIAL_BYTES);
-        expect(ashEmitSpy).toHaveBeenCalledWith(AshEvents.FATAL_ERROR, EzspStatus.HOST_FATAL_ERROR);
+        expect(ashEmitSpy).toHaveBeenCalledWith('fatalError', EzspStatus.HOST_FATAL_ERROR);
         expect(onAshFatalErrorSpy).toHaveBeenCalledWith(EzspStatus.HOST_FATAL_ERROR);
         expect(ezsp.checkConnection()).toBeTruthy();
     });
@@ -204,7 +203,7 @@ describe('Ember Ezsp Layer', () => {
         await expect(restart).resolves.toStrictEqual(EzspStatus.SUCCESS);
         //@ts-expect-error private
         expect(ezsp.ash.serialPort.port.recording).toStrictEqual(POST_RSTACK_SERIAL_BYTES);
-        expect(ashEmitSpy).toHaveBeenCalledWith(AshEvents.FATAL_ERROR, EzspStatus.HOST_FATAL_ERROR);
+        expect(ashEmitSpy).toHaveBeenCalledWith('fatalError', EzspStatus.HOST_FATAL_ERROR);
         expect(onAshFatalErrorSpy).toHaveBeenCalledWith(EzspStatus.HOST_FATAL_ERROR);
         expect(ezsp.checkConnection()).toBeTruthy();
     });

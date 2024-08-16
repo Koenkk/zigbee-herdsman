@@ -97,7 +97,7 @@ class EZSPAdapter extends Adapter {
             };
 
             this.waitress.resolve(payload);
-            this.emit(Events.Events.zclPayload, payload);
+            this.emit('zclPayload', payload);
         } else if (frame.apsFrame.profileId == 0xc05e && frame.senderEui64) {
             // ZLL Frame
             const payload: Events.ZclPayload = {
@@ -113,7 +113,7 @@ class EZSPAdapter extends Adapter {
             };
 
             this.waitress.resolve(payload);
-            this.emit(Events.Events.zclPayload, payload);
+            this.emit('zclPayload', payload);
         } else if (frame.apsFrame.profileId == 0xa1e0) {
             // GP Frame
             // Only handle when clusterId == 33 (greenPower), some devices send messages with this profileId
@@ -133,12 +133,11 @@ class EZSPAdapter extends Adapter {
                 };
 
                 this.waitress.resolve(payload);
-                this.emit(Events.Events.zclPayload, payload);
+                this.emit('zclPayload', payload);
             } else {
                 logger.debug(`Ignoring GP frame because clusterId is not greenPower`, NS);
             }
         }
-        this.emit('event', frame);
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -153,7 +152,7 @@ class EZSPAdapter extends Adapter {
         if (nwk == 0) {
             await this.nodeDescriptor(nwk);
         } else {
-            this.emit(Events.Events.deviceJoined, payload);
+            this.emit('deviceJoined', payload);
         }
     }
 
@@ -166,7 +165,7 @@ class EZSPAdapter extends Adapter {
             networkAddress: nwk,
             ieeeAddr: `0x${ieee.toString('hex')}`,
         };
-        this.emit(Events.Events.deviceLeave, payload);
+        this.emit('deviceLeave', payload);
     }
 
     /**
@@ -194,7 +193,7 @@ class EZSPAdapter extends Adapter {
         logger.debug(`onDriverClose()`, NS);
 
         if (!this.closing) {
-            this.emit(Events.Events.disconnected);
+            this.emit('disconnected');
         }
     }
 
