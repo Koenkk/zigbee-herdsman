@@ -402,11 +402,10 @@ class DeconzAdapter extends Adapter {
             req.txOptions = 0;
             req.radius = PARAM.PARAM.txRadius.DEFAULT_RADIUS;
 
-            try {
-                await this.driver.enqueueSendDataRequest(req);
-            } catch {
-                /* nothing */
-            }
+            this.driver
+                .enqueueSendDataRequest(req)
+                .then(() => {})
+                .catch(() => {});
 
             try {
                 const d = await this.waitForData(networkAddress, 0, 0x8031);
@@ -519,11 +518,10 @@ class DeconzAdapter extends Adapter {
             req.radius = PARAM.PARAM.txRadius.DEFAULT_RADIUS;
             req.timeout = 30;
 
-            try {
-                await this.driver.enqueueSendDataRequest(req);
-            } catch {
-                /* nothing */
-            }
+            this.driver
+                .enqueueSendDataRequest(req)
+                .then(() => {})
+                .catch(() => {});
 
             try {
                 const d = await this.waitForData(networkAddress, 0, 0x8032);
@@ -608,11 +606,10 @@ class DeconzAdapter extends Adapter {
         request.radius = PARAM.PARAM.txRadius.DEFAULT_RADIUS;
         request.timeout = 30;
 
-        try {
-            await this.driver.enqueueSendDataRequest(request);
-        } catch {
-            /* nothing */
-        }
+        this.driver
+            .enqueueSendDataRequest(request)
+            .then(() => {})
+            .catch(() => {});
 
         try {
             const d = await this.waitForData(networkAddress, 0, 0x8002);
@@ -660,11 +657,10 @@ class DeconzAdapter extends Adapter {
         request.radius = PARAM.PARAM.txRadius.DEFAULT_RADIUS;
         request.timeout = 30;
 
-        try {
-            await this.driver.enqueueSendDataRequest(request);
-        } catch {
-            /* nothing */
-        }
+        this.driver
+            .enqueueSendDataRequest(request)
+            .then(() => {})
+            .catch(() => {});
 
         try {
             const d = await this.waitForData(networkAddress, 0, 0x8005);
@@ -705,11 +701,10 @@ class DeconzAdapter extends Adapter {
         request.radius = PARAM.PARAM.txRadius.DEFAULT_RADIUS;
         request.timeout = 30;
 
-        try {
-            await this.driver.enqueueSendDataRequest(request);
-        } catch {
-            /* nothing */
-        }
+        this.driver
+            .enqueueSendDataRequest(request)
+            .then(() => {})
+            .catch(() => {});
 
         try {
             const d = await this.waitForData(networkAddress, 0, 0x8004);
@@ -877,23 +872,31 @@ class DeconzAdapter extends Adapter {
 
         const command = zclFrame.command;
 
-        try {
-            await this.driver.enqueueSendDataRequest(request);
+        this.driver
+            .enqueueSendDataRequest(request)
+            .then(() => {
+                logger.debug(`sendZclFrameToEndpoint - message send with transSeq Nr.: ${zclFrame.header.transactionSequenceNumber}`, NS);
+                logger.debug(
+                    command.hasOwnProperty('response') +
+                        ', ' +
+                        zclFrame.header.frameControl.disableDefaultResponse +
+                        ', ' +
+                        disableResponse +
+                        ', ' +
+                        request.timeout,
+                    NS,
+                );
 
-            logger.debug(`sendZclFrameToEndpoint - message send with transSeq Nr.: ${zclFrame.header.transactionSequenceNumber}`, NS);
-            logger.debug(
-                command.response + ', ' + zclFrame.header.frameControl.disableDefaultResponse + ', ' + disableResponse + ', ' + request.timeout,
-                NS,
-            );
-
-            if (command.response == undefined || zclFrame.header.frameControl.disableDefaultResponse || !disableResponse) {
-                logger.debug(`resolve request (${zclFrame.header.transactionSequenceNumber})`, NS);
-                return;
-            }
-        } catch (error) {
-            logger.debug(`sendZclFrameToEndpoint ERROR (${zclFrame.header.transactionSequenceNumber})`, NS);
-            logger.debug(error as Error, NS);
-        }
+                if (command.response == undefined || zclFrame.header.frameControl.disableDefaultResponse || !disableResponse) {
+                    logger.debug(`resolve request (${zclFrame.header.transactionSequenceNumber})`, NS);
+                    return Promise.resolve();
+                }
+            })
+            .catch((error) => {
+                logger.debug(`sendZclFrameToEndpoint ERROR (${zclFrame.header.transactionSequenceNumber})`, NS);
+                logger.debug(error, NS);
+                //return Promise.reject(new Error("sendZclFrameToEndpoint ERROR " + error));
+            });
 
         try {
             let data = null;
@@ -1028,11 +1031,10 @@ class DeconzAdapter extends Adapter {
         request.radius = PARAM.PARAM.txRadius.DEFAULT_RADIUS;
         request.timeout = 30;
 
-        try {
-            await this.driver.enqueueSendDataRequest(request);
-        } catch {
-            /* nothing */
-        }
+        this.driver
+            .enqueueSendDataRequest(request)
+            .then(() => {})
+            .catch(() => {});
 
         try {
             const d = await this.waitForData(destinationNetworkAddress, 0, 0x8021);
@@ -1089,11 +1091,10 @@ class DeconzAdapter extends Adapter {
         request.radius = PARAM.PARAM.txRadius.DEFAULT_RADIUS;
         request.timeout = 30;
 
-        try {
-            await this.driver.enqueueSendDataRequest(request);
-        } catch {
-            /* nothing */
-        }
+        this.driver
+            .enqueueSendDataRequest(request)
+            .then(() => {})
+            .catch(() => {});
 
         try {
             const d = await this.waitForData(destinationNetworkAddress, 0, 0x8022);
@@ -1128,11 +1129,10 @@ class DeconzAdapter extends Adapter {
         request.txOptions = 0;
         request.radius = PARAM.PARAM.txRadius.DEFAULT_RADIUS;
 
-        try {
-            await this.driver.enqueueSendDataRequest(request);
-        } catch {
-            /* nothing */
-        }
+        this.driver
+            .enqueueSendDataRequest(request)
+            .then(() => {})
+            .catch(() => {});
 
         try {
             const d = await this.waitForData(networkAddress, 0, 0x8034);
