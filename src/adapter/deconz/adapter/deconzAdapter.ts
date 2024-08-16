@@ -908,10 +908,8 @@ class DeconzAdapter extends Adapter {
                 const asdu = data.asduPayload!;
                 const buffer = Buffer.from(asdu);
 
-                assert(data.srcAddr16 != null);
                 const response: Events.ZclPayload = {
-                    // address: data.srcAddrMode === 0x02 ? data.srcAddr16 : undefined, // TODO: can't be undefined
-                    address: data.srcAddr16, // TODO: can't be undefined
+                    address: data.srcAddr16 ?? `0x${data.srcAddr64!}`,
                     data: buffer,
                     clusterID: zclFrame.cluster.ID,
                     header: Zcl.Header.fromBuffer(buffer),
@@ -1356,7 +1354,7 @@ class DeconzAdapter extends Adapter {
                 clusterID: resp.clusterId!,
                 header,
                 data: payBuf!, // valid from check
-                address: resp.destAddrMode === 0x03 ? resp.srcAddr64! : resp.srcAddr16!,
+                address: resp.destAddrMode === 0x03 ? `0x${resp.srcAddr64!}` : resp.srcAddr16!,
                 endpoint: resp.srcEndpoint!,
                 linkquality: resp.lqi!,
                 groupID: resp.destAddrMode === 0x01 ? resp.destAddr16! : 0,
