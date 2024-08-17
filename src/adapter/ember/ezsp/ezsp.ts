@@ -55,6 +55,7 @@ import {
     EzspNetworkScanType,
     EzspStatus,
     EzspZllNetworkOperation,
+    IEEE802154CcaMode,
     SecManFlag,
     SecManKeyType,
     SLStatus,
@@ -3809,7 +3810,7 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
      * @param ccaMode uint8_t A RAIL_IEEE802154_CcaMode_t value.
      * @returns An SLStatus value indicating the success or failure of the command.
      */
-    async ezspSetRadioIeee802154CcaMode(ccaMode: number): Promise<SLStatus> {
+    async ezspSetRadioIeee802154CcaMode(ccaMode: IEEE802154CcaMode): Promise<SLStatus> {
         const sendBuffalo = this.startCommand(EzspFrameID.SET_RADIO_IEEE802154_CCA_MODE);
         sendBuffalo.writeUInt8(ccaMode);
 

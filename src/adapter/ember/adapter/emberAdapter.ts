@@ -51,6 +51,7 @@ import {
     EmberTransmitPriority,
     EmberVersionType,
     EzspStatus,
+    IEEE802154CcaMode,
     SecManKeyType,
     SLStatus,
 } from '../enums';
@@ -195,6 +196,8 @@ type StackConfig = {
     END_DEVICE_POLL_TIMEOUT: number;
     /** <0-65535> (Default: 300) @see EzspConfigId.TRANSIENT_KEY_TIMEOUT_S */
     TRANSIENT_KEY_TIMEOUT_S: number;
+    /**@see Ezsp.ezspSetRadioIeee802154CcaMode */
+    CCA_MODE?: keyof typeof IEEE802154CcaMode;
 };
 
 /**
@@ -216,6 +219,7 @@ export const DEFAULT_STACK_CONFIG: Readonly<StackConfig> = {
     TRANSIENT_DEVICE_TIMEOUT: 10000,
     END_DEVICE_POLL_TIMEOUT: 8, // zigpc: 8
     TRANSIENT_KEY_TIMEOUT_S: 300, // zigpc: 65535
+    CCA_MODE: undefined, // not set by default
 };
 /** Default behavior is to disable app key requests */
 const ALLOW_APP_KEY_REQUESTS = false;
@@ -377,6 +381,13 @@ export class EmberAdapter extends Adapter {
             if (!inRange(config.TRANSIENT_KEY_TIMEOUT_S, 0, 65535)) {
                 config.TRANSIENT_KEY_TIMEOUT_S = DEFAULT_STACK_CONFIG.TRANSIENT_KEY_TIMEOUT_S;
                 logger.error(`[STACK CONFIG] Invalid TRANSIENT_KEY_TIMEOUT_S, using default.`, NS);
+            }
+
+            config.CCA_MODE = config.CCA_MODE ?? undefined; // always default to undefined
+
+            if (config.CCA_MODE && IEEE802154CcaMode[config.CCA_MODE] === undefined) {
+                config.CCA_MODE = undefined;
+                logger.error(`[STACK CONFIG] Invalid CCA_MODE, ignoring.`, NS);
             }
 
             logger.info(`Using stack config ${JSON.stringify(config)}.`, NS);
@@ -716,6 +727,13 @@ export class EmberAdapter extends Adapter {
         await this.emberSetEzspConfigValue(EzspConfigId.MAX_END_DEVICE_CHILDREN, this.stackConfig.MAX_END_DEVICE_CHILDREN);
         await this.emberSetEzspConfigValue(EzspConfigId.END_DEVICE_POLL_TIMEOUT, this.stackConfig.END_DEVICE_POLL_TIMEOUT);
         await this.emberSetEzspConfigValue(EzspConfigId.TRANSIENT_KEY_TIMEOUT_S, this.stackConfig.TRANSIENT_KEY_TIMEOUT_S);
+        // XXX: temp-fix: forces a side-effect in the firmware that prevents broadcast issues in environments with unusual interferences
+        await this.emberSetEzspValue(EzspValueId.CCA_THRESHOLD, 1, [0]);
+
+        if (this.stackConfig.CCA_MODE) {
+            // validated in `loadStackConfig`
+            await this.ezsp.ezspSetRadioIeee802154CcaMode(IEEE802154CcaMode[this.stackConfig.CCA_MODE]);
+        }
 
         // WARNING: From here on EZSP commands that affect memory allocation on the NCP should no longer be called (like resizing tables)
 
