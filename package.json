@@ -87,7 +87,7 @@
         "eslint": "eslint . --ext .ts --max-warnings=0",
         "pretty:write": "prettier --write .",
         "pretty:check": "prettier --check .",
-        "docs": "typedoc --tsconfig typedoc-tsconfig.json",
+        "typedoc": "typedoc --gitRevision $(git describe --tag --abbrev=0) --tsconfig tsconfig.json --excludePrivate --excludeProtected --excludeExternals --entryPointStrategy expand ./src --sourceLinkTemplate 'https://github.com/Koenkk/zigbee-herdsman/blob/{gitRevision}/{path}#L{line}' -out typedoc",
         "clean": "rimraf temp coverage dist",
         "prepack": "npm run clean && npm run build"
     },
