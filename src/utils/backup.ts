@@ -1,6 +1,6 @@
-/* eslint-disable max-len */
-import {fs} from 'mz';
 import * as path from 'path';
+
+import {fs} from 'mz';
 
 import * as ZStackStructs from '../adapter/z-stack/structs';
 import * as ZStackUtils from '../adapter/z-stack/utils';

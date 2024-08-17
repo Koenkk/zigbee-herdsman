@@ -1,4 +1,3 @@
-/* eslint-disable max-len */
 import assert from 'assert';
 
 import {StructMemoryAlignment} from '../struct';

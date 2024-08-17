@@ -1,26 +1,27 @@
-import {OpenOptions} from '@serialport/stream';
 import {MockBinding, MockPortBinding} from '@serialport/binding-mock';
+import {OpenOptions} from '@serialport/stream';
+
+import {EzspStatus} from '../../../src/adapter/ember/enums';
 import {Ezsp} from '../../../src/adapter/ember/ezsp/ezsp';
+import {logger} from '../../../src/utils/logger';
 import {
-    ASH_ACK_FIRST_BYTES,
-    RCED_DATA_WITH_CRC_ERROR,
-    RCED_DATA_VERSION,
-    RCED_DATA_VERSION_RES,
-    RECD_ERROR_ACK_TIMEOUT_BYTES,
-    RECD_RSTACK_BYTES,
-    SEND_RST_BYTES,
     adapterSONOFFDongleE,
-    SEND_DATA_VERSION,
-    SEND_ACK_FIRST_BYTES,
-    RCED_ERROR_WATCHDOG_BYTES,
-    SEND_UNICAST_REPLY_FN0_ASH_RAW,
-    MESSAGE_SENT_HANDLER_FN1_ASH_RAW,
+    ASH_ACK_FIRST_BYTES,
     INCOMING_MESSAGE_HANDLER_FN2_ASH_RAW,
     MESSAGE_SENT_HANDLER_FN0_ASH_RAW,
+    MESSAGE_SENT_HANDLER_FN1_ASH_RAW,
+    RCED_DATA_VERSION,
+    RCED_DATA_VERSION_RES,
+    RCED_DATA_WITH_CRC_ERROR,
+    RCED_ERROR_WATCHDOG_BYTES,
+    RECD_ERROR_ACK_TIMEOUT_BYTES,
+    RECD_RSTACK_BYTES,
+    SEND_ACK_FIRST_BYTES,
+    SEND_DATA_VERSION,
+    SEND_RST_BYTES,
+    SEND_UNICAST_REPLY_FN0_ASH_RAW,
     SET_POLICY_REPLY_FN1_ASH_RAW,
 } from './consts';
-import {EzspStatus} from '../../../src/adapter/ember/enums';
-import {logger} from '../../../src/utils/logger';
 
 const emitFromSerial = async (ezsp: Ezsp, data: Buffer, skipAdvanceTimers: boolean = false): Promise<void> => {
     //@ts-expect-error private

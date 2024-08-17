@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
+
 import assert from 'assert';
 
 import {Struct} from '../struct';

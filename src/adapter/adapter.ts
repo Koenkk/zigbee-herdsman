@@ -1,5 +1,6 @@
-import Bonjour, {Service} from 'bonjour-service';
 import events from 'events';
+
+import Bonjour, {Service} from 'bonjour-service';
 
 import * as Models from '../models';
 import {logger} from '../utils/logger';

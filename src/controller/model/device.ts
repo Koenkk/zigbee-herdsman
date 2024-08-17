@@ -9,7 +9,7 @@ import {ClusterDefinition, CustomClusters} from '../../zspec/zcl/definition/tsty
 import {ControllerEventMap} from '../controller';
 import {ZclFrameConverter} from '../helpers';
 import ZclTransactionSequenceNumber from '../helpers/zclTransactionSequenceNumber';
-import {KeyValue, DatabaseEntry, DeviceType} from '../tstype';
+import {DatabaseEntry, DeviceType, KeyValue} from '../tstype';
 import Endpoint from './endpoint';
 import Entity from './entity';
 

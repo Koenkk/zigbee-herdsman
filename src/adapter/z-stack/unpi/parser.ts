@@ -1,7 +1,7 @@
 import * as stream from 'stream';
 
 import {logger} from '../../../utils/logger';
-import {DataStart, SOF, MinMessageLength, PositionDataLength} from './constants';
+import {DataStart, MinMessageLength, PositionDataLength, SOF} from './constants';
 import Frame from './frame';
 
 const NS = 'zh:zstack:unpi:parser';

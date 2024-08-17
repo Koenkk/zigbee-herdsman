@@ -1,9 +1,10 @@
 import assert from 'assert';
 import events from 'events';
 import fs from 'fs';
+
 import mixinDeep from 'mixin-deep';
 
-import {TsType as AdapterTsType, Adapter, Events as AdapterEvents} from '../adapter';
+import {Adapter, Events as AdapterEvents, TsType as AdapterTsType} from '../adapter';
 import {BackupUtils} from '../utils';
 import {logger} from '../utils/logger';
 import {isNumberArrayOfLength} from '../utils/utils';
@@ -13,10 +14,10 @@ import Database from './database';
 import * as Events from './events';
 import GreenPower from './greenPower';
 import {ZclFrameConverter} from './helpers';
-import {Entity, Device} from './model';
+import {Device, Entity} from './model';
 import Group from './model/group';
 import Touchlink from './touchlink';
-import {KeyValue, DeviceType, GreenPowerDeviceJoinedPayload} from './tstype';
+import {DeviceType, GreenPowerDeviceJoinedPayload, KeyValue} from './tstype';
 
 const NS = 'zh:controller';
 

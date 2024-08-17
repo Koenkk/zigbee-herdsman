@@ -1,4 +1,5 @@
 /* istanbul ignore file */
+
 import * as basic from './basic';
 import * as named from './named';
 
@@ -672,7 +673,7 @@ export class EmberMultiAddress extends EzspStruct {
     /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
     static serialize(cls: any, obj: any): Buffer {
         const addrmode = obj['addrmode'];
-        /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
+
         const fields = addrmode == 3 ? cls.fields3 : cls.fields1;
         return Buffer.concat(
             /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/

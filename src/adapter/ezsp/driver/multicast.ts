@@ -1,4 +1,5 @@
 /* istanbul ignore file */
+
 import {logger} from '../../../utils/logger';
 import {Driver} from './driver';
 import {EzspConfigId} from './types';

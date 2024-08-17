@@ -1,5 +1,5 @@
-/* eslint-disable max-len */
 import assert from 'assert';
+
 import {fs} from 'mz';
 
 import * as Models from '../../../models';

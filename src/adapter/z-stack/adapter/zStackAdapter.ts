@@ -1,8 +1,9 @@
 import assert from 'assert';
+
 import debounce from 'debounce';
 
 import * as Models from '../../../models';
-import {Queue, Waitress, Wait} from '../../../utils';
+import {Queue, Wait, Waitress} from '../../../utils';
 import {logger} from '../../../utils/logger';
 import {BroadcastAddress} from '../../../zspec/enums';
 import * as Zcl from '../../../zspec/zcl';
@@ -10,21 +11,21 @@ import {Status as ZdoStatus} from '../../../zspec/zdo';
 import Adapter from '../../adapter';
 import * as Events from '../../events';
 import {
-    NetworkOptions,
-    SerialPortOptions,
+    ActiveEndpoints,
+    AdapterOptions,
     Coordinator,
     CoordinatorVersion,
-    NodeDescriptor,
     DeviceType,
-    ActiveEndpoints,
-    SimpleDescriptor,
     LQI,
-    RoutingTable,
-    NetworkParameters,
-    StartResult,
     LQINeighbor,
+    NetworkOptions,
+    NetworkParameters,
+    NodeDescriptor,
+    RoutingTable,
     RoutingTableEntry,
-    AdapterOptions,
+    SerialPortOptions,
+    SimpleDescriptor,
+    StartResult,
 } from '../../tstype';
 import * as Constants from '../constants';
 import {Constants as UnpiConstants} from '../unpi';

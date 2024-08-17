@@ -1,5 +1,8 @@
-import {OpenOptions} from '@serialport/stream';
 import {MockBinding, MockPortBinding} from '@serialport/binding-mock';
+import {OpenOptions} from '@serialport/stream';
+
+import {EzspStatus} from '../../../src/adapter/ember/enums';
+import {EzspBuffalo} from '../../../src/adapter/ember/ezsp/buffalo.ts';
 import {
     EZSP_EXTENDED_FRAME_CONTROL_LB_INDEX,
     EZSP_FRAME_CONTROL_COMMAND,
@@ -11,15 +14,13 @@ import {
     EZSP_PARAMETERS_INDEX,
     EZSP_SEQUENCE_INDEX,
 } from '../../../src/adapter/ember/ezsp/consts';
-import {EzspStatus} from '../../../src/adapter/ember/enums';
-import {EzspBuffer} from '../../../src/adapter/ember/uart/queues';
-import {UartAsh, CONFIG_TX_K} from '../../../src/adapter/ember/uart/ash';
-import {EZSP_HOST_RX_POOL_SIZE, TX_POOL_BUFFERS} from '../../../src/adapter/ember/uart/consts';
-import {RECD_RSTACK_BYTES, SEND_RST_BYTES, SEND_ACK_FIRST_BYTES, adapterSONOFFDongleE, ASH_ACK_FIRST_BYTES} from './consts';
-import {EzspBuffalo} from '../../../src/adapter/ember/ezsp/buffalo.ts';
-import {lowByte} from '../../../src/adapter/ember/utils/math';
 import {EzspFrameID} from '../../../src/adapter/ember/ezsp/enums.ts';
+import {CONFIG_TX_K, UartAsh} from '../../../src/adapter/ember/uart/ash';
+import {EZSP_HOST_RX_POOL_SIZE, TX_POOL_BUFFERS} from '../../../src/adapter/ember/uart/consts';
+import {EzspBuffer} from '../../../src/adapter/ember/uart/queues';
+import {lowByte} from '../../../src/adapter/ember/utils/math';
 import {Wait} from '../../../src/utils/';
+import {adapterSONOFFDongleE, ASH_ACK_FIRST_BYTES, RECD_RSTACK_BYTES, SEND_ACK_FIRST_BYTES, SEND_RST_BYTES} from './consts';
 
 const mockSerialPortCloseEvent = jest.fn();
 const mockSerialPortErrorEvent = jest.fn();

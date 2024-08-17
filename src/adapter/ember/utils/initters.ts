@@ -1,7 +1,8 @@
 /* istanbul ignore file */
+
 import * as ZSpec from '../../../zspec';
 import {NetworkCache} from '../adapter/emberAdapter';
-import {ZB_PSA_ALG, INVALID_RADIO_CHANNEL} from '../consts';
+import {INVALID_RADIO_CHANNEL, ZB_PSA_ALG} from '../consts';
 import {EmberJoinMethod, SecManDerivedKeyType, SecManFlag, SecManKeyType} from '../enums';
 import {EMBER_AES_HASH_BLOCK_SIZE} from '../ezsp/consts';
 import {EmberAesMmoHashContext, SecManContext} from '../types';

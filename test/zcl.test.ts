@@ -1,7 +1,8 @@
 import 'regenerator-runtime/runtime';
+
 import * as Zcl from '../src/zspec/zcl';
-import {BuffaloZclDataType, DataType, FrameType, Direction, StructuredIndicatorType} from '../src/zspec/zcl/definition/enums';
 import {BuffaloZcl} from '../src/zspec/zcl/buffaloZcl';
+import {BuffaloZclDataType, DataType, Direction, FrameType, StructuredIndicatorType} from '../src/zspec/zcl/definition/enums';
 
 describe('Zcl', () => {
     it('Get cluster by name', () => {

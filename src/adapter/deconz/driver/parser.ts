@@ -1,6 +1,8 @@
 /* istanbul ignore file */
-import slip from 'slip';
+
 import {Transform, TransformCallback} from 'stream';
+
+import slip from 'slip';
 
 import {logger} from '../../../utils/logger';
 

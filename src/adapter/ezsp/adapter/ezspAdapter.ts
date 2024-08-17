@@ -1,8 +1,9 @@
 /* istanbul ignore file */
+
 import assert from 'assert';
 
 import * as Models from '../../../models';
-import {Queue, Waitress, Wait, RealpathSync} from '../../../utils';
+import {Queue, RealpathSync, Wait, Waitress} from '../../../utils';
 import {logger} from '../../../utils/logger';
 import {BroadcastAddress} from '../../../zspec/enums';
 import * as Zcl from '../../../zspec/zcl';
@@ -11,24 +12,24 @@ import * as Events from '../../events';
 import SerialPortUtils from '../../serialPortUtils';
 import SocketPortUtils from '../../socketPortUtils';
 import {
-    NetworkOptions,
-    SerialPortOptions,
+    ActiveEndpoints,
+    AdapterOptions,
     Coordinator,
     CoordinatorVersion,
-    NodeDescriptor,
-    ActiveEndpoints,
-    SimpleDescriptor,
     LQI,
-    RoutingTable,
-    NetworkParameters,
-    StartResult,
     LQINeighbor,
+    NetworkOptions,
+    NetworkParameters,
+    NodeDescriptor,
+    RoutingTable,
     RoutingTableEntry,
-    AdapterOptions,
+    SerialPortOptions,
+    SimpleDescriptor,
+    StartResult,
 } from '../../tstype';
 import {Driver, EmberIncomingMessage} from '../driver';
 import {EZSPZDOResponseFrameData} from '../driver/ezsp';
-import {EmberZDOCmd, uint16_t, EmberEUI64, EmberStatus} from '../driver/types';
+import {EmberEUI64, EmberStatus, EmberZDOCmd, uint16_t} from '../driver/types';
 
 const NS = 'zh:ezsp';
 

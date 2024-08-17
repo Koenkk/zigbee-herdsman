@@ -1,16 +1,13 @@
-import path from 'path';
 import {existsSync, mkdirSync, unlinkSync, writeFileSync} from 'fs';
+import path from 'path';
 import {EventEmitter} from 'stream';
 
-import * as Zcl from '../../../src/zspec/zcl';
-import * as Zdo from '../../../src/zspec/zdo';
-import * as ZdoTypes from '../../../src/zspec/zdo/definition/tstypes';
-import * as ZSpec from '../../../src/zspec';
 import {TsType} from '../../../src/adapter';
-import {EmberEzspEventMap, Ezsp} from '../../../src/adapter/ember/ezsp/ezsp';
 import {EmberAdapter} from '../../../src/adapter/ember/adapter';
-import {AdapterOptions, NetworkOptions, SerialPortOptions} from '../../../src/adapter/tstype';
 import {DEFAULT_APS_OPTIONS, DEFAULT_STACK_CONFIG, LinkKeyBackupData, NetworkCache} from '../../../src/adapter/ember/adapter/emberAdapter';
+import {FIXED_ENDPOINTS} from '../../../src/adapter/ember/adapter/endpoints';
+import {OneWaitressEvents} from '../../../src/adapter/ember/adapter/oneWaitress';
+import {EMBER_LOW_RAM_CONCENTRATOR, INVALID_RADIO_CHANNEL, SECURITY_LEVEL_Z3} from '../../../src/adapter/ember/consts';
 import {
     EmberApsOption,
     EmberDeviceUpdate,
@@ -28,6 +25,10 @@ import {
     SecManKeyType,
     SLStatus,
 } from '../../../src/adapter/ember/enums';
+import {EZSP_MIN_PROTOCOL_VERSION, EZSP_PROTOCOL_VERSION, EZSP_STACK_TYPE_MESH} from '../../../src/adapter/ember/ezsp/consts';
+import {EzspConfigId, EzspDecisionBitmask, EzspEndpointFlag, EzspPolicyId, EzspValueId} from '../../../src/adapter/ember/ezsp/enums';
+import {EmberEzspEventMap, Ezsp} from '../../../src/adapter/ember/ezsp/ezsp';
+import {EzspError} from '../../../src/adapter/ember/ezspError';
 import {
     EmberAesMmoHashContext,
     EmberApsFrame,
@@ -40,18 +41,17 @@ import {
     SecManKey,
     SecManNetworkKeyInfo,
 } from '../../../src/adapter/ember/types';
-import {EzspEndpointFlag, EzspConfigId, EzspValueId, EzspPolicyId, EzspDecisionBitmask} from '../../../src/adapter/ember/ezsp/enums';
-import {EZSP_MIN_PROTOCOL_VERSION, EZSP_PROTOCOL_VERSION, EZSP_STACK_TYPE_MESH} from '../../../src/adapter/ember/ezsp/consts';
-import {FIXED_ENDPOINTS} from '../../../src/adapter/ember/adapter/endpoints';
-import {EMBER_LOW_RAM_CONCENTRATOR, INVALID_RADIO_CHANNEL, SECURITY_LEVEL_Z3} from '../../../src/adapter/ember/consts';
 import {lowHighBytes} from '../../../src/adapter/ember/utils/math';
-import {logger} from '../../../src/utils/logger';
-import {UnifiedBackupStorage} from '../../../src/models/backup-storage-unified';
 import {DeviceAnnouncePayload, DeviceJoinedPayload, DeviceLeavePayload, NetworkAddressPayload, ZclPayload} from '../../../src/adapter/events';
-import {EUI64, NodeId, PanId} from '../../../src/zspec/tstypes';
-import {OneWaitressEvents} from '../../../src/adapter/ember/adapter/oneWaitress';
+import {AdapterOptions, NetworkOptions, SerialPortOptions} from '../../../src/adapter/tstype';
 import {Backup} from '../../../src/models/backup';
-import {EzspError} from '../../../src/adapter/ember/ezspError';
+import {UnifiedBackupStorage} from '../../../src/models/backup-storage-unified';
+import {logger} from '../../../src/utils/logger';
+import * as ZSpec from '../../../src/zspec';
+import {EUI64, NodeId, PanId} from '../../../src/zspec/tstypes';
+import * as Zcl from '../../../src/zspec/zcl';
+import * as Zdo from '../../../src/zspec/zdo';
+import * as ZdoTypes from '../../../src/zspec/zdo/definition/tstypes';
 
 // https://github.com/jestjs/jest/issues/6028#issuecomment-567669082
 function defuseRejection<T>(promise: Promise<T>) {

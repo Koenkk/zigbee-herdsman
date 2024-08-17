@@ -1,4 +1,3 @@
-/* eslint-disable max-len */
 import * as crypto from 'crypto';
 
 import {TsType} from '../../';

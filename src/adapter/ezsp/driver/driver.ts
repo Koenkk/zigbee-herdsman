@@ -1,8 +1,10 @@
 /* istanbul ignore file */
+
 import {EventEmitter} from 'events';
+
 import equals from 'fast-deep-equal/es6';
 
-import {Waitress, Wait} from '../../../utils';
+import {Wait, Waitress} from '../../../utils';
 import {logger} from '../../../utils/logger';
 import {Clusters} from '../../../zspec/zcl/definition/cluster';
 import {EZSPAdapterBackup} from '../adapter/backup';
@@ -10,30 +12,30 @@ import * as TsType from './../../tstype';
 import {ParamsDesc} from './commands';
 import {Ezsp, EZSPFrameData, EZSPZDOResponseFrameData} from './ezsp';
 import {Multicast} from './multicast';
-import {EmberStatus, EmberNodeType, uint16_t, uint8_t, EmberZDOCmd, EmberApsOption, EmberKeyData, EmberJoinDecision} from './types';
+import {EmberApsOption, EmberJoinDecision, EmberKeyData, EmberNodeType, EmberStatus, EmberZDOCmd, uint8_t, uint16_t} from './types';
 import {
-    EmberOutgoingMessageType,
-    EmberEUI64,
-    EmberJoinMethod,
-    EmberDeviceUpdate,
-    EzspValueId,
-    EzspPolicyId,
-    EzspDecisionBitmask,
-    EmberNetworkStatus,
-    EmberKeyType,
     EmberDerivedKeyType,
-    EmberStackError,
-    SLStatus,
+    EmberDeviceUpdate,
+    EmberEUI64,
     EmberInitialSecurityBitmask,
+    EmberJoinMethod,
+    EmberKeyType,
+    EmberNetworkStatus,
+    EmberOutgoingMessageType,
+    EmberStackError,
+    EzspDecisionBitmask,
+    EzspPolicyId,
+    EzspValueId,
+    SLStatus,
 } from './types/named';
 import {
+    EmberAesMmoHashContext,
     EmberApsFrame,
-    EmberNetworkParameters,
+    EmberIeeeRawFrame,
     EmberInitialSecurityState,
     EmberKeyStruct,
+    EmberNetworkParameters,
     EmberRawFrame,
-    EmberIeeeRawFrame,
-    EmberAesMmoHashContext,
     EmberSecurityManagerContext,
 } from './types/struct';
 import {ember_security} from './utils';
@@ -679,7 +681,6 @@ export class Driver extends EventEmitter {
         }
     }
 
-    /* eslint-disable-next-line @typescript-eslint/no-unused-vars */
     public async brequest(destination: number, apsFrame: EmberApsFrame, data: Buffer): Promise<boolean> {
         try {
             const seq = (apsFrame.sequence + 1) & 0xff;

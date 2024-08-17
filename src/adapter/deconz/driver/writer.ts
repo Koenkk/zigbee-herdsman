@@ -1,10 +1,13 @@
 /* istanbul ignore file */
 /* eslint-disable */
+
 import * as stream from 'stream';
-import Frame from './frame';
+
 // @ts-ignore
 import slip from 'slip';
+
 import {logger} from '../../../utils/logger';
+import Frame from './frame';
 
 const NS = 'zh:deconz:driver:writer';
 

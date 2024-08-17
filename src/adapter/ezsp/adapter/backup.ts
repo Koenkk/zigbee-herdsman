@@ -1,4 +1,5 @@
 /* istanbul ignore file */
+
 import {fs} from 'mz';
 
 import * as Models from '../../../models';
@@ -6,7 +7,7 @@ import {BackupUtils} from '../../../utils';
 import {logger} from '../../../utils/logger';
 import {uint32MaskToChannels} from '../../../zspec/utils';
 import {Driver} from '../driver';
-import {EmberKeyType, EmberKeyStruct, EmberNetworkParameters, EmberSecurityManagerNetworkKeyInfo, EmberKeyData} from '../driver/types';
+import {EmberKeyData, EmberKeyStruct, EmberKeyType, EmberNetworkParameters, EmberSecurityManagerNetworkKeyInfo} from '../driver/types';
 
 const NS = 'zh:ezsp:backup';
 

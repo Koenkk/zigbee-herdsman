@@ -1,11 +1,10 @@
 /* istanbul ignore file */
+
 import {Buffer} from 'buffer';
 
 type calcFn = (buf: Buffer | number[], previous: number) => number;
 
-// eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
 function defineCrc(model: string, calc: calcFn): calcFn {
-    /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
     const fn = (buf: Buffer | number[], previous: number): number => calc(buf, previous) >>> 0;
     fn.signed = calc;
     fn.unsigned = fn;

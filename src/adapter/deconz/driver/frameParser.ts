@@ -1,23 +1,23 @@
 /* istanbul ignore file */
+
 import {EventEmitter} from 'stream';
 
 import {logger} from '../../../utils/logger';
-import PARAM from './constants';
-import {
-    Request,
-    ReceivedDataResponse,
-    DataStateResponse,
+import PARAM, {
     Command,
-    ParamMac,
-    ParamPanId,
-    ParamNwkAddr,
-    ParamExtPanId,
+    DataStateResponse,
+    gpDataInd,
     ParamChannel,
     ParamChannelMask,
+    ParamExtPanId,
+    ParamMac,
+    ParamNwkAddr,
+    ParamPanId,
     ParamPermitJoin,
-    gpDataInd,
+    ReceivedDataResponse,
+    Request,
 } from './constants';
-import {busyQueue, apsBusyQueue, enableRTS, enableRtsTimeout} from './driver';
+import {apsBusyQueue, busyQueue, enableRTS, enableRtsTimeout} from './driver';
 
 const NS = 'zh:deconz:frameparser';
 

@@ -1,7 +1,8 @@
 import {randomBytes} from 'crypto';
-import equals from 'fast-deep-equal/es6';
 import {existsSync, readFileSync, renameSync} from 'fs';
 import path from 'path';
+
+import equals from 'fast-deep-equal/es6';
 
 import {Adapter, TsType} from '../..';
 import {Backup, UnifiedBackupStorage} from '../../../models';
@@ -17,41 +18,41 @@ import {DeviceAnnouncePayload, DeviceJoinedPayload, DeviceLeavePayload, NetworkA
 import SerialPortUtils from '../../serialPortUtils';
 import SocketPortUtils from '../../socketPortUtils';
 import {
+    EMBER_HIGH_RAM_CONCENTRATOR,
     EMBER_INSTALL_CODE_CRC_SIZE,
     EMBER_INSTALL_CODE_SIZES,
+    EMBER_LOW_RAM_CONCENTRATOR,
+    EMBER_MIN_BROADCAST_ADDRESS,
+    INTERPAN_APS_FRAME_TYPE,
+    INVALID_RADIO_CHANNEL,
     LONG_DEST_FRAME_CONTROL,
     MAC_ACK_REQUIRED,
     MAXIMUM_INTERPAN_LENGTH,
-    STUB_NWK_FRAME_CONTROL,
-    INTERPAN_APS_FRAME_TYPE,
-    SHORT_DEST_FRAME_CONTROL,
-    EMBER_HIGH_RAM_CONCENTRATOR,
-    EMBER_LOW_RAM_CONCENTRATOR,
-    STACK_PROFILE_ZIGBEE_PRO,
     SECURITY_LEVEL_Z3,
-    INVALID_RADIO_CHANNEL,
+    SHORT_DEST_FRAME_CONTROL,
+    STACK_PROFILE_ZIGBEE_PRO,
+    STUB_NWK_FRAME_CONTROL,
     ZIGBEE_PROFILE_INTEROPERABILITY_LINK_KEY,
-    EMBER_MIN_BROADCAST_ADDRESS,
 } from '../consts';
 import {
     EmberApsOption,
-    EmberOutgoingMessageType,
-    EzspStatus,
-    EmberVersionType,
-    SLStatus,
-    EmberNodeType,
-    EmberNetworkStatus,
-    SecManKeyType,
-    EmberInterpanMessageType,
-    EmberSourceRouteDiscoveryMode,
-    EmberJoinDecision,
+    EmberDeviceUpdate,
     EmberExtendedSecurityBitmask,
+    EmberIncomingMessageType,
     EmberInitialSecurityBitmask,
+    EmberInterpanMessageType,
+    EmberJoinDecision,
     EmberJoinMethod,
     EmberNetworkInitBitmask,
-    EmberDeviceUpdate,
-    EmberIncomingMessageType,
+    EmberNetworkStatus,
+    EmberNodeType,
+    EmberOutgoingMessageType,
+    EmberSourceRouteDiscoveryMode,
     EmberTransmitPriority,
+    EmberVersionType,
+    EzspStatus,
+    SecManKeyType,
+    SLStatus,
 } from '../enums';
 import {EzspBuffalo} from '../ezsp/buffalo';
 import {EMBER_ENCRYPTION_KEY_SIZE, EZSP_MIN_PROTOCOL_VERSION, EZSP_PROTOCOL_VERSION, EZSP_STACK_TYPE_MESH} from '../ezsp/consts';

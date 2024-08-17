@@ -1,4 +1,5 @@
 /* istanbul ignore file */
+
 import assert from 'assert';
 
 import Device from '../../../controller/model/device';
@@ -10,24 +11,23 @@ import * as Zcl from '../../../zspec/zcl';
 import Adapter from '../../adapter';
 import * as Events from '../../events';
 import {
-    NetworkOptions,
-    SerialPortOptions,
+    ActiveEndpoints,
+    AdapterOptions,
     Coordinator,
     CoordinatorVersion,
-    NodeDescriptor,
     DeviceType,
-    ActiveEndpoints,
-    SimpleDescriptor,
     LQI,
-    RoutingTable,
-    NetworkParameters,
-    StartResult,
     LQINeighbor,
+    NetworkOptions,
+    NetworkParameters,
+    NodeDescriptor,
+    RoutingTable,
     RoutingTableEntry,
-    AdapterOptions,
+    SerialPortOptions,
+    SimpleDescriptor,
+    StartResult,
 } from '../../tstype';
-import PARAM from '../driver/constants';
-import {WaitForDataRequest, ApsDataRequest, ReceivedDataResponse, gpDataInd} from '../driver/constants';
+import PARAM, {ApsDataRequest, gpDataInd, ReceivedDataResponse, WaitForDataRequest} from '../driver/constants';
 import Driver from '../driver/driver';
 import processFrame, {frameParserEvents} from '../driver/frameParser';
 

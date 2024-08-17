@@ -1,5 +1,6 @@
 /* eslint max-len: 0 */
-import {DataType, BuffaloZclDataType, ParameterCondition} from './enums';
+
+import {BuffaloZclDataType, DataType, ParameterCondition} from './enums';
 import {ManufacturerCode} from './manufacturerCode';
 import {Status} from './status';
 import {ClusterDefinition, ClusterName} from './tstype';

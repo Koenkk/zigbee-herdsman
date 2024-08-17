@@ -1,7 +1,9 @@
 /* istanbul ignore file */
-import {DelimiterParser} from '@serialport/parser-delimiter';
+
 import {EventEmitter} from 'events';
 import net from 'net';
+
+import {DelimiterParser} from '@serialport/parser-delimiter';
 
 import {Buffalo} from '../../../buffalo';
 import {Queue} from '../../../utils';

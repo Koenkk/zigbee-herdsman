@@ -1,14 +1,15 @@
 /* istanbul ignore file */
+
 import {EventEmitter} from 'events';
 import net from 'net';
 
-import {Queue, Waitress, Wait} from '../../../utils';
+import {Queue, Wait, Waitress} from '../../../utils';
 import {logger} from '../../../utils/logger';
 import wait from '../../../utils/wait';
 import {SerialPort} from '../../serialPort';
 import SocketPortUtils from '../../socketPortUtils';
 import {SerialPortOptions} from '../../tstype';
-import {Frame as NpiFrame, FrameType} from './frame';
+import {FrameType, Frame as NpiFrame} from './frame';
 import {Parser} from './parser';
 import {Writer} from './writer';
 

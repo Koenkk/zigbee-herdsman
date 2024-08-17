@@ -133,7 +133,7 @@ export class Struct implements SerializableMemoryObject {
     /**
      * Returns structure contents in JS object format.
      */
-    // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types,@typescript-eslint/explicit-function-return-type
+    // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
     public toJSON() {
         return this.members.reduce((a, c) => {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any

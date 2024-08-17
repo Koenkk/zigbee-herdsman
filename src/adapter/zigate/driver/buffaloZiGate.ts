@@ -1,4 +1,5 @@
 /* istanbul ignore file */
+
 import {Buffalo} from '../../../buffalo';
 import {BuffaloZclOptions} from '../../../zspec/zcl/definition/tstype';
 import {LOG_LEVEL} from './constants';

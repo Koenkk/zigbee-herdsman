@@ -1,4 +1,5 @@
 /* istanbul ignore file */
+
 import Buffalo from '../../../buffalo/buffalo';
 import {GP_SINK_LIST_ENTRIES} from '../consts';
 import {EmberGpApplicationId, EmberGpSinkType, EzspStatus, SLStatus} from '../enums';
@@ -22,8 +23,8 @@ import {
     EmberInitialSecurityState,
     EmberKeyData,
     EmberMessageDigest,
-    EmberMultiPhyRadioParameters,
     EmberMulticastTableEntry,
+    EmberMultiPhyRadioParameters,
     EmberMultiprotocolPriorities,
     EmberNeighborTableEntry,
     EmberNetworkInitStruct,
@@ -38,10 +39,10 @@ import {
     EmberSignature283k1Data,
     EmberSignatureData,
     EmberSmacData,
-    EmberTokTypeStackZllData,
-    EmberTokTypeStackZllSecurity,
     EmberTokenData,
     EmberTokenInfo,
+    EmberTokTypeStackZllData,
+    EmberTokTypeStackZllSecurity,
     EmberZigbeeNetwork,
     EmberZllAddressAssignment,
     EmberZllDeviceInfoRecord,
@@ -55,29 +56,29 @@ import {
 } from '../types';
 import {highByte} from '../utils/math';
 import {
-    EMBER_ENCRYPTION_KEY_SIZE,
-    EMBER_CERTIFICATE_SIZE,
-    EMBER_PUBLIC_KEY_SIZE,
-    EMBER_PRIVATE_KEY_SIZE,
-    EMBER_SMAC_SIZE,
-    EMBER_SIGNATURE_SIZE,
     EMBER_AES_HASH_BLOCK_SIZE,
     EMBER_CERTIFICATE_283K1_SIZE,
-    EMBER_PUBLIC_KEY_283K1_SIZE,
+    EMBER_CERTIFICATE_SIZE,
+    EMBER_ENCRYPTION_KEY_SIZE,
     EMBER_PRIVATE_KEY_283K1_SIZE,
+    EMBER_PRIVATE_KEY_SIZE,
+    EMBER_PUBLIC_KEY_283K1_SIZE,
+    EMBER_PUBLIC_KEY_SIZE,
     EMBER_SIGNATURE_283K1_SIZE,
+    EMBER_SIGNATURE_SIZE,
+    EMBER_SMAC_SIZE,
+    EXTENDED_PAN_ID_SIZE,
     EZSP_EXTENDED_FRAME_CONTROL_HB_INDEX,
-    EZSP_EXTENDED_FRAME_FORMAT_VERSION_MASK,
-    EZSP_EXTENDED_FRAME_FORMAT_VERSION,
     EZSP_EXTENDED_FRAME_CONTROL_LB_INDEX,
-    EZSP_EXTENDED_PARAMETERS_INDEX,
     EZSP_EXTENDED_FRAME_CONTROL_RESERVED_MASK,
+    EZSP_EXTENDED_FRAME_FORMAT_VERSION,
+    EZSP_EXTENDED_FRAME_FORMAT_VERSION_MASK,
+    EZSP_EXTENDED_FRAME_ID_HB_INDEX,
+    EZSP_EXTENDED_FRAME_ID_LB_INDEX,
+    EZSP_EXTENDED_PARAMETERS_INDEX,
     EZSP_FRAME_CONTROL_INDEX,
     EZSP_FRAME_ID_INDEX,
     EZSP_PARAMETERS_INDEX,
-    EZSP_EXTENDED_FRAME_ID_HB_INDEX,
-    EZSP_EXTENDED_FRAME_ID_LB_INDEX,
-    EXTENDED_PAN_ID_SIZE,
 } from './consts';
 import {EzspFrameID} from './enums';
 

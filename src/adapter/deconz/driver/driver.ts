@@ -1,15 +1,16 @@
 /* istanbul ignore file */
 /* eslint-disable */
+
 import events from 'events';
 import net from 'net';
+
 import slip from 'slip';
 
 import {logger} from '../../../utils/logger';
 import {SerialPort} from '../../serialPort';
 import SerialPortUtils from '../../serialPortUtils';
 import SocketPortUtils from '../../socketPortUtils';
-import PARAM from './constants';
-import {Request, parameterT, ApsDataRequest, ReceivedDataResponse} from './constants';
+import PARAM, {ApsDataRequest, parameterT, ReceivedDataResponse, Request} from './constants';
 import {frameParserEvents} from './frameParser';
 import Parser from './parser';
 import Writer from './writer';
