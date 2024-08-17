@@ -5,5 +5,7 @@
     "printWidth": 150,
     "bracketSpacing": false,
     "endOfLine": "lf",
-    "tabWidth": 4
+    "tabWidth": 4,
+    "importOrder": ["", "^node:", "", "<THIRD_PARTY_MODULES>", "", "^zigbee", "", "^[./]"],
+    "plugins": ["@ianvs/prettier-plugin-sort-imports"]
 }
