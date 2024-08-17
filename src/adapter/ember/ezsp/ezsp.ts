@@ -5,6 +5,7 @@ import {Queue} from '../../../utils';
 import {logger} from '../../../utils/logger';
 import * as ZSpec from '../../../zspec';
 import {EUI64, ExtendedPanId, NodeId, PanId} from '../../../zspec/tstypes';
+import * as Zcl from '../../../zspec/zcl';
 import {Clusters} from '../../../zspec/zcl/definition/cluster';
 import * as Zdo from '../../../zspec/zdo';
 import {SerialPortOptions} from '../../tstype';
@@ -5244,10 +5245,12 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
 
         if (apsFrame.profileId === Zdo.ZDO_PROFILE_ID) {
             this.emit('zdoResponse', apsFrame, packetInfo.senderShortId, messageContents);
-        } else if (apsFrame.profileId === ZSpec.HA_PROFILE_ID || apsFrame.profileId === ZSpec.WILDCARD_PROFILE_ID) {
+        } else if (
+            apsFrame.profileId === ZSpec.HA_PROFILE_ID ||
+            apsFrame.profileId === ZSpec.WILDCARD_PROFILE_ID ||
+            (apsFrame.profileId === ZSpec.GP_PROFILE_ID && type !== EmberIncomingMessageType.BROADCAST_LOOPBACK)
+        ) {
             this.emit('incomingMessage', type, apsFrame, packetInfo.lastHopLqi, packetInfo.senderShortId, messageContents);
-        } else if (apsFrame.profileId === ZSpec.GP_PROFILE_ID) {
-            // only broadcast loopback in here
         }
     }
 
@@ -8506,7 +8509,7 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
         gpdCommandPayload: Buffer,
     ): void {
         logger.debug(
-            `ezspGpepIncomingMessageHandler(): callback called with: [status=${EmberGPStatus[status]}], [gpdLink=${gpdLink}], ` +
+            `ezspGpepIncomingMessageHandler(): callback called with: [status=${EmberGPStatus[status] ?? status}], [gpdLink=${gpdLink}], ` +
                 `[sequenceNumber=${sequenceNumber}], [addr=${JSON.stringify(addr)}], [gpdfSecurityLevel=${EmberGpSecurityLevel[gpdfSecurityLevel]}], ` +
                 `[gpdfSecurityKeyType=${EmberGpKeyType[gpdfSecurityKeyType]}], [autoCommissioning=${autoCommissioning}], ` +
                 `[bidirectionalInfo=${bidirectionalInfo}], [gpdSecurityFrameCounter=${gpdSecurityFrameCounter}], [gpdCommandId=${gpdCommandId}], ` +
@@ -8516,7 +8519,7 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
 
         if (addr.applicationId === EmberGpApplicationId.IEEE_ADDRESS) {
             // XXX: don't bother parsing for upstream for now, since it will be rejected
-            logger.error(`<=== [GP] Received IEEE address type in message. Support not implemented upstream. Dropping.`, NS);
+            logger.error(`<=x= [GP] Received IEEE address type in message. Support not implemented upstream. Dropping.`, NS);
             return;
         }
 
@@ -8526,22 +8529,39 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
             if (!gpdCommandPayload.length) {
                 // XXX: seem to be receiving duplicate commissioningNotification from some devices, second one with empty payload?
                 //      this will mess with the process no doubt, so dropping them
+                logger.debug(`<=x= [GP] Received commissioning notification with empty payload. Dropping.`, NS);
                 return;
             }
 
             commandIdentifier = Clusters.greenPower.commands.commissioningNotification.ID;
         }
 
-        this.emit(
-            'greenpowerMessage',
-            sequenceNumber,
-            commandIdentifier,
-            addr.sourceId,
-            gpdSecurityFrameCounter,
-            gpdCommandId,
-            gpdCommandPayload,
-            gpdLink,
-        );
+        const apsFrame: EmberApsFrame = {
+            profileId: ZSpec.GP_PROFILE_ID,
+            clusterId: Zcl.Clusters.greenPower.ID,
+            sourceEndpoint: ZSpec.GP_ENDPOINT,
+            destinationEndpoint: ZSpec.GP_ENDPOINT,
+            options: 0, // not used
+            groupId: ZSpec.GP_GROUP_ID,
+            sequence: 0, // not used
+        };
+        // this stuff is already parsed by EmberZNet stack, but Z2M expects the full buffer, so combine it back
+        const gpdHeader = Buffer.alloc(15); // addr.applicationId === EmberGpApplicationId.IEEE_ADDRESS ? 20 : 15
+        gpdHeader.writeUInt8(0b00000001, 0); // frameControl: FrameType.SPECIFIC + Direction.CLIENT_TO_SERVER + disableDefaultResponse=false
+        gpdHeader.writeUInt8(sequenceNumber, 1);
+        gpdHeader.writeUInt8(commandIdentifier, 2); // commandIdentifier
+        gpdHeader.writeUInt16LE(0, 3); // options, only srcID present
+        gpdHeader.writeUInt32LE(addr.sourceId, 5);
+        // omitted: gpdIEEEAddr (ieeeAddr)
+        // omitted: gpdEndpoint (uint8)
+        gpdHeader.writeUInt32LE(gpdSecurityFrameCounter, 9);
+        gpdHeader.writeUInt8(gpdCommandId, 13);
+        gpdHeader.writeUInt8(gpdCommandPayload.length, 14);
+
+        const messageContents = Buffer.concat([gpdHeader, gpdCommandPayload]); // omitted: gppNwkAddr (uint16), gppGddLink (uint8)
+
+        // XXX: BROADCAST currently hardcoded to match upstream codepath
+        this.emit('incomingMessage', EmberIncomingMessageType.BROADCAST, apsFrame, gpdLink, addr.sourceId & 0xffff, messageContents);
     }
 
     /**

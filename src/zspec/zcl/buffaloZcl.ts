@@ -574,7 +574,7 @@ export class BuffaloZcl extends Buffalo {
             };
             // Manufacturer-specific Attribute Reporting
         } else if (options.payload?.commandID == 0xa1) {
-            if (options.payload.payloadSize == null) {
+            if (options.payload.payloadSize == undefined) {
                 throw new Error('Cannot read GDP_FRAME with commandID=0xA1 without payloadSize options specified');
             }
 

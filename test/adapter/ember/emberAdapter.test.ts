@@ -1453,7 +1453,8 @@ describe('Ember Adapter Layer', () => {
             );
             const spyEmit = jest.spyOn(adapter, 'emit');
             const sourceId: number = 1234;
-            const gpdLink = 123;
+            const nwkAddress: NodeId = sourceId & 0xffff;
+            const gpdLink: number = 123;
             const sequenceNumber: number = 1;
             const commandIdentifier: number = Zcl.Clusters.greenPower.commands.commissioningNotification.ID;
             const frameCounter: number = 102;
@@ -1472,19 +1473,6 @@ describe('Ember Adapter Layer', () => {
                 0x00,
                 0x00 /* outgoingCounter */,
             ]);
-
-            mockEzspEmitter.emit(
-                'greenpowerMessage',
-                sequenceNumber,
-                commandIdentifier,
-                sourceId,
-                frameCounter,
-                gpdCommandId,
-                gpdCommandPayload,
-                gpdLink,
-            );
-            await flushPromises();
-
             const gpdHeader = Buffer.alloc(15);
             gpdHeader.writeUInt8(0b00000001, 0);
             gpdHeader.writeUInt8(sequenceNumber, 1);
@@ -1494,18 +1482,30 @@ describe('Ember Adapter Layer', () => {
             gpdHeader.writeUInt32LE(frameCounter, 9);
             gpdHeader.writeUInt8(gpdCommandId, 13);
             gpdHeader.writeUInt8(gpdCommandPayload.length, 14);
-
-            const data = Buffer.concat([gpdHeader, gpdCommandPayload]);
-            const payload: ZclPayload = {
-                header: Zcl.Header.fromBuffer(data),
-                data,
-                clusterID: Zcl.Clusters.greenPower.ID,
-                address: sourceId,
-                endpoint: ZSpec.GP_ENDPOINT,
-                linkquality: gpdLink,
-                groupID: 0x0b84, // TODO: this should be moved out of Adapter class and into ZSpec consts
-                wasBroadcast: true,
+            const messageContents = Buffer.concat([gpdHeader, gpdCommandPayload]);
+            const apsFrame: EmberApsFrame = {
+                profileId: ZSpec.GP_PROFILE_ID,
+                clusterId: Zcl.Clusters.greenPower.ID,
+                sourceEndpoint: ZSpec.GP_ENDPOINT,
                 destinationEndpoint: ZSpec.GP_ENDPOINT,
+                options: 0, // not used
+                groupId: ZSpec.GP_GROUP_ID,
+                sequence: 0, // not used
+            };
+
+            mockEzspEmitter.emit('incomingMessage', EmberIncomingMessageType.BROADCAST, apsFrame, gpdLink, nwkAddress, messageContents);
+            await flushPromises();
+
+            const payload: ZclPayload = {
+                header: Zcl.Header.fromBuffer(messageContents),
+                data: messageContents,
+                clusterID: apsFrame.clusterId,
+                address: nwkAddress,
+                endpoint: apsFrame.sourceEndpoint,
+                linkquality: gpdLink,
+                groupID: apsFrame.groupId,
+                wasBroadcast: true,
+                destinationEndpoint: apsFrame.destinationEndpoint,
             };
 
             expect(spyResolveZCL).toHaveBeenCalledTimes(1);
