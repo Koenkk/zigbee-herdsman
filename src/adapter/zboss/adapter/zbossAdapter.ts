@@ -1,23 +1,23 @@
-import {Queue, Waitress, Wait} from "../../../utils";
 import {Adapter, TsType} from "../..";
 import {Backup} from "../../../models";
+import {Queue, Waitress} from "../../../utils";
+import {logger} from "../../../utils/logger";
+import {BroadcastAddress} from '../../../zspec/enums';
 import * as Zcl from "../../../zspec/zcl";
-import {
-    Coordinator,
-    LQI,
-    LQINeighbor,
-} from '../../tstype';
 import {
     Events,
     DeviceJoinedPayload,
     DeviceLeavePayload,
     ZclPayload,
 } from "../../events";
-import {BroadcastAddress} from '../../../zspec/enums';
+import {
+    Coordinator,
+    LQI,
+    LQINeighbor,
+} from '../../tstype';
 import {ZBOSSDriver} from '../driver';
-import {ZBOSSFrame, FrameType} from "../frame";
-import {logger} from "../../../utils/logger";
 import {CommandId, DeviceUpdateStatus} from "../enums";
+import {ZBOSSFrame, FrameType} from "../frame";
 
 const NS = 'zh:zboss';
 
@@ -88,7 +88,7 @@ export class ZBOSSAdapter extends Adapter {
                 endpoint: frame.payload.srcEndpoint,
                 linkquality: frame.payload.lqi,
                 groupID: frame.payload.grpNwk,
-                wasBroadcast: false, // TODO
+                wasBroadcast: false,
                 destinationEndpoint: frame.payload.dstEndpoint,
             };
 
@@ -98,7 +98,7 @@ export class ZBOSSAdapter extends Adapter {
         this.emit('event', frame);
     }
 
-
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     public static async isValidPath(path: string): Promise<boolean> {
         return true;
     }
@@ -112,11 +112,11 @@ export class ZBOSSAdapter extends Adapter {
 
         await this.driver.connect();
 
-        return await this.driver.startup();
+        return this.driver.startup();
     }
 
     public async stop(): Promise<void> {
-        this.driver.stop();
+        await this.driver.stop();
         
         logger.info(`ZBOSS Adapter stopped`, NS);
     }
@@ -140,6 +140,7 @@ export class ZBOSSAdapter extends Adapter {
         return this.driver.getCoordinatorVersion();
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     public async reset(type: "soft" | "hard"): Promise<void> {
         return Promise.reject(new Error("Not supported"));
     }
@@ -148,6 +149,7 @@ export class ZBOSSAdapter extends Adapter {
         return false;
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     public async backup(ieeeAddressesInDatabase: string[]): Promise<Backup> {
         return null;
     }
@@ -170,6 +172,7 @@ export class ZBOSSAdapter extends Adapter {
         return false;
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     public async changeChannel(newChannel: number): Promise<void> {
         return null;
     }
@@ -182,6 +185,7 @@ export class ZBOSSAdapter extends Adapter {
         }
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     public async addInstallCode(ieeeAddress: string, key: Buffer): Promise<void> {
         return null;
     }
@@ -240,6 +244,7 @@ export class ZBOSSAdapter extends Adapter {
         }, networkAddress);
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     public async routingTable(networkAddress: number): Promise<TsType.RoutingTable> {
         return null;
     }
@@ -413,22 +418,27 @@ export class ZBOSSAdapter extends Adapter {
         }
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     public async sendZclFrameToGroup(groupID: number, zclFrame: Zcl.Frame, sourceEndpoint?: number): Promise<void> {
         return null;
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     public async sendZclFrameToAll(endpoint: number, zclFrame: Zcl.Frame, sourceEndpoint: number, destination: BroadcastAddress): Promise<void> {
         return null;
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     public async setChannelInterPAN(channel: number): Promise<void> {
         return null;
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     public async sendZclFrameInterPANToIeeeAddr(zclFrame: Zcl.Frame, ieeeAddress: string): Promise<void> {
         return null;
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     public async sendZclFrameInterPANBroadcast(zclFrame: Zcl.Frame, timeout: number): Promise<ZclPayload> {
         return null;
     }
