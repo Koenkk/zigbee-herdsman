@@ -23,6 +23,7 @@ import {
     EmberOutgoingMessageType,
     EmberVersionType,
     EzspStatus,
+    IEEE802154CcaMode,
     SecManDerivedKeyType,
     SecManFlag,
     SecManKeyType,
@@ -159,6 +160,7 @@ const mockEzspNetworkState = jest.fn().mockResolvedValue(EmberNetworkStatus.JOIN
 const mockEzspGetEui64 = jest.fn().mockResolvedValue(DEFAULT_COORDINATOR_IEEE);
 const mockEzspSetConcentrator = jest.fn().mockResolvedValue(SLStatus.OK);
 const mockEzspSetSourceRouteDiscoveryMode = jest.fn().mockResolvedValue(1240 /* ms */);
+const mockEzspSetRadioIeee802154CcaMode = jest.fn().mockResolvedValue(SLStatus.OK);
 // not OK by default since used to detected unreged EP
 const mockEzspGetEndpointFlags = jest.fn().mockResolvedValue([SLStatus.NOT_FOUND, EzspEndpointFlag.DISABLED]);
 const mockEzspAddEndpoint = jest.fn().mockResolvedValue(SLStatus.OK);
@@ -282,6 +284,7 @@ jest.mock('../../../src/adapter/ember/ezsp/ezsp', () => ({
         ezspGetEui64: mockEzspGetEui64,
         ezspSetConcentrator: mockEzspSetConcentrator,
         ezspSetSourceRouteDiscoveryMode: mockEzspSetSourceRouteDiscoveryMode,
+        ezspSetRadioIeee802154CcaMode: mockEzspSetRadioIeee802154CcaMode,
         ezspGetEndpointFlags: mockEzspGetEndpointFlags,
         ezspAddEndpoint: mockEzspAddEndpoint,
         ezspNetworkInit: mockEzspNetworkInit,
@@ -333,6 +336,7 @@ const ezspMocks = [
     mockEzspGetEui64,
     mockEzspSetConcentrator,
     mockEzspSetSourceRouteDiscoveryMode,
+    mockEzspSetRadioIeee802154CcaMode,
     mockEzspGetEndpointFlags,
     mockEzspAddEndpoint,
     mockEzspNetworkInit,
@@ -473,6 +477,7 @@ describe('Ember Adapter Layer', () => {
             TRANSIENT_DEVICE_TIMEOUT: 1000,
             END_DEVICE_POLL_TIMEOUT: 12,
             TRANSIENT_KEY_TIMEOUT_S: 500,
+            CCA_MODE: 'SIGNAL_AND_RSSI',
         };
 
         writeFileSync(STACK_CONFIG_PATH, JSON.stringify(config, undefined, 2));
@@ -497,6 +502,22 @@ describe('Ember Adapter Layer', () => {
             TRANSIENT_DEVICE_TIMEOUT: 65536,
             END_DEVICE_POLL_TIMEOUT: 15,
             TRANSIENT_KEY_TIMEOUT_S: 65536,
+            CCA_MODE: 'abcd',
+        };
+
+        writeFileSync(STACK_CONFIG_PATH, JSON.stringify(config, undefined, 2));
+
+        adapter = new EmberAdapter(DEFAULT_NETWORK_OPTIONS, DEFAULT_SERIAL_PORT_OPTIONS, backupPath, DEFAULT_ADAPTER_OPTIONS);
+
+        expect(adapter.stackConfig).toStrictEqual(DEFAULT_STACK_CONFIG);
+
+        // cleanup
+        unlinkSync(STACK_CONFIG_PATH);
+    });
+
+    it('Loads only valid custom stack config - null CCA_MODE', () => {
+        const config = {
+            CCA_MODE: null,
         };
 
         writeFileSync(STACK_CONFIG_PATH, JSON.stringify(config, undefined, 2));
@@ -546,7 +567,6 @@ describe('Ember Adapter Layer', () => {
     });
 
     it('Starts with custom stack config', async () => {
-        adapter = new EmberAdapter(DEFAULT_NETWORK_OPTIONS, DEFAULT_SERIAL_PORT_OPTIONS, backupPath, DEFAULT_ADAPTER_OPTIONS);
         const config = {
             CONCENTRATOR_RAM_TYPE: 'low',
             CONCENTRATOR_MIN_TIME: 1,
@@ -558,6 +578,7 @@ describe('Ember Adapter Layer', () => {
             TRANSIENT_DEVICE_TIMEOUT: 1000,
             END_DEVICE_POLL_TIMEOUT: 12,
             TRANSIENT_KEY_TIMEOUT_S: 500,
+            CCA_MODE: 'SIGNAL_AND_RSSI',
         };
 
         writeFileSync(STACK_CONFIG_PATH, JSON.stringify(config, undefined, 2));
@@ -580,6 +601,25 @@ describe('Ember Adapter Layer', () => {
             config.CONCENTRATOR_DELIVERY_FAILURE_THRESHOLD,
             config.CONCENTRATOR_MAX_HOPS,
         );
+        expect(mockEzspSetRadioIeee802154CcaMode).toHaveBeenCalledWith(IEEE802154CcaMode.SIGNAL_AND_RSSI);
+
+        // cleanup
+        unlinkSync(STACK_CONFIG_PATH);
+    });
+
+    it('Starts with custom stack config invalid CCA_MODE', async () => {
+        const config = {
+            CCA_MODE: 'abcd',
+        };
+
+        writeFileSync(STACK_CONFIG_PATH, JSON.stringify(config, undefined, 2));
+
+        adapter = new EmberAdapter(DEFAULT_NETWORK_OPTIONS, DEFAULT_SERIAL_PORT_OPTIONS, backupPath, DEFAULT_ADAPTER_OPTIONS);
+        const result = adapter.start();
+
+        await jest.advanceTimersByTimeAsync(5000);
+        await expect(result).resolves.toStrictEqual('resumed');
+        expect(mockEzspSetRadioIeee802154CcaMode).toHaveBeenCalledTimes(0);
 
         // cleanup
         unlinkSync(STACK_CONFIG_PATH);
