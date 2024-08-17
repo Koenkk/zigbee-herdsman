@@ -701,22 +701,18 @@ class EZSPAdapter extends Adapter {
     public async sendZclFrameInterPANToIeeeAddr(zclFrame: Zcl.Frame, ieeeAddr: string): Promise<void> {
         return this.queue.execute<void>(async () => {
             logger.debug(`sendZclFrameInterPANToIeeeAddr to ${ieeeAddr}`, NS);
-            try {
-                const frame = this.driver.makeEmberIeeeRawFrame();
-                frame.ieeeFrameControl = 0xcc21;
-                frame.destPanId = 0xffff;
-                frame.destAddress = new EmberEUI64(ieeeAddr);
-                frame.sourcePanId = this.driver.networkParams.panId;
-                frame.sourceAddress = this.driver.ieee;
-                frame.nwkFrameControl = 0x000b;
-                frame.appFrameControl = 0x03;
-                frame.clusterId = zclFrame.cluster.ID;
-                frame.profileId = 0xc05e;
+            const frame = this.driver.makeEmberIeeeRawFrame();
+            frame.ieeeFrameControl = 0xcc21;
+            frame.destPanId = 0xffff;
+            frame.destAddress = new EmberEUI64(ieeeAddr);
+            frame.sourcePanId = this.driver.networkParams.panId;
+            frame.sourceAddress = this.driver.ieee;
+            frame.nwkFrameControl = 0x000b;
+            frame.appFrameControl = 0x03;
+            frame.clusterId = zclFrame.cluster.ID;
+            frame.profileId = 0xc05e;
 
-                await this.driver.ieeerawrequest(frame, zclFrame.toBuffer());
-            } catch (error) {
-                throw error;
-            }
+            await this.driver.ieeerawrequest(frame, zclFrame.toBuffer());
         });
     }
 

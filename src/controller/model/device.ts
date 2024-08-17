@@ -538,7 +538,7 @@ class Device extends Entity<ControllerEventMap> {
             /* istanbul ignore else */
         }
         // always load value from database available (modernExtend.quirkCheckinInterval() exists for devices without genPollCtl)
-        if (entry.hasOwnProperty('checkinInterval')) {
+        if (entry.checkinInterval !== undefined) {
             // if the checkin interval is known, messages expire by default after one checkin interval
             pendingRequestTimeout = entry.checkinInterval * 1000; // milliseconds
         }

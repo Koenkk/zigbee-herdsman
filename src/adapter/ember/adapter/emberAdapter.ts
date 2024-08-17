@@ -381,7 +381,9 @@ export class EmberAdapter extends Adapter {
 
             logger.info(`Using stack config ${JSON.stringify(config)}.`, NS);
             return config;
-        } catch {}
+        } catch {
+            /* empty */
+        }
 
         logger.info(`Using default stack config.`, NS);
         return DEFAULT_STACK_CONFIG;

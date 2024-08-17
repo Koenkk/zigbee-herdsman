@@ -47,7 +47,7 @@ export class Multicast {
     }
 
     public async subscribe(group_id: number, endpoint: number): Promise<EmberStatus> {
-        if (this._multicast.hasOwnProperty(group_id)) {
+        if (this._multicast[group_id] !== undefined) {
             logger.debug(`${group_id} is already subscribed`, NS);
             return EmberStatus.SUCCESS;
         }

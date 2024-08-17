@@ -75,11 +75,12 @@ export class Struct implements SerializableMemoryObject {
                             aligned.set(this.buffer.slice(member.offset, member.offset + member.length), offset);
                             offset += member.length;
                             break;
-                        case 'struct':
+                        case 'struct': {
                             const structData = this.childStructs[member.key].struct.serialize(alignment, false, offset);
                             aligned.set(structData, offset);
                             offset += structData.length;
                             break;
+                        }
                     }
                 }
                 return aligned;
@@ -347,12 +348,13 @@ export class Struct implements SerializableMemoryObject {
                             this.buffer.set(data.slice(offset, offset + member.length), member.offset);
                             offset += member.length;
                             break;
-                        case 'struct':
+                        case 'struct': {
                             const child = this.childStructs[member.key];
                             child.struct.build(data.slice(offset, offset + child.struct.length));
                             this.buffer.set(child.struct.serialize(), member.offset);
                             offset += child.struct.length;
                             break;
+                        }
                     }
                 }
             } else {

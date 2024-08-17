@@ -36,7 +36,7 @@ function parseReadParameterResponse(view: DataView): Command | null {
     const parameterId = view.getUint8(7);
 
     switch (parameterId) {
-        case PARAM.PARAM.Network.MAC:
+        case PARAM.PARAM.Network.MAC: {
             const mac: ParamMac = view.getBigUint64(8, littleEndian).toString(16);
             let result = mac;
             while (result.length < 16) {
@@ -45,15 +45,18 @@ function parseReadParameterResponse(view: DataView): Command | null {
             result = '0x' + result;
             logger.debug(`MAC: ${result}`, NS);
             return result;
-        case PARAM.PARAM.Network.PAN_ID:
+        }
+        case PARAM.PARAM.Network.PAN_ID: {
             const panId: ParamPanId = view.getUint16(8, littleEndian);
             logger.debug('PANID: ' + panId.toString(16), NS);
             return panId;
-        case PARAM.PARAM.Network.NWK_ADDRESS:
+        }
+        case PARAM.PARAM.Network.NWK_ADDRESS: {
             const nwkAddr: ParamNwkAddr = view.getUint16(8, littleEndian);
             logger.debug('NWKADDR: ' + nwkAddr.toString(16), NS);
             return nwkAddr;
-        case PARAM.PARAM.Network.EXT_PAN_ID:
+        }
+        case PARAM.PARAM.Network.EXT_PAN_ID: {
             const extPanId: ParamExtPanId = view.getBigUint64(8, littleEndian).toString(16);
             let res = extPanId;
             while (res.length < 16) {
@@ -62,7 +65,8 @@ function parseReadParameterResponse(view: DataView): Command | null {
             res = '0x' + res;
             logger.debug(`EXT_PANID: ${res}`, NS);
             return res;
-        case PARAM.PARAM.Network.APS_EXT_PAN_ID:
+        }
+        case PARAM.PARAM.Network.APS_EXT_PAN_ID: {
             const apsExtPanId: ParamExtPanId = view.getBigUint64(8, littleEndian).toString(16);
             let resAEPID = apsExtPanId;
             while (resAEPID.length < 16) {
@@ -71,7 +75,8 @@ function parseReadParameterResponse(view: DataView): Command | null {
             resAEPID = '0x' + resAEPID;
             logger.debug(`APS_EXT_PANID: ${resAEPID}`, NS);
             return resAEPID;
-        case PARAM.PARAM.Network.NETWORK_KEY:
+        }
+        case PARAM.PARAM.Network.NETWORK_KEY: {
             const networkKey1 = view.getBigUint64(9).toString(16);
             let res1 = networkKey1;
             while (res1.length < 16) {
@@ -84,22 +89,27 @@ function parseReadParameterResponse(view: DataView): Command | null {
             }
             logger.debug('NETWORK_KEY: hidden', NS);
             return '0x' + res1 + res2;
-        case PARAM.PARAM.Network.CHANNEL:
+        }
+        case PARAM.PARAM.Network.CHANNEL: {
             const channel: ParamChannel = view.getUint8(8);
             logger.debug('CHANNEL: ' + channel, NS);
             return channel;
-        case PARAM.PARAM.Network.CHANNEL_MASK:
+        }
+        case PARAM.PARAM.Network.CHANNEL_MASK: {
             const chMask: ParamChannelMask = view.getUint32(8, littleEndian);
             logger.debug('CHANNELMASK: ' + chMask.toString(16), NS);
             return chMask;
-        case PARAM.PARAM.Network.PERMIT_JOIN:
+        }
+        case PARAM.PARAM.Network.PERMIT_JOIN: {
             const permitJoin: ParamPermitJoin = view.getUint8(8);
             logger.debug('PERMIT_JOIN: ' + permitJoin, NS);
             return permitJoin;
-        case PARAM.PARAM.Network.WATCHDOG_TTL:
+        }
+        case PARAM.PARAM.Network.WATCHDOG_TTL: {
             const ttl: ParamPermitJoin = view.getUint32(8);
             logger.debug('WATCHDOG_TTL: ' + ttl, NS);
             return ttl;
+        }
         default:
             //throw new Error(`unknown parameter id ${parameterId}`);
             logger.debug(`unknown parameter id ${parameterId}`, NS);

@@ -759,7 +759,9 @@ class DeconzAdapter extends Adapter {
         if (skip === false) {
             try {
                 simpleDesc = await this.simpleDescriptor(0x0, 1);
-            } catch {}
+            } catch {
+                /* empty */
+            }
 
             if (simpleDesc == undefined) {
                 await this.checkCoordinatorSimpleDescriptor(false);
@@ -877,7 +879,7 @@ class DeconzAdapter extends Adapter {
             .then(() => {
                 logger.debug(`sendZclFrameToEndpoint - message send with transSeq Nr.: ${zclFrame.header.transactionSequenceNumber}`, NS);
                 logger.debug(
-                    command.hasOwnProperty('response') +
+                    (command.response !== undefined) +
                         ', ' +
                         zclFrame.header.frameControl.disableDefaultResponse +
                         ', ' +
@@ -950,13 +952,8 @@ class DeconzAdapter extends Adapter {
         request.txOptions = 0;
         request.radius = PARAM.PARAM.txRadius.UNLIMITED;
 
-        try {
-            logger.debug(`sendZclFrameToGroup - message send`, NS);
-            return this.driver.enqueueSendDataRequest(request) as Promise<void>;
-        } catch (error) {
-            //logger.debug(`sendZclFrameToGroup ERROR: ${error}`, NS);
-            throw error;
-        }
+        logger.debug(`sendZclFrameToGroup - message send`, NS);
+        return this.driver.enqueueSendDataRequest(request) as Promise<void>;
     }
 
     public async sendZclFrameToAll(endpoint: number, zclFrame: Zcl.Frame, sourceEndpoint: number, destination: BroadcastAddress): Promise<void> {
@@ -979,13 +976,8 @@ class DeconzAdapter extends Adapter {
         request.txOptions = 0;
         request.radius = PARAM.PARAM.txRadius.UNLIMITED;
 
-        try {
-            logger.debug(`sendZclFrameToAll - message send`, NS);
-            return this.driver.enqueueSendDataRequest(request) as Promise<void>;
-        } catch (error) {
-            //logger.debug(`sendZclFrameToAll ERROR: ${error}`, NS);
-            throw error;
-        }
+        logger.debug(`sendZclFrameToAll - message send`, NS);
+        return this.driver.enqueueSendDataRequest(request) as Promise<void>;
     }
 
     public async bind(

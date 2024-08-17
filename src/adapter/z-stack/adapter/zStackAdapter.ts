@@ -566,7 +566,9 @@ class ZStackAdapter extends Adapter {
                         } else {
                             logger.debug('Network address did not change', NS);
                         }
-                    } catch {}
+                    } catch {
+                        /* empty */
+                    }
                 } else {
                     logger.debug('Wait 2000ms', NS);
                     await Wait(2000);

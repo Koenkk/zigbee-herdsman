@@ -904,7 +904,7 @@ export class EzspBuffalo extends Buffalo {
                 case EmberGpSinkType.FULL_UNICAST:
                 case EmberGpSinkType.LW_UNICAST:
                 case EmberGpSinkType.UNUSED:
-                default:
+                default: {
                     const sinkNodeId = this.readUInt16();
                     const sinkEUI = this.readIeeeAddr();
 
@@ -916,8 +916,9 @@ export class EzspBuffalo extends Buffalo {
                         },
                     });
                     break;
+                }
                 case EmberGpSinkType.D_GROUPCAST:
-                case EmberGpSinkType.GROUPCAST:
+                case EmberGpSinkType.GROUPCAST: {
                     const alias = this.readUInt16();
                     const groupID = this.readUInt16();
 
@@ -934,6 +935,7 @@ export class EzspBuffalo extends Buffalo {
                         },
                     });
                     break;
+                }
             }
         }
 

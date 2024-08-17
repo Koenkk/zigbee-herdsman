@@ -59,11 +59,13 @@ class GreenPower extends events.EventEmitter<GreenPowerEventMap> {
                 break;
             /* istanbul ignore next */
             case 0b00: // Full unicast forwarding
-            case 0b11: // Lightweight unicast forwarding
+            case 0b11: {
+                // Lightweight unicast forwarding
                 const coordinator = await this.adapter.getCoordinator();
                 payload.sinkIEEEAddr = coordinator.ieeeAddr;
                 payload.sinkNwkAddr = coordinator.networkAddress;
                 break;
+            }
             /* istanbul ignore next */
             default:
                 logger.error(`Unhandled applicationID: ${payload.options & 7}`, NS);
@@ -103,7 +105,8 @@ class GreenPower extends events.EventEmitter<GreenPowerEventMap> {
                 case undefined:
                     logger.error(`Received undefined command from '${dataPayload.address}'`, NS);
                     break;
-                case 0xe0: // GP Commissioning
+                case 0xe0: {
+                    // GP Commissioning
                     logger.info(`Received commissioning from '${dataPayload.address}'`, NS);
 
                     /* istanbul ignore if */
@@ -185,11 +188,13 @@ class GreenPower extends events.EventEmitter<GreenPowerEventMap> {
                     });
 
                     break;
+                }
                 /* istanbul ignore next */
                 case 0xe2: // GP Success
                     logger.debug(`Received success from '${dataPayload.address}'`, NS);
                     break;
-                case 0xe3: // GP Channel Request
+                case 0xe3: {
+                    // GP Channel Request
                     logger.debug(`Received channel request from '${dataPayload.address}'`, NS);
                     const networkParameters = await this.adapter.getNetworkParameters();
                     // Channel notification
@@ -220,6 +225,7 @@ class GreenPower extends events.EventEmitter<GreenPowerEventMap> {
 
                     await this.adapter.sendZclFrameToAll(242, replyFrame, 242, BroadcastAddress.RX_ON_WHEN_IDLE);
                     break;
+                }
                 /* istanbul ignore next */
                 case 0xa1: // GP Manufacturer-specific Attribute Reporting
                     break;

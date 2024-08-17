@@ -1134,7 +1134,7 @@ export class UartAsh extends EventEmitter<UartAshEventMap> {
 
         // Process frames received while connected
         switch (frameType) {
-            case AshFrameType.DATA:
+            case AshFrameType.DATA: {
                 frmNum = ashGetFrmNum(this.rxSHBuffer[0]);
                 const frameStr = `[FRAME type=${frameTypeStr} ackNum=${ackNum} frmNum=${frmNum}](frmRx=${this.frmRx})`;
 
@@ -1186,6 +1186,7 @@ export class UartAsh extends EventEmitter<UartAshEventMap> {
                     }
                 }
                 break;
+            }
             case AshFrameType.ACK:
                 // already fully processed
                 break;

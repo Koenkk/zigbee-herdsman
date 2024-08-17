@@ -298,7 +298,7 @@ class Znp extends events.EventEmitter {
                 const waiter = this.waitress.waitFor({type: Type.SRSP, subsystem: object.subsystem, command: object.command}, timeout || t);
                 this.unpiWriter.writeFrame(frame);
                 const result = await waiter.start().promise;
-                if (result && result.payload.hasOwnProperty('status') && !expectedStatuses.includes(result.payload.status)) {
+                if (result?.payload.status !== undefined && !expectedStatuses.includes(result.payload.status)) {
                     if (typeof waiterID === 'number') {
                         this.waitress.remove(waiterID);
                     }
