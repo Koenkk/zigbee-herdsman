@@ -4363,27 +4363,27 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
     manuSpecificTuya_4: {
         ID: 0xE000, // TUYA_COMMON_PRIVATE_CLUSTER
         attributes: {
-            random_timing: { ID: 0xD001, type: DataType.CHAR_STR },
-            cycle_timing: { ID: 0xD002, type: DataType.CHAR_STR },
-            inching: { ID: 0xD003, type: DataType.CHAR_STR },
+            random_timing: {ID: 0xD001, type: DataType.CHAR_STR},
+            cycle_timing: {ID: 0xD002, type: DataType.CHAR_STR},
+            inching: {ID: 0xD003, type: DataType.CHAR_STR},
         },
         commands: {
             setRandomTiming: {
                 ID: 0xF7,
                 parameters: [
-                    { name: 'payload', type: BuffaloZclDataType.BUFFER }
+                    {name: 'payload', type: BuffaloZclDataType.BUFFER}
                 ]
             },
             setCycleTiming: {
                 ID: 0xF8,
                 parameters: [
-                    { name: 'payload', type: BuffaloZclDataType.BUFFER }
+                    {name: 'payload', type: BuffaloZclDataType.BUFFER}
                 ]
             },
             setInching: {
                 ID: 0xFB,
                 parameters: [
-                    { name: 'payload', type: BuffaloZclDataType.BUFFER }
+                    {name: 'payload', type: BuffaloZclDataType.BUFFER}
                 ]
             }
         },
