@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.56.2](https://github.com/Koenkk/zigbee-herdsman/compare/v0.56.1...v0.56.2) (2024-08-18)
+
+
+### Bug Fixes
+
+* **ignore:** add rimraf ([1fa9409](https://github.com/Koenkk/zigbee-herdsman/commit/1fa9409107782fe218d2d31770881d2f281c7d9e))
+
 ## [0.56.1](https://github.com/Koenkk/zigbee-herdsman/compare/v0.56.0...v0.56.1) (2024-08-18)
 
 
