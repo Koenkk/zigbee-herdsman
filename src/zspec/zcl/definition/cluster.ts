@@ -4335,6 +4335,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         commands: {},
         commandsResponse: {},
     },
+    // TUYA_ELECTRICIAN_PRIVATE_CLUSTER
     manuSpecificTuya_3: {
         ID: 0xe001,
         attributes: {
@@ -4357,6 +4358,36 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             },
         },
         commandsResponse: {},
+    },
+    // https://developer.tuya.com/en/docs/connect-subdevices-to-gateways/tuya-zigbee-measuring-smart-plug-access-standard?id=K9ik6zvofpzqk
+    manuSpecificTuya_4: {
+        ID: 0xE000, // TUYA_COMMON_PRIVATE_CLUSTER
+        attributes: {
+            random_timing: { ID: 0xD001, type: DataType.CHAR_STR },
+            cycle_timing: { ID: 0xD002, type: DataType.CHAR_STR },
+            inching: { ID: 0xD003, type: DataType.CHAR_STR },
+        },
+        commands: {
+            setRandomTiming: {
+                ID: 0xF7,
+                parameters: [
+                    { name: 'payload', type: BuffaloZclDataType.BUFFER }
+                ]
+            },
+            setCycleTiming: {
+                ID: 0xF8,
+                parameters: [
+                    { name: 'payload', type: BuffaloZclDataType.BUFFER }
+                ]
+            },
+            setInching: {
+                ID: 0xFB,
+                parameters: [
+                    { name: 'payload', type: BuffaloZclDataType.BUFFER }
+                ]
+            }
+        },
+        commandsResponse: {}
     },
     manuSpecificCentraliteHumidity: {
         ID: 0xfc45,

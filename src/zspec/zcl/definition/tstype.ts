@@ -210,6 +210,7 @@ export type ClusterName =
     | 'liXeePrivate'
     | 'manuSpecificTuya_2'
     | 'manuSpecificTuya_3'
+    | 'manuSpecificTuya_4'
     | 'manuSpecificCentraliteHumidity'
     | 'manuSpecificSmartThingsArrivalSensor'
     | 'manuSpecificSamsungAccelerometer'
