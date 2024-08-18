@@ -4361,33 +4361,27 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
     },
     // https://developer.tuya.com/en/docs/connect-subdevices-to-gateways/tuya-zigbee-measuring-smart-plug-access-standard?id=K9ik6zvofpzqk
     manuSpecificTuya_4: {
-        ID: 0xE000, // TUYA_COMMON_PRIVATE_CLUSTER
+        ID: 0xe000, // TUYA_COMMON_PRIVATE_CLUSTER
         attributes: {
-            random_timing: {ID: 0xD001, type: DataType.CHAR_STR},
-            cycle_timing: {ID: 0xD002, type: DataType.CHAR_STR},
-            inching: {ID: 0xD003, type: DataType.CHAR_STR},
+            random_timing: {ID: 0xd001, type: DataType.CHAR_STR},
+            cycle_timing: {ID: 0xd002, type: DataType.CHAR_STR},
+            inching: {ID: 0xd003, type: DataType.CHAR_STR},
         },
         commands: {
             setRandomTiming: {
-                ID: 0xF7,
-                parameters: [
-                    {name: 'payload', type: BuffaloZclDataType.BUFFER}
-                ]
+                ID: 0xf7,
+                parameters: [{name: 'payload', type: BuffaloZclDataType.BUFFER}],
             },
             setCycleTiming: {
-                ID: 0xF8,
-                parameters: [
-                    {name: 'payload', type: BuffaloZclDataType.BUFFER}
-                ]
+                ID: 0xf8,
+                parameters: [{name: 'payload', type: BuffaloZclDataType.BUFFER}],
             },
             setInching: {
-                ID: 0xFB,
-                parameters: [
-                    {name: 'payload', type: BuffaloZclDataType.BUFFER}
-                ]
-            }
+                ID: 0xfb,
+                parameters: [{name: 'payload', type: BuffaloZclDataType.BUFFER}],
+            },
         },
-        commandsResponse: {}
+        commandsResponse: {},
     },
     manuSpecificCentraliteHumidity: {
         ID: 0xfc45,
