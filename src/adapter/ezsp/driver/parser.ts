@@ -1,4 +1,5 @@
 /* istanbul ignore file */
+
 import * as stream from 'stream';
 
 import {logger} from '../../../utils/logger';

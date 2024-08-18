@@ -1,12 +1,13 @@
 /* istanbul ignore file */
-import {fs} from 'mz';
+
+import * as fs from 'fs';
 
 import * as Models from '../../../models';
 import {BackupUtils} from '../../../utils';
 import {logger} from '../../../utils/logger';
 import {uint32MaskToChannels} from '../../../zspec/utils';
 import {Driver} from '../driver';
-import {EmberKeyType, EmberKeyStruct, EmberNetworkParameters, EmberSecurityManagerNetworkKeyInfo, EmberKeyData} from '../driver/types';
+import {EmberKeyData, EmberKeyStruct, EmberKeyType, EmberNetworkParameters, EmberSecurityManagerNetworkKeyInfo} from '../driver/types';
 
 const NS = 'zh:ezsp:backup';
 
@@ -78,13 +79,13 @@ export class EZSPAdapterBackup {
      */
     public async getStoredBackup(): Promise<Models.Backup | undefined> {
         try {
-            await fs.access(this.defaultPath);
+            fs.accessSync(this.defaultPath);
         } catch {
             return undefined;
         }
         let data;
         try {
-            data = JSON.parse((await fs.readFile(this.defaultPath)).toString());
+            data = JSON.parse(fs.readFileSync(this.defaultPath).toString());
         } catch (error) {
             throw new Error(`Coordinator backup is corrupted (${(error as Error).stack})`);
         }

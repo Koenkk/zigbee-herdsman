@@ -1,29 +1,30 @@
 /* istanbul ignore file */
+
 import {EventEmitter} from 'events';
 
-import {Queue, Waitress, Wait} from '../../../utils';
+import {Queue, Wait, Waitress} from '../../../utils';
 import {logger} from '../../../utils/logger';
 import {SerialPortOptions} from '../../tstype';
 import {
-    FRAMES,
-    FRAME_NAMES_BY_ID,
     EZSPFrameDesc,
+    FRAME_NAMES_BY_ID,
+    FRAMES,
     ParamsDesc,
-    ZDOREQUESTS,
     ZDOREQUEST_NAME_BY_ID,
-    ZDORESPONSES,
+    ZDOREQUESTS,
     ZDORESPONSE_NAME_BY_ID,
+    ZDORESPONSES,
 } from './commands';
 import * as t from './types';
 import {
-    EmberStatus,
-    EmberOutgoingMessageType,
-    EzspPolicyId,
-    EzspDecisionId,
-    EzspDecisionBitmask,
     EmberConcentratorType,
-    EzspConfigId,
+    EmberOutgoingMessageType,
+    EmberStatus,
     EmberZdoConfigurationFlags,
+    EzspConfigId,
+    EzspDecisionBitmask,
+    EzspDecisionId,
+    EzspPolicyId,
 } from './types/named';
 import {EmberApsFrame, EmberNetworkParameters} from './types/struct';
 import {SerialDriver} from './uart';
@@ -314,7 +315,7 @@ export class EZSPZDOResponseFrameData {
 export class Ezsp extends EventEmitter {
     ezspV = 4;
     cmdSeq = 0; // command sequence
-    /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
+
     // COMMANDS_BY_ID = new Map<number, { name: string, inArgs: any[], outArgs: any[] }>();
     private serialDriver: SerialDriver;
     private waitress: Waitress<EZSPFrame, EZSPWaitressMatcher>;

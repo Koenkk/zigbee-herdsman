@@ -1,6 +1,6 @@
 import {Clusters} from './definition/cluster';
 import {DataType, DataTypeClass} from './definition/enums';
-import {Foundation, FoundationDefinition, FoundationCommandName} from './definition/foundation';
+import {Foundation, FoundationCommandName, FoundationDefinition} from './definition/foundation';
 import {Attribute, Cluster, ClusterDefinition, ClusterName, Command, CustomClusters} from './definition/tstype';
 
 const DATA_TYPE_CLASS_DISCRETE = [

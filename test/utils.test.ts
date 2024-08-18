@@ -1,5 +1,6 @@
 import 'regenerator-runtime/runtime';
-import {Utils, Wait, Queue, Waitress} from '../src/utils';
+
+import {Queue, Utils, Wait, Waitress} from '../src/utils';
 import {logger, setLogger} from '../src/utils/logger';
 
 const mockLogger = {

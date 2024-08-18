@@ -1,4 +1,5 @@
 /* istanbul ignore file */
+
 import {Socket} from 'net';
 import {EventEmitter} from 'stream';
 
@@ -8,7 +9,7 @@ import {SerialPort} from '../../serialPort';
 import SocketPortUtils from '../../socketPortUtils';
 import {SerialPortOptions} from '../../tstype';
 import {EzspStatus} from '../enums';
-import {inc8, mod8, withinRange, halCommonCrc16} from '../utils/math';
+import {halCommonCrc16, inc8, mod8, withinRange} from '../utils/math';
 import {
     ASH_ACKNUM_BIT,
     ASH_ACKNUM_MASK,
@@ -1133,7 +1134,7 @@ export class UartAsh extends EventEmitter<UartAshEventMap> {
 
         // Process frames received while connected
         switch (frameType) {
-            case AshFrameType.DATA:
+            case AshFrameType.DATA: {
                 frmNum = ashGetFrmNum(this.rxSHBuffer[0]);
                 const frameStr = `[FRAME type=${frameTypeStr} ackNum=${ackNum} frmNum=${frmNum}](frmRx=${this.frmRx})`;
 
@@ -1185,6 +1186,7 @@ export class UartAsh extends EventEmitter<UartAshEventMap> {
                     }
                 }
                 break;
+            }
             case AshFrameType.ACK:
                 // already fully processed
                 break;

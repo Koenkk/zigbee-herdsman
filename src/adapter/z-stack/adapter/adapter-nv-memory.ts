@@ -1,4 +1,3 @@
-/* eslint-disable max-len */
 import assert from 'assert';
 
 import {NvItemsIds, NvSystemIds, ZnpCommandStatus} from '../constants/common';
@@ -93,7 +92,7 @@ export class AdapterNvMemory {
      * @param offset Offset within NV item to write the data.
      * @param autoInit Whether NV item should be automatically initialized if not present.
      */
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     public async writeItem(id: NvItemsIds, data: Buffer | Structs.SerializableMemoryObject, offset = 0, autoInit = true): Promise<void> {
         this.checkMemoryAlignmentSetup();
         const buffer = Buffer.isBuffer(data) ? data : data.serialize(this.memoryAlignment);

@@ -1,5 +1,5 @@
 /* istanbul ignore file */
-/* eslint-disable max-len */
+
 import {autoDetect, AutoDetectTypes, OpenOptionsFromBinding, SetOptions} from '@serialport/bindings-cpp';
 // This file was copied from https://github.com/serialport/node-serialport/blob/master/packages/serialport/lib/serialport.ts.
 import {ErrorCallback, OpenOptions, SerialPortStream, StreamOptions} from '@serialport/stream';

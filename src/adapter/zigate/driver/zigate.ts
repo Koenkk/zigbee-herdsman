@@ -1,7 +1,9 @@
 /* istanbul ignore file */
-import {DelimiterParser} from '@serialport/parser-delimiter';
+
 import {EventEmitter} from 'events';
 import net from 'net';
+
+import {DelimiterParser} from '@serialport/parser-delimiter';
 
 import {Buffalo} from '../../../buffalo';
 import {Queue} from '../../../utils';
@@ -281,11 +283,12 @@ export default class ZiGate extends EventEmitter {
                         switch (ziGateObject.payload.profileID) {
                             case 0x0000:
                                 switch (ziGateObject.payload.clusterID) {
-                                    case 0x0013:
+                                    case 0x0013: {
                                         const networkAddress = ziGateObject.payload.payload.readUInt16LE(1);
                                         const ieeeAddr = new Buffalo(ziGateObject.payload.payload.slice(3, 11)).readIeeeAddr();
                                         this.emit('DeviceAnnounce', networkAddress, ieeeAddr);
                                         break;
+                                    }
                                 }
                                 break;
                             case 0x0104:

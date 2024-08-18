@@ -396,12 +396,12 @@ class Endpoint extends Entity {
         attributes: KeyValue,
         options?: Options,
     ): Promise<void> {
-        assert(!options || !options.hasOwnProperty('transactionSequenceNumber'), 'Use parameter');
+        assert(options?.transactionSequenceNumber === undefined, 'Use parameter');
         const cluster = this.getCluster(clusterKey);
         const payload: {status: number; attrId: number}[] = [];
 
         for (const [nameOrID, value] of Object.entries(attributes)) {
-            if (value.hasOwnProperty('status')) {
+            if (value.status !== undefined) {
                 if (cluster.hasAttribute(nameOrID)) {
                     const attribute = cluster.getAttribute(nameOrID);
                     payload.push({attrId: attribute.ID, status: value.status});
@@ -455,7 +455,7 @@ class Endpoint extends Entity {
         attributes: KeyValue,
         options?: Options,
     ): Promise<void> {
-        assert(!options || !options.hasOwnProperty('transactionSequenceNumber'), 'Use parameter');
+        assert(options?.transactionSequenceNumber === undefined, 'Use parameter');
 
         const cluster = this.getCluster(clusterKey);
         const payload: {attrId: number; status: number; dataType: number; attrData: number | string}[] = [];
@@ -605,7 +605,7 @@ class Endpoint extends Entity {
         transactionSequenceNumber: number,
         options?: Options,
     ): Promise<void> {
-        assert(!options || !options.hasOwnProperty('transactionSequenceNumber'), 'Use parameter');
+        assert(options?.transactionSequenceNumber === undefined, 'Use parameter');
         const payload = {cmdId: commandID, statusCode: status};
         await this.zclCommand(clusterID, 'defaultRsp', payload, {direction: Zcl.Direction.SERVER_TO_CLIENT, ...options, transactionSequenceNumber});
     }
@@ -693,7 +693,7 @@ class Endpoint extends Entity {
         options?: Options,
         transactionSequenceNumber?: number,
     ): Promise<void | KeyValue> {
-        assert(!options || options.transactionSequenceNumber === undefined, 'Use parameter');
+        assert(options?.transactionSequenceNumber === undefined, 'Use parameter');
 
         const device = this.getDevice();
         const cluster = this.getCluster(clusterKey, device);

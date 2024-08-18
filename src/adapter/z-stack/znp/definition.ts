@@ -1,4 +1,4 @@
-import {Subsystem, Type as CommandType} from '../unpi/constants';
+import {Type as CommandType, Subsystem} from '../unpi/constants';
 import ParameterType from './parameterType';
 import {MtCmd} from './tstype';
 

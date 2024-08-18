@@ -1,5 +1,4 @@
-/* eslint-disable max-len */
-import {fs} from 'mz';
+import * as fs from 'fs';
 import * as path from 'path';
 
 import * as ZStackStructs from '../adapter/z-stack/structs';
@@ -13,7 +12,7 @@ import * as Models from '../models';
  * @param backup Backup to create unified backup format from.
  */
 export const toUnifiedBackup = async (backup: Models.Backup): Promise<Models.UnifiedBackupStorage> => {
-    const packageInfo = JSON.parse((await fs.readFile(path.join(__dirname, '../../', 'package.json'))).toString());
+    const packageInfo = JSON.parse(fs.readFileSync(path.join(__dirname, '../../', 'package.json')).toString());
 
     /* istanbul ignore next */
     return {

@@ -1,4 +1,4 @@
-import {Type, Subsystem, DataStart, SOF, PositionCmd0, PositionCmd1} from './constants';
+import {DataStart, PositionCmd0, PositionCmd1, SOF, Subsystem, Type} from './constants';
 
 class Frame {
     public readonly type: Type;

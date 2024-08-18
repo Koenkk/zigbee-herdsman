@@ -1,9 +1,10 @@
 import 'regenerator-runtime/runtime';
-import {SerialPort} from '../../../src/adapter/serialPort';
+
+import {FrameType} from '../../../src/adapter/ezsp/driver/frame';
+import {Parser} from '../../../src/adapter/ezsp/driver/parser';
 import {SerialDriver} from '../../../src/adapter/ezsp/driver/uart';
 import {Writer} from '../../../src/adapter/ezsp/driver/writer';
-import {Parser} from '../../../src/adapter/ezsp/driver/parser';
-import {FrameType} from '../../../src/adapter/ezsp/driver/frame';
+import {SerialPort} from '../../../src/adapter/serialPort';
 
 let mockParser;
 const mockSerialPortClose = jest.fn().mockImplementation((cb) => (cb ? cb() : null));

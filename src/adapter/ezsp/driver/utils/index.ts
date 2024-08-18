@@ -1,7 +1,8 @@
 /* istanbul ignore file */
+
 import {randomBytes} from 'crypto';
 
-import {EmberInitialSecurityBitmask, EmberEUI64} from '../types/named';
+import {EmberEUI64, EmberInitialSecurityBitmask} from '../types/named';
 import {EmberInitialSecurityState, EmberKeyData} from '../types/struct';
 import crc16ccitt from './crc16ccitt';
 
@@ -10,7 +11,6 @@ if (!Symbol.asyncIterator) {
     (<any>Symbol).asyncIterator = Symbol.for('Symbol.asyncIterator');
 }
 
-/* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
 function ember_security(networkKey: Buffer): EmberInitialSecurityState {
     const isc: EmberInitialSecurityState = new EmberInitialSecurityState();
     isc.bitmask =

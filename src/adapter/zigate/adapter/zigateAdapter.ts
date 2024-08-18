@@ -1,4 +1,5 @@
 /* istanbul ignore file */
+
 import {Buffalo} from '../../../buffalo';
 import {KeyValue} from '../../../controller/tstype';
 import * as Models from '../../../models';
@@ -12,8 +13,8 @@ import * as TsType from '../../tstype';
 import {ActiveEndpoints, DeviceType, LQI, LQINeighbor, NodeDescriptor, SimpleDescriptor} from '../../tstype';
 import {RawAPSDataRequestPayload} from '../driver/commandType';
 import {ADDRESS_MODE, coordinatorEndpoints, DEVICE_TYPE, ZiGateCommandCode, ZiGateMessageCode, ZPSNwkKeyState} from '../driver/constants';
-import ZiGateObject from '../driver/ziGateObject';
 import Driver from '../driver/zigate';
+import ZiGateObject from '../driver/ziGateObject';
 
 const NS = 'zh:zigate';
 const default_bind_group = 901; // https://github.com/Koenkk/zigbee-herdsman-converters/blob/master/lib/constants.js#L3

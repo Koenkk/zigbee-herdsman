@@ -1,8 +1,8 @@
 import {BuffaloZcl} from './buffaloZcl';
-import {Direction, DataType, BuffaloZclDataType, FrameType, ParameterCondition} from './definition/enums';
+import {BuffaloZclDataType, DataType, Direction, FrameType, ParameterCondition} from './definition/enums';
 import {FoundationCommandName} from './definition/foundation';
 import {Status} from './definition/status';
-import {BuffaloZclOptions, Cluster, Command, ClusterName, CustomClusters, ParameterDefinition} from './definition/tstype';
+import {BuffaloZclOptions, Cluster, ClusterName, Command, CustomClusters, ParameterDefinition} from './definition/tstype';
 import * as Utils from './utils';
 import {ZclHeader} from './zclHeader';
 

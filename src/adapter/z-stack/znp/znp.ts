@@ -1,14 +1,15 @@
 import events from 'events';
-import Equals from 'fast-deep-equal/es6';
 import net from 'net';
 
-import {Wait, Queue, Waitress, RealpathSync} from '../../../utils';
+import Equals from 'fast-deep-equal/es6';
+
+import {Queue, RealpathSync, Wait, Waitress} from '../../../utils';
 import {logger} from '../../../utils/logger';
 import {SerialPort} from '../../serialPort';
 import SerialPortUtils from '../../serialPortUtils';
 import SocketPortUtils from '../../socketPortUtils';
 import * as Constants from '../constants';
-import {Writer as UnpiWriter, Parser as UnpiParser, Frame as UnpiFrame} from '../unpi';
+import {Frame as UnpiFrame, Parser as UnpiParser, Writer as UnpiWriter} from '../unpi';
 import {Subsystem, Type} from '../unpi/constants';
 import {ZpiObjectPayload} from './tstype';
 import ZpiObject from './zpiObject';
@@ -297,7 +298,7 @@ class Znp extends events.EventEmitter {
                 const waiter = this.waitress.waitFor({type: Type.SRSP, subsystem: object.subsystem, command: object.command}, timeout || t);
                 this.unpiWriter.writeFrame(frame);
                 const result = await waiter.start().promise;
-                if (result && result.payload.hasOwnProperty('status') && !expectedStatuses.includes(result.payload.status)) {
+                if (result?.payload.status !== undefined && !expectedStatuses.includes(result.payload.status)) {
                     if (typeof waiterID === 'number') {
                         this.waitress.remove(waiterID);
                     }

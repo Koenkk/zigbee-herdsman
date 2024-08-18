@@ -1,4 +1,5 @@
 /* istanbul ignore file */
+
 import equals from 'fast-deep-equal/es6';
 
 import {TOUCHLINK_PROFILE_ID} from '../../../zspec/consts';

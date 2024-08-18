@@ -1,4 +1,5 @@
 /* istanbul ignore file */
+
 import {logger} from '../../../utils/logger';
 import BuffaloZiGate, {BuffaloZiGateOptions} from './buffaloZiGate';
 import {ZiGateCommand, ZiGateCommandParameter, ZiGateCommandType} from './commandType';

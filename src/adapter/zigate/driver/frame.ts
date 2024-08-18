@@ -1,4 +1,5 @@
 /* istanbul ignore file */
+
 import {logger} from '../../../utils/logger';
 
 const NS = 'zh:zigate:frame';

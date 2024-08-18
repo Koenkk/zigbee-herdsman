@@ -9,7 +9,7 @@ import {ClusterDefinition, CustomClusters} from '../../zspec/zcl/definition/tsty
 import {ControllerEventMap} from '../controller';
 import {ZclFrameConverter} from '../helpers';
 import ZclTransactionSequenceNumber from '../helpers/zclTransactionSequenceNumber';
-import {KeyValue, DatabaseEntry, DeviceType} from '../tstype';
+import {DatabaseEntry, DeviceType, KeyValue} from '../tstype';
 import Endpoint from './endpoint';
 import Entity from './entity';
 
@@ -538,7 +538,7 @@ class Device extends Entity<ControllerEventMap> {
             /* istanbul ignore else */
         }
         // always load value from database available (modernExtend.quirkCheckinInterval() exists for devices without genPollCtl)
-        if (entry.hasOwnProperty('checkinInterval')) {
+        if (entry.checkinInterval !== undefined) {
             // if the checkin interval is known, messages expire by default after one checkin interval
             pendingRequestTimeout = entry.checkinInterval * 1000; // milliseconds
         }

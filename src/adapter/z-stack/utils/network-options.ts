@@ -1,4 +1,3 @@
-/* eslint-disable max-len */
 /* istanbul ignore file */
 
 import * as Models from '../../../models';

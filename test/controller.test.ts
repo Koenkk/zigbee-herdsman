@@ -1,23 +1,27 @@
 import 'regenerator-runtime/runtime';
-import {Controller} from '../src/controller';
-import {ZStackAdapter} from '../src/adapter/z-stack/adapter';
-import {DeconzAdapter} from '../src/adapter/deconz/adapter';
-import {ZiGateAdapter} from '../src/adapter/zigate/adapter';
-import equals from 'fast-deep-equal/es6';
+
 import fs from 'fs';
-import {Device, Group} from '../src/controller/model';
-import * as Zcl from '../src/zspec/zcl';
-import zclTransactionSequenceNumber from '../src/controller/helpers/zclTransactionSequenceNumber';
-import Request from '../src/controller/helpers/request';
-import {Adapter} from '../src/adapter';
 import path from 'path';
-import {Wait} from '../src/utils';
-import * as Models from '../src/models';
-import * as Utils from '../src/utils';
+
 import Bonjour, {BrowserConfig, Service} from 'bonjour-service';
+import equals from 'fast-deep-equal/es6';
+
+import {Adapter} from '../src/adapter';
+import {DeconzAdapter} from '../src/adapter/deconz/adapter';
+import {ZStackAdapter} from '../src/adapter/z-stack/adapter';
+import {ZiGateAdapter} from '../src/adapter/zigate/adapter';
+import {Controller} from '../src/controller';
+import Request from '../src/controller/helpers/request';
+import zclTransactionSequenceNumber from '../src/controller/helpers/zclTransactionSequenceNumber';
+import ZclTransactionSequenceNumber from '../src/controller/helpers/zclTransactionSequenceNumber';
+import {Device, Group} from '../src/controller/model';
+import * as Models from '../src/models';
+import {Wait} from '../src/utils';
+import * as Utils from '../src/utils';
 import {setLogger} from '../src/utils/logger';
 import {BroadcastAddress} from '../src/zspec/enums';
-import ZclTransactionSequenceNumber from '../src/controller/helpers/zclTransactionSequenceNumber';
+import * as Zcl from '../src/zspec/zcl';
+
 const globalSetImmediate = setImmediate;
 const flushPromises = () => new Promise(globalSetImmediate);
 

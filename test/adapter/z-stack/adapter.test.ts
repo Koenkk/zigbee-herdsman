@@ -1,19 +1,22 @@
 import 'regenerator-runtime/runtime';
-import {Znp} from '../../../src/adapter/z-stack/znp';
-import {ZStackAdapter} from '../../../src/adapter/z-stack/adapter';
-import {DevStates, NvItemsIds, NvSystemIds, ZnpCommandStatus} from '../../../src/adapter/z-stack/constants/common';
-import {Subsystem, Type} from '../../../src/adapter/z-stack/unpi/constants';
-import equals from 'fast-deep-equal/es6';
-import {ZnpVersion} from '../../../src/adapter/z-stack/adapter/tstype';
-import * as Structs from '../../../src/adapter/z-stack/structs';
+
 import * as fs from 'fs';
 import * as path from 'path';
-import * as Zcl from '../../../src/zspec/zcl';
-import * as Constants from '../../../src/adapter/z-stack/constants';
+
+import equals from 'fast-deep-equal/es6';
+
 import {ZclPayload} from '../../../src/adapter/events';
+import {ZStackAdapter} from '../../../src/adapter/z-stack/adapter';
+import {ZnpVersion} from '../../../src/adapter/z-stack/adapter/tstype';
+import * as Constants from '../../../src/adapter/z-stack/constants';
+import {DevStates, NvItemsIds, NvSystemIds, ZnpCommandStatus} from '../../../src/adapter/z-stack/constants/common';
+import * as Structs from '../../../src/adapter/z-stack/structs';
+import {Subsystem, Type} from '../../../src/adapter/z-stack/unpi/constants';
+import {Znp} from '../../../src/adapter/z-stack/znp';
 import {UnifiedBackupStorage} from '../../../src/models';
 import {setLogger} from '../../../src/utils/logger';
 import {BroadcastAddress} from '../../../src/zspec/enums';
+import * as Zcl from '../../../src/zspec/zcl';
 import {Status} from '../../../src/zspec/zdo';
 
 const mockLogger = {

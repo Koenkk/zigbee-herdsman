@@ -1,8 +1,9 @@
 /* istanbul ignore file */
+
 import assert from 'assert';
 
 import * as Models from '../../../models';
-import {Queue, Waitress, Wait, RealpathSync} from '../../../utils';
+import {Queue, RealpathSync, Wait, Waitress} from '../../../utils';
 import {logger} from '../../../utils/logger';
 import {BroadcastAddress} from '../../../zspec/enums';
 import * as Zcl from '../../../zspec/zcl';
@@ -11,24 +12,24 @@ import * as Events from '../../events';
 import SerialPortUtils from '../../serialPortUtils';
 import SocketPortUtils from '../../socketPortUtils';
 import {
-    NetworkOptions,
-    SerialPortOptions,
+    ActiveEndpoints,
+    AdapterOptions,
     Coordinator,
     CoordinatorVersion,
-    NodeDescriptor,
-    ActiveEndpoints,
-    SimpleDescriptor,
     LQI,
-    RoutingTable,
-    NetworkParameters,
-    StartResult,
     LQINeighbor,
+    NetworkOptions,
+    NetworkParameters,
+    NodeDescriptor,
+    RoutingTable,
     RoutingTableEntry,
-    AdapterOptions,
+    SerialPortOptions,
+    SimpleDescriptor,
+    StartResult,
 } from '../../tstype';
 import {Driver, EmberIncomingMessage} from '../driver';
 import {EZSPZDOResponseFrameData} from '../driver/ezsp';
-import {EmberZDOCmd, uint16_t, EmberEUI64, EmberStatus} from '../driver/types';
+import {EmberEUI64, EmberStatus, EmberZDOCmd, uint16_t} from '../driver/types';
 
 const NS = 'zh:ezsp';
 
@@ -700,22 +701,18 @@ class EZSPAdapter extends Adapter {
     public async sendZclFrameInterPANToIeeeAddr(zclFrame: Zcl.Frame, ieeeAddr: string): Promise<void> {
         return this.queue.execute<void>(async () => {
             logger.debug(`sendZclFrameInterPANToIeeeAddr to ${ieeeAddr}`, NS);
-            try {
-                const frame = this.driver.makeEmberIeeeRawFrame();
-                frame.ieeeFrameControl = 0xcc21;
-                frame.destPanId = 0xffff;
-                frame.destAddress = new EmberEUI64(ieeeAddr);
-                frame.sourcePanId = this.driver.networkParams.panId;
-                frame.sourceAddress = this.driver.ieee;
-                frame.nwkFrameControl = 0x000b;
-                frame.appFrameControl = 0x03;
-                frame.clusterId = zclFrame.cluster.ID;
-                frame.profileId = 0xc05e;
+            const frame = this.driver.makeEmberIeeeRawFrame();
+            frame.ieeeFrameControl = 0xcc21;
+            frame.destPanId = 0xffff;
+            frame.destAddress = new EmberEUI64(ieeeAddr);
+            frame.sourcePanId = this.driver.networkParams.panId;
+            frame.sourceAddress = this.driver.ieee;
+            frame.nwkFrameControl = 0x000b;
+            frame.appFrameControl = 0x03;
+            frame.clusterId = zclFrame.cluster.ID;
+            frame.profileId = 0xc05e;
 
-                await this.driver.ieeerawrequest(frame, zclFrame.toBuffer());
-            } catch (error) {
-                throw error;
-            }
+            await this.driver.ieeerawrequest(frame, zclFrame.toBuffer());
         });
     }
 
