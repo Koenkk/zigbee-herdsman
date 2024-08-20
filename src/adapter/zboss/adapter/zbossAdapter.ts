@@ -221,23 +221,23 @@ export class ZBOSSAdapter extends Adapter {
                 for (const entry of list) {
                     neighbors.push({
                         linkquality: entry.lqi,
-                        networkAddress: entry.nodeid,
-                        ieeeAddr: `0x${(entry.ieee).toString()}`,
-                        relationship: (entry.packed >> 4) & 0x7,
+                        networkAddress: entry.nwk,
+                        ieeeAddr: entry.ieee,
+                        relationship: (entry.relationship >> 4) & 0x7,
                         depth: entry.depth,
                     });
                 }
             };
 
             let response = (await request(0)).payload;
-            add(response.neighborlqilist.neighbors);
-            const size = response.neighborlqilist.entries;
-            let nextStartIndex = response.neighborlqilist.neighbors.length;
+            add(response.neighbors);
+            const size = response.entries;
+            let nextStartIndex = response.neighbors.length;
 
             while (neighbors.length < size) {
                 response = await request(nextStartIndex);
-                add(response.neighborlqilist.neighbors);
-                nextStartIndex += response.neighborlqilist.neighbors.length;
+                add(response.neighbors);
+                nextStartIndex += response.neighbors.length;
             }
 
             return {neighbors};

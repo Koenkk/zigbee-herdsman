@@ -65,8 +65,16 @@ export class ZBOSSBuffaloZcl extends BuffaloZcl {
                 continue;
             }
             if (parameter.options) parameter.options(payload, options);
-    
-            payload[parameter.name] = this.read(parameter.type as DataType, options);
+
+            if (parameter.type == BuffaloZBOSSDataType.LIST_TYPED && parameter.typed) {
+                payload[parameter.name] = [];
+                for (let i = 0; i < options.length; i++) {
+                    const internalPaload = this.readByDesc(parameter.typed);
+                    payload[parameter.name].push(internalPaload);
+                }
+            } else {
+                payload[parameter.name] = this.read(parameter.type as DataType, options);
+            }
         }
     
         return payload;

@@ -654,6 +654,18 @@ export const FRAMES: {[key in CommandId]?: ZBOSSFrameDesc} = {
         ],
         response: [
             ...commonResponse,
+            {name: 'entries', type: DataType.UINT8},
+            {name: 'startIndex', type: DataType.UINT8},
+            {name: 'len', type: DataType.UINT8},
+            {name: 'neighbors', type: BuffaloZBOSSDataType.LIST_TYPED, typed: [
+                {name: 'extendedPanID', type: BuffaloZBOSSDataType.EXTENDED_PAN_ID},
+                {name: 'ieee', type: DataType.IEEE_ADDR},
+                {name: 'nwk', type: DataType.UINT16},
+                {name: 'relationship', type: DataType.UINT8},
+                {name: 'joining', type: DataType.UINT8},
+                {name: 'depth', type: DataType.UINT8},
+                {name: 'lqi', type: DataType.UINT8},
+            ], options: (payload, options) => options.length = payload.len},
         ],
     },
     // Sends a ZDO Mgmt NWK Update Request to a remote device

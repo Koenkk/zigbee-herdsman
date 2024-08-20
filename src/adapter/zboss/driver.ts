@@ -357,6 +357,10 @@ export class ZBOSSDriver extends EventEmitter {
         return this.execCommand(CommandId.ZDO_MGMT_LQI_REQ, {nwk: nwk, startIndex: index});
     }
 
+    public async neighbors(ieee: string): Promise<ZBOSSFrame> {
+        return this.execCommand(CommandId.NWK_GET_NEIGHBOR_BY_IEEE, {ieee: ieee});
+    }
+
     public async nodeDescriptor(nwk: number): Promise<ZBOSSFrame> {
         return this.execCommand(CommandId.ZDO_NODE_DESC_REQ, {nwk: nwk});
     }
@@ -418,4 +422,9 @@ export class ZBOSSDriver extends EventEmitter {
             dstEP: destinationEndpoint || 1,
         });
     }
+
+    public async ieeeByNwk(nwk: number): Promise<string> {
+        return (await this.execCommand(CommandId.NWK_GET_IEEE_BY_SHORT, {nwk: nwk})).payload.ieee;
+    }
+
 };
