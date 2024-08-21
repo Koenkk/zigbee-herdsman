@@ -88,18 +88,9 @@ export class ZBOSSDriver extends EventEmitter {
             // const restore = await this.needsToBeRestore(this.nwkOpt);
             const restore = false;
 
-            // const res = await this.ezsp.execCommand('networkState');
-
-            // logger.debug(`Network state ${res.status}`, NS);
-
             if (this.netInfo.joined) {
                 logger.info(`Leaving current network and forming new network`, NS);
                 await this.reset(ResetOptions.FactoryReset);
-            //     const st = await this.ezsp.leaveNetwork();
-
-            //     if (st != EmberStatus.NETWORK_DOWN) {
-            //         logger.error(`leaveNetwork returned unexpected status: ${st}`, NS);
-            //     }
             }
 
             if (restore) {
