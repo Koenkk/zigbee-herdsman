@@ -228,7 +228,6 @@ export type ClusterName =
     | 'sprutNoise'
     | 'sprutIrBlaster'
     | 'manuSpecificSiglisZigfred'
-    | 'manuSpecificInovelli'
     | 'owonClearMetering'
     | 'zosungIRTransmit'
     | 'zosungIRControl'
