@@ -45,7 +45,7 @@ class Device extends Entity<ControllerEventMap> {
     private _ieeeAddr: string;
     private _interviewCompleted: boolean;
     private _interviewing: boolean;
-    private _lastSeen?: number;
+    private _lastSeen: number;
     private _manufacturerID?: number;
     private _manufacturerName?: string;
     private _modelID?: string;
@@ -85,7 +85,7 @@ class Device extends Entity<ControllerEventMap> {
     get interviewing(): boolean {
         return this._interviewing;
     }
-    get lastSeen(): number | undefined {
+    get lastSeen(): number {
         return this._lastSeen;
     }
     get manufacturerID(): number | undefined {
@@ -291,7 +291,7 @@ class Device extends Entity<ControllerEventMap> {
         softwareBuildID: string | undefined,
         interviewCompleted: boolean,
         meta: KeyValue,
-        lastSeen: number | undefined,
+        lastSeen: number,
         checkinInterval: number | undefined,
         pendingRequestTimeout: number,
     ) {
@@ -735,7 +735,7 @@ class Device extends Entity<ControllerEventMap> {
             undefined,
             interviewCompleted,
             {},
-            undefined,
+            Date.now(),
             undefined,
             0,
         );
