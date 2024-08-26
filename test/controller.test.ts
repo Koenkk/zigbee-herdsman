@@ -7282,7 +7282,7 @@ describe('Controller', () => {
         try {
             await Adapter.create(null, {path: undefined, baudRate: 100, rtscts: false, adapter: 'efr'}, null, null);
         } catch (e) {
-            expect(e).toStrictEqual(new Error(`Adapter 'efr' does not exists, possible options: zstack, deconz, zigate, ezsp, ember`));
+            expect(e).toStrictEqual(new Error(`Adapter 'efr' does not exists, possible options: zstack, deconz, zigate, ezsp, ember, zboss`));
         }
     });
 
