@@ -1,24 +1,36 @@
 import {BuffaloZclDataType, DataType} from '../../zspec/zcl/definition/enums';
-import {CommandId, DeviceType, ResetOptions, StatusCategory, StatusCodeGeneric, StatusCodeAPS, StatusCodeCBKE, BuffaloZBOSSDataType, ResetSource, PolicyType, DeviceUpdateStatus} from "./enums";
+import {
+    BuffaloZBOSSDataType,
+    CommandId,
+    DeviceType,
+    DeviceUpdateStatus,
+    PolicyType,
+    ResetOptions,
+    ResetSource,
+    StatusCategory,
+    StatusCodeAPS,
+    StatusCodeCBKE,
+    StatusCodeGeneric,
+} from './enums';
 
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
 // export interface ParamsDesc {[s: string]: any};
 export interface ParamsDesc {
-    name: string,
+    name: string;
     /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
-    type: DataType | BuffaloZclDataType | BuffaloZBOSSDataType,
+    type: DataType | BuffaloZclDataType | BuffaloZBOSSDataType;
     /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
-    condition?: (payload: any, buffalo: any) => boolean,
+    condition?: (payload: any, buffalo: any) => boolean;
     /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
-    typed?: any
+    typed?: any;
     /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
-    options?: (payload: any, options: any) => void,
-};
+    options?: (payload: any, options: any) => void;
+}
 
 interface ZBOSSFrameDesc {
-    request: ParamsDesc[],
-    response: ParamsDesc[],
-    indication?: ParamsDesc[],
+    request: ParamsDesc[];
+    response: ParamsDesc[];
+    indication?: ParamsDesc[];
 }
 
 const commonResponse = [
@@ -43,42 +55,33 @@ export const FRAMES: {[key in CommandId]?: ZBOSSFrameDesc} = {
     },
     // Force NCP module reboot
     [CommandId.NCP_RESET]: {
-        request: [
-            {name: 'options', type: DataType.UINT8, typed: ResetOptions},
-        ],
-        response: [
-            ...commonResponse,
-        ],
+        request: [{name: 'options', type: DataType.UINT8, typed: ResetOptions}],
+        response: [...commonResponse],
     },
     // Requests current Zigbee role of the local device
     [CommandId.GET_ZIGBEE_ROLE]: {
-        request: [
-        ],
-        response: [
-            ...commonResponse,
-            {name: 'role', type: DataType.UINT8, typed: DeviceType},
-        ],
+        request: [],
+        response: [...commonResponse, {name: 'role', type: DataType.UINT8, typed: DeviceType}],
     },
     // Set Zigbee role of the local device
     [CommandId.SET_ZIGBEE_ROLE]: {
-        request: [
-            {name: 'role', type: DataType.UINT8, typed: DeviceType},
-        ],
-        response: [
-            ...commonResponse,
-        ],
+        request: [{name: 'role', type: DataType.UINT8, typed: DeviceType}],
+        response: [...commonResponse],
     },
     // Get Zigbee channels page and mask of the local device
     [CommandId.GET_ZIGBEE_CHANNEL_MASK]: {
-        request: [
-        ],
+        request: [],
         response: [
             ...commonResponse,
             {name: 'len', type: DataType.UINT8},
-            {name: 'channels', type: BuffaloZBOSSDataType.LIST_TYPED, typed: [
-                {name: 'page', type: DataType.UINT8},
-                {name: 'mask', type: DataType.UINT32},
-            ]},
+            {
+                name: 'channels',
+                type: BuffaloZBOSSDataType.LIST_TYPED,
+                typed: [
+                    {name: 'page', type: DataType.UINT8},
+                    {name: 'mask', type: DataType.UINT32},
+                ],
+            },
         ],
     },
     // Set Zigbee channels page and mask
@@ -87,48 +90,27 @@ export const FRAMES: {[key in CommandId]?: ZBOSSFrameDesc} = {
             {name: 'page', type: DataType.UINT8},
             {name: 'mask', type: DataType.UINT32},
         ],
-        response: [
-            ...commonResponse,
-        ],
+        response: [...commonResponse],
     },
     // Get Zigbee channel
     [CommandId.GET_ZIGBEE_CHANNEL]: {
-        request: [
-        ],
-        response: [
-            ...commonResponse,
-            {name: 'page', type: DataType.UINT8},
-            {name: 'channel', type: DataType.UINT8},
-        ],
+        request: [],
+        response: [...commonResponse, {name: 'page', type: DataType.UINT8}, {name: 'channel', type: DataType.UINT8}],
     },
     // Requests current short PAN ID
     [CommandId.GET_PAN_ID]: {
-        request: [
-        ],
-        response: [
-            ...commonResponse,
-            {name: 'panID', type: DataType.UINT16},
-        ],
+        request: [],
+        response: [...commonResponse, {name: 'panID', type: DataType.UINT16}],
     },
     // Set short PAN ID
     [CommandId.SET_PAN_ID]: {
-        request: [
-            {name: 'panID', type: DataType.UINT16},
-        ],
-        response: [
-            ...commonResponse,
-        ],
+        request: [{name: 'panID', type: DataType.UINT16}],
+        response: [...commonResponse],
     },
     // Requests local IEEE address
     [CommandId.GET_LOCAL_IEEE_ADDR]: {
-        request: [
-            {name: 'mac', type: DataType.UINT8},
-        ],
-        response: [
-            ...commonResponse,
-            {name: 'mac', type: DataType.UINT8},
-            {name: 'ieee', type: DataType.IEEE_ADDR},
-        ],
+        request: [{name: 'mac', type: DataType.UINT8}],
+        response: [...commonResponse, {name: 'mac', type: DataType.UINT8}, {name: 'ieee', type: DataType.IEEE_ADDR}],
     },
     // Set local IEEE address
     [CommandId.SET_LOCAL_IEEE_ADDR]: {
@@ -136,82 +118,47 @@ export const FRAMES: {[key in CommandId]?: ZBOSSFrameDesc} = {
             {name: 'mac', type: DataType.UINT8},
             {name: 'ieee', type: DataType.IEEE_ADDR},
         ],
-        response: [
-            ...commonResponse,
-        ],
+        response: [...commonResponse],
     },
     // Get Transmit Power
     [CommandId.GET_TX_POWER]: {
         request: [],
-        response: [
-            ...commonResponse,
-            {name: 'txPower', type: DataType.UINT8},
-        ],
-        
+        response: [...commonResponse, {name: 'txPower', type: DataType.UINT8}],
     },
     // Set Transmit Power
     [CommandId.SET_TX_POWER]: {
-        request: [
-            {name: 'txPower', type: DataType.UINT8},
-        ],
-        response: [
-            ...commonResponse,
-            {name: 'txPower', type: DataType.UINT8},
-        ],
+        request: [{name: 'txPower', type: DataType.UINT8}],
+        response: [...commonResponse, {name: 'txPower', type: DataType.UINT8}],
     },
     // Requests RxOnWhenIdle PIB attribute
     [CommandId.GET_RX_ON_WHEN_IDLE]: {
-        request: [
-        ],
-        response: [
-            ...commonResponse,
-            {name: 'rxOn', type: DataType.UINT8},
-        ],
+        request: [],
+        response: [...commonResponse, {name: 'rxOn', type: DataType.UINT8}],
     },
     // Sets Rx On When Idle PIB attribute
     [CommandId.SET_RX_ON_WHEN_IDLE]: {
-        request: [
-            {name: 'rxOn', type: DataType.UINT8},
-        ],
-        response: [
-            ...commonResponse,
-        ],
+        request: [{name: 'rxOn', type: DataType.UINT8}],
+        response: [...commonResponse],
     },
     // Requests current join status of the device
     [CommandId.GET_JOINED]: {
-        request: [
-        ],
-        response: [
-            ...commonResponse,
-            {name: 'joined', type: DataType.UINT8},
-        ],
+        request: [],
+        response: [...commonResponse, {name: 'joined', type: DataType.UINT8}],
     },
     // Requests current authentication status of the device
     [CommandId.GET_AUTHENTICATED]: {
-        request: [
-        ],
-        response: [
-            ...commonResponse,
-            {name: 'authenticated', type: DataType.UINT8},
-        ],
+        request: [],
+        response: [...commonResponse, {name: 'authenticated', type: DataType.UINT8}],
     },
     // Requests current End Device timeout
     [CommandId.GET_ED_TIMEOUT]: {
-        request: [
-        ],
-        response: [
-            ...commonResponse,
-            {name: 'timeout', type: DataType.UINT8},
-        ],
+        request: [],
+        response: [...commonResponse, {name: 'timeout', type: DataType.UINT8}],
     },
     // Sets End Device timeout
     [CommandId.SET_ED_TIMEOUT]: {
-        request: [
-            {name: 'timeout', type: DataType.UINT8},
-        ],
-        response: [
-            ...commonResponse,
-        ],
+        request: [{name: 'timeout', type: DataType.UINT8}],
+        response: [...commonResponse],
     },
     // Set NWK Key
     [CommandId.SET_NWK_KEY]: {
@@ -219,14 +166,11 @@ export const FRAMES: {[key in CommandId]?: ZBOSSFrameDesc} = {
             {name: 'nwkKey', type: DataType.SEC_KEY},
             {name: 'index', type: DataType.UINT8},
         ],
-        response: [
-            ...commonResponse,
-        ],
+        response: [...commonResponse],
     },
     // Get list of NWK keys
     [CommandId.GET_NWK_KEYS]: {
-        request: [
-        ],
+        request: [],
         response: [
             ...commonResponse,
             {name: 'nwkKey1', type: DataType.SEC_KEY},
@@ -239,108 +183,69 @@ export const FRAMES: {[key in CommandId]?: ZBOSSFrameDesc} = {
     },
     // Get APS key by IEEE
     [CommandId.GET_APS_KEY_BY_IEEE]: {
-        request: [
-            {name: 'ieee', type: DataType.IEEE_ADDR},
-        ],
-        response: [
-            ...commonResponse,
-            {name: 'apsKey', type: DataType.SEC_KEY},
-        ],
+        request: [{name: 'ieee', type: DataType.IEEE_ADDR}],
+        response: [...commonResponse, {name: 'apsKey', type: DataType.SEC_KEY}],
     },
     // Get Parent short address
     [CommandId.GET_PARENT_ADDRESS]: {
-        request: [
-        ],
-        response: [
-            ...commonResponse,
-            {name: 'parent', type: DataType.UINT16},
-        ],
+        request: [],
+        response: [...commonResponse, {name: 'parent', type: DataType.UINT16}],
     },
     // Get Extended Pan ID
     [CommandId.GET_EXTENDED_PAN_ID]: {
-        request: [
-        ],
-        response: [
-            ...commonResponse,
-            {name: 'extendedPanID', type: BuffaloZBOSSDataType.EXTENDED_PAN_ID},
-        ],
+        request: [],
+        response: [...commonResponse, {name: 'extendedPanID', type: BuffaloZBOSSDataType.EXTENDED_PAN_ID}],
     },
     // Get Coordinator version
     [CommandId.GET_COORDINATOR_VERSION]: {
-        request: [
-        ],
-        response: [
-            ...commonResponse,
-            {name: 'version', type: DataType.UINT8},
-        ],
+        request: [],
+        response: [...commonResponse, {name: 'version', type: DataType.UINT8}],
     },
     // Get Short Address of the device
     [CommandId.GET_SHORT_ADDRESS]: {
-        request: [
-        ],
-        response: [
-            ...commonResponse,
-            {name: 'nwk', type: DataType.UINT16},
-        ],
+        request: [],
+        response: [...commonResponse, {name: 'nwk', type: DataType.UINT16}],
     },
     // Get Trust Center IEEE Address
     [CommandId.GET_TRUST_CENTER_ADDRESS]: {
-        request: [
-        ],
-        response: [
-            ...commonResponse,
-            {name: 'ieee', type: DataType.IEEE_ADDR},
-        ],
+        request: [],
+        response: [...commonResponse, {name: 'ieee', type: DataType.IEEE_ADDR}],
     },
     // Device Reset Indication with reset source
     [CommandId.NCP_RESET_IND]: {
         request: [],
-        response: [
-            ...commonResponse,
-        ],
-        indication: [
-            {name: 'source', type: DataType.UINT8, typed: ResetSource},
-        ],
+        response: [...commonResponse],
+        indication: [{name: 'source', type: DataType.UINT8, typed: ResetSource}],
     },
     // Writes NVRAM datasets
     [CommandId.NVRAM_WRITE]: {
         request: [
             {name: 'len', type: DataType.UINT8},
-            {name: 'data', type: BuffaloZclDataType.LIST_UINT8, options: (payload, options) => options.length = payload.len},
+            {name: 'data', type: BuffaloZclDataType.LIST_UINT8, options: (payload, options) => (options.length = payload.len)},
         ],
-        response: [
-            ...commonResponse,
-        ],
+        response: [...commonResponse],
     },
     // Reads an NVRAM dataset
     [CommandId.NVRAM_READ]: {
-        request: [
-            {name: 'type', type: DataType.UINT8},
-        ],
+        request: [{name: 'type', type: DataType.UINT8}],
         response: [
             ...commonResponse,
             {name: 'nvVersion', type: DataType.UINT16},
             {name: 'type', type: DataType.UINT16},
             {name: 'version', type: DataType.UINT16},
             {name: 'len', type: DataType.UINT16},
-            {name: 'data', type: BuffaloZclDataType.LIST_UINT8, options: (payload, options) => options.length = payload.len},
+            {name: 'data', type: BuffaloZclDataType.LIST_UINT8, options: (payload, options) => (options.length = payload.len)},
         ],
     },
     // Erases all datasets in NVRAM
     [CommandId.NVRAM_ERASE]: {
-        request: [
-        ],
-        response: [
-            ...commonResponse,
-        ],
+        request: [],
+        response: [...commonResponse],
     },
     // Erases all datasets in NVRAM except ZB_NVRAM_RESERVED, ZB_IB_COUNTERS and application datasets
     [CommandId.NVRAM_CLEAR]: {
-        request: [
-        ],
-        response: [
-            ...commonResponse,
-        ],
+        request: [],
+        response: [...commonResponse],
     },
     // Sets TC Policy
     [CommandId.SET_TC_POLICY]: {
@@ -348,38 +253,24 @@ export const FRAMES: {[key in CommandId]?: ZBOSSFrameDesc} = {
             {name: 'type', type: DataType.UINT16, typed: PolicyType},
             {name: 'value', type: DataType.UINT8},
         ],
-        response: [
-            ...commonResponse,
-        ],
+        response: [...commonResponse],
     },
     // Sets an extended PAN ID
     [CommandId.SET_EXTENDED_PAN_ID]: {
-        request: [
-            {name: 'extendedPanID', type: BuffaloZBOSSDataType.EXTENDED_PAN_ID},
-        ],
-        response: [
-            ...commonResponse,
-        ],
+        request: [{name: 'extendedPanID', type: BuffaloZBOSSDataType.EXTENDED_PAN_ID}],
+        response: [...commonResponse],
     },
     // Sets the maximum number of children
     [CommandId.SET_MAX_CHILDREN]: {
-        request: [
-            {name: 'children', type: DataType.UINT8},
-        ],
-        response: [
-            ...commonResponse,
-        ],
+        request: [{name: 'children', type: DataType.UINT8}],
+        response: [...commonResponse],
     },
     // Gets the maximum number of children
     [CommandId.GET_MAX_CHILDREN]: {
-        request: [
-        ],
-        response: [
-            ...commonResponse,
-            {name: 'children', type: DataType.UINT8},
-        ],
+        request: [],
+        response: [...commonResponse, {name: 'children', type: DataType.UINT8}],
     },
-    
+
     // ------------------------------------------
     // Application Framework
     // ------------------------------------------
@@ -393,21 +284,23 @@ export const FRAMES: {[key in CommandId]?: ZBOSSFrameDesc} = {
             {name: 'version', type: DataType.UINT8},
             {name: 'inputClusterCount', type: DataType.UINT8},
             {name: 'outputClusterCount', type: DataType.UINT8},
-            {name: 'inputClusters', type: BuffaloZclDataType.LIST_UINT16, options: (payload, options) => options.length = payload.inputClusterCount},
-            {name: 'outputClusters', type: BuffaloZclDataType.LIST_UINT16, options: (payload, options) => options.length = payload.outputClusterCount},
+            {
+                name: 'inputClusters',
+                type: BuffaloZclDataType.LIST_UINT16,
+                options: (payload, options) => (options.length = payload.inputClusterCount),
+            },
+            {
+                name: 'outputClusters',
+                type: BuffaloZclDataType.LIST_UINT16,
+                options: (payload, options) => (options.length = payload.outputClusterCount),
+            },
         ],
-        response: [
-            ...commonResponse,
-        ],
+        response: [...commonResponse],
     },
     // Delete Simple Descriptor for a specified endpoint
     [CommandId.AF_DEL_SIMPLE_DESC]: {
-        request: [
-            {name: 'endpoint', type: DataType.UINT8},
-        ],
-        response: [
-            ...commonResponse,
-        ],
+        request: [{name: 'endpoint', type: DataType.UINT8}],
+        response: [...commonResponse],
     },
     // Set Node Descriptor
     [CommandId.AF_SET_NODE_DESC]: {
@@ -416,9 +309,7 @@ export const FRAMES: {[key in CommandId]?: ZBOSSFrameDesc} = {
             {name: 'macCapabilities', type: DataType.UINT8},
             {name: 'manufacturerCode', type: DataType.UINT16},
         ],
-        response: [
-            ...commonResponse,
-        ],
+        response: [...commonResponse],
     },
     // Set power descriptor for the device
     [CommandId.AF_SET_POWER_DESC]: {
@@ -428,9 +319,7 @@ export const FRAMES: {[key in CommandId]?: ZBOSSFrameDesc} = {
             {name: 'powerSource', type: DataType.UINT8},
             {name: 'powerSourceLevel', type: DataType.UINT8},
         ],
-        response: [
-            ...commonResponse,
-        ],
+        response: [...commonResponse],
     },
 
     // ------------------------------------------
@@ -451,7 +340,7 @@ export const FRAMES: {[key in CommandId]?: ZBOSSFrameDesc} = {
             {name: 'nwk', type: DataType.UINT16},
             {name: 'num', type: DataType.UINT8, condition: (payload, buffalo) => buffalo && buffalo.isMore()},
             {name: 'startIndex', type: DataType.UINT8, condition: (payload, buffalo) => buffalo && buffalo.isMore()},
-            {name: 'nwks', type: BuffaloZclDataType.LIST_UINT16, options: (payload, options) => options.length = payload.num},
+            {name: 'nwks', type: BuffaloZclDataType.LIST_UINT16, options: (payload, options) => (options.length = payload.num)},
         ],
     },
     // Request for a remote device IEEE address
@@ -468,25 +357,17 @@ export const FRAMES: {[key in CommandId]?: ZBOSSFrameDesc} = {
             {name: 'nwk', type: DataType.UINT16},
             {name: 'num', type: DataType.UINT8, condition: (payload, buffalo) => buffalo && buffalo.isMore()},
             {name: 'startIndex', type: DataType.UINT8, condition: (payload, buffalo) => buffalo && buffalo.isMore()},
-            {name: 'nwks', type: BuffaloZclDataType.LIST_UINT16, options: (payload, options) => options.length = payload.num},
+            {name: 'nwks', type: BuffaloZclDataType.LIST_UINT16, options: (payload, options) => (options.length = payload.num)},
         ],
     },
     // Get the Power Descriptor from a remote device
     [CommandId.ZDO_POWER_DESC_REQ]: {
-        request: [
-            {name: 'nwk', type: DataType.UINT16},
-        ],
-        response: [
-            ...commonResponse,
-            {name: 'powerDescriptor', type: DataType.UINT16},
-            {name: 'nwk', type: DataType.UINT16},
-        ],
+        request: [{name: 'nwk', type: DataType.UINT16}],
+        response: [...commonResponse, {name: 'powerDescriptor', type: DataType.UINT16}, {name: 'nwk', type: DataType.UINT16}],
     },
     // Get the Node Descriptor from a remote device
     [CommandId.ZDO_NODE_DESC_REQ]: {
-        request: [
-            {name: 'nwk', type: DataType.UINT16},
-        ],
+        request: [{name: 'nwk', type: DataType.UINT16}],
         response: [
             ...commonResponse,
             {name: 'flags', type: DataType.UINT16},
@@ -514,20 +395,26 @@ export const FRAMES: {[key in CommandId]?: ZBOSSFrameDesc} = {
             {name: 'version', type: DataType.UINT8},
             {name: 'inputClusterCount', type: DataType.UINT8},
             {name: 'outputClusterCount', type: DataType.UINT8},
-            {name: 'inputClusters', type: BuffaloZclDataType.LIST_UINT16, options: (payload, options) => options.length = payload.inputClusterCount},
-            {name: 'outputClusters', type: BuffaloZclDataType.LIST_UINT16, options: (payload, options) => options.length = payload.outputClusterCount},
+            {
+                name: 'inputClusters',
+                type: BuffaloZclDataType.LIST_UINT16,
+                options: (payload, options) => (options.length = payload.inputClusterCount),
+            },
+            {
+                name: 'outputClusters',
+                type: BuffaloZclDataType.LIST_UINT16,
+                options: (payload, options) => (options.length = payload.outputClusterCount),
+            },
             {name: 'nwk', type: DataType.UINT16},
         ],
     },
     // Get a list of Active Endpoints from a remote device
     [CommandId.ZDO_ACTIVE_EP_REQ]: {
-        request: [
-            {name: 'nwk', type: DataType.UINT16},
-        ],
+        request: [{name: 'nwk', type: DataType.UINT16}],
         response: [
             ...commonResponse,
             {name: 'len', type: DataType.UINT8},
-            {name: 'endpoints', type: BuffaloZclDataType.LIST_UINT8, options: (payload, options) => options.length = payload.len},
+            {name: 'endpoints', type: BuffaloZclDataType.LIST_UINT8, options: (payload, options) => (options.length = payload.len)},
             {name: 'nwk', type: DataType.UINT16},
         ],
     },
@@ -538,13 +425,21 @@ export const FRAMES: {[key in CommandId]?: ZBOSSFrameDesc} = {
             {name: 'profileID', type: DataType.UINT16},
             {name: 'inputClusterCount', type: DataType.UINT8},
             {name: 'outputClusterCount', type: DataType.UINT8},
-            {name: 'inputClusters', type: BuffaloZclDataType.LIST_UINT16, options: (payload, options) => options.length = payload.inputClusterCount},
-            {name: 'outputClusters', type: BuffaloZclDataType.LIST_UINT16, options: (payload, options) => options.length = payload.outputClusterCount},
+            {
+                name: 'inputClusters',
+                type: BuffaloZclDataType.LIST_UINT16,
+                options: (payload, options) => (options.length = payload.inputClusterCount),
+            },
+            {
+                name: 'outputClusters',
+                type: BuffaloZclDataType.LIST_UINT16,
+                options: (payload, options) => (options.length = payload.outputClusterCount),
+            },
         ],
         response: [
             ...commonResponse,
             {name: 'len', type: DataType.UINT8},
-            {name: 'endpoints', type: BuffaloZclDataType.LIST_UINT8, options: (payload, options) => options.length = payload.len},
+            {name: 'endpoints', type: BuffaloZclDataType.LIST_UINT8, options: (payload, options) => (options.length = payload.len)},
             {name: 'nwk', type: DataType.UINT16},
         ],
     },
@@ -558,11 +453,8 @@ export const FRAMES: {[key in CommandId]?: ZBOSSFrameDesc} = {
             {name: 'addrMode', type: DataType.UINT8},
             {name: 'dstIeee', type: DataType.IEEE_ADDR},
             {name: 'dstEP', type: DataType.UINT8},
-            
         ],
-        response: [
-            ...commonResponse,
-        ],
+        response: [...commonResponse],
     },
     // Send Unbind request to a remote device
     [CommandId.ZDO_UNBIND_REQ]: {
@@ -575,9 +467,7 @@ export const FRAMES: {[key in CommandId]?: ZBOSSFrameDesc} = {
             {name: 'dstIeee', type: DataType.IEEE_ADDR},
             {name: 'dstEP', type: DataType.UINT8},
         ],
-        response: [
-            ...commonResponse,
-        ],
+        response: [...commonResponse],
     },
     // Request that a Remote Device leave the network
     [CommandId.ZDO_MGMT_LEAVE_REQ]: {
@@ -586,9 +476,7 @@ export const FRAMES: {[key in CommandId]?: ZBOSSFrameDesc} = {
             {name: 'ieee', type: DataType.IEEE_ADDR},
             {name: 'flags', type: DataType.UINT8},
         ],
-        response: [
-            ...commonResponse,
-        ],
+        response: [...commonResponse],
     },
     // Request a remote device or devices to allow or disallow association
     [CommandId.ZDO_PERMIT_JOINING_REQ]: {
@@ -597,9 +485,7 @@ export const FRAMES: {[key in CommandId]?: ZBOSSFrameDesc} = {
             {name: 'duration', type: DataType.UINT8},
             {name: 'tcSignificance', type: DataType.UINT8},
         ],
-        response: [
-            ...commonResponse,
-        ],
+        response: [...commonResponse],
     },
     // Device announce indication
     [CommandId.ZDO_DEV_ANNCE_IND]: {
@@ -616,25 +502,22 @@ export const FRAMES: {[key in CommandId]?: ZBOSSFrameDesc} = {
         request: [
             {name: 'extendedPanID', type: BuffaloZBOSSDataType.EXTENDED_PAN_ID},
             {name: 'len', type: DataType.UINT8},
-            {name: 'channels', type: BuffaloZBOSSDataType.LIST_TYPED, typed: [
-                {name: 'page', type: DataType.UINT8},
-                {name: 'mask', type: DataType.UINT32},
-            ]},
+            {
+                name: 'channels',
+                type: BuffaloZBOSSDataType.LIST_TYPED,
+                typed: [
+                    {name: 'page', type: DataType.UINT8},
+                    {name: 'mask', type: DataType.UINT32},
+                ],
+            },
             {name: 'secure', type: DataType.UINT8},
         ],
-        response: [
-            ...commonResponse,
-            {name: 'flags', type: DataType.UINT8},
-        ],
+        response: [...commonResponse, {name: 'flags', type: DataType.UINT8}],
     },
     // Sends a ZDO system server discovery request
     [CommandId.ZDO_SYSTEM_SRV_DISCOVERY_REQ]: {
-        request: [
-            {name: 'serverMask', type: DataType.UINT16},
-        ],
-        response: [
-            ...commonResponse,
-        ],
+        request: [{name: 'serverMask', type: DataType.UINT16}],
+        response: [...commonResponse],
     },
     // Sends a ZDO Mgmt Bind request to a remote device
     [CommandId.ZDO_MGMT_BIND_REQ]: {
@@ -642,9 +525,7 @@ export const FRAMES: {[key in CommandId]?: ZBOSSFrameDesc} = {
             {name: 'nwk', type: DataType.UINT16},
             {name: 'startIndex', type: DataType.UINT8},
         ],
-        response: [
-            ...commonResponse,
-        ],
+        response: [...commonResponse],
     },
     // Sends a ZDO Mgmt LQI request to a remote device
     [CommandId.ZDO_MGMT_LQI_REQ]: {
@@ -657,15 +538,20 @@ export const FRAMES: {[key in CommandId]?: ZBOSSFrameDesc} = {
             {name: 'entries', type: DataType.UINT8},
             {name: 'startIndex', type: DataType.UINT8},
             {name: 'len', type: DataType.UINT8},
-            {name: 'neighbors', type: BuffaloZBOSSDataType.LIST_TYPED, typed: [
-                {name: 'extendedPanID', type: BuffaloZBOSSDataType.EXTENDED_PAN_ID},
-                {name: 'ieee', type: DataType.IEEE_ADDR},
-                {name: 'nwk', type: DataType.UINT16},
-                {name: 'relationship', type: DataType.UINT8},
-                {name: 'joining', type: DataType.UINT8},
-                {name: 'depth', type: DataType.UINT8},
-                {name: 'lqi', type: DataType.UINT8},
-            ], options: (payload, options) => options.length = payload.len},
+            {
+                name: 'neighbors',
+                type: BuffaloZBOSSDataType.LIST_TYPED,
+                typed: [
+                    {name: 'extendedPanID', type: BuffaloZBOSSDataType.EXTENDED_PAN_ID},
+                    {name: 'ieee', type: DataType.IEEE_ADDR},
+                    {name: 'nwk', type: DataType.UINT16},
+                    {name: 'relationship', type: DataType.UINT8},
+                    {name: 'joining', type: DataType.UINT8},
+                    {name: 'depth', type: DataType.UINT8},
+                    {name: 'lqi', type: DataType.UINT8},
+                ],
+                options: (payload, options) => (options.length = payload.len),
+            },
         ],
     },
     // Sends a ZDO Mgmt NWK Update Request to a remote device
@@ -677,15 +563,11 @@ export const FRAMES: {[key in CommandId]?: ZBOSSFrameDesc} = {
             {name: 'managerNwk', type: DataType.UINT16},
             {name: 'nwk', type: DataType.UINT16},
         ],
-        response: [
-            ...commonResponse,
-        ],
+        response: [...commonResponse],
     },
     // Require statistics (last message LQI\RSSI, counters, etc.) from the ZDO level
     [CommandId.ZDO_GET_STATS]: {
-        request: [
-            {name: 'cleanup', type: DataType.UINT8},
-        ],
+        request: [{name: 'cleanup', type: DataType.UINT8}],
         response: [
             ...commonResponse,
             {name: 'mac_rx_bcast', type: DataType.UINT32},
@@ -728,10 +610,8 @@ export const FRAMES: {[key in CommandId]?: ZBOSSFrameDesc} = {
     },
     // Indicates some device in the network was authorized (e.g. received TCLK)
     [CommandId.ZDO_DEV_AUTHORIZED_IND]: {
-        request: [
-        ],
-        response: [
-        ],
+        request: [],
+        response: [],
         indication: [
             {name: 'ieee', type: DataType.IEEE_ADDR},
             {name: 'nwk', type: DataType.UINT16},
@@ -741,10 +621,8 @@ export const FRAMES: {[key in CommandId]?: ZBOSSFrameDesc} = {
     },
     // Indicates some device joined the network
     [CommandId.ZDO_DEV_UPDATE_IND]: {
-        request: [
-        ],
-        response: [
-        ],
+        request: [],
+        response: [],
         indication: [
             {name: 'ieee', type: DataType.IEEE_ADDR},
             {name: 'nwk', type: DataType.UINT16},
@@ -753,12 +631,8 @@ export const FRAMES: {[key in CommandId]?: ZBOSSFrameDesc} = {
     },
     // Sets manufacturer code field in the node descriptor
     [CommandId.ZDO_SET_NODE_DESC_MANUF_CODE]: {
-        request: [
-            {name: 'manufacturerCode', type: DataType.UINT16},
-        ],
-        response: [
-            ...commonResponse,
-        ],
+        request: [{name: 'manufacturerCode', type: DataType.UINT16}],
+        response: [...commonResponse],
     },
 
     // ------------------------------------------
@@ -783,12 +657,12 @@ export const FRAMES: {[key in CommandId]?: ZBOSSFrameDesc} = {
             //{name: 'aliasAddr', type: DataType.UINT16, condition: (payload) => payload.useAlias !== 0},
             {name: 'aliasAddr', type: DataType.UINT16},
             {name: 'aliasSequence', type: DataType.UINT8},
-            {name: 'data', type: BuffaloZclDataType.LIST_UINT8, options: (payload, options) => options.length = payload.dataLength},
+            {name: 'data', type: BuffaloZclDataType.LIST_UINT8, options: (payload, options) => (options.length = payload.dataLength)},
         ],
         response: [
             ...commonResponse,
             {name: 'ieee', type: DataType.IEEE_ADDR},
-            {name: 'dstEndpoint', type: DataType.UINT8, condition: (payload) => ![2,3].includes(payload.dstAddrMode)},
+            {name: 'dstEndpoint', type: DataType.UINT8, condition: (payload) => ![2, 3].includes(payload.dstAddrMode)},
             {name: 'srcEndpoint', type: DataType.UINT8},
             {name: 'txTime', type: DataType.UINT32},
             {name: 'dstAddrMode', type: DataType.UINT8},
@@ -804,10 +678,7 @@ export const FRAMES: {[key in CommandId]?: ZBOSSFrameDesc} = {
             {name: 'dstIeee', type: DataType.IEEE_ADDR},
             {name: 'dstEndpoint', type: DataType.UINT8},
         ],
-        response: [
-            ...commonResponse,
-            {name: 'index', type: DataType.UINT8},
-        ],
+        response: [...commonResponse, {name: 'index', type: DataType.UINT8}],
     },
     // APSME-UNBIND.request
     [CommandId.APSME_UNBIND]: {
@@ -819,10 +690,7 @@ export const FRAMES: {[key in CommandId]?: ZBOSSFrameDesc} = {
             {name: 'dstIeee', type: DataType.IEEE_ADDR},
             {name: 'dstEndpoint', type: DataType.UINT8},
         ],
-        response: [
-            ...commonResponse,
-            {name: 'index', type: DataType.UINT8},
-        ],
+        response: [...commonResponse, {name: 'index', type: DataType.UINT8}],
     },
     // APSME-ADD-GROUP.request
     [CommandId.APSME_ADD_GROUP]: {
@@ -830,9 +698,7 @@ export const FRAMES: {[key in CommandId]?: ZBOSSFrameDesc} = {
             {name: 'nwk', type: DataType.UINT16},
             {name: 'endpoint', type: DataType.UINT8},
         ],
-        response: [
-            ...commonResponse,
-        ],
+        response: [...commonResponse],
     },
     // APSME-REMOVE-GROUP.request
     [CommandId.APSME_RM_GROUP]: {
@@ -840,16 +706,12 @@ export const FRAMES: {[key in CommandId]?: ZBOSSFrameDesc} = {
             {name: 'nwk', type: DataType.UINT16},
             {name: 'endpoint', type: DataType.UINT8},
         ],
-        response: [
-            ...commonResponse,
-        ],
+        response: [...commonResponse],
     },
     // APSDE-DATA.indication
     [CommandId.APSDE_DATA_IND]: {
-        request: [
-        ],
-        response: [
-        ],
+        request: [],
+        response: [],
         indication: [
             {name: 'paramLength', type: DataType.UINT8},
             {name: 'dataLength', type: DataType.UINT16},
@@ -867,17 +729,13 @@ export const FRAMES: {[key in CommandId]?: ZBOSSFrameDesc} = {
             {name: 'lqi', type: DataType.UINT8},
             {name: 'rssi', type: DataType.UINT8},
             {name: 'apsKey', type: DataType.UINT8},
-            {name: 'data', type: BuffaloZclDataType.BUFFER, options: (payload, options) => options.length = payload.dataLength},
+            {name: 'data', type: BuffaloZclDataType.BUFFER, options: (payload, options) => (options.length = payload.dataLength)},
         ],
     },
     // APSME-REMOVE-ALL-GROUPS.request
     [CommandId.APSME_RM_ALL_GROUPS]: {
-        request: [
-            {name: 'endpoint', type: DataType.UINT8},
-        ],
-        response: [
-            ...commonResponse,
-        ],
+        request: [{name: 'endpoint', type: DataType.UINT8}],
+        response: [...commonResponse],
     },
     // Checks if there are any bindings for specified endpoint and cluster
     [CommandId.APS_CHECK_BINDING]: {
@@ -885,28 +743,21 @@ export const FRAMES: {[key in CommandId]?: ZBOSSFrameDesc} = {
             {name: 'endpoint', type: DataType.UINT8},
             {name: 'clusterID', type: DataType.UINT16},
         ],
-        response: [
-            ...commonResponse,
-            {name: 'exists', type: DataType.UINT8},
-        ],
+        response: [...commonResponse, {name: 'exists', type: DataType.UINT8}],
     },
     // Gets the APS Group Table
     [CommandId.APS_GET_GROUP_TABLE]: {
-        request: [
-        ],
+        request: [],
         response: [
             ...commonResponse,
             {name: 'length', type: DataType.UINT16},
-            {name: 'groups', type: BuffaloZclDataType.LIST_UINT16, options: (payload, options) => options.length = payload.length},
+            {name: 'groups', type: BuffaloZclDataType.LIST_UINT16, options: (payload, options) => (options.length = payload.length)},
         ],
     },
     // Removes all bindings
     [CommandId.APSME_UNBIND_ALL]: {
-        request: [
-        ],
-        response: [
-            ...commonResponse,
-        ],
+        request: [],
+        response: [...commonResponse],
     },
 
     // ------------------------------------------
@@ -917,28 +768,33 @@ export const FRAMES: {[key in CommandId]?: ZBOSSFrameDesc} = {
     [CommandId.NWK_FORMATION]: {
         request: [
             {name: 'len', type: DataType.UINT8},
-            {name: 'channels', type: BuffaloZBOSSDataType.LIST_TYPED, typed: [
-                {name: 'page', type: DataType.UINT8},
-                {name: 'mask', type: DataType.UINT32},
-            ]},
+            {
+                name: 'channels',
+                type: BuffaloZBOSSDataType.LIST_TYPED,
+                typed: [
+                    {name: 'page', type: DataType.UINT8},
+                    {name: 'mask', type: DataType.UINT32},
+                ],
+            },
             {name: 'duration', type: DataType.UINT8},
             {name: 'distribFlag', type: DataType.UINT8},
             {name: 'distribNwk', type: DataType.UINT16},
             {name: 'extendedPanID', type: BuffaloZBOSSDataType.EXTENDED_PAN_ID},
         ],
-        response: [
-            ...commonResponse,
-            {name: 'nwk', type: DataType.UINT16},
-        ],
+        response: [...commonResponse, {name: 'nwk', type: DataType.UINT16}],
     },
     // NLME-NETWORK-DISCOVERY.request
     [CommandId.NWK_DISCOVERY]: {
         request: [
             {name: 'len', type: DataType.UINT8},
-            {name: 'channels', type: BuffaloZBOSSDataType.LIST_TYPED, typed: [
-                {name: 'page', type: DataType.UINT8},
-                {name: 'mask', type: DataType.UINT32},
-            ]},
+            {
+                name: 'channels',
+                type: BuffaloZBOSSDataType.LIST_TYPED,
+                typed: [
+                    {name: 'page', type: DataType.UINT8},
+                    {name: 'mask', type: DataType.UINT32},
+                ],
+            },
             {name: 'duration', type: DataType.UINT8},
             {name: 'macCapabilities', type: DataType.UINT8},
             {name: 'security', type: DataType.UINT8},
@@ -961,10 +817,14 @@ export const FRAMES: {[key in CommandId]?: ZBOSSFrameDesc} = {
             {name: 'extendedPanID', type: BuffaloZBOSSDataType.EXTENDED_PAN_ID},
             {name: 'rejoin', type: DataType.UINT8},
             {name: 'len', type: DataType.UINT8},
-            {name: 'channels', type: BuffaloZBOSSDataType.LIST_TYPED, typed: [
-                {name: 'page', type: DataType.UINT8},
-                {name: 'mask', type: DataType.UINT32},
-            ]},
+            {
+                name: 'channels',
+                type: BuffaloZBOSSDataType.LIST_TYPED,
+                typed: [
+                    {name: 'page', type: DataType.UINT8},
+                    {name: 'mask', type: DataType.UINT32},
+                ],
+            },
         ],
         response: [
             ...commonResponse,
@@ -978,38 +838,22 @@ export const FRAMES: {[key in CommandId]?: ZBOSSFrameDesc} = {
     },
     // NLME-PERMIT-JOINING.request
     [CommandId.NWK_PERMIT_JOINING]: {
-        request: [
-            {name: 'duration', type: DataType.UINT8},
-        ],
-        response: [
-            ...commonResponse,
-        ],
+        request: [{name: 'duration', type: DataType.UINT8}],
+        response: [...commonResponse],
     },
     // Get IEEE address by short address from the local address translation table
     [CommandId.NWK_GET_IEEE_BY_SHORT]: {
-        request: [
-            {name: 'nwk', type: DataType.UINT16},
-        ],
-        response: [
-            ...commonResponse,
-            {name: 'ieee', type: DataType.IEEE_ADDR},
-        ],
+        request: [{name: 'nwk', type: DataType.UINT16}],
+        response: [...commonResponse, {name: 'ieee', type: DataType.IEEE_ADDR}],
     },
     // Get short address by IEEE address from the local address translation table
     [CommandId.NWK_GET_SHORT_BY_IEEE]: {
-        request: [
-            {name: 'ieee', type: DataType.IEEE_ADDR},
-        ],
-        response: [
-            ...commonResponse,
-            {name: 'nwk', type: DataType.UINT16},
-        ],
+        request: [{name: 'ieee', type: DataType.IEEE_ADDR}],
+        response: [...commonResponse, {name: 'nwk', type: DataType.UINT16}],
     },
     // Get local neighbor table entry by IEEE address
     [CommandId.NWK_GET_NEIGHBOR_BY_IEEE]: {
-        request: [
-            {name: 'ieee', type: DataType.IEEE_ADDR},
-        ],
+        request: [{name: 'ieee', type: DataType.IEEE_ADDR}],
         response: [
             ...commonResponse,
             {name: 'ieee', type: DataType.IEEE_ADDR},
@@ -1045,9 +889,7 @@ export const FRAMES: {[key in CommandId]?: ZBOSSFrameDesc} = {
     [CommandId.NWK_REJOIN_FAILED_IND]: {
         request: [],
         response: [],
-        indication: [
-            ...commonResponse,
-        ],
+        indication: [...commonResponse],
     },
     // Network Leave indication
     [CommandId.NWK_LEAVE_IND]: {
@@ -1060,97 +902,59 @@ export const FRAMES: {[key in CommandId]?: ZBOSSFrameDesc} = {
     },
     // Set Fast Poll Interval PIM attribute
     [CommandId.PIM_SET_FAST_POLL_INTERVAL]: {
-        request: [
-            {name: 'interval', type: DataType.UINT16},
-        ],
-        response: [
-            ...commonResponse,
-        ],
+        request: [{name: 'interval', type: DataType.UINT16}],
+        response: [...commonResponse],
     },
     // Set Long Poll Interval PIM attribute
     [CommandId.PIM_SET_LONG_POLL_INTERVAL]: {
-        request: [
-            {name: 'interval', type: DataType.UINT32},
-        ],
-        response: [
-            ...commonResponse,
-        ],
+        request: [{name: 'interval', type: DataType.UINT32}],
+        response: [...commonResponse],
     },
     // Start poll with the Fast Poll Interval specified by PIM attribute
     [CommandId.PIM_START_FAST_POLL]: {
-        request: [
-        ],
-        response: [
-            ...commonResponse,
-        ],
+        request: [],
+        response: [...commonResponse],
     },
     // Start Long Poll
     [CommandId.PIM_START_LONG_POLL]: {
-        request: [
-        ],
-        response: [
-            ...commonResponse,
-        ],
+        request: [],
+        response: [...commonResponse],
     },
     // Start poll with the Long Poll Interval specified by PIM attribute
     [CommandId.PIM_START_POLL]: {
-        request: [
-        ],
-        response: [
-            ...commonResponse,
-        ],
+        request: [],
+        response: [...commonResponse],
     },
     // Stop fast poll and restart it with the Long Poll Interval
     [CommandId.PIM_STOP_FAST_POLL]: {
-        request: [
-        ],
-        response: [
-            ...commonResponse,
-            {name: 'result', type: DataType.UINT8},
-        ],
+        request: [],
+        response: [...commonResponse, {name: 'result', type: DataType.UINT8}],
     },
     // Stop automatic ZBOSS poll
     [CommandId.PIM_STOP_POLL]: {
-        request: [
-        ],
-        response: [
-            ...commonResponse,
-        ],
+        request: [],
+        response: [...commonResponse],
     },
     // Enable turbo poll for a given amount of time.
     [CommandId.PIM_ENABLE_TURBO_POLL]: {
-        request: [
-            {name: 'time', type: DataType.UINT32},
-        ],
-        response: [
-            ...commonResponse,
-        ],
+        request: [{name: 'time', type: DataType.UINT32}],
+        response: [...commonResponse],
     },
     // Disable turbo poll for a given amount of time.
     [CommandId.PIM_DISABLE_TURBO_POLL]: {
-        request: [
-        ],
-        response: [
-            ...commonResponse,
-        ],
+        request: [],
+        response: [...commonResponse],
     },
     // Disable turbo poll for a given amount of time.
     [CommandId.NWK_ADDRESS_UPDATE_IND]: {
-        request: [
-        ],
-        response: [
-        ],
-        indication: [
-            {name: 'nwk', type: DataType.UINT16},
-        ],
+        request: [],
+        response: [],
+        indication: [{name: 'nwk', type: DataType.UINT16}],
     },
     // Start without forming a new network.
     [CommandId.NWK_START_WITHOUT_FORMATION]: {
-        request: [
-        ],
-        response: [
-            ...commonResponse,
-        ],
+        request: [],
+        response: [...commonResponse],
     },
     // NWK NLME start router request
     [CommandId.NWK_NLME_ROUTER_START]: {
@@ -1159,18 +963,13 @@ export const FRAMES: {[key in CommandId]?: ZBOSSFrameDesc} = {
             {name: 'superframeOrder', type: DataType.UINT8},
             {name: 'batteryLife', type: DataType.UINT8},
         ],
-        response: [
-            ...commonResponse,
-        ],
+        response: [...commonResponse],
     },
     // Indicates that joined device has no parent
     [CommandId.PARENT_LOST_IND]: {
-        request: [
-        ],
-        response: [
-        ],
-        indication: [
-        ],
+        request: [],
+        response: [],
+        indication: [],
     },
     // PIM_START_TURBO_POLL_PACKETS
     // PIM_START_TURBO_POLL_CONTINUOUS
@@ -1182,12 +981,8 @@ export const FRAMES: {[key in CommandId]?: ZBOSSFrameDesc} = {
     // PIM_GET_IN_FAST_POLL_FLAG
     // Sets keepalive mode
     [CommandId.SET_KEEPALIVE_MOVE]: {
-        request: [
-            {name: 'mode', type: DataType.UINT8},
-        ],
-        response: [
-            ...commonResponse,
-        ],
+        request: [{name: 'mode', type: DataType.UINT8}],
+        response: [...commonResponse],
     },
     // Starts a concentrator mode
     [CommandId.START_CONCENTRATOR_MODE]: {
@@ -1195,35 +990,22 @@ export const FRAMES: {[key in CommandId]?: ZBOSSFrameDesc} = {
             {name: 'radius', type: DataType.UINT8},
             {name: 'timeout', type: DataType.UINT32},
         ],
-        response: [
-            ...commonResponse,
-        ],
+        response: [...commonResponse],
     },
     // Stops a concentrator mode
     [CommandId.STOP_CONCENTRATOR_MODE]: {
-        request: [
-        ],
-        response: [
-            ...commonResponse,
-        ],
+        request: [],
+        response: [...commonResponse],
     },
     // Enables or disables PAN ID conflict resolution
     [CommandId.NWK_ENABLE_PAN_ID_CONFLICT_RESOLUTION]: {
-        request: [
-            {name: 'enable', type: DataType.UINT8},
-        ],
-        response: [
-            ...commonResponse,
-        ],
+        request: [{name: 'enable', type: DataType.UINT8}],
+        response: [...commonResponse],
     },
     // Enables or disables automatic PAN ID conflict resolution
     [CommandId.NWK_ENABLE_AUTO_PAN_ID_CONFLICT_RESOLUTION]: {
-        request: [
-            {name: 'enable', type: DataType.UINT8},
-        ],
-        response: [
-            ...commonResponse,
-        ],
+        request: [{name: 'enable', type: DataType.UINT8}],
+        response: [...commonResponse],
     },
     // PIM_TURBO_POLL_CANCEL_PACKET
 
@@ -1236,33 +1018,24 @@ export const FRAMES: {[key in CommandId]?: ZBOSSFrameDesc} = {
         request: [
             {name: 'installCode', type: BuffaloZclDataType.LIST_UINT8}, //8, 10, 14 or 18Installcode, including trailing 2 bytes of CRC
         ],
-        response: [
-            ...commonResponse,
-        ],
+        response: [...commonResponse],
     },
     // Set remote device installcode to ZC
     [CommandId.SECUR_ADD_IC]: {
         request: [
-            {name: 'ieee', type:  DataType.IEEE_ADDR},
+            {name: 'ieee', type: DataType.IEEE_ADDR},
             {name: 'installCode', type: BuffaloZclDataType.LIST_UINT8}, //8, 10, 14 or 18Installcode, including trailing 2 bytes of CRC
         ],
-        response: [
-            ...commonResponse,
-        ],
+        response: [...commonResponse],
     },
     // Delete remote device installcode from ZC
     [CommandId.SECUR_DEL_IC]: {
-        request: [
-            {name: 'ieee', type:  DataType.IEEE_ADDR},
-        ],
-        response: [
-            ...commonResponse,
-        ],
+        request: [{name: 'ieee', type: DataType.IEEE_ADDR}],
+        response: [...commonResponse],
     },
     // Get local device Installcode
     [CommandId.SECUR_GET_LOCAL_IC]: {
-        request: [
-        ],
+        request: [],
         response: [
             ...commonResponse,
             {name: 'installCode', type: BuffaloZclDataType.LIST_UINT8}, //8, 10, 14 or 18Installcode, including trailing 2 bytes of CRC
@@ -1270,55 +1043,46 @@ export const FRAMES: {[key in CommandId]?: ZBOSSFrameDesc} = {
     },
     // TCLK Indication
     [CommandId.SECUR_TCLK_IND]: {
-        request: [
-        ],
-        response: [
-        ],
+        request: [],
+        response: [],
         indication: [
-            {name: 'ieee', type:  DataType.IEEE_ADDR},
-            {name: 'keyType', type:  DataType.UINT8},
+            {name: 'ieee', type: DataType.IEEE_ADDR},
+            {name: 'keyType', type: DataType.UINT8},
         ],
     },
     // TCLK Exchange Indication Failed
     [CommandId.SECUR_TCLK_EXCHANGE_FAILED_IND]: {
-        request: [
-        ],
-        response: [
-        ],
-        indication: [
-            ...commonResponse,
-        ],
+        request: [],
+        response: [],
+        indication: [...commonResponse],
     },
     // Initiates a key switch procedure
     [CommandId.SECUR_NWK_INITIATE_KEY_SWITCH_PROCEDURE]: {
-        request: [
-        ],
-        response: [
-            ...commonResponse,
-        ],
+        request: [],
+        response: [...commonResponse],
     },
     // Gets the IC list
     [CommandId.SECUR_GET_IC_LIST]: {
-        request: [
-            {name: 'startIndex', type:  DataType.UINT8},
-        ],
+        request: [{name: 'startIndex', type: DataType.UINT8}],
         response: [
             ...commonResponse,
-            {name: 'size', type:  DataType.UINT8},
-            {name: 'startIndex', type:  DataType.UINT8},
-            {name: 'count', type:  DataType.UINT8},
-            {name: 'table', type: BuffaloZBOSSDataType.LIST_TYPED, typed: [
-                {name: 'ieee', type: DataType.IEEE_ADDR},
-                {name: 'type', type: DataType.UINT8},
-                {name: 'installCode', type: BuffaloZclDataType.LIST_UINT8}, //8, 10, 14 or 18Installcode, including trailing 2 bytes of CRC
-            ]},
+            {name: 'size', type: DataType.UINT8},
+            {name: 'startIndex', type: DataType.UINT8},
+            {name: 'count', type: DataType.UINT8},
+            {
+                name: 'table',
+                type: BuffaloZBOSSDataType.LIST_TYPED,
+                typed: [
+                    {name: 'ieee', type: DataType.IEEE_ADDR},
+                    {name: 'type', type: DataType.UINT8},
+                    {name: 'installCode', type: BuffaloZclDataType.LIST_UINT8}, //8, 10, 14 or 18Installcode, including trailing 2 bytes of CRC
+                ],
+            },
         ],
     },
     // Get an IC table entry by index
     [CommandId.SECUR_GET_IC_BY_IDX]: {
-        request: [
-            {name: 'index', type:  DataType.UINT8},
-        ],
+        request: [{name: 'index', type: DataType.UINT8}],
         response: [
             ...commonResponse,
             {name: 'ieee', type: DataType.IEEE_ADDR},
@@ -1328,22 +1092,14 @@ export const FRAMES: {[key in CommandId]?: ZBOSSFrameDesc} = {
     },
     // Removes all IC
     [CommandId.SECUR_REMOVE_ALL_IC]: {
-        request: [
-        ],
-        response: [
-            ...commonResponse,
-        ],
+        request: [],
+        response: [...commonResponse],
     },
 
     ///////////////////
     [CommandId.UNKNOWN_1]: {
-        request: [
-        ],
-        response: [
-            ...commonResponse,
-        ],
-        indication: [
-            {name: 'data', type:  DataType.UINT8},
-        ],
+        request: [],
+        response: [...commonResponse],
+        indication: [{name: 'data', type: DataType.UINT8}],
     },
 };

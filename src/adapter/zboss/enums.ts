@@ -1,4 +1,3 @@
-
 export enum StatusCategory {
     GENERIC = 0,
     MAC = 2,
@@ -7,7 +6,6 @@ export enum StatusCategory {
     ZDO = 5,
     CBKE = 6,
 }
-
 
 export enum StatusCodeGeneric {
     OK = 0,
@@ -68,8 +66,7 @@ export enum StatusCodeGeneric {
     AGAIN = 70,
     DEVICE_NOT_FOUND = 71,
     OBSOLETE = 72,
-};
-
+}
 
 export enum StatusCodeAPS {
     // A request has been executed successfully.
@@ -108,8 +105,7 @@ export enum StatusCodeAPS {
     UNSECURED = 0xaf,
     // An APSME-GET.request or APSME-SET.request has been issued with an unknown attribute identifier.
     UNSUPPORTED_ATTRIBUTE = 0xb0,
-};
-
+}
 
 export enum StatusCodeCBKE {
     // The Issuer field within the key establishment partner's certificate is unknown to the sending device
@@ -126,38 +122,36 @@ export enum StatusCodeCBKE {
     INVALID_CERTIFICATE = 6,
     // Non-standard ZBOSS extension: SE KE endpoint not found
     NO_KE_EP = 7,
-};
-
+}
 
 /**
  * Enum of the network state
  */
 export enum NetworkState {
-    OFFLINE = 0x00,                      /*!< The network is offline */
-    JOINING = 0x01,                      /*!< Joinging the network */
-    CONNECTED = 0x02,                    /*!< Conneted with the network */
-    LEAVING = 0x03,                      /*!< Leaving the network */
-    CONFIRM = 0x04,                      /*!< Confirm the APS */
-    INDICATION = 0x05,                   /*!< Indication the APS */
-};
+    OFFLINE = 0x00 /*!< The network is offline */,
+    JOINING = 0x01 /*!< Joinging the network */,
+    CONNECTED = 0x02 /*!< Conneted with the network */,
+    LEAVING = 0x03 /*!< Leaving the network */,
+    CONFIRM = 0x04 /*!< Confirm the APS */,
+    INDICATION = 0x05 /*!< Indication the APS */,
+}
 
 /**
- * Enum of the network security mode 
+ * Enum of the network security mode
  */
 export enum EspNCPSecur {
-    ESP_NCP_NO_SECURITY = 0x00,                  /*!< The network is no security mode */
-    ESP_NCP_PRECONFIGURED_NETWORK_KEY = 0x01,    /*!< Pre-configured the network key */
+    ESP_NCP_NO_SECURITY = 0x00 /*!< The network is no security mode */,
+    ESP_NCP_PRECONFIGURED_NETWORK_KEY = 0x01 /*!< Pre-configured the network key */,
     ESP_NCP_NETWORK_KEY_FROM_TC = 0x02,
     ESP_NCP_ONLY_TCLK = 0x03,
-};
-
+}
 
 export enum DeviceType {
     COORDINATOR = 0x00,
     ROUTER = 0x01,
     ED = 0x02,
     NONE = 0x03,
-};
+}
 
 export enum CommandId {
     // NCP config
@@ -294,14 +288,14 @@ export enum CommandId {
 
     ///////////////////
     UNKNOWN_1 = 0x0a02,
-};
+}
 
 export enum ResetOptions {
     NoOptions = 0,
     EraseNVRAM = 1,
     FactoryReset = 2,
     LockReadingKeys = 3,
-};
+}
 
 export enum ResetSource {
     RESET_SRC_POWER_ON = 0,
@@ -310,7 +304,7 @@ export enum ResetSource {
     RESET_SRC_BROWN_OUT = 3,
     RESET_SRC_CLOCK_LOSS = 4,
     RESET_SRC_OTHER = 5,
-};
+}
 
 export enum PolicyType {
     LINK_KEY_REQUIRED = 0,
@@ -319,17 +313,16 @@ export enum PolicyType {
     IGNORE_TC_REJOIN = 3,
     APS_INSECURE_JOIN = 4,
     DISABLE_NWK_MGMT_CHANNEL_UPDATE = 5,
-};
+}
 
 export enum BuffaloZBOSSDataType {
     LIST_TYPED = 3000,
     EXTENDED_PAN_ID = 3001,
 }
 
-
 export enum DeviceUpdateStatus {
     SECURE_REJOIN = 0,
     UNSECURE_REJOIN = 1,
     LEFT = 2,
     TC_REJOIN = 3,
-};
+}

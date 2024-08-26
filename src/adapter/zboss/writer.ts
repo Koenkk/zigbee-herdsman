@@ -1,4 +1,4 @@
-import {Readable, ReadableOptions} from "stream";
+import {Readable, ReadableOptions} from 'stream';
 
 export class ZBOSSWriter extends Readable {
     private bytesToWrite: number[];
@@ -43,6 +43,5 @@ export class ZBOSSWriter extends Readable {
         }
     }
 
-    public _read(): void {
-    }
+    public _read(): void {}
 }

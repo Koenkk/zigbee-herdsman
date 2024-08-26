@@ -1,7 +1,7 @@
-import {Transform, TransformCallback, TransformOptions} from "stream";
+import {Transform, TransformCallback, TransformOptions} from 'stream';
 
-import {logger} from "../../utils/logger";
-import {SIGNATURE} from "./consts";
+import {logger} from '../../utils/logger';
+import {SIGNATURE} from './consts';
 
 const NS = 'zh:zboss:read';
 
@@ -22,9 +22,9 @@ export class ZBOSSReader extends Transform {
         // SIGNATURE - start of package
         while ((position = data.indexOf(SIGNATURE)) !== -1) {
             // need for read length
-            if (data.length > (position + 3)) {
+            if (data.length > position + 3) {
                 const len = data.readUInt16LE(position + 1);
-                if (data.length >= (position - 1 + len)) {
+                if (data.length >= position - 1 + len) {
                     const frame = data.subarray(position + 1, position + 1 + len);
                     logger.debug(`<<< FRAME [${frame.toString('hex')}]`, NS);
                     // emit the frame via 'data' event
@@ -32,7 +32,7 @@ export class ZBOSSReader extends Transform {
 
                     // if position not 1 - try to convert buffer before position to text - chip console output
                     if (position > 1) {
-                        logger.debug(`<<< CONSOLE:\n\r${data.subarray(0, position-1).toString()}`, NS);
+                        logger.debug(`<<< CONSOLE:\n\r${data.subarray(0, position - 1).toString()}`, NS);
                     }
                     // remove the frame from internal buffer (set below)
                     data = data.subarray(position + 1 + len);
