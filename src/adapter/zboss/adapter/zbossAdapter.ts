@@ -478,22 +478,22 @@ export class ZBOSSAdapter extends Adapter {
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     public async sendZclFrameToGroup(groupID: number, zclFrame: Zcl.Frame, sourceEndpoint?: number): Promise<void> {
-        throw new Error(`Is not supported for 'zboss' yet`);
+        return;
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     public async sendZclFrameToAll(endpoint: number, zclFrame: Zcl.Frame, sourceEndpoint: number, destination: BroadcastAddress): Promise<void> {
-        throw new Error(`Is not supported for 'zboss' yet`);
+        return;
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     public async setChannelInterPAN(channel: number): Promise<void> {
-        throw new Error(`Is not supported for 'zboss' yet`);
+        return;
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     public async sendZclFrameInterPANToIeeeAddr(zclFrame: Zcl.Frame, ieeeAddress: string): Promise<void> {
-        throw new Error(`Is not supported for 'zboss' yet`);
+        return;
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -502,7 +502,7 @@ export class ZBOSSAdapter extends Adapter {
     }
 
     public async restoreChannelInterPAN(): Promise<void> {
-        throw new Error(`Is not supported for 'zboss' yet`);
+        return;
     }
 
     public waitFor(
