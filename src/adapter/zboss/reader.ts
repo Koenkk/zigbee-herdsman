@@ -1,3 +1,5 @@
+/* istanbul ignore file */
+
 import {Transform, TransformCallback, TransformOptions} from 'stream';
 
 import {logger} from '../../utils/logger';

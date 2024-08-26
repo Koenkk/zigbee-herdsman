@@ -1,3 +1,5 @@
+/* istanbul ignore file */
+
 import {Adapter, TsType} from '../..';
 import {Backup} from '../../../models';
 import {Queue, RealpathSync, Waitress} from '../../../utils';

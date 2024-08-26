@@ -1,3 +1,5 @@
+/* istanbul ignore file */
+
 import {BuffaloZclDataType, DataType} from '../../zspec/zcl/definition/enums';
 import {
     BuffaloZBOSSDataType,

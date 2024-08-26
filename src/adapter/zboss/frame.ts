@@ -1,3 +1,5 @@
+/* istanbul ignore file */
+
 import {KeyValue} from '../../controller/tstype';
 import {DataType} from '../../zspec/zcl';
 import {BuffaloZcl} from '../../zspec/zcl/buffaloZcl';

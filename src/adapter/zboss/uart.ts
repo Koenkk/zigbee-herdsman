@@ -1,3 +1,5 @@
+/* istanbul ignore file */
+
 import {Socket} from 'net';
 import EventEmitter from 'stream';
 

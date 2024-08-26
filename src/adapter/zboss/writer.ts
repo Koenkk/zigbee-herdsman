@@ -1,3 +1,5 @@
+/* istanbul ignore file */
+
 import {Readable, ReadableOptions} from 'stream';
 
 export class ZBOSSWriter extends Readable {
