@@ -1,6 +1,8 @@
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
+
+import assert from 'assert';
+
 import {Struct} from '../struct';
-/* eslint-disable @typescript-eslint/explicit-module-boundary-types */
 import {nwkKeyDescriptor} from './nwk-key-descriptor';
 
 /**
@@ -10,7 +12,8 @@ import {nwkKeyDescriptor} from './nwk-key-descriptor';
  *
  * @param data Data to initialize structure with.
  */
-export const nib = (data?: Buffer) => {
+export const nib = (data?: Buffer | Buffer[]) => {
+    assert(!Array.isArray(data));
     return Struct.new()
         .member('uint8', 'SequenceNum')
         .member('uint8', 'PassiveAckTimeout')

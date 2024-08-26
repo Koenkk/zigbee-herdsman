@@ -666,18 +666,23 @@ export type EmberGpSourceId = number;
  * GPD Address for sending and receiving a GPDF.
  * EmberGpAddress_gpdIeeeAddress | EmberGpAddress_sourceId;
  */
-export type EmberGpAddress = {
-    // union {
-    /** The IEEE address is used when the application identifier is ::EMBER_GP_APPLICATION_IEEE_ADDRESS. */
-    gpdIeeeAddress?: EUI64;
-    /** The 32-bit source identifier is used when the application identifier is ::EMBER_GP_APPLICATION_SOURCE_ID. */
-    sourceId?: EmberGpSourceId;
-    // } id;
-    /** Application identifier of the GPD. */
-    applicationId: EmberGpApplicationId;
-    /** Application endpoint , only used when application identifier is ::EMBER_GP_APPLICATION_IEEE_ADDRESS. uint8_t */
-    endpoint: number;
-};
+export type EmberGpAddress =
+    | {
+          /** The 32-bit source identifier is used when the application identifier is ::EMBER_GP_APPLICATION_SOURCE_ID. */
+          sourceId: EmberGpSourceId;
+          /** Application identifier of the GPD. */
+          applicationId: EmberGpApplicationId.SOURCE_ID;
+          /** Application endpoint, only used when application identifier is ::EMBER_GP_APPLICATION_IEEE_ADDRESS. uint8_t */
+          endpoint: number;
+      }
+    | {
+          /** The IEEE address is used when the application identifier is ::EMBER_GP_APPLICATION_IEEE_ADDRESS. */
+          gpdIeeeAddress: EUI64;
+          /** Application identifier of the GPD. */
+          applicationId: EmberGpApplicationId.IEEE_ADDRESS;
+          /** Application endpoint, only used when application identifier is ::EMBER_GP_APPLICATION_IEEE_ADDRESS. uint8_t */
+          endpoint: number;
+      };
 
 /** 32-bit security frame counter uint32_t */
 export type EmberGpSecurityFrameCounter = number;
@@ -723,16 +728,19 @@ export type EmberGpSinkGroup = {
 };
 
 /** GP Sink List Entry. */
-export type EmberGpSinkListEntry = {
-    /** Sink Type */
-    type: EmberGpSinkType;
-    // union {
-    unicast?: EmberGpSinkAddress;
-    groupcast?: EmberGpSinkGroup;
-    /** Entry for Sink Group List */
-    groupList?: EmberGpSinkGroup;
-    // } target;
-};
+export type EmberGpSinkListEntry =
+    | {
+          /** Sink Type */
+          type: EmberGpSinkType.FULL_UNICAST | EmberGpSinkType.LW_UNICAST | EmberGpSinkType.UNUSED;
+          unicast: EmberGpSinkAddress;
+      }
+    | {
+          /** Sink Type */
+          type: EmberGpSinkType.D_GROUPCAST | EmberGpSinkType.GROUPCAST;
+          groupcast: EmberGpSinkGroup;
+          /** Entry for Sink Group List */
+          groupList?: EmberGpSinkGroup;
+      };
 
 /** The internal representation of a sink table entry. */
 export type EmberGpSinkTableEntry = {
@@ -778,24 +786,6 @@ export type EmberTokenData = {
     size: number;
     /** A data pointer pointing to the storage for the token data of above size. void * */
     data: Buffer;
-};
-
-/** This data structure contains the transient key data that is used during Zigbee 3.0 joining. */
-export type EmberTransientKeyData = {
-    eui64: EUI64;
-    /** uint32_t */
-    incomingFrameCounter: number;
-    bitmask: EmberKeyStructBitmask;
-    /** uint16_t */
-    remainingTimeSeconds: number;
-    /** uint8_t */
-    networkIndex: number;
-    // union {
-    /** valid only if bitmask & EMBER_KEY_HAS_KEY_DATA (on some parts, keys are stored in secure storage and not RAM) */
-    keyData?: EmberKeyData;
-    /** valid only if bitmask & EMBER_KEY_HAS_PSA_ID (on some parts, keys are stored in secure storage and not RAM). uint32_t */
-    psa_id?: number;
-    // },
 };
 
 /**

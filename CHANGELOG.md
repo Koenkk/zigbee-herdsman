@@ -1,5 +1,36 @@
 # Changelog
 
+## [0.56.2](https://github.com/Koenkk/zigbee-herdsman/compare/v0.56.1...v0.56.2) (2024-08-18)
+
+
+### Bug Fixes
+
+* **ignore:** add rimraf ([1fa9409](https://github.com/Koenkk/zigbee-herdsman/commit/1fa9409107782fe218d2d31770881d2f281c7d9e))
+
+## [0.56.1](https://github.com/Koenkk/zigbee-herdsman/compare/v0.56.0...v0.56.1) (2024-08-18)
+
+
+### Bug Fixes
+
+* Ember: fix CCA issues in busy environments (broadcast errors) ([#1153](https://github.com/Koenkk/zigbee-herdsman/issues/1153)) ([81d828b](https://github.com/Koenkk/zigbee-herdsman/commit/81d828b9f778afd4e577519fb7f0035268dcaa40))
+* Ember: fix GP proxied messages handling ([#1151](https://github.com/Koenkk/zigbee-herdsman/issues/1151)) ([748e001](https://github.com/Koenkk/zigbee-herdsman/commit/748e001485db872fa9373920085b6a6c1ed8f118))
+* **ignore:** Migrate to eslint 9 ([#1154](https://github.com/Koenkk/zigbee-herdsman/issues/1154)) ([1ff1dc7](https://github.com/Koenkk/zigbee-herdsman/commit/1ff1dc77bd5637c05f2d8865cbbb850371c3a645))
+* **ignore:** update dependencies ([#1155](https://github.com/Koenkk/zigbee-herdsman/issues/1155)) ([f60520f](https://github.com/Koenkk/zigbee-herdsman/commit/f60520f3ef3241083ab6ed26633aac28a431459a))
+
+## [0.56.0](https://github.com/Koenkk/zigbee-herdsman/compare/v0.55.5...v0.56.0) (2024-08-16)
+
+
+### Features
+
+* Enforce TS `strict` type checking and other improvements ([#1146](https://github.com/Koenkk/zigbee-herdsman/issues/1146)) ([98e3384](https://github.com/Koenkk/zigbee-herdsman/commit/98e3384b74429d94a81c4d84938f133c4b9f6078))
+
+
+### Bug Fixes
+
+* **ignore:** update dependencies ([#1147](https://github.com/Koenkk/zigbee-herdsman/issues/1147)) ([16d5cfe](https://github.com/Koenkk/zigbee-herdsman/commit/16d5cfe058ccb20af0e0d48356b577a0d31ce64b))
+* Improve bind/unbind logic ([#1144](https://github.com/Koenkk/zigbee-herdsman/issues/1144)) ([a3aeb33](https://github.com/Koenkk/zigbee-herdsman/commit/a3aeb33c7ec687acb55c5e5d3b93d0566f24a0ba))
+* Support install code format with pipe delimiter ([#1150](https://github.com/Koenkk/zigbee-herdsman/issues/1150)) ([3a5b075](https://github.com/Koenkk/zigbee-herdsman/commit/3a5b075d90e0e9652e53794ba1391a4ec6c04f83))
+
 ## [0.55.5](https://github.com/Koenkk/zigbee-herdsman/compare/v0.55.4...v0.55.5) (2024-08-06)
 
 

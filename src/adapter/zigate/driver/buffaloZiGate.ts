@@ -1,5 +1,5 @@
 /* istanbul ignore file */
-/* eslint-disable */
+
 import {Buffalo} from '../../../buffalo';
 import {BuffaloZclOptions} from '../../../zspec/zcl/definition/tstype';
 import {LOG_LEVEL} from './constants';
@@ -10,6 +10,7 @@ export interface BuffaloZiGateOptions extends BuffaloZclOptions {
 }
 
 class BuffaloZiGate extends Buffalo {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars
     public write(type: ParameterType, value: any, options: BuffaloZiGateOptions): void {
         switch (type) {
             case ParameterType.UINT8: {
@@ -72,7 +73,7 @@ class BuffaloZiGate extends Buffalo {
         throw new Error(`Write for '${type}' not available`);
     }
 
-    public read(type: ParameterType, options: BuffaloZiGateOptions): any {
+    public read(type: ParameterType, options: BuffaloZiGateOptions): unknown {
         switch (type) {
             case ParameterType.UINT8: {
                 return this.readUInt8();
@@ -109,10 +110,10 @@ class BuffaloZiGate extends Buffalo {
                 return this.readBuffer(100);
             }
             case ParameterType.LIST_UINT8: {
-                return this.readListUInt8(options.length);
+                return this.readListUInt8(options.length ?? 0); // XXX: should always be valid?
             }
             case ParameterType.LIST_UINT16: {
-                return this.readListUInt16(options.length);
+                return this.readListUInt16(options.length ?? 0); // XXX: should always be valid?
             }
             case ParameterType.INT8: {
                 return this.readInt8();

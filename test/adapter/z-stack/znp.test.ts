@@ -1,10 +1,11 @@
 import 'regenerator-runtime/runtime';
-import {Znp, ZpiObject} from '../../../src/adapter/z-stack/znp';
+
 import {SerialPort} from '../../../src/adapter/serialPort';
-import {Frame as UnpiFrame, Constants as UnpiConstants} from '../../../src/adapter/z-stack/unpi';
-import {duplicateArray, ieeeaAddr1, ieeeaAddr2} from '../../testUtils';
+import {Constants as UnpiConstants, Frame as UnpiFrame} from '../../../src/adapter/z-stack/unpi';
+import {Znp, ZpiObject} from '../../../src/adapter/z-stack/znp';
 import BuffaloZnp from '../../../src/adapter/z-stack/znp/buffaloZnp';
 import ParameterType from '../../../src/adapter/z-stack/znp/parameterType';
+import {duplicateArray, ieeeaAddr1, ieeeaAddr2} from '../../testUtils';
 
 const mockSerialPortClose = jest.fn().mockImplementation((cb) => (cb ? cb() : null));
 const mockSerialPortFlush = jest.fn().mockImplementation((cb) => cb());
@@ -15,7 +16,7 @@ const mockSerialPortOpen = jest.fn().mockImplementation((cb) => cb());
 const mockSerialPortAsyncOpen = jest.fn();
 const mockSerialPortConstructor = jest.fn();
 const mockSerialPortOnce = jest.fn();
-const mockSerialPortSet = jest.fn().mockImplementation((opts, cb) => cb());
+const mockSerialPortAsyncSet = jest.fn();
 const mockSerialPortWrite = jest.fn((buffer, cb) => cb());
 let mockSerialPortIsOpen = false;
 
@@ -34,12 +35,12 @@ jest.mock('../../../src/adapter/serialPort', () => {
                 once: mockSerialPortOnce,
                 open: mockSerialPortOpen,
                 pipe: mockSerialPortPipe,
-                set: mockSerialPortSet,
                 write: mockSerialPortWrite,
                 flush: mockSerialPortFlush,
                 isOpen: mockSerialPortIsOpen,
                 asyncOpen: mockSerialPortAsyncOpen,
                 asyncFlushAndClose: mockSerialPortAsyncFlushAndClose,
+                asyncSet: mockSerialPortAsyncSet,
             };
         }),
     };
@@ -207,7 +208,7 @@ describe('ZNP', () => {
             {manufacturer: 'Not texas instruments', vendorId: '0451', productId: '16a8', path: '/dev/autodetected2'},
         ]);
 
-        expect(await Znp.autoDetectPath()).toBeNull();
+        expect(await Znp.autoDetectPath()).toBeUndefined();
     });
 
     it('Open and close tcp port', async () => {
@@ -475,7 +476,7 @@ describe('ZNP', () => {
         await znp.open();
         requestSpy.mockRestore();
 
-        const result = await znp.request(UnpiConstants.Subsystem.SYS, 'osalNvRead', {id: 1, offset: 2});
+        const result = await znp.requestWithReply(UnpiConstants.Subsystem.SYS, 'osalNvRead', {id: 1, offset: 2});
 
         const frame = mockUnpiWriterWriteFrame.mock.calls[0][0];
         expect(mockUnpiWriterWriteFrame).toHaveBeenCalledTimes(1);
@@ -671,7 +672,7 @@ describe('ZNP', () => {
             error = e;
         }
 
-        expect(error).toEqual(new Error("Command 'nonExisting' from subsystem '6' not found"));
+        expect(error).toEqual(new Error("Command request 'nonExisting' from subsystem '6' not found"));
     });
 
     it('znp request timeout', async () => {
@@ -800,6 +801,17 @@ describe('ZNP', () => {
 
             jest.runOnlyPendingTimers();
         });
+    });
+
+    it('znp requestWithReply should throw error when request as no reply', async () => {
+        await znp.open();
+
+        try {
+            await znp.requestWithReply(UnpiConstants.Subsystem.ZDO, 'autoFindDestination', {});
+            fail('Should throw error');
+        } catch (error) {
+            expect(error).toStrictEqual(new Error('Command autoFindDestination has no reply'));
+        }
     });
 
     it('ZpiObject throw error on missing write parser', async () => {

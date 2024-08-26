@@ -1,0 +1,38 @@
+name: Publish typedoc on Github Pages
+
+on:
+    release:
+        types:
+            - published
+    workflow_dispatch:
+
+jobs:
+    build:
+        runs-on: ubuntu-latest
+        permissions:
+            contents: write
+        steps:
+            - uses: actions/checkout@v4
+            - uses: actions/setup-node@v4
+            - name: Generate docs
+              run: |
+                  npm ci
+                  npm run typedoc
+            - uses: actions/upload-pages-artifact@v3
+              with:
+                  name: github-pages
+                  # typedoc "out" path
+                  path: ./typedoc
+    deploy:
+        needs: build
+        runs-on: ubuntu-latest
+        permissions:
+            pages: write # to deploy to Pages
+            id-token: write # to verify the deployment originates from an appropriate source
+        environment:
+            name: github-pages
+            url: ${{ steps.deployment.outputs.page_url }}
+        steps:
+            - name: Deploy to GitHub Pages
+              id: deployment
+              uses: actions/deploy-pages@v4

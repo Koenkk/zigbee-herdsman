@@ -1,27 +1,27 @@
-import {OpenOptions} from '@serialport/stream';
 import {MockBinding, MockPortBinding} from '@serialport/binding-mock';
+import {OpenOptions} from '@serialport/stream';
+
+import {EzspStatus} from '../../../src/adapter/ember/enums';
 import {Ezsp} from '../../../src/adapter/ember/ezsp/ezsp';
+import {logger} from '../../../src/utils/logger';
 import {
-    ASH_ACK_FIRST_BYTES,
-    RCED_DATA_WITH_CRC_ERROR,
-    RCED_DATA_VERSION,
-    RCED_DATA_VERSION_RES,
-    RECD_ERROR_ACK_TIMEOUT_BYTES,
-    RECD_RSTACK_BYTES,
-    SEND_RST_BYTES,
     adapterSONOFFDongleE,
-    SEND_DATA_VERSION,
-    SEND_ACK_FIRST_BYTES,
-    RCED_ERROR_WATCHDOG_BYTES,
-    SEND_UNICAST_REPLY_FN0_ASH_RAW,
-    MESSAGE_SENT_HANDLER_FN1_ASH_RAW,
+    ASH_ACK_FIRST_BYTES,
     INCOMING_MESSAGE_HANDLER_FN2_ASH_RAW,
     MESSAGE_SENT_HANDLER_FN0_ASH_RAW,
+    MESSAGE_SENT_HANDLER_FN1_ASH_RAW,
+    RCED_DATA_VERSION,
+    RCED_DATA_VERSION_RES,
+    RCED_DATA_WITH_CRC_ERROR,
+    RCED_ERROR_WATCHDOG_BYTES,
+    RECD_ERROR_ACK_TIMEOUT_BYTES,
+    RECD_RSTACK_BYTES,
+    SEND_ACK_FIRST_BYTES,
+    SEND_DATA_VERSION,
+    SEND_RST_BYTES,
+    SEND_UNICAST_REPLY_FN0_ASH_RAW,
     SET_POLICY_REPLY_FN1_ASH_RAW,
 } from './consts';
-import {EzspStatus} from '../../../src/adapter/ember/enums';
-import {AshEvents} from '../../../src/adapter/ember/uart/ash';
-import {logger} from '../../../src/utils/logger';
 
 const emitFromSerial = async (ezsp: Ezsp, data: Buffer, skipAdvanceTimers: boolean = false): Promise<void> => {
     //@ts-expect-error private
@@ -103,9 +103,6 @@ describe('Ember Ezsp Layer', () => {
     });
 
     it('Starts ASH layer even when received ERROR from port', async () => {
-        const ashEmitSpy = jest.spyOn(ezsp.ash, 'emit');
-        // @ts-expect-error private
-        const onAshFatalErrorSpy = jest.spyOn(ezsp, 'onAshFatalError');
         const startResult = ezsp.start();
 
         await advanceTime100ms(2);
@@ -114,16 +111,11 @@ describe('Ember Ezsp Layer', () => {
         await emitFromSerial(ezsp, Buffer.from(RECD_RSTACK_BYTES));
         await expect(startResult).resolves.toStrictEqual(EzspStatus.SUCCESS);
         //@ts-expect-error private
-        expect(ezsp.ash.serialPort.port.recording).toStrictEqual(Buffer.concat([Buffer.from(SEND_RST_BYTES), POST_RSTACK_SERIAL_BYTES]));
+        expect(ezsp.ash.serialPort.port.recording).toStrictEqual(POST_RSTACK_SERIAL_BYTES);
         expect(ezsp.checkConnection()).toBeTruthy();
-        expect(ashEmitSpy).toHaveBeenCalledWith(AshEvents.FATAL_ERROR, EzspStatus.HOST_FATAL_ERROR);
-        expect(onAshFatalErrorSpy).not.toHaveBeenCalled(); // ERROR is handled by ezsp layer, not bubbled up to adapter
     });
 
     it('Starts ASH layer when received ERROR RESET_WATCHDOG from port', async () => {
-        const ashEmitSpy = jest.spyOn(ezsp.ash, 'emit');
-        // @ts-expect-error private
-        const onAshFatalErrorSpy = jest.spyOn(ezsp, 'onAshFatalError');
         const startResult = ezsp.start();
 
         await advanceTime100ms(2);
@@ -132,10 +124,8 @@ describe('Ember Ezsp Layer', () => {
         await emitFromSerial(ezsp, Buffer.from(RECD_RSTACK_BYTES));
         await expect(startResult).resolves.toStrictEqual(EzspStatus.SUCCESS);
         //@ts-expect-error private
-        expect(ezsp.ash.serialPort.port.recording).toStrictEqual(Buffer.concat([Buffer.from(SEND_RST_BYTES), POST_RSTACK_SERIAL_BYTES]));
+        expect(ezsp.ash.serialPort.port.recording).toStrictEqual(POST_RSTACK_SERIAL_BYTES);
         expect(ezsp.checkConnection()).toBeTruthy();
-        expect(ashEmitSpy).toHaveBeenCalledWith(AshEvents.FATAL_ERROR, EzspStatus.HOST_FATAL_ERROR);
-        expect(onAshFatalErrorSpy).not.toHaveBeenCalled(); // ERROR is handled by ezsp layer, not bubbled up to adapter
     });
 
     it('Starts ASH layer when received duplicate RSTACK from port right after first ACK', async () => {
@@ -149,6 +139,7 @@ describe('Ember Ezsp Layer', () => {
                 await ezsp.stop();
                 jest.useFakeTimers();
 
+                ezsp = new Ezsp(openOpts);
                 const startResult = ezsp.start();
 
                 await advanceTimeToRSTACK();
@@ -171,7 +162,7 @@ describe('Ember Ezsp Layer', () => {
         await expect(restart).resolves.toStrictEqual(EzspStatus.SUCCESS);
         //@ts-expect-error private
         expect(ezsp.ash.serialPort.port.recording).toStrictEqual(POST_RSTACK_SERIAL_BYTES);
-        expect(ashEmitSpy).toHaveBeenCalledWith(AshEvents.FATAL_ERROR, EzspStatus.HOST_FATAL_ERROR);
+        expect(ashEmitSpy).toHaveBeenCalledWith('fatalError', EzspStatus.HOST_FATAL_ERROR);
         expect(onAshFatalErrorSpy).toHaveBeenCalledWith(EzspStatus.HOST_FATAL_ERROR);
         expect(ezsp.checkConnection()).toBeTruthy();
     });
@@ -188,6 +179,7 @@ describe('Ember Ezsp Layer', () => {
                 await ezsp.stop();
                 jest.useFakeTimers();
 
+                ezsp = new Ezsp(openOpts);
                 const startResult = ezsp.start();
 
                 await advanceTimeToRSTACK();
@@ -202,7 +194,7 @@ describe('Ember Ezsp Layer', () => {
         await advanceTimeToRSTACK();
         await emitFromSerial(ezsp, Buffer.from(RECD_RSTACK_BYTES));
         //@ts-expect-error private
-        expect(ezsp.ash.serialPort.port.recording).toStrictEqual(Buffer.concat([Buffer.from(SEND_RST_BYTES), POST_RSTACK_SERIAL_BYTES]));
+        expect(ezsp.ash.serialPort.port.recording).toStrictEqual(POST_RSTACK_SERIAL_BYTES);
         await emitFromSerial(ezsp, Buffer.from(RECD_RSTACK_BYTES));
         await expect(startResult).resolves.toStrictEqual(EzspStatus.SUCCESS); // dup is received after this returns
         expect(ezsp.checkConnection()).toBeFalsy();
@@ -212,7 +204,7 @@ describe('Ember Ezsp Layer', () => {
         await expect(restart).resolves.toStrictEqual(EzspStatus.SUCCESS);
         //@ts-expect-error private
         expect(ezsp.ash.serialPort.port.recording).toStrictEqual(POST_RSTACK_SERIAL_BYTES);
-        expect(ashEmitSpy).toHaveBeenCalledWith(AshEvents.FATAL_ERROR, EzspStatus.HOST_FATAL_ERROR);
+        expect(ashEmitSpy).toHaveBeenCalledWith('fatalError', EzspStatus.HOST_FATAL_ERROR);
         expect(onAshFatalErrorSpy).toHaveBeenCalledWith(EzspStatus.HOST_FATAL_ERROR);
         expect(ezsp.checkConnection()).toBeTruthy();
     });
@@ -227,6 +219,7 @@ describe('Ember Ezsp Layer', () => {
                 await ezsp.stop();
                 jest.useFakeTimers();
 
+                ezsp = new Ezsp(openOpts);
                 const startResult = ezsp.start();
 
                 await advanceTimeToRSTACK();

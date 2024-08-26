@@ -1,12 +1,13 @@
 /* istanbul ignore file */
-import {fs} from 'mz';
+
+import * as fs from 'fs';
 
 import * as Models from '../../../models';
 import {BackupUtils} from '../../../utils';
 import {logger} from '../../../utils/logger';
+import {uint32MaskToChannels} from '../../../zspec/utils';
 import {Driver} from '../driver';
-import {EmberKeyType, EmberKeyStruct, EmberNetworkParameters, EmberSecurityManagerNetworkKeyInfo, EmberKeyData} from '../driver/types';
-import {channelsMask2list} from '../driver/utils';
+import {EmberKeyData, EmberKeyStruct, EmberKeyType, EmberNetworkParameters, EmberSecurityManagerNetworkKeyInfo} from '../driver/types';
 
 const NS = 'zh:ezsp:backup';
 
@@ -26,8 +27,8 @@ export class EZSPAdapterBackup {
         const netParams = await this.driver.ezsp.execCommand('getNetworkParameters');
         const networkParams: EmberNetworkParameters = netParams.parameters;
         const netResult = await this.driver.getKey(EmberKeyType.CURRENT_NETWORK_KEY);
-        let tclKey: Buffer = null;
-        let netKey: Buffer = null;
+        let tclKey: Buffer;
+        let netKey: Buffer;
         let netKeySequenceNumber: number = 0;
         let netKeyFrameCounter: number = 0;
 
@@ -57,7 +58,7 @@ export class EZSPAdapterBackup {
             networkOptions: {
                 panId: networkParams.panId,
                 extendedPanId: Buffer.from(networkParams.extendedPanId),
-                channelList: channelsMask2list(networkParams.channels),
+                channelList: uint32MaskToChannels(networkParams.channels),
                 networkKey: netKey,
                 networkKeyDistribute: true,
             },
@@ -76,17 +77,17 @@ export class EZSPAdapterBackup {
     /**
      * Loads currently stored backup and returns it in internal backup model.
      */
-    public async getStoredBackup(): Promise<Models.Backup> {
+    public async getStoredBackup(): Promise<Models.Backup | undefined> {
         try {
-            await fs.access(this.defaultPath);
+            fs.accessSync(this.defaultPath);
         } catch {
-            return null;
+            return undefined;
         }
         let data;
         try {
-            data = JSON.parse((await fs.readFile(this.defaultPath)).toString());
+            data = JSON.parse(fs.readFileSync(this.defaultPath).toString());
         } catch (error) {
-            throw new Error(`Coordinator backup is corrupted (${error.message})`);
+            throw new Error(`Coordinator backup is corrupted (${(error as Error).stack})`);
         }
         if (data.metadata?.format === 'zigpy/open-coordinator-backup' && data.metadata?.version) {
             if (data.metadata?.version !== 1) {

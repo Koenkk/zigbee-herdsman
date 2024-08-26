@@ -1,4 +1,5 @@
 /* istanbul ignore file */
+
 import {logger} from '../../../utils/logger';
 import {EZSP_MAX_FRAME_LENGTH} from '../ezsp/consts';
 
@@ -11,13 +12,13 @@ const NS = 'zh:ember:uart:queues';
 export class EzspBuffer {
     /** uint8_t[EZSP_MAX_FRAME_LENGTH] */
     public data: Buffer;
-    public link: EzspBuffer;
+    public link?: EzspBuffer;
     /** uint8_t */
     public len: number;
 
     constructor() {
         this.data = Buffer.alloc(EZSP_MAX_FRAME_LENGTH); // inits to all-zeroes
-        this.link = null;
+        this.link = undefined;
         this.len = 0;
     }
 }
@@ -26,10 +27,10 @@ export class EzspBuffer {
  * Simple queue (singly-linked list)
  */
 export class EzspQueue {
-    public tail: EzspBuffer;
+    public tail?: EzspBuffer;
 
     constructor() {
-        this.tail = null;
+        this.tail = undefined;
     }
 
     /**
@@ -37,10 +38,10 @@ export class EzspQueue {
      * @returns
      */
     get length(): number {
-        let head: EzspBuffer = this.tail;
+        let head = this.tail;
         let count: number = 0;
 
-        for (count; head != null; count++) {
+        for (count; head != undefined; count++) {
             head = head.link;
         }
 
@@ -48,7 +49,7 @@ export class EzspQueue {
     }
 
     get empty(): boolean {
-        return this.tail == null;
+        return this.tail == undefined;
     }
 
     /**
@@ -56,16 +57,14 @@ export class EzspQueue {
      * @returns
      */
     get head(): EzspBuffer {
-        let head: EzspBuffer = this.tail;
+        let head = this.tail;
 
-        if (head == null) {
+        if (head == undefined) {
             throw new Error(`Tried to get head from an empty queue.`);
         }
 
-        if (head != null) {
-            while (head.link != null) {
-                head = head.link;
-            }
+        while (head.link != undefined) {
+            head = head.link;
         }
 
         return head;
@@ -77,15 +76,15 @@ export class EzspQueue {
      * @param n
      * @returns
      */
-    public getNthEntry(n: number): EzspBuffer {
+    public getNthEntry(n: number): EzspBuffer | undefined {
         if (n === 0) {
             throw new Error(`Asked for 0th element in queue.`);
         }
 
-        let buf: EzspBuffer = this.tail;
+        let buf = this.tail;
 
         while (--n) {
-            if (buf == null) {
+            if (buf == undefined) {
                 throw new Error(`Less than N entries in queue.`);
             }
 
@@ -97,24 +96,28 @@ export class EzspQueue {
 
     /**
      * Get a pointer to the entry before the specified entry (closer to the tail).
-     * If the buffer specified is null, the head entry is returned.
-     * If the buffer specified is the tail, null is returned.
+     * If the buffer specified is undefined, the head entry is returned.
+     * If the buffer specified is the tail, undefined is returned.
      * @param entry The buffer to look before.
      * @returns
      */
-    public getPrecedingEntry(entry: EzspBuffer): EzspBuffer {
-        let buf: EzspBuffer = this.tail;
+    public getPrecedingEntry(entry?: EzspBuffer): EzspBuffer | undefined {
+        let buf = this.tail;
 
         if (buf === entry) {
-            return null;
+            return undefined;
         } else {
+            if (buf == undefined) {
+                throw new Error(`Tried to get preceding entry from an empty queue.`);
+            }
+
             do {
                 if (buf.link === entry) {
                     return buf;
                 }
 
                 buf = buf.link;
-            } while (buf != null);
+            } while (buf != undefined);
 
             throw new Error(`Buffer not in queue.`);
         }
@@ -129,7 +132,7 @@ export class EzspQueue {
             buf.link = this.tail;
             this.tail = buf;
         } else {
-            throw new Error(`Called addTail with null buffer`);
+            throw new Error(`Called addTail with undefined buffer`);
         }
     }
 
@@ -138,23 +141,23 @@ export class EzspQueue {
      * @returns The removed buffer.
      */
     public removeHead(): EzspBuffer {
-        let head: EzspBuffer = this.tail;
+        let head = this.tail;
 
-        if (head == null) {
+        if (head == undefined) {
             throw new Error(`Tried to remove head from an empty queue.`);
         }
 
-        if (head.link == null) {
-            this.tail = null;
+        if (head.link == undefined) {
+            this.tail = undefined;
         } else {
             let prev: EzspBuffer;
 
             do {
                 prev = head;
                 head = head.link;
-            } while (head.link != null);
+            } while (head.link != undefined);
 
-            prev.link = null;
+            prev.link = undefined;
         }
 
         return head;
@@ -165,10 +168,10 @@ export class EzspQueue {
      * @param entry
      * @returns A pointer to the preceding entry (if any).
      */
-    public removeEntry(entry: EzspBuffer): EzspBuffer {
-        const buf: EzspBuffer = this.getPrecedingEntry(entry);
+    public removeEntry(entry: EzspBuffer): EzspBuffer | undefined {
+        const buf = this.getPrecedingEntry(entry);
 
-        if (buf != null) {
+        if (buf != undefined) {
             buf.link = entry.link;
         } else {
             this.tail = entry.link;
@@ -182,10 +185,10 @@ export class EzspQueue {
  * Simple free list (singly-linked list)
  */
 export class EzspFreeList {
-    public link: EzspBuffer;
+    public link?: EzspBuffer;
 
     constructor() {
-        this.link = null;
+        this.link = undefined;
     }
 
     /**
@@ -193,10 +196,10 @@ export class EzspFreeList {
      * @returns
      */
     get length(): number {
-        let next: EzspBuffer = this.link;
+        let next = this.link;
         let count: number = 0;
 
-        for (count; next != null; count++) {
+        for (count; next != undefined; count++) {
             next = next.link;
         }
 
@@ -212,7 +215,7 @@ export class EzspFreeList {
             buf.link = this.link;
             this.link = buf;
         } else {
-            throw new Error(`Called freeBuffer with null buffer`);
+            throw new Error(`Called freeBuffer with undefined buffer`);
         }
     }
 
@@ -220,10 +223,10 @@ export class EzspFreeList {
      * Get a buffer from the free list.
      * @returns
      */
-    public allocBuffer(): EzspBuffer {
-        const buf: EzspBuffer = this.link;
+    public allocBuffer(): EzspBuffer | undefined {
+        const buf = this.link;
 
-        if (buf != null) {
+        if (buf != undefined) {
             this.link = buf.link;
             buf.len = 0;
 

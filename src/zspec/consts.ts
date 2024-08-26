@@ -22,6 +22,8 @@ export const HA_ENDPOINT = 0x01;
 /** The GP endpoint, as defined in the ZigBee spec. */
 export const GP_ENDPOINT = 0xf2;
 
+export const GP_GROUP_ID = 0x0b84;
+
 /** The maximum 802.15.4 channel number is 26. */
 export const MAX_802_15_4_CHANNEL_NUMBER = 26;
 /** The minimum 2.4GHz 802.15.4 channel number is 11. */

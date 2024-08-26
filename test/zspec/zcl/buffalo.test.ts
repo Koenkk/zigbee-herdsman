@@ -609,8 +609,11 @@ describe('ZCL Buffalo', () => {
         ['long char str', {type: Zcl.DataType.LONG_CHAR_STR, position: 2, returned: ''}],
         ['array', {type: Zcl.DataType.ARRAY, position: 3, returned: []}],
         ['struct', {type: Zcl.DataType.STRUCT, position: 2, returned: []}],
-        ['time of day', {type: Zcl.DataType.TOD, position: 4, returned: {hours: null, minutes: null, seconds: null, hundredths: null}}],
-        ['date', {type: Zcl.DataType.DATE, position: 4, returned: {year: null, month: null, dayOfMonth: null, dayOfWeek: null}}],
+        [
+            'time of day',
+            {type: Zcl.DataType.TOD, position: 4, returned: {hours: undefined, minutes: undefined, seconds: undefined, hundredths: undefined}},
+        ],
+        ['date', {type: Zcl.DataType.DATE, position: 4, returned: {year: undefined, month: undefined, dayOfMonth: undefined, dayOfWeek: undefined}}],
         ['mi struct', {type: Zcl.BuffaloZclDataType.MI_STRUCT, position: 1, returned: {}}],
     ])('Reads Non-Value for %s', (_name, payload) => {
         const buffalo = new BuffaloZcl(Buffer.alloc(50, 0xff));
@@ -625,7 +628,7 @@ describe('ZCL Buffalo', () => {
             {
                 type: Zcl.DataType.TOD,
                 position: 4,
-                value: {hours: null, minutes: null, seconds: null, hundredths: null},
+                value: {hours: undefined, minutes: undefined, seconds: undefined, hundredths: undefined},
                 written: [0xff, 0xff, 0xff, 0xff],
             },
         ],
@@ -634,7 +637,7 @@ describe('ZCL Buffalo', () => {
             {
                 type: Zcl.DataType.DATE,
                 position: 4,
-                value: {year: null, month: null, dayOfMonth: null, dayOfWeek: null},
+                value: {year: undefined, month: undefined, dayOfMonth: undefined, dayOfWeek: undefined},
                 written: [0xff, 0xff, 0xff, 0xff],
             },
         ],
@@ -647,8 +650,8 @@ describe('ZCL Buffalo', () => {
     });
 
     it.each([
-        ['time of day', {type: Zcl.DataType.TOD, value: {hours: 1, minutes: 2, seconds: null, hundredths: 3}, written: [1, 2, 0xff, 3]}],
-        ['date', {type: Zcl.DataType.DATE, value: {year: 1901, month: 2, dayOfMonth: null, dayOfWeek: 3}, written: [1, 2, 0xff, 3]}],
+        ['time of day', {type: Zcl.DataType.TOD, value: {hours: 1, minutes: 2, seconds: undefined, hundredths: 3}, written: [1, 2, 0xff, 3]}],
+        ['date', {type: Zcl.DataType.DATE, value: {year: 1901, month: 2, dayOfMonth: undefined, dayOfWeek: 3}, written: [1, 2, 0xff, 3]}],
     ])('Writes & Reads partial Non-Value for %s', (_name, payload) => {
         const buffer = Buffer.alloc(10);
         const buffalo = new BuffaloZcl(buffer);

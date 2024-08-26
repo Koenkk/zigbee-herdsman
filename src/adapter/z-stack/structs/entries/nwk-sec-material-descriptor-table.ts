@@ -1,4 +1,5 @@
-/* eslint-disable @typescript-eslint/explicit-module-boundary-types */
+import assert from 'assert';
+
 import {StructMemoryAlignment} from '../struct';
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
 import {Table} from '../table';
@@ -14,5 +15,6 @@ export const nwkSecMaterialDescriptorTable = (dataOrCapacity?: Buffer | Buffer[]
     const table = Table.new<ReturnType<typeof nwkSecMaterialDescriptorEntry>>()
         .struct(nwkSecMaterialDescriptorEntry)
         .occupancy((e) => e.isSet() as boolean);
+    assert(dataOrCapacity !== undefined, 'dataOrCapacity cannot be undefined');
     return typeof dataOrCapacity === 'number' ? table.build(dataOrCapacity) : table.build(dataOrCapacity, alignment);
 };

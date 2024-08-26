@@ -1,8 +1,8 @@
 import {BuffaloZcl} from './buffaloZcl';
-import {Direction, DataType, BuffaloZclDataType, FrameType, ParameterCondition} from './definition/enums';
+import {BuffaloZclDataType, DataType, Direction, FrameType, ParameterCondition} from './definition/enums';
 import {FoundationCommandName} from './definition/foundation';
 import {Status} from './definition/status';
-import {BuffaloZclOptions, Cluster, Command, ClusterName, CustomClusters, ParameterDefinition} from './definition/tstype';
+import {BuffaloZclOptions, Cluster, ClusterName, Command, CustomClusters, ParameterDefinition} from './definition/tstype';
 import * as Utils from './utils';
 import {ZclHeader} from './zclHeader';
 
@@ -41,7 +41,7 @@ export class ZclFrame {
         frameType: FrameType,
         direction: Direction,
         disableDefaultResponse: boolean,
-        manufacturerCode: number | null,
+        manufacturerCode: number | undefined,
         transactionSequenceNumber: number,
         commandKey: number | string,
         clusterKey: number | string,
@@ -50,12 +50,12 @@ export class ZclFrame {
         reservedBits = 0,
     ): ZclFrame {
         const cluster = Utils.getCluster(clusterKey, manufacturerCode, customClusters);
-        let command: Command = null;
-        if (frameType === FrameType.GLOBAL) {
-            command = Utils.getGlobalCommand(commandKey);
-        } else {
-            command = direction === Direction.CLIENT_TO_SERVER ? cluster.getCommand(commandKey) : cluster.getCommandResponse(commandKey);
-        }
+        const command: Command =
+            frameType === FrameType.GLOBAL
+                ? Utils.getGlobalCommand(commandKey)
+                : direction === Direction.CLIENT_TO_SERVER
+                  ? cluster.getCommand(commandKey)
+                  : cluster.getCommandResponse(commandKey);
 
         const header = new ZclHeader(
             {reservedBits, frameType, direction, disableDefaultResponse, manufacturerSpecific: manufacturerCode != null},
@@ -140,24 +140,18 @@ export class ZclFrame {
     /**
      * Parsing
      */
-    public static fromBuffer(clusterID: number, header: ZclHeader, buffer: Buffer, customClusters: CustomClusters): ZclFrame {
+    public static fromBuffer(clusterID: number, header: ZclHeader | undefined, buffer: Buffer, customClusters: CustomClusters): ZclFrame {
         if (!header) {
             throw new Error('Invalid ZclHeader.');
         }
 
         const buffalo = new BuffaloZcl(buffer, header.length);
         const cluster = Utils.getCluster(clusterID, header.manufacturerCode, customClusters);
-
-        let command: Command = null;
-        if (header.isGlobal) {
-            command = Utils.getGlobalCommand(header.commandIdentifier);
-        } else {
-            command =
-                header.frameControl.direction === Direction.CLIENT_TO_SERVER
-                    ? cluster.getCommand(header.commandIdentifier)
-                    : cluster.getCommandResponse(header.commandIdentifier);
-        }
-
+        const command: Command = header.isGlobal
+            ? Utils.getGlobalCommand(header.commandIdentifier)
+            : header.frameControl.direction === Direction.CLIENT_TO_SERVER
+              ? cluster.getCommand(header.commandIdentifier)
+              : cluster.getCommandResponse(header.commandIdentifier);
         const payload = this.parsePayload(header, cluster, buffalo);
 
         return new ZclFrame(header, payload, cluster, command);
@@ -328,7 +322,7 @@ export class ZclFrame {
     }
 
     // List of commands is not completed, feel free to add more.
-    public isCommand(commandName: FoundationCommandName | 'remove' | 'add' | 'write' | 'enrollReq' | 'checkin' | 'getAlarm'): boolean {
+    public isCommand(commandName: FoundationCommandName | 'remove' | 'add' | 'write' | 'enrollReq' | 'checkin' | 'getAlarm' | 'arm'): boolean {
         return this.command.name === commandName;
     }
 }

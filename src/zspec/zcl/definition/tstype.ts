@@ -1,4 +1,4 @@
-import {DataType, FrameType, Direction, BuffaloZclDataType, StructuredIndicatorType, ParameterCondition, DataTypeClass} from './enums';
+import {BuffaloZclDataType, DataType, DataTypeClass, Direction, FrameType, ParameterCondition, StructuredIndicatorType} from './enums';
 import {Status} from './status';
 
 export interface BuffaloZclOptions {
@@ -228,7 +228,6 @@ export type ClusterName =
     | 'sprutNoise'
     | 'sprutIrBlaster'
     | 'manuSpecificSiglisZigfred'
-    | 'manuSpecificInovelli'
     | 'owonClearMetering'
     | 'zosungIRTransmit'
     | 'zosungIRControl'

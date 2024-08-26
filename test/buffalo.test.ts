@@ -1,4 +1,5 @@
 import 'regenerator-runtime/runtime';
+
 import {Buffalo} from '../src/buffalo';
 import {ieeeaAddr1, ieeeaAddr2} from './testUtils';
 

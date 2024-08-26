@@ -1,6 +1,6 @@
 import {Buffalo} from '../../buffalo';
-import {IsNumberArray} from '../../utils';
 import {logger} from '../../utils/logger';
+import {isNumberArray} from '../../utils/utils';
 import {BuffaloZclDataType, DataType, StructuredIndicatorType} from './definition/enums';
 import {BuffaloZclOptions, StructuredSelector, ZclArray} from './definition/tstype';
 import * as Utils from './utils';
@@ -331,15 +331,15 @@ export class BuffaloZcl extends Buffalo {
         const hundredths = this.readUInt8();
 
         return {
-            hours: hours < 0xff ? hours : null,
-            minutes: minutes < 0xff ? minutes : null,
-            seconds: seconds < 0xff ? seconds : null,
-            hundredths: hundredths < 0xff ? hundredths : null,
+            hours: hours < 0xff ? hours : undefined,
+            minutes: minutes < 0xff ? minutes : undefined,
+            seconds: seconds < 0xff ? seconds : undefined,
+            hundredths: hundredths < 0xff ? hundredths : undefined,
         };
     }
 
     private writeDate(value: ZclDate): void {
-        this.writeUInt8(value.year != null ? value.year - 1900 : 0xff);
+        this.writeUInt8(value.year != undefined ? value.year - 1900 : 0xff);
         this.writeUInt8(value.month ?? 0xff);
         this.writeUInt8(value.dayOfMonth ?? 0xff);
         this.writeUInt8(value.dayOfWeek ?? 0xff);
@@ -352,10 +352,10 @@ export class BuffaloZcl extends Buffalo {
         const dayOfWeek = this.readUInt8();
 
         return {
-            year: year < 0xff ? year + 1900 : null,
-            month: month < 0xff ? month : null,
-            dayOfMonth: dayOfMonth < 0xff ? dayOfMonth : null,
-            dayOfWeek: dayOfWeek < 0xff ? dayOfWeek : null,
+            year: year < 0xff ? year + 1900 : undefined,
+            month: month < 0xff ? month : undefined,
+            dayOfMonth: dayOfMonth < 0xff ? dayOfMonth : undefined,
+            dayOfWeek: dayOfWeek < 0xff ? dayOfWeek : undefined,
         };
     }
 
@@ -574,7 +574,7 @@ export class BuffaloZcl extends Buffalo {
             };
             // Manufacturer-specific Attribute Reporting
         } else if (options.payload?.commandID == 0xa1) {
-            if (options.payload.payloadSize == null) {
+            if (options.payload.payloadSize == undefined) {
                 throw new Error('Cannot read GDP_FRAME with commandID=0xA1 without payloadSize options specified');
             }
 
@@ -859,7 +859,7 @@ export class BuffaloZcl extends Buffalo {
             }
             case BuffaloZclDataType.USE_DATA_TYPE: {
                 if (options.dataType == null) {
-                    if (Buffer.isBuffer(value) || IsNumberArray(value)) {
+                    if (Buffer.isBuffer(value) || isNumberArray(value)) {
                         return this.writeBuffer(value, value.length);
                     } else {
                         throw new Error('Cannot write USE_DATA_TYPE without dataType option specified');
@@ -911,7 +911,7 @@ export class BuffaloZcl extends Buffalo {
             default: {
                 // In case the type is undefined, write it as a buffer to easily allow for custom types
                 // e.g. for https://github.com/Koenkk/zigbee-herdsman/issues/127
-                if (Buffer.isBuffer(value) || IsNumberArray(value)) {
+                if (Buffer.isBuffer(value) || isNumberArray(value)) {
                     return this.writeBuffer(value, value.length);
                 }
             }

@@ -1,5 +1,7 @@
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
-/* eslint-disable @typescript-eslint/explicit-module-boundary-types */
+
+import assert from 'assert';
+
 import {Struct} from '../struct';
 
 /**
@@ -7,4 +9,7 @@ import {Struct} from '../struct';
  *
  * @param data Data to initialize structure with.
  */
-export const nwkKey = (data?: Buffer) => Struct.new().member('uint8array', 'key', 16).build(data);
+export const nwkKey = (data?: Buffer | Buffer[]) => {
+    assert(!Array.isArray(data));
+    return Struct.new().member('uint8array', 'key', 16).build(data);
+};

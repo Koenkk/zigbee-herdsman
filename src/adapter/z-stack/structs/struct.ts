@@ -1,3 +1,5 @@
+import assert from 'assert';
+
 import {SerializableMemoryObject} from './serializable-memory-object';
 
 /* Helper Types */
@@ -22,8 +24,9 @@ export class Struct implements SerializableMemoryObject {
         return new Struct();
     }
 
+    // @ts-expect-error initialized in `build()`
     private buffer: Buffer;
-    private defaultData: Buffer;
+    private defaultData: Buffer | undefined;
     private members: {key: string; offset: number; type: StructMemberType; length?: number}[] = [];
     private childStructs: {[key: string]: StructChild} = {};
     private length = 0;
@@ -68,14 +71,16 @@ export class Struct implements SerializableMemoryObject {
                             break;
                         case 'uint8array':
                         case 'uint8array-reversed':
+                            assert(member.length !== undefined);
                             aligned.set(this.buffer.slice(member.offset, member.offset + member.length), offset);
                             offset += member.length;
                             break;
-                        case 'struct':
+                        case 'struct': {
                             const structData = this.childStructs[member.key].struct.serialize(alignment, false, offset);
                             aligned.set(structData, offset);
                             offset += structData.length;
                             break;
+                        }
                     }
                 }
                 return aligned;
@@ -109,6 +114,7 @@ export class Struct implements SerializableMemoryObject {
                             break;
                         case 'uint8array':
                         case 'uint8array-reversed':
+                            assert(member.length !== undefined);
                             offset += member.length;
                             break;
                         case 'struct':
@@ -128,7 +134,7 @@ export class Struct implements SerializableMemoryObject {
     /**
      * Returns structure contents in JS object format.
      */
-    // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types,@typescript-eslint/explicit-function-return-type
+    // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
     public toJSON() {
         return this.members.reduce((a, c) => {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -187,7 +193,7 @@ export class Struct implements SerializableMemoryObject {
     ): R {
         const offset = this.length;
         const structFactory = type === 'struct' ? (lengthOrStructFactory as StructFactorySignature<T>) : undefined;
-        const length = type === 'struct' ? (structFactory() as unknown as Struct).length : (lengthOrStructFactory as number);
+        const length = structFactory ? (structFactory() as unknown as Struct).length : (lengthOrStructFactory as number);
 
         switch (type) {
             case 'uint8': {
@@ -245,6 +251,7 @@ export class Struct implements SerializableMemoryObject {
                 break;
             }
             case 'struct': {
+                assert(structFactory);
                 this.childStructs[name] = {offset, struct: structFactory() as unknown as Struct};
                 Object.defineProperty(this, name, {
                     enumerable: true,
@@ -271,6 +278,7 @@ export class Struct implements SerializableMemoryObject {
             enumerable: true,
             configurable: false,
             writable: false,
+            // @ts-expect-error ignore because we are using `this`
             value: () => body.bind(this)(this),
         });
         return this as unknown as R;
@@ -336,15 +344,17 @@ export class Struct implements SerializableMemoryObject {
                             break;
                         case 'uint8array':
                         case 'uint8array-reversed':
+                            assert(member.length !== undefined);
                             this.buffer.set(data.slice(offset, offset + member.length), member.offset);
                             offset += member.length;
                             break;
-                        case 'struct':
+                        case 'struct': {
                             const child = this.childStructs[member.key];
                             child.struct.build(data.slice(offset, offset + child.struct.length));
                             this.buffer.set(child.struct.serialize(), member.offset);
                             offset += child.struct.length;
                             break;
+                        }
                     }
                 }
             } else {

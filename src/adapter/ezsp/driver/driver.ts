@@ -1,8 +1,10 @@
 /* istanbul ignore file */
+
 import {EventEmitter} from 'events';
+
 import equals from 'fast-deep-equal/es6';
 
-import {Waitress, Wait} from '../../../utils';
+import {Wait, Waitress} from '../../../utils';
 import {logger} from '../../../utils/logger';
 import {Clusters} from '../../../zspec/zcl/definition/cluster';
 import {EZSPAdapterBackup} from '../adapter/backup';
@@ -10,30 +12,30 @@ import * as TsType from './../../tstype';
 import {ParamsDesc} from './commands';
 import {Ezsp, EZSPFrameData, EZSPZDOResponseFrameData} from './ezsp';
 import {Multicast} from './multicast';
-import {EmberStatus, EmberNodeType, uint16_t, uint8_t, EmberZDOCmd, EmberApsOption, EmberKeyData, EmberJoinDecision} from './types';
+import {EmberApsOption, EmberJoinDecision, EmberKeyData, EmberNodeType, EmberStatus, EmberZDOCmd, uint8_t, uint16_t} from './types';
 import {
-    EmberOutgoingMessageType,
-    EmberEUI64,
-    EmberJoinMethod,
-    EmberDeviceUpdate,
-    EzspValueId,
-    EzspPolicyId,
-    EzspDecisionBitmask,
-    EmberNetworkStatus,
-    EmberKeyType,
     EmberDerivedKeyType,
-    EmberStackError,
-    SLStatus,
+    EmberDeviceUpdate,
+    EmberEUI64,
     EmberInitialSecurityBitmask,
+    EmberJoinMethod,
+    EmberKeyType,
+    EmberNetworkStatus,
+    EmberOutgoingMessageType,
+    EmberStackError,
+    EzspDecisionBitmask,
+    EzspPolicyId,
+    EzspValueId,
+    SLStatus,
 } from './types/named';
 import {
+    EmberAesMmoHashContext,
     EmberApsFrame,
-    EmberNetworkParameters,
+    EmberIeeeRawFrame,
     EmberInitialSecurityState,
     EmberKeyStruct,
+    EmberNetworkParameters,
     EmberRawFrame,
-    EmberIeeeRawFrame,
-    EmberAesMmoHashContext,
     EmberSecurityManagerContext,
 } from './types/struct';
 import {ember_security} from './utils';
@@ -87,10 +89,13 @@ const DEFAULT_MFG_ID = 0x1049;
 const REQUEST_ATTEMPT_DELAYS = [500, 1000, 1500];
 
 export class Driver extends EventEmitter {
+    // @ts-expect-error XXX: init in startup
     public ezsp: Ezsp;
     private nwkOpt: TsType.NetworkOptions;
     private greenPowerGroup: number;
+    // @ts-expect-error XXX: init in startup
     public networkParams: EmberNetworkParameters;
+    // @ts-expect-error XXX: init in startup
     public version: {
         product: number;
         majorrel: string;
@@ -99,8 +104,10 @@ export class Driver extends EventEmitter {
         revision: string;
     };
     private eui64ToNodeId = new Map<string, number>();
-    private eui64ToRelays = new Map<string, number>();
+    // private eui64ToRelays = new Map<string, number>();
+    // @ts-expect-error XXX: init in startup
     public ieee: EmberEUI64;
+    // @ts-expect-error XXX: init in startup
     private multicast: Multicast;
     private waitress: Waitress<EmberFrame, EmberWaitressMatcher>;
     private transactionID = 1;
@@ -129,20 +136,20 @@ export class Driver extends EventEmitter {
             // don't emit 'close' on stop since we don't want this to bubble back up as 'disconnected' to the controller.
             await this.stop(false);
         } catch (err) {
-            logger.debug(`Stop error ${err.stack}`, NS);
+            logger.debug(`Stop error ${err}`, NS);
         }
         try {
             await Wait(1000);
             logger.debug(`Startup again.`, NS);
             await this.startup();
         } catch (err) {
-            logger.debug(`Reset error ${err.stack}`, NS);
+            logger.debug(`Reset error ${err}`, NS);
 
             try {
                 // here we let emit
                 await this.stop();
             } catch (stopErr) {
-                logger.debug(`Failed to stop after failed reset ${stopErr.stack}`, NS);
+                logger.debug(`Failed to stop after failed reset ${stopErr}`, NS);
             }
         }
     }
@@ -168,14 +175,14 @@ export class Driver extends EventEmitter {
     public async startup(): Promise<TsType.StartResult> {
         let result: TsType.StartResult = 'resumed';
         this.transactionID = 1;
-        this.ezsp = undefined;
+        // this.ezsp = undefined;
         this.ezsp = new Ezsp();
         this.ezsp.on('close', this.onEzspClose.bind(this));
 
         try {
             await this.ezsp.connect(this.serialOpt);
         } catch (error) {
-            logger.debug(`EZSP could not connect: ${error.cause ?? error}`, NS);
+            logger.debug(`EZSP could not connect: ${error}`, NS);
 
             throw error;
         }
@@ -316,13 +323,18 @@ export class Driver extends EventEmitter {
         let initial_security_state: EmberInitialSecurityState;
         if (restore) {
             backup = await this.backupMan.getStoredBackup();
+
+            if (!backup) {
+                throw new Error(`No valid backup found.`);
+            }
+
             initial_security_state = ember_security(backup.networkOptions.networkKey);
             initial_security_state.bitmask |= EmberInitialSecurityBitmask.NO_FRAME_COUNTER_RESET;
             initial_security_state.networkKeySequenceNumber = backup.networkKeyInfo.sequenceNumber;
-            initial_security_state.preconfiguredKey.contents = backup.ezsp.hashed_tclk;
+            initial_security_state.preconfiguredKey.contents = backup.ezsp!.hashed_tclk!;
         } else {
             await this.ezsp.execCommand('clearKeyTable');
-            initial_security_state = ember_security(Buffer.from(this.nwkOpt.networkKey));
+            initial_security_state = ember_security(Buffer.from(this.nwkOpt.networkKey!));
         }
         await this.ezsp.setInitialSecurityState(initial_security_state);
 
@@ -333,14 +345,15 @@ export class Driver extends EventEmitter {
         parameters.nwkUpdateId = 0;
         parameters.channels = 0x07fff800; // all channels
         if (restore) {
-            parameters.panId = backup.networkOptions.panId;
-            parameters.extendedPanId = backup.networkOptions.extendedPanId;
-            parameters.radioChannel = backup.logicalChannel;
-            parameters.nwkUpdateId = backup.networkUpdateId;
+            // `backup` valid from above
+            parameters.panId = backup!.networkOptions.panId;
+            parameters.extendedPanId = backup!.networkOptions.extendedPanId;
+            parameters.radioChannel = backup!.logicalChannel;
+            parameters.nwkUpdateId = backup!.networkUpdateId;
         } else {
             parameters.radioChannel = this.nwkOpt.channelList[0];
             parameters.panId = this.nwkOpt.panID;
-            parameters.extendedPanId = Buffer.from(this.nwkOpt.extendedPanID);
+            parameters.extendedPanId = Buffer.from(this.nwkOpt.extendedPanID!);
         }
 
         await this.ezsp.formNetwork(parameters);
@@ -625,7 +638,7 @@ export class Driver extends EventEmitter {
                     break;
                 }
             } catch (e) {
-                logger.debug(`Request error ${e}: ${e.stack}`, NS);
+                logger.debug(`Request error ${e}`, NS);
                 break;
             }
         }
@@ -651,7 +664,7 @@ export class Driver extends EventEmitter {
             await this.ezsp.execCommand('sendRawMessage', {message: msgData});
             return true;
         } catch (e) {
-            logger.debug(`Request error ${e}: ${e.stack}`, NS);
+            logger.debug(`Request error ${e}`, NS);
             return false;
         }
     }
@@ -663,12 +676,11 @@ export class Driver extends EventEmitter {
             await this.ezsp.execCommand('sendRawMessage', {message: msgData});
             return true;
         } catch (e) {
-            logger.debug(`Request error ${e}: ${e.stack}`, NS);
+            logger.debug(`Request error ${e}`, NS);
             return false;
         }
     }
 
-    /* eslint-disable-next-line @typescript-eslint/no-unused-vars */
     public async brequest(destination: number, apsFrame: EmberApsFrame, data: Buffer): Promise<boolean> {
         try {
             const seq = (apsFrame.sequence + 1) & 0xff;
@@ -746,7 +758,7 @@ export class Driver extends EventEmitter {
             return result;
         } catch (e) {
             this.waitress.remove(waiter.ID);
-            logger.debug(`zdoRequest error: ${e} ${e.stack}`, NS);
+            logger.debug(`zdoRequest error: ${e}`, NS);
 
             throw e;
         }
@@ -928,7 +940,8 @@ export class Driver extends EventEmitter {
         logger.debug(`Current Node type: ${netParams.nodeType}, Network parameters: ${networkParams}`, NS);
         logger.debug(`Backuped network parameters: ${backup.networkOptions}`, NS);
         const networkKey = await this.getKey(EmberKeyType.CURRENT_NETWORK_KEY);
-        let netKey: Buffer = null;
+        let netKey: Buffer;
+
         if (this.ezsp.ezspV < 13) {
             netKey = Buffer.from((networkKey.keyStruct as EmberKeyStruct).key.contents);
         } else {
@@ -944,14 +957,14 @@ export class Driver extends EventEmitter {
             logger.error(`Configuration is not consistent with adapter backup!`, NS);
             logger.error(`- PAN ID: configured=${options.panID}, adapter=${networkParams.panId}, backup=${backup.networkOptions.panId}`, NS);
             logger.error(
-                `- Extended PAN ID: configured=${Buffer.from(options.extendedPanID).toString('hex')}, ` +
+                `- Extended PAN ID: configured=${Buffer.from(options.extendedPanID!).toString('hex')}, ` +
                     `adapter=${Buffer.from(networkParams.extendedPanId).toString('hex')}, ` +
                     `backup=${Buffer.from(networkParams.extendedPanId).toString('hex')}`,
                 NS,
             );
             logger.error(`- Channel: configured=${options.channelList}, adapter=${networkParams.radioChannel}, backup=${backup.logicalChannel}`, NS);
             logger.error(
-                `- Network key: configured=${Buffer.from(options.networkKey).toString('hex')}, ` +
+                `- Network key: configured=${Buffer.from(options.networkKey!).toString('hex')}, ` +
                     `adapter=${Buffer.from(netKey).toString('hex')}, ` +
                     `backup=${backup.networkOptions.networkKey.toString('hex')}`,
                 NS,
@@ -965,8 +978,8 @@ export class Driver extends EventEmitter {
         // if the settings in the backup match the config, then the old network is in the chip and needs to be restored
         valid = valid && options.panID == backup.networkOptions.panId;
         valid = valid && options.channelList.includes(backup.logicalChannel);
-        valid = valid && Buffer.from(options.extendedPanID).equals(backup.networkOptions.extendedPanId);
-        valid = valid && Buffer.from(options.networkKey).equals(backup.networkOptions.networkKey);
+        valid = valid && Buffer.from(options.extendedPanID!).equals(backup.networkOptions.extendedPanId);
+        valid = valid && Buffer.from(options.networkKey!).equals(backup.networkOptions.networkKey);
         return valid;
     }
 }

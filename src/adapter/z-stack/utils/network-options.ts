@@ -1,4 +1,3 @@
-/* eslint-disable max-len */
 /* istanbul ignore file */
 
 import * as Models from '../../../models';
@@ -15,13 +14,13 @@ export const compareNetworkOptions = (
     opts2: Models.NetworkOptions,
     lenientExtendedPanIdMatching?: boolean,
 ): boolean => {
-    return (
+    return Boolean(
         opts1.panId === opts2.panId &&
-        (opts1.extendedPanId.equals(opts2.extendedPanId) ||
-            (lenientExtendedPanIdMatching && (opts1.hasDefaultExtendedPanId || opts2.hasDefaultExtendedPanId)) ||
-            (lenientExtendedPanIdMatching && opts1.extendedPanId.equals(Buffer.from(opts2.extendedPanId).reverse()))) &&
-        opts1.networkKey.equals(opts2.networkKey) &&
-        compareChannelLists(opts1.channelList, opts2.channelList) &&
-        opts1.networkKeyDistribute === opts2.networkKeyDistribute
+            (opts1.extendedPanId.equals(opts2.extendedPanId) ||
+                (lenientExtendedPanIdMatching && (opts1.hasDefaultExtendedPanId || opts2.hasDefaultExtendedPanId)) ||
+                (lenientExtendedPanIdMatching && opts1.extendedPanId.equals(Buffer.from(opts2.extendedPanId).reverse()))) &&
+            opts1.networkKey.equals(opts2.networkKey) &&
+            compareChannelLists(opts1.channelList, opts2.channelList) &&
+            opts1.networkKeyDistribute === opts2.networkKeyDistribute,
     );
 };

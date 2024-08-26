@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
-/* eslint-disable @typescript-eslint/explicit-module-boundary-types */
+
 import {Struct} from '../struct';
 
 const emptyExtendedPanId = Buffer.alloc(8, 0x00);

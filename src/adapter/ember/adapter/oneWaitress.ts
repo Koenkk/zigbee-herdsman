@@ -1,4 +1,5 @@
 /* istanbul ignore file */
+
 import equals from 'fast-deep-equal/es6';
 
 import {TOUCHLINK_PROFILE_ID} from '../../../zspec/consts';
@@ -54,9 +55,11 @@ interface Waiter<A, B> {
  * NOTE: `messageTag` is unreliable, so not used...
  */
 export class EmberOneWaitress {
-    private readonly waiters: Map<number, Waiter<OneWaitressMatcher, unknown>>;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    private readonly waiters: Map<number, Waiter<OneWaitressMatcher, any>>;
     // NOTE: for now, this could be much simpler (array-like), but more complex events might come into play
-    private readonly eventWaiters: Map<number, Waiter<OneWaitressEventMatcher, unknown>>;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    private readonly eventWaiters: Map<number, Waiter<OneWaitressEventMatcher, any>>;
     private currentId: number;
     private currentEventId: number;
 
@@ -255,12 +258,14 @@ export class EmberOneWaitress {
                 return true;
             }
         }
+
+        return false;
     }
 
     public waitForEvent<T>(
         matcher: OneWaitressEventMatcher,
         timeout: number,
-        reason: string = null,
+        reason?: string,
     ): {id: number; start: () => {promise: Promise<T>; id: number}} {
         // NOTE: logic is very much the same as `waitFor`, just different matcher
         const id = this.currentEventId++;
@@ -302,7 +307,7 @@ export class EmberOneWaitress {
      * @param reason If supplied, will be used as timeout label, otherwise stringified matcher is.
      * @returns
      */
-    public startWaitingForEvent<T>(matcher: OneWaitressEventMatcher, timeout: number, reason: string = null): Promise<T> {
+    public startWaitingForEvent<T>(matcher: OneWaitressEventMatcher, timeout: number, reason?: string): Promise<T> {
         return this.waitForEvent<T>(matcher, timeout, reason).start().promise;
     }
 
