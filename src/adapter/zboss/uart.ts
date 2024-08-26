@@ -93,7 +93,7 @@ export class ZBOSSUart extends EventEmitter {
         this.closing = true;
         this.queue.clear();
         await this.closePort();
-
+        this.closing = false;
         logger.info(`UART stopped`, NS);
     }
 
@@ -106,18 +106,7 @@ export class ZBOSSUart extends EventEmitter {
                 baudRate: typeof this.portOptions.baudRate === 'number' ? this.portOptions.baudRate : 115200, 
                 rtscts: typeof this.portOptions.rtscts === 'boolean' ? this.portOptions.rtscts : false,
                 autoOpen: false,
-                parity: 'none' as const,
-                stopBits: 1 as const,
-                xon: false,
-                xoff: false,
             };
-
-            // enable software flow control if RTS/CTS not enabled in config
-            if (!serialOpts.rtscts) {
-                logger.info(`RTS/CTS config is off, enabling software flow control.`, NS);
-                serialOpts.xon = true;
-                serialOpts.xoff = true;
-            }
 
             //@ts-expect-error Jest testing
             if (this.portOptions.binding != null) {
@@ -195,9 +184,11 @@ export class ZBOSSUart extends EventEmitter {
             }
 
             this.serialPort.removeAllListeners();
+            this.serialPort = null;
         } else if (this.socketPort != null && !this.socketPort.closed) {
             this.socketPort.destroy();
             this.socketPort.removeAllListeners();
+            this.socketPort = null;
         }
     }
 
@@ -215,7 +206,8 @@ export class ZBOSSUart extends EventEmitter {
     }
 
     private async onPackage(data: Buffer): Promise<void> {
-        //const len = data.readUInt16LE(0);
+        if (this.inReset) return;
+        const len = data.readUInt16LE(0);
         const pType = data.readUInt8(2);
         const pFlags = data.readUInt8(3);
         const isACK = (pFlags & 0x1) === 1;
@@ -231,19 +223,24 @@ export class ZBOSSUart extends EventEmitter {
             logger.error(`<-- Wrong package type: ${pType}`, NS);
             return;
         }
-        // header crc
-        const hCRC = data.readUInt8(4);
-        const hCRC8 = crc8(data.subarray(0, 4));
-        if (hCRC !== hCRC8) {
-             logger.error(`<-- Wrong package header crc: is ${hCRC}, expected ${hCRC8}`, NS);
-             return;
-        }
         if (isACK) {
             // ACKseq is received
             this.handleACK(ACKseq);
             return;
         }
+        if (len <= 5) {
+            logger.debug(`<-- Empty package`, NS);
+            return;
+        }
 
+        // header crc
+        const hCRC = data.readUInt8(4);
+        const hCRC8 = crc8(data.subarray(0, 4));
+        if (hCRC !== hCRC8) {
+            logger.error(`<-- Wrong package header crc: is ${hCRC}, expected ${hCRC8}`, NS);
+            return;
+        }
+        
         // body crc
         const bCRC = data.readUInt16LE(5);
         const body = data.subarray(7);

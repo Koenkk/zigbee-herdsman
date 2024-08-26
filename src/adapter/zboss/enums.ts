@@ -296,13 +296,6 @@ export enum CommandId {
     UNKNOWN_1 = 0x0a02,
 };
 
-export enum Status {
-    NoOptions = 0,
-    EraseNVRAM = 1,
-    FactoryReset = 2,
-    LockReadingKeys = 3,
-};
-
 export enum ResetOptions {
     NoOptions = 0,
     EraseNVRAM = 1,
