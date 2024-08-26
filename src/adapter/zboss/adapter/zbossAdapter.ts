@@ -1,6 +1,6 @@
 import {Adapter, TsType} from "../..";
 import {Backup} from "../../../models";
-import {Queue, Waitress} from "../../../utils";
+import {Queue, Waitress, RealpathSync} from "../../../utils";
 import {logger} from "../../../utils/logger";
 import {BroadcastAddress} from '../../../zspec/enums';
 import * as Zcl from "../../../zspec/zcl";
@@ -18,8 +18,15 @@ import {
 import {ZBOSSDriver} from '../driver';
 import {CommandId, DeviceUpdateStatus} from "../enums";
 import {ZBOSSFrame, FrameType} from "../frame";
+import SerialPortUtils from '../../serialPortUtils';
+import SocketPortUtils from '../../socketPortUtils';
 
 const NS = 'zh:zboss';
+
+const autoDetectDefinitions = [
+    // Nordic Zigbee NCP
+    {manufacturer: 'ZEPHYR', vendorId: '2fe3', productId: '0100'},
+];
 
 interface WaitressMatcher {
     address: number | string;
@@ -98,13 +105,24 @@ export class ZBOSSAdapter extends Adapter {
         this.emit('event', frame);
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     public static async isValidPath(path: string): Promise<boolean> {
-        return true;
+        // For TCP paths we cannot get device information, therefore we cannot validate it.
+        if (SocketPortUtils.isTcpPath(path)) {
+            return false;
+        }
+
+        try {
+            return SerialPortUtils.is(RealpathSync(path), autoDetectDefinitions);
+        } catch (error) {
+            logger.debug(`Failed to determine if path is valid: '${error}'`, NS);
+            return false;
+        }
     }
 
     public static async autoDetectPath(): Promise<string> {
-        return null;
+        const paths = await SerialPortUtils.find(autoDetectDefinitions);
+        paths.sort((a, b) => (a < b ? -1 : 1));
+        return paths.length > 0 ? paths[0] : null;
     }
 
     public async start(): Promise<TsType.StartResult> {

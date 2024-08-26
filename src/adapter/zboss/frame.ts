@@ -57,8 +57,6 @@ export class ZBOSSBuffaloZcl extends BuffaloZcl {
         const payload: KeyValue = {};
     
         for (const parameter of params) {
-            if (!this.isMore()) break;
-            
             const options: BuffaloZclOptions = {payload};
     
             if (parameter.condition && !parameter.condition(payload, this)) {
@@ -68,11 +66,16 @@ export class ZBOSSBuffaloZcl extends BuffaloZcl {
 
             if (parameter.type == BuffaloZBOSSDataType.LIST_TYPED && parameter.typed) {
                 payload[parameter.name] = [];
+                
+                if (!this.isMore()) break;
+
                 for (let i = 0; i < options.length; i++) {
                     const internalPaload = this.readByDesc(parameter.typed);
                     payload[parameter.name].push(internalPaload);
                 }
             } else {
+                if (!this.isMore()) break;
+                
                 payload[parameter.name] = this.read(parameter.type as DataType, options);
             }
         }
