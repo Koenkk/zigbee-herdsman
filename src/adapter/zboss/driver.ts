@@ -1,49 +1,48 @@
-import EventEmitter from "events";
+import EventEmitter from 'events';
+
 import equals from 'fast-deep-equal/es6';
 
-import {TsType} from "..";
-import {KeyValue,} from "../../controller/tstype";
+import {TsType} from '..';
+import {KeyValue} from '../../controller/tstype';
 import {Queue, Waitress} from '../../utils';
-import {logger} from "../../utils/logger";
-import {CommandId, ResetOptions, PolicyType, DeviceType, StatusCodeGeneric} from "./enums";
-import {ZBOSSFrame, makeFrame, FrameType} from "./frame";
-import {ZBOSSUart} from "./uart";
+import {logger} from '../../utils/logger';
+import {CommandId, DeviceType, PolicyType, ResetOptions, StatusCodeGeneric} from './enums';
+import {FrameType, makeFrame, ZBOSSFrame} from './frame';
+import {ZBOSSUart} from './uart';
 
 const NS = 'zh:zboss:driv';
 
 const MAX_INIT_ATTEMPTS = 5;
 
-
 type ZBOSSWaitressMatcher = {
-    tsn: number | null,
-    commandId: number,
+    tsn: number | null;
+    commandId: number;
 };
 
 type ZBOSSNetworkInfo = {
-    joined: boolean,
-    nodeType: DeviceType,
-    ieeeAddr: string,
+    joined: boolean;
+    nodeType: DeviceType;
+    ieeeAddr: string;
     network: {
         panID: number;
         extendedPanID: number[];
         channel: number;
-    },
+    };
 };
 
 export class ZBOSSDriver extends EventEmitter {
     public readonly port: ZBOSSUart;
     private waitress: Waitress<ZBOSSFrame, ZBOSSWaitressMatcher>;
     private queue: Queue;
-    private tsn = 1;  // command sequence
+    private tsn = 1; // command sequence
     private nwkOpt: TsType.NetworkOptions;
-    public netInfo: ZBOSSNetworkInfo;
+    public netInfo?: ZBOSSNetworkInfo;
 
     constructor(options: TsType.SerialPortOptions, nwkOpt: TsType.NetworkOptions) {
         super();
         this.nwkOpt = nwkOpt;
         this.queue = new Queue();
-        this.waitress = new Waitress<ZBOSSFrame, ZBOSSWaitressMatcher>(
-            this.waitressValidator, this.waitressTimeoutFormatter);
+        this.waitress = new Waitress<ZBOSSFrame, ZBOSSWaitressMatcher>(this.waitressValidator, this.waitressTimeoutFormatter);
 
         this.port = new ZBOSSUart(options);
         this.port.on('frame', this.onFrame.bind(this));
@@ -52,7 +51,7 @@ export class ZBOSSDriver extends EventEmitter {
     public async connect(): Promise<boolean> {
         logger.info(`Driver connecting`, NS);
 
-        let status: boolean;
+        let status: boolean = false;
 
         for (let i = 0; i < MAX_INIT_ATTEMPTS; i++) {
             status = await this.port.resetNcp();
@@ -82,13 +81,13 @@ export class ZBOSSDriver extends EventEmitter {
     public async startup(): Promise<TsType.StartResult> {
         logger.info(`Driver startup`, NS);
         let result: TsType.StartResult = 'resumed';
-        
+
         if (await this.needsToBeInitialised(this.nwkOpt)) {
             // need to check the backup
             // const restore = await this.needsToBeRestore(this.nwkOpt);
             const restore = false;
 
-            if (this.netInfo.joined) {
+            if (this.netInfo?.joined) {
                 logger.info(`Leaving current network and forming new network`, NS);
                 await this.reset(ResetOptions.FactoryReset);
             }
@@ -117,17 +116,14 @@ export class ZBOSSDriver extends EventEmitter {
         await this.addEndpoint(
             1,
             260,
-            0xbeef, 
+            0xbeef,
             [0x0000, 0x0003, 0x0006, 0x000a, 0x0019, 0x001a, 0x0300],
-            [0x0000, 0x0003, 0x0004, 0x0005, 0x0006, 0x0008, 0x0020, 0x0300, 0x0400, 0x0402, 0x0405, 0x0406, 0x0500, 0x0b01, 0x0b03, 0x0b04, 0x0702, 0x1000, 0xfc01, 0xfc02],
+            [
+                0x0000, 0x0003, 0x0004, 0x0005, 0x0006, 0x0008, 0x0020, 0x0300, 0x0400, 0x0402, 0x0405, 0x0406, 0x0500, 0x0b01, 0x0b03, 0x0b04,
+                0x0702, 0x1000, 0xfc01, 0xfc02,
+            ],
         );
-        await this.addEndpoint(
-            242,
-            0xa1e0,
-            0x61,
-            [],
-            [0x0021],
-        );
+        await this.addEndpoint(242, 0xa1e0, 0x61, [], [0x0021]);
 
         await this.execCommand(CommandId.SET_RX_ON_WHEN_IDLE, {rxOn: 1});
         //await this.execCommand(CommandId.SET_ED_TIMEOUT, {timeout: 8});
@@ -144,14 +140,14 @@ export class ZBOSSDriver extends EventEmitter {
             valid = valid && this.netInfo.nodeType == DeviceType.COORDINATOR;
             valid = valid && options.panID == this.netInfo.network.panID;
             valid = valid && options.channelList.includes(this.netInfo.network.channel);
-            valid = valid && equals(Buffer.from(options.extendedPanID),Buffer.from(this.netInfo.network.extendedPanID));
+            valid = valid && equals(Buffer.from(options.extendedPanID || []), Buffer.from(this.netInfo.network.extendedPanID));
         } else {
             valid = false;
         }
         return !valid;
     }
 
-    private async getNetworkInfo(): Promise<ZBOSSNetworkInfo | null> {
+    private async getNetworkInfo(): Promise<ZBOSSNetworkInfo> {
         let result = await this.execCommand(CommandId.GET_JOINED, {});
         const joined = result.payload.joined == 1;
         if (!joined) {
@@ -160,7 +156,7 @@ export class ZBOSSDriver extends EventEmitter {
 
         result = await this.execCommand(CommandId.GET_ZIGBEE_ROLE, {});
         const nodeType = result.payload.role;
-        
+
         result = await this.execCommand(CommandId.GET_LOCAL_IEEE_ADDR, {mac: 0});
         const ieeeAddr = result.payload.ieee;
 
@@ -181,11 +177,17 @@ export class ZBOSSDriver extends EventEmitter {
                 panID,
                 extendedPanID,
                 channel,
-            }
+            },
         };
     }
 
-    private async addEndpoint(endpoint: number, profileId: number, deviceId: number, inputClusters: number[], outputClusters: number[]): Promise<void> {
+    private async addEndpoint(
+        endpoint: number,
+        profileId: number,
+        deviceId: number,
+        inputClusters: number[],
+        outputClusters: number[],
+    ): Promise<void> {
         const res = await this.execCommand(CommandId.AF_SET_SIMPLE_DESC, {
             endpoint: endpoint,
             profileID: profileId,
@@ -211,17 +213,19 @@ export class ZBOSSDriver extends EventEmitter {
         await this.execCommand(CommandId.SET_PAN_ID, {panID: this.nwkOpt.panID});
         // await this.execCommand(CommandId.SET_EXTENDED_PAN_ID, {extendedPanID: this.nwkOpt.extendedPanID});
         await this.execCommand(CommandId.SET_NWK_KEY, {nwkKey: this.nwkOpt.networkKey, index: 0});
-        
-        const res = await this.execCommand(CommandId.NWK_FORMATION, {
-            len: 1,
-            channels: [
-                {page: 0, mask: channelMask},
-            ],
-            duration: 0x05,
-            distribFlag: 0x00,
-            distribNwk: 0x0000,
-            extendedPanID: this.nwkOpt.extendedPanID,
-        }, 20000);
+
+        const res = await this.execCommand(
+            CommandId.NWK_FORMATION,
+            {
+                len: 1,
+                channels: [{page: 0, mask: channelMask}],
+                duration: 0x05,
+                distribFlag: 0x00,
+                distribNwk: 0x0000,
+                extendedPanID: this.nwkOpt.extendedPanID,
+            },
+            20000,
+        );
         logger.debug(`Forming network: ${JSON.stringify(res)}`, NS);
     }
 
@@ -241,11 +245,11 @@ export class ZBOSSDriver extends EventEmitter {
         }
     }
 
-    public isInitialized(): boolean {
+    public isInitialized(): boolean | undefined {
         return this.port.portOpen && !this.port.inReset;
     }
 
-    public async execCommand(commandId: number, params: KeyValue = null, timeout: number = 10000): Promise<ZBOSSFrame> {
+    public async execCommand(commandId: number, params: KeyValue = {}, timeout: number = 10000): Promise<ZBOSSFrame> {
         logger.debug(`==> ${CommandId[commandId]}(${commandId}): ${JSON.stringify(params)}`, NS);
 
         if (!this.port.portOpen) {
@@ -255,7 +259,7 @@ export class ZBOSSDriver extends EventEmitter {
         return this.queue.execute<ZBOSSFrame>(async (): Promise<ZBOSSFrame> => {
             const frame = makeFrame(FrameType.REQUEST, commandId, params);
             frame.tsn = this.tsn;
-            const waiter = this.waitFor(commandId, (commandId == CommandId.NCP_RESET) ? null : this.tsn, timeout);
+            const waiter = this.waitFor(commandId, commandId == CommandId.NCP_RESET ? null : this.tsn, timeout);
             this.tsn = (this.tsn + 1) & 255;
 
             try {
@@ -276,8 +280,7 @@ export class ZBOSSDriver extends EventEmitter {
         });
     }
 
-    public waitFor(commandId: number, tsn: number | null, timeout = 10000)
-        : { start: () => { promise: Promise<ZBOSSFrame>; ID: number }; ID: number } {
+    public waitFor(commandId: number, tsn: number | null, timeout = 10000): {start: () => {promise: Promise<ZBOSSFrame>; ID: number}; ID: number} {
         return this.waitress.waitFor({commandId, tsn}, timeout);
     }
 
@@ -286,10 +289,7 @@ export class ZBOSSDriver extends EventEmitter {
     }
 
     private waitressValidator(payload: ZBOSSFrame, matcher: ZBOSSWaitressMatcher): boolean {
-        return (
-            (matcher.tsn == null || payload.tsn === matcher.tsn) &&
-            (matcher.commandId == payload.commandId)
-        );
+        return (matcher.tsn == null || payload.tsn === matcher.tsn) && matcher.commandId == payload.commandId;
     }
 
     public async getCoordinator(): Promise<TsType.Coordinator> {
@@ -305,9 +305,9 @@ export class ZBOSSDriver extends EventEmitter {
                 inputClusters: sd.payload.inputClusters,
                 outputClusters: sd.payload.outputClusters,
             });
-        };
+        }
         return {
-            ieeeAddr: this.netInfo.ieeeAddr,
+            ieeeAddr: this.netInfo?.ieeeAddr || '',
             networkAddress: 0x0000,
             manufacturerID: 0x0000,
             endpoints: ap,
@@ -318,13 +318,13 @@ export class ZBOSSDriver extends EventEmitter {
         const ver = await this.execCommand(CommandId.GET_MODULE_VERSION, {});
         const cver = await this.execCommand(CommandId.GET_COORDINATOR_VERSION, {});
         const ver2str = (version: number): string => {
-            const major = (version >> 24 & 0xFF);
-            const minor = (version >> 16 & 0xFF);
-            const revision = (version >> 8 & 0xFF);
-            const commit = (version & 0xFF);
+            const major = (version >> 24) & 0xff;
+            const minor = (version >> 16) & 0xff;
+            const revision = (version >> 8) & 0xff;
+            const commit = version & 0xff;
             return `${major}.${minor}.${revision}.${commit}`;
         };
-        
+
         return {
             type: `zboss`,
             meta: {
@@ -379,7 +379,7 @@ export class ZBOSSDriver extends EventEmitter {
             srcEndpoint: srcEp,
             radius: 3,
             dstAddrMode: 3, // ADDRESS MODE ieee
-            txOptions: 2, // ROUTE DISCOVERY 
+            txOptions: 2, // ROUTE DISCOVERY
             useAlias: 0,
             aliasAddr: 0,
             aliasSequence: 0,
@@ -388,27 +388,41 @@ export class ZBOSSDriver extends EventEmitter {
         return this.execCommand(CommandId.APSDE_DATA_REQ, payload);
     }
 
-    public async bind(destinationNetworkAddress: number, sourceIeeeAddress: string, sourceEndpoint: number, clusterID: number,
-        destinationAddressOrGroup: string | number, type: "endpoint" | "group", destinationEndpoint?: number): Promise<ZBOSSFrame> {
+    public async bind(
+        destinationNetworkAddress: number,
+        sourceIeeeAddress: string,
+        sourceEndpoint: number,
+        clusterID: number,
+        destinationAddressOrGroup: string | number,
+        type: 'endpoint' | 'group',
+        destinationEndpoint?: number,
+    ): Promise<ZBOSSFrame> {
         return this.execCommand(CommandId.ZDO_BIND_REQ, {
             target: destinationNetworkAddress,
             srcIeee: sourceIeeeAddress,
             srcEP: sourceEndpoint,
             clusterID: clusterID,
-            addrMode: (type == 'endpoint') ? 3 /* ieee */ : 1 /* group */,
+            addrMode: type == 'endpoint' ? 3 /* ieee */ : 1 /* group */,
             dstIeee: destinationAddressOrGroup,
             dstEP: destinationEndpoint || 1,
         });
     }
 
-    public async unbind(destinationNetworkAddress: number, sourceIeeeAddress: string, sourceEndpoint: number, clusterID: number,
-        destinationAddressOrGroup: string | number, type: "endpoint" | "group", destinationEndpoint?: number): Promise<ZBOSSFrame> {
+    public async unbind(
+        destinationNetworkAddress: number,
+        sourceIeeeAddress: string,
+        sourceEndpoint: number,
+        clusterID: number,
+        destinationAddressOrGroup: string | number,
+        type: 'endpoint' | 'group',
+        destinationEndpoint?: number,
+    ): Promise<ZBOSSFrame> {
         return this.execCommand(CommandId.ZDO_UNBIND_REQ, {
             target: destinationNetworkAddress,
             srcIeee: sourceIeeeAddress,
             srcEP: sourceEndpoint,
             clusterID: clusterID,
-            addrMode: (type == 'endpoint') ? 3 /* ieee */ : 1 /* group */,
+            addrMode: type == 'endpoint' ? 3 /* ieee */ : 1 /* group */,
             dstIeee: destinationAddressOrGroup,
             dstEP: destinationEndpoint || 1,
         });
@@ -417,5 +431,4 @@ export class ZBOSSDriver extends EventEmitter {
     public async ieeeByNwk(nwk: number): Promise<string> {
         return (await this.execCommand(CommandId.NWK_GET_IEEE_BY_SHORT, {nwk: nwk})).payload.ieee;
     }
-
-};
+}

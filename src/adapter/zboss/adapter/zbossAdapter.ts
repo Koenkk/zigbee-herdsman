@@ -1,25 +1,16 @@
-import {Adapter, TsType} from "../..";
-import {Backup} from "../../../models";
-import {Queue, Waitress, RealpathSync} from "../../../utils";
-import {logger} from "../../../utils/logger";
+import {Adapter, TsType} from '../..';
+import {Backup} from '../../../models';
+import {Queue, RealpathSync, Waitress} from '../../../utils';
+import {logger} from '../../../utils/logger';
 import {BroadcastAddress} from '../../../zspec/enums';
-import * as Zcl from "../../../zspec/zcl";
-import {
-    Events,
-    DeviceJoinedPayload,
-    DeviceLeavePayload,
-    ZclPayload,
-} from "../../events";
-import {
-    Coordinator,
-    LQI,
-    LQINeighbor,
-} from '../../tstype';
-import {ZBOSSDriver} from '../driver';
-import {CommandId, DeviceUpdateStatus} from "../enums";
-import {ZBOSSFrame, FrameType} from "../frame";
+import * as Zcl from '../../../zspec/zcl';
+import {DeviceJoinedPayload, DeviceLeavePayload, ZclPayload} from '../../events';
 import SerialPortUtils from '../../serialPortUtils';
 import SocketPortUtils from '../../socketPortUtils';
+import {Coordinator, LQI, LQINeighbor} from '../../tstype';
+import {ZBOSSDriver} from '../driver';
+import {CommandId, DeviceUpdateStatus} from '../enums';
+import {FrameType, ZBOSSFrame} from '../frame';
 
 const NS = 'zh:zboss';
 
@@ -36,20 +27,23 @@ interface WaitressMatcher {
     commandIdentifier: number;
 }
 
-
 export class ZBOSSAdapter extends Adapter {
     private queue: Queue;
     private readonly driver: ZBOSSDriver;
     private waitress: Waitress<ZclPayload, WaitressMatcher>;
-    public coordinator: Coordinator;
+    public coordinator?: Coordinator;
 
-    constructor(networkOptions: TsType.NetworkOptions, serialPortOptions: TsType.SerialPortOptions, backupPath: string,
-        adapterOptions: TsType.AdapterOptions) {
+    constructor(
+        networkOptions: TsType.NetworkOptions,
+        serialPortOptions: TsType.SerialPortOptions,
+        backupPath: string,
+        adapterOptions: TsType.AdapterOptions,
+    ) {
         super(networkOptions, serialPortOptions, backupPath, adapterOptions);
         const concurrent = adapterOptions && adapterOptions.concurrent ? adapterOptions.concurrent : 8;
         logger.debug(`Adapter concurrent: ${concurrent}`, NS);
         this.queue = new Queue(concurrent);
-        
+
         this.waitress = new Waitress<ZclPayload, WaitressMatcher>(this.waitressValidator, this.waitressTimeoutFormatter);
         this.driver = new ZBOSSDriver(serialPortOptions, networkOptions);
         this.driver.on('frame', this.processMessage.bind(this));
@@ -57,14 +51,18 @@ export class ZBOSSAdapter extends Adapter {
 
     private async processMessage(frame: ZBOSSFrame): Promise<void> {
         logger.debug(`processMessage: ${JSON.stringify(frame)}`, NS);
-        if (frame.type == FrameType.INDICATION && frame.commandId == CommandId.ZDO_DEV_UPDATE_IND && frame.payload.status == DeviceUpdateStatus.LEFT) {
+        if (
+            frame.type == FrameType.INDICATION &&
+            frame.commandId == CommandId.ZDO_DEV_UPDATE_IND &&
+            frame.payload.status == DeviceUpdateStatus.LEFT
+        ) {
             logger.debug(`Device left network request received: ${frame.payload.nwk} ${frame.payload.ieee}`, NS);
             const payload: DeviceLeavePayload = {
                 networkAddress: frame.payload.nwk,
                 ieeeAddr: frame.payload.ieee,
             };
 
-            this.emit(Events.deviceLeave, payload);
+            this.emit('deviceLeave', payload);
         }
         if (frame.type == FrameType.INDICATION && frame.commandId == CommandId.NWK_LEAVE_IND) {
             logger.debug(`Device left network request received from ${frame.payload.ieee}`, NS);
@@ -73,7 +71,7 @@ export class ZBOSSAdapter extends Adapter {
                 ieeeAddr: frame.payload.ieee,
             };
 
-            this.emit(Events.deviceLeave, payload);
+            this.emit('deviceLeave', payload);
         }
         if (frame.type == FrameType.INDICATION && frame.commandId == CommandId.ZDO_DEV_ANNCE_IND) {
             logger.debug(`Device join request received: ${frame.payload.nwk} ${frame.payload.ieee}`, NS);
@@ -82,10 +80,10 @@ export class ZBOSSAdapter extends Adapter {
                 ieeeAddr: frame.payload.ieee,
             };
 
-            this.emit(Events.deviceJoined, payload);
+            this.emit('deviceJoined', payload);
         }
-        
-        if (frame.type == FrameType.INDICATION && frame.commandId == CommandId.APSDE_DATA_IND) {         
+
+        if (frame.type == FrameType.INDICATION && frame.commandId == CommandId.APSDE_DATA_IND) {
             logger.debug(`ZCL frame received from ${frame.payload.srcNwk} ${frame.payload.srcEndpoint}`, NS);
             const payload: ZclPayload = {
                 clusterID: frame.payload.clusterID,
@@ -100,9 +98,9 @@ export class ZBOSSAdapter extends Adapter {
             };
 
             this.waitress.resolve(payload);
-            this.emit(Events.zclPayload, payload);
+            this.emit('zclPayload', payload);
         }
-        this.emit('event', frame);
+        //this.emit('event', frame);
     }
 
     public static async isValidPath(path: string): Promise<boolean> {
@@ -119,7 +117,7 @@ export class ZBOSSAdapter extends Adapter {
         }
     }
 
-    public static async autoDetectPath(): Promise<string> {
+    public static async autoDetectPath(): Promise<string | null> {
         const paths = await SerialPortUtils.find(autoDetectDefinitions);
         paths.sort((a, b) => (a < b ? -1 : 1));
         return paths.length > 0 ? paths[0] : null;
@@ -135,7 +133,7 @@ export class ZBOSSAdapter extends Adapter {
 
     public async stop(): Promise<void> {
         await this.driver.stop();
-        
+
         logger.info(`ZBOSS Adapter stopped`, NS);
     }
 
@@ -159,8 +157,8 @@ export class ZBOSSAdapter extends Adapter {
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    public async reset(type: "soft" | "hard"): Promise<void> {
-        return Promise.reject(new Error("Not supported"));
+    public async reset(type: 'soft' | 'hard'): Promise<void> {
+        return Promise.reject(new Error('Not supported'));
     }
 
     public async supportsBackup(): Promise<boolean> {
@@ -169,14 +167,14 @@ export class ZBOSSAdapter extends Adapter {
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     public async backup(ieeeAddressesInDatabase: string[]): Promise<Backup> {
-        return null;
+        throw new Error('This adapter does not support backup');
     }
 
     public async getNetworkParameters(): Promise<TsType.NetworkParameters> {
         return this.queue.execute<TsType.NetworkParameters>(async () => {
-            const channel = this.driver.netInfo.network.channel;
-            const panID = this.driver.netInfo.network.panID;
-            const extendedPanID = this.driver.netInfo.network.extendedPanID;
+            const channel = this.driver.netInfo!.network.channel;
+            const panID = this.driver.netInfo!.network.panID!;
+            const extendedPanID = this.driver.netInfo!.network.extendedPanID;
 
             return {
                 panID,
@@ -192,7 +190,7 @@ export class ZBOSSAdapter extends Adapter {
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     public async changeChannel(newChannel: number): Promise<void> {
-        return null;
+        throw new Error(`Channel change is not supported for 'zboss' yet`);
     }
 
     public async setTransmitPower(value: number): Promise<void> {
@@ -205,7 +203,7 @@ export class ZBOSSAdapter extends Adapter {
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     public async addInstallCode(ieeeAddress: string, key: Buffer): Promise<void> {
-        return null;
+        throw new Error(`Install code is not supported for 'zboss' yet`);
     }
 
     public async permitJoin(seconds: number, networkAddress: number): Promise<void> {
@@ -214,7 +212,7 @@ export class ZBOSSAdapter extends Adapter {
                 await this.driver.permitJoin(networkAddress, seconds);
                 if (!networkAddress) {
                     // send broadcast permit
-                    await this.driver.permitJoin(0xFFFC, seconds);
+                    await this.driver.permitJoin(0xfffc, seconds);
                 }
             });
         }
@@ -229,7 +227,7 @@ export class ZBOSSAdapter extends Adapter {
                     const result = await this.driver.lqi(networkAddress, startIndex);
 
                     return result;
-                } catch(error) {
+                } catch (error) {
                     throw new Error(`LQI for '${networkAddress}' failed: ${error}`);
                 }
             };
@@ -264,7 +262,7 @@ export class ZBOSSAdapter extends Adapter {
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     public async routingTable(networkAddress: number): Promise<TsType.RoutingTable> {
-        return null;
+        throw new Error(`Routing table is not supported for 'zboss' yet`);
     }
 
     public async nodeDescriptor(networkAddress: number): Promise<TsType.NodeDescriptor> {
@@ -306,17 +304,47 @@ export class ZBOSSAdapter extends Adapter {
         }, networkAddress);
     }
 
-    public async bind(destinationNetworkAddress: number, sourceIeeeAddress: string, sourceEndpoint: number, clusterID: number,
-        destinationAddressOrGroup: string | number, type: "endpoint" | "group", destinationEndpoint?: number): Promise<void> {
+    public async bind(
+        destinationNetworkAddress: number,
+        sourceIeeeAddress: string,
+        sourceEndpoint: number,
+        clusterID: number,
+        destinationAddressOrGroup: string | number,
+        type: 'endpoint' | 'group',
+        destinationEndpoint?: number,
+    ): Promise<void> {
         return this.queue.execute<void>(async () => {
-            await this.driver.bind(destinationNetworkAddress, sourceIeeeAddress, sourceEndpoint, clusterID, destinationAddressOrGroup, type, destinationEndpoint);
+            await this.driver.bind(
+                destinationNetworkAddress,
+                sourceIeeeAddress,
+                sourceEndpoint,
+                clusterID,
+                destinationAddressOrGroup,
+                type,
+                destinationEndpoint,
+            );
         }, destinationNetworkAddress);
     }
 
-    public async unbind(destinationNetworkAddress: number, sourceIeeeAddress: string, sourceEndpoint: number, clusterID: number,
-        destinationAddressOrGroup: string | number, type: "endpoint" | "group", destinationEndpoint: number): Promise<void> {
+    public async unbind(
+        destinationNetworkAddress: number,
+        sourceIeeeAddress: string,
+        sourceEndpoint: number,
+        clusterID: number,
+        destinationAddressOrGroup: string | number,
+        type: 'endpoint' | 'group',
+        destinationEndpoint: number,
+    ): Promise<void> {
         return this.queue.execute<void>(async () => {
-            await this.driver.unbind(destinationNetworkAddress, sourceIeeeAddress, sourceEndpoint, clusterID, destinationAddressOrGroup, type, destinationEndpoint);
+            await this.driver.unbind(
+                destinationNetworkAddress,
+                sourceIeeeAddress,
+                sourceEndpoint,
+                clusterID,
+                destinationAddressOrGroup,
+                type,
+                destinationEndpoint,
+            );
         }, destinationNetworkAddress);
     }
 
@@ -326,9 +354,17 @@ export class ZBOSSAdapter extends Adapter {
         }, networkAddress);
     }
 
-    public async sendZclFrameToEndpoint(ieeeAddr: string, networkAddress: number, endpoint: number, zclFrame: Zcl.Frame, timeout: number,
-        disableResponse: boolean, disableRecovery: boolean, sourceEndpoint?: number): Promise<ZclPayload> {
-        return this.queue.execute<ZclPayload>(async () => {
+    public async sendZclFrameToEndpoint(
+        ieeeAddr: string,
+        networkAddress: number,
+        endpoint: number,
+        zclFrame: Zcl.Frame,
+        timeout: number,
+        disableResponse: boolean,
+        disableRecovery: boolean,
+        sourceEndpoint?: number,
+    ): Promise<ZclPayload | void> {
+        return this.queue.execute<ZclPayload | void>(async () => {
             return this.sendZclFrameToEndpointInternal(
                 ieeeAddr,
                 networkAddress,
@@ -362,10 +398,10 @@ export class ZBOSSAdapter extends Adapter {
         checkedNetworkAddress: boolean,
         discoveredRoute: boolean,
         assocRemove: boolean,
-        assocRestore: {ieeeadr: string; nwkaddr: number; noderelation: number},
-    ): Promise<ZclPayload> {
+        assocRestore: {ieeeadr: string; nwkaddr: number; noderelation: number} | null,
+    ): Promise<ZclPayload | void> {
         if (ieeeAddr == null) {
-            ieeeAddr = this.coordinator.ieeeAddr;
+            ieeeAddr = this.coordinator!.ieeeAddr;
         }
         logger.debug(
             `sendZclFrameToEndpointInternal ${ieeeAddr}:${networkAddress}/${endpoint} ` +
@@ -380,7 +416,7 @@ export class ZBOSSAdapter extends Adapter {
                 endpoint,
                 zclFrame.header.transactionSequenceNumber,
                 zclFrame.cluster.ID,
-                command.response,
+                command.response!,
                 timeout,
             );
         } else if (!zclFrame.header.frameControl.disableDefaultResponse) {
@@ -395,7 +431,11 @@ export class ZBOSSAdapter extends Adapter {
         }
 
         const dataConfirmResult = await this.driver.request(
-            ieeeAddr, 0x0104, zclFrame.cluster.ID, endpoint, sourceEndpoint || 0x01,
+            ieeeAddr,
+            0x0104,
+            zclFrame.cluster.ID,
+            endpoint,
+            sourceEndpoint || 0x01,
             zclFrame.toBuffer(),
         );
         if (!dataConfirmResult) {
@@ -432,40 +472,39 @@ export class ZBOSSAdapter extends Adapter {
                 }
             }
         } else {
-            return null;
+            return;
         }
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     public async sendZclFrameToGroup(groupID: number, zclFrame: Zcl.Frame, sourceEndpoint?: number): Promise<void> {
-        return null;
+        throw new Error(`Is not supported for 'zboss' yet`);
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     public async sendZclFrameToAll(endpoint: number, zclFrame: Zcl.Frame, sourceEndpoint: number, destination: BroadcastAddress): Promise<void> {
-        return null;
+        throw new Error(`Is not supported for 'zboss' yet`);
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     public async setChannelInterPAN(channel: number): Promise<void> {
-        return null;
+        throw new Error(`Is not supported for 'zboss' yet`);
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     public async sendZclFrameInterPANToIeeeAddr(zclFrame: Zcl.Frame, ieeeAddress: string): Promise<void> {
-        return null;
+        throw new Error(`Is not supported for 'zboss' yet`);
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     public async sendZclFrameInterPANBroadcast(zclFrame: Zcl.Frame, timeout: number): Promise<ZclPayload> {
-        return null;
+        throw new Error(`Is not supported for 'zboss' yet`);
     }
 
     public async restoreChannelInterPAN(): Promise<void> {
-        return null;
+        throw new Error(`Is not supported for 'zboss' yet`);
     }
 
-    
     public waitFor(
         networkAddress: number,
         endpoint: number,
@@ -475,7 +514,7 @@ export class ZBOSSAdapter extends Adapter {
         clusterID: number,
         commandIdentifier: number,
         timeout: number,
-    ): {promise: Promise<ZclPayload>; cancel: () => void, start: () => {promise: Promise<ZclPayload>}; } {
+    ): {promise: Promise<ZclPayload>; cancel: () => void; start: () => {promise: Promise<ZclPayload>}} {
         const payload = {
             address: networkAddress,
             endpoint,
@@ -500,12 +539,13 @@ export class ZBOSSAdapter extends Adapter {
 
     private waitressValidator(payload: ZclPayload, matcher: WaitressMatcher): boolean {
         return (
-            payload.header &&
-            (!matcher.address || payload.address === matcher.address) &&
-            payload.endpoint === matcher.endpoint &&
-            (!matcher.transactionSequenceNumber || payload.header.transactionSequenceNumber === matcher.transactionSequenceNumber) &&
-            payload.clusterID === matcher.clusterID &&
-            matcher.commandIdentifier === payload.header.commandIdentifier
+            (payload.header &&
+                (!matcher.address || payload.address === matcher.address) &&
+                payload.endpoint === matcher.endpoint &&
+                (!matcher.transactionSequenceNumber || payload.header.transactionSequenceNumber === matcher.transactionSequenceNumber) &&
+                payload.clusterID === matcher.clusterID &&
+                matcher.commandIdentifier === payload.header.commandIdentifier) ||
+            false
         );
     }
 }

@@ -1,27 +1,27 @@
-import {Socket} from "net";
-import EventEmitter from "stream";
+import {Socket} from 'net';
+import EventEmitter from 'stream';
 
 import {Queue, Waitress} from '../../utils';
-import {logger} from "../../utils/logger";
-import wait from "../../utils/wait";
-import {SerialPort} from "../serialPort";
-import SocketPortUtils from "../socketPortUtils";
-import {SerialPortOptions} from "../tstype";
-import {SIGNATURE, ZBOSS_NCP_API_HL, ZBOSS_FLAG_FIRST_FRAGMENT, ZBOSS_FLAG_LAST_FRAGMENT} from "./consts";
-import {ZBOSSFrame, readZBOSSFrame, writeZBOSSFrame} from "./frame";
-import {ZBOSSReader} from "./reader";
-import {crc8, crc16} from "./utils";
-import {ZBOSSWriter} from "./writer";
+import {logger} from '../../utils/logger';
+import wait from '../../utils/wait';
+import {SerialPort} from '../serialPort';
+import SocketPortUtils from '../socketPortUtils';
+import {SerialPortOptions} from '../tstype';
+import {SIGNATURE, ZBOSS_FLAG_FIRST_FRAGMENT, ZBOSS_FLAG_LAST_FRAGMENT, ZBOSS_NCP_API_HL} from './consts';
+import {readZBOSSFrame, writeZBOSSFrame, ZBOSSFrame} from './frame';
+import {ZBOSSReader} from './reader';
+import {crc8, crc16} from './utils';
+import {ZBOSSWriter} from './writer';
 
 const NS = 'zh:zboss:uart';
 
 export class ZBOSSUart extends EventEmitter {
     private readonly portOptions: SerialPortOptions;
-    private serialPort: SerialPort;
-    private socketPort: Socket;
+    private serialPort?: SerialPort;
+    private socketPort?: Socket;
     private writer: ZBOSSWriter;
     private reader: ZBOSSReader;
-    private closing: boolean;
+    private closing: boolean = false;
     private sendSeq = 0; // next frame number to send
     private recvSeq = 0; // next frame number to receive
     private ackSeq = 0; // next number after the last accepted frame
@@ -33,8 +33,10 @@ export class ZBOSSUart extends EventEmitter {
         super();
 
         this.portOptions = options;
-        this.serialPort = null;
-        this.socketPort = null;
+        this.serialPort = undefined;
+        this.socketPort = undefined;
+        this.writer = new ZBOSSWriter();
+        this.reader = new ZBOSSReader();
         this.queue = new Queue(1);
         this.waitress = new Waitress<number, number>(this.waitressValidator, this.waitressTimeoutFormatter);
     }
@@ -59,11 +61,11 @@ export class ZBOSSUart extends EventEmitter {
         }
     }
 
-    get portOpen(): boolean {
+    get portOpen(): boolean | undefined {
         if (this.closing) {
             return false;
         }
-        if (SocketPortUtils.isTcpPath(this.portOptions.path)) {
+        if (SocketPortUtils.isTcpPath(this.portOptions.path!)) {
             return this.socketPort && !this.socketPort.closed;
         } else {
             return this.serialPort && this.serialPort.isOpen;
@@ -100,10 +102,10 @@ export class ZBOSSUart extends EventEmitter {
     private async openPort(): Promise<void> {
         await this.closePort();
 
-        if (!SocketPortUtils.isTcpPath(this.portOptions.path)) {
+        if (!SocketPortUtils.isTcpPath(this.portOptions.path!)) {
             const serialOpts = {
-                path: this.portOptions.path,
-                baudRate: typeof this.portOptions.baudRate === 'number' ? this.portOptions.baudRate : 115200, 
+                path: this.portOptions.path!,
+                baudRate: typeof this.portOptions.baudRate === 'number' ? this.portOptions.baudRate : 115200,
                 rtscts: typeof this.portOptions.rtscts === 'boolean' ? this.portOptions.rtscts : false,
                 autoOpen: false,
             };
@@ -117,13 +119,11 @@ export class ZBOSSUart extends EventEmitter {
             logger.debug(`Opening serial port with ${JSON.stringify(serialOpts)}`, NS);
             this.serialPort = new SerialPort(serialOpts);
 
-            this.writer = new ZBOSSWriter();
             this.writer.pipe(this.serialPort);
 
-            this.reader = new ZBOSSReader();
             this.serialPort.pipe(this.reader);
             this.reader.on('data', this.onPackage.bind(this));
-            
+
             try {
                 await this.serialPort.asyncOpen();
                 logger.info(`Serial port opened`, NS);
@@ -136,17 +136,15 @@ export class ZBOSSUart extends EventEmitter {
                 throw error;
             }
         } else {
-            const info = SocketPortUtils.parseTcpPath(this.portOptions.path);
+            const info = SocketPortUtils.parseTcpPath(this.portOptions.path!);
             logger.debug(`Opening TCP socket with ${info.host}:${info.port}`, NS);
 
             this.socketPort = new Socket();
             this.socketPort.setNoDelay(true);
             this.socketPort.setKeepAlive(true, 15000);
 
-            this.writer = new ZBOSSWriter();
             this.writer.pipe(this.socketPort);
 
-            this.reader = new ZBOSSReader();
             this.socketPort.pipe(this.reader);
             this.reader.on('data', this.onPackage.bind(this));
 
@@ -157,20 +155,20 @@ export class ZBOSSUart extends EventEmitter {
                     reject(err);
                 };
 
-                this.socketPort.on('connect', () => {
+                this.socketPort?.on('connect', () => {
                     logger.debug(`Socket connected`, NS);
                 });
-                this.socketPort.on('ready', async (): Promise<void> => {
+                this.socketPort?.on('ready', async (): Promise<void> => {
                     logger.info(`Socket ready`, NS);
-                    this.socketPort.removeListener('error', openError);
-                    this.socketPort.once('close', this.onPortClose.bind(this));
-                    this.socketPort.on('error', this.onPortError.bind(this));
+                    this.socketPort?.removeListener('error', openError);
+                    this.socketPort?.once('close', this.onPortClose.bind(this));
+                    this.socketPort?.on('error', this.onPortError.bind(this));
 
                     resolve();
                 });
-                this.socketPort.once('error', openError);
+                this.socketPort?.once('error', openError);
 
-                this.socketPort.connect(info.port, info.host);
+                this.socketPort?.connect(info.port, info.host);
             });
         }
     }
@@ -184,11 +182,11 @@ export class ZBOSSUart extends EventEmitter {
             }
 
             this.serialPort.removeAllListeners();
-            this.serialPort = null;
-        } else if (this.socketPort != null && !this.socketPort.closed) {
+            this.serialPort = undefined;
+        } else if (this.socketPort != undefined && !this.socketPort.closed) {
             this.socketPort.destroy();
             this.socketPort.removeAllListeners();
-            this.socketPort = null;
+            this.socketPort = undefined;
         }
     }
 
@@ -211,14 +209,16 @@ export class ZBOSSUart extends EventEmitter {
         const pType = data.readUInt8(2);
         const pFlags = data.readUInt8(3);
         const isACK = (pFlags & 0x1) === 1;
-        const retransmit = (pFlags >> 1 & 0x1) === 1;
-        const sequence = pFlags >> 2 & 0x3;
-        const ACKseq = pFlags >> 4 & 0x3;
-        const isFirst = (pFlags >> 6 & 0x1) === 1;
-        const isLast = (pFlags >> 7 & 0x1) === 1;
-        logger.debug(`<-- package type ${pType}, flags ${pFlags.toString(16)}`+
-            `${JSON.stringify({isACK, retransmit, sequence, ACKseq, isFirst, isLast})}`, NS);
-        
+        const retransmit = ((pFlags >> 1) & 0x1) === 1;
+        const sequence = (pFlags >> 2) & 0x3;
+        const ACKseq = (pFlags >> 4) & 0x3;
+        const isFirst = ((pFlags >> 6) & 0x1) === 1;
+        const isLast = ((pFlags >> 7) & 0x1) === 1;
+        logger.debug(
+            `<-- package type ${pType}, flags ${pFlags.toString(16)}` + `${JSON.stringify({isACK, retransmit, sequence, ACKseq, isFirst, isLast})}`,
+            NS,
+        );
+
         if (pType !== ZBOSS_NCP_API_HL) {
             logger.error(`<-- Wrong package type: ${pType}`, NS);
             return;
@@ -240,7 +240,7 @@ export class ZBOSSUart extends EventEmitter {
             logger.error(`<-- Wrong package header crc: is ${hCRC}, expected ${hCRC8}`, NS);
             return;
         }
-        
+
         // body crc
         const bCRC = data.readUInt16LE(5);
         const body = data.subarray(7);
@@ -263,7 +263,7 @@ export class ZBOSSUart extends EventEmitter {
                 this.emit('frame', frame);
             }
         } catch (error) {
-            logger.debug(`<-- error ${error.stack}`, NS);
+            logger.debug(`<-- error ${(error as Error).stack}`, NS);
         }
     }
 
@@ -275,17 +275,20 @@ export class ZBOSSUart extends EventEmitter {
             flags = flags | ZBOSS_FLAG_FIRST_FRAGMENT | ZBOSS_FLAG_LAST_FRAGMENT;
             const pack = this.makePack(flags, buf);
             const isACK = (flags & 0x1) === 1;
-            const retransmit = (flags >> 1 & 0x1) === 1;
-            const sequence = flags >> 2 & 0x3;
-            const ACKseq = flags >> 4 & 0x3;
-            const isFirst = (flags >> 6 & 0x1) === 1;
-            const isLast = (flags >> 7 & 0x1) === 1;
-            logger.debug(`--> package type ${ZBOSS_NCP_API_HL}, flags ${flags.toString(16)}`+
-                `${JSON.stringify({isACK, retransmit, sequence, ACKseq, isFirst, isLast})}`, NS);
+            const retransmit = ((flags >> 1) & 0x1) === 1;
+            const sequence = (flags >> 2) & 0x3;
+            const ACKseq = (flags >> 4) & 0x3;
+            const isFirst = ((flags >> 6) & 0x1) === 1;
+            const isLast = ((flags >> 7) & 0x1) === 1;
+            logger.debug(
+                `--> package type ${ZBOSS_NCP_API_HL}, flags ${flags.toString(16)}` +
+                    `${JSON.stringify({isACK, retransmit, sequence, ACKseq, isFirst, isLast})}`,
+                NS,
+            );
             logger.debug(`--> PACK: ${pack.toString('hex')}`, NS);
             await this.sendDATA(pack);
         } catch (error) {
-            logger.debug(`--> error ${error.stack}`, NS);
+            logger.debug(`--> error ${(error as Error).stack}`, NS);
         }
     }
 
@@ -333,7 +336,7 @@ export class ZBOSSUart extends EventEmitter {
         /* Handle an acknowledgement package */
         // next number after the last accepted package
         this.ackSeq = ackSeq & 0x03;
-        
+
         logger.debug(`<-- ACK (${this.ackSeq})`, NS);
 
         const handled = this.waitress.resolve(this.ackSeq);
@@ -344,8 +347,8 @@ export class ZBOSSUart extends EventEmitter {
             // but has already sent us the next one.
             logger.debug(`Unexpected packet sequence ${this.ackSeq} | ${this.sendSeq}`, NS);
         } else {
-            // next 
-            this.sendSeq = {0: 1, 1: 2, 2: 3, 3: 1}[this.sendSeq];
+            // next
+            this.sendSeq = {0: 1, 1: 2, 2: 3, 3: 1}[this.sendSeq] || 1;
         }
 
         return handled;
@@ -353,20 +356,23 @@ export class ZBOSSUart extends EventEmitter {
 
     private async sendACK(ackNum: number, retransmit: boolean = false): Promise<void> {
         /* Construct a acknowledgement package */
-        
+
         let flags = (ackNum & 0x03) << 4; // ACKseq
         flags |= 0x01; // isACK
         if (retransmit) {
             flags |= 0x02; // retransmit
         }
-        const ackPackage = this.makePack(flags, null);
+        const ackPackage = this.makePack(flags, undefined);
         const isACK = (flags & 0x1) === 1;
-        const sequence = flags >> 2 & 0x3;
-        const ACKseq = flags >> 4 & 0x3;
-        const isFirst = (flags >> 6 & 0x1) === 1;
-        const isLast = (flags >> 7 & 0x1) === 1;
-        logger.debug(`--> package type ${ZBOSS_NCP_API_HL}, flags ${flags.toString(16)}`+
-            `${JSON.stringify({isACK, retransmit, sequence, ACKseq, isFirst, isLast})}`, NS);
+        const sequence = (flags >> 2) & 0x3;
+        const ACKseq = (flags >> 4) & 0x3;
+        const isFirst = ((flags >> 6) & 0x1) === 1;
+        const isLast = ((flags >> 7) & 0x1) === 1;
+        logger.debug(
+            `--> package type ${ZBOSS_NCP_API_HL}, flags ${flags.toString(16)}` +
+                `${JSON.stringify({isACK, retransmit, sequence, ACKseq, isFirst, isLast})}`,
+            NS,
+        );
         logger.debug(`-->  ACK: ${ackPackage.toString('hex')}`, NS);
         await this.sendDATA(ackPackage, true);
     }
@@ -378,7 +384,7 @@ export class ZBOSSUart extends EventEmitter {
 
     private makePack(flags: number, data?: Buffer): Buffer {
         /* Construct a package */
-        const packLen = 5 + ((data) ? data.length + 2 : 0);
+        const packLen = 5 + (data ? data.length + 2 : 0);
         const header = Buffer.alloc(7);
         header.writeUint16BE(SIGNATURE);
         header.writeUint16LE(packLen, 2);

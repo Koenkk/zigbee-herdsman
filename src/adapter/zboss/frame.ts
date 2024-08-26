@@ -1,10 +1,10 @@
-import {KeyValue} from "../../controller/tstype";
-import {DataType} from "../../zspec/zcl";
-import {BuffaloZcl} from "../../zspec/zcl/buffaloZcl";
-import {BuffaloZclDataType} from "../../zspec/zcl/definition/enums";
+import {KeyValue} from '../../controller/tstype';
+import {DataType} from '../../zspec/zcl';
+import {BuffaloZcl} from '../../zspec/zcl/buffaloZcl';
+import {BuffaloZclDataType} from '../../zspec/zcl/definition/enums';
 import {BuffaloZclOptions} from '../../zspec/zcl/definition/tstype';
-import {FRAMES, ParamsDesc} from "./commands";
-import {CommandId, BuffaloZBOSSDataType} from "./enums";
+import {FRAMES, ParamsDesc} from './commands';
+import {BuffaloZBOSSDataType, CommandId} from './enums';
 
 export class ZBOSSBuffaloZcl extends BuffaloZcl {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -35,12 +35,12 @@ export class ZBOSSBuffaloZcl extends BuffaloZcl {
         const start = this.getPosition();
         for (const parameter of params) {
             const options: BuffaloZclOptions = {};
-    
+
             if (parameter.condition && !parameter.condition(payload, this)) {
                 continue;
             }
             if (parameter.options) parameter.options(payload, options);
-    
+
             if (parameter.type == BuffaloZBOSSDataType.LIST_TYPED && parameter.typed) {
                 const internalPaload = payload[parameter.name];
                 for (const value of internalPaload) {
@@ -50,15 +50,15 @@ export class ZBOSSBuffaloZcl extends BuffaloZcl {
                 this.write(parameter.type as DataType, payload[parameter.name], options);
             }
         }
-        return this.getPosition()-start;
+        return this.getPosition() - start;
     }
 
     public readByDesc(params: ParamsDesc[]): KeyValue {
         const payload: KeyValue = {};
-    
+
         for (const parameter of params) {
             const options: BuffaloZclOptions = {payload};
-    
+
             if (parameter.condition && !parameter.condition(payload, this)) {
                 continue;
             }
@@ -66,20 +66,20 @@ export class ZBOSSBuffaloZcl extends BuffaloZcl {
 
             if (parameter.type == BuffaloZBOSSDataType.LIST_TYPED && parameter.typed) {
                 payload[parameter.name] = [];
-                
+
                 if (!this.isMore()) break;
 
-                for (let i = 0; i < options.length; i++) {
+                for (let i = 0; i < (options.length || 0); i++) {
                     const internalPaload = this.readByDesc(parameter.typed);
                     payload[parameter.name].push(internalPaload);
                 }
             } else {
                 if (!this.isMore()) break;
-                
+
                 payload[parameter.name] = this.read(parameter.type as DataType, options);
             }
         }
-    
+
         return payload;
     }
 }
@@ -94,8 +94,6 @@ function getFrameDesc(type: FrameType, key: CommandId): ParamsDesc[] {
             return frameDesc.response || [];
         case FrameType.INDICATION:
             return frameDesc.indication || [];
-        default:
-            return;
     }
 }
 
@@ -119,7 +117,6 @@ export function readZBOSSFrame(buffer: Buffer): ZBOSSFrame {
     };
 }
 
-
 export function writeZBOSSFrame(frame: ZBOSSFrame): Buffer {
     const buf = new ZBOSSBuffaloZcl(Buffer.alloc(247));
     buf.writeInt8(frame.version);
@@ -140,8 +137,8 @@ export interface ZBOSSFrame {
     version: number;
     type: FrameType;
     commandId: CommandId;
-    tsn?: number;
-    payload?: KeyValue;
+    tsn: number;
+    payload: KeyValue;
 }
 
 export function makeFrame(type: FrameType, commandId: CommandId, params: KeyValue): ZBOSSFrame {
@@ -162,7 +159,7 @@ export function makeFrame(type: FrameType, commandId: CommandId, params: KeyValu
         commandId: commandId,
         tsn: 0,
         payload: payload,
-    }
+    };
 }
 
 function readPayload(type: FrameType, commandId: CommandId, buffalo: ZBOSSBuffaloZcl): KeyValue {
