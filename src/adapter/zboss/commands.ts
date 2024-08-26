@@ -13,11 +13,8 @@ import {
     StatusCodeGeneric,
 } from './enums';
 
-/* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
-// export interface ParamsDesc {[s: string]: any};
 export interface ParamsDesc {
     name: string;
-    /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
     type: DataType | BuffaloZclDataType | BuffaloZBOSSDataType;
     /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
     condition?: (payload: any, buffalo: any) => boolean;

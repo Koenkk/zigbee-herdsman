@@ -410,7 +410,7 @@ export class ZBOSSAdapter extends Adapter {
         );
         let response = null;
         const command = zclFrame.command;
-        if (command.hasOwnProperty('response') && disableResponse === false) {
+        if (command.response && disableResponse === false) {
             response = this.waitFor(
                 networkAddress,
                 endpoint,
