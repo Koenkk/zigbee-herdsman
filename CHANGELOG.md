@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.57.0](https://github.com/Koenkk/zigbee-herdsman/compare/v0.56.2...v0.57.0) (2024-08-27)
+
+
+### Features
+
+* ZBOSS adapter for nRF ZBOSS NCP ([#1165](https://github.com/Koenkk/zigbee-herdsman/issues/1165)) ([bef4655](https://github.com/Koenkk/zigbee-herdsman/commit/bef46559a93a5218a50868cd0bb1692ae2f76383))
+
+
+### Bug Fixes
+
+* **ignore:** Remove `manuSpecificInovelli` cluster ([#1161](https://github.com/Koenkk/zigbee-herdsman/issues/1161)) ([54d0dda](https://github.com/Koenkk/zigbee-herdsman/commit/54d0dda8b3c11a3b8cbe7c164dba45340f29f690))
+* **ignore:** Remove `mz` depdency https://github.com/Koenkk/zigbee-herdsman/pull/1154 ([46ec9ee](https://github.com/Koenkk/zigbee-herdsman/commit/46ec9ee8f08076d08b61981ea87f55fae8b4134c))
+* **ignore:** update dependencies ([#1164](https://github.com/Koenkk/zigbee-herdsman/issues/1164)) ([54421dc](https://github.com/Koenkk/zigbee-herdsman/commit/54421dca7dbb3a329ec420155d2bdafe41a88e5e))
+
 ## [0.56.2](https://github.com/Koenkk/zigbee-herdsman/compare/v0.56.1...v0.56.2) (2024-08-18)
 
 
