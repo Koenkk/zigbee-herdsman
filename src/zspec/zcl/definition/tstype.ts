@@ -154,6 +154,7 @@ export type ClusterName =
     | 'pHMeasurement'
     | 'msCO2'
     | 'pm1Measurement'
+    | 'msFormaldehyde'
     | 'pm10Measurement'
     | 'pm25Measurement'
     | 'ssIasZone'
