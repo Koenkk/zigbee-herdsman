@@ -2500,6 +2500,18 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         commands: {},
         commandsResponse: {},
     },
+    msFormaldehyde: {
+        ID: 0x042b,
+        attributes: {
+            measuredValue: {ID: 0x0000, type: DataType.SINGLE_PREC},
+            minMeasuredValue: {ID: 0x0001, type: DataType.SINGLE_PREC},
+            maxMeasuredValue: {ID: 0x0002, type: DataType.SINGLE_PREC},
+            measuredTolerance: {ID: 0x0003, type: DataType.SINGLE_PREC},
+            //heimanSpecificFormaldehydeMeasurement: {ID: 0x0000, type: DataType.DataType.UINT16, manufacturerCode: ManufacturerCode.HEIMAN_TECHNOLOGY_CO_LTD},
+        },
+        commands: {},
+        commandsResponse: {},
+    },
     pm1Measurement: {
         ID: 0x042c,
         attributes: {
@@ -4390,19 +4402,6 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             x_axis: {ID: 18, type: DataType.INT16},
             y_axis: {ID: 19, type: DataType.INT16},
             z_axis: {ID: 20, type: DataType.INT16},
-        },
-        commands: {},
-        commandsResponse: {},
-    },
-    heimanSpecificFormaldehydeMeasurement: {
-        // from HS2AQ-3.0海曼智能空气质量检测仪API文档-V01
-        ID: 0x042b,
-        manufacturerCode: ManufacturerCode.HEIMAN_TECHNOLOGY_CO_LTD,
-        attributes: {
-            measuredValue: {ID: 0x0000, type: DataType.UINT16},
-            measuredMinValue: {ID: 0x0001, type: DataType.UINT16},
-            measuredMaxValue: {ID: 0x0002, type: DataType.UINT16},
-            measuredTolerance: {ID: 0x0003, type: DataType.UINT16},
         },
         commands: {},
         commandsResponse: {},
