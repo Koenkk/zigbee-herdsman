@@ -214,7 +214,6 @@ export type ClusterName =
     | 'manuSpecificCentraliteHumidity'
     | 'manuSpecificSmartThingsArrivalSensor'
     | 'manuSpecificSamsungAccelerometer'
-    | 'heimanSpecificFormaldehydeMeasurement'
     | 'heimanSpecificAirQuality'
     | 'heimanSpecificScenes'
     | 'tradfriButton'
