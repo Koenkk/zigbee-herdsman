@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.57.1](https://github.com/Koenkk/zigbee-herdsman/compare/v0.57.0...v0.57.1) (2024-08-30)
+
+
+### Bug Fixes
+
+* **ignore:** ZBOSS: Catch error for cancel waiting ([#1168](https://github.com/Koenkk/zigbee-herdsman/issues/1168)) ([53de8d4](https://github.com/Koenkk/zigbee-herdsman/commit/53de8d4f30888f2cc2f575c8c5d8007c79f92ec0))
+* Remove `heimanSpecificFormaldehydeMeasurement` in favour of `msFormaldehyde` ([#1166](https://github.com/Koenkk/zigbee-herdsman/issues/1166)) ([717f729](https://github.com/Koenkk/zigbee-herdsman/commit/717f7290047a29e17f745de57a0939a1018baa99))
+* Zigate: parse all values as big endian ([#1170](https://github.com/Koenkk/zigbee-herdsman/issues/1170)) ([1a50e2e](https://github.com/Koenkk/zigbee-herdsman/commit/1a50e2e47f0b7364d32fdcb3f49531f481f95c55))
+
 ## [0.57.0](https://github.com/Koenkk/zigbee-herdsman/compare/v0.56.2...v0.57.0) (2024-08-27)
 
 
