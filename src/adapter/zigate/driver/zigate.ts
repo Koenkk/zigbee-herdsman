@@ -263,7 +263,7 @@ export default class ZiGate extends EventEmitter {
 
     private onSerialData(buffer: Buffer): void {
         try {
-            // logger.debug(`--- parseNext `, buffer, NS);
+            // logger.debug(`--- parseNext ${JSON.stringify(buffer)}`, NS);
 
             const frame = new ZiGateFrame(buffer);
             if (!(frame instanceof ZiGateFrame)) return; // @Todo fix
@@ -314,7 +314,7 @@ export default class ZiGate extends EventEmitter {
     }
 
     private waitressTimeoutFormatter(matcher: WaitressMatcher, timeout: number): string {
-        return `${matcher} after ${timeout}ms`;
+        return `${JSON.stringify(matcher)} after ${timeout}ms`;
     }
 
     private waitressValidator(ziGateObject: ZiGateObject, matcher: WaitressMatcher): boolean {
