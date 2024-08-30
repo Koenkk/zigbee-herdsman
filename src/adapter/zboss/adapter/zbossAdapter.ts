@@ -431,50 +431,56 @@ export class ZBOSSAdapter extends Adapter {
                 timeout,
             );
         }
-
-        const dataConfirmResult = await this.driver.request(
-            ieeeAddr,
-            0x0104,
-            zclFrame.cluster.ID,
-            endpoint,
-            sourceEndpoint || 0x01,
-            zclFrame.toBuffer(),
-        );
-        if (!dataConfirmResult) {
+        try {
+            const dataConfirmResult = await this.driver.request(
+                ieeeAddr,
+                0x0104,
+                zclFrame.cluster.ID,
+                endpoint,
+                sourceEndpoint || 0x01,
+                zclFrame.toBuffer(),
+            );
+            if (!dataConfirmResult) {
+                if (response != null) {
+                    response.cancel();
+                }
+                throw Error('sendZclFrameToEndpointInternal error');
+            }
+            if (response !== null) {
+                try {
+                    const result = await response.start().promise;
+                    return result;
+                } catch (error) {
+                    logger.debug(`Response timeout (${ieeeAddr}:${networkAddress},${responseAttempt})`, NS);
+                    if (responseAttempt < 1 && !disableRecovery) {
+                        return this.sendZclFrameToEndpointInternal(
+                            ieeeAddr,
+                            networkAddress,
+                            endpoint,
+                            sourceEndpoint,
+                            zclFrame,
+                            timeout,
+                            disableResponse,
+                            disableRecovery,
+                            responseAttempt + 1,
+                            dataRequestAttempt,
+                            checkedNetworkAddress,
+                            discoveredRoute,
+                            assocRemove,
+                            assocRestore,
+                        );
+                    } else {
+                        throw error;
+                    }
+                }
+            } else {
+                return;
+            }
+        } catch (error) {
             if (response != null) {
                 response.cancel();
             }
-            throw Error('sendZclFrameToEndpointInternal error');
-        }
-        if (response !== null) {
-            try {
-                const result = await response.start().promise;
-                return result;
-            } catch (error) {
-                logger.debug(`Response timeout (${ieeeAddr}:${networkAddress},${responseAttempt})`, NS);
-                if (responseAttempt < 1 && !disableRecovery) {
-                    return this.sendZclFrameToEndpointInternal(
-                        ieeeAddr,
-                        networkAddress,
-                        endpoint,
-                        sourceEndpoint,
-                        zclFrame,
-                        timeout,
-                        disableResponse,
-                        disableRecovery,
-                        responseAttempt + 1,
-                        dataRequestAttempt,
-                        checkedNetworkAddress,
-                        discoveredRoute,
-                        assocRemove,
-                        assocRestore,
-                    );
-                } else {
-                    throw error;
-                }
-            }
-        } else {
-            return;
+            throw error;
         }
     }
 
