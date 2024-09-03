@@ -14,9 +14,6 @@ enum ParameterType {
 
     LIST_UINT8 = 11,
     LIST_UINT16 = 12,
-    LIST_ROUTING_TABLE = 13,
-    LIST_BIND_TABLE = 14,
-    LIST_NEIGHBOR_LQI = 15,
     LIST_NETWORK = 16,
 
     INT8 = 18,

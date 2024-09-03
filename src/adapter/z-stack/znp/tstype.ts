@@ -17,11 +17,7 @@ interface MtCmd {
     response?: MtParameter[];
 }
 
-interface MtCmdZdoReq extends MtCmd {
-    type: CommandType.SREQ;
-}
-
-interface MtCmdZdoResp extends Omit<MtCmd, 'request'> {
+interface MtCmdZdo extends Omit<MtCmd, 'request'> {
     zdo: {cluterId: ZdoClusterId; convert?: (buffer: Buffer) => Buffer};
     type: CommandType.AREQ;
 }
@@ -34,4 +30,4 @@ interface BuffaloZnpOptions {
     startIndex?: number;
 }
 
-export {ZpiObjectPayload, MtParameter, MtCmd, MtType, BuffaloZnpOptions, MtCmdZdoReq, MtCmdZdoResp};
+export {ZpiObjectPayload, MtParameter, MtCmd, MtType, BuffaloZnpOptions, MtCmdZdo};

@@ -3,7 +3,7 @@ import {MaxDataSize, Subsystem, Type} from '../unpi/constants';
 import BuffaloZnp from './buffaloZnp';
 import Definition from './definition';
 import ParameterType from './parameterType';
-import {BuffaloZnpOptions, MtCmd, MtCmdZdoResp, MtParameter, MtType, ZpiObjectPayload} from './tstype';
+import {BuffaloZnpOptions, MtCmd, MtParameter, MtType, ZpiObjectPayload} from './tstype';
 
 const BufferAndListTypes = [
     ParameterType.BUFFER,
@@ -14,9 +14,6 @@ const BufferAndListTypes = [
     ParameterType.BUFFER42,
     ParameterType.BUFFER100,
     ParameterType.LIST_UINT16,
-    ParameterType.LIST_ROUTING_TABLE,
-    ParameterType.LIST_BIND_TABLE,
-    ParameterType.LIST_NEIGHBOR_LQI,
     ParameterType.LIST_NETWORK,
     ParameterType.LIST_UINT8,
 ];

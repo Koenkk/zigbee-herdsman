@@ -953,139 +953,6 @@ describe('ZNP', () => {
         expect(value).toStrictEqual([1024, 2048]);
     });
 
-    it('LIST_ROUTING_TABLE write', () => {
-        expect(() => {
-            const buffalo = new BuffaloZnp(Buffer.alloc(10));
-            buffalo.write(ParameterType.LIST_ROUTING_TABLE, [], {});
-        }).toThrow();
-    });
-
-    it('LIST_ROUTING_TABLE read', () => {
-        const buffer = Buffer.from([0x00, 0x10, 0x27, 0x00, 0x11, 0x27, 0x10, 0x29, 0x01, 0x11, 0x23]);
-
-        const buffalo = new BuffaloZnp(buffer, 1);
-        const value = buffalo.read(ParameterType.LIST_ROUTING_TABLE, {length: 2});
-        expect(buffalo.getPosition()).toStrictEqual(11);
-        expect(value).toStrictEqual([
-            {
-                destNwkAddr: 10000,
-                nextHopNwkAddr: 10001,
-                routeStatus: 'ACTIVE',
-            },
-            {
-                destNwkAddr: 10512,
-                nextHopNwkAddr: 8977,
-                routeStatus: 'DISCOVERY_UNDERWAY',
-            },
-        ]);
-    });
-
-    it('LIST_BIND_TABLE write', () => {
-        expect(() => {
-            const buffalo = new BuffaloZnp(Buffer.alloc(10));
-            buffalo.write(ParameterType.LIST_BIND_TABLE, [], {});
-        }).toThrow();
-    });
-
-    it('LIST_BIND_TABLE read', () => {
-        const buffer = Buffer.from([
-            0x00,
-            ...ieeeaAddr1.hex,
-            0x02,
-            0x01,
-            0x00,
-            0x02,
-            ...ieeeaAddr2.hex,
-            ...ieeeaAddr2.hex,
-            0x02,
-            0x01,
-            0x00,
-            0x03,
-            ...ieeeaAddr1.hex,
-            0x04,
-            0x01,
-        ]);
-
-        const buffalo = new BuffaloZnp(buffer, 1);
-        const value = buffalo.read(ParameterType.LIST_BIND_TABLE, {length: 2});
-        expect(buffalo.getPosition()).toStrictEqual(42);
-        expect(value).toStrictEqual([
-            {
-                clusterId: 1,
-                dstAddr: ieeeaAddr2.string,
-                dstAddrMode: 2,
-                srcAddr: ieeeaAddr1.string,
-                srcEp: 2,
-            },
-            {
-                clusterId: 1,
-                dstAddr: ieeeaAddr1.string,
-                dstAddrMode: 3,
-                dstEp: 4,
-                srcAddr: ieeeaAddr2.string,
-                srcEp: 2,
-            },
-        ]);
-    });
-
-    it('LIST_NEIGHBOR_LQI write', () => {
-        expect(() => {
-            const buffalo = new BuffaloZnp(Buffer.alloc(10));
-            buffalo.write(ParameterType.LIST_NEIGHBOR_LQI, [], {});
-        }).toThrow();
-    });
-
-    it('LIST_NEIGHBOR_LQI read', () => {
-        const buffer = Buffer.from([
-            0x00,
-            ...ieeeaAddr1.hex,
-            ...ieeeaAddr2.hex,
-            0x10,
-            0x10,
-            0x44,
-            0x01,
-            0x02,
-            0x09,
-            ...ieeeaAddr2.hex,
-            ...ieeeaAddr1.hex,
-            0x10,
-            0x10,
-            0x44,
-            0x00,
-            0x10,
-            0x08,
-            0x01,
-        ]);
-
-        const buffalo = new BuffaloZnp(buffer, 1);
-        const value = buffalo.read(ParameterType.LIST_NEIGHBOR_LQI, {length: 2});
-        expect(buffalo.getPosition()).toStrictEqual(45);
-        expect(value).toStrictEqual([
-            {
-                depth: 2,
-                deviceType: 0,
-                extAddr: '0xaf440112005b1200',
-                extPandId: '0xae440112004b1200',
-                lqi: 9,
-                nwkAddr: 4112,
-                permitJoin: 1,
-                relationship: 4,
-                rxOnWhenIdle: 1,
-            },
-            {
-                depth: 16,
-                deviceType: 0,
-                extAddr: '0xae440112004b1200',
-                extPandId: '0xaf440112005b1200',
-                lqi: 8,
-                nwkAddr: 4112,
-                permitJoin: 0,
-                relationship: 4,
-                rxOnWhenIdle: 1,
-            },
-        ]);
-    });
-
     it('LIST_NETWORK write', () => {
         expect(() => {
             const buffalo = new BuffaloZnp(Buffer.alloc(10));
@@ -1255,18 +1122,13 @@ describe('ZNP', () => {
         expect(value).toStrictEqual(ieeeaAddr2.string);
     });
 
-    it.each([
-        ParameterType.BUFFER,
-        ParameterType.LIST_UINT8,
-        ParameterType.LIST_UINT16,
-        ParameterType.LIST_ROUTING_TABLE,
-        ParameterType.LIST_BIND_TABLE,
-        ParameterType.LIST_NEIGHBOR_LQI,
-        ParameterType.LIST_NETWORK,
-    ])('Throws when read is missing required length option - param %s', (type) => {
-        expect(() => {
-            const buffalo = new BuffaloZnp(Buffer.alloc(1));
-            buffalo.read(type, {});
-        }).toThrow(`Cannot read ${ParameterType[type]} without length option specified`);
-    });
+    it.each([ParameterType.BUFFER, ParameterType.LIST_UINT8, ParameterType.LIST_UINT16, ParameterType.LIST_NETWORK])(
+        'Throws when read is missing required length option - param %s',
+        (type) => {
+            expect(() => {
+                const buffalo = new BuffaloZnp(Buffer.alloc(1));
+                buffalo.read(type, {});
+            }).toThrow(`Cannot read ${ParameterType[type]} without length option specified`);
+        },
+    );
 });

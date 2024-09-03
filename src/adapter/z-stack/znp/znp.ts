@@ -318,7 +318,6 @@ class Znp extends events.EventEmitter {
                 /* istanbul ignore else */
                 if (object.command.type === Type.AREQ) {
                     this.unpiWriter.writeFrame(object.unpiFrame);
-                    return undefined;
                 } else {
                     throw new Error(`Unknown type '${object.command.type}'`);
                 }

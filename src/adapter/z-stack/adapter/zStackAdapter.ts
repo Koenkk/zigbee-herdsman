@@ -892,7 +892,7 @@ class ZStackAdapter extends Adapter {
         }
     }
 
-    public onZnpRecieved(object: ZpiObject): void {
+    private onZnpRecieved(object: ZpiObject): void {
         if (object.command.type !== UnpiConstants.Type.AREQ) {
             return;
         }

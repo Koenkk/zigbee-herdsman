@@ -1,7 +1,7 @@
 import {ClusterId as ZdoClusterId} from '../../../zspec/zdo';
 import {Type as CommandType, Subsystem} from '../unpi/constants';
 import ParameterType from './parameterType';
-import {MtCmd, MtCmdZdoReq, MtCmdZdoResp} from './tstype';
+import {MtCmd, MtCmdZdo} from './tstype';
 
 const convertSkipSrcAddr = (buffer: Buffer): Buffer => buffer.subarray(2);
 
@@ -9,7 +9,7 @@ const Definition: {
     [Subsystem.SYS]: MtCmd[];
     [Subsystem.MAC]: MtCmd[];
     [Subsystem.AF]: MtCmd[];
-    [Subsystem.ZDO]: (MtCmdZdoReq | MtCmdZdoResp)[];
+    [Subsystem.ZDO]: MtCmdZdo[];
     [Subsystem.SAPI]: MtCmd[];
     [Subsystem.UTIL]: MtCmd[];
     [Subsystem.DEBUG]: MtCmd[];

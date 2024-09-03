@@ -171,9 +171,6 @@ class BuffaloZnp extends Buffalo {
                 return this.writeListUInt16(value);
             }
             // NOTE: not writable
-            // case ParameterType.LIST_ROUTING_TABLE:
-            // case ParameterType.LIST_BIND_TABLE:
-            // case ParameterType.LIST_NEIGHBOR_LQI:
             // case ParameterType.LIST_NETWORK:
             case ParameterType.INT8: {
                 return this.writeInt8(value);
@@ -237,27 +234,6 @@ class BuffaloZnp extends Buffalo {
 
                 return this.readListUInt16(options.length);
             }
-            case ParameterType.LIST_ROUTING_TABLE: {
-                if (options.length == null) {
-                    throw new Error('Cannot read LIST_ROUTING_TABLE without length option specified');
-                }
-
-                return this.readListRoutingTable(options.length);
-            }
-            case ParameterType.LIST_BIND_TABLE: {
-                if (options.length == null) {
-                    throw new Error('Cannot read LIST_BIND_TABLE without length option specified');
-                }
-
-                return this.readListBindTable(options.length);
-            }
-            case ParameterType.LIST_NEIGHBOR_LQI: {
-                if (options.length == null) {
-                    throw new Error('Cannot read LIST_NEIGHBOR_LQI without length option specified');
-                }
-
-                return this.readListNeighborLqi(options.length);
-            }
             case ParameterType.LIST_NETWORK: {
                 if (options.length == null) {
                     throw new Error('Cannot read LIST_NETWORK without length option specified');
@@ -269,9 +245,6 @@ class BuffaloZnp extends Buffalo {
                 return this.readInt8();
             }
         }
-
-        // unreachable detected in TS, but not in JS when typing ignored for "type", so kept for good measure
-        throw new Error(`Read for '${type}' not available`);
     }
 }
 
