@@ -2,42 +2,6 @@ import {Buffalo} from '../../../buffalo';
 import ParameterType from './parameterType';
 import {BuffaloZnpOptions} from './tstype';
 
-type RoutingTableEntryStatus = 'ACTIVE' | 'DISCOVERY_UNDERWAY' | 'DISCOVERY_FAILED' | 'INACTIVE';
-
-const routingTableStatusLookup: Record<number, RoutingTableEntryStatus> = {
-    0: 'ACTIVE',
-    1: 'DISCOVERY_UNDERWAY',
-    2: 'DISCOVERY_FAILED',
-    3: 'INACTIVE',
-};
-
-interface RoutingEntry {
-    destNwkAddr: number;
-    routeStatus: RoutingTableEntryStatus | undefined;
-    nextHopNwkAddr: number;
-}
-
-interface Bind {
-    srcAddr: string;
-    srcEp: number;
-    clusterId: number;
-    dstAddrMode: number;
-    dstAddr: string;
-    dstEp?: number;
-}
-
-interface Neighbor {
-    extPandId: string;
-    extAddr: string;
-    nwkAddr: number;
-    deviceType: number;
-    rxOnWhenIdle: number;
-    relationship: number;
-    permitJoin: number;
-    depth: number;
-    lqi: number;
-}
-
 interface Network {
     neightborPanId: number;
     logicalChannel: number;
@@ -49,62 +13,6 @@ interface Network {
 }
 
 class BuffaloZnp extends Buffalo {
-    private readListRoutingTable(length: number): RoutingEntry[] {
-        const value: RoutingEntry[] = [];
-
-        for (let i = 0; i < length; i++) {
-            value.push({
-                destNwkAddr: this.readUInt16(),
-                routeStatus: routingTableStatusLookup[this.readUInt8()],
-                nextHopNwkAddr: this.readUInt16(),
-            });
-        }
-
-        return value;
-    }
-
-    private readListBindTable(length: number): Bind[] {
-        const value: Bind[] = [];
-
-        for (let i = 0; i < length; i++) {
-            const item: Bind = {
-                srcAddr: this.readIeeeAddr(),
-                srcEp: this.readUInt8(),
-                clusterId: this.readUInt16(),
-                dstAddrMode: this.readUInt8(),
-                dstAddr: this.readIeeeAddr(),
-            };
-            if (item.dstAddrMode === 3) {
-                item.dstEp = this.readUInt8();
-            }
-            value.push(item);
-        }
-        return value;
-    }
-
-    private readListNeighborLqi(length: number): Neighbor[] {
-        const value: Neighbor[] = [];
-        for (let i = 0; i < length; i++) {
-            const prefix = {
-                extPandId: this.readIeeeAddr(),
-                extAddr: this.readIeeeAddr(),
-                nwkAddr: this.readUInt16(),
-            };
-            const bitfields = this.readUInt8();
-            value.push({
-                ...prefix,
-                deviceType: bitfields & 0x03,
-                rxOnWhenIdle: (bitfields & 0x0c) >> 2,
-                relationship: (bitfields & 0x70) >> 4,
-                permitJoin: this.readUInt8() & 0x03,
-                depth: this.readUInt8(),
-                lqi: this.readUInt8(),
-            });
-        }
-
-        return value;
-    }
-
     private readListNetwork(length: number): Network[] {
         const value: Network[] = [];
         for (let i = 0; i < length; i++) {
