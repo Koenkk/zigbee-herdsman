@@ -1,7 +1,7 @@
 import * as stream from 'stream';
 
 import {logger} from '../../../utils/logger';
-import {DataStart, SOF, MinMessageLength, PositionDataLength} from './constants';
+import {DataStart, MinMessageLength, PositionDataLength, SOF} from './constants';
 import Frame from './frame';
 
 const NS = 'zh:zstack:unpi:parser';
@@ -45,7 +45,7 @@ class Parser extends stream.Transform {
                     logger.debug(`--> parsed ${frame}`, NS);
                     this.emit('parsed', frame);
                 } catch (error) {
-                    logger.debug(`--> error ${error.stack}`, NS);
+                    logger.debug(`--> error ${error}`, NS);
                 }
 
                 this.buffer = this.buffer.slice(frameLength, this.buffer.length);

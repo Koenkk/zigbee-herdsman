@@ -11,7 +11,7 @@ const GLOBAL_HEADER = new Zcl.Header(
         disableDefaultResponse: false,
         reservedBits: 0,
     },
-    null,
+    undefined,
     123,
     Zcl.Foundation.read.ID,
 );
@@ -26,7 +26,7 @@ const GLOBAL_RSP_HEADER = new Zcl.Header(
         disableDefaultResponse: false,
         reservedBits: 0,
     },
-    null,
+    undefined,
     78,
     Zcl.Foundation.readRsp.ID,
 );
@@ -41,7 +41,7 @@ const GLOBAL_CONDITION_HEADER = new Zcl.Header(
         disableDefaultResponse: false,
         reservedBits: 0,
     },
-    null,
+    undefined,
     78,
     Zcl.Foundation.configReport.ID,
 );
@@ -56,7 +56,7 @@ const SPECIFIC_HEADER = new Zcl.Header(
         disableDefaultResponse: false,
         reservedBits: 0,
     },
-    null,
+    undefined,
     44,
     Zcl.Clusters.genAlarms.commands.getAlarm.ID,
 );
@@ -71,7 +71,7 @@ const SPECIFIC_CONDITION_HEADER = new Zcl.Header(
         disableDefaultResponse: false,
         reservedBits: 0,
     },
-    null,
+    undefined,
     45,
     Zcl.Clusters.genOta.commandsResponse.queryNextImageResponse.ID,
 );
@@ -86,7 +86,7 @@ const SPECIFIC_RSP_HEADER = new Zcl.Header(
         disableDefaultResponse: false,
         reservedBits: 0,
     },
-    null,
+    undefined,
     53,
     Zcl.Clusters.genAlarms.commandsResponse.alarm.ID,
 );
@@ -121,7 +121,7 @@ const GLOBAL_FRAME = Zcl.Frame.create(
     GLOBAL_HEADER.frameControl.reservedBits,
 );
 const GLOBAL_FRAME_BUFFER = Buffer.concat([GLOBAL_HEADER_BUFFER, Buffer.from(uint16To8Array(256))]);
-const GLOBAL_FRAME_STRING = `{"header":{"frameControl":{"reservedBits":0,"frameType":0,"direction":0,"disableDefaultResponse":false,"manufacturerSpecific":false},"manufacturerCode":null,"transactionSequenceNumber":123,"commandIdentifier":0},"payload":[{"attrId":256}],"command":{"ID":0,"name":"read","parameters":[{"name":"attrId","type":33}],"response":1}}`;
+const GLOBAL_FRAME_STRING = `{"header":{"frameControl":{"reservedBits":0,"frameType":0,"direction":0,"disableDefaultResponse":false,"manufacturerSpecific":false},"transactionSequenceNumber":123,"commandIdentifier":0},"payload":[{"attrId":256}],"command":{"ID":0,"name":"read","parameters":[{"name":"attrId","type":33}],"response":1}}`;
 
 /** Frame of Global type and response command */
 const GLOBAL_RSP_FRAME = Zcl.Frame.create(
@@ -140,7 +140,7 @@ const GLOBAL_RSP_FRAME_BUFFER = Buffer.concat([
     GLOBAL_RSP_HEADER_BUFFER,
     Buffer.from([...uint16To8Array(256), Zcl.Status.SUCCESS, Zcl.DataType.ENUM8, 127]),
 ]);
-const GLOBAL_RSP_FRAME_STRING = `{"header":{"frameControl":{"reservedBits":0,"frameType":0,"direction":1,"disableDefaultResponse":false,"manufacturerSpecific":false},"manufacturerCode":null,"transactionSequenceNumber":78,"commandIdentifier":1},"payload":[{"attrId":256,"status":0,"dataType":48,"attrData":127}],"command":{"ID":1,"name":"readRsp","parameters":[{"name":"attrId","type":33},{"name":"status","type":32},{"name":"dataType","type":32,"conditions":[{"type":"statusEquals","value":0}]},{"name":"attrData","type":1000,"conditions":[{"type":"statusEquals","value":0}]}]}}`;
+const GLOBAL_RSP_FRAME_STRING = `{"header":{"frameControl":{"reservedBits":0,"frameType":0,"direction":1,"disableDefaultResponse":false,"manufacturerSpecific":false},"transactionSequenceNumber":78,"commandIdentifier":1},"payload":[{"attrId":256,"status":0,"dataType":48,"attrData":127}],"command":{"ID":1,"name":"readRsp","parameters":[{"name":"attrId","type":33},{"name":"status","type":32},{"name":"dataType","type":32,"conditions":[{"type":"statusEquals","value":0}]},{"name":"attrData","type":1000,"conditions":[{"type":"statusEquals","value":0}]}]}}`;
 
 /** Frame of Global type with no payload */
 const GLOBAL_FRAME_NO_PAYLOAD = Zcl.Frame.create(
@@ -156,7 +156,7 @@ const GLOBAL_FRAME_NO_PAYLOAD = Zcl.Frame.create(
     GLOBAL_HEADER.frameControl.reservedBits,
 );
 const GLOBAL_FRAME_NO_PAYLOAD_BUFFER = Buffer.concat([GLOBAL_HEADER_BUFFER]);
-const GLOBAL_FRAME_NO_PAYLOAD_STRING = `{"header":{"frameControl":{"reservedBits":0,"frameType":0,"direction":0,"disableDefaultResponse":false,"manufacturerSpecific":false},"manufacturerCode":null,"transactionSequenceNumber":123,"commandIdentifier":0},"payload":[],"command":{"ID":0,"name":"read","parameters":[{"name":"attrId","type":33}],"response":1}}`;
+const GLOBAL_FRAME_NO_PAYLOAD_STRING = `{"header":{"frameControl":{"reservedBits":0,"frameType":0,"direction":0,"disableDefaultResponse":false,"manufacturerSpecific":false},"transactionSequenceNumber":123,"commandIdentifier":0},"payload":[],"command":{"ID":0,"name":"read","parameters":[{"name":"attrId","type":33}],"response":1}}`;
 
 /** Frame of Global type with condition-based parameters */
 const GLOBAL_CONDITION_FRAME = Zcl.Frame.create(
@@ -175,7 +175,7 @@ const GLOBAL_CONDITION_FRAME_BUFFER = Buffer.concat([
     GLOBAL_CONDITION_HEADER_BUFFER,
     Buffer.from([Zcl.Direction.SERVER_TO_CLIENT, ...uint16To8Array(256), ...uint16To8Array(10000)]),
 ]);
-const GLOBAL_CONDITION_FRAME_STRING = `{"header":{"frameControl":{"reservedBits":0,"frameType":0,"direction":1,"disableDefaultResponse":false,"manufacturerSpecific":false},"manufacturerCode":null,"transactionSequenceNumber":78,"commandIdentifier":6},"payload":[{"direction":1,"attrId":256,"timeout":10000}],"command":{"ID":6,"name":"configReport","parameters":[{"name":"direction","type":32},{"name":"attrId","type":33},{"name":"dataType","type":32,"conditions":[{"type":"directionEquals","value":0}]},{"name":"minRepIntval","type":33,"conditions":[{"type":"directionEquals","value":0}]},{"name":"maxRepIntval","type":33,"conditions":[{"type":"directionEquals","value":0}]},{"name":"repChange","type":1000,"conditions":[{"type":"directionEquals","value":0},{"type":"dataTypeValueTypeEquals","value":"ANALOG"}]},{"name":"timeout","type":33,"conditions":[{"type":"directionEquals","value":1}]}],"response":7}}`;
+const GLOBAL_CONDITION_FRAME_STRING = `{"header":{"frameControl":{"reservedBits":0,"frameType":0,"direction":1,"disableDefaultResponse":false,"manufacturerSpecific":false},"transactionSequenceNumber":78,"commandIdentifier":6},"payload":[{"direction":1,"attrId":256,"timeout":10000}],"command":{"ID":6,"name":"configReport","parameters":[{"name":"direction","type":32},{"name":"attrId","type":33},{"name":"dataType","type":32,"conditions":[{"type":"directionEquals","value":0}]},{"name":"minRepIntval","type":33,"conditions":[{"type":"directionEquals","value":0}]},{"name":"maxRepIntval","type":33,"conditions":[{"type":"directionEquals","value":0}]},{"name":"repChange","type":1000,"conditions":[{"type":"directionEquals","value":0},{"type":"dataTypeValueTypeEquals","value":"ANALOG"}]},{"name":"timeout","type":33,"conditions":[{"type":"directionEquals","value":1}]}],"response":7}}`;
 
 /** Frame of Specific type */
 const SPECIFIC_FRAME = Zcl.Frame.create(
@@ -191,7 +191,7 @@ const SPECIFIC_FRAME = Zcl.Frame.create(
     SPECIFIC_HEADER.frameControl.reservedBits,
 );
 const SPECIFIC_FRAME_BUFFER = Buffer.concat([SPECIFIC_HEADER_BUFFER]);
-const SPECIFIC_FRAME_STRING = `{"header":{"frameControl":{"reservedBits":0,"frameType":1,"direction":0,"disableDefaultResponse":false,"manufacturerSpecific":false},"manufacturerCode":null,"transactionSequenceNumber":44,"commandIdentifier":2},"payload":{},"command":{"ID":2,"parameters":[],"name":"getAlarm"}}`;
+const SPECIFIC_FRAME_STRING = `{"header":{"frameControl":{"reservedBits":0,"frameType":1,"direction":0,"disableDefaultResponse":false,"manufacturerSpecific":false},"transactionSequenceNumber":44,"commandIdentifier":2},"payload":{},"command":{"ID":2,"parameters":[],"name":"getAlarm"}}`;
 
 /** Frame of Specific type and response command */
 const SPECIFIC_RSP_FRAME = Zcl.Frame.create(
@@ -207,7 +207,7 @@ const SPECIFIC_RSP_FRAME = Zcl.Frame.create(
     SPECIFIC_RSP_HEADER.frameControl.reservedBits,
 );
 const SPECIFIC_RSP_FRAME_BUFFER = Buffer.concat([SPECIFIC_RSP_HEADER_BUFFER, Buffer.from([246, ...uint16To8Array(3456)])]);
-const SPECIFIC_RSP_FRAME_STRING = `{"header":{"frameControl":{"reservedBits":0,"frameType":1,"direction":1,"disableDefaultResponse":false,"manufacturerSpecific":false},"manufacturerCode":null,"transactionSequenceNumber":53,"commandIdentifier":0},"payload":{"alarmcode":246,"clusterid":3456},"command":{"ID":0,"parameters":[{"name":"alarmcode","type":32},{"name":"clusterid","type":33}],"name":"alarm"}}`;
+const SPECIFIC_RSP_FRAME_STRING = `{"header":{"frameControl":{"reservedBits":0,"frameType":1,"direction":1,"disableDefaultResponse":false,"manufacturerSpecific":false},"transactionSequenceNumber":53,"commandIdentifier":0},"payload":{"alarmcode":246,"clusterid":3456},"command":{"ID":0,"parameters":[{"name":"alarmcode","type":32},{"name":"clusterid","type":33}],"name":"alarm"}}`;
 
 /** Frame of Specific type with condition-based parameters */
 const SPECIFIC_CONDITION_FRAME = Zcl.Frame.create(
@@ -223,7 +223,7 @@ const SPECIFIC_CONDITION_FRAME = Zcl.Frame.create(
     SPECIFIC_CONDITION_HEADER.frameControl.reservedBits,
 );
 const SPECIFIC_CONDITION_FRAME_BUFFER = Buffer.concat([SPECIFIC_CONDITION_HEADER_BUFFER, Buffer.from([149])]);
-const SPECIFIC_CONDITION_FRAME_STRING = `{"header":{"frameControl":{"reservedBits":0,"frameType":1,"direction":1,"disableDefaultResponse":false,"manufacturerSpecific":false},"manufacturerCode":null,"transactionSequenceNumber":45,"commandIdentifier":2},"payload":{"status":149},"command":{"ID":2,"parameters":[{"name":"status","type":32},{"name":"manufacturerCode","type":33,"conditions":[{"type":"statusEquals","value":0}]},{"name":"imageType","type":33,"conditions":[{"type":"statusEquals","value":0}]},{"name":"fileVersion","type":35,"conditions":[{"type":"statusEquals","value":0}]},{"name":"imageSize","type":35,"conditions":[{"type":"statusEquals","value":0}]}],"name":"queryNextImageResponse"}}`;
+const SPECIFIC_CONDITION_FRAME_STRING = `{"header":{"frameControl":{"reservedBits":0,"frameType":1,"direction":1,"disableDefaultResponse":false,"manufacturerSpecific":false},"transactionSequenceNumber":45,"commandIdentifier":2},"payload":{"status":149},"command":{"ID":2,"parameters":[{"name":"status","type":32},{"name":"manufacturerCode","type":33,"conditions":[{"type":"statusEquals","value":0}]},{"name":"imageType","type":33,"conditions":[{"type":"statusEquals","value":0}]},{"name":"fileVersion","type":35,"conditions":[{"type":"statusEquals","value":0}]},{"name":"imageSize","type":35,"conditions":[{"type":"statusEquals","value":0}]}],"name":"queryNextImageResponse"}}`;
 
 /** Frame manufacturer-specific */
 const MANUF_SPE_FRAME = Zcl.Frame.create(
@@ -374,7 +374,7 @@ describe('ZCL Frame', () => {
                         disableDefaultResponse: true,
                         reservedBits: 0,
                     },
-                    manufacturerCode: null,
+                    manufacturerCode: undefined,
                     transactionSequenceNumber: 234,
                     commandId: 1,
                 },
@@ -390,7 +390,7 @@ describe('ZCL Frame', () => {
                         disableDefaultResponse: false,
                         reservedBits: 7,
                     },
-                    manufacturerCode: null,
+                    manufacturerCode: undefined,
                     transactionSequenceNumber: 234,
                     commandId: 1,
                 },
@@ -508,7 +508,7 @@ describe('ZCL Frame', () => {
                 disableDefaultResponse: false,
                 reservedBits: 0,
             },
-            null,
+            undefined,
             123,
             Zcl.Foundation.read.ID,
         );
@@ -544,7 +544,7 @@ describe('ZCL Frame', () => {
                 disableDefaultResponse: false,
                 reservedBits: 0,
             },
-            null,
+            undefined,
             123,
             Zcl.Foundation.defaultRsp.ID,
         );
@@ -586,7 +586,7 @@ describe('ZCL Frame', () => {
                 disableDefaultResponse: false,
                 reservedBits: 0,
             },
-            null,
+            undefined,
             123,
             Zcl.Foundation.discoverRsp.ID,
         );

@@ -31,14 +31,10 @@ interface DatabaseEntry {
     [s: string]: any;
 }
 
-enum GreenPowerEvents {
-    deviceJoined = 'deviceJoined',
-}
-
 interface GreenPowerDeviceJoinedPayload {
     sourceID: number;
     deviceID: number;
     networkAddress: number;
 }
 
-export {KeyValue, DatabaseEntry, EntityType, DeviceType, GreenPowerEvents, GreenPowerDeviceJoinedPayload, SendPolicy};
+export {KeyValue, DatabaseEntry, EntityType, DeviceType, GreenPowerDeviceJoinedPayload, SendPolicy};

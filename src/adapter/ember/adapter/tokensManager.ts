@@ -1,7 +1,8 @@
 /* istanbul ignore file */
+
 import {logger} from '../../../utils/logger';
 import {BLANK_EUI64} from '../../../zspec';
-import {SLStatus, SecManFlag, SecManKeyType} from '../enums';
+import {SecManFlag, SecManKeyType, SLStatus} from '../enums';
 import {EMBER_ENCRYPTION_KEY_SIZE, EUI64_SIZE} from '../ezsp/consts';
 import {EzspValueId} from '../ezsp/enums';
 import {Ezsp} from '../ezsp/ezsp';
@@ -338,7 +339,7 @@ export class EmberTokensManager {
      *
      * @return Saved tokens buffer or null.
      */
-    public static async saveTokens(ezsp: Ezsp, localEui64: Buffer): Promise<Buffer> {
+    public static async saveTokens(ezsp: Ezsp, localEui64: Buffer): Promise<Buffer | undefined> {
         logger.info(`[TOKENS] Saving tokens...`, NS);
         const tokenCount = await ezsp.ezspGetTokenCount();
 
@@ -415,7 +416,7 @@ export class EmberTokensManager {
             logger.error(`[TOKENS] Saving tokens not supported by adapter (not NVM3-based).`, NS);
         }
 
-        return null;
+        return undefined;
     }
 
     /**
@@ -620,7 +621,7 @@ export class EmberTokensManager {
         let status: SLStatus = SLStatus.OK;
         const context = initSecurityManagerContext();
 
-        const plaintextKey: SecManKey = {contents: null};
+        const plaintextKey: SecManKey = {contents: Buffer.alloc(0)};
 
         if (nvm3Key === NVM3KEY_STACK_KEYS) {
             // typedef struct {

@@ -1,4 +1,5 @@
 /* istanbul ignore file */
+
 import fs from 'fs';
 
 /* Only used for mocking purposes */

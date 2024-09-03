@@ -1,3 +1,4 @@
+// All multi-byte values are big-endian
 enum ParameterType {
     UINT8 = 0,
     UINT16 = 1,
@@ -23,9 +24,6 @@ enum ParameterType {
     // /!\ TODO missing but used in code, IDs assigned for proper compiling, NOT based on spec, needs updating
     // /!\      some also don't have proper read/write in BuffaloZiGate
     BUFFER_RAW = 247,
-    UINT16BE = 248,
-    UINT32BE = 249,
-    LIST_UINT16BE = 251,
     MAYBE_UINT8 = 252,
     LOG_LEVEL = 253,
     STRING = 254,

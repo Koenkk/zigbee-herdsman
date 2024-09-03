@@ -4,9 +4,9 @@ import * as Zcl from '../../../src/zspec/zcl';
 import * as Zdo from '../../../src/zspec/zdo';
 import {BuffaloZdo} from '../../../src/zspec/zdo/buffaloZdo';
 import {
+    ActiveEndpointsResponse,
     APSFrameCounterChallengeTLV,
     APSFrameCounterResponseTLV,
-    ActiveEndpointsResponse,
     AuthenticationTokenIdTLV,
     BeaconAppendixEncapsulationGlobalTLV,
     BeaconSurveyConfigurationTLV,
@@ -1353,16 +1353,17 @@ describe('ZDO Buffalo', () => {
                     clusterId: Zcl.Clusters.closuresShadeCfg.ID,
                     destAddrMode: 0x01,
                     dest: NODE_ID2,
-                    destEndpoint: null,
+                    destEndpoint: undefined,
                 },
-                {
-                    sourceEui64: IEEE_ADDRESS2,
-                    sourceEndpoint: 0xf4,
-                    clusterId: Zcl.Clusters.genAnalogInput.ID,
-                    destAddrMode: 0x02,
-                    dest: null,
-                    destEndpoint: null,
-                },
+                // invalid destAddrMode is ignored
+                // {
+                //     sourceEui64: IEEE_ADDRESS2,
+                //     sourceEndpoint: 0xf4,
+                //     clusterId: Zcl.Clusters.genAnalogInput.ID,
+                //     destAddrMode: 0x02,
+                //     dest: undefined,
+                //     destEndpoint: undefined,
+                // },
             ],
         } as BindingTableResponse);
 

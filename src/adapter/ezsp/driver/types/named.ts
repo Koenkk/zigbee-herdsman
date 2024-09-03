@@ -1,5 +1,5 @@
 /* istanbul ignore file */
-/* eslint-disable @typescript-eslint/explicit-module-boundary-types */
+
 import * as basic from './basic';
 import {fixed_list} from './basic';
 
@@ -61,7 +61,7 @@ export class EmberEUI64 extends fixed_list(8, basic.uint8_t) {
             value = (value as EmberEUI64).value as number[];
         }
         // console.assert(cls._length === value.length);
-        /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
+
         const val = Buffer.from(value)
             .reverse()
             .map((i) => basic.uint8_t.serialize(basic.uint8_t, i)[0]);

@@ -15,8 +15,7 @@ export interface UnifiedBackupStorage {
             znpVersion?: number;
             ezspVersion?: number;
 
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            [key: string]: any;
+            [key: string]: unknown;
         };
     };
     stack_specific?: {
@@ -43,10 +42,6 @@ export interface UnifiedBackupStorage {
         nwk_address: string | null;
         ieee_address: string;
         is_child: boolean;
-        link_key: {
-            key: string;
-            rx_counter: number;
-            tx_counter: number;
-        } | null;
+        link_key: {key: string; rx_counter: number; tx_counter: number} | undefined;
     }[];
 }

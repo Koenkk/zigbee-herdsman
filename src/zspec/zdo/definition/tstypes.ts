@@ -1,5 +1,5 @@
 import {ClusterId, EUI64, ExtendedPanId, NodeId, PanId, ProfileId} from '../../tstypes';
-import {JoiningPolicy, ActiveLinkKeyType, InitialJoinMethod, SelectedKeyNegotiationProtocol, SelectedPreSharedSecret} from './enums';
+import {ActiveLinkKeyType, InitialJoinMethod, JoiningPolicy, SelectedKeyNegotiationProtocol, SelectedPreSharedSecret} from './enums';
 import {Status} from './status';
 
 /**

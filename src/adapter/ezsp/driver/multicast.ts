@@ -1,4 +1,5 @@
 /* istanbul ignore file */
+
 import {logger} from '../../../utils/logger';
 import {Driver} from './driver';
 import {EzspConfigId} from './types';
@@ -46,7 +47,7 @@ export class Multicast {
     }
 
     public async subscribe(group_id: number, endpoint: number): Promise<EmberStatus> {
-        if (this._multicast.hasOwnProperty(group_id)) {
+        if (this._multicast[group_id] !== undefined) {
             logger.debug(`${group_id} is already subscribed`, NS);
             return EmberStatus.SUCCESS;
         }
@@ -68,7 +69,7 @@ export class Multicast {
             logger.debug(`Set MulticastTableEntry #${idx} for ${entry.multicastId} multicast id: ${status}`, NS);
             return status;
         } catch (error) {
-            logger.error(`No more available slots MulticastId subscription (${error.message})`, NS);
+            logger.error(`No more available slots MulticastId subscription (${(error as Error).stack})`, NS);
             return EmberStatus.INDEX_OUT_OF_RANGE;
         }
     }

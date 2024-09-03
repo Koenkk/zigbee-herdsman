@@ -1,4 +1,4 @@
-import {DataType, FrameType, Direction, BuffaloZclDataType, StructuredIndicatorType, ParameterCondition, DataTypeClass} from './enums';
+import {BuffaloZclDataType, DataType, DataTypeClass, Direction, FrameType, ParameterCondition, StructuredIndicatorType} from './enums';
 import {Status} from './status';
 
 export interface BuffaloZclOptions {
@@ -154,6 +154,7 @@ export type ClusterName =
     | 'pHMeasurement'
     | 'msCO2'
     | 'pm1Measurement'
+    | 'msFormaldehyde'
     | 'pm10Measurement'
     | 'pm25Measurement'
     | 'ssIasZone'
@@ -213,7 +214,6 @@ export type ClusterName =
     | 'manuSpecificCentraliteHumidity'
     | 'manuSpecificSmartThingsArrivalSensor'
     | 'manuSpecificSamsungAccelerometer'
-    | 'heimanSpecificFormaldehydeMeasurement'
     | 'heimanSpecificAirQuality'
     | 'heimanSpecificScenes'
     | 'tradfriButton'
@@ -228,7 +228,6 @@ export type ClusterName =
     | 'sprutNoise'
     | 'sprutIrBlaster'
     | 'manuSpecificSiglisZigfred'
-    | 'manuSpecificInovelli'
     | 'owonClearMetering'
     | 'zosungIRTransmit'
     | 'zosungIRControl'

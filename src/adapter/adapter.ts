@@ -1,16 +1,26 @@
-import Bonjour, {Service} from 'bonjour-service';
 import events from 'events';
+
+import Bonjour, {Service} from 'bonjour-service';
 
 import * as Models from '../models';
 import {logger} from '../utils/logger';
 import {BroadcastAddress} from '../zspec/enums';
 import * as Zcl from '../zspec/zcl';
-import {ZclPayload} from './events';
+import * as AdapterEvents from './events';
 import * as TsType from './tstype';
 
 const NS = 'zh:adapter';
 
-abstract class Adapter extends events.EventEmitter {
+interface AdapterEventMap {
+    deviceJoined: [payload: AdapterEvents.DeviceJoinedPayload];
+    zclPayload: [payload: AdapterEvents.ZclPayload];
+    disconnected: [];
+    deviceAnnounce: [payload: AdapterEvents.DeviceAnnouncePayload];
+    deviceLeave: [payload: AdapterEvents.DeviceLeavePayload];
+    networkAddress: [payload: AdapterEvents.NetworkAddressPayload];
+}
+
+abstract class Adapter extends events.EventEmitter<AdapterEventMap> {
     public readonly greenPowerGroup = 0x0b84;
     protected networkOptions: TsType.NetworkOptions;
     protected adapterOptions: TsType.AdapterOptions;
@@ -45,12 +55,27 @@ abstract class Adapter extends events.EventEmitter {
         const {ZiGateAdapter} = await import('./zigate/adapter');
         const {EZSPAdapter} = await import('./ezsp/adapter');
         const {EmberAdapter} = await import('./ember/adapter');
-        type AdapterImplementation = typeof ZStackAdapter | typeof DeconzAdapter | typeof ZiGateAdapter | typeof EZSPAdapter | typeof EmberAdapter;
+        const {ZBOSSAdapter} = await import('./zboss/adapter');
+        type AdapterImplementation =
+            | typeof ZStackAdapter
+            | typeof DeconzAdapter
+            | typeof ZiGateAdapter
+            | typeof EZSPAdapter
+            | typeof EmberAdapter
+            | typeof ZBOSSAdapter;
 
         let adapters: AdapterImplementation[];
-        const adapterLookup = {zstack: ZStackAdapter, deconz: DeconzAdapter, zigate: ZiGateAdapter, ezsp: EZSPAdapter, ember: EmberAdapter};
+        const adapterLookup = {
+            zstack: ZStackAdapter,
+            deconz: DeconzAdapter,
+            zigate: ZiGateAdapter,
+            ezsp: EZSPAdapter,
+            ember: EmberAdapter,
+            zboss: ZBOSSAdapter,
+        };
+
         if (serialPortOptions.adapter && serialPortOptions.adapter !== 'auto') {
-            if (adapterLookup.hasOwnProperty(serialPortOptions.adapter)) {
+            if (adapterLookup[serialPortOptions.adapter]) {
                 adapters = [adapterLookup[serialPortOptions.adapter]];
             } else {
                 throw new Error(`Adapter '${serialPortOptions.adapter}' does not exists, possible options: ${Object.keys(adapterLookup).join(', ')}`);
@@ -79,13 +104,16 @@ abstract class Adapter extends events.EventEmitter {
             }
         } else if (serialPortOptions.path.startsWith('mdns://')) {
             const mdnsDevice = serialPortOptions.path.substring(7);
+
             if (mdnsDevice.length == 0) {
                 throw new Error(`No mdns device specified. You must specify the coordinator mdns service type after mdns://, e.g. mdns://my-adapter`);
             }
+
             const bj = new Bonjour();
             const mdnsTimeout = 2000; // timeout for mdns scan
 
             logger.info(`Starting mdns discovery for coordinator: ${mdnsDevice}`, NS);
+
             await new Promise((resolve, reject) => {
                 bj.findOne({type: mdnsDevice}, mdnsTimeout, function (service: Service) {
                     if (service) {
@@ -96,16 +124,22 @@ abstract class Adapter extends events.EventEmitter {
                                 service.txt.radio_type == 'znp' ? 'zstack' : service.txt.radio_type
                             ) as TsType.SerialPortOptions['adapter'];
                             const mdnsBaud = parseInt(service.txt.baud_rate);
+
                             logger.info(`Coordinator Ip: ${mdnsIp}`, NS);
                             logger.info(`Coordinator Port: ${mdnsPort}`, NS);
                             logger.info(`Coordinator Radio: ${mdnsAdapter}`, NS);
                             logger.info(`Coordinator Baud: ${mdnsBaud}\n`, NS);
                             bj.destroy();
+
                             serialPortOptions.path = `tcp://${mdnsIp}:${mdnsPort}`;
                             serialPortOptions.adapter = mdnsAdapter;
                             serialPortOptions.baudRate = mdnsBaud;
 
-                            if (adapterLookup.hasOwnProperty(serialPortOptions.adapter) && serialPortOptions.adapter !== 'auto') {
+                            if (
+                                serialPortOptions.adapter &&
+                                serialPortOptions.adapter !== 'auto' &&
+                                adapterLookup[serialPortOptions.adapter] !== undefined
+                            ) {
                                 adapter = adapterLookup[serialPortOptions.adapter];
                                 resolve(new adapter(networkOptions, serialPortOptions, backupPath, adapterOptions));
                             } else {
@@ -170,21 +204,21 @@ abstract class Adapter extends events.EventEmitter {
     public abstract addInstallCode(ieeeAddress: string, key: Buffer): Promise<void>;
 
     public abstract waitFor(
-        networkAddress: number,
+        networkAddress: number | undefined,
         endpoint: number,
         frameType: Zcl.FrameType,
         direction: Zcl.Direction,
-        transactionSequenceNumber: number,
+        transactionSequenceNumber: number | undefined,
         clusterID: number,
         commandIdentifier: number,
         timeout: number,
-    ): {promise: Promise<ZclPayload>; cancel: () => void};
+    ): {promise: Promise<AdapterEvents.ZclPayload>; cancel: () => void};
 
     /**
      * ZDO
      */
 
-    public abstract permitJoin(seconds: number, networkAddress: number): Promise<void>;
+    public abstract permitJoin(seconds: number, networkAddress?: number): Promise<void>;
 
     public abstract lqi(networkAddress: number): Promise<TsType.LQI>;
 
@@ -213,7 +247,7 @@ abstract class Adapter extends events.EventEmitter {
         clusterID: number,
         destinationAddressOrGroup: string | number,
         type: 'endpoint' | 'group',
-        destinationEndpoint: number,
+        destinationEndpoint?: number,
     ): Promise<void>;
 
     public abstract removeDevice(networkAddress: number, ieeeAddr: string): Promise<void>;
@@ -231,7 +265,7 @@ abstract class Adapter extends events.EventEmitter {
         disableResponse: boolean,
         disableRecovery: boolean,
         sourceEndpoint?: number,
-    ): Promise<ZclPayload>;
+    ): Promise<AdapterEvents.ZclPayload | void>;
 
     public abstract sendZclFrameToGroup(groupID: number, zclFrame: Zcl.Frame, sourceEndpoint?: number): Promise<void>;
 
@@ -245,7 +279,7 @@ abstract class Adapter extends events.EventEmitter {
 
     public abstract sendZclFrameInterPANToIeeeAddr(zclFrame: Zcl.Frame, ieeeAddress: string): Promise<void>;
 
-    public abstract sendZclFrameInterPANBroadcast(zclFrame: Zcl.Frame, timeout: number): Promise<ZclPayload>;
+    public abstract sendZclFrameInterPANBroadcast(zclFrame: Zcl.Frame, timeout: number): Promise<AdapterEvents.ZclPayload>;
 
     public abstract restoreChannelInterPAN(): Promise<void>;
 }

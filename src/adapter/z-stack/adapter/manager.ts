@@ -1,4 +1,3 @@
-/* eslint-disable max-len */
 import * as crypto from 'crypto';
 
 import {TsType} from '../../';
@@ -35,6 +34,7 @@ export class ZnpAdapterManager {
 
     private znp: Znp;
     private options: ZStackModels.StartupOptions;
+    // @ts-expect-error initialized in `start()`
     private nwkOptions: Models.NetworkOptions;
 
     public constructor(znp: Znp, options: ZStackModels.StartupOptions) {
@@ -113,7 +113,9 @@ export class ZnpAdapterManager {
         const nib = await this.nv.readItem(NvItemsIds.NIB, 0, Structs.nib);
         const preconfiguredKey =
             this.options.version === ZnpVersion.zStack12
-                ? Structs.nwkKey((await this.znp.request(Subsystem.SAPI, 'readConfiguration', {configid: NvItemsIds.PRECFGKEY})).payload.value)
+                ? Structs.nwkKey(
+                      (await this.znp.requestWithReply(Subsystem.SAPI, 'readConfiguration', {configid: NvItemsIds.PRECFGKEY})).payload.value,
+                  )
                 : await this.nv.readItem(NvItemsIds.PRECFGKEY, 0, Structs.nwkKey);
         let activeKeyInfo = await this.nv.readItem(NvItemsIds.NWK_ACTIVE_KEY_INFO, 0, Structs.nwkKeyDescriptor);
         let alternateKeyInfo = await this.nv.readItem(NvItemsIds.NWK_ALTERN_KEY_INFO, 0, Structs.nwkKeyDescriptor);
@@ -270,11 +272,11 @@ export class ZnpAdapterManager {
      * Internal method to perform regular adapter startup in coordinator mode.
      */
     private async beginStartup(): Promise<void> {
-        const deviceInfo = await this.znp.request(Subsystem.UTIL, 'getDeviceInfo', {});
+        const deviceInfo = await this.znp.requestWithReply(Subsystem.UTIL, 'getDeviceInfo', {});
         if (deviceInfo.payload.devicestate !== DevStates.ZB_COORD) {
             logger.debug('starting adapter as coordinator', NS);
             const started = this.znp.waitFor(UnpiConstants.Type.AREQ, Subsystem.ZDO, 'stateChangeInd', {state: 9}, 60000);
-            await this.znp.request(Subsystem.ZDO, 'startupFromApp', {startdelay: 100}, null, null, [
+            await this.znp.request(Subsystem.ZDO, 'startupFromApp', {startdelay: 100}, undefined, undefined, [
                 ZnpCommandStatus.SUCCESS,
                 ZnpCommandStatus.FAILURE,
             ]);
@@ -363,7 +365,7 @@ export class ZnpAdapterManager {
                 await started.start().promise;
             } catch (error) {
                 throw new Error(
-                    `network commissioning timed out - most likely network with the same panId or extendedPanId already exists nearby (${error.message})`,
+                    `network commissioning timed out - most likely network with the same panId or extendedPanId already exists nearby (${(error as Error).stack})`,
                 );
             }
         } else {
@@ -374,7 +376,7 @@ export class ZnpAdapterManager {
         /* wait for NIB to settle (takes different amount of time of different platforms */
         logger.debug('waiting for NIB to settle', NS);
         let reads = 0;
-        let nib: ReturnType<typeof Structs.nib> = null;
+        let nib: ReturnType<typeof Structs.nib>;
         do {
             await Wait(3000);
             nib = await this.nv.readItem(NvItemsIds.NIB, 0, Structs.nib);
@@ -385,7 +387,7 @@ export class ZnpAdapterManager {
         }
 
         /* validate provisioned PAN ID */
-        const extNwkInfo = await this.znp.request(Subsystem.ZDO, 'extNwkInfo', {});
+        const extNwkInfo = await this.znp.requestWithReply(Subsystem.ZDO, 'extNwkInfo', {});
         if (extNwkInfo.payload.panid !== nwkOptions.panId && failOnCollision) {
             throw new Error(
                 `network commissioning failed - panId collision detected (expected=${nwkOptions.panId}, actual=${extNwkInfo.payload.panid})`,
@@ -469,7 +471,7 @@ export class ZnpAdapterManager {
      * @param group Target group index.
      */
     private async addToGroup(endpoint: number, group: number): Promise<void> {
-        const result = await this.znp.request(5, 'extFindGroup', {endpoint, groupid: group}, null, null, [
+        const result = await this.znp.requestWithReply(5, 'extFindGroup', {endpoint, groupid: group}, undefined, undefined, [
             ZnpCommandStatus.SUCCESS,
             ZnpCommandStatus.FAILURE,
         ]);
@@ -513,12 +515,12 @@ export class ZnpAdapterManager {
         const parsed: Models.NetworkOptions = {
             channelList: channelList,
             panId: options.panID,
-            extendedPanId: Buffer.from(options.extendedPanID),
-            networkKey: Buffer.from(options.networkKey),
-            networkKeyDistribute: options.networkKeyDistribute,
+            extendedPanId: Buffer.from(options.extendedPanID!),
+            networkKey: Buffer.from(options.networkKey!),
+            networkKeyDistribute: Boolean(options.networkKeyDistribute),
         };
         if (parsed.extendedPanId.equals(Buffer.alloc(8, 0xdd))) {
-            const adapterIeeeAddressResponse = await this.znp.request(Subsystem.SYS, 'getExtAddr', {});
+            const adapterIeeeAddressResponse = await this.znp.requestWithReply(Subsystem.SYS, 'getExtAddr', {});
             parsed.extendedPanId = Buffer.from(adapterIeeeAddressResponse.payload.extaddress.split('0x')[1], 'hex');
             parsed.hasDefaultExtendedPanId = true;
         }

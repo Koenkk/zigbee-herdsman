@@ -1,7 +1,5 @@
-import {buffer} from 'stream/consumers';
-
 import {ClusterId as ZdoClusterId} from '../../../zspec/zdo';
-import {Subsystem, Type as CommandType} from '../unpi/constants';
+import {Type as CommandType, Subsystem} from '../unpi/constants';
 import ParameterType from './parameterType';
 import {MtCmd, MtCmdZdoReq, MtCmdZdoResp} from './tstype';
 

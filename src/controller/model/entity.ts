@@ -3,9 +3,13 @@ import events from 'events';
 import {Adapter} from '../../adapter';
 import Database from '../database';
 
-abstract class Entity extends events.EventEmitter {
-    protected static database: Database = null;
-    protected static adapter: Adapter = null;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type EventMap<T> = Record<keyof T, any[]> | DefaultEventMap;
+type DefaultEventMap = [never];
+
+abstract class Entity<T extends EventMap<T> = DefaultEventMap> extends events.EventEmitter<T> {
+    protected static database?: Database;
+    protected static adapter?: Adapter;
 
     public static injectDatabase(database: Database): void {
         Entity.database = database;

@@ -1,4 +1,5 @@
-/* eslint-disable @typescript-eslint/explicit-module-boundary-types */
+import assert from 'assert';
+
 import {StructMemoryAlignment} from '../struct';
 import {Table} from '../table';
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
@@ -14,5 +15,6 @@ export const addressManagerTable = (dataOrCapacity?: Buffer | Buffer[] | number,
     const table = Table.new<ReturnType<typeof addressManagerEntry>>()
         .struct(addressManagerEntry)
         .occupancy((e) => e.isSet() as boolean);
+    assert(dataOrCapacity !== undefined, 'dataOrCapacity cannot be undefined');
     return typeof dataOrCapacity === 'number' ? table.build(dataOrCapacity) : table.build(dataOrCapacity, alignment);
 };

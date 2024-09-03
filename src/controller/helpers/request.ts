@@ -32,10 +32,11 @@ class Request<Type = any> {
     private func: (frame: Zcl.Frame) => Promise<Type>;
     frame: Zcl.Frame;
     expires: number;
-    sendPolicy: SendPolicy;
+    sendPolicy: SendPolicy | undefined;
     private resolveQueue: Array<(value: Type) => void>;
     private rejectQueue: Array<(error: Error) => void>;
     private lastError: Error;
+
     constructor(
         func: (frame: Zcl.Frame) => Promise<Type>,
         frame: Zcl.Frame,
@@ -80,7 +81,7 @@ class Request<Type = any> {
         try {
             return await this.func(this.frame);
         } catch (error) {
-            this.lastError = error;
+            this.lastError = error as Error;
             throw error;
         }
     }

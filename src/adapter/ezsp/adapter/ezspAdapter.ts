@@ -1,6 +1,9 @@
 /* istanbul ignore file */
+
+import assert from 'assert';
+
 import * as Models from '../../../models';
-import {Queue, Waitress, Wait, RealpathSync} from '../../../utils';
+import {Queue, RealpathSync, Wait, Waitress} from '../../../utils';
 import {logger} from '../../../utils/logger';
 import {BroadcastAddress} from '../../../zspec/enums';
 import * as Zcl from '../../../zspec/zcl';
@@ -9,24 +12,24 @@ import * as Events from '../../events';
 import SerialPortUtils from '../../serialPortUtils';
 import SocketPortUtils from '../../socketPortUtils';
 import {
-    NetworkOptions,
-    SerialPortOptions,
+    ActiveEndpoints,
+    AdapterOptions,
     Coordinator,
     CoordinatorVersion,
-    NodeDescriptor,
-    ActiveEndpoints,
-    SimpleDescriptor,
     LQI,
-    RoutingTable,
-    NetworkParameters,
-    StartResult,
     LQINeighbor,
+    NetworkOptions,
+    NetworkParameters,
+    NodeDescriptor,
+    RoutingTable,
     RoutingTableEntry,
-    AdapterOptions,
+    SerialPortOptions,
+    SimpleDescriptor,
+    StartResult,
 } from '../../tstype';
 import {Driver, EmberIncomingMessage} from '../driver';
 import {EZSPZDOResponseFrameData} from '../driver/ezsp';
-import {EmberZDOCmd, uint16_t, EmberEUI64, EmberStatus} from '../driver/types';
+import {EmberEUI64, EmberStatus, EmberZDOCmd, uint16_t} from '../driver/types';
 
 const NS = 'zh:ezsp';
 
@@ -36,7 +39,7 @@ const autoDetectDefinitions = [
 ];
 
 interface WaitressMatcher {
-    address: number | string;
+    address?: number | string;
     endpoint: number;
     transactionSequenceNumber?: number;
     clusterID: number;
@@ -49,7 +52,7 @@ class EZSPAdapter extends Adapter {
     private interpanLock: boolean;
     private queue: Queue;
     private closing: boolean;
-    private deprecatedTimer: NodeJS.Timeout;
+    private deprecatedTimer?: NodeJS.Timeout;
 
     public constructor(networkOptions: NetworkOptions, serialPortOptions: SerialPortOptions, backupPath: string, adapterOptions: AdapterOptions) {
         super(networkOptions, serialPortOptions, backupPath, adapterOptions);
@@ -89,13 +92,13 @@ class EZSPAdapter extends Adapter {
                 address: frame.sender,
                 endpoint: frame.apsFrame.sourceEndpoint,
                 linkquality: frame.lqi,
-                groupID: frame.apsFrame.groupId,
+                groupID: frame.apsFrame.groupId ?? 0,
                 wasBroadcast: false, // TODO
                 destinationEndpoint: frame.apsFrame.destinationEndpoint,
             };
 
             this.waitress.resolve(payload);
-            this.emit(Events.Events.zclPayload, payload);
+            this.emit('zclPayload', payload);
         } else if (frame.apsFrame.profileId == 0xc05e && frame.senderEui64) {
             // ZLL Frame
             const payload: Events.ZclPayload = {
@@ -105,13 +108,13 @@ class EZSPAdapter extends Adapter {
                 address: `0x${frame.senderEui64.toString()}`,
                 endpoint: 0xfe,
                 linkquality: frame.lqi,
-                groupID: null,
+                groupID: 0,
                 wasBroadcast: false,
-                destinationEndpoint: null,
+                destinationEndpoint: 1,
             };
 
             this.waitress.resolve(payload);
-            this.emit(Events.Events.zclPayload, payload);
+            this.emit('zclPayload', payload);
         } else if (frame.apsFrame.profileId == 0xa1e0) {
             // GP Frame
             // Only handle when clusterId == 33 (greenPower), some devices send messages with this profileId
@@ -125,18 +128,17 @@ class EZSPAdapter extends Adapter {
                     address: frame.sender,
                     endpoint: frame.apsFrame.sourceEndpoint,
                     linkquality: frame.lqi,
-                    groupID: null,
+                    groupID: 0,
                     wasBroadcast: true,
                     destinationEndpoint: frame.apsFrame.sourceEndpoint,
                 };
 
                 this.waitress.resolve(payload);
-                this.emit(Events.Events.zclPayload, payload);
+                this.emit('zclPayload', payload);
             } else {
                 logger.debug(`Ignoring GP frame because clusterId is not greenPower`, NS);
             }
         }
-        this.emit('event', frame);
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -151,7 +153,7 @@ class EZSPAdapter extends Adapter {
         if (nwk == 0) {
             await this.nodeDescriptor(nwk);
         } else {
-            this.emit(Events.Events.deviceJoined, payload);
+            this.emit('deviceJoined', payload);
         }
     }
 
@@ -164,7 +166,7 @@ class EZSPAdapter extends Adapter {
             networkAddress: nwk,
             ieeeAddr: `0x${ieee.toString('hex')}`,
         };
-        this.emit(Events.Events.deviceLeave, payload);
+        this.emit('deviceLeave', payload);
     }
 
     /**
@@ -192,7 +194,7 @@ class EZSPAdapter extends Adapter {
         logger.debug(`onDriverClose()`, NS);
 
         if (!this.closing) {
-            this.emit(Events.Events.disconnected);
+            this.emit('disconnected');
         }
     }
 
@@ -210,10 +212,10 @@ class EZSPAdapter extends Adapter {
         }
     }
 
-    public static async autoDetectPath(): Promise<string> {
+    public static async autoDetectPath(): Promise<string | undefined> {
         const paths = await SerialPortUtils.find(autoDetectDefinitions);
         paths.sort((a, b) => (a < b ? -1 : 1));
-        return paths.length > 0 ? paths[0] : null;
+        return paths.length > 0 ? paths[0] : undefined;
     }
 
     public async getCoordinator(): Promise<Coordinator> {
@@ -249,7 +251,7 @@ class EZSPAdapter extends Adapter {
         });
     }
 
-    public async permitJoin(seconds: number, networkAddress: number): Promise<void> {
+    public async permitJoin(seconds: number, networkAddress?: number): Promise<void> {
         if (this.driver.ezsp.isInitialized()) {
             return this.queue.execute<void>(async () => {
                 this.checkInterpanLock();
@@ -438,8 +440,8 @@ class EZSPAdapter extends Adapter {
         disableResponse: boolean,
         disableRecovery: boolean,
         sourceEndpoint?: number,
-    ): Promise<Events.ZclPayload> {
-        return this.queue.execute<Events.ZclPayload>(async () => {
+    ): Promise<Events.ZclPayload | void> {
+        return this.queue.execute<Events.ZclPayload | void>(async () => {
             this.checkInterpanLock();
             return this.sendZclFrameToEndpointInternal(
                 ieeeAddr,
@@ -452,16 +454,12 @@ class EZSPAdapter extends Adapter {
                 disableRecovery,
                 0,
                 0,
-                false,
-                false,
-                false,
-                null,
             );
         }, networkAddress);
     }
 
     private async sendZclFrameToEndpointInternal(
-        ieeeAddr: string,
+        ieeeAddr: string | undefined,
         networkAddress: number,
         endpoint: number,
         sourceEndpoint: number,
@@ -471,11 +469,7 @@ class EZSPAdapter extends Adapter {
         disableRecovery: boolean,
         responseAttempt: number,
         dataRequestAttempt: number,
-        checkedNetworkAddress: boolean,
-        discoveredRoute: boolean,
-        assocRemove: boolean,
-        assocRestore: {ieeeadr: string; nwkaddr: number; noderelation: number},
-    ): Promise<Events.ZclPayload> {
+    ): Promise<Events.ZclPayload | void> {
         if (ieeeAddr == null) {
             ieeeAddr = `0x${this.driver.ieee.toString()}`;
         }
@@ -486,7 +480,7 @@ class EZSPAdapter extends Adapter {
         );
         let response = null;
         const command = zclFrame.command;
-        if (command.hasOwnProperty('response') && disableResponse === false) {
+        if (command.response != undefined && disableResponse === false) {
             response = this.waitForInternal(
                 networkAddress,
                 endpoint,
@@ -538,17 +532,11 @@ class EZSPAdapter extends Adapter {
                         disableRecovery,
                         responseAttempt + 1,
                         dataRequestAttempt,
-                        checkedNetworkAddress,
-                        discoveredRoute,
-                        assocRemove,
-                        assocRestore,
                     );
                 } else {
                     throw error;
                 }
             }
-        } else {
-            return null;
         }
     }
 
@@ -635,7 +623,7 @@ class EZSPAdapter extends Adapter {
         clusterID: number,
         destinationAddressOrGroup: string | number,
         type: 'endpoint' | 'group',
-        destinationEndpoint: number,
+        destinationEndpoint?: number,
     ): Promise<void> {
         return this.queue.execute<void>(async () => {
             this.checkInterpanLock();
@@ -690,9 +678,8 @@ class EZSPAdapter extends Adapter {
     }
 
     public async backup(): Promise<Models.Backup> {
-        if (this.driver.ezsp.isInitialized()) {
-            return this.driver.backupMan.createBackup();
-        }
+        assert(this.driver.ezsp.isInitialized(), 'Cannot make backup when ezsp is not initialized');
+        return this.driver.backupMan.createBackup();
     }
 
     public async restoreChannelInterPAN(): Promise<void> {
@@ -714,22 +701,18 @@ class EZSPAdapter extends Adapter {
     public async sendZclFrameInterPANToIeeeAddr(zclFrame: Zcl.Frame, ieeeAddr: string): Promise<void> {
         return this.queue.execute<void>(async () => {
             logger.debug(`sendZclFrameInterPANToIeeeAddr to ${ieeeAddr}`, NS);
-            try {
-                const frame = this.driver.makeEmberIeeeRawFrame();
-                frame.ieeeFrameControl = 0xcc21;
-                frame.destPanId = 0xffff;
-                frame.destAddress = new EmberEUI64(ieeeAddr);
-                frame.sourcePanId = this.driver.networkParams.panId;
-                frame.sourceAddress = this.driver.ieee;
-                frame.nwkFrameControl = 0x000b;
-                frame.appFrameControl = 0x03;
-                frame.clusterId = zclFrame.cluster.ID;
-                frame.profileId = 0xc05e;
+            const frame = this.driver.makeEmberIeeeRawFrame();
+            frame.ieeeFrameControl = 0xcc21;
+            frame.destPanId = 0xffff;
+            frame.destAddress = new EmberEUI64(ieeeAddr);
+            frame.sourcePanId = this.driver.networkParams.panId;
+            frame.sourceAddress = this.driver.ieee;
+            frame.nwkFrameControl = 0x000b;
+            frame.appFrameControl = 0x03;
+            frame.clusterId = zclFrame.cluster.ID;
+            frame.profileId = 0xc05e;
 
-                await this.driver.ieeerawrequest(frame, zclFrame.toBuffer());
-            } catch (error) {
-                throw error;
-            }
+            await this.driver.ieeerawrequest(frame, zclFrame.toBuffer());
         });
     }
 
@@ -737,11 +720,12 @@ class EZSPAdapter extends Adapter {
         return this.queue.execute<Events.ZclPayload>(async () => {
             logger.debug(`sendZclFrameInterPANBroadcast`, NS);
             const command = zclFrame.command;
-            if (!command.hasOwnProperty('response')) {
+
+            if (command.response == undefined) {
                 throw new Error(`Command '${command.name}' has no response, cannot wait for response`);
             }
 
-            const response = this.waitForInternal(null, 0xfe, null, zclFrame.cluster.ID, command.response, timeout);
+            const response = this.waitForInternal(undefined, 0xfe, undefined, zclFrame.cluster.ID, command.response, timeout);
 
             try {
                 const frame = this.driver.makeEmberRawFrame();
@@ -785,32 +769,33 @@ class EZSPAdapter extends Adapter {
     }
 
     private waitForInternal(
-        networkAddress: number,
+        networkAddress: number | undefined,
         endpoint: number,
-        transactionSequenceNumber: number,
+        transactionSequenceNumber: number | undefined,
         clusterID: number,
         commandIdentifier: number,
         timeout: number,
     ): {start: () => {promise: Promise<Events.ZclPayload>}; cancel: () => void} {
-        const payload = {
-            address: networkAddress,
-            endpoint,
-            clusterID,
-            commandIdentifier,
-            transactionSequenceNumber,
-        };
-
-        const waiter = this.waitress.waitFor(payload, timeout);
+        const waiter = this.waitress.waitFor(
+            {
+                address: networkAddress,
+                endpoint,
+                clusterID,
+                commandIdentifier,
+                transactionSequenceNumber,
+            },
+            timeout,
+        );
         const cancel = (): void => this.waitress.remove(waiter.ID);
         return {start: waiter.start, cancel};
     }
 
     public waitFor(
-        networkAddress: number,
+        networkAddress: number | undefined,
         endpoint: number,
         frameType: Zcl.FrameType,
         direction: Zcl.Direction,
-        transactionSequenceNumber: number,
+        transactionSequenceNumber: number | undefined,
         clusterID: number,
         commandIdentifier: number,
         timeout: number,
@@ -829,13 +814,13 @@ class EZSPAdapter extends Adapter {
     }
 
     private waitressValidator(payload: Events.ZclPayload, matcher: WaitressMatcher): boolean {
-        return (
+        return Boolean(
             payload.header &&
-            (!matcher.address || payload.address === matcher.address) &&
-            payload.endpoint === matcher.endpoint &&
-            (!matcher.transactionSequenceNumber || payload.header.transactionSequenceNumber === matcher.transactionSequenceNumber) &&
-            payload.clusterID === matcher.clusterID &&
-            matcher.commandIdentifier === payload.header.commandIdentifier
+                (!matcher.address || payload.address === matcher.address) &&
+                payload.endpoint === matcher.endpoint &&
+                (!matcher.transactionSequenceNumber || payload.header.transactionSequenceNumber === matcher.transactionSequenceNumber) &&
+                payload.clusterID === matcher.clusterID &&
+                matcher.commandIdentifier === payload.header.commandIdentifier,
         );
     }
 }

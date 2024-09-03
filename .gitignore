@@ -3,6 +3,7 @@ coverage/
 dist/
 .idea
 temp/
+typedoc/
 .remote-sync.json
 tsconfig.tsbuildinfo
 

@@ -1,5 +1,7 @@
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
-/* eslint-disable @typescript-eslint/explicit-module-boundary-types */
+
+import assert from 'assert';
+
 import {Struct} from '../struct';
 
 /**
@@ -7,8 +9,10 @@ import {Struct} from '../struct';
  *
  * @param data Data to initialize structure with.
  */
-export const hasConfigured = (data?: Buffer) =>
-    Struct.new()
+export const hasConfigured = (data?: Buffer | Buffer[]) => {
+    assert(!Array.isArray(data));
+    return Struct.new()
         .member('uint8', 'hasConfigured')
         .method('isConfigured', Boolean.prototype, (struct) => struct.hasConfigured === 0x55)
         .build(data);
+};

@@ -1,9 +1,9 @@
 import {Frame as UnpiFrame} from '../unpi';
-import {Subsystem, Type, MaxDataSize} from '../unpi/constants';
+import {MaxDataSize, Subsystem, Type} from '../unpi/constants';
 import BuffaloZnp from './buffaloZnp';
 import Definition from './definition';
 import ParameterType from './parameterType';
-import {MtParameter, MtCmd, ZpiObjectPayload, MtType, BuffaloZnpOptions} from './tstype';
+import {BuffaloZnpOptions, MtCmd, MtCmdZdoResp, MtParameter, MtType, ZpiObjectPayload} from './tstype';
 
 const BufferAndListTypes = [
     ParameterType.BUFFER,
@@ -23,7 +23,7 @@ const BufferAndListTypes = [
 
 class ZpiObject {
     public readonly subsystem: Subsystem;
-    public readonly command: MtCmd;
+    public readonly command: MtCmd | MtCmdZdoResp;
     public readonly payload: ZpiObjectPayload;
     public readonly unpiFrame: UnpiFrame;
 
@@ -40,9 +40,8 @@ class ZpiObject {
         }
 
         const cmd = Definition[subsystem].find((c: MtCmd): boolean => c.name === command);
-
-        if (!cmd) {
-            throw new Error(`Command '${command}' from subsystem '${subsystem}' not found`);
+        if (cmd?.request === undefined) {
+            throw new Error(`Command request '${command}' from subsystem '${subsystem}' not found`);
         }
 
         const upiFrame = this.createUnpiFrame(cmd, subsystem, payload);

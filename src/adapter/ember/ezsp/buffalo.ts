@@ -1,4 +1,5 @@
 /* istanbul ignore file */
+
 import Buffalo from '../../../buffalo/buffalo';
 import {GP_SINK_LIST_ENTRIES} from '../consts';
 import {EmberGpApplicationId, EmberGpSinkType, EzspStatus, SLStatus} from '../enums';
@@ -22,8 +23,8 @@ import {
     EmberInitialSecurityState,
     EmberKeyData,
     EmberMessageDigest,
-    EmberMultiPhyRadioParameters,
     EmberMulticastTableEntry,
+    EmberMultiPhyRadioParameters,
     EmberMultiprotocolPriorities,
     EmberNeighborTableEntry,
     EmberNetworkInitStruct,
@@ -38,11 +39,10 @@ import {
     EmberSignature283k1Data,
     EmberSignatureData,
     EmberSmacData,
-    EmberTokTypeStackZllData,
-    EmberTokTypeStackZllSecurity,
     EmberTokenData,
     EmberTokenInfo,
-    EmberTransientKeyData,
+    EmberTokTypeStackZllData,
+    EmberTokTypeStackZllSecurity,
     EmberZigbeeNetwork,
     EmberZllAddressAssignment,
     EmberZllDeviceInfoRecord,
@@ -56,29 +56,29 @@ import {
 } from '../types';
 import {highByte} from '../utils/math';
 import {
-    EMBER_ENCRYPTION_KEY_SIZE,
-    EMBER_CERTIFICATE_SIZE,
-    EMBER_PUBLIC_KEY_SIZE,
-    EMBER_PRIVATE_KEY_SIZE,
-    EMBER_SMAC_SIZE,
-    EMBER_SIGNATURE_SIZE,
     EMBER_AES_HASH_BLOCK_SIZE,
     EMBER_CERTIFICATE_283K1_SIZE,
-    EMBER_PUBLIC_KEY_283K1_SIZE,
+    EMBER_CERTIFICATE_SIZE,
+    EMBER_ENCRYPTION_KEY_SIZE,
     EMBER_PRIVATE_KEY_283K1_SIZE,
+    EMBER_PRIVATE_KEY_SIZE,
+    EMBER_PUBLIC_KEY_283K1_SIZE,
+    EMBER_PUBLIC_KEY_SIZE,
     EMBER_SIGNATURE_283K1_SIZE,
+    EMBER_SIGNATURE_SIZE,
+    EMBER_SMAC_SIZE,
+    EXTENDED_PAN_ID_SIZE,
     EZSP_EXTENDED_FRAME_CONTROL_HB_INDEX,
-    EZSP_EXTENDED_FRAME_FORMAT_VERSION_MASK,
-    EZSP_EXTENDED_FRAME_FORMAT_VERSION,
     EZSP_EXTENDED_FRAME_CONTROL_LB_INDEX,
-    EZSP_EXTENDED_PARAMETERS_INDEX,
     EZSP_EXTENDED_FRAME_CONTROL_RESERVED_MASK,
+    EZSP_EXTENDED_FRAME_FORMAT_VERSION,
+    EZSP_EXTENDED_FRAME_FORMAT_VERSION_MASK,
+    EZSP_EXTENDED_FRAME_ID_HB_INDEX,
+    EZSP_EXTENDED_FRAME_ID_LB_INDEX,
+    EZSP_EXTENDED_PARAMETERS_INDEX,
     EZSP_FRAME_CONTROL_INDEX,
     EZSP_FRAME_ID_INDEX,
     EZSP_PARAMETERS_INDEX,
-    EZSP_EXTENDED_FRAME_ID_HB_INDEX,
-    EZSP_EXTENDED_FRAME_ID_LB_INDEX,
-    EXTENDED_PAN_ID_SIZE,
 } from './consts';
 import {EzspFrameID} from './enums';
 
@@ -539,33 +539,6 @@ export class EzspBuffalo extends Buffalo {
         };
     }
 
-    public writeEmberTransientKeyData(value: EmberTransientKeyData): void {
-        this.writeIeeeAddr(value.eui64);
-        this.writeEmberKeyData(value.keyData);
-        this.writeUInt32(value.incomingFrameCounter);
-        this.writeUInt16(value.bitmask);
-        this.writeUInt16(value.remainingTimeSeconds);
-        this.writeUInt8(value.networkIndex);
-    }
-
-    public readEmberTransientKeyData(): EmberTransientKeyData {
-        const eui64 = this.readIeeeAddr();
-        const keyData = this.readEmberKeyData();
-        const incomingFrameCounter = this.readUInt32();
-        const bitmask = this.readUInt16();
-        const remainingTimeSeconds = this.readUInt16();
-        const networkIndex = this.readUInt8();
-
-        return {
-            eui64,
-            keyData,
-            incomingFrameCounter,
-            bitmask,
-            remainingTimeSeconds,
-            networkIndex,
-        };
-    }
-
     public writeEmberInitialSecurityState(value: EmberInitialSecurityState): void {
         this.writeUInt16(value.bitmask);
         this.writeEmberKeyData(value.preconfiguredKey);
@@ -918,7 +891,7 @@ export class EzspBuffalo extends Buffalo {
             return {applicationId, gpdIeeeAddress, endpoint};
         }
 
-        return null;
+        throw new Error(`Invalid GP applicationId ${applicationId}.`);
     }
 
     public readEmberGpSinkList(): EmberGpSinkListEntry[] {
@@ -931,7 +904,7 @@ export class EzspBuffalo extends Buffalo {
                 case EmberGpSinkType.FULL_UNICAST:
                 case EmberGpSinkType.LW_UNICAST:
                 case EmberGpSinkType.UNUSED:
-                default:
+                default: {
                     const sinkNodeId = this.readUInt16();
                     const sinkEUI = this.readIeeeAddr();
 
@@ -943,8 +916,9 @@ export class EzspBuffalo extends Buffalo {
                         },
                     });
                     break;
+                }
                 case EmberGpSinkType.D_GROUPCAST:
-                case EmberGpSinkType.GROUPCAST:
+                case EmberGpSinkType.GROUPCAST: {
                     const alias = this.readUInt16();
                     const groupID = this.readUInt16();
 
@@ -961,6 +935,7 @@ export class EzspBuffalo extends Buffalo {
                         },
                     });
                     break;
+                }
             }
         }
 
@@ -969,26 +944,28 @@ export class EzspBuffalo extends Buffalo {
 
     public writeEmberGpSinkList(value: EmberGpSinkListEntry[]): void {
         for (let i = 0; i < GP_SINK_LIST_ENTRIES; i++) {
-            this.writeUInt8(value[i].type);
+            const entry = value[i];
 
-            switch (value[i].type) {
+            this.writeUInt8(entry.type);
+
+            switch (entry.type) {
                 case EmberGpSinkType.FULL_UNICAST:
                 case EmberGpSinkType.LW_UNICAST:
                 case EmberGpSinkType.UNUSED:
                 default:
-                    this.writeUInt16(value[i].unicast.sinkNodeId);
-                    this.writeIeeeAddr(value[i].unicast.sinkEUI); // changed 8 to const var
+                    this.writeUInt16(entry.unicast.sinkNodeId);
+                    this.writeIeeeAddr(entry.unicast.sinkEUI);
 
                     break;
 
                 case EmberGpSinkType.D_GROUPCAST:
                 case EmberGpSinkType.GROUPCAST:
-                    this.writeUInt16(value[i].groupcast.alias);
-                    this.writeUInt16(value[i].groupcast.groupID);
+                    this.writeUInt16(entry.groupcast.alias);
+                    this.writeUInt16(entry.groupcast.groupID);
                     //fillers
-                    this.writeUInt16(value[i].groupcast.alias);
-                    this.writeUInt16(value[i].groupcast.groupID);
-                    this.writeUInt16(value[i].groupcast.alias);
+                    this.writeUInt16(entry.groupcast.alias);
+                    this.writeUInt16(entry.groupcast.groupID);
+                    this.writeUInt16(entry.groupcast.alias);
                     break;
             }
         }

@@ -2,18 +2,6 @@ import {FrameControl} from '../zspec/zcl/definition/tstype';
 import {Device, Endpoint} from './model';
 import {KeyValue} from './tstype';
 
-enum Events {
-    message = 'message',
-    adapterDisconnected = 'adapterDisconnected',
-    deviceJoined = 'deviceJoined',
-    deviceInterview = 'deviceInterview',
-    deviceAnnounce = 'deviceAnnounce',
-    deviceNetworkAddressChanged = 'deviceNetworkAddressChanged',
-    deviceLeave = 'deviceLeave',
-    permitJoinChanged = 'permitJoinChanged',
-    lastSeenChanged = 'lastSeenChanged',
-}
-
 interface DeviceJoinedPayload {
     device: Device;
 }
@@ -38,7 +26,7 @@ interface DeviceLeavePayload {
 interface PermitJoinChangedPayload {
     permitted: boolean;
     reason: 'timer_expired' | 'manual';
-    timeout: number;
+    timeout?: number;
 }
 
 interface LastSeenChangedPayload {
@@ -64,7 +52,6 @@ interface MessagePayload {
 }
 
 export {
-    Events,
     MessagePayload,
     MessagePayloadType,
     DeviceInterviewPayload,
