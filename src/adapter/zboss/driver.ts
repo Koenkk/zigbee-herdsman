@@ -238,7 +238,7 @@ export class ZBOSSDriver extends EventEmitter {
     }
 
     private onFrame(frame: ZBOSSFrame): void {
-        logger.info(`<== Frame: ${JSON.stringify(frame)}`, NS);
+        logger.debug(`<== Frame: ${JSON.stringify(frame)}`, NS);
 
         const handled = this.waitress.resolve(frame);
 
