@@ -41,7 +41,8 @@ import {
 import * as Constants from '../constants';
 import {Constants as UnpiConstants} from '../unpi';
 import {Znp, ZpiObject} from '../znp';
-import {MtCmdZdoResp, ZpiObjectPayload} from '../znp/tstype';
+import {ZpiObjectPayload} from '../znp/tstype';
+import {assertIsMtCmdAreqZdo} from '../znp/utils';
 import {ZnpAdapterManager} from './manager';
 import {ZnpVersion} from './tstype';
 
@@ -138,7 +139,7 @@ class ZStackAdapter extends Adapter {
 
         // Old firmware did not support version, assume it's Z-Stack 1.2 for now.
         try {
-            this.version = (await this.znp.requestWithReply(Subsystem.SYS, 'version', {})).payload;
+            this.version = (await this.znp.requestWithReply(Subsystem.SYS, 'version', {})).payload as typeof this.version;
         } catch {
             logger.debug(`Failed to get zStack version, assuming 1.2`, NS);
             this.version = {transportrev: 2, product: 0, majorrel: 2, minorrel: 0, maintrel: 0, revision: ''};
@@ -1129,9 +1130,11 @@ class ZStackAdapter extends Adapter {
             return new Promise<T>((resolve, reject) => {
                 startResult.promise
                     .then((response) => {
-                        const cmd: MtCmdZdoResp = response.command; // TODO dont' cast
+                        const cmd = response.command;
+                        assertIsMtCmdAreqZdo(cmd);
                         try {
-                            const zdoResponse = BuffaloZdo.readResponse(cmd.zdo.cluterId, response.unpiFrame.data.subarray(cmd.zdo.skip)) as T;
+                            const data = cmd.zdo.convert(response.unpiFrame.data);
+                            const zdoResponse = BuffaloZdo.readResponse(cmd.zdo.cluterId, data) as T;
                             resolve(zdoResponse);
                         } catch (error) {
                             reject(error);

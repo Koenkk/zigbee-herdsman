@@ -1,4 +1,3 @@
-import {BuffaloZdo} from '../../../zspec/zdo/buffaloZdo';
 import {Frame as UnpiFrame} from '../unpi';
 import {MaxDataSize, Subsystem, Type} from '../unpi/constants';
 import BuffaloZnp from './buffaloZnp';
@@ -62,11 +61,8 @@ class ZpiObject {
             throw new Error(`CommandID '${frame.commandID}' from subsystem '${frame.subsystem}' not found`);
         }
 
-        let payload: ZpiObjectPayload;
-        if (isMtCmdAreqZdo(cmd)) {
-            const data = cmd.zdo.convert(frame.data);
-            payload = BuffaloZdo.readResponse(cmd.zdo.cluterId, data) as ZpiObjectPayload;
-        } else {
+        let payload: ZpiObjectPayload = {};
+        if (!isMtCmdAreqZdo(cmd)) {
             const parameters = frame.type === Type.SRSP && cmd.type !== Type.AREQ ? cmd.response : cmd.request;
             if (parameters === undefined) {
                 /* istanbul ignore next */
