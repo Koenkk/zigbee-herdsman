@@ -1,9 +1,11 @@
+import {BuffaloZdo} from '../../../zspec/zdo/buffaloZdo';
 import {Frame as UnpiFrame} from '../unpi';
 import {MaxDataSize, Subsystem, Type} from '../unpi/constants';
 import BuffaloZnp from './buffaloZnp';
 import Definition from './definition';
 import ParameterType from './parameterType';
-import {BuffaloZnpOptions, MtCmd, MtCmdZdo, MtParameter, MtType, ZpiObjectPayload} from './tstype';
+import {BuffaloZnpOptions, MtCmd, MtParameter, MtType, ZpiObjectPayload} from './tstype';
+import {isMtCmdAreqZdo} from './utils';
 
 const BufferAndListTypes = [
     ParameterType.BUFFER,
@@ -20,7 +22,7 @@ const BufferAndListTypes = [
 
 class ZpiObject {
     public readonly subsystem: Subsystem;
-    public readonly command: MtCmd | MtCmdZdo;
+    public readonly command: MtCmd;
     public readonly payload: ZpiObjectPayload;
     public readonly unpiFrame: UnpiFrame;
 
@@ -36,45 +38,47 @@ class ZpiObject {
             throw new Error(`Subsystem '${subsystem}' does not exist`);
         }
 
-        const cmd = Definition[subsystem].find((c: MtCmd): boolean => c.name === command);
-        if (cmd?.request === undefined) {
+        const cmd = Definition[subsystem].find((c) => c.name === command);
+        if (cmd === undefined || isMtCmdAreqZdo(cmd) || cmd?.request === undefined) {
             throw new Error(`Command request '${command}' from subsystem '${subsystem}' not found`);
         }
 
-        const upiFrame = this.createUnpiFrame(cmd, subsystem, payload);
-        return new ZpiObject(subsystem, cmd, payload, upiFrame);
-    }
-
-    private static createUnpiFrame(command: MtCmd, subsystem: Subsystem, payload: ZpiObjectPayload): UnpiFrame {
+        // Create the UnpiFrame
         const buffalo = new BuffaloZnp(Buffer.alloc(MaxDataSize));
-
-        for (const parameter of command.request) {
+        for (const parameter of cmd.request) {
             const value = payload[parameter.name];
             buffalo.write(parameter.parameterType, value, {});
         }
-
         const buffer = buffalo.getWritten();
-        return new UnpiFrame(command.type, subsystem, command.ID, buffer);
+        const upiFrame = new UnpiFrame(cmd.type, subsystem, cmd.ID, buffer);
+
+        return new ZpiObject(subsystem, cmd, payload, upiFrame);
     }
 
     public static fromUnpiFrame(frame: UnpiFrame): ZpiObject {
-        const cmd = Definition[frame.subsystem].find((c: MtCmd): boolean => c.ID === frame.commandID);
+        const cmd = Definition[frame.subsystem].find((c) => c.ID === frame.commandID);
 
         if (!cmd) {
             throw new Error(`CommandID '${frame.commandID}' from subsystem '${frame.subsystem}' not found`);
         }
 
-        const parameters = frame.type === Type.SRSP ? cmd.response : cmd.request;
+        let payload: ZpiObjectPayload;
+        if (isMtCmdAreqZdo(cmd)) {
+            const data = cmd.zdo.convert(frame.data);
+            payload = BuffaloZdo.readResponse(cmd.zdo.cluterId, data) as ZpiObjectPayload;
+        } else {
+            const parameters = frame.type === Type.SRSP && cmd.type !== Type.AREQ ? cmd.response : cmd.request;
+            if (parameters === undefined) {
+                /* istanbul ignore next */
+                throw new Error(
+                    `CommandID '${frame.commandID}' from subsystem '${frame.subsystem}' cannot be a ` +
+                        `${frame.type === Type.SRSP ? 'response' : 'request'}`,
+                );
+            }
 
-        if (parameters === undefined) {
-            /* istanbul ignore next */
-            throw new Error(
-                `CommandID '${frame.commandID}' from subsystem '${frame.subsystem}' cannot be a ` +
-                    `${frame.type === Type.SRSP ? 'response' : 'request'}`,
-            );
+            payload = this.readParameters(frame.data, parameters);
         }
 
-        const payload = this.readParameters(frame.data, parameters);
         return new ZpiObject(frame.subsystem, cmd, payload, frame);
     }
 
