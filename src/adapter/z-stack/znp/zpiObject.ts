@@ -3,7 +3,7 @@ import {MaxDataSize, Subsystem, Type} from '../unpi/constants';
 import BuffaloZnp from './buffaloZnp';
 import Definition from './definition';
 import ParameterType from './parameterType';
-import {BuffaloZnpOptions, MtCmd, MtParameter, MtType, ZpiObjectPayload} from './tstype';
+import {BuffaloZnpOptions, MtCmd, MtCmdZdo, MtParameter, MtType, ZpiObjectPayload} from './tstype';
 
 const BufferAndListTypes = [
     ParameterType.BUFFER,
@@ -20,7 +20,7 @@ const BufferAndListTypes = [
 
 class ZpiObject {
     public readonly subsystem: Subsystem;
-    public readonly command: MtCmd | MtCmdZdoResp;
+    public readonly command: MtCmd | MtCmdZdo;
     public readonly payload: ZpiObjectPayload;
     public readonly unpiFrame: UnpiFrame;
 

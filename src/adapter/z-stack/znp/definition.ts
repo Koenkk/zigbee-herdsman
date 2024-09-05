@@ -9,7 +9,7 @@ const Definition: {
     [Subsystem.SYS]: MtCmd[];
     [Subsystem.MAC]: MtCmd[];
     [Subsystem.AF]: MtCmd[];
-    [Subsystem.ZDO]: MtCmdZdo[];
+    [Subsystem.ZDO]: (MtCmd | MtCmdZdo)[];
     [Subsystem.SAPI]: MtCmd[];
     [Subsystem.UTIL]: MtCmd[];
     [Subsystem.DEBUG]: MtCmd[];

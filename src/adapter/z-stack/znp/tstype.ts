@@ -1,5 +1,4 @@
 import {ClusterId as ZdoClusterId} from '../../../zspec/zdo';
-import {Type as CommandType} from '../unpi/constants';
 import ParameterType from './parameterType';
 
 type MtType = number | number[] | string | Buffer | {[s: string]: number | string}[];
@@ -17,9 +16,8 @@ interface MtCmd {
     response?: MtParameter[];
 }
 
-interface MtCmdZdo extends Omit<MtCmd, 'request'> {
+interface MtCmdZdo extends MtCmd {
     zdo: {cluterId: ZdoClusterId; convert?: (buffer: Buffer) => Buffer};
-    type: CommandType.AREQ;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
