@@ -111,7 +111,7 @@ interface gpDataInd {
     frameCounter?: number;
     commandId?: number;
     commandFrameSize?: number;
-    commandFrame?: number[];
+    commandFrame?: Buffer;
 }
 
 interface DataStateResponse {

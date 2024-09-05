@@ -382,7 +382,7 @@ function parseGreenPowerDataIndication(view: DataView): object | null {
             ind.commandId = view.getUint8(17);
             ind.commandFrameSize = view.byteLength - 18 - 6; // cut 18 from begin and 4 (sec mic) and 2 from end (cfc)
 
-            const payload = [];
+            const payload = Buffer.alloc(ind.commandFrameSize);
             let i = 0;
             for (let u = 18; u < ind.commandFrameSize + 18; u++) {
                 payload[i] = view.getUint8(u);
@@ -399,7 +399,7 @@ function parseGreenPowerDataIndication(view: DataView): object | null {
             ind.commandId = view.getUint8(12);
             ind.commandFrameSize = view.byteLength - 13 - 2; // cut 13 from begin and 2 from end (cfc)
 
-            const payload = [];
+            const payload = Buffer.alloc(ind.commandFrameSize);
             let i = 0;
             for (let u = 13; u < ind.commandFrameSize + 13; u++) {
                 payload[i] = view.getUint8(u);
