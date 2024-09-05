@@ -4,6 +4,16 @@ import ParameterType from './parameterType';
 import {MtCmd} from './tstype';
 
 const convertSkipSrcAddr = (buffer: Buffer): Buffer => buffer.subarray(2);
+const convertSwapStartIndexNumAssocDev = (buffer: Buffer): Buffer => {
+    // ZStack swaps the `startindex` and `numassocdev` compared to ZDO.
+    // Swap them back here.
+    const startIndex = buffer[11];
+    const assocDevCount = buffer[12];
+    const newBuffer = Buffer.from(buffer);
+    newBuffer[11] = assocDevCount;
+    newBuffer[12] = startIndex;
+    return newBuffer;
+};
 
 const Definition: {
     [Subsystem.SYS]: MtCmd[];
@@ -1390,19 +1400,9 @@ const Definition: {
             name: 'nwkAddrRsp',
             ID: 128,
             type: CommandType.AREQ,
-            // CHECKED
             zdo: {
                 cluterId: ZdoClusterId.NETWORK_ADDRESS_RESPONSE,
-                convert: (buffer): Buffer => {
-                    // ZStack swaps the `startindex` and `numassocdev` compared to ZDO.
-                    // Swap them back here.
-                    const startIndex = buffer[11];
-                    const assocDevCount = buffer[12];
-                    const newBuffer = Buffer.from(buffer);
-                    newBuffer[11] = assocDevCount;
-                    newBuffer[12] = startIndex;
-                    return newBuffer;
-                },
+                convert: convertSwapStartIndexNumAssocDev,
             },
             // request: [
             //     {name: 'status', parameterType: ParameterType.UINT8},
@@ -1417,15 +1417,18 @@ const Definition: {
             name: 'ieeeAddrRsp',
             ID: 129,
             type: CommandType.AREQ,
-            zdo: {cluterId: ZdoClusterId.IEEE_ADDRESS_RESPONSE},
-            request: [
-                {name: 'status', parameterType: ParameterType.UINT8},
-                {name: 'ieeeaddr', parameterType: ParameterType.IEEEADDR},
-                {name: 'nwkaddr', parameterType: ParameterType.UINT16},
-                {name: 'startindex', parameterType: ParameterType.UINT8},
-                {name: 'numassocdev', parameterType: ParameterType.UINT8},
-                {name: 'assocdevlist', parameterType: ParameterType.LIST_ASSOC_DEV},
-            ],
+            zdo: {
+                cluterId: ZdoClusterId.IEEE_ADDRESS_RESPONSE,
+                convert: convertSwapStartIndexNumAssocDev,
+            },
+            // request: [
+            //     {name: 'status', parameterType: ParameterType.UINT8},
+            //     {name: 'ieeeaddr', parameterType: ParameterType.IEEEADDR},
+            //     {name: 'nwkaddr', parameterType: ParameterType.UINT16},
+            //     {name: 'startindex', parameterType: ParameterType.UINT8},
+            //     {name: 'numassocdev', parameterType: ParameterType.UINT8},
+            //     {name: 'assocdevlist', parameterType: ParameterType.LIST_ASSOC_DEV},
+            // ],
         },
         {
             name: 'nodeDescRsp',
@@ -1435,7 +1438,6 @@ const Definition: {
                 cluterId: ZdoClusterId.NODE_DESCRIPTOR_RESPONSE,
                 convert: convertSkipSrcAddr,
             },
-            // CHECKED
             // request: [
             //     {name: 'srcaddr', parameterType: ParameterType.UINT16},
             //     {name: 'status', parameterType: ParameterType.UINT8},
@@ -1475,7 +1477,6 @@ const Definition: {
                 cluterId: ZdoClusterId.SIMPLE_DESCRIPTOR_RESPONSE,
                 convert: convertSkipSrcAddr,
             },
-            // CHECKED
             // request: [
             //     {name: 'srcaddr', parameterType: ParameterType.UINT16},
             //     {name: 'status', parameterType: ParameterType.UINT8},
@@ -1499,7 +1500,6 @@ const Definition: {
                 cluterId: ZdoClusterId.ACTIVE_ENDPOINTS_RESPONSE,
                 convert: convertSkipSrcAddr,
             },
-            // CHECKED
             // request: [
             //     {name: 'srcaddr', parameterType: ParameterType.UINT16},
             //     {name: 'status', parameterType: ParameterType.UINT8},
@@ -1589,7 +1589,6 @@ const Definition: {
                 cluterId: ZdoClusterId.BIND_RESPONSE,
                 convert: convertSkipSrcAddr,
             },
-            // CHECKED
             // request: [
             //     {name: 'srcaddr', parameterType: ParameterType.UINT16},
             //     {name: 'status', parameterType: ParameterType.UINT8},
@@ -1603,7 +1602,6 @@ const Definition: {
                 cluterId: ZdoClusterId.UNBIND_RESPONSE,
                 convert: convertSkipSrcAddr,
             },
-            // CHECKED
             // request: [
             //     {name: 'srcaddr', parameterType: ParameterType.UINT16},
             //     {name: 'status', parameterType: ParameterType.UINT8},
@@ -1630,7 +1628,6 @@ const Definition: {
                 cluterId: ZdoClusterId.LQI_TABLE_RESPONSE,
                 convert: convertSkipSrcAddr,
             },
-            // CHECKED
             // request: [
             //     {name: 'srcaddr', parameterType: ParameterType.UINT16},
             //     {name: 'status', parameterType: ParameterType.UINT8},
@@ -1648,7 +1645,6 @@ const Definition: {
                 cluterId: ZdoClusterId.ROUTING_TABLE_RESPONSE,
                 convert: convertSkipSrcAddr,
             },
-            // CHECKED
             // request: [
             //     {name: 'srcaddr', parameterType: ParameterType.UINT16},
             //     {name: 'status', parameterType: ParameterType.UINT8},
@@ -1683,7 +1679,6 @@ const Definition: {
                 cluterId: ZdoClusterId.LEAVE_RESPONSE,
                 convert: convertSkipSrcAddr,
             },
-            // CHECKED
             // request: [
             //     {name: 'srcaddr', parameterType: ParameterType.UINT16},
             //     {name: 'status', parameterType: ParameterType.UINT8},
@@ -1702,7 +1697,6 @@ const Definition: {
             name: 'mgmtPermitJoinRsp',
             ID: 182,
             type: CommandType.AREQ,
-            // CHECKED
             zdo: {
                 cluterId: ZdoClusterId.PERMIT_JOINING_RESPONSE,
                 convert: convertSkipSrcAddr,
@@ -2717,7 +2711,6 @@ const Definition: {
             ID: 128,
             type: CommandType.AREQ,
             request: [{name: 'status', parameterType: ParameterType.UINT8}],
-            response: [{name: 'status', parameterType: ParameterType.UINT8}],
         },
         {
             name: 'setNwkFrameCounter',
