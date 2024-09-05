@@ -1,10 +1,11 @@
+import {BuffaloZdo} from '../../../zspec/zdo/buffaloZdo';
 import {Frame as UnpiFrame} from '../unpi';
 import {MaxDataSize, Subsystem, Type} from '../unpi/constants';
 import BuffaloZnp from './buffaloZnp';
 import Definition from './definition';
 import ParameterType from './parameterType';
 import {BuffaloZnpOptions, MtCmd, MtParameter, MtType, ZpiObjectPayload} from './tstype';
-import {isMtCmdAreqZdo} from './utils';
+import {assertIsMtCmdAreqZdo, isMtCmdAreqZdo} from './utils';
 
 const BufferAndListTypes = [
     ParameterType.BUFFER,
@@ -108,6 +109,12 @@ class ZpiObject {
             (this.command.name === 'resetReq' && this.subsystem === Subsystem.SYS) ||
             (this.command.name === 'systemReset' && this.subsystem === Subsystem.SAPI)
         );
+    }
+
+    public parseZdoPayload<T>(): T {
+        assertIsMtCmdAreqZdo(this.command);
+        const data = this.command.zdo.convert(this.unpiFrame.data);
+        return BuffaloZdo.readResponse(this.command.zdo.cluterId, data) as T;
     }
 }
 

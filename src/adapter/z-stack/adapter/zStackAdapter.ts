@@ -7,9 +7,9 @@ import {Queue, Wait, Waitress} from '../../../utils';
 import {logger} from '../../../utils/logger';
 import {BroadcastAddress} from '../../../zspec/enums';
 import * as Zcl from '../../../zspec/zcl';
-import {BuffaloZdo} from '../../../zspec/zdo/buffaloZdo';
 import {
     ActiveEndpointsResponse,
+    EndDeviceAnnounce,
     LQITableEntry,
     LQITableResponse,
     NetworkAddressResponse,
@@ -42,7 +42,6 @@ import * as Constants from '../constants';
 import {Constants as UnpiConstants} from '../unpi';
 import {Znp, ZpiObject} from '../znp';
 import {ZpiObjectPayload} from '../znp/tstype';
-import {assertIsMtCmdAreqZdo} from '../znp/utils';
 import {ZnpAdapterManager} from './manager';
 import {ZnpVersion} from './tstype';
 
@@ -907,10 +906,10 @@ class ZStackAdapter extends Adapter {
 
                 this.emit('deviceJoined', payload);
             } else if (object.command.name === 'endDeviceAnnceInd') {
-                // CONTINUE FROM HERE
+                const zdoPayload = object.parseZdoPayload<EndDeviceAnnounce>();
                 const payload: Events.DeviceAnnouncePayload = {
-                    networkAddress: object.payload.nwkaddr,
-                    ieeeAddr: object.payload.ieeeaddr,
+                    networkAddress: zdoPayload.nwkAddress,
+                    ieeeAddr: zdoPayload.eui64,
                 };
 
                 // Only discover routes to end devices, if bit 1 of capabilities === 0 it's an end device.
@@ -940,9 +939,10 @@ class ZStackAdapter extends Adapter {
 
                 this.emit('deviceAnnounce', payload);
             } else if (object.command.name === 'nwkAddrRsp') {
+                const zdoPayload = object.parseZdoPayload<NetworkAddressResponse>();
                 const payload: Events.NetworkAddressPayload = {
-                    networkAddress: object.payload.nwkaddr,
-                    ieeeAddr: object.payload.ieeeaddr,
+                    networkAddress: zdoPayload.nwkAddress,
+                    ieeeAddr: zdoPayload.eui64,
                 };
 
                 this.emit('networkAddress', payload);
@@ -1130,12 +1130,8 @@ class ZStackAdapter extends Adapter {
             return new Promise<T>((resolve, reject) => {
                 startResult.promise
                     .then((response) => {
-                        const cmd = response.command;
-                        assertIsMtCmdAreqZdo(cmd);
                         try {
-                            const data = cmd.zdo.convert(response.unpiFrame.data);
-                            const zdoResponse = BuffaloZdo.readResponse(cmd.zdo.cluterId, data) as T;
-                            resolve(zdoResponse);
+                            resolve(response.parseZdoPayload());
                         } catch (error) {
                             reject(error);
                         }

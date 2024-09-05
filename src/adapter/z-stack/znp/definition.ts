@@ -1730,12 +1730,16 @@ const Definition: {
             name: 'endDeviceAnnceInd',
             ID: 193,
             type: CommandType.AREQ,
-            request: [
-                {name: 'srcaddr', parameterType: ParameterType.UINT16},
-                {name: 'nwkaddr', parameterType: ParameterType.UINT16},
-                {name: 'ieeeaddr', parameterType: ParameterType.IEEEADDR},
-                {name: 'capabilities', parameterType: ParameterType.UINT8},
-            ],
+            zdo: {
+                cluterId: ZdoClusterId.END_DEVICE_ANNOUNCE,
+                convert: convertSkipSrcAddr,
+            },
+            // request: [
+            //     {name: 'srcaddr', parameterType: ParameterType.UINT16},
+            //     {name: 'nwkaddr', parameterType: ParameterType.UINT16},
+            //     {name: 'ieeeaddr', parameterType: ParameterType.IEEEADDR},
+            //     {name: 'capabilities', parameterType: ParameterType.UINT8},
+            // ],
         },
         {
             name: 'matchDescRspSent',
