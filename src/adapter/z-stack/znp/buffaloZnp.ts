@@ -83,9 +83,10 @@ class BuffaloZnp extends Buffalo {
             case ParameterType.INT8: {
                 return this.writeInt8(value);
             }
+            default: {
+                throw new Error(`Write for '${type}' not available`);
+            }
         }
-
-        throw new Error(`Write for '${type}' not available`);
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -151,6 +152,9 @@ class BuffaloZnp extends Buffalo {
             }
             case ParameterType.INT8: {
                 return this.readInt8();
+            }
+            default: {
+                throw new Error(`Read for '${type}' not available`);
             }
         }
     }

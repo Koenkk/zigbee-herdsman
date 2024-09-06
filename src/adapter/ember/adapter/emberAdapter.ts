@@ -524,7 +524,7 @@ export class EmberAdapter extends Adapter {
      */
     private async onZDOResponse(apsFrame: EmberApsFrame, sender: NodeId, messageContents: Buffer): Promise<void> {
         try {
-            const payload = BuffaloZdo.readResponse(apsFrame.clusterId, messageContents);
+            const payload = BuffaloZdo.readResponse(apsFrame.clusterId, messageContents, true);
 
             logger.debug(`<~~~ [ZDO ${Zdo.ClusterId[apsFrame.clusterId]} from=${sender} ${payload ? JSON.stringify(payload) : 'OK'}]`, NS);
             this.oneWaitress.resolveZDO(sender, apsFrame, payload);

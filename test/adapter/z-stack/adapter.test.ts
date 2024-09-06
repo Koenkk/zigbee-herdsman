@@ -1,5 +1,6 @@
 import 'regenerator-runtime/runtime';
 
+import assert from 'assert';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -13,11 +14,33 @@ import {DevStates, NvItemsIds, NvSystemIds, ZnpCommandStatus} from '../../../src
 import * as Structs from '../../../src/adapter/z-stack/structs';
 import {Subsystem, Type} from '../../../src/adapter/z-stack/unpi/constants';
 import {Znp} from '../../../src/adapter/z-stack/znp';
+import Definition from '../../../src/adapter/z-stack/znp/definition';
 import {UnifiedBackupStorage} from '../../../src/models';
 import {setLogger} from '../../../src/utils/logger';
 import {BroadcastAddress} from '../../../src/zspec/enums';
 import * as Zcl from '../../../src/zspec/zcl';
 import {Status} from '../../../src/zspec/zdo';
+import {
+    ActiveEndpointsResponse,
+    EndDeviceAnnounce,
+    LQITableResponse,
+    NetworkAddressResponse,
+    NodeDescriptorResponse,
+    RoutingTableResponse,
+    SimpleDescriptorResponse,
+} from '../../../src/zspec/zdo/definition/tstypes';
+import {ZdoStatusError} from '../../../src/zspec/zdo/zdoStatusError';
+
+const DUMMY_NODE_DESC_RSP_CAPABILITIES = {
+    allocateAddress: 0,
+    alternatePANCoordinator: 0,
+    deviceType: 2,
+    powerSource: 0,
+    reserved1: 0,
+    reserved2: 0,
+    rxOnWhenIdle: 0,
+    securityCapability: 0,
+};
 
 const mockLogger = {
     debug: jest.fn(),
@@ -919,7 +942,14 @@ const mockZnpWaitForDefault = () => {
         };
 
         if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'activeEpRsp') {
-            return waitForResult({payload: {status: Status.SUCCESS, activeeplist: []}});
+            return waitForResult(
+                mockZdoZpiObject<ActiveEndpointsResponse>('activeEpRsp', Status.SUCCESS, {
+                    nwkAddress: 0,
+                    endpointList: [],
+                }),
+            );
+        } else if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'mgmtPermitJoinRsp') {
+            return waitForResult(mockZdoZpiObject('mgmtPermitJoinRsp', Status.SUCCESS, {}));
         } else if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'stateChangeInd') {
             return waitForResult({payload: {state: 9}});
         } else {
@@ -937,7 +967,12 @@ const mockZnpWaitForStateChangeIndTimeout = () => {
         };
 
         if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'activeEpRsp') {
-            return waitForResult({payload: {status: Status.SUCCESS, activeeplist: []}});
+            return waitForResult(
+                mockZdoZpiObject<ActiveEndpointsResponse>('activeEpRsp', Status.SUCCESS, {
+                    nwkAddress: 0,
+                    endpointList: [],
+                }),
+            );
         } else if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'stateChangeInd') {
             return;
         } else {
@@ -947,6 +982,30 @@ const mockZnpWaitForStateChangeIndTimeout = () => {
 };
 
 let bindStatusResponse = 0;
+
+const mockZdoZpiObject = <T>(commandName: string, status: Status, payload: T | undefined = undefined) => {
+    const subsystem = Subsystem.ZDO;
+    const command = Definition[subsystem].find((c) => c.name === commandName);
+    return {
+        type: Type.AREQ,
+        subsystem,
+        command,
+        payload: {},
+        parseZdoPayload: () => {
+            if (status !== Status.SUCCESS) {
+                throw new ZdoStatusError(status);
+            } else {
+                assert(payload !== undefined, 'Status.SUCCESS but no payload given');
+                return payload;
+            }
+        },
+    };
+};
+
+const mockZpiObject = (type: Type, subsystem: Subsystem, commandName: string, payload: {[s: string]: unknown}) => {
+    const command = Definition[subsystem].find((c) => c.name === commandName);
+    return {type, subsystem, payload, command};
+};
 
 const basicMocks = () => {
     mockZnpRequestWith(commissioned3x0AlignedRequestMock);
@@ -958,29 +1017,53 @@ const basicMocks = () => {
         };
 
         if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'activeEpRsp') {
-            return waitForResult({payload: {status: Status.SUCCESS, activeeplist: [1, 2, 3, 4, 5, 6, 8, 10, 11, 110, 12, 13, 47, 242]}});
+            return waitForResult(
+                mockZdoZpiObject<ActiveEndpointsResponse>('activeEpRsp', Status.SUCCESS, {
+                    nwkAddress: 0,
+                    endpointList: [1, 2, 3, 4, 5, 6, 8, 10, 11, 110, 12, 13, 47, 242],
+                }),
+            );
         } else if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'stateChangeInd') {
             return waitForResult({payload: {}});
+        } else if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'mgmtPermitJoinRsp') {
+            return waitForResult(mockZdoZpiObject('mgmtPermitJoinRsp', Status.SUCCESS, {}));
         } else if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'simpleDescRsp') {
             if (equals(payload, {endpoint: 1})) {
-                return waitForResult({
-                    payload: {status: Status.SUCCESS, endpoint: 1, profileid: 123, deviceid: 5, inclusterlist: [1], outclusterlist: [2]},
-                });
+                return waitForResult(
+                    mockZdoZpiObject<SimpleDescriptorResponse>('simpleDescRsp', Status.SUCCESS, {
+                        endpoint: 1,
+                        profileId: 123,
+                        deviceId: 5,
+                        inClusterList: [1],
+                        outClusterList: [2],
+                        nwkAddress: 0,
+                        deviceVersion: 0,
+                    }),
+                );
             } else if (equals(payload, {endpoint: 99})) {
-                return waitForResult({
-                    payload: {status: Status.SUCCESS, endpoint: 99, profileid: 123, deviceid: 5, inclusterlist: [1], outclusterlist: [2]},
-                });
+                return waitForResult(
+                    mockZdoZpiObject<SimpleDescriptorResponse>('simpleDescRsp', Status.SUCCESS, {
+                        endpoint: 99,
+                        profileId: 123,
+                        deviceId: 5,
+                        inClusterList: [1],
+                        outClusterList: [2],
+                        nwkAddress: 0,
+                        deviceVersion: 0,
+                    }),
+                );
             } else {
-                return waitForResult({
-                    payload: {
-                        status: Status.SUCCESS,
+                return waitForResult(
+                    mockZdoZpiObject<SimpleDescriptorResponse>('simpleDescRsp', Status.SUCCESS, {
                         endpoint: payload.endpoint,
-                        profileid: 124,
-                        deviceid: 7,
-                        inclusterlist: [8],
-                        outclusterlist: [9],
-                    },
-                });
+                        profileId: 124,
+                        deviceId: 7,
+                        inClusterList: [8],
+                        outClusterList: [9],
+                        nwkAddress: 0,
+                        deviceVersion: 0,
+                    }),
+                );
             }
         } else if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'nodeDescRsp') {
             if (nodeDescRspErrorOnce) {
@@ -997,9 +1080,34 @@ const basicMocks = () => {
                 };
             }
 
-            return waitForResult({
-                payload: {status: Status.SUCCESS, manufacturercode: payload.nwkaddr * 2, logicaltype_cmplxdescavai_userdescavai: payload.nwkaddr - 1},
-            });
+            return waitForResult(
+                mockZdoZpiObject<NodeDescriptorResponse>('nodeDescRsp', Status.SUCCESS, {
+                    manufacturerCode: payload.nwkaddr * 2,
+                    apsFlags: 0,
+                    capabilities: DUMMY_NODE_DESC_RSP_CAPABILITIES,
+                    deprecated1: 0,
+                    fragmentationSupported: true,
+                    frequencyBand: 0,
+                    logicalType: payload.nwkaddr - 1,
+                    maxBufSize: 0,
+                    maxIncTxSize: 0,
+                    maxOutTxSize: 0,
+                    nwkAddress: payload.nwkaddr,
+                    serverMask: {
+                        backupTrustCenter: 0,
+                        deprecated1: 0,
+                        deprecated2: 0,
+                        deprecated3: 0,
+                        deprecated4: 0,
+                        networkManager: 0,
+                        primaryTrustCenter: 0,
+                        reserved1: 0,
+                        reserved2: 0,
+                        stackComplianceResivion: 0,
+                    },
+                    tlvs: [],
+                }),
+            );
         } else if (type === Type.AREQ && subsystem === Subsystem.AF && command === 'dataConfirm') {
             const status = dataConfirmCode;
             if (dataConfirmCodeReset) {
@@ -1021,75 +1129,100 @@ const basicMocks = () => {
                 return waitForResult({payload: {status}}, 99);
             }
         } else if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'mgmtLqiRsp' && equals(payload, {srcaddr: 203})) {
+            const defaults = {deviceType: 0, extendedPanId: [0], permitJoining: 0, reserved1: 0, reserved2: 0, rxOnWhenIdle: 0};
+
             if (lastStartIndex === 0) {
-                return waitForResult({
-                    payload: {
-                        status: 0,
-                        neighbortableentries: 5,
-                        neighborlqilist: [
-                            {lqi: 10, nwkAddr: 2, extAddr: 3, relationship: 3, depth: 1},
-                            {lqi: 15, nwkAddr: 3, extAddr: 4, relationship: 2, depth: 5},
+                return waitForResult(
+                    mockZdoZpiObject<LQITableResponse>('mgmtLqiRsp', Status.SUCCESS, {
+                        neighborTableEntries: 5,
+                        startIndex: 0,
+                        entryList: [
+                            {lqi: 10, nwkAddress: 2, eui64: '0x3', relationship: 3, depth: 1, ...defaults},
+                            {lqi: 15, nwkAddress: 3, eui64: '0x4', relationship: 2, depth: 5, ...defaults},
                         ],
-                    },
-                });
+                    }),
+                );
             } else if (lastStartIndex === 2) {
-                return waitForResult({
-                    payload: {
-                        status: 0,
-                        neighbortableentries: 5,
-                        neighborlqilist: [
-                            {lqi: 10, nwkAddr: 5, extAddr: 6, relationship: 3, depth: 1},
-                            {lqi: 15, nwkAddr: 7, extAddr: 8, relationship: 2, depth: 5},
+                return waitForResult(
+                    mockZdoZpiObject<LQITableResponse>('mgmtLqiRsp', Status.SUCCESS, {
+                        neighborTableEntries: 5,
+                        startIndex: 0,
+                        entryList: [
+                            {lqi: 10, nwkAddress: 5, eui64: '0x6', relationship: 3, depth: 1, ...defaults},
+                            {lqi: 15, nwkAddress: 7, eui64: '0x8', relationship: 2, depth: 5, ...defaults},
                         ],
-                    },
-                });
+                    }),
+                );
             } else if (lastStartIndex === 4) {
-                return waitForResult({
-                    payload: {status: 0, neighbortableentries: 5, neighborlqilist: [{lqi: 10, nwkAddr: 9, extAddr: 10, relationship: 3, depth: 1}]},
-                });
+                return waitForResult(
+                    mockZdoZpiObject<LQITableResponse>('mgmtLqiRsp', Status.SUCCESS, {
+                        neighborTableEntries: 5,
+                        startIndex: 0,
+                        entryList: [{lqi: 10, nwkAddress: 9, eui64: '0x10', relationship: 3, depth: 1, ...defaults}],
+                    }),
+                );
             }
         } else if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'mgmtLqiRsp' && equals(payload, {srcaddr: 204})) {
-            return waitForResult({payload: {status: Status.NOT_AUTHORIZED}});
+            return waitForResult(mockZdoZpiObject<LQITableResponse>('mgmtLqiRsp', Status.NOT_AUTHORIZED));
         } else if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'mgmtRtgRsp' && equals(payload, {srcaddr: 205})) {
+            const defaultEntryList = {manyToOne: 0, memoryConstrained: 0, reserved1: 0, routeRecordRequired: 0, status: 0};
             if (lastStartIndex === 0) {
-                return waitForResult({
-                    payload: {
-                        status: 0,
-                        routingtableentries: 5,
-                        routingtablelist: [
-                            {destNwkAddr: 10, routeStatus: 'OK', nextHopNwkAddr: 3},
-                            {destNwkAddr: 11, routeStatus: 'OK', nextHopNwkAddr: 3},
+                return waitForResult(
+                    mockZdoZpiObject<RoutingTableResponse>('mgmtRtgRsp', Status.SUCCESS, {
+                        startIndex: 0,
+                        routingTableEntries: 5,
+                        entryList: [
+                            {destinationAddress: 10, nextHopAddress: 3, ...defaultEntryList},
+                            {destinationAddress: 11, nextHopAddress: 3, ...defaultEntryList},
                         ],
-                    },
-                });
+                    }),
+                );
             } else if (lastStartIndex === 2) {
-                return waitForResult({
-                    payload: {
-                        status: 0,
-                        routingtableentries: 5,
-                        routingtablelist: [
-                            {destNwkAddr: 12, routeStatus: 'OK', nextHopNwkAddr: 3},
-                            {destNwkAddr: 13, routeStatus: 'OK', nextHopNwkAddr: 3},
+                return waitForResult(
+                    mockZdoZpiObject<RoutingTableResponse>('mgmtRtgRsp', Status.SUCCESS, {
+                        startIndex: 0,
+                        routingTableEntries: 5,
+                        entryList: [
+                            {destinationAddress: 12, nextHopAddress: 3, ...defaultEntryList},
+                            {destinationAddress: 13, nextHopAddress: 3, ...defaultEntryList},
                         ],
-                    },
-                });
+                    }),
+                );
             } else if (lastStartIndex === 4) {
-                return waitForResult({
-                    payload: {status: 0, routingtableentries: 5, routingtablelist: [{destNwkAddr: 14, routeStatus: 'OK', nextHopNwkAddr: 3}]},
-                });
+                return waitForResult(
+                    mockZdoZpiObject<RoutingTableResponse>('mgmtRtgRsp', Status.SUCCESS, {
+                        startIndex: 0,
+                        routingTableEntries: 5,
+                        entryList: [{destinationAddress: 14, nextHopAddress: 3, ...defaultEntryList}],
+                    }),
+                );
             }
         } else if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'mgmtRtgRsp' && equals(payload, {srcaddr: 206})) {
-            return waitForResult({payload: {status: Status.INSUFFICIENT_SPACE}});
+            return waitForResult(mockZdoZpiObject<RoutingTableResponse>('mgmtRtgRsp', Status.INSUFFICIENT_SPACE));
         } else if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'bindRsp' && equals(payload, {srcaddr: 301})) {
-            return waitForResult({payload: {status: bindStatusResponse}});
+            return waitForResult(mockZdoZpiObject('bindRsp', bindStatusResponse, {}));
         } else if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'unbindRsp' && equals(payload, {srcaddr: 301})) {
-            return waitForResult({payload: {status: bindStatusResponse}});
+            return waitForResult(mockZdoZpiObject('unbindRsp', bindStatusResponse, {}));
         } else if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'mgmtLeaveRsp' && equals(payload, {srcaddr: 401})) {
-            return waitForResult({payload: {status: Status.SUCCESS}});
+            return waitForResult(mockZdoZpiObject('mgmtLeaveRsp', Status.SUCCESS, {}));
         } else if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'nwkAddrRsp' && payload.ieeeaddr === '0x03') {
-            return waitForResult({payload: {status: Status.SUCCESS, nwkaddr: 3, ieeeaddr: '0x03'}});
+            return waitForResult(
+                mockZdoZpiObject<NetworkAddressResponse>('nwkAddrRsp', Status.SUCCESS, {
+                    nwkAddress: 3,
+                    eui64: '0x03',
+                    assocDevList: [],
+                    startIndex: 0,
+                }),
+            );
         } else if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'nwkAddrRsp' && payload.ieeeaddr === '0x02') {
-            return waitForResult({payload: {status: Status.SUCCESS, nwkaddr: 2, ieeeaddr: '0x02'}});
+            return waitForResult(
+                mockZdoZpiObject<NetworkAddressResponse>('nwkAddrRsp', Status.SUCCESS, {
+                    nwkAddress: 2,
+                    eui64: '0x02',
+                    assocDevList: [],
+                    startIndex: 0,
+                }),
+            );
         } else {
             missing();
         }
@@ -1734,7 +1867,12 @@ describe('zstack-adapter', () => {
             };
 
             if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'activeEpRsp') {
-                return waitForResult({payload: {status: Status.SUCCESS, activeeplist: [1, 2, 3]}});
+                return waitForResult(
+                    mockZdoZpiObject<ActiveEndpointsResponse>('activeEpRsp', Status.SUCCESS, {
+                        nwkAddress: 0,
+                        endpointList: [1, 2, 3],
+                    }),
+                );
             } else if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === 'stateChangeInd') {
                 return waitForResult({payload: {state: 9}});
             } else {
@@ -2264,12 +2402,14 @@ describe('zstack-adapter', () => {
             {cmdId: 0, status: 0},
             {},
         );
-        const object = {
-            type: Type.AREQ,
-            subsystem: Subsystem.AF,
-            command: 'incomingMsg',
-            payload: {clusterid: 0, srcendpoint: 20, srcaddr: 2, linkquality: 101, groupid: 12, data: defaultReponse.toBuffer()},
-        };
+        const object = mockZpiObject(Type.AREQ, Subsystem.AF, 'incomingMsg', {
+            clusterid: 0,
+            srcendpoint: 20,
+            srcaddr: 2,
+            linkquality: 101,
+            groupid: 12,
+            data: defaultReponse.toBuffer(),
+        });
         mockZnpRequest.mockClear();
         const frame = Zcl.Frame.create(
             Zcl.FrameType.GLOBAL,
@@ -2883,18 +3023,22 @@ describe('zstack-adapter', () => {
             {},
         );
         const frame = Zcl.Frame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, true, undefined, 100, 'read', 0, [{attrId: 0}], {});
-        const object = {
-            type: Type.AREQ,
-            subsystem: Subsystem.AF,
-            command: 'incomingMsg',
-            payload: {clusterid: 0, srcendpoint: 20, srcaddr: 2, linkquality: 101, groupid: 12, data: responseFrame.toBuffer()},
-        };
-        const objectMismatch = {
-            type: Type.AREQ,
-            subsystem: Subsystem.AF,
-            command: 'incomingMsg',
-            payload: {clusterid: 0, srcendpoint: 20, srcaddr: 2, linkquality: 101, groupid: 12, data: responseMismatchFrame.toBuffer()},
-        };
+        const object = mockZpiObject(Type.AREQ, Subsystem.AF, 'incomingMsg', {
+            clusterid: 0,
+            srcendpoint: 20,
+            srcaddr: 2,
+            linkquality: 101,
+            groupid: 12,
+            data: responseFrame.toBuffer(),
+        });
+        const objectMismatch = mockZpiObject(Type.AREQ, Subsystem.AF, 'incomingMsg', {
+            clusterid: 0,
+            srcendpoint: 20,
+            srcaddr: 2,
+            linkquality: 101,
+            groupid: 12,
+            data: responseMismatchFrame.toBuffer(),
+        });
         const response = adapter.sendZclFrameToEndpoint('0x02', 2, 20, frame, 10000, false, false);
         znpReceived(objectMismatch);
         znpReceived(object);
@@ -2945,18 +3089,22 @@ describe('zstack-adapter', () => {
             {},
         );
         const frame = Zcl.Frame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, false, undefined, 100, 'read', 0, [{attrId: 0}], {});
-        const object = {
-            type: Type.AREQ,
-            subsystem: Subsystem.AF,
-            command: 'incomingMsg',
-            payload: {clusterid: 0, srcendpoint: 20, srcaddr: 2, linkquality: 101, groupid: 12, data: responseFrame.toBuffer()},
-        };
-        const objectMismatch = {
-            type: Type.AREQ,
-            subsystem: Subsystem.AF,
-            command: 'incomingMsg',
-            payload: {clusterid: 0, srcendpoint: 20, srcaddr: 2, linkquality: 101, groupid: 12, data: responseMismatchFrame.toBuffer()},
-        };
+        const object = mockZpiObject(Type.AREQ, Subsystem.AF, 'incomingMsg', {
+            clusterid: 0,
+            srcendpoint: 20,
+            srcaddr: 2,
+            linkquality: 101,
+            groupid: 12,
+            data: responseFrame.toBuffer(),
+        });
+        const objectMismatch = mockZpiObject(Type.AREQ, Subsystem.AF, 'incomingMsg', {
+            clusterid: 0,
+            srcendpoint: 20,
+            srcaddr: 2,
+            linkquality: 101,
+            groupid: 12,
+            data: responseMismatchFrame.toBuffer(),
+        });
         const defaultReponse = Zcl.Frame.create(
             Zcl.FrameType.GLOBAL,
             Zcl.Direction.SERVER_TO_CLIENT,
@@ -2968,12 +3116,14 @@ describe('zstack-adapter', () => {
             {cmdId: 0, status: 0},
             {},
         );
-        const defaultObject = {
-            type: Type.AREQ,
-            subsystem: Subsystem.AF,
-            command: 'incomingMsg',
-            payload: {clusterid: 0, srcendpoint: 20, srcaddr: 2, linkquality: 101, groupid: 12, data: defaultReponse.toBuffer()},
-        };
+        const defaultObject = mockZpiObject(Type.AREQ, Subsystem.AF, 'incomingMsg', {
+            clusterid: 0,
+            srcendpoint: 20,
+            srcaddr: 2,
+            linkquality: 101,
+            groupid: 12,
+            data: defaultReponse.toBuffer(),
+        });
         const response = adapter.sendZclFrameToEndpoint('0x02', 2, 20, frame, 10000, false, false);
         znpReceived(objectMismatch);
         znpReceived(defaultObject);
@@ -3042,12 +3192,14 @@ describe('zstack-adapter', () => {
             {},
         );
         const frame = Zcl.Frame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, false, undefined, 100, 'read', 0, [{attrId: 0}], {});
-        const objectMismatch = {
-            type: Type.AREQ,
-            subsystem: Subsystem.AF,
-            command: 'incomingMsg',
-            payload: {clusterid: 0, srcendpoint: 20, srcaddr: 2, linkquality: 101, groupid: 12, data: responseMismatchFrame.toBuffer()},
-        };
+        const objectMismatch = mockZpiObject(Type.AREQ, Subsystem.AF, 'incomingMsg', {
+            clusterid: 0,
+            srcendpoint: 20,
+            srcaddr: 2,
+            linkquality: 101,
+            groupid: 12,
+            data: responseMismatchFrame.toBuffer(),
+        });
         let error;
         try {
             mockSetTimeout();
@@ -3097,12 +3249,14 @@ describe('zstack-adapter', () => {
             {},
         );
         const frame = Zcl.Frame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, false, undefined, 100, 'read', 0, [{attrId: 0}], {});
-        const objectMismatch = {
-            type: Type.AREQ,
-            subsystem: Subsystem.AF,
-            command: 'incomingMsg',
-            payload: {clusterid: 0, srcendpoint: 20, srcaddr: 2, linkquality: 101, groupid: 12, data: responseMismatchFrame.toBuffer()},
-        };
+        const objectMismatch = mockZpiObject(Type.AREQ, Subsystem.AF, 'incomingMsg', {
+            clusterid: 0,
+            srcendpoint: 20,
+            srcaddr: 2,
+            linkquality: 101,
+            groupid: 12,
+            data: responseMismatchFrame.toBuffer(),
+        });
         let error;
         try {
             mockSetTimeout();
@@ -3153,12 +3307,14 @@ describe('zstack-adapter', () => {
             {},
         );
         const frame = Zcl.Frame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, false, undefined, 100, 'read', 0, [{attrId: 0}], {});
-        const object = {
-            type: Type.AREQ,
-            subsystem: Subsystem.AF,
-            command: 'incomingMsg',
-            payload: {clusterid: 0, srcendpoint: 20, srcaddr: 2, linkquality: 101, groupid: 12, data: responseFrame.toBuffer()},
-        };
+        const object = mockZpiObject(Type.AREQ, Subsystem.AF, 'incomingMsg', {
+            clusterid: 0,
+            srcendpoint: 20,
+            srcaddr: 2,
+            linkquality: 101,
+            groupid: 12,
+            data: responseFrame.toBuffer(),
+        });
         const response = adapter.sendZclFrameToEndpoint('0x02', 2, 20, frame, 10000, false, false);
         znpReceived(object);
 
@@ -3198,12 +3354,12 @@ describe('zstack-adapter', () => {
         expect(mockZnpRequest).toHaveBeenCalledWith(Subsystem.ZDO, 'mgmtLqiReq', {dstaddr: 203, startindex: 4}, 1);
         expect(result).toStrictEqual({
             neighbors: [
-                {linkquality: 10, networkAddress: 2, ieeeAddr: 3, relationship: 3, depth: 1},
-                {linkquality: 15, networkAddress: 3, ieeeAddr: 4, relationship: 2, depth: 5},
-                {linkquality: 10, networkAddress: 2, ieeeAddr: 3, relationship: 3, depth: 1},
-                {linkquality: 15, networkAddress: 3, ieeeAddr: 4, relationship: 2, depth: 5},
-                {linkquality: 10, networkAddress: 5, ieeeAddr: 6, relationship: 3, depth: 1},
-                {linkquality: 15, networkAddress: 7, ieeeAddr: 8, relationship: 2, depth: 5},
+                {linkquality: 10, networkAddress: 2, ieeeAddr: '0x3', relationship: 3, depth: 1},
+                {linkquality: 15, networkAddress: 3, ieeeAddr: '0x4', relationship: 2, depth: 5},
+                {linkquality: 10, networkAddress: 2, ieeeAddr: '0x3', relationship: 3, depth: 1},
+                {linkquality: 15, networkAddress: 3, ieeeAddr: '0x4', relationship: 2, depth: 5},
+                {linkquality: 10, networkAddress: 5, ieeeAddr: '0x6', relationship: 3, depth: 1},
+                {linkquality: 15, networkAddress: 7, ieeeAddr: '0x8', relationship: 2, depth: 5},
             ],
         });
     });
@@ -3212,14 +3368,7 @@ describe('zstack-adapter', () => {
         basicMocks();
         await adapter.start();
         mockZnpRequest.mockClear();
-
-        let error;
-        try {
-            await adapter.lqi(204);
-        } catch (e) {
-            error = e;
-        }
-        expect(error).toStrictEqual(new Error("ZDO error: mgmtLqi failed with status 'NOT_AUTHORIZED' (141)"));
+        await expect(adapter.lqi(204)).rejects.toThrow("Status 'NOT_AUTHORIZED'");
         expect(mockQueueExecute.mock.calls[0][1]).toBe(204);
         expect(mockZnpRequest).toHaveBeenCalledTimes(1);
         expect(mockZnpRequest).toHaveBeenCalledWith(Subsystem.ZDO, 'mgmtLqiReq', {dstaddr: 204, startindex: 0}, 1);
@@ -3238,12 +3387,12 @@ describe('zstack-adapter', () => {
         expect(mockZnpRequest).toHaveBeenCalledWith(Subsystem.ZDO, 'mgmtRtgReq', {dstaddr: 205, startindex: 4}, 1);
         expect(result).toStrictEqual({
             table: [
-                {destinationAddress: 10, status: 'OK', nextHop: 3},
-                {destinationAddress: 11, status: 'OK', nextHop: 3},
-                {destinationAddress: 10, status: 'OK', nextHop: 3},
-                {destinationAddress: 11, status: 'OK', nextHop: 3},
-                {destinationAddress: 12, status: 'OK', nextHop: 3},
-                {destinationAddress: 13, status: 'OK', nextHop: 3},
+                {destinationAddress: 10, status: 'ACTIVE', nextHop: 3},
+                {destinationAddress: 11, status: 'ACTIVE', nextHop: 3},
+                {destinationAddress: 10, status: 'ACTIVE', nextHop: 3},
+                {destinationAddress: 11, status: 'ACTIVE', nextHop: 3},
+                {destinationAddress: 12, status: 'ACTIVE', nextHop: 3},
+                {destinationAddress: 13, status: 'ACTIVE', nextHop: 3},
             ],
         });
     });
@@ -3253,13 +3402,7 @@ describe('zstack-adapter', () => {
         await adapter.start();
         mockZnpRequest.mockClear();
 
-        let error;
-        try {
-            await adapter.routingTable(206);
-        } catch (e) {
-            error = e;
-        }
-        expect(error).toStrictEqual(new Error("ZDO error: mgmtRtg failed with status 'INSUFFICIENT_SPACE' (138)"));
+        await expect(adapter.routingTable(206)).rejects.toThrow("Status 'INSUFFICIENT_SPACE'");
         expect(mockQueueExecute.mock.calls[0][1]).toBe(206);
         expect(mockZnpRequest).toHaveBeenCalledTimes(1);
         expect(mockZnpRequest).toHaveBeenCalledWith(Subsystem.ZDO, 'mgmtRtgReq', {dstaddr: 206, startindex: 0}, 1);
@@ -3286,9 +3429,7 @@ describe('zstack-adapter', () => {
         await adapter.start();
         mockZnpRequest.mockClear();
         bindStatusResponse = 0x8e;
-        await expect(adapter.bind(301, '0x129', 1, 1, 4, 'endpoint', 9)).rejects.toThrow(
-            `ZDO error: bind failed with status 'DEVICE_BINDING_TABLE_FULL' (142)`,
-        );
+        await expect(adapter.bind(301, '0x129', 1, 1, 4, 'endpoint', 9)).rejects.toThrow(`Status 'DEVICE_BINDING_TABLE_FULL'`);
     });
 
     it('Bind group', async () => {
@@ -3365,12 +3506,14 @@ describe('zstack-adapter', () => {
             [{attrId: 0, attrData: 2, dataType: 32, status: 0}],
             {},
         );
-        const object = {
-            type: Type.AREQ,
-            subsystem: Subsystem.AF,
-            command: 'incomingMsgExt',
-            payload: {clusterid: 0, srcendpoint: 20, srcaddr: 2, linkquality: 101, groupid: 12, data: responseFrame.toBuffer()},
-        };
+        const object = mockZpiObject(Type.AREQ, Subsystem.AF, 'incomingMsgExt', {
+            clusterid: 0,
+            srcendpoint: 20,
+            srcaddr: 2,
+            linkquality: 101,
+            groupid: 12,
+            data: responseFrame.toBuffer(),
+        });
         adapter.on('zclPayload', (p) => {
             zclData = p;
         });
@@ -3388,12 +3531,14 @@ describe('zstack-adapter', () => {
         basicMocks();
         await adapter.start();
         let rawData;
-        const object = {
-            type: Type.AREQ,
-            subsystem: Subsystem.AF,
-            command: 'incomingMsg',
-            payload: {clusterid: 1, srcendpoint: 20, srcaddr: 2, linkquality: 101, groupid: 12, data: Buffer.from([0x0, 0x1])},
-        };
+        const object = mockZpiObject(Type.AREQ, Subsystem.AF, 'incomingMsg', {
+            clusterid: 1,
+            srcendpoint: 20,
+            srcaddr: 2,
+            linkquality: 101,
+            groupid: 12,
+            data: Buffer.from([0x0, 0x1]),
+        });
         adapter.on('zclPayload', (p) => {
             rawData = p;
         });
@@ -3433,7 +3578,7 @@ describe('zstack-adapter', () => {
         basicMocks();
         await adapter.start();
         let deviceJoin;
-        const object = {type: Type.AREQ, subsystem: Subsystem.ZDO, command: 'tcDeviceInd', payload: {nwkaddr: 123, extaddr: '0x123'}};
+        const object = mockZpiObject(Type.AREQ, Subsystem.ZDO, 'tcDeviceInd', {nwkaddr: 123, extaddr: '0x123'});
         adapter.on('deviceJoined', (p) => {
             deviceJoin = p;
         });
@@ -3446,12 +3591,11 @@ describe('zstack-adapter', () => {
         await adapter.start();
         let deviceAnnounce;
         mockZnpRequest.mockClear();
-        const object = {
-            type: Type.AREQ,
-            subsystem: Subsystem.ZDO,
-            command: 'endDeviceAnnceInd',
-            payload: {nwkaddr: 123, ieeeaddr: '0x123', capabilities: 142},
-        };
+        const object = mockZdoZpiObject<EndDeviceAnnounce>('endDeviceAnnceInd', Status.SUCCESS, {
+            capabilities: DUMMY_NODE_DESC_RSP_CAPABILITIES,
+            eui64: '0x123',
+            nwkAddress: 123,
+        });
         adapter.on('deviceAnnounce', (p) => {
             deviceAnnounce = p;
         });
@@ -3465,12 +3609,11 @@ describe('zstack-adapter', () => {
         await adapter.start();
         let deviceAnnounce;
         mockZnpRequest.mockClear();
-        const object = {
-            type: Type.AREQ,
-            subsystem: Subsystem.ZDO,
-            command: 'endDeviceAnnceInd',
-            payload: {nwkaddr: 123, ieeeaddr: '0x123', capabilities: 4},
-        };
+        const object = mockZdoZpiObject<EndDeviceAnnounce>('endDeviceAnnceInd', Status.SUCCESS, {
+            capabilities: {...DUMMY_NODE_DESC_RSP_CAPABILITIES, deviceType: 0},
+            eui64: '0x123',
+            nwkAddress: 123,
+        });
         adapter.on('deviceAnnounce', (p) => {
             deviceAnnounce = p;
         });
@@ -3490,7 +3633,12 @@ describe('zstack-adapter', () => {
         basicMocks();
         await adapter.start();
         let networkAddress;
-        const object = {type: Type.AREQ, subsystem: Subsystem.ZDO, command: 'nwkAddrRsp', payload: {nwkaddr: 124, ieeeaddr: '0x123'}};
+        const object = mockZdoZpiObject<NetworkAddressResponse>('nwkAddrRsp', Status.SUCCESS, {
+            eui64: '0x123',
+            nwkAddress: 124,
+            assocDevList: [],
+            startIndex: 0,
+        });
         adapter.on('networkAddress', (p) => {
             networkAddress = p;
         });
@@ -3502,7 +3650,7 @@ describe('zstack-adapter', () => {
         basicMocks();
         await adapter.start();
         let networkAddress;
-        const object = {type: Type.AREQ, subsystem: Subsystem.ZDO, command: 'concentratorIndCb', payload: {srcaddr: 124, extaddr: '0x123'}};
+        const object = mockZpiObject(Type.AREQ, Subsystem.ZDO, 'concentratorIndCb', {srcaddr: 124, extaddr: '0x123'});
         adapter.on('networkAddress', (p) => {
             networkAddress = p;
         });
@@ -3514,7 +3662,7 @@ describe('zstack-adapter', () => {
         basicMocks();
         await adapter.start();
         let deviceAnnounce;
-        const object = {type: Type.AREQ, subsystem: Subsystem.ZDO, command: 'leaveInd', payload: {srcaddr: 123, extaddr: '0x123'}};
+        const object = mockZpiObject(Type.AREQ, Subsystem.ZDO, 'leaveInd', {srcaddr: 123, extaddr: '0x123'});
         adapter.on('deviceLeave', (p) => {
             deviceAnnounce = p;
         });
@@ -3526,7 +3674,7 @@ describe('zstack-adapter', () => {
         basicMocks();
         await adapter.start();
         let deviceAnnounce;
-        const object = {type: Type.AREQ, subsystem: Subsystem.ZDO, command: 'leaveInd', payload: {srcaddr: 123, extaddr: '0x123', rejoin: true}};
+        const object = mockZpiObject(Type.AREQ, Subsystem.ZDO, 'leaveInd', {srcaddr: 123, extaddr: '0x123', rejoin: true});
         adapter.on('deviceLeave', (p) => {
             deviceAnnounce = p;
         });
@@ -3537,13 +3685,13 @@ describe('zstack-adapter', () => {
     it('Do nothing wiht non areq event', async () => {
         basicMocks();
         await adapter.start();
-        let deviceAnnounce;
-        const object = {type: Type.SREQ, subsystem: Subsystem.ZDO, command: 'leaveInd', payload: {srcaddr: 123, extaddr: '0x123'}};
+        let deviceLeave;
+        const object = mockZpiObject(Type.SREQ, Subsystem.ZDO, 'leaveInd', {srcaddr: 123, extaddr: '0x123'});
         adapter.on('deviceLeave', (p) => {
-            deviceAnnounce = p;
+            deviceLeave = p;
         });
         znpReceived(object);
-        expect(deviceAnnounce).toStrictEqual(undefined);
+        expect(deviceLeave).toStrictEqual(undefined);
     });
 
     it('Get network parameters', async () => {
@@ -3610,12 +3758,14 @@ describe('zstack-adapter', () => {
         basicMocks();
         await adapter.start();
         mockZnpRequest.mockClear();
-        const object = {
-            type: Type.AREQ,
-            subsystem: Subsystem.AF,
-            command: 'incomingMsgExt',
-            payload: {clusterid: 4096, srcendpoint: 0xfe, srcaddr: 12394, linkquality: 101, groupid: 0, data: touchlinkScanResponse.toBuffer()},
-        };
+        const object = mockZpiObject(Type.AREQ, Subsystem.AF, 'incomingMsgExt', {
+            clusterid: 4096,
+            srcendpoint: 0xfe,
+            srcaddr: 12394,
+            linkquality: 101,
+            groupid: 0,
+            data: touchlinkScanResponse.toBuffer(),
+        });
 
         let result: ZclPayload | Promise<ZclPayload> = adapter.sendZclFrameInterPANBroadcast(touchlinkScanRequest, 1000);
         znpReceived(object);
@@ -3725,12 +3875,14 @@ describe('zstack-adapter', () => {
             [{attrId: 0, attrData: 2, dataType: 32, status: 0}],
             {},
         );
-        const object = {
-            type: Type.AREQ,
-            subsystem: Subsystem.AF,
-            command: 'incomingMsg',
-            payload: {clusterid: 0, srcendpoint: 20, srcaddr: 2, linkquality: 101, groupid: 12, data: responseFrame.toBuffer()},
-        };
+        const object = mockZpiObject(Type.AREQ, Subsystem.AF, 'incomingMsg', {
+            clusterid: 0,
+            srcendpoint: 20,
+            srcaddr: 2,
+            linkquality: 101,
+            groupid: 12,
+            data: responseFrame.toBuffer(),
+        });
         const wait = adapter.waitFor(2, 20, 0, 1, 100, 0, 1, 10);
         znpReceived(object);
         const result = await wait.promise;

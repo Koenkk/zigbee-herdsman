@@ -21,12 +21,14 @@ const BufferAndListTypes = [
 ];
 
 class ZpiObject {
+    public readonly type: Type;
     public readonly subsystem: Subsystem;
     public readonly command: MtCmd;
     public readonly payload: ZpiObjectPayload;
     public readonly unpiFrame: UnpiFrame;
 
-    private constructor(subsystem: Subsystem, command: MtCmd, payload: ZpiObjectPayload, unpiFrame: UnpiFrame) {
+    private constructor(type: Type, subsystem: Subsystem, command: MtCmd, payload: ZpiObjectPayload, unpiFrame: UnpiFrame) {
+        this.type = type;
         this.subsystem = subsystem;
         this.command = command;
         this.payload = payload;
@@ -52,7 +54,7 @@ class ZpiObject {
         const buffer = buffalo.getWritten();
         const upiFrame = new UnpiFrame(cmd.type, subsystem, cmd.ID, buffer);
 
-        return new ZpiObject(subsystem, cmd, payload, upiFrame);
+        return new ZpiObject(cmd.type, subsystem, cmd, payload, upiFrame);
     }
 
     public static fromUnpiFrame(frame: UnpiFrame): ZpiObject {
@@ -65,8 +67,8 @@ class ZpiObject {
         let payload: ZpiObjectPayload = {};
         if (!isMtCmdAreqZdo(cmd)) {
             const parameters = frame.type === Type.SRSP && cmd.type !== Type.AREQ ? cmd.response : cmd.request;
+            /* istanbul ignore if */
             if (parameters === undefined) {
-                /* istanbul ignore next */
                 throw new Error(
                     `CommandID '${frame.commandID}' from subsystem '${frame.subsystem}' cannot be a ` +
                         `${frame.type === Type.SRSP ? 'response' : 'request'}`,
@@ -76,7 +78,7 @@ class ZpiObject {
             payload = this.readParameters(frame.data, parameters);
         }
 
-        return new ZpiObject(frame.subsystem, cmd, payload, frame);
+        return new ZpiObject(frame.type, frame.subsystem, cmd, payload, frame);
     }
 
     private static readParameters(buffer: Buffer, parameters: MtParameter[]): ZpiObjectPayload {
@@ -107,6 +109,7 @@ class ZpiObject {
     public isResetCommand(): boolean {
         return (
             (this.command.name === 'resetReq' && this.subsystem === Subsystem.SYS) ||
+            // istanbul ignore next
             (this.command.name === 'systemReset' && this.subsystem === Subsystem.SAPI)
         );
     }
@@ -114,7 +117,7 @@ class ZpiObject {
     public parseZdoPayload<T>(): T {
         assertIsMtCmdAreqZdo(this.command);
         const data = this.command.zdo.convert(this.unpiFrame.data);
-        return BuffaloZdo.readResponse(this.command.zdo.cluterId, data) as T;
+        return BuffaloZdo.readResponse(this.command.zdo.cluterId, data, false) as T;
     }
 }
 

@@ -893,7 +893,7 @@ class ZStackAdapter extends Adapter {
     }
 
     private onZnpRecieved(object: ZpiObject): void {
-        if (object.command.type !== UnpiConstants.Type.AREQ) {
+        if (object.type !== UnpiConstants.Type.AREQ) {
             return;
         }
 
@@ -913,7 +913,7 @@ class ZStackAdapter extends Adapter {
                 };
 
                 // Only discover routes to end devices, if bit 1 of capabilities === 0 it's an end device.
-                const isEndDevice = (object.payload.capabilities & (1 << 1)) === 0;
+                const isEndDevice = zdoPayload.capabilities.deviceType === 0;
                 if (isEndDevice) {
                     if (!this.deviceAnnounceRouteDiscoveryDebouncers.has(payload.networkAddress)) {
                         // If a device announces multiple times in a very short time, it makes no sense

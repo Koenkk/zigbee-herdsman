@@ -33,11 +33,11 @@ class Frame {
         const subsystem: Subsystem = buffer.readUInt8(PositionCmd0) & 0x1f;
         const type: Type = (buffer.readUInt8(PositionCmd0) & 0xe0) >> 5;
         const commandID = buffer.readUInt8(PositionCmd1);
-        const data = buffer.slice(DataStart, fcsPosition);
+        const data = buffer.subarray(DataStart, fcsPosition);
         const fcs = buffer.readUInt8(fcsPosition);
 
         // Validate the checksum to see if we fully received the message
-        const checksum = this.calculateChecksum(buffer.slice(1, fcsPosition));
+        const checksum = this.calculateChecksum(buffer.subarray(1, fcsPosition));
 
         if (checksum === fcs) {
             return new Frame(type, subsystem, commandID, data, length, fcs);

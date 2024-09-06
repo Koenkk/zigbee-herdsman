@@ -436,8 +436,8 @@ describe('ZNP', () => {
         expect(received).toHaveBeenCalledTimes(1);
 
         const obj = received.mock.calls[0][0];
-        expect(obj.command).toBe('version');
-        expect(obj.commandID).toBe(2);
+        expect(obj.command.name).toBe('version');
+        expect(obj.command.ID).toBe(2);
         expect(obj.payload).toStrictEqual({maintrel: 5, majorrel: 3, minorrel: 4, product: 2, revision: 16843009, transportrev: 1});
         expect(obj.subsystem).toBe(UnpiConstants.Subsystem.SYS);
         expect(obj.type).toBe(UnpiConstants.Type.SRSP);
@@ -485,8 +485,8 @@ describe('ZNP', () => {
         expect(frame.type).toBe(UnpiConstants.Type.SREQ);
         expect(frame.data).toStrictEqual(Buffer.from([0x01, 0x00, 0x02]));
 
-        expect(result.command).toBe('osalNvRead');
-        expect(result.commandID).toBe(0x08);
+        expect(result.command.name).toBe('osalNvRead');
+        expect(result.command.ID).toBe(0x08);
         expect(result.payload).toStrictEqual({status: 0, len: 2, value: Buffer.from([0x01, 0x02])});
         expect(result.subsystem).toBe(UnpiConstants.Subsystem.SYS);
         expect(result.type).toBe(UnpiConstants.Type.SRSP);
@@ -580,8 +580,8 @@ describe('ZNP', () => {
         expect(frame.type).toBe(UnpiConstants.Type.SREQ);
         expect(frame.data).toStrictEqual(Buffer.from([0x01, 0x00, 0x02]));
 
-        expect(result.command).toBe('osalNvRead');
-        expect(result.commandID).toBe(0x08);
+        expect(result.command.name).toBe('osalNvRead');
+        expect(result.command.ID).toBe(0x08);
         expect(result.payload).toStrictEqual({status: 0, len: 2, value: Buffer.from([0x01, 0x02])});
         expect(result.subsystem).toBe(UnpiConstants.Subsystem.SYS);
         expect(result.type).toBe(UnpiConstants.Type.SRSP);
@@ -611,8 +611,8 @@ describe('ZNP', () => {
         expect(frame.type).toBe(UnpiConstants.Type.AREQ);
         expect(frame.data).toStrictEqual(Buffer.from([1]));
 
-        expect(result.command).toBe('resetInd');
-        expect(result.commandID).toBe(0x80);
+        expect(result.command.name).toBe('resetInd');
+        expect(result.command.ID).toBe(0x80);
         expect(result.payload).toStrictEqual({reason: 1, transportrev: 2, productid: 3, majorrel: 4, minorrel: 5, hwrev: 6});
         expect(result.subsystem).toBe(UnpiConstants.Subsystem.SYS);
         expect(result.type).toBe(UnpiConstants.Type.AREQ);
@@ -823,7 +823,6 @@ describe('ZNP', () => {
     });
 
     it('ZpiObject throw error on unknown command', async () => {
-        // @ts-ignore; make sure we always get a new instance
         const frame = new UnpiFrame(UnpiConstants.Type.SREQ, UnpiConstants.Subsystem.AF, 99999, Buffer.alloc(0));
         expect(() => {
             ZpiObject.fromUnpiFrame(frame);
@@ -831,7 +830,6 @@ describe('ZNP', () => {
     });
 
     it('ZpiObject throw error on unknown parameters', async () => {
-        // @ts-ignore; make sure we always get a new instance
         const frame = new UnpiFrame(UnpiConstants.Type.SRSP, UnpiConstants.Subsystem.AF, 128, Buffer.alloc(0));
         expect(() => {
             ZpiObject.fromUnpiFrame(frame);
@@ -844,18 +842,36 @@ describe('ZNP', () => {
         expect(obj.isResetCommand()).toBeFalsy();
     });
 
-    it('ZpiObject with assoc dev list', async () => {
-        const buffer = Buffer.from([0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x01, 0x01, 0x00, 0x02, 0x10, 0x10, 0x11, 0x11]);
+    it('ZpiObject parseZdoPayload - endDeviceAnnceInd', async () => {
+        const buffer = Buffer.from([0, 0, 0, 1, 1, 2, 3, 4, 5, 6, 7, 8, 5]);
+        const frame = new UnpiFrame(UnpiConstants.Type.AREQ, UnpiConstants.Subsystem.ZDO, 193, buffer);
+        const obj = ZpiObject.fromUnpiFrame(frame);
+        expect(obj.parseZdoPayload()).toStrictEqual({
+            capabilities: {
+                allocateAddress: 0,
+                alternatePANCoordinator: 1,
+                deviceType: 0,
+                powerSource: 1,
+                reserved1: 0,
+                reserved2: 0,
+                rxOnWhenIdle: 0,
+                securityCapability: 0,
+            },
+            eui64: '0x0807060504030201',
+            nwkAddress: 256,
+        });
+    });
 
+    it('ZpiObject parseZdoPayload - nwkAddrRsp', async () => {
+        const buffer = Buffer.from([0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x01, 0x01, 0x00, 0x02, 0x10, 0x10, 0x11, 0x11]);
         const frame = new UnpiFrame(UnpiConstants.Type.AREQ, UnpiConstants.Subsystem.ZDO, 128, buffer);
         const obj = ZpiObject.fromUnpiFrame(frame);
-        expect(obj.payload).toStrictEqual({
-            assocdevlist: [4112, 4369],
-            ieeeaddr: '0x0807060504030201',
-            numassocdev: 2,
-            nwkaddr: 257,
-            startindex: 0,
-            status: 0,
+        expect(obj.parseZdoPayload()).toStrictEqual({
+            assocDevList: [4112, 4369],
+            eui64: '0x0807060504030201',
+            // numassocdev: 2,
+            nwkAddress: 257,
+            startIndex: 0,
         });
     });
 
