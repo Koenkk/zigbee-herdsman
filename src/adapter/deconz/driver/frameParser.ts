@@ -381,14 +381,7 @@ function parseGreenPowerDataIndication(view: DataView): object | null {
             ind.frameCounter = view.getUint32(13, littleEndian);
             ind.commandId = view.getUint8(17);
             ind.commandFrameSize = view.byteLength - 18 - 6; // cut 18 from begin and 4 (sec mic) and 2 from end (cfc)
-
-            const payload = Buffer.alloc(ind.commandFrameSize);
-            let i = 0;
-            for (let u = 18; u < ind.commandFrameSize + 18; u++) {
-                payload[i] = view.getUint8(u);
-                i++;
-            }
-            ind.commandFrame = payload;
+            ind.commandFrame = Buffer.from(view.buffer.slice(18, ind.commandFrameSize + 18));
         } else {
             logger.debug('GP commissioning notification', NS);
             ind.id = 0x04; // 0 = notification, 4 = commissioning
@@ -398,14 +391,7 @@ function parseGreenPowerDataIndication(view: DataView): object | null {
             ind.frameCounter = view.getUint32(36, littleEndian);
             ind.commandId = view.getUint8(12);
             ind.commandFrameSize = view.byteLength - 13 - 2; // cut 13 from begin and 2 from end (cfc)
-
-            const payload = Buffer.alloc(ind.commandFrameSize);
-            let i = 0;
-            for (let u = 13; u < ind.commandFrameSize + 13; u++) {
-                payload[i] = view.getUint8(u);
-                i++;
-            }
-            ind.commandFrame = payload;
+            ind.commandFrame = Buffer.from(view.buffer.slice(13, ind.commandFrameSize + 13));
         }
 
         if (
