@@ -26,7 +26,7 @@ export class ZBOSSReader extends Transform {
             // need for read length
             if (data.length > position + 3) {
                 const len = data.readUInt16LE(position + 1);
-                if (data.length >= position - 1 + len) {
+                if (data.length >= position + 1 + len) {
                     const frame = data.subarray(position + 1, position + 1 + len);
                     logger.debug(`<<< FRAME [${frame.toString('hex')}]`, NS);
                     // emit the frame via 'data' event

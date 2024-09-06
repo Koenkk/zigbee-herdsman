@@ -81,7 +81,7 @@
     },
     "scripts": {
         "build": "tsc",
-        "start": "tsc -w",
+        "build:watch": "tsc -w",
         "test": "jest test --silent --maxWorkers=50%",
         "test-with-coverage": "jest test --silent --maxWorkers=50% --coverage",
         "test-watch": "jest test --silent --maxWorkers=25% --watch",
@@ -92,7 +92,7 @@
         "clean": "rimraf temp coverage dist",
         "prepack": "npm run clean && npm run build"
     },
-    "version": "0.57.1",
+    "version": "0.57.2",
     "jest": {
         "coverageThreshold": {
             "global": {
