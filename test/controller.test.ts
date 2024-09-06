@@ -810,25 +810,64 @@ describe('Controller', () => {
         expect(databaseSaveSpy).toHaveBeenCalledTimes(1);
     });
 
-    it('Controller stop, should reset runtime lookups', async () => {
+    it('Syncs runtime lookups', async () => {
         await controller.start();
+        // @ts-expect-error private
+        Device.devices.clear();
+        // @ts-expect-error private
+        Device.deletedDevices.clear();
+        // @ts-expect-error private
+        Group.groups.clear();
 
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
+        // @ts-expect-error private
+        expect(Device.devices.size).toStrictEqual(1);
+        // @ts-expect-error private
+        expect(Device.deletedDevices.size).toStrictEqual(0);
+        expect(Device.byIeeeAddr('0x129', false)).toBeInstanceOf(Device);
+        expect(Device.byIeeeAddr('0x128', false)).toBeUndefined();
+
         await mockAdapterEvents['deviceJoined']({networkAddress: 128, ieeeAddr: '0x128'});
         await mockAdapterEvents['deviceLeave']({networkAddress: 128, ieeeAddr: '0x128'});
-        controller.createGroup(1);
-        expect(Device.byIeeeAddr('0x129', false)).toBeInstanceOf(Device);
+        // @ts-expect-error private
+        expect(Device.devices.size).toStrictEqual(1);
+        // @ts-expect-error private
+        expect(Device.deletedDevices.size).toStrictEqual(1);
+        expect(Device.byIeeeAddr('0x128', false)).toBeUndefined();
         expect(Device.byIeeeAddr('0x128', true)).toBeInstanceOf(Device);
+
+        await mockAdapterEvents['deviceJoined']({networkAddress: 128, ieeeAddr: '0x128'});
+        // @ts-expect-error private
+        expect(Device.devices.size).toStrictEqual(2);
+        // @ts-expect-error private
+        expect(Device.deletedDevices.size).toStrictEqual(0);
+        const device2 = Device.byIeeeAddr('0x128', false);
+        expect(device2).toBeInstanceOf(Device);
+        expect(() => {
+            device2!.undelete();
+        }).toThrow(`Device '0x128' is not deleted`);
+
+        controller.createGroup(1);
+        // @ts-expect-error private
+        expect(Group.groups.size).toStrictEqual(1);
         expect(Group.byGroupID(1)).toBeInstanceOf(Group);
+        expect(Group.byGroupID(2)).toBeUndefined();
+
+        const group2 = controller.createGroup(2);
+        group2.removeFromNetwork();
+        // @ts-expect-error private
+        expect(Group.groups.size).toStrictEqual(1);
+        expect(Group.byGroupID(1)).toBeInstanceOf(Group);
+        expect(Group.byGroupID(2)).toBeUndefined();
 
         await controller.stop();
 
         // @ts-expect-error private
-        expect(Device.devices).toStrictEqual({});
+        expect(Device.devices.size).toStrictEqual(0);
         // @ts-expect-error private
-        expect(Device.deletedDevices).toStrictEqual({});
+        expect(Device.deletedDevices.size).toStrictEqual(0);
         // @ts-expect-error private
-        expect(Group.groups).toStrictEqual({});
+        expect(Group.groups.size).toStrictEqual(0);
     });
 
     it('Controller start', async () => {
@@ -6995,7 +7034,7 @@ describe('Controller', () => {
             _skipDefaultResponse: false,
             meta: {configured: 1},
         });
-        expect((await controller.getGroups({})).length).toBe(2);
+        expect((await controller.getGroups()).length).toBe(2);
 
         const group1 = controller.getGroupByID(1);
         group1._members = Array.from(group1._members);
