@@ -128,7 +128,11 @@ class Device extends Entity<ControllerEventMap> {
         return this._networkAddress;
     }
     set networkAddress(networkAddress: number) {
+        Device.nwkToIeeeCache.delete(this._networkAddress);
+
         this._networkAddress = networkAddress;
+
+        Device.nwkToIeeeCache.set(this._networkAddress, this.ieeeAddr);
 
         for (const endpoint of this._endpoints) {
             endpoint.deviceNetworkAddress = networkAddress;

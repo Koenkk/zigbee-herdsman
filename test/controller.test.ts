@@ -2122,18 +2122,24 @@ describe('Controller', () => {
     it('Device announce event should update network address when different', async () => {
         await controller.start();
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
+        expect(controller.getDeviceByNetworkAddress(129)?.ieeeAddr).toStrictEqual('0x129');
         expect(events.deviceAnnounce.length).toBe(0);
         await mockAdapterEvents['deviceAnnounce']({networkAddress: 9999, ieeeAddr: '0x129'});
-        expect(controller.getDeviceByIeeeAddr('0x129').networkAddress).toBe(9999);
-        expect(controller.getDeviceByIeeeAddr('0x129').getEndpoint(1).deviceNetworkAddress).toBe(9999);
+        expect(controller.getDeviceByIeeeAddr('0x129')?.networkAddress).toBe(9999);
+        expect(controller.getDeviceByIeeeAddr('0x129')?.getEndpoint(1)?.deviceNetworkAddress).toBe(9999);
+        expect(controller.getDeviceByNetworkAddress(129)).toBeUndefined();
+        expect(controller.getDeviceByNetworkAddress(9999)?.ieeeAddr).toStrictEqual('0x129');
     });
 
     it('Network address event should update network address when different', async () => {
         await controller.start();
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
+        expect(controller.getDeviceByNetworkAddress(129)?.ieeeAddr).toStrictEqual('0x129');
         await mockAdapterEvents['networkAddress']({networkAddress: 9999, ieeeAddr: '0x129'});
         expect(controller.getDeviceByIeeeAddr('0x129').networkAddress).toBe(9999);
         expect(controller.getDeviceByIeeeAddr('0x129').getEndpoint(1).deviceNetworkAddress).toBe(9999);
+        expect(controller.getDeviceByNetworkAddress(129)).toBeUndefined();
+        expect(controller.getDeviceByNetworkAddress(9999)?.ieeeAddr).toStrictEqual('0x129');
     });
 
     it('Network address event shouldnt update network address when the same', async () => {
@@ -2447,13 +2453,16 @@ describe('Controller', () => {
         await controller.start();
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
+        expect(controller.getDeviceByNetworkAddress(129)?.ieeeAddr).toStrictEqual('0x129');
         expect(events.deviceJoined.length).toBe(1);
         expect(equalsPartial(events.deviceJoined[0].device, {ID: 2, networkAddress: 129, ieeeAddr: '0x129'})).toBeTruthy();
-        expect(controller.getDeviceByIeeeAddr('0x129').networkAddress).toBe(129);
+        expect(controller.getDeviceByIeeeAddr('0x129')?.networkAddress).toBe(129);
 
         await mockAdapterEvents['deviceJoined']({networkAddress: 130, ieeeAddr: '0x129'});
         expect(events.deviceJoined.length).toBe(1);
-        expect(controller.getDeviceByIeeeAddr('0x129').networkAddress).toBe(130);
+        expect(controller.getDeviceByIeeeAddr('0x129')?.networkAddress).toBe(130);
+        expect(controller.getDeviceByNetworkAddress(129)).toBeUndefined();
+        expect(controller.getDeviceByNetworkAddress(130)?.ieeeAddr).toStrictEqual('0x129');
     });
 
     it('Device joins and interview succeeds', async () => {
