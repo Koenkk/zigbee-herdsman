@@ -201,6 +201,7 @@ class Device extends Entity<ControllerEventMap> {
     private static readonly devices: Map<string /* IEEE */, Device> = new Map();
     private static loadedFromDatabase: boolean = false;
     private static readonly deletedDevices: Map<string /* IEEE */, Device> = new Map();
+    private static readonly nwkToIeeeCache: Map<number /* nwk addr */, string /* IEEE */> = new Map();
 
     public static readonly ReportablePropertiesMapping: {
         [s: string]: {
@@ -335,6 +336,7 @@ class Device extends Entity<ControllerEventMap> {
         Device.devices.delete(this.ieeeAddr);
         this.ieeeAddr = ieeeAddr;
         Device.devices.set(this.ieeeAddr, this);
+        Device.nwkToIeeeCache.set(this.networkAddress, this.ieeeAddr);
 
         this.endpoints.forEach((e) => (e.deviceIeeeAddress = ieeeAddr));
         this.save();
@@ -513,6 +515,7 @@ class Device extends Entity<ControllerEventMap> {
         Device.devices.clear();
         Device.loadedFromDatabase = false;
         Device.deletedDevices.clear();
+        Device.nwkToIeeeCache.clear();
     }
 
     private static fromDatabaseEntry(entry: DatabaseEntry): Device {
@@ -610,6 +613,7 @@ class Device extends Entity<ControllerEventMap> {
                 const device = Device.fromDatabaseEntry(entry);
 
                 Device.devices.set(device.ieeeAddr, device);
+                Device.nwkToIeeeCache.set(device.networkAddress, device.ieeeAddr);
             }
 
             Device.loadedFromDatabase = true;
@@ -631,21 +635,9 @@ class Device extends Entity<ControllerEventMap> {
     public static byNetworkAddress(networkAddress: number, includeDeleted: boolean = false): Device | undefined {
         Device.loadFromDatabaseIfNecessary();
 
-        if (includeDeleted) {
-            for (const device of Device.deletedDevices.values()) {
-                /* istanbul ignore else */
-                if (device.networkAddress === networkAddress) {
-                    return device;
-                }
-            }
-        }
+        const ieeeAddr = Device.nwkToIeeeCache.get(networkAddress);
 
-        for (const device of Device.devices.values()) {
-            /* istanbul ignore else */
-            if (device.networkAddress === networkAddress) {
-                return device;
-            }
-        }
+        return ieeeAddr ? Device.byIeeeAddr(ieeeAddr, includeDeleted) : undefined;
     }
 
     public static byType(type: DeviceType): Device[] {
@@ -741,6 +733,7 @@ class Device extends Entity<ControllerEventMap> {
 
         Entity.database!.insert(device.toDatabaseEntry());
         Device.devices.set(device.ieeeAddr, device);
+        Device.nwkToIeeeCache.set(device.networkAddress, device.ieeeAddr);
         return device;
     }
 
