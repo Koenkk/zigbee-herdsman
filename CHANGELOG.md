@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.57.3](https://github.com/Koenkk/zigbee-herdsman/compare/v0.57.2...v0.57.3) (2024-09-06)
+
+
+### Bug Fixes
+
+* Use `Map` for runtime Device/Group lookups. ([#1176](https://github.com/Koenkk/zigbee-herdsman/issues/1176)) ([eb96b55](https://github.com/Koenkk/zigbee-herdsman/commit/eb96b55beada9569935c39cba8e87cf17c2cb06d))
+
 ## [0.57.2](https://github.com/Koenkk/zigbee-herdsman/compare/v0.57.1...v0.57.2) (2024-09-06)
 
 
