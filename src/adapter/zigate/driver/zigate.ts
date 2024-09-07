@@ -83,7 +83,8 @@ export default class ZiGate extends EventEmitter {
         return this.queue.execute(async () => {
             try {
                 logger.debug(
-                    () => 'Send command \x1b[32m>>>> ' +
+                    () =>
+                        'Send command \x1b[32m>>>> ' +
                         ZiGateCommandCode[code] +
                         ' 0x' +
                         zeroPad(code) +

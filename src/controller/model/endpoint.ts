@@ -902,7 +902,7 @@ class Endpoint extends Entity {
             optionsWithDefaults.reservedBits,
         );
 
-        const messageBuilder = () => 
+        const messageBuilder = () =>
             `ZCL command ${this.deviceIeeeAddress}/${this.ID} ` +
             `${cluster.name}.${command.name}(${JSON.stringify(logPayload ? logPayload : payload)}, ${JSON.stringify(optionsWithDefaults)})`;
         logger.debug(() => messageBuilder(), NS);
@@ -953,9 +953,11 @@ class Endpoint extends Entity {
         );
 
         logger.debug(
-            () => `ZCL command broadcast ${this.deviceIeeeAddress}/${sourceEndpoint} to ${destination}/${endpoint} ` +
-            `${cluster.name}.${command.name}(${JSON.stringify({payload, optionsWithDefaults})})`,
-            NS);
+            () =>
+                `ZCL command broadcast ${this.deviceIeeeAddress}/${sourceEndpoint} to ${destination}/${endpoint} ` +
+                `${cluster.name}.${command.name}(${JSON.stringify({payload, optionsWithDefaults})})`,
+            NS,
+        );
 
         // if endpoint===0xFF ("broadcast endpoint"), deliver to all endpoints supporting cluster, should be avoided whenever possible
         await Entity.adapter!.sendZclFrameToAll(endpoint, frame, sourceEndpoint, destination);

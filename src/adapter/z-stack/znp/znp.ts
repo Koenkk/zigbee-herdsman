@@ -74,7 +74,7 @@ class Znp extends events.EventEmitter {
     }
 
     private log(prefix: string, object: ZpiObject): void {
-        if (!logger.isEnabled("debug", NS)) {
+        if (!logger.isEnabled('debug', NS)) {
             return;
         }
 
@@ -84,7 +84,7 @@ class Znp extends events.EventEmitter {
     private onUnpiParsed(frame: UnpiFrame): void {
         try {
             const object = ZpiObject.fromUnpiFrame(frame);
-            this.log("<--", object);
+            this.log('<--', object);
             this.waitress.resolve(object);
             this.emit('received', object);
         } catch (error) {
@@ -284,7 +284,7 @@ class Znp extends events.EventEmitter {
         const object = ZpiObject.createRequest(subsystem, command, payload);
 
         return this.queue.execute<ZpiObject | void>(async () => {
-            this.log("-->", object);
+            this.log('-->', object);
 
             const frame = object.toUnpiFrame();
 
@@ -299,7 +299,7 @@ class Znp extends events.EventEmitter {
                     }
 
                     throw new Error(
-                        `SREQ '${Znp.stringifyObject("-->", object)}' failed with status '${statusDescription(
+                        `SREQ '${Znp.stringifyObject('-->', object)}' failed with status '${statusDescription(
                             result.payload.status,
                         )}' (expected '${expectedStatuses.map(statusDescription)}')`,
                     );

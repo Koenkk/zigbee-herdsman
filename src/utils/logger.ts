@@ -1,4 +1,3 @@
-
 export interface Logger {
     isEnabled: (level: string, namespace: string) => boolean;
     debug: (messageOrLambda: string | (() => string), namespace: string) => void;
@@ -8,11 +7,14 @@ export interface Logger {
 }
 
 export let logger: Logger = {
-    isEnabled: (level, namespace) => true, 
-    debug: (messageOrLambda, namespace) => console.debug(`${namespace}: ${(typeof messageOrLambda === "string") ? messageOrLambda : messageOrLambda()}`),
-    info: (messageOrLambda, namespace) => console.info(`${namespace}: ${(typeof messageOrLambda === "string") ? messageOrLambda : messageOrLambda()}`),
-    warning: (messageOrLambda, namespace) => console.warn(`${namespace}: ${(typeof messageOrLambda === "string") ? messageOrLambda : messageOrLambda()}`),
-    error: (messageOrLambda, namespace) => console.error(`${namespace}: ${(typeof messageOrLambda === "string") ? messageOrLambda : messageOrLambda()}`),
+    isEnabled: (level, namespace) => true,
+    debug: (messageOrLambda, namespace) =>
+        console.debug(`${namespace}: ${typeof messageOrLambda === 'string' ? messageOrLambda : messageOrLambda()}`),
+    info: (messageOrLambda, namespace) => console.info(`${namespace}: ${typeof messageOrLambda === 'string' ? messageOrLambda : messageOrLambda()}`),
+    warning: (messageOrLambda, namespace) =>
+        console.warn(`${namespace}: ${typeof messageOrLambda === 'string' ? messageOrLambda : messageOrLambda()}`),
+    error: (messageOrLambda, namespace) =>
+        console.error(`${namespace}: ${typeof messageOrLambda === 'string' ? messageOrLambda : messageOrLambda()}`),
 };
 
 export function setLogger(l: Logger): void {
