@@ -198,9 +198,8 @@ class Group extends Entity {
             }
         }
 
-        const messageBuilder = () => 
+        const messageBuilder = () =>
             `Write ${this.groupID} ${cluster.name}(${JSON.stringify(attributes)}, ${JSON.stringify(optionsWithDefaults)})`;
-
         logger.debug(() => messageBuilder(), NS);
 
         try {
@@ -249,7 +248,7 @@ class Group extends Entity {
             optionsWithDefaults.reservedBits,
         );
 
-        const messageBuilder = () => 
+        const messageBuilder = () =>
             `Read ${this.groupID} ${cluster.name}(${JSON.stringify(attributes)}, ${JSON.stringify(optionsWithDefaults)})`;
         logger.debug(() => messageBuilder(), NS);
 
