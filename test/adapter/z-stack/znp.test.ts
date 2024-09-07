@@ -518,7 +518,7 @@ describe('ZNP', () => {
         }
 
         expect(error).toStrictEqual(
-            new Error("SREQ '--> SYS - osalNvRead - {\"id\":1,\"offset\":2}' failed with status '(0x01: FAILURE)' (expected '(0x00: SUCCESS)')"),
+            new Error("'SREQ: --> SYS - osalNvRead - {\"id\":1,\"offset\":2}' failed with status '(0x01: FAILURE)' (expected '(0x00: SUCCESS)')"),
         );
     });
 
@@ -550,7 +550,7 @@ describe('ZNP', () => {
         }
 
         expect(error).toStrictEqual(
-            new Error("SREQ '--> SYS - osalNvRead - {\"id\":1,\"offset\":2}' failed with status '(0x01: FAILURE)' (expected '(0x00: SUCCESS)')"),
+            new Error("'SREQ: --> SYS - osalNvRead - {\"id\":1,\"offset\":2}' failed with status '(0x01: FAILURE)' (expected '(0x00: SUCCESS)')"),
         );
     });
 

@@ -470,8 +470,7 @@ export class EmberAdapter extends Adapter {
                     case EmberOutgoingMessageType.MULTICAST_WITH_ALIAS: {
                         // BC/MC not checking for message sent, avoid unnecessary waitress lookups
                         logger.error(
-                            () =>
-                                `Delivery of ${EmberOutgoingMessageType[type]} failed for '${indexOrDestination}' [apsFrame=${JSON.stringify(apsFrame)} messageTag=${messageTag}]`,
+                            `Delivery of ${EmberOutgoingMessageType[type]} failed for '${indexOrDestination}' [apsFrame=${JSON.stringify(apsFrame)} messageTag=${messageTag}]`,
                             NS,
                         );
                         break;

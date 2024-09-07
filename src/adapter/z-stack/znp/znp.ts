@@ -299,7 +299,7 @@ class Znp extends events.EventEmitter {
                     }
 
                     throw new Error(
-                        `SREQ '${Znp.stringifyObject('-->', object)}' failed with status '${statusDescription(
+                        `'${Znp.stringifyObject('-->', object)}' failed with status '${statusDescription(
                             result.payload.status,
                         )}' (expected '${expectedStatuses.map(statusDescription)}')`,
                     );
