@@ -2,6 +2,7 @@
 
 import assert from 'assert';
 
+import {ZSpec} from '../../..';
 import Device from '../../../controller/model/device';
 import * as Models from '../../../models';
 import {Queue, Waitress} from '../../../utils';
@@ -1229,38 +1230,29 @@ class DeconzAdapter extends Adapter {
     }
 
     private checkReceivedGreenPowerIndication(ind: gpDataInd): void {
-        ind.clusterId = 0x21;
+        const gpdHeader = Buffer.alloc(15); // applicationId === IEEE_ADDRESS ? 20 : 15
+        gpdHeader.writeUInt8(0b00000001, 0); // frameControl: FrameType.SPECIFIC + Direction.CLIENT_TO_SERVER + disableDefaultResponse=false
+        gpdHeader.writeUInt8(ind.seqNr!, 1);
+        gpdHeader.writeUInt8(ind.id!, 2); // commandIdentifier
+        gpdHeader.writeUInt16LE(0, 3); // options, only srcID present
+        gpdHeader.writeUInt32LE(ind.srcId!, 5);
+        // omitted: gpdIEEEAddr (ieeeAddr)
+        // omitted: gpdEndpoint (uint8)
+        gpdHeader.writeUInt32LE(ind.frameCounter!, 9);
+        gpdHeader.writeUInt8(ind.commandId!, 13);
+        gpdHeader.writeUInt8(ind.commandFrameSize!, 14);
 
-        const gpFrame = [
-            ind.rspId!,
-            ind.seqNr!,
-            ind.id!,
-            0,
-            0, // 0, 0 for options is a temp fix until https://github.com/Koenkk/zigbee-herdsman/pull/536 is merged.
-            // ind.options & 0xff, (ind.options >> 8) & 0xff,
-            ind.srcId! & 0xff,
-            (ind.srcId! >> 8) & 0xff,
-            (ind.srcId! >> 16) & 0xff,
-            (ind.srcId! >> 24) & 0xff,
-            ind.frameCounter! & 0xff,
-            (ind.frameCounter! >> 8) & 0xff,
-            (ind.frameCounter! >> 16) & 0xff,
-            (ind.frameCounter! >> 24) & 0xff,
-            ind.commandId!,
-            ind.commandFrameSize!,
-        ].concat(ind.commandFrame!);
-
-        const payBuf = Buffer.from(gpFrame);
+        const payBuf = Buffer.concat([gpdHeader, ind.commandFrame!]);
         const payload: Events.ZclPayload = {
             header: Zcl.Header.fromBuffer(payBuf),
             data: payBuf,
-            clusterID: ind.clusterId,
-            address: ind.srcId!,
-            endpoint: 242, // GP endpoint
-            linkquality: 127,
-            groupID: 0x0b84,
-            wasBroadcast: false,
-            destinationEndpoint: 1,
+            clusterID: Zcl.Clusters.greenPower.ID,
+            address: ind.srcId! & 0xffff,
+            endpoint: ZSpec.GP_ENDPOINT,
+            linkquality: 0xff, // bogus
+            groupID: ZSpec.GP_GROUP_ID,
+            wasBroadcast: true, // Take the codepath that doesn't require `gppNwkAddr` as its not present in the payload
+            destinationEndpoint: ZSpec.GP_ENDPOINT,
         };
 
         this.waitress.resolve(payload);

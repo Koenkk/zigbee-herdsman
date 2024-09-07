@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.57.3](https://github.com/Koenkk/zigbee-herdsman/compare/v0.57.2...v0.57.3) (2024-09-06)
+
+
+### Bug Fixes
+
+* Use `Map` for runtime Device/Group lookups. ([#1176](https://github.com/Koenkk/zigbee-herdsman/issues/1176)) ([eb96b55](https://github.com/Koenkk/zigbee-herdsman/commit/eb96b55beada9569935c39cba8e87cf17c2cb06d))
+
+## [0.57.2](https://github.com/Koenkk/zigbee-herdsman/compare/v0.57.1...v0.57.2) (2024-09-06)
+
+
+### Bug Fixes
+
+* Fix Deconz Green power implementation ([#1175](https://github.com/Koenkk/zigbee-herdsman/issues/1175)) ([4b99609](https://github.com/Koenkk/zigbee-herdsman/commit/4b9960910e4e2587479e388870b0a83b4239285e))
+* **ignore:** update dependencies ([#1171](https://github.com/Koenkk/zigbee-herdsman/issues/1171)) ([ce90134](https://github.com/Koenkk/zigbee-herdsman/commit/ce90134aea9e832565bbe404d3eb8e092a3998de))
+* ZBOSS: fixed logging and uart packet handling ([#1174](https://github.com/Koenkk/zigbee-herdsman/issues/1174)) ([0e9228f](https://github.com/Koenkk/zigbee-herdsman/commit/0e9228fbe024a8ea73ddef948a8c038383d854ed))
+
 ## [0.57.1](https://github.com/Koenkk/zigbee-herdsman/compare/v0.57.0...v0.57.1) (2024-08-30)
 
 
