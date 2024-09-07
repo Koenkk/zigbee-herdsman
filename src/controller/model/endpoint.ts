@@ -714,7 +714,7 @@ class Endpoint extends Entity {
             optionsWithDefaults.reservedBits,
         );
 
-        const messageBuilder = () =>
+        const messageBuilder = (): string =>
             `CommandResponse ${this.deviceIeeeAddress}/${this.ID} ` +
             `${cluster.name}.${command.name}(${JSON.stringify(payload)}, ${JSON.stringify(optionsWithDefaults)})`;
         logger.debug(() => messageBuilder(), NS);
@@ -902,7 +902,7 @@ class Endpoint extends Entity {
             optionsWithDefaults.reservedBits,
         );
 
-        const messageBuilder = () =>
+        const messageBuilder = (): string =>
             `ZCL command ${this.deviceIeeeAddress}/${this.ID} ` +
             `${cluster.name}.${command.name}(${JSON.stringify(logPayload ? logPayload : payload)}, ${JSON.stringify(optionsWithDefaults)})`;
         logger.debug(() => messageBuilder(), NS);

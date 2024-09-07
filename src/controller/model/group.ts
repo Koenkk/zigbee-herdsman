@@ -198,7 +198,7 @@ class Group extends Entity {
             }
         }
 
-        const messageBuilder = () => `Write ${this.groupID} ${cluster.name}(${JSON.stringify(attributes)}, ${JSON.stringify(optionsWithDefaults)})`;
+        const messageBuilder = (): string => `Write ${this.groupID} ${cluster.name}(${JSON.stringify(attributes)}, ${JSON.stringify(optionsWithDefaults)})`;
         logger.debug(() => messageBuilder(), NS);
 
         try {
@@ -247,7 +247,7 @@ class Group extends Entity {
             optionsWithDefaults.reservedBits,
         );
 
-        const messageBuilder = () => `Read ${this.groupID} ${cluster.name}(${JSON.stringify(attributes)}, ${JSON.stringify(optionsWithDefaults)})`;
+        const messageBuilder = (): string => `Read ${this.groupID} ${cluster.name}(${JSON.stringify(attributes)}, ${JSON.stringify(optionsWithDefaults)})`;
         logger.debug(() => messageBuilder(), NS);
 
         try {
@@ -266,7 +266,7 @@ class Group extends Entity {
         const cluster = Zcl.Utils.getCluster(clusterKey, undefined, {});
         const command = cluster.getCommand(commandKey);
 
-        const messageBuilder = () => `Command ${this.groupID} ${cluster.name}.${command.name}(${JSON.stringify(payload)})`;
+        const messageBuilder = (): string => `Command ${this.groupID} ${cluster.name}.${command.name}(${JSON.stringify(payload)})`;
         logger.debug(() => messageBuilder(), NS);
 
         try {
