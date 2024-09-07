@@ -2748,7 +2748,7 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
      */
     ezspNetworkFoundHandler(networkFound: EmberZigbeeNetwork, lastHopLqi: number, lastHopRssi: number): void {
         logger.debug(
-            `ezspNetworkFoundHandler(): callback called with: [networkFound=${JSON.stringify(networkFound)}], [lastHopLqi=${lastHopLqi}], [lastHopRssi=${lastHopRssi}]`,
+            () => `ezspNetworkFoundHandler(): callback called with: [networkFound=${JSON.stringify(networkFound)}], [lastHopLqi=${lastHopLqi}], [lastHopRssi=${lastHopRssi}]`,
             NS,
         );
     }
@@ -4675,7 +4675,7 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
      */
     ezspRemoteSetBindingHandler(entry: EmberBindingTableEntry, index: number, policyDecision: SLStatus): void {
         logger.debug(
-            `ezspRemoteSetBindingHandler(): callback called with: [entry=${JSON.stringify(entry)}], [index=${index}], [policyDecision=${SLStatus[policyDecision]}]`,
+            () => `ezspRemoteSetBindingHandler(): callback called with: [entry=${JSON.stringify(entry)}], [index=${index}], [policyDecision=${SLStatus[policyDecision]}]`,
             NS,
         );
     }
@@ -4973,7 +4973,7 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
         messageContents?: Buffer,
     ): void {
         logger.debug(
-            `ezspMessageSentHandler(): callback called with: [status=${SLStatus[status]}], [type=${EmberOutgoingMessageType[type]}], ` +
+            () => `ezspMessageSentHandler(): callback called with: [status=${SLStatus[status]}], [type=${EmberOutgoingMessageType[type]}], ` +
                 `[indexOrDestination=${indexOrDestination}], [apsFrame=${JSON.stringify(apsFrame)}], [messageTag=${messageTag}]` +
                 (messageContents ? `, [messageContents=${messageContents.toString('hex')}]` : ''),
             NS,
@@ -5240,7 +5240,7 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
         messageContents: Buffer,
     ): void {
         logger.debug(
-            `ezspIncomingMessageHandler(): callback called with: [type=${EmberIncomingMessageType[type]}], [apsFrame=${JSON.stringify(apsFrame)}], ` +
+            () => `ezspIncomingMessageHandler(): callback called with: [type=${EmberIncomingMessageType[type]}], [apsFrame=${JSON.stringify(apsFrame)}], ` +
                 `[packetInfo:${JSON.stringify(packetInfo)}], [messageContents=${messageContents.toString('hex')}]`,
             NS,
         );
@@ -5757,7 +5757,7 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
      */
     ezspMacPassthroughMessageHandler(messageType: EmberMacPassthroughType, packetInfo: EmberRxPacketInfo, messageContents: Buffer): void {
         logger.debug(
-            `ezspMacPassthroughMessageHandler(): callback called with: [messageType=${messageType}], [packetInfo=${JSON.stringify(packetInfo)}], [messageContents=${messageContents.toString('hex')}]`,
+            () => `ezspMacPassthroughMessageHandler(): callback called with: [messageType=${messageType}], [packetInfo=${JSON.stringify(packetInfo)}], [messageContents=${messageContents.toString('hex')}]`,
             NS,
         );
     }
@@ -5778,7 +5778,7 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
         messageContents: Buffer,
     ): void {
         logger.debug(
-            `ezspMacFilterMatchMessageHandler(): callback called with: [filterIndexMatch=${filterIndexMatch}], [legacyPassthroughType=${legacyPassthroughType}], ` +
+            () => `ezspMacFilterMatchMessageHandler(): callback called with: [filterIndexMatch=${filterIndexMatch}], [legacyPassthroughType=${legacyPassthroughType}], ` +
                 `[packetInfo=${JSON.stringify(packetInfo)}], [messageContents=${messageContents.toString('hex')}]`,
             NS,
         );
@@ -7727,7 +7727,7 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
      */
     ezspIncomingBootloadMessageHandler(longId: EUI64, packetInfo: EmberRxPacketInfo, messageContents: Buffer): void {
         logger.debug(
-            `ezspIncomingBootloadMessageHandler(): callback called with: [longId=${longId}], [packetInfo=${JSON.stringify(packetInfo)}], [messageContents=${messageContents.toString('hex')}]`,
+            () => `ezspIncomingBootloadMessageHandler(): callback called with: [longId=${longId}], [packetInfo=${JSON.stringify(packetInfo)}], [messageContents=${messageContents.toString('hex')}]`,
             NS,
         );
     }
@@ -8080,7 +8080,7 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
         packetInfo: EmberRxPacketInfo,
     ): void {
         logger.debug(
-            `ezspZllNetworkFoundHandler(): callback called with: [networkInfo=${networkInfo}], [isDeviceInfoNull=${isDeviceInfoNull}], [deviceInfo=${deviceInfo}], [packetInfo=${JSON.stringify(packetInfo)}]`,
+            () => `ezspZllNetworkFoundHandler(): callback called with: [networkInfo=${networkInfo}], [isDeviceInfoNull=${isDeviceInfoNull}], [deviceInfo=${deviceInfo}], [packetInfo=${JSON.stringify(packetInfo)}]`,
             NS,
         );
     }
@@ -8103,7 +8103,7 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
      */
     ezspZllAddressAssignmentHandler(addressInfo: EmberZllAddressAssignment, packetInfo: EmberRxPacketInfo): void {
         logger.debug(
-            `ezspZllAddressAssignmentHandler(): callback called with: [addressInfo=${addressInfo}], [packetInfo=${JSON.stringify(packetInfo)}]`,
+            () => `ezspZllAddressAssignmentHandler(): callback called with: [addressInfo=${addressInfo}], [packetInfo=${JSON.stringify(packetInfo)}]`,
             NS,
         );
     }
@@ -8511,7 +8511,7 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
         gpdCommandPayload: Buffer,
     ): void {
         logger.debug(
-            `ezspGpepIncomingMessageHandler(): callback called with: [status=${EmberGPStatus[status] ?? status}], [gpdLink=${gpdLink}], ` +
+            () => `ezspGpepIncomingMessageHandler(): callback called with: [status=${EmberGPStatus[status] ?? status}], [gpdLink=${gpdLink}], ` +
                 `[sequenceNumber=${sequenceNumber}], [addr=${JSON.stringify(addr)}], [gpdfSecurityLevel=${EmberGpSecurityLevel[gpdfSecurityLevel]}], ` +
                 `[gpdfSecurityKeyType=${EmberGpKeyType[gpdfSecurityKeyType]}], [autoCommissioning=${autoCommissioning}], ` +
                 `[bidirectionalInfo=${bidirectionalInfo}], [gpdSecurityFrameCounter=${gpdSecurityFrameCounter}], [gpdCommandId=${gpdCommandId}], ` +

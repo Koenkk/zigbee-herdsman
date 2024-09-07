@@ -434,7 +434,7 @@ export class Ezsp extends EventEmitter {
             return;
         }
 
-        logger.debug(`<== 0x${frameId.toString(16)}: ${JSON.stringify(frm)}`, NS);
+        logger.debug(() => `<== 0x${frameId.toString(16)}: ${JSON.stringify(frm)}`, NS);
 
         const handled = this.waitress.resolve({
             frameId,
@@ -633,7 +633,7 @@ export class Ezsp extends EventEmitter {
     private makeFrame(name: string, params: ParamsDesc | undefined, seq: number): Buffer {
         const frmData = new EZSPFrameData(name, true, params);
 
-        logger.debug(`==> ${JSON.stringify(frmData)}`, NS);
+        logger.debug(() => `==> ${JSON.stringify(frmData)}`, NS);
 
         const frame = [seq & 255];
 
@@ -653,7 +653,7 @@ export class Ezsp extends EventEmitter {
     }
 
     public async execCommand(name: string, params?: ParamsDesc): Promise<EZSPFrameData> {
-        logger.debug(`==> ${name}: ${JSON.stringify(params)}`, NS);
+        logger.debug(() => `==> ${name}: ${JSON.stringify(params)}`, NS);
 
         if (!this.serialDriver.isInitialized()) {
             throw new Error('Connection not initialized');

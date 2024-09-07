@@ -714,10 +714,10 @@ class Endpoint extends Entity {
             optionsWithDefaults.reservedBits,
         );
 
-        const log =
+        const messageBuilder = () =>
             `CommandResponse ${this.deviceIeeeAddress}/${this.ID} ` +
             `${cluster.name}.${command.name}(${JSON.stringify(payload)}, ${JSON.stringify(optionsWithDefaults)})`;
-        logger.debug(log, NS);
+        logger.debug(() => messageBuilder(), NS);
 
         try {
             await this.sendRequest(frame, optionsWithDefaults, async (f) => {
@@ -739,7 +739,7 @@ class Endpoint extends Entity {
             });
         } catch (error) {
             const err = error as Error;
-            err.message = `${log} failed (${err.message})`;
+            err.message = `${messageBuilder()} failed (${err.message})`;
             logger.debug((err as Error).stack!, NS);
             throw error;
         }
@@ -902,10 +902,10 @@ class Endpoint extends Entity {
             optionsWithDefaults.reservedBits,
         );
 
-        const log =
+        const messageBuilder = () => 
             `ZCL command ${this.deviceIeeeAddress}/${this.ID} ` +
             `${cluster.name}.${command.name}(${JSON.stringify(logPayload ? logPayload : payload)}, ${JSON.stringify(optionsWithDefaults)})`;
-        logger.debug(log, NS);
+        logger.debug(() => messageBuilder(), NS);
 
         try {
             const result = await this.sendRequest(frame, optionsWithDefaults);
@@ -919,7 +919,7 @@ class Endpoint extends Entity {
             }
         } catch (error) {
             const err = error as Error;
-            err.message = `${log} failed (${err.message})`;
+            err.message = `${messageBuilder()} failed (${err.message})`;
             logger.debug((err as Error).stack!, NS);
             throw error;
         }
@@ -952,10 +952,10 @@ class Endpoint extends Entity {
             optionsWithDefaults.reservedBits,
         );
 
-        const log =
-            `ZCL command broadcast ${this.deviceIeeeAddress}/${sourceEndpoint} to ${destination}/${endpoint} ` +
-            `${cluster.name}.${command.name}(${JSON.stringify({payload, optionsWithDefaults})})`;
-        logger.debug(log, NS);
+        logger.debug(
+            () => `ZCL command broadcast ${this.deviceIeeeAddress}/${sourceEndpoint} to ${destination}/${endpoint} ` +
+            `${cluster.name}.${command.name}(${JSON.stringify({payload, optionsWithDefaults})})`,
+            NS);
 
         // if endpoint===0xFF ("broadcast endpoint"), deliver to all endpoints supporting cluster, should be avoided whenever possible
         await Entity.adapter!.sendZclFrameToAll(endpoint, frame, sourceEndpoint, destination);

@@ -412,7 +412,7 @@ export class Driver extends EventEmitter {
                 const status = frame.status;
                 if (status != 0) {
                     // send failure
-                    logger.debug(`Delivery failed for ${JSON.stringify(frame)}.`, NS);
+                    logger.debug(() => `Delivery failed for ${JSON.stringify(frame)}.`, NS);
                 } else {
                     // send success
                     // If there was a message to the group and this group is not known,
@@ -734,7 +734,7 @@ export class Driver extends EventEmitter {
         const requestName = EmberZDOCmd.valueName(EmberZDOCmd, requestCmd);
         const responseName = EmberZDOCmd.valueName(EmberZDOCmd, responseCmd);
 
-        logger.debug(`ZDO ${requestName} params: ${JSON.stringify(params)}`, NS);
+        logger.debug(() => `ZDO ${requestName} params: ${JSON.stringify(params)}`, NS);
 
         const frame = this.makeApsFrame(requestCmd as number, false);
         const payload = this.makeZDOframe(requestCmd as number, {transId: frame.sequence, ...params});
@@ -749,7 +749,7 @@ export class Driver extends EventEmitter {
 
             const response = await waiter.start().promise;
 
-            logger.debug(`${responseName}  frame: ${JSON.stringify(response.payload)}`, NS);
+            logger.debug(() => `${responseName}  frame: ${JSON.stringify(response.payload)}`, NS);
 
             const result = new EZSPZDOResponseFrameData(responseCmd as number, response.payload);
 
@@ -830,7 +830,7 @@ export class Driver extends EventEmitter {
             inputClusterList: inputClusters,
             outputClusterList: outputClusters,
         });
-        logger.debug(`Ezsp adding endpoint: ${JSON.stringify(res)}`, NS);
+        logger.debug(() => `Ezsp adding endpoint: ${JSON.stringify(res)}`, NS);
     }
 
     public waitFor(

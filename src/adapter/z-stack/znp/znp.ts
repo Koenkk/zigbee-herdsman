@@ -69,26 +69,22 @@ class Znp extends events.EventEmitter {
         this.unpiParser = new UnpiParser();
     }
 
-    private log(type: Type, message: string): void {
-        if (type === Type.SRSP) {
-            logger.debug(`SRSP: ${message}`, NS);
-        } else if (type === Type.AREQ) {
-            logger.debug(`AREQ: ${message}`, NS);
-        } else {
-            /* istanbul ignore else */
-            if (type === Type.SREQ) {
-                logger.debug(`SREQ: ${message}`, NS);
-            } else {
-                throw new Error(`Unknown type '${type}'`);
-            }
+    private static stringifyObject(prefix: string, object: ZpiObject): string {
+        return `${Type[object.type]}: ${prefix} ${Subsystem[object.subsystem]} - ${object.command} - ${JSON.stringify(object.payload)}`;
+    }
+
+    private log(prefix: string, object: ZpiObject): void {
+        if (!logger.isEnabled("debug", NS)) {
+            return;
         }
+
+        logger.debug(Znp.stringifyObject(prefix, object), NS);
     }
 
     private onUnpiParsed(frame: UnpiFrame): void {
         try {
             const object = ZpiObject.fromUnpiFrame(frame);
-            const message = `<-- ${Subsystem[object.subsystem]} - ${object.command} - ${JSON.stringify(object.payload)}`;
-            this.log(object.type, message);
+            this.log("<--", object);
             this.waitress.resolve(object);
             this.emit('received', object);
         } catch (error) {
@@ -286,10 +282,9 @@ class Znp extends events.EventEmitter {
         }
 
         const object = ZpiObject.createRequest(subsystem, command, payload);
-        const message = `--> ${Subsystem[object.subsystem]} - ${object.command} - ${JSON.stringify(payload)}`;
 
         return this.queue.execute<ZpiObject | void>(async () => {
-            this.log(object.type, message);
+            this.log("-->", object);
 
             const frame = object.toUnpiFrame();
 
@@ -304,7 +299,7 @@ class Znp extends events.EventEmitter {
                     }
 
                     throw new Error(
-                        `SREQ '${message}' failed with status '${statusDescription(
+                        `SREQ '${Znp.stringifyObject("-->", object)}' failed with status '${statusDescription(
                             result.payload.status,
                         )}' (expected '${expectedStatuses.map(statusDescription)}')`,
                     );
