@@ -9,12 +9,12 @@ export interface Logger {
 export let logger: Logger = {
     isEnabled: () => true,
     debug: (messageOrLambda, namespace) =>
-        console.debug(`${namespace}: ${typeof messageOrLambda === 'string' ? messageOrLambda : messageOrLambda()}`),
+        console.debug(`${namespace}: ${typeof messageOrLambda === 'function' ? messageOrLambda() : messageOrLambda}`),
     info: (messageOrLambda, namespace) => console.info(`${namespace}: ${typeof messageOrLambda === 'string' ? messageOrLambda : messageOrLambda()}`),
     warning: (messageOrLambda, namespace) =>
-        console.warn(`${namespace}: ${typeof messageOrLambda === 'string' ? messageOrLambda : messageOrLambda()}`),
+        console.warn(`${namespace}: ${typeof messageOrLambda === 'function' ? messageOrLambda() : messageOrLambda}`),
     error: (messageOrLambda, namespace) =>
-        console.error(`${namespace}: ${typeof messageOrLambda === 'string' ? messageOrLambda : messageOrLambda()}`),
+        console.error(`${namespace}: ${typeof messageOrLambda === 'function' ? messageOrLambda() : messageOrLambda}`),
 };
 
 export function setLogger(l: Logger): void {
