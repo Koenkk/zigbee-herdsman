@@ -27,9 +27,8 @@ const flushPromises = () => new Promise(globalSetImmediate);
 
 const mockLogger = {
     isEnabled: jest.fn().mockImplementation(() => true),
-    debug: jest.fn(messageOrLambda => {
-        if (typeof messageOrLambda === "function")
-            messageOrLambda();
+    debug: jest.fn((messageOrLambda) => {
+        if (typeof messageOrLambda === 'function') messageOrLambda();
     }),
     info: jest.fn(),
     warning: jest.fn(),

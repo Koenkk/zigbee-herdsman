@@ -5,9 +5,8 @@ import {Constants as UnpiConstants, Frame as UnpiFrame} from '../../../src/adapt
 import {Znp, ZpiObject} from '../../../src/adapter/z-stack/znp';
 import BuffaloZnp from '../../../src/adapter/z-stack/znp/buffaloZnp';
 import ParameterType from '../../../src/adapter/z-stack/znp/parameterType';
+import {logger, setLogger} from '../../../src/utils/logger';
 import {duplicateArray, ieeeaAddr1, ieeeaAddr2} from '../../testUtils';
-import {logger} from '../../../src/utils/logger';
-import {setLogger} from '../../../src/utils/logger';
 
 const mockLogger = {
     isEnabled: jest.fn().mockImplementation(() => false),
@@ -1348,7 +1347,7 @@ describe('ZNP', () => {
     });
 
     it('Coverage logger', async () => {
-        consoleLogger.warning(()=>"Test warning", "TestNS");
-        consoleLogger.error(()=>"Test error", "TestNS");
+        consoleLogger.warning(() => 'Test warning', 'TestNS');
+        consoleLogger.error(() => 'Test error', 'TestNS');
     });
 });
