@@ -20,7 +20,6 @@ import * as Zcl from '../../../src/zspec/zcl';
 import {Status} from '../../../src/zspec/zdo';
 
 const mockLogger = {
-    isEnabled: jest.fn(),
     debug: jest.fn(),
     info: jest.fn(),
     warning: jest.fn(),

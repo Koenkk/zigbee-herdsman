@@ -542,7 +542,7 @@ class Endpoint extends Entity {
         } catch (error) {
             const err = error as Error;
             err.message = `${log} failed (${err.message})`;
-            logger.debug((err as Error).stack!, NS);
+            logger.debug(err.stack!, NS);
             throw error;
         }
     }
@@ -593,7 +593,7 @@ class Endpoint extends Entity {
         } catch (error) {
             const err = error as Error;
             err.message = `${log} failed (${err.message})`;
-            logger.debug((err as Error).stack!, NS);
+            logger.debug(err.stack!, NS);
             throw error;
         }
     }
@@ -717,7 +717,7 @@ class Endpoint extends Entity {
         const messageBuilder = (): string =>
             `CommandResponse ${this.deviceIeeeAddress}/${this.ID} ` +
             `${cluster.name}.${command.name}(${JSON.stringify(payload)}, ${JSON.stringify(optionsWithDefaults)})`;
-        logger.debug(() => messageBuilder(), NS);
+        logger.debug(messageBuilder, NS);
 
         try {
             await this.sendRequest(frame, optionsWithDefaults, async (f) => {
@@ -740,7 +740,7 @@ class Endpoint extends Entity {
         } catch (error) {
             const err = error as Error;
             err.message = `${messageBuilder()} failed (${err.message})`;
-            logger.debug((err as Error).stack!, NS);
+            logger.debug(err.stack!, NS);
             throw error;
         }
     }
@@ -905,7 +905,7 @@ class Endpoint extends Entity {
         const messageBuilder = (): string =>
             `ZCL command ${this.deviceIeeeAddress}/${this.ID} ` +
             `${cluster.name}.${command.name}(${JSON.stringify(logPayload ? logPayload : payload)}, ${JSON.stringify(optionsWithDefaults)})`;
-        logger.debug(() => messageBuilder(), NS);
+        logger.debug(messageBuilder, NS);
 
         try {
             const result = await this.sendRequest(frame, optionsWithDefaults);
@@ -920,7 +920,7 @@ class Endpoint extends Entity {
         } catch (error) {
             const err = error as Error;
             err.message = `${messageBuilder()} failed (${err.message})`;
-            logger.debug((err as Error).stack!, NS);
+            logger.debug(err.stack!, NS);
             throw error;
         }
     }

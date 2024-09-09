@@ -1,5 +1,4 @@
 export interface Logger {
-    isEnabled: (level: string, namespace: string) => boolean;
     debug: (messageOrLambda: string | (() => string), namespace: string) => void;
     info: (messageOrLambda: string | (() => string), namespace: string) => void;
     warning: (messageOrLambda: string | (() => string), namespace: string) => void;
@@ -7,7 +6,6 @@ export interface Logger {
 }
 
 export let logger: Logger = {
-    isEnabled: () => true,
     debug: (messageOrLambda, namespace) =>
         console.debug(`${namespace}: ${typeof messageOrLambda === 'function' ? messageOrLambda() : messageOrLambda}`),
     info: (messageOrLambda, namespace) => console.info(`${namespace}: ${typeof messageOrLambda === 'string' ? messageOrLambda : messageOrLambda()}`),

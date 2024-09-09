@@ -200,7 +200,7 @@ class Group extends Entity {
 
         const messageBuilder = (): string =>
             `Write ${this.groupID} ${cluster.name}(${JSON.stringify(attributes)}, ${JSON.stringify(optionsWithDefaults)})`;
-        logger.debug(() => messageBuilder(), NS);
+        logger.debug(messageBuilder, NS);
 
         try {
             const frame = Zcl.Frame.create(
@@ -220,7 +220,7 @@ class Group extends Entity {
         } catch (error) {
             const err = error as Error;
             err.message = `${messageBuilder()} failed (${err.message})`;
-            logger.debug((err as Error).stack!, NS);
+            logger.debug(err.stack!, NS);
 
             throw error;
         }
@@ -250,14 +250,14 @@ class Group extends Entity {
 
         const messageBuilder = (): string =>
             `Read ${this.groupID} ${cluster.name}(${JSON.stringify(attributes)}, ${JSON.stringify(optionsWithDefaults)})`;
-        logger.debug(() => messageBuilder(), NS);
+        logger.debug(messageBuilder, NS);
 
         try {
             await Entity.adapter!.sendZclFrameToGroup(this.groupID, frame, optionsWithDefaults.srcEndpoint);
         } catch (error) {
             const err = error as Error;
             err.message = `${messageBuilder()} failed (${err.message})`;
-            logger.debug((err as Error).stack!, NS);
+            logger.debug(err.stack!, NS);
 
             throw error;
         }
@@ -269,7 +269,7 @@ class Group extends Entity {
         const command = cluster.getCommand(commandKey);
 
         const messageBuilder = (): string => `Command ${this.groupID} ${cluster.name}.${command.name}(${JSON.stringify(payload)})`;
-        logger.debug(() => messageBuilder(), NS);
+        logger.debug(messageBuilder, NS);
 
         try {
             const frame = Zcl.Frame.create(
@@ -289,7 +289,7 @@ class Group extends Entity {
         } catch (error) {
             const err = error as Error;
             err.message = `${messageBuilder()} failed (${err.message})`;
-            logger.debug((err as Error).stack!, NS);
+            logger.debug(err.stack!, NS);
 
             throw error;
         }

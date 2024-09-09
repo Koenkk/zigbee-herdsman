@@ -26,7 +26,6 @@ const globalSetImmediate = setImmediate;
 const flushPromises = () => new Promise(globalSetImmediate);
 
 const mockLogger = {
-    isEnabled: jest.fn().mockImplementation(() => true),
     debug: jest.fn((messageOrLambda) => {
         if (typeof messageOrLambda === 'function') messageOrLambda();
     }),

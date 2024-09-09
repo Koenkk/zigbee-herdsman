@@ -9,7 +9,6 @@ import {logger, setLogger} from '../../../src/utils/logger';
 import {duplicateArray, ieeeaAddr1, ieeeaAddr2} from '../../testUtils';
 
 const mockLogger = {
-    isEnabled: jest.fn().mockImplementation(() => false),
     debug: jest.fn(),
     info: jest.fn(),
     warning: jest.fn(),
@@ -528,7 +527,7 @@ describe('ZNP', () => {
         }
 
         expect(error).toStrictEqual(
-            new Error("'SREQ: --> SYS - osalNvRead - {\"id\":1,\"offset\":2}' failed with status '(0x01: FAILURE)' (expected '(0x00: SUCCESS)')"),
+            new Error("--> 'SREQ: SYS - osalNvRead - {\"id\":1,\"offset\":2}' failed with status '(0x01: FAILURE)' (expected '(0x00: SUCCESS)')"),
         );
     });
 
@@ -560,7 +559,7 @@ describe('ZNP', () => {
         }
 
         expect(error).toStrictEqual(
-            new Error("'SREQ: --> SYS - osalNvRead - {\"id\":1,\"offset\":2}' failed with status '(0x01: FAILURE)' (expected '(0x00: SUCCESS)')"),
+            new Error("--> 'SREQ: SYS - osalNvRead - {\"id\":1,\"offset\":2}' failed with status '(0x01: FAILURE)' (expected '(0x00: SUCCESS)')"),
         );
     });
 
@@ -1317,33 +1316,6 @@ describe('ZNP', () => {
             const buffalo = new BuffaloZnp(Buffer.alloc(1));
             buffalo.read(ParameterType.LIST_ASSOC_DEV, {length: 1});
         }).toThrow(`Cannot read LIST_ASSOC_DEV without startIndex option specified`);
-    });
-
-    it('Coverage logger disabled', async () => {
-        setLogger(mockLogger);
-        let parsedCb;
-        const received = jest.fn();
-
-        znp.on('received', received);
-
-        mockUnpiParserOn.mockImplementationOnce((event, cb) => {
-            if (event === 'parsed') {
-                parsedCb = cb;
-            }
-        });
-
-        znp.open();
-        parsedCb(
-            new UnpiFrame(
-                UnpiConstants.Type.SRSP,
-                UnpiConstants.Subsystem.SYS,
-                0x02,
-                Buffer.from([0x01, 0x02, 0x03, 0x04, 0x05, 0x01, 0x01, 0x01, 0x01]),
-            ),
-        );
-
-        expect(received).toHaveBeenCalledTimes(1);
-        expect(mockLogger.info).toHaveBeenCalledTimes(1);
     });
 
     it('Coverage logger', async () => {

@@ -131,6 +131,10 @@ class ZpiObject {
             (this.command === 'resetReq' && this.subsystem === Subsystem.SYS) || (this.command === 'systemReset' && this.subsystem === Subsystem.SAPI)
         );
     }
+
+    public toString(): string {
+        return `${Type[this.type]}: ${Subsystem[this.subsystem]} - ${this.command} - ${JSON.stringify(this.payload)}`;
+    }
 }
 
 export default ZpiObject;
