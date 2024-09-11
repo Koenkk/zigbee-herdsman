@@ -1113,7 +1113,7 @@ class Device extends Entity<ControllerEventMap> {
     }
 
     public async ping(disableRecovery = true): Promise<void> {
-        // Zigbee does not have an official pining mechamism. Use a read request
+        // Zigbee does not have an official pinging mechanism. Use a read request
         // of a mandatory basic cluster attribute to keep it as lightweight as
         // possible.
         const endpoint = this.endpoints.find((ep) => ep.inputClusters.includes(0)) ?? this.endpoints[0];
