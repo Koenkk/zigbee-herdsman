@@ -69,26 +69,10 @@ class Znp extends events.EventEmitter {
         this.unpiParser = new UnpiParser();
     }
 
-    private log(type: Type, message: string): void {
-        if (type === Type.SRSP) {
-            logger.debug(`SRSP: ${message}`, NS);
-        } else if (type === Type.AREQ) {
-            logger.debug(`AREQ: ${message}`, NS);
-        } else {
-            /* istanbul ignore else */
-            if (type === Type.SREQ) {
-                logger.debug(`SREQ: ${message}`, NS);
-            } else {
-                throw new Error(`Unknown type '${type}'`);
-            }
-        }
-    }
-
     private onUnpiParsed(frame: UnpiFrame): void {
         try {
             const object = ZpiObject.fromUnpiFrame(frame);
-            const message = `<-- ${Subsystem[object.subsystem]} - ${object.command.name} - ${JSON.stringify(object.payload)}`;
-            this.log(object.type, message);
+            logger.debug(() => `<-- ${object}`, NS);
             this.waitress.resolve(object);
             this.emit('received', object);
         } catch (error) {
@@ -286,10 +270,9 @@ class Znp extends events.EventEmitter {
         }
 
         const object = ZpiObject.createRequest(subsystem, command, payload);
-        const message = `--> ${Subsystem[object.subsystem]} - ${object.command.name} - ${JSON.stringify(payload)}`;
 
         return this.queue.execute<ZpiObject | void>(async () => {
-            this.log(object.type, message);
+            logger.debug(() => `--> ${object}`, NS);
 
             if (object.type === Type.SREQ) {
                 const t = object.command.name === 'bdbStartCommissioning' || object.command.name === 'startupFromApp' ? 40000 : timeouts.SREQ;
@@ -302,7 +285,7 @@ class Znp extends events.EventEmitter {
                     }
 
                     throw new Error(
-                        `SREQ '${message}' failed with status '${statusDescription(
+                        `--> '${object}' failed with status '${statusDescription(
                             result.payload.status,
                         )}' (expected '${expectedStatuses.map(statusDescription)}')`,
                     );

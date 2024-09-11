@@ -142,6 +142,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             },
             view: {
                 ID: 1,
+                response: 1,
                 parameters: [{name: 'groupid', type: DataType.UINT16}],
             },
             getMembership: {

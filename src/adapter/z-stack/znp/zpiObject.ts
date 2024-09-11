@@ -119,6 +119,10 @@ class ZpiObject {
         const data = this.command.zdo.convert(this.unpiFrame.data);
         return BuffaloZdo.readResponse(this.command.zdo.cluterId, data, false) as T;
     }
+
+    public toString(): string {
+        return `${Type[this.type]}: ${Subsystem[this.subsystem]} - ${this.command.name} - ${JSON.stringify(this.payload)}`;
+    }
 }
 
 export default ZpiObject;

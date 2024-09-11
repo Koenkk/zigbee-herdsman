@@ -414,6 +414,7 @@ class Controller extends events.EventEmitter<ControllerEventMap> {
 
     /**
      * Get all devices
+     * @deprecated use getDevicesIterator()
      */
     public getDevices(): Device[] {
         return Device.all();
@@ -463,12 +464,13 @@ class Controller extends events.EventEmitter<ControllerEventMap> {
     /**
      * Get group by ID
      */
-    public getGroupByID(groupID: number): Group {
+    public getGroupByID(groupID: number): Group | undefined {
         return Group.byGroupID(groupID);
     }
 
     /**
      * Get all groups
+     * @deprecated use getGroupsIterator()
      */
     public getGroups(): Group[] {
         return Group.all();
@@ -577,7 +579,7 @@ class Controller extends events.EventEmitter<ControllerEventMap> {
     }
 
     private async onDeviceJoinedGreenPower(payload: GreenPowerDeviceJoinedPayload): Promise<void> {
-        logger.debug(`Green power device '${JSON.stringify(payload)}' joined`, NS);
+        logger.debug(() => `Green power device '${JSON.stringify(payload)}' joined`, NS);
 
         // Green power devices don't have an ieeeAddr, the sourceID is unique and static so use this.
         let ieeeAddr = payload.sourceID.toString(16);

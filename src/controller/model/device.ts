@@ -92,7 +92,7 @@ class Device extends Entity<ControllerEventMap> {
         return this._manufacturerID;
     }
     get isDeleted(): boolean {
-        return Boolean(Device.deletedDevices[this.ieeeAddr]);
+        return Device.deletedDevices.has(this.ieeeAddr);
     }
     set type(type: DeviceType) {
         this._type = type;
@@ -128,7 +128,11 @@ class Device extends Entity<ControllerEventMap> {
         return this._networkAddress;
     }
     set networkAddress(networkAddress: number) {
+        Device.nwkToIeeeCache.delete(this._networkAddress);
+
         this._networkAddress = networkAddress;
+
+        Device.nwkToIeeeCache.set(this._networkAddress, this.ieeeAddr);
 
         for (const endpoint of this._endpoints) {
             endpoint.deviceNetworkAddress = networkAddress;
@@ -198,9 +202,10 @@ class Device extends Entity<ControllerEventMap> {
 
     // This lookup contains all devices that are queried from the database, this is to ensure that always
     // the same instance is returned.
-    private static devices: {[ieeeAddr: string]: Device} = {};
+    private static readonly devices: Map<string /* IEEE */, Device> = new Map();
     private static loadedFromDatabase: boolean = false;
-    private static deletedDevices: {[ieeeAddr: string]: Device} = {};
+    private static readonly deletedDevices: Map<string /* IEEE */, Device> = new Map();
+    private static readonly nwkToIeeeCache: Map<number /* nwk addr */, string /* IEEE */> = new Map();
 
     public static readonly ReportablePropertiesMapping: {
         [s: string]: {
@@ -332,9 +337,10 @@ class Device extends Entity<ControllerEventMap> {
     }
 
     public changeIeeeAddress(ieeeAddr: string): void {
-        delete Device.devices[this.ieeeAddr];
+        Device.devices.delete(this.ieeeAddr);
         this.ieeeAddr = ieeeAddr;
-        Device.devices[this.ieeeAddr] = this;
+        Device.devices.set(this.ieeeAddr, this);
+        Device.nwkToIeeeCache.set(this.networkAddress, this.ieeeAddr);
 
         this.endpoints.forEach((e) => (e.deviceIeeeAddress = ieeeAddr));
         this.save();
@@ -510,9 +516,10 @@ class Device extends Entity<ControllerEventMap> {
      * Reset runtime lookups.
      */
     public static resetCache(): void {
-        Device.devices = {};
+        Device.devices.clear();
         Device.loadedFromDatabase = false;
-        Device.deletedDevices = {};
+        Device.deletedDevices.clear();
+        Device.nwkToIeeeCache.clear();
     }
 
     private static fromDatabaseEntry(entry: DatabaseEntry): Device {
@@ -608,7 +615,9 @@ class Device extends Entity<ControllerEventMap> {
         if (!Device.loadedFromDatabase) {
             for (const entry of Entity.database!.getEntriesIterator(['Coordinator', 'EndDevice', 'Router', 'GreenPower', 'Unknown'])) {
                 const device = Device.fromDatabaseEntry(entry);
-                Device.devices[device.ieeeAddr] = device;
+
+                Device.devices.set(device.ieeeAddr, device);
+                Device.nwkToIeeeCache.set(device.networkAddress, device.ieeeAddr);
             }
 
             Device.loadedFromDatabase = true;
@@ -624,31 +633,15 @@ class Device extends Entity<ControllerEventMap> {
     public static byIeeeAddr(ieeeAddr: string, includeDeleted: boolean = false): Device | undefined {
         Device.loadFromDatabaseIfNecessary();
 
-        return includeDeleted ? (Device.deletedDevices[ieeeAddr] ?? Device.devices[ieeeAddr]) : Device.devices[ieeeAddr];
+        return includeDeleted ? (Device.deletedDevices.get(ieeeAddr) ?? Device.devices.get(ieeeAddr)) : Device.devices.get(ieeeAddr);
     }
 
     public static byNetworkAddress(networkAddress: number, includeDeleted: boolean = false): Device | undefined {
         Device.loadFromDatabaseIfNecessary();
 
-        if (includeDeleted) {
-            for (const ieeeAddress in Device.deletedDevices) {
-                const device = Device.deletedDevices[ieeeAddress];
+        const ieeeAddr = Device.nwkToIeeeCache.get(networkAddress);
 
-                /* istanbul ignore else */
-                if (device.networkAddress === networkAddress) {
-                    return device;
-                }
-            }
-        }
-
-        for (const ieeeAddress in Device.devices) {
-            const device = Device.devices[ieeeAddress];
-
-            /* istanbul ignore else */
-            if (device.networkAddress === networkAddress) {
-                return device;
-            }
-        }
+        return ieeeAddr ? Device.byIeeeAddr(ieeeAddr, includeDeleted) : undefined;
     }
 
     public static byType(type: DeviceType): Device[] {
@@ -661,17 +654,18 @@ class Device extends Entity<ControllerEventMap> {
         return devices;
     }
 
+    /**
+     * @deprecated use allIterator()
+     */
     public static all(): Device[] {
         Device.loadFromDatabaseIfNecessary();
-        return Object.values(Device.devices);
+        return Array.from(Device.devices.values());
     }
 
     public static *allIterator(predicate?: (value: Device) => boolean): Generator<Device> {
         Device.loadFromDatabaseIfNecessary();
 
-        for (const ieeeAddr in Device.devices) {
-            const device = Device.devices[ieeeAddr];
-
+        for (const device of Device.devices.values()) {
             if (!predicate || predicate(device)) {
                 yield device;
             }
@@ -679,14 +673,15 @@ class Device extends Entity<ControllerEventMap> {
     }
 
     public undelete(interviewCompleted?: boolean): void {
-        assert(Device.deletedDevices[this.ieeeAddr], `Device '${this.ieeeAddr}' is not deleted`);
+        if (Device.deletedDevices.delete(this.ieeeAddr)) {
+            Device.devices.set(this.ieeeAddr, this);
 
-        Device.devices[this.ieeeAddr] = this;
-        delete Device.deletedDevices[this.ieeeAddr];
+            this._interviewCompleted = interviewCompleted ?? this._interviewCompleted;
 
-        this._interviewCompleted = interviewCompleted ?? this._interviewCompleted;
-
-        Entity.database!.insert(this.toDatabaseEntry());
+            Entity.database!.insert(this.toDatabaseEntry());
+        } else {
+            throw new Error(`Device '${this.ieeeAddr}' is not deleted`);
+        }
     }
 
     public static create(
@@ -708,7 +703,7 @@ class Device extends Entity<ControllerEventMap> {
     ): Device {
         Device.loadFromDatabaseIfNecessary();
 
-        if (Device.devices[ieeeAddr]) {
+        if (Device.devices.has(ieeeAddr)) {
             throw new Error(`Device with IEEE address '${ieeeAddr}' already exists`);
         }
 
@@ -741,7 +736,8 @@ class Device extends Entity<ControllerEventMap> {
         );
 
         Entity.database!.insert(device.toDatabaseEntry());
-        Device.devices[device.ieeeAddr] = device;
+        Device.devices.set(device.ieeeAddr, device);
+        Device.nwkToIeeeCache.set(device.networkAddress, device.ieeeAddr);
         return device;
     }
 
@@ -1084,8 +1080,8 @@ class Device extends Entity<ControllerEventMap> {
             Entity.database!.remove(this.ID);
         }
 
-        Device.deletedDevices[this.ieeeAddr] = this;
-        delete Device.devices[this.ieeeAddr];
+        Device.deletedDevices.set(this.ieeeAddr, this);
+        Device.devices.delete(this.ieeeAddr);
 
         // Clear all data in case device joins again
         this._interviewCompleted = false;
@@ -1117,7 +1113,7 @@ class Device extends Entity<ControllerEventMap> {
     }
 
     public async ping(disableRecovery = true): Promise<void> {
-        // Zigbee does not have an official pining mechamism. Use a read request
+        // Zigbee does not have an official pinging mechanism. Use a read request
         // of a mandatory basic cluster attribute to keep it as lightweight as
         // possible.
         const endpoint = this.endpoints.find((ep) => ep.inputClusters.includes(0)) ?? this.endpoints[0];

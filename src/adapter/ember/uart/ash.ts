@@ -484,7 +484,7 @@ export class UartAsh extends EventEmitter<UartAshEventMap> {
                 serialOpts.binding = this.portOptions.binding;
             }
 
-            logger.debug(`Opening serial port with ${JSON.stringify(serialOpts)}`, NS);
+            logger.debug(() => `Opening serial port with ${JSON.stringify(serialOpts)}`, NS);
             this.serialPort = new SerialPort(serialOpts);
 
             this.writer.pipe(this.serialPort);

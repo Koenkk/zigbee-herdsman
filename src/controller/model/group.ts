@@ -35,7 +35,7 @@ class Group extends Entity {
 
     // This lookup contains all groups that are queried from the database, this is to ensure that always
     // the same instance is returned.
-    private static groups: {[groupID: number]: Group} = {};
+    private static readonly groups: Map<number /* groupID */, Group> = new Map();
     private static loadedFromDatabase: boolean = false;
 
     private constructor(databaseID: number, groupID: number, members: Set<Endpoint>, meta: KeyValue) {
@@ -54,7 +54,7 @@ class Group extends Entity {
      * Reset runtime lookups.
      */
     public static resetCache(): void {
-        Group.groups = {};
+        Group.groups.clear();
         Group.loadedFromDatabase = false;
     }
 
@@ -91,29 +91,30 @@ class Group extends Entity {
         if (!Group.loadedFromDatabase) {
             for (const entry of Entity.database!.getEntriesIterator(['Group'])) {
                 const group = Group.fromDatabaseEntry(entry);
-                Group.groups[group.groupID] = group;
+                Group.groups.set(group.groupID, group);
             }
 
             Group.loadedFromDatabase = true;
         }
     }
 
-    public static byGroupID(groupID: number): Group {
+    public static byGroupID(groupID: number): Group | undefined {
         Group.loadFromDatabaseIfNecessary();
-        return Group.groups[groupID];
+        return Group.groups.get(groupID);
     }
 
+    /**
+     * @deprecated use allIterator()
+     */
     public static all(): Group[] {
         Group.loadFromDatabaseIfNecessary();
-        return Object.values(Group.groups);
+        return Array.from(Group.groups.values());
     }
 
     public static *allIterator(predicate?: (value: Group) => boolean): Generator<Group> {
         Group.loadFromDatabaseIfNecessary();
 
-        for (const ieeeAddr in Group.groups) {
-            const group = Group.groups[ieeeAddr];
-
+        for (const group of Group.groups.values()) {
             /* istanbul ignore else */
             if (!predicate || predicate(group)) {
                 yield group;
@@ -129,7 +130,7 @@ class Group extends Entity {
 
         Group.loadFromDatabaseIfNecessary();
 
-        if (Group.groups[groupID]) {
+        if (Group.groups.has(groupID)) {
             throw new Error(`Group with groupID '${groupID}' already exists`);
         }
 
@@ -137,7 +138,7 @@ class Group extends Entity {
         const group = new Group(databaseID, groupID, new Set(), {});
         Entity.database!.insert(group.toDatabaseRecord());
 
-        Group.groups[group.groupID] = group;
+        Group.groups.set(group.groupID, group);
         return group;
     }
 
@@ -156,7 +157,7 @@ class Group extends Entity {
             Entity.database!.remove(this.databaseID);
         }
 
-        delete Group.groups[this.groupID];
+        Group.groups.delete(this.groupID);
     }
 
     public save(writeDatabase = true): void {
@@ -197,8 +198,9 @@ class Group extends Entity {
             }
         }
 
-        const log = `Write ${this.groupID} ${cluster.name}(${JSON.stringify(attributes)}, ${JSON.stringify(optionsWithDefaults)})`;
-        logger.debug(log, NS);
+        const createLogMessage = (): string =>
+            `Write ${this.groupID} ${cluster.name}(${JSON.stringify(attributes)}, ${JSON.stringify(optionsWithDefaults)})`;
+        logger.debug(createLogMessage, NS);
 
         try {
             const frame = Zcl.Frame.create(
@@ -217,8 +219,8 @@ class Group extends Entity {
             await Entity.adapter!.sendZclFrameToGroup(this.groupID, frame, optionsWithDefaults.srcEndpoint);
         } catch (error) {
             const err = error as Error;
-            err.message = `${log} failed (${err.message})`;
-            logger.debug((err as Error).stack!, NS);
+            err.message = `${createLogMessage()} failed (${err.message})`;
+            logger.debug(err.stack!, NS);
 
             throw error;
         }
@@ -246,15 +248,16 @@ class Group extends Entity {
             optionsWithDefaults.reservedBits,
         );
 
-        const log = `Read ${this.groupID} ${cluster.name}(${JSON.stringify(attributes)}, ${JSON.stringify(optionsWithDefaults)})`;
-        logger.debug(log, NS);
+        const createLogMessage = (): string =>
+            `Read ${this.groupID} ${cluster.name}(${JSON.stringify(attributes)}, ${JSON.stringify(optionsWithDefaults)})`;
+        logger.debug(createLogMessage, NS);
 
         try {
             await Entity.adapter!.sendZclFrameToGroup(this.groupID, frame, optionsWithDefaults.srcEndpoint);
         } catch (error) {
             const err = error as Error;
-            err.message = `${log} failed (${err.message})`;
-            logger.debug((err as Error).stack!, NS);
+            err.message = `${createLogMessage()} failed (${err.message})`;
+            logger.debug(err.stack!, NS);
 
             throw error;
         }
@@ -265,8 +268,8 @@ class Group extends Entity {
         const cluster = Zcl.Utils.getCluster(clusterKey, undefined, {});
         const command = cluster.getCommand(commandKey);
 
-        const log = `Command ${this.groupID} ${cluster.name}.${command.name}(${JSON.stringify(payload)})`;
-        logger.debug(log, NS);
+        const createLogMessage = (): string => `Command ${this.groupID} ${cluster.name}.${command.name}(${JSON.stringify(payload)})`;
+        logger.debug(createLogMessage, NS);
 
         try {
             const frame = Zcl.Frame.create(
@@ -285,8 +288,8 @@ class Group extends Entity {
             await Entity.adapter!.sendZclFrameToGroup(this.groupID, frame, optionsWithDefaults.srcEndpoint);
         } catch (error) {
             const err = error as Error;
-            err.message = `${log} failed (${err.message})`;
-            logger.debug((err as Error).stack!, NS);
+            err.message = `${createLogMessage()} failed (${err.message})`;
+            logger.debug(err.stack!, NS);
 
             throw error;
         }

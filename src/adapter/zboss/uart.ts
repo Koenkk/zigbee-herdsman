@@ -217,7 +217,9 @@ export class ZBOSSUart extends EventEmitter {
         const isFirst = ((pFlags >> 6) & 0x1) === 1;
         const isLast = ((pFlags >> 7) & 0x1) === 1;
         logger.debug(
-            `<-- package type ${pType}, flags ${pFlags.toString(16)}` + `${JSON.stringify({isACK, retransmit, sequence, ACKseq, isFirst, isLast})}`,
+            () =>
+                `<-- package type ${pType}, flags ${pFlags.toString(16)}` +
+                `${JSON.stringify({isACK, retransmit, sequence, ACKseq, isFirst, isLast})}`,
             NS,
         );
 
@@ -283,7 +285,8 @@ export class ZBOSSUart extends EventEmitter {
             const isFirst = ((flags >> 6) & 0x1) === 1;
             const isLast = ((flags >> 7) & 0x1) === 1;
             logger.debug(
-                `--> package type ${ZBOSS_NCP_API_HL}, flags ${flags.toString(16)}` +
+                () =>
+                    `--> package type ${ZBOSS_NCP_API_HL}, flags ${flags.toString(16)}` +
                     `${JSON.stringify({isACK, retransmit, sequence, ACKseq, isFirst, isLast})}`,
                 NS,
             );
@@ -371,7 +374,8 @@ export class ZBOSSUart extends EventEmitter {
         const isFirst = ((flags >> 6) & 0x1) === 1;
         const isLast = ((flags >> 7) & 0x1) === 1;
         logger.debug(
-            `--> package type ${ZBOSS_NCP_API_HL}, flags ${flags.toString(16)}` +
+            () =>
+                `--> package type ${ZBOSS_NCP_API_HL}, flags ${flags.toString(16)}` +
                 `${JSON.stringify({isACK, retransmit, sequence, ACKseq, isFirst, isLast})}`,
             NS,
         );
