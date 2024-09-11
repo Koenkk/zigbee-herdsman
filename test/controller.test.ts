@@ -4386,7 +4386,7 @@ describe('Controller', () => {
                         ],
                         name: 'add',
                     },
-                    view: {ID: 1, parameters: [{name: 'groupid', type: 33}], name: 'view'},
+                    view: {ID: 1, response: 1, parameters: [{name: 'groupid', type: 33}], name: 'view'},
                     getMembership: {
                         ID: 2,
                         response: 2,
@@ -5240,7 +5240,7 @@ describe('Controller', () => {
                         ],
                         name: 'add',
                     },
-                    view: {ID: 1, parameters: [{name: 'groupid', type: 33}], name: 'view'},
+                    view: {ID: 1, response: 1, parameters: [{name: 'groupid', type: 33}], name: 'view'},
                     getMembership: {
                         ID: 2,
                         response: 2,
@@ -5349,7 +5349,7 @@ describe('Controller', () => {
                         ],
                         name: 'add',
                     },
-                    view: {ID: 1, parameters: [{name: 'groupid', type: 33}], name: 'view'},
+                    view: {ID: 1, response: 1, parameters: [{name: 'groupid', type: 33}], name: 'view'},
                     getMembership: {
                         ID: 2,
                         response: 2,
@@ -5445,7 +5445,7 @@ describe('Controller', () => {
                         ],
                         name: 'add',
                     },
-                    view: {ID: 1, parameters: [{name: 'groupid', type: 33}], name: 'view'},
+                    view: {ID: 1, response: 1, parameters: [{name: 'groupid', type: 33}], name: 'view'},
                     getMembership: {
                         ID: 2,
                         response: 2,
@@ -6674,7 +6674,7 @@ describe('Controller', () => {
                         ],
                         name: 'add',
                     },
-                    view: {ID: 1, parameters: [{name: 'groupid', type: 33}], name: 'view'},
+                    view: {ID: 1, response: 1, parameters: [{name: 'groupid', type: 33}], name: 'view'},
                     getMembership: {
                         ID: 2,
                         response: 2,
