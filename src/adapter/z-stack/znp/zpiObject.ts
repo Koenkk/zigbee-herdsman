@@ -52,9 +52,9 @@ class ZpiObject {
             buffalo.write(parameter.parameterType, value, {});
         }
         const buffer = buffalo.getWritten();
-        const upiFrame = new UnpiFrame(cmd.type, subsystem, cmd.ID, buffer);
+        const unpiFrame = new UnpiFrame(cmd.type, subsystem, cmd.ID, buffer);
 
-        return new ZpiObject(cmd.type, subsystem, cmd, payload, upiFrame);
+        return new ZpiObject(cmd.type, subsystem, cmd, payload, unpiFrame);
     }
 
     public static fromUnpiFrame(frame: UnpiFrame): ZpiObject {
