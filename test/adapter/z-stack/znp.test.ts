@@ -5,8 +5,17 @@ import {Constants as UnpiConstants, Frame as UnpiFrame} from '../../../src/adapt
 import {Znp, ZpiObject} from '../../../src/adapter/z-stack/znp';
 import BuffaloZnp from '../../../src/adapter/z-stack/znp/buffaloZnp';
 import ParameterType from '../../../src/adapter/z-stack/znp/parameterType';
+import {logger, setLogger} from '../../../src/utils/logger';
 import {duplicateArray, ieeeaAddr1, ieeeaAddr2} from '../../testUtils';
 
+const mockLogger = {
+    debug: jest.fn(),
+    info: jest.fn(),
+    warning: jest.fn(),
+    error: jest.fn(),
+};
+
+const consoleLogger = logger;
 const mockSerialPortClose = jest.fn().mockImplementation((cb) => (cb ? cb() : null));
 const mockSerialPortFlush = jest.fn().mockImplementation((cb) => cb());
 const mockSerialPortAsyncFlushAndClose = jest.fn();
@@ -518,7 +527,7 @@ describe('ZNP', () => {
         }
 
         expect(error).toStrictEqual(
-            new Error("SREQ '--> SYS - osalNvRead - {\"id\":1,\"offset\":2}' failed with status '(0x01: FAILURE)' (expected '(0x00: SUCCESS)')"),
+            new Error("--> 'SREQ: SYS - osalNvRead - {\"id\":1,\"offset\":2}' failed with status '(0x01: FAILURE)' (expected '(0x00: SUCCESS)')"),
         );
     });
 
@@ -550,7 +559,7 @@ describe('ZNP', () => {
         }
 
         expect(error).toStrictEqual(
-            new Error("SREQ '--> SYS - osalNvRead - {\"id\":1,\"offset\":2}' failed with status '(0x01: FAILURE)' (expected '(0x00: SUCCESS)')"),
+            new Error("--> 'SREQ: SYS - osalNvRead - {\"id\":1,\"offset\":2}' failed with status '(0x01: FAILURE)' (expected '(0x00: SUCCESS)')"),
         );
     });
 
@@ -1307,5 +1316,10 @@ describe('ZNP', () => {
             const buffalo = new BuffaloZnp(Buffer.alloc(1));
             buffalo.read(ParameterType.LIST_ASSOC_DEV, {length: 1});
         }).toThrow(`Cannot read LIST_ASSOC_DEV without startIndex option specified`);
+    });
+
+    it('Coverage logger', async () => {
+        consoleLogger.warning(() => 'Test warning', 'TestNS');
+        consoleLogger.error(() => 'Test error', 'TestNS');
     });
 });

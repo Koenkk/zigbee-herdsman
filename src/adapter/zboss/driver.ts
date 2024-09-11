@@ -137,7 +137,7 @@ export class ZBOSSDriver extends EventEmitter {
     private async needsToBeInitialised(options: TsType.NetworkOptions): Promise<boolean> {
         let valid = true;
         this.netInfo = await this.getNetworkInfo();
-        logger.debug(`Current network parameters: ${JSON.stringify(this.netInfo)}`, NS);
+        logger.debug(() => `Current network parameters: ${JSON.stringify(this.netInfo)}`, NS);
         if (this.netInfo) {
             valid = valid && this.netInfo.nodeType == DeviceType.COORDINATOR;
             valid = valid && options.panID == this.netInfo.network.panID;
@@ -201,7 +201,7 @@ export class ZBOSSDriver extends EventEmitter {
             outputClusters: outputClusters,
         });
 
-        logger.debug(`Adding endpoint: ${JSON.stringify(res)}`, NS);
+        logger.debug(() => `Adding endpoint: ${JSON.stringify(res)}`, NS);
     }
 
     private getChannelMask(channels: number[]): number {
@@ -228,7 +228,7 @@ export class ZBOSSDriver extends EventEmitter {
             },
             20000,
         );
-        logger.debug(`Forming network: ${JSON.stringify(res)}`, NS);
+        logger.debug(() => `Forming network: ${JSON.stringify(res)}`, NS);
     }
 
     public async stop(): Promise<void> {
@@ -238,7 +238,7 @@ export class ZBOSSDriver extends EventEmitter {
     }
 
     private onFrame(frame: ZBOSSFrame): void {
-        logger.debug(`<== Frame: ${JSON.stringify(frame)}`, NS);
+        logger.debug(() => `<== Frame: ${JSON.stringify(frame)}`, NS);
 
         const handled = this.waitress.resolve(frame);
 
@@ -252,7 +252,7 @@ export class ZBOSSDriver extends EventEmitter {
     }
 
     public async execCommand(commandId: number, params: KeyValue = {}, timeout: number = 10000): Promise<ZBOSSFrame> {
-        logger.debug(`==> ${CommandId[commandId]}(${commandId}): ${JSON.stringify(params)}`, NS);
+        logger.debug(() => `==> ${CommandId[commandId]}(${commandId}): ${JSON.stringify(params)}`, NS);
 
         if (!this.port.portOpen) {
             throw new Error('Connection not initialized');
@@ -265,7 +265,7 @@ export class ZBOSSDriver extends EventEmitter {
             this.tsn = (this.tsn + 1) & 255;
 
             try {
-                logger.debug(`==> FRAME: ${JSON.stringify(frame)}`, NS);
+                logger.debug(() => `==> FRAME: ${JSON.stringify(frame)}`, NS);
                 await this.port.sendFrame(frame);
 
                 const response = await waiter.start().promise;

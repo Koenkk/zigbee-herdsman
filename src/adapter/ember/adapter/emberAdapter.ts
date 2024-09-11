@@ -512,7 +512,7 @@ export class EmberAdapter extends Adapter {
                                 );
                             }
 
-                            logger.debug(`Registered multicast table entry (${tableIdx}): ${JSON.stringify(multicastEntry)}.`, NS);
+                            logger.debug(() => `Registered multicast table entry (${tableIdx}): ${JSON.stringify(multicastEntry)}.`, NS);
                         });
                     } catch (error) {
                         // remove to allow retry on next occurrence
@@ -538,7 +538,7 @@ export class EmberAdapter extends Adapter {
         try {
             const payload = BuffaloZdo.readResponse(apsFrame.clusterId, messageContents);
 
-            logger.debug(`<~~~ [ZDO ${Zdo.ClusterId[apsFrame.clusterId]} from=${sender} ${payload ? JSON.stringify(payload) : 'OK'}]`, NS);
+            logger.debug(() => `<~~~ [ZDO ${Zdo.ClusterId[apsFrame.clusterId]} from=${sender} ${payload ? JSON.stringify(payload) : 'OK'}]`, NS);
             this.oneWaitress.resolveZDO(sender, apsFrame, payload);
 
             if (apsFrame.clusterId === Zdo.ClusterId.NETWORK_ADDRESS_RESPONSE) {
@@ -759,7 +759,7 @@ export class EmberAdapter extends Adapter {
         this.networkCache.parameters = parameters;
         this.networkCache.eui64 = await this.ezsp.ezspGetEui64();
 
-        logger.debug(`[INIT] Network Ready! ${JSON.stringify(this.networkCache)}`, NS);
+        logger.debug(() => `[INIT] Network Ready! ${JSON.stringify(this.networkCache)}`, NS);
 
         this.watchdogCountersHandle = setInterval(this.watchdogCounters.bind(this), WATCHDOG_COUNTERS_FEED_INTERVAL);
 
@@ -842,7 +842,7 @@ export class EmberAdapter extends Adapter {
                     throw new Error(`Failed to register group '${multicastId}' in multicast table with status=${SLStatus[status]}.`);
                 }
 
-                logger.debug(`Registered multicast table entry (${this.multicastTable.length}): ${JSON.stringify(multicastEntry)}.`, NS);
+                logger.debug(() => `Registered multicast table entry (${this.multicastTable.length}): ${JSON.stringify(multicastEntry)}.`, NS);
                 this.multicastTable.push(multicastEntry.multicastId);
             }
         }
@@ -904,7 +904,7 @@ export class EmberAdapter extends Adapter {
 
             const [npStatus, nodeType, netParams] = await this.ezsp.ezspGetNetworkParameters();
 
-            logger.debug(`[INIT TC] Current adapter network: nodeType=${EmberNodeType[nodeType]} params=${JSON.stringify(netParams)}`, NS);
+            logger.debug(() => `[INIT TC] Current adapter network: nodeType=${EmberNodeType[nodeType]} params=${JSON.stringify(netParams)}`, NS);
 
             if (
                 npStatus === SLStatus.OK &&
@@ -1118,7 +1118,7 @@ export class EmberAdapter extends Adapter {
             channels: ZSpec.ALL_802_15_4_CHANNELS_MASK,
         };
 
-        logger.info(`[INIT FORM] Forming new network with: ${JSON.stringify(netParams)}`, NS);
+        logger.info(() => `[INIT FORM] Forming new network with: ${JSON.stringify(netParams)}`, NS);
 
         status = await this.ezsp.ezspFormNetwork(netParams);
 
@@ -1450,7 +1450,7 @@ export class EmberAdapter extends Adapter {
             logger.warning(`Adapter is running a non-GA version (${EmberVersionType[versionStruct.type]}).`, NS);
         }
 
-        logger.info(`Adapter version info: ${JSON.stringify(this.version)}`, NS);
+        logger.info(() => `Adapter version info: ${JSON.stringify(this.version)}`, NS);
     }
 
     /**
@@ -2472,7 +2472,7 @@ export class EmberAdapter extends Adapter {
         return this.queue.execute<ZclPayload | void>(async () => {
             this.checkInterpanLock();
 
-            logger.debug(`~~~> [ZCL to=${networkAddress} apsFrame=${JSON.stringify(apsFrame)} header=${JSON.stringify(zclFrame.header)}]`, NS);
+            logger.debug(() => `~~~> [ZCL to=${networkAddress} apsFrame=${JSON.stringify(apsFrame)} header=${JSON.stringify(zclFrame.header)}]`, NS);
 
             for (let i = 1; i <= QUEUE_MAX_SEND_ATTEMPTS; i++) {
                 let status: SLStatus = SLStatus.FAIL;
@@ -2555,7 +2555,7 @@ export class EmberAdapter extends Adapter {
         return this.queue.execute<void>(async () => {
             this.checkInterpanLock();
 
-            logger.debug(`~~~> [ZCL GROUP apsFrame=${JSON.stringify(apsFrame)} header=${JSON.stringify(zclFrame.header)}]`, NS);
+            logger.debug(() => `~~~> [ZCL GROUP apsFrame=${JSON.stringify(apsFrame)} header=${JSON.stringify(zclFrame.header)}]`, NS);
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
             const [status, messageTag] = await this.ezsp.send(
                 EmberOutgoingMessageType.MULTICAST,
@@ -2597,7 +2597,7 @@ export class EmberAdapter extends Adapter {
         return this.queue.execute<void>(async () => {
             this.checkInterpanLock();
 
-            logger.debug(`~~~> [ZCL BROADCAST apsFrame=${JSON.stringify(apsFrame)} header=${JSON.stringify(zclFrame.header)}]`, NS);
+            logger.debug(() => `~~~> [ZCL BROADCAST apsFrame=${JSON.stringify(apsFrame)} header=${JSON.stringify(zclFrame.header)}]`, NS);
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
             const [status, messageTag] = await this.ezsp.send(
                 EmberOutgoingMessageType.BROADCAST,
@@ -2654,7 +2654,7 @@ export class EmberAdapter extends Adapter {
             msgBuffalo.writeUInt16(zclFrame.cluster.ID);
             msgBuffalo.writeUInt16(ZSpec.TOUCHLINK_PROFILE_ID);
 
-            logger.debug(`~~~> [ZCL TOUCHLINK to=${ieeeAddress} header=${JSON.stringify(zclFrame.header)}]`, NS);
+            logger.debug(() => `~~~> [ZCL TOUCHLINK to=${ieeeAddress} header=${JSON.stringify(zclFrame.header)}]`, NS);
             const status = await this.ezsp.ezspSendRawMessage(
                 Buffer.concat([msgBuffalo.getWritten(), zclFrame.toBuffer()]),
                 EmberTransmitPriority.NORMAL,
@@ -2709,7 +2709,7 @@ export class EmberAdapter extends Adapter {
 
             const data = Buffer.concat([msgBuffalo.getWritten(), zclFrame.toBuffer()]);
 
-            logger.debug(`~~~> [ZCL TOUCHLINK BROADCAST header=${JSON.stringify(zclFrame.header)}]`, NS);
+            logger.debug(() => `~~~> [ZCL TOUCHLINK BROADCAST header=${JSON.stringify(zclFrame.header)}]`, NS);
             const status = await this.ezsp.ezspSendRawMessage(data, EmberTransmitPriority.NORMAL, true);
 
             if (status !== SLStatus.OK) {

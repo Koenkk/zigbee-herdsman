@@ -52,7 +52,7 @@ export class ZBOSSAdapter extends Adapter {
     }
 
     private async processMessage(frame: ZBOSSFrame): Promise<void> {
-        logger.debug(`processMessage: ${JSON.stringify(frame)}`, NS);
+        logger.debug(() => `processMessage: ${JSON.stringify(frame)}`, NS);
         if (
             frame.type == FrameType.INDICATION &&
             frame.commandId == CommandId.ZDO_DEV_UPDATE_IND &&
@@ -142,7 +142,7 @@ export class ZBOSSAdapter extends Adapter {
     public async getCoordinator(): Promise<Coordinator> {
         return this.queue.execute<Coordinator>(async () => {
             const info = await this.driver.getCoordinator();
-            logger.debug(`ZBOSS Adapter Coordinator description:\n${JSON.stringify(info)}`, NS);
+            logger.debug(() => `ZBOSS Adapter Coordinator description:\n${JSON.stringify(info)}`, NS);
             this.coordinator = {
                 networkAddress: info.networkAddress,
                 manufacturerID: 0,

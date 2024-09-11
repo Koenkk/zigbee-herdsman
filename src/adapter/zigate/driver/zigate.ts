@@ -83,7 +83,8 @@ export default class ZiGate extends EventEmitter {
         return this.queue.execute(async () => {
             try {
                 logger.debug(
-                    'Send command \x1b[32m>>>> ' +
+                    () =>
+                        'Send command \x1b[32m>>>> ' +
                         ZiGateCommandCode[code] +
                         ' 0x' +
                         zeroPad(code) +
@@ -92,7 +93,7 @@ export default class ZiGate extends EventEmitter {
                 );
                 const ziGateObject = ZiGateObject.createRequest(code, payload);
                 const frame = ziGateObject.toZiGateFrame();
-                logger.debug(`${JSON.stringify(frame)}`, NS);
+                logger.debug(() => `${JSON.stringify(frame)}`, NS);
 
                 const sendBuffer = frame.toBuffer();
                 logger.debug(`<-- send command ${sendBuffer.toString('hex')}`, NS);
@@ -263,7 +264,7 @@ export default class ZiGate extends EventEmitter {
 
     private onSerialData(buffer: Buffer): void {
         try {
-            // logger.debug(`--- parseNext ${JSON.stringify(buffer)}`, NS);
+            // logger.debug(() => `--- parseNext ${JSON.stringify(buffer)}`, NS);
 
             const frame = new ZiGateFrame(buffer);
             if (!(frame instanceof ZiGateFrame)) return; // @Todo fix
@@ -275,7 +276,7 @@ export default class ZiGate extends EventEmitter {
 
             try {
                 const ziGateObject = ZiGateObject.fromZiGateFrame(frame);
-                logger.debug(`${JSON.stringify(ziGateObject.payload)}`, NS);
+                logger.debug(() => `${JSON.stringify(ziGateObject.payload)}`, NS);
                 this.waitress.resolve(ziGateObject);
 
                 switch (code) {

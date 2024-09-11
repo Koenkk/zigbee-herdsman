@@ -1,15 +1,18 @@
 export interface Logger {
-    debug: (message: string, namespace: string) => void;
-    info: (message: string, namespace: string) => void;
-    warning: (message: string, namespace: string) => void;
-    error: (message: string, namespace: string) => void;
+    debug: (messageOrLambda: string | (() => string), namespace: string) => void;
+    info: (messageOrLambda: string | (() => string), namespace: string) => void;
+    warning: (messageOrLambda: string | (() => string), namespace: string) => void;
+    error: (messageOrLambda: string | (() => string), namespace: string) => void;
 }
 
 export let logger: Logger = {
-    debug: (message, namespace) => console.debug(`${namespace}: ${message}`),
-    info: (message, namespace) => console.info(`${namespace}: ${message}`),
-    warning: (message, namespace) => console.warn(`${namespace}: ${message}`),
-    error: (message, namespace) => console.error(`${namespace}: ${message}`),
+    debug: (messageOrLambda, namespace) =>
+        console.debug(`${namespace}: ${typeof messageOrLambda === 'function' ? messageOrLambda() : messageOrLambda}`),
+    info: (messageOrLambda, namespace) => console.info(`${namespace}: ${typeof messageOrLambda === 'string' ? messageOrLambda : messageOrLambda()}`),
+    warning: (messageOrLambda, namespace) =>
+        console.warn(`${namespace}: ${typeof messageOrLambda === 'function' ? messageOrLambda() : messageOrLambda}`),
+    error: (messageOrLambda, namespace) =>
+        console.error(`${namespace}: ${typeof messageOrLambda === 'function' ? messageOrLambda() : messageOrLambda}`),
 };
 
 export function setLogger(l: Logger): void {

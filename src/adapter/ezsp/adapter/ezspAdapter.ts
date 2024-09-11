@@ -73,7 +73,7 @@ class EZSPAdapter extends Adapter {
     }
 
     private async processMessage(frame: EmberIncomingMessage): Promise<void> {
-        logger.debug(`processMessage: ${JSON.stringify(frame)}`, NS);
+        logger.debug(() => `processMessage: ${JSON.stringify(frame)}`, NS);
         if (frame.apsFrame.profileId == 0) {
             if (frame.apsFrame.clusterId == EmberZDOCmd.Device_annce && frame.apsFrame.destinationEndpoint == 0) {
                 let nwk, rst, ieee;

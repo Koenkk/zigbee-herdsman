@@ -111,7 +111,7 @@ class ZiGateAdapter extends Adapter {
             ieeeAddr: networkResponse.payload.extendedAddress,
             endpoints: coordinatorEndpoints.slice(), // copy
         };
-        logger.debug(`getCoordinator ${JSON.stringify(response)}`, NS);
+        logger.debug(() => `getCoordinator ${JSON.stringify(response)}`, NS);
         return response;
     }
 
@@ -358,7 +358,7 @@ class ZiGateAdapter extends Adapter {
                     endpoints: <number[]>epList,
                 };
 
-                logger.debug(`ActiveEndpoints response: ${JSON.stringify(payloadAE)}`, NS);
+                logger.debug(() => `ActiveEndpoints response: ${JSON.stringify(payloadAE)}`, NS);
                 return payloadAE;
             } catch (error) {
                 logger.error(`RECEIVING ActiveEndpoints FAILED, ${error}`, NS);
@@ -660,7 +660,7 @@ class ZiGateAdapter extends Adapter {
                 dataLength: data.length,
                 data: data,
             };
-            logger.debug(`sendZclFrameToAll ${JSON.stringify(payload)}`, NS);
+            logger.debug(() => `sendZclFrameToAll ${JSON.stringify(payload)}`, NS);
 
             await this.driver.sendCommand(ZiGateCommandCode.RawAPSDataRequest, payload, undefined, {}, true);
             await Wait(200);
@@ -797,7 +797,7 @@ class ZiGateAdapter extends Adapter {
     }
 
     private leaveIndicationListener(data: {ziGateObject: ZiGateObject}): void {
-        logger.debug(`LeaveIndication ${JSON.stringify(data)}`, NS);
+        logger.debug(() => `LeaveIndication ${JSON.stringify(data)}`, NS);
         const payload: Events.DeviceLeavePayload = {
             networkAddress: <number>data.ziGateObject.payload.extendedAddress,
             ieeeAddr: <string>data.ziGateObject.payload.extendedAddress,
