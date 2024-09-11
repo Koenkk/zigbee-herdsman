@@ -198,9 +198,9 @@ class Group extends Entity {
             }
         }
 
-        const messageBuilder = (): string =>
+        const createLogMessage = (): string =>
             `Write ${this.groupID} ${cluster.name}(${JSON.stringify(attributes)}, ${JSON.stringify(optionsWithDefaults)})`;
-        logger.debug(messageBuilder, NS);
+        logger.debug(createLogMessage, NS);
 
         try {
             const frame = Zcl.Frame.create(
@@ -219,7 +219,7 @@ class Group extends Entity {
             await Entity.adapter!.sendZclFrameToGroup(this.groupID, frame, optionsWithDefaults.srcEndpoint);
         } catch (error) {
             const err = error as Error;
-            err.message = `${messageBuilder()} failed (${err.message})`;
+            err.message = `${createLogMessage()} failed (${err.message})`;
             logger.debug(err.stack!, NS);
 
             throw error;
@@ -248,15 +248,15 @@ class Group extends Entity {
             optionsWithDefaults.reservedBits,
         );
 
-        const messageBuilder = (): string =>
+        const createLogMessage = (): string =>
             `Read ${this.groupID} ${cluster.name}(${JSON.stringify(attributes)}, ${JSON.stringify(optionsWithDefaults)})`;
-        logger.debug(messageBuilder, NS);
+        logger.debug(createLogMessage, NS);
 
         try {
             await Entity.adapter!.sendZclFrameToGroup(this.groupID, frame, optionsWithDefaults.srcEndpoint);
         } catch (error) {
             const err = error as Error;
-            err.message = `${messageBuilder()} failed (${err.message})`;
+            err.message = `${createLogMessage()} failed (${err.message})`;
             logger.debug(err.stack!, NS);
 
             throw error;
@@ -268,8 +268,8 @@ class Group extends Entity {
         const cluster = Zcl.Utils.getCluster(clusterKey, undefined, {});
         const command = cluster.getCommand(commandKey);
 
-        const messageBuilder = (): string => `Command ${this.groupID} ${cluster.name}.${command.name}(${JSON.stringify(payload)})`;
-        logger.debug(messageBuilder, NS);
+        const createLogMessage = (): string => `Command ${this.groupID} ${cluster.name}.${command.name}(${JSON.stringify(payload)})`;
+        logger.debug(createLogMessage, NS);
 
         try {
             const frame = Zcl.Frame.create(
@@ -288,7 +288,7 @@ class Group extends Entity {
             await Entity.adapter!.sendZclFrameToGroup(this.groupID, frame, optionsWithDefaults.srcEndpoint);
         } catch (error) {
             const err = error as Error;
-            err.message = `${messageBuilder()} failed (${err.message})`;
+            err.message = `${createLogMessage()} failed (${err.message})`;
             logger.debug(err.stack!, NS);
 
             throw error;

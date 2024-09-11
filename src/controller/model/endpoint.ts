@@ -714,10 +714,10 @@ class Endpoint extends Entity {
             optionsWithDefaults.reservedBits,
         );
 
-        const messageBuilder = (): string =>
+        const createLogMessage = (): string =>
             `CommandResponse ${this.deviceIeeeAddress}/${this.ID} ` +
             `${cluster.name}.${command.name}(${JSON.stringify(payload)}, ${JSON.stringify(optionsWithDefaults)})`;
-        logger.debug(messageBuilder, NS);
+        logger.debug(createLogMessage, NS);
 
         try {
             await this.sendRequest(frame, optionsWithDefaults, async (f) => {
@@ -739,7 +739,7 @@ class Endpoint extends Entity {
             });
         } catch (error) {
             const err = error as Error;
-            err.message = `${messageBuilder()} failed (${err.message})`;
+            err.message = `${createLogMessage()} failed (${err.message})`;
             logger.debug(err.stack!, NS);
             throw error;
         }
@@ -902,10 +902,10 @@ class Endpoint extends Entity {
             optionsWithDefaults.reservedBits,
         );
 
-        const messageBuilder = (): string =>
+        const createLogMessage = (): string =>
             `ZCL command ${this.deviceIeeeAddress}/${this.ID} ` +
             `${cluster.name}.${command.name}(${JSON.stringify(logPayload ? logPayload : payload)}, ${JSON.stringify(optionsWithDefaults)})`;
-        logger.debug(messageBuilder, NS);
+        logger.debug(createLogMessage, NS);
 
         try {
             const result = await this.sendRequest(frame, optionsWithDefaults);
@@ -919,7 +919,7 @@ class Endpoint extends Entity {
             }
         } catch (error) {
             const err = error as Error;
-            err.message = `${messageBuilder()} failed (${err.message})`;
+            err.message = `${createLogMessage()} failed (${err.message})`;
             logger.debug(err.stack!, NS);
             throw error;
         }
