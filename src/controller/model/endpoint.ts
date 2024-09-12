@@ -284,7 +284,7 @@ class Endpoint extends Entity {
     }
 
     public async sendPendingRequests(fastPolling: boolean): Promise<void> {
-        return this.pendingRequests.send(fastPolling);
+        return await this.pendingRequests.send(fastPolling);
     }
 
     private async sendRequest(frame: Zcl.Frame, options: OptionsWithDefaults): Promise<AdapterEvents.ZclPayload>;
@@ -319,12 +319,12 @@ class Endpoint extends Entity {
             if (device.pendingRequestTimeout > 0) {
                 logger.debug(logPrefix + `send ${frame.command.name} request immediately (sendPolicy=${options.sendPolicy})`, NS);
             }
-            return request.send();
+            return await request.send();
         }
         // If this is a bulk message, we queue directly.
         if (request.sendPolicy === 'bulk') {
             logger.debug(logPrefix + `queue request (${this.pendingRequests.size})`, NS);
-            return this.pendingRequests.queue(request);
+            return await this.pendingRequests.queue(request);
         }
 
         try {
@@ -334,7 +334,7 @@ class Endpoint extends Entity {
             // If we got a failed transaction, the device is likely sleeping.
             // Queue for transmission later.
             logger.debug(logPrefix + `queue request (transaction failed) (${error})`, NS);
-            return this.pendingRequests.queue(request);
+            return await this.pendingRequests.queue(request);
         }
     }
 

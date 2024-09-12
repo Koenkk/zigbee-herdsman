@@ -61,7 +61,7 @@ class RequestQueue extends Set<Request> {
 
     public async queue<Type>(request: Request<Type>): Promise<Type> {
         logger.debug(`Request Queue (${this.deviceIeeeAddress}/${this.ID}): Sending when active. Expires: ${request.expires}`, NS);
-        return new Promise((resolve, reject): void => {
+        return await new Promise((resolve, reject): void => {
             request.addCallbacks(resolve, reject);
             this.add(request);
         });

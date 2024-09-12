@@ -89,11 +89,11 @@ class GreenPower extends events.EventEmitter<GreenPowerEventMap> {
         // the proxy MAY send it as unicast to selected proxy.
         // This attempts to mirror logic from commit 92f77cc5.
         if (dataPayload.wasBroadcast) {
-            return this.adapter.sendZclFrameToAll(242, replyFrame, 242, BroadcastAddress.RX_ON_WHEN_IDLE);
+            return await this.adapter.sendZclFrameToAll(242, replyFrame, 242, BroadcastAddress.RX_ON_WHEN_IDLE);
         } else {
             const device = Device.byNetworkAddress(frame.payload.gppNwkAddr);
             assert(device, 'Failed to find green power proxy device');
-            return this.adapter.sendZclFrameToEndpoint(device.ieeeAddr, frame.payload.gppNwkAddr, 242, replyFrame, 10000, false, false, 242);
+            return await this.adapter.sendZclFrameToEndpoint(device.ieeeAddr, frame.payload.gppNwkAddr, 242, replyFrame, 10000, false, false, 242);
         }
     }
 

@@ -95,7 +95,7 @@ class Znp extends events.EventEmitter {
     }
 
     public async open(): Promise<void> {
-        return SocketPortUtils.isTcpPath(this.path) ? this.openSocketPort() : this.openSerialPort();
+        return SocketPortUtils.isTcpPath(this.path) ? await this.openSocketPort() : await this.openSerialPort();
     }
 
     private async openSerialPort(): Promise<void> {
@@ -141,7 +141,7 @@ class Znp extends events.EventEmitter {
         this.socketPort.pipe(this.unpiParser);
         this.unpiParser.on('parsed', this.onUnpiParsed.bind(this));
 
-        return new Promise((resolve, reject): void => {
+        return await new Promise((resolve, reject): void => {
             this.socketPort!.on('connect', function () {
                 logger.info('Socket connected', NS);
             });
@@ -201,7 +201,7 @@ class Znp extends events.EventEmitter {
         }
 
         try {
-            return SerialPortUtils.is(RealpathSync(path), autoDetectDefinitions);
+            return await SerialPortUtils.is(RealpathSync(path), autoDetectDefinitions);
         } catch (error) {
             logger.error(`Failed to determine if path is valid: '${error}'`, NS);
             return false;
@@ -298,7 +298,7 @@ class Znp extends events.EventEmitter {
                 const waiter = this.waitress.waitFor({type: Type.AREQ, subsystem: Subsystem.SYS, command: 'resetInd'}, timeout || timeouts.reset);
                 this.queue.clear();
                 this.unpiWriter.writeFrame(frame);
-                return waiter.start().promise;
+                return await waiter.start().promise;
             } else {
                 /* istanbul ignore else */
                 if (object.type === Type.AREQ) {

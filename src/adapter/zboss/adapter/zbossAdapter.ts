@@ -112,7 +112,7 @@ export class ZBOSSAdapter extends Adapter {
         }
 
         try {
-            return SerialPortUtils.is(RealpathSync(path), autoDetectDefinitions);
+            return await SerialPortUtils.is(RealpathSync(path), autoDetectDefinitions);
         } catch (error) {
             logger.debug(`Failed to determine if path is valid: '${error}'`, NS);
             return false;
@@ -130,7 +130,7 @@ export class ZBOSSAdapter extends Adapter {
 
         await this.driver.connect();
 
-        return this.driver.startup();
+        return await this.driver.startup();
     }
 
     public async stop(): Promise<void> {
@@ -140,7 +140,7 @@ export class ZBOSSAdapter extends Adapter {
     }
 
     public async getCoordinator(): Promise<Coordinator> {
-        return this.queue.execute<Coordinator>(async () => {
+        return await this.queue.execute<Coordinator>(async () => {
             const info = await this.driver.getCoordinator();
             logger.debug(() => `ZBOSS Adapter Coordinator description:\n${JSON.stringify(info)}`, NS);
             this.coordinator = {
@@ -155,12 +155,12 @@ export class ZBOSSAdapter extends Adapter {
     }
 
     public async getCoordinatorVersion(): Promise<TsType.CoordinatorVersion> {
-        return this.driver.getCoordinatorVersion();
+        return await this.driver.getCoordinatorVersion();
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     public async reset(type: 'soft' | 'hard'): Promise<void> {
-        return Promise.reject(new Error('Not supported'));
+        return await Promise.reject(new Error('Not supported'));
     }
 
     public async supportsBackup(): Promise<boolean> {
@@ -173,7 +173,7 @@ export class ZBOSSAdapter extends Adapter {
     }
 
     public async getNetworkParameters(): Promise<TsType.NetworkParameters> {
-        return this.queue.execute<TsType.NetworkParameters>(async () => {
+        return await this.queue.execute<TsType.NetworkParameters>(async () => {
             const channel = this.driver.netInfo!.network.channel;
             const panID = this.driver.netInfo!.network.panID!;
             const extendedPanID = this.driver.netInfo!.network.extendedPanID;
@@ -197,7 +197,7 @@ export class ZBOSSAdapter extends Adapter {
 
     public async setTransmitPower(value: number): Promise<void> {
         if (this.driver.isInitialized()) {
-            return this.queue.execute<void>(async () => {
+            return await this.queue.execute<void>(async () => {
                 await this.driver.setTXPower(value);
             });
         }
@@ -210,7 +210,7 @@ export class ZBOSSAdapter extends Adapter {
 
     public async permitJoin(seconds: number, networkAddress: number): Promise<void> {
         if (this.driver.isInitialized()) {
-            return this.queue.execute<void>(async () => {
+            return await this.queue.execute<void>(async () => {
                 await this.driver.permitJoin(networkAddress, seconds);
                 if (!networkAddress) {
                     // send broadcast permit
@@ -221,7 +221,7 @@ export class ZBOSSAdapter extends Adapter {
     }
 
     public async lqi(networkAddress: number): Promise<TsType.LQI> {
-        return this.queue.execute<LQI>(async (): Promise<LQI> => {
+        return await this.queue.execute<LQI>(async (): Promise<LQI> => {
             const neighbors: LQINeighbor[] = [];
 
             const request = async (startIndex: number): Promise<ZBOSSFrame> => {
@@ -268,7 +268,7 @@ export class ZBOSSAdapter extends Adapter {
     }
 
     public async nodeDescriptor(networkAddress: number): Promise<TsType.NodeDescriptor> {
-        return this.queue.execute<TsType.NodeDescriptor>(async () => {
+        return await this.queue.execute<TsType.NodeDescriptor>(async () => {
             try {
                 logger.debug(`Requesting 'Node Descriptor' for '${networkAddress}'`, NS);
                 const descriptor = await this.driver.nodeDescriptor(networkAddress);
@@ -286,7 +286,7 @@ export class ZBOSSAdapter extends Adapter {
 
     public async activeEndpoints(networkAddress: number): Promise<TsType.ActiveEndpoints> {
         logger.debug(`Requesting 'Active endpoints' for '${networkAddress}'`, NS);
-        return this.queue.execute<TsType.ActiveEndpoints>(async () => {
+        return await this.queue.execute<TsType.ActiveEndpoints>(async () => {
             const endpoints = await this.driver.activeEndpoints(networkAddress);
             return {endpoints: [...endpoints.payload.endpoints]};
         }, networkAddress);
@@ -294,7 +294,7 @@ export class ZBOSSAdapter extends Adapter {
 
     public async simpleDescriptor(networkAddress: number, endpointID: number): Promise<TsType.SimpleDescriptor> {
         logger.debug(`Requesting 'Simple Descriptor' for '${networkAddress}' endpoint ${endpointID}`, NS);
-        return this.queue.execute<TsType.SimpleDescriptor>(async () => {
+        return await this.queue.execute<TsType.SimpleDescriptor>(async () => {
             const sd = await this.driver.simpleDescriptor(networkAddress, endpointID);
             return {
                 profileID: sd.payload.profileID,
@@ -315,7 +315,7 @@ export class ZBOSSAdapter extends Adapter {
         type: 'endpoint' | 'group',
         destinationEndpoint?: number,
     ): Promise<void> {
-        return this.queue.execute<void>(async () => {
+        return await this.queue.execute<void>(async () => {
             await this.driver.bind(
                 destinationNetworkAddress,
                 sourceIeeeAddress,
@@ -337,7 +337,7 @@ export class ZBOSSAdapter extends Adapter {
         type: 'endpoint' | 'group',
         destinationEndpoint: number,
     ): Promise<void> {
-        return this.queue.execute<void>(async () => {
+        return await this.queue.execute<void>(async () => {
             await this.driver.unbind(
                 destinationNetworkAddress,
                 sourceIeeeAddress,
@@ -351,7 +351,7 @@ export class ZBOSSAdapter extends Adapter {
     }
 
     public async removeDevice(networkAddress: number, ieeeAddr: string): Promise<void> {
-        return this.queue.execute<void>(async () => {
+        return await this.queue.execute<void>(async () => {
             await this.driver.removeDevice(networkAddress, ieeeAddr);
         }, networkAddress);
     }
@@ -366,8 +366,8 @@ export class ZBOSSAdapter extends Adapter {
         disableRecovery: boolean,
         sourceEndpoint?: number,
     ): Promise<ZclPayload | void> {
-        return this.queue.execute<ZclPayload | void>(async () => {
-            return this.sendZclFrameToEndpointInternal(
+        return await this.queue.execute<ZclPayload | void>(async () => {
+            return await this.sendZclFrameToEndpointInternal(
                 ieeeAddr,
                 networkAddress,
                 endpoint,
@@ -453,7 +453,7 @@ export class ZBOSSAdapter extends Adapter {
                 } catch (error) {
                     logger.debug(`Response timeout (${ieeeAddr}:${networkAddress},${responseAttempt})`, NS);
                     if (responseAttempt < 1 && !disableRecovery) {
-                        return this.sendZclFrameToEndpointInternal(
+                        return await this.sendZclFrameToEndpointInternal(
                             ieeeAddr,
                             networkAddress,
                             endpoint,

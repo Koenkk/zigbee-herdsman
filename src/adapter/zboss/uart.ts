@@ -150,7 +150,7 @@ export class ZBOSSUart extends EventEmitter {
             this.socketPort.pipe(this.reader);
             this.reader.on('data', this.onPackage.bind(this));
 
-            return new Promise((resolve, reject): void => {
+            return await new Promise((resolve, reject): void => {
                 const openError = async (err: Error): Promise<void> => {
                     await this.stop();
 
@@ -302,7 +302,7 @@ export class ZBOSSUart extends EventEmitter {
         const nextSeq = this.sendSeq;
         const ackSeq = this.recvSeq;
 
-        return this.queue.execute<void>(async (): Promise<void> => {
+        return await this.queue.execute<void>(async (): Promise<void> => {
             try {
                 logger.debug(`--> DATA (${seq},${ackSeq},0): ${data.toString('hex')}`, NS);
                 if (!isACK) {

@@ -544,7 +544,7 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
             return EzspStatus.ERROR_COMMAND_TOO_LONG;
         }
 
-        return this.queue.execute<EzspStatus>(async () => {
+        return await this.queue.execute<EzspStatus>(async () => {
             let status: EzspStatus = EzspStatus.ASH_ERROR_TIMEOUTS; // will be overwritten below as necessary
             const frameId = sendBuffalo.getFrameId();
             const frameString = `[FRAME: ID=${frameId}:"${EzspFrameID[frameId]}" Seq=${sequence} Len=${length}]`;
@@ -1223,7 +1223,7 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
      * @returns EzspStatus
      */
     public async ezspSetEndpointFlags(endpoint: number, flags: EzspEndpointFlag): Promise<SLStatus> {
-        return this.ezspSetValue(EzspValueId.ENDPOINT_FLAGS, 3, [endpoint, lowByte(flags), highByte(flags)]);
+        return await this.ezspSetValue(EzspValueId.ENDPOINT_FLAGS, 3, [endpoint, lowByte(flags), highByte(flags)]);
     }
 
     /**
@@ -1299,7 +1299,7 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
      * @returns
      */
     public async ezspSetExtendedSecurityBitmask(mask: EmberExtendedSecurityBitmask): Promise<SLStatus> {
-        return this.ezspSetValue(EzspValueId.EXTENDED_SECURITY_BITMASK, 2, [lowByte(mask), highByte(mask)]);
+        return await this.ezspSetValue(EzspValueId.EXTENDED_SECURITY_BITMASK, 2, [lowByte(mask), highByte(mask)]);
     }
 
     /**
@@ -1321,7 +1321,7 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
      * @returns
      */
     public async ezspStartWritingStackTokens(): Promise<SLStatus> {
-        return this.ezspSetValue(EzspValueId.STACK_TOKEN_WRITING, 1, [1]);
+        return await this.ezspSetValue(EzspValueId.STACK_TOKEN_WRITING, 1, [1]);
     }
 
     /**
@@ -1329,7 +1329,7 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
      * @returns
      */
     public async ezspStopWritingStackTokens(): Promise<SLStatus> {
-        return this.ezspSetValue(EzspValueId.STACK_TOKEN_WRITING, 1, [0]);
+        return await this.ezspSetValue(EzspValueId.STACK_TOKEN_WRITING, 1, [0]);
     }
 
     //-----------------------------------------------------------------------------//

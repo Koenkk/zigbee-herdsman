@@ -129,7 +129,7 @@ export class SerialDriver extends EventEmitter {
         this.socketPort.pipe(this.parser);
         this.parser.on('parsed', this.onParsed.bind(this));
 
-        return new Promise((resolve, reject): void => {
+        return await new Promise((resolve, reject): void => {
             const openError = (err: Error): void => {
                 this.initialized = false;
 
@@ -323,7 +323,7 @@ export class SerialDriver extends EventEmitter {
         this.sendSeq = 0;
         this.recvSeq = 0;
 
-        return this.queue.execute<void>(async (): Promise<void> => {
+        return await this.queue.execute<void>(async (): Promise<void> => {
             try {
                 logger.debug(`--> Write reset`, NS);
                 const waiter = this.waitFor(-1, 10000);
@@ -400,7 +400,7 @@ export class SerialDriver extends EventEmitter {
         const nextSeq = this.sendSeq;
         const ackSeq = this.recvSeq;
 
-        return this.queue.execute<void>(async (): Promise<void> => {
+        return await this.queue.execute<void>(async (): Promise<void> => {
             const randData = NpiFrame.makeRandomizedBuffer(data);
 
             try {

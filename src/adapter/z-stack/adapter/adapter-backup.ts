@@ -454,9 +454,9 @@ export class AdapterBackup {
      */
     private async getAddressManagerTable(version: ZnpVersion): Promise<ReturnType<typeof Structs.addressManagerTable>> {
         if (version === ZnpVersion.zStack3x0) {
-            return this.nv.readTable('extended', NvSystemIds.ZSTACK, NvItemsIds.ZCD_NV_EX_ADDRMGR, undefined, Structs.addressManagerTable);
+            return await this.nv.readTable('extended', NvSystemIds.ZSTACK, NvItemsIds.ZCD_NV_EX_ADDRMGR, undefined, Structs.addressManagerTable);
         } else {
-            return this.nv.readItem(NvItemsIds.ADDRMGR, 0, Structs.addressManagerTable);
+            return await this.nv.readItem(NvItemsIds.ADDRMGR, 0, Structs.addressManagerTable);
         }
     }
 
@@ -464,7 +464,7 @@ export class AdapterBackup {
      * Internal method to retrieve security manager table. Also referred to as APS Link Key Table.
      */
     private async getSecurityManagerTable(): Promise<ReturnType<typeof Structs.securityManagerTable>> {
-        return this.nv.readItem(NvItemsIds.APS_LINK_KEY_TABLE, 0, Structs.securityManagerTable);
+        return await this.nv.readItem(NvItemsIds.APS_LINK_KEY_TABLE, 0, Structs.securityManagerTable);
     }
 
     /**
@@ -474,9 +474,15 @@ export class AdapterBackup {
      */
     private async getApsLinkKeyDataTable(version: ZnpVersion): Promise<ReturnType<typeof Structs.apsLinkKeyDataTable>> {
         if (version === ZnpVersion.zStack3x0) {
-            return this.nv.readTable('extended', NvSystemIds.ZSTACK, NvItemsIds.ZCD_NV_EX_APS_KEY_DATA_TABLE, undefined, Structs.apsLinkKeyDataTable);
+            return await this.nv.readTable(
+                'extended',
+                NvSystemIds.ZSTACK,
+                NvItemsIds.ZCD_NV_EX_APS_KEY_DATA_TABLE,
+                undefined,
+                Structs.apsLinkKeyDataTable,
+            );
         } else {
-            return this.nv.readTable('legacy', NvItemsIds.APS_LINK_KEY_DATA_START, 255, Structs.apsLinkKeyDataTable);
+            return await this.nv.readTable('legacy', NvItemsIds.APS_LINK_KEY_DATA_START, 255, Structs.apsLinkKeyDataTable);
         }
     }
 
@@ -487,9 +493,9 @@ export class AdapterBackup {
      */
     private async getTclkTable(version: ZnpVersion): Promise<ReturnType<typeof Structs.apsTcLinkKeyTable>> {
         if (version === ZnpVersion.zStack3x0) {
-            return this.nv.readTable('extended', NvSystemIds.ZSTACK, NvItemsIds.EX_TCLK_TABLE, undefined, Structs.apsTcLinkKeyTable);
+            return await this.nv.readTable('extended', NvSystemIds.ZSTACK, NvItemsIds.EX_TCLK_TABLE, undefined, Structs.apsTcLinkKeyTable);
         } else {
-            return this.nv.readTable('legacy', NvItemsIds.LEGACY_TCLK_TABLE_START, 239, Structs.apsTcLinkKeyTable);
+            return await this.nv.readTable('legacy', NvItemsIds.LEGACY_TCLK_TABLE_START, 239, Structs.apsTcLinkKeyTable);
         }
     }
 
@@ -500,7 +506,7 @@ export class AdapterBackup {
      */
     private async getNetworkSecurityMaterialTable(version: ZnpVersion): Promise<ReturnType<typeof Structs.nwkSecMaterialDescriptorTable>> {
         if (version === ZnpVersion.zStack3x0) {
-            return this.nv.readTable(
+            return await this.nv.readTable(
                 'extended',
                 NvSystemIds.ZSTACK,
                 NvItemsIds.EX_NWK_SEC_MATERIAL_TABLE,
@@ -508,7 +514,7 @@ export class AdapterBackup {
                 Structs.nwkSecMaterialDescriptorTable,
             );
         } else {
-            return this.nv.readTable('legacy', NvItemsIds.LEGACY_NWK_SEC_MATERIAL_TABLE_START, 12, Structs.nwkSecMaterialDescriptorTable);
+            return await this.nv.readTable('legacy', NvItemsIds.LEGACY_NWK_SEC_MATERIAL_TABLE_START, 12, Structs.nwkSecMaterialDescriptorTable);
         }
     }
 }
