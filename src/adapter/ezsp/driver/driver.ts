@@ -168,7 +168,7 @@ export class Driver extends EventEmitter {
         logger.debug('Stopping driver', NS);
 
         if (this.ezsp) {
-            return this.ezsp.close(emitClose);
+            return await this.ezsp.close(emitClose);
         }
     }
 
@@ -805,7 +805,7 @@ export class Driver extends EventEmitter {
     }
 
     public async permitJoining(seconds: number): Promise<EZSPFrameData> {
-        return this.ezsp.execCommand('permitJoining', {duration: seconds});
+        return await this.ezsp.execCommand('permitJoining', {duration: seconds});
     }
 
     public makeZDOframe(name: string | number, params: ParamsDesc): Buffer {
@@ -891,7 +891,7 @@ export class Driver extends EventEmitter {
 
     public async getKey(keyType: EmberKeyType): Promise<EZSPFrameData> {
         if (this.ezsp.ezspV < 13) {
-            return this.ezsp.execCommand('getKey', {keyType});
+            return await this.ezsp.execCommand('getKey', {keyType});
         } else {
             // Mapping EmberKeyType to SecManKeyType (ezsp13)
             const SecManKeyType = {

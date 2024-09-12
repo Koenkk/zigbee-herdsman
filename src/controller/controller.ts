@@ -229,15 +229,15 @@ class Controller extends events.EventEmitter<ControllerEventMap> {
     }
 
     public async touchlinkScan(): Promise<{ieeeAddr: string; channel: number}[]> {
-        return this.touchlink.scan();
+        return await this.touchlink.scan();
     }
 
     public async touchlinkFactoryReset(ieeeAddr: string, channel: number): Promise<boolean> {
-        return this.touchlink.factoryReset(ieeeAddr, channel);
+        return await this.touchlink.factoryReset(ieeeAddr, channel);
     }
 
     public async touchlinkFactoryResetFirst(): Promise<boolean> {
-        return this.touchlink.factoryResetFirst();
+        return await this.touchlink.factoryResetFirst();
     }
 
     public async addInstallCode(installCode: string): Promise<void> {
@@ -400,7 +400,7 @@ class Controller extends events.EventEmitter<ControllerEventMap> {
     }
 
     public async getCoordinatorVersion(): Promise<AdapterTsType.CoordinatorVersion> {
-        return this.adapter.getCoordinatorVersion();
+        return await this.adapter.getCoordinatorVersion();
     }
 
     public async getNetworkParameters(): Promise<AdapterTsType.NetworkParameters> {
@@ -505,7 +505,7 @@ class Controller extends events.EventEmitter<ControllerEventMap> {
      *  Set transmit power of the adapter
      */
     public async setTransmitPower(value: number): Promise<void> {
-        return this.adapter.setTransmitPower(value);
+        return await this.adapter.setTransmitPower(value);
     }
 
     private onNetworkAddress(payload: AdapterEvents.NetworkAddressPayload): void {

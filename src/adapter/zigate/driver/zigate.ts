@@ -80,7 +80,7 @@ export default class ZiGate extends EventEmitter {
     ): Promise<ZiGateObject> {
         const waiters: Promise<ZiGateObject>[] = [];
         const waitersId: number[] = [];
-        return this.queue.execute(async () => {
+        return await this.queue.execute(async () => {
             try {
                 logger.debug(
                     () =>
@@ -125,21 +125,21 @@ export default class ZiGate extends EventEmitter {
                     const statusResponse: ZiGateObject = await resultPromise;
                     if (statusResponse.payload.status !== STATUS.E_SL_MSG_STATUS_SUCCESS) {
                         waitersId.map((id) => this.waitress.remove(id));
-                        return Promise.reject(statusResponse);
+                        return await Promise.reject(statusResponse);
                     } else if (waiters.length === 0) {
-                        return Promise.resolve(statusResponse);
+                        return await Promise.resolve(statusResponse);
                     }
                 }
-                return Promise.race(waiters);
+                return await Promise.race(waiters);
             } catch (e) {
                 logger.error(`sendCommand error ${e}`, NS);
-                return Promise.reject(new Error('sendCommand error: ' + e));
+                return await Promise.reject(new Error('sendCommand error: ' + e));
             }
         });
     }
 
     public static async isValidPath(path: string): Promise<boolean> {
-        return SerialPortUtils.is(path, autoDetectDefinitions);
+        return await SerialPortUtils.is(path, autoDetectDefinitions);
     }
 
     public static async autoDetectPath(): Promise<string | undefined> {
@@ -228,7 +228,7 @@ export default class ZiGate extends EventEmitter {
         this.parser.on('data', this.onSerialData.bind(this));
 
         this.portWrite = this.socketPort;
-        return new Promise((resolve, reject): void => {
+        return await new Promise((resolve, reject): void => {
             this.socketPort!.on('connect', () => {
                 logger.debug('Socket connected', NS);
             });

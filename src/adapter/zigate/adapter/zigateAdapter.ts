@@ -197,7 +197,7 @@ class ZiGateAdapter extends Adapter {
     }
 
     public async lqi(networkAddress: number): Promise<TsType.LQI> {
-        return this.queue.execute<LQI>(async (): Promise<LQI> => {
+        return await this.queue.execute<LQI>(async (): Promise<LQI> => {
             const neighbors: LQINeighbor[] = [];
 
             const add = (list: Buffer[]): void => {
@@ -298,7 +298,7 @@ class ZiGateAdapter extends Adapter {
     }
 
     public async nodeDescriptor(networkAddress: number): Promise<TsType.NodeDescriptor> {
-        return this.queue.execute<NodeDescriptor>(async () => {
+        return await this.queue.execute<NodeDescriptor>(async () => {
             try {
                 const nodeDescriptorResponse = await this.driver.sendCommand(ZiGateCommandCode.NodeDescriptor, {
                     targetShortAddress: networkAddress,
@@ -341,7 +341,7 @@ class ZiGateAdapter extends Adapter {
     }
 
     public async activeEndpoints(networkAddress: number): Promise<TsType.ActiveEndpoints> {
-        return this.queue.execute<ActiveEndpoints>(async () => {
+        return await this.queue.execute<ActiveEndpoints>(async () => {
             const payload = {
                 targetShortAddress: networkAddress,
             };
@@ -368,7 +368,7 @@ class ZiGateAdapter extends Adapter {
     }
 
     public async simpleDescriptor(networkAddress: number, endpointID: number): Promise<TsType.SimpleDescriptor> {
-        return this.queue.execute<SimpleDescriptor>(async () => {
+        return await this.queue.execute<SimpleDescriptor>(async () => {
             try {
                 const payload = {
                     targetShortAddress: networkAddress,
@@ -423,7 +423,7 @@ class ZiGateAdapter extends Adapter {
         type: 'endpoint' | 'group',
         destinationEndpoint?: number,
     ): Promise<void> {
-        return this.queue.execute<void>(async () => {
+        return await this.queue.execute<void>(async () => {
             const payload: KeyValue = {
                 targetExtendedAddress: sourceIeeeAddress,
                 targetEndpoint: sourceEndpoint,
@@ -457,7 +457,7 @@ class ZiGateAdapter extends Adapter {
         type: 'endpoint' | 'group',
         destinationEndpoint?: number,
     ): Promise<void> {
-        return this.queue.execute<void>(async () => {
+        return await this.queue.execute<void>(async () => {
             const payload: KeyValue = {
                 targetExtendedAddress: sourceIeeeAddress,
                 targetEndpoint: sourceEndpoint,
@@ -483,7 +483,7 @@ class ZiGateAdapter extends Adapter {
     }
 
     public async removeDevice(networkAddress: number, ieeeAddr: string): Promise<void> {
-        return this.queue.execute<void>(async () => {
+        return await this.queue.execute<void>(async () => {
             const payload = {
                 shortAddress: networkAddress,
                 extendedAddress: ieeeAddr,
@@ -509,8 +509,8 @@ class ZiGateAdapter extends Adapter {
         disableRecovery: boolean,
         sourceEndpoint?: number,
     ): Promise<Events.ZclPayload | void> {
-        return this.queue.execute<Events.ZclPayload | void>(async () => {
-            return this.sendZclFrameToEndpointInternal(
+        return await this.queue.execute<Events.ZclPayload | void>(async () => {
+            return await this.sendZclFrameToEndpointInternal(
                 ieeeAddr,
                 networkAddress,
                 endpoint,
@@ -591,7 +591,7 @@ class ZiGateAdapter extends Adapter {
         } catch {
             if (responseAttempt < 1 && !disableRecovery) {
                 // @todo discover route
-                return this.sendZclFrameToEndpointInternal(
+                return await this.sendZclFrameToEndpointInternal(
                     ieeeAddr,
                     networkAddress,
                     endpoint,
@@ -618,7 +618,7 @@ class ZiGateAdapter extends Adapter {
             } catch (error) {
                 logger.error(`Response error ${(error as Error).message} (${ieeeAddr}:${networkAddress},${responseAttempt})`, NS);
                 if (responseAttempt < 1 && !disableRecovery) {
-                    return this.sendZclFrameToEndpointInternal(
+                    return await this.sendZclFrameToEndpointInternal(
                         ieeeAddr,
                         networkAddress,
                         endpoint,
@@ -640,7 +640,7 @@ class ZiGateAdapter extends Adapter {
     }
 
     public async sendZclFrameToAll(endpoint: number, zclFrame: Zcl.Frame, sourceEndpoint: number, destination: BroadcastAddress): Promise<void> {
-        return this.queue.execute<void>(async () => {
+        return await this.queue.execute<void>(async () => {
             if (sourceEndpoint !== 0x01 /*&& sourceEndpoint !== 242*/) {
                 // @todo on zigate firmware without gp causes hang
                 logger.error(`source endpoint ${sourceEndpoint}, not supported`, NS);
@@ -668,7 +668,7 @@ class ZiGateAdapter extends Adapter {
     }
 
     public async sendZclFrameToGroup(groupID: number, zclFrame: Zcl.Frame, sourceEndpoint?: number): Promise<void> {
-        return this.queue.execute<void>(async () => {
+        return await this.queue.execute<void>(async () => {
             const data = zclFrame.toBuffer();
             const payload: RawAPSDataRequestPayload = {
                 addressMode: ADDRESS_MODE.group, //nwk
@@ -741,11 +741,11 @@ class ZiGateAdapter extends Adapter {
     }
 
     public static async isValidPath(path: string): Promise<boolean> {
-        return Driver.isValidPath(path);
+        return await Driver.isValidPath(path);
     }
 
     public static async autoDetectPath(): Promise<string | undefined> {
-        return Driver.autoDetectPath();
+        return await Driver.autoDetectPath();
     }
 
     /**

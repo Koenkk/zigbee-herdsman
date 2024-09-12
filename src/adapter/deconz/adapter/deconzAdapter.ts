@@ -97,11 +97,11 @@ class DeconzAdapter extends Adapter {
     }
 
     public static async isValidPath(path: string): Promise<boolean> {
-        return Driver.isValidPath(path);
+        return await Driver.isValidPath(path);
     }
 
     public static async autoDetectPath(): Promise<string | undefined> {
-        return Driver.autoDetectPath();
+        return await Driver.autoDetectPath();
     }
 
     /**
@@ -351,12 +351,12 @@ class DeconzAdapter extends Adapter {
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     public async addInstallCode(ieeeAddress: string, key: Buffer): Promise<void> {
-        return Promise.reject(new Error('Add install code is not supported'));
+        return await Promise.reject(new Error('Add install code is not supported'));
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     public async reset(type: 'soft' | 'hard'): Promise<void> {
-        return Promise.reject(new Error('Reset is not supported'));
+        return await Promise.reject(new Error('Reset is not supported'));
     }
 
     public async lqi(networkAddress: number): Promise<LQI> {
@@ -454,7 +454,7 @@ class DeconzAdapter extends Adapter {
             } catch (error) {
                 const msg = 'LQI REQUEST FAILED - addr: 0x' + networkAddress.toString(16) + ' ' + error;
                 logger.debug(msg, NS);
-                return Promise.reject(new Error(msg));
+                return await Promise.reject(new Error(msg));
             }
         };
 
@@ -570,7 +570,7 @@ class DeconzAdapter extends Adapter {
             } catch (error) {
                 const msg = 'ROUTING_TABLE REQUEST FAILED - addr: 0x' + networkAddress.toString(16) + ' ' + error;
                 logger.debug(msg, NS);
-                return Promise.reject(new Error(msg));
+                return await Promise.reject(new Error(msg));
             }
         };
 
@@ -634,7 +634,7 @@ class DeconzAdapter extends Adapter {
         } catch (error) {
             const msg = 'RECEIVING NODE_DESCRIPTOR FAILED - addr: 0x' + networkAddress.toString(16) + ' ' + error;
             logger.debug(msg, NS);
-            return Promise.reject(new Error(msg));
+            return await Promise.reject(new Error(msg));
         }
     }
 
@@ -678,7 +678,7 @@ class DeconzAdapter extends Adapter {
         } catch (error) {
             const msg = 'READING ACTIVE_ENDPOINTS FAILED - addr: 0x' + networkAddress.toString(16) + ' ' + error;
             logger.debug(msg, NS);
-            return Promise.reject(new Error(msg));
+            return await Promise.reject(new Error(msg));
         }
     }
 
@@ -749,7 +749,7 @@ class DeconzAdapter extends Adapter {
         } catch (error) {
             const msg = 'RECEIVING SIMPLE_DESCRIPTOR FAILED - addr: 0x' + networkAddress.toString(16) + ' ' + error;
             logger.debug(msg, NS);
-            return Promise.reject(new Error(msg));
+            return await Promise.reject(new Error(msg));
         }
     }
 
@@ -954,7 +954,7 @@ class DeconzAdapter extends Adapter {
         request.radius = PARAM.PARAM.txRadius.UNLIMITED;
 
         logger.debug(`sendZclFrameToGroup - message send`, NS);
-        return this.driver.enqueueSendDataRequest(request) as Promise<void>;
+        return await (this.driver.enqueueSendDataRequest(request) as Promise<void>);
     }
 
     public async sendZclFrameToAll(endpoint: number, zclFrame: Zcl.Frame, sourceEndpoint: number, destination: BroadcastAddress): Promise<void> {
@@ -978,7 +978,7 @@ class DeconzAdapter extends Adapter {
         request.radius = PARAM.PARAM.txRadius.UNLIMITED;
 
         logger.debug(`sendZclFrameToAll - message send`, NS);
-        return this.driver.enqueueSendDataRequest(request) as Promise<void>;
+        return await (this.driver.enqueueSendDataRequest(request) as Promise<void>);
     }
 
     public async bind(
@@ -1164,7 +1164,7 @@ class DeconzAdapter extends Adapter {
         } catch (error) {
             const msg = 'get network parameters Error:' + error;
             logger.debug(msg, NS);
-            return Promise.reject(new Error(msg));
+            return await Promise.reject(new Error(msg));
         }
     }
 

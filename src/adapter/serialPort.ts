@@ -21,19 +21,19 @@ export class SerialPort<T extends AutoDetectTypes = AutoDetectTypes> extends Ser
     }
 
     public async asyncOpen(): Promise<void> {
-        return new Promise((resolve, reject): void => {
+        return await new Promise((resolve, reject): void => {
             this.open((err) => (err ? reject(err) : resolve()));
         });
     }
 
     public async asyncClose(): Promise<void> {
-        return new Promise((resolve, reject): void => {
+        return await new Promise((resolve, reject): void => {
             this.close((err) => (err ? reject(err) : resolve()));
         });
     }
 
     public async asyncFlush(): Promise<void> {
-        return new Promise((resolve, reject): void => {
+        return await new Promise((resolve, reject): void => {
             this.flush((err) => (err ? reject(err) : resolve()));
         });
     }
@@ -44,13 +44,13 @@ export class SerialPort<T extends AutoDetectTypes = AutoDetectTypes> extends Ser
     }
 
     public async asyncGet(): Promise<{cts: boolean; dsr: boolean; dcd: boolean}> {
-        return new Promise((resolve, reject): void => {
+        return await new Promise((resolve, reject): void => {
             this.get((err, options?) => (err ? reject(err) : resolve(options!)));
         });
     }
 
     public async asyncSet(options: SetOptions): Promise<void> {
-        return new Promise((resolve, reject): void => {
+        return await new Promise((resolve, reject): void => {
             this.set(options, (err) => (err ? reject(err) : resolve()));
         });
     }

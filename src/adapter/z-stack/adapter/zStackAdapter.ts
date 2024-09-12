@@ -165,7 +165,7 @@ class ZStackAdapter extends Adapter {
             await this.setTransmitPower(this.adapterOptions.transmitPower);
         }
 
-        return startResult;
+        return await startResult;
     }
 
     public async stop(): Promise<void> {
@@ -174,15 +174,15 @@ class ZStackAdapter extends Adapter {
     }
 
     public static async isValidPath(path: string): Promise<boolean> {
-        return Znp.isValidPath(path);
+        return await Znp.isValidPath(path);
     }
 
     public static async autoDetectPath(): Promise<string | undefined> {
-        return Znp.autoDetectPath();
+        return await Znp.autoDetectPath();
     }
 
     public async getCoordinator(): Promise<Coordinator> {
-        return this.queue.execute<Coordinator>(async () => {
+        return await this.queue.execute<Coordinator>(async () => {
             this.checkInterpanLock();
             const activeEpRsp = this.waitForAreqZdo('activeEpRsp');
             await this.znp.request(Subsystem.ZDO, 'activeEpReq', {dstaddr: 0, nwkaddrofinterest: 0}, activeEpRsp.ID);
@@ -300,7 +300,7 @@ class ZStackAdapter extends Adapter {
     }
 
     public async nodeDescriptor(networkAddress: number): Promise<NodeDescriptor> {
-        return this.queue.execute<NodeDescriptor>(async () => {
+        return await this.queue.execute<NodeDescriptor>(async () => {
             this.checkInterpanLock();
             try {
                 const result = await this.nodeDescriptorInternal(networkAddress);
@@ -337,7 +337,7 @@ class ZStackAdapter extends Adapter {
     }
 
     public async activeEndpoints(networkAddress: number): Promise<ActiveEndpoints> {
-        return this.queue.execute<ActiveEndpoints>(async () => {
+        return await this.queue.execute<ActiveEndpoints>(async () => {
             this.checkInterpanLock();
             const response = this.waitForAreqZdo('activeEpRsp', {nwkaddr: networkAddress});
             const payload = {dstaddr: networkAddress, nwkaddrofinterest: networkAddress};
@@ -348,7 +348,7 @@ class ZStackAdapter extends Adapter {
     }
 
     public async simpleDescriptor(networkAddress: number, endpointID: number): Promise<SimpleDescriptor> {
-        return this.queue.execute<SimpleDescriptor>(async () => {
+        return await this.queue.execute<SimpleDescriptor>(async () => {
             this.checkInterpanLock();
             const responsePayload = {nwkaddr: networkAddress, endpoint: endpointID};
             const response = this.waitForAreqZdo('simpleDescRsp', responsePayload);
@@ -375,9 +375,9 @@ class ZStackAdapter extends Adapter {
         disableRecovery: boolean,
         sourceEndpoint?: number,
     ): Promise<Events.ZclPayload | void> {
-        return this.queue.execute<Events.ZclPayload | void>(async () => {
+        return await this.queue.execute<Events.ZclPayload | void>(async () => {
             this.checkInterpanLock();
-            return this.sendZclFrameToEndpointInternal(
+            return await this.sendZclFrameToEndpointInternal(
                 ieeeAddr,
                 networkAddress,
                 endpoint,
@@ -497,7 +497,7 @@ class ZStackAdapter extends Adapter {
                  * wait some time and retry.
                  */
                 await Wait(2000);
-                return this.sendZclFrameToEndpointInternal(
+                return await this.sendZclFrameToEndpointInternal(
                     ieeeAddr,
                     networkAddress,
                     endpoint,
@@ -574,7 +574,7 @@ class ZStackAdapter extends Adapter {
                     await Wait(2000);
                 }
 
-                return this.sendZclFrameToEndpointInternal(
+                return await this.sendZclFrameToEndpointInternal(
                     ieeeAddr,
                     networkAddress,
                     endpoint,
@@ -627,7 +627,7 @@ class ZStackAdapter extends Adapter {
                     }
                     // No response could be of invalid route, e.g. when message is send to wrong parent of end device.
                     await this.discoverRoute(networkAddress);
-                    return this.sendZclFrameToEndpointInternal(
+                    return await this.sendZclFrameToEndpointInternal(
                         ieeeAddr,
                         networkAddress,
                         endpoint,
@@ -651,7 +651,7 @@ class ZStackAdapter extends Adapter {
     }
 
     public async sendZclFrameToGroup(groupID: number, zclFrame: Zcl.Frame, sourceEndpoint?: number): Promise<void> {
-        return this.queue.execute<void>(async () => {
+        return await this.queue.execute<void>(async () => {
             this.checkInterpanLock();
             await this.dataRequestExtended(
                 AddressMode.ADDR_GROUP,
@@ -676,7 +676,7 @@ class ZStackAdapter extends Adapter {
     }
 
     public async sendZclFrameToAll(endpoint: number, zclFrame: Zcl.Frame, sourceEndpoint: number, destination: BroadcastAddress): Promise<void> {
-        return this.queue.execute<void>(async () => {
+        return await this.queue.execute<void>(async () => {
             this.checkInterpanLock();
             await this.dataRequestExtended(
                 AddressMode.ADDR_16BIT,
@@ -702,7 +702,7 @@ class ZStackAdapter extends Adapter {
     }
 
     public async lqi(networkAddress: number): Promise<LQI> {
-        return this.queue.execute<LQI>(async (): Promise<LQI> => {
+        return await this.queue.execute<LQI>(async (): Promise<LQI> => {
             this.checkInterpanLock();
             const neighbors: LQINeighbor[] = [];
 
@@ -743,7 +743,7 @@ class ZStackAdapter extends Adapter {
     }
 
     public async routingTable(networkAddress: number): Promise<RoutingTable> {
-        return this.queue.execute<RoutingTable>(async (): Promise<RoutingTable> => {
+        return await this.queue.execute<RoutingTable>(async (): Promise<RoutingTable> => {
             this.checkInterpanLock();
             const table: RoutingTableEntry[] = [];
 
@@ -839,7 +839,7 @@ class ZStackAdapter extends Adapter {
         targetType: 'endpoint' | 'group',
         destinationEndpoint?: number,
     ): Promise<void> {
-        return this.queue.execute<void>(async () => {
+        return await this.queue.execute<void>(async () => {
             this.checkInterpanLock();
             const response = this.waitForAreqZdo(`${bindType}Rsp`, {srcaddr: destinationNetworkAddress});
 
@@ -1005,11 +1005,11 @@ class ZStackAdapter extends Adapter {
     }
 
     public async backup(ieeeAddressesInDatabase: string[]): Promise<Models.Backup> {
-        return this.adapterManager.backup.createBackup(ieeeAddressesInDatabase);
+        return await this.adapterManager.backup.createBackup(ieeeAddressesInDatabase);
     }
 
     public async setChannelInterPAN(channel: number): Promise<void> {
-        return this.queue.execute<void>(async () => {
+        return await this.queue.execute<void>(async () => {
             this.interpanLock = true;
             await this.znp.request(Subsystem.AF, 'interPanCtl', {cmd: 1, data: [channel]});
 
@@ -1022,7 +1022,7 @@ class ZStackAdapter extends Adapter {
     }
 
     public async sendZclFrameInterPANToIeeeAddr(zclFrame: Zcl.Frame, ieeeAddr: string): Promise<void> {
-        return this.queue.execute<void>(async () => {
+        return await this.queue.execute<void>(async () => {
             await this.dataRequestExtended(
                 AddressMode.ADDR_64BIT,
                 ieeeAddr,
@@ -1039,7 +1039,7 @@ class ZStackAdapter extends Adapter {
     }
 
     public async sendZclFrameInterPANBroadcast(zclFrame: Zcl.Frame, timeout: number): Promise<Events.ZclPayload> {
-        return this.queue.execute<Events.ZclPayload>(async () => {
+        return await this.queue.execute<Events.ZclPayload>(async () => {
             const command = zclFrame.command;
             if (command.response == undefined) {
                 throw new Error(`Command '${command.name}' has no response, cannot wait for response`);
@@ -1074,12 +1074,12 @@ class ZStackAdapter extends Adapter {
                 throw error;
             }
 
-            return response.start().promise;
+            return await response.start().promise;
         });
     }
 
     public async restoreChannelInterPAN(): Promise<void> {
-        return this.queue.execute<void>(async () => {
+        return await this.queue.execute<void>(async () => {
             await this.znp.request(Subsystem.AF, 'interPanCtl', {cmd: 0, data: []});
             // Give adapter some time to restore, otherwise stuff crashes
             await Wait(3000);
@@ -1088,7 +1088,7 @@ class ZStackAdapter extends Adapter {
     }
 
     public async changeChannel(newChannel: number): Promise<void> {
-        return this.queue.execute<void>(async () => {
+        return await this.queue.execute<void>(async () => {
             this.checkInterpanLock();
 
             const payload = {
@@ -1107,7 +1107,7 @@ class ZStackAdapter extends Adapter {
     }
 
     public async setTransmitPower(value: number): Promise<void> {
-        return this.queue.execute<void>(async () => {
+        return await this.queue.execute<void>(async () => {
             await this.znp.request(Subsystem.SYS, 'stackTune', {operation: 0, value});
         });
     }
@@ -1275,7 +1275,7 @@ class ZStackAdapter extends Adapter {
                      * Retry this command once after a cooling down period.
                      */
                     await Wait(2000);
-                    return this.dataRequestExtended(
+                    return await this.dataRequestExtended(
                         addressMode,
                         destinationAddressOrGroupID,
                         destinationEndpoint,

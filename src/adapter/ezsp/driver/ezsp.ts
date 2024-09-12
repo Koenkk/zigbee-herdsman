@@ -659,7 +659,7 @@ export class Ezsp extends EventEmitter {
             throw new Error('Connection not initialized');
         }
 
-        return this.queue.execute<EZSPFrameData>(async (): Promise<EZSPFrameData> => {
+        return await this.queue.execute<EZSPFrameData>(async (): Promise<EZSPFrameData> => {
             const data = this.makeFrame(name, params, this.cmdSeq);
             const waiter = this.waitFor(name, this.cmdSeq);
             this.cmdSeq = (this.cmdSeq + 1) & 255;
