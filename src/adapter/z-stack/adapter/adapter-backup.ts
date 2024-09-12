@@ -474,7 +474,13 @@ export class AdapterBackup {
      */
     private async getApsLinkKeyDataTable(version: ZnpVersion): Promise<ReturnType<typeof Structs.apsLinkKeyDataTable>> {
         if (version === ZnpVersion.zStack3x0) {
-            return await this.nv.readTable('extended', NvSystemIds.ZSTACK, NvItemsIds.ZCD_NV_EX_APS_KEY_DATA_TABLE, undefined, Structs.apsLinkKeyDataTable);
+            return await this.nv.readTable(
+                'extended',
+                NvSystemIds.ZSTACK,
+                NvItemsIds.ZCD_NV_EX_APS_KEY_DATA_TABLE,
+                undefined,
+                Structs.apsLinkKeyDataTable,
+            );
         } else {
             return await this.nv.readTable('legacy', NvItemsIds.APS_LINK_KEY_DATA_START, 255, Structs.apsLinkKeyDataTable);
         }
