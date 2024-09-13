@@ -5,7 +5,7 @@ import BuffaloZnp from './buffaloZnp';
 import Definition from './definition';
 import ParameterType from './parameterType';
 import {BuffaloZnpOptions, MtCmd, MtParameter, MtType, ZpiObjectPayload} from './tstype';
-import {assertIsMtCmdAreqZdo, isMtCmdAreqZdo} from './utils';
+import {assertIsMtCmdAreqZdo} from './utils';
 
 const BufferAndListTypes = [
     ParameterType.BUFFER,
@@ -41,7 +41,7 @@ class ZpiObject {
         }
 
         const cmd = Definition[subsystem].find((c) => c.name === command);
-        if (cmd === undefined || isMtCmdAreqZdo(cmd) || cmd?.request === undefined) {
+        if (cmd === undefined) {
             throw new Error(`Command request '${command}' from subsystem '${subsystem}' not found`);
         }
 
@@ -65,18 +65,16 @@ class ZpiObject {
         }
 
         let payload: ZpiObjectPayload = {};
-        if (!isMtCmdAreqZdo(cmd)) {
-            const parameters = frame.type === Type.SRSP && cmd.type !== Type.AREQ ? cmd.response : cmd.request;
-            /* istanbul ignore if */
-            if (parameters === undefined) {
-                throw new Error(
-                    `CommandID '${frame.commandID}' from subsystem '${frame.subsystem}' cannot be a ` +
-                        `${frame.type === Type.SRSP ? 'response' : 'request'}`,
-                );
-            }
-
-            payload = this.readParameters(frame.data, parameters);
+        const parameters = frame.type === Type.SRSP && cmd.type !== Type.AREQ ? cmd.response : cmd.request;
+        /* istanbul ignore if */
+        if (parameters === undefined) {
+            throw new Error(
+                `CommandID '${frame.commandID}' from subsystem '${frame.subsystem}' cannot be a ` +
+                    `${frame.type === Type.SRSP ? 'response' : 'request'}`,
+            );
         }
+
+        payload = this.readParameters(frame.data, parameters);
 
         return new ZpiObject(frame.type, frame.subsystem, cmd, payload, frame);
     }

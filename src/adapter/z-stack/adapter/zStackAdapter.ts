@@ -156,7 +156,7 @@ class ZStackAdapter extends Adapter {
         this.queue = new Queue(concurrent);
 
         logger.debug(`Detected znp version '${ZnpVersion[this.version.product]}' (${JSON.stringify(this.version)})`, NS);
-        this.adapterManager = new ZnpAdapterManager(this.znp, {
+        this.adapterManager = new ZnpAdapterManager(this, this.znp, {
             backupPath: this.backupPath,
             version: this.version.product,
             greenPowerGroup: this.greenPowerGroup,
@@ -195,25 +195,13 @@ class ZStackAdapter extends Adapter {
     public async getCoordinator(): Promise<Coordinator> {
         return this.queue.execute<Coordinator>(async () => {
             this.checkInterpanLock();
-            const activeEpRsp = this.waitForAreqZdo<ActiveEndpointsResponse>('activeEpRsp');
-            await this.znp.request(Subsystem.ZDO, 'activeEpReq', {dstaddr: 0, nwkaddrofinterest: 0}, activeEpRsp.ID);
-            const activeEp = await activeEpRsp.start();
-
+            const activeEp = await this.activeEndpoints(0);
             const deviceInfo = await this.znp.requestWithReply(Subsystem.UTIL, 'getDeviceInfo', {});
 
             const endpoints = [];
-            for (const endpoint of activeEp.endpointList) {
-                const simpleDescRsp = this.waitForAreqZdo<SimpleDescriptorResponse>('simpleDescRsp', {endpoint});
-                await this.znp.request(Subsystem.ZDO, 'simpleDescReq', {dstaddr: 0, nwkaddrofinterest: 0, endpoint}, simpleDescRsp.ID);
-                const simpleDesc = await simpleDescRsp.start();
-
-                endpoints.push({
-                    ID: simpleDesc.endpoint,
-                    profileID: simpleDesc.profileId,
-                    deviceID: simpleDesc.deviceId,
-                    inputClusters: simpleDesc.inClusterList,
-                    outputClusters: simpleDesc.outClusterList,
-                });
+            for (const endpoint of activeEp.endpoints) {
+                const simpleDesc = await this.simpleDescriptor(0, endpoint);
+                endpoints.push({...simpleDesc, ID: simpleDesc.endpointID});
             }
 
             return {
@@ -330,7 +318,7 @@ class ZStackAdapter extends Adapter {
     }
 
     private async nodeDescriptorInternal(networkAddress: number): Promise<NodeDescriptor> {
-        const response = this.waitForAreqZdo<NodeDescriptorResponse>('nodeDescRsp', {nwkaddr: networkAddress});
+        const response = this.waitForAreqZdo<NodeDescriptorResponse>('nodeDescRsp', {srcaddr: networkAddress});
         const payload = {dstaddr: networkAddress, nwkaddrofinterest: networkAddress};
         await this.znp.request(Subsystem.ZDO, 'nodeDescReq', payload, response.ID);
         const descriptor = await response.start();
@@ -352,7 +340,7 @@ class ZStackAdapter extends Adapter {
     public async activeEndpoints(networkAddress: number): Promise<ActiveEndpoints> {
         return this.queue.execute<ActiveEndpoints>(async () => {
             this.checkInterpanLock();
-            const response = this.waitForAreqZdo<ActiveEndpointsResponse>('activeEpRsp', {nwkaddr: networkAddress});
+            const response = this.waitForAreqZdo<ActiveEndpointsResponse>('activeEpRsp', {srcaddr: networkAddress});
             const payload = {dstaddr: networkAddress, nwkaddrofinterest: networkAddress};
             await this.znp.request(Subsystem.ZDO, 'activeEpReq', payload, response.ID);
             const activeEp = await response.start();
@@ -363,8 +351,7 @@ class ZStackAdapter extends Adapter {
     public async simpleDescriptor(networkAddress: number, endpointID: number): Promise<SimpleDescriptor> {
         return this.queue.execute<SimpleDescriptor>(async () => {
             this.checkInterpanLock();
-            const responsePayload = {nwkaddr: networkAddress, endpoint: endpointID};
-            const response = this.waitForAreqZdo<SimpleDescriptorResponse>('simpleDescRsp', responsePayload);
+            const response = this.waitForAreqZdo<SimpleDescriptorResponse>('simpleDescRsp', {srcaddr: networkAddress});
             const payload = {dstaddr: networkAddress, nwkaddrofinterest: networkAddress, endpoint: endpointID};
             await this.znp.request(Subsystem.ZDO, 'simpleDescReq', payload, response.ID);
             const descriptor = await response.start();

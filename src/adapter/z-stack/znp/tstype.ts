@@ -26,7 +26,7 @@ interface MtCmdSreq extends Omit<MtCmdBase, 'zdo'> {
     type: CommandType.SREQ;
 }
 
-export interface MtCmdAreqZdo extends Omit<MtCmdBase, 'request' | 'response'> {
+export interface MtCmdAreqZdo extends Omit<MtCmdBase, 'response'> {
     type: CommandType.AREQ;
 }
 
