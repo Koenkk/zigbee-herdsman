@@ -1121,17 +1121,17 @@ const basicMocks = () => {
 
             return waitForResult(
                 mockZdoZpiObject<NodeDescriptorResponse>('nodeDescRsp', Status.SUCCESS, {
-                    manufacturerCode: payload.nwkaddr * 2,
+                    manufacturerCode: payload.srcaddr * 2,
                     apsFlags: 0,
                     capabilities: DUMMY_NODE_DESC_RSP_CAPABILITIES,
                     deprecated1: 0,
                     fragmentationSupported: true,
                     frequencyBand: 0,
-                    logicalType: payload.nwkaddr - 1,
+                    logicalType: payload.srcaddr - 1,
                     maxBufSize: 0,
                     maxIncTxSize: 0,
                     maxOutTxSize: 0,
-                    nwkAddress: payload.nwkaddr,
+                    nwkAddress: payload.srcaddr,
                     serverMask: {
                         backupTrustCenter: 0,
                         deprecated1: 0,
@@ -2314,7 +2314,7 @@ describe('zstack-adapter', () => {
         mockZnpRequest.mockClear();
         mockQueueExecute.mockClear();
         result = await adapter.nodeDescriptor(2);
-        expect(mockZnpWaitFor).toHaveBeenCalledWith(Type.AREQ, Subsystem.ZDO, 'nodeDescRsp', {nwkaddr: 2});
+        expect(mockZnpWaitFor).toHaveBeenCalledWith(Type.AREQ, Subsystem.ZDO, 'nodeDescRsp', {srcaddr: 2});
         expect(mockZnpRequest).toHaveBeenCalledTimes(1);
         expect(mockZnpRequest).toHaveBeenCalledWith(Subsystem.ZDO, 'nodeDescReq', {dstaddr: 2, nwkaddrofinterest: 2}, 1);
         expect(mockQueueExecute.mock.calls[0][1]).toBe(2);
@@ -2354,6 +2354,7 @@ describe('zstack-adapter', () => {
     it('Active endpoints', async () => {
         basicMocks();
         await adapter.start();
+        mockQueueExecute.mockClear();
 
         const result = await adapter.activeEndpoints(3);
         expect(mockQueueExecute.mock.calls[0][1]).toBe(3);

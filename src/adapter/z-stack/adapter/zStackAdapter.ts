@@ -201,7 +201,13 @@ class ZStackAdapter extends Adapter {
             const endpoints = [];
             for (const endpoint of activeEp.endpoints) {
                 const simpleDesc = await this.simpleDescriptor(0, endpoint);
-                endpoints.push({...simpleDesc, ID: simpleDesc.endpointID});
+                endpoints.push({
+                    ID: simpleDesc.endpointID,
+                    deviceID: simpleDesc.deviceID,
+                    profileID: simpleDesc.profileID,
+                    inputClusters: simpleDesc.inputClusters,
+                    outputClusters: simpleDesc.outputClusters,
+                });
             }
 
             return {

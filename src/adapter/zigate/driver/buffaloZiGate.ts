@@ -199,8 +199,7 @@ class BuffaloZiGate extends Buffalo {
     }
 
     public readIeeeAddrBE(): EUI64 {
-        const octets = Array.from(this.readBuffer(8));
-        return `0x${octets.map((octet) => octet.toString(16).padStart(2, '0')).join('')}`;
+        return `0x${this.readBuffer(8).toString('hex')}`;
     }
     public writeIeeeAddrBE(value: string /*TODO: EUI64*/): void {
         this.writeUInt32BE(parseInt(value.slice(2, 10), 16));
