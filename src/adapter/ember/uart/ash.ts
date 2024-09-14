@@ -514,7 +514,7 @@ export class UartAsh extends EventEmitter<UartAshEventMap> {
             this.socketPort.pipe(this.parser);
             this.parser.on('data', this.onFrame.bind(this));
 
-            return new Promise((resolve, reject): void => {
+            return await new Promise((resolve, reject): void => {
                 const openError = async (err: Error): Promise<void> => {
                     await this.stop();
 

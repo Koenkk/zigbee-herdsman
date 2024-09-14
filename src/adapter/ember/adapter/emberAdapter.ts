@@ -1265,7 +1265,7 @@ export class EmberAdapter extends Adapter {
      *       On the other hand, the more often this runs, the more secure the network is...
      */
     public async broadcastNetworkKeyUpdate(): Promise<void> {
-        return this.queue.execute<void>(async () => {
+        return await this.queue.execute<void>(async () => {
             logger.warning(`[TRUST CENTER] Performing a network key update. This might take a while and disrupt normal operation.`, NS);
 
             // zero-filled = let stack generate new random network key
@@ -1573,7 +1573,7 @@ export class EmberAdapter extends Adapter {
             }*/
         }
 
-        return this.emberSetEzspPolicy(EzspPolicyId.TRUST_CENTER_POLICY, policy);
+        return await this.emberSetEzspPolicy(EzspPolicyId.TRUST_CENTER_POLICY, policy);
     }
 
     //---- END EZSP wrappers
@@ -1677,7 +1677,7 @@ export class EmberAdapter extends Adapter {
         }
 
         try {
-            return SerialPortUtils.is(RealpathSync(path), autoDetectDefinitions);
+            return await SerialPortUtils.is(RealpathSync(path), autoDetectDefinitions);
         } catch (error) {
             logger.debug(`Failed to determine if path is valid: '${error}'`, NS);
             return false;
@@ -1708,7 +1708,7 @@ export class EmberAdapter extends Adapter {
 
     // queued, non-InterPAN
     public async getCoordinator(): Promise<TsType.Coordinator> {
-        return this.queue.execute<TsType.Coordinator>(async () => {
+        return await this.queue.execute<TsType.Coordinator>(async () => {
             this.checkInterpanLock();
 
             // in all likelihood this will be retrieved from cache
@@ -1750,7 +1750,7 @@ export class EmberAdapter extends Adapter {
     // queued
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     public async backup(ieeeAddressesInDatabase: string[]): Promise<Backup> {
-        return this.queue.execute<Backup>(async () => {
+        return await this.queue.execute<Backup>(async () => {
             // grab fresh version here, bypass cache
             const [netStatus, , netParams] = await this.ezsp.ezspGetNetworkParameters();
 
@@ -1832,7 +1832,7 @@ export class EmberAdapter extends Adapter {
 
     // queued, non-InterPAN
     public async getNetworkParameters(): Promise<TsType.NetworkParameters> {
-        return this.queue.execute<TsType.NetworkParameters>(async () => {
+        return await this.queue.execute<TsType.NetworkParameters>(async () => {
             this.checkInterpanLock();
 
             // first call will cache for the others, but in all likelihood, it will all be from freshly cached after init
@@ -1851,7 +1851,7 @@ export class EmberAdapter extends Adapter {
 
     // queued
     public async changeChannel(newChannel: number): Promise<void> {
-        return this.queue.execute<void>(async () => {
+        return await this.queue.execute<void>(async () => {
             this.checkInterpanLock();
 
             const zdoPayload = BuffaloZdo.buildChannelChangeRequest(newChannel, null);
@@ -1876,7 +1876,7 @@ export class EmberAdapter extends Adapter {
 
     // queued
     public async setTransmitPower(value: number): Promise<void> {
-        return this.queue.execute<void>(async () => {
+        return await this.queue.execute<void>(async () => {
             const status = await this.ezsp.ezspSetRadioPower(value);
 
             if (status !== SLStatus.OK) {
@@ -1913,7 +1913,7 @@ export class EmberAdapter extends Adapter {
             }
         }
 
-        return this.queue.execute<void>(async () => {
+        return await this.queue.execute<void>(async () => {
             // Compute the key from the install code and CRC.
             const [aesStatus, keyContents] = await this.emberAesHashSimple(key);
 
@@ -2007,7 +2007,7 @@ export class EmberAdapter extends Adapter {
 
         if (networkAddress) {
             // specific device that is not `Coordinator`
-            return this.queue.execute<void>(async () => {
+            return await this.queue.execute<void>(async () => {
                 this.checkInterpanLock();
                 await preJoining();
 
@@ -2035,7 +2035,7 @@ export class EmberAdapter extends Adapter {
             });
         } else {
             // coordinator-only, or all
-            return this.queue.execute<void>(async () => {
+            return await this.queue.execute<void>(async () => {
                 this.checkInterpanLock();
                 await preJoining();
 
@@ -2069,7 +2069,7 @@ export class EmberAdapter extends Adapter {
 
     // queued, non-InterPAN
     public async lqi(networkAddress: number): Promise<TsType.LQI> {
-        return this.queue.execute<TsType.LQI>(async () => {
+        return await this.queue.execute<TsType.LQI>(async () => {
             this.checkInterpanLock();
 
             const neighbors: TsType.LQINeighbor[] = [];
@@ -2125,7 +2125,7 @@ export class EmberAdapter extends Adapter {
 
     // queued, non-InterPAN
     public async routingTable(networkAddress: number): Promise<TsType.RoutingTable> {
-        return this.queue.execute<TsType.RoutingTable>(async () => {
+        return await this.queue.execute<TsType.RoutingTable>(async () => {
             this.checkInterpanLock();
 
             const table: TsType.RoutingTableEntry[] = [];
@@ -2181,7 +2181,7 @@ export class EmberAdapter extends Adapter {
 
     // queued, non-InterPAN
     public async nodeDescriptor(networkAddress: number): Promise<TsType.NodeDescriptor> {
-        return this.queue.execute<TsType.NodeDescriptor>(async () => {
+        return await this.queue.execute<TsType.NodeDescriptor>(async () => {
             this.checkInterpanLock();
 
             const zdoPayload = BuffaloZdo.buildNodeDescriptorRequest(networkAddress);
@@ -2236,7 +2236,7 @@ export class EmberAdapter extends Adapter {
 
     // queued, non-InterPAN
     public async activeEndpoints(networkAddress: number): Promise<TsType.ActiveEndpoints> {
-        return this.queue.execute<TsType.ActiveEndpoints>(async () => {
+        return await this.queue.execute<TsType.ActiveEndpoints>(async () => {
             this.checkInterpanLock();
 
             const zdoPayload = BuffaloZdo.buildActiveEndpointsRequest(networkAddress);
@@ -2266,7 +2266,7 @@ export class EmberAdapter extends Adapter {
 
     // queued, non-InterPAN
     public async simpleDescriptor(networkAddress: number, endpointID: number): Promise<TsType.SimpleDescriptor> {
-        return this.queue.execute<TsType.SimpleDescriptor>(async () => {
+        return await this.queue.execute<TsType.SimpleDescriptor>(async () => {
             this.checkInterpanLock();
 
             const zdoPayload = BuffaloZdo.buildSimpleDescriptorRequest(networkAddress, endpointID);
@@ -2312,7 +2312,7 @@ export class EmberAdapter extends Adapter {
         type: 'endpoint' | 'group',
         destinationEndpoint?: number,
     ): Promise<void> {
-        return this.queue.execute<void>(async () => {
+        return await this.queue.execute<void>(async () => {
             this.checkInterpanLock();
 
             const zdoPayload = BuffaloZdo.buildBindRequest(
@@ -2358,7 +2358,7 @@ export class EmberAdapter extends Adapter {
         type: 'endpoint' | 'group',
         destinationEndpoint?: number,
     ): Promise<void> {
-        return this.queue.execute<void>(async () => {
+        return await this.queue.execute<void>(async () => {
             this.checkInterpanLock();
 
             const zdoPayload = BuffaloZdo.buildUnbindRequest(
@@ -2396,7 +2396,7 @@ export class EmberAdapter extends Adapter {
 
     // queued, non-InterPAN
     public async removeDevice(networkAddress: number, ieeeAddr: string): Promise<void> {
-        return this.queue.execute<void>(async () => {
+        return await this.queue.execute<void>(async () => {
             this.checkInterpanLock();
 
             const zdoPayload = BuffaloZdo.buildLeaveRequest(ieeeAddr as EUI64, Zdo.LeaveRequestFlags.WITHOUT_REJOIN);
@@ -2457,7 +2457,7 @@ export class EmberAdapter extends Adapter {
 
         const data = zclFrame.toBuffer();
 
-        return this.queue.execute<ZclPayload | void>(async () => {
+        return await this.queue.execute<ZclPayload | void>(async () => {
             this.checkInterpanLock();
 
             logger.debug(() => `~~~> [ZCL to=${networkAddress} apsFrame=${JSON.stringify(apsFrame)} header=${JSON.stringify(zclFrame.header)}]`, NS);
@@ -2540,7 +2540,7 @@ export class EmberAdapter extends Adapter {
         };
         const data = zclFrame.toBuffer();
 
-        return this.queue.execute<void>(async () => {
+        return await this.queue.execute<void>(async () => {
             this.checkInterpanLock();
 
             logger.debug(() => `~~~> [ZCL GROUP apsFrame=${JSON.stringify(apsFrame)} header=${JSON.stringify(zclFrame.header)}]`, NS);
@@ -2582,7 +2582,7 @@ export class EmberAdapter extends Adapter {
         };
         const data = zclFrame.toBuffer();
 
-        return this.queue.execute<void>(async () => {
+        return await this.queue.execute<void>(async () => {
             this.checkInterpanLock();
 
             logger.debug(() => `~~~> [ZCL BROADCAST apsFrame=${JSON.stringify(apsFrame)} header=${JSON.stringify(zclFrame.header)}]`, NS);
@@ -2611,7 +2611,7 @@ export class EmberAdapter extends Adapter {
 
     // queued
     public async setChannelInterPAN(channel: number): Promise<void> {
-        return this.queue.execute<void>(async () => {
+        return await this.queue.execute<void>(async () => {
             this.interpanLock = true;
             const status = await this.ezsp.ezspSetLogicalAndRadioChannel(channel);
 
@@ -2624,7 +2624,7 @@ export class EmberAdapter extends Adapter {
 
     // queued
     public async sendZclFrameInterPANToIeeeAddr(zclFrame: Zcl.Frame, ieeeAddress: string): Promise<void> {
-        return this.queue.execute<void>(async () => {
+        return await this.queue.execute<void>(async () => {
             const msgBuffalo = new EzspBuffalo(Buffer.alloc(MAXIMUM_INTERPAN_LENGTH));
 
             // cache-enabled getters
@@ -2677,7 +2677,7 @@ export class EmberAdapter extends Adapter {
             sequence: 0, // set by stack
         };
 
-        return this.queue.execute<ZclPayload>(async () => {
+        return await this.queue.execute<ZclPayload>(async () => {
             const msgBuffalo = new EzspBuffalo(Buffer.alloc(MAXIMUM_INTERPAN_LENGTH));
 
             // cache-enabled getters
@@ -2722,7 +2722,7 @@ export class EmberAdapter extends Adapter {
 
     // queued
     public async restoreChannelInterPAN(): Promise<void> {
-        return this.queue.execute<void>(async () => {
+        return await this.queue.execute<void>(async () => {
             const status = await this.ezsp.ezspSetLogicalAndRadioChannel(this.networkOptions.channelList[0]);
 
             if (status !== SLStatus.OK) {

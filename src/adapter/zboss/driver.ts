@@ -258,7 +258,7 @@ export class ZBOSSDriver extends EventEmitter {
             throw new Error('Connection not initialized');
         }
 
-        return this.queue.execute<ZBOSSFrame>(async (): Promise<ZBOSSFrame> => {
+        return await this.queue.execute<ZBOSSFrame>(async (): Promise<ZBOSSFrame> => {
             const frame = makeFrame(FrameType.REQUEST, commandId, params);
             frame.tsn = this.tsn;
             const waiter = this.waitFor(commandId, commandId == CommandId.NCP_RESET ? null : this.tsn, timeout);
@@ -347,27 +347,27 @@ export class ZBOSSDriver extends EventEmitter {
     }
 
     public async lqi(nwk: number, index: number): Promise<ZBOSSFrame> {
-        return this.execCommand(CommandId.ZDO_MGMT_LQI_REQ, {nwk: nwk, startIndex: index});
+        return await this.execCommand(CommandId.ZDO_MGMT_LQI_REQ, {nwk: nwk, startIndex: index});
     }
 
     public async neighbors(ieee: string): Promise<ZBOSSFrame> {
-        return this.execCommand(CommandId.NWK_GET_NEIGHBOR_BY_IEEE, {ieee: ieee});
+        return await this.execCommand(CommandId.NWK_GET_NEIGHBOR_BY_IEEE, {ieee: ieee});
     }
 
     public async nodeDescriptor(nwk: number): Promise<ZBOSSFrame> {
-        return this.execCommand(CommandId.ZDO_NODE_DESC_REQ, {nwk: nwk});
+        return await this.execCommand(CommandId.ZDO_NODE_DESC_REQ, {nwk: nwk});
     }
 
     public async activeEndpoints(nwk: number): Promise<ZBOSSFrame> {
-        return this.execCommand(CommandId.ZDO_ACTIVE_EP_REQ, {nwk: nwk});
+        return await this.execCommand(CommandId.ZDO_ACTIVE_EP_REQ, {nwk: nwk});
     }
 
     public async simpleDescriptor(nwk: number, ep: number): Promise<ZBOSSFrame> {
-        return this.execCommand(CommandId.ZDO_SIMPLE_DESC_REQ, {nwk: nwk, endpoint: ep});
+        return await this.execCommand(CommandId.ZDO_SIMPLE_DESC_REQ, {nwk: nwk, endpoint: ep});
     }
 
     public async removeDevice(nwk: number, ieee: string): Promise<ZBOSSFrame> {
-        return this.execCommand(CommandId.ZDO_MGMT_LEAVE_REQ, {nwk: nwk, ieee: ieee, flags: 0});
+        return await this.execCommand(CommandId.ZDO_MGMT_LEAVE_REQ, {nwk: nwk, ieee: ieee, flags: 0});
     }
 
     public async request(ieee: string, profileID: number, clusterID: number, dstEp: number, srcEp: number, data: Buffer): Promise<ZBOSSFrame> {
@@ -387,7 +387,7 @@ export class ZBOSSDriver extends EventEmitter {
             aliasSequence: 0,
             data: data,
         };
-        return this.execCommand(CommandId.APSDE_DATA_REQ, payload);
+        return await this.execCommand(CommandId.APSDE_DATA_REQ, payload);
     }
 
     public async bind(
@@ -399,7 +399,7 @@ export class ZBOSSDriver extends EventEmitter {
         type: 'endpoint' | 'group',
         destinationEndpoint?: number,
     ): Promise<ZBOSSFrame> {
-        return this.execCommand(CommandId.ZDO_BIND_REQ, {
+        return await this.execCommand(CommandId.ZDO_BIND_REQ, {
             target: destinationNetworkAddress,
             srcIeee: sourceIeeeAddress,
             srcEP: sourceEndpoint,
@@ -419,7 +419,7 @@ export class ZBOSSDriver extends EventEmitter {
         type: 'endpoint' | 'group',
         destinationEndpoint?: number,
     ): Promise<ZBOSSFrame> {
-        return this.execCommand(CommandId.ZDO_UNBIND_REQ, {
+        return await this.execCommand(CommandId.ZDO_UNBIND_REQ, {
             target: destinationNetworkAddress,
             srcIeee: sourceIeeeAddress,
             srcEP: sourceEndpoint,

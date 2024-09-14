@@ -450,7 +450,7 @@ class Device extends Entity<ControllerEventMap> {
                         logger.debug(`Request Queue (${this.ieeeAddr}): default expiration timeout set to ${this.pendingRequestTimeout}`, NS);
                     }
 
-                    await Promise.all(this.endpoints.map(async (e) => e.sendPendingRequests(true)));
+                    await Promise.all(this.endpoints.map(async (e) => await e.sendPendingRequests(true)));
                     // We *must* end fast-poll when we're done sending things. Otherwise
                     // we cause undue power-drain.
                     logger.debug(`check-in from ${this.ieeeAddr}: stopping fast-poll`, NS);
@@ -1105,11 +1105,11 @@ class Device extends Entity<ControllerEventMap> {
     }
 
     public async lqi(): Promise<LQI> {
-        return Entity.adapter!.lqi(this.networkAddress);
+        return await Entity.adapter!.lqi(this.networkAddress);
     }
 
     public async routingTable(): Promise<RoutingTable> {
-        return Entity.adapter!.routingTable(this.networkAddress);
+        return await Entity.adapter!.routingTable(this.networkAddress);
     }
 
     public async ping(disableRecovery = true): Promise<void> {
