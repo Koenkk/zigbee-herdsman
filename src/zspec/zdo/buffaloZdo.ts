@@ -1416,8 +1416,8 @@ export class BuffaloZdo extends Buffalo {
 
     //-- RESPONSES
 
-    public static readResponse(clusterId: ZdoClusterId, buffer: Buffer): unknown {
-        const buffalo = new BuffaloZdo(buffer, ZDO_MESSAGE_OVERHEAD); // set pos to skip `transaction sequence number`
+    public static readResponse(clusterId: ZdoClusterId, buffer: Buffer, hasZdoMessageOverhead: boolean): unknown {
+        const buffalo = new BuffaloZdo(buffer, hasZdoMessageOverhead ? ZDO_MESSAGE_OVERHEAD : 0); // set pos to skip `transaction sequence number`
 
         switch (clusterId) {
             case ZdoClusterId.NETWORK_ADDRESS_RESPONSE: {

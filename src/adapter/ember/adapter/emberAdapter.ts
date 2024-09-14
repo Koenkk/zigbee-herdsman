@@ -99,18 +99,6 @@ export type LinkKeyBackupData = {
     incomingFrameCounter: number;
 };
 
-/** Enum to pass strings from numbers up to Z2M. */
-enum RoutingTableStatus {
-    ACTIVE = 0x0,
-    DISCOVERY_UNDERWAY = 0x1,
-    DISCOVERY_FAILED = 0x2,
-    INACTIVE = 0x3,
-    VALIDATION_UNDERWAY = 0x4,
-    RESERVED1 = 0x5,
-    RESERVED2 = 0x6,
-    RESERVED3 = 0x7,
-}
-
 enum NetworkInitAction {
     /** Ain't that nice! */
     DONE,
@@ -536,7 +524,7 @@ export class EmberAdapter extends Adapter {
      */
     private async onZDOResponse(apsFrame: EmberApsFrame, sender: NodeId, messageContents: Buffer): Promise<void> {
         try {
-            const payload = BuffaloZdo.readResponse(apsFrame.clusterId, messageContents);
+            const payload = BuffaloZdo.readResponse(apsFrame.clusterId, messageContents, true);
 
             logger.debug(() => `<~~~ [ZDO ${Zdo.ClusterId[apsFrame.clusterId]} from=${sender} ${payload ? JSON.stringify(payload) : 'OK'}]`, NS);
             this.oneWaitress.resolveZDO(sender, apsFrame, payload);
@@ -2168,7 +2156,7 @@ export class EmberAdapter extends Adapter {
                 for (const entry of result.entryList) {
                     table.push({
                         destinationAddress: entry.destinationAddress,
-                        status: RoutingTableStatus[entry.status], // get str value from enum to satisfy upstream's needs
+                        status: TsType.RoutingTableStatus[entry.status], // get str value from enum to satisfy upstream's needs
                         nextHop: entry.nextHopAddress,
                     });
                 }

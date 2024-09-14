@@ -274,12 +274,10 @@ class Znp extends events.EventEmitter {
         return this.queue.execute<ZpiObject | void>(async () => {
             logger.debug(() => `--> ${object}`, NS);
 
-            const frame = object.toUnpiFrame();
-
             if (object.type === Type.SREQ) {
-                const t = object.command === 'bdbStartCommissioning' || object.command === 'startupFromApp' ? 40000 : timeouts.SREQ;
-                const waiter = this.waitress.waitFor({type: Type.SRSP, subsystem: object.subsystem, command: object.command}, timeout || t);
-                this.unpiWriter.writeFrame(frame);
+                const t = object.command.name === 'bdbStartCommissioning' || object.command.name === 'startupFromApp' ? 40000 : timeouts.SREQ;
+                const waiter = this.waitress.waitFor({type: Type.SRSP, subsystem: object.subsystem, command: object.command.name}, timeout || t);
+                this.unpiWriter.writeFrame(object.unpiFrame);
                 const result = await waiter.start().promise;
                 if (result?.payload.status !== undefined && !expectedStatuses.includes(result.payload.status)) {
                     if (typeof waiterID === 'number') {
@@ -297,12 +295,12 @@ class Znp extends events.EventEmitter {
             } else if (object.type === Type.AREQ && object.isResetCommand()) {
                 const waiter = this.waitress.waitFor({type: Type.AREQ, subsystem: Subsystem.SYS, command: 'resetInd'}, timeout || timeouts.reset);
                 this.queue.clear();
-                this.unpiWriter.writeFrame(frame);
+                this.unpiWriter.writeFrame(object.unpiFrame);
                 return await waiter.start().promise;
             } else {
                 /* istanbul ignore else */
                 if (object.type === Type.AREQ) {
-                    this.unpiWriter.writeFrame(frame);
+                    this.unpiWriter.writeFrame(object.unpiFrame);
                 } else {
                     throw new Error(`Unknown type '${object.type}'`);
                 }
@@ -325,12 +323,13 @@ class Znp extends events.EventEmitter {
     }
 
     private waitressValidator(zpiObject: ZpiObject, matcher: WaitressMatcher): boolean {
-        const requiredMatch = matcher.type === zpiObject.type && matcher.subsystem == zpiObject.subsystem && matcher.command === zpiObject.command;
+        const requiredMatch =
+            matcher.type === zpiObject.type && matcher.subsystem == zpiObject.subsystem && matcher.command === zpiObject.command.name;
         let payloadMatch = true;
 
         if (matcher.payload) {
-            for (const [key, value] of Object.entries(matcher.payload)) {
-                if (!Equals(zpiObject.payload[key], value)) {
+            for (const key in matcher.payload) {
+                if (!Equals(zpiObject.payload[key], matcher.payload[key])) {
                     payloadMatch = false;
                     break;
                 }

@@ -445,8 +445,8 @@ describe('ZNP', () => {
         expect(received).toHaveBeenCalledTimes(1);
 
         const obj = received.mock.calls[0][0];
-        expect(obj.command).toBe('version');
-        expect(obj.commandID).toBe(2);
+        expect(obj.command.name).toBe('version');
+        expect(obj.command.ID).toBe(2);
         expect(obj.payload).toStrictEqual({maintrel: 5, majorrel: 3, minorrel: 4, product: 2, revision: 16843009, transportrev: 1});
         expect(obj.subsystem).toBe(UnpiConstants.Subsystem.SYS);
         expect(obj.type).toBe(UnpiConstants.Type.SRSP);
@@ -494,8 +494,8 @@ describe('ZNP', () => {
         expect(frame.type).toBe(UnpiConstants.Type.SREQ);
         expect(frame.data).toStrictEqual(Buffer.from([0x01, 0x00, 0x02]));
 
-        expect(result.command).toBe('osalNvRead');
-        expect(result.commandID).toBe(0x08);
+        expect(result.command.name).toBe('osalNvRead');
+        expect(result.command.ID).toBe(0x08);
         expect(result.payload).toStrictEqual({status: 0, len: 2, value: Buffer.from([0x01, 0x02])});
         expect(result.subsystem).toBe(UnpiConstants.Subsystem.SYS);
         expect(result.type).toBe(UnpiConstants.Type.SRSP);
@@ -589,8 +589,8 @@ describe('ZNP', () => {
         expect(frame.type).toBe(UnpiConstants.Type.SREQ);
         expect(frame.data).toStrictEqual(Buffer.from([0x01, 0x00, 0x02]));
 
-        expect(result.command).toBe('osalNvRead');
-        expect(result.commandID).toBe(0x08);
+        expect(result.command.name).toBe('osalNvRead');
+        expect(result.command.ID).toBe(0x08);
         expect(result.payload).toStrictEqual({status: 0, len: 2, value: Buffer.from([0x01, 0x02])});
         expect(result.subsystem).toBe(UnpiConstants.Subsystem.SYS);
         expect(result.type).toBe(UnpiConstants.Type.SRSP);
@@ -620,8 +620,8 @@ describe('ZNP', () => {
         expect(frame.type).toBe(UnpiConstants.Type.AREQ);
         expect(frame.data).toStrictEqual(Buffer.from([1]));
 
-        expect(result.command).toBe('resetInd');
-        expect(result.commandID).toBe(0x80);
+        expect(result.command.name).toBe('resetInd');
+        expect(result.command.ID).toBe(0x80);
         expect(result.payload).toStrictEqual({reason: 1, transportrev: 2, productid: 3, majorrel: 4, minorrel: 5, hwrev: 6});
         expect(result.subsystem).toBe(UnpiConstants.Subsystem.SYS);
         expect(result.type).toBe(UnpiConstants.Type.AREQ);
@@ -832,7 +832,6 @@ describe('ZNP', () => {
     });
 
     it('ZpiObject throw error on unknown command', async () => {
-        // @ts-ignore; make sure we always get a new instance
         const frame = new UnpiFrame(UnpiConstants.Type.SREQ, UnpiConstants.Subsystem.AF, 99999, Buffer.alloc(0));
         expect(() => {
             ZpiObject.fromUnpiFrame(frame);
@@ -840,7 +839,6 @@ describe('ZNP', () => {
     });
 
     it('ZpiObject throw error on unknown parameters', async () => {
-        // @ts-ignore; make sure we always get a new instance
         const frame = new UnpiFrame(UnpiConstants.Type.SRSP, UnpiConstants.Subsystem.AF, 128, Buffer.alloc(0));
         expect(() => {
             ZpiObject.fromUnpiFrame(frame);
@@ -853,18 +851,36 @@ describe('ZNP', () => {
         expect(obj.isResetCommand()).toBeFalsy();
     });
 
-    it('ZpiObject with assoc dev list', async () => {
-        const buffer = Buffer.from([0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x01, 0x01, 0x00, 0x02, 0x10, 0x10, 0x11, 0x11]);
+    it('ZpiObject parseZdoPayload - endDeviceAnnceInd', async () => {
+        const buffer = Buffer.from([0, 0, 0, 1, 1, 2, 3, 4, 5, 6, 7, 8, 5]);
+        const frame = new UnpiFrame(UnpiConstants.Type.AREQ, UnpiConstants.Subsystem.ZDO, 193, buffer);
+        const obj = ZpiObject.fromUnpiFrame(frame);
+        expect(obj.parseZdoPayload()).toStrictEqual({
+            capabilities: {
+                allocateAddress: 0,
+                alternatePANCoordinator: 1,
+                deviceType: 0,
+                powerSource: 1,
+                reserved1: 0,
+                reserved2: 0,
+                rxOnWhenIdle: 0,
+                securityCapability: 0,
+            },
+            eui64: '0x0807060504030201',
+            nwkAddress: 256,
+        });
+    });
 
+    it('ZpiObject parseZdoPayload - nwkAddrRsp', async () => {
+        const buffer = Buffer.from([0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x01, 0x01, 0x00, 0x02, 0x10, 0x10, 0x11, 0x11]);
         const frame = new UnpiFrame(UnpiConstants.Type.AREQ, UnpiConstants.Subsystem.ZDO, 128, buffer);
         const obj = ZpiObject.fromUnpiFrame(frame);
-        expect(obj.payload).toStrictEqual({
-            assocdevlist: [4112, 4369],
-            ieeeaddr: '0x0807060504030201',
-            numassocdev: 2,
-            nwkaddr: 257,
-            startindex: 0,
-            status: 0,
+        expect(obj.parseZdoPayload()).toStrictEqual({
+            assocDevList: [4112, 4369],
+            eui64: '0x0807060504030201',
+            // numassocdev: 2,
+            nwkAddress: 257,
+            startIndex: 0,
         });
     });
 
@@ -962,139 +978,6 @@ describe('ZNP', () => {
         expect(value).toStrictEqual([1024, 2048]);
     });
 
-    it('LIST_ROUTING_TABLE write', () => {
-        expect(() => {
-            const buffalo = new BuffaloZnp(Buffer.alloc(10));
-            buffalo.write(ParameterType.LIST_ROUTING_TABLE, [], {});
-        }).toThrow();
-    });
-
-    it('LIST_ROUTING_TABLE read', () => {
-        const buffer = Buffer.from([0x00, 0x10, 0x27, 0x00, 0x11, 0x27, 0x10, 0x29, 0x01, 0x11, 0x23]);
-
-        const buffalo = new BuffaloZnp(buffer, 1);
-        const value = buffalo.read(ParameterType.LIST_ROUTING_TABLE, {length: 2});
-        expect(buffalo.getPosition()).toStrictEqual(11);
-        expect(value).toStrictEqual([
-            {
-                destNwkAddr: 10000,
-                nextHopNwkAddr: 10001,
-                routeStatus: 'ACTIVE',
-            },
-            {
-                destNwkAddr: 10512,
-                nextHopNwkAddr: 8977,
-                routeStatus: 'DISCOVERY_UNDERWAY',
-            },
-        ]);
-    });
-
-    it('LIST_BIND_TABLE write', () => {
-        expect(() => {
-            const buffalo = new BuffaloZnp(Buffer.alloc(10));
-            buffalo.write(ParameterType.LIST_BIND_TABLE, [], {});
-        }).toThrow();
-    });
-
-    it('LIST_BIND_TABLE read', () => {
-        const buffer = Buffer.from([
-            0x00,
-            ...ieeeaAddr1.hex,
-            0x02,
-            0x01,
-            0x00,
-            0x02,
-            ...ieeeaAddr2.hex,
-            ...ieeeaAddr2.hex,
-            0x02,
-            0x01,
-            0x00,
-            0x03,
-            ...ieeeaAddr1.hex,
-            0x04,
-            0x01,
-        ]);
-
-        const buffalo = new BuffaloZnp(buffer, 1);
-        const value = buffalo.read(ParameterType.LIST_BIND_TABLE, {length: 2});
-        expect(buffalo.getPosition()).toStrictEqual(42);
-        expect(value).toStrictEqual([
-            {
-                clusterId: 1,
-                dstAddr: ieeeaAddr2.string,
-                dstAddrMode: 2,
-                srcAddr: ieeeaAddr1.string,
-                srcEp: 2,
-            },
-            {
-                clusterId: 1,
-                dstAddr: ieeeaAddr1.string,
-                dstAddrMode: 3,
-                dstEp: 4,
-                srcAddr: ieeeaAddr2.string,
-                srcEp: 2,
-            },
-        ]);
-    });
-
-    it('LIST_NEIGHBOR_LQI write', () => {
-        expect(() => {
-            const buffalo = new BuffaloZnp(Buffer.alloc(10));
-            buffalo.write(ParameterType.LIST_NEIGHBOR_LQI, [], {});
-        }).toThrow();
-    });
-
-    it('LIST_NEIGHBOR_LQI read', () => {
-        const buffer = Buffer.from([
-            0x00,
-            ...ieeeaAddr1.hex,
-            ...ieeeaAddr2.hex,
-            0x10,
-            0x10,
-            0x44,
-            0x01,
-            0x02,
-            0x09,
-            ...ieeeaAddr2.hex,
-            ...ieeeaAddr1.hex,
-            0x10,
-            0x10,
-            0x44,
-            0x00,
-            0x10,
-            0x08,
-            0x01,
-        ]);
-
-        const buffalo = new BuffaloZnp(buffer, 1);
-        const value = buffalo.read(ParameterType.LIST_NEIGHBOR_LQI, {length: 2});
-        expect(buffalo.getPosition()).toStrictEqual(45);
-        expect(value).toStrictEqual([
-            {
-                depth: 2,
-                deviceType: 0,
-                extAddr: '0xaf440112005b1200',
-                extPandId: '0xae440112004b1200',
-                lqi: 9,
-                nwkAddr: 4112,
-                permitJoin: 1,
-                relationship: 4,
-                rxOnWhenIdle: 1,
-            },
-            {
-                depth: 16,
-                deviceType: 0,
-                extAddr: '0xae440112004b1200',
-                extPandId: '0xaf440112005b1200',
-                lqi: 8,
-                nwkAddr: 4112,
-                permitJoin: 0,
-                relationship: 4,
-                rxOnWhenIdle: 1,
-            },
-        ]);
-    });
-
     it('LIST_NETWORK write', () => {
         expect(() => {
             const buffalo = new BuffaloZnp(Buffer.alloc(10));
@@ -1128,37 +1011,6 @@ describe('ZNP', () => {
                 zigbeeVersion: 3,
             },
         ]);
-    });
-
-    it('LIST_ASSOC_DEV write', () => {
-        expect(() => {
-            const bufallo = new BuffaloZnp(Buffer.alloc(10), 1);
-            bufallo.write(ParameterType.LIST_ASSOC_DEV, [], {});
-        }).toThrow();
-    });
-
-    it('LIST_ASSOC_DEV read 3', () => {
-        const buffer = Buffer.from([0x05, 0x10, 0x10, 0x09, 0x31, 0x13]);
-
-        const buffalo = new BuffaloZnp(buffer);
-        const value = buffalo.read(ParameterType.LIST_ASSOC_DEV, {length: 3, startIndex: 0});
-        expect(buffalo.getPosition()).toStrictEqual(6);
-        expect(value).toStrictEqual([4101, 2320, 4913]);
-    });
-
-    it('LIST_ASSOC_DEV read 75', () => {
-        const payload35 = duplicateArray(35, [0x10, 0x10]);
-        const payload5 = duplicateArray(5, [0x10, 0x10]);
-
-        const buffalo1 = new BuffaloZnp(Buffer.from(payload35));
-        const value1 = buffalo1.read(ParameterType.LIST_ASSOC_DEV, {length: 40, startIndex: 0});
-        expect(buffalo1.getPosition()).toStrictEqual(70);
-        expect(value1).toStrictEqual(duplicateArray(35, [4112]));
-
-        const buffalo2 = new BuffaloZnp(Buffer.from(payload5));
-        const value2 = buffalo2.read(ParameterType.LIST_ASSOC_DEV, {length: 40, startIndex: 35});
-        expect(buffalo2.getPosition()).toStrictEqual(10);
-        expect(value2).toStrictEqual(duplicateArray(5, [4112]));
     });
 
     it('BUFFER8 write', () => {
@@ -1295,28 +1147,15 @@ describe('ZNP', () => {
         expect(value).toStrictEqual(ieeeaAddr2.string);
     });
 
-    it.each([
-        ParameterType.BUFFER,
-        ParameterType.LIST_UINT8,
-        ParameterType.LIST_UINT16,
-        ParameterType.LIST_ROUTING_TABLE,
-        ParameterType.LIST_BIND_TABLE,
-        ParameterType.LIST_NEIGHBOR_LQI,
-        ParameterType.LIST_NETWORK,
-        ParameterType.LIST_ASSOC_DEV,
-    ])('Throws when read is missing required length option - param %s', (type) => {
-        expect(() => {
-            const buffalo = new BuffaloZnp(Buffer.alloc(1));
-            buffalo.read(type, {});
-        }).toThrow(`Cannot read ${ParameterType[type]} without length option specified`);
-    });
-
-    it('Throws when read LIST_ASSOC_DEV is missing required start index option', () => {
-        expect(() => {
-            const buffalo = new BuffaloZnp(Buffer.alloc(1));
-            buffalo.read(ParameterType.LIST_ASSOC_DEV, {length: 1});
-        }).toThrow(`Cannot read LIST_ASSOC_DEV without startIndex option specified`);
-    });
+    it.each([ParameterType.BUFFER, ParameterType.LIST_UINT8, ParameterType.LIST_UINT16, ParameterType.LIST_NETWORK])(
+        'Throws when read is missing required length option - param %s',
+        (type) => {
+            expect(() => {
+                const buffalo = new BuffaloZnp(Buffer.alloc(1));
+                buffalo.read(type, {});
+            }).toThrow(`Cannot read ${ParameterType[type]} without length option specified`);
+        },
+    );
 
     it('Coverage logger', async () => {
         consoleLogger.warning(() => 'Test warning', 'TestNS');

@@ -1,26 +1,41 @@
+import {ClusterId as ZdoClusterId} from '../../../zspec/zdo';
+import {Type as CommandType} from '../unpi/constants';
 import ParameterType from './parameterType';
 
-type MtType = number | number[] | string | Buffer | {[s: string]: number | string}[];
+export type MtType = number | number[] | string | Buffer | {[s: string]: number | string}[];
 
-interface MtParameter {
+export interface MtParameter {
     name: string;
     parameterType: ParameterType;
 }
 
-interface MtCmd {
+interface MtCmdBase {
     name: string;
     ID: number;
     type: number;
-    request?: MtParameter[];
-    response?: MtParameter[];
+    request: MtParameter[];
+    response: MtParameter[];
+    zdo: {cluterId: ZdoClusterId; convert: (buffer: Buffer) => Buffer};
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type ZpiObjectPayload = any;
+interface MtCmdAreq extends Omit<MtCmdBase, 'response' | 'zdo'> {
+    type: CommandType.AREQ;
+}
 
-interface BuffaloZnpOptions {
+interface MtCmdSreq extends Omit<MtCmdBase, 'zdo'> {
+    type: CommandType.SREQ;
+}
+
+export interface MtCmdAreqZdo extends Omit<MtCmdBase, 'response'> {
+    type: CommandType.AREQ;
+}
+
+export type MtCmd = MtCmdAreq | MtCmdSreq | MtCmdAreqZdo;
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type ZpiObjectPayload = {[s: string]: any};
+
+export interface BuffaloZnpOptions {
     length?: number;
     startIndex?: number;
 }
-
-export {ZpiObjectPayload, MtParameter, MtCmd, MtType, BuffaloZnpOptions};

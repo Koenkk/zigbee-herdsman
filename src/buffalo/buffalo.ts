@@ -185,8 +185,7 @@ class Buffalo {
     }
 
     public readIeeeAddr(): EUI64 {
-        const octets = Array.from(this.readBuffer(8).reverse());
-        return `0x${octets.map((octet) => octet.toString(16).padStart(2, '0')).join('')}`;
+        return `0x${Buffer.from(this.readBuffer(8)).reverse().toString('hex')}`;
     }
 
     public writeBuffer(values: Buffer | number[], length: number): void {

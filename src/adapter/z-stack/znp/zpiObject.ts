@@ -1,9 +1,13 @@
+import assert from 'assert';
+
+import {BuffaloZdo} from '../../../zspec/zdo/buffaloZdo';
 import {Frame as UnpiFrame} from '../unpi';
 import {MaxDataSize, Subsystem, Type} from '../unpi/constants';
 import BuffaloZnp from './buffaloZnp';
 import Definition from './definition';
 import ParameterType from './parameterType';
 import {BuffaloZnpOptions, MtCmd, MtParameter, MtType, ZpiObjectPayload} from './tstype';
+import {assertIsMtCmdAreqZdo} from './utils';
 
 const BufferAndListTypes = [
     ParameterType.BUFFER,
@@ -14,30 +18,23 @@ const BufferAndListTypes = [
     ParameterType.BUFFER42,
     ParameterType.BUFFER100,
     ParameterType.LIST_UINT16,
-    ParameterType.LIST_ROUTING_TABLE,
-    ParameterType.LIST_BIND_TABLE,
-    ParameterType.LIST_NEIGHBOR_LQI,
     ParameterType.LIST_NETWORK,
-    ParameterType.LIST_ASSOC_DEV,
     ParameterType.LIST_UINT8,
 ];
 
 class ZpiObject {
-    public readonly subsystem: Subsystem;
-    public readonly command: string;
-    public readonly commandID: number;
-    public readonly payload: ZpiObjectPayload;
     public readonly type: Type;
+    public readonly subsystem: Subsystem;
+    public readonly command: MtCmd;
+    public readonly payload: ZpiObjectPayload;
+    public readonly unpiFrame: UnpiFrame;
 
-    private readonly parameters: MtParameter[];
-
-    private constructor(type: Type, subsystem: Subsystem, command: string, commandID: number, payload: ZpiObjectPayload, parameters: MtParameter[]) {
+    private constructor(type: Type, subsystem: Subsystem, command: MtCmd, payload: ZpiObjectPayload, unpiFrame: UnpiFrame) {
+        this.type = type;
         this.subsystem = subsystem;
         this.command = command;
-        this.commandID = commandID;
         this.payload = payload;
-        this.type = type;
-        this.parameters = parameters;
+        this.unpiFrame = unpiFrame;
     }
 
     public static createRequest(subsystem: Subsystem, command: string, payload: ZpiObjectPayload): ZpiObject {
@@ -45,38 +42,39 @@ class ZpiObject {
             throw new Error(`Subsystem '${subsystem}' does not exist`);
         }
 
-        const cmd = Definition[subsystem].find((c: MtCmd): boolean => c.name === command);
-        if (cmd?.request === undefined) {
+        const cmd = Definition[subsystem].find((c) => c.name === command);
+        if (cmd === undefined) {
             throw new Error(`Command request '${command}' from subsystem '${subsystem}' not found`);
         }
 
-        return new ZpiObject(cmd.type, subsystem, command, cmd.ID, payload, cmd.request);
-    }
+        // Create the UnpiFrame
+        const buffalo = new BuffaloZnp(Buffer.alloc(MaxDataSize));
+        for (const parameter of cmd.request) {
+            const value = payload[parameter.name];
+            buffalo.write(parameter.parameterType, value, {});
+        }
+        const buffer = buffalo.getWritten();
+        const unpiFrame = new UnpiFrame(cmd.type, subsystem, cmd.ID, buffer);
 
-    public toUnpiFrame(): UnpiFrame {
-        const buffer = this.createPayloadBuffer();
-        return new UnpiFrame(this.type, this.subsystem, this.commandID, buffer);
+        return new ZpiObject(cmd.type, subsystem, cmd, payload, unpiFrame);
     }
 
     public static fromUnpiFrame(frame: UnpiFrame): ZpiObject {
-        const cmd = Definition[frame.subsystem].find((c: MtCmd): boolean => c.ID === frame.commandID);
+        const cmd = Definition[frame.subsystem].find((c) => c.ID === frame.commandID);
 
         if (!cmd) {
             throw new Error(`CommandID '${frame.commandID}' from subsystem '${frame.subsystem}' not found`);
         }
 
-        const parameters = frame.type === Type.SRSP ? cmd.response : cmd.request;
-
-        if (parameters === undefined) {
-            /* istanbul ignore next */
-            throw new Error(
-                `CommandID '${frame.commandID}' from subsystem '${frame.subsystem}' cannot be a ` +
-                    `${frame.type === Type.SRSP ? 'response' : 'request'}`,
-            );
-        }
-
-        const payload = this.readParameters(frame.data, parameters);
-        return new ZpiObject(frame.type, frame.subsystem, cmd.name, cmd.ID, payload, parameters);
+        let payload: ZpiObjectPayload = {};
+        const parameters = frame.type === Type.SRSP && cmd.type !== Type.AREQ ? cmd.response : cmd.request;
+        assert(
+            parameters,
+            `CommandID '${frame.commandID}' from subsystem '${frame.subsystem}' cannot be a ` +
+                `${frame.type === Type.SRSP ? 'response' : 'request'}`,
+        );
+        payload = this.readParameters(frame.data, parameters);
+        return new ZpiObject(frame.type, frame.subsystem, cmd, payload, frame);
     }
 
     private static readParameters(buffer: Buffer, parameters: MtParameter[]): ZpiObjectPayload {
@@ -96,17 +94,6 @@ class ZpiObject {
                 if (typeof length === 'number') {
                     options.length = length;
                 }
-
-                if (parameter.parameterType === ParameterType.LIST_ASSOC_DEV) {
-                    // For LIST_ASSOC_DEV, we also need to grab the startindex which is right before the length
-                    const startIndexParameter = parameters[parameters.indexOf(parameter) - 2];
-                    const startIndex: MtType = result[startIndexParameter.name];
-
-                    /* istanbul ignore else */
-                    if (typeof startIndex === 'number') {
-                        options.startIndex = startIndex;
-                    }
-                }
             }
 
             result[parameter.name] = buffalo.read(parameter.parameterType, options);
@@ -115,25 +102,22 @@ class ZpiObject {
         return result;
     }
 
-    private createPayloadBuffer(): Buffer {
-        const buffalo = new BuffaloZnp(Buffer.alloc(MaxDataSize));
-
-        for (const parameter of this.parameters) {
-            const value = this.payload[parameter.name];
-            buffalo.write(parameter.parameterType, value, {});
-        }
-
-        return buffalo.getWritten();
-    }
-
     public isResetCommand(): boolean {
         return (
-            (this.command === 'resetReq' && this.subsystem === Subsystem.SYS) || (this.command === 'systemReset' && this.subsystem === Subsystem.SAPI)
+            (this.command.name === 'resetReq' && this.subsystem === Subsystem.SYS) ||
+            // istanbul ignore next
+            (this.command.name === 'systemReset' && this.subsystem === Subsystem.SAPI)
         );
     }
 
+    public parseZdoPayload<T>(): T {
+        assertIsMtCmdAreqZdo(this.command);
+        const data = this.command.zdo.convert(this.unpiFrame.data);
+        return BuffaloZdo.readResponse(this.command.zdo.cluterId, data, false) as T;
+    }
+
     public toString(): string {
-        return `${Type[this.type]}: ${Subsystem[this.subsystem]} - ${this.command} - ${JSON.stringify(this.payload)}`;
+        return `${Type[this.type]}: ${Subsystem[this.subsystem]} - ${this.command.name} - ${JSON.stringify(this.payload)}`;
     }
 }
 

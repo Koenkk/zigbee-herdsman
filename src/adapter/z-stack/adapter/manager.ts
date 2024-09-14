@@ -16,6 +16,7 @@ import {AdapterBackup} from './adapter-backup';
 import {AdapterNvMemory} from './adapter-nv-memory';
 import {Endpoints} from './endpoints';
 import {ZnpVersion} from './tstype';
+import ZStackAdapter from './zStackAdapter';
 
 const NS = 'zh:adapter:zstack:manager';
 
@@ -33,12 +34,14 @@ export class ZnpAdapterManager {
     public backup: AdapterBackup;
 
     private znp: Znp;
+    private adapter: ZStackAdapter;
     private options: ZStackModels.StartupOptions;
     // @ts-expect-error initialized in `start()`
     private nwkOptions: Models.NetworkOptions;
 
-    public constructor(znp: Znp, options: ZStackModels.StartupOptions) {
+    public constructor(adapter: ZStackAdapter, znp: Znp, options: ZStackModels.StartupOptions) {
         this.znp = znp;
+        this.adapter = adapter;
         this.options = options;
         this.nv = new AdapterNvMemory(this.znp);
         this.backup = new AdapterBackup(this.znp, this.nv, this.options.backupPath);
@@ -449,13 +452,9 @@ export class ZnpAdapterManager {
      * Registers endpoints before beginning normal operation.
      */
     private async registerEndpoints(): Promise<void> {
-        const activeEpResponse = this.znp.waitFor(UnpiConstants.Type.AREQ, Subsystem.ZDO, 'activeEpRsp');
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
-        this.znp.request(Subsystem.ZDO, 'activeEpReq', {dstaddr: 0, nwkaddrofinterest: 0});
-        const activeEp = await activeEpResponse.start().promise;
-
+        const activeEp = await this.adapter.activeEndpoints(0);
         for (const endpoint of Endpoints) {
-            if (activeEp.payload.activeeplist.includes(endpoint.endpoint)) {
+            if (activeEp.endpoints.includes(endpoint.endpoint)) {
                 logger.debug(`endpoint '${endpoint.endpoint}' already registered`, NS);
             } else {
                 logger.debug(`registering endpoint '${endpoint.endpoint}'`, NS);
