@@ -6,6 +6,7 @@ import {Znp, ZpiObject} from '../../../src/adapter/z-stack/znp';
 import BuffaloZnp from '../../../src/adapter/z-stack/znp/buffaloZnp';
 import ParameterType from '../../../src/adapter/z-stack/znp/parameterType';
 import {logger, setLogger} from '../../../src/utils/logger';
+import * as Zdo from '../../../src/zspec/zdo';
 import {duplicateArray, ieeeaAddr1, ieeeaAddr2} from '../../testUtils';
 
 const mockLogger = {
@@ -855,33 +856,39 @@ describe('ZNP', () => {
         const buffer = Buffer.from([0, 0, 0, 1, 1, 2, 3, 4, 5, 6, 7, 8, 5]);
         const frame = new UnpiFrame(UnpiConstants.Type.AREQ, UnpiConstants.Subsystem.ZDO, 193, buffer);
         const obj = ZpiObject.fromUnpiFrame(frame);
-        expect(obj.parseZdoPayload()).toStrictEqual({
-            capabilities: {
-                allocateAddress: 0,
-                alternatePANCoordinator: 1,
-                deviceType: 0,
-                powerSource: 1,
-                reserved1: 0,
-                reserved2: 0,
-                rxOnWhenIdle: 0,
-                securityCapability: 0,
+        expect(obj.parseZdoPayload()).toStrictEqual([
+            Zdo.Status.SUCCESS,
+            {
+                capabilities: {
+                    allocateAddress: 0,
+                    alternatePANCoordinator: 1,
+                    deviceType: 0,
+                    powerSource: 1,
+                    reserved1: 0,
+                    reserved2: 0,
+                    rxOnWhenIdle: 0,
+                    securityCapability: 0,
+                },
+                eui64: '0x0807060504030201',
+                nwkAddress: 256,
             },
-            eui64: '0x0807060504030201',
-            nwkAddress: 256,
-        });
+        ]);
     });
 
     it('ZpiObject parseZdoPayload - nwkAddrRsp', async () => {
         const buffer = Buffer.from([0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x01, 0x01, 0x00, 0x02, 0x10, 0x10, 0x11, 0x11]);
         const frame = new UnpiFrame(UnpiConstants.Type.AREQ, UnpiConstants.Subsystem.ZDO, 128, buffer);
         const obj = ZpiObject.fromUnpiFrame(frame);
-        expect(obj.parseZdoPayload()).toStrictEqual({
-            assocDevList: [4112, 4369],
-            eui64: '0x0807060504030201',
-            // numassocdev: 2,
-            nwkAddress: 257,
-            startIndex: 0,
-        });
+        expect(obj.parseZdoPayload()).toStrictEqual([
+            Zdo.Status.SUCCESS,
+            {
+                assocDevList: [4112, 4369],
+                eui64: '0x0807060504030201',
+                // numassocdev: 2,
+                nwkAddress: 257,
+                startIndex: 0,
+            },
+        ]);
     });
 
     it('Cant read unsupported type', () => {

@@ -42,6 +42,7 @@ export class ZBOSSAdapter extends Adapter {
         adapterOptions: TsType.AdapterOptions,
     ) {
         super(networkOptions, serialPortOptions, backupPath, adapterOptions);
+        this.hasZdoMessageOverhead = false;
         const concurrent = adapterOptions && adapterOptions.concurrent ? adapterOptions.concurrent : 8;
         logger.debug(`Adapter concurrent: ${concurrent}`, NS);
         this.queue = new Queue(concurrent);

@@ -1,5 +1,12 @@
 import {ClusterId, EUI64, ExtendedPanId, NodeId, PanId, ProfileId} from '../../tstypes';
-import {ActiveLinkKeyType, InitialJoinMethod, JoiningPolicy, SelectedKeyNegotiationProtocol, SelectedPreSharedSecret} from './enums';
+import {
+    ActiveLinkKeyType,
+    InitialJoinMethod,
+    JoiningPolicy,
+    RoutingTableStatus,
+    SelectedKeyNegotiationProtocol,
+    SelectedPreSharedSecret,
+} from './enums';
 import {Status} from './status';
 
 /**
@@ -59,7 +66,7 @@ export type MACCapabilityFlags = {
  * - [networkManager: 1]
  * - [reserved1: 1]
  * - [reserved2: 1]
- * - [stackComplianceResivion: 7]
+ * - [stackComplianceRevision: 7]
  */
 export type ServerMask = {
     primaryTrustCenter: number;
@@ -77,7 +84,7 @@ export type ServerMask = {
      * A stack that is compliant to Revision 23 would set these bits to 23 (0010111b).
      * A stack SHALL indicate the Revision of the specification it is compliant to by setting these bits.
      */
-    stackComplianceResivion: number;
+    stackComplianceRevision: number;
 };
 
 //-------------------------------------------------------------------------------------------------
@@ -172,7 +179,7 @@ export type RoutingTableEntry = {
      *
      * 3-bit
      */
-    status: number;
+    status: keyof typeof RoutingTableStatus | 'UNKNOWN';
     /**
      * A flag indicating whether the device is a memory constrained concentrator
      *
@@ -261,7 +268,7 @@ export type NodeDescriptorResponse = {
     /** 000 == Zigbee Coordinator, 001 == Zigbee Router,  010 === Zigbee End Device, 011-111 === Reserved */
     logicalType: number;
     /** R23 and above (determined via other means if not). Indicates whether the device supports fragmentation at the APS layer. */
-    fragmentationSupported: boolean | null;
+    fragmentationSupported: boolean | undefined;
     /** Specifies the application support sub-layer capabilities of the node. Currently not supported, should be zero */
     apsFlags: number;
     /**
@@ -344,6 +351,8 @@ export type PowerDescriptorResponse = {
 export type SimpleDescriptorResponse = {
     /** NWK address for the request. */
     nwkAddress: NodeId;
+    /** Length of the descriptor */
+    length: number;
     /**
      * Specifies the endpoint within the node to which this description refers.
      * Applications SHALL only use endpoints 1-254.

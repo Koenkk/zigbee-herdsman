@@ -57,7 +57,7 @@ export const getServerMask = (serverMask: number): ServerMask => {
         networkManager: (serverMask & 0x40) >> 6,
         reserved1: (serverMask & 0x80) >> 7,
         reserved2: (serverMask & 0x100) >> 8,
-        stackComplianceResivion: (serverMask & 0xfe00) >> 9,
+        stackComplianceRevision: (serverMask & 0xfe00) >> 9,
     };
 };
 
@@ -72,6 +72,6 @@ export const createServerMask = (serverMask: ServerMask): number => {
         ((serverMask.networkManager << 6) & 0x40) |
         ((serverMask.reserved1 << 7) & 0x80) |
         ((serverMask.reserved2 << 8) & 0x100) |
-        ((serverMask.stackComplianceResivion << 9) & 0xfe00)
+        ((serverMask.stackComplianceRevision << 9) & 0xfe00)
     );
 };

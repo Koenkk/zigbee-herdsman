@@ -5,11 +5,12 @@ import debounce from 'debounce';
 import * as Models from '../../../models';
 import {Queue, Wait, Waitress} from '../../../utils';
 import {logger} from '../../../utils/logger';
+import * as ZSpec from '../../../zspec';
 import {BroadcastAddress} from '../../../zspec/enums';
 import * as Zcl from '../../../zspec/zcl';
+import * as Zdo from '../../../zspec/zdo';
 import {
     ActiveEndpointsResponse,
-    EndDeviceAnnounce,
     LQITableEntry,
     LQITableResponse,
     NetworkAddressResponse,
@@ -33,7 +34,6 @@ import {
     NodeDescriptor,
     RoutingTable,
     RoutingTableEntry,
-    RoutingTableStatus,
     SerialPortOptions,
     SimpleDescriptor,
     StartResult,
@@ -105,6 +105,7 @@ class ZStackAdapter extends Adapter {
 
     public constructor(networkOptions: NetworkOptions, serialPortOptions: SerialPortOptions, backupPath: string, adapterOptions: AdapterOptions) {
         super(networkOptions, serialPortOptions, backupPath, adapterOptions);
+        this.hasZdoMessageOverhead = false;
         this.znp = new Znp(this.serialPortOptions.path!, this.serialPortOptions.baudRate!, this.serialPortOptions.rtscts!);
 
         this.transactionID = 0;
@@ -159,7 +160,7 @@ class ZStackAdapter extends Adapter {
         this.adapterManager = new ZnpAdapterManager(this, this.znp, {
             backupPath: this.backupPath,
             version: this.version.product,
-            greenPowerGroup: this.greenPowerGroup,
+            greenPowerGroup: ZSpec.GP_GROUP_ID,
             networkOptions: this.networkOptions,
             adapterOptions: this.adapterOptions,
         });
@@ -762,7 +763,7 @@ class ZStackAdapter extends Adapter {
                 for (const entry of list) {
                     table.push({
                         destinationAddress: entry.destinationAddress,
-                        status: RoutingTableStatus[entry.status],
+                        status: entry.status,
                         nextHop: entry.nextHopAddress,
                     });
                 }
@@ -899,46 +900,54 @@ class ZStackAdapter extends Adapter {
 
                 this.emit('deviceJoined', payload);
             } else if (object.command.name === 'endDeviceAnnceInd') {
-                const zdoPayload = object.parseZdoPayload<EndDeviceAnnounce>();
-                const payload: Events.DeviceAnnouncePayload = {
-                    networkAddress: zdoPayload.nwkAddress,
-                    ieeeAddr: zdoPayload.eui64,
-                };
+                const zdoResult = object.parseZdoPayload();
 
-                // Only discover routes to end devices, if bit 1 of capabilities === 0 it's an end device.
-                const isEndDevice = zdoPayload.capabilities.deviceType === 0;
-                if (isEndDevice) {
-                    if (!this.deviceAnnounceRouteDiscoveryDebouncers.has(payload.networkAddress)) {
-                        // If a device announces multiple times in a very short time, it makes no sense
-                        // to rediscover the route every time.
-                        const debouncer = debounce(
-                            () => {
-                                // eslint-disable-next-line @typescript-eslint/no-floating-promises
-                                this.queue.execute<void>(async () => {
-                                    /* istanbul ignore next */
-                                    this.discoverRoute(payload.networkAddress, false).catch(() => {});
-                                }, payload.networkAddress);
-                            },
-                            60 * 1000,
-                            {immediate: true},
-                        );
-                        this.deviceAnnounceRouteDiscoveryDebouncers.set(payload.networkAddress, debouncer);
+                /* istanbul ignore else */
+                if (Zdo.Buffalo.checkStatus<Zdo.ClusterId.END_DEVICE_ANNOUNCE>(zdoResult)) {
+                    const payload: Events.DeviceAnnouncePayload = {
+                        networkAddress: zdoResult[1].nwkAddress,
+                        ieeeAddr: zdoResult[1].eui64,
+                    };
+
+                    // Only discover routes to end devices, if bit 1 of capabilities === 0 it's an end device.
+                    const isEndDevice = zdoResult[1].capabilities.deviceType === 0;
+                    if (isEndDevice) {
+                        if (!this.deviceAnnounceRouteDiscoveryDebouncers.has(payload.networkAddress)) {
+                            // If a device announces multiple times in a very short time, it makes no sense
+                            // to rediscover the route every time.
+                            const debouncer = debounce(
+                                () => {
+                                    // eslint-disable-next-line @typescript-eslint/no-floating-promises
+                                    this.queue.execute<void>(async () => {
+                                        /* istanbul ignore next */
+                                        this.discoverRoute(payload.networkAddress, false).catch(() => {});
+                                    }, payload.networkAddress);
+                                },
+                                60 * 1000,
+                                {immediate: true},
+                            );
+                            this.deviceAnnounceRouteDiscoveryDebouncers.set(payload.networkAddress, debouncer);
+                        }
+
+                        const debouncer = this.deviceAnnounceRouteDiscoveryDebouncers.get(payload.networkAddress);
+                        assert(debouncer);
+                        debouncer();
                     }
 
-                    const debouncer = this.deviceAnnounceRouteDiscoveryDebouncers.get(payload.networkAddress);
-                    assert(debouncer);
-                    debouncer();
+                    this.emit('deviceAnnounce', payload);
                 }
-
-                this.emit('deviceAnnounce', payload);
             } else if (object.command.name === 'nwkAddrRsp') {
-                const zdoPayload = object.parseZdoPayload<NetworkAddressResponse>();
-                const payload: Events.NetworkAddressPayload = {
-                    networkAddress: zdoPayload.nwkAddress,
-                    ieeeAddr: zdoPayload.eui64,
-                };
+                const zdoResult = object.parseZdoPayload();
 
-                this.emit('networkAddress', payload);
+                /* istanbul ignore else */
+                if (Zdo.Buffalo.checkStatus<Zdo.ClusterId.NETWORK_ADDRESS_RESPONSE>(zdoResult)) {
+                    const payload: Events.NetworkAddressPayload = {
+                        networkAddress: zdoResult[1].nwkAddress,
+                        ieeeAddr: zdoResult[1].eui64,
+                    };
+
+                    this.emit('networkAddress', payload);
+                }
             } else if (object.command.name === 'concentratorIndCb') {
                 // Some routers may change short addresses and the announcement
                 // is missed by the coordinator. This can happen when there are
@@ -1123,10 +1132,12 @@ class ZStackAdapter extends Adapter {
             return new Promise<T>((resolve, reject) => {
                 startResult.promise
                     .then((response) => {
-                        try {
-                            resolve(response.parseZdoPayload());
-                        } catch (error) {
-                            reject(error);
+                        const [status, payload] = response.parseZdoPayload();
+
+                        if (status === Zdo.Status.SUCCESS) {
+                            resolve(payload as T);
+                        } else {
+                            reject(new Zdo.StatusError(status));
                         }
                     })
                     .catch(reject);

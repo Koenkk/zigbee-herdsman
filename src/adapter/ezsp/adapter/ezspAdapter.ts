@@ -56,6 +56,7 @@ class EZSPAdapter extends Adapter {
 
     public constructor(networkOptions: NetworkOptions, serialPortOptions: SerialPortOptions, backupPath: string, adapterOptions: AdapterOptions) {
         super(networkOptions, serialPortOptions, backupPath, adapterOptions);
+        this.hasZdoMessageOverhead = true;
 
         this.waitress = new Waitress<Events.ZclPayload, WaitressMatcher>(this.waitressValidator, this.waitressTimeoutFormatter);
         this.interpanLock = false;
@@ -65,7 +66,7 @@ class EZSPAdapter extends Adapter {
         logger.debug(`Adapter concurrent: ${concurrent}`, NS);
         this.queue = new Queue(concurrent);
 
-        this.driver = new Driver(this.serialPortOptions, this.networkOptions, this.greenPowerGroup, backupPath);
+        this.driver = new Driver(this.serialPortOptions, this.networkOptions, backupPath);
         this.driver.on('close', this.onDriverClose.bind(this));
         this.driver.on('deviceJoined', this.handleDeviceJoin.bind(this));
         this.driver.on('deviceLeft', this.handleDeviceLeft.bind(this));

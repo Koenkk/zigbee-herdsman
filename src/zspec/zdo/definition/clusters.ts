@@ -501,7 +501,7 @@ export enum ClusterId {
      * Response: [transaction sequence number: 1] [status: 1] [ieee joining list update id: 1] [joining policy: 1]
      *           [ieee joining list total: 1] [start index: 1] [ieee joining count: 1] [ieee:8]*
      */
-    NWK_IEEE_JOINING_LIST_REPONSE = 0x803a,
+    NWK_IEEE_JOINING_LIST_RESPONSE = 0x803a,
 
     /**
      * Response: [transaction sequence number: 1] [status: 1] [channel in use: 4] [mac tx ucast total: 2] [mac tx ucast failures: 2]

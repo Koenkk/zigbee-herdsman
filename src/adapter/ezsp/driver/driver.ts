@@ -6,6 +6,7 @@ import equals from 'fast-deep-equal/es6';
 
 import {Wait, Waitress} from '../../../utils';
 import {logger} from '../../../utils/logger';
+import * as ZSpec from '../../../zspec';
 import {Clusters} from '../../../zspec/zcl/definition/cluster';
 import {EZSPAdapterBackup} from '../adapter/backup';
 import * as TsType from './../../tstype';
@@ -92,7 +93,6 @@ export class Driver extends EventEmitter {
     // @ts-expect-error XXX: init in startup
     public ezsp: Ezsp;
     private nwkOpt: TsType.NetworkOptions;
-    private greenPowerGroup: number;
     // @ts-expect-error XXX: init in startup
     public networkParams: EmberNetworkParameters;
     // @ts-expect-error XXX: init in startup
@@ -114,12 +114,11 @@ export class Driver extends EventEmitter {
     private serialOpt: TsType.SerialPortOptions;
     public backupMan: EZSPAdapterBackup;
 
-    constructor(serialOpt: TsType.SerialPortOptions, nwkOpt: TsType.NetworkOptions, greenPowerGroup: number, backupPath: string) {
+    constructor(serialOpt: TsType.SerialPortOptions, nwkOpt: TsType.NetworkOptions, backupPath: string) {
         super();
 
         this.nwkOpt = nwkOpt;
         this.serialOpt = serialOpt;
-        this.greenPowerGroup = greenPowerGroup;
         this.waitress = new Waitress<EmberFrame, EmberWaitressMatcher>(this.waitressValidator, this.waitressTimeoutFormatter);
         this.backupMan = new EZSPAdapterBackup(this, backupPath);
     }
@@ -296,7 +295,7 @@ export class Driver extends EventEmitter {
 
         this.multicast = new Multicast(this);
         await this.multicast.startup([]);
-        await this.multicast.subscribe(this.greenPowerGroup, 242);
+        await this.multicast.subscribe(ZSpec.GP_GROUP_ID, ZSpec.GP_ENDPOINT);
         // await this.multicast.subscribe(1, 901);
 
         return result;
