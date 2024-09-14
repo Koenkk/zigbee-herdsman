@@ -86,3 +86,14 @@ export enum GlobalTLV {
     DEVICE_CAPABILITY_EXTENSION = 76,
     // Reserved = 77-255
 }
+
+export enum RoutingTableStatus {
+    ACTIVE = 0x0,
+    DISCOVERY_UNDERWAY = 0x1,
+    DISCOVERY_FAILED = 0x2,
+    INACTIVE = 0x3,
+    VALIDATION_UNDERWAY = 0x4,
+    RESERVED1 = 0x5,
+    RESERVED2 = 0x6,
+    RESERVED3 = 0x7,
+}

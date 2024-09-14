@@ -44,6 +44,7 @@ class ZiGateAdapter extends Adapter {
         adapterOptions: TsType.AdapterOptions,
     ) {
         super(networkOptions, serialPortOptions, backupPath, adapterOptions);
+        this.hasZdoMessageOverhead = false;
 
         this.joinPermitted = false;
         this.closing = false;

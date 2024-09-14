@@ -2437,7 +2437,20 @@ describe('Ember Adapter Layer', () => {
         it('Adapter impl: throws when permitJoin on coordinator fails due to failed request', async () => {
             mockEzspPermitJoining.mockResolvedValueOnce(SLStatus.FAIL);
 
-            await expect(adapter.permitJoin(250, 0)).rejects.toThrow(`[ZDO] Failed permit joining request with status=${SLStatus[SLStatus.FAIL]}.`);
+            await expect(adapter.permitJoin(250, 0)).rejects.toThrow(
+                `[ZDO] Failed coordinator permit joining request with status=${SLStatus[SLStatus.FAIL]}.`,
+            );
+        });
+
+        it('Adapter impl: log error when permitJoin broadcast fails due to failed request', async () => {
+            mockEzspSendBroadcast.mockResolvedValueOnce([SLStatus.FAIL, 0]);
+
+            await adapter.permitJoin(250, undefined);
+
+            expect(loggerSpies.error).toHaveBeenCalledWith(
+                `[ZDO] Failed broadcast permit joining request with status=${SLStatus[SLStatus.FAIL]}.`,
+                'zh:ember',
+            );
         });
 
         it('Adapter impl: throws when permitJoin on router fails due to failed ZDO status', async () => {
@@ -2762,7 +2775,7 @@ describe('Ember Adapter Layer', () => {
                 groupId: 0,
                 sequence: 0,
             };
-            // for coverage of stackComplianceResivion detection
+            // for coverage of stackComplianceRevision detection
             const serverMask = Zdo.Utils.createServerMask({
                 primaryTrustCenter: 0,
                 backupTrustCenter: 0,
@@ -2773,7 +2786,7 @@ describe('Ember Adapter Layer', () => {
                 networkManager: 0,
                 reserved1: 0,
                 reserved2: 0,
-                stackComplianceResivion: 0,
+                stackComplianceRevision: 0,
             });
 
             mockEzspSendUnicast.mockImplementationOnce(() => {
@@ -2832,7 +2845,7 @@ describe('Ember Adapter Layer', () => {
                 groupId: 0,
                 sequence: 0,
             };
-            // for coverage of stackComplianceResivion detection
+            // for coverage of stackComplianceRevision detection
             const serverMask = Zdo.Utils.createServerMask({
                 primaryTrustCenter: 0,
                 backupTrustCenter: 0,
@@ -2843,7 +2856,7 @@ describe('Ember Adapter Layer', () => {
                 networkManager: 0,
                 reserved1: 0,
                 reserved2: 0,
-                stackComplianceResivion: 21,
+                stackComplianceRevision: 21,
             });
 
             mockEzspSendUnicast.mockImplementationOnce(() => {

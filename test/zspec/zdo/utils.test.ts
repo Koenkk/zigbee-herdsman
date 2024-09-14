@@ -185,7 +185,7 @@ describe('ZDO Utils', () => {
                 networkManager: 0,
                 reserved1: 0,
                 reserved2: 0,
-                stackComplianceResivion: 0,
+                stackComplianceRevision: 0,
             },
         ],
         [
@@ -200,7 +200,7 @@ describe('ZDO Utils', () => {
                 networkManager: 0,
                 reserved1: 0,
                 reserved2: 0,
-                stackComplianceResivion: 0,
+                stackComplianceRevision: 0,
             },
         ],
         [
@@ -215,7 +215,7 @@ describe('ZDO Utils', () => {
                 networkManager: 1,
                 reserved1: 0,
                 reserved2: 0,
-                stackComplianceResivion: 23,
+                stackComplianceRevision: 23,
             },
         ],
         [
@@ -230,7 +230,7 @@ describe('ZDO Utils', () => {
                 networkManager: 1,
                 reserved1: 0,
                 reserved2: 0,
-                stackComplianceResivion: 21,
+                stackComplianceRevision: 21,
             },
         ],
     ])('Gets & Creates server mask for %s', (value, expected) => {

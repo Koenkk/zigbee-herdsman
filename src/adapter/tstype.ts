@@ -51,17 +51,6 @@ interface LQI {
     neighbors: LQINeighbor[];
 }
 
-enum RoutingTableStatus {
-    ACTIVE = 0x0,
-    DISCOVERY_UNDERWAY = 0x1,
-    DISCOVERY_FAILED = 0x2,
-    INACTIVE = 0x3,
-    VALIDATION_UNDERWAY = 0x4,
-    RESERVED1 = 0x5,
-    RESERVED2 = 0x6,
-    RESERVED3 = 0x7,
-}
-
 interface RoutingTableEntry {
     destinationAddress: number;
     status: string;
@@ -124,5 +113,4 @@ export {
     StartResult,
     RoutingTableEntry,
     AdapterOptions,
-    RoutingTableStatus,
 };

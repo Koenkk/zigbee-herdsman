@@ -126,8 +126,7 @@ export class EmberOneWaitress {
             if (
                 sender === waiter.matcher.target &&
                 apsFrame.profileId === waiter.matcher.apsFrame.profileId &&
-                apsFrame.clusterId ===
-                    (waiter.matcher.responseClusterId != null ? waiter.matcher.responseClusterId : waiter.matcher.apsFrame.clusterId)
+                apsFrame.clusterId === (waiter.matcher.responseClusterId ?? waiter.matcher.apsFrame.clusterId)
             ) {
                 clearTimeout(waiter.timer);
 

@@ -21,7 +21,7 @@ interface AdapterEventMap {
 }
 
 abstract class Adapter extends events.EventEmitter<AdapterEventMap> {
-    public readonly greenPowerGroup = 0x0b84;
+    public hasZdoMessageOverhead: boolean;
     protected networkOptions: TsType.NetworkOptions;
     protected adapterOptions: TsType.AdapterOptions;
     protected serialPortOptions: TsType.SerialPortOptions;
@@ -34,6 +34,7 @@ abstract class Adapter extends events.EventEmitter<AdapterEventMap> {
         adapterOptions: TsType.AdapterOptions,
     ) {
         super();
+        this.hasZdoMessageOverhead = true;
         this.networkOptions = networkOptions;
         this.adapterOptions = adapterOptions;
         this.serialPortOptions = serialPortOptions;
