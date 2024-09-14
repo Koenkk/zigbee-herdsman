@@ -328,8 +328,8 @@ class Znp extends events.EventEmitter {
         let payloadMatch = true;
 
         if (matcher.payload) {
-            for (const [key, value] of Object.entries(matcher.payload)) {
-                if (!Equals(zpiObject.payload[key], value)) {
+            for (const key in matcher.payload) {
+                if (!Equals(zpiObject.payload[key], matcher.payload[key])) {
                     payloadMatch = false;
                     break;
                 }

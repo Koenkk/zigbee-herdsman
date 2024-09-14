@@ -1,3 +1,5 @@
+import assert from 'assert';
+
 import {BuffaloZdo} from '../../../zspec/zdo/buffaloZdo';
 import {Frame as UnpiFrame} from '../unpi';
 import {MaxDataSize, Subsystem, Type} from '../unpi/constants';
@@ -66,16 +68,12 @@ class ZpiObject {
 
         let payload: ZpiObjectPayload = {};
         const parameters = frame.type === Type.SRSP && cmd.type !== Type.AREQ ? cmd.response : cmd.request;
-        /* istanbul ignore if */
-        if (parameters === undefined) {
-            throw new Error(
-                `CommandID '${frame.commandID}' from subsystem '${frame.subsystem}' cannot be a ` +
-                    `${frame.type === Type.SRSP ? 'response' : 'request'}`,
-            );
-        }
-
+        assert(
+            parameters,
+            `CommandID '${frame.commandID}' from subsystem '${frame.subsystem}' cannot be a ` +
+                `${frame.type === Type.SRSP ? 'response' : 'request'}`,
+        );
         payload = this.readParameters(frame.data, parameters);
-
         return new ZpiObject(frame.type, frame.subsystem, cmd, payload, frame);
     }
 
