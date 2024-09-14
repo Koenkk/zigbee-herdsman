@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.57.4](https://github.com/Koenkk/zigbee-herdsman/compare/v0.57.3...v0.57.4) (2024-09-14)
+
+
+### Bug Fixes
+
+* Add missing response ID to `view` command ([#1181](https://github.com/Koenkk/zigbee-herdsman/issues/1181)) ([fc229cc](https://github.com/Koenkk/zigbee-herdsman/commit/fc229cc26404bdce6dacffaeb80561da06d78f36))
+* Fix `Error: CommandID '159' from subsystem '5' not found` https://github.com/Koenkk/zigbee2mqtt/issues/3363 ([c77db30](https://github.com/Koenkk/zigbee-herdsman/commit/c77db3067ddabc1d047fe7e94929d6116bd3a15d))
+* Fix two docs typos in device.ts ([#1182](https://github.com/Koenkk/zigbee-herdsman/issues/1182)) ([3d4b374](https://github.com/Koenkk/zigbee-herdsman/commit/3d4b3749c0780494d3142a874d6b5abb2ad5c678))
+* **ignore:** Improve performance when logging is disabled ([#1178](https://github.com/Koenkk/zigbee-herdsman/issues/1178)) ([f3fc0d7](https://github.com/Koenkk/zigbee-herdsman/commit/f3fc0d7334be6701d396ae3ef556a2618a68f80e))
+* **ignore:** Sync eslint settings from zhc ([#1185](https://github.com/Koenkk/zigbee-herdsman/issues/1185)) ([e2683ed](https://github.com/Koenkk/zigbee-herdsman/commit/e2683ed6586beb4963ef454f86e3cb4565f1dee6))
+* **ignore:** update dependencies ([#1179](https://github.com/Koenkk/zigbee-herdsman/issues/1179)) ([b001834](https://github.com/Koenkk/zigbee-herdsman/commit/b001834e7c602c24db4b39d84b14015ad55d0223))
+* Use BuffaloZdo in ZStackAdapter ([#1133](https://github.com/Koenkk/zigbee-herdsman/issues/1133)) ([4fa371d](https://github.com/Koenkk/zigbee-herdsman/commit/4fa371df704299c9987378787b8310c6b952dc86))
+* ZDO spec: improve build/read logic and typing ([#1186](https://github.com/Koenkk/zigbee-herdsman/issues/1186)) ([c8cb557](https://github.com/Koenkk/zigbee-herdsman/commit/c8cb557a6bd38b90608558c8944c86c11b334d29))
+
 ## [0.57.3](https://github.com/Koenkk/zigbee-herdsman/compare/v0.57.2...v0.57.3) (2024-09-06)
 
 
