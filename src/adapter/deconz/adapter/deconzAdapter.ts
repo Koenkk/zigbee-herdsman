@@ -9,6 +9,8 @@ import {Queue, Waitress} from '../../../utils';
 import {logger} from '../../../utils/logger';
 import {BroadcastAddress} from '../../../zspec/enums';
 import * as Zcl from '../../../zspec/zcl';
+import * as Zdo from '../../../zspec/zdo';
+import * as ZdoTypes from '../../../zspec/zdo/definition/tstypes';
 import Adapter from '../../adapter';
 import * as Events from '../../events';
 import {
@@ -842,6 +844,60 @@ class DeconzAdapter extends Adapter {
         const waiter = this.waitress.waitFor(payload, timeout);
         const cancel = (): void => this.waitress.remove(waiter.ID);
         return {promise: waiter.start().promise, cancel};
+    }
+
+    public async sendZdo(
+        ieeeAddress: string,
+        networkAddress: number,
+        clusterId: Zdo.ClusterId,
+        payload: Buffer,
+        disableResponse: true,
+    ): Promise<void>;
+    public async sendZdo<K extends keyof ZdoTypes.RequestToResponseMap>(
+        ieeeAddress: string,
+        networkAddress: number,
+        clusterId: K,
+        payload: Buffer,
+        disableResponse: false,
+    ): Promise<ZdoTypes.RequestToResponseMap[K]>;
+    public async sendZdo<K extends keyof ZdoTypes.RequestToResponseMap>(
+        ieeeAddress: string,
+        networkAddress: number,
+        clusterId: K,
+        payload: Buffer,
+        disableResponse: boolean,
+    ): Promise<ZdoTypes.RequestToResponseMap[K] | void> {
+        const transactionID = this.nextTransactionID();
+        payload[0] = transactionID;
+        const req: ApsDataRequest = {
+            requestId: transactionID,
+            destAddrMode: PARAM.PARAM.addressMode.NWK_ADDR,
+            destAddr16: networkAddress,
+            destEndpoint: 0,
+            profileId: 0,
+            clusterId,
+            srcEndpoint: 0,
+            asduLength: payload.length,
+            asduPayload: Array.from(payload),
+            txOptions: 0,
+            radius: PARAM.PARAM.txRadius.DEFAULT_RADIUS,
+            timeout: 30,
+        };
+
+        logger.debug(`UNSUPPORTED sendZdo(${ieeeAddress}, ${networkAddress}, ${clusterId}, ${payload}, ${disableResponse})`, NS);
+        this.driver
+            .enqueueSendDataRequest(req)
+            .then(() => {})
+            .catch(() => {});
+
+        if (!disableResponse) {
+            const responseClusterId = Zdo.Utils.getResponseClusterId(clusterId);
+
+            if (responseClusterId) {
+                // TODO: response from Zdo.Buffalo
+                // return await this.waitForData(networkAddress, Zdo.ZDO_PROFILE_ID, responseClusterId);
+            }
+        }
     }
 
     public async sendZclFrameToEndpoint(

@@ -9,6 +9,7 @@ import * as ZSpec from '../../../zspec';
 import {BroadcastAddress} from '../../../zspec/enums';
 import * as Zcl from '../../../zspec/zcl';
 import * as Zdo from '../../../zspec/zdo';
+import * as ZdoTypes from '../../../zspec/zdo/definition/tstypes';
 import {
     ActiveEndpointsResponse,
     LQITableEntry,
@@ -370,6 +371,99 @@ class ZStackAdapter extends Adapter {
                 outputClusters: descriptor.outClusterList,
             };
         }, networkAddress);
+    }
+
+    public async sendZdo(
+        ieeeAddress: string,
+        networkAddress: number,
+        clusterId: Zdo.ClusterId,
+        payload: Buffer,
+        disableResponse: true,
+    ): Promise<void>;
+    public async sendZdo<K extends keyof ZdoTypes.RequestToResponseMap>(
+        ieeeAddress: string,
+        networkAddress: number,
+        clusterId: K,
+        payload: Buffer,
+        disableResponse: false,
+    ): Promise<ZdoTypes.RequestToResponseMap[K]>;
+    public async sendZdo<K extends keyof ZdoTypes.RequestToResponseMap>(
+        ieeeAddress: string,
+        networkAddress: number,
+        clusterId: K,
+        payload: Buffer,
+        disableResponse: boolean,
+    ): Promise<ZdoTypes.RequestToResponseMap[K] | void> {
+        return await this.queue.execute(async () => {
+            this.checkInterpanLock();
+
+            // stack-specific requirements
+            switch (clusterId) {
+                case Zdo.ClusterId.PERMIT_JOINING_REQUEST: {
+                    const prefixedPayload = Buffer.alloc(payload.length + 3);
+                    prefixedPayload.writeUInt8(ZSpec.BroadcastAddress[networkAddress] ? AddressMode.ADDR_BROADCAST : AddressMode.ADDR_16BIT, 0);
+                    // TODO: confirm zstack uses AddressMode.ADDR_16BIT + ZSpec.BroadcastAddress.DEFAULT to signal "coordinator-only" (assumed from previous code)
+                    prefixedPayload.writeUInt16LE(networkAddress === 0 ? ZSpec.BroadcastAddress.DEFAULT : networkAddress, 1);
+                    prefixedPayload.set(payload, 3);
+
+                    payload = prefixedPayload;
+                    break;
+                }
+
+                case Zdo.ClusterId.NWK_UPDATE_REQUEST: {
+                    // extra zeroes for empty nwkManagerAddr if necessary
+                    const zeroes = 9 - payload.length - 1; /* TODO: zstack doesn't have nwkUpdateId? */
+                    const prefixedPayload = Buffer.alloc(payload.length + 3 + zeroes);
+                    prefixedPayload.writeUInt16LE(networkAddress, 0);
+                    prefixedPayload.writeUInt8(ZSpec.BroadcastAddress[networkAddress] ? AddressMode.ADDR_BROADCAST : AddressMode.ADDR_16BIT, 2);
+                    prefixedPayload.set(payload, 3);
+
+                    payload = prefixedPayload;
+                    break;
+                }
+
+                case Zdo.ClusterId.BIND_REQUEST:
+                case Zdo.ClusterId.UNBIND_REQUEST: {
+                    // extra zeroes for uint16 (in place of ieee when MULTICAST) and endpoint
+                    // TODO: blank endpoint at end should be fine since should not be used with MULTICAST bind type?
+                    const zeroes = 21 - payload.length;
+                    const prefixedPayload = Buffer.alloc(payload.length + 2 + zeroes);
+                    prefixedPayload.writeUInt16LE(networkAddress, 0);
+                    prefixedPayload.set(payload, 2);
+
+                    payload = prefixedPayload;
+                    break;
+                }
+
+                case Zdo.ClusterId.NETWORK_ADDRESS_REQUEST: {
+                    // no modification necessary
+                    break;
+                }
+
+                default: {
+                    const prefixedPayload = Buffer.alloc(payload.length + 2);
+                    prefixedPayload.writeUInt16LE(networkAddress, 0);
+                    prefixedPayload.set(payload, 2);
+
+                    payload = prefixedPayload;
+                    break;
+                }
+            }
+
+            logger.debug(`UNSUPPORTED sendZdo(${ieeeAddress}, ${networkAddress}, ${clusterId}, ${payload}, ${disableResponse})`, NS);
+            // TODO: https://github.com/Nerivec/zigbee-herdsman/blob/zdo-tmp/src/adapter/z-stack/znp/znp.ts#L333
+            // await this.znp.requestZdo(clusterId, payload);
+
+            if (!disableResponse) {
+                const responseClusterId = Zdo.Utils.getResponseClusterId(clusterId);
+
+                if (responseClusterId) {
+                    // TODO
+                    // const response = this.waitForAreqZdo(responseClusterId, {srcaddr: networkAddress});
+                    // return response.start();
+                }
+            }
+        }, networkAddress /* TODO: replace with ieeeAddress once zdo moved upstream */);
     }
 
     public async sendZclFrameToEndpoint(
@@ -892,6 +986,11 @@ class ZStackAdapter extends Adapter {
         }
 
         if (object.subsystem === Subsystem.ZDO) {
+            // TODO: emit in a generic way?
+            // if (object.command.zdo?.clusterId !== undefined) {
+            //     this.emit('zdoResponse', object.command.zdo.clusterId, object.parseZdoPayload());
+            // }
+
             if (object.command.name === 'tcDeviceInd') {
                 const payload: Events.DeviceJoinedPayload = {
                     networkAddress: object.payload.nwkaddr,
@@ -902,6 +1001,7 @@ class ZStackAdapter extends Adapter {
             } else if (object.command.name === 'endDeviceAnnceInd') {
                 const zdoResult = object.parseZdoPayload();
 
+                // TODO: better way???
                 /* istanbul ignore else */
                 if (Zdo.Buffalo.checkStatus<Zdo.ClusterId.END_DEVICE_ANNOUNCE>(zdoResult)) {
                     const payload: Events.DeviceAnnouncePayload = {
@@ -933,21 +1033,11 @@ class ZStackAdapter extends Adapter {
                         assert(debouncer);
                         debouncer();
                     }
-
-                    this.emit('deviceAnnounce', payload);
                 }
+
+                this.emit('zdoResponse', Zdo.ClusterId.END_DEVICE_ANNOUNCE, zdoResult);
             } else if (object.command.name === 'nwkAddrRsp') {
-                const zdoResult = object.parseZdoPayload();
-
-                /* istanbul ignore else */
-                if (Zdo.Buffalo.checkStatus<Zdo.ClusterId.NETWORK_ADDRESS_RESPONSE>(zdoResult)) {
-                    const payload: Events.NetworkAddressPayload = {
-                        networkAddress: zdoResult[1].nwkAddress,
-                        ieeeAddr: zdoResult[1].eui64,
-                    };
-
-                    this.emit('networkAddress', payload);
-                }
+                this.emit('zdoResponse', Zdo.ClusterId.NETWORK_ADDRESS_RESPONSE, object.parseZdoPayload());
             } else if (object.command.name === 'concentratorIndCb') {
                 // Some routers may change short addresses and the announcement
                 // is missed by the coordinator. This can happen when there are

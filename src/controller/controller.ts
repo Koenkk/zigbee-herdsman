@@ -10,6 +10,8 @@ import {logger} from '../utils/logger';
 import {isNumberArrayOfLength} from '../utils/utils';
 import * as Zcl from '../zspec/zcl';
 import {FrameControl} from '../zspec/zcl/definition/tstype';
+import * as Zdo from '../zspec/zdo';
+import {GenericZdoResponse} from '../zspec/zdo/definition/tstypes';
 import Database from './database';
 import * as Events from './events';
 import GreenPower from './greenPower';
@@ -164,6 +166,7 @@ class Controller extends events.EventEmitter<ControllerEventMap> {
         // Register adapter events
         this.adapter.on('deviceJoined', this.onDeviceJoined.bind(this));
         this.adapter.on('zclPayload', this.onZclPayload.bind(this));
+        this.adapter.on('zdoResponse', this.onZdoResponse.bind(this));
         this.adapter.on('disconnected', this.onAdapterDisconnected.bind(this));
         this.adapter.on('deviceAnnounce', this.onDeviceAnnounce.bind(this));
         this.adapter.on('deviceLeave', this.onDeviceLeave.bind(this));
@@ -668,6 +671,28 @@ class Controller extends events.EventEmitter<ControllerEventMap> {
                 `Not interviewing '${payload.ieeeAddr}', completed '${device.interviewCompleted}', in progress '${device.interviewing}'`,
                 NS,
             );
+        }
+    }
+
+    private async onZdoResponse(clusterId: Zdo.ClusterId, response: GenericZdoResponse): Promise<void> {
+        if (clusterId === Zdo.ClusterId.NETWORK_ADDRESS_RESPONSE) {
+            if (Zdo.Buffalo.checkStatus<Zdo.ClusterId.NETWORK_ADDRESS_RESPONSE>(response)) {
+                const payload = response[1];
+
+                this.onNetworkAddress({
+                    networkAddress: payload.nwkAddress,
+                    ieeeAddr: payload.eui64,
+                });
+            }
+        } else if (clusterId === Zdo.ClusterId.END_DEVICE_ANNOUNCE) {
+            if (Zdo.Buffalo.checkStatus<Zdo.ClusterId.END_DEVICE_ANNOUNCE>(response)) {
+                const payload = response[1];
+
+                this.onDeviceAnnounce({
+                    networkAddress: payload.nwkAddress,
+                    ieeeAddr: payload.eui64,
+                });
+            }
         }
     }
 

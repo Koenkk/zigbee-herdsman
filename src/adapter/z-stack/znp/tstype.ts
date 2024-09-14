@@ -15,7 +15,7 @@ interface MtCmdBase {
     type: number;
     request: MtParameter[];
     response: MtParameter[];
-    zdo: {cluterId: ZdoClusterId; convert: (buffer: Buffer) => Buffer};
+    zdo: {clusterId: ZdoClusterId; convert: (buffer: Buffer) => Buffer};
 }
 
 interface MtCmdAreq extends Omit<MtCmdBase, 'response' | 'zdo'> {

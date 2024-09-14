@@ -113,7 +113,7 @@ class ZpiObject {
     public parseZdoPayload(): ReturnType<typeof BuffaloZdo.readResponse> {
         assertIsMtCmdAreqZdo(this.command);
         const data = this.command.zdo.convert(this.unpiFrame.data);
-        return BuffaloZdo.readResponse(false, this.command.zdo.cluterId, data);
+        return BuffaloZdo.readResponse(false, this.command.zdo.clusterId, data);
     }
 
     public toString(): string {

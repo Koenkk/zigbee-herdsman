@@ -3,8 +3,7 @@
 import equals from 'fast-deep-equal/es6';
 
 import {TOUCHLINK_PROFILE_ID} from '../../../zspec/consts';
-import {NodeId} from '../../../zspec/tstypes';
-import * as Zdo from '../../../zspec/zdo/';
+import {EUI64, NodeId} from '../../../zspec/tstypes';
 import {ZclPayload} from '../../events';
 import {EmberApsFrame} from '../types';
 
@@ -20,12 +19,13 @@ export enum OneWaitressEvents {
 type OneWaitressMatcher = {
     /**
      * Matches `indexOrDestination` in `ezspMessageSentHandler` or `sender` in `ezspIncomingMessageHandler`
+     * EUI64 is currently only for NetworkAddress Request/Response
      * Except for InterPAN touchlink, it should always be present.
      */
-    target?: NodeId;
+    target?: NodeId | EUI64;
     apsFrame: EmberApsFrame;
-    /** Cluster ID for when the response doesn't match the request. Takes priority over apsFrame.clusterId. Should be mostly for ZDO requests. */
-    responseClusterId?: number;
+    /** Cluster ID for ZDO (because request !== response). */
+    zdoResponseClusterId?: number;
     /** ZCL frame transaction sequence number */
     zclSequence?: number;
     /** Expected command ID for ZCL commands */
@@ -98,7 +98,7 @@ export class EmberOneWaitress {
                 waiter.resolved = true;
 
                 this.waiters.delete(index);
-                waiter.reject(new Error(`Delivery failed for ${JSON.stringify(apsFrame)}`));
+                waiter.reject(new Error(`Delivery failed for '${target}'.`));
 
                 return true;
             }
@@ -108,37 +108,31 @@ export class EmberOneWaitress {
     }
 
     /**
-     * Resolve or reject ZDO response based on given status.
-     * @param status
-     * @param sender
-     * @param apsFrame
-     * @param payload
-     * @returns
+     * Resolve ZDO response payload.
+     * @param sender Node ID or EUI64 in the response
+     * @param apsFrame APS Frame in the response
+     * @param payload Payload to resolve
+     * @returns True if resolved a waiter
      */
-    public resolveZDO(sender: NodeId, apsFrame: EmberApsFrame, payload: unknown | Zdo.StatusError): boolean {
+    public resolveZDO(sender: NodeId | EUI64, apsFrame: EmberApsFrame, payload: unknown): boolean {
         for (const [index, waiter] of this.waiters.entries()) {
             if (waiter.timedout) {
                 this.waiters.delete(index);
                 continue;
             }
 
-            // always a sender expected in ZDO, profileId is a bit redundant here, but...
             if (
-                sender === waiter.matcher.target &&
-                apsFrame.profileId === waiter.matcher.apsFrame.profileId &&
-                apsFrame.clusterId === (waiter.matcher.responseClusterId ?? waiter.matcher.apsFrame.clusterId)
+                waiter.matcher.zdoResponseClusterId !== undefined && // skip if not a zdo waiter
+                sender === waiter.matcher.target && // always a sender expected in ZDO
+                apsFrame.profileId === waiter.matcher.apsFrame.profileId && // profileId is a bit redundant here, but...
+                apsFrame.clusterId === waiter.matcher.zdoResponseClusterId
             ) {
                 clearTimeout(waiter.timer);
 
                 waiter.resolved = true;
 
                 this.waiters.delete(index);
-
-                if (payload instanceof Zdo.StatusError || payload instanceof Error) {
-                    waiter.reject(new Error(`[ZDO] Failed response for '${sender}' cluster '${apsFrame.clusterId}' ${payload.message}.`));
-                } else {
-                    waiter.resolve(payload);
-                }
+                waiter.resolve(payload);
 
                 return true;
             }
@@ -147,6 +141,11 @@ export class EmberOneWaitress {
         return false;
     }
 
+    /**
+     * Resolve ZCL response payload
+     * @param payload Payload to resolve
+     * @returns True if resolved a waiter
+     */
     public resolveZCL(payload: ZclPayload): boolean {
         if (!payload.header) return false;
 

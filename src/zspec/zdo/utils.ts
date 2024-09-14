@@ -3,19 +3,18 @@ import {MACCapabilityFlags, ServerMask} from './definition/tstypes';
 
 /**
  * Get a the response cluster ID corresponding to a request.
- * May be null if cluster does not have a response.
  * @param requestClusterId
- * @returns
+ * @returns Response cluster ID or undefined if unknown/invalid
  */
-export const getResponseClusterId = (requestClusterId: ClusterId): ClusterId | null => {
+export const getResponseClusterId = (requestClusterId: ClusterId): ClusterId | undefined => {
     if (0x8000 < requestClusterId || requestClusterId === ClusterId.END_DEVICE_ANNOUNCE) {
-        return null;
+        return undefined;
     }
 
     const responseClusterId = requestClusterId + 0x8000;
 
     if (ClusterId[responseClusterId] == undefined) {
-        return null;
+        return undefined;
     }
 
     return responseClusterId;

@@ -6,6 +6,8 @@ import * as Models from '../models';
 import {logger} from '../utils/logger';
 import {BroadcastAddress} from '../zspec/enums';
 import * as Zcl from '../zspec/zcl';
+import * as Zdo from '../zspec/zdo';
+import * as ZdoTypes from '../zspec/zdo/definition/tstypes';
 import * as AdapterEvents from './events';
 import * as TsType from './tstype';
 
@@ -14,6 +16,7 @@ const NS = 'zh:adapter';
 interface AdapterEventMap {
     deviceJoined: [payload: AdapterEvents.DeviceJoinedPayload];
     zclPayload: [payload: AdapterEvents.ZclPayload];
+    zdoResponse: [clusterId: Zdo.ClusterId, response: ZdoTypes.GenericZdoResponse];
     disconnected: [];
     deviceAnnounce: [payload: AdapterEvents.DeviceAnnouncePayload];
     deviceLeave: [payload: AdapterEvents.DeviceLeavePayload];
@@ -218,6 +221,28 @@ abstract class Adapter extends events.EventEmitter<AdapterEventMap> {
     /**
      * ZDO
      */
+
+    public abstract sendZdo(
+        ieeeAddress: string,
+        networkAddress: number,
+        clusterId: Zdo.ClusterId,
+        payload: Buffer,
+        disableResponse: true,
+    ): Promise<void>;
+    public abstract sendZdo<K extends keyof ZdoTypes.RequestToResponseMap>(
+        ieeeAddress: string,
+        networkAddress: number,
+        clusterId: K,
+        payload: Buffer,
+        disableResponse: false,
+    ): Promise<ZdoTypes.RequestToResponseMap[K]>;
+    public abstract sendZdo<K extends keyof ZdoTypes.RequestToResponseMap>(
+        ieeeAddress: string,
+        networkAddress: number,
+        clusterId: K,
+        payload: Buffer,
+        disableResponse: boolean,
+    ): Promise<ZdoTypes.RequestToResponseMap[K] | void>;
 
     public abstract permitJoin(seconds: number, networkAddress?: number): Promise<void>;
 

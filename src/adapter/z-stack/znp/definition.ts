@@ -1401,7 +1401,7 @@ const Definition: {
             ID: 128,
             type: CommandType.AREQ,
             zdo: {
-                cluterId: ZdoClusterId.NETWORK_ADDRESS_RESPONSE,
+                clusterId: ZdoClusterId.NETWORK_ADDRESS_RESPONSE,
                 convert: convertSwapStartIndexNumAssocDev,
             },
             request: [
@@ -1419,7 +1419,7 @@ const Definition: {
             ID: 129,
             type: CommandType.AREQ,
             zdo: {
-                cluterId: ZdoClusterId.IEEE_ADDRESS_RESPONSE,
+                clusterId: ZdoClusterId.IEEE_ADDRESS_RESPONSE,
                 convert: convertSwapStartIndexNumAssocDev,
             },
             request: [
@@ -1436,7 +1436,7 @@ const Definition: {
             ID: 130,
             type: CommandType.AREQ,
             zdo: {
-                cluterId: ZdoClusterId.NODE_DESCRIPTOR_RESPONSE,
+                clusterId: ZdoClusterId.NODE_DESCRIPTOR_RESPONSE,
                 convert: convertSkipSrcAddr,
             },
             request: [
@@ -1459,7 +1459,7 @@ const Definition: {
             ID: 131,
             type: CommandType.AREQ,
             zdo: {
-                cluterId: ZdoClusterId.POWER_DESCRIPTOR_RESPONSE,
+                clusterId: ZdoClusterId.POWER_DESCRIPTOR_RESPONSE,
                 convert: convertSkipSrcAddr,
             },
             request: [
@@ -1475,7 +1475,7 @@ const Definition: {
             ID: 132,
             type: CommandType.AREQ,
             zdo: {
-                cluterId: ZdoClusterId.SIMPLE_DESCRIPTOR_RESPONSE,
+                clusterId: ZdoClusterId.SIMPLE_DESCRIPTOR_RESPONSE,
                 convert: convertSkipSrcAddr,
             },
             request: [
@@ -1498,7 +1498,7 @@ const Definition: {
             ID: 133,
             type: CommandType.AREQ,
             zdo: {
-                cluterId: ZdoClusterId.ACTIVE_ENDPOINTS_RESPONSE,
+                clusterId: ZdoClusterId.ACTIVE_ENDPOINTS_RESPONSE,
                 convert: convertSkipSrcAddr,
             },
             request: [
@@ -1514,7 +1514,7 @@ const Definition: {
             ID: 134,
             type: CommandType.AREQ,
             zdo: {
-                cluterId: ZdoClusterId.MATCH_DESCRIPTORS_RESPONSE,
+                clusterId: ZdoClusterId.MATCH_DESCRIPTORS_RESPONSE,
                 convert: convertSkipSrcAddr,
             },
             request: [
@@ -1564,7 +1564,7 @@ const Definition: {
             ID: 138,
             type: CommandType.AREQ,
             zdo: {
-                cluterId: ZdoClusterId.SYSTEM_SERVER_DISCOVERY_RESPONSE,
+                clusterId: ZdoClusterId.SYSTEM_SERVER_DISCOVERY_RESPONSE,
                 convert: convertSkipSrcAddr,
             },
             request: [
@@ -1594,7 +1594,7 @@ const Definition: {
             ID: 161,
             type: CommandType.AREQ,
             zdo: {
-                cluterId: ZdoClusterId.BIND_RESPONSE,
+                clusterId: ZdoClusterId.BIND_RESPONSE,
                 convert: convertSkipSrcAddr,
             },
             request: [
@@ -1607,7 +1607,7 @@ const Definition: {
             ID: 162,
             type: CommandType.AREQ,
             zdo: {
-                cluterId: ZdoClusterId.UNBIND_RESPONSE,
+                clusterId: ZdoClusterId.UNBIND_RESPONSE,
                 convert: convertSkipSrcAddr,
             },
             request: [
@@ -1633,7 +1633,7 @@ const Definition: {
             ID: 177,
             type: CommandType.AREQ,
             zdo: {
-                cluterId: ZdoClusterId.LQI_TABLE_RESPONSE,
+                clusterId: ZdoClusterId.LQI_TABLE_RESPONSE,
                 convert: convertSkipSrcAddr,
             },
             request: [
@@ -1650,7 +1650,7 @@ const Definition: {
             ID: 178,
             type: CommandType.AREQ,
             zdo: {
-                cluterId: ZdoClusterId.ROUTING_TABLE_RESPONSE,
+                clusterId: ZdoClusterId.ROUTING_TABLE_RESPONSE,
                 convert: convertSkipSrcAddr,
             },
             request: [
@@ -1667,7 +1667,7 @@ const Definition: {
             ID: 179,
             type: CommandType.AREQ,
             zdo: {
-                cluterId: ZdoClusterId.BINDING_TABLE_RESPONSE,
+                clusterId: ZdoClusterId.BINDING_TABLE_RESPONSE,
                 convert: convertSkipSrcAddr,
             },
             request: [
@@ -1684,7 +1684,7 @@ const Definition: {
             ID: 180,
             type: CommandType.AREQ,
             zdo: {
-                cluterId: ZdoClusterId.LEAVE_RESPONSE,
+                clusterId: ZdoClusterId.LEAVE_RESPONSE,
                 convert: convertSkipSrcAddr,
             },
             request: [
@@ -1706,7 +1706,7 @@ const Definition: {
             ID: 182,
             type: CommandType.AREQ,
             zdo: {
-                cluterId: ZdoClusterId.PERMIT_JOINING_RESPONSE,
+                clusterId: ZdoClusterId.PERMIT_JOINING_RESPONSE,
                 convert: convertSkipSrcAddr,
             },
             request: [
@@ -1719,7 +1719,7 @@ const Definition: {
             ID: 184,
             type: CommandType.AREQ,
             zdo: {
-                cluterId: ZdoClusterId.NWK_UPDATE_RESPONSE,
+                clusterId: ZdoClusterId.NWK_UPDATE_RESPONSE,
                 convert: convertSkipSrcAddr,
             },
             request: [
@@ -1743,7 +1743,7 @@ const Definition: {
             ID: 193,
             type: CommandType.AREQ,
             zdo: {
-                cluterId: ZdoClusterId.END_DEVICE_ANNOUNCE,
+                clusterId: ZdoClusterId.END_DEVICE_ANNOUNCE,
                 convert: convertSkipSrcAddr,
             },
             request: [

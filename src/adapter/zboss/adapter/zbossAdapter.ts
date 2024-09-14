@@ -6,6 +6,8 @@ import {Queue, RealpathSync, Waitress} from '../../../utils';
 import {logger} from '../../../utils/logger';
 import {BroadcastAddress} from '../../../zspec/enums';
 import * as Zcl from '../../../zspec/zcl';
+import * as Zdo from '../../../zspec/zdo';
+import * as ZdoTypes from '../../../zspec/zdo/definition/tstypes';
 import {DeviceJoinedPayload, DeviceLeavePayload, ZclPayload} from '../../events';
 import SerialPortUtils from '../../serialPortUtils';
 import SocketPortUtils from '../../socketPortUtils';
@@ -355,6 +357,60 @@ export class ZBOSSAdapter extends Adapter {
         return await this.queue.execute<void>(async () => {
             await this.driver.removeDevice(networkAddress, ieeeAddr);
         }, networkAddress);
+    }
+
+    public async sendZdo(
+        ieeeAddress: string,
+        networkAddress: number,
+        clusterId: Zdo.ClusterId,
+        payload: Buffer,
+        disableResponse: true,
+    ): Promise<void>;
+    public async sendZdo<K extends keyof ZdoTypes.RequestToResponseMap>(
+        ieeeAddress: string,
+        networkAddress: number,
+        clusterId: K,
+        payload: Buffer,
+        disableResponse: false,
+    ): Promise<ZdoTypes.RequestToResponseMap[K]>;
+    public async sendZdo<K extends keyof ZdoTypes.RequestToResponseMap>(
+        ieeeAddress: string,
+        networkAddress: number,
+        clusterId: K,
+        payload: Buffer,
+        disableResponse: boolean,
+    ): Promise<ZdoTypes.RequestToResponseMap[K] | void> {
+        return await this.queue.execute(async () => {
+            // stack-specific requirements
+            switch (clusterId) {
+                case Zdo.ClusterId.PERMIT_JOINING_REQUEST:
+                case Zdo.ClusterId.NETWORK_ADDRESS_REQUEST:
+                case Zdo.ClusterId.LEAVE_REQUEST:
+                case Zdo.ClusterId.LQI_TABLE_REQUEST:
+                case Zdo.ClusterId.BIND_REQUEST:
+                case Zdo.ClusterId.UNBIND_REQUEST: {
+                    const prefixedPayload = Buffer.alloc(payload.length + 2);
+                    prefixedPayload.writeUInt16LE(networkAddress, 0);
+                    prefixedPayload.set(payload, 2);
+
+                    payload = prefixedPayload;
+                    break;
+                }
+            }
+
+            logger.debug(`UNSUPPORTED sendZdo(${ieeeAddress}, ${networkAddress}, ${clusterId}, ${payload}, ${disableResponse})`, NS);
+            // TODO: https://github.com/Nerivec/zigbee-herdsman/blob/zdo-tmp/src/adapter/zboss/driver.ts#L386
+            // await this.driver.requestZdo(clusterId, payload);
+
+            if (!disableResponse) {
+                const responseClusterId = Zdo.Utils.getResponseClusterId(clusterId);
+
+                if (responseClusterId) {
+                    // TODO: response from Zdo.Buffalo
+                    // return response;
+                }
+            }
+        }, networkAddress /* TODO: replace with ieeeAddress once zdo moved upstream */);
     }
 
     public async sendZclFrameToEndpoint(
