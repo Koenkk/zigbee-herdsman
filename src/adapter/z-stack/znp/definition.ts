@@ -1574,6 +1574,13 @@ const Definition: {
             ],
         },
         {
+            // https://github.com/Koenkk/zigbee2mqtt/issues/3363
+            name: 'unknown',
+            ID: 159,
+            type: CommandType.AREQ,
+            request: [],
+        },
+        {
             name: 'endDeviceBindRsp',
             ID: 160,
             type: CommandType.AREQ,
