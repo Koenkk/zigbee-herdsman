@@ -697,7 +697,10 @@ class Controller extends events.EventEmitter<ControllerEventMap> {
             }
         } else {
             /* istanbul ignore next */
-            logger.debug(`Received ZDO response: clusterId=${Zdo.ClusterId[clusterId]}, status=${Zdo.Status[response[0]]}, payload=${JSON.stringify(response[1])}`, NS);
+            logger.debug(
+                `Received ZDO response: clusterId=${Zdo.ClusterId[clusterId]}, status=${Zdo.Status[response[0]]}, payload=${JSON.stringify(response[1])}`,
+                NS,
+            );
         }
     }
 

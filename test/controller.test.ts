@@ -2293,7 +2293,7 @@ describe('Controller', () => {
     it('ZDO response for cluster ID with no extra processing', async () => {
         await controller.start();
         await mockAdapterEvents['zdoResponse'](Zdo.ClusterId.BIND_RESPONSE, [Zdo.Status.SUCCESS, undefined]);
-    })
+    });
 
     it('Emit lastSeenChanged event even when no message is emitted from it', async () => {
         // Default response
