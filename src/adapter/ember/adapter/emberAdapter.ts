@@ -450,7 +450,8 @@ export class EmberAdapter extends Adapter {
         switch (status) {
             case SLStatus.ZIGBEE_DELIVERY_FAILED: {
                 logger.debug(
-                    () => `~x~> DELIVERY_FAILED [indexOrDestination=${indexOrDestination} apsFrame=${JSON.stringify(apsFrame)} messageTag=${messageTag}]`,
+                    () =>
+                        `~x~> DELIVERY_FAILED [indexOrDestination=${indexOrDestination} apsFrame=${JSON.stringify(apsFrame)} messageTag=${messageTag}]`,
                     NS,
                 );
 
