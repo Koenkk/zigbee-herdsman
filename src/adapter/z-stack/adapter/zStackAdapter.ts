@@ -400,25 +400,25 @@ class ZStackAdapter extends Adapter {
             // stack-specific requirements
             switch (clusterId) {
                 case Zdo.ClusterId.PERMIT_JOINING_REQUEST: {
-                    const prefixedPayload = Buffer.alloc(payload.length + 3);
-                    prefixedPayload.writeUInt8(ZSpec.BroadcastAddress[networkAddress] ? AddressMode.ADDR_BROADCAST : AddressMode.ADDR_16BIT, 0);
+                    const finalPayload = Buffer.alloc(payload.length + 3);
+                    finalPayload.writeUInt8(ZSpec.BroadcastAddress[networkAddress] ? AddressMode.ADDR_BROADCAST : AddressMode.ADDR_16BIT, 0);
                     // TODO: confirm zstack uses AddressMode.ADDR_16BIT + ZSpec.BroadcastAddress.DEFAULT to signal "coordinator-only" (assumed from previous code)
-                    prefixedPayload.writeUInt16LE(networkAddress === 0 ? ZSpec.BroadcastAddress.DEFAULT : networkAddress, 1);
-                    prefixedPayload.set(payload, 3);
+                    finalPayload.writeUInt16LE(networkAddress === 0 ? ZSpec.BroadcastAddress.DEFAULT : networkAddress, 1);
+                    finalPayload.set(payload, 3);
 
-                    payload = prefixedPayload;
+                    payload = finalPayload;
                     break;
                 }
 
                 case Zdo.ClusterId.NWK_UPDATE_REQUEST: {
                     // extra zeroes for empty nwkManagerAddr if necessary
                     const zeroes = 9 - payload.length - 1; /* TODO: zstack doesn't have nwkUpdateId? */
-                    const prefixedPayload = Buffer.alloc(payload.length + 3 + zeroes);
-                    prefixedPayload.writeUInt16LE(networkAddress, 0);
-                    prefixedPayload.writeUInt8(ZSpec.BroadcastAddress[networkAddress] ? AddressMode.ADDR_BROADCAST : AddressMode.ADDR_16BIT, 2);
-                    prefixedPayload.set(payload, 3);
+                    const finalPayload = Buffer.alloc(payload.length + 3 + zeroes);
+                    finalPayload.writeUInt16LE(networkAddress, 0);
+                    finalPayload.writeUInt8(ZSpec.BroadcastAddress[networkAddress] ? AddressMode.ADDR_BROADCAST : AddressMode.ADDR_16BIT, 2);
+                    finalPayload.set(payload, 3);
 
-                    payload = prefixedPayload;
+                    payload = finalPayload;
                     break;
                 }
 
@@ -427,11 +427,11 @@ class ZStackAdapter extends Adapter {
                     // extra zeroes for uint16 (in place of ieee when MULTICAST) and endpoint
                     // TODO: blank endpoint at end should be fine since should not be used with MULTICAST bind type?
                     const zeroes = 21 - payload.length;
-                    const prefixedPayload = Buffer.alloc(payload.length + 2 + zeroes);
-                    prefixedPayload.writeUInt16LE(networkAddress, 0);
-                    prefixedPayload.set(payload, 2);
+                    const finalPayload = Buffer.alloc(payload.length + 2 + zeroes);
+                    finalPayload.writeUInt16LE(networkAddress, 0);
+                    finalPayload.set(payload, 2);
 
-                    payload = prefixedPayload;
+                    payload = finalPayload;
                     break;
                 }
 
@@ -441,18 +441,17 @@ class ZStackAdapter extends Adapter {
                 }
 
                 default: {
-                    const prefixedPayload = Buffer.alloc(payload.length + 2);
-                    prefixedPayload.writeUInt16LE(networkAddress, 0);
-                    prefixedPayload.set(payload, 2);
+                    const finalPayload = Buffer.alloc(payload.length + 2);
+                    finalPayload.writeUInt16LE(networkAddress, 0);
+                    finalPayload.set(payload, 2);
 
-                    payload = prefixedPayload;
+                    payload = finalPayload;
                     break;
                 }
             }
 
             logger.debug(`UNSUPPORTED sendZdo(${ieeeAddress}, ${networkAddress}, ${clusterId}, ${payload}, ${disableResponse})`, NS);
-            // TODO: https://github.com/Nerivec/zigbee-herdsman/blob/zdo-tmp/src/adapter/z-stack/znp/znp.ts#L333
-            // await this.znp.requestZdo(clusterId, payload);
+            await this.znp.requestZdo(clusterId, payload);
 
             if (!disableResponse) {
                 const responseClusterId = Zdo.Utils.getResponseClusterId(clusterId);

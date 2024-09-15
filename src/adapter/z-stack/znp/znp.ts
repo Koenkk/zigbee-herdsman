@@ -1,3 +1,4 @@
+import assert from 'assert';
 import events from 'events';
 import net from 'net';
 
@@ -5,6 +6,7 @@ import Equals from 'fast-deep-equal/es6';
 
 import {Queue, RealpathSync, Wait, Waitress} from '../../../utils';
 import {logger} from '../../../utils/logger';
+import {ClusterId as ZdoClusterId} from '../../../zspec/zdo';
 import {SerialPort} from '../../serialPort';
 import SerialPortUtils from '../../serialPortUtils';
 import SocketPortUtils from '../../socketPortUtils';
@@ -33,6 +35,24 @@ interface WaitressMatcher {
     command: string;
     payload?: ZpiObjectPayload;
 }
+
+const ZDO_CLUSTER_ID_TO_ZSTACK_SREQ_ID: Readonly<Partial<Record<ZdoClusterId, number>>> = {
+    [ZdoClusterId.NETWORK_ADDRESS_REQUEST]: 0,
+    [ZdoClusterId.IEEE_ADDRESS_REQUEST]: 1,
+    [ZdoClusterId.NODE_DESCRIPTOR_REQUEST]: 2,
+    [ZdoClusterId.POWER_DESCRIPTOR_REQUEST]: 3,
+    [ZdoClusterId.SIMPLE_DESCRIPTOR_REQUEST]: 4,
+    [ZdoClusterId.ACTIVE_ENDPOINTS_REQUEST]: 5,
+    [ZdoClusterId.MATCH_DESCRIPTORS_REQUEST]: 6,
+    [ZdoClusterId.SYSTEM_SERVER_DISCOVERY_REQUEST]: 12,
+    [ZdoClusterId.BIND_REQUEST]: 33,
+    [ZdoClusterId.UNBIND_REQUEST]: 34,
+    [ZdoClusterId.LQI_TABLE_REQUEST]: 49,
+    [ZdoClusterId.ROUTING_TABLE_REQUEST]: 50,
+    [ZdoClusterId.LEAVE_REQUEST]: 52,
+    [ZdoClusterId.PERMIT_JOINING_REQUEST]: 54,
+    [ZdoClusterId.NWK_UPDATE_REQUEST]: 55,
+};
 
 const autoDetectDefinitions = [
     {manufacturer: 'Texas Instruments', vendorId: '0451', productId: '16c8'}, // CC2538
@@ -304,6 +324,42 @@ class Znp extends events.EventEmitter {
                 } else {
                     throw new Error(`Unknown type '${object.type}'`);
                 }
+            }
+        });
+    }
+
+    public requestZdo(
+        clusterId: ZdoClusterId,
+        payload: Buffer,
+        waiterID?: number,
+        timeout?: number,
+        expectedStatuses: Constants.COMMON.ZnpCommandStatus[] = [ZnpCommandStatus.SUCCESS],
+    ): Promise<void> {
+        return this.queue.execute(async () => {
+            const commandId = ZDO_CLUSTER_ID_TO_ZSTACK_SREQ_ID[clusterId];
+            assert(commandId, `Cluster ID ${clusterId} not supported.`);
+
+            const unpiFrame = new UnpiFrame(Type.SREQ, Subsystem.ZDO, commandId, payload);
+            // TODO proper logic
+            const waiter = this.waitress.waitFor(
+                {type: Type.SRSP, subsystem: Subsystem.ZDO, command: ZdoClusterId[clusterId] /* ??? */},
+                timeout || timeouts.SREQ,
+            );
+
+            this.unpiWriter.writeFrame(unpiFrame);
+
+            const result = await waiter.start().promise;
+
+            if (result?.payload.status !== undefined && !expectedStatuses.includes(result.payload.status)) {
+                if (typeof waiterID === 'number') {
+                    this.waitress.remove(waiterID);
+                }
+
+                throw new Error(
+                    `--> 'SREQ: ZDO - ${ZdoClusterId[clusterId]} - ${payload.toString()}' failed with status '${statusDescription(
+                        result.payload.status,
+                    )}' (expected '${expectedStatuses.map(statusDescription)}')`,
+                );
             }
         });
     }
