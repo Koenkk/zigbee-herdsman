@@ -676,6 +676,7 @@ class Controller extends events.EventEmitter<ControllerEventMap> {
 
     private async onZdoResponse(clusterId: Zdo.ClusterId, response: GenericZdoResponse): Promise<void> {
         if (clusterId === Zdo.ClusterId.NETWORK_ADDRESS_RESPONSE) {
+            /* istanbul ignore else */
             if (Zdo.Buffalo.checkStatus<Zdo.ClusterId.NETWORK_ADDRESS_RESPONSE>(response)) {
                 const payload = response[1];
 
@@ -685,6 +686,7 @@ class Controller extends events.EventEmitter<ControllerEventMap> {
                 });
             }
         } else if (clusterId === Zdo.ClusterId.END_DEVICE_ANNOUNCE) {
+            /* istanbul ignore else */
             if (Zdo.Buffalo.checkStatus<Zdo.ClusterId.END_DEVICE_ANNOUNCE>(response)) {
                 const payload = response[1];
 
@@ -693,6 +695,9 @@ class Controller extends events.EventEmitter<ControllerEventMap> {
                     ieeeAddr: payload.eui64,
                 });
             }
+        } else {
+            /* istanbul ignore next */
+            logger.debug(`Received ZDO response: clusterId=${Zdo.ClusterId[clusterId]}, status=${Zdo.Status[response[0]]}, payload=${JSON.stringify(response[1])}`, NS);
         }
     }
 

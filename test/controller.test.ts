@@ -21,6 +21,7 @@ import * as Utils from '../src/utils';
 import {setLogger} from '../src/utils/logger';
 import {BroadcastAddress} from '../src/zspec/enums';
 import * as Zcl from '../src/zspec/zcl';
+import * as Zdo from '../src/zspec/zdo';
 
 const globalSetImmediate = setImmediate;
 const flushPromises = () => new Promise(globalSetImmediate);
@@ -664,7 +665,7 @@ const mocksRestore = [
     mockZiGateAdapterAutoDetectPath,
 ];
 
-const events = {
+const events: Record<string, any> = {
     deviceJoined: [],
     deviceInterview: [],
     adapterDisconnected: [],
@@ -2138,8 +2139,8 @@ describe('Controller', () => {
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
         expect(controller.getDeviceByNetworkAddress(129)?.ieeeAddr).toStrictEqual('0x129');
         await mockAdapterEvents['networkAddress']({networkAddress: 9999, ieeeAddr: '0x129'});
-        expect(controller.getDeviceByIeeeAddr('0x129').networkAddress).toBe(9999);
-        expect(controller.getDeviceByIeeeAddr('0x129').getEndpoint(1).deviceNetworkAddress).toBe(9999);
+        expect(controller.getDeviceByIeeeAddr('0x129')?.networkAddress).toBe(9999);
+        expect(controller.getDeviceByIeeeAddr('0x129')?.getEndpoint(1)?.deviceNetworkAddress).toBe(9999);
         expect(controller.getDeviceByNetworkAddress(129)).toBeUndefined();
         expect(controller.getDeviceByNetworkAddress(9999)?.ieeeAddr).toStrictEqual('0x129');
     });
@@ -2148,8 +2149,8 @@ describe('Controller', () => {
         await controller.start();
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
         await mockAdapterEvents['networkAddress']({networkAddress: 129, ieeeAddr: '0x129'});
-        expect(controller.getDeviceByIeeeAddr('0x129').networkAddress).toBe(129);
-        expect(controller.getDeviceByIeeeAddr('0x129').getEndpoint(1).deviceNetworkAddress).toBe(129);
+        expect(controller.getDeviceByIeeeAddr('0x129')?.networkAddress).toBe(129);
+        expect(controller.getDeviceByIeeeAddr('0x129')?.getEndpoint(1)?.deviceNetworkAddress).toBe(129);
     });
 
     it('Network address event from unknown device', async () => {
@@ -2161,10 +2162,138 @@ describe('Controller', () => {
         await controller.start();
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
         Date.now = jest.fn();
+        // @ts-expect-error mock
         Date.now.mockReturnValue(200);
         await mockAdapterEvents['networkAddress']({networkAddress: 129, ieeeAddr: '0x129'});
         expect(events.lastSeenChanged[1].device.lastSeen).toBe(200);
     });
+
+    it('ZDO response for NETWORK_ADDRESS_RESPONSE should update network address when different', async () => {
+        await controller.start();
+        await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
+        expect(controller.getDeviceByNetworkAddress(129)?.ieeeAddr).toStrictEqual('0x129');
+        await mockAdapterEvents['zdoResponse'](Zdo.ClusterId.NETWORK_ADDRESS_RESPONSE, [
+            Zdo.Status.SUCCESS,
+            {nwkAddress: 9999, eui64: '0x129', assocDevList: [], startIndex: 0},
+        ]);
+        expect(controller.getDeviceByIeeeAddr('0x129')?.networkAddress).toBe(9999);
+        expect(controller.getDeviceByIeeeAddr('0x129')?.getEndpoint(1)?.deviceNetworkAddress).toBe(9999);
+        expect(controller.getDeviceByNetworkAddress(129)).toBeUndefined();
+        expect(controller.getDeviceByNetworkAddress(9999)?.ieeeAddr).toStrictEqual('0x129');
+    });
+
+    it('ZDO response for NETWORK_ADDRESS_RESPONSE shouldnt update network address when the same', async () => {
+        await controller.start();
+        await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
+        await mockAdapterEvents['zdoResponse'](Zdo.ClusterId.NETWORK_ADDRESS_RESPONSE, [
+            Zdo.Status.SUCCESS,
+            {nwkAddress: 129, eui64: '0x129', assocDevList: [], startIndex: 0},
+        ]);
+        expect(controller.getDeviceByIeeeAddr('0x129')?.networkAddress).toBe(129);
+        expect(controller.getDeviceByIeeeAddr('0x129')?.getEndpoint(1)?.deviceNetworkAddress).toBe(129);
+    });
+
+    it('ZDO response for NETWORK_ADDRESS_RESPONSE from unknown device', async () => {
+        await controller.start();
+        await mockAdapterEvents['zdoResponse'](Zdo.ClusterId.NETWORK_ADDRESS_RESPONSE, [
+            Zdo.Status.SUCCESS,
+            {nwkAddress: 19321, eui64: '0x19321', assocDevList: [], startIndex: 0},
+        ]);
+    });
+
+    it('ZDO response for NETWORK_ADDRESS_RESPONSE should update the last seen value', async () => {
+        await controller.start();
+        await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
+        Date.now = jest.fn();
+        // @ts-expect-error mock
+        Date.now.mockReturnValue(200);
+        await mockAdapterEvents['zdoResponse'](Zdo.ClusterId.NETWORK_ADDRESS_RESPONSE, [
+            Zdo.Status.SUCCESS,
+            {nwkAddress: 129, eui64: '0x129', assocDevList: [], startIndex: 0},
+        ]);
+        expect(events.lastSeenChanged[1].device.lastSeen).toBe(200);
+    });
+
+    it('ZDO response for END_DEVICE_ANNOUNCE should bubble up event', async () => {
+        await controller.start();
+        await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
+        expect(events.deviceAnnounce.length).toBe(0);
+        await mockAdapterEvents['zdoResponse'](Zdo.ClusterId.END_DEVICE_ANNOUNCE, [
+            Zdo.Status.SUCCESS,
+            {
+                nwkAddress: 129,
+                eui64: '0x129',
+                capabilities: {
+                    allocateAddress: 0,
+                    alternatePANCoordinator: 0,
+                    deviceType: 2,
+                    powerSource: 0,
+                    reserved1: 0,
+                    reserved2: 0,
+                    rxOnWhenIdle: 0,
+                    securityCapability: 0,
+                },
+            },
+        ]);
+        expect(events.deviceAnnounce.length).toBe(1);
+        expect(events.deviceAnnounce[0].device).toBeInstanceOf(Device);
+        expect(events.deviceAnnounce[0].device.ieeeAddr).toBe('0x129');
+        expect(events.deviceAnnounce[0].device.modelID).toBe('myModelID');
+    });
+
+    it('ZDO response for END_DEVICE_ANNOUNCE should update network address when different', async () => {
+        await controller.start();
+        await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
+        expect(controller.getDeviceByNetworkAddress(129)?.ieeeAddr).toStrictEqual('0x129');
+        await mockAdapterEvents['zdoResponse'](Zdo.ClusterId.END_DEVICE_ANNOUNCE, [
+            Zdo.Status.SUCCESS,
+            {
+                nwkAddress: 9999,
+                eui64: '0x129',
+                capabilities: {
+                    allocateAddress: 0,
+                    alternatePANCoordinator: 0,
+                    deviceType: 2,
+                    powerSource: 0,
+                    reserved1: 0,
+                    reserved2: 0,
+                    rxOnWhenIdle: 0,
+                    securityCapability: 0,
+                },
+            },
+        ]);
+        expect(controller.getDeviceByIeeeAddr('0x129')?.networkAddress).toBe(9999);
+        expect(controller.getDeviceByIeeeAddr('0x129')?.getEndpoint(1)?.deviceNetworkAddress).toBe(9999);
+        expect(controller.getDeviceByNetworkAddress(129)).toBeUndefined();
+        expect(controller.getDeviceByNetworkAddress(9999)?.ieeeAddr).toStrictEqual('0x129');
+    });
+
+    it('ZDO response for END_DEVICE_ANNOUNCE from unknown device', async () => {
+        await controller.start();
+        await mockAdapterEvents['zdoResponse'](Zdo.ClusterId.END_DEVICE_ANNOUNCE, [
+            Zdo.Status.SUCCESS,
+            {
+                nwkAddress: 12999,
+                eui64: '0x12999',
+                capabilities: {
+                    allocateAddress: 0,
+                    alternatePANCoordinator: 0,
+                    deviceType: 2,
+                    powerSource: 0,
+                    reserved1: 0,
+                    reserved2: 0,
+                    rxOnWhenIdle: 0,
+                    securityCapability: 0,
+                },
+            },
+        ]);
+        expect(events.deviceAnnounce.length).toBe(0);
+    });
+
+    it('ZDO response for cluster ID with no extra processing', async () => {
+        await controller.start();
+        await mockAdapterEvents['zdoResponse'](Zdo.ClusterId.BIND_RESPONSE, [Zdo.Status.SUCCESS, undefined]);
+    })
 
     it('Emit lastSeenChanged event even when no message is emitted from it', async () => {
         // Default response

@@ -532,6 +532,7 @@ export class EmberAdapter extends Adapter {
         if (apsFrame.clusterId === Zdo.ClusterId.NETWORK_ADDRESS_RESPONSE) {
             // special case to properly resolve a NETWORK_ADDRESS_RESPONSE following a NETWORK_ADDRESS_REQUEST (based on EUI64 from ZDO payload)
             // NOTE: if response has invalid status (no EUI64 available), response waiter will eventually time out
+            /* istanbul ignore else */
             if (Zdo.Buffalo.checkStatus<Zdo.ClusterId.NETWORK_ADDRESS_RESPONSE>(result)) {
                 this.oneWaitress.resolveZDO(result[1].eui64, apsFrame, result);
             }
@@ -1959,6 +1960,7 @@ export class EmberAdapter extends Adapter {
             if (!disableResponse) {
                 const responseClusterId = Zdo.Utils.getResponseClusterId(clusterId);
 
+                /* istanbul ignore else */
                 if (responseClusterId) {
                     return await this.oneWaitress.startWaitingFor(
                         {
@@ -2019,7 +2021,9 @@ export class EmberAdapter extends Adapter {
 
             const result = await this.sendZdo(ZSpec.BLANK_EUI64, networkAddress, Zdo.ClusterId.PERMIT_JOINING_REQUEST, zdoPayload, false);
 
+            /* istanbul ignore next */
             if (!Zdo.Buffalo.checkStatus(result)) {
+                // TODO: will disappear once moved upstream
                 throw new Zdo.StatusError(result[0]);
             }
         } else {
@@ -2054,6 +2058,7 @@ export class EmberAdapter extends Adapter {
             const zdoPayload = Zdo.Buffalo.buildRequest(this.hasZdoMessageOverhead, Zdo.ClusterId.LQI_TABLE_REQUEST, startIndex);
             const result = await this.sendZdo(ZSpec.BLANK_EUI64, networkAddress, Zdo.ClusterId.LQI_TABLE_REQUEST, zdoPayload, false);
 
+            /* istanbul ignore else */
             if (Zdo.Buffalo.checkStatus(result)) {
                 const payload = result[1];
 
@@ -2069,6 +2074,7 @@ export class EmberAdapter extends Adapter {
 
                 return [payload.neighborTableEntries, payload.entryList.length];
             } else {
+                // TODO: will disappear once moved upstream
                 throw new Zdo.StatusError(result[0]);
             }
         };
@@ -2094,6 +2100,7 @@ export class EmberAdapter extends Adapter {
             const zdoPayload = Zdo.Buffalo.buildRequest(this.hasZdoMessageOverhead, Zdo.ClusterId.ROUTING_TABLE_REQUEST, startIndex);
             const result = await this.sendZdo(ZSpec.BLANK_EUI64, networkAddress, Zdo.ClusterId.ROUTING_TABLE_REQUEST, zdoPayload, false);
 
+            /* istanbul ignore else */
             if (Zdo.Buffalo.checkStatus(result)) {
                 const payload = result[1];
 
@@ -2107,6 +2114,7 @@ export class EmberAdapter extends Adapter {
 
                 return [payload.routingTableEntries, payload.entryList.length];
             } else {
+                // TODO: will disappear once moved upstream
                 throw new Zdo.StatusError(result[0]);
             }
         };
@@ -2130,6 +2138,7 @@ export class EmberAdapter extends Adapter {
         const zdoPayload = Zdo.Buffalo.buildRequest(this.hasZdoMessageOverhead, Zdo.ClusterId.NODE_DESCRIPTOR_REQUEST, networkAddress);
         const result = await this.sendZdo(ZSpec.BLANK_EUI64, networkAddress, Zdo.ClusterId.NODE_DESCRIPTOR_REQUEST, zdoPayload, false);
 
+        /* istanbul ignore else */
         if (Zdo.Buffalo.checkStatus(result)) {
             const payload = result[1];
             let type: TsType.DeviceType = 'Unknown';
@@ -2159,6 +2168,7 @@ export class EmberAdapter extends Adapter {
 
             return {type, manufacturerCode: payload.manufacturerCode};
         } else {
+            // TODO: will disappear once moved upstream
             throw new Zdo.StatusError(result[0]);
         }
     }
@@ -2168,11 +2178,13 @@ export class EmberAdapter extends Adapter {
         const zdoPayload = Zdo.Buffalo.buildRequest(this.hasZdoMessageOverhead, Zdo.ClusterId.ACTIVE_ENDPOINTS_REQUEST, networkAddress);
         const result = await this.sendZdo(ZSpec.BLANK_EUI64, networkAddress, Zdo.ClusterId.ACTIVE_ENDPOINTS_REQUEST, zdoPayload, false);
 
+        /* istanbul ignore else */
         if (Zdo.Buffalo.checkStatus(result)) {
             const payload = result[1];
 
             return {endpoints: payload.endpointList};
         } else {
+            // TODO: will disappear once moved upstream
             throw new Zdo.StatusError(result[0]);
         }
     }
@@ -2182,6 +2194,7 @@ export class EmberAdapter extends Adapter {
         const zdoPayload = Zdo.Buffalo.buildRequest(this.hasZdoMessageOverhead, Zdo.ClusterId.SIMPLE_DESCRIPTOR_REQUEST, networkAddress, endpointID);
         const result = await this.sendZdo(ZSpec.BLANK_EUI64, networkAddress, Zdo.ClusterId.SIMPLE_DESCRIPTOR_REQUEST, zdoPayload, false);
 
+        /* istanbul ignore else */
         if (Zdo.Buffalo.checkStatus(result)) {
             const payload = result[1];
 
@@ -2193,6 +2206,7 @@ export class EmberAdapter extends Adapter {
                 outputClusters: payload.outClusterList,
             };
         } else {
+            // TODO: will disappear once moved upstream
             throw new Zdo.StatusError(result[0]);
         }
     }
@@ -2220,7 +2234,9 @@ export class EmberAdapter extends Adapter {
         );
         const result = await this.sendZdo(ZSpec.BLANK_EUI64, destinationNetworkAddress, Zdo.ClusterId.BIND_REQUEST, zdoPayload, false);
 
+        /* istanbul ignore next */
         if (!Zdo.Buffalo.checkStatus(result)) {
+            // TODO: will disappear once moved upstream
             throw new Zdo.StatusError(result[0]);
         }
     }
@@ -2248,7 +2264,9 @@ export class EmberAdapter extends Adapter {
         );
         const result = await this.sendZdo(ZSpec.BLANK_EUI64, destinationNetworkAddress, Zdo.ClusterId.UNBIND_REQUEST, zdoPayload, false);
 
+        /* istanbul ignore next */
         if (!Zdo.Buffalo.checkStatus(result)) {
+            // TODO: will disappear once moved upstream
             throw new Zdo.StatusError(result[0]);
         }
     }
@@ -2263,7 +2281,9 @@ export class EmberAdapter extends Adapter {
         );
         const result = await this.sendZdo(ZSpec.BLANK_EUI64, networkAddress, Zdo.ClusterId.LEAVE_REQUEST, zdoPayload, false);
 
+        /* istanbul ignore next */
         if (!Zdo.Buffalo.checkStatus(result)) {
+            // TODO: will disappear once moved upstream
             throw new Zdo.StatusError(result[0]);
         }
     }
