@@ -850,6 +850,26 @@ describe('ZNP', () => {
         ]);
     });
 
+    it('znp waitFor with target as IEEE forced to timeout because invalid ZDO status (no payload to match against)', async () => {
+        let parsedCb;
+        mockUnpiParserOn.mockImplementationOnce((event, cb) => {
+            if (event === 'parsed') {
+                parsedCb = cb;
+            }
+        });
+
+        await znp.open();
+        requestSpy.mockRestore();
+
+        const waiter = znp.waitFor(UnpiConstants.Type.AREQ, UnpiConstants.Subsystem.ZDO, 'nwkAddrRsp', '0x0807060504030201');
+
+        parsedCb(new UnpiFrame(UnpiConstants.Type.AREQ, UnpiConstants.Subsystem.ZDO, 128, Buffer.from([Zdo.Status.INVALID_INDEX])));
+
+        expect(async () => {
+            await waiter.start().promise;
+        }).rejects.toThrow('AREQ - ZDO - nwkAddrRsp after 10000ms');
+    });
+
     it('znp waitFor with state', async () => {
         let parsedCb;
         mockUnpiParserOn.mockImplementationOnce((event, cb) => {
@@ -869,7 +889,7 @@ describe('ZNP', () => {
         expect(object.payload).toStrictEqual({state: 9});
     });
 
-    it('znp request, waitFor with payload mismatch', (done) => {
+    it('znp waitFor with payload mismatch', async () => {
         let parsedCb;
         mockUnpiParserOn.mockImplementationOnce((event, cb) => {
             if (event === 'parsed') {
@@ -877,23 +897,16 @@ describe('ZNP', () => {
             }
         });
 
-        znp.open().then(() => {
-            requestSpy.mockRestore();
-            const waiter = znp.waitFor(UnpiConstants.Type.SRSP, UnpiConstants.Subsystem.SYS, 'osalNvRead', 'abcd');
-            znp.request(UnpiConstants.Subsystem.SYS, 'osalNvRead', {id: 1, offset: 2});
+        await znp.open();
+        requestSpy.mockRestore();
 
-            parsedCb(new UnpiFrame(UnpiConstants.Type.SRSP, UnpiConstants.Subsystem.SYS, 0x08, Buffer.from([0x00, 0x02, 0x01, 0x02])));
+        const waiter = znp.waitFor(UnpiConstants.Type.SRSP, UnpiConstants.Subsystem.SYS, 'osalNvRead', 'abcd');
 
-            waiter
-                .start()
-                .promise.then(() => done("Shouldn't end up here"))
-                .catch((e) => {
-                    expect(e).toStrictEqual(new Error('SRSP - SYS - osalNvRead after 10000ms'));
-                    done();
-                });
+        parsedCb(new UnpiFrame(UnpiConstants.Type.SRSP, UnpiConstants.Subsystem.SYS, 0x08, Buffer.from([0x00, 0x02, 0x01, 0x02])));
 
-            jest.runOnlyPendingTimers();
-        });
+        expect(async () => {
+            await waiter.start().promise;
+        }).rejects.toThrow('SRSP - SYS - osalNvRead after 10000ms');
     });
 
     it('znp requestWithReply should throw error when request as no reply', async () => {
