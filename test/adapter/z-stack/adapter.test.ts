@@ -3687,7 +3687,6 @@ describe('zstack-adapter', () => {
     it('Device announce', async () => {
         basicMocks();
         await adapter.start();
-        let deviceAnnounce;
         mockZnpRequest.mockClear();
         mockQueueExecute.mockClear();
         const object = mockZdoZpiObject<EndDeviceAnnounce>('endDeviceAnnceInd', Zdo.Status.SUCCESS, {
@@ -3695,18 +3694,18 @@ describe('zstack-adapter', () => {
             eui64: '0x123',
             nwkAddress: 123,
         });
-        adapter.on('deviceAnnounce', (p) => {
-            deviceAnnounce = p;
+        adapter.on('zdoResponse', (clusterId, payload) => {
+            expect(clusterId).toStrictEqual(Zdo.ClusterId.END_DEVICE_ANNOUNCE);
+            expect(payload[0]).toStrictEqual(Zdo.Status.SUCCESS);
+            expect(payload[1]).toStrictEqual({eui64: '0x123', nwkAddress: 123, capabilities: DUMMY_NODE_DESC_RSP_CAPABILITIES});
         });
         znpReceived(object);
-        expect(deviceAnnounce).toStrictEqual({ieeeAddr: '0x123', networkAddress: 123});
         expect(mockZnpRequest).toHaveBeenCalledTimes(0);
     });
 
     it('Device announce should discover route to end devices', async () => {
         basicMocks();
         await adapter.start();
-        let deviceAnnounce;
         mockZnpRequest.mockClear();
         mockQueueExecute.mockClear();
         const object = mockZdoZpiObject<EndDeviceAnnounce>('endDeviceAnnceInd', Zdo.Status.SUCCESS, {
@@ -3714,17 +3713,17 @@ describe('zstack-adapter', () => {
             eui64: '0x123',
             nwkAddress: 123,
         });
-        adapter.on('deviceAnnounce', (p) => {
-            deviceAnnounce = p;
+        adapter.on('zdoResponse', (clusterId, payload) => {
+            expect(clusterId).toStrictEqual(Zdo.ClusterId.END_DEVICE_ANNOUNCE);
+            expect(payload[0]).toStrictEqual(Zdo.Status.SUCCESS);
+            expect(payload[1]).toStrictEqual({eui64: '0x123', nwkAddress: 123, capabilities: {...DUMMY_NODE_DESC_RSP_CAPABILITIES, deviceType: 0}});
         });
         znpReceived(object);
-        expect(deviceAnnounce).toStrictEqual({ieeeAddr: '0x123', networkAddress: 123});
         expect(mockZnpRequest).toHaveBeenCalledTimes(1);
         expect(mockZnpRequest).toHaveBeenCalledWith(Subsystem.ZDO, 'extRouteDisc', {dstAddr: 123, options: 0, radius: 30});
 
         // Should debounce route discovery.
         znpReceived(object);
-        expect(deviceAnnounce).toStrictEqual({ieeeAddr: '0x123', networkAddress: 123});
         expect(mockZnpRequest).toHaveBeenCalledTimes(1);
         expect(mockZnpRequest).toHaveBeenCalledWith(Subsystem.ZDO, 'extRouteDisc', {dstAddr: 123, options: 0, radius: 30});
     });
@@ -3732,18 +3731,18 @@ describe('zstack-adapter', () => {
     it('Network address response', async () => {
         basicMocks();
         await adapter.start();
-        let networkAddress;
         const object = mockZdoZpiObject<NetworkAddressResponse>('nwkAddrRsp', Zdo.Status.SUCCESS, {
             eui64: '0x123',
             nwkAddress: 124,
             assocDevList: [],
             startIndex: 0,
         });
-        adapter.on('networkAddress', (p) => {
-            networkAddress = p;
+        adapter.on('zdoResponse', (clusterId, payload) => {
+            expect(clusterId).toStrictEqual(Zdo.ClusterId.NETWORK_ADDRESS_RESPONSE);
+            expect(payload[0]).toStrictEqual(Zdo.Status.SUCCESS);
+            expect(payload[1]).toStrictEqual({eui64: '0x123', nwkAddress: 124, assocDevList: [], startIndex: 0});
         });
         znpReceived(object);
-        expect(networkAddress).toStrictEqual({ieeeAddr: '0x123', networkAddress: 124});
     });
 
     it('Concentrator Callback Indication', async () => {
