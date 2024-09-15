@@ -127,28 +127,6 @@ interface MiboxerZone {
 export class BuffaloZcl extends Buffalo {
     // TODO: remove read/write int "SB" versions in favor of plain numbers, implemented in buffalo.ts
 
-    private writeUInt40SB(value: number[]): void {
-        this.writeUInt32(value[1]);
-        this.writeUInt8(value[0]);
-    }
-
-    private readUInt40SB(): [number, number] {
-        const lsb = this.readUInt32();
-        const msb = this.readUInt8();
-        return [msb, lsb];
-    }
-
-    private writeUInt48SB(value: number[]): void {
-        this.writeUInt32(value[1]);
-        this.writeUInt16(value[0]);
-    }
-
-    private readUInt48SB(): [number, number] {
-        const lsb = this.readUInt32();
-        const msb = this.readUInt16();
-        return [msb, lsb];
-    }
-
     private writeUInt56SB(value: number[]): void {
         // XXX: [uint32, uint32] param not following read return pattern [uint32, uint16, uint8]
         const temp = Buffer.alloc(8);
@@ -175,17 +153,6 @@ export class BuffaloZcl extends Buffalo {
         const lsb = parseInt(value.slice(10), 16);
         this.writeUInt32(lsb);
         this.writeUInt32(msb);
-    }
-
-    private writeInt40SB(value: number[]): void {
-        this.writeInt32(value[1]);
-        this.writeInt8(value[0]);
-    }
-
-    private readInt40SB(): [number, number] {
-        const lsb = this.readInt32();
-        const msb = this.readInt8();
-        return [msb, lsb];
     }
 
     private writeInt56SB(value: number[]): void {
@@ -773,12 +740,12 @@ export class BuffaloZcl extends Buffalo {
             case DataType.DATA40:
             case DataType.BITMAP40:
             case DataType.UINT40: {
-                return this.writeUInt40SB(value);
+                return this.writeUInt40(value);
             }
             case DataType.DATA48:
             case DataType.BITMAP48:
             case DataType.UINT48: {
-                return this.writeUInt48SB(value);
+                return this.writeUInt48(value);
             }
             case DataType.DATA56:
             case DataType.BITMAP56:
@@ -803,7 +770,7 @@ export class BuffaloZcl extends Buffalo {
                 return this.writeInt32(value);
             }
             case DataType.INT40: {
-                return this.writeInt40SB(value);
+                return this.writeInt40(value);
             }
             case DataType.INT48: {
                 return this.writeInt48(value);
@@ -957,12 +924,12 @@ export class BuffaloZcl extends Buffalo {
             case DataType.DATA40:
             case DataType.BITMAP40:
             case DataType.UINT40: {
-                return this.readUInt40SB();
+                return this.readUInt40();
             }
             case DataType.DATA48:
             case DataType.BITMAP48:
             case DataType.UINT48: {
-                return this.readUInt48SB();
+                return this.readUInt48();
             }
             case DataType.DATA56:
             case DataType.BITMAP56:
@@ -987,7 +954,7 @@ export class BuffaloZcl extends Buffalo {
                 return this.readInt32();
             }
             case DataType.INT40: {
-                return this.readInt40SB();
+                return this.readInt40();
             }
             case DataType.INT48: {
                 return this.readInt48();

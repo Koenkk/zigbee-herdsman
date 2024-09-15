@@ -699,7 +699,7 @@ describe('ZCL Frame', () => {
     it('[workaround] Reads Foundation char str as Mi struct for Xiaomi attridId=65281', () => {
         const expected = [
             {attrId: 5, dataType: Zcl.DataType.CHAR_STR, attrData: 'lumi.sensor_wleak.aq1'},
-            {attrId: 65281, dataType: Zcl.DataType.CHAR_STR, attrData: {1: 3285, 3: 33, 4: 5032, 5: 43, 6: [0, 327680], 8: 516, 10: 0, 100: 0}},
+            {attrId: 65281, dataType: Zcl.DataType.CHAR_STR, attrData: {1: 3285, 3: 33, 4: 5032, 5: 43, 6: 327680, 8: 516, 10: 0, 100: 0}},
         ];
         const buffer = Buffer.from([
             28,
@@ -779,7 +779,7 @@ describe('ZCL Frame', () => {
                     {elmType: Zcl.DataType.BOOLEAN, elmVal: 1},
                     {elmType: Zcl.DataType.UINT16, elmVal: 3022},
                     {elmType: Zcl.DataType.UINT16, elmVal: 17320},
-                    {elmType: Zcl.DataType.UINT40, elmVal: [0, 1]},
+                    {elmType: Zcl.DataType.UINT40, elmVal: 1},
                     {elmType: Zcl.DataType.UINT16, elmVal: 560},
                     {elmType: Zcl.DataType.UINT8, elmVal: 86},
                 ],
@@ -787,7 +787,7 @@ describe('ZCL Frame', () => {
                     {elmType: Zcl.DataType.BOOLEAN, elmVal: 1},
                     {elmType: Zcl.DataType.UINT16, elmVal: 3022},
                     {elmType: Zcl.DataType.UINT16, elmVal: 17320},
-                    {elmType: Zcl.DataType.UINT40, elmVal: [0, 1]},
+                    {elmType: Zcl.DataType.UINT40, elmVal: 1},
                     {elmType: Zcl.DataType.UINT16, elmVal: 560},
                     {elmType: Zcl.DataType.UINT8, elmVal: 86},
                 ],

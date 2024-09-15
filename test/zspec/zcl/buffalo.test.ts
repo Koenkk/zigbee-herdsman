@@ -214,17 +214,6 @@ describe('ZCL Buffalo', () => {
 
     it.each([
         [
-            'uint40-like',
-            {value: [250, 25635482], types: [Zcl.DataType.DATA40, Zcl.DataType.BITMAP40, Zcl.DataType.UINT40]},
-            {position: 5, written: [...uint32To8Array(25635482), 250]},
-        ],
-        [
-            'uint48-like',
-            {value: [65530, 65894582], types: [Zcl.DataType.DATA48, Zcl.DataType.BITMAP48, Zcl.DataType.UINT48]},
-            {position: 6, written: [...uint32To8Array(65894582), ...uint16To8Array(65530)]},
-        ],
-        ['int40-like', {value: [120, -2147483640], types: [Zcl.DataType.INT40]}, {position: 5, written: [...uint32To8Array(-2147483640), 120]}],
-        [
             'int64-like',
             {value: [-2147483640, 2147483640], types: [Zcl.DataType.INT64]},
             {position: 8, written: [...uint32To8Array(2147483640), ...uint32To8Array(-2147483640)]},
@@ -373,7 +362,7 @@ describe('ZCL Buffalo', () => {
     });
 
     it('[workaround] Reads char str as Mi struct for Xiaomi attridId=65281', () => {
-        const expectedValue = {'1': 3285, '3': 33, '4': 5032, '5': 43, '6': [0, 327680], '8': 516, '10': 0, '100': 0};
+        const expectedValue = {'1': 3285, '3': 33, '4': 5032, '5': 43, '6': 327680, '8': 516, '10': 0, '100': 0};
         const buffer = Buffer.from([
             34,
             1,
