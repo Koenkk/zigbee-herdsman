@@ -15,18 +15,18 @@ interface MtCmdBase {
     type: number;
     request: MtParameter[];
     response: MtParameter[];
-    zdo: {clusterId: ZdoClusterId; convert: (buffer: Buffer) => Buffer};
+    zdoClusterId: ZdoClusterId;
 }
 
-interface MtCmdAreq extends Omit<MtCmdBase, 'response' | 'zdo'> {
+interface MtCmdAreq extends Omit<MtCmdBase, 'response' | 'zdoClusterId'> {
     type: CommandType.AREQ;
 }
 
-interface MtCmdSreq extends Omit<MtCmdBase, 'zdo'> {
+interface MtCmdSreq extends Omit<MtCmdBase, 'zdoClusterId'> {
     type: CommandType.SREQ;
 }
 
-export interface MtCmdAreqZdo extends Omit<MtCmdBase, 'response'> {
+export interface MtCmdAreqZdo extends Omit<MtCmdBase, 'request' | 'response'> {
     type: CommandType.AREQ;
 }
 

@@ -1,5 +1,6 @@
 import assert from 'assert';
 
+import {ClusterId as ZdoClusterId} from '../../../zspec/zdo';
 import {BuffaloZdo} from '../../../zspec/zdo/buffaloZdo';
 import {Frame as UnpiFrame} from '../unpi';
 import {MaxDataSize, Subsystem, Type} from '../unpi/constants';
@@ -7,7 +8,7 @@ import BuffaloZnp from './buffaloZnp';
 import Definition from './definition';
 import ParameterType from './parameterType';
 import {BuffaloZnpOptions, MtCmd, MtParameter, MtType, ZpiObjectPayload} from './tstype';
-import {assertIsMtCmdAreqZdo} from './utils';
+import {isMtCmdAreqZdo} from './utils';
 
 const BufferAndListTypes = [
     ParameterType.BUFFER,
@@ -43,16 +44,19 @@ class ZpiObject {
         }
 
         const cmd = Definition[subsystem].find((c) => c.name === command);
-        if (cmd === undefined) {
+
+        if (cmd === undefined || isMtCmdAreqZdo(cmd) || cmd.request === undefined) {
             throw new Error(`Command request '${command}' from subsystem '${subsystem}' not found`);
         }
 
         // Create the UnpiFrame
         const buffalo = new BuffaloZnp(Buffer.alloc(MaxDataSize));
+
         for (const parameter of cmd.request) {
             const value = payload[parameter.name];
             buffalo.write(parameter.parameterType, value, {});
         }
+
         const buffer = buffalo.getWritten();
         const unpiFrame = new UnpiFrame(cmd.type, subsystem, cmd.ID, buffer);
 
@@ -67,13 +71,29 @@ class ZpiObject {
         }
 
         let payload: ZpiObjectPayload = {};
-        const parameters = frame.type === Type.SRSP && cmd.type !== Type.AREQ ? cmd.response : cmd.request;
-        assert(
-            parameters,
-            `CommandID '${frame.commandID}' from subsystem '${frame.subsystem}' cannot be a ` +
-                `${frame.type === Type.SRSP ? 'response' : 'request'}`,
-        );
-        payload = this.readParameters(frame.data, parameters);
+
+        if (isMtCmdAreqZdo(cmd)) {
+            if (cmd.zdoClusterId === ZdoClusterId.NETWORK_ADDRESS_RESPONSE || cmd.zdoClusterId === ZdoClusterId.IEEE_ADDRESS_RESPONSE) {
+                // ZStack swaps the `startindex` and `numassocdev` compared to ZDO swap them back before handing to ZDO
+                const startIndex = frame.data[11];
+                const assocDevCount = frame.data[12];
+                frame.data[11] = assocDevCount;
+                frame.data[12] = startIndex;
+                payload.zdo = BuffaloZdo.readResponse(false, cmd.zdoClusterId, frame.data);
+            } else {
+                payload.srcaddr = frame.data.readUInt16LE(0);
+                payload.zdo = BuffaloZdo.readResponse(false, cmd.zdoClusterId, frame.data.subarray(2));
+            }
+        } else {
+            const parameters = frame.type === Type.SRSP && cmd.type !== Type.AREQ ? cmd.response : cmd.request;
+            assert(
+                parameters,
+                `CommandID '${frame.commandID}' from subsystem '${frame.subsystem}' cannot be a ` +
+                    `${frame.type === Type.SRSP ? 'response' : 'request'}`,
+            );
+            payload = this.readParameters(frame.data, parameters);
+        }
+
         return new ZpiObject(frame.type, frame.subsystem, cmd, payload, frame);
     }
 
@@ -108,12 +128,6 @@ class ZpiObject {
             // istanbul ignore next
             (this.command.name === 'systemReset' && this.subsystem === Subsystem.SAPI)
         );
-    }
-
-    public parseZdoPayload(): ReturnType<typeof BuffaloZdo.readResponse> {
-        assertIsMtCmdAreqZdo(this.command);
-        const data = this.command.zdo.convert(this.unpiFrame.data);
-        return BuffaloZdo.readResponse(false, this.command.zdo.clusterId, data);
     }
 
     public toString(): string {

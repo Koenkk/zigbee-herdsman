@@ -2,8 +2,6 @@ import assert from 'assert';
 import events from 'events';
 import net from 'net';
 
-import Equals from 'fast-deep-equal/es6';
-
 import {Queue, RealpathSync, Wait, Waitress} from '../../../utils';
 import {logger} from '../../../utils/logger';
 import {ClusterId as ZdoClusterId} from '../../../zspec/zdo';
@@ -33,7 +31,9 @@ interface WaitressMatcher {
     type: Type;
     subsystem: Subsystem;
     command: string;
-    payload?: ZpiObjectPayload;
+    target?: number | string;
+    transid?: number;
+    state?: number;
 }
 
 const ZDO_CLUSTER_ID_TO_ZSTACK_SREQ_ID: Readonly<Partial<Record<ZdoClusterId, number>>> = {
@@ -372,27 +372,26 @@ class Znp extends events.EventEmitter {
         type: Type,
         subsystem: Subsystem,
         command: string,
-        payload: ZpiObjectPayload = {},
+        target: number | string | undefined,
+        transid: number | undefined,
+        state: number | undefined,
         timeout: number = timeouts.default,
     ): {start: () => {promise: Promise<ZpiObject>; ID: number}; ID: number} {
-        return this.waitress.waitFor({type, subsystem, command, payload}, timeout);
+        return this.waitress.waitFor({type, subsystem, command, target, transid, state}, timeout);
     }
 
     private waitressValidator(zpiObject: ZpiObject, matcher: WaitressMatcher): boolean {
-        const requiredMatch =
-            matcher.type === zpiObject.type && matcher.subsystem == zpiObject.subsystem && matcher.command === zpiObject.command.name;
-        let payloadMatch = true;
-
-        if (matcher.payload) {
-            for (const key in matcher.payload) {
-                if (!Equals(zpiObject.payload[key], matcher.payload[key])) {
-                    payloadMatch = false;
-                    break;
-                }
-            }
-        }
-
-        return requiredMatch && payloadMatch;
+        return (
+            matcher.type === zpiObject.type &&
+            matcher.subsystem == zpiObject.subsystem &&
+            matcher.command === zpiObject.command.name &&
+            (matcher.target === undefined ||
+                (typeof matcher.target === 'number'
+                    ? matcher.target === zpiObject.payload.srcaddr
+                    : matcher.target === zpiObject.payload.zdo?.[1]?.eui64)) &&
+            (matcher.transid === undefined || matcher.transid === zpiObject.payload.transid) &&
+            (matcher.state === undefined || matcher.state === zpiObject.payload.state)
+        );
     }
 }
 

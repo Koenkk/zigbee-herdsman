@@ -3,18 +3,6 @@ import {Type as CommandType, Subsystem} from '../unpi/constants';
 import ParameterType from './parameterType';
 import {MtCmd} from './tstype';
 
-const convertSkipSrcAddr = (buffer: Buffer): Buffer => buffer.subarray(2);
-const convertSwapStartIndexNumAssocDev = (buffer: Buffer): Buffer => {
-    // ZStack swaps the `startindex` and `numassocdev` compared to ZDO.
-    // Swap them back here.
-    const startIndex = buffer[11];
-    const assocDevCount = buffer[12];
-    const newBuffer = Buffer.from(buffer);
-    newBuffer[11] = assocDevCount;
-    newBuffer[12] = startIndex;
-    return newBuffer;
-};
-
 const Definition: {
     [Subsystem.SYS]: MtCmd[];
     [Subsystem.MAC]: MtCmd[];
@@ -1400,130 +1388,109 @@ const Definition: {
             name: 'nwkAddrRsp',
             ID: 128,
             type: CommandType.AREQ,
-            zdo: {
-                clusterId: ZdoClusterId.NETWORK_ADDRESS_RESPONSE,
-                convert: convertSwapStartIndexNumAssocDev,
-            },
-            request: [
-                {name: 'status', parameterType: ParameterType.UINT8},
-                // Parse the ieeeaddr as it is needed for ZNP waitFor (see zStackAdapter.requestNetworkAddress())
-                {name: 'ieeeaddr', parameterType: ParameterType.IEEEADDR},
-                // {name: 'nwkaddr', parameterType: ParameterType.UINT16},
-                // {name: 'startindex', parameterType: ParameterType.UINT8},
-                // {name: 'numassocdev', parameterType: ParameterType.UINT8},
-                // {name: 'assocdevlist', parameterType: ParameterType.LIST_ASSOC_DEV},
-            ],
+            zdoClusterId: ZdoClusterId.NETWORK_ADDRESS_RESPONSE,
+            // request: [
+            // {name: 'status', parameterType: ParameterType.UINT8},
+            // Parse the ieeeaddr as it is needed for ZNP waitFor (see zStackAdapter.requestNetworkAddress())
+            // {name: 'ieeeaddr', parameterType: ParameterType.IEEEADDR},
+            // {name: 'nwkaddr', parameterType: ParameterType.UINT16},
+            // {name: 'startindex', parameterType: ParameterType.UINT8},
+            // {name: 'numassocdev', parameterType: ParameterType.UINT8},
+            // {name: 'assocdevlist', parameterType: ParameterType.LIST_ASSOC_DEV},
+            // ],
         },
         {
             name: 'ieeeAddrRsp',
             ID: 129,
             type: CommandType.AREQ,
-            zdo: {
-                clusterId: ZdoClusterId.IEEE_ADDRESS_RESPONSE,
-                convert: convertSwapStartIndexNumAssocDev,
-            },
-            request: [
-                // {name: 'status', parameterType: ParameterType.UINT8},
-                // {name: 'ieeeaddr', parameterType: ParameterType.IEEEADDR},
-                // {name: 'nwkaddr', parameterType: ParameterType.UINT16},
-                // {name: 'startindex', parameterType: ParameterType.UINT8},
-                // {name: 'numassocdev', parameterType: ParameterType.UINT8},
-                // {name: 'assocdevlist', parameterType: ParameterType.LIST_ASSOC_DEV},
-            ],
+            zdoClusterId: ZdoClusterId.IEEE_ADDRESS_RESPONSE,
+            // request: [
+            // {name: 'status', parameterType: ParameterType.UINT8},
+            // {name: 'ieeeaddr', parameterType: ParameterType.IEEEADDR},
+            // {name: 'nwkaddr', parameterType: ParameterType.UINT16},
+            // {name: 'startindex', parameterType: ParameterType.UINT8},
+            // {name: 'numassocdev', parameterType: ParameterType.UINT8},
+            // {name: 'assocdevlist', parameterType: ParameterType.LIST_ASSOC_DEV},
+            // ],
         },
         {
             name: 'nodeDescRsp',
             ID: 130,
             type: CommandType.AREQ,
-            zdo: {
-                clusterId: ZdoClusterId.NODE_DESCRIPTOR_RESPONSE,
-                convert: convertSkipSrcAddr,
-            },
-            request: [
-                {name: 'srcaddr', parameterType: ParameterType.UINT16},
-                // {name: 'status', parameterType: ParameterType.UINT8},
-                // {name: 'nwkaddr', parameterType: ParameterType.UINT16},
-                // {name: 'logicaltype_cmplxdescavai_userdescavai', parameterType: ParameterType.UINT8},
-                // {name: 'apsflags_freqband', parameterType: ParameterType.UINT8},
-                // {name: 'maccapflags', parameterType: ParameterType.UINT8},
-                // {name: 'manufacturercode', parameterType: ParameterType.UINT16},
-                // {name: 'maxbuffersize', parameterType: ParameterType.UINT8},
-                // {name: 'maxintransfersize', parameterType: ParameterType.UINT16},
-                // {name: 'servermask', parameterType: ParameterType.UINT16},
-                // {name: 'maxouttransfersize', parameterType: ParameterType.UINT16},
-                // {name: 'descriptorcap', parameterType: ParameterType.UINT8},
-            ],
+            zdoClusterId: ZdoClusterId.NODE_DESCRIPTOR_RESPONSE,
+            // request: [
+            // {name: 'srcaddr', parameterType: ParameterType.UINT16},
+            // {name: 'status', parameterType: ParameterType.UINT8},
+            // {name: 'nwkaddr', parameterType: ParameterType.UINT16},
+            // {name: 'logicaltype_cmplxdescavai_userdescavai', parameterType: ParameterType.UINT8},
+            // {name: 'apsflags_freqband', parameterType: ParameterType.UINT8},
+            // {name: 'maccapflags', parameterType: ParameterType.UINT8},
+            // {name: 'manufacturercode', parameterType: ParameterType.UINT16},
+            // {name: 'maxbuffersize', parameterType: ParameterType.UINT8},
+            // {name: 'maxintransfersize', parameterType: ParameterType.UINT16},
+            // {name: 'servermask', parameterType: ParameterType.UINT16},
+            // {name: 'maxouttransfersize', parameterType: ParameterType.UINT16},
+            // {name: 'descriptorcap', parameterType: ParameterType.UINT8},
+            // ],
         },
         {
             name: 'powerDescRsp',
             ID: 131,
             type: CommandType.AREQ,
-            zdo: {
-                clusterId: ZdoClusterId.POWER_DESCRIPTOR_RESPONSE,
-                convert: convertSkipSrcAddr,
-            },
-            request: [
-                {name: 'srcaddr', parameterType: ParameterType.UINT16},
-                // {name: 'status', parameterType: ParameterType.UINT8},
-                // {name: 'nwkaddr', parameterType: ParameterType.UINT16},
-                // {name: 'currentpowermode_avaipowersrc', parameterType: ParameterType.UINT8},
-                // {name: 'currentpowersrc_currentpowersrclevel', parameterType: ParameterType.UINT8},
-            ],
+            zdoClusterId: ZdoClusterId.POWER_DESCRIPTOR_RESPONSE,
+            // request: [
+            // {name: 'srcaddr', parameterType: ParameterType.UINT16},
+            // {name: 'status', parameterType: ParameterType.UINT8},
+            // {name: 'nwkaddr', parameterType: ParameterType.UINT16},
+            // {name: 'currentpowermode_avaipowersrc', parameterType: ParameterType.UINT8},
+            // {name: 'currentpowersrc_currentpowersrclevel', parameterType: ParameterType.UINT8},
+            // ],
         },
         {
             name: 'simpleDescRsp',
             ID: 132,
             type: CommandType.AREQ,
-            zdo: {
-                clusterId: ZdoClusterId.SIMPLE_DESCRIPTOR_RESPONSE,
-                convert: convertSkipSrcAddr,
-            },
-            request: [
-                {name: 'srcaddr', parameterType: ParameterType.UINT16},
-                // {name: 'status', parameterType: ParameterType.UINT8},
-                // {name: 'nwkaddr', parameterType: ParameterType.UINT16},
-                // {name: 'len', parameterType: ParameterType.UINT8},
-                // {name: 'endpoint', parameterType: ParameterType.UINT8},
-                // {name: 'profileid', parameterType: ParameterType.UINT16},
-                // {name: 'deviceid', parameterType: ParameterType.UINT16},
-                // {name: 'deviceversion', parameterType: ParameterType.UINT8},
-                // {name: 'numinclusters', parameterType: ParameterType.UINT8},
-                // {name: 'inclusterlist', parameterType: ParameterType.LIST_UINT16},
-                // {name: 'numoutclusters', parameterType: ParameterType.UINT8},
-                // {name: 'outclusterlist', parameterType: ParameterType.LIST_UINT16},
-            ],
+            zdoClusterId: ZdoClusterId.SIMPLE_DESCRIPTOR_RESPONSE,
+            // request: [
+            // {name: 'srcaddr', parameterType: ParameterType.UINT16},
+            // {name: 'status', parameterType: ParameterType.UINT8},
+            // {name: 'nwkaddr', parameterType: ParameterType.UINT16},
+            // {name: 'len', parameterType: ParameterType.UINT8},
+            // {name: 'endpoint', parameterType: ParameterType.UINT8},
+            // {name: 'profileid', parameterType: ParameterType.UINT16},
+            // {name: 'deviceid', parameterType: ParameterType.UINT16},
+            // {name: 'deviceversion', parameterType: ParameterType.UINT8},
+            // {name: 'numinclusters', parameterType: ParameterType.UINT8},
+            // {name: 'inclusterlist', parameterType: ParameterType.LIST_UINT16},
+            // {name: 'numoutclusters', parameterType: ParameterType.UINT8},
+            // {name: 'outclusterlist', parameterType: ParameterType.LIST_UINT16},
+            // ],
         },
         {
             name: 'activeEpRsp',
             ID: 133,
             type: CommandType.AREQ,
-            zdo: {
-                clusterId: ZdoClusterId.ACTIVE_ENDPOINTS_RESPONSE,
-                convert: convertSkipSrcAddr,
-            },
-            request: [
-                {name: 'srcaddr', parameterType: ParameterType.UINT16},
-                // {name: 'status', parameterType: ParameterType.UINT8},
-                // {name: 'nwkaddr', parameterType: ParameterType.UINT16},
-                // {name: 'activeepcount', parameterType: ParameterType.UINT8},
-                // {name: 'activeeplist', parameterType: ParameterType.LIST_UINT8},
-            ],
+            zdoClusterId: ZdoClusterId.ACTIVE_ENDPOINTS_RESPONSE,
+            // request: [
+            // {name: 'srcaddr', parameterType: ParameterType.UINT16},
+            // {name: 'status', parameterType: ParameterType.UINT8},
+            // {name: 'nwkaddr', parameterType: ParameterType.UINT16},
+            // {name: 'activeepcount', parameterType: ParameterType.UINT8},
+            // {name: 'activeeplist', parameterType: ParameterType.LIST_UINT8},
+            // ],
         },
         {
             name: 'matchDescRsp',
             ID: 134,
             type: CommandType.AREQ,
-            zdo: {
-                clusterId: ZdoClusterId.MATCH_DESCRIPTORS_RESPONSE,
-                convert: convertSkipSrcAddr,
-            },
-            request: [
-                {name: 'srcaddr', parameterType: ParameterType.UINT16},
-                // {name: 'status', parameterType: ParameterType.UINT8},
-                // {name: 'nwkaddr', parameterType: ParameterType.UINT16},
-                // {name: 'matchlength', parameterType: ParameterType.UINT8},
-                // {name: 'matchlist', parameterType: ParameterType.BUFFER},
-            ],
+            zdoClusterId: ZdoClusterId.MATCH_DESCRIPTORS_RESPONSE,
+            // request: [
+            // {name: 'srcaddr', parameterType: ParameterType.UINT16},
+            // {name: 'status', parameterType: ParameterType.UINT8},
+            // {name: 'nwkaddr', parameterType: ParameterType.UINT16},
+            // {name: 'matchlength', parameterType: ParameterType.UINT8},
+            // {name: 'matchlist', parameterType: ParameterType.BUFFER},
+            // ],
         },
         {
             name: 'complexDescRsp',
@@ -1563,15 +1530,12 @@ const Definition: {
             name: 'serverDiscRsp',
             ID: 138,
             type: CommandType.AREQ,
-            zdo: {
-                clusterId: ZdoClusterId.SYSTEM_SERVER_DISCOVERY_RESPONSE,
-                convert: convertSkipSrcAddr,
-            },
-            request: [
-                {name: 'srcaddr', parameterType: ParameterType.UINT16},
-                // {name: 'status', parameterType: ParameterType.UINT8},
-                // {name: 'servermask', parameterType: ParameterType.UINT16},
-            ],
+            zdoClusterId: ZdoClusterId.SYSTEM_SERVER_DISCOVERY_RESPONSE,
+            // request: [
+            // {name: 'srcaddr', parameterType: ParameterType.UINT16},
+            // {name: 'status', parameterType: ParameterType.UINT8},
+            // {name: 'servermask', parameterType: ParameterType.UINT16},
+            // ],
         },
         {
             // https://github.com/Koenkk/zigbee2mqtt/issues/3363
@@ -1593,27 +1557,21 @@ const Definition: {
             name: 'bindRsp',
             ID: 161,
             type: CommandType.AREQ,
-            zdo: {
-                clusterId: ZdoClusterId.BIND_RESPONSE,
-                convert: convertSkipSrcAddr,
-            },
-            request: [
-                {name: 'srcaddr', parameterType: ParameterType.UINT16},
-                // {name: 'status', parameterType: ParameterType.UINT8},
-            ],
+            zdoClusterId: ZdoClusterId.BIND_RESPONSE,
+            // request: [
+            // {name: 'srcaddr', parameterType: ParameterType.UINT16},
+            // {name: 'status', parameterType: ParameterType.UINT8},
+            // ],
         },
         {
             name: 'unbindRsp',
             ID: 162,
             type: CommandType.AREQ,
-            zdo: {
-                clusterId: ZdoClusterId.UNBIND_RESPONSE,
-                convert: convertSkipSrcAddr,
-            },
-            request: [
-                {name: 'srcaddr', parameterType: ParameterType.UINT16},
-                // {name: 'status', parameterType: ParameterType.UINT8},
-            ],
+            zdoClusterId: ZdoClusterId.UNBIND_RESPONSE,
+            // request: [
+            // {name: 'srcaddr', parameterType: ParameterType.UINT16},
+            // {name: 'status', parameterType: ParameterType.UINT8},
+            // ],
         },
         {
             name: 'mgmtNwkDiscRsp',
@@ -1632,65 +1590,53 @@ const Definition: {
             name: 'mgmtLqiRsp',
             ID: 177,
             type: CommandType.AREQ,
-            zdo: {
-                clusterId: ZdoClusterId.LQI_TABLE_RESPONSE,
-                convert: convertSkipSrcAddr,
-            },
-            request: [
-                {name: 'srcaddr', parameterType: ParameterType.UINT16},
-                // {name: 'status', parameterType: ParameterType.UINT8},
-                // {name: 'neighbortableentries', parameterType: ParameterType.UINT8},
-                // {name: 'startindex', parameterType: ParameterType.UINT8},
-                // {name: 'neighborlqilistcount', parameterType: ParameterType.UINT8},
-                // {name: 'neighborlqilist', parameterType: ParameterType.LIST_NEIGHBOR_LQI},
-            ],
+            zdoClusterId: ZdoClusterId.LQI_TABLE_RESPONSE,
+            // request: [
+            // {name: 'srcaddr', parameterType: ParameterType.UINT16},
+            // {name: 'status', parameterType: ParameterType.UINT8},
+            // {name: 'neighbortableentries', parameterType: ParameterType.UINT8},
+            // {name: 'startindex', parameterType: ParameterType.UINT8},
+            // {name: 'neighborlqilistcount', parameterType: ParameterType.UINT8},
+            // {name: 'neighborlqilist', parameterType: ParameterType.LIST_NEIGHBOR_LQI},
+            // ],
         },
         {
             name: 'mgmtRtgRsp',
             ID: 178,
             type: CommandType.AREQ,
-            zdo: {
-                clusterId: ZdoClusterId.ROUTING_TABLE_RESPONSE,
-                convert: convertSkipSrcAddr,
-            },
-            request: [
-                {name: 'srcaddr', parameterType: ParameterType.UINT16},
-                // {name: 'status', parameterType: ParameterType.UINT8},
-                // {name: 'routingtableentries', parameterType: ParameterType.UINT8},
-                // {name: 'startindex', parameterType: ParameterType.UINT8},
-                // {name: 'routingtablelistcount', parameterType: ParameterType.UINT8},
-                // {name: 'routingtablelist', parameterType: ParameterType.LIST_ROUTING_TABLE},
-            ],
+            zdoClusterId: ZdoClusterId.ROUTING_TABLE_RESPONSE,
+            // request: [
+            // {name: 'srcaddr', parameterType: ParameterType.UINT16},
+            // {name: 'status', parameterType: ParameterType.UINT8},
+            // {name: 'routingtableentries', parameterType: ParameterType.UINT8},
+            // {name: 'startindex', parameterType: ParameterType.UINT8},
+            // {name: 'routingtablelistcount', parameterType: ParameterType.UINT8},
+            // {name: 'routingtablelist', parameterType: ParameterType.LIST_ROUTING_TABLE},
+            // ],
         },
         {
             name: 'mgmtBindRsp',
             ID: 179,
             type: CommandType.AREQ,
-            zdo: {
-                clusterId: ZdoClusterId.BINDING_TABLE_RESPONSE,
-                convert: convertSkipSrcAddr,
-            },
-            request: [
-                {name: 'srcaddr', parameterType: ParameterType.UINT16},
-                // {name: 'status', parameterType: ParameterType.UINT8},
-                // {name: 'bindingtableentries', parameterType: ParameterType.UINT8},
-                // {name: 'startindex', parameterType: ParameterType.UINT8},
-                // {name: 'bindingtablelistcount', parameterType: ParameterType.UINT8},
-                // {name: 'bindingtablelist', parameterType: ParameterType.LIST_BIND_TABLE},
-            ],
+            zdoClusterId: ZdoClusterId.BINDING_TABLE_RESPONSE,
+            // request: [
+            // {name: 'srcaddr', parameterType: ParameterType.UINT16},
+            // {name: 'status', parameterType: ParameterType.UINT8},
+            // {name: 'bindingtableentries', parameterType: ParameterType.UINT8},
+            // {name: 'startindex', parameterType: ParameterType.UINT8},
+            // {name: 'bindingtablelistcount', parameterType: ParameterType.UINT8},
+            // {name: 'bindingtablelist', parameterType: ParameterType.LIST_BIND_TABLE},
+            // ],
         },
         {
             name: 'mgmtLeaveRsp',
             ID: 180,
             type: CommandType.AREQ,
-            zdo: {
-                clusterId: ZdoClusterId.LEAVE_RESPONSE,
-                convert: convertSkipSrcAddr,
-            },
-            request: [
-                {name: 'srcaddr', parameterType: ParameterType.UINT16},
-                // {name: 'status', parameterType: ParameterType.UINT8},
-            ],
+            zdoClusterId: ZdoClusterId.LEAVE_RESPONSE,
+            // request: [
+            // {name: 'srcaddr', parameterType: ParameterType.UINT16},
+            // {name: 'status', parameterType: ParameterType.UINT8},
+            // ],
         },
         {
             name: 'mgmtDirectJoinRsp',
@@ -1705,32 +1651,26 @@ const Definition: {
             name: 'mgmtPermitJoinRsp',
             ID: 182,
             type: CommandType.AREQ,
-            zdo: {
-                clusterId: ZdoClusterId.PERMIT_JOINING_RESPONSE,
-                convert: convertSkipSrcAddr,
-            },
-            request: [
-                {name: 'srcaddr', parameterType: ParameterType.UINT16},
-                // {name: 'status', parameterType: ParameterType.UINT8},
-            ],
+            zdoClusterId: ZdoClusterId.PERMIT_JOINING_RESPONSE,
+            // request: [
+            // {name: 'srcaddr', parameterType: ParameterType.UINT16},
+            // {name: 'status', parameterType: ParameterType.UINT8},
+            // ],
         },
         {
             name: 'mgmtNwkUpdateNotify',
             ID: 184,
             type: CommandType.AREQ,
-            zdo: {
-                clusterId: ZdoClusterId.NWK_UPDATE_RESPONSE,
-                convert: convertSkipSrcAddr,
-            },
-            request: [
-                {name: 'srcaddr', parameterType: ParameterType.UINT16},
-                // {name: 'status', parameterType: ParameterType.UINT8},
-                // {name: 'scannedchannels', parameterType: ParameterType.UINT32},
-                // {name: 'totaltrans', parameterType: ParameterType.UINT16},
-                // {name: 'transfails', parameterType: ParameterType.UINT16},
-                // {name: 'energylength', parameterType: ParameterType.UINT8},
-                // {name: 'energyvalues', parameterType: ParameterType.LIST_UINT8},
-            ],
+            zdoClusterId: ZdoClusterId.NWK_UPDATE_RESPONSE,
+            // request: [
+            // {name: 'srcaddr', parameterType: ParameterType.UINT16},
+            // {name: 'status', parameterType: ParameterType.UINT8},
+            // {name: 'scannedchannels', parameterType: ParameterType.UINT32},
+            // {name: 'totaltrans', parameterType: ParameterType.UINT16},
+            // {name: 'transfails', parameterType: ParameterType.UINT16},
+            // {name: 'energylength', parameterType: ParameterType.UINT8},
+            // {name: 'energyvalues', parameterType: ParameterType.LIST_UINT8},
+            // ],
         },
         {
             name: 'stateChangeInd',
@@ -1742,16 +1682,13 @@ const Definition: {
             name: 'endDeviceAnnceInd',
             ID: 193,
             type: CommandType.AREQ,
-            zdo: {
-                clusterId: ZdoClusterId.END_DEVICE_ANNOUNCE,
-                convert: convertSkipSrcAddr,
-            },
-            request: [
-                {name: 'srcaddr', parameterType: ParameterType.UINT16},
-                // {name: 'nwkaddr', parameterType: ParameterType.UINT16},
-                // {name: 'ieeeaddr', parameterType: ParameterType.IEEEADDR},
-                // {name: 'capabilities', parameterType: ParameterType.UINT8},
-            ],
+            zdoClusterId: ZdoClusterId.END_DEVICE_ANNOUNCE,
+            // request: [
+            // {name: 'srcaddr', parameterType: ParameterType.UINT16},
+            // {name: 'nwkaddr', parameterType: ParameterType.UINT16},
+            // {name: 'ieeeaddr', parameterType: ParameterType.IEEEADDR},
+            // {name: 'capabilities', parameterType: ParameterType.UINT8},
+            // ],
         },
         {
             name: 'matchDescRspSent',
