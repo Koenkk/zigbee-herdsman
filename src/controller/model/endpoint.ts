@@ -804,7 +804,7 @@ class Endpoint extends Entity {
         attributes: (string | number)[] | ConfigureReportingItem[],
         fallbackManufacturerCode: number | undefined, // XXX: problematic undefined for a "fallback"?
         caller: string,
-    ): number {
+    ): number | undefined {
         const manufacturerCodes = new Set(
             attributes.map((nameOrID): number | undefined => {
                 let attributeID;
