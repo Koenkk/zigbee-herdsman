@@ -158,6 +158,68 @@ describe('Buffalo', () => {
         expect(value).toStrictEqual(6618611909121);
     });
 
+    it('UINT56 write', () => {
+        const buffalo = new Buffalo(Buffer.alloc(9), 2);
+        buffalo.writeUInt56(72057594037927934n);
+        expect(buffalo.getPosition()).toEqual(9);
+        expect(buffalo.getBuffer()).toStrictEqual(Buffer.from([0, 0, 254, 255, 255, 255, 255, 255, 255]));
+    });
+
+    it('UINT56 read', () => {
+        const buffalo = new Buffalo(Buffer.from([254, 255, 255, 255, 255, 255, 255]));
+        const value = buffalo.readUInt56();
+        expect(buffalo.getPosition()).toEqual(7);
+        expect(value).toStrictEqual(72057594037927934n);
+    });
+
+    it.each([
+        [36028797018963964n, [0, 0, 252, 255, 255, 255, 255, 255, 127]],
+        [-36028797018963964n, [0, 0, 4, 0, 0, 0, 0, 0, 128]],
+    ])('INT56 write positive', (value: bigint, expectedValues: number[]) => {
+        const buffalo = new Buffalo(Buffer.alloc(9), 2);
+        buffalo.writeInt56(value);
+        expect(buffalo.getPosition()).toEqual(9);
+        expect(buffalo.getBuffer()).toStrictEqual(Buffer.from(expectedValues));
+    });
+
+    it.each([
+        [36028797018963964n, [252, 255, 255, 255, 255, 255, 127]],
+        [-36028797018963964n, [4, 0, 0, 0, 0, 0, 128]],
+    ])('INT56 read', (expectedValue: bigint, values: number[]) => {
+        const buffalo = new Buffalo(Buffer.from(values));
+        const value = buffalo.readInt56();
+        expect(buffalo.getPosition()).toEqual(7);
+        expect(value).toStrictEqual(expectedValue);
+    });
+
+    it('UINT64 write', () => {
+        const buffalo = new Buffalo(Buffer.alloc(10), 2);
+        buffalo.writeUInt64(18446744073709551613n);
+        expect(buffalo.getPosition()).toEqual(10);
+        expect(buffalo.getBuffer()).toStrictEqual(Buffer.from([0, 0, 253, 255, 255, 255, 255, 255, 255, 255]));
+    });
+
+    it('UINT64 read', () => {
+        const buffalo = new Buffalo(Buffer.from([253, 255, 255, 255, 255, 255, 255, 255]));
+        const value = buffalo.readUInt64();
+        expect(buffalo.getPosition()).toEqual(8);
+        expect(value).toStrictEqual(18446744073709551613n);
+    });
+
+    it('INT64 write', () => {
+        const buffalo = new Buffalo(Buffer.alloc(10), 2);
+        buffalo.writeInt64(9223372036854775806n);
+        expect(buffalo.getPosition()).toEqual(10);
+        expect(buffalo.getBuffer()).toStrictEqual(Buffer.from([0, 0, 254, 255, 255, 255, 255, 255, 255, 127]));
+    });
+
+    it('INT64 read', () => {
+        const buffalo = new Buffalo(Buffer.from([254, 255, 255, 255, 255, 255, 255, 127]));
+        const value = buffalo.readInt64();
+        expect(buffalo.getPosition()).toEqual(8);
+        expect(value).toStrictEqual(9223372036854775806n);
+    });
+
     it('IEEEADDR write', () => {
         const buffalo = new Buffalo(Buffer.alloc(8));
         buffalo.writeIeeeAddr(ieeeaAddr1.string);

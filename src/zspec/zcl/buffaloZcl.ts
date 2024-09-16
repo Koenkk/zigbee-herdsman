@@ -125,61 +125,6 @@ interface MiboxerZone {
 }
 
 export class BuffaloZcl extends Buffalo {
-    // TODO: remove read/write int "SB" versions in favor of plain numbers, implemented in buffalo.ts
-
-    private writeUInt56SB(value: number[]): void {
-        // XXX: [uint32, uint32] param not following read return pattern [uint32, uint16, uint8]
-        const temp = Buffer.alloc(8);
-        temp.writeUInt32LE(value[1], 0);
-        temp.writeUInt32LE(value[0], 4);
-        this.writeBuffer(temp.subarray(0, 7), 7);
-    }
-
-    private readUInt56SB(): [number, number, number] {
-        const lsb = this.readUInt32();
-        const xsb = this.readUInt16();
-        const msb = this.readUInt8();
-        return [msb, xsb, lsb];
-    }
-
-    private readUInt64SB(): string {
-        // XXX: not following pattern, should return as [msb, lsb]
-        return this.readIeeeAddr();
-    }
-
-    private writeUInt64SB(value: string): void {
-        // XXX: not following pattern, should pass as number[uint32, uint32]
-        const msb = parseInt(value.slice(2, 10), 16);
-        const lsb = parseInt(value.slice(10), 16);
-        this.writeUInt32(lsb);
-        this.writeUInt32(msb);
-    }
-
-    private writeInt56SB(value: number[]): void {
-        const temp = Buffer.alloc(8);
-        temp.writeInt32LE(value[1], 0);
-        temp.writeInt32LE(value[0], 4);
-        this.writeBuffer(temp.subarray(0, 7), 7);
-    }
-
-    private readInt56SB(): [number, number, number] {
-        const lsb = this.readInt32();
-        const xsb = this.readInt16();
-        const msb = this.readInt8();
-        return [msb, xsb, lsb];
-    }
-
-    private writeInt64SB(value: number[]): void {
-        this.writeInt32(value[1]);
-        this.writeInt32(value[0]);
-    }
-
-    private readInt64SB(): [number, number] {
-        const lsb = this.readInt32();
-        const msb = this.readInt32();
-        return [msb, lsb];
-    }
-
     private writeOctetStr(value: number[]): void {
         // TODO: this does not allow "non-value" 0xFF
         this.writeUInt8(value.length);
@@ -750,12 +695,12 @@ export class BuffaloZcl extends Buffalo {
             case DataType.DATA56:
             case DataType.BITMAP56:
             case DataType.UINT56: {
-                return this.writeUInt56SB(value);
+                return this.writeUInt56(value);
             }
             case DataType.DATA64:
             case DataType.BITMAP64:
             case DataType.UINT64: {
-                return this.writeUInt64SB(value);
+                return this.writeUInt64(value);
             }
             case DataType.INT8: {
                 return this.writeInt8(value);
@@ -776,10 +721,10 @@ export class BuffaloZcl extends Buffalo {
                 return this.writeInt48(value);
             }
             case DataType.INT56: {
-                return this.writeInt56SB(value);
+                return this.writeInt56(value);
             }
             case DataType.INT64: {
-                return this.writeInt64SB(value);
+                return this.writeInt64(value);
             }
             // case DataType.SEMI_PREC: {
             //     // https://tc39.es/proposal-float16array/
@@ -934,12 +879,12 @@ export class BuffaloZcl extends Buffalo {
             case DataType.DATA56:
             case DataType.BITMAP56:
             case DataType.UINT56: {
-                return this.readUInt56SB();
+                return this.readUInt56();
             }
             case DataType.DATA64:
             case DataType.BITMAP64:
             case DataType.UINT64: {
-                return this.readUInt64SB();
+                return this.readUInt64();
             }
             case DataType.INT8: {
                 return this.readInt8();
@@ -960,10 +905,10 @@ export class BuffaloZcl extends Buffalo {
                 return this.readInt48();
             }
             case DataType.INT56: {
-                return this.readInt56SB();
+                return this.readInt56();
             }
             case DataType.INT64: {
-                return this.readInt64SB();
+                return this.readInt64();
             }
             // case DataType.SEMI_PREC: {
             //     // https://tc39.es/proposal-float16array/
