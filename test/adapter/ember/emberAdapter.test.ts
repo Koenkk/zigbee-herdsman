@@ -3838,6 +3838,67 @@ describe('Ember Adapter Layer', () => {
             expect(mockEzspSend).toHaveBeenCalledWith(EmberOutgoingMessageType.DIRECT, networkAddress, apsFrame, zclFrame.toBuffer(), 0, 0);
         });
 
+        it('Adapter impl: sendZdo with EUI64', async () => {
+            const sender: NodeId = 0x6789;
+            const senderEUI64: EUI64 = '0x1122334455667788';
+            const apsFrame: EmberApsFrame = {
+                profileId: Zdo.ZDO_PROFILE_ID,
+                clusterId: Zdo.ClusterId.NETWORK_ADDRESS_RESPONSE,
+                sourceEndpoint: Zdo.ZDO_ENDPOINT,
+                destinationEndpoint: Zdo.ZDO_ENDPOINT,
+                options: 0,
+                groupId: 0,
+                sequence: 0,
+            };
+
+            mockEzspSendBroadcast.mockImplementationOnce(() => {
+                setTimeout(async () => {
+                    mockEzspEmitter.emit(
+                        'zdoResponse',
+                        apsFrame,
+                        sender,
+                        Buffer.from([
+                            1,
+                            Zdo.Status.SUCCESS,
+                            0x88,
+                            0x77,
+                            0x66,
+                            0x55,
+                            0x44,
+                            0x33,
+                            0x22,
+                            0x11,
+                            0x89, // nwkAddress
+                            0x67, // nwkAddress
+                        ]),
+                    );
+                    await flushPromises();
+                }, 300);
+
+                return [SLStatus.OK, ++mockAPSSequence];
+            });
+
+            const zdoPayload = Zdo.Buffalo.buildRequest(false, Zdo.ClusterId.NETWORK_ADDRESS_REQUEST, senderEUI64, false, 0);
+            const p = adapter.sendZdo(
+                senderEUI64,
+                ZSpec.NULL_NODE_ID /* same as broadcast SLEEPY */,
+                Zdo.ClusterId.NETWORK_ADDRESS_REQUEST,
+                zdoPayload,
+                false,
+            );
+
+            await jest.advanceTimersByTimeAsync(1000);
+            await expect(p).resolves.toStrictEqual([
+                Zdo.Status.SUCCESS,
+                {
+                    eui64: senderEUI64,
+                    nwkAddress: sender,
+                    startIndex: 0,
+                    assocDevList: [],
+                } as ZdoTypes.NetworkAddressResponse,
+            ]);
+        });
+
         it('Adapter impl: sendZclFrameToEndpoint with default response', async () => {
             const networkAddress: NodeId = 1234;
             const endpoint: number = 3;

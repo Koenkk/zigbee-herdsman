@@ -1741,33 +1741,15 @@ export class EmberAdapter extends Adapter {
 
     // queued
     public async changeChannel(newChannel: number): Promise<void> {
-        return await this.queue.execute<void>(async () => {
-            this.checkInterpanLock();
+        const clusterId = Zdo.ClusterId.NWK_UPDATE_REQUEST;
+        const zdoPayload = Zdo.Buffalo.buildRequest(this.hasZdoMessageOverhead, clusterId, [newChannel], 0xfe, undefined, undefined, undefined);
 
-            const zdoPayload = Zdo.Buffalo.buildRequest(
-                this.hasZdoMessageOverhead,
-                Zdo.ClusterId.NWK_UPDATE_REQUEST,
-                [newChannel],
-                0xfe,
-                undefined,
-                undefined,
-                undefined,
-            );
-
-            await this.sendZdo(
-                ZSpec.BLANK_EUI64,
-                ZSpec.BroadcastAddress.SLEEPY,
-                Zdo.ClusterId.NWK_UPDATE_REQUEST,
-                zdoPayload,
-                true, // handled below
-            );
-
-            await this.oneWaitress.startWaitingForEvent(
-                {eventName: OneWaitressEvents.STACK_STATUS_CHANNEL_CHANGED},
-                DEFAULT_NETWORK_REQUEST_TIMEOUT * 2, // observed to ~9sec
-                '[ZDO] Change Channel',
-            );
-        });
+        await this.sendZdo(ZSpec.BLANK_EUI64, ZSpec.BroadcastAddress.SLEEPY, clusterId, zdoPayload, true /* handled below */);
+        await this.oneWaitress.startWaitingForEvent(
+            {eventName: OneWaitressEvents.STACK_STATUS_CHANNEL_CHANGED},
+            DEFAULT_NETWORK_REQUEST_TIMEOUT * 2, // observed to ~9sec
+            '[ZDO] Change Channel',
+        );
     }
 
     // queued
@@ -1964,7 +1946,7 @@ export class EmberAdapter extends Adapter {
                 if (responseClusterId) {
                     return await this.oneWaitress.startWaitingFor(
                         {
-                            target: networkAddress,
+                            target: networkAddress === ZSpec.NULL_NODE_ID ? (ieeeAddress as EUI64) : networkAddress,
                             apsFrame,
                             zdoResponseClusterId: responseClusterId,
                         },
@@ -1977,6 +1959,7 @@ export class EmberAdapter extends Adapter {
 
     // queued, non-InterPAN
     public async permitJoin(seconds: number, networkAddress?: number): Promise<void> {
+        const clusterId = Zdo.ClusterId.PERMIT_JOINING_REQUEST;
         const preJoining = async (): Promise<void> => {
             if (seconds) {
                 const plaintextKey: SecManKey = {contents: Buffer.from(ZIGBEE_PROFILE_INTEROPERABILITY_LINK_KEY)};
@@ -2017,9 +2000,9 @@ export class EmberAdapter extends Adapter {
             });
 
             // `authentication`: TC significance always 1 (zb specs)
-            const zdoPayload = Zdo.Buffalo.buildRequest(this.hasZdoMessageOverhead, Zdo.ClusterId.PERMIT_JOINING_REQUEST, seconds, 1, []);
+            const zdoPayload = Zdo.Buffalo.buildRequest(this.hasZdoMessageOverhead, clusterId, seconds, 1, []);
 
-            const result = await this.sendZdo(ZSpec.BLANK_EUI64, networkAddress, Zdo.ClusterId.PERMIT_JOINING_REQUEST, zdoPayload, false);
+            const result = await this.sendZdo(ZSpec.BLANK_EUI64, networkAddress, clusterId, zdoPayload, false);
 
             /* istanbul ignore next */
             if (!Zdo.Buffalo.checkStatus(result)) {
@@ -2044,19 +2027,20 @@ export class EmberAdapter extends Adapter {
             // broadcast permit joining ZDO
             if (networkAddress === undefined) {
                 // `authentication`: TC significance always 1 (zb specs)
-                const zdoPayload = Zdo.Buffalo.buildRequest(this.hasZdoMessageOverhead, Zdo.ClusterId.PERMIT_JOINING_REQUEST, seconds, 1, []);
+                const zdoPayload = Zdo.Buffalo.buildRequest(this.hasZdoMessageOverhead, clusterId, seconds, 1, []);
 
-                await this.sendZdo(ZSpec.BLANK_EUI64, ZSpec.BroadcastAddress.DEFAULT, Zdo.ClusterId.PERMIT_JOINING_REQUEST, zdoPayload, true);
+                await this.sendZdo(ZSpec.BLANK_EUI64, ZSpec.BroadcastAddress.DEFAULT, clusterId, zdoPayload, true);
             }
         }
     }
 
     // queued, non-InterPAN
     public async lqi(networkAddress: number): Promise<TsType.LQI> {
+        const clusterId = Zdo.ClusterId.LQI_TABLE_REQUEST;
         const neighbors: TsType.LQINeighbor[] = [];
         const request = async (startIndex: number): Promise<[tableEntries: number, entryCount: number]> => {
-            const zdoPayload = Zdo.Buffalo.buildRequest(this.hasZdoMessageOverhead, Zdo.ClusterId.LQI_TABLE_REQUEST, startIndex);
-            const result = await this.sendZdo(ZSpec.BLANK_EUI64, networkAddress, Zdo.ClusterId.LQI_TABLE_REQUEST, zdoPayload, false);
+            const zdoPayload = Zdo.Buffalo.buildRequest(this.hasZdoMessageOverhead, clusterId, startIndex);
+            const result = await this.sendZdo(ZSpec.BLANK_EUI64, networkAddress, clusterId, zdoPayload, false);
 
             /* istanbul ignore else */
             if (Zdo.Buffalo.checkStatus(result)) {
@@ -2095,10 +2079,11 @@ export class EmberAdapter extends Adapter {
 
     // queued, non-InterPAN
     public async routingTable(networkAddress: number): Promise<TsType.RoutingTable> {
+        const clusterId = Zdo.ClusterId.ROUTING_TABLE_REQUEST;
         const table: TsType.RoutingTableEntry[] = [];
         const request = async (startIndex: number): Promise<[tableEntries: number, entryCount: number]> => {
-            const zdoPayload = Zdo.Buffalo.buildRequest(this.hasZdoMessageOverhead, Zdo.ClusterId.ROUTING_TABLE_REQUEST, startIndex);
-            const result = await this.sendZdo(ZSpec.BLANK_EUI64, networkAddress, Zdo.ClusterId.ROUTING_TABLE_REQUEST, zdoPayload, false);
+            const zdoPayload = Zdo.Buffalo.buildRequest(this.hasZdoMessageOverhead, clusterId, startIndex);
+            const result = await this.sendZdo(ZSpec.BLANK_EUI64, networkAddress, clusterId, zdoPayload, false);
 
             /* istanbul ignore else */
             if (Zdo.Buffalo.checkStatus(result)) {
@@ -2135,8 +2120,9 @@ export class EmberAdapter extends Adapter {
 
     // queued, non-InterPAN
     public async nodeDescriptor(networkAddress: number): Promise<TsType.NodeDescriptor> {
-        const zdoPayload = Zdo.Buffalo.buildRequest(this.hasZdoMessageOverhead, Zdo.ClusterId.NODE_DESCRIPTOR_REQUEST, networkAddress);
-        const result = await this.sendZdo(ZSpec.BLANK_EUI64, networkAddress, Zdo.ClusterId.NODE_DESCRIPTOR_REQUEST, zdoPayload, false);
+        const clusterId = Zdo.ClusterId.NODE_DESCRIPTOR_REQUEST;
+        const zdoPayload = Zdo.Buffalo.buildRequest(this.hasZdoMessageOverhead, clusterId, networkAddress);
+        const result = await this.sendZdo(ZSpec.BLANK_EUI64, networkAddress, clusterId, zdoPayload, false);
 
         /* istanbul ignore else */
         if (Zdo.Buffalo.checkStatus(result)) {
@@ -2175,8 +2161,9 @@ export class EmberAdapter extends Adapter {
 
     // queued, non-InterPAN
     public async activeEndpoints(networkAddress: number): Promise<TsType.ActiveEndpoints> {
-        const zdoPayload = Zdo.Buffalo.buildRequest(this.hasZdoMessageOverhead, Zdo.ClusterId.ACTIVE_ENDPOINTS_REQUEST, networkAddress);
-        const result = await this.sendZdo(ZSpec.BLANK_EUI64, networkAddress, Zdo.ClusterId.ACTIVE_ENDPOINTS_REQUEST, zdoPayload, false);
+        const clusterId = Zdo.ClusterId.ACTIVE_ENDPOINTS_REQUEST;
+        const zdoPayload = Zdo.Buffalo.buildRequest(this.hasZdoMessageOverhead, clusterId, networkAddress);
+        const result = await this.sendZdo(ZSpec.BLANK_EUI64, networkAddress, clusterId, zdoPayload, false);
 
         /* istanbul ignore else */
         if (Zdo.Buffalo.checkStatus(result)) {
@@ -2191,8 +2178,9 @@ export class EmberAdapter extends Adapter {
 
     // queued, non-InterPAN
     public async simpleDescriptor(networkAddress: number, endpointID: number): Promise<TsType.SimpleDescriptor> {
-        const zdoPayload = Zdo.Buffalo.buildRequest(this.hasZdoMessageOverhead, Zdo.ClusterId.SIMPLE_DESCRIPTOR_REQUEST, networkAddress, endpointID);
-        const result = await this.sendZdo(ZSpec.BLANK_EUI64, networkAddress, Zdo.ClusterId.SIMPLE_DESCRIPTOR_REQUEST, zdoPayload, false);
+        const clusterId = Zdo.ClusterId.SIMPLE_DESCRIPTOR_REQUEST;
+        const zdoPayload = Zdo.Buffalo.buildRequest(this.hasZdoMessageOverhead, clusterId, networkAddress, endpointID);
+        const result = await this.sendZdo(ZSpec.BLANK_EUI64, networkAddress, clusterId, zdoPayload, false);
 
         /* istanbul ignore else */
         if (Zdo.Buffalo.checkStatus(result)) {
@@ -2221,9 +2209,10 @@ export class EmberAdapter extends Adapter {
         type: 'endpoint' | 'group',
         destinationEndpoint?: number,
     ): Promise<void> {
+        const clusterId = Zdo.ClusterId.BIND_REQUEST;
         const zdoPayload = Zdo.Buffalo.buildRequest(
             this.hasZdoMessageOverhead,
-            Zdo.ClusterId.BIND_REQUEST,
+            clusterId,
             sourceIeeeAddress as EUI64,
             sourceEndpoint,
             clusterID,
@@ -2232,7 +2221,7 @@ export class EmberAdapter extends Adapter {
             destinationAddressOrGroup as number, // not used with UNICAST_BINDING
             destinationEndpoint ?? 0, // not used with MULTICAST_BINDING
         );
-        const result = await this.sendZdo(ZSpec.BLANK_EUI64, destinationNetworkAddress, Zdo.ClusterId.BIND_REQUEST, zdoPayload, false);
+        const result = await this.sendZdo(ZSpec.BLANK_EUI64, destinationNetworkAddress, clusterId, zdoPayload, false);
 
         /* istanbul ignore next */
         if (!Zdo.Buffalo.checkStatus(result)) {
@@ -2251,9 +2240,10 @@ export class EmberAdapter extends Adapter {
         type: 'endpoint' | 'group',
         destinationEndpoint?: number,
     ): Promise<void> {
+        const clusterId = Zdo.ClusterId.UNBIND_REQUEST;
         const zdoPayload = Zdo.Buffalo.buildRequest(
             this.hasZdoMessageOverhead,
-            Zdo.ClusterId.UNBIND_REQUEST,
+            clusterId,
             sourceIeeeAddress as EUI64,
             sourceEndpoint,
             clusterID,
@@ -2262,7 +2252,7 @@ export class EmberAdapter extends Adapter {
             destinationAddressOrGroup as number, // not used with UNICAST_BINDING
             destinationEndpoint ?? 0, // not used with MULTICAST_BINDING
         );
-        const result = await this.sendZdo(ZSpec.BLANK_EUI64, destinationNetworkAddress, Zdo.ClusterId.UNBIND_REQUEST, zdoPayload, false);
+        const result = await this.sendZdo(ZSpec.BLANK_EUI64, destinationNetworkAddress, clusterId, zdoPayload, false);
 
         /* istanbul ignore next */
         if (!Zdo.Buffalo.checkStatus(result)) {
@@ -2273,13 +2263,9 @@ export class EmberAdapter extends Adapter {
 
     // queued, non-InterPAN
     public async removeDevice(networkAddress: number, ieeeAddr: string): Promise<void> {
-        const zdoPayload = Zdo.Buffalo.buildRequest(
-            this.hasZdoMessageOverhead,
-            Zdo.ClusterId.LEAVE_REQUEST,
-            ieeeAddr as EUI64,
-            Zdo.LeaveRequestFlags.WITHOUT_REJOIN,
-        );
-        const result = await this.sendZdo(ZSpec.BLANK_EUI64, networkAddress, Zdo.ClusterId.LEAVE_REQUEST, zdoPayload, false);
+        const clusterId = Zdo.ClusterId.LEAVE_REQUEST;
+        const zdoPayload = Zdo.Buffalo.buildRequest(this.hasZdoMessageOverhead, clusterId, ieeeAddr as EUI64, Zdo.LeaveRequestFlags.WITHOUT_REJOIN);
+        const result = await this.sendZdo(ZSpec.BLANK_EUI64, networkAddress, clusterId, zdoPayload, false);
 
         /* istanbul ignore next */
         if (!Zdo.Buffalo.checkStatus(result)) {

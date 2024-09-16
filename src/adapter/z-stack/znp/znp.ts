@@ -1,4 +1,3 @@
-import assert from 'assert';
 import events from 'events';
 import net from 'net';
 
@@ -12,6 +11,7 @@ import * as Constants from '../constants';
 import {Frame as UnpiFrame, Parser as UnpiParser, Writer as UnpiWriter} from '../unpi';
 import {Subsystem, Type} from '../unpi/constants';
 import {ZpiObjectPayload} from './tstype';
+import {getSREQId} from './utils';
 import ZpiObject from './zpiObject';
 
 const {
@@ -35,24 +35,6 @@ interface WaitressMatcher {
     transid?: number;
     state?: number;
 }
-
-const ZDO_CLUSTER_ID_TO_ZSTACK_SREQ_ID: Readonly<Partial<Record<ZdoClusterId, number>>> = {
-    [ZdoClusterId.NETWORK_ADDRESS_REQUEST]: 0,
-    [ZdoClusterId.IEEE_ADDRESS_REQUEST]: 1,
-    [ZdoClusterId.NODE_DESCRIPTOR_REQUEST]: 2,
-    [ZdoClusterId.POWER_DESCRIPTOR_REQUEST]: 3,
-    [ZdoClusterId.SIMPLE_DESCRIPTOR_REQUEST]: 4,
-    [ZdoClusterId.ACTIVE_ENDPOINTS_REQUEST]: 5,
-    [ZdoClusterId.MATCH_DESCRIPTORS_REQUEST]: 6,
-    [ZdoClusterId.SYSTEM_SERVER_DISCOVERY_REQUEST]: 12,
-    [ZdoClusterId.BIND_REQUEST]: 33,
-    [ZdoClusterId.UNBIND_REQUEST]: 34,
-    [ZdoClusterId.LQI_TABLE_REQUEST]: 49,
-    [ZdoClusterId.ROUTING_TABLE_REQUEST]: 50,
-    [ZdoClusterId.LEAVE_REQUEST]: 52,
-    [ZdoClusterId.PERMIT_JOINING_REQUEST]: 54,
-    [ZdoClusterId.NWK_UPDATE_REQUEST]: 55,
-};
 
 const autoDetectDefinitions = [
     {manufacturer: 'Texas Instruments', vendorId: '0451', productId: '16c8'}, // CC2538
@@ -336,10 +318,7 @@ class Znp extends events.EventEmitter {
         expectedStatuses: Constants.COMMON.ZnpCommandStatus[] = [ZnpCommandStatus.SUCCESS],
     ): Promise<void> {
         return this.queue.execute(async () => {
-            const commandId = ZDO_CLUSTER_ID_TO_ZSTACK_SREQ_ID[clusterId];
-            assert(commandId, `Cluster ID ${clusterId} not supported.`);
-
-            const unpiFrame = new UnpiFrame(Type.SREQ, Subsystem.ZDO, commandId, payload);
+            const unpiFrame = new UnpiFrame(Type.SREQ, Subsystem.ZDO, getSREQId(clusterId), payload);
             // TODO proper logic
             const waiter = this.waitress.waitFor(
                 {type: Type.SRSP, subsystem: Subsystem.ZDO, command: ZdoClusterId[clusterId] /* ??? */},
