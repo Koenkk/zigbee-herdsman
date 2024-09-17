@@ -212,106 +212,6 @@ describe('ZCL Buffalo', () => {
         expect(buffalo.getPosition()).toStrictEqual(length);
     });
 
-    it.each([
-        [
-            'uint40-like',
-            {value: [250, 25635482], types: [Zcl.DataType.DATA40, Zcl.DataType.BITMAP40, Zcl.DataType.UINT40]},
-            {position: 5, written: [...uint32To8Array(25635482), 250]},
-        ],
-        [
-            'uint48-like',
-            {value: [65530, 65894582], types: [Zcl.DataType.DATA48, Zcl.DataType.BITMAP48, Zcl.DataType.UINT48]},
-            {position: 6, written: [...uint32To8Array(65894582), ...uint16To8Array(65530)]},
-        ],
-        ['int40-like', {value: [120, -2147483640], types: [Zcl.DataType.INT40]}, {position: 5, written: [...uint32To8Array(-2147483640), 120]}],
-        [
-            'int64-like',
-            {value: [-2147483640, 2147483640], types: [Zcl.DataType.INT64]},
-            {position: 8, written: [...uint32To8Array(2147483640), ...uint32To8Array(-2147483640)]},
-        ],
-    ])('Writes & Reads SB variant %s', (_name, payload, expected) => {
-        for (const type of payload.types) {
-            const buffer = Buffer.alloc(100);
-            const buffalo = new BuffaloZcl(buffer);
-            buffalo.write(type, payload.value, {});
-            expect(buffalo.getPosition()).toStrictEqual(expected.position);
-            expect(buffalo.getWritten()).toStrictEqual(Buffer.from(expected.written));
-
-            // @ts-expect-error private
-            buffalo.position = 0;
-
-            expect(buffalo.read(type, {})).toStrictEqual(payload.value);
-            expect(buffalo.getPosition()).toStrictEqual(expected.position);
-        }
-    });
-
-    it('Writes & Reads inconsistent SB variant uint56-like', () => {
-        // inconsistent with rest (write params != read return)
-        const lsb = 1294967290;
-        const msb = 123456789;
-        const expectedWritten = Buffer.from([...uint32To8Array(lsb), ...uint16To8Array(msb), (msb >> 16) & 0xff]);
-        const expectedRead = [expectedWritten.readUInt8(6), expectedWritten.readUInt16LE(4), lsb];
-        const expectedPosition = 7;
-
-        for (const type of [Zcl.DataType.DATA56, Zcl.DataType.BITMAP56, Zcl.DataType.UINT56]) {
-            const buffer = Buffer.alloc(10);
-            const buffalo = new BuffaloZcl(buffer);
-            buffalo.write(type, [msb, lsb], {});
-            expect(buffalo.getPosition()).toStrictEqual(expectedPosition);
-            expect(buffalo.getWritten()).toStrictEqual(expectedWritten);
-
-            // @ts-expect-error private
-            buffalo.position = 0;
-
-            expect(buffalo.read(type, {})).toStrictEqual(expectedRead);
-            expect(buffalo.getPosition()).toStrictEqual(expectedPosition);
-        }
-    });
-
-    it('Writes & Reads inconsistent SB variant uint64-like', () => {
-        // inconsistent with rest (string-based)
-        const ieee = '0xfe1234abcd9876ff';
-        const expectedWritten = Buffer.from(ieee.substring(2).match(/.{2}/g)!.reverse().join(''), 'hex');
-        const expectedPosition = 8;
-
-        for (const type of [Zcl.DataType.DATA64, Zcl.DataType.BITMAP64, Zcl.DataType.UINT64]) {
-            const buffer = Buffer.alloc(10);
-            const buffalo = new BuffaloZcl(buffer);
-            buffalo.write(type, ieee, {});
-            expect(buffalo.getPosition()).toStrictEqual(expectedPosition);
-            expect(buffalo.getWritten()).toStrictEqual(expectedWritten);
-
-            // @ts-expect-error private
-            buffalo.position = 0;
-
-            expect(buffalo.read(type, {})).toStrictEqual(ieee);
-            expect(buffalo.getPosition()).toStrictEqual(expectedPosition);
-        }
-    });
-
-    it('Writes & Reads inconsistent SB variant int56-like', () => {
-        // inconsistent with rest (write params != read return)
-        const lsb = -2147483640;
-        const msb = 123456789;
-        const expectedWritten = Buffer.from([...uint32To8Array(lsb), ...uint16To8Array(msb), (msb >> 16) & 0xff]);
-        const expectedRead = [expectedWritten.readInt8(6), expectedWritten.readInt16LE(4), lsb];
-        const expectedPosition = 7;
-
-        for (const type of [Zcl.DataType.INT56]) {
-            const buffer = Buffer.alloc(10);
-            const buffalo = new BuffaloZcl(buffer);
-            buffalo.write(type, [msb, lsb], {});
-            expect(buffalo.getPosition()).toStrictEqual(expectedPosition);
-            expect(buffalo.getWritten()).toStrictEqual(expectedWritten);
-
-            // @ts-expect-error private
-            buffalo.position = 0;
-
-            expect(buffalo.read(type, {})).toStrictEqual(expectedRead);
-            expect(buffalo.getPosition()).toStrictEqual(expectedPosition);
-        }
-    });
-
     it('Writes & Reads octet str', () => {
         const value = [0xfe, 0x01, 0xab, 0x98];
         const expectedPosition = 5;
@@ -373,7 +273,7 @@ describe('ZCL Buffalo', () => {
     });
 
     it('[workaround] Reads char str as Mi struct for Xiaomi attridId=65281', () => {
-        const expectedValue = {'1': 3285, '3': 33, '4': 5032, '5': 43, '6': [0, 327680], '8': 516, '10': 0, '100': 0};
+        const expectedValue = {'1': 3285, '3': 33, '4': 5032, '5': 43, '6': 327680, '8': 516, '10': 0, '100': 0};
         const buffer = Buffer.from([
             34,
             1,

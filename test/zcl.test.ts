@@ -505,7 +505,7 @@ describe('Zcl', () => {
 
         const payload = [
             {attrId: 5, dataType: 66, attrData: 'lumi.sensor_wleak.aq1'},
-            {attrId: 65281, dataType: 66, attrData: {'1': 3285, '3': 33, '4': 5032, '5': 43, '6': [0, 327680], '8': 516, '10': 0, '100': 0}},
+            {attrId: 65281, dataType: 66, attrData: {'1': 3285, '3': 33, '4': 5032, '5': 43, '6': 327680, '8': 516, '10': 0, '100': 0}},
         ];
 
         expect(frame.header).toStrictEqual(header);
@@ -537,7 +537,7 @@ describe('Zcl', () => {
                     {elmType: 16, elmVal: 1},
                     {elmType: 33, elmVal: 3022},
                     {elmType: 33, elmVal: 17320},
-                    {elmType: 36, elmVal: [0, 1]},
+                    {elmType: 36, elmVal: 1},
                     {elmType: 33, elmVal: 560},
                     {elmType: 32, elmVal: 86},
                 ],
@@ -545,7 +545,7 @@ describe('Zcl', () => {
                     {elmType: 16, elmVal: 1},
                     {elmType: 33, elmVal: 3022},
                     {elmType: 33, elmVal: 17320},
-                    {elmType: 36, elmVal: [0, 1]},
+                    {elmType: 36, elmVal: 1},
                     {elmType: 33, elmVal: 560},
                     {elmType: 32, elmVal: 86},
                 ],
@@ -1560,7 +1560,7 @@ describe('Zcl', () => {
         const buffalo = new BuffaloZcl(buffer);
         const value = buffalo.read(type, {});
         expect(buffalo.getPosition()).toBe(5);
-        expect(value).toStrictEqual([6, 84149505]);
+        expect(value).toStrictEqual(25853953281);
     });
 
     it.each([DataType.UINT48, DataType.DATA48, DataType.BITMAP48])('BuffaloZcl read uint48, data48, bitmap48', (type) => {
@@ -1568,7 +1568,7 @@ describe('Zcl', () => {
         const buffalo = new BuffaloZcl(buffer);
         const value = buffalo.read(type, {});
         expect(buffalo.getPosition()).toBe(6);
-        expect(value).toStrictEqual([1798, 84149505]);
+        expect(value).toStrictEqual(7722435347713);
     });
 
     it.each([DataType.UINT56, DataType.DATA56, DataType.BITMAP56])('BuffaloZcl read uint56, data56, bitmap56', (type) => {
@@ -1576,7 +1576,7 @@ describe('Zcl', () => {
         const buffalo = new BuffaloZcl(buffer);
         const value = buffalo.read(type, {});
         expect(buffalo.getPosition()).toBe(7);
-        expect(value).toStrictEqual([7, 1798, 84149505]);
+        expect(value).toStrictEqual(1978047272322305n);
     });
 
     it.each([DataType.UINT64, DataType.DATA64, DataType.BITMAP64])('BuffaloZcl read uint64, data64, bitmap64', (type) => {
@@ -1584,15 +1584,15 @@ describe('Zcl', () => {
         const buffalo = new BuffaloZcl(buffer);
         const value = buffalo.read(type, {});
         expect(buffalo.getPosition()).toBe(8);
-        expect(value).toStrictEqual('0x0907070605040501');
+        expect(value).toStrictEqual(0x0907070605040501n);
     });
 
     it('BuffaloZcl read int40', () => {
-        const buffer = Buffer.from([1, 5, 4, 5, 6, 7]);
+        const buffer = Buffer.from([254, 255, 255, 255, 127]);
         const buffalo = new BuffaloZcl(buffer);
         const value = buffalo.read(DataType.INT40, {});
         expect(buffalo.getPosition()).toBe(5);
-        expect(value).toStrictEqual([6, 84149505]);
+        expect(value).toStrictEqual(549755813886);
     });
 
     it('BuffaloZcl read int56', () => {
@@ -1600,7 +1600,7 @@ describe('Zcl', () => {
         const buffalo = new BuffaloZcl(buffer);
         const value = buffalo.read(DataType.INT56, {});
         expect(buffalo.getPosition()).toBe(7);
-        expect(value).toStrictEqual([7, 1798, 84149505]);
+        expect(value).toStrictEqual(1978047272322305n);
     });
 
     it('BuffaloZcl read int64', () => {
@@ -1608,7 +1608,7 @@ describe('Zcl', () => {
         const buffalo = new BuffaloZcl(buffer);
         const value = buffalo.read(DataType.INT64, {});
         expect(buffalo.getPosition()).toBe(8);
-        expect(value).toStrictEqual([151455494, 84149505]);
+        expect(value).toStrictEqual(650496393613673729n);
     });
 
     it.each([
@@ -1701,20 +1701,20 @@ describe('Zcl', () => {
         expect(buffer).toStrictEqual(expected);
     });
 
-    it.each([DataType.UINT40, DataType.DATA40, DataType.BITMAP56])('BuffaloZcl write uint40, data40, bitmap40', (type) => {
-        const payload = [30, 40];
+    it.each([DataType.UINT40, DataType.DATA40, DataType.BITMAP40])('BuffaloZcl write uint40, data40, bitmap40', (type) => {
+        const payload = 1099511627773;
         const buffer = Buffer.alloc(5);
-        const expected = Buffer.from([40, 0, 0, 0, 30]);
+        const expected = Buffer.from([253, 255, 255, 255, 255]);
         const buffalo = new BuffaloZcl(buffer);
         buffalo.write(type, payload, {});
         expect(buffalo.getPosition()).toBe(5);
         expect(buffer).toStrictEqual(expected);
     });
 
-    it.each([DataType.UINT48, DataType.DATA48, DataType.BITMAP56])('BuffaloZcl write uint48, data48, bitmap48', (type) => {
-        const payload = [1798, 84149505];
+    it.each([DataType.UINT48, DataType.DATA48, DataType.BITMAP48])('BuffaloZcl write uint48, data48, bitmap48', (type) => {
+        const payload = 281474976710653;
         const buffer = Buffer.alloc(6);
-        const expected = Buffer.from([1, 5, 4, 5, 6, 7]);
+        const expected = Buffer.from([253, 255, 255, 255, 255, 255]);
         const buffalo = new BuffaloZcl(buffer);
         buffalo.write(type, payload, {});
         expect(buffalo.getPosition()).toBe(6);
@@ -1722,9 +1722,9 @@ describe('Zcl', () => {
     });
 
     it.each([DataType.UINT56, DataType.DATA56, DataType.BITMAP56])('BuffaloZcl write uint56, data56, bitmap56', (type) => {
-        const payload = [7, 1798, 84149505];
+        const payload = 1978047272322305n;
         const buffer = Buffer.alloc(7);
-        const expected = Buffer.from([6, 7, 0, 0, 7, 0, 0]);
+        const expected = Buffer.from([1, 5, 4, 5, 6, 7, 7]);
         const buffalo = new BuffaloZcl(buffer);
         buffalo.write(type, payload, {});
         expect(buffalo.getPosition()).toBe(7);
@@ -1732,7 +1732,7 @@ describe('Zcl', () => {
     });
 
     it.each([DataType.UINT64, DataType.DATA64, DataType.BITMAP64])('BuffaloZcl write uint64, data64, bitmap64', (type) => {
-        const payload = '0x0907070605040501';
+        const payload = 0x0907070605040501n;
         const buffer = Buffer.alloc(8);
         const expected = Buffer.from([1, 5, 4, 5, 6, 7, 7, 9]);
         const buffalo = new BuffaloZcl(buffer);
@@ -1742,9 +1742,9 @@ describe('Zcl', () => {
     });
 
     it('BuffaloZcl write int40', () => {
-        const payload = [30, 40];
+        const payload = 549755813886;
         const buffer = Buffer.alloc(5);
-        const expected = Buffer.from([40, 0, 0, 0, 30]);
+        const expected = Buffer.from([254, 255, 255, 255, 127]);
         const buffalo = new BuffaloZcl(buffer);
         buffalo.write(DataType.INT40, payload, {});
         expect(buffalo.getPosition()).toBe(5);
@@ -1752,9 +1752,9 @@ describe('Zcl', () => {
     });
 
     it('BuffaloZcl write int56', () => {
-        const payload = [7, 1798, 84149505];
+        const payload = 1978047272322305n;
         const buffer = Buffer.alloc(7);
-        const expected = Buffer.from([6, 7, 0, 0, 7, 0, 0]);
+        const expected = Buffer.from([1, 5, 4, 5, 6, 7, 7]);
         const buffalo = new BuffaloZcl(buffer);
         buffalo.write(DataType.INT56, payload, {});
         expect(buffalo.getPosition()).toBe(7);
@@ -1762,9 +1762,9 @@ describe('Zcl', () => {
     });
 
     it('BuffaloZcl write int64', () => {
-        const payload = [17105925, 101123849];
+        const payload = 650496393613673729n;
         const buffer = Buffer.alloc(8);
-        const expected = Buffer.from([0x09, 0x07, 0x07, 0x06, 0x05, 0x04, 0x05, 0x01]);
+        const expected = Buffer.from([1, 5, 4, 5, 6, 7, 7, 9]);
         const buffalo = new BuffaloZcl(buffer);
         buffalo.write(DataType.INT64, payload, {});
         expect(buffalo.getPosition()).toBe(8);

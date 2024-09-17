@@ -91,6 +91,30 @@ class Buffalo {
         return value;
     }
 
+    public writeUInt56(value: bigint): void {
+        this.buffer.writeUIntLE(Number(value & 0xffffffffffffn), this.position, 6);
+        this.buffer.writeUInt8(Number(value >> 48n), this.position + 6);
+        this.position += 7;
+    }
+
+    public readUInt56(): bigint {
+        const low = this.buffer.readUIntLE(this.position, 6);
+        const high = this.buffer.readUInt8(this.position + 6);
+        this.position += 7;
+        return (BigInt(high) << 48n) | BigInt(low);
+    }
+
+    public writeUInt64(value: bigint): void {
+        this.buffer.writeBigUInt64LE(value, this.position);
+        this.position += 8;
+    }
+
+    public readUInt64(): bigint {
+        const value = this.buffer.readBigUInt64LE(this.position);
+        this.position += 8;
+        return value;
+    }
+
     public writeInt8(value: number): void {
         this.buffer.writeInt8(value, this.position);
         this.position++;
@@ -154,6 +178,35 @@ class Buffalo {
     public readInt48(): number {
         const value = this.buffer.readIntLE(this.position, 6);
         this.position += 6;
+        return value;
+    }
+
+    public writeInt56(value: bigint): void {
+        const unsignedValue = value < 0n ? (1n << 56n) + value : value;
+        this.buffer.writeUIntLE(Number(unsignedValue & 0xffffffffffffn), this.position, 6);
+        this.buffer.writeUInt8(Number(unsignedValue >> 48n), this.position + 6);
+        this.position += 7;
+    }
+
+    public readInt56(): bigint {
+        const low = BigInt(this.buffer.readUIntLE(this.position, 6));
+        const high = BigInt(this.buffer.readUInt8(this.position + 6));
+        let result = (high << 48n) | low;
+        if (high & 0x80n) {
+            result -= 1n << 56n;
+        }
+        this.position += 7;
+        return result;
+    }
+
+    public writeInt64(value: bigint): void {
+        this.buffer.writeBigInt64LE(value, this.position);
+        this.position += 8;
+    }
+
+    public readInt64(): bigint {
+        const value = this.buffer.readBigInt64LE(this.position);
+        this.position += 8;
         return value;
     }
 

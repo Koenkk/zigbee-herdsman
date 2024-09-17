@@ -392,15 +392,15 @@ export class ZBOSSUart extends EventEmitter {
         /* Construct a package */
         const packLen = 5 + (data ? data.length + 2 : 0);
         const header = Buffer.alloc(7);
-        header.writeUint16BE(SIGNATURE);
-        header.writeUint16LE(packLen, 2);
-        header.writeUint8(ZBOSS_NCP_API_HL, 4);
-        header.writeUint8(flags, 5);
+        header.writeUInt16BE(SIGNATURE);
+        header.writeUInt16LE(packLen, 2);
+        header.writeUInt8(ZBOSS_NCP_API_HL, 4);
+        header.writeUInt8(flags, 5);
         const hCRC8 = crc8(header.subarray(2, 6));
-        header.writeUint8(hCRC8, 6);
+        header.writeUInt8(hCRC8, 6);
         if (data) {
             const pCRC16 = Buffer.alloc(2);
-            pCRC16.writeUint16LE(crc16(data));
+            pCRC16.writeUInt16LE(crc16(data));
             return Buffer.concat([header, pCRC16, data]);
         } else {
             return header;

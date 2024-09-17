@@ -20,7 +20,7 @@ export interface ConfigureReportingItem {
     attribute: string | number | {ID: number; type: number};
     minimumReportInterval: number;
     maximumReportInterval: number;
-    reportableChange: number | [number, number];
+    reportableChange: number;
 }
 
 interface Options {
