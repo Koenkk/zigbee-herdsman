@@ -175,7 +175,7 @@ describe('Buffalo', () => {
     it.each([
         [36028797018963964n, [0, 0, 252, 255, 255, 255, 255, 255, 127]],
         [-36028797018963964n, [0, 0, 4, 0, 0, 0, 0, 0, 128]],
-    ])('INT56 write positive', (value: bigint, expectedValues: number[]) => {
+    ])('INT56 write', (value: bigint, expectedValues: number[]) => {
         const buffalo = new Buffalo(Buffer.alloc(9), 2);
         buffalo.writeInt56(value);
         expect(buffalo.getPosition()).toEqual(9);

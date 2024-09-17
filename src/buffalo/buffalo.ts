@@ -93,7 +93,7 @@ class Buffalo {
 
     public writeUInt56(value: bigint): void {
         this.buffer.writeUIntLE(Number(value & 0xffffffffffffn), this.position, 6);
-        this.buffer.writeUint8(Number(value >> 48n), this.position + 6);
+        this.buffer.writeUInt8(Number(value >> 48n), this.position + 6);
         this.position += 7;
     }
 
@@ -182,12 +182,9 @@ class Buffalo {
     }
 
     public writeInt56(value: bigint): void {
-        let unsignedValue = value;
-        if (value < 0n) {
-            unsignedValue = (1n << 56n) + value;
-        }
+        const unsignedValue = value < 0n ? (1n << 56n) + value : value;
         this.buffer.writeUIntLE(Number(unsignedValue & 0xffffffffffffn), this.position, 6);
-        this.buffer.writeUint8(Number(unsignedValue >> 48n), this.position + 6);
+        this.buffer.writeUInt8(Number(unsignedValue >> 48n), this.position + 6);
         this.position += 7;
     }
 
