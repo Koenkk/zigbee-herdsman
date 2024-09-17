@@ -3,6 +3,7 @@
 import {EventEmitter} from 'stream';
 
 import {logger} from '../../../utils/logger';
+import * as Zdo from '../../../zspec/zdo';
 import PARAM, {
     Command,
     DataStateResponse,
@@ -137,59 +138,60 @@ function parseChangeNetworkStateResponse(view: DataView): number {
     return state;
 }
 
-function parseQuerySendDataStateResponse(view: DataView): object | null {
+function parseQuerySendDataStateResponse(view: DataView): DataStateResponse | null {
     try {
-        const response: DataStateResponse = {};
+        const commandId = view.getUint8(0);
+        const seqNr = view.getUint8(1);
+        const status = view.getUint8(2);
 
-        response.commandId = view.getUint8(0);
-        response.seqNr = view.getUint8(1);
-        response.status = view.getUint8(2);
-
-        if (response.status !== 0) {
-            if (response.status !== 5) {
-                logger.debug('DATA_CONFIRM RESPONSE - seqNr.: ' + response.seqNr + ' status: ' + response.status, NS);
+        if (status !== 0) {
+            if (status !== 5) {
+                logger.debug('DATA_CONFIRM RESPONSE - seqNr.: ' + seqNr + ' status: ' + status, NS);
             }
 
             return null;
         }
 
-        response.frameLength = 7;
-        response.payloadLength = view.getUint16(5, littleEndian);
-        response.deviceState = view.getUint8(7);
-        response.requestId = view.getUint8(8);
+        const frameLength = 7;
+        const payloadLength = view.getUint16(5, littleEndian);
+        const deviceState = view.getUint8(7);
+        const requestId = view.getUint8(8);
+        const destAddrMode = view.getUint8(9);
 
-        response.destAddrMode = view.getUint8(9);
-
+        let destAddr64: string | undefined;
+        let destAddr16: number | undefined;
+        let destEndpoint: number | undefined;
         let destAddr = '';
-        if (response.destAddrMode === 0x03) {
+
+        if (destAddrMode === PARAM.PARAM.addressMode.IEEE_ADDR) {
             let res = view.getBigUint64(10, littleEndian).toString(16);
             while (res.length < 16) {
                 res = '0' + res;
             }
-            response.destAddr64 = res;
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
-            const buf2 = view.buffer.slice(18, view.buffer.byteLength);
-            destAddr = response.destAddr64;
+            destAddr64 = res;
+            // const buf2 = view.buffer.slice(18, view.buffer.byteLength);
+            destAddr = destAddr64;
         } else {
-            response.destAddr16 = view.getUint16(10, littleEndian);
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
-            const buf2 = view.buffer.slice(12, view.buffer.byteLength);
-            destAddr = response.destAddr16.toString(16);
-        }
-        if (response.destAddrMode === 0x02 || response.destAddrMode === 0x03) {
-            response.destEndpoint = view.getUint8(view.byteLength - 7);
+            destAddr16 = view.getUint16(10, littleEndian);
+            // const buf2 = view.buffer.slice(12, view.buffer.byteLength);
+            destAddr = destAddr16.toString(16);
         }
 
-        response.srcEndpoint = view.getUint8(view.byteLength - 6);
-        response.confirmStatus = view.getInt8(view.byteLength - 5);
+        if (destAddrMode === PARAM.PARAM.addressMode.NWK_ADDR || destAddrMode === PARAM.PARAM.addressMode.IEEE_ADDR) {
+            destEndpoint = view.getUint8(view.byteLength - 7);
+        }
 
-        let newStatus = response.deviceState.toString(2);
+        const srcEndpoint = view.getUint8(view.byteLength - 6);
+        const confirmStatus = view.getInt8(view.byteLength - 5);
+
+        let newStatus = deviceState.toString(2);
+
         for (let l = 0; l <= 8 - newStatus.length; l++) {
             newStatus = '0' + newStatus;
         }
 
         // resolve send data request promise
-        const i = apsBusyQueue.findIndex((r: Request) => r.request && r.request.requestId === response.requestId);
+        const i = apsBusyQueue.findIndex((r: Request) => r.request && r.request.requestId === requestId);
 
         if (i < 0) {
             return null;
@@ -200,128 +202,163 @@ function parseQuerySendDataStateResponse(view: DataView): object | null {
         const req: Request = apsBusyQueue[i];
 
         // TODO timeout (at driver.ts)
-        if (response.confirmStatus !== 0) {
+        if (confirmStatus !== 0) {
             // reject if status is not SUCCESS
-            //logger.debug("REJECT APS_REQUEST - request id: " + response.requestId + " confirm status: " + response.confirmStatus, NS);
-            req.reject?.(response.confirmStatus);
+            //logger.debug("REJECT APS_REQUEST - request id: " + requestId + " confirm status: " + confirmStatus, NS);
+            req.reject(new Error(`confirmStatus=${confirmStatus}`));
         } else {
-            //logger.debug("RESOLVE APS_REQUEST - request id: " + response.requestId + " confirm status: " + response.confirmStatus, NS);
-            req.resolve?.(response.confirmStatus);
+            //logger.debug("RESOLVE APS_REQUEST - request id: " + requestId + " confirm status: " + confirmStatus, NS);
+            req.resolve(confirmStatus);
         }
 
         //remove from busyqueue
         apsBusyQueue.splice(i, 1);
 
-        logger.debug(
-            'DATA_CONFIRM RESPONSE - destAddr: 0x' + destAddr + ' request id: ' + response.requestId + ' confirm status: ' + response.confirmStatus,
-            NS,
-        );
-        frameParserEvents.emit('receivedDataNotification', response.deviceState);
+        logger.debug('DATA_CONFIRM RESPONSE - destAddr: 0x' + destAddr + ' request id: ' + requestId + ' confirm status: ' + confirmStatus, NS);
+        frameParserEvents.emit('receivedDataNotification', deviceState);
 
-        return response;
+        return {
+            commandId,
+            seqNr,
+            status,
+            frameLength,
+            payloadLength,
+            deviceState,
+            requestId,
+            destAddrMode,
+            destAddr16,
+            destAddr64,
+            destEndpoint,
+            srcEndpoint,
+            confirmStatus,
+        };
     } catch (error) {
         logger.debug('DATA_CONFIRM RESPONSE - ' + error, NS);
         return null;
     }
 }
 
-function parseReadReceivedDataResponse(view: DataView): object | null {
+function parseReadReceivedDataResponse(view: DataView): ReceivedDataResponse | null {
     // min 28 bytelength
     try {
-        const response: ReceivedDataResponse = {};
         let buf2, buf3;
 
-        response.commandId = view.getUint8(0);
-        response.seqNr = view.getUint8(1);
-        response.status = view.getUint8(2);
+        const commandId = view.getUint8(0);
+        const seqNr = view.getUint8(1);
+        const status = view.getUint8(2);
 
-        if (response.status != 0) {
-            if (response.status !== 5) {
-                logger.debug('DATA_INDICATION RESPONSE - seqNr.: ' + response.seqNr + ' status: ' + response.status, NS);
+        if (status != 0) {
+            if (status !== 5) {
+                logger.debug('DATA_INDICATION RESPONSE - seqNr.: ' + seqNr + ' status: ' + status, NS);
             }
             return null;
         }
 
-        response.frameLength = view.getUint16(3, littleEndian);
-        response.payloadLength = view.getUint16(5, littleEndian);
-        response.deviceState = view.getUint8(7);
-        response.destAddrMode = view.getUint8(8);
+        const frameLength = view.getUint16(3, littleEndian);
+        const payloadLength = view.getUint16(5, littleEndian);
+        const deviceState = view.getUint8(7);
+        const destAddrMode = view.getUint8(8);
 
+        let destAddr64: string | undefined;
+        let destAddr16: number | undefined;
         let destAddr = '';
-        if (response.destAddrMode === 0x03) {
+
+        if (destAddrMode === PARAM.PARAM.addressMode.IEEE_ADDR) {
             let res = view.getBigUint64(9, littleEndian).toString(16);
             while (res.length < 16) {
                 res = '0' + res;
             }
-            response.destAddr64 = res;
+            destAddr64 = res;
             buf2 = view.buffer.slice(17, view.buffer.byteLength);
-            destAddr = response.destAddr64;
+            destAddr = destAddr64;
         } else {
-            response.destAddr16 = view.getUint16(9, littleEndian);
+            destAddr16 = view.getUint16(9, littleEndian);
             buf2 = view.buffer.slice(11, view.buffer.byteLength);
-            destAddr = response.destAddr16.toString(16);
+            destAddr = destAddr16.toString(16);
         }
 
         view = new DataView(buf2);
-        response.destEndpoint = view.getUint8(0);
-        response.srcAddrMode = view.getUint8(1);
+        const destEndpoint = view.getUint8(0);
+        const srcAddrMode = view.getUint8(1);
 
+        let srcAddr64: string | undefined;
+        let srcAddr16: number | undefined;
         let srcAddr = '';
-        if (response.srcAddrMode === 0x02 || response.srcAddrMode === 0x04) {
-            response.srcAddr16 = view.getUint16(2, littleEndian);
+
+        if (srcAddrMode === PARAM.PARAM.addressMode.NWK_ADDR || srcAddrMode === 0x04) {
+            srcAddr16 = view.getUint16(2, littleEndian);
             buf3 = view.buffer.slice(4, view.buffer.byteLength);
-            srcAddr = response.srcAddr16.toString(16);
+            srcAddr = srcAddr16.toString(16);
         }
 
-        if (response.srcAddrMode === 0x03 || response.srcAddrMode === 0x04) {
+        if (srcAddrMode === PARAM.PARAM.addressMode.IEEE_ADDR || srcAddrMode === 0x04) {
             let res = view.getBigUint64(2, littleEndian).toString(16);
             while (res.length < 16) {
                 res = '0' + res;
             }
-            response.srcAddr64 = res;
+            srcAddr64 = res;
             buf3 = view.buffer.slice(10, view.buffer.byteLength);
-            srcAddr = response.srcAddr64;
+            srcAddr = srcAddr64;
         }
 
         view = new DataView(buf3!); // XXX: not validated?
-        response.srcEndpoint = view.getUint8(0);
-        response.profileId = view.getUint16(1, littleEndian);
-        response.clusterId = view.getUint16(3, littleEndian);
-        response.asduLength = view.getUint16(5, littleEndian);
+        const srcEndpoint = view.getUint8(0);
+        const profileId = view.getUint16(1, littleEndian);
+        const clusterId = view.getUint16(3, littleEndian);
+        const asduLength = view.getUint16(5, littleEndian);
+        const asduPayload = Buffer.from(view.buffer.slice(7, asduLength + 7));
+        const lqi = view.getUint8(view.byteLength - 8);
+        const rssi = view.getInt8(view.byteLength - 3);
 
-        const payload = [];
-        let i = 0;
-        for (let u = 7; u < response.asduLength + 7; u++) {
-            payload[i] = view.getUint8(u);
-            i++;
-        }
+        let newStatus = deviceState.toString(2);
 
-        response.asduPayload = payload;
-        response.lqi = view.getUint8(view.byteLength - 8);
-        response.rssi = view.getInt8(view.byteLength - 3);
-
-        let newStatus = response.deviceState.toString(2);
         for (let l = 0; l <= 8 - newStatus.length; l++) {
             newStatus = '0' + newStatus;
         }
+
         logger.debug(
             'DATA_INDICATION RESPONSE - seqNr. ' +
-                response.seqNr +
+                seqNr +
                 ' srcAddr: 0x' +
                 srcAddr +
                 ' destAddr: 0x' +
                 destAddr +
                 ' profile id: 0x' +
-                response.profileId.toString(16) +
+                profileId.toString(16) +
                 ' cluster id: 0x' +
-                response.clusterId.toString(16) +
+                clusterId.toString(16) +
                 ' lqi: ' +
-                response.lqi,
+                lqi,
             NS,
         );
-        logger.debug('response payload: ' + payload, NS);
+        logger.debug('response payload: ' + asduPayload.toString('hex'), NS);
+        frameParserEvents.emit('receivedDataNotification', deviceState);
+
+        const response: ReceivedDataResponse = {
+            commandId,
+            seqNr,
+            status,
+            frameLength,
+            payloadLength,
+            deviceState,
+            destAddrMode,
+            destAddr16,
+            destAddr64,
+            destEndpoint,
+            srcAddrMode,
+            srcAddr16,
+            srcAddr64,
+            srcEndpoint,
+            profileId,
+            clusterId,
+            asduLength,
+            asduPayload,
+            lqi,
+            rssi,
+            zdo: profileId === Zdo.ZDO_PROFILE_ID ? Zdo.Buffalo.readResponse(true, clusterId, asduPayload) : undefined,
+        };
+
         frameParserEvents.emit('receivedDataPayload', response);
-        frameParserEvents.emit('receivedDataNotification', response.deviceState);
         return response;
     } catch (error) {
         logger.debug('DATA_INDICATION RESPONSE - ' + error, NS);
@@ -366,51 +403,58 @@ function parseReceivedDataNotification(view: DataView): number | null {
     }
 }
 
-function parseGreenPowerDataIndication(view: DataView): object | null {
+function parseGreenPowerDataIndication(view: DataView): gpDataInd | null {
     try {
-        const ind: gpDataInd = {};
-        ind.seqNr = view.getUint8(1);
+        let id, rspId, options, srcId, frameCounter, commandId, commandFrameSize, commandFrame;
+        const seqNr = view.getUint8(1);
 
         if (view.byteLength < 30) {
             logger.debug('GP data notification', NS);
-            ind.id = 0x00; // 0 = notification, 4 = commissioning
-            ind.rspId = 0x01; // 1 = pairing, 2 = commissioning
-            ind.options = 0;
+            id = 0x00; // 0 = notification, 4 = commissioning
+            rspId = 0x01; // 1 = pairing, 2 = commissioning
+            options = 0;
             view.getUint16(7, littleEndian); // frame ctrl field(7) ext.fcf(8)
-            ind.srcId = view.getUint32(9, littleEndian);
-            ind.frameCounter = view.getUint32(13, littleEndian);
-            ind.commandId = view.getUint8(17);
-            ind.commandFrameSize = view.byteLength - 18 - 6; // cut 18 from begin and 4 (sec mic) and 2 from end (cfc)
-            ind.commandFrame = Buffer.from(view.buffer.slice(18, ind.commandFrameSize + 18));
+            srcId = view.getUint32(9, littleEndian);
+            frameCounter = view.getUint32(13, littleEndian);
+            commandId = view.getUint8(17);
+            commandFrameSize = view.byteLength - 18 - 6; // cut 18 from begin and 4 (sec mic) and 2 from end (cfc)
+            commandFrame = Buffer.from(view.buffer.slice(18, commandFrameSize + 18));
         } else {
             logger.debug('GP commissioning notification', NS);
-            ind.id = 0x04; // 0 = notification, 4 = commissioning
-            ind.rspId = 0x01; // 1 = pairing, 2 = commissioning
-            ind.options = view.getUint16(14, littleEndian); // opt(14) ext.opt(15)
-            ind.srcId = view.getUint32(8, littleEndian);
-            ind.frameCounter = view.getUint32(36, littleEndian);
-            ind.commandId = view.getUint8(12);
-            ind.commandFrameSize = view.byteLength - 13 - 2; // cut 13 from begin and 2 from end (cfc)
-            ind.commandFrame = Buffer.from(view.buffer.slice(13, ind.commandFrameSize + 13));
+            id = 0x04; // 0 = notification, 4 = commissioning
+            rspId = 0x01; // 1 = pairing, 2 = commissioning
+            options = view.getUint16(14, littleEndian); // opt(14) ext.opt(15)
+            srcId = view.getUint32(8, littleEndian);
+            frameCounter = view.getUint32(36, littleEndian);
+            commandId = view.getUint8(12);
+            commandFrameSize = view.byteLength - 13 - 2; // cut 13 from begin and 2 from end (cfc)
+            commandFrame = Buffer.from(view.buffer.slice(13, commandFrameSize + 13));
         }
 
-        if (
-            !(
-                lastReceivedGpInd.srcId === ind.srcId &&
-                lastReceivedGpInd.commandId === ind.commandId &&
-                lastReceivedGpInd.frameCounter === ind.frameCounter
-            )
-        ) {
-            lastReceivedGpInd.srcId = ind.srcId;
-            lastReceivedGpInd.commandId = ind.commandId;
-            lastReceivedGpInd.frameCounter = ind.frameCounter;
-            //logger.debug(`GP_DATA_INDICATION - src id: ${ind.srcId} cmd id: ${ind.commandId} frameCounter: ${ind.frameCounter}`, NS);
+        const ind: gpDataInd = {
+            rspId,
+            seqNr,
+            id,
+            options,
+            srcId,
+            frameCounter,
+            commandId,
+            commandFrameSize,
+            commandFrame,
+        };
+
+        if (!(lastReceivedGpInd.srcId === srcId && lastReceivedGpInd.commandId === commandId && lastReceivedGpInd.frameCounter === frameCounter)) {
+            lastReceivedGpInd.srcId = srcId;
+            lastReceivedGpInd.commandId = commandId;
+            lastReceivedGpInd.frameCounter = frameCounter;
+            //logger.debug(`GP_DATA_INDICATION - src id: ${srcId} cmd id: ${commandId} frameCounter: ${frameCounter}`, NS);
             logger.debug(
-                `GP_DATA_INDICATION - src id: 0x${ind.srcId.toString(16)} cmd id: 0x${ind.commandId.toString(16)} frameCounter: 0x${ind.frameCounter.toString(16)}`,
+                `GP_DATA_INDICATION - src id: 0x${srcId.toString(16)} cmd id: 0x${commandId.toString(16)} frameCounter: 0x${frameCounter.toString(16)}`,
                 NS,
             );
             frameParserEvents.emit('receivedGreenPowerIndication', ind);
         }
+
         return ind;
     } catch (error) {
         logger.debug('GREEN_POWER INDICATION - ' + error, NS);
@@ -498,10 +542,10 @@ function processFrame(frame: Uint8Array): void {
     if (status !== 0) {
         // reject if status is not SUCCESS
         //logger.debug("REJECT REQUEST", NS);
-        req.reject?.({status});
+        req.reject(new Error(`status=${status}`));
     } else {
         //logger.debug("RESOLVE REQUEST", NS);
-        req.resolve?.(command);
+        req.resolve(command);
     }
 }
 
