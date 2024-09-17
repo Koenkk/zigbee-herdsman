@@ -502,11 +502,7 @@ class EZSPAdapter extends Adapter {
                     throw new Error(`~x~> [ZDO ${clusterName} BROADCAST to=${networkAddress}] Failed to send request.`);
                 }
             } else {
-                logger.debug(
-                    () =>
-                        `~~~> [ZDO ${clusterName} UNICAST to=${ieeeAddress}:${networkAddress} payload=${payload.toString('hex')}]`,
-                    NS,
-                );
+                logger.debug(() => `~~~> [ZDO ${clusterName} UNICAST to=${ieeeAddress}:${networkAddress} payload=${payload.toString('hex')}]`, NS);
 
                 const req = await this.driver.request(networkAddress, frame, payload);
 
