@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.0.0](https://github.com/Koenkk/zigbee-herdsman/compare/v0.57.4...v1.0.0) (2024-09-17)
+
+
+### ⚠ BREAKING CHANGES
+
+* Fix always use `number` for `reportableChange` ([#1190](https://github.com/Koenkk/zigbee-herdsman/issues/1190))
+
+### Bug Fixes
+
+* Fix always use `number` for `reportableChange` ([#1190](https://github.com/Koenkk/zigbee-herdsman/issues/1190)) ([e30d7b7](https://github.com/Koenkk/zigbee-herdsman/commit/e30d7b760a4264ede2f15c451668769473230517))
+* **ignore:** update dependencies ([#1188](https://github.com/Koenkk/zigbee-herdsman/issues/1188)) ([741b9c8](https://github.com/Koenkk/zigbee-herdsman/commit/741b9c8f7fa040e85556f176554f15abddf6ac2f))
+
 ## [0.57.4](https://github.com/Koenkk/zigbee-herdsman/compare/v0.57.3...v0.57.4) (2024-09-14)
 
 
