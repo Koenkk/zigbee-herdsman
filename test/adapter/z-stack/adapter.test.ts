@@ -57,7 +57,7 @@ jest.mock('../../../src/utils/wait', () => {
     return jest.fn();
 });
 
-const waitForResult = (payloadOrPromise: Promise<unknown> | ZpiObjectPayload, ID = null) => {
+const waitForResult = (payloadOrPromise: Promise<unknown> | ZpiObjectPayload, ID?: number) => {
     ID = ID || 1;
     if (payloadOrPromise instanceof Promise) {
         return {
@@ -1020,32 +1020,6 @@ interface ZnpWaitFor {
     state?: number;
     resolve: (object: unknown) => unknown;
     reject: (reason: string) => void;
-}
-const znpWaitFors: ZnpWaitFor[] = [];
-function resolveZnpWaitFors(
-    type: Type,
-    subsystem: Subsystem,
-    command: string,
-    target: number | string | undefined,
-    transid: number | undefined,
-    state: number | undefined,
-    result: ZpiObject,
-): void {
-    const matches = znpWaitFors.filter(
-        (i) =>
-            i.type === type &&
-            i.subsystem === subsystem &&
-            i.command === command &&
-            (i.target === undefined ||
-                (typeof i.target === 'number' ? i.target === result.payload.srcaddr : i.target === result.payload.zdo?.[1]?.eui64)) &&
-            (i.transid === undefined || i.transid === result.payload.transid) &&
-            (i.state === undefined || i.state === result.payload.state),
-    );
-    if (matches.length > 0) {
-        matches.forEach((m) => m.resolve(result));
-    } else {
-        throw new Error(`No waiters for ${Type[type]}: ${Subsystem[subsystem]} - ${command} - ${target} - ${transid} - ${state}`);
-    }
 }
 
 const basicMocks = () => {
@@ -2266,6 +2240,7 @@ describe('zstack-adapter', () => {
                 (ZSpec.BroadcastAddress.DEFAULT >> 8) & 0xff,
                 ...zdoPayload,
             ]),
+            undefined,
             // Subsystem.ZDO, 'mgmtPermitJoinReq', {
             //     addrmode: 0x0f,
             //     dstaddr: 0xfffc,
@@ -2289,6 +2264,7 @@ describe('zstack-adapter', () => {
         expect(mockZnpRequestZdo).toHaveBeenCalledWith(
             Zdo.ClusterId.PERMIT_JOINING_REQUEST,
             Buffer.from([AddressMode.ADDR_16BIT, 42102 & 0xff, (42102 >> 8) & 0xff, ...zdoPayload]),
+            expect.any(Number),
             // Subsystem.ZDO, 'mgmtPermitJoinReq', {
             //     addrmode: 2,
             //     dstaddr: 42102,
@@ -2346,6 +2322,7 @@ describe('zstack-adapter', () => {
                 0,
                 0,
             ]),
+            undefined,
             // Subsystem.ZDO, 'mgmtNwkUpdateReq', {
             //     dstaddr: 0xffff,
             //     dstaddrmode: 15,
@@ -2407,6 +2384,7 @@ describe('zstack-adapter', () => {
         expect(mockZnpRequestZdo).toHaveBeenCalledWith(
             Zdo.ClusterId.NODE_DESCRIPTOR_REQUEST,
             Buffer.from([2 & 0xff, (2 >> 8) & 0xff, ...Zdo.Buffalo.buildRequest(false, Zdo.ClusterId.NODE_DESCRIPTOR_REQUEST, 2)]),
+            expect.any(Number),
             //Subsystem.ZDO, 'nodeDescReq', {dstaddr: 2, nwkaddrofinterest: 2}, 1
         );
         expect(mockQueueExecute.mock.calls[0][1]).toBe(2);
@@ -2645,6 +2623,7 @@ describe('zstack-adapter', () => {
         expect(mockZnpRequestZdo).toHaveBeenCalledWith(
             Zdo.ClusterId.NETWORK_ADDRESS_REQUEST,
             Zdo.Buffalo.buildRequest(false, Zdo.ClusterId.NETWORK_ADDRESS_REQUEST, '0x02', false, 0),
+            expect.any(Number),
             //9, 5, 'nwkAddrReq', {ieeeaddr: '0x02', reqtype: 0, startindex: 0}
         );
         expect(mockZnpRequest).toHaveBeenNthCalledWith(
@@ -2712,6 +2691,7 @@ describe('zstack-adapter', () => {
         expect(mockZnpRequestZdo).toHaveBeenCalledWith(
             Zdo.ClusterId.NETWORK_ADDRESS_REQUEST,
             Zdo.Buffalo.buildRequest(false, Zdo.ClusterId.NETWORK_ADDRESS_REQUEST, '0x02', false, 0),
+            expect.any(Number),
             //6, 5, 'nwkAddrReq', {ieeeaddr: '0x02', reqtype: 0, startindex: 0}
         );
         expect(mockZnpRequest).toHaveBeenNthCalledWith(
@@ -2784,6 +2764,7 @@ describe('zstack-adapter', () => {
         expect(mockZnpRequestZdo).toHaveBeenCalledWith(
             Zdo.ClusterId.NETWORK_ADDRESS_REQUEST,
             Zdo.Buffalo.buildRequest(false, Zdo.ClusterId.NETWORK_ADDRESS_REQUEST, '0x02', false, 0),
+            expect.any(Number),
             //5, 5, 'nwkAddrReq', {ieeeaddr: '0x02', reqtype: 0, startindex: 0}
         );
         expect(mockZnpRequest).toHaveBeenNthCalledWith(
@@ -2856,6 +2837,7 @@ describe('zstack-adapter', () => {
         expect(mockZnpRequestZdo).toHaveBeenCalledWith(
             Zdo.ClusterId.NETWORK_ADDRESS_REQUEST,
             Zdo.Buffalo.buildRequest(false, Zdo.ClusterId.NETWORK_ADDRESS_REQUEST, '0x03', false, 0),
+            expect.any(Number),
             //5, 5, 'nwkAddrReq', {ieeeaddr: '0x03', reqtype: 0, startindex: 0}
         );
         expect(mockZnpRequest).toHaveBeenNthCalledWith(5, 5, 'extRouteDisc', {dstAddr: 3, options: 0, radius: 30});
@@ -3542,18 +3524,21 @@ describe('zstack-adapter', () => {
         expect(mockZnpRequestZdo).toHaveBeenCalledWith(
             Zdo.ClusterId.LQI_TABLE_REQUEST,
             Buffer.from([203 & 0xff, (203 >> 8) & 0xff, ...zdoPayload]),
+            expect.any(Number),
             //Subsystem.ZDO, 'mgmtLqiReq', {dstaddr: 203, startindex: 0}, 1
         );
         zdoPayload = Zdo.Buffalo.buildRequest(false, Zdo.ClusterId.LQI_TABLE_REQUEST, 2);
         expect(mockZnpRequestZdo).toHaveBeenCalledWith(
             Zdo.ClusterId.LQI_TABLE_REQUEST,
             Buffer.from([203 & 0xff, (203 >> 8) & 0xff, ...zdoPayload]),
+            expect.any(Number),
             //Subsystem.ZDO, 'mgmtLqiReq', {dstaddr: 203, startindex: 2}, 1
         );
         zdoPayload = Zdo.Buffalo.buildRequest(false, Zdo.ClusterId.LQI_TABLE_REQUEST, 4);
         expect(mockZnpRequestZdo).toHaveBeenCalledWith(
             Zdo.ClusterId.LQI_TABLE_REQUEST,
             Buffer.from([203 & 0xff, (203 >> 8) & 0xff, ...zdoPayload]),
+            expect.any(Number),
             //Subsystem.ZDO, 'mgmtLqiReq', {dstaddr: 203, startindex: 4}, 1
         );
         expect(result).toStrictEqual({
@@ -3580,18 +3565,21 @@ describe('zstack-adapter', () => {
         expect(mockZnpRequestZdo).toHaveBeenCalledWith(
             Zdo.ClusterId.ROUTING_TABLE_REQUEST,
             Buffer.from([205 & 0xff, (205 >> 8) & 0xff, ...zdoPayload]),
+            expect.any(Number),
             //Subsystem.ZDO, 'mgmtRtgReq', {dstaddr: 205, startindex: 0}, 1
         );
         zdoPayload = Zdo.Buffalo.buildRequest(false, Zdo.ClusterId.ROUTING_TABLE_REQUEST, 2);
         expect(mockZnpRequestZdo).toHaveBeenCalledWith(
             Zdo.ClusterId.ROUTING_TABLE_REQUEST,
             Buffer.from([205 & 0xff, (205 >> 8) & 0xff, ...zdoPayload]),
+            expect.any(Number),
             // Subsystem.ZDO, 'mgmtRtgReq', {dstaddr: 205, startindex: 2}, 1
         );
         zdoPayload = Zdo.Buffalo.buildRequest(false, Zdo.ClusterId.ROUTING_TABLE_REQUEST, 4);
         expect(mockZnpRequestZdo).toHaveBeenCalledWith(
             Zdo.ClusterId.ROUTING_TABLE_REQUEST,
             Buffer.from([205 & 0xff, (205 >> 8) & 0xff, ...zdoPayload]),
+            expect.any(Number),
             // Subsystem.ZDO, 'mgmtRtgReq', {dstaddr: 205, startindex: 4}, 1
         );
         expect(result).toStrictEqual({
@@ -3618,6 +3606,7 @@ describe('zstack-adapter', () => {
         expect(mockZnpRequestZdo).toHaveBeenCalledWith(
             Zdo.ClusterId.BIND_REQUEST,
             Buffer.from([301 & 0xff, (301 >> 8) & 0xff, ...zdoPayload]),
+            expect.any(Number),
             // Subsystem.ZDO,
             // 'bindReq',
             // {clusterid: 1, dstaddr: 301, dstaddress: '0x02', dstaddrmode: 3, dstendpoint: 1, srcaddr: '0x01', srcendpoint: 1},
@@ -3638,6 +3627,7 @@ describe('zstack-adapter', () => {
         expect(mockZnpRequestZdo).toHaveBeenCalledWith(
             Zdo.ClusterId.BIND_REQUEST,
             Buffer.from([301 & 0xff, (301 >> 8) & 0xff, ...zdoPayload, 0, 0, 0, 0, 0, 0, 0]),
+            expect.any(Number),
             // Subsystem.ZDO,
             // 'bindReq',
             // {clusterid: 1, dstaddr: 301, dstaddress: '0x0000000000000004', dstaddrmode: 1, dstendpoint: 0xff, srcaddr: '0x129', srcendpoint: 1},
@@ -3658,6 +3648,7 @@ describe('zstack-adapter', () => {
         expect(mockZnpRequestZdo).toHaveBeenCalledWith(
             Zdo.ClusterId.UNBIND_REQUEST,
             Buffer.from([301 & 0xff, (301 >> 8) & 0xff, ...zdoPayload]),
+            expect.any(Number),
             // Subsystem.ZDO,
             // 'unbindReq',
             // {clusterid: 1, dstaddr: 301, dstaddress: '0x02', dstaddrmode: 3, dstendpoint: 1, srcaddr: '0x01', srcendpoint: 1},
@@ -3688,6 +3679,7 @@ describe('zstack-adapter', () => {
         expect(mockZnpRequestZdo).toHaveBeenCalledWith(
             Zdo.ClusterId.UNBIND_REQUEST,
             Buffer.from([301 & 0xff, (301 >> 8) & 0xff, ...zdoPayload, 0, 0, 0, 0, 0, 0, 0]),
+            expect.any(Number),
             // Subsystem.ZDO,
             // 'unbindReq',
             // {clusterid: 1, dstaddr: 301, dstaddress: '0x0000000000000004', dstaddrmode: 1, dstendpoint: 0xff, srcaddr: '0x129', srcendpoint: 1},
@@ -3708,6 +3700,7 @@ describe('zstack-adapter', () => {
         expect(mockZnpRequestZdo).toHaveBeenCalledWith(
             Zdo.ClusterId.LEAVE_REQUEST,
             Buffer.from([401 & 0xff, (401 >> 8) & 0xff, ...zdoPayload]),
+            expect.any(Number),
             //Subsystem.ZDO, 'mgmtLeaveReq', {deviceaddress: '0x01', dstaddr: 401, removechildrenRejoin: 0}, 1
         );
     });
@@ -4171,6 +4164,7 @@ describe('zstack-adapter', () => {
     it('Sends proper ZDO request payload for PERMIT_JOINING_REQUEST to target', async () => {
         basicMocks();
         await adapter.start();
+        mockZnpRequestZdo.mockClear();
 
         const clusterId = Zdo.ClusterId.PERMIT_JOINING_REQUEST;
         const zdoPayload = Zdo.Buffalo.buildRequest(false, clusterId, 250, 1, []);
@@ -4180,12 +4174,14 @@ describe('zstack-adapter', () => {
         expect(mockZnpRequestZdo).toHaveBeenCalledWith(
             clusterId,
             Buffer.from([AddressMode.ADDR_16BIT, 1234 & 0xff, (1234 >> 8) & 0xff, ...zdoPayload]),
+            undefined,
         );
     });
 
     it('Sends proper ZDO request payload for PERMIT_JOINING_REQUEST broadcast', async () => {
         basicMocks();
         await adapter.start();
+        mockZnpRequestZdo.mockClear();
 
         const clusterId = Zdo.ClusterId.PERMIT_JOINING_REQUEST;
         const zdoPayload = Zdo.Buffalo.buildRequest(false, clusterId, 250, 1, []);
@@ -4200,12 +4196,14 @@ describe('zstack-adapter', () => {
                 (ZSpec.BroadcastAddress.DEFAULT >> 8) & 0xff,
                 ...zdoPayload,
             ]),
+            undefined,
         );
     });
 
     it('Sends proper ZDO request payload for NWK_UPDATE_REQUEST UNICAST', async () => {
         basicMocks();
         await adapter.start();
+        mockZnpRequestZdo.mockClear();
 
         const clusterId = Zdo.ClusterId.NWK_UPDATE_REQUEST;
         const zdoPayload = Zdo.Buffalo.buildRequest(false, clusterId, [15], 0xfe, 0, undefined, 0);
@@ -4222,12 +4220,14 @@ describe('zstack-adapter', () => {
                 0, // nwkmanageraddr
                 0, // nwkmanageraddr
             ]),
+            undefined,
         );
     });
 
     it('Sends proper ZDO request payload for NWK_UPDATE_REQUEST BROADCAST', async () => {
         basicMocks();
         await adapter.start();
+        mockZnpRequestZdo.mockClear();
 
         const clusterId = Zdo.ClusterId.NWK_UPDATE_REQUEST;
         const zdoPayload = Zdo.Buffalo.buildRequest(false, clusterId, [15], 0xfe, 0, undefined, 0);
@@ -4244,12 +4244,14 @@ describe('zstack-adapter', () => {
                 0, // nwkmanageraddr
                 0, // nwkmanageraddr
             ]),
+            undefined,
         );
     });
 
     it('Sends proper ZDO request payload for BIND_REQUEST/UNBIND_REQUEST UNICAST', async () => {
         basicMocks();
         await adapter.start();
+        mockZnpRequestZdo.mockClear();
 
         const clusterId = Zdo.ClusterId.BIND_REQUEST;
         const zdoPayload = Zdo.Buffalo.buildRequest(
@@ -4266,12 +4268,13 @@ describe('zstack-adapter', () => {
 
         await adapter.sendZdo(ZSpec.BLANK_EUI64, 1234, clusterId, zdoPayload, true);
 
-        expect(mockZnpRequestZdo).toHaveBeenCalledWith(clusterId, Buffer.from([1234 & 0xff, (1234 >> 8) & 0xff, ...zdoPayload]));
+        expect(mockZnpRequestZdo).toHaveBeenCalledWith(clusterId, Buffer.from([1234 & 0xff, (1234 >> 8) & 0xff, ...zdoPayload]), undefined);
     });
 
     it('Sends proper ZDO request payload for BIND_REQUEST/UNBIND_REQUEST MULTICAST', async () => {
         basicMocks();
         await adapter.start();
+        mockZnpRequestZdo.mockClear();
 
         const clusterId = Zdo.ClusterId.BIND_REQUEST;
         const zdoPayload = Zdo.Buffalo.buildRequest(
@@ -4302,30 +4305,33 @@ describe('zstack-adapter', () => {
                 0, // match destination EUI64 length
                 0, // endpoint
             ]),
+            undefined,
         );
     });
 
     it('Sends proper ZDO request payload for NETWORK_ADDRESS_REQUEST', async () => {
         basicMocks();
         await adapter.start();
+        mockZnpRequestZdo.mockClear();
 
         const clusterId = Zdo.ClusterId.NETWORK_ADDRESS_REQUEST;
         const zdoPayload = Zdo.Buffalo.buildRequest(false, clusterId, '0x1122334455667788', false, 0);
 
         await adapter.sendZdo(ZSpec.BLANK_EUI64, 1234, clusterId, zdoPayload, true);
 
-        expect(mockZnpRequestZdo).toHaveBeenCalledWith(clusterId, zdoPayload);
+        expect(mockZnpRequestZdo).toHaveBeenCalledWith(clusterId, zdoPayload, undefined);
     });
 
     it('Sends proper ZDO request payload for generic logic request', async () => {
         basicMocks();
         await adapter.start();
+        mockZnpRequestZdo.mockClear();
 
         const clusterId = Zdo.ClusterId.NODE_DESCRIPTOR_REQUEST;
         const zdoPayload = Zdo.Buffalo.buildRequest(false, clusterId, 1234);
 
         await adapter.sendZdo(ZSpec.BLANK_EUI64, 1234, clusterId, zdoPayload, true);
 
-        expect(mockZnpRequestZdo).toHaveBeenCalledWith(clusterId, Buffer.from([1234 & 0xff, (1234 >> 8) & 0xff, ...zdoPayload]));
+        expect(mockZnpRequestZdo).toHaveBeenCalledWith(clusterId, Buffer.from([1234 & 0xff, (1234 >> 8) & 0xff, ...zdoPayload]), undefined);
     });
 });

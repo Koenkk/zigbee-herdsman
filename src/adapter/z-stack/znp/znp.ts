@@ -1,3 +1,4 @@
+import assert from 'assert';
 import events from 'events';
 import net from 'net';
 
@@ -10,8 +11,9 @@ import SocketPortUtils from '../../socketPortUtils';
 import * as Constants from '../constants';
 import {Frame as UnpiFrame, Parser as UnpiParser, Writer as UnpiWriter} from '../unpi';
 import {Subsystem, Type} from '../unpi/constants';
+import Definition from './definition';
 import {ZpiObjectPayload} from './tstype';
-import {getSREQId} from './utils';
+import {isMtCmdSreqZdo} from './utils';
 import ZpiObject from './zpiObject';
 
 const {
@@ -310,34 +312,25 @@ class Znp extends events.EventEmitter {
         });
     }
 
-    public requestZdo(
-        clusterId: ZdoClusterId,
-        payload: Buffer,
-        waiterID?: number,
-        timeout?: number,
-        expectedStatuses: Constants.COMMON.ZnpCommandStatus[] = [ZnpCommandStatus.SUCCESS],
-    ): Promise<void> {
+    public requestZdo(clusterId: ZdoClusterId, payload: Buffer, waiterID?: number): Promise<void> {
         return this.queue.execute(async () => {
-            const unpiFrame = new UnpiFrame(Type.SREQ, Subsystem.ZDO, getSREQId(clusterId), payload);
-            // TODO proper logic
-            const waiter = this.waitress.waitFor(
-                {type: Type.SRSP, subsystem: Subsystem.ZDO, command: ZdoClusterId[clusterId] /* ??? */},
-                timeout || timeouts.SREQ,
-            );
+            const cmd = Definition[Subsystem.ZDO].find((c) => isMtCmdSreqZdo(c) && c.zdoClusterId === clusterId);
+            assert(cmd, `Command for ZDO cluster ID '${clusterId}' not supported.`);
+
+            const unpiFrame = new UnpiFrame(Type.SREQ, Subsystem.ZDO, cmd.ID, payload);
+            const waiter = this.waitress.waitFor({type: Type.SRSP, subsystem: Subsystem.ZDO, command: cmd.name}, timeouts.SREQ);
 
             this.unpiWriter.writeFrame(unpiFrame);
 
             const result = await waiter.start().promise;
 
-            if (result?.payload.status !== undefined && !expectedStatuses.includes(result.payload.status)) {
-                if (typeof waiterID === 'number') {
+            if (result?.payload.status !== undefined && result.payload.status !== ZnpCommandStatus.SUCCESS) {
+                if (waiterID !== undefined) {
                     this.waitress.remove(waiterID);
                 }
 
                 throw new Error(
-                    `--> 'SREQ: ZDO - ${ZdoClusterId[clusterId]} - ${payload.toString()}' failed with status '${statusDescription(
-                        result.payload.status,
-                    )}' (expected '${expectedStatuses.map(statusDescription)}')`,
+                    `--> 'SREQ: ZDO - ${ZdoClusterId[clusterId]} - ${payload.toString('hex')}' failed with status '${statusDescription(result.payload.status)}'`,
                 );
             }
         });

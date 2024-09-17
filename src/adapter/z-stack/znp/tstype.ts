@@ -30,7 +30,11 @@ export interface MtCmdAreqZdo extends Omit<MtCmdBase, 'request' | 'response'> {
     type: CommandType.AREQ;
 }
 
-export type MtCmd = MtCmdAreq | MtCmdSreq | MtCmdAreqZdo;
+export interface MtCmdSreqZdo extends Omit<MtCmdBase, 'request' | 'response'> {
+    type: CommandType.SREQ;
+}
+
+export type MtCmd = MtCmdAreq | MtCmdSreq | MtCmdAreqZdo | MtCmdSreqZdo;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type ZpiObjectPayload = {[s: string]: any};

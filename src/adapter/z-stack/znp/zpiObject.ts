@@ -8,7 +8,7 @@ import BuffaloZnp from './buffaloZnp';
 import Definition from './definition';
 import ParameterType from './parameterType';
 import {BuffaloZnpOptions, MtCmd, MtParameter, MtType, ZpiObjectPayload} from './tstype';
-import {isMtCmdAreqZdo} from './utils';
+import {isMtCmdAreqZdo, isMtCmdSreqZdo} from './utils';
 
 const BufferAndListTypes = [
     ParameterType.BUFFER,
@@ -23,14 +23,22 @@ const BufferAndListTypes = [
     ParameterType.LIST_UINT8,
 ];
 
-class ZpiObject {
+type ZpiObjectType = 'Request' | 'Response';
+
+class ZpiObject<T extends ZpiObjectType = 'Response'> {
     public readonly type: Type;
     public readonly subsystem: Subsystem;
     public readonly command: MtCmd;
     public readonly payload: ZpiObjectPayload;
-    public readonly unpiFrame: UnpiFrame;
+    public readonly unpiFrame: T extends 'Request' ? UnpiFrame : undefined;
 
-    private constructor(type: Type, subsystem: Subsystem, command: MtCmd, payload: ZpiObjectPayload, unpiFrame: UnpiFrame) {
+    private constructor(
+        type: Type,
+        subsystem: Subsystem,
+        command: MtCmd,
+        payload: ZpiObjectPayload,
+        unpiFrame: T extends 'Request' ? UnpiFrame : undefined,
+    ) {
         this.type = type;
         this.subsystem = subsystem;
         this.command = command;
@@ -38,14 +46,14 @@ class ZpiObject {
         this.unpiFrame = unpiFrame;
     }
 
-    public static createRequest(subsystem: Subsystem, command: string, payload: ZpiObjectPayload): ZpiObject {
+    public static createRequest(subsystem: Subsystem, command: string, payload: ZpiObjectPayload): ZpiObject<'Request'> {
         if (!Definition[subsystem]) {
             throw new Error(`Subsystem '${subsystem}' does not exist`);
         }
 
         const cmd = Definition[subsystem].find((c) => c.name === command);
 
-        if (cmd === undefined || isMtCmdAreqZdo(cmd) || cmd.request === undefined) {
+        if (cmd === undefined || isMtCmdAreqZdo(cmd) || isMtCmdSreqZdo(cmd) || cmd.request === undefined) {
             throw new Error(`Command request '${command}' from subsystem '${subsystem}' not found`);
         }
 
@@ -63,7 +71,7 @@ class ZpiObject {
         return new ZpiObject(cmd.type, subsystem, cmd, payload, unpiFrame);
     }
 
-    public static fromUnpiFrame(frame: UnpiFrame): ZpiObject {
+    public static fromUnpiFrame(frame: UnpiFrame): ZpiObject<'Response'> {
         const cmd = Definition[frame.subsystem].find((c) => c.ID === frame.commandID);
 
         if (!cmd) {
@@ -72,6 +80,7 @@ class ZpiObject {
 
         let payload: ZpiObjectPayload = {};
 
+        // hotpath AREQ & SREQ ZDO since payload is identical (no need to instantiate BuffaloZnp or parse generically)
         if (isMtCmdAreqZdo(cmd)) {
             if (cmd.zdoClusterId === ZdoClusterId.NETWORK_ADDRESS_RESPONSE || cmd.zdoClusterId === ZdoClusterId.IEEE_ADDRESS_RESPONSE) {
                 // ZStack swaps the `startindex` and `numassocdev` compared to ZDO swap them back before handing to ZDO
@@ -84,6 +93,8 @@ class ZpiObject {
                 payload.srcaddr = frame.data.readUInt16LE(0);
                 payload.zdo = BuffaloZdo.readResponse(false, cmd.zdoClusterId, frame.data.subarray(2));
             }
+        } else if (isMtCmdSreqZdo(cmd)) {
+            payload.status = frame.data.readUInt8(0);
         } else {
             const parameters = frame.type === Type.SRSP && cmd.type !== Type.AREQ ? cmd.response : cmd.request;
             assert(
@@ -94,7 +105,8 @@ class ZpiObject {
             payload = this.readParameters(frame.data, parameters);
         }
 
-        return new ZpiObject(frame.type, frame.subsystem, cmd, payload, frame);
+        // GC UnpiFrame as early as possible, no longer needed
+        return new ZpiObject(frame.type, frame.subsystem, cmd, payload, undefined);
     }
 
     private static readParameters(buffer: Buffer, parameters: MtParameter[]): ZpiObjectPayload {

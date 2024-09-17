@@ -33,7 +33,8 @@ import {
 import * as Constants from '../constants';
 import {Constants as UnpiConstants} from '../unpi';
 import {Znp, ZpiObject} from '../znp';
-import {getAREQName, isMtCmdAreqZdo} from '../znp/utils';
+import Definition from '../znp/definition';
+import {isMtCmdAreqZdo} from '../znp/utils';
 import {ZnpAdapterManager} from './manager';
 import {ZnpVersion} from './tstype';
 
@@ -468,10 +469,13 @@ class ZStackAdapter extends Adapter {
 
                 /* istanbul ignore else */
                 if (responseClusterId) {
+                    const cmd = Definition[Subsystem.ZDO].find((c) => isMtCmdAreqZdo(c) && c.zdoClusterId === responseClusterId);
+                    assert(cmd, `Response for ZDO cluster ID '${responseClusterId}' not supported.`);
+
                     waiter = this.znp.waitFor(
                         UnpiConstants.Type.AREQ,
                         Subsystem.ZDO,
-                        getAREQName(responseClusterId),
+                        cmd.name,
                         networkAddress === ZSpec.NULL_NODE_ID ? ieeeAddress : networkAddress,
                         undefined,
                         undefined,
@@ -479,7 +483,7 @@ class ZStackAdapter extends Adapter {
                 }
             }
 
-            await this.znp.requestZdo(clusterId, payload);
+            await this.znp.requestZdo(clusterId, payload, waiter?.ID);
 
             if (waiter) {
                 const response = await waiter.start().promise;

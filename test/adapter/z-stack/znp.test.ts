@@ -5,7 +5,7 @@ import {Constants as UnpiConstants, Frame as UnpiFrame} from '../../../src/adapt
 import {Znp, ZpiObject} from '../../../src/adapter/z-stack/znp';
 import BuffaloZnp from '../../../src/adapter/z-stack/znp/buffaloZnp';
 import ParameterType from '../../../src/adapter/z-stack/znp/parameterType';
-import {logger, setLogger} from '../../../src/utils/logger';
+import {logger} from '../../../src/utils/logger';
 import * as Zdo from '../../../src/zspec/zdo';
 import {duplicateArray, ieeeaAddr1, ieeeaAddr2} from '../../testUtils';
 
@@ -766,6 +766,112 @@ describe('ZNP', () => {
         expect(object.payload).toStrictEqual({len: 2, status: 0, value: Buffer.from([1, 2])});
     });
 
+    it('znp request ZDO', async () => {
+        let parsedCb;
+
+        mockUnpiParserOn.mockImplementationOnce((event, cb) => {
+            if (event === 'parsed') {
+                parsedCb = cb;
+            }
+        });
+        mockUnpiWriterWriteFrame.mockImplementationOnce(() => {
+            parsedCb(new UnpiFrame(UnpiConstants.Type.SRSP, UnpiConstants.Subsystem.ZDO, 2, Buffer.from([0x00])));
+        });
+
+        await znp.open();
+
+        const zdoPayload = Buffer.from([2 & 0xff, (2 >> 8) & 0xff, ...Zdo.Buffalo.buildRequest(false, Zdo.ClusterId.NODE_DESCRIPTOR_REQUEST, 2)]);
+        const result = await znp.requestZdo(Zdo.ClusterId.NODE_DESCRIPTOR_REQUEST, zdoPayload, 1);
+
+        const frame = mockUnpiWriterWriteFrame.mock.calls[0][0];
+        expect(mockUnpiWriterWriteFrame).toHaveBeenCalledTimes(1);
+        expect(frame.commandID).toBe(2);
+        expect(frame.subsystem).toBe(UnpiConstants.Subsystem.ZDO);
+        expect(frame.type).toBe(UnpiConstants.Type.SREQ);
+        expect(frame.data).toStrictEqual(zdoPayload);
+
+        expect(result).toBe(undefined);
+    });
+
+    it('znp request ZDO SUCCESS', async () => {
+        let parsedCb;
+        mockUnpiParserOn.mockImplementationOnce((event, cb) => {
+            if (event === 'parsed') {
+                parsedCb = cb;
+            }
+        });
+
+        await znp.open();
+
+        const waiter = znp.waitFor(UnpiConstants.Type.SRSP, UnpiConstants.Subsystem.ZDO, 'nodeDescReq');
+        const zdoPayload = Buffer.from([2 & 0xff, (2 >> 8) & 0xff, ...Zdo.Buffalo.buildRequest(false, Zdo.ClusterId.NODE_DESCRIPTOR_REQUEST, 2)]);
+        znp.requestZdo(Zdo.ClusterId.NODE_DESCRIPTOR_REQUEST, zdoPayload, 1);
+
+        parsedCb(new UnpiFrame(UnpiConstants.Type.SRSP, UnpiConstants.Subsystem.ZDO, 2, Buffer.from([0x00])));
+
+        const object = await waiter.start().promise;
+        expect(object.payload).toStrictEqual({status: 0x00});
+    });
+
+    it('znp request ZDO FAILURE', async () => {
+        let parsedCb;
+        mockUnpiParserOn.mockImplementationOnce((event, cb) => {
+            if (event === 'parsed') {
+                parsedCb = cb;
+            }
+        });
+
+        mockUnpiWriterWriteFrame.mockImplementationOnce(() => {
+            parsedCb(new UnpiFrame(UnpiConstants.Type.SRSP, UnpiConstants.Subsystem.ZDO, 2, Buffer.from([0x01])));
+        });
+
+        await znp.open();
+
+        const zdoPayload = Buffer.from([2 & 0xff, (2 >> 8) & 0xff, ...Zdo.Buffalo.buildRequest(false, Zdo.ClusterId.NODE_DESCRIPTOR_REQUEST, 2)]);
+        let error;
+        try {
+            await znp.requestZdo(Zdo.ClusterId.NODE_DESCRIPTOR_REQUEST, zdoPayload, undefined);
+        } catch (e) {
+            error = e;
+        }
+
+        expect(error).toStrictEqual(
+            new Error(`--> 'SREQ: ZDO - NODE_DESCRIPTOR_REQUEST - ${zdoPayload.toString('hex')}' failed with status '(0x01: FAILURE)'`),
+        );
+    });
+
+    it('znp request ZDO failed should cancel waiter when provided', async () => {
+        let parsedCb;
+        mockUnpiParserOn.mockImplementationOnce((event, cb) => {
+            if (event === 'parsed') {
+                parsedCb = cb;
+            }
+        });
+
+        mockUnpiWriterWriteFrame.mockImplementationOnce(() => {
+            parsedCb(new UnpiFrame(UnpiConstants.Type.SRSP, UnpiConstants.Subsystem.ZDO, 2, Buffer.from([0x01])));
+        });
+
+        await znp.open();
+
+        expect(znp.waitress.waiters.size).toBe(0);
+        const waiter = znp.waitFor(UnpiConstants.Type.AREQ, UnpiConstants.Subsystem.ZDO, 'nodeDescRsp');
+        expect(znp.waitress.waiters.size).toBe(1);
+
+        const zdoPayload = Buffer.from([2 & 0xff, (2 >> 8) & 0xff, ...Zdo.Buffalo.buildRequest(false, Zdo.ClusterId.NODE_DESCRIPTOR_REQUEST, 2)]);
+        let error;
+        try {
+            await znp.requestZdo(Zdo.ClusterId.NODE_DESCRIPTOR_REQUEST, zdoPayload, waiter.ID);
+        } catch (e) {
+            expect(znp.waitress.waiters.size).toBe(0);
+            error = e;
+        }
+
+        expect(error).toStrictEqual(
+            new Error(`--> 'SREQ: ZDO - NODE_DESCRIPTOR_REQUEST - ${zdoPayload.toString('hex')}' failed with status '(0x01: FAILURE)'`),
+        );
+    });
+
     it('znp waitFor with transid', async () => {
         let parsedCb;
         mockUnpiParserOn.mockImplementationOnce((event, cb) => {
@@ -798,11 +904,6 @@ describe('ZNP', () => {
 
         const waiter = znp.waitFor(UnpiConstants.Type.AREQ, UnpiConstants.Subsystem.ZDO, 'activeEpRsp', 0x1234);
 
-        // {name: 'srcaddr', parameterType: ParameterType.UINT16},
-        // {name: 'status', parameterType: ParameterType.UINT8},
-        // {name: 'nwkaddr', parameterType: ParameterType.UINT16},
-        // {name: 'activeepcount', parameterType: ParameterType.UINT8},
-        // {name: 'activeeplist', parameterType: ParameterType.LIST_UINT8},
         parsedCb(new UnpiFrame(UnpiConstants.Type.AREQ, UnpiConstants.Subsystem.ZDO, 133, Buffer.from([0x34, 0x12, 0x00, 0x34, 0x12, 0x00])));
 
         const object = await waiter.start().promise;
