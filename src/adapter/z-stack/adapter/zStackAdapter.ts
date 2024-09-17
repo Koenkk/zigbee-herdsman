@@ -476,7 +476,7 @@ class ZStackAdapter extends Adapter {
                         UnpiConstants.Type.AREQ,
                         Subsystem.ZDO,
                         cmd.name,
-                        networkAddress === ZSpec.NULL_NODE_ID ? ieeeAddress : networkAddress,
+                        responseClusterId === Zdo.ClusterId.NETWORK_ADDRESS_RESPONSE ? ieeeAddress : networkAddress,
                         undefined,
                         undefined,
                     );

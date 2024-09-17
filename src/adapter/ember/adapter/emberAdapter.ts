@@ -1946,7 +1946,7 @@ export class EmberAdapter extends Adapter {
                 if (responseClusterId) {
                     return await this.oneWaitress.startWaitingFor(
                         {
-                            target: networkAddress === ZSpec.NULL_NODE_ID ? (ieeeAddress as EUI64) : networkAddress,
+                            target: responseClusterId === Zdo.ClusterId.NETWORK_ADDRESS_RESPONSE ? (ieeeAddress as EUI64) : networkAddress,
                             apsFrame,
                             zdoResponseClusterId: responseClusterId,
                         },
