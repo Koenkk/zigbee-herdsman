@@ -1,3 +1,5 @@
+import '../../utils/patchBigIntSerialization';
+
 import {BuffaloZcl} from './buffaloZcl';
 import {BuffaloZclDataType, DataType, Direction, FrameType, ParameterCondition} from './definition/enums';
 import {FoundationCommandName} from './definition/foundation';
