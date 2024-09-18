@@ -55,6 +55,7 @@ class DeconzAdapter extends Adapter {
     private fwVersion?: CoordinatorVersion;
     private waitress: Waitress<Events.ZclPayload, WaitressMatcher>;
     private TX_OPTIONS = 0x00; // No APS ACKS
+    private joinPermitted: boolean = false;
 
     public constructor(networkOptions: NetworkOptions, serialPortOptions: SerialPortOptions, backupPath: string, adapterOptions: AdapterOptions) {
         super(networkOptions, serialPortOptions, backupPath, adapterOptions);
@@ -313,6 +314,8 @@ class DeconzAdapter extends Adapter {
                 await this.sendZdo(ZSpec.BLANK_EUI64, ZSpec.BroadcastAddress.DEFAULT, clusterId, zdoPayload, true);
             }
         }
+
+        this.joinPermitted = seconds !== 0;
     }
 
     public async getCoordinatorVersion(): Promise<CoordinatorVersion> {
@@ -1001,6 +1004,13 @@ class DeconzAdapter extends Adapter {
                     if (Zdo.Buffalo.checkStatus<Zdo.ClusterId.NETWORK_ADDRESS_RESPONSE>(resp.zdo!)) {
                         srcEUI64 = resp.zdo![1].eui64;
                     }
+                } else if (resp.clusterId === Zdo.ClusterId.END_DEVICE_ANNOUNCE) {
+                    // XXX: using same response for announce (handled by controller) or joined depending on permit join status?
+                    if (this.joinPermitted === true && Zdo.Buffalo.checkStatus<Zdo.ClusterId.END_DEVICE_ANNOUNCE>(resp.zdo!)) {
+                        const payload = resp.zdo[1];
+
+                        this.emit('deviceJoined', {networkAddress: payload.nwkAddress, ieeeAddr: payload.eui64});
+                    }
                 }
 
                 this.emit('zdoResponse', resp.clusterId, resp.zdo!);
@@ -1039,21 +1049,6 @@ class DeconzAdapter extends Adapter {
                 req.reject(new Error('waiting for response TIMEOUT'));
             }
         }
-
-        // TODO: that `joinPermitted` is weird: deviceAnnounce handled by controller from emit zdoResponse above, rest necessary??
-        // check unattended incomming messages
-        // if (resp && resp.profileId === Zdo.ZDO_PROFILE_ID && resp.clusterId === Zdo.ClusterId.END_DEVICE_ANNOUNCE) {
-        //     // device Annce
-        //     const payload: Events.DeviceJoinedPayload = {
-        //         networkAddress: resp.asduPayload.readUInt16LE(1),
-        //         ieeeAddr: resp.asduPayload.subarray(3, 11).reverse().toString('hex'),
-        //     };
-        //     if (this.joinPermitted === true) {
-        //         this.emit('deviceJoined', payload);
-        //     } else {
-        //         this.emit('deviceAnnounce', payload);
-        //     }
-        // }
 
         if (resp && resp.profileId != Zdo.ZDO_PROFILE_ID) {
             const payload: Events.ZclPayload = {
