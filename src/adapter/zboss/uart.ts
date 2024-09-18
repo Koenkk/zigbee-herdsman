@@ -271,9 +271,8 @@ export class ZBOSSUart extends EventEmitter {
         }
     }
 
-    public async sendFrame(frame: ZBOSSFrame): Promise<void> {
+    public async sendBuffer(buf: Buffer): Promise<void> {
         try {
-            const buf = writeZBOSSFrame(frame);
             logger.debug(`--> FRAME: ${buf.toString('hex')}`, NS);
             let flags = (this.sendSeq & 0x03) << 2; // sequence
             flags = flags | ZBOSS_FLAG_FIRST_FRAGMENT | ZBOSS_FLAG_LAST_FRAGMENT;
@@ -295,6 +294,10 @@ export class ZBOSSUart extends EventEmitter {
         } catch (error) {
             logger.debug(`--> error ${(error as Error).stack}`, NS);
         }
+    }
+
+    public async sendFrame(frame: ZBOSSFrame): Promise<void> {
+        return await this.sendBuffer(writeZBOSSFrame(frame));
     }
 
     private async sendDATA(data: Buffer, isACK: boolean = false): Promise<void> {

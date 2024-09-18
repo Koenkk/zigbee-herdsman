@@ -5,7 +5,10 @@ import {DataType} from '../../zspec/zcl';
 import {BuffaloZcl} from '../../zspec/zcl/buffaloZcl';
 import {BuffaloZclDataType} from '../../zspec/zcl/definition/enums';
 import {BuffaloZclOptions} from '../../zspec/zcl/definition/tstype';
-import {FRAMES, ParamsDesc} from './commands';
+import {ClusterId as ZdoClusterId} from '../../zspec/zdo';
+import {BuffaloZdo} from '../../zspec/zdo/buffaloZdo';
+import {GenericZdoResponse} from '../../zspec/zdo/definition/tstypes';
+import {FRAMES, ParamsDesc, ZBOSS_COMMAND_ID_TO_ZDO_RSP_CLUSTER_ID} from './commands';
 import {BuffaloZBOSSDataType, CommandId} from './enums';
 
 export class ZBOSSBuffaloZcl extends BuffaloZcl {
@@ -103,20 +106,40 @@ export function readZBOSSFrame(buffer: Buffer): ZBOSSFrame {
     const buf = new ZBOSSBuffaloZcl(buffer);
     const version = buf.readUInt8();
     const type = buf.readUInt8();
-    const commandId = buf.readUInt16();
+    const commandId: CommandId = buf.readUInt16();
     let tsn = 0;
+
     if ([FrameType.REQUEST, FrameType.RESPONSE].includes(type)) {
         tsn = buf.readUInt8();
     }
-    const payload = readPayload(type, commandId, buf);
 
-    return {
-        version,
-        type,
-        commandId,
-        tsn,
-        payload,
-    };
+    const zdoResponseClusterId = ZBOSS_COMMAND_ID_TO_ZDO_RSP_CLUSTER_ID[commandId];
+
+    if (zdoResponseClusterId !== undefined) {
+        const category = buf.readUInt8(); // XXX: should always be ZDO here?
+        const zdoClusterId = zdoResponseClusterId;
+        const zdo = BuffaloZdo.readResponse(false, zdoResponseClusterId, buffer.subarray(6));
+
+        return {
+            version,
+            type,
+            commandId,
+            tsn,
+            payload: {
+                category,
+                zdoClusterId,
+                zdo,
+            },
+        };
+    } else {
+        return {
+            version,
+            type,
+            commandId,
+            tsn,
+            payload: readPayload(type, commandId, buf),
+        };
+    }
 }
 
 export function writeZBOSSFrame(frame: ZBOSSFrame): Buffer {
@@ -140,7 +163,7 @@ export interface ZBOSSFrame {
     type: FrameType;
     commandId: CommandId;
     tsn: number;
-    payload: KeyValue;
+    payload: KeyValue & {zdoCluster?: ZdoClusterId; zdo?: GenericZdoResponse};
 }
 
 export function makeFrame(type: FrameType, commandId: CommandId, params: KeyValue): ZBOSSFrame {
