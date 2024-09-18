@@ -327,7 +327,7 @@ export class ZBOSSDriver extends EventEmitter {
         }
 
         const commandId = ZDO_REQ_CLUSTER_ID_TO_ZBOSS_COMMAND_ID[clusterId];
-        assert(commandId, `ZDO cluster ID '${clusterId}' not supported.`);
+        assert(commandId !== undefined, `ZDO cluster ID '${clusterId}' not supported.`);
 
         const cmdLog = `${Zdo.ClusterId[clusterId]}(cmd: ${commandId})`;
         logger.debug(() => `===> ZDO ${cmdLog}: ${payload.toString('hex')}`, NS);
