@@ -1,6 +1,6 @@
 import * as Zcl from '../../../src/zspec/zcl';
 import {BuffaloZcl} from '../../../src/zspec/zcl/buffaloZcl';
-import {uint16To8Array, uint32To8Array} from '../../utils/math';
+import {uint16To8Array, uint32To8Array, uint56To8Array} from '../../utils/math';
 
 /** Header with Global frame type */
 const GLOBAL_HEADER = new Zcl.Header(
@@ -31,6 +31,21 @@ const GLOBAL_RSP_HEADER = new Zcl.Header(
     Zcl.Foundation.readRsp.ID,
 );
 const GLOBAL_RSP_HEADER_BUFFER = Buffer.from([8, 78, Zcl.Foundation.readRsp.ID]);
+
+/** Header with Global frame type with command report */
+const GLOBAL_HEADER_REPORT = new Zcl.Header(
+    {
+        frameType: Zcl.FrameType.GLOBAL,
+        manufacturerSpecific: false,
+        direction: Zcl.Direction.CLIENT_TO_SERVER,
+        disableDefaultResponse: false,
+        reservedBits: 0,
+    },
+    undefined,
+    123,
+    Zcl.Foundation.report.ID,
+);
+const GLOBAL_HEADER_REPORT_BUFFER = Buffer.from([0, 123, Zcl.Foundation.report.ID]);
 
 /** Header with Global frame type and server to client direction including condition-based parameters */
 const GLOBAL_CONDITION_HEADER = new Zcl.Header(
@@ -115,13 +130,34 @@ const GLOBAL_FRAME = Zcl.Frame.create(
     GLOBAL_HEADER.manufacturerCode,
     GLOBAL_HEADER.transactionSequenceNumber,
     GLOBAL_HEADER.commandIdentifier,
-    Zcl.Foundation.read.ID,
+    Zcl.Clusters.genBasic.ID,
     [{attrId: 256}] /*payload*/,
     {} /*custom clusters*/,
     GLOBAL_HEADER.frameControl.reservedBits,
 );
 const GLOBAL_FRAME_BUFFER = Buffer.concat([GLOBAL_HEADER_BUFFER, Buffer.from(uint16To8Array(256))]);
 const GLOBAL_FRAME_STRING = `{"header":{"frameControl":{"reservedBits":0,"frameType":0,"direction":0,"disableDefaultResponse":false,"manufacturerSpecific":false},"transactionSequenceNumber":123,"commandIdentifier":0},"payload":[{"attrId":256}],"command":{"ID":0,"name":"read","parameters":[{"name":"attrId","type":33}],"response":1}}`;
+
+/** Frame of Global type with BigInt */
+const GLOBAL_FRAME_BIG_INT = Zcl.Frame.create(
+    GLOBAL_HEADER_REPORT.frameControl.frameType,
+    GLOBAL_HEADER_REPORT.frameControl.direction,
+    GLOBAL_HEADER_REPORT.frameControl.disableDefaultResponse,
+    GLOBAL_HEADER_REPORT.manufacturerCode,
+    GLOBAL_HEADER_REPORT.transactionSequenceNumber,
+    GLOBAL_HEADER_REPORT.commandIdentifier,
+    Zcl.Clusters.haApplianceIdentification.ID,
+    [{attrId: 0, dataType: Zcl.DataType.UINT56, attrData: 200n}] /*payload*/,
+    {} /*custom clusters*/,
+    GLOBAL_HEADER_REPORT.frameControl.reservedBits,
+);
+const GLOBAL_FRAME_BIG_INT_BUFFER = Buffer.concat([
+    GLOBAL_HEADER_REPORT_BUFFER,
+    Buffer.from(uint16To8Array(0)),
+    Buffer.from([Zcl.DataType.UINT56]),
+    Buffer.from(uint56To8Array(200n)),
+]);
+const GLOBAL_FRAME_BIG_INT_STRING = `{"header":{"frameControl":{"reservedBits":0,"frameType":0,"direction":0,"disableDefaultResponse":false,"manufacturerSpecific":false},"transactionSequenceNumber":123,"commandIdentifier":10},"payload":[{"attrId":0,"dataType":38,"attrData":"200"}],"command":{"ID":10,"name":"report","parameters":[{"name":"attrId","type":33},{"name":"dataType","type":32},{"name":"attrData","type":1000}]}}`;
 
 /** Frame of Global type and response command */
 const GLOBAL_RSP_FRAME = Zcl.Frame.create(
@@ -131,7 +167,7 @@ const GLOBAL_RSP_FRAME = Zcl.Frame.create(
     GLOBAL_RSP_HEADER.manufacturerCode,
     GLOBAL_RSP_HEADER.transactionSequenceNumber,
     GLOBAL_RSP_HEADER.commandIdentifier,
-    Zcl.Foundation.readRsp.ID,
+    Zcl.Clusters.genPowerCfg.ID,
     [{attrId: 256, status: Zcl.Status.SUCCESS, dataType: Zcl.DataType.ENUM8, attrData: 127}] /*payload*/,
     {} /*custom clusters*/,
     GLOBAL_RSP_HEADER.frameControl.reservedBits,
@@ -150,7 +186,7 @@ const GLOBAL_FRAME_NO_PAYLOAD = Zcl.Frame.create(
     GLOBAL_HEADER.manufacturerCode,
     GLOBAL_HEADER.transactionSequenceNumber,
     GLOBAL_HEADER.commandIdentifier,
-    Zcl.Foundation.read.ID,
+    Zcl.Clusters.genBasic.ID,
     [] /*payload*/,
     {} /*custom clusters*/,
     GLOBAL_HEADER.frameControl.reservedBits,
@@ -166,7 +202,7 @@ const GLOBAL_CONDITION_FRAME = Zcl.Frame.create(
     GLOBAL_CONDITION_HEADER.manufacturerCode,
     GLOBAL_CONDITION_HEADER.transactionSequenceNumber,
     GLOBAL_CONDITION_HEADER.commandIdentifier,
-    Zcl.Foundation.configReport.ID,
+    Zcl.Clusters.genOnOff.ID,
     [{direction: Zcl.Direction.SERVER_TO_CLIENT, attrId: 256, timeout: 10000}] /*payload*/,
     {} /*custom clusters*/,
     GLOBAL_CONDITION_HEADER.frameControl.reservedBits,
@@ -466,6 +502,11 @@ describe('ZCL Frame', () => {
 
     it.each([
         ['global', GLOBAL_FRAME, {string: GLOBAL_FRAME_STRING, header: GLOBAL_HEADER, written: GLOBAL_FRAME_BUFFER}],
+        [
+            'global BigInt',
+            GLOBAL_FRAME_BIG_INT,
+            {string: GLOBAL_FRAME_BIG_INT_STRING, header: GLOBAL_HEADER_REPORT, written: GLOBAL_FRAME_BIG_INT_BUFFER},
+        ],
         ['global response', GLOBAL_RSP_FRAME, {string: GLOBAL_RSP_FRAME_STRING, header: GLOBAL_RSP_HEADER, written: GLOBAL_RSP_FRAME_BUFFER}],
         [
             'global no payload',
