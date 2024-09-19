@@ -16,6 +16,7 @@ import {RawAPSDataRequestPayload} from '../driver/commandType';
 import {ADDRESS_MODE, coordinatorEndpoints, DEVICE_TYPE, ZiGateCommandCode, ZiGateMessageCode, ZPSNwkKeyState} from '../driver/constants';
 import Driver from '../driver/zigate';
 import ZiGateObject from '../driver/ziGateObject';
+import {patchZdoBuffaloBE} from './patchZdoBuffaloBE';
 
 const NS = 'zh:zigate';
 const default_bind_group = 901; // https://github.com/Koenkk/zigbee-herdsman-converters/blob/master/lib/constants.js#L3
@@ -28,8 +29,6 @@ interface WaitressMatcher {
     commandIdentifier: number;
     direction: number;
 }
-
-const channelsToMask = (channels: number[]): number => channels.map((x) => 2 ** x).reduce((acc, x) => acc + x, 0);
 
 class ZiGateAdapter extends Adapter {
     private driver: Driver;
@@ -44,43 +43,9 @@ class ZiGateAdapter extends Adapter {
         backupPath: string,
         adapterOptions: TsType.AdapterOptions,
     ) {
+        patchZdoBuffaloBE();
         super(networkOptions, serialPortOptions, backupPath, adapterOptions);
         this.hasZdoMessageOverhead = false; // false for requests, true for responses
-
-        // patch Zdo.Buffalo to use BE variants
-        Zdo.Buffalo.prototype.writeUInt16 = function (value: number): void {
-            // @ts-expect-error workaround
-            this.buffer.writeUInt16BE(value, this.position);
-            // @ts-expect-error workaround
-            this.position += 2;
-        };
-        Zdo.Buffalo.prototype.readUInt16 = function (): number {
-            // @ts-expect-error workaround
-            const value = this.buffer.readUInt16BE(this.position);
-            // @ts-expect-error workaround
-            this.position += 2;
-            return value;
-        };
-        Zdo.Buffalo.prototype.readUInt32 = function (): number {
-            // @ts-expect-error workaround
-            const value = this.buffer.readUInt32BE(this.position);
-            // @ts-expect-error workaround
-            this.position += 4;
-            return value;
-        };
-        Zdo.Buffalo.prototype.writeUInt32 = function (value: number): void {
-            // @ts-expect-error workaround
-            this.buffer.writeUInt32BE(value, this.position);
-            // @ts-expect-error workaround
-            this.position += 4;
-        };
-        Zdo.Buffalo.prototype.writeIeeeAddr = function (value: string /*TODO: EUI64*/): void {
-            this.writeUInt32(parseInt(value.slice(2, 10), 16));
-            this.writeUInt32(parseInt(value.slice(10), 16));
-        };
-        Zdo.Buffalo.prototype.readIeeeAddr = function (): EUI64 {
-            return `0x${this.readBuffer(8).toString('hex')}`;
-        };
 
         this.joinPermitted = false;
         this.closing = false;
@@ -121,9 +86,9 @@ class ZiGateAdapter extends Adapter {
 
             await this.driver.sendCommand(ZiGateCommandCode.AddGroup, {
                 addressMode: ADDRESS_MODE.short,
-                shortAddress: 0x0000,
-                sourceEndpoint: 0x01,
-                destinationEndpoint: 0x01,
+                shortAddress: ZSpec.COORDINATOR_ADDRESS,
+                sourceEndpoint: ZSpec.HA_ENDPOINT,
+                destinationEndpoint: ZSpec.HA_ENDPOINT,
                 groupAddress: default_bind_group,
             });
         } catch (error) {
@@ -144,7 +109,7 @@ class ZiGateAdapter extends Adapter {
         // @TODO deal hardcoded endpoints, made by analogy with deconz
         // polling the coordinator on some firmware went into a memory leak, so we don't ask this info
         const response: TsType.Coordinator = {
-            networkAddress: 0,
+            networkAddress: ZSpec.COORDINATOR_ADDRESS,
             manufacturerID: 0,
             ieeeAddr: networkResponse.payload.extendedAddress,
             endpoints: coordinatorEndpoints.slice(), // copy
@@ -609,9 +574,9 @@ class ZiGateAdapter extends Adapter {
         const payload: RawAPSDataRequestPayload = {
             addressMode: ADDRESS_MODE.short, //nwk
             targetShortAddress: networkAddress,
-            sourceEndpoint: sourceEndpoint || 0x01,
+            sourceEndpoint: sourceEndpoint || ZSpec.HA_ENDPOINT,
             destinationEndpoint: endpoint,
-            profileID: 0x0104,
+            profileID: ZSpec.HA_PROFILE_ID,
             clusterID: zclFrame.cluster.ID,
             securityMode: 0x02,
             radius: 30,
@@ -710,7 +675,7 @@ class ZiGateAdapter extends Adapter {
                 targetShortAddress: destination,
                 sourceEndpoint: sourceEndpoint,
                 destinationEndpoint: endpoint,
-                profileID: /*sourceEndpoint === 242 ? 0xa1e0 :*/ 0x0104,
+                profileID: /*sourceEndpoint === ZSpec.GP_ENDPOINT ? ZSpec.GP_PROFILE_ID :*/ ZSpec.HA_PROFILE_ID,
                 clusterID: zclFrame.cluster.ID,
                 securityMode: 0x02,
                 radius: 30,
@@ -730,9 +695,9 @@ class ZiGateAdapter extends Adapter {
             const payload: RawAPSDataRequestPayload = {
                 addressMode: ADDRESS_MODE.group, //nwk
                 targetShortAddress: groupID,
-                sourceEndpoint: sourceEndpoint || 0x01,
+                sourceEndpoint: sourceEndpoint || ZSpec.HA_ENDPOINT,
                 destinationEndpoint: 0xff,
-                profileID: 0x0104,
+                profileID: ZSpec.HA_PROFILE_ID,
                 clusterID: zclFrame.cluster.ID,
                 securityMode: 0x02,
                 radius: 30,
@@ -750,7 +715,9 @@ class ZiGateAdapter extends Adapter {
      */
     private async initNetwork(): Promise<void> {
         logger.debug(`Set channel mask ${this.networkOptions.channelList} key`, NS);
-        await this.driver.sendCommand(ZiGateCommandCode.SetChannelMask, {channelMask: channelsToMask(this.networkOptions.channelList)});
+        await this.driver.sendCommand(ZiGateCommandCode.SetChannelMask, {
+            channelMask: ZSpec.Utils.channelsToUInt32Mask(this.networkOptions.channelList),
+        });
 
         logger.debug(`Set security key`, NS);
         await this.driver.sendCommand(ZiGateCommandCode.SetSecurityStateKey, {
