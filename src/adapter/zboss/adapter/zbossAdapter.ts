@@ -237,7 +237,6 @@ export class ZBOSSAdapter extends Adapter {
 
             if (networkAddress !== undefined) {
                 // TODO: works on networkAddress === 0 for 'coordinator-only'?
-                await this.driver.execCommand(CommandId.ZDO_PERMIT_JOINING_REQ, {nwk: networkAddress, duration: seconds, tcSignificance: 1});
                 // `authentication`: TC significance always 1 (zb specs)
                 const zdoPayload = Zdo.Buffalo.buildRequest(this.hasZdoMessageOverhead, clusterId, seconds, 1, []);
 
