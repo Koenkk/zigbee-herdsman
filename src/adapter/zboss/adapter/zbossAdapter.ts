@@ -231,15 +231,14 @@ export class ZBOSSAdapter extends Adapter {
         throw new Error(`Install code is not supported for 'zboss' yet`);
     }
 
-    public async permitJoin(seconds: number, networkAddress: number): Promise<void> {
+    public async permitJoin(seconds: number, networkAddress?: number): Promise<void> {
         if (this.driver.isInitialized()) {
             const clusterId = Zdo.ClusterId.PERMIT_JOINING_REQUEST;
+            // `authentication`: TC significance always 1 (zb specs)
+            const zdoPayload = Zdo.Buffalo.buildRequest(this.hasZdoMessageOverhead, clusterId, seconds, 1, []);
 
-            if (networkAddress !== undefined) {
-                // TODO: works on networkAddress === 0 for 'coordinator-only'?
-                // `authentication`: TC significance always 1 (zb specs)
-                const zdoPayload = Zdo.Buffalo.buildRequest(this.hasZdoMessageOverhead, clusterId, seconds, 1, []);
-
+            if (networkAddress) {
+                // `device-only`
                 const result = await this.sendZdo(ZSpec.BLANK_EUI64, networkAddress, clusterId, zdoPayload, false);
 
                 /* istanbul ignore next */
@@ -248,11 +247,19 @@ export class ZBOSSAdapter extends Adapter {
                     throw new Zdo.StatusError(result[0]);
                 }
             } else {
-                // broadcast permit joining ZDO
-                // `authentication`: TC significance always 1 (zb specs)
-                const zdoPayload = Zdo.Buffalo.buildRequest(this.hasZdoMessageOverhead, clusterId, seconds, 1, []);
+                // `coordinator-only` (for `all` too)
+                const result = await this.sendZdo(ZSpec.BLANK_EUI64, ZSpec.COORDINATOR_ADDRESS, clusterId, zdoPayload, false);
 
-                await this.sendZdo(ZSpec.BLANK_EUI64, ZSpec.BroadcastAddress.DEFAULT, clusterId, zdoPayload, true);
+                /* istanbul ignore next */
+                if (!Zdo.Buffalo.checkStatus(result)) {
+                    // TODO: will disappear once moved upstream
+                    throw new Zdo.StatusError(result[0]);
+                }
+
+                if (networkAddress === undefined) {
+                    // `all`: broadcast
+                    await this.sendZdo(ZSpec.BLANK_EUI64, ZSpec.BroadcastAddress.DEFAULT, clusterId, zdoPayload, true);
+                }
             }
         }
     }
