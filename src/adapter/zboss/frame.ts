@@ -102,6 +102,36 @@ function getFrameDesc(type: FrameType, key: CommandId): ParamsDesc[] {
     }
 }
 
+function fixNonStandardZdoRspPayload(clusterId: ZdoClusterId, buffer: Buffer): Buffer {
+    switch (clusterId) {
+        case ZdoClusterId.NODE_DESCRIPTOR_RESPONSE:
+        case ZdoClusterId.POWER_DESCRIPTOR_RESPONSE:
+        case ZdoClusterId.ACTIVE_ENDPOINTS_RESPONSE:
+        case ZdoClusterId.MATCH_DESCRIPTORS_RESPONSE: {
+            // flip nwkAddress from end to start
+            return Buffer.concat([buffer.subarray(0, 1), buffer.subarray(-2), buffer.subarray(1, -2)]);
+        }
+
+        case ZdoClusterId.SIMPLE_DESCRIPTOR_RESPONSE: {
+            // flip nwkAddress from end to start
+            // add length after nwkAddress
+            // move outClusterCount before inClusterList
+            const inClusterListSize = buffer[7] * 2; // uint16
+            return Buffer.concat([
+                buffer.subarray(0, 1), // status
+                buffer.subarray(-2), // nwkAddress
+                Buffer.from([buffer.length - 3 /* status + nwkAddress */]),
+                buffer.subarray(1, 8), // endpoint>inClusterCount
+                buffer.subarray(9, 9 + inClusterListSize), // inClusterList
+                buffer.subarray(8, 9), // outClusterCount
+                buffer.subarray(9 + inClusterListSize, -2), // outClusterList
+            ]);
+        }
+    }
+
+    return buffer;
+}
+
 export function readZBOSSFrame(buffer: Buffer): ZBOSSFrame {
     const buf = new ZBOSSBuffaloZcl(buffer);
     const version = buf.readUInt8();
@@ -118,7 +148,8 @@ export function readZBOSSFrame(buffer: Buffer): ZBOSSFrame {
     if (zdoResponseClusterId !== undefined) {
         const category = buf.readUInt8(); // XXX: should always be ZDO here?
         const zdoClusterId = zdoResponseClusterId;
-        const zdo = BuffaloZdo.readResponse(false, zdoResponseClusterId, buffer.subarray(6));
+        const zdoPayload = fixNonStandardZdoRspPayload(zdoClusterId, buffer.subarray(6));
+        const zdo = BuffaloZdo.readResponse(false, zdoResponseClusterId, zdoPayload);
 
         return {
             version,
