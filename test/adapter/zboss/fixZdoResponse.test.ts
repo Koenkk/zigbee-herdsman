@@ -1,13 +1,14 @@
-import {readZBOSSFrame, ZBOSSFrame} from '../../../src/adapter/zboss/frame';
+import {CommandId} from '../../../src/adapter/zboss/enums';
+import {FrameType, readZBOSSFrame, ZBOSSFrame} from '../../../src/adapter/zboss/frame';
 import * as Zdo from '../../../src/zspec/zdo';
 import * as ZdoTypes from '../../../src/zspec/zdo/definition/tstypes';
 
 describe('ZBOSS fix non-standard ZDO response payloads', () => {
-    it('No fix needed', async () => {
+    it('No fix needed FrameType.RESPONSE', async () => {
         expect(readZBOSSFrame(Buffer.from('0001010211000088776655443322113412', 'hex'))).toStrictEqual({
             version: 0,
-            type: 1,
-            commandId: 513,
+            type: FrameType.RESPONSE,
+            commandId: CommandId.ZDO_NWK_ADDR_REQ,
             tsn: 17,
             payload: {
                 category: 0,
@@ -25,11 +26,32 @@ describe('ZBOSS fix non-standard ZDO response payloads', () => {
         } as ZBOSSFrame);
     });
 
+    it('No fix needed FrameType.INDICATION', async () => {
+        expect(readZBOSSFrame(Buffer.from('00020c020cda603602602bd5b3708e', 'hex'))).toStrictEqual({
+            version: 0,
+            type: FrameType.INDICATION,
+            commandId: CommandId.ZDO_DEV_ANNCE_IND,
+            tsn: 0,
+            payload: {
+                category: undefined,
+                zdoClusterId: Zdo.ClusterId.END_DEVICE_ANNOUNCE,
+                zdo: [
+                    Zdo.Status.SUCCESS,
+                    {
+                        nwkAddress: 0xda0c,
+                        eui64: '0x70b3d52b60023660',
+                        capabilities: Zdo.Utils.getMacCapFlags(0x8e),
+                    } as ZdoTypes.EndDeviceAnnounce,
+                ],
+            },
+        } as ZBOSSFrame);
+    });
+
     it('NODE_DESCRIPTOR_RESPONSE', async () => {
         expect(readZBOSSFrame(Buffer.from('000104021100000000000000000000432c0000003412', 'hex'))).toStrictEqual({
             version: 0,
-            type: 1,
-            commandId: 516,
+            type: FrameType.RESPONSE,
+            commandId: CommandId.ZDO_NODE_DESC_REQ,
             tsn: 17,
             payload: {
                 category: 0,
@@ -68,8 +90,8 @@ describe('ZBOSS fix non-standard ZDO response payloads', () => {
     it('POWER_DESCRIPTOR_RESPONSE', async () => {
         expect(readZBOSSFrame(Buffer.from('0001030211000001023412', 'hex'))).toStrictEqual({
             version: 0,
-            type: 1,
-            commandId: 515,
+            type: FrameType.RESPONSE,
+            commandId: CommandId.ZDO_POWER_DESC_REQ,
             tsn: 17,
             payload: {
                 category: 0,
@@ -91,8 +113,8 @@ describe('ZBOSS fix non-standard ZDO response payloads', () => {
     it('MATCH_DESCRIPTORS_RESPONSE', async () => {
         expect(readZBOSSFrame(Buffer.from('0001070211000002f2013412', 'hex'))).toStrictEqual({
             version: 0,
-            type: 1,
-            commandId: 519,
+            type: FrameType.RESPONSE,
+            commandId: CommandId.ZDO_MATCH_DESC_REQ,
             tsn: 17,
             payload: {
                 category: 0,
@@ -111,8 +133,8 @@ describe('ZBOSS fix non-standard ZDO response payloads', () => {
     it('ACTIVE_ENDPOINTS_RESPONSE', async () => {
         expect(readZBOSSFrame(Buffer.from('0001060211000002f2013412', 'hex'))).toStrictEqual({
             version: 0,
-            type: 1,
-            commandId: 518,
+            type: FrameType.RESPONSE,
+            commandId: CommandId.ZDO_ACTIVE_EP_REQ,
             tsn: 17,
             payload: {
                 category: 0,
@@ -131,8 +153,8 @@ describe('ZBOSS fix non-standard ZDO response payloads', () => {
     it('SIMPLE_DESCRIPTOR_RESPONSE', async () => {
         expect(readZBOSSFrame(Buffer.from('0001050211000001040100000301022c2ffefebcbc3412', 'hex'))).toStrictEqual({
             version: 0,
-            type: 1,
-            commandId: 517,
+            type: FrameType.RESPONSE,
+            commandId: CommandId.ZDO_SIMPLE_DESC_REQ,
             tsn: 17,
             payload: {
                 category: 0,

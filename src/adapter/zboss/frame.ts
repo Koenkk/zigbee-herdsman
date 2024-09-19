@@ -135,20 +135,17 @@ function fixNonStandardZdoRspPayload(clusterId: ZdoClusterId, buffer: Buffer): B
 export function readZBOSSFrame(buffer: Buffer): ZBOSSFrame {
     const buf = new ZBOSSBuffaloZcl(buffer);
     const version = buf.readUInt8();
-    const type = buf.readUInt8();
+    const type: FrameType = buf.readUInt8();
     const commandId: CommandId = buf.readUInt16();
-    let tsn = 0;
+    const tsn = type === FrameType.REQUEST || type === FrameType.RESPONSE ? buf.readUInt8() : 0;
 
-    if ([FrameType.REQUEST, FrameType.RESPONSE].includes(type)) {
-        tsn = buf.readUInt8();
-    }
-
-    const zdoResponseClusterId = ZBOSS_COMMAND_ID_TO_ZDO_RSP_CLUSTER_ID[commandId];
+    const zdoResponseClusterId =
+        type === FrameType.RESPONSE || type === FrameType.INDICATION ? ZBOSS_COMMAND_ID_TO_ZDO_RSP_CLUSTER_ID[commandId] : undefined;
 
     if (zdoResponseClusterId !== undefined) {
-        const category = buf.readUInt8(); // XXX: should always be ZDO here?
-        const zdoClusterId = zdoResponseClusterId;
-        const zdoPayload = fixNonStandardZdoRspPayload(zdoClusterId, buffer.subarray(6));
+        // FrameType.INDICATION has no tsn (above), no category
+        const category = type === FrameType.RESPONSE ? buf.readUInt8() : undefined;
+        const zdoPayload = fixNonStandardZdoRspPayload(zdoResponseClusterId, buffer.subarray(type === FrameType.RESPONSE ? 6 : 4));
         const zdo = BuffaloZdo.readResponse(false, zdoResponseClusterId, zdoPayload);
 
         return {
@@ -158,7 +155,7 @@ export function readZBOSSFrame(buffer: Buffer): ZBOSSFrame {
             tsn,
             payload: {
                 category,
-                zdoClusterId,
+                zdoClusterId: zdoResponseClusterId,
                 zdo,
             },
         };
