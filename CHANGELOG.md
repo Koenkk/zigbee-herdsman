@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.1](https://github.com/Koenkk/zigbee-herdsman/compare/v1.0.0...v1.0.1) (2024-09-19)
+
+
+### Bug Fixes
+
+* **ignore:** Fix crash due to BigInt serialization ([#1191](https://github.com/Koenkk/zigbee-herdsman/issues/1191)) ([d760eb3](https://github.com/Koenkk/zigbee-herdsman/commit/d760eb36cdaa309898f1c504fbe291e7d9a039aa))
+
 ## [1.0.0](https://github.com/Koenkk/zigbee-herdsman/compare/v0.57.4...v1.0.0) (2024-09-17)
 
 
