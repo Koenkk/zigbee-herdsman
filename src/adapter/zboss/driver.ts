@@ -352,13 +352,7 @@ export class ZBOSSDriver extends EventEmitter {
                 await this.port.sendBuffer(buf);
 
                 if (waiter) {
-                    const response = await waiter.start().promise;
-
-                    if (response?.payload?.status !== StatusCodeGeneric.OK) {
-                        throw new Error(`=x=> ZDO error ${cmdLog}: ${JSON.stringify(response)}`);
-                    }
-
-                    return response;
+                    return await waiter.start().promise;
                 }
             } catch (error) {
                 if (waiter) {
