@@ -16,7 +16,7 @@ import SerialPortUtils from '../../serialPortUtils';
 import SocketPortUtils from '../../socketPortUtils';
 import {Coordinator} from '../../tstype';
 import {ZBOSSDriver} from '../driver';
-import {CommandId, DeviceUpdateStatus, DeviceUpdateTCAction} from '../enums';
+import {CommandId, DeviceUpdateStatus} from '../enums';
 import {FrameType, ZBOSSFrame} from '../frame';
 
 const NS = 'zh:zboss';
@@ -65,7 +65,7 @@ export class ZBOSSAdapter extends Adapter {
             switch (frame.commandId) {
                 case CommandId.ZDO_DEV_UPDATE_IND: {
                     logger.debug(
-                        `Device ${frame.payload.ieee}:${frame.payload.nwk} ${DeviceUpdateStatus[frame.payload.status]} ${DeviceUpdateTCAction[frame.payload.tcAction]} via ${frame.payload.parentNwk}.`,
+                        `Device ${frame.payload.ieee}:${frame.payload.nwk} ${DeviceUpdateStatus[frame.payload.status]}.`,
                         NS,
                     );
 
@@ -76,17 +76,10 @@ export class ZBOSSAdapter extends Adapter {
                         });
                     } else {
                         // SECURE_REJOIN, UNSECURE_JOIN, TC_REJOIN
-                        if (frame.payload.tcAction === DeviceUpdateTCAction.AUTHORIZE) {
-                            this.emit('deviceJoined', {
-                                networkAddress: frame.payload.nwk,
-                                ieeeAddr: frame.payload.ieee,
-                            });
-                        } else {
-                            logger.warning(
-                                `Device ${frame.payload.ieee}:${frame.payload.nwk} was denied joining via ${frame.payload.parentNwk} (${DeviceUpdateTCAction[frame.payload.tcAction]}).`,
-                                NS,
-                            );
-                        }
+                        this.emit('deviceJoined', {
+                            networkAddress: frame.payload.nwk,
+                            ieeeAddr: frame.payload.ieee,
+                        });
                     }
                     break;
                 }

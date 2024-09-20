@@ -8,7 +8,6 @@ import {
     DeviceAuthorizedType,
     DeviceType,
     DeviceUpdateStatus,
-    DeviceUpdateTCAction,
     PolicyType,
     ResetOptions,
     ResetSource,
@@ -670,8 +669,9 @@ export const FRAMES: {[key in CommandId]?: ZBOSSFrameDesc} = {
             {name: 'ieee', type: DataType.IEEE_ADDR},
             {name: 'nwk', type: DataType.UINT16},
             {name: 'status', type: DataType.UINT8, typed: DeviceUpdateStatus},
-            {name: 'tcAction', type: DataType.UINT8, typed: DeviceUpdateTCAction},
-            {name: 'parentNwk', type: DataType.UINT16},
+            // not in dsr-corporation spec
+            // {name: 'tcAction', type: DataType.UINT8, typed: DeviceUpdateTCAction},
+            // {name: 'parentNwk', type: DataType.UINT16},
         ],
     },
     // Sets manufacturer code field in the node descriptor
