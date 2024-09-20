@@ -11,12 +11,12 @@ import {EUI64} from '../../../zspec/tstypes';
 import * as Zcl from '../../../zspec/zcl';
 import * as Zdo from '../../../zspec/zdo';
 import * as ZdoTypes from '../../../zspec/zdo/definition/tstypes';
-import {DeviceLeavePayload, ZclPayload} from '../../events';
+import {ZclPayload} from '../../events';
 import SerialPortUtils from '../../serialPortUtils';
 import SocketPortUtils from '../../socketPortUtils';
 import {Coordinator} from '../../tstype';
 import {ZBOSSDriver} from '../driver';
-import {CommandId, DeviceUpdateStatus} from '../enums';
+import {CommandId, DeviceUpdateStatus, DeviceUpdateTCAction} from '../enums';
 import {FrameType, ZBOSSFrame} from '../frame';
 
 const NS = 'zh:zboss';
@@ -58,43 +58,64 @@ export class ZBOSSAdapter extends Adapter {
 
     private async processMessage(frame: ZBOSSFrame): Promise<void> {
         logger.debug(() => `processMessage: ${JSON.stringify(frame)}`, NS);
+
         if (frame.payload.zdoClusterId !== undefined) {
             this.emit('zdoResponse', frame.payload.zdoClusterId, frame.payload.zdo!);
         } else if (frame.type == FrameType.INDICATION) {
-            if (frame.commandId == CommandId.ZDO_DEV_UPDATE_IND) {
-                if (frame.payload.status == DeviceUpdateStatus.LEFT) {
-                    logger.debug(`Device left network request received: ${frame.payload.nwk} ${frame.payload.ieee}`, NS);
-                    const payload: DeviceLeavePayload = {
+            switch (frame.commandId) {
+                case CommandId.ZDO_DEV_UPDATE_IND: {
+                    logger.debug(
+                        `Device ${frame.payload.ieee}:${frame.payload.nwk} ${DeviceUpdateStatus[frame.payload.status]} ${DeviceUpdateTCAction[frame.payload.tcAction]} via ${frame.payload.parentNwk}.`,
+                        NS,
+                    );
+
+                    if (frame.payload.status === DeviceUpdateStatus.LEFT) {
+                        this.emit('deviceLeave', {
+                            networkAddress: frame.payload.nwk,
+                            ieeeAddr: frame.payload.ieee,
+                        });
+                    } else {
+                        // SECURE_REJOIN, UNSECURE_JOIN, TC_REJOIN
+                        if (frame.payload.tcAction === DeviceUpdateTCAction.AUTHORIZE) {
+                            this.emit('deviceJoined', {
+                                networkAddress: frame.payload.nwk,
+                                ieeeAddr: frame.payload.ieee,
+                            });
+                        } else {
+                            logger.warning(
+                                `Device ${frame.payload.ieee}:${frame.payload.nwk} was denied joining via ${frame.payload.parentNwk} (${DeviceUpdateTCAction[frame.payload.tcAction]}).`,
+                                NS,
+                            );
+                        }
+                    }
+                    break;
+                }
+
+                case CommandId.NWK_LEAVE_IND: {
+                    this.emit('deviceLeave', {
                         networkAddress: frame.payload.nwk,
                         ieeeAddr: frame.payload.ieee,
+                    });
+                    break;
+                }
+
+                case CommandId.APSDE_DATA_IND: {
+                    const payload: ZclPayload = {
+                        clusterID: frame.payload.clusterID,
+                        header: Zcl.Header.fromBuffer(frame.payload.data),
+                        data: frame.payload.data,
+                        address: frame.payload.srcNwk,
+                        endpoint: frame.payload.srcEndpoint,
+                        linkquality: frame.payload.lqi,
+                        groupID: frame.payload.grpNwk,
+                        wasBroadcast: false,
+                        destinationEndpoint: frame.payload.dstEndpoint,
                     };
 
-                    this.emit('deviceLeave', payload);
+                    this.waitress.resolve(payload);
+                    this.emit('zclPayload', payload);
+                    break;
                 }
-            } else if (frame.commandId == CommandId.NWK_LEAVE_IND) {
-                logger.debug(`Device left network request received from ${frame.payload.ieee}`, NS);
-                const payload: DeviceLeavePayload = {
-                    networkAddress: frame.payload.nwk,
-                    ieeeAddr: frame.payload.ieee,
-                };
-
-                this.emit('deviceLeave', payload);
-            } else if (frame.commandId == CommandId.APSDE_DATA_IND) {
-                logger.debug(`ZCL frame received from ${frame.payload.srcNwk} ${frame.payload.srcEndpoint}`, NS);
-                const payload: ZclPayload = {
-                    clusterID: frame.payload.clusterID,
-                    header: Zcl.Header.fromBuffer(frame.payload.data),
-                    data: frame.payload.data,
-                    address: frame.payload.srcNwk,
-                    endpoint: frame.payload.srcEndpoint,
-                    linkquality: frame.payload.lqi,
-                    groupID: frame.payload.grpNwk,
-                    wasBroadcast: false,
-                    destinationEndpoint: frame.payload.dstEndpoint,
-                };
-
-                this.waitress.resolve(payload);
-                this.emit('zclPayload', payload);
             }
         }
     }

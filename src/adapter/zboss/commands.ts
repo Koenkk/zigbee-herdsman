@@ -5,8 +5,10 @@ import {ClusterId as ZdoClusterId} from '../../zspec/zdo';
 import {
     BuffaloZBOSSDataType,
     CommandId,
+    DeviceAuthorizedType,
     DeviceType,
     DeviceUpdateStatus,
+    DeviceUpdateTCAction,
     PolicyType,
     ResetOptions,
     ResetSource,
@@ -652,8 +654,12 @@ export const FRAMES: {[key in CommandId]?: ZBOSSFrameDesc} = {
         indication: [
             {name: 'ieee', type: DataType.IEEE_ADDR},
             {name: 'nwk', type: DataType.UINT16},
-            {name: 'authType', type: DataType.UINT8},
-            {name: 'authStatus', type: DataType.UINT8},
+            {name: 'authType', type: DataType.UINT8, typed: DeviceAuthorizedType},
+            {
+                name: 'authStatus',
+                type: DataType.UINT8,
+                /* typed: DeviceAuthorizedLegacyStatus | DeviceAuthorizedR21TCLKStatus | DeviceAuthorizedSECBKEStatus */
+            },
         ],
     },
     // Indicates some device joined the network
@@ -664,6 +670,8 @@ export const FRAMES: {[key in CommandId]?: ZBOSSFrameDesc} = {
             {name: 'ieee', type: DataType.IEEE_ADDR},
             {name: 'nwk', type: DataType.UINT16},
             {name: 'status', type: DataType.UINT8, typed: DeviceUpdateStatus},
+            {name: 'tcAction', type: DataType.UINT8, typed: DeviceUpdateTCAction},
+            {name: 'parentNwk', type: DataType.UINT16},
         ],
     },
     // Sets manufacturer code field in the node descriptor
