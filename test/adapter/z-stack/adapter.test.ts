@@ -3873,13 +3873,13 @@ describe('zstack-adapter', () => {
     it('Concentrator Callback Indication', async () => {
         basicMocks();
         await adapter.start();
-        let networkAddress;
         const object = mockZpiObject(Type.AREQ, Subsystem.ZDO, 'concentratorIndCb', {srcaddr: 124, extaddr: '0x123'});
-        adapter.on('networkAddress', (p) => {
-            networkAddress = p;
+        adapter.on('zdoResponse', (clusterId, payload) => {
+            expect(clusterId).toStrictEqual(Zdo.ClusterId.NETWORK_ADDRESS_RESPONSE);
+            expect(payload[0]).toStrictEqual(Zdo.Status.SUCCESS);
+            expect(payload[1]).toStrictEqual({eui64: '0x123', nwkAddress: 124, assocDevList: [], startIndex: 0});
         });
         znpReceived(object);
-        expect(networkAddress).toStrictEqual({ieeeAddr: '0x123', networkAddress: 124});
     });
 
     it('Device leave', async () => {

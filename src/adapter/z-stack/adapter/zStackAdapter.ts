@@ -1061,12 +1061,15 @@ class ZStackAdapter extends Adapter {
                 // mappings.
                 // https://e2e.ti.com/cfs-file/__key/communityserver-discussions-components-files/158/4403.zstacktask.c
                 // https://github.com/Koenkk/zigbee-herdsman/issues/74
-                const payload: Events.NetworkAddressPayload = {
-                    networkAddress: object.payload.srcaddr,
-                    ieeeAddr: object.payload.extaddr,
-                };
-
-                this.emit('networkAddress', payload);
+                this.emit('zdoResponse', Zdo.ClusterId.NETWORK_ADDRESS_RESPONSE, [
+                    Zdo.Status.SUCCESS,
+                    {
+                        eui64: object.payload.extaddr,
+                        nwkAddress: object.payload.srcaddr,
+                        startIndex: 0,
+                        assocDevList: [],
+                    } as ZdoTypes.NetworkAddressResponse,
+                ]);
             } else {
                 /* istanbul ignore else */
                 if (object.command.name === 'leaveInd') {
