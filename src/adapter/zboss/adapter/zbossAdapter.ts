@@ -64,10 +64,7 @@ export class ZBOSSAdapter extends Adapter {
         } else if (frame.type == FrameType.INDICATION) {
             switch (frame.commandId) {
                 case CommandId.ZDO_DEV_UPDATE_IND: {
-                    logger.debug(
-                        `Device ${frame.payload.ieee}:${frame.payload.nwk} ${DeviceUpdateStatus[frame.payload.status]}.`,
-                        NS,
-                    );
+                    logger.debug(`Device ${frame.payload.ieee}:${frame.payload.nwk} ${DeviceUpdateStatus[frame.payload.status]}.`, NS);
 
                     if (frame.payload.status === DeviceUpdateStatus.LEFT) {
                         this.emit('deviceLeave', {
