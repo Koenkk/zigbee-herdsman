@@ -64,16 +64,7 @@ const mockAdapterReset = jest.fn();
 const mockAdapterStop = jest.fn();
 const mockAdapterStart = jest.fn().mockReturnValue('resumed');
 const mockAdapterSetTransmitPower = jest.fn();
-const mockAdapterGetCoordinator = jest.fn().mockReturnValue({
-    ieeeAddr: '0x0000012300000000',
-    networkAddress: ZSpec.COORDINATOR_ADDRESS,
-    manufacturerID: 100,
-    endpoints: [
-        {ID: 1, profileID: 2, deviceID: 3, inputClusters: [10], outputClusters: [11]},
-        {ID: 2, profileID: 3, deviceID: 5, inputClusters: [1], outputClusters: [0]},
-    ],
-});
-
+const mockAdapterGetCoordinatorIEEE = jest.fn().mockReturnValue('0x0000012300000000');
 const mockAdapterGetNetworkParameters = jest.fn().mockReturnValue({panID: 1, extendedPanID: 3, channel: 15});
 const mocksendZclFrameToGroup = jest.fn();
 const mocksendZclFrameToAll = jest.fn();
@@ -391,11 +382,12 @@ let dummyBackup;
 jest.mock('../src/adapter/z-stack/adapter/zStackAdapter', () => {
     return jest.fn().mockImplementation(() => {
         return {
-            greenPowerGroup: 0x0b84,
+            hasZdoMessageOverhead: false,
+            manufacturerID: 0x0007,
             on: (event, handler) => (mockAdapterEvents[event] = handler),
             removeAllListeners: (event) => delete mockAdapterEvents[event],
             start: mockAdapterStart,
-            getCoordinator: mockAdapterGetCoordinator,
+            getCoordinatorIEEE: mockAdapterGetCoordinatorIEEE,
             reset: mockAdapterReset,
             supportsBackup: mockAdapterSupportsBackup,
             backup: () => {
@@ -740,7 +732,7 @@ describe('Controller', () => {
             _interviewCompleted: true,
             _interviewing: false,
             _skipDefaultResponse: false,
-            _manufacturerID: 100,
+            _manufacturerID: 0x0007,
             _networkAddress: 0,
             _type: 'Coordinator',
             meta: {},
@@ -753,15 +745,7 @@ describe('Controller', () => {
         await controller.start();
         expect(controller.getDevicesByType('Coordinator')[0].ieeeAddr).toStrictEqual('0x0000012300000000');
         await controller.stop();
-        mockAdapterGetCoordinator.mockReturnValueOnce({
-            ieeeAddr: '0x123444',
-            networkAddress: ZSpec.COORDINATOR_ADDRESS,
-            manufacturerID: 100,
-            endpoints: [
-                {ID: 1, profileID: 2, deviceID: 3, inputClusters: [10], outputClusters: [11]},
-                {ID: 2, profileID: 3, deviceID: 5, inputClusters: [1], outputClusters: [0]},
-            ],
-        });
+        mockAdapterGetCoordinatorIEEE.mockReturnValueOnce('0x123444');
         await controller.start();
         expect(controller.getDevicesByType('Coordinator')[0].ieeeAddr).toStrictEqual('0x123444');
     });
@@ -1615,6 +1599,8 @@ describe('Controller', () => {
     it('Change channel on start', async () => {
         mockAdapterStart.mockReturnValueOnce('resumed');
         mockAdapterGetNetworkParameters.mockReturnValueOnce({panID: 1, extendedPanID: 3, channel: 25});
+        // @ts-expect-error private
+        const changeChannelSpy = jest.spyOn(controller, 'changeChannel');
         await controller.start();
         expect(mockAdapterGetNetworkParameters).toHaveBeenCalledTimes(1);
         const zdoPayload = Zdo.Buffalo.buildRequest(false, Zdo.ClusterId.NWK_UPDATE_REQUEST, [15], 0xfe, undefined, 0, undefined);
@@ -1626,13 +1612,16 @@ describe('Controller', () => {
             true,
         );
         expect(await controller.getNetworkParameters()).toEqual({panID: 1, channel: 15, extendedPanID: 3});
+        expect(changeChannelSpy).toHaveBeenCalledTimes(1);
     });
 
     it('Does not change channel on start if not changed', async () => {
         mockAdapterStart.mockReturnValueOnce('resumed');
+        // @ts-expect-error private
+        const changeChannelSpy = jest.spyOn(controller, 'changeChannel');
         await controller.start();
         expect(mockAdapterGetNetworkParameters).toHaveBeenCalledTimes(1);
-        expect(mockAdapterSendZdo).toHaveBeenCalledTimes(0);
+        expect(changeChannelSpy).toHaveBeenCalledTimes(0);
     });
 
     it('Set transmit power', async () => {
@@ -1784,7 +1773,7 @@ describe('Controller', () => {
         expect(deepClone(controller.getDeviceByNetworkAddress(129))).toStrictEqual(device);
         expect(events.deviceInterview.length).toBe(2);
         expect(databaseContents()).toStrictEqual(
-            `{"id":1,"type":"Coordinator","ieeeAddr":"0x0000012300000000","nwkAddr":0,"manufId":100,"epList":[1,2],"endpoints":{"1":{"profId":2,"epId":1,"devId":3,"inClusterList":[10],"outClusterList":[11],"clusters":{},"binds":[],"configuredReportings":[],"meta":{}},"2":{"profId":3,"epId":2,"devId":5,"inClusterList":[1],"outClusterList":[0],"clusters":{},"binds":[],"configuredReportings":[],"meta":{}}},"interviewCompleted":true,"meta":{}}\n{"id":2,"type":"Router","ieeeAddr":"0x129","nwkAddr":129,"manufId":1212,"manufName":"KoenAndCo","powerSource":"Mains (single phase)","modelId":"myModelID","epList":[1],"endpoints":{"1":{"profId":99,"epId":1,"devId":5,"inClusterList":[0,1],"outClusterList":[2],"clusters":{},"binds":[],"configuredReportings":[],"meta":{}}},"appVersion":2,"stackVersion":101,"hwVersion":3,"dateCode":"201901","swBuildId":"1.01","zclVersion":1,"interviewCompleted":true,"meta":{},"lastSeen":150}`,
+            `{"id":1,"type":"Coordinator","ieeeAddr":"0x0000012300000000","nwkAddr":0,"manufId":7,"epList":[1,2],"endpoints":{"1":{"profId":2,"epId":1,"devId":3,"inClusterList":[10],"outClusterList":[11],"clusters":{},"binds":[],"configuredReportings":[],"meta":{}},"2":{"profId":3,"epId":2,"devId":5,"inClusterList":[1],"outClusterList":[0],"clusters":{},"binds":[],"configuredReportings":[],"meta":{}}},"interviewCompleted":true,"meta":{}}\n{"id":2,"type":"Router","ieeeAddr":"0x129","nwkAddr":129,"manufId":1212,"manufName":"KoenAndCo","powerSource":"Mains (single phase)","modelId":"myModelID","epList":[1],"endpoints":{"1":{"profId":99,"epId":1,"devId":5,"inClusterList":[0,1],"outClusterList":[2],"clusters":{},"binds":[],"configuredReportings":[],"meta":{}}},"appVersion":2,"stackVersion":101,"hwVersion":3,"dateCode":"201901","swBuildId":"1.01","zclVersion":1,"interviewCompleted":true,"meta":{},"lastSeen":150}`,
         );
         expect(controller.getDeviceByNetworkAddress(129)!.lastSeen).toBe(Date.now());
     });
@@ -1867,8 +1856,7 @@ describe('Controller', () => {
         expect(controller.getDeviceByIeeeAddr('0x129')!.lastSeen).toBe(Date.now());
     });
 
-    it('Join a device and explictly refuse it', async () => {
-        sendZdoResponseStatus = Zdo.Status.INV_REQUESTTYPE;
+    it('Join a device and explictly refuses it', async () => {
         const mockAcceptJoiningDeviceHandler = jest.fn().mockReturnValue(false);
         controller = new Controller({...options, acceptJoiningDeviceHandler: mockAcceptJoiningDeviceHandler});
         controller.on('deviceJoined', (device) => events.deviceJoined.push(device));
@@ -1883,6 +1871,25 @@ describe('Controller', () => {
         expect(controller.getDeviceByIeeeAddr('0x129')).toBeUndefined();
         const zdoPayload = Zdo.Buffalo.buildRequest(false, Zdo.ClusterId.LEAVE_REQUEST, '0x129', Zdo.LeaveRequestFlags.WITHOUT_REJOIN);
         expect(mockAdapterSendZdo).toHaveBeenNthCalledWith(1, '0x129', 129, Zdo.ClusterId.LEAVE_REQUEST, zdoPayload, false);
+    });
+
+    it('Join a device and explictly refuses it but LEAVE request fails', async () => {
+        const mockAcceptJoiningDeviceHandler = jest.fn().mockReturnValue(false);
+        controller = new Controller({...options, acceptJoiningDeviceHandler: mockAcceptJoiningDeviceHandler});
+        controller.on('deviceJoined', (device) => events.deviceJoined.push(device));
+        controller.on('deviceInterview', (device) => events.deviceInterview.push(deepClone(device)));
+        await controller.start();
+        mockAdapterSendZdo.mockClear();
+        expect(databaseContents().includes('0x129')).toBeFalsy();
+        sendZdoResponseStatus = Zdo.Status.NOT_SUPPORTED;
+        await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
+        expect(events.deviceJoined.length).toBe(0);
+        expect(events.deviceInterview.length).toBe(0);
+        expect(databaseContents().includes('0x129')).toBeFalsy();
+        expect(controller.getDeviceByIeeeAddr('0x129')).toBeUndefined();
+        const zdoPayload = Zdo.Buffalo.buildRequest(false, Zdo.ClusterId.LEAVE_REQUEST, '0x129', Zdo.LeaveRequestFlags.WITHOUT_REJOIN);
+        expect(mockAdapterSendZdo).toHaveBeenNthCalledWith(1, '0x129', 129, Zdo.ClusterId.LEAVE_REQUEST, zdoPayload, false);
+        expect(mockLogger.error).toHaveBeenCalledWith(`Failed to remove rejected device: Status 'NOT_SUPPORTED'`, 'zh:controller');
     });
 
     it('Set device powersource by string', async () => {
@@ -2350,9 +2357,9 @@ describe('Controller', () => {
         // Green power
         expect(mocksendZclFrameToAll).toHaveBeenCalledTimes(1);
         const commisionFrameEnable = Zcl.Frame.create(1, 1, true, undefined, 2, 'commisioningMode', 33, {options: 0x0b, commisioningWindow: 254}, {});
-        expect(mocksendZclFrameToAll.mock.calls[0][0]).toBe(242);
+        expect(mocksendZclFrameToAll.mock.calls[0][0]).toBe(ZSpec.GP_ENDPOINT);
         expect(deepClone(mocksendZclFrameToAll.mock.calls[0][1])).toStrictEqual(deepClone(commisionFrameEnable));
-        expect(mocksendZclFrameToAll.mock.calls[0][2]).toBe(242);
+        expect(mocksendZclFrameToAll.mock.calls[0][2]).toBe(ZSpec.GP_ENDPOINT);
 
         // should call it again ever +- 200 seconds
         jest.advanceTimersByTime(210 * 1000);
@@ -2381,9 +2388,9 @@ describe('Controller', () => {
         // Green power
         expect(mocksendZclFrameToAll).toHaveBeenCalledTimes(4);
         const commissionFrameDisable = Zcl.Frame.create(1, 1, true, undefined, 5, 'commisioningMode', 33, {options: 0x0a, commisioningWindow: 0}, {});
-        expect(mocksendZclFrameToAll.mock.calls[3][0]).toBe(242);
+        expect(mocksendZclFrameToAll.mock.calls[3][0]).toBe(ZSpec.GP_ENDPOINT);
         expect(deepClone(mocksendZclFrameToAll.mock.calls[3][1])).toStrictEqual(deepClone(commissionFrameDisable));
-        expect(mocksendZclFrameToAll.mock.calls[3][2]).toBe(242);
+        expect(mocksendZclFrameToAll.mock.calls[3][2]).toBe(ZSpec.GP_ENDPOINT);
         expect(mocksendZclFrameToAll).toHaveBeenCalledTimes(4);
     });
 
@@ -4316,7 +4323,7 @@ describe('Controller', () => {
         await mockAdapterEvents['deviceJoined']({networkAddress: 140, ieeeAddr: '0x129'});
         let error;
         try {
-            Device.create('Router', '0x129', 140, undefined, undefined, undefined, undefined, false, []);
+            Device.create('Router', '0x129', 140, undefined, undefined, undefined, undefined, false);
         } catch (e) {
             error = e;
         }
@@ -4325,7 +4332,7 @@ describe('Controller', () => {
 
     it('Should allow to set type', async () => {
         await controller.start();
-        const device = Device.create('Router', '0x129', 140, undefined, undefined, undefined, undefined, false, []);
+        const device = Device.create('Router', '0x129', 140, undefined, undefined, undefined, undefined, false);
         device.type = 'EndDevice';
         expect(device.type).toStrictEqual('EndDevice');
     });
@@ -5381,7 +5388,7 @@ describe('Controller', () => {
         });
         expect(group.members).toContain(endpoint);
         expect(databaseContents()).toContain(
-            `{"id":1,"type":"Coordinator","ieeeAddr":"0x0000012300000000","nwkAddr":0,"manufId":100,"epList":[1,2],"endpoints":{"1":{"profId":2,"epId":1,"devId":3,"inClusterList":[10],"outClusterList":[11],"clusters":{},"binds":[],"configuredReportings":[],"meta":{}},"2":{"profId":3,"epId":2,"devId":5,"inClusterList":[1],"outClusterList":[0],"clusters":{},"binds":[],"configuredReportings":[],"meta":{}}},"interviewCompleted":true,"meta":{}}\n{"id":2,"type":"Router","ieeeAddr":"0x129","nwkAddr":129,"manufId":1212,"manufName":"KoenAndCo","powerSource":"Mains (single phase)","modelId":"myModelID","epList":[1],"endpoints":{"1":{"profId":99,"epId":1,"devId":5,"inClusterList":[0,1],"outClusterList":[2],"clusters":{},"binds":[],"configuredReportings":[],"meta":{}}},"appVersion":2,"stackVersion":101,"hwVersion":3,"dateCode":"201901","swBuildId":"1.01","zclVersion":1,"interviewCompleted":true,"meta":{},"lastSeen":150}\n{"id":3,"type":"Group","groupID":2,"members":[{"deviceIeeeAddr":"0x129","endpointID":1}],"meta":{}}`,
+            `{"id":1,"type":"Coordinator","ieeeAddr":"0x0000012300000000","nwkAddr":0,"manufId":7,"epList":[1,2],"endpoints":{"1":{"profId":2,"epId":1,"devId":3,"inClusterList":[10],"outClusterList":[11],"clusters":{},"binds":[],"configuredReportings":[],"meta":{}},"2":{"profId":3,"epId":2,"devId":5,"inClusterList":[1],"outClusterList":[0],"clusters":{},"binds":[],"configuredReportings":[],"meta":{}}},"interviewCompleted":true,"meta":{}}\n{"id":2,"type":"Router","ieeeAddr":"0x129","nwkAddr":129,"manufId":1212,"manufName":"KoenAndCo","powerSource":"Mains (single phase)","modelId":"myModelID","epList":[1],"endpoints":{"1":{"profId":99,"epId":1,"devId":5,"inClusterList":[0,1],"outClusterList":[2],"clusters":{},"binds":[],"configuredReportings":[],"meta":{}}},"appVersion":2,"stackVersion":101,"hwVersion":3,"dateCode":"201901","swBuildId":"1.01","zclVersion":1,"interviewCompleted":true,"meta":{},"lastSeen":150}\n{"id":3,"type":"Group","groupID":2,"members":[{"deviceIeeeAddr":"0x129","endpointID":1}],"meta":{}}`,
         );
     });
 
@@ -8180,7 +8187,7 @@ describe('Controller', () => {
             clusterID: frame.cluster.ID,
             data: frame.toBuffer(),
             header: frame.header,
-            endpoint: 242,
+            endpoint: ZSpec.GP_ENDPOINT,
             linkquality: 50,
             groupID: 1,
         });
@@ -8195,9 +8202,9 @@ describe('Controller', () => {
         };
         const frameResponse = Zcl.Frame.create(1, 1, true, undefined, 2, 'pairing', 33, dataResponse, {});
 
-        expect(mocksendZclFrameToAll.mock.calls[0][0]).toBe(242);
+        expect(mocksendZclFrameToAll.mock.calls[0][0]).toBe(ZSpec.GP_ENDPOINT);
         expect(deepClone(mocksendZclFrameToAll.mock.calls[0][1])).toStrictEqual(deepClone(frameResponse));
-        expect(mocksendZclFrameToAll.mock.calls[0][2]).toBe(242);
+        expect(mocksendZclFrameToAll.mock.calls[0][2]).toBe(ZSpec.GP_ENDPOINT);
         expect(mocksendZclFrameToAll).toHaveBeenCalledTimes(1);
 
         // When joins again, shouldnt emit duplicate event
@@ -8208,7 +8215,7 @@ describe('Controller', () => {
             clusterID: frame.cluster.ID,
             data: frame.toBuffer(),
             header: frame.header,
-            endpoint: 242,
+            endpoint: ZSpec.GP_ENDPOINT,
             linkquality: 50,
             groupID: 1,
         });
@@ -8224,8 +8231,8 @@ describe('Controller', () => {
                     {
                         inputClusters: [],
                         outputClusters: [],
-                        pendingRequests: {ID: 242, deviceIeeeAddress: '0x000000000046f4fe', sendInProgress: false},
-                        ID: 242,
+                        pendingRequests: {ID: ZSpec.GP_ENDPOINT, deviceIeeeAddress: '0x000000000046f4fe', sendInProgress: false},
+                        ID: ZSpec.GP_ENDPOINT,
                         clusters: {},
                         deviceIeeeAddress: '0x000000000046f4fe',
                         deviceNetworkAddress: 0xf4fe,
@@ -8291,7 +8298,7 @@ describe('Controller', () => {
             clusterID: frameToggle.cluster.ID,
             data: frameToggle.toBuffer(),
             header: frameToggle.header,
-            endpoint: 242,
+            endpoint: ZSpec.GP_ENDPOINT,
             linkquality: 50,
             groupID: 1,
         });
@@ -8310,8 +8317,8 @@ describe('Controller', () => {
                         inputClusters: [],
                         meta: {},
                         outputClusters: [],
-                        pendingRequests: {ID: 242, deviceIeeeAddress: '0x000000000046f4fe', sendInProgress: false},
-                        ID: 242,
+                        pendingRequests: {ID: ZSpec.GP_ENDPOINT, deviceIeeeAddress: '0x000000000046f4fe', sendInProgress: false},
+                        ID: ZSpec.GP_ENDPOINT,
                         _events: {},
                         _eventsCount: 0,
                         clusters: {},
@@ -8336,8 +8343,8 @@ describe('Controller', () => {
                 inputClusters: [],
                 meta: {},
                 outputClusters: [],
-                pendingRequests: {ID: 242, deviceIeeeAddress: '0x000000000046f4fe', sendInProgress: false},
-                ID: 242,
+                pendingRequests: {ID: ZSpec.GP_ENDPOINT, deviceIeeeAddress: '0x000000000046f4fe', sendInProgress: false},
+                ID: ZSpec.GP_ENDPOINT,
                 _events: {},
                 _eventsCount: 0,
                 clusters: {},
@@ -8370,7 +8377,7 @@ describe('Controller', () => {
             clusterID: frame.cluster.ID,
             data: buffer,
             header: frame.header,
-            endpoint: 242,
+            endpoint: ZSpec.GP_ENDPOINT,
             linkquality: 50,
             groupID: 1,
         });
@@ -8431,7 +8438,7 @@ describe('Controller', () => {
             clusterID: frame.cluster.ID,
             data: frame.toBuffer(),
             header: frame.header,
-            endpoint: 242,
+            endpoint: ZSpec.GP_ENDPOINT,
             linkquality: 50,
             groupID: 1,
         });
@@ -8451,9 +8458,9 @@ describe('Controller', () => {
         const frameResponse = Zcl.Frame.create(1, 1, true, undefined, 2, 'response', 33, commissioningReply, {});
 
         expect(mocksendZclFrameToAll).toHaveBeenCalledTimes(1);
-        expect(mocksendZclFrameToAll.mock.calls[0][0]).toBe(242);
+        expect(mocksendZclFrameToAll.mock.calls[0][0]).toBe(ZSpec.GP_ENDPOINT);
         expect(deepClone(mocksendZclFrameToAll.mock.calls[0][1])).toStrictEqual(deepClone(frameResponse));
-        expect(mocksendZclFrameToAll.mock.calls[0][2]).toBe(242);
+        expect(mocksendZclFrameToAll.mock.calls[0][2]).toBe(ZSpec.GP_ENDPOINT);
     });
 
     it('Green power rxOnCap', async () => {
@@ -8482,7 +8489,7 @@ describe('Controller', () => {
             clusterID: frame.cluster.ID,
             data: frame.toBuffer(),
             header: frame.header,
-            endpoint: 242,
+            endpoint: ZSpec.GP_ENDPOINT,
             linkquality: 50,
             groupID: 1,
         });
@@ -8505,9 +8512,9 @@ describe('Controller', () => {
         const frameResponse = Zcl.Frame.create(1, 1, true, undefined, 2, 'response', 33, commissioningReply, {});
 
         expect(mocksendZclFrameToAll).toHaveBeenCalledTimes(2);
-        expect(mocksendZclFrameToAll.mock.calls[0][0]).toBe(242);
+        expect(mocksendZclFrameToAll.mock.calls[0][0]).toBe(ZSpec.GP_ENDPOINT);
         expect(deepClone(mocksendZclFrameToAll.mock.calls[0][1])).toStrictEqual(deepClone(frameResponse));
-        expect(mocksendZclFrameToAll.mock.calls[0][2]).toBe(242);
+        expect(mocksendZclFrameToAll.mock.calls[0][2]).toBe(ZSpec.GP_ENDPOINT);
 
         const pairingData = {
             options: 424,
@@ -8517,9 +8524,9 @@ describe('Controller', () => {
         };
         const pairing = Zcl.Frame.create(1, 1, true, undefined, 3, 'pairing', 33, pairingData, {});
 
-        expect(mocksendZclFrameToAll.mock.calls[1][0]).toBe(242);
+        expect(mocksendZclFrameToAll.mock.calls[1][0]).toBe(ZSpec.GP_ENDPOINT);
         expect(deepClone(mocksendZclFrameToAll.mock.calls[1][1])).toStrictEqual(deepClone(pairing));
-        expect(mocksendZclFrameToAll.mock.calls[1][2]).toBe(242);
+        expect(mocksendZclFrameToAll.mock.calls[1][2]).toBe(ZSpec.GP_ENDPOINT);
 
         mocksendZclFrameToAll.mockClear();
         // Test green power response on endpoint object
@@ -8535,26 +8542,27 @@ describe('Controller', () => {
             },
         };
 
-        await device.getEndpoint(242)!.commandResponse('greenPower', 'response', payload, {
-            srcEndpoint: 242,
+        await device.getEndpoint(ZSpec.GP_ENDPOINT)!.commandResponse('greenPower', 'response', payload, {
+            srcEndpoint: ZSpec.GP_ENDPOINT,
             disableDefaultResponse: true,
         });
 
         const response = Zcl.Frame.create(1, 1, true, undefined, 4, 'response', 33, payload, {});
 
         expect(mocksendZclFrameToAll).toHaveBeenCalledTimes(1);
-        expect(mocksendZclFrameToAll.mock.calls[0][0]).toBe(242);
+        expect(mocksendZclFrameToAll.mock.calls[0][0]).toBe(ZSpec.GP_ENDPOINT);
         expect(deepClone(mocksendZclFrameToAll.mock.calls[0][1])).toStrictEqual(deepClone(response));
-        expect(mocksendZclFrameToAll.mock.calls[0][2]).toBe(242);
+        expect(mocksendZclFrameToAll.mock.calls[0][2]).toBe(ZSpec.GP_ENDPOINT);
     });
 
     it('Green power unicast', async () => {
         await controller.start();
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
+        const srcID = 0x017171f8;
         const gppDevice = controller.getDeviceByIeeeAddr('0x129')!;
         const data = {
             options: 0x800, // Proxy info present
-            srcID: 0x017171f8,
+            srcID,
             frameCounter: 248,
             commandID: 0xe0,
             payloadSize: 46,
@@ -8596,14 +8604,14 @@ describe('Controller', () => {
             clusterID: expectedFrame.cluster.ID,
             data: expectedFrame.toBuffer(),
             header: expectedFrame.header,
-            endpoint: 242,
+            endpoint: ZSpec.GP_ENDPOINT,
             linkquality: 50,
             groupID: 0,
         });
 
         const dataResponse = {
             options: 0x00e568,
-            srcID: 0x017171f8,
+            srcID,
             sinkIEEEAddr: '0x0000012300000000',
             sinkNwkAddr: 0,
             deviceID: 2,
@@ -8615,12 +8623,12 @@ describe('Controller', () => {
         expect(mocksendZclFrameToEndpoint).toHaveBeenLastCalledWith(
             gppDevice.ieeeAddr,
             gppDevice.networkAddress,
-            242,
+            ZSpec.GP_ENDPOINT,
             expect.any(Object),
             10000,
             false,
             false,
-            242,
+            ZSpec.GP_ENDPOINT,
         );
         expect(deepClone(mocksendZclFrameToEndpoint.mock.calls[mocksendZclFrameToEndpoint.mock.calls.length - 1][3])).toStrictEqual(
             deepClone(frameResponse),
@@ -8634,7 +8642,7 @@ describe('Controller', () => {
             clusterID: expectedFrame.cluster.ID,
             data: expectedFrame.toBuffer(),
             header: expectedFrame.header,
-            endpoint: 242,
+            endpoint: ZSpec.GP_ENDPOINT,
             linkquality: 50,
             groupID: 0,
         });
@@ -8650,7 +8658,7 @@ describe('Controller', () => {
                 _customClusters: {},
                 _endpoints: [
                     {
-                        ID: 242,
+                        ID: ZSpec.GP_ENDPOINT,
                         _binds: [],
                         _configuredReportings: [],
                         _events: {},
@@ -8661,7 +8669,7 @@ describe('Controller', () => {
                         inputClusters: [],
                         meta: {},
                         outputClusters: [],
-                        pendingRequests: {ID: 242, deviceIeeeAddress: '0x00000000017171f8', sendInProgress: false},
+                        pendingRequests: {ID: ZSpec.GP_ENDPOINT, deviceIeeeAddress: '0x00000000017171f8', sendInProgress: false},
                     },
                 ],
                 _ieeeAddr: '0x00000000017171f8',
@@ -8704,7 +8712,7 @@ describe('Controller', () => {
         expect(events.message.length).toBe(0);
         const dataScene = {
             options: 0x5488,
-            srcID: 0x017171f8,
+            srcID,
             frameCounter: 4601,
             commandID: 0x13,
             payloadSize: 0,
@@ -8715,11 +8723,11 @@ describe('Controller', () => {
         const frameScene = Zcl.Frame.create(1, 0, true, undefined, 10, 'notification', 33, dataScene, {});
         await mockAdapterEvents['zclPayload']({
             wasBroadcast: false,
-            address: 0x017171f8,
+            address: srcID & 0xffff,
             clusterID: frameScene.cluster.ID,
             data: frameScene.toBuffer(),
             header: frameScene.header,
-            endpoint: 242,
+            endpoint: ZSpec.GP_ENDPOINT,
             linkquality: 50,
             groupID: 0,
         });
@@ -8739,7 +8747,7 @@ describe('Controller', () => {
                     {
                         _events: {},
                         _eventsCount: 0,
-                        ID: 242,
+                        ID: ZSpec.GP_ENDPOINT,
                         inputClusters: [],
                         outputClusters: [],
                         deviceNetworkAddress: 29176,
@@ -8748,7 +8756,7 @@ describe('Controller', () => {
                         _binds: [],
                         _configuredReportings: [],
                         meta: {},
-                        pendingRequests: {sendInProgress: false, ID: 242, deviceIeeeAddress: '0x00000000017171f8'},
+                        pendingRequests: {sendInProgress: false, ID: ZSpec.GP_ENDPOINT, deviceIeeeAddress: '0x00000000017171f8'},
                     },
                 ],
                 _modelID: 'GreenPower_2',
@@ -8763,7 +8771,7 @@ describe('Controller', () => {
             endpoint: {
                 _events: {},
                 _eventsCount: 0,
-                ID: 242,
+                ID: ZSpec.GP_ENDPOINT,
                 inputClusters: [],
                 outputClusters: [],
                 deviceNetworkAddress: 29176,
@@ -8772,7 +8780,7 @@ describe('Controller', () => {
                 _binds: [],
                 _configuredReportings: [],
                 meta: {},
-                pendingRequests: {sendInProgress: false, ID: 242, deviceIeeeAddress: '0x00000000017171f8'},
+                pendingRequests: {sendInProgress: false, ID: ZSpec.GP_ENDPOINT, deviceIeeeAddress: '0x00000000017171f8'},
             },
             data: {
                 options: 21640,
@@ -8797,16 +8805,16 @@ describe('Controller', () => {
         // Remove green power device from network
         const removeCommand = {
             options: 0x002550,
-            srcID: 0x017171f8,
+            srcID,
         };
         const removeFrame = Zcl.Frame.create(1, 1, true, undefined, 13, 'pairing', 33, removeCommand, {});
 
         events.message = [];
         const device = controller.getDeviceByIeeeAddr('0x00000000017171f8')!!;
         await device.removeFromNetwork();
-        expect(mocksendZclFrameToAll.mock.calls[0][0]).toBe(242);
+        expect(mocksendZclFrameToAll.mock.calls[0][0]).toBe(ZSpec.GP_ENDPOINT);
         expect(deepClone(mocksendZclFrameToAll.mock.calls[0][1])).toStrictEqual(deepClone(removeFrame));
-        expect(mocksendZclFrameToAll.mock.calls[0][2]).toBe(242);
+        expect(mocksendZclFrameToAll.mock.calls[0][2]).toBe(ZSpec.GP_ENDPOINT);
         expect(mocksendZclFrameToAll).toHaveBeenCalledTimes(1);
         expect(controller.getDeviceByIeeeAddr('0x00000000017171f8')).toBeUndefined();
 
@@ -8820,7 +8828,7 @@ describe('Controller', () => {
             _customClusters: {},
             _endpoints: [
                 {
-                    ID: 242,
+                    ID: ZSpec.GP_ENDPOINT,
                     _binds: [],
                     _configuredReportings: [],
                     _events: {},
@@ -8831,7 +8839,7 @@ describe('Controller', () => {
                     inputClusters: [],
                     meta: {},
                     outputClusters: [],
-                    pendingRequests: {ID: 242, deviceIeeeAddress: '0x00000000017171f8', sendInProgress: false},
+                    pendingRequests: {ID: ZSpec.GP_ENDPOINT, deviceIeeeAddress: '0x00000000017171f8', sendInProgress: false},
                 },
             ],
             _ieeeAddr: '0x00000000017171f8',
@@ -8853,7 +8861,7 @@ describe('Controller', () => {
             clusterID: expectedFrame.cluster.ID,
             data: expectedFrame.toBuffer(),
             header: expectedFrame.header,
-            endpoint: 242,
+            endpoint: ZSpec.GP_ENDPOINT,
             linkquality: 50,
             groupID: 0,
         });
@@ -8867,7 +8875,7 @@ describe('Controller', () => {
             _customClusters: {},
             _endpoints: [
                 {
-                    ID: 242,
+                    ID: ZSpec.GP_ENDPOINT,
                     _binds: [],
                     _configuredReportings: [],
                     _events: {},
@@ -8878,7 +8886,7 @@ describe('Controller', () => {
                     inputClusters: [],
                     meta: {},
                     outputClusters: [],
-                    pendingRequests: {ID: 242, deviceIeeeAddress: '0x00000000017171f8', sendInProgress: false},
+                    pendingRequests: {ID: ZSpec.GP_ENDPOINT, deviceIeeeAddress: '0x00000000017171f8', sendInProgress: false},
                 },
             ],
             _ieeeAddr: '0x00000000017171f8',

@@ -23,6 +23,7 @@ interface AdapterEventMap {
 
 abstract class Adapter extends events.EventEmitter<AdapterEventMap> {
     public hasZdoMessageOverhead: boolean;
+    public manufacturerID: Zcl.ManufacturerCode;
     protected networkOptions: TsType.NetworkOptions;
     protected adapterOptions: TsType.AdapterOptions;
     protected serialPortOptions: TsType.SerialPortOptions;
@@ -36,6 +37,7 @@ abstract class Adapter extends events.EventEmitter<AdapterEventMap> {
     ) {
         super();
         this.hasZdoMessageOverhead = true;
+        this.manufacturerID = Zcl.ManufacturerCode.RESERVED_10;
         this.networkOptions = networkOptions;
         this.adapterOptions = adapterOptions;
         this.serialPortOptions = serialPortOptions;
@@ -187,7 +189,7 @@ abstract class Adapter extends events.EventEmitter<AdapterEventMap> {
 
     public abstract stop(): Promise<void>;
 
-    public abstract getCoordinator(): Promise<TsType.Coordinator>;
+    public abstract getCoordinatorIEEE(): Promise<string>;
 
     public abstract getCoordinatorVersion(): Promise<TsType.CoordinatorVersion>;
 
@@ -198,8 +200,6 @@ abstract class Adapter extends events.EventEmitter<AdapterEventMap> {
     public abstract backup(ieeeAddressesInDatabase: string[]): Promise<Models.Backup>;
 
     public abstract getNetworkParameters(): Promise<TsType.NetworkParameters>;
-
-    public abstract changeChannel(newChannel: number): Promise<void>;
 
     public abstract setTransmitPower(value: number): Promise<void>;
 
@@ -243,38 +243,6 @@ abstract class Adapter extends events.EventEmitter<AdapterEventMap> {
     ): Promise<ZdoTypes.RequestToResponseMap[K] | void>;
 
     public abstract permitJoin(seconds: number, networkAddress?: number): Promise<void>;
-
-    public abstract lqi(networkAddress: number): Promise<TsType.LQI>;
-
-    public abstract routingTable(networkAddress: number): Promise<TsType.RoutingTable>;
-
-    public abstract nodeDescriptor(networkAddress: number): Promise<TsType.NodeDescriptor>;
-
-    public abstract activeEndpoints(networkAddress: number): Promise<TsType.ActiveEndpoints>;
-
-    public abstract simpleDescriptor(networkAddress: number, endpointID: number): Promise<TsType.SimpleDescriptor>;
-
-    public abstract bind(
-        destinationNetworkAddress: number,
-        sourceIeeeAddress: string,
-        sourceEndpoint: number,
-        clusterID: number,
-        destinationAddressOrGroup: string | number,
-        type: 'endpoint' | 'group',
-        destinationEndpoint?: number,
-    ): Promise<void>;
-
-    public abstract unbind(
-        destinationNetworkAddress: number,
-        sourceIeeeAddress: string,
-        sourceEndpoint: number,
-        clusterID: number,
-        destinationAddressOrGroup: string | number,
-        type: 'endpoint' | 'group',
-        destinationEndpoint?: number,
-    ): Promise<void>;
-
-    public abstract removeDevice(networkAddress: number, ieeeAddr: string): Promise<void>;
 
     /**
      * ZCL

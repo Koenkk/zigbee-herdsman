@@ -1,6 +1,7 @@
 import * as crypto from 'crypto';
 
 import {TsType} from '../../';
+import {Zdo, ZSpec} from '../../..';
 import * as Models from '../../../models';
 import {Wait} from '../../../utils';
 import {logger} from '../../../utils/logger';
@@ -452,14 +453,23 @@ export class ZnpAdapterManager {
      * Registers endpoints before beginning normal operation.
      */
     private async registerEndpoints(): Promise<void> {
-        const activeEp = await this.adapter.activeEndpoints(0);
-        for (const endpoint of Endpoints) {
-            if (activeEp.endpoints.includes(endpoint.endpoint)) {
-                logger.debug(`endpoint '${endpoint.endpoint}' already registered`, NS);
-            } else {
-                logger.debug(`registering endpoint '${endpoint.endpoint}'`, NS);
-                await this.znp.request(Subsystem.AF, 'register', endpoint);
+        const clusterId = Zdo.ClusterId.ACTIVE_ENDPOINTS_REQUEST;
+        const zdoPayload = Zdo.Buffalo.buildRequest(this.adapter.hasZdoMessageOverhead, clusterId, ZSpec.COORDINATOR_ADDRESS);
+        const response = await this.adapter.sendZdo(ZSpec.BLANK_EUI64, ZSpec.COORDINATOR_ADDRESS, clusterId, zdoPayload, false);
+
+        if (Zdo.Buffalo.checkStatus(response)) {
+            const activeEndpoints = response[1].endpointList;
+
+            for (const endpoint of Endpoints) {
+                if (activeEndpoints.includes(endpoint.endpoint)) {
+                    logger.debug(`endpoint '${endpoint.endpoint}' already registered`, NS);
+                } else {
+                    logger.debug(`registering endpoint '${endpoint.endpoint}'`, NS);
+                    await this.znp.request(Subsystem.AF, 'register', endpoint);
+                }
             }
+        } else {
+            throw new Zdo.StatusError(response[0]);
         }
     }
 

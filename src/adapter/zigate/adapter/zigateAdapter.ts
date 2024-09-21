@@ -5,7 +5,6 @@ import {Queue, Wait, Waitress} from '../../../utils';
 import {logger} from '../../../utils/logger';
 import * as ZSpec from '../../../zspec';
 import {BroadcastAddress} from '../../../zspec/enums';
-import {EUI64} from '../../../zspec/tstypes';
 import * as Zcl from '../../../zspec/zcl';
 import * as Zdo from '../../../zspec/zdo';
 import * as ZdoTypes from '../../../zspec/zdo/definition/tstypes';
@@ -13,7 +12,7 @@ import Adapter from '../../adapter';
 import * as Events from '../../events';
 import * as TsType from '../../tstype';
 import {RawAPSDataRequestPayload} from '../driver/commandType';
-import {ADDRESS_MODE, coordinatorEndpoints, DEVICE_TYPE, ZiGateCommandCode, ZiGateMessageCode, ZPSNwkKeyState} from '../driver/constants';
+import {ADDRESS_MODE, DEVICE_TYPE, ZiGateCommandCode, ZiGateMessageCode, ZPSNwkKeyState} from '../driver/constants';
 import Driver from '../driver/zigate';
 import ZiGateObject from '../driver/ziGateObject';
 import {patchZdoBuffaloBE} from './patchZdoBuffaloBE';
@@ -46,6 +45,7 @@ class ZiGateAdapter extends Adapter {
         patchZdoBuffaloBE();
         super(networkOptions, serialPortOptions, backupPath, adapterOptions);
         this.hasZdoMessageOverhead = false; // false for requests, true for responses
+        this.manufacturerID = Zcl.ManufacturerCode.RESERVED_10;
 
         this.joinPermitted = false;
         this.closing = false;
@@ -103,19 +103,9 @@ class ZiGateAdapter extends Adapter {
         await this.driver.close();
     }
 
-    public async getCoordinator(): Promise<TsType.Coordinator> {
+    public async getCoordinatorIEEE(): Promise<string> {
         const networkResponse = await this.driver.sendCommand(ZiGateCommandCode.GetNetworkState);
-
-        // @TODO deal hardcoded endpoints, made by analogy with deconz
-        // polling the coordinator on some firmware went into a memory leak, so we don't ask this info
-        const response: TsType.Coordinator = {
-            networkAddress: ZSpec.COORDINATOR_ADDRESS,
-            manufacturerID: 0,
-            ieeeAddr: networkResponse.payload.extendedAddress,
-            endpoints: coordinatorEndpoints.slice(), // copy
-        };
-        logger.debug(() => `getCoordinator ${JSON.stringify(response)}`, NS);
-        return response;
+        return networkResponse.payload.extendedAddress;
     }
 
     public async getCoordinatorVersion(): Promise<TsType.CoordinatorVersion> {
@@ -200,240 +190,11 @@ class ZiGateAdapter extends Adapter {
         throw new Error('This adapter does not support backup');
     }
 
-    public async changeChannel(newChannel: number): Promise<void> {
-        const clusterId = Zdo.ClusterId.NWK_UPDATE_REQUEST;
-        const zdoPayload = Zdo.Buffalo.buildRequest(this.hasZdoMessageOverhead, clusterId, [newChannel], 0xfe, undefined, undefined, undefined);
-
-        await this.sendZdo(ZSpec.BLANK_EUI64, ZSpec.BroadcastAddress.SLEEPY, clusterId, zdoPayload, true /* handled below */);
-        await Wait(12000);
-    }
-
     public async setTransmitPower(value: number): Promise<void> {
         try {
             await this.driver.sendCommand(ZiGateCommandCode.SetTXpower, {value: value});
         } catch (error) {
             throw new Error(`Set transmitpower failed ${error}`);
-        }
-    }
-
-    public async lqi(networkAddress: number): Promise<TsType.LQI> {
-        const clusterId = Zdo.ClusterId.LQI_TABLE_REQUEST;
-        const neighbors: TsType.LQINeighbor[] = [];
-        const request = async (startIndex: number): Promise<[tableEntries: number, entryCount: number]> => {
-            const zdoPayload = Zdo.Buffalo.buildRequest(this.hasZdoMessageOverhead, clusterId, startIndex);
-            const result = await this.sendZdo(ZSpec.BLANK_EUI64, networkAddress, clusterId, zdoPayload, false);
-
-            /* istanbul ignore else */
-            if (Zdo.Buffalo.checkStatus(result)) {
-                const payload = result[1];
-
-                for (const entry of payload.entryList) {
-                    neighbors.push({
-                        ieeeAddr: entry.eui64,
-                        networkAddress: entry.nwkAddress,
-                        linkquality: entry.lqi,
-                        relationship: entry.relationship,
-                        depth: entry.depth,
-                    });
-                }
-
-                return [payload.neighborTableEntries, payload.entryList.length];
-            } else {
-                // TODO: will disappear once moved upstream
-                throw new Zdo.StatusError(result[0]);
-            }
-        };
-
-        let [tableEntries, entryCount] = await request(0);
-
-        const size = tableEntries;
-        let nextStartIndex = entryCount;
-
-        while (neighbors.length < size) {
-            [tableEntries, entryCount] = await request(nextStartIndex);
-
-            nextStartIndex += entryCount;
-        }
-
-        return {neighbors};
-    }
-
-    public async routingTable(networkAddress: number): Promise<TsType.RoutingTable> {
-        const clusterId = Zdo.ClusterId.ROUTING_TABLE_REQUEST;
-        const table: TsType.RoutingTableEntry[] = [];
-        const request = async (startIndex: number): Promise<[tableEntries: number, entryCount: number]> => {
-            const zdoPayload = Zdo.Buffalo.buildRequest(this.hasZdoMessageOverhead, clusterId, startIndex);
-            const result = await this.sendZdo(ZSpec.BLANK_EUI64, networkAddress, clusterId, zdoPayload, false);
-
-            /* istanbul ignore else */
-            if (Zdo.Buffalo.checkStatus(result)) {
-                const payload = result[1];
-
-                for (const entry of payload.entryList) {
-                    table.push({
-                        destinationAddress: entry.destinationAddress,
-                        status: entry.status,
-                        nextHop: entry.nextHopAddress,
-                    });
-                }
-
-                return [payload.routingTableEntries, payload.entryList.length];
-            } else {
-                // TODO: will disappear once moved upstream
-                throw new Zdo.StatusError(result[0]);
-            }
-        };
-
-        let [tableEntries, entryCount] = await request(0);
-
-        const size = tableEntries;
-        let nextStartIndex = entryCount;
-
-        while (table.length < size) {
-            [tableEntries, entryCount] = await request(nextStartIndex);
-
-            nextStartIndex += entryCount;
-        }
-
-        return {table};
-    }
-
-    public async nodeDescriptor(networkAddress: number): Promise<TsType.NodeDescriptor> {
-        const clusterId = Zdo.ClusterId.NODE_DESCRIPTOR_REQUEST;
-        const zdoPayload = Zdo.Buffalo.buildRequest(this.hasZdoMessageOverhead, clusterId, networkAddress);
-        const result = await this.sendZdo(ZSpec.BLANK_EUI64, networkAddress, clusterId, zdoPayload, false);
-
-        /* istanbul ignore else */
-        if (Zdo.Buffalo.checkStatus(result)) {
-            const payload = result[1];
-            let type: TsType.DeviceType = 'Unknown';
-
-            switch (payload.logicalType) {
-                case 0x0:
-                    type = 'Coordinator';
-                    break;
-                case 0x1:
-                    type = 'Router';
-                    break;
-                case 0x2:
-                    type = 'EndDevice';
-                    break;
-            }
-
-            return {type, manufacturerCode: payload.manufacturerCode};
-        } else {
-            // TODO: will disappear once moved upstream
-            throw new Zdo.StatusError(result[0]);
-        }
-    }
-
-    public async activeEndpoints(networkAddress: number): Promise<TsType.ActiveEndpoints> {
-        const clusterId = Zdo.ClusterId.ACTIVE_ENDPOINTS_REQUEST;
-        const zdoPayload = Zdo.Buffalo.buildRequest(this.hasZdoMessageOverhead, clusterId, networkAddress);
-        const result = await this.sendZdo(ZSpec.BLANK_EUI64, networkAddress, clusterId, zdoPayload, false);
-
-        /* istanbul ignore else */
-        if (Zdo.Buffalo.checkStatus(result)) {
-            const payload = result[1];
-
-            return {endpoints: payload.endpointList};
-        } else {
-            // TODO: will disappear once moved upstream
-            throw new Zdo.StatusError(result[0]);
-        }
-    }
-
-    public async simpleDescriptor(networkAddress: number, endpointID: number): Promise<TsType.SimpleDescriptor> {
-        const clusterId = Zdo.ClusterId.SIMPLE_DESCRIPTOR_REQUEST;
-        const zdoPayload = Zdo.Buffalo.buildRequest(this.hasZdoMessageOverhead, clusterId, networkAddress, endpointID);
-        const result = await this.sendZdo(ZSpec.BLANK_EUI64, networkAddress, clusterId, zdoPayload, false);
-
-        /* istanbul ignore else */
-        if (Zdo.Buffalo.checkStatus(result)) {
-            const payload = result[1];
-
-            return {
-                profileID: payload.profileId,
-                endpointID: payload.endpoint,
-                deviceID: payload.deviceId,
-                inputClusters: payload.inClusterList,
-                outputClusters: payload.outClusterList,
-            };
-        } else {
-            // TODO: will disappear once moved upstream
-            throw new Zdo.StatusError(result[0]);
-        }
-    }
-
-    public async bind(
-        destinationNetworkAddress: number,
-        sourceIeeeAddress: string,
-        sourceEndpoint: number,
-        clusterID: number,
-        destinationAddressOrGroup: string | number,
-        type: 'endpoint' | 'group',
-        destinationEndpoint?: number,
-    ): Promise<void> {
-        const clusterId = Zdo.ClusterId.BIND_REQUEST;
-        const zdoPayload = Zdo.Buffalo.buildRequest(
-            this.hasZdoMessageOverhead,
-            clusterId,
-            sourceIeeeAddress as EUI64,
-            sourceEndpoint,
-            clusterID,
-            type === 'group' ? Zdo.MULTICAST_BINDING : Zdo.UNICAST_BINDING,
-            destinationAddressOrGroup as EUI64, // not used with MULTICAST_BINDING
-            destinationAddressOrGroup as number, // not used with UNICAST_BINDING
-            destinationEndpoint ?? 0, // not used with MULTICAST_BINDING
-        );
-        const result = await this.sendZdo(ZSpec.BLANK_EUI64, destinationNetworkAddress, clusterId, zdoPayload, false);
-
-        /* istanbul ignore next */
-        if (!Zdo.Buffalo.checkStatus(result)) {
-            // TODO: will disappear once moved upstream
-            throw new Zdo.StatusError(result[0]);
-        }
-    }
-
-    public async unbind(
-        destinationNetworkAddress: number,
-        sourceIeeeAddress: string,
-        sourceEndpoint: number,
-        clusterID: number,
-        destinationAddressOrGroup: string | number,
-        type: 'endpoint' | 'group',
-        destinationEndpoint?: number,
-    ): Promise<void> {
-        const clusterId = Zdo.ClusterId.UNBIND_REQUEST;
-        const zdoPayload = Zdo.Buffalo.buildRequest(
-            this.hasZdoMessageOverhead,
-            clusterId,
-            sourceIeeeAddress as EUI64,
-            sourceEndpoint,
-            clusterID,
-            type === 'group' ? Zdo.MULTICAST_BINDING : Zdo.UNICAST_BINDING,
-            destinationAddressOrGroup as EUI64, // not used with MULTICAST_BINDING
-            destinationAddressOrGroup as number, // not used with UNICAST_BINDING
-            destinationEndpoint ?? 0, // not used with MULTICAST_BINDING
-        );
-        const result = await this.sendZdo(ZSpec.BLANK_EUI64, destinationNetworkAddress, clusterId, zdoPayload, false);
-
-        /* istanbul ignore next */
-        if (!Zdo.Buffalo.checkStatus(result)) {
-            // TODO: will disappear once moved upstream
-            throw new Zdo.StatusError(result[0]);
-        }
-    }
-
-    public async removeDevice(networkAddress: number, ieeeAddr: string): Promise<void> {
-        const clusterId = Zdo.ClusterId.LEAVE_REQUEST;
-        const zdoPayload = Zdo.Buffalo.buildRequest(this.hasZdoMessageOverhead, clusterId, ieeeAddr as EUI64, Zdo.LeaveRequestFlags.WITHOUT_REJOIN);
-        const result = await this.sendZdo(ZSpec.BLANK_EUI64, networkAddress, clusterId, zdoPayload, false);
-
-        /* istanbul ignore next */
-        if (!Zdo.Buffalo.checkStatus(result)) {
-            // TODO: will disappear once moved upstream
-            throw new Zdo.StatusError(result[0]);
         }
     }
 
@@ -518,7 +279,7 @@ class ZiGateAdapter extends Adapter {
 
                 return result.zdo as ZdoTypes.RequestToResponseMap[K];
             }
-        }, networkAddress /* TODO: replace with ieeeAddress once zdo moved upstream */);
+        }, networkAddress);
     }
 
     public async sendZclFrameToEndpoint(
@@ -796,9 +557,8 @@ class ZiGateAdapter extends Adapter {
 
     private deviceAnnounceListener(response: ZdoTypes.EndDeviceAnnounce): void {
         // @todo debounce
-        const payload: Events.DeviceAnnouncePayload = {networkAddress: response.nwkAddress, ieeeAddr: response.eui64};
         if (this.joinPermitted === true) {
-            this.emit('deviceJoined', payload);
+            this.emit('deviceJoined', {networkAddress: response.nwkAddress, ieeeAddr: response.eui64});
         } else {
             // convert to `zdoResponse` to avoid needing extra event upstream
             this.emit('zdoResponse', Zdo.ClusterId.END_DEVICE_ANNOUNCE, [Zdo.Status.SUCCESS, response]);

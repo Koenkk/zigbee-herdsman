@@ -5,7 +5,7 @@ import fs from 'fs';
 import mixinDeep from 'mixin-deep';
 
 import {Adapter, Events as AdapterEvents, TsType as AdapterTsType} from '../adapter';
-import {BackupUtils} from '../utils';
+import {BackupUtils, Wait} from '../utils';
 import {logger} from '../utils/logger';
 import {isNumberArrayOfLength} from '../utils/utils';
 import * as ZSpec from '../zspec';
@@ -185,28 +185,35 @@ class Controller extends events.EventEmitter<ControllerEventMap> {
         }
 
         // Add coordinator to the database if it is not there yet.
-        const coordinator = await this.adapter.getCoordinator();
+        const coordinatorIEEE = await this.adapter.getCoordinatorIEEE();
 
         if (Device.byType('Coordinator').length === 0) {
             logger.debug('No coordinator in database, querying...', NS);
-            Device.create(
+            const coordinator = Device.create(
                 'Coordinator',
-                coordinator.ieeeAddr,
-                coordinator.networkAddress,
-                coordinator.manufacturerID,
+                coordinatorIEEE,
+                ZSpec.COORDINATOR_ADDRESS,
+                this.adapter.manufacturerID,
                 undefined,
                 undefined,
                 undefined,
                 true,
-                coordinator.endpoints,
             );
+
+            await coordinator.updateActiveEndpoints();
+
+            for (const endpoint of coordinator.endpoints) {
+                await endpoint.updateSimpleDescriptor();
+            }
+
+            coordinator.save();
         }
 
         // Update coordinator ieeeAddr if changed, can happen due to e.g. reflashing
         const databaseCoordinator = Device.byType('Coordinator')[0];
-        if (databaseCoordinator.ieeeAddr !== coordinator.ieeeAddr) {
-            logger.info(`Coordinator address changed, updating to '${coordinator.ieeeAddr}'`, NS);
-            databaseCoordinator.changeIeeeAddress(coordinator.ieeeAddr);
+        if (databaseCoordinator.ieeeAddr !== coordinatorIEEE) {
+            logger.info(`Coordinator address changed, updating to '${coordinatorIEEE}'`, NS);
+            databaseCoordinator.changeIeeeAddress(coordinatorIEEE);
         }
 
         // Set backup timer to 1 day.
@@ -508,6 +515,9 @@ class Controller extends events.EventEmitter<ControllerEventMap> {
         logger.info(`Channel changed to '${newChannel}'`, NS);
 
         this.networkParametersCached = undefined; // invalidate cache
+        // wait for the broadcast to propagate and the adapter to actually change
+        // NOTE: observed to ~9sec on `ember` with actual stack event
+        await Wait(12000);
     }
 
     /**
@@ -629,7 +639,7 @@ class Controller extends events.EventEmitter<ControllerEventMap> {
         if (!device) {
             logger.debug(`New green power device '${ieeeAddr}' joined`, NS);
             logger.debug(`Creating device '${ieeeAddr}'`, NS);
-            device = Device.create('GreenPower', ieeeAddr, payload.networkAddress, undefined, undefined, undefined, modelID, true, []);
+            device = Device.create('GreenPower', ieeeAddr, payload.networkAddress, undefined, undefined, undefined, modelID, true);
             device.save();
 
             this.selfAndDeviceEmit(device, 'deviceJoined', {device});
@@ -677,7 +687,7 @@ class Controller extends events.EventEmitter<ControllerEventMap> {
                         throw new Zdo.StatusError(response[0]);
                     }
                 } catch (error) {
-                    logger.error(`Failed to remove rejected device: ${error}`, NS);
+                    logger.error(`Failed to remove rejected device: ${(error as Error).message}`, NS);
                 }
 
                 return;
@@ -690,7 +700,7 @@ class Controller extends events.EventEmitter<ControllerEventMap> {
         if (!device) {
             logger.debug(`New device '${payload.ieeeAddr}' joined`, NS);
             logger.debug(`Creating device '${payload.ieeeAddr}'`, NS);
-            device = Device.create('Unknown', payload.ieeeAddr, payload.networkAddress, undefined, undefined, undefined, undefined, false, []);
+            device = Device.create('Unknown', payload.ieeeAddr, payload.networkAddress, undefined, undefined, undefined, undefined, false);
             this.selfAndDeviceEmit(device, 'deviceJoined', {device});
         } else if (device.isDeleted) {
             logger.debug(`Deleted device '${payload.ieeeAddr}' joined, undeleting`, NS);

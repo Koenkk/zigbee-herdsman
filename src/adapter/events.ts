@@ -5,16 +5,6 @@ type DeviceJoinedPayload = {
     ieeeAddr: string;
 };
 
-type DeviceAnnouncePayload = {
-    networkAddress: number;
-    ieeeAddr: string;
-};
-
-type NetworkAddressPayload = {
-    networkAddress: number;
-    ieeeAddr: string;
-};
-
 type DeviceLeavePayload = {networkAddress?: number; ieeeAddr: string} | {networkAddress: number; ieeeAddr?: string};
 
 interface ZclPayload {
@@ -30,4 +20,4 @@ interface ZclPayload {
     destinationEndpoint: number;
 }
 
-export {DeviceJoinedPayload, ZclPayload, DeviceAnnouncePayload, NetworkAddressPayload, DeviceLeavePayload};
+export {DeviceJoinedPayload, ZclPayload, DeviceLeavePayload};

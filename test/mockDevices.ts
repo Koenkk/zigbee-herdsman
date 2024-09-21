@@ -97,7 +97,7 @@ export const MOCK_DEVICES: {
 } = {
     // coordinator
     0: {
-        nodeDescriptor: [Zdo.Status.SUCCESS, {...NODE_DESC_DEFAULTS, nwkAddress: 0, logicalType: 0b000, manufacturerCode: 100}],
+        nodeDescriptor: [Zdo.Status.SUCCESS, {...NODE_DESC_DEFAULTS, nwkAddress: 0, logicalType: 0b000, manufacturerCode: 0x0007}],
         activeEndpoints: [Zdo.Status.SUCCESS, {nwkAddress: 0, endpointList: [1, 2]}],
         simpleDescriptor: {
             1: [

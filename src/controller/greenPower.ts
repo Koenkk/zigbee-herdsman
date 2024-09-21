@@ -4,7 +4,7 @@ import events from 'events';
 
 import {Adapter, Events as AdapterEvents} from '../adapter';
 import {logger} from '../utils/logger';
-import {GP_ENDPOINT, GP_GROUP_ID} from '../zspec/consts';
+import {COORDINATOR_ADDRESS, GP_ENDPOINT, GP_GROUP_ID} from '../zspec/consts';
 import {BroadcastAddress} from '../zspec/enums';
 import * as Zcl from '../zspec/zcl';
 import ZclTransactionSequenceNumber from './helpers/zclTransactionSequenceNumber';
@@ -62,9 +62,9 @@ class GreenPower extends events.EventEmitter<GreenPowerEventMap> {
             case 0b00: // Full unicast forwarding
             case 0b11: {
                 // Lightweight unicast forwarding
-                const coordinator = await this.adapter.getCoordinator();
-                payload.sinkIEEEAddr = coordinator.ieeeAddr;
-                payload.sinkNwkAddr = coordinator.networkAddress;
+                const coordinatorIEEE = await this.adapter.getCoordinatorIEEE();
+                payload.sinkIEEEAddr = coordinatorIEEE;
+                payload.sinkNwkAddr = COORDINATOR_ADDRESS;
                 break;
             }
             /* istanbul ignore next */

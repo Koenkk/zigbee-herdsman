@@ -697,23 +697,12 @@ class Device extends Entity<ControllerEventMap> {
         powerSource: string | undefined,
         modelID: string | undefined,
         interviewCompleted: boolean,
-        endpoints: {
-            ID: number;
-            profileID: number;
-            deviceID: number;
-            inputClusters: number[];
-            outputClusters: number[];
-        }[],
     ): Device {
         Device.loadFromDatabaseIfNecessary();
 
         if (Device.devices.has(ieeeAddr)) {
             throw new Error(`Device with IEEE address '${ieeeAddr}' already exists`);
         }
-
-        const endpointsMapped = endpoints.map((e): Endpoint => {
-            return Endpoint.create(e.ID, e.profileID, e.deviceID, e.inputClusters, e.outputClusters, networkAddress, ieeeAddr);
-        });
 
         const ID = Entity.database!.newID();
         const device = new Device(
@@ -722,7 +711,7 @@ class Device extends Entity<ControllerEventMap> {
             ieeeAddr,
             networkAddress,
             manufacturerID,
-            endpointsMapped,
+            [],
             manufacturerName,
             powerSource,
             modelID,
