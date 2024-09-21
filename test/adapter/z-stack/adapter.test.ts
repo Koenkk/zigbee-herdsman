@@ -4334,4 +4334,21 @@ describe('zstack-adapter', () => {
 
         expect(mockZnpRequestZdo).toHaveBeenCalledWith(clusterId, Buffer.from([1234 & 0xff, (1234 >> 8) & 0xff, ...zdoPayload]), undefined);
     });
+
+    it('Node descriptor request should discover route to fix potential fails', async () => {
+        // https://github.com/Koenkk/zigbee2mqtt/issues/3276
+        basicMocks();
+        await adapter.start();
+        mockZnpRequest.mockClear();
+        mockZnpRequestZdo.mockClear();
+
+        const clusterId = Zdo.ClusterId.NODE_DESCRIPTOR_REQUEST;
+        const zdoPayload = Zdo.Buffalo.buildRequest(false, clusterId, 1234);
+
+        await adapter.sendZdo(ZSpec.BLANK_EUI64, 1234, clusterId, zdoPayload, true);
+
+        expect(mockZnpRequestZdo).toHaveBeenCalledWith(clusterId, Buffer.from([1234 & 0xff, (1234 >> 8) & 0xff, ...zdoPayload]), undefined);
+        expect(mockZnpRequest).toHaveBeenCalledTimes(1);
+        expect(mockZnpRequest).toHaveBeenCalledWith(Subsystem.ZDO, 'extRouteDisc', {dstAddr: 1234, options: 0, radius: 30});
+    });
 });

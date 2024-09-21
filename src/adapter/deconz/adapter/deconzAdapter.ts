@@ -633,7 +633,6 @@ class DeconzAdapter extends Adapter {
             timeout: 30,
         };
 
-        logger.debug(`UNSUPPORTED sendZdo(${ieeeAddress}, ${networkAddress}, ${clusterId}, ${payload}, ${disableResponse})`, NS);
         this.driver
             .enqueueSendDataRequest(req)
             .then(() => {})

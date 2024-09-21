@@ -414,7 +414,7 @@ class ZStackAdapter extends Adapter {
                 case Zdo.ClusterId.PERMIT_JOINING_REQUEST: {
                     const finalPayload = Buffer.alloc(payload.length + 3);
                     finalPayload.writeUInt8(ZSpec.BroadcastAddress[networkAddress] ? AddressMode.ADDR_BROADCAST : AddressMode.ADDR_16BIT, 0);
-                    // TODO: confirm zstack uses AddressMode.ADDR_16BIT + ZSpec.BroadcastAddress.DEFAULT to signal "coordinator-only" (assumed from previous code)
+                    // zstack uses AddressMode.ADDR_16BIT + ZSpec.BroadcastAddress.DEFAULT to signal "coordinator-only"
                     finalPayload.writeUInt16LE(networkAddress === 0 ? ZSpec.BroadcastAddress.DEFAULT : networkAddress, 1);
                     finalPayload.set(payload, 3);
 
@@ -424,7 +424,7 @@ class ZStackAdapter extends Adapter {
 
                 case Zdo.ClusterId.NWK_UPDATE_REQUEST: {
                     // extra zeroes for empty nwkManagerAddr if necessary
-                    const zeroes = 9 - payload.length - 1; /* TODO: zstack doesn't have nwkUpdateId? */
+                    const zeroes = 9 - payload.length - 1; /* zstack doesn't have nwkUpdateId */
                     const finalPayload = Buffer.alloc(payload.length + 3 + zeroes);
                     finalPayload.writeUInt16LE(networkAddress, 0);
                     finalPayload.writeUInt8(ZSpec.BroadcastAddress[networkAddress] ? AddressMode.ADDR_BROADCAST : AddressMode.ADDR_16BIT, 2);
@@ -436,8 +436,7 @@ class ZStackAdapter extends Adapter {
 
                 case Zdo.ClusterId.BIND_REQUEST:
                 case Zdo.ClusterId.UNBIND_REQUEST: {
-                    // extra zeroes for uint16 (in place of ieee when MULTICAST) and endpoint
-                    // TODO: blank endpoint at end should be fine since should not be used with MULTICAST bind type?
+                    // extra zeroes for uint16 (in place of ieee when MULTICAST) and endpoint (not used when MULTICAST)
                     const zeroes = 21 - payload.length;
                     const finalPayload = Buffer.alloc(payload.length + 2 + zeroes);
                     finalPayload.writeUInt16LE(networkAddress, 0);
@@ -447,7 +446,8 @@ class ZStackAdapter extends Adapter {
                     break;
                 }
 
-                case Zdo.ClusterId.NETWORK_ADDRESS_REQUEST: {
+                case Zdo.ClusterId.NETWORK_ADDRESS_REQUEST:
+                case Zdo.ClusterId.IEEE_ADDRESS_REQUEST: {
                     // no modification necessary
                     break;
                 }
@@ -481,6 +481,11 @@ class ZStackAdapter extends Adapter {
                         undefined,
                     );
                 }
+            }
+
+            if (clusterId === Zdo.ClusterId.NODE_DESCRIPTOR_REQUEST) {
+                // makes it succeed in some cases: https://github.com/Koenkk/zigbee2mqtt/issues/3276
+                await this.discoverRoute(networkAddress);
             }
 
             await this.znp.requestZdo(clusterId, payload, waiter?.ID);
