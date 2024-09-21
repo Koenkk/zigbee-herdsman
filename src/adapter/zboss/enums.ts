@@ -215,6 +215,7 @@ export enum CommandId {
     ZDO_SYSTEM_SRV_DISCOVERY_REQ = 0x020e,
     ZDO_MGMT_BIND_REQ = 0x020f,
     ZDO_MGMT_LQI_REQ = 0x0210,
+    // ZDO_MGMT_RTG_REQ = 0x0???,
     ZDO_MGMT_NWK_UPDATE_REQ = 0x0211,
     ZDO_GET_STATS = 0x0213,
     ZDO_DEV_AUTHORIZED_IND = 0x0214,
@@ -320,9 +321,40 @@ export enum BuffaloZBOSSDataType {
     EXTENDED_PAN_ID = 3001,
 }
 
+export enum DeviceAuthorizedType {
+    LEGACY = 0,
+    R21_TCLK = 1,
+    SE_CBKE = 2,
+}
+
+export enum DeviceAuthorizedLegacyStatus {
+    SUCCESS = 0,
+    FAILED = 1,
+}
+
+export enum DeviceAuthorizedR21TCLKStatus {
+    SUCCESS = 0,
+    TIMEOUT = 1,
+    FAILED = 2,
+}
+
+export enum DeviceAuthorizedSECBKEStatus {
+    SUCCESS = 0,
+}
+
 export enum DeviceUpdateStatus {
-    SECURE_REJOIN = 0,
-    UNSECURE_REJOIN = 1,
+    SECURED_REJOIN = 0,
+    UNSECURED_JOIN = 1,
     LEFT = 2,
     TC_REJOIN = 3,
+    // 0x04 – 0x07 = Reserved
+}
+
+export enum DeviceUpdateTCAction {
+    /* authorize device */
+    AUTHORIZE = 0,
+    /* deby authorization - msend Remove device  */
+    DENY = 1,
+    /* ignore Update Device - that meay lead to authorization deny */
+    IGNORE = 2,
 }

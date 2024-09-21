@@ -1,17 +1,19 @@
+import assert from 'assert';
 import events from 'events';
 import net from 'net';
 
-import Equals from 'fast-deep-equal/es6';
-
 import {Queue, RealpathSync, Wait, Waitress} from '../../../utils';
 import {logger} from '../../../utils/logger';
+import {ClusterId as ZdoClusterId} from '../../../zspec/zdo';
 import {SerialPort} from '../../serialPort';
 import SerialPortUtils from '../../serialPortUtils';
 import SocketPortUtils from '../../socketPortUtils';
 import * as Constants from '../constants';
 import {Frame as UnpiFrame, Parser as UnpiParser, Writer as UnpiWriter} from '../unpi';
 import {Subsystem, Type} from '../unpi/constants';
+import Definition from './definition';
 import {ZpiObjectPayload} from './tstype';
+import {isMtCmdSreqZdo} from './utils';
 import ZpiObject from './zpiObject';
 
 const {
@@ -31,7 +33,9 @@ interface WaitressMatcher {
     type: Type;
     subsystem: Subsystem;
     command: string;
-    payload?: ZpiObjectPayload;
+    target?: number | string;
+    transid?: number;
+    state?: number;
 }
 
 const autoDetectDefinitions = [
@@ -308,6 +312,30 @@ class Znp extends events.EventEmitter {
         });
     }
 
+    public requestZdo(clusterId: ZdoClusterId, payload: Buffer, waiterID?: number): Promise<void> {
+        return this.queue.execute(async () => {
+            const cmd = Definition[Subsystem.ZDO].find((c) => isMtCmdSreqZdo(c) && c.zdoClusterId === clusterId);
+            assert(cmd, `Command for ZDO cluster ID '${clusterId}' not supported.`);
+
+            const unpiFrame = new UnpiFrame(Type.SREQ, Subsystem.ZDO, cmd.ID, payload);
+            const waiter = this.waitress.waitFor({type: Type.SRSP, subsystem: Subsystem.ZDO, command: cmd.name}, timeouts.SREQ);
+
+            this.unpiWriter.writeFrame(unpiFrame);
+
+            const result = await waiter.start().promise;
+
+            if (result?.payload.status !== undefined && result.payload.status !== ZnpCommandStatus.SUCCESS) {
+                if (waiterID !== undefined) {
+                    this.waitress.remove(waiterID);
+                }
+
+                throw new Error(
+                    `--> 'SREQ: ZDO - ${ZdoClusterId[clusterId]} - ${payload.toString('hex')}' failed with status '${statusDescription(result.payload.status)}'`,
+                );
+            }
+        });
+    }
+
     private waitressTimeoutFormatter(matcher: WaitressMatcher, timeout: number): string {
         return `${Type[matcher.type]} - ${Subsystem[matcher.subsystem]} - ${matcher.command} after ${timeout}ms`;
     }
@@ -316,27 +344,26 @@ class Znp extends events.EventEmitter {
         type: Type,
         subsystem: Subsystem,
         command: string,
-        payload: ZpiObjectPayload = {},
+        target: number | string | undefined,
+        transid: number | undefined,
+        state: number | undefined,
         timeout: number = timeouts.default,
     ): {start: () => {promise: Promise<ZpiObject>; ID: number}; ID: number} {
-        return this.waitress.waitFor({type, subsystem, command, payload}, timeout);
+        return this.waitress.waitFor({type, subsystem, command, target, transid, state}, timeout);
     }
 
     private waitressValidator(zpiObject: ZpiObject, matcher: WaitressMatcher): boolean {
-        const requiredMatch =
-            matcher.type === zpiObject.type && matcher.subsystem == zpiObject.subsystem && matcher.command === zpiObject.command.name;
-        let payloadMatch = true;
-
-        if (matcher.payload) {
-            for (const key in matcher.payload) {
-                if (!Equals(zpiObject.payload[key], matcher.payload[key])) {
-                    payloadMatch = false;
-                    break;
-                }
-            }
-        }
-
-        return requiredMatch && payloadMatch;
+        return (
+            matcher.type === zpiObject.type &&
+            matcher.subsystem == zpiObject.subsystem &&
+            matcher.command === zpiObject.command.name &&
+            (matcher.target === undefined ||
+                (typeof matcher.target === 'number'
+                    ? matcher.target === zpiObject.payload.srcaddr
+                    : matcher.target === zpiObject.payload.zdo?.[1]?.eui64)) &&
+            (matcher.transid === undefined || matcher.transid === zpiObject.payload.transid) &&
+            (matcher.state === undefined || matcher.state === zpiObject.payload.state)
+        );
     }
 }
 

@@ -1,15 +1,20 @@
 /* istanbul ignore file */
 
+import assert from 'assert';
+
 import {Adapter, TsType} from '../..';
 import {Backup} from '../../../models';
-import {Queue, RealpathSync, Waitress} from '../../../utils';
+import {Queue, RealpathSync, Wait, Waitress} from '../../../utils';
 import {logger} from '../../../utils/logger';
-import {BroadcastAddress} from '../../../zspec/enums';
+import * as ZSpec from '../../../zspec';
+import {EUI64} from '../../../zspec/tstypes';
 import * as Zcl from '../../../zspec/zcl';
-import {DeviceJoinedPayload, DeviceLeavePayload, ZclPayload} from '../../events';
+import * as Zdo from '../../../zspec/zdo';
+import * as ZdoTypes from '../../../zspec/zdo/definition/tstypes';
+import {ZclPayload} from '../../events';
 import SerialPortUtils from '../../serialPortUtils';
 import SocketPortUtils from '../../socketPortUtils';
-import {Coordinator, LQI, LQINeighbor} from '../../tstype';
+import {Coordinator} from '../../tstype';
 import {ZBOSSDriver} from '../driver';
 import {CommandId, DeviceUpdateStatus} from '../enums';
 import {FrameType, ZBOSSFrame} from '../frame';
@@ -33,7 +38,6 @@ export class ZBOSSAdapter extends Adapter {
     private queue: Queue;
     private readonly driver: ZBOSSDriver;
     private waitress: Waitress<ZclPayload, WaitressMatcher>;
-    public coordinator?: Coordinator;
 
     constructor(
         networkOptions: TsType.NetworkOptions,
@@ -54,56 +58,56 @@ export class ZBOSSAdapter extends Adapter {
 
     private async processMessage(frame: ZBOSSFrame): Promise<void> {
         logger.debug(() => `processMessage: ${JSON.stringify(frame)}`, NS);
-        if (
-            frame.type == FrameType.INDICATION &&
-            frame.commandId == CommandId.ZDO_DEV_UPDATE_IND &&
-            frame.payload.status == DeviceUpdateStatus.LEFT
-        ) {
-            logger.debug(`Device left network request received: ${frame.payload.nwk} ${frame.payload.ieee}`, NS);
-            const payload: DeviceLeavePayload = {
-                networkAddress: frame.payload.nwk,
-                ieeeAddr: frame.payload.ieee,
-            };
 
-            this.emit('deviceLeave', payload);
+        if (frame.payload.zdoClusterId !== undefined) {
+            this.emit('zdoResponse', frame.payload.zdoClusterId, frame.payload.zdo!);
+        } else if (frame.type == FrameType.INDICATION) {
+            switch (frame.commandId) {
+                case CommandId.ZDO_DEV_UPDATE_IND: {
+                    logger.debug(`Device ${frame.payload.ieee}:${frame.payload.nwk} ${DeviceUpdateStatus[frame.payload.status]}.`, NS);
+
+                    if (frame.payload.status === DeviceUpdateStatus.LEFT) {
+                        this.emit('deviceLeave', {
+                            networkAddress: frame.payload.nwk,
+                            ieeeAddr: frame.payload.ieee,
+                        });
+                    } else {
+                        // SECURE_REJOIN, UNSECURE_JOIN, TC_REJOIN
+                        this.emit('deviceJoined', {
+                            networkAddress: frame.payload.nwk,
+                            ieeeAddr: frame.payload.ieee,
+                        });
+                    }
+                    break;
+                }
+
+                case CommandId.NWK_LEAVE_IND: {
+                    this.emit('deviceLeave', {
+                        networkAddress: frame.payload.nwk,
+                        ieeeAddr: frame.payload.ieee,
+                    });
+                    break;
+                }
+
+                case CommandId.APSDE_DATA_IND: {
+                    const payload: ZclPayload = {
+                        clusterID: frame.payload.clusterID,
+                        header: Zcl.Header.fromBuffer(frame.payload.data),
+                        data: frame.payload.data,
+                        address: frame.payload.srcNwk,
+                        endpoint: frame.payload.srcEndpoint,
+                        linkquality: frame.payload.lqi,
+                        groupID: frame.payload.grpNwk,
+                        wasBroadcast: false,
+                        destinationEndpoint: frame.payload.dstEndpoint,
+                    };
+
+                    this.waitress.resolve(payload);
+                    this.emit('zclPayload', payload);
+                    break;
+                }
+            }
         }
-        if (frame.type == FrameType.INDICATION && frame.commandId == CommandId.NWK_LEAVE_IND) {
-            logger.debug(`Device left network request received from ${frame.payload.ieee}`, NS);
-            const payload: DeviceLeavePayload = {
-                networkAddress: frame.payload.nwk,
-                ieeeAddr: frame.payload.ieee,
-            };
-
-            this.emit('deviceLeave', payload);
-        }
-        if (frame.type == FrameType.INDICATION && frame.commandId == CommandId.ZDO_DEV_ANNCE_IND) {
-            logger.debug(`Device join request received: ${frame.payload.nwk} ${frame.payload.ieee}`, NS);
-            const payload: DeviceJoinedPayload = {
-                networkAddress: frame.payload.nwk,
-                ieeeAddr: frame.payload.ieee,
-            };
-
-            this.emit('deviceJoined', payload);
-        }
-
-        if (frame.type == FrameType.INDICATION && frame.commandId == CommandId.APSDE_DATA_IND) {
-            logger.debug(`ZCL frame received from ${frame.payload.srcNwk} ${frame.payload.srcEndpoint}`, NS);
-            const payload: ZclPayload = {
-                clusterID: frame.payload.clusterID,
-                header: Zcl.Header.fromBuffer(frame.payload.data),
-                data: frame.payload.data,
-                address: frame.payload.srcNwk,
-                endpoint: frame.payload.srcEndpoint,
-                linkquality: frame.payload.lqi,
-                groupID: frame.payload.grpNwk,
-                wasBroadcast: false,
-                destinationEndpoint: frame.payload.dstEndpoint,
-            };
-
-            this.waitress.resolve(payload);
-            this.emit('zclPayload', payload);
-        }
-        //this.emit('event', frame);
     }
 
     public static async isValidPath(path: string): Promise<boolean> {
@@ -142,26 +146,56 @@ export class ZBOSSAdapter extends Adapter {
 
     public async getCoordinator(): Promise<Coordinator> {
         return await this.queue.execute<Coordinator>(async () => {
-            const info = await this.driver.getCoordinator();
-            logger.debug(() => `ZBOSS Adapter Coordinator description:\n${JSON.stringify(info)}`, NS);
-            this.coordinator = {
-                networkAddress: info.networkAddress,
-                manufacturerID: 0,
-                ieeeAddr: info.ieeeAddr,
-                endpoints: info.endpoints,
-            };
+            const activeEndpoints = await this.activeEndpoints(0x0000);
+            const ap = [];
 
-            return this.coordinator;
+            for (const ep of activeEndpoints.endpoints) {
+                const sd = await this.simpleDescriptor(0x0000, ep);
+
+                ap.push({
+                    ID: sd.endpointID,
+                    profileID: sd.profileID,
+                    deviceID: sd.deviceID,
+                    inputClusters: sd.inputClusters,
+                    outputClusters: sd.outputClusters,
+                });
+            }
+
+            return {
+                ieeeAddr: this.driver.netInfo.ieeeAddr,
+                networkAddress: ZSpec.COORDINATOR_ADDRESS,
+                manufacturerID: 0x0000,
+                endpoints: ap,
+            };
         });
     }
 
     public async getCoordinatorVersion(): Promise<TsType.CoordinatorVersion> {
-        return await this.driver.getCoordinatorVersion();
+        return await this.queue.execute<TsType.CoordinatorVersion>(async () => {
+            const ver = await this.driver.execCommand(CommandId.GET_MODULE_VERSION, {});
+            const cver = await this.driver.execCommand(CommandId.GET_COORDINATOR_VERSION, {});
+            const ver2str = (version: number): string => {
+                const major = (version >> 24) & 0xff;
+                const minor = (version >> 16) & 0xff;
+                const revision = (version >> 8) & 0xff;
+                const commit = version & 0xff;
+                return `${major}.${minor}.${revision}.${commit}`;
+            };
+
+            return {
+                type: `zboss`,
+                meta: {
+                    coordinator: cver.payload.version,
+                    stack: ver2str(ver.payload.stackVersion),
+                    protocol: ver2str(ver.payload.protocolVersion),
+                    revision: ver2str(ver.payload.fwVersion),
+                },
+            };
+        });
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     public async reset(type: 'soft' | 'hard'): Promise<void> {
-        return await Promise.reject(new Error('Not supported'));
+        throw new Error(`This adapter does not reset '${type}'`);
     }
 
     public async supportsBackup(): Promise<boolean> {
@@ -187,124 +221,208 @@ export class ZBOSSAdapter extends Adapter {
         });
     }
 
-    public async supportsChangeChannel(): Promise<boolean> {
-        return false;
-    }
-
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     public async changeChannel(newChannel: number): Promise<void> {
-        throw new Error(`Channel change is not supported for 'zboss' yet`);
+        const clusterId = Zdo.ClusterId.NWK_UPDATE_REQUEST;
+        const zdoPayload = Zdo.Buffalo.buildRequest(this.hasZdoMessageOverhead, clusterId, [newChannel], 0xfe, undefined, undefined, undefined);
+
+        await this.sendZdo(ZSpec.BLANK_EUI64, ZSpec.BroadcastAddress.SLEEPY, clusterId, zdoPayload, true /* handled below */);
+        await Wait(12000);
     }
 
     public async setTransmitPower(value: number): Promise<void> {
         if (this.driver.isInitialized()) {
             return await this.queue.execute<void>(async () => {
-                await this.driver.setTXPower(value);
+                await this.driver.execCommand(CommandId.SET_TX_POWER, {txPower: value});
             });
         }
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     public async addInstallCode(ieeeAddress: string, key: Buffer): Promise<void> {
+        logger.error(() => `NOT SUPPORTED: sendZclFrameToGroup(${ieeeAddress},${key.toString('hex')}`, NS);
         throw new Error(`Install code is not supported for 'zboss' yet`);
     }
 
-    public async permitJoin(seconds: number, networkAddress: number): Promise<void> {
+    public async permitJoin(seconds: number, networkAddress?: number): Promise<void> {
         if (this.driver.isInitialized()) {
-            return await this.queue.execute<void>(async () => {
-                await this.driver.permitJoin(networkAddress, seconds);
-                if (!networkAddress) {
-                    // send broadcast permit
-                    await this.driver.permitJoin(0xfffc, seconds);
+            const clusterId = Zdo.ClusterId.PERMIT_JOINING_REQUEST;
+            // `authentication`: TC significance always 1 (zb specs)
+            const zdoPayload = Zdo.Buffalo.buildRequest(this.hasZdoMessageOverhead, clusterId, seconds, 1, []);
+
+            if (networkAddress) {
+                // `device-only`
+                const result = await this.sendZdo(ZSpec.BLANK_EUI64, networkAddress, clusterId, zdoPayload, false);
+
+                /* istanbul ignore next */
+                if (!Zdo.Buffalo.checkStatus(result)) {
+                    // TODO: will disappear once moved upstream
+                    throw new Zdo.StatusError(result[0]);
                 }
-            });
+            } else {
+                // `coordinator-only` (for `all` too)
+                const result = await this.sendZdo(ZSpec.BLANK_EUI64, ZSpec.COORDINATOR_ADDRESS, clusterId, zdoPayload, false);
+
+                /* istanbul ignore next */
+                if (!Zdo.Buffalo.checkStatus(result)) {
+                    // TODO: will disappear once moved upstream
+                    throw new Zdo.StatusError(result[0]);
+                }
+
+                if (networkAddress === undefined) {
+                    // `all`: broadcast
+                    await this.sendZdo(ZSpec.BLANK_EUI64, ZSpec.BroadcastAddress.DEFAULT, clusterId, zdoPayload, true);
+                }
+            }
         }
     }
 
     public async lqi(networkAddress: number): Promise<TsType.LQI> {
-        return await this.queue.execute<LQI>(async (): Promise<LQI> => {
-            const neighbors: LQINeighbor[] = [];
+        const clusterId = Zdo.ClusterId.LQI_TABLE_REQUEST;
+        const neighbors: TsType.LQINeighbor[] = [];
+        const request = async (startIndex: number): Promise<[tableEntries: number, entryCount: number]> => {
+            const zdoPayload = Zdo.Buffalo.buildRequest(this.hasZdoMessageOverhead, clusterId, startIndex);
+            const result = await this.sendZdo(ZSpec.BLANK_EUI64, networkAddress, clusterId, zdoPayload, false);
 
-            const request = async (startIndex: number): Promise<ZBOSSFrame> => {
-                try {
-                    const result = await this.driver.lqi(networkAddress, startIndex);
+            /* istanbul ignore else */
+            if (Zdo.Buffalo.checkStatus(result)) {
+                const payload = result[1];
 
-                    return result;
-                } catch (error) {
-                    throw new Error(`LQI for '${networkAddress}' failed: ${error}`);
-                }
-            };
-
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const add = (list: any): void => {
-                for (const entry of list) {
+                for (const entry of payload.entryList) {
                     neighbors.push({
+                        ieeeAddr: entry.eui64,
+                        networkAddress: entry.nwkAddress,
                         linkquality: entry.lqi,
-                        networkAddress: entry.nwk,
-                        ieeeAddr: entry.ieee,
-                        relationship: (entry.relationship >> 4) & 0x7,
+                        relationship: entry.relationship,
                         depth: entry.depth,
                     });
                 }
-            };
 
-            let response = (await request(0)).payload;
-            add(response.neighbors);
-            const size = response.entries;
-            let nextStartIndex = response.neighbors.length;
-
-            while (neighbors.length < size) {
-                response = await request(nextStartIndex);
-                add(response.neighbors);
-                nextStartIndex += response.neighbors.length;
+                return [payload.neighborTableEntries, payload.entryList.length];
+            } else {
+                // TODO: will disappear once moved upstream
+                throw new Zdo.StatusError(result[0]);
             }
+        };
 
-            return {neighbors};
-        }, networkAddress);
+        let [tableEntries, entryCount] = await request(0);
+
+        const size = tableEntries;
+        let nextStartIndex = entryCount;
+
+        while (neighbors.length < size) {
+            [tableEntries, entryCount] = await request(nextStartIndex);
+
+            nextStartIndex += entryCount;
+        }
+
+        return {neighbors};
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     public async routingTable(networkAddress: number): Promise<TsType.RoutingTable> {
-        throw new Error(`Routing table is not supported for 'zboss' yet`);
+        throw new Error(`Routing table is not supported for 'zboss' yet '${networkAddress}'`);
+        // const clusterId = Zdo.ClusterId.ROUTING_TABLE_REQUEST;
+        // const table: TsType.RoutingTableEntry[] = [];
+        // const request = async (startIndex: number): Promise<[tableEntries: number, entryCount: number]> => {
+        //     const zdoPayload = Zdo.Buffalo.buildRequest(this.hasZdoMessageOverhead, clusterId, startIndex);
+        //     const result = await this.sendZdo(ZSpec.BLANK_EUI64, networkAddress, clusterId, zdoPayload, false);
+
+        //     /* istanbul ignore else */
+        //     if (Zdo.Buffalo.checkStatus(result)) {
+        //         const payload = result[1];
+
+        //         for (const entry of payload.entryList) {
+        //             table.push({
+        //                 destinationAddress: entry.destinationAddress,
+        //                 status: entry.status,
+        //                 nextHop: entry.nextHopAddress,
+        //             });
+        //         }
+
+        //         return [payload.routingTableEntries, payload.entryList.length];
+        //     } else {
+        //         // TODO: will disappear once moved upstream
+        //         throw new Zdo.StatusError(result[0]);
+        //     }
+        // };
+
+        // let [tableEntries, entryCount] = await request(0);
+
+        // const size = tableEntries;
+        // let nextStartIndex = entryCount;
+
+        // while (table.length < size) {
+        //     [tableEntries, entryCount] = await request(nextStartIndex);
+
+        //     nextStartIndex += entryCount;
+        // }
+
+        // return {table};
     }
 
     public async nodeDescriptor(networkAddress: number): Promise<TsType.NodeDescriptor> {
-        return await this.queue.execute<TsType.NodeDescriptor>(async () => {
-            try {
-                logger.debug(`Requesting 'Node Descriptor' for '${networkAddress}'`, NS);
-                const descriptor = await this.driver.nodeDescriptor(networkAddress);
-                const logicaltype = descriptor.payload.flags & 0x07;
-                return {
-                    manufacturerCode: descriptor.payload.manufacturerCode,
-                    type: logicaltype == 0 ? 'Coordinator' : logicaltype == 1 ? 'Router' : 'EndDevice',
-                };
-            } catch (error) {
-                logger.debug(`Node descriptor request for '${networkAddress}' failed (${error}), retry`, NS);
-                throw error;
+        const clusterId = Zdo.ClusterId.NODE_DESCRIPTOR_REQUEST;
+        const zdoPayload = Zdo.Buffalo.buildRequest(this.hasZdoMessageOverhead, clusterId, networkAddress);
+        const result = await this.sendZdo(ZSpec.BLANK_EUI64, networkAddress, clusterId, zdoPayload, false);
+
+        /* istanbul ignore else */
+        if (Zdo.Buffalo.checkStatus(result)) {
+            const payload = result[1];
+            let type: TsType.DeviceType = 'Unknown';
+
+            switch (payload.logicalType) {
+                case 0x0:
+                    type = 'Coordinator';
+                    break;
+                case 0x1:
+                    type = 'Router';
+                    break;
+                case 0x2:
+                    type = 'EndDevice';
+                    break;
             }
-        });
+
+            return {type, manufacturerCode: payload.manufacturerCode};
+        } else {
+            // TODO: will disappear once moved upstream
+            throw new Zdo.StatusError(result[0]);
+        }
     }
 
     public async activeEndpoints(networkAddress: number): Promise<TsType.ActiveEndpoints> {
-        logger.debug(`Requesting 'Active endpoints' for '${networkAddress}'`, NS);
-        return await this.queue.execute<TsType.ActiveEndpoints>(async () => {
-            const endpoints = await this.driver.activeEndpoints(networkAddress);
-            return {endpoints: [...endpoints.payload.endpoints]};
-        }, networkAddress);
+        const clusterId = Zdo.ClusterId.ACTIVE_ENDPOINTS_REQUEST;
+        const zdoPayload = Zdo.Buffalo.buildRequest(this.hasZdoMessageOverhead, clusterId, networkAddress);
+        const result = await this.sendZdo(ZSpec.BLANK_EUI64, networkAddress, clusterId, zdoPayload, false);
+
+        /* istanbul ignore else */
+        if (Zdo.Buffalo.checkStatus(result)) {
+            const payload = result[1];
+
+            return {endpoints: payload.endpointList};
+        } else {
+            // TODO: will disappear once moved upstream
+            throw new Zdo.StatusError(result[0]);
+        }
     }
 
     public async simpleDescriptor(networkAddress: number, endpointID: number): Promise<TsType.SimpleDescriptor> {
-        logger.debug(`Requesting 'Simple Descriptor' for '${networkAddress}' endpoint ${endpointID}`, NS);
-        return await this.queue.execute<TsType.SimpleDescriptor>(async () => {
-            const sd = await this.driver.simpleDescriptor(networkAddress, endpointID);
+        const clusterId = Zdo.ClusterId.SIMPLE_DESCRIPTOR_REQUEST;
+        const zdoPayload = Zdo.Buffalo.buildRequest(this.hasZdoMessageOverhead, clusterId, networkAddress, endpointID);
+        const result = await this.sendZdo(ZSpec.BLANK_EUI64, networkAddress, clusterId, zdoPayload, false);
+
+        /* istanbul ignore else */
+        if (Zdo.Buffalo.checkStatus(result)) {
+            const payload = result[1];
+
             return {
-                profileID: sd.payload.profileID,
-                endpointID: sd.payload.endpoint,
-                deviceID: sd.payload.deviceID,
-                inputClusters: sd.payload.inputClusters,
-                outputClusters: sd.payload.outputClusters,
+                profileID: payload.profileId,
+                endpointID: payload.endpoint,
+                deviceID: payload.deviceId,
+                inputClusters: payload.inClusterList,
+                outputClusters: payload.outClusterList,
             };
-        }, networkAddress);
+        } else {
+            // TODO: will disappear once moved upstream
+            throw new Zdo.StatusError(result[0]);
+        }
     }
 
     public async bind(
@@ -316,17 +434,25 @@ export class ZBOSSAdapter extends Adapter {
         type: 'endpoint' | 'group',
         destinationEndpoint?: number,
     ): Promise<void> {
-        return await this.queue.execute<void>(async () => {
-            await this.driver.bind(
-                destinationNetworkAddress,
-                sourceIeeeAddress,
-                sourceEndpoint,
-                clusterID,
-                destinationAddressOrGroup,
-                type,
-                destinationEndpoint,
-            );
-        }, destinationNetworkAddress);
+        const clusterId = Zdo.ClusterId.BIND_REQUEST;
+        const zdoPayload = Zdo.Buffalo.buildRequest(
+            this.hasZdoMessageOverhead,
+            clusterId,
+            sourceIeeeAddress as EUI64,
+            sourceEndpoint,
+            clusterID,
+            type === 'group' ? Zdo.MULTICAST_BINDING : Zdo.UNICAST_BINDING,
+            destinationAddressOrGroup as EUI64, // not used with MULTICAST_BINDING
+            destinationAddressOrGroup as number, // not used with UNICAST_BINDING
+            destinationEndpoint ?? 0, // not used with MULTICAST_BINDING
+        );
+        const result = await this.sendZdo(ZSpec.BLANK_EUI64, destinationNetworkAddress, clusterId, zdoPayload, false);
+
+        /* istanbul ignore next */
+        if (!Zdo.Buffalo.checkStatus(result)) {
+            // TODO: will disappear once moved upstream
+            throw new Zdo.StatusError(result[0]);
+        }
     }
 
     public async unbind(
@@ -338,23 +464,90 @@ export class ZBOSSAdapter extends Adapter {
         type: 'endpoint' | 'group',
         destinationEndpoint: number,
     ): Promise<void> {
-        return await this.queue.execute<void>(async () => {
-            await this.driver.unbind(
-                destinationNetworkAddress,
-                sourceIeeeAddress,
-                sourceEndpoint,
-                clusterID,
-                destinationAddressOrGroup,
-                type,
-                destinationEndpoint,
-            );
-        }, destinationNetworkAddress);
+        const clusterId = Zdo.ClusterId.UNBIND_REQUEST;
+        const zdoPayload = Zdo.Buffalo.buildRequest(
+            this.hasZdoMessageOverhead,
+            clusterId,
+            sourceIeeeAddress as EUI64,
+            sourceEndpoint,
+            clusterID,
+            type === 'group' ? Zdo.MULTICAST_BINDING : Zdo.UNICAST_BINDING,
+            destinationAddressOrGroup as EUI64, // not used with MULTICAST_BINDING
+            destinationAddressOrGroup as number, // not used with UNICAST_BINDING
+            destinationEndpoint ?? 0, // not used with MULTICAST_BINDING
+        );
+        const result = await this.sendZdo(ZSpec.BLANK_EUI64, destinationNetworkAddress, clusterId, zdoPayload, false);
+
+        /* istanbul ignore next */
+        if (!Zdo.Buffalo.checkStatus(result)) {
+            // TODO: will disappear once moved upstream
+            throw new Zdo.StatusError(result[0]);
+        }
     }
 
     public async removeDevice(networkAddress: number, ieeeAddr: string): Promise<void> {
-        return await this.queue.execute<void>(async () => {
-            await this.driver.removeDevice(networkAddress, ieeeAddr);
-        }, networkAddress);
+        const clusterId = Zdo.ClusterId.LEAVE_REQUEST;
+        const zdoPayload = Zdo.Buffalo.buildRequest(this.hasZdoMessageOverhead, clusterId, ieeeAddr as EUI64, Zdo.LeaveRequestFlags.WITHOUT_REJOIN);
+        const result = await this.sendZdo(ZSpec.BLANK_EUI64, networkAddress, clusterId, zdoPayload, false);
+
+        /* istanbul ignore next */
+        if (!Zdo.Buffalo.checkStatus(result)) {
+            // TODO: will disappear once moved upstream
+            throw new Zdo.StatusError(result[0]);
+        }
+    }
+
+    public async sendZdo(
+        ieeeAddress: string,
+        networkAddress: number,
+        clusterId: Zdo.ClusterId,
+        payload: Buffer,
+        disableResponse: true,
+    ): Promise<void>;
+    public async sendZdo<K extends keyof ZdoTypes.RequestToResponseMap>(
+        ieeeAddress: string,
+        networkAddress: number,
+        clusterId: K,
+        payload: Buffer,
+        disableResponse: false,
+    ): Promise<ZdoTypes.RequestToResponseMap[K]>;
+    public async sendZdo<K extends keyof ZdoTypes.RequestToResponseMap>(
+        ieeeAddress: string,
+        networkAddress: number,
+        clusterId: K,
+        payload: Buffer,
+        disableResponse: boolean,
+    ): Promise<ZdoTypes.RequestToResponseMap[K] | void> {
+        return await this.queue.execute(async () => {
+            // stack-specific requirements
+            switch (clusterId) {
+                case Zdo.ClusterId.NETWORK_ADDRESS_REQUEST:
+                case Zdo.ClusterId.IEEE_ADDRESS_REQUEST:
+                case Zdo.ClusterId.BIND_REQUEST: // XXX: according to `FRAMES`, might not support group bind?
+                case Zdo.ClusterId.UNBIND_REQUEST: // XXX: according to `FRAMES`, might not support group unbind?
+                case Zdo.ClusterId.LQI_TABLE_REQUEST:
+                case Zdo.ClusterId.ROUTING_TABLE_REQUEST:
+                case Zdo.ClusterId.BINDING_TABLE_REQUEST:
+                case Zdo.ClusterId.LEAVE_REQUEST:
+                case Zdo.ClusterId.PERMIT_JOINING_REQUEST: {
+                    const prefixedPayload = Buffer.alloc(payload.length + 2);
+                    prefixedPayload.writeUInt16LE(networkAddress, 0);
+                    prefixedPayload.set(payload, 2);
+
+                    payload = prefixedPayload;
+                    break;
+                }
+            }
+
+            const zdoResponseClusterId = Zdo.Utils.getResponseClusterId(clusterId);
+            const frame = await this.driver.requestZdo(clusterId, payload, disableResponse || zdoResponseClusterId === undefined);
+
+            if (!disableResponse && zdoResponseClusterId !== undefined) {
+                assert(frame, `ZDO ${Zdo.ClusterId[clusterId]} expected response ${Zdo.ClusterId[zdoResponseClusterId]}.`);
+
+                return frame.payload.zdo as ZdoTypes.RequestToResponseMap[K];
+            }
+        }, networkAddress /* TODO: replace with ieeeAddress once zdo moved upstream */);
     }
 
     public async sendZclFrameToEndpoint(
@@ -404,7 +597,7 @@ export class ZBOSSAdapter extends Adapter {
         assocRestore: {ieeeadr: string; nwkaddr: number; noderelation: number} | null,
     ): Promise<ZclPayload | void> {
         if (ieeeAddr == null) {
-            ieeeAddr = this.coordinator!.ieeeAddr;
+            ieeeAddr = this.driver.netInfo.ieeeAddr;
         }
         logger.debug(
             `sendZclFrameToEndpointInternal ${ieeeAddr}:${networkAddress}/${endpoint} ` +
@@ -485,28 +678,33 @@ export class ZBOSSAdapter extends Adapter {
         }
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     public async sendZclFrameToGroup(groupID: number, zclFrame: Zcl.Frame, sourceEndpoint?: number): Promise<void> {
+        logger.error(() => `NOT SUPPORTED: sendZclFrameToGroup(${groupID},${JSON.stringify(zclFrame)},${sourceEndpoint})`, NS);
         return;
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    public async sendZclFrameToAll(endpoint: number, zclFrame: Zcl.Frame, sourceEndpoint: number, destination: BroadcastAddress): Promise<void> {
+    public async sendZclFrameToAll(
+        endpoint: number,
+        zclFrame: Zcl.Frame,
+        sourceEndpoint: number,
+        destination: ZSpec.BroadcastAddress,
+    ): Promise<void> {
+        logger.error(() => `NOT SUPPORTED: sendZclFrameToAll(${endpoint},${JSON.stringify(zclFrame)},${sourceEndpoint},${destination})`, NS);
         return;
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     public async setChannelInterPAN(channel: number): Promise<void> {
+        logger.error(`NOT SUPPORTED: setChannelInterPAN(${channel})`, NS);
         return;
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     public async sendZclFrameInterPANToIeeeAddr(zclFrame: Zcl.Frame, ieeeAddress: string): Promise<void> {
+        logger.error(() => `NOT SUPPORTED: sendZclFrameInterPANToIeeeAddr(${JSON.stringify(zclFrame)},${ieeeAddress})`, NS);
         return;
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     public async sendZclFrameInterPANBroadcast(zclFrame: Zcl.Frame, timeout: number): Promise<ZclPayload> {
+        logger.error(() => `NOT SUPPORTED: sendZclFrameInterPANBroadcast(${JSON.stringify(zclFrame)},${timeout})`, NS);
         throw new Error(`Is not supported for 'zboss' yet`);
     }
 

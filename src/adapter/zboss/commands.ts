@@ -1,9 +1,11 @@
 /* istanbul ignore file */
 
 import {BuffaloZclDataType, DataType} from '../../zspec/zcl/definition/enums';
+import {ClusterId as ZdoClusterId} from '../../zspec/zdo';
 import {
     BuffaloZBOSSDataType,
     CommandId,
+    DeviceAuthorizedType,
     DeviceType,
     DeviceUpdateStatus,
     PolicyType,
@@ -31,6 +33,43 @@ interface ZBOSSFrameDesc {
     response: ParamsDesc[];
     indication?: ParamsDesc[];
 }
+
+export const ZDO_REQ_CLUSTER_ID_TO_ZBOSS_COMMAND_ID: Readonly<Partial<Record<ZdoClusterId, CommandId>>> = {
+    [ZdoClusterId.NETWORK_ADDRESS_REQUEST]: CommandId.ZDO_NWK_ADDR_REQ,
+    [ZdoClusterId.IEEE_ADDRESS_REQUEST]: CommandId.ZDO_IEEE_ADDR_REQ,
+    [ZdoClusterId.POWER_DESCRIPTOR_REQUEST]: CommandId.ZDO_POWER_DESC_REQ,
+    [ZdoClusterId.NODE_DESCRIPTOR_REQUEST]: CommandId.ZDO_NODE_DESC_REQ,
+    [ZdoClusterId.SIMPLE_DESCRIPTOR_REQUEST]: CommandId.ZDO_SIMPLE_DESC_REQ,
+    [ZdoClusterId.ACTIVE_ENDPOINTS_REQUEST]: CommandId.ZDO_ACTIVE_EP_REQ,
+    [ZdoClusterId.MATCH_DESCRIPTORS_REQUEST]: CommandId.ZDO_MATCH_DESC_REQ,
+    [ZdoClusterId.BIND_REQUEST]: CommandId.ZDO_BIND_REQ,
+    [ZdoClusterId.UNBIND_REQUEST]: CommandId.ZDO_UNBIND_REQ,
+    [ZdoClusterId.LEAVE_REQUEST]: CommandId.ZDO_MGMT_LEAVE_REQ,
+    [ZdoClusterId.PERMIT_JOINING_REQUEST]: CommandId.ZDO_PERMIT_JOINING_REQ,
+    [ZdoClusterId.BINDING_TABLE_REQUEST]: CommandId.ZDO_MGMT_BIND_REQ,
+    [ZdoClusterId.LQI_TABLE_REQUEST]: CommandId.ZDO_MGMT_LQI_REQ,
+    // [ZdoClusterId.ROUTING_TABLE_REQUEST]: CommandId.ZDO_MGMT_RTG_REQ,
+    [ZdoClusterId.NWK_UPDATE_REQUEST]: CommandId.ZDO_MGMT_NWK_UPDATE_REQ,
+};
+
+export const ZBOSS_COMMAND_ID_TO_ZDO_RSP_CLUSTER_ID: Readonly<Partial<Record<CommandId, ZdoClusterId>>> = {
+    [CommandId.ZDO_NWK_ADDR_REQ]: ZdoClusterId.NETWORK_ADDRESS_RESPONSE,
+    [CommandId.ZDO_IEEE_ADDR_REQ]: ZdoClusterId.IEEE_ADDRESS_RESPONSE,
+    [CommandId.ZDO_POWER_DESC_REQ]: ZdoClusterId.POWER_DESCRIPTOR_RESPONSE,
+    [CommandId.ZDO_NODE_DESC_REQ]: ZdoClusterId.NODE_DESCRIPTOR_RESPONSE,
+    [CommandId.ZDO_SIMPLE_DESC_REQ]: ZdoClusterId.SIMPLE_DESCRIPTOR_RESPONSE,
+    [CommandId.ZDO_ACTIVE_EP_REQ]: ZdoClusterId.ACTIVE_ENDPOINTS_RESPONSE,
+    [CommandId.ZDO_MATCH_DESC_REQ]: ZdoClusterId.MATCH_DESCRIPTORS_RESPONSE,
+    [CommandId.ZDO_BIND_REQ]: ZdoClusterId.BIND_RESPONSE,
+    [CommandId.ZDO_UNBIND_REQ]: ZdoClusterId.UNBIND_RESPONSE,
+    [CommandId.ZDO_MGMT_LEAVE_REQ]: ZdoClusterId.LEAVE_RESPONSE,
+    [CommandId.ZDO_PERMIT_JOINING_REQ]: ZdoClusterId.PERMIT_JOINING_RESPONSE,
+    [CommandId.ZDO_MGMT_BIND_REQ]: ZdoClusterId.BINDING_TABLE_RESPONSE,
+    [CommandId.ZDO_MGMT_LQI_REQ]: ZdoClusterId.LQI_TABLE_RESPONSE,
+    // [CommandId.ZDO_MGMT_RTG_REQ]: ZdoClusterId.ROUTING_TABLE_RESPONSE,
+    [CommandId.ZDO_MGMT_NWK_UPDATE_REQ]: ZdoClusterId.NWK_UPDATE_RESPONSE,
+    [CommandId.ZDO_DEV_ANNCE_IND]: ZdoClusterId.END_DEVICE_ANNOUNCE,
+};
 
 const commonResponse = [
     {name: 'category', type: DataType.UINT8, typed: StatusCategory},
@@ -326,176 +365,176 @@ export const FRAMES: {[key in CommandId]?: ZBOSSFrameDesc} = {
     // ------------------------------------------
 
     // Request for a remote device NWK address
-    [CommandId.ZDO_NWK_ADDR_REQ]: {
-        request: [
-            {name: 'nwk', type: DataType.UINT16},
-            {name: 'ieee', type: DataType.IEEE_ADDR},
-            {name: 'type', type: DataType.UINT8},
-            {name: 'startIndex', type: DataType.UINT8},
-        ],
-        response: [
-            ...commonResponse,
-            {name: 'ieee', type: DataType.IEEE_ADDR},
-            {name: 'nwk', type: DataType.UINT16},
-            {name: 'num', type: DataType.UINT8, condition: (payload, buffalo) => buffalo && buffalo.isMore()},
-            {name: 'startIndex', type: DataType.UINT8, condition: (payload, buffalo) => buffalo && buffalo.isMore()},
-            {name: 'nwks', type: BuffaloZclDataType.LIST_UINT16, options: (payload, options) => (options.length = payload.num)},
-        ],
-    },
+    // [CommandId.ZDO_NWK_ADDR_REQ]: {
+    //     request: [
+    //         {name: 'nwk', type: DataType.UINT16},
+    //         {name: 'ieee', type: DataType.IEEE_ADDR},
+    //         {name: 'type', type: DataType.UINT8},
+    //         {name: 'startIndex', type: DataType.UINT8},
+    //     ],
+    //     response: [
+    //         ...commonResponse,
+    //         {name: 'ieee', type: DataType.IEEE_ADDR},
+    //         {name: 'nwk', type: DataType.UINT16},
+    //         {name: 'num', type: DataType.UINT8, condition: (payload, buffalo) => buffalo && buffalo.isMore()},
+    //         {name: 'startIndex', type: DataType.UINT8, condition: (payload, buffalo) => buffalo && buffalo.isMore()},
+    //         {name: 'nwks', type: BuffaloZclDataType.LIST_UINT16, options: (payload, options) => (options.length = payload.num)},
+    //     ],
+    // },
     // Request for a remote device IEEE address
-    [CommandId.ZDO_IEEE_ADDR_REQ]: {
-        request: [
-            {name: 'destNwk', type: DataType.UINT16},
-            {name: 'nwk', type: DataType.UINT16},
-            {name: 'type', type: DataType.UINT8},
-            {name: 'startIndex', type: DataType.UINT8},
-        ],
-        response: [
-            ...commonResponse,
-            {name: 'ieee', type: DataType.IEEE_ADDR},
-            {name: 'nwk', type: DataType.UINT16},
-            {name: 'num', type: DataType.UINT8, condition: (payload, buffalo) => buffalo && buffalo.isMore()},
-            {name: 'startIndex', type: DataType.UINT8, condition: (payload, buffalo) => buffalo && buffalo.isMore()},
-            {name: 'nwks', type: BuffaloZclDataType.LIST_UINT16, options: (payload, options) => (options.length = payload.num)},
-        ],
-    },
+    // [CommandId.ZDO_IEEE_ADDR_REQ]: {
+    //     request: [
+    //         {name: 'destNwk', type: DataType.UINT16},
+    //         {name: 'nwk', type: DataType.UINT16},
+    //         {name: 'type', type: DataType.UINT8},
+    //         {name: 'startIndex', type: DataType.UINT8},
+    //     ],
+    //     response: [
+    //         ...commonResponse,
+    //         {name: 'ieee', type: DataType.IEEE_ADDR},
+    //         {name: 'nwk', type: DataType.UINT16},
+    //         {name: 'num', type: DataType.UINT8, condition: (payload, buffalo) => buffalo && buffalo.isMore()},
+    //         {name: 'startIndex', type: DataType.UINT8, condition: (payload, buffalo) => buffalo && buffalo.isMore()},
+    //         {name: 'nwks', type: BuffaloZclDataType.LIST_UINT16, options: (payload, options) => (options.length = payload.num)},
+    //     ],
+    // },
     // Get the Power Descriptor from a remote device
-    [CommandId.ZDO_POWER_DESC_REQ]: {
-        request: [{name: 'nwk', type: DataType.UINT16}],
-        response: [...commonResponse, {name: 'powerDescriptor', type: DataType.UINT16}, {name: 'nwk', type: DataType.UINT16}],
-    },
+    // [CommandId.ZDO_POWER_DESC_REQ]: {
+    //     request: [{name: 'nwk', type: DataType.UINT16}],
+    //     response: [...commonResponse, {name: 'powerDescriptor', type: DataType.UINT16}, {name: 'nwk', type: DataType.UINT16}],
+    // },
     // Get the Node Descriptor from a remote device
-    [CommandId.ZDO_NODE_DESC_REQ]: {
-        request: [{name: 'nwk', type: DataType.UINT16}],
-        response: [
-            ...commonResponse,
-            {name: 'flags', type: DataType.UINT16},
-            {name: 'macCapabilities', type: DataType.UINT8},
-            {name: 'manufacturerCode', type: DataType.UINT16},
-            {name: 'bufferSize', type: DataType.UINT8},
-            {name: 'incomingSize', type: DataType.UINT16},
-            {name: 'serverMask', type: DataType.UINT16},
-            {name: 'outgoingSize', type: DataType.UINT16},
-            {name: 'descriptorCapabilities', type: DataType.UINT8},
-            {name: 'nwk', type: DataType.UINT16},
-        ],
-    },
+    // [CommandId.ZDO_NODE_DESC_REQ]: {
+    //     request: [{name: 'nwk', type: DataType.UINT16}],
+    //     response: [
+    //         ...commonResponse,
+    //         {name: 'flags', type: DataType.UINT16},
+    //         {name: 'macCapabilities', type: DataType.UINT8},
+    //         {name: 'manufacturerCode', type: DataType.UINT16},
+    //         {name: 'bufferSize', type: DataType.UINT8},
+    //         {name: 'incomingSize', type: DataType.UINT16},
+    //         {name: 'serverMask', type: DataType.UINT16},
+    //         {name: 'outgoingSize', type: DataType.UINT16},
+    //         {name: 'descriptorCapabilities', type: DataType.UINT8},
+    //         {name: 'nwk', type: DataType.UINT16},
+    //     ],
+    // },
     // Get the Simple Descriptor from a remote device
-    [CommandId.ZDO_SIMPLE_DESC_REQ]: {
-        request: [
-            {name: 'nwk', type: DataType.UINT16},
-            {name: 'endpoint', type: DataType.UINT8},
-        ],
-        response: [
-            ...commonResponse,
-            {name: 'endpoint', type: DataType.UINT8},
-            {name: 'profileID', type: DataType.UINT16},
-            {name: 'deviceID', type: DataType.UINT16},
-            {name: 'version', type: DataType.UINT8},
-            {name: 'inputClusterCount', type: DataType.UINT8},
-            {name: 'outputClusterCount', type: DataType.UINT8},
-            {
-                name: 'inputClusters',
-                type: BuffaloZclDataType.LIST_UINT16,
-                options: (payload, options) => (options.length = payload.inputClusterCount),
-            },
-            {
-                name: 'outputClusters',
-                type: BuffaloZclDataType.LIST_UINT16,
-                options: (payload, options) => (options.length = payload.outputClusterCount),
-            },
-            {name: 'nwk', type: DataType.UINT16},
-        ],
-    },
+    // [CommandId.ZDO_SIMPLE_DESC_REQ]: {
+    //     request: [
+    //         {name: 'nwk', type: DataType.UINT16},
+    //         {name: 'endpoint', type: DataType.UINT8},
+    //     ],
+    //     response: [
+    //         ...commonResponse,
+    //         {name: 'endpoint', type: DataType.UINT8},
+    //         {name: 'profileID', type: DataType.UINT16},
+    //         {name: 'deviceID', type: DataType.UINT16},
+    //         {name: 'version', type: DataType.UINT8},
+    //         {name: 'inputClusterCount', type: DataType.UINT8},
+    //         {name: 'outputClusterCount', type: DataType.UINT8},
+    //         {
+    //             name: 'inputClusters',
+    //             type: BuffaloZclDataType.LIST_UINT16,
+    //             options: (payload, options) => (options.length = payload.inputClusterCount),
+    //         },
+    //         {
+    //             name: 'outputClusters',
+    //             type: BuffaloZclDataType.LIST_UINT16,
+    //             options: (payload, options) => (options.length = payload.outputClusterCount),
+    //         },
+    //         {name: 'nwk', type: DataType.UINT16},
+    //     ],
+    // },
     // Get a list of Active Endpoints from a remote device
-    [CommandId.ZDO_ACTIVE_EP_REQ]: {
-        request: [{name: 'nwk', type: DataType.UINT16}],
-        response: [
-            ...commonResponse,
-            {name: 'len', type: DataType.UINT8},
-            {name: 'endpoints', type: BuffaloZclDataType.LIST_UINT8, options: (payload, options) => (options.length = payload.len)},
-            {name: 'nwk', type: DataType.UINT16},
-        ],
-    },
+    // [CommandId.ZDO_ACTIVE_EP_REQ]: {
+    //     request: [{name: 'nwk', type: DataType.UINT16}],
+    //     response: [
+    //         ...commonResponse,
+    //         {name: 'len', type: DataType.UINT8},
+    //         {name: 'endpoints', type: BuffaloZclDataType.LIST_UINT8, options: (payload, options) => (options.length = payload.len)},
+    //         {name: 'nwk', type: DataType.UINT16},
+    //     ],
+    // },
     // Send Match Descriptor request to a remote device
-    [CommandId.ZDO_MATCH_DESC_REQ]: {
-        request: [
-            {name: 'nwk', type: DataType.UINT16},
-            {name: 'profileID', type: DataType.UINT16},
-            {name: 'inputClusterCount', type: DataType.UINT8},
-            {name: 'outputClusterCount', type: DataType.UINT8},
-            {
-                name: 'inputClusters',
-                type: BuffaloZclDataType.LIST_UINT16,
-                options: (payload, options) => (options.length = payload.inputClusterCount),
-            },
-            {
-                name: 'outputClusters',
-                type: BuffaloZclDataType.LIST_UINT16,
-                options: (payload, options) => (options.length = payload.outputClusterCount),
-            },
-        ],
-        response: [
-            ...commonResponse,
-            {name: 'len', type: DataType.UINT8},
-            {name: 'endpoints', type: BuffaloZclDataType.LIST_UINT8, options: (payload, options) => (options.length = payload.len)},
-            {name: 'nwk', type: DataType.UINT16},
-        ],
-    },
+    // [CommandId.ZDO_MATCH_DESC_REQ]: {
+    //     request: [
+    //         {name: 'nwk', type: DataType.UINT16},
+    //         {name: 'profileID', type: DataType.UINT16},
+    //         {name: 'inputClusterCount', type: DataType.UINT8},
+    //         {name: 'outputClusterCount', type: DataType.UINT8},
+    //         {
+    //             name: 'inputClusters',
+    //             type: BuffaloZclDataType.LIST_UINT16,
+    //             options: (payload, options) => (options.length = payload.inputClusterCount),
+    //         },
+    //         {
+    //             name: 'outputClusters',
+    //             type: BuffaloZclDataType.LIST_UINT16,
+    //             options: (payload, options) => (options.length = payload.outputClusterCount),
+    //         },
+    //     ],
+    //     response: [
+    //         ...commonResponse,
+    //         {name: 'len', type: DataType.UINT8},
+    //         {name: 'endpoints', type: BuffaloZclDataType.LIST_UINT8, options: (payload, options) => (options.length = payload.len)},
+    //         {name: 'nwk', type: DataType.UINT16},
+    //     ],
+    // },
     // Send Bind request to a remote device
-    [CommandId.ZDO_BIND_REQ]: {
-        request: [
-            {name: 'target', type: DataType.UINT16},
-            {name: 'srcIeee', type: DataType.IEEE_ADDR},
-            {name: 'srcEP', type: DataType.UINT8},
-            {name: 'clusterID', type: DataType.UINT16},
-            {name: 'addrMode', type: DataType.UINT8},
-            {name: 'dstIeee', type: DataType.IEEE_ADDR},
-            {name: 'dstEP', type: DataType.UINT8},
-        ],
-        response: [...commonResponse],
-    },
+    // [CommandId.ZDO_BIND_REQ]: {
+    //     request: [
+    //         {name: 'target', type: DataType.UINT16},
+    //         {name: 'srcIeee', type: DataType.IEEE_ADDR},
+    //         {name: 'srcEP', type: DataType.UINT8},
+    //         {name: 'clusterID', type: DataType.UINT16},
+    //         {name: 'addrMode', type: DataType.UINT8},
+    //         {name: 'dstIeee', type: DataType.IEEE_ADDR},
+    //         {name: 'dstEP', type: DataType.UINT8},
+    //     ],
+    //     response: [...commonResponse],
+    // },
     // Send Unbind request to a remote device
-    [CommandId.ZDO_UNBIND_REQ]: {
-        request: [
-            {name: 'target', type: DataType.UINT16},
-            {name: 'srcIeee', type: DataType.IEEE_ADDR},
-            {name: 'srcEP', type: DataType.UINT8},
-            {name: 'clusterID', type: DataType.UINT16},
-            {name: 'addrMode', type: DataType.UINT8},
-            {name: 'dstIeee', type: DataType.IEEE_ADDR},
-            {name: 'dstEP', type: DataType.UINT8},
-        ],
-        response: [...commonResponse],
-    },
+    // [CommandId.ZDO_UNBIND_REQ]: {
+    //     request: [
+    //         {name: 'target', type: DataType.UINT16},
+    //         {name: 'srcIeee', type: DataType.IEEE_ADDR},
+    //         {name: 'srcEP', type: DataType.UINT8},
+    //         {name: 'clusterID', type: DataType.UINT16},
+    //         {name: 'addrMode', type: DataType.UINT8},
+    //         {name: 'dstIeee', type: DataType.IEEE_ADDR},
+    //         {name: 'dstEP', type: DataType.UINT8},
+    //     ],
+    //     response: [...commonResponse],
+    // },
     // Request that a Remote Device leave the network
-    [CommandId.ZDO_MGMT_LEAVE_REQ]: {
-        request: [
-            {name: 'nwk', type: DataType.UINT16},
-            {name: 'ieee', type: DataType.IEEE_ADDR},
-            {name: 'flags', type: DataType.UINT8},
-        ],
-        response: [...commonResponse],
-    },
+    // [CommandId.ZDO_MGMT_LEAVE_REQ]: {
+    //     request: [
+    //         {name: 'nwk', type: DataType.UINT16},
+    //         {name: 'ieee', type: DataType.IEEE_ADDR},
+    //         {name: 'flags', type: DataType.UINT8},
+    //     ],
+    //     response: [...commonResponse],
+    // },
     // Request a remote device or devices to allow or disallow association
-    [CommandId.ZDO_PERMIT_JOINING_REQ]: {
-        request: [
-            {name: 'nwk', type: DataType.UINT16},
-            {name: 'duration', type: DataType.UINT8},
-            {name: 'tcSignificance', type: DataType.UINT8},
-        ],
-        response: [...commonResponse],
-    },
+    // [CommandId.ZDO_PERMIT_JOINING_REQ]: {
+    //     request: [
+    //         {name: 'nwk', type: DataType.UINT16},
+    //         {name: 'duration', type: DataType.UINT8},
+    //         {name: 'tcSignificance', type: DataType.UINT8},
+    //     ],
+    //     response: [...commonResponse],
+    // },
     // Device announce indication
-    [CommandId.ZDO_DEV_ANNCE_IND]: {
-        request: [],
-        response: [],
-        indication: [
-            {name: 'nwk', type: DataType.UINT16},
-            {name: 'ieee', type: DataType.IEEE_ADDR},
-            {name: 'macCapabilities', type: DataType.UINT8},
-        ],
-    },
+    // [CommandId.ZDO_DEV_ANNCE_IND]: {
+    //     request: [],
+    //     response: [],
+    //     indication: [
+    //         {name: 'nwk', type: DataType.UINT16},
+    //         {name: 'ieee', type: DataType.IEEE_ADDR},
+    //         {name: 'macCapabilities', type: DataType.UINT8},
+    //     ],
+    // },
     // Rejoin to remote network even if joined already. If joined, clear internal data structures prior to joining. That call is useful for rejoin after parent loss.
     [CommandId.ZDO_REJOIN]: {
         request: [
@@ -519,51 +558,51 @@ export const FRAMES: {[key in CommandId]?: ZBOSSFrameDesc} = {
         response: [...commonResponse],
     },
     // Sends a ZDO Mgmt Bind request to a remote device
-    [CommandId.ZDO_MGMT_BIND_REQ]: {
-        request: [
-            {name: 'nwk', type: DataType.UINT16},
-            {name: 'startIndex', type: DataType.UINT8},
-        ],
-        response: [...commonResponse],
-    },
+    // [CommandId.ZDO_MGMT_BIND_REQ]: {
+    //     request: [
+    //         {name: 'nwk', type: DataType.UINT16},
+    //         {name: 'startIndex', type: DataType.UINT8},
+    //     ],
+    //     response: [...commonResponse],
+    // },
     // Sends a ZDO Mgmt LQI request to a remote device
-    [CommandId.ZDO_MGMT_LQI_REQ]: {
-        request: [
-            {name: 'nwk', type: DataType.UINT16},
-            {name: 'startIndex', type: DataType.UINT8},
-        ],
-        response: [
-            ...commonResponse,
-            {name: 'entries', type: DataType.UINT8},
-            {name: 'startIndex', type: DataType.UINT8},
-            {name: 'len', type: DataType.UINT8},
-            {
-                name: 'neighbors',
-                type: BuffaloZBOSSDataType.LIST_TYPED,
-                typed: [
-                    {name: 'extendedPanID', type: BuffaloZBOSSDataType.EXTENDED_PAN_ID},
-                    {name: 'ieee', type: DataType.IEEE_ADDR},
-                    {name: 'nwk', type: DataType.UINT16},
-                    {name: 'relationship', type: DataType.UINT8},
-                    {name: 'joining', type: DataType.UINT8},
-                    {name: 'depth', type: DataType.UINT8},
-                    {name: 'lqi', type: DataType.UINT8},
-                ],
-                options: (payload, options) => (options.length = payload.len),
-            },
-        ],
-    },
+    // [CommandId.ZDO_MGMT_LQI_REQ]: {
+    //     request: [
+    //         {name: 'nwk', type: DataType.UINT16},
+    //         {name: 'startIndex', type: DataType.UINT8},
+    //     ],
+    //     response: [
+    //         ...commonResponse,
+    //         {name: 'entries', type: DataType.UINT8},
+    //         {name: 'startIndex', type: DataType.UINT8},
+    //         {name: 'len', type: DataType.UINT8},
+    //         {
+    //             name: 'neighbors',
+    //             type: BuffaloZBOSSDataType.LIST_TYPED,
+    //             typed: [
+    //                 {name: 'extendedPanID', type: BuffaloZBOSSDataType.EXTENDED_PAN_ID},
+    //                 {name: 'ieee', type: DataType.IEEE_ADDR},
+    //                 {name: 'nwk', type: DataType.UINT16},
+    //                 {name: 'relationship', type: DataType.UINT8},
+    //                 {name: 'joining', type: DataType.UINT8},
+    //                 {name: 'depth', type: DataType.UINT8},
+    //                 {name: 'lqi', type: DataType.UINT8},
+    //             ],
+    //             options: (payload, options) => (options.length = payload.len),
+    //         },
+    //     ],
+    // },
     // Sends a ZDO Mgmt NWK Update Request to a remote device
-    [CommandId.ZDO_MGMT_NWK_UPDATE_REQ]: {
-        request: [
-            {name: 'channelMask', type: DataType.UINT32},
-            {name: 'duration', type: DataType.UINT8},
-            {name: 'count', type: DataType.UINT8},
-            {name: 'managerNwk', type: DataType.UINT16},
-            {name: 'nwk', type: DataType.UINT16},
-        ],
-        response: [...commonResponse],
-    },
+    // [CommandId.ZDO_MGMT_NWK_UPDATE_REQ]: {
+    //     request: [
+    //         {name: 'channelMask', type: DataType.UINT32},
+    //         {name: 'duration', type: DataType.UINT8},
+    //         {name: 'count', type: DataType.UINT8},
+    //         {name: 'managerNwk', type: DataType.UINT16},
+    //         {name: 'nwk', type: DataType.UINT16},
+    //     ],
+    //     response: [...commonResponse],
+    // },
     // Require statistics (last message LQI\RSSI, counters, etc.) from the ZDO level
     [CommandId.ZDO_GET_STATS]: {
         request: [{name: 'cleanup', type: DataType.UINT8}],
@@ -614,8 +653,12 @@ export const FRAMES: {[key in CommandId]?: ZBOSSFrameDesc} = {
         indication: [
             {name: 'ieee', type: DataType.IEEE_ADDR},
             {name: 'nwk', type: DataType.UINT16},
-            {name: 'authType', type: DataType.UINT8},
-            {name: 'authStatus', type: DataType.UINT8},
+            {name: 'authType', type: DataType.UINT8, typed: DeviceAuthorizedType},
+            {
+                name: 'authStatus',
+                type: DataType.UINT8,
+                /* typed: DeviceAuthorizedLegacyStatus | DeviceAuthorizedR21TCLKStatus | DeviceAuthorizedSECBKEStatus */
+            },
         ],
     },
     // Indicates some device joined the network
@@ -626,6 +669,9 @@ export const FRAMES: {[key in CommandId]?: ZBOSSFrameDesc} = {
             {name: 'ieee', type: DataType.IEEE_ADDR},
             {name: 'nwk', type: DataType.UINT16},
             {name: 'status', type: DataType.UINT8, typed: DeviceUpdateStatus},
+            // not in dsr-corporation spec
+            // {name: 'tcAction', type: DataType.UINT8, typed: DeviceUpdateTCAction},
+            // {name: 'parentNwk', type: DataType.UINT16},
         ],
     },
     // Sets manufacturer code field in the node descriptor

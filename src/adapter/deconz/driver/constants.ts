@@ -1,10 +1,8 @@
 /* istanbul ignore file */
-/* eslint-disable */
-const PARAM: {
-    [s: string]: {
-        [s: string]: number;
-    };
-} = {
+
+import {GenericZdoResponse} from '../../../zspec/zdo/definition/tstypes';
+
+const PARAM = {
     Network: {
         NET_OFFLINE: 0x00,
         NET_JOINING: 0x01,
@@ -56,93 +54,94 @@ const PARAM: {
 };
 
 interface Request {
-    commandId?: number;
+    commandId: number;
     networkState?: number;
     parameterId?: number;
     parameter?: parameterT;
     request?: ApsDataRequest;
-    seqNumber?: number;
-    resolve?: Function;
-    reject?: Function;
+    seqNumber: number;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    resolve: (value: any) => void;
+    reject: (value: Error) => void;
     ts?: number;
 }
 
 interface WaitForDataRequest {
-    addr?: number;
-    profileId?: number;
-    clusterId?: number;
+    addr: number | string;
+    profileId: number;
+    clusterId: number;
     transactionSequenceNumber?: number;
-    resolve?: Function;
-    reject?: Function;
+    resolve: (value: ReceivedDataResponse | PromiseLike<ReceivedDataResponse>) => void;
+    reject: (value: Error) => void;
     ts?: number;
     timeout?: number;
 }
 
 interface ReceivedDataResponse {
-    commandId?: number;
-    seqNr?: number;
-    status?: number;
-    frameLength?: number;
-    payloadLength?: number;
-    deviceState?: number;
-    destAddrMode?: number;
+    commandId: number;
+    seqNr: number;
+    status: number;
+    frameLength: number;
+    payloadLength: number;
+    deviceState: number;
+    destAddrMode: number;
     destAddr16?: number;
     destAddr64?: string;
-    destEndpoint?: number;
-    srcAddrMode?: number;
+    destEndpoint: number;
+    srcAddrMode: number;
     srcAddr16?: number;
     srcAddr64?: string;
-    srcEndpoint?: number;
-    profileId?: number;
-    clusterId?: number;
-    asduLength?: number;
-    asduPayload?: number[];
-    lqi?: number;
-    rssi?: number;
+    srcEndpoint: number;
+    profileId: number;
+    clusterId: number;
+    asduLength: number;
+    asduPayload: Buffer;
+    lqi: number;
+    rssi: number;
+    zdo?: GenericZdoResponse;
 }
 
 interface gpDataInd {
-    rspId?: number;
-    seqNr?: number;
-    id?: number;
-    clusterId?: number;
-    options?: number;
-    srcId?: number;
-    frameCounter?: number;
-    commandId?: number;
-    commandFrameSize?: number;
-    commandFrame?: Buffer;
+    rspId: number;
+    seqNr: number;
+    id: number;
+    options: number;
+    srcId: number;
+    frameCounter: number;
+    commandId: number;
+    commandFrameSize: number;
+    commandFrame: Buffer;
 }
 
 interface DataStateResponse {
-    commandId?: number;
-    seqNr?: number;
-    status?: number;
-    frameLength?: number;
-    payloadLength?: number;
-    deviceState?: number;
-    requestId?: number;
-    destAddrMode?: number;
+    commandId: number;
+    seqNr: number;
+    status: number;
+    frameLength: number;
+    payloadLength: number;
+    deviceState: number;
+    requestId: number;
+    destAddrMode: number;
     destAddr16?: number;
     destAddr64?: string;
     destEndpoint?: number;
-    srcEndpoint?: number;
-    confirmStatus?: number;
+    srcEndpoint: number;
+    confirmStatus: number;
 }
 
 interface ApsDataRequest {
-    requestId?: number;
-    destAddrMode?: number;
+    requestId: number;
+    destAddrMode: number;
     destAddr16?: number;
     destAddr64?: string; //number[];
     destEndpoint?: number;
-    profileId?: number;
-    clusterId?: number;
-    srcEndpoint?: number;
-    asduLength?: number;
-    asduPayload?: number[];
-    txOptions?: number;
-    radius?: number;
+    profileId: number;
+    clusterId: number;
+    srcEndpoint: number;
+    asduLength: number;
+    asduPayload: Buffer;
+    txOptions: number;
+    radius: number;
     timeout?: number; // seconds
 }
 

@@ -1,8 +1,10 @@
 import {ClusterId, EUI64, ExtendedPanId, NodeId, PanId, ProfileId} from '../../tstypes';
+import {ClusterId as ZdoClusterId} from './clusters';
 import {
     ActiveLinkKeyType,
     InitialJoinMethod,
     JoiningPolicy,
+    LeaveRequestFlags,
     RoutingTableStatus,
     SelectedKeyNegotiationProtocol,
     SelectedPreSharedSecret,
@@ -886,3 +888,175 @@ export type TLV = {
 export type TLVs = {
     tlvs: TLV[];
 };
+
+export interface RequestMap {
+    [ZdoClusterId.NETWORK_ADDRESS_REQUEST]: [target: EUI64, reportKids: boolean, childStartIndex: number];
+    [ZdoClusterId.IEEE_ADDRESS_REQUEST]: [target: NodeId, reportKids: boolean, childStartIndex: number];
+    [ZdoClusterId.NODE_DESCRIPTOR_REQUEST]: [target: NodeId, fragmentationParameters?: FragmentationParametersGlobalTLV];
+    [ZdoClusterId.POWER_DESCRIPTOR_REQUEST]: [target: NodeId];
+    [ZdoClusterId.SIMPLE_DESCRIPTOR_REQUEST]: [target: NodeId, targetEndpoint: number];
+    [ZdoClusterId.ACTIVE_ENDPOINTS_REQUEST]: [target: NodeId];
+    [ZdoClusterId.MATCH_DESCRIPTORS_REQUEST]: [target: NodeId, profileId: ProfileId, inClusterList: ClusterId[], outClusterList: ClusterId[]];
+    [ZdoClusterId.SYSTEM_SERVER_DISCOVERY_REQUEST]: [serverMask: ServerMask];
+    [ZdoClusterId.PARENT_ANNOUNCE]: [children: EUI64[]];
+    [ZdoClusterId.BIND_REQUEST]: [
+        source: EUI64,
+        sourceEndpoint: number,
+        clusterId: ClusterId,
+        type: number,
+        destination: EUI64,
+        groupAddress: number,
+        destinationEndpoint: number,
+    ];
+    [ZdoClusterId.UNBIND_REQUEST]: [
+        source: EUI64,
+        sourceEndpoint: number,
+        clusterId: ClusterId,
+        type: number,
+        destination: EUI64,
+        groupAddress: number,
+        destinationEndpoint: number,
+    ];
+    [ZdoClusterId.CLEAR_ALL_BINDINGS_REQUEST]: [tlv: ClearAllBindingsReqEUI64TLV];
+    [ZdoClusterId.LQI_TABLE_REQUEST]: [startIndex: number];
+    [ZdoClusterId.ROUTING_TABLE_REQUEST]: [startIndex: number];
+    [ZdoClusterId.BINDING_TABLE_REQUEST]: [startIndex: number];
+    [ZdoClusterId.LEAVE_REQUEST]: [deviceAddress: EUI64, leaveRequestFlags: LeaveRequestFlags];
+    [ZdoClusterId.PERMIT_JOINING_REQUEST]: [duration: number, authentication: number, tlvs: TLV[]];
+    [ZdoClusterId.NWK_UPDATE_REQUEST]: [
+        channels: number[],
+        duration: number,
+        count: number | undefined,
+        nwkUpdateId: number | undefined,
+        nwkManagerAddr: number | undefined,
+    ];
+    [ZdoClusterId.NWK_ENHANCED_UPDATE_REQUEST]: [
+        channelPages: number[],
+        duration: number,
+        count: number | undefined,
+        nwkUpdateId: number | undefined,
+        nwkManagerAddr: NodeId | undefined,
+        configurationBitmask: number | undefined,
+    ];
+    [ZdoClusterId.NWK_IEEE_JOINING_LIST_REQUEST]: [startIndex: number];
+    [ZdoClusterId.NWK_BEACON_SURVEY_REQUEST]: [tlv: BeaconSurveyConfigurationTLV];
+    [ZdoClusterId.START_KEY_NEGOTIATION_REQUEST]: [tlv: Curve25519PublicPointTLV];
+    [ZdoClusterId.RETRIEVE_AUTHENTICATION_TOKEN_REQUEST]: [tlv: AuthenticationTokenIdTLV];
+    [ZdoClusterId.GET_AUTHENTICATION_LEVEL_REQUEST]: [tlv: TargetIEEEAddressTLV];
+    [ZdoClusterId.SET_CONFIGURATION_REQUEST]: [
+        nextPanIdChange: NextPanIdChangeGlobalTLV,
+        nextChannelChange: NextChannelChangeGlobalTLV,
+        configurationParameters: ConfigurationParametersGlobalTLV,
+    ];
+    [ZdoClusterId.GET_CONFIGURATION_REQUEST]: [tlvIds: number[]];
+    [ZdoClusterId.START_KEY_UPDATE_REQUEST]: [
+        selectedKeyNegotiationMethod: SelectedKeyNegotiationMethodTLV,
+        fragmentationParameters: FragmentationParametersGlobalTLV,
+    ];
+    [ZdoClusterId.DECOMMISSION_REQUEST]: [tlv: DeviceEUI64ListTLV];
+    [ZdoClusterId.CHALLENGE_REQUEST]: [tlv: APSFrameCounterChallengeTLV];
+}
+
+export type GenericZdoResponse = [Status, unknown | undefined];
+
+export interface ResponseMap {
+    [ZdoClusterId.NETWORK_ADDRESS_RESPONSE]: [Status, NetworkAddressResponse | undefined];
+    [ZdoClusterId.IEEE_ADDRESS_RESPONSE]: [Status, IEEEAddressResponse | undefined];
+    [ZdoClusterId.NODE_DESCRIPTOR_RESPONSE]: [Status, NodeDescriptorResponse | undefined];
+    [ZdoClusterId.POWER_DESCRIPTOR_RESPONSE]: [Status, PowerDescriptorResponse | undefined];
+    [ZdoClusterId.SIMPLE_DESCRIPTOR_RESPONSE]: [Status, SimpleDescriptorResponse | undefined];
+    [ZdoClusterId.ACTIVE_ENDPOINTS_RESPONSE]: [Status, ActiveEndpointsResponse | undefined];
+    [ZdoClusterId.MATCH_DESCRIPTORS_RESPONSE]: [Status, MatchDescriptorsResponse | undefined];
+    [ZdoClusterId.END_DEVICE_ANNOUNCE]: [Status, EndDeviceAnnounce | undefined];
+    [ZdoClusterId.SYSTEM_SERVER_DISCOVERY_RESPONSE]: [Status, SystemServerDiscoveryResponse | undefined];
+    [ZdoClusterId.PARENT_ANNOUNCE_RESPONSE]: [Status, ParentAnnounceResponse | undefined];
+    [ZdoClusterId.BIND_RESPONSE]: [Status, void | undefined];
+    [ZdoClusterId.UNBIND_RESPONSE]: [Status, void | undefined];
+    [ZdoClusterId.CLEAR_ALL_BINDINGS_RESPONSE]: [Status, void | undefined];
+    [ZdoClusterId.LQI_TABLE_RESPONSE]: [Status, LQITableResponse | undefined];
+    [ZdoClusterId.ROUTING_TABLE_RESPONSE]: [Status, RoutingTableResponse | undefined];
+    [ZdoClusterId.BINDING_TABLE_RESPONSE]: [Status, BindingTableResponse | undefined];
+    [ZdoClusterId.LEAVE_RESPONSE]: [Status, void | undefined];
+    [ZdoClusterId.PERMIT_JOINING_RESPONSE]: [Status, void | undefined];
+    [ZdoClusterId.NWK_UPDATE_RESPONSE]: [Status, NwkUpdateResponse | undefined];
+    [ZdoClusterId.NWK_ENHANCED_UPDATE_RESPONSE]: [Status, NwkEnhancedUpdateResponse | undefined];
+    [ZdoClusterId.NWK_IEEE_JOINING_LIST_RESPONSE]: [Status, NwkIEEEJoiningListResponse | undefined];
+    [ZdoClusterId.NWK_UNSOLICITED_ENHANCED_UPDATE_RESPONSE]: [Status, NwkUnsolicitedEnhancedUpdateResponse | undefined];
+    [ZdoClusterId.NWK_BEACON_SURVEY_RESPONSE]: [Status, NwkBeaconSurveyResponse | undefined];
+    [ZdoClusterId.START_KEY_NEGOTIATION_RESPONSE]: [Status, StartKeyNegotiationResponse | undefined];
+    [ZdoClusterId.RETRIEVE_AUTHENTICATION_TOKEN_RESPONSE]: [Status, RetrieveAuthenticationTokenResponse | undefined];
+    [ZdoClusterId.GET_AUTHENTICATION_LEVEL_RESPONSE]: [Status, GetAuthenticationLevelResponse | undefined];
+    [ZdoClusterId.SET_CONFIGURATION_RESPONSE]: [Status, SetConfigurationResponse | undefined];
+    [ZdoClusterId.GET_CONFIGURATION_RESPONSE]: [Status, GetConfigurationResponse | undefined];
+    [ZdoClusterId.START_KEY_UPDATE_RESPONSE]: [Status, void | undefined];
+    [ZdoClusterId.DECOMMISSION_RESPONSE]: [Status, void | undefined];
+    [ZdoClusterId.CHALLENGE_RESPONSE]: [Status, ChallengeResponse | undefined];
+    // allow passing number to readResponse() from parsed payload without explicitly converting with `as`
+    [key: number]: GenericZdoResponse;
+}
+
+export interface ValidResponseMap {
+    [ZdoClusterId.NETWORK_ADDRESS_RESPONSE]: [Status.SUCCESS, NetworkAddressResponse];
+    [ZdoClusterId.IEEE_ADDRESS_RESPONSE]: [Status.SUCCESS, IEEEAddressResponse];
+    [ZdoClusterId.NODE_DESCRIPTOR_RESPONSE]: [Status.SUCCESS, NodeDescriptorResponse];
+    [ZdoClusterId.POWER_DESCRIPTOR_RESPONSE]: [Status.SUCCESS, PowerDescriptorResponse];
+    [ZdoClusterId.SIMPLE_DESCRIPTOR_RESPONSE]: [Status.SUCCESS, SimpleDescriptorResponse];
+    [ZdoClusterId.ACTIVE_ENDPOINTS_RESPONSE]: [Status.SUCCESS, ActiveEndpointsResponse];
+    [ZdoClusterId.MATCH_DESCRIPTORS_RESPONSE]: [Status.SUCCESS, MatchDescriptorsResponse];
+    [ZdoClusterId.END_DEVICE_ANNOUNCE]: [Status.SUCCESS, EndDeviceAnnounce];
+    [ZdoClusterId.SYSTEM_SERVER_DISCOVERY_RESPONSE]: [Status.SUCCESS, SystemServerDiscoveryResponse];
+    [ZdoClusterId.PARENT_ANNOUNCE_RESPONSE]: [Status.SUCCESS, ParentAnnounceResponse];
+    [ZdoClusterId.BIND_RESPONSE]: [Status.SUCCESS, void];
+    [ZdoClusterId.UNBIND_RESPONSE]: [Status.SUCCESS, void];
+    [ZdoClusterId.CLEAR_ALL_BINDINGS_RESPONSE]: [Status.SUCCESS, void];
+    [ZdoClusterId.LQI_TABLE_RESPONSE]: [Status.SUCCESS, LQITableResponse];
+    [ZdoClusterId.ROUTING_TABLE_RESPONSE]: [Status.SUCCESS, RoutingTableResponse];
+    [ZdoClusterId.BINDING_TABLE_RESPONSE]: [Status.SUCCESS, BindingTableResponse];
+    [ZdoClusterId.LEAVE_RESPONSE]: [Status.SUCCESS, void];
+    [ZdoClusterId.PERMIT_JOINING_RESPONSE]: [Status.SUCCESS, void];
+    [ZdoClusterId.NWK_UPDATE_RESPONSE]: [Status.SUCCESS, NwkUpdateResponse];
+    [ZdoClusterId.NWK_ENHANCED_UPDATE_RESPONSE]: [Status.SUCCESS, NwkEnhancedUpdateResponse];
+    [ZdoClusterId.NWK_IEEE_JOINING_LIST_RESPONSE]: [Status.SUCCESS, NwkIEEEJoiningListResponse];
+    [ZdoClusterId.NWK_UNSOLICITED_ENHANCED_UPDATE_RESPONSE]: [Status.SUCCESS, NwkUnsolicitedEnhancedUpdateResponse];
+    [ZdoClusterId.NWK_BEACON_SURVEY_RESPONSE]: [Status.SUCCESS, NwkBeaconSurveyResponse];
+    [ZdoClusterId.START_KEY_NEGOTIATION_RESPONSE]: [Status.SUCCESS, StartKeyNegotiationResponse];
+    [ZdoClusterId.RETRIEVE_AUTHENTICATION_TOKEN_RESPONSE]: [Status.SUCCESS, RetrieveAuthenticationTokenResponse];
+    [ZdoClusterId.GET_AUTHENTICATION_LEVEL_RESPONSE]: [Status.SUCCESS, GetAuthenticationLevelResponse];
+    [ZdoClusterId.SET_CONFIGURATION_RESPONSE]: [Status.SUCCESS, SetConfigurationResponse];
+    [ZdoClusterId.GET_CONFIGURATION_RESPONSE]: [Status.SUCCESS, GetConfigurationResponse];
+    [ZdoClusterId.START_KEY_UPDATE_RESPONSE]: [Status.SUCCESS, void];
+    [ZdoClusterId.DECOMMISSION_RESPONSE]: [Status.SUCCESS, void];
+    [ZdoClusterId.CHALLENGE_RESPONSE]: [Status.SUCCESS, ChallengeResponse];
+}
+
+export interface RequestToResponseMap {
+    [ZdoClusterId.NETWORK_ADDRESS_REQUEST]: ResponseMap[ZdoClusterId.NETWORK_ADDRESS_RESPONSE];
+    [ZdoClusterId.IEEE_ADDRESS_REQUEST]: ResponseMap[ZdoClusterId.IEEE_ADDRESS_RESPONSE];
+    [ZdoClusterId.NODE_DESCRIPTOR_REQUEST]: ResponseMap[ZdoClusterId.NODE_DESCRIPTOR_RESPONSE];
+    [ZdoClusterId.POWER_DESCRIPTOR_REQUEST]: ResponseMap[ZdoClusterId.POWER_DESCRIPTOR_RESPONSE];
+    [ZdoClusterId.SIMPLE_DESCRIPTOR_REQUEST]: ResponseMap[ZdoClusterId.SIMPLE_DESCRIPTOR_RESPONSE];
+    [ZdoClusterId.ACTIVE_ENDPOINTS_REQUEST]: ResponseMap[ZdoClusterId.ACTIVE_ENDPOINTS_RESPONSE];
+    [ZdoClusterId.MATCH_DESCRIPTORS_REQUEST]: ResponseMap[ZdoClusterId.MATCH_DESCRIPTORS_RESPONSE];
+    [ZdoClusterId.SYSTEM_SERVER_DISCOVERY_REQUEST]: ResponseMap[ZdoClusterId.SYSTEM_SERVER_DISCOVERY_RESPONSE];
+    [ZdoClusterId.PARENT_ANNOUNCE]: ResponseMap[ZdoClusterId.PARENT_ANNOUNCE_RESPONSE];
+    [ZdoClusterId.BIND_REQUEST]: ResponseMap[ZdoClusterId.BIND_RESPONSE];
+    [ZdoClusterId.UNBIND_REQUEST]: ResponseMap[ZdoClusterId.UNBIND_RESPONSE];
+    [ZdoClusterId.CLEAR_ALL_BINDINGS_REQUEST]: ResponseMap[ZdoClusterId.CLEAR_ALL_BINDINGS_RESPONSE];
+    [ZdoClusterId.LQI_TABLE_REQUEST]: ResponseMap[ZdoClusterId.LQI_TABLE_RESPONSE];
+    [ZdoClusterId.ROUTING_TABLE_REQUEST]: ResponseMap[ZdoClusterId.ROUTING_TABLE_RESPONSE];
+    [ZdoClusterId.BINDING_TABLE_REQUEST]: ResponseMap[ZdoClusterId.BINDING_TABLE_RESPONSE];
+    [ZdoClusterId.LEAVE_REQUEST]: ResponseMap[ZdoClusterId.LEAVE_RESPONSE];
+    [ZdoClusterId.PERMIT_JOINING_REQUEST]: ResponseMap[ZdoClusterId.PERMIT_JOINING_RESPONSE];
+    [ZdoClusterId.NWK_UPDATE_REQUEST]: ResponseMap[ZdoClusterId.NWK_UPDATE_RESPONSE];
+    [ZdoClusterId.NWK_ENHANCED_UPDATE_REQUEST]: ResponseMap[ZdoClusterId.NWK_ENHANCED_UPDATE_RESPONSE];
+    [ZdoClusterId.NWK_IEEE_JOINING_LIST_REQUEST]: ResponseMap[ZdoClusterId.NWK_IEEE_JOINING_LIST_RESPONSE];
+    [ZdoClusterId.NWK_BEACON_SURVEY_REQUEST]: ResponseMap[ZdoClusterId.NWK_BEACON_SURVEY_RESPONSE];
+    [ZdoClusterId.START_KEY_NEGOTIATION_REQUEST]: ResponseMap[ZdoClusterId.START_KEY_NEGOTIATION_RESPONSE];
+    [ZdoClusterId.RETRIEVE_AUTHENTICATION_TOKEN_REQUEST]: ResponseMap[ZdoClusterId.RETRIEVE_AUTHENTICATION_TOKEN_RESPONSE];
+    [ZdoClusterId.GET_AUTHENTICATION_LEVEL_REQUEST]: ResponseMap[ZdoClusterId.GET_AUTHENTICATION_LEVEL_RESPONSE];
+    [ZdoClusterId.SET_CONFIGURATION_REQUEST]: ResponseMap[ZdoClusterId.SET_CONFIGURATION_RESPONSE];
+    [ZdoClusterId.GET_CONFIGURATION_REQUEST]: ResponseMap[ZdoClusterId.GET_CONFIGURATION_RESPONSE];
+    [ZdoClusterId.START_KEY_UPDATE_REQUEST]: ResponseMap[ZdoClusterId.START_KEY_UPDATE_RESPONSE];
+    [ZdoClusterId.DECOMMISSION_REQUEST]: ResponseMap[ZdoClusterId.DECOMMISSION_RESPONSE];
+    [ZdoClusterId.CHALLENGE_REQUEST]: ResponseMap[ZdoClusterId.CHALLENGE_RESPONSE];
+}

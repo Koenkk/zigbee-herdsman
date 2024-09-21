@@ -5,7 +5,10 @@ import {DataType} from '../../zspec/zcl';
 import {BuffaloZcl} from '../../zspec/zcl/buffaloZcl';
 import {BuffaloZclDataType} from '../../zspec/zcl/definition/enums';
 import {BuffaloZclOptions} from '../../zspec/zcl/definition/tstype';
-import {FRAMES, ParamsDesc} from './commands';
+import {ClusterId as ZdoClusterId} from '../../zspec/zdo';
+import {BuffaloZdo} from '../../zspec/zdo/buffaloZdo';
+import {GenericZdoResponse} from '../../zspec/zdo/definition/tstypes';
+import {FRAMES, ParamsDesc, ZBOSS_COMMAND_ID_TO_ZDO_RSP_CLUSTER_ID} from './commands';
 import {BuffaloZBOSSDataType, CommandId} from './enums';
 
 export class ZBOSSBuffaloZcl extends BuffaloZcl {
@@ -99,24 +102,72 @@ function getFrameDesc(type: FrameType, key: CommandId): ParamsDesc[] {
     }
 }
 
+function fixNonStandardZdoRspPayload(clusterId: ZdoClusterId, buffer: Buffer): Buffer {
+    switch (clusterId) {
+        case ZdoClusterId.NODE_DESCRIPTOR_RESPONSE:
+        case ZdoClusterId.POWER_DESCRIPTOR_RESPONSE:
+        case ZdoClusterId.ACTIVE_ENDPOINTS_RESPONSE:
+        case ZdoClusterId.MATCH_DESCRIPTORS_RESPONSE: {
+            // flip nwkAddress from end to start
+            return Buffer.concat([buffer.subarray(0, 1), buffer.subarray(-2), buffer.subarray(1, -2)]);
+        }
+
+        case ZdoClusterId.SIMPLE_DESCRIPTOR_RESPONSE: {
+            // flip nwkAddress from end to start
+            // add length after nwkAddress
+            // move outClusterCount before inClusterList
+            const inClusterListSize = buffer[7] * 2; // uint16
+            return Buffer.concat([
+                buffer.subarray(0, 1), // status
+                buffer.subarray(-2), // nwkAddress
+                Buffer.from([buffer.length - 3 /* status + nwkAddress */]),
+                buffer.subarray(1, 8), // endpoint>inClusterCount
+                buffer.subarray(9, 9 + inClusterListSize), // inClusterList
+                buffer.subarray(8, 9), // outClusterCount
+                buffer.subarray(9 + inClusterListSize, -2), // outClusterList
+            ]);
+        }
+    }
+
+    return buffer;
+}
+
 export function readZBOSSFrame(buffer: Buffer): ZBOSSFrame {
     const buf = new ZBOSSBuffaloZcl(buffer);
     const version = buf.readUInt8();
-    const type = buf.readUInt8();
-    const commandId = buf.readUInt16();
-    let tsn = 0;
-    if ([FrameType.REQUEST, FrameType.RESPONSE].includes(type)) {
-        tsn = buf.readUInt8();
-    }
-    const payload = readPayload(type, commandId, buf);
+    const type: FrameType = buf.readUInt8();
+    const commandId: CommandId = buf.readUInt16();
+    const tsn = type === FrameType.REQUEST || type === FrameType.RESPONSE ? buf.readUInt8() : 0;
 
-    return {
-        version,
-        type,
-        commandId,
-        tsn,
-        payload,
-    };
+    const zdoResponseClusterId =
+        type === FrameType.RESPONSE || type === FrameType.INDICATION ? ZBOSS_COMMAND_ID_TO_ZDO_RSP_CLUSTER_ID[commandId] : undefined;
+
+    if (zdoResponseClusterId !== undefined) {
+        // FrameType.INDICATION has no tsn (above), no category
+        const category = type === FrameType.RESPONSE ? buf.readUInt8() : undefined;
+        const zdoPayload = fixNonStandardZdoRspPayload(zdoResponseClusterId, buffer.subarray(type === FrameType.RESPONSE ? 6 : 4));
+        const zdo = BuffaloZdo.readResponse(false, zdoResponseClusterId, zdoPayload);
+
+        return {
+            version,
+            type,
+            commandId,
+            tsn,
+            payload: {
+                category,
+                zdoClusterId: zdoResponseClusterId,
+                zdo,
+            },
+        };
+    } else {
+        return {
+            version,
+            type,
+            commandId,
+            tsn,
+            payload: readPayload(type, commandId, buf),
+        };
+    }
 }
 
 export function writeZBOSSFrame(frame: ZBOSSFrame): Buffer {
@@ -140,7 +191,7 @@ export interface ZBOSSFrame {
     type: FrameType;
     commandId: CommandId;
     tsn: number;
-    payload: KeyValue;
+    payload: KeyValue & {zdoCluster?: ZdoClusterId; zdo?: GenericZdoResponse};
 }
 
 export function makeFrame(type: FrameType, commandId: CommandId, params: KeyValue): ZBOSSFrame {

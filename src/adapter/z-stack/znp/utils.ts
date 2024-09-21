@@ -1,7 +1,10 @@
-import assert from 'assert';
+import {Type} from '../unpi/constants';
+import {MtCmd, MtCmdAreqZdo, MtCmdSreqZdo} from './tstype';
 
-import {MtCmd, MtCmdAreqZdo} from './tstype';
+export function isMtCmdAreqZdo(cmd: MtCmd): cmd is MtCmdAreqZdo {
+    return cmd.type === Type.AREQ && 'zdoClusterId' in cmd;
+}
 
-export function assertIsMtCmdAreqZdo(cmd: MtCmd): asserts cmd is MtCmdAreqZdo {
-    assert('zdo' in cmd, `'${cmd.name}' is not a MtCmdAreqZdo`);
+export function isMtCmdSreqZdo(cmd: MtCmd): cmd is MtCmdSreqZdo {
+    return cmd.type === Type.SREQ && 'zdoClusterId' in cmd;
 }

@@ -3,6 +3,7 @@
 import {Buffalo} from '../../../buffalo';
 import {EUI64} from '../../../zspec/tstypes';
 import {BuffaloZclOptions} from '../../../zspec/zcl/definition/tstype';
+import {getMacCapFlags} from '../../../zspec/zdo/utils';
 import {LOG_LEVEL} from './constants';
 import ParameterType from './parameterType';
 
@@ -114,25 +115,7 @@ class BuffaloZiGate extends Buffalo {
                 return this.readInt8();
             }
             case ParameterType.MACCAPABILITY: {
-                const result: {[k: string]: boolean | number} = {};
-                const mac = this.readUInt8();
-                //
-                result.alternatePanCoordinator = !!(mac & 0b00000001);
-                // bit 0: Alternative PAN Coordinator, always 0
-                result.fullFunctionDevice = !!(mac & 0b00000010);
-                // bit 1: Device Type, 1 = FFD , 0 = RFD ; cf. https://fr.wikipedia.org/wiki/IEEE_802.15.4
-                result.mainsPowerSource = !!(mac & 0b00000100);
-                // bit 2: Power Source, 1 = mains power, 0 = other
-                result.receiverOnWhenIdle = !!(mac & 0b00001000);
-                // bit 3: Receiver on when Idle, 1 = non-sleepy, 0 = sleepy
-                result.reserved = (mac & 0b00110000) >> 4;
-                // bit 4&5: Reserved
-                result.securityCapability = !!(mac & 0b01000000);
-                // bit 6: Security capacity, always 0 (standard security)
-                result.allocateAddress = !!(mac & 0b10000000);
-                // bit 7: 1 = joining device must be issued network address
-
-                return result;
+                return getMacCapFlags(this.readUInt8());
             }
             case ParameterType.ADDRESS_WITH_TYPE_DEPENDENCY: {
                 const addressMode = this.buffer.readUInt8(this.position - 1);

@@ -1,3 +1,5 @@
+import {ClusterId as ZdoClusterId} from '../../../zspec/zdo';
+
 export enum ADDRESS_MODE {
     bound = 0x00, //Use one or more bound nodes/endpoints, with acknowledgements
     group = 0x01, //Use a pre-defined group address, with acknowledgements
@@ -195,7 +197,6 @@ export enum ZiGateCommandCode {
     Reset = 0x0011,
     ErasePersistentData = 0x0012,
     RemoveDevice = 0x0026,
-    PermitJoin = 0x0049,
     RawAPSDataRequest = 0x0530,
     GetTimeServer = 0x0017,
     SetTimeServer = 0x0016,
@@ -205,29 +206,59 @@ export enum ZiGateCommandCode {
     StartNetwork = 0x0024,
     StartNetworkScan = 0x0025,
     SetCertification = 0x0019,
-    Bind = 0x0030,
-    UnBind = 0x0031,
 
     // ResetFactoryNew = 0x0013,
     OnOff = 0x0092,
     OnOffTimed = 0x0093,
-    ActiveEndpoint = 0x0045,
     AttributeDiscovery = 0x0140,
     AttributeRead = 0x0100,
     AttributeWrite = 0x0110,
     DescriptorComplex = 0x0531,
-    NodeDescriptor = 0x0042,
-    PowerDescriptor = 0x0044,
-    SimpleDescriptor = 0x0043,
-    SetDeviceType = 0x0023,
+
+    // zdo
+    Bind = 0x0030,
+    UnBind = 0x0031,
+    NwkAddress = 0x0040,
     IEEEAddress = 0x0041,
+    NodeDescriptor = 0x0042,
+    SimpleDescriptor = 0x0043,
+    PowerDescriptor = 0x0044,
+    ActiveEndpoint = 0x0045,
+    MatchDescriptor = 0x0046,
+    // ManagementLeaveRequest = 0x0047, XXX: some non-standard form of LeaveRequest?
+    PermitJoin = 0x0049,
+    ManagementNetworkUpdate = 0x004a,
+    SystemServerDiscovery = 0x004b,
+    LeaveRequest = 0x004c,
+    ManagementLQI = 0x004e,
+    // ManagementRtg = 0x004?,
+    // ManagementBind = 0x004?,
+
+    SetDeviceType = 0x0023,
     LED = 0x0018,
     SetTXpower = 0x0806,
-    ManagementLeaveRequest = 0x0047,
-    ManagementLQI = 0x004e,
     SetSecurityStateKey = 0x0022,
     AddGroup = 0x0060,
 }
+
+export const ZDO_REQ_CLUSTER_ID_TO_ZIGATE_COMMAND_ID: Readonly<Partial<Record<ZdoClusterId, ZiGateCommandCode>>> = {
+    [ZdoClusterId.NETWORK_ADDRESS_REQUEST]: ZiGateCommandCode.NwkAddress,
+    [ZdoClusterId.IEEE_ADDRESS_REQUEST]: ZiGateCommandCode.IEEEAddress,
+    [ZdoClusterId.NODE_DESCRIPTOR_REQUEST]: ZiGateCommandCode.NodeDescriptor,
+    [ZdoClusterId.POWER_DESCRIPTOR_REQUEST]: ZiGateCommandCode.PowerDescriptor,
+    [ZdoClusterId.SIMPLE_DESCRIPTOR_REQUEST]: ZiGateCommandCode.SimpleDescriptor,
+    [ZdoClusterId.MATCH_DESCRIPTORS_REQUEST]: ZiGateCommandCode.MatchDescriptor,
+    [ZdoClusterId.ACTIVE_ENDPOINTS_REQUEST]: ZiGateCommandCode.ActiveEndpoint,
+    [ZdoClusterId.SYSTEM_SERVER_DISCOVERY_REQUEST]: ZiGateCommandCode.SystemServerDiscovery,
+    [ZdoClusterId.BIND_REQUEST]: ZiGateCommandCode.Bind,
+    [ZdoClusterId.UNBIND_REQUEST]: ZiGateCommandCode.UnBind,
+    [ZdoClusterId.LQI_TABLE_REQUEST]: ZiGateCommandCode.ManagementLQI,
+    // [ZdoClusterId.ROUTING_TABLE_REQUEST]: ZiGateCommandCode.ManagementRtg,
+    // [ZdoClusterId.BINDING_TABLE_REQUEST]: ZiGateCommandCode.ManagementBind,
+    [ZdoClusterId.LEAVE_REQUEST]: ZiGateCommandCode.LeaveRequest,
+    [ZdoClusterId.NWK_UPDATE_REQUEST]: ZiGateCommandCode.ManagementNetworkUpdate,
+    [ZdoClusterId.PERMIT_JOINING_REQUEST]: ZiGateCommandCode.PermitJoin,
+};
 
 export enum ZiGateMessageCode {
     DeviceAnnounce = 0x004d,

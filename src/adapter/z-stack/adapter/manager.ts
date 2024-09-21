@@ -278,7 +278,7 @@ export class ZnpAdapterManager {
         const deviceInfo = await this.znp.requestWithReply(Subsystem.UTIL, 'getDeviceInfo', {});
         if (deviceInfo.payload.devicestate !== DevStates.ZB_COORD) {
             logger.debug('starting adapter as coordinator', NS);
-            const started = this.znp.waitFor(UnpiConstants.Type.AREQ, Subsystem.ZDO, 'stateChangeInd', {state: 9}, 60000);
+            const started = this.znp.waitFor(UnpiConstants.Type.AREQ, Subsystem.ZDO, 'stateChangeInd', undefined, undefined, 9, 60000);
             await this.znp.request(Subsystem.ZDO, 'startupFromApp', {startdelay: 100}, undefined, undefined, [
                 ZnpCommandStatus.SUCCESS,
                 ZnpCommandStatus.FAILURE,
@@ -362,7 +362,7 @@ export class ZnpAdapterManager {
             await this.znp.request(Subsystem.APP_CNF, 'bdbSetChannel', {isPrimary: 0x0, channel: 0x0});
 
             /* perform bdb commissioning */
-            const started = this.znp.waitFor(UnpiConstants.Type.AREQ, Subsystem.ZDO, 'stateChangeInd', {state: 9}, 60000);
+            const started = this.znp.waitFor(UnpiConstants.Type.AREQ, Subsystem.ZDO, 'stateChangeInd', undefined, undefined, 9, 60000);
             await this.znp.request(Subsystem.APP_CNF, 'bdbStartCommissioning', {mode: 0x04});
             try {
                 await started.start().promise;

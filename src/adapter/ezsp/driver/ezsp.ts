@@ -456,6 +456,10 @@ export class Ezsp extends EventEmitter {
         const version = this.ezspV;
         const result = await this.execCommand('version', {desiredProtocolVersion: version});
 
+        if (result.protocolVersion >= 14) {
+            throw new Error(`'ezsp' driver is not compatible with firmware 8.x.x or above (EZSP v14+). Use 'ember' driver instead.`);
+        }
+
         if (result.protocolVersion !== version) {
             logger.debug(`Switching to eszp version ${result.protocolVersion}`, NS);
 
