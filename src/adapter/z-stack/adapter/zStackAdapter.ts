@@ -483,12 +483,19 @@ class ZStackAdapter extends Adapter {
                 }
             }
 
-            if (clusterId === Zdo.ClusterId.NODE_DESCRIPTOR_REQUEST) {
-                // makes it succeed in some cases: https://github.com/Koenkk/zigbee2mqtt/issues/3276
-                await this.discoverRoute(networkAddress);
+            try {
+                await this.znp.requestZdo(clusterId, payload, waiter?.ID);
+            } catch (error) {
+                if (clusterId === Zdo.ClusterId.NODE_DESCRIPTOR_REQUEST) {
+                    // Discover route when node descriptor request fails
+                    // https://github.com/Koenkk/zigbee2mqtt/issues/3276
+                    logger.debug(`Discover route to '${networkAddress}' because node descriptor request failed`, NS);
+                    await this.discoverRoute(networkAddress);
+                    await this.znp.requestZdo(clusterId, payload, waiter?.ID);
+                } else {
+                    throw error;
+                }
             }
-
-            await this.znp.requestZdo(clusterId, payload, waiter?.ID);
 
             if (waiter) {
                 const response = await waiter.start().promise;

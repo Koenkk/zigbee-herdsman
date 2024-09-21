@@ -4341,14 +4341,30 @@ describe('zstack-adapter', () => {
         await adapter.start();
         mockZnpRequest.mockClear();
         mockZnpRequestZdo.mockClear();
+        mockZnpRequestZdo.mockRejectedValueOnce('Failed');
 
         const clusterId = Zdo.ClusterId.NODE_DESCRIPTOR_REQUEST;
         const zdoPayload = Zdo.Buffalo.buildRequest(false, clusterId, 1234);
 
         await adapter.sendZdo(ZSpec.BLANK_EUI64, 1234, clusterId, zdoPayload, true);
 
-        expect(mockZnpRequestZdo).toHaveBeenCalledWith(clusterId, Buffer.from([1234 & 0xff, (1234 >> 8) & 0xff, ...zdoPayload]), undefined);
+        expect(mockZnpRequestZdo).toHaveBeenCalledTimes(2);
+        expect(mockZnpRequestZdo).toHaveBeenNthCalledWith(1, clusterId, Buffer.from([1234 & 0xff, (1234 >> 8) & 0xff, ...zdoPayload]), undefined);
+        expect(mockZnpRequestZdo).toHaveBeenNthCalledWith(2, clusterId, Buffer.from([1234 & 0xff, (1234 >> 8) & 0xff, ...zdoPayload]), undefined);
         expect(mockZnpRequest).toHaveBeenCalledTimes(1);
         expect(mockZnpRequest).toHaveBeenCalledWith(Subsystem.ZDO, 'extRouteDisc', {dstAddr: 1234, options: 0, radius: 30});
+    });
+
+    it('Should throw error when ZDO call fails', async () => {
+        basicMocks();
+        await adapter.start();
+        mockZnpRequest.mockClear();
+        mockZnpRequestZdo.mockClear();
+        mockZnpRequestZdo.mockRejectedValueOnce(new Error('Failed'));
+
+        const clusterId = Zdo.ClusterId.SIMPLE_DESCRIPTOR_REQUEST;
+        const zdoPayload = Zdo.Buffalo.buildRequest(false, clusterId, 123, 0);
+
+        await expect(adapter.sendZdo(ZSpec.BLANK_EUI64, 1234, clusterId, zdoPayload, true)).rejects.toThrow('Failed');
     });
 });
