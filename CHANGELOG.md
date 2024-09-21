@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.0](https://github.com/Koenkk/zigbee-herdsman/compare/v1.0.1...v1.1.0) (2024-09-21)
+
+
+### Features
+
+* Prepare to move specific ZDO requests out of Adapter ([#1187](https://github.com/Koenkk/zigbee-herdsman/issues/1187)) ([d84725b](https://github.com/Koenkk/zigbee-herdsman/commit/d84725bc22abe15d5ea3215b3a961fd6d65d22ff))
+
 ## [1.0.1](https://github.com/Koenkk/zigbee-herdsman/compare/v1.0.0...v1.0.1) (2024-09-19)
 
 
