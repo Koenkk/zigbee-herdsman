@@ -1,10 +1,11 @@
 import * as crypto from 'crypto';
 
 import {TsType} from '../../';
-import {Zdo, ZSpec} from '../../..';
 import * as Models from '../../../models';
 import {Wait} from '../../../utils';
 import {logger} from '../../../utils/logger';
+import * as ZSpec from '../../../zspec';
+import * as Zdo from '../../../zspec/zdo';
 import * as ZnpConstants from '../constants';
 import {DevStates, NvItemsIds, ZnpCommandStatus} from '../constants/common';
 import * as ZStackModels from '../models';

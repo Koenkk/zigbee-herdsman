@@ -6,10 +6,10 @@ import net from 'net';
 
 import {DelimiterParser} from '@serialport/parser-delimiter';
 
-import {ZSpec} from '../../..';
 import {Queue} from '../../../utils';
 import {logger} from '../../../utils/logger';
 import Waitress from '../../../utils/waitress';
+import * as ZSpec from '../../../zspec';
 import * as Zdo from '../../../zspec/zdo';
 import {EndDeviceAnnounce, GenericZdoResponse} from '../../../zspec/zdo/definition/tstypes';
 import {SerialPort} from '../../serialPort';

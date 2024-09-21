@@ -2,11 +2,11 @@
 
 import assert from 'assert';
 
-import {ZSpec} from '../../..';
 import Device from '../../../controller/model/device';
 import * as Models from '../../../models';
 import {Wait, Waitress} from '../../../utils';
 import {logger} from '../../../utils/logger';
+import * as ZSpec from '../../../zspec';
 import {BroadcastAddress} from '../../../zspec/enums';
 import * as Zcl from '../../../zspec/zcl';
 import * as Zdo from '../../../zspec/zdo';
