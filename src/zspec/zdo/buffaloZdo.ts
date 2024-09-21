@@ -1067,7 +1067,7 @@ export class BuffaloZdo extends Buffalo {
         source: EUI64,
         sourceEndpoint: number,
         clusterId: ClusterId,
-        type: ClusterId,
+        type: number,
         destination: EUI64,
         groupAddress: number,
         destinationEndpoint: number,

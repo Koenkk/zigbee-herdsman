@@ -18,9 +18,7 @@ interface AdapterEventMap {
     zclPayload: [payload: AdapterEvents.ZclPayload];
     zdoResponse: [clusterId: Zdo.ClusterId, response: ZdoTypes.GenericZdoResponse];
     disconnected: [];
-    deviceAnnounce: [payload: AdapterEvents.DeviceAnnouncePayload];
     deviceLeave: [payload: AdapterEvents.DeviceLeavePayload];
-    networkAddress: [payload: AdapterEvents.NetworkAddressPayload];
 }
 
 abstract class Adapter extends events.EventEmitter<AdapterEventMap> {
