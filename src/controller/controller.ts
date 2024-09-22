@@ -618,8 +618,7 @@ class Controller extends events.EventEmitter<ControllerEventMap> {
             device.networkAddress = payload.nwkAddress;
             device.save();
 
-            // TODO: this is not emitting `deviceNetworkAddressChanged`?
-            // this.selfAndDeviceEmit(device, 'deviceNetworkAddressChanged', {device});
+            this.selfAndDeviceEmit(device, 'deviceNetworkAddressChanged', {device});
         }
 
         this.selfAndDeviceEmit(device, 'deviceAnnounce', {device});
