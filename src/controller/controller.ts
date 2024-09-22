@@ -86,6 +86,8 @@ class Controller extends events.EventEmitter<ControllerEventMap> {
     private stopping: boolean;
     private adapterDisconnected: boolean;
     private networkParametersCached: AdapterTsType.NetworkParameters | undefined;
+    /** List of unknown devices detected during a single runtime session. Serves as de-dupe and anti-spam. */
+    private unknownDevices: Set<number>;
 
     /**
      * Create a controller
@@ -97,6 +99,7 @@ class Controller extends events.EventEmitter<ControllerEventMap> {
         this.stopping = false;
         this.adapterDisconnected = true; // set false after adapter.start() is successfully called
         this.options = mixinDeep(JSON.parse(JSON.stringify(DefaultOptions)), options);
+        this.unknownDevices = new Set();
 
         // Validate options
         for (const channel of this.options.network.channelList) {
@@ -527,6 +530,32 @@ class Controller extends events.EventEmitter<ControllerEventMap> {
         return await this.adapter.setTransmitPower(value);
     }
 
+    public async identifyUnknownDevice(nwkAddress: number): Promise<Device | undefined> {
+        if (this.unknownDevices.has(nwkAddress)) {
+            // prevent duplicate triggering
+            return;
+        }
+
+        logger.debug(`Trying to identify unknown device with address '${nwkAddress}'`, NS);
+        this.unknownDevices.add(nwkAddress);
+        const clusterId = Zdo.ClusterId.IEEE_ADDRESS_REQUEST;
+        const zdoPayload = Zdo.Buffalo.buildRequest(this.adapter.hasZdoMessageOverhead, clusterId, nwkAddress, false, 0);
+        const response = await this.adapter.sendZdo(ZSpec.BLANK_EUI64, nwkAddress, clusterId, zdoPayload, false);
+
+        if (Zdo.Buffalo.checkStatus(response)) {
+            // XXX: race with onIEEEAddress triggered from onZdoResponse or not?
+            // this duplicates the triggering but makes sure device is updated before going further...
+            this.onIEEEAddress(response[1]);
+
+            return Device.byIeeeAddr(response[1].eui64);
+        } else {
+            logger.debug(`Failed to retrieve IEEE address for device '${nwkAddress}': ${Zdo.Status[response[0]]}`, NS);
+        }
+
+        // NOTE: by keeping nwkAddress in `this.unknownDevices` on fail, it prevents a non-responding device from potentially spamming identify.
+        // This only lasts until next reboot (runtime Set), allowing to 'force' another trigger if necessary.
+    }
+
     private onNetworkAddress(payload: ZdoTypes.NetworkAddressResponse): void {
         logger.debug(`Network address from '${payload.eui64}:${payload.nwkAddress}'`, NS);
         const device = Device.byIeeeAddr(payload.eui64);
@@ -567,6 +596,8 @@ class Controller extends events.EventEmitter<ControllerEventMap> {
 
             this.selfAndDeviceEmit(device, 'deviceNetworkAddressChanged', {device});
         }
+
+        this.unknownDevices.delete(payload.nwkAddress);
     }
 
     private onDeviceAnnounce(payload: ZdoTypes.EndDeviceAnnounce): void {
@@ -820,21 +851,7 @@ class Controller extends events.EventEmitter<ControllerEventMap> {
 
         if (!device) {
             if (typeof payload.address === 'number') {
-                logger.debug(`Trying to identify unknown device with address '${payload.address}'`, NS);
-                const clusterId = Zdo.ClusterId.IEEE_ADDRESS_REQUEST;
-                const zdoPayload = Zdo.Buffalo.buildRequest(this.adapter.hasZdoMessageOverhead, clusterId, payload.address, false, 0);
-                const response = await this.adapter.sendZdo(ZSpec.BLANK_EUI64, payload.address, clusterId, zdoPayload, false);
-
-                if (Zdo.Buffalo.checkStatus(response)) {
-                    // XXX: race with onIEEEAddress triggered from onZdoResponse or not?
-                    // this duplicates the triggering but makes sure device is updated before going further...
-                    this.onIEEEAddress(response[1]);
-
-                    device = Device.byIeeeAddr(response[1].eui64);
-                } else {
-                    logger.debug(`Failed to retrieve IEEE address for device '${payload.address}': ${Zdo.Status[response[0]]}`, NS);
-                    return;
-                }
+                device = await this.identifyUnknownDevice(payload.address);
             }
 
             if (!device) {

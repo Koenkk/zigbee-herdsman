@@ -10357,4 +10357,99 @@ describe('Controller', () => {
             'zh:controller',
         );
     });
+
+    it('Device network address changed while Z2M was offline, no duplicate triggering of IEEE request', async () => {
+        const oldNwkAddress = 40369;
+        const newNwkAddress = 12345;
+        const database = `
+        {"id":1,"type":"Coordinator","ieeeAddr":"0x0000012300000000","nwkAddr":0,"manufId":0,"epList":[11,6,5,4,3,2,1],"endpoints":{"1":{"profId":260,"epId":1,"devId":5,"inClusterList":[],"meta":{},"outClusterList":[],"clusters":{}},"2":{"profId":257,"epId":2,"devId":5,"inClusterList":[],"meta":{},"outClusterList":[],"clusters":{}},"3":{"profId":261,"epId":3,"devId":5,"inClusterList":[],"meta":{},"outClusterList":[],"clusters":{}},"4":{"profId":263,"epId":4,"devId":5,"inClusterList":[],"meta":{},"outClusterList":[],"clusters":{}},"5":{"profId":264,"epId":5,"devId":5,"inClusterList":[],"meta":{},"outClusterList":[],"clusters":{}},"6":{"profId":265,"epId":6,"devId":5,"inClusterList":[],"meta":{},"outClusterList":[],"clusters":{}},"11":{"profId":260,"epId":11,"devId":1024,"inClusterList":[],"meta":{},"outClusterList":[1280],"clusters":{}}},"interviewCompleted":false,"meta":{},"_id":"aM341ldunExFmJ3u"}
+        {"id":3,"type":"Router","ieeeAddr":"0x000b57fffec6a5b2","nwkAddr":${oldNwkAddress},"manufId":4476,"manufName":"IKEA of Sweden","powerSource":"Mains (single phase)","modelId":"TRADFRI bulb E27 WS opal 980lm","epList":[1],"endpoints":{"1":{"profId":49246,"epId":1,"devId":544,"inClusterList":[0,3,4,5,6,8,768,2821,4096],"meta":{},"outClusterList":[5,25,32,4096],"clusters":{}}},"appVersion":17,"stackVersion":87,"hwVersion":1,"dateCode":"20170331","swBuildId":"1.2.217","zclVersion":1,"interviewCompleted":true,"meta":{"reporting":1},"_id":"pagvP2f9Bbj3o9TM"}
+        `;
+        fs.writeFileSync(options.databasePath, database);
+        await controller.start();
+        mockAdapterSendZdo.mockClear();
+        const identifyUnknownDeviceSpy = jest.spyOn(controller, 'identifyUnknownDevice');
+
+        const device = controller.getDeviceByIeeeAddr('0x000b57fffec6a5b2')!;
+        expect(device.networkAddress).toStrictEqual(oldNwkAddress);
+
+        const frame = Zcl.Frame.create(0, 1, true, undefined, 10, 'readRsp', 0, [{attrId: 5, status: 0, dataType: 66, attrData: 'new.model.id'}], {});
+        const zclPayload = {
+            wasBroadcast: false,
+            address: newNwkAddress,
+            clusterID: frame.cluster.ID,
+            data: frame.toBuffer(),
+            header: frame.header,
+            endpoint: 1,
+            linkquality: 50,
+            groupID: 1,
+        };
+
+        mockAdapterSendZdo.mockImplementationOnce(async () => {
+            await mockAdapterEvents['zclPayload'](zclPayload);
+
+            const zdoResponse = [
+                Zdo.Status.SUCCESS,
+                {
+                    eui64: '0x000b57fffec6a5b2',
+                    nwkAddress: newNwkAddress,
+                    startIndex: 0,
+                    assocDevList: [],
+                } as IEEEAddressResponse,
+            ];
+
+            await mockAdapterEvents['zdoResponse'](Zdo.ClusterId.IEEE_ADDRESS_RESPONSE, zdoResponse);
+            return zdoResponse;
+        });
+
+        await mockAdapterEvents['zclPayload'](zclPayload);
+
+        expect(device.networkAddress).toStrictEqual(newNwkAddress);
+        expect(device.modelID).toBe('new.model.id');
+        expect(identifyUnknownDeviceSpy).toHaveBeenCalledTimes(2);
+        expect(mockAdapterSendZdo).toHaveBeenCalledTimes(1);
+    });
+
+    it('Device network address changed while Z2M was offline, no spamming of IEEE request when device doesnt respond', async () => {
+        const nwkAddress = 40369;
+        await controller.start();
+        mockAdapterSendZdo.mockClear();
+        mockAdapterSendZdo.mockImplementationOnce(async () => {
+            const zdoResponse = [Zdo.Status.NOT_SUPPORTED, undefined];
+
+            await mockAdapterEvents['zdoResponse'](Zdo.ClusterId.IEEE_ADDRESS_RESPONSE, zdoResponse);
+            return zdoResponse;
+        });
+        const identifyUnknownDeviceSpy = jest.spyOn(controller, 'identifyUnknownDevice');
+
+        const frame = Zcl.Frame.create(0, 1, true, undefined, 10, 'readRsp', 0, [{attrId: 5, status: 0, dataType: 66, attrData: 'new.model.id'}], {});
+        await mockAdapterEvents['zclPayload']({
+            wasBroadcast: false,
+            address: nwkAddress,
+            clusterID: frame.cluster.ID,
+            data: frame.toBuffer(),
+            header: frame.header,
+            endpoint: 1,
+            linkquality: 50,
+            groupID: 1,
+        });
+
+        expect(mockAdapterSendZdo).toHaveBeenCalledTimes(1);
+        expect(identifyUnknownDeviceSpy).toHaveBeenCalledTimes(1);
+        expect(mockLogger.debug).toHaveBeenCalledWith(`Failed to retrieve IEEE address for device '${nwkAddress}': NOT_SUPPORTED`, 'zh:controller');
+
+        await mockAdapterEvents['zclPayload']({
+            wasBroadcast: false,
+            address: nwkAddress,
+            clusterID: frame.cluster.ID,
+            data: frame.toBuffer(),
+            header: frame.header,
+            endpoint: 1,
+            linkquality: 50,
+            groupID: 1,
+        });
+
+        expect(mockAdapterSendZdo).toHaveBeenCalledTimes(1);
+        expect(identifyUnknownDeviceSpy).toHaveBeenCalledTimes(2);
+    });
 });
