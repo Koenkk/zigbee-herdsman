@@ -739,6 +739,11 @@ class Controller extends events.EventEmitter<ControllerEventMap> {
     }
 
     private async onZdoResponse(clusterId: Zdo.ClusterId, response: ZdoTypes.GenericZdoResponse): Promise<void> {
+        logger.debug(
+            `Received ZDO response: clusterId=${Zdo.ClusterId[clusterId]}, status=${Zdo.Status[response[0]]}, payload=${JSON.stringify(response[1])}`,
+            NS,
+        );
+
         switch (clusterId) {
             case Zdo.ClusterId.NETWORK_ADDRESS_RESPONSE: {
                 /* istanbul ignore else */
@@ -762,16 +767,6 @@ class Controller extends events.EventEmitter<ControllerEventMap> {
                     this.onDeviceAnnounce(response[1]);
                 }
                 break;
-            }
-
-            default: {
-                // TODO: other responses that may be useful to update last seen & such
-
-                /* istanbul ignore next */
-                logger.debug(
-                    `Received ZDO response: clusterId=${Zdo.ClusterId[clusterId]}, status=${Zdo.Status[response[0]]}, payload=${JSON.stringify(response[1])}`,
-                    NS,
-                );
             }
         }
     }
