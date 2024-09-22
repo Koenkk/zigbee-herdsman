@@ -12,7 +12,7 @@ const NS = 'zh:adapter:discovery';
 
 type Adapter = NonNullable<SerialPortOptions['adapter']>;
 type DiscoverableUSBAdapter = 'deconz' | 'ember' | 'zstack' | 'zboss' | 'zigate';
-type USBFootprint = {
+type USBFingerprint = {
     vendorId: string;
     productId: string;
     manufacturer?: string;
@@ -31,7 +31,7 @@ type USBFootprint = {
  *
  * XXX: vendorId `10c4` + productId `ea60` is a problem on Windows since can't match `path` and possibly can't match `manufacturer` to refine properly
  */
-const USB_FOOTPRINTS: Record<DiscoverableUSBAdapter, USBFootprint[]> = {
+const USB_FINGERPRINTS: Record<DiscoverableUSBAdapter, USBFingerprint[]> = {
     deconz: [
         {
             // Conbee II
@@ -219,7 +219,7 @@ const USB_FOOTPRINTS: Record<DiscoverableUSBAdapter, USBFootprint[]> = {
     ],
 };
 
-function matchUSBFootprint(portInfo: PortInfo, isWindows: boolean, entries: USBFootprint[]): [PortInfo['path'], USBFootprint] | undefined {
+function matchUSBFingerprint(portInfo: PortInfo, isWindows: boolean, entries: USBFingerprint[]): [PortInfo['path'], USBFingerprint] | undefined {
     if (!portInfo.vendorId || !portInfo.productId) {
         // port info is missing essential information for proper matching, ignore it
         return;
@@ -251,7 +251,7 @@ export async function findUSBAdapter(adapter?: Adapter, path?: string): Promise<
         }
 
         if (adapter) {
-            const match = matchUSBFootprint(portInfo, isWindows, USB_FOOTPRINTS[adapter]);
+            const match = matchUSBFingerprint(portInfo, isWindows, USB_FINGERPRINTS[adapter]);
 
             if (match) {
                 logger.info(`Matched adapter: ${JSON.stringify(portInfo)} => ${adapter}: ${JSON.stringify(match[1])}`, NS);
@@ -261,8 +261,8 @@ export async function findUSBAdapter(adapter?: Adapter, path?: string): Promise<
             continue;
         }
 
-        for (const key in USB_FOOTPRINTS) {
-            const match = matchUSBFootprint(portInfo, isWindows, USB_FOOTPRINTS[key as DiscoverableUSBAdapter]!);
+        for (const key in USB_FINGERPRINTS) {
+            const match = matchUSBFingerprint(portInfo, isWindows, USB_FINGERPRINTS[key as DiscoverableUSBAdapter]!);
 
             if (match) {
                 logger.info(`Matched adapter: ${JSON.stringify(portInfo)} => ${key}: ${JSON.stringify(match[1])}`, NS);
