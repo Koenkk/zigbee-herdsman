@@ -1,5 +1,21 @@
 # Changelog
 
+## [2.0.0](https://github.com/Koenkk/zigbee-herdsman/compare/v1.1.0...v2.0.0) (2024-09-22)
+
+
+### ⚠ BREAKING CHANGES
+
+* Standardize ZDO ([#1194](https://github.com/Koenkk/zigbee-herdsman/issues/1194))
+
+### Features
+
+* Standardize ZDO ([#1194](https://github.com/Koenkk/zigbee-herdsman/issues/1194)) ([9bce063](https://github.com/Koenkk/zigbee-herdsman/commit/9bce063767ec3c63f287a44dcdef60338c51b3d9))
+
+
+### Bug Fixes
+
+* **ignore:** update dependencies ([#1195](https://github.com/Koenkk/zigbee-herdsman/issues/1195)) ([3f76f1a](https://github.com/Koenkk/zigbee-herdsman/commit/3f76f1a14bcdc52af9e9793b1ce2312f4b5cb7ae))
+
 ## [1.1.0](https://github.com/Koenkk/zigbee-herdsman/compare/v1.0.1...v1.1.0) (2024-09-21)
 
 
