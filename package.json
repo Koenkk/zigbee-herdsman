@@ -41,6 +41,7 @@
         "@babel/core": "^7.25.2",
         "@babel/preset-env": "^7.25.4",
         "@babel/preset-typescript": "^7.24.7",
+        "@eslint/core": "^0.6.0",
         "@eslint/js": "^9.11.0",
         "@ianvs/prettier-plugin-sort-imports": "^4.3.1",
         "@serialport/binding-mock": "^10.2.2",
