@@ -1091,14 +1091,11 @@ class Device extends Entity<ControllerEventMap> {
      * Request device to advertise its network address.
      * Note: This does not actually update the device property (if needed), as this is already done with `zdoResponse` event in Controller.
      */
-    public async updateNetworkAddress(): Promise<void> {
+    public async requestNetworkAddress(): Promise<void> {
         const clusterId = Zdo.ClusterId.NETWORK_ADDRESS_REQUEST;
         const zdoPayload = Zdo.Buffalo.buildRequest(Entity.adapter!.hasZdoMessageOverhead, clusterId, this.ieeeAddr as EUI64, false, 0);
-        const response = await Entity.adapter!.sendZdo(this.ieeeAddr, ZSpec.BroadcastAddress.RX_ON_WHEN_IDLE, clusterId, zdoPayload, false);
 
-        if (!Zdo.Buffalo.checkStatus(response)) {
-            throw new Zdo.StatusError(response[0]);
-        }
+        await Entity.adapter!.sendZdo(this.ieeeAddr, ZSpec.BroadcastAddress.RX_ON_WHEN_IDLE, clusterId, zdoPayload, true);
     }
 
     public async removeFromNetwork(): Promise<void> {
