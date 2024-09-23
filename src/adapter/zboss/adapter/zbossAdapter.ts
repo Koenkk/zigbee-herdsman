@@ -426,8 +426,13 @@ export class ZBOSSAdapter extends Adapter {
     }
 
     public async sendZclFrameToGroup(groupID: number, zclFrame: Zcl.Frame, sourceEndpoint?: number): Promise<void> {
-        logger.error(() => `NOT SUPPORTED: sendZclFrameToGroup(${groupID},${JSON.stringify(zclFrame)},${sourceEndpoint})`, NS);
-        return;
+        await this.driver.grequest(
+            groupID,
+            sourceEndpoint === ZSpec.GP_ENDPOINT ? ZSpec.GP_PROFILE_ID : ZSpec.HA_PROFILE_ID,
+            zclFrame.cluster.ID,
+            sourceEndpoint || 0x01,
+            zclFrame.toBuffer(),
+        );
     }
 
     public async sendZclFrameToAll(
@@ -436,8 +441,14 @@ export class ZBOSSAdapter extends Adapter {
         sourceEndpoint: number,
         destination: ZSpec.BroadcastAddress,
     ): Promise<void> {
-        logger.error(() => `NOT SUPPORTED: sendZclFrameToAll(${endpoint},${JSON.stringify(zclFrame)},${sourceEndpoint},${destination})`, NS);
-        return;
+        await this.driver.brequest(
+            destination,
+            sourceEndpoint === ZSpec.GP_ENDPOINT && endpoint === ZSpec.GP_ENDPOINT ? ZSpec.GP_PROFILE_ID : ZSpec.HA_PROFILE_ID,
+            zclFrame.cluster.ID,
+            endpoint,
+            sourceEndpoint || 0x01,
+            zclFrame.toBuffer(),
+        );
     }
 
     public async setChannelInterPAN(channel: number): Promise<void> {
