@@ -236,7 +236,7 @@ class ZiGateAdapter extends Adapter {
                 case Zdo.ClusterId.UNBIND_REQUEST: {
                     // only need adjusting when Zdo.UNICAST_BINDING
                     if (payload.length === 14) {
-                        // extra zeroes for endpoint
+                        // extra zero for endpoint
                         const prefixedPayload = Buffer.alloc(payload.length + 1);
                         prefixedPayload.set(payload, 0);
 
