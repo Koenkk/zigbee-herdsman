@@ -342,6 +342,25 @@ export class ZBOSSDriver extends EventEmitter {
         return await this.execCommand(CommandId.APSDE_DATA_REQ, payload);
     }
 
+    public async grequest(group: number, profileID: number, clusterID: number, srcEp: number, data: Buffer): Promise<ZBOSSFrame> {
+        const payload = {
+            paramLength: 20,
+            dataLength: data.length,
+            addr: `0x${group.toString(16).padStart(16,'0')}`,
+            profileID: profileID,
+            clusterID: clusterID,
+            srcEndpoint: srcEp,
+            radius: 3,
+            dstAddrMode: 1, // ADDRESS MODE group
+            txOptions: 2, // ROUTE DISCOVERY
+            useAlias: 0,
+            aliasAddr: 0,
+            aliasSequence: 0,
+            data: data,
+        };
+        return await this.execCommand(CommandId.APSDE_DATA_REQ, payload);
+    }
+
     public async requestZdo(clusterId: Zdo.ClusterId, payload: Buffer, disableResponse: boolean): Promise<ZBOSSFrame | void> {
         if (!this.port.portOpen) {
             throw new Error('Connection not initialized');
