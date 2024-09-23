@@ -10,6 +10,7 @@ import {KeyValue} from '../../controller/tstype';
 import {Queue, Waitress} from '../../utils';
 import {logger} from '../../utils/logger';
 import * as Zdo from '../../zspec/zdo';
+import * as ZSpec from '../../zspec';
 import {ZDO_REQ_CLUSTER_ID_TO_ZBOSS_COMMAND_ID} from './commands';
 import {CommandId, DeviceType, PolicyType, ResetOptions, StatusCodeGeneric} from './enums';
 import {FrameType, makeFrame, ZBOSSFrame} from './frame';
@@ -305,13 +306,33 @@ export class ZBOSSDriver extends EventEmitter {
         const payload = {
             paramLength: 21,
             dataLength: data.length,
-            ieee: ieee,
+            addr: ieee,
             profileID: profileID,
             clusterID: clusterID,
             dstEndpoint: dstEp,
             srcEndpoint: srcEp,
             radius: 3,
             dstAddrMode: 3, // ADDRESS MODE ieee
+            txOptions: 2, // ROUTE DISCOVERY
+            useAlias: 0,
+            aliasAddr: 0,
+            aliasSequence: 0,
+            data: data,
+        };
+        return await this.execCommand(CommandId.APSDE_DATA_REQ, payload);
+    }
+
+    public async brequest(addr: ZSpec.BroadcastAddress, profileID: number, clusterID: number, dstEp: number, srcEp: number, data: Buffer): Promise<ZBOSSFrame> {
+        const payload = {
+            paramLength: 21,
+            dataLength: data.length,
+            addr: `0x${addr.toString(16).padStart(16,'0')}`,
+            profileID: profileID,
+            clusterID: clusterID,
+            dstEndpoint: dstEp,
+            srcEndpoint: srcEp,
+            radius: 3,
+            dstAddrMode: 2, // ADDRESS MODE broadcast
             txOptions: 2, // ROUTE DISCOVERY
             useAlias: 0,
             aliasAddr: 0,

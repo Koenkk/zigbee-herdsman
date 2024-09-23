@@ -689,7 +689,7 @@ export const FRAMES: {[key in CommandId]?: ZBOSSFrameDesc} = {
         request: [
             {name: 'paramLength', type: DataType.UINT8},
             {name: 'dataLength', type: DataType.UINT16},
-            {name: 'ieee', type: DataType.IEEE_ADDR},
+            {name: 'addr', type: DataType.IEEE_ADDR},
             {name: 'profileID', type: DataType.UINT16},
             {name: 'clusterID', type: DataType.UINT16},
             //{name: 'dstEndpoint', type: DataType.UINT8, condition: (payload) => ![2,3].includes(payload.dstAddrMode)},

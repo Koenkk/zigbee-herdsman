@@ -436,8 +436,14 @@ export class ZBOSSAdapter extends Adapter {
         sourceEndpoint: number,
         destination: ZSpec.BroadcastAddress,
     ): Promise<void> {
-        logger.error(() => `NOT SUPPORTED: sendZclFrameToAll(${endpoint},${JSON.stringify(zclFrame)},${sourceEndpoint},${destination})`, NS);
-        return;
+        await this.driver.brequest(
+            destination,
+            sourceEndpoint === ZSpec.GP_ENDPOINT && endpoint === ZSpec.GP_ENDPOINT ? ZSpec.GP_PROFILE_ID : ZSpec.HA_PROFILE_ID,
+            zclFrame.cluster.ID,
+            endpoint,
+            sourceEndpoint || 0x01,
+            zclFrame.toBuffer(),
+        );
     }
 
     public async setChannelInterPAN(channel: number): Promise<void> {
