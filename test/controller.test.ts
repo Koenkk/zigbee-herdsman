@@ -9998,7 +9998,7 @@ describe('Controller', () => {
         );
     });
 
-    it('Device update network address - unchanged', async () => {
+    it('Device requests network address - unchanged', async () => {
         await controller.start();
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
         mockAdapterSendZdo.mockClear();
@@ -10020,7 +10020,7 @@ describe('Controller', () => {
             return zdoResponse;
         });
 
-        await device.updateNetworkAddress();
+        await device.requestNetworkAddress();
 
         expect(mockAdapterSendZdo).toHaveBeenCalledTimes(1);
         const zdoPayload = Zdo.Buffalo.buildRequest(false, Zdo.ClusterId.NETWORK_ADDRESS_REQUEST, '0x129', false, 0);
@@ -10035,7 +10035,7 @@ describe('Controller', () => {
         expect(controller.getDeviceByIeeeAddr('0x129')!.networkAddress).toBe(129);
     });
 
-    it('Device update network address - changed', async () => {
+    it('Device requests network address - changed', async () => {
         await controller.start();
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
         mockAdapterSendZdo.mockClear();
@@ -10057,7 +10057,7 @@ describe('Controller', () => {
             return zdoResponse;
         });
 
-        await device.updateNetworkAddress();
+        await device.requestNetworkAddress();
 
         expect(mockAdapterSendZdo).toHaveBeenCalledTimes(1);
         const zdoPayload = Zdo.Buffalo.buildRequest(false, Zdo.ClusterId.NETWORK_ADDRESS_REQUEST, '0x129', false, 0);
