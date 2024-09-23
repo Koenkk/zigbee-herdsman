@@ -245,7 +245,7 @@ describe('Adapter', () => {
             });
         });
 
-        it('detects ember from scratch on Windows', async () => {
+        it('detects from scratch on Windows', async () => {
             platformSpy.mockReturnValueOnce('win32');
             listSpy.mockReturnValue([
                 {
@@ -268,6 +268,19 @@ describe('Adapter', () => {
             expect(adapter.serialPortOptions).toStrictEqual({
                 path: 'COM3',
                 adapter: 'ember',
+            });
+        });
+
+        it('detects from scratch with pnpId', async () => {
+            listSpy.mockReturnValue([{...ZBOSS_NORDIC, path: '/dev/ttyUSB0', pnpId: 'usb-ZEPHYR_Zigbee_NCP_54ACCFAFA6DADC49-if00'}]);
+
+            const adapter = await Adapter.create({panID: 0x1a62, channelList: [11]}, {}, 'test.db.backup', {disableLED: false});
+
+            expect(adapter).toBeInstanceOf(ZBOSSAdapter);
+            // @ts-expect-error protected
+            expect(adapter.serialPortOptions).toStrictEqual({
+                path: '/dev/ttyUSB0',
+                adapter: 'zboss',
             });
         });
 
@@ -391,6 +404,21 @@ describe('Adapter', () => {
             expect(adapter.serialPortOptions).toStrictEqual({
                 path: ZSTACK_CC2538.path,
                 adapter: 'zstack',
+            });
+        });
+
+        it('detects with specific config with pnpId', async () => {
+            listSpy.mockReturnValue([{...ZBOSS_NORDIC, path: '/dev/ttyUSB0', pnpId: 'usb-ZEPHYR_Zigbee_NCP_54ACCFAFA6DADC49-if00'}]);
+
+            const adapter = await Adapter.create({panID: 0x1a62, channelList: [11]}, {adapter: 'zboss', path: '/dev/ttyUSB0'}, 'test.db.backup', {
+                disableLED: false,
+            });
+
+            expect(adapter).toBeInstanceOf(ZBOSSAdapter);
+            // @ts-expect-error protected
+            expect(adapter.serialPortOptions).toStrictEqual({
+                path: '/dev/ttyUSB0',
+                adapter: 'zboss',
             });
         });
 

@@ -187,7 +187,8 @@ const USB_FINGERPRINTS: Record<DiscoverableUSBAdapter, USBAdapterFingerprint[]> 
             vendorId: '2fe3',
             productId: '0100',
             manufacturer: 'ZEPHYR',
-            pathRegex: '.*ZEPHYR.*', // TODO
+            // /dev/serial/by-id/usb-ZEPHYR_Zigbee_NCP_54ACCFAFA6DADC49-if00
+            pathRegex: '.*ZEPHYR.*',
         },
     ],
     zigate: [
@@ -230,6 +231,26 @@ async function getSerialPortList(): Promise<PortInfo[]> {
     return portInfos;
 }
 
+/**
+ * Case insensitive string matching.
+ * @param str1
+ * @param str2
+ * @returns
+ */
+function matchString(str1: string, str2: string): boolean {
+    return str1.localeCompare(str2, undefined, {sensitivity: 'base'}) === 0;
+}
+
+/**
+ * Case insensitive regex matching.
+ * @param regexStr Passed to RegExp constructor.
+ * @param str Always returns false if undefined.
+ * @returns
+ */
+function matchRegex(regexStr: string, str?: string): boolean {
+    return str !== undefined && new RegExp(regexStr, 'i').test(str);
+}
+
 function matchUSBFingerprint(
     portInfo: PortInfo,
     isWindows: boolean,
@@ -242,13 +263,10 @@ function matchUSBFingerprint(
 
     for (const entry of entries) {
         if (
-            portInfo.vendorId.localeCompare(entry.vendorId, undefined, {sensitivity: 'base'}) === 0 &&
-            portInfo.productId.localeCompare(entry.productId, undefined, {sensitivity: 'base'}) === 0 &&
-            (!entry.manufacturer ||
-                !portInfo.manufacturer ||
-                portInfo.manufacturer.localeCompare(entry.manufacturer, undefined, {sensitivity: 'base'}) === 0 ||
-                isWindows) &&
-            (!entry.pathRegex || new RegExp(entry.pathRegex, 'i').test(portInfo.path) || isWindows)
+            matchString(portInfo.vendorId, entry.vendorId) &&
+            matchString(portInfo.productId, entry.productId) &&
+            (!entry.manufacturer || !portInfo.manufacturer || matchString(portInfo.manufacturer, entry.manufacturer) || isWindows) &&
+            (!entry.pathRegex || matchRegex(entry.pathRegex, portInfo.path) || matchRegex(entry.pathRegex, portInfo.pnpId) || isWindows)
         ) {
             return [portInfo.path, entry];
         }
