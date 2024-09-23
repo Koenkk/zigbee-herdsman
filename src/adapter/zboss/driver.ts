@@ -323,13 +323,13 @@ export class ZBOSSDriver extends EventEmitter {
     }
 
     public async brequest(
-            addr: ZSpec.BroadcastAddress,
-            profileID: number,
-            clusterID: number,
-            dstEp: number,
-            srcEp: number,
-            data: Buffer,
-        ): Promise<ZBOSSFrame> {
+        addr: ZSpec.BroadcastAddress,
+        profileID: number,
+        clusterID: number,
+        dstEp: number,
+        srcEp: number,
+        data: Buffer,
+    ): Promise<ZBOSSFrame> {
         const payload = {
             paramLength: 21,
             dataLength: data.length,
