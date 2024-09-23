@@ -9,8 +9,8 @@ import {TsType} from '..';
 import {KeyValue} from '../../controller/tstype';
 import {Queue, Waitress} from '../../utils';
 import {logger} from '../../utils/logger';
-import * as Zdo from '../../zspec/zdo';
 import * as ZSpec from '../../zspec';
+import * as Zdo from '../../zspec/zdo';
 import {ZDO_REQ_CLUSTER_ID_TO_ZBOSS_COMMAND_ID} from './commands';
 import {CommandId, DeviceType, PolicyType, ResetOptions, StatusCodeGeneric} from './enums';
 import {FrameType, makeFrame, ZBOSSFrame} from './frame';
@@ -322,7 +322,14 @@ export class ZBOSSDriver extends EventEmitter {
         return await this.execCommand(CommandId.APSDE_DATA_REQ, payload);
     }
 
-    public async brequest(addr: ZSpec.BroadcastAddress, profileID: number, clusterID: number, dstEp: number, srcEp: number, data: Buffer): Promise<ZBOSSFrame> {
+    public async brequest(
+            addr: ZSpec.BroadcastAddress,
+            profileID: number,
+            clusterID: number,
+            dstEp: number,
+            srcEp: number,
+            data: Buffer,
+        ): Promise<ZBOSSFrame> {
         const payload = {
             paramLength: 21,
             dataLength: data.length,
