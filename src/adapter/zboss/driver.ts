@@ -326,7 +326,7 @@ export class ZBOSSDriver extends EventEmitter {
         const payload = {
             paramLength: 21,
             dataLength: data.length,
-            addr: `0x${addr.toString(16).padStart(16,'0')}`,
+            addr: `0x${addr.toString(16).padStart(16, '0')}`,
             profileID: profileID,
             clusterID: clusterID,
             dstEndpoint: dstEp,
@@ -346,7 +346,7 @@ export class ZBOSSDriver extends EventEmitter {
         const payload = {
             paramLength: 20,
             dataLength: data.length,
-            addr: `0x${group.toString(16).padStart(16,'0')}`,
+            addr: `0x${group.toString(16).padStart(16, '0')}`,
             profileID: profileID,
             clusterID: clusterID,
             srcEndpoint: srcEp,
