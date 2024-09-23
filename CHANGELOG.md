@@ -1,5 +1,17 @@
 # Changelog
 
+## [2.1.0](https://github.com/Koenkk/zigbee-herdsman/compare/v2.0.0...v2.1.0) (2024-09-23)
+
+
+### Features
+
+* ZBOSS: group and broadcast requests ([#1200](https://github.com/Koenkk/zigbee-herdsman/issues/1200)) ([0317295](https://github.com/Koenkk/zigbee-herdsman/commit/0317295d4f1b4165575449e460930c03b7814a1f))
+
+
+### Bug Fixes
+
+* **ignore:** zigate: Fix ZDO BIND/UNBIND payload mismatch. ([#1198](https://github.com/Koenkk/zigbee-herdsman/issues/1198)) ([b007282](https://github.com/Koenkk/zigbee-herdsman/commit/b0072827349bc3b87ee3550733d7ccf7c40bfe04))
+
 ## [2.0.0](https://github.com/Koenkk/zigbee-herdsman/compare/v1.1.0...v2.0.0) (2024-09-22)
 
 
