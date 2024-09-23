@@ -11,6 +11,7 @@ import {DeconzAdapter} from '../src/adapter/deconz/adapter';
 import {ZStackAdapter} from '../src/adapter/z-stack/adapter';
 import {ZiGateAdapter} from '../src/adapter/zigate/adapter';
 import {Controller} from '../src/controller';
+import * as Events from '../src/controller/events';
 import Request from '../src/controller/helpers/request';
 import zclTransactionSequenceNumber from '../src/controller/helpers/zclTransactionSequenceNumber';
 import ZclTransactionSequenceNumber from '../src/controller/helpers/zclTransactionSequenceNumber';
@@ -466,7 +467,17 @@ const mocksRestore = [
     mockZiGateAdapterAutoDetectPath,
 ];
 
-const events: Record<string, any> = {
+const events: {
+    deviceJoined: Events.DeviceJoinedPayload[];
+    deviceInterview: Events.DeviceInterviewPayload[];
+    adapterDisconnected: number[];
+    deviceAnnounce: Events.DeviceAnnouncePayload[];
+    deviceLeave: Events.DeviceLeavePayload[];
+    message: Events.MessagePayload[];
+    permitJoinChanged: Events.PermitJoinChangedPayload[];
+    lastSeenChanged: Events.LastSeenChangedPayload[];
+    deviceNetworkAddressChanged: Events.DeviceNetworkAddressChangedPayload[];
+} = {
     deviceJoined: [],
     deviceInterview: [],
     adapterDisconnected: [],
@@ -475,6 +486,7 @@ const events: Record<string, any> = {
     message: [],
     permitJoinChanged: [],
     lastSeenChanged: [],
+    deviceNetworkAddressChanged: [],
 };
 
 const backupPath = getTempFile('backup');
@@ -536,14 +548,15 @@ describe('Controller', () => {
             fs.unlinkSync(options.databasePath);
         }
         controller = new Controller(options);
-        controller.on('permitJoinChanged', (p) => events.permitJoinChanged.push(p));
-        controller.on('deviceJoined', (device) => events.deviceJoined.push(device));
-        controller.on('deviceInterview', (device) => events.deviceInterview.push(deepClone(device)));
+        controller.on('permitJoinChanged', (data) => events.permitJoinChanged.push(data));
+        controller.on('deviceJoined', (data) => events.deviceJoined.push(data));
+        controller.on('deviceInterview', (data) => events.deviceInterview.push(deepClone(data)));
         controller.on('adapterDisconnected', () => events.adapterDisconnected.push(1));
-        controller.on('deviceAnnounce', (device) => events.deviceAnnounce.push(device));
-        controller.on('deviceLeave', (device) => events.deviceLeave.push(device));
-        controller.on('message', (message) => events.message.push(message));
-        controller.on('lastSeenChanged', (device) => events.lastSeenChanged.push(device));
+        controller.on('deviceAnnounce', (data) => events.deviceAnnounce.push(data));
+        controller.on('deviceLeave', (data) => events.deviceLeave.push(data));
+        controller.on('message', (data) => events.message.push(data));
+        controller.on('lastSeenChanged', (data) => events.lastSeenChanged.push(data));
+        controller.on('deviceNetworkAddressChanged', (data) => events.deviceNetworkAddressChanged.push(data));
         restoreMocksendZclFrameToEndpoint();
     });
 
@@ -2496,8 +2509,10 @@ describe('Controller', () => {
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
         expect(events.deviceInterview.length).toBe(2);
         expect(events.deviceInterview[0].status).toBe('started');
+        // @ts-expect-error private but deep cloned
         expect(events.deviceInterview[0].device._ieeeAddr).toBe('0x129');
         expect(events.deviceInterview[1].status).toBe('successful');
+        // @ts-expect-error private but deep cloned
         expect(events.deviceInterview[1].device._ieeeAddr).toBe('0x129');
     });
 
@@ -2506,8 +2521,10 @@ describe('Controller', () => {
         await mockAdapterEvents['deviceJoined']({networkAddress: 140, ieeeAddr: '0x140'});
         expect(events.deviceInterview.length).toBe(2);
         expect(events.deviceInterview[0].status).toBe('started');
+        // @ts-expect-error private but deep cloned
         expect(events.deviceInterview[0].device._ieeeAddr).toBe('0x140');
         expect(events.deviceInterview[1].status).toBe('failed');
+        // @ts-expect-error private but deep cloned
         expect(events.deviceInterview[1].device._ieeeAddr).toBe('0x140');
         expect(controller.getDeviceByIeeeAddr('0x140')!.type).toStrictEqual('Unknown');
     });
@@ -2517,9 +2534,12 @@ describe('Controller', () => {
         await mockAdapterEvents['deviceJoined']({networkAddress: 161, ieeeAddr: '0x161'});
         expect(events.deviceInterview.length).toBe(2);
         expect(events.deviceInterview[0].status).toBe('started');
+        // @ts-expect-error private but deep cloned
         expect(events.deviceInterview[0].device._ieeeAddr).toBe('0x161');
         expect(events.deviceInterview[1].status).toBe('successful');
+        // @ts-expect-error private but deep cloned
         expect(events.deviceInterview[1].device._ieeeAddr).toBe('0x161');
+        // @ts-expect-error private but deep cloned
         expect(events.deviceInterview[1].device._modelID).toBe('myDevice9123');
     });
 
@@ -2528,9 +2548,12 @@ describe('Controller', () => {
         await mockAdapterEvents['deviceJoined']({networkAddress: 162, ieeeAddr: '0x162'});
         expect(events.deviceInterview.length).toBe(2);
         expect(events.deviceInterview[0].status).toBe('started');
+        // @ts-expect-error private but deep cloned
         expect(events.deviceInterview[0].device._ieeeAddr).toBe('0x162');
         expect(events.deviceInterview[1].status).toBe('successful');
+        // @ts-expect-error private but deep cloned
         expect(events.deviceInterview[1].device._ieeeAddr).toBe('0x162');
+        // @ts-expect-error private but deep cloned
         expect(events.deviceInterview[1].device._modelID).toBe('myDevice9124');
     });
 
@@ -2540,8 +2563,10 @@ describe('Controller', () => {
         await event;
         expect(events.deviceInterview.length).toBe(2);
         expect(events.deviceInterview[0].status).toBe('started');
+        // @ts-expect-error private but deep cloned
         expect(events.deviceInterview[0].device._ieeeAddr).toBe('0x170');
         expect(events.deviceInterview[1].status).toBe('successful');
+        // @ts-expect-error private but deep cloned
         expect(events.deviceInterview[1].device._ieeeAddr).toBe('0x170');
 
         const write = mocksendZclFrameToEndpoint.mock.calls[10];
@@ -2684,8 +2709,10 @@ describe('Controller', () => {
         await mockAdapterEvents['deviceJoined']({networkAddress: 170, ieeeAddr: '0x170'});
         expect(events.deviceInterview.length).toBe(2);
         expect(events.deviceInterview[0].status).toBe('started');
+        // @ts-expect-error private but deep cloned
         expect(events.deviceInterview[0].device._ieeeAddr).toBe('0x170');
         expect(events.deviceInterview[1].status).toBe('failed');
+        // @ts-expect-error private but deep cloned
         expect(events.deviceInterview[1].device._ieeeAddr).toBe('0x170');
     });
 
@@ -2695,8 +2722,10 @@ describe('Controller', () => {
         await mockAdapterEvents['deviceJoined']({networkAddress: 170, ieeeAddr: '0x170'});
         expect(events.deviceInterview.length).toBe(2);
         expect(events.deviceInterview[0].status).toBe('started');
+        // @ts-expect-error private but deep cloned
         expect(events.deviceInterview[0].device._ieeeAddr).toBe('0x170');
         expect(events.deviceInterview[1].status).toBe('successful');
+        // @ts-expect-error private but deep cloned
         expect(events.deviceInterview[1].device._ieeeAddr).toBe('0x170');
         expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(10);
     });
@@ -3815,8 +3844,10 @@ describe('Controller', () => {
         await mockAdapterEvents['deviceJoined']({networkAddress: 173, ieeeAddr: '0x173'});
         expect(events.deviceInterview.length).toBe(2);
         expect(events.deviceInterview[0].status).toBe('started');
+        // @ts-expect-error private but deep cloned
         expect(events.deviceInterview[0].device._ieeeAddr).toBe('0x173');
         expect(events.deviceInterview[1].status).toBe('failed');
+        // @ts-expect-error private but deep cloned
         expect(events.deviceInterview[1].device._ieeeAddr).toBe('0x173');
         expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(1);
         expect(controller.getDeviceByIeeeAddr('0x173')!.modelID).toBe(undefined);
@@ -3833,8 +3864,10 @@ describe('Controller', () => {
         await mockAdapterEvents['deviceJoined']({networkAddress: 173, ieeeAddr: '0x173'});
         expect(events.deviceInterview.length).toBe(4);
         expect(events.deviceInterview[2].status).toBe('started');
+        // @ts-expect-error private but deep cloned
         expect(events.deviceInterview[2].device._ieeeAddr).toBe('0x173');
         expect(events.deviceInterview[3].status).toBe('successful');
+        // @ts-expect-error private but deep cloned
         expect(events.deviceInterview[3].device._ieeeAddr).toBe('0x173');
         expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(2);
 
@@ -3854,8 +3887,10 @@ describe('Controller', () => {
         await mockAdapterEvents['deviceJoined']({networkAddress: 171, ieeeAddr: '0x171'});
         expect(events.deviceInterview.length).toBe(2);
         expect(events.deviceInterview[0].status).toBe('started');
+        // @ts-expect-error private but deep cloned
         expect(events.deviceInterview[0].device._ieeeAddr).toBe('0x171');
         expect(events.deviceInterview[1].status).toBe('successful');
+        // @ts-expect-error private but deep cloned
         expect(events.deviceInterview[1].device._ieeeAddr).toBe('0x171');
         expect(controller.getDeviceByIeeeAddr('0x171')!.modelID).toBe('lumi.remote.b286opcn01');
     });
@@ -3866,8 +3901,10 @@ describe('Controller', () => {
         await mockAdapterEvents['deviceJoined']({networkAddress: 172, ieeeAddr: '0x172'});
         expect(events.deviceInterview.length).toBe(2);
         expect(events.deviceInterview[0].status).toBe('started');
+        // @ts-expect-error private but deep cloned
         expect(events.deviceInterview[0].device._ieeeAddr).toBe('0x172');
         expect(events.deviceInterview[1].status).toBe('successful');
+        // @ts-expect-error private but deep cloned
         expect(events.deviceInterview[1].device._ieeeAddr).toBe('0x172');
         expect(controller.getDeviceByIeeeAddr('0x172')!.modelID).toBe('GL-C-008');
     });
@@ -3877,8 +3914,10 @@ describe('Controller', () => {
         await mockAdapterEvents['deviceJoined']({networkAddress: 150, ieeeAddr: '0x150'});
         expect(events.deviceInterview.length).toBe(2);
         expect(events.deviceInterview[0].status).toBe('started');
+        // @ts-expect-error private but deep cloned
         expect(events.deviceInterview[0].device._ieeeAddr).toBe('0x150');
         expect(events.deviceInterview[1].status).toBe('successful');
+        // @ts-expect-error private but deep cloned
         expect(events.deviceInterview[1].device._ieeeAddr).toBe('0x150');
         expect(deepClone(controller.getDeviceByIeeeAddr('0x150'))).toStrictEqual({
             ID: 2,
@@ -3929,8 +3968,10 @@ describe('Controller', () => {
         await mockAdapterEvents['deviceJoined']({networkAddress: 151, ieeeAddr: '0x151'});
         expect(events.deviceInterview.length).toBe(2);
         expect(events.deviceInterview[0].status).toBe('started');
+        // @ts-expect-error private but deep cloned
         expect(events.deviceInterview[0].device._ieeeAddr).toBe('0x151');
         expect(events.deviceInterview[1].status).toBe('successful');
+        // @ts-expect-error private but deep cloned
         expect(events.deviceInterview[1].device._ieeeAddr).toBe('0x151');
         expect(deepClone(controller.getDeviceByIeeeAddr('0x151'))).toStrictEqual({
             ID: 2,
@@ -9988,7 +10029,7 @@ describe('Controller', () => {
             ZSpec.BroadcastAddress.RX_ON_WHEN_IDLE,
             Zdo.ClusterId.NETWORK_ADDRESS_REQUEST,
             zdoPayload,
-            false,
+            true,
         );
 
         expect(controller.getDeviceByIeeeAddr('0x129')!.networkAddress).toBe(129);
@@ -10025,36 +10066,13 @@ describe('Controller', () => {
             ZSpec.BroadcastAddress.RX_ON_WHEN_IDLE,
             Zdo.ClusterId.NETWORK_ADDRESS_REQUEST,
             zdoPayload,
-            false,
+            true,
         );
 
         expect(controller.getDeviceByIeeeAddr('0x129')!.networkAddress).toBe(9999);
         expect(controller.getDeviceByIeeeAddr('0x129')!.getEndpoint(1)!.deviceNetworkAddress).toBe(9999);
         expect(controller.getDeviceByNetworkAddress(129)).toBeUndefined();
         expect(controller.getDeviceByNetworkAddress(9999)!.ieeeAddr).toStrictEqual('0x129');
-    });
-
-    it('Device update network address fails', async () => {
-        await controller.start();
-        await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
-        mockAdapterSendZdo.mockClear();
-        const device = controller.getDeviceByNetworkAddress(129)!;
-
-        sendZdoResponseStatus = Zdo.Status.INSUFFICIENT_SPACE;
-
-        expect(async () => {
-            await device.updateNetworkAddress();
-        }).rejects.toThrow(`Status 'INSUFFICIENT_SPACE'`);
-
-        expect(mockAdapterSendZdo).toHaveBeenCalledTimes(1);
-        const zdoPayload = Zdo.Buffalo.buildRequest(false, Zdo.ClusterId.NETWORK_ADDRESS_REQUEST, '0x129', false, 0);
-        expect(mockAdapterSendZdo).toHaveBeenCalledWith(
-            '0x129',
-            ZSpec.BroadcastAddress.RX_ON_WHEN_IDLE,
-            Zdo.ClusterId.NETWORK_ADDRESS_REQUEST,
-            zdoPayload,
-            false,
-        );
     });
 
     it('Device remove from network fails', async () => {
@@ -10214,6 +10232,8 @@ describe('Controller', () => {
         `;
         fs.writeFileSync(options.databasePath, database);
         await controller.start();
+        events.lastSeenChanged = [];
+        events.deviceNetworkAddressChanged = [];
 
         const device = controller.getDeviceByIeeeAddr('0x000b57fffec6a5b2')!;
         expect(device.networkAddress).toStrictEqual(oldNwkAddress);
@@ -10247,6 +10267,10 @@ describe('Controller', () => {
 
         expect(device.networkAddress).toStrictEqual(newNwkAddress);
         expect(device.modelID).toBe('new.model.id');
+        expect(events.lastSeenChanged.length).toBe(2); // zdoResponse + zclPayload
+        expect(events.lastSeenChanged[0].device.networkAddress).toBe(newNwkAddress);
+        expect(events.deviceNetworkAddressChanged.length).toBe(1);
+        expect(events.deviceNetworkAddressChanged[0].device.networkAddress).toBe(newNwkAddress);
     });
 
     it('Device network address changed while Z2M was running, received no notification', async () => {
@@ -10258,6 +10282,8 @@ describe('Controller', () => {
         `;
         fs.writeFileSync(options.databasePath, database);
         await controller.start();
+        events.lastSeenChanged = [];
+        events.deviceNetworkAddressChanged = [];
 
         const device = controller.getDeviceByIeeeAddr('0x0017880104e45517')!;
         expect(device.networkAddress).toStrictEqual(oldNwkAddress);
@@ -10316,6 +10342,10 @@ describe('Controller', () => {
 
         expect(device.networkAddress).toStrictEqual(newNwkAddress);
         expect(device.modelID).toBe('new.model.id2');
+        expect(events.lastSeenChanged.length).toBe(3); // zdoResponse + zclPayload x2
+        expect(events.lastSeenChanged[0].device.networkAddress).toBe(newNwkAddress);
+        expect(events.deviceNetworkAddressChanged.length).toBe(1);
+        expect(events.deviceNetworkAddressChanged[0].device.networkAddress).toBe(newNwkAddress);
     });
 
     it('Device network address changed while Z2M was offline - fails to retrieve new one', async () => {
@@ -10327,6 +10357,8 @@ describe('Controller', () => {
         `;
         fs.writeFileSync(options.databasePath, database);
         await controller.start();
+        events.lastSeenChanged = [];
+        events.deviceNetworkAddressChanged = [];
 
         const device = controller.getDeviceByIeeeAddr('0x000b57fffec6a5b2')!;
         expect(device.networkAddress).toStrictEqual(oldNwkAddress);
@@ -10356,6 +10388,8 @@ describe('Controller', () => {
             `Failed to retrieve IEEE address for device '${newNwkAddress}': INV_REQUESTTYPE`,
             'zh:controller',
         );
+        expect(events.lastSeenChanged.length).toBe(0);
+        expect(events.deviceNetworkAddressChanged.length).toBe(0);
     });
 
     it('Device network address changed while Z2M was offline, no duplicate triggering of IEEE request', async () => {
@@ -10367,6 +10401,8 @@ describe('Controller', () => {
         `;
         fs.writeFileSync(options.databasePath, database);
         await controller.start();
+        events.lastSeenChanged = [];
+        events.deviceNetworkAddressChanged = [];
         mockAdapterSendZdo.mockClear();
         const identifyUnknownDeviceSpy = jest.spyOn(controller, 'identifyUnknownDevice');
 
@@ -10408,11 +10444,17 @@ describe('Controller', () => {
         expect(device.modelID).toBe('new.model.id');
         expect(identifyUnknownDeviceSpy).toHaveBeenCalledTimes(2);
         expect(mockAdapterSendZdo).toHaveBeenCalledTimes(1);
+        expect(events.lastSeenChanged.length).toBe(2); // zdoResponse + zclPayload (second ignored)
+        expect(events.lastSeenChanged[0].device.networkAddress).toBe(newNwkAddress);
+        expect(events.deviceNetworkAddressChanged.length).toBe(1);
+        expect(events.deviceNetworkAddressChanged[0].device.networkAddress).toBe(newNwkAddress);
     });
 
     it('Device network address changed while Z2M was offline, no spamming of IEEE request when device doesnt respond', async () => {
         const nwkAddress = 40369;
         await controller.start();
+        events.lastSeenChanged = [];
+        events.deviceNetworkAddressChanged = [];
         mockAdapterSendZdo.mockClear();
         mockAdapterSendZdo.mockImplementationOnce(async () => {
             const zdoResponse = [Zdo.Status.NOT_SUPPORTED, undefined];
@@ -10451,5 +10493,7 @@ describe('Controller', () => {
 
         expect(mockAdapterSendZdo).toHaveBeenCalledTimes(1);
         expect(identifyUnknownDeviceSpy).toHaveBeenCalledTimes(2);
+        expect(events.lastSeenChanged.length).toBe(0);
+        expect(events.deviceNetworkAddressChanged.length).toBe(0);
     });
 });

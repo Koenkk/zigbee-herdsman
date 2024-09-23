@@ -543,17 +543,32 @@ class Controller extends events.EventEmitter<ControllerEventMap> {
         const response = await this.adapter.sendZdo(ZSpec.BLANK_EUI64, nwkAddress, clusterId, zdoPayload, false);
 
         if (Zdo.Buffalo.checkStatus(response)) {
-            // XXX: race with onIEEEAddress triggered from onZdoResponse or not?
-            // this duplicates the triggering but makes sure device is updated before going further...
-            this.onIEEEAddress(response[1]);
+            const payload = response[1];
+            const device = Device.byIeeeAddr(payload.eui64);
 
-            return Device.byIeeeAddr(response[1].eui64);
+            /* istanbul ignore else */
+            if (device) {
+                this.checkDeviceNetworkAddress(device, payload.eui64, payload.nwkAddress);
+                this.unknownDevices.delete(payload.nwkAddress);
+            }
+
+            return device;
         } else {
             logger.debug(`Failed to retrieve IEEE address for device '${nwkAddress}': ${Zdo.Status[response[0]]}`, NS);
         }
 
         // NOTE: by keeping nwkAddress in `this.unknownDevices` on fail, it prevents a non-responding device from potentially spamming identify.
         // This only lasts until next reboot (runtime Set), allowing to 'force' another trigger if necessary.
+    }
+
+    private checkDeviceNetworkAddress(device: Device, ieeeAddress: string, nwkAddress: number): void {
+        if (device.networkAddress !== nwkAddress) {
+            logger.debug(`Device '${ieeeAddress}' got new networkAddress '${nwkAddress}'`, NS);
+            device.networkAddress = nwkAddress;
+            device.save();
+
+            this.selfAndDeviceEmit(device, 'deviceNetworkAddressChanged', {device});
+        }
     }
 
     private onNetworkAddress(payload: ZdoTypes.NetworkAddressResponse): void {
@@ -567,14 +582,7 @@ class Controller extends events.EventEmitter<ControllerEventMap> {
 
         device.updateLastSeen();
         this.selfAndDeviceEmit(device, 'lastSeenChanged', {device, reason: 'networkAddress'});
-
-        if (device.networkAddress !== payload.nwkAddress) {
-            logger.debug(`Device '${payload.eui64}' got new networkAddress '${payload.nwkAddress}'`, NS);
-            device.networkAddress = payload.nwkAddress;
-            device.save();
-
-            this.selfAndDeviceEmit(device, 'deviceNetworkAddressChanged', {device});
-        }
+        this.checkDeviceNetworkAddress(device, payload.eui64, payload.nwkAddress);
     }
 
     private onIEEEAddress(payload: ZdoTypes.IEEEAddressResponse): void {
@@ -588,16 +596,7 @@ class Controller extends events.EventEmitter<ControllerEventMap> {
 
         device.updateLastSeen();
         this.selfAndDeviceEmit(device, 'lastSeenChanged', {device, reason: 'networkAddress'});
-
-        if (device.networkAddress !== payload.nwkAddress) {
-            logger.debug(`Device '${payload.eui64}' got new networkAddress '${payload.nwkAddress}'`, NS);
-            device.networkAddress = payload.nwkAddress;
-            device.save();
-
-            this.selfAndDeviceEmit(device, 'deviceNetworkAddressChanged', {device});
-        }
-
-        this.unknownDevices.delete(payload.nwkAddress);
+        this.checkDeviceNetworkAddress(device, payload.eui64, payload.nwkAddress);
     }
 
     private onDeviceAnnounce(payload: ZdoTypes.EndDeviceAnnounce): void {
@@ -612,15 +611,7 @@ class Controller extends events.EventEmitter<ControllerEventMap> {
         device.updateLastSeen();
         this.selfAndDeviceEmit(device, 'lastSeenChanged', {device, reason: 'deviceAnnounce'});
         device.implicitCheckin();
-
-        if (device.networkAddress !== payload.nwkAddress) {
-            logger.debug(`Device '${payload.eui64}' announced with new networkAddress '${payload.nwkAddress}'`, NS);
-            device.networkAddress = payload.nwkAddress;
-            device.save();
-
-            this.selfAndDeviceEmit(device, 'deviceNetworkAddressChanged', {device});
-        }
-
+        this.checkDeviceNetworkAddress(device, payload.eui64, payload.nwkAddress);
         this.selfAndDeviceEmit(device, 'deviceAnnounce', {device});
     }
 
