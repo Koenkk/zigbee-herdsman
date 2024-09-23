@@ -6,7 +6,7 @@ import equals from 'fast-deep-equal/es6';
 
 import {Adapter, TsType} from '../..';
 import {Backup, UnifiedBackupStorage} from '../../../models';
-import {BackupUtils, Queue, RealpathSync, Wait} from '../../../utils';
+import {BackupUtils, Queue, Wait} from '../../../utils';
 import {logger} from '../../../utils/logger';
 import * as ZSpec from '../../../zspec';
 import {EUI64, ExtendedPanId, NodeId, PanId} from '../../../zspec/tstypes';
@@ -14,8 +14,6 @@ import * as Zcl from '../../../zspec/zcl';
 import * as Zdo from '../../../zspec/zdo';
 import * as ZdoTypes from '../../../zspec/zdo/definition/tstypes';
 import {DeviceJoinedPayload, DeviceLeavePayload, ZclPayload} from '../../events';
-import SerialPortUtils from '../../serialPortUtils';
-import SocketPortUtils from '../../socketPortUtils';
 import {
     EMBER_HIGH_RAM_CONCENTRATOR,
     EMBER_INSTALL_CODE_CRC_SIZE,
@@ -110,14 +108,6 @@ enum NetworkInitAction {
     /** Re-form the network using full backed-up data. */
     FORM_BACKUP,
 }
-
-/** NOTE: Drivers can override `manufacturer`. Verify logic doesn't work in most cases anyway. */
-const autoDetectDefinitions = [
-    /** NOTE: Manuf code "0x1321" for "Shenzhen Sonoff Technologies Co., Ltd." */
-    {manufacturer: 'ITEAD', vendorId: '1a86', productId: '55d4'}, // Sonoff ZBDongle-E
-    /** NOTE: Manuf code "0x134B" for "Nabu Casa, Inc." */
-    {manufacturer: 'Nabu Casa', vendorId: '10c4', productId: 'ea60'}, // Home Assistant SkyConnect
-];
 
 /**
  * Application generated ZDO messages use sequence numbers 0-127, and the stack
@@ -1570,28 +1560,6 @@ export class EmberAdapter extends Adapter {
     //---- END Ember ZDO
 
     //-- START Adapter implementation
-
-    /* istanbul ignore next */
-    public static async isValidPath(path: string): Promise<boolean> {
-        // For TCP paths we cannot get device information, therefore we cannot validate it.
-        if (SocketPortUtils.isTcpPath(path)) {
-            return false;
-        }
-
-        try {
-            return await SerialPortUtils.is(RealpathSync(path), autoDetectDefinitions);
-        } catch (error) {
-            logger.debug(`Failed to determine if path is valid: '${error}'`, NS);
-            return false;
-        }
-    }
-
-    /* istanbul ignore next */
-    public static async autoDetectPath(): Promise<string | undefined> {
-        const paths = await SerialPortUtils.find(autoDetectDefinitions);
-        paths.sort((a, b) => (a < b ? -1 : 1));
-        return paths.length > 0 ? paths[0] : undefined;
-    }
 
     public async start(): Promise<TsType.StartResult> {
         logger.info(`======== Ember Adapter Starting ========`, NS);

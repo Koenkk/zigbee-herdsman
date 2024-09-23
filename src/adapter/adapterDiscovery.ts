@@ -1,23 +1,13 @@
-import assert from 'assert';
 import {platform} from 'os';
 
 import {PortInfo} from '@serialport/bindings-cpp';
-import Bonjour, {Service} from 'bonjour-service';
+import {Bonjour, Service} from 'bonjour-service';
 
 import {logger} from '../utils/logger';
 import {SerialPort} from './serialPort';
-import {SerialPortOptions} from './tstype';
+import {Adapter, DiscoverableUSBAdapter, USBAdapterFingerprint, ValidAdapter} from './tstype';
 
 const NS = 'zh:adapter:discovery';
-
-type Adapter = NonNullable<SerialPortOptions['adapter']>;
-type DiscoverableUSBAdapter = 'deconz' | 'ember' | 'zstack' | 'zboss' | 'zigate';
-type USBFingerprint = {
-    vendorId: string;
-    productId: string;
-    manufacturer?: string;
-    pathRegex?: string;
-};
 
 /**
  * @see https://serialport.io/docs/api-bindings-cpp#list
@@ -31,7 +21,7 @@ type USBFingerprint = {
  *
  * XXX: vendorId `10c4` + productId `ea60` is a problem on Windows since can't match `path` and possibly can't match `manufacturer` to refine properly
  */
-const USB_FINGERPRINTS: Record<DiscoverableUSBAdapter, USBFingerprint[]> = {
+const USB_FINGERPRINTS: Record<DiscoverableUSBAdapter, USBAdapterFingerprint[]> = {
     deconz: [
         {
             // Conbee II
@@ -113,7 +103,7 @@ const USB_FINGERPRINTS: Record<DiscoverableUSBAdapter, USBFingerprint[]> = {
             vendorId: '0403',
             productId: '6015',
             manufacturer: 'Electrolama',
-            // pathRegex: '.*.*',
+            pathRegex: '.*electrolame.*', // TODO
         },
         {
             // slae.sh cc2652rb
@@ -148,11 +138,18 @@ const USB_FINGERPRINTS: Record<DiscoverableUSBAdapter, USBFingerprint[]> = {
             pathRegex: '.*CC2531.*',
         },
         {
-            // CC1352P_2 and CC26X2R1
+            // CC1352P_2
             vendorId: '0451',
             productId: 'bef3',
             manufacturer: 'Texas Instruments',
-            // pathRegex: '.*.*',
+            pathRegex: '.*CC1352P_2.*', // TODO
+        },
+        {
+            // CC26X2R1
+            vendorId: '0451',
+            productId: 'bef3',
+            manufacturer: 'Texas Instruments',
+            pathRegex: '.*CC26X2R1.*', // TODO
         },
         {
             // SMLight slzb-07p7
@@ -190,7 +187,7 @@ const USB_FINGERPRINTS: Record<DiscoverableUSBAdapter, USBFingerprint[]> = {
             vendorId: '2fe3',
             productId: '0100',
             manufacturer: 'ZEPHYR',
-            // pathRegex: '.*.*',
+            pathRegex: '.*ZEPHYR.*', // TODO
         },
     ],
     zigate: [
@@ -219,7 +216,25 @@ const USB_FINGERPRINTS: Record<DiscoverableUSBAdapter, USBFingerprint[]> = {
     ],
 };
 
-function matchUSBFingerprint(portInfo: PortInfo, isWindows: boolean, entries: USBFingerprint[]): [PortInfo['path'], USBFingerprint] | undefined {
+async function getSerialPortList(): Promise<PortInfo[]> {
+    const portInfos = await SerialPort.list();
+
+    // TODO: can sorting be removed in favor of `path` regex matching?
+
+    // CC1352P_2 and CC26X2R1 lists as 2 USB devices with same manufacturer, productId and vendorId
+    // one is the actual chip interface, other is the XDS110.
+    // The chip is always exposed on the first one after alphabetical sorting.
+    /* istanbul ignore next */
+    portInfos.sort((a, b) => (a.path < b.path ? -1 : 1));
+
+    return portInfos;
+}
+
+function matchUSBFingerprint(
+    portInfo: PortInfo,
+    isWindows: boolean,
+    entries: USBAdapterFingerprint[],
+): [PortInfo['path'], USBAdapterFingerprint] | undefined {
     if (!portInfo.vendorId || !portInfo.productId) {
         // port info is missing essential information for proper matching, ignore it
         return;
@@ -240,24 +255,32 @@ function matchUSBFingerprint(portInfo: PortInfo, isWindows: boolean, entries: US
     }
 }
 
-export async function findUSBAdapter(adapter?: Adapter, path?: string): Promise<[adapter: Adapter, path: PortInfo['path']] | undefined> {
-    assert(adapter !== 'auto' && adapter !== 'ezsp', `Cannot discover USB adapter for '${adapter}'.`);
-
+export async function matchUSBAdapter(adapter: ValidAdapter, path: string): Promise<boolean> {
     const isWindows = platform() === 'win32';
 
-    for (const portInfo of await SerialPort.list()) {
-        if (path && portInfo.path !== path) {
+    for (const portInfo of await getSerialPortList()) {
+        /* istanbul ignore else */
+        if (portInfo.path !== path) {
             continue;
         }
 
-        if (adapter) {
-            const match = matchUSBFingerprint(portInfo, isWindows, USB_FINGERPRINTS[adapter]);
+        const match = matchUSBFingerprint(portInfo, isWindows, USB_FINGERPRINTS[adapter === 'ezsp' ? 'ember' : adapter]);
 
-            if (match) {
-                logger.info(`Matched adapter: ${JSON.stringify(portInfo)} => ${adapter}: ${JSON.stringify(match[1])}`, NS);
-                return [adapter, match[0]];
-            }
+        /* istanbul ignore else */
+        if (match) {
+            logger.info(`Matched adapter: ${JSON.stringify(portInfo)} => ${adapter}: ${JSON.stringify(match[1])}`, NS);
+            return true;
+        }
+    }
 
+    return false;
+}
+
+export async function findUSBAdapter(path?: string): Promise<[adapter: DiscoverableUSBAdapter, path: PortInfo['path']] | undefined> {
+    const isWindows = platform() === 'win32';
+
+    for (const portInfo of await getSerialPortList()) {
+        if (path && portInfo.path !== path) {
             continue;
         }
 
@@ -266,13 +289,13 @@ export async function findUSBAdapter(adapter?: Adapter, path?: string): Promise<
 
             if (match) {
                 logger.info(`Matched adapter: ${JSON.stringify(portInfo)} => ${key}: ${JSON.stringify(match[1])}`, NS);
-                return [key as Adapter, match[0]];
+                return [key as DiscoverableUSBAdapter, match[0]];
             }
         }
     }
 }
 
-export async function findmDNSAdapter(path: string): Promise<[adapter: string, path: string, baudRate: number]> {
+export async function findmDNSAdapter(path: string): Promise<[adapter: ValidAdapter, path: string, baudRate: number]> {
     const mdnsDevice = path.substring(7);
 
     if (mdnsDevice.length == 0) {
@@ -328,10 +351,14 @@ export async function findmDNSAdapter(path: string): Promise<[adapter: string, p
     });
 }
 
-export async function findTCPAdapter(path: string, adapter?: Adapter): Promise<[adapter: string, path: string]> {
-    const regex = /^(?:tcp:\/\/)[\w.-]+[:][\d]+$/gm;
+export async function findTCPAdapter(path: string, adapter?: Adapter): Promise<[adapter: ValidAdapter, path: string]> {
+    const regex = /^tcp:\/\/(?:[0-9]{1,3}\.){3}[0-9]{1,3}:\d{1,5}$/gm;
 
-    if (!regex.test(path) || !adapter || adapter === 'auto') {
+    if (!regex.test(path)) {
+        throw new Error(`Invalid TCP path, expected format: tcp://<host>:<port>`);
+    }
+
+    if (!adapter || adapter === 'auto') {
         throw new Error(`Cannot discover TCP adapters at this time. Please specify valid 'adapter' and 'path' manually.`);
     }
 
@@ -353,20 +380,32 @@ export async function findTCPAdapter(path: string, adapter?: Adapter): Promise<[
  * @returns path Path to adapter.
  * @returns baudRate [optional] Discovered baud rate of the adapter. Valid only for mDNS discovery at the moment.
  */
-export async function discoverAdapter(adapter?: Adapter, path?: string): Promise<[adapter: string, path: string, baudRate?: number | undefined]> {
+export async function discoverAdapter(
+    adapter?: Adapter,
+    path?: string,
+): Promise<[adapter: ValidAdapter, path: string, baudRate?: number | undefined]> {
     if (path) {
         if (path.startsWith('mdns://')) {
             return await findmDNSAdapter(path);
         } else if (path.startsWith('tcp://')) {
             return await findTCPAdapter(path, adapter);
+        } else if (adapter && adapter !== 'auto') {
+            const matched = await matchUSBAdapter(adapter, path);
+
+            /* istanbul ignore else */
+            if (!matched) {
+                logger.error(`Unable to match USB adapter: ${adapter} | ${path}`, NS);
+            }
+
+            return [adapter, path];
         }
     }
 
     // default to matching USB
-    const match = await findUSBAdapter(adapter === 'auto' ? undefined : adapter, path);
+    const match = await findUSBAdapter(path);
 
     if (!match) {
-        throw new Error(`Unable to find matching USB adapter.`);
+        throw new Error(`Unable to find a valid USB adapter.`);
     }
 
     return match;
