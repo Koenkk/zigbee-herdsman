@@ -224,9 +224,9 @@ class ZiGateAdapter extends Adapter {
             // https://zigate.fr/documentation/commandes-zigate/
             switch (clusterId) {
                 case Zdo.ClusterId.LEAVE_REQUEST: {
-                    const prefixedPayload = Buffer.alloc(payload.length + 3); // extra zero for `removeChildren`
-                    prefixedPayload.writeUInt16BE(networkAddress, 0);
-                    prefixedPayload.set(payload, 2);
+                    // extra zero for `removeChildren`
+                    const prefixedPayload = Buffer.alloc(payload.length + 1);
+                    prefixedPayload.set(payload, 0);
 
                     payload = prefixedPayload;
                     break;
@@ -236,7 +236,7 @@ class ZiGateAdapter extends Adapter {
                 case Zdo.ClusterId.UNBIND_REQUEST: {
                     // only need adjusting when Zdo.MULTICAST_BINDING
                     if (payload.length === 14) {
-                        // extra zero for endpoint
+                        // extra zero for `endpoint`
                         const prefixedPayload = Buffer.alloc(payload.length + 1);
                         prefixedPayload.set(payload, 0);
 
