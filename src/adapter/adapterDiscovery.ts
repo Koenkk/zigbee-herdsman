@@ -86,6 +86,7 @@ const USB_FINGERPRINTS: Record<DiscoverableUSBAdapter, USBAdapterFingerprint[]> 
             productId: '55d4',
             manufacturer: 'ITEAD',
             // /dev/serial/by-id/usb-ITEAD_SONOFF_Zigbee_3.0_USB_Dongle_Plus_V2_20240122184111-if00
+            // /dev/serial/by-id/usb-ITead_Sonoff_Zigbee_3.0_USB_Dongle_Plus_186ff44314e2ed11b891eb5162c61111-if00-port0
             pathRegex: '.*sonoff.*plus.*',
         },
         // {
@@ -156,7 +157,7 @@ const USB_FINGERPRINTS: Record<DiscoverableUSBAdapter, USBAdapterFingerprint[]> 
             vendorId: '',
             productId: '',
             // manufacturer: '',
-            // /dev/serial/by-id/usb-SMLIGHT_SMLIGHT_SLZB-07p7_be9faa0786e1ea11bd68dc2d9a583cc7-if00-port0
+            // /dev/serial/by-id/usb-SMLIGHT_SMLIGHT_SLZB-07p7_be9faa0786e1ea11bd68dc2d9a583111-if00-port0
             pathRegex: '.*SLZB-07p7.*',
         },
         {
@@ -187,7 +188,7 @@ const USB_FINGERPRINTS: Record<DiscoverableUSBAdapter, USBAdapterFingerprint[]> 
             vendorId: '2fe3',
             productId: '0100',
             manufacturer: 'ZEPHYR',
-            // /dev/serial/by-id/usb-ZEPHYR_Zigbee_NCP_54ACCFAFA6DADC49-if00
+            // /dev/serial/by-id/usb-ZEPHYR_Zigbee_NCP_54ACCFAFA6DAD111-if00
             pathRegex: '.*ZEPHYR.*',
         },
     ],
@@ -377,7 +378,7 @@ export async function findTCPAdapter(path: string, adapter?: Adapter): Promise<[
     }
 
     if (!adapter || adapter === 'auto') {
-        throw new Error(`Cannot discover TCP adapters at this time. Please specify valid 'adapter' and 'path' manually.`);
+        throw new Error(`Cannot discover TCP adapters at this time. Specify valid 'adapter' and 'port' in your configuration.`);
     }
 
     return [adapter, path];
@@ -408,23 +409,31 @@ export async function discoverAdapter(
         } else if (path.startsWith('tcp://')) {
             return await findTCPAdapter(path, adapter);
         } else if (adapter && adapter !== 'auto') {
-            const matched = await matchUSBAdapter(adapter, path);
+            try {
+                const matched = await matchUSBAdapter(adapter, path);
 
-            /* istanbul ignore else */
-            if (!matched) {
-                logger.error(`Unable to match USB adapter: ${adapter} | ${path}`, NS);
+                /* istanbul ignore else */
+                if (!matched) {
+                    logger.error(`Unable to match USB adapter: ${adapter} | ${path}`, NS);
+                }
+            } catch (error) {
+                logger.error(`Error while trying to match USB adapter (${(error as Error).message}).`, NS);
             }
 
             return [adapter, path];
         }
     }
 
-    // default to matching USB
-    const match = await findUSBAdapter(path);
+    try {
+        // default to matching USB
+        const match = await findUSBAdapter(path);
 
-    if (!match) {
-        throw new Error(`Unable to find a valid USB adapter.`);
+        if (!match) {
+            throw new Error(`No valid USB adapter found`);
+        }
+
+        return match;
+    } catch (error) {
+        throw new Error(`USB adapter discovery error (${(error as Error).message}). Specify valid 'adapter' and 'port' in your configuration.`);
     }
-
-    return match;
 }

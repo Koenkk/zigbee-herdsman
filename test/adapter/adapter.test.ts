@@ -164,7 +164,7 @@ describe('Adapter', () => {
                 await Adapter.create({panID: 0x1a62, channelList: [11]}, {path: `tcp://192.168.1.321:3456`, adapter: `auto`}, 'test.db.backup', {
                     disableLED: false,
                 });
-            }).rejects.toThrow(`Cannot discover TCP adapters at this time. Please specify valid 'adapter' and 'path' manually.`);
+            }).rejects.toThrow(`Cannot discover TCP adapters at this time. Specify valid 'adapter' and 'port' in your configuration.`);
         });
     });
 
@@ -456,7 +456,7 @@ describe('Adapter', () => {
 
             expect(async () => {
                 await Adapter.create({panID: 0x1a62, channelList: [11]}, {path: '/dev/ttyUSB0'}, 'test.db.backup', {disableLED: false});
-            }).rejects.toThrow(`Unable to find a valid USB adapter.`);
+            }).rejects.toThrow(`USB adapter discovery error (No valid USB adapter found). Specify valid 'adapter' and 'port' in your configuration.`);
         });
 
         it('fails to match with incomplete port info, throws', async () => {
@@ -464,7 +464,7 @@ describe('Adapter', () => {
 
             expect(async () => {
                 await Adapter.create({panID: 0x1a62, channelList: [11]}, {}, 'test.db.backup', {disableLED: false});
-            }).rejects.toThrow(`Unable to find a valid USB adapter.`);
+            }).rejects.toThrow(`USB adapter discovery error (No valid USB adapter found). Specify valid 'adapter' and 'port' in your configuration.`);
         });
 
         it('fails to match specified adapter+path, throws invalid adapter', async () => {
@@ -479,6 +479,40 @@ describe('Adapter', () => {
                     {disableLED: false},
                 );
             }).rejects.toThrow(`Adapter 'invalid' does not exists, possible options: zstack, deconz, zigate, ezsp, ember, zboss`);
+        });
+
+        it('detecting from scratch fails to get SerialPort.list', async () => {
+            listSpy.mockRejectedValueOnce(new Error('spawn udevadm ENOENT'));
+
+            expect(async () => {
+                await Adapter.create({panID: 0x1a62, channelList: [11]}, {}, 'test.db.backup', {disableLED: false});
+            }).rejects.toThrow(`USB adapter discovery error (spawn udevadm ENOENT). Specify valid 'adapter' and 'port' in your configuration.`);
+        });
+
+        it('detecting with auto config fails to get SerialPort.list', async () => {
+            listSpy.mockRejectedValueOnce(new Error('spawn udevadm ENOENT'));
+
+            expect(async () => {
+                await Adapter.create({panID: 0x1a62, channelList: [11]}, {adapter: 'auto'}, 'test.db.backup', {disableLED: false});
+            }).rejects.toThrow(`USB adapter discovery error (spawn udevadm ENOENT). Specify valid 'adapter' and 'port' in your configuration.`);
+        });
+
+        it('detecting with specific config fails to get SerialPort.list, uses config anyway', async () => {
+            listSpy.mockRejectedValueOnce(new Error('spawn udevadm ENOENT'));
+
+            const adapter = await Adapter.create(
+                {panID: 0x1a62, channelList: [11]},
+                {adapter: 'zstack', path: ZSTACK_CC2538.path},
+                'test.db.backup',
+                {disableLED: false},
+            );
+
+            expect(adapter).toBeInstanceOf(ZStackAdapter);
+            // @ts-expect-error protected
+            expect(adapter.serialPortOptions).toStrictEqual({
+                path: ZSTACK_CC2538.path,
+                adapter: 'zstack',
+            });
         });
     });
 });
