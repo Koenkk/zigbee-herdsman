@@ -1,6 +1,6 @@
 import * as Zdo from '../../../src/zspec/zdo';
 
-describe('ZiGate Patch BuffaloZdo to use BE variants', () => {
+describe('ZiGate Patch BuffaloZdo to use BE variants when writing', () => {
     let BuffaloZdo: typeof Zdo.Buffalo;
 
     beforeAll(async () => {
@@ -35,23 +35,20 @@ describe('ZiGate Patch BuffaloZdo to use BE variants', () => {
         );
     });
 
-    it('readUInt16 + readUInt32', async () => {
+    it('readUInt16 + readUInt32 - LE', async () => {
         expect(
             BuffaloZdo.readResponse(
                 true,
                 Zdo.ClusterId.NWK_UPDATE_RESPONSE,
                 Buffer.from([0x01, 0x00, 0x00, 0x00, 0x80, 0x00, 0x12, 0x34, 0x00, 0x01, 0x01, 0x12]),
             ),
-        ).toStrictEqual([Zdo.Status.SUCCESS, {scannedChannels: 32768, totalTransmissions: 0x1234, totalFailures: 0x01, entryList: [0x12]}]);
-
-        // ensure regular parsing OK
-        expect(
+        ).toStrictEqual(
             Zdo.Buffalo.readResponse(
                 true,
                 Zdo.ClusterId.NWK_UPDATE_RESPONSE,
-                Buffer.from([0x01, 0x00, 0x00, 0x80, 0x00, 0x00, 0x34, 0x12, 0x01, 0x00, 0x01, 0x12]),
+                Buffer.from([0x01, 0x00, 0x00, 0x00, 0x80, 0x00, 0x12, 0x34, 0x00, 0x01, 0x01, 0x12]),
             ),
-        ).toStrictEqual([Zdo.Status.SUCCESS, {scannedChannels: 32768, totalTransmissions: 0x1234, totalFailures: 0x01, entryList: [0x12]}]);
+        );
     });
 
     it('writeIeeeAddr', async () => {
@@ -65,22 +62,19 @@ describe('ZiGate Patch BuffaloZdo to use BE variants', () => {
         );
     });
 
-    it('readIeeeAddr', async () => {
+    it('readIeeeAddr - LE', async () => {
         expect(
             BuffaloZdo.readResponse(
                 true,
                 Zdo.ClusterId.IEEE_ADDRESS_RESPONSE,
                 Buffer.from([0x01, 0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x12, 0x34]),
             ),
-        ).toStrictEqual([Zdo.Status.SUCCESS, {eui64: '0x1122334455667788', nwkAddress: 0x1234, startIndex: 0, assocDevList: []}]);
-
-        // ensure regular parsing OK
-        expect(
+        ).toStrictEqual(
             Zdo.Buffalo.readResponse(
                 true,
                 Zdo.ClusterId.IEEE_ADDRESS_RESPONSE,
-                Buffer.from([0x01, 0x00, 0x88, 0x77, 0x66, 0x55, 0x44, 0x33, 0x22, 0x11, 0x34, 0x12]),
+                Buffer.from([0x01, 0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x12, 0x34]),
             ),
-        ).toStrictEqual([Zdo.Status.SUCCESS, {eui64: '0x1122334455667788', nwkAddress: 0x1234, startIndex: 0, assocDevList: []}]);
+        );
     });
 });
