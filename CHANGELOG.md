@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.1.1](https://github.com/Koenkk/zigbee-herdsman/compare/v2.1.0...v2.1.1) (2024-09-24)
+
+
+### Bug Fixes
+
+* Cleanup network address change code ([#1201](https://github.com/Koenkk/zigbee-herdsman/issues/1201)) ([d6eef4d](https://github.com/Koenkk/zigbee-herdsman/commit/d6eef4d8b6c946316fe7a914c810dc0e3b654893))
+* **ignore:** zigate: Various fixes ([#1203](https://github.com/Koenkk/zigbee-herdsman/issues/1203)) ([45c0f26](https://github.com/Koenkk/zigbee-herdsman/commit/45c0f26c3b05c7c8e45403040f7fe87ff5d35afd))
+
 ## [2.1.0](https://github.com/Koenkk/zigbee-herdsman/compare/v2.0.0...v2.1.0) (2024-09-23)
 
 
