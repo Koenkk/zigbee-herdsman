@@ -11,7 +11,7 @@ import {logger} from '../../../utils/logger';
 import Waitress from '../../../utils/waitress';
 import * as ZSpec from '../../../zspec';
 import * as Zdo from '../../../zspec/zdo';
-import {EndDeviceAnnounce, GenericZdoResponse} from '../../../zspec/zdo/definition/tstypes';
+import {EndDeviceAnnounce, GenericZdoResponse, ResponseMap as ZdoResponseMap} from '../../../zspec/zdo/definition/tstypes';
 import {SerialPort} from '../../serialPort';
 import SerialPortUtils from '../../serialPortUtils';
 import SocketPortUtils from '../../socketPortUtils';
@@ -345,33 +345,47 @@ export default class ZiGate extends EventEmitter<ZiGateEventMap> {
 
                     this.zdoWaitress.resolve({ziGatePayload, zdo});
                     this.emit('zdoResponse', ziGatePayload.clusterID, zdo);
+                } else if (code === ZiGateMessageCode.LeaveIndication && ziGateObject.payload.rejoin === 0) {
+                    // mock a ZDO response (if waiter present) as zigate does not follow spec on this (missing ZDO LEAVE_RESPONSE)
+                    const ziGatePayload: ZdoWaitressPayload['ziGatePayload'] = {
+                        status: 0,
+                        profileID: Zdo.ZDO_PROFILE_ID,
+                        clusterID: Zdo.ClusterId.LEAVE_RESPONSE, // only piece actually required for waitress validation
+                        sourceEndpoint: Zdo.ZDO_ENDPOINT,
+                        destinationEndpoint: Zdo.ZDO_ENDPOINT,
+                        sourceAddressMode: 0x03,
+                        sourceAddress: ziGateObject.payload.extendedAddress,
+                        destinationAddressMode: 0x03,
+                        destinationAddress: ZSpec.BLANK_EUI64,
+                        // @ts-expect-error not used
+                        payload: undefined,
+                    };
+
+                    // Workaround: `zdo` is not valid for LEAVE_RESPONSE, but required to pass altered waitress validation (in sendZdo)
+                    if (this.zdoWaitress.resolve({ziGatePayload, zdo: [Zdo.Status.SUCCESS, {eui64: ziGateObject.payload.extendedAddress}]})) {
+                        this.emit('zdoResponse', Zdo.ClusterId.LEAVE_RESPONSE, [
+                            Zdo.Status.SUCCESS,
+                            undefined,
+                        ] as ZdoResponseMap[Zdo.ClusterId.LEAVE_RESPONSE]);
+                    }
+
+                    this.emit('LeaveIndication', ziGateObject);
                 } else {
                     this.waitress.resolve(ziGateObject);
-                }
 
-                switch (code) {
-                    case ZiGateMessageCode.DataIndication:
-                        switch (ziGateObject.payload.profileID) {
-                            case Zdo.ZDO_PROFILE_ID:
-                                // handled above
-                                break;
-                            case ZSpec.HA_PROFILE_ID:
-                                this.emit('received', ziGateObject);
-                                break;
-                            default:
-                                logger.debug('not implemented profile: ' + ziGateObject.payload.profileID, NS);
+                    if (code === ZiGateMessageCode.DataIndication) {
+                        if (ziGateObject.payload.profileID === ZSpec.HA_PROFILE_ID) {
+                            this.emit('received', ziGateObject);
+                        } else {
+                            logger.debug('not implemented profile: ' + ziGateObject.payload.profileID, NS);
                         }
-                        break;
-                    case ZiGateMessageCode.LeaveIndication:
-                        this.emit('LeaveIndication', ziGateObject);
-                        break;
-                    case ZiGateMessageCode.DeviceAnnounce:
+                    } else if (code === ZiGateMessageCode.DeviceAnnounce) {
                         this.emit('DeviceAnnounce', {
                             nwkAddress: ziGateObject.payload.shortAddress,
                             eui64: ziGateObject.payload.ieee,
                             capabilities: ziGateObject.payload.MACcapability,
                         });
-                        break;
+                    }
                 }
             } catch (error) {
                 logger.error(`Parsing error: ${error}`, NS);
