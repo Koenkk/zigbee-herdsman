@@ -229,8 +229,6 @@ class ZiGateAdapter extends Adapter {
                     prefixedPayload.set(payload, 0);
 
                     payload = prefixedPayload;
-                    // XXX: zigate is missing ZDO LEAVE_RESPONSE, force disable to avoid waitress timeout (LeaveIndication will do the rest)
-                    disableResponse = true;
                     break;
                 }
 
@@ -271,7 +269,10 @@ class ZiGateAdapter extends Adapter {
                 if (responseClusterId) {
                     waiter = this.driver.zdoWaitFor({
                         clusterId: responseClusterId,
-                        target: responseClusterId === Zdo.ClusterId.NETWORK_ADDRESS_RESPONSE ? ieeeAddress : networkAddress,
+                        target:
+                            responseClusterId === Zdo.ClusterId.NETWORK_ADDRESS_RESPONSE || responseClusterId === Zdo.ClusterId.LEAVE_RESPONSE
+                                ? ieeeAddress
+                                : networkAddress,
                     });
                 }
             }
@@ -282,9 +283,6 @@ class ZiGateAdapter extends Adapter {
                 const result = await waiter.start().promise;
 
                 return result.zdo as ZdoTypes.RequestToResponseMap[K];
-            } else if (clusterId === Zdo.ClusterId.LEAVE_REQUEST) {
-                // mock missing response (see above)
-                return [Zdo.Status.SUCCESS, undefined];
             }
         }, networkAddress);
     }
