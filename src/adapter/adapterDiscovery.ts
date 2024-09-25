@@ -117,7 +117,7 @@ const USB_FINGERPRINTS: Record<DiscoverableUSBAdapter, USBAdapterFingerprint[]> 
             // Sonoff ZBDongle-P (CC2652P)
             vendorId: '10c4',
             productId: 'ea60',
-            // manufacturer: '',
+            manufacturer: 'ITEAD',
             // /dev/serial/by-id/usb-Silicon_Labs_Sonoff_Zigbee_3.0_USB_Dongle_Plus_0111-if00-port0
             // /dev/serial/by-id/usb-ITead_Sonoff_Zigbee_3.0_USB_Dongle_Plus_b8b49abd27a6ed11a280eba32981d111-if00-port0
             pathRegex: '.*sonoff.*plus.*',
@@ -152,14 +152,14 @@ const USB_FINGERPRINTS: Record<DiscoverableUSBAdapter, USBAdapterFingerprint[]> 
             manufacturer: 'Texas Instruments',
             pathRegex: '.*CC26X2R1.*', // TODO
         },
-        {
-            // SMLight slzb-07p7
-            vendorId: '',
-            productId: '',
-            // manufacturer: '',
-            // /dev/serial/by-id/usb-SMLIGHT_SMLIGHT_SLZB-07p7_be9faa0786e1ea11bd68dc2d9a583111-if00-port0
-            pathRegex: '.*SLZB-07p7.*',
-        },
+        // {
+        //     // TODO: SMLight slzb-07p7
+        //     vendorId: '',
+        //     productId: '',
+        //     // manufacturer: '',
+        //     // /dev/serial/by-id/usb-SMLIGHT_SMLIGHT_SLZB-07p7_be9faa0786e1ea11bd68dc2d9a583111-if00-port0
+        //     pathRegex: '.*SLZB-07p7.*',
+        // },
         {
             // TubesZB ?
             vendorId: '10c4',
@@ -218,6 +218,11 @@ const USB_FINGERPRINTS: Record<DiscoverableUSBAdapter, USBAdapterFingerprint[]> 
     ],
 };
 
+/**
+ * Vendor and Product IDs that are prone to conflict if only matching on vendorId+productId.
+ */
+const USB_FINGERPRINTS_CONFLICT_IDS: ReadonlyArray<string /* vendorId:productId */> = ['10c4:ea60'];
+
 async function getSerialPortList(): Promise<PortInfo[]> {
     const portInfos = await SerialPort.list();
 
@@ -256,6 +261,7 @@ function matchUSBFingerprint(
     portInfo: PortInfo,
     isWindows: boolean,
     entries: USBAdapterFingerprint[],
+    conflictProne: boolean,
 ): [PortInfo['path'], USBAdapterFingerprint] | undefined {
     if (!portInfo.vendorId || !portInfo.productId) {
         // port info is missing essential information for proper matching, ignore it
@@ -263,9 +269,19 @@ function matchUSBFingerprint(
     }
 
     for (const entry of entries) {
-        if (
-            matchString(portInfo.vendorId, entry.vendorId) &&
-            matchString(portInfo.productId, entry.productId) &&
+        if (!matchString(portInfo.vendorId, entry.vendorId) || !matchString(portInfo.productId, entry.productId)) {
+            continue;
+        }
+
+        if (conflictProne) {
+            // if vendor+product combo is conflict prone, enforce at least one of manufacturer or pathRegex to match to avoid false positive
+            if (
+                (entry.manufacturer && portInfo.manufacturer && matchString(portInfo.manufacturer, entry.manufacturer)) ||
+                (entry.pathRegex && (matchRegex(entry.pathRegex, portInfo.path) || matchRegex(entry.pathRegex, portInfo.pnpId)))
+            ) {
+                return [portInfo.path, entry];
+            }
+        } else if (
             (!entry.manufacturer || !portInfo.manufacturer || matchString(portInfo.manufacturer, entry.manufacturer) || isWindows) &&
             (!entry.pathRegex || matchRegex(entry.pathRegex, portInfo.path) || matchRegex(entry.pathRegex, portInfo.pnpId) || isWindows)
         ) {
@@ -283,7 +299,8 @@ export async function matchUSBAdapter(adapter: ValidAdapter, path: string): Prom
             continue;
         }
 
-        const match = matchUSBFingerprint(portInfo, isWindows, USB_FINGERPRINTS[adapter === 'ezsp' ? 'ember' : adapter]);
+        const conflictProne = USB_FINGERPRINTS_CONFLICT_IDS.includes(`${portInfo.vendorId}:${portInfo.productId}`);
+        const match = matchUSBFingerprint(portInfo, isWindows, USB_FINGERPRINTS[adapter === 'ezsp' ? 'ember' : adapter], conflictProne);
 
         /* istanbul ignore else */
         if (match) {
@@ -303,8 +320,10 @@ export async function findUSBAdapter(path?: string): Promise<[adapter: Discovera
             continue;
         }
 
+        const conflictProne = USB_FINGERPRINTS_CONFLICT_IDS.includes(`${portInfo.vendorId}:${portInfo.productId}`);
+
         for (const key in USB_FINGERPRINTS) {
-            const match = matchUSBFingerprint(portInfo, isWindows, USB_FINGERPRINTS[key as DiscoverableUSBAdapter]!);
+            const match = matchUSBFingerprint(portInfo, isWindows, USB_FINGERPRINTS[key as DiscoverableUSBAdapter]!, conflictProne);
 
             if (match) {
                 logger.info(`Matched adapter: ${JSON.stringify(portInfo)} => ${key}: ${JSON.stringify(match[1])}`, NS);

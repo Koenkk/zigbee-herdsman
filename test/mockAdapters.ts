@@ -4,9 +4,16 @@ export const DECONZ_CONBEE_II = {
     productId: '0030',
     manufacturer: 'dresden elektronik ingenieurtechnik GmbH',
 };
+export const EMBER_ZBDONGLE_E = {
+    path: '/dev/serial/by-id/usb-ITEAD_SONOFF_Zigbee_3.0_USB_Dongle_Plus_V2_20240122184111-if00',
+    vendorId: '1A86', // uppercased for extra coverage
+    productId: '55d4',
+    manufacturer: 'ITEAD',
+};
+// vendorId+productId conflict with ZSTACK_ZBDONGLE_P
 export const EMBER_SKYCONNECT = {
     path: '/dev/serial/by-id/usb-Nabu_Casa_SkyConnect_v1.0_3abe54797c91ed118fc3cad13b20a111-if00-port0',
-    vendorId: '10C4', // uppercased for extra coverage
+    vendorId: '10c4',
     productId: 'ea60',
     manufacturer: 'Nabu Casa',
 };
@@ -15,6 +22,13 @@ export const ZSTACK_CC2538 = {
     vendorId: '0451',
     productId: '16C8', // uppercased for extra coverage
     manufacturer: 'Texas Instruments',
+};
+// vendorId+productId conflict with EMBER_SKYCONNECT
+export const ZSTACK_ZBDONGLE_P = {
+    path: '/dev/serial/by-id/usb-Silicon_Labs_Sonoff_Zigbee_3.0_USB_Dongle_Plus_0111-if00-port0',
+    vendorId: '10c4',
+    productId: 'ea60',
+    manufacturer: 'ITEAD',
 };
 export const ZBOSS_NORDIC = {
     path: '/dev/serial/by-id/usb-ZEPHYR_Zigbee_NCP_54ACCFAFA6DADC49-if00',

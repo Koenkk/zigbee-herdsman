@@ -10,7 +10,7 @@ import {SerialPort} from '../../src/adapter/serialPort';
 import {ZStackAdapter} from '../../src/adapter/z-stack/adapter';
 import {ZBOSSAdapter} from '../../src/adapter/zboss/adapter';
 import {ZiGateAdapter} from '../../src/adapter/zigate/adapter';
-import {DECONZ_CONBEE_II, EMBER_SKYCONNECT, ZBOSS_NORDIC, ZIGATE_PLUSV2, ZSTACK_CC2538} from '../mockAdapters';
+import {DECONZ_CONBEE_II, EMBER_SKYCONNECT, EMBER_ZBDONGLE_E, ZBOSS_NORDIC, ZIGATE_PLUSV2, ZSTACK_CC2538, ZSTACK_ZBDONGLE_P} from '../mockAdapters';
 
 const mockBonjourResult = jest.fn().mockImplementation((type) => ({
     name: 'Mock Adapter',
@@ -174,14 +174,14 @@ describe('Adapter', () => {
 
         beforeAll(() => {
             listSpy = jest.spyOn(SerialPort, 'list');
-            listSpy.mockReturnValue([DECONZ_CONBEE_II, EMBER_SKYCONNECT, ZSTACK_CC2538, ZBOSS_NORDIC, ZIGATE_PLUSV2]);
+            listSpy.mockReturnValue([DECONZ_CONBEE_II, EMBER_ZBDONGLE_E, ZSTACK_CC2538, ZBOSS_NORDIC, ZIGATE_PLUSV2]);
 
             platformSpy = jest.spyOn(os, 'platform');
             platformSpy.mockReturnValue('linux');
         });
 
         it('detects deconz from scratch', async () => {
-            listSpy.mockReturnValue([DECONZ_CONBEE_II]);
+            listSpy.mockReturnValueOnce([DECONZ_CONBEE_II]);
 
             const adapter = await Adapter.create({panID: 0x1a62, channelList: [11]}, {}, 'test.db.backup', {disableLED: false});
 
@@ -194,20 +194,20 @@ describe('Adapter', () => {
         });
 
         it('detects ember from scratch', async () => {
-            listSpy.mockReturnValue([EMBER_SKYCONNECT]);
+            listSpy.mockReturnValueOnce([EMBER_ZBDONGLE_E]);
 
             const adapter = await Adapter.create({panID: 0x1a62, channelList: [11]}, {}, 'test.db.backup', {disableLED: false});
 
             expect(adapter).toBeInstanceOf(EmberAdapter);
             // @ts-expect-error protected
             expect(adapter.serialPortOptions).toStrictEqual({
-                path: EMBER_SKYCONNECT.path,
+                path: EMBER_ZBDONGLE_E.path,
                 adapter: 'ember',
             });
         });
 
         it('detects zstack from scratch', async () => {
-            listSpy.mockReturnValue([ZSTACK_CC2538]);
+            listSpy.mockReturnValueOnce([ZSTACK_CC2538]);
 
             const adapter = await Adapter.create({panID: 0x1a62, channelList: [11]}, {}, 'test.db.backup', {disableLED: false});
 
@@ -220,7 +220,7 @@ describe('Adapter', () => {
         });
 
         it('detects zboss from scratch', async () => {
-            listSpy.mockReturnValue([ZBOSS_NORDIC]);
+            listSpy.mockReturnValueOnce([ZBOSS_NORDIC]);
 
             const adapter = await Adapter.create({panID: 0x1a62, channelList: [11]}, {}, 'test.db.backup', {disableLED: false});
 
@@ -233,7 +233,7 @@ describe('Adapter', () => {
         });
 
         it('detects zigate from scratch', async () => {
-            listSpy.mockReturnValue([ZIGATE_PLUSV2]);
+            listSpy.mockReturnValueOnce([ZIGATE_PLUSV2]);
 
             const adapter = await Adapter.create({panID: 0x1a62, channelList: [11]}, {}, 'test.db.backup', {disableLED: false});
 
@@ -247,7 +247,7 @@ describe('Adapter', () => {
 
         it('detects from scratch on Windows', async () => {
             platformSpy.mockReturnValueOnce('win32');
-            listSpy.mockReturnValue([
+            listSpy.mockReturnValueOnce([
                 {
                     // Windows sample - Sonoff Dongle-E
                     path: 'COM3',
@@ -272,7 +272,7 @@ describe('Adapter', () => {
         });
 
         it('detects from scratch with pnpId', async () => {
-            listSpy.mockReturnValue([{...ZBOSS_NORDIC, path: '/dev/ttyUSB0', pnpId: 'usb-ZEPHYR_Zigbee_NCP_54ACCFAFA6DADC49-if00'}]);
+            listSpy.mockReturnValueOnce([{...ZBOSS_NORDIC, path: '/dev/ttyUSB0', pnpId: 'usb-ZEPHYR_Zigbee_NCP_54ACCFAFA6DADC49-if00'}]);
 
             const adapter = await Adapter.create({panID: 0x1a62, channelList: [11]}, {}, 'test.db.backup', {disableLED: false});
 
@@ -285,7 +285,7 @@ describe('Adapter', () => {
         });
 
         it('detects deconz with specific config', async () => {
-            listSpy.mockReturnValue([DECONZ_CONBEE_II]);
+            listSpy.mockReturnValueOnce([DECONZ_CONBEE_II]);
 
             const adapter = await Adapter.create(
                 {panID: 0x1a62, channelList: [11]},
@@ -303,11 +303,11 @@ describe('Adapter', () => {
         });
 
         it('detects ember with specific config', async () => {
-            listSpy.mockReturnValue([EMBER_SKYCONNECT]);
+            listSpy.mockReturnValueOnce([EMBER_ZBDONGLE_E]);
 
             const adapter = await Adapter.create(
                 {panID: 0x1a62, channelList: [11]},
-                {adapter: 'ember', path: EMBER_SKYCONNECT.path},
+                {adapter: 'ember', path: EMBER_ZBDONGLE_E.path},
                 'test.db.backup',
                 {disableLED: false},
             );
@@ -315,17 +315,17 @@ describe('Adapter', () => {
             expect(adapter).toBeInstanceOf(EmberAdapter);
             // @ts-expect-error protected
             expect(adapter.serialPortOptions).toStrictEqual({
-                path: EMBER_SKYCONNECT.path,
+                path: EMBER_ZBDONGLE_E.path,
                 adapter: 'ember',
             });
         });
 
         it('detects ezsp with specific config', async () => {
-            listSpy.mockReturnValue([EMBER_SKYCONNECT]);
+            listSpy.mockReturnValueOnce([EMBER_ZBDONGLE_E]);
 
             const adapter = await Adapter.create(
                 {panID: 0x1a62, channelList: [11]},
-                {adapter: 'ezsp', path: EMBER_SKYCONNECT.path},
+                {adapter: 'ezsp', path: EMBER_ZBDONGLE_E.path},
                 'test.db.backup',
                 {disableLED: false},
             );
@@ -333,13 +333,13 @@ describe('Adapter', () => {
             expect(adapter).toBeInstanceOf(EZSPAdapter);
             // @ts-expect-error protected
             expect(adapter.serialPortOptions).toStrictEqual({
-                path: EMBER_SKYCONNECT.path,
+                path: EMBER_ZBDONGLE_E.path,
                 adapter: 'ezsp',
             });
         });
 
         it('detects zstack with specific config', async () => {
-            listSpy.mockReturnValue([ZSTACK_CC2538]);
+            listSpy.mockReturnValueOnce([ZSTACK_CC2538]);
 
             const adapter = await Adapter.create(
                 {panID: 0x1a62, channelList: [11]},
@@ -357,7 +357,7 @@ describe('Adapter', () => {
         });
 
         it('detects zboss with specific config', async () => {
-            listSpy.mockReturnValue([ZBOSS_NORDIC]);
+            listSpy.mockReturnValueOnce([ZBOSS_NORDIC]);
 
             const adapter = await Adapter.create({panID: 0x1a62, channelList: [11]}, {adapter: 'zboss', path: ZBOSS_NORDIC.path}, 'test.db.backup', {
                 disableLED: false,
@@ -372,7 +372,7 @@ describe('Adapter', () => {
         });
 
         it('detects zigate with specific config', async () => {
-            listSpy.mockReturnValue([ZIGATE_PLUSV2]);
+            listSpy.mockReturnValueOnce([ZIGATE_PLUSV2]);
 
             const adapter = await Adapter.create(
                 {panID: 0x1a62, channelList: [11]},
@@ -390,7 +390,7 @@ describe('Adapter', () => {
         });
 
         it('detects with specific config with multiple adapters connected', async () => {
-            listSpy.mockReturnValue([DECONZ_CONBEE_II, ZSTACK_CC2538, EMBER_SKYCONNECT]);
+            listSpy.mockReturnValueOnce([DECONZ_CONBEE_II, ZSTACK_CC2538, EMBER_ZBDONGLE_E]);
 
             const adapter = await Adapter.create(
                 {panID: 0x1a62, channelList: [11]},
@@ -408,7 +408,7 @@ describe('Adapter', () => {
         });
 
         it('detects with specific config with pnpId', async () => {
-            listSpy.mockReturnValue([{...ZBOSS_NORDIC, path: '/dev/ttyUSB0', pnpId: 'usb-ZEPHYR_Zigbee_NCP_54ACCFAFA6DADC49-if00'}]);
+            listSpy.mockReturnValueOnce([{...ZBOSS_NORDIC, path: '/dev/ttyUSB0', pnpId: 'usb-ZEPHYR_Zigbee_NCP_54ACCFAFA6DADC49-if00'}]);
 
             const adapter = await Adapter.create({panID: 0x1a62, channelList: [11]}, {adapter: 'zboss', path: '/dev/ttyUSB0'}, 'test.db.backup', {
                 disableLED: false,
@@ -423,7 +423,7 @@ describe('Adapter', () => {
         });
 
         it('fails to match specified adapter+path, tries to start anyway', async () => {
-            listSpy.mockReturnValue([]);
+            listSpy.mockReturnValueOnce([]);
             const adapter = await Adapter.create({panID: 0x1a62, channelList: [11]}, {adapter: 'zstack', path: 'dev/ttyUSB0'}, 'test.db.backup', {
                 disableLED: false,
             });
@@ -437,7 +437,7 @@ describe('Adapter', () => {
         });
 
         it('fails to match with different paths, tries to start anyway', async () => {
-            listSpy.mockReturnValue([DECONZ_CONBEE_II]);
+            listSpy.mockReturnValueOnce([DECONZ_CONBEE_II]);
 
             const adapter = await Adapter.create({panID: 0x1a62, channelList: [11]}, {adapter: 'deconz', path: '/dev/ttyUSB0'}, 'test.db.backup', {
                 disableLED: false,
@@ -452,7 +452,7 @@ describe('Adapter', () => {
         });
 
         it('fails to match from scratch with different paths, throws', async () => {
-            listSpy.mockReturnValue([DECONZ_CONBEE_II]);
+            listSpy.mockReturnValueOnce([DECONZ_CONBEE_II]);
 
             expect(async () => {
                 await Adapter.create({panID: 0x1a62, channelList: [11]}, {path: '/dev/ttyUSB0'}, 'test.db.backup', {disableLED: false});
@@ -460,7 +460,13 @@ describe('Adapter', () => {
         });
 
         it('fails to match with incomplete port info, throws', async () => {
-            listSpy.mockReturnValue([{...DECONZ_CONBEE_II, vendorId: undefined}]);
+            listSpy.mockReturnValueOnce([{...DECONZ_CONBEE_II, vendorId: undefined}]);
+
+            expect(async () => {
+                await Adapter.create({panID: 0x1a62, channelList: [11]}, {}, 'test.db.backup', {disableLED: false});
+            }).rejects.toThrow(`USB adapter discovery error (No valid USB adapter found). Specify valid 'adapter' and 'port' in your configuration.`);
+
+            listSpy.mockReturnValueOnce([{...DECONZ_CONBEE_II, productId: undefined}]);
 
             expect(async () => {
                 await Adapter.create({panID: 0x1a62, channelList: [11]}, {}, 'test.db.backup', {disableLED: false});
@@ -468,7 +474,7 @@ describe('Adapter', () => {
         });
 
         it('fails to match specified adapter+path, throws invalid adapter', async () => {
-            listSpy.mockReturnValue([]);
+            listSpy.mockReturnValueOnce([]);
 
             expect(async () => {
                 await Adapter.create(
@@ -513,6 +519,77 @@ describe('Adapter', () => {
                 path: ZSTACK_CC2538.path,
                 adapter: 'zstack',
             });
+        });
+
+        it('detects from scratch on conflict vendor+product IDs', async () => {
+            listSpy.mockReturnValueOnce([{...EMBER_SKYCONNECT, manufacturer: undefined}]);
+
+            let adapter = await Adapter.create({panID: 0x1a62, channelList: [11]}, {}, 'test.db.backup', {disableLED: false});
+
+            expect(adapter).toBeInstanceOf(EmberAdapter);
+            // @ts-expect-error protected
+            expect(adapter.serialPortOptions).toStrictEqual({
+                path: EMBER_SKYCONNECT.path,
+                adapter: 'ember',
+            });
+
+            listSpy.mockReturnValueOnce([{...ZSTACK_ZBDONGLE_P, path: '/dev/ttyACM0'}]);
+
+            adapter = await Adapter.create({panID: 0x1a62, channelList: [11]}, {}, 'test.db.backup', {disableLED: false});
+
+            expect(adapter).toBeInstanceOf(ZStackAdapter);
+            // @ts-expect-error protected
+            expect(adapter.serialPortOptions).toStrictEqual({
+                path: '/dev/ttyACM0',
+                adapter: 'zstack',
+            });
+        });
+
+        it('fails to detect from scratch on conflict vendor+product IDs', async () => {
+            listSpy.mockReturnValueOnce([{...EMBER_SKYCONNECT, path: '/dev/ttyACM0', manufacturer: undefined}]);
+
+            expect(async () => {
+                await Adapter.create({panID: 0x1a62, channelList: [11]}, {}, 'test.db.backup', {disableLED: false});
+            }).rejects.toThrow(`USB adapter discovery error (No valid USB adapter found). Specify valid 'adapter' and 'port' in your configuration.`);
+        });
+
+        it('detects with specific config on conflict vendor+product IDs', async () => {
+            listSpy.mockReturnValueOnce([{...EMBER_SKYCONNECT, manufacturer: undefined}]);
+
+            let adapter = await Adapter.create(
+                {panID: 0x1a62, channelList: [11]},
+                {adapter: 'ember', path: EMBER_SKYCONNECT.path},
+                'test.db.backup',
+                {disableLED: false},
+            );
+
+            expect(adapter).toBeInstanceOf(EmberAdapter);
+            // @ts-expect-error protected
+            expect(adapter.serialPortOptions).toStrictEqual({
+                path: EMBER_SKYCONNECT.path,
+                adapter: 'ember',
+            });
+
+            listSpy.mockReturnValueOnce([{...ZSTACK_ZBDONGLE_P, path: '/dev/ttyACM0'}]);
+
+            adapter = await Adapter.create({panID: 0x1a62, channelList: [11]}, {adapter: 'zstack', path: '/dev/ttyACM0'}, 'test.db.backup', {
+                disableLED: false,
+            });
+
+            expect(adapter).toBeInstanceOf(ZStackAdapter);
+            // @ts-expect-error protected
+            expect(adapter.serialPortOptions).toStrictEqual({
+                path: '/dev/ttyACM0',
+                adapter: 'zstack',
+            });
+        });
+
+        it('fails to detect with adapter only on conflict vendor+product IDs', async () => {
+            listSpy.mockReturnValueOnce([{...EMBER_SKYCONNECT, path: '/dev/ttyACM0', manufacturer: undefined}]);
+
+            expect(async () => {
+                await Adapter.create({panID: 0x1a62, channelList: [11]}, {adapter: 'zstack'}, 'test.db.backup', {disableLED: false});
+            }).rejects.toThrow(`USB adapter discovery error (No valid USB adapter found). Specify valid 'adapter' and 'port' in your configuration.`);
         });
     });
 });
