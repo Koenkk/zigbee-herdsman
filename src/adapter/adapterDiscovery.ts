@@ -259,8 +259,8 @@ function matchRegex(regexStr: string, str?: string): boolean {
 
 function matchUSBFingerprint(
     portInfo: PortInfo,
-    isWindows: boolean,
     entries: USBAdapterFingerprint[],
+    isWindows: boolean,
     conflictProne: boolean,
 ): [PortInfo['path'], USBAdapterFingerprint] | undefined {
     if (!portInfo.vendorId || !portInfo.productId) {
@@ -285,6 +285,10 @@ function matchUSBFingerprint(
             (!entry.manufacturer || !portInfo.manufacturer || matchString(portInfo.manufacturer, entry.manufacturer) || isWindows) &&
             (!entry.pathRegex || matchRegex(entry.pathRegex, portInfo.path) || matchRegex(entry.pathRegex, portInfo.pnpId) || isWindows)
         ) {
+            // if entry has either manufacturer or pathRegex, match as much as possible:
+            //   - match manufacturer if available
+            //   - try to match pathRegex against path or pnpId
+            // on Windows, allow fuzzier match, since manufacturer can get overridden by OS driver and path is COM
             return [portInfo.path, entry];
         }
     }
@@ -292,19 +296,22 @@ function matchUSBFingerprint(
 
 export async function matchUSBAdapter(adapter: ValidAdapter, path: string): Promise<boolean> {
     const isWindows = platform() === 'win32';
+    const portList = await getSerialPortList();
 
-    for (const portInfo of await getSerialPortList()) {
+    logger.debug(() => `Connected devices: ${JSON.stringify(portList)}`, NS);
+
+    for (const portInfo of portList) {
         /* istanbul ignore else */
         if (portInfo.path !== path) {
             continue;
         }
 
         const conflictProne = USB_FINGERPRINTS_CONFLICT_IDS.includes(`${portInfo.vendorId}:${portInfo.productId}`);
-        const match = matchUSBFingerprint(portInfo, isWindows, USB_FINGERPRINTS[adapter === 'ezsp' ? 'ember' : adapter], conflictProne);
+        const match = matchUSBFingerprint(portInfo, USB_FINGERPRINTS[adapter === 'ezsp' ? 'ember' : adapter], isWindows, conflictProne);
 
         /* istanbul ignore else */
         if (match) {
-            logger.info(`Matched adapter: ${JSON.stringify(portInfo)} => ${adapter}: ${JSON.stringify(match[1])}`, NS);
+            logger.info(() => `Matched adapter: ${JSON.stringify(portInfo)} => ${adapter}: ${JSON.stringify(match[1])}`, NS);
             return true;
         }
     }
@@ -312,10 +319,18 @@ export async function matchUSBAdapter(adapter: ValidAdapter, path: string): Prom
     return false;
 }
 
-export async function findUSBAdapter(path?: string): Promise<[adapter: DiscoverableUSBAdapter, path: PortInfo['path']] | undefined> {
+export async function findUSBAdapter(
+    adapter?: ValidAdapter,
+    path?: string,
+): Promise<[adapter: DiscoverableUSBAdapter, path: PortInfo['path']] | undefined> {
     const isWindows = platform() === 'win32';
+    // refine to DiscoverableUSBAdapter
+    adapter = adapter && adapter === 'ezsp' ? 'ember' : adapter;
+    const portList = await getSerialPortList();
 
-    for (const portInfo of await getSerialPortList()) {
+    logger.debug(() => `Connected devices: ${JSON.stringify(portList)}`, NS);
+
+    for (const portInfo of portList) {
         if (path && portInfo.path !== path) {
             continue;
         }
@@ -323,10 +338,14 @@ export async function findUSBAdapter(path?: string): Promise<[adapter: Discovera
         const conflictProne = USB_FINGERPRINTS_CONFLICT_IDS.includes(`${portInfo.vendorId}:${portInfo.productId}`);
 
         for (const key in USB_FINGERPRINTS) {
-            const match = matchUSBFingerprint(portInfo, isWindows, USB_FINGERPRINTS[key as DiscoverableUSBAdapter]!, conflictProne);
+            if (adapter && adapter !== key) {
+                continue;
+            }
+
+            const match = matchUSBFingerprint(portInfo, USB_FINGERPRINTS[key as DiscoverableUSBAdapter]!, isWindows, conflictProne);
 
             if (match) {
-                logger.info(`Matched adapter: ${JSON.stringify(portInfo)} => ${key}: ${JSON.stringify(match[1])}`, NS);
+                logger.info(() => `Matched adapter: ${JSON.stringify(portInfo)} => ${key}: ${JSON.stringify(match[1])}`, NS);
                 return [key as DiscoverableUSBAdapter, match[0]];
             }
         }
@@ -445,13 +464,14 @@ export async function discoverAdapter(
 
     try {
         // default to matching USB
-        const match = await findUSBAdapter(path);
+        const match = await findUSBAdapter(adapter && adapter !== 'auto' ? adapter : undefined, path);
 
         if (!match) {
             throw new Error(`No valid USB adapter found`);
         }
 
-        return match;
+        // keep adapter if `ezsp` since findUSBAdapter returns DiscoverableUSBAdapter
+        return adapter && adapter === 'ezsp' ? [adapter, match[1]] : match;
     } catch (error) {
         throw new Error(`USB adapter discovery error (${(error as Error).message}). Specify valid 'adapter' and 'port' in your configuration.`);
     }
