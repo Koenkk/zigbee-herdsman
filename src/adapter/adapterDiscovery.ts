@@ -414,10 +414,10 @@ export async function discoverAdapter(
 
                 /* istanbul ignore else */
                 if (!matched) {
-                    logger.error(`Unable to match USB adapter: ${adapter} | ${path}`, NS);
+                    logger.debug(`Unable to match USB adapter: ${adapter} | ${path}`, NS);
                 }
             } catch (error) {
-                logger.error(`Error while trying to match USB adapter (${(error as Error).message}).`, NS);
+                logger.debug(`Error while trying to match USB adapter (${(error as Error).message}).`, NS);
             }
 
             return [adapter, path];
