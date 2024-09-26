@@ -76,9 +76,10 @@ const USB_FINGERPRINTS: Record<DiscoverableUSBAdapter, USBAdapterFingerprint[]> 
             // SMLight slzb-07
             vendorId: '10c4',
             productId: 'ea60',
-            // manufacturer: '',
+            manufacturer: 'SMLIGHT',
+            // /dev/serial/by-id/usb-SMLIGHT_SMLIGHT_SLZB-07_be9faa0786e1ea11bd68dc2d9a583111-if00-port0
             // /dev/serial/by-id/usb-Silicon_Labs_CP2102N_USB_to_UART_Bridge_Controller_a215650c853bec119a079e957a0af111-if00-port0
-            pathRegex: '.*slzb-07.*',
+            pathRegex: '.*slzb-07_.*', // `_` to not match 07p7
         },
         {
             // Sonoff ZBDongle-E V2
@@ -152,14 +153,14 @@ const USB_FINGERPRINTS: Record<DiscoverableUSBAdapter, USBAdapterFingerprint[]> 
             manufacturer: 'Texas Instruments',
             pathRegex: '.*CC26X2R1.*', // TODO
         },
-        // {
-        //     // TODO: SMLight slzb-07p7
-        //     vendorId: '',
-        //     productId: '',
-        //     // manufacturer: '',
-        //     // /dev/serial/by-id/usb-SMLIGHT_SMLIGHT_SLZB-07p7_be9faa0786e1ea11bd68dc2d9a583111-if00-port0
-        //     pathRegex: '.*SLZB-07p7.*',
-        // },
+        {
+            // SMLight slzb-07p7
+            vendorId: '10c4',
+            productId: 'ea60',
+            manufacturer: 'SMLIGHT',
+            // /dev/serial/by-id/usb-SMLIGHT_SMLIGHT_SLZB-07p7_be9faa0786e1ea11bd68dc2d9a583111-if00-port0
+            pathRegex: '.*SLZB-07p7.*',
+        },
         {
             // TubesZB ?
             vendorId: '10c4',
