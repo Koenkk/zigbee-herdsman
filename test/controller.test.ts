@@ -7995,6 +7995,34 @@ describe('Controller', () => {
         expect(error).toStrictEqual(new Error(`Unbind 0x129/1 genOnOff invalid target '1' (no group with this ID exists).`));
     });
 
+    it('Unbind against unbound cluster', async () => {
+        await controller.start();
+        await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
+        await mockAdapterEvents['deviceJoined']({networkAddress: 170, ieeeAddr: '0x170'});
+        const endpoint = controller.getDeviceByIeeeAddr('0x129')!.getEndpoint(1)!;
+        const target = controller.getDeviceByIeeeAddr('0x170')!.getEndpoint(1)!;
+        await endpoint.bind('genOnOff', target);
+        mockAdapterSendZdo.mockClear();
+
+        sendZdoResponseStatus = Zdo.Status.NO_ENTRY;
+
+        await endpoint.unbind('genOnOff', target);
+
+        const zdoPayload = Zdo.Buffalo.buildRequest(
+            false,
+            Zdo.ClusterId.UNBIND_REQUEST,
+            '0x129',
+            1,
+            Zcl.Clusters.genOnOff.ID,
+            Zdo.UNICAST_BINDING,
+            '0x170',
+            0,
+            1,
+        );
+        expect(mockAdapterSendZdo).toHaveBeenCalledWith('0x129', 129, Zdo.ClusterId.UNBIND_REQUEST, zdoPayload, false);
+        expect(endpoint.binds).toStrictEqual([]);
+    });
+
     it('Unbind error', async () => {
         await controller.start();
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
