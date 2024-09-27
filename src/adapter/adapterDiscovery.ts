@@ -82,6 +82,13 @@ const USB_FINGERPRINTS: Record<DiscoverableUSBAdapter, USBAdapterFingerprint[]> 
             pathRegex: '.*slzb-07_.*', // `_` to not match 07p7
         },
         {
+            // SMLight slzb-07mg24
+            vendorId: '10c4',
+            productId: 'ea60',
+            manufacturer: 'SMLIGHT',
+            pathRegex: '.*slzb-07mg24.*',
+        },
+        {
             // Sonoff ZBDongle-E V2
             vendorId: '1a86',
             productId: '55d4',
