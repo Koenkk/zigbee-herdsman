@@ -10413,7 +10413,7 @@ describe('Controller', () => {
         expect(device.networkAddress).toStrictEqual(oldNwkAddress);
         expect(device.modelID).toBe('TRADFRI bulb E27 WS opal 980lm');
         expect(mockLogger.debug).toHaveBeenCalledWith(
-            `Failed to retrieve IEEE address for device '${newNwkAddress}': INV_REQUESTTYPE`,
+            `Failed to retrieve IEEE address for device '${newNwkAddress}': Error: Status 'INV_REQUESTTYPE'`,
             'zh:controller',
         );
         expect(events.lastSeenChanged.length).toBe(0);
@@ -10484,12 +10484,7 @@ describe('Controller', () => {
         events.lastSeenChanged = [];
         events.deviceNetworkAddressChanged = [];
         mockAdapterSendZdo.mockClear();
-        mockAdapterSendZdo.mockImplementationOnce(async () => {
-            const zdoResponse = [Zdo.Status.NOT_SUPPORTED, undefined];
-
-            await mockAdapterEvents['zdoResponse'](Zdo.ClusterId.IEEE_ADDRESS_RESPONSE, zdoResponse);
-            return zdoResponse;
-        });
+        mockAdapterSendZdo.mockRejectedValueOnce(new Error('timeout'));
         const identifyUnknownDeviceSpy = jest.spyOn(controller, 'identifyUnknownDevice');
 
         const frame = Zcl.Frame.create(0, 1, true, undefined, 10, 'readRsp', 0, [{attrId: 5, status: 0, dataType: 66, attrData: 'new.model.id'}], {});
@@ -10506,7 +10501,7 @@ describe('Controller', () => {
 
         expect(mockAdapterSendZdo).toHaveBeenCalledTimes(1);
         expect(identifyUnknownDeviceSpy).toHaveBeenCalledTimes(1);
-        expect(mockLogger.debug).toHaveBeenCalledWith(`Failed to retrieve IEEE address for device '${nwkAddress}': NOT_SUPPORTED`, 'zh:controller');
+        expect(mockLogger.debug).toHaveBeenCalledWith(`Failed to retrieve IEEE address for device '${nwkAddress}': Error: timeout`, 'zh:controller');
 
         await mockAdapterEvents['zclPayload']({
             wasBroadcast: false,

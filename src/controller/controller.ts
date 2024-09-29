@@ -540,21 +540,27 @@ class Controller extends events.EventEmitter<ControllerEventMap> {
         this.unknownDevices.add(nwkAddress);
         const clusterId = Zdo.ClusterId.IEEE_ADDRESS_REQUEST;
         const zdoPayload = Zdo.Buffalo.buildRequest(this.adapter.hasZdoMessageOverhead, clusterId, nwkAddress, false, 0);
-        const response = await this.adapter.sendZdo(ZSpec.BLANK_EUI64, nwkAddress, clusterId, zdoPayload, false);
 
-        if (Zdo.Buffalo.checkStatus(response)) {
-            const payload = response[1];
-            const device = Device.byIeeeAddr(payload.eui64);
+        try {
+            const response = await this.adapter.sendZdo(ZSpec.BLANK_EUI64, nwkAddress, clusterId, zdoPayload, false);
 
-            /* istanbul ignore else */
-            if (device) {
-                this.checkDeviceNetworkAddress(device, payload.eui64, payload.nwkAddress);
-                this.unknownDevices.delete(payload.nwkAddress);
+            if (Zdo.Buffalo.checkStatus(response)) {
+                const payload = response[1];
+                const device = Device.byIeeeAddr(payload.eui64);
+
+                /* istanbul ignore else */
+                if (device) {
+                    this.checkDeviceNetworkAddress(device, payload.eui64, payload.nwkAddress);
+                    this.unknownDevices.delete(payload.nwkAddress);
+                }
+
+                return device;
+            } else {
+                throw new Zdo.StatusError(response[0]);
             }
-
-            return device;
-        } else {
-            logger.debug(`Failed to retrieve IEEE address for device '${nwkAddress}': ${Zdo.Status[response[0]]}`, NS);
+        } catch (error) {
+            // Catches 2 types of exception: Zdo.StatusError and no response from `adapter.sendZdo()`.
+            logger.debug(`Failed to retrieve IEEE address for device '${nwkAddress}': ${error}`, NS);
         }
 
         // NOTE: by keeping nwkAddress in `this.unknownDevices` on fail, it prevents a non-responding device from potentially spamming identify.
