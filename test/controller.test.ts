@@ -10385,7 +10385,7 @@ describe('Controller', () => {
         expect(device.networkAddress).toStrictEqual(oldNwkAddress);
         expect(device.modelID).toBe('TRADFRI bulb E27 WS opal 980lm');
         expect(mockLogger.debug).toHaveBeenCalledWith(
-            `Failed to retrieve IEEE address for device '${newNwkAddress}': INV_REQUESTTYPE`,
+            `Failed to retrieve IEEE address for device '${newNwkAddress}': Error: Status 'INV_REQUESTTYPE'`,
             'zh:controller',
         );
         expect(events.lastSeenChanged.length).toBe(0);
