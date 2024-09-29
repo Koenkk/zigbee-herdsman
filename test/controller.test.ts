@@ -10478,7 +10478,10 @@ describe('Controller', () => {
 
         expect(mockAdapterSendZdo).toHaveBeenCalledTimes(1);
         expect(identifyUnknownDeviceSpy).toHaveBeenCalledTimes(1);
-        expect(mockLogger.debug).toHaveBeenCalledWith(`Failed to retrieve IEEE address for device '${nwkAddress}': NOT_SUPPORTED`, 'zh:controller');
+        expect(mockLogger.debug).toHaveBeenCalledWith(
+            `Failed to retrieve IEEE address for device '${nwkAddress}': Error: Status 'NOT_SUPPORTED'`,
+            'zh:controller',
+        );
 
         await mockAdapterEvents['zclPayload']({
             wasBroadcast: false,
