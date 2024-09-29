@@ -1,5 +1,15 @@
 # Changelog
 
+## [2.1.2](https://github.com/Koenkk/zigbee-herdsman/compare/v2.1.1...v2.1.2) (2024-09-29)
+
+
+### Bug Fixes
+
+* Fix crash on IEEE address request timeout ([#1209](https://github.com/Koenkk/zigbee-herdsman/issues/1209)) ([985e11a](https://github.com/Koenkk/zigbee-herdsman/commit/985e11a48eeede31558b1e0a561c40755d7e8226))
+* **ignore:** update dependencies ([#1208](https://github.com/Koenkk/zigbee-herdsman/issues/1208)) ([854e5f3](https://github.com/Koenkk/zigbee-herdsman/commit/854e5f318a6cc2c1ea896f0fabc6ce627c20b79b))
+* **ignore:** zigate: Workaround missing ZDO `LEAVE_RESPONSE` ([#1204](https://github.com/Koenkk/zigbee-herdsman/issues/1204)) ([5d02efe](https://github.com/Koenkk/zigbee-herdsman/commit/5d02efe44826401521b85259dde5e3ca4421e312))
+* On NO_ENTRY error during unbind cleanup database ([#1206](https://github.com/Koenkk/zigbee-herdsman/issues/1206)) ([01b76ff](https://github.com/Koenkk/zigbee-herdsman/commit/01b76ff3f352ce76eb98b3cd4fa9d09c67f8563c))
+
 ## [2.1.1](https://github.com/Koenkk/zigbee-herdsman/compare/v2.1.0...v2.1.1) (2024-09-24)
 
 
