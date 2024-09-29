@@ -1,7 +1,5 @@
 /* istanbul ignore file */
 
-import assert from 'assert';
-
 import Device from '../../../controller/model/device';
 import * as Models from '../../../models';
 import {Wait, Waitress} from '../../../utils';
@@ -665,7 +663,7 @@ class DeconzAdapter extends Adapter {
                     // Note: srcAddr16 can be undefined after this and this is intended behavior
                     // there are zigbee frames which do not contain a 16 bit address, e.g. during joining.
                     // So any code that relies on srcAddr16 must handle this in some way.
-                    resp.srcAddr16 = srcAddr; 
+                    resp.srcAddr16 = srcAddr;
                 }
             }
 
