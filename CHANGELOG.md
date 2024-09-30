@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.1.3](https://github.com/Koenkk/zigbee-herdsman/compare/v2.1.2...v2.1.3) (2024-09-30)
+
+
+### Bug Fixes
+
+* Fix unable to join some devices with Conbee III ([#1207](https://github.com/Koenkk/zigbee-herdsman/issues/1207)) ([3e7bfaa](https://github.com/Koenkk/zigbee-herdsman/commit/3e7bfaa11693f1dc9e7608777e852cfbdb6ffd2b))
+
 ## [2.1.2](https://github.com/Koenkk/zigbee-herdsman/compare/v2.1.1...v2.1.2) (2024-09-29)
 
 
