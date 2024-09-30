@@ -10,7 +10,17 @@ import {SerialPort} from '../../src/adapter/serialPort';
 import {ZStackAdapter} from '../../src/adapter/z-stack/adapter';
 import {ZBOSSAdapter} from '../../src/adapter/zboss/adapter';
 import {ZiGateAdapter} from '../../src/adapter/zigate/adapter';
-import {DECONZ_CONBEE_II, EMBER_SKYCONNECT, EMBER_ZBDONGLE_E, ZBOSS_NORDIC, ZIGATE_PLUSV2, ZSTACK_CC2538, ZSTACK_SMLIGHT_SLZB_06P10, ZSTACK_SMLIGHT_SLZB_07, ZSTACK_ZBDONGLE_P} from '../mockAdapters';
+import {
+    DECONZ_CONBEE_II,
+    EMBER_SKYCONNECT,
+    EMBER_ZBDONGLE_E,
+    ZBOSS_NORDIC,
+    ZIGATE_PLUSV2,
+    ZSTACK_CC2538,
+    ZSTACK_SMLIGHT_SLZB_06P10,
+    ZSTACK_SMLIGHT_SLZB_07,
+    ZSTACK_ZBDONGLE_P,
+} from '../mockAdapters';
 
 const mockBonjourResult = jest.fn().mockImplementation((type) => ({
     name: 'Mock Adapter',
@@ -181,10 +191,10 @@ describe('Adapter', () => {
         });
 
         describe('without config', () => {
-            it('detects deconz', async () => {
+            it('detects each adapter', async () => {
                 listSpy.mockReturnValueOnce([DECONZ_CONBEE_II]);
 
-                const adapter = await Adapter.create({panID: 0x1a62, channelList: [11]}, {}, 'test.db.backup', {disableLED: false});
+                let adapter = await Adapter.create({panID: 0x1a62, channelList: [11]}, {}, 'test.db.backup', {disableLED: false});
 
                 expect(adapter).toBeInstanceOf(DeconzAdapter);
                 // @ts-expect-error protected
@@ -192,12 +202,10 @@ describe('Adapter', () => {
                     path: DECONZ_CONBEE_II.path,
                     adapter: 'deconz',
                 });
-            });
 
-            it('detects ember', async () => {
                 listSpy.mockReturnValueOnce([EMBER_ZBDONGLE_E]);
 
-                const adapter = await Adapter.create({panID: 0x1a62, channelList: [11]}, {}, 'test.db.backup', {disableLED: false});
+                adapter = await Adapter.create({panID: 0x1a62, channelList: [11]}, {}, 'test.db.backup', {disableLED: false});
 
                 expect(adapter).toBeInstanceOf(EmberAdapter);
                 // @ts-expect-error protected
@@ -205,12 +213,10 @@ describe('Adapter', () => {
                     path: EMBER_ZBDONGLE_E.path,
                     adapter: 'ember',
                 });
-            });
 
-            it('detects zstack', async () => {
                 listSpy.mockReturnValueOnce([ZSTACK_CC2538]);
 
-                const adapter = await Adapter.create({panID: 0x1a62, channelList: [11]}, {}, 'test.db.backup', {disableLED: false});
+                adapter = await Adapter.create({panID: 0x1a62, channelList: [11]}, {}, 'test.db.backup', {disableLED: false});
 
                 expect(adapter).toBeInstanceOf(ZStackAdapter);
                 // @ts-expect-error protected
@@ -218,12 +224,10 @@ describe('Adapter', () => {
                     path: ZSTACK_CC2538.path,
                     adapter: 'zstack',
                 });
-            });
 
-            it('detects zboss', async () => {
                 listSpy.mockReturnValueOnce([ZBOSS_NORDIC]);
 
-                const adapter = await Adapter.create({panID: 0x1a62, channelList: [11]}, {}, 'test.db.backup', {disableLED: false});
+                adapter = await Adapter.create({panID: 0x1a62, channelList: [11]}, {}, 'test.db.backup', {disableLED: false});
 
                 expect(adapter).toBeInstanceOf(ZBOSSAdapter);
                 // @ts-expect-error protected
@@ -231,12 +235,10 @@ describe('Adapter', () => {
                     path: ZBOSS_NORDIC.path,
                     adapter: 'zboss',
                 });
-            });
 
-            it('detects zigate', async () => {
                 listSpy.mockReturnValueOnce([ZIGATE_PLUSV2]);
 
-                const adapter = await Adapter.create({panID: 0x1a62, channelList: [11]}, {}, 'test.db.backup', {disableLED: false});
+                adapter = await Adapter.create({panID: 0x1a62, channelList: [11]}, {}, 'test.db.backup', {disableLED: false});
 
                 expect(adapter).toBeInstanceOf(ZiGateAdapter);
                 // @ts-expect-error protected
@@ -246,7 +248,34 @@ describe('Adapter', () => {
                 });
             });
 
-            it('detects on Windows but less accurate', async () => {
+            it('detects on Windows with manufacturer present', async () => {
+                platformSpy.mockReturnValueOnce('win32');
+                listSpy.mockReturnValueOnce([
+                    {
+                        // Windows sample - Sonoff Dongle-E
+                        path: 'COM3',
+                        manufacturer: 'ITEAD',
+                        serialNumber: '54DD002111',
+                        pnpId: 'USB\\VID_1A86&PID_55D4\\54DD002111',
+                        locationId: 'Port_#0005.Hub_#0001',
+                        friendlyName: 'USB-Enhanced-SERIAL CH9102 (COM3)',
+                        vendorId: '1A86',
+                        productId: '55D4',
+                    },
+                ]);
+
+                const adapter = await Adapter.create({panID: 0x1a62, channelList: [11]}, {}, 'test.db.backup', {disableLED: false});
+
+                expect(adapter).toBeInstanceOf(EmberAdapter);
+                // @ts-expect-error protected
+                expect(adapter.serialPortOptions).toStrictEqual({
+                    path: 'COM3',
+                    adapter: 'ember',
+                });
+            });
+
+            it('detects on Windows without manufacturer present', async () => {
+                // Note: this is the least-accurate possible match
                 platformSpy.mockReturnValueOnce('win32');
                 listSpy.mockReturnValueOnce([
                     {
@@ -373,10 +402,10 @@ describe('Adapter', () => {
         });
 
         describe('with adapter+path config', () => {
-            it('detects deconz', async () => {
+            it('detects each adapter', async () => {
                 listSpy.mockReturnValueOnce([DECONZ_CONBEE_II]);
 
-                const adapter = await Adapter.create(
+                let adapter = await Adapter.create(
                     {panID: 0x1a62, channelList: [11]},
                     {adapter: 'deconz', path: DECONZ_CONBEE_II.path},
                     'test.db.backup',
@@ -389,12 +418,10 @@ describe('Adapter', () => {
                     path: DECONZ_CONBEE_II.path,
                     adapter: 'deconz',
                 });
-            });
 
-            it('detects ember', async () => {
                 listSpy.mockReturnValueOnce([EMBER_ZBDONGLE_E]);
 
-                const adapter = await Adapter.create(
+                adapter = await Adapter.create(
                     {panID: 0x1a62, channelList: [11]},
                     {adapter: 'ember', path: EMBER_ZBDONGLE_E.path},
                     'test.db.backup',
@@ -407,17 +434,12 @@ describe('Adapter', () => {
                     path: EMBER_ZBDONGLE_E.path,
                     adapter: 'ember',
                 });
-            });
 
-            it('detects ezsp', async () => {
                 listSpy.mockReturnValueOnce([EMBER_ZBDONGLE_E]);
 
-                const adapter = await Adapter.create(
-                    {panID: 0x1a62, channelList: [11]},
-                    {adapter: 'ezsp', path: EMBER_ZBDONGLE_E.path},
-                    'test.db.backup',
-                    {disableLED: false},
-                );
+                adapter = await Adapter.create({panID: 0x1a62, channelList: [11]}, {adapter: 'ezsp', path: EMBER_ZBDONGLE_E.path}, 'test.db.backup', {
+                    disableLED: false,
+                });
 
                 expect(adapter).toBeInstanceOf(EZSPAdapter);
                 // @ts-expect-error protected
@@ -425,17 +447,12 @@ describe('Adapter', () => {
                     path: EMBER_ZBDONGLE_E.path,
                     adapter: 'ezsp',
                 });
-            });
 
-            it('detects zstack', async () => {
                 listSpy.mockReturnValueOnce([ZSTACK_CC2538]);
 
-                const adapter = await Adapter.create(
-                    {panID: 0x1a62, channelList: [11]},
-                    {adapter: 'zstack', path: ZSTACK_CC2538.path},
-                    'test.db.backup',
-                    {disableLED: false},
-                );
+                adapter = await Adapter.create({panID: 0x1a62, channelList: [11]}, {adapter: 'zstack', path: ZSTACK_CC2538.path}, 'test.db.backup', {
+                    disableLED: false,
+                });
 
                 expect(adapter).toBeInstanceOf(ZStackAdapter);
                 // @ts-expect-error protected
@@ -443,19 +460,12 @@ describe('Adapter', () => {
                     path: ZSTACK_CC2538.path,
                     adapter: 'zstack',
                 });
-            });
 
-            it('detects zboss', async () => {
                 listSpy.mockReturnValueOnce([ZBOSS_NORDIC]);
 
-                const adapter = await Adapter.create(
-                    {panID: 0x1a62, channelList: [11]},
-                    {adapter: 'zboss', path: ZBOSS_NORDIC.path},
-                    'test.db.backup',
-                    {
-                        disableLED: false,
-                    },
-                );
+                adapter = await Adapter.create({panID: 0x1a62, channelList: [11]}, {adapter: 'zboss', path: ZBOSS_NORDIC.path}, 'test.db.backup', {
+                    disableLED: false,
+                });
 
                 expect(adapter).toBeInstanceOf(ZBOSSAdapter);
                 // @ts-expect-error protected
@@ -463,17 +473,12 @@ describe('Adapter', () => {
                     path: ZBOSS_NORDIC.path,
                     adapter: 'zboss',
                 });
-            });
 
-            it('detects zigate', async () => {
                 listSpy.mockReturnValueOnce([ZIGATE_PLUSV2]);
 
-                const adapter = await Adapter.create(
-                    {panID: 0x1a62, channelList: [11]},
-                    {adapter: 'zigate', path: ZIGATE_PLUSV2.path},
-                    'test.db.backup',
-                    {disableLED: false},
-                );
+                adapter = await Adapter.create({panID: 0x1a62, channelList: [11]}, {adapter: 'zigate', path: ZIGATE_PLUSV2.path}, 'test.db.backup', {
+                    disableLED: false,
+                });
 
                 expect(adapter).toBeInstanceOf(ZiGateAdapter);
                 // @ts-expect-error protected
@@ -615,10 +620,10 @@ describe('Adapter', () => {
         });
 
         describe('with adapter only config', () => {
-            it('detects deconz', async () => {
+            it('detects each adapter', async () => {
                 listSpy.mockReturnValueOnce([DECONZ_CONBEE_II]);
 
-                const adapter = await Adapter.create({panID: 0x1a62, channelList: [11]}, {adapter: 'deconz'}, 'test.db.backup', {disableLED: false});
+                let adapter = await Adapter.create({panID: 0x1a62, channelList: [11]}, {adapter: 'deconz'}, 'test.db.backup', {disableLED: false});
 
                 expect(adapter).toBeInstanceOf(DeconzAdapter);
                 // @ts-expect-error protected
@@ -626,12 +631,10 @@ describe('Adapter', () => {
                     path: DECONZ_CONBEE_II.path,
                     adapter: 'deconz',
                 });
-            });
 
-            it('detects ember', async () => {
                 listSpy.mockReturnValueOnce([EMBER_ZBDONGLE_E]);
 
-                const adapter = await Adapter.create({panID: 0x1a62, channelList: [11]}, {adapter: 'ember'}, 'test.db.backup', {disableLED: false});
+                adapter = await Adapter.create({panID: 0x1a62, channelList: [11]}, {adapter: 'ember'}, 'test.db.backup', {disableLED: false});
 
                 expect(adapter).toBeInstanceOf(EmberAdapter);
                 // @ts-expect-error protected
@@ -639,12 +642,10 @@ describe('Adapter', () => {
                     path: EMBER_ZBDONGLE_E.path,
                     adapter: 'ember',
                 });
-            });
 
-            it('detects ezsp', async () => {
                 listSpy.mockReturnValueOnce([EMBER_ZBDONGLE_E]);
 
-                const adapter = await Adapter.create({panID: 0x1a62, channelList: [11]}, {adapter: 'ezsp'}, 'test.db.backup', {disableLED: false});
+                adapter = await Adapter.create({panID: 0x1a62, channelList: [11]}, {adapter: 'ezsp'}, 'test.db.backup', {disableLED: false});
 
                 expect(adapter).toBeInstanceOf(EZSPAdapter);
                 // @ts-expect-error protected
@@ -652,12 +653,10 @@ describe('Adapter', () => {
                     path: EMBER_ZBDONGLE_E.path,
                     adapter: 'ezsp',
                 });
-            });
 
-            it('detects zstack', async () => {
                 listSpy.mockReturnValueOnce([ZSTACK_CC2538]);
 
-                const adapter = await Adapter.create({panID: 0x1a62, channelList: [11]}, {adapter: 'zstack'}, 'test.db.backup', {disableLED: false});
+                adapter = await Adapter.create({panID: 0x1a62, channelList: [11]}, {adapter: 'zstack'}, 'test.db.backup', {disableLED: false});
 
                 expect(adapter).toBeInstanceOf(ZStackAdapter);
                 // @ts-expect-error protected
@@ -665,12 +664,10 @@ describe('Adapter', () => {
                     path: ZSTACK_CC2538.path,
                     adapter: 'zstack',
                 });
-            });
 
-            it('detects zboss', async () => {
                 listSpy.mockReturnValueOnce([ZBOSS_NORDIC]);
 
-                const adapter = await Adapter.create({panID: 0x1a62, channelList: [11]}, {adapter: 'zboss'}, 'test.db.backup', {disableLED: false});
+                adapter = await Adapter.create({panID: 0x1a62, channelList: [11]}, {adapter: 'zboss'}, 'test.db.backup', {disableLED: false});
 
                 expect(adapter).toBeInstanceOf(ZBOSSAdapter);
                 // @ts-expect-error protected
@@ -678,12 +675,10 @@ describe('Adapter', () => {
                     path: ZBOSS_NORDIC.path,
                     adapter: 'zboss',
                 });
-            });
 
-            it('detects zigate', async () => {
                 listSpy.mockReturnValueOnce([ZIGATE_PLUSV2]);
 
-                const adapter = await Adapter.create({panID: 0x1a62, channelList: [11]}, {adapter: 'zigate'}, 'test.db.backup', {disableLED: false});
+                adapter = await Adapter.create({panID: 0x1a62, channelList: [11]}, {adapter: 'zigate'}, 'test.db.backup', {disableLED: false});
 
                 expect(adapter).toBeInstanceOf(ZiGateAdapter);
                 // @ts-expect-error protected
@@ -733,10 +728,10 @@ describe('Adapter', () => {
         });
 
         describe('with path only config', () => {
-            it('detects deconz', async () => {
+            it('detects each adapter', async () => {
                 listSpy.mockReturnValueOnce([DECONZ_CONBEE_II]);
 
-                const adapter = await Adapter.create({panID: 0x1a62, channelList: [11]}, {path: DECONZ_CONBEE_II.path}, 'test.db.backup', {
+                let adapter = await Adapter.create({panID: 0x1a62, channelList: [11]}, {path: DECONZ_CONBEE_II.path}, 'test.db.backup', {
                     disableLED: false,
                 });
 
@@ -746,12 +741,10 @@ describe('Adapter', () => {
                     path: DECONZ_CONBEE_II.path,
                     adapter: 'deconz',
                 });
-            });
 
-            it('detects ember', async () => {
                 listSpy.mockReturnValueOnce([EMBER_ZBDONGLE_E]);
 
-                const adapter = await Adapter.create({panID: 0x1a62, channelList: [11]}, {path: EMBER_ZBDONGLE_E.path}, 'test.db.backup', {
+                adapter = await Adapter.create({panID: 0x1a62, channelList: [11]}, {path: EMBER_ZBDONGLE_E.path}, 'test.db.backup', {
                     disableLED: false,
                 });
 
@@ -761,12 +754,10 @@ describe('Adapter', () => {
                     path: EMBER_ZBDONGLE_E.path,
                     adapter: 'ember',
                 });
-            });
 
-            it('detects zstack', async () => {
                 listSpy.mockReturnValueOnce([ZSTACK_CC2538]);
 
-                const adapter = await Adapter.create({panID: 0x1a62, channelList: [11]}, {path: ZSTACK_CC2538.path}, 'test.db.backup', {
+                adapter = await Adapter.create({panID: 0x1a62, channelList: [11]}, {path: ZSTACK_CC2538.path}, 'test.db.backup', {
                     disableLED: false,
                 });
 
@@ -776,12 +767,10 @@ describe('Adapter', () => {
                     path: ZSTACK_CC2538.path,
                     adapter: 'zstack',
                 });
-            });
 
-            it('detects zboss', async () => {
                 listSpy.mockReturnValueOnce([ZBOSS_NORDIC]);
 
-                const adapter = await Adapter.create({panID: 0x1a62, channelList: [11]}, {path: ZBOSS_NORDIC.path}, 'test.db.backup', {
+                adapter = await Adapter.create({panID: 0x1a62, channelList: [11]}, {path: ZBOSS_NORDIC.path}, 'test.db.backup', {
                     disableLED: false,
                 });
 
@@ -791,12 +780,10 @@ describe('Adapter', () => {
                     path: ZBOSS_NORDIC.path,
                     adapter: 'zboss',
                 });
-            });
 
-            it('detects zigate', async () => {
                 listSpy.mockReturnValueOnce([ZIGATE_PLUSV2]);
 
-                const adapter = await Adapter.create({panID: 0x1a62, channelList: [11]}, {path: ZIGATE_PLUSV2.path}, 'test.db.backup', {
+                adapter = await Adapter.create({panID: 0x1a62, channelList: [11]}, {path: ZIGATE_PLUSV2.path}, 'test.db.backup', {
                     disableLED: false,
                 });
 

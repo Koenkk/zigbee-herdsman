@@ -9,6 +9,14 @@ import {Adapter, DiscoverableUSBAdapter, USBAdapterFingerprint, ValidAdapter} fr
 
 const NS = 'zh:adapter:discovery';
 
+const enum USBFingerprintMatchScore {
+    NONE = 0,
+    VID_PID = 1,
+    VID_PID_MANUF = 2,
+    VID_PID_PATH = 3,
+    VID_PID_MANUF_PATH = 4,
+}
+
 /**
  * @see https://serialport.io/docs/api-bindings-cpp#list
  *
@@ -120,7 +128,7 @@ const USB_FINGERPRINTS: Record<DiscoverableUSBAdapter, USBAdapterFingerprint[]> 
             productId: 'ea60',
             manufacturer: 'Silicon Labs',
             // /dev/serial/by-id/usb-Silicon_Labs_slae.sh_cc2652rb_stick_-_slaesh_s_iot_stuff_00_12_4B_00_21_A8_EC_79-if00-port0
-            pathRegex: '.*slae\.sh_cc2652rb.*',
+            pathRegex: '.*slae\\.sh_cc2652rb.*',
         },
         {
             // Sonoff ZBDongle-P (CC2652P)
@@ -280,36 +288,59 @@ function matchUSBFingerprint(
     entries: USBAdapterFingerprint[],
     isWindows: boolean,
     conflictProne: boolean,
-): [PortInfo['path'], USBAdapterFingerprint] | undefined {
+): [path: PortInfo['path'], score: number] | undefined {
     if (!portInfo.vendorId || !portInfo.productId) {
         // port info is missing essential information for proper matching, ignore it
         return;
     }
+
+    let match: USBAdapterFingerprint | undefined;
+    let score: number = USBFingerprintMatchScore.NONE;
 
     for (const entry of entries) {
         if (!matchString(portInfo.vendorId, entry.vendorId) || !matchString(portInfo.productId, entry.productId)) {
             continue;
         }
 
-        if (conflictProne) {
-            // if vendor+product combo is conflict prone, enforce at least one of manufacturer or pathRegex to match to avoid false positive
-            if (
-                (entry.manufacturer && portInfo.manufacturer && matchString(portInfo.manufacturer, entry.manufacturer)) ||
-                (entry.pathRegex && (matchRegex(entry.pathRegex, portInfo.path) || matchRegex(entry.pathRegex, portInfo.pnpId)))
-            ) {
-                return [portInfo.path, entry];
-            }
-        } else if (
-            (!entry.manufacturer || !portInfo.manufacturer || matchString(portInfo.manufacturer, entry.manufacturer) || isWindows) &&
-            (!entry.pathRegex || matchRegex(entry.pathRegex, portInfo.path) || matchRegex(entry.pathRegex, portInfo.pnpId) || isWindows)
+        // allow matching on vendorId+productId only on Windows
+        if (score < USBFingerprintMatchScore.VID_PID && isWindows) {
+            match = entry;
+            score = USBFingerprintMatchScore.VID_PID;
+        }
+
+        if (
+            score < USBFingerprintMatchScore.VID_PID_MANUF &&
+            entry.manufacturer &&
+            portInfo.manufacturer &&
+            matchString(portInfo.manufacturer, entry.manufacturer)
         ) {
-            // if entry has either manufacturer or pathRegex, match as much as possible:
-            //   - match manufacturer if available
-            //   - try to match pathRegex against path or pnpId
-            // on Windows, allow fuzzier match, since manufacturer can get overridden by OS driver and path is COM
-            return [portInfo.path, entry];
+            match = entry;
+            score = USBFingerprintMatchScore.VID_PID_MANUF;
+
+            if (isWindows && !conflictProne) {
+                // path will never match on Windows (COMx), assume vendor+product+manufacturer is "exact match"
+                // except for conflict-prone, since it could easily return a mismatch (better to return no match and force manual config)
+                return [portInfo.path, score];
+            }
+        }
+
+        if (
+            score < USBFingerprintMatchScore.VID_PID_PATH &&
+            entry.pathRegex &&
+            (matchRegex(entry.pathRegex, portInfo.path) || matchRegex(entry.pathRegex, portInfo.pnpId))
+        ) {
+            if (score === USBFingerprintMatchScore.VID_PID_MANUF) {
+                // best possible match, return early
+                return [portInfo.path, USBFingerprintMatchScore.VID_PID_MANUF_PATH];
+            } else {
+                match = entry;
+                score = USBFingerprintMatchScore.VID_PID_PATH;
+            }
         }
     }
+
+    // poor match only returned if port info not conflict-prone
+    return match && (score > USBFingerprintMatchScore.VID_PID || !conflictProne) ? [portInfo.path, score] : undefined;
 }
 
 export async function matchUSBAdapter(adapter: ValidAdapter, path: string): Promise<boolean> {
@@ -354,6 +385,7 @@ export async function findUSBAdapter(
         }
 
         const conflictProne = USB_FINGERPRINTS_CONFLICT_IDS.includes(`${portInfo.vendorId}:${portInfo.productId}`);
+        let bestMatch: [DiscoverableUSBAdapter, NonNullable<ReturnType<typeof matchUSBFingerprint>>] | undefined;
 
         for (const key in USB_FINGERPRINTS) {
             if (adapter && adapter !== key) {
@@ -362,10 +394,23 @@ export async function findUSBAdapter(
 
             const match = matchUSBFingerprint(portInfo, USB_FINGERPRINTS[key as DiscoverableUSBAdapter]!, isWindows, conflictProne);
 
-            if (match) {
-                logger.info(() => `Matched adapter: ${JSON.stringify(portInfo)} => ${key}: ${JSON.stringify(match[1])}`, NS);
-                return [key as DiscoverableUSBAdapter, match[0]];
+            // register the match if no previous or better score
+            if (match && (!bestMatch || bestMatch[1][1] < match[1])) {
+                bestMatch = [key as DiscoverableUSBAdapter, match];
+
+                if (match[1] === USBFingerprintMatchScore.VID_PID_MANUF_PATH) {
+                    // got best possible match, exit loop
+                    break;
+                }
             }
+        }
+
+        if (bestMatch) {
+            logger.info(
+                () => `Matched adapter: ${JSON.stringify(portInfo)} => ${bestMatch[0]}: path=${bestMatch[1][0]}, score=${bestMatch[1][1]}`,
+                NS,
+            );
+            return [bestMatch[0], bestMatch[1][0]];
         }
     }
 }
