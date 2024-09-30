@@ -1,7 +1,5 @@
 /* istanbul ignore file */
 
-import assert from 'assert';
-
 import Device from '../../../controller/model/device';
 import * as Models from '../../../models';
 import {Wait, Waitress} from '../../../utils';
@@ -660,12 +658,13 @@ class DeconzAdapter extends Adapter {
                     logger.debug(`Try to find network address of ${resp.srcAddr64}`, NS);
                     // Note: Device expects addresses with a 0x prefix...
                     srcAddr = Device.byIeeeAddr('0x' + resp.srcAddr64, false)?.networkAddress;
+                    // apperantly some functions furhter up in the protocol stack expect this to be set.
+                    // so let's make sure they get the network address
+                    // Note: srcAddr16 can be undefined after this and this is intended behavior
+                    // there are zigbee frames which do not contain a 16 bit address, e.g. during joining.
+                    // So any code that relies on srcAddr16 must handle this in some way.
+                    resp.srcAddr16 = srcAddr;
                 }
-
-                assert(srcAddr, 'Failed to find srcAddr of message');
-                // apperantly some functions furhter up in the protocol stack expect this to be set.
-                // so let's make sure they get the network address
-                resp.srcAddr16 = srcAddr; // TODO: can't be undefined
             }
 
             if (resp.profileId === Zdo.ZDO_PROFILE_ID) {
@@ -724,7 +723,7 @@ class DeconzAdapter extends Adapter {
                 clusterID: resp.clusterId,
                 header,
                 data: resp.asduPayload,
-                address: resp.destAddrMode === 0x03 ? `0x${resp.srcAddr64!}` : resp.srcAddr16!,
+                address: resp.srcAddrMode === 0x03 ? `0x${resp.srcAddr64!}` : resp.srcAddr16!,
                 endpoint: resp.srcEndpoint,
                 linkquality: resp.lqi,
                 groupID: resp.destAddrMode === 0x01 ? resp.destAddr16! : 0,
