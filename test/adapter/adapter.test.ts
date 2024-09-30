@@ -10,7 +10,7 @@ import {SerialPort} from '../../src/adapter/serialPort';
 import {ZStackAdapter} from '../../src/adapter/z-stack/adapter';
 import {ZBOSSAdapter} from '../../src/adapter/zboss/adapter';
 import {ZiGateAdapter} from '../../src/adapter/zigate/adapter';
-import {DECONZ_CONBEE_II, EMBER_SKYCONNECT, EMBER_ZBDONGLE_E, ZBOSS_NORDIC, ZIGATE_PLUSV2, ZSTACK_CC2538, ZSTACK_ZBDONGLE_P} from '../mockAdapters';
+import {DECONZ_CONBEE_II, EMBER_SKYCONNECT, EMBER_ZBDONGLE_E, ZBOSS_NORDIC, ZIGATE_PLUSV2, ZSTACK_CC2538, ZSTACK_SMLIGHT_SLZB_06P10, ZSTACK_SMLIGHT_SLZB_07, ZSTACK_ZBDONGLE_P} from '../mockAdapters';
 
 const mockBonjourResult = jest.fn().mockImplementation((type) => ({
     name: 'Mock Adapter',
@@ -306,6 +306,28 @@ describe('Adapter', () => {
                 expect(adapter.serialPortOptions).toStrictEqual({
                     path: '/dev/ttyACM0',
                     adapter: 'zstack',
+                });
+
+                listSpy.mockReturnValueOnce([ZSTACK_SMLIGHT_SLZB_06P10]);
+
+                adapter = await Adapter.create({panID: 0x1a62, channelList: [11]}, {}, 'test.db.backup', {disableLED: false});
+
+                expect(adapter).toBeInstanceOf(ZStackAdapter);
+                // @ts-expect-error protected
+                expect(adapter.serialPortOptions).toStrictEqual({
+                    path: ZSTACK_SMLIGHT_SLZB_06P10.path,
+                    adapter: 'zstack',
+                });
+
+                listSpy.mockReturnValueOnce([ZSTACK_SMLIGHT_SLZB_07]);
+
+                adapter = await Adapter.create({panID: 0x1a62, channelList: [11]}, {}, 'test.db.backup', {disableLED: false});
+
+                expect(adapter).toBeInstanceOf(EmberAdapter);
+                // @ts-expect-error protected
+                expect(adapter.serialPortOptions).toStrictEqual({
+                    path: ZSTACK_SMLIGHT_SLZB_07.path,
+                    adapter: 'ember',
                 });
             });
 

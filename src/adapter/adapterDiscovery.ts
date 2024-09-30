@@ -112,14 +112,15 @@ const USB_FINGERPRINTS: Record<DiscoverableUSBAdapter, USBAdapterFingerprint[]> 
             vendorId: '0403',
             productId: '6015',
             manufacturer: 'Electrolama',
-            pathRegex: '.*electrolame.*', // TODO
+            pathRegex: '.*electrolama.*',
         },
         {
             // slae.sh cc2652rb
             vendorId: '10c4',
             productId: 'ea60',
-            // manufacturer: '',
-            pathRegex: '.*2652.*',
+            manufacturer: 'Silicon Labs',
+            // /dev/serial/by-id/usb-Silicon_Labs_slae.sh_cc2652rb_stick_-_slaesh_s_iot_stuff_00_12_4B_00_21_A8_EC_79-if00-port0
+            pathRegex: '.*slae\.sh_cc2652rb.*',
         },
         {
             // Sonoff ZBDongle-P (CC2652P)
@@ -147,18 +148,11 @@ const USB_FINGERPRINTS: Record<DiscoverableUSBAdapter, USBAdapterFingerprint[]> 
             pathRegex: '.*CC2531.*',
         },
         {
-            // CC1352P_2
+            // Texas instruments launchpads
             vendorId: '0451',
             productId: 'bef3',
             manufacturer: 'Texas Instruments',
-            pathRegex: '.*CC1352P_2.*', // TODO
-        },
-        {
-            // CC26X2R1
-            vendorId: '0451',
-            productId: 'bef3',
-            manufacturer: 'Texas Instruments',
-            pathRegex: '.*CC26X2R1.*', // TODO
+            pathRegex: '.*Texas_Instruments.*',
         },
         {
             // SMLight slzb-07p7
@@ -167,6 +161,22 @@ const USB_FINGERPRINTS: Record<DiscoverableUSBAdapter, USBAdapterFingerprint[]> 
             manufacturer: 'SMLIGHT',
             // /dev/serial/by-id/usb-SMLIGHT_SMLIGHT_SLZB-07p7_be9faa0786e1ea11bd68dc2d9a583111-if00-port0
             pathRegex: '.*SLZB-07p7.*',
+        },
+        {
+            // SMLight slzb-06p7
+            vendorId: '10c4',
+            productId: 'ea60',
+            manufacturer: 'SMLIGHT',
+            // /dev/serial/by-id/usb-SMLIGHT_SMLIGHT_SLZB-06p7_82e43faf9872ed118bb924f3fdf7b791-if00-port0
+            pathRegex: '.*SMLIGHT_SLZB-06p7_.*',
+        },
+        {
+            // SMLight slzb-06p10
+            vendorId: '10c4',
+            productId: 'ea60',
+            manufacturer: 'SMLIGHT',
+            // /dev/serial/by-id/usb-SMLIGHT_SMLIGHT_SLZB-06p10_40df2f3e3977ed11b142f6fafdf7b791-if00-port0
+            pathRegex: '.*SMLIGHT_SLZB-06p10_.*',
         },
         {
             // TubesZB ?
