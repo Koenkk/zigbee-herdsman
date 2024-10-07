@@ -1,5 +1,4 @@
-export type Adapter = 'auto' | 'deconz' | 'ember' | 'zstack' | 'zboss' | 'zigate' | 'ezsp';
-export type ValidAdapter = 'deconz' | 'ember' | 'zstack' | 'zboss' | 'zigate' | 'ezsp';
+export type Adapter = 'deconz' | 'ember' | 'zstack' | 'zboss' | 'zigate' | 'ezsp';
 export type DiscoverableUSBAdapter = 'deconz' | 'ember' | 'zstack' | 'zboss' | 'zigate';
 
 export type USBAdapterFingerprint = {

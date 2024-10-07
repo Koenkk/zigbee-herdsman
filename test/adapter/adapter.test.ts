@@ -126,23 +126,6 @@ describe('Adapter', () => {
                     `port, got: 1122`,
             );
         });
-
-        it('returns auto adapter', async () => {
-            mockBonjourResult.mockReturnValueOnce({
-                name: 'Mock Adapter',
-                type: `my_adapter_mdns`,
-                port: '1122',
-                addresses: ['192.168.1.123'],
-                txt: {
-                    radio_type: 'auto',
-                    baud_rate: 115200,
-                },
-            });
-
-            expect(async () => {
-                await Adapter.create({panID: 0, channelList: []}, {path: `mdns://my_adapter`}, 'test.db', {disableLED: false});
-            }).rejects.toThrow(`Adapter auto is not supported.`);
-        });
     });
 
     describe('TCP discovery', () => {
@@ -171,7 +154,7 @@ describe('Adapter', () => {
 
         it('invalid adapter', async () => {
             expect(async () => {
-                await Adapter.create({panID: 0x1a62, channelList: [11]}, {path: `tcp://192.168.1.321:3456`, adapter: `auto`}, 'test.db.backup', {
+                await Adapter.create({panID: 0x1a62, channelList: [11]}, {path: `tcp://192.168.1.321:3456`}, 'test.db.backup', {
                     disableLED: false,
                 });
             }).rejects.toThrow(`Cannot discover TCP adapters at this time. Specify valid 'adapter' and 'port' in your configuration.`);
@@ -381,12 +364,6 @@ describe('Adapter', () => {
 
                 expect(async () => {
                     await Adapter.create({panID: 0x1a62, channelList: [11]}, {}, 'test.db.backup', {disableLED: false});
-                }).rejects.toThrow(`USB adapter discovery error (spawn udevadm ENOENT). Specify valid 'adapter' and 'port' in your configuration.`);
-
-                listSpy.mockRejectedValueOnce(new Error('spawn udevadm ENOENT'));
-
-                expect(async () => {
-                    await Adapter.create({panID: 0x1a62, channelList: [11]}, {adapter: 'auto'}, 'test.db.backup', {disableLED: false});
                 }).rejects.toThrow(`USB adapter discovery error (spawn udevadm ENOENT). Specify valid 'adapter' and 'port' in your configuration.`);
             });
 

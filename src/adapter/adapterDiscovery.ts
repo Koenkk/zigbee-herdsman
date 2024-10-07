@@ -5,7 +5,7 @@ import {Bonjour, Service} from 'bonjour-service';
 
 import {logger} from '../utils/logger';
 import {SerialPort} from './serialPort';
-import {Adapter, DiscoverableUSBAdapter, USBAdapterFingerprint, ValidAdapter} from './tstype';
+import {Adapter, DiscoverableUSBAdapter, USBAdapterFingerprint} from './tstype';
 
 const NS = 'zh:adapter:discovery';
 
@@ -343,7 +343,7 @@ function matchUSBFingerprint(
     return match && (score > USBFingerprintMatchScore.VID_PID || !conflictProne) ? [portInfo.path, score] : undefined;
 }
 
-export async function matchUSBAdapter(adapter: ValidAdapter, path: string): Promise<boolean> {
+export async function matchUSBAdapter(adapter: Adapter, path: string): Promise<boolean> {
     const isWindows = platform() === 'win32';
     const portList = await getSerialPortList();
 
@@ -369,7 +369,7 @@ export async function matchUSBAdapter(adapter: ValidAdapter, path: string): Prom
 }
 
 export async function findUSBAdapter(
-    adapter?: ValidAdapter,
+    adapter?: Adapter,
     path?: string,
 ): Promise<[adapter: DiscoverableUSBAdapter, path: PortInfo['path']] | undefined> {
     const isWindows = platform() === 'win32';
@@ -415,7 +415,7 @@ export async function findUSBAdapter(
     }
 }
 
-export async function findmDNSAdapter(path: string): Promise<[adapter: ValidAdapter, path: string, baudRate: number]> {
+export async function findmDNSAdapter(path: string): Promise<[adapter: Adapter, path: string, baudRate: number]> {
     const mdnsDevice = path.substring(7);
 
     if (mdnsDevice.length == 0) {
@@ -446,11 +446,7 @@ export async function findmDNSAdapter(path: string): Promise<[adapter: ValidAdap
                     const adapter = mdnsAdapter;
                     const baudRate = mdnsBaud;
 
-                    if (adapter && adapter !== 'auto') {
-                        resolve([adapter, path, baudRate]);
-                    } else {
-                        reject(new Error(`Adapter ${adapter} is not supported.`));
-                    }
+                    resolve([adapter, path, baudRate]);
                 } else {
                     bj.destroy();
                     reject(
@@ -471,14 +467,14 @@ export async function findmDNSAdapter(path: string): Promise<[adapter: ValidAdap
     });
 }
 
-export async function findTCPAdapter(path: string, adapter?: Adapter): Promise<[adapter: ValidAdapter, path: string]> {
+export async function findTCPAdapter(path: string, adapter?: Adapter): Promise<[adapter: Adapter, path: string]> {
     const regex = /^tcp:\/\/(?:[0-9]{1,3}\.){3}[0-9]{1,3}:\d{1,5}$/gm;
 
     if (!regex.test(path)) {
         throw new Error(`Invalid TCP path, expected format: tcp://<host>:<port>`);
     }
 
-    if (!adapter || adapter === 'auto') {
+    if (!adapter) {
         throw new Error(`Cannot discover TCP adapters at this time. Specify valid 'adapter' and 'port' in your configuration.`);
     }
 
@@ -500,16 +496,13 @@ export async function findTCPAdapter(path: string, adapter?: Adapter): Promise<[
  * @returns path Path to adapter.
  * @returns baudRate [optional] Discovered baud rate of the adapter. Valid only for mDNS discovery at the moment.
  */
-export async function discoverAdapter(
-    adapter?: Adapter,
-    path?: string,
-): Promise<[adapter: ValidAdapter, path: string, baudRate?: number | undefined]> {
+export async function discoverAdapter(adapter?: Adapter, path?: string): Promise<[adapter: Adapter, path: string, baudRate?: number | undefined]> {
     if (path) {
         if (path.startsWith('mdns://')) {
             return await findmDNSAdapter(path);
         } else if (path.startsWith('tcp://')) {
             return await findTCPAdapter(path, adapter);
-        } else if (adapter && adapter !== 'auto') {
+        } else if (adapter) {
             try {
                 const matched = await matchUSBAdapter(adapter, path);
 
@@ -527,7 +520,7 @@ export async function discoverAdapter(
 
     try {
         // default to matching USB
-        const match = await findUSBAdapter(adapter && adapter !== 'auto' ? adapter : undefined, path);
+        const match = await findUSBAdapter(adapter, path);
 
         if (!match) {
             throw new Error(`No valid USB adapter found`);
