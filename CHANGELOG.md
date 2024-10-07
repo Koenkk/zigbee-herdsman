@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.1.4](https://github.com/Koenkk/zigbee-herdsman/compare/v2.1.3...v2.1.4) (2024-10-07)
+
+
+### Bug Fixes
+
+* Ember: set NWK frame counter on backup restore ([#1213](https://github.com/Koenkk/zigbee-herdsman/issues/1213)) ([48a4278](https://github.com/Koenkk/zigbee-herdsman/commit/48a427876bbf26600b4343b1501e36a98201c82c))
+* **ignore:** update dependencies ([#1211](https://github.com/Koenkk/zigbee-herdsman/issues/1211)) ([8485184](https://github.com/Koenkk/zigbee-herdsman/commit/8485184258f3d7cfddabfc2a62190abaf0fba101))
+
 ## [2.1.3](https://github.com/Koenkk/zigbee-herdsman/compare/v2.1.2...v2.1.3) (2024-09-30)
 
 
