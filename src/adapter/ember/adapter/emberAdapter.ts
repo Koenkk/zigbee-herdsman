@@ -986,6 +986,7 @@ export class EmberAdapter extends Adapter {
                     true /*from backup*/,
                     backup!.networkOptions.networkKey,
                     backup!.networkKeyInfo.sequenceNumber,
+                    backup!.networkKeyInfo.frameCounter,
                     backup!.networkOptions.panId,
                     Array.from(backup!.networkOptions.extendedPanId),
                     backup!.logicalChannel,
@@ -1000,6 +1001,7 @@ export class EmberAdapter extends Adapter {
                 await this.formNetwork(
                     false /*from config*/,
                     configNetworkKey,
+                    0,
                     0,
                     this.networkOptions.panID,
                     this.networkOptions.extendedPanID!,
@@ -1046,6 +1048,7 @@ export class EmberAdapter extends Adapter {
         fromBackup: boolean,
         networkKey: Buffer,
         networkKeySequenceNumber: number,
+        networkKeyFrameCounter: number,
         panId: PanId,
         extendedPanId: ExtendedPanId,
         radioChannel: number,
@@ -1066,6 +1069,18 @@ export class EmberAdapter extends Adapter {
 
         if (fromBackup) {
             state.bitmask |= EmberInitialSecurityBitmask.NO_FRAME_COUNTER_RESET;
+
+            const status = await this.ezsp.ezspSetNWKFrameCounter(networkKeyFrameCounter);
+
+            if (status !== SLStatus.OK) {
+                throw new Error(`[INIT FORM] Failed to set NWK frame counter with status=${SLStatus[status]}.`);
+            }
+
+            // status = await this.ezsp.ezspSetAPSFrameCounter(tcLinkKeyFrameCounter);
+
+            // if (status !== SLStatus.OK) {
+            //     throw new Error(`[INIT FORM] Failed to set TC APS frame counter with status=${SLStatus[status]}.`);
+            // }
         }
 
         let status = await this.ezsp.ezspSetInitialSecurityState(state);
@@ -1654,6 +1669,12 @@ export class EmberAdapter extends Adapter {
                 throw new Error(`[BACKUP] Failed to export TC Link Key with status=${SLStatus[tclkStatus]}.`);
             }
 
+            // const [tcKeyStatus, tcKeyInfo] = await this.ezsp.ezspGetApsKeyInfo(context);
+
+            // if (tcKeyStatus !== SLStatus.OK) {
+            //     throw new Error(`[BACKUP] Failed to get TC APS key info with status=${SLStatus[tcKeyStatus]}.`);
+            // }
+
             context = initSecurityManagerContext(); // make sure it's back to zeroes
             context.coreKeyType = SecManKeyType.NETWORK;
             context.keyIndex = 0;
@@ -1676,6 +1697,10 @@ export class EmberAdapter extends Adapter {
                     sequenceNumber: netKeyInfo.networkKeySequenceNumber,
                     frameCounter: netKeyInfo.networkKeyFrameCounter,
                 },
+                // tcLinkKeyInfo: {
+                //     incomingFrameCounter: tcKeyInfo.bitmask & EmberKeyStructBitmask.HAS_INCOMING_FRAME_COUNTER ? tcKeyInfo.incomingFrameCounter : 0,
+                //     outgoingFrameCounter: tcKeyInfo.bitmask & EmberKeyStructBitmask.HAS_OUTGOING_FRAME_COUNTER ? tcKeyInfo.outgoingFrameCounter : 0,
+                // },
                 securityLevel: SECURITY_LEVEL_Z3,
                 networkUpdateId: netParams.nwkUpdateId,
                 coordinatorIeeeAddress: Buffer.from(this.networkCache.eui64.substring(2) /*take out 0x*/, 'hex').reverse(),

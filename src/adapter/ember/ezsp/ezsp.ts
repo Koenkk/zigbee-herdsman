@@ -1332,6 +1332,56 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
         return await this.ezspSetValue(EzspValueId.STACK_TOKEN_WRITING, 1, [0]);
     }
 
+    /**
+     * Wrapper for `ezspSetValue`.
+     *
+     * Set NWK layer outgoing frame counter (intended for device restoration purposes).
+     * Caveats:
+     *   - Can only be called before NetworkInit / FormNetwork / JoinNetwork, when sl_zigbee_network_state()==SL_ZIGBEE_NO_NETWORK.
+     *   - This function should be called before ::sl_zigbee_set_initial_security_state, and the SL_ZIGBEE_NO_FRAME_COUNTER_RESET
+     *     bitmask should be added to the initial security bitmask when ::emberSetInitialSecurityState is called.
+     *   - If used in multi-network context, be sure to call ::sl_zigbee_set_current_network() prior to calling this function.
+     *
+     * @param desiredValue The desired outgoing NWK frame counter value.
+     *        This should needs to be less than MAX_INT32U_VALUE to ensure that rollover does not occur on the next encrypted transmission.
+     * @returns
+     * - SL_STATUS_OK if calling context is valid (sl_zigbee_network_state() == SL_ZIGBEE_NO_NETWORK) and desiredValue < MAX_INT32U_VALUE.
+     * - SL_STATUS_INVALID_STATE.
+     */
+    public async ezspSetNWKFrameCounter(frameCounter: number): Promise<SLStatus> {
+        return await this.ezspSetValue(EzspValueId.NWK_FRAME_COUNTER, 4, [
+            frameCounter & 0xff,
+            (frameCounter >> 8) & 0xff,
+            (frameCounter >> 16) & 0xff,
+            (frameCounter >> 24) & 0xff,
+        ]);
+    }
+
+    /**
+     * Wrapper for `ezspSetValue`.
+     *
+     * Function to set APS layer outgoing frame counter for Trust Center Link Key (intended for device restoration purposes).
+     * Caveats:
+     *    - Can only be called before NetworkInit / FormNetwork / JoinNetwork, when sl_zigbee_network_state()==SL_ZIGBEE_NO_NETWORK.
+     *    - This function should be called before ::sl_zigbee_set_initial_security_state, and the SL_ZIGBEE_NO_FRAME_COUNTER_RESET
+     *      bitmask should be added to the initial security bitmask when ::emberSetInitialSecurityState is called.
+     *    - If used in multi-network context, be sure to call ::sl_zigbee_set_current_network() prior to calling this function.
+     *
+     * @param desiredValue The desired outgoing APS frame counter value.
+     *        This should needs to be less than MAX_INT32U_VALUE to ensure that rollover does not occur on the next encrypted transmission.
+     * @returns
+     * - SL_STATUS_OK if calling context is valid (sl_zigbee_network_state() == SL_ZIGBEE_NO_NETWORK) and desiredValue < MAX_INT32U_VALUE.
+     * - SL_STATUS_INVALID_STATE.
+     */
+    public async ezspSetAPSFrameCounter(frameCounter: number): Promise<SLStatus> {
+        return await this.ezspSetValue(EzspValueId.APS_FRAME_COUNTER, 4, [
+            frameCounter & 0xff,
+            (frameCounter >> 8) & 0xff,
+            (frameCounter >> 16) & 0xff,
+            (frameCounter >> 24) & 0xff,
+        ]);
+    }
+
     //-----------------------------------------------------------------------------//
     //---------------------------- START EZSP COMMANDS ----------------------------//
     //-----------------------------------------------------------------------------//
@@ -2768,7 +2818,7 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
      * Callback
      * This function returns an unused panID and channel pair found via the find
      * unused panId scan procedure.
-     * @param The unused panID which has been found.
+     * @param panId The unused panID which has been found.
      * @param channel uint8_t The channel that the unused panID was found on.
      */
     ezspUnusedPanIdFoundHandler(panId: PanId, channel: number): void {
