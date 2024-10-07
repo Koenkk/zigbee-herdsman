@@ -78,7 +78,6 @@ class Controller extends events.EventEmitter<ControllerEventMap> {
     // @ts-expect-error assigned and validated in start()
     private touchlink: Touchlink;
 
-    private permitJoinNetworkClosedTimer: NodeJS.Timeout | undefined;
     private permitJoinTimeoutTimer: NodeJS.Timeout | undefined;
     private permitJoinTimeout: number | undefined;
     private backupTimer: NodeJS.Timeout | undefined;
@@ -274,59 +273,46 @@ class Controller extends events.EventEmitter<ControllerEventMap> {
         await this.adapter.addInstallCode(ieeeAddr, key);
     }
 
-    public async permitJoin(permit: boolean, device?: Device, time?: number): Promise<void> {
-        await this.permitJoinInternal(permit, 'manual', device, time);
-    }
-
-    public async permitJoinInternal(permit: boolean, reason: 'manual' | 'timer_expired', device?: Device, time?: number): Promise<void> {
-        clearInterval(this.permitJoinNetworkClosedTimer);
+    public async permitJoin(time: number, device?: Device): Promise<void> {
         clearInterval(this.permitJoinTimeoutTimer);
-        this.permitJoinNetworkClosedTimer = undefined;
         this.permitJoinTimeoutTimer = undefined;
         this.permitJoinTimeout = undefined;
 
-        if (permit) {
-            await this.adapter.permitJoin(254, device?.networkAddress);
-            await this.greenPower.permitJoin(254, device?.networkAddress);
+        if (time > 0) {
+            // never permit more than uint8, and never permit 255 that is often equal to "forever"
+            time = time > 254 ? 254 : time;
 
-            // TODO: remove https://github.com/Koenkk/zigbee-herdsman/issues/940
-            // Zigbee 3 networks automatically close after max 255 seconds, keep network open.
-            this.permitJoinNetworkClosedTimer = setInterval(async (): Promise<void> => {
-                try {
-                    await this.adapter.permitJoin(254, device?.networkAddress);
-                    await this.greenPower.permitJoin(254, device?.networkAddress);
-                } catch (error) {
-                    logger.error(`Failed to keep permit join alive: ${error}`, NS);
+            await this.adapter.permitJoin(time, device?.networkAddress);
+            await this.greenPower.permitJoin(time, device?.networkAddress);
+
+            // TODO: should use setTimeout and timer only for open/close emit
+            //       let the other end (frontend) do the sec-by-sec updating (without mqtt publish)
+            // Also likely creates a gap of a few secs between what Z2M says and what the stack actually has => unreliable timer end
+            this.permitJoinTimeout = time;
+            this.permitJoinTimeoutTimer = setInterval(async (): Promise<void> => {
+                // assumed valid number while in interval
+                this.permitJoinTimeout!--;
+
+                if (this.permitJoinTimeout! <= 0) {
+                    clearInterval(this.permitJoinTimeoutTimer);
+                    this.permitJoinTimeoutTimer = undefined;
+                    this.permitJoinTimeout = undefined;
+
+                    this.emit('permitJoinChanged', {permitted: false, timeout: this.permitJoinTimeout});
+                } else {
+                    this.emit('permitJoinChanged', {permitted: true, timeout: this.permitJoinTimeout});
                 }
-            }, 200 * 1000);
+            }, 1000);
 
-            // TODO: prevent many mqtt messages by doing this on the other end?
-            if (typeof time === 'number') {
-                this.permitJoinTimeout = time;
-                this.permitJoinTimeoutTimer = setInterval(async (): Promise<void> => {
-                    // assumed valid number while in interval
-                    this.permitJoinTimeout!--;
-
-                    if (this.permitJoinTimeout! <= 0) {
-                        await this.permitJoinInternal(false, 'timer_expired');
-                    } else {
-                        this.emit('permitJoinChanged', {permitted: true, timeout: this.permitJoinTimeout, reason});
-                    }
-                }, 1000);
-            }
-
-            this.emit('permitJoinChanged', {permitted: true, reason, timeout: this.permitJoinTimeout});
+            this.emit('permitJoinChanged', {permitted: true, timeout: this.permitJoinTimeout});
         } else {
             logger.debug('Disable joining', NS);
+
             await this.greenPower.permitJoin(0);
             await this.adapter.permitJoin(0);
 
-            this.emit('permitJoinChanged', {permitted: false, reason, timeout: this.permitJoinTimeout});
+            this.emit('permitJoinChanged', {permitted: false, timeout: this.permitJoinTimeout});
         }
-    }
-
-    public getPermitJoin(): boolean {
-        return this.permitJoinNetworkClosedTimer != undefined;
     }
 
     public getPermitJoinTimeout(): number | undefined {
@@ -354,7 +340,7 @@ class Controller extends events.EventEmitter<ControllerEventMap> {
             this.databaseSave();
         } else {
             try {
-                await this.permitJoinInternal(false, 'manual');
+                await this.permitJoin(0);
             } catch (error) {
                 logger.error(`Failed to disable join on stop: ${error}`, NS);
             }

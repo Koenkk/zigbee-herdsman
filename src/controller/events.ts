@@ -25,7 +25,6 @@ interface DeviceLeavePayload {
 
 interface PermitJoinChangedPayload {
     permitted: boolean;
-    reason: 'timer_expired' | 'manual';
     timeout?: number;
 }
 
