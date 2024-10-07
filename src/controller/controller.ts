@@ -79,7 +79,7 @@ class Controller extends events.EventEmitter<ControllerEventMap> {
     private touchlink: Touchlink;
 
     private permitJoinTimeoutTimer: NodeJS.Timeout | undefined;
-    private permitJoinTimeout: number | undefined;
+    private permitJoinTimeout: number;
     private backupTimer: NodeJS.Timeout | undefined;
     private databaseSaveTimer: NodeJS.Timeout | undefined;
     private stopping: boolean;
@@ -99,6 +99,7 @@ class Controller extends events.EventEmitter<ControllerEventMap> {
         this.adapterDisconnected = true; // set false after adapter.start() is successfully called
         this.options = mixinDeep(JSON.parse(JSON.stringify(DefaultOptions)), options);
         this.unknownDevices = new Set();
+        this.permitJoinTimeout = 0;
 
         // Validate options
         for (const channel of this.options.network.channelList) {
@@ -276,7 +277,7 @@ class Controller extends events.EventEmitter<ControllerEventMap> {
     public async permitJoin(time: number, device?: Device): Promise<void> {
         clearInterval(this.permitJoinTimeoutTimer);
         this.permitJoinTimeoutTimer = undefined;
-        this.permitJoinTimeout = undefined;
+        this.permitJoinTimeout = 0;
 
         if (time > 0) {
             // never permit more than uint8, and never permit 255 that is often equal to "forever"
@@ -291,12 +292,12 @@ class Controller extends events.EventEmitter<ControllerEventMap> {
             this.permitJoinTimeout = time;
             this.permitJoinTimeoutTimer = setInterval(async (): Promise<void> => {
                 // assumed valid number while in interval
-                this.permitJoinTimeout!--;
+                this.permitJoinTimeout--;
 
-                if (this.permitJoinTimeout! <= 0) {
+                if (this.permitJoinTimeout <= 0) {
                     clearInterval(this.permitJoinTimeoutTimer);
                     this.permitJoinTimeoutTimer = undefined;
-                    this.permitJoinTimeout = undefined;
+                    this.permitJoinTimeout = 0;
 
                     this.emit('permitJoinChanged', {permitted: false, timeout: this.permitJoinTimeout});
                 } else {
@@ -315,7 +316,10 @@ class Controller extends events.EventEmitter<ControllerEventMap> {
         }
     }
 
-    public getPermitJoinTimeout(): number | undefined {
+    /**
+     * @returns Timeout until permit joining expires. [0-254], with 0 being "not permitting joining".
+     */
+    public getPermitJoinTimeout(): number {
         return this.permitJoinTimeout;
     }
 
