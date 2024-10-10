@@ -281,7 +281,7 @@ class Controller extends events.EventEmitter<ControllerEventMap> {
 
         if (time > 0) {
             // never permit more than uint8, and never permit 255 that is often equal to "forever"
-            time = time > 254 ? 254 : time;
+            assert(time <= 254, `Cannot permit join for more than 254 seconds.`);
 
             await this.adapter.permitJoin(time, device?.networkAddress);
             await this.greenPower.permitJoin(time, device?.networkAddress);

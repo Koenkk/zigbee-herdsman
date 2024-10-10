@@ -2482,20 +2482,14 @@ describe('Controller', () => {
         expect(controller.getPermitJoinTimeout()).toStrictEqual(0);
     });
 
-    it('Controller permit joining for too long time is clamped to max', async () => {
+    it('Controller permit joining for too long time throws', async () => {
         await controller.start();
-        await controller.permitJoin(300);
 
-        expect(mockAdapterPermitJoin).toHaveBeenCalledTimes(1);
-        expect(mockAdapterPermitJoin.mock.calls[0][0]).toStrictEqual(254);
-        expect(events.permitJoinChanged.length).toStrictEqual(1);
-        expect(events.permitJoinChanged[0]).toStrictEqual({permitted: true, timeout: 254});
-        expect(controller.getPermitJoinTimeout()).toStrictEqual(254);
-
-        // Timer expired
-        await jest.advanceTimersByTimeAsync(300 * 1000);
-
-        expect(controller.getPermitJoinTimeout()).toStrictEqual(0);
+        expect(async () => {
+            await controller.permitJoin(255);
+        }).rejects.toThrow(`Cannot permit join for more than 254 seconds.`);
+        expect(mockAdapterPermitJoin).toHaveBeenCalledTimes(0);
+        expect(events.permitJoinChanged.length).toStrictEqual(0);
     });
 
     it('Shouldnt create backup when adapter doesnt support it', async () => {
