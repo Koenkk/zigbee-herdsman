@@ -8,7 +8,6 @@ import slip from 'slip';
 
 import {logger} from '../../../utils/logger';
 import {SerialPort} from '../../serialPort';
-import SerialPortUtils from '../../serialPortUtils';
 import SocketPortUtils from '../../socketPortUtils';
 import PARAM, {ApsDataRequest, parameterT, ReceivedDataResponse, Request} from './constants';
 import {frameParserEvents} from './frameParser';
@@ -16,10 +15,6 @@ import Parser from './parser';
 import Writer from './writer';
 
 const NS = 'zh:deconz:driver';
-
-const autoDetectDefinitions = [
-    {manufacturer: 'dresden elektronik ingenieurtechnik GmbH', vendorId: '1cf1', productId: '0030'}, // Conbee II
-];
 
 const queue: Array<Request> = [];
 export const busyQueue: Array<Request> = [];
@@ -188,15 +183,6 @@ class Driver extends events.EventEmitter {
                 this.catchPromise(that.handleDeviceStatus());
             }, this.HANDLE_DEVICE_STATUS_DELAY),
         ); // query confirm and indication requests
-    }
-
-    public static async isValidPath(path: string): Promise<boolean> {
-        return SerialPortUtils.is(path, autoDetectDefinitions);
-    }
-
-    public static async autoDetectPath(): Promise<string | undefined> {
-        const paths = await SerialPortUtils.find(autoDetectDefinitions);
-        return paths.length > 0 ? paths[0] : undefined;
     }
 
     private onPortClose(): void {

@@ -3,7 +3,7 @@
 import assert from 'assert';
 
 import * as Models from '../../../models';
-import {Queue, RealpathSync, Wait, Waitress} from '../../../utils';
+import {Queue, Wait, Waitress} from '../../../utils';
 import {logger} from '../../../utils/logger';
 import * as ZSpec from '../../../zspec';
 import * as Zcl from '../../../zspec/zcl';
@@ -11,18 +11,11 @@ import * as Zdo from '../../../zspec/zdo';
 import * as ZdoTypes from '../../../zspec/zdo/definition/tstypes';
 import Adapter from '../../adapter';
 import {ZclPayload} from '../../events';
-import SerialPortUtils from '../../serialPortUtils';
-import SocketPortUtils from '../../socketPortUtils';
 import {AdapterOptions, CoordinatorVersion, NetworkOptions, NetworkParameters, SerialPortOptions, StartResult} from '../../tstype';
 import {Driver, EmberIncomingMessage} from '../driver';
 import {EmberEUI64, EmberStatus} from '../driver/types';
 
 const NS = 'zh:ezsp';
-
-const autoDetectDefinitions = [
-    {manufacturer: 'ITEAD', vendorId: '1a86', productId: '55d4'}, // Sonoff ZBDongle-E
-    {manufacturer: 'Nabu Casa', vendorId: '10c4', productId: 'ea60'}, // Home Assistant SkyConnect
-];
 
 interface WaitressMatcher {
     address?: number | string;
@@ -163,26 +156,6 @@ class EZSPAdapter extends Adapter {
         if (!this.closing) {
             this.emit('disconnected');
         }
-    }
-
-    public static async isValidPath(path: string): Promise<boolean> {
-        // For TCP paths we cannot get device information, therefore we cannot validate it.
-        if (SocketPortUtils.isTcpPath(path)) {
-            return false;
-        }
-
-        try {
-            return await SerialPortUtils.is(RealpathSync(path), autoDetectDefinitions);
-        } catch (error) {
-            logger.debug(`Failed to determine if path is valid: '${error}'`, NS);
-            return false;
-        }
-    }
-
-    public static async autoDetectPath(): Promise<string | undefined> {
-        const paths = await SerialPortUtils.find(autoDetectDefinitions);
-        paths.sort((a, b) => (a < b ? -1 : 1));
-        return paths.length > 0 ? paths[0] : undefined;
     }
 
     public async getCoordinatorIEEE(): Promise<string> {

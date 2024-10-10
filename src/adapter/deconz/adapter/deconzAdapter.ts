@@ -76,14 +76,6 @@ class DeconzAdapter extends Adapter {
         }, 1000);
     }
 
-    public static async isValidPath(path: string): Promise<boolean> {
-        return await Driver.isValidPath(path);
-    }
-
-    public static async autoDetectPath(): Promise<string | undefined> {
-        return await Driver.autoDetectPath();
-    }
-
     /**
      * Adapter methods
      */

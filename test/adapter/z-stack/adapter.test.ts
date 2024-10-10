@@ -1384,9 +1384,6 @@ jest.mock('../../../src/utils/queue', () => {
     });
 });
 
-Znp.isValidPath = jest.fn().mockReturnValue(true);
-Znp.autoDetectPath = jest.fn().mockReturnValue('/dev/autodetected');
-
 const mocksClear = [mockLogger.debug, mockLogger.info, mockLogger.warning, mockLogger.error];
 
 describe('zstack-adapter', () => {
@@ -2078,17 +2075,6 @@ describe('zstack-adapter', () => {
     });
 
     /* Original Tests */
-    it('Is valid path', async () => {
-        const result = await ZStackAdapter.isValidPath('/dev/autodetected');
-        expect(result).toBeTruthy();
-        expect(Znp.isValidPath).toHaveBeenCalledWith('/dev/autodetected');
-    });
-
-    it('Auto detect path', async () => {
-        const result = await ZStackAdapter.autoDetectPath();
-        expect(result).toBe('/dev/autodetected');
-        expect(Znp.autoDetectPath).toHaveBeenCalledTimes(1);
-    });
 
     it('Call znp constructor', async () => {
         expect(Znp).toHaveBeenCalledWith('dummy', 800, false);

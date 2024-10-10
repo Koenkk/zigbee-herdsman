@@ -163,14 +163,6 @@ class ZStackAdapter extends Adapter {
         await this.znp.close();
     }
 
-    public static async isValidPath(path: string): Promise<boolean> {
-        return await Znp.isValidPath(path);
-    }
-
-    public static async autoDetectPath(): Promise<string | undefined> {
-        return await Znp.autoDetectPath();
-    }
-
     public async getCoordinatorIEEE(): Promise<string> {
         return await this.queue.execute(async () => {
             this.checkInterpanLock();
