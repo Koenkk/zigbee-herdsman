@@ -530,14 +530,6 @@ class ZiGateAdapter extends Adapter {
         return {promise: waiter.start().promise, cancel};
     }
 
-    public static async isValidPath(path: string): Promise<boolean> {
-        return await Driver.isValidPath(path);
-    }
-
-    public static async autoDetectPath(): Promise<string | undefined> {
-        return await Driver.autoDetectPath();
-    }
-
     /**
      * InterPAN !!! not implemented
      */
