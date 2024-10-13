@@ -37,10 +37,10 @@ importers:
         specifier: ^7.25.7
         version: 7.25.7(@babel/core@7.25.8)
       '@babel/core':
-        specifier: ^7.25.7
+        specifier: ^7.25.8
         version: 7.25.8
       '@babel/preset-env':
-        specifier: ^7.25.7
+        specifier: ^7.25.8
         version: 7.25.8(@babel/core@7.25.8)
       '@babel/preset-typescript':
         specifier: ^7.25.7
@@ -73,7 +73,7 @@ importers:
         specifier: ^1.8.16
         version: 1.8.16
       '@types/node':
-        specifier: ^22.7.4
+        specifier: ^22.7.5
         version: 22.7.5
       babel-jest:
         specifier: ^29.7.0
@@ -97,7 +97,7 @@ importers:
         specifier: ^6.0.1
         version: 6.0.1
       typedoc:
-        specifier: ^0.26.8
+        specifier: ^0.26.9
         version: 0.26.9(typescript@5.6.3)
       typedoc-plugin-markdown:
         specifier: ^4.2.9
@@ -106,10 +106,10 @@ importers:
         specifier: ^1.4.0
         version: 1.4.0(typedoc@0.26.9(typescript@5.6.3))
       typescript:
-        specifier: ^5.6.2
+        specifier: ^5.6.3
         version: 5.6.3
       typescript-eslint:
-        specifier: ^8.8.0
+        specifier: ^8.8.1
         version: 8.8.1(eslint@9.12.0)(typescript@5.6.3)
 
 packages:
