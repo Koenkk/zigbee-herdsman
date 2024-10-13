@@ -38,8 +38,8 @@
     "description": "An open source ZigBee gateway solution with node.js.",
     "devDependencies": {
         "@babel/cli": "^7.25.7",
-        "@babel/core": "^7.25.7",
-        "@babel/preset-env": "^7.25.7",
+        "@babel/core": "^7.25.8",
+        "@babel/preset-env": "^7.25.8",
         "@babel/preset-typescript": "^7.25.7",
         "@eslint/core": "^0.6.0",
         "@eslint/js": "^9.12.0",
@@ -50,7 +50,7 @@
         "@types/jest": "^29.5.13",
         "@types/mz": "^2.7.8",
         "@types/nedb": "^1.8.16",
-        "@types/node": "^22.7.4",
+        "@types/node": "^22.7.5",
         "babel-jest": "^29.7.0",
         "eslint": "^9.12.0",
         "eslint-config-prettier": "^9.1.0",
@@ -58,11 +58,11 @@
         "prettier": "^3.3.3",
         "regenerator-runtime": "^0.14.1",
         "rimraf": "^6.0.1",
-        "typedoc": "^0.26.8",
+        "typedoc": "^0.26.9",
         "typedoc-plugin-markdown": "^4.2.9",
         "typedoc-plugin-no-inherit": "^1.4.0",
-        "typescript": "^5.6.2",
-        "typescript-eslint": "^8.8.0"
+        "typescript": "^5.6.3",
+        "typescript-eslint": "^8.8.1"
     },
     "homepage": "https://github.com/Koenkk/zigbee-herdsman",
     "keywords": [
