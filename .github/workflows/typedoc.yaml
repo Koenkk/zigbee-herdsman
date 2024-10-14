@@ -16,8 +16,8 @@ jobs:
             - uses: actions/setup-node@v4
             - name: Generate docs
               run: |
-                  npm ci
-                  npm run typedoc
+                  pnpm install --frozen-lockfile
+                  pnpm run typedoc
             - uses: actions/upload-pages-artifact@v3
               with:
                   name: github-pages
