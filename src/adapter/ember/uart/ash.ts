@@ -558,7 +558,7 @@ export class UartAsh extends EventEmitter<UartAshEventMap> {
      * @param error
      */
     private async onPortError(error: Error): Promise<void> {
-        logger.info(`Port ${error}`, NS);
+        logger.error(`Port ${error}`, NS);
         this.flags = 0;
         this.emit('fatalError', EzspStatus.ERROR_SERIAL_INIT);
     }
