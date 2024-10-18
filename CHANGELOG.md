@@ -1,5 +1,19 @@
 # Changelog
 
+## [2.1.4](https://github.com/Koenkk/zigbee-herdsman/compare/v2.1.3...v2.1.4) (2024-10-18)
+
+
+### Bug Fixes
+
+* Ember: set NWK frame counter on backup restore ([#1213](https://github.com/Koenkk/zigbee-herdsman/issues/1213)) ([48a4278](https://github.com/Koenkk/zigbee-herdsman/commit/48a427876bbf26600b4343b1501e36a98201c82c))
+* **ignore:** fix fdcea288e477956511bd1e07c72909599d29494d ([021d6ba](https://github.com/Koenkk/zigbee-herdsman/commit/021d6ba7e7423a811748e03cc902e1956d6c7993))
+* **ignore:** fix pnpm publish ([3a8a9ff](https://github.com/Koenkk/zigbee-herdsman/commit/3a8a9ff1e234c988feefd17c04f4ae634138c445))
+* **ignore:** fix pnpm publish ([ec7c799](https://github.com/Koenkk/zigbee-herdsman/commit/ec7c7999f18493142d3787ebde6e0a03172c1f83))
+* **ignore:** Switch to pnpm ([#1215](https://github.com/Koenkk/zigbee-herdsman/issues/1215)) ([fdcea28](https://github.com/Koenkk/zigbee-herdsman/commit/fdcea288e477956511bd1e07c72909599d29494d))
+* **ignore:** update dependencies ([#1211](https://github.com/Koenkk/zigbee-herdsman/issues/1211)) ([8485184](https://github.com/Koenkk/zigbee-herdsman/commit/8485184258f3d7cfddabfc2a62190abaf0fba101))
+* **ignore:** update dependencies ([#1216](https://github.com/Koenkk/zigbee-herdsman/issues/1216)) ([deb42aa](https://github.com/Koenkk/zigbee-herdsman/commit/deb42aafdff2cc153233480ba0208aa7b37cacb7))
+* Log socket errors https://github.com/zigbee2mqtt/hassio-zigbee2mqtt/issues/644 ([#1217](https://github.com/Koenkk/zigbee-herdsman/issues/1217)) ([96fc5e6](https://github.com/Koenkk/zigbee-herdsman/commit/96fc5e6cac2deb04d5fa3821b24cb0a2976609da))
+
 ## [2.1.3](https://github.com/Koenkk/zigbee-herdsman/compare/v2.1.2...v2.1.3) (2024-09-30)
 
 
