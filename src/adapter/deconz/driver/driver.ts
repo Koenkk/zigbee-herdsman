@@ -264,8 +264,8 @@ class Driver extends events.EventEmitter {
 
             this.socketPort!.once('close', this.onPortClose);
 
-            this.socketPort!.on('error', function () {
-                logger.debug('Socket error', NS);
+            this.socketPort!.on('error', function (error) {
+                logger.error(`Socket error ${error}`, NS);
                 reject(new Error(`Error while opening socket`));
                 self.initialized = false;
             });
