@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.1.5](https://github.com/Koenkk/zigbee-herdsman/compare/v2.1.4...v2.1.5) (2024-10-21)
+
+
+### Bug Fixes
+
+* **ignore:** update dependencies ([#1219](https://github.com/Koenkk/zigbee-herdsman/issues/1219)) ([5f11842](https://github.com/Koenkk/zigbee-herdsman/commit/5f118426098d5bc3331db39f13fea4b52c652ebf))
+* ZBOSS: Fix unhandled error on sendZclFrameToEndpointInternal in case of request execute time more than timeout. ([#1218](https://github.com/Koenkk/zigbee-herdsman/issues/1218)) ([346b3be](https://github.com/Koenkk/zigbee-herdsman/commit/346b3be6392f67d35fa36abd8cd9d52747641a88))
+
 ## [2.1.4](https://github.com/Koenkk/zigbee-herdsman/compare/v2.1.3...v2.1.4) (2024-10-18)
 
 
