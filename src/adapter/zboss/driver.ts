@@ -84,7 +84,7 @@ export class ZBOSSDriver extends EventEmitter {
         await this.execCommand(CommandId.NCP_RESET, {options}, 10000);
     }
 
-    public async startup(): Promise<TsType.StartResult> {
+    public async startup(transmitPower?: number): Promise<TsType.StartResult> {
         logger.info(`Driver startup`, NS);
         let result: TsType.StartResult = 'resumed';
 
@@ -134,6 +134,10 @@ export class ZBOSSDriver extends EventEmitter {
         await this.execCommand(CommandId.SET_RX_ON_WHEN_IDLE, {rxOn: 1});
         //await this.execCommand(CommandId.SET_ED_TIMEOUT, {timeout: 8});
         //await this.execCommand(CommandId.SET_MAX_CHILDREN, {children: 100});
+
+        if (transmitPower != undefined) {
+            await this.execCommand(CommandId.SET_TX_POWER, {txPower: transmitPower});
+        }
 
         return result;
     }

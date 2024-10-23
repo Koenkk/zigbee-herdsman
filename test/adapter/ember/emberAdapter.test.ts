@@ -871,6 +871,24 @@ describe('Ember Adapter Layer', () => {
         expect(mockEzspSetRadioPower).toHaveBeenCalledTimes(0);
     });
 
+    it('Starts with mismatching transmit power, failure does not present start', async () => {
+        adapter = new EmberAdapter(
+            DEFAULT_NETWORK_OPTIONS,
+            DEFAULT_SERIAL_PORT_OPTIONS,
+            backupPath,
+            Object.assign({}, DEFAULT_ADAPTER_OPTIONS, {transmitPower: 12}),
+        );
+        mockEzspSetRadioPower.mockResolvedValueOnce(SLStatus.FAIL);
+
+        const result = adapter.start();
+
+        await jest.advanceTimersByTimeAsync(5000);
+        await expect(result).resolves.toStrictEqual('resumed');
+        expect(mockEzspSetRadioPower).toHaveBeenCalledTimes(1);
+        expect(mockEzspSetRadioPower).toHaveBeenCalledWith(12);
+        expect(loggerSpies.error).toHaveBeenCalledWith(`Failed to set transmit power to 12 status=FAIL.`, 'zh:ember');
+    });
+
     it('Fails to start when EZSP layer fails to start', async () => {
         adapter = new EmberAdapter(DEFAULT_NETWORK_OPTIONS, DEFAULT_SERIAL_PORT_OPTIONS, backupPath, DEFAULT_ADAPTER_OPTIONS);
 
@@ -2269,18 +2287,6 @@ describe('Ember Adapter Layer', () => {
                 channel: DEFAULT_NETWORK_OPTIONS.channelList[0],
             } as TsType.NetworkParameters);
             expect(mockEzspGetNetworkParameters).toHaveBeenCalledTimes(1);
-        });
-
-        it('Adapter impl: setTransmitPower', async () => {
-            await expect(adapter.setTransmitPower(10)).resolves.toStrictEqual(undefined);
-            expect(mockEzspSetRadioPower).toHaveBeenCalledTimes(1);
-        });
-
-        it('Adapter impl: throws when setTransmitPower fails', async () => {
-            mockEzspSetRadioPower.mockResolvedValueOnce(SLStatus.FAIL);
-
-            await expect(adapter.setTransmitPower(10)).rejects.toThrow(`Failed to set transmit power to 10 status=FAIL.`);
-            expect(mockEzspSetRadioPower).toHaveBeenCalledTimes(1);
         });
 
         it('Adapter impl: addInstallCode without local CRC validation', async () => {

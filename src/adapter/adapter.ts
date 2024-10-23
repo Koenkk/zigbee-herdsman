@@ -97,8 +97,6 @@ abstract class Adapter extends events.EventEmitter<AdapterEventMap> {
 
     public abstract getNetworkParameters(): Promise<TsType.NetworkParameters>;
 
-    public abstract setTransmitPower(value: number): Promise<void>;
-
     public abstract addInstallCode(ieeeAddress: string, key: Buffer): Promise<void>;
 
     public abstract waitFor(
