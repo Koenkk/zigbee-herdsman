@@ -575,11 +575,6 @@ class DeconzAdapter extends Adapter {
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    public async setTransmitPower(value: number): Promise<void> {
-        throw new Error('not supported');
-    }
-
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     public async sendZclFrameInterPANIeeeAddr(zclFrame: Zcl.Frame, ieeeAddr: string): Promise<void> {
         throw new Error('not supported');
     }

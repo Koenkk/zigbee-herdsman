@@ -2182,16 +2182,6 @@ describe('zstack-adapter', () => {
         expect(mockZnpRequest).toHaveBeenCalledWith(Subsystem.SYS, 'stackTune', {operation: 0, value: 2});
     });
 
-    it('Set transmit power', async () => {
-        basicMocks();
-        await adapter.start();
-        mockZnpRequest.mockClear();
-        mockQueueExecute.mockClear();
-        await adapter.setTransmitPower(15);
-        expect(mockZnpRequest).toHaveBeenCalledTimes(1);
-        expect(mockZnpRequest).toHaveBeenCalledWith(Subsystem.SYS, 'stackTune', {operation: 0, value: 15});
-    });
-
     it('Support LED should go to false when LED request fails', async () => {
         basicMocks();
         await adapter.start();

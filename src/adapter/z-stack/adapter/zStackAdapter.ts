@@ -152,7 +152,7 @@ class ZStackAdapter extends Adapter {
         }
 
         if (this.adapterOptions.transmitPower != null) {
-            await this.setTransmitPower(this.adapterOptions.transmitPower);
+            await this.znp.request(Subsystem.SYS, 'stackTune', {operation: 0, value: this.adapterOptions.transmitPower});
         }
 
         return await startResult;
@@ -950,12 +950,6 @@ class ZStackAdapter extends Adapter {
             // Give adapter some time to restore, otherwise stuff crashes
             await Wait(3000);
             this.interpanLock = false;
-        });
-    }
-
-    public async setTransmitPower(value: number): Promise<void> {
-        return await this.queue.execute<void>(async () => {
-            await this.znp.request(Subsystem.SYS, 'stackTune', {operation: 0, value});
         });
     }
 

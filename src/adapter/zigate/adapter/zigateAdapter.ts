@@ -91,6 +91,10 @@ class ZiGateAdapter extends Adapter {
                 destinationEndpoint: ZSpec.HA_ENDPOINT,
                 groupAddress: default_bind_group,
             });
+
+            if (this.adapterOptions.transmitPower != undefined) {
+                await this.driver.sendCommand(ZiGateCommandCode.SetTXpower, {value: this.adapterOptions.transmitPower});
+            }
         } catch (error) {
             throw new Error('failed to connect to zigate adapter ' + (error as Error).message);
         }
@@ -188,14 +192,6 @@ class ZiGateAdapter extends Adapter {
 
     public async backup(): Promise<Models.Backup> {
         throw new Error('This adapter does not support backup');
-    }
-
-    public async setTransmitPower(value: number): Promise<void> {
-        try {
-            await this.driver.sendCommand(ZiGateCommandCode.SetTXpower, {value: value});
-        } catch (error) {
-            throw new Error(`Set transmitpower failed ${error}`);
-        }
     }
 
     public async sendZdo(
