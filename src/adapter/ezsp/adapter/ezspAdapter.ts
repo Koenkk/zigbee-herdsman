@@ -142,7 +142,7 @@ class EZSPAdapter extends Adapter {
             `'ezsp' driver is deprecated and will only remain to provide support for older firmware (pre 7.4.x). Migration to 'ember' is recommended. If using Zigbee2MQTT see https://github.com/Koenkk/zigbee2mqtt/discussions/21462`,
             NS,
         );
-        return await this.driver.startup();
+        return await this.driver.startup(this.adapterOptions.transmitPower);
     }
 
     public async stop(): Promise<void> {
@@ -539,13 +539,6 @@ class EZSPAdapter extends Adapter {
             }
 
             return await response.start().promise;
-        });
-    }
-
-    public async setTransmitPower(value: number): Promise<void> {
-        logger.debug(`setTransmitPower to ${value}`, NS);
-        return await this.queue.execute<void>(async () => {
-            await this.driver.setRadioPower(value);
         });
     }
 

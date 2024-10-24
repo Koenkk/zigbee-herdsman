@@ -725,8 +725,13 @@ export class EmberAdapter extends Adapter {
             throw new Error(`Failed to get network parameters with status=${SLStatus[status]}.`);
         }
 
-        if (this.adapterOptions.transmitPower != null && parameters.radioTxPower !== this.adapterOptions.transmitPower) {
-            await this.setTransmitPower(this.adapterOptions.transmitPower);
+        if (this.adapterOptions.transmitPower != undefined && parameters.radioTxPower !== this.adapterOptions.transmitPower) {
+            const status = await this.ezsp.ezspSetRadioPower(this.adapterOptions.transmitPower);
+
+            if (status !== SLStatus.OK) {
+                // soft-fail, don't prevent start
+                logger.error(`Failed to set transmit power to ${this.adapterOptions.transmitPower} status=${SLStatus[status]}.`, NS);
+            }
         }
 
         this.networkCache.parameters = parameters;
@@ -1710,17 +1715,6 @@ export class EmberAdapter extends Adapter {
                 extendedPanID: parseInt(Buffer.from(extendedPanID).toString('hex'), 16),
                 channel,
             };
-        });
-    }
-
-    // queued
-    public async setTransmitPower(value: number): Promise<void> {
-        return await this.queue.execute<void>(async () => {
-            const status = await this.ezsp.ezspSetRadioPower(value);
-
-            if (status !== SLStatus.OK) {
-                throw new Error(`Failed to set transmit power to ${value} status=${SLStatus[status]}.`);
-            }
         });
     }
 

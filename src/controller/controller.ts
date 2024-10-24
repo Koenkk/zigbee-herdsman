@@ -513,13 +513,6 @@ class Controller extends events.EventEmitter<ControllerEventMap> {
         await Wait(12000);
     }
 
-    /**
-     *  Set transmit power of the adapter
-     */
-    public async setTransmitPower(value: number): Promise<void> {
-        return await this.adapter.setTransmitPower(value);
-    }
-
     public async identifyUnknownDevice(nwkAddress: number): Promise<Device | undefined> {
         if (this.unknownDevices.has(nwkAddress)) {
             // prevent duplicate triggering

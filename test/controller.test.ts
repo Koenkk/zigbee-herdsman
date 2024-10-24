@@ -64,7 +64,6 @@ const mockAdapterSupportsBackup = jest.fn().mockReturnValue(true);
 const mockAdapterReset = jest.fn();
 const mockAdapterStop = jest.fn();
 const mockAdapterStart = jest.fn().mockReturnValue('resumed');
-const mockAdapterSetTransmitPower = jest.fn();
 const mockAdapterGetCoordinatorIEEE = jest.fn().mockReturnValue('0x0000012300000000');
 const mockAdapterGetNetworkParameters = jest.fn().mockReturnValue({panID: 1, extendedPanID: 3, channel: 15});
 const mocksendZclFrameToGroup = jest.fn();
@@ -399,7 +398,6 @@ jest.mock('../src/adapter/z-stack/adapter/zStackAdapter', () => {
             },
             getNetworkParameters: mockAdapterGetNetworkParameters,
             waitFor: mockAdapterWaitFor,
-            setTransmitPower: mockAdapterSetTransmitPower,
             sendZclFrameToEndpoint: mocksendZclFrameToEndpoint,
             sendZclFrameToGroup: mocksendZclFrameToGroup,
             sendZclFrameToAll: mocksendZclFrameToAll,
@@ -1613,12 +1611,6 @@ describe('Controller', () => {
         await controller.start();
         expect(mockAdapterGetNetworkParameters).toHaveBeenCalledTimes(1);
         expect(changeChannelSpy).toHaveBeenCalledTimes(0);
-    });
-
-    it('Set transmit power', async () => {
-        await controller.start();
-        await controller.setTransmitPower(15);
-        expect(mockAdapterSetTransmitPower).toHaveBeenCalledWith(15);
     });
 
     it('Get coordinator version', async () => {

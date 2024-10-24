@@ -107,7 +107,7 @@ export class ZBOSSAdapter extends Adapter {
 
         await this.driver.connect();
 
-        return await this.driver.startup();
+        return await this.driver.startup(this.adapterOptions.transmitPower);
     }
 
     public async stop(): Promise<void> {
@@ -169,14 +169,6 @@ export class ZBOSSAdapter extends Adapter {
                 channel,
             };
         });
-    }
-
-    public async setTransmitPower(value: number): Promise<void> {
-        if (this.driver.isInitialized()) {
-            return await this.queue.execute<void>(async () => {
-                await this.driver.execCommand(CommandId.SET_TX_POWER, {txPower: value});
-            });
-        }
     }
 
     public async addInstallCode(ieeeAddress: string, key: Buffer): Promise<void> {
