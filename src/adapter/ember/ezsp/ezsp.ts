@@ -367,9 +367,6 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
      * Triggered by @see 'FRAME'
      */
     private onAshFrame(): void {
-        // trigger housekeeping in ASH layer
-        this.ash.sendExec();
-
         const buffer = this.ash.rxQueue.getPrecedingEntry();
 
         if (buffer == null) {

@@ -284,6 +284,7 @@ describe('Ember Ezsp Layer', () => {
     describe('When connected', () => {
         let callbackDispatchSpy: jest.SpyInstance;
         let mockResponseWaiterResolve = jest.fn();
+        let ashSendExecSpy: jest.SpyInstance;
 
         beforeEach(async () => {
             const startResult = ezsp.start();
@@ -294,8 +295,8 @@ describe('Ember Ezsp Layer', () => {
             expect(ezsp.checkConnection()).toBeTruthy();
 
             callbackDispatchSpy = jest.spyOn(ezsp, 'callbackDispatch').mockImplementation(jest.fn());
+            ashSendExecSpy = jest.spyOn(ezsp.ash, 'sendExec');
 
-            callbackDispatchSpy.mockClear();
             mockResponseWaiterResolve.mockClear();
         });
 
@@ -310,6 +311,7 @@ describe('Ember Ezsp Layer', () => {
             expect(mockResponseWaiterResolve).toHaveBeenCalledTimes(1);
             expect(mockResponseWaiterResolve).toHaveBeenCalledWith(EzspStatus.SUCCESS);
             expect(ezsp.frameToString).toStrictEqual(`[FRAME: ID=52:"SEND_UNICAST" Seq=39 Len=10]`);
+            expect(ashSendExecSpy).toHaveBeenCalledTimes(1);
 
             await emitFromSerial(ezsp, Buffer.from(MESSAGE_SENT_HANDLER_FN1_ASH_RAW, 'hex'));
             await jest.advanceTimersByTimeAsync(1000);
@@ -318,6 +320,7 @@ describe('Ember Ezsp Layer', () => {
             expect(mockResponseWaiterResolve).toHaveBeenCalledTimes(1);
             expect(ezsp.callbackFrameToString).toStrictEqual(`[CBFRAME: ID=63:"MESSAGE_SENT_HANDLER" Seq=39 Len=26]`);
             expect(ezsp.frameToString).toStrictEqual(`[FRAME: ID=52:"SEND_UNICAST" Seq=39 Len=10]`);
+            expect(ashSendExecSpy).toHaveBeenCalledTimes(2);
 
             await emitFromSerial(ezsp, Buffer.from(INCOMING_MESSAGE_HANDLER_FN2_ASH_RAW, 'hex'));
             await jest.advanceTimersByTimeAsync(1000);
@@ -326,6 +329,7 @@ describe('Ember Ezsp Layer', () => {
             expect(mockResponseWaiterResolve).toHaveBeenCalledTimes(1);
             expect(ezsp.callbackFrameToString).toStrictEqual(`[CBFRAME: ID=69:"INCOMING_MESSAGE_HANDLER" Seq=39 Len=42]`);
             expect(ezsp.frameToString).toStrictEqual(`[FRAME: ID=52:"SEND_UNICAST" Seq=39 Len=10]`);
+            expect(ashSendExecSpy).toHaveBeenCalledTimes(3);
         });
 
         it('Parses valid incoming callback frame while waiting for response frame', async () => {
@@ -339,6 +343,7 @@ describe('Ember Ezsp Layer', () => {
             expect(mockResponseWaiterResolve).toHaveBeenCalledTimes(0);
             expect(ezsp.callbackFrameToString).toStrictEqual(`[CBFRAME: ID=63:"MESSAGE_SENT_HANDLER" Seq=39 Len=26]`);
             expect(ezsp.frameToString).toStrictEqual(`[FRAME: ID=0:"VERSION" Seq=0 Len=0]`);
+            expect(ashSendExecSpy).toHaveBeenCalledTimes(1);
 
             await emitFromSerial(ezsp, Buffer.from(SET_POLICY_REPLY_FN1_ASH_RAW, 'hex'));
             await jest.advanceTimersByTimeAsync(1000);
@@ -348,6 +353,7 @@ describe('Ember Ezsp Layer', () => {
             expect(mockResponseWaiterResolve).toHaveBeenCalledWith(EzspStatus.SUCCESS);
             expect(ezsp.frameToString).toStrictEqual(`[FRAME: ID=85:"SET_POLICY" Seq=79 Len=9]`);
             expect(ezsp.callbackFrameToString).toStrictEqual(`[CBFRAME: ID=63:"MESSAGE_SENT_HANDLER" Seq=39 Len=26]`);
+            expect(ashSendExecSpy).toHaveBeenCalledTimes(2);
         });
 
         it('Parses invalid incoming frame', async () => {
@@ -363,6 +369,7 @@ describe('Ember Ezsp Layer', () => {
             expect(mockResponseWaiterResolve).toHaveBeenCalledTimes(1);
             expect(mockResponseWaiterResolve).toHaveBeenCalledWith(EzspStatus.ERROR_WRONG_DIRECTION);
             expect(ezsp.frameToString).toStrictEqual(`[FRAME: ID=52:"SEND_UNICAST" Seq=39 Len=10]`);
+            expect(ashSendExecSpy).toHaveBeenCalledTimes(1);
         });
 
         it('Parses invalid incoming callback frame', async () => {
@@ -375,6 +382,7 @@ describe('Ember Ezsp Layer', () => {
             expect(mockResponseWaiterResolve).toHaveBeenCalledTimes(0);
             expect(ezsp.callbackFrameToString).toStrictEqual(`[CBFRAME: ID=63:"MESSAGE_SENT_HANDLER" Seq=39 Len=26]`);
             expect(ezsp.frameToString).toStrictEqual(`[FRAME: ID=0:"VERSION" Seq=0 Len=0]`);
+            expect(ashSendExecSpy).toHaveBeenCalledTimes(1);
         });
     });
 });

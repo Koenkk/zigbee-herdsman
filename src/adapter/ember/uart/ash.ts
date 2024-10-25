@@ -591,7 +591,7 @@ export class UartAsh extends EventEmitter<UartAshEventMap> {
 
         const status = this.receiveFrame(buffer);
 
-        setImmediate(this.sendExec.bind(this)); // always trigger to cover all cases (also triggered in Ezsp layer when a DATA frame is emitted)
+        this.sendExec(); // always trigger to cover all cases
 
         if (status !== EzspStatus.SUCCESS && status !== EzspStatus.ASH_IN_PROGRESS && status !== EzspStatus.NO_RX_DATA) {
             logger.error(`Error while parsing received frame, status=${EzspStatus[status]}.`, NS);
