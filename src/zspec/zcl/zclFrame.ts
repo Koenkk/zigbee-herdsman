@@ -170,6 +170,7 @@ export class ZclFrame {
     }
 
     private static parsePayloadCluster(header: ZclHeader, cluster: Cluster, buffalo: BuffaloZcl): ZclPayload {
+        console.log('asljkdf');
         const command =
             header.frameControl.direction === Direction.CLIENT_TO_SERVER
                 ? cluster.getCommand(header.commandIdentifier)
@@ -202,6 +203,8 @@ export class ZclFrame {
     private static parsePayloadGlobal(header: ZclHeader, buffalo: BuffaloZcl): ZclPayload {
         const command = Utils.getFoundationCommand(header.commandIdentifier);
 
+        console.log(command);
+
         if (command.parseStrategy === 'repetitive') {
             const payload = [];
 
@@ -211,6 +214,7 @@ export class ZclFrame {
 
                 for (const parameter of command.parameters) {
                     const options: BuffaloZclOptions = {};
+                    console.log(parameter);
 
                     if (!this.conditionsValid(parameter, entry, buffalo.getBuffer().length - buffalo.getPosition())) {
                         continue;
@@ -220,8 +224,11 @@ export class ZclFrame {
                         // We need to grab the dataType to parse useDataType
                         options.dataType = entry.dataType;
 
+                        console.log(options.dataType);
+
                         if (entry.dataType === DataType.CHAR_STR && entry.attrId === 65281) {
                             // [workaround] parse char str as Xiaomi struct
+                            console.log('MIStruct');
                             options.dataType = BuffaloZclDataType.MI_STRUCT;
                         }
                     }

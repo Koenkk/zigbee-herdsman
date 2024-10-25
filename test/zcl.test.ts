@@ -311,6 +311,17 @@ describe('Zcl', () => {
         expect(frame.header).toStrictEqual(header);
     });
 
+    it('onlythisZclFrame from buffer getWeeklyScheduleRsp (hvacThermostat)', () => {
+        const b = Buffer.from([
+            28, 95, 17, 44, 10, 1, 255, 66, 68, 3, 40, 29, 5, 33, 252, 40, 8, 33, 47, 18, 9, 33, 2, 18, 100, 16, 1, 101, 16, 0, 110, 32, 255, 111, 32,
+            255, 148, 32, 0, 149, 57, 164, 112, 5, 62, 150, 57, 130, 196, 19, 69, 151, 57, 0, 48, 104, 59, 152, 57, 0, 0, 0, 0, 155, 33, 1, 0, 156,
+            32, 1, 10, 33, 164, 54, 12, 40, 0, 0,
+        ]);
+
+        const k = Zcl.Frame.fromBuffer(0, Zcl.Header.fromBuffer(b), b, {});
+        console.log(k);
+    });
+
     it('ZclFrame from buffer getWeeklyScheduleRsp (hvacThermostat)', () => {
         const bufferHeat = Buffer.from([
             9, 7, 0, 6, 64, 1, 104, 1, 252, 8, 58, 2, 152, 8, 208, 2, 102, 8, 72, 3, 102, 8, 222, 3, 252, 8, 100, 5, 52, 8,
@@ -484,7 +495,7 @@ describe('Zcl', () => {
         expect(frame.payload).toStrictEqual(payload);
     });
 
-    it('ZclFrame from buffer xiaomiStruct', () => {
+    it(' ZclFrame from buffer xiaomiStruct', () => {
         const buffer = Buffer.from([
             28, 95, 17, 3, 10, 5, 0, 66, 21, 108, 117, 109, 105, 46, 115, 101, 110, 115, 111, 114, 95, 119, 108, 101, 97, 107, 46, 97, 113, 49, 1,
             255, 66, 34, 1, 33, 213, 12, 3, 40, 33, 4, 33, 168, 19, 5, 33, 43, 0, 6, 36, 0, 0, 5, 0, 0, 8, 33, 4, 2, 10, 33, 0, 0, 100, 16, 0,

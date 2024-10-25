@@ -628,17 +628,28 @@ export class BuffaloZcl extends Buffalo {
     // }
 
     private readMiStruct(): Record<number, number | number[]> {
+        console.log('pos', this.position);
         const length = this.readUInt8();
         const value: Record<number, number | number[]> = {};
 
         if (length === 0xff) {
             return value;
         }
+        // this.position = 0;
+        // console.log(this.buffer.slice(this.position));
 
         for (let i = 0; i < length; i++) {
+            console.log(this.buffer.slice(this.position, this.position + 5));
             const index = this.readUInt8();
             const dataType = this.readUInt8();
+            console.log(index, dataType);
+
+            // if (dataType == 95) {
+            //     this.position += 4;
+            // } else {
             value[index] = this.read(dataType, {});
+            // }
+            console.log(value);
 
             if (this.position === this.buffer.length) {
                 break;

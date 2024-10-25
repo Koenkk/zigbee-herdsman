@@ -31,6 +31,7 @@ class Buffalo {
     }
 
     public readUInt8(): number {
+        // console.log(this.position);
         const value = this.buffer.readUInt8(this.position);
         this.position++;
         return value;
