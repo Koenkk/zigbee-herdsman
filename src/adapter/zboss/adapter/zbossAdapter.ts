@@ -289,7 +289,7 @@ export class ZBOSSAdapter extends Adapter {
                 case Zdo.ClusterId.BIND_REQUEST:
                 case Zdo.ClusterId.UNBIND_REQUEST: {
                     // use fixed size address
-                    const addrType = payload.readUInt8(13);  // address type
+                    const addrType = payload.readUInt8(13); // address type
                     if (addrType == Zdo.MULTICAST_BINDING) {
                         payload = Buffer.concat([payload, Buffer.alloc(7)]);
                     }
