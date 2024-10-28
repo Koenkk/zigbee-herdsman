@@ -270,8 +270,8 @@ export class ZBOSSAdapter extends Adapter {
             switch (clusterId) {
                 case Zdo.ClusterId.NETWORK_ADDRESS_REQUEST:
                 case Zdo.ClusterId.IEEE_ADDRESS_REQUEST:
-                case Zdo.ClusterId.BIND_REQUEST: // XXX: according to `FRAMES`, might not support group bind?
-                case Zdo.ClusterId.UNBIND_REQUEST: // XXX: according to `FRAMES`, might not support group unbind?
+                case Zdo.ClusterId.BIND_REQUEST:
+                case Zdo.ClusterId.UNBIND_REQUEST:
                 case Zdo.ClusterId.LQI_TABLE_REQUEST:
                 case Zdo.ClusterId.ROUTING_TABLE_REQUEST:
                 case Zdo.ClusterId.BINDING_TABLE_REQUEST:
@@ -282,6 +282,17 @@ export class ZBOSSAdapter extends Adapter {
                     prefixedPayload.set(payload, 2);
 
                     payload = prefixedPayload;
+                    break;
+                }
+            }
+            switch (clusterId) {
+                case Zdo.ClusterId.BIND_REQUEST:
+                case Zdo.ClusterId.UNBIND_REQUEST: {
+                    // use fixed size address
+                    const addrType = payload.readUInt8(13);  // address type
+                    if (addrType == Zdo.MULTICAST_BINDING) {
+                        payload = Buffer.concat([payload, Buffer.alloc(7)]);
+                    }
                     break;
                 }
             }
