@@ -1,5 +1,14 @@
 # Changelog
 
+## [2.1.6](https://github.com/Koenkk/zigbee-herdsman/compare/v2.1.5...v2.1.6) (2024-10-29)
+
+
+### Bug Fixes
+
+* Ember: minor cleanup ([#1223](https://github.com/Koenkk/zigbee-herdsman/issues/1223)) ([bf8b468](https://github.com/Koenkk/zigbee-herdsman/commit/bf8b4680ecf062b39dc8afb71f093332a00232f6))
+* **ignore:** update dependencies ([#1225](https://github.com/Koenkk/zigbee-herdsman/issues/1225)) ([a2a9e54](https://github.com/Koenkk/zigbee-herdsman/commit/a2a9e54f31353cbb01a8336f4715f90123e3fb07))
+* ZBOSS: fix ZDO bind/unbind commands for groups ([#1226](https://github.com/Koenkk/zigbee-herdsman/issues/1226)) ([f2fa9ab](https://github.com/Koenkk/zigbee-herdsman/commit/f2fa9abd97b30433fdc24c62fb41e2fc9ebb0757))
+
 ## [2.1.5](https://github.com/Koenkk/zigbee-herdsman/compare/v2.1.4...v2.1.5) (2024-10-21)
 
 
