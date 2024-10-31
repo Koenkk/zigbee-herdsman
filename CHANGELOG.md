@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.1.7](https://github.com/Koenkk/zigbee-herdsman/compare/v2.1.6...v2.1.7) (2024-10-31)
+
+
+### Bug Fixes
+
+* Remove disappeared endpoints ([#1227](https://github.com/Koenkk/zigbee-herdsman/issues/1227)) ([cc7f479](https://github.com/Koenkk/zigbee-herdsman/commit/cc7f479168c049127e22171766617f84ee959559))
+
 ## [2.1.6](https://github.com/Koenkk/zigbee-herdsman/compare/v2.1.5...v2.1.6) (2024-10-29)
 
 
