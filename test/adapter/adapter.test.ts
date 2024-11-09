@@ -26,13 +26,13 @@ const mockBonjourResult = jest.fn().mockImplementation((type) => ({
     name: 'Mock Adapter',
     type: `${type}_mdns`,
     port: '1122',
+    host: 'mock_adapter.local',
     addresses: ['192.168.1.123'],
     txt: {
         radio_type: `${type}`,
-        baud_rate: 115200,
     },
 }));
-const mockBonjourFindOne = jest.fn().mockImplementation((opts: BrowserConfig | null, timeout: number, callback?: CallableFunction) => {
+const mockBonjourFindOne = jest.fn((opts: BrowserConfig | null, timeout: number, callback?: CallableFunction) => {
     if (callback) {
         callback(mockBonjourResult(opts?.type));
     }
@@ -40,7 +40,7 @@ const mockBonjourFindOne = jest.fn().mockImplementation((opts: BrowserConfig | n
 const mockBonjourDestroy = jest.fn();
 
 jest.mock('bonjour-service', () => ({
-    Bonjour: jest.fn().mockImplementation(() => ({
+    Bonjour: jest.fn(() => ({
         findOne: mockBonjourFindOne,
         destroy: mockBonjourDestroy,
     })),
@@ -71,7 +71,6 @@ describe('Adapter', () => {
             expect(adapter).toBeInstanceOf(adapterCls);
             // @ts-expect-error protected
             expect(adapter.serialPortOptions).toStrictEqual({
-                baudRate: 115200,
                 path: 'tcp://192.168.1.123:1122',
                 adapter: name,
             });
@@ -83,9 +82,28 @@ describe('Adapter', () => {
             expect(adapter).toBeInstanceOf(ZStackAdapter);
             // @ts-expect-error protected
             expect(adapter.serialPortOptions).toStrictEqual({
-                baudRate: 115200,
                 path: 'tcp://192.168.1.123:1122',
                 adapter: 'zstack',
+            });
+        });
+
+        it('falls back to host if no addresses', async () => {
+            mockBonjourResult.mockReturnValueOnce({
+                name: 'Mock Adapter',
+                type: `my_adapter_mdns`,
+                port: '1122',
+                host: 'mock_adapter.local',
+                txt: {
+                    radio_type: `zstack`,
+                },
+            });
+            const adapter = await Adapter.create({panID: 0x1a62, channelList: [11]}, {path: `mdns://zstack`}, 'test.db.backup', {disableLED: false});
+
+            expect(adapter).toBeInstanceOf(ZStackAdapter);
+            // @ts-expect-error protected
+            expect(adapter.serialPortOptions).toStrictEqual({
+                path: 'tcp://mock_adapter.local:1122',
+                adapter: `zstack`,
             });
         });
 
@@ -109,10 +127,10 @@ describe('Adapter', () => {
                 name: 'Mock Adapter',
                 type: `my_adapter_mdns`,
                 port: '1122',
+                host: 'my_adapter.local',
                 addresses: ['192.168.1.123'],
                 txt: {
                     radio_type: undefined,
-                    baud_rate: 115200,
                 },
             });
 
@@ -121,8 +139,6 @@ describe('Adapter', () => {
             }).rejects.toThrow(
                 `Coordinator returned wrong Zeroconf format! The following values are expected:\n` +
                     `txt.radio_type, got: undefined\n` +
-                    `txt.baud_rate, got: 115200\n` +
-                    `address, got: 192.168.1.123\n` +
                     `port, got: 1122`,
             );
         });
@@ -177,24 +193,26 @@ describe('Adapter', () => {
             it('detects each adapter', async () => {
                 listSpy.mockReturnValueOnce([DECONZ_CONBEE_II]);
 
-                let adapter = await Adapter.create({panID: 0x1a62, channelList: [11]}, {}, 'test.db.backup', {disableLED: false});
+                let adapter = await Adapter.create({panID: 0x1a62, channelList: [11]}, {baudRate: 57600}, 'test.db.backup', {disableLED: false});
 
                 expect(adapter).toBeInstanceOf(DeconzAdapter);
                 // @ts-expect-error protected
                 expect(adapter.serialPortOptions).toStrictEqual({
                     path: DECONZ_CONBEE_II.path,
                     adapter: 'deconz',
+                    baudRate: 57600,
                 });
 
                 listSpy.mockReturnValueOnce([EMBER_ZBDONGLE_E]);
 
-                adapter = await Adapter.create({panID: 0x1a62, channelList: [11]}, {}, 'test.db.backup', {disableLED: false});
+                adapter = await Adapter.create({panID: 0x1a62, channelList: [11]}, {baudRate: 115200}, 'test.db.backup', {disableLED: false});
 
                 expect(adapter).toBeInstanceOf(EmberAdapter);
                 // @ts-expect-error protected
                 expect(adapter.serialPortOptions).toStrictEqual({
                     path: EMBER_ZBDONGLE_E.path,
                     adapter: 'ember',
+                    baudRate: 115200,
                 });
 
                 listSpy.mockReturnValueOnce([ZSTACK_CC2538]);

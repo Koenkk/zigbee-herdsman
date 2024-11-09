@@ -415,7 +415,7 @@ export async function findUSBAdapter(
     }
 }
 
-export async function findmDNSAdapter(path: string): Promise<[adapter: Adapter, path: string, baudRate: number]> {
+export async function findmDNSAdapter(path: string): Promise<[adapter: Adapter, path: string]> {
     const mdnsDevice = path.substring(7);
 
     if (mdnsDevice.length == 0) {
@@ -430,31 +430,26 @@ export async function findmDNSAdapter(path: string): Promise<[adapter: Adapter, 
     return await new Promise((resolve, reject) => {
         bj.findOne({type: mdnsDevice}, mdnsTimeout, function (service: Service) {
             if (service) {
-                if (service.txt?.radio_type && service.txt?.baud_rate && service.addresses && service.port) {
-                    const mdnsIp = service.addresses[0];
+                if (service.txt?.radio_type && service.port) {
+                    const mdnsAddress = service.addresses?.[0] ?? service.host;
                     const mdnsPort = service.port;
                     const mdnsAdapter = (service.txt.radio_type == 'znp' ? 'zstack' : service.txt.radio_type) as Adapter;
-                    const mdnsBaud = parseInt(service.txt.baud_rate);
 
-                    logger.info(`Coordinator Ip: ${mdnsIp}`, NS);
+                    logger.info(`Coordinator Address: ${mdnsAddress}`, NS);
                     logger.info(`Coordinator Port: ${mdnsPort}`, NS);
                     logger.info(`Coordinator Radio: ${mdnsAdapter}`, NS);
-                    logger.info(`Coordinator Baud: ${mdnsBaud}\n`, NS);
                     bj.destroy();
 
-                    path = `tcp://${mdnsIp}:${mdnsPort}`;
+                    path = `tcp://${mdnsAddress}:${mdnsPort}`;
                     const adapter = mdnsAdapter;
-                    const baudRate = mdnsBaud;
 
-                    resolve([adapter, path, baudRate]);
+                    resolve([adapter, path]);
                 } else {
                     bj.destroy();
                     reject(
                         new Error(
                             `Coordinator returned wrong Zeroconf format! The following values are expected:\n` +
                                 `txt.radio_type, got: ${service.txt?.radio_type}\n` +
-                                `txt.baud_rate, got: ${service.txt?.baud_rate}\n` +
-                                `address, got: ${service.addresses?.[0]}\n` +
                                 `port, got: ${service.port}`,
                         ),
                     );
@@ -494,9 +489,8 @@ export async function findTCPAdapter(path: string, adapter?: Adapter): Promise<[
  *   - USB: Optional, limits the discovery to the specified path.
  * @returns adapter An adapter type supported by Z2M. While result is TS-typed, this should be validated against actual values before use.
  * @returns path Path to adapter.
- * @returns baudRate [optional] Discovered baud rate of the adapter. Valid only for mDNS discovery at the moment.
  */
-export async function discoverAdapter(adapter?: Adapter, path?: string): Promise<[adapter: Adapter, path: string, baudRate?: number | undefined]> {
+export async function discoverAdapter(adapter?: Adapter, path?: string): Promise<[adapter: Adapter, path: string]> {
     if (path) {
         if (path.startsWith('mdns://')) {
             return await findmDNSAdapter(path);
