@@ -145,10 +145,25 @@ describe('Adapter', () => {
     });
 
     describe('TCP discovery', () => {
-        it('returns config', async () => {
+        it('returns config with tcp path', async () => {
             const adapter = await Adapter.create(
                 {panID: 0x1a62, channelList: [11]},
                 {path: `tcp://192.168.1.321:3456`, adapter: `zstack`},
+                'test.db.backup',
+                {disableLED: false},
+            );
+
+            // @ts-expect-error protected
+            expect(adapter.serialPortOptions).toStrictEqual({
+                path: `tcp://192.168.1.321:3456`,
+                adapter: `zstack`,
+            });
+        });
+
+        it('returns config with socket path', async () => {
+            const adapter = await Adapter.create(
+                {panID: 0x1a62, channelList: [11]},
+                {path: `socket://192.168.1.321:3456`, adapter: `zstack`},
                 'test.db.backup',
                 {disableLED: false},
             );

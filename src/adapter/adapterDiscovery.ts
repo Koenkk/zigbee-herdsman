@@ -440,10 +440,7 @@ export async function findmDNSAdapter(path: string): Promise<[adapter: Adapter, 
                     logger.info(`Coordinator Radio: ${mdnsAdapter}`, NS);
                     bj.destroy();
 
-                    path = `tcp://${mdnsAddress}:${mdnsPort}`;
-                    const adapter = mdnsAdapter;
-
-                    resolve([adapter, path]);
+                    resolve([mdnsAdapter, `tcp://${mdnsAddress}:${mdnsPort}`]);
                 } else {
                     bj.destroy();
                     reject(
@@ -463,7 +460,7 @@ export async function findmDNSAdapter(path: string): Promise<[adapter: Adapter, 
 }
 
 export async function findTCPAdapter(path: string, adapter?: Adapter): Promise<[adapter: Adapter, path: string]> {
-    const regex = /^tcp:\/\/(?:[0-9]{1,3}\.){3}[0-9]{1,3}:\d{1,5}$/gm;
+    const regex = /^(tcp|socket):\/\/(?:[0-9]{1,3}\.){3}[0-9]{1,3}:\d{1,5}$/gm;
 
     if (!regex.test(path)) {
         throw new Error(`Invalid TCP path, expected format: tcp://<host>:<port>`);
@@ -473,7 +470,8 @@ export async function findTCPAdapter(path: string, adapter?: Adapter): Promise<[
         throw new Error(`Cannot discover TCP adapters at this time. Specify valid 'adapter' and 'port' in your configuration.`);
     }
 
-    return [adapter, path];
+    // always use `tcp://` format
+    return [adapter, path.replace(/^socket/, 'tcp')];
 }
 
 /**
@@ -494,7 +492,7 @@ export async function discoverAdapter(adapter?: Adapter, path?: string): Promise
     if (path) {
         if (path.startsWith('mdns://')) {
             return await findmDNSAdapter(path);
-        } else if (path.startsWith('tcp://')) {
+        } else if (path.startsWith('tcp://') || path.startsWith('socket://')) {
             return await findTCPAdapter(path, adapter);
         } else if (adapter) {
             try {
