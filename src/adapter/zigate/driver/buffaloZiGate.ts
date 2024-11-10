@@ -1,6 +1,7 @@
 /* istanbul ignore file */
 
 import {Buffalo} from '../../../buffalo';
+import {Utils as ZSpecUtils} from '../../../zspec';
 import {EUI64} from '../../../zspec/tstypes';
 import {BuffaloZclOptions} from '../../../zspec/zcl/definition/tstype';
 import {getMacCapFlags} from '../../../zspec/zdo/utils';
@@ -182,8 +183,9 @@ class BuffaloZiGate extends Buffalo {
     }
 
     public readIeeeAddrBE(): EUI64 {
-        return `0x${this.readBuffer(8).toString('hex')}`;
+        return ZSpecUtils.eui64BEBufferToHex(this.readBuffer(8));
     }
+
     public writeIeeeAddrBE(value: string /*TODO: EUI64*/): void {
         this.writeUInt32BE(parseInt(value.slice(2, 10), 16));
         this.writeUInt32BE(parseInt(value.slice(10), 16));

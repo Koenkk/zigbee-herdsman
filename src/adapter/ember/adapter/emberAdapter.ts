@@ -963,16 +963,12 @@ export class EmberAdapter extends Adapter {
                 logger.info(`[INIT TC] Forming from backup.`, NS);
                 // `backup` valid in this `action` path (not detected by TS)
                 /* istanbul ignore next */
-                const keyList: LinkKeyBackupData[] = backup!.devices.map((device) => {
-                    const octets = Array.from(device.ieeeAddress.reverse());
-
-                    return {
-                        deviceEui64: `0x${octets.map((octet) => octet.toString(16).padStart(2, '0')).join('')}`,
-                        key: {contents: device.linkKey!.key},
-                        outgoingFrameCounter: device.linkKey!.txCounter,
-                        incomingFrameCounter: device.linkKey!.rxCounter,
-                    };
-                });
+                const keyList: LinkKeyBackupData[] = backup!.devices.map((device) => ({
+                    deviceEui64: ZSpec.Utils.eui64BEBufferToHex(device.ieeeAddress),
+                    key: {contents: device.linkKey!.key},
+                    outgoingFrameCounter: device.linkKey!.txCounter,
+                    incomingFrameCounter: device.linkKey!.rxCounter,
+                }));
 
                 // before forming
                 await this.importLinkKeys(keyList);

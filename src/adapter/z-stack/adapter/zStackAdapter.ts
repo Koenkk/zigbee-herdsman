@@ -1129,17 +1129,7 @@ class ZStackAdapter extends Adapter {
     }
 
     private toAddressString(address: number | string): string {
-        if (typeof address === 'number') {
-            let addressString = address.toString(16);
-
-            for (let i = addressString.length; i < 16; i++) {
-                addressString = '0' + addressString;
-            }
-
-            return `0x${addressString}`;
-        } else {
-            return address.toString();
-        }
+        return typeof address === 'number' ? `0x${address.toString(16).padStart(16, '0')}` : address.toString();
     }
 
     private waitressTimeoutFormatter(matcher: WaitressMatcher, timeout: number): string {

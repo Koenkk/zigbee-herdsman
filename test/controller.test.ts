@@ -463,6 +463,7 @@ const events: {
 
 const backupPath = getTempFile('backup');
 
+const mockAcceptJoiningDeviceHandler = jest.fn((ieeeAddr: string): Promise<boolean> => Promise.resolve(true));
 const options = {
     network: {
         panID: 0x1a63,
@@ -472,7 +473,7 @@ const options = {
         baudRate: 115200,
         rtscts: true,
         path: '/dev/ttyUSB0',
-        adapter: 'zstack',
+        adapter: 'zstack' as const,
     },
     adapter: {
         disableLED: false,
@@ -480,7 +481,7 @@ const options = {
     databasePath: getTempFile('database.db'),
     databaseBackupPath: getTempFile('database.db.backup'),
     backupPath,
-    acceptJoiningDeviceHandler: jest.fn().mockResolvedValue(true),
+    acceptJoiningDeviceHandler: mockAcceptJoiningDeviceHandler,
 };
 
 const databaseContents = () => fs.readFileSync(options.databasePath).toString();
@@ -1762,8 +1763,7 @@ describe('Controller', () => {
     });
 
     it('Join a device and explictly accept it', async () => {
-        const mockAcceptJoiningDeviceHandler = jest.fn().mockReturnValue(true);
-        controller = new Controller({...options, acceptJoiningDeviceHandler: mockAcceptJoiningDeviceHandler});
+        controller = new Controller(options);
         controller.on('deviceJoined', (device) => events.deviceJoined.push(device));
         controller.on('deviceInterview', (device) => events.deviceInterview.push(deepClone(device)));
         await controller.start();
@@ -1840,8 +1840,8 @@ describe('Controller', () => {
     });
 
     it('Join a device and explictly refuses it', async () => {
-        const mockAcceptJoiningDeviceHandler = jest.fn().mockReturnValue(false);
-        controller = new Controller({...options, acceptJoiningDeviceHandler: mockAcceptJoiningDeviceHandler});
+        mockAcceptJoiningDeviceHandler.mockResolvedValueOnce(false);
+        controller = new Controller(options);
         controller.on('deviceJoined', (device) => events.deviceJoined.push(device));
         controller.on('deviceInterview', (device) => events.deviceInterview.push(deepClone(device)));
         await controller.start();
@@ -1857,8 +1857,8 @@ describe('Controller', () => {
     });
 
     it('Join a device and explictly refuses it but LEAVE request fails', async () => {
-        const mockAcceptJoiningDeviceHandler = jest.fn().mockReturnValue(false);
-        controller = new Controller({...options, acceptJoiningDeviceHandler: mockAcceptJoiningDeviceHandler});
+        mockAcceptJoiningDeviceHandler.mockResolvedValueOnce(false);
+        controller = new Controller(options);
         controller.on('deviceJoined', (device) => events.deviceJoined.push(device));
         controller.on('deviceInterview', (device) => events.deviceInterview.push(deepClone(device)));
         await controller.start();

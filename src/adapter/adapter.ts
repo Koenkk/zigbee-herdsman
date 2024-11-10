@@ -65,15 +65,11 @@ abstract class Adapter extends events.EventEmitter<AdapterEventMap> {
             zboss: ZBOSSAdapter,
         };
 
-        const [adapter, path, baudRate] = await discoverAdapter(serialPortOptions.adapter, serialPortOptions.path);
+        const [adapter, path] = await discoverAdapter(serialPortOptions.adapter, serialPortOptions.path);
 
         if (adapterLookup[adapter]) {
             serialPortOptions.adapter = adapter;
             serialPortOptions.path = path;
-
-            if (baudRate !== undefined) {
-                serialPortOptions.baudRate = baudRate;
-            }
 
             return new adapterLookup[adapter](networkOptions, serialPortOptions, backupPath, adapterOptions);
         } else {

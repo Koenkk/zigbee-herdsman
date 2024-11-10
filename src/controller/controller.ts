@@ -387,10 +387,10 @@ class Controller extends events.EventEmitter<ControllerEventMap> {
     public async coordinatorCheck(): Promise<{missingRouters: Device[]}> {
         if (await this.adapter.supportsBackup()) {
             const backup = await this.adapter.backup(this.getDeviceIeeeAddresses());
-            const devicesInBackup = backup.devices.map((d) => `0x${d.ieeeAddress.toString('hex')}`);
+            const devicesInBackup = backup.devices.map((d) => ZSpec.Utils.eui64BEBufferToHex(d.ieeeAddress));
             const missingRouters = [];
 
-            for (const device of this.getDevicesIterator((d) => d.type === 'Router' && !devicesInBackup.includes(d.ieeeAddr))) {
+            for (const device of this.getDevicesIterator((d) => d.type === 'Router' && !devicesInBackup.includes(d.ieeeAddr as EUI64))) {
                 missingRouters.push(device);
             }
 
@@ -640,7 +640,7 @@ class Controller extends events.EventEmitter<ControllerEventMap> {
 
         // Green power devices don't have an ieeeAddr, the sourceID is unique and static so use this.
         let ieeeAddr = payload.sourceID.toString(16);
-        ieeeAddr = `0x${'0'.repeat(16 - ieeeAddr.length)}${ieeeAddr}`;
+        ieeeAddr = `0x${ieeeAddr.padStart(16, '0')}`;
 
         // Green power devices dont' have a modelID, create a modelID based on the deviceID (=type)
         const modelID = `GreenPower_${payload.deviceID}`;
