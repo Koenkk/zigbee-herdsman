@@ -1644,7 +1644,7 @@ describe('zstack-adapter', () => {
         mockZnpRequestWith(empty3AlignedRequestMock);
         await adapter.start();
         fs.writeFileSync(backupFile, JSON.stringify(backupWithMissingDevice), 'utf8');
-        const devicesInDatabase = backupWithMissingDevice.devices.map((d) => `0x${d.ieee_address}`);
+        const devicesInDatabase = backupWithMissingDevice.devices.map((d) => ZSpec.Utils.eui64BEBufferToHex(d.ieee_address));
         const backup = await adapter.backup(devicesInDatabase);
         const missingDevice = backup.devices.find((d) => d.ieeeAddress.toString('hex') == '00128d11124fa80b');
         expect(missingDevice).not.toBeNull();

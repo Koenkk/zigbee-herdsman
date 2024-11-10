@@ -121,7 +121,7 @@ const DEFAULT_BACKUP: Readonly<UnifiedBackupStorage> = {
     },
     devices: [],
 };
-const DEFAULT_COORDINATOR_IEEE: EUI64 = `0x${Buffer.from(DEFAULT_BACKUP.coordinator_ieee, 'hex').reverse().toString('hex')}`;
+const DEFAULT_COORDINATOR_IEEE: EUI64 = ZSpec.Utils.eui64LEBufferToHex(Buffer.from(DEFAULT_BACKUP.coordinator_ieee, 'hex'));
 const DEFAULT_ADAPTER_NETWORK_PARAMETERS: EmberNetworkParameters = {
     extendedPanId: DEFAULT_NETWORK_OPTIONS.extendedPanID!,
     panId: DEFAULT_NETWORK_OPTIONS.panID,

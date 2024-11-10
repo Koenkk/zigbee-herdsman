@@ -1,3 +1,5 @@
+import type {EUI64} from './tstypes';
+
 import {ALL_802_15_4_CHANNELS} from './consts';
 import {BroadcastAddress} from './enums';
 
@@ -35,3 +37,15 @@ export const isBroadcastAddress = (address: number): boolean => {
         address === BroadcastAddress.LOW_POWER_ROUTERS
     );
 };
+
+/**
+ * Represent a little endian buffer in `0x...` form
+ *
+ * NOTE: the buffer is always copied to avoid reversal in reference
+ */
+export const eui64LEBufferToHex = (eui64LEBuf: Buffer): EUI64 => `0x${Buffer.from(eui64LEBuf).reverse().toString('hex')}`;
+
+/**
+ * Represent a big endian buffer in `0x...` form
+ */
+export const eui64BEBufferToHex = (eui64BEBuf: Buffer): EUI64 => `0x${eui64BEBuf.toString('hex')}`;
