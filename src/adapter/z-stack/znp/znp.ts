@@ -76,7 +76,7 @@ class Znp extends events.EventEmitter {
     private onUnpiParsed(frame: UnpiFrame): void {
         try {
             const object = ZpiObject.fromUnpiFrame(frame);
-            logger.debug(() => `<-- ${object}`, NS);
+            logger.debug(() => `<-- ${object.toString(object.subsystem !== Subsystem.ZDO)}`, NS);
             this.waitress.resolve(object);
             this.emit('received', object);
         } catch (error) {
