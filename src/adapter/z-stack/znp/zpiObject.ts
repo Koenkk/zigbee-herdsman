@@ -143,11 +143,8 @@ class ZpiObject<T extends ZpiObjectType = 'Response'> {
     }
 
     public toString(includePayload = true): string {
-        if (includePayload) {
-            return `${Type[this.type]}: ${Subsystem[this.subsystem]} - ${this.command.name} - ${JSON.stringify(this.payload)}`;
-        } else {
-            return `${Type[this.type]}: ${Subsystem[this.subsystem]} - ${this.command.name}`;
-        }
+        const baseStr = `${Type[this.type]}: ${Subsystem[this.subsystem]} - ${this.command.name}`;
+        return includePayload ? baseStr + ` - ${JSON.stringify(this.payload)}` : baseStr;
     }
 }
 
