@@ -142,8 +142,9 @@ class ZpiObject<T extends ZpiObjectType = 'Response'> {
         );
     }
 
-    public toString(): string {
-        return `${Type[this.type]}: ${Subsystem[this.subsystem]} - ${this.command.name} - ${JSON.stringify(this.payload)}`;
+    public toString(includePayload = true): string {
+        const baseStr = `${Type[this.type]}: ${Subsystem[this.subsystem]} - ${this.command.name}`;
+        return includePayload ? baseStr + ` - ${JSON.stringify(this.payload)}` : baseStr;
     }
 }
 
