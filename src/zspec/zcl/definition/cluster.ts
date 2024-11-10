@@ -2450,6 +2450,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             elkoOccupancyOperationMode: {ID: 0xe001, type: DataType.ENUM8, manufacturerCode: ManufacturerCode.ADEO},
             elkoForceOffTimeout: {ID: 0xe002, type: DataType.UINT16, manufacturerCode: ManufacturerCode.ADEO},
             elkoOccupancySensitivity: {ID: 0xe003, type: DataType.UINT8, manufacturerCode: ManufacturerCode.ADEO},
+            schneiderOccupancySensitivity: {ID: 0xe003, type: DataType.UINT8, manufacturerCode: ManufacturerCode.SCHNEIDER_ELECTRIC},
             sprutOccupancyLevel: {ID: 0x6600, type: DataType.UINT16, manufacturerCode: ManufacturerCode.CUSTOM_SPRUT_DEVICE},
             sprutOccupancySensitivity: {ID: 0x6601, type: DataType.UINT16, manufacturerCode: ManufacturerCode.CUSTOM_SPRUT_DEVICE},
         },
@@ -4592,6 +4593,18 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
     elkoOccupancySettingClusterServer: {
         ID: 0xff19,
         manufacturerCode: ManufacturerCode.ADEO,
+        attributes: {
+            AmbienceLightThreshold: {ID: 0x0000, type: DataType.UINT16},
+            OccupancyActions: {ID: 0x0001, type: DataType.ENUM8},
+            UnoccupiedLevelDflt: {ID: 0x0002, type: DataType.UINT8},
+            UnoccupiedLevel: {ID: 0x0003, type: DataType.UINT8},
+        },
+        commands: {},
+        commandsResponse: {},
+    },
+    manuSpecificSchneiderOccupancyConfiguration: {
+        ID: 0xff19,
+        manufacturerCode: ManufacturerCode.SCHNEIDER_ELECTRIC,
         attributes: {
             AmbienceLightThreshold: {ID: 0x0000, type: DataType.UINT16},
             OccupancyActions: {ID: 0x0001, type: DataType.ENUM8},

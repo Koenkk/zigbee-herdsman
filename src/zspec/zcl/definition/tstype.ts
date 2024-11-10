@@ -221,6 +221,7 @@ export type ClusterName =
     | 'schneiderSpecificPilotMode'
     | 'elkoOccupancySettingClusterServer'
     | 'elkoSwitchConfigurationClusterServer'
+    | 'manuSpecificSchneiderOccupancyConfiguration'
     | 'manuSpecificSchneiderLightSwitchConfiguration'
     | 'manuSpecificSchneiderFanSwitchConfiguration'
     | 'sprutDevice'
