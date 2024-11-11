@@ -235,8 +235,8 @@ export class ZBOSSAdapter extends Adapter {
             switch (clusterId) {
                 case Zdo.ClusterId.NETWORK_ADDRESS_REQUEST:
                 case Zdo.ClusterId.IEEE_ADDRESS_REQUEST:
-                case Zdo.ClusterId.BIND_REQUEST: // XXX: according to `FRAMES`, might not support group bind?
-                case Zdo.ClusterId.UNBIND_REQUEST: // XXX: according to `FRAMES`, might not support group unbind?
+                case Zdo.ClusterId.BIND_REQUEST:
+                case Zdo.ClusterId.UNBIND_REQUEST:
                 case Zdo.ClusterId.LQI_TABLE_REQUEST:
                 case Zdo.ClusterId.ROUTING_TABLE_REQUEST:
                 case Zdo.ClusterId.BINDING_TABLE_REQUEST:
@@ -247,6 +247,17 @@ export class ZBOSSAdapter extends Adapter {
                     prefixedPayload.set(payload, 2);
 
                     payload = prefixedPayload;
+                    break;
+                }
+            }
+            switch (clusterId) {
+                case Zdo.ClusterId.BIND_REQUEST:
+                case Zdo.ClusterId.UNBIND_REQUEST: {
+                    // use fixed size address
+                    const addrType = payload.readUInt8(13); // address type
+                    if (addrType == Zdo.MULTICAST_BINDING) {
+                        payload = Buffer.concat([payload, Buffer.alloc(7)]);
+                    }
                     break;
                 }
             }
@@ -319,7 +330,7 @@ export class ZBOSSAdapter extends Adapter {
         let response = null;
         const command = zclFrame.command;
         if (command.response && disableResponse === false) {
-            response = this.waitFor(
+            response = this.waitForInternal(
                 networkAddress,
                 endpoint,
                 zclFrame.header.transactionSequenceNumber,
@@ -328,7 +339,7 @@ export class ZBOSSAdapter extends Adapter {
                 timeout,
             );
         } else if (!zclFrame.header.frameControl.disableDefaultResponse) {
-            response = this.waitFor(
+            response = this.waitForInternal(
                 networkAddress,
                 endpoint,
                 zclFrame.header.transactionSequenceNumber,
@@ -435,28 +446,41 @@ export class ZBOSSAdapter extends Adapter {
         return;
     }
 
-    public waitFor(
+    private waitForInternal(
         networkAddress: number,
         endpoint: number,
-        // frameType: Zcl.FrameType,
-        // direction: Zcl.Direction,
-        transactionSequenceNumber: number,
+        transactionSequenceNumber: number | undefined,
         clusterID: number,
         commandIdentifier: number,
         timeout: number,
-    ): {promise: Promise<ZclPayload>; cancel: () => void; start: () => {promise: Promise<ZclPayload>}} {
-        const payload = {
-            address: networkAddress,
-            endpoint,
-            clusterID,
-            commandIdentifier,
-            transactionSequenceNumber,
-        };
-
-        const waiter = this.waitress.waitFor(payload, timeout);
+    ): {start: () => {promise: Promise<ZclPayload>}; cancel: () => void} {
+        const waiter = this.waitress.waitFor(
+            {
+                address: networkAddress,
+                endpoint,
+                clusterID,
+                commandIdentifier,
+                transactionSequenceNumber,
+            },
+            timeout,
+        );
         const cancel = (): void => this.waitress.remove(waiter.ID);
+        return {start: waiter.start, cancel};
+    }
 
-        return {cancel: cancel, promise: waiter.start().promise, start: waiter.start};
+    public waitFor(
+        networkAddress: number,
+        endpoint: number,
+        frameType: Zcl.FrameType,
+        direction: Zcl.Direction,
+        transactionSequenceNumber: number | undefined,
+        clusterID: number,
+        commandIdentifier: number,
+        timeout: number,
+    ): {promise: Promise<ZclPayload>; cancel: () => void} {
+        const waiter = this.waitForInternal(networkAddress, endpoint, transactionSequenceNumber, clusterID, commandIdentifier, timeout);
+
+        return {cancel: waiter.cancel, promise: waiter.start().promise};
     }
 
     private waitressTimeoutFormatter(matcher: WaitressMatcher, timeout: number): string {

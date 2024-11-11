@@ -15,7 +15,7 @@ import * as Events from '../src/controller/events';
 import Request from '../src/controller/helpers/request';
 import zclTransactionSequenceNumber from '../src/controller/helpers/zclTransactionSequenceNumber';
 import ZclTransactionSequenceNumber from '../src/controller/helpers/zclTransactionSequenceNumber';
-import {Device, Group} from '../src/controller/model';
+import {Device, Endpoint, Group} from '../src/controller/model';
 import * as Models from '../src/models';
 import {Wait} from '../src/utils';
 import * as Utils from '../src/utils';
@@ -4051,6 +4051,18 @@ describe('Controller', () => {
         await device.interview(true);
         expect(deviceNodeDescSpy).toHaveBeenCalledTimes(1);
         expect(mockAdapterSendZdo).toHaveBeenCalledTimes(8); // nodeDesc + activeEp + simpleDesc x1
+    });
+
+    it('Should remove disappeared endpoints on updateActiveEndpoints', async () => {
+        await controller.start();
+        mockAdapterSendZdo.mockClear();
+        await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
+
+        const device = controller.getDeviceByIeeeAddr('0x129')!;
+        device.endpoints.push(Endpoint.create(2, undefined, undefined, [], [], device.networkAddress, device.ieeeAddr));
+        expect(device.endpoints.map((e) => e.ID)).toStrictEqual([1, 2]);
+        await device.updateActiveEndpoints();
+        expect(device.endpoints.map((e) => e.ID)).toStrictEqual([1]);
     });
 
     it('Receive zclData report from unkown attribute', async () => {

@@ -287,8 +287,7 @@ export default class ZiGate extends EventEmitter<ZiGateEventMap> {
 
             this.socketPort!.on('error', (error) => {
                 logger.error(`Socket error ${error}`, NS);
-                // reject(new Error(`Error while opening socket`));
-                reject();
+                reject(new Error(`Error while opening socket`));
                 this.initialized = false;
             });
 

@@ -1074,8 +1074,6 @@ class Device extends Entity<ControllerEventMap> {
 
         // Make sure that the endpoint are sorted.
         activeEndpoints.endpointList.sort((a, b) => a - b);
-
-        // TODO: this does not take care of removing endpoint (changing custom devices)?
         for (const endpoint of activeEndpoints.endpointList) {
             // Some devices, e.g. TERNCY return endpoint 0 in the active endpoints request.
             // This is not a valid endpoint number according to the ZCL, requesting a simple descriptor will result
@@ -1085,6 +1083,9 @@ class Device extends Entity<ControllerEventMap> {
                 this._endpoints.push(Endpoint.create(endpoint, undefined, undefined, [], [], this.networkAddress, this.ieeeAddr));
             }
         }
+
+        // Remove disappeared endpoints (can happen with e.g. custom devices).
+        this._endpoints = this._endpoints.filter((e) => activeEndpoints.endpointList.includes(e.ID));
     }
 
     /**
