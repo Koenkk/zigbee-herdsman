@@ -145,12 +145,14 @@ export const Foundation: Readonly<Record<FoundationCommandName, Readonly<Foundat
             {name: 'direction', type: DataType.UINT8},
             {name: 'attrId', type: DataType.UINT16},
         ],
+        response: 0x09, // readReportConfigRsp
     },
     /** Read Reporting Configuration Response */
     readReportConfigRsp: {
         ID: 0x09,
         parseStrategy: 'repetitive',
         parameters: [
+            {name: 'status', type: DataType.UINT8},
             {name: 'direction', type: DataType.UINT8},
             {name: 'attrId', type: DataType.UINT16},
             {name: 'dataType', type: DataType.UINT8, conditions: [{type: ParameterCondition.DIRECTION_EQUAL, value: Direction.CLIENT_TO_SERVER}]},
