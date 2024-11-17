@@ -1359,7 +1359,7 @@ const Definition: {
         },
         {
             name: 'mgmtNwkUpdateReq',
-            ID: 55, // he spec says 0x38, but TI used 0x37 see https://github.com/Koenkk/zigbee-herdsman/issues/1237
+            ID: 55, // the spec says 0x38, but TI used 0x37 see https://github.com/Koenkk/zigbee-herdsman/issues/1237
             type: CommandType.SREQ,
             zdoClusterId: ZdoClusterId.NWK_UPDATE_REQUEST,
             // request: [
