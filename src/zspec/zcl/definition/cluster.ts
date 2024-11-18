@@ -371,7 +371,11 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             },
             enhancedAddRsp: {
                 ID: 64,
-                parameters: [],
+                parameters: [
+                    {name: 'status', type: DataType.UINT8},
+                    {name: 'groupId', type: DataType.UINT16},
+                    {name: 'sceneId', type: DataType.UINT8},
+                ],
             },
             enhancedViewRsp: {
                 ID: 65,
