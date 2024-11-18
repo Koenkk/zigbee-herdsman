@@ -333,7 +333,11 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                     {name: 'sceneid', type: DataType.UINT8},
                     {name: 'transtime', type: DataType.UINT16, conditions: [{type: ParameterCondition.STATUS_EQUAL, value: Status.SUCCESS}]},
                     {name: 'scenename', type: DataType.CHAR_STR, conditions: [{type: ParameterCondition.STATUS_EQUAL, value: Status.SUCCESS}]},
-                    {name: 'extensionfieldsets', type: BuffaloZclDataType.EXTENSION_FIELD_SETS, conditions: [{type: ParameterCondition.STATUS_EQUAL, value: Status.SUCCESS}]},
+                    {
+                        name: 'extensionfieldsets',
+                        type: BuffaloZclDataType.EXTENSION_FIELD_SETS,
+                        conditions: [{type: ParameterCondition.STATUS_EQUAL, value: Status.SUCCESS}],
+                    },
                 ],
             },
             removeRsp: {
@@ -366,7 +370,11 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                     {name: 'capacity', type: DataType.UINT8},
                     {name: 'groupid', type: DataType.UINT16},
                     {name: 'scenecount', type: DataType.UINT8, conditions: [{type: ParameterCondition.STATUS_EQUAL, value: Status.SUCCESS}]},
-                    {name: 'scenelist', type: BuffaloZclDataType.LIST_UINT8, conditions: [{type: ParameterCondition.STATUS_EQUAL, value: Status.SUCCESS}]},
+                    {
+                        name: 'scenelist',
+                        type: BuffaloZclDataType.LIST_UINT8,
+                        conditions: [{type: ParameterCondition.STATUS_EQUAL, value: Status.SUCCESS}],
+                    },
                 ],
             },
             enhancedAddRsp: {
@@ -385,7 +393,11 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                     {name: 'sceneid', type: DataType.UINT8},
                     {name: 'transtime', type: DataType.UINT16, conditions: [{type: ParameterCondition.STATUS_EQUAL, value: Status.SUCCESS}]},
                     {name: 'scenename', type: DataType.CHAR_STR, conditions: [{type: ParameterCondition.STATUS_EQUAL, value: Status.SUCCESS}]},
-                    {name: 'extensionfieldsets', type: BuffaloZclDataType.EXTENSION_FIELD_SETS, conditions: [{type: ParameterCondition.STATUS_EQUAL, value: Status.SUCCESS}]},
+                    {
+                        name: 'extensionfieldsets',
+                        type: BuffaloZclDataType.EXTENSION_FIELD_SETS,
+                        conditions: [{type: ParameterCondition.STATUS_EQUAL, value: Status.SUCCESS}],
+                    },
                 ],
             },
             copyRsp: {

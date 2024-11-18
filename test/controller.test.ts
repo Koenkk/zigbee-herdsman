@@ -3522,7 +3522,7 @@ describe('Controller', () => {
                             {name: 'groupId', type: 33},
                             {name: 'sceneId', type: 32},
                         ],
-                        name: 'enhancedAddRsp'
+                        name: 'enhancedAddRsp',
                     },
                     enhancedViewRsp: {
                         ID: 65,
