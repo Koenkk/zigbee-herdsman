@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.1.9](https://github.com/Koenkk/zigbee-herdsman/compare/v2.1.8...v2.1.9) (2024-11-18)
+
+
+### Bug Fixes
+
+* comment on Z-Stack ZDO command oddity ([#1240](https://github.com/Koenkk/zigbee-herdsman/issues/1240)) ([b54d1e8](https://github.com/Koenkk/zigbee-herdsman/commit/b54d1e8f22ef9505e95a3eb2764e44ad4c2a1757))
+* Fix command responses in the scenes cluster ([#1241](https://github.com/Koenkk/zigbee-herdsman/issues/1241)) ([1d54cba](https://github.com/Koenkk/zigbee-herdsman/commit/1d54cba76de04a80fb65d647369ec0e9f53e230a))
+
 ## [2.1.8](https://github.com/Koenkk/zigbee-herdsman/compare/v2.1.7...v2.1.8) (2024-11-13)
 
 
