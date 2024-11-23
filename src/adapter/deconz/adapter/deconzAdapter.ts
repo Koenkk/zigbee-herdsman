@@ -299,9 +299,8 @@ class DeconzAdapter extends Adapter {
         }
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     public async addInstallCode(ieeeAddress: string, key: Buffer): Promise<void> {
-        return await Promise.reject(new Error('Add install code is not supported'));
+        await this.driver.writeLinkKey(ieeeAddress, ZSpec.Utils.aes128MmoHash(key));
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars

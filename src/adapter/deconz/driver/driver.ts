@@ -304,6 +304,10 @@ class Driver extends events.EventEmitter {
         });
     }
 
+    public async writeLinkKey(ieeeAddress: string, hashedKey: Buffer): Promise<void> {
+        await this.writeParameterRequest(PARAM.PARAM.Network.LINK_KEY, [...this.macAddrStringToArray(ieeeAddress), ...hashedKey]);
+    }
+
     public readFirmwareVersionRequest(): Promise<number[]> {
         const seqNumber = this.nextSeqNumber();
         return new Promise((resolve, reject): void => {

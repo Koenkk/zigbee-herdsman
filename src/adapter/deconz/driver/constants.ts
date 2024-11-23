@@ -15,6 +15,7 @@ const PARAM = {
         CHANNEL_MASK: 0x0a,
         APS_EXT_PAN_ID: 0x0b,
         NETWORK_KEY: 0x18,
+        LINK_KEY: 0x19,
         CHANNEL: 0x1c,
         PERMIT_JOIN: 0x21,
         WATCHDOG_TTL: 0x26,
