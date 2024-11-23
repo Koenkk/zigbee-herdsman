@@ -271,7 +271,16 @@ class Controller extends events.EventEmitter<ControllerEventMap> {
         // match valid else asserted above
         key = Buffer.from(key.match(/.{1,2}/g)!.map((d) => parseInt(d, 16)));
 
-        await this.adapter.addInstallCode(ieeeAddr, key);
+        // will throw if code cannot be fixed and is invalid
+        const [adjustedKey, adjusted] = ZSpec.Utils.checkInstallCode(key, true);
+
+        if (adjusted) {
+            logger.info(`Install code was adjusted for reason '${adjusted}'.`, NS);
+        }
+
+        logger.info(`Adding install code for ${ieeeAddr}.`, NS);
+
+        await this.adapter.addInstallCode(ieeeAddr, adjustedKey);
     }
 
     public async permitJoin(time: number, device?: Device): Promise<void> {
