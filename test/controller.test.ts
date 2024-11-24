@@ -2295,15 +2295,16 @@ describe('Controller', () => {
         );
     });
 
-    it('Add install code 16 byte', async () => {
+    it('Add install code 16 byte - missing CRC is appended', async () => {
         await controller.start();
         const code = 'RB01SG0D836591B3CC0010000000000000000000000D6F00179F2BC9DLKD0F471C9BBA2C0208608E91EED17E2B1';
         await controller.addInstallCode(code);
         expect(mockAddInstallCode).toHaveBeenCalledTimes(1);
         expect(mockAddInstallCode).toHaveBeenCalledWith(
             '0x000D6F00179F2BC9',
-            Buffer.from([0xd0, 0xf4, 0x71, 0xc9, 0xbb, 0xa2, 0xc0, 0x20, 0x86, 0x08, 0xe9, 0x1e, 0xed, 0x17, 0xe2, 0xb1]),
+            Buffer.from([0xd0, 0xf4, 0x71, 0xc9, 0xbb, 0xa2, 0xc0, 0x20, 0x86, 0x08, 0xe9, 0x1e, 0xed, 0x17, 0xe2, 0xb1, 0x9a, 0xec]),
         );
+        expect(mockLogger.info).toHaveBeenCalledWith(`Install code was adjusted for reason 'missing CRC'.`, 'zh:controller');
     });
 
     it('Add install code Aqara', async () => {
@@ -2326,6 +2327,18 @@ describe('Controller', () => {
             '0x54EF44100006E7DF',
             Buffer.from([0x33, 0x13, 0xa0, 0x05, 0xe1, 0x77, 0xa6, 0x47, 0xfc, 0x79, 0x25, 0x62, 0x0a, 0xb2, 0x07, 0xc4, 0xbe, 0xf5]),
         );
+    });
+
+    it('Add install code invalid', async () => {
+        await controller.start();
+
+        const code = '54EF44100006E7DF|3313A005E177A647FC7925620AB207';
+
+        expect(async () => {
+            await controller.addInstallCode(code);
+        }).rejects.toThrow(`Install code 3313a005e177a647fc7925620ab207 has invalid size`);
+
+        expect(mockAddInstallCode).toHaveBeenCalledTimes(0);
     });
 
     it('Controller permit joining all, disabled automatically', async () => {
