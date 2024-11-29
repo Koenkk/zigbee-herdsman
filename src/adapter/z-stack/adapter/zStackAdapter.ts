@@ -417,6 +417,7 @@ class ZStackAdapter extends Adapter {
         disableRecovery: boolean,
         sourceEndpoint?: number,
     ): Promise<Events.ZclPayload | void> {
+        logger.debug(`== sendZclFrameToEndpoint add to queue - ${ieeeAddr}/${networkAddress}`, NS);
         return await this.queue.execute<Events.ZclPayload | void>(async () => {
             this.checkInterpanLock();
             return await this.sendZclFrameToEndpointInternal(
