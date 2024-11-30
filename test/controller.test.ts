@@ -2355,7 +2355,13 @@ describe('Controller', () => {
         const commisionFrameEnable = Zcl.Frame.create(1, 1, true, undefined, 2, 'commisioningMode', 33, {options: 0x0b, commisioningWindow: 254}, {});
 
         expect(mocksendZclFrameToAll).toHaveBeenCalledTimes(1);
-        expect(mocksendZclFrameToAll).toHaveBeenNthCalledWith(1, ZSpec.GP_ENDPOINT, expect.any(Object), ZSpec.GP_ENDPOINT, ZSpec.BroadcastAddress.RX_ON_WHEN_IDLE);
+        expect(mocksendZclFrameToAll).toHaveBeenNthCalledWith(
+            1,
+            ZSpec.GP_ENDPOINT,
+            expect.any(Object),
+            ZSpec.GP_ENDPOINT,
+            ZSpec.BroadcastAddress.RX_ON_WHEN_IDLE,
+        );
         expect(deepClone(mocksendZclFrameToAll.mock.calls[0][1])).toStrictEqual(deepClone(commisionFrameEnable));
 
         await jest.advanceTimersByTimeAsync(250 * 1000);
@@ -2390,7 +2396,13 @@ describe('Controller', () => {
         const commisionFrameEnable = Zcl.Frame.create(1, 1, true, undefined, 2, 'commisioningMode', 33, {options: 0x0b, commisioningWindow: 254}, {});
 
         expect(mocksendZclFrameToAll).toHaveBeenCalledTimes(1);
-        expect(mocksendZclFrameToAll).toHaveBeenNthCalledWith(1, ZSpec.GP_ENDPOINT, expect.any(Object), ZSpec.GP_ENDPOINT, ZSpec.BroadcastAddress.RX_ON_WHEN_IDLE);
+        expect(mocksendZclFrameToAll).toHaveBeenNthCalledWith(
+            1,
+            ZSpec.GP_ENDPOINT,
+            expect.any(Object),
+            ZSpec.GP_ENDPOINT,
+            ZSpec.BroadcastAddress.RX_ON_WHEN_IDLE,
+        );
         expect(deepClone(mocksendZclFrameToAll.mock.calls[0][1])).toStrictEqual(deepClone(commisionFrameEnable));
 
         await jest.advanceTimersByTimeAsync(250 * 1000);
@@ -2412,7 +2424,13 @@ describe('Controller', () => {
         const commissionFrameDisable = Zcl.Frame.create(1, 1, true, undefined, 3, 'commisioningMode', 33, {options: 0x0a, commisioningWindow: 0}, {});
 
         expect(mocksendZclFrameToAll).toHaveBeenCalledTimes(2);
-        expect(mocksendZclFrameToAll).toHaveBeenNthCalledWith(2, ZSpec.GP_ENDPOINT, expect.any(Object), ZSpec.GP_ENDPOINT, ZSpec.BroadcastAddress.RX_ON_WHEN_IDLE);
+        expect(mocksendZclFrameToAll).toHaveBeenNthCalledWith(
+            2,
+            ZSpec.GP_ENDPOINT,
+            expect.any(Object),
+            ZSpec.GP_ENDPOINT,
+            ZSpec.BroadcastAddress.RX_ON_WHEN_IDLE,
+        );
         expect(deepClone(mocksendZclFrameToAll.mock.calls[1][1])).toStrictEqual(deepClone(commissionFrameDisable));
     });
 
