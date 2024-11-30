@@ -79,6 +79,7 @@ class Controller extends events.EventEmitter<ControllerEventMap> {
     private touchlink: Touchlink;
 
     private permitJoinTimer: NodeJS.Timeout | undefined;
+    private permitJoinEnd?: number;
     private backupTimer: NodeJS.Timeout | undefined;
     private databaseSaveTimer: NodeJS.Timeout | undefined;
     private stopping: boolean;
@@ -284,6 +285,7 @@ class Controller extends events.EventEmitter<ControllerEventMap> {
     public async permitJoin(time: number, device?: Device): Promise<void> {
         clearTimeout(this.permitJoinTimer);
         this.permitJoinTimer = undefined;
+        this.permitJoinEnd = undefined;
 
         if (time > 0) {
             // never permit more than uint8, and never permit 255 that is often equal to "forever"
@@ -292,11 +294,14 @@ class Controller extends events.EventEmitter<ControllerEventMap> {
             await this.adapter.permitJoin(time, device?.networkAddress);
             await this.greenPower.permitJoin(time, device?.networkAddress);
 
+            const timeMs = time * 1000;
+            this.permitJoinEnd = Date.now() + timeMs;
             this.permitJoinTimer = setTimeout((): void => {
                 this.emit('permitJoinChanged', {permitted: false});
 
                 this.permitJoinTimer = undefined;
-            }, time * 1000);
+                this.permitJoinEnd = undefined;
+            }, timeMs);
 
             this.emit('permitJoinChanged', {permitted: true, time});
         } else {
@@ -311,6 +316,10 @@ class Controller extends events.EventEmitter<ControllerEventMap> {
 
     public getPermitJoin(): boolean {
         return this.permitJoinTimer !== undefined;
+    }
+
+    public getPermitJoinEnd(): number | undefined {
+        return this.permitJoinEnd;
     }
 
     public isStopping(): boolean {
