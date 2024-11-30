@@ -78,7 +78,7 @@ class Controller extends events.EventEmitter<ControllerEventMap> {
     // @ts-expect-error assigned and validated in start()
     private touchlink: Touchlink;
 
-    private permitJoinTimeoutTimer: NodeJS.Timeout | undefined;
+    private permitJoinTimer: NodeJS.Timeout | undefined;
     private backupTimer: NodeJS.Timeout | undefined;
     private databaseSaveTimer: NodeJS.Timeout | undefined;
     private stopping: boolean;
@@ -282,8 +282,8 @@ class Controller extends events.EventEmitter<ControllerEventMap> {
     }
 
     public async permitJoin(time: number, device?: Device): Promise<void> {
-        clearTimeout(this.permitJoinTimeoutTimer);
-        this.permitJoinTimeoutTimer = undefined;
+        clearTimeout(this.permitJoinTimer);
+        this.permitJoinTimer = undefined;
 
         if (time > 0) {
             // never permit more than uint8, and never permit 255 that is often equal to "forever"
@@ -292,13 +292,13 @@ class Controller extends events.EventEmitter<ControllerEventMap> {
             await this.adapter.permitJoin(time, device?.networkAddress);
             await this.greenPower.permitJoin(time, device?.networkAddress);
 
-            this.permitJoinTimeoutTimer = setTimeout(async (): Promise<void> => {
+            this.permitJoinTimer = setTimeout((): void => {
                 this.emit('permitJoinChanged', {permitted: false});
 
-                this.permitJoinTimeoutTimer = undefined;
-            }, time);
+                this.permitJoinTimer = undefined;
+            }, time * 1000);
 
-            this.emit('permitJoinChanged', {permitted: true, duration: time});
+            this.emit('permitJoinChanged', {permitted: true, time});
         } else {
             logger.debug('Disable joining', NS);
 
@@ -310,7 +310,7 @@ class Controller extends events.EventEmitter<ControllerEventMap> {
     }
 
     public getPermitJoin(): boolean {
-        return this.permitJoinTimeoutTimer !== undefined;
+        return this.permitJoinTimer !== undefined;
     }
 
     public isStopping(): boolean {
