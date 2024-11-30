@@ -2347,6 +2347,7 @@ describe('Controller', () => {
         expect(controller.getPermitJoin()).toStrictEqual(false);
         expect(controller.getPermitJoinEnd()).toBeUndefined();
 
+        (Date.now as ReturnType<typeof jest.fn>).mockReturnValueOnce(0);
         await controller.permitJoin(254);
 
         expect(mockAdapterPermitJoin).toHaveBeenCalledTimes(1);
@@ -2354,7 +2355,7 @@ describe('Controller', () => {
         expect(events.permitJoinChanged.length).toStrictEqual(1);
         expect(events.permitJoinChanged[0]).toStrictEqual({permitted: true, time: 254});
         expect(controller.getPermitJoin()).toStrictEqual(true);
-        expect(controller.getPermitJoinEnd()).toBeGreaterThan(0);
+        expect(controller.getPermitJoinEnd()).toStrictEqual(254 * 1000);
 
         // Green power
         const commisionFrameEnable = Zcl.Frame.create(1, 1, true, undefined, 2, 'commisioningMode', 33, {options: 0x0b, commisioningWindow: 254}, {});
@@ -2374,7 +2375,7 @@ describe('Controller', () => {
         expect(mocksendZclFrameToAll).toHaveBeenCalledTimes(1);
         expect(mockAdapterPermitJoin).toHaveBeenCalledTimes(1);
         expect(controller.getPermitJoin()).toStrictEqual(true);
-        expect(controller.getPermitJoinEnd()).toBeGreaterThan(0);
+        expect(controller.getPermitJoinEnd()).toStrictEqual(254 * 1000);
 
         // Timer expired
         await jest.advanceTimersByTimeAsync(10 * 1000);
@@ -2395,6 +2396,7 @@ describe('Controller', () => {
         expect(controller.getPermitJoin()).toStrictEqual(false);
         expect(controller.getPermitJoinEnd()).toBeUndefined();
 
+        (Date.now as ReturnType<typeof jest.fn>).mockReturnValueOnce(0);
         await controller.permitJoin(254);
 
         expect(mockAdapterPermitJoin).toHaveBeenCalledTimes(1);
@@ -2402,7 +2404,7 @@ describe('Controller', () => {
         expect(events.permitJoinChanged.length).toStrictEqual(1);
         expect(events.permitJoinChanged[0]).toStrictEqual({permitted: true, time: 254});
         expect(controller.getPermitJoin()).toStrictEqual(true);
-        expect(controller.getPermitJoinEnd()).toBeGreaterThan(0);
+        expect(controller.getPermitJoinEnd()).toStrictEqual(254 * 1000);
 
         // Green power
         const commisionFrameEnable = Zcl.Frame.create(1, 1, true, undefined, 2, 'commisioningMode', 33, {options: 0x0b, commisioningWindow: 254}, {});
@@ -2422,7 +2424,7 @@ describe('Controller', () => {
         expect(mocksendZclFrameToAll).toHaveBeenCalledTimes(1);
         expect(mockAdapterPermitJoin).toHaveBeenCalledTimes(1);
         expect(controller.getPermitJoin()).toStrictEqual(true);
-        expect(controller.getPermitJoinEnd()).toBeGreaterThan(0);
+        expect(controller.getPermitJoinEnd()).toStrictEqual(254 * 1000);
 
         // Disable
         await controller.permitJoin(0);
