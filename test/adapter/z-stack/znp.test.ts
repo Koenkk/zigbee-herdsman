@@ -202,25 +202,6 @@ describe('ZNP', () => {
         expect(mockSerialPortOnce).toHaveBeenCalledTimes(2);
     });
 
-    it('Open autodetect port', async () => {
-        mockSerialPortList.mockReturnValue([
-            {manufacturer: 'Not texas instruments', vendorId: '0451', productId: '16a8', path: '/dev/autodetected2'},
-            {path: '/dev/tty.usbmodemL43001T22', manufacturer: 'Texas Instruments', vendorId: '0451', productId: 'bef3'},
-            {path: '/dev/tty.usbmodemL43001T24', manufacturer: 'Texas Instruments', vendorId: '0451', productId: 'bef3'},
-            {path: '/dev/tty.usbmodemL43001T21', manufacturer: 'Texas Instruments', vendorId: '0451', productId: 'bef3'},
-        ]);
-
-        expect(await Znp.autoDetectPath()).toBe('/dev/tty.usbmodemL43001T21');
-    });
-
-    it('Autodetect port error when there are not available devices', async () => {
-        mockSerialPortList.mockReturnValue([
-            {manufacturer: 'Not texas instruments', vendorId: '0451', productId: '16a8', path: '/dev/autodetected2'},
-        ]);
-
-        expect(await Znp.autoDetectPath()).toBeUndefined();
-    });
-
     it('Open and close tcp port', async () => {
         znp = new Znp('tcp://localhost:8080', 100, false);
         await znp.open();
@@ -249,43 +230,6 @@ describe('ZNP', () => {
 
         expect(error).toStrictEqual(new Error('Error while opening socket'));
         expect(znp.isInitialized()).toBeFalsy();
-    });
-
-    it('Check if tcp path is valid', async () => {
-        expect(await Znp.isValidPath('tcp://192.168.2.1:8080')).toBeFalsy();
-        expect(await Znp.isValidPath('tcp://localhost:8080')).toBeFalsy();
-        expect(await Znp.isValidPath('tcp://192.168.2.1')).toBeFalsy();
-        expect(await Znp.isValidPath('tcp://localhost')).toBeFalsy();
-        expect(await Znp.isValidPath('tcp')).toBeFalsy();
-    });
-
-    it('Check if path is valid', async () => {
-        mockSerialPortList.mockReturnValue([
-            {manufacturer: 'Not texas instruments', vendorId: '0451', productId: '16a8', path: '/dev/autodetected2'},
-            {path: '/dev/tty.usbmodemL43001T22', manufacturer: 'Texas Instruments', vendorId: '0451', productId: 'bef3'},
-            {path: '/dev/tty.usbmodemL43001T24', manufacturer: 'Texas Instruments', vendorId: '0451', productId: 'bef3'},
-            {path: '/dev/tty.usbmodemL43001T21', manufacturer: 'Texas Instruments', vendorId: '0451', productId: 'bef3'},
-        ]);
-
-        expect(await Znp.isValidPath('/dev/tty.usbmodemL43001T21')).toBeTruthy();
-        expect(await Znp.isValidPath('/dev/autodetected2')).toBeFalsy();
-    });
-
-    it('Check if path is valid; return false when path does not exist in device list', async () => {
-        mockSerialPortList.mockReturnValue([
-            {manufacturer: 'Not texas instruments', vendorId: '0451', productId: '16a8', path: '/dev/autodetected2'},
-            {path: '/dev/tty.usbmodemL43001T22', manufacturer: 'Texas Instruments', vendorId: '0451', productId: 'bef3'},
-            {path: '/dev/tty.usbmodemL43001T24', manufacturer: 'Texas Instruments', vendorId: '0451', productId: 'bef3'},
-            {path: '/dev/tty.usbmodemL43001T21', manufacturer: 'Texas Instruments', vendorId: '0451', productId: 'bef3'},
-        ]);
-
-        expect(await Znp.isValidPath('/dev/notexisting')).toBeFalsy();
-    });
-
-    it('Check if path is valid path resolve fails', async () => {
-        mockRealPathSyncError = true;
-        expect(await Znp.isValidPath('/dev/tty.usbmodemL43001T21')).toBeFalsy();
-        mockRealPathSyncError = false;
     });
 
     it('Open with error', async () => {

@@ -1,5 +1,4 @@
 /* istanbul ignore file */
-/* eslint-disable */
 
 import events from 'events';
 import net from 'net';
@@ -8,7 +7,6 @@ import slip from 'slip';
 
 import {logger} from '../../../utils/logger';
 import {SerialPort} from '../../serialPort';
-import SerialPortUtils from '../../serialPortUtils';
 import SocketPortUtils from '../../socketPortUtils';
 import PARAM, {ApsDataRequest, parameterT, ReceivedDataResponse, Request} from './constants';
 import {frameParserEvents} from './frameParser';
@@ -16,10 +14,6 @@ import Parser from './parser';
 import Writer from './writer';
 
 const NS = 'zh:deconz:driver';
-
-const autoDetectDefinitions = [
-    {manufacturer: 'dresden elektronik ingenieurtechnik GmbH', vendorId: '1cf1', productId: '0030'}, // Conbee II
-];
 
 const queue: Array<Request> = [];
 export const busyQueue: Array<Request> = [];
@@ -48,7 +42,7 @@ class Driver extends events.EventEmitter {
     private parser: Parser;
     private frameParserEvent = frameParserEvents;
     private seqNumber: number;
-    private timeoutResetTimeout: any;
+    private timeoutResetTimeout?: NodeJS.Timeout;
     private apsRequestFreeSlots: number;
     private apsDataConfirm: number;
     private apsDataIndication: number;
@@ -66,7 +60,7 @@ class Driver extends events.EventEmitter {
         this.path = path;
         this.initialized = false;
         this.seqNumber = 0;
-        this.timeoutResetTimeout = null;
+        this.timeoutResetTimeout = undefined;
 
         this.apsRequestFreeSlots = 1;
         this.apsDataConfirm = 0;
@@ -80,23 +74,22 @@ class Driver extends events.EventEmitter {
         this.writer = new Writer();
         this.parser = new Parser();
 
-        const that = this;
         setInterval(() => {
-            that.deviceStateRequest()
-                .then((result) => {})
-                .catch((error) => {});
+            this.deviceStateRequest()
+                .then(() => {})
+                .catch(() => {});
         }, 10000);
 
         setInterval(
             () => {
-                that.writeParameterRequest(0x26, 600) // reset watchdog // 10 minutes
-                    .then((result) => {})
-                    .catch((error) => {
+                this.writeParameterRequest(0x26, 600) // reset watchdog // 10 minutes
+                    .then(() => {})
+                    .catch(() => {
                         //try again
                         logger.debug('try again to reset watchdog', NS);
-                        that.writeParameterRequest(0x26, 600)
-                            .then((result) => {})
-                            .catch((error) => {
+                        this.writeParameterRequest(0x26, 600)
+                            .then(() => {})
+                            .catch(() => {
                                 logger.debug('warning watchdog was not reset', NS);
                             });
                     });
@@ -105,8 +98,8 @@ class Driver extends events.EventEmitter {
         ); // 8 minutes
 
         this.onParsed = this.onParsed.bind(this);
-        this.frameParserEvent.on('receivedDataNotification', (data: number) => {
-            this.catchPromise(this.checkDeviceStatus(data));
+        this.frameParserEvent.on('receivedDataNotification', async (data: number) => {
+            await this.catchPromise(this.checkDeviceStatus(data));
         });
 
         this.on('close', () => {
@@ -122,12 +115,12 @@ class Driver extends events.EventEmitter {
 
     protected intervals: NodeJS.Timeout[] = [];
 
-    protected registerInterval(interval: NodeJS.Timeout) {
+    protected registerInterval(interval: NodeJS.Timeout): void {
         this.intervals.push(interval);
     }
 
-    protected catchPromise(val: any) {
-        return Promise.resolve(val).catch((err) => logger.debug(`Promise was caught with reason: ${err}`, NS));
+    protected async catchPromise<T>(val: Promise<T>): Promise<void | Awaited<T>> {
+        return await Promise.resolve(val).catch((err) => logger.debug(`Promise was caught with reason: ${err}`, NS));
     }
 
     public setDelay(delay: number): void {
@@ -157,46 +150,36 @@ class Driver extends events.EventEmitter {
             this.HANDLE_DEVICE_STATUS_DELAY = 60;
         }
 
-        const that = this;
         this.registerInterval(
             setInterval(() => {
-                that.processQueue();
+                this.processQueue();
             }, this.PROCESS_QUEUES),
         ); // fire non aps requests
         this.registerInterval(
-            setInterval(() => {
-                this.catchPromise(that.processBusyQueue());
+            setInterval(async () => {
+                await this.catchPromise(this.processBusyQueue());
             }, this.PROCESS_QUEUES),
         ); // check timeouts for non aps requests
         this.registerInterval(
-            setInterval(() => {
-                this.catchPromise(that.processApsQueue());
+            setInterval(async () => {
+                await this.catchPromise(this.processApsQueue());
             }, this.PROCESS_QUEUES),
         ); // fire aps request
         this.registerInterval(
             setInterval(() => {
-                that.processApsBusyQueue();
+                this.processApsBusyQueue();
             }, this.PROCESS_QUEUES),
         ); // check timeouts for all open aps requests
         this.registerInterval(
-            setInterval(() => {
-                this.catchPromise(that.processApsConfirmIndQueue());
+            setInterval(async () => {
+                this.processApsConfirmIndQueue();
             }, this.PROCESS_QUEUES),
         ); // fire aps indications and confirms
         this.registerInterval(
-            setInterval(() => {
-                this.catchPromise(that.handleDeviceStatus());
+            setInterval(async () => {
+                await this.catchPromise(this.handleDeviceStatus());
             }, this.HANDLE_DEVICE_STATUS_DELAY),
         ); // query confirm and indication requests
-    }
-
-    public static async isValidPath(path: string): Promise<boolean> {
-        return SerialPortUtils.is(path, autoDetectDefinitions);
-    }
-
-    public static async autoDetectPath(): Promise<string | undefined> {
-        const paths = await SerialPortUtils.find(autoDetectDefinitions);
-        return paths.length > 0 ? paths[0] : undefined;
     }
 
     private onPortClose(): void {
@@ -207,7 +190,7 @@ class Driver extends events.EventEmitter {
 
     public async open(baudrate: number): Promise<void> {
         this.currentBaudRate = baudrate;
-        return SocketPortUtils.isTcpPath(this.path) ? this.openSocketPort() : this.openSerialPort(baudrate);
+        return await (SocketPortUtils.isTcpPath(this.path) ? this.openSocketPort() : this.openSerialPort(baudrate));
     }
 
     public openSerialPort(baudrate: number): Promise<void> {
@@ -250,24 +233,23 @@ class Driver extends events.EventEmitter {
         this.socketPort.pipe(this.parser);
         this.parser.on('parsed', this.onParsed);
 
-        return new Promise((resolve, reject): void => {
-            this.socketPort!.on('connect', function () {
+        return await new Promise((resolve, reject): void => {
+            this.socketPort!.on('connect', () => {
                 logger.debug('Socket connected', NS);
             });
 
-            const self = this;
-            this.socketPort!.on('ready', async function () {
+            this.socketPort!.on('ready', async () => {
                 logger.debug('Socket ready', NS);
-                self.initialized = true;
+                this.initialized = true;
                 resolve();
             });
 
             this.socketPort!.once('close', this.onPortClose);
 
-            this.socketPort!.on('error', function (error) {
+            this.socketPort!.on('error', (error) => {
                 logger.error(`Socket error ${error}`, NS);
                 reject(new Error(`Error while opening socket`));
-                self.initialized = false;
+                this.initialized = false;
             });
 
             this.socketPort!.connect(info.port, info.host);
@@ -281,7 +263,13 @@ class Driver extends events.EventEmitter {
                     this.serialPort.flush((): void => {
                         this.serialPort!.close((error): void => {
                             this.initialized = false;
-                            error == null ? resolve() : reject(new Error(`Error while closing serialport '${error}'`));
+
+                            if (error == null) {
+                                resolve();
+                            } else {
+                                reject(new Error(`Error while closing serialport '${error}'`));
+                            }
+
                             this.emit('close');
                         });
                     });
@@ -318,6 +306,10 @@ class Driver extends events.EventEmitter {
         });
     }
 
+    public async writeLinkKey(ieeeAddress: string, hashedKey: Buffer): Promise<void> {
+        await this.writeParameterRequest(PARAM.PARAM.Network.LINK_KEY, [...this.macAddrStringToArray(ieeeAddress), ...hashedKey]);
+    }
+
     public readFirmwareVersionRequest(): Promise<number[]> {
         const seqNumber = this.nextSeqNumber();
         return new Promise((resolve, reject): void => {
@@ -329,7 +321,7 @@ class Driver extends events.EventEmitter {
         });
     }
 
-    private sendReadParameterRequest(parameterId: number, seqNumber: number) {
+    private sendReadParameterRequest(parameterId: number, seqNumber: number): void {
         /* command id, sequence number, 0, framelength(U16), payloadlength(U16), parameter id */
         if (parameterId === PARAM.PARAM.Network.NETWORK_KEY) {
             this.sendRequest(Buffer.from([PARAM.PARAM.FrameType.ReadParameter, seqNumber, 0x00, 0x09, 0x00, 0x02, 0x00, parameterId, 0x00]));
@@ -338,11 +330,11 @@ class Driver extends events.EventEmitter {
         }
     }
 
-    private sendWriteParameterRequest(parameterId: number, value: parameterT, seqNumber: number) {
+    private sendWriteParameterRequest(parameterId: number, value: parameterT, seqNumber: number): void {
         /* command id, sequence number, 0, framelength(U16), payloadlength(U16), parameter id, pameter */
         let parameterLength = 0;
         if (parameterId === PARAM.PARAM.STK.Endpoint) {
-            let arrayParameterValue = value as number[];
+            const arrayParameterValue = value as number[];
             parameterLength = arrayParameterValue.length;
         } else {
             parameterLength = this.getLengthOfParameter(parameterId);
@@ -422,20 +414,21 @@ class Driver extends events.EventEmitter {
         }
     }
 
-    private sendReadFirmwareVersionRequest(seqNumber: number) {
+    private sendReadFirmwareVersionRequest(seqNumber: number): void {
         /* command id, sequence number, 0, framelength(U16) */
         this.sendRequest(Buffer.from([PARAM.PARAM.FrameType.ReadFirmwareVersion, seqNumber, 0x00, 0x09, 0x00, 0x00, 0x00, 0x00, 0x00]));
     }
 
-    private sendReadDeviceStateRequest(seqNumber: number) {
+    private sendReadDeviceStateRequest(seqNumber: number): void {
         /* command id, sequence number, 0, framelength(U16) */
         this.sendRequest(Buffer.from([PARAM.PARAM.FrameType.ReadDeviceState, seqNumber, 0x00, 0x08, 0x00, 0x00, 0x00, 0x00]));
     }
 
-    private sendRequest(buffer: Buffer) {
+    private sendRequest(buffer: Buffer): void {
         const frame = Buffer.concat([buffer, this.calcCrc(buffer)]);
         const slipframe = slip.encode(frame);
 
+        // TODO: write not awaited?
         if (this.serialPort) {
             this.serialPort.write(slipframe, function (err) {
                 if (err) {
@@ -451,7 +444,7 @@ class Driver extends events.EventEmitter {
         }
     }
 
-    private processQueue() {
+    private processQueue(): void {
         if (queue.length === 0) {
             return;
         }
@@ -496,7 +489,7 @@ class Driver extends events.EventEmitter {
         }
     }
 
-    private async processBusyQueue() {
+    private async processBusyQueue(): Promise<void> {
         let i = busyQueue.length;
         while (i--) {
             const req: Request = busyQueue[i];
@@ -510,7 +503,7 @@ class Driver extends events.EventEmitter {
                 // after a timeout the timeoutcounter will be reset after 1 min. If another timeout happen then the timeoutcounter
                 // will not be reset
                 clearTimeout(this.timeoutResetTimeout);
-                this.timeoutResetTimeout = null;
+                this.timeoutResetTimeout = undefined;
                 this.resetTimeoutCounterAfter1min();
                 req.reject(new Error('TIMEOUT'));
                 if (this.timeoutCounter >= 2) {
@@ -539,13 +532,13 @@ class Driver extends events.EventEmitter {
         });
     }
 
-    private sendChangeNetworkStateRequest(seqNumber: number, networkState: number) {
+    private sendChangeNetworkStateRequest(seqNumber: number, networkState: number): void {
         this.sendRequest(Buffer.from([PARAM.PARAM.NetworkState.CHANGE_NETWORK_STATE, seqNumber, 0x00, 0x06, 0x00, networkState]));
     }
 
-    private deviceStateRequest() {
+    private async deviceStateRequest(): Promise<void> {
         const seqNumber = this.nextSeqNumber();
-        return new Promise((resolve, reject): void => {
+        return await new Promise((resolve, reject): void => {
             //logger.debug(`DEVICE_STATE Request - seqNr: ${seqNumber}`, NS);
             const ts = 0;
             const commandId = PARAM.PARAM.FrameType.ReadDeviceState;
@@ -554,7 +547,7 @@ class Driver extends events.EventEmitter {
         });
     }
 
-    private async checkDeviceStatus(currentDeviceStatus: number) {
+    private async checkDeviceStatus(currentDeviceStatus: number): Promise<void> {
         const networkState = currentDeviceStatus & 0x03;
         this.apsDataConfirm = (currentDeviceStatus >> 2) & 0x01;
         this.apsDataIndication = (currentDeviceStatus >> 3) & 0x01;
@@ -576,12 +569,12 @@ class Driver extends events.EventEmitter {
         );
     }
 
-    private async handleDeviceStatus() {
+    private async handleDeviceStatus(): Promise<void> {
         if (this.apsDataConfirm === 1) {
             try {
                 logger.debug('query aps data confirm', NS);
                 this.apsDataConfirm = 0;
-                const x = await this.querySendDataStateRequest();
+                await this.querySendDataStateRequest();
             } catch (error) {
                 // @ts-expect-error TODO: this doesn't look right?
                 if (error.status === 5) {
@@ -593,7 +586,7 @@ class Driver extends events.EventEmitter {
             try {
                 logger.debug('query aps data indication', NS);
                 this.apsDataIndication = 0;
-                const x = await this.readReceivedDataRequest();
+                await this.readReceivedDataRequest();
             } catch (error) {
                 // @ts-expect-error TODO: this doesn't look right?
                 if (error.status === 5) {
@@ -624,7 +617,6 @@ class Driver extends events.EventEmitter {
         return new Promise((resolve, reject): void => {
             //logger.debug(`push enqueue send data request to apsQueue. seqNr: ${seqNumber}`, NS);
             const ts = 0;
-            const requestId = request.requestId;
             const commandId = PARAM.PARAM.APS.DATA_REQUEST;
             const req: Request = {commandId, seqNumber, request, resolve, reject, ts};
             apsQueue.push(req);
@@ -643,7 +635,7 @@ class Driver extends events.EventEmitter {
         });
     }
 
-    private async processApsQueue() {
+    private async processApsQueue(): Promise<void> {
         if (apsQueue.length === 0) {
             return;
         }
@@ -681,7 +673,7 @@ class Driver extends events.EventEmitter {
         }
     }
 
-    private async processApsConfirmIndQueue() {
+    private processApsConfirmIndQueue(): void {
         if (apsConfirmIndQueue.length === 0) {
             return;
         }
@@ -699,7 +691,7 @@ class Driver extends events.EventEmitter {
                     if (this.DELAY === 0) {
                         this.sendReadReceivedDataRequest(req.seqNumber);
                     } else {
-                        await this.sendReadReceivedDataRequest(req.seqNumber);
+                        this.sendReadReceivedDataRequest(req.seqNumber);
                     }
                     break;
                 case PARAM.PARAM.APS.DATA_CONFIRM:
@@ -707,7 +699,7 @@ class Driver extends events.EventEmitter {
                     if (this.DELAY === 0) {
                         this.sendQueryDataStateRequest(req.seqNumber);
                     } else {
-                        await this.sendQueryDataStateRequest(req.seqNumber);
+                        this.sendQueryDataStateRequest(req.seqNumber);
                     }
                     break;
                 default:
@@ -716,18 +708,18 @@ class Driver extends events.EventEmitter {
         }
     }
 
-    private sendQueryDataStateRequest(seqNumber: number) {
+    private sendQueryDataStateRequest(seqNumber: number): void {
         logger.debug(`DATA_CONFIRM - sending data state request - SeqNr. ${seqNumber}`, NS);
         this.sendRequest(Buffer.from([PARAM.PARAM.APS.DATA_CONFIRM, seqNumber, 0x00, 0x07, 0x00, 0x00, 0x00]));
     }
 
-    private sendReadReceivedDataRequest(seqNumber: number) {
+    private sendReadReceivedDataRequest(seqNumber: number): void {
         logger.debug(`DATA_INDICATION - sending read data request - SeqNr. ${seqNumber}`, NS);
         // payloadlength = 0, flag = none
         this.sendRequest(Buffer.from([PARAM.PARAM.APS.DATA_INDICATION, seqNumber, 0x00, 0x08, 0x00, 0x01, 0x00, 0x01]));
     }
 
-    private sendEnqueueSendDataRequest(request: ApsDataRequest, seqNumber: number) {
+    private sendEnqueueSendDataRequest(request: ApsDataRequest, seqNumber: number): void {
         const payloadLength =
             12 +
             (request.destAddrMode === PARAM.PARAM.addressMode.GROUP_ADDR ? 2 : request.destAddrMode === PARAM.PARAM.addressMode.NWK_ADDR ? 3 : 9) +
@@ -784,7 +776,7 @@ class Driver extends events.EventEmitter {
         );
     }
 
-    private processApsBusyQueue() {
+    private processApsBusyQueue(): void {
         let i = apsBusyQueue.length;
         while (i--) {
             const req = apsBusyQueue[i];
@@ -821,7 +813,7 @@ class Driver extends events.EventEmitter {
                 addr = '0' + addr;
             }
         }
-        let result: number[] = new Array<number>();
+        const result = new Array<number>();
         let y = 0;
         for (let i = 0; i < 8; i++) {
             result[i] = parseInt(addr.substr(y, 2), 16);
@@ -885,11 +877,11 @@ class Driver extends events.EventEmitter {
         return new Promise((resolve) => setTimeout(resolve, ms));
     }
 
-    private resetTimeoutCounterAfter1min() {
-        if (this.timeoutResetTimeout === null) {
+    private resetTimeoutCounterAfter1min(): void {
+        if (this.timeoutResetTimeout === undefined) {
             this.timeoutResetTimeout = setTimeout(() => {
                 this.timeoutCounter = 0;
-                this.timeoutResetTimeout = null;
+                this.timeoutResetTimeout = undefined;
             }, 60000);
         }
     }
