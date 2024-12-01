@@ -1,5 +1,28 @@
 # Changelog
 
+## [3.0.0](https://github.com/Koenkk/zigbee-herdsman/compare/v2.1.9...v3.0.0) (2024-12-01)
+
+
+### ⚠ BREAKING CHANGES
+
+* Fix some transmit power issues after #1139 ([#1222](https://github.com/Koenkk/zigbee-herdsman/issues/1222))
+* Improved adapter discovery ([#1197](https://github.com/Koenkk/zigbee-herdsman/issues/1197))
+* Improve permit join ([#1214](https://github.com/Koenkk/zigbee-herdsman/issues/1214))
+
+### Features
+
+* Improve permit join ([#1214](https://github.com/Koenkk/zigbee-herdsman/issues/1214)) ([818435a](https://github.com/Koenkk/zigbee-herdsman/commit/818435afcf55d7392fd71df25913427dc67eaada))
+* Improved adapter discovery ([#1197](https://github.com/Koenkk/zigbee-herdsman/issues/1197)) ([1d35a14](https://github.com/Koenkk/zigbee-herdsman/commit/1d35a1435512285323b0dd0e185ffdbe23ac05b9))
+
+
+### Bug Fixes
+
+* Better support for install codes (including deconz) ([#1243](https://github.com/Koenkk/zigbee-herdsman/issues/1243)) ([9ac181c](https://github.com/Koenkk/zigbee-herdsman/commit/9ac181c8c58323b9f246bb4292aadac2fccc2ac1))
+* Better support for install codes (including deconz) ([#1243](https://github.com/Koenkk/zigbee-herdsman/issues/1243)) ([b98b141](https://github.com/Koenkk/zigbee-herdsman/commit/b98b141d2ccebd207b4ef31ffa695a2be8284016))
+* Fix some transmit power issues after [#1139](https://github.com/Koenkk/zigbee-herdsman/issues/1139) ([#1222](https://github.com/Koenkk/zigbee-herdsman/issues/1222)) ([c016153](https://github.com/Koenkk/zigbee-herdsman/commit/c0161535c734800478d62203d6db695a7a1f67aa))
+* General cleanup ([#1231](https://github.com/Koenkk/zigbee-herdsman/issues/1231)) ([86d1a76](https://github.com/Koenkk/zigbee-herdsman/commit/86d1a76c0a3f803859e98dfd0af7e60ece60f28e))
+* **ignore:** Update dependencies ([#1246](https://github.com/Koenkk/zigbee-herdsman/issues/1246)) ([bc24ecb](https://github.com/Koenkk/zigbee-herdsman/commit/bc24ecb2cf7d1dd5e78e859a3962668a950c8f89))
+
 ## [2.1.9](https://github.com/Koenkk/zigbee-herdsman/compare/v2.1.8...v2.1.9) (2024-11-18)
 
 
