@@ -1,5 +1,23 @@
 # Changelog
 
+## [2.1.9](https://github.com/Koenkk/zigbee-herdsman/compare/v2.1.8...v2.1.9) (2024-11-18)
+
+
+### Bug Fixes
+
+* comment on Z-Stack ZDO command oddity ([#1240](https://github.com/Koenkk/zigbee-herdsman/issues/1240)) ([b54d1e8](https://github.com/Koenkk/zigbee-herdsman/commit/b54d1e8f22ef9505e95a3eb2764e44ad4c2a1757))
+* Fix command responses in the scenes cluster ([#1241](https://github.com/Koenkk/zigbee-herdsman/issues/1241)) ([1d54cba](https://github.com/Koenkk/zigbee-herdsman/commit/1d54cba76de04a80fb65d647369ec0e9f53e230a))
+
+## [2.1.8](https://github.com/Koenkk/zigbee-herdsman/compare/v2.1.7...v2.1.8) (2024-11-13)
+
+
+### Bug Fixes
+
+* Fix missing response for readReportConfig command ([#1235](https://github.com/Koenkk/zigbee-herdsman/issues/1235)) ([6b29aff](https://github.com/Koenkk/zigbee-herdsman/commit/6b29affb2470fc68bf3a83cc6c3e8a4413b7fe44))
+* **ignore:** update dependencies ([#1229](https://github.com/Koenkk/zigbee-herdsman/issues/1229)) ([59c2f1b](https://github.com/Koenkk/zigbee-herdsman/commit/59c2f1b1c776667d18831bd0f55654e5577cb50b))
+* **ignore:** update dependencies ([#1232](https://github.com/Koenkk/zigbee-herdsman/issues/1232)) ([bf3b0a0](https://github.com/Koenkk/zigbee-herdsman/commit/bf3b0a07584c219405de6697dfad0242baa10956))
+* ZNP ZDO: skip logging payload ([#1233](https://github.com/Koenkk/zigbee-herdsman/issues/1233)) ([c8ad904](https://github.com/Koenkk/zigbee-herdsman/commit/c8ad90461afae84e7e78dae28fae173cc84cab67))
+
 ## [2.1.7](https://github.com/Koenkk/zigbee-herdsman/compare/v2.1.6...v2.1.7) (2024-10-31)
 
 
