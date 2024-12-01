@@ -13,6 +13,7 @@ import * as ZSpec from '../../../zspec';
 import * as Zdo from '../../../zspec/zdo';
 import {EndDeviceAnnounce, GenericZdoResponse, ResponseMap as ZdoResponseMap} from '../../../zspec/zdo/definition/tstypes';
 import {SerialPort} from '../../serialPort';
+import SerialPortUtils from '../../serialPortUtils';
 import SocketPortUtils from '../../socketPortUtils';
 import {SerialPortOptions} from '../../tstype';
 import {equal, ZiGateResponseMatcher, ZiGateResponseMatcherRule} from './commandType';
@@ -21,6 +22,11 @@ import ZiGateFrame from './frame';
 import ZiGateObject from './ziGateObject';
 
 const NS = 'zh:zigate:driver';
+
+const autoDetectDefinitions = [
+    {manufacturer: 'zigate_PL2303', vendorId: '067b', productId: '2303'},
+    {manufacturer: 'zigate_cp2102', vendorId: '10c4', productId: 'ea60'},
+];
 
 const timeouts = {
     reset: 30000,
@@ -196,6 +202,15 @@ export default class ZiGate extends EventEmitter<ZiGateEventMap> {
 
             return statusResponse.payload.status === STATUS.E_SL_MSG_STATUS_SUCCESS;
         });
+    }
+
+    public static async isValidPath(path: string): Promise<boolean> {
+        return await SerialPortUtils.is(path, autoDetectDefinitions);
+    }
+
+    public static async autoDetectPath(): Promise<string | undefined> {
+        const paths = await SerialPortUtils.find(autoDetectDefinitions);
+        return paths.length > 0 ? paths[0] : undefined;
     }
 
     public open(): Promise<void> {

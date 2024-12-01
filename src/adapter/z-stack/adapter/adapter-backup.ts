@@ -4,7 +4,7 @@ import * as fs from 'fs';
 import * as Models from '../../../models';
 import {BackupUtils} from '../../../utils';
 import {logger} from '../../../utils/logger';
-import {NULL_NODE_ID, Utils as ZSpecUtils} from '../../../zspec';
+import {NULL_NODE_ID} from '../../../zspec';
 import {NvItemsIds, NvSystemIds} from '../constants/common';
 import * as Structs from '../structs';
 import {AddressManagerUser, SecurityManagerAuthenticationOption} from '../structs';
@@ -232,10 +232,10 @@ export class AdapterBackup {
             const missing = oldBackup.devices.filter(
                 (d) =>
                     d.linkKey &&
-                    ieeeAddressesInDatabase.includes(ZSpecUtils.eui64BEBufferToHex(d.ieeeAddress)) &&
+                    ieeeAddressesInDatabase.includes(`0x${d.ieeeAddress.toString('hex')}`) &&
                     !backup.devices.find((dd) => d.ieeeAddress.equals(dd.ieeeAddress)),
             );
-            const missingStr = missing.map((d) => ZSpecUtils.eui64BEBufferToHex(d.ieeeAddress)).join(', ');
+            const missingStr = missing.map((d) => `0x${d.ieeeAddress.toString('hex')}`).join(', ');
             logger.debug(
                 `Following devices with link key are missing from new backup but present in old backup and database, ` +
                     `adding them back: ${missingStr}`,

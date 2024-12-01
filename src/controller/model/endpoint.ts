@@ -788,7 +788,7 @@ class Endpoint extends Entity {
     public waitForCommand(
         clusterKey: number | string,
         commandKey: number | string,
-        transactionSequenceNumber: number | undefined,
+        transactionSequenceNumber: number,
         timeout: number,
     ): {promise: Promise<{header: Zcl.Header; payload: KeyValue}>; cancel: () => void} {
         const device = this.getDevice();

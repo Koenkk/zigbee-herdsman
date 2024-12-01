@@ -2,10 +2,11 @@ import assert from 'assert';
 import events from 'events';
 import net from 'net';
 
-import {Queue, Wait, Waitress} from '../../../utils';
+import {Queue, RealpathSync, Wait, Waitress} from '../../../utils';
 import {logger} from '../../../utils/logger';
 import {ClusterId as ZdoClusterId} from '../../../zspec/zdo';
 import {SerialPort} from '../../serialPort';
+import SerialPortUtils from '../../serialPortUtils';
 import SocketPortUtils from '../../socketPortUtils';
 import * as Constants from '../constants';
 import {Frame as UnpiFrame, Parser as UnpiParser, Writer as UnpiWriter} from '../unpi';
@@ -36,6 +37,13 @@ interface WaitressMatcher {
     transid?: number;
     state?: number;
 }
+
+const autoDetectDefinitions = [
+    {manufacturer: 'Texas Instruments', vendorId: '0451', productId: '16c8'}, // CC2538
+    {manufacturer: 'Texas Instruments', vendorId: '0451', productId: '16a8'}, // CC2531
+    {manufacturer: 'Texas Instruments', vendorId: '0451', productId: 'bef3'}, // CC1352P_2 and CC26X2R1
+    {manufacturer: 'Electrolama', vendorId: '0403', productId: '6015'}, // ZZH
+];
 
 class Znp extends events.EventEmitter {
     private path: string;
@@ -188,6 +196,31 @@ class Znp extends events.EventEmitter {
                 }
             }
         }
+    }
+
+    public static async isValidPath(path: string): Promise<boolean> {
+        // For TCP paths we cannot get device information, therefore we cannot validate it.
+        if (SocketPortUtils.isTcpPath(path)) {
+            return false;
+        }
+
+        try {
+            return await SerialPortUtils.is(RealpathSync(path), autoDetectDefinitions);
+        } catch (error) {
+            logger.error(`Failed to determine if path is valid: '${error}'`, NS);
+            return false;
+        }
+    }
+
+    public static async autoDetectPath(): Promise<string | undefined> {
+        const paths = await SerialPortUtils.find(autoDetectDefinitions);
+
+        // CC1352P_2 and CC26X2R1 lists as 2 USB devices with same manufacturer, productId and vendorId
+        // one is the actual chip interface, other is the XDS110.
+        // The chip is always exposed on the first one after alphabetical sorting.
+        paths.sort((a, b) => (a < b ? -1 : 1));
+
+        return paths.length > 0 ? paths[0] : undefined;
     }
 
     public async close(): Promise<void> {

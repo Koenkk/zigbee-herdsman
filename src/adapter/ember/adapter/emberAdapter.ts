@@ -6,7 +6,7 @@ import equals from 'fast-deep-equal/es6';
 
 import {Adapter, TsType} from '../..';
 import {Backup, UnifiedBackupStorage} from '../../../models';
-import {BackupUtils, Queue, Wait} from '../../../utils';
+import {BackupUtils, Queue, RealpathSync, Wait} from '../../../utils';
 import {logger} from '../../../utils/logger';
 import * as ZSpec from '../../../zspec';
 import {EUI64, ExtendedPanId, NodeId, PanId} from '../../../zspec/tstypes';
@@ -14,8 +14,12 @@ import * as Zcl from '../../../zspec/zcl';
 import * as Zdo from '../../../zspec/zdo';
 import * as ZdoTypes from '../../../zspec/zdo/definition/tstypes';
 import {DeviceJoinedPayload, DeviceLeavePayload, ZclPayload} from '../../events';
+import SerialPortUtils from '../../serialPortUtils';
+import SocketPortUtils from '../../socketPortUtils';
 import {
     EMBER_HIGH_RAM_CONCENTRATOR,
+    EMBER_INSTALL_CODE_CRC_SIZE,
+    EMBER_INSTALL_CODE_SIZES,
     EMBER_LOW_RAM_CONCENTRATOR,
     EMBER_MIN_BROADCAST_ADDRESS,
     INTERPAN_APS_FRAME_TYPE,
@@ -68,8 +72,8 @@ import {
     SecManContext,
     SecManKey,
 } from '../types';
-import {initNetworkCache, initSecurityManagerContext} from '../utils/initters';
-import {lowHighBytes} from '../utils/math';
+import {aesMmoHashInit, initNetworkCache, initSecurityManagerContext} from '../utils/initters';
+import {halCommonCrc16, highByte, highLowToInt, lowByte, lowHighBytes} from '../utils/math';
 import {FIXED_ENDPOINTS} from './endpoints';
 import {EmberOneWaitress, OneWaitressEvents} from './oneWaitress';
 
@@ -106,6 +110,14 @@ enum NetworkInitAction {
     /** Re-form the network using full backed-up data. */
     FORM_BACKUP,
 }
+
+/** NOTE: Drivers can override `manufacturer`. Verify logic doesn't work in most cases anyway. */
+const autoDetectDefinitions = [
+    /** NOTE: Manuf code "0x1321" for "Shenzhen Sonoff Technologies Co., Ltd." */
+    {manufacturer: 'ITEAD', vendorId: '1a86', productId: '55d4'}, // Sonoff ZBDongle-E
+    /** NOTE: Manuf code "0x134B" for "Nabu Casa, Inc." */
+    {manufacturer: 'Nabu Casa', vendorId: '10c4', productId: 'ea60'}, // Home Assistant SkyConnect
+];
 
 /**
  * Application generated ZDO messages use sequence numbers 0-127, and the stack
@@ -723,13 +735,8 @@ export class EmberAdapter extends Adapter {
             throw new Error(`Failed to get network parameters with status=${SLStatus[status]}.`);
         }
 
-        if (this.adapterOptions.transmitPower != undefined && parameters.radioTxPower !== this.adapterOptions.transmitPower) {
-            const status = await this.ezsp.ezspSetRadioPower(this.adapterOptions.transmitPower);
-
-            if (status !== SLStatus.OK) {
-                // soft-fail, don't prevent start
-                logger.error(`Failed to set transmit power to ${this.adapterOptions.transmitPower} status=${SLStatus[status]}.`, NS);
-            }
+        if (this.adapterOptions.transmitPower != null && parameters.radioTxPower !== this.adapterOptions.transmitPower) {
+            await this.setTransmitPower(this.adapterOptions.transmitPower);
         }
 
         this.networkCache.parameters = parameters;
@@ -961,12 +968,16 @@ export class EmberAdapter extends Adapter {
                 logger.info(`[INIT TC] Forming from backup.`, NS);
                 // `backup` valid in this `action` path (not detected by TS)
                 /* istanbul ignore next */
-                const keyList: LinkKeyBackupData[] = backup!.devices.map((device) => ({
-                    deviceEui64: ZSpec.Utils.eui64BEBufferToHex(device.ieeeAddress),
-                    key: {contents: device.linkKey!.key},
-                    outgoingFrameCounter: device.linkKey!.txCounter,
-                    incomingFrameCounter: device.linkKey!.rxCounter,
-                }));
+                const keyList: LinkKeyBackupData[] = backup!.devices.map((device) => {
+                    const octets = Array.from(device.ieeeAddress.reverse());
+
+                    return {
+                        deviceEui64: `0x${octets.map((octet) => octet.toString(16).padStart(2, '0')).join('')}`,
+                        key: {contents: device.linkKey!.key},
+                        outgoingFrameCounter: device.linkKey!.txCounter,
+                        incomingFrameCounter: device.linkKey!.rxCounter,
+                    };
+                });
 
                 // before forming
                 await this.importLinkKeys(keyList);
@@ -1190,14 +1201,19 @@ export class EmberAdapter extends Adapter {
                 // Rather than give the real link key, the backup contains a hashed version of the key.
                 // This is done to prevent a compromise of the backup data from compromising the current link keys.
                 // This is per the Smart Energy spec.
-                const hashedKey = ZSpec.Utils.aes128MmoHash(plaintextKey.contents);
+                const [hashStatus, hashedKey] = await this.emberAesHashSimple(plaintextKey.contents);
 
-                keyList.push({
-                    deviceEui64: context.eui64,
-                    key: {contents: hashedKey},
-                    outgoingFrameCounter: apsKeyMeta.outgoingFrameCounter,
-                    incomingFrameCounter: apsKeyMeta.incomingFrameCounter,
-                });
+                if (hashStatus === SLStatus.OK) {
+                    keyList.push({
+                        deviceEui64: context.eui64,
+                        key: {contents: hashedKey},
+                        outgoingFrameCounter: apsKeyMeta.outgoingFrameCounter,
+                        incomingFrameCounter: apsKeyMeta.incomingFrameCounter,
+                    });
+                } else {
+                    // this should never happen?
+                    logger.error(`[BACKUP] Failed to hash link key at index ${i} with status=${SLStatus[hashStatus]}. Omitting from backup.`, NS);
+                }
             }
         }
 
@@ -1488,6 +1504,26 @@ export class EmberAdapter extends Adapter {
     }
 
     /**
+     *  This is a convenience method when the hash data is less than 255
+     *  bytes. It inits, updates, and finalizes the hash in one function call.
+     *
+     * @param data const uint8_t* The data to hash. Expected of valid length (as in, not larger alloc)
+     *
+     * @returns An ::SLStatus value indicating EMBER_SUCCESS if the hash was
+     *   calculated successfully.  EMBER_INVALID_CALL if the block size is not a
+     *   multiple of 16 bytes, and EMBER_INDEX_OUT_OF_RANGE is returned when the
+     *   data exceeds the maximum limits of the hash function.
+     * @returns result uint8_t*  The location where the result of the hash will be written.
+     */
+    private async emberAesHashSimple(data: Buffer): Promise<[SLStatus, result: Buffer]> {
+        const context = aesMmoHashInit();
+
+        const [status, reContext] = await this.ezsp.ezspAesMmoHash(context, true, data);
+
+        return [status, reContext?.result];
+    }
+
+    /**
      * Set the trust center policy bitmask using decision.
      * @param decision
      * @returns
@@ -1534,6 +1570,28 @@ export class EmberAdapter extends Adapter {
     //---- END Ember ZDO
 
     //-- START Adapter implementation
+
+    /* istanbul ignore next */
+    public static async isValidPath(path: string): Promise<boolean> {
+        // For TCP paths we cannot get device information, therefore we cannot validate it.
+        if (SocketPortUtils.isTcpPath(path)) {
+            return false;
+        }
+
+        try {
+            return await SerialPortUtils.is(RealpathSync(path), autoDetectDefinitions);
+        } catch (error) {
+            logger.debug(`Failed to determine if path is valid: '${error}'`, NS);
+            return false;
+        }
+    }
+
+    /* istanbul ignore next */
+    public static async autoDetectPath(): Promise<string | undefined> {
+        const paths = await SerialPortUtils.find(autoDetectDefinitions);
+        paths.sort((a, b) => (a < b ? -1 : 1));
+        return paths.length > 0 ? paths[0] : undefined;
+    }
 
     public async start(): Promise<TsType.StartResult> {
         logger.info(`======== Ember Adapter Starting ========`, NS);
@@ -1688,11 +1746,55 @@ export class EmberAdapter extends Adapter {
     }
 
     // queued
-    public async addInstallCode(ieeeAddress: string, key: Buffer): Promise<void> {
+    public async setTransmitPower(value: number): Promise<void> {
         return await this.queue.execute<void>(async () => {
+            const status = await this.ezsp.ezspSetRadioPower(value);
+
+            if (status !== SLStatus.OK) {
+                throw new Error(`Failed to set transmit power to ${value} status=${SLStatus[status]}.`);
+            }
+        });
+    }
+
+    // queued
+    public async addInstallCode(ieeeAddress: string, key: Buffer): Promise<void> {
+        // codes with CRC, check CRC before sending to NCP, otherwise let NCP handle
+        if (EMBER_INSTALL_CODE_SIZES.indexOf(key.length) !== -1) {
+            // Reverse the bits in a byte (uint8_t)
+            const reverse = (b: number): number => {
+                return (((((b * 0x0802) & 0x22110) | ((b * 0x8020) & 0x88440)) * 0x10101) >> 16) & 0xff;
+            };
+            let crc = 0xffff; // uint16_t
+
+            // Compute the CRC and verify that it matches.
+            // The bit reversals, byte swap, and ones' complement are due to differences between halCommonCrc16 and the Smart Energy version.
+            for (let index = 0; index < key.length - EMBER_INSTALL_CODE_CRC_SIZE; index++) {
+                crc = halCommonCrc16(reverse(key[index]), crc);
+            }
+
+            crc = ~highLowToInt(reverse(lowByte(crc)), reverse(highByte(crc))) & 0xffff;
+
+            if (
+                key[key.length - EMBER_INSTALL_CODE_CRC_SIZE] !== lowByte(crc) ||
+                key[key.length - EMBER_INSTALL_CODE_CRC_SIZE + 1] !== highByte(crc)
+            ) {
+                throw new Error(`[ADD INSTALL CODE] Failed for '${ieeeAddress}'; invalid code CRC.`);
+            } else {
+                logger.debug(`[ADD INSTALL CODE] CRC validated for '${ieeeAddress}'.`, NS);
+            }
+        }
+
+        return await this.queue.execute<void>(async () => {
+            // Compute the key from the install code and CRC.
+            const [aesStatus, keyContents] = await this.emberAesHashSimple(key);
+
+            if (aesStatus !== SLStatus.OK) {
+                throw new Error(`[ADD INSTALL CODE] Failed AES hash for '${ieeeAddress}' with status=${SLStatus[aesStatus]}.`);
+            }
+
             // Add the key to the transient key table.
             // This will be used while the DUT joins.
-            const impStatus = await this.ezsp.ezspImportTransientKey(ieeeAddress as EUI64, {contents: ZSpec.Utils.aes128MmoHash(key)});
+            const impStatus = await this.ezsp.ezspImportTransientKey(ieeeAddress as EUI64, {contents: keyContents});
 
             if (impStatus == SLStatus.OK) {
                 logger.debug(`[ADD INSTALL CODE] Success for '${ieeeAddress}'.`, NS);

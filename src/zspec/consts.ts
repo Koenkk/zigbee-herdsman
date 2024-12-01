@@ -72,13 +72,3 @@ export const PAN_ID_SIZE = 2;
 export const EXTENDED_PAN_ID_SIZE = 8;
 /** Size of an encryption key in bytes. */
 export const DEFAULT_ENCRYPTION_KEY_SIZE = 16;
-/** Size of a AES-128-MMO (Matyas-Meyer-Oseas) block in bytes. */
-export const AES_MMO_128_BLOCK_SIZE = 16;
-/**
- * Valid install code sizes, including `INSTALL_CODE_CRC_SIZE`.
- *
- * NOTE: 18 is now standard, first for iterations, order after is important (8 before 10)!
- */
-export const INSTALL_CODE_SIZES: ReadonlyArray<number> = [18, 8, 10, 14];
-/** Size of the CRC appended to install codes. */
-export const INSTALL_CODE_CRC_SIZE = 2;
