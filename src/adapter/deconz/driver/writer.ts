@@ -1,7 +1,9 @@
 /* istanbul ignore file */
+/* eslint-disable */
 
 import * as stream from 'stream';
 
+// @ts-ignore
 import slip from 'slip';
 
 import {logger} from '../../../utils/logger';

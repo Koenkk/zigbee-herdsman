@@ -1384,6 +1384,9 @@ jest.mock('../../../src/utils/queue', () => {
     });
 });
 
+Znp.isValidPath = jest.fn().mockReturnValue(true);
+Znp.autoDetectPath = jest.fn().mockReturnValue('/dev/autodetected');
+
 const mocksClear = [mockLogger.debug, mockLogger.info, mockLogger.warning, mockLogger.error];
 
 describe('zstack-adapter', () => {
@@ -1644,7 +1647,7 @@ describe('zstack-adapter', () => {
         mockZnpRequestWith(empty3AlignedRequestMock);
         await adapter.start();
         fs.writeFileSync(backupFile, JSON.stringify(backupWithMissingDevice), 'utf8');
-        const devicesInDatabase = backupWithMissingDevice.devices.map((d) => ZSpec.Utils.eui64BEBufferToHex(d.ieee_address));
+        const devicesInDatabase = backupWithMissingDevice.devices.map((d) => `0x${d.ieee_address}`);
         const backup = await adapter.backup(devicesInDatabase);
         const missingDevice = backup.devices.find((d) => d.ieeeAddress.toString('hex') == '00128d11124fa80b');
         expect(missingDevice).not.toBeNull();
@@ -2075,6 +2078,17 @@ describe('zstack-adapter', () => {
     });
 
     /* Original Tests */
+    it('Is valid path', async () => {
+        const result = await ZStackAdapter.isValidPath('/dev/autodetected');
+        expect(result).toBeTruthy();
+        expect(Znp.isValidPath).toHaveBeenCalledWith('/dev/autodetected');
+    });
+
+    it('Auto detect path', async () => {
+        const result = await ZStackAdapter.autoDetectPath();
+        expect(result).toBe('/dev/autodetected');
+        expect(Znp.autoDetectPath).toHaveBeenCalledTimes(1);
+    });
 
     it('Call znp constructor', async () => {
         expect(Znp).toHaveBeenCalledWith('dummy', 800, false);
@@ -2180,6 +2194,16 @@ describe('zstack-adapter', () => {
         adapter = new ZStackAdapter(networkOptions, serialPortOptions, 'backup.json', {transmitPower: 2, disableLED: false});
         await adapter.start();
         expect(mockZnpRequest).toHaveBeenCalledWith(Subsystem.SYS, 'stackTune', {operation: 0, value: 2});
+    });
+
+    it('Set transmit power', async () => {
+        basicMocks();
+        await adapter.start();
+        mockZnpRequest.mockClear();
+        mockQueueExecute.mockClear();
+        await adapter.setTransmitPower(15);
+        expect(mockZnpRequest).toHaveBeenCalledTimes(1);
+        expect(mockZnpRequest).toHaveBeenCalledWith(Subsystem.SYS, 'stackTune', {operation: 0, value: 15});
     });
 
     it('Support LED should go to false when LED request fails', async () => {

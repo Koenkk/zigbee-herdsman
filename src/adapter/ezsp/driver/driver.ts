@@ -175,7 +175,7 @@ export class Driver extends EventEmitter {
         }
     }
 
-    public async startup(transmitPower?: number): Promise<TsType.StartResult> {
+    public async startup(): Promise<TsType.StartResult> {
         let result: TsType.StartResult = 'resumed';
         this.transactionID = 1;
         // this.ezsp = undefined;
@@ -260,12 +260,12 @@ export class Driver extends EventEmitter {
             if (restore) {
                 // restore
                 logger.info('Restore network from backup', NS);
-                await this.formNetwork(true, transmitPower);
+                await this.formNetwork(true);
                 result = 'restored';
             } else {
                 // reset
                 logger.info('Form network', NS);
-                await this.formNetwork(false, transmitPower);
+                await this.formNetwork(false);
                 result = 'reset';
             }
         }
@@ -301,10 +301,6 @@ export class Driver extends EventEmitter {
         await this.multicast.subscribe(ZSpec.GP_GROUP_ID, ZSpec.GP_ENDPOINT);
         // await this.multicast.subscribe(1, 901);
 
-        if (transmitPower != undefined && this.networkParams.radioTxPower !== transmitPower) {
-            await this.ezsp.execCommand('setRadioPower', {power: transmitPower});
-        }
-
         return result;
     }
 
@@ -322,7 +318,7 @@ export class Driver extends EventEmitter {
         return !valid;
     }
 
-    private async formNetwork(restore: boolean, transmitPower?: number): Promise<void> {
+    private async formNetwork(restore: boolean): Promise<void> {
         let backup;
         await this.ezsp.execCommand('clearTransientLinkKeys');
 
@@ -345,7 +341,7 @@ export class Driver extends EventEmitter {
         await this.ezsp.setInitialSecurityState(initial_security_state);
 
         const parameters: EmberNetworkParameters = new EmberNetworkParameters();
-        parameters.radioTxPower = transmitPower ?? 5;
+        parameters.radioTxPower = 5;
         parameters.joinMethod = EmberJoinMethod.USE_MAC_ASSOCIATION;
         parameters.nwkManagerId = 0;
         parameters.nwkUpdateId = 0;
@@ -866,6 +862,10 @@ export class Driver extends EventEmitter {
             (!payload.frame || payload.frame.clusterId === matcher.clusterId) &&
             (!payload.frame || payload.payload[0] === matcher.sequence)
         );
+    }
+
+    public setRadioPower(value: number): Promise<EZSPFrameData> {
+        return this.ezsp.execCommand('setRadioPower', {power: value});
     }
 
     public setChannel(channel: number): Promise<EZSPFrameData> {

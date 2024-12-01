@@ -91,10 +91,6 @@ class ZiGateAdapter extends Adapter {
                 destinationEndpoint: ZSpec.HA_ENDPOINT,
                 groupAddress: default_bind_group,
             });
-
-            if (this.adapterOptions.transmitPower != undefined) {
-                await this.driver.sendCommand(ZiGateCommandCode.SetTXpower, {value: this.adapterOptions.transmitPower});
-            }
         } catch (error) {
             throw new Error('failed to connect to zigate adapter ' + (error as Error).message);
         }
@@ -192,6 +188,14 @@ class ZiGateAdapter extends Adapter {
 
     public async backup(): Promise<Models.Backup> {
         throw new Error('This adapter does not support backup');
+    }
+
+    public async setTransmitPower(value: number): Promise<void> {
+        try {
+            await this.driver.sendCommand(ZiGateCommandCode.SetTXpower, {value: value});
+        } catch (error) {
+            throw new Error(`Set transmitpower failed ${error}`);
+        }
     }
 
     public async sendZdo(
@@ -524,6 +528,14 @@ class ZiGateAdapter extends Adapter {
         const waiter = this.waitress.waitFor(payload, timeout);
         const cancel = (): void => this.waitress.remove(waiter.ID);
         return {promise: waiter.start().promise, cancel};
+    }
+
+    public static async isValidPath(path: string): Promise<boolean> {
+        return await Driver.isValidPath(path);
+    }
+
+    public static async autoDetectPath(): Promise<string | undefined> {
+        return await Driver.autoDetectPath();
     }
 
     /**

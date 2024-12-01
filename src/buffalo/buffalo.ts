@@ -1,6 +1,4 @@
-import type {EUI64} from '../zspec/tstypes';
-
-import {Utils as ZSpecUtils} from '../zspec';
+import {EUI64} from '../zspec/tstypes';
 
 class Buffalo {
     protected position: number;
@@ -240,7 +238,7 @@ class Buffalo {
     }
 
     public readIeeeAddr(): EUI64 {
-        return ZSpecUtils.eui64LEBufferToHex(this.readBuffer(8));
+        return `0x${Buffer.from(this.readBuffer(8)).reverse().toString('hex')}`;
     }
 
     public writeBuffer(values: Buffer | number[], length: number): void {

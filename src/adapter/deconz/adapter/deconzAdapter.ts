@@ -76,6 +76,14 @@ class DeconzAdapter extends Adapter {
         }, 1000);
     }
 
+    public static async isValidPath(path: string): Promise<boolean> {
+        return await Driver.isValidPath(path);
+    }
+
+    public static async autoDetectPath(): Promise<string | undefined> {
+        return await Driver.autoDetectPath();
+    }
+
     /**
      * Adapter methods
      */
@@ -299,8 +307,9 @@ class DeconzAdapter extends Adapter {
         }
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     public async addInstallCode(ieeeAddress: string, key: Buffer): Promise<void> {
-        await this.driver.writeLinkKey(ieeeAddress, ZSpec.Utils.aes128MmoHash(key));
+        return await Promise.reject(new Error('Add install code is not supported'));
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -570,6 +579,11 @@ class DeconzAdapter extends Adapter {
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     public async setChannelInterPAN(channel: number): Promise<void> {
+        throw new Error('not supported');
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    public async setTransmitPower(value: number): Promise<void> {
         throw new Error('not supported');
     }
 
