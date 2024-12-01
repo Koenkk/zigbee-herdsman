@@ -152,7 +152,7 @@ class ZStackAdapter extends Adapter {
         }
 
         if (this.adapterOptions.transmitPower != null) {
-            await this.setTransmitPower(this.adapterOptions.transmitPower);
+            await this.znp.request(Subsystem.SYS, 'stackTune', {operation: 0, value: this.adapterOptions.transmitPower});
         }
 
         return await startResult;
@@ -161,14 +161,6 @@ class ZStackAdapter extends Adapter {
     public async stop(): Promise<void> {
         this.closing = true;
         await this.znp.close();
-    }
-
-    public static async isValidPath(path: string): Promise<boolean> {
-        return await Znp.isValidPath(path);
-    }
-
-    public static async autoDetectPath(): Promise<string | undefined> {
-        return await Znp.autoDetectPath();
     }
 
     public async getCoordinatorIEEE(): Promise<string> {
@@ -961,12 +953,6 @@ class ZStackAdapter extends Adapter {
         });
     }
 
-    public async setTransmitPower(value: number): Promise<void> {
-        return await this.queue.execute<void>(async () => {
-            await this.znp.request(Subsystem.SYS, 'stackTune', {operation: 0, value});
-        });
-    }
-
     private waitForInternal(
         networkAddress: number | undefined,
         endpoint: number,
@@ -1143,17 +1129,7 @@ class ZStackAdapter extends Adapter {
     }
 
     private toAddressString(address: number | string): string {
-        if (typeof address === 'number') {
-            let addressString = address.toString(16);
-
-            for (let i = addressString.length; i < 16; i++) {
-                addressString = '0' + addressString;
-            }
-
-            return `0x${addressString}`;
-        } else {
-            return address.toString();
-        }
+        return typeof address === 'number' ? `0x${address.toString(16).padStart(16, '0')}` : address.toString();
     }
 
     private waitressTimeoutFormatter(matcher: WaitressMatcher, timeout: number): string {

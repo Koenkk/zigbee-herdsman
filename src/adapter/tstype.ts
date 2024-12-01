@@ -1,4 +1,14 @@
-interface NetworkOptions {
+export type Adapter = 'deconz' | 'ember' | 'zstack' | 'zboss' | 'zigate' | 'ezsp';
+export type DiscoverableUSBAdapter = 'deconz' | 'ember' | 'zstack' | 'zboss' | 'zigate';
+
+export type USBAdapterFingerprint = {
+    vendorId: string;
+    productId: string;
+    manufacturer?: string;
+    pathRegex: string;
+};
+
+export interface NetworkOptions {
     panID: number;
     extendedPanID?: number[];
     channelList: number[];
@@ -6,14 +16,14 @@ interface NetworkOptions {
     networkKeyDistribute?: boolean;
 }
 
-interface SerialPortOptions {
+export interface SerialPortOptions {
     baudRate?: number;
     rtscts?: boolean;
     path?: string;
-    adapter?: 'zstack' | 'deconz' | 'zigate' | 'ezsp' | 'ember' | 'zboss' | 'auto';
+    adapter?: Adapter;
 }
 
-interface AdapterOptions {
+export interface AdapterOptions {
     concurrent?: number;
     delay?: number;
     disableLED: boolean;
@@ -21,16 +31,16 @@ interface AdapterOptions {
     forceStartWithInconsistentAdapterConfiguration?: boolean;
 }
 
-interface CoordinatorVersion {
+export interface CoordinatorVersion {
     type: string;
     meta: {[s: string]: number | string};
 }
 
-type DeviceType = 'Coordinator' | 'EndDevice' | 'Router' | 'Unknown';
+export type DeviceType = 'Coordinator' | 'EndDevice' | 'Router' | 'Unknown';
 
-type StartResult = 'resumed' | 'reset' | 'restored';
+export type StartResult = 'resumed' | 'reset' | 'restored';
 
-interface LQINeighbor {
+export interface LQINeighbor {
     ieeeAddr: string;
     networkAddress: number;
     linkquality: number;
@@ -38,21 +48,21 @@ interface LQINeighbor {
     depth: number;
 }
 
-interface LQI {
+export interface LQI {
     neighbors: LQINeighbor[];
 }
 
-interface RoutingTableEntry {
+export interface RoutingTableEntry {
     destinationAddress: number;
     status: string;
     nextHop: number;
 }
 
-interface RoutingTable {
+export interface RoutingTable {
     table: RoutingTableEntry[];
 }
 
-interface Backup {
+export interface Backup {
     adapterType: 'zStack';
     time: string;
     meta: {[s: string]: number};
@@ -60,23 +70,8 @@ interface Backup {
     data: any;
 }
 
-interface NetworkParameters {
+export interface NetworkParameters {
     panID: number;
     extendedPanID: number;
     channel: number;
 }
-
-export {
-    SerialPortOptions,
-    NetworkOptions,
-    CoordinatorVersion,
-    DeviceType,
-    LQI,
-    LQINeighbor,
-    RoutingTable,
-    Backup,
-    NetworkParameters,
-    StartResult,
-    RoutingTableEntry,
-    AdapterOptions,
-};

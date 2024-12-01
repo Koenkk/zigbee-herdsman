@@ -78,9 +78,8 @@ class Controller extends events.EventEmitter<ControllerEventMap> {
     // @ts-expect-error assigned and validated in start()
     private touchlink: Touchlink;
 
-    private permitJoinNetworkClosedTimer: NodeJS.Timeout | undefined;
     private permitJoinTimeoutTimer: NodeJS.Timeout | undefined;
-    private permitJoinTimeout: number | undefined;
+    private permitJoinTimeout: number;
     private backupTimer: NodeJS.Timeout | undefined;
     private databaseSaveTimer: NodeJS.Timeout | undefined;
     private stopping: boolean;
@@ -100,6 +99,7 @@ class Controller extends events.EventEmitter<ControllerEventMap> {
         this.adapterDisconnected = true; // set false after adapter.start() is successfully called
         this.options = mixinDeep(JSON.parse(JSON.stringify(DefaultOptions)), options);
         this.unknownDevices = new Set();
+        this.permitJoinTimeout = 0;
 
         // Validate options
         for (const channel of this.options.network.channelList) {
@@ -271,65 +271,64 @@ class Controller extends events.EventEmitter<ControllerEventMap> {
         // match valid else asserted above
         key = Buffer.from(key.match(/.{1,2}/g)!.map((d) => parseInt(d, 16)));
 
-        await this.adapter.addInstallCode(ieeeAddr, key);
+        // will throw if code cannot be fixed and is invalid
+        const [adjustedKey, adjusted] = ZSpec.Utils.checkInstallCode(key, true);
+
+        if (adjusted) {
+            logger.info(`Install code was adjusted for reason '${adjusted}'.`, NS);
+        }
+
+        logger.info(`Adding install code for ${ieeeAddr}.`, NS);
+
+        await this.adapter.addInstallCode(ieeeAddr, adjustedKey);
     }
 
-    public async permitJoin(permit: boolean, device?: Device, time?: number): Promise<void> {
-        await this.permitJoinInternal(permit, 'manual', device, time);
-    }
-
-    public async permitJoinInternal(permit: boolean, reason: 'manual' | 'timer_expired', device?: Device, time?: number): Promise<void> {
-        clearInterval(this.permitJoinNetworkClosedTimer);
+    public async permitJoin(time: number, device?: Device): Promise<void> {
         clearInterval(this.permitJoinTimeoutTimer);
-        this.permitJoinNetworkClosedTimer = undefined;
         this.permitJoinTimeoutTimer = undefined;
-        this.permitJoinTimeout = undefined;
+        this.permitJoinTimeout = 0;
 
-        if (permit) {
-            await this.adapter.permitJoin(254, device?.networkAddress);
-            await this.greenPower.permitJoin(254, device?.networkAddress);
+        if (time > 0) {
+            // never permit more than uint8, and never permit 255 that is often equal to "forever"
+            assert(time <= 254, `Cannot permit join for more than 254 seconds.`);
 
-            // TODO: remove https://github.com/Koenkk/zigbee-herdsman/issues/940
-            // Zigbee 3 networks automatically close after max 255 seconds, keep network open.
-            this.permitJoinNetworkClosedTimer = setInterval(async (): Promise<void> => {
-                try {
-                    await this.adapter.permitJoin(254, device?.networkAddress);
-                    await this.greenPower.permitJoin(254, device?.networkAddress);
-                } catch (error) {
-                    logger.error(`Failed to keep permit join alive: ${error}`, NS);
+            await this.adapter.permitJoin(time, device?.networkAddress);
+            await this.greenPower.permitJoin(time, device?.networkAddress);
+
+            // TODO: should use setTimeout and timer only for open/close emit
+            //       let the other end (frontend) do the sec-by-sec updating (without mqtt publish)
+            // Also likely creates a gap of a few secs between what Z2M says and what the stack actually has => unreliable timer end
+            this.permitJoinTimeout = time;
+            this.permitJoinTimeoutTimer = setInterval(async (): Promise<void> => {
+                // assumed valid number while in interval
+                this.permitJoinTimeout--;
+
+                if (this.permitJoinTimeout <= 0) {
+                    clearInterval(this.permitJoinTimeoutTimer);
+                    this.permitJoinTimeoutTimer = undefined;
+                    this.permitJoinTimeout = 0;
+
+                    this.emit('permitJoinChanged', {permitted: false, timeout: this.permitJoinTimeout});
+                } else {
+                    this.emit('permitJoinChanged', {permitted: true, timeout: this.permitJoinTimeout});
                 }
-            }, 200 * 1000);
+            }, 1000);
 
-            // TODO: prevent many mqtt messages by doing this on the other end?
-            if (typeof time === 'number') {
-                this.permitJoinTimeout = time;
-                this.permitJoinTimeoutTimer = setInterval(async (): Promise<void> => {
-                    // assumed valid number while in interval
-                    this.permitJoinTimeout!--;
-
-                    if (this.permitJoinTimeout! <= 0) {
-                        await this.permitJoinInternal(false, 'timer_expired');
-                    } else {
-                        this.emit('permitJoinChanged', {permitted: true, timeout: this.permitJoinTimeout, reason});
-                    }
-                }, 1000);
-            }
-
-            this.emit('permitJoinChanged', {permitted: true, reason, timeout: this.permitJoinTimeout});
+            this.emit('permitJoinChanged', {permitted: true, timeout: this.permitJoinTimeout});
         } else {
             logger.debug('Disable joining', NS);
+
             await this.greenPower.permitJoin(0);
             await this.adapter.permitJoin(0);
 
-            this.emit('permitJoinChanged', {permitted: false, reason, timeout: this.permitJoinTimeout});
+            this.emit('permitJoinChanged', {permitted: false, timeout: this.permitJoinTimeout});
         }
     }
 
-    public getPermitJoin(): boolean {
-        return this.permitJoinNetworkClosedTimer != undefined;
-    }
-
-    public getPermitJoinTimeout(): number | undefined {
+    /**
+     * @returns Timeout until permit joining expires. [0-254], with 0 being "not permitting joining".
+     */
+    public getPermitJoinTimeout(): number {
         return this.permitJoinTimeout;
     }
 
@@ -354,7 +353,7 @@ class Controller extends events.EventEmitter<ControllerEventMap> {
             this.databaseSave();
         } else {
             try {
-                await this.permitJoinInternal(false, 'manual');
+                await this.permitJoin(0);
             } catch (error) {
                 logger.error(`Failed to disable join on stop: ${error}`, NS);
             }
@@ -397,10 +396,10 @@ class Controller extends events.EventEmitter<ControllerEventMap> {
     public async coordinatorCheck(): Promise<{missingRouters: Device[]}> {
         if (await this.adapter.supportsBackup()) {
             const backup = await this.adapter.backup(this.getDeviceIeeeAddresses());
-            const devicesInBackup = backup.devices.map((d) => `0x${d.ieeeAddress.toString('hex')}`);
+            const devicesInBackup = backup.devices.map((d) => ZSpec.Utils.eui64BEBufferToHex(d.ieeeAddress));
             const missingRouters = [];
 
-            for (const device of this.getDevicesIterator((d) => d.type === 'Router' && !devicesInBackup.includes(d.ieeeAddr))) {
+            for (const device of this.getDevicesIterator((d) => d.type === 'Router' && !devicesInBackup.includes(d.ieeeAddr as EUI64))) {
                 missingRouters.push(device);
             }
 
@@ -521,13 +520,6 @@ class Controller extends events.EventEmitter<ControllerEventMap> {
         // wait for the broadcast to propagate and the adapter to actually change
         // NOTE: observed to ~9sec on `ember` with actual stack event
         await Wait(12000);
-    }
-
-    /**
-     *  Set transmit power of the adapter
-     */
-    public async setTransmitPower(value: number): Promise<void> {
-        return await this.adapter.setTransmitPower(value);
     }
 
     public async identifyUnknownDevice(nwkAddress: number): Promise<Device | undefined> {
@@ -657,7 +649,7 @@ class Controller extends events.EventEmitter<ControllerEventMap> {
 
         // Green power devices don't have an ieeeAddr, the sourceID is unique and static so use this.
         let ieeeAddr = payload.sourceID.toString(16);
-        ieeeAddr = `0x${'0'.repeat(16 - ieeeAddr.length)}${ieeeAddr}`;
+        ieeeAddr = `0x${ieeeAddr.padStart(16, '0')}`;
 
         // Green power devices dont' have a modelID, create a modelID based on the deviceID (=type)
         const modelID = `GreenPower_${payload.deviceID}`;
