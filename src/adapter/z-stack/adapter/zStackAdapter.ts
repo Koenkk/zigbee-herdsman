@@ -600,15 +600,15 @@ class ZStackAdapter extends Adapter {
                     // Figure out once if the network address has been changed.
                     try {
                         checkedNetworkAddress = true;
-                        const actualNetworkAddress = await this.requestNetworkAddress(ieeeAddr);
-                        if (networkAddress !== actualNetworkAddress) {
-                            logger.debug(`Failed because request was done with wrong network address`, NS);
-                            discoveredRoute = true;
-                            networkAddress = actualNetworkAddress;
-                            await this.discoverRoute(actualNetworkAddress);
-                        } else {
-                            logger.debug('Network address did not change', NS);
-                        }
+                        // const actualNetworkAddress = await this.requestNetworkAddress(ieeeAddr);
+                        // if (networkAddress !== actualNetworkAddress) {
+                        //     logger.debug(`Failed because request was done with wrong network address`, NS);
+                        //     discoveredRoute = true;
+                        //     networkAddress = actualNetworkAddress;
+                        //     await this.discoverRoute(actualNetworkAddress);
+                        // } else {
+                        //     logger.debug('Network address did not change', NS);
+                        // }
                     } catch {
                         /* empty */
                     }
