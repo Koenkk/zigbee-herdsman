@@ -5336,7 +5336,7 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
      *        for this discovery arrive, but the callback is made only once.
      */
     ezspIncomingManyToOneRouteRequestHandler(source: NodeId, longId: EUI64, cost: number): void {
-        logger.debug(`ezspIncomingManyToOneRouteRequestHandler(): callback called with: [source=${source}], [longId=${longId}], [cost=${cost}]`, NS);
+        logger.debug(`ezspIncomingManyToOneRouteRequestHandler(): callback called with: [source=${source.toString(16)}], [longId=${longId}], [cost=${cost}]`, NS);
     }
 
     /**
@@ -5365,7 +5365,7 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
      * @param target The short id of the remote node.
      */
     ezspIncomingRouteErrorHandler(status: SLStatus, target: NodeId): void {
-        logger.debug(`ezspIncomingRouteErrorHandler(): callback called with: [status=${SLStatus[status]}], [target=${target}]`, NS);
+        logger.debug(`ezspIncomingRouteErrorHandler(): callback called with: [status=${SLStatus[status]}], [target=${target.toString(16)}]`, NS);
         // NOTE: This can trigger immediately after removal of a device with status MAC_INDIRECT_TIMEOUT
     }
 
@@ -5383,8 +5383,8 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
      * @param target The short ID of the remote node
      */
     ezspIncomingNetworkStatusHandler(errorCode: EmberStackError, target: NodeId): void {
-        logger.debug(`ezspIncomingNetworkStatusHandler(): callback called with: [errorCode=${EmberStackError[errorCode]}], [target=${target}]`, NS);
-        logger.info(`Received network/route error ${EmberStackError[errorCode]} for "${target}".`, NS);
+        logger.debug(`ezspIncomingNetworkStatusHandler(): callback called with: [errorCode=${EmberStackError[errorCode]}], [target=${target.toString(16)}]`, NS);
+        logger.info(`Received network/route error ${EmberStackError[errorCode]} for "${target.toString(16)}".`, NS);
     }
 
     /**
@@ -5407,7 +5407,7 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
         relayList: number[],
     ): void {
         logger.debug(
-            `ezspIncomingRouteRecordHandler(): callback called with: [source=${source}], [sourceEui=${sourceEui}], [lastHopLqi=${lastHopLqi}], [lastHopRssi=${lastHopRssi}], [relayCount=${relayCount}], [relayList=${relayList}]`,
+            `ezspIncomingRouteRecordHandler(): callback called with: [source=${source.toString(16)}], [sourceEui=${sourceEui}], [lastHopLqi=${lastHopLqi}], [lastHopRssi=${lastHopRssi}], [relayCount=${relayCount}], [relayList=${relayList}]`,
             NS,
         );
         // XXX: could at least trigger a `Events.lastSeenChanged` but this is not currently being listened to at the adapter level
