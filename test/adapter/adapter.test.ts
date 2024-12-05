@@ -175,9 +175,24 @@ describe('Adapter', () => {
             });
         });
 
+        it('returns config with hostname path', async () => {
+            const adapter = await Adapter.create(
+                {panID: 0x1a62, channelList: [11]},
+                {path: `tcp://my-super-host:3456`, adapter: `zstack`},
+                'test.db.backup',
+                {disableLED: false},
+            );
+
+            // @ts-expect-error protected
+            expect(adapter.serialPortOptions).toStrictEqual({
+                path: `tcp://my-super-host:3456`,
+                adapter: `zstack`,
+            });
+        });
+
         it('invalid path', async () => {
             expect(async () => {
-                await Adapter.create({panID: 0x1a62, channelList: [11]}, {path: `tcp://192168.1.321:3456`, adapter: `zstack`}, 'test.db.backup', {
+                await Adapter.create({panID: 0x1a62, channelList: [11]}, {path: `tcp://192168.1.321:INVALID`, adapter: `zstack`}, 'test.db.backup', {
                     disableLED: false,
                 });
             }).rejects.toThrow(`Invalid TCP path, expected format: tcp://<host>:<port>`);

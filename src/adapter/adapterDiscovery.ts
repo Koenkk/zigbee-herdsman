@@ -460,7 +460,7 @@ export async function findmDNSAdapter(path: string): Promise<[adapter: Adapter, 
 }
 
 export async function findTCPAdapter(path: string, adapter?: Adapter): Promise<[adapter: Adapter, path: string]> {
-    const regex = /^(tcp|socket):\/\/(?:[0-9]{1,3}\.){3}[0-9]{1,3}:\d{1,5}$/gm;
+    const regex = /^(tcp|socket):\/\/.+:\d{1,5}$/gm;
 
     if (!regex.test(path)) {
         throw new Error(`Invalid TCP path, expected format: tcp://<host>:<port>`);
