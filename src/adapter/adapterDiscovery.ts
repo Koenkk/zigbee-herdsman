@@ -1,3 +1,4 @@
+import assert from 'assert';
 import {platform} from 'os';
 
 import {PortInfo} from '@serialport/bindings-cpp';
@@ -460,9 +461,10 @@ export async function findmDNSAdapter(path: string): Promise<[adapter: Adapter, 
 }
 
 export async function findTCPAdapter(path: string, adapter?: Adapter): Promise<[adapter: Adapter, path: string]> {
-    const regex = /^(tcp|socket):\/\/.+:\d{1,5}$/gm;
-
-    if (!regex.test(path)) {
+    try {
+        const url = new URL(path);
+        assert(url.port !== '');
+    } catch {
         throw new Error(`Invalid TCP path, expected format: tcp://<host>:<port>`);
     }
 

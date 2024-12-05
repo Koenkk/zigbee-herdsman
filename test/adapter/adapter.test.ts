@@ -190,9 +190,9 @@ describe('Adapter', () => {
             });
         });
 
-        it('invalid path', async () => {
+        test.each([`tcp://192168.1.321`, `tcp://192168.1.321:INVALID`])('invalid path', async (path) => {
             expect(async () => {
-                await Adapter.create({panID: 0x1a62, channelList: [11]}, {path: `tcp://192168.1.321:INVALID`, adapter: `zstack`}, 'test.db.backup', {
+                await Adapter.create({panID: 0x1a62, channelList: [11]}, {path, adapter: `zstack`}, 'test.db.backup', {
                     disableLED: false,
                 });
             }).rejects.toThrow(`Invalid TCP path, expected format: tcp://<host>:<port>`);
