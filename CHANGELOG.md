@@ -1,5 +1,13 @@
 # Changelog
 
+## [3.0.1](https://github.com/Koenkk/zigbee-herdsman/compare/v3.0.0...v3.0.1) (2024-12-05)
+
+
+### Bug Fixes
+
+* Allow hostnames for tcp adapters https://github.com/Koenkk/zigbee2mqtt/issues/25062 ([e9240da](https://github.com/Koenkk/zigbee-herdsman/commit/e9240da62deb80ae7d50c8c3a61eb9a13f1da4e8))
+* **ignore:** improve e9240da62deb80ae7d50c8c3a61eb9a13f1da4e8 ([5a29fda](https://github.com/Koenkk/zigbee-herdsman/commit/5a29fda0d5e7f502c3e122d0a14f75ab3d942490))
+
 ## [3.0.0](https://github.com/Koenkk/zigbee-herdsman/compare/v2.1.9...v3.0.0) (2024-12-01)
 
 
