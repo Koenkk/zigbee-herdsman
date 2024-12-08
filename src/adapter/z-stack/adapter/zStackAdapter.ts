@@ -258,7 +258,7 @@ class ZStackAdapter extends Adapter {
         const clusterId = Zdo.ClusterId.NETWORK_ADDRESS_REQUEST;
         const zdoPayload = Zdo.Buffalo.buildRequest(this.hasZdoMessageOverhead, clusterId, ieeeAddr as EUI64, false, 0);
 
-        const result = await this.sendZdo(ieeeAddr, ZSpec.NULL_NODE_ID, clusterId, zdoPayload, false);
+        const result = await this.sendZdoInternal(ieeeAddr, ZSpec.NULL_NODE_ID, clusterId, zdoPayload, false, true);
 
         /* istanbul ignore else */
         if (Zdo.Buffalo.checkStatus(result)) {
@@ -308,7 +308,35 @@ class ZStackAdapter extends Adapter {
         payload: Buffer,
         disableResponse: boolean,
     ): Promise<ZdoTypes.RequestToResponseMap[K] | void> {
-        return await this.queue.execute(async () => {
+        // @ts-expect-error TODO fix
+        return await this.sendZdoInternal(ieeeAddress, networkAddress, clusterId, payload, disableResponse, true);
+    }
+
+    private async sendZdoInternal(
+        ieeeAddress: string,
+        networkAddress: number,
+        clusterId: Zdo.ClusterId,
+        payload: Buffer,
+        disableResponse: true,
+        skipQueue: boolean,
+    ): Promise<void>;
+    private async sendZdoInternal<K extends keyof ZdoTypes.RequestToResponseMap>(
+        ieeeAddress: string,
+        networkAddress: number,
+        clusterId: K,
+        payload: Buffer,
+        disableResponse: false,
+        skipQueue: boolean,
+    ): Promise<ZdoTypes.RequestToResponseMap[K]>;
+    private async sendZdoInternal<K extends keyof ZdoTypes.RequestToResponseMap>(
+        ieeeAddress: string,
+        networkAddress: number,
+        clusterId: K,
+        payload: Buffer,
+        disableResponse: boolean,
+        skipQueue: boolean,
+    ): Promise<ZdoTypes.RequestToResponseMap[K] | void> {
+        const func = async (): Promise<ZdoTypes.RequestToResponseMap[K] | void> => {
             this.checkInterpanLock();
 
             // stack-specific requirements
@@ -404,7 +432,8 @@ class ZStackAdapter extends Adapter {
 
                 return response.payload.zdo;
             }
-        }, networkAddress);
+        };
+        return skipQueue ? await func() : await this.queue.execute(func, networkAddress);
     }
 
     public async sendZclFrameToEndpoint(
@@ -600,15 +629,15 @@ class ZStackAdapter extends Adapter {
                     // Figure out once if the network address has been changed.
                     try {
                         checkedNetworkAddress = true;
-                        // const actualNetworkAddress = await this.requestNetworkAddress(ieeeAddr);
-                        // if (networkAddress !== actualNetworkAddress) {
-                        //     logger.debug(`Failed because request was done with wrong network address`, NS);
-                        //     discoveredRoute = true;
-                        //     networkAddress = actualNetworkAddress;
-                        //     await this.discoverRoute(actualNetworkAddress);
-                        // } else {
-                        //     logger.debug('Network address did not change', NS);
-                        // }
+                        const actualNetworkAddress = await this.requestNetworkAddress(ieeeAddr);
+                        if (networkAddress !== actualNetworkAddress) {
+                            logger.debug(`Failed because request was done with wrong network address`, NS);
+                            discoveredRoute = true;
+                            networkAddress = actualNetworkAddress;
+                            await this.discoverRoute(actualNetworkAddress);
+                        } else {
+                            logger.debug('Network address did not change', NS);
+                        }
                     } catch {
                         /* empty */
                     }
