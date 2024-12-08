@@ -1,5 +1,13 @@
 # Changelog
 
+## [3.0.2](https://github.com/Koenkk/zigbee-herdsman/compare/v3.0.1...v3.0.2) (2024-12-08)
+
+
+### Bug Fixes
+
+* **ignore:** update dependencies ([#1254](https://github.com/Koenkk/zigbee-herdsman/issues/1254)) ([1d22bd2](https://github.com/Koenkk/zigbee-herdsman/commit/1d22bd29688bdfb1a301390a09c37759904e054c))
+* Permit join optimisation ([#1251](https://github.com/Koenkk/zigbee-herdsman/issues/1251)) ([5dca3bc](https://github.com/Koenkk/zigbee-herdsman/commit/5dca3bcddb33f899222f5f3f27b7e1a1193b6f11))
+
 ## [3.0.1](https://github.com/Koenkk/zigbee-herdsman/compare/v3.0.0...v3.0.1) (2024-12-05)
 
 
