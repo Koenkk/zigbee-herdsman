@@ -309,7 +309,7 @@ class ZStackAdapter extends Adapter {
         disableResponse: boolean,
     ): Promise<ZdoTypes.RequestToResponseMap[K] | void> {
         // @ts-expect-error TODO fix
-        return await this.sendZdoInternal(ieeeAddress, networkAddress, clusterId, payload, disableResponse, true);
+        return await this.sendZdoInternal(ieeeAddress, networkAddress, clusterId, payload, disableResponse, false);
     }
 
     private async sendZdoInternal(
