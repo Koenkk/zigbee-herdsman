@@ -490,7 +490,7 @@ describe('Controller', () => {
     let controller: Controller;
 
     beforeAll(async () => {
-        jest.useFakeTimers({doNotFake: ['setTimeout']});
+        jest.useFakeTimers();
         Date.now = jest.fn().mockReturnValue(150);
         setLogger(mockLogger);
         dummyBackup = await Utils.BackupUtils.toUnifiedBackup(mockDummyBackup);
@@ -2343,35 +2343,48 @@ describe('Controller', () => {
 
     it('Controller permit joining all, disabled automatically', async () => {
         await controller.start();
+
+        expect(controller.getPermitJoin()).toStrictEqual(false);
+        expect(controller.getPermitJoinEnd()).toBeUndefined();
+
+        (Date.now as ReturnType<typeof jest.fn>).mockReturnValueOnce(0);
         await controller.permitJoin(254);
 
         expect(mockAdapterPermitJoin).toHaveBeenCalledTimes(1);
-        expect(mockAdapterPermitJoin.mock.calls[0][0]).toStrictEqual(254);
+        expect(mockAdapterPermitJoin).toHaveBeenNthCalledWith(1, 254, undefined);
         expect(events.permitJoinChanged.length).toStrictEqual(1);
-        expect(events.permitJoinChanged[0]).toStrictEqual({permitted: true, timeout: 254});
-        expect(controller.getPermitJoinTimeout()).toStrictEqual(254);
+        expect(events.permitJoinChanged[0]).toStrictEqual({permitted: true, time: 254});
+        expect(controller.getPermitJoin()).toStrictEqual(true);
+        expect(controller.getPermitJoinEnd()).toStrictEqual(254 * 1000);
 
         // Green power
         const commisionFrameEnable = Zcl.Frame.create(1, 1, true, undefined, 2, 'commisioningMode', 33, {options: 0x0b, commisioningWindow: 254}, {});
 
         expect(mocksendZclFrameToAll).toHaveBeenCalledTimes(1);
-        expect(mocksendZclFrameToAll.mock.calls[0][0]).toStrictEqual(ZSpec.GP_ENDPOINT);
+        expect(mocksendZclFrameToAll).toHaveBeenNthCalledWith(
+            1,
+            ZSpec.GP_ENDPOINT,
+            expect.any(Object),
+            ZSpec.GP_ENDPOINT,
+            ZSpec.BroadcastAddress.RX_ON_WHEN_IDLE,
+        );
         expect(deepClone(mocksendZclFrameToAll.mock.calls[0][1])).toStrictEqual(deepClone(commisionFrameEnable));
-        expect(mocksendZclFrameToAll.mock.calls[0][2]).toStrictEqual(ZSpec.GP_ENDPOINT);
 
         await jest.advanceTimersByTimeAsync(250 * 1000);
 
         expect(mocksendZclFrameToAll).toHaveBeenCalledTimes(1);
         expect(mockAdapterPermitJoin).toHaveBeenCalledTimes(1);
-        expect(controller.getPermitJoinTimeout()).toStrictEqual(4);
+        expect(controller.getPermitJoin()).toStrictEqual(true);
+        expect(controller.getPermitJoinEnd()).toStrictEqual(254 * 1000);
 
         // Timer expired
         await jest.advanceTimersByTimeAsync(10 * 1000);
 
         expect(mockAdapterPermitJoin).toHaveBeenCalledTimes(1);
-        expect(events.permitJoinChanged.length).toStrictEqual(255);
-        expect(events.permitJoinChanged[254]).toStrictEqual({permitted: false, timeout: 0});
-        expect(controller.getPermitJoinTimeout()).toStrictEqual(0);
+        expect(events.permitJoinChanged.length).toStrictEqual(2);
+        expect(events.permitJoinChanged[1]).toStrictEqual({permitted: false});
+        expect(controller.getPermitJoin()).toStrictEqual(false);
+        expect(controller.getPermitJoinEnd()).toBeUndefined();
 
         // Green power
         expect(mocksendZclFrameToAll).toHaveBeenCalledTimes(1);
@@ -2379,44 +2392,62 @@ describe('Controller', () => {
 
     it('Controller permit joining all, disabled manually', async () => {
         await controller.start();
+
+        expect(controller.getPermitJoin()).toStrictEqual(false);
+        expect(controller.getPermitJoinEnd()).toBeUndefined();
+
+        (Date.now as ReturnType<typeof jest.fn>).mockReturnValueOnce(0);
         await controller.permitJoin(254);
+
         expect(mockAdapterPermitJoin).toHaveBeenCalledTimes(1);
-        expect(mockAdapterPermitJoin.mock.calls[0][0]).toStrictEqual(254);
+        expect(mockAdapterPermitJoin).toHaveBeenNthCalledWith(1, 254, undefined);
         expect(events.permitJoinChanged.length).toStrictEqual(1);
-        expect(events.permitJoinChanged[0]).toStrictEqual({permitted: true, timeout: 254});
-        expect(controller.getPermitJoinTimeout()).toStrictEqual(254);
+        expect(events.permitJoinChanged[0]).toStrictEqual({permitted: true, time: 254});
+        expect(controller.getPermitJoin()).toStrictEqual(true);
+        expect(controller.getPermitJoinEnd()).toStrictEqual(254 * 1000);
 
         // Green power
         const commisionFrameEnable = Zcl.Frame.create(1, 1, true, undefined, 2, 'commisioningMode', 33, {options: 0x0b, commisioningWindow: 254}, {});
 
         expect(mocksendZclFrameToAll).toHaveBeenCalledTimes(1);
-        expect(mocksendZclFrameToAll.mock.calls[0][0]).toStrictEqual(ZSpec.GP_ENDPOINT);
+        expect(mocksendZclFrameToAll).toHaveBeenNthCalledWith(
+            1,
+            ZSpec.GP_ENDPOINT,
+            expect.any(Object),
+            ZSpec.GP_ENDPOINT,
+            ZSpec.BroadcastAddress.RX_ON_WHEN_IDLE,
+        );
         expect(deepClone(mocksendZclFrameToAll.mock.calls[0][1])).toStrictEqual(deepClone(commisionFrameEnable));
-        expect(mocksendZclFrameToAll.mock.calls[0][2]).toStrictEqual(ZSpec.GP_ENDPOINT);
 
         await jest.advanceTimersByTimeAsync(250 * 1000);
 
         expect(mocksendZclFrameToAll).toHaveBeenCalledTimes(1);
         expect(mockAdapterPermitJoin).toHaveBeenCalledTimes(1);
-        expect(events.permitJoinChanged.length).toStrictEqual(251);
-        expect(controller.getPermitJoinTimeout()).toStrictEqual(4);
+        expect(controller.getPermitJoin()).toStrictEqual(true);
+        expect(controller.getPermitJoinEnd()).toStrictEqual(254 * 1000);
 
         // Disable
         await controller.permitJoin(0);
 
         expect(mockAdapterPermitJoin).toHaveBeenCalledTimes(2);
-        expect(mockAdapterPermitJoin.mock.calls[1][0]).toStrictEqual(0);
-        expect(events.permitJoinChanged.length).toStrictEqual(252);
-        expect(events.permitJoinChanged[251]).toStrictEqual({permitted: false, timeout: 0});
-        expect(controller.getPermitJoinTimeout()).toStrictEqual(0);
+        expect(mockAdapterPermitJoin).toHaveBeenNthCalledWith(2, 0);
+        expect(events.permitJoinChanged.length).toStrictEqual(2);
+        expect(events.permitJoinChanged[1]).toStrictEqual({permitted: false});
+        expect(controller.getPermitJoin()).toStrictEqual(false);
+        expect(controller.getPermitJoinEnd()).toBeUndefined();
 
         // Green power
         const commissionFrameDisable = Zcl.Frame.create(1, 1, true, undefined, 3, 'commisioningMode', 33, {options: 0x0a, commisioningWindow: 0}, {});
 
         expect(mocksendZclFrameToAll).toHaveBeenCalledTimes(2);
-        expect(mocksendZclFrameToAll.mock.calls[1][0]).toStrictEqual(ZSpec.GP_ENDPOINT);
+        expect(mocksendZclFrameToAll).toHaveBeenNthCalledWith(
+            2,
+            ZSpec.GP_ENDPOINT,
+            expect.any(Object),
+            ZSpec.GP_ENDPOINT,
+            ZSpec.BroadcastAddress.RX_ON_WHEN_IDLE,
+        );
         expect(deepClone(mocksendZclFrameToAll.mock.calls[1][1])).toStrictEqual(deepClone(commissionFrameDisable));
-        expect(mocksendZclFrameToAll.mock.calls[1][2]).toStrictEqual(ZSpec.GP_ENDPOINT);
     });
 
     it('Controller permit joining through specific device', async () => {
@@ -2425,15 +2456,25 @@ describe('Controller', () => {
         await controller.permitJoin(254, controller.getDeviceByIeeeAddr('0x129'));
 
         expect(mockAdapterPermitJoin).toHaveBeenCalledTimes(1);
-        expect(mockAdapterPermitJoin.mock.calls[0][0]).toStrictEqual(254);
-        expect(mockAdapterPermitJoin.mock.calls[0][1]).toStrictEqual(129);
-        expect(controller.getPermitJoinTimeout()).toStrictEqual(254);
+        expect(mockAdapterPermitJoin).toHaveBeenCalledWith(254, 129);
+        expect(events.permitJoinChanged.length).toStrictEqual(1);
+        expect(events.permitJoinChanged[0]).toStrictEqual({permitted: true, time: 254});
+        expect(controller.getPermitJoin()).toStrictEqual(true);
+        expect(controller.getPermitJoinEnd()).toBeGreaterThan(0);
+
+        await jest.advanceTimersByTimeAsync(120 * 1000);
+
+        expect(controller.getPermitJoin()).toStrictEqual(true);
+        expect(controller.getPermitJoinEnd()).toBeGreaterThan(0);
 
         // Timer expired
         await jest.advanceTimersByTimeAsync(300 * 1000);
 
         expect(mockAdapterPermitJoin).toHaveBeenCalledTimes(1);
-        expect(controller.getPermitJoinTimeout()).toStrictEqual(0);
+        expect(events.permitJoinChanged.length).toStrictEqual(2);
+        expect(events.permitJoinChanged[1]).toStrictEqual({permitted: false});
+        expect(controller.getPermitJoin()).toStrictEqual(false);
+        expect(controller.getPermitJoinEnd()).toBeUndefined();
     });
 
     it('Controller permit joining for specific time', async () => {
@@ -2441,24 +2482,24 @@ describe('Controller', () => {
         await controller.permitJoin(10);
 
         expect(mockAdapterPermitJoin).toHaveBeenCalledTimes(1);
-        expect(mockAdapterPermitJoin.mock.calls[0][0]).toStrictEqual(10);
+        expect(mockAdapterPermitJoin).toHaveBeenCalledWith(10, undefined);
         expect(events.permitJoinChanged.length).toStrictEqual(1);
-        expect(events.permitJoinChanged[0]).toStrictEqual({permitted: true, timeout: 10});
-        expect(controller.getPermitJoinTimeout()).toStrictEqual(10);
+        expect(events.permitJoinChanged[0]).toStrictEqual({permitted: true, time: 10});
+        expect(controller.getPermitJoin()).toStrictEqual(true);
 
         await jest.advanceTimersByTimeAsync(5 * 1000);
 
-        expect(events.permitJoinChanged.length).toStrictEqual(6);
-        expect(events.permitJoinChanged[5]).toStrictEqual({permitted: true, timeout: 5});
-        expect(controller.getPermitJoinTimeout()).toStrictEqual(5);
+        expect(controller.getPermitJoin()).toStrictEqual(true);
+        expect(controller.getPermitJoinEnd()).toBeGreaterThan(0);
 
         // Timer expired
         await jest.advanceTimersByTimeAsync(7 * 1000);
 
         expect(mockAdapterPermitJoin).toHaveBeenCalledTimes(1);
-        expect(events.permitJoinChanged.length).toStrictEqual(11);
-        expect(events.permitJoinChanged[10]).toStrictEqual({permitted: false, timeout: 0});
-        expect(controller.getPermitJoinTimeout()).toStrictEqual(0);
+        expect(events.permitJoinChanged.length).toStrictEqual(2);
+        expect(events.permitJoinChanged[1]).toStrictEqual({permitted: false});
+        expect(controller.getPermitJoin()).toStrictEqual(false);
+        expect(controller.getPermitJoinEnd()).toBeUndefined();
     });
 
     it('Controller permit joining for too long time throws', async () => {

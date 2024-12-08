@@ -78,8 +78,8 @@ class Controller extends events.EventEmitter<ControllerEventMap> {
     // @ts-expect-error assigned and validated in start()
     private touchlink: Touchlink;
 
-    private permitJoinTimeoutTimer: NodeJS.Timeout | undefined;
-    private permitJoinTimeout: number;
+    private permitJoinTimer: NodeJS.Timeout | undefined;
+    private permitJoinEnd?: number;
     private backupTimer: NodeJS.Timeout | undefined;
     private databaseSaveTimer: NodeJS.Timeout | undefined;
     private stopping: boolean;
@@ -99,7 +99,6 @@ class Controller extends events.EventEmitter<ControllerEventMap> {
         this.adapterDisconnected = true; // set false after adapter.start() is successfully called
         this.options = mixinDeep(JSON.parse(JSON.stringify(DefaultOptions)), options);
         this.unknownDevices = new Set();
-        this.permitJoinTimeout = 0;
 
         // Validate options
         for (const channel of this.options.network.channelList) {
@@ -284,9 +283,9 @@ class Controller extends events.EventEmitter<ControllerEventMap> {
     }
 
     public async permitJoin(time: number, device?: Device): Promise<void> {
-        clearInterval(this.permitJoinTimeoutTimer);
-        this.permitJoinTimeoutTimer = undefined;
-        this.permitJoinTimeout = 0;
+        clearTimeout(this.permitJoinTimer);
+        this.permitJoinTimer = undefined;
+        this.permitJoinEnd = undefined;
 
         if (time > 0) {
             // never permit more than uint8, and never permit 255 that is often equal to "forever"
@@ -295,41 +294,32 @@ class Controller extends events.EventEmitter<ControllerEventMap> {
             await this.adapter.permitJoin(time, device?.networkAddress);
             await this.greenPower.permitJoin(time, device?.networkAddress);
 
-            // TODO: should use setTimeout and timer only for open/close emit
-            //       let the other end (frontend) do the sec-by-sec updating (without mqtt publish)
-            // Also likely creates a gap of a few secs between what Z2M says and what the stack actually has => unreliable timer end
-            this.permitJoinTimeout = time;
-            this.permitJoinTimeoutTimer = setInterval(async (): Promise<void> => {
-                // assumed valid number while in interval
-                this.permitJoinTimeout--;
+            const timeMs = time * 1000;
+            this.permitJoinEnd = Date.now() + timeMs;
+            this.permitJoinTimer = setTimeout((): void => {
+                this.emit('permitJoinChanged', {permitted: false});
 
-                if (this.permitJoinTimeout <= 0) {
-                    clearInterval(this.permitJoinTimeoutTimer);
-                    this.permitJoinTimeoutTimer = undefined;
-                    this.permitJoinTimeout = 0;
+                this.permitJoinTimer = undefined;
+                this.permitJoinEnd = undefined;
+            }, timeMs);
 
-                    this.emit('permitJoinChanged', {permitted: false, timeout: this.permitJoinTimeout});
-                } else {
-                    this.emit('permitJoinChanged', {permitted: true, timeout: this.permitJoinTimeout});
-                }
-            }, 1000);
-
-            this.emit('permitJoinChanged', {permitted: true, timeout: this.permitJoinTimeout});
+            this.emit('permitJoinChanged', {permitted: true, time});
         } else {
             logger.debug('Disable joining', NS);
 
             await this.greenPower.permitJoin(0);
             await this.adapter.permitJoin(0);
 
-            this.emit('permitJoinChanged', {permitted: false, timeout: this.permitJoinTimeout});
+            this.emit('permitJoinChanged', {permitted: false});
         }
     }
 
-    /**
-     * @returns Timeout until permit joining expires. [0-254], with 0 being "not permitting joining".
-     */
-    public getPermitJoinTimeout(): number {
-        return this.permitJoinTimeout;
+    public getPermitJoin(): boolean {
+        return this.permitJoinTimer !== undefined;
+    }
+
+    public getPermitJoinEnd(): number | undefined {
+        return this.permitJoinEnd;
     }
 
     public isStopping(): boolean {

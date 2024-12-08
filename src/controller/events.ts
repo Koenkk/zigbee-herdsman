@@ -25,7 +25,7 @@ interface DeviceLeavePayload {
 
 interface PermitJoinChangedPayload {
     permitted: boolean;
-    timeout?: number;
+    time?: number;
 }
 
 interface LastSeenChangedPayload {
