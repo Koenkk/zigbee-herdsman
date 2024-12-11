@@ -131,141 +131,143 @@ const DEFAULT_ADAPTER_NETWORK_PARAMETERS: EmberNetworkParameters = {
     nwkUpdateId: 0,
     channels: ZSpec.ALL_802_15_4_CHANNELS_MASK,
 };
+const DEFAULT_NETWORK_KEY_INFO: SecManNetworkKeyInfo = {
+    networkKeySet: true,
+    alternateNetworkKeySet: false,
+    networkKeySequenceNumber: DEFAULT_BACKUP.network_key.sequence_number,
+    altNetworkKeySequenceNumber: 0,
+    networkKeyFrameCounter: DEFAULT_BACKUP.network_key.frame_counter,
+};
 
 let mockManufCode = Zcl.ManufacturerCode.SILICON_LABORATORIES;
 let mockAPSSequence = -1; // start at 0
 let mockMessageTag = -1; // start at 0
 let mockEzspEmitter = new EventEmitter<EmberEzspEventMap>();
-const mockEzspRemoveAllListeners = jest.fn().mockImplementation((e) => {
+const mockEzspRemoveAllListeners = jest.fn((e: unknown) => {
     mockEzspEmitter.removeAllListeners(e);
 });
-const mockEzspOn = jest.fn().mockImplementation((e, l) => {
+const mockEzspOn = jest.fn((e: any, l: (...args: any) => void) => {
     mockEzspEmitter.on(e, l);
 });
-const mockEzspOnce = jest.fn().mockImplementation((e, l) => {
+const mockEzspOnce = jest.fn((e: any, l: (...args: any) => void) => {
     mockEzspEmitter.once(e, l);
 });
-const mockEzspStart = jest.fn().mockResolvedValue(EzspStatus.SUCCESS);
+const mockEzspStart = jest.fn(() => Promise.resolve(EzspStatus.SUCCESS));
 const mockEzspStop = jest.fn();
 
-const mockEzspSend = jest.fn().mockResolvedValue([SLStatus.OK, ++mockMessageTag]);
-const mockEzspSetMulticastTableEntry = jest.fn().mockResolvedValue(SLStatus.OK);
-const mockEzspSetManufacturerCode = jest.fn().mockImplementation((code) => (mockManufCode = code));
-const mockEzspReadAndClearCounters = jest.fn().mockResolvedValue([1, 2, 3, 4]); // not matching EmberCounterType, but doesn't matter here
-const mockEzspGetNetworkParameters = jest
-    .fn()
-    .mockResolvedValue([SLStatus.OK, EmberNodeType.COORDINATOR, deepClone(DEFAULT_ADAPTER_NETWORK_PARAMETERS)]);
-const mockEzspNetworkState = jest.fn().mockResolvedValue(EmberNetworkStatus.JOINED_NETWORK);
-const mockEzspGetEui64 = jest.fn().mockResolvedValue(DEFAULT_COORDINATOR_IEEE);
-const mockEzspSetConcentrator = jest.fn().mockResolvedValue(SLStatus.OK);
-const mockEzspSetSourceRouteDiscoveryMode = jest.fn().mockResolvedValue(1240 /* ms */);
-const mockEzspSetRadioIeee802154CcaMode = jest.fn().mockResolvedValue(SLStatus.OK);
+const mockEzspSend = jest.fn(() => Promise.resolve([SLStatus.OK, ++mockMessageTag]));
+const mockEzspSetMulticastTableEntry = jest.fn(() => Promise.resolve(SLStatus.OK));
+const mockEzspSetManufacturerCode = jest.fn((code: Zcl.ManufacturerCode) => (mockManufCode = code));
+const mockEzspReadAndClearCounters = jest.fn(() => Promise.resolve([1, 2, 3, 4])); // not matching EmberCounterType, but doesn't matter here
+const mockEzspGetNetworkParameters = jest.fn(() =>
+    Promise.resolve([SLStatus.OK, EmberNodeType.COORDINATOR, deepClone(DEFAULT_ADAPTER_NETWORK_PARAMETERS)]),
+);
+const mockEzspNetworkState = jest.fn(() => Promise.resolve(EmberNetworkStatus.JOINED_NETWORK));
+const mockEzspGetEui64 = jest.fn(() => Promise.resolve(DEFAULT_COORDINATOR_IEEE));
+const mockEzspSetConcentrator = jest.fn(() => Promise.resolve(SLStatus.OK));
+const mockEzspSetSourceRouteDiscoveryMode = jest.fn(() => Promise.resolve(1240 /* ms */));
+const mockEzspSetRadioIeee802154CcaMode = jest.fn(() => Promise.resolve(SLStatus.OK));
 // not OK by default since used to detected unreged EP
-const mockEzspGetEndpointFlags = jest.fn().mockResolvedValue([SLStatus.NOT_FOUND, EzspEndpointFlag.DISABLED]);
-const mockEzspAddEndpoint = jest.fn().mockResolvedValue(SLStatus.OK);
-const mockEzspNetworkInit = jest.fn().mockImplementation((networkInitStruct: EmberNetworkInitStruct) => {
+const mockEzspGetEndpointFlags = jest.fn(() => Promise.resolve([SLStatus.NOT_FOUND, EzspEndpointFlag.DISABLED]));
+const mockEzspAddEndpoint = jest.fn(() => Promise.resolve(SLStatus.OK));
+const mockEzspNetworkInit = jest.fn((networkInitStruct: EmberNetworkInitStruct) => {
     setTimeout(async () => {
         mockEzspEmitter.emit('stackStatus', SLStatus.NETWORK_UP);
         await flushPromises();
     }, 300);
 
-    return SLStatus.OK;
+    return Promise.resolve(SLStatus.OK);
 });
-const mockEzspExportKey = jest.fn().mockImplementation((context: SecManContext) => {
+const mockEzspExportKey = jest.fn((context: SecManContext) => {
     switch (context.coreKeyType) {
         case SecManKeyType.NETWORK: {
-            return [SLStatus.OK, {contents: Buffer.from(DEFAULT_BACKUP.network_key.key, 'hex')} as SecManKey];
+            return Promise.resolve([SLStatus.OK, {contents: Buffer.from(DEFAULT_BACKUP.network_key.key, 'hex')} as SecManKey]);
         }
         case SecManKeyType.TC_LINK: {
-            return [SLStatus.OK, {contents: Buffer.from(DEFAULT_BACKUP.stack_specific!.ezsp!.hashed_tclk!, 'hex')} as SecManKey];
+            return Promise.resolve([SLStatus.OK, {contents: Buffer.from(DEFAULT_BACKUP.stack_specific!.ezsp!.hashed_tclk!, 'hex')} as SecManKey]);
         }
     }
 });
-const mockEzspLeaveNetwork = jest.fn().mockImplementation(() => {
+const mockEzspLeaveNetwork = jest.fn(() => {
     setTimeout(async () => {
         mockEzspEmitter.emit('stackStatus', SLStatus.NETWORK_DOWN);
         await flushPromises();
     }, 300);
 
-    return SLStatus.OK;
+    return Promise.resolve(SLStatus.OK);
 });
-const mockEzspSetInitialSecurityState = jest.fn().mockResolvedValue(SLStatus.OK);
-const mockEzspSetExtendedSecurityBitmask = jest.fn().mockResolvedValue(SLStatus.OK);
-const mockEzspClearKeyTable = jest.fn().mockResolvedValue(SLStatus.OK);
-const mockEzspFormNetwork = jest.fn().mockImplementation((parameters: EmberNetworkParameters) => {
+const mockEzspSetInitialSecurityState = jest.fn(() => Promise.resolve(SLStatus.OK));
+const mockEzspSetExtendedSecurityBitmask = jest.fn(() => Promise.resolve(SLStatus.OK));
+const mockEzspClearKeyTable = jest.fn(() => Promise.resolve(SLStatus.OK));
+const mockEzspFormNetwork = jest.fn((parameters: EmberNetworkParameters) => {
     setTimeout(async () => {
         mockEzspEmitter.emit('stackStatus', SLStatus.NETWORK_UP);
         await flushPromises();
     }, 300);
 
-    return SLStatus.OK;
+    return Promise.resolve(SLStatus.OK);
 });
-const mockEzspStartWritingStackTokens = jest.fn().mockResolvedValue(SLStatus.OK);
-const mockEzspGetConfigurationValue = jest.fn().mockImplementation((config: EzspConfigId) => {
+const mockEzspStartWritingStackTokens = jest.fn(() => Promise.resolve(SLStatus.OK));
+const mockEzspGetConfigurationValue = jest.fn((config: EzspConfigId) => {
     switch (config) {
         case EzspConfigId.KEY_TABLE_SIZE: {
-            return [SLStatus.OK, 0];
+            return Promise.resolve([SLStatus.OK, 0]);
         }
     }
 });
 const mockEzspExportLinkKeyByIndex = jest.fn();
-const mockEzspEraseKeyTableEntry = jest.fn().mockResolvedValue(SLStatus.OK);
-const mockEzspImportLinkKey = jest.fn().mockResolvedValue(SLStatus.OK);
-const mockEzspBroadcastNextNetworkKey = jest.fn().mockResolvedValue(SLStatus.OK);
-const mockEzspBroadcastNetworkKeySwitch = jest.fn().mockResolvedValue(SLStatus.OK);
-const mockEzspStartScan = jest.fn().mockResolvedValue(SLStatus.OK);
-const mockEzspVersion = jest.fn().mockImplementation((version: number) => [version, EZSP_STACK_TYPE_MESH, 0]);
+const mockEzspEraseKeyTableEntry = jest.fn(() => Promise.resolve(SLStatus.OK));
+const mockEzspImportLinkKey = jest.fn(() => Promise.resolve(SLStatus.OK));
+const mockEzspBroadcastNextNetworkKey = jest.fn(() => Promise.resolve(SLStatus.OK));
+const mockEzspBroadcastNetworkKeySwitch = jest.fn(() => Promise.resolve(SLStatus.OK));
+const mockEzspStartScan = jest.fn(() => Promise.resolve(SLStatus.OK));
+const mockEzspVersion = jest.fn((version: number) => Promise.resolve([version, EZSP_STACK_TYPE_MESH, 0]));
 const mockEzspSetProtocolVersion = jest.fn();
-const mockEzspGetVersionStruct = jest.fn().mockResolvedValue([
-    SLStatus.OK,
-    {
-        build: 135,
-        major: 8,
-        minor: 0,
-        patch: 0,
-        special: 0,
-        type: EmberVersionType.GA,
-    } as EmberVersion,
-]);
-const mockEzspSetConfigurationValue = jest.fn().mockResolvedValue(SLStatus.OK);
-const mockEzspSetValue = jest.fn().mockResolvedValue(SLStatus.OK);
-const mockEzspSetPolicy = jest.fn().mockResolvedValue(SLStatus.OK);
-const mockEzspPermitJoining = jest.fn().mockImplementation((duration: number) => {
+const mockEzspGetVersionStruct = jest.fn(() =>
+    Promise.resolve([
+        SLStatus.OK,
+        {
+            build: 135,
+            major: 8,
+            minor: 0,
+            patch: 0,
+            special: 0,
+            type: EmberVersionType.GA,
+        } as EmberVersion,
+    ]),
+);
+const mockEzspSetConfigurationValue = jest.fn(() => Promise.resolve(SLStatus.OK));
+const mockEzspSetValue = jest.fn(() => Promise.resolve(SLStatus.OK));
+const mockEzspSetPolicy = jest.fn(() => Promise.resolve(SLStatus.OK));
+const mockEzspPermitJoining = jest.fn((duration: number) => {
     setTimeout(async () => {
         mockEzspEmitter.emit('stackStatus', duration > 0 ? SLStatus.ZIGBEE_NETWORK_OPENED : SLStatus.ZIGBEE_NETWORK_CLOSED);
         await flushPromises();
     }, 300);
 
-    return SLStatus.OK;
+    return Promise.resolve(SLStatus.OK);
 });
-const mockEzspSendBroadcast = jest.fn().mockResolvedValue([SLStatus.OK, ++mockAPSSequence]);
-const mockEzspSendUnicast = jest.fn().mockResolvedValue([SLStatus.OK, ++mockAPSSequence]);
-const mockEzspGetNetworkKeyInfo = jest.fn().mockResolvedValue([
-    SLStatus.OK,
-    {
-        networkKeySet: true,
-        alternateNetworkKeySet: false,
-        networkKeySequenceNumber: DEFAULT_BACKUP.network_key.sequence_number,
-        altNetworkKeySequenceNumber: 0,
-        networkKeyFrameCounter: DEFAULT_BACKUP.network_key.frame_counter,
-    } as SecManNetworkKeyInfo,
-]);
-const mockEzspGetApsKeyInfo = jest.fn().mockResolvedValue([
-    SLStatus.OK,
-    {
-        bitmask: EmberKeyStructBitmask.HAS_OUTGOING_FRAME_COUNTER,
-        outgoingFrameCounter: 456,
-        incomingFrameCounter: 0,
-        ttlInSeconds: 0,
-    } as SecManAPSKeyMetadata,
-]);
-const mockEzspSetRadioPower = jest.fn().mockResolvedValue(SLStatus.OK);
-const mockEzspImportTransientKey = jest.fn().mockResolvedValue(SLStatus.OK);
-const mockEzspClearTransientLinkKeys = jest.fn().mockResolvedValue(SLStatus.OK);
-const mockEzspSetLogicalAndRadioChannel = jest.fn().mockResolvedValue(SLStatus.OK);
-const mockEzspSendRawMessage = jest.fn().mockResolvedValue(SLStatus.OK);
-const mockEzspSetNWKFrameCounter = jest.fn().mockResolvedValue(SLStatus.OK);
-const mockEzspSetAPSFrameCounter = jest.fn().mockResolvedValue(SLStatus.OK);
+const mockEzspSendBroadcast = jest.fn(() => Promise.resolve([SLStatus.OK, ++mockAPSSequence]));
+const mockEzspSendUnicast = jest.fn(() => Promise.resolve([SLStatus.OK, ++mockAPSSequence]));
+const mockEzspGetNetworkKeyInfo = jest.fn(() => Promise.resolve([SLStatus.OK, deepClone(DEFAULT_NETWORK_KEY_INFO)]));
+const mockEzspGetApsKeyInfo = jest.fn(() =>
+    Promise.resolve([
+        SLStatus.OK,
+        {
+            bitmask: EmberKeyStructBitmask.HAS_OUTGOING_FRAME_COUNTER,
+            outgoingFrameCounter: 456,
+            incomingFrameCounter: 0,
+            ttlInSeconds: 0,
+        } as SecManAPSKeyMetadata,
+    ]),
+);
+const mockEzspSetRadioPower = jest.fn(() => Promise.resolve(SLStatus.OK));
+const mockEzspImportTransientKey = jest.fn(() => Promise.resolve(SLStatus.OK));
+const mockEzspClearTransientLinkKeys = jest.fn(() => Promise.resolve(SLStatus.OK));
+const mockEzspSetLogicalAndRadioChannel = jest.fn(() => Promise.resolve(SLStatus.OK));
+const mockEzspSendRawMessage = jest.fn(() => Promise.resolve(SLStatus.OK));
+const mockEzspSetNWKFrameCounter = jest.fn(() => Promise.resolve(SLStatus.OK));
+const mockEzspSetAPSFrameCounter = jest.fn(() => Promise.resolve(SLStatus.OK));
 
 jest.mock('../../../src/adapter/ember/uart/ash');
 
@@ -919,7 +921,7 @@ describe('Ember Adapter Layer', () => {
             () => {
                 mockEzspGetNetworkParameters
                     .mockResolvedValueOnce([SLStatus.OK, EmberNodeType.COORDINATOR, deepClone(DEFAULT_ADAPTER_NETWORK_PARAMETERS)])
-                    .mockResolvedValueOnce([SLStatus.FAIL, 0, {}]);
+                    .mockResolvedValueOnce([SLStatus.FAIL, 0, deepClone(DEFAULT_ADAPTER_NETWORK_PARAMETERS)]);
             },
             `Failed to get network parameters with status=FAIL.`,
         ],
@@ -982,23 +984,22 @@ describe('Ember Adapter Layer', () => {
             () => {
                 mockEzspNetworkInit.mockResolvedValueOnce(SLStatus.FAIL);
             },
-            `[INIT TC] Failed network init request with status=FAIL.`,
+            `Failed network init request with status=FAIL.`,
         ],
         [
             'if could not export network key',
             () => {
-                mockEzspExportKey.mockResolvedValueOnce([SLStatus.FAIL, Buffer.alloc(16)]);
+                mockEzspExportKey.mockResolvedValueOnce([SLStatus.FAIL, {contents: Buffer.alloc(16)}]);
             },
-            `[INIT TC] Failed to export Network Key with status=FAIL.`,
+            `Failed to export Network Key with status=FAIL.`,
         ],
         [
             'if could not leave network',
             () => {
-                // force leave code path
-                mockEzspGetNetworkParameters.mockResolvedValueOnce([SLStatus.FAIL, 0, {}]);
+                takeResetCodePath();
                 mockEzspLeaveNetwork.mockResolvedValueOnce(SLStatus.FAIL);
             },
-            `[INIT TC] Failed leave network request with status=FAIL.`,
+            `Failed leave network request with status=FAIL.`,
         ],
         [
             'if form could not set NWK frame counter',
@@ -1045,7 +1046,7 @@ describe('Ember Adapter Layer', () => {
             () => {
                 writeFileSync(backupPath, 'abcd');
             },
-            `[BACKUP] Coordinator backup is corrupted.`,
+            `Coordinator backup is corrupted (SyntaxError: Unexpected token 'a', \"abcd\" is not valid JSON)`,
         ],
         [
             'if backup unsupported',
@@ -1056,7 +1057,7 @@ describe('Ember Adapter Layer', () => {
 
                 writeFileSync(backupPath, JSON.stringify(customBackup, undefined, 2));
             },
-            `[BACKUP] Unsupported open coordinator backup version (version=2).`,
+            `Coordinator backup is corrupted (Error: Unsupported open coordinator backup version (version=2))`,
         ],
         [
             'if backup not EmberZNet stack specific',
@@ -1069,10 +1070,10 @@ describe('Ember Adapter Layer', () => {
             `[BACKUP] Current backup file is not for EmberZNet stack.`,
         ],
         [
-            'if backup not EmberZNet EZSP version',
+            'if backup is missing EmberZNet tclk',
             () => {
                 const customBackup = deepClone(DEFAULT_BACKUP);
-                customBackup.metadata.internal.ezspVersion = undefined;
+                customBackup.stack_specific!.ezsp!.hashed_tclk = undefined;
 
                 writeFileSync(backupPath, JSON.stringify(customBackup, undefined, 2));
             },
@@ -1087,7 +1088,7 @@ describe('Ember Adapter Layer', () => {
 
                 writeFileSync(backupPath, JSON.stringify(customBackup, undefined, 2));
             },
-            `[BACKUP] Unknown backup format.`,
+            `Unknown backup format`,
         ],
     ])('Fails to start %s', async (_reason, setup, error) => {
         adapter = new EmberAdapter(DEFAULT_NETWORK_OPTIONS, DEFAULT_SERIAL_PORT_OPTIONS, backupPath, DEFAULT_ADAPTER_OPTIONS);
@@ -1178,23 +1179,6 @@ describe('Ember Adapter Layer', () => {
         );
     });
 
-    it('Starts and detects when network key frame counter will soon wrap to 0', async () => {
-        const customBackup = deepClone(DEFAULT_BACKUP);
-        customBackup.network_key.frame_counter = 0xfeeeeeef;
-
-        writeFileSync(backupPath, JSON.stringify(customBackup, undefined, 2));
-
-        adapter = new EmberAdapter(DEFAULT_NETWORK_OPTIONS, DEFAULT_SERIAL_PORT_OPTIONS, backupPath, DEFAULT_ADAPTER_OPTIONS);
-        const result = adapter.start();
-
-        await jest.advanceTimersByTimeAsync(5000);
-        await expect(result).resolves.toStrictEqual('resumed');
-        expect(logger.warning).toHaveBeenCalledWith(
-            `[INIT TC] Network key frame counter is reaching its limit. A new network key will have to be instaured soon.`,
-            'zh:ember',
-        );
-    });
-
     it('Starts and soft-fails if unable to clear key table', async () => {
         takeResetCodePath();
         mockEzspClearKeyTable.mockResolvedValueOnce(SLStatus.FAIL);
@@ -1205,28 +1189,6 @@ describe('Ember Adapter Layer', () => {
         await jest.advanceTimersByTimeAsync(5000);
         await expect(result).resolves.toStrictEqual('reset');
         expect(loggerSpies.error).toHaveBeenCalledWith(`[INIT FORM] Failed to clear key table with status=FAIL.`, 'zh:ember');
-    });
-
-    it('Starts but ignores backup if unsupported version', async () => {
-        const customBackup = deepClone(DEFAULT_BACKUP);
-        customBackup.metadata.internal.ezspVersion = 11;
-
-        writeFileSync(backupPath, JSON.stringify(customBackup, undefined, 2));
-
-        adapter = new EmberAdapter(DEFAULT_NETWORK_OPTIONS, DEFAULT_SERIAL_PORT_OPTIONS, backupPath, DEFAULT_ADAPTER_OPTIONS);
-        const result = adapter.start();
-        const old = `${backupPath}.old`;
-
-        await jest.advanceTimersByTimeAsync(5000);
-        await expect(result).resolves.toStrictEqual('resumed');
-        expect(existsSync(old)).toBeTruthy();
-        expect(loggerSpies.warning).toHaveBeenCalledWith(
-            `[BACKUP] Current backup file is from an unsupported EZSP version. Renaming and ignoring.`,
-            'zh:ember',
-        );
-
-        // cleanup
-        unlinkSync(old);
     });
 
     describe('When started', () => {
@@ -1288,9 +1250,9 @@ describe('Ember Adapter Layer', () => {
 
         it('Throws when failed to retrieve parameter from NCP', async () => {
             mockEzspGetNetworkParameters
-                .mockResolvedValueOnce([SLStatus.FAIL, 0, {}])
-                .mockResolvedValueOnce([SLStatus.FAIL, 0, {}])
-                .mockResolvedValueOnce([SLStatus.FAIL, 0, {}]);
+                .mockResolvedValueOnce([SLStatus.FAIL, 0, deepClone(DEFAULT_ADAPTER_NETWORK_PARAMETERS)])
+                .mockResolvedValueOnce([SLStatus.FAIL, 0, deepClone(DEFAULT_ADAPTER_NETWORK_PARAMETERS)])
+                .mockResolvedValueOnce([SLStatus.FAIL, 0, deepClone(DEFAULT_ADAPTER_NETWORK_PARAMETERS)]);
 
             adapter.clearNetworkCache();
 
@@ -2176,21 +2138,21 @@ describe('Ember Adapter Layer', () => {
             [
                 'failed get network parameters',
                 () => {
-                    mockEzspGetNetworkParameters.mockResolvedValueOnce([SLStatus.FAIL, 0, {}]);
+                    mockEzspGetNetworkParameters.mockResolvedValueOnce([SLStatus.FAIL, 0, deepClone(DEFAULT_ADAPTER_NETWORK_PARAMETERS)]);
                 },
                 `[BACKUP] Failed to get network parameters with status=FAIL.`,
             ],
             [
                 'failed get network key info',
                 () => {
-                    mockEzspGetNetworkKeyInfo.mockResolvedValueOnce([SLStatus.FAIL, {}]);
+                    mockEzspGetNetworkKeyInfo.mockResolvedValueOnce([SLStatus.FAIL, deepClone(DEFAULT_NETWORK_KEY_INFO)]);
                 },
                 `[BACKUP] Failed to get network keys info with status=FAIL.`,
             ],
             // [
             //     'failed get TC APS key info',
             //     () => {
-            //         mockEzspGetNetworkKeyInfo.mockResolvedValueOnce([SLStatus.FAIL, {}]);
+            //         mockEzspGetNetworkKeyInfo.mockResolvedValueOnce([SLStatus.FAIL, deepClone(DEFAULT_NETWORK_KEY_INFO)]);
             //     },
             //     `[BACKUP] Failed to get TC APS key info with status=FAIL.`,
             // ],
@@ -2213,7 +2175,7 @@ describe('Ember Adapter Layer', () => {
             [
                 'failed export TC link key',
                 () => {
-                    mockEzspExportKey.mockResolvedValueOnce([SLStatus.FAIL, {}]);
+                    mockEzspExportKey.mockResolvedValueOnce([SLStatus.FAIL, {contents: Buffer.alloc(16)}]);
                 },
                 `[BACKUP] Failed to export TC Link Key with status=FAIL.`,
             ],
@@ -2225,7 +2187,7 @@ describe('Ember Adapter Layer', () => {
                             SLStatus.OK,
                             {contents: Buffer.from(DEFAULT_BACKUP.stack_specific!.ezsp!.hashed_tclk!, 'hex')} as SecManKey,
                         ])
-                        .mockResolvedValueOnce([SLStatus.FAIL, {}]);
+                        .mockResolvedValueOnce([SLStatus.FAIL, {contents: Buffer.alloc(16)}]);
                 },
                 `[BACKUP] Failed to export Network Key with status=FAIL.`,
             ],
@@ -2360,7 +2322,7 @@ describe('Ember Adapter Layer', () => {
                     await flushPromises();
                 }, 300);
 
-                return [SLStatus.OK, ++mockAPSSequence];
+                return Promise.resolve([SLStatus.OK, ++mockAPSSequence]);
             };
 
             mockEzspSendUnicast.mockImplementationOnce(emitResponse).mockImplementationOnce(emitResponse);
@@ -2522,7 +2484,7 @@ describe('Ember Adapter Layer', () => {
                     await flushPromises();
                 }, 300);
 
-                return [SLStatus.OK, ++mockAPSSequence];
+                return Promise.resolve([SLStatus.OK, ++mockAPSSequence]);
             });
 
             const p = adapter.sendZclFrameToEndpoint('0x1122334455667788', networkAddress, endpoint, zclFrame, 10000, false, false, sourceEndpoint);
@@ -2583,7 +2545,7 @@ describe('Ember Adapter Layer', () => {
                     await flushPromises();
                 }, 300);
 
-                return [SLStatus.OK, ++mockAPSSequence];
+                return Promise.resolve([SLStatus.OK, ++mockAPSSequence]);
             });
 
             const p = adapter.sendZclFrameToEndpoint('0x1122334455667788', networkAddress, endpoint, zclFrame, 10000, false, false, sourceEndpoint);
@@ -2644,7 +2606,7 @@ describe('Ember Adapter Layer', () => {
                     await flushPromises();
                 }, 300);
 
-                return [SLStatus.OK, ++mockAPSSequence];
+                return Promise.resolve([SLStatus.OK, ++mockAPSSequence]);
             });
 
             const p = adapter.sendZclFrameToEndpoint('0x1122334455667788', networkAddress, endpoint, zclFrame, 10000, false, false);
@@ -2708,7 +2670,7 @@ describe('Ember Adapter Layer', () => {
                     await flushPromises();
                 }, 300);
 
-                return [SLStatus.OK, ++mockAPSSequence];
+                return Promise.resolve([SLStatus.OK, ++mockAPSSequence]);
             });
 
             const p = adapter.sendZclFrameToEndpoint('0x1122334455667788', networkAddress, endpoint, zclFrame, 10000, false, false, sourceEndpoint);
@@ -2774,7 +2736,7 @@ describe('Ember Adapter Layer', () => {
                     await flushPromises();
                 }, 300);
 
-                return [SLStatus.OK, ++mockAPSSequence];
+                return Promise.resolve([SLStatus.OK, ++mockAPSSequence]);
             });
 
             const p = adapter.sendZclFrameToEndpoint('0x1122334455667788', networkAddress, endpoint, zclFrame, 10000, false, false, sourceEndpoint);
@@ -3027,7 +2989,7 @@ describe('Ember Adapter Layer', () => {
                     await flushPromises();
                 }, 300);
 
-                return [SLStatus.OK, ++mockAPSSequence];
+                return Promise.resolve([SLStatus.OK, ++mockAPSSequence]);
             });
 
             const zdoPayload = Zdo.Buffalo.buildRequest(false, Zdo.ClusterId.NETWORK_ADDRESS_REQUEST, senderEUI64, false, 0);
@@ -3092,7 +3054,7 @@ describe('Ember Adapter Layer', () => {
                     await flushPromises();
                 }, 300);
 
-                return [SLStatus.OK, ++mockAPSSequence];
+                return Promise.resolve([SLStatus.OK, ++mockAPSSequence]);
             });
 
             const p = adapter.sendZclFrameToEndpoint('0x1122334455667788', networkAddress, endpoint, zclFrame, 10000, true, false, sourceEndpoint);
@@ -3349,7 +3311,7 @@ describe('Ember Adapter Layer', () => {
                     await flushPromises();
                 }, 300);
 
-                return SLStatus.OK;
+                return Promise.resolve(SLStatus.OK);
             });
 
             const p = adapter.sendZclFrameInterPANBroadcast(zclFrame, 10000);

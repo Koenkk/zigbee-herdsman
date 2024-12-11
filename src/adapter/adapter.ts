@@ -1,6 +1,9 @@
-import events from 'events';
+import assert from 'node:assert';
+import events from 'node:events';
+import {accessSync, readFileSync} from 'node:fs';
 
 import * as Models from '../models';
+import {BackupUtils} from '../utils';
 import {BroadcastAddress} from '../zspec/enums';
 import * as Zcl from '../zspec/zcl';
 import * as Zdo from '../zspec/zdo';
@@ -77,9 +80,107 @@ abstract class Adapter extends events.EventEmitter<AdapterEventMap> {
         }
     }
 
+    /**
+     * Get the strategy to use during start.
+     * - resumed: network in configuration.yaml matches network in adapter, resume operation
+     * - reset: network in configuration.yaml does not match network in adapter, no valid backup, form a new network
+     * - restored: network in configuration.yaml does not match network in adapter, valid backup, restore from backup
+     */
+    public async initNetwork(): Promise<TsType.StartResult> {
+        const enum InitAction {
+            DONE,
+            /** Config mismatch, must leave network. */
+            LEAVE,
+            /** Config mismatched, left network. Will evaluate forming from backup or config next. */
+            LEFT,
+            /** Form the network using config. No backup, or backup mismatch. */
+            FORM_CONFIG,
+            /** Re-form the network using full backed-up data. */
+            FORM_BACKUP,
+        }
+
+        const [hasNetwork, panID, extendedPanID] = await this.hasNetwork();
+        const extendedPanIDBuffer = Buffer.from(this.networkOptions.extendedPanID);
+        const configNetworkKeyBuffer = Buffer.from(this.networkOptions.networkKey!);
+        let action: InitAction = InitAction.DONE;
+
+        if (hasNetwork) {
+            // has a network
+            if (this.networkOptions.panID === panID && extendedPanIDBuffer.equals(extendedPanID)) {
+                // pan matches
+                if (!configNetworkKeyBuffer.equals(await this.getNetworkKey())) {
+                    // network key does not match
+                    action = InitAction.LEAVE;
+                }
+            } else {
+                // pan does not match
+                action = InitAction.LEAVE;
+            }
+
+            if (action === InitAction.LEAVE) {
+                // mismatch, force network leave
+                await this.leaveNetwork();
+
+                action = InitAction.LEFT;
+            }
+        }
+
+        const backup = this.getStoredBackup();
+
+        if (!hasNetwork || action === InitAction.LEFT) {
+            // no network
+            if (backup !== undefined) {
+                // valid backup
+                if (
+                    this.networkOptions.panID === backup.networkOptions.panId &&
+                    extendedPanIDBuffer.equals(backup.networkOptions.extendedPanId) &&
+                    this.networkOptions.channelList.includes(backup.logicalChannel) &&
+                    configNetworkKeyBuffer.equals(backup.networkOptions.networkKey)
+                ) {
+                    // config matches backup
+                    action = InitAction.FORM_BACKUP;
+                } else {
+                    // TODO: this should be changed to write config instead, and FORM_BACKUP (i.e. support loading backup from scratch)
+                    // config does not match backup
+                    action = InitAction.FORM_CONFIG;
+                }
+            } else {
+                // no backup
+                action = InitAction.FORM_CONFIG;
+            }
+        }
+
+        //---- from here on, we assume everything is in place for whatever decision was taken above
+
+        switch (action) {
+            case InitAction.FORM_BACKUP: {
+                assert(backup);
+                await this.formNetwork(backup);
+
+                return 'restored';
+            }
+            case InitAction.FORM_CONFIG: {
+                await this.formNetwork();
+
+                return 'reset';
+            }
+            case InitAction.DONE: {
+                return 'resumed';
+            }
+        }
+    }
+
     public abstract start(): Promise<TsType.StartResult>;
 
     public abstract stop(): Promise<void>;
+
+    public abstract hasNetwork(): Promise<[true, panID: number, extendedPanID: Buffer] | [false, panID: undefined, extendedPanID: undefined]>;
+
+    public abstract leaveNetwork(): Promise<void>;
+
+    public abstract formNetwork(backup?: Models.Backup): Promise<void>;
+
+    public abstract getNetworkKey(): Promise<Buffer>;
 
     public abstract getCoordinatorIEEE(): Promise<string>;
 
@@ -88,6 +189,45 @@ abstract class Adapter extends events.EventEmitter<AdapterEventMap> {
     public abstract reset(type: 'soft' | 'hard'): Promise<void>;
 
     public abstract supportsBackup(): Promise<boolean>;
+
+    /**
+     * Loads currently stored backup and returns it in internal backup model.
+     */
+    public getStoredBackup(): Models.Backup | undefined {
+        try {
+            accessSync(this.backupPath);
+        } catch {
+            return undefined;
+        }
+
+        try {
+            const data = JSON.parse(readFileSync(this.backupPath, 'utf8')) as Models.UnifiedBackupStorage | Models.LegacyBackupStorage;
+
+            if ('adapterType' in data) {
+                const backup = BackupUtils.fromLegacyBackup(data as Models.LegacyBackupStorage);
+
+                this.checkBackup(backup);
+
+                return backup;
+            } else if (data.metadata?.format === 'zigpy/open-coordinator-backup' && data.metadata?.version) {
+                if (data.metadata?.version !== 1) {
+                    throw new Error(`Unsupported open coordinator backup version (version=${data.metadata?.version})`);
+                }
+
+                const backup = BackupUtils.fromUnifiedBackup(data as Models.UnifiedBackupStorage);
+
+                this.checkBackup(backup);
+
+                return backup;
+            }
+        } catch (error) {
+            throw new Error(`Coordinator backup is corrupted (${error})`);
+        }
+
+        throw new Error('Unknown backup format');
+    }
+
+    public abstract checkBackup(backup: Models.Backup): void;
 
     public abstract backup(ieeeAddressesInDatabase: string[]): Promise<Models.Backup>;
 
