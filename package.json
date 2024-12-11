@@ -48,8 +48,6 @@
         "@types/debounce": "^1.2.4",
         "@types/eslint__js": "^8.42.3",
         "@types/jest": "^29.5.14",
-        "@types/mz": "^2.7.8",
-        "@types/nedb": "^1.8.16",
         "@types/node": "^22.10.1",
         "babel-jest": "^29.7.0",
         "eslint": "^9.16.0",

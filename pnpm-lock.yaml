@@ -66,12 +66,6 @@ importers:
       '@types/jest':
         specifier: ^29.5.14
         version: 29.5.14
-      '@types/mz':
-        specifier: ^2.7.8
-        version: 2.7.8
-      '@types/nedb':
-        specifier: ^1.8.16
-        version: 1.8.16
       '@types/node':
         specifier: ^22.10.1
         version: 22.10.1
@@ -980,12 +974,6 @@ packages:
 
   '@types/json-schema@7.0.15':
     resolution: {integrity: sha512-5+fP8P8MFNC+AyZCDxrB2pkZFPGzqQWUzpSeuuVLvm8VMcorNYavBqoFcxK8bQz4Qsbn4oUEEem4wDLfcysGHA==}
-
-  '@types/mz@2.7.8':
-    resolution: {integrity: sha512-mGLNqqwt8yu4pDw9rEphAiyWnEdok0GzOGrwi5EiTuDFxw7H3ZaEI4ASFKq4HaZtemtjQ8MkcmtWcrU4V0WkIw==}
-
-  '@types/nedb@1.8.16':
-    resolution: {integrity: sha512-ND+uzwAZk7ZI9byOvHGOcZe2R9XUcLF698yDJKn00trFvh+GaemkX3gQKCSKtObjDpv8Uuou+k8v4x4scPr4TA==}
 
   '@types/node@22.10.1':
     resolution: {integrity: sha512-qKgsUwfHZV2WCWLAnVP1JqnpE6Im6h3Y0+fYgMTasNQ7V++CBX5OT1as0g0f+OyubbFqhf6XVNIsmN4IIhEgGQ==}
@@ -3503,14 +3491,6 @@ snapshots:
       pretty-format: 29.7.0
 
   '@types/json-schema@7.0.15': {}
-
-  '@types/mz@2.7.8':
-    dependencies:
-      '@types/node': 22.10.1
-
-  '@types/nedb@1.8.16':
-    dependencies:
-      '@types/node': 22.10.1
 
   '@types/node@22.10.1':
     dependencies:
