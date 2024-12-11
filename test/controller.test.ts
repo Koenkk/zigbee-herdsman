@@ -65,7 +65,7 @@ const mockAdapterReset = jest.fn();
 const mockAdapterStop = jest.fn();
 const mockAdapterStart = jest.fn().mockReturnValue('resumed');
 const mockAdapterGetCoordinatorIEEE = jest.fn().mockReturnValue('0x0000012300000000');
-const mockAdapterGetNetworkParameters = jest.fn().mockReturnValue({panID: 1, extendedPanID: 3, channel: 15});
+const mockAdapterGetNetworkParameters = jest.fn().mockReturnValue({panID: 1, extendedPanID: '0x64c5fd698daf0c00', channel: 15});
 const mocksendZclFrameToGroup = jest.fn();
 const mocksendZclFrameToAll = jest.fn();
 const mockAddInstallCode = jest.fn();
@@ -1588,7 +1588,7 @@ describe('Controller', () => {
 
     it('Change channel on start', async () => {
         mockAdapterStart.mockReturnValueOnce('resumed');
-        mockAdapterGetNetworkParameters.mockReturnValueOnce({panID: 1, extendedPanID: 3, channel: 25});
+        mockAdapterGetNetworkParameters.mockReturnValueOnce({panID: 1, extendedPanID: '0x64c5fd698daf0c00', channel: 25});
         // @ts-expect-error private
         const changeChannelSpy = jest.spyOn(controller, 'changeChannel');
         await controller.start();
@@ -1601,7 +1601,7 @@ describe('Controller', () => {
             zdoPayload,
             true,
         );
-        expect(await controller.getNetworkParameters()).toEqual({panID: 1, channel: 15, extendedPanID: 3});
+        expect(await controller.getNetworkParameters()).toEqual({panID: 1, channel: 15, extendedPanID: '0x64c5fd698daf0c00'});
         expect(changeChannelSpy).toHaveBeenCalledTimes(1);
     });
 
@@ -1621,8 +1621,9 @@ describe('Controller', () => {
 
     it('Get network parameters', async () => {
         await controller.start();
-        expect(await controller.getNetworkParameters()).toEqual({panID: 1, channel: 15, extendedPanID: 3});
-        expect(await controller.getNetworkParameters()).toEqual({panID: 1, channel: 15, extendedPanID: 3});
+        expect(await controller.getNetworkParameters()).toEqual({panID: 1, channel: 15, extendedPanID: '0x64c5fd698daf0c00'});
+        // cached
+        expect(await controller.getNetworkParameters()).toEqual({panID: 1, channel: 15, extendedPanID: '0x64c5fd698daf0c00'});
         expect(mockAdapterGetNetworkParameters).toHaveBeenCalledTimes(1);
     });
 
