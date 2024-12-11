@@ -1320,47 +1320,42 @@ export class EmberAdapter extends Adapter {
         logger.info(`======== Ember Adapter Stopped ========`, NS);
     }
 
-    public async hasNetwork(): Promise<[true, panID: number, extendedPanID: Buffer] | [false, panID: undefined, extendedPanID: undefined]> {
-        // when called after init TC, should always return true
-        if (this.networkCache.parameters.panId !== ZSpec.INVALID_PAN_ID) {
-            return [true, this.networkCache.parameters.panId, Buffer.from(this.networkCache.parameters.extendedPanId)];
-        } else {
-            const networkInitStruct: EmberNetworkInitStruct = {
-                bitmask: EmberNetworkInitBitmask.PARENT_INFO_IN_TOKEN | EmberNetworkInitBitmask.END_DEVICE_REJOIN_ON_REBOOT,
-            };
-            const initStatus = await this.ezsp.ezspNetworkInit(networkInitStruct);
+    protected async initHasNetwork(): Promise<[true, panID: number, extendedPanID: Buffer] | [false, panID: undefined, extendedPanID: undefined]> {
+        const networkInitStruct: EmberNetworkInitStruct = {
+            bitmask: EmberNetworkInitBitmask.PARENT_INFO_IN_TOKEN | EmberNetworkInitBitmask.END_DEVICE_REJOIN_ON_REBOOT,
+        };
+        const initStatus = await this.ezsp.ezspNetworkInit(networkInitStruct);
 
-            logger.debug(`Network init status=${SLStatus[initStatus]}.`, NS);
+        logger.debug(`Network init status=${SLStatus[initStatus]}.`, NS);
 
-            if (initStatus !== SLStatus.OK && initStatus !== SLStatus.NOT_JOINED) {
-                throw new Error(`Failed network init request with status=${SLStatus[initStatus]}.`);
-            }
-
-            if (initStatus === SLStatus.OK) {
-                await this.oneWaitress.startWaitingForEvent(
-                    {eventName: OneWaitressEvents.STACK_STATUS_NETWORK_UP},
-                    DEFAULT_NETWORK_REQUEST_TIMEOUT,
-                    'Network init',
-                );
-
-                const [npStatus, nodeType, netParams] = await this.ezsp.ezspGetNetworkParameters();
-
-                if (npStatus !== SLStatus.OK) {
-                    throw new Error(`Failed to get network parameters with status=${SLStatus[npStatus]}.`);
-                }
-
-                logger.debug(() => `Current adapter network: nodeType=${EmberNodeType[nodeType]} params=${JSON.stringify(netParams)}`, NS);
-
-                // force forming in case current network is `ROUTER` type
-                if (nodeType !== EmberNodeType.COORDINATOR) {
-                    return [false, undefined, undefined];
-                }
-
-                return [true, netParams.panId, Buffer.from(netParams.extendedPanId)];
-            }
-
-            return [false, undefined, undefined];
+        if (initStatus !== SLStatus.OK && initStatus !== SLStatus.NOT_JOINED) {
+            throw new Error(`Failed network init request with status=${SLStatus[initStatus]}.`);
         }
+
+        if (initStatus === SLStatus.OK) {
+            await this.oneWaitress.startWaitingForEvent(
+                {eventName: OneWaitressEvents.STACK_STATUS_NETWORK_UP},
+                DEFAULT_NETWORK_REQUEST_TIMEOUT,
+                'Network init',
+            );
+
+            const [npStatus, nodeType, netParams] = await this.ezsp.ezspGetNetworkParameters();
+
+            if (npStatus !== SLStatus.OK) {
+                throw new Error(`Failed to get network parameters with status=${SLStatus[npStatus]}.`);
+            }
+
+            logger.debug(() => `Current adapter network: nodeType=${EmberNodeType[nodeType]} params=${JSON.stringify(netParams)}`, NS);
+
+            // force forming in case current network is `ROUTER` type
+            if (nodeType !== EmberNodeType.COORDINATOR) {
+                return [false, undefined, undefined];
+            }
+
+            return [true, netParams.panId, Buffer.from(netParams.extendedPanId)];
+        }
+
+        return [false, undefined, undefined];
     }
 
     public async leaveNetwork(): Promise<void> {

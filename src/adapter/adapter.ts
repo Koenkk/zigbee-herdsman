@@ -99,7 +99,7 @@ abstract class Adapter extends events.EventEmitter<AdapterEventMap> {
             FORM_BACKUP,
         }
 
-        const [hasNetwork, panID, extendedPanID] = await this.hasNetwork();
+        const [hasNetwork, panID, extendedPanID] = await this.initHasNetwork();
         const extendedPanIDBuffer = Buffer.from(this.networkOptions.extendedPanID);
         const configNetworkKeyBuffer = Buffer.from(this.networkOptions.networkKey!);
         let action: InitAction = InitAction.DONE;
@@ -174,7 +174,11 @@ abstract class Adapter extends events.EventEmitter<AdapterEventMap> {
 
     public abstract stop(): Promise<void>;
 
-    public abstract hasNetwork(): Promise<[true, panID: number, extendedPanID: Buffer] | [false, panID: undefined, extendedPanID: undefined]>;
+    /**
+     * Check the network status on the adapter (execute the necessary pre-steps to be able to get it).
+     * WARNING: This is a one-off. Should not be called outside of `initNetwork`.
+     */
+    protected abstract initHasNetwork(): Promise<[true, panID: number, extendedPanID: Buffer] | [false, panID: undefined, extendedPanID: undefined]>;
 
     public abstract leaveNetwork(): Promise<void>;
 

@@ -101,7 +101,7 @@ class DeconzAdapter extends Adapter {
         await this.driver.close();
     }
 
-    public async hasNetwork(): Promise<[true, panID: number, extendedPanID: Buffer] | [false, panID: undefined, extendedPanID: undefined]> {
+    protected async initHasNetwork(): Promise<[true, panID: number, extendedPanID: Buffer] | [false, panID: undefined, extendedPanID: undefined]> {
         const panid = (await this.driver.readParameterRequest(PARAM.PARAM.Network.PAN_ID)) as number;
         const expanid = (await this.driver.readParameterRequest(PARAM.PARAM.Network.APS_EXT_PAN_ID)) as string;
 
@@ -122,6 +122,7 @@ class DeconzAdapter extends Adapter {
 
     public async formNetwork(backup?: Models.Backup): Promise<void> {
         if (backup) {
+            // this path should never be reached
             throw new Error('This adapter does not support backup');
         } else {
             await this.driver.writeParameterRequest(PARAM.PARAM.Network.PAN_ID, this.networkOptions.panID);
