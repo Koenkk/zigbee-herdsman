@@ -696,7 +696,8 @@ export class EmberAdapter extends Adapter {
         await this.registerFixedEndpoints();
         this.clearNetworkCache();
 
-        result = await this.initTrustCenter();
+        await this.initTrustCenter();
+        result = await this.initNetwork();
 
         // after network UP, as per SDK, ensures clean slate
         await this.initNCPConcentrator();
@@ -809,39 +810,31 @@ export class EmberAdapter extends Adapter {
         }
     }
 
-    /**
-     *
-     * @returns True if the network needed to be formed.
-     */
-    private async initTrustCenter(): Promise<TsType.StartResult> {
+    private async initTrustCenter(): Promise<void> {
         // init TC policies
-        {
-            let status = await this.emberSetEzspPolicy(EzspPolicyId.TC_KEY_REQUEST_POLICY, EzspDecisionId.ALLOW_TC_KEY_REQUESTS_AND_SEND_CURRENT_KEY);
+        let status = await this.emberSetEzspPolicy(EzspPolicyId.TC_KEY_REQUEST_POLICY, EzspDecisionId.ALLOW_TC_KEY_REQUESTS_AND_SEND_CURRENT_KEY);
 
-            if (status !== SLStatus.OK) {
-                throw new Error(
-                    `[INIT TC] Failed to set EzspPolicyId TC_KEY_REQUEST_POLICY to ALLOW_TC_KEY_REQUESTS_AND_SEND_CURRENT_KEY with status=${SLStatus[status]}.`,
-                );
-            }
-
-            /* istanbul ignore next */
-            const appKeyRequestsPolicy = ALLOW_APP_KEY_REQUESTS ? EzspDecisionId.ALLOW_APP_KEY_REQUESTS : EzspDecisionId.DENY_APP_KEY_REQUESTS;
-            status = await this.emberSetEzspPolicy(EzspPolicyId.APP_KEY_REQUEST_POLICY, appKeyRequestsPolicy);
-
-            if (status !== SLStatus.OK) {
-                throw new Error(
-                    `[INIT TC] Failed to set EzspPolicyId APP_KEY_REQUEST_POLICY to ${EzspDecisionId[appKeyRequestsPolicy]} with status=${SLStatus[status]}.`,
-                );
-            }
-
-            status = await this.emberSetJoinPolicy(EmberJoinDecision.USE_PRECONFIGURED_KEY);
-
-            if (status !== SLStatus.OK) {
-                throw new Error(`[INIT TC] Failed to set join policy to USE_PRECONFIGURED_KEY with status=${SLStatus[status]}.`);
-            }
+        if (status !== SLStatus.OK) {
+            throw new Error(
+                `[INIT TC] Failed to set EzspPolicyId TC_KEY_REQUEST_POLICY to ALLOW_TC_KEY_REQUESTS_AND_SEND_CURRENT_KEY with status=${SLStatus[status]}.`,
+            );
         }
 
-        return await this.initNetwork();
+        /* istanbul ignore next */
+        const appKeyRequestsPolicy = ALLOW_APP_KEY_REQUESTS ? EzspDecisionId.ALLOW_APP_KEY_REQUESTS : EzspDecisionId.DENY_APP_KEY_REQUESTS;
+        status = await this.emberSetEzspPolicy(EzspPolicyId.APP_KEY_REQUEST_POLICY, appKeyRequestsPolicy);
+
+        if (status !== SLStatus.OK) {
+            throw new Error(
+                `[INIT TC] Failed to set EzspPolicyId APP_KEY_REQUEST_POLICY to ${EzspDecisionId[appKeyRequestsPolicy]} with status=${SLStatus[status]}.`,
+            );
+        }
+
+        status = await this.emberSetJoinPolicy(EmberJoinDecision.USE_PRECONFIGURED_KEY);
+
+        if (status !== SLStatus.OK) {
+            throw new Error(`[INIT TC] Failed to set join policy to USE_PRECONFIGURED_KEY with status=${SLStatus[status]}.`);
+        }
     }
 
     /**
