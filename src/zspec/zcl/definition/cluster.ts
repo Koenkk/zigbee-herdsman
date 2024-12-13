@@ -2142,8 +2142,8 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             colorTempPhysicalMax: {ID: 16396, type: DataType.UINT16},
             coupleColorTempToLevelMin: {ID: 16397, type: DataType.UINT16},
             startUpColorTemperature: {ID: 16400, type: DataType.UINT16},
-            tuyaBrightness: {ID: 61441, type: DataType.UINT16},
-            tuyaRgbMode: {ID: 61440, type: DataType.UINT16},
+            tuyaBrightness: {ID: 61441, type: DataType.UINT8},
+            tuyaRgbMode: {ID: 61440, type: DataType.UINT8},
         },
         commands: {
             moveToHue: {
