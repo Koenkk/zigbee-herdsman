@@ -1,5 +1,13 @@
 # Changelog
 
+## [3.0.3](https://github.com/Koenkk/zigbee-herdsman/compare/v3.0.2...v3.0.3) (2024-12-13)
+
+
+### Bug Fixes
+
+* Fix tuya custom attributes types. ([#1260](https://github.com/Koenkk/zigbee-herdsman/issues/1260)) ([cba0912](https://github.com/Koenkk/zigbee-herdsman/commit/cba09120be2cfb9b1225a0278fdd0c699b129934))
+* Proper extended PAN ID in `getNetworkParameters` ([#1259](https://github.com/Koenkk/zigbee-herdsman/issues/1259)) ([febca96](https://github.com/Koenkk/zigbee-herdsman/commit/febca962ffcd8880a33156064d2e4995e84862b4))
+
 ## [3.0.2](https://github.com/Koenkk/zigbee-herdsman/compare/v3.0.1...v3.0.2) (2024-12-08)
 
 
