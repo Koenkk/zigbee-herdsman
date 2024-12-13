@@ -173,9 +173,9 @@ class ZiGateAdapter extends Adapter {
             const result = await this.driver.sendCommand(ZiGateCommandCode.GetNetworkState, {}, 10000);
 
             return {
-                panID: <number>result.payload.PANID,
-                extendedPanID: <number>result.payload.ExtPANID,
-                channel: <number>result.payload.Channel,
+                panID: result.payload.PANID as number,
+                extendedPanID: result.payload.ExtPANID as string, // read as IEEEADDR, so `0x${string}`
+                channel: result.payload.Channel as number,
             };
         } catch (error) {
             throw new Error(`Get network parameters failed ${error}`);
