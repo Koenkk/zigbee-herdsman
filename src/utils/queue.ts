@@ -1,12 +1,8 @@
-import {logger} from './logger';
-
 interface Job {
     key?: string | number;
     running: boolean;
     start?: () => void;
 }
-
-const NS = 'zh:queue';
 
 class Queue {
     private jobs: Job[];
@@ -18,7 +14,6 @@ class Queue {
     }
 
     public async execute<T>(func: () => Promise<T>, key?: string | number): Promise<T> {
-        logger.debug(`== queue add - ${key} (keys=${this.jobs.map((j) => j.key)})`, NS);
         const job: Job = {key, running: false};
         this.jobs.push(job);
 
@@ -38,11 +33,9 @@ class Queue {
         }
 
         try {
-            logger.debug(`== queue execute func - ${key} (keys=${this.jobs.map((j) => j.key)})`, NS);
             return await func();
         } finally {
             this.jobs.splice(this.jobs.indexOf(job), 1);
-            logger.debug(`== queue remove - ${key}  (keys=${this.jobs.map((j) => j.key)})`, NS);
             this.executeNext();
         }
     }

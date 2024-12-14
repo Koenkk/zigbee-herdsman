@@ -308,7 +308,6 @@ class ZStackAdapter extends Adapter {
         payload: Buffer,
         disableResponse: boolean,
     ): Promise<ZdoTypes.RequestToResponseMap[K] | void> {
-        // @ts-expect-error TODO fix
         return await this.sendZdoInternal(ieeeAddress, networkAddress, clusterId, payload, disableResponse, false);
     }
 
@@ -317,7 +316,7 @@ class ZStackAdapter extends Adapter {
         networkAddress: number,
         clusterId: Zdo.ClusterId,
         payload: Buffer,
-        disableResponse: true,
+        disableResponse: boolean,
         skipQueue: boolean,
     ): Promise<void>;
     private async sendZdoInternal<K extends keyof ZdoTypes.RequestToResponseMap>(
@@ -446,7 +445,6 @@ class ZStackAdapter extends Adapter {
         disableRecovery: boolean,
         sourceEndpoint?: number,
     ): Promise<Events.ZclPayload | void> {
-        logger.debug(`== sendZclFrameToEndpoint add to queue - ${ieeeAddr}/${networkAddress}`, NS);
         return await this.queue.execute<Events.ZclPayload | void>(async () => {
             this.checkInterpanLock();
             return await this.sendZclFrameToEndpointInternal(
