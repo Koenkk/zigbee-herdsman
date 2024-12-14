@@ -1,7 +1,5 @@
 /* istanbul ignore file */
 
-import assert from 'assert';
-
 import Device from '../../../controller/model/device';
 import * as Models from '../../../models';
 import {Wait, Waitress} from '../../../utils';
@@ -76,14 +74,6 @@ class DeconzAdapter extends Adapter {
         setInterval(() => {
             this.checkReceivedDataPayload(null);
         }, 1000);
-    }
-
-    public static async isValidPath(path: string): Promise<boolean> {
-        return await Driver.isValidPath(path);
-    }
-
-    public static async autoDetectPath(): Promise<string | undefined> {
-        return await Driver.autoDetectPath();
     }
 
     /**
@@ -309,9 +299,8 @@ class DeconzAdapter extends Adapter {
         }
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     public async addInstallCode(ieeeAddress: string, key: Buffer): Promise<void> {
-        return await Promise.reject(new Error('Add install code is not supported'));
+        await this.driver.writeLinkKey(ieeeAddress, ZSpec.Utils.aes128MmoHash(key));
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -548,9 +537,10 @@ class DeconzAdapter extends Adapter {
             const panid = await this.driver.readParameterRequest(PARAM.PARAM.Network.PAN_ID);
             const expanid = await this.driver.readParameterRequest(PARAM.PARAM.Network.APS_EXT_PAN_ID);
             const channel = await this.driver.readParameterRequest(PARAM.PARAM.Network.CHANNEL);
+
             return {
                 panID: panid as number,
-                extendedPanID: expanid as number,
+                extendedPanID: expanid as string, // read as `0x...`
                 channel: channel as number,
             };
         } catch (error) {
@@ -581,11 +571,6 @@ class DeconzAdapter extends Adapter {
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     public async setChannelInterPAN(channel: number): Promise<void> {
-        throw new Error('not supported');
-    }
-
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    public async setTransmitPower(value: number): Promise<void> {
         throw new Error('not supported');
     }
 
@@ -660,12 +645,13 @@ class DeconzAdapter extends Adapter {
                     logger.debug(`Try to find network address of ${resp.srcAddr64}`, NS);
                     // Note: Device expects addresses with a 0x prefix...
                     srcAddr = Device.byIeeeAddr('0x' + resp.srcAddr64, false)?.networkAddress;
+                    // apperantly some functions furhter up in the protocol stack expect this to be set.
+                    // so let's make sure they get the network address
+                    // Note: srcAddr16 can be undefined after this and this is intended behavior
+                    // there are zigbee frames which do not contain a 16 bit address, e.g. during joining.
+                    // So any code that relies on srcAddr16 must handle this in some way.
+                    resp.srcAddr16 = srcAddr;
                 }
-
-                assert(srcAddr, 'Failed to find srcAddr of message');
-                // apperantly some functions furhter up in the protocol stack expect this to be set.
-                // so let's make sure they get the network address
-                resp.srcAddr16 = srcAddr; // TODO: can't be undefined
             }
 
             if (resp.profileId === Zdo.ZDO_PROFILE_ID) {
@@ -724,7 +710,7 @@ class DeconzAdapter extends Adapter {
                 clusterID: resp.clusterId,
                 header,
                 data: resp.asduPayload,
-                address: resp.destAddrMode === 0x03 ? `0x${resp.srcAddr64!}` : resp.srcAddr16!,
+                address: resp.srcAddrMode === 0x03 ? `0x${resp.srcAddr64!}` : resp.srcAddr16!,
                 endpoint: resp.srcEndpoint,
                 linkquality: resp.lqi,
                 groupID: resp.destAddrMode === 0x01 ? resp.destAddr16! : 0,

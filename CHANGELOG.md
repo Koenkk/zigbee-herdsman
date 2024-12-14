@@ -1,5 +1,145 @@
 # Changelog
 
+## [3.0.3](https://github.com/Koenkk/zigbee-herdsman/compare/v3.0.2...v3.0.3) (2024-12-13)
+
+
+### Bug Fixes
+
+* Fix tuya custom attributes types. ([#1260](https://github.com/Koenkk/zigbee-herdsman/issues/1260)) ([cba0912](https://github.com/Koenkk/zigbee-herdsman/commit/cba09120be2cfb9b1225a0278fdd0c699b129934))
+* Proper extended PAN ID in `getNetworkParameters` ([#1259](https://github.com/Koenkk/zigbee-herdsman/issues/1259)) ([febca96](https://github.com/Koenkk/zigbee-herdsman/commit/febca962ffcd8880a33156064d2e4995e84862b4))
+
+## [3.0.2](https://github.com/Koenkk/zigbee-herdsman/compare/v3.0.1...v3.0.2) (2024-12-08)
+
+
+### Bug Fixes
+
+* **ignore:** update dependencies ([#1254](https://github.com/Koenkk/zigbee-herdsman/issues/1254)) ([1d22bd2](https://github.com/Koenkk/zigbee-herdsman/commit/1d22bd29688bdfb1a301390a09c37759904e054c))
+* Permit join optimisation ([#1251](https://github.com/Koenkk/zigbee-herdsman/issues/1251)) ([5dca3bc](https://github.com/Koenkk/zigbee-herdsman/commit/5dca3bcddb33f899222f5f3f27b7e1a1193b6f11))
+
+## [3.0.1](https://github.com/Koenkk/zigbee-herdsman/compare/v3.0.0...v3.0.1) (2024-12-05)
+
+
+### Bug Fixes
+
+* Allow hostnames for tcp adapters https://github.com/Koenkk/zigbee2mqtt/issues/25062 ([e9240da](https://github.com/Koenkk/zigbee-herdsman/commit/e9240da62deb80ae7d50c8c3a61eb9a13f1da4e8))
+* **ignore:** improve e9240da62deb80ae7d50c8c3a61eb9a13f1da4e8 ([5a29fda](https://github.com/Koenkk/zigbee-herdsman/commit/5a29fda0d5e7f502c3e122d0a14f75ab3d942490))
+
+## [3.0.0](https://github.com/Koenkk/zigbee-herdsman/compare/v2.1.9...v3.0.0) (2024-12-01)
+
+
+### ⚠ BREAKING CHANGES
+
+* Fix some transmit power issues after #1139 ([#1222](https://github.com/Koenkk/zigbee-herdsman/issues/1222))
+* Improved adapter discovery ([#1197](https://github.com/Koenkk/zigbee-herdsman/issues/1197))
+* Improve permit join ([#1214](https://github.com/Koenkk/zigbee-herdsman/issues/1214))
+
+### Features
+
+* Improve permit join ([#1214](https://github.com/Koenkk/zigbee-herdsman/issues/1214)) ([818435a](https://github.com/Koenkk/zigbee-herdsman/commit/818435afcf55d7392fd71df25913427dc67eaada))
+* Improved adapter discovery ([#1197](https://github.com/Koenkk/zigbee-herdsman/issues/1197)) ([1d35a14](https://github.com/Koenkk/zigbee-herdsman/commit/1d35a1435512285323b0dd0e185ffdbe23ac05b9))
+
+
+### Bug Fixes
+
+* Better support for install codes (including deconz) ([#1243](https://github.com/Koenkk/zigbee-herdsman/issues/1243)) ([9ac181c](https://github.com/Koenkk/zigbee-herdsman/commit/9ac181c8c58323b9f246bb4292aadac2fccc2ac1))
+* Better support for install codes (including deconz) ([#1243](https://github.com/Koenkk/zigbee-herdsman/issues/1243)) ([b98b141](https://github.com/Koenkk/zigbee-herdsman/commit/b98b141d2ccebd207b4ef31ffa695a2be8284016))
+* Fix some transmit power issues after [#1139](https://github.com/Koenkk/zigbee-herdsman/issues/1139) ([#1222](https://github.com/Koenkk/zigbee-herdsman/issues/1222)) ([c016153](https://github.com/Koenkk/zigbee-herdsman/commit/c0161535c734800478d62203d6db695a7a1f67aa))
+* General cleanup ([#1231](https://github.com/Koenkk/zigbee-herdsman/issues/1231)) ([86d1a76](https://github.com/Koenkk/zigbee-herdsman/commit/86d1a76c0a3f803859e98dfd0af7e60ece60f28e))
+* **ignore:** Update dependencies ([#1246](https://github.com/Koenkk/zigbee-herdsman/issues/1246)) ([bc24ecb](https://github.com/Koenkk/zigbee-herdsman/commit/bc24ecb2cf7d1dd5e78e859a3962668a950c8f89))
+
+## [2.1.9](https://github.com/Koenkk/zigbee-herdsman/compare/v2.1.8...v2.1.9) (2024-11-18)
+
+
+### Bug Fixes
+
+* comment on Z-Stack ZDO command oddity ([#1240](https://github.com/Koenkk/zigbee-herdsman/issues/1240)) ([b54d1e8](https://github.com/Koenkk/zigbee-herdsman/commit/b54d1e8f22ef9505e95a3eb2764e44ad4c2a1757))
+* Fix command responses in the scenes cluster ([#1241](https://github.com/Koenkk/zigbee-herdsman/issues/1241)) ([1d54cba](https://github.com/Koenkk/zigbee-herdsman/commit/1d54cba76de04a80fb65d647369ec0e9f53e230a))
+
+## [2.1.8](https://github.com/Koenkk/zigbee-herdsman/compare/v2.1.7...v2.1.8) (2024-11-13)
+
+
+### Bug Fixes
+
+* Fix missing response for readReportConfig command ([#1235](https://github.com/Koenkk/zigbee-herdsman/issues/1235)) ([6b29aff](https://github.com/Koenkk/zigbee-herdsman/commit/6b29affb2470fc68bf3a83cc6c3e8a4413b7fe44))
+* **ignore:** update dependencies ([#1229](https://github.com/Koenkk/zigbee-herdsman/issues/1229)) ([59c2f1b](https://github.com/Koenkk/zigbee-herdsman/commit/59c2f1b1c776667d18831bd0f55654e5577cb50b))
+* **ignore:** update dependencies ([#1232](https://github.com/Koenkk/zigbee-herdsman/issues/1232)) ([bf3b0a0](https://github.com/Koenkk/zigbee-herdsman/commit/bf3b0a07584c219405de6697dfad0242baa10956))
+* ZNP ZDO: skip logging payload ([#1233](https://github.com/Koenkk/zigbee-herdsman/issues/1233)) ([c8ad904](https://github.com/Koenkk/zigbee-herdsman/commit/c8ad90461afae84e7e78dae28fae173cc84cab67))
+
+## [2.1.7](https://github.com/Koenkk/zigbee-herdsman/compare/v2.1.6...v2.1.7) (2024-10-31)
+
+
+### Bug Fixes
+
+* Remove disappeared endpoints ([#1227](https://github.com/Koenkk/zigbee-herdsman/issues/1227)) ([cc7f479](https://github.com/Koenkk/zigbee-herdsman/commit/cc7f479168c049127e22171766617f84ee959559))
+
+## [2.1.6](https://github.com/Koenkk/zigbee-herdsman/compare/v2.1.5...v2.1.6) (2024-10-29)
+
+
+### Bug Fixes
+
+* Ember: minor cleanup ([#1223](https://github.com/Koenkk/zigbee-herdsman/issues/1223)) ([bf8b468](https://github.com/Koenkk/zigbee-herdsman/commit/bf8b4680ecf062b39dc8afb71f093332a00232f6))
+* **ignore:** update dependencies ([#1225](https://github.com/Koenkk/zigbee-herdsman/issues/1225)) ([a2a9e54](https://github.com/Koenkk/zigbee-herdsman/commit/a2a9e54f31353cbb01a8336f4715f90123e3fb07))
+* ZBOSS: fix ZDO bind/unbind commands for groups ([#1226](https://github.com/Koenkk/zigbee-herdsman/issues/1226)) ([f2fa9ab](https://github.com/Koenkk/zigbee-herdsman/commit/f2fa9abd97b30433fdc24c62fb41e2fc9ebb0757))
+
+## [2.1.5](https://github.com/Koenkk/zigbee-herdsman/compare/v2.1.4...v2.1.5) (2024-10-21)
+
+
+### Bug Fixes
+
+* **ignore:** update dependencies ([#1219](https://github.com/Koenkk/zigbee-herdsman/issues/1219)) ([5f11842](https://github.com/Koenkk/zigbee-herdsman/commit/5f118426098d5bc3331db39f13fea4b52c652ebf))
+* ZBOSS: Fix unhandled error on sendZclFrameToEndpointInternal in case of request execute time more than timeout. ([#1218](https://github.com/Koenkk/zigbee-herdsman/issues/1218)) ([346b3be](https://github.com/Koenkk/zigbee-herdsman/commit/346b3be6392f67d35fa36abd8cd9d52747641a88))
+
+## [2.1.4](https://github.com/Koenkk/zigbee-herdsman/compare/v2.1.3...v2.1.4) (2024-10-18)
+
+
+### Bug Fixes
+
+* Ember: set NWK frame counter on backup restore ([#1213](https://github.com/Koenkk/zigbee-herdsman/issues/1213)) ([48a4278](https://github.com/Koenkk/zigbee-herdsman/commit/48a427876bbf26600b4343b1501e36a98201c82c))
+* **ignore:** fix fdcea288e477956511bd1e07c72909599d29494d ([021d6ba](https://github.com/Koenkk/zigbee-herdsman/commit/021d6ba7e7423a811748e03cc902e1956d6c7993))
+* **ignore:** fix pnpm publish ([3a8a9ff](https://github.com/Koenkk/zigbee-herdsman/commit/3a8a9ff1e234c988feefd17c04f4ae634138c445))
+* **ignore:** fix pnpm publish ([ec7c799](https://github.com/Koenkk/zigbee-herdsman/commit/ec7c7999f18493142d3787ebde6e0a03172c1f83))
+* **ignore:** Switch to pnpm ([#1215](https://github.com/Koenkk/zigbee-herdsman/issues/1215)) ([fdcea28](https://github.com/Koenkk/zigbee-herdsman/commit/fdcea288e477956511bd1e07c72909599d29494d))
+* **ignore:** update dependencies ([#1211](https://github.com/Koenkk/zigbee-herdsman/issues/1211)) ([8485184](https://github.com/Koenkk/zigbee-herdsman/commit/8485184258f3d7cfddabfc2a62190abaf0fba101))
+* **ignore:** update dependencies ([#1216](https://github.com/Koenkk/zigbee-herdsman/issues/1216)) ([deb42aa](https://github.com/Koenkk/zigbee-herdsman/commit/deb42aafdff2cc153233480ba0208aa7b37cacb7))
+* Log socket errors https://github.com/zigbee2mqtt/hassio-zigbee2mqtt/issues/644 ([#1217](https://github.com/Koenkk/zigbee-herdsman/issues/1217)) ([96fc5e6](https://github.com/Koenkk/zigbee-herdsman/commit/96fc5e6cac2deb04d5fa3821b24cb0a2976609da))
+
+## [2.1.3](https://github.com/Koenkk/zigbee-herdsman/compare/v2.1.2...v2.1.3) (2024-09-30)
+
+
+### Bug Fixes
+
+* Fix unable to join some devices with Conbee III ([#1207](https://github.com/Koenkk/zigbee-herdsman/issues/1207)) ([3e7bfaa](https://github.com/Koenkk/zigbee-herdsman/commit/3e7bfaa11693f1dc9e7608777e852cfbdb6ffd2b))
+
+## [2.1.2](https://github.com/Koenkk/zigbee-herdsman/compare/v2.1.1...v2.1.2) (2024-09-29)
+
+
+### Bug Fixes
+
+* Fix crash on IEEE address request timeout ([#1209](https://github.com/Koenkk/zigbee-herdsman/issues/1209)) ([985e11a](https://github.com/Koenkk/zigbee-herdsman/commit/985e11a48eeede31558b1e0a561c40755d7e8226))
+* **ignore:** update dependencies ([#1208](https://github.com/Koenkk/zigbee-herdsman/issues/1208)) ([854e5f3](https://github.com/Koenkk/zigbee-herdsman/commit/854e5f318a6cc2c1ea896f0fabc6ce627c20b79b))
+* **ignore:** zigate: Workaround missing ZDO `LEAVE_RESPONSE` ([#1204](https://github.com/Koenkk/zigbee-herdsman/issues/1204)) ([5d02efe](https://github.com/Koenkk/zigbee-herdsman/commit/5d02efe44826401521b85259dde5e3ca4421e312))
+* On NO_ENTRY error during unbind cleanup database ([#1206](https://github.com/Koenkk/zigbee-herdsman/issues/1206)) ([01b76ff](https://github.com/Koenkk/zigbee-herdsman/commit/01b76ff3f352ce76eb98b3cd4fa9d09c67f8563c))
+
+## [2.1.1](https://github.com/Koenkk/zigbee-herdsman/compare/v2.1.0...v2.1.1) (2024-09-24)
+
+
+### Bug Fixes
+
+* Cleanup network address change code ([#1201](https://github.com/Koenkk/zigbee-herdsman/issues/1201)) ([d6eef4d](https://github.com/Koenkk/zigbee-herdsman/commit/d6eef4d8b6c946316fe7a914c810dc0e3b654893))
+* **ignore:** zigate: Various fixes ([#1203](https://github.com/Koenkk/zigbee-herdsman/issues/1203)) ([45c0f26](https://github.com/Koenkk/zigbee-herdsman/commit/45c0f26c3b05c7c8e45403040f7fe87ff5d35afd))
+
+## [2.1.0](https://github.com/Koenkk/zigbee-herdsman/compare/v2.0.0...v2.1.0) (2024-09-23)
+
+
+### Features
+
+* ZBOSS: group and broadcast requests ([#1200](https://github.com/Koenkk/zigbee-herdsman/issues/1200)) ([0317295](https://github.com/Koenkk/zigbee-herdsman/commit/0317295d4f1b4165575449e460930c03b7814a1f))
+
+
+### Bug Fixes
+
+* **ignore:** zigate: Fix ZDO BIND/UNBIND payload mismatch. ([#1198](https://github.com/Koenkk/zigbee-herdsman/issues/1198)) ([b007282](https://github.com/Koenkk/zigbee-herdsman/commit/b0072827349bc3b87ee3550733d7ccf7c40bfe04))
+
 ## [2.0.0](https://github.com/Koenkk/zigbee-herdsman/compare/v1.1.0...v2.0.0) (2024-09-22)
 
 

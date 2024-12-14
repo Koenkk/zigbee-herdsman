@@ -200,7 +200,7 @@ export function makeFrame(type: FrameType, commandId: CommandId, params: KeyValu
     for (const parameter of frameDesc) {
         // const options: BuffaloZclOptions = {payload};
 
-        if (parameter.condition && !parameter.condition(payload, undefined)) {
+        if (parameter.condition && !parameter.condition(params, undefined)) {
             continue;
         }
 

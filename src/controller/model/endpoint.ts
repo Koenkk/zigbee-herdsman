@@ -621,7 +621,11 @@ class Endpoint extends Entity {
             const response = await Entity.adapter!.sendZdo(this.deviceIeeeAddress, this.deviceNetworkAddress, zdoClusterId, zdoPayload, false);
 
             if (!Zdo.Buffalo.checkStatus(response)) {
-                throw new Zdo.StatusError(response[0]);
+                if (response[0] === Zdo.Status.NO_ENTRY) {
+                    logger.debug(`${log} no entry on device, removing entry from database.`, NS);
+                } else {
+                    throw new Zdo.StatusError(response[0]);
+                }
             }
 
             this._binds.splice(index, 1);
@@ -784,7 +788,7 @@ class Endpoint extends Entity {
     public waitForCommand(
         clusterKey: number | string,
         commandKey: number | string,
-        transactionSequenceNumber: number,
+        transactionSequenceNumber: number | undefined,
         timeout: number,
     ): {promise: Promise<{header: Zcl.Header; payload: KeyValue}>; cancel: () => void} {
         const device = this.getDevice();

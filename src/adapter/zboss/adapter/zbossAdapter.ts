@@ -4,25 +4,18 @@ import assert from 'assert';
 
 import {Adapter, TsType} from '../..';
 import {Backup} from '../../../models';
-import {Queue, RealpathSync, Waitress} from '../../../utils';
+import {Queue, Waitress} from '../../../utils';
 import {logger} from '../../../utils/logger';
 import * as ZSpec from '../../../zspec';
 import * as Zcl from '../../../zspec/zcl';
 import * as Zdo from '../../../zspec/zdo';
 import * as ZdoTypes from '../../../zspec/zdo/definition/tstypes';
 import {ZclPayload} from '../../events';
-import SerialPortUtils from '../../serialPortUtils';
-import SocketPortUtils from '../../socketPortUtils';
 import {ZBOSSDriver} from '../driver';
 import {CommandId, DeviceUpdateStatus} from '../enums';
 import {FrameType, ZBOSSFrame} from '../frame';
 
 const NS = 'zh:zboss';
-
-const autoDetectDefinitions = [
-    // Nordic Zigbee NCP
-    {manufacturer: 'ZEPHYR', vendorId: '2fe3', productId: '0100'},
-];
 
 interface WaitressMatcher {
     address: number | string;
@@ -109,32 +102,12 @@ export class ZBOSSAdapter extends Adapter {
         }
     }
 
-    public static async isValidPath(path: string): Promise<boolean> {
-        // For TCP paths we cannot get device information, therefore we cannot validate it.
-        if (SocketPortUtils.isTcpPath(path)) {
-            return false;
-        }
-
-        try {
-            return await SerialPortUtils.is(RealpathSync(path), autoDetectDefinitions);
-        } catch (error) {
-            logger.debug(`Failed to determine if path is valid: '${error}'`, NS);
-            return false;
-        }
-    }
-
-    public static async autoDetectPath(): Promise<string | null> {
-        const paths = await SerialPortUtils.find(autoDetectDefinitions);
-        paths.sort((a, b) => (a < b ? -1 : 1));
-        return paths.length > 0 ? paths[0] : null;
-    }
-
     public async start(): Promise<TsType.StartResult> {
         logger.info(`ZBOSS Adapter starting`, NS);
 
         await this.driver.connect();
 
-        return await this.driver.startup();
+        return await this.driver.startup(this.adapterOptions.transmitPower);
     }
 
     public async stop(): Promise<void> {
@@ -192,18 +165,10 @@ export class ZBOSSAdapter extends Adapter {
 
             return {
                 panID,
-                extendedPanID: parseInt(Buffer.from(extendedPanID).toString('hex'), 16),
+                extendedPanID: ZSpec.Utils.eui64LEBufferToHex(Buffer.from(extendedPanID)),
                 channel,
             };
         });
-    }
-
-    public async setTransmitPower(value: number): Promise<void> {
-        if (this.driver.isInitialized()) {
-            return await this.queue.execute<void>(async () => {
-                await this.driver.execCommand(CommandId.SET_TX_POWER, {txPower: value});
-            });
-        }
     }
 
     public async addInstallCode(ieeeAddress: string, key: Buffer): Promise<void> {
@@ -270,8 +235,8 @@ export class ZBOSSAdapter extends Adapter {
             switch (clusterId) {
                 case Zdo.ClusterId.NETWORK_ADDRESS_REQUEST:
                 case Zdo.ClusterId.IEEE_ADDRESS_REQUEST:
-                case Zdo.ClusterId.BIND_REQUEST: // XXX: according to `FRAMES`, might not support group bind?
-                case Zdo.ClusterId.UNBIND_REQUEST: // XXX: according to `FRAMES`, might not support group unbind?
+                case Zdo.ClusterId.BIND_REQUEST:
+                case Zdo.ClusterId.UNBIND_REQUEST:
                 case Zdo.ClusterId.LQI_TABLE_REQUEST:
                 case Zdo.ClusterId.ROUTING_TABLE_REQUEST:
                 case Zdo.ClusterId.BINDING_TABLE_REQUEST:
@@ -282,6 +247,17 @@ export class ZBOSSAdapter extends Adapter {
                     prefixedPayload.set(payload, 2);
 
                     payload = prefixedPayload;
+                    break;
+                }
+            }
+            switch (clusterId) {
+                case Zdo.ClusterId.BIND_REQUEST:
+                case Zdo.ClusterId.UNBIND_REQUEST: {
+                    // use fixed size address
+                    const addrType = payload.readUInt8(13); // address type
+                    if (addrType == Zdo.MULTICAST_BINDING) {
+                        payload = Buffer.concat([payload, Buffer.alloc(7)]);
+                    }
                     break;
                 }
             }
@@ -354,7 +330,7 @@ export class ZBOSSAdapter extends Adapter {
         let response = null;
         const command = zclFrame.command;
         if (command.response && disableResponse === false) {
-            response = this.waitFor(
+            response = this.waitForInternal(
                 networkAddress,
                 endpoint,
                 zclFrame.header.transactionSequenceNumber,
@@ -363,7 +339,7 @@ export class ZBOSSAdapter extends Adapter {
                 timeout,
             );
         } else if (!zclFrame.header.frameControl.disableDefaultResponse) {
-            response = this.waitFor(
+            response = this.waitForInternal(
                 networkAddress,
                 endpoint,
                 zclFrame.header.transactionSequenceNumber,
@@ -426,8 +402,13 @@ export class ZBOSSAdapter extends Adapter {
     }
 
     public async sendZclFrameToGroup(groupID: number, zclFrame: Zcl.Frame, sourceEndpoint?: number): Promise<void> {
-        logger.error(() => `NOT SUPPORTED: sendZclFrameToGroup(${groupID},${JSON.stringify(zclFrame)},${sourceEndpoint})`, NS);
-        return;
+        await this.driver.grequest(
+            groupID,
+            sourceEndpoint === ZSpec.GP_ENDPOINT ? ZSpec.GP_PROFILE_ID : ZSpec.HA_PROFILE_ID,
+            zclFrame.cluster.ID,
+            sourceEndpoint || 0x01,
+            zclFrame.toBuffer(),
+        );
     }
 
     public async sendZclFrameToAll(
@@ -436,8 +417,14 @@ export class ZBOSSAdapter extends Adapter {
         sourceEndpoint: number,
         destination: ZSpec.BroadcastAddress,
     ): Promise<void> {
-        logger.error(() => `NOT SUPPORTED: sendZclFrameToAll(${endpoint},${JSON.stringify(zclFrame)},${sourceEndpoint},${destination})`, NS);
-        return;
+        await this.driver.brequest(
+            destination,
+            sourceEndpoint === ZSpec.GP_ENDPOINT && endpoint === ZSpec.GP_ENDPOINT ? ZSpec.GP_PROFILE_ID : ZSpec.HA_PROFILE_ID,
+            zclFrame.cluster.ID,
+            endpoint,
+            sourceEndpoint || 0x01,
+            zclFrame.toBuffer(),
+        );
     }
 
     public async setChannelInterPAN(channel: number): Promise<void> {
@@ -459,28 +446,41 @@ export class ZBOSSAdapter extends Adapter {
         return;
     }
 
-    public waitFor(
+    private waitForInternal(
         networkAddress: number,
         endpoint: number,
-        // frameType: Zcl.FrameType,
-        // direction: Zcl.Direction,
-        transactionSequenceNumber: number,
+        transactionSequenceNumber: number | undefined,
         clusterID: number,
         commandIdentifier: number,
         timeout: number,
-    ): {promise: Promise<ZclPayload>; cancel: () => void; start: () => {promise: Promise<ZclPayload>}} {
-        const payload = {
-            address: networkAddress,
-            endpoint,
-            clusterID,
-            commandIdentifier,
-            transactionSequenceNumber,
-        };
-
-        const waiter = this.waitress.waitFor(payload, timeout);
+    ): {start: () => {promise: Promise<ZclPayload>}; cancel: () => void} {
+        const waiter = this.waitress.waitFor(
+            {
+                address: networkAddress,
+                endpoint,
+                clusterID,
+                commandIdentifier,
+                transactionSequenceNumber,
+            },
+            timeout,
+        );
         const cancel = (): void => this.waitress.remove(waiter.ID);
+        return {start: waiter.start, cancel};
+    }
 
-        return {cancel: cancel, promise: waiter.start().promise, start: waiter.start};
+    public waitFor(
+        networkAddress: number,
+        endpoint: number,
+        frameType: Zcl.FrameType,
+        direction: Zcl.Direction,
+        transactionSequenceNumber: number | undefined,
+        clusterID: number,
+        commandIdentifier: number,
+        timeout: number,
+    ): {promise: Promise<ZclPayload>; cancel: () => void} {
+        const waiter = this.waitForInternal(networkAddress, endpoint, transactionSequenceNumber, clusterID, commandIdentifier, timeout);
+
+        return {cancel: waiter.cancel, promise: waiter.start().promise};
     }
 
     private waitressTimeoutFormatter(matcher: WaitressMatcher, timeout: number): string {

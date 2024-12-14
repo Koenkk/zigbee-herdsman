@@ -1074,8 +1074,6 @@ class Device extends Entity<ControllerEventMap> {
 
         // Make sure that the endpoint are sorted.
         activeEndpoints.endpointList.sort((a, b) => a - b);
-
-        // TODO: this does not take care of removing endpoint (changing custom devices)?
         for (const endpoint of activeEndpoints.endpointList) {
             // Some devices, e.g. TERNCY return endpoint 0 in the active endpoints request.
             // This is not a valid endpoint number according to the ZCL, requesting a simple descriptor will result
@@ -1085,20 +1083,20 @@ class Device extends Entity<ControllerEventMap> {
                 this._endpoints.push(Endpoint.create(endpoint, undefined, undefined, [], [], this.networkAddress, this.ieeeAddr));
             }
         }
+
+        // Remove disappeared endpoints (can happen with e.g. custom devices).
+        this._endpoints = this._endpoints.filter((e) => activeEndpoints.endpointList.includes(e.ID));
     }
 
     /**
      * Request device to advertise its network address.
      * Note: This does not actually update the device property (if needed), as this is already done with `zdoResponse` event in Controller.
      */
-    public async updateNetworkAddress(): Promise<void> {
+    public async requestNetworkAddress(): Promise<void> {
         const clusterId = Zdo.ClusterId.NETWORK_ADDRESS_REQUEST;
         const zdoPayload = Zdo.Buffalo.buildRequest(Entity.adapter!.hasZdoMessageOverhead, clusterId, this.ieeeAddr as EUI64, false, 0);
-        const response = await Entity.adapter!.sendZdo(this.ieeeAddr, ZSpec.BroadcastAddress.RX_ON_WHEN_IDLE, clusterId, zdoPayload, false);
 
-        if (!Zdo.Buffalo.checkStatus(response)) {
-            throw new Zdo.StatusError(response[0]);
-        }
+        await Entity.adapter!.sendZdo(this.ieeeAddr, ZSpec.BroadcastAddress.RX_ON_WHEN_IDLE, clusterId, zdoPayload, true);
     }
 
     public async removeFromNetwork(): Promise<void> {

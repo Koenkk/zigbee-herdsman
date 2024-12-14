@@ -31,7 +31,6 @@ import {EzspConfigId, EzspDecisionBitmask, EzspEndpointFlag, EzspPolicyId, EzspV
 import {EmberEzspEventMap, Ezsp} from '../../../src/adapter/ember/ezsp/ezsp';
 import {EzspError} from '../../../src/adapter/ember/ezspError';
 import {
-    EmberAesMmoHashContext,
     EmberApsFrame,
     EmberMulticastTableEntry,
     EmberNetworkInitStruct,
@@ -121,7 +120,7 @@ const DEFAULT_BACKUP: Readonly<UnifiedBackupStorage> = {
     },
     devices: [],
 };
-const DEFAULT_COORDINATOR_IEEE: EUI64 = `0x${Buffer.from(DEFAULT_BACKUP.coordinator_ieee, 'hex').reverse().toString('hex')}`;
+const DEFAULT_COORDINATOR_IEEE: EUI64 = ZSpec.Utils.eui64LEBufferToHex(Buffer.from(DEFAULT_BACKUP.coordinator_ieee, 'hex'));
 const DEFAULT_ADAPTER_NETWORK_PARAMETERS: EmberNetworkParameters = {
     extendedPanId: DEFAULT_NETWORK_OPTIONS.extendedPanID!,
     panId: DEFAULT_NETWORK_OPTIONS.panID,
@@ -231,10 +230,6 @@ const mockEzspGetVersionStruct = jest.fn().mockResolvedValue([
 const mockEzspSetConfigurationValue = jest.fn().mockResolvedValue(SLStatus.OK);
 const mockEzspSetValue = jest.fn().mockResolvedValue(SLStatus.OK);
 const mockEzspSetPolicy = jest.fn().mockResolvedValue(SLStatus.OK);
-const mockEzspAesMmoHash = jest.fn().mockImplementation((context: EmberAesMmoHashContext, finalize: boolean, data: Buffer) => [
-    SLStatus.OK,
-    {result: data, length: data.length} as EmberAesMmoHashContext, // echo data
-]);
 const mockEzspPermitJoining = jest.fn().mockImplementation((duration: number) => {
     setTimeout(async () => {
         mockEzspEmitter.emit('stackStatus', duration > 0 ? SLStatus.ZIGBEE_NETWORK_OPENED : SLStatus.ZIGBEE_NETWORK_CLOSED);
@@ -255,11 +250,22 @@ const mockEzspGetNetworkKeyInfo = jest.fn().mockResolvedValue([
         networkKeyFrameCounter: DEFAULT_BACKUP.network_key.frame_counter,
     } as SecManNetworkKeyInfo,
 ]);
+const mockEzspGetApsKeyInfo = jest.fn().mockResolvedValue([
+    SLStatus.OK,
+    {
+        bitmask: EmberKeyStructBitmask.HAS_OUTGOING_FRAME_COUNTER,
+        outgoingFrameCounter: 456,
+        incomingFrameCounter: 0,
+        ttlInSeconds: 0,
+    } as SecManAPSKeyMetadata,
+]);
 const mockEzspSetRadioPower = jest.fn().mockResolvedValue(SLStatus.OK);
 const mockEzspImportTransientKey = jest.fn().mockResolvedValue(SLStatus.OK);
 const mockEzspClearTransientLinkKeys = jest.fn().mockResolvedValue(SLStatus.OK);
 const mockEzspSetLogicalAndRadioChannel = jest.fn().mockResolvedValue(SLStatus.OK);
 const mockEzspSendRawMessage = jest.fn().mockResolvedValue(SLStatus.OK);
+const mockEzspSetNWKFrameCounter = jest.fn().mockResolvedValue(SLStatus.OK);
+const mockEzspSetAPSFrameCounter = jest.fn().mockResolvedValue(SLStatus.OK);
 
 jest.mock('../../../src/adapter/ember/uart/ash');
 
@@ -308,16 +314,18 @@ jest.mock('../../../src/adapter/ember/ezsp/ezsp', () => ({
         ezspSetConfigurationValue: mockEzspSetConfigurationValue,
         ezspSetValue: mockEzspSetValue,
         ezspSetPolicy: mockEzspSetPolicy,
-        ezspAesMmoHash: mockEzspAesMmoHash,
         ezspPermitJoining: mockEzspPermitJoining,
         ezspSendBroadcast: mockEzspSendBroadcast,
         ezspSendUnicast: mockEzspSendUnicast,
         ezspGetNetworkKeyInfo: mockEzspGetNetworkKeyInfo,
+        ezspGetApsKeyInfo: mockEzspGetApsKeyInfo,
         ezspSetRadioPower: mockEzspSetRadioPower,
         ezspImportTransientKey: mockEzspImportTransientKey,
         ezspClearTransientLinkKeys: mockEzspClearTransientLinkKeys,
         ezspSetLogicalAndRadioChannel: mockEzspSetLogicalAndRadioChannel,
         ezspSendRawMessage: mockEzspSendRawMessage,
+        ezspSetNWKFrameCounter: mockEzspSetNWKFrameCounter,
+        ezspSetAPSFrameCounter: mockEzspSetAPSFrameCounter,
     })),
 }));
 
@@ -360,16 +368,18 @@ const ezspMocks = [
     mockEzspSetConfigurationValue,
     mockEzspSetValue,
     mockEzspSetPolicy,
-    mockEzspAesMmoHash,
     mockEzspPermitJoining,
     mockEzspSendBroadcast,
     mockEzspSendUnicast,
     mockEzspGetNetworkKeyInfo,
+    mockEzspGetApsKeyInfo,
     mockEzspSetRadioPower,
     mockEzspImportTransientKey,
     mockEzspClearTransientLinkKeys,
     mockEzspSetLogicalAndRadioChannel,
     mockEzspSendRawMessage,
+    mockEzspSetNWKFrameCounter,
+    mockEzspSetAPSFrameCounter,
 ];
 
 describe('Ember Adapter Layer', () => {
@@ -396,6 +406,23 @@ describe('Ember Adapter Layer', () => {
 
     const takeResetCodePath = () => {
         deleteCoordinatorBackup();
+        mockEzspGetNetworkParameters.mockResolvedValueOnce([
+            SLStatus.OK,
+            EmberNodeType.COORDINATOR,
+            {
+                extendedPanId: DEFAULT_NETWORK_OPTIONS.extendedPanID!,
+                panId: 1234,
+                radioTxPower: 5,
+                radioChannel: DEFAULT_NETWORK_OPTIONS.channelList[0],
+                joinMethod: 0,
+                nwkManagerId: 0,
+                nwkUpdateId: 0,
+                channels: ZSpec.ALL_802_15_4_CHANNELS_MASK,
+            } as EmberNetworkParameters,
+        ]);
+    };
+
+    const takeRestoredCodePath = () => {
         mockEzspGetNetworkParameters.mockResolvedValueOnce([
             SLStatus.OK,
             EmberNodeType.COORDINATOR,
@@ -627,17 +654,40 @@ describe('Ember Adapter Layer', () => {
 
     it('Starts with restored when no network in adapter', async () => {
         adapter = new EmberAdapter(DEFAULT_NETWORK_OPTIONS, DEFAULT_SERIAL_PORT_OPTIONS, backupPath, DEFAULT_ADAPTER_OPTIONS);
+        const expectedNetParams: EmberNetworkParameters = {
+            extendedPanId: DEFAULT_NETWORK_OPTIONS.extendedPanID!,
+            panId: DEFAULT_NETWORK_OPTIONS.panID,
+            radioTxPower: 5,
+            radioChannel: DEFAULT_NETWORK_OPTIONS.channelList[0],
+            joinMethod: 0,
+            nwkManagerId: 0,
+            nwkUpdateId: 0,
+            channels: ZSpec.ALL_802_15_4_CHANNELS_MASK,
+        };
 
         mockEzspNetworkInit.mockResolvedValueOnce(SLStatus.NOT_JOINED);
 
         const result = adapter.start();
 
         await jest.advanceTimersByTimeAsync(5000);
+        expect(mockEzspSetNWKFrameCounter).toHaveBeenCalledWith(DEFAULT_BACKUP.network_key.frame_counter);
+        // expect(mockEzspSetAPSFrameCounter).toHaveBeenCalledWith(DEFAULT_BACKUP.???.???);
+        expect(mockEzspFormNetwork).toHaveBeenCalledWith(expectedNetParams);
         await expect(result).resolves.toStrictEqual('restored');
     });
 
     it('Starts with restored when network param mismatch but backup available', async () => {
         adapter = new EmberAdapter(DEFAULT_NETWORK_OPTIONS, DEFAULT_SERIAL_PORT_OPTIONS, backupPath, DEFAULT_ADAPTER_OPTIONS);
+        const expectedNetParams: EmberNetworkParameters = {
+            extendedPanId: DEFAULT_NETWORK_OPTIONS.extendedPanID!,
+            panId: DEFAULT_NETWORK_OPTIONS.panID,
+            radioTxPower: 5,
+            radioChannel: DEFAULT_NETWORK_OPTIONS.channelList[0],
+            joinMethod: 0,
+            nwkManagerId: 0,
+            nwkUpdateId: 0,
+            channels: ZSpec.ALL_802_15_4_CHANNELS_MASK,
+        };
 
         mockEzspGetNetworkParameters.mockResolvedValueOnce([
             SLStatus.OK,
@@ -657,12 +707,14 @@ describe('Ember Adapter Layer', () => {
         const result = adapter.start();
 
         await jest.advanceTimersByTimeAsync(5000);
+        expect(mockEzspSetNWKFrameCounter).toHaveBeenCalledWith(DEFAULT_BACKUP.network_key.frame_counter);
+        // expect(mockEzspSetAPSFrameCounter).toHaveBeenCalledWith(DEFAULT_BACKUP.???.???);
+        expect(mockEzspFormNetwork).toHaveBeenCalledWith(expectedNetParams);
         await expect(result).resolves.toStrictEqual('restored');
     });
 
     it('Starts with restored when network key mismatch but backup available', async () => {
         adapter = new EmberAdapter(DEFAULT_NETWORK_OPTIONS, DEFAULT_SERIAL_PORT_OPTIONS, backupPath, DEFAULT_ADAPTER_OPTIONS);
-
         const expectedNetParams: EmberNetworkParameters = {
             extendedPanId: DEFAULT_NETWORK_OPTIONS.extendedPanID!,
             panId: DEFAULT_NETWORK_OPTIONS.panID,
@@ -673,14 +725,19 @@ describe('Ember Adapter Layer', () => {
             nwkUpdateId: 0,
             channels: ZSpec.ALL_802_15_4_CHANNELS_MASK,
         };
+
         mockEzspGetNetworkParameters.mockResolvedValueOnce([SLStatus.OK, EmberNodeType.COORDINATOR, expectedNetParams]);
+
         const contents = Buffer.from(DEFAULT_BACKUP.network_key.key, 'hex').fill(0xff);
+
         mockEzspExportKey.mockResolvedValueOnce([SLStatus.OK, {contents} as SecManKey]);
 
         const result = adapter.start();
 
         await jest.advanceTimersByTimeAsync(5000);
         await expect(result).resolves.toStrictEqual('restored');
+        expect(mockEzspSetNWKFrameCounter).toHaveBeenCalledWith(DEFAULT_BACKUP.network_key.frame_counter);
+        // expect(mockEzspSetAPSFrameCounter).toHaveBeenCalledWith(DEFAULT_BACKUP.???.???);
         expect(mockEzspFormNetwork).toHaveBeenCalledWith(expectedNetParams);
     });
 
@@ -721,6 +778,8 @@ describe('Ember Adapter Layer', () => {
 
         await jest.advanceTimersByTimeAsync(5000);
         await expect(result).resolves.toStrictEqual('reset');
+        expect(mockEzspSetNWKFrameCounter).toHaveBeenCalledTimes(0);
+        // expect(mockEzspSetAPSFrameCounter).toHaveBeenCalledTimes(0);
         expect(mockEzspFormNetwork).toHaveBeenCalledWith({
             panId: 1234,
             extendedPanId: DEFAULT_NETWORK_OPTIONS.extendedPanID!,
@@ -745,6 +804,8 @@ describe('Ember Adapter Layer', () => {
 
         await jest.advanceTimersByTimeAsync(5000);
         await expect(result).resolves.toStrictEqual('reset');
+        expect(mockEzspSetNWKFrameCounter).toHaveBeenCalledTimes(0);
+        // expect(mockEzspSetAPSFrameCounter).toHaveBeenCalledTimes(0);
         expect(mockEzspFormNetwork).toHaveBeenCalledWith({
             panId: 1234,
             extendedPanId: DEFAULT_NETWORK_OPTIONS.extendedPanID!,
@@ -801,6 +862,24 @@ describe('Ember Adapter Layer', () => {
         await jest.advanceTimersByTimeAsync(5000);
         await expect(result).resolves.toStrictEqual('restored');
         expect(mockEzspSetRadioPower).toHaveBeenCalledTimes(0);
+    });
+
+    it('Starts with mismatching transmit power, failure does not present start', async () => {
+        adapter = new EmberAdapter(
+            DEFAULT_NETWORK_OPTIONS,
+            DEFAULT_SERIAL_PORT_OPTIONS,
+            backupPath,
+            Object.assign({}, DEFAULT_ADAPTER_OPTIONS, {transmitPower: 12}),
+        );
+        mockEzspSetRadioPower.mockResolvedValueOnce(SLStatus.FAIL);
+
+        const result = adapter.start();
+
+        await jest.advanceTimersByTimeAsync(5000);
+        await expect(result).resolves.toStrictEqual('resumed');
+        expect(mockEzspSetRadioPower).toHaveBeenCalledTimes(1);
+        expect(mockEzspSetRadioPower).toHaveBeenCalledWith(12);
+        expect(loggerSpies.error).toHaveBeenCalledWith(`Failed to set transmit power to 12 status=FAIL.`, 'zh:ember');
     });
 
     it('Fails to start when EZSP layer fails to start', async () => {
@@ -921,6 +1000,22 @@ describe('Ember Adapter Layer', () => {
             },
             `[INIT TC] Failed leave network request with status=FAIL.`,
         ],
+        [
+            'if form could not set NWK frame counter',
+            () => {
+                takeRestoredCodePath();
+                mockEzspSetNWKFrameCounter.mockResolvedValueOnce(SLStatus.FAIL);
+            },
+            `[INIT FORM] Failed to set NWK frame counter with status=FAIL.`,
+        ],
+        // [
+        //     'if form could not set TC APS frame counter',
+        //     () => {
+        //         takeRestoredCodePath();
+        //         mockEzspSetAPSFrameCounter.mockResolvedValueOnce(SLStatus.FAIL);
+        //     },
+        //     `[INIT FORM] Failed to set TC APS frame counter with status=FAIL.`,
+        // ],
         [
             'if form could not set initial security state',
             () => {
@@ -1641,6 +1736,7 @@ describe('Ember Adapter Layer', () => {
                 psaKeyAlgPermission: 0,
             };
             const k1 = Buffer.from([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]);
+            const k1Hashed = ZSpec.Utils.aes128MmoHash(k1);
             const k1Metadata: SecManAPSKeyMetadata = {
                 bitmask: EmberKeyStructBitmask.HAS_INCOMING_FRAME_COUNTER | EmberKeyStructBitmask.HAS_OUTGOING_FRAME_COUNTER,
                 outgoingFrameCounter: 1,
@@ -1657,6 +1753,7 @@ describe('Ember Adapter Layer', () => {
                 psaKeyAlgPermission: 0,
             };
             const k2 = Buffer.from([2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17]);
+            const k2Hashed = ZSpec.Utils.aes128MmoHash(k2);
             const k2Metadata: SecManAPSKeyMetadata = {
                 bitmask: EmberKeyStructBitmask.HAS_INCOMING_FRAME_COUNTER | EmberKeyStructBitmask.HAS_OUTGOING_FRAME_COUNTER,
                 outgoingFrameCounter: 10,
@@ -1673,6 +1770,7 @@ describe('Ember Adapter Layer', () => {
                 psaKeyAlgPermission: 0,
             };
             const k3 = Buffer.from([3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18]);
+            const k3Hashed = ZSpec.Utils.aes128MmoHash(k3);
             const k3Metadata: SecManAPSKeyMetadata = {
                 bitmask: EmberKeyStructBitmask.HAS_INCOMING_FRAME_COUNTER | EmberKeyStructBitmask.HAS_OUTGOING_FRAME_COUNTER,
                 outgoingFrameCounter: 100,
@@ -1692,19 +1790,19 @@ describe('Ember Adapter Layer', () => {
             expect(keys).toStrictEqual([
                 {
                     deviceEui64: k1Context.eui64,
-                    key: {contents: k1},
+                    key: {contents: k1Hashed},
                     outgoingFrameCounter: k1Metadata.outgoingFrameCounter,
                     incomingFrameCounter: k1Metadata.incomingFrameCounter,
                 } as LinkKeyBackupData,
                 {
                     deviceEui64: k2Context.eui64,
-                    key: {contents: k2},
+                    key: {contents: k2Hashed},
                     outgoingFrameCounter: k2Metadata.outgoingFrameCounter,
                     incomingFrameCounter: k2Metadata.incomingFrameCounter,
                 } as LinkKeyBackupData,
                 {
                     deviceEui64: k3Context.eui64,
-                    key: {contents: k3},
+                    key: {contents: k3Hashed},
                     outgoingFrameCounter: k3Metadata.outgoingFrameCounter,
                     incomingFrameCounter: k3Metadata.incomingFrameCounter,
                 } as LinkKeyBackupData,
@@ -1722,36 +1820,6 @@ describe('Ember Adapter Layer', () => {
             mockEzspGetConfigurationValue.mockResolvedValueOnce([SLStatus.FAIL, 0]);
 
             await expect(adapter.exportLinkKeys()).rejects.toThrow(`[BACKUP] Failed to retrieve key table size from NCP with status=FAIL.`);
-        });
-
-        it('Fails to export link keys due to failed AES hashing', async () => {
-            const k1Context: SecManContext = {
-                coreKeyType: SecManKeyType.APP_LINK,
-                keyIndex: 0,
-                derivedType: SecManDerivedKeyType.NONE,
-                eui64: '0x1122334455667788',
-                multiNetworkIndex: 0,
-                flags: SecManFlag.EUI_IS_VALID | SecManFlag.KEY_INDEX_IS_VALID,
-                psaKeyAlgPermission: 0,
-            };
-            const k1 = Buffer.from([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]);
-            const k1Metadata: SecManAPSKeyMetadata = {
-                bitmask: EmberKeyStructBitmask.HAS_INCOMING_FRAME_COUNTER | EmberKeyStructBitmask.HAS_OUTGOING_FRAME_COUNTER,
-                outgoingFrameCounter: 1,
-                incomingFrameCounter: 2,
-                ttlInSeconds: 0,
-            };
-
-            mockEzspGetConfigurationValue.mockResolvedValueOnce([SLStatus.OK, 1]);
-            mockEzspExportLinkKeyByIndex.mockResolvedValueOnce([SLStatus.OK, k1Context, {contents: k1} as SecManKey, k1Metadata]);
-            mockEzspAesMmoHash.mockResolvedValueOnce([SLStatus.FAIL, {result: k1, length: k1.length} as EmberAesMmoHashContext]);
-
-            await adapter.exportLinkKeys();
-
-            expect(loggerSpies.error).toHaveBeenCalledWith(
-                `[BACKUP] Failed to hash link key at index 0 with status=FAIL. Omitting from backup.`,
-                'zh:ember',
-            );
         });
 
         it('Imports link keys', async () => {
@@ -2113,12 +2181,19 @@ describe('Ember Adapter Layer', () => {
                 `[BACKUP] Failed to get network parameters with status=FAIL.`,
             ],
             [
-                'failed get network keys info',
+                'failed get network key info',
                 () => {
                     mockEzspGetNetworkKeyInfo.mockResolvedValueOnce([SLStatus.FAIL, {}]);
                 },
                 `[BACKUP] Failed to get network keys info with status=FAIL.`,
             ],
+            // [
+            //     'failed get TC APS key info',
+            //     () => {
+            //         mockEzspGetNetworkKeyInfo.mockResolvedValueOnce([SLStatus.FAIL, {}]);
+            //     },
+            //     `[BACKUP] Failed to get TC APS key info with status=FAIL.`,
+            // ],
             [
                 'no network key set',
                 () => {
@@ -2163,7 +2238,7 @@ describe('Ember Adapter Layer', () => {
         it('Adapter impl: getNetworkParameters from cache', async () => {
             await expect(adapter.getNetworkParameters()).resolves.toStrictEqual({
                 panID: DEFAULT_NETWORK_OPTIONS.panID,
-                extendedPanID: parseInt(Buffer.from(DEFAULT_NETWORK_OPTIONS.extendedPanID!).toString('hex'), 16),
+                extendedPanID: ZSpec.Utils.eui64LEBufferToHex(Buffer.from(DEFAULT_NETWORK_OPTIONS.extendedPanID!)),
                 channel: DEFAULT_NETWORK_OPTIONS.channelList[0],
             } as TsType.NetworkParameters);
             expect(mockEzspGetNetworkParameters).toHaveBeenCalledTimes(0);
@@ -2174,49 +2249,18 @@ describe('Ember Adapter Layer', () => {
 
             await expect(adapter.getNetworkParameters()).resolves.toStrictEqual({
                 panID: DEFAULT_NETWORK_OPTIONS.panID,
-                extendedPanID: parseInt(Buffer.from(DEFAULT_NETWORK_OPTIONS.extendedPanID!).toString('hex'), 16),
+                extendedPanID: ZSpec.Utils.eui64LEBufferToHex(Buffer.from(DEFAULT_NETWORK_OPTIONS.extendedPanID!)),
                 channel: DEFAULT_NETWORK_OPTIONS.channelList[0],
             } as TsType.NetworkParameters);
             expect(mockEzspGetNetworkParameters).toHaveBeenCalledTimes(1);
         });
 
-        it('Adapter impl: setTransmitPower', async () => {
-            await expect(adapter.setTransmitPower(10)).resolves.toStrictEqual(undefined);
-            expect(mockEzspSetRadioPower).toHaveBeenCalledTimes(1);
-        });
-
-        it('Adapter impl: throws when setTransmitPower fails', async () => {
-            mockEzspSetRadioPower.mockResolvedValueOnce(SLStatus.FAIL);
-
-            await expect(adapter.setTransmitPower(10)).rejects.toThrow(`Failed to set transmit power to 10 status=FAIL.`);
-            expect(mockEzspSetRadioPower).toHaveBeenCalledTimes(1);
-        });
-
-        it('Adapter impl: addInstallCode without local CRC validation', async () => {
-            await expect(adapter.addInstallCode('0x1122334455667788', Buffer.alloc(16))).resolves.toStrictEqual(undefined);
-            expect(mockEzspAesMmoHash).toHaveBeenCalledTimes(1);
-            expect(mockEzspImportTransientKey).toHaveBeenCalledTimes(1);
-            expect(loggerSpies.debug).toHaveBeenCalledWith(`[ADD INSTALL CODE] Success for '0x1122334455667788'.`, 'zh:ember');
-        });
-
-        it('Adapter impl: addInstallCode with local CRC validation', async () => {
+        it('Adapter impl: addInstallCode', async () => {
             await expect(
                 adapter.addInstallCode('0x1122334455667788', Buffer.from('DD7ED5CDAA8E2C708B67D2B1573DB6843A5F', 'hex')),
             ).resolves.toStrictEqual(undefined);
-            expect(mockEzspAesMmoHash).toHaveBeenCalledTimes(1);
             expect(mockEzspImportTransientKey).toHaveBeenCalledTimes(1);
-            expect(loggerSpies.debug).toHaveBeenCalledWith(`[ADD INSTALL CODE] CRC validated for '0x1122334455667788'.`, 'zh:ember');
             expect(loggerSpies.debug).toHaveBeenCalledWith(`[ADD INSTALL CODE] Success for '0x1122334455667788'.`, 'zh:ember');
-        });
-
-        it('Adapter impl: throw when addInstallCode fails AES hashing', async () => {
-            mockEzspAesMmoHash.mockResolvedValueOnce([SLStatus.FAIL, Buffer.alloc(16)]);
-
-            await expect(adapter.addInstallCode('0x1122334455667788', Buffer.alloc(16))).rejects.toThrow(
-                `[ADD INSTALL CODE] Failed AES hash for '0x1122334455667788' with status=FAIL.`,
-            );
-            expect(mockEzspAesMmoHash).toHaveBeenCalledTimes(1);
-            expect(mockEzspImportTransientKey).toHaveBeenCalledTimes(0);
         });
 
         it('Adapter impl: throw when addInstallCode fails import transient key', async () => {
@@ -2225,16 +2269,7 @@ describe('Ember Adapter Layer', () => {
             await expect(adapter.addInstallCode('0x1122334455667788', Buffer.alloc(16))).rejects.toThrow(
                 `[ADD INSTALL CODE] Failed for '0x1122334455667788' with status=FAIL.`,
             );
-            expect(mockEzspAesMmoHash).toHaveBeenCalledTimes(1);
             expect(mockEzspImportTransientKey).toHaveBeenCalledTimes(1);
-        });
-
-        it('Adapter impl: throw when addInstallCode fails local CRC validation', async () => {
-            await expect(adapter.addInstallCode('0x1122334455667788', Buffer.alloc(18))).rejects.toThrow(
-                `[ADD INSTALL CODE] Failed for '0x1122334455667788'; invalid code CRC.`,
-            );
-            expect(mockEzspAesMmoHash).toHaveBeenCalledTimes(0);
-            expect(mockEzspImportTransientKey).toHaveBeenCalledTimes(0);
         });
 
         it('Adapter impl: waitFor', async () => {
