@@ -10,7 +10,7 @@ import * as Zdo from '../zspec/zdo';
 import * as ZdoTypes from '../zspec/zdo/definition/tstypes';
 import {discoverAdapter} from './adapterDiscovery';
 import * as AdapterEvents from './events';
-import * as TsType from './tstype';
+import {AdapterOptions, CoordinatorVersion, NetworkOptions, NetworkParameters, SerialPortOptions, StartResult} from './tstype';
 
 interface AdapterEventMap {
     deviceJoined: [payload: AdapterEvents.DeviceJoinedPayload];
@@ -23,17 +23,12 @@ interface AdapterEventMap {
 abstract class Adapter extends events.EventEmitter<AdapterEventMap> {
     public hasZdoMessageOverhead: boolean;
     public manufacturerID: Zcl.ManufacturerCode;
-    protected networkOptions: TsType.NetworkOptions;
-    protected adapterOptions: TsType.AdapterOptions;
-    protected serialPortOptions: TsType.SerialPortOptions;
+    protected networkOptions: NetworkOptions;
+    protected adapterOptions: AdapterOptions;
+    protected serialPortOptions: SerialPortOptions;
     protected backupPath: string;
 
-    protected constructor(
-        networkOptions: TsType.NetworkOptions,
-        serialPortOptions: TsType.SerialPortOptions,
-        backupPath: string,
-        adapterOptions: TsType.AdapterOptions,
-    ) {
+    protected constructor(networkOptions: NetworkOptions, serialPortOptions: SerialPortOptions, backupPath: string, adapterOptions: AdapterOptions) {
         super();
         this.hasZdoMessageOverhead = true;
         this.manufacturerID = Zcl.ManufacturerCode.RESERVED_10;
@@ -48,10 +43,10 @@ abstract class Adapter extends events.EventEmitter<AdapterEventMap> {
      */
 
     public static async create(
-        networkOptions: TsType.NetworkOptions,
-        serialPortOptions: TsType.SerialPortOptions,
+        networkOptions: NetworkOptions,
+        serialPortOptions: SerialPortOptions,
         backupPath: string,
-        adapterOptions: TsType.AdapterOptions,
+        adapterOptions: AdapterOptions,
     ): Promise<Adapter> {
         const {ZStackAdapter} = await import('./z-stack/adapter');
         const {DeconzAdapter} = await import('./deconz/adapter');
@@ -86,7 +81,7 @@ abstract class Adapter extends events.EventEmitter<AdapterEventMap> {
      * - reset: network in configuration.yaml does not match network in adapter, no valid backup, form a new network
      * - restored: network in configuration.yaml does not match network in adapter, valid backup, restore from backup
      */
-    public async initNetwork(): Promise<TsType.StartResult> {
+    public async initNetwork(): Promise<StartResult> {
         const enum InitAction {
             DONE,
             /** Config mismatch, must leave network. */
@@ -155,14 +150,15 @@ abstract class Adapter extends events.EventEmitter<AdapterEventMap> {
         switch (action) {
             case InitAction.FORM_BACKUP: {
                 assert(backup);
-                await this.formNetwork(backup);
 
-                return 'restored';
+                const formResult = await this.formNetwork(backup);
+
+                return formResult || 'restored';
             }
             case InitAction.FORM_CONFIG: {
-                await this.formNetwork();
+                const formResult = await this.formNetwork();
 
-                return 'reset';
+                return formResult || 'reset';
             }
             case InitAction.DONE: {
                 return 'resumed';
@@ -170,7 +166,7 @@ abstract class Adapter extends events.EventEmitter<AdapterEventMap> {
         }
     }
 
-    public abstract start(): Promise<TsType.StartResult>;
+    public abstract start(): Promise<StartResult>;
 
     public abstract stop(): Promise<void>;
 
@@ -185,13 +181,13 @@ abstract class Adapter extends events.EventEmitter<AdapterEventMap> {
     /**
      * If backup is defined, form network from backup, otherwise from config.
      */
-    public abstract formNetwork(backup?: Models.Backup): Promise<void>;
+    public abstract formNetwork(backup?: Models.Backup): Promise<StartResult | void>;
 
     public abstract getNetworkKey(): Promise<Buffer>;
 
     public abstract getCoordinatorIEEE(): Promise<string>;
 
-    public abstract getCoordinatorVersion(): Promise<TsType.CoordinatorVersion>;
+    public abstract getCoordinatorVersion(): Promise<CoordinatorVersion>;
 
     public abstract reset(type: 'soft' | 'hard'): Promise<void>;
 
@@ -238,7 +234,7 @@ abstract class Adapter extends events.EventEmitter<AdapterEventMap> {
 
     public abstract backup(ieeeAddressesInDatabase: string[]): Promise<Models.Backup>;
 
-    public abstract getNetworkParameters(): Promise<TsType.NetworkParameters>;
+    public abstract getNetworkParameters(): Promise<NetworkParameters>;
 
     public abstract addInstallCode(ieeeAddress: string, key: Buffer): Promise<void>;
 
