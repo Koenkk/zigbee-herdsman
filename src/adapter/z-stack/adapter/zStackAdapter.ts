@@ -186,9 +186,9 @@ class ZStackAdapter extends Adapter {
     /**
      * If backup is defined, form network from backup, otherwise from config.
      */
-    public async formNetwork(backup?: Models.Backup): Promise<StartResult> {
+    public async formNetwork(backup?: Models.Backup): Promise<StartResult | void> {
         if (backup) {
-            return await this.adapterManager.restore(backup);
+            await this.adapterManager.restore(backup);
         } else {
             return await this.adapterManager.reset();
         }

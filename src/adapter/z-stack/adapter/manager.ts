@@ -71,7 +71,7 @@ export class ZnpAdapterManager {
         await this.beginStartup();
     }
 
-    public async restore(backup: Models.Backup): Promise<StartResult> {
+    public async restore(backup: Models.Backup): Promise<void> {
         if (this.options.version === ZnpVersion.zStack12) {
             logger.debug(`performing recommissioning instead of restore for z-stack 1.2`, NS);
             await this.leaveNetwork();
@@ -80,11 +80,9 @@ export class ZnpAdapterManager {
         } else {
             await this.beginRestore(backup);
         }
-
-        return 'restored';
     }
 
-    public async reset(): Promise<StartResult> {
+    public async reset(): Promise<StartResult | void> {
         if (this.options.version === ZnpVersion.zStack12) {
             const hasConfigured = await this.nv.readItem(NvItemsIds.ZNP_HAS_CONFIGURED_ZSTACK1, 0, Structs.hasConfigured);
             await this.leaveNetwork();
@@ -95,8 +93,6 @@ export class ZnpAdapterManager {
             return hasConfigured && hasConfigured.isConfigured() ? 'reset' : 'restored';
         } else {
             await this.beginCommissioning(this.nwkOptions);
-
-            return 'reset';
         }
     }
 
