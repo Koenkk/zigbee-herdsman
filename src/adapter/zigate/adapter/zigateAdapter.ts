@@ -213,7 +213,7 @@ class ZiGateAdapter extends Adapter {
 
             return {
                 panID: result.payload.PANID as number,
-                extendedPanID: result.payload.ExtPANID as number,
+                extendedPanID: result.payload.ExtPANID as string, // read as IEEEADDR, so `0x${string}`
                 channel: result.payload.Channel as number,
             };
         } catch (error) {

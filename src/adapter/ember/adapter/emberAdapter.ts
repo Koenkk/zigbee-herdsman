@@ -1565,7 +1565,7 @@ export class EmberAdapter extends Adapter {
 
             return {
                 panID,
-                extendedPanID: parseInt(Buffer.from(extendedPanID).toString('hex'), 16),
+                extendedPanID: ZSpec.Utils.eui64LEBufferToHex(Buffer.from(extendedPanID)),
                 channel,
             };
         });

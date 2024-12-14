@@ -2200,7 +2200,7 @@ describe('Ember Adapter Layer', () => {
         it('Adapter impl: getNetworkParameters from cache', async () => {
             await expect(adapter.getNetworkParameters()).resolves.toStrictEqual({
                 panID: DEFAULT_NETWORK_OPTIONS.panID,
-                extendedPanID: parseInt(Buffer.from(DEFAULT_NETWORK_OPTIONS.extendedPanID!).toString('hex'), 16),
+                extendedPanID: ZSpec.Utils.eui64LEBufferToHex(Buffer.from(DEFAULT_NETWORK_OPTIONS.extendedPanID!)),
                 channel: DEFAULT_NETWORK_OPTIONS.channelList[0],
             } as TsType.NetworkParameters);
             expect(mockEzspGetNetworkParameters).toHaveBeenCalledTimes(0);
@@ -2211,7 +2211,7 @@ describe('Ember Adapter Layer', () => {
 
             await expect(adapter.getNetworkParameters()).resolves.toStrictEqual({
                 panID: DEFAULT_NETWORK_OPTIONS.panID,
-                extendedPanID: parseInt(Buffer.from(DEFAULT_NETWORK_OPTIONS.extendedPanID!).toString('hex'), 16),
+                extendedPanID: ZSpec.Utils.eui64LEBufferToHex(Buffer.from(DEFAULT_NETWORK_OPTIONS.extendedPanID!)),
                 channel: DEFAULT_NETWORK_OPTIONS.channelList[0],
             } as TsType.NetworkParameters);
             expect(mockEzspGetNetworkParameters).toHaveBeenCalledTimes(1);

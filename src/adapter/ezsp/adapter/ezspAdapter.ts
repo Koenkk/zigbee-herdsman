@@ -461,7 +461,7 @@ class EZSPAdapter extends Adapter {
     public async getNetworkParameters(): Promise<NetworkParameters> {
         return {
             panID: this.driver.networkParams.panId,
-            extendedPanID: this.driver.networkParams.extendedPanId[0],
+            extendedPanID: ZSpec.Utils.eui64LEBufferToHex(this.driver.networkParams.extendedPanId),
             channel: this.driver.networkParams.radioChannel,
         };
     }

@@ -250,7 +250,7 @@ class ZStackAdapter extends Adapter {
         const clusterId = Zdo.ClusterId.NETWORK_ADDRESS_REQUEST;
         const zdoPayload = Zdo.Buffalo.buildRequest(this.hasZdoMessageOverhead, clusterId, ieeeAddr as EUI64, false, 0);
 
-        const result = await this.sendZdo(ieeeAddr, ZSpec.NULL_NODE_ID, clusterId, zdoPayload, false);
+        const result = await this.sendZdoInternal(ieeeAddr, ZSpec.NULL_NODE_ID, clusterId, zdoPayload, false, true);
 
         /* istanbul ignore else */
         if (Zdo.Buffalo.checkStatus(result)) {
@@ -300,7 +300,34 @@ class ZStackAdapter extends Adapter {
         payload: Buffer,
         disableResponse: boolean,
     ): Promise<ZdoTypes.RequestToResponseMap[K] | void> {
-        return await this.queue.execute(async () => {
+        return await this.sendZdoInternal(ieeeAddress, networkAddress, clusterId, payload, disableResponse, false);
+    }
+
+    private async sendZdoInternal(
+        ieeeAddress: string,
+        networkAddress: number,
+        clusterId: Zdo.ClusterId,
+        payload: Buffer,
+        disableResponse: boolean,
+        skipQueue: boolean,
+    ): Promise<void>;
+    private async sendZdoInternal<K extends keyof ZdoTypes.RequestToResponseMap>(
+        ieeeAddress: string,
+        networkAddress: number,
+        clusterId: K,
+        payload: Buffer,
+        disableResponse: false,
+        skipQueue: boolean,
+    ): Promise<ZdoTypes.RequestToResponseMap[K]>;
+    private async sendZdoInternal<K extends keyof ZdoTypes.RequestToResponseMap>(
+        ieeeAddress: string,
+        networkAddress: number,
+        clusterId: K,
+        payload: Buffer,
+        disableResponse: boolean,
+        skipQueue: boolean,
+    ): Promise<ZdoTypes.RequestToResponseMap[K] | void> {
+        const func = async (): Promise<ZdoTypes.RequestToResponseMap[K] | void> => {
             this.checkInterpanLock();
 
             // stack-specific requirements
@@ -396,7 +423,8 @@ class ZStackAdapter extends Adapter {
 
                 return response.payload.zdo;
             }
-        }, networkAddress);
+        };
+        return skipQueue ? await func() : await this.queue.execute(func, networkAddress);
     }
 
     public async sendZclFrameToEndpoint(
@@ -860,9 +888,9 @@ class ZStackAdapter extends Adapter {
     public async getNetworkParameters(): Promise<NetworkParameters> {
         const result = await this.znp.requestWithReply(Subsystem.ZDO, 'extNwkInfo', {});
         return {
-            panID: result.payload.panid,
-            extendedPanID: result.payload.extendedpanid,
-            channel: result.payload.channel,
+            panID: result.payload.panid as number,
+            extendedPanID: result.payload.extendedpanid as string, // read as IEEEADDR, so `0x${string}`
+            channel: result.payload.channel as number,
         };
     }
 

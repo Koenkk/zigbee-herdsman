@@ -72,6 +72,6 @@ export interface Backup {
 
 export interface NetworkParameters {
     panID: number;
-    extendedPanID: number;
+    extendedPanID: string; // `0x${string}` same as IEEE address
     channel: number;
 }

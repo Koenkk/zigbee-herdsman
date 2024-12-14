@@ -448,9 +448,10 @@ class DeconzAdapter extends Adapter {
             const panid = await this.driver.readParameterRequest(PARAM.PARAM.Network.PAN_ID);
             const expanid = await this.driver.readParameterRequest(PARAM.PARAM.Network.APS_EXT_PAN_ID);
             const channel = await this.driver.readParameterRequest(PARAM.PARAM.Network.CHANNEL);
+
             return {
                 panID: panid as number,
-                extendedPanID: expanid as number,
+                extendedPanID: expanid as string, // read as `0x...`
                 channel: channel as number,
             };
         } catch (error) {
