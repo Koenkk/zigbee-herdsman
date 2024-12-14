@@ -44,13 +44,11 @@ export class ZnpAdapterManager {
         this.backup = new AdapterBackup(this.znp, this.nv, this.options.backupPath);
     }
 
-    public async init(): Promise<void> {
+    public async initHasNetwork(): Promise<[true, panID: number, extendedPanID: Buffer] | [false, panID: undefined, extendedPanID: undefined]> {
         logger.debug(`beginning znp startup`, NS);
         this.nwkOptions = await this.parseConfigNetworkOptions(this.options.networkOptions);
         await this.nv.init();
-    }
 
-    public async initHasNetwork(): Promise<[true, panID: number, extendedPanID: Buffer] | [false, panID: undefined, extendedPanID: undefined]> {
         /* acquire data from adapter */
         const hasConfiguredNvId =
             this.options.version === ZnpVersion.zStack12 ? NvItemsIds.ZNP_HAS_CONFIGURED_ZSTACK1 : NvItemsIds.ZNP_HAS_CONFIGURED_ZSTACK3;
