@@ -101,6 +101,10 @@ class DeconzAdapter extends Adapter {
         await this.driver.close();
     }
 
+    /**
+     * Check the network status on the adapter (execute the necessary pre-steps to be able to get it).
+     * WARNING: This is a one-off. Should not be called outside of `initNetwork`.
+     */
     protected async initHasNetwork(): Promise<[true, panID: number, extendedPanID: Buffer] | [false, panID: undefined, extendedPanID: undefined]> {
         const panid = (await this.driver.readParameterRequest(PARAM.PARAM.Network.PAN_ID)) as number;
         const expanid = (await this.driver.readParameterRequest(PARAM.PARAM.Network.APS_EXT_PAN_ID)) as string;

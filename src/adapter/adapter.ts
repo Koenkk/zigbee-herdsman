@@ -182,6 +182,9 @@ abstract class Adapter extends events.EventEmitter<AdapterEventMap> {
 
     public abstract leaveNetwork(): Promise<void>;
 
+    /**
+     * If backup is defined, form network from backup, otherwise from config.
+     */
     public abstract formNetwork(backup?: Models.Backup): Promise<void>;
 
     public abstract getNetworkKey(): Promise<Buffer>;

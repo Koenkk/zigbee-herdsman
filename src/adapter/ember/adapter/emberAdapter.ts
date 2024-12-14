@@ -1320,6 +1320,10 @@ export class EmberAdapter extends Adapter {
         logger.info(`======== Ember Adapter Stopped ========`, NS);
     }
 
+    /**
+     * Check the network status on the adapter (execute the necessary pre-steps to be able to get it).
+     * WARNING: This is a one-off. Should not be called outside of `initNetwork`.
+     */
     protected async initHasNetwork(): Promise<[true, panID: number, extendedPanID: Buffer] | [false, panID: undefined, extendedPanID: undefined]> {
         const networkInitStruct: EmberNetworkInitStruct = {
             bitmask: EmberNetworkInitBitmask.PARENT_INFO_IN_TOKEN | EmberNetworkInitBitmask.END_DEVICE_REJOIN_ON_REBOOT,
