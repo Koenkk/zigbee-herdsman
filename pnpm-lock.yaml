@@ -91,14 +91,14 @@ importers:
         specifier: ^6.0.1
         version: 6.0.1
       typedoc:
-        specifier: ^0.27.4
-        version: 0.27.4(typescript@5.7.2)
+        specifier: ^0.27.5
+        version: 0.27.5(typescript@5.7.2)
       typedoc-plugin-markdown:
         specifier: ^4.3.2
-        version: 4.3.2(typedoc@0.27.4(typescript@5.7.2))
+        version: 4.3.2(typedoc@0.27.5(typescript@5.7.2))
       typedoc-plugin-no-inherit:
         specifier: ^1.4.0
-        version: 1.4.0(typedoc@0.27.4(typescript@5.7.2))
+        version: 1.4.0(typedoc@0.27.5(typescript@5.7.2))
       typescript:
         specifier: ^5.7.2
         version: 5.7.2
@@ -2209,8 +2209,8 @@ packages:
     peerDependencies:
       typedoc: '>=0.23.0'
 
-  typedoc@0.27.4:
-    resolution: {integrity: sha512-wXPQs1AYC2Crk+1XFpNuutLIkNWleokZf1UNf/X8w9KsMnirkvT+LzxTXDvfF6ug3TSLf3Xu5ZXRKGfoXPX7IA==}
+  typedoc@0.27.5:
+    resolution: {integrity: sha512-x+fhKJtTg4ozXwKayh/ek4wxZQI/+2hmZUdO2i2NGDBRUflDble70z+ewHod3d4gRpXSO6fnlnjbDTnJk7HlkQ==}
     engines: {node: '>= 18'}
     hasBin: true
     peerDependencies:
@@ -4861,15 +4861,15 @@ snapshots:
 
   type-fest@0.21.3: {}
 
-  typedoc-plugin-markdown@4.3.2(typedoc@0.27.4(typescript@5.7.2)):
+  typedoc-plugin-markdown@4.3.2(typedoc@0.27.5(typescript@5.7.2)):
     dependencies:
-      typedoc: 0.27.4(typescript@5.7.2)
+      typedoc: 0.27.5(typescript@5.7.2)
 
-  typedoc-plugin-no-inherit@1.4.0(typedoc@0.27.4(typescript@5.7.2)):
+  typedoc-plugin-no-inherit@1.4.0(typedoc@0.27.5(typescript@5.7.2)):
     dependencies:
-      typedoc: 0.27.4(typescript@5.7.2)
+      typedoc: 0.27.5(typescript@5.7.2)
 
-  typedoc@0.27.4(typescript@5.7.2):
+  typedoc@0.27.5(typescript@5.7.2):
     dependencies:
       '@gerrit0/mini-shiki': 1.24.4
       lunr: 2.3.9
