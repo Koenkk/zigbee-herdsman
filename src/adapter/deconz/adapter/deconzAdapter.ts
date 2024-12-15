@@ -129,6 +129,11 @@ class DeconzAdapter extends Adapter {
             // this path should never be reached
             throw new Error('This adapter does not support backup');
         } else {
+            await this.driver.writeParameterRequest(
+                PARAM.PARAM.Network.CHANNEL_MASK,
+                ZSpec.Utils.channelsToUInt32Mask(this.networkOptions.channelList),
+            );
+            await Wait(500);
             await this.driver.writeParameterRequest(PARAM.PARAM.Network.PAN_ID, this.networkOptions.panID);
             await Wait(500);
             await this.driver.writeParameterRequest(PARAM.PARAM.Network.APS_EXT_PAN_ID, this.networkOptions.extendedPanID!);
