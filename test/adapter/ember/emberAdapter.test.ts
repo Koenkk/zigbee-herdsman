@@ -74,7 +74,7 @@ function reverseApsFrame(apsFrame: EmberApsFrame): EmberApsFrame {
 }
 
 function flushPromises(): Promise<void> {
-    return new Promise(jest.requireActual('timers').setImmediate);
+    return new Promise(jest.requireActual('node:timers').setImmediate);
 }
 
 const TEMP_PATH = path.resolve('temp');
