@@ -1,4 +1,4 @@
-import assert from 'assert';
+import assert from 'node:assert';
 
 import {ClusterId as ZdoClusterId} from '../../../zspec/zdo';
 import {BuffaloZdo} from '../../../zspec/zdo/buffaloZdo';

@@ -1,4 +1,4 @@
-import events from 'events';
+import events from 'node:events';
 
 import * as Models from '../models';
 import {BroadcastAddress} from '../zspec/enums';

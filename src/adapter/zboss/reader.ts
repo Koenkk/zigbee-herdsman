@@ -1,6 +1,6 @@
 /* istanbul ignore file */
 
-import {Transform, TransformCallback, TransformOptions} from 'stream';
+import {Transform, TransformCallback, TransformOptions} from 'node:stream';
 
 import {logger} from '../../utils/logger';
 import {SIGNATURE} from './consts';

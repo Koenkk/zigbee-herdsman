@@ -1,7 +1,7 @@
 import 'regenerator-runtime/runtime';
 
-import fs from 'fs';
-import path from 'path';
+import fs from 'node:fs';
+import path from 'node:path';
 
 import Bonjour, {Browser, BrowserConfig, Service} from 'bonjour-service';
 import equals from 'fast-deep-equal/es6';

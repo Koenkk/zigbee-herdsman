@@ -1,5 +1,5 @@
-import assert from 'assert';
-import {platform} from 'os';
+import assert from 'node:assert';
+import {platform} from 'node:os';
 
 import {PortInfo} from '@serialport/bindings-cpp';
 import {Bonjour, Service} from 'bonjour-service';

@@ -1,6 +1,6 @@
 /* istanbul ignore file */
 
-import fs from 'fs';
+import fs from 'node:fs';
 
 /* Only used for mocking purposes */
 function realpathSync(path: string): string {

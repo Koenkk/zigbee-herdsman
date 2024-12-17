@@ -1,8 +1,8 @@
 /* istanbul ignore file */
 
-import assert from 'assert';
-import {EventEmitter} from 'events';
-import net from 'net';
+import assert from 'node:assert';
+import {EventEmitter} from 'node:events';
+import net from 'node:net';
 
 import {DelimiterParser} from '@serialport/parser-delimiter';
 

@@ -1,6 +1,6 @@
-import assert from 'assert';
-import events from 'events';
-import net from 'net';
+import assert from 'node:assert';
+import events from 'node:events';
+import net from 'node:net';
 
 import {Queue, Wait, Waitress} from '../../../utils';
 import {logger} from '../../../utils/logger';

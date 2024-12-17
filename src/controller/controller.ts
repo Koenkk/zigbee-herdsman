@@ -1,6 +1,6 @@
-import assert from 'assert';
-import events from 'events';
-import fs from 'fs';
+import assert from 'node:assert';
+import events from 'node:events';
+import fs from 'node:fs';
 
 import mixinDeep from 'mixin-deep';
 

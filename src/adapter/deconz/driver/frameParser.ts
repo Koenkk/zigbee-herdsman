@@ -1,6 +1,6 @@
 /* istanbul ignore file */
 
-import {EventEmitter} from 'stream';
+import {EventEmitter} from 'node:events';
 
 import {logger} from '../../../utils/logger';
 import * as Zdo from '../../../zspec/zdo';

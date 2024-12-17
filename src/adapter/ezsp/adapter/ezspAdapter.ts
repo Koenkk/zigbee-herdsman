@@ -1,6 +1,6 @@
 /* istanbul ignore file */
 
-import assert from 'assert';
+import assert from 'node:assert';
 
 import * as Models from '../../../models';
 import {Queue, Wait, Waitress} from '../../../utils';
