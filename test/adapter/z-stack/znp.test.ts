@@ -68,7 +68,7 @@ const mockSocketConnect = jest.fn().mockImplementation(() => {
 const mockSocketDestroy = jest.fn();
 let requestSpy;
 
-jest.mock('net', () => {
+jest.mock('node:net', () => {
     return {
         Socket: jest.fn().mockImplementation(() => {
             return {
