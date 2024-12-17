@@ -16,7 +16,7 @@ class Writer extends stream.Readable {
         this.push(buffer);
     }
 
-    public _read(): void {}
+    public override _read(): void {}
 }
 
 export default Writer;

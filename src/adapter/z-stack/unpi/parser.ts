@@ -14,7 +14,7 @@ class Parser extends stream.Transform {
         this.buffer = Buffer.from([]);
     }
 
-    public _transform(chunk: Buffer, _: string, cb: () => void): void {
+    public override _transform(chunk: Buffer, _: string, cb: () => void): void {
         logger.debug(`<-- [${[...chunk]}]`, NS);
         this.buffer = Buffer.concat([this.buffer, chunk]);
         this.parseNext();

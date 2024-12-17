@@ -13,7 +13,7 @@ import {BuffaloZBOSSDataType, CommandId} from './enums';
 
 export class ZBOSSBuffaloZcl extends BuffaloZcl {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    public write(type: DataType | BuffaloZclDataType | BuffaloZBOSSDataType, value: any, options: BuffaloZclOptions): void {
+    public override write(type: DataType | BuffaloZclDataType | BuffaloZBOSSDataType, value: any, options: BuffaloZclOptions): void {
         switch (type) {
             case BuffaloZBOSSDataType.EXTENDED_PAN_ID: {
                 return this.writeBuffer(value, 8);
@@ -25,7 +25,7 @@ export class ZBOSSBuffaloZcl extends BuffaloZcl {
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    public read(type: DataType | BuffaloZclDataType | BuffaloZBOSSDataType, options: BuffaloZclOptions): any {
+    public override read(type: DataType | BuffaloZclDataType | BuffaloZBOSSDataType, options: BuffaloZclOptions): any {
         switch (type) {
             case BuffaloZBOSSDataType.EXTENDED_PAN_ID: {
                 return this.readBuffer(8);
