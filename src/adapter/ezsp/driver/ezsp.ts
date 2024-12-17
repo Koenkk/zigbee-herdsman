@@ -1,6 +1,6 @@
 /* istanbul ignore file */
 
-import {EventEmitter} from 'events';
+import {EventEmitter} from 'node:events';
 
 import {Queue, wait, Waitress} from '../../../utils';
 import {logger} from '../../../utils/logger';

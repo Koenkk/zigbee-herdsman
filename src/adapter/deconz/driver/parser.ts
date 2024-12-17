@@ -1,6 +1,6 @@
 /* istanbul ignore file */
 
-import {Transform, TransformCallback} from 'stream';
+import {Transform, TransformCallback} from 'node:stream';
 
 import slip from 'slip';
 

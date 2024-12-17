@@ -1,4 +1,4 @@
-import assert from 'assert';
+import assert from 'node:assert';
 
 import {Events as AdapterEvents} from '../../adapter';
 import {logger} from '../../utils/logger';

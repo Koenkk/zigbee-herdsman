@@ -1,7 +1,7 @@
 /* istanbul ignore file */
 
-import {Socket} from 'net';
-import EventEmitter from 'stream';
+import EventEmitter from 'node:events';
+import {Socket} from 'node:net';
 
 import {Queue, wait, Waitress} from '../../utils';
 import {logger} from '../../utils/logger';

@@ -1,7 +1,7 @@
 /* istanbul ignore file */
 
-import events from 'events';
-import net from 'net';
+import events from 'node:events';
+import net from 'node:net';
 
 import slip from 'slip';
 

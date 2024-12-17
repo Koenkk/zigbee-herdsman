@@ -1,6 +1,6 @@
 /* istanbul ignore file */
 
-import {EventEmitter} from 'events';
+import {EventEmitter} from 'node:events';
 
 import equals from 'fast-deep-equal/es6';
 

@@ -1,6 +1,6 @@
 /* istanbul ignore file */
 
-import * as stream from 'stream';
+import * as stream from 'node:stream';
 
 import slip from 'slip';
 

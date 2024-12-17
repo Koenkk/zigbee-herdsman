@@ -1,6 +1,6 @@
-import {existsSync, mkdirSync, unlinkSync, writeFileSync} from 'fs';
-import path from 'path';
-import {EventEmitter} from 'stream';
+import {existsSync, mkdirSync, unlinkSync, writeFileSync} from 'node:fs';
+import path from 'node:path';
+import {EventEmitter} from 'node:stream';
 
 import {TsType} from '../../../src/adapter';
 import {

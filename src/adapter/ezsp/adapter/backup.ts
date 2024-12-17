@@ -1,6 +1,6 @@
 /* istanbul ignore file */
 
-import * as fs from 'fs';
+import * as fs from 'node:fs';
 
 import * as Models from '../../../models';
 import {BackupUtils} from '../../../utils';

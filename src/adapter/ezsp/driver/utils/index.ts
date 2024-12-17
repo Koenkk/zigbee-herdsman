@@ -1,6 +1,6 @@
 /* istanbul ignore file */
 
-import {randomBytes} from 'crypto';
+import {randomBytes} from 'node:crypto';
 
 import {EmberEUI64, EmberInitialSecurityBitmask} from '../types/named';
 import {EmberInitialSecurityState, EmberKeyData} from '../types/struct';
