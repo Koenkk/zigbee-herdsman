@@ -55,5 +55,3 @@ export class SerialPort<T extends AutoDetectTypes = AutoDetectTypes> extends Ser
         });
     }
 }
-
-export default SerialPort;
