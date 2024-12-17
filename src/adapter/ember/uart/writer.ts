@@ -49,5 +49,5 @@ export class AshWriter extends Readable {
         }
     }
 
-    public _read(): void {}
+    public override _read(): void {}
 }

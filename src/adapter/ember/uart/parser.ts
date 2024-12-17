@@ -16,7 +16,7 @@ export class AshParser extends Transform {
         this.buffer = Buffer.alloc(0);
     }
 
-    _transform(chunk: Buffer, encoding: BufferEncoding, cb: TransformCallback): void {
+    override _transform(chunk: Buffer, encoding: BufferEncoding, cb: TransformCallback): void {
         let data = Buffer.concat([this.buffer, chunk]);
         let position: number;
 
@@ -37,7 +37,7 @@ export class AshParser extends Transform {
         cb();
     }
 
-    _flush(cb: TransformCallback): void {
+    override _flush(cb: TransformCallback): void {
         this.push(this.buffer);
 
         this.buffer = Buffer.alloc(0);

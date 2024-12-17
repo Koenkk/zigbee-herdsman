@@ -14,7 +14,7 @@ export class Writer extends stream.Readable {
         this.push(buffer);
     }
 
-    public _read(): void {}
+    public override _read(): void {}
 
     public sendACK(ackNum: number): void {
         /* Construct a acknowledgement frame */

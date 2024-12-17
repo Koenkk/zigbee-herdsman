@@ -48,7 +48,7 @@ export class EmberEUI64 extends fixed_list(8, basic.uint8_t) {
     }
 
     /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
-    static deserialize(cls: any, data: Buffer): any[] {
+    static override deserialize(cls: any, data: Buffer): any[] {
         const arr = super.deserialize(cls, data);
         const r = arr[0];
         data = arr[1] as Buffer;
