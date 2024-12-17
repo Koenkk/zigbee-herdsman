@@ -66,7 +66,7 @@ const mockSocketConnect = jest.fn(() => {
 const mockSocketDestroy = jest.fn();
 let requestSpy;
 
-jest.mock('net', () => ({
+jest.mock('node:net', () => ({
     Socket: jest.fn(() => ({
         setNoDelay: mockSocketSetNoDelay,
         pipe: mockSocketPipe,
