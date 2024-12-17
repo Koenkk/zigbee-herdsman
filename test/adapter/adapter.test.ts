@@ -2,13 +2,13 @@ import os from 'os';
 
 import {Bonjour, BrowserConfig} from 'bonjour-service';
 
-import {Adapter} from '../../src/adapter';
+import {Adapter, TsType} from '../../src/adapter';
 import {DeconzAdapter} from '../../src/adapter/deconz/adapter/deconzAdapter';
 import {EmberAdapter} from '../../src/adapter/ember/adapter/emberAdapter';
-import {EZSPAdapter} from '../../src/adapter/ezsp/adapter/ezspAdapter';
+import {EZSPAdapter} from '../../src/adapter/ezsp/adapter/EZSPAdapter';
 import {SerialPort} from '../../src/adapter/serialPort';
 import {ZStackAdapter} from '../../src/adapter/z-stack/adapter/zStackAdapter';
-import {ZBOSSAdapter} from '../../src/adapter/zboss/adapter/zbossAdapter';
+import {ZBOSSAdapter} from '../../src/adapter/zboss/adapter/ZBOSSAdapter';
 import {ZiGateAdapter} from '../../src/adapter/zigate/adapter/zigateAdapter';
 import {
     DECONZ_CONBEE_II,
@@ -49,6 +49,24 @@ jest.mock('bonjour-service', () => ({
 describe('Adapter', () => {
     beforeAll(() => {
         jest.useFakeTimers();
+    });
+
+    it.each([
+        ['deconz', DeconzAdapter],
+        ['ember', EmberAdapter],
+        ['ezsp', EZSPAdapter],
+        ['zstack', ZStackAdapter],
+        ['zboss', ZBOSSAdapter],
+        ['zigate', ZiGateAdapter],
+    ])('Calls adapter contructor for %s', async (name, cls) => {
+        const adapter = await Adapter.create(
+            {panID: 0x1a62, channelList: [11]},
+            {path: '/dev/ttyUSB0', adapter: name as TsType.Adapter},
+            'test.db.backup',
+            {disableLED: false},
+        );
+
+        expect(adapter).toBeInstanceOf(cls);
     });
 
     describe('mDNS discovery', () => {
@@ -640,7 +658,7 @@ describe('Adapter', () => {
                         'test.db.backup',
                         {disableLED: false},
                     );
-                }).rejects.toThrow(`Adapter 'invalid' does not exists, possible options: zstack, deconz, zigate, ezsp, ember, zboss`);
+                }).rejects.toThrow(`Adapter 'invalid' does not exists, possible options: deconz, ember, ezsp, zstack, zboss, zigate`);
             });
         });
 

@@ -17,6 +17,13 @@ interface AdapterEventMap {
     deviceLeave: [payload: AdapterEvents.DeviceLeavePayload];
 }
 
+type AdapterConstructor = new (
+    networkOptions: TsType.NetworkOptions,
+    serialPortOptions: TsType.SerialPortOptions,
+    backupPath: string,
+    adapterOptions: TsType.AdapterOptions,
+) => Adapter;
+
 export abstract class Adapter extends events.EventEmitter<AdapterEventMap> {
     public hasZdoMessageOverhead: boolean;
     public manufacturerID: Zcl.ManufacturerCode;
@@ -50,28 +57,25 @@ export abstract class Adapter extends events.EventEmitter<AdapterEventMap> {
         backupPath: string,
         adapterOptions: TsType.AdapterOptions,
     ): Promise<Adapter> {
-        const {ZStackAdapter} = await import('./z-stack/adapter/zStackAdapter');
-        const {DeconzAdapter} = await import('./deconz/adapter/deconzAdapter');
-        const {ZiGateAdapter} = await import('./zigate/adapter/zigateAdapter');
-        const {EZSPAdapter} = await import('./ezsp/adapter/ezspAdapter');
-        const {EmberAdapter} = await import('./ember/adapter/emberAdapter');
-        const {ZBOSSAdapter} = await import('./zboss/adapter/zbossAdapter');
         const adapterLookup = {
-            zstack: ZStackAdapter,
-            deconz: DeconzAdapter,
-            zigate: ZiGateAdapter,
-            ezsp: EZSPAdapter,
-            ember: EmberAdapter,
-            zboss: ZBOSSAdapter,
+            deconz: ['./deconz/adapter/deconzAdapter', 'DeconzAdapter'],
+            ember: ['./ember/adapter/emberAdapter', 'EmberAdapter'],
+            ezsp: ['./ezsp/adapter/EZSPAdapter', 'EZSPAdapter'],
+            zstack: ['./z-stack/adapter/zStackAdapter', 'ZStackAdapter'],
+            zboss: ['./zboss/adapter/ZBOSSAdapter', 'ZBOSSAdapter'],
+            zigate: ['./zigate/adapter/zigateAdapter', 'ZiGateAdapter'],
         };
-
         const [adapter, path] = await discoverAdapter(serialPortOptions.adapter, serialPortOptions.path);
+        const detectedAdapter = adapterLookup[adapter];
 
-        if (adapterLookup[adapter]) {
+        if (detectedAdapter) {
             serialPortOptions.adapter = adapter;
             serialPortOptions.path = path;
 
-            return new adapterLookup[adapter](networkOptions, serialPortOptions, backupPath, adapterOptions);
+            const adapterModule = await import(detectedAdapter[0]);
+            const AdapterCtor = adapterModule[detectedAdapter[1]] as AdapterConstructor;
+
+            return new AdapterCtor(networkOptions, serialPortOptions, backupPath, adapterOptions);
         } else {
             throw new Error(`Adapter '${adapter}' does not exists, possible options: ${Object.keys(adapterLookup).join(', ')}`);
         }

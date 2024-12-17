@@ -7,9 +7,7 @@ import Bonjour, {Browser, BrowserConfig, Service} from 'bonjour-service';
 import equals from 'fast-deep-equal/es6';
 
 import {Adapter} from '../src/adapter';
-import {DeconzAdapter} from '../src/adapter/deconz/adapter/deconzAdapter';
 import {ZStackAdapter} from '../src/adapter/z-stack/adapter/zStackAdapter';
-import {ZiGateAdapter} from '../src/adapter/zigate/adapter/zigateAdapter';
 import {Controller} from '../src/controller';
 import * as Events from '../src/controller/events';
 import Request from '../src/controller/helpers/request';
@@ -404,14 +402,6 @@ jest.mock('../src/adapter/z-stack/adapter/zStackAdapter', () => ({
         restoreChannelInterPAN: mockRestoreChannelInterPAN,
         sendZdo: mockAdapterSendZdo,
     })),
-}));
-
-jest.mock('../src/adapter/deconz/adapter/deconzAdapter', () => ({
-    DeconzAdapter: jest.fn(() => ({})),
-}));
-
-jest.mock('../src/adapter/zigate/adapter/zigateAdapter', () => ({
-    ZiGateAdapter: jest.fn(() => ({})),
 }));
 
 const TEMP_PATH = path.resolve('temp');
