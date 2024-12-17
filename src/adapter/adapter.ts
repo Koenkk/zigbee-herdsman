@@ -60,9 +60,9 @@ export abstract class Adapter extends events.EventEmitter<AdapterEventMap> {
         const adapterLookup = {
             deconz: ['./deconz/adapter/deconzAdapter', 'DeconzAdapter'],
             ember: ['./ember/adapter/emberAdapter', 'EmberAdapter'],
-            ezsp: ['./ezsp/adapter/EZSPAdapter', 'EZSPAdapter'],
+            ezsp: ['./ezsp/adapter/ezspAdapter', 'EZSPAdapter'],
             zstack: ['./z-stack/adapter/zStackAdapter', 'ZStackAdapter'],
-            zboss: ['./zboss/adapter/ZBOSSAdapter', 'ZBOSSAdapter'],
+            zboss: ['./zboss/adapter/zbossAdapter', 'ZBOSSAdapter'],
             zigate: ['./zigate/adapter/zigateAdapter', 'ZiGateAdapter'],
         };
         const [adapter, path] = await discoverAdapter(serialPortOptions.adapter, serialPortOptions.path);

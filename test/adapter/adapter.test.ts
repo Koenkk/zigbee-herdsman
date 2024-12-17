@@ -3,12 +3,12 @@ import os from 'os';
 import {Bonjour, BrowserConfig} from 'bonjour-service';
 
 import {Adapter, TsType} from '../../src/adapter';
+import {SerialPort} from '../../src/adapter/serialPort';
 import {DeconzAdapter} from '../../src/adapter/deconz/adapter/deconzAdapter';
 import {EmberAdapter} from '../../src/adapter/ember/adapter/emberAdapter';
-import {EZSPAdapter} from '../../src/adapter/ezsp/adapter/EZSPAdapter';
-import {SerialPort} from '../../src/adapter/serialPort';
+import {EZSPAdapter} from '../../src/adapter/ezsp/adapter/ezspAdapter.ts';
 import {ZStackAdapter} from '../../src/adapter/z-stack/adapter/zStackAdapter';
-import {ZBOSSAdapter} from '../../src/adapter/zboss/adapter/ZBOSSAdapter';
+import {ZBOSSAdapter} from '../../src/adapter/zboss/adapter/zbossAdapter';
 import {ZiGateAdapter} from '../../src/adapter/zigate/adapter/zigateAdapter';
 import {
     DECONZ_CONBEE_II,
