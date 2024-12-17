@@ -2,7 +2,7 @@ import assert from 'assert';
 import events from 'events';
 import net from 'net';
 
-import {Queue, Wait, Waitress} from '../../../utils';
+import {Queue, wait, Waitress} from '../../../utils';
 import {logger} from '../../../utils/logger';
 import {ClusterId as ZdoClusterId} from '../../../zspec/zdo';
 import {SerialPort} from '../../serialPort';
@@ -13,7 +13,7 @@ import {Subsystem, Type} from '../unpi/constants';
 import Definition from './definition';
 import {ZpiObjectPayload} from './tstype';
 import {isMtCmdSreqZdo} from './utils';
-import ZpiObject from './zpiObject';
+import {ZpiObject} from './zpiObject';
 
 const {
     COMMON: {ZnpCommandStatus},
@@ -37,7 +37,7 @@ interface WaitressMatcher {
     state?: number;
 }
 
-class Znp extends events.EventEmitter {
+export class Znp extends events.EventEmitter {
     private path: string;
     private baudRate: number;
     private rtscts: boolean;
@@ -173,18 +173,18 @@ class Znp extends events.EventEmitter {
             try {
                 logger.info('Writing CC2530/CC2531 skip bootloader payload', NS);
                 this.unpiWriter.writeBuffer(Buffer.from([0xef]));
-                await Wait(1000);
+                await wait(1000);
                 await this.request(Subsystem.SYS, 'ping', {capabilities: 1}, undefined, 250);
             } catch {
                 // Skip bootloader on some CC2652 devices (e.g. zzh-p)
                 logger.info('Skip bootloader for CC2652/CC1352', NS);
                 if (this.serialPort) {
                     await this.serialPort.asyncSet({dtr: false, rts: false});
-                    await Wait(150);
+                    await wait(150);
                     await this.serialPort.asyncSet({dtr: false, rts: true});
-                    await Wait(150);
+                    await wait(150);
                     await this.serialPort.asyncSet({dtr: false, rts: false});
-                    await Wait(150);
+                    await wait(150);
                 }
             }
         }
@@ -333,5 +333,3 @@ class Znp extends events.EventEmitter {
         );
     }
 }
-
-export default Znp;

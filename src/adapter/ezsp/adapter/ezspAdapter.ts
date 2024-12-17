@@ -3,7 +3,7 @@
 import assert from 'assert';
 
 import * as Models from '../../../models';
-import {Queue, Wait, Waitress} from '../../../utils';
+import {Queue, wait, Waitress} from '../../../utils';
 import {logger} from '../../../utils/logger';
 import * as ZSpec from '../../../zspec';
 import * as Zcl from '../../../zspec/zcl';
@@ -25,7 +25,7 @@ interface WaitressMatcher {
     commandIdentifier: number;
 }
 
-class EZSPAdapter extends Adapter {
+export class EZSPAdapter extends Adapter {
     private driver: Driver;
     private waitress: Waitress<ZclPayload, WaitressMatcher>;
     private interpanLock: boolean;
@@ -427,7 +427,7 @@ class EZSPAdapter extends Adapter {
              * (contrary to network address requests) we will give the
              * command some time to 'settle' in the network.
              */
-            await Wait(200);
+            await wait(200);
         });
     }
 
@@ -454,7 +454,7 @@ class EZSPAdapter extends Adapter {
              * (contrary to network address requests) we will give the
              * command some time to 'settle' in the network.
              */
-            await Wait(200);
+            await wait(200);
         });
     }
 
@@ -480,7 +480,7 @@ class EZSPAdapter extends Adapter {
             const channel = (await this.getNetworkParameters()).channel;
             await this.driver.setChannel(channel);
             // Give adapter some time to restore, otherwise stuff crashes
-            await Wait(3000);
+            await wait(3000);
             this.interpanLock = false;
         });
     }
@@ -605,5 +605,3 @@ class EZSPAdapter extends Adapter {
         );
     }
 }
-
-export default EZSPAdapter;

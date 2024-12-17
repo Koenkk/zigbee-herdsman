@@ -8,7 +8,7 @@ import {DelimiterParser} from '@serialport/parser-delimiter';
 
 import {Queue} from '../../../utils';
 import {logger} from '../../../utils/logger';
-import Waitress from '../../../utils/waitress';
+import {Waitress} from '../../../utils/waitress';
 import * as ZSpec from '../../../zspec';
 import * as Zdo from '../../../zspec/zdo';
 import {EndDeviceAnnounce, GenericZdoResponse, ResponseMap as ZdoResponseMap} from '../../../zspec/zdo/definition/tstypes';

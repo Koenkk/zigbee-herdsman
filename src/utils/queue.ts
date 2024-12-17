@@ -4,7 +4,7 @@ interface Job {
     start?: () => void;
 }
 
-class Queue {
+export class Queue {
     private jobs: Job[];
     private readonly concurrent: number;
 
@@ -73,5 +73,3 @@ class Queue {
         return this.jobs.length;
     }
 }
-
-export default Queue;

@@ -1,5 +1,5 @@
 import {Adapter} from '../adapter';
-import {Wait} from '../utils';
+import {wait} from '../utils';
 import {logger} from '../utils/logger';
 import {assertString} from '../utils/utils';
 import * as Zcl from '../zspec/zcl';
@@ -7,7 +7,7 @@ import * as Zcl from '../zspec/zcl';
 const NS = 'zh:controller:touchlink';
 const scanChannels = [11, 15, 20, 25, 12, 13, 14, 16, 17, 18, 19, 21, 22, 23, 24, 26];
 
-class Touchlink {
+export class Touchlink {
     private adapter: Adapter;
     private locked: boolean;
 
@@ -90,7 +90,7 @@ class Touchlink {
 
             logger.debug(`Identifying '${ieeeAddr}'`, NS);
             await this.adapter.sendZclFrameInterPANToIeeeAddr(this.createIdentifyRequestFrame(transaction), ieeeAddr);
-            await Wait(2000);
+            await wait(2000);
 
             logger.debug(`Reset to factory new '${ieeeAddr}'`, NS);
             await this.adapter.sendZclFrameInterPANToIeeeAddr(this.createResetFactoryNewRequestFrame(transaction), ieeeAddr);
@@ -123,7 +123,7 @@ class Touchlink {
                     // identify it (this will make e.g. the bulb flash)
                     logger.debug(`Identifying`, NS);
                     await this.adapter.sendZclFrameInterPANToIeeeAddr(this.createIdentifyRequestFrame(transaction), response.address);
-                    await Wait(2000);
+                    await wait(2000);
 
                     logger.debug(`Reset to factory new`, NS);
                     await this.adapter.sendZclFrameInterPANToIeeeAddr(this.createResetFactoryNewRequestFrame(transaction), response.address);

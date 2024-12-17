@@ -6,7 +6,7 @@ import equals from 'fast-deep-equal/es6';
 
 import {Adapter, TsType} from '../..';
 import {Backup, UnifiedBackupStorage} from '../../../models';
-import {BackupUtils, Queue, Wait} from '../../../utils';
+import {BackupUtils, Queue, wait} from '../../../utils';
 import {logger} from '../../../utils/logger';
 import * as ZSpec from '../../../zspec';
 import {EUI64, ExtendedPanId, NodeId, PanId} from '../../../zspec/tstypes';
@@ -921,7 +921,7 @@ export class EmberAdapter extends Adapter {
                     '[INIT TC] Leave network',
                 );
 
-                await Wait(200); // settle down
+                await wait(200); // settle down
 
                 action = NetworkInitAction.LEFT;
             }
@@ -1271,7 +1271,7 @@ export class EmberAdapter extends Adapter {
 
             // XXX: this will block other requests for a while, but should ensure the key propagates without interference?
             //      could also stop dispatching entirely and do this outside the queue if necessary/better
-            await Wait(BROADCAST_NETWORK_KEY_SWITCH_WAIT_TIME);
+            await wait(BROADCAST_NETWORK_KEY_SWITCH_WAIT_TIME);
 
             status = await this.ezsp.ezspBroadcastNetworkKeySwitch();
 
@@ -2009,9 +2009,9 @@ export class EmberAdapter extends Adapter {
                         `~x~> [ZCL to=${ieeeAddr}:${networkAddress} apsFrame=${JSON.stringify(apsFrame)}] Failed to send request with status=${SLStatus[status]}.`,
                     );
                 } else if (status === SLStatus.ZIGBEE_MAX_MESSAGE_LIMIT_REACHED || status === SLStatus.BUSY) {
-                    await Wait(QUEUE_BUSY_DEFER_MSEC);
+                    await wait(QUEUE_BUSY_DEFER_MSEC);
                 } else if (status === SLStatus.NETWORK_DOWN) {
-                    await Wait(QUEUE_NETWORK_DOWN_DEFER_MSEC);
+                    await wait(QUEUE_NETWORK_DOWN_DEFER_MSEC);
                 } else {
                     throw new Error(
                         `~x~> [ZCL to=${ieeeAddr}:${networkAddress} apsFrame=${JSON.stringify(apsFrame)}] Failed to send request with status=${SLStatus[status]}.`,
@@ -2075,7 +2075,7 @@ export class EmberAdapter extends Adapter {
             }
 
             // NOTE: since ezspMessageSentHandler could take a while here, we don't block, it'll just be logged if the delivery failed
-            await Wait(QUEUE_BUSY_DEFER_MSEC);
+            await wait(QUEUE_BUSY_DEFER_MSEC);
         });
     }
 
@@ -2117,7 +2117,7 @@ export class EmberAdapter extends Adapter {
             }
 
             // NOTE: since ezspMessageSentHandler could take a while here, we don't block, it'll just be logged if the delivery failed
-            await Wait(QUEUE_BUSY_DEFER_MSEC);
+            await wait(QUEUE_BUSY_DEFER_MSEC);
         });
     }
 
@@ -2246,7 +2246,7 @@ export class EmberAdapter extends Adapter {
             }
 
             // let adapter settle down
-            await Wait(QUEUE_NETWORK_DOWN_DEFER_MSEC);
+            await wait(QUEUE_NETWORK_DOWN_DEFER_MSEC);
 
             this.interpanLock = false;
         });

@@ -1,4 +1,4 @@
-import {ZiGateAdapter} from '../../../src/adapter/zigate/adapter';
+import {ZiGateAdapter} from '../../../src/adapter/zigate/adapter/zigateAdapter';
 import {BLANK_EUI64} from '../../../src/zspec';
 import * as Zdo from '../../../src/zspec/zdo';
 

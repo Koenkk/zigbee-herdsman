@@ -1,3 +1,1 @@
-import Buffalo from './buffalo';
-
-export {Buffalo};
+export {Buffalo} from './buffalo';

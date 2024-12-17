@@ -22,31 +22,29 @@ const mockSerialPortSet = jest.fn().mockImplementation((opts, cb) => cb());
 const mockSerialPortWrite = jest.fn((buffer, cb) => (cb ? cb() : null));
 let mockSerialPortIsOpen = false;
 
-jest.mock('../../../src/adapter/serialPort', () => {
-    return {
-        SerialPort: jest.fn().mockImplementation(() => {
-            return {
-                close: mockSerialPortClose,
-                constructor: mockSerialPortConstructor,
-                emit: () => {},
-                on: () => {},
-                once: mockSerialPortOnce,
-                open: mockSerialPortOpen,
-                pipe: mockSerialPortPipe,
-                set: mockSerialPortSet,
-                write: mockSerialPortWrite,
-                flush: mockSerialPortFlush,
-                isOpen: mockSerialPortIsOpen,
-                asyncOpen: mockSerialPortAsyncOpen,
-                asyncFlushAndClose: mockSerialPortAsyncFlushAndClose,
-            };
-        }),
-    };
-});
+jest.mock('../../../src/adapter/serialPort', () => ({
+    SerialPort: jest.fn(() => ({
+        close: mockSerialPortClose,
+        constructor: mockSerialPortConstructor,
+        emit: () => {},
+        on: () => {},
+        once: mockSerialPortOnce,
+        open: mockSerialPortOpen,
+        pipe: mockSerialPortPipe,
+        set: mockSerialPortSet,
+        write: mockSerialPortWrite,
+        flush: mockSerialPortFlush,
+        isOpen: mockSerialPortIsOpen,
+        asyncOpen: mockSerialPortAsyncOpen,
+        asyncFlushAndClose: mockSerialPortAsyncFlushAndClose,
+    })),
+}));
 
-jest.mock('../../../src/utils/wait', () => {
-    return () => {};
-});
+jest.mock('../../../src/utils/wait', () => ({
+    wait: jest.fn(() => {
+        return new Promise<void>((resolve) => resolve());
+    }),
+}));
 
 let writeBufferSpy;
 

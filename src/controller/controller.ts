@@ -5,7 +5,7 @@ import fs from 'fs';
 import mixinDeep from 'mixin-deep';
 
 import {Adapter, Events as AdapterEvents, TsType as AdapterTsType} from '../adapter';
-import {BackupUtils, Wait} from '../utils';
+import {BackupUtils, wait} from '../utils';
 import {logger} from '../utils/logger';
 import {isNumberArrayOfLength} from '../utils/utils';
 import * as ZSpec from '../zspec';
@@ -67,7 +67,7 @@ export interface ControllerEventMap {
 /**
  * @noInheritDoc
  */
-class Controller extends events.EventEmitter<ControllerEventMap> {
+export class Controller extends events.EventEmitter<ControllerEventMap> {
     private options: Options;
     // @ts-expect-error assigned and validated in start()
     private database: Database;
@@ -509,7 +509,7 @@ class Controller extends events.EventEmitter<ControllerEventMap> {
         this.networkParametersCached = undefined; // invalidate cache
         // wait for the broadcast to propagate and the adapter to actually change
         // NOTE: observed to ~9sec on `ember` with actual stack event
-        await Wait(12000);
+        await wait(12000);
     }
 
     public async identifyUnknownDevice(nwkAddress: number): Promise<Device | undefined> {

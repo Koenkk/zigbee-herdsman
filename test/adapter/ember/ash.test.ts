@@ -19,7 +19,7 @@ import {CONFIG_TX_K, UartAsh} from '../../../src/adapter/ember/uart/ash';
 import {EZSP_HOST_RX_POOL_SIZE, TX_POOL_BUFFERS} from '../../../src/adapter/ember/uart/consts';
 import {EzspBuffer} from '../../../src/adapter/ember/uart/queues';
 import {lowByte} from '../../../src/adapter/ember/utils/math';
-import {Wait} from '../../../src/utils/';
+import {wait} from '../../../src/utils/';
 import {adapterSONOFFDongleE, ASH_ACK_FIRST_BYTES, RECD_RSTACK_BYTES, SEND_ACK_FIRST_BYTES, SEND_RST_BYTES} from './consts';
 
 const mockSerialPortCloseEvent = jest.fn();
@@ -206,7 +206,7 @@ describe('Ember UART ASH Protocol', () => {
         uartAsh.serialPort.port.emitData(badCrcRSTACK);
         const startResult = await uartAsh.start();
 
-        await Wait(10);
+        await wait(10);
 
         expect(startResult).toStrictEqual(EzspStatus.HOST_FATAL_ERROR);
         expect(uartAsh.counters.txAllFrames).toStrictEqual(1);
@@ -253,7 +253,7 @@ describe('Ember UART ASH Protocol', () => {
 
             uartAsh.send(sendBuf.length, sendBuf);
 
-            await Wait(10);
+            await wait(10);
 
             expect(uartAsh.counters.txDataFrames).toStrictEqual(1);
             //@ts-expect-error private
@@ -282,12 +282,12 @@ describe('Ember UART ASH Protocol', () => {
 
             uartAsh.send(sendBuf.length, sendBuf);
 
-            await Wait(10);
+            await wait(10);
 
             //@ts-expect-error private
             uartAsh.serialPort.port.emitData(Buffer.from(SEND_ACK_FIRST_BYTES)); // just an ACK, doesn't matter what it is
 
-            await Wait(10); // force wait new frame
+            await wait(10); // force wait new frame
 
             expect(uartAsh.counters.txAckFrames).toStrictEqual(1);
             expect(uartAsh.counters.rxAckFrames).toStrictEqual(1);
@@ -317,7 +317,7 @@ describe('Ember UART ASH Protocol', () => {
                 uartAsh.send(sendBuf.length, sendBuf);
             }
 
-            await Wait(10);
+            await wait(10);
 
             expect(uartAsh.counters.txDataFrames).toStrictEqual(3);
             expect(uartAsh.txQueue.length).toStrictEqual(1);

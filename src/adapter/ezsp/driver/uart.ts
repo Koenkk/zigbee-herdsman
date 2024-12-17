@@ -3,9 +3,8 @@
 import {EventEmitter} from 'events';
 import net from 'net';
 
-import {Queue, Wait, Waitress} from '../../../utils';
+import {Queue, wait, Waitress} from '../../../utils';
 import {logger} from '../../../utils/logger';
-import wait from '../../../utils/wait';
 import {SerialPort} from '../../serialPort';
 import SocketPortUtils from '../../socketPortUtils';
 import {SerialPortOptions} from '../../tstype';
@@ -416,7 +415,7 @@ export class SerialDriver extends EventEmitter {
                 logger.error(`Can't send DATA frame (${seq},${ackSeq},0): ${data.toString('hex')}`, NS);
 
                 try {
-                    await Wait(500);
+                    await wait(500);
                     const waiter = this.waitFor(nextSeq);
                     logger.debug(`->> DATA (${seq},${ackSeq},1): ${data.toString('hex')}`, NS);
                     this.writer.sendData(randData, seq, 1, ackSeq);
