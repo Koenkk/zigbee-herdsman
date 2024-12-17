@@ -17,7 +17,7 @@ interface AdapterEventMap {
     deviceLeave: [payload: AdapterEvents.DeviceLeavePayload];
 }
 
-abstract class Adapter extends events.EventEmitter<AdapterEventMap> {
+export abstract class Adapter extends events.EventEmitter<AdapterEventMap> {
     public hasZdoMessageOverhead: boolean;
     public manufacturerID: Zcl.ManufacturerCode;
     protected networkOptions: TsType.NetworkOptions;
@@ -50,12 +50,12 @@ abstract class Adapter extends events.EventEmitter<AdapterEventMap> {
         backupPath: string,
         adapterOptions: TsType.AdapterOptions,
     ): Promise<Adapter> {
-        const {ZStackAdapter} = await import('./z-stack/adapter');
-        const {DeconzAdapter} = await import('./deconz/adapter');
-        const {ZiGateAdapter} = await import('./zigate/adapter');
-        const {EZSPAdapter} = await import('./ezsp/adapter');
-        const {EmberAdapter} = await import('./ember/adapter');
-        const {ZBOSSAdapter} = await import('./zboss/adapter');
+        const {ZStackAdapter} = await import('./z-stack/adapter/zStackAdapter');
+        const {DeconzAdapter} = await import('./deconz/adapter/deconzAdapter');
+        const {ZiGateAdapter} = await import('./zigate/adapter/zigateAdapter');
+        const {EZSPAdapter} = await import('./ezsp/adapter/ezspAdapter');
+        const {EmberAdapter} = await import('./ember/adapter/emberAdapter');
+        const {ZBOSSAdapter} = await import('./zboss/adapter/zbossAdapter');
         const adapterLookup = {
             zstack: ZStackAdapter,
             deconz: DeconzAdapter,

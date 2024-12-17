@@ -2,11 +2,11 @@ import * as stream from 'stream';
 
 import {logger} from '../../../utils/logger';
 import {DataStart, MinMessageLength, PositionDataLength, SOF} from './constants';
-import Frame from './frame';
+import {Frame} from './frame';
 
 const NS = 'zh:zstack:unpi:parser';
 
-class Parser extends stream.Transform {
+export class Parser extends stream.Transform {
     private buffer: Buffer;
 
     public constructor() {
@@ -54,5 +54,3 @@ class Parser extends stream.Transform {
         }
     }
 }
-
-export default Parser;

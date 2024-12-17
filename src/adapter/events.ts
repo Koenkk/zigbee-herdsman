@@ -1,13 +1,13 @@
 import {Header as ZclHeader} from '../zspec/zcl';
 
-type DeviceJoinedPayload = {
+export type DeviceJoinedPayload = {
     networkAddress: number;
     ieeeAddr: string;
 };
 
-type DeviceLeavePayload = {networkAddress?: number; ieeeAddr: string} | {networkAddress: number; ieeeAddr?: string};
+export type DeviceLeavePayload = {networkAddress?: number; ieeeAddr: string} | {networkAddress: number; ieeeAddr?: string};
 
-interface ZclPayload {
+export interface ZclPayload {
     clusterID: number;
     address: number | string;
     header: ZclHeader | undefined;
@@ -19,5 +19,3 @@ interface ZclPayload {
     wasBroadcast: boolean;
     destinationEndpoint: number;
 }
-
-export {DeviceJoinedPayload, ZclPayload, DeviceLeavePayload};

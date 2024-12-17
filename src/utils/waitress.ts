@@ -11,7 +11,7 @@ interface Waiter<TPayload, TMatcher> {
 type Validator<TPayload, TMatcher> = (payload: TPayload, matcher: TMatcher) => boolean;
 type TimeoutFormatter<TMatcher> = (matcher: TMatcher, timeout: number) => string;
 
-class Waitress<TPayload, TMatcher> {
+export class Waitress<TPayload, TMatcher> {
     private waiters: Map<number, Waiter<TPayload, TMatcher>>;
     private readonly validator: Validator<TPayload, TMatcher>;
     private readonly timeoutFormatter: TimeoutFormatter<TMatcher>;
@@ -86,5 +86,3 @@ class Waitress<TPayload, TMatcher> {
         return foundMatching;
     }
 }
-
-export default Waitress;

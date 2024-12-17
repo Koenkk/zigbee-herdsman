@@ -2,7 +2,7 @@
 
 import Device from '../../../controller/model/device';
 import * as Models from '../../../models';
-import {Wait, Waitress} from '../../../utils';
+import {wait, Waitress} from '../../../utils';
 import {logger} from '../../../utils/logger';
 import * as ZSpec from '../../../zspec';
 import {BroadcastAddress} from '../../../zspec/enums';
@@ -28,7 +28,7 @@ interface WaitressMatcher {
     direction: number;
 }
 
-class DeconzAdapter extends Adapter {
+export class DeconzAdapter extends Adapter {
     private driver: Driver;
     private openRequestsQueue: WaitForDataRequest[];
     private transactionID: number;
@@ -156,7 +156,7 @@ class DeconzAdapter extends Adapter {
 
             try {
                 await this.driver.writeParameterRequest(PARAM.PARAM.Network.CHANNEL_MASK, setChannelMask);
-                await Wait(500);
+                await wait(500);
                 changed = true;
             } catch (error) {
                 logger.debug('Could not set channel: ' + error, NS);
@@ -172,7 +172,7 @@ class DeconzAdapter extends Adapter {
 
             try {
                 await this.driver.writeParameterRequest(PARAM.PARAM.Network.PAN_ID, this.networkOptions.panID);
-                await Wait(500);
+                await wait(500);
                 changed = true;
             } catch (error) {
                 logger.debug('Could not set panid: ' + error, NS);
@@ -192,7 +192,7 @@ class DeconzAdapter extends Adapter {
 
             try {
                 await this.driver.writeParameterRequest(PARAM.PARAM.Network.APS_EXT_PAN_ID, this.networkOptions.extendedPanID!);
-                await Wait(500);
+                await wait(500);
                 changed = true;
             } catch (error) {
                 logger.debug('Could not set extended panid: ' + error, NS);
@@ -208,7 +208,7 @@ class DeconzAdapter extends Adapter {
 
             try {
                 await this.driver.writeParameterRequest(PARAM.PARAM.Network.NETWORK_KEY, this.networkOptions.networkKey!);
-                await Wait(500);
+                await wait(500);
                 changed = true;
             } catch (error) {
                 logger.debug('Could not set network key: ' + error, NS);
@@ -217,9 +217,9 @@ class DeconzAdapter extends Adapter {
 
         if (changed) {
             await this.driver.changeNetworkStateRequest(PARAM.PARAM.Network.NET_OFFLINE);
-            await Wait(2000);
+            await wait(2000);
             await this.driver.changeNetworkStateRequest(PARAM.PARAM.Network.NET_CONNECTED);
-            await Wait(2000);
+            await wait(2000);
         }
 
         // write endpoints
@@ -754,5 +754,3 @@ class DeconzAdapter extends Adapter {
         );
     }
 }
-
-export default DeconzAdapter;

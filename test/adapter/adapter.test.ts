@@ -3,13 +3,13 @@ import os from 'os';
 import {Bonjour, BrowserConfig} from 'bonjour-service';
 
 import {Adapter} from '../../src/adapter';
-import {DeconzAdapter} from '../../src/adapter/deconz/adapter';
-import {EmberAdapter} from '../../src/adapter/ember/adapter';
-import {EZSPAdapter} from '../../src/adapter/ezsp/adapter';
+import {DeconzAdapter} from '../../src/adapter/deconz/adapter/deconzAdapter';
+import {EmberAdapter} from '../../src/adapter/ember/adapter/emberAdapter';
+import {EZSPAdapter} from '../../src/adapter/ezsp/adapter/ezspAdapter';
 import {SerialPort} from '../../src/adapter/serialPort';
-import {ZStackAdapter} from '../../src/adapter/z-stack/adapter';
-import {ZBOSSAdapter} from '../../src/adapter/zboss/adapter';
-import {ZiGateAdapter} from '../../src/adapter/zigate/adapter';
+import {ZStackAdapter} from '../../src/adapter/z-stack/adapter/zStackAdapter';
+import {ZBOSSAdapter} from '../../src/adapter/zboss/adapter/zbossAdapter';
+import {ZiGateAdapter} from '../../src/adapter/zigate/adapter/zigateAdapter';
 import {
     DECONZ_CONBEE_II,
     EMBER_SKYCONNECT,

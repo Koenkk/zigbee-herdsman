@@ -3,9 +3,8 @@
 import {Socket} from 'net';
 import EventEmitter from 'stream';
 
-import {Queue, Waitress} from '../../utils';
+import {Queue, wait, Waitress} from '../../utils';
 import {logger} from '../../utils/logger';
-import wait from '../../utils/wait';
 import {SerialPort} from '../serialPort';
 import SocketPortUtils from '../socketPortUtils';
 import {SerialPortOptions} from '../tstype';

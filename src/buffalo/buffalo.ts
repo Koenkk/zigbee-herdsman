@@ -2,7 +2,7 @@ import type {EUI64} from '../zspec/tstypes';
 
 import {Utils as ZSpecUtils} from '../zspec';
 
-class Buffalo {
+export class Buffalo {
     protected position: number;
     protected buffer: Buffer;
 

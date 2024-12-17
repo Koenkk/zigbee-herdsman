@@ -1,4 +1,4 @@
-class ZclTransactionSequenceNumber {
+export class ZclTransactionSequenceNumber {
     private static number = 1;
 
     public static next(): number {

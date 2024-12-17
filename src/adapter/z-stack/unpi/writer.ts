@@ -1,11 +1,11 @@
 import * as stream from 'stream';
 
 import {logger} from '../../../utils/logger';
-import Frame from './frame';
+import {Frame} from './frame';
 
 const NS = 'zh:zstack:unpi:writer';
 
-class Writer extends stream.Readable {
+export class Writer extends stream.Readable {
     public writeFrame(frame: Frame): void {
         const buffer = frame.toBuffer();
         logger.debug(`--> frame [${[...buffer]}]`, NS);
@@ -19,5 +19,3 @@ class Writer extends stream.Readable {
 
     public _read(): void {}
 }
-
-export default Writer;

@@ -5,7 +5,7 @@ import {DatabaseEntry, EntityType} from './tstype';
 
 const NS = 'zh:controller:database';
 
-class Database {
+export class Database {
     private entries: {[id: number]: DatabaseEntry};
     private path: string;
     private maxId: number;

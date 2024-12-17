@@ -4,7 +4,7 @@ import {EventEmitter} from 'events';
 
 import equals from 'fast-deep-equal/es6';
 
-import {Wait, Waitress} from '../../../utils';
+import {wait, Waitress} from '../../../utils';
 import {logger} from '../../../utils/logger';
 import * as ZSpec from '../../../zspec';
 import {Clusters} from '../../../zspec/zcl/definition/cluster';
@@ -142,7 +142,7 @@ export class Driver extends EventEmitter {
             logger.debug(`Stop error ${err}`, NS);
         }
         try {
-            await Wait(1000);
+            await wait(1000);
             logger.debug(`Startup again.`, NS);
             await this.startup();
         } catch (err) {
@@ -293,7 +293,7 @@ export class Driver extends EventEmitter {
         const netResult = await this.getKey(EmberKeyType.CURRENT_NETWORK_KEY);
         logger.debug(`CURRENT_NETWORK_KEY: ${JSON.stringify(netResult)}`, NS);
 
-        await Wait(1000);
+        await wait(1000);
         await this.ezsp.execCommand('setManufacturerCode', {code: DEFAULT_MFG_ID});
 
         this.multicast = new Multicast(this);
@@ -607,7 +607,7 @@ export class Driver extends EventEmitter {
     private async resetMfgId(mfgId: number): Promise<void> {
         await this.ezsp.execCommand('setManufacturerCode', {code: mfgId});
         // 60 sec for waiting
-        await Wait(60000);
+        await wait(60000);
         await this.ezsp.execCommand('setManufacturerCode', {code: DEFAULT_MFG_ID});
     }
 
@@ -683,7 +683,7 @@ export class Driver extends EventEmitter {
                     // need to repeat after pause
                     logger.error(`Request send status ${sendResult.status}. Attempt to repeat the request`, NS);
 
-                    await Wait(delay);
+                    await wait(delay);
                 } else {
                     result = sendResult.status == EmberStatus.SUCCESS;
                     break;

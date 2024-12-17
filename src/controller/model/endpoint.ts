@@ -86,7 +86,7 @@ interface ConfiguredReporting {
     reportableChange: number;
 }
 
-class Endpoint extends Entity {
+export class Endpoint extends Entity {
     public deviceID?: number;
     public inputClusters: number[];
     public outputClusters: number[];
