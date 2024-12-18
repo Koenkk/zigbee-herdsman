@@ -1,4 +1,4 @@
-import assert from 'assert';
+import assert from 'node:assert';
 
 import {NvItemsIds, NvSystemIds, ZnpCommandStatus} from '../constants/common';
 import * as Structs from '../structs';

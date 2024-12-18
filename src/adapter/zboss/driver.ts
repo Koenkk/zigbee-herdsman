@@ -1,7 +1,7 @@
 /* istanbul ignore file */
 
-import assert from 'assert';
-import EventEmitter from 'events';
+import assert from 'node:assert';
+import EventEmitter from 'node:events';
 
 import {TsType} from '..';
 import {KeyValue} from '../../controller/tstype';
