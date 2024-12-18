@@ -21,10 +21,10 @@ interface AdapterEventMap {
 }
 
 type AdapterConstructor = new (
-    networkOptions: TsType.NetworkOptions,
-    serialPortOptions: TsType.SerialPortOptions,
+    networkOptions: NetworkOptions,
+    serialPortOptions: SerialPortOptions,
     backupPath: string,
-    adapterOptions: TsType.AdapterOptions,
+    adapterOptions: AdapterOptions,
 ) => Adapter;
 
 export abstract class Adapter extends events.EventEmitter<AdapterEventMap> {
