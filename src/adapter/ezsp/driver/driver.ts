@@ -2,8 +2,6 @@
 
 import {EventEmitter} from 'events';
 
-import equals from 'fast-deep-equal/es6';
-
 import {wait, Waitress} from '../../../utils';
 import {logger} from '../../../utils/logger';
 import * as ZSpec from '../../../zspec';

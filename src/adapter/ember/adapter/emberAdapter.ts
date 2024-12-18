@@ -5,8 +5,8 @@ import path from 'path';
 import equals from 'fast-deep-equal/es6';
 
 import {Adapter, TsType} from '../..';
-import {Backup, UnifiedBackupStorage} from '../../../models';
-import {BackupUtils, Queue, wait} from '../../../utils';
+import {Backup} from '../../../models';
+import {Queue, wait} from '../../../utils';
 import {logger} from '../../../utils/logger';
 import * as ZSpec from '../../../zspec';
 import {EUI64, ExtendedPanId, NodeId, PanId} from '../../../zspec/tstypes';
@@ -1375,7 +1375,7 @@ export class EmberAdapter extends Adapter {
             'Leave network',
         );
 
-        await Wait(200); // settle down
+        await wait(200); // settle down
     }
 
     public async formNetwork(backup?: Backup): Promise<void> {

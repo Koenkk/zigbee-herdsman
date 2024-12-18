@@ -146,6 +146,7 @@ export class DeconzAdapter extends Adapter {
             await wait(2000);
             await this.driver.changeNetworkStateRequest(PARAM.PARAM.Network.NET_CONNECTED);
             await wait(2000);
+        }
     }
 
     public async getNetworkKey(): Promise<Buffer> {
