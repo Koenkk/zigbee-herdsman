@@ -1,7 +1,7 @@
 /* istanbul ignore file */
 
 import * as Models from '../../../models';
-import {Queue, Wait, Waitress} from '../../../utils';
+import {Queue, wait, Waitress} from '../../../utils';
 import {logger} from '../../../utils/logger';
 import * as ZSpec from '../../../zspec';
 import {BroadcastAddress} from '../../../zspec/enums';
@@ -29,7 +29,7 @@ interface WaitressMatcher {
     direction: number;
 }
 
-class ZiGateAdapter extends Adapter {
+export class ZiGateAdapter extends Adapter {
     private driver: Driver;
     private joinPermitted: boolean;
     private waitress: Waitress<Events.ZclPayload, WaitressMatcher>;
@@ -490,7 +490,7 @@ class ZiGateAdapter extends Adapter {
             logger.debug(() => `sendZclFrameToAll ${JSON.stringify(payload)}`, NS);
 
             await this.driver.sendCommand(ZiGateCommandCode.RawAPSDataRequest, payload, undefined, {}, true);
-            await Wait(200);
+            await wait(200);
         });
     }
 
@@ -511,7 +511,7 @@ class ZiGateAdapter extends Adapter {
             };
 
             await this.driver.sendCommand(ZiGateCommandCode.RawAPSDataRequest, payload, undefined, {}, true);
-            await Wait(200);
+            await wait(200);
         });
     }
 
@@ -627,5 +627,3 @@ class ZiGateAdapter extends Adapter {
         }
     }
 }
-
-export default ZiGateAdapter;

@@ -6,8 +6,8 @@ import * as path from 'path';
 import equals from 'fast-deep-equal/es6';
 
 import {ZclPayload} from '../../../src/adapter/events';
-import {ZStackAdapter} from '../../../src/adapter/z-stack/adapter';
 import {ZnpVersion} from '../../../src/adapter/z-stack/adapter/tstype';
+import {ZStackAdapter} from '../../../src/adapter/z-stack/adapter/zStackAdapter';
 import * as Constants from '../../../src/adapter/z-stack/constants';
 import {AddressMode, DevStates, NvItemsIds, NvSystemIds, ZnpCommandStatus} from '../../../src/adapter/z-stack/constants/common';
 import * as Structs from '../../../src/adapter/z-stack/structs';
@@ -49,11 +49,18 @@ const mockLogger = {
     error: jest.fn(),
 };
 const deepClone = (obj) => JSON.parse(JSON.stringify(obj));
-const mockSetTimeout = () => (setTimeout = jest.fn().mockImplementation((r) => r()));
+const mockSetTimeout = () => {
+    return jest.spyOn(globalThis, 'setTimeout').mockImplementation(
+        // @ts-expect-error mock
+        (cb) => cb(),
+    );
+};
 
-jest.mock('../../../src/utils/wait', () => {
-    return jest.fn();
-});
+jest.mock('../../../src/utils/wait', () => ({
+    wait: jest.fn(() => {
+        return new Promise<void>((resolve) => resolve());
+    }),
+}));
 
 const waitForResult = (payloadOrPromise: Promise<unknown> | ZpiObjectPayload, ID?: number) => {
     ID = ID || 1;
@@ -1355,34 +1362,30 @@ let lastStartIndex = 0;
 let simpleDescriptorEndpoint = 0;
 let assocGetWithAddressNodeRelation;
 
-jest.mock('../../../src/adapter/z-stack/znp/znp', () => {
-    return jest.fn().mockImplementation(() => {
-        return {
-            on: (event, handler) => {
-                if (event === 'received') {
-                    znpReceived = handler;
-                } else if (event === 'close') {
-                    znpClose = handler;
-                }
-            },
-            open: mockZnpOpen,
-            request: mockZnpRequest,
-            requestZdo: mockZnpRequestZdo,
-            requestWithReply: mockZnpRequest,
-            waitFor: mockZnpWaitFor,
-            close: mockZnpClose,
-        };
-    });
-});
+jest.mock('../../../src/adapter/z-stack/znp/znp', () => ({
+    Znp: jest.fn(() => ({
+        on: (event, handler) => {
+            if (event === 'received') {
+                znpReceived = handler;
+            } else if (event === 'close') {
+                znpClose = handler;
+            }
+        },
+        open: mockZnpOpen,
+        request: mockZnpRequest,
+        requestZdo: mockZnpRequestZdo,
+        requestWithReply: mockZnpRequest,
+        waitFor: mockZnpWaitFor,
+        close: mockZnpClose,
+    })),
+}));
 
-jest.mock('../../../src/utils/queue', () => {
-    return jest.fn().mockImplementation(() => {
-        return {
-            execute: mockQueueExecute,
-            count: () => 1,
-        };
-    });
-});
+jest.mock('../../../src/utils/queue', () => ({
+    Queue: jest.fn(() => ({
+        execute: mockQueueExecute,
+        count: () => 1,
+    })),
+}));
 
 const mocksClear = [mockLogger.debug, mockLogger.info, mockLogger.warning, mockLogger.error];
 
@@ -3144,10 +3147,11 @@ describe('zstack-adapter', () => {
         });
         let error;
         try {
-            mockSetTimeout();
+            const spy = mockSetTimeout();
             const response = adapter.sendZclFrameToEndpoint('0x02', 2, 20, frame, 1, false, false);
             znpReceived(objectMismatch);
             await response;
+            spy.mockRestore();
         } catch (e) {
             error = e;
         }
@@ -3202,10 +3206,11 @@ describe('zstack-adapter', () => {
         });
         let error;
         try {
-            mockSetTimeout();
+            const spy = mockSetTimeout();
             const response = adapter.sendZclFrameToEndpoint('0x02', 2, 20, frame, 1, false, false);
             znpReceived(objectMismatch);
             await response;
+            spy.mockRestore();
         } catch (e) {
             error = e;
         }

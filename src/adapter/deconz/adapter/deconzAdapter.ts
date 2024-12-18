@@ -2,7 +2,7 @@
 
 import Device from '../../../controller/model/device';
 import * as Models from '../../../models';
-import {Wait, Waitress} from '../../../utils';
+import {wait, Waitress} from '../../../utils';
 import {logger} from '../../../utils/logger';
 import * as ZSpec from '../../../zspec';
 import {BroadcastAddress} from '../../../zspec/enums';
@@ -28,7 +28,7 @@ interface WaitressMatcher {
     direction: number;
 }
 
-class DeconzAdapter extends Adapter {
+export class DeconzAdapter extends Adapter {
     private driver: Driver;
     private openRequestsQueue: WaitForDataRequest[];
     private transactionID: number;
@@ -92,6 +92,7 @@ class DeconzAdapter extends Adapter {
             0x00, 0x05, 0x02, 0x05,
         ];
         const sd1 = sd.reverse();
+
         await this.driver.writeParameterRequest(PARAM.PARAM.STK.Endpoint, sd1);
 
         return result;
@@ -121,7 +122,7 @@ class DeconzAdapter extends Adapter {
         // TODO: https://github.com/dresden-elektronik/deconz/blob/7a87ce0b3e401dd1be89b10e41b13abfd983e329/src/zm_controller.cpp#L3130-L3147
         // since this is used below AFTER changing parameters, this does not seem to actually "clear" the network in the adapter, just puts it in a state of "offline"?
         await this.driver.changeNetworkStateRequest(PARAM.PARAM.Network.NET_OFFLINE);
-        await Wait(2000);
+        await wait(2000);
     }
 
     public async formNetwork(backup?: Models.Backup): Promise<void> {
@@ -133,19 +134,18 @@ class DeconzAdapter extends Adapter {
                 PARAM.PARAM.Network.CHANNEL_MASK,
                 ZSpec.Utils.channelsToUInt32Mask(this.networkOptions.channelList),
             );
-            await Wait(500);
+            await wait(500);
             await this.driver.writeParameterRequest(PARAM.PARAM.Network.PAN_ID, this.networkOptions.panID);
-            await Wait(500);
+            await wait(500);
             await this.driver.writeParameterRequest(PARAM.PARAM.Network.APS_EXT_PAN_ID, this.networkOptions.extendedPanID!);
-            await Wait(500);
+            await wait(500);
             await this.driver.writeParameterRequest(PARAM.PARAM.Network.NETWORK_KEY, this.networkOptions.networkKey!);
-            await Wait(500);
+            await wait(500);
 
             await this.driver.changeNetworkStateRequest(PARAM.PARAM.Network.NET_OFFLINE);
-            await Wait(2000);
+            await wait(2000);
             await this.driver.changeNetworkStateRequest(PARAM.PARAM.Network.NET_CONNECTED);
-            await Wait(2000);
-        }
+            await wait(2000);
     }
 
     public async getNetworkKey(): Promise<Buffer> {
@@ -674,5 +674,3 @@ class DeconzAdapter extends Adapter {
         );
     }
 }
-
-export default DeconzAdapter;

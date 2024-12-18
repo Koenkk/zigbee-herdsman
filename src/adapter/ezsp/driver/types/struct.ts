@@ -641,7 +641,7 @@ export class EmberMultiAddress extends EzspStruct {
         ['nwk', named.EmberNodeId],
     ];
     /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
-    static serialize(cls: any, obj: any): Buffer {
+    static override serialize(cls: any, obj: any): Buffer {
         const addrmode = obj['addrmode'];
 
         const fields = addrmode == 3 ? cls.fields3 : cls.fields1;

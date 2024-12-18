@@ -45,5 +45,5 @@ export class ZBOSSWriter extends Readable {
         }
     }
 
-    public _read(): void {}
+    public override _read(): void {}
 }

@@ -2,7 +2,7 @@ import * as Zcl from '../../zspec/zcl';
 import {SendPolicy} from '../tstype';
 
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
-class Request<Type = any> {
+export class Request<Type = any> {
     static defaultSendPolicy: {[key: number]: SendPolicy} = {
         0x00: 'keep-payload', // Read Attributes
         0x01: 'immediate', // Read Attributes Response

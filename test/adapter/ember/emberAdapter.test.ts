@@ -3,8 +3,13 @@ import path from 'path';
 import {EventEmitter} from 'stream';
 
 import {TsType} from '../../../src/adapter';
-import {EmberAdapter} from '../../../src/adapter/ember/adapter';
-import {DEFAULT_APS_OPTIONS, DEFAULT_STACK_CONFIG, LinkKeyBackupData, NetworkCache} from '../../../src/adapter/ember/adapter/emberAdapter';
+import {
+    DEFAULT_APS_OPTIONS,
+    DEFAULT_STACK_CONFIG,
+    EmberAdapter,
+    LinkKeyBackupData,
+    NetworkCache,
+} from '../../../src/adapter/ember/adapter/emberAdapter';
 import {FIXED_ENDPOINTS} from '../../../src/adapter/ember/adapter/endpoints';
 import {OneWaitressEvents} from '../../../src/adapter/ember/adapter/oneWaitress';
 import {EMBER_LOW_RAM_CONCENTRATOR, INVALID_RADIO_CHANNEL, SECURITY_LEVEL_Z3} from '../../../src/adapter/ember/consts';
@@ -273,7 +278,7 @@ jest.mock('../../../src/adapter/ember/uart/ash');
 
 jest.mock('../../../src/adapter/ember/ezsp/ezsp', () => ({
     ...jest.requireActual('../../../src/adapter/ember/ezsp/ezsp'),
-    Ezsp: jest.fn().mockImplementation(() => ({
+    Ezsp: jest.fn(() => ({
         removeAllListeners: mockEzspRemoveAllListeners,
         on: mockEzspOn,
         once: mockEzspOnce,

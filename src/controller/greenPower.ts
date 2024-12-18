@@ -19,7 +19,7 @@ interface GreenPowerEventMap {
     deviceJoined: [payload: GreenPowerDeviceJoinedPayload];
 }
 
-class GreenPower extends events.EventEmitter<GreenPowerEventMap> {
+export class GreenPower extends events.EventEmitter<GreenPowerEventMap> {
     private adapter: Adapter;
 
     public constructor(adapter: Adapter) {

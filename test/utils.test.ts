@@ -1,6 +1,6 @@
 import 'regenerator-runtime/runtime';
 
-import {Queue, Utils, Wait, Waitress} from '../src/utils';
+import {Queue, Utils, wait, Waitress} from '../src/utils';
 import {logger, setLogger} from '../src/utils/logger';
 
 const mockLogger = {
@@ -38,12 +38,14 @@ describe('Utils', () => {
     });
 
     it('Test wait', async () => {
-        const originalSetTimeout = setTimeout;
-        setTimeout = jest.fn();
-        Wait(1000).then(() => {});
+        const setTimeoutSpy = jest.spyOn(globalThis, 'setTimeout').mockImplementationOnce(
+            // @ts-expect-error mocked
+            () => {},
+        );
+        wait(1000).then(() => {});
         expect(setTimeout).toHaveBeenCalledTimes(1);
         expect(setTimeout).toHaveBeenLastCalledWith(expect.any(Function), 1000);
-        setTimeout = originalSetTimeout;
+        setTimeoutSpy.mockRestore();
     });
 
     it('Test waitress', async () => {
@@ -93,7 +95,7 @@ describe('Utils', () => {
         // reject test
         const wait1_ = waitress.waitFor(1, 5000).start();
         let error1_;
-        Wait(1000).then(() => {
+        wait(1000).then(() => {
             waitress.reject('one', 'drop');
         });
         try {

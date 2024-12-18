@@ -2,7 +2,7 @@ import * as crypto from 'crypto';
 
 import {TsType} from '../../';
 import * as Models from '../../../models';
-import {Wait} from '../../../utils';
+import {wait} from '../../../utils';
 import {logger} from '../../../utils/logger';
 import * as ZSpec from '../../../zspec';
 import * as Zdo from '../../../zspec/zdo';
@@ -19,7 +19,7 @@ import {AdapterBackup} from './adapter-backup';
 import {AdapterNvMemory} from './adapter-nv-memory';
 import {Endpoints} from './endpoints';
 import {ZnpVersion} from './tstype';
-import ZStackAdapter from './zStackAdapter';
+import {ZStackAdapter} from './zStackAdapter';
 
 const NS = 'zh:adapter:zstack:manager';
 
@@ -162,7 +162,7 @@ export class ZnpAdapterManager {
 
         /* settle & reset adapter */
         logger.debug('giving adapter some time to settle', NS);
-        await Wait(1000);
+        await wait(1000);
         await this.resetAdapter();
 
         /* startup with restored adapter */
@@ -213,7 +213,7 @@ export class ZnpAdapterManager {
         let reads = 0;
         let nib: ReturnType<typeof Structs.nib>;
         do {
-            await Wait(3000);
+            await wait(3000);
             nib = await this.nv.readItem(NvItemsIds.NIB, 0, Structs.nib);
             reads++;
         } while ((!nib || nib.nwkPanId === 65535 || nib.nwkLogicalChannel === 0) && reads < 10);

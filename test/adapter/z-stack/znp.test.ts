@@ -30,95 +30,74 @@ const mockSerialPortAsyncSet = jest.fn();
 const mockSerialPortWrite = jest.fn((buffer, cb) => cb());
 let mockSerialPortIsOpen = false;
 
-jest.mock('../../../src/utils/wait', () => {
-    return jest.fn();
-});
+jest.mock('../../../src/utils/wait', () => ({
+    wait: jest.fn(() => {
+        return new Promise<void>((resolve) => resolve());
+    }),
+}));
 
-jest.mock('../../../src/adapter/serialPort', () => {
-    return {
-        SerialPort: jest.fn().mockImplementation(() => {
-            return {
-                close: mockSerialPortClose,
-                constructor: mockSerialPortConstructor,
-                emit: () => {},
-                on: () => {},
-                once: mockSerialPortOnce,
-                open: mockSerialPortOpen,
-                pipe: mockSerialPortPipe,
-                write: mockSerialPortWrite,
-                flush: mockSerialPortFlush,
-                isOpen: mockSerialPortIsOpen,
-                asyncOpen: mockSerialPortAsyncOpen,
-                asyncFlushAndClose: mockSerialPortAsyncFlushAndClose,
-                asyncSet: mockSerialPortAsyncSet,
-            };
-        }),
-    };
-});
+jest.mock('../../../src/adapter/serialPort', () => ({
+    SerialPort: jest.fn(() => ({
+        close: mockSerialPortClose,
+        constructor: mockSerialPortConstructor,
+        emit: () => {},
+        on: () => {},
+        once: mockSerialPortOnce,
+        open: mockSerialPortOpen,
+        pipe: mockSerialPortPipe,
+        write: mockSerialPortWrite,
+        flush: mockSerialPortFlush,
+        isOpen: mockSerialPortIsOpen,
+        asyncOpen: mockSerialPortAsyncOpen,
+        asyncFlushAndClose: mockSerialPortAsyncFlushAndClose,
+        asyncSet: mockSerialPortAsyncSet,
+    })),
+}));
 
 const mockSocketSetNoDelay = jest.fn();
 const mockSocketSetKeepAlive = jest.fn();
 const mockSocketPipe = jest.fn();
 const mockSocketOnce = jest.fn();
 const mockSocketCallbacks = {};
-const mockSocketConnect = jest.fn().mockImplementation(() => {
+const mockSocketConnect = jest.fn(() => {
     mockSocketCallbacks['connect']();
     mockSocketCallbacks['ready']();
 });
 const mockSocketDestroy = jest.fn();
 let requestSpy;
 
-jest.mock('net', () => {
-    return {
-        Socket: jest.fn().mockImplementation(() => {
-            return {
-                setNoDelay: mockSocketSetNoDelay,
-                pipe: mockSocketPipe,
-                connect: mockSocketConnect,
-                on: (event, cb) => (mockSocketCallbacks[event] = cb),
-                once: mockSocketOnce,
-                destroy: mockSocketDestroy,
-                setKeepAlive: mockSocketSetKeepAlive,
-            };
-        }),
-    };
-});
-
-// Mock realPathSync
-let mockRealPathSyncError = false;
-jest.mock('../../../src/utils/realpathSync', () => {
-    return jest.fn().mockImplementation((path) => {
-        if (mockRealPathSyncError) {
-            throw new Error('Not a valid path');
-        }
-        return path;
-    });
-});
+jest.mock('net', () => ({
+    Socket: jest.fn(() => ({
+        setNoDelay: mockSocketSetNoDelay,
+        pipe: mockSocketPipe,
+        connect: mockSocketConnect,
+        on: (event, cb) => (mockSocketCallbacks[event] = cb),
+        once: mockSocketOnce,
+        destroy: mockSocketDestroy,
+        setKeepAlive: mockSocketSetKeepAlive,
+    })),
+}));
 
 SerialPort.list = mockSerialPortList;
 
 const mockUnpiParserOn = jest.fn();
 
-jest.mock('../../../src/adapter/z-stack/unpi/parser', () => {
-    return jest.fn().mockImplementation(() => {
-        return {
-            on: mockUnpiParserOn,
-        };
-    });
-});
+jest.mock('../../../src/adapter/z-stack/unpi/parser', () => ({
+    Parser: jest.fn(() => ({
+        on: mockUnpiParserOn,
+    })),
+}));
 
 const mockUnpiWriterWriteFrame = jest.fn();
 const mockUnpiWriterWriteBuffer = jest.fn();
 
-jest.mock('../../../src/adapter/z-stack/unpi/writer', () => {
-    return jest.fn().mockImplementation(() => {
-        return {
-            writeFrame: mockUnpiWriterWriteFrame,
-            writeBuffer: mockUnpiWriterWriteBuffer,
-            pipe: jest.fn(),
-        };
-    });
-});
+jest.mock('../../../src/adapter/z-stack/unpi/writer', () => ({
+    Writer: jest.fn(() => ({
+        writeFrame: mockUnpiWriterWriteFrame,
+        writeBuffer: mockUnpiWriterWriteBuffer,
+        pipe: jest.fn(),
+    })),
+}));
 
 const mocks = [
     mockSerialPortClose,

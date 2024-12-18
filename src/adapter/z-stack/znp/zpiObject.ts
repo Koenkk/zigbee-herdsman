@@ -25,7 +25,7 @@ const BufferAndListTypes = [
 
 type ZpiObjectType = 'Request' | 'Response';
 
-class ZpiObject<T extends ZpiObjectType = 'Response'> {
+export class ZpiObject<T extends ZpiObjectType = 'Response'> {
     public readonly type: Type;
     public readonly subsystem: Subsystem;
     public readonly command: MtCmd;
@@ -147,5 +147,3 @@ class ZpiObject<T extends ZpiObjectType = 'Response'> {
         return includePayload ? baseStr + ` - ${JSON.stringify(this.payload)}` : baseStr;
     }
 }
-
-export default ZpiObject;

@@ -7,9 +7,7 @@ import Bonjour, {Browser, BrowserConfig, Service} from 'bonjour-service';
 import equals from 'fast-deep-equal/es6';
 
 import {Adapter} from '../src/adapter';
-import {DeconzAdapter} from '../src/adapter/deconz/adapter';
-import {ZStackAdapter} from '../src/adapter/z-stack/adapter';
-import {ZiGateAdapter} from '../src/adapter/zigate/adapter';
+import {ZStackAdapter} from '../src/adapter/z-stack/adapter/zStackAdapter';
 import {Controller} from '../src/controller';
 import * as Events from '../src/controller/events';
 import Request from '../src/controller/helpers/request';
@@ -17,7 +15,7 @@ import zclTransactionSequenceNumber from '../src/controller/helpers/zclTransacti
 import ZclTransactionSequenceNumber from '../src/controller/helpers/zclTransactionSequenceNumber';
 import {Device, Endpoint, Group} from '../src/controller/model';
 import * as Models from '../src/models';
-import {Wait} from '../src/utils';
+import {wait} from '../src/utils';
 import * as Utils from '../src/utils';
 import {setLogger} from '../src/utils/logger';
 import * as ZSpec from '../src/zspec';
@@ -40,7 +38,7 @@ const mockLogger = {
 };
 
 let skipWait = true;
-(Wait as ReturnType<typeof jest.fn>).mockImplementation((milliseconds) => {
+(wait as ReturnType<typeof jest.fn>).mockImplementation((milliseconds) => {
     if (!skipWait) {
         return new Promise<void>((resolve) => {
             setTimeout((): void => resolve(), milliseconds);
@@ -313,18 +311,11 @@ const equalsPartial = (object, expected) => {
     return true;
 };
 
-// Mock realPathSync
-jest.mock('../src/utils/realpathSync', () => {
-    return jest.fn().mockImplementation((path) => {
-        return path;
-    });
-});
-
-jest.mock('../src/utils/wait', () => {
-    return jest.fn().mockImplementation(() => {
-        return new Promise<void>((resolve, reject) => resolve());
-    });
-});
+jest.mock('../src/utils/wait', () => ({
+    wait: jest.fn(() => {
+        return new Promise<void>((resolve) => resolve());
+    }),
+}));
 
 const getCluster = (key) => {
     const cluster = Zcl.Utils.getCluster(key, undefined, {});
@@ -379,53 +370,39 @@ const mockDummyBackup: Models.Backup = {
 
 let dummyBackup;
 
-jest.mock('../src/adapter/z-stack/adapter/zStackAdapter', () => {
-    return jest.fn().mockImplementation(() => {
-        return {
-            hasZdoMessageOverhead: false,
-            manufacturerID: 0x0007,
-            on: (event, handler) => (mockAdapterEvents[event] = handler),
-            removeAllListeners: (event) => delete mockAdapterEvents[event],
-            start: mockAdapterStart,
-            getCoordinatorIEEE: mockAdapterGetCoordinatorIEEE,
-            reset: mockAdapterReset,
-            supportsBackup: mockAdapterSupportsBackup,
-            backup: () => {
-                return mockDummyBackup;
-            },
-            getCoordinatorVersion: () => {
-                return {type: 'zStack', meta: {version: 1}};
-            },
-            getNetworkParameters: mockAdapterGetNetworkParameters,
-            waitFor: mockAdapterWaitFor,
-            sendZclFrameToEndpoint: mocksendZclFrameToEndpoint,
-            sendZclFrameToGroup: mocksendZclFrameToGroup,
-            sendZclFrameToAll: mocksendZclFrameToAll,
-            addInstallCode: mockAddInstallCode,
-            permitJoin: mockAdapterPermitJoin,
-            supportsDiscoverRoute: mockAdapterSupportsDiscoverRoute,
-            discoverRoute: mockDiscoverRoute,
-            stop: mockAdapterStop,
-            setChannelInterPAN: mockSetChannelInterPAN,
-            sendZclFrameInterPANToIeeeAddr: mocksendZclFrameInterPANToIeeeAddr,
-            sendZclFrameInterPANBroadcast: mocksendZclFrameInterPANBroadcast,
-            restoreChannelInterPAN: mockRestoreChannelInterPAN,
-            sendZdo: mockAdapterSendZdo,
-        };
-    });
-});
-
-jest.mock('../src/adapter/deconz/adapter/deconzAdapter', () => {
-    return jest.fn().mockImplementation(() => {
-        return {};
-    });
-});
-
-jest.mock('../src/adapter/zigate/adapter/zigateAdapter', () => {
-    return jest.fn().mockImplementation(() => {
-        return {};
-    });
-});
+jest.mock('../src/adapter/z-stack/adapter/zStackAdapter', () => ({
+    ZStackAdapter: jest.fn(() => ({
+        hasZdoMessageOverhead: false,
+        manufacturerID: 0x0007,
+        on: (event, handler) => (mockAdapterEvents[event] = handler),
+        removeAllListeners: (event) => delete mockAdapterEvents[event],
+        start: mockAdapterStart,
+        getCoordinatorIEEE: mockAdapterGetCoordinatorIEEE,
+        reset: mockAdapterReset,
+        supportsBackup: mockAdapterSupportsBackup,
+        backup: () => {
+            return mockDummyBackup;
+        },
+        getCoordinatorVersion: () => {
+            return {type: 'zStack', meta: {version: 1}};
+        },
+        getNetworkParameters: mockAdapterGetNetworkParameters,
+        waitFor: mockAdapterWaitFor,
+        sendZclFrameToEndpoint: mocksendZclFrameToEndpoint,
+        sendZclFrameToGroup: mocksendZclFrameToGroup,
+        sendZclFrameToAll: mocksendZclFrameToAll,
+        addInstallCode: mockAddInstallCode,
+        permitJoin: mockAdapterPermitJoin,
+        supportsDiscoverRoute: mockAdapterSupportsDiscoverRoute,
+        discoverRoute: mockDiscoverRoute,
+        stop: mockAdapterStop,
+        setChannelInterPAN: mockSetChannelInterPAN,
+        sendZclFrameInterPANToIeeeAddr: mocksendZclFrameInterPANToIeeeAddr,
+        sendZclFrameInterPANBroadcast: mocksendZclFrameInterPANBroadcast,
+        restoreChannelInterPAN: mockRestoreChannelInterPAN,
+        sendZdo: mockAdapterSendZdo,
+    })),
+}));
 
 const TEMP_PATH = path.resolve('temp');
 

@@ -1,4 +1,4 @@
-interface KeyValue {
+export interface KeyValue {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     [s: string]: any;
 }
@@ -19,22 +19,20 @@ interface KeyValue {
                     If immediate delivery fails, only the latest undivided set of commands is sent for each unique
                     set of command IDs.
 */
-type SendPolicy = 'bulk' | 'queue' | 'immediate' | 'keep-payload' | 'keep-command' | 'keep-cmd-undiv';
-type DeviceType = 'Coordinator' | 'Router' | 'EndDevice' | 'Unknown' | 'GreenPower';
+export type SendPolicy = 'bulk' | 'queue' | 'immediate' | 'keep-payload' | 'keep-command' | 'keep-cmd-undiv';
+export type DeviceType = 'Coordinator' | 'Router' | 'EndDevice' | 'Unknown' | 'GreenPower';
 
-type EntityType = DeviceType | 'Group';
+export type EntityType = DeviceType | 'Group';
 
-interface DatabaseEntry {
+export interface DatabaseEntry {
     id: number;
     type: EntityType;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     [s: string]: any;
 }
 
-interface GreenPowerDeviceJoinedPayload {
+export interface GreenPowerDeviceJoinedPayload {
     sourceID: number;
     deviceID: number;
     networkAddress: number;
 }
-
-export {KeyValue, DatabaseEntry, EntityType, DeviceType, GreenPowerDeviceJoinedPayload, SendPolicy};
