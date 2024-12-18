@@ -1,5 +1,15 @@
 # Changelog
 
+## [3.0.5](https://github.com/Koenkk/zigbee-herdsman/compare/v3.0.4...v3.0.5) (2024-12-18)
+
+
+### Bug Fixes
+
+* Cleanup imports/exports ([#1269](https://github.com/Koenkk/zigbee-herdsman/issues/1269)) ([6fde32f](https://github.com/Koenkk/zigbee-herdsman/commit/6fde32ff0c829f688fb77889a172ca481710e320))
+* **ignore:** import using `node:` prefix for built-in ([#1268](https://github.com/Koenkk/zigbee-herdsman/issues/1268)) ([b23e10a](https://github.com/Koenkk/zigbee-herdsman/commit/b23e10a9bbf7af4a0e155067aa9b1d0d5d3a13c2))
+* **ignore:** overrides ([#1267](https://github.com/Koenkk/zigbee-herdsman/issues/1267)) ([068f03a](https://github.com/Koenkk/zigbee-herdsman/commit/068f03a1d9d7f4c8e9529ac73be6a5fea3c57958))
+* **ignore:** update dependencies ([#1265](https://github.com/Koenkk/zigbee-herdsman/issues/1265)) ([68597b9](https://github.com/Koenkk/zigbee-herdsman/commit/68597b922d258d7540bb214cf9e98b70b3efa0f4))
+
 ## [3.0.4](https://github.com/Koenkk/zigbee-herdsman/compare/v3.0.3...v3.0.4) (2024-12-14)
 
 
