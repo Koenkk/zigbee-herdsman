@@ -1,6 +1,6 @@
 /* istanbul ignore file */
 
-import {Readable, ReadableOptions} from 'stream';
+import {Readable, ReadableOptions} from 'node:stream';
 
 // import {logger} from '../../../utils/logger';
 

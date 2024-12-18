@@ -1,4 +1,4 @@
-import events from 'events';
+import events from 'node:events';
 
 import {Adapter} from '../../adapter';
 import Database from '../database';

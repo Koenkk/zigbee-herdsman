@@ -1,6 +1,6 @@
-import {randomBytes} from 'crypto';
-import {existsSync, readFileSync, renameSync} from 'fs';
-import path from 'path';
+import {randomBytes} from 'node:crypto';
+import {existsSync, readFileSync, renameSync} from 'node:fs';
+import path from 'node:path';
 
 import equals from 'fast-deep-equal/es6';
 

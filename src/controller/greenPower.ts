@@ -1,6 +1,6 @@
-import assert from 'assert';
-import crypto from 'crypto';
-import events from 'events';
+import assert from 'node:assert';
+import crypto from 'node:crypto';
+import events from 'node:events';
 
 import {Adapter, Events as AdapterEvents} from '../adapter';
 import {logger} from '../utils/logger';

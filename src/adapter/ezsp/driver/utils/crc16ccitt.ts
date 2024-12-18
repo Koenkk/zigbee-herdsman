@@ -1,6 +1,6 @@
 /* istanbul ignore file */
 
-import {Buffer} from 'buffer';
+import {Buffer} from 'node:buffer';
 
 type calcFn = (buf: Buffer | number[], previous: number) => number;
 
