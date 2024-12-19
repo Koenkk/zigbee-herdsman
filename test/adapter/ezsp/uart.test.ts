@@ -1,5 +1,3 @@
-import 'regenerator-runtime/runtime';
-
 import {FrameType} from '../../../src/adapter/ezsp/driver/frame';
 import {Parser} from '../../../src/adapter/ezsp/driver/parser';
 import {SerialDriver} from '../../../src/adapter/ezsp/driver/uart';

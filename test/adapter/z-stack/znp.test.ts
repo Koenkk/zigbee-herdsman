@@ -1,7 +1,5 @@
 import type {MockInstance} from 'vitest';
 
-import 'regenerator-runtime/runtime';
-
 import {SerialPort} from '../../../src/adapter/serialPort';
 import {Constants as UnpiConstants, Frame as UnpiFrame} from '../../../src/adapter/z-stack/unpi';
 import {Znp, ZpiObject} from '../../../src/adapter/z-stack/znp';

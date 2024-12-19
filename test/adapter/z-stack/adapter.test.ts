@@ -1,5 +1,3 @@
-import 'regenerator-runtime/runtime';
-
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 

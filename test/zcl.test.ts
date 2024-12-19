@@ -1,5 +1,3 @@
-import 'regenerator-runtime/runtime';
-
 import * as Zcl from '../src/zspec/zcl';
 import {BuffaloZcl} from '../src/zspec/zcl/buffaloZcl';
 import {BuffaloZclDataType, DataType, Direction, FrameType, StructuredIndicatorType} from '../src/zspec/zcl/definition/enums';

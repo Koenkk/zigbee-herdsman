@@ -48,7 +48,6 @@
         "eslint": "^9.17.0",
         "eslint-config-prettier": "^9.1.0",
         "prettier": "^3.4.2",
-        "regenerator-runtime": "^0.14.1",
         "rimraf": "^6.0.1",
         "typedoc": "^0.27.5",
         "typedoc-plugin-markdown": "^4.3.2",

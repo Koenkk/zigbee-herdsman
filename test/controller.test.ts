@@ -1,7 +1,5 @@
 import type {MockInstance} from 'vitest';
 
-import 'regenerator-runtime/runtime';
-
 import fs from 'node:fs';
 import path from 'node:path';
 

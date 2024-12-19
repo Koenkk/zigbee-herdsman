@@ -1,5 +1,3 @@
-import 'regenerator-runtime/runtime';
-
 import {Queue, Utils, wait, Waitress} from '../src/utils';
 import {logger, setLogger} from '../src/utils/logger';
 
