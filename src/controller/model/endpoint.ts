@@ -214,7 +214,6 @@ export class Endpoint extends Entity {
         for (const entryKey in record.clusters) {
             const entry = record.clusters[entryKey];
 
-            /* istanbul ignore else */
             if (entry.attrs != undefined) {
                 entry.attributes = entry.attrs;
                 delete entry.attrs;
@@ -667,7 +666,6 @@ export class Endpoint extends Entity {
                 dataType = item.attribute.type;
                 attrId = item.attribute.ID;
             } else {
-                /* istanbul ignore else */
                 if (cluster.hasAttribute(item.attribute)) {
                     const attribute = cluster.getAttribute(item.attribute);
                     dataType = attribute.type;

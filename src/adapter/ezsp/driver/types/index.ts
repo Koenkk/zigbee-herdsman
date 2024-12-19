@@ -1,4 +1,4 @@
-/* istanbul ignore file */
+/* v8 ignore start */
 
 import {Bytes, fixed_list, int8s, list, LVBytes, LVList, uint_t, uint8_t, uint16_t, uint24_t, uint32_t, uint64_t, WordList} from './basic';
 import {

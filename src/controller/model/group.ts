@@ -67,7 +67,6 @@ export class Group extends Entity {
             if (device) {
                 const endpoint = device.getEndpoint(member.endpointID);
 
-                /* istanbul ignore else */
                 if (endpoint) {
                     members.add(endpoint);
                 }
@@ -115,7 +114,6 @@ export class Group extends Entity {
         Group.loadFromDatabaseIfNecessary();
 
         for (const group of Group.groups.values()) {
-            /* istanbul ignore else */
             if (!predicate || predicate(group)) {
                 yield group;
             }

@@ -1,4 +1,4 @@
-/* istanbul ignore file */
+/* v8 ignore start */
 
 import * as Models from '../../../models';
 import {compareChannelLists} from './channel-list';

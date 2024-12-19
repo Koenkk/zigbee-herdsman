@@ -1,4 +1,4 @@
-/* istanbul ignore file */
+/* v8 ignore start */
 
 import {autoDetect, AutoDetectTypes, OpenOptionsFromBinding, SetOptions} from '@serialport/bindings-cpp';
 // This file was copied from https://github.com/serialport/node-serialport/blob/master/packages/serialport/lib/serialport.ts.

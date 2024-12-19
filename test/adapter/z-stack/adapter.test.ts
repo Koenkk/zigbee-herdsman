@@ -1,5 +1,3 @@
-import 'regenerator-runtime/runtime';
-
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 
@@ -43,21 +41,21 @@ const DUMMY_NODE_DESC_RSP_CAPABILITIES = {
 };
 
 const mockLogger = {
-    debug: jest.fn(),
-    info: jest.fn(),
-    warning: jest.fn(),
-    error: jest.fn(),
+    debug: vi.fn(),
+    info: vi.fn(),
+    warning: vi.fn(),
+    error: vi.fn(),
 };
 const deepClone = (obj) => JSON.parse(JSON.stringify(obj));
 const mockSetTimeout = () => {
-    return jest.spyOn(globalThis, 'setTimeout').mockImplementation(
+    return vi.spyOn(globalThis, 'setTimeout').mockImplementation(
         // @ts-expect-error mock
         (cb) => cb(),
     );
 };
 
-jest.mock('../../../src/utils/wait', () => ({
-    wait: jest.fn(() => {
+vi.mock('../../../src/utils/wait', () => ({
+    wait: vi.fn(() => {
         return new Promise<void>((resolve) => resolve());
     }),
 }));
@@ -922,18 +920,18 @@ const commissioned12UnalignedMismatchRequestMock = commissioned12UnalignedReques
     .clone()
     .nv(NvItemsIds.PRECFGKEY, Buffer.from('aabb0507090b0d0f00020406080a0c0d', 'hex'));
 
-const mockZnpRequest = jest
+const mockZnpRequest = vi
     .fn()
     .mockReturnValue(new Promise((resolve) => resolve({payload: {}})))
     .mockImplementation(
         (subsystem: Subsystem, command: string, payload: any, expectedStatus: ZnpCommandStatus) =>
             new Promise((resolve) => resolve(baseZnpRequestMock.execute({subsystem, command, payload}))),
     );
-const mockZnpRequestZdo = jest.fn();
-const mockZnpWaitFor = jest.fn();
-const mockZnpOpen = jest.fn();
-const mockZnpClose = jest.fn();
-const mockQueueExecute = jest.fn().mockImplementation(async (func) => await func());
+const mockZnpRequestZdo = vi.fn();
+const mockZnpWaitFor = vi.fn();
+const mockZnpOpen = vi.fn();
+const mockZnpClose = vi.fn();
+const mockQueueExecute = vi.fn().mockImplementation(async (func) => await func());
 const mocks = [mockZnpOpen, mockZnpRequest, mockZnpClose];
 
 const mockZnpRequestWith = (builder: ZnpRequestMockBuilder) => {
@@ -1362,8 +1360,8 @@ let lastStartIndex = 0;
 let simpleDescriptorEndpoint = 0;
 let assocGetWithAddressNodeRelation;
 
-jest.mock('../../../src/adapter/z-stack/znp/znp', () => ({
-    Znp: jest.fn(() => ({
+vi.mock('../../../src/adapter/z-stack/znp/znp', () => ({
+    Znp: vi.fn(() => ({
         on: (event, handler) => {
             if (event === 'received') {
                 znpReceived = handler;
@@ -1380,8 +1378,8 @@ jest.mock('../../../src/adapter/z-stack/znp/znp', () => ({
     })),
 }));
 
-jest.mock('../../../src/utils/queue', () => ({
-    Queue: jest.fn(() => ({
+vi.mock('../../../src/utils/queue', () => ({
+    Queue: vi.fn(() => ({
         execute: mockQueueExecute,
         count: () => 1,
     })),
@@ -1397,12 +1395,12 @@ describe('zstack-adapter', () => {
     });
 
     afterAll(async () => {
-        jest.useRealTimers();
+        vi.useRealTimers();
     });
 
     beforeEach(() => {
-        jest.useRealTimers();
-        jest.useFakeTimers();
+        vi.useRealTimers();
+        vi.useFakeTimers();
         adapter = new ZStackAdapter(networkOptions, serialPortOptions, 'backup.json', {concurrent: 3});
         mockZnpWaitForDefault();
         mocks.forEach((m) => m.mockRestore());
@@ -1489,7 +1487,7 @@ describe('zstack-adapter', () => {
 
     it('should fail to commission network with 3.0.x adapter when nib fails to settle', async () => {
         mockZnpRequestWith(empty3AlignedRequestMock.clone().handle(Subsystem.APP_CNF, 'bdbStartCommissioning', () => ({})));
-        jest.setTimeout(35000);
+        vi.setConfig({testTimeout: 35000});
         adapter = new ZStackAdapter(networkOptions, serialPortOptions, 'backup.json', {concurrent: 3});
         const promise = adapter.start();
         await expect(promise).rejects.toThrowError('network commissioning failed - timed out waiting for nib to settle');
@@ -3955,10 +3953,8 @@ describe('zstack-adapter', () => {
 
     it('Should throw error when registerEndpoints fails', async () => {
         basicMocks();
-        jest.spyOn(adapter, 'sendZdo').mockResolvedValueOnce([Zdo.Status.NOT_ACTIVE, undefined]);
+        vi.spyOn(adapter, 'sendZdo').mockResolvedValueOnce([Zdo.Status.NOT_ACTIVE, undefined]);
 
-        expect(async () => {
-            await adapter.start();
-        }).rejects.toThrow(`Status 'NOT_ACTIVE'`);
+        await expect(adapter.start()).rejects.toThrow(`Status 'NOT_ACTIVE'`);
     });
 });

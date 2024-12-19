@@ -1,4 +1,4 @@
-import 'regenerator-runtime/runtime';
+import type {MockInstance} from 'vitest';
 
 import {SerialPort} from '../../../src/adapter/serialPort';
 import {Constants as UnpiConstants, Frame as UnpiFrame} from '../../../src/adapter/z-stack/unpi';
@@ -10,34 +10,34 @@ import * as Zdo from '../../../src/zspec/zdo';
 import {duplicateArray, ieeeaAddr1, ieeeaAddr2} from '../../testUtils';
 
 const mockLogger = {
-    debug: jest.fn(),
-    info: jest.fn(),
-    warning: jest.fn(),
-    error: jest.fn(),
+    debug: vi.fn(),
+    info: vi.fn(),
+    warning: vi.fn(),
+    error: vi.fn(),
 };
 
 const consoleLogger = logger;
-const mockSerialPortClose = jest.fn().mockImplementation((cb) => (cb ? cb() : null));
-const mockSerialPortFlush = jest.fn().mockImplementation((cb) => cb());
-const mockSerialPortAsyncFlushAndClose = jest.fn();
-const mockSerialPortPipe = jest.fn();
-const mockSerialPortList = jest.fn().mockReturnValue([]);
-const mockSerialPortOpen = jest.fn().mockImplementation((cb) => cb());
-const mockSerialPortAsyncOpen = jest.fn();
-const mockSerialPortConstructor = jest.fn();
-const mockSerialPortOnce = jest.fn();
-const mockSerialPortAsyncSet = jest.fn();
-const mockSerialPortWrite = jest.fn((buffer, cb) => cb());
+const mockSerialPortClose = vi.fn().mockImplementation((cb) => (cb ? cb() : null));
+const mockSerialPortFlush = vi.fn().mockImplementation((cb) => cb());
+const mockSerialPortAsyncFlushAndClose = vi.fn();
+const mockSerialPortPipe = vi.fn();
+const mockSerialPortList = vi.fn().mockReturnValue([]);
+const mockSerialPortOpen = vi.fn().mockImplementation((cb) => cb());
+const mockSerialPortAsyncOpen = vi.fn();
+const mockSerialPortConstructor = vi.fn();
+const mockSerialPortOnce = vi.fn();
+const mockSerialPortAsyncSet = vi.fn();
+const mockSerialPortWrite = vi.fn((buffer, cb) => cb());
 let mockSerialPortIsOpen = false;
 
-jest.mock('../../../src/utils/wait', () => ({
-    wait: jest.fn(() => {
+vi.mock('../../../src/utils/wait', () => ({
+    wait: vi.fn(() => {
         return new Promise<void>((resolve) => resolve());
     }),
 }));
 
-jest.mock('../../../src/adapter/serialPort', () => ({
-    SerialPort: jest.fn(() => ({
+vi.mock('../../../src/adapter/serialPort', () => ({
+    SerialPort: vi.fn(() => ({
         close: mockSerialPortClose,
         constructor: mockSerialPortConstructor,
         emit: () => {},
@@ -54,20 +54,20 @@ jest.mock('../../../src/adapter/serialPort', () => ({
     })),
 }));
 
-const mockSocketSetNoDelay = jest.fn();
-const mockSocketSetKeepAlive = jest.fn();
-const mockSocketPipe = jest.fn();
-const mockSocketOnce = jest.fn();
+const mockSocketSetNoDelay = vi.fn();
+const mockSocketSetKeepAlive = vi.fn();
+const mockSocketPipe = vi.fn();
+const mockSocketOnce = vi.fn();
 const mockSocketCallbacks = {};
-const mockSocketConnect = jest.fn(() => {
+const mockSocketConnect = vi.fn(() => {
     mockSocketCallbacks['connect']();
     mockSocketCallbacks['ready']();
 });
-const mockSocketDestroy = jest.fn();
-let requestSpy;
+const mockSocketDestroy = vi.fn();
+let requestSpy: MockInstance;
 
-jest.mock('node:net', () => ({
-    Socket: jest.fn(() => ({
+vi.mock('node:net', async (importOriginal) => ({
+    Socket: vi.fn(() => ({
         setNoDelay: mockSocketSetNoDelay,
         pipe: mockSocketPipe,
         connect: mockSocketConnect,
@@ -80,22 +80,22 @@ jest.mock('node:net', () => ({
 
 SerialPort.list = mockSerialPortList;
 
-const mockUnpiParserOn = jest.fn();
+const mockUnpiParserOn = vi.fn();
 
-jest.mock('../../../src/adapter/z-stack/unpi/parser', () => ({
-    Parser: jest.fn(() => ({
+vi.mock('../../../src/adapter/z-stack/unpi/parser', () => ({
+    Parser: vi.fn(() => ({
         on: mockUnpiParserOn,
     })),
 }));
 
-const mockUnpiWriterWriteFrame = jest.fn();
-const mockUnpiWriterWriteBuffer = jest.fn();
+const mockUnpiWriterWriteFrame = vi.fn();
+const mockUnpiWriterWriteBuffer = vi.fn();
 
-jest.mock('../../../src/adapter/z-stack/unpi/writer', () => ({
-    Writer: jest.fn(() => ({
+vi.mock('../../../src/adapter/z-stack/unpi/writer', () => ({
+    Writer: vi.fn(() => ({
         writeFrame: mockUnpiWriterWriteFrame,
         writeBuffer: mockUnpiWriterWriteBuffer,
-        pipe: jest.fn(),
+        pipe: vi.fn(),
     })),
 }));
 
@@ -116,14 +116,14 @@ const mocks = [
 ];
 
 describe('ZNP', () => {
-    let znp;
+    let znp: Znp;
 
     beforeAll(async () => {
-        jest.useFakeTimers();
+        vi.useFakeTimers();
     });
 
     afterAll(async () => {
-        jest.useRealTimers();
+        vi.useRealTimers();
     });
 
     beforeEach(() => {
@@ -134,7 +134,7 @@ describe('ZNP', () => {
 
         // @ts-ignore; make sure we always get a new instance
         znp = new Znp('/dev/ttyACM0', 100, true);
-        requestSpy = jest.spyOn(znp, 'request').mockImplementation(() => {});
+        requestSpy = vi.spyOn(znp, 'request').mockImplementation(() => {});
     });
 
     afterEach(() => {
@@ -170,7 +170,7 @@ describe('ZNP', () => {
 
     it('Open with defaults', async () => {
         znp = new Znp('/dev/ttyACM0', undefined, undefined);
-        requestSpy = jest.spyOn(znp, 'request').mockImplementation(() => {});
+        requestSpy = vi.spyOn(znp, 'request').mockImplementation(() => {});
         await znp.open();
 
         expect(SerialPort).toHaveBeenCalledTimes(1);
@@ -266,7 +266,7 @@ describe('ZNP', () => {
     });
 
     it('Open and close', async () => {
-        const close = jest.fn();
+        const close = vi.fn();
         znp.on('close', close);
         expect(znp.isInitialized()).toBeFalsy();
         await znp.open();
@@ -279,7 +279,7 @@ describe('ZNP', () => {
     });
 
     it('Open and close error', async () => {
-        const close = jest.fn();
+        const close = vi.fn();
         znp.on('close', close);
         mockSerialPortAsyncFlushAndClose.mockImplementationOnce(() => {
             return new Promise((resolve, reject) => {
@@ -301,7 +301,7 @@ describe('ZNP', () => {
     });
 
     it('Close without initialization', async () => {
-        const close = jest.fn();
+        const close = vi.fn();
         znp.on('close', close);
         mockSerialPortAsyncFlushAndClose.mockImplementationOnce(() => {
             return new Promise((resolve, reject) => {
@@ -323,7 +323,7 @@ describe('ZNP', () => {
             }
         });
 
-        const close = jest.fn();
+        const close = vi.fn();
         znp.on('close', close);
         await znp.open();
         closeCb();
@@ -346,7 +346,7 @@ describe('ZNP', () => {
 
     it('znp receive', async () => {
         let parsedCb;
-        const received = jest.fn();
+        const received = vi.fn();
 
         znp.on('received', received);
 
@@ -378,7 +378,7 @@ describe('ZNP', () => {
 
     it('znp receive malformed', async () => {
         let parsedCb;
-        const received = jest.fn();
+        const received = vi.fn();
 
         znp.on('received', received);
 
@@ -613,7 +613,7 @@ describe('ZNP', () => {
         requestSpy.mockRestore();
 
         let result = znp.request(UnpiConstants.Subsystem.SYS, 'osalNvRead', {id: 1, offset: 2});
-        jest.runAllTimers();
+        vi.runAllTimers();
 
         let error;
         try {
@@ -630,11 +630,11 @@ describe('ZNP', () => {
         requestSpy.mockRestore();
 
         let result = znp.request(UnpiConstants.Subsystem.ZDO, 'startupFromApp', {startdelay: 100});
-        jest.advanceTimersByTime(30000);
+        vi.advanceTimersByTime(30000);
 
         let error;
         try {
-            jest.advanceTimersByTime(15000);
+            vi.advanceTimersByTime(15000);
             await result;
         } catch (e) {
             error = e;
@@ -655,7 +655,7 @@ describe('ZNP', () => {
         requestSpy.mockRestore();
 
         let result = znp.request(UnpiConstants.Subsystem.SYS, 'osalNvRead', {id: 1, offset: 2});
-        jest.runAllTimers();
+        vi.runAllTimers();
 
         parsedCb(new UnpiFrame(UnpiConstants.Type.SRSP, UnpiConstants.Subsystem.SYS, 0x08, Buffer.from([0x00, 0x02, 0x01, 0x02])));
 
@@ -885,13 +885,12 @@ describe('ZNP', () => {
         await znp.open();
         requestSpy.mockRestore();
 
-        const waiter = znp.waitFor(UnpiConstants.Type.AREQ, UnpiConstants.Subsystem.ZDO, 'nwkAddrRsp', '0x0807060504030201');
+        const waiter = znp.waitFor(UnpiConstants.Type.AREQ, UnpiConstants.Subsystem.ZDO, 'nwkAddrRsp', '0x0807060504030201').start();
 
         parsedCb(new UnpiFrame(UnpiConstants.Type.AREQ, UnpiConstants.Subsystem.ZDO, 128, Buffer.from([Zdo.Status.INVALID_INDEX])));
 
-        expect(async () => {
-            await waiter.start().promise;
-        }).rejects.toThrow('AREQ - ZDO - nwkAddrRsp after 10000ms');
+        vi.advanceTimersByTime(11000);
+        await expect(waiter.promise).rejects.toThrow('AREQ - ZDO - nwkAddrRsp after 10000ms');
     });
 
     it('znp waitFor with state', async () => {
@@ -924,13 +923,12 @@ describe('ZNP', () => {
         await znp.open();
         requestSpy.mockRestore();
 
-        const waiter = znp.waitFor(UnpiConstants.Type.SRSP, UnpiConstants.Subsystem.SYS, 'osalNvRead', 'abcd');
+        const waiter = znp.waitFor(UnpiConstants.Type.SRSP, UnpiConstants.Subsystem.SYS, 'osalNvRead', 'abcd').start();
 
         parsedCb(new UnpiFrame(UnpiConstants.Type.SRSP, UnpiConstants.Subsystem.SYS, 0x08, Buffer.from([0x00, 0x02, 0x01, 0x02])));
 
-        expect(async () => {
-            await waiter.start().promise;
-        }).rejects.toThrow('SRSP - SYS - osalNvRead after 10000ms');
+        vi.advanceTimersByTime(11000);
+        await expect(waiter.promise).rejects.toThrow('SRSP - SYS - osalNvRead after 10000ms');
     });
 
     it('znp requestWithReply should throw error when request as no reply', async () => {

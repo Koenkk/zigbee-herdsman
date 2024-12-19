@@ -1,4 +1,4 @@
-/* istanbul ignore file */
+/* v8 ignore start */
 
 import {KeyValue} from '../../controller/tstype';
 import {DataType} from '../../zspec/zcl';

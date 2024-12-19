@@ -1,4 +1,4 @@
-/* istanbul ignore file */
+/* v8 ignore start */
 
 import events from 'node:events';
 import net from 'node:net';

@@ -1,4 +1,4 @@
-/* istanbul ignore file */
+/* v8 ignore start */
 
 import {Buffalo} from '../../../buffalo';
 import {Utils as ZSpecUtils} from '../../../zspec';

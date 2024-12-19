@@ -1,4 +1,4 @@
-/* istanbul ignore file */
+/* v8 ignore start */
 //--------------------------------------------------------------
 // Define macros for handling 3-bit frame numbers modulo 8
 

@@ -1,4 +1,4 @@
-/* istanbul ignore file */
+/* v8 ignore start */
 
 import {logger} from '../../../utils/logger';
 import {EZSP_MAX_FRAME_LENGTH} from '../ezsp/consts';

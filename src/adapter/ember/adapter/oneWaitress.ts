@@ -1,4 +1,4 @@
-/* istanbul ignore file */
+/* v8 ignore start */
 
 import equals from 'fast-deep-equal/es6';
 

@@ -1,4 +1,4 @@
-/* istanbul ignore file */
+/* v8 ignore start */
 
 import * as ZSpec from '../../../zspec';
 import {NetworkCache} from '../adapter/emberAdapter';

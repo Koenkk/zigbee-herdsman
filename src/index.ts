@@ -1,3 +1,5 @@
+/* v8 ignore start */
+
 export {Controller} from './controller/controller';
 export type * as Events from './controller/events';
 export type * as Types from './controller/tstype';

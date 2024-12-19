@@ -22,8 +22,8 @@ import {lowByte} from '../../../src/adapter/ember/utils/math';
 import {wait} from '../../../src/utils/';
 import {adapterSONOFFDongleE, ASH_ACK_FIRST_BYTES, RECD_RSTACK_BYTES, SEND_ACK_FIRST_BYTES, SEND_RST_BYTES} from './consts';
 
-const mockSerialPortCloseEvent = jest.fn();
-const mockSerialPortErrorEvent = jest.fn();
+const mockSerialPortCloseEvent = vi.fn();
+const mockSerialPortErrorEvent = vi.fn();
 
 // todo doesnt reset if closing
 // todo doesnt start if closing or connected
@@ -49,11 +49,11 @@ describe('Ember UART ASH Protocol', () => {
     let frameSequence: number;
 
     beforeAll(async () => {
-        jest.useRealTimers(); // messes with serialport promise handling otherwise?
+        vi.useRealTimers(); // messes with serialport promise handling otherwise?
     });
 
     afterAll(async () => {
-        jest.useRealTimers();
+        vi.useRealTimers();
     });
 
     beforeEach(() => {
@@ -132,13 +132,13 @@ describe('Ember UART ASH Protocol', () => {
 
     it('Reaches CONNECTED state', async () => {
         //@ts-expect-error private
-        const initPortSpy = jest.spyOn(uartAsh, 'initPort');
-        const resetNcpSpy = jest.spyOn(uartAsh, 'resetNcp');
-        const sendExecSpy = jest.spyOn(uartAsh, 'sendExec');
+        const initPortSpy = vi.spyOn(uartAsh, 'initPort');
+        const resetNcpSpy = vi.spyOn(uartAsh, 'resetNcp');
+        const sendExecSpy = vi.spyOn(uartAsh, 'sendExec');
         //@ts-expect-error private
-        const onPortCloseSpy = jest.spyOn(uartAsh, 'onPortClose');
+        const onPortCloseSpy = vi.spyOn(uartAsh, 'onPortClose');
         //@ts-expect-error private
-        const onPortErrorSpy = jest.spyOn(uartAsh, 'onPortError');
+        const onPortErrorSpy = vi.spyOn(uartAsh, 'onPortError');
 
         const resetResult = await uartAsh.resetNcp();
 
@@ -158,7 +158,7 @@ describe('Ember UART ASH Protocol', () => {
         expect(uartAsh.portOpen).toBeTruthy();
 
         //@ts-expect-error private
-        jest.spyOn(uartAsh.serialPort, 'asyncFlush').mockImplementationOnce(jest.fn());
+        vi.spyOn(uartAsh.serialPort, 'asyncFlush').mockImplementationOnce(vi.fn());
         //@ts-expect-error private
         uartAsh.serialPort.port.emitData(Buffer.from(RECD_RSTACK_BYTES));
         const startResult = await uartAsh.start();
@@ -187,11 +187,11 @@ describe('Ember UART ASH Protocol', () => {
 
     it.skip('Resets but failed to start b/c error in RSTACK frame returned by NCP', async () => {
         //@ts-expect-error private
-        const rejectFrameSpy = jest.spyOn(uartAsh, 'rejectFrame');
+        const rejectFrameSpy = vi.spyOn(uartAsh, 'rejectFrame');
         //@ts-expect-error private
-        const receiveFrameSpy = jest.spyOn(uartAsh, 'receiveFrame');
+        const receiveFrameSpy = vi.spyOn(uartAsh, 'receiveFrame');
         //@ts-expect-error private
-        const decodeByteSpy = jest.spyOn(uartAsh, 'decodeByte');
+        const decodeByteSpy = vi.spyOn(uartAsh, 'decodeByte');
 
         const resetResult = await uartAsh.resetNcp();
 
@@ -201,7 +201,7 @@ describe('Ember UART ASH Protocol', () => {
         badCrcRSTACK[badCrcRSTACK.length - 2] = 0; // throw CRC low
 
         //@ts-expect-error private
-        jest.spyOn(uartAsh.serialPort, 'asyncFlush').mockImplementationOnce(jest.fn());
+        vi.spyOn(uartAsh.serialPort, 'asyncFlush').mockImplementationOnce(vi.fn());
         //@ts-expect-error private
         uartAsh.serialPort.port.emitData(badCrcRSTACK);
         const startResult = await uartAsh.start();
@@ -222,7 +222,7 @@ describe('Ember UART ASH Protocol', () => {
         beforeEach(async () => {
             const resetResult = await uartAsh.resetNcp();
             //@ts-expect-error private
-            jest.spyOn(uartAsh.serialPort, 'asyncFlush').mockImplementationOnce(jest.fn());
+            vi.spyOn(uartAsh.serialPort, 'asyncFlush').mockImplementationOnce(vi.fn());
             //@ts-expect-error private
             uartAsh.serialPort.port.emitData(Buffer.from(RECD_RSTACK_BYTES));
             const startResult = await uartAsh.start();

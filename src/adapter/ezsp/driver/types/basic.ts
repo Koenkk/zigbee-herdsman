@@ -1,4 +1,4 @@
-/* istanbul ignore file */
+/* v8 ignore start */
 export class int_t {
     static _signed = true;
 

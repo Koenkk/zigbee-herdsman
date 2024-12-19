@@ -65,7 +65,6 @@ export class Table<R extends BuiltStruct> implements SerializableMemoryObject {
      * Return number of records marked as free.
      */
     public get freeCount(): number {
-        /* istanbul ignore next */
         return this.free.length;
     }
 
@@ -89,8 +88,7 @@ export class Table<R extends BuiltStruct> implements SerializableMemoryObject {
      * @param entry Entry to resolve index for.
      */
     public indexOf(entry: R): number | null {
-        /* istanbul ignore next */
-        return this.entries.findIndex((e) => e.serialize().equals(entry.serialize())) ?? null;
+        return this.entries.findIndex((e) => e.serialize().equals(entry.serialize())) ?? /* v8 ignore next */ null;
     }
 
     /**
@@ -161,10 +159,11 @@ export class Table<R extends BuiltStruct> implements SerializableMemoryObject {
     public build(capacity: number): BuiltTable<R>;
 
     public build(dataOrCapacity: Buffer | Buffer[] | number, alignment: StructMemoryAlignment = 'unaligned'): BuiltTable<R> {
-        /* istanbul ignore next */
+        /* v8 ignore start */
         if (!this.entryStructFactory) {
             throw new Error('Table requires an entry struct factory.');
         }
+        /* v8 ignore stop */
         if (Array.isArray(dataOrCapacity) && dataOrCapacity.every((e) => Buffer.isBuffer(e))) {
             /* create table from given entries */
             const data = dataOrCapacity;

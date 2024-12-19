@@ -69,7 +69,6 @@ export const eui64BEBufferToHex = (eui64BEBuf: Buffer): EUI64 => `0x${eui64BEBuf
  * NOTE: This is not exported for test coverage reasons (large number of combinations possible, many unused).
  *       Specific, needed, algorithms should be defined as exported wrappers below, and coverage added for them.
  */
-/* istanbul ignore next */
 function calcCRC(
     data: number[] | Uint8Array | Buffer,
     length: 8 | 16 | 32,
@@ -90,6 +89,7 @@ function calcCRC(
             x = ((x & 0x3333) << 2) | ((x & 0xcccc) >> 2);
             x = ((x & 0x0f0f) << 4) | ((x & 0xf0f0) >> 4);
             x = ((x & 0x00ff) << 8) | ((x & 0xff00) >> 8);
+            /* v8 ignore start */
         } /* if (size === 32) */ else {
             x = ((x & 0x55555555) << 1) | ((x & 0xaaaaaaaa) >> 1);
             x = ((x & 0x33333333) << 2) | ((x & 0xcccccccc) >> 2);
@@ -97,6 +97,7 @@ function calcCRC(
             x = ((x & 0x00ff00ff) << 8) | ((x & 0xff00ff00) >> 8);
             x = ((x & 0x0000ffff) << 16) | ((x & 0xffff0000) >> 16);
         }
+        /* v8 ignore stop */
 
         return x;
     };

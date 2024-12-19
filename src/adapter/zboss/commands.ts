@@ -1,4 +1,4 @@
-/* istanbul ignore file */
+/* v8 ignore start */
 
 import {BuffaloZclDataType, DataType} from '../../zspec/zcl/definition/enums';
 import {ClusterId as ZdoClusterId} from '../../zspec/zdo';

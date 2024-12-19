@@ -98,7 +98,6 @@ function findClusterNameByID(
 
         if (cluster.ID === id) {
             // priority on first match when matching only ID
-            /* istanbul ignore else */
             if (name == undefined) {
                 name = clusterName;
             }

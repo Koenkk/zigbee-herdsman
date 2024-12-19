@@ -1,4 +1,4 @@
-/* istanbul ignore file */
+/* v8 ignore start */
 
 import * as basic from './basic';
 import {fixed_list} from './basic';

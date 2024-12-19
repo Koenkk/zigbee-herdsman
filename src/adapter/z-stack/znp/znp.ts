@@ -1,6 +1,6 @@
 import assert from 'node:assert';
 import events from 'node:events';
-import net from 'node:net';
+import {Socket} from 'node:net';
 
 import {Queue, wait, Waitress} from '../../../utils';
 import {logger} from '../../../utils/logger';
@@ -43,7 +43,7 @@ export class Znp extends events.EventEmitter {
     private rtscts: boolean;
 
     private serialPort?: SerialPort;
-    private socketPort?: net.Socket;
+    private socketPort?: Socket;
     private unpiWriter: UnpiWriter;
     private unpiParser: UnpiParser;
     private initialized: boolean;
@@ -129,7 +129,7 @@ export class Znp extends events.EventEmitter {
         const info = SocketPortUtils.parseTcpPath(this.path);
         logger.info(`Opening TCP socket with ${info.host}:${info.port}`, NS);
 
-        this.socketPort = new net.Socket();
+        this.socketPort = new Socket();
 
         this.socketPort.setNoDelay(true);
         this.socketPort.setKeepAlive(true, 15000);
@@ -174,7 +174,7 @@ export class Znp extends events.EventEmitter {
                 logger.info('Writing CC2530/CC2531 skip bootloader payload', NS);
                 this.unpiWriter.writeBuffer(Buffer.from([0xef]));
                 await wait(1000);
-                await this.request(Subsystem.SYS, 'ping', {capabilities: 1}, undefined, 250);
+                await this.request(Subsystem.SYS, 'ping', {capabilities: 1}, undefined, 250 /* v8 ignore next */);
             } catch {
                 // Skip bootloader on some CC2652 devices (e.g. zzh-p)
                 logger.info('Skip bootloader for CC2652/CC1352', NS);
@@ -269,12 +269,13 @@ export class Znp extends events.EventEmitter {
                 this.unpiWriter.writeFrame(object.unpiFrame);
                 return await waiter.start().promise;
             } else {
-                /* istanbul ignore else */
                 if (object.type === Type.AREQ) {
                     this.unpiWriter.writeFrame(object.unpiFrame);
+                    /* v8 ignore start */
                 } else {
                     throw new Error(`Unknown type '${object.type}'`);
                 }
+                /* v8 ignore stop */
             }
         });
     }

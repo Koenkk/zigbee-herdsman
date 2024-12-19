@@ -1,5 +1,3 @@
-import 'regenerator-runtime/runtime';
-
 import {FrameType} from '../../../src/adapter/ezsp/driver/frame';
 import {Parser} from '../../../src/adapter/ezsp/driver/parser';
 import {SerialDriver} from '../../../src/adapter/ezsp/driver/uart';
@@ -7,23 +5,23 @@ import {Writer} from '../../../src/adapter/ezsp/driver/writer';
 import {SerialPort} from '../../../src/adapter/serialPort';
 
 let mockParser;
-const mockSerialPortClose = jest.fn().mockImplementation((cb) => (cb ? cb() : null));
-const mockSerialPortFlush = jest.fn().mockImplementation((cb) => cb());
-const mockSerialPortAsyncFlushAndClose = jest.fn();
-const mockSerialPortPipe = jest.fn().mockImplementation((parser) => {
+const mockSerialPortClose = vi.fn().mockImplementation((cb) => (cb ? cb() : null));
+const mockSerialPortFlush = vi.fn().mockImplementation((cb) => cb());
+const mockSerialPortAsyncFlushAndClose = vi.fn();
+const mockSerialPortPipe = vi.fn().mockImplementation((parser) => {
     mockParser = parser;
 });
-const mockSerialPortList = jest.fn().mockReturnValue([]);
-const mockSerialPortOpen = jest.fn().mockImplementation((cb) => cb());
-const mockSerialPortAsyncOpen = jest.fn();
-const mockSerialPortConstructor = jest.fn();
-const mockSerialPortOnce = jest.fn();
-const mockSerialPortSet = jest.fn().mockImplementation((opts, cb) => cb());
-const mockSerialPortWrite = jest.fn((buffer, cb) => (cb ? cb() : null));
+const mockSerialPortList = vi.fn().mockReturnValue([]);
+const mockSerialPortOpen = vi.fn().mockImplementation((cb) => cb());
+const mockSerialPortAsyncOpen = vi.fn();
+const mockSerialPortConstructor = vi.fn();
+const mockSerialPortOnce = vi.fn();
+const mockSerialPortSet = vi.fn().mockImplementation((opts, cb) => cb());
+const mockSerialPortWrite = vi.fn((buffer, cb) => (cb ? cb() : null));
 let mockSerialPortIsOpen = false;
 
-jest.mock('../../../src/adapter/serialPort', () => ({
-    SerialPort: jest.fn(() => ({
+vi.mock('../../../src/adapter/serialPort', () => ({
+    SerialPort: vi.fn(() => ({
         close: mockSerialPortClose,
         constructor: mockSerialPortConstructor,
         emit: () => {},
@@ -40,8 +38,8 @@ jest.mock('../../../src/adapter/serialPort', () => ({
     })),
 }));
 
-jest.mock('../../../src/utils/wait', () => ({
-    wait: jest.fn(() => {
+vi.mock('../../../src/utils/wait', () => ({
+    wait: vi.fn(() => {
         return new Promise<void>((resolve) => resolve());
     }),
 }));
@@ -63,12 +61,12 @@ const mocks = [
 describe('UART', () => {
     let serialDriver;
     beforeAll(async () => {
-        jest.useFakeTimers();
+        vi.useFakeTimers();
     });
 
     afterAll(async () => {
-        jest.useRealTimers();
-        jest.restoreAllMocks();
+        vi.useRealTimers();
+        vi.restoreAllMocks();
     });
 
     beforeEach(() => {
@@ -79,12 +77,12 @@ describe('UART', () => {
 
         // @ts-ignore; make sure we always get a new instance
         serialDriver = new SerialDriver();
-        writeBufferSpy = jest.spyOn(Writer.prototype, 'writeBuffer').mockImplementation((buffer) => {
+        writeBufferSpy = vi.spyOn(Writer.prototype, 'writeBuffer').mockImplementation((buffer) => {
             if (buffer[0] == 0x1a) {
                 serialDriver.waitress.resolve({sequence: -1});
             }
         });
-        jest.spyOn(Writer.prototype, 'pipe').mockImplementation(jest.fn());
+        vi.spyOn(Writer.prototype, 'pipe').mockImplementation(vi.fn());
     });
 
     afterEach(() => {

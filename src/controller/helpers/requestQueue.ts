@@ -90,9 +90,7 @@ export class RequestQueue extends Set<Request> {
                 continue;
             }
 
-            /* istanbul ignore else */
             if (request.frame.cluster.ID === clusterID && request.frame.command.ID === commandID) {
-                /* istanbul ignore else */
                 if (newRequest.sendPolicy === 'keep-payload' && JSON.stringify(request.frame.payload) === JSON.stringify(payload)) {
                     logger.debug(`Request Queue (${this.deviceIeeeAddress}/${this.ID}): Merge duplicate request`, NS);
                     this.delete(request);

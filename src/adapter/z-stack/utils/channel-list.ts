@@ -18,10 +18,11 @@ export const unpackChannelList = (packedList: number): number[] => {
  */
 export const packChannelList = (channelList: number[]): number => {
     const invalidChannel = channelList.find((c) => c < 11 || c > 26);
-    /* istanbul ignore next */
+    /* v8 ignore start */
     if (invalidChannel !== undefined) {
         throw new Error(`Cannot pack channel list - unsupported channel ${invalidChannel}`);
     }
+    /* v8 ignore stop */
     return channelList.reduce((a, c) => a + (1 << c), 0);
 };
 
@@ -32,7 +33,7 @@ export const packChannelList = (channelList: number[]): number => {
  * @param list2 Second list to compare.
  */
 export const compareChannelLists = (list1: number | number[], list2: number | number[]): boolean => {
-    /* istanbul ignore next */
+    /* v8 ignore next */
     list1 = Array.isArray(list1) ? packChannelList(list1) : list1;
     list2 = Array.isArray(list2) ? packChannelList(list2) : list2;
     return list1 === list2;
