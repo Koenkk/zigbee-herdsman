@@ -192,7 +192,7 @@ describe('Writer', () => {
 
     it('Write frame', () => {
         const frame = new Frame(Constants.Type.SRSP, Constants.Subsystem.SYS, 3, Buffer.from([0x06, 0x01]));
-        const push = jest.spyOn(writer, 'push').mockReturnValue(undefined);
+        const push = vi.spyOn(writer, 'push').mockReturnValue(undefined);
         writer.writeFrame(frame);
         expect(push).toHaveBeenCalledTimes(1);
         expect(push.mock.calls[0][0]).toStrictEqual(frame.toBuffer());
@@ -200,7 +200,7 @@ describe('Writer', () => {
 
     it('Write buffer', () => {
         const buffer = Buffer.from([0x01, 0x02]);
-        const push = jest.spyOn(writer, 'push').mockReturnValue(undefined);
+        const push = vi.spyOn(writer, 'push').mockReturnValue(undefined);
         writer.writeBuffer(buffer);
         expect(push).toHaveBeenCalledTimes(1);
         expect(push.mock.calls[0][0]).toStrictEqual(buffer);

@@ -122,7 +122,6 @@ export class ZpiObject<T extends ZpiObjectType = 'Response'> {
                 const lengthParameter = parameters[parameters.indexOf(parameter) - 1];
                 const length: MtType = result[lengthParameter.name];
 
-                /* istanbul ignore else */
                 if (typeof length === 'number') {
                     options.length = length;
                 }
@@ -137,7 +136,7 @@ export class ZpiObject<T extends ZpiObjectType = 'Response'> {
     public isResetCommand(): boolean {
         return (
             (this.command.name === 'resetReq' && this.subsystem === Subsystem.SYS) ||
-            // istanbul ignore next
+            /* v8 ignore next */
             (this.command.name === 'systemReset' && this.subsystem === Subsystem.SAPI)
         );
     }

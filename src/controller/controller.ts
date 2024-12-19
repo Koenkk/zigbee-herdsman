@@ -167,7 +167,6 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
         this.adapter.on('deviceLeave', this.onDeviceLeave.bind(this));
 
         if (startResult === 'reset') {
-            /* istanbul ignore else */
             if (this.options.databaseBackupPath && fs.existsSync(this.options.databasePath)) {
                 fs.copyFileSync(this.options.databasePath, this.options.databaseBackupPath);
             }
@@ -530,7 +529,6 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
                 const payload = response[1];
                 const device = Device.byIeeeAddr(payload.eui64);
 
-                /* istanbul ignore else */
                 if (device) {
                     this.checkDeviceNetworkAddress(device, payload.eui64, payload.nwkAddress);
                     this.unknownDevices.delete(payload.nwkAddress);
@@ -675,7 +673,6 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
     private async onDeviceJoined(payload: AdapterEvents.DeviceJoinedPayload): Promise<void> {
         logger.debug(`Device '${payload.ieeeAddr}' joined`, NS);
 
-        /* istanbul ignore else */
         if (this.options.acceptJoiningDeviceHandler) {
             if (!(await this.options.acceptJoiningDeviceHandler(payload.ieeeAddr))) {
                 logger.debug(`Device '${payload.ieeeAddr}' rejected by handler, removing it`, NS);
@@ -691,7 +688,6 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
                     );
                     const response = await this.adapter.sendZdo(payload.ieeeAddr, payload.networkAddress, clusterId, zdoPayload, false);
 
-                    /* istanbul ignore else */
                     if (!Zdo.Buffalo.checkStatus(response)) {
                         throw new Zdo.StatusError(response[0]);
                     }
@@ -755,7 +751,6 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
 
         switch (clusterId) {
             case Zdo.ClusterId.NETWORK_ADDRESS_RESPONSE: {
-                /* istanbul ignore else */
                 if (Zdo.Buffalo.checkStatus<typeof clusterId>(response)) {
                     this.onNetworkAddress(response[1]);
                 }
@@ -763,7 +758,6 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
             }
 
             case Zdo.ClusterId.IEEE_ADDRESS_RESPONSE: {
-                /* istanbul ignore else */
                 if (Zdo.Buffalo.checkStatus<typeof clusterId>(response)) {
                     this.onIEEEAddress(response[1]);
                 }
@@ -771,7 +765,6 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
             }
 
             case Zdo.ClusterId.END_DEVICE_ANNOUNCE: {
-                /* istanbul ignore else */
                 if (Zdo.Buffalo.checkStatus<typeof clusterId>(response)) {
                     this.onDeviceAnnounce(response[1]);
                 }
@@ -908,7 +901,6 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
                     }
                 }
             } else {
-                /* istanbul ignore else */
                 if (frame.header.isSpecific) {
                     type = `command${command.name.charAt(0).toUpperCase()}${command.name.slice(1)}`;
                     data = frame.payload;

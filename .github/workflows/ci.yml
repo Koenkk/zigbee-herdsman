@@ -28,7 +28,7 @@ jobs:
             - name: Build
               run: pnpm run build
             - name: Test
-              run: pnpm run test-with-coverage -- --testTimeout=10000
+              run: pnpm run test:coverage -- --testTimeout=10000
             - name: Publish new release
               if: startsWith(github.ref, 'refs/tags/') && github.event_name == 'push'
               run: |

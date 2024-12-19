@@ -1,3 +1,5 @@
+import type {MockInstance} from 'vitest';
+
 import os from 'node:os';
 
 import {Bonjour, BrowserConfig} from 'bonjour-service';
@@ -5,7 +7,7 @@ import {Bonjour, BrowserConfig} from 'bonjour-service';
 import {Adapter, TsType} from '../../src/adapter';
 import {DeconzAdapter} from '../../src/adapter/deconz/adapter/deconzAdapter';
 import {EmberAdapter} from '../../src/adapter/ember/adapter/emberAdapter';
-import {EZSPAdapter} from '../../src/adapter/ezsp/adapter/ezspAdapter.ts';
+import {EZSPAdapter} from '../../src/adapter/ezsp/adapter/ezspAdapter';
 import {SerialPort} from '../../src/adapter/serialPort';
 import {ZStackAdapter} from '../../src/adapter/z-stack/adapter/zStackAdapter';
 import {ZBOSSAdapter} from '../../src/adapter/zboss/adapter/zbossAdapter';
@@ -22,7 +24,7 @@ import {
     ZSTACK_ZBDONGLE_P,
 } from '../mockAdapters';
 
-const mockBonjourResult = jest.fn().mockImplementation((type) => ({
+const mockBonjourResult = vi.fn().mockImplementation((type) => ({
     name: 'Mock Adapter',
     type: `${type}_mdns`,
     port: '1122',
@@ -32,15 +34,15 @@ const mockBonjourResult = jest.fn().mockImplementation((type) => ({
         radio_type: `${type}`,
     },
 }));
-const mockBonjourFindOne = jest.fn((opts: BrowserConfig | null, timeout: number, callback?: CallableFunction) => {
+const mockBonjourFindOne = vi.fn((opts: BrowserConfig | null, timeout: number, callback?: CallableFunction) => {
     if (callback) {
         callback(mockBonjourResult(opts?.type));
     }
 });
-const mockBonjourDestroy = jest.fn();
+const mockBonjourDestroy = vi.fn();
 
-jest.mock('bonjour-service', () => ({
-    Bonjour: jest.fn(() => ({
+vi.mock('bonjour-service', () => ({
+    Bonjour: vi.fn(() => ({
         findOne: mockBonjourFindOne,
         destroy: mockBonjourDestroy,
     })),
@@ -48,7 +50,7 @@ jest.mock('bonjour-service', () => ({
 
 describe('Adapter', () => {
     beforeAll(() => {
-        jest.useFakeTimers();
+        vi.useFakeTimers();
     });
 
     it.each([
@@ -129,15 +131,15 @@ describe('Adapter', () => {
             mockBonjourResult.mockReturnValueOnce(null);
             const fakeAdapterName = 'mdns_test_device';
 
-            expect(async () => {
-                await Adapter.create({panID: 0, channelList: []}, {path: `mdns://${fakeAdapterName}`}, 'test.db', {disableLED: false});
-            }).rejects.toThrow(`Coordinator [${fakeAdapterName}] not found after timeout of 2000ms!`);
+            await expect(
+                Adapter.create({panID: 0, channelList: []}, {path: `mdns://${fakeAdapterName}`}, 'test.db', {disableLED: false}),
+            ).rejects.toThrow(`Coordinator [${fakeAdapterName}] not found after timeout of 2000ms!`);
         });
 
         it('given invalid path', async () => {
-            expect(async () => {
-                await Adapter.create({panID: 0, channelList: []}, {path: `mdns://`}, 'test.db', {disableLED: false});
-            }).rejects.toThrow(`No mdns device specified. You must specify the coordinator mdns service type after mdns://, e.g. mdns://my-adapter`);
+            await expect(Adapter.create({panID: 0, channelList: []}, {path: `mdns://`}, 'test.db', {disableLED: false})).rejects.toThrow(
+                `No mdns device specified. You must specify the coordinator mdns service type after mdns://, e.g. mdns://my-adapter`,
+            );
         });
 
         it('returns invalid format', async () => {
@@ -152,9 +154,7 @@ describe('Adapter', () => {
                 },
             });
 
-            expect(async () => {
-                await Adapter.create({panID: 0, channelList: []}, {path: `mdns://my_adapter`}, 'test.db', {disableLED: false});
-            }).rejects.toThrow(
+            await expect(Adapter.create({panID: 0, channelList: []}, {path: `mdns://my_adapter`}, 'test.db', {disableLED: false})).rejects.toThrow(
                 `Coordinator returned wrong Zeroconf format! The following values are expected:\n` +
                     `txt.radio_type, got: undefined\n` +
                     `port, got: 1122`,
@@ -209,31 +209,31 @@ describe('Adapter', () => {
         });
 
         test.each([`tcp://192168.1.321`, `tcp://192168.1.321:INVALID`])('invalid path', async (path) => {
-            expect(async () => {
-                await Adapter.create({panID: 0x1a62, channelList: [11]}, {path, adapter: `zstack`}, 'test.db.backup', {
+            await expect(
+                Adapter.create({panID: 0x1a62, channelList: [11]}, {path, adapter: `zstack`}, 'test.db.backup', {
                     disableLED: false,
-                });
-            }).rejects.toThrow(`Invalid TCP path, expected format: tcp://<host>:<port>`);
+                }),
+            ).rejects.toThrow(`Invalid TCP path, expected format: tcp://<host>:<port>`);
         });
 
         it('invalid adapter', async () => {
-            expect(async () => {
-                await Adapter.create({panID: 0x1a62, channelList: [11]}, {path: `tcp://192.168.1.321:3456`}, 'test.db.backup', {
+            await expect(
+                Adapter.create({panID: 0x1a62, channelList: [11]}, {path: `tcp://192.168.1.321:3456`}, 'test.db.backup', {
                     disableLED: false,
-                });
-            }).rejects.toThrow(`Cannot discover TCP adapters at this time. Specify valid 'adapter' and 'port' in your configuration.`);
+                }),
+            ).rejects.toThrow(`Cannot discover TCP adapters at this time. Specify valid 'adapter' and 'port' in your configuration.`);
         });
     });
 
     describe('USB discovery', () => {
-        let listSpy: jest.SpyInstance;
-        let platformSpy: jest.SpyInstance;
+        let listSpy: MockInstance;
+        let platformSpy: MockInstance;
 
         beforeAll(() => {
-            listSpy = jest.spyOn(SerialPort, 'list');
+            listSpy = vi.spyOn(SerialPort, 'list');
             listSpy.mockReturnValue([DECONZ_CONBEE_II, EMBER_ZBDONGLE_E, ZSTACK_CC2538, ZBOSS_NORDIC, ZIGATE_PLUSV2]);
 
-            platformSpy = jest.spyOn(os, 'platform');
+            platformSpy = vi.spyOn(os, 'platform');
             platformSpy.mockReturnValue('linux');
         });
 
@@ -428,17 +428,15 @@ describe('Adapter', () => {
             it('throws on failure to get SerialPort.list', async () => {
                 listSpy.mockRejectedValueOnce(new Error('spawn udevadm ENOENT'));
 
-                expect(async () => {
-                    await Adapter.create({panID: 0x1a62, channelList: [11]}, {}, 'test.db.backup', {disableLED: false});
-                }).rejects.toThrow(`USB adapter discovery error (spawn udevadm ENOENT). Specify valid 'adapter' and 'port' in your configuration.`);
+                await expect(Adapter.create({panID: 0x1a62, channelList: [11]}, {}, 'test.db.backup', {disableLED: false})).rejects.toThrow(
+                    `USB adapter discovery error (spawn udevadm ENOENT). Specify valid 'adapter' and 'port' in your configuration.`,
+                );
             });
 
             it('throws on failure to detect with conflict vendor+product IDs', async () => {
                 listSpy.mockReturnValueOnce([{...EMBER_SKYCONNECT, path: '/dev/ttyACM0', manufacturer: undefined}]);
 
-                expect(async () => {
-                    await Adapter.create({panID: 0x1a62, channelList: [11]}, {}, 'test.db.backup', {disableLED: false});
-                }).rejects.toThrow(
+                await expect(Adapter.create({panID: 0x1a62, channelList: [11]}, {}, 'test.db.backup', {disableLED: false})).rejects.toThrow(
                     `USB adapter discovery error (No valid USB adapter found). Specify valid 'adapter' and 'port' in your configuration.`,
                 );
             });
@@ -650,15 +648,15 @@ describe('Adapter', () => {
             it('throws on failure to match invalid adapter', async () => {
                 listSpy.mockReturnValueOnce([]);
 
-                expect(async () => {
-                    await Adapter.create(
+                await expect(
+                    Adapter.create(
                         {panID: 0x1a62, channelList: [11]},
                         // @ts-expect-error invalid on purpose
                         {adapter: 'invalid', path: 'dev/ttyUSB0'},
                         'test.db.backup',
                         {disableLED: false},
-                    );
-                }).rejects.toThrow(`Adapter 'invalid' does not exists, possible options: deconz, ember, ezsp, zstack, zboss, zigate`);
+                    ),
+                ).rejects.toThrow(`Adapter 'invalid' does not exists, possible options: deconz, ember, ezsp, zstack, zboss, zigate`);
             });
         });
 
@@ -762,9 +760,9 @@ describe('Adapter', () => {
             it('throws on failure to detect with conflict vendor+product IDs', async () => {
                 listSpy.mockReturnValueOnce([{...EMBER_SKYCONNECT, path: '/dev/ttyACM0', manufacturer: undefined}]);
 
-                expect(async () => {
-                    await Adapter.create({panID: 0x1a62, channelList: [11]}, {adapter: 'zstack'}, 'test.db.backup', {disableLED: false});
-                }).rejects.toThrow(
+                await expect(
+                    Adapter.create({panID: 0x1a62, channelList: [11]}, {adapter: 'zstack'}, 'test.db.backup', {disableLED: false}),
+                ).rejects.toThrow(
                     `USB adapter discovery error (No valid USB adapter found). Specify valid 'adapter' and 'port' in your configuration.`,
                 );
             });
@@ -871,9 +869,9 @@ describe('Adapter', () => {
             it('throws on failure to match with different path', async () => {
                 listSpy.mockReturnValueOnce([DECONZ_CONBEE_II]);
 
-                expect(async () => {
-                    await Adapter.create({panID: 0x1a62, channelList: [11]}, {path: '/dev/ttyUSB0'}, 'test.db.backup', {disableLED: false});
-                }).rejects.toThrow(
+                await expect(
+                    Adapter.create({panID: 0x1a62, channelList: [11]}, {path: '/dev/ttyUSB0'}, 'test.db.backup', {disableLED: false}),
+                ).rejects.toThrow(
                     `USB adapter discovery error (No valid USB adapter found). Specify valid 'adapter' and 'port' in your configuration.`,
                 );
             });
@@ -882,15 +880,15 @@ describe('Adapter', () => {
         it('throws on failure to match when port info too limited', async () => {
             listSpy.mockReturnValueOnce([{...DECONZ_CONBEE_II, vendorId: undefined}]);
 
-            expect(async () => {
-                await Adapter.create({panID: 0x1a62, channelList: [11]}, {}, 'test.db.backup', {disableLED: false});
-            }).rejects.toThrow(`USB adapter discovery error (No valid USB adapter found). Specify valid 'adapter' and 'port' in your configuration.`);
+            await expect(Adapter.create({panID: 0x1a62, channelList: [11]}, {}, 'test.db.backup', {disableLED: false})).rejects.toThrow(
+                `USB adapter discovery error (No valid USB adapter found). Specify valid 'adapter' and 'port' in your configuration.`,
+            );
 
             listSpy.mockReturnValueOnce([{...DECONZ_CONBEE_II, productId: undefined}]);
 
-            expect(async () => {
-                await Adapter.create({panID: 0x1a62, channelList: [11]}, {}, 'test.db.backup', {disableLED: false});
-            }).rejects.toThrow(`USB adapter discovery error (No valid USB adapter found). Specify valid 'adapter' and 'port' in your configuration.`);
+            await expect(Adapter.create({panID: 0x1a62, channelList: [11]}, {}, 'test.db.backup', {disableLED: false})).rejects.toThrow(
+                `USB adapter discovery error (No valid USB adapter found). Specify valid 'adapter' and 'port' in your configuration.`,
+            );
         });
     });
 });

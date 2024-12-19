@@ -1,4 +1,4 @@
-/* istanbul ignore file */
+/* v8 ignore start */
 
 import Buffalo from '../../../buffalo/buffalo';
 import {GP_SINK_LIST_ENTRIES} from '../consts';

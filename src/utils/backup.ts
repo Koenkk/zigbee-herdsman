@@ -14,7 +14,6 @@ import * as Models from '../models';
 export const toUnifiedBackup = async (backup: Models.Backup): Promise<Models.UnifiedBackupStorage> => {
     const packageInfo = JSON.parse(fs.readFileSync(path.join(__dirname, '../../', 'package.json')).toString());
 
-    /* istanbul ignore next */
     return {
         metadata: {
             format: 'zigpy/open-coordinator-backup',
@@ -22,13 +21,14 @@ export const toUnifiedBackup = async (backup: Models.Backup): Promise<Models.Uni
             source: `${packageInfo.name}@${packageInfo.version}`,
             internal: {
                 date: new Date().toISOString(),
-                ...(backup.znp ? {znpVersion: backup.znp?.version ?? undefined} : undefined),
-                ...(backup.ezsp ? {ezspVersion: backup.ezsp?.version ?? undefined} : undefined),
+                ...(backup.znp ? {znpVersion: backup.znp?.version ?? undefined} : /* v8 ignore next */ undefined),
+                ...(backup.ezsp ? {ezspVersion: backup.ezsp?.version ?? undefined} : /* v8 ignore next */ undefined),
             },
         },
         stack_specific: {
+            /* v8 ignore next */
             ...(backup.znp ? {zstack: {tclk_seed: backup.znp?.trustCenterLinkKeySeed?.toString('hex') || undefined}} : undefined),
-            ...(backup.ezsp ? {ezsp: {hashed_tclk: backup.ezsp?.hashed_tclk?.toString('hex') || undefined}} : undefined),
+            ...(backup.ezsp ? {ezsp: {hashed_tclk: backup.ezsp?.hashed_tclk?.toString('hex') || undefined}} : /* v8 ignore next */ undefined),
         },
         coordinator_ieee: backup.coordinatorIeeeAddress.toString('hex'),
         pan_id: backup.networkOptions.panId.toString(16),
@@ -44,7 +44,7 @@ export const toUnifiedBackup = async (backup: Models.Backup): Promise<Models.Uni
         },
         devices: backup.devices.map((device) => {
             return {
-                nwk_address: device.networkAddress !== null ? device.networkAddress.toString(16) : null,
+                nwk_address: device.networkAddress !== null ? device.networkAddress.toString(16) : /* v8 ignore next */ null,
                 ieee_address: device.ieeeAddress.toString('hex'),
                 is_child: device.isDirectChild,
                 link_key: device.linkKey
@@ -63,7 +63,6 @@ export const toUnifiedBackup = async (backup: Models.Backup): Promise<Models.Uni
 export const fromUnifiedBackup = (backup: Models.UnifiedBackupStorage): Models.Backup => {
     const tclkSeedString = backup.stack_specific?.zstack?.tclk_seed || undefined;
 
-    /* istanbul ignore next */
     return {
         networkOptions: {
             panId: Number.parseInt(backup.pan_id, 16),

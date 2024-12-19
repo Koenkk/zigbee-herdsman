@@ -1,4 +1,4 @@
-/* istanbul ignore file */
+/* v8 ignore start */
 
 import {logger} from '../../../utils/logger';
 import BuffaloZiGate, {BuffaloZiGateOptions} from './buffaloZiGate';
