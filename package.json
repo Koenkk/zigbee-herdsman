@@ -37,10 +37,6 @@
     "deprecated": false,
     "description": "An open source ZigBee gateway solution with node.js.",
     "devDependencies": {
-        "@babel/cli": "^7.26.4",
-        "@babel/core": "^7.26.0",
-        "@babel/preset-env": "^7.26.0",
-        "@babel/preset-typescript": "^7.26.0",
         "@eslint/core": "^0.9.1",
         "@eslint/js": "^9.17.0",
         "@ianvs/prettier-plugin-sort-imports": "^4.4.0",
