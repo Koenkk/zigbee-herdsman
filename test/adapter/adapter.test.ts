@@ -1,7 +1,5 @@
 import type {MockInstance} from 'vitest';
 
-import os from 'node:os';
-
 import {Bonjour, BrowserConfig} from 'bonjour-service';
 
 import {Adapter, TsType} from '../../src/adapter';
@@ -23,6 +21,12 @@ import {
     ZSTACK_SMLIGHT_SLZB_07,
     ZSTACK_ZBDONGLE_P,
 } from '../mockAdapters';
+
+const mockPlatform = vi.fn(() => 'linux');
+
+vi.mock('node:os', () => ({
+    platform: vi.fn(() => mockPlatform()),
+}));
 
 const mockBonjourResult = vi.fn().mockImplementation((type) => ({
     name: 'Mock Adapter',
@@ -227,14 +231,10 @@ describe('Adapter', () => {
 
     describe('USB discovery', () => {
         let listSpy: MockInstance;
-        let platformSpy: MockInstance;
 
         beforeAll(() => {
             listSpy = vi.spyOn(SerialPort, 'list');
             listSpy.mockReturnValue([DECONZ_CONBEE_II, EMBER_ZBDONGLE_E, ZSTACK_CC2538, ZBOSS_NORDIC, ZIGATE_PLUSV2]);
-
-            platformSpy = vi.spyOn(os, 'platform');
-            platformSpy.mockReturnValue('linux');
         });
 
         describe('without config', () => {
@@ -298,7 +298,7 @@ describe('Adapter', () => {
             });
 
             it('detects on Windows with manufacturer present', async () => {
-                platformSpy.mockReturnValueOnce('win32');
+                mockPlatform.mockReturnValueOnce('win32');
                 listSpy.mockReturnValueOnce([
                     {
                         // Windows sample - Sonoff Dongle-E
@@ -325,7 +325,7 @@ describe('Adapter', () => {
 
             it('detects on Windows without manufacturer present', async () => {
                 // Note: this is the least-accurate possible match
-                platformSpy.mockReturnValueOnce('win32');
+                mockPlatform.mockReturnValueOnce('win32');
                 listSpy.mockReturnValueOnce([
                     {
                         // Windows sample - Sonoff Dongle-E
