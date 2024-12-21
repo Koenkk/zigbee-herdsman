@@ -62,7 +62,7 @@ export class int64s extends int_t {
 }
 
 export class uint_t extends int_t {
-    static _signed = false;
+    static override _signed = false;
 }
 
 export class uint8_t extends uint_t {
@@ -126,14 +126,14 @@ export abstract class List {
 
 class _LVList extends List {
     /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
-    static serialize(cls: any, value: any[]): Buffer {
+    static override serialize(cls: any, value: any[]): Buffer {
         const head = [cls.length];
         const data = super.serialize(cls, value);
         return Buffer.from(head.concat(data));
     }
 
     /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
-    static deserialize(cls: any, data: Buffer): any[] {
+    static override deserialize(cls: any, data: Buffer): any[] {
         let item, length;
         /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
         const r: any[] = [];
@@ -166,7 +166,7 @@ export function LVList(itemtype: any): List {
 
 export class WordList extends List {
     /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
-    static serialize(cls: any, value: any[]): Buffer {
+    static override serialize(cls: any, value: any[]): Buffer {
         const data = value.map((i) => Buffer.from(uint16_t.serialize(uint16_t, i)));
         return Buffer.concat(data);
     }
@@ -174,13 +174,13 @@ export class WordList extends List {
 
 class _FixedList extends List {
     /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
-    static serialize(cls: any, value: any[]): Buffer {
+    static override serialize(cls: any, value: any[]): Buffer {
         const data = value.map((i) => cls.itemtype.serialize(cls.itemtype, i)[0]);
         return Buffer.from(data);
     }
 
     /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
-    static deserialize(cls: any, data: Buffer): any[] {
+    static override deserialize(cls: any, data: Buffer): any[] {
         let item;
         /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
         const r: any[] = [];

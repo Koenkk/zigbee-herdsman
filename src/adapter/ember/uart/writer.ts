@@ -1,6 +1,6 @@
 /* istanbul ignore file */
 
-import {Readable, ReadableOptions} from 'stream';
+import {Readable, ReadableOptions} from 'node:stream';
 
 // import {logger} from '../../../utils/logger';
 
@@ -49,5 +49,5 @@ export class AshWriter extends Readable {
         }
     }
 
-    public _read(): void {}
+    public override _read(): void {}
 }

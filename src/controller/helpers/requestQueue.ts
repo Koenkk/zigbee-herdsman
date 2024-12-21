@@ -7,7 +7,7 @@ const NS = 'zh:controller:requestqueue';
 
 type Mutable<T> = {-readonly [P in keyof T]: T[P]};
 
-class RequestQueue extends Set<Request> {
+export class RequestQueue extends Set<Request> {
     private sendInProgress: boolean;
     private ID: number;
     private deviceIeeeAddress: string;

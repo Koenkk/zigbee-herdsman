@@ -1,11 +1,11 @@
-import fs from 'fs';
+import fs from 'node:fs';
 
 import {logger} from '../utils/logger';
 import {DatabaseEntry, EntityType} from './tstype';
 
 const NS = 'zh:controller:database';
 
-class Database {
+export class Database {
     private entries: {[id: number]: DatabaseEntry};
     private path: string;
     private maxId: number;

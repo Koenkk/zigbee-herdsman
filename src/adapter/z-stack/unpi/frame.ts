@@ -1,6 +1,6 @@
 import {DataStart, PositionCmd0, PositionCmd1, SOF, Subsystem, Type} from './constants';
 
-class Frame {
+export class Frame {
     public readonly type: Type;
     public readonly subsystem: Subsystem;
     public readonly commandID: number;
@@ -60,5 +60,3 @@ class Frame {
         return `${this.length} - ${this.type} - ${this.subsystem} - ${this.commandID} - [${[...this.data]}] - ${this.fcs}`;
     }
 }
-
-export default Frame;

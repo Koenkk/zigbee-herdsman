@@ -1,7 +1,7 @@
 /* istanbul ignore file */
 
 import * as Models from '../../../models';
-import {Queue, Wait, Waitress} from '../../../utils';
+import {Queue, wait, Waitress} from '../../../utils';
 import {logger} from '../../../utils/logger';
 import * as ZSpec from '../../../zspec';
 import {BroadcastAddress} from '../../../zspec/enums';
@@ -29,7 +29,7 @@ interface WaitressMatcher {
     direction: number;
 }
 
-class ZiGateAdapter extends Adapter {
+export class ZiGateAdapter extends Adapter {
     private driver: Driver;
     private joinPermitted: boolean;
     private waitress: Waitress<Events.ZclPayload, WaitressMatcher>;
@@ -91,6 +91,10 @@ class ZiGateAdapter extends Adapter {
                 destinationEndpoint: ZSpec.HA_ENDPOINT,
                 groupAddress: default_bind_group,
             });
+
+            if (this.adapterOptions.transmitPower != undefined) {
+                await this.driver.sendCommand(ZiGateCommandCode.SetTXpower, {value: this.adapterOptions.transmitPower});
+            }
         } catch (error) {
             throw new Error('failed to connect to zigate adapter ' + (error as Error).message);
         }
@@ -169,9 +173,9 @@ class ZiGateAdapter extends Adapter {
             const result = await this.driver.sendCommand(ZiGateCommandCode.GetNetworkState, {}, 10000);
 
             return {
-                panID: <number>result.payload.PANID,
-                extendedPanID: <number>result.payload.ExtPANID,
-                channel: <number>result.payload.Channel,
+                panID: result.payload.PANID as number,
+                extendedPanID: result.payload.ExtPANID as string, // read as IEEEADDR, so `0x${string}`
+                channel: result.payload.Channel as number,
             };
         } catch (error) {
             throw new Error(`Get network parameters failed ${error}`);
@@ -188,14 +192,6 @@ class ZiGateAdapter extends Adapter {
 
     public async backup(): Promise<Models.Backup> {
         throw new Error('This adapter does not support backup');
-    }
-
-    public async setTransmitPower(value: number): Promise<void> {
-        try {
-            await this.driver.sendCommand(ZiGateCommandCode.SetTXpower, {value: value});
-        } catch (error) {
-            throw new Error(`Set transmitpower failed ${error}`);
-        }
     }
 
     public async sendZdo(
@@ -451,7 +447,7 @@ class ZiGateAdapter extends Adapter {
             logger.debug(() => `sendZclFrameToAll ${JSON.stringify(payload)}`, NS);
 
             await this.driver.sendCommand(ZiGateCommandCode.RawAPSDataRequest, payload, undefined, {}, true);
-            await Wait(200);
+            await wait(200);
         });
     }
 
@@ -472,7 +468,7 @@ class ZiGateAdapter extends Adapter {
             };
 
             await this.driver.sendCommand(ZiGateCommandCode.RawAPSDataRequest, payload, undefined, {}, true);
-            await Wait(200);
+            await wait(200);
         });
     }
 
@@ -528,14 +524,6 @@ class ZiGateAdapter extends Adapter {
         const waiter = this.waitress.waitFor(payload, timeout);
         const cancel = (): void => this.waitress.remove(waiter.ID);
         return {promise: waiter.start().promise, cancel};
-    }
-
-    public static async isValidPath(path: string): Promise<boolean> {
-        return await Driver.isValidPath(path);
-    }
-
-    public static async autoDetectPath(): Promise<string | undefined> {
-        return await Driver.autoDetectPath();
     }
 
     /**
@@ -626,5 +614,3 @@ class ZiGateAdapter extends Adapter {
         }
     }
 }
-
-export default ZiGateAdapter;

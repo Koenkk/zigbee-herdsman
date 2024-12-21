@@ -1,17 +1,13 @@
-import events from 'events';
-
-import Bonjour, {Service} from 'bonjour-service';
+import events from 'node:events';
 
 import * as Models from '../models';
-import {logger} from '../utils/logger';
 import {BroadcastAddress} from '../zspec/enums';
 import * as Zcl from '../zspec/zcl';
 import * as Zdo from '../zspec/zdo';
 import * as ZdoTypes from '../zspec/zdo/definition/tstypes';
+import {discoverAdapter} from './adapterDiscovery';
 import * as AdapterEvents from './events';
 import * as TsType from './tstype';
-
-const NS = 'zh:adapter';
 
 interface AdapterEventMap {
     deviceJoined: [payload: AdapterEvents.DeviceJoinedPayload];
@@ -21,7 +17,14 @@ interface AdapterEventMap {
     deviceLeave: [payload: AdapterEvents.DeviceLeavePayload];
 }
 
-abstract class Adapter extends events.EventEmitter<AdapterEventMap> {
+type AdapterConstructor = new (
+    networkOptions: TsType.NetworkOptions,
+    serialPortOptions: TsType.SerialPortOptions,
+    backupPath: string,
+    adapterOptions: TsType.AdapterOptions,
+) => Adapter;
+
+export abstract class Adapter extends events.EventEmitter<AdapterEventMap> {
     public hasZdoMessageOverhead: boolean;
     public manufacturerID: Zcl.ManufacturerCode;
     protected networkOptions: TsType.NetworkOptions;
@@ -54,135 +57,28 @@ abstract class Adapter extends events.EventEmitter<AdapterEventMap> {
         backupPath: string,
         adapterOptions: TsType.AdapterOptions,
     ): Promise<Adapter> {
-        const {ZStackAdapter} = await import('./z-stack/adapter');
-        const {DeconzAdapter} = await import('./deconz/adapter');
-        const {ZiGateAdapter} = await import('./zigate/adapter');
-        const {EZSPAdapter} = await import('./ezsp/adapter');
-        const {EmberAdapter} = await import('./ember/adapter');
-        const {ZBOSSAdapter} = await import('./zboss/adapter');
-        type AdapterImplementation =
-            | typeof ZStackAdapter
-            | typeof DeconzAdapter
-            | typeof ZiGateAdapter
-            | typeof EZSPAdapter
-            | typeof EmberAdapter
-            | typeof ZBOSSAdapter;
-
-        let adapters: AdapterImplementation[];
         const adapterLookup = {
-            zstack: ZStackAdapter,
-            deconz: DeconzAdapter,
-            zigate: ZiGateAdapter,
-            ezsp: EZSPAdapter,
-            ember: EmberAdapter,
-            zboss: ZBOSSAdapter,
+            deconz: ['./deconz/adapter/deconzAdapter', 'DeconzAdapter'],
+            ember: ['./ember/adapter/emberAdapter', 'EmberAdapter'],
+            ezsp: ['./ezsp/adapter/ezspAdapter', 'EZSPAdapter'],
+            zstack: ['./z-stack/adapter/zStackAdapter', 'ZStackAdapter'],
+            zboss: ['./zboss/adapter/zbossAdapter', 'ZBOSSAdapter'],
+            zigate: ['./zigate/adapter/zigateAdapter', 'ZiGateAdapter'],
         };
+        const [adapter, path] = await discoverAdapter(serialPortOptions.adapter, serialPortOptions.path);
+        const detectedAdapter = adapterLookup[adapter];
 
-        if (serialPortOptions.adapter && serialPortOptions.adapter !== 'auto') {
-            if (adapterLookup[serialPortOptions.adapter]) {
-                adapters = [adapterLookup[serialPortOptions.adapter]];
-            } else {
-                throw new Error(`Adapter '${serialPortOptions.adapter}' does not exists, possible options: ${Object.keys(adapterLookup).join(', ')}`);
-            }
+        if (detectedAdapter) {
+            serialPortOptions.adapter = adapter;
+            serialPortOptions.path = path;
+
+            const adapterModule = await import(detectedAdapter[0]);
+            const AdapterCtor = adapterModule[detectedAdapter[1]] as AdapterConstructor;
+
+            return new AdapterCtor(networkOptions, serialPortOptions, backupPath, adapterOptions);
         } else {
-            adapters = Object.values(adapterLookup);
+            throw new Error(`Adapter '${adapter}' does not exists, possible options: ${Object.keys(adapterLookup).join(', ')}`);
         }
-
-        // Use ZStackAdapter by default
-        let adapter: AdapterImplementation = adapters[0];
-
-        if (!serialPortOptions.path) {
-            logger.debug('No path provided, auto detecting path', NS);
-            for (const candidate of adapters) {
-                const path = await candidate.autoDetectPath();
-                if (path) {
-                    logger.debug(`Auto detected path '${path}' from adapter '${candidate.name}'`, NS);
-                    serialPortOptions.path = path;
-                    adapter = candidate;
-                    break;
-                }
-            }
-
-            if (!serialPortOptions.path) {
-                throw new Error('No path provided and failed to auto detect path');
-            }
-        } else if (serialPortOptions.path.startsWith('mdns://')) {
-            const mdnsDevice = serialPortOptions.path.substring(7);
-
-            if (mdnsDevice.length == 0) {
-                throw new Error(`No mdns device specified. You must specify the coordinator mdns service type after mdns://, e.g. mdns://my-adapter`);
-            }
-
-            const bj = new Bonjour();
-            const mdnsTimeout = 2000; // timeout for mdns scan
-
-            logger.info(`Starting mdns discovery for coordinator: ${mdnsDevice}`, NS);
-
-            await new Promise((resolve, reject) => {
-                bj.findOne({type: mdnsDevice}, mdnsTimeout, function (service: Service) {
-                    if (service) {
-                        if (service.txt?.radio_type && service.txt?.baud_rate && service.addresses && service.port) {
-                            const mdnsIp = service.addresses[0];
-                            const mdnsPort = service.port;
-                            const mdnsAdapter = (
-                                service.txt.radio_type == 'znp' ? 'zstack' : service.txt.radio_type
-                            ) as TsType.SerialPortOptions['adapter'];
-                            const mdnsBaud = parseInt(service.txt.baud_rate);
-
-                            logger.info(`Coordinator Ip: ${mdnsIp}`, NS);
-                            logger.info(`Coordinator Port: ${mdnsPort}`, NS);
-                            logger.info(`Coordinator Radio: ${mdnsAdapter}`, NS);
-                            logger.info(`Coordinator Baud: ${mdnsBaud}\n`, NS);
-                            bj.destroy();
-
-                            serialPortOptions.path = `tcp://${mdnsIp}:${mdnsPort}`;
-                            serialPortOptions.adapter = mdnsAdapter;
-                            serialPortOptions.baudRate = mdnsBaud;
-
-                            if (
-                                serialPortOptions.adapter &&
-                                serialPortOptions.adapter !== 'auto' &&
-                                adapterLookup[serialPortOptions.adapter] !== undefined
-                            ) {
-                                adapter = adapterLookup[serialPortOptions.adapter];
-                                resolve(new adapter(networkOptions, serialPortOptions, backupPath, adapterOptions));
-                            } else {
-                                reject(new Error(`Adapter ${serialPortOptions.adapter} is not supported.`));
-                            }
-                        } else {
-                            bj.destroy();
-                            reject(
-                                new Error(
-                                    `Coordinator returned wrong Zeroconf format! The following values are expected:\n` +
-                                        `txt.radio_type, got: ${service.txt?.radio_type}\n` +
-                                        `txt.baud_rate, got: ${service.txt?.baud_rate}\n` +
-                                        `address, got: ${service.addresses?.[0]}\n` +
-                                        `port, got: ${service.port}`,
-                                ),
-                            );
-                        }
-                    } else {
-                        bj.destroy();
-                        reject(new Error(`Coordinator [${mdnsDevice}] not found after timeout of ${mdnsTimeout}ms!`));
-                    }
-                });
-            });
-        } else {
-            try {
-                // Determine adapter to use
-                for (const candidate of adapters) {
-                    if (await candidate.isValidPath(serialPortOptions.path)) {
-                        logger.debug(`Path '${serialPortOptions.path}' is valid for '${candidate.name}'`, NS);
-                        adapter = candidate;
-                        break;
-                    }
-                }
-            } catch (error) {
-                logger.debug(`Failed to validate path: '${error}'`, NS);
-            }
-        }
-
-        return new adapter(networkOptions, serialPortOptions, backupPath, adapterOptions);
     }
 
     public abstract start(): Promise<TsType.StartResult>;
@@ -200,8 +96,6 @@ abstract class Adapter extends events.EventEmitter<AdapterEventMap> {
     public abstract backup(ieeeAddressesInDatabase: string[]): Promise<Models.Backup>;
 
     public abstract getNetworkParameters(): Promise<TsType.NetworkParameters>;
-
-    public abstract setTransmitPower(value: number): Promise<void>;
 
     public abstract addInstallCode(ieeeAddress: string, key: Buffer): Promise<void>;
 

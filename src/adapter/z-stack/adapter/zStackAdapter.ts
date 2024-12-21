@@ -1,9 +1,9 @@
-import assert from 'assert';
+import assert from 'node:assert';
 
 import debounce from 'debounce';
 
 import * as Models from '../../../models';
-import {Queue, Wait, Waitress} from '../../../utils';
+import {Queue, wait, Waitress} from '../../../utils';
 import {logger} from '../../../utils/logger';
 import * as ZSpec from '../../../zspec';
 import {BroadcastAddress} from '../../../zspec/enums';
@@ -57,7 +57,7 @@ class DataConfirmError extends Error {
     }
 }
 
-class ZStackAdapter extends Adapter {
+export class ZStackAdapter extends Adapter {
     private deviceAnnounceRouteDiscoveryDebouncers: Map<number, () => void>;
     private znp: Znp;
     // @ts-expect-error initialized in `start`
@@ -147,12 +147,12 @@ class ZStackAdapter extends Adapter {
 
         if (this.adapterOptions.disableLED) {
             // Wait a bit for adapter to startup, otherwise led doesn't disable (tested with CC2531)
-            await Wait(200);
+            await wait(200);
             await this.setLED('disable');
         }
 
         if (this.adapterOptions.transmitPower != null) {
-            await this.setTransmitPower(this.adapterOptions.transmitPower);
+            await this.znp.request(Subsystem.SYS, 'stackTune', {operation: 0, value: this.adapterOptions.transmitPower});
         }
 
         return await startResult;
@@ -161,14 +161,6 @@ class ZStackAdapter extends Adapter {
     public async stop(): Promise<void> {
         this.closing = true;
         await this.znp.close();
-    }
-
-    public static async isValidPath(path: string): Promise<boolean> {
-        return await Znp.isValidPath(path);
-    }
-
-    public static async autoDetectPath(): Promise<string | undefined> {
-        return await Znp.autoDetectPath();
     }
 
     public async getCoordinatorIEEE(): Promise<string> {
@@ -258,7 +250,7 @@ class ZStackAdapter extends Adapter {
         const clusterId = Zdo.ClusterId.NETWORK_ADDRESS_REQUEST;
         const zdoPayload = Zdo.Buffalo.buildRequest(this.hasZdoMessageOverhead, clusterId, ieeeAddr as EUI64, false, 0);
 
-        const result = await this.sendZdo(ieeeAddr, ZSpec.NULL_NODE_ID, clusterId, zdoPayload, false);
+        const result = await this.sendZdoInternal(ieeeAddr, ZSpec.NULL_NODE_ID, clusterId, zdoPayload, false, true);
 
         /* istanbul ignore else */
         if (Zdo.Buffalo.checkStatus(result)) {
@@ -277,13 +269,13 @@ class ZStackAdapter extends Adapter {
         return this.version.product === ZnpVersion.zStack3x0 && parseInt(this.version.revision) >= 20201026;
     }
 
-    private async discoverRoute(networkAddress: number, wait = true): Promise<void> {
+    private async discoverRoute(networkAddress: number, waitSettled = true): Promise<void> {
         logger.debug(`Discovering route to ${networkAddress}`, NS);
         const payload = {dstAddr: networkAddress, options: 0, radius: Constants.AF.DEFAULT_RADIUS};
         await this.znp.request(Subsystem.ZDO, 'extRouteDisc', payload);
 
-        if (wait) {
-            await Wait(3000);
+        if (waitSettled) {
+            await wait(3000);
         }
     }
 
@@ -308,7 +300,34 @@ class ZStackAdapter extends Adapter {
         payload: Buffer,
         disableResponse: boolean,
     ): Promise<ZdoTypes.RequestToResponseMap[K] | void> {
-        return await this.queue.execute(async () => {
+        return await this.sendZdoInternal(ieeeAddress, networkAddress, clusterId, payload, disableResponse, false);
+    }
+
+    private async sendZdoInternal(
+        ieeeAddress: string,
+        networkAddress: number,
+        clusterId: Zdo.ClusterId,
+        payload: Buffer,
+        disableResponse: boolean,
+        skipQueue: boolean,
+    ): Promise<void>;
+    private async sendZdoInternal<K extends keyof ZdoTypes.RequestToResponseMap>(
+        ieeeAddress: string,
+        networkAddress: number,
+        clusterId: K,
+        payload: Buffer,
+        disableResponse: false,
+        skipQueue: boolean,
+    ): Promise<ZdoTypes.RequestToResponseMap[K]>;
+    private async sendZdoInternal<K extends keyof ZdoTypes.RequestToResponseMap>(
+        ieeeAddress: string,
+        networkAddress: number,
+        clusterId: K,
+        payload: Buffer,
+        disableResponse: boolean,
+        skipQueue: boolean,
+    ): Promise<ZdoTypes.RequestToResponseMap[K] | void> {
+        const func = async (): Promise<ZdoTypes.RequestToResponseMap[K] | void> => {
             this.checkInterpanLock();
 
             // stack-specific requirements
@@ -404,7 +423,8 @@ class ZStackAdapter extends Adapter {
 
                 return response.payload.zdo;
             }
-        }, networkAddress);
+        };
+        return skipQueue ? await func() : await this.queue.execute(func, networkAddress);
     }
 
     public async sendZclFrameToEndpoint(
@@ -538,7 +558,7 @@ class ZStackAdapter extends Adapter {
                  * MAC_NO_RESOURCES: Operation could not be completed because no memory resources are available,
                  * wait some time and retry.
                  */
-                await Wait(2000);
+                await wait(2000);
                 return await this.sendZclFrameToEndpointInternal(
                     ieeeAddr,
                     networkAddress,
@@ -613,7 +633,7 @@ class ZStackAdapter extends Adapter {
                     }
                 } else {
                     logger.debug('Wait 2000ms', NS);
-                    await Wait(2000);
+                    await wait(2000);
                 }
 
                 return await this.sendZclFrameToEndpointInternal(
@@ -713,7 +733,7 @@ class ZStackAdapter extends Adapter {
              * (contrary to network address requests) we will give the
              * command some time to 'settle' in the network.
              */
-            await Wait(200);
+            await wait(200);
         });
     }
 
@@ -739,7 +759,7 @@ class ZStackAdapter extends Adapter {
              * (contrary to network address requests) we will give the
              * command some time to 'settle' in the network.
              */
-            await Wait(200);
+            await wait(200);
         });
     }
 
@@ -868,9 +888,9 @@ class ZStackAdapter extends Adapter {
     public async getNetworkParameters(): Promise<NetworkParameters> {
         const result = await this.znp.requestWithReply(Subsystem.ZDO, 'extNwkInfo', {});
         return {
-            panID: result.payload.panid,
-            extendedPanID: result.payload.extendedpanid,
-            channel: result.payload.channel,
+            panID: result.payload.panid as number,
+            extendedPanID: result.payload.extendedpanid as string, // read as IEEEADDR, so `0x${string}`
+            channel: result.payload.channel as number,
         };
     }
 
@@ -956,14 +976,8 @@ class ZStackAdapter extends Adapter {
         return await this.queue.execute<void>(async () => {
             await this.znp.request(Subsystem.AF, 'interPanCtl', {cmd: 0, data: []});
             // Give adapter some time to restore, otherwise stuff crashes
-            await Wait(3000);
+            await wait(3000);
             this.interpanLock = false;
-        });
-    }
-
-    public async setTransmitPower(value: number): Promise<void> {
-        return await this.queue.execute<void>(async () => {
-            await this.znp.request(Subsystem.SYS, 'stackTune', {operation: 0, value});
         });
     }
 
@@ -1109,7 +1123,7 @@ class ZStackAdapter extends Adapter {
                      * error. This is because there is too much traffic on the network.
                      * Retry this command once after a cooling down period.
                      */
-                    await Wait(2000);
+                    await wait(2000);
                     return await this.dataRequestExtended(
                         addressMode,
                         destinationAddressOrGroupID,
@@ -1143,17 +1157,7 @@ class ZStackAdapter extends Adapter {
     }
 
     private toAddressString(address: number | string): string {
-        if (typeof address === 'number') {
-            let addressString = address.toString(16);
-
-            for (let i = addressString.length; i < 16; i++) {
-                addressString = '0' + addressString;
-            }
-
-            return `0x${addressString}`;
-        } else {
-            return address.toString();
-        }
+        return typeof address === 'number' ? `0x${address.toString(16).padStart(16, '0')}` : address.toString();
     }
 
     private waitressTimeoutFormatter(matcher: WaitressMatcher, timeout: number): string {
@@ -1183,5 +1187,3 @@ class ZStackAdapter extends Adapter {
         }
     }
 }
-
-export default ZStackAdapter;

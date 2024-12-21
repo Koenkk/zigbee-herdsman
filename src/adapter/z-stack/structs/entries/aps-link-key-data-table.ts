@@ -1,4 +1,4 @@
-import assert from 'assert';
+import assert from 'node:assert';
 
 import {StructMemoryAlignment} from '../struct';
 /* eslint-disable @typescript-eslint/explicit-function-return-type */

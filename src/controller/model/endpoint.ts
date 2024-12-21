@@ -1,4 +1,4 @@
-import assert from 'assert';
+import assert from 'node:assert';
 
 import {Events as AdapterEvents} from '../../adapter';
 import {logger} from '../../utils/logger';
@@ -86,7 +86,7 @@ interface ConfiguredReporting {
     reportableChange: number;
 }
 
-class Endpoint extends Entity {
+export class Endpoint extends Entity {
     public deviceID?: number;
     public inputClusters: number[];
     public outputClusters: number[];
@@ -788,7 +788,7 @@ class Endpoint extends Entity {
     public waitForCommand(
         clusterKey: number | string,
         commandKey: number | string,
-        transactionSequenceNumber: number,
+        transactionSequenceNumber: number | undefined,
         timeout: number,
     ): {promise: Promise<{header: Zcl.Header; payload: KeyValue}>; cancel: () => void} {
         const device = this.getDevice();

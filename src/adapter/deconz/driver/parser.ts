@@ -1,6 +1,6 @@
 /* istanbul ignore file */
 
-import {Transform, TransformCallback} from 'stream';
+import {Transform, TransformCallback} from 'node:stream';
 
 import slip from 'slip';
 
@@ -34,7 +34,7 @@ class Parser extends Transform {
         logger.debug(`<-- error '${error}'`, NS);
     }
 
-    public _transform(chunk: Buffer, _: string, cb: TransformCallback): void {
+    public override _transform(chunk: Buffer, _: string, cb: TransformCallback): void {
         //logger.debug(`<-- [${[...chunk]}]`, NS);
         this.decoder.decode(chunk);
         //logger.debug(`<-- [${[...chunk]}]`, NS);

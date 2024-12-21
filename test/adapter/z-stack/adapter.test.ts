@@ -1,13 +1,13 @@
 import 'regenerator-runtime/runtime';
 
-import * as fs from 'fs';
-import * as path from 'path';
+import * as fs from 'node:fs';
+import * as path from 'node:path';
 
 import equals from 'fast-deep-equal/es6';
 
 import {ZclPayload} from '../../../src/adapter/events';
-import {ZStackAdapter} from '../../../src/adapter/z-stack/adapter';
 import {ZnpVersion} from '../../../src/adapter/z-stack/adapter/tstype';
+import {ZStackAdapter} from '../../../src/adapter/z-stack/adapter/zStackAdapter';
 import * as Constants from '../../../src/adapter/z-stack/constants';
 import {AddressMode, DevStates, NvItemsIds, NvSystemIds, ZnpCommandStatus} from '../../../src/adapter/z-stack/constants/common';
 import * as Structs from '../../../src/adapter/z-stack/structs';
@@ -49,11 +49,18 @@ const mockLogger = {
     error: jest.fn(),
 };
 const deepClone = (obj) => JSON.parse(JSON.stringify(obj));
-const mockSetTimeout = () => (setTimeout = jest.fn().mockImplementation((r) => r()));
+const mockSetTimeout = () => {
+    return jest.spyOn(globalThis, 'setTimeout').mockImplementation(
+        // @ts-expect-error mock
+        (cb) => cb(),
+    );
+};
 
-jest.mock('../../../src/utils/wait', () => {
-    return jest.fn();
-});
+jest.mock('../../../src/utils/wait', () => ({
+    wait: jest.fn(() => {
+        return new Promise<void>((resolve) => resolve());
+    }),
+}));
 
 const waitForResult = (payloadOrPromise: Promise<unknown> | ZpiObjectPayload, ID?: number) => {
     ID = ID || 1;
@@ -1355,37 +1362,30 @@ let lastStartIndex = 0;
 let simpleDescriptorEndpoint = 0;
 let assocGetWithAddressNodeRelation;
 
-jest.mock('../../../src/adapter/z-stack/znp/znp', () => {
-    return jest.fn().mockImplementation(() => {
-        return {
-            on: (event, handler) => {
-                if (event === 'received') {
-                    znpReceived = handler;
-                } else if (event === 'close') {
-                    znpClose = handler;
-                }
-            },
-            open: mockZnpOpen,
-            request: mockZnpRequest,
-            requestZdo: mockZnpRequestZdo,
-            requestWithReply: mockZnpRequest,
-            waitFor: mockZnpWaitFor,
-            close: mockZnpClose,
-        };
-    });
-});
+jest.mock('../../../src/adapter/z-stack/znp/znp', () => ({
+    Znp: jest.fn(() => ({
+        on: (event, handler) => {
+            if (event === 'received') {
+                znpReceived = handler;
+            } else if (event === 'close') {
+                znpClose = handler;
+            }
+        },
+        open: mockZnpOpen,
+        request: mockZnpRequest,
+        requestZdo: mockZnpRequestZdo,
+        requestWithReply: mockZnpRequest,
+        waitFor: mockZnpWaitFor,
+        close: mockZnpClose,
+    })),
+}));
 
-jest.mock('../../../src/utils/queue', () => {
-    return jest.fn().mockImplementation(() => {
-        return {
-            execute: mockQueueExecute,
-            count: () => 1,
-        };
-    });
-});
-
-Znp.isValidPath = jest.fn().mockReturnValue(true);
-Znp.autoDetectPath = jest.fn().mockReturnValue('/dev/autodetected');
+jest.mock('../../../src/utils/queue', () => ({
+    Queue: jest.fn(() => ({
+        execute: mockQueueExecute,
+        count: () => 1,
+    })),
+}));
 
 const mocksClear = [mockLogger.debug, mockLogger.info, mockLogger.warning, mockLogger.error];
 
@@ -1647,7 +1647,7 @@ describe('zstack-adapter', () => {
         mockZnpRequestWith(empty3AlignedRequestMock);
         await adapter.start();
         fs.writeFileSync(backupFile, JSON.stringify(backupWithMissingDevice), 'utf8');
-        const devicesInDatabase = backupWithMissingDevice.devices.map((d) => `0x${d.ieee_address}`);
+        const devicesInDatabase = backupWithMissingDevice.devices.map((d) => ZSpec.Utils.eui64BEBufferToHex(d.ieee_address));
         const backup = await adapter.backup(devicesInDatabase);
         const missingDevice = backup.devices.find((d) => d.ieeeAddress.toString('hex') == '00128d11124fa80b');
         expect(missingDevice).not.toBeNull();
@@ -2078,17 +2078,6 @@ describe('zstack-adapter', () => {
     });
 
     /* Original Tests */
-    it('Is valid path', async () => {
-        const result = await ZStackAdapter.isValidPath('/dev/autodetected');
-        expect(result).toBeTruthy();
-        expect(Znp.isValidPath).toHaveBeenCalledWith('/dev/autodetected');
-    });
-
-    it('Auto detect path', async () => {
-        const result = await ZStackAdapter.autoDetectPath();
-        expect(result).toBe('/dev/autodetected');
-        expect(Znp.autoDetectPath).toHaveBeenCalledTimes(1);
-    });
 
     it('Call znp constructor', async () => {
         expect(Znp).toHaveBeenCalledWith('dummy', 800, false);
@@ -2194,16 +2183,6 @@ describe('zstack-adapter', () => {
         adapter = new ZStackAdapter(networkOptions, serialPortOptions, 'backup.json', {transmitPower: 2, disableLED: false});
         await adapter.start();
         expect(mockZnpRequest).toHaveBeenCalledWith(Subsystem.SYS, 'stackTune', {operation: 0, value: 2});
-    });
-
-    it('Set transmit power', async () => {
-        basicMocks();
-        await adapter.start();
-        mockZnpRequest.mockClear();
-        mockQueueExecute.mockClear();
-        await adapter.setTransmitPower(15);
-        expect(mockZnpRequest).toHaveBeenCalledTimes(1);
-        expect(mockZnpRequest).toHaveBeenCalledWith(Subsystem.SYS, 'stackTune', {operation: 0, value: 15});
     });
 
     it('Support LED should go to false when LED request fails', async () => {
@@ -3168,10 +3147,11 @@ describe('zstack-adapter', () => {
         });
         let error;
         try {
-            mockSetTimeout();
+            const spy = mockSetTimeout();
             const response = adapter.sendZclFrameToEndpoint('0x02', 2, 20, frame, 1, false, false);
             znpReceived(objectMismatch);
             await response;
+            spy.mockRestore();
         } catch (e) {
             error = e;
         }
@@ -3226,10 +3206,11 @@ describe('zstack-adapter', () => {
         });
         let error;
         try {
-            mockSetTimeout();
+            const spy = mockSetTimeout();
             const response = adapter.sendZclFrameToEndpoint('0x02', 2, 20, frame, 1, false, false);
             znpReceived(objectMismatch);
             await response;
+            spy.mockRestore();
         } catch (e) {
             error = e;
         }

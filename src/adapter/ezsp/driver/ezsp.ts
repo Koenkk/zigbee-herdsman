@@ -1,8 +1,8 @@
 /* istanbul ignore file */
 
-import {EventEmitter} from 'events';
+import {EventEmitter} from 'node:events';
 
-import {Queue, Wait, Waitress} from '../../../utils';
+import {Queue, wait, Waitress} from '../../../utils';
 import {logger} from '../../../utils/logger';
 import {SerialPortOptions} from '../../tstype';
 import {
@@ -350,7 +350,7 @@ export class Ezsp extends EventEmitter {
                 logger.error(`Connection attempt ${i} error: ${error}`, NS);
 
                 if (i < MAX_SERIAL_CONNECT_ATTEMPTS) {
-                    await Wait(SERIAL_CONNECT_NEW_ATTEMPT_MIN_DELAY * i);
+                    await wait(SERIAL_CONNECT_NEW_ATTEMPT_MIN_DELAY * i);
                     logger.debug(`Next attempt ${i + 1}`, NS);
                 }
 

@@ -1,6 +1,4 @@
-import Device from './device';
-import Endpoint from './endpoint';
-import Entity from './entity';
-import Group from './group';
-
-export {Device, Endpoint, Entity, Group};
+export {Device} from './device';
+export {Endpoint} from './endpoint';
+export {Entity} from './entity';
+export {Group} from './group';

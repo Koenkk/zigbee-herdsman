@@ -1,12 +1,12 @@
-import * as stream from 'stream';
+import * as stream from 'node:stream';
 
 import {logger} from '../../../utils/logger';
 import {DataStart, MinMessageLength, PositionDataLength, SOF} from './constants';
-import Frame from './frame';
+import {Frame} from './frame';
 
 const NS = 'zh:zstack:unpi:parser';
 
-class Parser extends stream.Transform {
+export class Parser extends stream.Transform {
     private buffer: Buffer;
 
     public constructor() {
@@ -14,7 +14,7 @@ class Parser extends stream.Transform {
         this.buffer = Buffer.from([]);
     }
 
-    public _transform(chunk: Buffer, _: string, cb: () => void): void {
+    public override _transform(chunk: Buffer, _: string, cb: () => void): void {
         logger.debug(`<-- [${[...chunk]}]`, NS);
         this.buffer = Buffer.concat([this.buffer, chunk]);
         this.parseNext();
@@ -54,5 +54,3 @@ class Parser extends stream.Transform {
         }
     }
 }
-
-export default Parser;

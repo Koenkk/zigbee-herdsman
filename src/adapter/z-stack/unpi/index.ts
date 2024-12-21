@@ -1,6 +1,4 @@
-import * as Constants from './constants';
-import Frame from './frame';
-import Parser from './parser';
-import Writer from './writer';
-
-export {Writer, Frame, Parser, Constants};
+export * as Constants from './constants';
+export {Frame} from './frame';
+export {Parser} from './parser';
+export {Writer} from './writer';

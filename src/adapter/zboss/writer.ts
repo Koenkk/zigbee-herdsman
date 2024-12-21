@@ -1,6 +1,6 @@
 /* istanbul ignore file */
 
-import {Readable, ReadableOptions} from 'stream';
+import {Readable, ReadableOptions} from 'node:stream';
 
 export class ZBOSSWriter extends Readable {
     private bytesToWrite: number[];
@@ -45,5 +45,5 @@ export class ZBOSSWriter extends Readable {
         }
     }
 
-    public _read(): void {}
+    public override _read(): void {}
 }

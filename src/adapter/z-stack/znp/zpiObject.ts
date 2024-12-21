@@ -1,4 +1,4 @@
-import assert from 'assert';
+import assert from 'node:assert';
 
 import {ClusterId as ZdoClusterId} from '../../../zspec/zdo';
 import {BuffaloZdo} from '../../../zspec/zdo/buffaloZdo';
@@ -25,7 +25,7 @@ const BufferAndListTypes = [
 
 type ZpiObjectType = 'Request' | 'Response';
 
-class ZpiObject<T extends ZpiObjectType = 'Response'> {
+export class ZpiObject<T extends ZpiObjectType = 'Response'> {
     public readonly type: Type;
     public readonly subsystem: Subsystem;
     public readonly command: MtCmd;
@@ -142,9 +142,8 @@ class ZpiObject<T extends ZpiObjectType = 'Response'> {
         );
     }
 
-    public toString(): string {
-        return `${Type[this.type]}: ${Subsystem[this.subsystem]} - ${this.command.name} - ${JSON.stringify(this.payload)}`;
+    public toString(includePayload = true): string {
+        const baseStr = `${Type[this.type]}: ${Subsystem[this.subsystem]} - ${this.command.name}`;
+        return includePayload ? baseStr + ` - ${JSON.stringify(this.payload)}` : baseStr;
     }
 }
-
-export default ZpiObject;

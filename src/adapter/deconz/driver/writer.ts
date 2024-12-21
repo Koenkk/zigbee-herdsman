@@ -1,9 +1,7 @@
 /* istanbul ignore file */
-/* eslint-disable */
 
-import * as stream from 'stream';
+import * as stream from 'node:stream';
 
-// @ts-ignore
 import slip from 'slip';
 
 import {logger} from '../../../utils/logger';
@@ -18,7 +16,7 @@ class Writer extends stream.Readable {
         this.push(buffer);
     }
 
-    public _read(): void {}
+    public override _read(): void {}
 }
 
 export default Writer;

@@ -1,6 +1,6 @@
 /* istanbul ignore file */
 
-import * as stream from 'stream';
+import * as stream from 'node:stream';
 
 import {logger} from '../../../utils/logger';
 import * as consts from './consts';
@@ -17,7 +17,7 @@ export class Parser extends stream.Transform {
         this.tail = [];
     }
 
-    public _transform(chunk: Buffer, _: string, cb: () => void): void {
+    public override _transform(chunk: Buffer, _: string, cb: () => void): void {
         if (chunk.indexOf(consts.CANCEL) >= 0) {
             this.reset();
             chunk = chunk.subarray(chunk.lastIndexOf(consts.CANCEL) + 1);

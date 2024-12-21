@@ -1,5 +1,3 @@
-import Adapter from './adapter';
-import * as Events from './events';
-import * as TsType from './tstype';
-
-export {TsType, Adapter, Events};
+export {Adapter} from './adapter';
+export * as Events from './events';
+export * as TsType from './tstype';

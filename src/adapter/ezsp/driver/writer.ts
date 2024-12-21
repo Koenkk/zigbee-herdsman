@@ -1,6 +1,6 @@
 /* istanbul ignore file */
 
-import * as stream from 'stream';
+import * as stream from 'node:stream';
 
 import {logger} from '../../../utils/logger';
 import * as consts from './consts';
@@ -14,7 +14,7 @@ export class Writer extends stream.Readable {
         this.push(buffer);
     }
 
-    public _read(): void {}
+    public override _read(): void {}
 
     public sendACK(ackNum: number): void {
         /* Construct a acknowledgement frame */

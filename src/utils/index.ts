@@ -1,9 +1,5 @@
-import * as BackupUtils from './backup';
-import EqualsPartial from './equalsPartial';
-import Queue from './queue';
-import RealpathSync from './realpathSync';
-import * as Utils from './utils';
-import Wait from './wait';
-import Waitress from './waitress';
-
-export {Wait, Queue, Waitress, EqualsPartial, RealpathSync, BackupUtils, Utils};
+export * as BackupUtils from './backup';
+export {Queue} from './queue';
+export * as Utils from './utils';
+export {wait} from './wait';
+export {Waitress} from './waitress';

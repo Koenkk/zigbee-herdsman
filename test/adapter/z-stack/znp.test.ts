@@ -30,95 +30,74 @@ const mockSerialPortAsyncSet = jest.fn();
 const mockSerialPortWrite = jest.fn((buffer, cb) => cb());
 let mockSerialPortIsOpen = false;
 
-jest.mock('../../../src/utils/wait', () => {
-    return jest.fn();
-});
+jest.mock('../../../src/utils/wait', () => ({
+    wait: jest.fn(() => {
+        return new Promise<void>((resolve) => resolve());
+    }),
+}));
 
-jest.mock('../../../src/adapter/serialPort', () => {
-    return {
-        SerialPort: jest.fn().mockImplementation(() => {
-            return {
-                close: mockSerialPortClose,
-                constructor: mockSerialPortConstructor,
-                emit: () => {},
-                on: () => {},
-                once: mockSerialPortOnce,
-                open: mockSerialPortOpen,
-                pipe: mockSerialPortPipe,
-                write: mockSerialPortWrite,
-                flush: mockSerialPortFlush,
-                isOpen: mockSerialPortIsOpen,
-                asyncOpen: mockSerialPortAsyncOpen,
-                asyncFlushAndClose: mockSerialPortAsyncFlushAndClose,
-                asyncSet: mockSerialPortAsyncSet,
-            };
-        }),
-    };
-});
+jest.mock('../../../src/adapter/serialPort', () => ({
+    SerialPort: jest.fn(() => ({
+        close: mockSerialPortClose,
+        constructor: mockSerialPortConstructor,
+        emit: () => {},
+        on: () => {},
+        once: mockSerialPortOnce,
+        open: mockSerialPortOpen,
+        pipe: mockSerialPortPipe,
+        write: mockSerialPortWrite,
+        flush: mockSerialPortFlush,
+        isOpen: mockSerialPortIsOpen,
+        asyncOpen: mockSerialPortAsyncOpen,
+        asyncFlushAndClose: mockSerialPortAsyncFlushAndClose,
+        asyncSet: mockSerialPortAsyncSet,
+    })),
+}));
 
 const mockSocketSetNoDelay = jest.fn();
 const mockSocketSetKeepAlive = jest.fn();
 const mockSocketPipe = jest.fn();
 const mockSocketOnce = jest.fn();
 const mockSocketCallbacks = {};
-const mockSocketConnect = jest.fn().mockImplementation(() => {
+const mockSocketConnect = jest.fn(() => {
     mockSocketCallbacks['connect']();
     mockSocketCallbacks['ready']();
 });
 const mockSocketDestroy = jest.fn();
 let requestSpy;
 
-jest.mock('net', () => {
-    return {
-        Socket: jest.fn().mockImplementation(() => {
-            return {
-                setNoDelay: mockSocketSetNoDelay,
-                pipe: mockSocketPipe,
-                connect: mockSocketConnect,
-                on: (event, cb) => (mockSocketCallbacks[event] = cb),
-                once: mockSocketOnce,
-                destroy: mockSocketDestroy,
-                setKeepAlive: mockSocketSetKeepAlive,
-            };
-        }),
-    };
-});
-
-// Mock realPathSync
-let mockRealPathSyncError = false;
-jest.mock('../../../src/utils/realpathSync', () => {
-    return jest.fn().mockImplementation((path) => {
-        if (mockRealPathSyncError) {
-            throw new Error('Not a valid path');
-        }
-        return path;
-    });
-});
+jest.mock('node:net', () => ({
+    Socket: jest.fn(() => ({
+        setNoDelay: mockSocketSetNoDelay,
+        pipe: mockSocketPipe,
+        connect: mockSocketConnect,
+        on: (event, cb) => (mockSocketCallbacks[event] = cb),
+        once: mockSocketOnce,
+        destroy: mockSocketDestroy,
+        setKeepAlive: mockSocketSetKeepAlive,
+    })),
+}));
 
 SerialPort.list = mockSerialPortList;
 
 const mockUnpiParserOn = jest.fn();
 
-jest.mock('../../../src/adapter/z-stack/unpi/parser', () => {
-    return jest.fn().mockImplementation(() => {
-        return {
-            on: mockUnpiParserOn,
-        };
-    });
-});
+jest.mock('../../../src/adapter/z-stack/unpi/parser', () => ({
+    Parser: jest.fn(() => ({
+        on: mockUnpiParserOn,
+    })),
+}));
 
 const mockUnpiWriterWriteFrame = jest.fn();
 const mockUnpiWriterWriteBuffer = jest.fn();
 
-jest.mock('../../../src/adapter/z-stack/unpi/writer', () => {
-    return jest.fn().mockImplementation(() => {
-        return {
-            writeFrame: mockUnpiWriterWriteFrame,
-            writeBuffer: mockUnpiWriterWriteBuffer,
-            pipe: jest.fn(),
-        };
-    });
-});
+jest.mock('../../../src/adapter/z-stack/unpi/writer', () => ({
+    Writer: jest.fn(() => ({
+        writeFrame: mockUnpiWriterWriteFrame,
+        writeBuffer: mockUnpiWriterWriteBuffer,
+        pipe: jest.fn(),
+    })),
+}));
 
 const mocks = [
     mockSerialPortClose,
@@ -202,25 +181,6 @@ describe('ZNP', () => {
         expect(mockSerialPortOnce).toHaveBeenCalledTimes(2);
     });
 
-    it('Open autodetect port', async () => {
-        mockSerialPortList.mockReturnValue([
-            {manufacturer: 'Not texas instruments', vendorId: '0451', productId: '16a8', path: '/dev/autodetected2'},
-            {path: '/dev/tty.usbmodemL43001T22', manufacturer: 'Texas Instruments', vendorId: '0451', productId: 'bef3'},
-            {path: '/dev/tty.usbmodemL43001T24', manufacturer: 'Texas Instruments', vendorId: '0451', productId: 'bef3'},
-            {path: '/dev/tty.usbmodemL43001T21', manufacturer: 'Texas Instruments', vendorId: '0451', productId: 'bef3'},
-        ]);
-
-        expect(await Znp.autoDetectPath()).toBe('/dev/tty.usbmodemL43001T21');
-    });
-
-    it('Autodetect port error when there are not available devices', async () => {
-        mockSerialPortList.mockReturnValue([
-            {manufacturer: 'Not texas instruments', vendorId: '0451', productId: '16a8', path: '/dev/autodetected2'},
-        ]);
-
-        expect(await Znp.autoDetectPath()).toBeUndefined();
-    });
-
     it('Open and close tcp port', async () => {
         znp = new Znp('tcp://localhost:8080', 100, false);
         await znp.open();
@@ -249,43 +209,6 @@ describe('ZNP', () => {
 
         expect(error).toStrictEqual(new Error('Error while opening socket'));
         expect(znp.isInitialized()).toBeFalsy();
-    });
-
-    it('Check if tcp path is valid', async () => {
-        expect(await Znp.isValidPath('tcp://192.168.2.1:8080')).toBeFalsy();
-        expect(await Znp.isValidPath('tcp://localhost:8080')).toBeFalsy();
-        expect(await Znp.isValidPath('tcp://192.168.2.1')).toBeFalsy();
-        expect(await Znp.isValidPath('tcp://localhost')).toBeFalsy();
-        expect(await Znp.isValidPath('tcp')).toBeFalsy();
-    });
-
-    it('Check if path is valid', async () => {
-        mockSerialPortList.mockReturnValue([
-            {manufacturer: 'Not texas instruments', vendorId: '0451', productId: '16a8', path: '/dev/autodetected2'},
-            {path: '/dev/tty.usbmodemL43001T22', manufacturer: 'Texas Instruments', vendorId: '0451', productId: 'bef3'},
-            {path: '/dev/tty.usbmodemL43001T24', manufacturer: 'Texas Instruments', vendorId: '0451', productId: 'bef3'},
-            {path: '/dev/tty.usbmodemL43001T21', manufacturer: 'Texas Instruments', vendorId: '0451', productId: 'bef3'},
-        ]);
-
-        expect(await Znp.isValidPath('/dev/tty.usbmodemL43001T21')).toBeTruthy();
-        expect(await Znp.isValidPath('/dev/autodetected2')).toBeFalsy();
-    });
-
-    it('Check if path is valid; return false when path does not exist in device list', async () => {
-        mockSerialPortList.mockReturnValue([
-            {manufacturer: 'Not texas instruments', vendorId: '0451', productId: '16a8', path: '/dev/autodetected2'},
-            {path: '/dev/tty.usbmodemL43001T22', manufacturer: 'Texas Instruments', vendorId: '0451', productId: 'bef3'},
-            {path: '/dev/tty.usbmodemL43001T24', manufacturer: 'Texas Instruments', vendorId: '0451', productId: 'bef3'},
-            {path: '/dev/tty.usbmodemL43001T21', manufacturer: 'Texas Instruments', vendorId: '0451', productId: 'bef3'},
-        ]);
-
-        expect(await Znp.isValidPath('/dev/notexisting')).toBeFalsy();
-    });
-
-    it('Check if path is valid path resolve fails', async () => {
-        mockRealPathSyncError = true;
-        expect(await Znp.isValidPath('/dev/tty.usbmodemL43001T21')).toBeFalsy();
-        mockRealPathSyncError = false;
     });
 
     it('Open with error', async () => {

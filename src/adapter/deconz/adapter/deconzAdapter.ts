@@ -2,7 +2,7 @@
 
 import Device from '../../../controller/model/device';
 import * as Models from '../../../models';
-import {Wait, Waitress} from '../../../utils';
+import {wait, Waitress} from '../../../utils';
 import {logger} from '../../../utils/logger';
 import * as ZSpec from '../../../zspec';
 import {BroadcastAddress} from '../../../zspec/enums';
@@ -28,7 +28,7 @@ interface WaitressMatcher {
     direction: number;
 }
 
-class DeconzAdapter extends Adapter {
+export class DeconzAdapter extends Adapter {
     private driver: Driver;
     private openRequestsQueue: WaitForDataRequest[];
     private transactionID: number;
@@ -74,14 +74,6 @@ class DeconzAdapter extends Adapter {
         setInterval(() => {
             this.checkReceivedDataPayload(null);
         }, 1000);
-    }
-
-    public static async isValidPath(path: string): Promise<boolean> {
-        return await Driver.isValidPath(path);
-    }
-
-    public static async autoDetectPath(): Promise<string | undefined> {
-        return await Driver.autoDetectPath();
     }
 
     /**
@@ -164,7 +156,7 @@ class DeconzAdapter extends Adapter {
 
             try {
                 await this.driver.writeParameterRequest(PARAM.PARAM.Network.CHANNEL_MASK, setChannelMask);
-                await Wait(500);
+                await wait(500);
                 changed = true;
             } catch (error) {
                 logger.debug('Could not set channel: ' + error, NS);
@@ -180,7 +172,7 @@ class DeconzAdapter extends Adapter {
 
             try {
                 await this.driver.writeParameterRequest(PARAM.PARAM.Network.PAN_ID, this.networkOptions.panID);
-                await Wait(500);
+                await wait(500);
                 changed = true;
             } catch (error) {
                 logger.debug('Could not set panid: ' + error, NS);
@@ -200,7 +192,7 @@ class DeconzAdapter extends Adapter {
 
             try {
                 await this.driver.writeParameterRequest(PARAM.PARAM.Network.APS_EXT_PAN_ID, this.networkOptions.extendedPanID!);
-                await Wait(500);
+                await wait(500);
                 changed = true;
             } catch (error) {
                 logger.debug('Could not set extended panid: ' + error, NS);
@@ -216,7 +208,7 @@ class DeconzAdapter extends Adapter {
 
             try {
                 await this.driver.writeParameterRequest(PARAM.PARAM.Network.NETWORK_KEY, this.networkOptions.networkKey!);
-                await Wait(500);
+                await wait(500);
                 changed = true;
             } catch (error) {
                 logger.debug('Could not set network key: ' + error, NS);
@@ -225,9 +217,9 @@ class DeconzAdapter extends Adapter {
 
         if (changed) {
             await this.driver.changeNetworkStateRequest(PARAM.PARAM.Network.NET_OFFLINE);
-            await Wait(2000);
+            await wait(2000);
             await this.driver.changeNetworkStateRequest(PARAM.PARAM.Network.NET_CONNECTED);
-            await Wait(2000);
+            await wait(2000);
         }
 
         // write endpoints
@@ -307,9 +299,8 @@ class DeconzAdapter extends Adapter {
         }
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     public async addInstallCode(ieeeAddress: string, key: Buffer): Promise<void> {
-        return await Promise.reject(new Error('Add install code is not supported'));
+        await this.driver.writeLinkKey(ieeeAddress, ZSpec.Utils.aes128MmoHash(key));
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -546,9 +537,10 @@ class DeconzAdapter extends Adapter {
             const panid = await this.driver.readParameterRequest(PARAM.PARAM.Network.PAN_ID);
             const expanid = await this.driver.readParameterRequest(PARAM.PARAM.Network.APS_EXT_PAN_ID);
             const channel = await this.driver.readParameterRequest(PARAM.PARAM.Network.CHANNEL);
+
             return {
                 panID: panid as number,
-                extendedPanID: expanid as number,
+                extendedPanID: expanid as string, // read as `0x...`
                 channel: channel as number,
             };
         } catch (error) {
@@ -579,11 +571,6 @@ class DeconzAdapter extends Adapter {
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     public async setChannelInterPAN(channel: number): Promise<void> {
-        throw new Error('not supported');
-    }
-
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    public async setTransmitPower(value: number): Promise<void> {
         throw new Error('not supported');
     }
 
@@ -767,5 +754,3 @@ class DeconzAdapter extends Adapter {
         );
     }
 }
-
-export default DeconzAdapter;

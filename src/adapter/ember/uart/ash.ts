@@ -1,9 +1,9 @@
 /* istanbul ignore file */
 
-import {Socket} from 'net';
-import {EventEmitter} from 'stream';
+import {EventEmitter} from 'node:events';
+import {Socket} from 'node:net';
 
-import {Wait} from '../../../utils';
+import {wait} from '../../../utils';
 import {logger} from '../../../utils/logger';
 import {SerialPort} from '../../serialPort';
 import SocketPortUtils from '../../socketPortUtils';
@@ -640,7 +640,7 @@ export class UartAsh extends EventEmitter<UartAshEventMap> {
             }
 
             logger.debug(`Waiting for RSTACK... ${i}/${CONFIG_TIME_RST}`, NS);
-            await Wait(CONFIG_TIME_RST_CHECK);
+            await wait(CONFIG_TIME_RST_CHECK);
         }
 
         return EzspStatus.HOST_FATAL_ERROR;

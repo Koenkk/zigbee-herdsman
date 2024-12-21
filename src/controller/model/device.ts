@@ -1,8 +1,8 @@
-import assert from 'assert';
+import assert from 'node:assert';
 
 import {Events as AdapterEvents} from '../../adapter';
 import {LQINeighbor, RoutingTableEntry} from '../../adapter/tstype';
-import {Wait} from '../../utils';
+import {wait} from '../../utils';
 import {logger} from '../../utils/logger';
 import * as ZSpec from '../../zspec';
 import {BroadcastAddress} from '../../zspec/enums';
@@ -40,7 +40,7 @@ interface RoutingTable {
 
 type CustomReadResponse = (frame: Zcl.Frame, endpoint: Endpoint) => boolean;
 
-class Device extends Entity<ControllerEventMap> {
+export class Device extends Entity<ControllerEventMap> {
     private readonly ID: number;
     private _applicationVersion?: number;
     private _dateCode?: string;
@@ -877,7 +877,7 @@ class Device extends Entity<ControllerEventMap> {
             // Give Tuya end device some time to pair. Otherwise they leave immediately.
             // https://github.com/Koenkk/zigbee2mqtt/issues/5814
             logger.debug('Interview - Detected Tuya end device, waiting 10 seconds...', NS);
-            await Wait(10000);
+            await wait(10000);
         } else if (this.manufacturerID === 0 || this.manufacturerID === 4098) {
             // Potentially a Tuya device, some sleep fast so make sure to read the modelId and manufacturerName quickly.
             // In case the device responds, the endoint and modelID/manufacturerName are set
@@ -942,7 +942,7 @@ class Device extends Entity<ControllerEventMap> {
                                 // The modelID and manufacturerName are crucial for device identification, so retry.
                                 if (item.key === 'modelID' || item.key === 'manufacturerName') {
                                     logger.debug(`Interview - first ${item.key} retrieval attempt failed, retrying after 10 seconds...`, NS);
-                                    await Wait(10000);
+                                    await wait(10000);
                                     result = await endpoint.read('genBasic', [key], {sendPolicy: 'immediate'});
                                 } else {
                                     throw error;
@@ -978,14 +978,14 @@ class Device extends Entity<ControllerEventMap> {
                     // - Manual enroll: coordinator replies to enroll request with an enroll response.
                     //                  this case in hanled in onZclData().
                     // https://github.com/Koenkk/zigbee2mqtt/issues/4569#issuecomment-706075676
-                    await Wait(500);
+                    await wait(500);
                     logger.debug(`IAS - '${this.ieeeAddr}' sending enroll response (auto enroll)`, NS);
                     const payload = {enrollrspcode: 0, zoneid: 23};
                     await endpoint.command('ssIasZone', 'enrollRsp', payload, {disableDefaultResponse: true, sendPolicy: 'immediate'});
 
                     let enrolled = false;
                     for (let attempt = 0; attempt < 20; attempt++) {
-                        await Wait(500);
+                        await wait(500);
                         const stateAfter = await endpoint.read('ssIasZone', ['iasCieAddr', 'zoneState'], {sendPolicy: 'immediate'});
                         logger.debug(`Interview - IAS - after enrolling state (${attempt}): '${JSON.stringify(stateAfter)}'`, NS);
                         if (stateAfter.zoneState === 1) {
@@ -1074,8 +1074,6 @@ class Device extends Entity<ControllerEventMap> {
 
         // Make sure that the endpoint are sorted.
         activeEndpoints.endpointList.sort((a, b) => a - b);
-
-        // TODO: this does not take care of removing endpoint (changing custom devices)?
         for (const endpoint of activeEndpoints.endpointList) {
             // Some devices, e.g. TERNCY return endpoint 0 in the active endpoints request.
             // This is not a valid endpoint number according to the ZCL, requesting a simple descriptor will result
@@ -1085,6 +1083,9 @@ class Device extends Entity<ControllerEventMap> {
                 this._endpoints.push(Endpoint.create(endpoint, undefined, undefined, [], [], this.networkAddress, this.ieeeAddr));
             }
         }
+
+        // Remove disappeared endpoints (can happen with e.g. custom devices).
+        this._endpoints = this._endpoints.filter((e) => activeEndpoints.endpointList.includes(e.ID));
     }
 
     /**

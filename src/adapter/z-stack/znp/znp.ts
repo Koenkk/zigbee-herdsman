@@ -1,12 +1,11 @@
-import assert from 'assert';
-import events from 'events';
-import net from 'net';
+import assert from 'node:assert';
+import events from 'node:events';
+import net from 'node:net';
 
-import {Queue, RealpathSync, Wait, Waitress} from '../../../utils';
+import {Queue, wait, Waitress} from '../../../utils';
 import {logger} from '../../../utils/logger';
 import {ClusterId as ZdoClusterId} from '../../../zspec/zdo';
 import {SerialPort} from '../../serialPort';
-import SerialPortUtils from '../../serialPortUtils';
 import SocketPortUtils from '../../socketPortUtils';
 import * as Constants from '../constants';
 import {Frame as UnpiFrame, Parser as UnpiParser, Writer as UnpiWriter} from '../unpi';
@@ -14,7 +13,7 @@ import {Subsystem, Type} from '../unpi/constants';
 import Definition from './definition';
 import {ZpiObjectPayload} from './tstype';
 import {isMtCmdSreqZdo} from './utils';
-import ZpiObject from './zpiObject';
+import {ZpiObject} from './zpiObject';
 
 const {
     COMMON: {ZnpCommandStatus},
@@ -38,14 +37,7 @@ interface WaitressMatcher {
     state?: number;
 }
 
-const autoDetectDefinitions = [
-    {manufacturer: 'Texas Instruments', vendorId: '0451', productId: '16c8'}, // CC2538
-    {manufacturer: 'Texas Instruments', vendorId: '0451', productId: '16a8'}, // CC2531
-    {manufacturer: 'Texas Instruments', vendorId: '0451', productId: 'bef3'}, // CC1352P_2 and CC26X2R1
-    {manufacturer: 'Electrolama', vendorId: '0403', productId: '6015'}, // ZZH
-];
-
-class Znp extends events.EventEmitter {
+export class Znp extends events.EventEmitter {
     private path: string;
     private baudRate: number;
     private rtscts: boolean;
@@ -76,7 +68,7 @@ class Znp extends events.EventEmitter {
     private onUnpiParsed(frame: UnpiFrame): void {
         try {
             const object = ZpiObject.fromUnpiFrame(frame);
-            logger.debug(() => `<-- ${object}`, NS);
+            logger.debug(() => `<-- ${object.toString(object.subsystem !== Subsystem.ZDO)}`, NS);
             this.waitress.resolve(object);
             this.emit('received', object);
         } catch (error) {
@@ -181,46 +173,21 @@ class Znp extends events.EventEmitter {
             try {
                 logger.info('Writing CC2530/CC2531 skip bootloader payload', NS);
                 this.unpiWriter.writeBuffer(Buffer.from([0xef]));
-                await Wait(1000);
+                await wait(1000);
                 await this.request(Subsystem.SYS, 'ping', {capabilities: 1}, undefined, 250);
             } catch {
                 // Skip bootloader on some CC2652 devices (e.g. zzh-p)
                 logger.info('Skip bootloader for CC2652/CC1352', NS);
                 if (this.serialPort) {
                     await this.serialPort.asyncSet({dtr: false, rts: false});
-                    await Wait(150);
+                    await wait(150);
                     await this.serialPort.asyncSet({dtr: false, rts: true});
-                    await Wait(150);
+                    await wait(150);
                     await this.serialPort.asyncSet({dtr: false, rts: false});
-                    await Wait(150);
+                    await wait(150);
                 }
             }
         }
-    }
-
-    public static async isValidPath(path: string): Promise<boolean> {
-        // For TCP paths we cannot get device information, therefore we cannot validate it.
-        if (SocketPortUtils.isTcpPath(path)) {
-            return false;
-        }
-
-        try {
-            return await SerialPortUtils.is(RealpathSync(path), autoDetectDefinitions);
-        } catch (error) {
-            logger.error(`Failed to determine if path is valid: '${error}'`, NS);
-            return false;
-        }
-    }
-
-    public static async autoDetectPath(): Promise<string | undefined> {
-        const paths = await SerialPortUtils.find(autoDetectDefinitions);
-
-        // CC1352P_2 and CC26X2R1 lists as 2 USB devices with same manufacturer, productId and vendorId
-        // one is the actual chip interface, other is the XDS110.
-        // The chip is always exposed on the first one after alphabetical sorting.
-        paths.sort((a, b) => (a < b ? -1 : 1));
-
-        return paths.length > 0 ? paths[0] : undefined;
     }
 
     public async close(): Promise<void> {
@@ -366,5 +333,3 @@ class Znp extends events.EventEmitter {
         );
     }
 }
-
-export default Znp;
