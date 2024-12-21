@@ -1,14 +1,16 @@
+import type {MockInstance} from 'vitest';
+
 import {ZiGateAdapter} from '../../../src/adapter/zigate/adapter/zigateAdapter';
 import {BLANK_EUI64} from '../../../src/zspec';
 import * as Zdo from '../../../src/zspec/zdo';
 
 describe('ZiGate ZDO payloads', () => {
     let adapter: ZiGateAdapter;
-    let requestZdoSpy: jest.SpyInstance;
+    let requestZdoSpy: MockInstance;
 
     beforeEach(() => {
         adapter = new ZiGateAdapter({panID: 0, channelList: [11]}, {}, 'tmp.db.backup', {disableLED: false});
-        requestZdoSpy = jest
+        requestZdoSpy = vi
             .spyOn(
                 // @ts-expect-error private
                 adapter.driver,

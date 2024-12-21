@@ -1,4 +1,4 @@
-/* istanbul ignore file */
+/* v8 ignore start */
 
 import {GenericZdoResponse} from '../../../zspec/zdo/definition/tstypes';
 

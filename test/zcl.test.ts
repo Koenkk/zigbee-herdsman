@@ -1,5 +1,3 @@
-import 'regenerator-runtime/runtime';
-
 import * as Zcl from '../src/zspec/zcl';
 import {BuffaloZcl} from '../src/zspec/zcl/buffaloZcl';
 import {BuffaloZclDataType, DataType, Direction, FrameType, StructuredIndicatorType} from '../src/zspec/zcl/definition/enums';
@@ -2505,7 +2503,7 @@ describe('Zcl', () => {
         });
 
         it('uint8', () => {
-            const uint8Spy = jest.spyOn(buffalo, 'writeUInt8');
+            const uint8Spy = vi.spyOn(buffalo, 'writeUInt8');
             const types = [DataType.DATA8, DataType.BOOLEAN, DataType.BITMAP8, DataType.UINT8, DataType.ENUM8];
             let i = 0;
 
@@ -2516,7 +2514,7 @@ describe('Zcl', () => {
         });
 
         it('uint16', () => {
-            const uint16Spy = jest.spyOn(buffalo, 'writeUInt16');
+            const uint16Spy = vi.spyOn(buffalo, 'writeUInt16');
             const types = [DataType.DATA16, DataType.BITMAP16, DataType.UINT16, DataType.ENUM16, DataType.CLUSTER_ID, DataType.ATTR_ID];
             let i = 0;
 
@@ -2527,7 +2525,7 @@ describe('Zcl', () => {
         });
 
         it('uint24', () => {
-            const uint24Spy = jest.spyOn(buffalo, 'writeUInt24');
+            const uint24Spy = vi.spyOn(buffalo, 'writeUInt24');
             const types = [DataType.DATA24, DataType.BITMAP24, DataType.UINT24];
             let i = 0;
 
@@ -2538,7 +2536,7 @@ describe('Zcl', () => {
         });
 
         it('uint32', () => {
-            const uint32Spy = jest.spyOn(buffalo, 'writeUInt32');
+            const uint32Spy = vi.spyOn(buffalo, 'writeUInt32');
             const types = [DataType.DATA32, DataType.BITMAP32, DataType.UINT32, DataType.UTC, DataType.BAC_OID];
             let i = 0;
 
@@ -2549,80 +2547,80 @@ describe('Zcl', () => {
         });
 
         it('int8', () => {
-            const int8Spy = jest.spyOn(buffalo, 'writeInt8');
+            const int8Spy = vi.spyOn(buffalo, 'writeInt8');
             buffalo.write(DataType.INT8, 1, {});
             expect(int8Spy).toHaveBeenCalledTimes(1);
         });
 
         it('int16', () => {
-            const int16Spy = jest.spyOn(buffalo, 'writeInt16');
+            const int16Spy = vi.spyOn(buffalo, 'writeInt16');
             buffalo.write(DataType.INT16, 1, {});
             expect(int16Spy).toHaveBeenCalledTimes(1);
         });
 
         it('int24', () => {
-            const int24Spy = jest.spyOn(buffalo, 'writeInt24');
+            const int24Spy = vi.spyOn(buffalo, 'writeInt24');
             buffalo.write(DataType.INT24, 1, {});
             expect(int24Spy).toHaveBeenCalledTimes(1);
         });
 
         it('int32', () => {
-            const int32Spy = jest.spyOn(buffalo, 'writeInt32');
+            const int32Spy = vi.spyOn(buffalo, 'writeInt32');
             buffalo.write(DataType.INT32, 1, {});
             expect(int32Spy).toHaveBeenCalledTimes(1);
         });
 
         it('int48', () => {
-            const int48Spy = jest.spyOn(buffalo, 'writeInt48');
+            const int48Spy = vi.spyOn(buffalo, 'writeInt48');
             buffalo.write(DataType.INT48, 1, {});
             expect(int48Spy).toHaveBeenCalledTimes(1);
         });
 
         it('list uint8', () => {
-            const listuint8Spy = jest.spyOn(buffalo, 'writeListUInt8');
+            const listuint8Spy = vi.spyOn(buffalo, 'writeListUInt8');
             buffalo.write(BuffaloZclDataType.LIST_UINT8, [1], {});
             expect(listuint8Spy).toHaveBeenCalledTimes(1);
         });
 
         it('list uint16', () => {
-            const listuint16Spy = jest.spyOn(buffalo, 'writeListUInt16');
+            const listuint16Spy = vi.spyOn(buffalo, 'writeListUInt16');
             buffalo.write(BuffaloZclDataType.LIST_UINT16, [1], {});
             expect(listuint16Spy).toHaveBeenCalledTimes(1);
         });
 
         it('list uint24', () => {
-            const listuint24Spy = jest.spyOn(buffalo, 'writeListUInt24');
+            const listuint24Spy = vi.spyOn(buffalo, 'writeListUInt24');
             buffalo.write(BuffaloZclDataType.LIST_UINT24, [1], {});
             expect(listuint24Spy).toHaveBeenCalledTimes(1);
         });
 
         it('list uint32', () => {
-            const listuint32Spy = jest.spyOn(buffalo, 'writeListUInt32');
+            const listuint32Spy = vi.spyOn(buffalo, 'writeListUInt32');
             buffalo.write(BuffaloZclDataType.LIST_UINT32, [1], {});
             expect(listuint32Spy).toHaveBeenCalledTimes(1);
         });
 
         // NOT SUPPORTED
         // it('semi prec', () => {
-        //     const semiPrecSpy = jest.spyOn(buffalo, 'writeSemiFloatLE');
+        //     const semiPrecSpy = vi.spyOn(buffalo, 'writeSemiFloatLE');
         //     buffalo.write(DataType.SEMI_PREC, 1, {});
         //     expect(semiPrecSpy).toHaveBeenCalledTimes(1);
         // });
 
         it('single prec', () => {
-            const singlePrecSpy = jest.spyOn(buffalo, 'writeFloatLE');
+            const singlePrecSpy = vi.spyOn(buffalo, 'writeFloatLE');
             buffalo.write(DataType.SINGLE_PREC, 1.1, {});
             expect(singlePrecSpy).toHaveBeenCalledTimes(1);
         });
 
         it('double prec', () => {
-            const doublePrecSpy = jest.spyOn(buffalo, 'writeDoubleLE');
+            const doublePrecSpy = vi.spyOn(buffalo, 'writeDoubleLE');
             buffalo.write(DataType.DOUBLE_PREC, 1.1, {});
             expect(doublePrecSpy).toHaveBeenCalledTimes(1);
         });
 
         it('ieee add', () => {
-            const doublePrecSpy = jest.spyOn(buffalo, 'writeIeeeAddr');
+            const doublePrecSpy = vi.spyOn(buffalo, 'writeIeeeAddr');
             buffalo.write(DataType.IEEE_ADDR, '0xf1f1f1f1f1f1f1f1', {});
             expect(doublePrecSpy).toHaveBeenCalledTimes(1);
         });
@@ -2636,7 +2634,7 @@ describe('Zcl', () => {
         });
 
         it('uint8', () => {
-            const uint8Spy = jest.spyOn(buffalo, 'readUInt8');
+            const uint8Spy = vi.spyOn(buffalo, 'readUInt8');
             const types = [DataType.DATA8, DataType.BOOLEAN, DataType.BITMAP8, DataType.UINT8, DataType.ENUM8];
             let i = 0;
 
@@ -2647,7 +2645,7 @@ describe('Zcl', () => {
         });
 
         it('uint16', () => {
-            const uint16Spy = jest.spyOn(buffalo, 'readUInt16');
+            const uint16Spy = vi.spyOn(buffalo, 'readUInt16');
             const types = [DataType.DATA16, DataType.BITMAP16, DataType.UINT16, DataType.ENUM16, DataType.CLUSTER_ID, DataType.ATTR_ID];
             let i = 0;
 
@@ -2658,7 +2656,7 @@ describe('Zcl', () => {
         });
 
         it('uint24', () => {
-            const uint24Spy = jest.spyOn(buffalo, 'readUInt24');
+            const uint24Spy = vi.spyOn(buffalo, 'readUInt24');
             const types = [DataType.DATA24, DataType.BITMAP24, DataType.UINT24];
             let i = 0;
 
@@ -2669,7 +2667,7 @@ describe('Zcl', () => {
         });
 
         it('uint32', () => {
-            const uint32Spy = jest.spyOn(buffalo, 'readUInt32');
+            const uint32Spy = vi.spyOn(buffalo, 'readUInt32');
             const types = [DataType.DATA32, DataType.BITMAP32, DataType.UINT32, DataType.UTC, DataType.BAC_OID];
             let i = 0;
 
@@ -2680,80 +2678,80 @@ describe('Zcl', () => {
         });
 
         it('int8', () => {
-            const int8Spy = jest.spyOn(buffalo, 'readInt8');
+            const int8Spy = vi.spyOn(buffalo, 'readInt8');
             buffalo.read(DataType.INT8, {});
             expect(int8Spy).toHaveBeenCalledTimes(1);
         });
 
         it('int16', () => {
-            const int16Spy = jest.spyOn(buffalo, 'readInt16');
+            const int16Spy = vi.spyOn(buffalo, 'readInt16');
             buffalo.read(DataType.INT16, {});
             expect(int16Spy).toHaveBeenCalledTimes(1);
         });
 
         it('int24', () => {
-            const int24Spy = jest.spyOn(buffalo, 'readInt24');
+            const int24Spy = vi.spyOn(buffalo, 'readInt24');
             buffalo.read(DataType.INT24, {});
             expect(int24Spy).toHaveBeenCalledTimes(1);
         });
 
         it('int32', () => {
-            const int32Spy = jest.spyOn(buffalo, 'readInt32');
+            const int32Spy = vi.spyOn(buffalo, 'readInt32');
             buffalo.read(DataType.INT32, {});
             expect(int32Spy).toHaveBeenCalledTimes(1);
         });
 
         it('int48', () => {
-            const int48Spy = jest.spyOn(buffalo, 'readInt48');
+            const int48Spy = vi.spyOn(buffalo, 'readInt48');
             buffalo.read(DataType.INT48, {});
             expect(int48Spy).toHaveBeenCalledTimes(1);
         });
 
         it('list uint8', () => {
-            const listuint8Spy = jest.spyOn(buffalo, 'readListUInt8');
+            const listuint8Spy = vi.spyOn(buffalo, 'readListUInt8');
             buffalo.read(BuffaloZclDataType.LIST_UINT8, {length: 1});
             expect(listuint8Spy).toHaveBeenCalledTimes(1);
         });
 
         it('list uint16', () => {
-            const listuint16Spy = jest.spyOn(buffalo, 'readListUInt16');
+            const listuint16Spy = vi.spyOn(buffalo, 'readListUInt16');
             buffalo.read(BuffaloZclDataType.LIST_UINT16, {length: 1});
             expect(listuint16Spy).toHaveBeenCalledTimes(1);
         });
 
         it('list uint24', () => {
-            const listuint24Spy = jest.spyOn(buffalo, 'readListUInt24');
+            const listuint24Spy = vi.spyOn(buffalo, 'readListUInt24');
             buffalo.read(BuffaloZclDataType.LIST_UINT24, {length: 1});
             expect(listuint24Spy).toHaveBeenCalledTimes(1);
         });
 
         it('list uint32', () => {
-            const listuint32Spy = jest.spyOn(buffalo, 'readListUInt32');
+            const listuint32Spy = vi.spyOn(buffalo, 'readListUInt32');
             buffalo.read(BuffaloZclDataType.LIST_UINT32, {length: 1});
             expect(listuint32Spy).toHaveBeenCalledTimes(1);
         });
 
         // NOT SUPPORTED
         // it('semi prec', () => {
-        //     const semiPrecSpy = jest.spyOn(buffalo, 'readSemiFloatLE');
+        //     const semiPrecSpy = vi.spyOn(buffalo, 'readSemiFloatLE');
         //     buffalo.read(DataType.SEMI_PREC, {});
         //     expect(semiPrecSpy).toHaveBeenCalledTimes(1);
         // });
 
         it('single prec', () => {
-            const singlePrecSpy = jest.spyOn(buffalo, 'readFloatLE');
+            const singlePrecSpy = vi.spyOn(buffalo, 'readFloatLE');
             buffalo.read(DataType.SINGLE_PREC, {});
             expect(singlePrecSpy).toHaveBeenCalledTimes(1);
         });
 
         it('double prec', () => {
-            const doublePrecSpy = jest.spyOn(buffalo, 'readDoubleLE');
+            const doublePrecSpy = vi.spyOn(buffalo, 'readDoubleLE');
             buffalo.read(DataType.DOUBLE_PREC, {});
             expect(doublePrecSpy).toHaveBeenCalledTimes(1);
         });
 
         it('ieee add', () => {
-            const doublePrecSpy = jest.spyOn(buffalo, 'readIeeeAddr');
+            const doublePrecSpy = vi.spyOn(buffalo, 'readIeeeAddr');
             buffalo.read(DataType.IEEE_ADDR, {});
             expect(doublePrecSpy).toHaveBeenCalledTimes(1);
         });

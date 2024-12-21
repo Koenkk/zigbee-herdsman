@@ -1,4 +1,4 @@
-/* istanbul ignore file */
+/* v8 ignore start */
 
 import {RANDOMIZE_SEQ, RANDOMIZE_START} from './consts';
 import crc16ccitt from './utils/crc16ccitt';

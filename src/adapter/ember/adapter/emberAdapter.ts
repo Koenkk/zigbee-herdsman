@@ -462,7 +462,6 @@ export class EmberAdapter extends Adapter {
                 break;
             }
             case SLStatus.OK: {
-                /* istanbul ignore else */
                 if (
                     type === EmberOutgoingMessageType.MULTICAST &&
                     apsFrame.destinationEndpoint === 0xff &&
@@ -517,7 +516,6 @@ export class EmberAdapter extends Adapter {
         if (apsFrame.clusterId === Zdo.ClusterId.NETWORK_ADDRESS_RESPONSE) {
             // special case to properly resolve a NETWORK_ADDRESS_RESPONSE following a NETWORK_ADDRESS_REQUEST (based on EUI64 from ZDO payload)
             // NOTE: if response has invalid status (no EUI64 available), response waiter will eventually time out
-            /* istanbul ignore else */
             if (Zdo.Buffalo.checkStatus<Zdo.ClusterId.NETWORK_ADDRESS_RESPONSE>(result)) {
                 this.oneWaitress.resolveZDO(result[1].eui64, apsFrame, result);
             }
@@ -839,7 +837,7 @@ export class EmberAdapter extends Adapter {
                 );
             }
 
-            /* istanbul ignore next */
+            /* v8 ignore next */
             const appKeyRequestsPolicy = ALLOW_APP_KEY_REQUESTS ? EzspDecisionId.ALLOW_APP_KEY_REQUESTS : EzspDecisionId.DENY_APP_KEY_REQUESTS;
             status = await this.emberSetEzspPolicy(EzspPolicyId.APP_KEY_REQUEST_POLICY, appKeyRequestsPolicy);
 
@@ -960,13 +958,14 @@ export class EmberAdapter extends Adapter {
             case NetworkInitAction.FORM_BACKUP: {
                 logger.info(`[INIT TC] Forming from backup.`, NS);
                 // `backup` valid in this `action` path (not detected by TS)
-                /* istanbul ignore next */
+                /* v8 ignore start */
                 const keyList: LinkKeyBackupData[] = backup!.devices.map((device) => ({
                     deviceEui64: ZSpec.Utils.eui64BEBufferToHex(device.ieeeAddress),
                     key: {contents: device.linkKey!.key},
                     outgoingFrameCounter: device.linkKey!.txCounter,
                     incomingFrameCounter: device.linkKey!.rxCounter,
                 }));
+                /* v8 ignore stop */
 
                 // before forming
                 await this.importLinkKeys(keyList);
@@ -1185,7 +1184,6 @@ export class EmberAdapter extends Adapter {
             logger.debug(`[BACKUP] Export link key at index ${i}, status=${SLStatus[status]}.`, NS);
 
             // only include key if we could retrieve one at index and hash it properly
-            /* istanbul ignore else */
             if (status === SLStatus.OK) {
                 // Rather than give the real link key, the backup contains a hashed version of the key.
                 // This is done to prevent a compromise of the backup data from compromising the current link keys.
@@ -1212,7 +1210,6 @@ export class EmberAdapter extends Adapter {
      * @param backupData
      */
     public async importLinkKeys(backupData: LinkKeyBackupData[]): Promise<void> {
-        /* istanbul ignore else */
         if (!backupData?.length) {
             return;
         }
@@ -1310,7 +1307,6 @@ export class EmberAdapter extends Adapter {
      * Check against BLANK_EUI64 for validity.
      */
     public async emberGetEui64(): Promise<EUI64> {
-        /* istanbul ignore else */
         if (this.networkCache.eui64 === ZSpec.BLANK_EUI64) {
             this.networkCache.eui64 = await this.ezsp.ezspGetEui64();
         }
@@ -1324,7 +1320,6 @@ export class EmberAdapter extends Adapter {
      * Check against INVALID_PAN_ID for validity.
      */
     public async emberGetPanId(): Promise<PanId> {
-        /* istanbul ignore else */
         if (this.networkCache.parameters.panId === ZSpec.INVALID_PAN_ID) {
             const [status, , parameters] = await this.ezsp.ezspGetNetworkParameters();
 
@@ -1344,7 +1339,6 @@ export class EmberAdapter extends Adapter {
      * Check against BLANK_EXTENDED_PAN_ID for validity.
      */
     public async emberGetExtendedPanId(): Promise<ExtendedPanId> {
-        /* istanbul ignore else */
         if (equals(this.networkCache.parameters.extendedPanId, ZSpec.BLANK_EXTENDED_PAN_ID)) {
             const [status, , parameters] = await this.ezsp.ezspGetNetworkParameters();
 
@@ -1364,7 +1358,6 @@ export class EmberAdapter extends Adapter {
      * Check against INVALID_RADIO_CHANNEL for validity.
      */
     public async emberGetRadioChannel(): Promise<number> {
-        /* istanbul ignore else */
         if (this.networkCache.parameters.radioChannel === INVALID_RADIO_CHANNEL) {
             const [status, , parameters] = await this.ezsp.ezspGetNetworkParameters();
 
@@ -1600,7 +1593,7 @@ export class EmberAdapter extends Adapter {
                 throw new Error(`[BACKUP] No network key set.`);
             }
 
-            /* istanbul ignore next */
+            /* v8 ignore next */
             const keyList: LinkKeyBackupData[] = ALLOW_APP_KEY_REQUESTS ? await this.exportLinkKeys() : [];
 
             let context: SecManContext = initSecurityManagerContext();
@@ -1647,7 +1640,8 @@ export class EmberAdapter extends Adapter {
                 networkUpdateId: netParams.nwkUpdateId,
                 coordinatorIeeeAddress: Buffer.from(this.networkCache.eui64.substring(2) /*take out 0x*/, 'hex').reverse(),
                 devices: keyList.map(
-                    /* istanbul ignore next */ (key) => ({
+                    /* v8 ignore start */
+                    (key) => ({
                         networkAddress: null, // not used for restore, no reason to make NCP calls for nothing
                         ieeeAddress: Buffer.from(key.deviceEui64.substring(2) /*take out 0x*/, 'hex').reverse(),
                         isDirectChild: false, // not used
@@ -1657,6 +1651,7 @@ export class EmberAdapter extends Adapter {
                             txCounter: key.outgoingFrameCounter,
                         },
                     }),
+                    /* v8 ignore stop */
                 ),
                 ezsp: {
                     version: this.version.ezsp,
@@ -1833,7 +1828,6 @@ export class EmberAdapter extends Adapter {
             if (!disableResponse) {
                 const responseClusterId = Zdo.Utils.getResponseClusterId(clusterId);
 
-                /* istanbul ignore else */
                 if (responseClusterId) {
                     return await this.oneWaitress.startWaitingFor(
                         {
@@ -1895,11 +1889,12 @@ export class EmberAdapter extends Adapter {
 
             const result = await this.sendZdo(ZSpec.BLANK_EUI64, networkAddress, clusterId, zdoPayload, false);
 
-            /* istanbul ignore next */
+            /* v8 ignore start */
             if (!Zdo.Buffalo.checkStatus(result)) {
                 // TODO: will disappear once moved upstream
                 throw new Zdo.StatusError(result[0]);
             }
+            /* v8 ignore stop */
         } else {
             // coordinator-only (0), or all
             await this.queue.execute<void>(async () => {
@@ -1986,7 +1981,6 @@ export class EmberAdapter extends Adapter {
                         0, // alias seq
                     );
                 } catch (error) {
-                    /* istanbul ignore else */
                     if (error instanceof EzspError) {
                         switch (error.code) {
                             case EzspStatus.NO_TX_SPACE: {

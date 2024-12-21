@@ -258,7 +258,7 @@ async function getSerialPortList(): Promise<PortInfo[]> {
     // CC1352P_2 and CC26X2R1 lists as 2 USB devices with same manufacturer, productId and vendorId
     // one is the actual chip interface, other is the XDS110.
     // The chip is always exposed on the first one after alphabetical sorting.
-    /* istanbul ignore next */
+    /* v8 ignore next */
     portInfos.sort((a, b) => (a.path < b.path ? -1 : 1));
 
     return portInfos;
@@ -351,7 +351,6 @@ export async function matchUSBAdapter(adapter: Adapter, path: string): Promise<b
     logger.debug(() => `Connected devices: ${JSON.stringify(portList)}`, NS);
 
     for (const portInfo of portList) {
-        /* istanbul ignore else */
         if (portInfo.path !== path) {
             continue;
         }
@@ -359,7 +358,6 @@ export async function matchUSBAdapter(adapter: Adapter, path: string): Promise<b
         const conflictProne = USB_FINGERPRINTS_CONFLICT_IDS.includes(`${portInfo.vendorId}:${portInfo.productId}`);
         const match = matchUSBFingerprint(portInfo, USB_FINGERPRINTS[adapter === 'ezsp' ? 'ember' : adapter], isWindows, conflictProne);
 
-        /* istanbul ignore else */
         if (match) {
             logger.info(() => `Matched adapter: ${JSON.stringify(portInfo)} => ${adapter}: ${JSON.stringify(match[1])}`, NS);
             return true;
@@ -500,7 +498,6 @@ export async function discoverAdapter(adapter?: Adapter, path?: string): Promise
             try {
                 const matched = await matchUSBAdapter(adapter, path);
 
-                /* istanbul ignore else */
                 if (!matched) {
                     logger.debug(`Unable to match USB adapter: ${adapter} | ${path}`, NS);
                 }

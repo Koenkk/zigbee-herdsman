@@ -1,4 +1,4 @@
-/* istanbul ignore file */
+/* v8 ignore start */
 
 import {EventEmitter} from 'node:events';
 
@@ -377,7 +377,6 @@ export class Driver extends EventEmitter {
                     if (apsFrame.clusterId === Zdo.ClusterId.NETWORK_ADDRESS_RESPONSE) {
                         // special case to properly resolve a NETWORK_ADDRESS_RESPONSE following a NETWORK_ADDRESS_REQUEST (based on EUI64 from ZDO payload)
                         // NOTE: if response has invalid status (no EUI64 available), response waiter will eventually time out
-                        /* istanbul ignore else */
                         if (Zdo.Buffalo.checkStatus<Zdo.ClusterId.NETWORK_ADDRESS_RESPONSE>(zdoResponse)) {
                             const eui64 = zdoResponse[1].eui64;
 

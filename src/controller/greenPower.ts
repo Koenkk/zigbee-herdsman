@@ -58,7 +58,7 @@ export class GreenPower extends events.EventEmitter<GreenPowerEventMap> {
             case 0b01: // Groupcast to DGroupID
                 payload.sinkGroupID = GP_GROUP_ID;
                 break;
-            /* istanbul ignore next */
+            /* v8 ignore next */
             case 0b00: // Full unicast forwarding
             case 0b11: {
                 // Lightweight unicast forwarding
@@ -67,10 +67,11 @@ export class GreenPower extends events.EventEmitter<GreenPowerEventMap> {
                 payload.sinkNwkAddr = COORDINATOR_ADDRESS;
                 break;
             }
-            /* istanbul ignore next */
+            /* v8 ignore start */
             default:
                 logger.error(`Unhandled applicationID: ${payload.options & 7}`, NS);
                 return;
+            /* v8 ignore stop */
         }
 
         const replyFrame = Zcl.Frame.create(
@@ -111,19 +112,21 @@ export class GreenPower extends events.EventEmitter<GreenPowerEventMap> {
         try {
             const commandID = frame.payload.commandID ?? frame.header.commandIdentifier;
             switch (commandID) {
-                /* istanbul ignore next */
+                /* v8 ignore start */
                 case undefined:
                     logger.error(`Received undefined command from '${dataPayload.address}'`, NS);
                     break;
+                /* v8 ignore stop */
                 case 0xe0: {
                     // GP Commissioning
                     logger.info(`Received commissioning from '${dataPayload.address}'`, NS);
 
-                    /* istanbul ignore if */
+                    /* v8 ignore start */
                     if (typeof dataPayload.address !== 'number') {
                         logger.error(`Commissioning request with string type address unsupported for '${dataPayload.address}'`, NS);
                         break;
                     }
+                    /* v8 ignore stop */
 
                     const rxOnCap = frame.payload.commandFrame.options & 0b10;
 
@@ -199,10 +202,11 @@ export class GreenPower extends events.EventEmitter<GreenPowerEventMap> {
 
                     break;
                 }
-                /* istanbul ignore next */
+                /* v8 ignore start */
                 case 0xe2: // GP Success
                     logger.debug(`Received success from '${dataPayload.address}'`, NS);
                     break;
+                /* v8 ignore stop */
                 case 0xe3: {
                     // GP Channel Request
                     logger.debug(`Received channel request from '${dataPayload.address}'`, NS);
@@ -236,17 +240,19 @@ export class GreenPower extends events.EventEmitter<GreenPowerEventMap> {
                     await this.adapter.sendZclFrameToAll(GP_ENDPOINT, replyFrame, GP_ENDPOINT, BroadcastAddress.RX_ON_WHEN_IDLE);
                     break;
                 }
-                /* istanbul ignore next */
+                /* v8 ignore start */
                 case 0xa1: // GP Manufacturer-specific Attribute Reporting
                     break;
+                /* v8 ignore stop */
                 default:
                     // NOTE: this is spammy because it logs everything that is handed back to Controller without special processing here
                     logger.debug(`Received unhandled command '0x${commandID.toString(16)}' from '${dataPayload.address}'`, NS);
             }
+            /* v8 ignore start */
         } catch (error) {
-            /* istanbul ignore next */
             logger.error((error as Error).stack!, NS);
         }
+        /* v8 ignore stop */
     }
 
     public async permitJoin(time: number, networkAddress?: number): Promise<void> {

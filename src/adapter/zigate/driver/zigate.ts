@@ -1,4 +1,4 @@
-/* istanbul ignore file */
+/* v8 ignore start */
 
 import assert from 'node:assert';
 import {EventEmitter} from 'node:events';

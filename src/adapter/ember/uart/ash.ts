@@ -1,4 +1,4 @@
-/* istanbul ignore file */
+/* v8 ignore start */
 
 import {EventEmitter} from 'node:events';
 import {Socket} from 'node:net';
@@ -663,6 +663,8 @@ export class UartAsh extends EventEmitter<UartAshEventMap> {
      * Does nothing if port not defined/open.
      */
     public async closePort(): Promise<void> {
+        this.flags = 0;
+
         if (this.serialPort?.isOpen) {
             try {
                 await this.serialPort.asyncFlushAndClose();

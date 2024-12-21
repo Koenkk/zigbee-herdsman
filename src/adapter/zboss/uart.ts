@@ -1,4 +1,4 @@
-/* istanbul ignore file */
+/* v8 ignore start */
 
 import EventEmitter from 'node:events';
 import {Socket} from 'node:net';

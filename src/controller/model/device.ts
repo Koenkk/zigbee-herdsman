@@ -362,7 +362,6 @@ export class Device extends Entity<ControllerEventMap> {
 
     public implicitCheckin(): void {
         // No need to do anythign in `catch` as `endpoint.sendRequest` already logs failures.
-        /* istanbul ignore next */
         Promise.allSettled(this.endpoints.map((e) => e.sendPendingRequests(false))).catch(() => {});
     }
 
@@ -468,7 +467,6 @@ export class Device extends Entity<ControllerEventMap> {
                     await endpoint.command(frame.cluster.ID, 'checkinRsp', payload, {sendPolicy: 'immediate'});
                 }
             } catch (error) {
-                /* istanbul ignore next */
                 logger.error(`Handling of poll check-in from ${this.ieeeAddr} failed (${(error as Error).message})`, NS);
             }
         }
@@ -477,7 +475,7 @@ export class Device extends Entity<ControllerEventMap> {
         const isDefaultResponse = frame.header.isGlobal && frame.command.name === 'defaultRsp';
         const commandHasResponse = frame.command.response != undefined;
         const disableDefaultResponse = frame.header.frameControl.disableDefaultResponse;
-        /* istanbul ignore next */
+        /* v8 ignore next */
         const disableTuyaDefaultResponse = endpoint.getDevice().manufacturerName?.startsWith('_TZ') && process.env['DISABLE_TUYA_DEFAULT_RESPONSE'];
         // Sometimes messages are received twice, prevent responding twice
         const alreadyResponded = this._lastDefaultResponseSequenceNumber === frame.header.transactionSequenceNumber;
@@ -546,7 +544,6 @@ export class Device extends Entity<ControllerEventMap> {
         if (endpoints.filter((e): boolean => e.inputClusters.includes(Zcl.Clusters.genPollCtrl.ID)).length > 0) {
             // default for devices that support genPollCtrl cluster (RX off when idle): 1 day
             pendingRequestTimeout = 86400000;
-            /* istanbul ignore else */
         }
         // always load value from database available (modernExtend.quirkCheckinInterval() exists for devices without genPollCtl)
         if (entry.checkinInterval !== undefined) {
@@ -892,7 +889,6 @@ export class Device extends Entity<ControllerEventMap> {
                     Device.ReportablePropertiesMapping[key].set(result[key], this);
                 }
             } catch (error) {
-                /* istanbul ignore next */
                 logger.debug(`Interview - Tuya read modelID and manufacturerName failed (${error})`, NS);
             }
         }
@@ -1014,10 +1010,11 @@ export class Device extends Entity<ControllerEventMap> {
                 this._checkinInterval = pollPeriod.checkinInterval / 4; // convert to seconds
                 this.resetPendingRequestTimeout();
             }
+            /* v8 ignore start */
         } catch (error) {
-            /* istanbul ignore next */
             logger.debug(`Interview - failed to bind genPollCtrl (${error})`, NS);
         }
+        /* v8 ignore stop */
     }
 
     public async updateNodeDescriptor(): Promise<void> {
@@ -1078,7 +1075,6 @@ export class Device extends Entity<ControllerEventMap> {
             // Some devices, e.g. TERNCY return endpoint 0 in the active endpoints request.
             // This is not a valid endpoint number according to the ZCL, requesting a simple descriptor will result
             // into an error. Therefore we filter it, more info: https://github.com/Koenkk/zigbee-herdsman/issues/82
-            /* istanbul ignore else */
             if (endpoint !== 0 && !this.getEndpoint(endpoint)) {
                 this._endpoints.push(Endpoint.create(endpoint, undefined, undefined, [], [], this.networkAddress, this.ieeeAddr));
             }

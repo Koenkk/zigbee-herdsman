@@ -1,4 +1,4 @@
-/* istanbul ignore file */
+/* v8 ignore start */
 
 import * as fs from 'node:fs';
 
@@ -49,7 +49,6 @@ export class EZSPAdapterBackup {
 
         const ieee = (await this.driver.ezsp.execCommand('getEui64')).eui64;
         /* return backup structure */
-        /* istanbul ignore next */
         return {
             ezsp: {
                 version: version,

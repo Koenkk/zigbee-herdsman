@@ -109,9 +109,7 @@ export class ZclFrame {
                 buffalo.write(parameter.type, this.payload[parameter.name], {});
             }
         } else {
-            /* istanbul ignore else */
             if (command.parseStrategy === 'oneof') {
-                /* istanbul ignore else */
                 if (Utils.isFoundationDiscoverRsp(command.ID)) {
                     buffalo.writeUInt8(this.payload.discComplete);
 
@@ -187,7 +185,6 @@ export class ZclFrame {
                 const lengthParameter = command.parameters[command.parameters.indexOf(parameter) - 1];
                 const length = payload[lengthParameter.name];
 
-                /* istanbul ignore else */
                 if (typeof length === 'number') {
                     options.length = length;
                 }
@@ -250,9 +247,7 @@ export class ZclFrame {
 
             return payload;
         } else {
-            /* istanbul ignore else */
             if (command.parseStrategy === 'oneof') {
-                /* istanbul ignore else */
                 if (Utils.isFoundationDiscoverRsp(command.ID)) {
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     const payload: {discComplete: number; attrInfos: {[k: string]: any}[]} = {

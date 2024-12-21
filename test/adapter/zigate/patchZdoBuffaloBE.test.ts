@@ -4,13 +4,13 @@ describe('ZiGate Patch BuffaloZdo to use BE variants when writing', () => {
     let BuffaloZdo: typeof Zdo.Buffalo;
 
     beforeAll(async () => {
-        await jest.isolateModulesAsync(async () => {
-            const buf = await import('../../../src/zspec/zdo/buffaloZdo');
-            BuffaloZdo = buf.BuffaloZdo;
-            const {ZiGateAdapter} = await import('../../../src/adapter/zigate/adapter/zigateAdapter');
-            // @ts-expect-error bogus, just need to trigger constructor
-            const adapter = new ZiGateAdapter({}, {}, '', {});
-        });
+        vi.resetModules();
+
+        const buf = await import('../../../src/zspec/zdo/buffaloZdo');
+        BuffaloZdo = buf.BuffaloZdo;
+        const {ZiGateAdapter} = await import('../../../src/adapter/zigate/adapter/zigateAdapter');
+        // @ts-expect-error bogus, just need to trigger constructor
+        const adapter = new ZiGateAdapter({}, {}, '', {});
     });
 
     it('writeUInt16', async () => {
