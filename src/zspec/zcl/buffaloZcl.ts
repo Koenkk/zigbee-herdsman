@@ -623,10 +623,7 @@ export class BuffaloZcl extends Buffalo {
         return value;
     }
 
-    // private writeMiStruct(value: Record<number, number | number[]>): {
-    //     XXX: read only?
-    // }
-
+    // NOTE: writeMiStruct is not supported.
     private readMiStruct(): Record<number, number | number[]> {
         const length = this.readUInt8();
         const value: Record<number, number | number[]> = {};
@@ -640,7 +637,12 @@ export class BuffaloZcl extends Buffalo {
             const dataType = this.readUInt8();
             value[index] = this.read(dataType, {});
 
-            if (this.position === this.buffer.length) {
+            const remaining = this.buffer.length - this.position;
+            if (remaining <= 1) {
+                if (remaining == 1) {
+                    // Some Xiaomi structs have a trailing byte, skip it.
+                    this.position += 1;
+                }
                 break;
             }
         }
