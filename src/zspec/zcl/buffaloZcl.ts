@@ -635,7 +635,6 @@ export class BuffaloZcl extends Buffalo {
         for (let i = 0; i < length; i++) {
             const index = this.readUInt8();
             const dataType = this.readUInt8();
-
             value[index] = this.read(dataType, {});
 
             const remaining = this.buffer.length - this.position;
