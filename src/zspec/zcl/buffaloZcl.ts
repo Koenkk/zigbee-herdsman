@@ -636,12 +636,7 @@ export class BuffaloZcl extends Buffalo {
             const index = this.readUInt8();
             const dataType = this.readUInt8();
 
-            // if (dataType == 95) {
-            //     this.position += 4;
-            // } else {
             value[index] = this.read(dataType, {});
-            // }
-            console.log(value);
 
             const remaining = this.buffer.length - this.position;
             if (remaining <= 1) {
