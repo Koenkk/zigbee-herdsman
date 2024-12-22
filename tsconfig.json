@@ -17,6 +17,7 @@
         "resolveJsonModule": true,
         "incremental": true,
         "composite": true,
+        "rootDir": "src",
         "checkJs": true
     },
     "include": ["src/**/*.ts", "src/**/*.json"],

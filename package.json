@@ -82,7 +82,7 @@
         "pretty:write": "prettier --write .",
         "pretty:check": "prettier --check .",
         "typedoc": "typedoc --gitRevision $(git describe --tag --abbrev=0) --tsconfig tsconfig.json --excludePrivate --excludeProtected --excludeExternals --entryPointStrategy expand ./src --sourceLinkTemplate 'https://github.com/Koenkk/zigbee-herdsman/blob/{gitRevision}/{path}#L{line}' -out typedoc",
-        "clean": "rimraf temp coverage dist",
+        "clean": "rimraf temp coverage dist tsconfig.tsbuildinfo",
         "prepack": "pnpm run clean && pnpm run build"
     },
     "version": "3.1.0"
