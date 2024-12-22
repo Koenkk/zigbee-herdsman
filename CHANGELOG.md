@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.1.1](https://github.com/Koenkk/zigbee-herdsman/compare/v3.1.0...v3.1.1) (2024-12-22)
+
+
+### Bug Fixes
+
+* **ignore:** Fix dist not emitted after `clean` ([9c1a3a4](https://github.com/Koenkk/zigbee-herdsman/commit/9c1a3a4fab47a47aa8a19ee86192221eb5960f2e))
+
 ## [3.1.0](https://github.com/Koenkk/zigbee-herdsman/compare/v3.0.4...v3.1.0) (2024-12-21)
 
 
