@@ -4,6 +4,7 @@ import Buffalo from '../../../buffalo/buffalo';
 import {GP_SINK_LIST_ENTRIES} from '../consts';
 import {EmberGpApplicationId, EmberGpSinkType, EzspStatus, SLStatus} from '../enums';
 import {
+    Ember802154RadioPriorities,
     EmberAesMmoHashContext,
     EmberApsFrame,
     EmberBeaconClassificationParams,
@@ -1336,6 +1337,7 @@ export class EzspBuffalo extends Buffalo {
         };
     }
 
+    /** @deprecated removed in EZSP v16 in favor of @see readEmber802154RadioPriorities */
     public readEmberMultiprotocolPriorities(): EmberMultiprotocolPriorities {
         const backgroundRx = this.readUInt8();
         const tx = this.readUInt8();
@@ -1344,9 +1346,28 @@ export class EzspBuffalo extends Buffalo {
         return {backgroundRx, tx, activeRx};
     }
 
+    /** @deprecated removed in EZSP v16 in favor of @see writeEmber802154RadioPriorities */
     public writeEmberMultiprotocolPriorities(priorities: EmberMultiprotocolPriorities): void {
         this.writeUInt8(priorities.backgroundRx);
         this.writeUInt8(priorities.tx);
+        this.writeUInt8(priorities.activeRx);
+    }
+
+    public readEmber802154RadioPriorities(): Ember802154RadioPriorities {
+        const backgroundRx = this.readUInt8();
+        const minTxPriority = this.readUInt8();
+        const txStep = this.readUInt8();
+        const maxTxPriority = this.readUInt8();
+        const activeRx = this.readUInt8();
+
+        return {backgroundRx, minTxPriority, txStep, maxTxPriority, activeRx};
+    }
+
+    public writeEmber802154RadioPriorities(priorities: Ember802154RadioPriorities): void {
+        this.writeUInt8(priorities.backgroundRx);
+        this.writeUInt8(priorities.minTxPriority);
+        this.writeUInt8(priorities.txStep);
+        this.writeUInt8(priorities.maxTxPriority);
         this.writeUInt8(priorities.activeRx);
     }
 

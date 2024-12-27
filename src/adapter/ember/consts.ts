@@ -60,6 +60,8 @@ export const APS_ENCRYPTION_OVERHEAD = 9;
 /** The additional overhead required for APS fragmentation. */
 export const APS_FRAGMENTATION_OVERHEAD = 2;
 
+/** An inactive concentrator. */
+export const EMBER_INACTIVE_CONCENTRATOR = 0xffff;
 /**
  * A concentrator with insufficient memory to store source routes for the entire network.
  * Route records are sent to the concentrator prior to every inbound APS unicast.
