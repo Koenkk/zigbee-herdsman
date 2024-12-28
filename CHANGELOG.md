@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.2.0](https://github.com/Koenkk/zigbee-herdsman/compare/v3.1.1...v3.2.0) (2024-12-28)
+
+
+### Features
+
+* Ember support for simplicity_sdk:2024.12.0 ([#1275](https://github.com/Koenkk/zigbee-herdsman/issues/1275)) ([d25695a](https://github.com/Koenkk/zigbee-herdsman/commit/d25695af728b030fba4a1367271e84d015ae36b6))
+
 ## [3.1.1](https://github.com/Koenkk/zigbee-herdsman/compare/v3.1.0...v3.1.1) (2024-12-22)
 
 
