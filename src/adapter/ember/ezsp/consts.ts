@@ -3,10 +3,10 @@
 
 export const EZSP_MIN_PROTOCOL_VERSION = 0x0d;
 /** Latest EZSP protocol version */
-export const EZSP_PROTOCOL_VERSION = 0x0e;
+export const EZSP_PROTOCOL_VERSION = 0x10;
 
 /** EZSP max length + Frame Control extra byte + Frame ID extra byte */
-export const EZSP_MAX_FRAME_LENGTH = 200 + 1 + 1;
+export const EZSP_MAX_FRAME_LENGTH = 218 + 1 + 1;
 
 /** EZSP Sequence Index for both legacy and extended frame format */
 export const EZSP_SEQUENCE_INDEX = 0;

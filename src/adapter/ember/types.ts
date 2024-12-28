@@ -807,11 +807,26 @@ export type EmberEndpointDescription = {
     outputClusterCount: number;
 };
 
+/** @deprecated removed in EZSP v16 in favor of @see Ember802154RadioPriorities */
 export type EmberMultiprotocolPriorities = {
     /** The priority of a Zigbee RX operation while not receiving a packet. uint8_t */
     backgroundRx: number;
     /** The priority of a Zigbee TX operation. uint8_t */
     tx: number;
+    /** The priority of a Zigbee RX operation while receiving a packet. uint8_t */
+    activeRx: number;
+};
+
+/** Struct used to specify priorities for Zigbee radio operations */
+export type Ember802154RadioPriorities = {
+    /** The priority of a Zigbee RX operation while not receiving a packet. uint8_t */
+    backgroundRx: number;
+    /** Starting priority of a Zigbee TX operation. The first transmit of the packet, before retries, uses this priority. uint8_t */
+    minTxPriority: number;
+    /** The increase in TX priority (which is a decrement in value) for each retry. uint8_t */
+    txStep: number;
+    /** Maximum priority of a Zigbee TX operation. Retried messages have priorities bumped by tx_step, up to a maximum of max_tx_priority. uint8_t */
+    maxTxPriority: number;
     /** The priority of a Zigbee RX operation while receiving a packet. uint8_t */
     activeRx: number;
 };

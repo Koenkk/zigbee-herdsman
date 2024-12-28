@@ -62,6 +62,7 @@ import {
 } from '../enums';
 import {EzspError} from '../ezspError';
 import {
+    Ember802154RadioPriorities,
     EmberAesMmoHashContext,
     EmberApsFrame,
     EmberBeaconClassificationParams,
@@ -1059,6 +1060,22 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
                 const mic = this.callbackBuffalo.readUInt32();
                 const proxyTableIndex = this.callbackBuffalo.readUInt8();
                 const gpdCommandPayload = this.callbackBuffalo.readPayload();
+                let packetInfo: EmberRxPacketInfo;
+
+                if (this.version < 0x10) {
+                    packetInfo = {
+                        senderShortId: ZSpec.NULL_NODE_ID,
+                        senderLongId: ZSpec.BLANK_EUI64,
+                        bindingIndex: ZSpec.NULL_BINDING,
+                        addressIndex: 0xff,
+                        lastHopLqi: gpdLink,
+                        lastHopRssi: 0,
+                        lastHopTimestamp: 0,
+                    };
+                } else {
+                    packetInfo = this.callbackBuffalo.readEmberRxPacketInfo();
+                }
+
                 this.ezspGpepIncomingMessageHandler(
                     gpStatus,
                     gpdLink,
@@ -1073,6 +1090,7 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
                     mic,
                     proxyTableIndex,
                     gpdCommandPayload,
+                    packetInfo,
                 );
                 break;
             }
@@ -2482,7 +2500,7 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
      * Get the current scheduler priorities for multiprotocol apps.
      * @returns The current priorities.
      */
-    async ezspRadioGetSchedulerPriorities(): Promise<EmberMultiprotocolPriorities> {
+    async ezspRadioGetSchedulerPriorities(): Promise<Ember802154RadioPriorities | EmberMultiprotocolPriorities> {
         if (this.version < 0x0e) {
             throw new EzspError(EzspStatus.ERROR_INVALID_FRAME_ID);
         }
@@ -2495,7 +2513,7 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
             throw new EzspError(sendStatus);
         }
 
-        const priorities = this.buffalo.readEmberMultiprotocolPriorities();
+        const priorities = this.version < 0x10 ? this.buffalo.readEmberMultiprotocolPriorities() : this.buffalo.readEmber802154RadioPriorities();
 
         return priorities;
     }
@@ -2504,13 +2522,18 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
      * Set the current scheduler priorities for multiprotocol apps.
      * @param priorities The current priorities.
      */
-    async ezspRadioSetSchedulerPriorities(priorities: EmberMultiprotocolPriorities): Promise<void> {
+    async ezspRadioSetSchedulerPriorities(priorities: Ember802154RadioPriorities | EmberMultiprotocolPriorities): Promise<void> {
         if (this.version < 0x0e) {
             throw new EzspError(EzspStatus.ERROR_INVALID_FRAME_ID);
         }
 
         const sendBuffalo = this.startCommand(EzspFrameID.RADIO_SET_SCHEDULER_PRIORITIES);
-        sendBuffalo.writeEmberMultiprotocolPriorities(priorities);
+
+        if (this.version < 0x10) {
+            sendBuffalo.writeEmberMultiprotocolPriorities(priorities as EmberMultiprotocolPriorities);
+        } else {
+            sendBuffalo.writeEmber802154RadioPriorities(priorities as Ember802154RadioPriorities);
+        }
 
         const sendStatus = await this.sendCommand(sendBuffalo);
 
@@ -8564,6 +8587,7 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
         mic: number,
         proxyTableIndex: number,
         gpdCommandPayload: Buffer,
+        packetInfo: EmberRxPacketInfo,
     ): void {
         logger.debug(
             () =>
@@ -8571,7 +8595,7 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
                 `[sequenceNumber=${sequenceNumber}], [addr=${JSON.stringify(addr)}], [gpdfSecurityLevel=${EmberGpSecurityLevel[gpdfSecurityLevel]}], ` +
                 `[gpdfSecurityKeyType=${EmberGpKeyType[gpdfSecurityKeyType]}], [autoCommissioning=${autoCommissioning}], ` +
                 `[bidirectionalInfo=${bidirectionalInfo}], [gpdSecurityFrameCounter=${gpdSecurityFrameCounter}], [gpdCommandId=${gpdCommandId}], ` +
-                `[mic=${mic}], [proxyTableIndex=${proxyTableIndex}], [gpdCommandPayload=${gpdCommandPayload.toString('hex')}]`,
+                `[mic=${mic}], [proxyTableIndex=${proxyTableIndex}], [gpdCommandPayload=${gpdCommandPayload.toString('hex')}], [packetInfo=${JSON.stringify(packetInfo)}]`,
             NS,
         );
 
