@@ -5095,20 +5095,6 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         },
         commandsResponse: {},
     },
-    manuSpecificNodOnPilotWire: {
-        ID: 0xfc00,
-        manufacturerCode: ManufacturerCode.NODON,
-        attributes: {
-            mode: {ID: 0x0000, type: DataType.UINT8},
-        },
-        commands: {
-            setMode: {
-                ID: 0x0000,
-                parameters: [{name: 'mode', type: DataType.UINT8}],
-            },
-        },
-        commandsResponse: {},
-    },
     manuSpecificProfalux1: {
         ID: 0xfc21, // Config cluster, 0xfc20 mostly for commands it seems
         manufacturerCode: ManufacturerCode.PROFALUX,
