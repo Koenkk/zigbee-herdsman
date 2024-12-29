@@ -3304,7 +3304,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             owonSentHistoricalRecordState: {ID: 0x5004, type: DataType.UINT8, manufacturerCode: ManufacturerCode.OWON_TECHNOLOGY_INC},
             owonAccumulativeEnergyThreshold: {ID: 0x5006, type: DataType.UINT8, manufacturerCode: ManufacturerCode.OWON_TECHNOLOGY_INC},
             owonReportMode: {ID: 0x5007, type: DataType.UINT8, manufacturerCode: ManufacturerCode.OWON_TECHNOLOGY_INC},
-            owonPercentChangeInPower: {ID: 0x5007, type: DataType.UINT8, manufacturerCode: ManufacturerCode.OWON_TECHNOLOGY_INC},
+            owonPercentChangeInPower: {ID: 0x5008, type: DataType.UINT8, manufacturerCode: ManufacturerCode.OWON_TECHNOLOGY_INC},
             schneiderActiveEnergyTotal: {ID: 0x4010, type: DataType.INT48, manufacturerCode: ManufacturerCode.SCHNEIDER_ELECTRIC},
             schneiderReactiveEnergyTotal: {ID: 0x4011, type: DataType.INT48, manufacturerCode: ManufacturerCode.SCHNEIDER_ELECTRIC},
             schneiderApparentEnergyTotal: {ID: 0x4012, type: DataType.INT48, manufacturerCode: ManufacturerCode.SCHNEIDER_ELECTRIC},
