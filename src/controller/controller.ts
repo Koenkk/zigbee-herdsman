@@ -499,8 +499,21 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
     private async changeChannel(oldChannel: number, newChannel: number): Promise<void> {
         logger.warning(`Changing channel from '${oldChannel}' to '${newChannel}'`, NS);
 
+        // According to the Zigbee specification:
+        // When broadcasting a Mgmt_NWK_Update_req to notify devices of a new channel, the nwkUpdateId parameter should be incremented in the NIB and included in the Mgmt_NWK_Update_req. 
+        // The valid range of nwkUpdateId is 0x00 to 0xFF, and it should wrap back to 0 if necessary.
+        let nwkUpdateId: number = 0x00;
+        const isSupportsBackup = await this.adapter.supportsBackup();
+        if (isSupportsBackup) {
+            const backup = await this.adapter.backup(this.getDeviceIeeeAddresses());
+            nwkUpdateId = backup.networkUpdateId ?? 0x00;
+        }
+        if (++nwkUpdateId > 0xFF) {
+            nwkUpdateId = 0x00;
+        }
+
         const clusterId = Zdo.ClusterId.NWK_UPDATE_REQUEST;
-        const zdoPayload = Zdo.Buffalo.buildRequest(this.adapter.hasZdoMessageOverhead, clusterId, [newChannel], 0xfe, undefined, 0, undefined);
+        const zdoPayload = Zdo.Buffalo.buildRequest(this.adapter.hasZdoMessageOverhead, clusterId, [newChannel], 0xfe, undefined, nwkUpdateId, undefined);
 
         await this.adapter.sendZdo(ZSpec.BLANK_EUI64, ZSpec.BroadcastAddress.SLEEPY, clusterId, zdoPayload, true);
         logger.info(`Channel changed to '${newChannel}'`, NS);
