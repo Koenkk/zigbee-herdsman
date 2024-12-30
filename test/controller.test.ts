@@ -1577,8 +1577,8 @@ describe('Controller', () => {
         mockAdapterStart.mockReturnValueOnce('resumed');
         mockAdapterGetNetworkParameters.mockReturnValueOnce({panID: 1, extendedPanID: '0x64c5fd698daf0c00', channel: 25});
         mockAdapterSupportsBackup.mockReturnValueOnce(true);
-        mockApaterBackup.mockReturnValueOnce(Object.assign({}, mockApaterBackup, { networkUpdateId: 0xFF }));
-        
+        mockApaterBackup.mockReturnValueOnce(Object.assign({}, mockApaterBackup, {networkUpdateId: 0xff}));
+
         // @ts-expect-error private
         const changeChannelSpy = vi.spyOn(controller, 'changeChannel');
         await controller.start();
@@ -1600,7 +1600,7 @@ describe('Controller', () => {
         mockAdapterGetNetworkParameters.mockReturnValueOnce({panID: 1, extendedPanID: '0x64c5fd698daf0c00', channel: 25});
         mockAdapterSupportsBackup.mockReturnValueOnce(true);
         mockApaterBackup.mockReturnValueOnce({});
-        
+
         // @ts-expect-error private
         const changeChannelSpy = vi.spyOn(controller, 'changeChannel');
         await controller.start();
