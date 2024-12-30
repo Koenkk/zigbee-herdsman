@@ -233,6 +233,5 @@ export type ClusterName =
     | 'zosungIRControl'
     | 'manuSpecificAssaDoorLock'
     | 'manuSpecificDoorman'
-    | 'manuSpecificNodOnPilotWire'
     | 'manuSpecificProfalux1'
     | 'manuSpecificAmazonWWAH';
