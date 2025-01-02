@@ -4303,6 +4303,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             curtainReverse: {ID: 0x0400, type: DataType.BOOLEAN},
             curtainHandOpen: {ID: 0x0401, type: DataType.BOOLEAN},
             curtainCalibrated: {ID: 0x0402, type: DataType.BOOLEAN},
+            powerOnBehaviour: {ID: 0x0517, type: DataType.UINT8},
         },
         commands: {},
         commandsResponse: {},
