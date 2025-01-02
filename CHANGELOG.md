@@ -1,5 +1,14 @@
 # Changelog
 
+## [3.2.1](https://github.com/Koenkk/zigbee-herdsman/compare/v3.2.0...v3.2.1) (2025-01-02)
+
+
+### Bug Fixes
+
+* Extend genBasic cluster ([#1282](https://github.com/Koenkk/zigbee-herdsman/issues/1282)) ([4cc23fc](https://github.com/Koenkk/zigbee-herdsman/commit/4cc23fc08ed3d3e785c4d7d120b2fe07d736780c))
+* Fix `owonPercentChangeInPower` ID ([#1279](https://github.com/Koenkk/zigbee-herdsman/issues/1279)) ([003b4b2](https://github.com/Koenkk/zigbee-herdsman/commit/003b4b2fb969e4cbdea88174ec4761f19d615d94))
+* **ignore:** remove manuSpecificNodOnPilotWire that was moved to zigbee-herdsman-converters ([#1274](https://github.com/Koenkk/zigbee-herdsman/issues/1274)) ([1c8d886](https://github.com/Koenkk/zigbee-herdsman/commit/1c8d8864da7f89c8f18b5290150277ec61f5d873))
+
 ## [3.2.0](https://github.com/Koenkk/zigbee-herdsman/compare/v3.1.1...v3.2.0) (2024-12-28)
 
 
