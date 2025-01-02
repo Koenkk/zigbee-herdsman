@@ -241,7 +241,7 @@ const mockEzspGetVersionStruct = vi.fn(() =>
             type: EmberVersionType.GA,
         } as EmberVersion,
     ]),
-));
+);
 const mockEzspSetConfigurationValue = vi.fn(() => Promise.resolve(SLStatus.OK));
 const mockEzspSetValue = vi.fn(() => Promise.resolve(SLStatus.OK));
 const mockEzspSetPolicy = vi.fn(() => Promise.resolve(SLStatus.OK));
@@ -266,7 +266,7 @@ const mockEzspGetApsKeyInfo = vi.fn(() =>
             ttlInSeconds: 0,
         } as SecManAPSKeyMetadata,
     ]),
-));
+);
 const mockEzspSetRadioPower = vi.fn(() => Promise.resolve(SLStatus.OK));
 const mockEzspImportTransientKey = vi.fn(() => Promise.resolve(SLStatus.OK));
 const mockEzspClearTransientLinkKeys = vi.fn(() => Promise.resolve(SLStatus.OK));
