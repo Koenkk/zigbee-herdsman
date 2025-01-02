@@ -1,13 +1,11 @@
-import 'regenerator-runtime/runtime';
-
 import {Queue, Utils, wait, Waitress} from '../src/utils';
 import {logger, setLogger} from '../src/utils/logger';
 
 const mockLogger = {
-    debug: jest.fn(),
-    info: jest.fn(),
-    warning: jest.fn(),
-    error: jest.fn(),
+    debug: vi.fn(),
+    info: vi.fn(),
+    warning: vi.fn(),
+    error: vi.fn(),
 };
 
 describe('Utils', () => {
@@ -38,7 +36,7 @@ describe('Utils', () => {
     });
 
     it('Test wait', async () => {
-        const setTimeoutSpy = jest.spyOn(globalThis, 'setTimeout').mockImplementationOnce(
+        const setTimeoutSpy = vi.spyOn(globalThis, 'setTimeout').mockImplementationOnce(
             // @ts-expect-error mocked
             () => {},
         );
@@ -49,7 +47,7 @@ describe('Utils', () => {
     });
 
     it('Test waitress', async () => {
-        jest.useFakeTimers();
+        vi.useFakeTimers();
         const validator = (payload: string, matcher: number): boolean => {
             if (payload === 'one' && matcher === 1) return true;
             if (payload === 'two' && matcher === 2) return true;
@@ -68,7 +66,7 @@ describe('Utils', () => {
         const wait2_5 = waitress.waitFor(2, 5000).start();
 
         waitress.remove(wait2_3.ID);
-        jest.advanceTimersByTime(6000);
+        vi.advanceTimersByTime(6000);
         waitress.remove(wait2_5.ID);
         waitress.resolve('two');
         expect(await wait2_1.promise).toBe('two');
@@ -90,7 +88,7 @@ describe('Utils', () => {
         }
         expect(error3).toStrictEqual(new Error("Timedout '5000'"));
 
-        jest.useRealTimers();
+        vi.useRealTimers();
 
         // reject test
         const wait1_ = waitress.waitFor(1, 5000).start();
@@ -105,12 +103,12 @@ describe('Utils', () => {
         }
         expect(error1_).toStrictEqual(new Error('drop'));
 
-        jest.useFakeTimers();
+        vi.useFakeTimers();
         const wait2_ = waitress.waitFor(2, 5000).start();
         let handled1 = waitress.reject('tree', 'drop');
         expect(handled1).toBe(false);
         let error2_;
-        jest.advanceTimersByTime(6000);
+        vi.advanceTimersByTime(6000);
         try {
             await wait2_.promise;
         } catch (e) {
@@ -119,7 +117,7 @@ describe('Utils', () => {
         expect(error2_).toStrictEqual(new Error("Timedout '5000'"));
         let handled2 = waitress.reject('two', 'drop');
         expect(handled2).toBe(false);
-        jest.useRealTimers();
+        vi.useRealTimers();
     });
 
     it('Test queue', async () => {
@@ -183,10 +181,10 @@ describe('Utils', () => {
     });
 
     it('Logs', () => {
-        const debugSpy = jest.spyOn(console, 'debug');
-        const infoSpy = jest.spyOn(console, 'info');
-        const warningSpy = jest.spyOn(console, 'warn');
-        const errorSpy = jest.spyOn(console, 'error');
+        const debugSpy = vi.spyOn(console, 'debug');
+        const infoSpy = vi.spyOn(console, 'info');
+        const warningSpy = vi.spyOn(console, 'warn');
+        const errorSpy = vi.spyOn(console, 'error');
         logger.debug('debug', 'zh');
         expect(debugSpy).toHaveBeenCalledWith('zh: debug');
         logger.info('info', 'zh');

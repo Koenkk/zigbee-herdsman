@@ -474,7 +474,6 @@ export class BuffaloZdo extends Buffalo {
     //     logger.debug(`readBeaconSurveyConfigurationTLV with length=${length}`, NS);
     //     const count = this.readUInt8();
 
-    //     /* istanbul ignore else */
     //     if (length !== (1 + (count * 4) + 1)) {
     //         throw new Error(`Malformed TLV. Invalid length '${length}', expected ${(1 + (count * 4) + 1)}.`);
     //     }
@@ -506,7 +505,6 @@ export class BuffaloZdo extends Buffalo {
     // write only
     // private readTargetIEEEAddressTLV(length: number): TargetIEEEAddressTLV {
     //     logger.debug(`readTargetIEEEAddressTLV with length=${length}`, NS);
-    //     /* istanbul ignore else */
     //     if (length !== EUI64_SIZE) {
     //         throw new Error(`Malformed TLV. Invalid length '${length}', expected ${EUI64_SIZE}.`);
     //     }
@@ -521,7 +519,6 @@ export class BuffaloZdo extends Buffalo {
     // write only
     // private readSelectedKeyNegotiationMethodTLV(length: number): SelectedKeyNegotiationMethodTLV {
     //     logger.debug(`readSelectedKeyNegotiationMethodTLV with length=${length}`, NS);
-    //     /* istanbul ignore else */
     //     if (length !== 10) {
     //         throw new Error(`Malformed TLV. Invalid length '${length}', expected 10.`);
     //     }
@@ -542,7 +539,6 @@ export class BuffaloZdo extends Buffalo {
     //     logger.debug(`readDeviceEUI64ListTLV with length=${length}`, NS);
     //     const count = this.readUInt8();
 
-    //     /* istanbul ignore else */
     //     if (length !== (1 + (count * EUI64_SIZE))) {
     //         throw new Error(`Malformed TLV. Invalid length '${length}', expected ${(1 + (count * EUI64_SIZE))}.`);
     //     }
@@ -717,25 +713,26 @@ export class BuffaloZdo extends Buffalo {
             let tlv: TLV['tlv'] | undefined;
 
             if (tagId < GlobalTLV.MANUFACTURER_SPECIFIC) {
-                /* istanbul ignore else */
                 if (localTLVReaders) {
                     const localTLVReader = localTLVReaders.get(tagId);
 
-                    /* istanbul ignore else */
                     if (localTLVReader) {
                         tlv = localTLVReader.call(this, length);
+                        /* v8 ignore start */
                     } else {
                         logger.debug(`Local TLV found tagId=${tagId} but no reader given for it. Ignoring it.`, NS);
                     }
+                    /* v8 ignore stop */
+                    /* v8 ignore start */
                 } else {
                     logger.debug(`Local TLV found tagId=${tagId} but no reader available. Ignoring it.`, NS);
                 }
+                /* v8 ignore stop */
             } else {
                 tlv = this.readGlobalTLV(tagId, length);
             }
 
             // validation: unknown tag shall be ignored
-            /* istanbul ignore else */
             if (tlv) {
                 tlvs.push({
                     tagId,
@@ -920,12 +917,10 @@ export class BuffaloZdo extends Buffalo {
         if (fragmentationParameters) {
             let length = 2;
 
-            /* istanbul ignore else */
             if (fragmentationParameters.fragmentationOptions) {
                 length += 1;
             }
 
-            /* istanbul ignore else */
             if (fragmentationParameters.maxIncomingTransferUnit) {
                 length += 2;
             }
@@ -1292,7 +1287,6 @@ export class BuffaloZdo extends Buffalo {
             this.writeUInt16(nwkManagerAddr);
         }
 
-        /* istanbul ignore else */
         if (configurationBitmask !== undefined) {
             this.writeUInt8(configurationBitmask);
         }
@@ -1434,12 +1428,10 @@ export class BuffaloZdo extends Buffalo {
         {
             let length = 2;
 
-            /* istanbul ignore else */
             if (fragmentationParameters.fragmentationOptions) {
                 length += 1;
             }
 
-            /* istanbul ignore else */
             if (fragmentationParameters.maxIncomingTransferUnit) {
                 length += 2;
             }

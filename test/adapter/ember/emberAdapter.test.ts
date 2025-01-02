@@ -73,8 +73,9 @@ function reverseApsFrame(apsFrame: EmberApsFrame): EmberApsFrame {
     return Object.assign({}, apsFrame, {sourceEndpoint: apsFrame.destinationEndpoint, destinationEndpoint: apsFrame.sourceEndpoint});
 }
 
-function flushPromises(): Promise<void> {
-    return new Promise(jest.requireActual('node:timers').setImmediate);
+async function flushPromises(): Promise<void> {
+    const {setImmediate} = await vi.importActual<typeof import('node:timers')>('node:timers');
+    return new Promise(setImmediate);
 }
 
 const TEMP_PATH = path.resolve('temp');
@@ -148,34 +149,34 @@ let mockManufCode = Zcl.ManufacturerCode.SILICON_LABORATORIES;
 let mockAPSSequence = -1; // start at 0
 let mockMessageTag = -1; // start at 0
 let mockEzspEmitter = new EventEmitter<EmberEzspEventMap>();
-const mockEzspRemoveAllListeners = jest.fn((e: unknown) => {
+const mockEzspRemoveAllListeners = vi.fn((e: unknown) => {
     mockEzspEmitter.removeAllListeners(e);
 });
-const mockEzspOn = jest.fn((e: any, l: (...args: any) => void) => {
+const mockEzspOn = vi.fn((e: any, l: (...args: any) => void) => {
     mockEzspEmitter.on(e, l);
 });
-const mockEzspOnce = jest.fn((e: any, l: (...args: any) => void) => {
+const mockEzspOnce = vi.fn((e: any, l: (...args: any) => void) => {
     mockEzspEmitter.once(e, l);
 });
-const mockEzspStart = jest.fn(() => Promise.resolve(EzspStatus.SUCCESS));
-const mockEzspStop = jest.fn();
+const mockEzspStart = vi.fn(() => Promise.resolve(EzspStatus.SUCCESS));
+const mockEzspStop = vi.fn();
 
-const mockEzspSend = jest.fn(() => Promise.resolve([SLStatus.OK, ++mockMessageTag]));
-const mockEzspSetMulticastTableEntry = jest.fn(() => Promise.resolve(SLStatus.OK));
-const mockEzspSetManufacturerCode = jest.fn((code: Zcl.ManufacturerCode) => (mockManufCode = code));
-const mockEzspReadAndClearCounters = jest.fn(() => Promise.resolve([1, 2, 3, 4])); // not matching EmberCounterType, but doesn't matter here
-const mockEzspGetNetworkParameters = jest.fn(() =>
+const mockEzspSend = vi.fn(() => Promise.resolve([SLStatus.OK, ++mockMessageTag]));
+const mockEzspSetMulticastTableEntry = vi.fn(() => Promise.resolve(SLStatus.OK));
+const mockEzspSetManufacturerCode = vi.fn((code: Zcl.ManufacturerCode) => (mockManufCode = code));
+const mockEzspReadAndClearCounters = vi.fn(() => Promise.resolve([1, 2, 3, 4])); // not matching EmberCounterType, but doesn't matter here
+const mockEzspGetNetworkParameters = vi.fn(() =>
     Promise.resolve([SLStatus.OK, EmberNodeType.COORDINATOR, deepClone(DEFAULT_ADAPTER_NETWORK_PARAMETERS)]),
 );
-const mockEzspNetworkState = jest.fn(() => Promise.resolve(EmberNetworkStatus.JOINED_NETWORK));
-const mockEzspGetEui64 = jest.fn(() => Promise.resolve(DEFAULT_COORDINATOR_IEEE));
-const mockEzspSetConcentrator = jest.fn(() => Promise.resolve(SLStatus.OK));
-const mockEzspSetSourceRouteDiscoveryMode = jest.fn(() => Promise.resolve(1240 /* ms */));
-const mockEzspSetRadioIeee802154CcaMode = jest.fn(() => Promise.resolve(SLStatus.OK));
+const mockEzspNetworkState = vi.fn(() => Promise.resolve(EmberNetworkStatus.JOINED_NETWORK));
+const mockEzspGetEui64 = vi.fn(() => Promise.resolve(DEFAULT_COORDINATOR_IEEE));
+const mockEzspSetConcentrator = vi.fn(() => Promise.resolve(SLStatus.OK));
+const mockEzspSetSourceRouteDiscoveryMode = vi.fn(() => Promise.resolve(1240 /* ms */));
+const mockEzspSetRadioIeee802154CcaMode = vi.fn(() => Promise.resolve(SLStatus.OK));
 // not OK by default since used to detected unreged EP
-const mockEzspGetEndpointFlags = jest.fn(() => Promise.resolve([SLStatus.NOT_FOUND, EzspEndpointFlag.DISABLED]));
-const mockEzspAddEndpoint = jest.fn(() => Promise.resolve(SLStatus.OK));
-const mockEzspNetworkInit = jest.fn((networkInitStruct: EmberNetworkInitStruct) => {
+const mockEzspGetEndpointFlags = vi.fn(() => Promise.resolve([SLStatus.NOT_FOUND, EzspEndpointFlag.DISABLED]));
+const mockEzspAddEndpoint = vi.fn(() => Promise.resolve(SLStatus.OK));
+const mockEzspNetworkInit = vi.fn((networkInitStruct: EmberNetworkInitStruct) => {
     setTimeout(async () => {
         mockEzspEmitter.emit('stackStatus', SLStatus.NETWORK_UP);
         await flushPromises();
@@ -183,7 +184,7 @@ const mockEzspNetworkInit = jest.fn((networkInitStruct: EmberNetworkInitStruct) 
 
     return Promise.resolve(SLStatus.OK);
 });
-const mockEzspExportKey = jest.fn((context: SecManContext) => {
+const mockEzspExportKey = vi.fn((context: SecManContext) => {
     switch (context.coreKeyType) {
         case SecManKeyType.NETWORK: {
             return Promise.resolve([SLStatus.OK, {contents: Buffer.from(DEFAULT_BACKUP.network_key.key, 'hex')} as SecManKey]);
@@ -193,7 +194,7 @@ const mockEzspExportKey = jest.fn((context: SecManContext) => {
         }
     }
 });
-const mockEzspLeaveNetwork = jest.fn(() => {
+const mockEzspLeaveNetwork = vi.fn(() => {
     setTimeout(async () => {
         mockEzspEmitter.emit('stackStatus', SLStatus.NETWORK_DOWN);
         await flushPromises();
@@ -201,10 +202,10 @@ const mockEzspLeaveNetwork = jest.fn(() => {
 
     return Promise.resolve(SLStatus.OK);
 });
-const mockEzspSetInitialSecurityState = jest.fn(() => Promise.resolve(SLStatus.OK));
-const mockEzspSetExtendedSecurityBitmask = jest.fn(() => Promise.resolve(SLStatus.OK));
-const mockEzspClearKeyTable = jest.fn(() => Promise.resolve(SLStatus.OK));
-const mockEzspFormNetwork = jest.fn((parameters: EmberNetworkParameters) => {
+const mockEzspSetInitialSecurityState = vi.fn(() => Promise.resolve(SLStatus.OK));
+const mockEzspSetExtendedSecurityBitmask = vi.fn(() => Promise.resolve(SLStatus.OK));
+const mockEzspClearKeyTable = vi.fn(() => Promise.resolve(SLStatus.OK));
+const mockEzspFormNetwork = vi.fn((parameters: EmberNetworkParameters) => {
     setTimeout(async () => {
         mockEzspEmitter.emit('stackStatus', SLStatus.NETWORK_UP);
         await flushPromises();
@@ -212,23 +213,23 @@ const mockEzspFormNetwork = jest.fn((parameters: EmberNetworkParameters) => {
 
     return Promise.resolve(SLStatus.OK);
 });
-const mockEzspStartWritingStackTokens = jest.fn(() => Promise.resolve(SLStatus.OK));
-const mockEzspGetConfigurationValue = jest.fn((config: EzspConfigId) => {
+const mockEzspStartWritingStackTokens = vi.fn(() => Promise.resolve(SLStatus.OK));
+const mockEzspGetConfigurationValue = vi.fn((config: EzspConfigId) => {
     switch (config) {
         case EzspConfigId.KEY_TABLE_SIZE: {
             return Promise.resolve([SLStatus.OK, 0]);
         }
     }
 });
-const mockEzspExportLinkKeyByIndex = jest.fn();
-const mockEzspEraseKeyTableEntry = jest.fn(() => Promise.resolve(SLStatus.OK));
-const mockEzspImportLinkKey = jest.fn(() => Promise.resolve(SLStatus.OK));
-const mockEzspBroadcastNextNetworkKey = jest.fn(() => Promise.resolve(SLStatus.OK));
-const mockEzspBroadcastNetworkKeySwitch = jest.fn(() => Promise.resolve(SLStatus.OK));
-const mockEzspStartScan = jest.fn(() => Promise.resolve(SLStatus.OK));
-const mockEzspVersion = jest.fn((version: number) => Promise.resolve([version, EZSP_STACK_TYPE_MESH, 0]));
-const mockEzspSetProtocolVersion = jest.fn();
-const mockEzspGetVersionStruct = jest.fn(() =>
+const mockEzspExportLinkKeyByIndex = vi.fn();
+const mockEzspEraseKeyTableEntry = vi.fn(() => Promise.resolve(SLStatus.OK));
+const mockEzspImportLinkKey = vi.fn(() => Promise.resolve(SLStatus.OK));
+const mockEzspBroadcastNextNetworkKey = vi.fn(() => Promise.resolve(SLStatus.OK));
+const mockEzspBroadcastNetworkKeySwitch = vi.fn(() => Promise.resolve(SLStatus.OK));
+const mockEzspStartScan = vi.fn(() => Promise.resolve(SLStatus.OK));
+const mockEzspVersion = vi.fn((version: number) => Promise.resolve([version, EZSP_STACK_TYPE_MESH, 0]));
+const mockEzspSetProtocolVersion = vi.fn();
+const mockEzspGetVersionStruct = vi.fn(() =>
     Promise.resolve([
         SLStatus.OK,
         {
@@ -240,11 +241,11 @@ const mockEzspGetVersionStruct = jest.fn(() =>
             type: EmberVersionType.GA,
         } as EmberVersion,
     ]),
-);
-const mockEzspSetConfigurationValue = jest.fn(() => Promise.resolve(SLStatus.OK));
-const mockEzspSetValue = jest.fn(() => Promise.resolve(SLStatus.OK));
-const mockEzspSetPolicy = jest.fn(() => Promise.resolve(SLStatus.OK));
-const mockEzspPermitJoining = jest.fn((duration: number) => {
+));
+const mockEzspSetConfigurationValue = vi.fn(() => Promise.resolve(SLStatus.OK));
+const mockEzspSetValue = vi.fn(() => Promise.resolve(SLStatus.OK));
+const mockEzspSetPolicy = vi.fn(() => Promise.resolve(SLStatus.OK));
+const mockEzspPermitJoining = vi.fn((duration: number) => {
     setTimeout(async () => {
         mockEzspEmitter.emit('stackStatus', duration > 0 ? SLStatus.ZIGBEE_NETWORK_OPENED : SLStatus.ZIGBEE_NETWORK_CLOSED);
         await flushPromises();
@@ -252,10 +253,10 @@ const mockEzspPermitJoining = jest.fn((duration: number) => {
 
     return Promise.resolve(SLStatus.OK);
 });
-const mockEzspSendBroadcast = jest.fn(() => Promise.resolve([SLStatus.OK, ++mockAPSSequence]));
-const mockEzspSendUnicast = jest.fn(() => Promise.resolve([SLStatus.OK, ++mockAPSSequence]));
-const mockEzspGetNetworkKeyInfo = jest.fn(() => Promise.resolve([SLStatus.OK, deepClone(DEFAULT_NETWORK_KEY_INFO)]));
-const mockEzspGetApsKeyInfo = jest.fn(() =>
+const mockEzspSendBroadcast = vi.fn(() => Promise.resolve([SLStatus.OK, ++mockAPSSequence]));
+const mockEzspSendUnicast = vi.fn(() => Promise.resolve([SLStatus.OK, ++mockAPSSequence]));
+const mockEzspGetNetworkKeyInfo = vi.fn(() => Promise.resolve([SLStatus.OK, deepClone(DEFAULT_NETWORK_KEY_INFO)]));
+const mockEzspGetApsKeyInfo = vi.fn(() =>
     Promise.resolve([
         SLStatus.OK,
         {
@@ -265,26 +266,26 @@ const mockEzspGetApsKeyInfo = jest.fn(() =>
             ttlInSeconds: 0,
         } as SecManAPSKeyMetadata,
     ]),
-);
-const mockEzspSetRadioPower = jest.fn(() => Promise.resolve(SLStatus.OK));
-const mockEzspImportTransientKey = jest.fn(() => Promise.resolve(SLStatus.OK));
-const mockEzspClearTransientLinkKeys = jest.fn(() => Promise.resolve(SLStatus.OK));
-const mockEzspSetLogicalAndRadioChannel = jest.fn(() => Promise.resolve(SLStatus.OK));
-const mockEzspSendRawMessage = jest.fn(() => Promise.resolve(SLStatus.OK));
-const mockEzspSetNWKFrameCounter = jest.fn(() => Promise.resolve(SLStatus.OK));
-const mockEzspSetAPSFrameCounter = jest.fn(() => Promise.resolve(SLStatus.OK));
+));
+const mockEzspSetRadioPower = vi.fn(() => Promise.resolve(SLStatus.OK));
+const mockEzspImportTransientKey = vi.fn(() => Promise.resolve(SLStatus.OK));
+const mockEzspClearTransientLinkKeys = vi.fn(() => Promise.resolve(SLStatus.OK));
+const mockEzspSetLogicalAndRadioChannel = vi.fn(() => Promise.resolve(SLStatus.OK));
+const mockEzspSendRawMessage = vi.fn(() => Promise.resolve(SLStatus.OK));
+const mockEzspSetNWKFrameCounter = vi.fn(() => Promise.resolve(SLStatus.OK));
+const mockEzspSetAPSFrameCounter = vi.fn(() => Promise.resolve(SLStatus.OK));
 
-jest.mock('../../../src/adapter/ember/uart/ash');
+vi.mock('../../../src/adapter/ember/uart/ash');
 
-jest.mock('../../../src/adapter/ember/ezsp/ezsp', () => ({
-    ...jest.requireActual('../../../src/adapter/ember/ezsp/ezsp'),
-    Ezsp: jest.fn(() => ({
+vi.mock('../../../src/adapter/ember/ezsp/ezsp', async (importOriginal) => ({
+    ...(await importOriginal()),
+    Ezsp: vi.fn(() => ({
         removeAllListeners: mockEzspRemoveAllListeners,
         on: mockEzspOn,
         once: mockEzspOnce,
 
         // only functions called from adapter
-        ash: {readAndClearCounters: jest.fn().mockReturnValue([9, 8, 7])},
+        ash: {readAndClearCounters: vi.fn().mockReturnValue([9, 8, 7])},
 
         start: mockEzspStart,
         stop: mockEzspStop,
@@ -393,10 +394,10 @@ describe('Ember Adapter Layer', () => {
     let adapter: EmberAdapter;
     let backupPath: string;
     let loggerSpies = {
-        debug: jest.spyOn(logger, 'debug'),
-        info: jest.spyOn(logger, 'info'),
-        warning: jest.spyOn(logger, 'warning'),
-        error: jest.spyOn(logger, 'error'),
+        debug: vi.spyOn(logger, 'debug'),
+        info: vi.spyOn(logger, 'info'),
+        warning: vi.spyOn(logger, 'warning'),
+        error: vi.spyOn(logger, 'error'),
     };
 
     const deleteCoordinatorBackup = () => {
@@ -473,7 +474,7 @@ describe('Ember Adapter Layer', () => {
     });
 
     beforeEach(async () => {
-        jest.useFakeTimers();
+        vi.useFakeTimers();
 
         backupPath = path.join(TEMP_PATH, `ember_coordinator_backup.json`);
 
@@ -489,7 +490,7 @@ describe('Ember Adapter Layer', () => {
     });
 
     afterEach(async () => {
-        jest.useRealTimers();
+        vi.useRealTimers();
     });
 
     it('Creates default instance', () => {
@@ -579,7 +580,7 @@ describe('Ember Adapter Layer', () => {
         adapter = new EmberAdapter(DEFAULT_NETWORK_OPTIONS, DEFAULT_SERIAL_PORT_OPTIONS, backupPath, DEFAULT_ADAPTER_OPTIONS);
         const result = adapter.start();
 
-        await jest.advanceTimersByTimeAsync(5000);
+        await vi.advanceTimersByTimeAsync(5000);
         await expect(result).resolves.toStrictEqual('resumed');
         expect(mockEzspSetProtocolVersion).toHaveBeenCalledWith(EZSP_PROTOCOL_VERSION);
         expect(
@@ -620,7 +621,7 @@ describe('Ember Adapter Layer', () => {
         adapter = new EmberAdapter(DEFAULT_NETWORK_OPTIONS, DEFAULT_SERIAL_PORT_OPTIONS, backupPath, DEFAULT_ADAPTER_OPTIONS);
         const result = adapter.start();
 
-        await jest.advanceTimersByTimeAsync(5000);
+        await vi.advanceTimersByTimeAsync(5000);
         await expect(result).resolves.toStrictEqual('resumed');
         expect(mockEzspSetValue).toHaveBeenCalledWith(EzspValueId.TRANSIENT_DEVICE_TIMEOUT, 2, lowHighBytes(config.TRANSIENT_DEVICE_TIMEOUT));
         expect(mockEzspSetConfigurationValue).toHaveBeenCalledWith(EzspConfigId.MAX_END_DEVICE_CHILDREN, config.MAX_END_DEVICE_CHILDREN);
@@ -651,7 +652,7 @@ describe('Ember Adapter Layer', () => {
         adapter = new EmberAdapter(DEFAULT_NETWORK_OPTIONS, DEFAULT_SERIAL_PORT_OPTIONS, backupPath, DEFAULT_ADAPTER_OPTIONS);
         const result = adapter.start();
 
-        await jest.advanceTimersByTimeAsync(5000);
+        await vi.advanceTimersByTimeAsync(5000);
         await expect(result).resolves.toStrictEqual('resumed');
         expect(mockEzspSetRadioIeee802154CcaMode).toHaveBeenCalledTimes(0);
 
@@ -676,7 +677,7 @@ describe('Ember Adapter Layer', () => {
 
         const result = adapter.start();
 
-        await jest.advanceTimersByTimeAsync(5000);
+        await vi.advanceTimersByTimeAsync(5000);
         expect(mockEzspSetNWKFrameCounter).toHaveBeenCalledWith(DEFAULT_BACKUP.network_key.frame_counter);
         // expect(mockEzspSetAPSFrameCounter).toHaveBeenCalledWith(DEFAULT_BACKUP.???.???);
         expect(mockEzspFormNetwork).toHaveBeenCalledWith(expectedNetParams);
@@ -713,7 +714,7 @@ describe('Ember Adapter Layer', () => {
 
         const result = adapter.start();
 
-        await jest.advanceTimersByTimeAsync(5000);
+        await vi.advanceTimersByTimeAsync(5000);
         expect(mockEzspSetNWKFrameCounter).toHaveBeenCalledWith(DEFAULT_BACKUP.network_key.frame_counter);
         // expect(mockEzspSetAPSFrameCounter).toHaveBeenCalledWith(DEFAULT_BACKUP.???.???);
         expect(mockEzspFormNetwork).toHaveBeenCalledWith(expectedNetParams);
@@ -741,7 +742,7 @@ describe('Ember Adapter Layer', () => {
 
         const result = adapter.start();
 
-        await jest.advanceTimersByTimeAsync(5000);
+        await vi.advanceTimersByTimeAsync(5000);
         await expect(result).resolves.toStrictEqual('restored');
         expect(mockEzspSetNWKFrameCounter).toHaveBeenCalledWith(DEFAULT_BACKUP.network_key.frame_counter);
         // expect(mockEzspSetAPSFrameCounter).toHaveBeenCalledWith(DEFAULT_BACKUP.???.???);
@@ -769,7 +770,7 @@ describe('Ember Adapter Layer', () => {
 
         const result = adapter.start();
 
-        await jest.advanceTimersByTimeAsync(5000);
+        await vi.advanceTimersByTimeAsync(5000);
         await expect(result).resolves.toStrictEqual('reset');
     });
 
@@ -783,7 +784,7 @@ describe('Ember Adapter Layer', () => {
 
         const result = adapter.start();
 
-        await jest.advanceTimersByTimeAsync(5000);
+        await vi.advanceTimersByTimeAsync(5000);
         await expect(result).resolves.toStrictEqual('reset');
         expect(mockEzspSetNWKFrameCounter).toHaveBeenCalledTimes(0);
         // expect(mockEzspSetAPSFrameCounter).toHaveBeenCalledTimes(0);
@@ -809,7 +810,7 @@ describe('Ember Adapter Layer', () => {
 
         const result = adapter.start();
 
-        await jest.advanceTimersByTimeAsync(5000);
+        await vi.advanceTimersByTimeAsync(5000);
         await expect(result).resolves.toStrictEqual('reset');
         expect(mockEzspSetNWKFrameCounter).toHaveBeenCalledTimes(0);
         // expect(mockEzspSetAPSFrameCounter).toHaveBeenCalledTimes(0);
@@ -835,7 +836,7 @@ describe('Ember Adapter Layer', () => {
 
         const result = adapter.start();
 
-        await jest.advanceTimersByTimeAsync(5000);
+        await vi.advanceTimersByTimeAsync(5000);
         await expect(result).resolves.toStrictEqual('resumed');
         expect(mockEzspSetRadioPower).toHaveBeenCalledTimes(1);
         expect(mockEzspSetRadioPower).toHaveBeenCalledWith(10);
@@ -866,7 +867,7 @@ describe('Ember Adapter Layer', () => {
 
         const result = adapter.start();
 
-        await jest.advanceTimersByTimeAsync(5000);
+        await vi.advanceTimersByTimeAsync(5000);
         await expect(result).resolves.toStrictEqual('restored');
         expect(mockEzspSetRadioPower).toHaveBeenCalledTimes(0);
     });
@@ -882,7 +883,7 @@ describe('Ember Adapter Layer', () => {
 
         const result = adapter.start();
 
-        await jest.advanceTimersByTimeAsync(5000);
+        await vi.advanceTimersByTimeAsync(5000);
         await expect(result).resolves.toStrictEqual('resumed');
         expect(mockEzspSetRadioPower).toHaveBeenCalledTimes(1);
         expect(mockEzspSetRadioPower).toHaveBeenCalledWith(12);
@@ -1102,7 +1103,7 @@ describe('Ember Adapter Layer', () => {
 
         const result = defuseRejection(adapter.start());
 
-        await jest.advanceTimersByTimeAsync(5000);
+        await vi.advanceTimersByTimeAsync(5000);
         await expect(result).rejects.toThrow(error);
     });
 
@@ -1125,7 +1126,7 @@ describe('Ember Adapter Layer', () => {
 
         const result = adapter.start();
 
-        await jest.advanceTimersByTimeAsync(5000);
+        await vi.advanceTimersByTimeAsync(5000);
         await expect(result).resolves.toStrictEqual('resumed');
 
         expect(loggerSpies.warning).toHaveBeenCalledWith(`Adapter is running a non-GA version (${EmberVersionType[type]}).`, 'zh:ember');
@@ -1138,7 +1139,7 @@ describe('Ember Adapter Layer', () => {
 
         const result = adapter.start();
 
-        await jest.advanceTimersByTimeAsync(5000);
+        await vi.advanceTimersByTimeAsync(5000);
         await expect(result).resolves.toStrictEqual('resumed');
         expect(mockEzspVersion).toHaveBeenNthCalledWith(1, EZSP_PROTOCOL_VERSION);
         expect(mockEzspVersion).toHaveBeenNthCalledWith(2, EZSP_MIN_PROTOCOL_VERSION);
@@ -1152,7 +1153,7 @@ describe('Ember Adapter Layer', () => {
 
         const result = adapter.start();
 
-        await jest.advanceTimersByTimeAsync(5000);
+        await vi.advanceTimersByTimeAsync(5000);
         await expect(result).resolves.toStrictEqual('resumed');
 
         expect(loggerSpies.info).toHaveBeenCalledWith(
@@ -1170,7 +1171,7 @@ describe('Ember Adapter Layer', () => {
 
         const result = adapter.start();
 
-        await jest.advanceTimersByTimeAsync(5000);
+        await vi.advanceTimersByTimeAsync(5000);
         await expect(result).resolves.toStrictEqual('resumed');
         expect(mockEzspAddEndpoint).toHaveBeenCalledTimes(1);
         const ep = FIXED_ENDPOINTS[0];
@@ -1191,7 +1192,7 @@ describe('Ember Adapter Layer', () => {
         adapter = new EmberAdapter(DEFAULT_NETWORK_OPTIONS, DEFAULT_SERIAL_PORT_OPTIONS, backupPath, DEFAULT_ADAPTER_OPTIONS);
         const result = adapter.start();
 
-        await jest.advanceTimersByTimeAsync(5000);
+        await vi.advanceTimersByTimeAsync(5000);
         await expect(result).resolves.toStrictEqual('reset');
         expect(loggerSpies.error).toHaveBeenCalledWith(`[INIT FORM] Failed to clear key table with status=FAIL.`, 'zh:ember');
     });
@@ -1202,7 +1203,7 @@ describe('Ember Adapter Layer', () => {
 
             const result = adapter.start();
 
-            await jest.advanceTimersByTimeAsync(5000);
+            await vi.advanceTimersByTimeAsync(5000);
             await result;
 
             // clean slate "post-start"
@@ -1211,9 +1212,9 @@ describe('Ember Adapter Layer', () => {
 
         it('Stops Ezsp layer on stop', async () => {
             // @ts-expect-error private
-            const ezspStopSpy = jest.spyOn(adapter.ezsp, 'stop');
+            const ezspStopSpy = vi.spyOn(adapter.ezsp, 'stop');
             // @ts-expect-error private
-            const ezspRemoveAllListenersSpy = jest.spyOn(adapter.ezsp, 'removeAllListeners');
+            const ezspRemoveAllListenersSpy = vi.spyOn(adapter.ezsp, 'removeAllListeners');
 
             await adapter.stop();
 
@@ -1263,21 +1264,21 @@ describe('Ember Adapter Layer', () => {
 
             const p1 = defuseRejection(adapter.emberGetPanId());
 
-            await jest.advanceTimersByTimeAsync(5000);
+            await vi.advanceTimersByTimeAsync(5000);
             await expect(p1).rejects.toThrow(`Failed to get PAN ID (via network parameters) with status=FAIL.`);
 
             adapter.clearNetworkCache();
 
             const p2 = defuseRejection(adapter.emberGetExtendedPanId());
 
-            await jest.advanceTimersByTimeAsync(5000);
+            await vi.advanceTimersByTimeAsync(5000);
             await expect(p2).rejects.toThrow(`Failed to get Extended PAN ID (via network parameters) with status=FAIL.`);
 
             adapter.clearNetworkCache();
 
             const p3 = defuseRejection(adapter.emberGetRadioChannel());
 
-            await jest.advanceTimersByTimeAsync(5000);
+            await vi.advanceTimersByTimeAsync(5000);
             await expect(p3).rejects.toThrow(`Failed to get radio channel (via network parameters) with status=FAIL.`);
         });
 
@@ -1307,7 +1308,7 @@ describe('Ember Adapter Layer', () => {
 
             expect(loggerSpies.error).toHaveBeenCalledWith(`Delivery of BROADCAST failed for '1234'.`, 'zh:ember');
 
-            const spyDeliveryFailedFor = jest.spyOn(
+            const spyDeliveryFailedFor = vi.spyOn(
                 // @ts-expect-error private
                 adapter.oneWaitress,
                 'deliveryFailedFor',
@@ -1389,12 +1390,12 @@ describe('Ember Adapter Layer', () => {
         });
 
         it('Emits network address event on ZDO NETWORK_ADDRESS_RESPONSE', async () => {
-            const spyResolveZDO = jest.spyOn(
+            const spyResolveZDO = vi.spyOn(
                 // @ts-expect-error private
                 adapter.oneWaitress,
                 'resolveZDO',
             );
-            const spyEmit = jest.spyOn(adapter, 'emit');
+            const spyEmit = vi.spyOn(adapter, 'emit');
             const sender = 1234;
             const apsFrame: EmberApsFrame = {
                 profileId: Zdo.ZDO_PROFILE_ID,
@@ -1430,12 +1431,12 @@ describe('Ember Adapter Layer', () => {
         });
 
         it('Emits device announce event on ZDO END_DEVICE_ANNOUNCE', async () => {
-            const spyResolveZDO = jest.spyOn(
+            const spyResolveZDO = vi.spyOn(
                 // @ts-expect-error private
                 adapter.oneWaitress,
                 'resolveZDO',
             );
-            const spyEmit = jest.spyOn(adapter, 'emit');
+            const spyEmit = vi.spyOn(adapter, 'emit');
             const sender = 1234;
             const apsFrame: EmberApsFrame = {
                 profileId: Zdo.ZDO_PROFILE_ID,
@@ -1474,12 +1475,12 @@ describe('Ember Adapter Layer', () => {
         });
 
         it('Emits ZCL payload on incoming message', async () => {
-            const spyResolveZCL = jest.spyOn(
+            const spyResolveZCL = vi.spyOn(
                 // @ts-expect-error private
                 adapter.oneWaitress,
                 'resolveZCL',
             );
-            const spyEmit = jest.spyOn(adapter, 'emit');
+            const spyEmit = vi.spyOn(adapter, 'emit');
             const sender = 1234;
             const apsFrame: EmberApsFrame = {
                 profileId: ZSpec.HA_PROFILE_ID,
@@ -1515,12 +1516,12 @@ describe('Ember Adapter Layer', () => {
         });
 
         it('Emits ZCL payload on touchlink message', async () => {
-            const spyResolveZCL = jest.spyOn(
+            const spyResolveZCL = vi.spyOn(
                 // @ts-expect-error private
                 adapter.oneWaitress,
                 'resolveZCL',
             );
-            const spyEmit = jest.spyOn(adapter, 'emit');
+            const spyEmit = vi.spyOn(adapter, 'emit');
             const sourcePanId: PanId = 0x1234;
             const sourceAddress: EUI64 = '0x1122334455aabbcc';
             const lastHopLqi = 252;
@@ -1548,12 +1549,12 @@ describe('Ember Adapter Layer', () => {
         });
 
         it('Emits ZCL payload on greenpower message', async () => {
-            const spyResolveZCL = jest.spyOn(
+            const spyResolveZCL = vi.spyOn(
                 // @ts-expect-error private
                 adapter.oneWaitress,
                 'resolveZCL',
             );
-            const spyEmit = jest.spyOn(adapter, 'emit');
+            const spyEmit = vi.spyOn(adapter, 'emit');
             const sourceId: number = 1234;
             const nwkAddress: NodeId = sourceId & 0xffff;
             const gpdLink: number = 123;
@@ -1616,7 +1617,7 @@ describe('Ember Adapter Layer', () => {
         });
 
         it('Emits device joined on trust center join', async () => {
-            const spyEmit = jest.spyOn(adapter, 'emit');
+            const spyEmit = vi.spyOn(adapter, 'emit');
             const newNodeId: NodeId = 1234;
             const newNodeEui64: EUI64 = '0x11223344eebbccaa';
             const status: EmberDeviceUpdate = EmberDeviceUpdate.STANDARD_SECURITY_UNSECURED_JOIN;
@@ -1633,7 +1634,7 @@ describe('Ember Adapter Layer', () => {
         });
 
         it('Emits device leave on trust center join', async () => {
-            const spyEmit = jest.spyOn(adapter, 'emit');
+            const spyEmit = vi.spyOn(adapter, 'emit');
             const newNodeId: NodeId = 1234;
             const newNodeEui64: EUI64 = '0x11223344eebbccaa';
             const status: EmberDeviceUpdate = EmberDeviceUpdate.DEVICE_LEFT;
@@ -1666,7 +1667,7 @@ describe('Ember Adapter Layer', () => {
         });
 
         it('Handles device join workaround requiring specific manufacturer code', async () => {
-            const spyEmit = jest.spyOn(adapter, 'emit');
+            const spyEmit = vi.spyOn(adapter, 'emit');
             const newNodeId: NodeId = 1234;
             const newNodeEui64: EUI64 = '0x54ef44ffeebbccaa';
             const status: EmberDeviceUpdate = EmberDeviceUpdate.STANDARD_SECURITY_UNSECURED_JOIN;
@@ -1685,7 +1686,7 @@ describe('Ember Adapter Layer', () => {
         });
 
         it('Triggers watchdog counters', async () => {
-            await jest.advanceTimersByTimeAsync(3610000);
+            await vi.advanceTimersByTimeAsync(3610000);
             expect(mockEzspReadAndClearCounters).toHaveBeenCalledTimes(1);
             expect(loggerSpies.info).toHaveBeenCalledTimes(2);
             expect(loggerSpies.info.mock.calls[0][0]).toMatch(/[NCP COUNTERS]/);
@@ -1977,7 +1978,7 @@ describe('Ember Adapter Layer', () => {
         it('Broadcasts network key update', async () => {
             const p = adapter.broadcastNetworkKeyUpdate();
 
-            await jest.advanceTimersByTimeAsync(100000);
+            await vi.advanceTimersByTimeAsync(100000);
             await expect(p).resolves.toStrictEqual(undefined);
             expect(mockEzspBroadcastNextNetworkKey).toHaveBeenCalledTimes(1);
             expect(mockEzspBroadcastNetworkKeySwitch).toHaveBeenCalledTimes(1);
@@ -1988,7 +1989,7 @@ describe('Ember Adapter Layer', () => {
 
             const p = defuseRejection(adapter.broadcastNetworkKeyUpdate());
 
-            await jest.advanceTimersByTimeAsync(100000);
+            await vi.advanceTimersByTimeAsync(100000);
             await expect(p).rejects.toThrow(`[TRUST CENTER] Failed to broadcast next network key with status=FAIL.`);
             expect(mockEzspBroadcastNextNetworkKey).toHaveBeenCalledTimes(1);
             expect(mockEzspBroadcastNetworkKeySwitch).toHaveBeenCalledTimes(0);
@@ -1999,29 +2000,29 @@ describe('Ember Adapter Layer', () => {
 
             const p = defuseRejection(adapter.broadcastNetworkKeyUpdate());
 
-            await jest.advanceTimersByTimeAsync(100000);
+            await vi.advanceTimersByTimeAsync(100000);
             await expect(p).rejects.toThrow(`[TRUST CENTER] Failed to broadcast network key switch with status=FAIL.`);
             expect(mockEzspBroadcastNextNetworkKey).toHaveBeenCalledTimes(1);
             expect(mockEzspBroadcastNetworkKeySwitch).toHaveBeenCalledTimes(1);
         });
 
         it('Handles NCP needing reset & init', async () => {
-            const spyEmit = jest.spyOn(adapter, 'emit');
+            const spyEmit = vi.spyOn(adapter, 'emit');
 
             mockEzspEmitter.emit('ncpNeedsResetAndInit', EzspStatus.ERROR_SERIAL_INIT);
-            await jest.advanceTimersByTimeAsync(5000);
+            await vi.advanceTimersByTimeAsync(5000);
 
             expect(spyEmit).toHaveBeenCalledTimes(1);
             expect(spyEmit).toHaveBeenCalledWith('disconnected');
         });
 
         it('Emits adapter disconnected when NCP needs reset & init but queue is too high', async () => {
-            jest.spyOn(
+            vi.spyOn(
                 // @ts-expect-error private
                 adapter.queue,
                 'count',
             ).mockReturnValueOnce(999);
-            const spyEmit = jest.spyOn(adapter, 'emit');
+            const spyEmit = vi.spyOn(adapter, 'emit');
 
             mockEzspEmitter.emit('ncpNeedsResetAndInit', EzspStatus.ERROR_SERIAL_INIT);
             await flushPromises();
@@ -2030,8 +2031,8 @@ describe('Ember Adapter Layer', () => {
         });
 
         it('Emits adapter disconnected when failed to reset & init NCP', async () => {
-            jest.spyOn(adapter, 'stop').mockRejectedValueOnce('mock error');
-            const spyEmit = jest.spyOn(adapter, 'emit');
+            vi.spyOn(adapter, 'stop').mockRejectedValueOnce('mock error');
+            const spyEmit = vi.spyOn(adapter, 'emit');
 
             mockEzspEmitter.emit('ncpNeedsResetAndInit', EzspStatus.ERROR_SERIAL_INIT);
             await flushPromises();
@@ -2079,7 +2080,10 @@ describe('Ember Adapter Layer', () => {
         ])('Adapter impl: throws when using non-InterPAN function %s while in InterPAN mode', async (funcName, args) => {
             await adapter.setChannelInterPAN(15);
 
-            await expect(adapter[funcName](...args)).rejects.toThrow(`[INTERPAN MODE] Cannot execute non-InterPAN commands.`);
+            await expect(
+                // @ts-expect-error mock
+                adapter[funcName](...args),
+            ).rejects.toThrow(`[INTERPAN MODE] Cannot execute non-InterPAN commands.`);
         });
 
         it('Adapter impl: getCoordinatorIEEE', async () => {
@@ -2241,7 +2245,7 @@ describe('Ember Adapter Layer', () => {
 
         it('Adapter impl: waitFor', async () => {
             const waiter = adapter.waitFor(1234, 1, Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, 10, 0, 1, 15000);
-            const spyCancel = jest.spyOn(waiter, 'cancel');
+            const spyCancel = vi.spyOn(waiter, 'cancel');
 
             expect(typeof waiter.cancel).toStrictEqual('function');
             expect(waiter.promise).toBeDefined();
@@ -2252,20 +2256,20 @@ describe('Ember Adapter Layer', () => {
         });
 
         it('Adapter impl: permitJoin on all', async () => {
-            const spyResolveEvent = jest.spyOn(
+            const spyResolveEvent = vi.spyOn(
                 // @ts-expect-error private
                 adapter.oneWaitress,
                 'resolveEvent',
             );
 
             await adapter.permitJoin(250);
-            await jest.advanceTimersByTimeAsync(1000);
+            await vi.advanceTimersByTimeAsync(1000);
             expect(mockEzspPermitJoining).toHaveBeenCalledWith(250);
             expect(mockEzspSendBroadcast).toHaveBeenCalledTimes(1);
             expect(spyResolveEvent).toHaveBeenCalledWith(OneWaitressEvents.STACK_STATUS_NETWORK_OPENED);
 
             await adapter.permitJoin(0);
-            await jest.advanceTimersByTimeAsync(1000);
+            await vi.advanceTimersByTimeAsync(1000);
             expect(mockEzspPermitJoining).toHaveBeenCalledWith(0);
             expect(mockEzspSendBroadcast).toHaveBeenCalledTimes(2);
             expect(spyResolveEvent).toHaveBeenCalledWith(OneWaitressEvents.STACK_STATUS_NETWORK_CLOSED);
@@ -2279,20 +2283,20 @@ describe('Ember Adapter Layer', () => {
         });
 
         it('Adapter impl: permitJoin on coordinator', async () => {
-            const spyResolveEvent = jest.spyOn(
+            const spyResolveEvent = vi.spyOn(
                 // @ts-expect-error private
                 adapter.oneWaitress,
                 'resolveEvent',
             );
 
             await adapter.permitJoin(250, ZSpec.COORDINATOR_ADDRESS);
-            await jest.advanceTimersByTimeAsync(1000);
+            await vi.advanceTimersByTimeAsync(1000);
             expect(mockEzspPermitJoining).toHaveBeenCalledWith(250);
             expect(mockEzspSendBroadcast).toHaveBeenCalledTimes(0);
             expect(spyResolveEvent).toHaveBeenCalledWith(OneWaitressEvents.STACK_STATUS_NETWORK_OPENED);
 
             await adapter.permitJoin(0, ZSpec.COORDINATOR_ADDRESS);
-            await jest.advanceTimersByTimeAsync(1000);
+            await vi.advanceTimersByTimeAsync(1000);
             expect(mockEzspPermitJoining).toHaveBeenCalledWith(0);
             expect(mockEzspSendBroadcast).toHaveBeenCalledTimes(0);
             expect(spyResolveEvent).toHaveBeenCalledWith(OneWaitressEvents.STACK_STATUS_NETWORK_CLOSED);
@@ -2306,7 +2310,7 @@ describe('Ember Adapter Layer', () => {
         });
 
         it('Adapter impl: permitJoin on router', async () => {
-            const spyResolveZDO = jest.spyOn(
+            const spyResolveZDO = vi.spyOn(
                 // @ts-expect-error private
                 adapter.oneWaitress,
                 'resolveZDO',
@@ -2334,14 +2338,14 @@ describe('Ember Adapter Layer', () => {
 
             let zdoResponse = [Zdo.Status.SUCCESS, undefined];
             let p = adapter.permitJoin(250, sender);
-            await jest.advanceTimersByTimeAsync(1000);
+            await vi.advanceTimersByTimeAsync(1000);
             await p;
             expect(mockEzspSendUnicast).toHaveBeenCalledTimes(1);
             expect(spyResolveZDO).toHaveBeenCalledTimes(1);
             expect(spyResolveZDO).toHaveBeenCalledWith(sender, apsFrame, zdoResponse);
 
             p = adapter.permitJoin(0, sender);
-            await jest.advanceTimersByTimeAsync(1000);
+            await vi.advanceTimersByTimeAsync(1000);
             await p;
             expect(mockEzspSendUnicast).toHaveBeenCalledTimes(2);
             expect(spyResolveZDO).toHaveBeenCalledTimes(2);
@@ -2356,7 +2360,7 @@ describe('Ember Adapter Layer', () => {
         });
 
         it('Adapter impl: permitJoin restores temp manufacturer code', async () => {
-            const spyResolveEvent = jest.spyOn(
+            const spyResolveEvent = vi.spyOn(
                 // @ts-expect-error private
                 adapter.oneWaitress,
                 'resolveEvent',
@@ -2375,7 +2379,7 @@ describe('Ember Adapter Layer', () => {
             expect(mockManufCode).toStrictEqual(Zcl.ManufacturerCode.LUMI_UNITED_TECHOLOGY_LTD_SHENZHEN);
 
             await adapter.permitJoin(0, ZSpec.COORDINATOR_ADDRESS);
-            await jest.advanceTimersByTimeAsync(1000);
+            await vi.advanceTimersByTimeAsync(1000);
             expect(mockEzspPermitJoining).toHaveBeenCalledWith(0);
             expect(mockEzspSendBroadcast).toHaveBeenCalledTimes(0);
             expect(spyResolveEvent).toHaveBeenCalledWith(OneWaitressEvents.STACK_STATUS_NETWORK_CLOSED);
@@ -2398,7 +2402,7 @@ describe('Ember Adapter Layer', () => {
         });
 
         it('Adapter impl: resolves undefined when permitJoin on router fails due to failed ZDO status', async () => {
-            const spyResolveZDO = jest.spyOn(
+            const spyResolveZDO = vi.spyOn(
                 // @ts-expect-error private
                 adapter.oneWaitress,
                 'resolveZDO',
@@ -2494,7 +2498,7 @@ describe('Ember Adapter Layer', () => {
 
             const p = adapter.sendZclFrameToEndpoint('0x1122334455667788', networkAddress, endpoint, zclFrame, 10000, false, false, sourceEndpoint);
 
-            await jest.advanceTimersByTimeAsync(5000);
+            await vi.advanceTimersByTimeAsync(5000);
             await expect(p).resolves.toStrictEqual({
                 clusterID: apsFrame.clusterId,
                 header: Zcl.Header.fromBuffer(messageContents),
@@ -2555,7 +2559,7 @@ describe('Ember Adapter Layer', () => {
 
             const p = adapter.sendZclFrameToEndpoint('0x1122334455667788', networkAddress, endpoint, zclFrame, 10000, false, false, sourceEndpoint);
 
-            await jest.advanceTimersByTimeAsync(5000);
+            await vi.advanceTimersByTimeAsync(5000);
             await expect(p).resolves.toStrictEqual({
                 clusterID: apsFrame.clusterId,
                 header: Zcl.Header.fromBuffer(messageContents),
@@ -2616,7 +2620,7 @@ describe('Ember Adapter Layer', () => {
 
             const p = adapter.sendZclFrameToEndpoint('0x1122334455667788', networkAddress, endpoint, zclFrame, 10000, false, false);
 
-            await jest.advanceTimersByTimeAsync(5000);
+            await vi.advanceTimersByTimeAsync(5000);
             await expect(p).resolves.toStrictEqual({
                 clusterID: apsFrame.clusterId,
                 header: Zcl.Header.fromBuffer(messageContents),
@@ -2680,7 +2684,7 @@ describe('Ember Adapter Layer', () => {
 
             const p = adapter.sendZclFrameToEndpoint('0x1122334455667788', networkAddress, endpoint, zclFrame, 10000, false, false, sourceEndpoint);
 
-            await jest.advanceTimersByTimeAsync(10000);
+            await vi.advanceTimersByTimeAsync(10000);
             await expect(p).resolves.toStrictEqual({
                 clusterID: apsFrame.clusterId,
                 header: Zcl.Header.fromBuffer(messageContents),
@@ -2746,7 +2750,7 @@ describe('Ember Adapter Layer', () => {
 
             const p = adapter.sendZclFrameToEndpoint('0x1122334455667788', networkAddress, endpoint, zclFrame, 10000, false, false, sourceEndpoint);
 
-            await jest.advanceTimersByTimeAsync(10000);
+            await vi.advanceTimersByTimeAsync(10000);
             await expect(p).resolves.toStrictEqual({
                 clusterID: apsFrame.clusterId,
                 header: Zcl.Header.fromBuffer(messageContents),
@@ -2802,7 +2806,7 @@ describe('Ember Adapter Layer', () => {
                 ),
             );
 
-            await jest.advanceTimersByTimeAsync(10000);
+            await vi.advanceTimersByTimeAsync(10000);
             await expect(p).rejects.toThrow(
                 `~x~> [ZCL to=0x1122334455667788:1234 apsFrame={"profileId":260,"clusterId":0,"sourceEndpoint":1,"destinationEndpoint":1,"options":4416,"groupId":0,"sequence":0}] Failed to send request with status=${SLStatus[SLStatus.BUSY]}.`,
             );
@@ -2850,7 +2854,7 @@ describe('Ember Adapter Layer', () => {
                 ),
             );
 
-            await jest.advanceTimersByTimeAsync(10000);
+            await vi.advanceTimersByTimeAsync(10000);
             await expect(p).rejects.toThrow(
                 `~x~> [ZCL to=0x1122334455667788:1234 apsFrame={"profileId":260,"clusterId":0,"sourceEndpoint":1,"destinationEndpoint":1,"options":4416,"groupId":0,"sequence":0}] Failed to send request with status=${SLStatus[SLStatus.BUSY]}.`,
             );
@@ -2901,7 +2905,7 @@ describe('Ember Adapter Layer', () => {
                 ),
             );
 
-            await jest.advanceTimersByTimeAsync(10000);
+            await vi.advanceTimersByTimeAsync(10000);
             await expect(p).rejects.toThrow(
                 `~x~> [ZCL to=0x1122334455667788:1234 apsFrame={"profileId":260,"clusterId":0,"sourceEndpoint":1,"destinationEndpoint":1,"options":4416,"groupId":0,"sequence":0}] Failed to send request with status=${SLStatus[SLStatus.BUSY]}.`,
             );
@@ -2949,7 +2953,7 @@ describe('Ember Adapter Layer', () => {
                 ),
             );
 
-            await jest.advanceTimersByTimeAsync(10000);
+            await vi.advanceTimersByTimeAsync(10000);
             await expect(p).rejects.toThrow(
                 `~x~> [ZCL to=0x1122334455667788:1234 apsFrame={"profileId":260,"clusterId":0,"sourceEndpoint":1,"destinationEndpoint":1,"options":4416,"groupId":0,"sequence":0}] Failed to send request with status=FAIL.`,
             );
@@ -3006,7 +3010,7 @@ describe('Ember Adapter Layer', () => {
                 false,
             );
 
-            await jest.advanceTimersByTimeAsync(1000);
+            await vi.advanceTimersByTimeAsync(1000);
             await expect(p).resolves.toStrictEqual([
                 Zdo.Status.SUCCESS,
                 {
@@ -3064,7 +3068,7 @@ describe('Ember Adapter Layer', () => {
 
             const p = adapter.sendZclFrameToEndpoint('0x1122334455667788', networkAddress, endpoint, zclFrame, 10000, true, false, sourceEndpoint);
 
-            await jest.advanceTimersByTimeAsync(5000);
+            await vi.advanceTimersByTimeAsync(5000);
             await expect(p).resolves.toStrictEqual({
                 clusterID: apsFrame.clusterId,
                 header: Zcl.Header.fromBuffer(messageContents),
@@ -3097,7 +3101,7 @@ describe('Ember Adapter Layer', () => {
 
             const p = adapter.sendZclFrameToEndpoint('0x1122334455667788', networkAddress, endpoint, zclFrame, 10000, true, false, sourceEndpoint);
 
-            await jest.advanceTimersByTimeAsync(5000);
+            await vi.advanceTimersByTimeAsync(5000);
             await expect(p).resolves.toStrictEqual(undefined);
 
             const apsFrame: EmberApsFrame = {
@@ -3118,7 +3122,7 @@ describe('Ember Adapter Layer', () => {
             const zclFrame = Zcl.Frame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.SERVER_TO_CLIENT, true, undefined, 1, 1, 0, [{}], {});
             const p = adapter.sendZclFrameToGroup(groupId, zclFrame, 2);
 
-            await jest.advanceTimersByTimeAsync(5000);
+            await vi.advanceTimersByTimeAsync(5000);
             await expect(p).resolves.toStrictEqual(undefined);
 
             const apsFrame: EmberApsFrame = {
@@ -3139,7 +3143,7 @@ describe('Ember Adapter Layer', () => {
             const zclFrame = Zcl.Frame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.SERVER_TO_CLIENT, true, undefined, 1, 1, 0, [{}], {});
             const p = adapter.sendZclFrameToGroup(groupId, zclFrame);
 
-            await jest.advanceTimersByTimeAsync(5000);
+            await vi.advanceTimersByTimeAsync(5000);
             await expect(p).resolves.toStrictEqual(undefined);
 
             const apsFrame: EmberApsFrame = {
@@ -3162,7 +3166,7 @@ describe('Ember Adapter Layer', () => {
             const zclFrame = Zcl.Frame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.SERVER_TO_CLIENT, true, undefined, 1, 1, 0, [{}], {});
             const p = defuseRejection(adapter.sendZclFrameToGroup(groupId, zclFrame, 1));
 
-            await jest.advanceTimersByTimeAsync(5000);
+            await vi.advanceTimersByTimeAsync(5000);
             await expect(p).rejects.toThrow(`~x~> [ZCL GROUP groupId=32] Failed to send with status=FAIL.`);
             expect(mockEzspSend).toHaveBeenCalledTimes(1);
         });
@@ -3173,7 +3177,7 @@ describe('Ember Adapter Layer', () => {
             const sourceEndpoint = FIXED_ENDPOINTS[0].endpoint;
             const p = adapter.sendZclFrameToAll(endpoint, zclFrame, sourceEndpoint, ZSpec.BroadcastAddress.DEFAULT);
 
-            await jest.advanceTimersByTimeAsync(5000);
+            await vi.advanceTimersByTimeAsync(5000);
             await expect(p).resolves.toStrictEqual(undefined);
 
             const apsFrame: EmberApsFrame = {
@@ -3202,7 +3206,7 @@ describe('Ember Adapter Layer', () => {
             const sourceEndpoint = 3;
             const p = adapter.sendZclFrameToAll(endpoint, zclFrame, sourceEndpoint, ZSpec.BroadcastAddress.DEFAULT);
 
-            await jest.advanceTimersByTimeAsync(5000);
+            await vi.advanceTimersByTimeAsync(5000);
             await expect(p).resolves.toStrictEqual(undefined);
 
             const apsFrame: EmberApsFrame = {
@@ -3232,7 +3236,7 @@ describe('Ember Adapter Layer', () => {
             const zclFrame = Zcl.Frame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.SERVER_TO_CLIENT, true, undefined, 1, 1, 0, [{}], {});
             const p = defuseRejection(adapter.sendZclFrameToAll(endpoint, zclFrame, 1, ZSpec.BroadcastAddress.DEFAULT));
 
-            await jest.advanceTimersByTimeAsync(5000);
+            await vi.advanceTimersByTimeAsync(5000);
             await expect(p).rejects.toThrow(`~x~> [ZCL BROADCAST destination=65532] Failed to send with status=FAIL.`);
             expect(mockEzspSend).toHaveBeenCalledTimes(1);
         });
@@ -3321,7 +3325,7 @@ describe('Ember Adapter Layer', () => {
 
             const p = adapter.sendZclFrameInterPANBroadcast(zclFrame, 10000);
 
-            await jest.advanceTimersByTimeAsync(5000);
+            await vi.advanceTimersByTimeAsync(5000);
 
             const payload: ZclPayload = {
                 clusterID: Zcl.Clusters.touchlink.ID,
@@ -3385,7 +3389,7 @@ describe('Ember Adapter Layer', () => {
         it('Adapter impl: restoreChannelInterPAN', async () => {
             const p = adapter.restoreChannelInterPAN();
 
-            await jest.advanceTimersByTimeAsync(10000);
+            await vi.advanceTimersByTimeAsync(10000);
             await expect(p).resolves.toStrictEqual(undefined);
             expect(mockEzspSetLogicalAndRadioChannel).toHaveBeenCalledWith(DEFAULT_NETWORK_OPTIONS.channelList[0]);
         });
@@ -3395,7 +3399,7 @@ describe('Ember Adapter Layer', () => {
 
             const p = defuseRejection(adapter.restoreChannelInterPAN());
 
-            await jest.advanceTimersByTimeAsync(10000);
+            await vi.advanceTimersByTimeAsync(10000);
             await expect(p).rejects.toThrow(`Failed to restore InterPAN channel to '${DEFAULT_NETWORK_OPTIONS.channelList[0]}' with status=FAIL.`);
             expect(mockEzspSetLogicalAndRadioChannel).toHaveBeenCalledWith(DEFAULT_NETWORK_OPTIONS.channelList[0]);
         });

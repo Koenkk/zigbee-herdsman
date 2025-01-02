@@ -1,4 +1,4 @@
-/* istanbul ignore file */
+/* v8 ignore start */
 
 import assert from 'node:assert';
 
@@ -311,7 +311,6 @@ export class ZBOSSAdapter extends Adapter {
                 // `device-only`
                 const result = await this.sendZdo(ZSpec.BLANK_EUI64, networkAddress, clusterId, zdoPayload, false);
 
-                /* istanbul ignore next */
                 if (!Zdo.Buffalo.checkStatus(result)) {
                     // TODO: will disappear once moved upstream
                     throw new Zdo.StatusError(result[0]);
@@ -320,7 +319,6 @@ export class ZBOSSAdapter extends Adapter {
                 // `coordinator-only` (for `all` too)
                 const result = await this.sendZdo(ZSpec.BLANK_EUI64, ZSpec.COORDINATOR_ADDRESS, clusterId, zdoPayload, false);
 
-                /* istanbul ignore next */
                 if (!Zdo.Buffalo.checkStatus(result)) {
                     // TODO: will disappear once moved upstream
                     throw new Zdo.StatusError(result[0]);

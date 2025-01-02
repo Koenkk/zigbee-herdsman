@@ -1,4 +1,4 @@
-import 'regenerator-runtime/runtime';
+import type {MockInstance} from 'vitest';
 
 import fs from 'node:fs';
 import path from 'node:path';
@@ -29,47 +29,35 @@ const globalSetImmediate = setImmediate;
 const flushPromises = () => new Promise(globalSetImmediate);
 
 const mockLogger = {
-    debug: jest.fn((messageOrLambda) => {
+    debug: vi.fn((messageOrLambda) => {
         if (typeof messageOrLambda === 'function') messageOrLambda();
     }),
-    info: jest.fn(),
-    warning: jest.fn(),
-    error: jest.fn(),
+    info: vi.fn(),
+    warning: vi.fn(),
+    error: vi.fn(),
 };
 
-let skipWait = true;
-(wait as ReturnType<typeof jest.fn>).mockImplementation((milliseconds) => {
-    if (!skipWait) {
-        return new Promise<void>((resolve) => {
-            setTimeout((): void => resolve(), milliseconds);
-        });
-    }
-});
-
-const mockedDate = new Date();
-jest.spyOn(global, 'Date').mockImplementation(() => mockedDate);
-
 const mockAdapterEvents = {};
-const mockAdapterWaitFor = jest.fn();
-const mockAdapterSupportsDiscoverRoute = jest.fn();
-const mockSetChannelInterPAN = jest.fn();
-const mocksendZclFrameInterPANToIeeeAddr = jest.fn();
-const mocksendZclFrameInterPANBroadcast = jest.fn();
-const mockRestoreChannelInterPAN = jest.fn();
-const mockAdapterPermitJoin = jest.fn();
-const mockDiscoverRoute = jest.fn();
-const mockAdapterSupportsBackup = jest.fn().mockReturnValue(true);
-const mockAdapterReset = jest.fn();
-const mockAdapterStop = jest.fn();
-const mockAdapterStart = jest.fn().mockReturnValue('resumed');
-const mockAdapterGetCoordinatorIEEE = jest.fn().mockReturnValue('0x0000012300000000');
-const mockAdapterGetNetworkParameters = jest.fn().mockReturnValue({panID: 1, extendedPanID: '0x64c5fd698daf0c00', channel: 15});
-const mocksendZclFrameToGroup = jest.fn();
-const mocksendZclFrameToAll = jest.fn();
-const mockAddInstallCode = jest.fn();
-const mocksendZclFrameToEndpoint = jest.fn();
+const mockAdapterWaitFor = vi.fn();
+const mockAdapterSupportsDiscoverRoute = vi.fn();
+const mockSetChannelInterPAN = vi.fn();
+const mocksendZclFrameInterPANToIeeeAddr = vi.fn();
+const mocksendZclFrameInterPANBroadcast = vi.fn();
+const mockRestoreChannelInterPAN = vi.fn();
+const mockAdapterPermitJoin = vi.fn();
+const mockDiscoverRoute = vi.fn();
+const mockAdapterSupportsBackup = vi.fn().mockReturnValue(true);
+const mockAdapterReset = vi.fn();
+const mockAdapterStop = vi.fn();
+const mockAdapterStart = vi.fn().mockReturnValue('resumed');
+const mockAdapterGetCoordinatorIEEE = vi.fn().mockReturnValue('0x0000012300000000');
+const mockAdapterGetNetworkParameters = vi.fn().mockReturnValue({panID: 1, extendedPanID: '0x64c5fd698daf0c00', channel: 15});
+const mocksendZclFrameToGroup = vi.fn();
+const mocksendZclFrameToAll = vi.fn();
+const mockAddInstallCode = vi.fn();
+const mocksendZclFrameToEndpoint = vi.fn();
 let sendZdoResponseStatus = Zdo.Status.SUCCESS;
-const mockAdapterSendZdo = jest
+const mockAdapterSendZdo = vi
     .fn()
     .mockImplementation(async (ieeeAddress: string, networkAddress: number, clusterId: Zdo.ClusterId, payload: Buffer, disableResponse: true) => {
         if (sendZdoResponseStatus !== Zdo.Status.SUCCESS) {
@@ -311,8 +299,8 @@ const equalsPartial = (object, expected) => {
     return true;
 };
 
-jest.mock('../src/utils/wait', () => ({
-    wait: jest.fn(() => {
+vi.mock('../src/utils/wait', () => ({
+    wait: vi.fn(() => {
         return new Promise<void>((resolve) => resolve());
     }),
 }));
@@ -370,8 +358,8 @@ const mockDummyBackup: Models.Backup = {
 
 let dummyBackup;
 
-jest.mock('../src/adapter/z-stack/adapter/zStackAdapter', () => ({
-    ZStackAdapter: jest.fn(() => ({
+vi.mock('../src/adapter/z-stack/adapter/zStackAdapter', () => ({
+    ZStackAdapter: vi.fn(() => ({
         hasZdoMessageOverhead: false,
         manufacturerID: 0x0007,
         on: (event, handler) => (mockAdapterEvents[event] = handler),
@@ -440,7 +428,7 @@ const events: {
 
 const backupPath = getTempFile('backup');
 
-const mockAcceptJoiningDeviceHandler = jest.fn((ieeeAddr: string): Promise<boolean> => Promise.resolve(true));
+const mockAcceptJoiningDeviceHandler = vi.fn((ieeeAddr: string): Promise<boolean> => Promise.resolve(true));
 const options = {
     network: {
         panID: 0x1a63,
@@ -465,20 +453,24 @@ const databaseContents = () => fs.readFileSync(options.databasePath).toString();
 
 describe('Controller', () => {
     let controller: Controller;
+    let mockedDate: Date;
 
     beforeAll(async () => {
-        jest.useFakeTimers();
-        Date.now = jest.fn().mockReturnValue(150);
+        mockedDate = new Date();
+
+        vi.useFakeTimers();
+        vi.setSystemTime(mockedDate);
         setLogger(mockLogger);
         dummyBackup = await Utils.BackupUtils.toUnifiedBackup(mockDummyBackup);
     });
 
     afterAll(async () => {
-        jest.useRealTimers();
+        vi.useRealTimers();
         fs.rmSync(TEMP_PATH, {recursive: true, force: true});
     });
 
     beforeEach(async () => {
+        vi.setSystemTime(mockedDate);
         sendZdoResponseStatus = Zdo.Status.SUCCESS;
         mocksRestore.forEach((m) => m.mockRestore());
         mocksClear.forEach((m) => m.mockClear());
@@ -568,7 +560,7 @@ describe('Controller', () => {
 
     it('Controller stop, should create backup', async () => {
         // @ts-expect-error private
-        const databaseSaveSpy = jest.spyOn(controller, 'databaseSave');
+        const databaseSaveSpy = vi.spyOn(controller, 'databaseSave');
         await controller.start();
         // @ts-expect-error private
         databaseSaveSpy.mockClear();
@@ -705,7 +697,7 @@ describe('Controller', () => {
             meta: {},
         });
         expect(JSON.parse(fs.readFileSync(options.backupPath).toString())).toStrictEqual(JSON.parse(JSON.stringify(dummyBackup)));
-        jest.advanceTimersByTime(86500000);
+        vi.advanceTimersByTime(86500000);
     });
 
     it('Controller update ieeeAddr if changed', async () => {
@@ -1567,7 +1559,7 @@ describe('Controller', () => {
         mockAdapterStart.mockReturnValueOnce('resumed');
         mockAdapterGetNetworkParameters.mockReturnValueOnce({panID: 1, extendedPanID: '0x64c5fd698daf0c00', channel: 25});
         // @ts-expect-error private
-        const changeChannelSpy = jest.spyOn(controller, 'changeChannel');
+        const changeChannelSpy = vi.spyOn(controller, 'changeChannel');
         await controller.start();
         expect(mockAdapterGetNetworkParameters).toHaveBeenCalledTimes(1);
         const zdoPayload = Zdo.Buffalo.buildRequest(false, Zdo.ClusterId.NWK_UPDATE_REQUEST, [15], 0xfe, undefined, 0, undefined);
@@ -1585,7 +1577,7 @@ describe('Controller', () => {
     it('Does not change channel on start if not changed', async () => {
         mockAdapterStart.mockReturnValueOnce('resumed');
         // @ts-expect-error private
-        const changeChannelSpy = jest.spyOn(controller, 'changeChannel');
+        const changeChannelSpy = vi.spyOn(controller, 'changeChannel');
         await controller.start();
         expect(mockAdapterGetNetworkParameters).toHaveBeenCalledTimes(1);
         expect(changeChannelSpy).toHaveBeenCalledTimes(0);
@@ -1675,7 +1667,7 @@ describe('Controller', () => {
                 _eventsCount: 0,
                 meta: {},
                 _skipDefaultResponse: false,
-                _lastSeen: deepClone(Date.now()),
+                _lastSeen: Date.now(),
                 ID: 2,
                 _pendingRequestTimeout: 0,
                 _customClusters: {},
@@ -1694,7 +1686,7 @@ describe('Controller', () => {
             _eventsCount: 0,
             _pendingRequestTimeout: 0,
             _skipDefaultResponse: false,
-            _lastSeen: deepClone(Date.now()),
+            _lastSeen: Date.now(),
             _type: 'Router',
             _ieeeAddr: '0x129',
             _networkAddress: 129,
@@ -1735,7 +1727,7 @@ describe('Controller', () => {
         expect(deepClone(controller.getDeviceByNetworkAddress(129))).toStrictEqual(device);
         expect(events.deviceInterview.length).toBe(2);
         expect(databaseContents()).toStrictEqual(
-            `{"id":1,"type":"Coordinator","ieeeAddr":"0x0000012300000000","nwkAddr":0,"manufId":7,"epList":[1,2],"endpoints":{"1":{"profId":2,"epId":1,"devId":3,"inClusterList":[10],"outClusterList":[11],"clusters":{},"binds":[],"configuredReportings":[],"meta":{}},"2":{"profId":3,"epId":2,"devId":5,"inClusterList":[1],"outClusterList":[0],"clusters":{},"binds":[],"configuredReportings":[],"meta":{}}},"interviewCompleted":true,"meta":{}}\n{"id":2,"type":"Router","ieeeAddr":"0x129","nwkAddr":129,"manufId":1212,"manufName":"KoenAndCo","powerSource":"Mains (single phase)","modelId":"myModelID","epList":[1],"endpoints":{"1":{"profId":99,"epId":1,"devId":5,"inClusterList":[0,1],"outClusterList":[2],"clusters":{},"binds":[],"configuredReportings":[],"meta":{}}},"appVersion":2,"stackVersion":101,"hwVersion":3,"dateCode":"201901","swBuildId":"1.01","zclVersion":1,"interviewCompleted":true,"meta":{},"lastSeen":150}`,
+            `{"id":1,"type":"Coordinator","ieeeAddr":"0x0000012300000000","nwkAddr":0,"manufId":7,"epList":[1,2],"endpoints":{"1":{"profId":2,"epId":1,"devId":3,"inClusterList":[10],"outClusterList":[11],"clusters":{},"binds":[],"configuredReportings":[],"meta":{}},"2":{"profId":3,"epId":2,"devId":5,"inClusterList":[1],"outClusterList":[0],"clusters":{},"binds":[],"configuredReportings":[],"meta":{}}},"interviewCompleted":true,"meta":{}}\n{"id":2,"type":"Router","ieeeAddr":"0x129","nwkAddr":129,"manufId":1212,"manufName":"KoenAndCo","powerSource":"Mains (single phase)","modelId":"myModelID","epList":[1],"endpoints":{"1":{"profId":99,"epId":1,"devId":5,"inClusterList":[0,1],"outClusterList":[2],"clusters":{},"binds":[],"configuredReportings":[],"meta":{}}},"appVersion":2,"stackVersion":101,"hwVersion":3,"dateCode":"201901","swBuildId":"1.01","zclVersion":1,"interviewCompleted":true,"meta":{},"lastSeen":${mockedDate.getTime()}}`,
         );
         expect(controller.getDeviceByNetworkAddress(129)!.lastSeen).toBe(Date.now());
     });
@@ -1754,7 +1746,7 @@ describe('Controller', () => {
                 _skipDefaultResponse: false,
                 _events: {},
                 _eventsCount: 0,
-                _lastSeen: deepClone(Date.now()),
+                _lastSeen: Date.now(),
                 ID: 2,
                 _pendingRequestTimeout: 0,
                 _customClusters: {},
@@ -1773,7 +1765,7 @@ describe('Controller', () => {
             _eventsCount: 0,
             _pendingRequestTimeout: 0,
             _skipDefaultResponse: false,
-            _lastSeen: deepClone(Date.now()),
+            _lastSeen: Date.now(),
             _type: 'Router',
             _ieeeAddr: '0x129',
             _networkAddress: 129,
@@ -1872,7 +1864,7 @@ describe('Controller', () => {
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
         expect(events.deviceAnnounce.length).toBe(0);
         // @ts-expect-error private
-        const onDeviceAnnounceSpy = jest.spyOn(controller, 'onDeviceAnnounce');
+        const onDeviceAnnounceSpy = vi.spyOn(controller, 'onDeviceAnnounce');
         await mockAdapterEvents['zdoResponse'](Zdo.ClusterId.END_DEVICE_ANNOUNCE, [
             Zdo.Status.SUCCESS,
             {nwkAddress: 129, eui64: '0x129', capabilities: Zdo.Utils.getMacCapFlags(0x10)},
@@ -1887,7 +1879,7 @@ describe('Controller', () => {
     it('Skip Device announce event from unknown device', async () => {
         await controller.start();
         // @ts-expect-error private
-        const onDeviceAnnounceSpy = jest.spyOn(controller, 'onDeviceAnnounce');
+        const onDeviceAnnounceSpy = vi.spyOn(controller, 'onDeviceAnnounce');
         await mockAdapterEvents['zdoResponse'](Zdo.ClusterId.END_DEVICE_ANNOUNCE, [
             Zdo.Status.SUCCESS,
             {nwkAddress: 12999, eui64: '0x12999', capabilities: Zdo.Utils.getMacCapFlags(0x10)},
@@ -1902,7 +1894,7 @@ describe('Controller', () => {
         expect(controller.getDeviceByNetworkAddress(129)!.ieeeAddr).toStrictEqual('0x129');
         expect(events.deviceAnnounce.length).toBe(0);
         // @ts-expect-error private
-        const onDeviceAnnounceSpy = jest.spyOn(controller, 'onDeviceAnnounce');
+        const onDeviceAnnounceSpy = vi.spyOn(controller, 'onDeviceAnnounce');
         await mockAdapterEvents['zdoResponse'](Zdo.ClusterId.END_DEVICE_ANNOUNCE, [
             Zdo.Status.SUCCESS,
             {nwkAddress: 9999, eui64: '0x129', capabilities: Zdo.Utils.getMacCapFlags(0x10)},
@@ -1919,7 +1911,7 @@ describe('Controller', () => {
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
         expect(controller.getDeviceByNetworkAddress(129)!.ieeeAddr).toStrictEqual('0x129');
         // @ts-expect-error private
-        const onNetworkAddressSpy = jest.spyOn(controller, 'onNetworkAddress');
+        const onNetworkAddressSpy = vi.spyOn(controller, 'onNetworkAddress');
         await mockAdapterEvents['zdoResponse'](Zdo.ClusterId.NETWORK_ADDRESS_RESPONSE, [
             Zdo.Status.SUCCESS,
             {nwkAddress: 9999, eui64: '0x129', startIndex: 0, assocDevList: []},
@@ -1934,7 +1926,7 @@ describe('Controller', () => {
     it('Network address event shouldnt update network address when the same', async () => {
         await controller.start();
         // @ts-expect-error private
-        const onNetworkAddressSpy = jest.spyOn(controller, 'onNetworkAddress');
+        const onNetworkAddressSpy = vi.spyOn(controller, 'onNetworkAddress');
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
         await mockAdapterEvents['zdoResponse'](Zdo.ClusterId.NETWORK_ADDRESS_RESPONSE, [
             Zdo.Status.SUCCESS,
@@ -1948,7 +1940,7 @@ describe('Controller', () => {
     it('Network address event from unknown device', async () => {
         await controller.start();
         // @ts-expect-error private
-        const onNetworkAddressSpy = jest.spyOn(controller, 'onNetworkAddress');
+        const onNetworkAddressSpy = vi.spyOn(controller, 'onNetworkAddress');
         await mockAdapterEvents['zdoResponse'](Zdo.ClusterId.NETWORK_ADDRESS_RESPONSE, [
             Zdo.Status.SUCCESS,
             {nwkAddress: 19321, eui64: '0x19321', startIndex: 0, assocDevList: []},
@@ -1959,15 +1951,16 @@ describe('Controller', () => {
     it('Network address event should update the last seen value', async () => {
         await controller.start();
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
-        (Date.now as ReturnType<typeof jest.fn>).mockReturnValue(200);
+        const updatedMockedDate = new Date();
+        vi.setSystemTime(updatedMockedDate);
         // @ts-expect-error private
-        const onNetworkAddressSpy = jest.spyOn(controller, 'onNetworkAddress');
+        const onNetworkAddressSpy = vi.spyOn(controller, 'onNetworkAddress');
         await mockAdapterEvents['zdoResponse'](Zdo.ClusterId.NETWORK_ADDRESS_RESPONSE, [
             Zdo.Status.SUCCESS,
             {nwkAddress: 129, eui64: '0x129', startIndex: 0, assocDevList: []},
         ]);
         expect(onNetworkAddressSpy).toHaveBeenCalledTimes(1);
-        expect(events.lastSeenChanged[1].device.lastSeen).toBe(200);
+        expect(events.lastSeenChanged[1].device.lastSeen).toBe(updatedMockedDate.getTime());
     });
 
     it('IEEE address event should update network address when different', async () => {
@@ -1975,7 +1968,7 @@ describe('Controller', () => {
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
         expect(controller.getDeviceByNetworkAddress(129)!.ieeeAddr).toStrictEqual('0x129');
         // @ts-expect-error private
-        const onIEEEAddressSpy = jest.spyOn(controller, 'onIEEEAddress');
+        const onIEEEAddressSpy = vi.spyOn(controller, 'onIEEEAddress');
         await mockAdapterEvents['zdoResponse'](Zdo.ClusterId.IEEE_ADDRESS_RESPONSE, [
             Zdo.Status.SUCCESS,
             {nwkAddress: 9999, eui64: '0x129', startIndex: 0, assocDevList: []},
@@ -1990,7 +1983,7 @@ describe('Controller', () => {
     it('IEEE address event shouldnt update network address when the same', async () => {
         await controller.start();
         // @ts-expect-error private
-        const onIEEEAddressSpy = jest.spyOn(controller, 'onIEEEAddress');
+        const onIEEEAddressSpy = vi.spyOn(controller, 'onIEEEAddress');
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
         await mockAdapterEvents['zdoResponse'](Zdo.ClusterId.IEEE_ADDRESS_RESPONSE, [
             Zdo.Status.SUCCESS,
@@ -2004,7 +1997,7 @@ describe('Controller', () => {
     it('IEEE address event from unknown device', async () => {
         await controller.start();
         // @ts-expect-error private
-        const onIEEEAddressSpy = jest.spyOn(controller, 'onIEEEAddress');
+        const onIEEEAddressSpy = vi.spyOn(controller, 'onIEEEAddress');
         await mockAdapterEvents['zdoResponse'](Zdo.ClusterId.IEEE_ADDRESS_RESPONSE, [
             Zdo.Status.SUCCESS,
             {nwkAddress: 19321, eui64: '0x19321', startIndex: 0, assocDevList: []},
@@ -2015,15 +2008,16 @@ describe('Controller', () => {
     it('IEEE address event should update the last seen value', async () => {
         await controller.start();
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
-        (Date.now as ReturnType<typeof jest.fn>).mockReturnValue(200);
+        const updatedMockedDate = new Date();
+        vi.setSystemTime(updatedMockedDate);
         // @ts-expect-error private
-        const onIEEEAddressSpy = jest.spyOn(controller, 'onIEEEAddress');
+        const onIEEEAddressSpy = vi.spyOn(controller, 'onIEEEAddress');
         await mockAdapterEvents['zdoResponse'](Zdo.ClusterId.IEEE_ADDRESS_RESPONSE, [
             Zdo.Status.SUCCESS,
             {nwkAddress: 129, eui64: '0x129', startIndex: 0, assocDevList: []},
         ]);
         expect(onIEEEAddressSpy).toHaveBeenCalledTimes(1);
-        expect(events.lastSeenChanged[1].device.lastSeen).toBe(200);
+        expect(events.lastSeenChanged[1].device.lastSeen).toBe(updatedMockedDate.getTime());
     });
 
     it('ZDO response for NETWORK_ADDRESS_RESPONSE should update network address when different', async () => {
@@ -2062,12 +2056,13 @@ describe('Controller', () => {
     it('ZDO response for NETWORK_ADDRESS_RESPONSE should update the last seen value', async () => {
         await controller.start();
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
-        (Date.now as ReturnType<typeof jest.fn>).mockReturnValue(200);
+        const updatedMockedDate = new Date();
+        vi.setSystemTime(updatedMockedDate);
         await mockAdapterEvents['zdoResponse'](Zdo.ClusterId.NETWORK_ADDRESS_RESPONSE, [
             Zdo.Status.SUCCESS,
             {nwkAddress: 129, eui64: '0x129', assocDevList: [], startIndex: 0},
         ]);
-        expect(events.lastSeenChanged[1].device.lastSeen).toBe(200);
+        expect(events.lastSeenChanged[1].device.lastSeen).toBe(updatedMockedDate.getTime());
     });
 
     it('ZDO response for END_DEVICE_ANNOUNCE should bubble up event', async () => {
@@ -2312,9 +2307,7 @@ describe('Controller', () => {
 
         const code = '54EF44100006E7DF|3313A005E177A647FC7925620AB207';
 
-        expect(async () => {
-            await controller.addInstallCode(code);
-        }).rejects.toThrow(`Install code 3313a005e177a647fc7925620ab207 has invalid size`);
+        await expect(controller.addInstallCode(code)).rejects.toThrow(`Install code 3313a005e177a647fc7925620ab207 has invalid size`);
 
         expect(mockAddInstallCode).toHaveBeenCalledTimes(0);
     });
@@ -2325,7 +2318,8 @@ describe('Controller', () => {
         expect(controller.getPermitJoin()).toStrictEqual(false);
         expect(controller.getPermitJoinEnd()).toBeUndefined();
 
-        (Date.now as ReturnType<typeof jest.fn>).mockReturnValueOnce(0);
+        const updatedMockedDate = new Date();
+        vi.setSystemTime(updatedMockedDate);
         await controller.permitJoin(254);
 
         expect(mockAdapterPermitJoin).toHaveBeenCalledTimes(1);
@@ -2333,7 +2327,7 @@ describe('Controller', () => {
         expect(events.permitJoinChanged.length).toStrictEqual(1);
         expect(events.permitJoinChanged[0]).toStrictEqual({permitted: true, time: 254});
         expect(controller.getPermitJoin()).toStrictEqual(true);
-        expect(controller.getPermitJoinEnd()).toStrictEqual(254 * 1000);
+        expect(controller.getPermitJoinEnd()).toStrictEqual(updatedMockedDate.getTime() + 254 * 1000);
 
         // Green power
         const commisionFrameEnable = Zcl.Frame.create(1, 1, true, undefined, 2, 'commisioningMode', 33, {options: 0x0b, commisioningWindow: 254}, {});
@@ -2348,15 +2342,15 @@ describe('Controller', () => {
         );
         expect(deepClone(mocksendZclFrameToAll.mock.calls[0][1])).toStrictEqual(deepClone(commisionFrameEnable));
 
-        await jest.advanceTimersByTimeAsync(250 * 1000);
+        await vi.advanceTimersByTimeAsync(250 * 1000);
 
         expect(mocksendZclFrameToAll).toHaveBeenCalledTimes(1);
         expect(mockAdapterPermitJoin).toHaveBeenCalledTimes(1);
         expect(controller.getPermitJoin()).toStrictEqual(true);
-        expect(controller.getPermitJoinEnd()).toStrictEqual(254 * 1000);
+        expect(controller.getPermitJoinEnd()).toStrictEqual(updatedMockedDate.getTime() + 254 * 1000);
 
         // Timer expired
-        await jest.advanceTimersByTimeAsync(10 * 1000);
+        await vi.advanceTimersByTimeAsync(10 * 1000);
 
         expect(mockAdapterPermitJoin).toHaveBeenCalledTimes(1);
         expect(events.permitJoinChanged.length).toStrictEqual(2);
@@ -2374,7 +2368,8 @@ describe('Controller', () => {
         expect(controller.getPermitJoin()).toStrictEqual(false);
         expect(controller.getPermitJoinEnd()).toBeUndefined();
 
-        (Date.now as ReturnType<typeof jest.fn>).mockReturnValueOnce(0);
+        const updatedMockedDate = new Date();
+        vi.setSystemTime(updatedMockedDate);
         await controller.permitJoin(254);
 
         expect(mockAdapterPermitJoin).toHaveBeenCalledTimes(1);
@@ -2382,7 +2377,7 @@ describe('Controller', () => {
         expect(events.permitJoinChanged.length).toStrictEqual(1);
         expect(events.permitJoinChanged[0]).toStrictEqual({permitted: true, time: 254});
         expect(controller.getPermitJoin()).toStrictEqual(true);
-        expect(controller.getPermitJoinEnd()).toStrictEqual(254 * 1000);
+        expect(controller.getPermitJoinEnd()).toStrictEqual(updatedMockedDate.getTime() + 254 * 1000);
 
         // Green power
         const commisionFrameEnable = Zcl.Frame.create(1, 1, true, undefined, 2, 'commisioningMode', 33, {options: 0x0b, commisioningWindow: 254}, {});
@@ -2397,12 +2392,12 @@ describe('Controller', () => {
         );
         expect(deepClone(mocksendZclFrameToAll.mock.calls[0][1])).toStrictEqual(deepClone(commisionFrameEnable));
 
-        await jest.advanceTimersByTimeAsync(250 * 1000);
+        await vi.advanceTimersByTimeAsync(250 * 1000);
 
         expect(mocksendZclFrameToAll).toHaveBeenCalledTimes(1);
         expect(mockAdapterPermitJoin).toHaveBeenCalledTimes(1);
         expect(controller.getPermitJoin()).toStrictEqual(true);
-        expect(controller.getPermitJoinEnd()).toStrictEqual(254 * 1000);
+        expect(controller.getPermitJoinEnd()).toStrictEqual(updatedMockedDate.getTime() + 254 * 1000);
 
         // Disable
         await controller.permitJoin(0);
@@ -2440,13 +2435,13 @@ describe('Controller', () => {
         expect(controller.getPermitJoin()).toStrictEqual(true);
         expect(controller.getPermitJoinEnd()).toBeGreaterThan(0);
 
-        await jest.advanceTimersByTimeAsync(120 * 1000);
+        await vi.advanceTimersByTimeAsync(120 * 1000);
 
         expect(controller.getPermitJoin()).toStrictEqual(true);
         expect(controller.getPermitJoinEnd()).toBeGreaterThan(0);
 
         // Timer expired
-        await jest.advanceTimersByTimeAsync(300 * 1000);
+        await vi.advanceTimersByTimeAsync(300 * 1000);
 
         expect(mockAdapterPermitJoin).toHaveBeenCalledTimes(1);
         expect(events.permitJoinChanged.length).toStrictEqual(2);
@@ -2465,13 +2460,13 @@ describe('Controller', () => {
         expect(events.permitJoinChanged[0]).toStrictEqual({permitted: true, time: 10});
         expect(controller.getPermitJoin()).toStrictEqual(true);
 
-        await jest.advanceTimersByTimeAsync(5 * 1000);
+        await vi.advanceTimersByTimeAsync(5 * 1000);
 
         expect(controller.getPermitJoin()).toStrictEqual(true);
         expect(controller.getPermitJoinEnd()).toBeGreaterThan(0);
 
         // Timer expired
-        await jest.advanceTimersByTimeAsync(7 * 1000);
+        await vi.advanceTimersByTimeAsync(7 * 1000);
 
         expect(mockAdapterPermitJoin).toHaveBeenCalledTimes(1);
         expect(events.permitJoinChanged.length).toStrictEqual(2);
@@ -2483,9 +2478,7 @@ describe('Controller', () => {
     it('Controller permit joining for too long time throws', async () => {
         await controller.start();
 
-        expect(async () => {
-            await controller.permitJoin(255);
-        }).rejects.toThrow(`Cannot permit join for more than 254 seconds.`);
+        await expect(controller.permitJoin(255)).rejects.toThrow(`Cannot permit join for more than 254 seconds.`);
         expect(mockAdapterPermitJoin).toHaveBeenCalledTimes(0);
         expect(events.permitJoinChanged.length).toStrictEqual(0);
     });
@@ -2514,8 +2507,8 @@ describe('Controller', () => {
 
     it('Adapter disconnected event', async () => {
         // @ts-expect-error private
-        const databaseSaveSpy = jest.spyOn(controller, 'databaseSave');
-        const backupSpy = jest.spyOn(controller, 'backup');
+        const databaseSaveSpy = vi.spyOn(controller, 'databaseSave');
+        const backupSpy = vi.spyOn(controller, 'backup');
         await controller.start();
         // @ts-expect-error private
         databaseSaveSpy.mockClear();
@@ -2805,7 +2798,7 @@ describe('Controller', () => {
                 _ieeeAddr: '0x129',
                 _pendingRequestTimeout: 0,
                 _networkAddress: 129,
-                _lastSeen: deepClone(Date.now()),
+                _lastSeen: Date.now(),
                 _linkquality: 50,
                 _skipDefaultResponse: false,
                 _customClusters: {},
@@ -2921,7 +2914,7 @@ describe('Controller', () => {
                 _pendingRequestTimeout: 0,
                 _ieeeAddr: '0x129',
                 _networkAddress: 129,
-                _lastSeen: deepClone(Date.now()),
+                _lastSeen: Date.now(),
                 _linkquality: 50,
                 _skipDefaultResponse: false,
                 _customClusters: {},
@@ -3008,7 +3001,7 @@ describe('Controller', () => {
                 _ieeeAddr: '0x129',
                 _pendingRequestTimeout: 0,
                 _networkAddress: 129,
-                _lastSeen: deepClone(Date.now()),
+                _lastSeen: Date.now(),
                 _linkquality: 50,
                 _skipDefaultResponse: false,
                 _customClusters: {},
@@ -3118,7 +3111,7 @@ describe('Controller', () => {
                 _events: {},
                 _eventsCount: 0,
                 _ieeeAddr: '0x129',
-                _lastSeen: deepClone(Date.now()),
+                _lastSeen: Date.now(),
                 _pendingRequestTimeout: 0,
                 _linkquality: 52,
                 _skipDefaultResponse: false,
@@ -3242,7 +3235,7 @@ describe('Controller', () => {
                 _events: {},
                 _eventsCount: 0,
                 _pendingRequestTimeout: 0,
-                _lastSeen: deepClone(Date.now()),
+                _lastSeen: Date.now(),
                 _linkquality: 19,
                 _skipDefaultResponse: false,
                 _ieeeAddr: '0x129',
@@ -3805,7 +3798,7 @@ describe('Controller', () => {
         mocksendZclFrameToEndpoint.mockClear();
 
         const device = controller.getDeviceByIeeeAddr('0x129')!;
-        device.customReadResponse = jest.fn().mockReturnValue(true);
+        device.customReadResponse = vi.fn().mockReturnValue(true);
 
         const frame = Zcl.Frame.create(0, 0, true, undefined, 40, 0, 10, [{attrId: 0}, {attrId: 1}, {attrId: 7}, {attrId: 9}], {});
         const payload = {
@@ -3824,7 +3817,7 @@ describe('Controller', () => {
         expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(0);
         expect(device.customReadResponse).toHaveBeenCalledTimes(1);
         expect(device.customReadResponse).toHaveBeenCalledWith(expect.any(Zcl.Frame), device.getEndpoint(1));
-        expect((device.customReadResponse as ReturnType<typeof jest.fn>).mock.calls[0][0].header).toBe(payload.header);
+        expect((device.customReadResponse as ReturnType<typeof vi.fn>).mock.calls[0][0].header).toBe(payload.header);
     });
 
     it('Respond to read of attribute', async () => {
@@ -3938,7 +3931,6 @@ describe('Controller', () => {
 
     it('Xiaomi WXCJKG11LM join (get simple descriptor for endpoint 2 fails)', async () => {
         // https://github.com/koenkk/zigbee2mqtt/issues/2844
-        (Date.now as ReturnType<typeof jest.fn>).mockReturnValue(150);
         await controller.start();
         await mockAdapterEvents['deviceJoined']({networkAddress: 171, ieeeAddr: '0x171'});
         expect(events.deviceInterview.length).toBe(2);
@@ -3982,7 +3974,7 @@ describe('Controller', () => {
             _pendingRequestTimeout: 0,
             _ieeeAddr: '0x150',
             _networkAddress: 150,
-            _lastSeen: deepClone(Date.now()),
+            _lastSeen: Date.now(),
             _linkquality: 50,
             _skipDefaultResponse: false,
             _customClusters: {},
@@ -4036,7 +4028,7 @@ describe('Controller', () => {
             _pendingRequestTimeout: 0,
             _ieeeAddr: '0x151',
             _networkAddress: 151,
-            _lastSeen: deepClone(Date.now()),
+            _lastSeen: Date.now(),
             _linkquality: 50,
             _skipDefaultResponse: false,
             _customClusters: {},
@@ -4080,7 +4072,7 @@ describe('Controller', () => {
         expect(mockAdapterSendZdo).toHaveBeenCalledTimes(3); // nodeDesc + activeEp + simpleDesc x1
 
         const device = controller.getDeviceByIeeeAddr('0x129')!;
-        const deviceNodeDescSpy = jest.spyOn(device, 'updateNodeDescriptor');
+        const deviceNodeDescSpy = vi.spyOn(device, 'updateNodeDescriptor');
 
         // Interview with ignoreCache=false should use cached node descriptor
         await device.interview(false);
@@ -4113,7 +4105,7 @@ describe('Controller', () => {
             255, 66, 34, 1, 33, 213, 12, 3, 40, 33, 4, 33, 168, 19, 5, 33, 43, 0, 6, 36, 0, 0, 5, 0, 0, 8, 33, 4, 2, 10, 33, 0, 0, 100, 16, 0,
         ]);
         const frame = Zcl.Frame.fromBuffer(Zcl.Utils.getCluster('genBasic', undefined, {}).ID, Zcl.Header.fromBuffer(buffer), buffer, {});
-        jest.spyOn(Zcl.Frame, 'fromBuffer').mockReturnValueOnce(frame); // Mock because no Buffalo write isn't supported for this payload
+        vi.spyOn(Zcl.Frame, 'fromBuffer').mockReturnValueOnce(frame); // Mock because no Buffalo write isn't supported for this payload
         await mockAdapterEvents['zclPayload']({
             wasBroadcast: false,
             address: 129,
@@ -4132,7 +4124,7 @@ describe('Controller', () => {
             device: {
                 _events: {},
                 _eventsCount: 0,
-                _lastSeen: deepClone(Date.now()),
+                _lastSeen: Date.now(),
                 _linkquality: 50,
                 _skipDefaultResponse: false,
                 ID: 2,
@@ -4640,7 +4632,6 @@ describe('Controller', () => {
                 attributes: {
                     zclVersion: {ID: 0, type: 32, name: 'zclVersion'},
                     appVersion: {ID: 1, type: 32, name: 'appVersion'},
-                    schneiderMeterRadioPower: {ID: 57856, manufacturerCode: 4190, name: 'schneiderMeterRadioPower', type: 40},
                     stackVersion: {ID: 2, type: 32, name: 'stackVersion'},
                     hwVersion: {ID: 3, type: 32, name: 'hwVersion'},
                     manufacturerName: {ID: 4, type: 66, name: 'manufacturerName'},
@@ -4648,13 +4639,19 @@ describe('Controller', () => {
                     dateCode: {ID: 6, type: 66, name: 'dateCode'},
                     powerSource: {ID: 7, type: 48, name: 'powerSource'},
                     appProfileVersion: {ID: 8, type: 48, name: 'appProfileVersion'},
-                    swBuildId: {ID: 16384, type: 66, name: 'swBuildId'},
+                    genericDeviceType: {ID: 9, type: 48, name: 'genericDeviceType'},
+                    productCode: {ID: 10, type: 65, name: 'productCode'},
+                    productUrl: {ID: 11, type: 66, name: 'productUrl'},
+                    manufacturerVersionDetails: {ID: 12, type: 66, name: 'manufacturerVersionDetails'},
                     serialNumber: {ID: 13, type: 66, name: 'serialNumber'},
+                    productLabel: {ID: 14, type: 66, name: 'productLabel'},
                     locationDesc: {ID: 16, type: 66, name: 'locationDesc'},
                     physicalEnv: {ID: 17, type: 48, name: 'physicalEnv'},
                     deviceEnabled: {ID: 18, type: 16, name: 'deviceEnabled'},
                     alarmMask: {ID: 19, type: 24, name: 'alarmMask'},
                     disableLocalConfig: {ID: 20, type: 24, name: 'disableLocalConfig'},
+                    swBuildId: {ID: 16384, type: 66, name: 'swBuildId'},
+                    schneiderMeterRadioPower: {ID: 57856, manufacturerCode: 4190, name: 'schneiderMeterRadioPower', type: 40},
                 },
                 name: 'genBasic',
                 commands: {
@@ -4691,7 +4688,7 @@ describe('Controller', () => {
             const responseFrame = Zcl.Frame.create(0, 1, true, undefined, 10, 'readRsp', frame.cluster.ID, payload, {});
             return {header: responseFrame.header, data: responseFrame.toBuffer(), clusterID: frame.cluster.ID};
         });
-        mocksendZclFrameToEndpoint.mockImplementationOnce(() => jest.advanceTimersByTime(10));
+        mocksendZclFrameToEndpoint.mockImplementationOnce(() => vi.advanceTimersByTime(10));
         let frame = Zcl.Frame.create(
             Zcl.FrameType.SPECIFIC,
             Zcl.Direction.SERVER_TO_CLIENT,
@@ -5497,7 +5494,7 @@ describe('Controller', () => {
         });
         expect(group.members).toContain(endpoint);
         expect(databaseContents()).toContain(
-            `{"id":1,"type":"Coordinator","ieeeAddr":"0x0000012300000000","nwkAddr":0,"manufId":7,"epList":[1,2],"endpoints":{"1":{"profId":2,"epId":1,"devId":3,"inClusterList":[10],"outClusterList":[11],"clusters":{},"binds":[],"configuredReportings":[],"meta":{}},"2":{"profId":3,"epId":2,"devId":5,"inClusterList":[1],"outClusterList":[0],"clusters":{},"binds":[],"configuredReportings":[],"meta":{}}},"interviewCompleted":true,"meta":{}}\n{"id":2,"type":"Router","ieeeAddr":"0x129","nwkAddr":129,"manufId":1212,"manufName":"KoenAndCo","powerSource":"Mains (single phase)","modelId":"myModelID","epList":[1],"endpoints":{"1":{"profId":99,"epId":1,"devId":5,"inClusterList":[0,1],"outClusterList":[2],"clusters":{},"binds":[],"configuredReportings":[],"meta":{}}},"appVersion":2,"stackVersion":101,"hwVersion":3,"dateCode":"201901","swBuildId":"1.01","zclVersion":1,"interviewCompleted":true,"meta":{},"lastSeen":150}\n{"id":3,"type":"Group","groupID":2,"members":[{"deviceIeeeAddr":"0x129","endpointID":1}],"meta":{}}`,
+            `{"id":1,"type":"Coordinator","ieeeAddr":"0x0000012300000000","nwkAddr":0,"manufId":7,"epList":[1,2],"endpoints":{"1":{"profId":2,"epId":1,"devId":3,"inClusterList":[10],"outClusterList":[11],"clusters":{},"binds":[],"configuredReportings":[],"meta":{}},"2":{"profId":3,"epId":2,"devId":5,"inClusterList":[1],"outClusterList":[0],"clusters":{},"binds":[],"configuredReportings":[],"meta":{}}},"interviewCompleted":true,"meta":{}}\n{"id":2,"type":"Router","ieeeAddr":"0x129","nwkAddr":129,"manufId":1212,"manufName":"KoenAndCo","powerSource":"Mains (single phase)","modelId":"myModelID","epList":[1],"endpoints":{"1":{"profId":99,"epId":1,"devId":5,"inClusterList":[0,1],"outClusterList":[2],"clusters":{},"binds":[],"configuredReportings":[],"meta":{}}},"appVersion":2,"stackVersion":101,"hwVersion":3,"dateCode":"201901","swBuildId":"1.01","zclVersion":1,"interviewCompleted":true,"meta":{},"lastSeen":${mockedDate.getTime()}}\n{"id":3,"type":"Group","groupID":2,"members":[{"deviceIeeeAddr":"0x129","endpointID":1}],"meta":{}}`,
         );
     });
 
@@ -6150,7 +6147,6 @@ describe('Controller', () => {
                 attributes: {
                     zclVersion: {ID: 0, type: 32, name: 'zclVersion'},
                     appVersion: {ID: 1, type: 32, name: 'appVersion'},
-                    schneiderMeterRadioPower: {ID: 57856, manufacturerCode: 4190, name: 'schneiderMeterRadioPower', type: 40},
                     stackVersion: {ID: 2, type: 32, name: 'stackVersion'},
                     hwVersion: {ID: 3, type: 32, name: 'hwVersion'},
                     manufacturerName: {ID: 4, type: 66, name: 'manufacturerName'},
@@ -6158,13 +6154,19 @@ describe('Controller', () => {
                     dateCode: {ID: 6, type: 66, name: 'dateCode'},
                     powerSource: {ID: 7, type: 48, name: 'powerSource'},
                     appProfileVersion: {ID: 8, type: 48, name: 'appProfileVersion'},
-                    swBuildId: {ID: 16384, type: 66, name: 'swBuildId'},
+                    genericDeviceType: {ID: 9, type: 48, name: 'genericDeviceType'},
+                    productCode: {ID: 10, type: 65, name: 'productCode'},
+                    productUrl: {ID: 11, type: 66, name: 'productUrl'},
+                    manufacturerVersionDetails: {ID: 12, type: 66, name: 'manufacturerVersionDetails'},
                     serialNumber: {ID: 13, type: 66, name: 'serialNumber'},
+                    productLabel: {ID: 14, type: 66, name: 'productLabel'},
                     locationDesc: {ID: 16, type: 66, name: 'locationDesc'},
                     physicalEnv: {ID: 17, type: 48, name: 'physicalEnv'},
                     deviceEnabled: {ID: 18, type: 16, name: 'deviceEnabled'},
                     alarmMask: {ID: 19, type: 24, name: 'alarmMask'},
                     disableLocalConfig: {ID: 20, type: 24, name: 'disableLocalConfig'},
+                    swBuildId: {ID: 16384, type: 66, name: 'swBuildId'},
+                    schneiderMeterRadioPower: {ID: 57856, manufacturerCode: 4190, name: 'schneiderMeterRadioPower', type: 40},
                 },
                 name: 'genBasic',
                 commands: {
@@ -6257,7 +6259,6 @@ describe('Controller', () => {
                 attributes: {
                     zclVersion: {ID: 0, type: 32, name: 'zclVersion'},
                     appVersion: {ID: 1, type: 32, name: 'appVersion'},
-                    schneiderMeterRadioPower: {ID: 57856, manufacturerCode: 4190, name: 'schneiderMeterRadioPower', type: 40},
                     stackVersion: {ID: 2, type: 32, name: 'stackVersion'},
                     hwVersion: {ID: 3, type: 32, name: 'hwVersion'},
                     manufacturerName: {ID: 4, type: 66, name: 'manufacturerName'},
@@ -6265,13 +6266,19 @@ describe('Controller', () => {
                     dateCode: {ID: 6, type: 66, name: 'dateCode'},
                     powerSource: {ID: 7, type: 48, name: 'powerSource'},
                     appProfileVersion: {ID: 8, type: 48, name: 'appProfileVersion'},
-                    swBuildId: {ID: 16384, type: 66, name: 'swBuildId'},
+                    genericDeviceType: {ID: 9, type: 48, name: 'genericDeviceType'},
+                    productCode: {ID: 10, type: 65, name: 'productCode'},
+                    productUrl: {ID: 11, type: 66, name: 'productUrl'},
+                    manufacturerVersionDetails: {ID: 12, type: 66, name: 'manufacturerVersionDetails'},
                     serialNumber: {ID: 13, type: 66, name: 'serialNumber'},
+                    productLabel: {ID: 14, type: 66, name: 'productLabel'},
                     locationDesc: {ID: 16, type: 66, name: 'locationDesc'},
                     physicalEnv: {ID: 17, type: 48, name: 'physicalEnv'},
                     deviceEnabled: {ID: 18, type: 16, name: 'deviceEnabled'},
                     alarmMask: {ID: 19, type: 24, name: 'alarmMask'},
                     disableLocalConfig: {ID: 20, type: 24, name: 'disableLocalConfig'},
+                    swBuildId: {ID: 16384, type: 66, name: 'swBuildId'},
+                    schneiderMeterRadioPower: {ID: 57856, manufacturerCode: 4190, name: 'schneiderMeterRadioPower', type: 40},
                 },
                 name: 'genBasic',
                 commands: {
@@ -6350,7 +6357,6 @@ describe('Controller', () => {
                 attributes: {
                     zclVersion: {ID: 0, type: 32, name: 'zclVersion'},
                     appVersion: {ID: 1, type: 32, name: 'appVersion'},
-                    schneiderMeterRadioPower: {ID: 57856, manufacturerCode: 4190, name: 'schneiderMeterRadioPower', type: 40},
                     stackVersion: {ID: 2, type: 32, name: 'stackVersion'},
                     hwVersion: {ID: 3, type: 32, name: 'hwVersion'},
                     manufacturerName: {ID: 4, type: 66, name: 'manufacturerName'},
@@ -6358,13 +6364,19 @@ describe('Controller', () => {
                     dateCode: {ID: 6, type: 66, name: 'dateCode'},
                     powerSource: {ID: 7, type: 48, name: 'powerSource'},
                     appProfileVersion: {ID: 8, type: 48, name: 'appProfileVersion'},
-                    swBuildId: {ID: 16384, type: 66, name: 'swBuildId'},
+                    genericDeviceType: {ID: 9, type: 48, name: 'genericDeviceType'},
+                    productCode: {ID: 10, type: 65, name: 'productCode'},
+                    productUrl: {ID: 11, type: 66, name: 'productUrl'},
+                    manufacturerVersionDetails: {ID: 12, type: 66, name: 'manufacturerVersionDetails'},
                     serialNumber: {ID: 13, type: 66, name: 'serialNumber'},
+                    productLabel: {ID: 14, type: 66, name: 'productLabel'},
                     locationDesc: {ID: 16, type: 66, name: 'locationDesc'},
                     physicalEnv: {ID: 17, type: 48, name: 'physicalEnv'},
                     deviceEnabled: {ID: 18, type: 16, name: 'deviceEnabled'},
                     alarmMask: {ID: 19, type: 24, name: 'alarmMask'},
                     disableLocalConfig: {ID: 20, type: 24, name: 'disableLocalConfig'},
+                    swBuildId: {ID: 16384, type: 66, name: 'swBuildId'},
+                    schneiderMeterRadioPower: {ID: 57856, manufacturerCode: 4190, name: 'schneiderMeterRadioPower', type: 40},
                 },
                 name: 'genBasic',
                 commands: {
@@ -6457,7 +6469,6 @@ describe('Controller', () => {
                 attributes: {
                     zclVersion: {ID: 0, type: 32, name: 'zclVersion'},
                     appVersion: {ID: 1, type: 32, name: 'appVersion'},
-                    schneiderMeterRadioPower: {ID: 57856, manufacturerCode: 4190, name: 'schneiderMeterRadioPower', type: 40},
                     stackVersion: {ID: 2, type: 32, name: 'stackVersion'},
                     hwVersion: {ID: 3, type: 32, name: 'hwVersion'},
                     manufacturerName: {ID: 4, type: 66, name: 'manufacturerName'},
@@ -6465,13 +6476,19 @@ describe('Controller', () => {
                     dateCode: {ID: 6, type: 66, name: 'dateCode'},
                     powerSource: {ID: 7, type: 48, name: 'powerSource'},
                     appProfileVersion: {ID: 8, type: 48, name: 'appProfileVersion'},
-                    swBuildId: {ID: 16384, type: 66, name: 'swBuildId'},
+                    genericDeviceType: {ID: 9, type: 48, name: 'genericDeviceType'},
+                    productCode: {ID: 10, type: 65, name: 'productCode'},
+                    productUrl: {ID: 11, type: 66, name: 'productUrl'},
+                    manufacturerVersionDetails: {ID: 12, type: 66, name: 'manufacturerVersionDetails'},
                     serialNumber: {ID: 13, type: 66, name: 'serialNumber'},
+                    productLabel: {ID: 14, type: 66, name: 'productLabel'},
                     locationDesc: {ID: 16, type: 66, name: 'locationDesc'},
                     physicalEnv: {ID: 17, type: 48, name: 'physicalEnv'},
                     deviceEnabled: {ID: 18, type: 16, name: 'deviceEnabled'},
                     alarmMask: {ID: 19, type: 24, name: 'alarmMask'},
                     disableLocalConfig: {ID: 20, type: 24, name: 'disableLocalConfig'},
+                    swBuildId: {ID: 16384, type: 66, name: 'swBuildId'},
+                    schneiderMeterRadioPower: {ID: 57856, manufacturerCode: 4190, name: 'schneiderMeterRadioPower', type: 40},
                 },
                 name: 'genBasic',
                 commands: {
@@ -6535,7 +6552,6 @@ describe('Controller', () => {
                 attributes: {
                     zclVersion: {ID: 0, type: 32, name: 'zclVersion'},
                     appVersion: {ID: 1, type: 32, name: 'appVersion'},
-                    schneiderMeterRadioPower: {ID: 57856, manufacturerCode: 4190, name: 'schneiderMeterRadioPower', type: 40},
                     stackVersion: {ID: 2, type: 32, name: 'stackVersion'},
                     hwVersion: {ID: 3, type: 32, name: 'hwVersion'},
                     manufacturerName: {ID: 4, type: 66, name: 'manufacturerName'},
@@ -6543,13 +6559,19 @@ describe('Controller', () => {
                     dateCode: {ID: 6, type: 66, name: 'dateCode'},
                     powerSource: {ID: 7, type: 48, name: 'powerSource'},
                     appProfileVersion: {ID: 8, type: 48, name: 'appProfileVersion'},
-                    swBuildId: {ID: 16384, type: 66, name: 'swBuildId'},
+                    genericDeviceType: {ID: 9, type: 48, name: 'genericDeviceType'},
+                    productCode: {ID: 10, type: 65, name: 'productCode'},
+                    productUrl: {ID: 11, type: 66, name: 'productUrl'},
+                    manufacturerVersionDetails: {ID: 12, type: 66, name: 'manufacturerVersionDetails'},
                     serialNumber: {ID: 13, type: 66, name: 'serialNumber'},
+                    productLabel: {ID: 14, type: 66, name: 'productLabel'},
                     locationDesc: {ID: 16, type: 66, name: 'locationDesc'},
                     physicalEnv: {ID: 17, type: 48, name: 'physicalEnv'},
                     deviceEnabled: {ID: 18, type: 16, name: 'deviceEnabled'},
                     alarmMask: {ID: 19, type: 24, name: 'alarmMask'},
                     disableLocalConfig: {ID: 20, type: 24, name: 'disableLocalConfig'},
+                    swBuildId: {ID: 16384, type: 66, name: 'swBuildId'},
+                    schneiderMeterRadioPower: {ID: 57856, manufacturerCode: 4190, name: 'schneiderMeterRadioPower', type: 40},
                 },
                 name: 'genBasic',
                 commands: {
@@ -6633,7 +6655,6 @@ describe('Controller', () => {
                 attributes: {
                     zclVersion: {ID: 0, type: 32, name: 'zclVersion'},
                     appVersion: {ID: 1, type: 32, name: 'appVersion'},
-                    schneiderMeterRadioPower: {ID: 57856, manufacturerCode: 4190, name: 'schneiderMeterRadioPower', type: 40},
                     stackVersion: {ID: 2, type: 32, name: 'stackVersion'},
                     hwVersion: {ID: 3, type: 32, name: 'hwVersion'},
                     manufacturerName: {ID: 4, type: 66, name: 'manufacturerName'},
@@ -6641,13 +6662,19 @@ describe('Controller', () => {
                     dateCode: {ID: 6, type: 66, name: 'dateCode'},
                     powerSource: {ID: 7, type: 48, name: 'powerSource'},
                     appProfileVersion: {ID: 8, type: 48, name: 'appProfileVersion'},
-                    swBuildId: {ID: 16384, type: 66, name: 'swBuildId'},
+                    genericDeviceType: {ID: 9, type: 48, name: 'genericDeviceType'},
+                    productCode: {ID: 10, type: 65, name: 'productCode'},
+                    productUrl: {ID: 11, type: 66, name: 'productUrl'},
+                    manufacturerVersionDetails: {ID: 12, type: 66, name: 'manufacturerVersionDetails'},
                     serialNumber: {ID: 13, type: 66, name: 'serialNumber'},
+                    productLabel: {ID: 14, type: 66, name: 'productLabel'},
                     locationDesc: {ID: 16, type: 66, name: 'locationDesc'},
                     physicalEnv: {ID: 17, type: 48, name: 'physicalEnv'},
                     deviceEnabled: {ID: 18, type: 16, name: 'deviceEnabled'},
                     alarmMask: {ID: 19, type: 24, name: 'alarmMask'},
                     disableLocalConfig: {ID: 20, type: 24, name: 'disableLocalConfig'},
+                    swBuildId: {ID: 16384, type: 66, name: 'swBuildId'},
+                    schneiderMeterRadioPower: {ID: 57856, manufacturerCode: 4190, name: 'schneiderMeterRadioPower', type: 40},
                 },
                 name: 'genBasic',
                 commands: {
@@ -6685,7 +6712,6 @@ describe('Controller', () => {
                 attributes: {
                     zclVersion: {ID: 0, type: 32, name: 'zclVersion'},
                     appVersion: {ID: 1, type: 32, name: 'appVersion'},
-                    schneiderMeterRadioPower: {ID: 57856, manufacturerCode: 4190, name: 'schneiderMeterRadioPower', type: 40},
                     stackVersion: {ID: 2, type: 32, name: 'stackVersion'},
                     hwVersion: {ID: 3, type: 32, name: 'hwVersion'},
                     manufacturerName: {ID: 4, type: 66, name: 'manufacturerName'},
@@ -6693,13 +6719,19 @@ describe('Controller', () => {
                     dateCode: {ID: 6, type: 66, name: 'dateCode'},
                     powerSource: {ID: 7, type: 48, name: 'powerSource'},
                     appProfileVersion: {ID: 8, type: 48, name: 'appProfileVersion'},
-                    swBuildId: {ID: 16384, type: 66, name: 'swBuildId'},
+                    genericDeviceType: {ID: 9, type: 48, name: 'genericDeviceType'},
+                    productCode: {ID: 10, type: 65, name: 'productCode'},
+                    productUrl: {ID: 11, type: 66, name: 'productUrl'},
+                    manufacturerVersionDetails: {ID: 12, type: 66, name: 'manufacturerVersionDetails'},
                     serialNumber: {ID: 13, type: 66, name: 'serialNumber'},
+                    productLabel: {ID: 14, type: 66, name: 'productLabel'},
                     locationDesc: {ID: 16, type: 66, name: 'locationDesc'},
                     physicalEnv: {ID: 17, type: 48, name: 'physicalEnv'},
                     deviceEnabled: {ID: 18, type: 16, name: 'deviceEnabled'},
                     alarmMask: {ID: 19, type: 24, name: 'alarmMask'},
                     disableLocalConfig: {ID: 20, type: 24, name: 'disableLocalConfig'},
+                    swBuildId: {ID: 16384, type: 66, name: 'swBuildId'},
+                    schneiderMeterRadioPower: {ID: 57856, manufacturerCode: 4190, name: 'schneiderMeterRadioPower', type: 40},
                 },
                 name: 'genBasic',
                 commands: {
@@ -7373,7 +7405,7 @@ describe('Controller', () => {
                 _ieeeAddr: '0x129',
                 _interviewCompleted: true,
                 _interviewing: false,
-                _lastSeen: 150,
+                _lastSeen: Date.now(),
                 _linkquality: 19,
                 _skipDefaultResponse: false,
                 _manufacturerID: 1212,
@@ -7471,7 +7503,7 @@ describe('Controller', () => {
                 _ieeeAddr: '0x129',
                 _interviewCompleted: true,
                 _interviewing: false,
-                _lastSeen: 150,
+                _lastSeen: Date.now(),
                 _linkquality: 19,
                 _skipDefaultResponse: false,
                 _manufacturerID: 1212,
@@ -7694,9 +7726,7 @@ describe('Controller', () => {
 
         sendZdoResponseStatus = Zdo.Status.INVALID_INDEX;
 
-        expect(async () => {
-            await endpoint.unbind('genOnOff', target);
-        }).rejects.toThrow(`Unbind 0x129/1 genOnOff from '0x170/1' failed (Status 'INVALID_INDEX')`);
+        await expect(endpoint.unbind('genOnOff', target)).rejects.toThrow(`Unbind 0x129/1 genOnOff from '0x170/1' failed (Status 'INVALID_INDEX')`);
 
         const zdoPayload = Zdo.Buffalo.buildRequest(
             false,
@@ -7722,9 +7752,7 @@ describe('Controller', () => {
 
         sendZdoResponseStatus = Zdo.Status.INVALID_INDEX;
 
-        expect(async () => {
-            await endpoint.bind('genOnOff', target);
-        }).rejects.toThrow(`Bind 0x129/1 genOnOff from '0x170/1' failed (Status 'INVALID_INDEX')`);
+        await expect(endpoint.bind('genOnOff', target)).rejects.toThrow(`Bind 0x129/1 genOnOff from '0x170/1' failed (Status 'INVALID_INDEX')`);
 
         const zdoPayload = Zdo.Buffalo.buildRequest(
             false,
@@ -7909,7 +7937,7 @@ describe('Controller', () => {
             },
         };
         const frame = Zcl.Frame.create(1, 0, true, undefined, 10, 'commissioningNotification', 33, data, {});
-        jest.spyOn(Zcl.Frame, 'fromBuffer').mockReturnValueOnce(frame); // Mock because no Buffalo write for 0xe0 is implemented
+        vi.spyOn(Zcl.Frame, 'fromBuffer').mockReturnValueOnce(frame); // Mock because no Buffalo write for 0xe0 is implemented
         await mockAdapterEvents['zclPayload']({
             wasBroadcast: true,
             address: 0x46f4fe,
@@ -7937,7 +7965,7 @@ describe('Controller', () => {
         expect(mocksendZclFrameToAll).toHaveBeenCalledTimes(1);
 
         // When joins again, shouldnt emit duplicate event
-        jest.spyOn(Zcl.Frame, 'fromBuffer').mockReturnValueOnce(frame); // Mock because no Buffalo write for 0xe0 is implemented
+        vi.spyOn(Zcl.Frame, 'fromBuffer').mockReturnValueOnce(frame); // Mock because no Buffalo write for 0xe0 is implemented
         await mockAdapterEvents['zclPayload']({
             wasBroadcast: true,
             address: 0xf4fe,
@@ -7977,7 +8005,7 @@ describe('Controller', () => {
                 _ieeeAddr: '0x000000000046f4fe',
                 _interviewCompleted: true,
                 _interviewing: false,
-                _lastSeen: 150,
+                _lastSeen: Date.now(),
                 _linkquality: 50,
                 _modelID: 'GreenPower_2',
                 _networkAddress: 0xf4fe,
@@ -8020,7 +8048,7 @@ describe('Controller', () => {
             commandFrame: {},
         };
         const frameToggle = Zcl.Frame.create(1, 0, true, undefined, 10, 'notification', 33, dataToggle, {});
-        jest.spyOn(Zcl.Frame, 'fromBuffer').mockReturnValueOnce(frameToggle); // Mock because no Buffalo write for 0x22 is implemented
+        vi.spyOn(Zcl.Frame, 'fromBuffer').mockReturnValueOnce(frameToggle); // Mock because no Buffalo write for 0x22 is implemented
         await mockAdapterEvents['zclPayload']({
             wasBroadcast: false,
             address: 0xf4fe,
@@ -8060,7 +8088,7 @@ describe('Controller', () => {
                 _ieeeAddr: '0x000000000046f4fe',
                 _interviewCompleted: true,
                 _interviewing: false,
-                _lastSeen: 150,
+                _lastSeen: Date.now(),
                 _linkquality: 50,
                 _skipDefaultResponse: false,
                 _modelID: 'GreenPower_2',
@@ -8161,7 +8189,7 @@ describe('Controller', () => {
             },
         };
         const frame = Zcl.Frame.create(1, 0, true, undefined, 10, 'commissioningNotification', 33, data, {});
-        jest.spyOn(Zcl.Frame, 'fromBuffer').mockReturnValueOnce(frame); // Mock because no Buffalo write for 0xe3 is implemented
+        vi.spyOn(Zcl.Frame, 'fromBuffer').mockReturnValueOnce(frame); // Mock because no Buffalo write for 0xe3 is implemented
         await mockAdapterEvents['zclPayload']({
             wasBroadcast: true,
             address: srcID & 0xffff,
@@ -8212,7 +8240,7 @@ describe('Controller', () => {
             },
         };
         const frame = Zcl.Frame.create(1, 0, true, undefined, 10, 'commissioningNotification', 33, data, {});
-        jest.spyOn(Zcl.Frame, 'fromBuffer').mockReturnValueOnce(frame); // Mock because no Buffalo write for 0xe0 is implemented
+        vi.spyOn(Zcl.Frame, 'fromBuffer').mockReturnValueOnce(frame); // Mock because no Buffalo write for 0xe0 is implemented
         await mockAdapterEvents['zclPayload']({
             wasBroadcast: true,
             address: 0x46f4fe,
@@ -8327,7 +8355,7 @@ describe('Controller', () => {
         const receivedFrame = Zcl.Frame.fromBuffer(33, Zcl.Header.fromBuffer(buffer), buffer, {});
 
         expect(deepClone(receivedFrame)).toStrictEqual(deepClone(expectedFrame));
-        jest.spyOn(Zcl.Frame, 'fromBuffer').mockReturnValueOnce(expectedFrame); // Mock because no Buffalo write for 0xe0 is implemented
+        vi.spyOn(Zcl.Frame, 'fromBuffer').mockReturnValueOnce(expectedFrame); // Mock because no Buffalo write for 0xe0 is implemented
         await mockAdapterEvents['zclPayload']({
             wasBroadcast: false,
             address: gppDevice.networkAddress,
@@ -8365,7 +8393,7 @@ describe('Controller', () => {
         );
 
         // When joins again, shouldnt emit duplicate event
-        jest.spyOn(Zcl.Frame, 'fromBuffer').mockReturnValueOnce(expectedFrame); // Mock because no Buffalo write for 0xe0 is implemented
+        vi.spyOn(Zcl.Frame, 'fromBuffer').mockReturnValueOnce(expectedFrame); // Mock because no Buffalo write for 0xe0 is implemented
         await mockAdapterEvents['zclPayload']({
             wasBroadcast: false,
             address: 129,
@@ -8405,7 +8433,7 @@ describe('Controller', () => {
                 _ieeeAddr: '0x00000000017171f8',
                 _interviewCompleted: true,
                 _interviewing: false,
-                _lastSeen: 150,
+                _lastSeen: Date.now(),
                 _linkquality: 50,
                 _modelID: 'GreenPower_2',
                 _networkAddress: 0x71f8,
@@ -8494,7 +8522,7 @@ describe('Controller', () => {
                 _interviewing: false,
                 _skipDefaultResponse: false,
                 meta: {},
-                _lastSeen: 150,
+                _lastSeen: Date.now(),
                 _pendingRequestTimeout: 0,
                 _linkquality: 50,
             },
@@ -8575,7 +8603,7 @@ describe('Controller', () => {
             _ieeeAddr: '0x00000000017171f8',
             _interviewCompleted: false,
             _interviewing: false,
-            _lastSeen: 150,
+            _lastSeen: Date.now(),
             _linkquality: 50,
             _modelID: 'GreenPower_2',
             _networkAddress: 0x71f8,
@@ -8584,7 +8612,7 @@ describe('Controller', () => {
         });
 
         // Re-add device
-        jest.spyOn(Zcl.Frame, 'fromBuffer').mockReturnValueOnce(expectedFrame); // Mock because no Buffalo write for 0xe0 is implemented
+        vi.spyOn(Zcl.Frame, 'fromBuffer').mockReturnValueOnce(expectedFrame); // Mock because no Buffalo write for 0xe0 is implemented
         await mockAdapterEvents['zclPayload']({
             wasBroadcast: false,
             address: 129,
@@ -8622,7 +8650,7 @@ describe('Controller', () => {
             _ieeeAddr: '0x00000000017171f8',
             _interviewCompleted: true,
             _interviewing: false,
-            _lastSeen: 150,
+            _lastSeen: Date.now(),
             _linkquality: 50,
             _modelID: 'GreenPower_2',
             _networkAddress: 0x71f8,
@@ -8675,7 +8703,6 @@ describe('Controller', () => {
                 attributes: {
                     zclVersion: {ID: 0, type: 32, name: 'zclVersion'},
                     appVersion: {ID: 1, type: 32, name: 'appVersion'},
-                    schneiderMeterRadioPower: {ID: 57856, manufacturerCode: 4190, name: 'schneiderMeterRadioPower', type: 40},
                     stackVersion: {ID: 2, type: 32, name: 'stackVersion'},
                     hwVersion: {ID: 3, type: 32, name: 'hwVersion'},
                     manufacturerName: {ID: 4, type: 66, name: 'manufacturerName'},
@@ -8683,13 +8710,19 @@ describe('Controller', () => {
                     dateCode: {ID: 6, type: 66, name: 'dateCode'},
                     powerSource: {ID: 7, type: 48, name: 'powerSource'},
                     appProfileVersion: {ID: 8, type: 48, name: 'appProfileVersion'},
-                    swBuildId: {ID: 16384, type: 66, name: 'swBuildId'},
+                    genericDeviceType: {ID: 9, type: 48, name: 'genericDeviceType'},
+                    productCode: {ID: 10, type: 65, name: 'productCode'},
+                    productUrl: {ID: 11, type: 66, name: 'productUrl'},
+                    manufacturerVersionDetails: {ID: 12, type: 66, name: 'manufacturerVersionDetails'},
                     serialNumber: {ID: 13, type: 66, name: 'serialNumber'},
+                    productLabel: {ID: 14, type: 66, name: 'productLabel'},
                     locationDesc: {ID: 16, type: 66, name: 'locationDesc'},
                     physicalEnv: {ID: 17, type: 48, name: 'physicalEnv'},
                     deviceEnabled: {ID: 18, type: 16, name: 'deviceEnabled'},
                     alarmMask: {ID: 19, type: 24, name: 'alarmMask'},
                     disableLocalConfig: {ID: 20, type: 24, name: 'disableLocalConfig'},
+                    swBuildId: {ID: 16384, type: 66, name: 'swBuildId'},
+                    schneiderMeterRadioPower: {ID: 57856, manufacturerCode: 4190, name: 'schneiderMeterRadioPower', type: 40},
                 },
                 name: 'genBasic',
                 commands: {
@@ -8771,7 +8804,7 @@ describe('Controller', () => {
         endpoint.pendingRequests.queue = async (req) => {
             // @ts-expect-error private
             const f = origQueueRequest.call(endpoint.pendingRequests, req);
-            jest.advanceTimersByTime(10);
+            vi.advanceTimersByTime(10);
             return f;
         };
         // @ts-expect-error private
@@ -8851,13 +8884,13 @@ describe('Controller', () => {
         endpoint.pendingRequests.queue = async (req) => {
             // @ts-expect-error private
             const f = origQueueRequest.call(endpoint.pendingRequests, req);
-            jest.advanceTimersByTime(10);
+            vi.advanceTimersByTime(10);
             return f;
         };
         const origSendPendingRequests = endpoint.sendPendingRequests;
         endpoint.sendPendingRequests = async (fastpoll) => {
             const f = await origSendPendingRequests.call(endpoint, fastpoll);
-            jest.advanceTimersByTime(10);
+            vi.advanceTimersByTime(10);
             return f;
         };
         // @ts-expect-error private
@@ -8889,7 +8922,7 @@ describe('Controller', () => {
         await mockAdapterEvents['zclPayload'](data);
         await nextTick;
         expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(2);
-        (Date.now as ReturnType<typeof jest.fn>).mockReturnValue(100000);
+        await vi.advanceTimersByTimeAsync(100000);
         let error;
         try {
             await mockAdapterEvents['zclPayload'](data);
@@ -8917,7 +8950,7 @@ describe('Controller', () => {
         endpoint.pendingRequests.queue = async (req) => {
             // @ts-expect-error private
             const f = origQueueRequest.call(endpoint.pendingRequests, req);
-            jest.advanceTimersByTime(10);
+            vi.advanceTimersByTime(10);
             return f;
         };
 
@@ -9021,7 +9054,7 @@ describe('Controller', () => {
         try {
             // Add the same ZCL request with different payload again, the first one should be rejected and removed from the queue
             result2 = endpoint.write('genOnOff', {onOff: 1}, {disableResponse: true});
-            expect(await result1).rejects.toBe('asas');
+            await expect(await result1).rejects.toBe('asas');
         } catch (e) {
             error = e;
             // Queue content:
@@ -9089,9 +9122,8 @@ describe('Controller', () => {
             groupID: 1,
         });
 
-        await result4;
-        expect(result4).resolves.toStrictEqual({onTime: 3});
-        expect(result5).resolves.toStrictEqual({onTime: 3});
+        await expect(result4).resolves.toStrictEqual({onTime: 3});
+        await expect(result5).resolves.toStrictEqual({onTime: 3});
         expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(13);
         expect(mocksendZclFrameToEndpoint.mock.calls[8][3].payload).toStrictEqual([{attrData: 0, attrId: 16387, dataType: 48}]);
         expect(mocksendZclFrameToEndpoint.mock.calls[9][3].payload).toStrictEqual([{attrData: 1, attrId: 0, dataType: 16}]);
@@ -9103,7 +9135,9 @@ describe('Controller', () => {
     });
 
     it('Write to device with pendingRequestTimeout > 0, discard messages after expiration', async () => {
-        (Date.now as ReturnType<typeof jest.fn>).mockReturnValue(1000);
+        let updatedMockedDate = new Date(mockedDate);
+        updatedMockedDate.setSeconds(updatedMockedDate.getSeconds() + 1000);
+        vi.setSystemTime(updatedMockedDate);
         await controller.start();
         await mockAdapterEvents['deviceJoined']({networkAddress: 174, ieeeAddr: '0x174'});
         const device = controller.getDeviceByIeeeAddr('0x174')!;
@@ -9154,7 +9188,8 @@ describe('Controller', () => {
         const result = endpoint.write('genOnOff', {onOff: 10}, {disableResponse: true});
         expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(1);
 
-        (Date.now as ReturnType<typeof jest.fn>).mockReturnValue(1001000);
+        updatedMockedDate.setSeconds(updatedMockedDate.getSeconds() + 1001000);
+        vi.setSystemTime(updatedMockedDate);
         let error = null;
         try {
             await result;
@@ -9164,7 +9199,6 @@ describe('Controller', () => {
         expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(1);
         // @ts-expect-error private
         expect(endpoint.pendingRequests.size).toBe(0);
-        (Date.now as ReturnType<typeof jest.fn>).mockReturnValue(150);
     });
 
     it('Implicit checkin while send already in progress', async () => {
@@ -9183,7 +9217,7 @@ describe('Controller', () => {
         endpoint.pendingRequests.queue = async (req) => {
             // @ts-expect-error private
             const f = origQueueRequest.call(endpoint.pendingRequests, req);
-            jest.advanceTimersByTime(10);
+            vi.advanceTimersByTime(10);
             return f;
         };
         // @ts-expect-error private
@@ -9221,7 +9255,7 @@ describe('Controller', () => {
         const origOnZclData = device.onZclData;
         device.onZclData = async (a, b, c) => {
             const f = origOnZclData.call(device, a, b, c);
-            jest.advanceTimersByTime(10);
+            vi.advanceTimersByTime(10);
             return f;
         };
         const nextTick = new Promise(process.nextTick);
@@ -9415,7 +9449,7 @@ describe('Controller', () => {
                 _ieeeAddr: '0x171',
                 _interviewCompleted: true,
                 _interviewing: false,
-                _lastSeen: 150,
+                _lastSeen: Date.now(),
                 _manufacturerID: 1212,
                 _manufacturerName: 'Xioami',
                 _modelID: 'lumi.remote.b286opcn01',
@@ -9622,7 +9656,7 @@ describe('Controller', () => {
         await controller.start();
         mockAdapterSendZdo.mockClear();
         const device = controller.getDeviceByNetworkAddress(ZSpec.COORDINATOR_ADDRESS)!;
-        const deviceNodeDescSpy = jest.spyOn(device, 'updateNodeDescriptor');
+        const deviceNodeDescSpy = vi.spyOn(device, 'updateNodeDescriptor');
 
         await device.interview(true);
 
@@ -9636,9 +9670,7 @@ describe('Controller', () => {
         const device = controller.getDeviceByNetworkAddress(ZSpec.COORDINATOR_ADDRESS)!;
         sendZdoResponseStatus = Zdo.Status.INSUFFICIENT_SPACE;
 
-        expect(async () => {
-            await device.updateNodeDescriptor();
-        }).rejects.toThrow(`Status 'INSUFFICIENT_SPACE'`);
+        await expect(device.updateNodeDescriptor()).rejects.toThrow(`Status 'INSUFFICIENT_SPACE'`);
         expect(mockAdapterSendZdo).toHaveBeenCalledTimes(1);
     });
 
@@ -9648,9 +9680,7 @@ describe('Controller', () => {
         const device = controller.getDeviceByNetworkAddress(ZSpec.COORDINATOR_ADDRESS)!;
         sendZdoResponseStatus = Zdo.Status.INSUFFICIENT_SPACE;
 
-        expect(async () => {
-            await device.updateActiveEndpoints();
-        }).rejects.toThrow(`Status 'INSUFFICIENT_SPACE'`);
+        await expect(device.updateActiveEndpoints()).rejects.toThrow(`Status 'INSUFFICIENT_SPACE'`);
         expect(mockAdapterSendZdo).toHaveBeenCalledTimes(1);
     });
 
@@ -9661,9 +9691,7 @@ describe('Controller', () => {
         const endpoint = device.getEndpoint(1)!;
         sendZdoResponseStatus = Zdo.Status.INSUFFICIENT_SPACE;
 
-        expect(async () => {
-            await endpoint.updateSimpleDescriptor();
-        }).rejects.toThrow(`Status 'INSUFFICIENT_SPACE'`);
+        await expect(endpoint.updateSimpleDescriptor()).rejects.toThrow(`Status 'INSUFFICIENT_SPACE'`);
         expect(mockAdapterSendZdo).toHaveBeenCalledTimes(1);
     });
 
@@ -9770,9 +9798,7 @@ describe('Controller', () => {
         const device = controller.getDeviceByIeeeAddr('0x140')!;
         sendZdoResponseStatus = Zdo.Status.INVALID_INDEX;
 
-        expect(async () => {
-            await device.removeFromNetwork();
-        }).rejects.toThrow(`Status 'INVALID_INDEX'`);
+        await expect(device.removeFromNetwork()).rejects.toThrow(`Status 'INVALID_INDEX'`);
 
         const zdoPayload = Zdo.Buffalo.buildRequest(false, Zdo.ClusterId.LEAVE_REQUEST, '0x140', Zdo.LeaveRequestFlags.WITHOUT_REJOIN);
         expect(mockAdapterSendZdo).toHaveBeenCalledWith('0x140', 140, Zdo.ClusterId.LEAVE_REQUEST, zdoPayload, false);
@@ -9785,9 +9811,7 @@ describe('Controller', () => {
         const device = controller.getDeviceByIeeeAddr('0x140')!;
         sendZdoResponseStatus = Zdo.Status.INVALID_INDEX;
 
-        expect(async () => {
-            await device.lqi();
-        }).rejects.toThrow(`Status 'INVALID_INDEX'`);
+        await expect(device.lqi()).rejects.toThrow(`Status 'INVALID_INDEX'`);
 
         const zdoPayload = Zdo.Buffalo.buildRequest(false, Zdo.ClusterId.LQI_TABLE_REQUEST, 0);
         expect(mockAdapterSendZdo).toHaveBeenCalledWith('0x140', 140, Zdo.ClusterId.LQI_TABLE_REQUEST, zdoPayload, false);
@@ -9800,9 +9824,7 @@ describe('Controller', () => {
         const device = controller.getDeviceByIeeeAddr('0x140')!;
         sendZdoResponseStatus = Zdo.Status.INVALID_INDEX;
 
-        expect(async () => {
-            await device.routingTable();
-        }).rejects.toThrow(`Status 'INVALID_INDEX'`);
+        await expect(device.routingTable()).rejects.toThrow(`Status 'INVALID_INDEX'`);
 
         const zdoPayload = Zdo.Buffalo.buildRequest(false, Zdo.ClusterId.ROUTING_TABLE_REQUEST, 0);
         expect(mockAdapterSendZdo).toHaveBeenCalledWith('0x140', 140, Zdo.ClusterId.ROUTING_TABLE_REQUEST, zdoPayload, false);
@@ -10084,7 +10106,7 @@ describe('Controller', () => {
         events.lastSeenChanged = [];
         events.deviceNetworkAddressChanged = [];
         mockAdapterSendZdo.mockClear();
-        const identifyUnknownDeviceSpy = jest.spyOn(controller, 'identifyUnknownDevice');
+        const identifyUnknownDeviceSpy = vi.spyOn(controller, 'identifyUnknownDevice');
 
         const device = controller.getDeviceByIeeeAddr('0x000b57fffec6a5b2')!;
         expect(device.networkAddress).toStrictEqual(oldNwkAddress);
@@ -10137,7 +10159,7 @@ describe('Controller', () => {
         events.deviceNetworkAddressChanged = [];
         mockAdapterSendZdo.mockClear();
         mockAdapterSendZdo.mockRejectedValueOnce(new Error('timeout'));
-        const identifyUnknownDeviceSpy = jest.spyOn(controller, 'identifyUnknownDevice');
+        const identifyUnknownDeviceSpy = vi.spyOn(controller, 'identifyUnknownDevice');
 
         const frame = Zcl.Frame.create(0, 1, true, undefined, 10, 'readRsp', 0, [{attrId: 5, status: 0, dataType: 66, attrData: 'new.model.id'}], {});
         await mockAdapterEvents['zclPayload']({

@@ -1,5 +1,45 @@
 # Changelog
 
+## [3.2.1](https://github.com/Koenkk/zigbee-herdsman/compare/v3.2.0...v3.2.1) (2025-01-02)
+
+
+### Bug Fixes
+
+* Extend genBasic cluster ([#1282](https://github.com/Koenkk/zigbee-herdsman/issues/1282)) ([4cc23fc](https://github.com/Koenkk/zigbee-herdsman/commit/4cc23fc08ed3d3e785c4d7d120b2fe07d736780c))
+* Fix `owonPercentChangeInPower` ID ([#1279](https://github.com/Koenkk/zigbee-herdsman/issues/1279)) ([003b4b2](https://github.com/Koenkk/zigbee-herdsman/commit/003b4b2fb969e4cbdea88174ec4761f19d615d94))
+* **ignore:** remove manuSpecificNodOnPilotWire that was moved to zigbee-herdsman-converters ([#1274](https://github.com/Koenkk/zigbee-herdsman/issues/1274)) ([1c8d886](https://github.com/Koenkk/zigbee-herdsman/commit/1c8d8864da7f89c8f18b5290150277ec61f5d873))
+
+## [3.2.0](https://github.com/Koenkk/zigbee-herdsman/compare/v3.1.1...v3.2.0) (2024-12-28)
+
+
+### Features
+
+* Ember support for simplicity_sdk:2024.12.0 ([#1275](https://github.com/Koenkk/zigbee-herdsman/issues/1275)) ([d25695a](https://github.com/Koenkk/zigbee-herdsman/commit/d25695af728b030fba4a1367271e84d015ae36b6))
+
+## [3.1.1](https://github.com/Koenkk/zigbee-herdsman/compare/v3.1.0...v3.1.1) (2024-12-22)
+
+
+### Bug Fixes
+
+* **ignore:** Fix dist not emitted after `clean` ([9c1a3a4](https://github.com/Koenkk/zigbee-herdsman/commit/9c1a3a4fab47a47aa8a19ee86192221eb5960f2e))
+
+## [3.1.0](https://github.com/Koenkk/zigbee-herdsman/compare/v3.0.4...v3.1.0) (2024-12-21)
+
+
+### Features
+
+* Use Vitest for testing ([#1270](https://github.com/Koenkk/zigbee-herdsman/issues/1270)) ([47b902e](https://github.com/Koenkk/zigbee-herdsman/commit/47b902eca7a4cb4d2618b51b091fd7027fea58a0))
+
+
+### Bug Fixes
+
+* Cleanup imports/exports ([#1269](https://github.com/Koenkk/zigbee-herdsman/issues/1269)) ([6fde32f](https://github.com/Koenkk/zigbee-herdsman/commit/6fde32ff0c829f688fb77889a172ca481710e320))
+* Fix Xiaomi struct parsing ([#1271](https://github.com/Koenkk/zigbee-herdsman/issues/1271)) ([248b6e9](https://github.com/Koenkk/zigbee-herdsman/commit/248b6e99ebed71e32395328abcf401934aa156f3))
+* **ignore:** import using `node:` prefix for built-in ([#1268](https://github.com/Koenkk/zigbee-herdsman/issues/1268)) ([b23e10a](https://github.com/Koenkk/zigbee-herdsman/commit/b23e10a9bbf7af4a0e155067aa9b1d0d5d3a13c2))
+* **ignore:** overrides ([#1267](https://github.com/Koenkk/zigbee-herdsman/issues/1267)) ([068f03a](https://github.com/Koenkk/zigbee-herdsman/commit/068f03a1d9d7f4c8e9529ac73be6a5fea3c57958))
+* **ignore:** update dependencies ([#1265](https://github.com/Koenkk/zigbee-herdsman/issues/1265)) ([68597b9](https://github.com/Koenkk/zigbee-herdsman/commit/68597b922d258d7540bb214cf9e98b70b3efa0f4))
+* **ignore:** update dependencies ([#1272](https://github.com/Koenkk/zigbee-herdsman/issues/1272)) ([7cd08e2](https://github.com/Koenkk/zigbee-herdsman/commit/7cd08e2aaa7657e3e2dde7338963723d52c9d38a))
+
 ## [3.0.4](https://github.com/Koenkk/zigbee-herdsman/compare/v3.0.3...v3.0.4) (2024-12-14)
 
 

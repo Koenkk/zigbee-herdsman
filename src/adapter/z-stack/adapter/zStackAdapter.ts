@@ -222,11 +222,12 @@ export class ZStackAdapter extends Adapter {
             // NOTE: `sendZdo` takes care of adjusting the payload as appropriate based on `networkAddress === 0` or not
             const result = await this.sendZdo(ZSpec.BLANK_EUI64, networkAddress, clusterId, zdoPayload, false);
 
-            /* istanbul ignore next */
+            /* v8 ignore start */
             if (!Zdo.Buffalo.checkStatus(result)) {
                 // TODO: will disappear once moved upstream
                 throw new Zdo.StatusError(result[0]);
             }
+            /* v8 ignore stop */
         }
 
         await this.queue.execute<void>(async () => {
@@ -287,13 +288,14 @@ export class ZStackAdapter extends Adapter {
 
         const result = await this.sendZdoInternal(ieeeAddr, ZSpec.NULL_NODE_ID, clusterId, zdoPayload, false, true);
 
-        /* istanbul ignore else */
         if (Zdo.Buffalo.checkStatus(result)) {
             return result[1].nwkAddress;
+            /* v8 ignore start */
         } else {
             // TODO: will disappear once moved upstream
             throw new Zdo.StatusError(result[0]);
         }
+        /* v8 ignore stop */
     }
 
     private supportsAssocRemove(): boolean {
@@ -423,7 +425,6 @@ export class ZStackAdapter extends Adapter {
             if (!disableResponse) {
                 const responseClusterId = Zdo.Utils.getResponseClusterId(clusterId);
 
-                /* istanbul ignore else */
                 if (responseClusterId) {
                     const cmd = Definition[Subsystem.ZDO].find((c) => isMtCmdAreqZdo(c) && c.zdoClusterId === responseClusterId);
                     assert(cmd, `Response for ZDO cluster ID '${responseClusterId}' not supported.`);
@@ -447,7 +448,7 @@ export class ZStackAdapter extends Adapter {
                     // https://github.com/Koenkk/zigbee2mqtt/issues/3276
                     logger.debug(`Discover route to '${networkAddress}' because node descriptor request failed`, NS);
                     await this.discoverRoute(networkAddress);
-                    await this.znp.requestZdo(clusterId, payload, waiter?.ID);
+                    await this.znp.requestZdo(clusterId, payload, /* v8 ignore next */ waiter?.ID);
                 } else {
                     throw error;
                 }
@@ -663,9 +664,11 @@ export class ZStackAdapter extends Adapter {
                         } else {
                             logger.debug('Network address did not change', NS);
                         }
+                        /* v8 ignore start */
                     } catch {
                         /* empty */
                     }
+                    /* v8 ignore stop */
                 } else {
                     logger.debug('Wait 2000ms', NS);
                     await wait(2000);
@@ -832,7 +835,6 @@ export class ZStackAdapter extends Adapter {
                 this.emit('deviceJoined', payload);
             } else if (object.command.name === 'endDeviceAnnceInd') {
                 // TODO: better way???
-                /* istanbul ignore else */
                 if (Zdo.Buffalo.checkStatus<Zdo.ClusterId.END_DEVICE_ANNOUNCE>(object.payload.zdo)) {
                     const zdoPayload = object.payload.zdo[1];
                     // Only discover routes to end devices, if bit 1 of capabilities === 0 it's an end device.
@@ -846,7 +848,6 @@ export class ZStackAdapter extends Adapter {
                                 () => {
                                     // eslint-disable-next-line @typescript-eslint/no-floating-promises
                                     this.queue.execute<void>(async () => {
-                                        /* istanbul ignore next */
                                         this.discoverRoute(zdoPayload.nwkAddress, false).catch(() => {});
                                     }, zdoPayload.nwkAddress);
                                 },
@@ -882,7 +883,6 @@ export class ZStackAdapter extends Adapter {
                     } as ZdoTypes.NetworkAddressResponse,
                 ]);
             } else {
-                /* istanbul ignore else */
                 if (object.command.name === 'leaveInd') {
                     if (object.payload.rejoin) {
                         logger.debug(`Device leave: Got leave indication with rejoin=true, nothing to do`, NS);
@@ -897,9 +897,7 @@ export class ZStackAdapter extends Adapter {
                 }
             }
         } else {
-            /* istanbul ignore else */
             if (object.subsystem === Subsystem.AF) {
-                /* istanbul ignore else */
                 if (object.command.name === 'incomingMsg' || object.command.name === 'incomingMsgExt') {
                     const payload: Events.ZclPayload = {
                         clusterID: object.payload.clusterid,

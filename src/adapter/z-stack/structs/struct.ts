@@ -42,7 +42,6 @@ export class Struct implements SerializableMemoryObject {
         switch (alignment) {
             case 'unaligned': {
                 /* update child struct values and return as-is (unaligned) */
-                /* istanbul ignore next */
                 for (const key of Object.keys(this.childStructs)) {
                     const child = this.childStructs[key];
                     this.buffer.set(child.struct.serialize(alignment), child.offset);
@@ -92,7 +91,6 @@ export class Struct implements SerializableMemoryObject {
      * Returns total length of the struct. Struct length is always fixed and configured
      * by calls to `member()` methods.
      */
-    /* istanbul ignore next */
     public getLength(alignment: StructMemoryAlignment = 'unaligned', padLength = true, parentOffset = 0): number {
         switch (alignment) {
             case 'unaligned': {
@@ -225,10 +223,11 @@ export class Struct implements SerializableMemoryObject {
             }
             case 'uint8array':
             case 'uint8array-reversed': {
-                /* istanbul ignore next */
+                /* v8 ignore start */
                 if (!length) {
                     throw new Error('Struct builder requires length for `uint8array` and `uint8array-reversed` type');
                 }
+                /* v8 ignore stop */
                 Object.defineProperty(this, name, {
                     enumerable: true,
                     get: () =>
@@ -289,11 +288,12 @@ export class Struct implements SerializableMemoryObject {
      *
      * @param data Data to initialize empty struct with.
      */
-    /* istanbul ignore next */
     public default(data: Buffer): this {
+        /* v8 ignore start */
         if (data.length !== this.length) {
             throw new Error('Default value needs to have the length of unaligned structure.');
         }
+        /* v8 ignore stop */
         this.defaultData = Buffer.from(data);
         return this;
     }
@@ -303,7 +303,6 @@ export class Struct implements SerializableMemoryObject {
      *
      * @param padding Byte to use for padding
      */
-    /* istanbul ignore next */
     public padding(padding = 0x00): this {
         this.paddingByte = padding;
         return this;

@@ -9,7 +9,7 @@ import * as Zdo from '../../../zspec/zdo';
 import {StartResult} from '../../tstype';
 import * as ZnpConstants from '../constants';
 import {DevStates, NvItemsIds, ZnpCommandStatus} from '../constants/common';
-import * as ZStackModels from '../models';
+import {StartupOptions} from '../models/startup-options';
 import * as Structs from '../structs';
 import {Subsystem} from '../unpi/constants';
 import * as UnpiConstants from '../unpi/constants';
@@ -33,10 +33,10 @@ export class ZnpAdapterManager {
 
     private znp: Znp;
     private adapter: ZStackAdapter;
-    private options: ZStackModels.StartupOptions;
+    private options: StartupOptions;
     private nwkOptions!: Models.NetworkOptions;
 
-    public constructor(adapter: ZStackAdapter, znp: Znp, options: ZStackModels.StartupOptions) {
+    public constructor(adapter: ZStackAdapter, znp: Znp, options: StartupOptions) {
         this.znp = znp;
         this.adapter = adapter;
         this.options = options;
@@ -259,7 +259,7 @@ export class ZnpAdapterManager {
         await this.nv.updateItem(NvItemsIds.PANID, nwkPanId.serialize());
         await this.nv.updateItem(NvItemsIds.EXTENDED_PAN_ID, extendedPanIdReversed);
         await this.nv.updateItem(NvItemsIds.APS_USE_EXT_PANID, extendedPanIdReversed);
-        /* istanbul ignore next */
+        /* v8 ignore next */
         await this.nv.updateItem(NvItemsIds.PRECFGKEYS_ENABLE, Buffer.from([options.networkKeyDistribute ? 0x01 : 0x00]));
 
         if ([ZnpVersion.zStack30x, ZnpVersion.zStack3x0].includes(this.options.version)) {
@@ -350,7 +350,6 @@ export class ZnpAdapterManager {
      */
     private async parseConfigNetworkOptions(options: TsType.NetworkOptions): Promise<Models.NetworkOptions> {
         const channelList = options.channelList;
-        /* istanbul ignore next */
         channelList.sort((c1, c2) => (c1 < c2 ? -1 : c1 > c2 ? 1 : 0));
 
         const parsed: Models.NetworkOptions = {

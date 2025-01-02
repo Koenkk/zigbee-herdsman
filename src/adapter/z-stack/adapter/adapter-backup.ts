@@ -98,7 +98,6 @@ export class AdapterBackup {
         /* examine network security material table */
         const genericExtendedPanId = Buffer.alloc(8, 0xff);
         let secMaterialDescriptor: ReturnType<typeof Structs.nwkSecMaterialDescriptorEntry> | undefined;
-        /* istanbul ignore next */
         for (const entry of secMaterialTable.used) {
             if (entry.extendedPanID.equals(nib.extendedPANID)) {
                 secMaterialDescriptor = entry;
@@ -115,7 +114,6 @@ export class AdapterBackup {
         }
 
         /* return backup structure */
-        /* istanbul ignore next */
         const backup: Models.Backup = {
             znp: {
                 version: version,
@@ -141,15 +139,17 @@ export class AdapterBackup {
                     addressManagerTable.used
                         .map((ame, ami) => {
                             /* take all entries of assoc and/or security type */
+                            /* v8 ignore start */
                             if (!ame.isSet() || (ame.user & (AddressManagerUser.Assoc | AddressManagerUser.Security)) === 0) {
-                                /* istanbul ignore next */
                                 return null;
                             }
+                            /* v8 ignore stop */
                             let linkKeyInfo: {key: Buffer; rxCounter: number; txCounter: number} | undefined;
                             const sme = securityManagerTable.used.find((e) => e.ami === ami);
                             if (sme) {
                                 const apsKeyDataIndex =
                                     version === ZnpVersion.zStack30x ? sme.keyNvId - NvItemsIds.APS_LINK_KEY_DATA_START : sme.keyNvId;
+                                /* v8 ignore next */
                                 const apsKeyData = apsLinkKeyDataTable.used[apsKeyDataIndex] || null;
                                 if (apsKeyData) {
                                     linkKeyInfo = {
@@ -228,10 +228,11 @@ export class AdapterBackup {
     public async restoreBackup(backup: Models.Backup): Promise<void> {
         logger.debug('restoring backup', NS);
         const version: ZnpVersion = await this.getAdapterVersion();
-        /* istanbul ignore next */
+        /* v8 ignore start */
         if (version === ZnpVersion.zStack12) {
             throw new Error('backup cannot be restored on Z-Stack 1.2 adapter');
         }
+        /* v8 ignore stop */
 
         /* fetch provisional NIB */
         const nib = await this.nv.readItem(NvItemsIds.NIB, 0, Structs.nib);

@@ -323,7 +323,6 @@ export enum PDMEventType {
     E_PDM_SYSTEM_EVENT_PDM_FULL_SAVE,
 }
 
-/* istanbul ignore next */
 const coordinatorEndpoints: readonly {ID: number; profileID: number; deviceID: number; inputClusters: number[]; outputClusters: number[]}[] = [
     {
         ID: 0x01,

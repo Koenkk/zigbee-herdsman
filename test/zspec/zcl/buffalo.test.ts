@@ -7,7 +7,7 @@ describe('ZCL Buffalo', () => {
         const value = [1, 2, 3];
         const buffer = Buffer.alloc(3);
         const buffalo = new BuffaloZcl(buffer);
-        const writeSpy = jest.spyOn(buffalo, 'writeBuffer');
+        const writeSpy = vi.spyOn(buffalo, 'writeBuffer');
         // @ts-expect-error invalid on purpose
         buffalo.write(99999, value, {});
         expect(writeSpy).toHaveBeenCalledWith(value, value.length);
@@ -150,9 +150,9 @@ describe('ZCL Buffalo', () => {
             const buffer = Buffer.alloc(255);
             const buffalo = new BuffaloZcl(buffer);
             // @ts-expect-error dynamic
-            const writeSpy = jest.spyOn(buffalo, expected.write);
+            const writeSpy = vi.spyOn(buffalo, expected.write);
             // @ts-expect-error dynamic
-            const readSpy = jest.spyOn(buffalo, expected.read);
+            const readSpy = vi.spyOn(buffalo, expected.read);
 
             buffalo.write(type, payload.value, {});
             expect(writeSpy).toHaveBeenCalledTimes(1);
@@ -171,8 +171,8 @@ describe('ZCL Buffalo', () => {
         const value = [1, 2, 3, 4];
         const buffer = Buffer.alloc(4);
         const buffalo = new BuffaloZcl(buffer);
-        const writeSpy = jest.spyOn(buffalo, 'writeBuffer');
-        const readSpy = jest.spyOn(buffalo, 'readBuffer');
+        const writeSpy = vi.spyOn(buffalo, 'writeBuffer');
+        const readSpy = vi.spyOn(buffalo, 'readBuffer');
 
         buffalo.write(Zcl.BuffaloZclDataType.BUFFER, Buffer.from(value), {});
         expect(writeSpy).toHaveBeenCalledTimes(1);
@@ -194,8 +194,8 @@ describe('ZCL Buffalo', () => {
         const length = 2;
         const buffer = Buffer.alloc(255);
         const buffalo = new BuffaloZcl(buffer);
-        const writeSpy = jest.spyOn(buffalo, 'writeBuffer');
-        const readSpy = jest.spyOn(buffalo, 'readBuffer');
+        const writeSpy = vi.spyOn(buffalo, 'writeBuffer');
+        const readSpy = vi.spyOn(buffalo, 'readBuffer');
 
         buffalo.write(Zcl.BuffaloZclDataType.BUFFER, Buffer.from(value), {length});
         expect(writeSpy).toHaveBeenCalledTimes(1);
@@ -574,9 +574,9 @@ describe('ZCL Buffalo', () => {
         const buffer = Buffer.alloc(255);
         const buffalo = new BuffaloZcl(buffer);
         // @ts-expect-error dynamic
-        const writeSpy = jest.spyOn(buffalo, expected.write);
+        const writeSpy = vi.spyOn(buffalo, expected.write);
         // @ts-expect-error dynamic
-        const readSpy = jest.spyOn(buffalo, expected.read);
+        const readSpy = vi.spyOn(buffalo, expected.read);
 
         buffalo.write(Zcl.BuffaloZclDataType.USE_DATA_TYPE, payload.value, {dataType: payload.type});
         expect(writeSpy).toHaveBeenCalledTimes(1);
@@ -594,8 +594,8 @@ describe('ZCL Buffalo', () => {
         const value = [12, 34];
         const buffer = Buffer.alloc(2);
         const buffalo = new BuffaloZcl(buffer);
-        const writeSpy = jest.spyOn(buffalo, 'writeBuffer');
-        const readSpy = jest.spyOn(buffalo, 'readBuffer');
+        const writeSpy = vi.spyOn(buffalo, 'writeBuffer');
+        const readSpy = vi.spyOn(buffalo, 'readBuffer');
         buffalo.write(Zcl.BuffaloZclDataType.USE_DATA_TYPE, value, {});
         expect(writeSpy).toHaveBeenCalledTimes(1);
         expect(writeSpy).toHaveBeenCalledWith(value, value.length);
