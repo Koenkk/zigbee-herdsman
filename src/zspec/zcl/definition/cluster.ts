@@ -5150,12 +5150,12 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             attr7: {ID: 0x0007, type: DataType.UINT8},
             autoCoolingSetpoint: {ID: 0x0008, type: DataType.INT16},
             autoHeatingSetpoint: {ID: 0x0009, type: DataType.INT16},
-            holdType: {ID: 0x000A, type: DataType.UINT8},
-            shortCycleProtection: {ID: 0x000B, type: DataType.UINT16},
-            coolingFanDelay: {ID: 0x000C, type: DataType.UINT16},
-            ruleCoolingSetpoint: {ID: 0x000D, type: DataType.INT16},
-            ruleHeatingSetpoint: {ID: 0x000E, type: DataType.INT16},
-            attr15: {ID: 0x000F, type: DataType.BOOLEAN},
+            holdType: {ID: 0x000a, type: DataType.UINT8},
+            shortCycleProtection: {ID: 0x000b, type: DataType.UINT16},
+            coolingFanDelay: {ID: 0x000c, type: DataType.UINT16},
+            ruleCoolingSetpoint: {ID: 0x000d, type: DataType.INT16},
+            ruleHeatingSetpoint: {ID: 0x000e, type: DataType.INT16},
+            attr15: {ID: 0x000f, type: DataType.BOOLEAN},
         },
         commands: {
             resetDevice: {
