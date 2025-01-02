@@ -5136,4 +5136,33 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         },
         commandsResponse: {},
     },
+    manuSpecificSalus: {
+        ID: 0xfc04,
+        manufacturerCode: ManufacturerCode.COMPUTIME,
+        attributes: {
+            frostSetpoint: {ID: 0x0000, type: DataType.INT16},
+            minFrostSetpoint: {ID: 0x0001, type: DataType.INT16},
+            maxFrostSetpoint: {ID: 0x0002, type: DataType.INT16},
+            timeDisplayFormat: {ID: 0x0003, type: DataType.BOOLEAN},
+            attr4: {ID: 0x0004, type: DataType.UINT16},
+            attr5: {ID: 0x0005, type: DataType.UINT8},
+            attr6: {ID: 0x0006, type: DataType.UINT16},
+            attr7: {ID: 0x0007, type: DataType.UINT8},
+            autoCoolingSetpoint: {ID: 0x0008, type: DataType.INT16},
+            autoHeatingSetpoint: {ID: 0x0009, type: DataType.INT16},
+            holdType: {ID: 0x000A, type: DataType.UINT8},
+            shortCycleProtection: {ID: 0x000B, type: DataType.UINT16},
+            coolingFanDelay: {ID: 0x000C, type: DataType.UINT16},
+            ruleCoolingSetpoint: {ID: 0x000D, type: DataType.INT16},
+            ruleHeatingSetpoint: {ID: 0x000E, type: DataType.INT16},
+            attr15: {ID: 0x000F, type: DataType.BOOLEAN},
+        },
+        commands: {
+            resetDevice: {
+                ID: 0x01,
+                parameters: [],
+            },
+        },
+        commandsResponse: {},
+    },
 };
