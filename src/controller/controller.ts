@@ -144,10 +144,17 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
             const netParams = await this.getNetworkParameters();
             const configuredChannel = this.options.network.channelList[0];
             const adapterChannel = netParams.channel;
+            // According to the Zigbee specification:
+            // When broadcasting a Mgmt_NWK_Update_req to notify devices of a new channel, the nwkUpdateId parameter should be incremented in the NIB and included in the Mgmt_NWK_Update_req.
+            // The valid range of nwkUpdateId is 0x00 to 0xFF, and it should wrap back to 0 if necessary.
+            let nwkUpdateID = netParams.nwkUpdateID ?? 0;
+            if (++nwkUpdateID > 0xFF) {
+                nwkUpdateID = 0x00;
+            }
 
             if (configuredChannel != adapterChannel) {
                 logger.info(`Configured channel '${configuredChannel}' does not match adapter channel '${adapterChannel}', changing channel`, NS);
-                await this.changeChannel(adapterChannel, configuredChannel);
+                await this.changeChannel(adapterChannel, configuredChannel, nwkUpdateID);
             }
         }
 
@@ -496,21 +503,12 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
     /**
      * Broadcast a network-wide channel change.
      */
-    private async changeChannel(oldChannel: number, newChannel: number): Promise<void> {
+    private async changeChannel(oldChannel: number, newChannel: number, nwkUpdateID: number): Promise<void> {
         logger.warning(`Changing channel from '${oldChannel}' to '${newChannel}'`, NS);
 
         // According to the Zigbee specification:
         // When broadcasting a Mgmt_NWK_Update_req to notify devices of a new channel, the nwkUpdateId parameter should be incremented in the NIB and included in the Mgmt_NWK_Update_req.
         // The valid range of nwkUpdateId is 0x00 to 0xFF, and it should wrap back to 0 if necessary.
-        let nwkUpdateId: number = 0x00;
-        const isSupportsBackup = await this.adapter.supportsBackup();
-        if (isSupportsBackup) {
-            const backup = await this.adapter.backup(this.getDeviceIeeeAddresses());
-            nwkUpdateId = backup.networkUpdateId ?? 0x00;
-        }
-        if (++nwkUpdateId > 0xff) {
-            nwkUpdateId = 0x00;
-        }
 
         const clusterId = Zdo.ClusterId.NWK_UPDATE_REQUEST;
         const zdoPayload = Zdo.Buffalo.buildRequest(
@@ -519,7 +517,7 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
             [newChannel],
             0xfe,
             undefined,
-            nwkUpdateId,
+            nwkUpdateID,
             undefined,
         );
 
