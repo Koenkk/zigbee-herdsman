@@ -818,7 +818,7 @@ export class EmberAdapter extends Adapter {
             );
         }
 
-        /* istanbul ignore next */
+        /* v8 ignore next */
         const appKeyRequestsPolicy = ALLOW_APP_KEY_REQUESTS ? EzspDecisionId.ALLOW_APP_KEY_REQUESTS : EzspDecisionId.DENY_APP_KEY_REQUESTS;
         status = await this.emberSetEzspPolicy(EzspPolicyId.APP_KEY_REQUEST_POLICY, appKeyRequestsPolicy);
 
@@ -1374,13 +1374,14 @@ export class EmberAdapter extends Adapter {
         if (backup) {
             logger.info(`[INIT FORM] Forming from backup.`, NS);
             // `backup` valid in this `action` path (not detected by TS)
-            /* istanbul ignore next */
+            /* v8 ignore start */
             const keyList: LinkKeyBackupData[] = backup!.devices.map((device) => ({
                 deviceEui64: ZSpec.Utils.eui64BEBufferToHex(device.ieeeAddress),
                 key: {contents: device.linkKey!.key},
                 outgoingFrameCounter: device.linkKey!.txCounter,
                 incomingFrameCounter: device.linkKey!.rxCounter,
             }));
+            /* v8 ignore stop */
 
             // before forming
             await this.importLinkKeys(keyList);
