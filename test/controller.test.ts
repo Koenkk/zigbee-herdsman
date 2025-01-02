@@ -94,7 +94,7 @@ const mocksendZclFrameToGroup = vi.fn();
 const mocksendZclFrameToAll = vi.fn();
 const mockAddInstallCode = vi.fn();
 const mocksendZclFrameToEndpoint = vi.fn();
-const mockApaterBackup = vi.fn().mockReturnValue(mockDummyBackup);
+const mockApaterBackup = vi.fn(() => Promise.resolve(mockDummyBackup));
 let sendZdoResponseStatus = Zdo.Status.SUCCESS;
 const mockAdapterSendZdo = vi
     .fn()
@@ -1573,39 +1573,14 @@ describe('Controller', () => {
         expect(changeChannelSpy).toHaveBeenCalledTimes(1);
     });
 
-    it('Change channel on start when the nwkUpdateId increases to 0xFF', async () => {
+    it('Change channel on start when nwkUpdateID is 0xff', async () => {
         mockAdapterStart.mockReturnValueOnce('resumed');
-        mockAdapterGetNetworkParameters.mockReturnValueOnce({panID: 1, extendedPanID: '0x64c5fd698daf0c00', channel: 25});
-        mockAdapterSupportsBackup.mockReturnValueOnce(true);
-        mockApaterBackup.mockReturnValueOnce(Object.assign({}, mockApaterBackup, {networkUpdateId: 0xff}));
-
+        mockAdapterGetNetworkParameters.mockReturnValueOnce({panID: 1, extendedPanID: '0x64c5fd698daf0c00', channel: 25, nwkUpdateID: 0xff});
         // @ts-expect-error private
         const changeChannelSpy = vi.spyOn(controller, 'changeChannel');
         await controller.start();
         expect(mockAdapterGetNetworkParameters).toHaveBeenCalledTimes(1);
         const zdoPayload = Zdo.Buffalo.buildRequest(false, Zdo.ClusterId.NWK_UPDATE_REQUEST, [15], 0xfe, undefined, 0, undefined);
-        expect(mockAdapterSendZdo).toHaveBeenCalledWith(
-            ZSpec.BLANK_EUI64,
-            ZSpec.BroadcastAddress.SLEEPY,
-            Zdo.ClusterId.NWK_UPDATE_REQUEST,
-            zdoPayload,
-            true,
-        );
-        expect(await controller.getNetworkParameters()).toEqual({panID: 1, channel: 15, extendedPanID: '0x64c5fd698daf0c00'});
-        expect(changeChannelSpy).toHaveBeenCalledTimes(1);
-    });
-
-    it('Change channel on start when the nwkUpdateId is undefinded', async () => {
-        mockAdapterStart.mockReturnValueOnce('resumed');
-        mockAdapterGetNetworkParameters.mockReturnValueOnce({panID: 1, extendedPanID: '0x64c5fd698daf0c00', channel: 25});
-        mockAdapterSupportsBackup.mockReturnValueOnce(true);
-        mockApaterBackup.mockReturnValueOnce({});
-
-        // @ts-expect-error private
-        const changeChannelSpy = vi.spyOn(controller, 'changeChannel');
-        await controller.start();
-        expect(mockAdapterGetNetworkParameters).toHaveBeenCalledTimes(1);
-        const zdoPayload = Zdo.Buffalo.buildRequest(false, Zdo.ClusterId.NWK_UPDATE_REQUEST, [15], 0xfe, undefined, 1, undefined);
         expect(mockAdapterSendZdo).toHaveBeenCalledWith(
             ZSpec.BLANK_EUI64,
             ZSpec.BroadcastAddress.SLEEPY,
