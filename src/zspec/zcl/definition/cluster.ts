@@ -2577,7 +2577,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         commands: {},
         commandsResponse: {},
     },
-    totalVOCConcentrationMeasurement: {
+    msVOC: {
         ID: 0x042e,
         attributes: {
             measuredValue: {ID: 0x0000, type: DataType.SINGLE_PREC},
