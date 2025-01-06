@@ -2555,6 +2555,17 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         commands: {},
         commandsResponse: {},
     },
+    totalVOCConcentrationMeasurement: {
+        ID: 0x042e,
+        attributes: {
+            measuredValue: {ID: 0x0000, type: DataType.SINGLE_PREC},
+            measuredMinValue: {ID: 0x0001, type: DataType.SINGLE_PREC},
+            measuredMaxValue: {ID: 0x0002, type: DataType.SINGLE_PREC},
+            measuredTolerance: {ID: 0x0003, type: DataType.SINGLE_PREC},
+        },
+        commands: {},
+        commandsResponse: {},
+    },
     ssIasZone: {
         ID: 1280,
         attributes: {

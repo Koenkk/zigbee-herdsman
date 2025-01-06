@@ -157,6 +157,7 @@ export type ClusterName =
     | 'msFormaldehyde'
     | 'pm10Measurement'
     | 'pm25Measurement'
+    | 'totalVOCConcentrationMeasurement'
     | 'ssIasZone'
     | 'ssIasAce'
     | 'ssIasWd'
