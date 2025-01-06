@@ -2500,7 +2500,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         commandsResponse: {},
     },
     msCO: {
-        ID: 0x040C,
+        ID: 0x040c,
         attributes: {
             measuredValue: {ID: 0x0000, type: DataType.SINGLE_PREC},
             measuredMinValue: {ID: 0x0001, type: DataType.SINGLE_PREC},
