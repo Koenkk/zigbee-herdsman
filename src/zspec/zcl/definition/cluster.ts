@@ -2499,6 +2499,17 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         commands: {},
         commandsResponse: {},
     },
+    msCO: {
+        ID: 0x040C,
+        attributes: {
+            measuredValue: {ID: 0x0000, type: DataType.SINGLE_PREC},
+            measuredMinValue: {ID: 0x0001, type: DataType.SINGLE_PREC},
+            measuredMaxValue: {ID: 0x0002, type: DataType.SINGLE_PREC},
+            measuredTolerance: {ID: 0x0003, type: DataType.SINGLE_PREC},
+        },
+        commands: {},
+        commandsResponse: {},
+    },
     msCO2: {
         ID: 1037,
         attributes: {
@@ -2507,6 +2518,17 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             maxMeasuredValue: {ID: 2, type: DataType.SINGLE_PREC},
             sprutCO2Calibration: {ID: 0x6600, type: DataType.BOOLEAN, manufacturerCode: ManufacturerCode.CUSTOM_SPRUT_DEVICE},
             sprutCO2AutoCalibration: {ID: 0x6601, type: DataType.BOOLEAN, manufacturerCode: ManufacturerCode.CUSTOM_SPRUT_DEVICE},
+        },
+        commands: {},
+        commandsResponse: {},
+    },
+    msNO: {
+        ID: 0x0413,
+        attributes: {
+            measuredValue: {ID: 0x0000, type: DataType.SINGLE_PREC},
+            measuredMinValue: {ID: 0x0001, type: DataType.SINGLE_PREC},
+            measuredMaxValue: {ID: 0x0002, type: DataType.SINGLE_PREC},
+            measuredTolerance: {ID: 0x0003, type: DataType.SINGLE_PREC},
         },
         commands: {},
         commandsResponse: {},
