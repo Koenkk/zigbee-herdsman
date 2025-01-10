@@ -179,6 +179,7 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
             for (const device of Device.allIterator()) {
                 device.removeFromDatabase();
             }
+            Device.resetCache();
         }
 
         if (startResult === 'reset' || (this.options.backupPath && !fs.existsSync(this.options.backupPath))) {

@@ -38,6 +38,7 @@ export class ZBOSSUart extends EventEmitter {
         this.socketPort = undefined;
         this.writer = new ZBOSSWriter();
         this.reader = new ZBOSSReader();
+        this.reader.on('data', this.onPackage.bind(this));
         this.queue = new Queue(1);
         this.waitress = new Waitress<number, number>(this.waitressValidator, this.waitressTimeoutFormatter);
     }
@@ -123,7 +124,6 @@ export class ZBOSSUart extends EventEmitter {
             this.writer.pipe(this.serialPort);
 
             this.serialPort.pipe(this.reader);
-            this.reader.on('data', this.onPackage.bind(this));
 
             try {
                 await this.serialPort.asyncOpen();
@@ -147,7 +147,6 @@ export class ZBOSSUart extends EventEmitter {
             this.writer.pipe(this.socketPort);
 
             this.socketPort.pipe(this.reader);
-            this.reader.on('data', this.onPackage.bind(this));
 
             return await new Promise((resolve, reject): void => {
                 const openError = async (err: Error): Promise<void> => {
@@ -311,7 +310,9 @@ export class ZBOSSUart extends EventEmitter {
                     const waiter = this.waitFor(nextSeq);
                     this.writeBuffer(data);
                     logger.debug(`-?- waiting (${nextSeq})`, NS);
-                    await waiter.start().promise;
+                    if (!this.inReset) {
+                        await waiter.start().promise;
+                    }
                     logger.debug(`-+- waiting (${nextSeq}) success`, NS);
                 } else {
                     this.writeBuffer(data);
