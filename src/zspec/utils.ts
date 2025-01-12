@@ -185,37 +185,37 @@ export function crc16CCITTFALSE(data: number[] | Uint8Array | Buffer): number {
     return calcCRC(data, 16, 0x1021, 0xffff);
 }
 
+function aes128MmoHashUpdate(result: Buffer, data: Buffer, dataSize: number): void {
+    while (dataSize >= AES_MMO_128_BLOCK_SIZE) {
+        const cipher = createCipheriv('aes-128-ecb', result, null);
+        const block = data.subarray(0, AES_MMO_128_BLOCK_SIZE);
+        const encryptedBlock = Buffer.concat([cipher.update(block), cipher.final()]);
+
+        // XOR encrypted and plaintext
+        for (let i = 0; i < AES_MMO_128_BLOCK_SIZE; i++) {
+            result[i] = encryptedBlock[i] ^ block[i];
+        }
+
+        data = data.subarray(AES_MMO_128_BLOCK_SIZE);
+        dataSize -= AES_MMO_128_BLOCK_SIZE;
+    }
+}
+
 /**
  * AES-128-MMO (Matyas-Meyer-Oseas) hashing (using node 'crypto' built-in with 'aes-128-ecb')
  *
  * Used for Install Codes - see Document 13-0402-13 - 10.1
  */
 export function aes128MmoHash(data: Buffer): Buffer {
-    const update = (result: Buffer, data: Buffer, dataSize: number): boolean => {
-        while (dataSize >= AES_MMO_128_BLOCK_SIZE) {
-            const cipher = createCipheriv('aes-128-ecb', result, null);
-            const block = data.subarray(0, AES_MMO_128_BLOCK_SIZE);
-            const encryptedBlock = Buffer.concat([cipher.update(block), cipher.final()]);
-
-            // XOR encrypted and plaintext
-            for (let i = 0; i < AES_MMO_128_BLOCK_SIZE; i++) {
-                result[i] = encryptedBlock[i] ^ block[i];
-            }
-
-            data = data.subarray(AES_MMO_128_BLOCK_SIZE);
-            dataSize -= AES_MMO_128_BLOCK_SIZE;
-        }
-
-        return true;
-    };
-
     const hashResult = Buffer.alloc(AES_MMO_128_BLOCK_SIZE);
     const temp = Buffer.alloc(AES_MMO_128_BLOCK_SIZE);
     let remainingLength = data.length;
     let position = 0;
 
     for (position; remainingLength >= AES_MMO_128_BLOCK_SIZE; ) {
-        update(hashResult, data.subarray(position, position + AES_MMO_128_BLOCK_SIZE), data.length);
+        const chunk = data.subarray(position, position + AES_MMO_128_BLOCK_SIZE);
+
+        aes128MmoHashUpdate(hashResult, chunk, chunk.length);
 
         position += AES_MMO_128_BLOCK_SIZE;
         remainingLength -= AES_MMO_128_BLOCK_SIZE;
@@ -230,14 +230,14 @@ export function aes128MmoHash(data: Buffer): Buffer {
 
     // if appending the bit string will push us beyond the 16-byte boundary, hash that block and append another 16-byte block
     if (AES_MMO_128_BLOCK_SIZE - remainingLength < 3) {
-        update(hashResult, temp, AES_MMO_128_BLOCK_SIZE);
+        aes128MmoHashUpdate(hashResult, temp, AES_MMO_128_BLOCK_SIZE);
         temp.fill(0);
     }
 
     temp[AES_MMO_128_BLOCK_SIZE - 2] = (data.length >> 5) & 0xff;
     temp[AES_MMO_128_BLOCK_SIZE - 1] = (data.length << 3) & 0xff;
 
-    update(hashResult, temp, AES_MMO_128_BLOCK_SIZE);
+    aes128MmoHashUpdate(hashResult, temp, AES_MMO_128_BLOCK_SIZE);
 
     const result = Buffer.alloc(AES_MMO_128_BLOCK_SIZE);
 
