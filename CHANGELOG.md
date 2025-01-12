@@ -1,5 +1,13 @@
 # Changelog
 
+## [3.2.2](https://github.com/Koenkk/zigbee-herdsman/compare/v3.2.1...v3.2.2) (2025-01-12)
+
+
+### Bug Fixes
+
+* AES-128-MMO incorrect calculation ([#1292](https://github.com/Koenkk/zigbee-herdsman/issues/1292)) ([705f765](https://github.com/Koenkk/zigbee-herdsman/commit/705f7650a92a75b60168287458c49d4a127a971d))
+* ZBOSS: fixed port reconnection processing during RESET ([#1289](https://github.com/Koenkk/zigbee-herdsman/issues/1289)) ([801212f](https://github.com/Koenkk/zigbee-herdsman/commit/801212ffb1b7cd2a485ff40ad998c96f92f13041))
+
 ## [3.2.1](https://github.com/Koenkk/zigbee-herdsman/compare/v3.2.0...v3.2.1) (2025-01-02)
 
 
