@@ -54,9 +54,15 @@ describe('ZSpec Utils', () => {
         const val1 = Buffer.from('83FED3407A939723A5C639FF4C12', 'hex');
         // Example from Zigbee spec
         const val2 = Buffer.from('83FED3407A939723A5C639B26916D505C3B5', 'hex');
+        // Example from Zigbee spec C.6.1
+        const val3 = Buffer.from('76777475727370717E7F7C7D7A7B7879C0', 'hex');
+        // Example from Zigbee spec C.6.1
+        const val4 = Buffer.from('1C1D1E1F18191A1B14151617101112133C3D537529A7A9A03F669DCD886CB52C', 'hex');
 
         expect(ZSpec.Utils.aes128MmoHash(val1)).toStrictEqual(Buffer.from('58C1828CF7F1C3FE29E7B1024AD84BFA', 'hex'));
         expect(ZSpec.Utils.aes128MmoHash(val2)).toStrictEqual(Buffer.from('66B6900981E1EE3CA4206B6B861C02BB', 'hex'));
+        expect(ZSpec.Utils.aes128MmoHash(val3)).toStrictEqual(Buffer.from('3C3D537529A7A9A03F669DCD886CB52C', 'hex'));
+        expect(ZSpec.Utils.aes128MmoHash(val4)).toStrictEqual(Buffer.from('4512807BF94CB3400F0E2C25FB76E999', 'hex'));
     });
 
     it('Checks install codes of all lengths', () => {
