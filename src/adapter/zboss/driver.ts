@@ -171,7 +171,8 @@ export class ZBOSSDriver extends EventEmitter {
         const ieeeAddr = result.payload.ieee;
 
         result = await this.execCommand(CommandId.GET_EXTENDED_PAN_ID, {});
-        const extendedPanID = result.payload.extendedPanID;
+        // TODO: bug in extendedPanID - got reversed value
+        const extendedPanID = result.payload.extendedPanID.reverse();
 
         result = await this.execCommand(CommandId.GET_PAN_ID, {});
         const panID = result.payload.panID;
