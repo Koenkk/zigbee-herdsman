@@ -4664,9 +4664,17 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         ID: 26112,
         manufacturerCode: 26214,
         attributes: {
-            debug: {ID: 0, type: DataType.BOOLEAN},
+            isConnected: {ID: 26116, type: enums_1.DataType.BOOLEAN},
+            UartBaudRate: {ID: 26113, type: enums_1.DataType.UINT32},
         },
-        commands: {},
+        commands: {
+            debug: {
+                ID: 0x67,
+                parameters: [
+                    {name: 'data', type: enums_1.DataType.UINT8},
+                ],
+            },
+        },
         commandsResponse: {},
     },
     sprutVoc: {
