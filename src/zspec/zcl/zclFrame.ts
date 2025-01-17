@@ -307,6 +307,10 @@ export class ZclFrame {
                         if (Utils.getDataTypeClass(entry.dataType) !== condition.value) return false;
                         break;
                     }
+                    case ParameterCondition.FIELD_EQUAL: {
+                        if (entry[condition.field] !== condition.value) return false;
+                        break;
+                    }
                 }
             }
         }

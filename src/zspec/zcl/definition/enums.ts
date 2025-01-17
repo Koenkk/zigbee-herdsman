@@ -164,6 +164,7 @@ export enum ParameterCondition {
     BITMASK_SET = 'bitMaskSet',
     BITFIELD_ENUM = 'bitFieldEnum',
     DATA_TYPE_CLASS_EQUAL = 'dataTypeValueTypeEquals',
+    FIELD_EQUAL = 'fieldEquals',
 }
 
 export enum FrameType {
