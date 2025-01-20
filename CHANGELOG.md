@@ -1,5 +1,13 @@
 # Changelog
 
+## [3.2.4](https://github.com/Koenkk/zigbee-herdsman/compare/v3.2.3...v3.2.4) (2025-01-20)
+
+
+### Bug Fixes
+
+* Ember: ignore endpoint for Touchlink matching ([#1306](https://github.com/Koenkk/zigbee-herdsman/issues/1306)) ([57c94c5](https://github.com/Koenkk/zigbee-herdsman/commit/57c94c5ce3a91a5a7a3805ed5848ba896542c84b))
+* **ignore:** update dependencies ([#1302](https://github.com/Koenkk/zigbee-herdsman/issues/1302)) ([2923236](https://github.com/Koenkk/zigbee-herdsman/commit/2923236748bc17c7fd3ed3e77cdfb2e5b48bf1e8))
+
 ## [3.2.3](https://github.com/Koenkk/zigbee-herdsman/compare/v3.2.2...v3.2.3) (2025-01-19)
 
 
