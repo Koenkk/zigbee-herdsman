@@ -356,6 +356,18 @@ describe('ZCL Frame', () => {
                 ),
             ).toBeFalsy();
         });
+
+        it('FIELD_EQUAL', () => {
+            expect(
+                Zcl.Frame.conditionsValid(Zcl.Clusters.touchlink.commandsResponse.scanResponse.parameters[13], {numberOfSubDevices: 1}, null),
+            ).toBeTruthy();
+            expect(
+                Zcl.Frame.conditionsValid(Zcl.Clusters.touchlink.commandsResponse.scanResponse.parameters[13], {numberOfSubDevices: 0}, null),
+            ).toBeFalsy();
+            expect(
+                Zcl.Frame.conditionsValid(Zcl.Clusters.touchlink.commandsResponse.scanResponse.parameters[13], {numberOfSubDevices: 3}, null),
+            ).toBeFalsy();
+        });
     });
 
     describe('Header', () => {
@@ -861,5 +873,53 @@ describe('ZCL Frame', () => {
         const frame = Zcl.Frame.fromBuffer(0 /*Foundation*/, header, buffer, {});
 
         expect(frame.payload).toStrictEqual(expected);
+    });
+
+    it('Reads/writes Touchlink Scan Response with different size payloads', () => {
+        const full = Buffer.from([
+            0x19, 0x0, 0x1, 0xe0, 0xde, 0x5e, 0x2f, 0xa, 0x5, 0x0, 0x12, 0x0, 0x3d, 0x30, 0x1d, 0x4a, 0x8f, 0xb7, 0xdc, 0x1c, 0x0, 0x4b, 0x12, 0x0,
+            0x0, 0xf, 0x62, 0x1a, 0xb3, 0xaa, 0x1, 0x0, 0xb, 0x5e, 0xc0, 0x10, 0x2, 0x2, 0x0,
+        ]);
+        const short = Buffer.from([
+            0x19, 0x0, 0x1, 0xe0, 0xde, 0x5e, 0x2f, 0xa, 0x5, 0x0, 0x12, 0x0, 0x3d, 0x30, 0x1d, 0x4a, 0x8f, 0xb7, 0xdc, 0x1c, 0x0, 0x4b, 0x12, 0x0,
+            0x0, 0xf, 0x62, 0x1a, 0xb3, 0xaa, 0x0, 0x0,
+        ]);
+        const short2 = Buffer.from([
+            0x19, 0x0, 0x1, 0xe0, 0xde, 0x5e, 0x2f, 0xa, 0x5, 0x0, 0x12, 0x0, 0x3d, 0x30, 0x1d, 0x4a, 0x8f, 0xb7, 0xdc, 0x1c, 0x0, 0x4b, 0x12, 0x0,
+            0x0, 0xf, 0x62, 0x1a, 0xb3, 0xaa, 0x3, 0x0,
+        ]);
+
+        const fullZcl = Zcl.Frame.fromBuffer(0x1000, Zcl.Header.fromBuffer(full), full, {});
+        expect(fullZcl.payload.numberOfSubDevices).toStrictEqual(1);
+        expect(fullZcl.payload.endpointID).toStrictEqual(11);
+        expect(fullZcl.payload.profileID).toStrictEqual(0xc05e);
+        expect(fullZcl.payload.deviceID).toStrictEqual(0x0210);
+        expect(fullZcl.payload.version).toStrictEqual(0x02);
+        expect(fullZcl.payload.groupIDCount).toStrictEqual(0);
+
+        const shortZcl = Zcl.Frame.fromBuffer(0x1000, Zcl.Header.fromBuffer(short), short, {});
+        expect(shortZcl.payload.numberOfSubDevices).toStrictEqual(0);
+        expect(shortZcl.payload.endpointID).toStrictEqual(undefined);
+        expect(shortZcl.payload.profileID).toStrictEqual(undefined);
+        expect(shortZcl.payload.deviceID).toStrictEqual(undefined);
+        expect(shortZcl.payload.version).toStrictEqual(undefined);
+        expect(shortZcl.payload.groupIDCount).toStrictEqual(undefined);
+
+        const short2Zcl = Zcl.Frame.fromBuffer(0x1000, Zcl.Header.fromBuffer(short2), short2, {});
+        expect(short2Zcl.payload.numberOfSubDevices).toStrictEqual(3);
+        expect(short2Zcl.payload.endpointID).toStrictEqual(undefined);
+        expect(short2Zcl.payload.profileID).toStrictEqual(undefined);
+        expect(short2Zcl.payload.deviceID).toStrictEqual(undefined);
+        expect(short2Zcl.payload.version).toStrictEqual(undefined);
+        expect(short2Zcl.payload.groupIDCount).toStrictEqual(undefined);
+
+        const fullNew = fullZcl.toBuffer();
+        expect(fullNew).toStrictEqual(full);
+
+        const shortNew = shortZcl.toBuffer();
+        expect(shortNew).toStrictEqual(short);
+
+        const short2New = short2Zcl.toBuffer();
+        expect(short2New).toStrictEqual(short2);
     });
 });
