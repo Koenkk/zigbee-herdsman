@@ -172,7 +172,7 @@ export class ZBOSSAdapter extends Adapter {
     }
 
     public async addInstallCode(ieeeAddress: string, key: Buffer): Promise<void> {
-        logger.error(() => `NOT SUPPORTED: sendZclFrameToGroup(${ieeeAddress},${key.toString('hex')}`, NS);
+        logger.error(`NOT SUPPORTED: sendZclFrameToGroup(${ieeeAddress},${key.toString('hex')}`, NS);
         throw new Error(`Install code is not supported for 'zboss' yet`);
     }
 
@@ -431,12 +431,12 @@ export class ZBOSSAdapter extends Adapter {
     }
 
     public async sendZclFrameInterPANToIeeeAddr(zclFrame: Zcl.Frame, ieeeAddress: string): Promise<void> {
-        logger.error(() => `NOT SUPPORTED: sendZclFrameInterPANToIeeeAddr(${JSON.stringify(zclFrame)},${ieeeAddress})`, NS);
+        logger.error(`NOT SUPPORTED: sendZclFrameInterPANToIeeeAddr(${JSON.stringify(zclFrame)},${ieeeAddress})`, NS);
         return;
     }
 
     public async sendZclFrameInterPANBroadcast(zclFrame: Zcl.Frame, timeout: number): Promise<ZclPayload> {
-        logger.error(() => `NOT SUPPORTED: sendZclFrameInterPANBroadcast(${JSON.stringify(zclFrame)},${timeout})`, NS);
+        logger.error(`NOT SUPPORTED: sendZclFrameInterPANBroadcast(${JSON.stringify(zclFrame)},${timeout})`, NS);
         throw new Error(`Is not supported for 'zboss' yet`);
     }
 
