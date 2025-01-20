@@ -55,10 +55,9 @@ export class Waitress<TPayload, TMatcher> {
             const waiter = this.waiters.get(ID);
             if (waiter && !waiter.resolved && !waiter.timer) {
                 // Capture the stack trace from the caller of start()
-                const error = new Error();
+                const error = new Error(this.timeoutFormatter(matcher, timeout));
                 Error.captureStackTrace(error);
                 waiter.timer = setTimeout((): void => {
-                    error.message = this.timeoutFormatter(matcher, timeout);
                     waiter.timedout = true;
                     waiter.reject(error);
                 }, timeout);

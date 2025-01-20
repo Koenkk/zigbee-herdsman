@@ -65,6 +65,7 @@ export interface ParameterDefinition extends Parameter {
         | {type: ParameterCondition.BITMASK_SET; param: string; mask: number}
         | {type: ParameterCondition.BITFIELD_ENUM; param: string; offset: number; size: number; value: number}
         | {type: ParameterCondition.DATA_TYPE_CLASS_EQUAL; value: DataTypeClass}
+        | {type: ParameterCondition.FIELD_EQUAL; field: string; value: unknown}
     )[];
 }
 

@@ -3837,29 +3837,119 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         attributes: {},
         commands: {
             scanRequest: {
-                ID: 0,
-                response: 1,
+                ID: 0x00,
+                response: 0x01,
                 parameters: [
                     {name: 'transactionID', type: DataType.UINT32},
                     {name: 'zigbeeInformation', type: DataType.BITMAP8},
                     {name: 'touchlinkInformation', type: DataType.BITMAP8},
                 ],
             },
+            deviceInformation: {
+                ID: 0x02,
+                response: 0x03,
+                parameters: [
+                    {name: 'transactionID', type: DataType.UINT32},
+                    {name: 'startIndex', type: DataType.UINT8},
+                ],
+            },
             identifyRequest: {
-                ID: 6,
+                ID: 0x06,
                 parameters: [
                     {name: 'transactionID', type: DataType.UINT32},
                     {name: 'duration', type: DataType.UINT16},
                 ],
             },
             resetToFactoryNew: {
-                ID: 7,
+                ID: 0x07,
                 parameters: [{name: 'transactionID', type: DataType.UINT32}],
+            },
+            networkStart: {
+                ID: 0x10,
+                response: 0x11,
+                parameters: [
+                    {name: 'transactionID', type: DataType.UINT32},
+                    {name: 'extendedPANID', type: DataType.IEEE_ADDR},
+                    {name: 'keyIndex', type: DataType.UINT8},
+                    {name: 'encryptedNetworkKey', type: DataType.SEC_KEY},
+                    {name: 'logicalChannel', type: DataType.UINT8},
+                    {name: 'panID', type: DataType.UINT16},
+                    {name: 'nwkAddr', type: DataType.UINT16},
+                    {name: 'groupIDsBegin', type: DataType.UINT16},
+                    {name: 'groupIDsEnd', type: DataType.UINT16},
+                    {name: 'freeNwkAddrRangeBegin', type: DataType.UINT16},
+                    {name: 'freeNwkAddrRangeEnd', type: DataType.UINT16},
+                    {name: 'freeGroupIDRangeBegin', type: DataType.UINT16},
+                    {name: 'freeGroupIDRangeEnd', type: DataType.UINT16},
+                    {name: 'initiatorIEEE', type: DataType.IEEE_ADDR},
+                    {name: 'initiatorNwkAddr', type: DataType.UINT16},
+                ],
+            },
+            networkJoinRouter: {
+                ID: 0x12,
+                response: 0x13,
+                parameters: [
+                    {name: 'transactionID', type: DataType.UINT32},
+                    {name: 'extendedPANID', type: DataType.IEEE_ADDR},
+                    {name: 'keyIndex', type: DataType.UINT8},
+                    {name: 'encryptedNetworkKey', type: DataType.SEC_KEY},
+                    {name: 'networkUpdateID', type: DataType.UINT8},
+                    {name: 'logicalChannel', type: DataType.UINT8},
+                    {name: 'panID', type: DataType.UINT16},
+                    {name: 'nwkAddr', type: DataType.UINT16},
+                    {name: 'groupIDsBegin', type: DataType.UINT16},
+                    {name: 'groupIDsEnd', type: DataType.UINT16},
+                    {name: 'freeNwkAddrRangeBegin', type: DataType.UINT16},
+                    {name: 'freeNwkAddrRangeEnd', type: DataType.UINT16},
+                    {name: 'freeGroupIDRangeBegin', type: DataType.UINT16},
+                    {name: 'freeGroupIDRangeEnd', type: DataType.UINT16},
+                ],
+            },
+            networkJoinEndDevice: {
+                ID: 0x14,
+                response: 0x15,
+                parameters: [
+                    {name: 'transactionID', type: DataType.UINT32},
+                    {name: 'extendedPANID', type: DataType.IEEE_ADDR},
+                    {name: 'keyIndex', type: DataType.UINT8},
+                    {name: 'encryptedNetworkKey', type: DataType.SEC_KEY},
+                    {name: 'networkUpdateID', type: DataType.UINT8},
+                    {name: 'logicalChannel', type: DataType.UINT8},
+                    {name: 'panID', type: DataType.UINT16},
+                    {name: 'nwkAddr', type: DataType.UINT16},
+                    {name: 'groupIDsBegin', type: DataType.UINT16},
+                    {name: 'groupIDsEnd', type: DataType.UINT16},
+                    {name: 'freeNwkAddrRangeBegin', type: DataType.UINT16},
+                    {name: 'freeNwkAddrRangeEnd', type: DataType.UINT16},
+                    {name: 'freeGroupIDRangeBegin', type: DataType.UINT16},
+                    {name: 'freeGroupIDRangeEnd', type: DataType.UINT16},
+                ],
+            },
+            networkUpdate: {
+                ID: 0x16,
+                parameters: [
+                    {name: 'transactionID', type: DataType.UINT32},
+                    {name: 'extendedPANID', type: DataType.IEEE_ADDR},
+                    {name: 'networkUpdateID', type: DataType.UINT8},
+                    {name: 'logicalChannel', type: DataType.UINT8},
+                    {name: 'panID', type: DataType.UINT16},
+                    {name: 'nwkAddr', type: DataType.UINT16},
+                ],
+            },
+            getGroupIdentifiers: {
+                ID: 0x41,
+                response: 0x41,
+                parameters: [{name: 'startIndex', type: DataType.UINT8}],
+            },
+            getEndpointList: {
+                ID: 0x42,
+                response: 0x42,
+                parameters: [{name: 'startIndex', type: DataType.UINT8}],
             },
         },
         commandsResponse: {
             scanResponse: {
-                ID: 1,
+                ID: 0x01,
                 parameters: [
                     {name: 'transactionID', type: DataType.UINT32},
                     {name: 'rssiCorrection', type: DataType.UINT8},
@@ -3874,15 +3964,133 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                     {name: 'networkAddress', type: DataType.UINT16},
                     {name: 'numberOfSubDevices', type: DataType.UINT8},
                     {name: 'totalGroupIdentifiers', type: DataType.UINT8},
-                    // Below are optional according to the spec, not all devices send these.
-                    // e.g. https://github.com/Koenkk/zigbee2mqtt/issues/8535#issuecomment-909199162
-                    // Since we don't have a way to deal with optional attributes yet and since we don't
-                    // use these attributes anyway, disable them for now.
-                    // {name: 'endpointID', type: DataType.UINT8},
-                    // {name: 'profileID', type: DataType.UINT16},
-                    // {name: 'deviceID', type: DataType.UINT16},
-                    // {name: 'version', type: DataType.UINT8},
-                    // {name: 'groupIdentifierCount', type: DataType.UINT8},
+                    {
+                        name: 'endpointID',
+                        type: DataType.UINT8,
+                        conditions: [{type: ParameterCondition.FIELD_EQUAL, field: 'numberOfSubDevices', value: 1}],
+                    },
+                    {
+                        name: 'profileID',
+                        type: DataType.UINT16,
+                        conditions: [{type: ParameterCondition.FIELD_EQUAL, field: 'numberOfSubDevices', value: 1}],
+                    },
+                    {
+                        name: 'deviceID',
+                        type: DataType.UINT16,
+                        conditions: [{type: ParameterCondition.FIELD_EQUAL, field: 'numberOfSubDevices', value: 1}],
+                    },
+                    {
+                        name: 'version',
+                        type: DataType.UINT8,
+                        conditions: [{type: ParameterCondition.FIELD_EQUAL, field: 'numberOfSubDevices', value: 1}],
+                    },
+                    {
+                        name: 'groupIDCount',
+                        type: DataType.UINT8,
+                        conditions: [{type: ParameterCondition.FIELD_EQUAL, field: 'numberOfSubDevices', value: 1}],
+                    },
+                ],
+            },
+            deviceInformation: {
+                ID: 0x03,
+                parameters: [
+                    {name: 'transactionID', type: DataType.UINT32},
+                    {name: 'numberOfSubDevices', type: DataType.UINT8},
+                    {name: 'startIndex', type: DataType.UINT8},
+                    {name: 'deviceInfoCount', type: DataType.UINT8},
+                    /**
+                     * TODO: (this * deviceInfoCount)
+                     * {name: 'ieeeAddress', type: DataType.IEEE_ADDR},
+                     * {name: 'endpointID', type: DataType.UINT8},
+                     * {name: 'profileID', type: DataType.UINT16},
+                     * {name: 'deviceID', type: DataType.UINT16},
+                     * {name: 'version', type: DataType.UINT8},
+                     * {name: 'groupIdCount', type: DataType.UINT8},
+                     * {name: 'sort', type: DataType.UINT8},
+                     */
+                    // {name: 'deviceInfoRecord', type: TODO},
+                ],
+            },
+            networkStart: {
+                ID: 0x11,
+                parameters: [
+                    {name: 'transactionID', type: DataType.UINT32},
+                    /**
+                     * - 0x00 Success
+                     * - 0x01 Failure
+                     * - 0x02 – 0xff Reserved
+                     */
+                    {name: 'status', type: DataType.ENUM8},
+                    {name: 'extendedPANID', type: DataType.IEEE_ADDR},
+                    {name: 'networkUpdateID', type: DataType.UINT8},
+                    {name: 'logicalChannel', type: DataType.UINT8},
+                    {name: 'panID', type: DataType.UINT16},
+                ],
+            },
+            networkJoinRouter: {
+                ID: 0x13,
+                parameters: [
+                    {name: 'transactionID', type: DataType.UINT32},
+                    /**
+                     * - 0x00 Success
+                     * - 0x01 Failure
+                     * - 0x02 – 0xff Reserved
+                     */
+                    {name: 'status', type: DataType.ENUM8},
+                ],
+            },
+            networkJoinEndDevice: {
+                ID: 0x15,
+                parameters: [
+                    {name: 'transactionID', type: DataType.UINT32},
+                    /**
+                     * - 0x00 Success
+                     * - 0x01 Failure
+                     * - 0x02 – 0xff Reserved
+                     */
+                    {name: 'status', type: DataType.ENUM8},
+                ],
+            },
+            endpointInformation: {
+                ID: 0x40,
+                parameters: [
+                    {name: 'ieeeAddress', type: DataType.IEEE_ADDR},
+                    {name: 'networkAddress', type: DataType.UINT16},
+                    {name: 'endpointID', type: DataType.UINT8},
+                    {name: 'profileID', type: DataType.UINT16},
+                    {name: 'deviceID', type: DataType.UINT16},
+                    {name: 'version', type: DataType.UINT8},
+                ],
+            },
+            getGroupIdentifiers: {
+                ID: 0x41,
+                parameters: [
+                    {name: 'total', type: DataType.UINT8},
+                    {name: 'startIndex', type: DataType.UINT8},
+                    {name: 'count', type: DataType.UINT8},
+                    /**
+                     * TODO: (this * count)
+                     * {name: 'groupID', type: DataType.UINT16},
+                     * {name: 'groupType', type: DataType.UINT8},
+                     */
+                    // {name: 'groupInfoList', type: TODO},
+                ],
+            },
+            getEndpointList: {
+                ID: 0x42,
+                parameters: [
+                    {name: 'total', type: DataType.UINT8},
+                    {name: 'startIndex', type: DataType.UINT8},
+                    {name: 'count', type: DataType.UINT8},
+                    /**
+                     * TODO: (this * count)
+                     * {name: 'networkAddress', type: DataType.UINT16},
+                     * {name: 'endpointID', type: DataType.UINT8},
+                     * {name: 'profileID', type: DataType.UINT16},
+                     * {name: 'deviceID', type: DataType.UINT16},
+                     * {name: 'version', type: DataType.UINT8},
+                     */
+                    // {name: 'endpointInfoList', type: TODO},
                 ],
             },
         },

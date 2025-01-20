@@ -1,5 +1,14 @@
 # Changelog
 
+## [3.2.3](https://github.com/Koenkk/zigbee-herdsman/compare/v3.2.2...v3.2.3) (2025-01-19)
+
+
+### Bug Fixes
+
+* Fill out missing Touchlink cluster info ([#1300](https://github.com/Koenkk/zigbee-herdsman/issues/1300)) ([5f48bd5](https://github.com/Koenkk/zigbee-herdsman/commit/5f48bd5ce45b8cd91669a630ecab2b1294de8a41))
+* **ignore:** update dependencies ([#1291](https://github.com/Koenkk/zigbee-herdsman/issues/1291)) ([32c940a](https://github.com/Koenkk/zigbee-herdsman/commit/32c940a942dd5b46cf84c66ad1cb39e667f25c43))
+* ZBOSS: fix reverse extended panid ([#1293](https://github.com/Koenkk/zigbee-herdsman/issues/1293)) ([19849dc](https://github.com/Koenkk/zigbee-herdsman/commit/19849dc39d8255c347b954c4e47b4b6ed12ad288))
+
 ## [3.2.2](https://github.com/Koenkk/zigbee-herdsman/compare/v3.2.1...v3.2.2) (2025-01-12)
 
 
