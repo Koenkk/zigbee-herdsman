@@ -345,6 +345,11 @@ function matchUSBFingerprint(
 }
 
 export async function matchUSBAdapter(adapter: Adapter, path: string): Promise<boolean> {
+    // no point in matching this
+    if (adapter === 'zoh') {
+        return false;
+    }
+
     const isWindows = platform() === 'win32';
     const portList = await getSerialPortList();
 
