@@ -156,11 +156,11 @@ export class EmberOneWaitress {
 
             // no target in touchlink, also no APS sequence, but use the ZCL one instead
             if (
-                (waiter.matcher.apsFrame.profileId === TOUCHLINK_PROFILE_ID || payload.address === waiter.matcher.target) &&
-                (!waiter.matcher.zclSequence || payload.header.transactionSequenceNumber === waiter.matcher.zclSequence) &&
-                (!waiter.matcher.commandIdentifier || payload.header.commandIdentifier === waiter.matcher.commandIdentifier) &&
-                payload.clusterID === waiter.matcher.apsFrame.clusterId &&
-                payload.endpoint === waiter.matcher.apsFrame.destinationEndpoint
+                (waiter.matcher.apsFrame.profileId === TOUCHLINK_PROFILE_ID ||
+                    (payload.address === waiter.matcher.target && payload.endpoint === waiter.matcher.apsFrame.destinationEndpoint)) &&
+                (waiter.matcher.zclSequence === undefined || payload.header.transactionSequenceNumber === waiter.matcher.zclSequence) &&
+                (waiter.matcher.commandIdentifier === undefined || payload.header.commandIdentifier === waiter.matcher.commandIdentifier) &&
+                payload.clusterID === waiter.matcher.apsFrame.clusterId
             ) {
                 clearTimeout(waiter.timer);
 
