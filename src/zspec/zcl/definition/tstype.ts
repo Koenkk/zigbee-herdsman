@@ -224,7 +224,6 @@ export type ClusterName =
     | 'elkoSwitchConfigurationClusterServer'
     | 'manuSpecificSchneiderLightSwitchConfiguration'
     | 'manuSpecificSchneiderFanSwitchConfiguration'
-    | 'sprutDevice'
     | 'sprutVoc'
     | 'sprutNoise'
     | 'sprutIrBlaster'
