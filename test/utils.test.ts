@@ -117,7 +117,7 @@ describe('Utils', () => {
         expect(error2_).toStrictEqual(new Error("Timedout '5000'"));
         let handled2 = waitress.reject('two', 'drop');
         expect(handled2).toBe(false);
-        
+
         const waitClear_1 = waitress.waitFor(2, 10000).start().promise;
         const waitClear_2 = waitress.waitFor(2, 10000).start().promise;
 
