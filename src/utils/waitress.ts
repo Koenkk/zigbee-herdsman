@@ -24,6 +24,14 @@ export class Waitress<TPayload, TMatcher> {
         this.currentID = 0;
     }
 
+    public clear(): void {
+        for (const [, waiter] of this.waiters) {
+            clearTimeout(waiter.timer);
+        }
+
+        this.waiters.clear();
+    }
+
     public resolve(payload: TPayload): boolean {
         return this.forEachMatching(payload, (waiter) => waiter.resolve(payload));
     }

@@ -117,6 +117,17 @@ describe('Utils', () => {
         expect(error2_).toStrictEqual(new Error("Timedout '5000'"));
         let handled2 = waitress.reject('two', 'drop');
         expect(handled2).toBe(false);
+
+        const waitClear_1 = waitress.waitFor(2, 10000).start().promise;
+        const waitClear_2 = waitress.waitFor(2, 10000).start().promise;
+
+        await vi.advanceTimersByTimeAsync(2000);
+        waitress.clear();
+        await vi.advanceTimersByTimeAsync(12000);
+
+        // @ts-expect-error private
+        expect(waitress.waiters.size).toStrictEqual(0);
+
         vi.useRealTimers();
     });
 
@@ -186,13 +197,13 @@ describe('Utils', () => {
         const warningSpy = vi.spyOn(console, 'warn');
         const errorSpy = vi.spyOn(console, 'error');
         logger.debug('debug', 'zh');
-        expect(debugSpy).toHaveBeenCalledWith('zh: debug');
+        expect(debugSpy).toHaveBeenCalledWith(expect.stringMatching(/^\[\d\d\d\d-\d\d-\d\dT\d\d:\d\d:\d\d.\d\d\dZ\] zh: debug$/));
         logger.info('info', 'zh');
-        expect(infoSpy).toHaveBeenCalledWith('zh: info');
+        expect(infoSpy).toHaveBeenCalledWith(expect.stringMatching(/^\[\d\d\d\d-\d\d-\d\dT\d\d:\d\d:\d\d.\d\d\dZ\] zh: info$/));
         logger.warning('warning', 'zh');
-        expect(warningSpy).toHaveBeenCalledWith('zh: warning');
+        expect(warningSpy).toHaveBeenCalledWith(expect.stringMatching(/^\[\d\d\d\d-\d\d-\d\dT\d\d:\d\d:\d\d.\d\d\dZ\] zh: warning$/));
         logger.error('error', 'zh');
-        expect(errorSpy).toHaveBeenCalledWith('zh: error');
+        expect(errorSpy).toHaveBeenCalledWith(expect.stringMatching(/^\[\d\d\d\d-\d\d-\d\dT\d\d:\d\d:\d\d.\d\d\dZ\] zh: error$/));
 
         setLogger(mockLogger);
         expect(logger).toEqual(mockLogger);
