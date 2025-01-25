@@ -4529,6 +4529,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             warnDIR2: {ID: 0x0007, type: DataType.UINT16},
             warnDIR3: {ID: 0x0008, type: DataType.UINT16},
             motDEtat: {ID: 0x0009, type: DataType.CHAR_STR},
+            tariffPeriod : {ID: 0x0010, type: DataType.CHAR_STR},
             currentPrice: {ID: 0x0200, type: DataType.CHAR_STR},
             currentIndexTarif: {ID: 0x0201, type: DataType.UINT8},
             currentDate: {ID: 0x0202, type: DataType.CHAR_STR},
