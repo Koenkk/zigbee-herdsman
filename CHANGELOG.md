@@ -1,5 +1,13 @@
 # Changelog
 
+## [3.2.5](https://github.com/Koenkk/zigbee-herdsman/compare/v3.2.4...v3.2.5) (2025-01-27)
+
+
+### Bug Fixes
+
+* **ignore:** cleanup logger, add waitress clear util ([#1307](https://github.com/Koenkk/zigbee-herdsman/issues/1307)) ([dcf2592](https://github.com/Koenkk/zigbee-herdsman/commit/dcf2592c35c0724b20a73d434c398c482238a34c))
+* **ignore:** update dependencies ([#1311](https://github.com/Koenkk/zigbee-herdsman/issues/1311)) ([8fee7b1](https://github.com/Koenkk/zigbee-herdsman/commit/8fee7b14de74c3e2d62dd3d7a15c73e161ff742d))
+
 ## [3.2.4](https://github.com/Koenkk/zigbee-herdsman/compare/v3.2.3...v3.2.4) (2025-01-20)
 
 
