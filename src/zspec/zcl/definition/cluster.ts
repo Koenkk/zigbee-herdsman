@@ -4251,32 +4251,6 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         },
         commandsResponse: {},
     },
-    manuSpecificNiko1: {
-        ID: 0xfc00,
-        manufacturerCode: ManufacturerCode.NIKO_NV,
-        attributes: {
-            /* WARNING: 0x0000 has different datatypes!
-             *          enum8 (switch) vs. bitmap8 (outlet)
-             *          unknown usage/function on outlet
-             */
-            switchOperationMode: {ID: 0x0000, type: DataType.ENUM8},
-            outletLedColor: {ID: 0x0100, type: DataType.UINT24},
-            outletChildLock: {ID: 0x0101, type: DataType.UINT8},
-            outletLedState: {ID: 0x0104, type: DataType.UINT8},
-        },
-        commands: {},
-        commandsResponse: {},
-    },
-    manuSpecificNiko2: {
-        ID: 0xfc01,
-        manufacturerCode: ManufacturerCode.NIKO_NV,
-        attributes: {
-            switchActionReporting: {ID: 0x0001, type: DataType.BITMAP8},
-            switchAction: {ID: 0x0002, type: DataType.UINT8},
-        },
-        commands: {},
-        commandsResponse: {},
-    },
     wiserDeviceInfo: {
         ID: 0xfe03, // 65027
         attributes: {
