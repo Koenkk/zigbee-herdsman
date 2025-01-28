@@ -204,8 +204,6 @@ export type ClusterName =
     | 'manuSpecificLegrandDevices'
     | 'manuSpecificLegrandDevices2'
     | 'manuSpecificLegrandDevices3'
-    | 'manuSpecificNiko1'
-    | 'manuSpecificNiko2'
     | 'wiserDeviceInfo'
     | 'manuSpecificTuya'
     | 'manuSpecificLumi'
