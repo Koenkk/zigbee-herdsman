@@ -6,6 +6,7 @@
     "bugs": {
         "url": "https://github.com/koenkk/zigbee-herdsman/issues"
     },
+    "packageManager": "pnpm@9.15.4",
     "contributors": [
         {
             "name": "Koen Kanters",
