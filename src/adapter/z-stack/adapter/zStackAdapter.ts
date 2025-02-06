@@ -887,7 +887,11 @@ export class ZStackAdapter extends Adapter {
 
     public async getNetworkParameters(): Promise<NetworkParameters> {
         const result = await this.znp.requestWithReply(Subsystem.ZDO, 'extNwkInfo', {});
-        const nwkUpdateID = (await this.adapterManager.nv.readItem(NvItemsIds.NIB, 0, Structs.nib))?.nwkUpdateId ?? 0;
+        const NIB = await this.adapterManager.nv.readItem(NvItemsIds.NIB, 0, Structs.nib);
+        let nwkUpdateID = 0;
+        if (NIB) {
+            nwkUpdateID = NIB.nwkUpdateId;
+        }
         return {
             panID: result.payload.panid as number,
             extendedPanID: result.payload.extendedpanid as string, // read as IEEEADDR, so `0x${string}`
