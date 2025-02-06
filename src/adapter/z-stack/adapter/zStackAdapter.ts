@@ -15,6 +15,8 @@ import Adapter from '../../adapter';
 import * as Events from '../../events';
 import {AdapterOptions, CoordinatorVersion, NetworkOptions, NetworkParameters, SerialPortOptions, StartResult} from '../../tstype';
 import * as Constants from '../constants';
+import {NvItemsIds} from '../constants/common';
+import * as Structs from '../structs';
 import {Constants as UnpiConstants} from '../unpi';
 import {Znp, ZpiObject} from '../znp';
 import Definition from '../znp/definition';
@@ -885,10 +887,12 @@ export class ZStackAdapter extends Adapter {
 
     public async getNetworkParameters(): Promise<NetworkParameters> {
         const result = await this.znp.requestWithReply(Subsystem.ZDO, 'extNwkInfo', {});
+        const nwkUpdateID = (await this.adapterManager.nv.readItem(NvItemsIds.NIB, 0, Structs.nib))?.nwkUpdateId ?? 0;
         return {
             panID: result.payload.panid as number,
             extendedPanID: result.payload.extendedpanid as string, // read as IEEEADDR, so `0x${string}`
             channel: result.payload.channel as number,
+            nwkUpdateID,
         };
     }
 

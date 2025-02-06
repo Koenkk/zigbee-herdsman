@@ -89,7 +89,7 @@ const mockAdapterReset = vi.fn();
 const mockAdapterStop = vi.fn();
 const mockAdapterStart = vi.fn().mockReturnValue('resumed');
 const mockAdapterGetCoordinatorIEEE = vi.fn().mockReturnValue('0x0000012300000000');
-const mockAdapterGetNetworkParameters = vi.fn().mockReturnValue({panID: 1, extendedPanID: '0x64c5fd698daf0c00', channel: 15});
+const mockAdapterGetNetworkParameters = vi.fn().mockReturnValue({panID: 1, extendedPanID: '0x64c5fd698daf0c00', channel: 15, nwkUpdateID: 0});
 const mocksendZclFrameToGroup = vi.fn();
 const mocksendZclFrameToAll = vi.fn();
 const mockAddInstallCode = vi.fn();
@@ -1556,7 +1556,7 @@ describe('Controller', () => {
 
     it('Change channel on start', async () => {
         mockAdapterStart.mockReturnValueOnce('resumed');
-        mockAdapterGetNetworkParameters.mockReturnValueOnce({panID: 1, extendedPanID: '0x64c5fd698daf0c00', channel: 25});
+        mockAdapterGetNetworkParameters.mockReturnValueOnce({panID: 1, extendedPanID: '0x64c5fd698daf0c00', channel: 25, nwkUpdateID: 0});
         // @ts-expect-error private
         const changeChannelSpy = vi.spyOn(controller, 'changeChannel');
         await controller.start();
@@ -1569,7 +1569,8 @@ describe('Controller', () => {
             zdoPayload,
             true,
         );
-        expect(await controller.getNetworkParameters()).toEqual({panID: 1, channel: 15, extendedPanID: '0x64c5fd698daf0c00'});
+        mockAdapterGetNetworkParameters.mockReturnValueOnce({panID: 1, extendedPanID: '0x64c5fd698daf0c00', channel: 15, nwkUpdateID: 1});
+        expect(await controller.getNetworkParameters()).toEqual({panID: 1, channel: 15, extendedPanID: '0x64c5fd698daf0c00', nwkUpdateID: 1});
         expect(changeChannelSpy).toHaveBeenCalledTimes(1);
     });
 
@@ -1588,7 +1589,7 @@ describe('Controller', () => {
             zdoPayload,
             true,
         );
-        expect(await controller.getNetworkParameters()).toEqual({panID: 1, channel: 15, extendedPanID: '0x64c5fd698daf0c00'});
+        expect(await controller.getNetworkParameters()).toEqual({panID: 1, channel: 15, extendedPanID: '0x64c5fd698daf0c00', nwkUpdateID: 0});
         expect(changeChannelSpy).toHaveBeenCalledTimes(1);
     });
 
@@ -1608,9 +1609,9 @@ describe('Controller', () => {
 
     it('Get network parameters', async () => {
         await controller.start();
-        expect(await controller.getNetworkParameters()).toEqual({panID: 1, channel: 15, extendedPanID: '0x64c5fd698daf0c00'});
+        expect(await controller.getNetworkParameters()).toEqual({panID: 1, channel: 15, extendedPanID: '0x64c5fd698daf0c00', nwkUpdateID: 0});
         // cached
-        expect(await controller.getNetworkParameters()).toEqual({panID: 1, channel: 15, extendedPanID: '0x64c5fd698daf0c00'});
+        expect(await controller.getNetworkParameters()).toEqual({panID: 1, channel: 15, extendedPanID: '0x64c5fd698daf0c00', nwkUpdateID: 0});
         expect(mockAdapterGetNetworkParameters).toHaveBeenCalledTimes(1);
     });
 
