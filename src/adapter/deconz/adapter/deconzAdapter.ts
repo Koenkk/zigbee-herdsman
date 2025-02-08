@@ -541,6 +541,7 @@ export class DeconzAdapter extends Adapter {
                 panID: panid as number,
                 extendedPanID: expanid as string, // read as `0x...`
                 channel: channel as number,
+                nwkUpdateID: 0 as number,
             };
         } catch (error) {
             const msg = 'get network parameters Error:' + error;

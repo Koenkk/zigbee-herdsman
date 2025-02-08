@@ -3507,9 +3507,9 @@ describe('zstack-adapter', () => {
         mockZnpRequest.mockClear();
         mockQueueExecute.mockClear();
         const result = await adapter.getNetworkParameters();
-        expect(mockZnpRequest).toHaveBeenCalledTimes(1);
+        expect(mockZnpRequest).toHaveBeenCalledTimes(3);
         expect(mockZnpRequest).toHaveBeenCalledWith(Subsystem.ZDO, 'extNwkInfo', {});
-        expect(result).toStrictEqual({channel: 21, extendedPanID: '0x00124b0009d69f77', panID: 123});
+        expect(result).toStrictEqual({channel: 21, extendedPanID: '0x00124b0009d69f77', panID: 123, nwkUpdateID: 0});
     });
 
     it('Set interpan channel', async () => {
