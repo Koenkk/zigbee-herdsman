@@ -15,8 +15,6 @@ import Adapter from '../../adapter';
 import * as Events from '../../events';
 import {AdapterOptions, CoordinatorVersion, NetworkOptions, NetworkParameters, SerialPortOptions, StartResult} from '../../tstype';
 import * as Constants from '../constants';
-import {NvItemsIds} from '../constants/common';
-import * as Structs from '../structs';
 import {Constants as UnpiConstants} from '../unpi';
 import {Znp, ZpiObject} from '../znp';
 import Definition from '../znp/definition';
