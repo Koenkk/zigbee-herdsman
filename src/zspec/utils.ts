@@ -260,7 +260,7 @@ export function aes128MmoHash(data: Buffer): Buffer {
  *   - If adjust is false, undefined, otherwise, the reason why the code needed adjusting or undefined if not.
  *   - Throws when adjust=false and invalid, or cannot fix.
  */
-export function checkInstallCode(code: Buffer, adjust: boolean = true): [outCode: Buffer, adjusted: string | undefined] {
+export function checkInstallCode(code: Buffer, adjust: boolean = true): [outCode: Buffer, adjusted: 'invalid CRC' | 'missing CRC' | undefined] {
     const crcLowByteIndex = code.length - INSTALL_CODE_CRC_SIZE;
     const crcHighByteIndex = code.length - INSTALL_CODE_CRC_SIZE + 1;
 

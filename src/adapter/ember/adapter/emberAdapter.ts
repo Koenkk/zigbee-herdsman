@@ -1683,11 +1683,11 @@ export class EmberAdapter extends Adapter {
     }
 
     // queued
-    public async addInstallCode(ieeeAddress: string, key: Buffer): Promise<void> {
+    public async addInstallCode(ieeeAddress: string, key: Buffer, hashed: boolean): Promise<void> {
         return await this.queue.execute<void>(async () => {
             // Add the key to the transient key table.
             // This will be used while the DUT joins.
-            const impStatus = await this.ezsp.ezspImportTransientKey(ieeeAddress as EUI64, {contents: ZSpec.Utils.aes128MmoHash(key)});
+            const impStatus = await this.ezsp.ezspImportTransientKey(ieeeAddress as EUI64, {contents: hashed ? key : ZSpec.Utils.aes128MmoHash(key)});
 
             if (impStatus == SLStatus.OK) {
                 logger.debug(`[ADD INSTALL CODE] Success for '${ieeeAddress}'.`, NS);

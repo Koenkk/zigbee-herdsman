@@ -298,8 +298,8 @@ export class DeconzAdapter extends Adapter {
         }
     }
 
-    public async addInstallCode(ieeeAddress: string, key: Buffer): Promise<void> {
-        await this.driver.writeLinkKey(ieeeAddress, ZSpec.Utils.aes128MmoHash(key));
+    public async addInstallCode(ieeeAddress: string, key: Buffer, hashed: boolean): Promise<void> {
+        await this.driver.writeLinkKey(ieeeAddress, hashed ? key : ZSpec.Utils.aes128MmoHash(key));
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars

@@ -279,7 +279,13 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
 
         logger.info(`Adding install code for ${ieeeAddr}.`, NS);
 
-        await this.adapter.addInstallCode(ieeeAddr, adjustedKey);
+        await this.adapter.addInstallCode(ieeeAddr, adjustedKey, false);
+
+        if (adjusted === 'missing CRC') {
+            // in case the CRC was missing, could also be a "already-hashed" key, send both
+            // XXX: seems to be the case for old HA1.2 devices
+            await this.adapter.addInstallCode(ieeeAddr, key, true);
+        }
     }
 
     public async permitJoin(time: number, device?: Device): Promise<void> {

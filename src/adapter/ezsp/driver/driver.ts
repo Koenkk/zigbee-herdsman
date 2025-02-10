@@ -32,7 +32,6 @@ import {
     SLStatus,
 } from './types/named';
 import {
-    EmberAesMmoHashContext,
     EmberApsFrame,
     EmberIeeeRawFrame,
     EmberInitialSecurityState,
@@ -879,21 +878,13 @@ export class Driver extends EventEmitter {
         }
     }
 
-    public async addInstallCode(ieeeAddress: string, key: Buffer): Promise<void> {
-        // Key need to be converted to aes hash string
-        const hc = new EmberAesMmoHashContext();
-        hc.result = Buffer.from([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
-        hc.length = 0;
-        const hash = await this.ezsp.execCommand('aesMmoHash', {context: hc, finalize: true, data: key});
-        if (hash.status == EmberStatus.SUCCESS) {
-            const ieee = new EmberEUI64(ieeeAddress);
-            const linkKey = new EmberKeyData();
-            linkKey.contents = hash.returnContext.result;
-            const result = await this.addTransientLinkKey(ieee, linkKey);
-            if (result.status !== EmberStatus.SUCCESS) {
-                throw new Error(`Add install code for '${ieeeAddress}' failed`);
-            }
-        } else {
+    public async addInstallCode(ieeeAddress: string, key: Buffer, hashed: boolean): Promise<void> {
+        const ieee = new EmberEUI64(ieeeAddress);
+        const linkKey = new EmberKeyData();
+        linkKey.contents = hashed ? key : ZSpec.Utils.aes128MmoHash(key);
+        const result = await this.addTransientLinkKey(ieee, linkKey);
+
+        if (result.status !== EmberStatus.SUCCESS) {
             throw new Error(`Add install code for '${ieeeAddress}' failed`);
         }
     }
