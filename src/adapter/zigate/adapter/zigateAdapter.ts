@@ -155,7 +155,7 @@ export class ZiGateAdapter extends Adapter {
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    public async addInstallCode(ieeeAddress: string, key: Buffer): Promise<void> {
+    public async addInstallCode(ieeeAddress: string, key: Buffer, hashed: boolean): Promise<void> {
         throw new Error('Add install code is not supported');
     }
 

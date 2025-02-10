@@ -766,9 +766,10 @@ export class ZStackAdapter extends Adapter {
         });
     }
 
-    public async addInstallCode(ieeeAddress: string, key: Buffer): Promise<void> {
+    public async addInstallCode(ieeeAddress: string, key: Buffer, hashed: boolean): Promise<void> {
         assert(this.version.product !== ZnpVersion.zStack12, 'Install code is not supported for ZStack 1.2 adapter');
-        const payload = {installCodeFormat: key.length === 18 ? 1 : 2, ieeeaddr: ieeeAddress, installCode: key};
+        // TODO: always use 0x2? => const hashedKey = hashed ? key : ZSpec.Utils.aes128MmoHash(key);
+        const payload = {installCodeFormat: hashed ? 0x2 : 0x1, ieeeaddr: ieeeAddress, installCode: key};
         await this.znp.request(Subsystem.APP_CNF, 'bdbAddInstallCode', payload);
     }
 
