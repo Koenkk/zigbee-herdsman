@@ -1,5 +1,14 @@
 # Changelog
 
+## [3.2.6](https://github.com/Koenkk/zigbee-herdsman/compare/v3.2.5...v3.2.6) (2025-02-10)
+
+
+### Bug Fixes
+
+* **ignore:** update dependencies ([#1314](https://github.com/Koenkk/zigbee-herdsman/issues/1314)) ([e986201](https://github.com/Koenkk/zigbee-herdsman/commit/e986201434cef3e5f4f5afdc800203c2d151a5d4))
+* **ignore:** update dependencies ([#1316](https://github.com/Koenkk/zigbee-herdsman/issues/1316)) ([877e905](https://github.com/Koenkk/zigbee-herdsman/commit/877e905e251d54aabd313901fc97db5e3f09a4fd))
+* Install code processing ([#1317](https://github.com/Koenkk/zigbee-herdsman/issues/1317)) ([2cf176b](https://github.com/Koenkk/zigbee-herdsman/commit/2cf176baff31e98c0b8df1b653cb553251f4f93e))
+
 ## [3.2.5](https://github.com/Koenkk/zigbee-herdsman/compare/v3.2.4...v3.2.5) (2025-01-28)
 
 
