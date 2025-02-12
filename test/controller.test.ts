@@ -5684,6 +5684,39 @@ describe('Controller', () => {
         expect(mocksendZclFrameToGroup.mock.calls[0][2]).toBeUndefined();
     });
 
+    it('Write to group with custom cluster', async () => {
+        await controller.start();
+        await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
+        const device = controller.getDeviceByIeeeAddr('0x129')!;
+        device.addCustomCluster('myCustomCluster', {
+            ID: 9123,
+            commands: {},
+            commandsResponse: {},
+            attributes: {superAttribute: {ID: 0, type: Zcl.DataType.UINT8}},
+        });
+        const group = await controller.createGroup(2);
+        group.addMember(device.getEndpoint(1)!);
+        await group.write('myCustomCluster', {superAttribute: 5}, {});
+        expect(mocksendZclFrameToGroup).toHaveBeenCalledTimes(1);
+        expect(mocksendZclFrameToGroup.mock.calls[0][0]).toBe(2);
+        expect(deepClone(mocksendZclFrameToGroup.mock.calls[0][1])).toStrictEqual(
+            deepClone(
+                Zcl.Frame.create(
+                    Zcl.FrameType.GLOBAL,
+                    Zcl.Direction.CLIENT_TO_SERVER,
+                    true,
+                    undefined,
+                    11,
+                    'write',
+                    9123,
+                    [{attrData: 5, attrId: 0, dataType: 32}],
+                    device.customClusters,
+                ),
+            ),
+        );
+        expect(mocksendZclFrameToGroup.mock.calls[0][2]).toBeUndefined();
+    });
+
     it('Write to group with unknown attribute should fail', async () => {
         await controller.start();
         const group = await controller.createGroup(2);
@@ -6852,10 +6885,13 @@ describe('Controller', () => {
         expect((await controller.getGroups()).length).toBe(2);
 
         const group1 = controller.getGroupByID(1)!;
-        expect(deepClone(group1)).toStrictEqual(deepClone({_events: {}, _eventsCount: 0, databaseID: 2, groupID: 1, _members: new Set(), meta: {}}));
+        expect(deepClone(group1)).toStrictEqual(
+            deepClone({_customClusters: null, _events: {}, _eventsCount: 0, databaseID: 2, groupID: 1, _members: new Set(), meta: {}}),
+        );
         const group2 = controller.getGroupByID(2)!;
         expect(deepClone(group2)).toStrictEqual(
             deepClone({
+                _customClusters: null,
                 _events: {},
                 _eventsCount: 0,
                 databaseID: 5,
