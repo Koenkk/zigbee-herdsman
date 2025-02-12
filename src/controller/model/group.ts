@@ -2,6 +2,7 @@ import assert from 'node:assert';
 
 import {logger} from '../../utils/logger';
 import * as Zcl from '../../zspec/zcl';
+import {CustomClusters} from '../../zspec/zcl/definition/tstype';
 import ZclTransactionSequenceNumber from '../helpers/zclTransactionSequenceNumber';
 import {DatabaseEntry, KeyValue} from '../tstype';
 import Device from './device';
@@ -27,6 +28,7 @@ export class Group extends Entity {
     private databaseID: number;
     public readonly groupID: number;
     private readonly _members: Set<Endpoint>;
+    private _customClusters: CustomClusters | null = null;
     get members(): Endpoint[] {
         return Array.from(this._members).filter((e) => e.getDevice());
     }
@@ -164,11 +166,13 @@ export class Group extends Entity {
 
     public addMember(endpoint: Endpoint): void {
         this._members.add(endpoint);
+        this._customClusters = null;
         this.save();
     }
 
     public removeMember(endpoint: Endpoint): void {
         this._members.delete(endpoint);
+        this._customClusters = null;
         this.save();
     }
 
@@ -182,7 +186,7 @@ export class Group extends Entity {
 
     public async write(clusterKey: number | string, attributes: KeyValue, options?: Options): Promise<void> {
         const optionsWithDefaults = this.getOptionsWithDefaults(options, Zcl.Direction.CLIENT_TO_SERVER);
-        const cluster = Zcl.Utils.getCluster(clusterKey, undefined, {});
+        const cluster = Zcl.Utils.getCluster(clusterKey, undefined, this.customClusters);
         const payload: {attrId: number; dataType: number; attrData: number | string | boolean}[] = [];
 
         for (const [nameOrID, value] of Object.entries(attributes)) {
@@ -210,7 +214,7 @@ export class Group extends Entity {
                 'write',
                 cluster.ID,
                 payload,
-                {},
+                this.customClusters,
                 optionsWithDefaults.reservedBits,
             );
 
@@ -226,7 +230,7 @@ export class Group extends Entity {
 
     public async read(clusterKey: number | string, attributes: (string | number)[], options?: Options): Promise<void> {
         const optionsWithDefaults = this.getOptionsWithDefaults(options, Zcl.Direction.CLIENT_TO_SERVER);
-        const cluster = Zcl.Utils.getCluster(clusterKey, undefined, {});
+        const cluster = Zcl.Utils.getCluster(clusterKey, undefined, this.customClusters);
         const payload: {attrId: number}[] = [];
 
         for (const attribute of attributes) {
@@ -242,7 +246,7 @@ export class Group extends Entity {
             'read',
             cluster.ID,
             payload,
-            {},
+            this.customClusters,
             optionsWithDefaults.reservedBits,
         );
 
@@ -263,7 +267,7 @@ export class Group extends Entity {
 
     public async command(clusterKey: number | string, commandKey: number | string, payload: KeyValue, options?: Options): Promise<void> {
         const optionsWithDefaults = this.getOptionsWithDefaults(options, Zcl.Direction.CLIENT_TO_SERVER);
-        const cluster = Zcl.Utils.getCluster(clusterKey, undefined, {});
+        const cluster = Zcl.Utils.getCluster(clusterKey, undefined, this.customClusters);
         const command = cluster.getCommand(commandKey);
 
         const createLogMessage = (): string => `Command ${this.groupID} ${cluster.name}.${command.name}(${JSON.stringify(payload)})`;
@@ -279,7 +283,7 @@ export class Group extends Entity {
                 command.ID,
                 cluster.ID,
                 payload,
-                {},
+                this.customClusters,
                 optionsWithDefaults.reservedBits,
             );
 
@@ -302,6 +306,32 @@ export class Group extends Entity {
             transactionSequenceNumber: undefined,
             ...(options || {}),
         };
+    }
+
+    /**
+     * Get custom clusters that all members share.
+     */
+    get customClusters(): CustomClusters {
+        if (this._customClusters) {
+            return this._customClusters;
+        }
+
+        if (this._members.size === 0) {
+            return {};
+        }
+
+        const firstMember = Array.from(this._members)[0];
+        const customClusters = firstMember.getDevice().customClusters;
+
+        const commonClusters: CustomClusters = {};
+        for (const clusterName in customClusters) {
+            if (Array.from(this._members).every((member) => clusterName in member.getDevice().customClusters)) {
+                commonClusters[clusterName] = customClusters[clusterName];
+            }
+        }
+
+        this._customClusters = commonClusters;
+        return this._customClusters;
     }
 }
 
