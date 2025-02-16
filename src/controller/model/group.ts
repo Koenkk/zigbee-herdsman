@@ -2,7 +2,7 @@ import assert from 'node:assert';
 
 import {logger} from '../../utils/logger';
 import * as Zcl from '../../zspec/zcl';
-import {CustomClusters} from '../../zspec/zcl/definition/tstype';
+import {Cluster, CustomClusters} from '../../zspec/zcl/definition/tstype';
 import ZclTransactionSequenceNumber from '../helpers/zclTransactionSequenceNumber';
 import {DatabaseEntry, KeyValue} from '../tstype';
 import Device from './device';
@@ -186,7 +186,7 @@ export class Group extends Entity {
 
     public async write(clusterKey: number | string, attributes: KeyValue, options?: Options): Promise<void> {
         const optionsWithDefaults = this.getOptionsWithDefaults(options, Zcl.Direction.CLIENT_TO_SERVER);
-        const cluster = Zcl.Utils.getCluster(clusterKey, undefined, this.customClusters);
+        const cluster = this.getCluster(clusterKey);
         const payload: {attrId: number; dataType: number; attrData: number | string | boolean}[] = [];
 
         for (const [nameOrID, value] of Object.entries(attributes)) {
@@ -214,7 +214,7 @@ export class Group extends Entity {
                 'write',
                 cluster.ID,
                 payload,
-                this.customClusters,
+                this._customClusters ?? {},
                 optionsWithDefaults.reservedBits,
             );
 
@@ -230,7 +230,7 @@ export class Group extends Entity {
 
     public async read(clusterKey: number | string, attributes: (string | number)[], options?: Options): Promise<void> {
         const optionsWithDefaults = this.getOptionsWithDefaults(options, Zcl.Direction.CLIENT_TO_SERVER);
-        const cluster = Zcl.Utils.getCluster(clusterKey, undefined, this.customClusters);
+        const cluster = this.getCluster(clusterKey);
         const payload: {attrId: number}[] = [];
 
         for (const attribute of attributes) {
@@ -246,7 +246,7 @@ export class Group extends Entity {
             'read',
             cluster.ID,
             payload,
-            this.customClusters,
+            this._customClusters ?? {},
             optionsWithDefaults.reservedBits,
         );
 
@@ -267,7 +267,7 @@ export class Group extends Entity {
 
     public async command(clusterKey: number | string, commandKey: number | string, payload: KeyValue, options?: Options): Promise<void> {
         const optionsWithDefaults = this.getOptionsWithDefaults(options, Zcl.Direction.CLIENT_TO_SERVER);
-        const cluster = Zcl.Utils.getCluster(clusterKey, undefined, this.customClusters);
+        const cluster = this.getCluster(clusterKey);
         const command = cluster.getCommand(commandKey);
 
         const createLogMessage = (): string => `Command ${this.groupID} ${cluster.name}.${command.name}(${JSON.stringify(payload)})`;
@@ -283,7 +283,7 @@ export class Group extends Entity {
                 command.ID,
                 cluster.ID,
                 payload,
-                this.customClusters,
+                this._customClusters ?? {},
                 optionsWithDefaults.reservedBits,
             );
 
@@ -309,15 +309,11 @@ export class Group extends Entity {
     }
 
     /**
-     * Get custom clusters that all members share.
+     * Calculate, store, and return custom clusters that all members share.
      */
-    get customClusters(): CustomClusters {
-        if (this._customClusters) {
-            return this._customClusters;
-        }
-
+    private calculateCustomClusters(): CustomClusters {
         if (this._members.size === 0) {
-            return {};
+            return (this._customClusters = {});
         }
 
         const membersArray = Array.from(this._members);
@@ -331,8 +327,24 @@ export class Group extends Entity {
             }
         }
 
-        this._customClusters = commonClusters;
-        return this._customClusters;
+        return (this._customClusters = commonClusters);
+    }
+
+    private getCluster(key: string | number): Cluster {
+        if (this._customClusters) {
+            return Zcl.Utils.getCluster(key, undefined, this._customClusters);
+        }
+
+        // At first, don't fully calculate custom clusters
+        const cluster = Zcl.Utils.findCluster(key, undefined, {});
+
+        // If no cluster was found, and we haven't calculated custom clusters,
+        // do so now, and then retry
+        if (!cluster) {
+            return Zcl.Utils.getCluster(key, undefined, this.calculateCustomClusters());
+        }
+
+        return cluster;
     }
 }
 

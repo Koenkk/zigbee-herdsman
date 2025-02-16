@@ -120,7 +120,7 @@ function getClusterDefinition(
     key: string | number,
     manufacturerCode: number | undefined,
     customClusters: CustomClusters,
-): {name: string; cluster: ClusterDefinition} {
+): {name: string; cluster: ClusterDefinition} | undefined {
     let name: string | undefined;
 
     if (typeof key === 'number') {
@@ -144,25 +144,23 @@ function getClusterDefinition(
         name = key;
     }
 
-    let cluster =
-        name !== undefined && hasCustomClusters(customClusters)
+    const hasCustomClustersResult = hasCustomClusters(customClusters);
+    const cluster =
+        name !== undefined && hasCustomClustersResult
             ? {
                   ...Clusters[name as ClusterName],
                   ...customClusters[name], // should override Zcl clusters
               }
             : Clusters[name as ClusterName];
 
-    if (!cluster) {
-        if (typeof key === 'number') {
-            name = key.toString();
-            cluster = {attributes: {}, commands: {}, commandsResponse: {}, manufacturerCode: undefined, ID: key};
-        } else {
-            name = undefined;
-        }
+    if (!name || !cluster) {
+        return undefined;
     }
-
-    if (!name) {
-        throw new Error(`Cluster with name '${key}' does not exist`);
+    // If we have customClusters, we have to double check that we didn't end up with
+    // an empty object due to the use of the spread operator above
+    if (hasCustomClustersResult) {
+        for (const k in cluster) return {name, cluster};
+        return undefined;
     }
 
     return {name, cluster};
@@ -281,7 +279,28 @@ function createCluster(name: string, cluster: ClusterDefinition, manufacturerCod
 }
 
 export function getCluster(key: string | number, manufacturerCode: number | undefined, customClusters: CustomClusters): Cluster {
-    const {name, cluster} = getClusterDefinition(key, manufacturerCode, customClusters);
+    let nameAndCluster = getClusterDefinition(key, manufacturerCode, customClusters);
+
+    if (!nameAndCluster) {
+        if (typeof key === 'number') {
+            const name = key.toString();
+            const cluster = {attributes: {}, commands: {}, commandsResponse: {}, manufacturerCode: undefined, ID: key};
+            nameAndCluster = {name, cluster};
+        } else {
+            throw new Error(`Cluster with name '${key}' does not exist`);
+        }
+    }
+
+    const {name, cluster} = nameAndCluster;
+    return createCluster(name, cluster, manufacturerCode);
+}
+
+export function findCluster(key: string | number, manufacturerCode: number | undefined, customClusters: CustomClusters): Cluster | undefined {
+    const nameAndCluster = getClusterDefinition(key, manufacturerCode, customClusters);
+    if (!nameAndCluster) {
+        return undefined;
+    }
+    const {name, cluster} = nameAndCluster;
     return createCluster(name, cluster, manufacturerCode);
 }
 
