@@ -28,7 +28,7 @@ export class Group extends Entity {
     private databaseID: number;
     public readonly groupID: number;
     private readonly _members: Set<Endpoint>;
-    private _customClusters: CustomClusters | null = null;
+    private _customClusters: CustomClusters | undefined;
     get members(): Endpoint[] {
         return Array.from(this._members).filter((e) => e.getDevice());
     }
@@ -166,13 +166,13 @@ export class Group extends Entity {
 
     public addMember(endpoint: Endpoint): void {
         this._members.add(endpoint);
-        this._customClusters = null;
+        this._customClusters = undefined;
         this.save();
     }
 
     public removeMember(endpoint: Endpoint): void {
         this._members.delete(endpoint);
-        this._customClusters = null;
+        this._customClusters = undefined;
         this.save();
     }
 
