@@ -320,12 +320,13 @@ export class Group extends Entity {
             return {};
         }
 
-        const firstMember = Array.from(this._members)[0];
+        const membersArray = Array.from(this._members);
+        const firstMember = membersArray[0];
         const customClusters = firstMember.getDevice().customClusters;
 
         const commonClusters: CustomClusters = {};
         for (const clusterName in customClusters) {
-            if (Array.from(this._members).every((member) => clusterName in member.getDevice().customClusters)) {
+            if (membersArray.every((member) => clusterName in member.getDevice().customClusters)) {
                 commonClusters[clusterName] = customClusters[clusterName];
             }
         }
