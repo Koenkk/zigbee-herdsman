@@ -6885,13 +6885,10 @@ describe('Controller', () => {
         expect((await controller.getGroups()).length).toBe(2);
 
         const group1 = controller.getGroupByID(1)!;
-        expect(deepClone(group1)).toStrictEqual(
-            deepClone({_customClusters: null, _events: {}, _eventsCount: 0, databaseID: 2, groupID: 1, _members: new Set(), meta: {}}),
-        );
+        expect(deepClone(group1)).toStrictEqual(deepClone({_events: {}, _eventsCount: 0, databaseID: 2, groupID: 1, _members: new Set(), meta: {}}));
         const group2 = controller.getGroupByID(2)!;
         expect(deepClone(group2)).toStrictEqual(
             deepClone({
-                _customClusters: null,
                 _events: {},
                 _eventsCount: 0,
                 databaseID: 5,
