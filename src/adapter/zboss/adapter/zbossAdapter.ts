@@ -167,6 +167,7 @@ export class ZBOSSAdapter extends Adapter {
                 panID,
                 extendedPanID: ZSpec.Utils.eui64LEBufferToHex(Buffer.from(extendedPanID)),
                 channel,
+                nwkUpdateID: 0,
             };
         });
     }

@@ -536,11 +536,15 @@ export class DeconzAdapter extends Adapter {
             const panid = await this.driver.readParameterRequest(PARAM.PARAM.Network.PAN_ID);
             const expanid = await this.driver.readParameterRequest(PARAM.PARAM.Network.APS_EXT_PAN_ID);
             const channel = await this.driver.readParameterRequest(PARAM.PARAM.Network.CHANNEL);
+            // For some reason, reading NWK_UPDATE_ID always returns `null` (tested with `0x26780700` on Conbee II)
+            // 0x24 was taken from https://github.com/zigpy/zigpy-deconz/blob/70910bc6a63e607332b4f12754ba470651eb878c/zigpy_deconz/api.py#L152
+            // const nwkUpdateId = await this.driver.readParameterRequest(0x24 /*PARAM.PARAM.Network.NWK_UPDATE_ID*/);
 
             return {
                 panID: panid as number,
                 extendedPanID: expanid as string, // read as `0x...`
                 channel: channel as number,
+                nwkUpdateID: 0 as number,
             };
         } catch (error) {
             const msg = 'get network parameters Error:' + error;
