@@ -4161,6 +4161,34 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         },
         commandsResponse: {},
     },
+    manuSpecificPhilips3: {
+        ID: 0xfc01,
+        manufacturerCode: ManufacturerCode.SIGNIFY_NETHERLANDS_B_V,
+        attributes: {},
+        commands: {
+            command1: {
+                ID: 1,
+                parameters: [{name: 'data', type: BuffaloZclDataType.BUFFER}],
+            },
+            command2: {
+                ID: 2,
+                parameters: [{name: 'data', type: BuffaloZclDataType.BUFFER}],
+            },
+            command3: {
+                ID: 3,
+                parameters: [{name: 'data', type: BuffaloZclDataType.BUFFER}],
+            },
+            command4: {
+                ID: 4,
+                parameters: [{name: 'data', type: BuffaloZclDataType.BUFFER}],
+            },
+            command7: {
+                ID: 7,
+                parameters: [{name: 'data', type: BuffaloZclDataType.BUFFER}],
+            },
+        },
+        commandsResponse: {},
+    },
     manuSpecificSinope: {
         ID: 65281,
         manufacturerCode: ManufacturerCode.SINOPE_TECHNOLOGIES,
