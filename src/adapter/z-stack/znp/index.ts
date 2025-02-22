@@ -1,2 +1,2 @@
-export {Znp} from './znp';
-export {ZpiObject} from './zpiObject';
+export {Znp} from "./znp";
+export {ZpiObject} from "./zpiObject";

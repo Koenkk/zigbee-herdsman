@@ -1,14 +1,14 @@
-import assert from 'node:assert';
+import assert from "node:assert";
 
-import {logger} from '../../utils/logger';
-import * as Zcl from '../../zspec/zcl';
-import ZclTransactionSequenceNumber from '../helpers/zclTransactionSequenceNumber';
-import {DatabaseEntry, KeyValue} from '../tstype';
-import Device from './device';
-import Endpoint from './endpoint';
-import Entity from './entity';
+import {logger} from "../../utils/logger";
+import * as Zcl from "../../zspec/zcl";
+import ZclTransactionSequenceNumber from "../helpers/zclTransactionSequenceNumber";
+import type {DatabaseEntry, KeyValue} from "../tstype";
+import Device from "./device";
+import type Endpoint from "./endpoint";
+import Entity from "./entity";
 
-const NS = 'zh:controller:group';
+const NS = "zh:controller:group";
 
 interface Options {
     manufacturerCode?: number;
@@ -36,7 +36,7 @@ export class Group extends Entity {
     // This lookup contains all groups that are queried from the database, this is to ensure that always
     // the same instance is returned.
     private static readonly groups: Map<number /* groupID */, Group> = new Map();
-    private static loadedFromDatabase: boolean = false;
+    private static loadedFromDatabase = false;
 
     private constructor(databaseID: number, groupID: number, members: Set<Endpoint>, meta: KeyValue) {
         super();
@@ -77,18 +77,18 @@ export class Group extends Entity {
     }
 
     private toDatabaseRecord(): DatabaseEntry {
-        const members: DatabaseEntry['members'] = [];
+        const members: DatabaseEntry["members"] = [];
 
         for (const member of this.members) {
             members.push({deviceIeeeAddr: member.getDevice().ieeeAddr, endpointID: member.ID});
         }
 
-        return {id: this.databaseID, type: 'Group', groupID: this.groupID, members, meta: this.meta};
+        return {id: this.databaseID, type: "Group", groupID: this.groupID, members, meta: this.meta};
     }
 
     private static loadFromDatabaseIfNecessary(): void {
         if (!Group.loadedFromDatabase) {
-            for (const entry of Entity.database!.getEntriesIterator(['Group'])) {
+            for (const entry of Entity.database!.getEntriesIterator(["Group"])) {
                 const group = Group.fromDatabaseEntry(entry);
                 Group.groups.set(group.groupID, group);
             }
@@ -121,10 +121,10 @@ export class Group extends Entity {
     }
 
     public static create(groupID: number): Group {
-        assert(typeof groupID === 'number', 'GroupID must be a number');
+        assert(typeof groupID === "number", "GroupID must be a number");
         // Don't allow groupID 0, from the spec:
         // "Scene identifier 0x00, along with group identifier 0x0000, is reserved for the global scene used by the OnOff cluster"
-        assert(groupID >= 1, 'GroupID must be at least 1');
+        assert(groupID >= 1, "GroupID must be at least 1");
 
         Group.loadFromDatabaseIfNecessary();
 
@@ -207,7 +207,7 @@ export class Group extends Entity {
                 true,
                 optionsWithDefaults.manufacturerCode,
                 optionsWithDefaults.transactionSequenceNumber ?? ZclTransactionSequenceNumber.next(),
-                'write',
+                "write",
                 cluster.ID,
                 payload,
                 {},
@@ -230,7 +230,7 @@ export class Group extends Entity {
         const payload: {attrId: number}[] = [];
 
         for (const attribute of attributes) {
-            payload.push({attrId: typeof attribute === 'number' ? attribute : cluster.getAttribute(attribute).ID});
+            payload.push({attrId: typeof attribute === "number" ? attribute : cluster.getAttribute(attribute).ID});
         }
 
         const frame = Zcl.Frame.create(
@@ -239,7 +239,7 @@ export class Group extends Entity {
             true,
             optionsWithDefaults.manufacturerCode,
             optionsWithDefaults.transactionSequenceNumber ?? ZclTransactionSequenceNumber.next(),
-            'read',
+            "read",
             cluster.ID,
             payload,
             {},

@@ -1,10 +1,10 @@
-import * as stream from 'node:stream';
+import * as stream from "node:stream";
 
-import {logger} from '../../../utils/logger';
-import {DataStart, MinMessageLength, PositionDataLength, SOF} from './constants';
-import {Frame} from './frame';
+import {logger} from "../../../utils/logger";
+import {DataStart, MinMessageLength, PositionDataLength, SOF} from "./constants";
+import {Frame} from "./frame";
 
-const NS = 'zh:zstack:unpi:parser';
+const NS = "zh:zstack:unpi:parser";
 
 export class Parser extends stream.Transform {
     private buffer: Buffer;
@@ -43,7 +43,7 @@ export class Parser extends stream.Transform {
                 try {
                     const frame = Frame.fromBuffer(dataLength, fcsPosition, frameBuffer);
                     logger.debug(`--> parsed ${frame}`, NS);
-                    this.emit('parsed', frame);
+                    this.emit("parsed", frame);
                 } catch (error) {
                     logger.debug(`--> error ${error}`, NS);
                 }

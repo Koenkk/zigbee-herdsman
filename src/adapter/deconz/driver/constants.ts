@@ -1,6 +1,6 @@
 /* v8 ignore start */
 
-import {GenericZdoResponse} from '../../../zspec/zdo/definition/tstypes';
+import type {GenericZdoResponse} from "../../../zspec/zdo/definition/tstypes";
 
 const PARAM = {
     Network: {
@@ -158,7 +158,7 @@ type ParamNetworkKey = string;
 type Command = ParamMac | ParamPanId | ParamNwkAddr | ParamExtPanId | ParamChannel | ParamChannelMask | ParamPermitJoin | ParamNetworkKey;
 type parameterT = number | number[];
 
-export {
+export type {
     Request,
     WaitForDataRequest,
     ApsDataRequest,

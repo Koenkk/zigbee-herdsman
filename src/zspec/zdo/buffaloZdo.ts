@@ -1,16 +1,16 @@
-import Buffalo from '../../buffalo/buffalo';
-import {logger} from '../../utils/logger';
-import {DEFAULT_ENCRYPTION_KEY_SIZE, EUI64_SIZE, EXTENDED_PAN_ID_SIZE, PAN_ID_SIZE} from '../consts';
-import {ClusterId, EUI64, NodeId, ProfileId} from '../tstypes';
-import * as ZSpecUtils from '../utils';
-import {ClusterId as ZdoClusterId} from './definition/clusters';
-import {CHALLENGE_VALUE_SIZE, CURVE_PUBLIC_POINT_SIZE, MULTICAST_BINDING, UNICAST_BINDING, ZDO_MESSAGE_OVERHEAD} from './definition/consts';
-import {GlobalTLV, LeaveRequestFlags, RoutingTableStatus} from './definition/enums';
-import {Status} from './definition/status';
-import {
-    ActiveEndpointsResponse,
+import Buffalo from "../../buffalo/buffalo";
+import {logger} from "../../utils/logger";
+import {DEFAULT_ENCRYPTION_KEY_SIZE, EUI64_SIZE, EXTENDED_PAN_ID_SIZE, PAN_ID_SIZE} from "../consts";
+import type {ClusterId, EUI64, NodeId, ProfileId} from "../tstypes";
+import * as ZSpecUtils from "../utils";
+import {ClusterId as ZdoClusterId} from "./definition/clusters";
+import {CHALLENGE_VALUE_SIZE, CURVE_PUBLIC_POINT_SIZE, MULTICAST_BINDING, UNICAST_BINDING, ZDO_MESSAGE_OVERHEAD} from "./definition/consts";
+import {GlobalTLV, type LeaveRequestFlags, RoutingTableStatus} from "./definition/enums";
+import {Status} from "./definition/status";
+import type {
     APSFrameCounterChallengeTLV,
     APSFrameCounterResponseTLV,
+    ActiveEndpointsResponse,
     AuthenticationTokenIdTLV,
     BeaconAppendixEncapsulationGlobalTLV,
     BeaconSurveyConfigurationTLV,
@@ -29,9 +29,9 @@ import {
     GetConfigurationResponse,
     IEEEAddressResponse,
     JoinerEncapsulationGlobalTLV,
-    LocalTLVReader,
     LQITableEntry,
     LQITableResponse,
+    LocalTLVReader,
     ManufacturerSpecificGlobalTLV,
     MatchDescriptorsResponse,
     NetworkAddressResponse,
@@ -62,14 +62,14 @@ import {
     SupportedKeyNegotiationMethodsGlobalTLV,
     SymmetricPassphraseGlobalTLV,
     SystemServerDiscoveryResponse,
-    TargetIEEEAddressTLV,
     TLV,
+    TargetIEEEAddressTLV,
     ValidResponseMap,
-} from './definition/tstypes';
-import * as Utils from './utils';
-import {ZdoStatusError} from './zdoStatusError';
+} from "./definition/tstypes";
+import * as Utils from "./utils";
+import {ZdoStatusError} from "./zdoStatusError";
 
-const NS = 'zh:zdo:buffalo';
+const NS = "zh:zdo:buffalo";
 
 const MAX_BUFFER_SIZE = 255;
 
@@ -152,7 +152,7 @@ export class BuffaloZdo extends Buffalo {
 
         const keyNegotiationProtocolsBitmask = this.readUInt8();
         const preSharedSecretsBitmask = this.readUInt8();
-        let sourceDeviceEui64: SupportedKeyNegotiationMethodsGlobalTLV['sourceDeviceEui64'];
+        let sourceDeviceEui64: SupportedKeyNegotiationMethodsGlobalTLV["sourceDeviceEui64"];
 
         if (length >= 2 + EUI64_SIZE) {
             sourceDeviceEui64 = this.readIeeeAddr();
@@ -269,8 +269,8 @@ export class BuffaloZdo extends Buffalo {
         }
 
         const nwkAddress = this.readUInt16();
-        let fragmentationOptions: FragmentationParametersGlobalTLV['fragmentationOptions'];
-        let maxIncomingTransferUnit: FragmentationParametersGlobalTLV['maxIncomingTransferUnit'];
+        let fragmentationOptions: FragmentationParametersGlobalTLV["fragmentationOptions"];
+        let maxIncomingTransferUnit: FragmentationParametersGlobalTLV["maxIncomingTransferUnit"];
 
         if (length >= 3) {
             fragmentationOptions = this.readUInt8();
@@ -416,7 +416,7 @@ export class BuffaloZdo extends Buffalo {
         }
     }
 
-    public readGlobalTLV(tagId: number, length: number): TLV['tlv'] | undefined {
+    public readGlobalTLV(tagId: number, length: number): TLV["tlv"] | undefined {
         switch (tagId) {
             case GlobalTLV.MANUFACTURER_SPECIFIC: {
                 return this.readManufacturerSpecificGlobalTLV(length);
@@ -611,7 +611,7 @@ export class BuffaloZdo extends Buffalo {
             throw new Error(`Malformed TLV. Invalid length '${length}', expected ${4 + entryCount * 3}.`);
         }
 
-        const potentialParents: PotentialParentsTLV['potentialParents'] = [];
+        const potentialParents: PotentialParentsTLV["potentialParents"] = [];
 
         for (let i = 0; i < entryCount; i++) {
             const nwkAddress = this.readUInt16();
@@ -656,7 +656,7 @@ export class BuffaloZdo extends Buffalo {
             throw new Error(`Malformed TLV. Invalid length '${length}', expected ${1 + count * 2}.`);
         }
 
-        const tlvs: ProcessingStatusTLV['tlvs'] = [];
+        const tlvs: ProcessingStatusTLV["tlvs"] = [];
 
         for (let i = 0; i < count; i++) {
             const tagId = this.readUInt8();
@@ -685,7 +685,7 @@ export class BuffaloZdo extends Buffalo {
      * @param encapsulated Default false. If true, this is reading inside an encapsuled TLV (excludes further encapsulation)
      * @returns
      */
-    public readTLVs(localTLVReaders?: Map<number, LocalTLVReader>, encapsulated: boolean = false): TLV[] {
+    public readTLVs(localTLVReaders?: Map<number, LocalTLVReader>, encapsulated = false): TLV[] {
         const tlvs: TLV[] = [];
 
         while (this.isMore()) {
@@ -710,7 +710,7 @@ export class BuffaloZdo extends Buffalo {
 
             const nextTLVStart = this.getPosition() + length;
             // undefined == unknown tag
-            let tlv: TLV['tlv'] | undefined;
+            let tlv: TLV["tlv"] | undefined;
 
             if (tagId < GlobalTLV.MANUFACTURER_SPECIFIC) {
                 if (localTLVReaders) {
@@ -1594,8 +1594,8 @@ export class BuffaloZdo extends Buffalo {
         if (status == Status.SUCCESS) {
             const eui64 = this.readIeeeAddr();
             const nwkAddress = this.readUInt16();
-            let assocDevCount: number = 0;
-            let startIndex: number = 0;
+            let assocDevCount = 0;
+            let startIndex = 0;
             let assocDevList: number[] = [];
 
             if (this.isMore()) {
@@ -1627,8 +1627,8 @@ export class BuffaloZdo extends Buffalo {
         if (status === Status.SUCCESS) {
             const eui64 = this.readIeeeAddr();
             const nwkAddress = this.readUInt16();
-            let assocDevCount: number = 0;
-            let startIndex: number = 0;
+            let assocDevCount = 0;
+            let startIndex = 0;
             let assocDevList: number[] = [];
 
             if (this.isMore()) {

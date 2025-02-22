@@ -1,13 +1,13 @@
-import events from 'node:events';
+import events from "node:events";
 
-import * as Models from '../models';
-import {BroadcastAddress} from '../zspec/enums';
-import * as Zcl from '../zspec/zcl';
-import * as Zdo from '../zspec/zdo';
-import * as ZdoTypes from '../zspec/zdo/definition/tstypes';
-import {discoverAdapter} from './adapterDiscovery';
-import * as AdapterEvents from './events';
-import * as TsType from './tstype';
+import type * as Models from "../models";
+import type {BroadcastAddress} from "../zspec/enums";
+import * as Zcl from "../zspec/zcl";
+import type * as Zdo from "../zspec/zdo";
+import type * as ZdoTypes from "../zspec/zdo/definition/tstypes";
+import {discoverAdapter} from "./adapterDiscovery";
+import type * as AdapterEvents from "./events";
+import type * as TsType from "./tstype";
 
 interface AdapterEventMap {
     deviceJoined: [payload: AdapterEvents.DeviceJoinedPayload];
@@ -58,12 +58,12 @@ export abstract class Adapter extends events.EventEmitter<AdapterEventMap> {
         adapterOptions: TsType.AdapterOptions,
     ): Promise<Adapter> {
         const adapterLookup = {
-            deconz: ['./deconz/adapter/deconzAdapter', 'DeconzAdapter'],
-            ember: ['./ember/adapter/emberAdapter', 'EmberAdapter'],
-            ezsp: ['./ezsp/adapter/ezspAdapter', 'EZSPAdapter'],
-            zstack: ['./z-stack/adapter/zStackAdapter', 'ZStackAdapter'],
-            zboss: ['./zboss/adapter/zbossAdapter', 'ZBOSSAdapter'],
-            zigate: ['./zigate/adapter/zigateAdapter', 'ZiGateAdapter'],
+            deconz: ["./deconz/adapter/deconzAdapter", "DeconzAdapter"],
+            ember: ["./ember/adapter/emberAdapter", "EmberAdapter"],
+            ezsp: ["./ezsp/adapter/ezspAdapter", "EZSPAdapter"],
+            zstack: ["./z-stack/adapter/zStackAdapter", "ZStackAdapter"],
+            zboss: ["./zboss/adapter/zbossAdapter", "ZBOSSAdapter"],
+            zigate: ["./zigate/adapter/zigateAdapter", "ZiGateAdapter"],
         };
         const [adapter, path] = await discoverAdapter(serialPortOptions.adapter, serialPortOptions.path);
         const detectedAdapter = adapterLookup[adapter];
@@ -77,7 +77,7 @@ export abstract class Adapter extends events.EventEmitter<AdapterEventMap> {
 
             return new AdapterCtor(networkOptions, serialPortOptions, backupPath, adapterOptions);
         } else {
-            throw new Error(`Adapter '${adapter}' does not exists, possible options: ${Object.keys(adapterLookup).join(', ')}`);
+            throw new Error(`Adapter '${adapter}' does not exists, possible options: ${Object.keys(adapterLookup).join(", ")}`);
         }
     }
 
@@ -89,7 +89,7 @@ export abstract class Adapter extends events.EventEmitter<AdapterEventMap> {
 
     public abstract getCoordinatorVersion(): Promise<TsType.CoordinatorVersion>;
 
-    public abstract reset(type: 'soft' | 'hard'): Promise<void>;
+    public abstract reset(type: "soft" | "hard"): Promise<void>;
 
     public abstract supportsBackup(): Promise<boolean>;
 

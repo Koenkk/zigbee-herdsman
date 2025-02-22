@@ -1,6 +1,6 @@
-import {GP_ENDPOINT, GP_PROFILE_ID, HA_PROFILE_ID} from '../../../zspec/consts';
-import {Clusters} from '../../../zspec/zcl/definition/cluster';
-import {ClusterId, EmberMulticastId, ProfileId} from '../types';
+import {GP_ENDPOINT, GP_PROFILE_ID, HA_PROFILE_ID} from "../../../zspec/consts";
+import {Clusters} from "../../../zspec/zcl/definition/cluster";
+import type {ClusterId, EmberMulticastId, ProfileId} from "../types";
 
 type FixedEndpointInfo = {
     /** Actual Zigbee endpoint number. uint8_t */

@@ -1,15 +1,15 @@
 /* v8 ignore start */
 
-import {logger} from '../../../utils/logger';
-import {BLANK_EUI64} from '../../../zspec';
-import {SecManFlag, SecManKeyType, SLStatus} from '../enums';
-import {EMBER_ENCRYPTION_KEY_SIZE, EUI64_SIZE} from '../ezsp/consts';
-import {EzspValueId} from '../ezsp/enums';
-import {Ezsp} from '../ezsp/ezsp';
-import {EmberTokenData, SecManKey} from '../types';
-import {initSecurityManagerContext} from '../utils/initters';
+import {logger} from "../../../utils/logger";
+import {BLANK_EUI64} from "../../../zspec";
+import {SLStatus, SecManFlag, SecManKeyType} from "../enums";
+import {EMBER_ENCRYPTION_KEY_SIZE, EUI64_SIZE} from "../ezsp/consts";
+import {EzspValueId} from "../ezsp/enums";
+import type {Ezsp} from "../ezsp/ezsp";
+import type {EmberTokenData, SecManKey} from "../types";
+import {initSecurityManagerContext} from "../utils/initters";
 
-const NS = 'zh:ember:tokens';
+const NS = "zh:ember:tokens";
 
 /* eslint-disable @typescript-eslint/no-unused-vars */
 //------------------------------------------------------------------------------
@@ -291,7 +291,7 @@ const NVM3KEYS: number[] = [
     NVM3KEY_STACK_GP_INCOMING_FC_IN_SINK,
 ];
 
-const BLANK_EUI64_BUF = Buffer.from(BLANK_EUI64.substring(2) /*take out 0x*/, 'hex');
+const BLANK_EUI64_BUF = Buffer.from(BLANK_EUI64.substring(2) /*take out 0x*/, "hex");
 
 export class EmberTokensManager {
     /**
@@ -349,11 +349,11 @@ export class EmberTokensManager {
             // Don't compile for scripted test or any non-host code due to linker issues.
             const hasSecureStorage: boolean = await EmberTokensManager.ncpUsesPSAKeyStorage(ezsp);
 
-            logger.debug(`[TOKENS] Saving ${tokenCount} tokens, ${hasSecureStorage ? 'with' : 'without'} secure storage.`, NS);
+            logger.debug(`[TOKENS] Saving ${tokenCount} tokens, ${hasSecureStorage ? "with" : "without"} secure storage.`, NS);
 
             for (let i = 0; i < tokenCount; i++) {
                 const [tiStatus, tokenInfo] = await ezsp.ezspGetTokenInfo(i);
-                let writeOffset: number = 0;
+                let writeOffset = 0;
 
                 if (tiStatus === SLStatus.OK) {
                     const outputToken = Buffer.alloc(4 + 1 + 1 + tokenInfo.size * tokenInfo.arraySize);
@@ -435,11 +435,11 @@ export class EmberTokensManager {
 
         logger.info(`[TOKENS] Restoring tokens...`, NS);
 
-        let readOffset: number = 0;
+        let readOffset = 0;
         const inTokenCount = inBuffer.readUInt8(readOffset++);
         const hasSecureStorage: boolean = await EmberTokensManager.ncpUsesPSAKeyStorage(ezsp);
 
-        logger.debug(`[TOKENS] Restoring ${inTokenCount} tokens, ${hasSecureStorage ? 'with' : 'without'} secure storage.`, NS);
+        logger.debug(`[TOKENS] Restoring ${inTokenCount} tokens, ${hasSecureStorage ? "with" : "without"} secure storage.`, NS);
 
         for (let i = 0; i < inTokenCount; i++) {
             const [tiStatus, tokenInfo] = await ezsp.ezspGetTokenInfo(i);
@@ -749,7 +749,7 @@ export class EmberTokensManager {
 
         logger.info(`[TOKENS] Restoring tokens to Zigbeed...`, NS);
 
-        let readOffset: number = 0;
+        let readOffset = 0;
         const inTokenCount = inBuffer.readUInt8(readOffset++);
 
         for (let i = 0; i < inTokenCount; i++) {

@@ -1,15 +1,15 @@
 /* v8 ignore start */
 
-import {KeyValue} from '../../controller/tstype';
-import {DataType} from '../../zspec/zcl';
-import {BuffaloZcl} from '../../zspec/zcl/buffaloZcl';
-import {BuffaloZclDataType} from '../../zspec/zcl/definition/enums';
-import {BuffaloZclOptions} from '../../zspec/zcl/definition/tstype';
-import {ClusterId as ZdoClusterId} from '../../zspec/zdo';
-import {BuffaloZdo} from '../../zspec/zdo/buffaloZdo';
-import {GenericZdoResponse} from '../../zspec/zdo/definition/tstypes';
-import {FRAMES, ParamsDesc, ZBOSS_COMMAND_ID_TO_ZDO_RSP_CLUSTER_ID} from './commands';
-import {BuffaloZBOSSDataType, CommandId} from './enums';
+import type {KeyValue} from "../../controller/tstype";
+import type {DataType} from "../../zspec/zcl";
+import {BuffaloZcl} from "../../zspec/zcl/buffaloZcl";
+import type {BuffaloZclDataType} from "../../zspec/zcl/definition/enums";
+import type {BuffaloZclOptions} from "../../zspec/zcl/definition/tstype";
+import {ClusterId as ZdoClusterId} from "../../zspec/zdo";
+import {BuffaloZdo} from "../../zspec/zdo/buffaloZdo";
+import type {GenericZdoResponse} from "../../zspec/zdo/definition/tstypes";
+import {FRAMES, type ParamsDesc, ZBOSS_COMMAND_ID_TO_ZDO_RSP_CLUSTER_ID} from "./commands";
+import {BuffaloZBOSSDataType, type CommandId} from "./enums";
 
 export class ZBOSSBuffaloZcl extends BuffaloZcl {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

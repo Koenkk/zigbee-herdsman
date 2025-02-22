@@ -1,6 +1,6 @@
-import {ClusterId, EUI64, ExtendedPanId, NodeId, PanId, ProfileId} from '../../tstypes';
-import {ClusterId as ZdoClusterId} from './clusters';
-import {
+import type {ClusterId, EUI64, ExtendedPanId, NodeId, PanId, ProfileId} from "../../tstypes";
+import {ClusterId as ZdoClusterId} from "./clusters";
+import type {
     ActiveLinkKeyType,
     InitialJoinMethod,
     JoiningPolicy,
@@ -8,8 +8,8 @@ import {
     RoutingTableStatus,
     SelectedKeyNegotiationProtocol,
     SelectedPreSharedSecret,
-} from './enums';
-import {Status} from './status';
+} from "./enums";
+import type {Status} from "./status";
 
 /**
  * Bits:
@@ -181,7 +181,7 @@ export type RoutingTableEntry = {
      *
      * 3-bit
      */
-    status: keyof typeof RoutingTableStatus | 'UNKNOWN';
+    status: keyof typeof RoutingTableStatus | "UNKNOWN";
     /**
      * A flag indicating whether the device is a memory constrained concentrator
      *

@@ -1,17 +1,17 @@
-import assert from 'node:assert';
-import crypto from 'node:crypto';
-import events from 'node:events';
+import assert from "node:assert";
+import crypto from "node:crypto";
+import events from "node:events";
 
-import {Adapter, Events as AdapterEvents} from '../adapter';
-import {logger} from '../utils/logger';
-import {COORDINATOR_ADDRESS, GP_ENDPOINT, GP_GROUP_ID} from '../zspec/consts';
-import {BroadcastAddress} from '../zspec/enums';
-import * as Zcl from '../zspec/zcl';
-import ZclTransactionSequenceNumber from './helpers/zclTransactionSequenceNumber';
-import {Device} from './model';
-import {GreenPowerDeviceJoinedPayload} from './tstype';
+import type {Adapter, Events as AdapterEvents} from "../adapter";
+import {logger} from "../utils/logger";
+import {COORDINATOR_ADDRESS, GP_ENDPOINT, GP_GROUP_ID} from "../zspec/consts";
+import {BroadcastAddress} from "../zspec/enums";
+import * as Zcl from "../zspec/zcl";
+import ZclTransactionSequenceNumber from "./helpers/zclTransactionSequenceNumber";
+import {Device} from "./model";
+import type {GreenPowerDeviceJoinedPayload} from "./tstype";
 
-const NS = 'zh:controller:greenpower';
+const NS = "zh:controller:greenpower";
 
 const zigBeeLinkKey = Buffer.from([0x5a, 0x69, 0x67, 0x42, 0x65, 0x65, 0x41, 0x6c, 0x6c, 0x69, 0x61, 0x6e, 0x63, 0x65, 0x30, 0x39]);
 
@@ -43,7 +43,7 @@ export class GreenPower extends events.EventEmitter<GreenPowerEventMap> {
         }
         nonce[12] = 0x05;
 
-        const cipher = crypto.createCipheriv('aes-128-ccm', zigBeeLinkKey, nonce, {authTagLength: 16});
+        const cipher = crypto.createCipheriv("aes-128-ccm", zigBeeLinkKey, nonce, {authTagLength: 16});
         const encrypted = cipher.update(securityKey);
         return Buffer.concat([encrypted, cipher.final()]);
     }
@@ -80,7 +80,7 @@ export class GreenPower extends events.EventEmitter<GreenPowerEventMap> {
             true,
             undefined,
             ZclTransactionSequenceNumber.next(),
-            'pairing',
+            "pairing",
             Zcl.Clusters.greenPower.ID,
             payload,
             {},
@@ -94,7 +94,7 @@ export class GreenPower extends events.EventEmitter<GreenPowerEventMap> {
             return await this.adapter.sendZclFrameToAll(GP_ENDPOINT, replyFrame, GP_ENDPOINT, BroadcastAddress.RX_ON_WHEN_IDLE);
         } else {
             const device = Device.byNetworkAddress(frame.payload.gppNwkAddr);
-            assert(device, 'Failed to find green power proxy device');
+            assert(device, "Failed to find green power proxy device");
             return await this.adapter.sendZclFrameToEndpoint(
                 device.ieeeAddr,
                 frame.payload.gppNwkAddr,
@@ -122,7 +122,7 @@ export class GreenPower extends events.EventEmitter<GreenPowerEventMap> {
                     logger.info(`Received commissioning from '${dataPayload.address}'`, NS);
 
                     /* v8 ignore start */
-                    if (typeof dataPayload.address !== 'number') {
+                    if (typeof dataPayload.address !== "number") {
                         logger.error(`Commissioning request with string type address unsupported for '${dataPayload.address}'`, NS);
                         break;
                     }
@@ -134,7 +134,7 @@ export class GreenPower extends events.EventEmitter<GreenPowerEventMap> {
 
                     // RX capable GPD needs GP Commissioning Reply
                     if (rxOnCap) {
-                        logger.debug('RxOnCap set -> supports bidirectional communication', NS);
+                        logger.debug("RxOnCap set -> supports bidirectional communication", NS);
                         // NOTE: currently encryption is disabled for RX capable GPDs
 
                         const networkParameters = await this.adapter.getNetworkParameters();
@@ -159,7 +159,7 @@ export class GreenPower extends events.EventEmitter<GreenPowerEventMap> {
                             true,
                             undefined,
                             ZclTransactionSequenceNumber.next(),
-                            'response',
+                            "response",
                             Zcl.Clusters.greenPower.ID,
                             payloadReply,
                             {},
@@ -194,7 +194,7 @@ export class GreenPower extends events.EventEmitter<GreenPowerEventMap> {
                         await this.sendPairingCommand(payload, dataPayload, frame);
                     }
 
-                    this.emit('deviceJoined', {
+                    this.emit("deviceJoined", {
                         sourceID: frame.payload.srcID,
                         deviceID: frame.payload.commandFrame.deviceID,
                         networkAddress: frame.payload.srcID & 0xffff,
@@ -231,7 +231,7 @@ export class GreenPower extends events.EventEmitter<GreenPowerEventMap> {
                         true,
                         undefined,
                         ZclTransactionSequenceNumber.next(),
-                        'response',
+                        "response",
                         Zcl.Clusters.greenPower.ID,
                         payload,
                         {},
@@ -267,7 +267,7 @@ export class GreenPower extends events.EventEmitter<GreenPowerEventMap> {
             true,
             undefined,
             ZclTransactionSequenceNumber.next(),
-            'commisioningMode',
+            "commisioningMode",
             Zcl.Clusters.greenPower.ID,
             payload,
             {},
@@ -277,7 +277,7 @@ export class GreenPower extends events.EventEmitter<GreenPowerEventMap> {
             await this.adapter.sendZclFrameToAll(GP_ENDPOINT, frame, GP_ENDPOINT, BroadcastAddress.RX_ON_WHEN_IDLE);
         } else {
             const device = Device.byNetworkAddress(networkAddress);
-            assert(device, 'Failed to find device to permit GP join on');
+            assert(device, "Failed to find device to permit GP join on");
             await this.adapter.sendZclFrameToEndpoint(device.ieeeAddr, networkAddress, GP_ENDPOINT, frame, 10000, false, false, GP_ENDPOINT);
         }
     }

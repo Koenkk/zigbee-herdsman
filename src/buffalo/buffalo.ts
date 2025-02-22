@@ -1,6 +1,6 @@
-import type {EUI64} from '../zspec/tstypes';
+import type {EUI64} from "../zspec/tstypes";
 
-import {Utils as ZSpecUtils} from '../zspec';
+import {Utils as ZSpecUtils} from "../zspec";
 
 export class Buffalo {
     protected position: number;
@@ -235,8 +235,8 @@ export class Buffalo {
     }
 
     public writeIeeeAddr(value: string /*TODO: EUI64*/): void {
-        this.writeUInt32(parseInt(value.slice(10), 16));
-        this.writeUInt32(parseInt(value.slice(2, 10), 16));
+        this.writeUInt32(Number.parseInt(value.slice(10), 16));
+        this.writeUInt32(Number.parseInt(value.slice(2, 10), 16));
     }
 
     public readIeeeAddr(): EUI64 {
@@ -321,12 +321,12 @@ export class Buffalo {
 
     public writeUtf8String(value: string): void {
         // value==='' is supported and is identified as "empty string"
-        this.position += this.buffer.write(value, this.position, 'utf8');
+        this.position += this.buffer.write(value, this.position, "utf8");
     }
 
     public readUtf8String(length: number): string {
         // length===0 is supported and is identified as "empty string"
-        const value = this.buffer.toString('utf8', this.position, this.position + length);
+        const value = this.buffer.toString("utf8", this.position, this.position + length);
         this.position += length;
         return value;
     }

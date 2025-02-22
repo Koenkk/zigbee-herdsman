@@ -1,18 +1,18 @@
 /* v8 ignore start */
 
-import equals from 'fast-deep-equal/es6';
+import equals from "fast-deep-equal/es6";
 
-import {TOUCHLINK_PROFILE_ID} from '../../../zspec/consts';
-import {EUI64, NodeId} from '../../../zspec/tstypes';
-import {ZclPayload} from '../../events';
-import {EmberApsFrame} from '../types';
+import {TOUCHLINK_PROFILE_ID} from "../../../zspec/consts";
+import type {EUI64, NodeId} from "../../../zspec/tstypes";
+import type {ZclPayload} from "../../events";
+import type {EmberApsFrame} from "../types";
 
 /** Events specific to OneWaitress usage. */
 export enum OneWaitressEvents {
-    STACK_STATUS_NETWORK_UP = 'STACK_STATUS_NETWORK_UP',
-    STACK_STATUS_NETWORK_DOWN = 'STACK_STATUS_NETWORK_DOWN',
-    STACK_STATUS_NETWORK_OPENED = 'STACK_STATUS_NETWORK_OPENED',
-    STACK_STATUS_NETWORK_CLOSED = 'STACK_STATUS_NETWORK_CLOSED',
+    STACK_STATUS_NETWORK_UP = "STACK_STATUS_NETWORK_UP",
+    STACK_STATUS_NETWORK_DOWN = "STACK_STATUS_NETWORK_DOWN",
+    STACK_STATUS_NETWORK_OPENED = "STACK_STATUS_NETWORK_OPENED",
+    STACK_STATUS_NETWORK_CLOSED = "STACK_STATUS_NETWORK_CLOSED",
 }
 
 type OneWaitressMatcher = {

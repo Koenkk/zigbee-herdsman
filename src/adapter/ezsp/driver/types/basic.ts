@@ -26,7 +26,7 @@ export class int_t {
                 return `${cls.name}.${prop}`;
             }
         }
-        return '';
+        return "";
     }
 
     /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
@@ -37,7 +37,7 @@ export class int_t {
                 return `${prop}`;
             }
         }
-        return '';
+        return "";
     }
 }
 

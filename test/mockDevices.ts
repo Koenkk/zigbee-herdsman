@@ -1,5 +1,5 @@
-import * as Zdo from '../src/zspec/zdo';
-import * as ZdoTypes from '../src/zspec/zdo/definition/tstypes';
+import * as Zdo from "../src/zspec/zdo";
+import type * as ZdoTypes from "../src/zspec/zdo/definition/tstypes";
 
 export const NODE_DESC_DEFAULTS = {
     // nwkAddress: NodeId;
@@ -92,7 +92,7 @@ export const MOCK_DEVICES: {
         lqiTable?: ZdoTypes.ResponseMap[Zdo.ClusterId.LQI_TABLE_RESPONSE];
         routingTable?: ZdoTypes.ResponseMap[Zdo.ClusterId.ROUTING_TABLE_RESPONSE];
         attributes?: {[key: number]: {[key: string]: unknown}};
-        key?: 'xiaomi';
+        key?: "xiaomi";
     };
 } = {
     // coordinator
@@ -121,13 +121,13 @@ export const MOCK_DEVICES: {
         },
         attributes: {
             1: {
-                modelId: 'myModelID',
-                manufacturerName: 'KoenAndCo',
+                modelId: "myModelID",
+                manufacturerName: "KoenAndCo",
                 zclVersion: 1,
                 appVersion: 2,
                 hwVersion: 3,
-                dateCode: '201901',
-                swBuildId: '1.01',
+                dateCode: "201901",
+                swBuildId: "1.01",
                 powerSource: 1,
                 stackVersion: 101,
             },
@@ -141,8 +141,8 @@ export const MOCK_DEVICES: {
                 neighborTableEntries: 2,
                 startIndex: 0,
                 entryList: [
-                    {...LQI_TABLE_ENTRY_DEFAULTS, eui64: '0x160', nwkAddress: 160, lqi: 20, relationship: 2, depth: 5},
-                    {...LQI_TABLE_ENTRY_DEFAULTS, eui64: '0x170', nwkAddress: 170, lqi: 21, relationship: 4, depth: 8},
+                    {...LQI_TABLE_ENTRY_DEFAULTS, eui64: "0x160", nwkAddress: 160, lqi: 20, relationship: 2, depth: 5},
+                    {...LQI_TABLE_ENTRY_DEFAULTS, eui64: "0x170", nwkAddress: 170, lqi: 21, relationship: 4, depth: 8},
                 ],
             },
         ],
@@ -152,20 +152,20 @@ export const MOCK_DEVICES: {
                 routingTableEntries: 2,
                 startIndex: 0,
                 entryList: [
-                    {...ROUTING_TABLE_ENTRY_DEFAULTS, destinationAddress: 120, status: 'ACTIVE', nextHopAddress: 1},
-                    {...ROUTING_TABLE_ENTRY_DEFAULTS, destinationAddress: 130, status: 'DISCOVERY_FAILED', nextHopAddress: 2},
+                    {...ROUTING_TABLE_ENTRY_DEFAULTS, destinationAddress: 120, status: "ACTIVE", nextHopAddress: 1},
+                    {...ROUTING_TABLE_ENTRY_DEFAULTS, destinationAddress: 130, status: "DISCOVERY_FAILED", nextHopAddress: 2},
                 ],
             },
         ],
     },
     150: {
         nodeDescriptor: undefined,
-        key: 'xiaomi',
+        key: "xiaomi",
     },
     151: {
         nodeDescriptor: [Zdo.Status.SUCCESS, {...NODE_DESC_DEFAULTS, nwkAddress: 151, logicalType: 0b010, manufacturerCode: 1219}],
         activeEndpoints: undefined,
-        key: 'xiaomi',
+        key: "xiaomi",
     },
     160: {
         nodeDescriptor: [Zdo.Status.SUCCESS, {...NODE_DESC_DEFAULTS, nwkAddress: 160, logicalType: 0b001, manufacturerCode: 1212}],
@@ -191,13 +191,13 @@ export const MOCK_DEVICES: {
         },
         attributes: {
             1: {
-                modelId: 'myDevice9123',
-                manufacturerName: 'Boef',
+                modelId: "myDevice9123",
+                manufacturerName: "Boef",
                 zclVersion: 1,
                 appVersion: 2,
                 hwVersion: 3,
-                dateCode: '201901',
-                swBuildId: '1.01',
+                dateCode: "201901",
+                swBuildId: "1.01",
                 powerSource: 1,
                 stackVersion: 101,
             },
@@ -223,13 +223,13 @@ export const MOCK_DEVICES: {
         },
         attributes: {
             2: {
-                modelId: 'myDevice9124',
-                manufacturerName: 'Boef',
+                modelId: "myDevice9124",
+                manufacturerName: "Boef",
                 zclVersion: 1,
                 appVersion: 2,
                 hwVersion: 3,
-                dateCode: '201901',
-                swBuildId: '1.01',
+                dateCode: "201901",
+                swBuildId: "1.01",
                 powerSource: 1,
                 stackVersion: 101,
             },
@@ -257,14 +257,14 @@ export const MOCK_DEVICES: {
         attributes: {
             1: {
                 zoneState: 0,
-                iasCieAddr: '0x0000012300000000',
-                modelId: 'myIasDevice',
-                manufacturerName: 'KoenAndCoSecurity',
+                iasCieAddr: "0x0000012300000000",
+                modelId: "myIasDevice",
+                manufacturerName: "KoenAndCoSecurity",
                 zclVersion: 1,
                 appVersion: 2,
                 hwVersion: 3,
-                dateCode: '201901',
-                swBuildId: '1.01',
+                dateCode: "201901",
+                swBuildId: "1.01",
                 powerSource: 1,
                 stackVersion: 101,
             },
@@ -291,13 +291,13 @@ export const MOCK_DEVICES: {
         },
         attributes: {
             1: {
-                modelId: 'lumi.remote.b286opcn01',
-                manufacturerName: 'Xioami',
+                modelId: "lumi.remote.b286opcn01",
+                manufacturerName: "Xioami",
                 zclVersion: 1,
                 appVersion: 2,
                 hwVersion: 3,
-                dateCode: '201901',
-                swBuildId: '1.01',
+                dateCode: "201901",
+                swBuildId: "1.01",
                 powerSource: 1,
                 stackVersion: 101,
             },
@@ -351,13 +351,13 @@ export const MOCK_DEVICES: {
         },
         attributes: {
             12: {
-                modelId: 'GL-C-008',
-                manufacturerName: 'Gledopto',
+                modelId: "GL-C-008",
+                manufacturerName: "Gledopto",
                 zclVersion: 1,
                 appVersion: 2,
                 hwVersion: 3,
-                dateCode: '201901',
-                swBuildId: '1.01',
+                dateCode: "201901",
+                swBuildId: "1.01",
                 powerSource: 1,
                 stackVersion: 101,
             },
@@ -402,13 +402,13 @@ export const MOCK_DEVICES: {
         },
         attributes: {
             1: {
-                modelId: 'lumi.plug',
-                manufacturerName: 'LUMI',
+                modelId: "lumi.plug",
+                manufacturerName: "LUMI",
                 zclVersion: 1,
                 appVersion: 2,
                 hwVersion: 3,
-                dateCode: '201901',
-                swBuildId: '1.01',
+                dateCode: "201901",
+                swBuildId: "1.01",
                 powerSource: 1,
                 stackVersion: 101,
             },
@@ -425,13 +425,13 @@ export const MOCK_DEVICES: {
         },
         attributes: {
             1: {
-                modelId: 'lumi.plug',
-                manufacturerName: 'LUMI',
+                modelId: "lumi.plug",
+                manufacturerName: "LUMI",
                 zclVersion: 1,
                 appVersion: 2,
                 hwVersion: 3,
-                dateCode: '201901',
-                swBuildId: '1.01',
+                dateCode: "201901",
+                swBuildId: "1.01",
                 powerSource: 1,
                 stackVersion: 101,
             },
@@ -457,13 +457,13 @@ export const MOCK_DEVICES: {
         },
         attributes: {
             1: {
-                modelId: ' Shutter switch with neutral',
-                manufacturerName: 'Legrand',
+                modelId: " Shutter switch with neutral",
+                manufacturerName: "Legrand",
                 zclVersion: 2,
                 appVersion: 0,
                 hwVersion: 8,
-                dateCode: '231030',
-                swBuildId: '0038',
+                dateCode: "231030",
+                swBuildId: "0038",
                 powerSource: 1,
                 stackVersion: 67,
             },

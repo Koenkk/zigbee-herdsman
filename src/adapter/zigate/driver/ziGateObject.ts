@@ -1,17 +1,17 @@
 /* v8 ignore start */
 
-import {logger} from '../../../utils/logger';
-import BuffaloZiGate, {BuffaloZiGateOptions} from './buffaloZiGate';
-import {ZiGateCommand, ZiGateCommandParameter, ZiGateCommandType} from './commandType';
-import {ZiGateCommandCode, ZiGateMessageCode, ZiGateObjectPayload} from './constants';
-import ZiGateFrame from './frame';
-import {ZiGateMessage, ZiGateMessageParameter} from './messageType';
-import ParameterType from './parameterType';
+import {logger} from "../../../utils/logger";
+import BuffaloZiGate, {type BuffaloZiGateOptions} from "./buffaloZiGate";
+import {ZiGateCommand, type ZiGateCommandParameter, type ZiGateCommandType} from "./commandType";
+import type {ZiGateCommandCode, ZiGateMessageCode, ZiGateObjectPayload} from "./constants";
+import ZiGateFrame from "./frame";
+import {ZiGateMessage, type ZiGateMessageParameter} from "./messageType";
+import ParameterType from "./parameterType";
 
 type ZiGateCode = ZiGateCommandCode | ZiGateMessageCode;
 type ZiGateParameter = ZiGateCommandParameter | ZiGateMessageParameter;
 
-const NS = 'zh:zigate:object';
+const NS = "zh:zigate:object";
 
 const BufferAndListTypes: ParameterType[] = [
     ParameterType.BUFFER,
@@ -99,7 +99,7 @@ class ZiGateObject {
                 const lengthParameter = parameters[parameters.indexOf(parameter) - 1];
                 const length = result[lengthParameter.name];
 
-                if (typeof length === 'number') {
+                if (typeof length === "number") {
                     options.length = length;
                 }
             }
@@ -112,10 +112,10 @@ class ZiGateObject {
         }
 
         if (buffalo.isMore()) {
-            const bufferString = buffalo.getBuffer().toString('hex');
+            const bufferString = buffalo.getBuffer().toString("hex");
             logger.debug(
-                `Last bytes of data were not parsed \x1b[32m${bufferString.slice(0, buffalo.getPosition() * 2).replace(/../g, '$& ')}` +
-                    `\x1b[31m${bufferString.slice(buffalo.getPosition() * 2).replace(/../g, '$& ')}\x1b[0m `,
+                `Last bytes of data were not parsed \x1b[32m${bufferString.slice(0, buffalo.getPosition() * 2).replace(/../g, "$& ")}` +
+                    `\x1b[31m${bufferString.slice(buffalo.getPosition() * 2).replace(/../g, "$& ")}\x1b[0m `,
                 NS,
             );
         }

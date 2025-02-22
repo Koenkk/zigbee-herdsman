@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
 
-import {Struct} from '../struct';
+import {Struct} from "../struct";
 
 /**
  * Security manager authentication options.
@@ -27,9 +27,9 @@ export enum SecurityManagerAuthenticationOption {
  */
 export const securityManagerEntry = (data?: Buffer) => {
     return Struct.new()
-        .member('uint16', 'ami')
-        .member('uint16', 'keyNvId')
-        .member('uint8', 'authenticationOption')
-        .default(Buffer.from('feff000000', 'hex'))
+        .member("uint16", "ami")
+        .member("uint16", "keyNvId")
+        .member("uint8", "authenticationOption")
+        .default(Buffer.from("feff000000", "hex"))
         .build(data);
 };

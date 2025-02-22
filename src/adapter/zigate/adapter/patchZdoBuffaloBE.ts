@@ -1,4 +1,4 @@
-import {BuffaloZdo} from '../../../zspec/zdo/buffaloZdo';
+import {BuffaloZdo} from "../../../zspec/zdo/buffaloZdo";
 
 class ZiGateZdoBuffalo extends BuffaloZdo {
     public override writeUInt16(value: number): void {
@@ -12,8 +12,8 @@ class ZiGateZdoBuffalo extends BuffaloZdo {
     }
 
     public override writeIeeeAddr(value: string /*TODO: EUI64*/): void {
-        this.writeUInt32(parseInt(value.slice(2, 10), 16));
-        this.writeUInt32(parseInt(value.slice(10), 16));
+        this.writeUInt32(Number.parseInt(value.slice(2, 10), 16));
+        this.writeUInt32(Number.parseInt(value.slice(10), 16));
     }
 }
 

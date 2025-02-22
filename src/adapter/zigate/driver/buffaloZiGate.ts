@@ -1,12 +1,12 @@
 /* v8 ignore start */
 
-import {Buffalo} from '../../../buffalo';
-import {Utils as ZSpecUtils} from '../../../zspec';
-import {EUI64} from '../../../zspec/tstypes';
-import {BuffaloZclOptions} from '../../../zspec/zcl/definition/tstype';
-import {getMacCapFlags} from '../../../zspec/zdo/utils';
-import {LOG_LEVEL} from './constants';
-import ParameterType from './parameterType';
+import {Buffalo} from "../../../buffalo";
+import {Utils as ZSpecUtils} from "../../../zspec";
+import type {EUI64} from "../../../zspec/tstypes";
+import type {BuffaloZclOptions} from "../../../zspec/zcl/definition/tstype";
+import {getMacCapFlags} from "../../../zspec/zdo/utils";
+import {LOG_LEVEL} from "./constants";
+import ParameterType from "./parameterType";
 
 export interface BuffaloZiGateOptions extends BuffaloZclOptions {
     startIndex?: number;
@@ -187,8 +187,8 @@ class BuffaloZiGate extends Buffalo {
     }
 
     public writeIeeeAddrBE(value: string /*TODO: EUI64*/): void {
-        this.writeUInt32BE(parseInt(value.slice(2, 10), 16));
-        this.writeUInt32BE(parseInt(value.slice(10), 16));
+        this.writeUInt32BE(Number.parseInt(value.slice(2, 10), 16));
+        this.writeUInt32BE(Number.parseInt(value.slice(10), 16));
     }
 }
 

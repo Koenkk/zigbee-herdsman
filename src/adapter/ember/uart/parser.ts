@@ -1,9 +1,9 @@
 /* v8 ignore start */
 
-import {Transform, TransformCallback, TransformOptions} from 'node:stream';
+import {Transform, type TransformCallback, type TransformOptions} from "node:stream";
 
 // import {logger} from '../../../utils/logger';
-import {AshReservedByte} from './enums';
+import {AshReservedByte} from "./enums";
 
 // const NS = 'zh:ember:uart:ash:parser';
 

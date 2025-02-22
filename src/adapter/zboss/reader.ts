@@ -1,11 +1,11 @@
 /* v8 ignore start */
 
-import {Transform, TransformCallback, TransformOptions} from 'node:stream';
+import {Transform, type TransformCallback, type TransformOptions} from "node:stream";
 
-import {logger} from '../../utils/logger';
-import {SIGNATURE} from './consts';
+import {logger} from "../../utils/logger";
+import {SIGNATURE} from "./consts";
 
-const NS = 'zh:zboss:read';
+const NS = "zh:zboss:read";
 
 export class ZBOSSReader extends Transform {
     private buffer: Buffer;
@@ -20,7 +20,7 @@ export class ZBOSSReader extends Transform {
         let data = Buffer.concat([this.buffer, chunk]);
         let position: number;
 
-        logger.debug(`<<<  DATA [${chunk.toString('hex')}]`, NS);
+        logger.debug(`<<<  DATA [${chunk.toString("hex")}]`, NS);
         // SIGNATURE - start of package
         while ((position = data.indexOf(SIGNATURE)) !== -1) {
             // need for read length
@@ -28,7 +28,7 @@ export class ZBOSSReader extends Transform {
                 const len = data.readUInt16LE(position + 1);
                 if (data.length >= position + 1 + len) {
                     const frame = data.subarray(position + 1, position + 1 + len);
-                    logger.debug(`<<< FRAME [${frame.toString('hex')}]`, NS);
+                    logger.debug(`<<< FRAME [${frame.toString("hex")}]`, NS);
                     // emit the frame via 'data' event
                     this.push(frame);
 
@@ -38,7 +38,7 @@ export class ZBOSSReader extends Transform {
                     }
                     // remove the frame from internal buffer (set below)
                     data = data.subarray(position + 1 + len);
-                    if (data.length) logger.debug(`<<< TAIL [${data.toString('hex')}]`, NS);
+                    if (data.length) logger.debug(`<<< TAIL [${data.toString("hex")}]`, NS);
                 } else {
                     logger.debug(`<<< Not enough data. Length=${data.length}, frame length=${len}. Waiting`, NS);
                     break;

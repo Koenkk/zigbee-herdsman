@@ -1,4 +1,4 @@
-import {Header as ZclHeader} from '../zspec/zcl';
+import type {Header as ZclHeader} from "../zspec/zcl";
 
 export type DeviceJoinedPayload = {
     networkAddress: number;

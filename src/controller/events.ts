@@ -1,13 +1,13 @@
-import {FrameControl} from '../zspec/zcl/definition/tstype';
-import {Device, Endpoint} from './model';
-import {KeyValue} from './tstype';
+import type {FrameControl} from "../zspec/zcl/definition/tstype";
+import type {Device, Endpoint} from "./model";
+import type {KeyValue} from "./tstype";
 
 export interface DeviceJoinedPayload {
     device: Device;
 }
 
 export interface DeviceInterviewPayload {
-    status: 'started' | 'successful' | 'failed';
+    status: "started" | "successful" | "failed";
     device: Device;
 }
 
@@ -30,10 +30,10 @@ export interface PermitJoinChangedPayload {
 
 export interface LastSeenChangedPayload {
     device: Device;
-    reason: 'deviceAnnounce' | 'networkAddress' | 'deviceJoined' | 'messageEmitted' | 'messageNonEmitted';
+    reason: "deviceAnnounce" | "networkAddress" | "deviceJoined" | "messageEmitted" | "messageNonEmitted";
 }
 
-export type MessagePayloadType = 'attributeReport' | 'readResponse' | 'raw' | 'read' | 'write' | `command${string}`;
+export type MessagePayloadType = "attributeReport" | "readResponse" | "raw" | "read" | "write" | `command${string}`;
 
 export interface MessagePayload {
     type: MessagePayloadType;

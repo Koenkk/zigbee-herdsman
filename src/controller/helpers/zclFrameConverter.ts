@@ -1,5 +1,5 @@
-import * as Zcl from '../../zspec/zcl';
-import {Cluster, CustomClusters} from '../../zspec/zcl/definition/tstype';
+import * as Zcl from "../../zspec/zcl";
+import type {Cluster, CustomClusters} from "../../zspec/zcl/definition/tstype";
 
 interface KeyValue {
     [s: string]: number | string;

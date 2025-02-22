@@ -1,9 +1,9 @@
 /* v8 ignore start */
 
-import Buffalo from '../../../buffalo/buffalo';
-import {GP_SINK_LIST_ENTRIES} from '../consts';
-import {EmberGpApplicationId, EmberGpSinkType, EzspStatus, SLStatus} from '../enums';
-import {
+import Buffalo from "../../../buffalo/buffalo";
+import {GP_SINK_LIST_ENTRIES} from "../consts";
+import {EmberGpApplicationId, EmberGpSinkType, EzspStatus, SLStatus} from "../enums";
+import type {
     Ember802154RadioPriorities,
     EmberAesMmoHashContext,
     EmberApsFrame,
@@ -24,8 +24,8 @@ import {
     EmberInitialSecurityState,
     EmberKeyData,
     EmberMessageDigest,
-    EmberMulticastTableEntry,
     EmberMultiPhyRadioParameters,
+    EmberMulticastTableEntry,
     EmberMultiprotocolPriorities,
     EmberNeighborTableEntry,
     EmberNetworkInitStruct,
@@ -40,10 +40,10 @@ import {
     EmberSignature283k1Data,
     EmberSignatureData,
     EmberSmacData,
-    EmberTokenData,
-    EmberTokenInfo,
     EmberTokTypeStackZllData,
     EmberTokTypeStackZllSecurity,
+    EmberTokenData,
+    EmberTokenInfo,
     EmberZigbeeNetwork,
     EmberZllAddressAssignment,
     EmberZllDeviceInfoRecord,
@@ -54,8 +54,8 @@ import {
     SecManContext,
     SecManKey,
     SecManNetworkKeyInfo,
-} from '../types';
-import {highByte} from '../utils/math';
+} from "../types";
+import {highByte} from "../utils/math";
 import {
     EMBER_AES_HASH_BLOCK_SIZE,
     EMBER_CERTIFICATE_283K1_SIZE,
@@ -80,8 +80,8 @@ import {
     EZSP_FRAME_CONTROL_INDEX,
     EZSP_FRAME_ID_INDEX,
     EZSP_PARAMETERS_INDEX,
-} from './consts';
-import {EzspFrameID} from './enums';
+} from "./consts";
+import type {EzspFrameID} from "./enums";
 
 /**
  * Handle EmberStatus deprecation in v14+ for previous versions
@@ -1300,7 +1300,7 @@ export class EzspBuffalo extends Buffalo {
      * @param mapFromEmber If true, map from EmberStatus, otherwise map from EzspStatus
      * @returns EzspStatus, EmberStatus or SLStatus as SLStatus
      */
-    public readStatus(version: number, mapFromEmber: boolean = true): SLStatus {
+    public readStatus(version: number, mapFromEmber = true): SLStatus {
         if (version < 0x0e) {
             const status = this.readUInt8();
 

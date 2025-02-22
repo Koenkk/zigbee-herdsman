@@ -52,13 +52,7 @@
         "vitest": "^3.0.5"
     },
     "homepage": "https://github.com/Koenkk/zigbee-herdsman",
-    "keywords": [
-        "zigbee",
-        "zstack",
-        "emberznet",
-        "deconz",
-        "zigate"
-    ],
+    "keywords": ["zigbee", "zstack", "emberznet", "deconz", "zigate"],
     "license": "MIT",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
