@@ -198,8 +198,6 @@ export type ClusterName =
     | 'touchlink'
     | 'manuSpecificClusterAduroSmart'
     | 'manuSpecificOsram'
-    | 'manuSpecificPhilips'
-    | 'manuSpecificPhilips2'
     | 'manuSpecificSinope'
     | 'manuSpecificLegrandDevices'
     | 'manuSpecificLegrandDevices2'
