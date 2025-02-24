@@ -979,6 +979,7 @@ export class EmberAdapter extends Adapter {
                     Array.from(backup!.networkOptions.extendedPanId),
                     backup!.logicalChannel,
                     backup!.ezsp!.hashed_tclk!, // valid from getStoredBackup
+                    backup!.networkUpdateId,
                 );
 
                 result = 'restored';
@@ -995,6 +996,7 @@ export class EmberAdapter extends Adapter {
                     this.networkOptions.extendedPanID!,
                     this.networkOptions.channelList[0],
                     randomBytes(EMBER_ENCRYPTION_KEY_SIZE), // rnd TC link key
+                    0,
                 );
 
                 result = 'reset';
@@ -1041,6 +1043,7 @@ export class EmberAdapter extends Adapter {
         extendedPanId: ExtendedPanId,
         radioChannel: number,
         tcLinkKey: Buffer,
+        nwkUpdateId: number,
     ): Promise<void> {
         const state: EmberInitialSecurityState = {
             bitmask:
@@ -1100,7 +1103,7 @@ export class EmberAdapter extends Adapter {
             radioChannel,
             joinMethod: EmberJoinMethod.MAC_ASSOCIATION,
             nwkManagerId: ZSpec.COORDINATOR_ADDRESS,
-            nwkUpdateId: 0,
+            nwkUpdateId,
             channels: ZSpec.ALL_802_15_4_CHANNELS_MASK,
         };
 
@@ -1678,6 +1681,7 @@ export class EmberAdapter extends Adapter {
                 panID,
                 extendedPanID: ZSpec.Utils.eui64LEBufferToHex(Buffer.from(extendedPanID)),
                 channel,
+                nwkUpdateID: this.networkCache.parameters.nwkUpdateId,
             };
         });
     }

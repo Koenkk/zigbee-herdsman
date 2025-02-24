@@ -37,6 +37,44 @@ const mockLogger = {
     error: vi.fn(),
 };
 
+const mockDummyBackup: Models.Backup = {
+    networkOptions: {
+        panId: 6755,
+        extendedPanId: Buffer.from('deadbeef01020304', 'hex'),
+        channelList: [11],
+        networkKey: Buffer.from('a1a2a3a4a5a6a7a8b1b2b3b4b5b6b7b8', 'hex'),
+        networkKeyDistribute: false,
+    },
+    coordinatorIeeeAddress: Buffer.from('0102030405060708', 'hex'),
+    logicalChannel: 11,
+    networkUpdateId: 0,
+    securityLevel: 5,
+    znp: {
+        version: 1,
+    },
+    networkKeyInfo: {
+        sequenceNumber: 0,
+        frameCounter: 10000,
+    },
+    devices: [
+        {
+            networkAddress: 1001,
+            ieeeAddress: Buffer.from('c1c2c3c4c5c6c7c8', 'hex'),
+            isDirectChild: false,
+        },
+        {
+            networkAddress: 1002,
+            ieeeAddress: Buffer.from('d1d2d3d4d5d6d7d8', 'hex'),
+            isDirectChild: false,
+            linkKey: {
+                key: Buffer.from('f8f7f6f5f4f3f2f1e1e2e3e4e5e6e7e8', 'hex'),
+                rxCounter: 10000,
+                txCounter: 5000,
+            },
+        },
+    ],
+};
+
 const mockAdapterEvents = {};
 const mockAdapterWaitFor = vi.fn();
 const mockAdapterSupportsDiscoverRoute = vi.fn();
@@ -51,11 +89,12 @@ const mockAdapterReset = vi.fn();
 const mockAdapterStop = vi.fn();
 const mockAdapterStart = vi.fn().mockReturnValue('resumed');
 const mockAdapterGetCoordinatorIEEE = vi.fn().mockReturnValue('0x0000012300000000');
-const mockAdapterGetNetworkParameters = vi.fn().mockReturnValue({panID: 1, extendedPanID: '0x64c5fd698daf0c00', channel: 15});
+const mockAdapterGetNetworkParameters = vi.fn().mockReturnValue({panID: 1, extendedPanID: '0x64c5fd698daf0c00', channel: 15, nwkUpdateID: 0});
 const mocksendZclFrameToGroup = vi.fn();
 const mocksendZclFrameToAll = vi.fn();
 const mockAddInstallCode = vi.fn();
 const mocksendZclFrameToEndpoint = vi.fn();
+const mockApaterBackup = vi.fn(() => Promise.resolve(mockDummyBackup));
 let sendZdoResponseStatus = Zdo.Status.SUCCESS;
 const mockAdapterSendZdo = vi
     .fn()
@@ -318,44 +357,6 @@ const getCluster = (key) => {
     return cluster;
 };
 
-const mockDummyBackup: Models.Backup = {
-    networkOptions: {
-        panId: 6755,
-        extendedPanId: Buffer.from('deadbeef01020304', 'hex'),
-        channelList: [11],
-        networkKey: Buffer.from('a1a2a3a4a5a6a7a8b1b2b3b4b5b6b7b8', 'hex'),
-        networkKeyDistribute: false,
-    },
-    coordinatorIeeeAddress: Buffer.from('0102030405060708', 'hex'),
-    logicalChannel: 11,
-    networkUpdateId: 0,
-    securityLevel: 5,
-    znp: {
-        version: 1,
-    },
-    networkKeyInfo: {
-        sequenceNumber: 0,
-        frameCounter: 10000,
-    },
-    devices: [
-        {
-            networkAddress: 1001,
-            ieeeAddress: Buffer.from('c1c2c3c4c5c6c7c8', 'hex'),
-            isDirectChild: false,
-        },
-        {
-            networkAddress: 1002,
-            ieeeAddress: Buffer.from('d1d2d3d4d5d6d7d8', 'hex'),
-            isDirectChild: false,
-            linkKey: {
-                key: Buffer.from('f8f7f6f5f4f3f2f1e1e2e3e4e5e6e7e8', 'hex'),
-                rxCounter: 10000,
-                txCounter: 5000,
-            },
-        },
-    ],
-};
-
 let dummyBackup;
 
 vi.mock('../src/adapter/z-stack/adapter/zStackAdapter', () => ({
@@ -368,9 +369,7 @@ vi.mock('../src/adapter/z-stack/adapter/zStackAdapter', () => ({
         getCoordinatorIEEE: mockAdapterGetCoordinatorIEEE,
         reset: mockAdapterReset,
         supportsBackup: mockAdapterSupportsBackup,
-        backup: () => {
-            return mockDummyBackup;
-        },
+        backup: mockApaterBackup,
         getCoordinatorVersion: () => {
             return {type: 'zStack', meta: {version: 1}};
         },
@@ -1117,7 +1116,27 @@ describe('Controller', () => {
 
     it('Change channel on start', async () => {
         mockAdapterStart.mockReturnValueOnce('resumed');
-        mockAdapterGetNetworkParameters.mockReturnValueOnce({panID: 1, extendedPanID: '0x64c5fd698daf0c00', channel: 25});
+        mockAdapterGetNetworkParameters.mockReturnValueOnce({panID: 1, extendedPanID: '0x64c5fd698daf0c00', channel: 25, nwkUpdateID: 0});
+        // @ts-expect-error private
+        const changeChannelSpy = vi.spyOn(controller, 'changeChannel');
+        await controller.start();
+        expect(mockAdapterGetNetworkParameters).toHaveBeenCalledTimes(1);
+        const zdoPayload = Zdo.Buffalo.buildRequest(false, Zdo.ClusterId.NWK_UPDATE_REQUEST, [15], 0xfe, undefined, 1, undefined);
+        expect(mockAdapterSendZdo).toHaveBeenCalledWith(
+            ZSpec.BLANK_EUI64,
+            ZSpec.BroadcastAddress.SLEEPY,
+            Zdo.ClusterId.NWK_UPDATE_REQUEST,
+            zdoPayload,
+            true,
+        );
+        mockAdapterGetNetworkParameters.mockReturnValueOnce({panID: 1, extendedPanID: '0x64c5fd698daf0c00', channel: 15, nwkUpdateID: 1});
+        expect(await controller.getNetworkParameters()).toEqual({panID: 1, channel: 15, extendedPanID: '0x64c5fd698daf0c00', nwkUpdateID: 1});
+        expect(changeChannelSpy).toHaveBeenCalledTimes(1);
+    });
+
+    it('Change channel on start when nwkUpdateID is 0xff', async () => {
+        mockAdapterStart.mockReturnValueOnce('resumed');
+        mockAdapterGetNetworkParameters.mockReturnValueOnce({panID: 1, extendedPanID: '0x64c5fd698daf0c00', channel: 25, nwkUpdateID: 0xff});
         // @ts-expect-error private
         const changeChannelSpy = vi.spyOn(controller, 'changeChannel');
         await controller.start();
@@ -1130,7 +1149,7 @@ describe('Controller', () => {
             zdoPayload,
             true,
         );
-        expect(await controller.getNetworkParameters()).toEqual({panID: 1, channel: 15, extendedPanID: '0x64c5fd698daf0c00'});
+        expect(await controller.getNetworkParameters()).toEqual({panID: 1, channel: 15, extendedPanID: '0x64c5fd698daf0c00', nwkUpdateID: 0});
         expect(changeChannelSpy).toHaveBeenCalledTimes(1);
     });
 
@@ -1150,9 +1169,9 @@ describe('Controller', () => {
 
     it('Get network parameters', async () => {
         await controller.start();
-        expect(await controller.getNetworkParameters()).toEqual({panID: 1, channel: 15, extendedPanID: '0x64c5fd698daf0c00'});
+        expect(await controller.getNetworkParameters()).toEqual({panID: 1, channel: 15, extendedPanID: '0x64c5fd698daf0c00', nwkUpdateID: 0});
         // cached
-        expect(await controller.getNetworkParameters()).toEqual({panID: 1, channel: 15, extendedPanID: '0x64c5fd698daf0c00'});
+        expect(await controller.getNetworkParameters()).toEqual({panID: 1, channel: 15, extendedPanID: '0x64c5fd698daf0c00', nwkUpdateID: 0});
         expect(mockAdapterGetNetworkParameters).toHaveBeenCalledTimes(1);
     });
 

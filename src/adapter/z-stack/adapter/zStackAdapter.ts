@@ -890,6 +890,13 @@ export class ZStackAdapter extends Adapter {
             panID: result.payload.panid as number,
             extendedPanID: result.payload.extendedpanid as string, // read as IEEEADDR, so `0x${string}`
             channel: result.payload.channel as number,
+            /**
+             * Return a dummy nwkUpdateId of 0, the nwkUpdateId is used when changing channels however the
+             * zstack API does not allow to set this value. Instead it automatically increments the nwkUpdateId
+             * based on the value in the NIB.
+             * https://github.com/Koenkk/zigbee-herdsman/pull/1280#discussion_r1947815987
+             */
+            nwkUpdateID: 0,
         };
     }
 
