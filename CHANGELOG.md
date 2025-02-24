@@ -1,5 +1,13 @@
 # Changelog
 
+## [3.2.7](https://github.com/Koenkk/zigbee-herdsman/compare/v3.2.6...v3.2.7) (2025-02-24)
+
+
+### Bug Fixes
+
+* Fix some devices not moving to new channel after channel change ([#1280](https://github.com/Koenkk/zigbee-herdsman/issues/1280)) ([fc7a782](https://github.com/Koenkk/zigbee-herdsman/commit/fc7a782839dbffe8523376c6eca8933d8e70d5a9))
+* **ignore:** update dependencies ([#1319](https://github.com/Koenkk/zigbee-herdsman/issues/1319)) ([946f073](https://github.com/Koenkk/zigbee-herdsman/commit/946f073eb01ad776c1d7a37179ca3c3575d5d4ee))
+
 ## [3.2.6](https://github.com/Koenkk/zigbee-herdsman/compare/v3.2.5...v3.2.6) (2025-02-10)
 
 
