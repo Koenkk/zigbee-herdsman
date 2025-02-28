@@ -220,7 +220,16 @@ export class ZclFrame {
                         if (entry.dataType === DataType.CHAR_STR && entry.attrId === 65281) {
                             // [workaround] parse char str as Xiaomi struct
                             options.dataType = BuffaloZclDataType.MI_STRUCT;
-                        }
+                        }else if (
+                            entry.dataType === DataType.CHAR_STR &&
+                            (entry.attrId === 61448 ||
+                              entry.attrId === 61449 ||
+                              entry.attrId === 61450) &&
+                            header.manufacturerCode == 4619
+                          ) {
+                            // [workaround] parse char str as heiman buffer
+                            options.dataType = BuffaloZclDataType.BUFFER;
+                          }
                     }
 
                     entry[parameter.name] = buffalo.read(parameter.type, options);
