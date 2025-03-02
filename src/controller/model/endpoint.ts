@@ -118,8 +118,11 @@ export class Endpoint extends Entity {
     }
 
     get configuredReportings(): ConfiguredReporting[] {
+        const device = this.getDevice();
+        assert(device, `Cannot get configured reportings for unknown/deleted device ${this.deviceIeeeAddress}`);
+
         return this._configuredReportings.map((entry, index) => {
-            const cluster = Zcl.Utils.getCluster(entry.cluster, entry.manufacturerCode, this.getDevice().customClusters);
+            const cluster = Zcl.Utils.getCluster(entry.cluster, entry.manufacturerCode, device.customClusters);
             const attribute: ZclTypes.Attribute = cluster.hasAttribute(entry.attrId)
                 ? cluster.getAttribute(entry.attrId)
                 : {ID: entry.attrId, name: `attr${index}`, type: Zcl.DataType.UNKNOWN, manufacturerCode: undefined};
@@ -165,8 +168,8 @@ export class Endpoint extends Entity {
     /**
      * Get device of this endpoint
      */
-    public getDevice(): Device {
-        return Device.byIeeeAddr(this.deviceIeeeAddress)!; // XXX: no way for device to not exist?
+    public getDevice(): Device | undefined {
+        return Device.byIeeeAddr(this.deviceIeeeAddress);
     }
 
     /**
@@ -309,6 +312,8 @@ export class Endpoint extends Entity {
     ): Promise<Type> {
         const logPrefix = `Request Queue (${this.deviceIeeeAddress}/${this.ID}): `;
         const device = this.getDevice();
+        assert(device, `Cannot send to unknown/deleted device ${this.deviceIeeeAddress}`);
+
         const request = new Request(func, frame, device.pendingRequestTimeout, options.sendPolicy);
 
         if (request.sendPolicy !== 'bulk') {
@@ -428,6 +433,8 @@ export class Endpoint extends Entity {
 
     public async read(clusterKey: number | string, attributes: (string | number)[], options?: Options): Promise<KeyValue> {
         const device = this.getDevice();
+        assert(device, `Cannot read from unknown/deleted device ${this.deviceIeeeAddress}`);
+
         const cluster = this.getCluster(clusterKey, device);
         const optionsWithDefaults = this.getOptionsWithDefaults(options, true, Zcl.Direction.CLIENT_TO_SERVER, cluster.manufacturerCode);
         optionsWithDefaults.manufacturerCode = this.ensureManufacturerCodeIsUniqueAndGet(
@@ -575,7 +582,7 @@ export class Endpoint extends Entity {
     }
 
     public save(): void {
-        this.getDevice().save();
+        this.getDevice()?.save();
     }
 
     public async unbind(clusterKey: number | string, target: Endpoint | Group | number): Promise<void> {
@@ -734,6 +741,8 @@ export class Endpoint extends Entity {
         assert(options?.transactionSequenceNumber === undefined, 'Use parameter');
 
         const device = this.getDevice();
+        assert(device, `Cannot respond to unknown/deleted device ${this.deviceIeeeAddress}`);
+
         const cluster = this.getCluster(clusterKey, device);
         const command = cluster.getCommandResponse(commandKey);
         transactionSequenceNumber = transactionSequenceNumber || ZclTransactionSequenceNumber.next();
@@ -790,6 +799,8 @@ export class Endpoint extends Entity {
         timeout: number,
     ): {promise: Promise<{header: Zcl.Header; payload: KeyValue}>; cancel: () => void} {
         const device = this.getDevice();
+        assert(device, `Cannot wait for unknown/deleted device ${this.deviceIeeeAddress}`);
+
         const cluster = this.getCluster(clusterKey, device);
         const command = cluster.getCommand(commandKey);
         const waiter = Entity.adapter!.waitFor(
@@ -883,7 +894,11 @@ export class Endpoint extends Entity {
     }
 
     private getCluster(clusterKey: number | string, device: Device | undefined = undefined): ZclTypes.Cluster {
-        device = device ?? this.getDevice();
+        if (!device) {
+            device = this.getDevice();
+            assert(device, `Cannot get cluster for unknown/deleted device ${this.deviceIeeeAddress}`);
+        }
+
         return Zcl.Utils.getCluster(clusterKey, device.manufacturerID, device.customClusters);
     }
 
@@ -922,6 +937,8 @@ export class Endpoint extends Entity {
         frameType: Zcl.FrameType = Zcl.FrameType.GLOBAL,
     ): Promise<void | Zcl.Frame> {
         const device = this.getDevice();
+        assert(device, `Cannot send to unknown/deleted device ${this.deviceIeeeAddress}`);
+
         const cluster = this.getCluster(clusterKey, device);
         const command = frameType == Zcl.FrameType.GLOBAL ? Zcl.Utils.getGlobalCommand(commandKey) : cluster.getCommand(commandKey);
         const hasResponse = frameType == Zcl.FrameType.GLOBAL ? true : command.response != undefined;
@@ -972,6 +989,8 @@ export class Endpoint extends Entity {
         options?: Options,
     ): Promise<void> {
         const device = this.getDevice();
+        assert(device, `Cannot send to unknown/deleted device ${this.deviceIeeeAddress}`);
+
         const cluster = this.getCluster(clusterKey, device);
         const command = cluster.getCommand(commandKey);
         const optionsWithDefaults = this.getOptionsWithDefaults(options, true, Zcl.Direction.CLIENT_TO_SERVER, cluster.manufacturerCode);
