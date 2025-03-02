@@ -6852,7 +6852,7 @@ describe('Controller', () => {
         expect((await controller.getGroups()).length).toBe(2);
 
         const group1 = controller.getGroupByID(1)!;
-        expect(deepClone(group1)).toStrictEqual(deepClone({_events: {}, _eventsCount: 0, databaseID: 2, groupID: 1, _members: new Set(), meta: {}}));
+        expect(deepClone(group1)).toStrictEqual(deepClone({_events: {}, _eventsCount: 0, databaseID: 2, groupID: 1, _members: [], meta: {}}));
         const group2 = controller.getGroupByID(2)!;
         expect(deepClone(group2)).toStrictEqual(
             deepClone({
@@ -6860,7 +6860,7 @@ describe('Controller', () => {
                 _eventsCount: 0,
                 databaseID: 5,
                 groupID: 2,
-                _members: new Set([
+                _members: [
                     {
                         meta: {},
                         _binds: [],
@@ -6877,7 +6877,7 @@ describe('Controller', () => {
                         pendingRequests: {ID: 1, deviceIeeeAddress: '0x000b57fffec6a5b2', sendInProgress: false},
                         profileID: 49246,
                     },
-                ]),
+                ],
                 meta: {},
             }),
         );
