@@ -10,6 +10,7 @@ import {KeyValue} from '../../controller/tstype';
 import {Queue, Waitress} from '../../utils';
 import {logger} from '../../utils/logger';
 import * as ZSpec from '../../zspec';
+import {ManufacturerCode} from '../../zspec/zcl';
 import * as Zdo from '../../zspec/zdo';
 import {ZDO_REQ_CLUSTER_ID_TO_ZBOSS_COMMAND_ID} from './commands';
 import {CommandId, DeviceType, PolicyType, ResetOptions, StatusCodeGeneric} from './enums';
@@ -112,12 +113,14 @@ export class ZBOSSDriver extends EventEmitter {
         } else {
             await this.execCommand(CommandId.NWK_START_WITHOUT_FORMATION, {});
         }
+
         await this.execCommand(CommandId.SET_TC_POLICY, {type: PolicyType.LINK_KEY_REQUIRED, value: 0});
         await this.execCommand(CommandId.SET_TC_POLICY, {type: PolicyType.IC_REQUIRED, value: 0});
         await this.execCommand(CommandId.SET_TC_POLICY, {type: PolicyType.TC_REJOIN_ENABLED, value: 1});
         await this.execCommand(CommandId.SET_TC_POLICY, {type: PolicyType.IGNORE_TC_REJOIN, value: 0});
         await this.execCommand(CommandId.SET_TC_POLICY, {type: PolicyType.APS_INSECURE_JOIN, value: 0});
         await this.execCommand(CommandId.SET_TC_POLICY, {type: PolicyType.DISABLE_NWK_MGMT_CHANNEL_UPDATE, value: 0});
+        await this.execCommand(CommandId.ZDO_SET_NODE_DESC_MANUF_CODE, {manufacturerCode: ManufacturerCode.LUMI_UNITED_TECHOLOGY_LTD_SHENZHEN});
 
         await this.addEndpoint(
             1,
