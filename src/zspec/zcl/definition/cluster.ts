@@ -4126,41 +4126,6 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             },
         },
     },
-    manuSpecificPhilips: {
-        ID: 0xfc00,
-        manufacturerCode: ManufacturerCode.SIGNIFY_NETHERLANDS_B_V,
-        attributes: {
-            config: {ID: 49, type: DataType.BITMAP16},
-        },
-        commands: {},
-        commandsResponse: {
-            hueNotification: {
-                ID: 0,
-                parameters: [
-                    {name: 'button', type: DataType.UINT8},
-                    {name: 'unknown1', type: DataType.UINT24},
-                    {name: 'type', type: DataType.UINT8},
-                    {name: 'unknown2', type: DataType.UINT8},
-                    {name: 'time', type: DataType.UINT8},
-                    {name: 'unknown2', type: DataType.UINT8},
-                ],
-            },
-        },
-    },
-    manuSpecificPhilips2: {
-        ID: 0xfc03,
-        manufacturerCode: ManufacturerCode.SIGNIFY_NETHERLANDS_B_V,
-        attributes: {
-            state: {ID: 0x0002, type: DataType.OCTET_STR},
-        },
-        commands: {
-            multiColor: {
-                ID: 0,
-                parameters: [{name: 'data', type: BuffaloZclDataType.BUFFER}],
-            },
-        },
-        commandsResponse: {},
-    },
     manuSpecificSinope: {
         ID: 65281,
         manufacturerCode: ManufacturerCode.SINOPE_TECHNOLOGIES,
