@@ -476,7 +476,7 @@ export class Device extends Entity<ControllerEventMap> {
         const commandHasResponse = frame.command.response != undefined;
         const disableDefaultResponse = frame.header.frameControl.disableDefaultResponse;
         /* v8 ignore next */
-        const disableTuyaDefaultResponse = endpoint.getDevice()!.manufacturerName?.startsWith('_TZ') && process.env['DISABLE_TUYA_DEFAULT_RESPONSE'];
+        const disableTuyaDefaultResponse = endpoint.getDevice().manufacturerName?.startsWith('_TZ') && process.env['DISABLE_TUYA_DEFAULT_RESPONSE'];
         // Sometimes messages are received twice, prevent responding twice
         const alreadyResponded = this._lastDefaultResponseSequenceNumber === frame.header.transactionSequenceNumber;
 
