@@ -5279,6 +5279,22 @@ describe('Controller', () => {
         });
     });
 
+    it('Try to get deleted device from endpoint', async () => {
+        await controller.start();
+        await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
+        const device = controller.getDeviceByIeeeAddr('0x129')!;
+        const endpoint = device.getEndpoint(1)!;
+        await mockAdapterEvents['deviceLeave']({networkAddress: 129, ieeeAddr: '0x129'});
+        // @ts-expect-error private
+        expect(Device.devices.size).toStrictEqual(1);
+        // @ts-expect-error private
+        expect(Device.deletedDevices.size).toStrictEqual(1);
+        const delDevice = endpoint.getDevice();
+
+        expect(delDevice).toBeUndefined();
+        expect(mockLogger.error).toHaveBeenCalledWith('Tried to get unknown/deleted device 0x129 from endpoint 1.', 'zh:controller:endpoint');
+    });
+
     it('Command response', async () => {
         await controller.start();
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
