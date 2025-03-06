@@ -1,5 +1,20 @@
 # Changelog
 
+## [3.3.0](https://github.com/Koenkk/zigbee-herdsman/compare/v3.2.7...v3.3.0) (2025-03-06)
+
+
+### Features
+
+* Add util to discover all serial/mDNS devices ([#1333](https://github.com/Koenkk/zigbee-herdsman/issues/1333)) ([fb27845](https://github.com/Koenkk/zigbee-herdsman/commit/fb27845215fc1d3b867e944823b588ced9bc0978))
+
+
+### Bug Fixes
+
+* Endpoint device & group members typing ([#1330](https://github.com/Koenkk/zigbee-herdsman/issues/1330)) ([d668227](https://github.com/Koenkk/zigbee-herdsman/commit/d668227236feeb43e7995b45ea4bef25389b7a50))
+* **ignore:** remove obsolete @types/eslint__js ([bb51058](https://github.com/Koenkk/zigbee-herdsman/commit/bb510581e2cd57a5a2d0177396c3026c9fc5635a))
+* **ignore:** update dependencies ([#1324](https://github.com/Koenkk/zigbee-herdsman/issues/1324)) ([572c4b8](https://github.com/Koenkk/zigbee-herdsman/commit/572c4b8f4580da9c0a353b50f9a155c4a360d19e))
+* **ignore:** update dependencies ([#1329](https://github.com/Koenkk/zigbee-herdsman/issues/1329)) ([80009db](https://github.com/Koenkk/zigbee-herdsman/commit/80009db8b62b8c957c8a156a793a55d2eef7e9bc))
+
 ## [3.2.7](https://github.com/Koenkk/zigbee-herdsman/compare/v3.2.6...v3.2.7) (2025-02-24)
 
 
