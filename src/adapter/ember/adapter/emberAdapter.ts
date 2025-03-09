@@ -13,6 +13,7 @@ import {EUI64, ExtendedPanId, NodeId, PanId} from '../../../zspec/tstypes';
 import * as Zcl from '../../../zspec/zcl';
 import * as Zdo from '../../../zspec/zdo';
 import * as ZdoTypes from '../../../zspec/zdo/definition/tstypes';
+import {WORKAROUND_JOIN_MANUF_IEEE_PREFIX_TO_CODE} from '../../const';
 import {DeviceJoinedPayload, DeviceLeavePayload, ZclPayload} from '../../events';
 import {
     EMBER_HIGH_RAM_CONCENTRATOR,
@@ -216,15 +217,6 @@ const DEFAULT_NETWORK_REQUEST_TIMEOUT = 10000; // nothing on the network to both
 const WATCHDOG_COUNTERS_FEED_INTERVAL = 3600000; // every hour...
 /** Default manufacturer code reported by coordinator. */
 const DEFAULT_MANUFACTURER_CODE = Zcl.ManufacturerCode.SILICON_LABORATORIES;
-/**
- * Workaround for devices that require a specific manufacturer code to be reported by coordinator while interviewing...
- * - Lumi/Aqara devices do not work properly otherwise (missing features): https://github.com/Koenkk/zigbee2mqtt/issues/9274
- */
-const WORKAROUND_JOIN_MANUF_IEEE_PREFIX_TO_CODE: {[ieeePrefix: string]: Zcl.ManufacturerCode} = {
-    // NOTE: Lumi has a new prefix registered since 2021, in case they start using that one with new devices, it might need to be added here too...
-    //       "0x18c23c" https://maclookup.app/vendors/lumi-united-technology-co-ltd
-    '0x54ef44': Zcl.ManufacturerCode.LUMI_UNITED_TECHOLOGY_LTD_SHENZHEN,
-};
 
 /**
  * Relay calls between Z2M and EZSP-layer and handle any error that might occur via queue & waitress.
