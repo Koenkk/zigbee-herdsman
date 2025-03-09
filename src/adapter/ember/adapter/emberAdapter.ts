@@ -224,6 +224,7 @@ const WORKAROUND_JOIN_MANUF_IEEE_PREFIX_TO_CODE: {[ieeePrefix: string]: Zcl.Manu
     // NOTE: Lumi has a new prefix registered since 2021, in case they start using that one with new devices, it might need to be added here too...
     //       "0x18c23c" https://maclookup.app/vendors/lumi-united-technology-co-ltd
     '0x54ef44': Zcl.ManufacturerCode.LUMI_UNITED_TECHOLOGY_LTD_SHENZHEN,
+    '0x04cf8c': Zcl.ManufacturerCode.LUMI_UNITED_TECHOLOGY_LTD_SHENZHEN,
 };
 
 /**
@@ -402,6 +403,16 @@ export class EmberAdapter extends Adapter {
             case SLStatus.ZIGBEE_NETWORK_CLOSED: {
                 this.oneWaitress.resolveEvent(OneWaitressEvents.STACK_STATUS_NETWORK_CLOSED);
                 logger.info(`[STACK STATUS] Network closed.`, NS);
+
+                if (this.manufacturerCode !== DEFAULT_MANUFACTURER_CODE) {
+                    await this.queue.execute<void>(async () => {
+                        logger.debug(`[WORKAROUND] Reverting coordinator manufacturer code to default.`, NS);
+                        await this.ezsp.ezspSetManufacturerCode(DEFAULT_MANUFACTURER_CODE);
+
+                        this.manufacturerCode = DEFAULT_MANUFACTURER_CODE;
+                    });
+                }
+
                 break;
             }
             case SLStatus.ZIGBEE_CHANNEL_CHANGED: {
@@ -1864,13 +1875,6 @@ export class EmberAdapter extends Adapter {
                     throw new Error(`[ZDO] Failed set join policy with status=${SLStatus[setJPstatus]}.`);
                 }
             } else {
-                if (this.manufacturerCode !== DEFAULT_MANUFACTURER_CODE) {
-                    logger.debug(`[WORKAROUND] Reverting coordinator manufacturer code to default.`, NS);
-                    await this.ezsp.ezspSetManufacturerCode(DEFAULT_MANUFACTURER_CODE);
-
-                    this.manufacturerCode = DEFAULT_MANUFACTURER_CODE;
-                }
-
                 await this.ezsp.ezspClearTransientLinkKeys();
 
                 const setJPstatus = await this.emberSetJoinPolicy(EmberJoinDecision.ALLOW_REJOINS_ONLY);
