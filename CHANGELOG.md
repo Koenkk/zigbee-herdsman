@@ -1,5 +1,13 @@
 # Changelog
 
+## [3.3.1](https://github.com/Koenkk/zigbee-herdsman/compare/v3.3.0...v3.3.1) (2025-03-09)
+
+
+### Bug Fixes
+
+* Ember: Lumi manuf code workaround for permit join ([#1334](https://github.com/Koenkk/zigbee-herdsman/issues/1334)) ([b87246b](https://github.com/Koenkk/zigbee-herdsman/commit/b87246b9b2221a1366f7f40839bd2cbcebae9989))
+* **ignore:** update dependencies ([#1335](https://github.com/Koenkk/zigbee-herdsman/issues/1335)) ([84f16d7](https://github.com/Koenkk/zigbee-herdsman/commit/84f16d7e46038a8b0513addae156dcbb5bb1f0d6))
+
 ## [3.3.0](https://github.com/Koenkk/zigbee-herdsman/compare/v3.2.7...v3.3.0) (2025-03-06)
 
 
