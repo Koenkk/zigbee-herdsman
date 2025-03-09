@@ -5703,6 +5703,7 @@ describe('Controller', () => {
     it('Write to group with custom cluster', async () => {
         await controller.start();
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
+
         const device = controller.getDeviceByIeeeAddr('0x129')!;
         device.addCustomCluster('myCustomCluster', {
             ID: 9123,
@@ -5710,7 +5711,7 @@ describe('Controller', () => {
             commandsResponse: {},
             attributes: {superAttribute: {ID: 0, type: Zcl.DataType.UINT8}},
         });
-        const group = await controller.createGroup(2);
+        const group = controller.createGroup(2);
         group.addMember(device.getEndpoint(1)!);
         await group.write('myCustomCluster', {superAttribute: 5}, {});
         expect(mocksendZclFrameToGroup).toHaveBeenCalledTimes(1);
@@ -5755,20 +5756,19 @@ describe('Controller', () => {
 
     it('Write to empty group with custom cluster should fail', async () => {
         await controller.start();
-        const group = await controller.createGroup(2);
-        let error;
-        try {
+
+        const group = controller.createGroup(2);
+
+        await expect(async () => {
             await group.write('myCustomCluster', {superAttribute: 5}, {});
-        } catch (e) {
-            error = e;
-        }
-        expect(error).toStrictEqual(new Error(`Cluster with name 'myCustomCluster' does not exist`));
+        }).rejects.toStrictEqual(new Error(`Cluster with name 'myCustomCluster' does not exist`));
+        expect(group.getCommonCustomClusters()).toStrictEqual({});
     });
 
     it('Write to group with unsupported custom cluster should fail', async () => {
         await controller.start();
-
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
+
         const device = controller.getDeviceByIeeeAddr('0x129')!;
         device.addCustomCluster('myCustomCluster', {
             ID: 9123,
@@ -5776,15 +5776,65 @@ describe('Controller', () => {
             commandsResponse: {},
             attributes: {superAttribute: {ID: 0, type: Zcl.DataType.UINT8}},
         });
-        const group = await controller.createGroup(2);
+        const group = controller.createGroup(2);
         group.addMember(device.getEndpoint(1)!);
-        let error;
-        try {
+
+        await expect(async () => {
             await group.write('otherCustomCluster', {superAttribute: 5}, {});
-        } catch (e) {
-            error = e;
-        }
-        expect(error).toStrictEqual(new Error(`Cluster with name 'otherCustomCluster' does not exist`));
+        }).rejects.toThrow(new Error(`Cluster with name 'otherCustomCluster' does not exist`));
+    });
+
+    it('Gets group common custom clusters', async () => {
+        await controller.start();
+        await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
+
+        const device = controller.getDeviceByIeeeAddr('0x129')!;
+        device.addCustomCluster('myCustomCluster', {
+            ID: 9123,
+            commands: {},
+            commandsResponse: {},
+            attributes: {superAttribute: {ID: 0, type: Zcl.DataType.UINT8}},
+        });
+        const group = controller.createGroup(2);
+        group.addMember(device.getEndpoint(1)!);
+
+        const expectedCustomClusters = {
+            myCustomCluster: {
+                ID: 9123,
+                attributes: {
+                    superAttribute: {
+                        ID: 0,
+                        type: 32,
+                    },
+                },
+                commands: {},
+                commandsResponse: {},
+            },
+        };
+
+        expect(group.getCommonCustomClusters(true)).toStrictEqual(expectedCustomClusters);
+
+        device.addCustomCluster('myCustomCluster', {
+            ID: 1234,
+            commands: {},
+            commandsResponse: {},
+            attributes: {superAttribute: {ID: 0, type: Zcl.DataType.UINT8}},
+        });
+
+        expect(group.getCommonCustomClusters(true)).toStrictEqual(expectedCustomClusters);
+        expect(group.getCommonCustomClusters()).toStrictEqual({
+            myCustomCluster: {
+                ID: 1234,
+                attributes: {
+                    superAttribute: {
+                        ID: 0,
+                        type: 32,
+                    },
+                },
+                commands: {},
+                commandsResponse: {},
+            },
+        });
     });
 
     it('Write to group with unknown attribute should fail', async () => {

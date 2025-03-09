@@ -28,7 +28,7 @@ export class Group extends Entity {
     private databaseID: number;
     public readonly groupID: number;
     private readonly _members: Endpoint[];
-    private _customClusters: CustomClusters | undefined;
+    private _commonCustomClusters: CustomClusters | undefined;
     // Can be used by applications to store data.
     public readonly meta: KeyValue;
 
@@ -174,7 +174,7 @@ export class Group extends Entity {
     public addMember(endpoint: Endpoint): void {
         if (!this._members.includes(endpoint)) {
             this._members.push(endpoint);
-            this._customClusters = undefined;
+            this._commonCustomClusters = undefined;
             this.save();
         }
     }
@@ -184,13 +184,38 @@ export class Group extends Entity {
 
         if (i > -1) {
             this._members.splice(i, 1);
-            this._customClusters = undefined;
+            this._commonCustomClusters = undefined;
             this.save();
         }
     }
 
     public hasMember(endpoint: Endpoint): boolean {
         return this._members.includes(endpoint);
+    }
+
+    /**
+     * Custom clusters that all members have in common.
+     * NOTE: This public getter always refreshes the underlaying variable to current state.
+     */
+    public getCommonCustomClusters(ignoreCache: boolean = false): CustomClusters {
+        if (!ignoreCache || !this._commonCustomClusters) {
+            if (this._members.length > 0) {
+                const customClusters = this._members[0].getDevice().customClusters;
+                const commonClusters: CustomClusters = {};
+
+                for (const clusterName in customClusters) {
+                    if (this._members.every((member) => clusterName in member.getDevice().customClusters)) {
+                        commonClusters[clusterName] = customClusters[clusterName];
+                    }
+                }
+
+                this._commonCustomClusters = commonClusters;
+            } else {
+                this._commonCustomClusters = {};
+            }
+        }
+
+        return this._commonCustomClusters;
     }
 
     /*
@@ -227,7 +252,7 @@ export class Group extends Entity {
                 'write',
                 cluster.ID,
                 payload,
-                this._customClusters ?? {},
+                this._commonCustomClusters ?? {},
                 optionsWithDefaults.reservedBits,
             );
 
@@ -259,7 +284,7 @@ export class Group extends Entity {
             'read',
             cluster.ID,
             payload,
-            this._customClusters ?? {},
+            this._commonCustomClusters ?? {},
             optionsWithDefaults.reservedBits,
         );
 
@@ -296,7 +321,7 @@ export class Group extends Entity {
                 command.ID,
                 cluster.ID,
                 payload,
-                this._customClusters ?? {},
+                this._commonCustomClusters ?? {},
                 optionsWithDefaults.reservedBits,
             );
 
@@ -321,31 +346,10 @@ export class Group extends Entity {
         };
     }
 
-    /**
-     * Calculate, store, and return custom clusters that all members share.
-     */
-    private calculateCustomClusters(): CustomClusters {
-        if (this._members.size === 0) {
-            return (this._customClusters = {});
-        }
-
-        const membersArray = Array.from(this._members);
-        const firstMember = membersArray[0];
-        const customClusters = firstMember.getDevice().customClusters;
-
-        const commonClusters: CustomClusters = {};
-        for (const clusterName in customClusters) {
-            if (membersArray.every((member) => clusterName in member.getDevice().customClusters)) {
-                commonClusters[clusterName] = customClusters[clusterName];
-            }
-        }
-
-        return (this._customClusters = commonClusters);
-    }
-
     private getCluster(key: string | number): Cluster {
-        if (this._customClusters) {
-            return Zcl.Utils.getCluster(key, undefined, this._customClusters);
+        if (this._commonCustomClusters) {
+            // if already cached, use that
+            return Zcl.Utils.getCluster(key, undefined, this._commonCustomClusters);
         }
 
         // At first, don't fully calculate custom clusters
@@ -354,7 +358,7 @@ export class Group extends Entity {
         // If no cluster was found, and we haven't calculated custom clusters,
         // do so now, and then retry
         if (!cluster) {
-            return Zcl.Utils.getCluster(key, undefined, this.calculateCustomClusters());
+            return Zcl.Utils.getCluster(key, undefined, this.getCommonCustomClusters());
         }
 
         return cluster;
