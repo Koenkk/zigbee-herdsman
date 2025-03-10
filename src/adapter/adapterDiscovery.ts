@@ -1,16 +1,18 @@
+import type {Adapter, DiscoverableUsbAdapter, UsbAdapterFingerprint} from './tstype';
+
 import assert from 'node:assert';
 import {platform} from 'node:os';
 
 import {PortInfo} from '@serialport/bindings-cpp';
 import {Bonjour, Service} from 'bonjour-service';
 
+import {wait} from '../utils';
 import {logger} from '../utils/logger';
 import {SerialPort} from './serialPort';
-import {Adapter, DiscoverableUSBAdapter, USBAdapterFingerprint} from './tstype';
 
 const NS = 'zh:adapter:discovery';
 
-const enum USBFingerprintMatchScore {
+const enum UsbFingerprintMatchScore {
     NONE = 0,
     VID_PID = 1,
     VID_PID_MANUF = 2,
@@ -30,7 +32,7 @@ const enum USBFingerprintMatchScore {
  *
  * XXX: vendorId `10c4` + productId `ea60` is a problem on Windows since can't match `path` and possibly can't match `manufacturer` to refine properly
  */
-const USB_FINGERPRINTS: Record<DiscoverableUSBAdapter, USBAdapterFingerprint[]> = {
+const USB_FINGERPRINTS: Record<DiscoverableUsbAdapter, UsbAdapterFingerprint[]> = {
     deconz: [
         {
             // Conbee II
@@ -250,6 +252,9 @@ const USB_FINGERPRINTS: Record<DiscoverableUSBAdapter, USBAdapterFingerprint[]> 
  */
 const USB_FINGERPRINTS_CONFLICT_IDS: ReadonlyArray<string /* vendorId:productId */> = ['10c4:ea60'];
 
+/** Time allotted for mDNS scanning */
+const MDNS_SCAN_TIME = 2000;
+
 async function getSerialPortList(): Promise<PortInfo[]> {
     const portInfos = await SerialPort.list();
 
@@ -284,9 +289,9 @@ function matchRegex(regexStr: string, str?: string): boolean {
     return str !== undefined && new RegExp(regexStr, 'i').test(str);
 }
 
-function matchUSBFingerprint(
+function matchUsbFingerprint(
     portInfo: PortInfo,
-    entries: USBAdapterFingerprint[],
+    entries: UsbAdapterFingerprint[],
     isWindows: boolean,
     conflictProne: boolean,
 ): [path: PortInfo['path'], score: number] | undefined {
@@ -295,8 +300,8 @@ function matchUSBFingerprint(
         return;
     }
 
-    let match: USBAdapterFingerprint | undefined;
-    let score: number = USBFingerprintMatchScore.NONE;
+    let match: UsbAdapterFingerprint | undefined;
+    let score: number = UsbFingerprintMatchScore.NONE;
 
     for (const entry of entries) {
         if (!matchString(portInfo.vendorId, entry.vendorId) || !matchString(portInfo.productId, entry.productId)) {
@@ -304,19 +309,19 @@ function matchUSBFingerprint(
         }
 
         // allow matching on vendorId+productId only on Windows
-        if (score < USBFingerprintMatchScore.VID_PID && isWindows) {
+        if (score < UsbFingerprintMatchScore.VID_PID && isWindows) {
             match = entry;
-            score = USBFingerprintMatchScore.VID_PID;
+            score = UsbFingerprintMatchScore.VID_PID;
         }
 
         if (
-            score < USBFingerprintMatchScore.VID_PID_MANUF &&
+            score < UsbFingerprintMatchScore.VID_PID_MANUF &&
             entry.manufacturer &&
             portInfo.manufacturer &&
             matchString(portInfo.manufacturer, entry.manufacturer)
         ) {
             match = entry;
-            score = USBFingerprintMatchScore.VID_PID_MANUF;
+            score = UsbFingerprintMatchScore.VID_PID_MANUF;
 
             if (isWindows && !conflictProne) {
                 // path will never match on Windows (COMx), assume vendor+product+manufacturer is "exact match"
@@ -326,25 +331,25 @@ function matchUSBFingerprint(
         }
 
         if (
-            score < USBFingerprintMatchScore.VID_PID_PATH &&
+            score < UsbFingerprintMatchScore.VID_PID_PATH &&
             entry.pathRegex &&
             (matchRegex(entry.pathRegex, portInfo.path) || matchRegex(entry.pathRegex, portInfo.pnpId))
         ) {
-            if (score === USBFingerprintMatchScore.VID_PID_MANUF) {
+            if (score === UsbFingerprintMatchScore.VID_PID_MANUF) {
                 // best possible match, return early
-                return [portInfo.path, USBFingerprintMatchScore.VID_PID_MANUF_PATH];
+                return [portInfo.path, UsbFingerprintMatchScore.VID_PID_MANUF_PATH];
             } else {
                 match = entry;
-                score = USBFingerprintMatchScore.VID_PID_PATH;
+                score = UsbFingerprintMatchScore.VID_PID_PATH;
             }
         }
     }
 
     // poor match only returned if port info not conflict-prone
-    return match && (score > USBFingerprintMatchScore.VID_PID || !conflictProne) ? [portInfo.path, score] : undefined;
+    return match && (score > UsbFingerprintMatchScore.VID_PID || !conflictProne) ? [portInfo.path, score] : undefined;
 }
 
-export async function matchUSBAdapter(adapter: Adapter, path: string): Promise<boolean> {
+export async function matchUsbAdapter(adapter: Adapter, path: string): Promise<boolean> {
     const isWindows = platform() === 'win32';
     const portList = await getSerialPortList();
 
@@ -356,7 +361,7 @@ export async function matchUSBAdapter(adapter: Adapter, path: string): Promise<b
         }
 
         const conflictProne = USB_FINGERPRINTS_CONFLICT_IDS.includes(`${portInfo.vendorId}:${portInfo.productId}`);
-        const match = matchUSBFingerprint(portInfo, USB_FINGERPRINTS[adapter === 'ezsp' ? 'ember' : adapter], isWindows, conflictProne);
+        const match = matchUsbFingerprint(portInfo, USB_FINGERPRINTS[adapter === 'ezsp' ? 'ember' : adapter], isWindows, conflictProne);
 
         if (match) {
             logger.info(() => `Matched adapter: ${JSON.stringify(portInfo)} => ${adapter}: ${JSON.stringify(match[1])}`, NS);
@@ -367,10 +372,39 @@ export async function matchUSBAdapter(adapter: Adapter, path: string): Promise<b
     return false;
 }
 
-export async function findUSBAdapter(
+export async function findUsbAdapterBestMatch(
+    adapter: Adapter | undefined,
+    portInfo: PortInfo,
+    isWindows: boolean,
+    conflictProne: boolean,
+): Promise<[DiscoverableUsbAdapter, NonNullable<ReturnType<typeof matchUsbFingerprint>>] | undefined> {
+    let bestMatch: [DiscoverableUsbAdapter, NonNullable<ReturnType<typeof matchUsbFingerprint>>] | undefined;
+
+    for (const key in USB_FINGERPRINTS) {
+        if (adapter && adapter !== key) {
+            continue;
+        }
+
+        const match = matchUsbFingerprint(portInfo, USB_FINGERPRINTS[key as DiscoverableUsbAdapter]!, isWindows, conflictProne);
+
+        // register the match if no previous or better score
+        if (match && (!bestMatch || bestMatch[1][1] < match[1])) {
+            bestMatch = [key as DiscoverableUsbAdapter, match];
+
+            if (match[1] === UsbFingerprintMatchScore.VID_PID_MANUF_PATH) {
+                // got best possible match, exit loop
+                break;
+            }
+        }
+    }
+
+    return bestMatch;
+}
+
+export async function findUsbAdapter(
     adapter?: Adapter,
     path?: string,
-): Promise<[adapter: DiscoverableUSBAdapter, path: PortInfo['path']] | undefined> {
+): Promise<[adapter: DiscoverableUsbAdapter, path: PortInfo['path']] | undefined> {
     const isWindows = platform() === 'win32';
     // refine to DiscoverableUSBAdapter
     adapter = adapter && adapter === 'ezsp' ? 'ember' : adapter;
@@ -384,25 +418,7 @@ export async function findUSBAdapter(
         }
 
         const conflictProne = USB_FINGERPRINTS_CONFLICT_IDS.includes(`${portInfo.vendorId}:${portInfo.productId}`);
-        let bestMatch: [DiscoverableUSBAdapter, NonNullable<ReturnType<typeof matchUSBFingerprint>>] | undefined;
-
-        for (const key in USB_FINGERPRINTS) {
-            if (adapter && adapter !== key) {
-                continue;
-            }
-
-            const match = matchUSBFingerprint(portInfo, USB_FINGERPRINTS[key as DiscoverableUSBAdapter]!, isWindows, conflictProne);
-
-            // register the match if no previous or better score
-            if (match && (!bestMatch || bestMatch[1][1] < match[1])) {
-                bestMatch = [key as DiscoverableUSBAdapter, match];
-
-                if (match[1] === USBFingerprintMatchScore.VID_PID_MANUF_PATH) {
-                    // got best possible match, exit loop
-                    break;
-                }
-            }
-        }
+        const bestMatch = await findUsbAdapterBestMatch(adapter, portInfo, isWindows, conflictProne);
 
         if (bestMatch) {
             logger.info(
@@ -414,7 +430,18 @@ export async function findUSBAdapter(
     }
 }
 
-export async function findmDNSAdapter(path: string): Promise<[adapter: Adapter, path: string]> {
+function getMdnsRadioAdapter(radio: string): Adapter {
+    switch (radio) {
+        case 'znp':
+            return 'zstack';
+        case 'ezsp':
+            return 'ember';
+        default:
+            return radio as Adapter;
+    }
+}
+
+export async function findMdnsAdapter(path: string): Promise<[adapter: Adapter, path: string]> {
     const mdnsDevice = path.substring(7);
 
     if (mdnsDevice.length == 0) {
@@ -422,17 +449,16 @@ export async function findmDNSAdapter(path: string): Promise<[adapter: Adapter, 
     }
 
     const bj = new Bonjour();
-    const mdnsTimeout = 2000; // timeout for mdns scan
 
     logger.info(`Starting mdns discovery for coordinator: ${mdnsDevice}`, NS);
 
     return await new Promise((resolve, reject) => {
-        bj.findOne({type: mdnsDevice}, mdnsTimeout, function (service: Service) {
+        bj.findOne({type: mdnsDevice}, MDNS_SCAN_TIME, (service: Service) => {
             if (service) {
                 if (service.txt?.radio_type && service.port) {
                     const mdnsAddress = service.addresses?.[0] ?? service.host;
                     const mdnsPort = service.port;
-                    const mdnsAdapter = (service.txt.radio_type == 'znp' ? 'zstack' : service.txt.radio_type) as Adapter;
+                    const mdnsAdapter = getMdnsRadioAdapter(service.txt.radio_type);
 
                     logger.info(`Coordinator Address: ${mdnsAddress}`, NS);
                     logger.info(`Coordinator Port: ${mdnsPort}`, NS);
@@ -452,13 +478,13 @@ export async function findmDNSAdapter(path: string): Promise<[adapter: Adapter, 
                 }
             } else {
                 bj.destroy();
-                reject(new Error(`Coordinator [${mdnsDevice}] not found after timeout of ${mdnsTimeout}ms!`));
+                reject(new Error(`Coordinator [${mdnsDevice}] not found after timeout of ${MDNS_SCAN_TIME}ms!`));
             }
         });
     });
 }
 
-export async function findTCPAdapter(path: string, adapter?: Adapter): Promise<[adapter: Adapter, path: string]> {
+export async function findTcpAdapter(path: string, adapter?: Adapter): Promise<[adapter: Adapter, path: string]> {
     try {
         const url = new URL(path);
         assert(url.port !== '');
@@ -491,12 +517,12 @@ export async function findTCPAdapter(path: string, adapter?: Adapter): Promise<[
 export async function discoverAdapter(adapter?: Adapter, path?: string): Promise<[adapter: Adapter, path: string]> {
     if (path) {
         if (path.startsWith('mdns://')) {
-            return await findmDNSAdapter(path);
+            return await findMdnsAdapter(path);
         } else if (path.startsWith('tcp://') || path.startsWith('socket://')) {
-            return await findTCPAdapter(path, adapter);
+            return await findTcpAdapter(path, adapter);
         } else if (adapter) {
             try {
-                const matched = await matchUSBAdapter(adapter, path);
+                const matched = await matchUsbAdapter(adapter, path);
 
                 if (!matched) {
                     logger.debug(`Unable to match USB adapter: ${adapter} | ${path}`, NS);
@@ -511,7 +537,7 @@ export async function discoverAdapter(adapter?: Adapter, path?: string): Promise
 
     try {
         // default to matching USB
-        const match = await findUSBAdapter(adapter, path);
+        const match = await findUsbAdapter(adapter, path);
 
         if (!match) {
             throw new Error(`No valid USB adapter found`);
@@ -522,4 +548,66 @@ export async function discoverAdapter(adapter?: Adapter, path?: string): Promise
     } catch (error) {
         throw new Error(`USB adapter discovery error (${(error as Error).message}). Specify valid 'adapter' and 'port' in your configuration.`);
     }
+}
+
+/**
+ * @returns List of all serial and mDNS devices found, with matching `adapter` if available
+ */
+export async function findAllDevices(): Promise<{name: string; path: string; adapter?: Adapter}[]> {
+    const devices: {name: string; path: string; adapter?: Adapter}[] = [];
+    const isWindows = platform() === 'win32';
+
+    try {
+        const portList = await getSerialPortList();
+
+        for (const portInfo of portList) {
+            // override matching on Windows, too many chances of mismatch due to lacking data
+            const bestMatch = isWindows
+                ? undefined
+                : await findUsbAdapterBestMatch(
+                      undefined,
+                      portInfo,
+                      isWindows,
+                      USB_FINGERPRINTS_CONFLICT_IDS.includes(`${portInfo.vendorId}:${portInfo.productId}`),
+                  );
+            // @ts-expect-error friendlyName Windows only
+            const friendlyName = portInfo.friendlyName ?? portInfo.pnpId;
+
+            devices.push({
+                name: `${friendlyName} (${portInfo.manufacturer})`,
+                path: portInfo.path,
+                adapter: bestMatch ? bestMatch[0] : undefined,
+            });
+        }
+        /* v8 ignore start */
+    } catch (error) {
+        logger.debug(`Failed to retrieve serial list ${(error as Error).message}.`, NS);
+    }
+    /* v8 ignore stop */
+
+    try {
+        const bonjour = new Bonjour();
+        const browser = bonjour.find(null, (service) => {
+            if (service.txt?.radio_type) {
+                const path = `tcp://${service.addresses?.[0] ?? service.host}:${service.port}`;
+
+                devices.push({
+                    name: `${service.name ?? service.txt.name ?? 'Unknown'} (${path})`,
+                    path,
+                    adapter: getMdnsRadioAdapter(service.txt.radio_type),
+                });
+            }
+        });
+
+        browser.start();
+        await wait(MDNS_SCAN_TIME);
+        browser.stop();
+        bonjour.destroy();
+        /* v8 ignore start */
+    } catch (error) {
+        logger.debug(`Failed to retrieve mDNS list ${(error as Error).message}.`, NS);
+    }
+    /* v8 ignore stop */
+
+    return devices;
 }

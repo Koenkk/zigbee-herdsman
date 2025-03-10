@@ -26,10 +26,7 @@ interface OptionsWithDefaults extends Options {
 export class Group extends Entity {
     private databaseID: number;
     public readonly groupID: number;
-    private readonly _members: Set<Endpoint>;
-    get members(): Endpoint[] {
-        return Array.from(this._members).filter((e) => e.getDevice());
-    }
+    private readonly _members: Endpoint[];
     // Can be used by applications to store data.
     public readonly meta: KeyValue;
 
@@ -38,7 +35,12 @@ export class Group extends Entity {
     private static readonly groups: Map<number /* groupID */, Group> = new Map();
     private static loadedFromDatabase: boolean = false;
 
-    private constructor(databaseID: number, groupID: number, members: Set<Endpoint>, meta: KeyValue) {
+    /** Member endpoints with valid devices (not unknown/deleted) */
+    get members(): Endpoint[] {
+        return this._members.filter((e) => e.getDevice() !== undefined);
+    }
+
+    private constructor(databaseID: number, groupID: number, members: Endpoint[], meta: KeyValue) {
         super();
         this.databaseID = databaseID;
         this.groupID = groupID;
@@ -59,7 +61,8 @@ export class Group extends Entity {
     }
 
     private static fromDatabaseEntry(entry: DatabaseEntry): Group {
-        const members = new Set<Endpoint>();
+        // db is expected to never contain duplicate, so no need for explicit check
+        const members: Endpoint[] = [];
 
         for (const member of entry.members) {
             const device = Device.byIeeeAddr(member.deviceIeeeAddr);
@@ -68,7 +71,7 @@ export class Group extends Entity {
                 const endpoint = device.getEndpoint(member.endpointID);
 
                 if (endpoint) {
-                    members.add(endpoint);
+                    members.push(endpoint);
                 }
             }
         }
@@ -79,8 +82,12 @@ export class Group extends Entity {
     private toDatabaseRecord(): DatabaseEntry {
         const members: DatabaseEntry['members'] = [];
 
-        for (const member of this.members) {
-            members.push({deviceIeeeAddr: member.getDevice().ieeeAddr, endpointID: member.ID});
+        for (const member of this._members) {
+            const device = member.getDevice();
+
+            if (device) {
+                members.push({deviceIeeeAddr: device.ieeeAddr, endpointID: member.ID});
+            }
         }
 
         return {id: this.databaseID, type: 'Group', groupID: this.groupID, members, meta: this.meta};
@@ -133,7 +140,7 @@ export class Group extends Entity {
         }
 
         const databaseID = Entity.database!.newID();
-        const group = new Group(databaseID, groupID, new Set(), {});
+        const group = new Group(databaseID, groupID, [], {});
         Entity.database!.insert(group.toDatabaseRecord());
 
         Group.groups.set(group.groupID, group);
@@ -163,17 +170,23 @@ export class Group extends Entity {
     }
 
     public addMember(endpoint: Endpoint): void {
-        this._members.add(endpoint);
-        this.save();
+        if (!this._members.includes(endpoint)) {
+            this._members.push(endpoint);
+            this.save();
+        }
     }
 
     public removeMember(endpoint: Endpoint): void {
-        this._members.delete(endpoint);
-        this.save();
+        const i = this._members.indexOf(endpoint);
+
+        if (i > -1) {
+            this._members.splice(i, 1);
+            this.save();
+        }
     }
 
     public hasMember(endpoint: Endpoint): boolean {
-        return this._members.has(endpoint);
+        return this._members.includes(endpoint);
     }
 
     /*

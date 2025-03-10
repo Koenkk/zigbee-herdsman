@@ -118,8 +118,10 @@ export class Endpoint extends Entity {
     }
 
     get configuredReportings(): ConfiguredReporting[] {
+        const device = this.getDevice();
+
         return this._configuredReportings.map((entry, index) => {
-            const cluster = Zcl.Utils.getCluster(entry.cluster, entry.manufacturerCode, this.getDevice().customClusters);
+            const cluster = Zcl.Utils.getCluster(entry.cluster, entry.manufacturerCode, device.customClusters);
             const attribute: ZclTypes.Attribute = cluster.hasAttribute(entry.attrId)
                 ? cluster.getAttribute(entry.attrId)
                 : {ID: entry.attrId, name: `attr${index}`, type: Zcl.DataType.UNKNOWN, manufacturerCode: undefined};
@@ -166,7 +168,14 @@ export class Endpoint extends Entity {
      * Get device of this endpoint
      */
     public getDevice(): Device {
-        return Device.byIeeeAddr(this.deviceIeeeAddress)!; // XXX: no way for device to not exist?
+        const device = Device.byIeeeAddr(this.deviceIeeeAddress);
+
+        if (!device) {
+            logger.error(`Tried to get unknown/deleted device ${this.deviceIeeeAddress} from endpoint ${this.ID}.`, NS);
+            logger.debug(new Error().stack!, NS);
+        }
+
+        return device!;
     }
 
     /**
@@ -883,7 +892,10 @@ export class Endpoint extends Entity {
     }
 
     private getCluster(clusterKey: number | string, device: Device | undefined = undefined): ZclTypes.Cluster {
-        device = device ?? this.getDevice();
+        if (!device) {
+            device = this.getDevice();
+        }
+
         return Zcl.Utils.getCluster(clusterKey, device.manufacturerID, device.customClusters);
     }
 

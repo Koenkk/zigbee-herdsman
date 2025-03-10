@@ -394,6 +394,16 @@ export class EmberAdapter extends Adapter {
             case SLStatus.ZIGBEE_NETWORK_CLOSED: {
                 this.oneWaitress.resolveEvent(OneWaitressEvents.STACK_STATUS_NETWORK_CLOSED);
                 logger.info(`[STACK STATUS] Network closed.`, NS);
+
+                if (this.manufacturerCode !== DEFAULT_MANUFACTURER_CODE) {
+                    await this.queue.execute<void>(async () => {
+                        logger.debug(`[WORKAROUND] Reverting coordinator manufacturer code to default.`, NS);
+                        await this.ezsp.ezspSetManufacturerCode(DEFAULT_MANUFACTURER_CODE);
+
+                        this.manufacturerCode = DEFAULT_MANUFACTURER_CODE;
+                    });
+                }
+
                 break;
             }
             case SLStatus.ZIGBEE_CHANNEL_CHANGED: {
@@ -1856,13 +1866,6 @@ export class EmberAdapter extends Adapter {
                     throw new Error(`[ZDO] Failed set join policy with status=${SLStatus[setJPstatus]}.`);
                 }
             } else {
-                if (this.manufacturerCode !== DEFAULT_MANUFACTURER_CODE) {
-                    logger.debug(`[WORKAROUND] Reverting coordinator manufacturer code to default.`, NS);
-                    await this.ezsp.ezspSetManufacturerCode(DEFAULT_MANUFACTURER_CODE);
-
-                    this.manufacturerCode = DEFAULT_MANUFACTURER_CODE;
-                }
-
                 await this.ezsp.ezspClearTransientLinkKeys();
 
                 const setJPstatus = await this.emberSetJoinPolicy(EmberJoinDecision.ALLOW_REJOINS_ONLY);
