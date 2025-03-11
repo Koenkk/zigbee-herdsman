@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.3.2](https://github.com/Koenkk/zigbee-herdsman/compare/v3.3.1...v3.3.2) (2025-03-11)
+
+
+### Bug Fixes
+
+* Zboss: fix joining of Lumi devices ([#1331](https://github.com/Koenkk/zigbee-herdsman/issues/1331)) ([3db0312](https://github.com/Koenkk/zigbee-herdsman/commit/3db0312020c8b84b92cb726609f5b673b0c9098a))
+
 ## [3.3.1](https://github.com/Koenkk/zigbee-herdsman/compare/v3.3.0...v3.3.1) (2025-03-09)
 
 
