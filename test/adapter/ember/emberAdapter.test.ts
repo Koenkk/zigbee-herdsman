@@ -2249,6 +2249,7 @@ describe('Ember Adapter Layer', () => {
                 panID: DEFAULT_NETWORK_OPTIONS.panID,
                 extendedPanID: ZSpec.Utils.eui64LEBufferToHex(Buffer.from(DEFAULT_NETWORK_OPTIONS.extendedPanID!)),
                 channel: DEFAULT_NETWORK_OPTIONS.channelList[0],
+                nwkUpdateID: 0,
             } as TsType.NetworkParameters);
             expect(mockEzspGetNetworkParameters).toHaveBeenCalledTimes(0);
         });
@@ -2260,13 +2261,14 @@ describe('Ember Adapter Layer', () => {
                 panID: DEFAULT_NETWORK_OPTIONS.panID,
                 extendedPanID: ZSpec.Utils.eui64LEBufferToHex(Buffer.from(DEFAULT_NETWORK_OPTIONS.extendedPanID!)),
                 channel: DEFAULT_NETWORK_OPTIONS.channelList[0],
+                nwkUpdateID: 0,
             } as TsType.NetworkParameters);
             expect(mockEzspGetNetworkParameters).toHaveBeenCalledTimes(1);
         });
 
         it('Adapter impl: addInstallCode', async () => {
             await expect(
-                adapter.addInstallCode('0x1122334455667788', Buffer.from('DD7ED5CDAA8E2C708B67D2B1573DB6843A5F', 'hex')),
+                adapter.addInstallCode('0x1122334455667788', Buffer.from('DD7ED5CDAA8E2C708B67D2B1573DB6843A5F', 'hex'), false),
             ).resolves.toStrictEqual(undefined);
             expect(mockEzspImportTransientKey).toHaveBeenCalledTimes(1);
             expect(loggerSpies.debug).toHaveBeenCalledWith(`[ADD INSTALL CODE] Success for '0x1122334455667788'.`, 'zh:ember');
@@ -2275,7 +2277,7 @@ describe('Ember Adapter Layer', () => {
         it('Adapter impl: throw when addInstallCode fails import transient key', async () => {
             mockEzspImportTransientKey.mockResolvedValueOnce(SLStatus.FAIL);
 
-            await expect(adapter.addInstallCode('0x1122334455667788', Buffer.alloc(16))).rejects.toThrow(
+            await expect(adapter.addInstallCode('0x1122334455667788', Buffer.alloc(16), true)).rejects.toThrow(
                 `[ADD INSTALL CODE] Failed for '0x1122334455667788' with status=FAIL.`,
             );
             expect(mockEzspImportTransientKey).toHaveBeenCalledTimes(1);

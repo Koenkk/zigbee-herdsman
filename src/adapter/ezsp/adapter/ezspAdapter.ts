@@ -214,11 +214,11 @@ export class EZSPAdapter extends Adapter {
         return {type: `EZSP v${this.driver.version.product}`, meta: this.driver.version};
     }
 
-    public async addInstallCode(ieeeAddress: string, key: Buffer): Promise<void> {
+    public async addInstallCode(ieeeAddress: string, key: Buffer, hashed: boolean): Promise<void> {
         if ([8, 10, 14, 16, 18].indexOf(key.length) === -1) {
             throw new Error('Wrong install code length');
         }
-        await this.driver.addInstallCode(ieeeAddress, key);
+        await this.driver.addInstallCode(ieeeAddress, key, hashed);
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -462,6 +462,7 @@ export class EZSPAdapter extends Adapter {
             panID: this.driver.networkParams.panId,
             extendedPanID: ZSpec.Utils.eui64LEBufferToHex(this.driver.networkParams.extendedPanId),
             channel: this.driver.networkParams.radioChannel,
+            nwkUpdateID: this.driver.networkParams.nwkUpdateId,
         };
     }
 

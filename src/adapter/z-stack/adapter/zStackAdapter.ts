@@ -766,9 +766,10 @@ export class ZStackAdapter extends Adapter {
         });
     }
 
-    public async addInstallCode(ieeeAddress: string, key: Buffer): Promise<void> {
+    public async addInstallCode(ieeeAddress: string, key: Buffer, hashed: boolean): Promise<void> {
         assert(this.version.product !== ZnpVersion.zStack12, 'Install code is not supported for ZStack 1.2 adapter');
-        const payload = {installCodeFormat: key.length === 18 ? 1 : 2, ieeeaddr: ieeeAddress, installCode: key};
+        // TODO: always use 0x2? => const hashedKey = hashed ? key : ZSpec.Utils.aes128MmoHash(key);
+        const payload = {installCodeFormat: hashed ? 0x2 : 0x1, ieeeaddr: ieeeAddress, installCode: key};
         await this.znp.request(Subsystem.APP_CNF, 'bdbAddInstallCode', payload);
     }
 
@@ -889,6 +890,13 @@ export class ZStackAdapter extends Adapter {
             panID: result.payload.panid as number,
             extendedPanID: result.payload.extendedpanid as string, // read as IEEEADDR, so `0x${string}`
             channel: result.payload.channel as number,
+            /**
+             * Return a dummy nwkUpdateId of 0, the nwkUpdateId is used when changing channels however the
+             * zstack API does not allow to set this value. Instead it automatically increments the nwkUpdateId
+             * based on the value in the NIB.
+             * https://github.com/Koenkk/zigbee-herdsman/pull/1280#discussion_r1947815987
+             */
+            nwkUpdateID: 0,
         };
     }
 

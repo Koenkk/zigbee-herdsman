@@ -1,7 +1,7 @@
 export type Adapter = 'deconz' | 'ember' | 'zstack' | 'zboss' | 'zigate' | 'ezsp' | 'zoh';
-export type DiscoverableUSBAdapter = 'deconz' | 'ember' | 'zstack' | 'zboss' | 'zigate';
+export type DiscoverableUsbAdapter = 'deconz' | 'ember' | 'zstack' | 'zboss' | 'zigate';
 
-export type USBAdapterFingerprint = {
+export type UsbAdapterFingerprint = {
     vendorId: string;
     productId: string;
     manufacturer?: string;
@@ -74,4 +74,5 @@ export interface NetworkParameters {
     panID: number;
     extendedPanID: string; // `0x${string}` same as IEEE address
     channel: number;
+    nwkUpdateID: number;
 }

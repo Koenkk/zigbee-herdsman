@@ -37,6 +37,44 @@ const mockLogger = {
     error: vi.fn(),
 };
 
+const mockDummyBackup: Models.Backup = {
+    networkOptions: {
+        panId: 6755,
+        extendedPanId: Buffer.from('deadbeef01020304', 'hex'),
+        channelList: [11],
+        networkKey: Buffer.from('a1a2a3a4a5a6a7a8b1b2b3b4b5b6b7b8', 'hex'),
+        networkKeyDistribute: false,
+    },
+    coordinatorIeeeAddress: Buffer.from('0102030405060708', 'hex'),
+    logicalChannel: 11,
+    networkUpdateId: 0,
+    securityLevel: 5,
+    znp: {
+        version: 1,
+    },
+    networkKeyInfo: {
+        sequenceNumber: 0,
+        frameCounter: 10000,
+    },
+    devices: [
+        {
+            networkAddress: 1001,
+            ieeeAddress: Buffer.from('c1c2c3c4c5c6c7c8', 'hex'),
+            isDirectChild: false,
+        },
+        {
+            networkAddress: 1002,
+            ieeeAddress: Buffer.from('d1d2d3d4d5d6d7d8', 'hex'),
+            isDirectChild: false,
+            linkKey: {
+                key: Buffer.from('f8f7f6f5f4f3f2f1e1e2e3e4e5e6e7e8', 'hex'),
+                rxCounter: 10000,
+                txCounter: 5000,
+            },
+        },
+    ],
+};
+
 const mockAdapterEvents = {};
 const mockAdapterWaitFor = vi.fn();
 const mockAdapterSupportsDiscoverRoute = vi.fn();
@@ -51,11 +89,12 @@ const mockAdapterReset = vi.fn();
 const mockAdapterStop = vi.fn();
 const mockAdapterStart = vi.fn().mockReturnValue('resumed');
 const mockAdapterGetCoordinatorIEEE = vi.fn().mockReturnValue('0x0000012300000000');
-const mockAdapterGetNetworkParameters = vi.fn().mockReturnValue({panID: 1, extendedPanID: '0x64c5fd698daf0c00', channel: 15});
+const mockAdapterGetNetworkParameters = vi.fn().mockReturnValue({panID: 1, extendedPanID: '0x64c5fd698daf0c00', channel: 15, nwkUpdateID: 0});
 const mocksendZclFrameToGroup = vi.fn();
 const mocksendZclFrameToAll = vi.fn();
 const mockAddInstallCode = vi.fn();
 const mocksendZclFrameToEndpoint = vi.fn();
+const mockApaterBackup = vi.fn(() => Promise.resolve(mockDummyBackup));
 let sendZdoResponseStatus = Zdo.Status.SUCCESS;
 const mockAdapterSendZdo = vi
     .fn()
@@ -318,44 +357,6 @@ const getCluster = (key) => {
     return cluster;
 };
 
-const mockDummyBackup: Models.Backup = {
-    networkOptions: {
-        panId: 6755,
-        extendedPanId: Buffer.from('deadbeef01020304', 'hex'),
-        channelList: [11],
-        networkKey: Buffer.from('a1a2a3a4a5a6a7a8b1b2b3b4b5b6b7b8', 'hex'),
-        networkKeyDistribute: false,
-    },
-    coordinatorIeeeAddress: Buffer.from('0102030405060708', 'hex'),
-    logicalChannel: 11,
-    networkUpdateId: 0,
-    securityLevel: 5,
-    znp: {
-        version: 1,
-    },
-    networkKeyInfo: {
-        sequenceNumber: 0,
-        frameCounter: 10000,
-    },
-    devices: [
-        {
-            networkAddress: 1001,
-            ieeeAddress: Buffer.from('c1c2c3c4c5c6c7c8', 'hex'),
-            isDirectChild: false,
-        },
-        {
-            networkAddress: 1002,
-            ieeeAddress: Buffer.from('d1d2d3d4d5d6d7d8', 'hex'),
-            isDirectChild: false,
-            linkKey: {
-                key: Buffer.from('f8f7f6f5f4f3f2f1e1e2e3e4e5e6e7e8', 'hex'),
-                rxCounter: 10000,
-                txCounter: 5000,
-            },
-        },
-    ],
-};
-
 let dummyBackup;
 
 vi.mock('../src/adapter/z-stack/adapter/zStackAdapter', () => ({
@@ -368,9 +369,7 @@ vi.mock('../src/adapter/z-stack/adapter/zStackAdapter', () => ({
         getCoordinatorIEEE: mockAdapterGetCoordinatorIEEE,
         reset: mockAdapterReset,
         supportsBackup: mockAdapterSupportsBackup,
-        backup: () => {
-            return mockDummyBackup;
-        },
+        backup: mockApaterBackup,
         getCoordinatorVersion: () => {
             return {type: 'zStack', meta: {version: 1}};
         },
@@ -1117,7 +1116,27 @@ describe('Controller', () => {
 
     it('Change channel on start', async () => {
         mockAdapterStart.mockReturnValueOnce('resumed');
-        mockAdapterGetNetworkParameters.mockReturnValueOnce({panID: 1, extendedPanID: '0x64c5fd698daf0c00', channel: 25});
+        mockAdapterGetNetworkParameters.mockReturnValueOnce({panID: 1, extendedPanID: '0x64c5fd698daf0c00', channel: 25, nwkUpdateID: 0});
+        // @ts-expect-error private
+        const changeChannelSpy = vi.spyOn(controller, 'changeChannel');
+        await controller.start();
+        expect(mockAdapterGetNetworkParameters).toHaveBeenCalledTimes(1);
+        const zdoPayload = Zdo.Buffalo.buildRequest(false, Zdo.ClusterId.NWK_UPDATE_REQUEST, [15], 0xfe, undefined, 1, undefined);
+        expect(mockAdapterSendZdo).toHaveBeenCalledWith(
+            ZSpec.BLANK_EUI64,
+            ZSpec.BroadcastAddress.SLEEPY,
+            Zdo.ClusterId.NWK_UPDATE_REQUEST,
+            zdoPayload,
+            true,
+        );
+        mockAdapterGetNetworkParameters.mockReturnValueOnce({panID: 1, extendedPanID: '0x64c5fd698daf0c00', channel: 15, nwkUpdateID: 1});
+        expect(await controller.getNetworkParameters()).toEqual({panID: 1, channel: 15, extendedPanID: '0x64c5fd698daf0c00', nwkUpdateID: 1});
+        expect(changeChannelSpy).toHaveBeenCalledTimes(1);
+    });
+
+    it('Change channel on start when nwkUpdateID is 0xff', async () => {
+        mockAdapterStart.mockReturnValueOnce('resumed');
+        mockAdapterGetNetworkParameters.mockReturnValueOnce({panID: 1, extendedPanID: '0x64c5fd698daf0c00', channel: 25, nwkUpdateID: 0xff});
         // @ts-expect-error private
         const changeChannelSpy = vi.spyOn(controller, 'changeChannel');
         await controller.start();
@@ -1130,7 +1149,7 @@ describe('Controller', () => {
             zdoPayload,
             true,
         );
-        expect(await controller.getNetworkParameters()).toEqual({panID: 1, channel: 15, extendedPanID: '0x64c5fd698daf0c00'});
+        expect(await controller.getNetworkParameters()).toEqual({panID: 1, channel: 15, extendedPanID: '0x64c5fd698daf0c00', nwkUpdateID: 0});
         expect(changeChannelSpy).toHaveBeenCalledTimes(1);
     });
 
@@ -1150,9 +1169,9 @@ describe('Controller', () => {
 
     it('Get network parameters', async () => {
         await controller.start();
-        expect(await controller.getNetworkParameters()).toEqual({panID: 1, channel: 15, extendedPanID: '0x64c5fd698daf0c00'});
+        expect(await controller.getNetworkParameters()).toEqual({panID: 1, channel: 15, extendedPanID: '0x64c5fd698daf0c00', nwkUpdateID: 0});
         // cached
-        expect(await controller.getNetworkParameters()).toEqual({panID: 1, channel: 15, extendedPanID: '0x64c5fd698daf0c00'});
+        expect(await controller.getNetworkParameters()).toEqual({panID: 1, channel: 15, extendedPanID: '0x64c5fd698daf0c00', nwkUpdateID: 0});
         expect(mockAdapterGetNetworkParameters).toHaveBeenCalledTimes(1);
     });
 
@@ -1825,6 +1844,7 @@ describe('Controller', () => {
         expect(mockAddInstallCode).toHaveBeenCalledWith(
             '0x9035EAFFFE424783',
             Buffer.from([0xae, 0x3b, 0x28, 0x72, 0x81, 0xcf, 0x16, 0xf5, 0x50, 0x73, 0x3a, 0x0c, 0xec, 0x38, 0xaa, 0x31, 0xe8, 0x02]),
+            false,
         );
     });
 
@@ -1832,10 +1852,16 @@ describe('Controller', () => {
         await controller.start();
         const code = 'RB01SG0D836591B3CC0010000000000000000000000D6F00179F2BC9DLKD0F471C9BBA2C0208608E91EED17E2B1';
         await controller.addInstallCode(code);
-        expect(mockAddInstallCode).toHaveBeenCalledTimes(1);
+        expect(mockAddInstallCode).toHaveBeenCalledTimes(2);
         expect(mockAddInstallCode).toHaveBeenCalledWith(
             '0x000D6F00179F2BC9',
             Buffer.from([0xd0, 0xf4, 0x71, 0xc9, 0xbb, 0xa2, 0xc0, 0x20, 0x86, 0x08, 0xe9, 0x1e, 0xed, 0x17, 0xe2, 0xb1, 0x9a, 0xec]),
+            false,
+        );
+        expect(mockAddInstallCode).toHaveBeenCalledWith(
+            '0x000D6F00179F2BC9',
+            Buffer.from([0xd0, 0xf4, 0x71, 0xc9, 0xbb, 0xa2, 0xc0, 0x20, 0x86, 0x08, 0xe9, 0x1e, 0xed, 0x17, 0xe2, 0xb1]),
+            true,
         );
         expect(mockLogger.info).toHaveBeenCalledWith(`Install code was adjusted for reason 'missing CRC'.`, 'zh:controller');
     });
@@ -1848,6 +1874,7 @@ describe('Controller', () => {
         expect(mockAddInstallCode).toHaveBeenCalledWith(
             '0x54EF44100006E7DF',
             Buffer.from([0x33, 0x13, 0xa0, 0x05, 0xe1, 0x77, 0xa6, 0x47, 0xfc, 0x79, 0x25, 0x62, 0x0a, 0xb2, 0x07, 0xc4, 0xbe, 0xf5]),
+            false,
         );
     });
 
@@ -1859,6 +1886,7 @@ describe('Controller', () => {
         expect(mockAddInstallCode).toHaveBeenCalledWith(
             '0x54EF44100006E7DF',
             Buffer.from([0x33, 0x13, 0xa0, 0x05, 0xe1, 0x77, 0xa6, 0x47, 0xfc, 0x79, 0x25, 0x62, 0x0a, 0xb2, 0x07, 0xc4, 0xbe, 0xf5]),
+            false,
         );
     });
 
@@ -5251,6 +5279,22 @@ describe('Controller', () => {
         });
     });
 
+    it('Try to get deleted device from endpoint', async () => {
+        await controller.start();
+        await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
+        const device = controller.getDeviceByIeeeAddr('0x129')!;
+        const endpoint = device.getEndpoint(1)!;
+        await mockAdapterEvents['deviceLeave']({networkAddress: 129, ieeeAddr: '0x129'});
+        // @ts-expect-error private
+        expect(Device.devices.size).toStrictEqual(1);
+        // @ts-expect-error private
+        expect(Device.deletedDevices.size).toStrictEqual(1);
+        const delDevice = endpoint.getDevice();
+
+        expect(delDevice).toBeUndefined();
+        expect(mockLogger.error).toHaveBeenCalledWith('Tried to get unknown/deleted device 0x129 from endpoint 1.', 'zh:controller:endpoint');
+    });
+
     it('Command response', async () => {
         await controller.start();
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
@@ -6824,7 +6868,7 @@ describe('Controller', () => {
         expect((await controller.getGroups()).length).toBe(2);
 
         const group1 = controller.getGroupByID(1)!;
-        expect(deepClone(group1)).toStrictEqual(deepClone({_events: {}, _eventsCount: 0, databaseID: 2, groupID: 1, _members: new Set(), meta: {}}));
+        expect(deepClone(group1)).toStrictEqual(deepClone({_events: {}, _eventsCount: 0, databaseID: 2, groupID: 1, _members: [], meta: {}}));
         const group2 = controller.getGroupByID(2)!;
         expect(deepClone(group2)).toStrictEqual(
             deepClone({
@@ -6832,7 +6876,7 @@ describe('Controller', () => {
                 _eventsCount: 0,
                 databaseID: 5,
                 groupID: 2,
-                _members: new Set([
+                _members: [
                     {
                         meta: {},
                         _binds: [],
@@ -6849,7 +6893,7 @@ describe('Controller', () => {
                         pendingRequests: {ID: 1, deviceIeeeAddress: '0x000b57fffec6a5b2', sendInProgress: false},
                         profileID: 49246,
                     },
-                ]),
+                ],
                 meta: {},
             }),
         );

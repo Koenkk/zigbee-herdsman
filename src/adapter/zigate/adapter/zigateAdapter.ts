@@ -155,7 +155,7 @@ export class ZiGateAdapter extends Adapter {
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    public async addInstallCode(ieeeAddress: string, key: Buffer): Promise<void> {
+    public async addInstallCode(ieeeAddress: string, key: Buffer, hashed: boolean): Promise<void> {
         throw new Error('Add install code is not supported');
     }
 
@@ -175,6 +175,7 @@ export class ZiGateAdapter extends Adapter {
                 panID: result.payload.PANID as number,
                 extendedPanID: result.payload.ExtPANID as string, // read as IEEEADDR, so `0x${string}`
                 channel: result.payload.Channel as number,
+                nwkUpdateID: 0 as number,
             };
         } catch (error) {
             throw new Error(`Get network parameters failed ${error}`);

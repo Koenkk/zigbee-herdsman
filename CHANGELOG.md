@@ -1,5 +1,45 @@
 # Changelog
 
+## [3.3.1](https://github.com/Koenkk/zigbee-herdsman/compare/v3.3.0...v3.3.1) (2025-03-09)
+
+
+### Bug Fixes
+
+* Ember: Lumi manuf code workaround for permit join ([#1334](https://github.com/Koenkk/zigbee-herdsman/issues/1334)) ([b87246b](https://github.com/Koenkk/zigbee-herdsman/commit/b87246b9b2221a1366f7f40839bd2cbcebae9989))
+* **ignore:** update dependencies ([#1335](https://github.com/Koenkk/zigbee-herdsman/issues/1335)) ([84f16d7](https://github.com/Koenkk/zigbee-herdsman/commit/84f16d7e46038a8b0513addae156dcbb5bb1f0d6))
+
+## [3.3.0](https://github.com/Koenkk/zigbee-herdsman/compare/v3.2.7...v3.3.0) (2025-03-06)
+
+
+### Features
+
+* Add util to discover all serial/mDNS devices ([#1333](https://github.com/Koenkk/zigbee-herdsman/issues/1333)) ([fb27845](https://github.com/Koenkk/zigbee-herdsman/commit/fb27845215fc1d3b867e944823b588ced9bc0978))
+
+
+### Bug Fixes
+
+* Endpoint device & group members typing ([#1330](https://github.com/Koenkk/zigbee-herdsman/issues/1330)) ([d668227](https://github.com/Koenkk/zigbee-herdsman/commit/d668227236feeb43e7995b45ea4bef25389b7a50))
+* **ignore:** remove obsolete @types/eslint__js ([bb51058](https://github.com/Koenkk/zigbee-herdsman/commit/bb510581e2cd57a5a2d0177396c3026c9fc5635a))
+* **ignore:** update dependencies ([#1324](https://github.com/Koenkk/zigbee-herdsman/issues/1324)) ([572c4b8](https://github.com/Koenkk/zigbee-herdsman/commit/572c4b8f4580da9c0a353b50f9a155c4a360d19e))
+* **ignore:** update dependencies ([#1329](https://github.com/Koenkk/zigbee-herdsman/issues/1329)) ([80009db](https://github.com/Koenkk/zigbee-herdsman/commit/80009db8b62b8c957c8a156a793a55d2eef7e9bc))
+
+## [3.2.7](https://github.com/Koenkk/zigbee-herdsman/compare/v3.2.6...v3.2.7) (2025-02-24)
+
+
+### Bug Fixes
+
+* Fix some devices not moving to new channel after channel change ([#1280](https://github.com/Koenkk/zigbee-herdsman/issues/1280)) ([fc7a782](https://github.com/Koenkk/zigbee-herdsman/commit/fc7a782839dbffe8523376c6eca8933d8e70d5a9))
+* **ignore:** update dependencies ([#1319](https://github.com/Koenkk/zigbee-herdsman/issues/1319)) ([946f073](https://github.com/Koenkk/zigbee-herdsman/commit/946f073eb01ad776c1d7a37179ca3c3575d5d4ee))
+
+## [3.2.6](https://github.com/Koenkk/zigbee-herdsman/compare/v3.2.5...v3.2.6) (2025-02-10)
+
+
+### Bug Fixes
+
+* **ignore:** update dependencies ([#1314](https://github.com/Koenkk/zigbee-herdsman/issues/1314)) ([e986201](https://github.com/Koenkk/zigbee-herdsman/commit/e986201434cef3e5f4f5afdc800203c2d151a5d4))
+* **ignore:** update dependencies ([#1316](https://github.com/Koenkk/zigbee-herdsman/issues/1316)) ([877e905](https://github.com/Koenkk/zigbee-herdsman/commit/877e905e251d54aabd313901fc97db5e3f09a4fd))
+* Install code processing ([#1317](https://github.com/Koenkk/zigbee-herdsman/issues/1317)) ([2cf176b](https://github.com/Koenkk/zigbee-herdsman/commit/2cf176baff31e98c0b8df1b653cb553251f4f93e))
+
 ## [3.2.5](https://github.com/Koenkk/zigbee-herdsman/compare/v3.2.4...v3.2.5) (2025-01-28)
 
 

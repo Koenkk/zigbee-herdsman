@@ -167,12 +167,13 @@ export class ZBOSSAdapter extends Adapter {
                 panID,
                 extendedPanID: ZSpec.Utils.eui64LEBufferToHex(Buffer.from(extendedPanID)),
                 channel,
+                nwkUpdateID: 0,
             };
         });
     }
 
-    public async addInstallCode(ieeeAddress: string, key: Buffer): Promise<void> {
-        logger.error(`NOT SUPPORTED: sendZclFrameToGroup(${ieeeAddress},${key.toString('hex')}`, NS);
+    public async addInstallCode(ieeeAddress: string, key: Buffer, hashed: boolean): Promise<void> {
+        logger.error(`NOT SUPPORTED: sendZclFrameToGroup(${ieeeAddress},${key.toString('hex')},${hashed}`, NS);
         throw new Error(`Install code is not supported for 'zboss' yet`);
     }
 

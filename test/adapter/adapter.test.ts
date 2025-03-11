@@ -1,8 +1,9 @@
 import type {MockInstance} from 'vitest';
 
-import {Bonjour, BrowserConfig} from 'bonjour-service';
+import {Bonjour, BrowserConfig, Service} from 'bonjour-service';
 
 import {Adapter, TsType} from '../../src/adapter';
+import {findAllDevices} from '../../src/adapter/adapterDiscovery';
 import {DeconzAdapter} from '../../src/adapter/deconz/adapter/deconzAdapter';
 import {EmberAdapter} from '../../src/adapter/ember/adapter/emberAdapter';
 import {EZSPAdapter} from '../../src/adapter/ezsp/adapter/ezspAdapter';
@@ -38,7 +39,16 @@ const mockBonjourResult = vi.fn().mockImplementation((type) => ({
         radio_type: `${type}`,
     },
 }));
-const mockBonjourFindOne = vi.fn((opts: BrowserConfig | null, timeout: number, callback?: CallableFunction) => {
+const mockBonjourFind = vi.fn((opts: BrowserConfig | null, onup?: (service: Service) => void) => {
+    if (onup) {
+        onup(mockBonjourResult('zstack'));
+        onup(mockBonjourResult('ezsp')); // expected as `ember` Adapter
+        onup(mockBonjourResult('znp')); // expected as `zstack` Adapter
+    }
+
+    return {start: vi.fn(), stop: vi.fn()};
+});
+const mockBonjourFindOne = vi.fn((opts: BrowserConfig | null, timeout: number, callback?: (service: Service) => void) => {
     if (callback) {
         callback(mockBonjourResult(opts?.type));
     }
@@ -47,6 +57,7 @@ const mockBonjourDestroy = vi.fn();
 
 vi.mock('bonjour-service', () => ({
     Bonjour: vi.fn(() => ({
+        find: mockBonjourFind,
         findOne: mockBonjourFindOne,
         destroy: mockBonjourDestroy,
     })),
@@ -55,6 +66,18 @@ vi.mock('bonjour-service', () => ({
 describe('Adapter', () => {
     beforeAll(() => {
         vi.useFakeTimers();
+    });
+
+    afterAll(() => {
+        vi.useRealTimers();
+    });
+
+    beforeEach(() => {
+        mockPlatform.mockClear();
+        mockBonjourResult.mockClear();
+        mockBonjourFind.mockClear();
+        mockBonjourFindOne.mockClear();
+        mockBonjourDestroy.mockClear();
     });
 
     it.each([
@@ -75,17 +98,124 @@ describe('Adapter', () => {
         expect(adapter).toBeInstanceOf(cls);
     });
 
-    describe('mDNS discovery', () => {
-        beforeEach(() => {
-            mockBonjourResult.mockClear();
-            mockBonjourFindOne.mockClear();
-            mockBonjourDestroy.mockClear();
-        });
+    it('finds all devices', async () => {
+        vi.spyOn(SerialPort, 'list').mockResolvedValueOnce([
+            Object.assign({pnpId: 'deconz conbee ii', serialNumber: '', locationId: ''}, DECONZ_CONBEE_II),
+            Object.assign({pnpId: 'zbdongle-e', serialNumber: '', locationId: ''}, EMBER_ZBDONGLE_E),
+            Object.assign({pnpId: 'cc2538', serialNumber: '', locationId: ''}, ZSTACK_CC2538),
+            Object.assign({pnpId: 'nordic', serialNumber: '', locationId: ''}, ZBOSS_NORDIC),
+            Object.assign({pnpId: 'zigate-plus-v2', serialNumber: '', locationId: '', manufacturer: ''}, ZIGATE_PLUSV2),
+        ]);
 
+        const p = findAllDevices();
+
+        await vi.advanceTimersByTimeAsync(2500);
+
+        await expect(p).resolves.toStrictEqual([
+            {
+                name: 'zigate-plus-v2 ()',
+                path: '/dev/serial/by-id/usb-FTDI_ZiGate_ZIGATE+-if00-port0',
+                adapter: 'zigate',
+            },
+            {
+                name: 'zbdongle-e (ITEAD)',
+                path: '/dev/serial/by-id/usb-ITEAD_SONOFF_Zigbee_3.0_USB_Dongle_Plus_V2_20240122184111-if00',
+                adapter: 'ember',
+            },
+            {
+                name: 'cc2538 (Texas Instruments)',
+                path: '/dev/serial/by-id/usb-Texas_Instruments_CC2538_USB_CDC-if00',
+                adapter: 'zstack',
+            },
+            {
+                name: 'nordic (ZEPHYR)',
+                path: '/dev/serial/by-id/usb-ZEPHYR_Zigbee_NCP_54ACCFAFA6DADC49-if00',
+                adapter: 'zboss',
+            },
+            {
+                name: 'deconz conbee ii (dresden elektronik ingenieurtechnik GmbH)',
+                path: '/dev/serial/by-id/usb-dresden_elektronik_ingenieurtechnik_GmbH_ConBee_II_DE2132111-if00',
+                adapter: 'deconz',
+            },
+            {
+                name: 'Mock Adapter (tcp://192.168.1.123:1122)',
+                path: 'tcp://192.168.1.123:1122',
+                adapter: 'zstack',
+            },
+            {
+                name: 'Mock Adapter (tcp://192.168.1.123:1122)',
+                path: 'tcp://192.168.1.123:1122',
+                adapter: 'ember',
+            },
+            {
+                name: 'Mock Adapter (tcp://192.168.1.123:1122)',
+                path: 'tcp://192.168.1.123:1122',
+                adapter: 'zstack',
+            },
+        ]);
+        expect(mockBonjourDestroy).toHaveBeenCalledTimes(1);
+    });
+
+    it('finds all devices with quirks', async () => {
+        // on Windows
+        mockPlatform.mockReturnValueOnce('win32');
+        vi.spyOn(SerialPort, 'list').mockResolvedValueOnce([
+            Object.assign({pnpId: 'zbdongle-e', serialNumber: '', locationId: '', friendlyName: 'silicon labs cp210x'}, EMBER_ZBDONGLE_E),
+        ]);
+        // `name` in `txt`, no `addresses`
+        mockBonjourResult.mockImplementationOnce((type) => ({
+            type: `${type}_mdns`,
+            port: '1122',
+            host: 'mock_adapter.local',
+            txt: {
+                name: 'Mock Adapter',
+                radio_type: `${type}`,
+            },
+        }));
+        // no name
+        mockBonjourResult.mockImplementationOnce((type) => ({
+            type: `${type}_mdns`,
+            port: '1122',
+            host: 'mock_adapter.local',
+            addresses: ['192.168.1.123'],
+            txt: {
+                radio_type: `${type}`,
+            },
+        }));
+
+        const p = findAllDevices();
+
+        await vi.advanceTimersByTimeAsync(2500);
+        await expect(p).resolves.toStrictEqual([
+            {
+                name: 'silicon labs cp210x (ITEAD)',
+                path: '/dev/serial/by-id/usb-ITEAD_SONOFF_Zigbee_3.0_USB_Dongle_Plus_V2_20240122184111-if00',
+                adapter: undefined,
+            },
+            {
+                name: 'Mock Adapter (tcp://mock_adapter.local:1122)',
+                path: 'tcp://mock_adapter.local:1122',
+                adapter: 'zstack',
+            },
+            {
+                name: 'Unknown (tcp://192.168.1.123:1122)',
+                path: 'tcp://192.168.1.123:1122',
+                adapter: 'ember',
+            },
+            {
+                name: 'Mock Adapter (tcp://192.168.1.123:1122)',
+                path: 'tcp://192.168.1.123:1122',
+                adapter: 'zstack',
+            },
+        ]);
+        expect(mockBonjourDestroy).toHaveBeenCalledTimes(1);
+    });
+
+    describe('mDNS discovery', () => {
         it.each([
             ['deconz', DeconzAdapter],
             ['ember', EmberAdapter],
-            ['ezsp', EZSPAdapter],
+            ['ezsp', EmberAdapter], // `ezsp` radio_type uses `ember` Adapter
             ['zstack', ZStackAdapter],
             ['zboss', ZBOSSAdapter],
             ['zigate', ZiGateAdapter],
@@ -96,7 +226,7 @@ describe('Adapter', () => {
             // @ts-expect-error protected
             expect(adapter.serialPortOptions).toStrictEqual({
                 path: 'tcp://192.168.1.123:1122',
-                adapter: name,
+                adapter: name === 'ezsp' ? 'ember' : name,
             });
         });
 
@@ -212,7 +342,7 @@ describe('Adapter', () => {
             });
         });
 
-        test.each([`tcp://192168.1.321`, `tcp://192168.1.321:INVALID`])('invalid path', async (path) => {
+        it.each([`tcp://192168.1.321`, `tcp://192168.1.321:INVALID`])('invalid path', async (path) => {
             await expect(
                 Adapter.create({panID: 0x1a62, channelList: [11]}, {path, adapter: `zstack`}, 'test.db.backup', {
                     disableLED: false,
