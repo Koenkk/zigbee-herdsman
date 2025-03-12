@@ -233,10 +233,10 @@ export class ZoHAdapter extends Adapter {
         await this.driver.start();
         await this.driver.formNetwork();
 
-        this.driver.on('FRAME', this.onFrame.bind(this));
-        this.driver.on('DEVICE_JOINED', this.onDeviceJoined.bind(this));
-        this.driver.on('DEVICE_REJOINED', this.onDeviceRejoined.bind(this));
-        this.driver.on('DEVICE_LEFT', this.onDeviceLeft.bind(this));
+        this.driver.on('frame', this.onFrame.bind(this));
+        this.driver.on('deviceJoined', this.onDeviceJoined.bind(this));
+        this.driver.on('deviceRejoined', this.onDeviceRejoined.bind(this));
+        this.driver.on('deviceLeft', this.onDeviceLeft.bind(this));
 
         return 'resumed';
     }
@@ -279,6 +279,7 @@ export class ZoHAdapter extends Adapter {
             panID: this.driver.netParams.panId,
             extendedPanID: bigUInt64ToHexBE(this.driver.netParams.extendedPANId),
             channel: this.driver.netParams.channel,
+            nwkUpdateID: this.driver.netParams.nwkUpdateId,
         };
     }
 
