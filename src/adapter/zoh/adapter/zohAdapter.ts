@@ -1,4 +1,5 @@
 import {Socket} from 'node:net';
+import {dirname} from 'node:path';
 
 import {OTRCPDriver} from 'zigbee-on-host';
 import {setLogger} from 'zigbee-on-host/dist/utils/logger';
@@ -19,7 +20,6 @@ import {SerialPort} from '../../serialPort';
 import {isTcpPath} from '../../socketPortUtils';
 import * as TsType from '../../tstype';
 import {bigUInt64ToHexBE} from './utils';
-import {dirname} from 'node:path';
 
 const NS = 'zh:zoh';
 
@@ -391,10 +391,7 @@ export class ZoHAdapter extends Adapter {
         return await this.queue.execute(async () => {
             this.checkInterpanLock();
 
-            logger.debug(
-                () => `~~~> [ZDO to=${ieeeAddress}:${networkAddress} clusterId=${clusterId} disableResponse=${disableResponse}]`,
-                NS,
-            );
+            logger.debug(() => `~~~> [ZDO to=${ieeeAddress}:${networkAddress} clusterId=${clusterId} disableResponse=${disableResponse}]`, NS);
 
             await this.driver.sendZDO(
                 payload,
@@ -587,7 +584,13 @@ export class ZoHAdapter extends Adapter {
      * @param apsHeader
      * @param apsPayload
      */
-    private onFrame(sender16: number | undefined, sender64: bigint | undefined, apsHeader: ZigbeeAPSHeader, apsPayload: ZigbeeAPSPayload, rssi: number): void {
+    private onFrame(
+        sender16: number | undefined,
+        sender64: bigint | undefined,
+        apsHeader: ZigbeeAPSHeader,
+        apsPayload: ZigbeeAPSPayload,
+        rssi: number,
+    ): void {
         const data = Buffer.from(apsPayload);
 
         if (apsHeader.profileId === Zdo.ZDO_PROFILE_ID) {
