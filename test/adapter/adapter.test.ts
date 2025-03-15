@@ -11,6 +11,7 @@ import {SerialPort} from '../../src/adapter/serialPort';
 import {ZStackAdapter} from '../../src/adapter/z-stack/adapter/zStackAdapter';
 import {ZBOSSAdapter} from '../../src/adapter/zboss/adapter/zbossAdapter';
 import {ZiGateAdapter} from '../../src/adapter/zigate/adapter/zigateAdapter';
+import {ZoHAdapter} from '../../src/adapter/zoh/adapter/zohAdapter';
 import {
     DECONZ_CONBEE_II,
     EMBER_SKYCONNECT,
@@ -87,9 +88,15 @@ describe('Adapter', () => {
         ['zstack', ZStackAdapter],
         ['zboss', ZBOSSAdapter],
         ['zigate', ZiGateAdapter],
+        ['zoh', ZoHAdapter],
     ])('Calls adapter contructor for %s', async (name, cls) => {
         const adapter = await Adapter.create(
-            {panID: 0x1a62, channelList: [11]},
+            {
+                panID: 0x1a62,
+                channelList: [11],
+                extendedPanID: [0xdd, 0xdd, 0xdd, 0xdd, 0xdd, 0xdd, 0xdd, 0xdd],
+                networkKey: [1, 3, 5, 7, 9, 11, 13, 15, 0, 2, 4, 6, 8, 10, 12, 13],
+            },
             {path: '/dev/ttyUSB0', adapter: name as TsType.Adapter},
             'test.db.backup',
             {disableLED: false},

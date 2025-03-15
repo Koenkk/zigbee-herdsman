@@ -33,7 +33,8 @@
         "debounce": "^2.2.0",
         "fast-deep-equal": "^3.1.3",
         "mixin-deep": "^2.0.1",
-        "slip": "^1.0.2"
+        "slip": "^1.0.2",
+        "zigbee-on-host": "^0.1.0"
     },
     "deprecated": false,
     "description": "An open source ZigBee gateway solution with node.js.",
