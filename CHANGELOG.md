@@ -1,5 +1,18 @@
 # Changelog
 
+## [3.4.0](https://github.com/Koenkk/zigbee-herdsman/compare/v3.3.2...v3.4.0) (2025-03-15)
+
+
+### Features
+
+* Initial support for ZigBee on Host adapter ([#1308](https://github.com/Koenkk/zigbee-herdsman/issues/1308)) ([038085f](https://github.com/Koenkk/zigbee-herdsman/commit/038085fe9d9cb9644faf22d584711c339cfb2af3))
+
+
+### Bug Fixes
+
+* **ignore:** Move to `Node16` `module` ([#1340](https://github.com/Koenkk/zigbee-herdsman/issues/1340)) ([5669c21](https://github.com/Koenkk/zigbee-herdsman/commit/5669c216cfc0a4575c7d6713b7f4a710f7626913))
+* **ignore:** Use `module` `NodeNext` ([#1343](https://github.com/Koenkk/zigbee-herdsman/issues/1343)) ([590851a](https://github.com/Koenkk/zigbee-herdsman/commit/590851a1ea552974a6cdb4ae85a135a4456de5c5))
+
 ## [3.3.2](https://github.com/Koenkk/zigbee-herdsman/compare/v3.3.1...v3.3.2) (2025-03-11)
 
 
