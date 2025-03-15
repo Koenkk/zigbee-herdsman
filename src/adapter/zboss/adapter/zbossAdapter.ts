@@ -10,6 +10,7 @@ import * as ZSpec from '../../../zspec';
 import * as Zcl from '../../../zspec/zcl';
 import * as Zdo from '../../../zspec/zdo';
 import * as ZdoTypes from '../../../zspec/zdo/definition/tstypes';
+import {WORKAROUND_JOIN_MANUF_IEEE_PREFIX_TO_CODE} from '../../const';
 import {ZclPayload} from '../../events';
 import {ZBOSSDriver} from '../driver';
 import {CommandId, DeviceUpdateStatus} from '../enums';
@@ -29,6 +30,7 @@ export class ZBOSSAdapter extends Adapter {
     private queue: Queue;
     private readonly driver: ZBOSSDriver;
     private waitress: Waitress<ZclPayload, WaitressMatcher>;
+    private currentManufacturerCode: Zcl.ManufacturerCode;
 
     constructor(
         networkOptions: TsType.NetworkOptions,
@@ -39,6 +41,7 @@ export class ZBOSSAdapter extends Adapter {
         super(networkOptions, serialPortOptions, backupPath, adapterOptions);
         this.hasZdoMessageOverhead = false;
         this.manufacturerID = Zcl.ManufacturerCode.NORDIC_SEMICONDUCTOR_ASA;
+        this.currentManufacturerCode = Zcl.ManufacturerCode.NORDIC_SEMICONDUCTOR_ASA;
         const concurrent = adapterOptions && adapterOptions.concurrent ? adapterOptions.concurrent : 8;
         logger.debug(`Adapter concurrent: ${concurrent}`, NS);
         this.queue = new Queue(concurrent);
@@ -64,6 +67,16 @@ export class ZBOSSAdapter extends Adapter {
                             ieeeAddr: frame.payload.ieee,
                         });
                     } else {
+                        // set workaround manuf code if necessary, or revert to default if previous joined device required workaround and new one does not
+                        const joinManufCode = WORKAROUND_JOIN_MANUF_IEEE_PREFIX_TO_CODE[frame.payload.ieee.substring(0, 8)] ?? this.manufacturerID;
+
+                        if (this.currentManufacturerCode !== joinManufCode) {
+                            logger.debug(`[WORKAROUND] Setting coordinator manufacturer code to ${Zcl.ManufacturerCode[joinManufCode]}.`, NS);
+
+                            await this.driver.execCommand(CommandId.ZDO_SET_NODE_DESC_MANUF_CODE, {manufacturerCode: joinManufCode});
+
+                            this.currentManufacturerCode = joinManufCode;
+                        }
                         // SECURE_REJOIN, UNSECURE_JOIN, TC_REJOIN
                         this.emit('deviceJoined', {
                             networkAddress: frame.payload.nwk,
@@ -179,6 +192,14 @@ export class ZBOSSAdapter extends Adapter {
 
     public async permitJoin(seconds: number, networkAddress?: number): Promise<void> {
         if (this.driver.isInitialized()) {
+            if (this.currentManufacturerCode !== this.manufacturerID) {
+                logger.debug(`[WORKAROUND] Resetting coordinator manufacturer code to ${Zcl.ManufacturerCode[this.manufacturerID]}.`, NS);
+
+                await this.driver.execCommand(CommandId.ZDO_SET_NODE_DESC_MANUF_CODE, {manufacturerCode: this.manufacturerID});
+
+                this.currentManufacturerCode = this.manufacturerID;
+            }
+
             const clusterId = Zdo.ClusterId.PERMIT_JOINING_REQUEST;
             // `authentication`: TC significance always 1 (zb specs)
             const zdoPayload = Zdo.Buffalo.buildRequest(this.hasZdoMessageOverhead, clusterId, seconds, 1, []);

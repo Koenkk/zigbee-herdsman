@@ -73,7 +73,7 @@ export abstract class Adapter extends events.EventEmitter<AdapterEventMap> {
             serialPortOptions.adapter = adapter;
             serialPortOptions.path = path;
 
-            const adapterModule = await import(detectedAdapter[0]);
+            const adapterModule = await import(`${detectedAdapter[0]}.js`);
             const AdapterCtor = adapterModule[detectedAdapter[1]] as AdapterConstructor;
 
             return new AdapterCtor(networkOptions, serialPortOptions, backupPath, adapterOptions);
