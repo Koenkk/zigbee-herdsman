@@ -3,7 +3,7 @@ import {dirname} from 'node:path';
 
 import {OTRCPDriver} from 'zigbee-on-host';
 import {setLogger} from 'zigbee-on-host/dist/utils/logger';
-import {ZigbeeAPSDeliveryMode, ZigbeeAPSHeader, ZigbeeAPSPayload} from 'zigbee-on-host/dist/zigbee/zigbee-aps';
+import {ZigbeeAPSHeader, ZigbeeAPSPayload} from 'zigbee-on-host/dist/zigbee/zigbee-aps';
 
 import {Backup} from '../../../models/backup';
 import {logger} from '../../../utils/logger';
@@ -28,6 +28,7 @@ interface WaitressMatcher {
     clusterId: number;
     endpoint?: number;
     commandId?: number;
+    transactionSequenceNumber?: number;
 }
 
 type ZdoResponse = {
@@ -43,15 +44,15 @@ export class ZoHAdapter extends Adapter {
     private socketPort?: Socket;
     /** True when adapter is currently closing */
     private closing: boolean;
-    public readonly driver: OTRCPDriver;
-    private readonly queue: Queue;
 
     private interpanLock: boolean;
 
-    private zclWaitress: Waitress<ZclPayload, WaitressMatcher>;
-    private zdoWaitress: Waitress<ZdoResponse, WaitressMatcher>;
+    public readonly driver: OTRCPDriver;
+    private readonly queue: Queue;
+    private readonly zclWaitress: Waitress<ZclPayload, WaitressMatcher>;
+    private readonly zdoWaitress: Waitress<ZdoResponse, WaitressMatcher>;
 
-    protected constructor(
+    constructor(
         networkOptions: TsType.NetworkOptions,
         serialPortOptions: TsType.SerialPortOptions,
         backupPath: string,
@@ -60,7 +61,7 @@ export class ZoHAdapter extends Adapter {
         super(networkOptions, serialPortOptions, backupPath, adapterOptions);
 
         this.hasZdoMessageOverhead = true;
-        this.manufacturerID = Zcl.ManufacturerCode.RESERVED_10;
+        this.manufacturerID = Zcl.ManufacturerCode.CONNECTIVITY_STANDARDS_ALLIANCE;
         this.closing = false;
 
         const channel = networkOptions.channelList[0];
@@ -79,12 +80,13 @@ export class ZoHAdapter extends Adapter {
             },
             // NOTE: this information is overwritten on `start` if a save exists
             {
-                eui64: Buffer.from([0x7a, 0x32, 0x6d, 0x7a, 0x32, 0x6d, 0x7a, 0x32]).readBigUInt64LE(0),
+                // TODO: make this configurable
+                eui64: Buffer.from([0x5a, 0x6f, 0x48, 0x6f, 0x6e, 0x5a, 0x32, 0x4d]).readBigUInt64LE(0),
                 panId: this.networkOptions.panID,
                 extendedPANId: Buffer.from(this.networkOptions.extendedPanID!).readBigUInt64LE(0),
                 channel,
                 nwkUpdateId: 0,
-                txPower: this.adapterOptions.transmitPower ?? 5, // TODO: proper default?
+                txPower: this.adapterOptions.transmitPower ?? /* v8 ignore next */ 5,
                 // ZigBeeAlliance09
                 tcKey: Buffer.from([0x5a, 0x69, 0x67, 0x42, 0x65, 0x65, 0x41, 0x6c, 0x6c, 0x69, 0x61, 0x6e, 0x63, 0x65, 0x30, 0x39]),
                 tcKeyFrameCounter: 0,
@@ -94,7 +96,7 @@ export class ZoHAdapter extends Adapter {
             },
             dirname(this.backupPath),
         );
-        this.queue = new Queue(this.adapterOptions.concurrent || 8); // ORed to avoid 0 (not checked in settings/queue constructor)
+        this.queue = new Queue(this.adapterOptions.concurrent || /* v8 ignore next */ 8); // ORed to avoid 0 (not checked in settings/queue constructor)
         this.zclWaitress = new Waitress(this.zclWaitressValidator, this.waitressTimeoutFormatter);
         this.zdoWaitress = new Waitress(this.zdoWaitressValidator, this.waitressTimeoutFormatter);
 
@@ -104,6 +106,7 @@ export class ZoHAdapter extends Adapter {
     /**
      * Init the serial or socket port and hook parser/writer.
      */
+    /* v8 ignore start */
     public async initPort(): Promise<void> {
         await this.closePort(); // will do nothing if nothing's open
 
@@ -185,11 +188,13 @@ export class ZoHAdapter extends Adapter {
             throw error;
         }
     }
+    /* v8 ignore stop */
 
     /**
      * Handle port closing
      * @param err A boolean for Socket, an Error for serialport
      */
+    /* v8 ignore start */
     private async onPortClose(error: boolean | Error): Promise<void> {
         if (error) {
             logger.error('Port closed unexpectedly.', NS);
@@ -197,17 +202,21 @@ export class ZoHAdapter extends Adapter {
             logger.info('Port closed.', NS);
         }
     }
+    /* v8 ignore stop */
 
     /**
      * Handle port error
      * @param error
      */
+    /* v8 ignore start */
     private async onPortError(error: Error): Promise<void> {
         logger.error(`Port ${error}`, NS);
 
-        throw new Error('Port error');
+        this.emit('disconnected');
     }
+    /* v8 ignore stop */
 
+    /* v8 ignore start */
     public async closePort(): Promise<void> {
         if (this.serialPort?.isOpen) {
             try {
@@ -226,6 +235,7 @@ export class ZoHAdapter extends Adapter {
             this.socketPort = undefined;
         }
     }
+    /* v8 ignore stop */
 
     public async start(): Promise<TsType.StartResult> {
         setLogger(logger); // pass the logger to ZoH
@@ -237,6 +247,7 @@ export class ZoHAdapter extends Adapter {
         this.driver.on('deviceJoined', this.onDeviceJoined.bind(this));
         this.driver.on('deviceRejoined', this.onDeviceRejoined.bind(this));
         this.driver.on('deviceLeft', this.onDeviceLeft.bind(this));
+        this.driver.on('deviceAuthorized', this.onDeviceAuthorized.bind(this));
 
         return 'resumed';
     }
@@ -244,6 +255,7 @@ export class ZoHAdapter extends Adapter {
     public async stop(): Promise<void> {
         this.closing = true;
 
+        this.driver.removeAllListeners();
         this.queue.clear();
         this.zclWaitress.clear();
         this.zdoWaitress.clear();
@@ -261,32 +273,41 @@ export class ZoHAdapter extends Adapter {
         };
     }
 
+    /* v8 ignore start */
     public async reset(type: 'soft' | 'hard'): Promise<void> {
         throw new Error(`Reset ${type} not support`);
     }
+    /* v8 ignore stop */
 
+    /* v8 ignore start */
     public async supportsBackup(): Promise<boolean> {
         return false;
     }
+    /* v8 ignore stop */
 
+    /* v8 ignore start */
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     public async backup(ieeeAddressesInDatabase: string[]): Promise<Backup> {
         throw new Error('ZigBee on Host handles backup internally');
     }
+    /* v8 ignore stop */
 
     public async getNetworkParameters(): Promise<TsType.NetworkParameters> {
         return {
             panID: this.driver.netParams.panId,
-            extendedPanID: bigUInt64ToHexBE(this.driver.netParams.extendedPANId),
+            extendedPanID: `0x${bigUInt64ToHexBE(this.driver.netParams.extendedPANId)}`,
             channel: this.driver.netParams.channel,
             nwkUpdateID: this.driver.netParams.nwkUpdateId,
         };
     }
 
+    /* v8 ignore start */
     public async addInstallCode(ieeeAddress: string, key: Buffer): Promise<void> {
         throw new Error(`not supported ${ieeeAddress}, ${key.toString('hex')}`);
     }
+    /* v8 ignore stop */
 
+    /* v8 ignore start */
     public waitFor(
         networkAddress: number,
         endpoint: number,
@@ -303,6 +324,7 @@ export class ZoHAdapter extends Adapter {
                 endpoint,
                 clusterId: clusterID,
                 commandId: commandIdentifier,
+                transactionSequenceNumber,
             },
             timeout,
         );
@@ -310,6 +332,7 @@ export class ZoHAdapter extends Adapter {
 
         return {cancel, promise: waiter.start().promise};
     }
+    /* v8 ignore stop */
 
     // #region ZDO
 
@@ -334,7 +357,7 @@ export class ZoHAdapter extends Adapter {
         payload: Buffer,
         disableResponse: boolean,
     ): Promise<ZdoTypes.RequestToResponseMap[K] | void> {
-        if (networkAddress === ZSpec.COORDINATOR_ADDRESS || BigInt(ieeeAddress) === this.driver.netParams.eui64) {
+        if (networkAddress === ZSpec.COORDINATOR_ADDRESS) {
             // mock ZDO response using driver layer data for coordinator
             // seqNum doesn't matter since waitress bypassed, so don't bother doing any logic for it
             switch (clusterId) {
@@ -382,9 +405,18 @@ export class ZoHAdapter extends Adapter {
                     this.emit('zdoResponse', respClusterId, result);
                     return result;
                 }
+                // TODO:
+                // case Zdo.ClusterId.LQI_TABLE_REQUEST: {
+                //     break;
+                // }
+                // case Zdo.ClusterId.ROUTING_TABLE_REQUEST: {
+                //     break;
+                // }
+                /* v8 ignore start */
                 default: {
                     throw new Error(`ZDO cluster ${clusterId} not supported for ${networkAddress}:${ieeeAddress}`);
                 }
+                /* v8 ignore stop */
             }
         }
 
@@ -499,6 +531,7 @@ export class ZoHAdapter extends Adapter {
                                     clusterId: zclFrame.cluster.ID,
                                     endpoint,
                                     commandId: commandResponseId,
+                                    transactionSequenceNumber: zclFrame.header.transactionSequenceNumber,
                                 },
                                 timeout,
                             )
@@ -509,13 +542,13 @@ export class ZoHAdapter extends Adapter {
 
                     return;
                 } catch (error) {
-                    if (disableRecovery) {
-                        disableRecovery = true;
-
+                    if (disableRecovery || i == 1) {
                         throw error;
                     } // else retry
                 }
-            }
+                /* v8 ignore start */
+            } // coverage detection failure
+            /* v8 ignore stop */
         });
     }
 
@@ -552,31 +585,41 @@ export class ZoHAdapter extends Adapter {
 
     // #region InterPAN
 
+    /* v8 ignore start */
     public async setChannelInterPAN(channel: number): Promise<void> {
         throw new Error(`not supported ${channel}`);
     }
+    /* v8 ignore stop */
 
+    /* v8 ignore start */
     public async sendZclFrameInterPANToIeeeAddr(zclFrame: Zcl.Frame, ieeeAddress: string): Promise<void> {
         throw new Error(`not supported ${JSON.stringify(zclFrame)}, ${ieeeAddress}`);
     }
+    /* v8 ignore stop */
 
+    /* v8 ignore start */
     public async sendZclFrameInterPANBroadcast(zclFrame: Zcl.Frame, timeout: number): Promise<ZclPayload> {
         throw new Error(`not supported ${JSON.stringify(zclFrame)}, ${timeout}`);
     }
+    /* v8 ignore stop */
 
+    /* v8 ignore start */
     public async restoreChannelInterPAN(): Promise<void> {
         throw new Error(`not supported`);
     }
+    /* v8 ignore stop */
 
     // #endregion
 
     // #region Implementation-Specific
 
+    /* v8 ignore start */
     private checkInterpanLock(): void {
         if (this.interpanLock) {
             throw new Error(`[INTERPAN MODE] Cannot execute non-InterPAN commands.`);
         }
     }
+    /* v8 ignore stop */
 
     /**
      * @param sender16 If undefined, sender64 is expected defined
@@ -620,7 +663,7 @@ export class ZoHAdapter extends Adapter {
                 endpoint: apsHeader.sourceEndpoint!,
                 linkquality: rssi, // TODO: convert RSSI to LQA
                 groupID: apsHeader.group!,
-                wasBroadcast: apsHeader.frameControl.deliveryMode === ZigbeeAPSDeliveryMode.BCAST,
+                wasBroadcast: apsHeader.frameControl.deliveryMode === 2 /* BCAST */,
                 destinationEndpoint: apsHeader.destEndpoint!,
             };
 
@@ -630,21 +673,21 @@ export class ZoHAdapter extends Adapter {
     }
 
     private onDeviceJoined(source16: number, source64: bigint): void {
-        // as needed for testing
-        setTimeout(() => {
-            this.emit('deviceJoined', {networkAddress: source16, ieeeAddr: `0x${bigUInt64ToHexBE(source64)}`});
-        }, 5000); // give some time for device to deal with joining/authorizing before hammering it with interview process
+        this.emit('deviceJoined', {networkAddress: source16, ieeeAddr: `0x${bigUInt64ToHexBE(source64)}`});
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     private onDeviceRejoined(source16: number, source64: bigint): void {
-        // as needed for testing
+        this.emit('deviceJoined', {networkAddress: source16, ieeeAddr: `0x${bigUInt64ToHexBE(source64)}`});
     }
 
     private onDeviceLeft(source16: number, source64: bigint): void {
-        // as needed for testing
         this.emit('deviceLeave', {networkAddress: source16, ieeeAddr: `0x${bigUInt64ToHexBE(source64)}`});
     }
+
+    /* v8 ignore start */
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    private onDeviceAuthorized(source16: number, source64: bigint): void {}
+    /* v8 ignore stop */
 
     private waitressTimeoutFormatter(matcher: WaitressMatcher, timeout: number): string {
         return `Timeout after ${timeout}ms [sender=${matcher.sender} clusterId=${matcher.clusterId} cmdId=${matcher.commandId}]`;
@@ -656,7 +699,8 @@ export class ZoHAdapter extends Adapter {
             (matcher.sender === undefined || payload.address === matcher.sender) &&
             payload.clusterID === matcher.clusterId &&
             payload.endpoint === matcher.endpoint &&
-            payload.header!.commandIdentifier === matcher.commandId
+            payload.header!.commandIdentifier === matcher.commandId &&
+            (matcher.transactionSequenceNumber === undefined || payload.header!.transactionSequenceNumber === matcher.transactionSequenceNumber)
         );
     }
 
