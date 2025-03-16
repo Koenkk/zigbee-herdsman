@@ -87,19 +87,23 @@ interface GPDChannelRequest {
     nextNextChannel: number;
 }
 
-interface GPDChannelConfiguration {
+export interface GPDChannelConfiguration {
     commandID: number;
     operationalChannel: number;
     basic: boolean;
 }
 
-interface GPDCommissioningReply {
+export interface GPDCommissioningReply {
     commandID: number;
     options: number;
-    panID: number;
-    securityKey: Buffer;
-    keyMic: number;
-    frameCounter: number;
+    /** expected valid if corresponding `options` bits set */
+    panID?: number;
+    /** expected valid if corresponding `options` bits set */
+    securityKey?: Buffer;
+    /** expected valid if corresponding `options` bits set */
+    keyMic?: number;
+    /** expected valid if corresponding `options` bits set */
+    frameCounter?: number;
 }
 
 interface GPDCustomReply {
@@ -372,13 +376,12 @@ export class BuffaloZcl extends Buffalo {
     private writeGdpFrame(value: GPDCommissioningReply | GPDChannelConfiguration | GPDCustomReply): void {
         if (value.commandID == 0xf0) {
             // Commissioning Reply
-            const v = <GPDCommissioningReply>value;
+            const v = value as GPDCommissioningReply;
 
-            const panIDPresent = v.options & (1 << 0);
-            const gpdSecurityKeyPresent = v.options & (1 << 1);
-            const gpdKeyEncryption = v.options & (1 << 2);
-            const securityLevel = v.options & ((3 << 3) >> 3);
-
+            const panIDPresent = Boolean(v.options & 0x1);
+            const gpdSecurityKeyPresent = Boolean(v.options & 0x2);
+            const gpdKeyEncryption = Boolean((v.options >> 2) & 0x1);
+            const securityLevel = (v.options >> 3) & 0x3;
             const hasGPDKeyMIC = gpdKeyEncryption && gpdSecurityKeyPresent;
             const hasFrameCounter = gpdSecurityKeyPresent && gpdKeyEncryption && (securityLevel === 0b10 || securityLevel === 0b11);
 
@@ -386,31 +389,36 @@ export class BuffaloZcl extends Buffalo {
             this.writeUInt8(v.options);
 
             if (panIDPresent) {
-                this.writeUInt16(v.panID);
+                this.writeUInt16(v.panID!);
             }
 
             if (gpdSecurityKeyPresent) {
-                this.writeBuffer(v.securityKey, 16);
+                this.writeBuffer(v.securityKey!, 16);
             }
 
             if (hasGPDKeyMIC) {
-                this.writeUInt32(v.keyMic);
+                this.writeUInt32(v.keyMic!);
             }
 
             if (hasFrameCounter) {
-                this.writeUInt32(v.frameCounter);
+                this.writeUInt32(v.frameCounter!);
             }
         } else if (value.commandID == 0xf3) {
             // Channel configuration
-            const v = <GPDChannelConfiguration>value;
+            const v = value as GPDChannelConfiguration;
+
             this.writeUInt8(1);
             this.writeUInt8((v.operationalChannel & 0xf) | ((v.basic ? 1 : 0) << 4));
         } else if (value.commandID == 0xf4 || value.commandID == 0xf5 || (value.commandID >= 0xf7 && value.commandID <= 0xff)) {
             // Other commands sent to GPD
-            const v = <GPDCustomReply>value;
+            const v = value as GPDCustomReply;
+
             this.writeUInt8(v.buffer.length);
             this.writeBuffer(v.buffer, v.buffer.length);
         }
+        // 0xf1: Write Attributes
+        // 0xf2: Read Attributes
+        // 0xf6: ZCL Tunneling
     }
 
     private readGdpFrame(options: BuffaloZclOptions): GPD | GPDChannelRequest | GPDAttributeReport | {raw: Buffer} | Record<string, never> {

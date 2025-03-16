@@ -7559,7 +7559,7 @@ describe('Controller', () => {
             sinkGroupID: 0x0b84,
             deviceID: 2,
             frameCounter: 1252,
-            gpdKey: [29, 213, 18, 52, 213, 52, 152, 88, 183, 49, 101, 110, 209, 248, 244, 140],
+            gpdKey: Buffer.from([29, 213, 18, 52, 213, 52, 152, 88, 183, 49, 101, 110, 209, 248, 244, 140]),
         };
         const frameResponse = Zcl.Frame.create(1, 1, true, undefined, 2, 'pairing', 33, dataResponse, {});
 
@@ -7745,7 +7745,7 @@ describe('Controller', () => {
         });
 
         expect(mockLogger.error).toHaveBeenCalledTimes(0);
-        expect(mockLogger.debug).toHaveBeenCalledWith(`Received unhandled command '0x2' from '4650238'`, `zh:controller:greenpower`);
+        expect(mockLogger.debug).toHaveBeenCalledWith(`[UNHANDLED_CMD] command=0x2 from=4650238`, `zh:controller:greenpower`);
     });
 
     it('Should ignore invalid green power frame', async () => {
@@ -7813,7 +7813,8 @@ describe('Controller', () => {
             gpdCmd: 0xf3,
             gpdPayload: {
                 commandID: 0xf3,
-                options: 4,
+                operationalChannel: 4,
+                basic: true,
             },
         };
 
@@ -7946,7 +7947,7 @@ describe('Controller', () => {
                 gpdCommandIdList: Buffer.from([0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x22, 0x60, 0x62, 0x63, 0x64, 0x65, 0x66, 0x67, 0x68]),
             },
             gppNwkAddr: gppDevice.networkAddress,
-            gppGddLink: 0xd8,
+            gppGpdLink: 0xd8,
         };
 
         const expectedFrame = Zcl.Frame.create(1, 0, true, undefined, 100, 'commissioningNotification', 33, data, {});
@@ -7978,7 +7979,7 @@ describe('Controller', () => {
             sinkNwkAddr: 0,
             deviceID: 2,
             frameCounter: 4600,
-            gpdKey: [0x09, 0x3c, 0xed, 0x1d, 0xbf, 0x25, 0x63, 0xf9, 0x29, 0x5c, 0x0d, 0x3d, 0x9f, 0xc5, 0x76, 0xe1],
+            gpdKey: Buffer.from([0x09, 0x3c, 0xed, 0x1d, 0xbf, 0x25, 0x63, 0xf9, 0x29, 0x5c, 0x0d, 0x3d, 0x9f, 0xc5, 0x76, 0xe1]),
         };
         const frameResponse = Zcl.Frame.create(1, 1, true, undefined, 11, 'pairing', 33, dataResponse, {});
 
@@ -8080,7 +8081,7 @@ describe('Controller', () => {
             payloadSize: 0,
             commandFrame: {},
             gppNwkAddr: 129,
-            gppGddLink: 0xd8,
+            gppGpdLink: 0xd8,
         };
         const frameScene = Zcl.Frame.create(1, 0, true, undefined, 10, 'notification', 33, dataScene, {});
         await mockAdapterEvents['zclPayload']({
@@ -8152,7 +8153,7 @@ describe('Controller', () => {
                 payloadSize: 0,
                 commandFrame: {raw: {type: 'Buffer', data: [129, 0, 216]}},
                 gppNwkAddr: 129,
-                gppGddLink: 216,
+                gppGpdLink: 216,
             },
             linkquality: 50,
             groupID: 0,

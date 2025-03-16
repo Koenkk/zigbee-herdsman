@@ -8634,13 +8634,11 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
         gpdHeader.writeUInt8(commandIdentifier, 2); // commandIdentifier
         gpdHeader.writeUInt16LE(0, 3); // options, only srcID present
         gpdHeader.writeUInt32LE(addr.sourceId, 5);
-        // omitted: gpdIEEEAddr (ieeeAddr)
-        // omitted: gpdEndpoint (uint8)
         gpdHeader.writeUInt32LE(gpdSecurityFrameCounter, 9);
         gpdHeader.writeUInt8(gpdCommandId, 13);
         gpdHeader.writeUInt8(gpdCommandPayload.length, 14);
 
-        const messageContents = Buffer.concat([gpdHeader, gpdCommandPayload]); // omitted: gppNwkAddr (uint16), gppGddLink (uint8)
+        const messageContents = Buffer.concat([gpdHeader, gpdCommandPayload]);
 
         // XXX: BROADCAST currently hardcoded to match upstream codepath
         this.emit('incomingMessage', EmberIncomingMessageType.BROADCAST, apsFrame, gpdLink, addr.sourceId & 0xffff, messageContents);
