@@ -2,6 +2,8 @@ import assert from 'node:assert';
 import {createCipheriv} from 'node:crypto';
 import {EventEmitter} from 'node:events';
 
+import {aes128CcmStar} from 'zigbee-on-host/dist/zigbee/zigbee';
+
 import {Adapter, Events as AdapterEvents} from '../adapter';
 import {logger} from '../utils/logger';
 import {COORDINATOR_ADDRESS, GP_ENDPOINT, GP_GROUP_ID, INTEROPERABILITY_LINK_KEY} from '../zspec/consts';
@@ -66,6 +68,19 @@ export class GreenPower extends EventEmitter<GreenPowerEventMap> {
         const encrypted = cipher.update(securityKey);
 
         return Buffer.concat([encrypted, cipher.final()]);
+    }
+
+    private decryptPayload(sourceID: number, frameCounter: number, securityKey: Buffer, payload: Buffer): Buffer {
+        const nonce = Buffer.alloc(13);
+
+        nonce.writeUInt32LE(sourceID, 0);
+        nonce.writeUInt32LE(sourceID, 4);
+        nonce.writeUInt32LE(frameCounter, 8);
+        nonce.writeUInt8(0x05, 12);
+
+        const [, decryptedPayload] = aes128CcmStar(4, securityKey, nonce, payload);
+
+        return decryptedPayload;
     }
 
     private async sendPairingCommand(
@@ -146,16 +161,60 @@ export class GreenPower extends EventEmitter<GreenPowerEventMap> {
         }
     }
 
-    public async onZclGreenPowerData(dataPayload: AdapterEvents.ZclPayload, frame: Zcl.Frame): Promise<void> {
+    public async onZclGreenPowerData(dataPayload: AdapterEvents.ZclPayload, frame: Zcl.Frame, securityKey?: Buffer): Promise<Zcl.Frame> {
         try {
+            const fullEncr = ((frame.payload.options >> 6) & 0x3) === 0x3;
+
+            if (fullEncr) {
+                if (!securityKey) {
+                    logger.error(
+                        `[FULLENCR] from=${dataPayload.address} commandIdentifier=${frame.header.commandIdentifier} Unknown security key`,
+                        NS,
+                    );
+                    return frame;
+                }
+
+                if (frame.header.commandIdentifier === Zcl.Clusters.greenPower.commands.notification.ID) {
+                    /* v8 ignore start */
+                    if (frame.payload.srcID === undefined) {
+                        // ApplicationID = 0b010 indicates the GPD ID field has the length of 8B and contains the GPD IEEE address; the Endpoint field is present.
+                        // Note: no device are currently known to use this (too expensive)
+                        logger.error(`[FULLENCR] from=${dataPayload.address} GPD ID containing IEEE address is not supported`, NS);
+                        return frame;
+                    }
+                    /* v8 ignore stop */
+
+                    const hashedKey = this.encryptSecurityKey(frame.payload.srcID, securityKey);
+                    const oldHeader = dataPayload.data.subarray(0, 15);
+                    // 4 bytes appended for MIC placeholder (just needs the bytes present for decrypt)
+                    const payload = Buffer.from([frame.payload.commandID, ...dataPayload.data.subarray(15), 0, 0, 0, 0]);
+                    // if the device has a registered security key, we assume it uses encrypted payloads
+                    const decrypted = this.decryptPayload(frame.payload.srcID, frame.payload.frameCounter, hashedKey, payload);
+
+                    const newHeader = Buffer.alloc(15);
+                    newHeader.set(oldHeader, 0);
+                    newHeader.writeUInt8(decrypted[0], oldHeader.byteLength - 2); // commandID
+                    newHeader.writeUInt8(decrypted.byteLength - 1, oldHeader.byteLength - 1); // payloadSize
+
+                    // re-parse with decrypted data
+                    frame = Zcl.Frame.fromBuffer(dataPayload.clusterID, dataPayload.header, Buffer.concat([newHeader, decrypted.subarray(1)]), {});
+                    /* v8 ignore start */
+                } else {
+                    logger.error(`[FULLENCR] from=${dataPayload.address} commandIdentifier=${frame.header.commandIdentifier} Not supported`, NS);
+                    return frame;
+                }
+                /* v8 ignore stop */
+            }
+
             const commandID = frame.payload.commandID ?? frame.header.commandIdentifier;
+
             switch (commandID) {
                 case 0xe0: {
                     // GP Commissioning
                     logger.info(`[COMMISSIONING] from=${dataPayload.address}`, NS);
 
                     /* v8 ignore start */
-                    if (typeof dataPayload.address !== 'number') {
+                    if (frame.payload.srcID === undefined) {
                         // ApplicationID = 0b010 indicates the GPD ID field has the length of 8B and contains the GPD IEEE address; the Endpoint field is present.
                         // Note: no device are currently known to use this (too expensive)
                         logger.error(`[COMMISSIONING] from=${dataPayload.address} GPD ID containing IEEE address is not supported`, NS);
@@ -268,6 +327,7 @@ export class GreenPower extends EventEmitter<GreenPowerEventMap> {
                         sourceID: frame.payload.srcID,
                         deviceID: frame.payload.commandFrame.deviceID,
                         networkAddress: frame.payload.srcID & 0xffff,
+                        securityKey: frame.payload.commandFrame.securityKey,
                     });
 
                     break;
@@ -327,13 +387,16 @@ export class GreenPower extends EventEmitter<GreenPowerEventMap> {
                 /* v8 ignore stop */
                 default:
                     // NOTE: this is spammy because it logs everything that is handed back to Controller without special processing here
-                    logger.debug(`[UNHANDLED_CMD] command=0x${commandID.toString(16)} from=${dataPayload.address}`, NS);
+                    logger.debug(`[UNHANDLED_CMD/PASSTHROUGH] command=0x${commandID.toString(16)} from=${dataPayload.address}`, NS);
             }
             /* v8 ignore start */
         } catch (error) {
             logger.error((error as Error).stack!, NS);
+            return frame;
         }
         /* v8 ignore stop */
+
+        return frame;
     }
 
     public async permitJoin(time: number, networkAddress?: number): Promise<void> {

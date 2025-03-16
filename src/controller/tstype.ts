@@ -35,4 +35,5 @@ export interface GreenPowerDeviceJoinedPayload {
     sourceID: number;
     deviceID: number;
     networkAddress: number;
+    securityKey?: Buffer;
 }

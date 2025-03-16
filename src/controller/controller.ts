@@ -670,6 +670,11 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
             logger.debug(`New green power device '${ieeeAddr}' joined`, NS);
             logger.debug(`Creating device '${ieeeAddr}'`, NS);
             device = Device.create('GreenPower', ieeeAddr, payload.networkAddress, undefined, undefined, undefined, modelID, true);
+
+            if (payload.securityKey) {
+                device.meta.gpSecurityKey = Array.from(payload.securityKey);
+            }
+
             device.save();
 
             this.selfAndDeviceEmit(device, 'deviceJoined', {device});
@@ -812,10 +817,16 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
                 return;
             }
 
-            await this.greenPower.onZclGreenPowerData(payload, frame);
+            const nwkAddress = frame.payload.srcID & 0xffff;
+            device = Device.byNetworkAddress(nwkAddress);
+            frame = await this.greenPower.onZclGreenPowerData(
+                payload,
+                frame,
+                device?.meta.gpSecurityKey ? Buffer.from(device.meta.gpSecurityKey) : undefined,
+            );
 
-            // lookup encapsulated gpDevice for further processing
-            device = Device.byNetworkAddress(frame.payload.srcID & 0xffff);
+            // lookup encapsulated gpDevice for further processing (re-fetch, may have been created by above call)
+            device = Device.byNetworkAddress(nwkAddress);
         } else {
             /**
              * Handling of re-transmitted Xiaomi messages.
