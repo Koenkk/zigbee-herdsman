@@ -70,8 +70,8 @@ export class GreenPower extends EventEmitter<GreenPowerEventMap> {
 
     private async sendPairingCommand(
         payload: PairingPayload,
-        dataPayload: AdapterEvents.ZclPayload,
-        frame: Zcl.Frame,
+        wasBroadcast: boolean,
+        gppNwkAddr: number | undefined,
     ): Promise<AdapterEvents.ZclPayload | void> {
         const appId = payload.options & 0x7;
         // const addSink = Boolean(payload.options & 0x8);
@@ -87,7 +87,7 @@ export class GreenPower extends EventEmitter<GreenPowerEventMap> {
         // const groupcastRadiusPresent = Boolean(payload.options & 0x20000);
         // payload.options bits 18..23 reserved
         logger.debug(
-            `[PAIRING] options=${payload.options} (appId=${appId} communicationMode=${communicationMode}) wasBroadcast=${dataPayload.wasBroadcast} gppNwkAddr=${frame.payload.gppNwkAddr}`,
+            `[PAIRING] options=${payload.options} (appId=${appId} communicationMode=${communicationMode}) wasBroadcast=${wasBroadcast} gppNwkAddr=${gppNwkAddr}`,
             NS,
         );
 
@@ -127,10 +127,10 @@ export class GreenPower extends EventEmitter<GreenPowerEventMap> {
         // to be sent as broadcast unless communication mode is 0b11 - in which case
         // the proxy MAY send it as unicast to selected proxy.
         // This attempts to mirror logic from commit 92f77cc5.
-        if (dataPayload.wasBroadcast) {
+        if (wasBroadcast) {
             return await this.adapter.sendZclFrameToAll(GP_ENDPOINT, replyFrame, GP_ENDPOINT, BroadcastAddress.RX_ON_WHEN_IDLE);
         } else {
-            const device = Device.byNetworkAddress(frame.payload.gppNwkAddr ?? /* v8 ignore next */ COORDINATOR_ADDRESS);
+            const device = Device.byNetworkAddress(gppNwkAddr ?? /* v8 ignore next */ COORDINATOR_ADDRESS);
             assert(device, 'Failed to find green power proxy device');
 
             return await this.adapter.sendZclFrameToEndpoint(
@@ -242,11 +242,11 @@ export class GreenPower extends EventEmitter<GreenPowerEventMap> {
                                 srcID: frame.payload.srcID,
                                 deviceID: frame.payload.commandFrame.deviceID,
                             },
-                            dataPayload,
-                            frame,
+                            dataPayload.wasBroadcast,
+                            frame.payload.gppNwkAddr,
                         );
                     } else {
-                        const key = this.encryptSecurityKey(frame.payload.srcID, frame.payload.commandFrame.securityKey);
+                        const gpdKey = this.encryptSecurityKey(frame.payload.srcID, frame.payload.commandFrame.securityKey);
 
                         await this.sendPairingCommand(
                             {
@@ -257,10 +257,10 @@ export class GreenPower extends EventEmitter<GreenPowerEventMap> {
                                 srcID: frame.payload.srcID,
                                 deviceID: frame.payload.commandFrame.deviceID,
                                 frameCounter: frame.payload.commandFrame.outgoingCounter,
-                                gpdKey: key,
+                                gpdKey,
                             },
-                            dataPayload,
-                            frame,
+                            dataPayload.wasBroadcast,
+                            frame.payload.gppNwkAddr,
                         );
                     }
 
