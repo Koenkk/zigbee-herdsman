@@ -1,10 +1,11 @@
 import {mkdirSync, rmSync} from 'node:fs';
 import {join} from 'node:path';
 
-import {encodeSpinelFrame, SPINEL_HEADER_FLG_SPINEL, SpinelFrame} from 'zigbee-on-host/dist/spinel/spinel';
+import {SPINEL_HEADER_FLG_SPINEL, SpinelFrame} from 'zigbee-on-host/dist/spinel/spinel';
 
 import {bigUInt64ToHexBE} from '../../../src/adapter/zoh/adapter/utils';
 import {ZoHAdapter} from '../../../src/adapter/zoh/adapter/zohAdapter';
+import * as ZSpec from '../../../src/zspec';
 import * as Zcl from '../../../src/zspec/zcl';
 import * as Zdo from '../../../src/zspec/zdo';
 
@@ -679,6 +680,215 @@ describe('ZigBee on Host', () => {
             },
             linkquality: -25,
             wasBroadcast: false,
+        });
+    });
+
+    it('receives GP frame', async () => {
+        await adapter.start();
+
+        const emitSpy = vi.spyOn(adapter, 'emit');
+
+        adapter.driver.emit(
+            'gpFrame',
+            0xe0,
+            Buffer.from([
+                0x2, 0x85, 0xf2, 0xc9, 0x25, 0x82, 0x1d, 0xf4, 0x6f, 0x45, 0x8c, 0xf0, 0xe6, 0x37, 0xaa, 0xc3, 0xba, 0xb6, 0xaa, 0x45, 0x83, 0x1a,
+                0x11, 0x46, 0x23, 0x0, 0x0, 0x4, 0x16, 0x10, 0x11, 0x22, 0x23, 0x18, 0x19, 0x14, 0x15, 0x12, 0x13, 0x64, 0x65, 0x62, 0x63, 0x1e, 0x1f,
+                0x1c, 0x1d, 0x1a, 0x1b, 0x16, 0x17,
+            ]),
+            {
+                frameControl: {
+                    frameType: 0x1,
+                    securityEnabled: false,
+                    framePending: false,
+                    ackRequest: false,
+                    panIdCompression: false,
+                    seqNumSuppress: false,
+                    iePresent: false,
+                    destAddrMode: 0x2,
+                    frameVersion: 0,
+                    sourceAddrMode: 0x0,
+                },
+                sequenceNumber: 70,
+                destinationPANId: 0xffff,
+                destination16: 0xffff,
+                sourcePANId: 0xffff,
+                fcs: 0xffff,
+            },
+            {
+                frameControl: {
+                    frameType: 0x0,
+                    protocolVersion: 3,
+                    autoCommissioning: false,
+                    nwkFrameControlExtension: false,
+                },
+                sourceId: 0x0155f47a,
+                micSize: 0,
+                payloadLength: 52,
+            },
+            0,
+        );
+
+        const data = Buffer.from([
+            1, 70, 4, 0, 0, 122, 244, 85, 1, 0, 0, 0, 0, 0xe0, 51, 0x2, 0x85, 0xf2, 0xc9, 0x25, 0x82, 0x1d, 0xf4, 0x6f, 0x45, 0x8c, 0xf0, 0xe6, 0x37,
+            0xaa, 0xc3, 0xba, 0xb6, 0xaa, 0x45, 0x83, 0x1a, 0x11, 0x46, 0x23, 0x0, 0x0, 0x4, 0x16, 0x10, 0x11, 0x22, 0x23, 0x18, 0x19, 0x14, 0x15,
+            0x12, 0x13, 0x64, 0x65, 0x62, 0x63, 0x1e, 0x1f, 0x1c, 0x1d, 0x1a, 0x1b, 0x16, 0x17,
+        ]);
+        const header = Zcl.Header.fromBuffer(data)!;
+
+        expect(emitSpy).toHaveBeenLastCalledWith('zclPayload', {
+            address: 0x0155f47a & 0xffff,
+            clusterID: Zcl.Clusters.greenPower.ID,
+            data,
+            destinationEndpoint: 242,
+            endpoint: 242,
+            groupID: ZSpec.GP_GROUP_ID,
+            header,
+            linkquality: 0,
+            wasBroadcast: true,
+        });
+
+        const frame = Zcl.Frame.fromBuffer(Zcl.Clusters.greenPower.ID, header, data, {});
+
+        expect(frame).toMatchObject({
+            header: {
+                frameControl: {
+                    frameType: 1,
+                    manufacturerSpecific: false,
+                    direction: 0,
+                    disableDefaultResponse: false,
+                    reservedBits: 0,
+                },
+                manufacturerCode: undefined,
+                transactionSequenceNumber: 70,
+                commandIdentifier: 4,
+            },
+            payload: {
+                options: 0,
+                srcID: 22410362,
+                frameCounter: 0,
+                commandID: 0xe0,
+                payloadSize: 51,
+                commandFrame: {
+                    deviceID: 2,
+                    options: 133,
+                    extendedOptions: 242,
+                    securityKey: Buffer.from('c925821df46f458cf0e637aac3bab6aa', 'hex'),
+                    keyMic: 286950213,
+                    outgoingCounter: 9030,
+                    applicationInfo: 4,
+                    manufacturerID: 0,
+                    modelID: 0,
+                    numGdpCommands: 22,
+                    gpdCommandIdList: Buffer.from('10112223181914151213646562631e1f1c1d1a1b1617', 'hex'),
+                    numServerClusters: 0,
+                    numClientClusters: 0,
+                    gpdServerClusters: Buffer.alloc(0),
+                    gpdClientClusters: Buffer.alloc(0),
+                },
+            },
+            cluster: {
+                ID: 0x21,
+                name: 'greenPower',
+            },
+            command: {
+                ID: 0x04,
+                name: 'commissioningNotification',
+            },
+        });
+
+        adapter.driver.emit(
+            'gpFrame',
+            0x10,
+            Buffer.from([]),
+            {
+                frameControl: {
+                    frameType: 0x1,
+                    securityEnabled: false,
+                    framePending: false,
+                    ackRequest: false,
+                    panIdCompression: false,
+                    seqNumSuppress: false,
+                    iePresent: false,
+                    destAddrMode: 0x2,
+                    frameVersion: 0,
+                    sourceAddrMode: 0x0,
+                },
+                sequenceNumber: 185,
+                destinationPANId: 0xffff,
+                destination16: 0xffff,
+                sourcePANId: 0xffff,
+                fcs: 0xffff,
+            },
+            {
+                frameControl: {
+                    frameType: 0x0,
+                    protocolVersion: 3,
+                    autoCommissioning: false,
+                    nwkFrameControlExtension: true,
+                },
+                frameControlExt: {
+                    appId: 0,
+                    direction: 0,
+                    rxAfterTx: false,
+                    securityKey: true,
+                    securityLevel: 2,
+                },
+                sourceId: 24221335,
+                securityFrameCounter: 185,
+                micSize: 4,
+                payloadLength: 1,
+                mic: 3523079166,
+            },
+            0,
+        );
+
+        const data2 = Buffer.from([1, 185, 0, 0, 0, 151, 150, 113, 1, 185, 0, 0, 0, 0x10, 0]);
+        const header2 = Zcl.Header.fromBuffer(data2)!;
+
+        expect(emitSpy).toHaveBeenLastCalledWith('zclPayload', {
+            address: 24221335 & 0xffff,
+            clusterID: Zcl.Clusters.greenPower.ID,
+            data: data2,
+            destinationEndpoint: 242,
+            endpoint: 242,
+            groupID: ZSpec.GP_GROUP_ID,
+            header: header2,
+            linkquality: 0,
+            wasBroadcast: true,
+        });
+
+        const frame2 = Zcl.Frame.fromBuffer(Zcl.Clusters.greenPower.ID, header2, data2, {});
+
+        expect(frame2).toMatchObject({
+            header: {
+                frameControl: {
+                    frameType: 1,
+                    manufacturerSpecific: false,
+                    direction: 0,
+                    disableDefaultResponse: false,
+                    reservedBits: 0,
+                },
+                manufacturerCode: undefined,
+                transactionSequenceNumber: 185,
+                commandIdentifier: 0,
+            },
+            payload: {
+                options: 0,
+                srcID: 24221335,
+                frameCounter: 185,
+                commandID: 0x10,
+                payloadSize: 0,
+                commandFrame: {},
+            },
+            cluster: {
+                ID: 0x21,
+                name: 'greenPower',
+            },
+            command: {
+                ID: 0x00,
+                name: 'notification',
+            },
         });
     });
 
