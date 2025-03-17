@@ -66,6 +66,7 @@ export class Device extends Entity<ControllerEventMap> {
     private _checkinInterval?: number;
     private _pendingRequestTimeout: number;
     private _customClusters: CustomClusters = {};
+    private _gpSecurityKey?: number[];
 
     // Getters/setters
     get ieeeAddr(): string {
@@ -201,6 +202,9 @@ export class Device extends Entity<ControllerEventMap> {
     get customClusters(): CustomClusters {
         return this._customClusters;
     }
+    get gpSecurityKey(): number[] | undefined {
+        return this._gpSecurityKey;
+    }
 
     public meta: KeyValue;
 
@@ -303,6 +307,7 @@ export class Device extends Entity<ControllerEventMap> {
         lastSeen: number | undefined,
         checkinInterval: number | undefined,
         pendingRequestTimeout: number,
+        gpSecurityKey: number[] | undefined,
     ) {
         super();
         this.ID = ID;
@@ -327,6 +332,7 @@ export class Device extends Entity<ControllerEventMap> {
         this._lastSeen = lastSeen;
         this._checkinInterval = checkinInterval;
         this._pendingRequestTimeout = pendingRequestTimeout;
+        this._gpSecurityKey = gpSecurityKey;
     }
 
     public createEndpoint(ID: number): Endpoint {
@@ -573,6 +579,7 @@ export class Device extends Entity<ControllerEventMap> {
             entry.lastSeen,
             entry.checkinInterval,
             pendingRequestTimeout,
+            entry.gpSecurityKey,
         );
     }
 
@@ -605,6 +612,7 @@ export class Device extends Entity<ControllerEventMap> {
             meta: this.meta,
             lastSeen: this.lastSeen,
             checkinInterval: this.checkinInterval,
+            gpSecurityKey: this.gpSecurityKey,
         };
     }
 
@@ -694,6 +702,7 @@ export class Device extends Entity<ControllerEventMap> {
         powerSource: string | undefined,
         modelID: string | undefined,
         interviewCompleted: boolean,
+        gpSecurityKey: number[] | undefined,
     ): Device {
         Device.loadFromDatabaseIfNecessary();
 
@@ -723,6 +732,7 @@ export class Device extends Entity<ControllerEventMap> {
             undefined,
             undefined,
             0,
+            gpSecurityKey,
         );
 
         Entity.database!.insert(device.toDatabaseEntry());

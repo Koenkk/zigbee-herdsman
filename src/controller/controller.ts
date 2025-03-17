@@ -201,6 +201,7 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
                 undefined,
                 undefined,
                 true,
+                undefined,
             );
 
             await coordinator.updateActiveEndpoints();
@@ -669,11 +670,17 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
         if (!device) {
             logger.debug(`New green power device '${ieeeAddr}' joined`, NS);
             logger.debug(`Creating device '${ieeeAddr}'`, NS);
-            device = Device.create('GreenPower', ieeeAddr, payload.networkAddress, undefined, undefined, undefined, modelID, true);
-
-            if (payload.securityKey) {
-                device.meta.gpSecurityKey = Array.from(payload.securityKey);
-            }
+            device = Device.create(
+                'GreenPower',
+                ieeeAddr,
+                payload.networkAddress,
+                undefined,
+                undefined,
+                undefined,
+                modelID,
+                true,
+                payload.securityKey ? Array.from(payload.securityKey) : /* v8 ignore next */ undefined,
+            );
 
             device.save();
 
@@ -733,7 +740,7 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
         if (!device) {
             logger.debug(`New device '${payload.ieeeAddr}' joined`, NS);
             logger.debug(`Creating device '${payload.ieeeAddr}'`, NS);
-            device = Device.create('Unknown', payload.ieeeAddr, payload.networkAddress, undefined, undefined, undefined, undefined, false);
+            device = Device.create('Unknown', payload.ieeeAddr, payload.networkAddress, undefined, undefined, undefined, undefined, false, undefined);
             this.selfAndDeviceEmit(device, 'deviceJoined', {device});
         } else if (device.isDeleted) {
             logger.debug(`Deleted device '${payload.ieeeAddr}' joined, undeleting`, NS);
@@ -819,11 +826,7 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
 
             const nwkAddress = frame.payload.srcID & 0xffff;
             device = Device.byNetworkAddress(nwkAddress);
-            frame = await this.greenPower.onZclGreenPowerData(
-                payload,
-                frame,
-                device?.meta.gpSecurityKey ? Buffer.from(device.meta.gpSecurityKey) : undefined,
-            );
+            frame = await this.greenPower.onZclGreenPowerData(payload, frame, device?.gpSecurityKey ? Buffer.from(device.gpSecurityKey) : undefined);
 
             // lookup encapsulated gpDevice for further processing (re-fetch, may have been created by above call)
             device = Device.byNetworkAddress(nwkAddress);

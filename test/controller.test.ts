@@ -4012,7 +4012,7 @@ describe('Controller', () => {
         await mockAdapterEvents['deviceJoined']({networkAddress: 140, ieeeAddr: '0x129'});
         let error;
         try {
-            Device.create('Router', '0x129', 140, undefined, undefined, undefined, undefined, false);
+            Device.create('Router', '0x129', 140, undefined, undefined, undefined, undefined, false, undefined);
         } catch (e) {
             error = e;
         }
@@ -4021,7 +4021,7 @@ describe('Controller', () => {
 
     it('Should allow to set type', async () => {
         await controller.start();
-        const device = Device.create('Router', '0x129', 140, undefined, undefined, undefined, undefined, false);
+        const device = Device.create('Router', '0x129', 140, undefined, undefined, undefined, undefined, false, undefined);
         device.type = 'EndDevice';
         expect(device.type).toStrictEqual('EndDevice');
     });
@@ -7614,9 +7614,8 @@ describe('Controller', () => {
                 _modelID: 'GreenPower_2',
                 _networkAddress: 0xf4fe,
                 _type: 'GreenPower',
-                meta: {
-                    gpSecurityKey: [0xf1, 0xec, 0x92, 0xab, 0xff, 0x8f, 0x13, 0x63, 0xe1, 0x46, 0xbe, 0xb5, 0x18, 0xc9, 0x0c, 0xab],
-                },
+                meta: {},
+                _gpSecurityKey: [0xf1, 0xec, 0x92, 0xab, 0xff, 0x8f, 0x13, 0x63, 0xe1, 0x46, 0xbe, 0xb5, 0x18, 0xc9, 0x0c, 0xab],
             },
         });
         expect(events.deviceInterview.length).toBe(1);
@@ -7636,9 +7635,8 @@ describe('Controller', () => {
                 _modelID: 'GreenPower_2',
                 _networkAddress: 0xf4fe,
                 _type: 'GreenPower',
-                meta: {
-                    gpSecurityKey: [0xf1, 0xec, 0x92, 0xab, 0xff, 0x8f, 0x13, 0x63, 0xe1, 0x46, 0xbe, 0xb5, 0x18, 0xc9, 0x0c, 0xab],
-                },
+                meta: {},
+                _gpSecurityKey: [0xf1, 0xec, 0x92, 0xab, 0xff, 0x8f, 0x13, 0x63, 0xe1, 0x46, 0xbe, 0xb5, 0x18, 0xc9, 0x0c, 0xab],
             },
         });
         expect(controller.getDeviceByIeeeAddr('0x000000000046f4fe')!.networkAddress).toBe(0xf4fe);
@@ -7702,9 +7700,8 @@ describe('Controller', () => {
                 _modelID: 'GreenPower_2',
                 _networkAddress: 0xf4fe,
                 _type: 'GreenPower',
-                meta: {
-                    gpSecurityKey: [0xf1, 0xec, 0x92, 0xab, 0xff, 0x8f, 0x13, 0x63, 0xe1, 0x46, 0xbe, 0xb5, 0x18, 0xc9, 0x0c, 0xab],
-                },
+                meta: {},
+                _gpSecurityKey: [0xf1, 0xec, 0x92, 0xab, 0xff, 0x8f, 0x13, 0x63, 0xe1, 0x46, 0xbe, 0xb5, 0x18, 0xc9, 0x0c, 0xab],
             },
             endpoint: {
                 inputClusters: [],
@@ -8049,9 +8046,8 @@ describe('Controller', () => {
                 _modelID: 'GreenPower_2',
                 _networkAddress: 0x71f8,
                 _type: 'GreenPower',
-                meta: {
-                    gpSecurityKey: [0x21, 0x7f, 0x8c, 0xb2, 0x90, 0xd9, 0x90, 0x14, 0x15, 0xd0, 0x5c, 0xb1, 0x64, 0x7c, 0x44, 0x6c],
-                },
+                meta: {},
+                _gpSecurityKey: [0x21, 0x7f, 0x8c, 0xb2, 0x90, 0xd9, 0x90, 0x14, 0x15, 0xd0, 0x5c, 0xb1, 0x64, 0x7c, 0x44, 0x6c],
             },
         });
         console.log(events.deviceInterview);
@@ -8072,9 +8068,8 @@ describe('Controller', () => {
                 _modelID: 'GreenPower_2',
                 _networkAddress: 0x71f8,
                 _type: 'GreenPower',
-                meta: {
-                    gpSecurityKey: [0x21, 0x7f, 0x8c, 0xb2, 0x90, 0xd9, 0x90, 0x14, 0x15, 0xd0, 0x5c, 0xb1, 0x64, 0x7c, 0x44, 0x6c],
-                },
+                meta: {},
+                _gpSecurityKey: [0x21, 0x7f, 0x8c, 0xb2, 0x90, 0xd9, 0x90, 0x14, 0x15, 0xd0, 0x5c, 0xb1, 0x64, 0x7c, 0x44, 0x6c],
             },
         });
         expect(controller.getDeviceByIeeeAddr('0x00000000017171f8')!.networkAddress).toBe(0x71f8);
@@ -8136,9 +8131,8 @@ describe('Controller', () => {
                 _interviewCompleted: true,
                 _interviewing: false,
                 _skipDefaultResponse: false,
-                meta: {
-                    gpSecurityKey: [0x21, 0x7f, 0x8c, 0xb2, 0x90, 0xd9, 0x90, 0x14, 0x15, 0xd0, 0x5c, 0xb1, 0x64, 0x7c, 0x44, 0x6c],
-                },
+                meta: {},
+                _gpSecurityKey: [0x21, 0x7f, 0x8c, 0xb2, 0x90, 0xd9, 0x90, 0x14, 0x15, 0xd0, 0x5c, 0xb1, 0x64, 0x7c, 0x44, 0x6c],
                 _lastSeen: Date.now(),
                 _pendingRequestTimeout: 0,
                 _linkquality: 50,
@@ -8226,6 +8220,7 @@ describe('Controller', () => {
             _networkAddress: 0x71f8,
             _type: 'GreenPower',
             meta: {},
+            _gpSecurityKey: [0x21, 0x7f, 0x8c, 0xb2, 0x90, 0xd9, 0x90, 0x14, 0x15, 0xd0, 0x5c, 0xb1, 0x64, 0x7c, 0x44, 0x6c],
         });
 
         // Re-add device
@@ -8273,6 +8268,7 @@ describe('Controller', () => {
             _networkAddress: 0x71f8,
             _type: 'GreenPower',
             meta: {},
+            _gpSecurityKey: [0x21, 0x7f, 0x8c, 0xb2, 0x90, 0xd9, 0x90, 0x14, 0x15, 0xd0, 0x5c, 0xb1, 0x64, 0x7c, 0x44, 0x6c],
         });
     });
 
