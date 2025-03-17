@@ -1,15 +1,22 @@
-import {mkdirSync, rmSync} from 'node:fs';
+import {mkdirSync, rmSync, writeFileSync} from 'node:fs';
 import {join} from 'node:path';
 
-import {encodeSpinelFrame, SPINEL_HEADER_FLG_SPINEL, SpinelFrame} from 'zigbee-on-host/dist/spinel/spinel';
+import {SPINEL_HEADER_FLG_SPINEL, SpinelFrame} from 'zigbee-on-host/dist/spinel/spinel';
 
 import {bigUInt64ToHexBE} from '../../../src/adapter/zoh/adapter/utils';
 import {ZoHAdapter} from '../../../src/adapter/zoh/adapter/zohAdapter';
+import * as ZSpec from '../../../src/zspec';
 import * as Zcl from '../../../src/zspec/zcl';
 import * as Zdo from '../../../src/zspec/zdo';
 
 const TEMP_PATH = 'zoh-tmp';
 const TEMP_PATH_SAVE = join(TEMP_PATH, 'zoh.save');
+const DEFAULT_PAN_ID = 0x1a62;
+const DEFAULT_EXT_PAN_ID = [0xdd, 0x11, 0x22, 0xdd, 0xdd, 0x33, 0x44, 0xdd];
+const DEFAULT_CHANNEL = 11;
+const DEFAULT_NETWORK_KEY = [0x11, 0x03, 0x15, 0x07, 0x09, 0x0b, 0x0d, 0x0f, 0x00, 0x02, 0x04, 0x06, 0x08, 0x1a, 0x1c, 0x1d];
+const DEFAULT_STATE_FILE_HEX =
+    '5a6f486f6e5a324d621add1122dddd3344dd0b001311031507090b0d0f00020406081a1c1d00040000005a6967426565416c6c69616e636530390004000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000';
 
 describe('ZigBee on Host', () => {
     let adapter: ZoHAdapter;
@@ -48,10 +55,10 @@ describe('ZigBee on Host', () => {
 
         adapter = new ZoHAdapter(
             {
-                panID: 0x1a62,
-                extendedPanID: [0xdd, 0x11, 0x22, 0xdd, 0xdd, 0x33, 0x44, 0xdd],
-                channelList: [11],
-                networkKey: [0x11, 0x03, 0x15, 0x07, 0x09, 0x0b, 0x0d, 0x0f, 0x00, 0x02, 0x04, 0x06, 0x08, 0x1a, 0x1c, 0x1d],
+                panID: DEFAULT_PAN_ID,
+                extendedPanID: DEFAULT_EXT_PAN_ID,
+                channelList: [DEFAULT_CHANNEL],
+                networkKey: DEFAULT_NETWORK_KEY,
                 networkKeyDistribute: false,
             },
             {
@@ -97,16 +104,16 @@ describe('ZigBee on Host', () => {
     });
 
     it('Adapter impl: gets state', async () => {
-        await expect(adapter.start()).resolves.toStrictEqual('resumed');
+        await expect(adapter.start()).resolves.toStrictEqual('reset');
         await expect(adapter.getCoordinatorIEEE()).resolves.toStrictEqual('0x4d325a6e6f486f5a');
         await expect(adapter.getCoordinatorVersion()).resolves.toStrictEqual({
             type: 'ZigBee on Host',
             meta: {revision: 'https://github.com/Nerivec/zigbee-on-host'},
         });
         await expect(adapter.getNetworkParameters()).resolves.toStrictEqual({
-            panID: 0x1a62,
-            extendedPanID: '0xdd4433dddd2211dd',
-            channel: 11,
+            panID: DEFAULT_PAN_ID,
+            extendedPanID: `0x${bigUInt64ToHexBE(Buffer.from(DEFAULT_EXT_PAN_ID).readBigUint64LE())}`,
+            channel: DEFAULT_CHANNEL,
             nwkUpdateID: 0,
         });
     });
@@ -682,6 +689,215 @@ describe('ZigBee on Host', () => {
         });
     });
 
+    it('receives GP frame', async () => {
+        await adapter.start();
+
+        const emitSpy = vi.spyOn(adapter, 'emit');
+
+        adapter.driver.emit(
+            'gpFrame',
+            0xe0,
+            Buffer.from([
+                0x2, 0x85, 0xf2, 0xc9, 0x25, 0x82, 0x1d, 0xf4, 0x6f, 0x45, 0x8c, 0xf0, 0xe6, 0x37, 0xaa, 0xc3, 0xba, 0xb6, 0xaa, 0x45, 0x83, 0x1a,
+                0x11, 0x46, 0x23, 0x0, 0x0, 0x4, 0x16, 0x10, 0x11, 0x22, 0x23, 0x18, 0x19, 0x14, 0x15, 0x12, 0x13, 0x64, 0x65, 0x62, 0x63, 0x1e, 0x1f,
+                0x1c, 0x1d, 0x1a, 0x1b, 0x16, 0x17,
+            ]),
+            {
+                frameControl: {
+                    frameType: 0x1,
+                    securityEnabled: false,
+                    framePending: false,
+                    ackRequest: false,
+                    panIdCompression: false,
+                    seqNumSuppress: false,
+                    iePresent: false,
+                    destAddrMode: 0x2,
+                    frameVersion: 0,
+                    sourceAddrMode: 0x0,
+                },
+                sequenceNumber: 70,
+                destinationPANId: 0xffff,
+                destination16: 0xffff,
+                sourcePANId: 0xffff,
+                fcs: 0xffff,
+            },
+            {
+                frameControl: {
+                    frameType: 0x0,
+                    protocolVersion: 3,
+                    autoCommissioning: false,
+                    nwkFrameControlExtension: false,
+                },
+                sourceId: 0x0155f47a,
+                micSize: 0,
+                payloadLength: 52,
+            },
+            0,
+        );
+
+        const data = Buffer.from([
+            1, 70, 4, 0, 0, 122, 244, 85, 1, 0, 0, 0, 0, 0xe0, 51, 0x2, 0x85, 0xf2, 0xc9, 0x25, 0x82, 0x1d, 0xf4, 0x6f, 0x45, 0x8c, 0xf0, 0xe6, 0x37,
+            0xaa, 0xc3, 0xba, 0xb6, 0xaa, 0x45, 0x83, 0x1a, 0x11, 0x46, 0x23, 0x0, 0x0, 0x4, 0x16, 0x10, 0x11, 0x22, 0x23, 0x18, 0x19, 0x14, 0x15,
+            0x12, 0x13, 0x64, 0x65, 0x62, 0x63, 0x1e, 0x1f, 0x1c, 0x1d, 0x1a, 0x1b, 0x16, 0x17,
+        ]);
+        const header = Zcl.Header.fromBuffer(data)!;
+
+        expect(emitSpy).toHaveBeenLastCalledWith('zclPayload', {
+            address: 0x0155f47a & 0xffff,
+            clusterID: Zcl.Clusters.greenPower.ID,
+            data,
+            destinationEndpoint: 242,
+            endpoint: 242,
+            groupID: ZSpec.GP_GROUP_ID,
+            header,
+            linkquality: 0,
+            wasBroadcast: true,
+        });
+
+        const frame = Zcl.Frame.fromBuffer(Zcl.Clusters.greenPower.ID, header, data, {});
+
+        expect(frame).toMatchObject({
+            header: {
+                frameControl: {
+                    frameType: 1,
+                    manufacturerSpecific: false,
+                    direction: 0,
+                    disableDefaultResponse: false,
+                    reservedBits: 0,
+                },
+                manufacturerCode: undefined,
+                transactionSequenceNumber: 70,
+                commandIdentifier: 4,
+            },
+            payload: {
+                options: 0,
+                srcID: 22410362,
+                frameCounter: 0,
+                commandID: 0xe0,
+                payloadSize: 51,
+                commandFrame: {
+                    deviceID: 2,
+                    options: 133,
+                    extendedOptions: 242,
+                    securityKey: Buffer.from('c925821df46f458cf0e637aac3bab6aa', 'hex'),
+                    keyMic: 286950213,
+                    outgoingCounter: 9030,
+                    applicationInfo: 4,
+                    manufacturerID: 0,
+                    modelID: 0,
+                    numGdpCommands: 22,
+                    gpdCommandIdList: Buffer.from('10112223181914151213646562631e1f1c1d1a1b1617', 'hex'),
+                    numServerClusters: 0,
+                    numClientClusters: 0,
+                    gpdServerClusters: Buffer.alloc(0),
+                    gpdClientClusters: Buffer.alloc(0),
+                },
+            },
+            cluster: {
+                ID: 0x21,
+                name: 'greenPower',
+            },
+            command: {
+                ID: 0x04,
+                name: 'commissioningNotification',
+            },
+        });
+
+        adapter.driver.emit(
+            'gpFrame',
+            0x10,
+            Buffer.from([]),
+            {
+                frameControl: {
+                    frameType: 0x1,
+                    securityEnabled: false,
+                    framePending: false,
+                    ackRequest: false,
+                    panIdCompression: false,
+                    seqNumSuppress: false,
+                    iePresent: false,
+                    destAddrMode: 0x2,
+                    frameVersion: 0,
+                    sourceAddrMode: 0x0,
+                },
+                sequenceNumber: 185,
+                destinationPANId: 0xffff,
+                destination16: 0xffff,
+                sourcePANId: 0xffff,
+                fcs: 0xffff,
+            },
+            {
+                frameControl: {
+                    frameType: 0x0,
+                    protocolVersion: 3,
+                    autoCommissioning: false,
+                    nwkFrameControlExtension: true,
+                },
+                frameControlExt: {
+                    appId: 0,
+                    direction: 0,
+                    rxAfterTx: false,
+                    securityKey: true,
+                    securityLevel: 2,
+                },
+                sourceId: 24221335,
+                securityFrameCounter: 185,
+                micSize: 4,
+                payloadLength: 1,
+                mic: 3523079166,
+            },
+            0,
+        );
+
+        const data2 = Buffer.from([1, 185, 0, 0, 0, 151, 150, 113, 1, 185, 0, 0, 0, 0x10, 0]);
+        const header2 = Zcl.Header.fromBuffer(data2)!;
+
+        expect(emitSpy).toHaveBeenLastCalledWith('zclPayload', {
+            address: 24221335 & 0xffff,
+            clusterID: Zcl.Clusters.greenPower.ID,
+            data: data2,
+            destinationEndpoint: 242,
+            endpoint: 242,
+            groupID: ZSpec.GP_GROUP_ID,
+            header: header2,
+            linkquality: 0,
+            wasBroadcast: true,
+        });
+
+        const frame2 = Zcl.Frame.fromBuffer(Zcl.Clusters.greenPower.ID, header2, data2, {});
+
+        expect(frame2).toMatchObject({
+            header: {
+                frameControl: {
+                    frameType: 1,
+                    manufacturerSpecific: false,
+                    direction: 0,
+                    disableDefaultResponse: false,
+                    reservedBits: 0,
+                },
+                manufacturerCode: undefined,
+                transactionSequenceNumber: 185,
+                commandIdentifier: 0,
+            },
+            payload: {
+                options: 0,
+                srcID: 24221335,
+                frameCounter: 185,
+                commandID: 0x10,
+                payloadSize: 0,
+                commandFrame: {},
+            },
+            cluster: {
+                ID: 0x21,
+                name: 'greenPower',
+            },
+            command: {
+                ID: 0x00,
+                name: 'notification',
+            },
+        });
+    });
+
     it('receives device events', async () => {
         await adapter.start();
 
@@ -697,5 +913,57 @@ describe('ZigBee on Host', () => {
         expect(emitSpy).toHaveBeenLastCalledWith('deviceLeave', {networkAddress: 0x123, ieeeAddr: `0x00000000000010e1`});
 
         // adapter.driver.emit('deviceAuthorized', 0x123, 4321n);
+    });
+
+    it('resumes network', async () => {
+        // create default
+        writeFileSync(TEMP_PATH_SAVE, Buffer.from(DEFAULT_STATE_FILE_HEX, 'hex'));
+
+        await expect(adapter.start()).resolves.toStrictEqual('resumed');
+        expect(adapter.driver.netParams.networkKeyFrameCounter).toStrictEqual(1024); // jump means it loaded from saved state
+    });
+
+    it('resets network on mismatch PAN ID', async () => {
+        // create default
+        const state = Buffer.from(DEFAULT_STATE_FILE_HEX, 'hex');
+
+        state.writeUInt16LE(0x1234, 8); // right after EUI64
+        writeFileSync(TEMP_PATH_SAVE, state);
+
+        const currentNetParams = await adapter.driver.readNetworkState();
+
+        expect(currentNetParams?.panId).toStrictEqual(0x1234);
+        await expect(adapter.start()).resolves.toStrictEqual('reset');
+        expect(adapter.driver.netParams.panId).toStrictEqual(DEFAULT_PAN_ID);
+    });
+
+    it('resets network on mismatch extended PAN ID', async () => {
+        // create default
+        const state = Buffer.from(DEFAULT_STATE_FILE_HEX, 'hex');
+
+        state.write('0011001100110011', 10, 'hex'); // right after PAN ID
+        writeFileSync(TEMP_PATH_SAVE, state);
+
+        const currentNetParams = await adapter.driver.readNetworkState();
+
+        expect(currentNetParams?.extendedPANId).toStrictEqual(Buffer.from('0011001100110011', 'hex').readBigUInt64LE());
+
+        await expect(adapter.start()).resolves.toStrictEqual('reset');
+        expect(adapter.driver.netParams.extendedPANId).toStrictEqual(Buffer.from(DEFAULT_EXT_PAN_ID).readBigUInt64LE());
+    });
+
+    it('resets network on mismatch network key', async () => {
+        // create default
+        const state = Buffer.from(DEFAULT_STATE_FILE_HEX, 'hex');
+
+        state.write('00110011001100110011001100110011', 21, 'hex'); // right after tx power
+        writeFileSync(TEMP_PATH_SAVE, state);
+
+        const currentNetParams = await adapter.driver.readNetworkState();
+
+        expect(currentNetParams?.networkKey).toStrictEqual(Buffer.from('00110011001100110011001100110011', 'hex'));
+
+        await expect(adapter.start()).resolves.toStrictEqual('reset');
+        expect(adapter.driver.netParams.networkKey).toStrictEqual(Buffer.from(DEFAULT_NETWORK_KEY));
     });
 });

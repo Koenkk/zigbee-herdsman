@@ -3,7 +3,9 @@ import {dirname} from 'node:path';
 
 import {OTRCPDriver} from 'zigbee-on-host';
 import {setLogger} from 'zigbee-on-host/dist/utils/logger';
+import {MACHeader} from 'zigbee-on-host/dist/zigbee/mac';
 import {ZigbeeAPSHeader, ZigbeeAPSPayload} from 'zigbee-on-host/dist/zigbee/zigbee-aps';
+import {ZigbeeNWKGPHeader} from 'zigbee-on-host/dist/zigbee/zigbee-nwkgp';
 
 import {Backup} from '../../../models/backup';
 import {logger} from '../../../utils/logger';
@@ -240,16 +242,38 @@ export class ZoHAdapter extends Adapter {
     public async start(): Promise<TsType.StartResult> {
         setLogger(logger); // pass the logger to ZoH
         await this.initPort();
+
+        let result: TsType.StartResult = 'resumed';
+        const currentNetParams = await this.driver.readNetworkState();
+
+        if (currentNetParams) {
+            // Note: channel change is handled by Controller
+            if (
+                // TODO: add eui64 whenever added as configurable
+                this.networkOptions.panID !== currentNetParams.panId ||
+                Buffer.from(this.networkOptions.extendedPanID!).readBigUInt64LE(0) != currentNetParams.extendedPANId ||
+                !Buffer.from(this.networkOptions.networkKey!).equals(currentNetParams.networkKey)
+            ) {
+                await this.driver.resetNetwork();
+
+                result = 'reset';
+            }
+        } else {
+            // no save detected, brand new network
+            result = 'reset';
+        }
+
         await this.driver.start();
         await this.driver.formNetwork();
 
         this.driver.on('frame', this.onFrame.bind(this));
+        this.driver.on('gpFrame', this.onGPFrame.bind(this));
         this.driver.on('deviceJoined', this.onDeviceJoined.bind(this));
         this.driver.on('deviceRejoined', this.onDeviceRejoined.bind(this));
         this.driver.on('deviceLeft', this.onDeviceLeft.bind(this));
         this.driver.on('deviceAuthorized', this.onDeviceAuthorized.bind(this));
 
-        return 'resumed';
+        return result;
     }
 
     public async stop(): Promise<void> {
@@ -670,6 +694,56 @@ export class ZoHAdapter extends Adapter {
             this.zclWaitress.resolve(payload);
             this.emit('zclPayload', payload);
         }
+    }
+
+    private onGPFrame(cmdId: number, payload: Buffer, macHeader: MACHeader, nwkHeader: ZigbeeNWKGPHeader, rssi: number): void {
+        // transform into a ZCL frame
+        const data = Buffer.alloc((nwkHeader.frameControlExt?.appId === 0x02 /* ZGP */ ? /* v8 ignore next */ 20 : 15) + payload.byteLength);
+        let offset = 0;
+        data.writeUInt8(0b00000001, offset); // frameControl: FrameType.SPECIFIC + Direction.CLIENT_TO_SERVER + disableDefaultResponse=false
+        offset += 1;
+        data.writeUInt8(macHeader.sequenceNumber ?? /* v8 ignore next */ 0, offset);
+        offset += 1;
+        data.writeUInt8(cmdId === 0xe0 ? 0x04 /* commissioning notification */ : 0x00 /* notification */, offset);
+        offset += 1;
+        data.writeUInt16LE(0, offset); // options, only srcID present
+        offset += 2;
+
+        /* v8 ignore start */
+        if (nwkHeader.frameControlExt?.appId === 0x02 /* ZGP */) {
+            data.writeBigUInt64LE(macHeader.source64!, offset);
+            offset += 8;
+            data.writeUInt8(nwkHeader.endpoint!, offset);
+            offset += 1;
+            /* v8 ignore stop */
+        } else {
+            data.writeUInt32LE(nwkHeader.sourceId!, offset);
+            offset += 4;
+        }
+
+        data.writeUInt32LE(nwkHeader.securityFrameCounter ?? 0, offset);
+        offset += 4;
+        data.writeUInt8(cmdId, offset);
+        offset += 1;
+        data.writeUInt8(payload.byteLength, offset);
+        offset += 1;
+        data.set(payload, offset);
+
+        const zclPayload: ZclPayload = {
+            clusterID: 0x21 /* Green Power */,
+            header: Zcl.Header.fromBuffer(data),
+            address:
+                macHeader.source64 !== undefined ? /* v8 ignore next */ `0x${bigUInt64ToHexBE(macHeader.source64)}` : nwkHeader.sourceId! & 0xffff,
+            data,
+            endpoint: ZSpec.GP_ENDPOINT,
+            linkquality: rssi, // TODO: convert RSSI to LQA
+            groupID: ZSpec.GP_GROUP_ID,
+            wasBroadcast: macHeader.destination64 === undefined && macHeader.destination16! >= 0xfff8,
+            destinationEndpoint: ZSpec.GP_ENDPOINT,
+        };
+
+        this.zclWaitress.resolve(zclPayload);
+        this.emit('zclPayload', zclPayload);
     }
 
     private onDeviceJoined(source16: number, source64: bigint): void {

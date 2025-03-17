@@ -33,8 +33,8 @@ importers:
         specifier: ^1.0.2
         version: 1.0.2
       zigbee-on-host:
-        specifier: ^0.1.0
-        version: 0.1.0
+        specifier: ^0.1.2
+        version: 0.1.2
     devDependencies:
       '@eslint/core':
         specifier: ^0.12.0
@@ -1401,8 +1401,8 @@ packages:
     resolution: {integrity: sha512-rVksvsnNCdJ/ohGc6xgPwyN8eheCxsiLM8mxuE/t/mOVqJewPuO1miLpTHQiRgTKCLexL4MeAFVagts7HmNZ2Q==}
     engines: {node: '>=10'}
 
-  zigbee-on-host@0.1.0:
-    resolution: {integrity: sha512-0lUepIg+7Ikt8scRtcD4Y+NhQXydn+3J6caVc7aBz4XYA2ClSDNq8F3hJkFxWw3FD7ZPwpZnYfHa9tHb5pJWjw==}
+  zigbee-on-host@0.1.2:
+    resolution: {integrity: sha512-bg88gSyyghczOwKLZa07VnSYVvM1iN+omxYk2gCsypUqV2IPXL+J2h8oRjf9vsrZSYBZSakREXLEZE2WEnDyAQ==}
     engines: {node: '>=20.17.0'}
 
 snapshots:
@@ -2662,4 +2662,4 @@ snapshots:
 
   yocto-queue@0.1.0: {}
 
-  zigbee-on-host@0.1.0: {}
+  zigbee-on-host@0.1.2: {}
