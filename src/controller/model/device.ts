@@ -816,6 +816,8 @@ export class Device extends Entity<ControllerEventMap> {
             '3RWS18BZ': {}, // https://github.com/Koenkk/zigbee-herdsman-converters/pull/2710
             'MULTI-MECI--EA01': {},
             MOT003: {}, // https://github.com/Koenkk/zigbee2mqtt/issues/12471
+            'C-ZB-SEDC': {}, //candeo device that doesn't follow IAS enrollment process correctly and therefore fails to complete interview
+            'C-ZB-SEMO': {}, //candeo device that doesn't follow IAS enrollment process correctly and therefore fails to complete interview
         };
 
         let match: string | undefined;
