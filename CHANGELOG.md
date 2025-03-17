@@ -1,5 +1,15 @@
 # Changelog
 
+## [3.4.1](https://github.com/Koenkk/zigbee-herdsman/compare/v3.4.0...v3.4.1) (2025-03-17)
+
+
+### Bug Fixes
+
+* Fix interview errors for Candeo C-ZB-SEDC and C-ZB-SEMO ([#1345](https://github.com/Koenkk/zigbee-herdsman/issues/1345)) ([3550bfe](https://github.com/Koenkk/zigbee-herdsman/commit/3550bfedd6c717a6f3ae8cd7c2827732f7a23bff))
+* **ignore:** update dependencies ([#1347](https://github.com/Koenkk/zigbee-herdsman/issues/1347)) ([9512722](https://github.com/Koenkk/zigbee-herdsman/commit/9512722c0838c7c850a5504a2e3b2ff75d11b508))
+* **ignore:** Use direct calls instead of lookup for `Adapter.create` ([#1346](https://github.com/Koenkk/zigbee-herdsman/issues/1346)) ([9339c90](https://github.com/Koenkk/zigbee-herdsman/commit/9339c9083a544add7014faf9bdad0c38b86cef0d))
+* **ignore:** ZoH v0.1.2 ([#1350](https://github.com/Koenkk/zigbee-herdsman/issues/1350)) ([3a6aac7](https://github.com/Koenkk/zigbee-herdsman/commit/3a6aac75ee214c5f11047bf8dcbb7ffc5986cbcc))
+
 ## [3.4.0](https://github.com/Koenkk/zigbee-herdsman/compare/v3.3.2...v3.4.0) (2025-03-15)
 
 
