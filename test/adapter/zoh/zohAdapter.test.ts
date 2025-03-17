@@ -112,8 +112,8 @@ describe('ZigBee on Host', () => {
         });
         await expect(adapter.getNetworkParameters()).resolves.toStrictEqual({
             panID: DEFAULT_PAN_ID,
-            extendedPanID: '0xdd4433dddd2211dd',
-            channel: 11,
+            extendedPanID: `0x${bigUInt64ToHexBE(Buffer.from(DEFAULT_EXT_PAN_ID).readBigUint64LE())}`,
+            channel: DEFAULT_CHANNEL,
             nwkUpdateID: 0,
         });
     });
