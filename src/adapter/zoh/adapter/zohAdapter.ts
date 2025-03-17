@@ -242,6 +242,27 @@ export class ZoHAdapter extends Adapter {
     public async start(): Promise<TsType.StartResult> {
         setLogger(logger); // pass the logger to ZoH
         await this.initPort();
+
+        let result: TsType.StartResult = 'resumed';
+        const currentNetParams = await this.driver.readNetworkState();
+
+        if (currentNetParams) {
+            // Note: channel change is handled by Controller
+            if (
+                // TODO: add eui64 whenever added as configurable
+                this.networkOptions.panID !== currentNetParams.panId ||
+                Buffer.from(this.networkOptions.extendedPanID!).readBigUInt64LE(0) != currentNetParams.extendedPANId ||
+                !Buffer.from(this.networkOptions.networkKey!).equals(currentNetParams.networkKey)
+            ) {
+                await this.driver.resetNetwork();
+
+                result = 'reset';
+            }
+        } else {
+            // no save detected, brand new network
+            result = 'reset';
+        }
+
         await this.driver.start();
         await this.driver.formNetwork();
 
@@ -252,7 +273,7 @@ export class ZoHAdapter extends Adapter {
         this.driver.on('deviceLeft', this.onDeviceLeft.bind(this));
         this.driver.on('deviceAuthorized', this.onDeviceAuthorized.bind(this));
 
-        return 'resumed';
+        return result;
     }
 
     public async stop(): Promise<void> {
