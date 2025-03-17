@@ -1150,7 +1150,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                     {name: 'frameCounter', type: DataType.UINT32},
                     {name: 'commandID', type: DataType.UINT8},
                     {name: 'payloadSize', type: DataType.UINT8},
-                    {name: 'commandFrame', type: BuffaloZclDataType.GDP_FRAME},
+                    {name: 'commandFrame', type: BuffaloZclDataType.GPD_FRAME},
                     {name: 'gppNwkAddr', type: DataType.UINT16, conditions: [{type: ParameterCondition.BITMASK_SET, param: 'options', mask: 0x4000}]},
                     /** Bits: 0..5 RSSI 6..7 Link quality */
                     {
@@ -1182,7 +1182,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                     {name: 'frameCounter', type: DataType.UINT32},
                     {name: 'commandID', type: DataType.UINT8},
                     {name: 'payloadSize', type: DataType.UINT8},
-                    {name: 'commandFrame', type: BuffaloZclDataType.GDP_FRAME},
+                    {name: 'commandFrame', type: BuffaloZclDataType.GPD_FRAME},
                     {name: 'gppNwkAddr', type: DataType.UINT16, conditions: [{type: ParameterCondition.BITMASK_SET, param: 'options', mask: 0x800}]},
                     /** Bits: 0..5 RSSI 6..7 Link quality */
                     {name: 'gppGpdLink', type: DataType.BITMAP8, conditions: [{type: ParameterCondition.BITMASK_SET, param: 'options', mask: 0x800}]},
@@ -1213,7 +1213,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                         conditions: [{type: ParameterCondition.BITFIELD_ENUM, param: 'options', offset: 0, size: 3, value: 0b010}],
                     },
                     {name: 'gpdCmd', type: DataType.UINT8},
-                    {name: 'gpdPayload', type: BuffaloZclDataType.GDP_FRAME},
+                    {name: 'gpdPayload', type: BuffaloZclDataType.GPD_FRAME},
                 ],
             },
             pairing: {

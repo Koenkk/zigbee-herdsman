@@ -791,14 +791,14 @@ describe('ZCL Buffalo', () => {
             const value = [0xff, 0x00];
             const buffalo = new BuffaloZcl(Buffer.from(value));
 
-            expect(buffalo.read(Zcl.BuffaloZclDataType.GDP_FRAME, {payload: {commandID: 0x1ff}})).toStrictEqual({raw: Buffer.from(value)});
+            expect(buffalo.read(Zcl.BuffaloZclDataType.GPD_FRAME, {payload: {commandID: 0x1ff}})).toStrictEqual({raw: Buffer.from(value)});
         });
 
         it('Reads unhandled command as empty object if buffer finished reading', () => {
             const value = [0xff, 0x00];
             const buffalo = new BuffaloZcl(Buffer.from(value), value.length /* pos at end*/);
 
-            expect(buffalo.read(Zcl.BuffaloZclDataType.GDP_FRAME, {payload: {commandID: 0x1ff}})).toStrictEqual({});
+            expect(buffalo.read(Zcl.BuffaloZclDataType.GPD_FRAME, {payload: {commandID: 0x1ff}})).toStrictEqual({});
         });
 
         it('Writes commissioning', () => {
@@ -806,7 +806,7 @@ describe('ZCL Buffalo', () => {
             const buffalo = new BuffaloZcl(Buffer.alloc(2));
 
             buffalo.write(
-                Zcl.BuffaloZclDataType.GDP_FRAME,
+                Zcl.BuffaloZclDataType.GPD_FRAME,
                 {
                     commandID: 0xf0,
                     options: 0,
@@ -825,7 +825,7 @@ describe('ZCL Buffalo', () => {
             const value = [0xff /*device*/, 0x00 /*options*/];
             const buffalo = new BuffaloZcl(Buffer.from(value));
 
-            expect(buffalo.read(Zcl.BuffaloZclDataType.GDP_FRAME, {payload: {commandID: 0xe0}})).toStrictEqual({
+            expect(buffalo.read(Zcl.BuffaloZclDataType.GPD_FRAME, {payload: {commandID: 0xe0}})).toStrictEqual({
                 deviceID: 0xff,
                 options: 0x00,
                 extendedOptions: 0x00,
@@ -834,7 +834,7 @@ describe('ZCL Buffalo', () => {
                 outgoingCounter: 0,
                 manufacturerID: 0,
                 modelID: 0,
-                numGdpCommands: 0,
+                numGpdCommands: 0,
                 gpdCommandIdList: Buffer.alloc(0),
                 numServerClusters: 0,
                 numClientClusters: 0,
@@ -878,7 +878,7 @@ describe('ZCL Buffalo', () => {
             const buffalo = new BuffaloZcl(Buffer.alloc(28));
 
             buffalo.write(
-                Zcl.BuffaloZclDataType.GDP_FRAME,
+                Zcl.BuffaloZclDataType.GPD_FRAME,
                 {
                     commandID: 0xf0,
                     options: 0b11111,
@@ -927,12 +927,12 @@ describe('ZCL Buffalo', () => {
                 0, // manufacturer ID
                 0,
                 0, // model ID
-                0, // num GDP commands + commands
+                0, // num GPD commands + commands
                 0, // clusters
             ];
             const buffalo = new BuffaloZcl(Buffer.from(value));
 
-            expect(buffalo.read(Zcl.BuffaloZclDataType.GDP_FRAME, {payload: {commandID: 0xe0}})).toStrictEqual({
+            expect(buffalo.read(Zcl.BuffaloZclDataType.GPD_FRAME, {payload: {commandID: 0xe0}})).toStrictEqual({
                 deviceID: 0xff,
                 options: 0x80 | 0x04,
                 extendedOptions: 0x20 | 0x40 | 0x80,
@@ -941,7 +941,7 @@ describe('ZCL Buffalo', () => {
                 outgoingCounter: 0,
                 manufacturerID: 0,
                 modelID: 0,
-                numGdpCommands: 0,
+                numGpdCommands: 0,
                 gpdCommandIdList: Buffer.alloc(0),
                 numServerClusters: 0,
                 numClientClusters: 0,
@@ -955,7 +955,7 @@ describe('ZCL Buffalo', () => {
             const expected = [1 /*length*/, 0xf /*Channel 26*/];
             const buffalo = new BuffaloZcl(Buffer.alloc(2));
             buffalo.write(
-                Zcl.BuffaloZclDataType.GDP_FRAME,
+                Zcl.BuffaloZclDataType.GPD_FRAME,
                 {
                     commandID: 0xf3,
                     operationalChannel: 0xf,
@@ -971,7 +971,7 @@ describe('ZCL Buffalo', () => {
             const expected = [1 /*length*/, 0x1f /*Channel 26 + Basic*/];
             const buffalo = new BuffaloZcl(Buffer.alloc(2));
             buffalo.write(
-                Zcl.BuffaloZclDataType.GDP_FRAME,
+                Zcl.BuffaloZclDataType.GPD_FRAME,
                 {
                     commandID: 0xf3,
                     operationalChannel: 0xf,
@@ -987,7 +987,7 @@ describe('ZCL Buffalo', () => {
             const value = [0xfa];
             const buffalo = new BuffaloZcl(Buffer.from(value));
 
-            expect(buffalo.read(Zcl.BuffaloZclDataType.GDP_FRAME, {payload: {commandID: 0xe3}})).toStrictEqual({
+            expect(buffalo.read(Zcl.BuffaloZclDataType.GPD_FRAME, {payload: {commandID: 0xe3}})).toStrictEqual({
                 nextChannel: 0xa,
                 nextNextChannel: 0xf,
             });
@@ -1023,7 +1023,7 @@ describe('ZCL Buffalo', () => {
             ];
             const buffalo = new BuffaloZcl(Buffer.from(value));
 
-            expect(buffalo.read(Zcl.BuffaloZclDataType.GDP_FRAME, {payload: {commandID: 0xa1, payloadSize: value.length}})).toStrictEqual({
+            expect(buffalo.read(Zcl.BuffaloZclDataType.GPD_FRAME, {payload: {commandID: 0xa1, payloadSize: value.length}})).toStrictEqual({
                 manufacturerCode: 13330,
                 clusterID: 65535,
                 attributes: {'0': 50462976, '1': 'ZIGBEE', '2': 1},
@@ -1042,14 +1042,14 @@ describe('ZCL Buffalo', () => {
             ];
 
             const buffalo = new BuffaloZcl(Buffer.alloc(7));
-            buffalo.write(Zcl.BuffaloZclDataType.GDP_FRAME, {commandID: 0xf4, buffer: Buffer.from('ZIGBEE')}, {});
+            buffalo.write(Zcl.BuffaloZclDataType.GPD_FRAME, {commandID: 0xf4, buffer: Buffer.from('ZIGBEE')}, {});
 
             expect(buffalo.getWritten()).toStrictEqual(Buffer.from(expected));
         });
 
         it('Writes nothing for unhandled command', () => {
             const buffalo = new BuffaloZcl(Buffer.alloc(7));
-            buffalo.write(Zcl.BuffaloZclDataType.GDP_FRAME, {commandID: 0x1ff}, {});
+            buffalo.write(Zcl.BuffaloZclDataType.GPD_FRAME, {commandID: 0x1ff}, {});
 
             expect(buffalo.getWritten()).toStrictEqual(Buffer.alloc(0));
         });
@@ -1057,8 +1057,8 @@ describe('ZCL Buffalo', () => {
         it('Throws when read is missing payload.payloadSize option when payload.commandID is 0xA1', () => {
             expect(() => {
                 const buffalo = new BuffaloZcl(Buffer.alloc(1));
-                buffalo.read(Zcl.BuffaloZclDataType.GDP_FRAME, {payload: {commandID: 0xa1}});
-            }).toThrow(`Cannot read GDP_FRAME with commandID=0xA1 without payloadSize options specified`);
+                buffalo.read(Zcl.BuffaloZclDataType.GPD_FRAME, {payload: {commandID: 0xa1}});
+            }).toThrow(`Cannot read GPD_FRAME with commandID=0xA1 without payloadSize options specified`);
         });
     });
 

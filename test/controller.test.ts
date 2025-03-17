@@ -7946,7 +7946,7 @@ describe('Controller', () => {
                 keyMic: 0xf80547fa,
                 outgoingCounter: 0x000011f8,
                 applicationInfo: 0x04,
-                numGdpCommands: 17,
+                numGpdCommands: 17,
                 gpdCommandIdList: Buffer.from([0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x22, 0x60, 0x62, 0x63, 0x64, 0x65, 0x66, 0x67, 0x68]),
             },
             gppNwkAddr: gppDevice.networkAddress,

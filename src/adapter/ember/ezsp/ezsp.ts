@@ -8567,7 +8567,7 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
      * @param autoCommissioning Whether the incoming GPDF had the auto-commissioning bit set.
      * @param bidirectionalInfo uint8_t Bidirectional information represented in bitfields,
      *        where bit0 holds the rxAfterTx of incoming gpdf and bit1 holds if tx queue is available for outgoing gpdf.
-     * @param gpdSecurityFrameCounter uint32_t The security frame counter of the incoming GDPF.
+     * @param gpdSecurityFrameCounter uint32_t The security frame counter of the incoming GPDF.
      * @param gpdCommandId uint8_t The gpdCommandId of the incoming GPDF.
      * @param mic uint32_t The received MIC of the GPDF.
      * @param proxyTableIndex uint8_tThe proxy table index of the corresponding proxy table entry to the incoming GPDF.
