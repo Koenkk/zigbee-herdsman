@@ -8633,12 +8633,7 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
         gpdHeader.writeUInt8(sequenceNumber, 1);
         gpdHeader.writeUInt8(commandIdentifier, 2); // commandIdentifier
         gpdHeader.writeUInt16LE(
-            status === EmberGPStatus.UNPROCESSED || status === EmberGPStatus.PASS_UNPROCESSED
-                ? (addr.applicationId & 0x7) |
-                      ((gpdfSecurityLevel & 0x3) << 6) |
-                      ((gpdfSecurityKeyType & 0x7) << 8) |
-                      ((bidirectionalInfo & 0x3) << 11)
-                : 0 /* only srcID */,
+            (addr.applicationId & 0x7) | ((gpdfSecurityLevel & 0x3) << 6) | ((gpdfSecurityKeyType & 0x7) << 8) | ((bidirectionalInfo & 0x3) << 11),
             3,
         ); // options
         gpdHeader.writeUInt32LE(addr.sourceId, 5);
