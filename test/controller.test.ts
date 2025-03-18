@@ -7544,7 +7544,7 @@ describe('Controller', () => {
         vi.spyOn(Zcl.Frame, 'fromBuffer').mockReturnValueOnce(frame); // Mock because no Buffalo write for 0xe0 is implemented
         await mockAdapterEvents['zclPayload']({
             wasBroadcast: true,
-            address: 0x46f4fe,
+            address: 0x0046f4fe & 0xffff,
             clusterID: frame.cluster.ID,
             data: frame.toBuffer(),
             header: frame.header,
@@ -7572,7 +7572,7 @@ describe('Controller', () => {
         vi.spyOn(Zcl.Frame, 'fromBuffer').mockReturnValueOnce(frame); // Mock because no Buffalo write for 0xe0 is implemented
         await mockAdapterEvents['zclPayload']({
             wasBroadcast: true,
-            address: 0xf4fe,
+            address: 0x0046f4fe & 0xffff,
             clusterID: frame.cluster.ID,
             data: frame.toBuffer(),
             header: frame.header,
@@ -7657,7 +7657,7 @@ describe('Controller', () => {
         vi.spyOn(Zcl.Frame, 'fromBuffer').mockReturnValueOnce(frameToggle); // Mock because no Buffalo write for 0x22 is implemented
         await mockAdapterEvents['zclPayload']({
             wasBroadcast: false,
-            address: 0xf4fe,
+            address: 0x0046f4fe & 0xffff,
             clusterID: frameToggle.cluster.ID,
             data: frameToggle.toBuffer(),
             header: frameToggle.header,
@@ -7728,7 +7728,47 @@ describe('Controller', () => {
         };
         expect(deepClone(events.message[0])).toStrictEqual(expected);
 
-        await mockAdapterEvents[''];
+        const identifyUnknownDeviceSpy = vi.spyOn(controller, 'identifyUnknownDevice');
+
+        const dataDecommission = {
+            srcID: 0x0046f4fe,
+            options: 384,
+            frameCounter: 254,
+            payloadSize: 1,
+            commandID: 0xe1,
+            commandFrame: Buffer.from([2]),
+        };
+        const frameDecommission = Zcl.Frame.create(1, 0, true, undefined, 10, 'notification', 33, dataDecommission, {});
+
+        vi.spyOn(Zcl.Frame, 'fromBuffer').mockReturnValueOnce(frameDecommission); // Mock because no Buffalo write for 0xe1 is implemented
+        await mockAdapterEvents['zclPayload']({
+            wasBroadcast: true,
+            address: 0x0046f4fe & 0xffff,
+            clusterID: frameDecommission.cluster.ID,
+            data: frameDecommission.toBuffer(),
+            header: frameDecommission.header,
+            endpoint: ZSpec.GP_ENDPOINT,
+            linkquality: 50,
+            groupID: 1,
+        });
+
+        expect(events.deviceLeave.length).toBe(1);
+        expect(deepClone(events.deviceLeave[0])).toStrictEqual({ieeeAddr: '0x000000000046f4fe'});
+
+        vi.spyOn(Zcl.Frame, 'fromBuffer').mockReturnValueOnce(frameDecommission); // Mock because no Buffalo write for 0xe1 is implemented
+        await mockAdapterEvents['zclPayload']({
+            wasBroadcast: true,
+            address: 0x0046f4fe & 0xffff,
+            clusterID: frameDecommission.cluster.ID,
+            data: frameDecommission.toBuffer(),
+            header: frameDecommission.header,
+            endpoint: ZSpec.GP_ENDPOINT,
+            linkquality: 50,
+            groupID: 1,
+        });
+
+        expect(events.deviceLeave.length).toBe(1);
+        expect(identifyUnknownDeviceSpy).toHaveBeenCalledTimes(0); // deviceLeave passthrough allows to test this here
     });
 
     it('Should handle comissioning frame gracefully', async () => {

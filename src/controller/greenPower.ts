@@ -46,6 +46,7 @@ type ResponsePayload<T extends GPDCommissioningReply | GPDChannelConfiguration> 
 
 interface GreenPowerEventMap {
     deviceJoined: [payload: GreenPowerDeviceJoinedPayload];
+    deviceLeave: [sourceID: number];
 }
 
 export class GreenPower extends EventEmitter<GreenPowerEventMap> {
@@ -336,6 +337,8 @@ export class GreenPower extends EventEmitter<GreenPowerEventMap> {
                 case 0xe1:
                     // GP Success
                     logger.debug(`[DECOMMISSIONING] from=${dataPayload.address}`, NS);
+
+                    this.emit('deviceLeave', frame.payload.srcID);
                     break;
                 case 0xe2:
                     // GP Success
