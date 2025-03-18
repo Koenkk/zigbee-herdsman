@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.4.2](https://github.com/Koenkk/zigbee-herdsman/compare/v3.4.1...v3.4.2) (2025-03-18)
+
+
+### Bug Fixes
+
+* Green spring cleaning ([#1349](https://github.com/Koenkk/zigbee-herdsman/issues/1349)) ([cfa8342](https://github.com/Koenkk/zigbee-herdsman/commit/cfa8342392eb131d8ce30c29a6ad1981552b8a50))
+
 ## [3.4.1](https://github.com/Koenkk/zigbee-herdsman/compare/v3.4.0...v3.4.1) (2025-03-17)
 
 
