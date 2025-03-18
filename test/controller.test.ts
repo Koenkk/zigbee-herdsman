@@ -4012,7 +4012,7 @@ describe('Controller', () => {
         await mockAdapterEvents['deviceJoined']({networkAddress: 140, ieeeAddr: '0x129'});
         let error;
         try {
-            Device.create('Router', '0x129', 140, undefined, undefined, undefined, undefined, false);
+            Device.create('Router', '0x129', 140, undefined, undefined, undefined, undefined, false, undefined);
         } catch (e) {
             error = e;
         }
@@ -4021,7 +4021,7 @@ describe('Controller', () => {
 
     it('Should allow to set type', async () => {
         await controller.start();
-        const device = Device.create('Router', '0x129', 140, undefined, undefined, undefined, undefined, false);
+        const device = Device.create('Router', '0x129', 140, undefined, undefined, undefined, undefined, false, undefined);
         device.type = 'EndDevice';
         expect(device.type).toStrictEqual('EndDevice');
     });
@@ -7544,7 +7544,7 @@ describe('Controller', () => {
         vi.spyOn(Zcl.Frame, 'fromBuffer').mockReturnValueOnce(frame); // Mock because no Buffalo write for 0xe0 is implemented
         await mockAdapterEvents['zclPayload']({
             wasBroadcast: true,
-            address: 0x46f4fe,
+            address: 0x0046f4fe & 0xffff,
             clusterID: frame.cluster.ID,
             data: frame.toBuffer(),
             header: frame.header,
@@ -7559,7 +7559,7 @@ describe('Controller', () => {
             sinkGroupID: 0x0b84,
             deviceID: 2,
             frameCounter: 1252,
-            gpdKey: [29, 213, 18, 52, 213, 52, 152, 88, 183, 49, 101, 110, 209, 248, 244, 140],
+            gpdKey: Buffer.from([29, 213, 18, 52, 213, 52, 152, 88, 183, 49, 101, 110, 209, 248, 244, 140]),
         };
         const frameResponse = Zcl.Frame.create(1, 1, true, undefined, 2, 'pairing', 33, dataResponse, {});
 
@@ -7572,7 +7572,7 @@ describe('Controller', () => {
         vi.spyOn(Zcl.Frame, 'fromBuffer').mockReturnValueOnce(frame); // Mock because no Buffalo write for 0xe0 is implemented
         await mockAdapterEvents['zclPayload']({
             wasBroadcast: true,
-            address: 0xf4fe,
+            address: 0x0046f4fe & 0xffff,
             clusterID: frame.cluster.ID,
             data: frame.toBuffer(),
             header: frame.header,
@@ -7615,6 +7615,7 @@ describe('Controller', () => {
                 _networkAddress: 0xf4fe,
                 _type: 'GreenPower',
                 meta: {},
+                _gpSecurityKey: [0xf1, 0xec, 0x92, 0xab, 0xff, 0x8f, 0x13, 0x63, 0xe1, 0x46, 0xbe, 0xb5, 0x18, 0xc9, 0x0c, 0xab],
             },
         });
         expect(events.deviceInterview.length).toBe(1);
@@ -7635,6 +7636,7 @@ describe('Controller', () => {
                 _networkAddress: 0xf4fe,
                 _type: 'GreenPower',
                 meta: {},
+                _gpSecurityKey: [0xf1, 0xec, 0x92, 0xab, 0xff, 0x8f, 0x13, 0x63, 0xe1, 0x46, 0xbe, 0xb5, 0x18, 0xc9, 0x0c, 0xab],
             },
         });
         expect(controller.getDeviceByIeeeAddr('0x000000000046f4fe')!.networkAddress).toBe(0xf4fe);
@@ -7655,7 +7657,7 @@ describe('Controller', () => {
         vi.spyOn(Zcl.Frame, 'fromBuffer').mockReturnValueOnce(frameToggle); // Mock because no Buffalo write for 0x22 is implemented
         await mockAdapterEvents['zclPayload']({
             wasBroadcast: false,
-            address: 0xf4fe,
+            address: 0x0046f4fe & 0xffff,
             clusterID: frameToggle.cluster.ID,
             data: frameToggle.toBuffer(),
             header: frameToggle.header,
@@ -7699,6 +7701,7 @@ describe('Controller', () => {
                 _networkAddress: 0xf4fe,
                 _type: 'GreenPower',
                 meta: {},
+                _gpSecurityKey: [0xf1, 0xec, 0x92, 0xab, 0xff, 0x8f, 0x13, 0x63, 0xe1, 0x46, 0xbe, 0xb5, 0x18, 0xc9, 0x0c, 0xab],
             },
             endpoint: {
                 inputClusters: [],
@@ -7725,7 +7728,47 @@ describe('Controller', () => {
         };
         expect(deepClone(events.message[0])).toStrictEqual(expected);
 
-        await mockAdapterEvents[''];
+        const identifyUnknownDeviceSpy = vi.spyOn(controller, 'identifyUnknownDevice');
+
+        const dataDecommission = {
+            srcID: 0x0046f4fe,
+            options: 384,
+            frameCounter: 254,
+            payloadSize: 1,
+            commandID: 0xe1,
+            commandFrame: Buffer.from([2]),
+        };
+        const frameDecommission = Zcl.Frame.create(1, 0, true, undefined, 10, 'notification', 33, dataDecommission, {});
+
+        vi.spyOn(Zcl.Frame, 'fromBuffer').mockReturnValueOnce(frameDecommission); // Mock because no Buffalo write for 0xe1 is implemented
+        await mockAdapterEvents['zclPayload']({
+            wasBroadcast: true,
+            address: 0x0046f4fe & 0xffff,
+            clusterID: frameDecommission.cluster.ID,
+            data: frameDecommission.toBuffer(),
+            header: frameDecommission.header,
+            endpoint: ZSpec.GP_ENDPOINT,
+            linkquality: 50,
+            groupID: 1,
+        });
+
+        expect(events.deviceLeave.length).toBe(1);
+        expect(deepClone(events.deviceLeave[0])).toStrictEqual({ieeeAddr: '0x000000000046f4fe'});
+
+        vi.spyOn(Zcl.Frame, 'fromBuffer').mockReturnValueOnce(frameDecommission); // Mock because no Buffalo write for 0xe1 is implemented
+        await mockAdapterEvents['zclPayload']({
+            wasBroadcast: true,
+            address: 0x0046f4fe & 0xffff,
+            clusterID: frameDecommission.cluster.ID,
+            data: frameDecommission.toBuffer(),
+            header: frameDecommission.header,
+            endpoint: ZSpec.GP_ENDPOINT,
+            linkquality: 50,
+            groupID: 1,
+        });
+
+        expect(events.deviceLeave.length).toBe(1);
+        expect(identifyUnknownDeviceSpy).toHaveBeenCalledTimes(0); // deviceLeave passthrough allows to test this here
     });
 
     it('Should handle comissioning frame gracefully', async () => {
@@ -7745,7 +7788,7 @@ describe('Controller', () => {
         });
 
         expect(mockLogger.error).toHaveBeenCalledTimes(0);
-        expect(mockLogger.debug).toHaveBeenCalledWith(`Received unhandled command '0x2' from '4650238'`, `zh:controller:greenpower`);
+        expect(mockLogger.debug).toHaveBeenCalledWith(`[UNHANDLED_CMD/PASSTHROUGH] command=0x2 from=4650238`, `zh:controller:greenpower`);
     });
 
     it('Should ignore invalid green power frame', async () => {
@@ -7813,7 +7856,8 @@ describe('Controller', () => {
             gpdCmd: 0xf3,
             gpdPayload: {
                 commandID: 0xf3,
-                options: 4,
+                operationalChannel: 4,
+                basic: true,
             },
         };
 
@@ -7942,11 +7986,11 @@ describe('Controller', () => {
                 keyMic: 0xf80547fa,
                 outgoingCounter: 0x000011f8,
                 applicationInfo: 0x04,
-                numGdpCommands: 17,
+                numGpdCommands: 17,
                 gpdCommandIdList: Buffer.from([0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x22, 0x60, 0x62, 0x63, 0x64, 0x65, 0x66, 0x67, 0x68]),
             },
             gppNwkAddr: gppDevice.networkAddress,
-            gppGddLink: 0xd8,
+            gppGpdLink: 0xd8,
         };
 
         const expectedFrame = Zcl.Frame.create(1, 0, true, undefined, 100, 'commissioningNotification', 33, data, {});
@@ -7978,7 +8022,7 @@ describe('Controller', () => {
             sinkNwkAddr: 0,
             deviceID: 2,
             frameCounter: 4600,
-            gpdKey: [0x09, 0x3c, 0xed, 0x1d, 0xbf, 0x25, 0x63, 0xf9, 0x29, 0x5c, 0x0d, 0x3d, 0x9f, 0xc5, 0x76, 0xe1],
+            gpdKey: Buffer.from([0x09, 0x3c, 0xed, 0x1d, 0xbf, 0x25, 0x63, 0xf9, 0x29, 0x5c, 0x0d, 0x3d, 0x9f, 0xc5, 0x76, 0xe1]),
         };
         const frameResponse = Zcl.Frame.create(1, 1, true, undefined, 11, 'pairing', 33, dataResponse, {});
 
@@ -8043,6 +8087,7 @@ describe('Controller', () => {
                 _networkAddress: 0x71f8,
                 _type: 'GreenPower',
                 meta: {},
+                _gpSecurityKey: [0x21, 0x7f, 0x8c, 0xb2, 0x90, 0xd9, 0x90, 0x14, 0x15, 0xd0, 0x5c, 0xb1, 0x64, 0x7c, 0x44, 0x6c],
             },
         });
         console.log(events.deviceInterview);
@@ -8064,6 +8109,7 @@ describe('Controller', () => {
                 _networkAddress: 0x71f8,
                 _type: 'GreenPower',
                 meta: {},
+                _gpSecurityKey: [0x21, 0x7f, 0x8c, 0xb2, 0x90, 0xd9, 0x90, 0x14, 0x15, 0xd0, 0x5c, 0xb1, 0x64, 0x7c, 0x44, 0x6c],
             },
         });
         expect(controller.getDeviceByIeeeAddr('0x00000000017171f8')!.networkAddress).toBe(0x71f8);
@@ -8080,7 +8126,7 @@ describe('Controller', () => {
             payloadSize: 0,
             commandFrame: {},
             gppNwkAddr: 129,
-            gppGddLink: 0xd8,
+            gppGpdLink: 0xd8,
         };
         const frameScene = Zcl.Frame.create(1, 0, true, undefined, 10, 'notification', 33, dataScene, {});
         await mockAdapterEvents['zclPayload']({
@@ -8126,6 +8172,7 @@ describe('Controller', () => {
                 _interviewing: false,
                 _skipDefaultResponse: false,
                 meta: {},
+                _gpSecurityKey: [0x21, 0x7f, 0x8c, 0xb2, 0x90, 0xd9, 0x90, 0x14, 0x15, 0xd0, 0x5c, 0xb1, 0x64, 0x7c, 0x44, 0x6c],
                 _lastSeen: Date.now(),
                 _pendingRequestTimeout: 0,
                 _linkquality: 50,
@@ -8152,7 +8199,7 @@ describe('Controller', () => {
                 payloadSize: 0,
                 commandFrame: {raw: {type: 'Buffer', data: [129, 0, 216]}},
                 gppNwkAddr: 129,
-                gppGddLink: 216,
+                gppGpdLink: 216,
             },
             linkquality: 50,
             groupID: 0,
@@ -8213,6 +8260,7 @@ describe('Controller', () => {
             _networkAddress: 0x71f8,
             _type: 'GreenPower',
             meta: {},
+            _gpSecurityKey: [0x21, 0x7f, 0x8c, 0xb2, 0x90, 0xd9, 0x90, 0x14, 0x15, 0xd0, 0x5c, 0xb1, 0x64, 0x7c, 0x44, 0x6c],
         });
 
         // Re-add device
@@ -8260,6 +8308,7 @@ describe('Controller', () => {
             _networkAddress: 0x71f8,
             _type: 'GreenPower',
             meta: {},
+            _gpSecurityKey: [0x21, 0x7f, 0x8c, 0xb2, 0x90, 0xd9, 0x90, 0x14, 0x15, 0xd0, 0x5c, 0xb1, 0x64, 0x7c, 0x44, 0x6c],
         });
     });
 

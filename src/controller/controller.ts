@@ -159,6 +159,7 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
 
         this.greenPower = new GreenPower(this.adapter);
         this.greenPower.on('deviceJoined', this.onDeviceJoinedGreenPower.bind(this));
+        this.greenPower.on('deviceLeave', this.onDeviceLeaveGreenPower.bind(this));
 
         // Register adapter events
         this.adapter.on('deviceJoined', this.onDeviceJoined.bind(this));
@@ -201,6 +202,7 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
                 undefined,
                 undefined,
                 true,
+                undefined,
             );
 
             await coordinator.updateActiveEndpoints();
@@ -659,17 +661,26 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
         logger.debug(() => `Green power device '${JSON.stringify(payload)}' joined`, NS);
 
         // Green power devices don't have an ieeeAddr, the sourceID is unique and static so use this.
-        let ieeeAddr = payload.sourceID.toString(16);
-        ieeeAddr = `0x${ieeeAddr.padStart(16, '0')}`;
-
+        const ieeeAddr = `0x${payload.sourceID.toString(16).padStart(16, '0')}`;
         // Green power devices dont' have a modelID, create a modelID based on the deviceID (=type)
         const modelID = `GreenPower_${payload.deviceID}`;
-
         let device = Device.byIeeeAddr(ieeeAddr, true);
+
         if (!device) {
             logger.debug(`New green power device '${ieeeAddr}' joined`, NS);
             logger.debug(`Creating device '${ieeeAddr}'`, NS);
-            device = Device.create('GreenPower', ieeeAddr, payload.networkAddress, undefined, undefined, undefined, modelID, true);
+            device = Device.create(
+                'GreenPower',
+                ieeeAddr,
+                payload.networkAddress,
+                undefined,
+                undefined,
+                undefined,
+                modelID,
+                true,
+                payload.securityKey ? Array.from(payload.securityKey) : /* v8 ignore next */ undefined,
+            );
+
             device.save();
 
             this.selfAndDeviceEmit(device, 'deviceJoined', {device});
@@ -682,6 +693,24 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
             this.selfAndDeviceEmit(device, 'deviceJoined', {device});
             this.selfAndDeviceEmit(device, 'deviceInterview', {status: 'successful', device});
         }
+    }
+
+    private async onDeviceLeaveGreenPower(sourceID: number): Promise<void> {
+        logger.debug(`Green power device '${sourceID}' left`, NS);
+
+        // Green power devices don't have an ieeeAddr, the sourceID is unique and static so use this.
+        const ieeeAddr = `0x${sourceID.toString(16).padStart(16, '0')}`;
+        const device = Device.byIeeeAddr(ieeeAddr);
+
+        if (!device) {
+            logger.debug(`Green power device leave is from unknown or already deleted device '${ieeeAddr}'`, NS);
+            return;
+        }
+
+        logger.debug(`Removing green power device from database '${device.ieeeAddr}'`, NS);
+        device.removeFromDatabase();
+
+        this.selfAndDeviceEmit(device, 'deviceLeave', {ieeeAddr: device.ieeeAddr});
     }
 
     private selfAndDeviceEmit<K extends keyof ControllerEventMap>(
@@ -728,7 +757,7 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
         if (!device) {
             logger.debug(`New device '${payload.ieeeAddr}' joined`, NS);
             logger.debug(`Creating device '${payload.ieeeAddr}'`, NS);
-            device = Device.create('Unknown', payload.ieeeAddr, payload.networkAddress, undefined, undefined, undefined, undefined, false);
+            device = Device.create('Unknown', payload.ieeeAddr, payload.networkAddress, undefined, undefined, undefined, undefined, false, undefined);
             this.selfAndDeviceEmit(device, 'deviceJoined', {device});
         } else if (device.isDeleted) {
             logger.debug(`Deleted device '${payload.ieeeAddr}' joined, undeleting`, NS);
@@ -812,10 +841,12 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
                 return;
             }
 
-            await this.greenPower.onZclGreenPowerData(payload, frame);
+            const nwkAddress = frame.payload.srcID & 0xffff;
+            device = Device.byNetworkAddress(nwkAddress);
+            frame = await this.greenPower.onZclGreenPowerData(payload, frame, device?.gpSecurityKey ? Buffer.from(device.gpSecurityKey) : undefined);
 
-            // lookup encapsulated gpDevice for further processing
-            device = Device.byNetworkAddress(frame.payload.srcID & 0xffff);
+            // lookup encapsulated gpDevice for further processing (re-fetch, may have been created by above call)
+            device = Device.byNetworkAddress(nwkAddress);
         } else {
             /**
              * Handling of re-transmitted Xiaomi messages.
@@ -844,7 +875,8 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
         }
 
         if (!device) {
-            if (typeof payload.address === 'number') {
+            // always skip identify for GP devices (unsupported)
+            if (payload.clusterID !== Zcl.Clusters.greenPower.ID && typeof payload.address === 'number') {
                 device = await this.identifyUnknownDevice(payload.address);
             }
 

@@ -1131,7 +1131,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             notification: {
                 ID: 0,
                 parameters: [
-                    {name: 'options', type: DataType.UINT16},
+                    {name: 'options', type: DataType.BITMAP16},
                     {
                         name: 'srcID',
                         type: DataType.UINT32,
@@ -1150,15 +1150,20 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                     {name: 'frameCounter', type: DataType.UINT32},
                     {name: 'commandID', type: DataType.UINT8},
                     {name: 'payloadSize', type: DataType.UINT8},
-                    {name: 'commandFrame', type: BuffaloZclDataType.GDP_FRAME},
+                    {name: 'commandFrame', type: BuffaloZclDataType.GPD_FRAME},
                     {name: 'gppNwkAddr', type: DataType.UINT16, conditions: [{type: ParameterCondition.BITMASK_SET, param: 'options', mask: 0x4000}]},
-                    {name: 'gppGddLink', type: DataType.UINT8, conditions: [{type: ParameterCondition.BITMASK_SET, param: 'options', mask: 0x4000}]},
+                    /** Bits: 0..5 RSSI 6..7 Link quality */
+                    {
+                        name: 'gppGpdLink',
+                        type: DataType.BITMAP8,
+                        conditions: [{type: ParameterCondition.BITMASK_SET, param: 'options', mask: 0x4000}],
+                    },
                 ],
             },
             commissioningNotification: {
                 ID: 4,
                 parameters: [
-                    {name: 'options', type: DataType.UINT16},
+                    {name: 'options', type: DataType.BITMAP16},
                     {
                         name: 'srcID',
                         type: DataType.UINT32,
@@ -1177,9 +1182,11 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                     {name: 'frameCounter', type: DataType.UINT32},
                     {name: 'commandID', type: DataType.UINT8},
                     {name: 'payloadSize', type: DataType.UINT8},
-                    {name: 'commandFrame', type: BuffaloZclDataType.GDP_FRAME},
+                    {name: 'commandFrame', type: BuffaloZclDataType.GPD_FRAME},
                     {name: 'gppNwkAddr', type: DataType.UINT16, conditions: [{type: ParameterCondition.BITMASK_SET, param: 'options', mask: 0x800}]},
-                    {name: 'gppGddLink', type: DataType.UINT8, conditions: [{type: ParameterCondition.BITMASK_SET, param: 'options', mask: 0x800}]},
+                    /** Bits: 0..5 RSSI 6..7 Link quality */
+                    {name: 'gppGpdLink', type: DataType.BITMAP8, conditions: [{type: ParameterCondition.BITMASK_SET, param: 'options', mask: 0x800}]},
+                    {name: 'mic', type: DataType.UINT32, conditions: [{type: ParameterCondition.BITMASK_SET, param: 'options', mask: 0x200}]},
                 ],
             },
         },
@@ -1189,7 +1196,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 parameters: [
                     {name: 'options', type: DataType.UINT8},
                     {name: 'tempMaster', type: DataType.UINT16},
-                    {name: 'tempMasterTx', type: DataType.UINT8},
+                    {name: 'tempMasterTx', type: DataType.BITMAP8},
                     {
                         name: 'srcID',
                         type: DataType.UINT32,
@@ -1206,13 +1213,13 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                         conditions: [{type: ParameterCondition.BITFIELD_ENUM, param: 'options', offset: 0, size: 3, value: 0b010}],
                     },
                     {name: 'gpdCmd', type: DataType.UINT8},
-                    {name: 'gpdPayload', type: BuffaloZclDataType.GDP_FRAME},
+                    {name: 'gpdPayload', type: BuffaloZclDataType.GPD_FRAME},
                 ],
             },
             pairing: {
                 ID: 1,
                 parameters: [
-                    {name: 'options', type: DataType.UINT24},
+                    {name: 'options', type: DataType.BITMAP24},
                     {
                         name: 'srcID',
                         type: DataType.UINT32,
@@ -1265,13 +1272,28 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                         conditions: [{type: ParameterCondition.BITMASK_SET, param: 'options', mask: 0x4000}],
                     },
                     {name: 'gpdKey', type: DataType.SEC_KEY, conditions: [{type: ParameterCondition.BITMASK_SET, param: 'options', mask: 0x8000}]},
+                    {
+                        name: 'assignedAlias',
+                        type: DataType.UINT16,
+                        conditions: [{type: ParameterCondition.BITMASK_SET, param: 'options', mask: 0x10000}],
+                    },
+                    {
+                        name: 'groupcastRadius',
+                        type: DataType.UINT8,
+                        conditions: [{type: ParameterCondition.BITMASK_SET, param: 'options', mask: 0x20000}],
+                    },
                 ],
             },
             commisioningMode: {
                 ID: 2,
                 parameters: [
-                    {name: 'options', type: DataType.UINT8},
-                    {name: 'commisioningWindow', type: DataType.UINT16},
+                    {name: 'options', type: DataType.BITMAP8},
+                    {
+                        name: 'commisioningWindow',
+                        type: DataType.UINT16,
+                        conditions: [{type: ParameterCondition.BITMASK_SET, param: 'options', mask: 0x2}],
+                    },
+                    {name: 'channel', type: DataType.UINT8, conditions: [{type: ParameterCondition.BITMASK_SET, param: 'options', mask: 0x10}]},
                 ],
             },
         },

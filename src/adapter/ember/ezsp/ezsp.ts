@@ -8567,7 +8567,7 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
      * @param autoCommissioning Whether the incoming GPDF had the auto-commissioning bit set.
      * @param bidirectionalInfo uint8_t Bidirectional information represented in bitfields,
      *        where bit0 holds the rxAfterTx of incoming gpdf and bit1 holds if tx queue is available for outgoing gpdf.
-     * @param gpdSecurityFrameCounter uint32_t The security frame counter of the incoming GDPF.
+     * @param gpdSecurityFrameCounter uint32_t The security frame counter of the incoming GPDF.
      * @param gpdCommandId uint8_t The gpdCommandId of the incoming GPDF.
      * @param mic uint32_t The received MIC of the GPDF.
      * @param proxyTableIndex uint8_tThe proxy table index of the corresponding proxy table entry to the incoming GPDF.
@@ -8632,15 +8632,16 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
         gpdHeader.writeUInt8(0b00000001, 0); // frameControl: FrameType.SPECIFIC + Direction.CLIENT_TO_SERVER + disableDefaultResponse=false
         gpdHeader.writeUInt8(sequenceNumber, 1);
         gpdHeader.writeUInt8(commandIdentifier, 2); // commandIdentifier
-        gpdHeader.writeUInt16LE(0, 3); // options, only srcID present
+        gpdHeader.writeUInt16LE(
+            (addr.applicationId & 0x7) | ((gpdfSecurityLevel & 0x3) << 6) | ((gpdfSecurityKeyType & 0x7) << 8) | ((bidirectionalInfo & 0x3) << 11),
+            3,
+        ); // options
         gpdHeader.writeUInt32LE(addr.sourceId, 5);
-        // omitted: gpdIEEEAddr (ieeeAddr)
-        // omitted: gpdEndpoint (uint8)
         gpdHeader.writeUInt32LE(gpdSecurityFrameCounter, 9);
         gpdHeader.writeUInt8(gpdCommandId, 13);
         gpdHeader.writeUInt8(gpdCommandPayload.length, 14);
 
-        const messageContents = Buffer.concat([gpdHeader, gpdCommandPayload]); // omitted: gppNwkAddr (uint16), gppGddLink (uint8)
+        const messageContents = Buffer.concat([gpdHeader, gpdCommandPayload]);
 
         // XXX: BROADCAST currently hardcoded to match upstream codepath
         this.emit('incomingMessage', EmberIncomingMessageType.BROADCAST, apsFrame, gpdLink, addr.sourceId & 0xffff, messageContents);

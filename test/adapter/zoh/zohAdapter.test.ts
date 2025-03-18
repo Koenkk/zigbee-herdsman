@@ -785,7 +785,7 @@ describe('ZigBee on Host', () => {
                     applicationInfo: 4,
                     manufacturerID: 0,
                     modelID: 0,
-                    numGdpCommands: 22,
+                    numGpdCommands: 22,
                     gpdCommandIdList: Buffer.from('10112223181914151213646562631e1f1c1d1a1b1617', 'hex'),
                     numServerClusters: 0,
                     numClientClusters: 0,

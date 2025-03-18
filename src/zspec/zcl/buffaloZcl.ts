@@ -74,7 +74,7 @@ interface GPD {
     applicationInfo: number;
     manufacturerID: number;
     modelID: number;
-    numGdpCommands: number;
+    numGpdCommands: number;
     gpdCommandIdList: Buffer;
     numServerClusters: number;
     numClientClusters: number;
@@ -87,19 +87,23 @@ interface GPDChannelRequest {
     nextNextChannel: number;
 }
 
-interface GPDChannelConfiguration {
+export interface GPDChannelConfiguration {
     commandID: number;
     operationalChannel: number;
     basic: boolean;
 }
 
-interface GPDCommissioningReply {
+export interface GPDCommissioningReply {
     commandID: number;
     options: number;
-    panID: number;
-    securityKey: Buffer;
-    keyMic: number;
-    frameCounter: number;
+    /** expected valid if corresponding `options` bits set */
+    panID?: number;
+    /** expected valid if corresponding `options` bits set */
+    securityKey?: Buffer;
+    /** expected valid if corresponding `options` bits set */
+    keyMic?: number;
+    /** expected valid if corresponding `options` bits set */
+    frameCounter?: number;
 }
 
 interface GPDCustomReply {
@@ -369,16 +373,15 @@ export class BuffaloZcl extends Buffalo {
         return result;
     }
 
-    private writeGdpFrame(value: GPDCommissioningReply | GPDChannelConfiguration | GPDCustomReply): void {
+    private writeGpdFrame(value: GPDCommissioningReply | GPDChannelConfiguration | GPDCustomReply): void {
         if (value.commandID == 0xf0) {
             // Commissioning Reply
-            const v = <GPDCommissioningReply>value;
+            const v = value as GPDCommissioningReply;
 
-            const panIDPresent = v.options & (1 << 0);
-            const gpdSecurityKeyPresent = v.options & (1 << 1);
-            const gpdKeyEncryption = v.options & (1 << 2);
-            const securityLevel = v.options & ((3 << 3) >> 3);
-
+            const panIDPresent = Boolean(v.options & 0x1);
+            const gpdSecurityKeyPresent = Boolean(v.options & 0x2);
+            const gpdKeyEncryption = Boolean((v.options >> 2) & 0x1);
+            const securityLevel = (v.options >> 3) & 0x3;
             const hasGPDKeyMIC = gpdKeyEncryption && gpdSecurityKeyPresent;
             const hasFrameCounter = gpdSecurityKeyPresent && gpdKeyEncryption && (securityLevel === 0b10 || securityLevel === 0b11);
 
@@ -386,34 +389,39 @@ export class BuffaloZcl extends Buffalo {
             this.writeUInt8(v.options);
 
             if (panIDPresent) {
-                this.writeUInt16(v.panID);
+                this.writeUInt16(v.panID!);
             }
 
             if (gpdSecurityKeyPresent) {
-                this.writeBuffer(v.securityKey, 16);
+                this.writeBuffer(v.securityKey!, 16);
             }
 
             if (hasGPDKeyMIC) {
-                this.writeUInt32(v.keyMic);
+                this.writeUInt32(v.keyMic!);
             }
 
             if (hasFrameCounter) {
-                this.writeUInt32(v.frameCounter);
+                this.writeUInt32(v.frameCounter!);
             }
         } else if (value.commandID == 0xf3) {
             // Channel configuration
-            const v = <GPDChannelConfiguration>value;
+            const v = value as GPDChannelConfiguration;
+
             this.writeUInt8(1);
             this.writeUInt8((v.operationalChannel & 0xf) | ((v.basic ? 1 : 0) << 4));
         } else if (value.commandID == 0xf4 || value.commandID == 0xf5 || (value.commandID >= 0xf7 && value.commandID <= 0xff)) {
             // Other commands sent to GPD
-            const v = <GPDCustomReply>value;
+            const v = value as GPDCustomReply;
+
             this.writeUInt8(v.buffer.length);
             this.writeBuffer(v.buffer, v.buffer.length);
         }
+        // 0xf1: Write Attributes
+        // 0xf2: Read Attributes
+        // 0xf6: ZCL Tunneling
     }
 
-    private readGdpFrame(options: BuffaloZclOptions): GPD | GPDChannelRequest | GPDAttributeReport | {raw: Buffer} | Record<string, never> {
+    private readGpdFrame(options: BuffaloZclOptions): GPD | GPDChannelRequest | GPDAttributeReport | {raw: Buffer} | Record<string, never> {
         // Commisioning
         if (options.payload?.commandID === 0xe0) {
             const frame = {
@@ -426,7 +434,7 @@ export class BuffaloZcl extends Buffalo {
                 applicationInfo: 0,
                 manufacturerID: 0,
                 modelID: 0,
-                numGdpCommands: 0,
+                numGpdCommands: 0,
                 gpdCommandIdList: Buffer.alloc(0),
                 numServerClusters: 0,
                 numClientClusters: 0,
@@ -463,8 +471,8 @@ export class BuffaloZcl extends Buffalo {
             }
 
             if (frame.applicationInfo & 0x04) {
-                frame.numGdpCommands = this.readUInt8();
-                frame.gpdCommandIdList = this.readBuffer(frame.numGdpCommands);
+                frame.numGpdCommands = this.readUInt8();
+                frame.gpdCommandIdList = this.readBuffer(frame.numGpdCommands);
             }
 
             if (frame.applicationInfo & 0x08) {
@@ -487,7 +495,7 @@ export class BuffaloZcl extends Buffalo {
             // Manufacturer-specific Attribute Reporting
         } else if (options.payload?.commandID == 0xa1) {
             if (options.payload.payloadSize == undefined) {
-                throw new Error('Cannot read GDP_FRAME with commandID=0xA1 without payloadSize options specified');
+                throw new Error('Cannot read GPD_FRAME with commandID=0xA1 without payloadSize options specified');
             }
 
             const start = this.position;
@@ -807,8 +815,8 @@ export class BuffaloZcl extends Buffalo {
                 // XXX: inconsistent with read that allows partial with options.length, here always "whole"
                 return this.writeBuffer(value, value.length);
             }
-            case BuffaloZclDataType.GDP_FRAME: {
-                return this.writeGdpFrame(value);
+            case BuffaloZclDataType.GPD_FRAME: {
+                return this.writeGpdFrame(value);
             }
             case BuffaloZclDataType.STRUCTURED_SELECTOR: {
                 return this.writeStructuredSelector(value);
@@ -1007,8 +1015,8 @@ export class BuffaloZcl extends Buffalo {
                 // if length option not specified, read the whole buffer
                 return this.readBuffer(options.length ?? this.buffer.length);
             }
-            case BuffaloZclDataType.GDP_FRAME: {
-                return this.readGdpFrame(options);
+            case BuffaloZclDataType.GPD_FRAME: {
+                return this.readGpdFrame(options);
             }
             case BuffaloZclDataType.STRUCTURED_SELECTOR: {
                 return this.readStructuredSelector();

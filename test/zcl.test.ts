@@ -673,7 +673,7 @@ describe('Zcl', () => {
         expect(frame.payload).toStrictEqual(payload);
     });
 
-    it('ZclFrame from buffer GDP commission', () => {
+    it('ZclFrame from buffer GPD commission', () => {
         const buffer = Buffer.from([
             0x11, 0x00, 0x04, 0x00, 0x00, 0xfe, 0xf4, 0x46, 0x00, 0xf9, 0x00, 0x00, 0x00, 0xe0, 0x1b, 0x02, 0x81, 0xf2, 0xf1, 0xec, 0x92, 0xab, 0xff,
             0x8f, 0x13, 0x63, 0xe1, 0x46, 0xbe, 0xb5, 0x18, 0xc9, 0x0c, 0xab, 0xa4, 0x46, 0xd4, 0xd5, 0xf9, 0x01, 0x00, 0x00,
@@ -712,7 +712,7 @@ describe('Zcl', () => {
                 keyMic: 3587458724,
                 outgoingCounter: 505,
                 applicationInfo: 0,
-                numGdpCommands: 0,
+                numGpdCommands: 0,
                 gpdCommandIdList: Buffer.alloc(0),
             },
         };
@@ -721,7 +721,7 @@ describe('Zcl', () => {
         expect(frame.payload).toStrictEqual(payload);
     });
 
-    it('ZclFrame from buffer GDP scene 0', () => {
+    it('ZclFrame from buffer GPD scene 0', () => {
         const buffer = Buffer.from([0x11, 0x00, 0x00, 0xa0, 0x14, 0xfe, 0xf4, 0x46, 0x00, 0xe5, 0x04, 0x00, 0x00, 0x10, 0xff]);
         const frame = Zcl.Frame.fromBuffer(Zcl.Clusters.greenPower.ID, Zcl.Header.fromBuffer(buffer)!, buffer, {});
         const header = new Zcl.Header(
@@ -750,7 +750,7 @@ describe('Zcl', () => {
         expect(frame.payload).toStrictEqual(payload);
     });
 
-    it('ZclFrame from buffer GDP with extra data', () => {
+    it('ZclFrame from buffer GPD with extra data', () => {
         const buffer = Buffer.from([0x11, 0x00, 0x00, 0xa0, 0x14, 0xfe, 0xf4, 0x46, 0x00, 0xe5, 0x04, 0x00, 0x00, 0x10, 0xff, 0x01]);
         const frame = Zcl.Frame.fromBuffer(Zcl.Clusters.greenPower.ID, Zcl.Header.fromBuffer(buffer)!, buffer, {});
         const header = new Zcl.Header(
@@ -779,7 +779,7 @@ describe('Zcl', () => {
         expect(frame.payload).toStrictEqual(payload);
     });
 
-    it('ZclFrame from buffer GDP pairing', () => {
+    it('ZclFrame from buffer GPD pairing', () => {
         const buffer = Buffer.from([
             0x19, 0x17, 0x01, 0x68, 0xe5, 0x00, 0xf8, 0x71, 0x71, 0x01, 0x47, 0x65, 0xa1, 0x1c, 0x00, 0x4b, 0x12, 0x00, 0x00, 0x00, 0x02, 0x1c, 0x12,
             0x00, 0x00, 0x09, 0x3c, 0xed, 0x1d, 0xbf, 0x25, 0x63, 0xf9, 0x29, 0x5c, 0x0d, 0x3d, 0x9f, 0xc5, 0x76, 0xe1, 0, 0, 0, 0, 0, 0,
@@ -1943,7 +1943,7 @@ describe('Zcl', () => {
         expect(() => cluster.getCommand('notExisting')).toThrow("Cluster 'genOnOff' has no command 'notExisting'");
     });
 
-    it('Zcl green power readGdp commissioning', () => {
+    it('Zcl green power readGpd commissioning', () => {
         const buffer = [
             0xff, // device
             0x00, // options
@@ -1951,7 +1951,7 @@ describe('Zcl', () => {
         const frame = new BuffaloZcl(Buffer.from(buffer));
 
         expect(
-            frame.read(BuffaloZclDataType.GDP_FRAME, {
+            frame.read(BuffaloZclDataType.GPD_FRAME, {
                 payload: {
                     commandID: 0xe0,
                 },
@@ -1965,7 +1965,7 @@ describe('Zcl', () => {
             outgoingCounter: 0,
             manufacturerID: 0,
             modelID: 0,
-            numGdpCommands: 0,
+            numGpdCommands: 0,
             gpdCommandIdList: Buffer.alloc(0),
             numServerClusters: 0,
             numClientClusters: 0,
@@ -1975,7 +1975,7 @@ describe('Zcl', () => {
         });
     });
 
-    it('Zcl green power readGdp commissioning all options', () => {
+    it('Zcl green power readGpd commissioning all options', () => {
         const buffer = [
             0xff, // device
             0x80 | 0x04, // options
@@ -2009,13 +2009,13 @@ describe('Zcl', () => {
             0, // manufacturer ID
             0,
             0, // model ID
-            0, // num GDP commands + commands
+            0, // num GPD commands + commands
             0, // clusters
         ];
         const frame = new BuffaloZcl(Buffer.from(buffer));
 
         expect(
-            frame.read(BuffaloZclDataType.GDP_FRAME, {
+            frame.read(BuffaloZclDataType.GPD_FRAME, {
                 payload: {
                     commandID: 0xe0,
                 },
@@ -2029,7 +2029,7 @@ describe('Zcl', () => {
             outgoingCounter: 0,
             manufacturerID: 0,
             modelID: 0,
-            numGdpCommands: 0,
+            numGpdCommands: 0,
             gpdCommandIdList: Buffer.alloc(0),
             numServerClusters: 0,
             numClientClusters: 0,
@@ -2039,12 +2039,12 @@ describe('Zcl', () => {
         });
     });
 
-    it('Zcl green power readGdp channel request', () => {
+    it('Zcl green power readGpd channel request', () => {
         const buffer = [0xfa];
         const frame = new BuffaloZcl(Buffer.from(buffer));
 
         expect(
-            frame.read(BuffaloZclDataType.GDP_FRAME, {
+            frame.read(BuffaloZclDataType.GPD_FRAME, {
                 payload: {
                     commandID: 0xe3,
                 },
@@ -2055,7 +2055,7 @@ describe('Zcl', () => {
         });
     });
 
-    it('Zcl green power readGdp attribute report', () => {
+    it('Zcl green power readGpd attribute report', () => {
         const buffer = [
             0x12,
             0x34, // Manufacturer ID
@@ -2086,7 +2086,7 @@ describe('Zcl', () => {
         const frame = new BuffaloZcl(Buffer.from(buffer));
 
         expect(
-            frame.read(BuffaloZclDataType.GDP_FRAME, {
+            frame.read(BuffaloZclDataType.GPD_FRAME, {
                 payload: {
                     commandID: 0xa1,
                     payloadSize: buffer.length,
@@ -2103,7 +2103,7 @@ describe('Zcl', () => {
         });
     });
 
-    it('Zcl green power writeGdp commissioning', () => {
+    it('Zcl green power writeGpd commissioning', () => {
         const expected = [
             1, // length
             0, // options
@@ -2111,7 +2111,7 @@ describe('Zcl', () => {
         const frame = new BuffaloZcl(Buffer.alloc(2));
 
         frame.write(
-            BuffaloZclDataType.GDP_FRAME,
+            BuffaloZclDataType.GPD_FRAME,
             {
                 commandID: 0xf0,
                 options: 0,
@@ -2126,7 +2126,7 @@ describe('Zcl', () => {
         expect(frame.getWritten()).toStrictEqual(Buffer.from(expected));
     });
 
-    it('Zcl green power writeGdp commissioning all options', () => {
+    it('Zcl green power writeGpd commissioning all options', () => {
         const expected = [
             27, // length
             0b11111, // options
@@ -2160,7 +2160,7 @@ describe('Zcl', () => {
         const frame = new BuffaloZcl(Buffer.alloc(28));
 
         frame.write(
-            BuffaloZclDataType.GDP_FRAME,
+            BuffaloZclDataType.GPD_FRAME,
             {
                 commandID: 0xf0,
                 options: 0b11111,
@@ -2175,7 +2175,7 @@ describe('Zcl', () => {
         expect(frame.getWritten()).toStrictEqual(Buffer.from(expected));
     });
 
-    it('Zcl green power writeGdp custom reply', () => {
+    it('Zcl green power writeGpd custom reply', () => {
         const expected = [
             6, // length
             90,
@@ -2188,7 +2188,7 @@ describe('Zcl', () => {
 
         const frame = new BuffaloZcl(Buffer.alloc(7));
         frame.write(
-            BuffaloZclDataType.GDP_FRAME,
+            BuffaloZclDataType.GPD_FRAME,
             {
                 commandID: 0xf4,
                 buffer: Buffer.from('ZIGBEE'),
@@ -2199,10 +2199,10 @@ describe('Zcl', () => {
         expect(frame.getWritten()).toStrictEqual(Buffer.from(expected));
     });
 
-    it('Zcl green power writeGdp unhandled command', () => {
+    it('Zcl green power writeGpd unhandled command', () => {
         const frame = new BuffaloZcl(Buffer.alloc(7));
         frame.write(
-            BuffaloZclDataType.GDP_FRAME,
+            BuffaloZclDataType.GPD_FRAME,
             {
                 commandID: 0x1ff,
             },
@@ -2212,7 +2212,7 @@ describe('Zcl', () => {
         expect(frame.getWritten()).toStrictEqual(Buffer.alloc(0));
     });
 
-    it('Zcl green power writeGdp channel configuration', () => {
+    it('Zcl green power writeGpd channel configuration', () => {
         const expected = [
             1, // length
             0xf, // Channel 26
@@ -2220,7 +2220,7 @@ describe('Zcl', () => {
 
         const frame = new BuffaloZcl(Buffer.alloc(2));
         frame.write(
-            BuffaloZclDataType.GDP_FRAME,
+            BuffaloZclDataType.GPD_FRAME,
             {
                 commandID: 0xf3,
                 operationalChannel: 0xf,
@@ -2232,7 +2232,7 @@ describe('Zcl', () => {
         expect(frame.getWritten()).toStrictEqual(Buffer.from(expected));
     });
 
-    it('Zcl green power writeGdp channel configuration basic', () => {
+    it('Zcl green power writeGpd channel configuration basic', () => {
         const expected = [
             1, // length
             0x1f, // Channel 26 + Basic
@@ -2240,7 +2240,7 @@ describe('Zcl', () => {
 
         const frame = new BuffaloZcl(Buffer.alloc(2));
         frame.write(
-            BuffaloZclDataType.GDP_FRAME,
+            BuffaloZclDataType.GPD_FRAME,
             {
                 commandID: 0xf3,
                 operationalChannel: 0xf,
@@ -2796,11 +2796,11 @@ describe('Zcl', () => {
         }).toThrow(`Cannot write USE_DATA_TYPE without dataType option specified`);
     });
 
-    it('Throws when read GDP_FRAME is missing payload.payloadSize option when payload.commandID is 0xA1', () => {
+    it('Throws when read GPD_FRAME is missing payload.payloadSize option when payload.commandID is 0xA1', () => {
         expect(() => {
             const buffalo = new BuffaloZcl(Buffer.alloc(1));
-            buffalo.read(BuffaloZclDataType.GDP_FRAME, {payload: {commandID: 0xa1}});
-        }).toThrow(`Cannot read GDP_FRAME with commandID=0xA1 without payloadSize options specified`);
+            buffalo.read(BuffaloZclDataType.GPD_FRAME, {payload: {commandID: 0xa1}});
+        }).toThrow(`Cannot read GPD_FRAME with commandID=0xA1 without payloadSize options specified`);
     });
 
     it('Throws when read LIST_THERMO_TRANSITIONS is missing required payload options', () => {

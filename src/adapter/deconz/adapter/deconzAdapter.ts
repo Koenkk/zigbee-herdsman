@@ -606,7 +606,7 @@ export class DeconzAdapter extends Adapter {
         gpdHeader.writeUInt8(0b00000001, 0); // frameControl: FrameType.SPECIFIC + Direction.CLIENT_TO_SERVER + disableDefaultResponse=false
         gpdHeader.writeUInt8(ind.seqNr, 1);
         gpdHeader.writeUInt8(ind.id, 2); // commandIdentifier
-        gpdHeader.writeUInt16LE(0, 3); // options, only srcID present
+        gpdHeader.writeUInt16LE(ind.options, 3); // options
         gpdHeader.writeUInt32LE(ind.srcId, 5);
         // omitted: gpdIEEEAddr (ieeeAddr)
         // omitted: gpdEndpoint (uint8)

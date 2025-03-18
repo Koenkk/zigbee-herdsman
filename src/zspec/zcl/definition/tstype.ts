@@ -6,8 +6,8 @@ export interface BuffaloZclOptions {
     payload?: {
         mode?: number; // used to read ListThermoTransitions
         numoftrans?: number; // used to read ListThermoTransitions
-        commandID?: number; // used to read GdpFrame
-        payloadSize?: number; // used to read GdpFrame
+        commandID?: number; // used to read GpdFrame
+        payloadSize?: number; // used to read GpdFrame
     } & {[key: string]: unknown};
     dataType?: DataType | BuffaloZclDataType;
     attrId?: number;
