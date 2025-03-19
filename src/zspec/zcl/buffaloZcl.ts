@@ -143,7 +143,7 @@ export class BuffaloZcl extends Buffalo {
     private writeCharStr(value: string | number[]): void {
         // TODO: this does not allow "non-value" 0xFF
         if (typeof value === 'string') {
-            this.writeUInt8(value.length);
+            this.writeUInt8(Buffer.byteLength(value, 'utf8'));
             this.writeUtf8String(value);
         } else {
             // XXX: value.length not written?
@@ -170,7 +170,7 @@ export class BuffaloZcl extends Buffalo {
 
     private writeLongCharStr(value: string): void {
         // TODO: this does not allow "non-value" 0xFF
-        this.writeUInt16(value.length);
+        this.writeUInt16(Buffer.byteLength(value, 'utf8'));
         this.writeUtf8String(value);
     }
 
