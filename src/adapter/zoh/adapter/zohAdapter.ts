@@ -519,6 +519,18 @@ export class ZoHAdapter extends Adapter {
         disableRecovery: boolean,
         sourceEndpoint?: number,
     ): Promise<ZclPayload | void> {
+        /* v8 ignore start */
+        if (networkAddress === ZSpec.COORDINATOR_ADDRESS) {
+            // TODO: handle e.g. GP permit join
+            logger.debug(
+                () => `~x~> [ZCL clusterId=${zclFrame.cluster.ID} destEp=${endpoint} sourceEp=${sourceEndpoint}] Not sending to coordinator`,
+                NS,
+            );
+
+            return;
+        }
+        /* v8 ignore stop */
+
         let commandResponseId: number | undefined;
 
         if (zclFrame.command.response !== undefined && disableResponse === false) {
@@ -658,12 +670,10 @@ export class ZoHAdapter extends Adapter {
         apsPayload: ZigbeeAPSPayload,
         rssi: number,
     ): void {
-        const data = Buffer.from(apsPayload);
-
         if (apsHeader.profileId === Zdo.ZDO_PROFILE_ID) {
             logger.debug(() => `<~~~ APS ZDO[sender=${sender16}:${sender64} clusterId=${apsHeader.clusterId}]`, NS);
 
-            const result = Zdo.Buffalo.readResponse(this.hasZdoMessageOverhead, apsHeader.clusterId!, data);
+            const result = Zdo.Buffalo.readResponse(this.hasZdoMessageOverhead, apsHeader.clusterId!, apsPayload);
 
             if (apsHeader.clusterId! === Zdo.ClusterId.NETWORK_ADDRESS_RESPONSE) {
                 // special case to properly resolve a NETWORK_ADDRESS_RESPONSE following a NETWORK_ADDRESS_REQUEST (based on EUI64 from ZDO payload)
@@ -681,9 +691,9 @@ export class ZoHAdapter extends Adapter {
 
             const payload: ZclPayload = {
                 clusterID: apsHeader.clusterId!,
-                header: Zcl.Header.fromBuffer(data),
+                header: Zcl.Header.fromBuffer(apsPayload),
                 address: sender64 !== undefined ? `0x${bigUInt64ToHexBE(sender64)}` : sender16!,
-                data,
+                data: apsPayload,
                 endpoint: apsHeader.sourceEndpoint!,
                 linkquality: rssi, // TODO: convert RSSI to LQA
                 groupID: apsHeader.group!,
