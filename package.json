@@ -86,7 +86,7 @@
         "clean": "rimraf temp coverage dist tsconfig.tsbuildinfo",
         "prepack": "pnpm run clean && pnpm run build"
     },
-    "version": "3.4.3",
+    "version": "3.4.4",
     "pnpm": {
         "onlyBuiltDependencies": [
             "@serialport/bindings-cpp",

@@ -1,5 +1,14 @@
 # Changelog
 
+## [3.4.4](https://github.com/Koenkk/zigbee-herdsman/compare/v3.4.3...v3.4.4) (2025-03-21)
+
+
+### Bug Fixes
+
+* Fixed problem with non-latin characters in the UTF8 string ([#1352](https://github.com/Koenkk/zigbee-herdsman/issues/1352)) ([1b7c5eb](https://github.com/Koenkk/zigbee-herdsman/commit/1b7c5ebe112d181a19b44cade5dc839375a9a6b8))
+* **ignore:** more Green power cleanup ([#1358](https://github.com/Koenkk/zigbee-herdsman/issues/1358)) ([7cac00b](https://github.com/Koenkk/zigbee-herdsman/commit/7cac00b611789f93fd6657057dbec8178575256b))
+* **ignore:** update dependencies ([#1357](https://github.com/Koenkk/zigbee-herdsman/issues/1357)) ([349cddf](https://github.com/Koenkk/zigbee-herdsman/commit/349cddfca7ff09e42e11d23f9270c48d44c735b3))
+
 ## [3.4.3](https://github.com/Koenkk/zigbee-herdsman/compare/v3.4.2...v3.4.3) (2025-03-19)
 
 
