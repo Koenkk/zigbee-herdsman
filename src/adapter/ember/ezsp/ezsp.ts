@@ -206,16 +206,6 @@ export interface EmberEzspEventMap {
     ];
     /** @see Ezsp.ezspMessageSentHandler */
     messageSent: [status: SLStatus, type: EmberOutgoingMessageType, indexOrDestination: number, apsFrame: EmberApsFrame, messageTag: number];
-    /** @see Ezsp.ezspGpepIncomingMessageHandler */
-    greenpowerMessage: [
-        sequenceNumber: number,
-        commandIdentifier: number,
-        sourceId: number,
-        frameCounter: number,
-        gpdCommandId: number,
-        gpdCommandPayload: Buffer,
-        gpdLink: number,
-    ];
 }
 
 /**

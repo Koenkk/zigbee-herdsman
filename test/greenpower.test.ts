@@ -92,6 +92,149 @@ describe('GreenPower', () => {
         vi.useRealTimers();
     });
 
+    it('encodes & decodes pairing options', async () => {
+        let rawByte = 0b000000000110101000;
+        let rawOptions = {
+            appId: 0,
+            addSink: true,
+            removeGpd: false,
+            communicationMode: 0b01,
+            gpdFixed: true,
+            gpdMacSeqNumCapabilities: true,
+            securityLevel: 0,
+            securityKeyType: 0,
+            gpdSecurityFrameCounterPresent: false,
+            gpdSecurityKeyPresent: false,
+            assignedAliasPresent: false,
+            groupcastRadiusPresent: false,
+        };
+        let options = GreenPower.decodePairingOptions(rawByte);
+        let byte = GreenPower.encodePairingOptions(rawOptions);
+
+        expect(options).toStrictEqual(rawOptions);
+        expect(rawByte).toStrictEqual(byte);
+
+        rawByte = 0b001110010101001000;
+        rawOptions = {
+            appId: 0,
+            addSink: true,
+            removeGpd: false,
+            communicationMode: 0b10,
+            gpdFixed: false,
+            gpdMacSeqNumCapabilities: true,
+            securityLevel: 0b10,
+            securityKeyType: 0b100,
+            gpdSecurityFrameCounterPresent: true,
+            gpdSecurityKeyPresent: true,
+            assignedAliasPresent: false,
+            groupcastRadiusPresent: false,
+        };
+        options = GreenPower.decodePairingOptions(rawByte);
+        byte = GreenPower.encodePairingOptions(rawOptions);
+
+        expect(options).toStrictEqual(rawOptions);
+        expect(rawByte).toStrictEqual(byte);
+
+        rawByte = 0b001110010101101000;
+        rawOptions = {
+            appId: 0,
+            addSink: true,
+            removeGpd: false,
+            communicationMode: 0b11,
+            gpdFixed: false,
+            gpdMacSeqNumCapabilities: true,
+            securityLevel: 0b10,
+            securityKeyType: 0b100,
+            gpdSecurityFrameCounterPresent: true,
+            gpdSecurityKeyPresent: true,
+            assignedAliasPresent: false,
+            groupcastRadiusPresent: false,
+        };
+        options = GreenPower.decodePairingOptions(rawByte);
+        byte = GreenPower.encodePairingOptions(rawOptions);
+
+        expect(options).toStrictEqual(rawOptions);
+        expect(rawByte).toStrictEqual(byte);
+
+        rawByte = 0b000000000110110000;
+        rawOptions = {
+            appId: 0,
+            addSink: false,
+            removeGpd: true,
+            communicationMode: 0b01,
+            gpdFixed: true,
+            gpdMacSeqNumCapabilities: true,
+            securityLevel: 0b00,
+            securityKeyType: 0b000,
+            gpdSecurityFrameCounterPresent: false,
+            gpdSecurityKeyPresent: false,
+            assignedAliasPresent: false,
+            groupcastRadiusPresent: false,
+        };
+        options = GreenPower.decodePairingOptions(rawByte);
+        byte = GreenPower.encodePairingOptions(rawOptions);
+
+        expect(options).toStrictEqual(rawOptions);
+        expect(rawByte).toStrictEqual(byte);
+
+        // coverage
+        rawByte = 0b110000000010110000;
+        rawOptions = {
+            appId: 0,
+            addSink: false,
+            removeGpd: true,
+            communicationMode: 0b01,
+            gpdFixed: true,
+            gpdMacSeqNumCapabilities: false,
+            securityLevel: 0b00,
+            securityKeyType: 0b000,
+            gpdSecurityFrameCounterPresent: false,
+            gpdSecurityKeyPresent: false,
+            assignedAliasPresent: true,
+            groupcastRadiusPresent: true,
+        };
+        options = GreenPower.decodePairingOptions(rawByte);
+        byte = GreenPower.encodePairingOptions(rawOptions);
+
+        expect(options).toStrictEqual(rawOptions);
+        expect(rawByte).toStrictEqual(byte);
+    });
+
+    it('encodes & decodes commissioning mode options', async () => {
+        let rawByte = 0x0b;
+        let rawOptions = {action: 1, commissioningWindowPresent: true, exitMode: 0b10, channelPresent: false, unicastCommunication: false};
+        let options = GreenPower.decodeCommissioningModeOptions(rawByte);
+        let byte = GreenPower.encodeCommissioningModeOptions(rawOptions);
+
+        expect(options).toStrictEqual(rawOptions);
+        expect(rawByte).toStrictEqual(byte);
+        rawByte = 0x2b;
+        rawOptions = {action: 1, commissioningWindowPresent: true, exitMode: 0b10, channelPresent: false, unicastCommunication: true};
+        options = GreenPower.decodeCommissioningModeOptions(rawByte);
+        byte = GreenPower.encodeCommissioningModeOptions(rawOptions);
+
+        expect(options).toStrictEqual(rawOptions);
+        expect(rawByte).toStrictEqual(byte);
+        rawByte = 0x0a;
+        rawOptions = {action: 0, commissioningWindowPresent: true, exitMode: 0b10, channelPresent: false, unicastCommunication: false};
+        options = GreenPower.decodeCommissioningModeOptions(rawByte);
+        byte = GreenPower.encodeCommissioningModeOptions(rawOptions);
+
+        expect(options).toStrictEqual(rawOptions);
+        expect(rawByte).toStrictEqual(byte);
+        expect(options).toStrictEqual(rawOptions);
+        expect(rawByte).toStrictEqual(byte);
+
+        // coverage
+        rawByte = 0b111100;
+        rawOptions = {action: 0, commissioningWindowPresent: false, exitMode: 0b11, channelPresent: true, unicastCommunication: true};
+        options = GreenPower.decodeCommissioningModeOptions(rawByte);
+        byte = GreenPower.encodeCommissioningModeOptions(rawOptions);
+
+        expect(options).toStrictEqual(rawOptions);
+        expect(rawByte).toStrictEqual(byte);
+    });
+
     // @see https://github.com/Koenkk/zigbee2mqtt/issues/19405#issuecomment-2727338024
     it('FULLENCR ZT-LP-ZEU2S-WH-MS MOES 2-gang', async () => {
         let joinData: GreenPowerDeviceJoinedPayload | undefined;
@@ -148,7 +291,7 @@ describe('GreenPower', () => {
             expect(logInfoSpy).toHaveBeenNthCalledWith(1, '[COMMISSIONING] from=18887', 'zh:controller:greenpower');
             expect(logDebugSpy).toHaveBeenNthCalledWith(
                 1,
-                '[PAIRING] options=58696 (appId=0 communicationMode=2) wasBroadcast=true gppNwkAddr=undefined',
+                '[PAIRING] options=58696 (addSink=true commMode=2) wasBroadcast=true gppNwkAddr=undefined',
                 'zh:controller:greenpower',
             );
 
@@ -567,7 +710,7 @@ describe('GreenPower', () => {
             expect(logInfoSpy).toHaveBeenNthCalledWith(1, '[COMMISSIONING] from=51637', 'zh:controller:greenpower');
             expect(logDebugSpy).toHaveBeenNthCalledWith(
                 1,
-                '[PAIRING] options=58696 (appId=0 communicationMode=2) wasBroadcast=true gppNwkAddr=undefined',
+                '[PAIRING] options=58696 (addSink=true commMode=2) wasBroadcast=true gppNwkAddr=undefined',
                 'zh:controller:greenpower',
             );
 
