@@ -278,26 +278,35 @@ describe('ZigBee on Host', () => {
 
         const sendZdoSpy = vi.spyOn(adapter, 'sendZdo');
         const allowJoinsSpy = vi.spyOn(adapter.driver, 'allowJoins');
+        const gpEnterCommissioningModeSpy = vi.spyOn(adapter.driver, 'gpEnterCommissioningMode');
 
         sendZdoSpy.mockImplementationOnce(() => Promise.resolve([0, undefined]));
         await adapter.permitJoin(254);
         expect(allowJoinsSpy).toHaveBeenLastCalledWith(254, true);
+        expect(gpEnterCommissioningModeSpy).toHaveBeenLastCalledWith(254);
 
         await adapter.permitJoin(0);
         expect(allowJoinsSpy).toHaveBeenLastCalledWith(0, true);
+        expect(gpEnterCommissioningModeSpy).toHaveBeenLastCalledWith(0);
 
         await adapter.permitJoin(200, 0x0000);
         expect(allowJoinsSpy).toHaveBeenLastCalledWith(200, true);
+        expect(gpEnterCommissioningModeSpy).toHaveBeenLastCalledWith(200);
 
         await adapter.permitJoin(0);
         expect(allowJoinsSpy).toHaveBeenLastCalledWith(0, true);
+        expect(gpEnterCommissioningModeSpy).toHaveBeenLastCalledWith(0);
+        expect(gpEnterCommissioningModeSpy).toHaveBeenCalledTimes(4);
 
         sendZdoSpy.mockImplementationOnce(() => Promise.resolve([0, undefined]));
         await adapter.permitJoin(150, 0x1234);
         expect(allowJoinsSpy).toHaveBeenLastCalledWith(150, false);
+        expect(gpEnterCommissioningModeSpy).toHaveBeenCalledTimes(4);
 
         await adapter.permitJoin(0);
         expect(allowJoinsSpy).toHaveBeenLastCalledWith(0, true);
+        expect(gpEnterCommissioningModeSpy).toHaveBeenLastCalledWith(0);
+        expect(gpEnterCommissioningModeSpy).toHaveBeenCalledTimes(5);
     });
 
     it('Adapter impl: sendZclFrameToEndpoint', async () => {

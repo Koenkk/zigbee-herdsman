@@ -480,6 +480,7 @@ export class ZoHAdapter extends Adapter {
         if (networkAddress === undefined) {
             // send ZDO BCAST
             this.driver.allowJoins(seconds, true);
+            this.driver.gpEnterCommissioningMode(seconds);
 
             const clusterId = Zdo.ClusterId.PERMIT_JOINING_REQUEST;
             // `authentication`: TC significance always 1 (zb specs)
@@ -488,6 +489,7 @@ export class ZoHAdapter extends Adapter {
             await this.sendZdo(ZSpec.BLANK_EUI64, ZSpec.BroadcastAddress.DEFAULT, clusterId, zdoPayload, true);
         } else if (networkAddress === ZSpec.COORDINATOR_ADDRESS) {
             this.driver.allowJoins(seconds, true);
+            this.driver.gpEnterCommissioningMode(seconds);
         } else {
             // send ZDO to networkAddress
             this.driver.allowJoins(seconds, false);
