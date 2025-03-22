@@ -1,5 +1,14 @@
 # Changelog
 
+## [3.4.5](https://github.com/Koenkk/zigbee-herdsman/compare/v3.4.4...v3.4.5) (2025-03-22)
+
+
+### Bug Fixes
+
+* Green Power decryption when received via commissioning notif ([#1359](https://github.com/Koenkk/zigbee-herdsman/issues/1359)) ([504b25d](https://github.com/Koenkk/zigbee-herdsman/commit/504b25d62e71e9554fc9c6315909e83b16b215af))
+* **ignore:** update dependencies ([#1361](https://github.com/Koenkk/zigbee-herdsman/issues/1361)) ([dfd7bbb](https://github.com/Koenkk/zigbee-herdsman/commit/dfd7bbb226ff6b8c47b0e5b8eacd633681c6d624))
+* **ignore:** update dependencies ([#1362](https://github.com/Koenkk/zigbee-herdsman/issues/1362)) ([a9a1dcf](https://github.com/Koenkk/zigbee-herdsman/commit/a9a1dcfde57b653121099b93203b1ddb728beb19))
+
 ## [3.4.4](https://github.com/Koenkk/zigbee-herdsman/compare/v3.4.3...v3.4.4) (2025-03-21)
 
 
