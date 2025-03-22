@@ -296,9 +296,13 @@ export class GreenPower extends EventEmitter<GreenPowerEventMap> {
                 // 4 bytes appended for MIC placeholder (just needs the bytes present for decrypt)
                 const payload = Buffer.from([frame.payload.commandID, ...dataPayload.data.subarray(15, dataEndOffset), 0, 0, 0, 0]);
                 const decrypted = this.decryptPayload(frame.payload.srcID, frame.payload.frameCounter, hashedKey, payload);
-
                 const newHeader = Buffer.alloc(15);
                 newHeader.set(oldHeader, 0);
+                // flip securityLevel to ZigbeeNWKGPSecurityLevel.NO (for ease) before re-parsing
+                newHeader.writeUInt16LE(
+                    frame.payload.options & ~(isCommissioningNotification ? 0x30 : 0xc0) & ~(isCommissioningNotification ? 0x200 : 0),
+                    3,
+                );
                 newHeader.writeUInt8(decrypted[0], oldHeader.byteLength - 2); // commandID
                 newHeader.writeUInt8(decrypted.byteLength - 1, oldHeader.byteLength - 1); // payloadSize
 

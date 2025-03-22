@@ -791,14 +791,33 @@ describe('ZCL Buffalo', () => {
             const value = [0xff, 0x00];
             const buffalo = new BuffaloZcl(Buffer.from(value));
 
-            expect(buffalo.read(Zcl.BuffaloZclDataType.GPD_FRAME, {payload: {commandID: 0x1ff}})).toStrictEqual({raw: Buffer.from(value)});
+            expect(buffalo.read(Zcl.BuffaloZclDataType.GPD_FRAME, {payload: {commandID: 0x1ff, payloadSize: 2}})).toStrictEqual({
+                raw: Buffer.from(value),
+            });
+        });
+
+        it('Reads unhandled command as object[raw] and ignores GPP data/mic', () => {
+            let value = [0xff, 0x00, 0x21, 0x43, 0xfe];
+            let buffalo = new BuffaloZcl(Buffer.from(value));
+
+            expect(buffalo.read(Zcl.BuffaloZclDataType.GPD_FRAME, {payload: {commandID: 0x1ff, payloadSize: 2}})).toStrictEqual({
+                raw: Buffer.from(value).subarray(0, -3),
+            });
+
+            value = [0xff, 0x00, 0x21, 0x43, 0xfe, 0xf1, 0xf2, 0xf3, 0xf4];
+            buffalo = new BuffaloZcl(Buffer.from(value));
+
+            expect(buffalo.read(Zcl.BuffaloZclDataType.GPD_FRAME, {payload: {commandID: 0x1ff, payloadSize: 2}})).toStrictEqual({
+                raw: Buffer.from(value).subarray(0, -7),
+            });
         });
 
         it('Reads unhandled command as empty object if buffer finished reading', () => {
+            // XXX: this is no longer relevant with proper payload size checking?
             const value = [0xff, 0x00];
             const buffalo = new BuffaloZcl(Buffer.from(value), value.length /* pos at end*/);
 
-            expect(buffalo.read(Zcl.BuffaloZclDataType.GPD_FRAME, {payload: {commandID: 0x1ff}})).toStrictEqual({});
+            expect(buffalo.read(Zcl.BuffaloZclDataType.GPD_FRAME, {payload: {commandID: 0x1ff, payloadSize: 2}})).toStrictEqual({});
         });
 
         it('Writes commissioning', () => {

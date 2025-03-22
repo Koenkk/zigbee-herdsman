@@ -422,8 +422,8 @@ export class BuffaloZcl extends Buffalo {
     }
 
     private readGpdFrame(options: BuffaloZclOptions): GPD | GPDChannelRequest | GPDAttributeReport | {raw: Buffer} | Record<string, never> {
-        // Commisioning
         if (options.payload?.commandID === 0xe0) {
+            // Commisioning
             const frame = {
                 deviceID: this.readUInt8(),
                 options: this.readUInt8(),
@@ -485,15 +485,15 @@ export class BuffaloZcl extends Buffalo {
             }
 
             return frame;
-            // Channel Request
         } else if (options.payload?.commandID === 0xe3) {
+            // Channel Request
             const options = this.readUInt8();
             return {
                 nextChannel: options & 0xf,
                 nextNextChannel: options >> 4,
             };
-            // Manufacturer-specific Attribute Reporting
         } else if (options.payload?.commandID == 0xa1) {
+            // Manufacturer-specific Attribute Reporting
             if (options.payload.payloadSize == undefined) {
                 throw new Error('Cannot read GPD_FRAME with commandID=0xA1 without payloadSize options specified');
             }
@@ -523,8 +523,9 @@ export class BuffaloZcl extends Buffalo {
             }
 
             return frame;
-        } else if (this.isMore()) {
-            return {raw: this.buffer.subarray(this.position)};
+        } else if (options.payload?.payloadSize && this.isMore()) {
+            // might contain `gppNwkAddr`, `gppGpdLink` & `mic` from ZCL cluster, so limit by `payloadSize`
+            return {raw: this.readBuffer(options.payload.payloadSize)};
         } else {
             return {};
         }

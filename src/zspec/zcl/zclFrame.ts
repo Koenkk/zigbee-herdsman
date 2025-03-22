@@ -292,7 +292,9 @@ export class ZclFrame {
                         break;
                     }
                     case ParameterCondition.BITMASK_SET: {
-                        if ((entry[condition.param] & condition.mask) !== condition.mask) return false;
+                        if (condition.reversed) {
+                            if ((entry[condition.param] & condition.mask) === condition.mask) return false;
+                        } else if ((entry[condition.param] & condition.mask) !== condition.mask) return false;
                         break;
                     }
                     case ParameterCondition.BITFIELD_ENUM: {
