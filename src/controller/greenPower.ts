@@ -244,9 +244,15 @@ export class GreenPower extends EventEmitter<GreenPowerEventMap> {
 
     public async onZclGreenPowerData(dataPayload: AdapterEvents.ZclPayload, frame: Zcl.Frame, securityKey?: Buffer): Promise<Zcl.Frame> {
         try {
-            const securityLevel = (frame.payload.options >> 6) & 0x3;
+            // notification: A.3.3.4.1
+            // commissioningNotification: A.3.3.4.3
+            const isCommissioningNotification = frame.header.commandIdentifier === Zcl.Clusters.greenPower.commands.commissioningNotification.ID;
+            const securityLevel = isCommissioningNotification ? (frame.payload.options >> 4) & 0x3 : (frame.payload.options >> 6) & 0x3;
 
-            if (securityLevel === ZigbeeNWKGPSecurityLevel.FULLENCR) {
+            if (
+                securityLevel === ZigbeeNWKGPSecurityLevel.FULLENCR &&
+                (!isCommissioningNotification || ((frame.payload.options >> 9) & 0x1) === 1) /* security processing failed */
+            ) {
                 if (!securityKey) {
                     logger.error(
                         `[FULLENCR] from=${dataPayload.address} commandIdentifier=${frame.header.commandIdentifier} Unknown security key`,
@@ -255,36 +261,54 @@ export class GreenPower extends EventEmitter<GreenPowerEventMap> {
                     return frame;
                 }
 
-                if (frame.header.commandIdentifier === Zcl.Clusters.greenPower.commands.notification.ID) {
-                    /* v8 ignore start */
-                    if (frame.payload.srcID === undefined) {
-                        // ApplicationID = 0b010 indicates the GPD ID field has the length of 8B and contains the GPD IEEE address; the Endpoint field is present.
-                        // Note: no device are currently known to use this (too expensive)
-                        logger.error(`[FULLENCR] from=${dataPayload.address} GPD ID containing IEEE address is not supported`, NS);
-                        return frame;
-                    }
-                    /* v8 ignore stop */
-
-                    const hashedKey = this.encryptSecurityKey(frame.payload.srcID, securityKey);
-                    const oldHeader = dataPayload.data.subarray(0, 15);
-                    // 4 bytes appended for MIC placeholder (just needs the bytes present for decrypt)
-                    const payload = Buffer.from([frame.payload.commandID, ...dataPayload.data.subarray(15), 0, 0, 0, 0]);
-                    // if the device has a registered security key, we assume it uses encrypted payloads
-                    const decrypted = this.decryptPayload(frame.payload.srcID, frame.payload.frameCounter, hashedKey, payload);
-
-                    const newHeader = Buffer.alloc(15);
-                    newHeader.set(oldHeader, 0);
-                    newHeader.writeUInt8(decrypted[0], oldHeader.byteLength - 2); // commandID
-                    newHeader.writeUInt8(decrypted.byteLength - 1, oldHeader.byteLength - 1); // payloadSize
-
-                    // re-parse with decrypted data
-                    frame = Zcl.Frame.fromBuffer(dataPayload.clusterID, dataPayload.header, Buffer.concat([newHeader, decrypted.subarray(1)]), {});
-                    /* v8 ignore start */
-                } else {
-                    logger.error(`[FULLENCR] from=${dataPayload.address} commandIdentifier=${frame.header.commandIdentifier} Not supported`, NS);
+                /* v8 ignore start */
+                if (frame.payload.srcID === undefined) {
+                    // ApplicationID = 0b010 indicates the GPD ID field has the length of 8B and contains the GPD IEEE address; the Endpoint field is present.
+                    // Note: no device are currently known to use this (too expensive)
+                    logger.error(`[FULLENCR] from=${dataPayload.address} GPD ID containing IEEE address is not supported`, NS);
                     return frame;
                 }
                 /* v8 ignore stop */
+
+                const oldHeader = dataPayload.data.subarray(0, 15);
+                let dataEndOffset = dataPayload.data.byteLength;
+
+                if (isCommissioningNotification) {
+                    const hasMic = frame.payload.options & 0x200;
+                    const hasGppData = frame.payload.options & 0x800;
+
+                    if (hasGppData) {
+                        dataEndOffset -= 3;
+                    }
+
+                    if (hasMic) {
+                        dataEndOffset -= 4;
+                    }
+                } else {
+                    const hasGppData = frame.payload.options & 0x4000;
+
+                    if (hasGppData) {
+                        dataEndOffset -= 3;
+                    }
+                }
+
+                const hashedKey = this.encryptSecurityKey(frame.payload.srcID, securityKey);
+                // 4 bytes appended for MIC placeholder (just needs the bytes present for decrypt)
+                const payload = Buffer.from([frame.payload.commandID, ...dataPayload.data.subarray(15, dataEndOffset), 0, 0, 0, 0]);
+                const decrypted = this.decryptPayload(frame.payload.srcID, frame.payload.frameCounter, hashedKey, payload);
+
+                const newHeader = Buffer.alloc(15);
+                newHeader.set(oldHeader, 0);
+                newHeader.writeUInt8(decrypted[0], oldHeader.byteLength - 2); // commandID
+                newHeader.writeUInt8(decrypted.byteLength - 1, oldHeader.byteLength - 1); // payloadSize
+
+                // re-parse with decrypted data
+                frame = Zcl.Frame.fromBuffer(
+                    dataPayload.clusterID,
+                    dataPayload.header,
+                    Buffer.concat([newHeader, decrypted.subarray(1), dataPayload.data.subarray(dataEndOffset)]),
+                    {},
+                );
             }
 
             const commandID = frame.payload.commandID ?? frame.header.commandIdentifier;

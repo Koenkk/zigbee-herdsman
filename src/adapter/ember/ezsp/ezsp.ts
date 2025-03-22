@@ -8596,6 +8596,7 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
         }
 
         let commandIdentifier = Clusters.greenPower.commands.notification.ID;
+        let options = 0;
 
         if (gpdCommandId === 0xe0) {
             if (!gpdCommandPayload.length) {
@@ -8606,6 +8607,14 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
             }
 
             commandIdentifier = Clusters.greenPower.commands.commissioningNotification.ID;
+            options =
+                (addr.applicationId & 0x7) | ((bidirectionalInfo & 0x1) << 3) | ((gpdfSecurityLevel & 0x3) << 4) | ((gpdfSecurityKeyType & 0x7) << 6);
+        } else {
+            options =
+                (addr.applicationId & 0x7) |
+                ((gpdfSecurityLevel & 0x3) << 6) |
+                ((gpdfSecurityKeyType & 0x7) << 8) |
+                ((bidirectionalInfo & 0x1) << 11);
         }
 
         const apsFrame: EmberApsFrame = {
@@ -8622,10 +8631,7 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
         gpdHeader.writeUInt8(0b00000001, 0); // frameControl: FrameType.SPECIFIC + Direction.CLIENT_TO_SERVER + disableDefaultResponse=false
         gpdHeader.writeUInt8(sequenceNumber, 1);
         gpdHeader.writeUInt8(commandIdentifier, 2); // commandIdentifier
-        gpdHeader.writeUInt16LE(
-            (addr.applicationId & 0x7) | ((gpdfSecurityLevel & 0x3) << 6) | ((gpdfSecurityKeyType & 0x7) << 8) | ((bidirectionalInfo & 0x3) << 11),
-            3,
-        ); // options
+        gpdHeader.writeUInt16LE(options, 3);
         gpdHeader.writeUInt32LE(addr.sourceId, 5);
         gpdHeader.writeUInt32LE(gpdSecurityFrameCounter, 9);
         gpdHeader.writeUInt8(gpdCommandId, 13);

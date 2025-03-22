@@ -87,7 +87,7 @@ describe('ZigBee on Host', () => {
                 payload: Buffer.alloc(254), // more than enough to not fail various reads
             }),
         );
-        vi.spyOn(adapter.driver, 'setProperty').mockImplementation(() => Promise.resolve([0, Buffer.alloc(0)]));
+        vi.spyOn(adapter.driver, 'setProperty').mockImplementation(() => Promise.resolve());
         vi.spyOn(adapter.driver, 'formNetwork').mockImplementation(() => Promise.resolve());
 
         vi.spyOn(adapter.driver.writer, 'pipe').mockImplementation(
@@ -858,7 +858,7 @@ describe('ZigBee on Host', () => {
             0,
         );
 
-        const data2 = Buffer.from([1, 185, 0, 0, 0, 151, 150, 113, 1, 185, 0, 0, 0, 0x10, 0]);
+        const data2 = Buffer.from([1, 185, 0, 0b10000000, 0, 151, 150, 113, 1, 185, 0, 0, 0, 0x10, 0]);
         const header2 = Zcl.Header.fromBuffer(data2)!;
 
         expect(emitSpy).toHaveBeenLastCalledWith('zclPayload', {
@@ -889,7 +889,7 @@ describe('ZigBee on Host', () => {
                 commandIdentifier: 0,
             },
             payload: {
-                options: 0,
+                options: 0b10000000,
                 srcID: 24221335,
                 frameCounter: 185,
                 commandID: 0x10,

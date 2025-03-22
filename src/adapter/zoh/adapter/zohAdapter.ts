@@ -718,7 +718,29 @@ export class ZoHAdapter extends Adapter {
         offset += 1;
         data.writeUInt8(cmdId === 0xe0 ? 0x04 /* commissioning notification */ : 0x00 /* notification */, offset);
         offset += 1;
-        data.writeUInt16LE(0, offset); // options, only srcID present
+
+        if (nwkHeader.frameControlExt) {
+            /* v8 ignore start */
+            if (cmdId === 0xe0) {
+                data.writeUInt16LE(
+                    (nwkHeader.frameControlExt.appId & 0x7) |
+                        (((nwkHeader.frameControlExt.rxAfterTx ? 1 : 0) & 0x1) << 3) |
+                        ((nwkHeader.frameControlExt.securityLevel & 0x3) << 4),
+                    offset,
+                );
+                /* v8 ignore stop */
+            } else {
+                data.writeUInt16LE(
+                    (nwkHeader.frameControlExt.appId & 0x7) |
+                        ((nwkHeader.frameControlExt.securityLevel & 0x3) << 6) |
+                        /* v8 ignore next */ (((nwkHeader.frameControlExt.rxAfterTx ? 1 : 0) & 0x3) << 11),
+                    offset,
+                );
+            }
+        } else {
+            data.writeUInt16LE(0, offset); // options, only srcID present
+        }
+
         offset += 2;
 
         /* v8 ignore start */
