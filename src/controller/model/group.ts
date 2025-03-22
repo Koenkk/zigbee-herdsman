@@ -2,6 +2,7 @@ import assert from 'node:assert';
 
 import {logger} from '../../utils/logger';
 import * as Zcl from '../../zspec/zcl';
+import {Cluster, CustomClusters} from '../../zspec/zcl/definition/tstype';
 import ZclTransactionSequenceNumber from '../helpers/zclTransactionSequenceNumber';
 import {DatabaseEntry, KeyValue} from '../tstype';
 import Device from './device';
@@ -27,6 +28,7 @@ export class Group extends Entity {
     private databaseID: number;
     public readonly groupID: number;
     private readonly _members: Endpoint[];
+    private _commonCustomClusters: CustomClusters | undefined;
     // Can be used by applications to store data.
     public readonly meta: KeyValue;
 
@@ -172,6 +174,7 @@ export class Group extends Entity {
     public addMember(endpoint: Endpoint): void {
         if (!this._members.includes(endpoint)) {
             this._members.push(endpoint);
+            this._commonCustomClusters = undefined;
             this.save();
         }
     }
@@ -181,6 +184,7 @@ export class Group extends Entity {
 
         if (i > -1) {
             this._members.splice(i, 1);
+            this._commonCustomClusters = undefined;
             this.save();
         }
     }
@@ -189,13 +193,38 @@ export class Group extends Entity {
         return this._members.includes(endpoint);
     }
 
+    /**
+     * Custom clusters that all members have in common.
+     * NOTE: This public getter always refreshes the underlaying variable to current state.
+     */
+    public getCommonCustomClusters(ignoreCache: boolean = false): CustomClusters {
+        if (!ignoreCache || !this._commonCustomClusters) {
+            if (this._members.length > 0) {
+                const customClusters = this._members[0].getDevice().customClusters;
+                const commonClusters: CustomClusters = {};
+
+                for (const clusterName in customClusters) {
+                    if (this._members.every((member) => clusterName in member.getDevice().customClusters)) {
+                        commonClusters[clusterName] = customClusters[clusterName];
+                    }
+                }
+
+                this._commonCustomClusters = commonClusters;
+            } else {
+                this._commonCustomClusters = {};
+            }
+        }
+
+        return this._commonCustomClusters;
+    }
+
     /*
      * Zigbee functions
      */
 
     public async write(clusterKey: number | string, attributes: KeyValue, options?: Options): Promise<void> {
         const optionsWithDefaults = this.getOptionsWithDefaults(options, Zcl.Direction.CLIENT_TO_SERVER);
-        const cluster = Zcl.Utils.getCluster(clusterKey, undefined, {});
+        const cluster = this.getCluster(clusterKey);
         const payload: {attrId: number; dataType: number; attrData: number | string | boolean}[] = [];
 
         for (const [nameOrID, value] of Object.entries(attributes)) {
@@ -223,7 +252,7 @@ export class Group extends Entity {
                 'write',
                 cluster.ID,
                 payload,
-                {},
+                this._commonCustomClusters ?? {},
                 optionsWithDefaults.reservedBits,
             );
 
@@ -239,7 +268,7 @@ export class Group extends Entity {
 
     public async read(clusterKey: number | string, attributes: (string | number)[], options?: Options): Promise<void> {
         const optionsWithDefaults = this.getOptionsWithDefaults(options, Zcl.Direction.CLIENT_TO_SERVER);
-        const cluster = Zcl.Utils.getCluster(clusterKey, undefined, {});
+        const cluster = this.getCluster(clusterKey);
         const payload: {attrId: number}[] = [];
 
         for (const attribute of attributes) {
@@ -255,7 +284,7 @@ export class Group extends Entity {
             'read',
             cluster.ID,
             payload,
-            {},
+            this._commonCustomClusters ?? {},
             optionsWithDefaults.reservedBits,
         );
 
@@ -276,7 +305,7 @@ export class Group extends Entity {
 
     public async command(clusterKey: number | string, commandKey: number | string, payload: KeyValue, options?: Options): Promise<void> {
         const optionsWithDefaults = this.getOptionsWithDefaults(options, Zcl.Direction.CLIENT_TO_SERVER);
-        const cluster = Zcl.Utils.getCluster(clusterKey, undefined, {});
+        const cluster = this.getCluster(clusterKey);
         const command = cluster.getCommand(commandKey);
 
         const createLogMessage = (): string => `Command ${this.groupID} ${cluster.name}.${command.name}(${JSON.stringify(payload)})`;
@@ -292,7 +321,7 @@ export class Group extends Entity {
                 command.ID,
                 cluster.ID,
                 payload,
-                {},
+                this._commonCustomClusters ?? {},
                 optionsWithDefaults.reservedBits,
             );
 
@@ -315,6 +344,24 @@ export class Group extends Entity {
             transactionSequenceNumber: undefined,
             ...(options || {}),
         };
+    }
+
+    private getCluster(key: string | number): Cluster {
+        if (this._commonCustomClusters) {
+            // if already cached, use that
+            return Zcl.Utils.getCluster(key, undefined, this._commonCustomClusters);
+        }
+
+        // At first, don't fully calculate custom clusters
+        const cluster = Zcl.Utils.findCluster(key, undefined, {});
+
+        // If no cluster was found, and we haven't calculated custom clusters,
+        // do so now, and then retry
+        if (!cluster) {
+            return Zcl.Utils.getCluster(key, undefined, this.getCommonCustomClusters());
+        }
+
+        return cluster;
     }
 }
 
