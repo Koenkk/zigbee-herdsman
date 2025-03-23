@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.4.6](https://github.com/Koenkk/zigbee-herdsman/compare/v3.4.5...v3.4.6) (2025-03-23)
+
+
+### Bug Fixes
+
+* **ignore:** encrypted GP frame should not parse `commandFrame` until decrypted ([#1363](https://github.com/Koenkk/zigbee-herdsman/issues/1363)) ([e47367c](https://github.com/Koenkk/zigbee-herdsman/commit/e47367c9d22105c7b5fd6de1a7df16b72e92522a))
+
 ## [3.4.5](https://github.com/Koenkk/zigbee-herdsman/compare/v3.4.4...v3.4.5) (2025-03-22)
 
 
