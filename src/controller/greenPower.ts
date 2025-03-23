@@ -298,11 +298,10 @@ export class GreenPower extends EventEmitter<GreenPowerEventMap> {
                 const decrypted = this.decryptPayload(frame.payload.srcID, frame.payload.frameCounter, hashedKey, payload);
                 const newHeader = Buffer.alloc(15);
                 newHeader.set(oldHeader, 0);
-                // flip securityLevel to ZigbeeNWKGPSecurityLevel.NO (for ease) before re-parsing
-                newHeader.writeUInt16LE(
-                    frame.payload.options & ~(isCommissioningNotification ? 0x30 : 0xc0) & ~(isCommissioningNotification ? 0x200 : 0),
-                    3,
-                );
+                // flip necessary bits in options before re-parsing
+                // - "securityLevel" to ZigbeeNWKGPSecurityLevel.NO (for ease) and "securityProcessingFailed" to 0
+                // - "securityLevel" to ZigbeeNWKGPSecurityLevel.NO (for ease)
+                newHeader.writeUInt16LE(isCommissioningNotification ? frame.payload.options & ~0x30 & ~0x200 : frame.payload.options & ~0xc0, 3);
                 newHeader.writeUInt8(decrypted[0], oldHeader.byteLength - 2); // commandID
                 newHeader.writeUInt8(decrypted.byteLength - 1, oldHeader.byteLength - 1); // payloadSize
 
