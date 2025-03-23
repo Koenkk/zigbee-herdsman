@@ -62,7 +62,7 @@ export interface ParameterDefinition extends Parameter {
         | {type: ParameterCondition.STATUS_NOT_EQUAL; value: Status}
         | {type: ParameterCondition.MINIMUM_REMAINING_BUFFER_BYTES; value: number}
         | {type: ParameterCondition.DIRECTION_EQUAL; value: Direction}
-        | {type: ParameterCondition.BITMASK_SET; param: string; mask: number}
+        | {type: ParameterCondition.BITMASK_SET; param: string; mask: number; /* not set */ reversed?: boolean}
         | {type: ParameterCondition.BITFIELD_ENUM; param: string; offset: number; size: number; value: number}
         | {type: ParameterCondition.DATA_TYPE_CLASS_EQUAL; value: DataTypeClass}
         | {type: ParameterCondition.FIELD_EQUAL; field: string; value: unknown}

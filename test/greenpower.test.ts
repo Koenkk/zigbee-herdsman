@@ -258,6 +258,219 @@ describe('GreenPower', () => {
         expect(rawByte).toStrictEqual(byte);
     });
 
+    it('ignores GPP data from raw payload', async () => {
+        const addr = {applicationId: 0, sourceId: 2777252112, endpoint: 0};
+        const options = 0x800;
+        const sequenceNumber = 18;
+        const gpdSecurityFrameCounter = 17326;
+        const gpdCommandId = 38;
+        const gpdCommandPayload = Buffer.from([0x3e]);
+        const commandIdentifier = Zcl.Clusters.greenPower.commands.commissioningNotification.ID;
+        const gppNwkAddr = 24404;
+        const gppGpdLink = 207;
+
+        const gpdHeader = makeHeader(
+            sequenceNumber,
+            commandIdentifier,
+            0,
+            0,
+            0,
+            0,
+            addr.sourceId,
+            gpdSecurityFrameCounter,
+            gpdCommandId,
+            gpdCommandPayload.length,
+            options,
+        );
+        const gpdFooter = makeFooter(options, gppNwkAddr, gppGpdLink);
+        const payload = makePayload(addr.sourceId, Buffer.concat([gpdHeader, gpdCommandPayload, gpdFooter]), 138);
+        const frame = Zcl.Frame.fromBuffer(payload.clusterID, payload.header, payload.data, {});
+        const retFrame = await gp.onZclGreenPowerData(payload, frame, undefined);
+
+        expect(frame.payload.gppNwkAddr).toStrictEqual(gppNwkAddr);
+        expect(frame.payload.gppGpdLink).toStrictEqual(gppGpdLink);
+        expect(retFrame.payload.commandFrame).toStrictEqual({raw: gpdCommandPayload});
+        expect(retFrame.payload.gppNwkAddr).toStrictEqual(gppNwkAddr);
+        expect(retFrame.payload.gppGpdLink).toStrictEqual(gppGpdLink);
+    });
+
+    it('ignores MIC from raw payload', async () => {
+        const securityKey = Buffer.from([227, 227, 225, 134, 235, 104, 141, 250, 162, 211, 104, 147, 201, 146, 67, 175]);
+        const addr = {applicationId: 0, sourceId: 2777252112, endpoint: 0};
+        const options = 0x30 | 0x200;
+        const sequenceNumber = 18;
+        const gpdSecurityFrameCounter = 17326;
+        const gpdCommandId = 38;
+        const gpdCommandPayload = Buffer.from([0x3e]);
+        const commandIdentifier = Zcl.Clusters.greenPower.commands.commissioningNotification.ID;
+        const mic = 1441399364;
+
+        const gpdHeader = makeHeader(
+            sequenceNumber,
+            commandIdentifier,
+            0,
+            0,
+            0,
+            0,
+            addr.sourceId,
+            gpdSecurityFrameCounter,
+            gpdCommandId,
+            gpdCommandPayload.length,
+            options,
+        );
+        const gpdFooter = makeFooter(options, undefined, undefined, mic);
+        const payload = makePayload(addr.sourceId, Buffer.concat([gpdHeader, gpdCommandPayload, gpdFooter]), 138);
+        const frame = Zcl.Frame.fromBuffer(payload.clusterID, payload.header, payload.data, {});
+        const retFrame = await gp.onZclGreenPowerData(payload, frame, securityKey);
+
+        expect(frame.payload.mic).toBeDefined(); // garbage
+        expect(retFrame.payload.commandID).toStrictEqual(0x21); // just to be sure it decrypted properly
+        expect(retFrame.payload.commandFrame).toStrictEqual({raw: Buffer.from([207 /* decrypted, bogus data */])});
+        expect(retFrame.payload.mic).toStrictEqual(undefined); // removed once decrypted
+    });
+
+    it('ignores GPP data and MIC from raw payload', async () => {
+        const securityKey = Buffer.from([227, 227, 225, 134, 235, 104, 141, 250, 162, 211, 104, 147, 201, 146, 67, 175]);
+        const addr = {applicationId: 0, sourceId: 2777252112, endpoint: 0};
+        const options = 0x30 | 0x200 | 0x800;
+        const sequenceNumber = 18;
+        const gpdSecurityFrameCounter = 17326;
+        const gpdCommandId = 38;
+        const gpdCommandPayload = Buffer.from([0x3e]);
+        const commandIdentifier = Zcl.Clusters.greenPower.commands.commissioningNotification.ID;
+        const gppNwkAddr = 24404;
+        const gppGpdLink = 207;
+        const mic = 1441399364;
+
+        const gpdHeader = makeHeader(
+            sequenceNumber,
+            commandIdentifier,
+            0,
+            0,
+            0,
+            0,
+            addr.sourceId,
+            gpdSecurityFrameCounter,
+            gpdCommandId,
+            gpdCommandPayload.length,
+            options,
+        );
+        const gpdFooter = makeFooter(options, gppNwkAddr, gppGpdLink, mic);
+        const payload = makePayload(addr.sourceId, Buffer.concat([gpdHeader, gpdCommandPayload, gpdFooter]), 138);
+        const frame = Zcl.Frame.fromBuffer(payload.clusterID, payload.header, payload.data, {});
+        const retFrame = await gp.onZclGreenPowerData(payload, frame, securityKey);
+
+        expect(frame.payload.gppNwkAddr).toBeDefined(); // garbage
+        expect(frame.payload.gppGpdLink).toBeDefined(); // garbage
+        expect(frame.payload.mic).toBeDefined(); // garbage
+        expect(retFrame.payload.commandID).toStrictEqual(0x21); // just to be sure it decrypted properly
+        expect(retFrame.payload.commandFrame).toStrictEqual({raw: Buffer.from([207 /* decrypted, bogus data */])});
+        expect(retFrame.payload.gppNwkAddr).toStrictEqual(gppNwkAddr); // removed once decrypted
+        expect(retFrame.payload.gppGpdLink).toStrictEqual(gppGpdLink); // removed once decrypted
+        expect(retFrame.payload.mic).toStrictEqual(undefined); // removed once decrypted
+    });
+
+    it('does not parse command frame when FULLENCR security level - SINK', async () => {
+        const addr = {applicationId: 0, sourceId: 2888399791, endpoint: 0};
+        const securityLevelFullEncr = 3;
+        const securityKeyTypeNWK = 1;
+        const gpdLink = 207;
+        const sequenceNumber = 143;
+        const bidirectionalInfo = 0;
+        const gpdSecurityFrameCounter = 3727;
+        const gpdCommandId = 227; // this would otherwise be CHANNEL_REQUEST and result in bad parsing
+        const gpdCommandPayload = Buffer.from('', 'hex');
+        const commandIdentifier = Zcl.Clusters.greenPower.commands.notification.ID;
+
+        const gpdHeader = makeHeader(
+            sequenceNumber,
+            commandIdentifier,
+            addr.applicationId,
+            securityLevelFullEncr,
+            securityKeyTypeNWK,
+            bidirectionalInfo,
+            addr.sourceId,
+            gpdSecurityFrameCounter,
+            gpdCommandId,
+            gpdCommandPayload.length,
+        );
+
+        {
+            // mock bad frame, allows to bypass options check and validate that this errors out (trying to parse as CHANNEL_REQUEST)
+            const alteredSecurityGpdHeader = Buffer.from(gpdHeader);
+            alteredSecurityGpdHeader[3] = 0;
+            alteredSecurityGpdHeader[4] = 0;
+            const payload = makePayload(addr.sourceId, Buffer.concat([alteredSecurityGpdHeader, gpdCommandPayload]), gpdLink);
+
+            expect(() => {
+                Zcl.Frame.fromBuffer(payload.clusterID, payload.header, payload.data, {});
+            }).toThrow('The value of "offset" is out of range. It must be >= 0 and <= 14. Received 15');
+        }
+
+        const payload = makePayload(addr.sourceId, Buffer.concat([gpdHeader, gpdCommandPayload]), gpdLink);
+        const frame = Zcl.Frame.fromBuffer(payload.clusterID, payload.header, payload.data, {});
+
+        expect(frame.payload.commandFrame).toBeUndefined(); // as opposed to `{}` when parsing (payloadSize=0)
+
+        const retFrame = await gp.onZclGreenPowerData(payload, frame, Buffer.alloc(16) /* just for the codepath, decrypting not important */);
+
+        expect(logDebugSpy).toHaveBeenNthCalledWith(1, '[UNHANDLED_CMD/PASSTHROUGH] command=0x9d from=31663', 'zh:controller:greenpower');
+
+        const clonedFrame = Zcl.Frame.fromBuffer(payload.clusterID, payload.header, payload.data, {});
+        clonedFrame.payload.commandID = 0x9d;
+        clonedFrame.payload.options = 256;
+        clonedFrame.payload.commandFrame = {};
+
+        expect(JSON.parse(JSON.stringify(retFrame))).toStrictEqual(JSON.parse(JSON.stringify(clonedFrame)));
+    });
+
+    it('does not parse command frame when FULLENCR security level - GPP', async () => {
+        const addr = {applicationId: 0, sourceId: 2888399791, endpoint: 0};
+        const gpdLink = 207;
+        const sequenceNumber = 143;
+        const gpdSecurityFrameCounter = 3727;
+        const gpdCommandId = 227; // this would otherwise be CHANNEL_REQUEST and result in bad parsing
+        const gpdCommandPayload = Buffer.from('', 'hex');
+        const commandIdentifier = Zcl.Clusters.greenPower.commands.commissioningNotification.ID;
+        const gppNwkAddr = 24404;
+        const gppGpdLink = 123;
+        const mic = 456;
+        const options = 2864;
+
+        const gpdHeader = makeHeader(
+            sequenceNumber,
+            commandIdentifier,
+            0,
+            0,
+            0,
+            0,
+            addr.sourceId,
+            gpdSecurityFrameCounter,
+            gpdCommandId,
+            gpdCommandPayload.length,
+            options,
+        );
+        const gpdFooter = makeFooter(options, gppNwkAddr, gppGpdLink, mic);
+        const payload = makePayload(addr.sourceId, Buffer.concat([gpdHeader, gpdCommandPayload, gpdFooter]), gpdLink);
+        const frame = Zcl.Frame.fromBuffer(payload.clusterID, payload.header, payload.data, {});
+
+        expect(frame.payload.commandFrame).toBeUndefined(); // as opposed to `{}` when parsing (payloadSize=0)
+
+        const retFrame = await gp.onZclGreenPowerData(payload, frame, Buffer.alloc(16) /* just for the codepath, decrypting not important */);
+
+        expect(logDebugSpy).toHaveBeenNthCalledWith(1, '[UNHANDLED_CMD/PASSTHROUGH] command=0x9d from=31663', 'zh:controller:greenpower');
+
+        const clonedFrame = Zcl.Frame.fromBuffer(payload.clusterID, payload.header, payload.data, {});
+        clonedFrame.payload.commandID = 0x9d;
+        clonedFrame.payload.options = 2304;
+        clonedFrame.payload.commandFrame = {};
+        clonedFrame.payload.gppNwkAddr = gppNwkAddr;
+        clonedFrame.payload.gppGpdLink = gppGpdLink;
+        delete clonedFrame.payload.mic;
+
+        expect(JSON.parse(JSON.stringify(retFrame))).toStrictEqual(JSON.parse(JSON.stringify(clonedFrame)));
+    });
+
     // @see https://github.com/Koenkk/zigbee2mqtt/issues/19405#issuecomment-2727338024
     it('FULLENCR ZT-LP-ZEU2S-WH-MS MOES 2-gang vectors from ember', async () => {
         let joinData: GreenPowerDeviceJoinedPayload | undefined;
@@ -293,10 +506,6 @@ describe('GreenPower', () => {
             );
             const payload = makePayload(addr.sourceId, Buffer.concat([gpdHeader, gpdCommandPayload]), gpdLink);
             const frame = Zcl.Frame.fromBuffer(payload.clusterID, payload.header, payload.data, {});
-
-            // console.log(JSON.stringify(frame.header, undefined, 2));
-            // console.log(JSON.stringify(frame.payload, undefined, 2));
-
             const retFrame = await gp.onZclGreenPowerData(payload, frame, joinData?.securityKey); // always undefined since not yet joined
 
             await vi.waitUntil(() => joinData !== undefined);
@@ -314,10 +523,29 @@ describe('GreenPower', () => {
                 'zh:controller:greenpower',
             );
 
-            const clonedFrame = JSON.parse(JSON.stringify(frame));
+            const clonedFrame = Zcl.Frame.fromBuffer(payload.clusterID, payload.header, payload.data, {});
             clonedFrame.payload.commandID = 0xe0;
+            clonedFrame.payload.options = 0;
+            clonedFrame.payload.commandFrame = {
+                deviceID: 2,
+                options: 137,
+                extendedOptions: 243,
+                securityKey: joinData?.securityKey,
+                keyMic: 869628642,
+                outgoingCounter: 2323,
+                applicationInfo: addr.applicationId,
+                manufacturerID: 0,
+                modelID: 0,
+                numGpdCommands: 0,
+                gpdCommandIdList: Buffer.from([]),
+                numServerClusters: 0,
+                numClientClusters: 0,
+                gpdServerClusters: Buffer.from([]),
+                gpdClientClusters: Buffer.from([]),
+            };
 
-            expect(JSON.parse(JSON.stringify(retFrame))).toStrictEqual(clonedFrame);
+            expect(JSON.parse(JSON.stringify(retFrame))).toStrictEqual(JSON.parse(JSON.stringify(clonedFrame)));
+            expect(retFrame.payload.commandFrame.securityKey).toStrictEqual(joinData?.securityKey);
         }
 
         clearLogMocks();
@@ -349,18 +577,17 @@ describe('GreenPower', () => {
             );
             const payload = makePayload(addr.sourceId, Buffer.concat([gpdHeader, gpdCommandPayload]), gpdLink);
             const frame = Zcl.Frame.fromBuffer(payload.clusterID, payload.header, payload.data, {});
-
-            // console.log(JSON.stringify(frame.header, undefined, 2));
-            // console.log(JSON.stringify(frame.payload, undefined, 2));
-
             const retFrame = await gp.onZclGreenPowerData(payload, frame, joinData?.securityKey);
 
             expect(logDebugSpy).toHaveBeenNthCalledWith(1, '[UNHANDLED_CMD/PASSTHROUGH] command=0x20 from=18887', 'zh:controller:greenpower');
 
-            const clonedFrame = JSON.parse(JSON.stringify(frame));
+            const clonedFrame = Zcl.Frame.fromBuffer(payload.clusterID, payload.header, payload.data, {});
             clonedFrame.payload.commandID = 0x20;
+            clonedFrame.payload.options = 256;
+            clonedFrame.payload.commandFrame = {};
 
-            expect(JSON.parse(JSON.stringify(retFrame))).toStrictEqual(clonedFrame);
+            expect(JSON.parse(JSON.stringify(retFrame))).toStrictEqual(JSON.parse(JSON.stringify(clonedFrame)));
+            expect(retFrame.payload.commandFrame).toStrictEqual({});
         }
 
         clearLogMocks();
@@ -389,18 +616,17 @@ describe('GreenPower', () => {
             );
             const payload = makePayload(addr.sourceId, Buffer.concat([gpdHeader, gpdCommandPayload]), gpdLink);
             const frame = Zcl.Frame.fromBuffer(payload.clusterID, payload.header, payload.data, {});
-
-            // console.log(JSON.stringify(frame.header, undefined, 2));
-            // console.log(JSON.stringify(frame.payload, undefined, 2));
-
             const retFrame = await gp.onZclGreenPowerData(payload, frame, joinData?.securityKey);
 
             expect(logDebugSpy).toHaveBeenNthCalledWith(1, '[UNHANDLED_CMD/PASSTHROUGH] command=0x20 from=18887', 'zh:controller:greenpower');
 
-            const clonedFrame = JSON.parse(JSON.stringify(frame));
+            const clonedFrame = Zcl.Frame.fromBuffer(payload.clusterID, payload.header, payload.data, {});
             clonedFrame.payload.commandID = 0x20;
+            clonedFrame.payload.options = 256;
+            clonedFrame.payload.commandFrame = {};
 
-            expect(JSON.parse(JSON.stringify(retFrame))).toStrictEqual(clonedFrame);
+            expect(JSON.parse(JSON.stringify(retFrame))).toStrictEqual(JSON.parse(JSON.stringify(clonedFrame)));
+            expect(retFrame.payload.commandFrame).toStrictEqual({});
         }
 
         clearLogMocks();
@@ -429,18 +655,17 @@ describe('GreenPower', () => {
             );
             const payload = makePayload(addr.sourceId, Buffer.concat([gpdHeader, gpdCommandPayload]), gpdLink);
             const frame = Zcl.Frame.fromBuffer(payload.clusterID, payload.header, payload.data, {});
-
-            // console.log(JSON.stringify(frame.header, undefined, 2));
-            // console.log(JSON.stringify(frame.payload, undefined, 2));
-
             const retFrame = await gp.onZclGreenPowerData(payload, frame, joinData?.securityKey);
 
             expect(logDebugSpy).toHaveBeenNthCalledWith(1, '[UNHANDLED_CMD/PASSTHROUGH] command=0x20 from=18887', 'zh:controller:greenpower');
 
-            const clonedFrame = JSON.parse(JSON.stringify(frame));
+            const clonedFrame = Zcl.Frame.fromBuffer(payload.clusterID, payload.header, payload.data, {});
             clonedFrame.payload.commandID = 0x20;
+            clonedFrame.payload.options = 256;
+            clonedFrame.payload.commandFrame = {};
 
-            expect(JSON.parse(JSON.stringify(retFrame))).toStrictEqual(clonedFrame);
+            expect(JSON.parse(JSON.stringify(retFrame))).toStrictEqual(JSON.parse(JSON.stringify(clonedFrame)));
+            expect(retFrame.payload.commandFrame).toStrictEqual({});
         }
 
         clearLogMocks();
@@ -469,18 +694,17 @@ describe('GreenPower', () => {
             );
             const payload = makePayload(addr.sourceId, Buffer.concat([gpdHeader, gpdCommandPayload]), gpdLink);
             const frame = Zcl.Frame.fromBuffer(payload.clusterID, payload.header, payload.data, {});
-
-            // console.log(JSON.stringify(frame.header, undefined, 2));
-            // console.log(JSON.stringify(frame.payload, undefined, 2));
-
             const retFrame = await gp.onZclGreenPowerData(payload, frame, joinData?.securityKey);
 
             expect(logDebugSpy).toHaveBeenNthCalledWith(1, '[UNHANDLED_CMD/PASSTHROUGH] command=0x21 from=18887', 'zh:controller:greenpower');
 
-            const clonedFrame = JSON.parse(JSON.stringify(frame));
+            const clonedFrame = Zcl.Frame.fromBuffer(payload.clusterID, payload.header, payload.data, {});
             clonedFrame.payload.commandID = 0x21;
+            clonedFrame.payload.options = 256;
+            clonedFrame.payload.commandFrame = {};
 
-            expect(JSON.parse(JSON.stringify(retFrame))).toStrictEqual(clonedFrame);
+            expect(JSON.parse(JSON.stringify(retFrame))).toStrictEqual(JSON.parse(JSON.stringify(clonedFrame)));
+            expect(retFrame.payload.commandFrame).toStrictEqual({});
         }
 
         clearLogMocks();
@@ -509,18 +733,17 @@ describe('GreenPower', () => {
             );
             const payload = makePayload(addr.sourceId, Buffer.concat([gpdHeader, gpdCommandPayload]), gpdLink);
             const frame = Zcl.Frame.fromBuffer(payload.clusterID, payload.header, payload.data, {});
-
-            // console.log(JSON.stringify(frame.header, undefined, 2));
-            // console.log(JSON.stringify(frame.payload, undefined, 2));
-
             const retFrame = await gp.onZclGreenPowerData(payload, frame, joinData?.securityKey);
 
             expect(logDebugSpy).toHaveBeenNthCalledWith(1, '[UNHANDLED_CMD/PASSTHROUGH] command=0x21 from=18887', 'zh:controller:greenpower');
 
-            const clonedFrame = JSON.parse(JSON.stringify(frame));
+            const clonedFrame = Zcl.Frame.fromBuffer(payload.clusterID, payload.header, payload.data, {});
             clonedFrame.payload.commandID = 0x21;
+            clonedFrame.payload.options = 256;
+            clonedFrame.payload.commandFrame = {};
 
-            expect(JSON.parse(JSON.stringify(retFrame))).toStrictEqual(clonedFrame);
+            expect(JSON.parse(JSON.stringify(retFrame))).toStrictEqual(JSON.parse(JSON.stringify(clonedFrame)));
+            expect(retFrame.payload.commandFrame).toStrictEqual({});
         }
 
         clearLogMocks();
@@ -549,18 +772,17 @@ describe('GreenPower', () => {
             );
             const payload = makePayload(addr.sourceId, Buffer.concat([gpdHeader, gpdCommandPayload]), gpdLink);
             const frame = Zcl.Frame.fromBuffer(payload.clusterID, payload.header, payload.data, {});
-
-            // console.log(JSON.stringify(frame.header, undefined, 2));
-            // console.log(JSON.stringify(frame.payload, undefined, 2));
-
             const retFrame = await gp.onZclGreenPowerData(payload, frame, joinData?.securityKey);
 
             expect(logDebugSpy).toHaveBeenNthCalledWith(1, '[UNHANDLED_CMD/PASSTHROUGH] command=0x21 from=18887', 'zh:controller:greenpower');
 
-            const clonedFrame = JSON.parse(JSON.stringify(frame));
+            const clonedFrame = Zcl.Frame.fromBuffer(payload.clusterID, payload.header, payload.data, {});
             clonedFrame.payload.commandID = 0x21;
+            clonedFrame.payload.options = 256;
+            clonedFrame.payload.commandFrame = {};
 
-            expect(JSON.parse(JSON.stringify(retFrame))).toStrictEqual(clonedFrame);
+            expect(JSON.parse(JSON.stringify(retFrame))).toStrictEqual(JSON.parse(JSON.stringify(clonedFrame)));
+            expect(retFrame.payload.commandFrame).toStrictEqual({});
         }
 
         clearLogMocks();
@@ -589,10 +811,6 @@ describe('GreenPower', () => {
             );
             const payload = makePayload(addr.sourceId, Buffer.concat([gpdHeader, gpdCommandPayload]), gpdLink);
             const frame = Zcl.Frame.fromBuffer(payload.clusterID, payload.header, payload.data, {});
-
-            // console.log(JSON.stringify(frame.header, undefined, 2));
-            // console.log(JSON.stringify(frame.payload, undefined, 2));
-
             const retFrame = await gp.onZclGreenPowerData(payload, frame, undefined);
 
             expect(logErrorSpy).toHaveBeenNthCalledWith(
@@ -636,20 +854,19 @@ describe('GreenPower', () => {
             gpdFooter.writeUInt8(gppGpdLink, 2);
             const payload = makePayload(addr.sourceId, Buffer.concat([gpdHeader, gpdCommandPayload, gpdFooter]), gpdLink);
             const frame = Zcl.Frame.fromBuffer(payload.clusterID, payload.header, payload.data, {});
-
-            // console.log(JSON.stringify(frame.header, undefined, 2));
-            // console.log(JSON.stringify(frame.payload, undefined, 2));
-
             const retFrame = await gp.onZclGreenPowerData(payload, frame, joinData?.securityKey);
 
             expect(logDebugSpy).toHaveBeenNthCalledWith(1, '[UNHANDLED_CMD/PASSTHROUGH] command=0x21 from=18887', 'zh:controller:greenpower');
 
-            const clonedFrame = JSON.parse(JSON.stringify(frame));
+            const clonedFrame = Zcl.Frame.fromBuffer(payload.clusterID, payload.header, payload.data, {});
             clonedFrame.payload.commandID = 0x21;
+            clonedFrame.payload.options = 16384;
+            clonedFrame.payload.commandFrame = {};
+            clonedFrame.payload.gppNwkAddr = gppNwkAddr;
+            clonedFrame.payload.gppGpdLink = gppGpdLink;
 
-            expect(JSON.parse(JSON.stringify(retFrame))).toStrictEqual(clonedFrame);
-            expect(retFrame.payload.gppNwkAddr).toStrictEqual(gppNwkAddr);
-            expect(retFrame.payload.gppGpdLink).toStrictEqual(gppGpdLink);
+            expect(JSON.parse(JSON.stringify(retFrame))).toStrictEqual(JSON.parse(JSON.stringify(clonedFrame)));
+            expect(retFrame.payload.commandFrame).toStrictEqual({});
         }
     });
 
@@ -688,10 +905,6 @@ describe('GreenPower', () => {
             );
             const payload = makePayload(addr.sourceId, Buffer.concat([gpdHeader, gpdCommandPayload]), gpdLink);
             const frame = Zcl.Frame.fromBuffer(payload.clusterID, payload.header, payload.data, {});
-
-            // console.log(JSON.stringify(frame.header, undefined, 2));
-            // console.log(JSON.stringify(frame.payload, undefined, 2));
-
             const retFrame = await gp.onZclGreenPowerData(payload, frame, joinData?.securityKey); // always undefined since not yet joined
 
             await vi.waitUntil(() => joinData !== undefined);
@@ -709,10 +922,29 @@ describe('GreenPower', () => {
                 'zh:controller:greenpower',
             );
 
-            const clonedFrame = JSON.parse(JSON.stringify(frame));
+            const clonedFrame = Zcl.Frame.fromBuffer(payload.clusterID, payload.header, payload.data, {});
             clonedFrame.payload.commandID = 0xe0;
+            clonedFrame.payload.options = 0;
+            clonedFrame.payload.commandFrame = {
+                deviceID: 2,
+                options: 137,
+                extendedOptions: 243,
+                securityKey: joinData?.securityKey,
+                keyMic: 713134344,
+                outgoingCounter: 1163,
+                applicationInfo: addr.applicationId,
+                manufacturerID: 0,
+                modelID: 0,
+                numGpdCommands: 0,
+                gpdCommandIdList: Buffer.from([]),
+                numServerClusters: 0,
+                numClientClusters: 0,
+                gpdServerClusters: Buffer.from([]),
+                gpdClientClusters: Buffer.from([]),
+            };
 
-            expect(JSON.parse(JSON.stringify(retFrame))).toStrictEqual(clonedFrame);
+            expect(JSON.parse(JSON.stringify(retFrame))).toStrictEqual(JSON.parse(JSON.stringify(clonedFrame)));
+            expect(retFrame.payload.commandFrame.securityKey).toStrictEqual(joinData?.securityKey);
         }
 
         clearLogMocks();
@@ -744,18 +976,17 @@ describe('GreenPower', () => {
             );
             const payload = makePayload(addr.sourceId, Buffer.concat([gpdHeader, gpdCommandPayload]), gpdLink);
             const frame = Zcl.Frame.fromBuffer(payload.clusterID, payload.header, payload.data, {});
-
-            // console.log(JSON.stringify(frame.header, undefined, 2));
-            // console.log(JSON.stringify(frame.payload, undefined, 2));
-
             const retFrame = await gp.onZclGreenPowerData(payload, frame, joinData?.securityKey);
 
             expect(logDebugSpy).toHaveBeenNthCalledWith(1, '[UNHANDLED_CMD/PASSTHROUGH] command=0x20 from=51637', 'zh:controller:greenpower');
 
-            const clonedFrame = JSON.parse(JSON.stringify(frame));
+            const clonedFrame = Zcl.Frame.fromBuffer(payload.clusterID, payload.header, payload.data, {});
             clonedFrame.payload.commandID = 0x20;
+            clonedFrame.payload.options = 256;
+            clonedFrame.payload.commandFrame = {};
 
-            expect(JSON.parse(JSON.stringify(retFrame))).toStrictEqual(clonedFrame);
+            expect(JSON.parse(JSON.stringify(retFrame))).toStrictEqual(JSON.parse(JSON.stringify(clonedFrame)));
+            expect(retFrame.payload.commandFrame).toStrictEqual({});
         }
 
         clearLogMocks();
@@ -784,18 +1015,17 @@ describe('GreenPower', () => {
             );
             const payload = makePayload(addr.sourceId, Buffer.concat([gpdHeader, gpdCommandPayload]), gpdLink);
             const frame = Zcl.Frame.fromBuffer(payload.clusterID, payload.header, payload.data, {});
-
-            // console.log(JSON.stringify(frame.header, undefined, 2));
-            // console.log(JSON.stringify(frame.payload, undefined, 2));
-
             const retFrame = await gp.onZclGreenPowerData(payload, frame, joinData?.securityKey);
 
             expect(logDebugSpy).toHaveBeenNthCalledWith(1, '[UNHANDLED_CMD/PASSTHROUGH] command=0x21 from=51637', 'zh:controller:greenpower');
 
-            const clonedFrame = JSON.parse(JSON.stringify(frame));
+            const clonedFrame = Zcl.Frame.fromBuffer(payload.clusterID, payload.header, payload.data, {});
             clonedFrame.payload.commandID = 0x21;
+            clonedFrame.payload.options = 256;
+            clonedFrame.payload.commandFrame = {};
 
-            expect(JSON.parse(JSON.stringify(retFrame))).toStrictEqual(clonedFrame);
+            expect(JSON.parse(JSON.stringify(retFrame))).toStrictEqual(JSON.parse(JSON.stringify(clonedFrame)));
+            expect(retFrame.payload.commandFrame).toStrictEqual({});
         }
 
         clearLogMocks();
@@ -824,18 +1054,17 @@ describe('GreenPower', () => {
             );
             const payload = makePayload(addr.sourceId, Buffer.concat([gpdHeader, gpdCommandPayload]), gpdLink);
             const frame = Zcl.Frame.fromBuffer(payload.clusterID, payload.header, payload.data, {});
-
-            // console.log(JSON.stringify(frame.header, undefined, 2));
-            // console.log(JSON.stringify(frame.payload, undefined, 2));
-
             const retFrame = await gp.onZclGreenPowerData(payload, frame, joinData?.securityKey);
 
             expect(logDebugSpy).toHaveBeenNthCalledWith(1, '[UNHANDLED_CMD/PASSTHROUGH] command=0x11 from=51637', 'zh:controller:greenpower');
 
-            const clonedFrame = JSON.parse(JSON.stringify(frame));
+            const clonedFrame = Zcl.Frame.fromBuffer(payload.clusterID, payload.header, payload.data, {});
             clonedFrame.payload.commandID = 0x11;
+            clonedFrame.payload.options = 256;
+            clonedFrame.payload.commandFrame = {};
 
-            expect(JSON.parse(JSON.stringify(retFrame))).toStrictEqual(clonedFrame);
+            expect(JSON.parse(JSON.stringify(retFrame))).toStrictEqual(JSON.parse(JSON.stringify(clonedFrame)));
+            expect(retFrame.payload.commandFrame).toStrictEqual({});
         }
     });
 
@@ -877,18 +1106,20 @@ describe('GreenPower', () => {
             const gpdFooter = makeFooter(options, gppNwkAddr, gppGpdLink, mic);
             const payload = makePayload(addr.sourceId, Buffer.concat([gpdHeader, gpdCommandPayload, gpdFooter]), 138);
             const frame = Zcl.Frame.fromBuffer(payload.clusterID, payload.header, payload.data, {});
-
-            // console.log(JSON.stringify(frame.header, undefined, 2));
-            // console.log(JSON.stringify(frame.payload, undefined, 2));
-
             const retFrame = await gp.onZclGreenPowerData(payload, frame, joinData?.securityKey);
 
             expect(logDebugSpy).toHaveBeenNthCalledWith(1, '[UNHANDLED_CMD/PASSTHROUGH] command=0x21 from=33040', 'zh:controller:greenpower');
 
-            const clonedFrame = JSON.parse(JSON.stringify(frame));
+            const clonedFrame = Zcl.Frame.fromBuffer(payload.clusterID, payload.header, payload.data, {});
             clonedFrame.payload.commandID = 0x21;
+            clonedFrame.payload.options = 2304;
+            clonedFrame.payload.commandFrame = {};
+            clonedFrame.payload.gppNwkAddr = gppNwkAddr;
+            clonedFrame.payload.gppGpdLink = gppGpdLink;
+            delete clonedFrame.payload.mic;
 
-            expect(JSON.parse(JSON.stringify(retFrame))).toStrictEqual(clonedFrame);
+            expect(JSON.parse(JSON.stringify(retFrame))).toStrictEqual(JSON.parse(JSON.stringify(clonedFrame)));
+            expect(retFrame.payload.commandFrame).toStrictEqual({});
         }
 
         clearLogMocks();
@@ -919,18 +1150,20 @@ describe('GreenPower', () => {
             const gpdFooter = makeFooter(options, gppNwkAddr, gppGpdLink, mic);
             const payload = makePayload(addr.sourceId, Buffer.concat([gpdHeader, gpdCommandPayload, gpdFooter]), 127);
             const frame = Zcl.Frame.fromBuffer(payload.clusterID, payload.header, payload.data, {});
-
-            // console.log(JSON.stringify(frame.header, undefined, 2));
-            // console.log(JSON.stringify(frame.payload, undefined, 2));
-
             const retFrame = await gp.onZclGreenPowerData(payload, frame, joinData?.securityKey);
 
             expect(logDebugSpy).toHaveBeenNthCalledWith(1, '[UNHANDLED_CMD/PASSTHROUGH] command=0x21 from=33040', 'zh:controller:greenpower');
 
-            const clonedFrame = JSON.parse(JSON.stringify(frame));
+            const clonedFrame = Zcl.Frame.fromBuffer(payload.clusterID, payload.header, payload.data, {});
             clonedFrame.payload.commandID = 0x21;
+            clonedFrame.payload.options = 2304;
+            clonedFrame.payload.commandFrame = {};
+            clonedFrame.payload.gppNwkAddr = gppNwkAddr;
+            clonedFrame.payload.gppGpdLink = gppGpdLink;
+            delete clonedFrame.payload.mic;
 
-            expect(JSON.parse(JSON.stringify(retFrame))).toStrictEqual(clonedFrame);
+            expect(JSON.parse(JSON.stringify(retFrame))).toStrictEqual(JSON.parse(JSON.stringify(clonedFrame)));
+            expect(retFrame.payload.commandFrame).toStrictEqual({});
         }
 
         clearLogMocks();
@@ -961,18 +1194,20 @@ describe('GreenPower', () => {
             const gpdFooter = makeFooter(options, gppNwkAddr, gppGpdLink, mic);
             const payload = makePayload(addr.sourceId, Buffer.concat([gpdHeader, gpdCommandPayload, gpdFooter]), 138);
             const frame = Zcl.Frame.fromBuffer(payload.clusterID, payload.header, payload.data, {});
-
-            // console.log(JSON.stringify(frame.header, undefined, 2));
-            // console.log(JSON.stringify(frame.payload, undefined, 2));
-
             const retFrame = await gp.onZclGreenPowerData(payload, frame, joinData?.securityKey);
 
             expect(logDebugSpy).toHaveBeenNthCalledWith(1, '[UNHANDLED_CMD/PASSTHROUGH] command=0x21 from=33040', 'zh:controller:greenpower');
 
-            const clonedFrame = JSON.parse(JSON.stringify(frame));
+            const clonedFrame = Zcl.Frame.fromBuffer(payload.clusterID, payload.header, payload.data, {});
             clonedFrame.payload.commandID = 0x21;
+            clonedFrame.payload.options = 2304;
+            clonedFrame.payload.commandFrame = {};
+            clonedFrame.payload.gppNwkAddr = gppNwkAddr;
+            clonedFrame.payload.gppGpdLink = gppGpdLink;
+            delete clonedFrame.payload.mic;
 
-            expect(JSON.parse(JSON.stringify(retFrame))).toStrictEqual(clonedFrame);
+            expect(JSON.parse(JSON.stringify(retFrame))).toStrictEqual(JSON.parse(JSON.stringify(clonedFrame)));
+            expect(retFrame.payload.commandFrame).toStrictEqual({});
         }
 
         clearLogMocks();
@@ -1003,18 +1238,20 @@ describe('GreenPower', () => {
             const gpdFooter = makeFooter(options, gppNwkAddr, gppGpdLink, mic);
             const payload = makePayload(addr.sourceId, Buffer.concat([gpdHeader, gpdCommandPayload, gpdFooter]), 138);
             const frame = Zcl.Frame.fromBuffer(payload.clusterID, payload.header, payload.data, {});
-
-            // console.log(JSON.stringify(frame.header, undefined, 2));
-            // console.log(JSON.stringify(frame.payload, undefined, 2));
-
             const retFrame = await gp.onZclGreenPowerData(payload, frame, joinData?.securityKey);
 
             expect(logDebugSpy).toHaveBeenNthCalledWith(1, '[UNHANDLED_CMD/PASSTHROUGH] command=0x20 from=33040', 'zh:controller:greenpower');
 
-            const clonedFrame = JSON.parse(JSON.stringify(frame));
+            const clonedFrame = Zcl.Frame.fromBuffer(payload.clusterID, payload.header, payload.data, {});
             clonedFrame.payload.commandID = 0x20;
+            clonedFrame.payload.options = 2304;
+            clonedFrame.payload.commandFrame = {};
+            clonedFrame.payload.gppNwkAddr = gppNwkAddr;
+            clonedFrame.payload.gppGpdLink = gppGpdLink;
+            delete clonedFrame.payload.mic;
 
-            expect(JSON.parse(JSON.stringify(retFrame))).toStrictEqual(clonedFrame);
+            expect(JSON.parse(JSON.stringify(retFrame))).toStrictEqual(JSON.parse(JSON.stringify(clonedFrame)));
+            expect(retFrame.payload.commandFrame).toStrictEqual({});
         }
 
         clearLogMocks();
@@ -1045,18 +1282,20 @@ describe('GreenPower', () => {
             const gpdFooter = makeFooter(options, gppNwkAddr, gppGpdLink, mic);
             const payload = makePayload(addr.sourceId, Buffer.concat([gpdHeader, gpdCommandPayload, gpdFooter]), 142);
             const frame = Zcl.Frame.fromBuffer(payload.clusterID, payload.header, payload.data, {});
-
-            // console.log(JSON.stringify(frame.header, undefined, 2));
-            // console.log(JSON.stringify(frame.payload, undefined, 2));
-
             const retFrame = await gp.onZclGreenPowerData(payload, frame, joinData?.securityKey);
 
             expect(logDebugSpy).toHaveBeenNthCalledWith(1, '[UNHANDLED_CMD/PASSTHROUGH] command=0x20 from=33040', 'zh:controller:greenpower');
 
-            const clonedFrame = JSON.parse(JSON.stringify(frame));
+            const clonedFrame = Zcl.Frame.fromBuffer(payload.clusterID, payload.header, payload.data, {});
             clonedFrame.payload.commandID = 0x20;
+            clonedFrame.payload.options = 2304;
+            clonedFrame.payload.commandFrame = {};
+            clonedFrame.payload.gppNwkAddr = gppNwkAddr;
+            clonedFrame.payload.gppGpdLink = gppGpdLink;
+            delete clonedFrame.payload.mic;
 
-            expect(JSON.parse(JSON.stringify(retFrame))).toStrictEqual(clonedFrame);
+            expect(JSON.parse(JSON.stringify(retFrame))).toStrictEqual(JSON.parse(JSON.stringify(clonedFrame)));
+            expect(retFrame.payload.commandFrame).toStrictEqual({});
         }
 
         clearLogMocks();
@@ -1087,18 +1326,20 @@ describe('GreenPower', () => {
             const gpdFooter = makeFooter(options, gppNwkAddr, gppGpdLink, mic);
             const payload = makePayload(addr.sourceId, Buffer.concat([gpdHeader, gpdCommandPayload, gpdFooter]), 138);
             const frame = Zcl.Frame.fromBuffer(payload.clusterID, payload.header, payload.data, {});
-
-            // console.log(JSON.stringify(frame.header, undefined, 2));
-            // console.log(JSON.stringify(frame.payload, undefined, 2));
-
             const retFrame = await gp.onZclGreenPowerData(payload, frame, joinData?.securityKey);
 
             expect(logDebugSpy).toHaveBeenNthCalledWith(1, '[UNHANDLED_CMD/PASSTHROUGH] command=0x20 from=33040', 'zh:controller:greenpower');
 
-            const clonedFrame = JSON.parse(JSON.stringify(frame));
+            const clonedFrame = Zcl.Frame.fromBuffer(payload.clusterID, payload.header, payload.data, {});
             clonedFrame.payload.commandID = 0x20;
+            clonedFrame.payload.options = 2304;
+            clonedFrame.payload.commandFrame = {};
+            clonedFrame.payload.gppNwkAddr = gppNwkAddr;
+            clonedFrame.payload.gppGpdLink = gppGpdLink;
+            delete clonedFrame.payload.mic;
 
-            expect(JSON.parse(JSON.stringify(retFrame))).toStrictEqual(clonedFrame);
+            expect(JSON.parse(JSON.stringify(retFrame))).toStrictEqual(JSON.parse(JSON.stringify(clonedFrame)));
+            expect(retFrame.payload.commandFrame).toStrictEqual({});
         }
     });
 });

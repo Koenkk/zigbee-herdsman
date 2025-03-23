@@ -1150,7 +1150,12 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                     {name: 'frameCounter', type: DataType.UINT32},
                     {name: 'commandID', type: DataType.UINT8},
                     {name: 'payloadSize', type: DataType.UINT8},
-                    {name: 'commandFrame', type: BuffaloZclDataType.GPD_FRAME},
+                    {
+                        name: 'commandFrame',
+                        type: BuffaloZclDataType.GPD_FRAME,
+                        // not parsing when FULLENCR (requires decryption first - then re-parsing)
+                        conditions: [{type: ParameterCondition.BITMASK_SET, param: 'options', mask: 0xc0, reversed: true}],
+                    },
                     {name: 'gppNwkAddr', type: DataType.UINT16, conditions: [{type: ParameterCondition.BITMASK_SET, param: 'options', mask: 0x4000}]},
                     /** Bits: 0..5 RSSI 6..7 Link quality */
                     {
@@ -1182,7 +1187,15 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                     {name: 'frameCounter', type: DataType.UINT32},
                     {name: 'commandID', type: DataType.UINT8},
                     {name: 'payloadSize', type: DataType.UINT8},
-                    {name: 'commandFrame', type: BuffaloZclDataType.GPD_FRAME},
+                    {
+                        name: 'commandFrame',
+                        type: BuffaloZclDataType.GPD_FRAME,
+                        conditions: [
+                            // not parsing when FULLENCR and "security failed" bit is set (requires decryption first - then re-parsing)
+                            {type: ParameterCondition.BITMASK_SET, param: 'options', mask: 0x30, reversed: true},
+                            {type: ParameterCondition.BITMASK_SET, param: 'options', mask: 0x200, reversed: true},
+                        ],
+                    },
                     {name: 'gppNwkAddr', type: DataType.UINT16, conditions: [{type: ParameterCondition.BITMASK_SET, param: 'options', mask: 0x800}]},
                     /** Bits: 0..5 RSSI 6..7 Link quality */
                     {name: 'gppGpdLink', type: DataType.BITMAP8, conditions: [{type: ParameterCondition.BITMASK_SET, param: 'options', mask: 0x800}]},

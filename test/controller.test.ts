@@ -8211,7 +8211,7 @@ describe('Controller', () => {
                 frameCounter: 4601,
                 commandID: 19,
                 payloadSize: 0,
-                commandFrame: {raw: {type: 'Buffer', data: [129, 0, 216]}},
+                commandFrame: {},
                 gppNwkAddr: 129,
                 gppGpdLink: 216,
             },
