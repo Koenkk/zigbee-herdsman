@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.4.7](https://github.com/Koenkk/zigbee-herdsman/compare/v3.4.6...v3.4.7) (2025-03-25)
+
+
+### Bug Fixes
+
+* **ignore:** ZoH API update & cleaner tests ([#1365](https://github.com/Koenkk/zigbee-herdsman/issues/1365)) ([7ceb211](https://github.com/Koenkk/zigbee-herdsman/commit/7ceb211344631d75f1e603baab1ba614f09fcaa3))
+
 ## [3.4.6](https://github.com/Koenkk/zigbee-herdsman/compare/v3.4.5...v3.4.6) (2025-03-23)
 
 
