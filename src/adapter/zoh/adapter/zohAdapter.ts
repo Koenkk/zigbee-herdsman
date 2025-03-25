@@ -758,6 +758,7 @@ export class ZoHAdapter extends Adapter {
         }
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     private onDeviceRejoined(source16: number, source64: bigint, capabilities: MACCapabilities): void {
         this.emit('deviceJoined', {networkAddress: source16, ieeeAddr: `0x${bigUInt64ToHexBE(source64)}`});
     }
