@@ -3,7 +3,7 @@ import {dirname} from 'node:path';
 
 import {OTRCPDriver} from 'zigbee-on-host';
 import {setLogger} from 'zigbee-on-host/dist/utils/logger';
-import {MACHeader} from 'zigbee-on-host/dist/zigbee/mac';
+import {MACCapabilities, MACHeader} from 'zigbee-on-host/dist/zigbee/mac';
 import {ZigbeeAPSHeader, ZigbeeAPSPayload} from 'zigbee-on-host/dist/zigbee/zigbee-aps';
 import {ZigbeeNWKGPHeader} from 'zigbee-on-host/dist/zigbee/zigbee-nwkgp';
 
@@ -293,7 +293,13 @@ export class ZoHAdapter extends Adapter {
     public async getCoordinatorVersion(): Promise<TsType.CoordinatorVersion> {
         return {
             type: 'ZigBee on Host',
-            meta: {revision: 'https://github.com/Nerivec/zigbee-on-host'},
+            meta: {
+                major: this.driver.protocolVersionMajor,
+                minor: this.driver.protocolVersionMinor,
+                version: this.driver.ncpVersion,
+                apiVersion: this.driver.rcpAPIVersion,
+                revision: `https://github.com/Nerivec/zigbee-on-host (using: ${this.driver.ncpVersion})`,
+            },
         };
     }
 
@@ -384,64 +390,18 @@ export class ZoHAdapter extends Adapter {
         if (networkAddress === ZSpec.COORDINATOR_ADDRESS) {
             // mock ZDO response using driver layer data for coordinator
             // seqNum doesn't matter since waitress bypassed, so don't bother doing any logic for it
-            switch (clusterId) {
-                case Zdo.ClusterId.NODE_DESCRIPTOR_REQUEST: {
-                    const respClusterId = Zdo.ClusterId.NODE_DESCRIPTOR_RESPONSE;
-                    const result = Zdo.Buffalo.readResponse(
-                        this.hasZdoMessageOverhead,
-                        respClusterId,
-                        Buffer.from(this.driver.configAttributes.nodeDescriptor),
-                    ) as ZdoTypes.RequestToResponseMap[K];
+            const response = this.driver.getCoordinatorZDOResponse(clusterId, payload);
 
-                    this.emit('zdoResponse', respClusterId, result);
-                    return result;
-                }
-                case Zdo.ClusterId.POWER_DESCRIPTOR_REQUEST: {
-                    const respClusterId = Zdo.ClusterId.POWER_DESCRIPTOR_RESPONSE;
-                    const result = Zdo.Buffalo.readResponse(
-                        this.hasZdoMessageOverhead,
-                        respClusterId,
-                        Buffer.from(this.driver.configAttributes.powerDescriptor),
-                    ) as ZdoTypes.RequestToResponseMap[K];
-
-                    this.emit('zdoResponse', respClusterId, result);
-                    return result;
-                }
-                case Zdo.ClusterId.SIMPLE_DESCRIPTOR_REQUEST: {
-                    const respClusterId = Zdo.ClusterId.SIMPLE_DESCRIPTOR_RESPONSE;
-                    const result = Zdo.Buffalo.readResponse(
-                        this.hasZdoMessageOverhead,
-                        respClusterId,
-                        Buffer.from(this.driver.configAttributes.simpleDescriptors),
-                    ) as ZdoTypes.RequestToResponseMap[K];
-
-                    this.emit('zdoResponse', respClusterId, result);
-                    return result;
-                }
-                case Zdo.ClusterId.ACTIVE_ENDPOINTS_REQUEST: {
-                    const respClusterId = Zdo.ClusterId.ACTIVE_ENDPOINTS_RESPONSE;
-                    const result = Zdo.Buffalo.readResponse(
-                        this.hasZdoMessageOverhead,
-                        respClusterId,
-                        Buffer.from(this.driver.configAttributes.activeEndpoints),
-                    ) as ZdoTypes.RequestToResponseMap[K];
-
-                    this.emit('zdoResponse', respClusterId, result);
-                    return result;
-                }
-                // TODO:
-                // case Zdo.ClusterId.LQI_TABLE_REQUEST: {
-                //     break;
-                // }
-                // case Zdo.ClusterId.ROUTING_TABLE_REQUEST: {
-                //     break;
-                // }
-                /* v8 ignore start */
-                default: {
-                    throw new Error(`ZDO cluster ${clusterId} not supported for ${networkAddress}:${ieeeAddress}`);
-                }
-                /* v8 ignore stop */
+            if (!response) {
+                throw new Error(`Coordinator does not support ZDO cluster ${clusterId}`);
             }
+
+            const respClusterId = clusterId | 0x8000;
+            const result = Zdo.Buffalo.readResponse(this.hasZdoMessageOverhead, respClusterId, response) as ZdoTypes.RequestToResponseMap[K];
+
+            this.emit('zdoResponse', respClusterId, result);
+
+            return result;
         }
 
         return await this.queue.execute(async () => {
@@ -675,19 +635,25 @@ export class ZoHAdapter extends Adapter {
         if (apsHeader.profileId === Zdo.ZDO_PROFILE_ID) {
             logger.debug(() => `<~~~ APS ZDO[sender=${sender16}:${sender64} clusterId=${apsHeader.clusterId}]`, NS);
 
-            const result = Zdo.Buffalo.readResponse(this.hasZdoMessageOverhead, apsHeader.clusterId!, apsPayload);
+            try {
+                const result = Zdo.Buffalo.readResponse(this.hasZdoMessageOverhead, apsHeader.clusterId!, apsPayload);
 
-            if (apsHeader.clusterId! === Zdo.ClusterId.NETWORK_ADDRESS_RESPONSE) {
-                // special case to properly resolve a NETWORK_ADDRESS_RESPONSE following a NETWORK_ADDRESS_REQUEST (based on EUI64 from ZDO payload)
-                // NOTE: if response has invalid status (no EUI64 available), response waiter will eventually time out
-                if (Zdo.Buffalo.checkStatus<Zdo.ClusterId.NETWORK_ADDRESS_RESPONSE>(result)) {
-                    this.zdoWaitress.resolve({sender: result[1].eui64, clusterId: apsHeader.clusterId, response: result});
+                if (apsHeader.clusterId! === Zdo.ClusterId.NETWORK_ADDRESS_RESPONSE) {
+                    // special case to properly resolve a NETWORK_ADDRESS_RESPONSE following a NETWORK_ADDRESS_REQUEST (based on EUI64 from ZDO payload)
+                    // NOTE: if response has invalid status (no EUI64 available), response waiter will eventually time out
+                    if (Zdo.Buffalo.checkStatus<Zdo.ClusterId.NETWORK_ADDRESS_RESPONSE>(result)) {
+                        this.zdoWaitress.resolve({sender: result[1].eui64, clusterId: apsHeader.clusterId, response: result});
+                    }
+                } else {
+                    this.zdoWaitress.resolve({sender: sender16!, clusterId: apsHeader.clusterId!, response: result});
                 }
-            } else {
-                this.zdoWaitress.resolve({sender: sender16!, clusterId: apsHeader.clusterId!, response: result});
-            }
 
-            this.emit('zdoResponse', apsHeader.clusterId!, result);
+                this.emit('zdoResponse', apsHeader.clusterId!, result);
+                /* v8 ignore start */
+            } catch (error) {
+                logger.error(`${(error as Error).message}`, NS);
+            }
+            /* v8 ignore stop */
         } else {
             logger.debug(() => `<~~~ APS[sender=${sender16}:${sender64} profileId=${apsHeader.profileId} clusterId=${apsHeader.clusterId}]`, NS);
 
@@ -780,11 +746,20 @@ export class ZoHAdapter extends Adapter {
         this.emit('zclPayload', zclPayload);
     }
 
-    private onDeviceJoined(source16: number, source64: bigint): void {
-        this.emit('deviceJoined', {networkAddress: source16, ieeeAddr: `0x${bigUInt64ToHexBE(source64)}`});
+    private onDeviceJoined(source16: number, source64: bigint, capabilities: MACCapabilities): void {
+        // XXX: don't delay if no cap? (joined through router)
+        if (capabilities && capabilities.rxOnWhenIdle) {
+            this.emit('deviceJoined', {networkAddress: source16, ieeeAddr: `0x${bigUInt64ToHexBE(source64)}`});
+        } else {
+            // XXX: end devices can be finicky about finishing the key authorization, Z2M interview can create a bottleneck, so delay it
+            setTimeout(() => {
+                this.emit('deviceJoined', {networkAddress: source16, ieeeAddr: `0x${bigUInt64ToHexBE(source64)}`});
+            }, 5000);
+        }
     }
 
-    private onDeviceRejoined(source16: number, source64: bigint): void {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    private onDeviceRejoined(source16: number, source64: bigint, capabilities: MACCapabilities): void {
         this.emit('deviceJoined', {networkAddress: source16, ieeeAddr: `0x${bigUInt64ToHexBE(source64)}`});
     }
 
