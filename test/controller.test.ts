@@ -7785,7 +7785,7 @@ describe('Controller', () => {
         expect(identifyUnknownDeviceSpy).toHaveBeenCalledTimes(0); // deviceLeave passthrough allows to test this here
     });
 
-    it('Should handle comissioning frame gracefully', async () => {
+    it('Should handle green power commissioning mode frame gracefully', async () => {
         await controller.start();
         mockLogger.error.mockClear();
         const buffer = Buffer.from([25, 10, 2, 11, 254, 0]);
@@ -7802,7 +7802,66 @@ describe('Controller', () => {
         });
 
         expect(mockLogger.error).toHaveBeenCalledTimes(0);
-        expect(mockLogger.debug).toHaveBeenCalledWith(`[UNHANDLED_CMD/PASSTHROUGH] command=0x2 from=4650238`, `zh:controller:greenpower`);
+        expect(mockLogger.debug).toHaveBeenCalledWith(`[NO_CMD/PASSTHROUGH] command=0x2 from=4650238`, `zh:controller:greenpower`);
+    });
+
+    it('Should handle green power commissioning frame', async () => {
+        await controller.start();
+        mockLogger.error.mockClear();
+        const buffer = Buffer.from(
+            '11020400087af455012e000000e0330285f2c925821df46f458cf0e637aac3bab6aa45831a112e280000041610112223181914151213646562631e1f1c1d1a1b1617966fd7',
+            'hex',
+        );
+        const frame = Zcl.Frame.fromBuffer(Zcl.Clusters.greenPower.ID, Zcl.Header.fromBuffer(buffer)!, buffer, {});
+        await mockAdapterEvents['zclPayload']({
+            wasBroadcast: true,
+            address: 0xf4fe,
+            clusterID: frame.cluster.ID,
+            data: buffer,
+            header: frame.header,
+            endpoint: ZSpec.GP_ENDPOINT,
+            linkquality: 50,
+            groupID: 1,
+        });
+
+        expect(mockLogger.error).toHaveBeenCalledTimes(0);
+        expect(mockLogger.debug).toHaveBeenCalledWith(
+            '[PAIRING] srcID=22410362 gpp=28566 options=58696 (addSink=true commMode=2) wasBroadcast=true',
+            'zh:controller:greenpower',
+        );
+        expect(mockLogger.info).toHaveBeenCalledWith(
+            '[COMMISSIONING] srcID=22410362 gpp=28566 rssi=23 linkQuality=Excellent',
+            'zh:controller:greenpower',
+        );
+    });
+
+    it('Should handle green power commissioning frame with switch info', async () => {
+        await controller.start();
+        mockLogger.error.mockClear();
+        const buffer = Buffer.from('1102040008d755550114000000e01f0785f256b8e010b32e6921aca5d18ab7b7d44d0f063d4d140300001002050229dfe2', 'hex');
+        const frame = Zcl.Frame.fromBuffer(Zcl.Clusters.greenPower.ID, Zcl.Header.fromBuffer(buffer)!, buffer, {});
+        await mockAdapterEvents['zclPayload']({
+            wasBroadcast: true,
+            address: 57129,
+            clusterID: frame.cluster.ID,
+            data: buffer,
+            header: frame.header,
+            endpoint: ZSpec.GP_ENDPOINT,
+            linkquality: 50,
+            groupID: 1,
+        });
+
+        expect(frame.payload.commandFrame.genericSwitchConfig).toStrictEqual(5);
+        expect(frame.payload.commandFrame.currentContactStatus).toStrictEqual(2);
+        expect(mockLogger.error).toHaveBeenCalledTimes(0);
+        expect(mockLogger.debug).toHaveBeenCalledWith(
+            '[PAIRING] srcID=22369751 gpp=57129 options=58696 (addSink=true commMode=2) wasBroadcast=true',
+            'zh:controller:greenpower',
+        );
+        expect(mockLogger.info).toHaveBeenCalledWith(
+            '[COMMISSIONING] srcID=22369751 gpp=57129 rssi=34 linkQuality=Excellent',
+            'zh:controller:greenpower',
+        );
     });
 
     it('Should ignore invalid green power frame', async () => {
@@ -8002,6 +8061,8 @@ describe('Controller', () => {
                 applicationInfo: 0x04,
                 numGpdCommands: 17,
                 gpdCommandIdList: Buffer.from([0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x22, 0x60, 0x62, 0x63, 0x64, 0x65, 0x66, 0x67, 0x68]),
+                genericSwitchConfig: 0,
+                currentContactStatus: 0,
             },
             gppNwkAddr: gppDevice.networkAddress,
             gppGpdLink: 0xd8,

@@ -187,7 +187,7 @@ export class GreenPower extends EventEmitter<GreenPowerEventMap> {
     ): Promise<AdapterEvents.ZclPayload | void> {
         payload.options = GreenPower.encodePairingOptions(options);
         logger.debug(
-            `[PAIRING] options=${payload.options} (addSink=${options.addSink} commMode=${options.communicationMode}) wasBroadcast=${wasBroadcast} gppNwkAddr=${gppNwkAddr}`,
+            `[PAIRING] srcID=${payload.srcID} gpp=${gppNwkAddr ?? 'NO'} options=${payload.options} (addSink=${options.addSink} commMode=${options.communicationMode}) wasBroadcast=${wasBroadcast}`,
             NS,
         );
 
@@ -243,6 +243,13 @@ export class GreenPower extends EventEmitter<GreenPowerEventMap> {
     }
 
     public async onZclGreenPowerData(dataPayload: AdapterEvents.ZclPayload, frame: Zcl.Frame, securityKey?: Buffer): Promise<Zcl.Frame> {
+        if (frame.payload.commandID === undefined) {
+            // received a `commandsResponse`
+            logger.debug(`[NO_CMD/PASSTHROUGH] command=0x${frame.header.commandIdentifier.toString(16)} from=${dataPayload.address}`, NS);
+
+            return frame;
+        }
+
         try {
             // notification: A.3.3.4.1
             // commissioningNotification: A.3.3.4.3
@@ -255,7 +262,7 @@ export class GreenPower extends EventEmitter<GreenPowerEventMap> {
             ) {
                 if (!securityKey) {
                     logger.error(
-                        `[FULLENCR] from=${dataPayload.address} commandIdentifier=${frame.header.commandIdentifier} Unknown security key`,
+                        `[FULLENCR] srcID=${frame.payload.srcID} gpp=${frame.payload.gppNwkAddr ?? 'NO'} commandIdentifier=${frame.header.commandIdentifier} Unknown security key`,
                         NS,
                     );
                     return frame;
@@ -265,7 +272,10 @@ export class GreenPower extends EventEmitter<GreenPowerEventMap> {
                 if (frame.payload.srcID === undefined) {
                     // ApplicationID = 0b010 indicates the GPD ID field has the length of 8B and contains the GPD IEEE address; the Endpoint field is present.
                     // Note: no device are currently known to use this (too expensive)
-                    logger.error(`[FULLENCR] from=${dataPayload.address} GPD ID containing IEEE address is not supported`, NS);
+                    logger.error(
+                        `[FULLENCR] from=${dataPayload.address} gpp=${frame.payload.gppNwkAddr ?? 'NO'} GPD ID containing IEEE address is not supported`,
+                        NS,
+                    );
                     return frame;
                 }
                 /* v8 ignore stop */
@@ -314,49 +324,54 @@ export class GreenPower extends EventEmitter<GreenPowerEventMap> {
                 );
             }
 
-            const commandID = frame.payload.commandID ?? frame.header.commandIdentifier;
+            let logStr: string;
 
-            switch (commandID) {
+            /* v8 ignore start */
+            if (frame.payload.gppGpdLink !== undefined) {
+                const rssi = frame.payload.gppGpdLink & 0x3f;
+                const linkQuality = (frame.payload.gppGpdLink >> 6) & 0x3;
+                let linkQualityStr: string | undefined;
+
+                switch (linkQuality) {
+                    case 0b00:
+                        linkQualityStr = 'Poor';
+                        break;
+                    case 0b01:
+                        linkQualityStr = 'Moderate';
+                        break;
+                    case 0b10:
+                        linkQualityStr = 'High';
+                        break;
+                    case 0b11:
+                        linkQualityStr = 'Excellent';
+                        break;
+                }
+
+                logStr = `srcID=${frame.payload.srcID} gpp=${frame.payload.gppNwkAddr} rssi=${rssi} linkQuality=${linkQualityStr}`;
+            } else {
+                logStr = `srcID=${frame.payload.srcID} gpp=NO`;
+            }
+            /* v8 ignore stop */
+
+            switch (frame.payload.commandID) {
                 case 0xe0: {
-                    logger.info(`[COMMISSIONING] from=${dataPayload.address}`, NS);
-
                     /* v8 ignore start */
                     if (frame.payload.srcID === undefined) {
                         // ApplicationID = 0b010 indicates the GPD ID field has the length of 8B and contains the GPD IEEE address; the Endpoint field is present.
                         // Note: no device are currently known to use this (too expensive)
-                        logger.error(`[COMMISSIONING] from=${dataPayload.address} GPD ID containing IEEE address is not supported`, NS);
+                        logger.error(
+                            `[COMMISSIONING] from=${dataPayload.address} gpp=${frame.payload.gppNwkAddr ?? 'NO'} GPD ID containing IEEE address is not supported`,
+                            NS,
+                        );
                         break;
                     }
                     /* v8 ignore stop */
 
-                    /* v8 ignore start */
-                    if (frame.payload.gppGpdLink !== undefined) {
-                        const rssi = frame.payload.gppGpdLink & 0x3f;
-                        const linkQuality = (frame.payload.gppGpdLink >> 6) & 0x3;
-                        let linkQualityStr;
-
-                        switch (linkQuality) {
-                            case 0b00:
-                                linkQualityStr = 'Poor';
-                                break;
-                            case 0b01:
-                                linkQualityStr = 'Moderate';
-                                break;
-                            case 0b10:
-                                linkQualityStr = 'High';
-                                break;
-                            case 0b11:
-                                linkQualityStr = 'Excellent';
-                                break;
-                        }
-
-                        logger.info(`[COMMISSIONING] from=${dataPayload.address} rssi=${rssi} linkQuality=${linkQualityStr}`, NS);
-                    }
-                    /* v8 ignore stop */
+                    logger.info(`[COMMISSIONING] ${logStr}`, NS);
 
                     /* v8 ignore start */
                     if (frame.payload.options & 0x200) {
-                        logger.warning(`[COMMISSIONING] from=${dataPayload.address} Security processing marked as failed`, NS);
+                        logger.warning(`[COMMISSIONING] ${logStr} Security processing marked as failed`, NS);
                     }
                     /* v8 ignore stop */
 
@@ -364,10 +379,7 @@ export class GreenPower extends EventEmitter<GreenPowerEventMap> {
 
                     if (rxOnCap) {
                         // RX capable GPD needs GP Commissioning Reply
-                        logger.debug(
-                            `[COMMISSIONING] from=${dataPayload.address} GPD has receiving capabilities in operational mode (RxOnCapability)`,
-                            NS,
-                        );
+                        logger.debug(`[COMMISSIONING] ${logStr} GPD has receiving capabilities in operational mode (RxOnCapability)`, NS);
                         // NOTE: currently encryption is disabled for RX capable GPDs
 
                         const networkParameters = await this.adapter.getNetworkParameters();
@@ -467,7 +479,7 @@ export class GreenPower extends EventEmitter<GreenPowerEventMap> {
                     break;
                 }
                 case 0xe1: {
-                    logger.debug(`[DECOMMISSIONING] from=${dataPayload.address}`, NS);
+                    logger.debug(`[DECOMMISSIONING] ${logStr}`, NS);
 
                     await this.sendPairingCommand(
                         {
@@ -498,12 +510,12 @@ export class GreenPower extends EventEmitter<GreenPowerEventMap> {
                 }
                 /* v8 ignore start */
                 case 0xe2: {
-                    logger.debug(`[SUCCESS] from=${dataPayload.address}`, NS);
+                    logger.debug(`[SUCCESS] ${logStr}`, NS);
                     break;
                 }
                 /* v8 ignore stop */
                 case 0xe3: {
-                    logger.debug(`[CHANNEL_REQUEST] from=${dataPayload.address}`, NS);
+                    logger.debug(`[CHANNEL_REQUEST] ${logStr}`, NS);
                     const networkParameters = await this.adapter.getNetworkParameters();
                     // Channel notification
                     const payload: ResponsePayload<GPDChannelConfiguration> = {
@@ -540,7 +552,7 @@ export class GreenPower extends EventEmitter<GreenPowerEventMap> {
                 }
                 /* v8 ignore start */
                 case 0xe4: {
-                    logger.debug(`[APP_DESCRIPTION] from=${dataPayload.address}`, NS);
+                    logger.debug(`[APP_DESCRIPTION] ${logStr}`, NS);
                     break;
                 }
                 case 0xa1: {
@@ -550,13 +562,12 @@ export class GreenPower extends EventEmitter<GreenPowerEventMap> {
                 /* v8 ignore stop */
                 default: {
                     // NOTE: this is spammy because it logs everything that is handed back to Controller without special processing here
-                    logger.debug(`[UNHANDLED_CMD/PASSTHROUGH] command=0x${commandID.toString(16)} from=${dataPayload.address}`, NS);
+                    logger.debug(`[UNHANDLED_CMD/PASSTHROUGH] command=0x${frame.payload.commandID.toString(16)} ${logStr}`, NS);
                 }
             }
             /* v8 ignore start */
         } catch (error) {
             logger.error((error as Error).stack!, NS);
-            return frame;
         }
         /* v8 ignore stop */
 

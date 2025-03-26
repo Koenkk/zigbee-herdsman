@@ -513,7 +513,7 @@ export class ZoHAdapter extends Adapter {
                 try {
                     await this.driver.sendUnicast(
                         zclFrame.toBuffer(),
-                        ZSpec.HA_PROFILE_ID,
+                        sourceEndpoint === ZSpec.GP_ENDPOINT && endpoint === ZSpec.GP_ENDPOINT ? ZSpec.GP_PROFILE_ID : ZSpec.HA_PROFILE_ID,
                         zclFrame.cluster.ID,
                         networkAddress, // nwkDest16
                         undefined, // nwkDest64 XXX: avoid passing EUI64 whenever not absolutely necessary
@@ -573,7 +573,14 @@ export class ZoHAdapter extends Adapter {
 
             logger.debug(() => `~~~> [ZCL BROADCAST to=${destination} destEp=${endpoint} sourceEp=${sourceEndpoint}]`, NS);
 
-            await this.driver.sendBroadcast(zclFrame.toBuffer(), ZSpec.HA_PROFILE_ID, zclFrame.cluster.ID, destination, endpoint, sourceEndpoint);
+            await this.driver.sendBroadcast(
+                zclFrame.toBuffer(),
+                sourceEndpoint === ZSpec.GP_ENDPOINT && endpoint === ZSpec.GP_ENDPOINT ? ZSpec.GP_PROFILE_ID : ZSpec.HA_PROFILE_ID,
+                zclFrame.cluster.ID,
+                destination,
+                endpoint,
+                sourceEndpoint,
+            );
             // settle
             await wait(500);
         });

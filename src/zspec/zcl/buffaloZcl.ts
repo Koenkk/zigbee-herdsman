@@ -80,6 +80,8 @@ interface GPD {
     numClientClusters: number;
     gpdServerClusters: Buffer;
     gpdClientClusters: Buffer;
+    genericSwitchConfig: number;
+    currentContactStatus: number;
 }
 
 interface GPDChannelRequest {
@@ -422,6 +424,9 @@ export class BuffaloZcl extends Buffalo {
     }
 
     private readGpdFrame(options: BuffaloZclOptions): GPD | GPDChannelRequest | GPDAttributeReport | {raw: Buffer} | Record<string, never> {
+        // ensure offset by options.payload.payloadSize (if any) at end of parsing to not cause issues with spec changes (until supported)
+        const startPosition = this.position;
+
         if (options.payload?.commandID === 0xe0) {
             // Commisioning
             const frame = {
@@ -440,6 +445,8 @@ export class BuffaloZcl extends Buffalo {
                 numClientClusters: 0,
                 gpdServerClusters: Buffer.alloc(0),
                 gpdClientClusters: Buffer.alloc(0),
+                genericSwitchConfig: 0,
+                currentContactStatus: 0,
             };
 
             if (frame.options & 0x80) {
@@ -484,13 +491,36 @@ export class BuffaloZcl extends Buffalo {
                 frame.gpdClientClusters = this.readBuffer(2 * frame.numClientClusters);
             }
 
+            if (frame.applicationInfo & 0x10) {
+                const len = this.readUInt8();
+
+                if (len >= 1) {
+                    frame.genericSwitchConfig = this.readUInt8();
+                }
+
+                if (len >= 2) {
+                    frame.currentContactStatus = this.readUInt8();
+                }
+            }
+
+            if (options.payload.payloadSize) {
+                this.position = startPosition + options.payload.payloadSize;
+            }
+
             return frame;
         } else if (options.payload?.commandID === 0xe3) {
             // Channel Request
-            const options = this.readUInt8();
+            const channelOpts = this.readUInt8();
+
+            /* v8 ignore start */
+            if (options.payload?.payloadSize) {
+                this.position = startPosition + options.payload.payloadSize;
+            }
+            /* v8 ignore stop */
+
             return {
-                nextChannel: options & 0xf,
-                nextNextChannel: options >> 4,
+                nextChannel: channelOpts & 0xf,
+                nextNextChannel: channelOpts >> 4,
             };
         } else if (options.payload?.commandID == 0xa1) {
             // Manufacturer-specific Attribute Reporting
@@ -522,11 +552,17 @@ export class BuffaloZcl extends Buffalo {
                 frame.attributes[attribute] = this.read(type, options);
             }
 
+            this.position = startPosition + options.payload.payloadSize;
+
             return frame;
         } else if (options.payload?.payloadSize && this.isMore()) {
             // might contain `gppNwkAddr`, `gppGpdLink` & `mic` from ZCL cluster, so limit by `payloadSize`
             return {raw: this.readBuffer(options.payload.payloadSize)};
         } else {
+            if (options.payload?.payloadSize) {
+                this.position = startPosition + options.payload.payloadSize;
+            }
+
             return {};
         }
     }

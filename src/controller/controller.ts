@@ -658,7 +658,7 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
     }
 
     private async onDeviceJoinedGreenPower(payload: GreenPowerDeviceJoinedPayload): Promise<void> {
-        logger.debug(() => `Green power device '${JSON.stringify(payload)}' joined`, NS);
+        logger.debug(() => `Green power device '${JSON.stringify(payload).replaceAll(/\[[\d,]+\]/g, 'HIDDEN')}' joined`, NS);
 
         // Green power devices don't have an ieeeAddr, the sourceID is unique and static so use this.
         const ieeeAddr = `0x${payload.sourceID.toString(16).padStart(16, '0')}`;
@@ -841,12 +841,18 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
                 return;
             }
 
-            const nwkAddress = frame.payload.srcID & 0xffff;
+            // catch potential IEEE-using GP devices by using invalid address
+            const nwkAddress = (frame.payload.srcID ?? 0xffff) & 0xffff;
             device = Device.byNetworkAddress(nwkAddress);
             frame = await this.greenPower.onZclGreenPowerData(payload, frame, device?.gpSecurityKey ? Buffer.from(device.gpSecurityKey) : undefined);
 
             // lookup encapsulated gpDevice for further processing (re-fetch, may have been created by above call)
             device = Device.byNetworkAddress(nwkAddress);
+
+            if (!device) {
+                logger.debug(`Data is from unknown green power device with address '${nwkAddress}' (${frame.payload.srcID}), skipping...`, NS);
+                return;
+            }
         } else {
             /**
              * Handling of re-transmitted Xiaomi messages.
@@ -875,8 +881,7 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
         }
 
         if (!device) {
-            // always skip identify for GP devices (unsupported)
-            if (payload.clusterID !== Zcl.Clusters.greenPower.ID && typeof payload.address === 'number') {
+            if (typeof payload.address === 'number') {
                 device = await this.identifyUnknownDevice(payload.address);
             }
 

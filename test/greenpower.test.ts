@@ -258,7 +258,7 @@ describe('GreenPower', () => {
         expect(rawByte).toStrictEqual(byte);
     });
 
-    it('ignores GPP data from raw payload', async () => {
+    it('omits GPP data from raw payload', async () => {
         const addr = {applicationId: 0, sourceId: 2777252112, endpoint: 0};
         const options = 0x800;
         const sequenceNumber = 18;
@@ -294,7 +294,7 @@ describe('GreenPower', () => {
         expect(retFrame.payload.gppGpdLink).toStrictEqual(gppGpdLink);
     });
 
-    it('ignores MIC from raw payload', async () => {
+    it('omits MIC from raw payload', async () => {
         const securityKey = Buffer.from([227, 227, 225, 134, 235, 104, 141, 250, 162, 211, 104, 147, 201, 146, 67, 175]);
         const addr = {applicationId: 0, sourceId: 2777252112, endpoint: 0};
         const options = 0x30 | 0x200;
@@ -329,7 +329,7 @@ describe('GreenPower', () => {
         expect(retFrame.payload.mic).toStrictEqual(undefined); // removed once decrypted
     });
 
-    it('ignores GPP data and MIC from raw payload', async () => {
+    it('omits GPP data and MIC from raw payload', async () => {
         const securityKey = Buffer.from([227, 227, 225, 134, 235, 104, 141, 250, 162, 211, 104, 147, 201, 146, 67, 175]);
         const addr = {applicationId: 0, sourceId: 2777252112, endpoint: 0};
         const options = 0x30 | 0x200 | 0x800;
@@ -414,7 +414,11 @@ describe('GreenPower', () => {
 
         const retFrame = await gp.onZclGreenPowerData(payload, frame, Buffer.alloc(16) /* just for the codepath, decrypting not important */);
 
-        expect(logDebugSpy).toHaveBeenNthCalledWith(1, '[UNHANDLED_CMD/PASSTHROUGH] command=0x9d from=31663', 'zh:controller:greenpower');
+        expect(logDebugSpy).toHaveBeenNthCalledWith(
+            1,
+            '[UNHANDLED_CMD/PASSTHROUGH] command=0x9d srcID=2888399791 gpp=NO',
+            'zh:controller:greenpower',
+        );
 
         const clonedFrame = Zcl.Frame.fromBuffer(payload.clusterID, payload.header, payload.data, {});
         clonedFrame.payload.commandID = 0x9d;
@@ -458,7 +462,11 @@ describe('GreenPower', () => {
 
         const retFrame = await gp.onZclGreenPowerData(payload, frame, Buffer.alloc(16) /* just for the codepath, decrypting not important */);
 
-        expect(logDebugSpy).toHaveBeenNthCalledWith(1, '[UNHANDLED_CMD/PASSTHROUGH] command=0x9d from=31663', 'zh:controller:greenpower');
+        expect(logDebugSpy).toHaveBeenNthCalledWith(
+            1,
+            '[UNHANDLED_CMD/PASSTHROUGH] command=0x9d srcID=2888399791 gpp=24404 rssi=59 linkQuality=Moderate',
+            'zh:controller:greenpower',
+        );
 
         const clonedFrame = Zcl.Frame.fromBuffer(payload.clusterID, payload.header, payload.data, {});
         clonedFrame.payload.commandID = 0x9d;
@@ -516,10 +524,10 @@ describe('GreenPower', () => {
                 networkAddress: addr.sourceId & 0xffff,
                 securityKey: frame.payload.commandFrame.securityKey,
             });
-            expect(logInfoSpy).toHaveBeenNthCalledWith(1, '[COMMISSIONING] from=18887', 'zh:controller:greenpower');
+            expect(logInfoSpy).toHaveBeenNthCalledWith(1, '[COMMISSIONING] srcID=1496140231 gpp=NO', 'zh:controller:greenpower');
             expect(logDebugSpy).toHaveBeenNthCalledWith(
                 1,
-                '[PAIRING] options=58696 (addSink=true commMode=2) wasBroadcast=true gppNwkAddr=undefined',
+                '[PAIRING] srcID=1496140231 gpp=NO options=58696 (addSink=true commMode=2) wasBroadcast=true',
                 'zh:controller:greenpower',
             );
 
@@ -542,6 +550,8 @@ describe('GreenPower', () => {
                 numClientClusters: 0,
                 gpdServerClusters: Buffer.from([]),
                 gpdClientClusters: Buffer.from([]),
+                genericSwitchConfig: 0,
+                currentContactStatus: 0,
             };
 
             expect(JSON.parse(JSON.stringify(retFrame))).toStrictEqual(JSON.parse(JSON.stringify(clonedFrame)));
@@ -579,7 +589,11 @@ describe('GreenPower', () => {
             const frame = Zcl.Frame.fromBuffer(payload.clusterID, payload.header, payload.data, {});
             const retFrame = await gp.onZclGreenPowerData(payload, frame, joinData?.securityKey);
 
-            expect(logDebugSpy).toHaveBeenNthCalledWith(1, '[UNHANDLED_CMD/PASSTHROUGH] command=0x20 from=18887', 'zh:controller:greenpower');
+            expect(logDebugSpy).toHaveBeenNthCalledWith(
+                1,
+                '[UNHANDLED_CMD/PASSTHROUGH] command=0x20 srcID=1496140231 gpp=NO',
+                'zh:controller:greenpower',
+            );
 
             const clonedFrame = Zcl.Frame.fromBuffer(payload.clusterID, payload.header, payload.data, {});
             clonedFrame.payload.commandID = 0x20;
@@ -618,7 +632,11 @@ describe('GreenPower', () => {
             const frame = Zcl.Frame.fromBuffer(payload.clusterID, payload.header, payload.data, {});
             const retFrame = await gp.onZclGreenPowerData(payload, frame, joinData?.securityKey);
 
-            expect(logDebugSpy).toHaveBeenNthCalledWith(1, '[UNHANDLED_CMD/PASSTHROUGH] command=0x20 from=18887', 'zh:controller:greenpower');
+            expect(logDebugSpy).toHaveBeenNthCalledWith(
+                1,
+                '[UNHANDLED_CMD/PASSTHROUGH] command=0x20 srcID=1496140231 gpp=NO',
+                'zh:controller:greenpower',
+            );
 
             const clonedFrame = Zcl.Frame.fromBuffer(payload.clusterID, payload.header, payload.data, {});
             clonedFrame.payload.commandID = 0x20;
@@ -657,7 +675,11 @@ describe('GreenPower', () => {
             const frame = Zcl.Frame.fromBuffer(payload.clusterID, payload.header, payload.data, {});
             const retFrame = await gp.onZclGreenPowerData(payload, frame, joinData?.securityKey);
 
-            expect(logDebugSpy).toHaveBeenNthCalledWith(1, '[UNHANDLED_CMD/PASSTHROUGH] command=0x20 from=18887', 'zh:controller:greenpower');
+            expect(logDebugSpy).toHaveBeenNthCalledWith(
+                1,
+                '[UNHANDLED_CMD/PASSTHROUGH] command=0x20 srcID=1496140231 gpp=NO',
+                'zh:controller:greenpower',
+            );
 
             const clonedFrame = Zcl.Frame.fromBuffer(payload.clusterID, payload.header, payload.data, {});
             clonedFrame.payload.commandID = 0x20;
@@ -696,7 +718,11 @@ describe('GreenPower', () => {
             const frame = Zcl.Frame.fromBuffer(payload.clusterID, payload.header, payload.data, {});
             const retFrame = await gp.onZclGreenPowerData(payload, frame, joinData?.securityKey);
 
-            expect(logDebugSpy).toHaveBeenNthCalledWith(1, '[UNHANDLED_CMD/PASSTHROUGH] command=0x21 from=18887', 'zh:controller:greenpower');
+            expect(logDebugSpy).toHaveBeenNthCalledWith(
+                1,
+                '[UNHANDLED_CMD/PASSTHROUGH] command=0x21 srcID=1496140231 gpp=NO',
+                'zh:controller:greenpower',
+            );
 
             const clonedFrame = Zcl.Frame.fromBuffer(payload.clusterID, payload.header, payload.data, {});
             clonedFrame.payload.commandID = 0x21;
@@ -735,7 +761,11 @@ describe('GreenPower', () => {
             const frame = Zcl.Frame.fromBuffer(payload.clusterID, payload.header, payload.data, {});
             const retFrame = await gp.onZclGreenPowerData(payload, frame, joinData?.securityKey);
 
-            expect(logDebugSpy).toHaveBeenNthCalledWith(1, '[UNHANDLED_CMD/PASSTHROUGH] command=0x21 from=18887', 'zh:controller:greenpower');
+            expect(logDebugSpy).toHaveBeenNthCalledWith(
+                1,
+                '[UNHANDLED_CMD/PASSTHROUGH] command=0x21 srcID=1496140231 gpp=NO',
+                'zh:controller:greenpower',
+            );
 
             const clonedFrame = Zcl.Frame.fromBuffer(payload.clusterID, payload.header, payload.data, {});
             clonedFrame.payload.commandID = 0x21;
@@ -774,7 +804,11 @@ describe('GreenPower', () => {
             const frame = Zcl.Frame.fromBuffer(payload.clusterID, payload.header, payload.data, {});
             const retFrame = await gp.onZclGreenPowerData(payload, frame, joinData?.securityKey);
 
-            expect(logDebugSpy).toHaveBeenNthCalledWith(1, '[UNHANDLED_CMD/PASSTHROUGH] command=0x21 from=18887', 'zh:controller:greenpower');
+            expect(logDebugSpy).toHaveBeenNthCalledWith(
+                1,
+                '[UNHANDLED_CMD/PASSTHROUGH] command=0x21 srcID=1496140231 gpp=NO',
+                'zh:controller:greenpower',
+            );
 
             const clonedFrame = Zcl.Frame.fromBuffer(payload.clusterID, payload.header, payload.data, {});
             clonedFrame.payload.commandID = 0x21;
@@ -815,7 +849,7 @@ describe('GreenPower', () => {
 
             expect(logErrorSpy).toHaveBeenNthCalledWith(
                 1,
-                '[FULLENCR] from=18887 commandIdentifier=0 Unknown security key',
+                '[FULLENCR] srcID=1496140231 gpp=NO commandIdentifier=0 Unknown security key',
                 'zh:controller:greenpower',
             );
 
@@ -856,7 +890,11 @@ describe('GreenPower', () => {
             const frame = Zcl.Frame.fromBuffer(payload.clusterID, payload.header, payload.data, {});
             const retFrame = await gp.onZclGreenPowerData(payload, frame, joinData?.securityKey);
 
-            expect(logDebugSpy).toHaveBeenNthCalledWith(1, '[UNHANDLED_CMD/PASSTHROUGH] command=0x21 from=18887', 'zh:controller:greenpower');
+            expect(logDebugSpy).toHaveBeenNthCalledWith(
+                1,
+                '[UNHANDLED_CMD/PASSTHROUGH] command=0x21 srcID=1496140231 gpp=24404 rssi=15 linkQuality=Excellent',
+                'zh:controller:greenpower',
+            );
 
             const clonedFrame = Zcl.Frame.fromBuffer(payload.clusterID, payload.header, payload.data, {});
             clonedFrame.payload.commandID = 0x21;
@@ -915,10 +953,10 @@ describe('GreenPower', () => {
                 networkAddress: addr.sourceId & 0xffff,
                 securityKey: frame.payload.commandFrame.securityKey,
             });
-            expect(logInfoSpy).toHaveBeenNthCalledWith(1, '[COMMISSIONING] from=51637', 'zh:controller:greenpower');
+            expect(logInfoSpy).toHaveBeenNthCalledWith(1, '[COMMISSIONING] srcID=344902069 gpp=NO', 'zh:controller:greenpower');
             expect(logDebugSpy).toHaveBeenNthCalledWith(
                 1,
-                '[PAIRING] options=58696 (addSink=true commMode=2) wasBroadcast=true gppNwkAddr=undefined',
+                '[PAIRING] srcID=344902069 gpp=NO options=58696 (addSink=true commMode=2) wasBroadcast=true',
                 'zh:controller:greenpower',
             );
 
@@ -941,6 +979,8 @@ describe('GreenPower', () => {
                 numClientClusters: 0,
                 gpdServerClusters: Buffer.from([]),
                 gpdClientClusters: Buffer.from([]),
+                genericSwitchConfig: 0,
+                currentContactStatus: 0,
             };
 
             expect(JSON.parse(JSON.stringify(retFrame))).toStrictEqual(JSON.parse(JSON.stringify(clonedFrame)));
@@ -978,7 +1018,11 @@ describe('GreenPower', () => {
             const frame = Zcl.Frame.fromBuffer(payload.clusterID, payload.header, payload.data, {});
             const retFrame = await gp.onZclGreenPowerData(payload, frame, joinData?.securityKey);
 
-            expect(logDebugSpy).toHaveBeenNthCalledWith(1, '[UNHANDLED_CMD/PASSTHROUGH] command=0x20 from=51637', 'zh:controller:greenpower');
+            expect(logDebugSpy).toHaveBeenNthCalledWith(
+                1,
+                '[UNHANDLED_CMD/PASSTHROUGH] command=0x20 srcID=344902069 gpp=NO',
+                'zh:controller:greenpower',
+            );
 
             const clonedFrame = Zcl.Frame.fromBuffer(payload.clusterID, payload.header, payload.data, {});
             clonedFrame.payload.commandID = 0x20;
@@ -1017,7 +1061,11 @@ describe('GreenPower', () => {
             const frame = Zcl.Frame.fromBuffer(payload.clusterID, payload.header, payload.data, {});
             const retFrame = await gp.onZclGreenPowerData(payload, frame, joinData?.securityKey);
 
-            expect(logDebugSpy).toHaveBeenNthCalledWith(1, '[UNHANDLED_CMD/PASSTHROUGH] command=0x21 from=51637', 'zh:controller:greenpower');
+            expect(logDebugSpy).toHaveBeenNthCalledWith(
+                1,
+                '[UNHANDLED_CMD/PASSTHROUGH] command=0x21 srcID=344902069 gpp=NO',
+                'zh:controller:greenpower',
+            );
 
             const clonedFrame = Zcl.Frame.fromBuffer(payload.clusterID, payload.header, payload.data, {});
             clonedFrame.payload.commandID = 0x21;
@@ -1056,7 +1104,11 @@ describe('GreenPower', () => {
             const frame = Zcl.Frame.fromBuffer(payload.clusterID, payload.header, payload.data, {});
             const retFrame = await gp.onZclGreenPowerData(payload, frame, joinData?.securityKey);
 
-            expect(logDebugSpy).toHaveBeenNthCalledWith(1, '[UNHANDLED_CMD/PASSTHROUGH] command=0x11 from=51637', 'zh:controller:greenpower');
+            expect(logDebugSpy).toHaveBeenNthCalledWith(
+                1,
+                '[UNHANDLED_CMD/PASSTHROUGH] command=0x11 srcID=344902069 gpp=NO',
+                'zh:controller:greenpower',
+            );
 
             const clonedFrame = Zcl.Frame.fromBuffer(payload.clusterID, payload.header, payload.data, {});
             clonedFrame.payload.commandID = 0x11;
@@ -1108,7 +1160,11 @@ describe('GreenPower', () => {
             const frame = Zcl.Frame.fromBuffer(payload.clusterID, payload.header, payload.data, {});
             const retFrame = await gp.onZclGreenPowerData(payload, frame, joinData?.securityKey);
 
-            expect(logDebugSpy).toHaveBeenNthCalledWith(1, '[UNHANDLED_CMD/PASSTHROUGH] command=0x21 from=33040', 'zh:controller:greenpower');
+            expect(logDebugSpy).toHaveBeenNthCalledWith(
+                1,
+                '[UNHANDLED_CMD/PASSTHROUGH] command=0x21 srcID=2777252112 gpp=24404 rssi=15 linkQuality=Excellent',
+                'zh:controller:greenpower',
+            );
 
             const clonedFrame = Zcl.Frame.fromBuffer(payload.clusterID, payload.header, payload.data, {});
             clonedFrame.payload.commandID = 0x21;
@@ -1152,7 +1208,11 @@ describe('GreenPower', () => {
             const frame = Zcl.Frame.fromBuffer(payload.clusterID, payload.header, payload.data, {});
             const retFrame = await gp.onZclGreenPowerData(payload, frame, joinData?.securityKey);
 
-            expect(logDebugSpy).toHaveBeenNthCalledWith(1, '[UNHANDLED_CMD/PASSTHROUGH] command=0x21 from=33040', 'zh:controller:greenpower');
+            expect(logDebugSpy).toHaveBeenNthCalledWith(
+                1,
+                '[UNHANDLED_CMD/PASSTHROUGH] command=0x21 srcID=2777252112 gpp=24404 rssi=15 linkQuality=Excellent',
+                'zh:controller:greenpower',
+            );
 
             const clonedFrame = Zcl.Frame.fromBuffer(payload.clusterID, payload.header, payload.data, {});
             clonedFrame.payload.commandID = 0x21;
@@ -1196,7 +1256,11 @@ describe('GreenPower', () => {
             const frame = Zcl.Frame.fromBuffer(payload.clusterID, payload.header, payload.data, {});
             const retFrame = await gp.onZclGreenPowerData(payload, frame, joinData?.securityKey);
 
-            expect(logDebugSpy).toHaveBeenNthCalledWith(1, '[UNHANDLED_CMD/PASSTHROUGH] command=0x21 from=33040', 'zh:controller:greenpower');
+            expect(logDebugSpy).toHaveBeenNthCalledWith(
+                1,
+                '[UNHANDLED_CMD/PASSTHROUGH] command=0x21 srcID=2777252112 gpp=24404 rssi=15 linkQuality=Excellent',
+                'zh:controller:greenpower',
+            );
 
             const clonedFrame = Zcl.Frame.fromBuffer(payload.clusterID, payload.header, payload.data, {});
             clonedFrame.payload.commandID = 0x21;
@@ -1240,7 +1304,11 @@ describe('GreenPower', () => {
             const frame = Zcl.Frame.fromBuffer(payload.clusterID, payload.header, payload.data, {});
             const retFrame = await gp.onZclGreenPowerData(payload, frame, joinData?.securityKey);
 
-            expect(logDebugSpy).toHaveBeenNthCalledWith(1, '[UNHANDLED_CMD/PASSTHROUGH] command=0x20 from=33040', 'zh:controller:greenpower');
+            expect(logDebugSpy).toHaveBeenNthCalledWith(
+                1,
+                '[UNHANDLED_CMD/PASSTHROUGH] command=0x20 srcID=2777252112 gpp=24404 rssi=14 linkQuality=High',
+                'zh:controller:greenpower',
+            );
 
             const clonedFrame = Zcl.Frame.fromBuffer(payload.clusterID, payload.header, payload.data, {});
             clonedFrame.payload.commandID = 0x20;
@@ -1284,7 +1352,11 @@ describe('GreenPower', () => {
             const frame = Zcl.Frame.fromBuffer(payload.clusterID, payload.header, payload.data, {});
             const retFrame = await gp.onZclGreenPowerData(payload, frame, joinData?.securityKey);
 
-            expect(logDebugSpy).toHaveBeenNthCalledWith(1, '[UNHANDLED_CMD/PASSTHROUGH] command=0x20 from=33040', 'zh:controller:greenpower');
+            expect(logDebugSpy).toHaveBeenNthCalledWith(
+                1,
+                '[UNHANDLED_CMD/PASSTHROUGH] command=0x20 srcID=2777252112 gpp=24404 rssi=17 linkQuality=Excellent',
+                'zh:controller:greenpower',
+            );
 
             const clonedFrame = Zcl.Frame.fromBuffer(payload.clusterID, payload.header, payload.data, {});
             clonedFrame.payload.commandID = 0x20;
@@ -1328,7 +1400,11 @@ describe('GreenPower', () => {
             const frame = Zcl.Frame.fromBuffer(payload.clusterID, payload.header, payload.data, {});
             const retFrame = await gp.onZclGreenPowerData(payload, frame, joinData?.securityKey);
 
-            expect(logDebugSpy).toHaveBeenNthCalledWith(1, '[UNHANDLED_CMD/PASSTHROUGH] command=0x20 from=33040', 'zh:controller:greenpower');
+            expect(logDebugSpy).toHaveBeenNthCalledWith(
+                1,
+                '[UNHANDLED_CMD/PASSTHROUGH] command=0x20 srcID=2777252112 gpp=24404 rssi=17 linkQuality=Excellent',
+                'zh:controller:greenpower',
+            );
 
             const clonedFrame = Zcl.Frame.fromBuffer(payload.clusterID, payload.header, payload.data, {});
             clonedFrame.payload.commandID = 0x20;
