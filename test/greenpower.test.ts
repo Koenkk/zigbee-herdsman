@@ -550,6 +550,8 @@ describe('GreenPower', () => {
                 numClientClusters: 0,
                 gpdServerClusters: Buffer.from([]),
                 gpdClientClusters: Buffer.from([]),
+                genericSwitchConfig: 0,
+                currentContactStatus: 0,
             };
 
             expect(JSON.parse(JSON.stringify(retFrame))).toStrictEqual(JSON.parse(JSON.stringify(clonedFrame)));
@@ -977,6 +979,8 @@ describe('GreenPower', () => {
                 numClientClusters: 0,
                 gpdServerClusters: Buffer.from([]),
                 gpdClientClusters: Buffer.from([]),
+                genericSwitchConfig: 0,
+                currentContactStatus: 0,
             };
 
             expect(JSON.parse(JSON.stringify(retFrame))).toStrictEqual(JSON.parse(JSON.stringify(clonedFrame)));

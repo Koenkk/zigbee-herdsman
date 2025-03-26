@@ -7835,6 +7835,35 @@ describe('Controller', () => {
         );
     });
 
+    it('Should handle green power commissioning frame with switch info', async () => {
+        await controller.start();
+        mockLogger.error.mockClear();
+        const buffer = Buffer.from('1102040008d755550114000000e01f0785f256b8e010b32e6921aca5d18ab7b7d44d0f063d4d140300001002050229dfe2', 'hex');
+        const frame = Zcl.Frame.fromBuffer(Zcl.Clusters.greenPower.ID, Zcl.Header.fromBuffer(buffer)!, buffer, {});
+        await mockAdapterEvents['zclPayload']({
+            wasBroadcast: true,
+            address: 57129,
+            clusterID: frame.cluster.ID,
+            data: buffer,
+            header: frame.header,
+            endpoint: ZSpec.GP_ENDPOINT,
+            linkquality: 50,
+            groupID: 1,
+        });
+
+        expect(frame.payload.commandFrame.genericSwitchConfig).toStrictEqual(5);
+        expect(frame.payload.commandFrame.currentContactStatus).toStrictEqual(2);
+        expect(mockLogger.error).toHaveBeenCalledTimes(0);
+        expect(mockLogger.debug).toHaveBeenCalledWith(
+            '[PAIRING] srcID=22369751 gpp=57129 options=58696 (addSink=true commMode=2) wasBroadcast=true',
+            'zh:controller:greenpower',
+        );
+        expect(mockLogger.info).toHaveBeenCalledWith(
+            '[COMMISSIONING] srcID=22369751 gpp=57129 rssi=34 linkQuality=Excellent',
+            'zh:controller:greenpower',
+        );
+    });
+
     it('Should ignore invalid green power frame', async () => {
         await controller.start();
         await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
@@ -8032,6 +8061,8 @@ describe('Controller', () => {
                 applicationInfo: 0x04,
                 numGpdCommands: 17,
                 gpdCommandIdList: Buffer.from([0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x22, 0x60, 0x62, 0x63, 0x64, 0x65, 0x66, 0x67, 0x68]),
+                genericSwitchConfig: 0,
+                currentContactStatus: 0,
             },
             gppNwkAddr: gppDevice.networkAddress,
             gppGpdLink: 0xd8,

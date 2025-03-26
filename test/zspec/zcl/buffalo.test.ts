@@ -860,6 +860,8 @@ describe('ZCL Buffalo', () => {
                 gpdServerClusters: Buffer.alloc(0),
                 gpdClientClusters: Buffer.alloc(0),
                 applicationInfo: 0x00,
+                genericSwitchConfig: 0,
+                currentContactStatus: 0,
             });
         });
 
@@ -941,13 +943,16 @@ describe('ZCL Buffalo', () => {
                 0,
                 0,
                 0, // outgoing counter
-                0x01 | 0x02 | 0x04 | 0x08, // application info
+                0x01 | 0x02 | 0x04 | 0x08 | 0x10, // application info
                 0,
                 0, // manufacturer ID
                 0,
                 0, // model ID
                 0, // num GPD commands + commands
                 0, // clusters
+                2, // switch info length
+                5, // generic switch config
+                2, // current contact status
             ];
             const buffalo = new BuffaloZcl(Buffer.from(value));
 
@@ -966,7 +971,9 @@ describe('ZCL Buffalo', () => {
                 numClientClusters: 0,
                 gpdServerClusters: Buffer.alloc(0),
                 gpdClientClusters: Buffer.alloc(0),
-                applicationInfo: 0x01 | 0x02 | 0x04 | 0x08,
+                applicationInfo: 0x01 | 0x02 | 0x04 | 0x08 | 0x10,
+                genericSwitchConfig: 5,
+                currentContactStatus: 2,
             });
         });
 
