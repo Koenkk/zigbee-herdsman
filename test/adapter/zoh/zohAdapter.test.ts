@@ -358,7 +358,7 @@ describe('ZigBee on Host', () => {
 
         expect(emitSpy).toHaveBeenLastCalledWith('zdoResponse', Zdo.ClusterId.SIMPLE_DESCRIPTOR_RESPONSE, [
             0,
-            expect.objectContaining({endpoint: 1, profileId: 0x0104}),
+            expect.objectContaining({endpoint: 1, profileId: ZSpec.HA_PROFILE_ID}),
         ]);
 
         await adapter.sendZdo(
@@ -452,7 +452,7 @@ describe('ZigBee on Host', () => {
                     ackRequest: false,
                     extendedHeader: false,
                 },
-                profileId: 0x0104,
+                profileId: ZSpec.HA_PROFILE_ID,
                 clusterId: Zcl.Clusters.genGroups.ID,
                 sourceEndpoint: 0x1,
                 destEndpoint: 0x2,
@@ -482,7 +482,7 @@ describe('ZigBee on Host', () => {
             linkquality: -25,
             wasBroadcast: false,
         });
-        expect(sendUnicastSpy).toHaveBeenLastCalledWith(zclFrame.toBuffer(), 0x0104, Zcl.Clusters.genGroups.ID, 0x9876, undefined, 1, 2);
+        expect(sendUnicastSpy).toHaveBeenLastCalledWith(zclFrame.toBuffer(), ZSpec.HA_PROFILE_ID, Zcl.Clusters.genGroups.ID, 0x9876, undefined, 1, 2);
 
         waitForTIDSpy.mockResolvedValueOnce(makeSpinelStreamRawFrame(2, Buffer.alloc(1)));
         sendUnicastSpy.mockResolvedValueOnce(2);
@@ -491,7 +491,7 @@ describe('ZigBee on Host', () => {
 
         await vi.advanceTimersByTimeAsync(100);
         await expect(p2).resolves.toStrictEqual(undefined);
-        expect(sendUnicastSpy).toHaveBeenLastCalledWith(zclFrame.toBuffer(), 0x0104, Zcl.Clusters.genGroups.ID, 0x9876, undefined, 1, 1);
+        expect(sendUnicastSpy).toHaveBeenLastCalledWith(zclFrame.toBuffer(), ZSpec.HA_PROFILE_ID, Zcl.Clusters.genGroups.ID, 0x9876, undefined, 1, 1);
 
         const zclPayloadDefRsp = Buffer.from([0, 123, Zcl.Foundation.read.ID]);
         const zclFrameDefRsp = Zcl.Frame.fromBuffer(Zcl.Clusters.genGroups.ID, Zcl.Header.fromBuffer(zclPayloadDefRsp), zclPayloadDefRsp, {});
@@ -515,7 +515,7 @@ describe('ZigBee on Host', () => {
                     ackRequest: false,
                     extendedHeader: false,
                 },
-                profileId: 0x0104,
+                profileId: ZSpec.HA_PROFILE_ID,
                 clusterId: Zcl.Clusters.genGroups.ID,
                 sourceEndpoint: 0x1,
                 destEndpoint: 0x2,
@@ -545,7 +545,15 @@ describe('ZigBee on Host', () => {
             linkquality: -25,
             wasBroadcast: false,
         });
-        expect(sendUnicastSpy).toHaveBeenLastCalledWith(zclFrameDefRsp.toBuffer(), 0x0104, Zcl.Clusters.genGroups.ID, 0x9876, undefined, 1, 2);
+        expect(sendUnicastSpy).toHaveBeenLastCalledWith(
+            zclFrameDefRsp.toBuffer(),
+            ZSpec.HA_PROFILE_ID,
+            Zcl.Clusters.genGroups.ID,
+            0x9876,
+            undefined,
+            1,
+            2,
+        );
 
         sendUnicastSpy.mockClear();
         waitForTIDSpy.mockResolvedValueOnce(makeSpinelStreamRawFrame(2, Buffer.alloc(1)));
@@ -567,7 +575,7 @@ describe('ZigBee on Host', () => {
                     ackRequest: false,
                     extendedHeader: false,
                 },
-                profileId: 0x0104,
+                profileId: ZSpec.HA_PROFILE_ID,
                 clusterId: Zcl.Clusters.genGroups.ID,
                 sourceEndpoint: 0x1,
                 destEndpoint: 0x2,
@@ -597,7 +605,7 @@ describe('ZigBee on Host', () => {
             linkquality: -25,
             wasBroadcast: false,
         });
-        expect(sendUnicastSpy).toHaveBeenLastCalledWith(zclFrame.toBuffer(), 0x0104, Zcl.Clusters.genGroups.ID, 0x9876, undefined, 1, 2);
+        expect(sendUnicastSpy).toHaveBeenLastCalledWith(zclFrame.toBuffer(), ZSpec.HA_PROFILE_ID, Zcl.Clusters.genGroups.ID, 0x9876, undefined, 1, 2);
         expect(sendUnicastSpy).toHaveBeenCalledTimes(2);
 
         sendUnicastSpy.mockClear();
@@ -606,12 +614,22 @@ describe('ZigBee on Host', () => {
 
         await expect(adapter.sendZclFrameToEndpoint('0x00000000000004d2', 0x9876, 1, zclFrame, 10000, false, false, 2)).rejects.toThrow('Failed');
         expect(sendUnicastSpy).toHaveBeenCalledTimes(2);
+
+        const zclFrameGP = Zcl.Frame.fromBuffer(Zcl.Clusters.greenPower.ID, Zcl.Header.fromBuffer(zclPayload), zclPayload, {});
+
+        sendUnicastSpy.mockClear();
+        waitForTIDSpy.mockResolvedValueOnce(makeSpinelStreamRawFrame(2, Buffer.alloc(1)));
+
+        await expect(
+            adapter.sendZclFrameToEndpoint('0xb43a31fffe0f6aae', 57129, ZSpec.GP_ENDPOINT, zclFrameGP, 10000, true, false, ZSpec.GP_ENDPOINT),
+        ).resolves.toStrictEqual(undefined);
+        expect(sendUnicastSpy).toHaveBeenCalledTimes(1);
     });
 
     it('Adapter impl: sendZclFrameToGroup', async () => {
         await adapter.start();
 
-        const sendMulticastSpy = vi.spyOn(adapter.driver, 'sendMulticast').mockResolvedValueOnce(1).mockResolvedValueOnce(1);
+        const sendMulticastSpy = vi.spyOn(adapter.driver, 'sendMulticast').mockResolvedValueOnce(1).mockResolvedValueOnce(1).mockResolvedValueOnce(1);
 
         const zclPayload = Buffer.from([0, 123, Zcl.Foundation.read.ID]);
         const zclFrame = Zcl.Frame.fromBuffer(Zcl.Clusters.genGroups.ID, Zcl.Header.fromBuffer(zclPayload), zclPayload, {});
@@ -620,19 +638,19 @@ describe('ZigBee on Host', () => {
 
         await vi.advanceTimersByTimeAsync(1000);
         await expect(p1).resolves.toStrictEqual(undefined);
-        expect(sendMulticastSpy).toHaveBeenLastCalledWith(zclFrame.toBuffer(), 0x0104, Zcl.Clusters.genGroups.ID, 123, 0xff, 5);
+        expect(sendMulticastSpy).toHaveBeenLastCalledWith(zclFrame.toBuffer(), ZSpec.HA_PROFILE_ID, Zcl.Clusters.genGroups.ID, 123, 0xff, 5);
 
         const p2 = adapter.sendZclFrameToGroup(123, zclFrame);
 
         await vi.advanceTimersByTimeAsync(1000);
         await expect(p2).resolves.toStrictEqual(undefined);
-        expect(sendMulticastSpy).toHaveBeenLastCalledWith(zclFrame.toBuffer(), 0x0104, Zcl.Clusters.genGroups.ID, 123, 0xff, 1);
+        expect(sendMulticastSpy).toHaveBeenLastCalledWith(zclFrame.toBuffer(), ZSpec.HA_PROFILE_ID, Zcl.Clusters.genGroups.ID, 123, 0xff, 1);
     });
 
     it('Adapter impl: sendZclFrameToAll', async () => {
         await adapter.start();
 
-        const sendBroadcastSpy = vi.spyOn(adapter.driver, 'sendBroadcast').mockResolvedValueOnce(1);
+        const sendBroadcastSpy = vi.spyOn(adapter.driver, 'sendBroadcast').mockResolvedValueOnce(1).mockResolvedValueOnce(1);
 
         const zclPayload = Buffer.from([0, 123, Zcl.Foundation.read.ID]);
         const zclFrame = Zcl.Frame.fromBuffer(Zcl.Clusters.genAlarms.ID, Zcl.Header.fromBuffer(zclPayload), zclPayload, {});
@@ -641,7 +659,20 @@ describe('ZigBee on Host', () => {
 
         await vi.advanceTimersByTimeAsync(1000);
         await expect(p).resolves.toStrictEqual(undefined);
-        expect(sendBroadcastSpy).toHaveBeenLastCalledWith(zclFrame.toBuffer(), 0x0104, Zcl.Clusters.genAlarms.ID, 0xfffc, 3, 1);
+        expect(sendBroadcastSpy).toHaveBeenLastCalledWith(zclFrame.toBuffer(), ZSpec.HA_PROFILE_ID, Zcl.Clusters.genAlarms.ID, 0xfffc, 3, 1);
+
+        const p2 = adapter.sendZclFrameToAll(ZSpec.GP_ENDPOINT, zclFrame, ZSpec.GP_ENDPOINT, 0xfffc);
+
+        await vi.advanceTimersByTimeAsync(1000);
+        await expect(p2).resolves.toStrictEqual(undefined);
+        expect(sendBroadcastSpy).toHaveBeenLastCalledWith(
+            zclFrame.toBuffer(),
+            ZSpec.GP_PROFILE_ID,
+            Zcl.Clusters.genAlarms.ID,
+            0xfffc,
+            ZSpec.GP_ENDPOINT,
+            ZSpec.GP_ENDPOINT,
+        );
     });
 
     it('receives ZDO frame', async () => {
@@ -733,13 +764,13 @@ describe('ZigBee on Host', () => {
                     ackRequest: false,
                     extendedHeader: false,
                 },
-                profileId: 0x0104,
+                profileId: ZSpec.HA_PROFILE_ID,
                 clusterId: Zcl.Clusters.genAlarms.ID,
                 sourceEndpoint: 0x1,
                 destEndpoint: 0x1,
             },
             Buffer.from([0, 123, Zcl.Foundation.read.ID, 0x01, 0xff]),
-            -25,
+            125,
         );
 
         expect(emitSpy).toHaveBeenLastCalledWith('zclPayload', {
@@ -761,7 +792,7 @@ describe('ZigBee on Host', () => {
                 manufacturerCode: undefined,
                 transactionSequenceNumber: 123,
             },
-            linkquality: -25,
+            linkquality: 125,
             wasBroadcast: false,
         });
 
@@ -778,13 +809,13 @@ describe('ZigBee on Host', () => {
                     ackRequest: false,
                     extendedHeader: false,
                 },
-                profileId: 0x0104,
+                profileId: ZSpec.HA_PROFILE_ID,
                 clusterId: Zcl.Clusters.genIdentify.ID,
                 sourceEndpoint: 0x1,
                 destEndpoint: 0x1,
             },
             Buffer.from([0, 123, 0x00, 0x01, 0xff]),
-            -25,
+            155,
         );
 
         expect(emitSpy).toHaveBeenLastCalledWith('zclPayload', {
@@ -806,7 +837,52 @@ describe('ZigBee on Host', () => {
                 manufacturerCode: undefined,
                 transactionSequenceNumber: 123,
             },
-            linkquality: -25,
+            linkquality: 155,
+            wasBroadcast: false,
+        });
+
+        adapter.driver.emit(
+            'frame',
+            57129,
+            undefined,
+            {
+                frameControl: {
+                    frameType: 0 /* DATA */,
+                    deliveryMode: 0 /* UNICAST */,
+                    ackFormat: false,
+                    security: false,
+                    ackRequest: false,
+                    extendedHeader: false,
+                },
+                profileId: ZSpec.GP_PROFILE_ID,
+                clusterId: Zcl.Clusters.greenPower.ID,
+                sourceEndpoint: ZSpec.GP_ENDPOINT,
+                destEndpoint: ZSpec.GP_ENDPOINT,
+            },
+            Buffer.from('1102040008d755550114000000e01f0785f256b8e010b32e6921aca5d18ab7b7d44d0f063d4d140300001002050229dfe2', 'hex'),
+            245,
+        );
+
+        expect(emitSpy).toHaveBeenLastCalledWith('zclPayload', {
+            address: 57129,
+            clusterID: Zcl.Clusters.greenPower.ID,
+            data: Buffer.from('1102040008d755550114000000e01f0785f256b8e010b32e6921aca5d18ab7b7d44d0f063d4d140300001002050229dfe2', 'hex'),
+            destinationEndpoint: ZSpec.GP_ENDPOINT,
+            endpoint: ZSpec.GP_ENDPOINT,
+            groupID: undefined,
+            header: {
+                commandIdentifier: 4,
+                frameControl: {
+                    direction: 0,
+                    disableDefaultResponse: true,
+                    frameType: 1,
+                    manufacturerSpecific: false,
+                    reservedBits: 0,
+                },
+                manufacturerCode: undefined,
+                transactionSequenceNumber: 2,
+            },
+            linkquality: 245,
             wasBroadcast: false,
         });
     });
