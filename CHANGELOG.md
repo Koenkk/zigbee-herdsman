@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.4.9](https://github.com/Koenkk/zigbee-herdsman/compare/v3.4.8...v3.4.9) (2025-03-26)
+
+
+### Bug Fixes
+
+* Green power parsing issue with payload size ([#1369](https://github.com/Koenkk/zigbee-herdsman/issues/1369)) ([72b8cf1](https://github.com/Koenkk/zigbee-herdsman/commit/72b8cf131bca70135cbbf0b101b9e4c8cfe5c471))
+
 ## [3.4.8](https://github.com/Koenkk/zigbee-herdsman/compare/v3.4.7...v3.4.8) (2025-03-25)
 
 
