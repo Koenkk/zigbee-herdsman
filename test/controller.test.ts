@@ -7785,7 +7785,7 @@ describe('Controller', () => {
         expect(identifyUnknownDeviceSpy).toHaveBeenCalledTimes(0); // deviceLeave passthrough allows to test this here
     });
 
-    it('Should handle comissioning frame gracefully', async () => {
+    it('Should handle green power commissioning mode frame gracefully', async () => {
         await controller.start();
         mockLogger.error.mockClear();
         const buffer = Buffer.from([25, 10, 2, 11, 254, 0]);
@@ -7802,7 +7802,37 @@ describe('Controller', () => {
         });
 
         expect(mockLogger.error).toHaveBeenCalledTimes(0);
-        expect(mockLogger.debug).toHaveBeenCalledWith(`[UNHANDLED_CMD/PASSTHROUGH] command=0x2 from=4650238`, `zh:controller:greenpower`);
+        expect(mockLogger.debug).toHaveBeenCalledWith(`[NO_CMD/PASSTHROUGH] command=0x2 from=4650238`, `zh:controller:greenpower`);
+    });
+
+    it('Should handle green power commissioning frame', async () => {
+        await controller.start();
+        mockLogger.error.mockClear();
+        const buffer = Buffer.from(
+            '11020400087af455012e000000e0330285f2c925821df46f458cf0e637aac3bab6aa45831a112e280000041610112223181914151213646562631e1f1c1d1a1b1617966fd7',
+            'hex',
+        );
+        const frame = Zcl.Frame.fromBuffer(Zcl.Clusters.greenPower.ID, Zcl.Header.fromBuffer(buffer)!, buffer, {});
+        await mockAdapterEvents['zclPayload']({
+            wasBroadcast: true,
+            address: 0xf4fe,
+            clusterID: frame.cluster.ID,
+            data: buffer,
+            header: frame.header,
+            endpoint: ZSpec.GP_ENDPOINT,
+            linkquality: 50,
+            groupID: 1,
+        });
+
+        expect(mockLogger.error).toHaveBeenCalledTimes(0);
+        expect(mockLogger.debug).toHaveBeenCalledWith(
+            '[PAIRING] srcID=22410362 gpp=28566 options=58696 (addSink=true commMode=2) wasBroadcast=true',
+            'zh:controller:greenpower',
+        );
+        expect(mockLogger.info).toHaveBeenCalledWith(
+            '[COMMISSIONING] srcID=22410362 gpp=28566 rssi=23 linkQuality=Excellent',
+            'zh:controller:greenpower',
+        );
     });
 
     it('Should ignore invalid green power frame', async () => {

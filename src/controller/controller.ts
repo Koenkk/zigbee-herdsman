@@ -658,7 +658,7 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
     }
 
     private async onDeviceJoinedGreenPower(payload: GreenPowerDeviceJoinedPayload): Promise<void> {
-        logger.debug(() => `Green power device '${JSON.stringify(payload)}' joined`, NS);
+        logger.debug(() => `Green power device '${JSON.stringify(payload).replaceAll(/\[[\d,]+\]/g, 'HIDDEN')}' joined`, NS);
 
         // Green power devices don't have an ieeeAddr, the sourceID is unique and static so use this.
         const ieeeAddr = `0x${payload.sourceID.toString(16).padStart(16, '0')}`;
