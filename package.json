@@ -50,9 +50,6 @@
         "eslint-config-prettier": "^10.1.1",
         "prettier": "^3.5.3",
         "rimraf": "^6.0.1",
-        "typedoc": "^0.28.1",
-        "typedoc-plugin-markdown": "^4.6.0",
-        "typedoc-plugin-no-inherit": "^1.5.0",
         "typescript": "^5.8.2",
         "typescript-eslint": "^8.28.0",
         "vitest": "^3.0.9"
@@ -82,7 +79,6 @@
         "eslint": "eslint --max-warnings=0",
         "pretty:write": "prettier --write .",
         "pretty:check": "prettier --check .",
-        "typedoc": "typedoc --gitRevision $(git describe --tag --abbrev=0) --tsconfig tsconfig.json --excludePrivate --excludeProtected --excludeExternals --entryPointStrategy expand ./src --sourceLinkTemplate 'https://github.com/Koenkk/zigbee-herdsman/blob/{gitRevision}/{path}#L{line}' -out typedoc",
         "clean": "rimraf temp coverage dist tsconfig.tsbuildinfo",
         "prepack": "pnpm run clean && pnpm run build"
     },
