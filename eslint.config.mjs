@@ -26,7 +26,7 @@ export default tseslint.config(
         },
     },
     {
-        ignores: ['typedoc/', 'test/', 'dist/', '**/*.js', '**/*.mjs'],
+        ignores: ['test/', 'dist/', '**/*.js', '**/*.mjs'],
     },
     eslintConfigPrettier,
 );
