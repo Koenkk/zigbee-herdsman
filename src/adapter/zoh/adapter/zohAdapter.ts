@@ -37,6 +37,7 @@ type ZdoResponse = {
     sender: number | string;
     clusterId: number;
     response: ZdoTypes.GenericZdoResponse;
+    seqNum: number;
 };
 
 const DEFAULT_REQUEST_TIMEOUT = 15000;
@@ -409,7 +410,7 @@ export class ZoHAdapter extends Adapter {
 
             logger.debug(() => `~~~> [ZDO to=${ieeeAddress}:${networkAddress} clusterId=${clusterId} disableResponse=${disableResponse}]`, NS);
 
-            await this.driver.sendZDO(
+            const [, zdoSeqNum] = await this.driver.sendZDO(
                 payload,
                 networkAddress, // nwkDest16
                 undefined, // nwkDest64 XXX: avoid passing EUI64 whenever not absolutely necessary
@@ -425,6 +426,7 @@ export class ZoHAdapter extends Adapter {
                             {
                                 sender: responseClusterId === Zdo.ClusterId.NETWORK_ADDRESS_RESPONSE ? ieeeAddress : networkAddress,
                                 clusterId: responseClusterId,
+                                transactionSequenceNumber: zdoSeqNum,
                             },
                             DEFAULT_REQUEST_TIMEOUT,
                         )
@@ -556,7 +558,7 @@ export class ZoHAdapter extends Adapter {
 
             logger.debug(() => `~~~> [ZCL GROUP to=${groupID} clusterId=${zclFrame.cluster.ID} sourceEp=${sourceEndpoint}]`, NS);
 
-            await this.driver.sendMulticast(zclFrame.toBuffer(), ZSpec.HA_PROFILE_ID, zclFrame.cluster.ID, groupID, 0xff, sourceEndpoint ?? 1);
+            await this.driver.sendGroupcast(zclFrame.toBuffer(), ZSpec.HA_PROFILE_ID, zclFrame.cluster.ID, groupID, sourceEndpoint ?? 1);
             // settle
             await wait(500);
         });
@@ -649,10 +651,10 @@ export class ZoHAdapter extends Adapter {
                     // special case to properly resolve a NETWORK_ADDRESS_RESPONSE following a NETWORK_ADDRESS_REQUEST (based on EUI64 from ZDO payload)
                     // NOTE: if response has invalid status (no EUI64 available), response waiter will eventually time out
                     if (Zdo.Buffalo.checkStatus<Zdo.ClusterId.NETWORK_ADDRESS_RESPONSE>(result)) {
-                        this.zdoWaitress.resolve({sender: result[1].eui64, clusterId: apsHeader.clusterId, response: result});
+                        this.zdoWaitress.resolve({sender: result[1].eui64, clusterId: apsHeader.clusterId, response: result, seqNum: apsPayload[0]});
                     }
                 } else {
-                    this.zdoWaitress.resolve({sender: sender16!, clusterId: apsHeader.clusterId!, response: result});
+                    this.zdoWaitress.resolve({sender: sender16!, clusterId: apsHeader.clusterId!, response: result, seqNum: apsPayload[0]});
                 }
 
                 this.emit('zdoResponse', apsHeader.clusterId!, result);
@@ -795,7 +797,7 @@ export class ZoHAdapter extends Adapter {
     }
 
     private zdoWaitressValidator(payload: ZdoResponse, matcher: WaitressMatcher): boolean {
-        return payload.sender === matcher.sender && payload.clusterId === matcher.clusterId;
+        return matcher.sender === payload.sender && matcher.clusterId === payload.clusterId && matcher.transactionSequenceNumber === payload.seqNum;
     }
     // #endregion
 }
