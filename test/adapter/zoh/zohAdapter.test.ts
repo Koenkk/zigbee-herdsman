@@ -2,9 +2,10 @@ import {randomBytes} from 'node:crypto';
 import {mkdirSync, rmSync, writeFileSync} from 'node:fs';
 import {join} from 'node:path';
 
-import {decodeHdlcFrame} from 'zigbee-on-host/dist/spinel/hdlc';
-import {decodeSpinelFrame, SPINEL_HEADER_FLG_SPINEL, SpinelFrame} from 'zigbee-on-host/dist/spinel/spinel';
+import {encodeSpinelFrame, SPINEL_HEADER_FLG_SPINEL, SpinelFrame} from 'zigbee-on-host/dist/spinel/spinel';
+import {SpinelStatus} from 'zigbee-on-host/dist/spinel/statuses';
 import {MACCapabilities} from 'zigbee-on-host/dist/zigbee/mac';
+import {ZigbeeNWKLinkStatus} from 'zigbee-on-host/dist/zigbee/zigbee-nwk';
 
 import {bigUInt64ToHexBE} from '../../../src/adapter/zoh/adapter/utils';
 import {ZoHAdapter} from '../../../src/adapter/zoh/adapter/zohAdapter';
@@ -23,7 +24,36 @@ const DEFAULT_STATE_FILE_HEX =
 
 const randomBigInt = (): bigint => BigInt(`0x${randomBytes(8).toString('hex')}`);
 
-const RESET_POWER_ON_FRAME_HEX = '7e80060070ee747e';
+/** SL-OPENTHREAD/2.5.2.0_GitHub-1fceb225b; EFR32; Mar 19 2025 13:45:44 */
+const START_FRAMES_SILABS = {
+    protocolVersion: '7e8106010403db0a7e',
+    ncpVersion:
+        '7e820602534c2d4f50454e5448524541442f322e352e322e305f4769744875622d3166636562323235623b2045465233323b204d617220313920323032352031333a34353a343400b5dc7e',
+    interfaceType: '7e83060303573a7e',
+    rcpAPIVersion: '7e8406b0010a681f7e',
+    rcpMinHostAPIVersion: '7e8506b101048ea77e',
+    resetPowerOn: '7e80060070ee747e',
+};
+/** SL-OPENTHREAD/2.5.2.0_GitHub-1fceb225b; EFR32; Mar 19 2025 13:45:44 */
+const FORM_FRAMES_SILABS = {
+    phyEnabled: '7e87062001f2627e',
+    phyChan: '7e88062114ff8e7e',
+    phyTxPowerSet: '7e8906257d339b817e',
+    mac154LAddr: '7e8a06344d325a6e6f486f5a8f327e',
+    mac154SAddr: '7e8b0635000047f67e',
+    mac154PANId: '7e8c0636d98579727e',
+    macRxOnWhenIdleMode: '7e8d060000e68c7e',
+    macRawStreamEnabled: '7e8e06370108437e',
+    phyTxPowerGet: '7e8106257d3343647e',
+    phyRSSIGet: '7e820626983d517e',
+    phyRXSensitivityGet: '7e8306279c7a127e',
+    phyCCAThresholdGet: '7e840624b5f0d37e',
+};
+// /** SL-OPENTHREAD/2.5.2.0_GitHub-1fceb225b; EFR32; Mar 19 2025 13:45:44 */
+// const STOP_FRAMES_SILABS = {
+//     macRawStreamEnabled: "7e8b063700d63c7e",
+//     phyEnabled: "7e8c0620006eb37e",
+// }
 const COMMON_FFD_MAC_CAP: MACCapabilities = {
     alternatePANCoordinator: false,
     deviceType: 1,
@@ -43,66 +73,93 @@ const COMMON_RFD_MAC_CAP: MACCapabilities = {
 
 describe('ZigBee on Host', () => {
     let adapter: ZoHAdapter;
+    let nextTidFromStartup = 1;
 
     const deleteZoHSave = () => {
         rmSync(TEMP_PATH_SAVE, {force: true});
     };
 
-    const makeSpinelStreamRawFrame = (tid: number, macFrame: Buffer): SpinelFrame => {
-        return {
+    const makeSpinelLastStatus = (tid: number, status: SpinelStatus = SpinelStatus.OK): Buffer => {
+        const respSpinelFrame = {
             header: {
                 tid,
                 nli: 0,
                 flg: SPINEL_HEADER_FLG_SPINEL,
             },
             commandId: 6 /* PROP_VALUE_IS */,
-            payload: Buffer.from([113 /* STREAM_RAW */, macFrame.byteLength & 0xff, (macFrame.byteLength >> 8) & 0xff, ...macFrame]),
+            payload: Buffer.from([0 /* LAST_STATUS */, status]),
         };
+        const encRespHdlcFrame = encodeSpinelFrame(respSpinelFrame);
+
+        return Buffer.from(encRespHdlcFrame.data.subarray(0, encRespHdlcFrame.length));
     };
 
-    const mockGetPropertyPayload = (hex: string): SpinelFrame => decodeSpinelFrame(decodeHdlcFrame(Buffer.from(hex, 'hex')));
+    const makeSpinelStreamRaw = (tid: number, macFrame: Buffer, spinelMeta?: Buffer): Buffer => {
+        const spinelFrame = {
+            header: {
+                tid,
+                nli: 0,
+                flg: SPINEL_HEADER_FLG_SPINEL,
+            },
+            commandId: 6 /* PROP_VALUE_IS */,
+            payload: Buffer.from([
+                113 /* STREAM_RAW */,
+                macFrame.byteLength & 0xff,
+                (macFrame.byteLength >> 8) & 0xff,
+                ...macFrame,
+                ...(spinelMeta || []),
+            ]),
+        };
+        const encHdlcFrame = encodeSpinelFrame(spinelFrame);
 
-    const mockStart = async (loadState = true) => {
-        if (adapter?.driver) {
+        return Buffer.from(encHdlcFrame.data.subarray(0, encHdlcFrame.length));
+    };
+
+    const mockStart = async (loadState = true, frames = START_FRAMES_SILABS) => {
+        if (adapter.driver) {
             let loadStateSpy: ReturnType<typeof vi.spyOn> | undefined;
 
             if (!loadState) {
                 loadStateSpy = vi.spyOn(adapter.driver, 'loadState').mockResolvedValue(undefined);
             }
 
-            const getPropertySpy = vi
-                .spyOn(adapter.driver, 'getProperty')
-                .mockResolvedValueOnce(mockGetPropertyPayload('7e8106010403db0a7e')) // PROTOCOL_VERSION
-                .mockResolvedValueOnce(
-                    mockGetPropertyPayload(
-                        '7e820602534c2d4f50454e5448524541442f322e352e322e305f4769744875622d3166636562323235623b2045465233323b204d617220313920323032352031333a34353a343400b5dc7e',
-                    ),
-                ) // NCP_VERSION
-                .mockResolvedValueOnce(mockGetPropertyPayload('7e83060303573a7e')) // INTERFACE_TYPE
-                .mockResolvedValueOnce(mockGetPropertyPayload('7e8406b0010a681f7e')) // RCP_API_VERSION
-                .mockResolvedValueOnce(mockGetPropertyPayload('7e8506b101048ea77e')); // RCP_MIN_HOST_API_VERSION
+            let i = -1;
+            const orderedFrames = [
+                frames.protocolVersion,
+                frames.ncpVersion,
+                frames.interfaceType,
+                frames.rcpAPIVersion,
+                frames.rcpMinHostAPIVersion,
+                frames.resetPowerOn,
+            ];
 
-            const waitForResetSpy = vi.spyOn(adapter.driver, 'waitForReset').mockImplementationOnce(async () => {
-                const p = adapter.driver.waitForReset();
+            const reply = async () => {
+                await vi.advanceTimersByTimeAsync(5);
 
-                adapter.driver.parser._transform(Buffer.from(RESET_POWER_ON_FRAME_HEX, 'hex'), 'utf8', () => {});
-                await vi.advanceTimersByTimeAsync(10);
+                // skip cancel byte
+                if (i >= 0) {
+                    adapter.driver.parser._transform(Buffer.from(orderedFrames[i], 'hex'), 'utf8', () => {});
+                    await vi.advanceTimersByTimeAsync(5);
+                }
 
-                await p;
-            });
+                i++;
 
+                if (i === orderedFrames.length) {
+                    adapter.driver.writer.removeListener('data', reply);
+                }
+            };
+
+            adapter.driver.writer.on('data', reply);
             await adapter.driver.start();
-
             loadStateSpy?.mockRestore();
-            getPropertySpy.mockRestore();
-            waitForResetSpy.mockRestore();
-
             await vi.advanceTimersByTimeAsync(100); // flush
+
+            nextTidFromStartup = adapter.driver.currentSpinelTID + 1;
         }
     };
 
     const mockStop = async (expectThrow?: string) => {
-        if (adapter?.driver) {
+        if (adapter.driver) {
             const setPropertySpy = vi.spyOn(adapter.driver, 'setProperty').mockResolvedValue();
 
             if (expectThrow !== undefined) {
@@ -115,27 +172,100 @@ describe('ZigBee on Host', () => {
 
             await vi.advanceTimersByTimeAsync(100); // flush
         }
+
+        nextTidFromStartup = 1;
     };
 
-    const mockFormNetwork = async () => {
-        if (adapter?.driver) {
-            const setPropertySpy = vi.spyOn(adapter.driver, 'setProperty').mockResolvedValue();
-            const getPropertySpy = vi
-                .spyOn(adapter.driver, 'getProperty')
-                .mockResolvedValueOnce(mockGetPropertyPayload('7e8106257d3343647e')) // PHY_TX_POWER
-                .mockResolvedValueOnce(mockGetPropertyPayload('7e82062695d88a7e')) // PHY_RSSI
-                .mockResolvedValueOnce(mockGetPropertyPayload('7e8306279c7a127e')) // PHY_RX_SENSITIVITY
-                .mockResolvedValueOnce(mockGetPropertyPayload('7e840624b5f0d37e')); // PHY_CCA_THRESHOLD
-            const registerTimersSpy = vi.spyOn(adapter.driver, 'registerTimers').mockResolvedValue();
+    const mockFormNetwork = async (registerTimers = false, frames = FORM_FRAMES_SILABS) => {
+        if (adapter.driver) {
+            let i = 0;
+            const orderedFrames = [
+                frames.phyEnabled,
+                frames.phyChan,
+                frames.phyTxPowerSet,
+                frames.mac154LAddr,
+                frames.mac154SAddr,
+                frames.mac154PANId,
+                frames.macRxOnWhenIdleMode,
+                frames.macRawStreamEnabled,
+                frames.phyTxPowerGet,
+                frames.phyRSSIGet,
+                frames.phyRXSensitivityGet,
+                frames.phyCCAThresholdGet,
+            ];
+
+            const reply = async () => {
+                await vi.advanceTimersByTimeAsync(5);
+                adapter.driver.parser._transform(Buffer.from(orderedFrames[i], 'hex'), 'utf8', () => {});
+                await vi.advanceTimersByTimeAsync(5);
+
+                i++;
+
+                if (i === orderedFrames.length) {
+                    adapter.driver.writer.removeListener('data', reply);
+                }
+            };
+
+            adapter.driver.writer.on('data', reply);
+
+            let registerTimersSpy: ReturnType<typeof vi.spyOn> | undefined;
+
+            if (registerTimers) {
+                await mockRegisterTimers();
+            } else {
+                registerTimersSpy = vi.spyOn(adapter.driver, 'registerTimers').mockResolvedValue();
+            }
 
             await adapter.driver.formNetwork();
 
-            setPropertySpy.mockRestore();
-            getPropertySpy.mockRestore();
             registerTimersSpy?.mockRestore();
 
             await vi.advanceTimersByTimeAsync(100); // flush
+
+            nextTidFromStartup = adapter.driver.currentSpinelTID + 1;
         }
+    };
+
+    const mockRegisterTimers = async () => {
+        if (adapter.driver) {
+            let linksSpy: ZigbeeNWKLinkStatus[] | undefined;
+            let manyToOneSpy: number | undefined;
+            let destination16Spy: number | undefined;
+
+            // creates a bottleneck with vitest & promises, noop it
+            const savePeriodicStateSpy = vi.spyOn(adapter.driver, 'savePeriodicState').mockResolvedValue();
+            const sendZigbeeNWKLinkStatusSpy = vi.spyOn(adapter.driver, 'sendZigbeeNWKLinkStatus').mockImplementationOnce(async (links) => {
+                linksSpy = links;
+                const p = adapter.driver.sendZigbeeNWKLinkStatus(links);
+                // LINK_STATUS => OK
+                adapter.driver.parser._transform(makeSpinelLastStatus(nextTidFromStartup), 'utf8', () => {});
+                await vi.advanceTimersByTimeAsync(10);
+                await p;
+            });
+            const sendZigbeeNWKRouteReqSpy = vi
+                .spyOn(adapter.driver, 'sendZigbeeNWKRouteReq')
+                .mockImplementationOnce(async (manyToOne, destination16) => {
+                    manyToOneSpy = manyToOne;
+                    destination16Spy = destination16;
+                    const p = adapter.driver.sendZigbeeNWKRouteReq(manyToOne, destination16);
+                    // ROUTE_REQ => OK
+                    adapter.driver.parser._transform(makeSpinelLastStatus(nextTidFromStartup + 1), 'utf8', () => {});
+                    await vi.advanceTimersByTimeAsync(10);
+                    return await p;
+                });
+            await adapter.driver.registerTimers();
+            await vi.advanceTimersByTimeAsync(100); // flush
+
+            expect(savePeriodicStateSpy).toHaveBeenCalledTimes(1);
+            expect(sendZigbeeNWKLinkStatusSpy).toHaveBeenCalledTimes(1 + 1); // *2 by spy mock
+            expect(sendZigbeeNWKRouteReqSpy).toHaveBeenCalledTimes(1 + 1); // *2 by spy mock
+
+            nextTidFromStartup = adapter.driver.currentSpinelTID + 1;
+
+            return [linksSpy, manyToOneSpy, destination16Spy];
+        }
+
+        return [undefined, undefined, undefined];
     };
 
     beforeAll(() => {
@@ -190,7 +320,6 @@ describe('ZigBee on Host', () => {
             // @ts-expect-error mock noop
             () => {},
         );
-        vi.spyOn(adapter.driver.writer, 'writeBuffer').mockImplementation((b) => {});
 
         adapter.driver.parser.on('data', adapter.driver.onFrame.bind(adapter.driver));
     });
@@ -223,9 +352,7 @@ describe('ZigBee on Host', () => {
     it('Adapter impl: sendZdo to device', async () => {
         await adapter.start();
 
-        const waitForTIDSpy = vi.spyOn(adapter.driver, 'waitForTID');
-
-        waitForTIDSpy.mockResolvedValueOnce(makeSpinelStreamRawFrame(1, Buffer.alloc(1)));
+        await adapter.driver.associate(0x2211, BigInt('0x0807060504030201'), true, structuredClone(COMMON_FFD_MAC_CAP), true, false, true);
 
         const p1 = adapter.sendZdo(
             '0x0807060504030201',
@@ -235,11 +362,13 @@ describe('ZigBee on Host', () => {
             false,
         );
 
-        await vi.advanceTimersByTimeAsync(100);
+        await vi.advanceTimersByTimeAsync(10);
+        adapter.driver.parser._transform(makeSpinelLastStatus(nextTidFromStartup, SpinelStatus.OK), 'utf8', () => {});
+        await vi.advanceTimersByTimeAsync(10);
         adapter.driver.emit(
             'frame',
             0x2211,
-            578437695752307201n,
+            BigInt('0x0807060504030201'),
             {
                 frameControl: {
                     frameType: 0 /* DATA */,
@@ -255,8 +384,9 @@ describe('ZigBee on Host', () => {
                 destEndpoint: 0x0,
             },
             Buffer.from([1, 0, 0x1, 0x2, 0x3, 0x4, 0x5, 0x6, 0x7, 0x8, 0x11, 0x22]),
-            -50,
+            150,
         );
+        await vi.advanceTimersByTimeAsync(10);
 
         await expect(p1).resolves.toStrictEqual([
             0,
@@ -268,8 +398,6 @@ describe('ZigBee on Host', () => {
             },
         ]);
 
-        waitForTIDSpy.mockResolvedValueOnce(makeSpinelStreamRawFrame(1, Buffer.alloc(1)));
-
         const p2 = adapter.sendZdo(
             '0x0807060504030201',
             0x2211,
@@ -278,11 +406,13 @@ describe('ZigBee on Host', () => {
             false,
         );
 
-        await vi.advanceTimersByTimeAsync(100);
+        await vi.advanceTimersByTimeAsync(10);
+        adapter.driver.parser._transform(makeSpinelLastStatus(nextTidFromStartup + 1, SpinelStatus.OK), 'utf8', () => {});
+        await vi.advanceTimersByTimeAsync(10);
         adapter.driver.emit(
             'frame',
             0x2211,
-            578437695752307201n,
+            BigInt('0x0807060504030201'),
             {
                 frameControl: {
                     frameType: 0 /* DATA */,
@@ -297,9 +427,10 @@ describe('ZigBee on Host', () => {
                 sourceEndpoint: 0x0,
                 destEndpoint: 0x0,
             },
-            Buffer.from([1, 0, 0x1, 0x2, 0x3, 0x4, 0x5, 0x6, 0x7, 0x8, 0x11, 0x22]),
-            -50,
+            Buffer.from([2, 0, 0x1, 0x2, 0x3, 0x4, 0x5, 0x6, 0x7, 0x8, 0x11, 0x22]),
+            150,
         );
+        await vi.advanceTimersByTimeAsync(10);
 
         await expect(p2).resolves.toStrictEqual([
             0,
@@ -427,18 +558,18 @@ describe('ZigBee on Host', () => {
     it('Adapter impl: sendZclFrameToEndpoint', async () => {
         await adapter.start();
 
-        const waitForTIDSpy = vi.spyOn(adapter.driver, 'waitForTID');
-        const sendUnicastSpy = vi.spyOn(adapter.driver, 'sendUnicast');
+        await adapter.driver.associate(0x9876, BigInt('0x00000000000004d2'), true, structuredClone(COMMON_FFD_MAC_CAP), true, false, true);
 
-        waitForTIDSpy.mockResolvedValueOnce(makeSpinelStreamRawFrame(1, Buffer.alloc(1)));
-        sendUnicastSpy.mockResolvedValueOnce(1);
+        const sendUnicastSpy = vi.spyOn(adapter.driver, 'sendUnicast');
 
         const zclPayload = Buffer.from([16, 123, Zcl.Foundation.read.ID]);
         const zclFrame = Zcl.Frame.fromBuffer(Zcl.Clusters.genGroups.ID, Zcl.Header.fromBuffer(zclPayload), zclPayload, {});
 
         const p1 = adapter.sendZclFrameToEndpoint('0x00000000000004d2', 0x9876, 1, zclFrame, 10000, false, false, 2);
 
-        await vi.advanceTimersByTimeAsync(100);
+        await vi.advanceTimersByTimeAsync(10);
+        adapter.driver.parser._transform(makeSpinelLastStatus(nextTidFromStartup, SpinelStatus.OK), 'utf8', () => {});
+        await vi.advanceTimersByTimeAsync(10);
         adapter.driver.emit(
             'frame',
             0x9876,
@@ -458,7 +589,7 @@ describe('ZigBee on Host', () => {
                 destEndpoint: 0x2,
             },
             Buffer.from([0, 123, Zcl.Foundation.read.response!, 0x01, 0xff]),
-            -25,
+            215,
         );
         await expect(p1).resolves.toStrictEqual({
             address: 0x9876,
@@ -479,29 +610,31 @@ describe('ZigBee on Host', () => {
                 manufacturerCode: undefined,
                 transactionSequenceNumber: 123,
             }),
-            linkquality: -25,
+            linkquality: 215,
             wasBroadcast: false,
         });
         expect(sendUnicastSpy).toHaveBeenLastCalledWith(zclFrame.toBuffer(), ZSpec.HA_PROFILE_ID, Zcl.Clusters.genGroups.ID, 0x9876, undefined, 1, 2);
 
-        waitForTIDSpy.mockResolvedValueOnce(makeSpinelStreamRawFrame(2, Buffer.alloc(1)));
         sendUnicastSpy.mockResolvedValueOnce(2);
 
         const p2 = adapter.sendZclFrameToEndpoint('0x00000000000004d2', 0x9876, 1, zclFrame, 10000, true, false);
 
-        await vi.advanceTimersByTimeAsync(100);
+        await vi.advanceTimersByTimeAsync(10);
+        adapter.driver.parser._transform(makeSpinelLastStatus(nextTidFromStartup + 1, SpinelStatus.OK), 'utf8', () => {});
+        await vi.advanceTimersByTimeAsync(10);
         await expect(p2).resolves.toStrictEqual(undefined);
         expect(sendUnicastSpy).toHaveBeenLastCalledWith(zclFrame.toBuffer(), ZSpec.HA_PROFILE_ID, Zcl.Clusters.genGroups.ID, 0x9876, undefined, 1, 1);
 
         const zclPayloadDefRsp = Buffer.from([0, 123, Zcl.Foundation.read.ID]);
         const zclFrameDefRsp = Zcl.Frame.fromBuffer(Zcl.Clusters.genGroups.ID, Zcl.Header.fromBuffer(zclPayloadDefRsp), zclPayloadDefRsp, {});
 
-        waitForTIDSpy.mockResolvedValueOnce(makeSpinelStreamRawFrame(3, Buffer.alloc(1)));
         sendUnicastSpy.mockResolvedValueOnce(3);
 
         const p3 = adapter.sendZclFrameToEndpoint('0x00000000000004d2', 0x9876, 1, zclFrameDefRsp, 10000, true, false, 2);
 
-        await vi.advanceTimersByTimeAsync(100);
+        await vi.advanceTimersByTimeAsync(10);
+        adapter.driver.parser._transform(makeSpinelLastStatus(nextTidFromStartup + 2, SpinelStatus.OK), 'utf8', () => {});
+        await vi.advanceTimersByTimeAsync(10);
         adapter.driver.emit(
             'frame',
             0x9876,
@@ -521,7 +654,7 @@ describe('ZigBee on Host', () => {
                 destEndpoint: 0x2,
             },
             Buffer.from([0, 123, Zcl.Foundation.defaultRsp.ID, 0x01, 0xff]),
-            -25,
+            125,
         );
         await expect(p3).resolves.toStrictEqual({
             address: 0x9876,
@@ -542,7 +675,7 @@ describe('ZigBee on Host', () => {
                 manufacturerCode: undefined,
                 transactionSequenceNumber: 123,
             }),
-            linkquality: -25,
+            linkquality: 125,
             wasBroadcast: false,
         });
         expect(sendUnicastSpy).toHaveBeenLastCalledWith(
@@ -556,12 +689,13 @@ describe('ZigBee on Host', () => {
         );
 
         sendUnicastSpy.mockClear();
-        waitForTIDSpy.mockResolvedValueOnce(makeSpinelStreamRawFrame(2, Buffer.alloc(1)));
         sendUnicastSpy.mockRejectedValueOnce(new Error('Failed')).mockResolvedValueOnce(2);
 
         const p4 = adapter.sendZclFrameToEndpoint('0x00000000000004d2', 0x9876, 1, zclFrame, 10000, false, false, 2);
 
-        await vi.advanceTimersByTimeAsync(100);
+        await vi.advanceTimersByTimeAsync(10);
+        adapter.driver.parser._transform(makeSpinelLastStatus(nextTidFromStartup + 3, SpinelStatus.OK), 'utf8', () => {});
+        await vi.advanceTimersByTimeAsync(10);
         adapter.driver.emit(
             'frame',
             0x9876,
@@ -581,7 +715,7 @@ describe('ZigBee on Host', () => {
                 destEndpoint: 0x2,
             },
             Buffer.from([0, 123, Zcl.Foundation.read.response!, 0x01, 0xff]),
-            -25,
+            225,
         );
         await expect(p4).resolves.toStrictEqual({
             address: 0x9876,
@@ -602,14 +736,13 @@ describe('ZigBee on Host', () => {
                 manufacturerCode: undefined,
                 transactionSequenceNumber: 123,
             }),
-            linkquality: -25,
+            linkquality: 225,
             wasBroadcast: false,
         });
         expect(sendUnicastSpy).toHaveBeenLastCalledWith(zclFrame.toBuffer(), ZSpec.HA_PROFILE_ID, Zcl.Clusters.genGroups.ID, 0x9876, undefined, 1, 2);
         expect(sendUnicastSpy).toHaveBeenCalledTimes(2);
 
         sendUnicastSpy.mockClear();
-        waitForTIDSpy.mockResolvedValueOnce(makeSpinelStreamRawFrame(2, Buffer.alloc(1)));
         sendUnicastSpy.mockRejectedValueOnce(new Error('Failed')).mockRejectedValueOnce(new Error('Failed'));
 
         await expect(adapter.sendZclFrameToEndpoint('0x00000000000004d2', 0x9876, 1, zclFrame, 10000, false, false, 2)).rejects.toThrow('Failed');
@@ -618,18 +751,17 @@ describe('ZigBee on Host', () => {
         const zclFrameGP = Zcl.Frame.fromBuffer(Zcl.Clusters.greenPower.ID, Zcl.Header.fromBuffer(zclPayload), zclPayload, {});
 
         sendUnicastSpy.mockClear();
-        waitForTIDSpy.mockResolvedValueOnce(makeSpinelStreamRawFrame(2, Buffer.alloc(1)));
 
         await expect(
             adapter.sendZclFrameToEndpoint('0xb43a31fffe0f6aae', 57129, ZSpec.GP_ENDPOINT, zclFrameGP, 10000, true, false, ZSpec.GP_ENDPOINT),
-        ).resolves.toStrictEqual(undefined);
-        expect(sendUnicastSpy).toHaveBeenCalledTimes(1);
+        ).rejects.toThrow('Unknown destination');
+        expect(sendUnicastSpy).toHaveBeenCalledTimes(2);
     });
 
     it('Adapter impl: sendZclFrameToGroup', async () => {
         await adapter.start();
 
-        const sendMulticastSpy = vi.spyOn(adapter.driver, 'sendMulticast').mockResolvedValueOnce(1).mockResolvedValueOnce(1).mockResolvedValueOnce(1);
+        const sendGroupcastSpy = vi.spyOn(adapter.driver, 'sendGroupcast').mockResolvedValueOnce(1).mockResolvedValueOnce(1).mockResolvedValueOnce(1);
 
         const zclPayload = Buffer.from([0, 123, Zcl.Foundation.read.ID]);
         const zclFrame = Zcl.Frame.fromBuffer(Zcl.Clusters.genGroups.ID, Zcl.Header.fromBuffer(zclPayload), zclPayload, {});
@@ -638,13 +770,13 @@ describe('ZigBee on Host', () => {
 
         await vi.advanceTimersByTimeAsync(1000);
         await expect(p1).resolves.toStrictEqual(undefined);
-        expect(sendMulticastSpy).toHaveBeenLastCalledWith(zclFrame.toBuffer(), ZSpec.HA_PROFILE_ID, Zcl.Clusters.genGroups.ID, 123, 0xff, 5);
+        expect(sendGroupcastSpy).toHaveBeenLastCalledWith(zclFrame.toBuffer(), ZSpec.HA_PROFILE_ID, Zcl.Clusters.genGroups.ID, 123, 5);
 
         const p2 = adapter.sendZclFrameToGroup(123, zclFrame);
 
         await vi.advanceTimersByTimeAsync(1000);
         await expect(p2).resolves.toStrictEqual(undefined);
-        expect(sendMulticastSpy).toHaveBeenLastCalledWith(zclFrame.toBuffer(), ZSpec.HA_PROFILE_ID, Zcl.Clusters.genGroups.ID, 123, 0xff, 1);
+        expect(sendGroupcastSpy).toHaveBeenLastCalledWith(zclFrame.toBuffer(), ZSpec.HA_PROFILE_ID, Zcl.Clusters.genGroups.ID, 123, 1);
     });
 
     it('Adapter impl: sendZclFrameToAll', async () => {
