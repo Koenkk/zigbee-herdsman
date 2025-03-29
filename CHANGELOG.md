@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.4.10](https://github.com/Koenkk/zigbee-herdsman/compare/v3.4.9...v3.4.10) (2025-03-28)
+
+
+### Bug Fixes
+
+* **ignore:** ZoH v0.1.10 ([#1372](https://github.com/Koenkk/zigbee-herdsman/issues/1372)) ([db05409](https://github.com/Koenkk/zigbee-herdsman/commit/db0540913cc50c9264e1cafdaed40baaa8027ad6))
+
 ## [3.4.9](https://github.com/Koenkk/zigbee-herdsman/compare/v3.4.8...v3.4.9) (2025-03-26)
 
 
