@@ -380,9 +380,21 @@ export class DeconzAdapter extends Adapter {
             const responseClusterId = Zdo.Utils.getResponseClusterId(clusterId);
 
             if (responseClusterId) {
-                const response = await this.waitForData(isNwkAddrRequest ? ieeeAddress : networkAddress, Zdo.ZDO_PROFILE_ID, responseClusterId);
-
-                return response.zdo! as ZdoTypes.RequestToResponseMap[K];
+                try {
+                    const response = await this.waitForData(isNwkAddrRequest ? ieeeAddress : networkAddress, Zdo.ZDO_PROFILE_ID, responseClusterId);
+                    return response.zdo! as ZdoTypes.RequestToResponseMap[K];
+                } catch (error) {
+                    if (responseClusterId == Zdo.ClusterId.ACTIVE_ENDPOINTS_RESPONSE && networkAddress === 0) {
+                        logger.warning('Failed to determine active endpoints of coordinator, falling back to [1]', NS);
+                        // Some Conbee adapaters don't provide a response to an active endpoint request of the coordinator, always return
+                        // an endpoint here. Before an active endpoint request was done to determine the endpoints, they were hardcoded:
+                        // https://github.com/Koenkk/zigbee-herdsman/blob/d855b3bf85a066cb7c325fe3ef0006873c735add/src/adapter/deconz/adapter/deconzAdapter.ts#L105
+                        const response: ZdoTypes.ResponseMap[Zdo.ClusterId.ACTIVE_ENDPOINTS_RESPONSE] = [Zdo.Status.SUCCESS, {endpointList: [1], nwkAddress: 0}]
+                        return response as ZdoTypes.RequestToResponseMap[K];
+                    } else {
+                        throw error
+                    }
+                }
             }
         }
     }
