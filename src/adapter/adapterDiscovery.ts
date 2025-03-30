@@ -100,13 +100,21 @@ const USB_FINGERPRINTS: Record<DiscoverableUsbAdapter, UsbAdapterFingerprint[]> 
             pathRegex: '.*slzb-07mg24.*',
         },
         {
-            // Sonoff ZBDongle-E V2
+            // Sonoff ZBDongle-E V2 (CH variant)
             vendorId: '1a86',
             productId: '55d4',
             manufacturer: 'ITEAD',
             // /dev/serial/by-id/usb-ITEAD_SONOFF_Zigbee_3.0_USB_Dongle_Plus_V2_20240122184111-if00
             // /dev/serial/by-id/usb-ITead_Sonoff_Zigbee_3.0_USB_Dongle_Plus_186ff44314e2ed11b891eb5162c61111-if00-port0
             pathRegex: '.*sonoff.*plus.*',
+        },
+        {
+            // Sonoff ZBDongle-E V2 (CP variant)
+            vendorId: '10c4',
+            productId: 'ea60',
+            manufacturer: 'ITEAD',
+            // /dev/serial/by-id/usb-Itead_Sonoff_Zigbee_3.0_USB_Dongle_Plus_V2_a6ee897e4d1fef11aa004ad0639e525b-if00-port0
+            pathRegex: '.*sonoff.*plus_v2_.*',
         },
         // {
         //     // TODO: Z-station by z-wave.me (EFR32MG21A020F1024IM32)
@@ -140,7 +148,7 @@ const USB_FINGERPRINTS: Record<DiscoverableUsbAdapter, UsbAdapterFingerprint[]> 
             manufacturer: 'ITEAD',
             // /dev/serial/by-id/usb-Silicon_Labs_Sonoff_Zigbee_3.0_USB_Dongle_Plus_0111-if00-port0
             // /dev/serial/by-id/usb-ITead_Sonoff_Zigbee_3.0_USB_Dongle_Plus_b8b49abd27a6ed11a280eba32981d111-if00-port0
-            pathRegex: '.*sonoff.*plus.*',
+            pathRegex: '.*sonoff.*plus(?!_v2_).*',
         },
         {
             // CC2538
@@ -297,7 +305,7 @@ function matchUsbFingerprint(
 ): [path: PortInfo['path'], score: number] | undefined {
     if (!portInfo.vendorId || !portInfo.productId) {
         // port info is missing essential information for proper matching, ignore it
-        return;
+        return undefined;
     }
 
     let match: UsbAdapterFingerprint | undefined;
@@ -346,7 +354,20 @@ function matchUsbFingerprint(
     }
 
     // poor match only returned if port info not conflict-prone
-    return match && (score > UsbFingerprintMatchScore.VID_PID || !conflictProne) ? [portInfo.path, score] : undefined;
+    if (match) {
+        if (score > UsbFingerprintMatchScore.VID_PID) {
+            if (conflictProne && score < UsbFingerprintMatchScore.VID_PID_PATH && matchString(match.manufacturer!, 'itead')) {
+                // can't trust metadata "only" on sonoff dongles with conflicts
+                return undefined;
+            }
+
+            return [portInfo.path, score];
+        } else if (!conflictProne) {
+            return [portInfo.path, score];
+        }
+    }
+
+    return undefined;
 }
 
 export async function matchUsbAdapter(adapter: Adapter, path: string): Promise<boolean> {

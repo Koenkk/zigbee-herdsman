@@ -16,6 +16,7 @@ import {
     DECONZ_CONBEE_II,
     EMBER_SKYCONNECT,
     EMBER_ZBDONGLE_E,
+    EMBER_ZBDONGLE_E_CP,
     ZBOSS_NORDIC,
     ZIGATE_PLUSV2,
     ZSTACK_CC2538,
@@ -167,7 +168,7 @@ describe('Adapter', () => {
         // on Windows
         mockPlatform.mockReturnValueOnce('win32');
         vi.spyOn(SerialPort, 'list').mockResolvedValueOnce([
-            Object.assign({pnpId: 'zbdongle-e', serialNumber: '', locationId: '', friendlyName: 'silicon labs cp210x'}, EMBER_ZBDONGLE_E),
+            Object.assign({pnpId: 'zbdongle-e', serialNumber: '', locationId: '', friendlyName: 'silicon labs cp210x'}, EMBER_ZBDONGLE_E_CP),
         ]);
         // `name` in `txt`, no `addresses`
         mockBonjourResult.mockImplementationOnce((type) => ({
@@ -196,7 +197,7 @@ describe('Adapter', () => {
         await expect(p).resolves.toStrictEqual([
             {
                 name: 'silicon labs cp210x (ITEAD)',
-                path: '/dev/serial/by-id/usb-ITEAD_SONOFF_Zigbee_3.0_USB_Dongle_Plus_V2_20240122184111-if00',
+                path: EMBER_ZBDONGLE_E_CP.path,
                 adapter: undefined,
             },
             {
@@ -514,6 +515,14 @@ describe('Adapter', () => {
 
                 listSpy.mockReturnValueOnce([{...ZSTACK_ZBDONGLE_P, path: '/dev/ttyACM0'}]);
 
+                await expect(Adapter.create({panID: 0x1a62, channelList: [11]}, {}, 'test.db.backup', {disableLED: false})).rejects.toThrow(
+                    `USB adapter discovery error (No valid USB adapter found). Specify valid 'adapter' and 'port' in your configuration.`,
+                );
+
+                listSpy.mockReturnValueOnce([
+                    {...ZSTACK_ZBDONGLE_P, path: '/dev/ttyACM0', pnpId: ZSTACK_ZBDONGLE_P.path.replace('/dev/serial/by-id/', '')},
+                ]);
+
                 adapter = await Adapter.create({panID: 0x1a62, channelList: [11]}, {}, 'test.db.backup', {disableLED: false});
 
                 expect(adapter).toBeInstanceOf(ZStackAdapter);
@@ -521,6 +530,28 @@ describe('Adapter', () => {
                 expect(adapter.serialPortOptions).toStrictEqual({
                     path: '/dev/ttyACM0',
                     adapter: 'zstack',
+                });
+
+                listSpy.mockReturnValueOnce([ZSTACK_ZBDONGLE_P]);
+
+                adapter = await Adapter.create({panID: 0x1a62, channelList: [11]}, {}, 'test.db.backup', {disableLED: false});
+
+                expect(adapter).toBeInstanceOf(ZStackAdapter);
+                // @ts-expect-error protected
+                expect(adapter.serialPortOptions).toStrictEqual({
+                    path: ZSTACK_ZBDONGLE_P.path,
+                    adapter: 'zstack',
+                });
+
+                listSpy.mockReturnValueOnce([EMBER_ZBDONGLE_E_CP]);
+
+                adapter = await Adapter.create({panID: 0x1a62, channelList: [11]}, {}, 'test.db.backup', {disableLED: false});
+
+                expect(adapter).toBeInstanceOf(EmberAdapter);
+                // @ts-expect-error protected
+                expect(adapter.serialPortOptions).toStrictEqual({
+                    path: EMBER_ZBDONGLE_E_CP.path,
+                    adapter: 'ember',
                 });
 
                 listSpy.mockReturnValueOnce([ZSTACK_SMLIGHT_SLZB_06P10]);
