@@ -1,5 +1,14 @@
 # Changelog
 
+## [3.4.11](https://github.com/Koenkk/zigbee-herdsman/compare/v3.4.10...v3.4.11) (2025-03-31)
+
+
+### Bug Fixes
+
+* De-conflict Sonoff dongles discovery ([#1377](https://github.com/Koenkk/zigbee-herdsman/issues/1377)) ([68abba0](https://github.com/Koenkk/zigbee-herdsman/commit/68abba0c5e65763d887b71d83aa7f33818b1aed5))
+* Fix Conbee adapter having no endpoints ([#1376](https://github.com/Koenkk/zigbee-herdsman/issues/1376)) ([206fa80](https://github.com/Koenkk/zigbee-herdsman/commit/206fa80e20c7dfe1ec965b3f1195aa82e014b48a))
+* **ignore:** update dependencies ([#1374](https://github.com/Koenkk/zigbee-herdsman/issues/1374)) ([c000e1e](https://github.com/Koenkk/zigbee-herdsman/commit/c000e1e9545f83672efb06ad9fd0bd0345f476b3))
+
 ## [3.4.10](https://github.com/Koenkk/zigbee-herdsman/compare/v3.4.9...v3.4.10) (2025-03-28)
 
 
