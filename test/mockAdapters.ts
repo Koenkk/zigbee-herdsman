@@ -5,9 +5,17 @@ export const DECONZ_CONBEE_II = {
     manufacturer: 'dresden elektronik ingenieurtechnik GmbH',
 };
 export const EMBER_ZBDONGLE_E = {
+    // may or may not have `V2` (bad metadata in some batches)
     path: '/dev/serial/by-id/usb-ITEAD_SONOFF_Zigbee_3.0_USB_Dongle_Plus_V2_20240122184111-if00',
     vendorId: '1A86', // uppercased for extra coverage
     productId: '55d4',
+    manufacturer: 'ITEAD',
+};
+export const EMBER_ZBDONGLE_E_CP = {
+    // may or may not have `V2` (bad metadata in some batches)
+    path: '/dev/serial/by-id/usb-Itead_Sonoff_Zigbee_3.0_USB_Dongle_Plus_V2_a6ee897e4d1fef11aa004ad0639e525b-if00-port0',
+    vendorId: '10c4',
+    productId: 'ea60',
     manufacturer: 'ITEAD',
 };
 // vendorId+productId conflict with all 10c4:ea60
@@ -25,7 +33,7 @@ export const ZSTACK_CC2538 = {
 };
 // vendorId+productId conflict with all 10c4:ea60
 export const ZSTACK_ZBDONGLE_P = {
-    path: '/dev/serial/by-id/usb-Silicon_Labs_Sonoff_Zigbee_3.0_USB_Dongle_Plus_0111-if00-port0',
+    path: '/dev/serial/by-id/usb-ITead_Sonoff_Zigbee_3.0_USB_Dongle_Plus_b8b49abd27a6ed11a280eba32981d111-if00-port0',
     vendorId: '10c4',
     productId: 'ea60',
     manufacturer: 'ITEAD',
