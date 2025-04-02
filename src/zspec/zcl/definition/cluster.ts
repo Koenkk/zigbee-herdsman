@@ -3459,9 +3459,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             },
             closeTunnel: {
                 ID: 1,
-                parameters: [
-                    {name: 'tunnelID', type: DataType.UINT16},
-                ],
+                parameters: [{name: 'tunnelID', type: DataType.UINT16}],
             },
             transferData: {
                 ID: 2,
