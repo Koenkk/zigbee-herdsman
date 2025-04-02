@@ -116,6 +116,14 @@ const USB_FINGERPRINTS: Record<DiscoverableUsbAdapter, UsbAdapterFingerprint[]> 
             // /dev/serial/by-id/usb-Itead_Sonoff_Zigbee_3.0_USB_Dongle_Plus_V2_a6ee897e4d1fef11aa004ad0639e525b-if00-port0
             pathRegex: '.*sonoff.*plus_v2_.*',
         },
+        {
+            // Sonoff ZBDongle-M
+            vendorId: '10c4',
+            productId: 'ea60',
+            manufacturer: 'SONOFF',
+            // /dev/serial/by-id/usb-SONOFF_SONOFF_Dongle_Max_MG24_08965d6b0674ef11b2f4e61e313510fd-if00-port0
+            pathRegex: '.*sonoff.*max.*',
+        },
         // {
         //     // TODO: Z-station by z-wave.me (EFR32MG21A020F1024IM32)
         //     vendorId: '',
