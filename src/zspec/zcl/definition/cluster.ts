@@ -4645,45 +4645,6 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         commands: {},
         commandsResponse: {},
     },
-    heimanSpecificAirQuality: {
-        // from HS2AQ-3.0海曼智能空气质量检测仪API文档-V01
-        ID: 0xfc81,
-        manufacturerCode: ManufacturerCode.HEIMAN_TECHNOLOGY_CO_LTD,
-        attributes: {
-            language: {ID: 0xf000, type: DataType.UINT8},
-            unitOfMeasure: {ID: 0xf001, type: DataType.UINT8},
-            batteryState: {ID: 0xf002, type: DataType.UINT8}, //  (0 is not charged, 1 is charging, 2 is fully charged)
-            pm10measuredValue: {ID: 0xf003, type: DataType.UINT16},
-            tvocMeasuredValue: {ID: 0xf004, type: DataType.UINT16},
-            aqiMeasuredValue: {ID: 0xf005, type: DataType.UINT16},
-            temperatureMeasuredMax: {ID: 0xf006, type: DataType.INT16},
-            temperatureMeasuredMin: {ID: 0xf007, type: DataType.INT16},
-            humidityMeasuredMax: {ID: 0xf008, type: DataType.UINT16},
-            humidityMeasuredMin: {ID: 0xf009, type: DataType.UINT16},
-            alarmEnable: {ID: 0xf00a, type: DataType.UINT16},
-        },
-        commands: {
-            setLanguage: {
-                ID: 0x011b,
-                parameters: [
-                    // (1: English 0: Chinese)
-                    {name: 'languageCode', type: DataType.UINT8},
-                ],
-            },
-            setUnitOfTemperature: {
-                ID: 0x011c,
-                parameters: [
-                    // (0: ℉ 1: ℃)
-                    {name: 'unitsCode', type: DataType.UINT8},
-                ],
-            },
-            getTime: {
-                ID: 0x011d,
-                parameters: [],
-            },
-        },
-        commandsResponse: {},
-    },
     heimanSpecificScenes: {
         // from HS2SS-3.0海曼智能情景开关API文档-V01
         ID: 0xfc80,
