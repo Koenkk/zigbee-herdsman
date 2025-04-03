@@ -233,7 +233,6 @@ export default class ZiGate extends EventEmitter<ZiGateEventMap> {
             dataBits: 8,
             parity: 'none' /* one of ['none', 'even', 'mark', 'odd', 'space'] */,
             stopBits: 1 /* one of [1,2] */,
-            lock: false,
             autoOpen: false,
         });
         this.parser = this.serialPort.pipe(new DelimiterParser({delimiter: [ZiGateFrame.STOP_BYTE], includeDelimiter: true}));
