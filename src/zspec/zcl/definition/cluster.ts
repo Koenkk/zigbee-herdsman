@@ -3451,7 +3451,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 ID: 0,
                 response: 0,
                 parameters: [
-                    {name: 'protocolID', type: DataType.ENUM8},
+                    {name: 'protocolId', type: DataType.ENUM8},
                     {name: 'mfgCode', type: DataType.UINT16},
                     {name: 'flowControl', type: DataType.BOOLEAN},
                     {name: 'mtuSize', type: DataType.UINT16},
@@ -3459,19 +3459,19 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             },
             closeTunnel: {
                 ID: 1,
-                parameters: [{name: 'tunnelID', type: DataType.UINT16}],
+                parameters: [{name: 'tunnelId', type: DataType.UINT16}],
             },
             transferData: {
                 ID: 2,
                 parameters: [
-                    {name: 'tunnelID', type: DataType.UINT16},
+                    {name: 'tunnelId', type: DataType.UINT16},
                     {name: 'data', type: BuffaloZclDataType.BUFFER},
                 ],
             },
             transferDataError: {
                 ID: 3,
                 parameters: [
-                    {name: 'tunnelID', type: DataType.UINT16},
+                    {name: 'tunnelId', type: DataType.UINT16},
                     {name: 'status', type: DataType.UINT8},
                 ],
             },
@@ -3480,7 +3480,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             requestTunnelResp: {
                 ID: 0,
                 parameters: [
-                    {name: 'tunnelID', type: DataType.UINT16},
+                    {name: 'tunnelId', type: DataType.UINT16},
                     {name: 'tunnelStatus', type: DataType.UINT8},
                     {name: 'mtuSize', type: DataType.UINT16},
                 ],
@@ -3488,14 +3488,14 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             transferDataResp: {
                 ID: 1,
                 parameters: [
-                    {name: 'tunnelID', type: DataType.UINT16},
+                    {name: 'tunnelId', type: DataType.UINT16},
                     {name: 'data', type: BuffaloZclDataType.BUFFER},
                 ],
             },
             transferDataErrorResp: {
                 ID: 2,
                 parameters: [
-                    {name: 'tunnelID', type: DataType.UINT16},
+                    {name: 'tunnelId', type: DataType.UINT16},
                     {name: 'status', type: DataType.UINT8},
                 ],
             },
