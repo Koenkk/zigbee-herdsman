@@ -3447,20 +3447,56 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         ID: 0x0704,
         attributes: {},
         commands: {
+            requestTunnel: {
+                ID: 0,
+                response: 0,
+                parameters: [
+                    {name: 'protocolId', type: DataType.ENUM8},
+                    {name: 'manufCode', type: DataType.UINT16},
+                    {name: 'flowControl', type: DataType.BOOLEAN},
+                    {name: 'mtuSize', type: DataType.UINT16},
+                ],
+            },
+            closeTunnel: {
+                ID: 1,
+                parameters: [{name: 'tunnelId', type: DataType.UINT16}],
+            },
             transferData: {
                 ID: 2,
                 parameters: [
-                    {name: 'tunnelID', type: DataType.UINT16},
+                    {name: 'tunnelId', type: DataType.UINT16},
                     {name: 'data', type: BuffaloZclDataType.BUFFER},
+                ],
+            },
+            transferDataError: {
+                ID: 3,
+                parameters: [
+                    {name: 'tunnelId', type: DataType.UINT16},
+                    {name: 'status', type: DataType.UINT8},
                 ],
             },
         },
         commandsResponse: {
+            requestTunnelResp: {
+                ID: 0,
+                parameters: [
+                    {name: 'tunnelId', type: DataType.UINT16},
+                    {name: 'tunnelStatus', type: DataType.UINT8},
+                    {name: 'mtuSize', type: DataType.UINT16},
+                ],
+            },
             transferDataResp: {
                 ID: 1,
                 parameters: [
-                    {name: 'tunnelID', type: DataType.UINT16},
+                    {name: 'tunnelId', type: DataType.UINT16},
                     {name: 'data', type: BuffaloZclDataType.BUFFER},
+                ],
+            },
+            transferDataErrorResp: {
+                ID: 2,
+                parameters: [
+                    {name: 'tunnelId', type: DataType.UINT16},
+                    {name: 'status', type: DataType.UINT8},
                 ],
             },
         },
