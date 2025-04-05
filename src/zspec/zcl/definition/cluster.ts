@@ -3452,7 +3452,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 response: 0,
                 parameters: [
                     {name: 'protocolId', type: DataType.ENUM8},
-                    {name: 'mfgCode', type: DataType.UINT16},
+                    {name: 'manufCode', type: DataType.UINT16},
                     {name: 'flowControl', type: DataType.BOOLEAN},
                     {name: 'mtuSize', type: DataType.UINT16},
                 ],
