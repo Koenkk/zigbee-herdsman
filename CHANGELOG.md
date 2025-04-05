@@ -1,5 +1,18 @@
 # Changelog
 
+## [3.5.0](https://github.com/Koenkk/zigbee-herdsman/compare/v3.4.11...v3.5.0) (2025-04-05)
+
+
+### Features
+
+* add SberDevices manufacturer code ([#1382](https://github.com/Koenkk/zigbee-herdsman/issues/1382)) ([236da5b](https://github.com/Koenkk/zigbee-herdsman/commit/236da5b7b0e007bdbde2d92648bf17bd997bf105))
+* add Tunneling cluster commands ([#1381](https://github.com/Koenkk/zigbee-herdsman/issues/1381)) ([5bf6b40](https://github.com/Koenkk/zigbee-herdsman/commit/5bf6b400f2ed3574c18cdf58245850fa84941413))
+
+
+### Bug Fixes
+
+* Support for Sonoff Dongle Max auto-discovery ([#1378](https://github.com/Koenkk/zigbee-herdsman/issues/1378)) ([38d2885](https://github.com/Koenkk/zigbee-herdsman/commit/38d2885eeb41f4c0839a5ff4e7a79fefd2ad4f48))
+
 ## [3.4.11](https://github.com/Koenkk/zigbee-herdsman/compare/v3.4.10...v3.4.11) (2025-03-31)
 
 
