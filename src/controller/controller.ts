@@ -69,14 +69,10 @@ export interface ControllerEventMap {
  */
 export class Controller extends events.EventEmitter<ControllerEventMap> {
     private options: Options;
-    // @ts-expect-error assigned and validated in start()
-    private database: Database;
-    // @ts-expect-error assigned and validated in start()
-    private adapter: Adapter;
-    // @ts-expect-error assigned and validated in start()
-    private greenPower: GreenPower;
-    // @ts-expect-error assigned and validated in start()
-    private touchlink: Touchlink;
+    private database!: Database;
+    private adapter!: Adapter;
+    private greenPower!: GreenPower;
+    private touchlink!: Touchlink;
 
     private permitJoinTimer: NodeJS.Timeout | undefined;
     private permitJoinEnd?: number;
@@ -661,7 +657,7 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
         logger.debug(() => `Green power device '${JSON.stringify(payload).replaceAll(/\[[\d,]+\]/g, 'HIDDEN')}' joined`, NS);
 
         // Green power devices don't have an ieeeAddr, the sourceID is unique and static so use this.
-        const ieeeAddr = `0x${payload.sourceID.toString(16).padStart(16, '0')}`;
+        const ieeeAddr = GreenPower.sourceIdToIeeeAddress(payload.sourceID);
         // Green power devices dont' have a modelID, create a modelID based on the deviceID (=type)
         const modelID = `GreenPower_${payload.deviceID}`;
         let device = Device.byIeeeAddr(ieeeAddr, true);
@@ -699,7 +695,7 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
         logger.debug(`Green power device '${sourceID}' left`, NS);
 
         // Green power devices don't have an ieeeAddr, the sourceID is unique and static so use this.
-        const ieeeAddr = `0x${sourceID.toString(16).padStart(16, '0')}`;
+        const ieeeAddr = GreenPower.sourceIdToIeeeAddress(sourceID);
         const device = Device.byIeeeAddr(ieeeAddr);
 
         if (!device) {
@@ -841,17 +837,34 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
                 return;
             }
 
-            // catch potential IEEE-using GP devices by using invalid address
-            const nwkAddress = (frame.payload.srcID ?? 0xffff) & 0xffff;
-            device = Device.byNetworkAddress(nwkAddress);
-            frame = await this.greenPower.onZclGreenPowerData(payload, frame, device?.gpSecurityKey ? Buffer.from(device.gpSecurityKey) : undefined);
+            if (frame.payload.commandID === undefined) {
+                // can be from gpd or gpp
+                // can be:
+                //   - greenPower.commandsResponse.commissioningMode
+                //   - Foundation.defaultRsp for greenPower.commandsResponse.pairing with status INVALID_FIELD or INSUFFICIENT_SPACE
+                //   - ...
+                device = Device.find(payload.address);
+            } else {
+                if (frame.payload.srcID === undefined) {
+                    logger.debug(`Data is from unsupported green power device with IEEE addressing, skipping...`, NS);
+                    return;
+                } else {
+                    const ieeeAddr = GreenPower.sourceIdToIeeeAddress(frame.payload.srcID);
+                    device = Device.byIeeeAddr(ieeeAddr);
+                    frame = await this.greenPower.processCommand(
+                        payload,
+                        frame,
+                        device?.gpSecurityKey ? Buffer.from(device.gpSecurityKey) : undefined,
+                    );
 
-            // lookup encapsulated gpDevice for further processing (re-fetch, may have been created by above call)
-            device = Device.byNetworkAddress(nwkAddress);
+                    // lookup encapsulated gpDevice for further processing (re-fetch, may have been created by above call)
+                    device = Device.byIeeeAddr(ieeeAddr);
 
-            if (!device) {
-                logger.debug(`Data is from unknown green power device with address '${nwkAddress}' (${frame.payload.srcID}), skipping...`, NS);
-                return;
+                    if (!device) {
+                        logger.debug(`Data is from unknown green power device with address '${ieeeAddr}' (${frame.payload.srcID}), skipping...`, NS);
+                        return;
+                    }
+                }
             }
         } else {
             /**
@@ -957,6 +970,17 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
                     case 'readRsp': {
                         type = 'readResponse';
                         data = ZclFrameConverter.attributeKeyValue(frame, device.manufacturerID, device.customClusters);
+                        break;
+                    }
+
+                    case 'defaultRsp': {
+                        if (frame.payload.statusCode !== Zcl.Status.SUCCESS) {
+                            logger.debug(
+                                `Failure default response from '${payload.address}': clusterID=${payload.clusterID} cmdId=${frame.payload.cmdId} status=${Zcl.Status[frame.payload.statusCode]}`,
+                                NS,
+                            );
+                        }
+
                         break;
                     }
                 }
