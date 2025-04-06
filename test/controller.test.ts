@@ -10,6 +10,7 @@ import {Adapter} from '../src/adapter';
 import {ZStackAdapter} from '../src/adapter/z-stack/adapter/zStackAdapter';
 import {Controller} from '../src/controller';
 import * as Events from '../src/controller/events';
+import GreenPower from '../src/controller/greenPower';
 import Request from '../src/controller/helpers/request';
 import zclTransactionSequenceNumber from '../src/controller/helpers/zclTransactionSequenceNumber';
 import ZclTransactionSequenceNumber from '../src/controller/helpers/zclTransactionSequenceNumber';
@@ -75,7 +76,15 @@ const mockDummyBackup: Models.Backup = {
     ],
 };
 
-const mockAdapterEvents = {};
+type AdapterEvent = 'zclPayload' | 'deviceJoined' | 'deviceLeave' | 'zdoResponse' | 'disconnected';
+
+const mockAdapterEvents: Record<AdapterEvent, Function> = {
+    zclPayload: () => {},
+    deviceJoined: () => {},
+    deviceLeave: () => {},
+    zdoResponse: () => {},
+    disconnected: () => {},
+};
 const mockAdapterWaitFor = vi.fn();
 const mockAdapterSupportsDiscoverRoute = vi.fn();
 const mockSetChannelInterPAN = vi.fn();
@@ -326,11 +335,11 @@ const mocksClear = [
     mockLogger.warning,
     mockLogger.error,
 ];
-const deepClone = (obj) => JSON.parse(JSON.stringify(obj));
+const deepClone = (obj: object | undefined) => JSON.parse(JSON.stringify(obj));
 
-const equalsPartial = (object, expected) => {
-    for (const [key, value] of Object.entries(expected)) {
-        if (!equals(object[key], value)) {
+const equalsPartial = (objA: object, objB: object) => {
+    for (const [key, value] of Object.entries(objB)) {
+        if (!equals(objA[key as keyof typeof objA], value)) {
             return false;
         }
     }
@@ -344,27 +353,14 @@ vi.mock('../src/utils/wait', () => ({
     }),
 }));
 
-const getCluster = (key) => {
-    const cluster = Zcl.Utils.getCluster(key, undefined, {});
-    // @ts-expect-error mock
-    delete cluster.getAttribute;
-    // @ts-expect-error mock
-    delete cluster.getCommand;
-    // @ts-expect-error mock
-    delete cluster.hasAttribute;
-    // @ts-expect-error mock
-    delete cluster.getCommandResponse;
-    return cluster;
-};
-
-let dummyBackup;
+let dummyBackup: Models.UnifiedBackupStorage | undefined;
 
 vi.mock('../src/adapter/z-stack/adapter/zStackAdapter', () => ({
     ZStackAdapter: vi.fn(() => ({
         hasZdoMessageOverhead: false,
         manufacturerID: 0x0007,
-        on: (event, handler) => (mockAdapterEvents[event] = handler),
-        removeAllListeners: (event) => delete mockAdapterEvents[event],
+        on: (event: AdapterEvent, handler: Function) => (mockAdapterEvents[event] = handler),
+        removeAllListeners: (event: AdapterEvent) => delete mockAdapterEvents[event],
         start: mockAdapterStart,
         getCoordinatorIEEE: mockAdapterGetCoordinatorIEEE,
         reset: mockAdapterReset,
@@ -483,7 +479,7 @@ describe('Controller', () => {
         options.network.channelList = [15];
 
         for (const event in events) {
-            events[event] = [];
+            events[event as keyof typeof events] = [];
         }
 
         Device.resetCache();
@@ -561,7 +557,6 @@ describe('Controller', () => {
         // @ts-expect-error private
         const databaseSaveSpy = vi.spyOn(controller, 'databaseSave');
         await controller.start();
-        // @ts-expect-error private
         databaseSaveSpy.mockClear();
         if (fs.existsSync(options.backupPath)) fs.unlinkSync(options.backupPath);
         expect(controller.isStopping()).toBeFalsy();
@@ -893,7 +888,7 @@ describe('Controller', () => {
 
     it('Touchlink lock', async () => {
         await controller.start();
-        let resolve;
+        let resolve: Function | undefined;
         mockSetChannelInterPAN.mockImplementationOnce(() => {
             return new Promise((r) => {
                 resolve = r;
@@ -908,7 +903,7 @@ describe('Controller', () => {
             error = e;
         }
         expect(error).toStrictEqual(new Error('Touchlink operation already in progress'));
-        resolve();
+        resolve?.();
         await r1;
     });
 
@@ -2098,7 +2093,6 @@ describe('Controller', () => {
         const databaseSaveSpy = vi.spyOn(controller, 'databaseSave');
         const backupSpy = vi.spyOn(controller, 'backup');
         await controller.start();
-        // @ts-expect-error private
         databaseSaveSpy.mockClear();
         backupSpy.mockClear();
         expect(controller.isStopping()).toBeFalsy();
@@ -4029,7 +4023,7 @@ describe('Controller', () => {
     it('Return device from databse when not in lookup', async () => {
         await controller.start();
         await mockAdapterEvents['deviceJoined']({networkAddress: 140, ieeeAddr: '0x129'});
-        Device['lookup'] = {};
+        Device.resetCache();
         expect(controller.getDeviceByIeeeAddr('0x129')).toBeInstanceOf(Device);
     });
 
@@ -4898,10 +4892,10 @@ describe('Controller', () => {
             error = e;
         }
         expect(error instanceof Zcl.StatusError).toBeTruthy();
-        expect(error.message).toStrictEqual(
+        expect((error as Zcl.StatusError).message).toStrictEqual(
             `ZCL command 0x129/1 genPowerCfg.configReport([{\"attribute\":\"mainsFrequency\",\"minimumReportInterval\":1,\"maximumReportInterval\":10,\"reportableChange\":1}], {\"timeout\":10000,\"disableResponse\":false,\"disableRecovery\":false,\"disableDefaultResponse\":true,\"direction\":0,\"reservedBits\":0,\"writeUndiv\":false}) failed (Status 'FAILURE')`,
         );
-        expect(error.code).toBe(1);
+        expect((error as Zcl.StatusError).code).toBe(1);
     });
 
     it('Endpoint configure reporting fails when status code is not 0 default rsp', async () => {
@@ -4926,10 +4920,10 @@ describe('Controller', () => {
             error = e;
         }
         expect(error instanceof Zcl.StatusError).toBeTruthy();
-        expect(error.message).toStrictEqual(
+        expect((error as Zcl.StatusError).message).toStrictEqual(
             `ZCL command 0x129/1 genPowerCfg.configReport([{\"attribute\":\"mainsFrequency\",\"minimumReportInterval\":1,\"maximumReportInterval\":10,\"reportableChange\":1}], {\"timeout\":10000,\"disableResponse\":false,\"disableRecovery\":false,\"disableDefaultResponse\":true,\"direction\":0,\"reservedBits\":0,\"writeUndiv\":false}) failed (Status 'FAILURE')`,
         );
-        expect(error.code).toBe(1);
+        expect((error as Zcl.StatusError).code).toBe(1);
     });
 
     it('Endpoint configure reporting with disable response', async () => {
@@ -4962,7 +4956,7 @@ describe('Controller', () => {
     it('Return group from databse when not in lookup', async () => {
         await controller.start();
         await controller.createGroup(2);
-        Group['lookup'] = {};
+        Group.resetCache();
         expect(controller.getGroupByID(2)).toBeInstanceOf(Group);
     });
 
@@ -5569,7 +5563,7 @@ describe('Controller', () => {
     });
 
     it('Device without meta should set meta to {}', async () => {
-        Device['lookup'] = {};
+        Device.resetCache();
         const line = JSON.stringify({
             id: 3,
             type: 'EndDevice',
@@ -6029,7 +6023,7 @@ describe('Controller', () => {
         } catch (e) {
             error = e;
         }
-        expect(error.message).toStrictEqual(`Use parameter`);
+        expect((error as Error).message).toStrictEqual(`Use parameter`);
         expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(0);
     });
 
@@ -6386,7 +6380,7 @@ describe('Controller', () => {
         } catch (e) {
             error = e;
         }
-        expect(error.message).toStrictEqual(`Use parameter`);
+        expect((error as Error).message).toStrictEqual(`Use parameter`);
         expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(0);
     });
 
@@ -7209,7 +7203,7 @@ describe('Controller', () => {
         } catch (e) {
             error = e;
         }
-        expect(error.message).toStrictEqual(`Use parameter`);
+        expect((error as Error).message).toStrictEqual(`Use parameter`);
     });
 
     it('ConfigureReporting error', async () => {
@@ -7264,7 +7258,7 @@ describe('Controller', () => {
         } catch (e) {
             error = e;
         }
-        expect(error.message).toStrictEqual(`Use parameter`);
+        expect((error as Error).message).toStrictEqual(`Use parameter`);
     });
 
     it('Skip unbind if not bound', async () => {
@@ -7553,15 +7547,28 @@ describe('Controller', () => {
             groupID: 1,
         });
 
-        const dataResponse = {
-            options: 0x00e548,
+        const dataPairing = {
+            options: GreenPower.encodePairingOptions({
+                appId: 0,
+                addSink: true,
+                removeGpd: false,
+                communicationMode: 0b10,
+                gpdFixed: false,
+                gpdMacSeqNumCapabilities: true,
+                securityLevel: 2,
+                securityKeyType: 4,
+                gpdSecurityFrameCounterPresent: true,
+                gpdSecurityKeyPresent: true,
+                assignedAliasPresent: false,
+                groupcastRadiusPresent: false,
+            }),
             srcID: 0x0046f4fe,
             sinkGroupID: 0x0b84,
             deviceID: 2,
             frameCounter: 1252,
             gpdKey: Buffer.from([29, 213, 18, 52, 213, 52, 152, 88, 183, 49, 101, 110, 209, 248, 244, 140]),
         };
-        const frameResponse = Zcl.Frame.create(1, 1, true, undefined, 2, 'pairing', 33, dataResponse, {});
+        const frameResponse = Zcl.Frame.create(1, 1, true, undefined, 2, 'pairing', 33, dataPairing, {});
 
         expect(mocksendZclFrameToAll.mock.calls[0][0]).toBe(ZSpec.GP_ENDPOINT);
         expect(deepClone(mocksendZclFrameToAll.mock.calls[0][1])).toStrictEqual(deepClone(frameResponse));
@@ -7757,12 +7764,25 @@ describe('Controller', () => {
         expect(events.deviceLeave.length).toBe(1);
         expect(deepClone(events.deviceLeave[0])).toStrictEqual({ieeeAddr: '0x000000000046f4fe'});
 
-        const decommDataResponse = {
-            options: 0b000000000110110000,
+        const decommDataPairing = {
+            options: GreenPower.encodePairingOptions({
+                appId: 0,
+                addSink: false,
+                removeGpd: true,
+                communicationMode: 0b01,
+                gpdFixed: false,
+                gpdMacSeqNumCapabilities: false,
+                securityLevel: 0,
+                securityKeyType: 0,
+                gpdSecurityFrameCounterPresent: false,
+                gpdSecurityKeyPresent: false,
+                assignedAliasPresent: false,
+                groupcastRadiusPresent: false,
+            }),
             srcID: 0x0046f4fe,
             sinkGroupID: 0x0b84,
         };
-        const decommFrameResponse = Zcl.Frame.create(1, 1, true, undefined, 4, 'pairing', 33, decommDataResponse, {});
+        const decommFrameResponse = Zcl.Frame.create(1, 1, true, undefined, 4, 'pairing', 33, decommDataPairing, {});
 
         expect(mocksendZclFrameToAll.mock.calls[0][0]).toBe(ZSpec.GP_ENDPOINT);
         expect(deepClone(mocksendZclFrameToAll.mock.calls[0][1])).toStrictEqual(deepClone(decommFrameResponse));
@@ -7785,24 +7805,49 @@ describe('Controller', () => {
         expect(identifyUnknownDeviceSpy).toHaveBeenCalledTimes(0); // deviceLeave passthrough allows to test this here
     });
 
-    it('Should handle green power commissioning mode frame gracefully', async () => {
+    it('Should handle green power responses gracefully', async () => {
         await controller.start();
+
+        const gpdNwkAddress = 1518266219 & 0xffff;
+        const gpdIeeeAddress = `0x${(1518266219).toString(16).padStart(16, '0')}`;
+
+        await mockAdapterEvents['deviceJoined']({networkAddress: 129, ieeeAddr: '0x129'});
+        await mockAdapterEvents['deviceJoined']({networkAddress: gpdNwkAddress, ieeeAddr: gpdIeeeAddress});
+
+        const gppDevice = controller.getDeviceByIeeeAddr('0x129')!;
+        const processCommandSpy = vi.spyOn(
+            // @ts-expect-error private
+            controller.greenPower,
+            'processCommand',
+        );
         mockLogger.error.mockClear();
-        const buffer = Buffer.from([25, 10, 2, 11, 254, 0]);
-        const frame = Zcl.Frame.fromBuffer(Zcl.Clusters.greenPower.ID, Zcl.Header.fromBuffer(buffer)!, buffer, {});
+        const commModeBuffer = Buffer.from([25, 10, 2, 11, 254, 0]);
+        const commModeFrame = Zcl.Frame.fromBuffer(Zcl.Clusters.greenPower.ID, Zcl.Header.fromBuffer(commModeBuffer)!, commModeBuffer, {});
         await mockAdapterEvents['zclPayload']({
             wasBroadcast: true,
-            address: 0x46f4fe,
-            clusterID: frame.cluster.ID,
-            data: buffer,
-            header: frame.header,
+            address: gpdNwkAddress,
+            clusterID: commModeFrame.cluster.ID,
+            data: commModeBuffer,
+            header: commModeFrame.header,
             endpoint: ZSpec.GP_ENDPOINT,
             linkquality: 50,
-            groupID: 1,
+            groupID: ZSpec.GP_GROUP_ID,
+        });
+        const defaultRspBuffer = Buffer.from([0, 116, 11, 1, 137]);
+        const defaultRspFrame = Zcl.Frame.fromBuffer(Zcl.Clusters.greenPower.ID, Zcl.Header.fromBuffer(defaultRspBuffer)!, defaultRspBuffer, {});
+        await mockAdapterEvents['zclPayload']({
+            wasBroadcast: false,
+            address: gppDevice.networkAddress,
+            clusterID: defaultRspFrame.cluster.ID,
+            data: defaultRspBuffer,
+            header: defaultRspFrame.header,
+            endpoint: ZSpec.GP_ENDPOINT,
+            linkquality: 50,
+            groupID: ZSpec.GP_GROUP_ID,
         });
 
         expect(mockLogger.error).toHaveBeenCalledTimes(0);
-        expect(mockLogger.debug).toHaveBeenCalledWith(`[NO_CMD/PASSTHROUGH] command=0x2 from=4650238`, `zh:controller:greenpower`);
+        expect(processCommandSpy).toHaveBeenCalledTimes(0);
     });
 
     it('Should handle green power commissioning frame', async () => {
@@ -7826,13 +7871,43 @@ describe('Controller', () => {
 
         expect(mockLogger.error).toHaveBeenCalledTimes(0);
         expect(mockLogger.debug).toHaveBeenCalledWith(
-            '[PAIRING] srcID=22410362 gpp=28566 options=58696 (addSink=true commMode=2) wasBroadcast=true',
+            '[PAIRING] srcID=22410362 gpp=28566 options=58696 (addSink=true commMode=2)',
             'zh:controller:greenpower',
         );
         expect(mockLogger.info).toHaveBeenCalledWith(
             '[COMMISSIONING] srcID=22410362 gpp=28566 rssi=23 linkQuality=Excellent',
             'zh:controller:greenpower',
         );
+    });
+
+    it('Should handle green power commissioning frame with IEEE addressing gracefully', async () => {
+        await controller.start();
+        mockLogger.error.mockClear();
+
+        const processCommandSpy = vi.spyOn(
+            // @ts-expect-error private
+            controller.greenPower,
+            'processCommand',
+        );
+
+        const buffer = Buffer.from(
+            '11020402087af4550100000000012e000000e0330285f2c925821df46f458cf0e637aac3bab6aa45831a112e280000041610112223181914151213646562631e1f1c1d1a1b1617966fd7',
+            'hex',
+        );
+        const frame = Zcl.Frame.fromBuffer(Zcl.Clusters.greenPower.ID, Zcl.Header.fromBuffer(buffer)!, buffer, {});
+        await mockAdapterEvents['zclPayload']({
+            wasBroadcast: true,
+            address: 0xf4fe,
+            clusterID: frame.cluster.ID,
+            data: buffer,
+            header: frame.header,
+            endpoint: ZSpec.GP_ENDPOINT,
+            linkquality: 50,
+            groupID: 1,
+        });
+
+        expect(mockLogger.error).toHaveBeenCalledTimes(0);
+        expect(processCommandSpy).toHaveBeenCalledTimes(0);
     });
 
     it('Should handle green power commissioning frame with switch info', async () => {
@@ -7855,7 +7930,7 @@ describe('Controller', () => {
         expect(frame.payload.commandFrame.currentContactStatus).toStrictEqual(2);
         expect(mockLogger.error).toHaveBeenCalledTimes(0);
         expect(mockLogger.debug).toHaveBeenCalledWith(
-            '[PAIRING] srcID=22369751 gpp=57129 options=58696 (addSink=true commMode=2) wasBroadcast=true',
+            '[PAIRING] srcID=22369751 gpp=57129 options=58696 (addSink=true commMode=2)',
             'zh:controller:greenpower',
         );
         expect(mockLogger.info).toHaveBeenCalledWith(
@@ -7996,7 +8071,20 @@ describe('Controller', () => {
         expect(mocksendZclFrameToAll.mock.calls[0][2]).toBe(ZSpec.GP_ENDPOINT);
 
         const pairingData = {
-            options: 424,
+            options: GreenPower.encodePairingOptions({
+                appId: 0,
+                addSink: true,
+                removeGpd: false,
+                communicationMode: 0b01,
+                gpdFixed: false,
+                gpdMacSeqNumCapabilities: true,
+                securityLevel: 0,
+                securityKeyType: 0,
+                gpdSecurityFrameCounterPresent: false,
+                gpdSecurityKeyPresent: false,
+                assignedAliasPresent: false,
+                groupcastRadiusPresent: false,
+            }),
             srcID: 0x0046f4fe,
             sinkGroupID: 0x0b84,
             deviceID: 2,
@@ -8090,8 +8178,21 @@ describe('Controller', () => {
             groupID: 0,
         });
 
-        const dataResponse = {
-            options: 0x00e568,
+        const dataPairing = {
+            options: GreenPower.encodePairingOptions({
+                appId: 0,
+                addSink: true,
+                removeGpd: false,
+                communicationMode: 0b11,
+                gpdFixed: true,
+                gpdMacSeqNumCapabilities: true,
+                securityLevel: 2,
+                securityKeyType: 4,
+                gpdSecurityFrameCounterPresent: true,
+                gpdSecurityKeyPresent: true,
+                assignedAliasPresent: false,
+                groupcastRadiusPresent: false,
+            }),
             srcID,
             sinkIEEEAddr: '0x0000012300000000',
             sinkNwkAddr: 0,
@@ -8099,7 +8200,7 @@ describe('Controller', () => {
             frameCounter: 4600,
             gpdKey: Buffer.from([0x09, 0x3c, 0xed, 0x1d, 0xbf, 0x25, 0x63, 0xf9, 0x29, 0x5c, 0x0d, 0x3d, 0x9f, 0xc5, 0x76, 0xe1]),
         };
-        const frameResponse = Zcl.Frame.create(1, 1, true, undefined, 11, 'pairing', 33, dataResponse, {});
+        const frameResponse = Zcl.Frame.create(1, 1, true, undefined, 11, 'pairing', 33, dataPairing, {});
 
         expect(mocksendZclFrameToEndpoint).toHaveBeenLastCalledWith(
             gppDevice.ieeeAddr,
@@ -8577,7 +8678,7 @@ describe('Controller', () => {
         try {
             await endpoint.write('genOnOff', {onOff: 1}, {disableResponse: true, sendPolicy: 'immediate'});
         } catch (error) {
-            expect(error.message).toStrictEqual(
+            expect((error as Error).message).toStrictEqual(
                 `ZCL command 0x129/1 genOnOff.write({\"onOff\":1}, {"timeout":10000,"disableResponse":true,"disableRecovery":false,"disableDefaultResponse":true,"direction":0,"reservedBits":0,"writeUndiv":false,"sendPolicy":"immediate"}) failed (Dogs barking too hard)`,
             );
         }
@@ -8659,7 +8760,7 @@ describe('Controller', () => {
             error = e;
         }
         expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(2);
-        expect(error.message).toStrictEqual(
+        expect((error as Error).message).toStrictEqual(
             `ZCL command 0x129/1 genOnOff.write({\"onOff\":1}, {"timeout":10000,"disableResponse":true,"disableRecovery":false,"disableDefaultResponse":true,"direction":0,"reservedBits":0,"writeUndiv":false}) failed (Dogs barking too hard)`,
         );
     });

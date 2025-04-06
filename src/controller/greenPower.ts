@@ -115,6 +115,10 @@ export class GreenPower extends EventEmitter<GreenPowerEventMap> {
         this.adapter = adapter;
     }
 
+    public static sourceIdToIeeeAddress(sourceId: number): string {
+        return `0x${sourceId.toString(16).padStart(16, '0')}`;
+    }
+
     private encryptSecurityKey(sourceID: number, securityKey: Buffer): Buffer {
         const nonce = Buffer.alloc(13);
 
@@ -182,12 +186,11 @@ export class GreenPower extends EventEmitter<GreenPowerEventMap> {
     private async sendPairingCommand(
         options: PairingOptions,
         payload: PairingPayload,
-        wasBroadcast: boolean,
         gppNwkAddr: number | undefined,
     ): Promise<AdapterEvents.ZclPayload | void> {
         payload.options = GreenPower.encodePairingOptions(options);
         logger.debug(
-            `[PAIRING] srcID=${payload.srcID} gpp=${gppNwkAddr ?? 'NO'} options=${payload.options} (addSink=${options.addSink} commMode=${options.communicationMode}) wasBroadcast=${wasBroadcast}`,
+            `[PAIRING] srcID=${payload.srcID} gpp=${gppNwkAddr ?? 'NO'} options=${payload.options} (addSink=${options.addSink} commMode=${options.communicationMode})`,
             NS,
         );
 
@@ -219,11 +222,7 @@ export class GreenPower extends EventEmitter<GreenPowerEventMap> {
             {},
         );
 
-        // Not sure how correct this is - according to GP spec Pairing command is
-        // to be sent as broadcast unless communication mode is 0b11 - in which case
-        // the proxy MAY send it as unicast to selected proxy.
-        // This attempts to mirror logic from commit 92f77cc5.
-        if (wasBroadcast) {
+        if (options.communicationMode !== GPCommunicationMode.LIGHTWEIGHT_UNICAST) {
             return await this.adapter.sendZclFrameToAll(GP_ENDPOINT, replyFrame, GP_ENDPOINT, BroadcastAddress.RX_ON_WHEN_IDLE);
         } else {
             const device = Device.byNetworkAddress(gppNwkAddr ?? /* v8 ignore next */ COORDINATOR_ADDRESS);
@@ -242,14 +241,7 @@ export class GreenPower extends EventEmitter<GreenPowerEventMap> {
         }
     }
 
-    public async onZclGreenPowerData(dataPayload: AdapterEvents.ZclPayload, frame: Zcl.Frame, securityKey?: Buffer): Promise<Zcl.Frame> {
-        if (frame.payload.commandID === undefined) {
-            // received a `commandsResponse`
-            logger.debug(`[NO_CMD/PASSTHROUGH] command=0x${frame.header.commandIdentifier.toString(16)} from=${dataPayload.address}`, NS);
-
-            return frame;
-        }
-
+    public async processCommand(dataPayload: AdapterEvents.ZclPayload, frame: Zcl.Frame, securityKey?: Buffer): Promise<Zcl.Frame> {
         try {
             // notification: A.3.3.4.1
             // commissioningNotification: A.3.3.4.3
@@ -267,18 +259,6 @@ export class GreenPower extends EventEmitter<GreenPowerEventMap> {
                     );
                     return frame;
                 }
-
-                /* v8 ignore start */
-                if (frame.payload.srcID === undefined) {
-                    // ApplicationID = 0b010 indicates the GPD ID field has the length of 8B and contains the GPD IEEE address; the Endpoint field is present.
-                    // Note: no device are currently known to use this (too expensive)
-                    logger.error(
-                        `[FULLENCR] from=${dataPayload.address} gpp=${frame.payload.gppNwkAddr ?? 'NO'} GPD ID containing IEEE address is not supported`,
-                        NS,
-                    );
-                    return frame;
-                }
-                /* v8 ignore stop */
 
                 const oldHeader = dataPayload.data.subarray(0, 15);
                 let dataEndOffset = dataPayload.data.byteLength;
@@ -355,18 +335,6 @@ export class GreenPower extends EventEmitter<GreenPowerEventMap> {
 
             switch (frame.payload.commandID) {
                 case 0xe0: {
-                    /* v8 ignore start */
-                    if (frame.payload.srcID === undefined) {
-                        // ApplicationID = 0b010 indicates the GPD ID field has the length of 8B and contains the GPD IEEE address; the Endpoint field is present.
-                        // Note: no device are currently known to use this (too expensive)
-                        logger.error(
-                            `[COMMISSIONING] from=${dataPayload.address} gpp=${frame.payload.gppNwkAddr ?? 'NO'} GPD ID containing IEEE address is not supported`,
-                            NS,
-                        );
-                        break;
-                    }
-                    /* v8 ignore stop */
-
                     logger.info(`[COMMISSIONING] ${logStr}`, NS);
 
                     /* v8 ignore start */
@@ -376,6 +344,8 @@ export class GreenPower extends EventEmitter<GreenPowerEventMap> {
                     /* v8 ignore stop */
 
                     const rxOnCap = frame.payload.commandFrame.options & 0x2;
+                    const gpdMacSeqNumCapabilities = Boolean(frame.payload.commandFrame.options & 0x1);
+                    const gpdFixed = Boolean(frame.payload.commandFrame.options & 0x40);
 
                     if (rxOnCap) {
                         // RX capable GPD needs GP Commissioning Reply
@@ -420,8 +390,8 @@ export class GreenPower extends EventEmitter<GreenPowerEventMap> {
                                 addSink: true,
                                 removeGpd: false,
                                 communicationMode: GPCommunicationMode.GROUPCAST_TO_DGROUPID,
-                                gpdFixed: true,
-                                gpdMacSeqNumCapabilities: true,
+                                gpdFixed,
+                                gpdMacSeqNumCapabilities,
                                 securityLevel: ZigbeeNWKGPSecurityLevel.NO,
                                 securityKeyType: ZigbeeNWKGPSecurityKeyType.NO_KEY,
                                 gpdSecurityFrameCounterPresent: false,
@@ -434,7 +404,6 @@ export class GreenPower extends EventEmitter<GreenPowerEventMap> {
                                 srcID: frame.payload.srcID,
                                 deviceID: frame.payload.commandFrame.deviceID,
                             },
-                            dataPayload.wasBroadcast,
                             frame.payload.gppNwkAddr,
                         );
                     } else {
@@ -445,11 +414,12 @@ export class GreenPower extends EventEmitter<GreenPowerEventMap> {
                                 appId: ZigbeeNWKGPAppId.DEFAULT,
                                 addSink: true,
                                 removeGpd: false,
+                                // keep communication mode matching incoming tx mode
                                 communicationMode: dataPayload.wasBroadcast
                                     ? GPCommunicationMode.GROUPCAST_TO_PRECOMMISSIONED_GROUPID
                                     : GPCommunicationMode.LIGHTWEIGHT_UNICAST,
-                                gpdFixed: false,
-                                gpdMacSeqNumCapabilities: true,
+                                gpdFixed,
+                                gpdMacSeqNumCapabilities,
                                 securityLevel: ZigbeeNWKGPSecurityLevel.FULL,
                                 securityKeyType: ZigbeeNWKGPSecurityKeyType.PRECONFIGURED_INDIVIDUAL_GPD_KEY,
                                 gpdSecurityFrameCounterPresent: true,
@@ -464,7 +434,6 @@ export class GreenPower extends EventEmitter<GreenPowerEventMap> {
                                 frameCounter: frame.payload.commandFrame.outgoingCounter,
                                 gpdKey,
                             },
-                            dataPayload.wasBroadcast,
                             frame.payload.gppNwkAddr,
                         );
                     }
@@ -472,6 +441,7 @@ export class GreenPower extends EventEmitter<GreenPowerEventMap> {
                     this.emit('deviceJoined', {
                         sourceID: frame.payload.srcID,
                         deviceID: frame.payload.commandFrame.deviceID,
+                        // XXX: this has the potential to create conflicting network addresses
                         networkAddress: frame.payload.srcID & 0xffff,
                         securityKey: frame.payload.commandFrame.securityKey,
                     });
@@ -487,8 +457,8 @@ export class GreenPower extends EventEmitter<GreenPowerEventMap> {
                             addSink: false,
                             removeGpd: true,
                             communicationMode: GPCommunicationMode.GROUPCAST_TO_DGROUPID,
-                            gpdFixed: true,
-                            gpdMacSeqNumCapabilities: true,
+                            gpdFixed: false,
+                            gpdMacSeqNumCapabilities: false,
                             securityLevel: ZigbeeNWKGPSecurityLevel.NO,
                             securityKeyType: ZigbeeNWKGPSecurityKeyType.NO_KEY,
                             gpdSecurityFrameCounterPresent: false,
@@ -500,7 +470,6 @@ export class GreenPower extends EventEmitter<GreenPowerEventMap> {
                             options: 0, // set from first param in `sendPairingCommand`
                             srcID: frame.payload.srcID,
                         },
-                        dataPayload.wasBroadcast,
                         frame.payload.gppNwkAddr,
                     );
 

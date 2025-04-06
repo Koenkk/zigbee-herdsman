@@ -285,7 +285,7 @@ describe('GreenPower', () => {
         const gpdFooter = makeFooter(options, gppNwkAddr, gppGpdLink);
         const payload = makePayload(addr.sourceId, Buffer.concat([gpdHeader, gpdCommandPayload, gpdFooter]), 138);
         const frame = Zcl.Frame.fromBuffer(payload.clusterID, payload.header, payload.data, {});
-        const retFrame = await gp.onZclGreenPowerData(payload, frame, undefined);
+        const retFrame = await gp.processCommand(payload, frame, undefined);
 
         expect(frame.payload.gppNwkAddr).toStrictEqual(gppNwkAddr);
         expect(frame.payload.gppGpdLink).toStrictEqual(gppGpdLink);
@@ -321,7 +321,7 @@ describe('GreenPower', () => {
         const gpdFooter = makeFooter(options, undefined, undefined, mic);
         const payload = makePayload(addr.sourceId, Buffer.concat([gpdHeader, gpdCommandPayload, gpdFooter]), 138);
         const frame = Zcl.Frame.fromBuffer(payload.clusterID, payload.header, payload.data, {});
-        const retFrame = await gp.onZclGreenPowerData(payload, frame, securityKey);
+        const retFrame = await gp.processCommand(payload, frame, securityKey);
 
         expect(frame.payload.mic).toBeDefined(); // garbage
         expect(retFrame.payload.commandID).toStrictEqual(0x21); // just to be sure it decrypted properly
@@ -358,7 +358,7 @@ describe('GreenPower', () => {
         const gpdFooter = makeFooter(options, gppNwkAddr, gppGpdLink, mic);
         const payload = makePayload(addr.sourceId, Buffer.concat([gpdHeader, gpdCommandPayload, gpdFooter]), 138);
         const frame = Zcl.Frame.fromBuffer(payload.clusterID, payload.header, payload.data, {});
-        const retFrame = await gp.onZclGreenPowerData(payload, frame, securityKey);
+        const retFrame = await gp.processCommand(payload, frame, securityKey);
 
         expect(frame.payload.gppNwkAddr).toBeDefined(); // garbage
         expect(frame.payload.gppGpdLink).toBeDefined(); // garbage
@@ -412,7 +412,7 @@ describe('GreenPower', () => {
 
         expect(frame.payload.commandFrame).toBeUndefined(); // as opposed to `{}` when parsing (payloadSize=0)
 
-        const retFrame = await gp.onZclGreenPowerData(payload, frame, Buffer.alloc(16) /* just for the codepath, decrypting not important */);
+        const retFrame = await gp.processCommand(payload, frame, Buffer.alloc(16) /* just for the codepath, decrypting not important */);
 
         expect(logDebugSpy).toHaveBeenNthCalledWith(
             1,
@@ -460,7 +460,7 @@ describe('GreenPower', () => {
 
         expect(frame.payload.commandFrame).toBeUndefined(); // as opposed to `{}` when parsing (payloadSize=0)
 
-        const retFrame = await gp.onZclGreenPowerData(payload, frame, Buffer.alloc(16) /* just for the codepath, decrypting not important */);
+        const retFrame = await gp.processCommand(payload, frame, Buffer.alloc(16) /* just for the codepath, decrypting not important */);
 
         expect(logDebugSpy).toHaveBeenNthCalledWith(
             1,
@@ -514,7 +514,7 @@ describe('GreenPower', () => {
             );
             const payload = makePayload(addr.sourceId, Buffer.concat([gpdHeader, gpdCommandPayload]), gpdLink);
             const frame = Zcl.Frame.fromBuffer(payload.clusterID, payload.header, payload.data, {});
-            const retFrame = await gp.onZclGreenPowerData(payload, frame, joinData?.securityKey); // always undefined since not yet joined
+            const retFrame = await gp.processCommand(payload, frame, joinData?.securityKey); // always undefined since not yet joined
 
             await vi.waitUntil(() => joinData !== undefined);
 
@@ -527,7 +527,7 @@ describe('GreenPower', () => {
             expect(logInfoSpy).toHaveBeenNthCalledWith(1, '[COMMISSIONING] srcID=1496140231 gpp=NO', 'zh:controller:greenpower');
             expect(logDebugSpy).toHaveBeenNthCalledWith(
                 1,
-                '[PAIRING] srcID=1496140231 gpp=NO options=58696 (addSink=true commMode=2) wasBroadcast=true',
+                '[PAIRING] srcID=1496140231 gpp=NO options=58696 (addSink=true commMode=2)',
                 'zh:controller:greenpower',
             );
 
@@ -587,7 +587,7 @@ describe('GreenPower', () => {
             );
             const payload = makePayload(addr.sourceId, Buffer.concat([gpdHeader, gpdCommandPayload]), gpdLink);
             const frame = Zcl.Frame.fromBuffer(payload.clusterID, payload.header, payload.data, {});
-            const retFrame = await gp.onZclGreenPowerData(payload, frame, joinData?.securityKey);
+            const retFrame = await gp.processCommand(payload, frame, joinData?.securityKey);
 
             expect(logDebugSpy).toHaveBeenNthCalledWith(
                 1,
@@ -630,7 +630,7 @@ describe('GreenPower', () => {
             );
             const payload = makePayload(addr.sourceId, Buffer.concat([gpdHeader, gpdCommandPayload]), gpdLink);
             const frame = Zcl.Frame.fromBuffer(payload.clusterID, payload.header, payload.data, {});
-            const retFrame = await gp.onZclGreenPowerData(payload, frame, joinData?.securityKey);
+            const retFrame = await gp.processCommand(payload, frame, joinData?.securityKey);
 
             expect(logDebugSpy).toHaveBeenNthCalledWith(
                 1,
@@ -673,7 +673,7 @@ describe('GreenPower', () => {
             );
             const payload = makePayload(addr.sourceId, Buffer.concat([gpdHeader, gpdCommandPayload]), gpdLink);
             const frame = Zcl.Frame.fromBuffer(payload.clusterID, payload.header, payload.data, {});
-            const retFrame = await gp.onZclGreenPowerData(payload, frame, joinData?.securityKey);
+            const retFrame = await gp.processCommand(payload, frame, joinData?.securityKey);
 
             expect(logDebugSpy).toHaveBeenNthCalledWith(
                 1,
@@ -716,7 +716,7 @@ describe('GreenPower', () => {
             );
             const payload = makePayload(addr.sourceId, Buffer.concat([gpdHeader, gpdCommandPayload]), gpdLink);
             const frame = Zcl.Frame.fromBuffer(payload.clusterID, payload.header, payload.data, {});
-            const retFrame = await gp.onZclGreenPowerData(payload, frame, joinData?.securityKey);
+            const retFrame = await gp.processCommand(payload, frame, joinData?.securityKey);
 
             expect(logDebugSpy).toHaveBeenNthCalledWith(
                 1,
@@ -759,7 +759,7 @@ describe('GreenPower', () => {
             );
             const payload = makePayload(addr.sourceId, Buffer.concat([gpdHeader, gpdCommandPayload]), gpdLink);
             const frame = Zcl.Frame.fromBuffer(payload.clusterID, payload.header, payload.data, {});
-            const retFrame = await gp.onZclGreenPowerData(payload, frame, joinData?.securityKey);
+            const retFrame = await gp.processCommand(payload, frame, joinData?.securityKey);
 
             expect(logDebugSpy).toHaveBeenNthCalledWith(
                 1,
@@ -802,7 +802,7 @@ describe('GreenPower', () => {
             );
             const payload = makePayload(addr.sourceId, Buffer.concat([gpdHeader, gpdCommandPayload]), gpdLink);
             const frame = Zcl.Frame.fromBuffer(payload.clusterID, payload.header, payload.data, {});
-            const retFrame = await gp.onZclGreenPowerData(payload, frame, joinData?.securityKey);
+            const retFrame = await gp.processCommand(payload, frame, joinData?.securityKey);
 
             expect(logDebugSpy).toHaveBeenNthCalledWith(
                 1,
@@ -845,7 +845,7 @@ describe('GreenPower', () => {
             );
             const payload = makePayload(addr.sourceId, Buffer.concat([gpdHeader, gpdCommandPayload]), gpdLink);
             const frame = Zcl.Frame.fromBuffer(payload.clusterID, payload.header, payload.data, {});
-            const retFrame = await gp.onZclGreenPowerData(payload, frame, undefined);
+            const retFrame = await gp.processCommand(payload, frame, undefined);
 
             expect(logErrorSpy).toHaveBeenNthCalledWith(
                 1,
@@ -888,7 +888,7 @@ describe('GreenPower', () => {
             gpdFooter.writeUInt8(gppGpdLink, 2);
             const payload = makePayload(addr.sourceId, Buffer.concat([gpdHeader, gpdCommandPayload, gpdFooter]), gpdLink);
             const frame = Zcl.Frame.fromBuffer(payload.clusterID, payload.header, payload.data, {});
-            const retFrame = await gp.onZclGreenPowerData(payload, frame, joinData?.securityKey);
+            const retFrame = await gp.processCommand(payload, frame, joinData?.securityKey);
 
             expect(logDebugSpy).toHaveBeenNthCalledWith(
                 1,
@@ -943,7 +943,7 @@ describe('GreenPower', () => {
             );
             const payload = makePayload(addr.sourceId, Buffer.concat([gpdHeader, gpdCommandPayload]), gpdLink);
             const frame = Zcl.Frame.fromBuffer(payload.clusterID, payload.header, payload.data, {});
-            const retFrame = await gp.onZclGreenPowerData(payload, frame, joinData?.securityKey); // always undefined since not yet joined
+            const retFrame = await gp.processCommand(payload, frame, joinData?.securityKey); // always undefined since not yet joined
 
             await vi.waitUntil(() => joinData !== undefined);
 
@@ -956,7 +956,7 @@ describe('GreenPower', () => {
             expect(logInfoSpy).toHaveBeenNthCalledWith(1, '[COMMISSIONING] srcID=344902069 gpp=NO', 'zh:controller:greenpower');
             expect(logDebugSpy).toHaveBeenNthCalledWith(
                 1,
-                '[PAIRING] srcID=344902069 gpp=NO options=58696 (addSink=true commMode=2) wasBroadcast=true',
+                '[PAIRING] srcID=344902069 gpp=NO options=58696 (addSink=true commMode=2)',
                 'zh:controller:greenpower',
             );
 
@@ -1016,7 +1016,7 @@ describe('GreenPower', () => {
             );
             const payload = makePayload(addr.sourceId, Buffer.concat([gpdHeader, gpdCommandPayload]), gpdLink);
             const frame = Zcl.Frame.fromBuffer(payload.clusterID, payload.header, payload.data, {});
-            const retFrame = await gp.onZclGreenPowerData(payload, frame, joinData?.securityKey);
+            const retFrame = await gp.processCommand(payload, frame, joinData?.securityKey);
 
             expect(logDebugSpy).toHaveBeenNthCalledWith(
                 1,
@@ -1059,7 +1059,7 @@ describe('GreenPower', () => {
             );
             const payload = makePayload(addr.sourceId, Buffer.concat([gpdHeader, gpdCommandPayload]), gpdLink);
             const frame = Zcl.Frame.fromBuffer(payload.clusterID, payload.header, payload.data, {});
-            const retFrame = await gp.onZclGreenPowerData(payload, frame, joinData?.securityKey);
+            const retFrame = await gp.processCommand(payload, frame, joinData?.securityKey);
 
             expect(logDebugSpy).toHaveBeenNthCalledWith(
                 1,
@@ -1102,7 +1102,7 @@ describe('GreenPower', () => {
             );
             const payload = makePayload(addr.sourceId, Buffer.concat([gpdHeader, gpdCommandPayload]), gpdLink);
             const frame = Zcl.Frame.fromBuffer(payload.clusterID, payload.header, payload.data, {});
-            const retFrame = await gp.onZclGreenPowerData(payload, frame, joinData?.securityKey);
+            const retFrame = await gp.processCommand(payload, frame, joinData?.securityKey);
 
             expect(logDebugSpy).toHaveBeenNthCalledWith(
                 1,
@@ -1158,7 +1158,7 @@ describe('GreenPower', () => {
             const gpdFooter = makeFooter(options, gppNwkAddr, gppGpdLink, mic);
             const payload = makePayload(addr.sourceId, Buffer.concat([gpdHeader, gpdCommandPayload, gpdFooter]), 138);
             const frame = Zcl.Frame.fromBuffer(payload.clusterID, payload.header, payload.data, {});
-            const retFrame = await gp.onZclGreenPowerData(payload, frame, joinData?.securityKey);
+            const retFrame = await gp.processCommand(payload, frame, joinData?.securityKey);
 
             expect(logDebugSpy).toHaveBeenNthCalledWith(
                 1,
@@ -1206,7 +1206,7 @@ describe('GreenPower', () => {
             const gpdFooter = makeFooter(options, gppNwkAddr, gppGpdLink, mic);
             const payload = makePayload(addr.sourceId, Buffer.concat([gpdHeader, gpdCommandPayload, gpdFooter]), 127);
             const frame = Zcl.Frame.fromBuffer(payload.clusterID, payload.header, payload.data, {});
-            const retFrame = await gp.onZclGreenPowerData(payload, frame, joinData?.securityKey);
+            const retFrame = await gp.processCommand(payload, frame, joinData?.securityKey);
 
             expect(logDebugSpy).toHaveBeenNthCalledWith(
                 1,
@@ -1254,7 +1254,7 @@ describe('GreenPower', () => {
             const gpdFooter = makeFooter(options, gppNwkAddr, gppGpdLink, mic);
             const payload = makePayload(addr.sourceId, Buffer.concat([gpdHeader, gpdCommandPayload, gpdFooter]), 138);
             const frame = Zcl.Frame.fromBuffer(payload.clusterID, payload.header, payload.data, {});
-            const retFrame = await gp.onZclGreenPowerData(payload, frame, joinData?.securityKey);
+            const retFrame = await gp.processCommand(payload, frame, joinData?.securityKey);
 
             expect(logDebugSpy).toHaveBeenNthCalledWith(
                 1,
@@ -1302,7 +1302,7 @@ describe('GreenPower', () => {
             const gpdFooter = makeFooter(options, gppNwkAddr, gppGpdLink, mic);
             const payload = makePayload(addr.sourceId, Buffer.concat([gpdHeader, gpdCommandPayload, gpdFooter]), 138);
             const frame = Zcl.Frame.fromBuffer(payload.clusterID, payload.header, payload.data, {});
-            const retFrame = await gp.onZclGreenPowerData(payload, frame, joinData?.securityKey);
+            const retFrame = await gp.processCommand(payload, frame, joinData?.securityKey);
 
             expect(logDebugSpy).toHaveBeenNthCalledWith(
                 1,
@@ -1350,7 +1350,7 @@ describe('GreenPower', () => {
             const gpdFooter = makeFooter(options, gppNwkAddr, gppGpdLink, mic);
             const payload = makePayload(addr.sourceId, Buffer.concat([gpdHeader, gpdCommandPayload, gpdFooter]), 142);
             const frame = Zcl.Frame.fromBuffer(payload.clusterID, payload.header, payload.data, {});
-            const retFrame = await gp.onZclGreenPowerData(payload, frame, joinData?.securityKey);
+            const retFrame = await gp.processCommand(payload, frame, joinData?.securityKey);
 
             expect(logDebugSpy).toHaveBeenNthCalledWith(
                 1,
@@ -1398,7 +1398,7 @@ describe('GreenPower', () => {
             const gpdFooter = makeFooter(options, gppNwkAddr, gppGpdLink, mic);
             const payload = makePayload(addr.sourceId, Buffer.concat([gpdHeader, gpdCommandPayload, gpdFooter]), 138);
             const frame = Zcl.Frame.fromBuffer(payload.clusterID, payload.header, payload.data, {});
-            const retFrame = await gp.onZclGreenPowerData(payload, frame, joinData?.securityKey);
+            const retFrame = await gp.processCommand(payload, frame, joinData?.securityKey);
 
             expect(logDebugSpy).toHaveBeenNthCalledWith(
                 1,

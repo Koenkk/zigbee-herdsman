@@ -8610,7 +8610,7 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
 
         const messageContents = Buffer.concat([gpdHeader, gpdCommandPayload]);
 
-        // XXX: BROADCAST currently hardcoded to match upstream codepath
+        // use broadcast type to match upstream codepath that does not expect `gppNwkAddr` (this from direct-to-coordinator)
         this.emit('incomingMessage', EmberIncomingMessageType.BROADCAST, apsFrame, gpdLink, addr.sourceId & 0xffff, messageContents);
     }
 
