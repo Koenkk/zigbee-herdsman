@@ -1,5 +1,13 @@
 # Changelog
 
+## [3.5.1](https://github.com/Koenkk/zigbee-herdsman/compare/v3.5.0...v3.5.1) (2025-04-06)
+
+
+### Bug Fixes
+
+* **ignore:** update dependencies ([#1384](https://github.com/Koenkk/zigbee-herdsman/issues/1384)) ([9e92522](https://github.com/Koenkk/zigbee-herdsman/commit/9e92522ebbfc79006d04467133764d2667110326))
+* Improve Green Power processing ([#1386](https://github.com/Koenkk/zigbee-herdsman/issues/1386)) ([573641b](https://github.com/Koenkk/zigbee-herdsman/commit/573641be043ba5cb4c7a4d14947f37b44a790f92))
+
 ## [3.5.0](https://github.com/Koenkk/zigbee-herdsman/compare/v3.4.11...v3.5.0) (2025-04-05)
 
 
