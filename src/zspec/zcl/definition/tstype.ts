@@ -213,7 +213,6 @@ export type ClusterName =
     | 'manuSpecificCentraliteHumidity'
     | 'manuSpecificSmartThingsArrivalSensor'
     | 'manuSpecificSamsungAccelerometer'
-    | 'heimanSpecificAirQuality'
     | 'heimanSpecificScenes'
     | 'tradfriButton'
     | 'heimanSpecificInfraRedRemote'
