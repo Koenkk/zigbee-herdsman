@@ -153,8 +153,6 @@ export class ZiGateAdapter extends Adapter {
 
         this.joinPermitted = seconds !== 0;
     }
-
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     public async addInstallCode(ieeeAddress: string, key: Buffer, hashed: boolean): Promise<void> {
         throw new Error("Add install code is not supported");
     }
@@ -529,17 +527,12 @@ export class ZiGateAdapter extends Adapter {
     /**
      * InterPAN !!! not implemented
      */
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     public async setChannelInterPAN(channel: number): Promise<void> {
         throw new Error("Not supported");
     }
-
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     public async sendZclFrameInterPANToIeeeAddr(zclFrame: Zcl.Frame, ieeeAddress: string): Promise<void> {
         throw new Error("Not supported");
     }
-
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     public async sendZclFrameInterPANBroadcast(zclFrame: Zcl.Frame, timeout: number): Promise<Events.ZclPayload> {
         throw new Error("Not supported");
     }

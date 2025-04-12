@@ -13,7 +13,6 @@ export interface BuffaloZiGateOptions extends BuffaloZclOptions {
 }
 
 class BuffaloZiGate extends Buffalo {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars
     public write(type: ParameterType, value: any, options: BuffaloZiGateOptions): void {
         switch (type) {
             case ParameterType.UINT8: {

@@ -61,7 +61,6 @@ interface Request {
     parameter?: parameterT;
     request?: ApsDataRequest;
     seqNumber: number;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     resolve: (value: any) => void;
     reject: (value: Error) => void;
     ts?: number;

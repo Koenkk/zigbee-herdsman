@@ -2,7 +2,6 @@ import assert from "node:assert";
 
 import type {StructMemoryAlignment} from "../struct";
 import {Table} from "../table";
-/* eslint-disable @typescript-eslint/explicit-function-return-type */
 import {addressManagerEntry} from "./address-manager-entry";
 
 /**

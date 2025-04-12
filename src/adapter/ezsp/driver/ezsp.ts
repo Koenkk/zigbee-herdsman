@@ -133,7 +133,6 @@ export class EZSPFrameData {
     _cls_: string;
     _id_: number;
     _isRequest_: boolean;
-    /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
     [name: string]: any;
 
     static createFrame(ezspv: number, frame_id: number, isRequest: boolean, params: ParamsDesc | Buffer): EZSPFrameData {
@@ -206,7 +205,6 @@ export class EZSPZDORequestFrameData {
     _cls_: string;
     _id_: number;
     _isRequest_: boolean;
-    /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
     [name: string]: any;
 
     static getFrame(key: string | number): EZSPFrameDesc {
@@ -262,7 +260,6 @@ export class EZSPZDORequestFrameData {
 export class EZSPZDOResponseFrameData {
     _cls_: string;
     _id_: number;
-    /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
     [name: string]: any;
 
     static getFrame(key: string | number): ParamsDesc {

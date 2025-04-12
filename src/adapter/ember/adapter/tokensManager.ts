@@ -11,7 +11,6 @@ import {initSecurityManagerContext} from "../utils/initters";
 
 const NS = "zh:ember:tokens";
 
-/* eslint-disable @typescript-eslint/no-unused-vars */
 //------------------------------------------------------------------------------
 // Definitions for stack tokens.
 // protocol\zigbee\stack\config\token-stack.h
@@ -209,7 +208,6 @@ const KEY_ENTRY_IEEE_OFFSET = 0;
 /** first 4 bytes may point to PSA ID if data[KEY_ENTRY_INFO_OFFSET] & KEY_TABLE_ENTRY_HAS_PSA_ID */
 const KEY_ENTRY_KEY_DATA_OFFSET = 8;
 const KEY_ENTRY_INFO_OFFSET = 24;
-/* eslint-enable @typescript-eslint/no-unused-vars */
 
 /** uint16_t */
 const CREATORS: number[] = [

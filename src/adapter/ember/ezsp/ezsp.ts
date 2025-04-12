@@ -579,7 +579,6 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
     public validateReceivedFrame(buffalo: EzspBuffalo): EzspStatus {
         let status: EzspStatus = EzspStatus.SUCCESS;
         let frameControl: number, frameId: number, parametersIndex: number;
-        // eslint-disable-next-line prefer-const
         [status, frameControl, frameId, parametersIndex] = buffalo.getResponseMetadata();
 
         if (frameId === EzspFrameID.INVALID_COMMAND) {
@@ -5846,16 +5845,13 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
         const msgBuffalo = new EzspBuffalo(messageContents, 0);
 
         const macFrameControl = msgBuffalo.readUInt16() & ~MAC_ACK_REQUIRED;
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const sequence = msgBuffalo.readUInt8();
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const destPanId: PanId = msgBuffalo.readUInt16();
         let destAddress: EUI64 | NodeId;
 
         if (macFrameControl === LONG_DEST_FRAME_CONTROL) {
             destAddress = msgBuffalo.readIeeeAddr();
         } else if (macFrameControl === SHORT_DEST_FRAME_CONTROL) {
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
             destAddress = msgBuffalo.readUInt16();
         } else {
             logger.debug(`ezspMacFilterMatchMessageHandler INVALID InterPAN macFrameControl '${macFrameControl}'.`, NS);

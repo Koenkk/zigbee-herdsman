@@ -20,11 +20,8 @@ import {
 export interface ParamsDesc {
     name: string;
     type: DataType | BuffaloZclDataType | BuffaloZBOSSDataType;
-    /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
     condition?: (payload: any, buffalo: any) => boolean;
-    /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
     typed?: any;
-    /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
     options?: (payload: any, options: any) => void;
 }
 

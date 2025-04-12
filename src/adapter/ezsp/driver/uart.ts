@@ -84,7 +84,6 @@ export class SerialDriver extends EventEmitter {
         }
 
         logger.debug(`Opening SerialPort with ${JSON.stringify(options)}`, NS);
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-ignore
         this.serialPort = new SerialPort(options);
 

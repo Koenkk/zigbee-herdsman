@@ -54,10 +54,8 @@ interface Waiter<A, B> {
  * NOTE: `messageTag` is unreliable, so not used...
  */
 export class EmberOneWaitress {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     private readonly waiters: Map<number, Waiter<OneWaitressMatcher, any>>;
     // NOTE: for now, this could be much simpler (array-like), but more complex events might come into play
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     private readonly eventWaiters: Map<number, Waiter<OneWaitressEventMatcher, any>>;
     private currentId: number;
     private currentEventId: number;

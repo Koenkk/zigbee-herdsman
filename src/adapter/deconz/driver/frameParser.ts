@@ -461,14 +461,10 @@ function parseGreenPowerDataIndication(view: DataView): gpDataInd | null {
         return null;
     }
 }
-
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function parseMacPollCommand(view: DataView): number {
     //logger.debug("Received command MAC_POLL", NS);
     return 28;
 }
-
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function parseBeaconRequest(view: DataView): number {
     logger.debug("Received Beacon Request", NS);
     return 31;

@@ -1,7 +1,6 @@
 import assert from "node:assert";
 
 import type {StructMemoryAlignment} from "../struct";
-/* eslint-disable @typescript-eslint/explicit-function-return-type */
 import {Table} from "../table";
 import {apsLinkKeyDataEntry} from "./aps-link-key-data-entry";
 

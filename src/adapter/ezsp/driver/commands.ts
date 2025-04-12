@@ -80,7 +80,6 @@ import {
 } from "./types";
 
 export interface ParamsDesc {
-    /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
     [s: string]: any;
 }
 

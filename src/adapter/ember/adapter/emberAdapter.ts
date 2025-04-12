@@ -1574,7 +1574,6 @@ export class EmberAdapter extends Adapter {
     }
 
     // queued
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     public async backup(ieeeAddressesInDatabase: string[]): Promise<Backup> {
         return await this.queue.execute<Backup>(async () => {
             // grab fresh version here, bypass cache
@@ -2052,8 +2051,6 @@ export class EmberAdapter extends Adapter {
             this.checkInterpanLock();
 
             logger.debug(() => `~~~> [ZCL GROUP apsFrame=${JSON.stringify(apsFrame)} header=${JSON.stringify(zclFrame.header)}]`, NS);
-
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
             const [status, messageTag] = await this.ezsp.send(
                 EmberOutgoingMessageType.MULTICAST,
                 groupID, // not used with MULTICAST
@@ -2095,7 +2092,6 @@ export class EmberAdapter extends Adapter {
             this.checkInterpanLock();
 
             logger.debug(() => `~~~> [ZCL BROADCAST apsFrame=${JSON.stringify(apsFrame)} header=${JSON.stringify(zclFrame.header)}]`, NS);
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
             const [status, messageTag] = await this.ezsp.send(
                 EmberOutgoingMessageType.BROADCAST,
                 destination,

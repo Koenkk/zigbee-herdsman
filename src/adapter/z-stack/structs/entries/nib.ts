@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/explicit-function-return-type */
-
 import assert from "node:assert";
 
 import {Struct} from "../struct";

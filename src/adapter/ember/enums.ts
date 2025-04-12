@@ -1350,7 +1350,6 @@ export enum EmberCounterType {
     COUNT = 42,
 }
 
-/* eslint-disable @typescript-eslint/no-duplicate-enum-values */
 /** An enumerated list of library identifiers. */
 export enum EmberLibraryId {
     FIRST = 0x00,
@@ -1404,7 +1403,6 @@ export enum EmberLibraryStatus {
     PACKET_VALIDATE_LIBRARY_ENABLED = 0x01,
     PACKET_VALIDATE_LIBRARY_ENABLE_MASK = 0x01,
 }
-/* eslint-enable @typescript-eslint/no-duplicate-enum-values */
 
 /** Defines the entropy source used by the stack. */
 export enum EmberEntropySource {

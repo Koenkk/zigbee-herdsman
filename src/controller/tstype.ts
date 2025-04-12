@@ -1,5 +1,4 @@
 export interface KeyValue {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     [s: string]: any;
 }
 
@@ -27,7 +26,6 @@ export type EntityType = DeviceType | "Group";
 export interface DatabaseEntry {
     id: number;
     type: EntityType;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     [s: string]: any;
 }
 

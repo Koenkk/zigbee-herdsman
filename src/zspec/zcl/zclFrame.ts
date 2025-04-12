@@ -7,8 +7,6 @@ import type {Status} from "./definition/status";
 import type {BuffaloZclOptions, Cluster, ClusterName, Command, CustomClusters, ParameterDefinition} from "./definition/tstype";
 import * as Utils from "./utils";
 import {ZclHeader} from "./zclHeader";
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type ZclPayload = any;
 
 const ListTypes: number[] = [
@@ -203,7 +201,6 @@ export class ZclFrame {
             const payload = [];
 
             while (buffalo.isMore()) {
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 const entry: {[s: string]: any} = {};
 
                 for (const parameter of command.parameters) {
@@ -238,7 +235,6 @@ export class ZclFrame {
 
             return payload;
         } else if (command.parseStrategy === "flat") {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const payload: {[s: string]: any} = {};
 
             for (const parameter of command.parameters) {
@@ -249,7 +245,6 @@ export class ZclFrame {
         } else {
             if (command.parseStrategy === "oneof") {
                 if (Utils.isFoundationDiscoverRsp(command.ID)) {
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     const payload: {discComplete: number; attrInfos: {[k: string]: any}[]} = {
                         discComplete: buffalo.readUInt8(),
                         attrInfos: [],

@@ -317,7 +317,6 @@ export class ZoHAdapter extends Adapter {
     /* v8 ignore stop */
 
     /* v8 ignore start */
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     public async backup(ieeeAddressesInDatabase: string[]): Promise<Backup> {
         throw new Error("ZigBee on Host handles backup internally");
     }
@@ -766,8 +765,6 @@ export class ZoHAdapter extends Adapter {
             }, 5000);
         }
     }
-
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     private onDeviceRejoined(source16: number, source64: bigint, capabilities: MACCapabilities): void {
         this.emit("deviceJoined", {networkAddress: source16, ieeeAddr: `0x${bigUInt64ToHexBE(source64)}`});
     }
@@ -777,7 +774,6 @@ export class ZoHAdapter extends Adapter {
     }
 
     /* v8 ignore start */
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     private onDeviceAuthorized(source16: number, source64: bigint): void {}
     /* v8 ignore stop */
 

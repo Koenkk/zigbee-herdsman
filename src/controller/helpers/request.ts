@@ -1,7 +1,6 @@
 import type * as Zcl from "../../zspec/zcl";
 import type {SendPolicy} from "../tstype";
 
-/* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
 export class Request<Type = any> {
     static defaultSendPolicy: {[key: number]: SendPolicy} = {
         0: "keep-payload", // Read Attributes

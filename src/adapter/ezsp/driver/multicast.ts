@@ -11,9 +11,7 @@ const NS = "zh:ezsp:cast";
 export class Multicast {
     TABLE_SIZE = 16;
     private driver: Driver;
-    /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
     private _multicast: any;
-    /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
     private _available: Array<any>;
 
     constructor(driver: Driver) {
@@ -35,7 +33,6 @@ export class Multicast {
         }
     }
 
-    /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
     async startup(enpoints: Array<any>): Promise<void> {
         await this._initialize();
         for (const ep of enpoints) {

@@ -219,7 +219,6 @@ export class Driver extends EventEmitter {
         //const mfgName = await ezsp.execCommand('getMfgToken', EzspMfgTokenId.MFG_STRING);
         // getting MFG_BOARD_NAME token
         //const boardName = await ezsp.execCommand('getMfgToken', EzspMfgTokenId.MFG_BOARD_NAME);
-        /* eslint-disable prefer-const */
         let verInfo = await this.ezsp.getValue(EzspValueId.VALUE_VERSION_INFO);
         let build, major, minor, patch, special;
         [build, verInfo] = uint16_t.deserialize(uint16_t, verInfo);
@@ -227,7 +226,6 @@ export class Driver extends EventEmitter {
         [minor, verInfo] = uint8_t.deserialize(uint8_t, verInfo);
         [patch, verInfo] = uint8_t.deserialize(uint8_t, verInfo);
         [special, verInfo] = uint8_t.deserialize(uint8_t, verInfo);
-        /* eslint-enable prefer-const */
         const vers = `${major}.${minor}.${patch}.${special} build ${build}`;
         logger.debug(`EmberZNet version: ${vers}`, NS);
         this.version = {
@@ -471,7 +469,6 @@ export class Driver extends EventEmitter {
                     if (msgType == EmberOutgoingMessageType.OUTGOING_MULTICAST) {
                         const apsFrame = frame.apsFrame;
                         if (apsFrame.destinationEndpoint == 255) {
-                            // eslint-disable-next-line @typescript-eslint/no-floating-promises
                             this.multicast.subscribe(apsFrame.groupId, 1);
                         }
                     }
@@ -618,7 +615,6 @@ export class Driver extends EventEmitter {
             if (Buffer.from(ieee.value).indexOf(Buffer.from(rec.prefix)) == 0) {
                 // set ManufacturerCode
                 logger.debug(`handleNodeJoined: change ManufacturerCode for ieee ${ieee} to ${rec.mfgId}`, NS);
-                // eslint-disable-next-line @typescript-eslint/no-floating-promises
                 this.resetMfgId(rec.mfgId);
                 break;
             }
@@ -695,7 +691,6 @@ export class Driver extends EventEmitter {
         return result;
     }
 
-    /* eslint-disable-next-line @typescript-eslint/no-unused-vars */
     public async mrequest(apsFrame: EmberApsFrame, data: Buffer, timeout = 30000): Promise<boolean> {
         try {
             const seq = (apsFrame.sequence + 1) & 0xff;
@@ -706,7 +701,6 @@ export class Driver extends EventEmitter {
         }
     }
 
-    /* eslint-disable-next-line @typescript-eslint/no-unused-vars */
     public async rawrequest(rawFrame: EmberRawFrame, data: Buffer, timeout = 10000): Promise<boolean> {
         try {
             const msgData = Buffer.concat([EmberRawFrame.serialize(EmberRawFrame, rawFrame), data]);
@@ -718,7 +712,6 @@ export class Driver extends EventEmitter {
         }
     }
 
-    /* eslint-disable-next-line @typescript-eslint/no-unused-vars */
     public async ieeerawrequest(rawFrame: EmberIeeeRawFrame, data: Buffer, timeout = 10000): Promise<boolean> {
         try {
             const msgData = Buffer.concat([EmberIeeeRawFrame.serialize(EmberIeeeRawFrame, rawFrame), data]);

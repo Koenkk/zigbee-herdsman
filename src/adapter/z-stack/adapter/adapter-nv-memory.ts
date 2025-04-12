@@ -78,7 +78,6 @@ export class AdapterNvMemory {
             offset += readResponse.payload.value.length;
         }
         if (useStruct) {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             return (useStruct as any)(buffer, this.memoryAlignment) as T;
         }
         return buffer;

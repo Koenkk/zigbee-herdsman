@@ -12,7 +12,6 @@ import {FRAMES, type ParamsDesc, ZBOSS_COMMAND_ID_TO_ZDO_RSP_CLUSTER_ID} from ".
 import {BuffaloZBOSSDataType, type CommandId} from "./enums";
 
 export class ZBOSSBuffaloZcl extends BuffaloZcl {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     public override write(type: DataType | BuffaloZclDataType | BuffaloZBOSSDataType, value: any, options: BuffaloZclOptions): void {
         switch (type) {
             case BuffaloZBOSSDataType.EXTENDED_PAN_ID: {
@@ -23,8 +22,6 @@ export class ZBOSSBuffaloZcl extends BuffaloZcl {
             }
         }
     }
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     public override read(type: DataType | BuffaloZclDataType | BuffaloZBOSSDataType, options: BuffaloZclOptions): any {
         switch (type) {
             case BuffaloZBOSSDataType.EXTENDED_PAN_ID: {

@@ -1,5 +1,3 @@
-/* eslint max-len: 0 */
-
 import {BuffaloZclDataType, DataType, DataTypeClass, Direction, ParameterCondition} from "./enums";
 import {Status} from "./status";
 import type {ParameterDefinition} from "./tstype";

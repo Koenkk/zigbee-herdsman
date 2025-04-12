@@ -694,8 +694,6 @@ export class BuffaloZcl extends Buffalo {
 
         return value;
     }
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     public write(type: DataType | BuffaloZclDataType, value: any, options: BuffaloZclOptions): void {
         switch (type) {
             case DataType.NO_DATA:
@@ -878,8 +876,6 @@ export class BuffaloZcl extends Buffalo {
 
         throw new Error(`Write for '${type}' not available`);
     }
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     public read(type: DataType | BuffaloZclDataType, options: BuffaloZclOptions): any {
         switch (type) {
             case DataType.NO_DATA:

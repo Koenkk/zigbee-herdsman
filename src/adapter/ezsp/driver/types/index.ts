@@ -105,7 +105,6 @@ import {
     EzspStruct,
 } from "./struct";
 
-/* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
 export function deserialize(payload: any, schema: any[]): any[] {
     const result = [];
     let value,
@@ -117,7 +116,6 @@ export function deserialize(payload: any, schema: any[]): any[] {
     return [result, data];
 }
 
-/* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
 export function serialize(data: any[], schema: {serialize: (schema: any, item: any) => Buffer}[]): Buffer {
     return Buffer.concat(schema.map((s, idx) => s.serialize(s, data[idx])));
 }

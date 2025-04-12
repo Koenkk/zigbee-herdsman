@@ -1,5 +1,3 @@
-/* eslint max-len: 0 */
-
 import {BuffaloZclDataType, DataType, ParameterCondition} from "./enums";
 import {ManufacturerCode} from "./manufacturerCode";
 import {Status} from "./status";

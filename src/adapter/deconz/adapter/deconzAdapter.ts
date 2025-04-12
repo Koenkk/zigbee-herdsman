@@ -301,8 +301,6 @@ export class DeconzAdapter extends Adapter {
     public async addInstallCode(ieeeAddress: string, key: Buffer, hashed: boolean): Promise<void> {
         await this.driver.writeLinkKey(ieeeAddress, hashed ? key : ZSpec.Utils.aes128MmoHash(key));
     }
-
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     public async reset(type: "soft" | "hard"): Promise<void> {
         return await Promise.reject(new Error("Reset is not supported"));
     }
@@ -571,28 +569,18 @@ export class DeconzAdapter extends Adapter {
     public async restoreChannelInterPAN(): Promise<void> {
         throw new Error("not supported");
     }
-
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     public async sendZclFrameInterPANToIeeeAddr(zclFrame: Zcl.Frame, ieeeAddr: string): Promise<void> {
         throw new Error("not supported");
     }
-
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     public async sendZclFrameInterPANBroadcast(zclFrame: Zcl.Frame, timeout: number): Promise<Events.ZclPayload> {
         throw new Error("not supported");
     }
-
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     public async sendZclFrameInterPANBroadcastWithResponse(zclFrame: Zcl.Frame, timeout: number): Promise<Events.ZclPayload> {
         throw new Error("not supported");
     }
-
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     public async setChannelInterPAN(channel: number): Promise<void> {
         throw new Error("not supported");
     }
-
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     public async sendZclFrameInterPANIeeeAddr(zclFrame: Zcl.Frame, ieeeAddr: string): Promise<void> {
         throw new Error("not supported");
     }

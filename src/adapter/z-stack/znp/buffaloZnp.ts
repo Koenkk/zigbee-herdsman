@@ -35,8 +35,6 @@ class BuffaloZnp extends Buffalo {
 
         return value;
     }
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     public write(type: ParameterType, value: any, options: BuffaloZnpOptions): void {
         switch (type) {
             case ParameterType.UINT8: {
@@ -88,8 +86,6 @@ class BuffaloZnp extends Buffalo {
             }
         }
     }
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     public read(type: ParameterType, options: BuffaloZnpOptions): any {
         switch (type) {
             case ParameterType.UINT8: {

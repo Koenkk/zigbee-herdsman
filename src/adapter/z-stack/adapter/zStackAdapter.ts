@@ -812,7 +812,6 @@ export class ZStackAdapter extends Adapter {
                             // to rediscover the route every time.
                             const debouncer = debounce(
                                 () => {
-                                    // eslint-disable-next-line @typescript-eslint/no-floating-promises
                                     this.queue.execute<void>(async () => {
                                         this.discoverRoute(zdoPayload.nwkAddress, false).catch(() => {});
                                     }, zdoPayload.nwkAddress);

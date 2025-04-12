@@ -141,8 +141,6 @@ export class Znp extends events.EventEmitter {
             this.socketPort!.on("connect", () => {
                 logger.info("Socket connected", NS);
             });
-
-            // eslint-disable-next-line @typescript-eslint/no-this-alias
             const self = this;
             this.socketPort!.on("ready", async () => {
                 logger.info("Socket ready", NS);

@@ -35,8 +35,6 @@ export interface MtCmdSreqZdo extends Omit<MtCmdBase, "request" | "response"> {
 }
 
 export type MtCmd = MtCmdAreq | MtCmdSreq | MtCmdAreqZdo | MtCmdSreqZdo;
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type ZpiObjectPayload = {[s: string]: any};
 
 export interface BuffaloZnpOptions {
