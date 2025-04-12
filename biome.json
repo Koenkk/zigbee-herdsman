@@ -46,7 +46,6 @@
                 "noAssignInExpressions": "off",
                 "noGlobalIsNan": "off",
                 "noAsyncPromiseExecutor": "off",
-                "useIsArray": "off",
                 "useDefaultSwitchClauseLast": "off"
             }
         }

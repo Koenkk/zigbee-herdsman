@@ -1,5 +1,5 @@
 export function isNumberArray(value: unknown): value is number[] {
-    return value instanceof Array && value.every((item) => typeof item === "number");
+    return Array.isArray(value) && value.every((item) => typeof item === "number");
 }
 
 export function isNumberArrayOfLength(value: unknown, length: number): boolean {
