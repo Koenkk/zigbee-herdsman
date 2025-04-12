@@ -1,9 +1,9 @@
 /* v8 ignore start */
 
-import {logger} from '../../../utils/logger';
-import {EZSP_MAX_FRAME_LENGTH} from '../ezsp/consts';
+import {logger} from "../../../utils/logger";
+import {EZSP_MAX_FRAME_LENGTH} from "../ezsp/consts";
 
-const NS = 'zh:ember:uart:queues';
+const NS = "zh:ember:uart:queues";
 
 /**
  * Buffer to hold a DATA frame.
@@ -39,7 +39,7 @@ export class EzspQueue {
      */
     get length(): number {
         let head = this.tail;
-        let count: number = 0;
+        let count = 0;
 
         for (count; head != undefined; count++) {
             head = head.link;
@@ -197,7 +197,7 @@ export class EzspFreeList {
      */
     get length(): number {
         let next = this.link;
-        let count: number = 0;
+        let count = 0;
 
         for (count; next != undefined; count++) {
             next = next.link;

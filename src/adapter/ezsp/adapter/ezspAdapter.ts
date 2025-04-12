@@ -1,21 +1,21 @@
 /* v8 ignore start */
 
-import assert from 'node:assert';
+import assert from "node:assert";
 
-import * as Models from '../../../models';
-import {Queue, wait, Waitress} from '../../../utils';
-import {logger} from '../../../utils/logger';
-import * as ZSpec from '../../../zspec';
-import * as Zcl from '../../../zspec/zcl';
-import * as Zdo from '../../../zspec/zdo';
-import * as ZdoTypes from '../../../zspec/zdo/definition/tstypes';
-import Adapter from '../../adapter';
-import {ZclPayload} from '../../events';
-import {AdapterOptions, CoordinatorVersion, NetworkOptions, NetworkParameters, SerialPortOptions, StartResult} from '../../tstype';
-import {Driver, EmberIncomingMessage} from '../driver';
-import {EmberEUI64, EmberStatus} from '../driver/types';
+import type * as Models from "../../../models";
+import {Queue, Waitress, wait} from "../../../utils";
+import {logger} from "../../../utils/logger";
+import * as ZSpec from "../../../zspec";
+import * as Zcl from "../../../zspec/zcl";
+import * as Zdo from "../../../zspec/zdo";
+import type * as ZdoTypes from "../../../zspec/zdo/definition/tstypes";
+import Adapter from "../../adapter";
+import type {ZclPayload} from "../../events";
+import type {AdapterOptions, CoordinatorVersion, NetworkOptions, NetworkParameters, SerialPortOptions, StartResult} from "../../tstype";
+import {Driver, type EmberIncomingMessage} from "../driver";
+import {EmberEUI64, EmberStatus} from "../driver/types";
 
-const NS = 'zh:ezsp';
+const NS = "zh:ezsp";
 
 interface WaitressMatcher {
     address?: number | string;
@@ -46,10 +46,10 @@ export class EZSPAdapter extends Adapter {
         this.queue = new Queue(concurrent);
 
         this.driver = new Driver(this.serialPortOptions, this.networkOptions, backupPath);
-        this.driver.on('close', this.onDriverClose.bind(this));
-        this.driver.on('deviceJoined', this.handleDeviceJoin.bind(this));
-        this.driver.on('deviceLeft', this.handleDeviceLeft.bind(this));
-        this.driver.on('incomingMessage', this.processMessage.bind(this));
+        this.driver.on("close", this.onDriverClose.bind(this));
+        this.driver.on("deviceJoined", this.handleDeviceJoin.bind(this));
+        this.driver.on("deviceLeft", this.handleDeviceLeft.bind(this));
+        this.driver.on("incomingMessage", this.processMessage.bind(this));
     }
 
     private async processMessage(frame: EmberIncomingMessage): Promise<void> {
@@ -57,7 +57,7 @@ export class EZSPAdapter extends Adapter {
 
         if (frame.apsFrame.profileId == Zdo.ZDO_PROFILE_ID) {
             if (frame.apsFrame.clusterId >= 0x8000 /* response only */) {
-                this.emit('zdoResponse', frame.apsFrame.clusterId, frame.zdoResponse!);
+                this.emit("zdoResponse", frame.apsFrame.clusterId, frame.zdoResponse!);
             }
         } else if (frame.apsFrame.profileId == ZSpec.HA_PROFILE_ID || frame.apsFrame.profileId == 0xffff) {
             const payload: ZclPayload = {
@@ -73,7 +73,7 @@ export class EZSPAdapter extends Adapter {
             };
 
             this.waitress.resolve(payload);
-            this.emit('zclPayload', payload);
+            this.emit("zclPayload", payload);
         } else if (frame.apsFrame.profileId == ZSpec.TOUCHLINK_PROFILE_ID && frame.senderEui64) {
             // ZLL Frame
             const payload: ZclPayload = {
@@ -89,7 +89,7 @@ export class EZSPAdapter extends Adapter {
             };
 
             this.waitress.resolve(payload);
-            this.emit('zclPayload', payload);
+            this.emit("zclPayload", payload);
         } else if (frame.apsFrame.profileId == ZSpec.GP_PROFILE_ID) {
             // GP Frame
             // Only handle when clusterId == 33 (greenPower), some devices send messages with this profileId
@@ -109,7 +109,7 @@ export class EZSPAdapter extends Adapter {
                 };
 
                 this.waitress.resolve(payload);
-                this.emit('zclPayload', payload);
+                this.emit("zclPayload", payload);
             } else {
                 logger.debug(`Ignoring GP frame because clusterId is not greenPower`, NS);
             }
@@ -119,7 +119,7 @@ export class EZSPAdapter extends Adapter {
     private async handleDeviceJoin(nwk: number, ieee: EmberEUI64): Promise<void> {
         logger.debug(() => `Device join request received: ${nwk} ${ieee.toString()}`, NS);
 
-        this.emit('deviceJoined', {
+        this.emit("deviceJoined", {
             networkAddress: nwk,
             ieeeAddr: `0x${ieee.toString()}`,
         });
@@ -128,7 +128,7 @@ export class EZSPAdapter extends Adapter {
     private handleDeviceLeft(nwk: number, ieee: EmberEUI64): void {
         logger.debug(() => `Device left network request received: ${nwk} ${ieee.toString()}`, NS);
 
-        this.emit('deviceLeave', {
+        this.emit("deviceLeave", {
             networkAddress: nwk,
             ieeeAddr: `0x${ieee.toString()}`,
         });
@@ -154,7 +154,7 @@ export class EZSPAdapter extends Adapter {
         logger.debug(`onDriverClose()`, NS);
 
         if (!this.closing) {
-            this.emit('disconnected');
+            this.emit("disconnected");
         }
     }
 
@@ -216,14 +216,14 @@ export class EZSPAdapter extends Adapter {
 
     public async addInstallCode(ieeeAddress: string, key: Buffer, hashed: boolean): Promise<void> {
         if ([8, 10, 14, 16, 18].indexOf(key.length) === -1) {
-            throw new Error('Wrong install code length');
+            throw new Error("Wrong install code length");
         }
         await this.driver.addInstallCode(ieeeAddress, key, hashed);
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    public async reset(type: 'soft' | 'hard'): Promise<void> {
-        return await Promise.reject(new Error('Not supported'));
+    public async reset(type: "soft" | "hard"): Promise<void> {
+        return await Promise.reject(new Error("Not supported"));
     }
 
     public async sendZdo(
@@ -269,7 +269,7 @@ export class EZSPAdapter extends Adapter {
             }
 
             if (ZSpec.Utils.isBroadcastAddress(networkAddress)) {
-                logger.debug(() => `~~~> [ZDO ${clusterName} BROADCAST to=${networkAddress} payload=${payload.toString('hex')}]`, NS);
+                logger.debug(() => `~~~> [ZDO ${clusterName} BROADCAST to=${networkAddress} payload=${payload.toString("hex")}]`, NS);
 
                 const req = await this.driver.brequest(networkAddress, frame, payload);
 
@@ -280,7 +280,7 @@ export class EZSPAdapter extends Adapter {
                     throw new Error(`~x~> [ZDO ${clusterName} BROADCAST to=${networkAddress}] Failed to send request.`);
                 }
             } else {
-                logger.debug(() => `~~~> [ZDO ${clusterName} UNICAST to=${ieeeAddress}:${networkAddress} payload=${payload.toString('hex')}]`, NS);
+                logger.debug(() => `~~~> [ZDO ${clusterName} UNICAST to=${ieeeAddress}:${networkAddress} payload=${payload.toString("hex")}]`, NS);
 
                 const req = await this.driver.request(networkAddress, frame, payload);
 
@@ -383,7 +383,7 @@ export class EZSPAdapter extends Adapter {
             if (response != null) {
                 response.cancel();
             }
-            throw Error('sendZclFrameToEndpointInternal error');
+            throw Error("sendZclFrameToEndpointInternal error");
         }
         if (response !== null) {
             try {
@@ -471,7 +471,7 @@ export class EZSPAdapter extends Adapter {
     }
 
     public async backup(): Promise<Models.Backup> {
-        assert(this.driver.ezsp.isInitialized(), 'Cannot make backup when ezsp is not initialized');
+        assert(this.driver.ezsp.isInitialized(), "Cannot make backup when ezsp is not initialized");
         return await this.driver.backupMan.createBackup();
     }
 

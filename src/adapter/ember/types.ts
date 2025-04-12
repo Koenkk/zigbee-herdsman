@@ -1,5 +1,5 @@
-import {EUI64, ExtendedPanId, NodeId, PanId} from '../../zspec/tstypes';
-import {
+import type {EUI64, ExtendedPanId, NodeId, PanId} from "../../zspec/tstypes";
+import type {
     EmberApsOption,
     EmberBindingType,
     EmberCurrentSecurityBitmask,
@@ -17,7 +17,7 @@ import {
     SecManDerivedKeyType,
     SecManFlag,
     SecManKeyType,
-} from './enums';
+} from "./enums";
 
 /** 16-bit ZigBee multicast group identifier. uint16_t */
 export type EmberMulticastId = number;

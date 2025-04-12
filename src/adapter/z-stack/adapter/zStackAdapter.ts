@@ -1,41 +1,41 @@
-import assert from 'node:assert';
+import assert from "node:assert";
 
-import debounce from 'debounce';
+import debounce from "debounce";
 
-import * as Models from '../../../models';
-import {Queue, wait, Waitress} from '../../../utils';
-import {logger} from '../../../utils/logger';
-import * as ZSpec from '../../../zspec';
-import {BroadcastAddress} from '../../../zspec/enums';
-import {EUI64} from '../../../zspec/tstypes';
-import * as Zcl from '../../../zspec/zcl';
-import * as Zdo from '../../../zspec/zdo';
-import * as ZdoTypes from '../../../zspec/zdo/definition/tstypes';
-import Adapter from '../../adapter';
-import * as Events from '../../events';
-import {AdapterOptions, CoordinatorVersion, NetworkOptions, NetworkParameters, SerialPortOptions, StartResult} from '../../tstype';
-import * as Constants from '../constants';
-import {Constants as UnpiConstants} from '../unpi';
-import {Znp, ZpiObject} from '../znp';
-import Definition from '../znp/definition';
-import {isMtCmdAreqZdo} from '../znp/utils';
-import {ZnpAdapterManager} from './manager';
-import {ZnpVersion} from './tstype';
+import type * as Models from "../../../models";
+import {Queue, Waitress, wait} from "../../../utils";
+import {logger} from "../../../utils/logger";
+import * as ZSpec from "../../../zspec";
+import type {BroadcastAddress} from "../../../zspec/enums";
+import type {EUI64} from "../../../zspec/tstypes";
+import * as Zcl from "../../../zspec/zcl";
+import * as Zdo from "../../../zspec/zdo";
+import type * as ZdoTypes from "../../../zspec/zdo/definition/tstypes";
+import Adapter from "../../adapter";
+import type * as Events from "../../events";
+import type {AdapterOptions, CoordinatorVersion, NetworkOptions, NetworkParameters, SerialPortOptions, StartResult} from "../../tstype";
+import * as Constants from "../constants";
+import {Constants as UnpiConstants} from "../unpi";
+import {Znp, type ZpiObject} from "../znp";
+import Definition from "../znp/definition";
+import {isMtCmdAreqZdo} from "../znp/utils";
+import {ZnpAdapterManager} from "./manager";
+import {ZnpVersion} from "./tstype";
 
-const NS = 'zh:zstack';
+const NS = "zh:zstack";
 const Subsystem = UnpiConstants.Subsystem;
 const Type = UnpiConstants.Type;
 const {ZnpCommandStatus, AddressMode} = Constants.COMMON;
 
 const DataConfirmTimeout = 9999; // Not an actual code
 const DataConfirmErrorCodeLookup: {[k: number]: string} = {
-    [DataConfirmTimeout]: 'Timeout',
-    26: 'MAC no resources',
-    183: 'APS no ack',
-    205: 'No network route',
-    225: 'MAC channel access failure',
-    233: 'MAC no ack',
-    240: 'MAC transaction expired',
+    [DataConfirmTimeout]: "Timeout",
+    26: "MAC no resources",
+    183: "APS no ack",
+    205: "No network route",
+    225: "MAC channel access failure",
+    233: "MAC no ack",
+    240: "MAC transaction expired",
 };
 
 interface WaitressMatcher {
@@ -93,8 +93,8 @@ export class ZStackAdapter extends Adapter {
         this.closing = false;
         this.waitress = new Waitress<Events.ZclPayload, WaitressMatcher>(this.waitressValidator, this.waitressTimeoutFormatter);
 
-        this.znp.on('received', this.onZnpRecieved.bind(this));
-        this.znp.on('close', this.onZnpClose.bind(this));
+        this.znp.on("received", this.onZnpRecieved.bind(this));
+        this.znp.on("close", this.onZnpClose.bind(this));
     }
 
     /**
@@ -106,7 +106,7 @@ export class ZStackAdapter extends Adapter {
         const attempts = 3;
         for (let i = 0; i < attempts; i++) {
             try {
-                await this.znp.request(Subsystem.SYS, 'ping', {capabilities: 1});
+                await this.znp.request(Subsystem.SYS, "ping", {capabilities: 1});
                 break;
             } catch (e) {
                 if (attempts - 1 === i) {
@@ -117,10 +117,10 @@ export class ZStackAdapter extends Adapter {
 
         // Old firmware did not support version, assume it's Z-Stack 1.2 for now.
         try {
-            this.version = (await this.znp.requestWithReply(Subsystem.SYS, 'version', {})).payload as typeof this.version;
+            this.version = (await this.znp.requestWithReply(Subsystem.SYS, "version", {})).payload as typeof this.version;
         } catch {
             logger.debug(`Failed to get zStack version, assuming 1.2`, NS);
-            this.version = {transportrev: 2, product: 0, majorrel: 2, minorrel: 0, maintrel: 0, revision: ''};
+            this.version = {transportrev: 2, product: 0, majorrel: 2, minorrel: 0, maintrel: 0, revision: ""};
         }
 
         const concurrent =
@@ -148,11 +148,11 @@ export class ZStackAdapter extends Adapter {
         if (this.adapterOptions.disableLED) {
             // Wait a bit for adapter to startup, otherwise led doesn't disable (tested with CC2531)
             await wait(200);
-            await this.setLED('disable');
+            await this.setLED("disable");
         }
 
         if (this.adapterOptions.transmitPower != null) {
-            await this.znp.request(Subsystem.SYS, 'stackTune', {operation: 0, value: this.adapterOptions.transmitPower});
+            await this.znp.request(Subsystem.SYS, "stackTune", {operation: 0, value: this.adapterOptions.transmitPower});
         }
 
         return await startResult;
@@ -166,7 +166,7 @@ export class ZStackAdapter extends Adapter {
     public async getCoordinatorIEEE(): Promise<string> {
         return await this.queue.execute(async () => {
             this.checkInterpanLock();
-            const deviceInfo = await this.znp.requestWithReply(Subsystem.UTIL, 'getDeviceInfo', {});
+            const deviceInfo = await this.znp.requestWithReply(Subsystem.UTIL, "getDeviceInfo", {});
 
             return deviceInfo.payload.ieeeaddr;
         });
@@ -197,31 +197,31 @@ export class ZStackAdapter extends Adapter {
 
         await this.queue.execute<void>(async () => {
             this.checkInterpanLock();
-            await this.setLED(seconds == 0 ? 'off' : 'on');
+            await this.setLED(seconds == 0 ? "off" : "on");
         });
     }
 
-    public async reset(type: 'soft' | 'hard'): Promise<void> {
-        if (type === 'soft') {
-            await this.znp.request(Subsystem.SYS, 'resetReq', {type: Constants.SYS.resetType.SOFT});
+    public async reset(type: "soft" | "hard"): Promise<void> {
+        if (type === "soft") {
+            await this.znp.request(Subsystem.SYS, "resetReq", {type: Constants.SYS.resetType.SOFT});
         } else {
-            await this.znp.request(Subsystem.SYS, 'resetReq', {type: Constants.SYS.resetType.HARD});
+            await this.znp.request(Subsystem.SYS, "resetReq", {type: Constants.SYS.resetType.HARD});
         }
     }
 
-    private async setLED(action: 'disable' | 'on' | 'off'): Promise<void> {
+    private async setLED(action: "disable" | "on" | "off"): Promise<void> {
         if (this.supportsLED == undefined) {
             // Only zStack3x0 with 20210430 and greater support LED
             const zStack3x0 = this.version.product === ZnpVersion.zStack3x0;
-            this.supportsLED = !zStack3x0 || (zStack3x0 && parseInt(this.version.revision) >= 20210430);
+            this.supportsLED = !zStack3x0 || (zStack3x0 && Number.parseInt(this.version.revision) >= 20210430);
         }
 
-        if (!this.supportsLED || (this.adapterOptions.disableLED && action !== 'disable')) {
+        if (!this.supportsLED || (this.adapterOptions.disableLED && action !== "disable")) {
             return;
         }
 
         // Firmwares build on and after 20211029 should handle LED themselves
-        const firmwareControlsLed = parseInt(this.version.revision) >= 20211029;
+        const firmwareControlsLed = Number.parseInt(this.version.revision) >= 20211029;
         const lookup = {
             disable: firmwareControlsLed ? {ledid: 0xff, mode: 5} : {ledid: 3, mode: 0},
             on: firmwareControlsLed ? null : {ledid: 3, mode: 1},
@@ -230,7 +230,7 @@ export class ZStackAdapter extends Adapter {
 
         const payload = lookup[action];
         if (payload) {
-            this.znp.request(Subsystem.UTIL, 'ledControl', payload, undefined, 500).catch(() => {
+            this.znp.request(Subsystem.UTIL, "ledControl", payload, undefined, 500).catch(() => {
                 // We cannot 100% correctly determine if an adapter supports LED. E.g. the zStack 1.2 20190608
                 // fw supports led on the CC2531 but not on the CC2530. Therefore if a led request fails never thrown
                 // an error but instead mark the led as unsupported.
@@ -264,17 +264,17 @@ export class ZStackAdapter extends Adapter {
     }
 
     private supportsAssocRemove(): boolean {
-        return this.version.product === ZnpVersion.zStack3x0 && parseInt(this.version.revision) >= 20200805;
+        return this.version.product === ZnpVersion.zStack3x0 && Number.parseInt(this.version.revision) >= 20200805;
     }
 
     private supportsAssocAdd(): boolean {
-        return this.version.product === ZnpVersion.zStack3x0 && parseInt(this.version.revision) >= 20201026;
+        return this.version.product === ZnpVersion.zStack3x0 && Number.parseInt(this.version.revision) >= 20201026;
     }
 
     private async discoverRoute(networkAddress: number, waitSettled = true): Promise<void> {
         logger.debug(`Discovering route to ${networkAddress}`, NS);
         const payload = {dstAddr: networkAddress, options: 0, radius: Constants.AF.DEFAULT_RADIUS};
-        await this.znp.request(Subsystem.ZDO, 'extRouteDisc', payload);
+        await this.znp.request(Subsystem.ZDO, "extRouteDisc", payload);
 
         if (waitSettled) {
             await wait(3000);
@@ -528,7 +528,7 @@ export class ZStackAdapter extends Adapter {
              */
             if (assocRemove && assocRestore && this.supportsAssocAdd()) {
                 logger.debug(`assocAdd(${assocRestore.ieeeadr})`, NS);
-                await this.znp.request(Subsystem.UTIL, 'assocAdd', assocRestore);
+                await this.znp.request(Subsystem.UTIL, "assocAdd", assocRestore);
                 assocRestore = undefined;
             }
 
@@ -584,7 +584,7 @@ export class ZStackAdapter extends Adapter {
                     dataRequestAttempt >= 1 &&
                     this.supportsAssocRemove()
                 ) {
-                    const match = await this.znp.requestWithReply(Subsystem.UTIL, 'assocGetWithAddress', {
+                    const match = await this.znp.requestWithReply(Subsystem.UTIL, "assocGetWithAddress", {
                         extaddr: ieeeAddr,
                         nwkaddr: networkAddress,
                     });
@@ -612,7 +612,7 @@ export class ZStackAdapter extends Adapter {
                      * automatically timeout after 60000ms.
                      */
                     logger.debug(`assocRemove(${ieeeAddr})`, NS);
-                    await this.znp.request(Subsystem.UTIL, 'assocRemove', {ieeeadr: ieeeAddr});
+                    await this.znp.request(Subsystem.UTIL, "assocRemove", {ieeeadr: ieeeAddr});
                 } else if (!discoveredRoute && dataRequestAttempt >= 1) {
                     discoveredRoute = true;
                     await this.discoverRoute(networkAddress);
@@ -627,7 +627,7 @@ export class ZStackAdapter extends Adapter {
                             networkAddress = actualNetworkAddress;
                             await this.discoverRoute(actualNetworkAddress);
                         } else {
-                            logger.debug('Network address did not change', NS);
+                            logger.debug("Network address did not change", NS);
                         }
                         /* v8 ignore start */
                     } catch {
@@ -635,7 +635,7 @@ export class ZStackAdapter extends Adapter {
                     }
                     /* v8 ignore stop */
                 } else {
-                    logger.debug('Wait 2000ms', NS);
+                    logger.debug("Wait 2000ms", NS);
                     await wait(2000);
                 }
 
@@ -668,7 +668,7 @@ export class ZStackAdapter extends Adapter {
                     // No response could be because the radio of the end device is turned off:
                     // Sometimes the coordinator does not properly set the PENDING flag.
                     // Try to rewrite the device entry in the association table, this fixes it sometimes.
-                    const match = await this.znp.requestWithReply(Subsystem.UTIL, 'assocGetWithAddress', {
+                    const match = await this.znp.requestWithReply(Subsystem.UTIL, "assocGetWithAddress", {
                         extaddr: ieeeAddr,
                         nwkaddr: networkAddress,
                     });
@@ -683,8 +683,8 @@ export class ZStackAdapter extends Adapter {
                         match.payload.noderelation == 1
                     ) {
                         logger.debug(`Response timeout recovery: Rewrite association table entry (${ieeeAddr})`, NS);
-                        await this.znp.request(Subsystem.UTIL, 'assocRemove', {ieeeadr: ieeeAddr});
-                        await this.znp.request(Subsystem.UTIL, 'assocAdd', {
+                        await this.znp.request(Subsystem.UTIL, "assocRemove", {ieeeadr: ieeeAddr});
+                        await this.znp.request(Subsystem.UTIL, "assocAdd", {
                             ieeeadr: ieeeAddr,
                             nwkaddr: networkAddress,
                             noderelation: match.payload.noderelation,
@@ -767,10 +767,10 @@ export class ZStackAdapter extends Adapter {
     }
 
     public async addInstallCode(ieeeAddress: string, key: Buffer, hashed: boolean): Promise<void> {
-        assert(this.version.product !== ZnpVersion.zStack12, 'Install code is not supported for ZStack 1.2 adapter');
+        assert(this.version.product !== ZnpVersion.zStack12, "Install code is not supported for ZStack 1.2 adapter");
         // TODO: always use 0x2? => const hashedKey = hashed ? key : ZSpec.Utils.aes128MmoHash(key);
         const payload = {installCodeFormat: hashed ? 0x2 : 0x1, ieeeaddr: ieeeAddress, installCode: key};
-        await this.znp.request(Subsystem.APP_CNF, 'bdbAddInstallCode', payload);
+        await this.znp.request(Subsystem.APP_CNF, "bdbAddInstallCode", payload);
     }
 
     /**
@@ -778,7 +778,7 @@ export class ZStackAdapter extends Adapter {
      */
     public onZnpClose(): void {
         if (!this.closing) {
-            this.emit('disconnected');
+            this.emit("disconnected");
         }
     }
 
@@ -789,17 +789,17 @@ export class ZStackAdapter extends Adapter {
 
         if (object.subsystem === Subsystem.ZDO) {
             if (isMtCmdAreqZdo(object.command)) {
-                this.emit('zdoResponse', object.command.zdoClusterId, object.payload.zdo);
+                this.emit("zdoResponse", object.command.zdoClusterId, object.payload.zdo);
             }
 
-            if (object.command.name === 'tcDeviceInd') {
+            if (object.command.name === "tcDeviceInd") {
                 const payload: Events.DeviceJoinedPayload = {
                     networkAddress: object.payload.nwkaddr,
                     ieeeAddr: object.payload.extaddr,
                 };
 
-                this.emit('deviceJoined', payload);
-            } else if (object.command.name === 'endDeviceAnnceInd') {
+                this.emit("deviceJoined", payload);
+            } else if (object.command.name === "endDeviceAnnceInd") {
                 // TODO: better way???
                 if (Zdo.Buffalo.checkStatus<Zdo.ClusterId.END_DEVICE_ANNOUNCE>(object.payload.zdo)) {
                     const zdoPayload = object.payload.zdo[1];
@@ -828,7 +828,7 @@ export class ZStackAdapter extends Adapter {
                         debouncer();
                     }
                 }
-            } else if (object.command.name === 'concentratorIndCb') {
+            } else if (object.command.name === "concentratorIndCb") {
                 // Some routers may change short addresses and the announcement
                 // is missed by the coordinator. This can happen when there are
                 // power outages or other interruptions in service. They may
@@ -839,7 +839,7 @@ export class ZStackAdapter extends Adapter {
                 // mappings.
                 // https://e2e.ti.com/cfs-file/__key/communityserver-discussions-components-files/158/4403.zstacktask.c
                 // https://github.com/Koenkk/zigbee-herdsman/issues/74
-                this.emit('zdoResponse', Zdo.ClusterId.NETWORK_ADDRESS_RESPONSE, [
+                this.emit("zdoResponse", Zdo.ClusterId.NETWORK_ADDRESS_RESPONSE, [
                     Zdo.Status.SUCCESS,
                     {
                         eui64: object.payload.extaddr,
@@ -849,7 +849,7 @@ export class ZStackAdapter extends Adapter {
                     } as ZdoTypes.NetworkAddressResponse,
                 ]);
             } else {
-                if (object.command.name === 'leaveInd') {
+                if (object.command.name === "leaveInd") {
                     if (object.payload.rejoin) {
                         logger.debug(`Device leave: Got leave indication with rejoin=true, nothing to do`, NS);
                     } else {
@@ -858,13 +858,13 @@ export class ZStackAdapter extends Adapter {
                             ieeeAddr: object.payload.extaddr,
                         };
 
-                        this.emit('deviceLeave', payload);
+                        this.emit("deviceLeave", payload);
                     }
                 }
             }
         } else {
             if (object.subsystem === Subsystem.AF) {
-                if (object.command.name === 'incomingMsg' || object.command.name === 'incomingMsgExt') {
+                if (object.command.name === "incomingMsg" || object.command.name === "incomingMsgExt") {
                     const payload: Events.ZclPayload = {
                         clusterID: object.payload.clusterid,
                         data: object.payload.data,
@@ -878,14 +878,14 @@ export class ZStackAdapter extends Adapter {
                     };
 
                     this.waitress.resolve(payload);
-                    this.emit('zclPayload', payload);
+                    this.emit("zclPayload", payload);
                 }
             }
         }
     }
 
     public async getNetworkParameters(): Promise<NetworkParameters> {
-        const result = await this.znp.requestWithReply(Subsystem.ZDO, 'extNwkInfo', {});
+        const result = await this.znp.requestWithReply(Subsystem.ZDO, "extNwkInfo", {});
         return {
             panID: result.payload.panid as number,
             extendedPanID: result.payload.extendedpanid as string, // read as IEEEADDR, so `0x${string}`
@@ -911,11 +911,11 @@ export class ZStackAdapter extends Adapter {
     public async setChannelInterPAN(channel: number): Promise<void> {
         return await this.queue.execute<void>(async () => {
             this.interpanLock = true;
-            await this.znp.request(Subsystem.AF, 'interPanCtl', {cmd: 1, data: [channel]});
+            await this.znp.request(Subsystem.AF, "interPanCtl", {cmd: 1, data: [channel]});
 
             if (!this.interpanEndpointRegistered) {
                 // Make sure that endpoint 12 is registered to proxy the InterPAN messages.
-                await this.znp.request(Subsystem.AF, 'interPanCtl', {cmd: 2, data: [12]});
+                await this.znp.request(Subsystem.AF, "interPanCtl", {cmd: 2, data: [12]});
                 this.interpanEndpointRegistered = true;
             }
         });
@@ -980,7 +980,7 @@ export class ZStackAdapter extends Adapter {
 
     public async restoreChannelInterPAN(): Promise<void> {
         return await this.queue.execute<void>(async () => {
-            await this.znp.request(Subsystem.AF, 'interPanCtl', {cmd: 0, data: []});
+            await this.znp.request(Subsystem.AF, "interPanCtl", {cmd: 0, data: []});
             // Give adapter some time to restore, otherwise stuff crashes
             await wait(3000);
             this.interpanLock = false;
@@ -1049,11 +1049,11 @@ export class ZStackAdapter extends Adapter {
         timeout: number,
     ): Promise<number> {
         const transactionID = this.nextTransactionID();
-        const response = this.znp.waitFor(Type.AREQ, Subsystem.AF, 'dataConfirm', undefined, transactionID, undefined, timeout);
+        const response = this.znp.waitFor(Type.AREQ, Subsystem.AF, "dataConfirm", undefined, transactionID, undefined, timeout);
 
         await this.znp.request(
             Subsystem.AF,
-            'dataRequest',
+            "dataRequest",
             {
                 dstaddr: destinationAddress,
                 destendpoint: destinationEndpoint,
@@ -1094,12 +1094,12 @@ export class ZStackAdapter extends Adapter {
     ): Promise<ZpiObject | void> {
         const transactionID = this.nextTransactionID();
         const response = confirmation
-            ? this.znp.waitFor(Type.AREQ, Subsystem.AF, 'dataConfirm', undefined, transactionID, undefined, timeout)
+            ? this.znp.waitFor(Type.AREQ, Subsystem.AF, "dataConfirm", undefined, transactionID, undefined, timeout)
             : undefined;
 
         await this.znp.request(
             Subsystem.AF,
-            'dataRequestExt',
+            "dataRequestExt",
             {
                 dstaddrmode: addressMode,
                 dstaddr: this.toAddressString(destinationAddressOrGroupID),
@@ -1163,7 +1163,7 @@ export class ZStackAdapter extends Adapter {
     }
 
     private toAddressString(address: number | string): string {
-        return typeof address === 'number' ? `0x${address.toString(16).padStart(16, '0')}` : address.toString();
+        return typeof address === "number" ? `0x${address.toString(16).padStart(16, "0")}` : address.toString();
     }
 
     private waitressTimeoutFormatter(matcher: WaitressMatcher, timeout: number): string {

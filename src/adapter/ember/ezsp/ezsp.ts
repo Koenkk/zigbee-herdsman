@@ -1,16 +1,16 @@
 /* v8 ignore start */
 
-import EventEmitter from 'node:events';
+import EventEmitter from "node:events";
 
-import {Queue} from '../../../utils';
-import {logger} from '../../../utils/logger';
-import * as ZSpec from '../../../zspec';
-import {EUI64, ExtendedPanId, NodeId, PanId} from '../../../zspec/tstypes';
-import * as Zcl from '../../../zspec/zcl';
-import {Clusters} from '../../../zspec/zcl/definition/cluster';
-import * as Zdo from '../../../zspec/zdo';
-import {SerialPortOptions} from '../../tstype';
-import {FIXED_ENDPOINTS} from '../adapter/endpoints';
+import {Queue} from "../../../utils";
+import {logger} from "../../../utils/logger";
+import * as ZSpec from "../../../zspec";
+import type {EUI64, ExtendedPanId, NodeId, PanId} from "../../../zspec/tstypes";
+import * as Zcl from "../../../zspec/zcl";
+import {Clusters} from "../../../zspec/zcl/definition/cluster";
+import * as Zdo from "../../../zspec/zdo";
+import type {SerialPortOptions} from "../../tstype";
+import {FIXED_ENDPOINTS} from "../adapter/endpoints";
 import {
     INTERPAN_APS_FRAME_CONTROL_NO_DELIVERY_MODE,
     INTERPAN_APS_FRAME_DELIVERY_MODE_MASK,
@@ -23,45 +23,45 @@ import {
     SHORT_DEST_FRAME_CONTROL,
     STUB_NWK_FRAME_CONTROL,
     STUB_NWK_SIZE,
-} from '../consts';
+} from "../consts";
 import {
     EmberApsOption,
     EmberCounterType,
     EmberDeviceUpdate,
-    EmberDutyCycleState,
-    EmberEntropySource,
-    EmberEventUnits,
-    EmberExtendedSecurityBitmask,
+    type EmberDutyCycleState,
+    type EmberEntropySource,
+    type EmberEventUnits,
+    type EmberExtendedSecurityBitmask,
+    EmberGPStatus,
     EmberGpApplicationId,
     EmberGpKeyType,
     EmberGpSecurityLevel,
-    EmberGPStatus,
     EmberIncomingMessageType,
     EmberInterpanMessageType,
     EmberJoinDecision,
     EmberKeyStatus,
     EmberLeaveNetworkOption,
-    EmberLibraryId,
-    EmberLibraryStatus,
-    EmberMacPassthroughType,
-    EmberMultiPhyNwkConfig,
-    EmberNetworkStatus,
-    EmberNodeType,
+    type EmberLibraryId,
+    type EmberLibraryStatus,
+    type EmberMacPassthroughType,
+    type EmberMultiPhyNwkConfig,
+    type EmberNetworkStatus,
+    type EmberNodeType,
     EmberOutgoingMessageType,
-    EmberSourceRouteDiscoveryMode,
+    type EmberSourceRouteDiscoveryMode,
     EmberStackError,
-    EmberTransmitPriority,
-    EmberTXPowerMode,
-    EzspNetworkScanType,
+    type EmberTXPowerMode,
+    type EmberTransmitPriority,
+    type EzspNetworkScanType,
     EzspStatus,
-    EzspZllNetworkOperation,
-    IEEE802154CcaMode,
+    type EzspZllNetworkOperation,
+    type IEEE802154CcaMode,
+    SLStatus,
     SecManFlag,
     SecManKeyType,
-    SLStatus,
-} from '../enums';
-import {EzspError} from '../ezspError';
-import {
+} from "../enums";
+import {EzspError} from "../ezspError";
+import type {
     Ember802154RadioPriorities,
     EmberAesMmoHashContext,
     EmberApsFrame,
@@ -80,8 +80,8 @@ import {
     EmberInitialSecurityState,
     EmberKeyData,
     EmberMessageDigest,
-    EmberMulticastTableEntry,
     EmberMultiPhyRadioParameters,
+    EmberMulticastTableEntry,
     EmberMultiprotocolPriorities,
     EmberNeighborTableEntry,
     EmberNetworkInitStruct,
@@ -95,10 +95,10 @@ import {
     EmberSignature283k1Data,
     EmberSignatureData,
     EmberSmacData,
-    EmberTokenData,
-    EmberTokenInfo,
     EmberTokTypeStackZllData,
     EmberTokTypeStackZllSecurity,
+    EmberTokenData,
+    EmberTokenInfo,
     EmberVersion,
     EmberZigbeeNetwork,
     EmberZllAddressAssignment,
@@ -109,11 +109,11 @@ import {
     SecManContext,
     SecManKey,
     SecManNetworkKeyInfo,
-} from '../types';
-import {UartAsh} from '../uart/ash';
-import {initSecurityManagerContext} from '../utils/initters';
-import {highByte, highLowToInt, lowByte} from '../utils/math';
-import {EzspBuffalo} from './buffalo';
+} from "../types";
+import {UartAsh} from "../uart/ash";
+import {initSecurityManagerContext} from "../utils/initters";
+import {highByte, highLowToInt, lowByte} from "../utils/math";
+import {EzspBuffalo} from "./buffalo";
 import {
     EMBER_ENCRYPTION_KEY_SIZE,
     EZSP_EXTENDED_FRAME_CONTROL_HB_INDEX,
@@ -140,21 +140,21 @@ import {
     EZSP_MAX_FRAME_LENGTH,
     EZSP_PARAMETERS_INDEX,
     EZSP_SEQUENCE_INDEX,
-} from './consts';
+} from "./consts";
 import {
-    EmberLeaveReason,
-    EmberRejoinReason,
-    EzspConfigId,
-    EzspEndpointFlag,
+    type EmberLeaveReason,
+    type EmberRejoinReason,
+    type EzspConfigId,
+    type EzspEndpointFlag,
     EzspExtendedValueId,
     EzspFrameID,
     EzspMfgTokenId,
-    EzspPolicyId,
+    type EzspPolicyId,
     EzspSleepMode,
     EzspValueId,
-} from './enums';
+} from "./enums";
 
-const NS = 'zh:ember:ezsp';
+const NS = "zh:ember:ezsp";
 
 /**
  * Simple object to resolve/timeout on command waiting for response.
@@ -308,8 +308,8 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
             if (status === EzspStatus.SUCCESS) {
                 logger.info(`======== EZSP started ========`, NS);
                 // registered after reset sequence
-                this.ash.on('frame', this.onAshFrame.bind(this));
-                this.ash.on('fatalError', this.onAshFatalError.bind(this));
+                this.ash.on("frame", this.onAshFrame.bind(this));
+                this.ash.on("fatalError", this.onAshFatalError.bind(this));
 
                 return status;
             }
@@ -351,7 +351,7 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
      * Triggered by @see 'FATAL_ERROR'
      */
     private onAshFatalError(status: EzspStatus): void {
-        this.emit('ncpNeedsResetAndInit', status);
+        this.emit("ncpNeedsResetAndInit", status);
     }
 
     /**
@@ -445,7 +445,7 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
             status !== EzspStatus.ERROR_QUEUE_FULL &&
             status !== EzspStatus.ERROR_WRONG_DIRECTION
         ) {
-            this.emit('ncpNeedsResetAndInit', status);
+            this.emit("ncpNeedsResetAndInit", status);
         }
     }
 
@@ -2056,7 +2056,7 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
         }
 
         const tokenDataLength = this.buffalo.readUInt8();
-        let expectedTokenDataLength: number = 0;
+        let expectedTokenDataLength = 0;
 
         // the size of corresponding the EZSP Mfg token, please refer to app/util/ezsp/ezsp-enum.h
         switch (tokenId) {
@@ -2386,7 +2386,7 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
      * @param payload uint8_t * The payload of the custom frame.
      */
     ezspCustomFrameHandler(payload: Buffer): void {
-        logger.debug(`ezspCustomFrameHandler: payload=${payload.toString('hex')}`, NS);
+        logger.debug(`ezspCustomFrameHandler: payload=${payload.toString("hex")}`, NS);
     }
 
     /**
@@ -2747,7 +2747,7 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
     ezspStackStatusHandler(status: SLStatus): void {
         logger.debug(`ezspStackStatusHandler: status=${SLStatus[status]}`, NS);
 
-        this.emit('stackStatus', status);
+        this.emit("stackStatus", status);
     }
 
     /**
@@ -3008,12 +3008,7 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
      *        This value could be set to 0 or SL_ZIGBEE_DEVICE_TYPE_UNCHANGED if not needed.
      * @returns An SLStatus value indicating success or the reason for failure.
      */
-    async ezspFindAndRejoinNetwork(
-        haveCurrentNetworkKey: boolean,
-        channelMask: number,
-        reason: number = 0xff,
-        nodeType: number = 0,
-    ): Promise<SLStatus> {
+    async ezspFindAndRejoinNetwork(haveCurrentNetworkKey: boolean, channelMask: number, reason = 0xff, nodeType = 0): Promise<SLStatus> {
         const sendBuffalo = this.startCommand(EzspFrameID.FIND_AND_REJOIN_NETWORK);
         sendBuffalo.writeUInt8(haveCurrentNetworkKey ? 1 : 0);
         sendBuffalo.writeUInt32(channelMask);
@@ -5036,11 +5031,11 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
             () =>
                 `ezspMessageSentHandler: status=${SLStatus[status]} type=${EmberOutgoingMessageType[type]} ` +
                 `indexOrDestination=${indexOrDestination} apsFrame=${JSON.stringify(apsFrame)} messageTag=${messageTag}` +
-                (messageContents ? ` messageContents=${messageContents.toString('hex')}` : ''),
+                (messageContents ? ` messageContents=${messageContents.toString("hex")}` : ""),
             NS,
         );
 
-        this.emit('messageSent', status, type, indexOrDestination, apsFrame, messageTag);
+        this.emit("messageSent", status, type, indexOrDestination, apsFrame, messageTag);
     }
 
     /**
@@ -5303,18 +5298,18 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
         logger.debug(
             () =>
                 `ezspIncomingMessageHandler: type=${EmberIncomingMessageType[type]} apsFrame=${JSON.stringify(apsFrame)} ` +
-                `packetInfo:${JSON.stringify(packetInfo)} messageContents=${messageContents.toString('hex')}`,
+                `packetInfo:${JSON.stringify(packetInfo)} messageContents=${messageContents.toString("hex")}`,
             NS,
         );
 
         if (apsFrame.profileId === Zdo.ZDO_PROFILE_ID) {
-            this.emit('zdoResponse', apsFrame, packetInfo.senderShortId, messageContents);
+            this.emit("zdoResponse", apsFrame, packetInfo.senderShortId, messageContents);
         } else if (
             apsFrame.profileId === ZSpec.HA_PROFILE_ID ||
             apsFrame.profileId === ZSpec.WILDCARD_PROFILE_ID ||
             (apsFrame.profileId === ZSpec.GP_PROFILE_ID && type !== EmberIncomingMessageType.BROADCAST_LOOPBACK)
         ) {
-            this.emit('incomingMessage', type, apsFrame, packetInfo.lastHopLqi, packetInfo.senderShortId, messageContents);
+            this.emit("incomingMessage", type, apsFrame, packetInfo.lastHopLqi, packetInfo.senderShortId, messageContents);
         }
     }
 
@@ -5820,7 +5815,7 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
     ezspMacPassthroughMessageHandler(messageType: EmberMacPassthroughType, packetInfo: EmberRxPacketInfo, messageContents: Buffer): void {
         logger.debug(
             () =>
-                `ezspMacPassthroughMessageHandler: messageType=${messageType} packetInfo=${JSON.stringify(packetInfo)} messageContents=${messageContents.toString('hex')}`,
+                `ezspMacPassthroughMessageHandler: messageType=${messageType} packetInfo=${JSON.stringify(packetInfo)} messageContents=${messageContents.toString("hex")}`,
             NS,
         );
     }
@@ -5843,7 +5838,7 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
         logger.debug(
             () =>
                 `ezspMacFilterMatchMessageHandler: filterIndexMatch=${filterIndexMatch} legacyPassthroughType=${legacyPassthroughType} ` +
-                `packetInfo=${JSON.stringify(packetInfo)} messageContents=${messageContents.toString('hex')}`,
+                `packetInfo=${JSON.stringify(packetInfo)} messageContents=${messageContents.toString("hex")}`,
             NS,
         );
 
@@ -5897,7 +5892,7 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
         }
 
         const messageType = apsFrameControl & INTERPAN_APS_FRAME_DELIVERY_MODE_MASK;
-        let groupId: number = 0; // XXX: looks fine from z2m code?
+        let groupId = 0; // XXX: looks fine from z2m code?
 
         switch (messageType) {
             case EmberInterpanMessageType.UNICAST:
@@ -5928,7 +5923,7 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
         const payload = msgBuffalo.readRest();
 
         if (profileId === ZSpec.TOUCHLINK_PROFILE_ID && clusterId === Clusters.touchlink.ID) {
-            this.emit('touchlinkMessage', sourcePanId, sourceAddress, groupId, packetInfo.lastHopLqi, payload);
+            this.emit("touchlinkMessage", sourcePanId, sourceAddress, groupId, packetInfo.lastHopLqi, payload);
         }
     }
 
@@ -5942,7 +5937,7 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
      * - SLStatus.ZIGBEE_DELIVERY_FAILED if not
      */
     ezspRawTransmitCompleteHandler(messageContents: Buffer, status: SLStatus): void {
-        logger.debug(`ezspRawTransmitCompleteHandler: messageContents=${messageContents.toString('hex')} status=${SLStatus[status]}`, NS);
+        logger.debug(`ezspRawTransmitCompleteHandler: messageContents=${messageContents.toString("hex")} status=${SLStatus[status]}`, NS);
     }
 
     /**
@@ -6929,7 +6924,7 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
             NS,
         );
         // NOTE: this is mostly just passing stuff up to Z2M, so use only one emit for all, let adapter do the rest, no parsing needed
-        this.emit('trustCenterJoin', newNodeId, newNodeEui64, status, policyDecision, parentOfNewNodeId);
+        this.emit("trustCenterJoin", newNodeId, newNodeEui64, status, policyDecision, parentOfNewNodeId);
     }
 
     /**
@@ -7319,7 +7314,7 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
      * @param messageContents uint8_t *The message and attached which includes the original message and the appended signature.
      */
     ezspDsaSignHandler(status: SLStatus, messageContents: Buffer): void {
-        logger.debug(`ezspDsaSignHandler: status=${SLStatus[status]} messageContents=${messageContents.toString('hex')}`, NS);
+        logger.debug(`ezspDsaSignHandler: status=${SLStatus[status]} messageContents=${messageContents.toString("hex")}`, NS);
     }
 
     /**
@@ -7677,7 +7672,7 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
      *        Length will be greater than 3 and less than 123.
      */
     ezspMfglibRxHandler(linkQuality: number, rssi: number, packetContents: Buffer): void {
-        logger.debug(`ezspMfglibRxHandler: linkQuality=${linkQuality} rssi=${rssi} packetContents=${packetContents.toString('hex')}`, NS);
+        logger.debug(`ezspMfglibRxHandler: linkQuality=${linkQuality} rssi=${rssi} packetContents=${packetContents.toString("hex")}`, NS);
     }
 
     //-----------------------------------------------------------------------------
@@ -7774,7 +7769,7 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
     ezspIncomingBootloadMessageHandler(longId: EUI64, packetInfo: EmberRxPacketInfo, messageContents: Buffer): void {
         logger.debug(
             () =>
-                `ezspIncomingBootloadMessageHandler: longId=${longId} packetInfo=${JSON.stringify(packetInfo)} messageContents=${messageContents.toString('hex')}`,
+                `ezspIncomingBootloadMessageHandler: longId=${longId} packetInfo=${JSON.stringify(packetInfo)} messageContents=${messageContents.toString("hex")}`,
             NS,
         );
     }
@@ -7789,7 +7784,7 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
      * @param messageContents uint8_t * The message that was sent.
      */
     ezspBootloadTransmitCompleteHandler(status: SLStatus, messageContents: Buffer): void {
-        logger.debug(`ezspBootloadTransmitCompleteHandler: status=${SLStatus[status]} messageContents=${messageContents.toString('hex')}`, NS);
+        logger.debug(`ezspBootloadTransmitCompleteHandler: status=${SLStatus[status]} messageContents=${messageContents.toString("hex")}`, NS);
     }
 
     /**
@@ -7823,7 +7818,7 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
      * @param data uint8_t * A pointer to the data received in the current message.
      */
     ezspIncomingMfgTestMessageHandler(messageType: number, messageContents: Buffer): void {
-        logger.debug(`ezspIncomingMfgTestMessageHandler: messageType=${messageType} messageContents=${messageContents.toString('hex')}`, NS);
+        logger.debug(`ezspIncomingMfgTestMessageHandler: messageType=${messageType} messageContents=${messageContents.toString("hex")}`, NS);
     }
 
     /**
@@ -8556,7 +8551,7 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
                 `sequenceNumber=${sequenceNumber} addr=${JSON.stringify(addr)} gpdfSecurityLevel=${EmberGpSecurityLevel[gpdfSecurityLevel]} ` +
                 `gpdfSecurityKeyType=${EmberGpKeyType[gpdfSecurityKeyType]} autoCommissioning=${autoCommissioning} ` +
                 `bidirectionalInfo=${bidirectionalInfo} gpdSecurityFrameCounter=${gpdSecurityFrameCounter} gpdCommandId=${gpdCommandId} ` +
-                `mic=${mic} proxyTableIndex=${proxyTableIndex} gpdCommandPayload=${gpdCommandPayload.toString('hex')} packetInfo=${JSON.stringify(packetInfo)}`,
+                `mic=${mic} proxyTableIndex=${proxyTableIndex} gpdCommandPayload=${gpdCommandPayload.toString("hex")} packetInfo=${JSON.stringify(packetInfo)}`,
             NS,
         );
 
@@ -8611,7 +8606,7 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
         const messageContents = Buffer.concat([gpdHeader, gpdCommandPayload]);
 
         // use broadcast type to match upstream codepath that does not expect `gppNwkAddr` (this from direct-to-coordinator)
-        this.emit('incomingMessage', EmberIncomingMessageType.BROADCAST, apsFrame, gpdLink, addr.sourceId & 0xffff, messageContents);
+        this.emit("incomingMessage", EmberIncomingMessageType.BROADCAST, apsFrame, gpdLink, addr.sourceId & 0xffff, messageContents);
     }
 
     /**

@@ -1,4 +1,4 @@
-import {DataStart, PositionCmd0, PositionCmd1, SOF, Subsystem, Type} from './constants';
+import {DataStart, PositionCmd0, PositionCmd1, SOF, type Subsystem, type Type} from "./constants";
 
 export class Frame {
     public readonly type: Type;
@@ -42,7 +42,7 @@ export class Frame {
         if (checksum === fcs) {
             return new Frame(type, subsystem, commandID, data, length, fcs);
         } else {
-            throw new Error('Invalid checksum');
+            throw new Error("Invalid checksum");
         }
     }
 

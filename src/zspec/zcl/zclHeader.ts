@@ -1,9 +1,9 @@
-import {logger} from '../../utils/logger';
-import {BuffaloZcl} from './buffaloZcl';
-import {FrameType} from './definition/enums';
-import {FrameControl} from './definition/tstype';
+import {logger} from "../../utils/logger";
+import {BuffaloZcl} from "./buffaloZcl";
+import {FrameType} from "./definition/enums";
+import type {FrameControl} from "./definition/tstype";
 
-const NS = 'zh:zcl:header';
+const NS = "zh:zcl:header";
 const HEADER_MINIMAL_LENGTH = 3;
 const HEADER_WITH_MANUF_LENGTH = HEADER_MINIMAL_LENGTH + 2;
 /** ZCL Header frame control frame type */

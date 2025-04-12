@@ -1,6 +1,6 @@
 /* v8 ignore start */
 
-import {Bytes, fixed_list, int8s, list, LVBytes, LVList, uint_t, uint8_t, uint16_t, uint24_t, uint32_t, uint64_t, WordList} from './basic';
+import {Bytes, LVBytes, LVList, WordList, fixed_list, int8s, list, uint8_t, uint16_t, uint24_t, uint32_t, uint64_t, uint_t} from "./basic";
 import {
     Bool,
     EmberApsOption,
@@ -52,12 +52,12 @@ import {
     EzspValueId,
     EzspZllNetworkOperation,
     NcpResetCode,
+    SLStatus,
     SecureEzspRandomNumber,
     SecureEzspSecurityLevel,
     SecureEzspSecurityType,
     SecureEzspSessionId,
-    SLStatus,
-} from './named';
+} from "./named";
 import {
     EmberAesMmoHashContext,
     EmberApsFrame,
@@ -73,8 +73,8 @@ import {
     EmberMessageDigest,
     EmberMultiAddress,
     EmberMulticastTableEntry,
-    EmberNeighbors,
     EmberNeighborTableEntry,
+    EmberNeighbors,
     EmberNetworkInitStruct,
     EmberNetworkParameters,
     EmberNodeDescriptor,
@@ -103,7 +103,7 @@ import {
     EmberZllNetwork,
     EmberZllSecurityAlgorithmData,
     EzspStruct,
-} from './struct';
+} from "./struct";
 
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
 export function deserialize(payload: any, schema: any[]): any[] {
@@ -137,7 +137,6 @@ export {
     fixed_list,
     WordList,
     Bytes,
-
     /* Named Types */
     NcpResetCode,
     EmberRf4ceTxOption,
@@ -194,7 +193,6 @@ export {
     EmberNetworkInitBitmask,
     EmberZDOCmd,
     EmberDerivedKeyType,
-
     /* Structs */
     EzspStruct,
     EmberNetworkParameters,

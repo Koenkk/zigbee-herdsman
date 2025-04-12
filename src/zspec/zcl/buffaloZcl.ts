@@ -1,11 +1,11 @@
-import {Buffalo} from '../../buffalo';
-import {logger} from '../../utils/logger';
-import {isNumberArray} from '../../utils/utils';
-import {BuffaloZclDataType, DataType, StructuredIndicatorType} from './definition/enums';
-import {BuffaloZclOptions, StructuredSelector, ZclArray} from './definition/tstype';
-import * as Utils from './utils';
+import {Buffalo} from "../../buffalo";
+import {logger} from "../../utils/logger";
+import {isNumberArray} from "../../utils/utils";
+import {BuffaloZclDataType, DataType, StructuredIndicatorType} from "./definition/enums";
+import type {BuffaloZclOptions, StructuredSelector, ZclArray} from "./definition/tstype";
+import * as Utils from "./utils";
 
-const NS = 'zh:zcl:buffalo';
+const NS = "zh:zcl:buffalo";
 
 interface KeyValue {
     [s: string | number]: number | string;
@@ -144,8 +144,8 @@ export class BuffaloZcl extends Buffalo {
 
     private writeCharStr(value: string | number[]): void {
         // TODO: this does not allow "non-value" 0xFF
-        if (typeof value === 'string') {
-            this.writeUInt8(Buffer.byteLength(value, 'utf8'));
+        if (typeof value === "string") {
+            this.writeUInt8(Buffer.byteLength(value, "utf8"));
             this.writeUtf8String(value);
         } else {
             // XXX: value.length not written?
@@ -156,7 +156,7 @@ export class BuffaloZcl extends Buffalo {
     private readCharStr(): string {
         const length = this.readUInt8();
 
-        return length < 0xff ? this.readUtf8String(length) : '';
+        return length < 0xff ? this.readUtf8String(length) : "";
     }
 
     private writeLongOctetStr(value: number[]): void {
@@ -172,17 +172,17 @@ export class BuffaloZcl extends Buffalo {
 
     private writeLongCharStr(value: string): void {
         // TODO: this does not allow "non-value" 0xFF
-        this.writeUInt16(Buffer.byteLength(value, 'utf8'));
+        this.writeUInt16(Buffer.byteLength(value, "utf8"));
         this.writeUtf8String(value);
     }
 
     private readLongCharStr(): string {
         const length = this.readUInt16();
-        return length < 0xffff ? this.readUtf8String(length) : ''; // non-value
+        return length < 0xffff ? this.readUtf8String(length) : ""; // non-value
     }
 
     private writeArray(value: ZclArray): void {
-        const elTypeNumeric = typeof value.elementType === 'number' ? value.elementType : DataType[value.elementType];
+        const elTypeNumeric = typeof value.elementType === "number" ? value.elementType : DataType[value.elementType];
         this.writeUInt8(elTypeNumeric);
         // TODO: this does not allow writing "non-value" 0xFFFF
         this.writeUInt16(value.elements.length);
@@ -349,7 +349,7 @@ export class BuffaloZcl extends Buffalo {
 
     private readListThermoTransitions(options: BuffaloZclOptions): ThermoTransition[] {
         if (options.payload == null || options.payload.mode == null || options.payload.numoftrans == null) {
-            throw new Error('Cannot read LIST_THERMO_TRANSITIONS without required payload options specified');
+            throw new Error("Cannot read LIST_THERMO_TRANSITIONS without required payload options specified");
         }
 
         const heat = options.payload.mode & 1;
@@ -525,7 +525,7 @@ export class BuffaloZcl extends Buffalo {
         } else if (options.payload?.commandID == 0xa1) {
             // Manufacturer-specific Attribute Reporting
             if (options.payload.payloadSize == undefined) {
-                throw new Error('Cannot read GPD_FRAME with commandID=0xA1 without payloadSize options specified');
+                throw new Error("Cannot read GPD_FRAME with commandID=0xA1 without payloadSize options specified");
             }
 
             const start = this.position;
@@ -546,7 +546,7 @@ export class BuffaloZcl extends Buffalo {
                     attribute = cluster.getAttribute(attributeID).name;
                 } catch {
                     // this is spammy because of the many manufacturer-specific attributes not currently used
-                    logger.debug('Unknown attribute ' + attributeID + ' in cluster ' + cluster.name, NS);
+                    logger.debug("Unknown attribute " + attributeID + " in cluster " + cluster.name, NS);
                 }
 
                 frame.attributes[attribute] = this.read(type, options);
@@ -589,7 +589,7 @@ export class BuffaloZcl extends Buffalo {
             // no indexes, whole attribute value is to be read
             return {indicatorType: StructuredIndicatorType.Whole};
         } else if (indicator < StructuredIndicatorType.WriteAdd) {
-            const indexes: StructuredSelector['indexes'] = [];
+            const indexes: StructuredSelector["indexes"] = [];
 
             for (let i = 0; i < indicator; i++) {
                 const index = this.readUInt16();
@@ -821,7 +821,7 @@ export class BuffaloZcl extends Buffalo {
                     if (Buffer.isBuffer(value) || isNumberArray(value)) {
                         return this.writeBuffer(value, value.length);
                     } else {
-                        throw new Error('Cannot write USE_DATA_TYPE without dataType option specified');
+                        throw new Error("Cannot write USE_DATA_TYPE without dataType option specified");
                     }
                 }
 
@@ -1009,35 +1009,35 @@ export class BuffaloZcl extends Buffalo {
             }
             case BuffaloZclDataType.LIST_UINT8: {
                 if (options.length == null) {
-                    throw new Error('Cannot read LIST_UINT8 without length option specified');
+                    throw new Error("Cannot read LIST_UINT8 without length option specified");
                 }
 
                 return this.readListUInt8(options.length);
             }
             case BuffaloZclDataType.LIST_UINT16: {
                 if (options.length == null) {
-                    throw new Error('Cannot read LIST_UINT16 without length option specified');
+                    throw new Error("Cannot read LIST_UINT16 without length option specified");
                 }
 
                 return this.readListUInt16(options.length);
             }
             case BuffaloZclDataType.LIST_UINT24: {
                 if (options.length == null) {
-                    throw new Error('Cannot read LIST_UINT24 without length option specified');
+                    throw new Error("Cannot read LIST_UINT24 without length option specified");
                 }
 
                 return this.readListUInt24(options.length);
             }
             case BuffaloZclDataType.LIST_UINT32: {
                 if (options.length == null) {
-                    throw new Error('Cannot read LIST_UINT32 without length option specified');
+                    throw new Error("Cannot read LIST_UINT32 without length option specified");
                 }
 
                 return this.readListUInt32(options.length);
             }
             case BuffaloZclDataType.LIST_ZONEINFO: {
                 if (options.length == null) {
-                    throw new Error('Cannot read LIST_ZONEINFO without length option specified');
+                    throw new Error("Cannot read LIST_ZONEINFO without length option specified");
                 }
 
                 return this.readListZoneInfo(options.length);

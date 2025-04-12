@@ -1,5 +1,5 @@
-import {ClusterId} from './definition/clusters';
-import {MACCapabilityFlags, ServerMask} from './definition/tstypes';
+import {ClusterId} from "./definition/clusters";
+import type {MACCapabilityFlags, ServerMask} from "./definition/tstypes";
 
 /**
  * Get a the response cluster ID corresponding to a request.

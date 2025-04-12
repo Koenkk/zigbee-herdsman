@@ -1,23 +1,23 @@
-import assert from 'node:assert';
+import assert from "node:assert";
 
-import {Events as AdapterEvents} from '../../adapter';
-import {logger} from '../../utils/logger';
-import * as ZSpec from '../../zspec';
-import {BroadcastAddress} from '../../zspec/enums';
-import {EUI64} from '../../zspec/tstypes';
-import * as Zcl from '../../zspec/zcl';
-import * as ZclTypes from '../../zspec/zcl/definition/tstype';
-import * as Zdo from '../../zspec/zdo';
-import Request from '../helpers/request';
-import RequestQueue from '../helpers/requestQueue';
-import * as ZclFrameConverter from '../helpers/zclFrameConverter';
-import ZclTransactionSequenceNumber from '../helpers/zclTransactionSequenceNumber';
-import {KeyValue, SendPolicy} from '../tstype';
-import Device from './device';
-import Entity from './entity';
-import Group from './group';
+import type {Events as AdapterEvents} from "../../adapter";
+import {logger} from "../../utils/logger";
+import * as ZSpec from "../../zspec";
+import {BroadcastAddress} from "../../zspec/enums";
+import type {EUI64} from "../../zspec/tstypes";
+import * as Zcl from "../../zspec/zcl";
+import type * as ZclTypes from "../../zspec/zcl/definition/tstype";
+import * as Zdo from "../../zspec/zdo";
+import Request from "../helpers/request";
+import RequestQueue from "../helpers/requestQueue";
+import * as ZclFrameConverter from "../helpers/zclFrameConverter";
+import ZclTransactionSequenceNumber from "../helpers/zclTransactionSequenceNumber";
+import type {KeyValue, SendPolicy} from "../tstype";
+import Device from "./device";
+import Entity from "./entity";
+import Group from "./group";
 
-const NS = 'zh:controller:endpoint';
+const NS = "zh:controller:endpoint";
 
 export interface ConfigureReportingItem {
     attribute: string | number | {ID: number; type: number};
@@ -58,7 +58,7 @@ interface Clusters {
 
 interface BindInternal {
     cluster: number;
-    type: 'endpoint' | 'group';
+    type: "endpoint" | "group";
     deviceIeeeAddress?: string;
     endpointID?: number;
     groupID?: number;
@@ -107,7 +107,7 @@ export class Endpoint extends Entity {
         for (const bind of this._binds) {
             // XXX: properties assumed valid when associated to `type`
             const target: Group | Endpoint | undefined =
-                bind.type === 'endpoint' ? Device.byIeeeAddr(bind.deviceIeeeAddress!)?.getEndpoint(bind.endpointID!) : Group.byGroupID(bind.groupID!);
+                bind.type === "endpoint" ? Device.byIeeeAddr(bind.deviceIeeeAddress!)?.getEndpoint(bind.endpointID!) : Group.byGroupID(bind.groupID!);
 
             if (target) {
                 binds.push({target, cluster: this.getCluster(bind.cluster)});
@@ -320,20 +320,20 @@ export class Endpoint extends Entity {
         const device = this.getDevice();
         const request = new Request(func, frame, device.pendingRequestTimeout, options.sendPolicy);
 
-        if (request.sendPolicy !== 'bulk') {
+        if (request.sendPolicy !== "bulk") {
             // Check if such a request is already in the queue and remove the old one(s) if necessary
             this.pendingRequests.filter(request);
         }
 
         // send without queueing if sendPolicy is 'immediate' or if the device has no timeout set
-        if (request.sendPolicy === 'immediate' || !device.pendingRequestTimeout) {
+        if (request.sendPolicy === "immediate" || !device.pendingRequestTimeout) {
             if (device.pendingRequestTimeout > 0) {
                 logger.debug(logPrefix + `send ${frame.command.name} request immediately (sendPolicy=${options.sendPolicy})`, NS);
             }
             return await request.send();
         }
         // If this is a bulk message, we queue directly.
-        if (request.sendPolicy === 'bulk') {
+        if (request.sendPolicy === "bulk") {
             logger.debug(logPrefix + `queue request (${this.pendingRequests.size})`, NS);
             return await this.pendingRequests.queue(request);
         }
@@ -373,7 +373,7 @@ export class Endpoint extends Entity {
             }
         }
 
-        await this.zclCommand(clusterKey, 'report', payload, options, attributes);
+        await this.zclCommand(clusterKey, "report", payload, options, attributes);
     }
 
     public async write(clusterKey: number | string, attributes: KeyValue, options?: Options): Promise<void> {
@@ -383,7 +383,7 @@ export class Endpoint extends Entity {
             cluster,
             Object.keys(attributes),
             optionsWithDefaults.manufacturerCode,
-            'write',
+            "write",
         );
 
         const payload: {attrId: number; dataType: number; attrData: number | string | boolean}[] = [];
@@ -398,7 +398,7 @@ export class Endpoint extends Entity {
             }
         }
 
-        await this.zclCommand(clusterKey, optionsWithDefaults.writeUndiv ? 'writeUndiv' : 'write', payload, optionsWithDefaults, attributes, true);
+        await this.zclCommand(clusterKey, optionsWithDefaults.writeUndiv ? "writeUndiv" : "write", payload, optionsWithDefaults, attributes, true);
     }
 
     public async writeResponse(
@@ -407,7 +407,7 @@ export class Endpoint extends Entity {
         attributes: KeyValue,
         options?: Options,
     ): Promise<void> {
-        assert(options?.transactionSequenceNumber === undefined, 'Use parameter');
+        assert(options?.transactionSequenceNumber === undefined, "Use parameter");
         const cluster = this.getCluster(clusterKey);
         const payload: {status: number; attrId: number}[] = [];
 
@@ -428,7 +428,7 @@ export class Endpoint extends Entity {
 
         await this.zclCommand(
             clusterKey,
-            'writeRsp',
+            "writeRsp",
             payload,
             {direction: Zcl.Direction.SERVER_TO_CLIENT, ...options, transactionSequenceNumber},
             attributes,
@@ -443,15 +443,15 @@ export class Endpoint extends Entity {
             cluster,
             attributes,
             optionsWithDefaults.manufacturerCode,
-            'read',
+            "read",
         );
 
         const payload: {attrId: number}[] = [];
         for (const attribute of attributes) {
-            payload.push({attrId: typeof attribute === 'number' ? attribute : cluster.getAttribute(attribute).ID});
+            payload.push({attrId: typeof attribute === "number" ? attribute : cluster.getAttribute(attribute).ID});
         }
 
-        const resultFrame = await this.zclCommand(clusterKey, 'read', payload, optionsWithDefaults, attributes, true);
+        const resultFrame = await this.zclCommand(clusterKey, "read", payload, optionsWithDefaults, attributes, true);
 
         if (resultFrame) {
             return ZclFrameConverter.attributeKeyValue(resultFrame, device.manufacturerID, device.customClusters);
@@ -466,7 +466,7 @@ export class Endpoint extends Entity {
         attributes: KeyValue,
         options?: Options,
     ): Promise<void> {
-        assert(options?.transactionSequenceNumber === undefined, 'Use parameter');
+        assert(options?.transactionSequenceNumber === undefined, "Use parameter");
 
         const cluster = this.getCluster(clusterKey);
         const payload: {attrId: number; status: number; dataType: number; attrData: number | string}[] = [];
@@ -483,7 +483,7 @@ export class Endpoint extends Entity {
 
         await this.zclCommand(
             clusterKey,
-            'readRsp',
+            "readRsp",
             payload,
             {direction: Zcl.Direction.SERVER_TO_CLIENT, ...options, transactionSequenceNumber},
             attributes,
@@ -518,7 +518,7 @@ export class Endpoint extends Entity {
     public addBinding(clusterKey: number | string, target: Endpoint | Group | number): void {
         const cluster = this.getCluster(clusterKey);
 
-        if (typeof target === 'number') {
+        if (typeof target === "number") {
             target = Group.byGroupID(target) || Group.create(target);
         }
 
@@ -528,11 +528,11 @@ export class Endpoint extends Entity {
     private addBindingInternal(cluster: ZclTypes.Cluster, target: Endpoint | Group): void {
         if (!this.hasBind(cluster.ID, target)) {
             if (target instanceof Group) {
-                this._binds.push({cluster: cluster.ID, groupID: target.groupID, type: 'group'});
+                this._binds.push({cluster: cluster.ID, groupID: target.groupID, type: "group"});
             } else {
                 this._binds.push({
                     cluster: cluster.ID,
-                    type: 'endpoint',
+                    type: "endpoint",
                     deviceIeeeAddress: target.deviceIeeeAddress,
                     endpointID: target.ID,
                 });
@@ -545,7 +545,7 @@ export class Endpoint extends Entity {
     public async bind(clusterKey: number | string, target: Endpoint | Group | number): Promise<void> {
         const cluster = this.getCluster(clusterKey);
 
-        if (typeof target === 'number') {
+        if (typeof target === "number") {
             target = Group.byGroupID(target) || Group.create(target);
         }
 
@@ -591,7 +591,7 @@ export class Endpoint extends Entity {
         const cluster = this.getCluster(clusterKey);
         const action = `Unbind ${this.deviceIeeeAddress}/${this.ID} ${cluster.name}`;
 
-        if (typeof target === 'number') {
+        if (typeof target === "number") {
             const groupTarget = Group.byGroupID(target);
 
             if (!groupTarget) {
@@ -653,9 +653,9 @@ export class Endpoint extends Entity {
         transactionSequenceNumber: number,
         options?: Options,
     ): Promise<void> {
-        assert(options?.transactionSequenceNumber === undefined, 'Use parameter');
+        assert(options?.transactionSequenceNumber === undefined, "Use parameter");
         const payload = {cmdId: commandID, statusCode: status};
-        await this.zclCommand(clusterID, 'defaultRsp', payload, {direction: Zcl.Direction.SERVER_TO_CLIENT, ...options, transactionSequenceNumber});
+        await this.zclCommand(clusterID, "defaultRsp", payload, {direction: Zcl.Direction.SERVER_TO_CLIENT, ...options, transactionSequenceNumber});
     }
 
     public async configureReporting(clusterKey: number | string, items: ConfigureReportingItem[], options?: Options): Promise<void> {
@@ -665,13 +665,13 @@ export class Endpoint extends Entity {
             cluster,
             items,
             optionsWithDefaults.manufacturerCode,
-            'configureReporting',
+            "configureReporting",
         );
 
         const payload = items.map((item): KeyValue => {
             let dataType, attrId;
 
-            if (typeof item.attribute === 'object') {
+            if (typeof item.attribute === "object") {
                 dataType = item.attribute.type;
                 attrId = item.attribute.ID;
             } else {
@@ -692,7 +692,7 @@ export class Endpoint extends Entity {
             };
         });
 
-        await this.zclCommand(clusterKey, 'configReport', payload, optionsWithDefaults, items, true);
+        await this.zclCommand(clusterKey, "configReport", payload, optionsWithDefaults, items, true);
 
         for (const e of payload) {
             this._configuredReportings = this._configuredReportings.filter(
@@ -700,7 +700,7 @@ export class Endpoint extends Entity {
                     !(
                         c.attrId === e.attrId &&
                         c.cluster === cluster.ID &&
-                        (!('manufacturerCode' in c) || c.manufacturerCode === optionsWithDefaults.manufacturerCode)
+                        (!("manufacturerCode" in c) || c.manufacturerCode === optionsWithDefaults.manufacturerCode)
                     ),
             );
         }
@@ -722,7 +722,7 @@ export class Endpoint extends Entity {
     }
 
     public async writeStructured(clusterKey: number | string, payload: KeyValue, options?: Options): Promise<void> {
-        await this.zclCommand(clusterKey, 'writeStructured', payload, options);
+        await this.zclCommand(clusterKey, "writeStructured", payload, options);
         // TODO: support `writeStructuredResponse`
     }
 
@@ -740,7 +740,7 @@ export class Endpoint extends Entity {
         options?: Options,
         transactionSequenceNumber?: number,
     ): Promise<void | KeyValue> {
-        assert(options?.transactionSequenceNumber === undefined, 'Use parameter');
+        assert(options?.transactionSequenceNumber === undefined, "Use parameter");
 
         const device = this.getDevice();
         const cluster = this.getCluster(clusterKey, device);
@@ -856,9 +856,9 @@ export class Endpoint extends Entity {
             attributes.map((nameOrID): number | undefined => {
                 let attributeID;
 
-                if (typeof nameOrID == 'object') {
+                if (typeof nameOrID == "object") {
                     // ConfigureReportingItem
-                    if (typeof nameOrID.attribute !== 'object') {
+                    if (typeof nameOrID.attribute !== "object") {
                         attributeID = nameOrID.attribute;
                     } else {
                         return fallbackManufacturerCode;
@@ -887,7 +887,7 @@ export class Endpoint extends Entity {
     }
 
     public async addToGroup(group: Group): Promise<void> {
-        await this.command('genGroups', 'add', {groupid: group.groupID, groupname: ''});
+        await this.command("genGroups", "add", {groupid: group.groupID, groupname: ""});
         group.addMember(this);
     }
 
@@ -905,14 +905,14 @@ export class Endpoint extends Entity {
      * to zigbee-herdsman.
      */
     public async removeFromGroup(group: Group | number): Promise<void> {
-        await this.command('genGroups', 'remove', {groupid: group instanceof Group ? group.groupID : group});
+        await this.command("genGroups", "remove", {groupid: group instanceof Group ? group.groupID : group});
         if (group instanceof Group) {
             group.removeMember(this);
         }
     }
 
     public async removeFromAllGroups(): Promise<void> {
-        await this.command('genGroups', 'removeAll', {}, {disableDefaultResponse: true});
+        await this.command("genGroups", "removeAll", {}, {disableDefaultResponse: true});
         this.removeFromAllGroupsDatabase();
     }
 
@@ -930,7 +930,7 @@ export class Endpoint extends Entity {
         payload: KeyValue,
         options?: Options,
         logPayload?: KeyValue,
-        checkStatus: boolean = false,
+        checkStatus = false,
         frameType: Zcl.FrameType = Zcl.FrameType.GLOBAL,
     ): Promise<void | Zcl.Frame> {
         const device = this.getDevice();

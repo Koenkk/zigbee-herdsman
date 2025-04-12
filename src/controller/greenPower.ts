@@ -1,28 +1,28 @@
-import assert from 'node:assert';
-import {createCipheriv} from 'node:crypto';
-import {EventEmitter} from 'node:events';
+import assert from "node:assert";
+import {createCipheriv} from "node:crypto";
+import {EventEmitter} from "node:events";
 
-import {aes128CcmStar} from 'zigbee-on-host/dist/zigbee/zigbee';
+import {aes128CcmStar} from "zigbee-on-host/dist/zigbee/zigbee";
 
-import {Adapter, Events as AdapterEvents} from '../adapter';
-import {logger} from '../utils/logger';
-import {COORDINATOR_ADDRESS, GP_ENDPOINT, GP_GROUP_ID, INTEROPERABILITY_LINK_KEY} from '../zspec/consts';
-import {BroadcastAddress} from '../zspec/enums';
-import * as Zcl from '../zspec/zcl';
-import {GPDChannelConfiguration, GPDCommissioningReply} from '../zspec/zcl/buffaloZcl';
-import ZclTransactionSequenceNumber from './helpers/zclTransactionSequenceNumber';
-import {Device} from './model';
-import {GreenPowerDeviceJoinedPayload} from './tstype';
+import type {Adapter, Events as AdapterEvents} from "../adapter";
+import {logger} from "../utils/logger";
+import {COORDINATOR_ADDRESS, GP_ENDPOINT, GP_GROUP_ID, INTEROPERABILITY_LINK_KEY} from "../zspec/consts";
+import {BroadcastAddress} from "../zspec/enums";
+import * as Zcl from "../zspec/zcl";
+import type {GPDChannelConfiguration, GPDCommissioningReply} from "../zspec/zcl/buffaloZcl";
+import ZclTransactionSequenceNumber from "./helpers/zclTransactionSequenceNumber";
+import {Device} from "./model";
+import type {GreenPowerDeviceJoinedPayload} from "./tstype";
 
-const NS = 'zh:controller:greenpower';
+const NS = "zh:controller:greenpower";
 
-const enum ZigbeeNWKGPAppId {
+enum ZigbeeNWKGPAppId {
     DEFAULT = 0x00,
     LPED = 0x01,
     ZGP = 0x02,
 }
 
-const enum ZigbeeNWKGPSecurityLevel {
+enum ZigbeeNWKGPSecurityLevel {
     /** No Security  */
     NO = 0x00,
     /** Reserved?  */
@@ -33,7 +33,7 @@ const enum ZigbeeNWKGPSecurityLevel {
     FULLENCR = 0x03,
 }
 
-const enum ZigbeeNWKGPSecurityKeyType {
+enum ZigbeeNWKGPSecurityKeyType {
     NO_KEY = 0x00,
     ZB_NWK_KEY = 0x01,
     GPD_GROUP_KEY = 0x02,
@@ -42,7 +42,7 @@ const enum ZigbeeNWKGPSecurityKeyType {
     DERIVED_INDIVIDUAL_GPD_KEY = 0x07,
 }
 
-const enum GPCommunicationMode {
+enum GPCommunicationMode {
     FULL_UNICAST = 0,
     GROUPCAST_TO_DGROUPID = 1,
     GROUPCAST_TO_PRECOMMISSIONED_GROUPID = 2,
@@ -116,7 +116,7 @@ export class GreenPower extends EventEmitter<GreenPowerEventMap> {
     }
 
     public static sourceIdToIeeeAddress(sourceId: number): string {
-        return `0x${sourceId.toString(16).padStart(16, '0')}`;
+        return `0x${sourceId.toString(16).padStart(16, "0")}`;
     }
 
     private encryptSecurityKey(sourceID: number, securityKey: Buffer): Buffer {
@@ -127,7 +127,7 @@ export class GreenPower extends EventEmitter<GreenPowerEventMap> {
         nonce.writeUInt32LE(sourceID, 8);
         nonce.writeUInt8(0x05, 12);
 
-        const cipher = createCipheriv('aes-128-ccm', Buffer.from(INTEROPERABILITY_LINK_KEY), nonce, {authTagLength: 16});
+        const cipher = createCipheriv("aes-128-ccm", Buffer.from(INTEROPERABILITY_LINK_KEY), nonce, {authTagLength: 16});
         const encrypted = cipher.update(securityKey);
 
         return Buffer.concat([encrypted, cipher.final()]);
@@ -190,7 +190,7 @@ export class GreenPower extends EventEmitter<GreenPowerEventMap> {
     ): Promise<AdapterEvents.ZclPayload | void> {
         payload.options = GreenPower.encodePairingOptions(options);
         logger.debug(
-            `[PAIRING] srcID=${payload.srcID} gpp=${gppNwkAddr ?? 'NO'} options=${payload.options} (addSink=${options.addSink} commMode=${options.communicationMode})`,
+            `[PAIRING] srcID=${payload.srcID} gpp=${gppNwkAddr ?? "NO"} options=${payload.options} (addSink=${options.addSink} commMode=${options.communicationMode})`,
             NS,
         );
 
@@ -216,7 +216,7 @@ export class GreenPower extends EventEmitter<GreenPowerEventMap> {
             true,
             undefined,
             ZclTransactionSequenceNumber.next(),
-            'pairing',
+            "pairing",
             Zcl.Clusters.greenPower.ID,
             payload,
             {},
@@ -226,7 +226,7 @@ export class GreenPower extends EventEmitter<GreenPowerEventMap> {
             return await this.adapter.sendZclFrameToAll(GP_ENDPOINT, replyFrame, GP_ENDPOINT, BroadcastAddress.RX_ON_WHEN_IDLE);
         } else {
             const device = Device.byNetworkAddress(gppNwkAddr ?? /* v8 ignore next */ COORDINATOR_ADDRESS);
-            assert(device, 'Failed to find green power proxy device');
+            assert(device, "Failed to find green power proxy device");
 
             return await this.adapter.sendZclFrameToEndpoint(
                 device.ieeeAddr,
@@ -254,7 +254,7 @@ export class GreenPower extends EventEmitter<GreenPowerEventMap> {
             ) {
                 if (!securityKey) {
                     logger.error(
-                        `[FULLENCR] srcID=${frame.payload.srcID} gpp=${frame.payload.gppNwkAddr ?? 'NO'} commandIdentifier=${frame.header.commandIdentifier} Unknown security key`,
+                        `[FULLENCR] srcID=${frame.payload.srcID} gpp=${frame.payload.gppNwkAddr ?? "NO"} commandIdentifier=${frame.header.commandIdentifier} Unknown security key`,
                         NS,
                     );
                     return frame;
@@ -314,16 +314,16 @@ export class GreenPower extends EventEmitter<GreenPowerEventMap> {
 
                 switch (linkQuality) {
                     case 0b00:
-                        linkQualityStr = 'Poor';
+                        linkQualityStr = "Poor";
                         break;
                     case 0b01:
-                        linkQualityStr = 'Moderate';
+                        linkQualityStr = "Moderate";
                         break;
                     case 0b10:
-                        linkQualityStr = 'High';
+                        linkQualityStr = "High";
                         break;
                     case 0b11:
-                        linkQualityStr = 'Excellent';
+                        linkQualityStr = "Excellent";
                         break;
                 }
 
@@ -376,7 +376,7 @@ export class GreenPower extends EventEmitter<GreenPowerEventMap> {
                             true,
                             undefined,
                             ZclTransactionSequenceNumber.next(),
-                            'response',
+                            "response",
                             Zcl.Clusters.greenPower.ID,
                             payloadResponse,
                             {},
@@ -438,7 +438,7 @@ export class GreenPower extends EventEmitter<GreenPowerEventMap> {
                         );
                     }
 
-                    this.emit('deviceJoined', {
+                    this.emit("deviceJoined", {
                         sourceID: frame.payload.srcID,
                         deviceID: frame.payload.commandFrame.deviceID,
                         // XXX: this has the potential to create conflicting network addresses
@@ -473,7 +473,7 @@ export class GreenPower extends EventEmitter<GreenPowerEventMap> {
                         frame.payload.gppNwkAddr,
                     );
 
-                    this.emit('deviceLeave', frame.payload.srcID);
+                    this.emit("deviceLeave", frame.payload.srcID);
 
                     break;
                 }
@@ -510,7 +510,7 @@ export class GreenPower extends EventEmitter<GreenPowerEventMap> {
                         true,
                         undefined,
                         ZclTransactionSequenceNumber.next(),
-                        'response',
+                        "response",
                         Zcl.Clusters.greenPower.ID,
                         payload,
                         {},
@@ -581,7 +581,7 @@ export class GreenPower extends EventEmitter<GreenPowerEventMap> {
             true, // avoid receiving many responses, especially from the nodes not supporting this functionality
             undefined,
             ZclTransactionSequenceNumber.next(),
-            'commisioningMode',
+            "commisioningMode",
             Zcl.Clusters.greenPower.ID,
             payload,
             {},
@@ -591,7 +591,7 @@ export class GreenPower extends EventEmitter<GreenPowerEventMap> {
             await this.adapter.sendZclFrameToAll(GP_ENDPOINT, frame, GP_ENDPOINT, BroadcastAddress.RX_ON_WHEN_IDLE);
         } else {
             const device = Device.byNetworkAddress(networkAddress);
-            assert(device, 'Failed to find device to permit GP join on');
+            assert(device, "Failed to find device to permit GP join on");
 
             await this.adapter.sendZclFrameToEndpoint(device.ieeeAddr, networkAddress, GP_ENDPOINT, frame, 10000, false, false, GP_ENDPOINT);
         }

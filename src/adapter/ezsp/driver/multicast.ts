@@ -1,12 +1,12 @@
 /* v8 ignore start */
 
-import {logger} from '../../../utils/logger';
-import {Driver} from './driver';
-import {EzspConfigId} from './types';
-import {EmberStatus} from './types/named';
-import {EmberMulticastTableEntry} from './types/struct';
+import {logger} from "../../../utils/logger";
+import type {Driver} from "./driver";
+import {EzspConfigId} from "./types";
+import {EmberStatus} from "./types/named";
+import {EmberMulticastTableEntry} from "./types/struct";
 
-const NS = 'zh:ezsp:cast';
+const NS = "zh:ezsp:cast";
 
 export class Multicast {
     TABLE_SIZE = 16;

@@ -1,12 +1,12 @@
-import '../../utils/patchBigIntSerialization';
+import "../../utils/patchBigIntSerialization";
 
-import {BuffaloZcl} from './buffaloZcl';
-import {BuffaloZclDataType, DataType, Direction, FrameType, ParameterCondition} from './definition/enums';
-import {FoundationCommandName} from './definition/foundation';
-import {Status} from './definition/status';
-import {BuffaloZclOptions, Cluster, ClusterName, Command, CustomClusters, ParameterDefinition} from './definition/tstype';
-import * as Utils from './utils';
-import {ZclHeader} from './zclHeader';
+import {BuffaloZcl} from "./buffaloZcl";
+import {BuffaloZclDataType, DataType, Direction, FrameType, ParameterCondition} from "./definition/enums";
+import type {FoundationCommandName} from "./definition/foundation";
+import type {Status} from "./definition/status";
+import type {BuffaloZclOptions, Cluster, ClusterName, Command, CustomClusters, ParameterDefinition} from "./definition/tstype";
+import * as Utils from "./utils";
+import {ZclHeader} from "./zclHeader";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type ZclPayload = any;
@@ -87,7 +87,7 @@ export class ZclFrame {
     private writePayloadGlobal(buffalo: BuffaloZcl): void {
         const command = Utils.getFoundationCommand(this.command.ID);
 
-        if (command.parseStrategy === 'repetitive') {
+        if (command.parseStrategy === "repetitive") {
             for (const entry of this.payload) {
                 for (const parameter of command.parameters) {
                     const options: BuffaloZclOptions = {};
@@ -96,7 +96,7 @@ export class ZclFrame {
                         continue;
                     }
 
-                    if (parameter.type === BuffaloZclDataType.USE_DATA_TYPE && typeof entry.dataType === 'number') {
+                    if (parameter.type === BuffaloZclDataType.USE_DATA_TYPE && typeof entry.dataType === "number") {
                         // We need to grab the dataType to parse useDataType
                         options.dataType = entry.dataType;
                     }
@@ -104,12 +104,12 @@ export class ZclFrame {
                     buffalo.write(parameter.type, entry[parameter.name], options);
                 }
             }
-        } else if (command.parseStrategy === 'flat') {
+        } else if (command.parseStrategy === "flat") {
             for (const parameter of command.parameters) {
                 buffalo.write(parameter.type, this.payload[parameter.name], {});
             }
         } else {
-            if (command.parseStrategy === 'oneof') {
+            if (command.parseStrategy === "oneof") {
                 if (Utils.isFoundationDiscoverRsp(command.ID)) {
                     buffalo.writeUInt8(this.payload.discComplete);
 
@@ -142,7 +142,7 @@ export class ZclFrame {
      */
     public static fromBuffer(clusterID: number, header: ZclHeader | undefined, buffer: Buffer, customClusters: CustomClusters): ZclFrame {
         if (!header) {
-            throw new Error('Invalid ZclHeader.');
+            throw new Error("Invalid ZclHeader.");
         }
 
         const buffalo = new BuffaloZcl(buffer, header.length);
@@ -185,7 +185,7 @@ export class ZclFrame {
                 const lengthParameter = command.parameters[command.parameters.indexOf(parameter) - 1];
                 const length = payload[lengthParameter.name];
 
-                if (typeof length === 'number') {
+                if (typeof length === "number") {
                     options.length = length;
                 }
             }
@@ -199,7 +199,7 @@ export class ZclFrame {
     private static parsePayloadGlobal(header: ZclHeader, buffalo: BuffaloZcl): ZclPayload {
         const command = Utils.getFoundationCommand(header.commandIdentifier);
 
-        if (command.parseStrategy === 'repetitive') {
+        if (command.parseStrategy === "repetitive") {
             const payload = [];
 
             while (buffalo.isMore()) {
@@ -213,7 +213,7 @@ export class ZclFrame {
                         continue;
                     }
 
-                    if (parameter.type === BuffaloZclDataType.USE_DATA_TYPE && typeof entry.dataType === 'number') {
+                    if (parameter.type === BuffaloZclDataType.USE_DATA_TYPE && typeof entry.dataType === "number") {
                         // We need to grab the dataType to parse useDataType
                         options.dataType = entry.dataType;
 
@@ -228,8 +228,8 @@ export class ZclFrame {
                     // TODO: not needed, but temp workaroudn to make payload equal to that of zcl-packet
                     // XXX: is this still needed?
                     if (parameter.type === BuffaloZclDataType.USE_DATA_TYPE && entry.dataType === DataType.STRUCT) {
-                        entry['structElms'] = entry.attrData;
-                        entry['numElms'] = entry.attrData.length;
+                        entry["structElms"] = entry.attrData;
+                        entry["numElms"] = entry.attrData.length;
                     }
                 }
 
@@ -237,7 +237,7 @@ export class ZclFrame {
             }
 
             return payload;
-        } else if (command.parseStrategy === 'flat') {
+        } else if (command.parseStrategy === "flat") {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const payload: {[s: string]: any} = {};
 
@@ -247,7 +247,7 @@ export class ZclFrame {
 
             return payload;
         } else {
-            if (command.parseStrategy === 'oneof') {
+            if (command.parseStrategy === "oneof") {
                 if (Utils.isFoundationDiscoverRsp(command.ID)) {
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     const payload: {discComplete: number; attrInfos: {[k: string]: any}[]} = {
@@ -325,7 +325,7 @@ export class ZclFrame {
     }
 
     // List of commands is not completed, feel free to add more.
-    public isCommand(commandName: FoundationCommandName | 'remove' | 'add' | 'write' | 'enrollReq' | 'checkin' | 'getAlarm' | 'arm'): boolean {
+    public isCommand(commandName: FoundationCommandName | "remove" | "add" | "write" | "enrollReq" | "checkin" | "getAlarm" | "arm"): boolean {
         return this.command.name === commandName;
     }
 }

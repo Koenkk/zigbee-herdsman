@@ -1,10 +1,10 @@
-import {Adapter} from '../adapter';
-import {wait} from '../utils';
-import {logger} from '../utils/logger';
-import {assertString} from '../utils/utils';
-import * as Zcl from '../zspec/zcl';
+import type {Adapter} from "../adapter";
+import {wait} from "../utils";
+import {logger} from "../utils/logger";
+import {assertString} from "../utils/utils";
+import * as Zcl from "../zspec/zcl";
 
-const NS = 'zh:controller:touchlink';
+const NS = "zh:controller:touchlink";
 const scanChannels = [11, 15, 20, 25, 12, 13, 14, 16, 17, 18, 19, 21, 22, 23, 24, 26];
 
 export class Touchlink {
@@ -150,7 +150,7 @@ export class Touchlink {
             true,
             undefined,
             0,
-            'scanRequest',
+            "scanRequest",
             Zcl.Clusters.touchlink.ID,
             {transactionID: transaction, zigbeeInformation: 4, touchlinkInformation: 18},
             {},
@@ -164,7 +164,7 @@ export class Touchlink {
             true,
             undefined,
             0,
-            'identifyRequest',
+            "identifyRequest",
             Zcl.Clusters.touchlink.ID,
             {transactionID: transaction, duration: 65535},
             {},
@@ -178,7 +178,7 @@ export class Touchlink {
             true,
             undefined,
             0,
-            'resetToFactoryNew',
+            "resetToFactoryNew",
             Zcl.Clusters.touchlink.ID,
             {transactionID: transaction},
             {},

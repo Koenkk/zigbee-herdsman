@@ -1,6 +1,6 @@
-import {Buffalo} from '../../../buffalo';
-import ParameterType from './parameterType';
-import {BuffaloZnpOptions} from './tstype';
+import {Buffalo} from "../../../buffalo";
+import ParameterType from "./parameterType";
+import type {BuffaloZnpOptions} from "./tstype";
 
 interface Network {
     neightborPanId: number;
@@ -106,7 +106,7 @@ class BuffaloZnp extends Buffalo {
             }
             case ParameterType.BUFFER: {
                 if (options.length == null) {
-                    throw new Error('Cannot read BUFFER without length option specified');
+                    throw new Error("Cannot read BUFFER without length option specified");
                 }
 
                 return this.readBuffer(options.length);
@@ -131,21 +131,21 @@ class BuffaloZnp extends Buffalo {
             }
             case ParameterType.LIST_UINT8: {
                 if (options.length == null) {
-                    throw new Error('Cannot read LIST_UINT8 without length option specified');
+                    throw new Error("Cannot read LIST_UINT8 without length option specified");
                 }
 
                 return this.readListUInt8(options.length);
             }
             case ParameterType.LIST_UINT16: {
                 if (options.length == null) {
-                    throw new Error('Cannot read LIST_UINT16 without length option specified');
+                    throw new Error("Cannot read LIST_UINT16 without length option specified");
                 }
 
                 return this.readListUInt16(options.length);
             }
             case ParameterType.LIST_NETWORK: {
                 if (options.length == null) {
-                    throw new Error('Cannot read LIST_NETWORK without length option specified');
+                    throw new Error("Cannot read LIST_NETWORK without length option specified");
                 }
 
                 return this.readListNetwork(options.length);

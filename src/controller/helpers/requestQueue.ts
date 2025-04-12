@@ -1,9 +1,9 @@
-import {logger} from '../../utils/logger';
-import * as Zcl from '../../zspec/zcl';
-import {Endpoint} from '../model';
-import Request from './request';
+import {logger} from "../../utils/logger";
+import type * as Zcl from "../../zspec/zcl";
+import type {Endpoint} from "../model";
+import type Request from "./request";
 
-const NS = 'zh:controller:requestqueue';
+const NS = "zh:controller:requestqueue";
 
 type Mutable<T> = {-readonly [P in keyof T]: T[P]};
 
@@ -41,7 +41,7 @@ export class RequestQueue extends Set<Request> {
         logger.debug(`Request Queue (${this.deviceIeeeAddress}/${this.ID}): send pending requests (${this.size}, ${fastPolling})`, NS);
 
         for (const request of this) {
-            if (fastPolling || request.sendPolicy !== 'bulk') {
+            if (fastPolling || request.sendPolicy !== "bulk") {
                 try {
                     const result = await request.send();
                     logger.debug(`Request Queue (${this.deviceIeeeAddress}/${this.ID}): send success`, NS);
@@ -86,17 +86,17 @@ export class RequestQueue extends Set<Request> {
                 continue;
             }
 
-            if (request.sendPolicy === 'bulk' || request.sendPolicy === 'queue' || request.sendPolicy === 'immediate') {
+            if (request.sendPolicy === "bulk" || request.sendPolicy === "queue" || request.sendPolicy === "immediate") {
                 continue;
             }
 
             if (request.frame.cluster.ID === clusterID && request.frame.command.ID === commandID) {
-                if (newRequest.sendPolicy === 'keep-payload' && JSON.stringify(request.frame.payload) === JSON.stringify(payload)) {
+                if (newRequest.sendPolicy === "keep-payload" && JSON.stringify(request.frame.payload) === JSON.stringify(payload)) {
                     logger.debug(`Request Queue (${this.deviceIeeeAddress}/${this.ID}): Merge duplicate request`, NS);
                     this.delete(request);
                     newRequest.moveCallbacks(request);
                 } else if (
-                    (newRequest.sendPolicy === 'keep-command' || newRequest.sendPolicy === 'keep-cmd-undiv') &&
+                    (newRequest.sendPolicy === "keep-command" || newRequest.sendPolicy === "keep-cmd-undiv") &&
                     Array.isArray(request.frame.payload)
                 ) {
                     const filteredPayload = request.frame.payload.filter(
@@ -110,7 +110,7 @@ export class RequestQueue extends Set<Request> {
                             request.reject();
                         }
                         this.delete(request);
-                    } else if (newRequest.sendPolicy !== 'keep-cmd-undiv') {
+                    } else if (newRequest.sendPolicy !== "keep-cmd-undiv") {
                         // remove all duplicate attributes if we shall not write undivided
                         (request.frame as Mutable<Zcl.Frame>).payload = filteredPayload;
                         logger.debug(`Request Queue (${this.deviceIeeeAddress}/${this.ID}): Remove commands from request`, NS);

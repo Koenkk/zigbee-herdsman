@@ -1,6 +1,6 @@
 /* v8 ignore start */
 
-import {Readable, ReadableOptions} from 'node:stream';
+import {Readable, type ReadableOptions} from "node:stream";
 
 export class ZBOSSWriter extends Readable {
     private bytesToWrite: number[];
@@ -19,7 +19,7 @@ export class ZBOSSWriter extends Readable {
         // logger.debug(`>>>> [FRAME raw=${buffer.toString('hex')}]`, NS);
 
         // this.push(buffer);
-        this.emit('data', buffer);
+        this.emit("data", buffer);
     }
 
     public writeByte(byte: number): void {

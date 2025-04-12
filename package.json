@@ -7,9 +7,7 @@
         "url": "https://github.com/koenkk/zigbee-herdsman/issues"
     },
     "packageManager": "pnpm@10.7.1",
-    "files": [
-        "dist"
-    ],
+    "files": ["dist"],
     "contributors": [
         {
             "name": "Koen Kanters",
@@ -52,13 +50,7 @@
         "vitest": "^3.1.1"
     },
     "homepage": "https://github.com/Koenkk/zigbee-herdsman",
-    "keywords": [
-        "zigbee",
-        "zstack",
-        "emberznet",
-        "deconz",
-        "zigate"
-    ],
+    "keywords": ["zigbee", "zstack", "emberznet", "deconz", "zigate"],
     "license": "MIT",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
@@ -79,9 +71,6 @@
     },
     "version": "3.5.1",
     "pnpm": {
-        "onlyBuiltDependencies": [
-            "@serialport/bindings-cpp",
-            "esbuild"
-        ]
+        "onlyBuiltDependencies": ["@serialport/bindings-cpp", "esbuild"]
     }
 }

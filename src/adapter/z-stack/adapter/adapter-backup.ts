@@ -1,20 +1,20 @@
-import assert from 'node:assert';
-import * as fs from 'node:fs';
+import assert from "node:assert";
+import * as fs from "node:fs";
 
-import * as Models from '../../../models';
-import {BackupUtils} from '../../../utils';
-import {logger} from '../../../utils/logger';
-import {NULL_NODE_ID, Utils as ZSpecUtils} from '../../../zspec';
-import {NvItemsIds, NvSystemIds} from '../constants/common';
-import * as Structs from '../structs';
-import {AddressManagerUser, SecurityManagerAuthenticationOption} from '../structs';
-import {Subsystem} from '../unpi/constants';
-import * as Utils from '../utils';
-import {Znp} from '../znp';
-import {AdapterNvMemory} from './adapter-nv-memory';
-import {ZnpVersion} from './tstype';
+import type * as Models from "../../../models";
+import {BackupUtils} from "../../../utils";
+import {logger} from "../../../utils/logger";
+import {NULL_NODE_ID, Utils as ZSpecUtils} from "../../../zspec";
+import {NvItemsIds, NvSystemIds} from "../constants/common";
+import * as Structs from "../structs";
+import {AddressManagerUser, SecurityManagerAuthenticationOption} from "../structs";
+import {Subsystem} from "../unpi/constants";
+import * as Utils from "../utils";
+import type {Znp} from "../znp";
+import type {AdapterNvMemory} from "./adapter-nv-memory";
+import {ZnpVersion} from "./tstype";
 
-const NS = 'zh:zstack:backup';
+const NS = "zh:zstack:backup";
 
 /**
  * Class providing ZNP adapter backup and restore procedures based mostly on NV memory manipulation.
@@ -45,15 +45,15 @@ export class AdapterBackup {
         } catch (error) {
             throw new Error(`Coordinator backup is corrupted (${error})`);
         }
-        if (data.metadata?.format === 'zigpy/open-coordinator-backup' && data.metadata?.version) {
+        if (data.metadata?.format === "zigpy/open-coordinator-backup" && data.metadata?.version) {
             if (data.metadata?.version !== 1) {
                 throw new Error(`Unsupported open coordinator backup version (version=${data.metadata?.version})`);
             }
             return BackupUtils.fromUnifiedBackup(data as Models.UnifiedBackupStorage);
-        } else if (data.adapterType === 'zStack') {
+        } else if (data.adapterType === "zStack") {
             return BackupUtils.fromLegacyBackup(data as Models.LegacyBackupStorage);
         } else {
-            throw new Error('Unknown backup format');
+            throw new Error("Unknown backup format");
         }
     }
 
@@ -61,29 +61,29 @@ export class AdapterBackup {
      * Creates a new backup from connected ZNP adapter and returns it in internal backup model format.
      */
     public async createBackup(ieeeAddressesInDatabase: string[]): Promise<Models.Backup> {
-        logger.debug('creating backup', NS);
+        logger.debug("creating backup", NS);
         const version: ZnpVersion = await this.getAdapterVersion();
 
         /* get adapter ieee address */
-        const ieeeAddressResponse = await this.znp.requestWithReply(Subsystem.SYS, 'getExtAddr', {});
-        if (!ieeeAddressResponse.payload.extaddress || !ieeeAddressResponse.payload.extaddress.startsWith('0x')) {
-            throw new Error('Failed to read adapter IEEE address');
+        const ieeeAddressResponse = await this.znp.requestWithReply(Subsystem.SYS, "getExtAddr", {});
+        if (!ieeeAddressResponse.payload.extaddress || !ieeeAddressResponse.payload.extaddress.startsWith("0x")) {
+            throw new Error("Failed to read adapter IEEE address");
         }
-        const ieeeAddress = Buffer.from(ieeeAddressResponse.payload.extaddress.split('0x')[1], 'hex');
-        logger.debug('fetched adapter ieee address', NS);
+        const ieeeAddress = Buffer.from(ieeeAddressResponse.payload.extaddress.split("0x")[1], "hex");
+        logger.debug("fetched adapter ieee address", NS);
 
         /* get adapter nib */
         const nib = await this.nv.readItem(NvItemsIds.NIB, 0, Structs.nib);
         if (!nib) {
-            throw new Error('Cannot backup - adapter not commissioned');
+            throw new Error("Cannot backup - adapter not commissioned");
         }
-        logger.debug('fetched adapter nib', NS);
+        logger.debug("fetched adapter nib", NS);
 
         /* get adapter active key information */
         let activeKeyInfo;
         if (version === ZnpVersion.zStack12) {
             const key = Structs.nwkKey(
-                (await this.znp.requestWithReply(Subsystem.SAPI, 'readConfiguration', {configid: NvItemsIds.PRECFGKEY})).payload.value,
+                (await this.znp.requestWithReply(Subsystem.SAPI, "readConfiguration", {configid: NvItemsIds.PRECFGKEY})).payload.value,
             );
             activeKeyInfo = Structs.nwkKeyDescriptor();
             activeKeyInfo.key = key.key;
@@ -92,13 +92,13 @@ export class AdapterBackup {
         }
 
         if (!activeKeyInfo) {
-            throw new Error('Cannot backup - missing active key info');
+            throw new Error("Cannot backup - missing active key info");
         }
-        logger.debug('fetched adapter active key information', NS);
+        logger.debug("fetched adapter active key information", NS);
 
         /* get adapter security data */
         const preconfiguredKeyEnabled = await this.nv.readItem(NvItemsIds.PRECFGKEYS_ENABLE, 0);
-        logger.debug('fetched adapter pre-configured key', NS);
+        logger.debug("fetched adapter pre-configured key", NS);
         const addressManagerTable = await this.getAddressManagerTable(version);
         logger.debug(
             `fetched adapter address manager table (capacity=${addressManagerTable?.capacity || 0}, used=${addressManagerTable?.usedCount || 0})`,
@@ -115,7 +115,7 @@ export class AdapterBackup {
             NS,
         );
         const tclkSeed = version === ZnpVersion.zStack12 ? null : await this.nv.readItem(NvItemsIds.TCLK_SEED, 0, Structs.nwkKey);
-        logger.debug('fetched adapter tclk seed', NS);
+        logger.debug("fetched adapter tclk seed", NS);
         const tclkTable = await this.getTclkTable(version);
         logger.debug(`fetched adapter tclk table (capacity=${tclkTable?.usedCount || 0}, used=${tclkTable?.usedCount || 0})`, NS);
         const secMaterialTable = await this.getNetworkSecurityMaterialTable(version);
@@ -190,7 +190,7 @@ export class AdapterBackup {
                             } else {
                                 const tclkTableEntry = tclkTable.used.find((e) => e.extAddr.equals(ame.extAddr));
                                 if (tclkTableEntry) {
-                                    assert(tclkSeed, 'Cannot be undefined because this is only called for ZStack 3');
+                                    assert(tclkSeed, "Cannot be undefined because this is only called for ZStack 3");
                                     const rotatedSeed = Buffer.concat([
                                         tclkSeed.key.subarray(tclkTableEntry.SeedShift_IcIndex),
                                         tclkSeed.key.subarray(0, tclkTableEntry.SeedShift_IcIndex),
@@ -235,7 +235,7 @@ export class AdapterBackup {
                     ieeeAddressesInDatabase.includes(ZSpecUtils.eui64BEBufferToHex(d.ieeeAddress)) &&
                     !backup.devices.find((dd) => d.ieeeAddress.equals(dd.ieeeAddress)),
             );
-            const missingStr = missing.map((d) => ZSpecUtils.eui64BEBufferToHex(d.ieeeAddress)).join(', ');
+            const missingStr = missing.map((d) => ZSpecUtils.eui64BEBufferToHex(d.ieeeAddress)).join(", ");
             logger.debug(
                 `Following devices with link key are missing from new backup but present in old backup and database, ` +
                     `adding them back: ${missingStr}`,
@@ -255,11 +255,11 @@ export class AdapterBackup {
      * @param backup Backup to restore to connected adapter.
      */
     public async restoreBackup(backup: Models.Backup): Promise<void> {
-        logger.debug('restoring backup', NS);
+        logger.debug("restoring backup", NS);
         const version: ZnpVersion = await this.getAdapterVersion();
         /* v8 ignore start */
         if (version === ZnpVersion.zStack12) {
-            throw new Error('backup cannot be restored on Z-Stack 1.2 adapter');
+            throw new Error("backup cannot be restored on Z-Stack 1.2 adapter");
         }
         /* v8 ignore stop */
 
@@ -351,7 +351,7 @@ export class AdapterBackup {
                         tclkEntry.txFrmCntr = device.linkKey.txCounter + 2500;
                         linkKeyProcessed = true;
                         logger.debug(
-                            `successfully recovered link key for ${device.ieeeAddress.toString('hex')} using tclk seed (shift=${recoveredSeedShift})`,
+                            `successfully recovered link key for ${device.ieeeAddress.toString("hex")} using tclk seed (shift=${recoveredSeedShift})`,
                             NS,
                         );
                     }
@@ -383,7 +383,7 @@ export class AdapterBackup {
                     sme.authenticationOption = SecurityManagerAuthenticationOption.AuthenticatedCBCK;
 
                     linkKeyProcessed = true;
-                    logger.debug(`successfully recovered link key for ${device.ieeeAddress.toString('hex')} using aps key data table`, NS);
+                    logger.debug(`successfully recovered link key for ${device.ieeeAddress.toString("hex")} using aps key data table`, NS);
                 }
             }
         }
@@ -406,14 +406,14 @@ export class AdapterBackup {
 
         /* write network security material table (nwk frame counters) */
         if (version === ZnpVersion.zStack3x0) {
-            await this.nv.writeTable('extended', NvSystemIds.ZSTACK, NvItemsIds.EX_NWK_SEC_MATERIAL_TABLE, nwkSecurityMaterialTable);
+            await this.nv.writeTable("extended", NvSystemIds.ZSTACK, NvItemsIds.EX_NWK_SEC_MATERIAL_TABLE, nwkSecurityMaterialTable);
         } else {
-            await this.nv.writeTable('legacy', NvItemsIds.LEGACY_NWK_SEC_MATERIAL_TABLE_START, nwkSecurityMaterialTable);
+            await this.nv.writeTable("legacy", NvItemsIds.LEGACY_NWK_SEC_MATERIAL_TABLE_START, nwkSecurityMaterialTable);
         }
 
         /* write address manager table */
         if (version === ZnpVersion.zStack3x0) {
-            await this.nv.writeTable('extended', NvSystemIds.ZSTACK, NvItemsIds.ZCD_NV_EX_ADDRMGR, addressManagerTable);
+            await this.nv.writeTable("extended", NvSystemIds.ZSTACK, NvItemsIds.ZCD_NV_EX_ADDRMGR, addressManagerTable);
         } else {
             await this.nv.writeItem(NvItemsIds.ADDRMGR, addressManagerTable);
         }
@@ -423,16 +423,16 @@ export class AdapterBackup {
 
         /* write aps link key data table */
         if (version === ZnpVersion.zStack3x0) {
-            await this.nv.writeTable('extended', NvSystemIds.ZSTACK, NvItemsIds.ZCD_NV_EX_APS_KEY_DATA_TABLE, apsLinkKeyDataTable);
+            await this.nv.writeTable("extended", NvSystemIds.ZSTACK, NvItemsIds.ZCD_NV_EX_APS_KEY_DATA_TABLE, apsLinkKeyDataTable);
         } else {
-            await this.nv.writeTable('legacy', NvItemsIds.APS_LINK_KEY_DATA_START, apsLinkKeyDataTable);
+            await this.nv.writeTable("legacy", NvItemsIds.APS_LINK_KEY_DATA_START, apsLinkKeyDataTable);
         }
 
         /* write tclk table */
         if (version === ZnpVersion.zStack3x0) {
-            await this.nv.writeTable('extended', NvSystemIds.ZSTACK, NvItemsIds.EX_TCLK_TABLE, tclkTable);
+            await this.nv.writeTable("extended", NvSystemIds.ZSTACK, NvItemsIds.EX_TCLK_TABLE, tclkTable);
         } else {
-            await this.nv.writeTable('legacy', NvItemsIds.LEGACY_TCLK_TABLE_START, tclkTable);
+            await this.nv.writeTable("legacy", NvItemsIds.LEGACY_TCLK_TABLE_START, tclkTable);
         }
     }
 
@@ -443,7 +443,7 @@ export class AdapterBackup {
      * and restore procedures are not supported.*
      */
     private async getAdapterVersion(): Promise<ZnpVersion> {
-        const versionResponse = await this.znp.requestWithReply(Subsystem.SYS, 'version', {});
+        const versionResponse = await this.znp.requestWithReply(Subsystem.SYS, "version", {});
         const version: ZnpVersion = versionResponse.payload.product;
         return version;
     }
@@ -455,7 +455,7 @@ export class AdapterBackup {
      */
     private async getAddressManagerTable(version: ZnpVersion): Promise<ReturnType<typeof Structs.addressManagerTable>> {
         if (version === ZnpVersion.zStack3x0) {
-            return await this.nv.readTable('extended', NvSystemIds.ZSTACK, NvItemsIds.ZCD_NV_EX_ADDRMGR, undefined, Structs.addressManagerTable);
+            return await this.nv.readTable("extended", NvSystemIds.ZSTACK, NvItemsIds.ZCD_NV_EX_ADDRMGR, undefined, Structs.addressManagerTable);
         } else {
             return await this.nv.readItem(NvItemsIds.ADDRMGR, 0, Structs.addressManagerTable);
         }
@@ -476,14 +476,14 @@ export class AdapterBackup {
     private async getApsLinkKeyDataTable(version: ZnpVersion): Promise<ReturnType<typeof Structs.apsLinkKeyDataTable>> {
         if (version === ZnpVersion.zStack3x0) {
             return await this.nv.readTable(
-                'extended',
+                "extended",
                 NvSystemIds.ZSTACK,
                 NvItemsIds.ZCD_NV_EX_APS_KEY_DATA_TABLE,
                 undefined,
                 Structs.apsLinkKeyDataTable,
             );
         } else {
-            return await this.nv.readTable('legacy', NvItemsIds.APS_LINK_KEY_DATA_START, 255, Structs.apsLinkKeyDataTable);
+            return await this.nv.readTable("legacy", NvItemsIds.APS_LINK_KEY_DATA_START, 255, Structs.apsLinkKeyDataTable);
         }
     }
 
@@ -494,9 +494,9 @@ export class AdapterBackup {
      */
     private async getTclkTable(version: ZnpVersion): Promise<ReturnType<typeof Structs.apsTcLinkKeyTable>> {
         if (version === ZnpVersion.zStack3x0) {
-            return await this.nv.readTable('extended', NvSystemIds.ZSTACK, NvItemsIds.EX_TCLK_TABLE, undefined, Structs.apsTcLinkKeyTable);
+            return await this.nv.readTable("extended", NvSystemIds.ZSTACK, NvItemsIds.EX_TCLK_TABLE, undefined, Structs.apsTcLinkKeyTable);
         } else {
-            return await this.nv.readTable('legacy', NvItemsIds.LEGACY_TCLK_TABLE_START, 239, Structs.apsTcLinkKeyTable);
+            return await this.nv.readTable("legacy", NvItemsIds.LEGACY_TCLK_TABLE_START, 239, Structs.apsTcLinkKeyTable);
         }
     }
 
@@ -508,14 +508,14 @@ export class AdapterBackup {
     private async getNetworkSecurityMaterialTable(version: ZnpVersion): Promise<ReturnType<typeof Structs.nwkSecMaterialDescriptorTable>> {
         if (version === ZnpVersion.zStack3x0) {
             return await this.nv.readTable(
-                'extended',
+                "extended",
                 NvSystemIds.ZSTACK,
                 NvItemsIds.EX_NWK_SEC_MATERIAL_TABLE,
                 undefined,
                 Structs.nwkSecMaterialDescriptorTable,
             );
         } else {
-            return await this.nv.readTable('legacy', NvItemsIds.LEGACY_NWK_SEC_MATERIAL_TABLE_START, 12, Structs.nwkSecMaterialDescriptorTable);
+            return await this.nv.readTable("legacy", NvItemsIds.LEGACY_NWK_SEC_MATERIAL_TABLE_START, 12, Structs.nwkSecMaterialDescriptorTable);
         }
     }
 }

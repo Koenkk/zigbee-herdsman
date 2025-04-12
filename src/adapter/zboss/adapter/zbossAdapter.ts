@@ -1,22 +1,22 @@
 /* v8 ignore start */
 
-import assert from 'node:assert';
+import assert from "node:assert";
 
-import {Adapter, TsType} from '../..';
-import {Backup} from '../../../models';
-import {Queue, Waitress} from '../../../utils';
-import {logger} from '../../../utils/logger';
-import * as ZSpec from '../../../zspec';
-import * as Zcl from '../../../zspec/zcl';
-import * as Zdo from '../../../zspec/zdo';
-import * as ZdoTypes from '../../../zspec/zdo/definition/tstypes';
-import {WORKAROUND_JOIN_MANUF_IEEE_PREFIX_TO_CODE} from '../../const';
-import {ZclPayload} from '../../events';
-import {ZBOSSDriver} from '../driver';
-import {CommandId, DeviceUpdateStatus} from '../enums';
-import {FrameType, ZBOSSFrame} from '../frame';
+import {Adapter, type TsType} from "../..";
+import type {Backup} from "../../../models";
+import {Queue, Waitress} from "../../../utils";
+import {logger} from "../../../utils/logger";
+import * as ZSpec from "../../../zspec";
+import * as Zcl from "../../../zspec/zcl";
+import * as Zdo from "../../../zspec/zdo";
+import type * as ZdoTypes from "../../../zspec/zdo/definition/tstypes";
+import {WORKAROUND_JOIN_MANUF_IEEE_PREFIX_TO_CODE} from "../../const";
+import type {ZclPayload} from "../../events";
+import {ZBOSSDriver} from "../driver";
+import {CommandId, DeviceUpdateStatus} from "../enums";
+import {FrameType, type ZBOSSFrame} from "../frame";
 
-const NS = 'zh:zboss';
+const NS = "zh:zboss";
 
 interface WaitressMatcher {
     address: number | string;
@@ -48,21 +48,21 @@ export class ZBOSSAdapter extends Adapter {
 
         this.waitress = new Waitress<ZclPayload, WaitressMatcher>(this.waitressValidator, this.waitressTimeoutFormatter);
         this.driver = new ZBOSSDriver(serialPortOptions, networkOptions);
-        this.driver.on('frame', this.processMessage.bind(this));
+        this.driver.on("frame", this.processMessage.bind(this));
     }
 
     private async processMessage(frame: ZBOSSFrame): Promise<void> {
         logger.debug(() => `processMessage: ${JSON.stringify(frame)}`, NS);
 
         if (frame.payload.zdoClusterId !== undefined) {
-            this.emit('zdoResponse', frame.payload.zdoClusterId, frame.payload.zdo!);
+            this.emit("zdoResponse", frame.payload.zdoClusterId, frame.payload.zdo!);
         } else if (frame.type == FrameType.INDICATION) {
             switch (frame.commandId) {
                 case CommandId.ZDO_DEV_UPDATE_IND: {
                     logger.debug(`Device ${frame.payload.ieee}:${frame.payload.nwk} ${DeviceUpdateStatus[frame.payload.status]}.`, NS);
 
                     if (frame.payload.status === DeviceUpdateStatus.LEFT) {
-                        this.emit('deviceLeave', {
+                        this.emit("deviceLeave", {
                             networkAddress: frame.payload.nwk,
                             ieeeAddr: frame.payload.ieee,
                         });
@@ -78,7 +78,7 @@ export class ZBOSSAdapter extends Adapter {
                             this.currentManufacturerCode = joinManufCode;
                         }
                         // SECURE_REJOIN, UNSECURE_JOIN, TC_REJOIN
-                        this.emit('deviceJoined', {
+                        this.emit("deviceJoined", {
                             networkAddress: frame.payload.nwk,
                             ieeeAddr: frame.payload.ieee,
                         });
@@ -87,7 +87,7 @@ export class ZBOSSAdapter extends Adapter {
                 }
 
                 case CommandId.NWK_LEAVE_IND: {
-                    this.emit('deviceLeave', {
+                    this.emit("deviceLeave", {
                         networkAddress: frame.payload.nwk,
                         ieeeAddr: frame.payload.ieee,
                     });
@@ -108,7 +108,7 @@ export class ZBOSSAdapter extends Adapter {
                     };
 
                     this.waitress.resolve(payload);
-                    this.emit('zclPayload', payload);
+                    this.emit("zclPayload", payload);
                     break;
                 }
             }
@@ -157,7 +157,7 @@ export class ZBOSSAdapter extends Adapter {
         });
     }
 
-    public async reset(type: 'soft' | 'hard'): Promise<void> {
+    public async reset(type: "soft" | "hard"): Promise<void> {
         throw new Error(`This adapter does not reset '${type}'`);
     }
 
@@ -167,7 +167,7 @@ export class ZBOSSAdapter extends Adapter {
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     public async backup(ieeeAddressesInDatabase: string[]): Promise<Backup> {
-        throw new Error('This adapter does not support backup');
+        throw new Error("This adapter does not support backup");
     }
 
     public async getNetworkParameters(): Promise<TsType.NetworkParameters> {
@@ -186,7 +186,7 @@ export class ZBOSSAdapter extends Adapter {
     }
 
     public async addInstallCode(ieeeAddress: string, key: Buffer, hashed: boolean): Promise<void> {
-        logger.error(`NOT SUPPORTED: sendZclFrameToGroup(${ieeeAddress},${key.toString('hex')},${hashed}`, NS);
+        logger.error(`NOT SUPPORTED: sendZclFrameToGroup(${ieeeAddress},${key.toString("hex")},${hashed}`, NS);
         throw new Error(`Install code is not supported for 'zboss' yet`);
     }
 
@@ -381,7 +381,7 @@ export class ZBOSSAdapter extends Adapter {
                 if (response != null) {
                     response.cancel();
                 }
-                throw Error('sendZclFrameToEndpointInternal error');
+                throw Error("sendZclFrameToEndpointInternal error");
             }
             if (response !== null) {
                 try {

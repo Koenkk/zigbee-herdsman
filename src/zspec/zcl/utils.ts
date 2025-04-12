@@ -1,7 +1,7 @@
-import {Clusters} from './definition/cluster';
-import {DataType, DataTypeClass} from './definition/enums';
-import {Foundation, FoundationCommandName, FoundationDefinition} from './definition/foundation';
-import {Attribute, Cluster, ClusterDefinition, ClusterName, Command, CustomClusters} from './definition/tstype';
+import {Clusters} from "./definition/cluster";
+import {DataType, DataTypeClass} from "./definition/enums";
+import {Foundation, type FoundationCommandName, type FoundationDefinition} from "./definition/foundation";
+import type {Attribute, Cluster, ClusterDefinition, ClusterName, Command, CustomClusters} from "./definition/tstype";
 
 const DATA_TYPE_CLASS_DISCRETE = [
     DataType.DATA8,
@@ -123,7 +123,7 @@ function getClusterDefinition(
 ): {name: string; cluster: ClusterDefinition} {
     let name: string | undefined;
 
-    if (typeof key === 'number') {
+    if (typeof key === "number") {
         let partialMatch: boolean;
 
         // custom clusters have priority over Zcl clusters, except in case of better match (see below)
@@ -153,7 +153,7 @@ function getClusterDefinition(
             : Clusters[name as ClusterName];
 
     if (!cluster) {
-        if (typeof key === 'number') {
+        if (typeof key === "number") {
             name = key.toString();
             cluster = {attributes: {}, commands: {}, commandsResponse: {}, manufacturerCode: undefined, ID: key};
         } else {
@@ -177,7 +177,7 @@ function createCluster(name: string, cluster: ClusterDefinition, manufacturerCod
     );
 
     const getAttributeInternal = (key: number | string): Attribute | undefined => {
-        if (typeof key === 'number') {
+        if (typeof key === "number") {
             let partialMatchAttr: Attribute | undefined;
 
             for (const attrKey in attributes) {
@@ -223,7 +223,7 @@ function createCluster(name: string, cluster: ClusterDefinition, manufacturerCod
     };
 
     const getCommand = (key: number | string): Command => {
-        if (typeof key === 'number') {
+        if (typeof key === "number") {
             for (const cmdKey in commands) {
                 const cmd = commands[cmdKey];
 
@@ -245,7 +245,7 @@ function createCluster(name: string, cluster: ClusterDefinition, manufacturerCod
     };
 
     const getCommandResponse = (key: number | string): Command => {
-        if (typeof key === 'number') {
+        if (typeof key === "number") {
             for (const cmdKey in commandsResponse) {
                 const cmd = commandsResponse[cmdKey];
 
@@ -296,7 +296,7 @@ function getGlobalCommandNameById(id: number): FoundationCommandName {
 }
 
 export function getGlobalCommand(key: number | string): Command {
-    const name = typeof key === 'number' ? getGlobalCommandNameById(key) : (key as FoundationCommandName);
+    const name = typeof key === "number" ? getGlobalCommandNameById(key) : (key as FoundationCommandName);
     const command = Foundation[name];
 
     if (!command) {

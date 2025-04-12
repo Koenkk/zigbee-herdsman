@@ -1,29 +1,29 @@
-import {Socket} from 'node:net';
-import {dirname} from 'node:path';
+import {Socket} from "node:net";
+import {dirname} from "node:path";
 
-import {OTRCPDriver} from 'zigbee-on-host';
-import {setLogger} from 'zigbee-on-host/dist/utils/logger';
-import {MACCapabilities, MACHeader} from 'zigbee-on-host/dist/zigbee/mac';
-import {ZigbeeAPSHeader, ZigbeeAPSPayload} from 'zigbee-on-host/dist/zigbee/zigbee-aps';
-import {ZigbeeNWKGPHeader} from 'zigbee-on-host/dist/zigbee/zigbee-nwkgp';
+import {OTRCPDriver} from "zigbee-on-host";
+import {setLogger} from "zigbee-on-host/dist/utils/logger";
+import type {MACCapabilities, MACHeader} from "zigbee-on-host/dist/zigbee/mac";
+import type {ZigbeeAPSHeader, ZigbeeAPSPayload} from "zigbee-on-host/dist/zigbee/zigbee-aps";
+import type {ZigbeeNWKGPHeader} from "zigbee-on-host/dist/zigbee/zigbee-nwkgp";
 
-import {Backup} from '../../../models/backup';
-import {logger} from '../../../utils/logger';
-import {Queue} from '../../../utils/queue';
-import {wait} from '../../../utils/wait';
-import {Waitress} from '../../../utils/waitress';
-import * as ZSpec from '../../../zspec';
-import * as Zcl from '../../../zspec/zcl';
-import * as Zdo from '../../../zspec/zdo';
-import * as ZdoTypes from '../../../zspec/zdo/definition/tstypes';
-import {Adapter} from '../../adapter';
-import {ZclPayload} from '../../events';
-import {SerialPort} from '../../serialPort';
-import {isTcpPath} from '../../socketPortUtils';
-import * as TsType from '../../tstype';
-import {bigUInt64ToHexBE} from './utils';
+import type {Backup} from "../../../models/backup";
+import {logger} from "../../../utils/logger";
+import {Queue} from "../../../utils/queue";
+import {wait} from "../../../utils/wait";
+import {Waitress} from "../../../utils/waitress";
+import * as ZSpec from "../../../zspec";
+import * as Zcl from "../../../zspec/zcl";
+import * as Zdo from "../../../zspec/zdo";
+import type * as ZdoTypes from "../../../zspec/zdo/definition/tstypes";
+import {Adapter} from "../../adapter";
+import type {ZclPayload} from "../../events";
+import {SerialPort} from "../../serialPort";
+import {isTcpPath} from "../../socketPortUtils";
+import type * as TsType from "../../tstype";
+import {bigUInt64ToHexBE} from "./utils";
 
-const NS = 'zh:zoh';
+const NS = "zh:zoh";
 
 interface WaitressMatcher {
     sender: number | string;
@@ -126,7 +126,7 @@ export class ZoHAdapter extends Adapter {
             this.socketPort.setKeepAlive(true, 15000);
             this.driver.writer.pipe(this.socketPort);
             this.socketPort.pipe(this.driver.parser);
-            this.driver.parser.on('data', this.driver.onFrame.bind(this.driver));
+            this.driver.parser.on("data", this.driver.onFrame.bind(this.driver));
 
             return await new Promise((resolve, reject): void => {
                 const openError = async (err: Error): Promise<void> => {
@@ -135,18 +135,18 @@ export class ZoHAdapter extends Adapter {
                     reject(err);
                 };
 
-                this.socketPort!.on('connect', () => {
-                    logger.debug('Socket connected', NS);
+                this.socketPort!.on("connect", () => {
+                    logger.debug("Socket connected", NS);
                 });
-                this.socketPort!.on('ready', (): void => {
-                    logger.info('Socket ready', NS);
-                    this.socketPort!.removeListener('error', openError);
-                    this.socketPort!.once('close', this.onPortClose.bind(this));
-                    this.socketPort!.on('error', this.onPortError.bind(this));
+                this.socketPort!.on("ready", (): void => {
+                    logger.info("Socket ready", NS);
+                    this.socketPort!.removeListener("error", openError);
+                    this.socketPort!.once("close", this.onPortClose.bind(this));
+                    this.socketPort!.on("error", this.onPortError.bind(this));
 
                     resolve();
                 });
-                this.socketPort!.once('error', openError);
+                this.socketPort!.once("error", openError);
 
                 this.socketPort!.connect(port, hostname);
             });
@@ -154,10 +154,10 @@ export class ZoHAdapter extends Adapter {
 
         const serialOpts = {
             path: this.serialPortOptions.path!,
-            baudRate: typeof this.serialPortOptions.baudRate === 'number' ? this.serialPortOptions.baudRate : 115200,
-            rtscts: typeof this.serialPortOptions.rtscts === 'boolean' ? this.serialPortOptions.rtscts : false,
+            baudRate: typeof this.serialPortOptions.baudRate === "number" ? this.serialPortOptions.baudRate : 115200,
+            rtscts: typeof this.serialPortOptions.rtscts === "boolean" ? this.serialPortOptions.rtscts : false,
             autoOpen: false,
-            parity: 'none' as const,
+            parity: "none" as const,
             stopBits: 1 as const,
             xon: false,
             xoff: false,
@@ -165,7 +165,7 @@ export class ZoHAdapter extends Adapter {
 
         // enable software flow control if RTS/CTS not enabled in config
         if (!serialOpts.rtscts) {
-            logger.info('RTS/CTS config is off, enabling software flow control.', NS);
+            logger.info("RTS/CTS config is off, enabling software flow control.", NS);
             serialOpts.xon = true;
             serialOpts.xoff = true;
         }
@@ -175,16 +175,16 @@ export class ZoHAdapter extends Adapter {
 
         this.driver.writer.pipe(this.serialPort);
         this.serialPort.pipe(this.driver.parser);
-        this.driver.parser.on('data', this.driver.onFrame.bind(this.driver));
+        this.driver.parser.on("data", this.driver.onFrame.bind(this.driver));
 
         try {
             await this.serialPort!.asyncOpen();
             await this.serialPort!.asyncFlush();
 
-            logger.info('Serial port opened', NS);
+            logger.info("Serial port opened", NS);
 
-            this.serialPort.once('close', this.onPortClose.bind(this));
-            this.serialPort.on('error', this.onPortError.bind(this));
+            this.serialPort.once("close", this.onPortClose.bind(this));
+            this.serialPort.on("error", this.onPortError.bind(this));
         } catch (error) {
             await this.stop();
 
@@ -200,9 +200,9 @@ export class ZoHAdapter extends Adapter {
     /* v8 ignore start */
     private async onPortClose(error: boolean | Error): Promise<void> {
         if (error) {
-            logger.error('Port closed unexpectedly.', NS);
+            logger.error("Port closed unexpectedly.", NS);
         } else {
-            logger.info('Port closed.', NS);
+            logger.info("Port closed.", NS);
         }
     }
     /* v8 ignore stop */
@@ -215,7 +215,7 @@ export class ZoHAdapter extends Adapter {
     private async onPortError(error: Error): Promise<void> {
         logger.error(`Port ${error}`, NS);
 
-        this.emit('disconnected');
+        this.emit("disconnected");
     }
     /* v8 ignore stop */
 
@@ -244,7 +244,7 @@ export class ZoHAdapter extends Adapter {
         setLogger(logger); // pass the logger to ZoH
         await this.initPort();
 
-        let result: TsType.StartResult = 'resumed';
+        let result: TsType.StartResult = "resumed";
         const currentNetParams = await this.driver.readNetworkState();
 
         if (currentNetParams) {
@@ -257,22 +257,22 @@ export class ZoHAdapter extends Adapter {
             ) {
                 await this.driver.resetNetwork();
 
-                result = 'reset';
+                result = "reset";
             }
         } else {
             // no save detected, brand new network
-            result = 'reset';
+            result = "reset";
         }
 
         await this.driver.start();
         await this.driver.formNetwork();
 
-        this.driver.on('frame', this.onFrame.bind(this));
-        this.driver.on('gpFrame', this.onGPFrame.bind(this));
-        this.driver.on('deviceJoined', this.onDeviceJoined.bind(this));
-        this.driver.on('deviceRejoined', this.onDeviceRejoined.bind(this));
-        this.driver.on('deviceLeft', this.onDeviceLeft.bind(this));
-        this.driver.on('deviceAuthorized', this.onDeviceAuthorized.bind(this));
+        this.driver.on("frame", this.onFrame.bind(this));
+        this.driver.on("gpFrame", this.onGPFrame.bind(this));
+        this.driver.on("deviceJoined", this.onDeviceJoined.bind(this));
+        this.driver.on("deviceRejoined", this.onDeviceRejoined.bind(this));
+        this.driver.on("deviceLeft", this.onDeviceLeft.bind(this));
+        this.driver.on("deviceAuthorized", this.onDeviceAuthorized.bind(this));
 
         return result;
     }
@@ -293,7 +293,7 @@ export class ZoHAdapter extends Adapter {
 
     public async getCoordinatorVersion(): Promise<TsType.CoordinatorVersion> {
         return {
-            type: 'ZigBee on Host',
+            type: "ZigBee on Host",
             meta: {
                 major: this.driver.protocolVersionMajor,
                 minor: this.driver.protocolVersionMinor,
@@ -305,7 +305,7 @@ export class ZoHAdapter extends Adapter {
     }
 
     /* v8 ignore start */
-    public async reset(type: 'soft' | 'hard'): Promise<void> {
+    public async reset(type: "soft" | "hard"): Promise<void> {
         throw new Error(`Reset ${type} not support`);
     }
     /* v8 ignore stop */
@@ -319,7 +319,7 @@ export class ZoHAdapter extends Adapter {
     /* v8 ignore start */
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     public async backup(ieeeAddressesInDatabase: string[]): Promise<Backup> {
-        throw new Error('ZigBee on Host handles backup internally');
+        throw new Error("ZigBee on Host handles backup internally");
     }
     /* v8 ignore stop */
 
@@ -334,7 +334,7 @@ export class ZoHAdapter extends Adapter {
 
     /* v8 ignore start */
     public async addInstallCode(ieeeAddress: string, key: Buffer): Promise<void> {
-        throw new Error(`not supported ${ieeeAddress}, ${key.toString('hex')}`);
+        throw new Error(`not supported ${ieeeAddress}, ${key.toString("hex")}`);
     }
     /* v8 ignore stop */
 
@@ -400,7 +400,7 @@ export class ZoHAdapter extends Adapter {
             const respClusterId = clusterId | 0x8000;
             const result = Zdo.Buffalo.readResponse(this.hasZdoMessageOverhead, respClusterId, response) as ZdoTypes.RequestToResponseMap[K];
 
-            this.emit('zdoResponse', respClusterId, result);
+            this.emit("zdoResponse", respClusterId, result);
 
             return result;
         }
@@ -657,7 +657,7 @@ export class ZoHAdapter extends Adapter {
                     this.zdoWaitress.resolve({sender: sender16!, clusterId: apsHeader.clusterId!, response: result, seqNum: apsPayload[0]});
                 }
 
-                this.emit('zdoResponse', apsHeader.clusterId!, result);
+                this.emit("zdoResponse", apsHeader.clusterId!, result);
                 /* v8 ignore start */
             } catch (error) {
                 logger.error(`${(error as Error).message}`, NS);
@@ -679,7 +679,7 @@ export class ZoHAdapter extends Adapter {
             };
 
             this.zclWaitress.resolve(payload);
-            this.emit('zclPayload', payload);
+            this.emit("zclPayload", payload);
         }
     }
 
@@ -752,28 +752,28 @@ export class ZoHAdapter extends Adapter {
         };
 
         this.zclWaitress.resolve(zclPayload);
-        this.emit('zclPayload', zclPayload);
+        this.emit("zclPayload", zclPayload);
     }
 
     private onDeviceJoined(source16: number, source64: bigint, capabilities: MACCapabilities): void {
         // XXX: don't delay if no cap? (joined through router)
         if (capabilities && capabilities.rxOnWhenIdle) {
-            this.emit('deviceJoined', {networkAddress: source16, ieeeAddr: `0x${bigUInt64ToHexBE(source64)}`});
+            this.emit("deviceJoined", {networkAddress: source16, ieeeAddr: `0x${bigUInt64ToHexBE(source64)}`});
         } else {
             // XXX: end devices can be finicky about finishing the key authorization, Z2M interview can create a bottleneck, so delay it
             setTimeout(() => {
-                this.emit('deviceJoined', {networkAddress: source16, ieeeAddr: `0x${bigUInt64ToHexBE(source64)}`});
+                this.emit("deviceJoined", {networkAddress: source16, ieeeAddr: `0x${bigUInt64ToHexBE(source64)}`});
             }, 5000);
         }
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     private onDeviceRejoined(source16: number, source64: bigint, capabilities: MACCapabilities): void {
-        this.emit('deviceJoined', {networkAddress: source16, ieeeAddr: `0x${bigUInt64ToHexBE(source64)}`});
+        this.emit("deviceJoined", {networkAddress: source16, ieeeAddr: `0x${bigUInt64ToHexBE(source64)}`});
     }
 
     private onDeviceLeft(source16: number, source64: bigint): void {
-        this.emit('deviceLeave', {networkAddress: source16, ieeeAddr: `0x${bigUInt64ToHexBE(source64)}`});
+        this.emit("deviceLeave", {networkAddress: source16, ieeeAddr: `0x${bigUInt64ToHexBE(source64)}`});
     }
 
     /* v8 ignore start */

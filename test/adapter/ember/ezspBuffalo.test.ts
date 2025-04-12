@@ -1,5 +1,5 @@
-import {SLStatus} from '../../../src/adapter/ember/enums';
-import {EzspBuffalo} from '../../../src/adapter/ember/ezsp/buffalo';
+import {SLStatus} from "../../../src/adapter/ember/enums";
+import {EzspBuffalo} from "../../../src/adapter/ember/ezsp/buffalo";
 import {
     EZSP_EXTENDED_FRAME_CONTROL_LB_INDEX,
     EZSP_FRAME_CONTROL_COMMAND,
@@ -10,11 +10,11 @@ import {
     EZSP_MAX_FRAME_LENGTH,
     EZSP_PARAMETERS_INDEX,
     EZSP_SEQUENCE_INDEX,
-} from '../../../src/adapter/ember/ezsp/consts';
-import {EzspFrameID} from '../../../src/adapter/ember/ezsp/enums';
-import {lowByte} from '../../../src/adapter/ember/utils/math';
+} from "../../../src/adapter/ember/ezsp/consts";
+import {EzspFrameID} from "../../../src/adapter/ember/ezsp/enums";
+import {lowByte} from "../../../src/adapter/ember/utils/math";
 
-describe('Ember EZSP Buffalo', () => {
+describe("Ember EZSP Buffalo", () => {
     let buffalo: EzspBuffalo;
 
     beforeAll(async () => {});
@@ -27,11 +27,11 @@ describe('Ember EZSP Buffalo', () => {
 
     afterEach(() => {});
 
-    it('Is empty after init', () => {
+    it("Is empty after init", () => {
         expect(buffalo.getWritten()).toStrictEqual(Buffer.from([]));
     });
 
-    it('Writes & read at position without altering internal position tracker', () => {
+    it("Writes & read at position without altering internal position tracker", () => {
         // mock send `version` command logic flow
         buffalo.setPosition(EZSP_PARAMETERS_INDEX);
         buffalo.setCommandByte(EZSP_FRAME_ID_INDEX, lowByte(EzspFrameID.VERSION));
@@ -55,7 +55,7 @@ describe('Ember EZSP Buffalo', () => {
         );
     });
 
-    it('Maps EmberStatus/EzspStatus to SLStatus', () => {
+    it("Maps EmberStatus/EzspStatus to SLStatus", () => {
         buffalo.setCommandByte(0, 0x00);
         buffalo.setCommandByte(1, 0x00);
         buffalo.setCommandByte(2, 0x00);
