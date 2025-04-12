@@ -37,7 +37,7 @@ export class Frame {
         const fcs = buffer.readUInt8(fcsPosition);
 
         // Validate the checksum to see if we fully received the message
-        const checksum = this.calculateChecksum(buffer.subarray(1, fcsPosition));
+        const checksum = Frame.calculateChecksum(buffer.subarray(1, fcsPosition));
 
         if (checksum === fcs) {
             return new Frame(type, subsystem, commandID, data, length, fcs);

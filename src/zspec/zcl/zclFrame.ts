@@ -150,16 +150,16 @@ export class ZclFrame {
             : header.frameControl.direction === Direction.CLIENT_TO_SERVER
               ? cluster.getCommand(header.commandIdentifier)
               : cluster.getCommandResponse(header.commandIdentifier);
-        const payload = this.parsePayload(header, cluster, buffalo);
+        const payload = ZclFrame.parsePayload(header, cluster, buffalo);
 
         return new ZclFrame(header, payload, cluster, command);
     }
 
     private static parsePayload(header: ZclHeader, cluster: Cluster, buffalo: BuffaloZcl): ZclPayload {
         if (header.isGlobal) {
-            return this.parsePayloadGlobal(header, buffalo);
+            return ZclFrame.parsePayloadGlobal(header, buffalo);
         } else if (header.isSpecific) {
-            return this.parsePayloadCluster(header, cluster, buffalo);
+            return ZclFrame.parsePayloadCluster(header, cluster, buffalo);
         } else {
             throw new Error(`Unsupported frameType '${header.frameControl.frameType}'`);
         }
@@ -175,7 +175,7 @@ export class ZclFrame {
         for (const parameter of command.parameters) {
             const options: BuffaloZclOptions = {payload};
 
-            if (!this.conditionsValid(parameter, payload, buffalo.getBuffer().length - buffalo.getPosition())) {
+            if (!ZclFrame.conditionsValid(parameter, payload, buffalo.getBuffer().length - buffalo.getPosition())) {
                 continue;
             }
 
@@ -206,7 +206,7 @@ export class ZclFrame {
                 for (const parameter of command.parameters) {
                     const options: BuffaloZclOptions = {};
 
-                    if (!this.conditionsValid(parameter, entry, buffalo.getBuffer().length - buffalo.getPosition())) {
+                    if (!ZclFrame.conditionsValid(parameter, entry, buffalo.getBuffer().length - buffalo.getPosition())) {
                         continue;
                     }
 

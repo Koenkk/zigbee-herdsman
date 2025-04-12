@@ -118,7 +118,7 @@ export abstract class List {
 class _LVList extends List {
     static override serialize(cls: any, value: any[]): Buffer {
         const head = [cls.length];
-        const data = super.serialize(cls, value);
+        const data = List.serialize(cls, value);
         return Buffer.from(head.concat(data));
     }
 

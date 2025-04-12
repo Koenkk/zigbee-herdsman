@@ -2,13 +2,13 @@ export class ZclTransactionSequenceNumber {
     private static number = 1;
 
     public static next(): number {
-        this.number++;
+        ZclTransactionSequenceNumber.number++;
 
-        if (this.number > 255) {
-            this.number = 1;
+        if (ZclTransactionSequenceNumber.number > 255) {
+            ZclTransactionSequenceNumber.number = 1;
         }
 
-        return this.number;
+        return ZclTransactionSequenceNumber.number;
     }
 }
 

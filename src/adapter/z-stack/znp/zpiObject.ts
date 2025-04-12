@@ -102,7 +102,7 @@ export class ZpiObject<T extends ZpiObjectType = "Response"> {
                 `CommandID '${frame.commandID}' from subsystem '${frame.subsystem}' cannot be a ` +
                     `${frame.type === Type.SRSP ? "response" : "request"}`,
             );
-            payload = this.readParameters(frame.data, parameters);
+            payload = ZpiObject.readParameters(frame.data, parameters);
         }
 
         // GC UnpiFrame as early as possible, no longer needed

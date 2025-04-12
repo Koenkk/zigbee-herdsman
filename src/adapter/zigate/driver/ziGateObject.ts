@@ -81,7 +81,7 @@ class ZiGateObject {
             throw new Error(`Message '${code.toString(16)}' cannot be a response`);
         }
 
-        const payload = this.readParameters(buffer, parameters);
+        const payload = ZiGateObject.readParameters(buffer, parameters);
 
         return new ZiGateObject(code, payload, parameters, frame);
     }
