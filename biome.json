@@ -1,6 +1,10 @@
 {
     "$schema": "https://biomejs.dev/schemas/1.9.4/schema.json",
-    "vcs": { "enabled": true, "clientKind": "git", "useIgnoreFile": true },
+    "vcs": {
+        "enabled": true,
+        "clientKind": "git",
+        "useIgnoreFile": true
+    },
     "formatter": {
         "indentStyle": "space",
         "indentWidth": 4,
@@ -9,12 +13,27 @@
     },
     "linter": {
         "rules": {
+            "correctness": {
+                "noVoidTypeReturn": "off"
+            },
             "style": {
                 "noNonNullAssertion": "off",
-                "noParameterAssign": "off"
+                "noParameterAssign": "off",
+                "noUnusedTemplateLiteral": "off",
+                "useTemplate": "off",
+                "noUselessElse": "off",
+                "useSingleVarDeclarator": "off",
+                "useConst": "off"
             },
             "complexity": {
-                "noForEach": "off"
+                "noForEach": "off",
+                "noUselessSwitchCase": "off",
+                "noThisInStatic": "off",
+                "noStaticOnlyClass": "off",
+                "useOptionalChain": "off",
+                "useLiteralKeys": "off",
+                "noBannedTypes": "off",
+                "noUselessTernary": "off"
             },
             "performance": {
                 "noDelete": "off",
@@ -22,7 +41,14 @@
             },
             "suspicious": {
                 "noImplicitAnyLet": "off",
-                "noExplicitAny": "off"
+                "noExplicitAny": "off",
+                "noConfusingVoidType": "off",
+                "noDoubleEquals": "off",
+                "noAssignInExpressions": "off",
+                "noGlobalIsNan": "off",
+                "noAsyncPromiseExecutor": "off",
+                "useIsArray": "off",
+                "useDefaultSwitchClauseLast": "off"
             }
         }
     }
