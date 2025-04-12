@@ -366,7 +366,7 @@ export class Endpoint extends Entity {
             if (cluster.hasAttribute(nameOrID)) {
                 const attribute = cluster.getAttribute(nameOrID);
                 payload.push({attrId: attribute.ID, attrData: value, dataType: attribute.type});
-            } else if (!isNaN(Number(nameOrID))) {
+            } else if (!Number.isNaN(Number(nameOrID))) {
                 payload.push({attrId: Number(nameOrID), attrData: value.value, dataType: value.type});
             } else {
                 throw new Error(`Unknown attribute '${nameOrID}', specify either an existing attribute or a number`);
@@ -391,7 +391,7 @@ export class Endpoint extends Entity {
             if (cluster.hasAttribute(nameOrID)) {
                 const attribute = cluster.getAttribute(nameOrID);
                 payload.push({attrId: attribute.ID, attrData: value, dataType: attribute.type});
-            } else if (!isNaN(Number(nameOrID))) {
+            } else if (!Number.isNaN(Number(nameOrID))) {
                 payload.push({attrId: Number(nameOrID), attrData: value.value, dataType: value.type});
             } else {
                 throw new Error(`Unknown attribute '${nameOrID}', specify either an existing attribute or a number`);
@@ -416,7 +416,7 @@ export class Endpoint extends Entity {
                 if (cluster.hasAttribute(nameOrID)) {
                     const attribute = cluster.getAttribute(nameOrID);
                     payload.push({attrId: attribute.ID, status: value.status});
-                } else if (!isNaN(Number(nameOrID))) {
+                } else if (!Number.isNaN(Number(nameOrID))) {
                     payload.push({attrId: Number(nameOrID), status: value.status});
                 } else {
                     throw new Error(`Unknown attribute '${nameOrID}', specify either an existing attribute or a number`);
@@ -474,7 +474,7 @@ export class Endpoint extends Entity {
             if (cluster.hasAttribute(nameOrID)) {
                 const attribute = cluster.getAttribute(nameOrID);
                 payload.push({attrId: attribute.ID, attrData: value, dataType: attribute.type, status: 0});
-            } else if (!isNaN(Number(nameOrID))) {
+            } else if (!Number.isNaN(Number(nameOrID))) {
                 payload.push({attrId: Number(nameOrID), attrData: value.value, dataType: value.type, status: 0});
             } else {
                 throw new Error(`Unknown attribute '${nameOrID}', specify either an existing attribute or a number`);

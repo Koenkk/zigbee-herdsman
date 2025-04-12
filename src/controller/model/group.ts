@@ -202,7 +202,7 @@ export class Group extends Entity {
             if (cluster.hasAttribute(nameOrID)) {
                 const attribute = cluster.getAttribute(nameOrID);
                 payload.push({attrId: attribute.ID, attrData: value, dataType: attribute.type});
-            } else if (!isNaN(Number(nameOrID))) {
+            } else if (!Number.isNaN(Number(nameOrID))) {
                 payload.push({attrId: Number(nameOrID), attrData: value.value, dataType: value.type});
             } else {
                 throw new Error(`Unknown attribute '${nameOrID}', specify either an existing attribute or a number`);

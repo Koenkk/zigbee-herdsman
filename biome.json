@@ -43,7 +43,6 @@
                 "noConfusingVoidType": "off",
                 "noDoubleEquals": "off",
                 "noAssignInExpressions": "off",
-                "noGlobalIsNan": "off",
                 "noAsyncPromiseExecutor": "off",
                 "useDefaultSwitchClauseLast": "off"
             }
