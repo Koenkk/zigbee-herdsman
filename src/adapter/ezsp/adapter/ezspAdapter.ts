@@ -111,7 +111,7 @@ export class EZSPAdapter extends Adapter {
                 this.waitress.resolve(payload);
                 this.emit("zclPayload", payload);
             } else {
-                logger.debug(`Ignoring GP frame because clusterId is not greenPower`, NS);
+                logger.debug("Ignoring GP frame because clusterId is not greenPower", NS);
             }
         }
     }
@@ -151,7 +151,7 @@ export class EZSPAdapter extends Adapter {
     }
 
     public async onDriverClose(): Promise<void> {
-        logger.debug(`onDriverClose()`, NS);
+        logger.debug("onDriverClose()", NS);
 
         if (!this.closing) {
             this.emit("disconnected");
@@ -271,7 +271,7 @@ export class EZSPAdapter extends Adapter {
 
                 const req = await this.driver.brequest(networkAddress, frame, payload);
 
-                logger.debug(`~~~> [SENT ZDO BROADCAST]`, NS);
+                logger.debug("~~~> [SENT ZDO BROADCAST]", NS);
 
                 if (!req) {
                     waiter?.cancel();
@@ -282,7 +282,7 @@ export class EZSPAdapter extends Adapter {
 
                 const req = await this.driver.request(networkAddress, frame, payload);
 
-                logger.debug(`~~~> [SENT ZDO UNICAST]`, NS);
+                logger.debug("~~~> [SENT ZDO UNICAST]", NS);
 
                 if (!req) {
                     waiter?.cancel();
@@ -485,7 +485,7 @@ export class EZSPAdapter extends Adapter {
 
     private checkInterpanLock(): void {
         if (this.interpanLock) {
-            throw new Error(`Cannot execute command, in Inter-PAN mode`);
+            throw new Error("Cannot execute command, in Inter-PAN mode");
         }
     }
 
@@ -509,7 +509,7 @@ export class EZSPAdapter extends Adapter {
 
     public async sendZclFrameInterPANBroadcast(zclFrame: Zcl.Frame, timeout: number): Promise<ZclPayload> {
         return await this.queue.execute<ZclPayload>(async () => {
-            logger.debug(`sendZclFrameInterPANBroadcast`, NS);
+            logger.debug("sendZclFrameInterPANBroadcast", NS);
             const command = zclFrame.command;
 
             if (command.response == undefined) {

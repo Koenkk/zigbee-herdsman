@@ -285,7 +285,7 @@ export default class ZiGate extends EventEmitter<ZiGateEventMap> {
 
             this.socketPort!.on("error", (error) => {
                 logger.error(`Socket error ${error}`, NS);
-                reject(new Error(`Error while opening socket`));
+                reject(new Error("Error while opening socket"));
                 this.initialized = false;
             });
 
@@ -386,7 +386,7 @@ export default class ZiGate extends EventEmitter<ZiGateEventMap> {
             try {
                 let expectedValue: string | number;
                 if (rule.value == undefined && rule.expectedProperty != undefined) {
-                    assert(matcher.ziGateObject, `Matcher ziGateObject expected valid.`);
+                    assert(matcher.ziGateObject, "Matcher ziGateObject expected valid.");
                     expectedValue = resolve(rule.expectedProperty, matcher.ziGateObject);
                 } else if (rule.value == undefined && rule.expectedExtraParameter != undefined) {
                     expectedValue = resolve(rule.expectedExtraParameter, matcher.extraParameters!); // XXX: assumed valid?

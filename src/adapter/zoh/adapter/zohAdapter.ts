@@ -611,7 +611,7 @@ export class ZoHAdapter extends Adapter {
 
     /* v8 ignore start */
     public async restoreChannelInterPAN(): Promise<void> {
-        throw new Error(`not supported`);
+        throw new Error("not supported");
     }
     /* v8 ignore stop */
 
@@ -622,7 +622,7 @@ export class ZoHAdapter extends Adapter {
     /* v8 ignore start */
     private checkInterpanLock(): void {
         if (this.interpanLock) {
-            throw new Error(`[INTERPAN MODE] Cannot execute non-InterPAN commands.`);
+            throw new Error("[INTERPAN MODE] Cannot execute non-InterPAN commands.");
         }
     }
     /* v8 ignore stop */

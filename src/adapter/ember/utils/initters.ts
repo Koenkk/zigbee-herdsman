@@ -36,7 +36,7 @@ export const initSecurityManagerContext = (): SecManContext => {
         coreKeyType: SecManKeyType.NONE,
         keyIndex: 0,
         derivedType: SecManDerivedKeyType.NONE,
-        eui64: `0x0000000000000000`,
+        eui64: "0x0000000000000000",
         multiNetworkIndex: 0,
         flags: SecManFlag.NONE,
         psaKeyAlgPermission: ZB_PSA_ALG, // unused for classic key storage

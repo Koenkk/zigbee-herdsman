@@ -55,7 +55,7 @@ export class ZBOSSDriver extends EventEmitter {
     }
 
     public async connect(): Promise<boolean> {
-        logger.info(`Driver connecting`, NS);
+        logger.info("Driver connecting", NS);
 
         let status = false;
 
@@ -70,7 +70,7 @@ export class ZBOSSDriver extends EventEmitter {
             status = await this.port.start();
 
             if (status) {
-                logger.info(`Driver connected`, NS);
+                logger.info("Driver connected", NS);
                 return status;
             }
         }
@@ -79,13 +79,13 @@ export class ZBOSSDriver extends EventEmitter {
     }
 
     private async reset(options = ResetOptions.NoOptions): Promise<void> {
-        logger.info(`Driver reset`, NS);
+        logger.info("Driver reset", NS);
         this.port.inReset = true;
         await this.execCommand(CommandId.NCP_RESET, {options}, 10000);
     }
 
     public async startup(transmitPower?: number): Promise<TsType.StartResult> {
-        logger.info(`Driver startup`, NS);
+        logger.info("Driver startup", NS);
         let result: TsType.StartResult = "resumed";
 
         if (await this.needsToBeInitialised(this.nwkOpt)) {
@@ -94,7 +94,7 @@ export class ZBOSSDriver extends EventEmitter {
             const restore = false;
 
             if (this.netInfo.joined) {
-                logger.info(`Leaving current network and forming new network`, NS);
+                logger.info("Leaving current network and forming new network", NS);
                 await this.reset(ResetOptions.FactoryReset);
             }
 
@@ -243,7 +243,7 @@ export class ZBOSSDriver extends EventEmitter {
     public async stop(): Promise<void> {
         await this.port.stop();
 
-        logger.info(`Driver stopped`, NS);
+        logger.info("Driver stopped", NS);
     }
 
     private onFrame(frame: ZBOSSFrame): void {

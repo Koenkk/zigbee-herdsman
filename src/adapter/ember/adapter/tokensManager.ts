@@ -338,7 +338,7 @@ export class EmberTokensManager {
      * @return Saved tokens buffer or null.
      */
     public static async saveTokens(ezsp: Ezsp, localEui64: Buffer): Promise<Buffer | undefined> {
-        logger.info(`[TOKENS] Saving tokens...`, NS);
+        logger.info("[TOKENS] Saving tokens...", NS);
         const tokenCount = await ezsp.ezspGetTokenCount();
 
         if (tokenCount) {
@@ -391,7 +391,7 @@ export class EmberTokensManager {
                             ) {
                                 // Special case : Save the node EUI64 on the restoredEui64 token while saving.
                                 tokenData.data.set(localEui64);
-                                logger.debug(`[TOKENS] Saved node EUI64 in place of blank RESTORED EUI64.`, NS);
+                                logger.debug("[TOKENS] Saved node EUI64 in place of blank RESTORED EUI64.", NS);
                             }
 
                             outputToken.set(tokenData.data, writeOffset);
@@ -411,7 +411,7 @@ export class EmberTokensManager {
         } else {
             // ezspGetTokenCount == 0 OR (ezspGetTokenInfo|ezspGetTokenData|ezspSetTokenData return LIBRARY_NOT_PRESENT)
             // ezspTokenFactoryReset will do nothing.
-            logger.error(`[TOKENS] Saving tokens not supported by adapter (not NVM3-based).`, NS);
+            logger.error("[TOKENS] Saving tokens not supported by adapter (not NVM3-based).", NS);
         }
 
         return undefined;
@@ -428,10 +428,10 @@ export class EmberTokensManager {
      */
     public static async restoreTokens(ezsp: Ezsp, inBuffer: Buffer): Promise<SLStatus> {
         if (!inBuffer?.length) {
-            throw new Error(`[TOKENS] Restore tokens buffer empty.`);
+            throw new Error("[TOKENS] Restore tokens buffer empty.");
         }
 
-        logger.info(`[TOKENS] Restoring tokens...`, NS);
+        logger.info("[TOKENS] Restoring tokens...", NS);
 
         let readOffset = 0;
         const inTokenCount = inBuffer.readUInt8(readOffset++);
@@ -742,10 +742,10 @@ export class EmberTokensManager {
      */
     public static async writeNcpTokensToZigbeedTokens(ezsp: Ezsp, inBuffer: Buffer): Promise<SLStatus> {
         if (!inBuffer?.length) {
-            throw new Error(`[TOKENS] Restore tokens buffer empty.`);
+            throw new Error("[TOKENS] Restore tokens buffer empty.");
         }
 
-        logger.info(`[TOKENS] Restoring tokens to Zigbeed...`, NS);
+        logger.info("[TOKENS] Restoring tokens to Zigbeed...", NS);
 
         let readOffset = 0;
         const inTokenCount = inBuffer.readUInt8(readOffset++);

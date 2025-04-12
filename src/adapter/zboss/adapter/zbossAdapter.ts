@@ -116,7 +116,7 @@ export class ZBOSSAdapter extends Adapter {
     }
 
     public async start(): Promise<TsType.StartResult> {
-        logger.info(`ZBOSS Adapter starting`, NS);
+        logger.info("ZBOSS Adapter starting", NS);
 
         await this.driver.connect();
 
@@ -126,7 +126,7 @@ export class ZBOSSAdapter extends Adapter {
     public async stop(): Promise<void> {
         await this.driver.stop();
 
-        logger.info(`ZBOSS Adapter stopped`, NS);
+        logger.info("ZBOSS Adapter stopped", NS);
     }
 
     public async getCoordinatorIEEE(): Promise<string> {
@@ -146,7 +146,7 @@ export class ZBOSSAdapter extends Adapter {
             };
 
             return {
-                type: `zboss`,
+                type: "zboss",
                 meta: {
                     coordinator: cver.payload.version,
                     stack: ver2str(ver.payload.stackVersion),

@@ -96,7 +96,7 @@ export class Database {
         let lines = "";
 
         for (const id in this.entries) {
-            lines += JSON.stringify(this.entries[id]) + `\n`;
+            lines += JSON.stringify(this.entries[id]) + "\n";
         }
 
         const tmpPath = this.path + ".tmp";

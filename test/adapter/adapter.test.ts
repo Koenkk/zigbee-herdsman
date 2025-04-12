@@ -239,7 +239,7 @@ describe("Adapter", () => {
         });
 
         it("for zstack as znp", async () => {
-            const adapter = await Adapter.create({panID: 0x1a62, channelList: [11]}, {path: `mdns://znp`}, "test.db.backup", {disableLED: false});
+            const adapter = await Adapter.create({panID: 0x1a62, channelList: [11]}, {path: "mdns://znp"}, "test.db.backup", {disableLED: false});
 
             expect(adapter).toBeInstanceOf(ZStackAdapter);
             // @ts-expect-error protected
@@ -252,20 +252,20 @@ describe("Adapter", () => {
         it("falls back to host if no addresses", async () => {
             mockBonjourResult.mockReturnValueOnce({
                 name: "Mock Adapter",
-                type: `my_adapter_mdns`,
+                type: "my_adapter_mdns",
                 port: "1122",
                 host: "mock_adapter.local",
                 txt: {
-                    radio_type: `zstack`,
+                    radio_type: "zstack",
                 },
             });
-            const adapter = await Adapter.create({panID: 0x1a62, channelList: [11]}, {path: `mdns://zstack`}, "test.db.backup", {disableLED: false});
+            const adapter = await Adapter.create({panID: 0x1a62, channelList: [11]}, {path: "mdns://zstack"}, "test.db.backup", {disableLED: false});
 
             expect(adapter).toBeInstanceOf(ZStackAdapter);
             // @ts-expect-error protected
             expect(adapter.serialPortOptions).toStrictEqual({
                 path: "tcp://mock_adapter.local:1122",
-                adapter: `zstack`,
+                adapter: "zstack",
             });
         });
 
@@ -279,15 +279,15 @@ describe("Adapter", () => {
         });
 
         it("given invalid path", async () => {
-            await expect(Adapter.create({panID: 0, channelList: []}, {path: `mdns://`}, "test.db", {disableLED: false})).rejects.toThrow(
-                `No mdns device specified. You must specify the coordinator mdns service type after mdns://, e.g. mdns://my-adapter`,
+            await expect(Adapter.create({panID: 0, channelList: []}, {path: "mdns://"}, "test.db", {disableLED: false})).rejects.toThrow(
+                "No mdns device specified. You must specify the coordinator mdns service type after mdns://, e.g. mdns://my-adapter",
             );
         });
 
         it("returns invalid format", async () => {
             mockBonjourResult.mockReturnValueOnce({
                 name: "Mock Adapter",
-                type: `my_adapter_mdns`,
+                type: "my_adapter_mdns",
                 port: "1122",
                 host: "my_adapter.local",
                 addresses: ["192.168.1.123"],
@@ -296,10 +296,10 @@ describe("Adapter", () => {
                 },
             });
 
-            await expect(Adapter.create({panID: 0, channelList: []}, {path: `mdns://my_adapter`}, "test.db", {disableLED: false})).rejects.toThrow(
-                `Coordinator returned wrong Zeroconf format! The following values are expected:\n` +
-                    `txt.radio_type, got: undefined\n` +
-                    `port, got: 1122`,
+            await expect(Adapter.create({panID: 0, channelList: []}, {path: "mdns://my_adapter"}, "test.db", {disableLED: false})).rejects.toThrow(
+                "Coordinator returned wrong Zeroconf format! The following values are expected:\n" +
+                    "txt.radio_type, got: undefined\n" +
+                    "port, got: 1122",
             );
         });
     });
@@ -308,59 +308,59 @@ describe("Adapter", () => {
         it("returns config with tcp path", async () => {
             const adapter = await Adapter.create(
                 {panID: 0x1a62, channelList: [11]},
-                {path: `tcp://192.168.1.321:3456`, adapter: `zstack`},
+                {path: "tcp://192.168.1.321:3456", adapter: "zstack"},
                 "test.db.backup",
                 {disableLED: false},
             );
 
             // @ts-expect-error protected
             expect(adapter.serialPortOptions).toStrictEqual({
-                path: `tcp://192.168.1.321:3456`,
-                adapter: `zstack`,
+                path: "tcp://192.168.1.321:3456",
+                adapter: "zstack",
             });
         });
 
         it("returns config with socket path", async () => {
             const adapter = await Adapter.create(
                 {panID: 0x1a62, channelList: [11]},
-                {path: `socket://192.168.1.321:3456`, adapter: `zstack`},
+                {path: "socket://192.168.1.321:3456", adapter: "zstack"},
                 "test.db.backup",
                 {disableLED: false},
             );
 
             // @ts-expect-error protected
             expect(adapter.serialPortOptions).toStrictEqual({
-                path: `tcp://192.168.1.321:3456`,
-                adapter: `zstack`,
+                path: "tcp://192.168.1.321:3456",
+                adapter: "zstack",
             });
         });
 
         it("returns config with hostname path", async () => {
             const adapter = await Adapter.create(
                 {panID: 0x1a62, channelList: [11]},
-                {path: `tcp://my-super-host:3456`, adapter: `zstack`},
+                {path: "tcp://my-super-host:3456", adapter: "zstack"},
                 "test.db.backup",
                 {disableLED: false},
             );
 
             // @ts-expect-error protected
             expect(adapter.serialPortOptions).toStrictEqual({
-                path: `tcp://my-super-host:3456`,
-                adapter: `zstack`,
+                path: "tcp://my-super-host:3456",
+                adapter: "zstack",
             });
         });
 
-        it.each([`tcp://192168.1.321`, `tcp://192168.1.321:INVALID`])("invalid path", async (path) => {
+        it.each(["tcp://192168.1.321", "tcp://192168.1.321:INVALID"])("invalid path", async (path) => {
             await expect(
-                Adapter.create({panID: 0x1a62, channelList: [11]}, {path, adapter: `zstack`}, "test.db.backup", {
+                Adapter.create({panID: 0x1a62, channelList: [11]}, {path, adapter: "zstack"}, "test.db.backup", {
                     disableLED: false,
                 }),
-            ).rejects.toThrow(`Invalid TCP path, expected format: tcp://<host>:<port>`);
+            ).rejects.toThrow("Invalid TCP path, expected format: tcp://<host>:<port>");
         });
 
         it("invalid adapter", async () => {
             await expect(
-                Adapter.create({panID: 0x1a62, channelList: [11]}, {path: `tcp://192.168.1.321:3456`}, "test.db.backup", {
+                Adapter.create({panID: 0x1a62, channelList: [11]}, {path: "tcp://192.168.1.321:3456"}, "test.db.backup", {
                     disableLED: false,
                 }),
             ).rejects.toThrow(`Cannot discover TCP adapters at this time. Specify valid 'adapter' and 'port' in your configuration.`);

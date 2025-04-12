@@ -94,7 +94,7 @@ export default class ZiGateFrame {
             }
 
             if (this.readChecksum() !== this.calcChecksum()) {
-                logger.error(`Provided frame has an invalid checksum.`, NS);
+                logger.error("Provided frame has an invalid checksum.", NS);
                 return;
             }
         }

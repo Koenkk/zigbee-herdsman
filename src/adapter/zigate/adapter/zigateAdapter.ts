@@ -479,7 +479,7 @@ export class ZiGateAdapter extends Adapter {
             channelMask: ZSpec.Utils.channelsToUInt32Mask(this.networkOptions.channelList),
         });
 
-        logger.debug(`Set security key`, NS);
+        logger.debug("Set security key", NS);
         await this.driver.sendCommand(ZiGateCommandCode.SetSecurityStateKey, {
             keyType: this.networkOptions.networkKeyDistribute
                 ? ZPSNwkKeyState.ZPS_ZDO_DISTRIBUTED_LINK_KEY

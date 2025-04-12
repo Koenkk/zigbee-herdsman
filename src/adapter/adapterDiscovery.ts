@@ -479,7 +479,7 @@ export async function findMdnsAdapter(path: string): Promise<[adapter: Adapter, 
     const mdnsDevice = path.substring(7);
 
     if (mdnsDevice.length == 0) {
-        throw new Error(`No mdns device specified. You must specify the coordinator mdns service type after mdns://, e.g. mdns://my-adapter`);
+        throw new Error("No mdns device specified. You must specify the coordinator mdns service type after mdns://, e.g. mdns://my-adapter");
     }
 
     const bj = new Bonjour();
@@ -504,7 +504,7 @@ export async function findMdnsAdapter(path: string): Promise<[adapter: Adapter, 
                     bj.destroy();
                     reject(
                         new Error(
-                            `Coordinator returned wrong Zeroconf format! The following values are expected:\n` +
+                            "Coordinator returned wrong Zeroconf format! The following values are expected:\n" +
                                 `txt.radio_type, got: ${service.txt?.radio_type}\n` +
                                 `port, got: ${service.port}`,
                         ),
@@ -523,7 +523,7 @@ export async function findTcpAdapter(path: string, adapter?: Adapter): Promise<[
         const url = new URL(path);
         assert(url.port !== "");
     } catch {
-        throw new Error(`Invalid TCP path, expected format: tcp://<host>:<port>`);
+        throw new Error("Invalid TCP path, expected format: tcp://<host>:<port>");
     }
 
     if (!adapter) {
@@ -574,7 +574,7 @@ export async function discoverAdapter(adapter?: Adapter, path?: string): Promise
         const match = await findUsbAdapter(adapter, path);
 
         if (!match) {
-            throw new Error(`No valid USB adapter found`);
+            throw new Error("No valid USB adapter found");
         }
 
         // keep adapter if `ezsp` since findUSBAdapter returns DiscoverableUSBAdapter

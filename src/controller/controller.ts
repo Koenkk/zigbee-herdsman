@@ -294,7 +294,7 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
 
         if (time > 0) {
             // never permit more than uint8, and never permit 255 that is often equal to "forever"
-            assert(time <= 254, `Cannot permit join for more than 254 seconds.`);
+            assert(time <= 254, "Cannot permit join for more than 254 seconds.");
 
             await this.adapter.permitJoin(time, device?.networkAddress);
             await this.greenPower.permitJoin(time, device?.networkAddress);
@@ -640,7 +640,7 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
     }
 
     private async onAdapterDisconnected(): Promise<void> {
-        logger.debug(`Adapter disconnected`, NS);
+        logger.debug("Adapter disconnected", NS);
 
         this.adapterDisconnected = true;
 
@@ -846,7 +846,7 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
                 device = Device.find(payload.address);
             } else {
                 if (frame.payload.srcID === undefined) {
-                    logger.debug(`Data is from unsupported green power device with IEEE addressing, skipping...`, NS);
+                    logger.debug("Data is from unsupported green power device with IEEE addressing, skipping...", NS);
                     return;
                 } else {
                     const ieeeAddr = GreenPower.sourceIdToIeeeAddress(frame.payload.srcID);

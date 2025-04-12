@@ -18,7 +18,7 @@ export class Touchlink {
 
     private lock(lock: boolean): void {
         if (lock && this.locked) {
-            throw new Error(`Touchlink operation already in progress`);
+            throw new Error("Touchlink operation already in progress");
         }
 
         this.locked = lock;
@@ -48,7 +48,7 @@ export class Touchlink {
                 }
             }
         } finally {
-            logger.info(`Restore InterPAN channel`, NS);
+            logger.info("Restore InterPAN channel", NS);
             await this.adapter.restoreChannelInterPAN();
             this.lock(false);
         }
@@ -71,7 +71,7 @@ export class Touchlink {
             logger.debug(`Identifying '${ieeeAddr}'`, NS);
             await this.adapter.sendZclFrameInterPANToIeeeAddr(this.createIdentifyRequestFrame(transaction), ieeeAddr);
         } finally {
-            logger.info(`Restore InterPAN channel`, NS);
+            logger.info("Restore InterPAN channel", NS);
             await this.adapter.restoreChannelInterPAN();
             this.lock(false);
         }
@@ -95,7 +95,7 @@ export class Touchlink {
             logger.debug(`Reset to factory new '${ieeeAddr}'`, NS);
             await this.adapter.sendZclFrameInterPANToIeeeAddr(this.createResetFactoryNewRequestFrame(transaction), ieeeAddr);
         } finally {
-            logger.info(`Restore InterPAN channel`, NS);
+            logger.info("Restore InterPAN channel", NS);
             await this.adapter.restoreChannelInterPAN();
             this.lock(false);
         }
@@ -121,11 +121,11 @@ export class Touchlink {
 
                     // Device answered (if not it will fall in the catch below),
                     // identify it (this will make e.g. the bulb flash)
-                    logger.debug(`Identifying`, NS);
+                    logger.debug("Identifying", NS);
                     await this.adapter.sendZclFrameInterPANToIeeeAddr(this.createIdentifyRequestFrame(transaction), response.address);
                     await wait(2000);
 
-                    logger.debug(`Reset to factory new`, NS);
+                    logger.debug("Reset to factory new", NS);
                     await this.adapter.sendZclFrameInterPANToIeeeAddr(this.createResetFactoryNewRequestFrame(transaction), response.address);
                     done = true;
                 } catch (error) {
@@ -135,7 +135,7 @@ export class Touchlink {
                 if (done) break;
             }
         } finally {
-            logger.info(`Restore InterPAN channel`, NS);
+            logger.info("Restore InterPAN channel", NS);
             await this.adapter.restoreChannelInterPAN();
             this.lock(false);
         }

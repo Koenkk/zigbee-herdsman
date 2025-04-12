@@ -508,7 +508,7 @@ export class DeconzAdapter extends Adapter {
             radius: PARAM.PARAM.txRadius.UNLIMITED,
         };
 
-        logger.debug(`sendZclFrameToGroup - message send`, NS);
+        logger.debug("sendZclFrameToGroup - message send", NS);
         return await (this.driver.enqueueSendDataRequest(request) as Promise<void>);
     }
 
@@ -532,7 +532,7 @@ export class DeconzAdapter extends Adapter {
             radius: PARAM.PARAM.txRadius.UNLIMITED,
         };
 
-        logger.debug(`sendZclFrameToAll - message send`, NS);
+        logger.debug("sendZclFrameToAll - message send", NS);
         return await (this.driver.enqueueSendDataRequest(request) as Promise<void>);
     }
 

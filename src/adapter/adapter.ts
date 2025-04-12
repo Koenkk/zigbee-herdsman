@@ -56,38 +56,38 @@ export abstract class Adapter extends events.EventEmitter<AdapterEventMap> {
 
         switch (adapter) {
             case "zstack": {
-                const {ZStackAdapter} = await import(`./z-stack/adapter/zStackAdapter.js`);
+                const {ZStackAdapter} = await import("./z-stack/adapter/zStackAdapter.js");
 
                 return new ZStackAdapter(networkOptions, serialPortOptions, backupPath, adapterOptions);
             }
             case "ember": {
-                const {EmberAdapter} = await import(`./ember/adapter/emberAdapter.js`);
+                const {EmberAdapter} = await import("./ember/adapter/emberAdapter.js");
 
                 return new EmberAdapter(networkOptions, serialPortOptions, backupPath, adapterOptions);
             }
             case "deconz": {
-                const {DeconzAdapter} = await import(`./deconz/adapter/deconzAdapter.js`);
+                const {DeconzAdapter} = await import("./deconz/adapter/deconzAdapter.js");
 
                 return new DeconzAdapter(networkOptions, serialPortOptions, backupPath, adapterOptions);
             }
             case "zigate": {
-                const {ZiGateAdapter} = await import(`./zigate/adapter/zigateAdapter.js`);
+                const {ZiGateAdapter} = await import("./zigate/adapter/zigateAdapter.js");
 
                 return new ZiGateAdapter(networkOptions, serialPortOptions, backupPath, adapterOptions);
             }
             case "zboss": {
-                const {ZBOSSAdapter} = await import(`./zboss/adapter/zbossAdapter.js`);
+                const {ZBOSSAdapter} = await import("./zboss/adapter/zbossAdapter.js");
 
                 return new ZBOSSAdapter(networkOptions, serialPortOptions, backupPath, adapterOptions);
             }
             case "zoh": {
-                const {ZoHAdapter} = await import(`./zoh/adapter/zohAdapter.js`);
+                const {ZoHAdapter} = await import("./zoh/adapter/zohAdapter.js");
 
                 return new ZoHAdapter(networkOptions, serialPortOptions, backupPath, adapterOptions);
             }
             // @deprecated
             case "ezsp": {
-                const {EZSPAdapter} = await import(`./ezsp/adapter/ezspAdapter.js`);
+                const {EZSPAdapter} = await import("./ezsp/adapter/ezspAdapter.js");
 
                 return new EZSPAdapter(networkOptions, serialPortOptions, backupPath, adapterOptions);
             }

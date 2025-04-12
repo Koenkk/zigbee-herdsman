@@ -1084,7 +1084,7 @@ describe("ZCL Buffalo", () => {
             expect(() => {
                 const buffalo = new BuffaloZcl(Buffer.alloc(1));
                 buffalo.read(Zcl.BuffaloZclDataType.GPD_FRAME, {payload: {commandID: 0xa1}});
-            }).toThrow(`Cannot read GPD_FRAME with commandID=0xA1 without payloadSize options specified`);
+            }).toThrow("Cannot read GPD_FRAME with commandID=0xA1 without payloadSize options specified");
         });
     });
 

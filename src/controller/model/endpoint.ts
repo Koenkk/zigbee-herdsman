@@ -339,7 +339,7 @@ export class Endpoint extends Entity {
         }
 
         try {
-            logger.debug(logPrefix + `send request`, NS);
+            logger.debug(logPrefix + "send request", NS);
             return await request.send();
         } catch (error) {
             // If we got a failed transaction, the device is likely sleeping.

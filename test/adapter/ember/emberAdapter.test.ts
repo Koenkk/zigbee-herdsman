@@ -474,7 +474,7 @@ describe("Ember Adapter Layer", () => {
     beforeEach(async () => {
         vi.useFakeTimers();
 
-        backupPath = path.join(TEMP_PATH, `ember_coordinator_backup.json`);
+        backupPath = path.join(TEMP_PATH, "ember_coordinator_backup.json");
 
         writeFileSync(backupPath, JSON.stringify(DEFAULT_BACKUP, undefined, 2));
 
@@ -885,7 +885,7 @@ describe("Ember Adapter Layer", () => {
         await expect(result).resolves.toStrictEqual("resumed");
         expect(mockEzspSetRadioPower).toHaveBeenCalledTimes(1);
         expect(mockEzspSetRadioPower).toHaveBeenCalledWith(12);
-        expect(loggerSpies.error).toHaveBeenCalledWith(`Failed to set transmit power to 12 status=FAIL.`, "zh:ember");
+        expect(loggerSpies.error).toHaveBeenCalledWith("Failed to set transmit power to 12 status=FAIL.", "zh:ember");
     });
 
     it("Fails to start when EZSP layer fails to start", async () => {
@@ -904,7 +904,7 @@ describe("Ember Adapter Layer", () => {
             () => {
                 mockEzspVersion.mockResolvedValueOnce([14, 1, 123]);
             },
-            `Stack type 1 is not expected!`,
+            "Stack type 1 is not expected!",
         ],
         [
             "if NCP version unsupported",
@@ -918,7 +918,7 @@ describe("Ember Adapter Layer", () => {
             () => {
                 mockEzspGetVersionStruct.mockResolvedValueOnce([SLStatus.INVALID_PARAMETER, 0]);
             },
-            `NCP has old-style version number. Not supported.`,
+            "NCP has old-style version number. Not supported.",
         ],
         [
             "if network is not valid by end of init sequence",
@@ -927,14 +927,14 @@ describe("Ember Adapter Layer", () => {
                     .mockResolvedValueOnce([SLStatus.OK, EmberNodeType.COORDINATOR, deepClone(DEFAULT_ADAPTER_NETWORK_PARAMETERS)])
                     .mockResolvedValueOnce([SLStatus.FAIL, 0, {}]);
             },
-            `Failed to get network parameters with status=FAIL.`,
+            "Failed to get network parameters with status=FAIL.",
         ],
         [
             "if could not set concentrator",
             () => {
                 mockEzspSetConcentrator.mockResolvedValueOnce(SLStatus.FAIL);
             },
-            `[CONCENTRATOR] Failed to set concentrator with status=FAIL.`,
+            "[CONCENTRATOR] Failed to set concentrator with status=FAIL.",
         ],
         [
             "if could not add endpoint",
@@ -958,7 +958,7 @@ describe("Ember Adapter Layer", () => {
                     .mockResolvedValueOnce(SLStatus.OK) // EzspPolicyId.MESSAGE_CONTENTS_IN_CALLBACK_POLICY
                     .mockResolvedValueOnce(SLStatus.FAIL); // EzspPolicyId.TC_KEY_REQUEST_POLICY
             },
-            `[INIT TC] Failed to set EzspPolicyId TC_KEY_REQUEST_POLICY to ALLOW_TC_KEY_REQUESTS_AND_SEND_CURRENT_KEY with status=FAIL.`,
+            "[INIT TC] Failed to set EzspPolicyId TC_KEY_REQUEST_POLICY to ALLOW_TC_KEY_REQUESTS_AND_SEND_CURRENT_KEY with status=FAIL.",
         ],
         [
             "if could not set app key request policy",
@@ -969,7 +969,7 @@ describe("Ember Adapter Layer", () => {
                     .mockResolvedValueOnce(SLStatus.OK) // EzspPolicyId.TC_KEY_REQUEST_POLICY
                     .mockResolvedValueOnce(SLStatus.FAIL); // EzspPolicyId.APP_KEY_REQUEST_POLICY
             },
-            `[INIT TC] Failed to set EzspPolicyId APP_KEY_REQUEST_POLICY to DENY_APP_KEY_REQUESTS with status=FAIL.`,
+            "[INIT TC] Failed to set EzspPolicyId APP_KEY_REQUEST_POLICY to DENY_APP_KEY_REQUESTS with status=FAIL.",
         ],
         [
             "if could not set app key request policy",
@@ -981,21 +981,21 @@ describe("Ember Adapter Layer", () => {
                     .mockResolvedValueOnce(SLStatus.OK) // EzspPolicyId.APP_KEY_REQUEST_POLICY
                     .mockResolvedValueOnce(SLStatus.FAIL); // EzspPolicyId.TRUST_CENTER_POLICY
             },
-            `[INIT TC] Failed to set join policy to USE_PRECONFIGURED_KEY with status=FAIL.`,
+            "[INIT TC] Failed to set join policy to USE_PRECONFIGURED_KEY with status=FAIL.",
         ],
         [
             "if could not init network",
             () => {
                 mockEzspNetworkInit.mockResolvedValueOnce(SLStatus.FAIL);
             },
-            `[INIT TC] Failed network init request with status=FAIL.`,
+            "[INIT TC] Failed network init request with status=FAIL.",
         ],
         [
             "if could not export network key",
             () => {
                 mockEzspExportKey.mockResolvedValueOnce([SLStatus.FAIL, Buffer.alloc(16)]);
             },
-            `[INIT TC] Failed to export Network Key with status=FAIL.`,
+            "[INIT TC] Failed to export Network Key with status=FAIL.",
         ],
         [
             "if could not leave network",
@@ -1004,7 +1004,7 @@ describe("Ember Adapter Layer", () => {
                 mockEzspGetNetworkParameters.mockResolvedValueOnce([SLStatus.FAIL, 0, {}]);
                 mockEzspLeaveNetwork.mockResolvedValueOnce(SLStatus.FAIL);
             },
-            `[INIT TC] Failed leave network request with status=FAIL.`,
+            "[INIT TC] Failed leave network request with status=FAIL.",
         ],
         [
             "if form could not set NWK frame counter",
@@ -1012,7 +1012,7 @@ describe("Ember Adapter Layer", () => {
                 takeRestoredCodePath();
                 mockEzspSetNWKFrameCounter.mockResolvedValueOnce(SLStatus.FAIL);
             },
-            `[INIT FORM] Failed to set NWK frame counter with status=FAIL.`,
+            "[INIT FORM] Failed to set NWK frame counter with status=FAIL.",
         ],
         // [
         //     'if form could not set TC APS frame counter',
@@ -1028,7 +1028,7 @@ describe("Ember Adapter Layer", () => {
                 takeResetCodePath();
                 mockEzspSetInitialSecurityState.mockResolvedValueOnce(SLStatus.FAIL);
             },
-            `[INIT FORM] Failed to set initial security state with status=FAIL.`,
+            "[INIT FORM] Failed to set initial security state with status=FAIL.",
         ],
         [
             "if form could not set extended security bitmask",
@@ -1036,7 +1036,7 @@ describe("Ember Adapter Layer", () => {
                 takeResetCodePath();
                 mockEzspSetExtendedSecurityBitmask.mockResolvedValueOnce(SLStatus.FAIL);
             },
-            `[INIT FORM] Failed to set extended security bitmask to 272 with status=FAIL.`,
+            "[INIT FORM] Failed to set extended security bitmask to 272 with status=FAIL.",
         ],
         [
             "if could not form network",
@@ -1044,14 +1044,14 @@ describe("Ember Adapter Layer", () => {
                 takeResetCodePath();
                 mockEzspFormNetwork.mockResolvedValueOnce(SLStatus.FAIL);
             },
-            `[INIT FORM] Failed form network request with status=FAIL.`,
+            "[INIT FORM] Failed form network request with status=FAIL.",
         ],
         [
             "if backup corrupted",
             () => {
                 writeFileSync(backupPath, "abcd");
             },
-            `[BACKUP] Coordinator backup is corrupted.`,
+            "[BACKUP] Coordinator backup is corrupted.",
         ],
         [
             "if backup unsupported",
@@ -1062,7 +1062,7 @@ describe("Ember Adapter Layer", () => {
 
                 writeFileSync(backupPath, JSON.stringify(customBackup, undefined, 2));
             },
-            `[BACKUP] Unsupported open coordinator backup version (version=2).`,
+            "[BACKUP] Unsupported open coordinator backup version (version=2).",
         ],
         [
             "if backup not EmberZNet stack specific",
@@ -1072,7 +1072,7 @@ describe("Ember Adapter Layer", () => {
 
                 writeFileSync(backupPath, JSON.stringify(customBackup, undefined, 2));
             },
-            `[BACKUP] Current backup file is not for EmberZNet stack.`,
+            "[BACKUP] Current backup file is not for EmberZNet stack.",
         ],
         [
             "if backup not EmberZNet EZSP version",
@@ -1082,7 +1082,7 @@ describe("Ember Adapter Layer", () => {
 
                 writeFileSync(backupPath, JSON.stringify(customBackup, undefined, 2));
             },
-            `[BACKUP] Current backup file is not for EmberZNet stack.`,
+            "[BACKUP] Current backup file is not for EmberZNet stack.",
         ],
         [
             "if backup unknown format",
@@ -1093,7 +1093,7 @@ describe("Ember Adapter Layer", () => {
 
                 writeFileSync(backupPath, JSON.stringify(customBackup, undefined, 2));
             },
-            `[BACKUP] Unknown backup format.`,
+            "[BACKUP] Unknown backup format.",
         ],
     ])("Fails to start %s", async (_reason, setup, error) => {
         adapter = new EmberAdapter(DEFAULT_NETWORK_OPTIONS, DEFAULT_SERIAL_PORT_OPTIONS, backupPath, DEFAULT_ADAPTER_OPTIONS);
@@ -1196,7 +1196,7 @@ describe("Ember Adapter Layer", () => {
         await vi.advanceTimersByTimeAsync(5000);
         await expect(result).resolves.toStrictEqual("resumed");
         expect(logger.warning).toHaveBeenCalledWith(
-            `[INIT TC] Network key frame counter is reaching its limit. A new network key will have to be instaured soon.`,
+            "[INIT TC] Network key frame counter is reaching its limit. A new network key will have to be instaured soon.",
             "zh:ember",
         );
     });
@@ -1210,7 +1210,7 @@ describe("Ember Adapter Layer", () => {
 
         await vi.advanceTimersByTimeAsync(5000);
         await expect(result).resolves.toStrictEqual("reset");
-        expect(loggerSpies.error).toHaveBeenCalledWith(`[INIT FORM] Failed to clear key table with status=FAIL.`, "zh:ember");
+        expect(loggerSpies.error).toHaveBeenCalledWith("[INIT FORM] Failed to clear key table with status=FAIL.", "zh:ember");
     });
 
     it("Starts but ignores backup if unsupported version", async () => {
@@ -1227,7 +1227,7 @@ describe("Ember Adapter Layer", () => {
         await expect(result).resolves.toStrictEqual("resumed");
         expect(existsSync(old)).toBeTruthy();
         expect(loggerSpies.warning).toHaveBeenCalledWith(
-            `[BACKUP] Current backup file is from an unsupported EZSP version. Renaming and ignoring.`,
+            "[BACKUP] Current backup file is from an unsupported EZSP version. Renaming and ignoring.",
             "zh:ember",
         );
 
@@ -1303,21 +1303,21 @@ describe("Ember Adapter Layer", () => {
             const p1 = defuseRejection(adapter.emberGetPanId());
 
             await vi.advanceTimersByTimeAsync(5000);
-            await expect(p1).rejects.toThrow(`Failed to get PAN ID (via network parameters) with status=FAIL.`);
+            await expect(p1).rejects.toThrow("Failed to get PAN ID (via network parameters) with status=FAIL.");
 
             adapter.clearNetworkCache();
 
             const p2 = defuseRejection(adapter.emberGetExtendedPanId());
 
             await vi.advanceTimersByTimeAsync(5000);
-            await expect(p2).rejects.toThrow(`Failed to get Extended PAN ID (via network parameters) with status=FAIL.`);
+            await expect(p2).rejects.toThrow("Failed to get Extended PAN ID (via network parameters) with status=FAIL.");
 
             adapter.clearNetworkCache();
 
             const p3 = defuseRejection(adapter.emberGetRadioChannel());
 
             await vi.advanceTimersByTimeAsync(5000);
-            await expect(p3).rejects.toThrow(`Failed to get radio channel (via network parameters) with status=FAIL.`);
+            await expect(p3).rejects.toThrow("Failed to get radio channel (via network parameters) with status=FAIL.");
         });
 
         it("Logs stack status change", async () => {
@@ -1825,7 +1825,7 @@ describe("Ember Adapter Layer", () => {
         it("Fails to export link keys due to failed table size retrieval", async () => {
             mockEzspGetConfigurationValue.mockResolvedValueOnce([SLStatus.FAIL, 0]);
 
-            await expect(adapter.exportLinkKeys()).rejects.toThrow(`[BACKUP] Failed to retrieve key table size from NCP with status=FAIL.`);
+            await expect(adapter.exportLinkKeys()).rejects.toThrow("[BACKUP] Failed to retrieve key table size from NCP with status=FAIL.");
         });
 
         it("Imports link keys", async () => {
@@ -1917,7 +1917,7 @@ describe("Ember Adapter Layer", () => {
                     // @ts-expect-error mock, unnecessary
                     {},
                 ]),
-            ).rejects.toThrow(`[BACKUP] Failed to retrieve key table size from NCP with status=FAIL.`);
+            ).rejects.toThrow("[BACKUP] Failed to retrieve key table size from NCP with status=FAIL.");
         });
 
         it("Failed to import link keys due to insufficient table size", async () => {
@@ -1928,7 +1928,7 @@ describe("Ember Adapter Layer", () => {
                     // @ts-expect-error mock, unnecessary
                     {},
                 ]),
-            ).rejects.toThrow(`[BACKUP] Current key table of 0 is too small to import backup of 1!`);
+            ).rejects.toThrow("[BACKUP] Current key table of 0 is too small to import backup of 1!");
         });
 
         it("Failed to import link keys due to improper network state", async () => {
@@ -1976,7 +1976,7 @@ describe("Ember Adapter Layer", () => {
                         incomingFrameCounter: k1Metadata.incomingFrameCounter,
                     },
                 ]),
-            ).rejects.toThrow(`[BACKUP] Failed to set key table entry at index 0 with status=FAIL.`);
+            ).rejects.toThrow("[BACKUP] Failed to set key table entry at index 0 with status=FAIL.");
         });
 
         it("Failed to import link keys due to failed key erase", async () => {
@@ -2010,7 +2010,7 @@ describe("Ember Adapter Layer", () => {
                         incomingFrameCounter: k1Metadata.incomingFrameCounter,
                     },
                 ]),
-            ).rejects.toThrow(`[BACKUP] Failed to erase key table entry at index 1 with status=FAIL.`);
+            ).rejects.toThrow("[BACKUP] Failed to erase key table entry at index 1 with status=FAIL.");
         });
 
         it("Broadcasts network key update", async () => {
@@ -2028,7 +2028,7 @@ describe("Ember Adapter Layer", () => {
             const p = defuseRejection(adapter.broadcastNetworkKeyUpdate());
 
             await vi.advanceTimersByTimeAsync(100000);
-            await expect(p).rejects.toThrow(`[TRUST CENTER] Failed to broadcast next network key with status=FAIL.`);
+            await expect(p).rejects.toThrow("[TRUST CENTER] Failed to broadcast next network key with status=FAIL.");
             expect(mockEzspBroadcastNextNetworkKey).toHaveBeenCalledTimes(1);
             expect(mockEzspBroadcastNetworkKeySwitch).toHaveBeenCalledTimes(0);
         });
@@ -2039,7 +2039,7 @@ describe("Ember Adapter Layer", () => {
             const p = defuseRejection(adapter.broadcastNetworkKeyUpdate());
 
             await vi.advanceTimersByTimeAsync(100000);
-            await expect(p).rejects.toThrow(`[TRUST CENTER] Failed to broadcast network key switch with status=FAIL.`);
+            await expect(p).rejects.toThrow("[TRUST CENTER] Failed to broadcast network key switch with status=FAIL.");
             expect(mockEzspBroadcastNextNetworkKey).toHaveBeenCalledTimes(1);
             expect(mockEzspBroadcastNetworkKeySwitch).toHaveBeenCalledTimes(1);
         });
@@ -2081,7 +2081,7 @@ describe("Ember Adapter Layer", () => {
         it("Handles channel changed stack status", async () => {
             mockEzspEmitter.emit("stackStatus", SLStatus.ZIGBEE_CHANNEL_CHANGED);
             await flushPromises();
-            expect(loggerSpies.info).toHaveBeenCalledWith(`[STACK STATUS] Channel changed.`, "zh:ember");
+            expect(loggerSpies.info).toHaveBeenCalledWith("[STACK STATUS] Channel changed.", "zh:ember");
         });
 
         it.each([
@@ -2121,7 +2121,7 @@ describe("Ember Adapter Layer", () => {
             await expect(
                 // @ts-expect-error mock
                 adapter[funcName](...args),
-            ).rejects.toThrow(`[INTERPAN MODE] Cannot execute non-InterPAN commands.`);
+            ).rejects.toThrow("[INTERPAN MODE] Cannot execute non-InterPAN commands.");
         });
 
         it("Adapter impl: getCoordinatorIEEE", async () => {
@@ -2130,7 +2130,7 @@ describe("Ember Adapter Layer", () => {
 
         it("Adapter impl: getCoordinatorVersion", async () => {
             await expect(adapter.getCoordinatorVersion()).resolves.toStrictEqual({
-                type: `EmberZNet`,
+                type: "EmberZNet",
                 meta: {
                     ezsp: EZSP_PROTOCOL_VERSION,
                     revision: `8.0.0 [${EmberVersionType[EmberVersionType.GA]}]`,
@@ -2187,14 +2187,14 @@ describe("Ember Adapter Layer", () => {
                 () => {
                     mockEzspGetNetworkParameters.mockResolvedValueOnce([SLStatus.FAIL, 0, {}]);
                 },
-                `[BACKUP] Failed to get network parameters with status=FAIL.`,
+                "[BACKUP] Failed to get network parameters with status=FAIL.",
             ],
             [
                 "failed get network key info",
                 () => {
                     mockEzspGetNetworkKeyInfo.mockResolvedValueOnce([SLStatus.FAIL, {}]);
                 },
-                `[BACKUP] Failed to get network keys info with status=FAIL.`,
+                "[BACKUP] Failed to get network keys info with status=FAIL.",
             ],
             // [
             //     'failed get TC APS key info',
@@ -2217,14 +2217,14 @@ describe("Ember Adapter Layer", () => {
                         } as SecManNetworkKeyInfo,
                     ]);
                 },
-                `[BACKUP] No network key set.`,
+                "[BACKUP] No network key set.",
             ],
             [
                 "failed export TC link key",
                 () => {
                     mockEzspExportKey.mockResolvedValueOnce([SLStatus.FAIL, {}]);
                 },
-                `[BACKUP] Failed to export TC Link Key with status=FAIL.`,
+                "[BACKUP] Failed to export TC Link Key with status=FAIL.",
             ],
             [
                 "failed export network key",
@@ -2236,7 +2236,7 @@ describe("Ember Adapter Layer", () => {
                         ])
                         .mockResolvedValueOnce([SLStatus.FAIL, {}]);
                 },
-                `[BACKUP] Failed to export Network Key with status=FAIL.`,
+                "[BACKUP] Failed to export Network Key with status=FAIL.",
             ],
         ])("Adapter impl: throws when backup fails due to %s", async (_command, setup, error) => {
             setup();
@@ -2430,14 +2430,14 @@ describe("Ember Adapter Layer", () => {
         it("Adapter impl: throws when permitJoin request on coordinator fails", async () => {
             mockEzspPermitJoining.mockResolvedValueOnce(SLStatus.FAIL);
 
-            await expect(adapter.permitJoin(250, 0)).rejects.toThrow(`[ZDO] Failed coordinator permit joining request with status=FAIL.`);
+            await expect(adapter.permitJoin(250, 0)).rejects.toThrow("[ZDO] Failed coordinator permit joining request with status=FAIL.");
         });
 
         it("Adapter impl: throws when permitJoin broadcast request fails", async () => {
             mockEzspSendBroadcast.mockResolvedValueOnce([SLStatus.FAIL, 0]);
 
             await expect(defuseRejection(adapter.permitJoin(250, undefined))).rejects.toThrow(
-                `~x~> [ZDO PERMIT_JOINING_REQUEST BROADCAST to=65532 messageTag=1] Failed to send request with status=FAIL.`,
+                "~x~> [ZDO PERMIT_JOINING_REQUEST BROADCAST to=65532 messageTag=1] Failed to send request with status=FAIL.",
             );
         });
 
@@ -2470,26 +2470,26 @@ describe("Ember Adapter Layer", () => {
             mockEzspSendUnicast.mockResolvedValueOnce([SLStatus.FAIL, 0]);
 
             await expect(adapter.permitJoin(250, 1234)).rejects.toThrow(
-                `~x~> [ZDO PERMIT_JOINING_REQUEST UNICAST to=0xFFFFFFFFFFFFFFFF:1234 messageTag=1] Failed to send request with status=FAIL.`,
+                "~x~> [ZDO PERMIT_JOINING_REQUEST UNICAST to=0xFFFFFFFFFFFFFFFF:1234 messageTag=1] Failed to send request with status=FAIL.",
             );
         });
 
         it("Adapter impl: throws when permitJoin fails to import ZIGBEE_PROFILE_INTEROPERABILITY_LINK_KEY", async () => {
             mockEzspImportTransientKey.mockResolvedValueOnce(SLStatus.FAIL);
 
-            await expect(adapter.permitJoin(250)).rejects.toThrow(`[ZDO] Failed import transient key with status=FAIL.`);
+            await expect(adapter.permitJoin(250)).rejects.toThrow("[ZDO] Failed import transient key with status=FAIL.");
         });
 
         it("Adapter impl: throws when permitJoin fails to set TC policy", async () => {
             mockEzspSetPolicy.mockResolvedValueOnce(SLStatus.FAIL);
 
-            await expect(adapter.permitJoin(250)).rejects.toThrow(`[ZDO] Failed set join policy with status=FAIL.`);
+            await expect(adapter.permitJoin(250)).rejects.toThrow("[ZDO] Failed set join policy with status=FAIL.");
         });
 
         it("Adapter impl: throws when stop permitJoin fails to restore TC policy", async () => {
             mockEzspSetPolicy.mockResolvedValueOnce(SLStatus.FAIL);
 
-            await expect(adapter.permitJoin(0)).rejects.toThrow(`[ZDO] Failed set join policy with status=FAIL.`);
+            await expect(adapter.permitJoin(0)).rejects.toThrow("[ZDO] Failed set join policy with status=FAIL.");
         });
 
         it("Adapter impl: sendZclFrameToEndpoint with command response with fixed source endpoint", async () => {
@@ -3207,7 +3207,7 @@ describe("Ember Adapter Layer", () => {
             const p = defuseRejection(adapter.sendZclFrameToGroup(groupId, zclFrame, 1));
 
             await vi.advanceTimersByTimeAsync(5000);
-            await expect(p).rejects.toThrow(`~x~> [ZCL GROUP groupId=32] Failed to send with status=FAIL.`);
+            await expect(p).rejects.toThrow("~x~> [ZCL GROUP groupId=32] Failed to send with status=FAIL.");
             expect(mockEzspSend).toHaveBeenCalledTimes(1);
         });
 
@@ -3277,7 +3277,7 @@ describe("Ember Adapter Layer", () => {
             const p = defuseRejection(adapter.sendZclFrameToAll(endpoint, zclFrame, 1, ZSpec.BroadcastAddress.DEFAULT));
 
             await vi.advanceTimersByTimeAsync(5000);
-            await expect(p).rejects.toThrow(`~x~> [ZCL BROADCAST destination=65532] Failed to send with status=FAIL.`);
+            await expect(p).rejects.toThrow("~x~> [ZCL BROADCAST destination=65532] Failed to send with status=FAIL.");
             expect(mockEzspSend).toHaveBeenCalledTimes(1);
         });
 

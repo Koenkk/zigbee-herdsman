@@ -473,7 +473,7 @@ export class UartAsh extends EventEmitter<UartAshEventMap> {
 
             // enable software flow control if RTS/CTS not enabled in config
             if (!serialOpts.rtscts) {
-                logger.info(`RTS/CTS config is off, enabling software flow control.`, NS);
+                logger.info("RTS/CTS config is off, enabling software flow control.", NS);
                 serialOpts.xon = true;
                 serialOpts.xoff = true;
             }
@@ -493,7 +493,7 @@ export class UartAsh extends EventEmitter<UartAshEventMap> {
 
             try {
                 await this.serialPort.asyncOpen();
-                logger.info(`Serial port opened`, NS);
+                logger.info("Serial port opened", NS);
 
                 this.serialPort.once("close", this.onPortClose.bind(this));
                 this.serialPort.on("error", this.onPortError.bind(this));
@@ -522,10 +522,10 @@ export class UartAsh extends EventEmitter<UartAshEventMap> {
                 };
 
                 this.socketPort!.on("connect", () => {
-                    logger.debug(`Socket connected`, NS);
+                    logger.debug("Socket connected", NS);
                 });
                 this.socketPort!.on("ready", (): void => {
-                    logger.info(`Socket ready`, NS);
+                    logger.info("Socket ready", NS);
                     this.socketPort!.removeListener("error", openError);
                     this.socketPort!.once("close", this.onPortClose.bind(this));
                     this.socketPort!.on("error", this.onPortError.bind(this));
@@ -544,7 +544,7 @@ export class UartAsh extends EventEmitter<UartAshEventMap> {
      * @param err A boolean for Socket, an Error for serialport
      */
     private async onPortClose(error: boolean | Error): Promise<void> {
-        logger.info(`Port closed.`, NS);
+        logger.info("Port closed.", NS);
 
         if (error && this.flags !== 0) {
             logger.info(`Port close ${error}`, NS);
@@ -585,7 +585,7 @@ export class UartAsh extends EventEmitter<UartAshEventMap> {
         if (!buffer.length) {
             // skip any CANCEL that results in empty frame (have yet to see one, but just in case...)
             // shouldn't happen for any other reason, unless receiving bad stuff from port?
-            logger.debug(`Received empty frame. Skipping.`, NS);
+            logger.debug("Received empty frame. Skipping.", NS);
             return;
         }
 
@@ -613,7 +613,7 @@ export class UartAsh extends EventEmitter<UartAshEventMap> {
             return EzspStatus.ERROR_INVALID_CALL;
         }
 
-        logger.info(`======== ASH starting ========`, NS);
+        logger.info("======== ASH starting ========", NS);
 
         try {
             if (this.serialPort) {
@@ -631,7 +631,7 @@ export class UartAsh extends EventEmitter<UartAshEventMap> {
             this.sendExec();
 
             if (this.flags & Flag.CONNECTED) {
-                logger.info(`======== ASH started ========`, NS);
+                logger.info("======== ASH started ========", NS);
 
                 return EzspStatus.SUCCESS;
             } else if (this.hostError !== EzspStatus.NO_ERROR || this.ncpError !== EzspStatus.NO_ERROR) {
@@ -655,7 +655,7 @@ export class UartAsh extends EventEmitter<UartAshEventMap> {
         this.logCounters();
         await this.closePort();
 
-        logger.info(`======== ASH stopped ========`, NS);
+        logger.info("======== ASH stopped ========", NS);
     }
 
     /**
@@ -694,7 +694,7 @@ export class UartAsh extends EventEmitter<UartAshEventMap> {
             return EzspStatus.ERROR_INVALID_CALL;
         }
 
-        logger.info(`======== ASH Adapter reset ========`, NS);
+        logger.info("======== ASH Adapter reset ========", NS);
 
         // ask ncp to reset itself using RST frame
         try {
@@ -861,7 +861,7 @@ export class UartAsh extends EventEmitter<UartAshEventMap> {
                         len = 1;
                         this.flags &= ~(Flag.RST | Flag.NAK | Flag.ACK);
                         this.sendState = SendState.SHFRAME;
-                        logger.debug(`---> [FRAME type=RST]`, NS);
+                        logger.debug("---> [FRAME type=RST]", NS);
                     } else if (this.flags & (Flag.NAK | Flag.ACK)) {
                         if (this.flags & Flag.NAK) {
                             this.txSHBuffer[0] = AshFrameType.NAK + (this.frmRx << ASH_ACKNUM_BIT);
@@ -1012,25 +1012,25 @@ export class UartAsh extends EventEmitter<UartAshEventMap> {
                 this.counters.rxCrcErrors += 1;
 
                 this.rejectFrame();
-                logger.error(`Received frame with CRC error`, NS);
+                logger.error("Received frame with CRC error", NS);
                 return EzspStatus.NO_RX_DATA;
             case EzspStatus.ASH_COMM_ERROR:
                 this.counters.rxCommErrors += 1;
 
                 this.rejectFrame();
-                logger.error(`Received frame with comm error`, NS);
+                logger.error("Received frame with comm error", NS);
                 return EzspStatus.NO_RX_DATA;
             case EzspStatus.ASH_TOO_SHORT:
                 this.counters.rxTooShort += 1;
 
                 this.rejectFrame();
-                logger.error(`Received frame shorter than minimum`, NS);
+                logger.error("Received frame shorter than minimum", NS);
                 return EzspStatus.NO_RX_DATA;
             case EzspStatus.ASH_TOO_LONG:
                 this.counters.rxTooLong += 1;
 
                 this.rejectFrame();
-                logger.error(`Received frame longer than maximum`, NS);
+                logger.error("Received frame longer than maximum", NS);
                 return EzspStatus.NO_RX_DATA;
             case EzspStatus.ASH_ERROR_XON_XOFF:
                 return this.hostDisconnect(status);
@@ -1085,7 +1085,7 @@ export class UartAsh extends EventEmitter<UartAshEventMap> {
 
                 this.flags = Flag.CONNECTED | Flag.ACK;
 
-                logger.info(`======== ASH connected ========`, NS);
+                logger.info("======== ASH connected ========", NS);
 
                 return EzspStatus.SUCCESS;
             } else if (frameType === AshFrameType.ERROR) {
@@ -1354,7 +1354,7 @@ export class UartAsh extends EventEmitter<UartAshEventMap> {
             if (this.rxFree.length < CONFIG_NR_LOW_LIMIT) {
                 this.flags |= Flag.NR;
 
-                logger.warning(`NOT READY - Signaling adapter`, NS);
+                logger.warning("NOT READY - Signaling adapter", NS);
             } else if (this.rxFree.length > CONFIG_NR_HIGH_LIMIT) {
                 this.flags &= ~Flag.NR;
 
@@ -1917,7 +1917,7 @@ export class UartAsh extends EventEmitter<UartAshEventMap> {
      * Used on ASH layer stop to get 'pre-stop state'.
      */
     private logCounters(): void {
-        logger.info(`ASH COUNTERS since last clear:`, NS);
+        logger.info("ASH COUNTERS since last clear:", NS);
         logger.info(`  Total frames: RX=${this.counters.rxAllFrames}, TX=${this.counters.txAllFrames}`, NS);
         logger.info(`  Cancelled   : RX=${this.counters.rxCancelled}, TX=${this.counters.txCancelled}`, NS);
         logger.info(`  DATA frames : RX=${this.counters.rxDataFrames}, TX=${this.counters.txDataFrames}`, NS);

@@ -598,7 +598,7 @@ export class BuffaloZcl extends Buffalo {
 
             return {indexes};
         } else {
-            throw new Error(`Read structured selector was outside [0-15] range.`);
+            throw new Error("Read structured selector was outside [0-15] range.");
         }
     }
 

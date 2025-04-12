@@ -705,7 +705,7 @@ describe("ZCL Frame", () => {
                 Buffer.from([]) /*payload*/,
                 {} /*custom clusters*/,
             );
-        }).toThrow(`Invalid ZclHeader.`);
+        }).toThrow("Invalid ZclHeader.");
     });
 
     it("Throws when writting missing payload", () => {

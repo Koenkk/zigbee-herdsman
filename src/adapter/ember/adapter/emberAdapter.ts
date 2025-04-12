@@ -302,59 +302,59 @@ export class EmberAdapter extends Adapter {
 
             if (!["high", "low"].includes(config.CONCENTRATOR_RAM_TYPE)) {
                 config.CONCENTRATOR_RAM_TYPE = DEFAULT_STACK_CONFIG.CONCENTRATOR_RAM_TYPE;
-                logger.error(`[STACK CONFIG] Invalid CONCENTRATOR_RAM_TYPE, using default.`, NS);
+                logger.error("[STACK CONFIG] Invalid CONCENTRATOR_RAM_TYPE, using default.", NS);
             }
 
             if (!inRange(config.CONCENTRATOR_MIN_TIME, 1, 60) || config.CONCENTRATOR_MIN_TIME >= config.CONCENTRATOR_MAX_TIME) {
                 config.CONCENTRATOR_MIN_TIME = DEFAULT_STACK_CONFIG.CONCENTRATOR_MIN_TIME;
-                logger.error(`[STACK CONFIG] Invalid CONCENTRATOR_MIN_TIME, using default.`, NS);
+                logger.error("[STACK CONFIG] Invalid CONCENTRATOR_MIN_TIME, using default.", NS);
             }
 
             if (!inRange(config.CONCENTRATOR_MAX_TIME, 30, 300) || config.CONCENTRATOR_MAX_TIME <= config.CONCENTRATOR_MIN_TIME) {
                 config.CONCENTRATOR_MAX_TIME = DEFAULT_STACK_CONFIG.CONCENTRATOR_MAX_TIME;
-                logger.error(`[STACK CONFIG] Invalid CONCENTRATOR_MAX_TIME, using default.`, NS);
+                logger.error("[STACK CONFIG] Invalid CONCENTRATOR_MAX_TIME, using default.", NS);
             }
 
             if (!inRange(config.CONCENTRATOR_ROUTE_ERROR_THRESHOLD, 1, 100)) {
                 config.CONCENTRATOR_ROUTE_ERROR_THRESHOLD = DEFAULT_STACK_CONFIG.CONCENTRATOR_ROUTE_ERROR_THRESHOLD;
-                logger.error(`[STACK CONFIG] Invalid CONCENTRATOR_ROUTE_ERROR_THRESHOLD, using default.`, NS);
+                logger.error("[STACK CONFIG] Invalid CONCENTRATOR_ROUTE_ERROR_THRESHOLD, using default.", NS);
             }
 
             if (!inRange(config.CONCENTRATOR_DELIVERY_FAILURE_THRESHOLD, 1, 100)) {
                 config.CONCENTRATOR_DELIVERY_FAILURE_THRESHOLD = DEFAULT_STACK_CONFIG.CONCENTRATOR_DELIVERY_FAILURE_THRESHOLD;
-                logger.error(`[STACK CONFIG] Invalid CONCENTRATOR_DELIVERY_FAILURE_THRESHOLD, using default.`, NS);
+                logger.error("[STACK CONFIG] Invalid CONCENTRATOR_DELIVERY_FAILURE_THRESHOLD, using default.", NS);
             }
 
             if (!inRange(config.CONCENTRATOR_MAX_HOPS, 0, 30)) {
                 config.CONCENTRATOR_MAX_HOPS = DEFAULT_STACK_CONFIG.CONCENTRATOR_MAX_HOPS;
-                logger.error(`[STACK CONFIG] Invalid CONCENTRATOR_MAX_HOPS, using default.`, NS);
+                logger.error("[STACK CONFIG] Invalid CONCENTRATOR_MAX_HOPS, using default.", NS);
             }
 
             if (!inRange(config.MAX_END_DEVICE_CHILDREN, 6, 64)) {
                 config.MAX_END_DEVICE_CHILDREN = DEFAULT_STACK_CONFIG.MAX_END_DEVICE_CHILDREN;
-                logger.error(`[STACK CONFIG] Invalid MAX_END_DEVICE_CHILDREN, using default.`, NS);
+                logger.error("[STACK CONFIG] Invalid MAX_END_DEVICE_CHILDREN, using default.", NS);
             }
 
             if (!inRange(config.TRANSIENT_DEVICE_TIMEOUT, 0, 65535)) {
                 config.TRANSIENT_DEVICE_TIMEOUT = DEFAULT_STACK_CONFIG.TRANSIENT_DEVICE_TIMEOUT;
-                logger.error(`[STACK CONFIG] Invalid TRANSIENT_DEVICE_TIMEOUT, using default.`, NS);
+                logger.error("[STACK CONFIG] Invalid TRANSIENT_DEVICE_TIMEOUT, using default.", NS);
             }
 
             if (!inRange(config.END_DEVICE_POLL_TIMEOUT, 0, 14)) {
                 config.END_DEVICE_POLL_TIMEOUT = DEFAULT_STACK_CONFIG.END_DEVICE_POLL_TIMEOUT;
-                logger.error(`[STACK CONFIG] Invalid END_DEVICE_POLL_TIMEOUT, using default.`, NS);
+                logger.error("[STACK CONFIG] Invalid END_DEVICE_POLL_TIMEOUT, using default.", NS);
             }
 
             if (!inRange(config.TRANSIENT_KEY_TIMEOUT_S, 0, 65535)) {
                 config.TRANSIENT_KEY_TIMEOUT_S = DEFAULT_STACK_CONFIG.TRANSIENT_KEY_TIMEOUT_S;
-                logger.error(`[STACK CONFIG] Invalid TRANSIENT_KEY_TIMEOUT_S, using default.`, NS);
+                logger.error("[STACK CONFIG] Invalid TRANSIENT_KEY_TIMEOUT_S, using default.", NS);
             }
 
             config.CCA_MODE = config.CCA_MODE ?? undefined; // always default to undefined
 
             if (config.CCA_MODE && IEEE802154CcaMode[config.CCA_MODE] === undefined) {
                 config.CCA_MODE = undefined;
-                logger.error(`[STACK CONFIG] Invalid CCA_MODE, ignoring.`, NS);
+                logger.error("[STACK CONFIG] Invalid CCA_MODE, ignoring.", NS);
             }
 
             logger.info(`Using stack config ${JSON.stringify(config)}.`, NS);
@@ -363,7 +363,7 @@ export class EmberAdapter extends Adapter {
             /* empty */
         }
 
-        logger.info(`Using default stack config.`, NS);
+        logger.info("Using default stack config.", NS);
         return DEFAULT_STACK_CONFIG;
     }
 
@@ -378,26 +378,26 @@ export class EmberAdapter extends Adapter {
         switch (status) {
             case SLStatus.NETWORK_UP: {
                 this.oneWaitress.resolveEvent(OneWaitressEvents.STACK_STATUS_NETWORK_UP);
-                logger.info(`[STACK STATUS] Network up.`, NS);
+                logger.info("[STACK STATUS] Network up.", NS);
                 break;
             }
             case SLStatus.NETWORK_DOWN: {
                 this.oneWaitress.resolveEvent(OneWaitressEvents.STACK_STATUS_NETWORK_DOWN);
-                logger.info(`[STACK STATUS] Network down.`, NS);
+                logger.info("[STACK STATUS] Network down.", NS);
                 break;
             }
             case SLStatus.ZIGBEE_NETWORK_OPENED: {
                 this.oneWaitress.resolveEvent(OneWaitressEvents.STACK_STATUS_NETWORK_OPENED);
-                logger.info(`[STACK STATUS] Network opened.`, NS);
+                logger.info("[STACK STATUS] Network opened.", NS);
                 break;
             }
             case SLStatus.ZIGBEE_NETWORK_CLOSED: {
                 this.oneWaitress.resolveEvent(OneWaitressEvents.STACK_STATUS_NETWORK_CLOSED);
-                logger.info(`[STACK STATUS] Network closed.`, NS);
+                logger.info("[STACK STATUS] Network closed.", NS);
 
                 if (this.manufacturerCode !== DEFAULT_MANUFACTURER_CODE) {
                     await this.queue.execute<void>(async () => {
-                        logger.debug(`[WORKAROUND] Reverting coordinator manufacturer code to default.`, NS);
+                        logger.debug("[WORKAROUND] Reverting coordinator manufacturer code to default.", NS);
                         await this.ezsp.ezspSetManufacturerCode(DEFAULT_MANUFACTURER_CODE);
 
                         this.manufacturerCode = DEFAULT_MANUFACTURER_CODE;
@@ -409,7 +409,7 @@ export class EmberAdapter extends Adapter {
             case SLStatus.ZIGBEE_CHANNEL_CHANGED: {
                 // invalidate cache
                 this.networkCache.parameters.radioChannel = INVALID_RADIO_CHANNEL;
-                logger.info(`[STACK STATUS] Channel changed.`, NS);
+                logger.info("[STACK STATUS] Channel changed.", NS);
                 break;
             }
             default: {
@@ -908,7 +908,7 @@ export class EmberAdapter extends Adapter {
             }
 
             if (action === NetworkInitAction.LEAVE) {
-                logger.info(`[INIT TC] Adapter network does not match config. Leaving network...`, NS);
+                logger.info("[INIT TC] Adapter network does not match config. Leaving network...", NS);
                 const leaveStatus = await this.ezsp.ezspLeaveNetwork();
 
                 if (leaveStatus !== SLStatus.OK) {
@@ -942,12 +942,12 @@ export class EmberAdapter extends Adapter {
                     action = NetworkInitAction.FORM_BACKUP;
                 } else {
                     // config doesn't match backup
-                    logger.info(`[INIT TC] Config does not match backup.`, NS);
+                    logger.info("[INIT TC] Config does not match backup.", NS);
                     action = NetworkInitAction.FORM_CONFIG;
                 }
             } else {
                 // no backup
-                logger.info(`[INIT TC] No valid backup found.`, NS);
+                logger.info("[INIT TC] No valid backup found.", NS);
                 action = NetworkInitAction.FORM_CONFIG;
             }
         }
@@ -958,7 +958,7 @@ export class EmberAdapter extends Adapter {
 
         switch (action) {
             case NetworkInitAction.FORM_BACKUP: {
-                logger.info(`[INIT TC] Forming from backup.`, NS);
+                logger.info("[INIT TC] Forming from backup.", NS);
                 // `backup` valid in this `action` path (not detected by TS)
                 /* v8 ignore start */
                 const keyList: LinkKeyBackupData[] = backup!.devices.map((device) => ({
@@ -988,7 +988,7 @@ export class EmberAdapter extends Adapter {
                 break;
             }
             case NetworkInitAction.FORM_CONFIG: {
-                logger.info(`[INIT TC] Forming from config.`, NS);
+                logger.info("[INIT TC] Forming from config.", NS);
                 await this.formNetwork(
                     false /*from config*/,
                     configNetworkKey,
@@ -1005,7 +1005,7 @@ export class EmberAdapter extends Adapter {
                 break;
             }
             case NetworkInitAction.DONE: {
-                logger.info(`[INIT TC] Adapter network matches config.`, NS);
+                logger.info("[INIT TC] Adapter network matches config.", NS);
                 break;
             }
         }
@@ -1027,7 +1027,7 @@ export class EmberAdapter extends Adapter {
             //         return SLStatus.OK;
             //     }, logger.error, true);// no reject just log error if any, will retry next start, & prioritize so we know it'll run when expected
             // }, 300000);
-            logger.warning(`[INIT TC] Network key frame counter is reaching its limit. A new network key will have to be instaured soon.`, NS);
+            logger.warning("[INIT TC] Network key frame counter is reaching its limit. A new network key will have to be instaured soon.", NS);
         }
 
         return result;
@@ -1126,7 +1126,7 @@ export class EmberAdapter extends Adapter {
         status = await this.ezsp.ezspStartWritingStackTokens();
 
         logger.debug(`[INIT FORM] Start writing stack tokens status=${SLStatus[status]}.`, NS);
-        logger.info(`[INIT FORM] New network formed!`, NS);
+        logger.info("[INIT FORM] New network formed!", NS);
     }
 
     /**
@@ -1151,18 +1151,18 @@ export class EmberAdapter extends Adapter {
             }
 
             if (!data.stack_specific?.ezsp || !data.metadata.internal.ezspVersion) {
-                throw new Error(`[BACKUP] Current backup file is not for EmberZNet stack.`);
+                throw new Error("[BACKUP] Current backup file is not for EmberZNet stack.");
             }
 
             if (data.metadata.internal.ezspVersion < BACKUP_OLDEST_SUPPORTED_EZSP_VERSION) {
                 renameSync(this.backupPath, `${this.backupPath}.old`);
-                logger.warning(`[BACKUP] Current backup file is from an unsupported EZSP version. Renaming and ignoring.`, NS);
+                logger.warning("[BACKUP] Current backup file is from an unsupported EZSP version. Renaming and ignoring.", NS);
                 return undefined;
             }
 
             return BackupUtils.fromUnifiedBackup(data);
         } else {
-            throw new Error(`[BACKUP] Unknown backup format.`);
+            throw new Error("[BACKUP] Unknown backup format.");
         }
     }
 
@@ -1262,7 +1262,7 @@ export class EmberAdapter extends Adapter {
      */
     public async broadcastNetworkKeyUpdate(): Promise<void> {
         return await this.queue.execute<void>(async () => {
-            logger.warning(`[TRUST CENTER] Performing a network key update. This might take a while and disrupt normal operation.`, NS);
+            logger.warning("[TRUST CENTER] Performing a network key update. This might take a while and disrupt normal operation.", NS);
 
             // zero-filled = let stack generate new random network key
             let status = await this.ezsp.ezspBroadcastNextNetworkKey({contents: Buffer.alloc(EMBER_ENCRYPTION_KEY_SIZE)});
@@ -1417,7 +1417,7 @@ export class EmberAdapter extends Adapter {
 
         if (status !== SLStatus.OK) {
             // Should never happen with support of only EZSP v13+
-            throw new Error(`NCP has old-style version number. Not supported.`);
+            throw new Error("NCP has old-style version number. Not supported.");
         }
 
         this.version = {
@@ -1534,7 +1534,7 @@ export class EmberAdapter extends Adapter {
     //-- START Adapter implementation
 
     public async start(): Promise<TsType.StartResult> {
-        logger.info(`======== Ember Adapter Starting ========`, NS);
+        logger.info("======== Ember Adapter Starting ========", NS);
         const result = await this.initEzsp();
 
         return result;
@@ -1545,7 +1545,7 @@ export class EmberAdapter extends Adapter {
         await this.ezsp.stop();
         this.ezsp.removeAllListeners();
 
-        logger.info(`======== Ember Adapter Stopped ========`, NS);
+        logger.info("======== Ember Adapter Stopped ========", NS);
     }
 
     public async getCoordinatorIEEE(): Promise<string> {
@@ -1558,7 +1558,7 @@ export class EmberAdapter extends Adapter {
     }
 
     public async getCoordinatorVersion(): Promise<TsType.CoordinatorVersion> {
-        return {type: `EmberZNet`, meta: this.version};
+        return {type: "EmberZNet", meta: this.version};
     }
 
     // queued
@@ -1594,7 +1594,7 @@ export class EmberAdapter extends Adapter {
             }
 
             if (!netKeyInfo.networkKeySet) {
-                throw new Error(`[BACKUP] No network key set.`);
+                throw new Error("[BACKUP] No network key set.");
             }
 
             /* v8 ignore next */
@@ -2245,7 +2245,7 @@ export class EmberAdapter extends Adapter {
 
     private checkInterpanLock(): void {
         if (this.interpanLock) {
-            throw new Error(`[INTERPAN MODE] Cannot execute non-InterPAN commands.`);
+            throw new Error("[INTERPAN MODE] Cannot execute non-InterPAN commands.");
         }
     }
 }

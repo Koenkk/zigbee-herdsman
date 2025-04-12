@@ -1890,7 +1890,7 @@ describe("Controller", () => {
 
         const code = "54EF44100006E7DF|3313A005E177A647FC7925620AB207";
 
-        await expect(controller.addInstallCode(code)).rejects.toThrow(`Install code 3313a005e177a647fc7925620ab207 has invalid size`);
+        await expect(controller.addInstallCode(code)).rejects.toThrow("Install code 3313a005e177a647fc7925620ab207 has invalid size");
 
         expect(mockAddInstallCode).toHaveBeenCalledTimes(0);
     });
@@ -2061,7 +2061,7 @@ describe("Controller", () => {
     it("Controller permit joining for too long time throws", async () => {
         await controller.start();
 
-        await expect(controller.permitJoin(255)).rejects.toThrow(`Cannot permit join for more than 254 seconds.`);
+        await expect(controller.permitJoin(255)).rejects.toThrow("Cannot permit join for more than 254 seconds.");
         expect(mockAdapterPermitJoin).toHaveBeenCalledTimes(0);
         expect(events.permitJoinChanged.length).toStrictEqual(0);
     });
@@ -6023,7 +6023,7 @@ describe("Controller", () => {
         } catch (e) {
             error = e;
         }
-        expect((error as Error).message).toStrictEqual(`Use parameter`);
+        expect((error as Error).message).toStrictEqual("Use parameter");
         expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(0);
     });
 
@@ -6380,7 +6380,7 @@ describe("Controller", () => {
         } catch (e) {
             error = e;
         }
-        expect((error as Error).message).toStrictEqual(`Use parameter`);
+        expect((error as Error).message).toStrictEqual("Use parameter");
         expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(0);
     });
 
@@ -7203,7 +7203,7 @@ describe("Controller", () => {
         } catch (e) {
             error = e;
         }
-        expect((error as Error).message).toStrictEqual(`Use parameter`);
+        expect((error as Error).message).toStrictEqual("Use parameter");
     });
 
     it("ConfigureReporting error", async () => {
@@ -7258,7 +7258,7 @@ describe("Controller", () => {
         } catch (e) {
             error = e;
         }
-        expect((error as Error).message).toStrictEqual(`Use parameter`);
+        expect((error as Error).message).toStrictEqual("Use parameter");
     });
 
     it("Skip unbind if not bound", async () => {
@@ -7463,7 +7463,7 @@ describe("Controller", () => {
         } catch (e) {
             error = e;
         }
-        expect(error).toStrictEqual(new Error(`Command 2 genOnOff.toggle({}) failed (timeout)`));
+        expect(error).toStrictEqual(new Error("Command 2 genOnOff.toggle({}) failed (timeout)"));
     });
 
     it("Write structured", async () => {
@@ -8866,7 +8866,7 @@ describe("Controller", () => {
             5,
             [],
             () => {
-                throw new Error(`1`);
+                throw new Error("1");
             },
         );
         await new Promise(process.nextTick);
@@ -9530,7 +9530,7 @@ describe("Controller", () => {
 
         expect(mockLogger.info).toHaveBeenCalledWith(
             `Device '0x162' is only compliant to revision '21' of the ZigBee specification (current revision: ${ZSpec.ZIGBEE_REVISION}).`,
-            `zh:controller:device`,
+            "zh:controller:device",
         );
     });
 
@@ -9540,7 +9540,7 @@ describe("Controller", () => {
 
         expect(mockLogger.info).toHaveBeenCalledWith(
             `Device '0x161' is only compliant to revision 'pre-21' of the ZigBee specification (current revision: ${ZSpec.ZIGBEE_REVISION}).`,
-            `zh:controller:device`,
+            "zh:controller:device",
         );
     });
 
@@ -9743,7 +9743,7 @@ describe("Controller", () => {
         mockAdapterPermitJoin.mockRejectedValueOnce("timeout");
         await controller.stop();
 
-        expect(mockLogger.error).toHaveBeenCalledWith(`Failed to disable join on stop: timeout`, "zh:controller");
+        expect(mockLogger.error).toHaveBeenCalledWith("Failed to disable join on stop: timeout", "zh:controller");
     });
 
     it("Adapter stop fails after adapter disconnected", async () => {
@@ -9751,7 +9751,7 @@ describe("Controller", () => {
         mockAdapterStop.mockRejectedValueOnce("timeout");
         await mockAdapterEvents["disconnected"]();
 
-        expect(mockLogger.error).toHaveBeenCalledWith(`Failed to stop adapter on disconnect: timeout`, "zh:controller");
+        expect(mockLogger.error).toHaveBeenCalledWith("Failed to stop adapter on disconnect: timeout", "zh:controller");
     });
 
     it("Device network address changed while Z2M was offline, received no notification on start", async () => {

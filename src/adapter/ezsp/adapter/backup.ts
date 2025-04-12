@@ -99,7 +99,7 @@ export class EZSPAdapterBackup {
                 throw new Error(`Unsupported open coordinator backup version (version=${data.metadata?.version})`);
             }
             if (!data.metadata.internal?.ezspVersion) {
-                throw new Error(`This open coordinator backup format not for EZSP adapter`);
+                throw new Error("This open coordinator backup format not for EZSP adapter");
             }
             return BackupUtils.fromUnifiedBackup(data);
         } else {

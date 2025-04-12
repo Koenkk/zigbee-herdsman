@@ -2802,32 +2802,32 @@ describe("Zcl", () => {
             const payload = "abcd";
             const buffalo = new BuffaloZcl(Buffer.alloc(2));
             buffalo.write(BuffaloZclDataType.USE_DATA_TYPE, payload, {});
-        }).toThrow(`Cannot write USE_DATA_TYPE without dataType option specified`);
+        }).toThrow("Cannot write USE_DATA_TYPE without dataType option specified");
     });
 
     it("Throws when read GPD_FRAME is missing payload.payloadSize option when payload.commandID is 0xA1", () => {
         expect(() => {
             const buffalo = new BuffaloZcl(Buffer.alloc(1));
             buffalo.read(BuffaloZclDataType.GPD_FRAME, {payload: {commandID: 0xa1}});
-        }).toThrow(`Cannot read GPD_FRAME with commandID=0xA1 without payloadSize options specified`);
+        }).toThrow("Cannot read GPD_FRAME with commandID=0xA1 without payloadSize options specified");
     });
 
     it("Throws when read LIST_THERMO_TRANSITIONS is missing required payload options", () => {
         expect(() => {
             const buffalo = new BuffaloZcl(Buffer.alloc(1));
             buffalo.read(BuffaloZclDataType.LIST_THERMO_TRANSITIONS, {});
-        }).toThrow(`Cannot read LIST_THERMO_TRANSITIONS without required payload options specified`);
+        }).toThrow("Cannot read LIST_THERMO_TRANSITIONS without required payload options specified");
         expect(() => {
             const buffalo = new BuffaloZcl(Buffer.alloc(1));
             buffalo.read(BuffaloZclDataType.LIST_THERMO_TRANSITIONS, {payload: {}});
-        }).toThrow(`Cannot read LIST_THERMO_TRANSITIONS without required payload options specified`);
+        }).toThrow("Cannot read LIST_THERMO_TRANSITIONS without required payload options specified");
         expect(() => {
             const buffalo = new BuffaloZcl(Buffer.alloc(1));
             buffalo.read(BuffaloZclDataType.LIST_THERMO_TRANSITIONS, {payload: {mode: 1}});
-        }).toThrow(`Cannot read LIST_THERMO_TRANSITIONS without required payload options specified`);
+        }).toThrow("Cannot read LIST_THERMO_TRANSITIONS without required payload options specified");
         expect(() => {
             const buffalo = new BuffaloZcl(Buffer.alloc(1));
             buffalo.read(BuffaloZclDataType.LIST_THERMO_TRANSITIONS, {payload: {numoftrans: 1}});
-        }).toThrow(`Cannot read LIST_THERMO_TRANSITIONS without required payload options specified`);
+        }).toThrow("Cannot read LIST_THERMO_TRANSITIONS without required payload options specified");
     });
 });

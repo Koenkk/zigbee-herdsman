@@ -153,7 +153,7 @@ export class Znp extends events.EventEmitter {
 
             this.socketPort!.on("error", (error) => {
                 logger.error(`Socket error ${error}`, NS);
-                reject(new Error(`Error while opening socket`));
+                reject(new Error("Error while opening socket"));
                 self.initialized = false;
             });
 

@@ -237,7 +237,7 @@ export class AdapterBackup {
             );
             const missingStr = missing.map((d) => ZSpecUtils.eui64BEBufferToHex(d.ieeeAddress)).join(", ");
             logger.debug(
-                `Following devices with link key are missing from new backup but present in old backup and database, ` +
+                "Following devices with link key are missing from new backup but present in old backup and database, " +
                     `adding them back: ${missingStr}`,
                 NS,
             );
@@ -285,7 +285,7 @@ export class AdapterBackup {
         const currentApsLinkKeyDataTable = await this.getApsLinkKeyDataTable(version);
         const currentTclkTable = await this.getTclkTable(version);
         const currentNwkSecMaterialTable = await this.getNetworkSecurityMaterialTable(version);
-        logger.debug(`got target adapter table sizes:`, NS);
+        logger.debug("got target adapter table sizes:", NS);
         logger.debug(` - address manager table: ${currentAddressManagerTable.capacity}`, NS);
         logger.debug(` - security manager table: ${currentSecurityManagerTable.capacity}`, NS);
         logger.debug(` - aps link key data table: ${currentApsLinkKeyDataTable.capacity}`, NS);

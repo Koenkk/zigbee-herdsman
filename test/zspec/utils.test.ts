@@ -22,15 +22,15 @@ describe("ZSpec Utils", () => {
     it("Converts EUI64 LE buffer to 0x...", () => {
         const buffer = Buffer.from([0x88, 0x77, 0x66, 0x55, 0x44, 0x33, 0x22, 0x11]);
 
-        expect(ZSpec.Utils.eui64LEBufferToHex(buffer)).toStrictEqual(`0x1122334455667788`);
+        expect(ZSpec.Utils.eui64LEBufferToHex(buffer)).toStrictEqual("0x1122334455667788");
         // reference not reversed
-        expect(buffer.toString("hex")).toStrictEqual(`8877665544332211`);
+        expect(buffer.toString("hex")).toStrictEqual("8877665544332211");
     });
 
     it("Converts EUI64 BE buffer to 0x...", () => {
         const buffer = Buffer.from([0x88, 0x77, 0x66, 0x55, 0x44, 0x33, 0x22, 0x11]);
 
-        expect(ZSpec.Utils.eui64BEBufferToHex(buffer)).toStrictEqual(`0x8877665544332211`);
+        expect(ZSpec.Utils.eui64BEBufferToHex(buffer)).toStrictEqual("0x8877665544332211");
     });
 
     it("Calculates CRC variants", () => {
@@ -66,7 +66,7 @@ describe("ZSpec Utils", () => {
     });
 
     it("Checks install codes of all lengths", () => {
-        expect(() => ZSpec.Utils.checkInstallCode(Buffer.from("001122", "hex"))).toThrow(`Install code 001122 has invalid size`);
+        expect(() => ZSpec.Utils.checkInstallCode(Buffer.from("001122", "hex"))).toThrow("Install code 001122 has invalid size");
 
         const code8Valid = Buffer.from("83FED3407A932B70", "hex");
         const code8Invalid = Buffer.from("FFFED3407A939723", "hex");

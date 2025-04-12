@@ -78,7 +78,7 @@ export class SerialDriver extends EventEmitter {
 
         // enable software flow control if RTS/CTS not enabled in config
         if (!options.rtscts) {
-            logger.debug(`RTS/CTS config is off, enabling software flow control.`, NS);
+            logger.debug("RTS/CTS config is off, enabling software flow control.", NS);
             options.xon = true;
             options.xoff = true;
         }
@@ -323,14 +323,14 @@ export class SerialDriver extends EventEmitter {
 
         return await this.queue.execute<void>(async (): Promise<void> => {
             try {
-                logger.debug(`--> Write reset`, NS);
+                logger.debug("--> Write reset", NS);
                 const waiter = this.waitFor(-1, 10000);
                 this.rejectCondition = false;
 
                 this.writer.sendReset();
-                logger.debug(`-?- waiting reset`, NS);
+                logger.debug("-?- waiting reset", NS);
                 await waiter.start().promise;
-                logger.debug(`-+- waiting reset success`, NS);
+                logger.debug("-+- waiting reset success", NS);
 
                 await wait(2000);
             } catch (e) {

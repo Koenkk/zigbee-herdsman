@@ -48,7 +48,7 @@ export class ZBOSSUart extends EventEmitter {
             return false;
         }
 
-        logger.info(`NCP reset`, NS);
+        logger.info("NCP reset", NS);
 
         try {
             if (!this.portOpen) {
@@ -79,7 +79,7 @@ export class ZBOSSUart extends EventEmitter {
             return false;
         }
 
-        logger.info(`UART starting`, NS);
+        logger.info("UART starting", NS);
 
         try {
             if (this.serialPort != null) {
@@ -98,7 +98,7 @@ export class ZBOSSUart extends EventEmitter {
         this.queue.clear();
         await this.closePort();
         this.closing = false;
-        logger.info(`UART stopped`, NS);
+        logger.info("UART stopped", NS);
     }
 
     private async openPort(): Promise<void> {
@@ -127,7 +127,7 @@ export class ZBOSSUart extends EventEmitter {
 
             try {
                 await this.serialPort.asyncOpen();
-                logger.info(`Serial port opened`, NS);
+                logger.info("Serial port opened", NS);
 
                 this.serialPort.once("close", this.onPortClose.bind(this));
                 this.serialPort.on("error", this.onPortError.bind(this));
@@ -156,10 +156,10 @@ export class ZBOSSUart extends EventEmitter {
                 };
 
                 this.socketPort?.on("connect", () => {
-                    logger.debug(`Socket connected`, NS);
+                    logger.debug("Socket connected", NS);
                 });
                 this.socketPort?.on("ready", async (): Promise<void> => {
-                    logger.info(`Socket ready`, NS);
+                    logger.info("Socket ready", NS);
                     this.socketPort?.removeListener("error", openError);
                     this.socketPort?.once("close", this.onPortClose.bind(this));
                     this.socketPort?.on("error", this.onPortError.bind(this));
@@ -231,7 +231,7 @@ export class ZBOSSUart extends EventEmitter {
             return;
         }
         if (len <= 5) {
-            logger.debug(`<-- Empty package`, NS);
+            logger.debug("<-- Empty package", NS);
             return;
         }
 

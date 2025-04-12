@@ -19,7 +19,6 @@
             "style": {
                 "noNonNullAssertion": "off",
                 "noParameterAssign": "off",
-                "noUnusedTemplateLiteral": "off",
                 "useTemplate": "off",
                 "noUselessElse": "off",
                 "useSingleVarDeclarator": "off",

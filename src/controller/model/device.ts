@@ -794,7 +794,7 @@ export class Device extends Entity<ControllerEventMap> {
             this._powerSource = this._powerSource || "Battery";
             this._interviewing = false;
             this._interviewCompleted = true;
-            logger.debug(`Interview - quirks matched for Tuya end device`, NS);
+            logger.debug("Interview - quirks matched for Tuya end device", NS);
             return true;
         }
 
@@ -977,10 +977,10 @@ export class Device extends Entity<ControllerEventMap> {
 
                 // Do not enroll when device has already been enrolled
                 if (stateBefore.zoneState !== 1 || stateBefore.iasCieAddr !== coordinator.ieeeAddr) {
-                    logger.debug(`Interview - IAS - not enrolled, enrolling`, NS);
+                    logger.debug("Interview - IAS - not enrolled, enrolling", NS);
 
                     await endpoint.write("ssIasZone", {iasCieAddr: coordinator.ieeeAddr}, {sendPolicy: "immediate"});
-                    logger.debug(`Interview - IAS - wrote iasCieAddr`, NS);
+                    logger.debug("Interview - IAS - wrote iasCieAddr", NS);
 
                     // There are 2 enrollment procedures:
                     // - Auto enroll: coordinator has to send enrollResponse without receiving an enroll request
@@ -1010,7 +1010,7 @@ export class Device extends Entity<ControllerEventMap> {
                         throw new Error(`Interview failed because of failed IAS enroll (zoneState didn't change ('${this.ieeeAddr}')`);
                     }
                 } else {
-                    logger.debug(`Interview - IAS - already enrolled, skipping enroll`, NS);
+                    logger.debug("Interview - IAS - already enrolled, skipping enroll", NS);
                 }
             }
         }

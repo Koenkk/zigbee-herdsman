@@ -298,7 +298,7 @@ describe("ZigBee on Host", () => {
                 path: "/dev/serial/by-id/mock-adapter",
                 adapter: "zoh",
             },
-            join(TEMP_PATH, `ember_coordinator_backup.json`),
+            join(TEMP_PATH, "ember_coordinator_backup.json"),
             {
                 concurrent: 8,
                 disableLED: false,
@@ -1234,18 +1234,18 @@ describe("ZigBee on Host", () => {
         const emitSpy = vi.spyOn(adapter, "emit");
 
         adapter.driver.emit("deviceJoined", 0x123, 4321n, structuredClone(COMMON_FFD_MAC_CAP));
-        expect(emitSpy).toHaveBeenNthCalledWith(1, "deviceJoined", {networkAddress: 0x123, ieeeAddr: `0x00000000000010e1`});
+        expect(emitSpy).toHaveBeenNthCalledWith(1, "deviceJoined", {networkAddress: 0x123, ieeeAddr: "0x00000000000010e1"});
 
         adapter.driver.emit("deviceJoined", 0x321, 1234n, structuredClone(COMMON_RFD_MAC_CAP));
         expect(emitSpy).toHaveBeenCalledTimes(1);
         await vi.advanceTimersByTimeAsync(5500);
-        expect(emitSpy).toHaveBeenNthCalledWith(2, "deviceJoined", {networkAddress: 0x321, ieeeAddr: `0x00000000000004d2`});
+        expect(emitSpy).toHaveBeenNthCalledWith(2, "deviceJoined", {networkAddress: 0x321, ieeeAddr: "0x00000000000004d2"});
 
         adapter.driver.emit("deviceRejoined", 0x987, 4321n, structuredClone(COMMON_FFD_MAC_CAP));
-        expect(emitSpy).toHaveBeenLastCalledWith("deviceJoined", {networkAddress: 0x987, ieeeAddr: `0x00000000000010e1`});
+        expect(emitSpy).toHaveBeenLastCalledWith("deviceJoined", {networkAddress: 0x987, ieeeAddr: "0x00000000000010e1"});
 
         adapter.driver.emit("deviceLeft", 0x123, 4321n);
-        expect(emitSpy).toHaveBeenLastCalledWith("deviceLeave", {networkAddress: 0x123, ieeeAddr: `0x00000000000010e1`});
+        expect(emitSpy).toHaveBeenLastCalledWith("deviceLeave", {networkAddress: 0x123, ieeeAddr: "0x00000000000010e1"});
 
         // adapter.driver.emit('deviceAuthorized', 0x123, 4321n);
     });

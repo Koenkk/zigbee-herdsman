@@ -291,7 +291,7 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
     }
 
     public async start(): Promise<EzspStatus> {
-        logger.info(`======== EZSP starting ========`, NS);
+        logger.info("======== EZSP starting ========", NS);
 
         let status: EzspStatus = EzspStatus.HOST_FATAL_ERROR;
 
@@ -306,7 +306,7 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
             status = await this.ash.start();
 
             if (status === EzspStatus.SUCCESS) {
-                logger.info(`======== EZSP started ========`, NS);
+                logger.info("======== EZSP started ========", NS);
                 // registered after reset sequence
                 this.ash.on("frame", this.onAshFrame.bind(this));
                 this.ash.on("fatalError", this.onAshFatalError.bind(this));
@@ -326,7 +326,7 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
         await this.ash.stop();
         this.ash.removeAllListeners();
 
-        logger.info(`======== EZSP stopped ========`, NS);
+        logger.info("======== EZSP stopped ========", NS);
     }
 
     /**
@@ -362,7 +362,7 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
 
         if (buffer == null) {
             // something is seriously wrong
-            logger.error(`Found no buffer in queue but ASH layer sent signal that one was available.`, NS);
+            logger.error("Found no buffer in queue but ASH layer sent signal that one was available.", NS);
             return;
         }
 
@@ -405,7 +405,7 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
 
                 this.responseWaiter = undefined; // done, gc
             } else {
-                logger.debug(`Received response while not expecting one. Ignoring.`, NS);
+                logger.debug("Received response while not expecting one. Ignoring.", NS);
             }
         }
     }
@@ -500,7 +500,7 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
      */
     private async sendCommand(sendBuffalo: EzspBuffalo): Promise<EzspStatus> {
         if (!this.checkConnection()) {
-            logger.debug(`[SEND COMMAND] NOT CONNECTED`, NS);
+            logger.debug("[SEND COMMAND] NOT CONNECTED", NS);
             return EzspStatus.NOT_CONNECTED;
         }
 
@@ -1990,7 +1990,7 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
      * Indicates that there are currently no pending callbacks.
      */
     ezspNoCallbacks(): void {
-        logger.debug(`ezspNoCallbacks(): callback called`, NS);
+        logger.debug("ezspNoCallbacks(): callback called", NS);
     }
 
     /**
@@ -6183,7 +6183,7 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
          */
         // NOTE: added for good measure
         if (context.coreKeyType === SecManKeyType.INTERNAL) {
-            logger.error(`ezspExportKey cannot use INTERNAL key type.`, NS);
+            logger.error("ezspExportKey cannot use INTERNAL key type.", NS);
             throw new EzspError(EzspStatus.ERROR_INVALID_CALL);
         }
 
@@ -6256,7 +6256,7 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
          */
         // NOTE: added for good measure
         if (context.coreKeyType === SecManKeyType.INTERNAL) {
-            logger.error(`ezspImportKey cannot use INTERNAL key type.`, NS);
+            logger.error("ezspImportKey cannot use INTERNAL key type.", NS);
             throw new EzspError(EzspStatus.ERROR_INVALID_CALL);
         }
 
@@ -8553,7 +8553,7 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
 
         if (addr.applicationId === EmberGpApplicationId.IEEE_ADDRESS) {
             // XXX: don't bother parsing for upstream for now, since it will be rejected
-            logger.error(`<=x= [GP] Received IEEE address type in message. Support not implemented upstream. Dropping.`, NS);
+            logger.error("<=x= [GP] Received IEEE address type in message. Support not implemented upstream. Dropping.", NS);
             return;
         }
 
@@ -8564,7 +8564,7 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
             if (!gpdCommandPayload.length) {
                 // XXX: seem to be receiving duplicate commissioningNotification from some devices, second one with empty payload?
                 //      this will mess with the process no doubt, so dropping them
-                logger.debug(`<=x= [GP] Received commissioning notification with empty payload. Dropping.`, NS);
+                logger.debug("<=x= [GP] Received commissioning notification with empty payload. Dropping.", NS);
                 return;
             }
 

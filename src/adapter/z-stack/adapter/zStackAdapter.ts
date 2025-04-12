@@ -119,7 +119,7 @@ export class ZStackAdapter extends Adapter {
         try {
             this.version = (await this.znp.requestWithReply(Subsystem.SYS, "version", {})).payload as typeof this.version;
         } catch {
-            logger.debug(`Failed to get zStack version, assuming 1.2`, NS);
+            logger.debug("Failed to get zStack version, assuming 1.2", NS);
             this.version = {transportrev: 2, product: 0, majorrel: 2, minorrel: 0, maintrel: 0, revision: ""};
         }
 
@@ -622,7 +622,7 @@ export class ZStackAdapter extends Adapter {
                         checkedNetworkAddress = true;
                         const actualNetworkAddress = await this.requestNetworkAddress(ieeeAddr);
                         if (networkAddress !== actualNetworkAddress) {
-                            logger.debug(`Failed because request was done with wrong network address`, NS);
+                            logger.debug("Failed because request was done with wrong network address", NS);
                             discoveredRoute = true;
                             networkAddress = actualNetworkAddress;
                             await this.discoverRoute(actualNetworkAddress);
@@ -850,7 +850,7 @@ export class ZStackAdapter extends Adapter {
             } else {
                 if (object.command.name === "leaveInd") {
                     if (object.payload.rejoin) {
-                        logger.debug(`Device leave: Got leave indication with rejoin=true, nothing to do`, NS);
+                        logger.debug("Device leave: Got leave indication with rejoin=true, nothing to do", NS);
                     } else {
                         const payload: Events.DeviceLeavePayload = {
                             networkAddress: object.payload.srcaddr,
@@ -1188,7 +1188,7 @@ export class ZStackAdapter extends Adapter {
 
     private checkInterpanLock(): void {
         if (this.interpanLock) {
-            throw new Error(`Cannot execute command, in Inter-PAN mode`);
+            throw new Error("Cannot execute command, in Inter-PAN mode");
         }
     }
 }

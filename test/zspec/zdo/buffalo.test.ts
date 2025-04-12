@@ -50,9 +50,9 @@ import type {
 } from "../../../src/zspec/zdo/definition/tstypes";
 import {uint16To8Array, uint32To8Array} from "../../utils/math";
 
-const IEEE_ADDRESS1: EUI64 = `0xfe34ac2385ff8311`;
+const IEEE_ADDRESS1: EUI64 = "0xfe34ac2385ff8311";
 const IEEE_ADDRESS1_BYTES = [0x11, 0x83, 0xff, 0x85, 0x23, 0xac, 0x34, 0xfe];
-const IEEE_ADDRESS2: EUI64 = `0x28373fecd834ba37`;
+const IEEE_ADDRESS2: EUI64 = "0x28373fecd834ba37";
 const IEEE_ADDRESS2_BYTES = [0x37, 0xba, 0x34, 0xd8, 0xec, 0x3f, 0x37, 0x28];
 const NODE_ID1: NodeId = 0xfe32;
 const NODE_ID1_BYTES = uint16To8Array(NODE_ID1);

@@ -54,7 +54,7 @@ export class ZnpAdapterManager {
      * and network is ready to process frames.
      */
     public async start(): Promise<TsType.StartResult> {
-        logger.debug(`beginning znp startup`, NS);
+        logger.debug("beginning znp startup", NS);
         this.nwkOptions = await this.parseConfigNetworkOptions(this.options.networkOptions);
         await this.nv.init();
 
@@ -72,7 +72,7 @@ export class ZnpAdapterManager {
             }
             case "restoreBackup": {
                 if (this.options.version === ZnpVersion.zStack12) {
-                    logger.debug(`performing recommissioning instead of restore for z-stack 1.2`, NS);
+                    logger.debug("performing recommissioning instead of restore for z-stack 1.2", NS);
                     await this.beginCommissioning(this.nwkOptions);
                     await this.beginStartup();
                 } else {
@@ -173,7 +173,7 @@ export class ZnpAdapterManager {
                 backup.znp.version !== ZnpVersion.zStack12
             ) {
                 throw new Error(
-                    `your backup is from newer platform version (Z-Stack 3.0.x+) and cannot be restored onto Z-Stack 1.2 adapter - please remove backup before proceeding`,
+                    "your backup is from newer platform version (Z-Stack 3.0.x+) and cannot be restored onto Z-Stack 1.2 adapter - please remove backup before proceeding",
                 );
             }
         };
@@ -222,7 +222,7 @@ export class ZnpAdapterManager {
                     if (backupMatchesAdapter) {
                         /* Backup matches adapter state */
                         logger.debug("(stage-4) adapter state matches backup", NS);
-                        logger.error(`Configuration is not consistent with adapter state/backup!`, NS);
+                        logger.error("Configuration is not consistent with adapter state/backup!", NS);
                         logger.error(`- PAN ID: configured=${this.nwkOptions.panId}, adapter=${nib.nwkPanId}`, NS);
                         logger.error(
                             `- Extended PAN ID: configured=${this.nwkOptions.extendedPanId.toString("hex")}, adapter=${nib.extendedPANID.toString("hex")}`,
@@ -236,15 +236,15 @@ export class ZnpAdapterManager {
                             `- Channel List: configured=${this.nwkOptions.channelList.toString()}, adapter=${Utils.unpackChannelList(nib.channelList).toString()}`,
                             NS,
                         );
-                        logger.error(`Please update configuration to prevent further issues.`, NS);
+                        logger.error("Please update configuration to prevent further issues.", NS);
                         logger.error(
                             `If you wish to re-commission your network, please remove coordinator backup at ${this.options.backupPath}.`,
                             NS,
                         );
-                        logger.error(`Re-commissioning your network will require re-pairing of all devices!`, NS);
+                        logger.error("Re-commissioning your network will require re-pairing of all devices!", NS);
                         if (this.options.adapterOptions.forceStartWithInconsistentAdapterConfiguration) {
                             logger.error(
-                                `Running despite adapter configuration mismatch as configured. Please update the adapter to compatible firmware and recreate your network as soon as possible.`,
+                                "Running despite adapter configuration mismatch as configured. Please update the adapter to compatible firmware and recreate your network as soon as possible.",
                                 NS,
                             );
                             return "startup";
@@ -350,7 +350,7 @@ export class ZnpAdapterManager {
      */
     private async beginCommissioning(nwkOptions: Models.NetworkOptions, failOnCollision = true, writeConfiguredFlag = true): Promise<void> {
         if (nwkOptions.panId === 65535) {
-            throw new Error(`network commissioning failed - cannot use pan id 65535`);
+            throw new Error("network commissioning failed - cannot use pan id 65535");
         }
 
         /* clear and reset the adapter */
@@ -390,7 +390,7 @@ export class ZnpAdapterManager {
             reads++;
         } while ((!nib || nib.nwkPanId === 65535 || nib.nwkLogicalChannel === 0) && reads < 10);
         if (!nib || nib.nwkPanId === 65535 || nib.nwkLogicalChannel === 0) {
-            throw new Error(`network commissioning failed - timed out waiting for nib to settle`);
+            throw new Error("network commissioning failed - timed out waiting for nib to settle");
         }
 
         /* validate provisioned PAN ID */
@@ -422,7 +422,7 @@ export class ZnpAdapterManager {
         channelList.channelList = Utils.packChannelList(options.channelList);
         const extendedPanIdReversed = Buffer.from(options.extendedPanId).reverse();
 
-        logger.debug(`setting network commissioning parameters`, NS);
+        logger.debug("setting network commissioning parameters", NS);
 
         await this.nv.updateItem(NvItemsIds.STARTUP_OPTION, Buffer.from([0x00]));
         await this.nv.updateItem(NvItemsIds.LOGICAL_TYPE, Buffer.from([ZnpConstants.ZDO.deviceLogicalType.COORDINATOR]));

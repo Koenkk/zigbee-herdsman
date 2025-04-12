@@ -132,7 +132,7 @@ export class Driver extends EventEmitter {
      * @returns
      */
     public async reset(): Promise<void> {
-        logger.debug(`Reset connection.`, NS);
+        logger.debug("Reset connection.", NS);
 
         try {
             // don't emit 'close' on stop since we don't want this to bubble back up as 'disconnected' to the controller.
@@ -142,7 +142,7 @@ export class Driver extends EventEmitter {
         }
         try {
             await wait(1000);
-            logger.debug(`Startup again.`, NS);
+            logger.debug("Startup again.", NS);
             await this.startup();
         } catch (err) {
             logger.debug(`Reset error ${err}`, NS);
@@ -245,7 +245,7 @@ export class Driver extends EventEmitter {
             logger.debug(`Network state ${res.status}`, NS);
 
             if (res.status == EmberNetworkStatus.JOINED_NETWORK) {
-                logger.info(`Leaving current network and forming new network`, NS);
+                logger.info("Leaving current network and forming new network", NS);
 
                 const st = await this.ezsp.leaveNetwork();
 
@@ -328,7 +328,7 @@ export class Driver extends EventEmitter {
             backup = await this.backupMan.getStoredBackup();
 
             if (!backup) {
-                throw new Error(`No valid backup found.`);
+                throw new Error("No valid backup found.");
             }
 
             initial_security_state = ember_security(backup.networkOptions.networkKey);
@@ -910,7 +910,7 @@ export class Driver extends EventEmitter {
 
     public async getNetworkKeyInfo(): Promise<EZSPFrameData> {
         if (this.ezsp.ezspV < 13) {
-            throw new Error(`getNetKeyInfo(): Invalid call on EZSP < 13.`);
+            throw new Error("getNetKeyInfo(): Invalid call on EZSP < 13.");
         } else {
             const keyInfo = await this.ezsp.execCommand("getNetworkKeyInfo");
             if (keyInfo.status !== SLStatus.SL_STATUS_OK) {
@@ -947,7 +947,7 @@ export class Driver extends EventEmitter {
         valid = valid && Buffer.from(networkParams.extendedPanId).equals(backup.networkOptions.extendedPanId);
         valid = valid && Buffer.from(netKey).equals(backup.networkOptions.networkKey);
         if (valid) {
-            logger.error(`Configuration is not consistent with adapter backup!`, NS);
+            logger.error("Configuration is not consistent with adapter backup!", NS);
             logger.error(`- PAN ID: configured=${options.panID}, adapter=${networkParams.panId}, backup=${backup.networkOptions.panId}`, NS);
             logger.error(
                 `- Extended PAN ID: configured=${Buffer.from(options.extendedPanID!).toString("hex")}, ` +
@@ -962,9 +962,9 @@ export class Driver extends EventEmitter {
                     `backup=${backup.networkOptions.networkKey.toString("hex")}`,
                 NS,
             );
-            logger.error(`Please update configuration to prevent further issues.`, NS);
-            logger.error(`If you wish to re-commission your network, please remove coordinator backup.`, NS);
-            logger.error(`Re-commissioning your network will require re-pairing of all devices!`, NS);
+            logger.error("Please update configuration to prevent further issues.", NS);
+            logger.error("If you wish to re-commission your network, please remove coordinator backup.", NS);
+            logger.error("Re-commissioning your network will require re-pairing of all devices!", NS);
             throw new Error("startup failed - configuration-adapter mismatch - see logs above for more information");
         }
         valid = true;

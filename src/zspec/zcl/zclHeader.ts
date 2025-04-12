@@ -69,7 +69,7 @@ export class ZclHeader {
     public static fromBuffer(buffer: Buffer): ZclHeader | undefined {
         // Returns `undefined` in case the ZclHeader cannot be parsed.
         if (buffer.length < HEADER_MINIMAL_LENGTH) {
-            logger.debug(`ZclHeader is too short.`, NS);
+            logger.debug("ZclHeader is too short.", NS);
             return undefined;
         }
 
@@ -87,7 +87,7 @@ export class ZclHeader {
 
         if (frameControl.manufacturerSpecific) {
             if (buffer.length < HEADER_WITH_MANUF_LENGTH) {
-                logger.debug(`ZclHeader is too short for control with manufacturer-specific.`, NS);
+                logger.debug("ZclHeader is too short for control with manufacturer-specific.", NS);
                 return undefined;
             }
 

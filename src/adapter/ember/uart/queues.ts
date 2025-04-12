@@ -60,7 +60,7 @@ export class EzspQueue {
         let head = this.tail;
 
         if (head == undefined) {
-            throw new Error(`Tried to get head from an empty queue.`);
+            throw new Error("Tried to get head from an empty queue.");
         }
 
         while (head.link != undefined) {
@@ -78,14 +78,14 @@ export class EzspQueue {
      */
     public getNthEntry(n: number): EzspBuffer | undefined {
         if (n === 0) {
-            throw new Error(`Asked for 0th element in queue.`);
+            throw new Error("Asked for 0th element in queue.");
         }
 
         let buf = this.tail;
 
         while (--n) {
             if (buf == undefined) {
-                throw new Error(`Less than N entries in queue.`);
+                throw new Error("Less than N entries in queue.");
             }
 
             buf = buf.link;
@@ -108,7 +108,7 @@ export class EzspQueue {
             return undefined;
         } else {
             if (buf == undefined) {
-                throw new Error(`Tried to get preceding entry from an empty queue.`);
+                throw new Error("Tried to get preceding entry from an empty queue.");
             }
 
             do {
@@ -119,7 +119,7 @@ export class EzspQueue {
                 buf = buf.link;
             } while (buf != undefined);
 
-            throw new Error(`Buffer not in queue.`);
+            throw new Error("Buffer not in queue.");
         }
     }
 
@@ -132,7 +132,7 @@ export class EzspQueue {
             buf.link = this.tail;
             this.tail = buf;
         } else {
-            throw new Error(`Called addTail with undefined buffer`);
+            throw new Error("Called addTail with undefined buffer");
         }
     }
 
@@ -144,7 +144,7 @@ export class EzspQueue {
         let head = this.tail;
 
         if (head == undefined) {
-            throw new Error(`Tried to remove head from an empty queue.`);
+            throw new Error("Tried to remove head from an empty queue.");
         }
 
         if (head.link == undefined) {
@@ -215,7 +215,7 @@ export class EzspFreeList {
             buf.link = this.link;
             this.link = buf;
         } else {
-            throw new Error(`Called freeBuffer with undefined buffer`);
+            throw new Error("Called freeBuffer with undefined buffer");
         }
     }
 
