@@ -504,9 +504,7 @@ export async function findMdnsAdapter(path: string): Promise<[adapter: Adapter, 
                     bj.destroy();
                     reject(
                         new Error(
-                            "Coordinator returned wrong Zeroconf format! The following values are expected:\n" +
-                                `txt.radio_type, got: ${service.txt?.radio_type}\n` +
-                                `port, got: ${service.port}`,
+                            `Coordinator returned wrong Zeroconf format! The following values are expected:\ntxt.radio_type, got: ${service.txt?.radio_type}\nport, got: ${service.port}`,
                         ),
                     );
                 }

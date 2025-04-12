@@ -92,11 +92,7 @@ export class DeconzAdapter extends Adapter {
         // check current channel against configuration.yaml
         if (this.networkOptions.channelList[0] !== channel) {
             logger.debug(
-                "Channel in configuration.yaml (" +
-                    this.networkOptions.channelList[0] +
-                    ") differs from current channel (" +
-                    channel +
-                    "). Changing channel.",
+                `Channel in configuration.yaml (${this.networkOptions.channelList[0]}) differs from current channel (${channel}). Changing channel.`,
                 NS,
             );
 
@@ -159,34 +155,27 @@ export class DeconzAdapter extends Adapter {
                 await wait(500);
                 changed = true;
             } catch (error) {
-                logger.debug("Could not set channel: " + error, NS);
+                logger.debug(`Could not set channel: ${error}`, NS);
             }
         }
 
         // check current panid against configuration.yaml
         if (this.networkOptions.panID !== panid) {
-            logger.debug(
-                "panid in configuration.yaml (" + this.networkOptions.panID + ") differs from current panid (" + panid + "). Changing panid.",
-                NS,
-            );
+            logger.debug(`panid in configuration.yaml (${this.networkOptions.panID}) differs from current panid (${panid}). Changing panid.`, NS);
 
             try {
                 await this.driver.writeParameterRequest(PARAM.PARAM.Network.PAN_ID, this.networkOptions.panID);
                 await wait(500);
                 changed = true;
             } catch (error) {
-                logger.debug("Could not set panid: " + error, NS);
+                logger.debug(`Could not set panid: ${error}`, NS);
             }
         }
 
         // check current extended_panid against configuration.yaml
         if (this.driver.generalArrayToString(this.networkOptions.extendedPanID!, 8) !== expanid) {
             logger.debug(
-                "extended panid in configuration.yaml (" +
-                    this.driver.macAddrArrayToString(this.networkOptions.extendedPanID!) +
-                    ") differs from current extended panid (" +
-                    expanid +
-                    "). Changing extended panid.",
+                `extended panid in configuration.yaml (${this.driver.macAddrArrayToString(this.networkOptions.extendedPanID!)}) differs from current extended panid (${expanid}). Changing extended panid.`,
                 NS,
             );
 
@@ -195,23 +184,20 @@ export class DeconzAdapter extends Adapter {
                 await wait(500);
                 changed = true;
             } catch (error) {
-                logger.debug("Could not set extended panid: " + error, NS);
+                logger.debug(`Could not set extended panid: ${error}`, NS);
             }
         }
 
         // check current network key against configuration.yaml
         if (this.driver.generalArrayToString(this.networkOptions.networkKey!, 16) !== networkKey) {
-            logger.debug(
-                "network key in configuration.yaml (hidden) differs from current network key (" + networkKey + "). Changing network key.",
-                NS,
-            );
+            logger.debug(`network key in configuration.yaml (hidden) differs from current network key (${networkKey}). Changing network key.`, NS);
 
             try {
                 await this.driver.writeParameterRequest(PARAM.PARAM.Network.NETWORK_KEY, this.networkOptions.networkKey!);
                 await wait(500);
                 changed = true;
             } catch (error) {
-                logger.debug("Could not set network key: " + error, NS);
+                logger.debug(`Could not set network key: ${error}`, NS);
             }
         }
 
@@ -280,7 +266,7 @@ export class DeconzAdapter extends Adapter {
             try {
                 const fw = await this.driver.readFirmwareVersionRequest();
                 const buf = Buffer.from(fw);
-                const fwString = "0x" + buf.readUInt32LE(0).toString(16);
+                const fwString = `0x${buf.readUInt32LE(0).toString(16)}`;
                 let type = "";
                 if (fw[1] === 5) {
                     type = "ConBee/RaspBee";
@@ -293,7 +279,7 @@ export class DeconzAdapter extends Adapter {
                 this.fwVersion = {type: type, meta: meta};
                 return {type: type, meta: meta};
             } catch (error) {
-                throw new Error("Get coordinator version Error: " + error);
+                throw new Error(`Get coordinator version Error: ${error}`);
             }
         }
     }
@@ -434,13 +420,7 @@ export class DeconzAdapter extends Adapter {
             .then(() => {
                 logger.debug(`sendZclFrameToEndpoint - message send with transSeq Nr.: ${zclFrame.header.transactionSequenceNumber}`, NS);
                 logger.debug(
-                    (command.response !== undefined) +
-                        ", " +
-                        zclFrame.header.frameControl.disableDefaultResponse +
-                        ", " +
-                        disableResponse +
-                        ", " +
-                        request.timeout,
+                    `${command.response !== undefined}, ${zclFrame.header.frameControl.disableDefaultResponse}, ${disableResponse}, ${request.timeout}`,
                     NS,
                 );
 
@@ -560,7 +540,7 @@ export class DeconzAdapter extends Adapter {
                 nwkUpdateID: 0 as number,
             };
         } catch (error) {
-            const msg = "get network parameters Error:" + error;
+            const msg = `get network parameters Error:${error}`;
             logger.debug(msg, NS);
             return await Promise.reject(new Error(msg));
         }
@@ -650,7 +630,7 @@ export class DeconzAdapter extends Adapter {
                 if (resp.srcAddr64 != null) {
                     logger.debug(`Try to find network address of ${resp.srcAddr64}`, NS);
                     // Note: Device expects addresses with a 0x prefix...
-                    srcAddr = Device.byIeeeAddr("0x" + resp.srcAddr64, false)?.networkAddress;
+                    srcAddr = Device.byIeeeAddr(`0x${resp.srcAddr64}`, false)?.networkAddress;
                     // apperantly some functions furhter up in the protocol stack expect this to be set.
                     // so let's make sure they get the network address
                     // Note: srcAddr16 can be undefined after this and this is intended behavior

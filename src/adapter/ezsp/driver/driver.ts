@@ -651,7 +651,7 @@ export class Driver extends EventEmitter {
                         if (nodeId && nodeId !== 0xffff) {
                             this.eui64ToNodeId.set(strEui64, nodeId);
                         } else {
-                            throw new Error("Unknown EUI64:" + strEui64);
+                            throw new Error(`Unknown EUI64:${strEui64}`);
                         }
                     }
                     nwk = nodeId;
@@ -780,7 +780,7 @@ export class Driver extends EventEmitter {
 
             return eUI64;
         } else {
-            throw new Error("Unrecognized nodeId:" + nwk);
+            throw new Error(`Unrecognized nodeId:${nwk}`);
         }
     }
 

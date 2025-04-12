@@ -109,12 +109,7 @@ export default class ZiGate extends EventEmitter<ZiGateEventMap> {
         return await this.queue.execute(async () => {
             try {
                 logger.debug(
-                    () =>
-                        "Send command \x1b[32m>>>> " +
-                        ZiGateCommandCode[code] +
-                        " 0x" +
-                        zeroPad(code) +
-                        ` <<<<\x1b[0m \nPayload: ${JSON.stringify(payload)}`,
+                    () => `Send command \x1b[32m>>>> ${ZiGateCommandCode[code]} 0x${zeroPad(code)} <<<<\x1b[0m \nPayload: ${JSON.stringify(payload)}`,
                     NS,
                 );
                 const ziGateObject = ZiGateObject.createRequest(code, payload);
@@ -159,7 +154,7 @@ export default class ZiGate extends EventEmitter<ZiGateEventMap> {
                 return await Promise.race(waiters);
             } catch (e) {
                 logger.error(`sendCommand error ${e}`, NS);
-                return await Promise.reject(new Error("sendCommand error: " + e));
+                return await Promise.reject(new Error(`sendCommand error: ${e}`));
             }
         });
     }
@@ -311,7 +306,7 @@ export default class ZiGate extends EventEmitter<ZiGateEventMap> {
             if (!(frame instanceof ZiGateFrame)) return; // @Todo fix
 
             const code = frame.readMsgCode();
-            const msgName = (ZiGateMessageCode[code] ? ZiGateMessageCode[code] : "") + " 0x" + zeroPad(code);
+            const msgName = `${ZiGateMessageCode[code] ? ZiGateMessageCode[code] : ""} 0x${zeroPad(code)}`;
 
             logger.debug(`--> parsed frame \x1b[1;34m>>>> ${msgName} <<<<\x1b[0m `, NS);
 
@@ -359,7 +354,7 @@ export default class ZiGate extends EventEmitter<ZiGateEventMap> {
                         if (ziGateObject.payload.profileID === ZSpec.HA_PROFILE_ID) {
                             this.emit("received", ziGateObject);
                         } else {
-                            logger.debug("not implemented profile: " + ziGateObject.payload.profileID, NS);
+                            logger.debug(`not implemented profile: ${ziGateObject.payload.profileID}`, NS);
                         }
                     } else if (code === ZiGateMessageCode.DeviceAnnounce) {
                         this.emit("DeviceAnnounce", {

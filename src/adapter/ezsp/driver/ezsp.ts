@@ -492,7 +492,7 @@ export class Ezsp extends EventEmitter {
         if (result.status !== EmberStatus.SUCCESS) {
             this.waitress.remove(waiter.ID);
             logger.debug("Failure to leave network", NS);
-            throw new Error("Failure to leave network: " + JSON.stringify(result));
+            throw new Error(`Failure to leave network: ${JSON.stringify(result)}`);
         }
 
         const response = await waiter.start().promise;
@@ -673,7 +673,7 @@ export class Ezsp extends EventEmitter {
                 return response.payload;
             } catch {
                 this.waitress.remove(waiter.ID);
-                throw new Error(`Failure send ${name}:` + JSON.stringify(data));
+                throw new Error(`Failure send ${name}:${JSON.stringify(data)}`);
             }
         });
     }
@@ -685,17 +685,17 @@ export class Ezsp extends EventEmitter {
         if (v.status !== EmberStatus.SUCCESS) {
             this.waitress.remove(waiter.ID);
 
-            logger.error("Failure forming network: " + JSON.stringify(v), NS);
+            logger.error(`Failure forming network: ${JSON.stringify(v)}`, NS);
 
-            throw new Error("Failure forming network: " + JSON.stringify(v));
+            throw new Error(`Failure forming network: ${JSON.stringify(v)}`);
         }
 
         const response = await waiter.start().promise;
 
         if (response.payload.status !== EmberStatus.NETWORK_UP) {
-            logger.error("Wrong network status: " + JSON.stringify(response.payload), NS);
+            logger.error(`Wrong network status: ${JSON.stringify(response.payload)}`, NS);
 
-            throw new Error("Wrong network status: " + JSON.stringify(response.payload));
+            throw new Error(`Wrong network status: ${JSON.stringify(response.payload)}`);
         }
 
         return response.payload.status;

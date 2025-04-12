@@ -5028,9 +5028,7 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
     ): void {
         logger.debug(
             () =>
-                `ezspMessageSentHandler: status=${SLStatus[status]} type=${EmberOutgoingMessageType[type]} ` +
-                `indexOrDestination=${indexOrDestination} apsFrame=${JSON.stringify(apsFrame)} messageTag=${messageTag}` +
-                (messageContents ? ` messageContents=${messageContents.toString("hex")}` : ""),
+                `ezspMessageSentHandler: status=${SLStatus[status]} type=${EmberOutgoingMessageType[type]} indexOrDestination=${indexOrDestination} apsFrame=${JSON.stringify(apsFrame)} messageTag=${messageTag}${messageContents ? ` messageContents=${messageContents.toString("hex")}` : ""}`,
             NS,
         );
 

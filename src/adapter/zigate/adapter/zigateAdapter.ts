@@ -96,7 +96,7 @@ export class ZiGateAdapter extends Adapter {
                 await this.driver.sendCommand(ZiGateCommandCode.SetTXpower, {value: this.adapterOptions.transmitPower});
             }
         } catch (error) {
-            throw new Error("failed to connect to zigate adapter " + (error as Error).message);
+            throw new Error(`failed to connect to zigate adapter ${(error as Error).message}`);
         }
 
         return startResult; // 'resumed' | 'reset' | 'restored'

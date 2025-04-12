@@ -248,7 +248,7 @@ const restoreMocksendZclFrameToEndpoint = () => {
                 true,
                 undefined,
                 10,
-                frame.command.name + "Rsp",
+                `${frame.command.name}Rsp`,
                 frame.cluster.ID,
                 {status: 0, groupid: 1},
                 {},
@@ -1799,7 +1799,7 @@ describe("Controller", () => {
     });
 
     it("Existing database.tmp should not be overwritten", async () => {
-        const databaseTmpPath = options.databasePath + ".tmp";
+        const databaseTmpPath = `${options.databasePath}.tmp`;
         fs.writeFileSync(databaseTmpPath, "Hello, World!");
 
         await controller.start();
@@ -5593,7 +5593,7 @@ describe("Controller", () => {
             interviewCompleted: true,
             _id: "fJ5pmjqKRYbNvslK",
         });
-        fs.writeFileSync(options.databasePath, line + "\n");
+        fs.writeFileSync(options.databasePath, `${line}\n`);
         await controller.start();
         const expected = {
             ID: 3,

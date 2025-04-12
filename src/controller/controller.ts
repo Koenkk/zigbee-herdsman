@@ -381,7 +381,7 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
             logger.debug("Creating coordinator backup", NS);
             const backup = await this.adapter.backup(this.getDeviceIeeeAddresses());
             const unifiedBackup = await BackupUtils.toUnifiedBackup(backup);
-            const tmpBackupPath = this.options.backupPath + ".tmp";
+            const tmpBackupPath = `${this.options.backupPath}.tmp`;
             fs.writeFileSync(tmpBackupPath, JSON.stringify(unifiedBackup, null, 2));
             fs.renameSync(tmpBackupPath, this.options.backupPath);
             logger.info(`Wrote coordinator backup to '${this.options.backupPath}'`, NS);

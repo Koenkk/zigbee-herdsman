@@ -328,23 +328,23 @@ export class Endpoint extends Entity {
         // send without queueing if sendPolicy is 'immediate' or if the device has no timeout set
         if (request.sendPolicy === "immediate" || !device.pendingRequestTimeout) {
             if (device.pendingRequestTimeout > 0) {
-                logger.debug(logPrefix + `send ${frame.command.name} request immediately (sendPolicy=${options.sendPolicy})`, NS);
+                logger.debug(`${logPrefix}send ${frame.command.name} request immediately (sendPolicy=${options.sendPolicy})`, NS);
             }
             return await request.send();
         }
         // If this is a bulk message, we queue directly.
         if (request.sendPolicy === "bulk") {
-            logger.debug(logPrefix + `queue request (${this.pendingRequests.size})`, NS);
+            logger.debug(`${logPrefix}queue request (${this.pendingRequests.size})`, NS);
             return await this.pendingRequests.queue(request);
         }
 
         try {
-            logger.debug(logPrefix + "send request", NS);
+            logger.debug(`${logPrefix}send request`, NS);
             return await request.send();
         } catch (error) {
             // If we got a failed transaction, the device is likely sleeping.
             // Queue for transmission later.
-            logger.debug(logPrefix + `queue request (transaction failed) (${error})`, NS);
+            logger.debug(`${logPrefix}queue request (transaction failed) (${error})`, NS);
             return await this.pendingRequests.queue(request);
         }
     }

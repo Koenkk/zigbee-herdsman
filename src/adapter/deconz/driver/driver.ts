@@ -434,13 +434,13 @@ class Driver extends events.EventEmitter {
         if (this.serialPort) {
             this.serialPort.write(slipframe, (err) => {
                 if (err) {
-                    logger.debug("Error writing serial Port: " + err.message, NS);
+                    logger.debug(`Error writing serial Port: ${err.message}`, NS);
                 }
             });
         } else {
             this.socketPort!.write(slipframe, (err) => {
                 if (err) {
-                    logger.debug("Error writing socket Port: " + err.message, NS);
+                    logger.debug(`Error writing socket Port: ${err.message}`, NS);
                 }
             });
         }
@@ -557,16 +557,7 @@ class Driver extends events.EventEmitter {
         this.apsRequestFreeSlots = (currentDeviceStatus >> 5) & 0x01;
 
         logger.debug(
-            "networkstate: " +
-                networkState +
-                " apsDataConfirm: " +
-                this.apsDataConfirm +
-                " apsDataIndication: " +
-                this.apsDataIndication +
-                " configChanged: " +
-                this.configChanged +
-                " apsRequestFreeSlots: " +
-                this.apsRequestFreeSlots,
+            `networkstate: ${networkState} apsDataConfirm: ${this.apsDataConfirm} apsDataIndication: ${this.apsDataIndication} configChanged: ${this.configChanged} apsRequestFreeSlots: ${this.apsRequestFreeSlots}`,
             NS,
         );
     }
@@ -812,7 +803,7 @@ class Driver extends events.EventEmitter {
         }
         if (addr.length < 16) {
             for (let l = 0; l < 16 - addr.length; l++) {
-                addr = "0" + addr;
+                addr = `0${addr}`;
             }
         }
         const result = new Array<number>();
@@ -827,7 +818,7 @@ class Driver extends events.EventEmitter {
 
     public macAddrArrayToString(addr: Array<number>): string {
         if (addr.length != 8) {
-            throw new Error("invalid array length for MAC address: " + addr.length);
+            throw new Error(`invalid array length for MAC address: ${addr.length}`);
         }
 
         let result = "0x";
@@ -836,7 +827,7 @@ class Driver extends events.EventEmitter {
         while (i--) {
             char = addr[i].toString(16);
             if (char.length < 2) {
-                char = "0" + char;
+                char = `0${char}`;
             }
             result += char;
         }
@@ -853,7 +844,7 @@ class Driver extends events.EventEmitter {
         while (i < length) {
             char = key[i].toString(16);
             if (char.length < 2) {
-                char = "0" + char;
+                char = `0${char}`;
             }
             result += char;
             i++;

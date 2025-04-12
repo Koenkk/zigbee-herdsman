@@ -96,14 +96,14 @@ export class Database {
         let lines = "";
 
         for (const id in this.entries) {
-            lines += JSON.stringify(this.entries[id]) + "\n";
+            lines += `${JSON.stringify(this.entries[id])}\n`;
         }
 
-        const tmpPath = this.path + ".tmp";
+        const tmpPath = `${this.path}.tmp`;
 
         try {
             // If there already exsits a database.db.tmp, rename it to database.db.tmp.<now>
-            const dateTmpPath = tmpPath + "." + new Date().toISOString().replaceAll(":", "-");
+            const dateTmpPath = `${tmpPath}.${new Date().toISOString().replaceAll(":", "-")}`;
             fs.renameSync(tmpPath, dateTmpPath);
 
             // If we got this far, we succeeded! Warn the user about this

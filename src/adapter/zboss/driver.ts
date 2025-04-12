@@ -286,7 +286,7 @@ export class ZBOSSDriver extends EventEmitter {
             } catch (error) {
                 this.waitress.remove(waiter.ID);
                 logger.error(`==> Error: ${error}`, NS);
-                throw new Error(`Failure send ${commandId}:` + JSON.stringify(frame));
+                throw new Error(`Failure send ${commandId}:${JSON.stringify(frame)}`);
             }
         });
     }

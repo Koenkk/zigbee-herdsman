@@ -546,7 +546,7 @@ export class BuffaloZcl extends Buffalo {
                     attribute = cluster.getAttribute(attributeID).name;
                 } catch {
                     // this is spammy because of the many manufacturer-specific attributes not currently used
-                    logger.debug("Unknown attribute " + attributeID + " in cluster " + cluster.name, NS);
+                    logger.debug(`Unknown attribute ${attributeID} in cluster ${cluster.name}`, NS);
                 }
 
                 frame.attributes[attribute] = this.read(type, options);
