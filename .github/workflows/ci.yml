@@ -21,10 +21,8 @@ jobs:
                   cache: pnpm
             - name: Install dependencies
               run: pnpm i --frozen-lockfile
-            - name: Lint
-              run: |
-                  pnpm run pretty:check
-                  pnpm run eslint
+            - name: Check
+              run: pnpm run check
             - name: Build
               run: pnpm run build
             - name: Test
