@@ -103,7 +103,9 @@ class Driver extends events.EventEmitter {
         });
 
         this.on("close", () => {
-            this.intervals.forEach((i) => clearInterval(i));
+            for (const interval of this.intervals) {
+                clearInterval(interval);
+            }
             queue.length = 0;
             busyQueue.length = 0;
             apsQueue.length = 0;

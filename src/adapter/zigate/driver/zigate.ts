@@ -126,11 +126,11 @@ export default class ZiGate extends EventEmitter<ZiGateEventMap> {
                 logger.debug(`DisableResponse: ${disableResponse}`, NS);
 
                 if (!disableResponse && Array.isArray(ziGateObject.command.response)) {
-                    ziGateObject.command.response.forEach((rules) => {
+                    for (const rules of ziGateObject.command.response) {
                         const waiter = this.waitress.waitFor({ziGateObject, rules, extraParameters}, timeout || timeouts.default);
                         waitersId.push(waiter.ID);
                         waiters.push(waiter.start().promise);
-                    });
+                    }
                 }
 
                 let resultPromise: Promise<ZiGateObject> | undefined;

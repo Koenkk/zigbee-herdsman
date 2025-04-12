@@ -26,7 +26,6 @@
                 "useConst": "off"
             },
             "complexity": {
-                "noForEach": "off",
                 "noUselessSwitchCase": "off",
                 "noThisInStatic": "off",
                 "noStaticOnlyClass": "off",

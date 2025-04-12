@@ -104,10 +104,10 @@ export class Table<R extends BuiltStruct> implements SerializableMemoryObject {
             output.writeUInt16LE(this.usedCount);
             offset += 2;
         }
-        this.data.forEach((e) => {
+        for (const e of this.data) {
             output.set(e.serialize(alignment), offset);
             offset += e.getLength(alignment);
-        });
+        }
         return output;
     }
 

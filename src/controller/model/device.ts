@@ -351,8 +351,10 @@ export class Device extends Entity<ControllerEventMap> {
         this.ieeeAddr = ieeeAddr;
         Device.devices.set(this.ieeeAddr, this);
         Device.nwkToIeeeCache.set(this.networkAddress, this.ieeeAddr);
+        for (const ep of this.endpoints) {
+            ep.deviceIeeeAddress = ieeeAddr;
+        }
 
-        this.endpoints.forEach((e) => (e.deviceIeeeAddress = ieeeAddr));
         this.save();
     }
 

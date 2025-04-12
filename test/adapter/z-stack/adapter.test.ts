@@ -1403,8 +1403,8 @@ describe("zstack-adapter", () => {
         vi.useFakeTimers();
         adapter = new ZStackAdapter(networkOptions, serialPortOptions, "backup.json", {concurrent: 3});
         mockZnpWaitForDefault();
-        mocks.forEach((m) => m.mockRestore());
-        mocksClear.forEach((m) => m.mockClear());
+        for (const m of mocks) m.mockRestore();
+        for (const m of mocksClear) m.mockClear();
         mockQueueExecute.mockClear();
         mockZnpWaitFor.mockClear();
         dataConfirmCode = 0;

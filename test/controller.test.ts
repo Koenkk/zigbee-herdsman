@@ -467,8 +467,8 @@ describe("Controller", () => {
     beforeEach(async () => {
         vi.setSystemTime(mockedDate);
         sendZdoResponseStatus = Zdo.Status.SUCCESS;
-        mocksRestore.forEach((m) => m.mockRestore());
-        mocksClear.forEach((m) => m.mockClear());
+        for (const m of mocksRestore) m.mockRestore();
+        for (const m of mocksClear) m.mockClear();
         MOCK_DEVICES[174]!.attributes![1].checkinInterval = DEFAULT_184_CHECKIN_INTERVAL;
         // @ts-expect-error mock
         zclTransactionSequenceNumber.number = 1;

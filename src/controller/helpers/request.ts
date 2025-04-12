@@ -67,12 +67,16 @@ export class Request<Type = any> {
     }
 
     reject(error?: Error): void {
-        this.rejectQueue.forEach((el) => el(error ?? this.lastError));
+        for (const el of this.rejectQueue) {
+            el(error ?? this.lastError);
+        }
         this.rejectQueue.length = 0;
     }
 
     resolve(value: Type): void {
-        this.resolveQueue.forEach((el) => el(value));
+        for (const el of this.resolveQueue) {
+            el(value);
+        }
         this.resolveQueue.length = 0;
     }
 
