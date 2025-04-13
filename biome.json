@@ -28,8 +28,7 @@
                 "noStaticOnlyClass": "off",
                 "useOptionalChain": "off",
                 "useLiteralKeys": "off",
-                "noBannedTypes": "off",
-                "noUselessTernary": "off"
+                "noBannedTypes": "off"
             },
             "performance": {
                 "noDelete": "off",
