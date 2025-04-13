@@ -31,8 +31,7 @@
                 "noBannedTypes": "off"
             },
             "performance": {
-                "noDelete": "off",
-                "noAccumulatingSpread": "off"
+                "noDelete": "off"
             },
             "suspicious": {
                 "noImplicitAnyLet": "off",
