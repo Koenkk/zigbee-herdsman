@@ -70,7 +70,7 @@ export class ZBOSSUart extends EventEmitter {
         if (SocketPortUtils.isTcpPath(this.portOptions.path!)) {
             return this.socketPort && !this.socketPort.closed;
         } else {
-            return this.serialPort && this.serialPort.isOpen;
+            return this.serialPort?.isOpen;
         }
     }
 

@@ -41,7 +41,7 @@ export class EZSPAdapter extends Adapter {
         this.interpanLock = false;
         this.closing = false;
 
-        const concurrent = adapterOptions && adapterOptions.concurrent ? adapterOptions.concurrent : 8;
+        const concurrent = adapterOptions?.concurrent ? adapterOptions.concurrent : 8;
         logger.debug(`Adapter concurrent: ${concurrent}`, NS);
         this.queue = new Queue(concurrent);
 

@@ -49,7 +49,7 @@ export class ZiGateAdapter extends Adapter {
 
         this.joinPermitted = false;
         this.closing = false;
-        const concurrent = this.adapterOptions && this.adapterOptions.concurrent ? this.adapterOptions.concurrent : 2;
+        const concurrent = this.adapterOptions?.concurrent ? this.adapterOptions.concurrent : 2;
         logger.debug(`Adapter concurrent: ${concurrent}`, NS);
         this.queue = new Queue(concurrent);
         this.driver = new Driver(serialPortOptions.path!, serialPortOptions);

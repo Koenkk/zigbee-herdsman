@@ -59,7 +59,7 @@ function zeroPad(number: number, size?: number): string {
 }
 function resolve(path: string | [], obj: {[k: string]: any}, separator = "."): any {
     const properties = Array.isArray(path) ? path : path.split(separator);
-    return properties.reduce((prev, curr) => prev && prev[curr], obj);
+    return properties.reduce((prev, curr) => prev?.[curr], obj);
 }
 
 interface ZiGateEventMap {

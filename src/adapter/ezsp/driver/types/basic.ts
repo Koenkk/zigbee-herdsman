@@ -19,7 +19,7 @@ export class int_t {
     static valueToName(cls: any, value: any): string {
         for (const prop of Object.getOwnPropertyNames(cls)) {
             const desc = Object.getOwnPropertyDescriptor(cls, prop);
-            if (desc !== undefined && desc.enumerable && desc.writable && value == desc.value) {
+            if (desc?.enumerable && desc.writable && value == desc.value) {
                 return `${cls.name}.${prop}`;
             }
         }
@@ -29,7 +29,7 @@ export class int_t {
     static valueName(cls: any, value: any): string {
         for (const prop of Object.getOwnPropertyNames(cls)) {
             const desc = Object.getOwnPropertyDescriptor(cls, prop);
-            if (desc !== undefined && desc.enumerable && desc.writable && value == desc.value) {
+            if (desc?.enumerable && desc.writable && value == desc.value) {
                 return `${prop}`;
             }
         }

@@ -756,7 +756,7 @@ export class ZoHAdapter extends Adapter {
 
     private onDeviceJoined(source16: number, source64: bigint, capabilities: MACCapabilities): void {
         // XXX: don't delay if no cap? (joined through router)
-        if (capabilities && capabilities.rxOnWhenIdle) {
+        if (capabilities?.rxOnWhenIdle) {
             this.emit("deviceJoined", {networkAddress: source16, ieeeAddr: `0x${bigUInt64ToHexBE(source64)}`});
         } else {
             // XXX: end devices can be finicky about finishing the key authorization, Z2M interview can create a bottleneck, so delay it

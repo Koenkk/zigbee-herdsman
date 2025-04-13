@@ -164,59 +164,56 @@ export class AdapterBackup {
             networkUpdateId: nib.nwkUpdateId,
             coordinatorIeeeAddress: ieeeAddress,
             devices:
-                (addressManagerTable &&
-                    addressManagerTable.used
-                        .map((ame, ami) => {
-                            /* take all entries of assoc and/or security type */
-                            /* v8 ignore start */
-                            if (!ame.isSet() || (ame.user & (AddressManagerUser.Assoc | AddressManagerUser.Security)) === 0) {
-                                return null;
+                addressManagerTable?.used
+                    .map((ame, ami) => {
+                        /* take all entries of assoc and/or security type */
+                        /* v8 ignore start */
+                        if (!ame.isSet() || (ame.user & (AddressManagerUser.Assoc | AddressManagerUser.Security)) === 0) {
+                            return null;
+                        }
+                        /* v8 ignore stop */
+                        let linkKeyInfo: {key: Buffer; rxCounter: number; txCounter: number} | undefined;
+                        const sme = securityManagerTable.used.find((e) => e.ami === ami);
+                        if (sme) {
+                            const apsKeyDataIndex = version === ZnpVersion.zStack30x ? sme.keyNvId - NvItemsIds.APS_LINK_KEY_DATA_START : sme.keyNvId;
+                            /* v8 ignore next */
+                            const apsKeyData = apsLinkKeyDataTable.used[apsKeyDataIndex] || null;
+                            if (apsKeyData) {
+                                linkKeyInfo = {
+                                    key: apsKeyData.key,
+                                    rxCounter: apsKeyData.rxFrmCntr,
+                                    txCounter: apsKeyData.txFrmCntr,
+                                };
                             }
-                            /* v8 ignore stop */
-                            let linkKeyInfo: {key: Buffer; rxCounter: number; txCounter: number} | undefined;
-                            const sme = securityManagerTable.used.find((e) => e.ami === ami);
-                            if (sme) {
-                                const apsKeyDataIndex =
-                                    version === ZnpVersion.zStack30x ? sme.keyNvId - NvItemsIds.APS_LINK_KEY_DATA_START : sme.keyNvId;
-                                /* v8 ignore next */
-                                const apsKeyData = apsLinkKeyDataTable.used[apsKeyDataIndex] || null;
-                                if (apsKeyData) {
-                                    linkKeyInfo = {
-                                        key: apsKeyData.key,
-                                        rxCounter: apsKeyData.rxFrmCntr,
-                                        txCounter: apsKeyData.txFrmCntr,
-                                    };
+                        } else {
+                            const tclkTableEntry = tclkTable.used.find((e) => e.extAddr.equals(ame.extAddr));
+                            if (tclkTableEntry) {
+                                assert(tclkSeed, "Cannot be undefined because this is only called for ZStack 3");
+                                const rotatedSeed = Buffer.concat([
+                                    tclkSeed.key.subarray(tclkTableEntry.SeedShift_IcIndex),
+                                    tclkSeed.key.subarray(0, tclkTableEntry.SeedShift_IcIndex),
+                                ]);
+                                const extAddrReversed = Buffer.from(ame.extAddr).reverse();
+                                const extAddrRepeated = Buffer.concat([extAddrReversed, extAddrReversed]);
+                                const derivedKey = Buffer.alloc(16);
+                                for (let i = 0; i < 16; i++) {
+                                    derivedKey[i] = rotatedSeed[i] ^ extAddrRepeated[i];
                                 }
-                            } else {
-                                const tclkTableEntry = tclkTable.used.find((e) => e.extAddr.equals(ame.extAddr));
-                                if (tclkTableEntry) {
-                                    assert(tclkSeed, "Cannot be undefined because this is only called for ZStack 3");
-                                    const rotatedSeed = Buffer.concat([
-                                        tclkSeed.key.subarray(tclkTableEntry.SeedShift_IcIndex),
-                                        tclkSeed.key.subarray(0, tclkTableEntry.SeedShift_IcIndex),
-                                    ]);
-                                    const extAddrReversed = Buffer.from(ame.extAddr).reverse();
-                                    const extAddrRepeated = Buffer.concat([extAddrReversed, extAddrReversed]);
-                                    const derivedKey = Buffer.alloc(16);
-                                    for (let i = 0; i < 16; i++) {
-                                        derivedKey[i] = rotatedSeed[i] ^ extAddrRepeated[i];
-                                    }
-                                    linkKeyInfo = {
-                                        key: derivedKey,
-                                        rxCounter: tclkTableEntry.rxFrmCntr,
-                                        txCounter: tclkTableEntry.txFrmCntr,
-                                    };
-                                }
+                                linkKeyInfo = {
+                                    key: derivedKey,
+                                    rxCounter: tclkTableEntry.rxFrmCntr,
+                                    txCounter: tclkTableEntry.txFrmCntr,
+                                };
                             }
-                            return {
-                                networkAddress: ame.nwkAddr,
-                                ieeeAddress: ame.extAddr,
-                                isDirectChild: (ame.user & AddressManagerUser.Assoc) > 0,
-                                linkKey: !linkKeyInfo ? undefined : linkKeyInfo,
-                            };
-                        })
-                        .filter((e) => e != null)) ||
-                [],
+                        }
+                        return {
+                            networkAddress: ame.nwkAddr,
+                            ieeeAddress: ame.extAddr,
+                            isDirectChild: (ame.user & AddressManagerUser.Assoc) > 0,
+                            linkKey: !linkKeyInfo ? undefined : linkKeyInfo,
+                        };
+                    })
+                    .filter((e) => e != null) || [],
         };
 
         try {

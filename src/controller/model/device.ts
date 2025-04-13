@@ -835,7 +835,7 @@ export class Device extends Entity<ControllerEventMap> {
         let match: string | undefined;
 
         for (const key in lookup) {
-            if (this.modelID && this.modelID.match(key)) {
+            if (this.modelID?.match(key)) {
                 match = key;
                 break;
             }

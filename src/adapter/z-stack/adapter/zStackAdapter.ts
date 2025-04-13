@@ -123,12 +123,7 @@ export class ZStackAdapter extends Adapter {
             this.version = {transportrev: 2, product: 0, majorrel: 2, minorrel: 0, maintrel: 0, revision: ""};
         }
 
-        const concurrent =
-            this.adapterOptions && this.adapterOptions.concurrent
-                ? this.adapterOptions.concurrent
-                : this.version.product === ZnpVersion.zStack3x0
-                  ? 16
-                  : 2;
+        const concurrent = this.adapterOptions?.concurrent ? this.adapterOptions.concurrent : this.version.product === ZnpVersion.zStack3x0 ? 16 : 2;
 
         logger.debug(`Adapter concurrent: ${concurrent}`, NS);
 

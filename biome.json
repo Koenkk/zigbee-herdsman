@@ -26,7 +26,6 @@
             "complexity": {
                 "noUselessSwitchCase": "off",
                 "noStaticOnlyClass": "off",
-                "useOptionalChain": "off",
                 "useLiteralKeys": "off",
                 "noBannedTypes": "off"
             },

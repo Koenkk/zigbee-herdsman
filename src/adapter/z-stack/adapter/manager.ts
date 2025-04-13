@@ -86,7 +86,7 @@ export class ZnpAdapterManager {
                     const hasConfigured = await this.nv.readItem(NvItemsIds.ZNP_HAS_CONFIGURED_ZSTACK1, 0, Structs.hasConfigured);
                     await this.beginCommissioning(this.nwkOptions);
                     await this.beginStartup();
-                    result = hasConfigured && hasConfigured.isConfigured() ? "reset" : "restored";
+                    result = hasConfigured?.isConfigured() ? "reset" : "restored";
                 } else {
                     await this.beginCommissioning(this.nwkOptions);
                     result = "reset";

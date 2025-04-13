@@ -442,7 +442,7 @@ class ZnpRequestMockBuilder {
                 throw new Error("osalNvLength offset not supported");
             }
             const item = handler.nvItems.find((e) => e.id === payload.id);
-            return {payload: {status: item && item.value ? 0 : 1, value: item && item.value ? item.value : undefined}};
+            return {payload: {status: item?.value ? 0 : 1, value: item?.value ? item.value : undefined}};
         };
         this.handle(Subsystem.SYS, "osalNvRead", handleOsalNvRead);
         this.handle(Subsystem.SYS, "osalNvReadExt", handleOsalNvRead);
@@ -483,7 +483,7 @@ class ZnpRequestMockBuilder {
                 throw new Error("osalNvLength offset not supported");
             }
             const item = handler.nvItems.find((e) => e.id === payload.id);
-            return {payload: {length: item && item.value ? item.value.length : 0}};
+            return {payload: {length: item?.value ? item.value.length : 0}};
         });
         this.handle(Subsystem.SYS, "osalNvDelete", (payload, handler) => {
             const item = handler.nvItems.find((e) => e.id === payload.id);
@@ -506,9 +506,9 @@ class ZnpRequestMockBuilder {
             const item = handler.nvExtendedItems.find((e) => e.sysId === payload.sysid && e.id === payload.itemid && e.subId === payload.subid);
             return {
                 payload: {
-                    status: item && item.value ? 0 : 1,
-                    value: item && item.value ? item.value : undefined,
-                    len: (item?.value && item.value.length) || undefined,
+                    status: item?.value ? 0 : 1,
+                    value: item?.value ? item.value : undefined,
+                    len: item?.value?.length || undefined,
                 },
             };
         });
@@ -549,7 +549,7 @@ class ZnpRequestMockBuilder {
                 throw new Error("nvLength offset not supported");
             }
             const item = handler.nvExtendedItems.find((e) => e.sysId === payload.sysid && e.id === payload.itemid && e.subId === payload.subid);
-            return {payload: {len: item && item.value ? item.value.length : 0}};
+            return {payload: {len: item?.value ? item.value.length : 0}};
         });
         this.handle(Subsystem.SYS, "nvDelete", (payload, handler) => {
             const item = handler.nvExtendedItems.find((e) => e.sysId === payload.sysid && e.id === payload.itemid && e.subId === payload.subid);
