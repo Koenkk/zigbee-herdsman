@@ -107,8 +107,8 @@ import {
 
 export function deserialize(payload: any, schema: any[]): any[] {
     const result = [];
-    let value,
-        data = payload;
+    let value;
+    let data = payload;
     for (const type of schema) {
         [value, data] = type.deserialize(type, data);
         result.push(value);

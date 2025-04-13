@@ -8840,7 +8840,8 @@ describe("Controller", () => {
         mocksendZclFrameToEndpoint.mockReturnValueOnce(createResponse(3));
         mocksendZclFrameToEndpoint.mockReturnValueOnce(createResponse(4));
 
-        let result1, result2: Promise<any>;
+        let result1;
+        let result2: Promise<any>;
         const nextTick = new Promise(process.nextTick);
         endpoint.write("genOnOff", {onOff: 0, startUpOnOff: 0}, {disableResponse: true});
         await nextTick;

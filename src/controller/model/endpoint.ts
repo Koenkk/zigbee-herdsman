@@ -669,7 +669,8 @@ export class Endpoint extends Entity {
         );
 
         const payload = items.map((item): KeyValue => {
-            let dataType, attrId;
+            let dataType;
+            let attrId;
 
             if (typeof item.attribute === "object") {
                 dataType = item.attribute.type;

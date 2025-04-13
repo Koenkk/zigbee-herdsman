@@ -123,7 +123,8 @@ class _LVList extends List {
     }
 
     static override deserialize(cls: any, data: Buffer): any[] {
-        let item, length;
+        let item;
+        let length;
         const r: any[] = [];
         [length, data] = [data[0], data.subarray(1)];
         for (let i = 0; i < length; i++) {

@@ -247,7 +247,8 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
     public async addInstallCode(installCode: string): Promise<void> {
         const aqaraMatch = installCode.match(/^G\$M:.+\$A:(.+)\$I:(.+)$/);
         const pipeMatch = installCode.match(/^(.+)\|(.+)$/);
-        let ieeeAddr, key;
+        let ieeeAddr;
+        let key;
 
         if (aqaraMatch) {
             ieeeAddr = aqaraMatch[1];

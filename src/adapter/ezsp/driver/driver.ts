@@ -220,7 +220,11 @@ export class Driver extends EventEmitter {
         // getting MFG_BOARD_NAME token
         //const boardName = await ezsp.execCommand('getMfgToken', EzspMfgTokenId.MFG_BOARD_NAME);
         let verInfo = await this.ezsp.getValue(EzspValueId.VALUE_VERSION_INFO);
-        let build, major, minor, patch, special;
+        let build;
+        let major;
+        let minor;
+        let patch;
+        let special;
         [build, verInfo] = uint16_t.deserialize(uint16_t, verInfo);
         [major, verInfo] = uint8_t.deserialize(uint8_t, verInfo);
         [minor, verInfo] = uint8_t.deserialize(uint8_t, verInfo);

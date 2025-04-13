@@ -578,7 +578,9 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
      */
     public validateReceivedFrame(buffalo: EzspBuffalo): EzspStatus {
         let status: EzspStatus = EzspStatus.SUCCESS;
-        let frameControl: number, frameId: number, parametersIndex: number;
+        let frameControl: number;
+        let frameId: number;
+        let parametersIndex: number;
         [status, frameControl, frameId, parametersIndex] = buffalo.getResponseMetadata();
 
         if (frameId === EzspFrameID.INVALID_COMMAND) {

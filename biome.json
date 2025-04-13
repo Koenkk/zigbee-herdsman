@@ -20,7 +20,6 @@
                 "noNonNullAssertion": "off",
                 "noParameterAssign": "off",
                 "noUselessElse": "off",
-                "useSingleVarDeclarator": "off",
                 "useConst": "off"
             },
             "complexity": {

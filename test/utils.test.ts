@@ -135,7 +135,9 @@ describe("Utils", () => {
         const queue = new Queue(4);
         const finished = [];
 
-        let job1Promise, job2Promise, job3Promise;
+        let job1Promise;
+        let job2Promise;
+        let job3Promise;
         const job1 = new Promise((resolve) => (job1Promise = resolve));
         const job2 = new Promise((resolve) => (job2Promise = resolve));
         const job5 = new Promise((resolve) => {});
