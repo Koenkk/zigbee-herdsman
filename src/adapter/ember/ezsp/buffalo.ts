@@ -905,6 +905,7 @@ export class EzspBuffalo extends Buffalo {
                 case EmberGpSinkType.FULL_UNICAST:
                 case EmberGpSinkType.LW_UNICAST:
                 case EmberGpSinkType.UNUSED:
+                // biome-ignore lint/suspicious/useDefaultSwitchClauseLast: <explanation>
                 default: {
                     const sinkNodeId = this.readUInt16();
                     const sinkEUI = this.readIeeeAddr();
@@ -953,6 +954,7 @@ export class EzspBuffalo extends Buffalo {
                 case EmberGpSinkType.FULL_UNICAST:
                 case EmberGpSinkType.LW_UNICAST:
                 case EmberGpSinkType.UNUSED:
+                // biome-ignore lint/suspicious/useDefaultSwitchClauseLast: <explanation>
                 default:
                     this.writeUInt16(entry.unicast.sinkNodeId);
                     this.writeIeeeAddr(entry.unicast.sinkEUI);

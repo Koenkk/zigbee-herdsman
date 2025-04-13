@@ -39,8 +39,7 @@
                 "noConfusingVoidType": "off",
                 "noDoubleEquals": "off",
                 "noAssignInExpressions": "off",
-                "noAsyncPromiseExecutor": "off",
-                "useDefaultSwitchClauseLast": "off"
+                "noAsyncPromiseExecutor": "off"
             }
         }
     }
