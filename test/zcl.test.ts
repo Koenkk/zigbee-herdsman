@@ -3,6 +3,51 @@ import {BuffaloZcl} from '../src/zspec/zcl/buffaloZcl';
 import {BuffaloZclDataType, DataType, Direction, FrameType, StructuredIndicatorType} from '../src/zspec/zcl/definition/enums';
 
 describe('Zcl', () => {
+    it('validate clusters', () => {
+        const keys: string[] = [];
+        const ids: number[] = [];
+        // of course...
+        const OFF_SPEC_ID_KEYS = [
+            'manuSpecificTuya',
+            'manuSpecificTuya_2',
+            'manuSpecificTuya_3',
+            'zosungIRTransmit',
+            'zosungIRControl',
+            'manuSpecificDoorman',
+        ];
+
+        for (const key in Zcl.Clusters) {
+            const id = Zcl.Clusters[key as keyof typeof Zcl.Clusters].ID;
+
+            keys.push(key);
+            ids.push(id);
+
+            if (!OFF_SPEC_ID_KEYS.includes(key)) {
+                // standard or manuf-specific, no reserved
+                expect(id >= 0x0000 && (id <= 0x7fff || (id >= 0xfc00 && id <= 0xffff))).toStrictEqual(true);
+            }
+        }
+
+        const uniqueKeys = new Set(keys);
+        // const uniqueIds = new Set(ids);
+
+        expect(uniqueKeys.size).toStrictEqual(keys.length);
+        // expect(uniqueIds.size).toStrictEqual(ids.length);
+
+        // XXX: until manuf-specific move to ZHC completed
+        const dupeIds = new Set(ids.filter((id1) => ids.filter((id2) => id1 === id2).length > 1));
+
+        if (dupeIds.size > 0) {
+            for (const dupeId of dupeIds) {
+                console.warn(`Duplicate clusters found with ID: ${dupeId} (0x${dupeId.toString(16)})`);
+
+                if (dupeId <= 0x7fff) {
+                    throw new Error('Duplicate standard cluster');
+                }
+            }
+        }
+    });
+
     it('Get cluster by name', () => {
         const cluster = Zcl.Utils.getCluster('genIdentify', undefined, {});
         expect(cluster.ID).toBe(3);
@@ -500,10 +545,10 @@ describe('Zcl', () => {
                         '9': 5378,
                         '10': 9784,
                         '12': 0,
-                        '100': 1,
-                        '101': 0,
-                        '110': 255,
-                        '111': 255,
+                        '100': true,
+                        '101': false,
+                        '110': Number.NaN,
+                        '111': Number.NaN,
                         '148': 4,
                         '149': 0.14562499523162842,
                         '150': 2335.614013671875,
@@ -522,7 +567,7 @@ describe('Zcl', () => {
             ],
             [
                 {attrId: 5, dataType: 66, attrData: 'lumi.sensor_wleak.aq1'},
-                {attrId: 65281, dataType: 66, attrData: {'1': 3285, '3': 33, '4': 5032, '5': 43, '6': 327680, '8': 516, '10': 0, '100': 0}},
+                {attrId: 65281, dataType: 66, attrData: {'1': 3285, '3': 33, '4': 5032, '5': 43, '6': 327680, '8': 516, '10': 0, '100': false}},
             ],
         ],
     ])('ZclFrame from buffer xiaomiStruct', (data, payload) => {
@@ -567,7 +612,7 @@ describe('Zcl', () => {
                 dataType: 76,
                 numElms: 6,
                 structElms: [
-                    {elmType: 16, elmVal: 1},
+                    {elmType: 16, elmVal: true},
                     {elmType: 33, elmVal: 3022},
                     {elmType: 33, elmVal: 17320},
                     {elmType: 36, elmVal: 1},
@@ -575,7 +620,7 @@ describe('Zcl', () => {
                     {elmType: 32, elmVal: 86},
                 ],
                 attrData: [
-                    {elmType: 16, elmVal: 1},
+                    {elmType: 16, elmVal: true},
                     {elmType: 33, elmVal: 3022},
                     {elmType: 33, elmVal: 17320},
                     {elmType: 36, elmVal: 1},
@@ -745,7 +790,7 @@ describe('Zcl', () => {
             commandID: 16,
             frameCounter: 1253,
             options: 5280,
-            payloadSize: 255,
+            payloadSize: Number.NaN,
         };
 
         expect(frame.header).toStrictEqual(header);
@@ -753,7 +798,7 @@ describe('Zcl', () => {
     });
 
     it('ZclFrame from buffer GPD with extra data', () => {
-        const buffer = Buffer.from([0x11, 0x00, 0x00, 0xa0, 0x14, 0xfe, 0xf4, 0x46, 0x00, 0xe5, 0x04, 0x00, 0x00, 0x10, 0xff, 0x01]);
+        const buffer = Buffer.from([0x11, 0x00, 0x00, 0xa0, 0x14, 0xfe, 0xf4, 0x46, 0x00, 0xe5, 0x04, 0x00, 0x00, 0x10, 0x01, 0x01]);
         const frame = Zcl.Frame.fromBuffer(Zcl.Clusters.greenPower.ID, Zcl.Header.fromBuffer(buffer)!, buffer, {});
         const header = new Zcl.Header(
             {
@@ -774,7 +819,7 @@ describe('Zcl', () => {
             commandID: 16,
             frameCounter: 1253,
             options: 5280,
-            payloadSize: 255,
+            payloadSize: 1,
         };
 
         expect(frame.header).toStrictEqual(header);
@@ -1955,6 +2000,7 @@ describe('Zcl', () => {
         expect(
             frame.read(BuffaloZclDataType.GPD_FRAME, {
                 payload: {
+                    payloadSize: buffer.length,
                     commandID: 0xe0,
                 },
             }),
@@ -2024,6 +2070,7 @@ describe('Zcl', () => {
         expect(
             frame.read(BuffaloZclDataType.GPD_FRAME, {
                 payload: {
+                    payloadSize: buffer.length,
                     commandID: 0xe0,
                 },
             }),
@@ -2055,6 +2102,7 @@ describe('Zcl', () => {
         expect(
             frame.read(BuffaloZclDataType.GPD_FRAME, {
                 payload: {
+                    payloadSize: buffer.length,
                     commandID: 0xe3,
                 },
             }),
@@ -2107,7 +2155,7 @@ describe('Zcl', () => {
             attributes: {
                 '0': 50462976,
                 '1': 'ZIGBEE',
-                '2': 1,
+                '2': true,
             },
         });
     });
@@ -2408,7 +2456,7 @@ describe('Zcl', () => {
         const buffer = Buffer.alloc(4);
         const expected = Buffer.from([0xff, 0xff, 0xff, 0xff]);
         const buffalo = new BuffaloZcl(buffer);
-        const payload = {hours: undefined, minutes: undefined, seconds: undefined, hundredths: undefined};
+        const payload = {hours: Number.NaN, minutes: Number.NaN, seconds: Number.NaN, hundredths: Number.NaN};
         buffalo.write(DataType.TOD, payload, {});
         expect(buffalo.getBuffer()).toStrictEqual(expected);
     });
@@ -2417,7 +2465,7 @@ describe('Zcl', () => {
         const buffer = Buffer.alloc(4);
         const expected = Buffer.from([0xff, 0xff, 0xff, 0xff]);
         const buffalo = new BuffaloZcl(buffer);
-        const payload = {year: undefined, month: undefined, dayOfMonth: undefined, dayOfWeek: undefined};
+        const payload = {year: Number.NaN, month: Number.NaN, dayOfMonth: Number.NaN, dayOfWeek: Number.NaN};
         buffalo.write(DataType.DATE, payload, {});
         expect(buffalo.getBuffer()).toStrictEqual(expected);
     });
@@ -2805,11 +2853,11 @@ describe('Zcl', () => {
         }).toThrow(`Cannot write USE_DATA_TYPE without dataType option specified`);
     });
 
-    it('Throws when read GPD_FRAME is missing payload.payloadSize option when payload.commandID is 0xA1', () => {
+    it('Throws when read GPD_FRAME is missing payload.payloadSize option', () => {
         expect(() => {
             const buffalo = new BuffaloZcl(Buffer.alloc(1));
             buffalo.read(BuffaloZclDataType.GPD_FRAME, {payload: {commandID: 0xa1}});
-        }).toThrow(`Cannot read GPD_FRAME with commandID=0xA1 without payloadSize options specified`);
+        }).toThrow(`Cannot read GPD_FRAME without required payload options specified`);
     });
 
     it('Throws when read LIST_THERMO_TRANSITIONS is missing required payload options', () => {

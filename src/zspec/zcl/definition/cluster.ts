@@ -1,9 +1,10 @@
 /* eslint max-len: 0 */
 
+import type {ClusterDefinition, ClusterName} from './tstype';
+
 import {BuffaloZclDataType, DataType, ParameterCondition} from './enums';
 import {ManufacturerCode} from './manufacturerCode';
 import {Status} from './status';
-import {ClusterDefinition, ClusterName} from './tstype';
 
 export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>> = {
     genBasic: {
@@ -2413,7 +2414,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         commandsResponse: {},
     },
     msIlluminanceMeasurement: {
-        ID: 1024,
+        ID: 1024, // 0x0400
         attributes: {
             measuredValue: {ID: 0, type: DataType.UINT16},
             minMeasuredValue: {ID: 1, type: DataType.UINT16},
@@ -2425,7 +2426,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         commandsResponse: {},
     },
     msIlluminanceLevelSensing: {
-        ID: 1025,
+        ID: 1025, // 0x0401
         attributes: {
             levelStatus: {ID: 0, type: DataType.ENUM8},
             lightSensorType: {ID: 1, type: DataType.ENUM8},
@@ -2435,7 +2436,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         commandsResponse: {},
     },
     msTemperatureMeasurement: {
-        ID: 1026,
+        ID: 1026, // 0x0402
         attributes: {
             measuredValue: {ID: 0, type: DataType.INT16},
             minMeasuredValue: {ID: 1, type: DataType.INT16},
@@ -2449,7 +2450,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         commandsResponse: {},
     },
     msPressureMeasurement: {
-        ID: 1027,
+        ID: 1027, // 0x0403
         attributes: {
             measuredValue: {ID: 0, type: DataType.INT16},
             minMeasuredValue: {ID: 1, type: DataType.INT16},
@@ -2465,7 +2466,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         commandsResponse: {},
     },
     msFlowMeasurement: {
-        ID: 1028,
+        ID: 1028, // 0x0404
         attributes: {
             measuredValue: {ID: 0, type: DataType.UINT16},
             minMeasuredValue: {ID: 1, type: DataType.UINT16},
@@ -2476,7 +2477,8 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         commandsResponse: {},
     },
     msRelativeHumidity: {
-        ID: 1029,
+        // Water Content
+        ID: 1029, // 0x0405
         attributes: {
             measuredValue: {ID: 0, type: DataType.UINT16},
             minMeasuredValue: {ID: 1, type: DataType.UINT16},
@@ -2488,7 +2490,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         commandsResponse: {},
     },
     msOccupancySensing: {
-        ID: 1030,
+        ID: 1030, // 0x0406
         attributes: {
             occupancy: {ID: 0x0000, type: DataType.BITMAP8},
             occupancySensorType: {ID: 0x0001, type: DataType.ENUM8},
@@ -2512,8 +2514,19 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         commands: {},
         commandsResponse: {},
     },
+    msLeafWetness: {
+        ID: 1031, // 0x0407
+        attributes: {
+            measuredValue: {ID: 0, type: DataType.UINT16},
+            minMeasuredValue: {ID: 1, type: DataType.UINT16},
+            maxMeasuredValue: {ID: 2, type: DataType.UINT16},
+            tolerance: {ID: 3, type: DataType.UINT16},
+        },
+        commands: {},
+        commandsResponse: {},
+    },
     msSoilMoisture: {
-        ID: 1032,
+        ID: 1032, // 0x0408
         attributes: {
             measuredValue: {ID: 0, type: DataType.UINT16},
             minMeasuredValue: {ID: 1, type: DataType.UINT16},
@@ -2524,7 +2537,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         commandsResponse: {},
     },
     pHMeasurement: {
-        ID: 1033,
+        ID: 1033, // 0x0409
         attributes: {
             measuredValue: {ID: 0, type: DataType.UINT16},
             minMeasuredValue: {ID: 1, type: DataType.UINT16},
@@ -2534,58 +2547,414 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         commands: {},
         commandsResponse: {},
     },
-    msCO2: {
-        ID: 1037,
+    msElectricalConductivity: {
+        ID: 1034, // 0x040a
+        attributes: {
+            measuredValue: {ID: 0, type: DataType.UINT16},
+            minMeasuredValue: {ID: 1, type: DataType.UINT16},
+            maxMeasuredValue: {ID: 2, type: DataType.UINT16},
+            tolerance: {ID: 3, type: DataType.UINT16},
+        },
+        commands: {},
+        commandsResponse: {},
+    },
+    msWindSpeed: {
+        ID: 1035, // 0x040b
+        attributes: {
+            measuredValue: {ID: 0, type: DataType.UINT16},
+            minMeasuredValue: {ID: 1, type: DataType.UINT16},
+            maxMeasuredValue: {ID: 2, type: DataType.UINT16},
+            tolerance: {ID: 3, type: DataType.UINT16},
+        },
+        commands: {},
+        commandsResponse: {},
+    },
+    msCarbonMonoxide: {
+        // CO
+        ID: 1036, // 0x040c
         attributes: {
             measuredValue: {ID: 0, type: DataType.SINGLE_PREC},
             minMeasuredValue: {ID: 1, type: DataType.SINGLE_PREC},
             maxMeasuredValue: {ID: 2, type: DataType.SINGLE_PREC},
+            tolerance: {ID: 3, type: DataType.SINGLE_PREC},
+        },
+        commands: {},
+        commandsResponse: {},
+    },
+    msCO2: {
+        // Carbon Dioxide
+        ID: 1037, // 0x040d
+        attributes: {
+            measuredValue: {ID: 0, type: DataType.SINGLE_PREC},
+            minMeasuredValue: {ID: 1, type: DataType.SINGLE_PREC},
+            maxMeasuredValue: {ID: 2, type: DataType.SINGLE_PREC},
+            tolerance: {ID: 3, type: DataType.SINGLE_PREC},
             sprutCO2Calibration: {ID: 0x6600, type: DataType.BOOLEAN, manufacturerCode: ManufacturerCode.CUSTOM_SPRUT_DEVICE},
             sprutCO2AutoCalibration: {ID: 0x6601, type: DataType.BOOLEAN, manufacturerCode: ManufacturerCode.CUSTOM_SPRUT_DEVICE},
         },
         commands: {},
         commandsResponse: {},
     },
+    msEthylene: {
+        // CH2
+        ID: 1038, // 0x040e
+        attributes: {
+            measuredValue: {ID: 0, type: DataType.SINGLE_PREC},
+            minMeasuredValue: {ID: 1, type: DataType.SINGLE_PREC},
+            maxMeasuredValue: {ID: 2, type: DataType.SINGLE_PREC},
+            tolerance: {ID: 3, type: DataType.SINGLE_PREC},
+        },
+        commands: {},
+        commandsResponse: {},
+    },
+    msEthyleneOxide: {
+        // C2H4O
+        ID: 1039, // 0x040f
+        attributes: {
+            measuredValue: {ID: 0, type: DataType.SINGLE_PREC},
+            minMeasuredValue: {ID: 1, type: DataType.SINGLE_PREC},
+            maxMeasuredValue: {ID: 2, type: DataType.SINGLE_PREC},
+            tolerance: {ID: 3, type: DataType.SINGLE_PREC},
+        },
+        commands: {},
+        commandsResponse: {},
+    },
+    msHydrogen: {
+        // H
+        ID: 1040, // 0x0410
+        attributes: {
+            measuredValue: {ID: 0, type: DataType.SINGLE_PREC},
+            minMeasuredValue: {ID: 1, type: DataType.SINGLE_PREC},
+            maxMeasuredValue: {ID: 2, type: DataType.SINGLE_PREC},
+            tolerance: {ID: 3, type: DataType.SINGLE_PREC},
+        },
+        commands: {},
+        commandsResponse: {},
+    },
+    msHydrogenSulfide: {
+        // H2S
+        ID: 1041, // 0x0411
+        attributes: {
+            measuredValue: {ID: 0, type: DataType.SINGLE_PREC},
+            minMeasuredValue: {ID: 1, type: DataType.SINGLE_PREC},
+            maxMeasuredValue: {ID: 2, type: DataType.SINGLE_PREC},
+            tolerance: {ID: 3, type: DataType.SINGLE_PREC},
+        },
+        commands: {},
+        commandsResponse: {},
+    },
+    msNitricOxide: {
+        // NO
+        ID: 1042, // 0x0412
+        attributes: {
+            measuredValue: {ID: 0, type: DataType.SINGLE_PREC},
+            minMeasuredValue: {ID: 1, type: DataType.SINGLE_PREC},
+            maxMeasuredValue: {ID: 2, type: DataType.SINGLE_PREC},
+            tolerance: {ID: 3, type: DataType.SINGLE_PREC},
+        },
+        commands: {},
+        commandsResponse: {},
+    },
+    msNitrogenDioxide: {
+        // NO2
+        ID: 1043, // 0x0413
+        attributes: {
+            measuredValue: {ID: 0, type: DataType.SINGLE_PREC},
+            minMeasuredValue: {ID: 1, type: DataType.SINGLE_PREC},
+            maxMeasuredValue: {ID: 2, type: DataType.SINGLE_PREC},
+            tolerance: {ID: 3, type: DataType.SINGLE_PREC},
+        },
+        commands: {},
+        commandsResponse: {},
+    },
+    msOxygen: {
+        // O2
+        ID: 1044, // 0x0414
+        attributes: {
+            measuredValue: {ID: 0, type: DataType.SINGLE_PREC},
+            minMeasuredValue: {ID: 1, type: DataType.SINGLE_PREC},
+            maxMeasuredValue: {ID: 2, type: DataType.SINGLE_PREC},
+            tolerance: {ID: 3, type: DataType.SINGLE_PREC},
+        },
+        commands: {},
+        commandsResponse: {},
+    },
+    msOzone: {
+        // O3
+        ID: 1045, // 0x0415
+        attributes: {
+            measuredValue: {ID: 0, type: DataType.SINGLE_PREC},
+            minMeasuredValue: {ID: 1, type: DataType.SINGLE_PREC},
+            maxMeasuredValue: {ID: 2, type: DataType.SINGLE_PREC},
+            tolerance: {ID: 3, type: DataType.SINGLE_PREC},
+        },
+        commands: {},
+        commandsResponse: {},
+    },
+    msSulfurDioxide: {
+        // SO2
+        ID: 1046, // 0x0416
+        attributes: {
+            measuredValue: {ID: 0, type: DataType.SINGLE_PREC},
+            minMeasuredValue: {ID: 1, type: DataType.SINGLE_PREC},
+            maxMeasuredValue: {ID: 2, type: DataType.SINGLE_PREC},
+            tolerance: {ID: 3, type: DataType.SINGLE_PREC},
+        },
+        commands: {},
+        commandsResponse: {},
+    },
+    msDissolvedOxygen: {
+        // DO
+        ID: 1047, // 0x0417
+        attributes: {
+            measuredValue: {ID: 0, type: DataType.SINGLE_PREC},
+            minMeasuredValue: {ID: 1, type: DataType.SINGLE_PREC},
+            maxMeasuredValue: {ID: 2, type: DataType.SINGLE_PREC},
+            tolerance: {ID: 3, type: DataType.SINGLE_PREC},
+        },
+        commands: {},
+        commandsResponse: {},
+    },
+    msBromate: {
+        ID: 1048, // 0x0418
+        attributes: {
+            measuredValue: {ID: 0, type: DataType.SINGLE_PREC},
+            minMeasuredValue: {ID: 1, type: DataType.SINGLE_PREC},
+            maxMeasuredValue: {ID: 2, type: DataType.SINGLE_PREC},
+            tolerance: {ID: 3, type: DataType.SINGLE_PREC},
+        },
+        commands: {},
+        commandsResponse: {},
+    },
+    msChloramines: {
+        ID: 1049, // 0x0419
+        attributes: {
+            measuredValue: {ID: 0, type: DataType.SINGLE_PREC},
+            minMeasuredValue: {ID: 1, type: DataType.SINGLE_PREC},
+            maxMeasuredValue: {ID: 2, type: DataType.SINGLE_PREC},
+            tolerance: {ID: 3, type: DataType.SINGLE_PREC},
+        },
+        commands: {},
+        commandsResponse: {},
+    },
+    msChlorine: {
+        ID: 1050, // 0x041a
+        attributes: {
+            measuredValue: {ID: 0, type: DataType.SINGLE_PREC},
+            minMeasuredValue: {ID: 1, type: DataType.SINGLE_PREC},
+            maxMeasuredValue: {ID: 2, type: DataType.SINGLE_PREC},
+            tolerance: {ID: 3, type: DataType.SINGLE_PREC},
+        },
+        commands: {},
+        commandsResponse: {},
+    },
+    msFecalColiformAndEColi: {
+        ID: 1051, // 0x041b
+        attributes: {
+            measuredValue: {ID: 0, type: DataType.SINGLE_PREC},
+            minMeasuredValue: {ID: 1, type: DataType.SINGLE_PREC},
+            maxMeasuredValue: {ID: 2, type: DataType.SINGLE_PREC},
+            tolerance: {ID: 3, type: DataType.SINGLE_PREC},
+        },
+        commands: {},
+        commandsResponse: {},
+    },
+    msFluoride: {
+        ID: 1052, // 0x041c
+        attributes: {
+            measuredValue: {ID: 0, type: DataType.SINGLE_PREC},
+            minMeasuredValue: {ID: 1, type: DataType.SINGLE_PREC},
+            maxMeasuredValue: {ID: 2, type: DataType.SINGLE_PREC},
+            tolerance: {ID: 3, type: DataType.SINGLE_PREC},
+        },
+        commands: {},
+        commandsResponse: {},
+    },
+    msHaloaceticAcids: {
+        ID: 1053, // 0x041d
+        attributes: {
+            measuredValue: {ID: 0, type: DataType.SINGLE_PREC},
+            minMeasuredValue: {ID: 1, type: DataType.SINGLE_PREC},
+            maxMeasuredValue: {ID: 2, type: DataType.SINGLE_PREC},
+            tolerance: {ID: 3, type: DataType.SINGLE_PREC},
+        },
+        commands: {},
+        commandsResponse: {},
+    },
+    msTotalTrihalomethanes: {
+        ID: 1054, // 0x041e
+        attributes: {
+            measuredValue: {ID: 0, type: DataType.SINGLE_PREC},
+            minMeasuredValue: {ID: 1, type: DataType.SINGLE_PREC},
+            maxMeasuredValue: {ID: 2, type: DataType.SINGLE_PREC},
+            tolerance: {ID: 3, type: DataType.SINGLE_PREC},
+        },
+        commands: {},
+        commandsResponse: {},
+    },
+    msTotalColiformBacteria: {
+        ID: 1055, // 0x041f
+        attributes: {
+            measuredValue: {ID: 0, type: DataType.SINGLE_PREC},
+            minMeasuredValue: {ID: 1, type: DataType.SINGLE_PREC},
+            maxMeasuredValue: {ID: 2, type: DataType.SINGLE_PREC},
+            tolerance: {ID: 3, type: DataType.SINGLE_PREC},
+        },
+        commands: {},
+        commandsResponse: {},
+    },
+    msTurbidity: {
+        ID: 1056, // 0x0420
+        attributes: {
+            measuredValue: {ID: 0, type: DataType.SINGLE_PREC},
+            minMeasuredValue: {ID: 1, type: DataType.SINGLE_PREC},
+            maxMeasuredValue: {ID: 2, type: DataType.SINGLE_PREC},
+            tolerance: {ID: 3, type: DataType.SINGLE_PREC},
+        },
+        commands: {},
+        commandsResponse: {},
+    },
+    msCopper: {
+        ID: 1057, // 0x0421
+        attributes: {
+            measuredValue: {ID: 0, type: DataType.SINGLE_PREC},
+            minMeasuredValue: {ID: 1, type: DataType.SINGLE_PREC},
+            maxMeasuredValue: {ID: 2, type: DataType.SINGLE_PREC},
+            tolerance: {ID: 3, type: DataType.SINGLE_PREC},
+        },
+        commands: {},
+        commandsResponse: {},
+    },
+    msLead: {
+        ID: 1058, // 0x0422
+        attributes: {
+            measuredValue: {ID: 0, type: DataType.SINGLE_PREC},
+            minMeasuredValue: {ID: 1, type: DataType.SINGLE_PREC},
+            maxMeasuredValue: {ID: 2, type: DataType.SINGLE_PREC},
+            tolerance: {ID: 3, type: DataType.SINGLE_PREC},
+        },
+        commands: {},
+        commandsResponse: {},
+    },
+    msManganese: {
+        ID: 1059, // 0x0423
+        attributes: {
+            measuredValue: {ID: 0, type: DataType.SINGLE_PREC},
+            minMeasuredValue: {ID: 1, type: DataType.SINGLE_PREC},
+            maxMeasuredValue: {ID: 2, type: DataType.SINGLE_PREC},
+            tolerance: {ID: 3, type: DataType.SINGLE_PREC},
+        },
+        commands: {},
+        commandsResponse: {},
+    },
+    msSulfate: {
+        ID: 1060, // 0x0424
+        attributes: {
+            measuredValue: {ID: 0, type: DataType.SINGLE_PREC},
+            minMeasuredValue: {ID: 1, type: DataType.SINGLE_PREC},
+            maxMeasuredValue: {ID: 2, type: DataType.SINGLE_PREC},
+            tolerance: {ID: 3, type: DataType.SINGLE_PREC},
+        },
+        commands: {},
+        commandsResponse: {},
+    },
+    msBromodichloromethane: {
+        ID: 1061, // 0x0425
+        attributes: {
+            measuredValue: {ID: 0, type: DataType.SINGLE_PREC},
+            minMeasuredValue: {ID: 1, type: DataType.SINGLE_PREC},
+            maxMeasuredValue: {ID: 2, type: DataType.SINGLE_PREC},
+            tolerance: {ID: 3, type: DataType.SINGLE_PREC},
+        },
+        commands: {},
+        commandsResponse: {},
+    },
+    msBromoform: {
+        ID: 1062, // 0x0426
+        attributes: {
+            measuredValue: {ID: 0, type: DataType.SINGLE_PREC},
+            minMeasuredValue: {ID: 1, type: DataType.SINGLE_PREC},
+            maxMeasuredValue: {ID: 2, type: DataType.SINGLE_PREC},
+            tolerance: {ID: 3, type: DataType.SINGLE_PREC},
+        },
+        commands: {},
+        commandsResponse: {},
+    },
+    msChlorodibromomethane: {
+        ID: 1063, // 0x0427
+        attributes: {
+            measuredValue: {ID: 0, type: DataType.SINGLE_PREC},
+            minMeasuredValue: {ID: 1, type: DataType.SINGLE_PREC},
+            maxMeasuredValue: {ID: 2, type: DataType.SINGLE_PREC},
+            tolerance: {ID: 3, type: DataType.SINGLE_PREC},
+        },
+        commands: {},
+        commandsResponse: {},
+    },
+    msChloroform: {
+        ID: 1064, // 0x0428
+        attributes: {
+            measuredValue: {ID: 0, type: DataType.SINGLE_PREC},
+            minMeasuredValue: {ID: 1, type: DataType.SINGLE_PREC},
+            maxMeasuredValue: {ID: 2, type: DataType.SINGLE_PREC},
+            tolerance: {ID: 3, type: DataType.SINGLE_PREC},
+        },
+        commands: {},
+        commandsResponse: {},
+    },
+    msSodium: {
+        ID: 1065, // 0x0429
+        attributes: {
+            measuredValue: {ID: 0, type: DataType.SINGLE_PREC},
+            minMeasuredValue: {ID: 1, type: DataType.SINGLE_PREC},
+            maxMeasuredValue: {ID: 2, type: DataType.SINGLE_PREC},
+            tolerance: {ID: 3, type: DataType.SINGLE_PREC},
+        },
+        commands: {},
+        commandsResponse: {},
+    },
     pm25Measurement: {
-        ID: 0x042a,
+        ID: 1066, // 0x042a
         attributes: {
             measuredValue: {ID: 0x0000, type: DataType.SINGLE_PREC},
             measuredMinValue: {ID: 0x0001, type: DataType.SINGLE_PREC},
             measuredMaxValue: {ID: 0x0002, type: DataType.SINGLE_PREC},
-            measuredTolerance: {ID: 0x0003, type: DataType.SINGLE_PREC},
+            tolerance: {ID: 0x0003, type: DataType.SINGLE_PREC},
         },
         commands: {},
         commandsResponse: {},
     },
     msFormaldehyde: {
-        ID: 0x042b,
+        ID: 1067, // 0x042b
         attributes: {
             measuredValue: {ID: 0x0000, type: DataType.SINGLE_PREC},
             minMeasuredValue: {ID: 0x0001, type: DataType.SINGLE_PREC},
             maxMeasuredValue: {ID: 0x0002, type: DataType.SINGLE_PREC},
-            measuredTolerance: {ID: 0x0003, type: DataType.SINGLE_PREC},
+            tolerance: {ID: 0x0003, type: DataType.SINGLE_PREC},
         },
         commands: {},
         commandsResponse: {},
     },
     pm1Measurement: {
-        ID: 0x042c,
+        // XXX: not in R8 spec?
+        ID: 1068, // 0x042c
         attributes: {
             measuredValue: {ID: 0x0000, type: DataType.SINGLE_PREC},
             measuredMinValue: {ID: 0x0001, type: DataType.SINGLE_PREC},
             measuredMaxValue: {ID: 0x0002, type: DataType.SINGLE_PREC},
-            measuredTolerance: {ID: 0x0003, type: DataType.SINGLE_PREC},
+            tolerance: {ID: 0x0003, type: DataType.SINGLE_PREC},
         },
         commands: {},
         commandsResponse: {},
     },
     pm10Measurement: {
-        ID: 0x042d,
+        // XXX: not in R8 spec?
+        ID: 1069, // 0x042d
         attributes: {
             measuredValue: {ID: 0x0000, type: DataType.SINGLE_PREC},
             measuredMinValue: {ID: 0x0001, type: DataType.SINGLE_PREC},
             measuredMaxValue: {ID: 0x0002, type: DataType.SINGLE_PREC},
-            measuredTolerance: {ID: 0x0003, type: DataType.SINGLE_PREC},
+            tolerance: {ID: 0x0003, type: DataType.SINGLE_PREC},
         },
         commands: {},
         commandsResponse: {},

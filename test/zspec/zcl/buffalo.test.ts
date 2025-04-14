@@ -67,9 +67,11 @@ describe('ZCL Buffalo', () => {
     });
 
     it.each([
+        ['boolean', {value: true, types: [Zcl.DataType.BOOLEAN]}, {position: 1, write: 'writeUInt8', read: 'readUInt8'}],
+        ['boolean', {value: false, types: [Zcl.DataType.BOOLEAN]}, {position: 1, write: 'writeUInt8', read: 'readUInt8'}],
         [
             'uint8-like',
-            {value: 250, types: [Zcl.DataType.DATA8, Zcl.DataType.BOOLEAN, Zcl.DataType.BITMAP8, Zcl.DataType.UINT8, Zcl.DataType.ENUM8]},
+            {value: 250, types: [Zcl.DataType.DATA8, Zcl.DataType.BITMAP8, Zcl.DataType.UINT8, Zcl.DataType.ENUM8]},
             {position: 1, write: 'writeUInt8', read: 'readUInt8'},
         ],
         [
@@ -165,6 +167,181 @@ describe('ZCL Buffalo', () => {
             expect(readSpy).toHaveBeenCalledTimes(1);
             expect(buffalo.getPosition()).toStrictEqual(expected.position);
         }
+    });
+
+    it.each([
+        ['boolean', {value: undefined, types: [Zcl.DataType.BOOLEAN]}, {written: 0xff, position: 1, write: 'writeUInt8', read: 'readUInt8'}],
+        [
+            'uint8-like',
+            {value: Number.NaN, types: [Zcl.DataType.DATA8, Zcl.DataType.BITMAP8, Zcl.DataType.UINT8, Zcl.DataType.ENUM8]},
+            {written: 0xff, position: 1, write: 'writeUInt8', read: 'readUInt8'},
+        ],
+        [
+            'uint16-like',
+            {
+                value: Number.NaN,
+                types: [
+                    Zcl.DataType.DATA16,
+                    Zcl.DataType.BITMAP16,
+                    Zcl.DataType.UINT16,
+                    Zcl.DataType.ENUM16,
+                    Zcl.DataType.CLUSTER_ID,
+                    Zcl.DataType.ATTR_ID,
+                ],
+            },
+            {written: 0xffff, position: 2, write: 'writeUInt16', read: 'readUInt16'},
+        ],
+        [
+            'uint24-like',
+            {value: Number.NaN, types: [Zcl.DataType.DATA24, Zcl.DataType.BITMAP24, Zcl.DataType.UINT24]},
+            {written: 0xffffff, position: 3, write: 'writeUInt24', read: 'readUInt24'},
+        ],
+        [
+            'uint32-like',
+            {value: Number.NaN, types: [Zcl.DataType.DATA32, Zcl.DataType.BITMAP32, Zcl.DataType.UINT32, Zcl.DataType.UTC, Zcl.DataType.BAC_OID]},
+            {written: 0xffffffff, position: 4, write: 'writeUInt32', read: 'readUInt32'},
+        ],
+        [
+            'uint40-like',
+            {value: Number.NaN, types: [Zcl.DataType.DATA40, Zcl.DataType.BITMAP40, Zcl.DataType.UINT40]},
+            {written: 0xffffffffff, position: 5, write: 'writeUInt40', read: 'readUInt40'},
+        ],
+        [
+            'uint48-like',
+            {value: Number.NaN, types: [Zcl.DataType.DATA48, Zcl.DataType.BITMAP48, Zcl.DataType.UINT48]},
+            {written: 0xffffffffffff, position: 6, write: 'writeUInt48', read: 'readUInt48'},
+        ],
+        [
+            'uint56-like',
+            {value: undefined, types: [Zcl.DataType.DATA56, Zcl.DataType.BITMAP56, Zcl.DataType.UINT56]},
+            {written: 0xffffffffffffffn, position: 7, write: 'writeUInt56', read: 'readUInt56'},
+        ],
+        [
+            'uint64-like',
+            {value: undefined, types: [Zcl.DataType.DATA64, Zcl.DataType.BITMAP64, Zcl.DataType.UINT64]},
+            {written: 0xffffffffffffffffn, position: 8, write: 'writeUInt64', read: 'readUInt64'},
+        ],
+        [
+            'octectStr',
+            {value: undefined, types: [Zcl.DataType.OCTET_STR]},
+            {written: 0xff, valueRead: Buffer.from([]), position: 1, write: 'writeUInt8', read: 'readUInt8'},
+        ],
+        [
+            'longOctectStr',
+            {value: undefined, types: [Zcl.DataType.LONG_OCTET_STR]},
+            {written: 0xffff, valueRead: Buffer.from([]), position: 2, write: 'writeUInt16', read: 'readUInt16'},
+        ],
+        [
+            'charStr',
+            {value: undefined, types: [Zcl.DataType.CHAR_STR]},
+            {written: 0xff, valueRead: '', position: 1, write: 'writeUInt8', read: 'readUInt8'},
+        ],
+        [
+            'longCharStr',
+            {value: undefined, types: [Zcl.DataType.LONG_CHAR_STR]},
+            {written: 0xffff, valueRead: '', position: 2, write: 'writeUInt16', read: 'readUInt16'},
+        ],
+        [
+            'array',
+            {value: undefined, types: [Zcl.DataType.ARRAY]},
+            {written: 0xffff00, valueRead: [], position: 3, write: 'writeUInt16', read: 'readUInt16'},
+        ],
+        [
+            'struct',
+            {value: undefined, types: [Zcl.DataType.STRUCT]},
+            {written: 0xffff, valueRead: [], position: 2, write: 'writeUInt16', read: 'readUInt16'},
+        ],
+    ])('Writes & Reads non-value for %s', (_name, payload, expected) => {
+        for (const type of payload.types) {
+            const buffer = Buffer.alloc(255);
+            const buffalo = new BuffaloZcl(buffer);
+            // @ts-expect-error dynamic
+            const writeSpy = vi.spyOn(buffalo, expected.write);
+            // @ts-expect-error dynamic
+            const readSpy = vi.spyOn(buffalo, expected.read);
+
+            buffalo.write(type, payload.value, {});
+            expect(writeSpy).toHaveBeenCalledTimes(1);
+            expect(buffalo.getPosition()).toStrictEqual(expected.position);
+            const expectedWrittenBuf = Buffer.alloc(expected.position);
+
+            if (typeof expected.written === 'bigint') {
+                if (expected.position === 7) {
+                    const unsignedValue = expected.written < 0n ? (1n << 56n) + expected.written : expected.written;
+                    expectedWrittenBuf.writeUIntLE(Number(unsignedValue & 0xffffffffffffn), 0, 6);
+                    expectedWrittenBuf.writeUInt8(Number(unsignedValue >> 48n), 0 + 6);
+                } else {
+                    expectedWrittenBuf.writeBigUInt64LE(expected.written, 0);
+                }
+            } else {
+                expectedWrittenBuf.writeUIntLE(expected.written, 0, expected.position);
+            }
+
+            expect(buffalo.getWritten()).toStrictEqual(expectedWrittenBuf);
+
+            // @ts-expect-error private
+            buffalo.position = 0;
+
+            expect(buffalo.read(type, {})).toStrictEqual('valueRead' in expected ? expected.valueRead : payload.value);
+            expect(readSpy).toHaveBeenCalledTimes(1);
+            expect(buffalo.getPosition()).toStrictEqual(expected.position);
+        }
+    });
+
+    it.each([
+        ['int8-like', {value: Number.NaN, type: Zcl.DataType.INT8}, {written: -0x80, position: 1, write: 'writeInt8', read: 'readInt8'}],
+        ['int16-like', {value: Number.NaN, type: Zcl.DataType.INT16}, {written: -0x8000, position: 2, write: 'writeInt16', read: 'readInt16'}],
+        ['int24-like', {value: Number.NaN, type: Zcl.DataType.INT24}, {written: -0x800000, position: 3, write: 'writeInt24', read: 'readInt24'}],
+        ['int32-like', {value: Number.NaN, type: Zcl.DataType.INT32}, {written: -0x80000000, position: 4, write: 'writeInt32', read: 'readInt32'}],
+        ['int40-like', {value: Number.NaN, type: Zcl.DataType.INT40}, {written: -0x8000000000, position: 5, write: 'writeInt40', read: 'readInt40'}],
+        [
+            'int48-like',
+            {value: Number.NaN, type: Zcl.DataType.INT48},
+            {written: -0x800000000000, position: 6, write: 'writeInt48', read: 'readInt48'},
+        ],
+        [
+            'int56-like',
+            {value: undefined, type: Zcl.DataType.INT56},
+            {written: -0x80000000000000n, position: 7, write: 'writeInt56', read: 'readInt56'},
+        ],
+        [
+            'int64-like',
+            {value: undefined, type: Zcl.DataType.INT64},
+            {written: -0x8000000000000000n, position: 8, write: 'writeInt64', read: 'readInt64'},
+        ],
+    ])('Writes & Reads signed non-value for %s', (_name, payload, expected) => {
+        const buffer = Buffer.alloc(255);
+        const buffalo = new BuffaloZcl(buffer);
+        // @ts-expect-error dynamic
+        const writeSpy = vi.spyOn(buffalo, expected.write);
+        // @ts-expect-error dynamic
+        const readSpy = vi.spyOn(buffalo, expected.read);
+
+        buffalo.write(payload.type, payload.value, {});
+        expect(writeSpy).toHaveBeenCalledTimes(1);
+        expect(buffalo.getPosition()).toStrictEqual(expected.position);
+        const expectedWrittenBuf = Buffer.alloc(expected.position);
+
+        if (typeof expected.written === 'bigint') {
+            if (expected.position === 7) {
+                const unsignedValue = expected.written < 0n ? (1n << 56n) + expected.written : expected.written;
+                expectedWrittenBuf.writeUIntLE(Number(unsignedValue & 0xffffffffffffn), 0, 6);
+                expectedWrittenBuf.writeUInt8(Number(unsignedValue >> 48n), 0 + 6);
+            } else {
+                expectedWrittenBuf.writeBigInt64LE(expected.written, 0);
+            }
+        } else {
+            expectedWrittenBuf.writeIntLE(expected.written, 0, expected.position);
+        }
+
+        expect(buffalo.getWritten()).toStrictEqual(expectedWrittenBuf);
+
+        // @ts-expect-error private
+        buffalo.position = 0;
+
+        expect(buffalo.read(payload.type, {})).toStrictEqual('valueRead' in expected ? expected.valueRead : payload.value);
+        expect(readSpy).toHaveBeenCalledTimes(1);
+        expect(buffalo.getPosition()).toStrictEqual(expected.position);
     });
 
     it('Reads whole buffer without length option', () => {
@@ -273,7 +450,7 @@ describe('ZCL Buffalo', () => {
     });
 
     it('[workaround] Reads char str as Mi struct for Xiaomi attridId=65281', () => {
-        const expectedValue = {'1': 3285, '3': 33, '4': 5032, '5': 43, '6': 327680, '8': 516, '10': 0, '100': 0};
+        const expectedValue = {'1': 3285, '3': 33, '4': 5032, '5': 43, '6': 327680, '8': 516, '10': 0, '100': false};
         const buffer = Buffer.from([
             34,
             1,
@@ -503,17 +680,14 @@ describe('ZCL Buffalo', () => {
     });
 
     it.each([
-        ['octet str', {type: Zcl.DataType.OCTET_STR, position: 1, returned: Buffer.from([])}],
-        ['char str', {type: Zcl.DataType.CHAR_STR, position: 1, returned: ''}],
-        ['long octet str', {type: Zcl.DataType.LONG_OCTET_STR, position: 2, returned: Buffer.from([])}],
-        ['long char str', {type: Zcl.DataType.LONG_CHAR_STR, position: 2, returned: ''}],
-        ['array', {type: Zcl.DataType.ARRAY, position: 3, returned: []}],
-        ['struct', {type: Zcl.DataType.STRUCT, position: 2, returned: []}],
         [
             'time of day',
-            {type: Zcl.DataType.TOD, position: 4, returned: {hours: undefined, minutes: undefined, seconds: undefined, hundredths: undefined}},
+            {type: Zcl.DataType.TOD, position: 4, returned: {hours: Number.NaN, minutes: Number.NaN, seconds: Number.NaN, hundredths: Number.NaN}},
         ],
-        ['date', {type: Zcl.DataType.DATE, position: 4, returned: {year: undefined, month: undefined, dayOfMonth: undefined, dayOfWeek: undefined}}],
+        [
+            'date',
+            {type: Zcl.DataType.DATE, position: 4, returned: {year: Number.NaN, month: Number.NaN, dayOfMonth: Number.NaN, dayOfWeek: Number.NaN}},
+        ],
         ['mi struct', {type: Zcl.BuffaloZclDataType.MI_STRUCT, position: 1, returned: {}}],
     ])('Reads Non-Value for %s', (_name, payload) => {
         const buffalo = new BuffaloZcl(Buffer.alloc(50, 0xff));
@@ -522,13 +696,12 @@ describe('ZCL Buffalo', () => {
     });
 
     it.each([
-        // TODO: others not yet supported
         [
             'time of day',
             {
                 type: Zcl.DataType.TOD,
                 position: 4,
-                value: {hours: undefined, minutes: undefined, seconds: undefined, hundredths: undefined},
+                value: {hours: Number.NaN, minutes: Number.NaN, seconds: Number.NaN, hundredths: Number.NaN},
                 written: [0xff, 0xff, 0xff, 0xff],
             },
         ],
@@ -537,7 +710,7 @@ describe('ZCL Buffalo', () => {
             {
                 type: Zcl.DataType.DATE,
                 position: 4,
-                value: {year: undefined, month: undefined, dayOfMonth: undefined, dayOfWeek: undefined},
+                value: {year: Number.NaN, month: Number.NaN, dayOfMonth: Number.NaN, dayOfWeek: Number.NaN},
                 written: [0xff, 0xff, 0xff, 0xff],
             },
         ],
@@ -550,8 +723,8 @@ describe('ZCL Buffalo', () => {
     });
 
     it.each([
-        ['time of day', {type: Zcl.DataType.TOD, value: {hours: 1, minutes: 2, seconds: undefined, hundredths: 3}, written: [1, 2, 0xff, 3]}],
-        ['date', {type: Zcl.DataType.DATE, value: {year: 1901, month: 2, dayOfMonth: undefined, dayOfWeek: 3}, written: [1, 2, 0xff, 3]}],
+        ['time of day', {type: Zcl.DataType.TOD, value: {hours: 1, minutes: 2, seconds: Number.NaN, hundredths: 3}, written: [1, 2, 0xff, 3]}],
+        ['date', {type: Zcl.DataType.DATE, value: {year: 1901, month: 2, dayOfMonth: Number.NaN, dayOfWeek: 3}, written: [1, 2, 0xff, 3]}],
     ])('Writes & Reads partial Non-Value for %s', (_name, payload) => {
         const buffer = Buffer.alloc(10);
         const buffalo = new BuffaloZcl(buffer);
@@ -817,7 +990,9 @@ describe('ZCL Buffalo', () => {
             const value = [0xff, 0x00];
             const buffalo = new BuffaloZcl(Buffer.from(value), value.length /* pos at end*/);
 
-            expect(buffalo.read(Zcl.BuffaloZclDataType.GPD_FRAME, {payload: {commandID: 0x1ff, payloadSize: 2}})).toStrictEqual({});
+            expect(buffalo.read(Zcl.BuffaloZclDataType.GPD_FRAME, {payload: {commandID: 0x1ff, payloadSize: value.length}})).toStrictEqual({
+                raw: Buffer.from([]),
+            });
         });
 
         it('Writes commissioning', () => {
@@ -844,7 +1019,7 @@ describe('ZCL Buffalo', () => {
             const value = [0xff /*device*/, 0x00 /*options*/];
             const buffalo = new BuffaloZcl(Buffer.from(value));
 
-            expect(buffalo.read(Zcl.BuffaloZclDataType.GPD_FRAME, {payload: {commandID: 0xe0}})).toStrictEqual({
+            expect(buffalo.read(Zcl.BuffaloZclDataType.GPD_FRAME, {payload: {payloadSize: value.length, commandID: 0xe0}})).toStrictEqual({
                 deviceID: 0xff,
                 options: 0x00,
                 extendedOptions: 0x00,
@@ -956,7 +1131,7 @@ describe('ZCL Buffalo', () => {
             ];
             const buffalo = new BuffaloZcl(Buffer.from(value));
 
-            expect(buffalo.read(Zcl.BuffaloZclDataType.GPD_FRAME, {payload: {commandID: 0xe0}})).toStrictEqual({
+            expect(buffalo.read(Zcl.BuffaloZclDataType.GPD_FRAME, {payload: {payloadSize: value.length, commandID: 0xe0}})).toStrictEqual({
                 deviceID: 0xff,
                 options: 0x80 | 0x04,
                 extendedOptions: 0x20 | 0x40 | 0x80,
@@ -1013,7 +1188,7 @@ describe('ZCL Buffalo', () => {
             const value = [0xfa];
             const buffalo = new BuffaloZcl(Buffer.from(value));
 
-            expect(buffalo.read(Zcl.BuffaloZclDataType.GPD_FRAME, {payload: {commandID: 0xe3}})).toStrictEqual({
+            expect(buffalo.read(Zcl.BuffaloZclDataType.GPD_FRAME, {payload: {payloadSize: value.length, commandID: 0xe3}})).toStrictEqual({
                 nextChannel: 0xa,
                 nextNextChannel: 0xf,
             });
@@ -1052,7 +1227,7 @@ describe('ZCL Buffalo', () => {
             expect(buffalo.read(Zcl.BuffaloZclDataType.GPD_FRAME, {payload: {commandID: 0xa1, payloadSize: value.length}})).toStrictEqual({
                 manufacturerCode: 13330,
                 clusterID: 65535,
-                attributes: {'0': 50462976, '1': 'ZIGBEE', '2': 1},
+                attributes: {'0': 50462976, '1': 'ZIGBEE', '2': true},
             });
         });
 
@@ -1080,11 +1255,11 @@ describe('ZCL Buffalo', () => {
             expect(buffalo.getWritten()).toStrictEqual(Buffer.alloc(0));
         });
 
-        it('Throws when read is missing payload.payloadSize option when payload.commandID is 0xA1', () => {
+        it('Throws when read is missing payload.payloadSize option', () => {
             expect(() => {
                 const buffalo = new BuffaloZcl(Buffer.alloc(1));
                 buffalo.read(Zcl.BuffaloZclDataType.GPD_FRAME, {payload: {commandID: 0xa1}});
-            }).toThrow(`Cannot read GPD_FRAME with commandID=0xA1 without payloadSize options specified`);
+            }).toThrow('Cannot read GPD_FRAME without required payload options specified');
         });
     });
 
