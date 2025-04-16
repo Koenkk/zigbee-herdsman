@@ -40,6 +40,13 @@ interface RoutingTable {
 
 type CustomReadResponse = (frame: Zcl.Frame, endpoint: Endpoint) => boolean;
 
+export const enum InterviewState {
+    PENDING = 'PENDING',
+    IN_PROGRESS = 'IN_PROGRESS',
+    SUCCESSFUL = 'SUCCESSFUL',
+    FAILED = 'FAILED',
+}
+
 export class Device extends Entity<ControllerEventMap> {
     private readonly ID: number;
     private _applicationVersion?: number;
@@ -47,8 +54,7 @@ export class Device extends Entity<ControllerEventMap> {
     private _endpoints: Endpoint[];
     private _hardwareVersion?: number;
     private _ieeeAddr: string;
-    private _interviewCompleted: boolean;
-    private _interviewing: boolean;
+    private _interviewState: InterviewState;
     private _lastSeen?: number;
     private _manufacturerID?: number;
     private _manufacturerName?: string;
@@ -84,11 +90,8 @@ export class Device extends Entity<ControllerEventMap> {
     get endpoints(): Endpoint[] {
         return this._endpoints;
     }
-    get interviewCompleted(): boolean {
-        return this._interviewCompleted;
-    }
-    get interviewing(): boolean {
-        return this._interviewing;
+    get interviewState(): InterviewState {
+        return this._interviewState;
     }
     get lastSeen(): number | undefined {
         return this._lastSeen;
@@ -302,7 +305,7 @@ export class Device extends Entity<ControllerEventMap> {
         hardwareVersion: number | undefined,
         dateCode: string | undefined,
         softwareBuildID: string | undefined,
-        interviewCompleted: boolean,
+        interviewState: InterviewState,
         meta: KeyValue,
         lastSeen: number | undefined,
         checkinInterval: number | undefined,
@@ -325,8 +328,7 @@ export class Device extends Entity<ControllerEventMap> {
         this._hardwareVersion = hardwareVersion;
         this._dateCode = dateCode;
         this._softwareBuildID = softwareBuildID;
-        this._interviewCompleted = interviewCompleted;
-        this._interviewing = false;
+        this._interviewState = interviewState;
         this._skipDefaultResponse = false;
         this.meta = meta;
         this._lastSeen = lastSeen;
@@ -539,7 +541,7 @@ export class Device extends Entity<ControllerEventMap> {
             endpoints.push(Endpoint.fromDatabaseRecord(entry.endpoints[id], networkAddress, ieeeAddr));
         }
 
-        const meta = entry.meta ? entry.meta : {};
+        const meta = entry.meta ?? {};
 
         if (entry.type === 'Group') {
             throw new Error('Cannot load device from group');
@@ -558,6 +560,12 @@ export class Device extends Entity<ControllerEventMap> {
         }
         logger.debug(`Request Queue (${ieeeAddr}): default expiration timeout set to ${pendingRequestTimeout}`, NS);
 
+        // Migrate interviewCompleted to interviewState
+        if (!entry.interviewState) {
+            entry.interviewState = entry.interviewCompleted ? InterviewState.SUCCESSFUL : InterviewState.FAILED;
+            logger.debug(`Migrated interviewState for '${ieeeAddr}': ${entry.interviewCompleted} -> ${entry.interviewCompleted}`, NS);
+        }
+
         return new Device(
             entry.id,
             entry.type,
@@ -574,7 +582,7 @@ export class Device extends Entity<ControllerEventMap> {
             entry.hwVersion,
             entry.dateCode,
             entry.swBuildId,
-            entry.interviewCompleted,
+            entry.interviewState,
             meta,
             entry.lastSeen,
             entry.checkinInterval,
@@ -608,7 +616,9 @@ export class Device extends Entity<ControllerEventMap> {
             dateCode: this.dateCode,
             swBuildId: this.softwareBuildID,
             zclVersion: this.zclVersion,
-            interviewCompleted: this.interviewCompleted,
+            // DEPRECATED: Keep interviewCompleted for backwards compatibility (in case zh gets downgraded).
+            interviewCompleted: this.interviewState === InterviewState.SUCCESSFUL,
+            interviewState: this.interviewState,
             meta: this.meta,
             lastSeen: this.lastSeen,
             checkinInterval: this.checkinInterval,
@@ -624,6 +634,11 @@ export class Device extends Entity<ControllerEventMap> {
         if (!Device.loadedFromDatabase) {
             for (const entry of Entity.database!.getEntriesIterator(['Coordinator', 'EndDevice', 'Router', 'GreenPower', 'Unknown'])) {
                 const device = Device.fromDatabaseEntry(entry);
+
+                // Can never be IN_PROGRESS in case of a database load, reset to PENDING.
+                if (device.interviewState == InterviewState.IN_PROGRESS) {
+                    device._interviewState = InterviewState.PENDING;
+                }
 
                 Device.devices.set(device.ieeeAddr, device);
                 Device.nwkToIeeeCache.set(device.networkAddress, device.ieeeAddr);
@@ -681,11 +696,11 @@ export class Device extends Entity<ControllerEventMap> {
         }
     }
 
-    public undelete(interviewCompleted?: boolean): void {
+    public undelete(interviewState?: InterviewState): void {
         if (Device.deletedDevices.delete(this.ieeeAddr)) {
             Device.devices.set(this.ieeeAddr, this);
 
-            this._interviewCompleted = interviewCompleted ?? this._interviewCompleted;
+            this._interviewState = interviewState ?? this._interviewState;
 
             Entity.database!.insert(this.toDatabaseEntry());
         } else {
@@ -701,7 +716,7 @@ export class Device extends Entity<ControllerEventMap> {
         manufacturerName: string | undefined,
         powerSource: string | undefined,
         modelID: string | undefined,
-        interviewCompleted: boolean,
+        interviewState: InterviewState,
         gpSecurityKey: number[] | undefined,
     ): Device {
         Device.loadFromDatabaseIfNecessary();
@@ -727,7 +742,7 @@ export class Device extends Entity<ControllerEventMap> {
             undefined,
             undefined,
             undefined,
-            interviewCompleted,
+            interviewState,
             {},
             undefined,
             undefined,
@@ -746,29 +761,30 @@ export class Device extends Entity<ControllerEventMap> {
      */
 
     public async interview(ignoreCache: boolean = false): Promise<void> {
-        if (this.interviewing) {
+        if (this.interviewState === InterviewState.IN_PROGRESS) {
             const message = `Interview - interview already in progress for '${this.ieeeAddr}'`;
             logger.debug(message, NS);
             throw new Error(message);
         }
 
         let err: unknown;
-        this._interviewing = true;
+        this._interviewState = InterviewState.IN_PROGRESS;
         logger.debug(`Interview - start device '${this.ieeeAddr}'`, NS);
 
         try {
             await this.interviewInternal(ignoreCache);
             logger.debug(`Interview - completed for device '${this.ieeeAddr}'`, NS);
-            this._interviewCompleted = true;
+            this._interviewState = InterviewState.SUCCESSFUL;
         } catch (error) {
             if (this.interviewQuirks()) {
+                this._interviewState = InterviewState.SUCCESSFUL;
                 logger.debug(`Interview - completed for device '${this.ieeeAddr}' because of quirks ('${error}')`, NS);
             } else {
+                this._interviewState = InterviewState.FAILED;
                 logger.debug(`Interview - failed for device '${this.ieeeAddr}' with error '${error}'`, NS);
                 err = error;
             }
         } finally {
-            this._interviewing = false;
             this.save();
         }
 
@@ -790,8 +806,6 @@ export class Device extends Entity<ControllerEventMap> {
         // modelID is mostly in the form of e.g. TS0202 and manufacturerName like e.g. _TYZB01_xph99wvr
         if (this.modelID?.match('^TS\\d*$') && (this.manufacturerName?.match('^_TZ.*_.*$') || this.manufacturerName?.match('^_TYZB01_.*$'))) {
             this._powerSource = this._powerSource || 'Battery';
-            this._interviewing = false;
-            this._interviewCompleted = true;
             logger.debug(`Interview - quirks matched for Tuya end device`, NS);
             return true;
         }
@@ -846,8 +860,6 @@ export class Device extends Entity<ControllerEventMap> {
             this._manufacturerID = this._manufacturerID || info.manufacturerID;
             this._manufacturerName = this._manufacturerName || info.manufacturerName;
             this._powerSource = this._powerSource || info.powerSource;
-            this._interviewing = false;
-            this._interviewCompleted = true;
             logger.debug(`Interview - quirks matched on '${match}'`, NS);
             return true;
         } else {
@@ -1159,8 +1171,7 @@ export class Device extends Entity<ControllerEventMap> {
         Device.devices.delete(this.ieeeAddr);
 
         // Clear all data in case device joins again
-        this._interviewCompleted = false;
-        this._interviewing = false;
+        this._interviewState = InterviewState.PENDING;
         this.meta = {};
         const newEndpoints: Endpoint[] = [];
         for (const endpoint of this.endpoints) {
