@@ -22,6 +22,7 @@ import {Device, Entity} from "./model";
 import Group from "./model/group";
 import Touchlink from "./touchlink";
 import type {DeviceType, GreenPowerDeviceJoinedPayload, KeyValue} from "./tstype";
+import {InterviewState} from "./model/device";
 
 const NS = "zh:controller";
 
@@ -197,7 +198,7 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
                 undefined,
                 undefined,
                 undefined,
-                true,
+                InterviewState.SUCCESSFUL,
                 undefined,
             );
 
@@ -676,7 +677,7 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
                 undefined,
                 undefined,
                 modelID,
-                true,
+                InterviewState.SUCCESSFUL,
                 payload.securityKey ? Array.from(payload.securityKey) : /* v8 ignore next */ undefined,
             );
 
@@ -687,7 +688,7 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
         } else if (device.isDeleted) {
             logger.debug(`Deleted green power device '${ieeeAddr}' joined, undeleting`, NS);
 
-            device.undelete(true);
+            device.undelete(InterviewState.SUCCESSFUL);
 
             this.selfAndDeviceEmit(device, "deviceJoined", {device});
             this.selfAndDeviceEmit(device, "deviceInterview", {status: "successful", device});
@@ -756,7 +757,17 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
         if (!device) {
             logger.debug(`New device '${payload.ieeeAddr}' joined`, NS);
             logger.debug(`Creating device '${payload.ieeeAddr}'`, NS);
-            device = Device.create("Unknown", payload.ieeeAddr, payload.networkAddress, undefined, undefined, undefined, undefined, false, undefined);
+            device = Device.create(
+                "Unknown",
+                payload.ieeeAddr,
+                payload.networkAddress,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                InterviewState.PENDING,
+                undefined,
+            );
             this.selfAndDeviceEmit(device, "deviceJoined", {device});
         } else if (device.isDeleted) {
             logger.debug(`Deleted device '${payload.ieeeAddr}' joined, undeleting`, NS);
@@ -774,7 +785,7 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
         this.selfAndDeviceEmit(device, "lastSeenChanged", {device, reason: "deviceJoined"});
         device.implicitCheckin();
 
-        if (!device.interviewCompleted && !device.interviewing) {
+        if (device.interviewState === InterviewState.PENDING || device.interviewState === InterviewState.FAILED) {
             logger.info(`Interview for '${device.ieeeAddr}' started`, NS);
             this.selfAndDeviceEmit(device, "deviceInterview", {status: "started", device});
 
@@ -787,10 +798,7 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
                 this.selfAndDeviceEmit(device, "deviceInterview", {status: "failed", device});
             }
         } else {
-            logger.debug(
-                `Not interviewing '${payload.ieeeAddr}', completed '${device.interviewCompleted}', in progress '${device.interviewing}'`,
-                NS,
-            );
+            logger.debug(`Not interviewing '${payload.ieeeAddr}', interviewState=${device.interviewState}'`, NS);
         }
     }
 

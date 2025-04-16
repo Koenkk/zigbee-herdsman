@@ -17,6 +17,7 @@ import * as Zcl from "../src/zspec/zcl";
 import * as Zdo from "../src/zspec/zdo";
 import type {IEEEAddressResponse, NetworkAddressResponse} from "../src/zspec/zdo/definition/tstypes";
 import {DEFAULT_184_CHECKIN_INTERVAL, LQI_TABLE_ENTRY_DEFAULTS, MOCK_DEVICES, ROUTING_TABLE_ENTRY_DEFAULTS} from "./mockDevices";
+import {InterviewState} from "../src/controller/model/device";
 
 const globalSetImmediate = setImmediate;
 const flushPromises = () => new Promise(globalSetImmediate);
@@ -676,8 +677,7 @@ describe("Controller", () => {
                 },
             ],
             _ieeeAddr: "0x0000012300000000",
-            _interviewCompleted: true,
-            _interviewing: false,
+            _interviewState: InterviewState.SUCCESSFUL,
             _skipDefaultResponse: false,
             _manufacturerID: 0x0007,
             _networkAddress: 0,
@@ -1246,8 +1246,7 @@ describe("Controller", () => {
                 _endpoints: [],
                 _type: "Unknown",
                 _ieeeAddr: "0x129",
-                _interviewCompleted: false,
-                _interviewing: false,
+                _interviewState: InterviewState.PENDING,
                 _networkAddress: 129,
             },
             status: "started",
@@ -1292,14 +1291,14 @@ describe("Controller", () => {
             _hardwareVersion: 3,
             _dateCode: "201901",
             _softwareBuildID: "1.01",
-            _interviewCompleted: true,
-            _interviewing: false,
+            _interviewState: InterviewState.SUCCESSFUL,
         };
         expect(events.deviceInterview[1]).toStrictEqual({status: "successful", device: device});
         expect(deepClone(controller.getDeviceByNetworkAddress(129))).toStrictEqual(device);
         expect(events.deviceInterview.length).toBe(2);
         expect(databaseContents()).toStrictEqual(
-            `{"id":1,"type":"Coordinator","ieeeAddr":"0x0000012300000000","nwkAddr":0,"manufId":7,"epList":[1,2],"endpoints":{"1":{"profId":2,"epId":1,"devId":3,"inClusterList":[10],"outClusterList":[11],"clusters":{},"binds":[],"configuredReportings":[],"meta":{}},"2":{"profId":3,"epId":2,"devId":5,"inClusterList":[1],"outClusterList":[0],"clusters":{},"binds":[],"configuredReportings":[],"meta":{}}},"interviewCompleted":true,"meta":{}}\n{"id":2,"type":"Router","ieeeAddr":"0x129","nwkAddr":129,"manufId":1212,"manufName":"KoenAndCo","powerSource":"Mains (single phase)","modelId":"myModelID","epList":[1],"endpoints":{"1":{"profId":99,"epId":1,"devId":5,"inClusterList":[0,1],"outClusterList":[2],"clusters":{},"binds":[],"configuredReportings":[],"meta":{}}},"appVersion":2,"stackVersion":101,"hwVersion":3,"dateCode":"201901","swBuildId":"1.01","zclVersion":1,"interviewCompleted":true,"meta":{},"lastSeen":${mockedDate.getTime()}}`,
+            '{"id":1,"type":"Coordinator","ieeeAddr":"0x0000012300000000","nwkAddr":0,"manufId":7,"epList":[1,2],"endpoints":{"1":{"profId":2,"epId":1,"devId":3,"inClusterList":[10],"outClusterList":[11],"clusters":{},"binds":[],"configuredReportings":[],"meta":{}},"2":{"profId":3,"epId":2,"devId":5,"inClusterList":[1],"outClusterList":[0],"clusters":{},"binds":[],"configuredReportings":[],"meta":{}}},"interviewCompleted":true,"interviewState":"SUCCESSFUL","meta":{}}\n' +
+                '{"id":2,"type":"Router","ieeeAddr":"0x129","nwkAddr":129,"manufId":1212,"manufName":"KoenAndCo","powerSource":"Mains (single phase)","modelId":"myModelID","epList":[1],"endpoints":{"1":{"profId":99,"epId":1,"devId":5,"inClusterList":[0,1],"outClusterList":[2],"clusters":{},"binds":[],"configuredReportings":[],"meta":{}}},"appVersion":2,"stackVersion":101,"hwVersion":3,"dateCode":"201901","swBuildId":"1.01","zclVersion":1,"interviewCompleted":true,"interviewState":"SUCCESSFUL","meta":{},"lastSeen":${mockedDate.getTime()}}',
         );
         expect(controller.getDeviceByNetworkAddress(129)!.lastSeen).toBe(Date.now());
     });
@@ -1325,8 +1324,7 @@ describe("Controller", () => {
                 _customClusters: {},
                 _endpoints: [],
                 _ieeeAddr: "0x129",
-                _interviewCompleted: false,
-                _interviewing: false,
+                _interviewState: InterviewState.PENDING,
                 _networkAddress: 129,
                 _type: "Unknown",
             },
@@ -1372,8 +1370,7 @@ describe("Controller", () => {
             _hardwareVersion: 3,
             _dateCode: "201901",
             _softwareBuildID: "1.01",
-            _interviewCompleted: true,
-            _interviewing: false,
+            _interviewState: InterviewState.SUCCESSFUL,
         };
         expect(events.deviceInterview[1]).toStrictEqual({status: "successful", device: device});
         expect(deepClone(controller.getDeviceByIeeeAddr("0x129"))).toStrictEqual(device);
@@ -2419,8 +2416,7 @@ describe("Controller", () => {
                 _hardwareVersion: 3,
                 _dateCode: "201901",
                 _softwareBuildID: "1.01",
-                _interviewCompleted: true,
-                _interviewing: false,
+                _interviewState: InterviewState.SUCCESSFUL,
             },
             endpoint: {
                 ID: 1,
@@ -2529,8 +2525,7 @@ describe("Controller", () => {
                 _hardwareVersion: 3,
                 _dateCode: "201901",
                 _softwareBuildID: "1.01",
-                _interviewCompleted: true,
-                _interviewing: false,
+                _interviewState: InterviewState.SUCCESSFUL,
             },
             endpoint: {
                 _events: {},
@@ -2617,8 +2612,7 @@ describe("Controller", () => {
                 _hardwareVersion: 3,
                 _dateCode: "201901",
                 _softwareBuildID: "1.01",
-                _interviewCompleted: true,
-                _interviewing: false,
+                _interviewState: InterviewState.SUCCESSFUL,
             },
             endpoint: {
                 _events: {},
@@ -2747,8 +2741,7 @@ describe("Controller", () => {
                 _hardwareVersion: 3,
                 _dateCode: "201901",
                 _softwareBuildID: "1.01",
-                _interviewCompleted: true,
-                _interviewing: false,
+                _interviewState: InterviewState.SUCCESSFUL,
                 _lastDefaultResponseSequenceNumber: 1,
             },
             endpoint: {
@@ -2851,8 +2844,7 @@ describe("Controller", () => {
                 _hardwareVersion: 3,
                 _dateCode: "201901",
                 _softwareBuildID: "1.01",
-                _interviewCompleted: true,
-                _interviewing: false,
+                _interviewState: InterviewState.SUCCESSFUL,
                 _lastDefaultResponseSequenceNumber: 29,
             },
             endpoint: {
@@ -3586,8 +3578,7 @@ describe("Controller", () => {
             meta: {},
             _powerSource: "Battery",
             _modelID: "lumi.occupancy",
-            _interviewCompleted: true,
-            _interviewing: false,
+            _interviewState: InterviewState.SUCCESSFUL,
         });
     });
 
@@ -3640,8 +3631,7 @@ describe("Controller", () => {
             meta: {},
             _powerSource: "Battery",
             _modelID: "lumi.occupancy",
-            _interviewCompleted: true,
-            _interviewing: false,
+            _interviewState: InterviewState.SUCCESSFUL,
         });
     });
 
@@ -3758,8 +3748,7 @@ describe("Controller", () => {
                 _dateCode: "201901",
                 _pendingRequestTimeout: 0,
                 _softwareBuildID: "1.01",
-                _interviewCompleted: true,
-                _interviewing: false,
+                _interviewState: InterviewState.SUCCESSFUL,
             },
             endpoint: {
                 _events: {},
@@ -4002,7 +3991,7 @@ describe("Controller", () => {
         await mockAdapterEvents.deviceJoined({networkAddress: 140, ieeeAddr: "0x129"});
         let error;
         try {
-            Device.create("Router", "0x129", 140, undefined, undefined, undefined, undefined, false, undefined);
+            Device.create("Router", "0x129", 140, undefined, undefined, undefined, undefined, InterviewState.PENDING, undefined);
         } catch (e) {
             error = e;
         }
@@ -4011,7 +4000,7 @@ describe("Controller", () => {
 
     it("Should allow to set type", async () => {
         await controller.start();
-        const device = Device.create("Router", "0x129", 140, undefined, undefined, undefined, undefined, false, undefined);
+        const device = Device.create("Router", "0x129", 140, undefined, undefined, undefined, undefined, InterviewState.PENDING, undefined);
         device.type = "EndDevice";
         expect(device.type).toStrictEqual("EndDevice");
     });
@@ -5074,7 +5063,8 @@ describe("Controller", () => {
         });
         expect(group.members).toContain(endpoint);
         expect(databaseContents()).toContain(
-            `{"id":1,"type":"Coordinator","ieeeAddr":"0x0000012300000000","nwkAddr":0,"manufId":7,"epList":[1,2],"endpoints":{"1":{"profId":2,"epId":1,"devId":3,"inClusterList":[10],"outClusterList":[11],"clusters":{},"binds":[],"configuredReportings":[],"meta":{}},"2":{"profId":3,"epId":2,"devId":5,"inClusterList":[1],"outClusterList":[0],"clusters":{},"binds":[],"configuredReportings":[],"meta":{}}},"interviewCompleted":true,"meta":{}}\n{"id":2,"type":"Router","ieeeAddr":"0x129","nwkAddr":129,"manufId":1212,"manufName":"KoenAndCo","powerSource":"Mains (single phase)","modelId":"myModelID","epList":[1],"endpoints":{"1":{"profId":99,"epId":1,"devId":5,"inClusterList":[0,1],"outClusterList":[2],"clusters":{},"binds":[],"configuredReportings":[],"meta":{}}},"appVersion":2,"stackVersion":101,"hwVersion":3,"dateCode":"201901","swBuildId":"1.01","zclVersion":1,"interviewCompleted":true,"meta":{},"lastSeen":${mockedDate.getTime()}}\n{"id":3,"type":"Group","groupID":2,"members":[{"deviceIeeeAddr":"0x129","endpointID":1}],"meta":{}}`,
+            '{"id":1,"type":"Coordinator","ieeeAddr":"0x0000012300000000","nwkAddr":0,"manufId":7,"epList":[1,2],"endpoints":{"1":{"profId":2,"epId":1,"devId":3,"inClusterList":[10],"outClusterList":[11],"clusters":{},"binds":[],"configuredReportings":[],"meta":{}},"2":{"profId":3,"epId":2,"devId":5,"inClusterList":[1],"outClusterList":[0],"clusters":{},"binds":[],"configuredReportings":[],"meta":{}}},"interviewCompleted":true,"interviewState":"SUCCESSFUL","meta":{}}\n' +
+                '{"id":2,"type":"Router","ieeeAddr":"0x129","nwkAddr":129,"manufId":1212,"manufName":"KoenAndCo","powerSource":"Mains (single phase)","modelId":"myModelID","epList":[1],"endpoints":{"1":{"profId":99,"epId":1,"devId":5,"inClusterList":[0,1],"outClusterList":[2],"clusters":{},"binds":[],"configuredReportings":[],"meta":{}}},"appVersion":2,"stackVersion":101,"hwVersion":3,"dateCode":"201901","swBuildId":"1.01","zclVersion":1,"interviewCompleted":true,"interviewState":"SUCCESSFUL","meta":{},"lastSeen":${mockedDate.getTime()}}\n{"id":3,"type":"Group","groupID":2,"members":[{"deviceIeeeAddr":"0x129","endpointID":1}],"meta":{}}',
         );
     });
 
@@ -5588,7 +5578,7 @@ describe("Controller", () => {
             dateCode: "20170302",
             swBuildId: "1.2.214",
             zclVersion: 1,
-            interviewCompleted: true,
+            interviewState: InterviewState.SUCCESSFUL,
             _id: "fJ5pmjqKRYbNvslK",
         });
         fs.writeFileSync(options.databasePath, `${line}\n`);
@@ -5622,8 +5612,7 @@ describe("Controller", () => {
             ],
             _hardwareVersion: 1,
             _ieeeAddr: "0x90fd9ffffe4b64ae",
-            _interviewCompleted: true,
-            _interviewing: false,
+            _interviewState: InterviewState.SUCCESSFUL,
             _manufacturerID: 4476,
             _manufacturerName: "IKEA of Sweden",
             meta: {},
@@ -6557,13 +6546,13 @@ describe("Controller", () => {
         const database = `
         {"id":1,"type":"Coordinator","ieeeAddr":"0x0000012300000000","nwkAddr":0,"manufId":0,"epList":[11,6,5,4,3,2,1],"endpoints":{"1":{"profId":260,"epId":1,"devId":5,"inClusterList":[],"meta":{},"outClusterList":[],"clusters":{}},"2":{"profId":257,"epId":2,"devId":5,"inClusterList":[],"meta":{},"outClusterList":[],"clusters":{}},"3":{"profId":261,"epId":3,"devId":5,"inClusterList":[],"meta":{},"outClusterList":[],"clusters":{}},"4":{"profId":263,"epId":4,"devId":5,"inClusterList":[],"meta":{},"outClusterList":[],"clusters":{}},"5":{"profId":264,"epId":5,"devId":5,"inClusterList":[],"meta":{},"outClusterList":[],"clusters":{}},"6":{"profId":265,"epId":6,"devId":5,"inClusterList":[],"meta":{},"outClusterList":[],"clusters":{}},"11":{"profId":260,"epId":11,"devId":1024,"inClusterList":[],"meta":{},"outClusterList":[1280],"clusters":{}}},"interviewCompleted":false,"meta":{},"_id":"aM341ldunExFmJ3u"}
         {"id":2,"type":"Group","groupID":1,"members":[],"meta":{},"_id":"kiiAEst4irEEqG8T"}
-        {"id":3,"type":"Router","ieeeAddr":"0x000b57fffec6a5b2","nwkAddr":40369,"manufId":4476,"manufName":"IKEA of Sweden","powerSource":"Mains (single phase)","modelId":"TRADFRI bulb E27 WS opal 980lm","epList":[1],"endpoints":{"1":{"profId":49246,"epId":1,"devId":544,"inClusterList":[0,3,4,5,6,8,768,2821,4096],"meta":{},"outClusterList":[5,25,32,4096],"clusters":{}}},"appVersion":17,"stackVersion":87,"hwVersion":1,"dateCode":"20170331","swBuildId":"1.2.217","zclVersion":1,"interviewCompleted":true,"meta":{"reporting":1},"_id":"pagvP2f9Bbj3o9TM"}
-        {"id":4,"type":"EndDevice","ieeeAddr":"0x0017880104e45517","nwkAddr":6535,"manufId":4107,"manufName":"Philips","powerSource":"Battery","modelId":"RWL021","epList":[1,2],"endpoints":{"1":{"profId":49246,"epId":1,"devId":2096,"inClusterList":[0],"meta":{},"outClusterList":[0,3,4,6,8,5],"clusters":{}},"2":{"profId":260,"epId":2,"devId":12,"inClusterList":[0,1,3,15,64512],"meta":{},"outClusterList":[25],"clusters":{}}},"appVersion":2,"stackVersion":1,"hwVersion":1,"dateCode":"20160302","swBuildId":"5.45.1.17846","zclVersion":1,"interviewCompleted":true,"meta":{"configured":1},"_id":"qxhymbX6H2GXDw8Z"}
+        {"id":3,"type":"Router","ieeeAddr":"0x000b57fffec6a5b2","nwkAddr":40369,"manufId":4476,"manufName":"IKEA of Sweden","powerSource":"Mains (single phase)","modelId":"TRADFRI bulb E27 WS opal 980lm","epList":[1],"endpoints":{"1":{"profId":49246,"epId":1,"devId":544,"inClusterList":[0,3,4,5,6,8,768,2821,4096],"meta":{},"outClusterList":[5,25,32,4096],"clusters":{}}},"appVersion":17,"stackVersion":87,"hwVersion":1,"dateCode":"20170331","swBuildId":"1.2.217","zclVersion":1,"interviewState":"SUCCESSFUL","meta":{"reporting":1},"_id":"pagvP2f9Bbj3o9TM"}
+        {"id":4,"type":"EndDevice","ieeeAddr":"0x0017880104e45517","nwkAddr":6535,"manufId":4107,"manufName":"Philips","powerSource":"Battery","modelId":"RWL021","epList":[1,2],"endpoints":{"1":{"profId":49246,"epId":1,"devId":2096,"inClusterList":[0],"meta":{},"outClusterList":[0,3,4,6,8,5],"clusters":{}},"2":{"profId":260,"epId":2,"devId":12,"inClusterList":[0,1,3,15,64512],"meta":{},"outClusterList":[25],"clusters":{}}},"appVersion":2,"stackVersion":1,"hwVersion":1,"dateCode":"20160302","swBuildId":"5.45.1.17846","zclVersion":1,"interviewState":"SUCCESSFUL","meta":{"configured":1},"_id":"qxhymbX6H2GXDw8Z"}
         {"$$indexCreated":{"fieldName":"id","unique":true,"sparse":false}}
-        {"id":4,"type":"EndDevice","ieeeAddr":"0x0017880104e45517","nwkAddr":6536,"manufId":4107,"manufName":"Philips","powerSource":"Battery","modelId":"RWL021","epList":[1,2],"endpoints":{"1":{"profId":49246,"epId":1,"devId":2096,"inClusterList":[0],"meta":{},"outClusterList":[0,3,4,6,8,5],"clusters":{}},"2":{"profId":260,"epId":2,"devId":12,"inClusterList":[0,1,3,15,64512],"meta":{},"outClusterList":[25],"clusters":{}}},"appVersion":2,"stackVersion":1,"hwVersion":1,"dateCode":"20160302","swBuildId":"5.45.1.17846","zclVersion":1,"interviewCompleted":true,"meta":{"configured":1},"_id":"qxhymbX6H2GXDw8Z"}
-        {"id":4,"type":"EndDevice","ieeeAddr":"0x0017880104e45517","lastSeen":123,"nwkAddr":6538,"manufId":4107,"manufName":"Philips","powerSource":"Battery","modelId":"RWL021","epList":[1,2],"endpoints":{"1":{"profId":49246,"epId":1,"devId":2096,"inClusterList":[0],"meta":{},"outClusterList":[0,3,4,6,8,5],"binds":[{"type":"endpoint","endpointID":1,"deviceIeeeAddr":"0x000b57fffec6a5b2"}],"configuredReportings":[{"cluster":1,"attrId":0,"minRepIntval":1,"maxRepIntval":20,"repChange":2}],"clusters":{"genBasic":{"dir":{"value":3},"attrs":{"modelId":"RWL021"}}}},"2":{"profId":260,"epId":2,"devId":12,"inClusterList":[0,1,3,15,64512],"meta":{},"outClusterList":[25],"clusters":{}}},"appVersion":2,"stackVersion":1,"hwVersion":1,"dateCode":"20160302","swBuildId":"5.45.1.17846","zclVersion":1,"interviewCompleted":true,"meta":{"configured":1},"_id":"qxhymbX6H2GXDw8Z"}
+        {"id":4,"type":"EndDevice","ieeeAddr":"0x0017880104e45517","nwkAddr":6536,"manufId":4107,"manufName":"Philips","powerSource":"Battery","modelId":"RWL021","epList":[1,2],"endpoints":{"1":{"profId":49246,"epId":1,"devId":2096,"inClusterList":[0],"meta":{},"outClusterList":[0,3,4,6,8,5],"clusters":{}},"2":{"profId":260,"epId":2,"devId":12,"inClusterList":[0,1,3,15,64512],"meta":{},"outClusterList":[25],"clusters":{}}},"appVersion":2,"stackVersion":1,"hwVersion":1,"dateCode":"20160302","swBuildId":"5.45.1.17846","zclVersion":1,"interviewState":"SUCCESSFUL","meta":{"configured":1},"_id":"qxhymbX6H2GXDw8Z"}
+        {"id":4,"type":"EndDevice","ieeeAddr":"0x0017880104e45517","lastSeen":123,"nwkAddr":6538,"manufId":4107,"manufName":"Philips","powerSource":"Battery","modelId":"RWL021","epList":[1,2],"endpoints":{"1":{"profId":49246,"epId":1,"devId":2096,"inClusterList":[0],"meta":{},"outClusterList":[0,3,4,6,8,5],"binds":[{"type":"endpoint","endpointID":1,"deviceIeeeAddr":"0x000b57fffec6a5b2"}],"configuredReportings":[{"cluster":1,"attrId":0,"minRepIntval":1,"maxRepIntval":20,"repChange":2}],"clusters":{"genBasic":{"dir":{"value":3},"attrs":{"modelId":"RWL021"}}}},"2":{"profId":260,"epId":2,"devId":12,"inClusterList":[0,1,3,15,64512],"meta":{},"outClusterList":[25],"clusters":{}}},"appVersion":2,"stackVersion":1,"hwVersion":1,"dateCode":"20160302","swBuildId":"5.45.1.17846","zclVersion":1,"interviewState":"SUCCESSFUL","meta":{"configured":1},"_id":"qxhymbX6H2GXDw8Z"}
         {"id":5,"type":"Group","groupID":2,"members":[{"deviceIeeeAddr": "0x000b57fffec6a5b2", "endpointID": 1}, {"deviceIeeeAddr": "notExisting", "endpointID": 1}],"meta":{},"_id":"kiiAEst4irEEqG8K"}
-        {"id":6,"type":"EndDevice","ieeeAddr":"0x0017880104e45518","nwkAddr":6536,"manufId":4107,"manufName":"Philips","powerSource":"Battery","modelId":"RWL021","epList":[1,2],"endpoints":{"1":{"profId":49246,"epId":1,"devId":2096,"inClusterList":[0],"meta":{},"outClusterList":[0,3,4,6,8,5],"clusters":{}},"2":{"profId":260,"epId":2,"devId":12,"inClusterList":[0,1,3,15,32,64512],"meta":{},"outClusterList":[25],"clusters":{}}},"appVersion":2,"stackVersion":1,"hwVersion":1,"dateCode":"20160302","swBuildId":"5.45.1.17846","zclVersion":1,"interviewCompleted":true,"meta":{"configured":1},"_id":"qxhymbX6H2GXDw8Z", "checkinInterval": 123456}
+        {"id":6,"type":"EndDevice","ieeeAddr":"0x0017880104e45518","nwkAddr":6536,"manufId":4107,"manufName":"Philips","powerSource":"Battery","modelId":"RWL021","epList":[1,2],"endpoints":{"1":{"profId":49246,"epId":1,"devId":2096,"inClusterList":[0],"meta":{},"outClusterList":[0,3,4,6,8,5],"clusters":{}},"2":{"profId":260,"epId":2,"devId":12,"inClusterList":[0,1,3,15,32,64512],"meta":{},"outClusterList":[25],"clusters":{}}},"appVersion":2,"stackVersion":1,"hwVersion":1,"dateCode":"20160302","swBuildId":"5.45.1.17846","zclVersion":1,"interviewState":"SUCCESSFUL","meta":{"configured":1},"_id":"qxhymbX6H2GXDw8Z", "checkinInterval": 123456}
         `;
         fs.writeFileSync(options.databasePath, database);
         await controller.start();
@@ -6689,8 +6678,7 @@ describe("Controller", () => {
                 },
             ],
             _ieeeAddr: "0x0000012300000000",
-            _interviewCompleted: false,
-            _interviewing: false,
+            _interviewState: InterviewState.FAILED,
             _manufacturerID: 0,
             _networkAddress: 0,
             _type: "Coordinator",
@@ -6726,8 +6714,7 @@ describe("Controller", () => {
             ],
             _hardwareVersion: 1,
             _ieeeAddr: "0x000b57fffec6a5b2",
-            _interviewCompleted: true,
-            _interviewing: false,
+            _interviewState: InterviewState.SUCCESSFUL,
             _manufacturerID: 4476,
             _manufacturerName: "IKEA of Sweden",
             meta: {reporting: 1},
@@ -6783,8 +6770,7 @@ describe("Controller", () => {
             ],
             _hardwareVersion: 1,
             _ieeeAddr: "0x0017880104e45517",
-            _interviewCompleted: true,
-            _interviewing: false,
+            _interviewState: InterviewState.SUCCESSFUL,
             _lastSeen: 123,
             _manufacturerID: 4107,
             _manufacturerName: "Philips",
@@ -6843,8 +6829,7 @@ describe("Controller", () => {
             ],
             _hardwareVersion: 1,
             _ieeeAddr: "0x0017880104e45518",
-            _interviewCompleted: true,
-            _interviewing: false,
+            _interviewState: InterviewState.SUCCESSFUL,
             _manufacturerID: 4107,
             _manufacturerName: "Philips",
             _modelID: "RWL021",
@@ -6999,8 +6984,7 @@ describe("Controller", () => {
                 _events: {},
                 _eventsCount: 0,
                 _ieeeAddr: "0x129",
-                _interviewCompleted: true,
-                _interviewing: false,
+                _interviewState: InterviewState.SUCCESSFUL,
                 _lastSeen: Date.now(),
                 _linkquality: 19,
                 _skipDefaultResponse: false,
@@ -7097,8 +7081,7 @@ describe("Controller", () => {
                 ],
                 _hardwareVersion: 3,
                 _ieeeAddr: "0x129",
-                _interviewCompleted: true,
-                _interviewing: false,
+                _interviewState: InterviewState.SUCCESSFUL,
                 _lastSeen: Date.now(),
                 _linkquality: 19,
                 _skipDefaultResponse: false,
@@ -7612,8 +7595,7 @@ describe("Controller", () => {
                 _events: {},
                 _eventsCount: 0,
                 _ieeeAddr: "0x000000000046f4fe",
-                _interviewCompleted: true,
-                _interviewing: false,
+                _interviewState: InterviewState.SUCCESSFUL,
                 _lastSeen: Date.now(),
                 _linkquality: 50,
                 _modelID: "GreenPower_2",
@@ -7635,8 +7617,7 @@ describe("Controller", () => {
                 _events: {},
                 _eventsCount: 0,
                 _ieeeAddr: "0x000000000046f4fe",
-                _interviewCompleted: true,
-                _interviewing: false,
+                _interviewState: InterviewState.SUCCESSFUL,
                 _modelID: "GreenPower_2",
                 _networkAddress: 0xf4fe,
                 _type: "GreenPower",
@@ -7697,8 +7678,7 @@ describe("Controller", () => {
                     },
                 ],
                 _ieeeAddr: "0x000000000046f4fe",
-                _interviewCompleted: true,
-                _interviewing: false,
+                _interviewState: InterviewState.SUCCESSFUL,
                 _lastSeen: Date.now(),
                 _linkquality: 50,
                 _skipDefaultResponse: false,
@@ -8253,8 +8233,7 @@ describe("Controller", () => {
                     },
                 ],
                 _ieeeAddr: "0x00000000017171f8",
-                _interviewCompleted: true,
-                _interviewing: false,
+                _interviewState: InterviewState.SUCCESSFUL,
                 _lastSeen: Date.now(),
                 _linkquality: 50,
                 _modelID: "GreenPower_2",
@@ -8277,8 +8256,7 @@ describe("Controller", () => {
                 _customClusters: {},
                 _endpoints: [],
                 _ieeeAddr: "0x00000000017171f8",
-                _interviewCompleted: true,
-                _interviewing: false,
+                _interviewState: InterviewState.SUCCESSFUL,
                 _modelID: "GreenPower_2",
                 _networkAddress: 0x71f8,
                 _type: "GreenPower",
@@ -8342,8 +8320,7 @@ describe("Controller", () => {
                     },
                 ],
                 _modelID: "GreenPower_2",
-                _interviewCompleted: true,
-                _interviewing: false,
+                _interviewState: InterviewState.SUCCESSFUL,
                 _skipDefaultResponse: false,
                 meta: {},
                 _gpSecurityKey: [0x21, 0x7f, 0x8c, 0xb2, 0x90, 0xd9, 0x90, 0x14, 0x15, 0xd0, 0x5c, 0xb1, 0x64, 0x7c, 0x44, 0x6c],
@@ -8426,8 +8403,7 @@ describe("Controller", () => {
                 },
             ],
             _ieeeAddr: "0x00000000017171f8",
-            _interviewCompleted: false,
-            _interviewing: false,
+            _interviewState: InterviewState.PENDING,
             _lastSeen: Date.now(),
             _linkquality: 50,
             _modelID: "GreenPower_2",
@@ -8474,8 +8450,7 @@ describe("Controller", () => {
                 },
             ],
             _ieeeAddr: "0x00000000017171f8",
-            _interviewCompleted: true,
-            _interviewing: false,
+            _interviewState: InterviewState.SUCCESSFUL,
             _lastSeen: Date.now(),
             _linkquality: 50,
             _modelID: "GreenPower_2",
@@ -9243,8 +9218,7 @@ describe("Controller", () => {
                 _eventsCount: 0,
                 _hardwareVersion: 3,
                 _ieeeAddr: "0x171",
-                _interviewCompleted: true,
-                _interviewing: false,
+                _interviewState: InterviewState.SUCCESSFUL,
                 _lastSeen: Date.now(),
                 _manufacturerID: 1212,
                 _manufacturerName: "Xioami",
@@ -9726,7 +9700,7 @@ describe("Controller", () => {
         const newNwkAddress = 12345;
         const database = `
         {"id":1,"type":"Coordinator","ieeeAddr":"0x0000012300000000","nwkAddr":0,"manufId":0,"epList":[11,6,5,4,3,2,1],"endpoints":{"1":{"profId":260,"epId":1,"devId":5,"inClusterList":[],"meta":{},"outClusterList":[],"clusters":{}},"2":{"profId":257,"epId":2,"devId":5,"inClusterList":[],"meta":{},"outClusterList":[],"clusters":{}},"3":{"profId":261,"epId":3,"devId":5,"inClusterList":[],"meta":{},"outClusterList":[],"clusters":{}},"4":{"profId":263,"epId":4,"devId":5,"inClusterList":[],"meta":{},"outClusterList":[],"clusters":{}},"5":{"profId":264,"epId":5,"devId":5,"inClusterList":[],"meta":{},"outClusterList":[],"clusters":{}},"6":{"profId":265,"epId":6,"devId":5,"inClusterList":[],"meta":{},"outClusterList":[],"clusters":{}},"11":{"profId":260,"epId":11,"devId":1024,"inClusterList":[],"meta":{},"outClusterList":[1280],"clusters":{}}},"interviewCompleted":false,"meta":{},"_id":"aM341ldunExFmJ3u"}
-        {"id":3,"type":"Router","ieeeAddr":"0x000b57fffec6a5b2","nwkAddr":${oldNwkAddress},"manufId":4476,"manufName":"IKEA of Sweden","powerSource":"Mains (single phase)","modelId":"TRADFRI bulb E27 WS opal 980lm","epList":[1],"endpoints":{"1":{"profId":49246,"epId":1,"devId":544,"inClusterList":[0,3,4,5,6,8,768,2821,4096],"meta":{},"outClusterList":[5,25,32,4096],"clusters":{}}},"appVersion":17,"stackVersion":87,"hwVersion":1,"dateCode":"20170331","swBuildId":"1.2.217","zclVersion":1,"interviewCompleted":true,"meta":{"reporting":1},"_id":"pagvP2f9Bbj3o9TM"}
+        {"id":3,"type":"Router","ieeeAddr":"0x000b57fffec6a5b2","nwkAddr":${oldNwkAddress},"manufId":4476,"manufName":"IKEA of Sweden","powerSource":"Mains (single phase)","modelId":"TRADFRI bulb E27 WS opal 980lm","epList":[1],"endpoints":{"1":{"profId":49246,"epId":1,"devId":544,"inClusterList":[0,3,4,5,6,8,768,2821,4096],"meta":{},"outClusterList":[5,25,32,4096],"clusters":{}}},"appVersion":17,"stackVersion":87,"hwVersion":1,"dateCode":"20170331","swBuildId":"1.2.217","zclVersion":1,"interviewState":"SUCCESSFUL","meta":{"reporting":1},"_id":"pagvP2f9Bbj3o9TM"}
         `;
         fs.writeFileSync(options.databasePath, database);
         await controller.start();
@@ -9776,7 +9750,7 @@ describe("Controller", () => {
         const newNwkAddress = 12345;
         const database = `
         {"id":1,"type":"Coordinator","ieeeAddr":"0x0000012300000000","nwkAddr":0,"manufId":0,"epList":[11,6,5,4,3,2,1],"endpoints":{"1":{"profId":260,"epId":1,"devId":5,"inClusterList":[],"meta":{},"outClusterList":[],"clusters":{}},"2":{"profId":257,"epId":2,"devId":5,"inClusterList":[],"meta":{},"outClusterList":[],"clusters":{}},"3":{"profId":261,"epId":3,"devId":5,"inClusterList":[],"meta":{},"outClusterList":[],"clusters":{}},"4":{"profId":263,"epId":4,"devId":5,"inClusterList":[],"meta":{},"outClusterList":[],"clusters":{}},"5":{"profId":264,"epId":5,"devId":5,"inClusterList":[],"meta":{},"outClusterList":[],"clusters":{}},"6":{"profId":265,"epId":6,"devId":5,"inClusterList":[],"meta":{},"outClusterList":[],"clusters":{}},"11":{"profId":260,"epId":11,"devId":1024,"inClusterList":[],"meta":{},"outClusterList":[1280],"clusters":{}}},"interviewCompleted":false,"meta":{},"_id":"aM341ldunExFmJ3u"}
-        {"id":4,"type":"EndDevice","ieeeAddr":"0x0017880104e45517","lastSeen":123,"nwkAddr":${oldNwkAddress},"manufId":4107,"manufName":"Philips","powerSource":"Battery","modelId":"RWL021","epList":[1,2],"endpoints":{"1":{"profId":49246,"epId":1,"devId":2096,"inClusterList":[0],"meta":{},"outClusterList":[0,3,4,6,8,5],"binds":[{"type":"endpoint","endpointID":1,"deviceIeeeAddr":"0x000b57fffec6a5b2"}],"configuredReportings":[{"cluster":1,"attrId":0,"minRepIntval":1,"maxRepIntval":20,"repChange":2}],"clusters":{"genBasic":{"dir":{"value":3},"attrs":{"modelId":"RWL021"}}}},"2":{"profId":260,"epId":2,"devId":12,"inClusterList":[0,1,3,15,64512],"meta":{},"outClusterList":[25],"clusters":{}}},"appVersion":2,"stackVersion":1,"hwVersion":1,"dateCode":"20160302","swBuildId":"5.45.1.17846","zclVersion":1,"interviewCompleted":true,"meta":{"configured":1},"_id":"qxhymbX6H2GXDw8Z"}
+        {"id":4,"type":"EndDevice","ieeeAddr":"0x0017880104e45517","lastSeen":123,"nwkAddr":${oldNwkAddress},"manufId":4107,"manufName":"Philips","powerSource":"Battery","modelId":"RWL021","epList":[1,2],"endpoints":{"1":{"profId":49246,"epId":1,"devId":2096,"inClusterList":[0],"meta":{},"outClusterList":[0,3,4,6,8,5],"binds":[{"type":"endpoint","endpointID":1,"deviceIeeeAddr":"0x000b57fffec6a5b2"}],"configuredReportings":[{"cluster":1,"attrId":0,"minRepIntval":1,"maxRepIntval":20,"repChange":2}],"clusters":{"genBasic":{"dir":{"value":3},"attrs":{"modelId":"RWL021"}}}},"2":{"profId":260,"epId":2,"devId":12,"inClusterList":[0,1,3,15,64512],"meta":{},"outClusterList":[25],"clusters":{}}},"appVersion":2,"stackVersion":1,"hwVersion":1,"dateCode":"20160302","swBuildId":"5.45.1.17846","zclVersion":1,"interviewState":"SUCCESSFUL","meta":{"configured":1},"_id":"qxhymbX6H2GXDw8Z"}
         `;
         fs.writeFileSync(options.databasePath, database);
         await controller.start();
@@ -9851,7 +9825,7 @@ describe("Controller", () => {
         const newNwkAddress = 12345;
         const database = `
         {"id":1,"type":"Coordinator","ieeeAddr":"0x0000012300000000","nwkAddr":0,"manufId":0,"epList":[11,6,5,4,3,2,1],"endpoints":{"1":{"profId":260,"epId":1,"devId":5,"inClusterList":[],"meta":{},"outClusterList":[],"clusters":{}},"2":{"profId":257,"epId":2,"devId":5,"inClusterList":[],"meta":{},"outClusterList":[],"clusters":{}},"3":{"profId":261,"epId":3,"devId":5,"inClusterList":[],"meta":{},"outClusterList":[],"clusters":{}},"4":{"profId":263,"epId":4,"devId":5,"inClusterList":[],"meta":{},"outClusterList":[],"clusters":{}},"5":{"profId":264,"epId":5,"devId":5,"inClusterList":[],"meta":{},"outClusterList":[],"clusters":{}},"6":{"profId":265,"epId":6,"devId":5,"inClusterList":[],"meta":{},"outClusterList":[],"clusters":{}},"11":{"profId":260,"epId":11,"devId":1024,"inClusterList":[],"meta":{},"outClusterList":[1280],"clusters":{}}},"interviewCompleted":false,"meta":{},"_id":"aM341ldunExFmJ3u"}
-        {"id":3,"type":"Router","ieeeAddr":"0x000b57fffec6a5b2","nwkAddr":${oldNwkAddress},"manufId":4476,"manufName":"IKEA of Sweden","powerSource":"Mains (single phase)","modelId":"TRADFRI bulb E27 WS opal 980lm","epList":[1],"endpoints":{"1":{"profId":49246,"epId":1,"devId":544,"inClusterList":[0,3,4,5,6,8,768,2821,4096],"meta":{},"outClusterList":[5,25,32,4096],"clusters":{}}},"appVersion":17,"stackVersion":87,"hwVersion":1,"dateCode":"20170331","swBuildId":"1.2.217","zclVersion":1,"interviewCompleted":true,"meta":{"reporting":1},"_id":"pagvP2f9Bbj3o9TM"}
+        {"id":3,"type":"Router","ieeeAddr":"0x000b57fffec6a5b2","nwkAddr":${oldNwkAddress},"manufId":4476,"manufName":"IKEA of Sweden","powerSource":"Mains (single phase)","modelId":"TRADFRI bulb E27 WS opal 980lm","epList":[1],"endpoints":{"1":{"profId":49246,"epId":1,"devId":544,"inClusterList":[0,3,4,5,6,8,768,2821,4096],"meta":{},"outClusterList":[5,25,32,4096],"clusters":{}}},"appVersion":17,"stackVersion":87,"hwVersion":1,"dateCode":"20170331","swBuildId":"1.2.217","zclVersion":1,"interviewState":"SUCCESSFUL","meta":{"reporting":1},"_id":"pagvP2f9Bbj3o9TM"}
         `;
         fs.writeFileSync(options.databasePath, database);
         await controller.start();
@@ -9895,7 +9869,7 @@ describe("Controller", () => {
         const newNwkAddress = 12345;
         const database = `
         {"id":1,"type":"Coordinator","ieeeAddr":"0x0000012300000000","nwkAddr":0,"manufId":0,"epList":[11,6,5,4,3,2,1],"endpoints":{"1":{"profId":260,"epId":1,"devId":5,"inClusterList":[],"meta":{},"outClusterList":[],"clusters":{}},"2":{"profId":257,"epId":2,"devId":5,"inClusterList":[],"meta":{},"outClusterList":[],"clusters":{}},"3":{"profId":261,"epId":3,"devId":5,"inClusterList":[],"meta":{},"outClusterList":[],"clusters":{}},"4":{"profId":263,"epId":4,"devId":5,"inClusterList":[],"meta":{},"outClusterList":[],"clusters":{}},"5":{"profId":264,"epId":5,"devId":5,"inClusterList":[],"meta":{},"outClusterList":[],"clusters":{}},"6":{"profId":265,"epId":6,"devId":5,"inClusterList":[],"meta":{},"outClusterList":[],"clusters":{}},"11":{"profId":260,"epId":11,"devId":1024,"inClusterList":[],"meta":{},"outClusterList":[1280],"clusters":{}}},"interviewCompleted":false,"meta":{},"_id":"aM341ldunExFmJ3u"}
-        {"id":3,"type":"Router","ieeeAddr":"0x000b57fffec6a5b2","nwkAddr":${oldNwkAddress},"manufId":4476,"manufName":"IKEA of Sweden","powerSource":"Mains (single phase)","modelId":"TRADFRI bulb E27 WS opal 980lm","epList":[1],"endpoints":{"1":{"profId":49246,"epId":1,"devId":544,"inClusterList":[0,3,4,5,6,8,768,2821,4096],"meta":{},"outClusterList":[5,25,32,4096],"clusters":{}}},"appVersion":17,"stackVersion":87,"hwVersion":1,"dateCode":"20170331","swBuildId":"1.2.217","zclVersion":1,"interviewCompleted":true,"meta":{"reporting":1},"_id":"pagvP2f9Bbj3o9TM"}
+        {"id":3,"type":"Router","ieeeAddr":"0x000b57fffec6a5b2","nwkAddr":${oldNwkAddress},"manufId":4476,"manufName":"IKEA of Sweden","powerSource":"Mains (single phase)","modelId":"TRADFRI bulb E27 WS opal 980lm","epList":[1],"endpoints":{"1":{"profId":49246,"epId":1,"devId":544,"inClusterList":[0,3,4,5,6,8,768,2821,4096],"meta":{},"outClusterList":[5,25,32,4096],"clusters":{}}},"appVersion":17,"stackVersion":87,"hwVersion":1,"dateCode":"20170331","swBuildId":"1.2.217","zclVersion":1,"interviewState":"SUCCESSFUL","meta":{"reporting":1},"_id":"pagvP2f9Bbj3o9TM"}
         `;
         fs.writeFileSync(options.databasePath, database);
         await controller.start();
