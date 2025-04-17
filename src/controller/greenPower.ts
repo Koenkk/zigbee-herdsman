@@ -10,7 +10,7 @@ import {COORDINATOR_ADDRESS, GP_ENDPOINT, GP_GROUP_ID, INTEROPERABILITY_LINK_KEY
 import {BroadcastAddress} from "../zspec/enums";
 import * as Zcl from "../zspec/zcl";
 import type {GPDChannelConfiguration, GPDCommissioningReply} from "../zspec/zcl/buffaloZcl";
-import ZclTransactionSequenceNumber from "./helpers/zclTransactionSequenceNumber";
+import zclTransactionSequenceNumber from "./helpers/zclTransactionSequenceNumber";
 import {Device} from "./model";
 import type {GreenPowerDeviceJoinedPayload} from "./tstype";
 
@@ -215,7 +215,7 @@ export class GreenPower extends EventEmitter<GreenPowerEventMap> {
             Zcl.Direction.SERVER_TO_CLIENT,
             true,
             undefined,
-            ZclTransactionSequenceNumber.next(),
+            zclTransactionSequenceNumber.next(),
             "pairing",
             Zcl.Clusters.greenPower.ID,
             payload,
@@ -375,7 +375,7 @@ export class GreenPower extends EventEmitter<GreenPowerEventMap> {
                             Zcl.Direction.SERVER_TO_CLIENT,
                             true,
                             undefined,
-                            ZclTransactionSequenceNumber.next(),
+                            zclTransactionSequenceNumber.next(),
                             "response",
                             Zcl.Clusters.greenPower.ID,
                             payloadResponse,
@@ -509,7 +509,7 @@ export class GreenPower extends EventEmitter<GreenPowerEventMap> {
                         Zcl.Direction.SERVER_TO_CLIENT,
                         true,
                         undefined,
-                        ZclTransactionSequenceNumber.next(),
+                        zclTransactionSequenceNumber.next(),
                         "response",
                         Zcl.Clusters.greenPower.ID,
                         payload,
@@ -580,7 +580,7 @@ export class GreenPower extends EventEmitter<GreenPowerEventMap> {
             Zcl.Direction.SERVER_TO_CLIENT,
             true, // avoid receiving many responses, especially from the nodes not supporting this functionality
             undefined,
-            ZclTransactionSequenceNumber.next(),
+            zclTransactionSequenceNumber.next(),
             "commisioningMode",
             Zcl.Clusters.greenPower.ID,
             payload,

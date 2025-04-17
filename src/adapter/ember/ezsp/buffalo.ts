@@ -904,23 +904,6 @@ export class EzspBuffalo extends Buffalo {
             const type: EmberGpSinkType = this.readUInt8();
 
             switch (type) {
-                case EmberGpSinkType.FULL_UNICAST:
-                case EmberGpSinkType.LW_UNICAST:
-                case EmberGpSinkType.UNUSED:
-                // biome-ignore lint/suspicious/useDefaultSwitchClauseLast: <explanation>
-                default: {
-                    const sinkNodeId = this.readUInt16();
-                    const sinkEUI = this.readIeeeAddr();
-
-                    list.push({
-                        type,
-                        unicast: {
-                            sinkNodeId,
-                            sinkEUI,
-                        },
-                    });
-                    break;
-                }
                 case EmberGpSinkType.D_GROUPCAST:
                 case EmberGpSinkType.GROUPCAST: {
                     const alias = this.readUInt16();
@@ -940,6 +923,22 @@ export class EzspBuffalo extends Buffalo {
                     });
                     break;
                 }
+                // case EmberGpSinkType.FULL_UNICAST:
+                // case EmberGpSinkType.LW_UNICAST:
+                // case EmberGpSinkType.UNUSED:
+                default: {
+                    const sinkNodeId = this.readUInt16();
+                    const sinkEUI = this.readIeeeAddr();
+
+                    list.push({
+                        type,
+                        unicast: {
+                            sinkNodeId,
+                            sinkEUI,
+                        },
+                    });
+                    break;
+                }
             }
         }
 
@@ -953,18 +952,8 @@ export class EzspBuffalo extends Buffalo {
             this.writeUInt8(entry.type);
 
             switch (entry.type) {
-                case EmberGpSinkType.FULL_UNICAST:
-                case EmberGpSinkType.LW_UNICAST:
-                case EmberGpSinkType.UNUSED:
-                // biome-ignore lint/suspicious/useDefaultSwitchClauseLast: <explanation>
-                default:
-                    this.writeUInt16(entry.unicast.sinkNodeId);
-                    this.writeIeeeAddr(entry.unicast.sinkEUI);
-
-                    break;
-
                 case EmberGpSinkType.D_GROUPCAST:
-                case EmberGpSinkType.GROUPCAST:
+                case EmberGpSinkType.GROUPCAST: {
                     this.writeUInt16(entry.groupcast.alias);
                     this.writeUInt16(entry.groupcast.groupID);
                     //fillers
@@ -972,6 +961,17 @@ export class EzspBuffalo extends Buffalo {
                     this.writeUInt16(entry.groupcast.groupID);
                     this.writeUInt16(entry.groupcast.alias);
                     break;
+                }
+
+                // case EmberGpSinkType.FULL_UNICAST:
+                // case EmberGpSinkType.LW_UNICAST:
+                // case EmberGpSinkType.UNUSED:
+                default: {
+                    this.writeUInt16(entry.unicast.sinkNodeId);
+                    this.writeIeeeAddr(entry.unicast.sinkEUI);
+
+                    break;
+                }
             }
         }
     }

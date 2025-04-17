@@ -2,7 +2,7 @@ import assert from "node:assert";
 
 import {logger} from "../../utils/logger";
 import * as Zcl from "../../zspec/zcl";
-import ZclTransactionSequenceNumber from "../helpers/zclTransactionSequenceNumber";
+import zclTransactionSequenceNumber from "../helpers/zclTransactionSequenceNumber";
 import type {DatabaseEntry, KeyValue} from "../tstype";
 import Device from "./device";
 import type Endpoint from "./endpoint";
@@ -219,7 +219,7 @@ export class Group extends Entity {
                 optionsWithDefaults.direction,
                 true,
                 optionsWithDefaults.manufacturerCode,
-                optionsWithDefaults.transactionSequenceNumber ?? ZclTransactionSequenceNumber.next(),
+                optionsWithDefaults.transactionSequenceNumber ?? zclTransactionSequenceNumber.next(),
                 "write",
                 cluster.ID,
                 payload,
@@ -251,7 +251,7 @@ export class Group extends Entity {
             optionsWithDefaults.direction,
             true,
             optionsWithDefaults.manufacturerCode,
-            optionsWithDefaults.transactionSequenceNumber ?? ZclTransactionSequenceNumber.next(),
+            optionsWithDefaults.transactionSequenceNumber ?? zclTransactionSequenceNumber.next(),
             "read",
             cluster.ID,
             payload,
@@ -288,7 +288,7 @@ export class Group extends Entity {
                 optionsWithDefaults.direction,
                 true,
                 optionsWithDefaults.manufacturerCode,
-                optionsWithDefaults.transactionSequenceNumber || ZclTransactionSequenceNumber.next(),
+                optionsWithDefaults.transactionSequenceNumber || zclTransactionSequenceNumber.next(),
                 command.ID,
                 cluster.ID,
                 payload,

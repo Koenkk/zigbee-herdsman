@@ -11,7 +11,7 @@ import * as Zdo from "../../zspec/zdo";
 import Request from "../helpers/request";
 import RequestQueue from "../helpers/requestQueue";
 import * as ZclFrameConverter from "../helpers/zclFrameConverter";
-import ZclTransactionSequenceNumber from "../helpers/zclTransactionSequenceNumber";
+import zclTransactionSequenceNumber from "../helpers/zclTransactionSequenceNumber";
 import type {KeyValue, SendPolicy} from "../tstype";
 import Device from "./device";
 import Entity from "./entity";
@@ -747,7 +747,7 @@ export class Endpoint extends Entity {
         const device = this.getDevice();
         const cluster = this.getCluster(clusterKey, device);
         const command = cluster.getCommandResponse(commandKey);
-        transactionSequenceNumber = transactionSequenceNumber || ZclTransactionSequenceNumber.next();
+        transactionSequenceNumber = transactionSequenceNumber || zclTransactionSequenceNumber.next();
         const optionsWithDefaults = this.getOptionsWithDefaults(options, true, Zcl.Direction.SERVER_TO_CLIENT, cluster.manufacturerCode);
 
         const frame = Zcl.Frame.create(
@@ -946,7 +946,7 @@ export class Endpoint extends Entity {
             optionsWithDefaults.direction,
             optionsWithDefaults.disableDefaultResponse,
             optionsWithDefaults.manufacturerCode,
-            optionsWithDefaults.transactionSequenceNumber ?? ZclTransactionSequenceNumber.next(),
+            optionsWithDefaults.transactionSequenceNumber ?? zclTransactionSequenceNumber.next(),
             command.name,
             cluster.name,
             payload,
@@ -996,7 +996,7 @@ export class Endpoint extends Entity {
             optionsWithDefaults.direction,
             true,
             optionsWithDefaults.manufacturerCode,
-            optionsWithDefaults.transactionSequenceNumber ?? ZclTransactionSequenceNumber.next(),
+            optionsWithDefaults.transactionSequenceNumber ?? zclTransactionSequenceNumber.next(),
             command.name,
             cluster.name,
             payload,

@@ -61,8 +61,6 @@
                 }
             },
             "complexity": {
-                "noUselessSwitchCase": "off",
-                "noStaticOnlyClass": "off",
                 "useLiteralKeys": "off",
                 "noBannedTypes": "off"
             },

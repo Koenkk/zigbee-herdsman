@@ -12,7 +12,7 @@ import type {ClusterDefinition, CustomClusters} from "../../zspec/zcl/definition
 import * as Zdo from "../../zspec/zdo";
 import type {ControllerEventMap} from "../controller";
 import {ZclFrameConverter} from "../helpers";
-import ZclTransactionSequenceNumber from "../helpers/zclTransactionSequenceNumber";
+import zclTransactionSequenceNumber from "../helpers/zclTransactionSequenceNumber";
 import type {DatabaseEntry, DeviceType, KeyValue} from "../tstype";
 import Endpoint from "./endpoint";
 import Entity from "./entity";
@@ -1121,7 +1121,7 @@ export class Device extends Entity<ControllerEventMap> {
                 Zcl.Direction.SERVER_TO_CLIENT,
                 true,
                 undefined,
-                ZclTransactionSequenceNumber.next(),
+                zclTransactionSequenceNumber.next(),
                 "pairing",
                 33,
                 payload,

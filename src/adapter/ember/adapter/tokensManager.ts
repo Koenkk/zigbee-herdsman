@@ -291,6 +291,7 @@ const NVM3KEYS: number[] = [
 
 const BLANK_EUI64_BUF = Buffer.from(BLANK_EUI64.substring(2) /*take out 0x*/, "hex");
 
+// biome-ignore lint/complexity/noStaticOnlyClass: TODO to functions
 export class EmberTokensManager {
     /**
      * Host-only API to check whether the NCP uses key storage.

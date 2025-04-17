@@ -7,7 +7,6 @@ import type * as Events from "../src/controller/events";
 import GreenPower from "../src/controller/greenPower";
 import Request from "../src/controller/helpers/request";
 import zclTransactionSequenceNumber from "../src/controller/helpers/zclTransactionSequenceNumber";
-import ZclTransactionSequenceNumber from "../src/controller/helpers/zclTransactionSequenceNumber";
 import {Device, Endpoint, Group} from "../src/controller/model";
 import type * as Models from "../src/models";
 import * as Utils from "../src/utils";
@@ -3916,8 +3915,7 @@ describe("Controller", () => {
             Zcl.Direction.CLIENT_TO_SERVER,
             true,
             undefined,
-            // @ts-expect-error private
-            ZclTransactionSequenceNumber.number,
+            zclTransactionSequenceNumber.current,
             "initTestMode",
             Zcl.Clusters.ssIasZone.ID,
             {},
@@ -3949,8 +3947,7 @@ describe("Controller", () => {
             Zcl.Direction.CLIENT_TO_SERVER,
             true,
             Zcl.ManufacturerCode.ROBERT_BOSCH_GMBH,
-            // @ts-expect-error private
-            ZclTransactionSequenceNumber.number,
+            zclTransactionSequenceNumber.current,
             "boschSmokeAlarmSiren",
             Zcl.Clusters.ssIasZone.ID,
             {data: 0x0000},
