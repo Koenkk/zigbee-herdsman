@@ -258,23 +258,25 @@ export class Znp extends events.EventEmitter {
                             result.payload.status,
                         )}' (expected '${expectedStatuses.map(statusDescription)}')`,
                     );
-                } else {
-                    return result;
                 }
-            } else if (object.type === Type.AREQ && object.isResetCommand()) {
+
+                return result;
+            }
+
+            if (object.type === Type.AREQ && object.isResetCommand()) {
                 const waiter = this.waitress.waitFor({type: Type.AREQ, subsystem: Subsystem.SYS, command: "resetInd"}, timeout || timeouts.reset);
                 this.queue.clear();
                 this.unpiWriter.writeFrame(object.unpiFrame);
                 return await waiter.start().promise;
-            } else {
-                if (object.type === Type.AREQ) {
-                    this.unpiWriter.writeFrame(object.unpiFrame);
-                    /* v8 ignore start */
-                } else {
-                    throw new Error(`Unknown type '${object.type}'`);
-                }
-                /* v8 ignore stop */
             }
+
+            if (object.type === Type.AREQ) {
+                this.unpiWriter.writeFrame(object.unpiFrame);
+                /* v8 ignore start */
+            } else {
+                throw new Error(`Unknown type '${object.type}'`);
+            }
+            /* v8 ignore stop */
         });
     }
 

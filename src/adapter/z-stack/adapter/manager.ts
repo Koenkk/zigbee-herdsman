@@ -187,91 +187,81 @@ export class ZnpAdapterManager {
                 logger.debug("(stage-2) configuration matches backup", NS);
                 checkRestoreVersionCompatibility();
                 return "restoreBackup";
-            } else {
-                /* Adapter backup is either not available or does not match configuration */
-                if (!backup) {
-                    logger.debug("(stage-2) adapter backup does not exist", NS);
-                } else {
-                    logger.debug("(stage-2) configuration does not match backup", NS);
-                }
-                return "startCommissioning";
             }
-        } else {
-            /* Adapter is configured and commissioned */
-            logger.debug("(stage-1) adapter is configured", NS);
+            /* Adapter backup is either not available or does not match configuration */
+            if (!backup) {
+                logger.debug("(stage-2) adapter backup does not exist", NS);
+            } else {
+                logger.debug("(stage-2) configuration does not match backup", NS);
+            }
+            return "startCommissioning";
+        }
+        /* Adapter is configured and commissioned */
+        logger.debug("(stage-1) adapter is configured", NS);
 
-            if (configMatchesAdapter) {
-                /* Warn if EPID is reversed (backward-compat) */
-                if (isExtendedPanIdReversed) {
-                    logger.debug("(stage-2) extended pan id is reversed", NS);
-                    logger.warning(
-                        `Extended PAN ID is reversed (expected=${this.nwkOptions.extendedPanId.toString("hex")}, actual=${nib.extendedPANID.toString("hex")})`,
+        if (configMatchesAdapter) {
+            /* Warn if EPID is reversed (backward-compat) */
+            if (isExtendedPanIdReversed) {
+                logger.debug("(stage-2) extended pan id is reversed", NS);
+                logger.warning(
+                    `Extended PAN ID is reversed (expected=${this.nwkOptions.extendedPanId.toString("hex")}, actual=${nib.extendedPANID.toString("hex")})`,
+                    NS,
+                );
+            }
+
+            /* Configuration matches adapter state - regular startup */
+            logger.debug("(stage-2) adapter state matches configuration", NS);
+            return "startup";
+        }
+        /* Configuration does not match adapter state */
+        logger.debug("(stage-2) adapter state does not match configuration", NS);
+        if (backup) {
+            /* Backup is present */
+            logger.debug("(stage-3) got adapter backup", NS);
+            if (backupMatchesAdapter) {
+                /* Backup matches adapter state */
+                logger.debug("(stage-4) adapter state matches backup", NS);
+                logger.error("Configuration is not consistent with adapter state/backup!", NS);
+                logger.error(`- PAN ID: configured=${this.nwkOptions.panId}, adapter=${nib.nwkPanId}`, NS);
+                logger.error(
+                    `- Extended PAN ID: configured=${this.nwkOptions.extendedPanId.toString("hex")}, adapter=${nib.extendedPANID.toString("hex")}`,
+                    NS,
+                );
+                logger.error(
+                    `- Network Key: configured=${this.nwkOptions.networkKey.toString("hex")}, adapter=${activeKeyInfo.key.toString("hex")}`,
+                    NS,
+                );
+                logger.error(
+                    `- Channel List: configured=${this.nwkOptions.channelList.toString()}, adapter=${Utils.unpackChannelList(nib.channelList).toString()}`,
+                    NS,
+                );
+                logger.error("Please update configuration to prevent further issues.", NS);
+                logger.error(`If you wish to re-commission your network, please remove coordinator backup at ${this.options.backupPath}.`, NS);
+                logger.error("Re-commissioning your network will require re-pairing of all devices!", NS);
+                if (this.options.adapterOptions.forceStartWithInconsistentAdapterConfiguration) {
+                    logger.error(
+                        "Running despite adapter configuration mismatch as configured. Please update the adapter to compatible firmware and recreate your network as soon as possible.",
                         NS,
                     );
+                    return "startup";
                 }
-
-                /* Configuration matches adapter state - regular startup */
-                logger.debug("(stage-2) adapter state matches configuration", NS);
-                return "startup";
-            } else {
-                /* Configuration does not match adapter state */
-                logger.debug("(stage-2) adapter state does not match configuration", NS);
-                if (backup) {
-                    /* Backup is present */
-                    logger.debug("(stage-3) got adapter backup", NS);
-                    if (backupMatchesAdapter) {
-                        /* Backup matches adapter state */
-                        logger.debug("(stage-4) adapter state matches backup", NS);
-                        logger.error("Configuration is not consistent with adapter state/backup!", NS);
-                        logger.error(`- PAN ID: configured=${this.nwkOptions.panId}, adapter=${nib.nwkPanId}`, NS);
-                        logger.error(
-                            `- Extended PAN ID: configured=${this.nwkOptions.extendedPanId.toString("hex")}, adapter=${nib.extendedPANID.toString("hex")}`,
-                            NS,
-                        );
-                        logger.error(
-                            `- Network Key: configured=${this.nwkOptions.networkKey.toString("hex")}, adapter=${activeKeyInfo.key.toString("hex")}`,
-                            NS,
-                        );
-                        logger.error(
-                            `- Channel List: configured=${this.nwkOptions.channelList.toString()}, adapter=${Utils.unpackChannelList(nib.channelList).toString()}`,
-                            NS,
-                        );
-                        logger.error("Please update configuration to prevent further issues.", NS);
-                        logger.error(
-                            `If you wish to re-commission your network, please remove coordinator backup at ${this.options.backupPath}.`,
-                            NS,
-                        );
-                        logger.error("Re-commissioning your network will require re-pairing of all devices!", NS);
-                        if (this.options.adapterOptions.forceStartWithInconsistentAdapterConfiguration) {
-                            logger.error(
-                                "Running despite adapter configuration mismatch as configured. Please update the adapter to compatible firmware and recreate your network as soon as possible.",
-                                NS,
-                            );
-                            return "startup";
-                        } else {
-                            throw new Error("startup failed - configuration-adapter mismatch - see logs above for more information");
-                        }
-                    } else {
-                        /* Backup does not match adapter state */
-                        logger.debug("(stage-4) adapter state does not match backup", NS);
-                        if (configMatchesBackup) {
-                            /* Adapter backup matches configuration */
-                            logger.debug("(stage-5) adapter backup matches configuration", NS);
-                            checkRestoreVersionCompatibility();
-                            return "restoreBackup";
-                        } else {
-                            /* Adapter backup does not match configuration */
-                            logger.debug("(stage-5) adapter backup does not match configuration", NS);
-                            return "startCommissioning";
-                        }
-                    }
-                } else {
-                    /* Configuration mismatches adapter and no backup is available */
-                    logger.debug("(stage-3) configuration-adapter mismatch (no backup)", NS);
-                    return "startCommissioning";
-                }
+                throw new Error("startup failed - configuration-adapter mismatch - see logs above for more information");
             }
+            /* Backup does not match adapter state */
+            logger.debug("(stage-4) adapter state does not match backup", NS);
+            if (configMatchesBackup) {
+                /* Adapter backup matches configuration */
+                logger.debug("(stage-5) adapter backup matches configuration", NS);
+                checkRestoreVersionCompatibility();
+                return "restoreBackup";
+            }
+            /* Adapter backup does not match configuration */
+            logger.debug("(stage-5) adapter backup does not match configuration", NS);
+            return "startCommissioning";
         }
+        /* Configuration mismatches adapter and no backup is available */
+        logger.debug("(stage-3) configuration-adapter mismatch (no backup)", NS);
+        return "startCommissioning";
     }
 
     /**

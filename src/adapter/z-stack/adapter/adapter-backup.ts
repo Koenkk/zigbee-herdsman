@@ -50,11 +50,13 @@ export class AdapterBackup {
                 throw new Error(`Unsupported open coordinator backup version (version=${data.metadata?.version})`);
             }
             return BackupUtils.fromUnifiedBackup(data as Models.UnifiedBackupStorage);
-        } else if (data.adapterType === "zStack") {
-            return BackupUtils.fromLegacyBackup(data as Models.LegacyBackupStorage);
-        } else {
-            throw new Error("Unknown backup format");
         }
+
+        if (data.adapterType === "zStack") {
+            return BackupUtils.fromLegacyBackup(data as Models.LegacyBackupStorage);
+        }
+
+        throw new Error("Unknown backup format");
     }
 
     /**
@@ -131,7 +133,9 @@ export class AdapterBackup {
             if (entry.extendedPanID.equals(nib.extendedPANID)) {
                 secMaterialDescriptor = entry;
                 break;
-            } else if (!secMaterialDescriptor && entry.extendedPanID.equals(genericExtendedPanId)) {
+            }
+
+            if (!secMaterialDescriptor && entry.extendedPanID.equals(genericExtendedPanId)) {
                 secMaterialDescriptor = entry;
             }
         }
@@ -452,9 +456,8 @@ export class AdapterBackup {
     private async getAddressManagerTable(version: ZnpVersion): Promise<ReturnType<typeof Structs.addressManagerTable>> {
         if (version === ZnpVersion.ZStack3x0) {
             return await this.nv.readTable("extended", NvSystemIds.ZSTACK, NvItemsIds.ZCD_NV_EX_ADDRMGR, undefined, Structs.addressManagerTable);
-        } else {
-            return await this.nv.readItem(NvItemsIds.ADDRMGR, 0, Structs.addressManagerTable);
         }
+        return await this.nv.readItem(NvItemsIds.ADDRMGR, 0, Structs.addressManagerTable);
     }
 
     /**
@@ -478,9 +481,8 @@ export class AdapterBackup {
                 undefined,
                 Structs.apsLinkKeyDataTable,
             );
-        } else {
-            return await this.nv.readTable("legacy", NvItemsIds.APS_LINK_KEY_DATA_START, 255, Structs.apsLinkKeyDataTable);
         }
+        return await this.nv.readTable("legacy", NvItemsIds.APS_LINK_KEY_DATA_START, 255, Structs.apsLinkKeyDataTable);
     }
 
     /**
@@ -491,9 +493,8 @@ export class AdapterBackup {
     private async getTclkTable(version: ZnpVersion): Promise<ReturnType<typeof Structs.apsTcLinkKeyTable>> {
         if (version === ZnpVersion.ZStack3x0) {
             return await this.nv.readTable("extended", NvSystemIds.ZSTACK, NvItemsIds.EX_TCLK_TABLE, undefined, Structs.apsTcLinkKeyTable);
-        } else {
-            return await this.nv.readTable("legacy", NvItemsIds.LEGACY_TCLK_TABLE_START, 239, Structs.apsTcLinkKeyTable);
         }
+        return await this.nv.readTable("legacy", NvItemsIds.LEGACY_TCLK_TABLE_START, 239, Structs.apsTcLinkKeyTable);
     }
 
     /**
@@ -510,8 +511,8 @@ export class AdapterBackup {
                 undefined,
                 Structs.nwkSecMaterialDescriptorTable,
             );
-        } else {
-            return await this.nv.readTable("legacy", NvItemsIds.LEGACY_NWK_SEC_MATERIAL_TABLE_START, 12, Structs.nwkSecMaterialDescriptorTable);
         }
+
+        return await this.nv.readTable("legacy", NvItemsIds.LEGACY_NWK_SEC_MATERIAL_TABLE_START, 12, Structs.nwkSecMaterialDescriptorTable);
     }
 }

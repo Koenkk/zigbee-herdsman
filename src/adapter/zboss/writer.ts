@@ -29,11 +29,11 @@ export class ZBOSSWriter extends Readable {
     public writeAvailable(): boolean {
         if (this.readableLength < this.readableHighWaterMark) {
             return true;
-        } else {
-            this.writeFlush();
-
-            return false;
         }
+
+        this.writeFlush();
+
+        return false;
     }
 
     /**

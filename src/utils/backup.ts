@@ -106,13 +106,21 @@ export const fromUnifiedBackup = (backup: Models.UnifiedBackupStorage): Models.B
 export const fromLegacyBackup = (backup: Models.LegacyBackupStorage): Models.Backup => {
     if (!backup.data.ZCD_NV_NIB) {
         throw new Error("Backup corrupted - missing NIB");
-    } else if (!backup.data.ZCD_NV_NWK_ACTIVE_KEY_INFO) {
+    }
+
+    if (!backup.data.ZCD_NV_NWK_ACTIVE_KEY_INFO) {
         throw new Error("Backup corrupted - missing active key info");
-    } else if (!backup.data.ZCD_NV_PRECFGKEY_ENABLE) {
+    }
+
+    if (!backup.data.ZCD_NV_PRECFGKEY_ENABLE) {
         throw new Error("Backup corrupted - missing pre-configured key enable attribute");
-    } else if (!backup.data.ZCD_NV_EX_NWK_SEC_MATERIAL_TABLE && !backup.data.ZCD_NV_LEGACY_NWK_SEC_MATERIAL_TABLE_START) {
+    }
+
+    if (!backup.data.ZCD_NV_EX_NWK_SEC_MATERIAL_TABLE && !backup.data.ZCD_NV_LEGACY_NWK_SEC_MATERIAL_TABLE_START) {
         throw new Error("Backup corrupted - missing network security material table");
-    } else if (!backup.data.ZCD_NV_EXTADDR) {
+    }
+
+    if (!backup.data.ZCD_NV_EXTADDR) {
         throw new Error("Backup corrupted - missing adapter IEEE address NV entry");
     }
 

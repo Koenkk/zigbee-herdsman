@@ -156,15 +156,15 @@ export function readZBOSSFrame(buffer: Buffer): ZBOSSFrame {
                 zdo,
             },
         };
-    } else {
-        return {
-            version,
-            type,
-            commandId,
-            tsn,
-            payload: readPayload(type, commandId, buf),
-        };
     }
+
+    return {
+        version,
+        type,
+        commandId,
+        tsn,
+        payload: readPayload(type, commandId, buf),
+    };
 }
 
 export function writeZBOSSFrame(frame: ZBOSSFrame): Buffer {

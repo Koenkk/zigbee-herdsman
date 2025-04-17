@@ -69,9 +69,9 @@ export class ZBOSSUart extends EventEmitter {
         }
         if (SocketPortUtils.isTcpPath(this.portOptions.path!)) {
             return this.socketPort && !this.socketPort.closed;
-        } else {
-            return this.serialPort?.isOpen;
         }
+
+        return this.serialPort?.isOpen;
     }
 
     public async start(): Promise<boolean> {
@@ -405,9 +405,9 @@ export class ZBOSSUart extends EventEmitter {
             const pCRC16 = Buffer.alloc(2);
             pCRC16.writeUInt16LE(crc16(data));
             return Buffer.concat([header, pCRC16, data]);
-        } else {
-            return header;
         }
+
+        return header;
     }
 
     private waitFor(sequence: number, timeout = 2000): {start: () => {promise: Promise<number>; ID: number}; ID: number} {

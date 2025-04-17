@@ -411,9 +411,9 @@ class Driver extends events.EventEmitter {
             buf.writeUIntLE(parameter, 0, parameterLength);
 
             return buf;
-        } else {
-            return Buffer.from(parameter.reverse());
         }
+
+        return Buffer.from(parameter.reverse());
     }
 
     private sendReadFirmwareVersionRequest(seqNumber: number): void {
@@ -651,15 +651,15 @@ class Driver extends events.EventEmitter {
                         logger.debug("delay sending of APS Request", NS);
                         apsQueue.unshift(req);
                         break;
-                    } else {
-                        disableRTS();
-                        enableRtsTimeout = setTimeout(() => {
-                            enableRTS();
-                        }, this.readyToSendTimeout);
-                        apsBusyQueue.push(req);
-                        this.sendEnqueueSendDataRequest(req.request!, req.seqNumber);
-                        break;
                     }
+
+                    disableRTS();
+                    enableRtsTimeout = setTimeout(() => {
+                        enableRTS();
+                    }, this.readyToSendTimeout);
+                    apsBusyQueue.push(req);
+                    this.sendEnqueueSendDataRequest(req.request!, req.seqNumber);
+                    break;
                 default:
                     throw new Error("process APS queue - unknown command id");
             }

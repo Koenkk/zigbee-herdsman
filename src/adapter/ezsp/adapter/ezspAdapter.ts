@@ -402,9 +402,9 @@ export class EZSPAdapter extends Adapter {
                         responseAttempt + 1,
                         dataRequestAttempt,
                     );
-                } else {
-                    throw error;
                 }
+
+                throw error;
             }
         }
     }

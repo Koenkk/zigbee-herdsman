@@ -178,9 +178,9 @@ export class EzspBuffalo extends Buffalo {
             EZSP_EXTENDED_FRAME_FORMAT_VERSION
         ) {
             return this.getExtFrameId();
-        } else {
-            return this.getResponseByte(EZSP_FRAME_ID_INDEX) as EzspFrameID;
         }
+
+        return this.getResponseByte(EZSP_FRAME_ID_INDEX) as EzspFrameID;
     }
 
     /**
@@ -885,7 +885,9 @@ export class EzspBuffalo extends Buffalo {
             const endpoint = this.readUInt8();
 
             return {applicationId, sourceId, endpoint};
-        } else if (applicationId === EmberGpApplicationId.IEEE_ADDRESS) {
+        }
+
+        if (applicationId === EmberGpApplicationId.IEEE_ADDRESS) {
             const gpdIeeeAddress = this.readIeeeAddr();
             const endpoint = this.readUInt8();
 
@@ -1318,9 +1320,9 @@ export class EzspBuffalo extends Buffalo {
 
             // EzspStatus mapping to SLStatus is always same code
             return SLStatus.ZIGBEE_EZSP_ERROR;
-        } else {
-            return this.readUInt32();
         }
+
+        return this.readUInt32();
     }
 
     public readEmberEndpointDescription(): EmberEndpointDescription {

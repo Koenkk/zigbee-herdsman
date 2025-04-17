@@ -158,11 +158,13 @@ export class ZclFrame {
     private static parsePayload(header: ZclHeader, cluster: Cluster, buffalo: BuffaloZcl): ZclPayload {
         if (header.isGlobal) {
             return ZclFrame.parsePayloadGlobal(header, buffalo);
-        } else if (header.isSpecific) {
-            return ZclFrame.parsePayloadCluster(header, cluster, buffalo);
-        } else {
-            throw new Error(`Unsupported frameType '${header.frameControl.frameType}'`);
         }
+
+        if (header.isSpecific) {
+            return ZclFrame.parsePayloadCluster(header, cluster, buffalo);
+        }
+
+        throw new Error(`Unsupported frameType '${header.frameControl.frameType}'`);
     }
 
     private static parsePayloadCluster(header: ZclHeader, cluster: Cluster, buffalo: BuffaloZcl): ZclPayload {
@@ -234,7 +236,9 @@ export class ZclFrame {
             }
 
             return payload;
-        } else if (command.parseStrategy === "flat") {
+        }
+
+        if (command.parseStrategy === "flat") {
             const payload: {[s: string]: any} = {};
 
             for (const parameter of command.parameters) {
@@ -242,26 +246,26 @@ export class ZclFrame {
             }
 
             return payload;
-        } else {
-            if (command.parseStrategy === "oneof") {
-                if (Utils.isFoundationDiscoverRsp(command.ID)) {
-                    const payload: {discComplete: number; attrInfos: {[k: string]: any}[]} = {
-                        discComplete: buffalo.readUInt8(),
-                        attrInfos: [],
-                    };
+        }
 
-                    while (buffalo.isMore()) {
-                        const entry: (typeof payload.attrInfos)[number] = {};
+        if (command.parseStrategy === "oneof") {
+            if (Utils.isFoundationDiscoverRsp(command.ID)) {
+                const payload: {discComplete: number; attrInfos: {[k: string]: any}[]} = {
+                    discComplete: buffalo.readUInt8(),
+                    attrInfos: [],
+                };
 
-                        for (const parameter of command.parameters) {
-                            entry[parameter.name] = buffalo.read(parameter.type, {});
-                        }
+                while (buffalo.isMore()) {
+                    const entry: (typeof payload.attrInfos)[number] = {};
 
-                        payload.attrInfos.push(entry);
+                    for (const parameter of command.parameters) {
+                        entry[parameter.name] = buffalo.read(parameter.type, {});
                     }
 
-                    return payload;
+                    payload.attrInfos.push(entry);
                 }
+
+                return payload;
             }
         }
     }

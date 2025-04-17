@@ -224,21 +224,21 @@ export class GreenPower extends EventEmitter<GreenPowerEventMap> {
 
         if (options.communicationMode !== GPCommunicationMode.LightweightUnicast) {
             return await this.adapter.sendZclFrameToAll(GP_ENDPOINT, replyFrame, GP_ENDPOINT, BroadcastAddress.RX_ON_WHEN_IDLE);
-        } else {
-            const device = Device.byNetworkAddress(gppNwkAddr ?? /* v8 ignore next */ COORDINATOR_ADDRESS);
-            assert(device, "Failed to find green power proxy device");
-
-            return await this.adapter.sendZclFrameToEndpoint(
-                device.ieeeAddr,
-                device.networkAddress,
-                GP_ENDPOINT,
-                replyFrame,
-                10000,
-                false,
-                false,
-                GP_ENDPOINT,
-            );
         }
+
+        const device = Device.byNetworkAddress(gppNwkAddr ?? /* v8 ignore next */ COORDINATOR_ADDRESS);
+        assert(device, "Failed to find green power proxy device");
+
+        return await this.adapter.sendZclFrameToEndpoint(
+            device.ieeeAddr,
+            device.networkAddress,
+            GP_ENDPOINT,
+            replyFrame,
+            10000,
+            false,
+            false,
+            GP_ENDPOINT,
+        );
     }
 
     public async processCommand(dataPayload: AdapterEvents.ZclPayload, frame: Zcl.Frame, securityKey?: Buffer): Promise<Zcl.Frame> {

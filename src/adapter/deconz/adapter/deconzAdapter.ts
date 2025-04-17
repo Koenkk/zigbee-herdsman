@@ -260,25 +260,25 @@ export class DeconzAdapter extends Adapter {
         // product: number; transportrev: number; majorrel: number; minorrel: number; maintrel: number; revision: string;
         if (this.fwVersion != undefined) {
             return this.fwVersion;
-        } else {
-            try {
-                const fw = await this.driver.readFirmwareVersionRequest();
-                const buf = Buffer.from(fw);
-                const fwString = `0x${buf.readUInt32LE(0).toString(16)}`;
-                let type = "";
-                if (fw[1] === 5) {
-                    type = "ConBee/RaspBee";
-                } else if (fw[1] === 7) {
-                    type = "ConBee2/RaspBee2";
-                } else {
-                    type = "ConBee3";
-                }
-                const meta = {transportrev: 0, product: 0, majorrel: fw[3], minorrel: fw[2], maintrel: 0, revision: fwString};
-                this.fwVersion = {type: type, meta: meta};
-                return {type: type, meta: meta};
-            } catch (error) {
-                throw new Error(`Get coordinator version Error: ${error}`);
+        }
+
+        try {
+            const fw = await this.driver.readFirmwareVersionRequest();
+            const buf = Buffer.from(fw);
+            const fwString = `0x${buf.readUInt32LE(0).toString(16)}`;
+            let type = "";
+            if (fw[1] === 5) {
+                type = "ConBee/RaspBee";
+            } else if (fw[1] === 7) {
+                type = "ConBee2/RaspBee2";
+            } else {
+                type = "ConBee3";
             }
+            const meta = {transportrev: 0, product: 0, majorrel: fw[3], minorrel: fw[2], maintrel: 0, revision: fwString};
+            this.fwVersion = {type: type, meta: meta};
+            return {type: type, meta: meta};
+        } catch (error) {
+            throw new Error(`Get coordinator version Error: ${error}`);
         }
     }
 
@@ -376,9 +376,9 @@ export class DeconzAdapter extends Adapter {
                             {endpointList: [1], nwkAddress: 0},
                         ];
                         return response as ZdoTypes.RequestToResponseMap[K];
-                    } else {
-                        throw error;
                     }
+
+                    throw error;
                 }
             }
         }
@@ -459,9 +459,9 @@ export class DeconzAdapter extends Adapter {
                 };
                 logger.debug(`response received (${zclFrame.header.transactionSequenceNumber})`, NS);
                 return response;
-            } else {
-                logger.debug(`no response expected (${zclFrame.header.transactionSequenceNumber})`, NS);
             }
+
+            logger.debug(`no response expected (${zclFrame.header.transactionSequenceNumber})`, NS);
         } catch (error) {
             throw new Error(`no response received (${zclFrame.header.transactionSequenceNumber}) ${error}`);
         }

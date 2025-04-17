@@ -508,7 +508,9 @@ export class BuffaloZcl extends Buffalo {
             }
 
             return frame;
-        } else if (options.payload?.commandID === 0xe3) {
+        }
+
+        if (options.payload?.commandID === 0xe3) {
             // Channel Request
             const channelOpts = this.readUInt8();
 
@@ -522,7 +524,9 @@ export class BuffaloZcl extends Buffalo {
                 nextChannel: channelOpts & 0xf,
                 nextNextChannel: channelOpts >> 4,
             };
-        } else if (options.payload?.commandID == 0xa1) {
+        }
+
+        if (options.payload?.commandID == 0xa1) {
             // Manufacturer-specific Attribute Reporting
             if (options.payload.payloadSize == undefined) {
                 throw new Error("Cannot read GPD_FRAME with commandID=0xA1 without payloadSize options specified");
@@ -555,16 +559,18 @@ export class BuffaloZcl extends Buffalo {
             this.position = startPosition + options.payload.payloadSize;
 
             return frame;
-        } else if (options.payload?.payloadSize && this.isMore()) {
+        }
+
+        if (options.payload?.payloadSize && this.isMore()) {
             // might contain `gppNwkAddr`, `gppGpdLink` & `mic` from ZCL cluster, so limit by `payloadSize`
             return {raw: this.readBuffer(options.payload.payloadSize)};
-        } else {
-            if (options.payload?.payloadSize) {
-                this.position = startPosition + options.payload.payloadSize;
-            }
-
-            return {};
         }
+
+        if (options.payload?.payloadSize) {
+            this.position = startPosition + options.payload.payloadSize;
+        }
+
+        return {};
     }
 
     private writeStructuredSelector(value: StructuredSelector): void {
@@ -588,7 +594,9 @@ export class BuffaloZcl extends Buffalo {
         if (indicator === 0) {
             // no indexes, whole attribute value is to be read
             return {indicatorType: StructuredIndicatorType.Whole};
-        } else if (indicator < StructuredIndicatorType.WriteAdd) {
+        }
+
+        if (indicator < StructuredIndicatorType.WriteAdd) {
             const indexes: StructuredSelector["indexes"] = [];
 
             for (let i = 0; i < indicator; i++) {
@@ -597,9 +605,9 @@ export class BuffaloZcl extends Buffalo {
             }
 
             return {indexes};
-        } else {
-            throw new Error("Read structured selector was outside [0-15] range.");
         }
+
+        throw new Error("Read structured selector was outside [0-15] range.");
     }
 
     private writeListTuyaDataPointValues(dpValues: TuyaDataPointValue[]): void {
@@ -818,9 +826,9 @@ export class BuffaloZcl extends Buffalo {
                 if (options.dataType == null) {
                     if (Buffer.isBuffer(value) || isNumberArray(value)) {
                         return this.writeBuffer(value, value.length);
-                    } else {
-                        throw new Error("Cannot write USE_DATA_TYPE without dataType option specified");
                     }
+
+                    throw new Error("Cannot write USE_DATA_TYPE without dataType option specified");
                 }
 
                 return this.write(options.dataType, value, options);

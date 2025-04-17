@@ -406,9 +406,9 @@ export class ZBOSSAdapter extends Adapter {
                             assocRemove,
                             assocRestore,
                         );
-                    } else {
-                        throw error;
                     }
+
+                    throw error;
                 }
             } else {
                 return;

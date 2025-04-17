@@ -106,21 +106,21 @@ export class EzspQueue {
 
         if (buf === entry) {
             return undefined;
-        } else {
-            if (buf == undefined) {
-                throw new Error("Tried to get preceding entry from an empty queue.");
+        }
+
+        if (buf == undefined) {
+            throw new Error("Tried to get preceding entry from an empty queue.");
+        }
+
+        do {
+            if (buf.link === entry) {
+                return buf;
             }
 
-            do {
-                if (buf.link === entry) {
-                    return buf;
-                }
+            buf = buf.link;
+        } while (buf != undefined);
 
-                buf = buf.link;
-            } while (buf != undefined);
-
-            throw new Error("Buffer not in queue.");
-        }
+        throw new Error("Buffer not in queue.");
     }
 
     /**

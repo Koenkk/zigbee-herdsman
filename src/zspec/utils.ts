@@ -279,13 +279,15 @@ export function checkInstallCode(code: Buffer, adjust = true): [outCode: Buffer,
                     outCode[crcHighByteIndex] = crcHighByte;
 
                     return [outCode, "invalid CRC"];
-                } else {
-                    throw new Error(`Install code ${code.toString("hex")} failed CRC validation`);
                 }
+
+                throw new Error(`Install code ${code.toString("hex")} failed CRC validation`);
             }
 
             return [code, undefined];
-        } else if (code.length === codeSize - INSTALL_CODE_CRC_SIZE) {
+        }
+
+        if (code.length === codeSize - INSTALL_CODE_CRC_SIZE) {
             if (adjust) {
                 // install code is missing CRC
                 const crc = crc16X25(code);
@@ -295,9 +297,9 @@ export function checkInstallCode(code: Buffer, adjust = true): [outCode: Buffer,
                 outCode.writeUInt16LE(crc, code.length);
 
                 return [outCode, "missing CRC"];
-            } else {
-                throw new Error(`Install code ${code.toString("hex")} failed CRC validation`);
             }
+
+            throw new Error(`Install code ${code.toString("hex")} failed CRC validation`);
         }
     }
 

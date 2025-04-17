@@ -2681,11 +2681,11 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
 
         if (this.version < 0x0e) {
             return SLStatus.OK;
-        } else {
-            const status = this.buffalo.readUInt32();
-
-            return status;
         }
+
+        const status = this.buffalo.readUInt32();
+
+        return status;
     }
 
     /**
@@ -4328,11 +4328,11 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
 
         if (this.version < 0x0e) {
             return SLStatus.OK;
-        } else {
-            const status = this.buffalo.readUInt32();
-
-            return status;
         }
+
+        const status = this.buffalo.readUInt32();
+
+        return status;
     }
 
     /**
@@ -5562,11 +5562,11 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
 
         if (this.version < 0x0e) {
             return SLStatus.OK;
-        } else {
-            const status = this.buffalo.readUInt32();
-
-            return status;
         }
+
+        const status = this.buffalo.readUInt32();
+
+        return status;
     }
 
     /**
@@ -5592,11 +5592,11 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
             const extendedTimeout = this.buffalo.readUInt8() !== 0;
 
             return extendedTimeout ? SLStatus.OK : SLStatus.FAIL;
-        } else {
-            const status = this.buffalo.readUInt32();
-
-            return status;
         }
+
+        const status = this.buffalo.readUInt32();
+
+        return status;
     }
 
     /**
@@ -6197,13 +6197,13 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
             const status = this.buffalo.readUInt32();
 
             return [status, key];
-        } else {
-            const status = this.buffalo.readUInt32();
-            const key = this.buffalo.readSecManKey();
-            context = this.buffalo.readSecManContext();
-
-            return [status, key];
         }
+
+        const status = this.buffalo.readUInt32();
+        const key = this.buffalo.readSecManKey();
+        context = this.buffalo.readSecManContext();
+
+        return [status, key];
     }
 
     /**
@@ -6547,13 +6547,13 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
             const status = this.buffalo.readUInt32();
 
             return [status, keyData];
-        } else {
-            const status = this.buffalo.readUInt32();
-            const keyData = this.buffalo.readSecManAPSKeyMetadata();
-            context = this.buffalo.readSecManContext();
-
-            return [status, keyData];
         }
+
+        const status = this.buffalo.readUInt32();
+        const keyData = this.buffalo.readSecManAPSKeyMetadata();
+        context = this.buffalo.readSecManContext();
+
+        return [status, keyData];
     }
 
     /**
@@ -6632,14 +6632,14 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
             const status = this.buffalo.readUInt32();
 
             return [status, context, plaintextKey, keyData];
-        } else {
-            const status = this.buffalo.readUInt32();
-            const context = this.buffalo.readSecManContext();
-            const plaintextKey = this.buffalo.readSecManKey();
-            const keyData = this.buffalo.readSecManAPSKeyMetadata();
-
-            return [status, context, plaintextKey, keyData];
         }
+
+        const status = this.buffalo.readUInt32();
+        const context = this.buffalo.readSecManContext();
+        const plaintextKey = this.buffalo.readSecManKey();
+        const keyData = this.buffalo.readSecManAPSKeyMetadata();
+
+        return [status, context, plaintextKey, keyData];
     }
 
     /**
@@ -6680,14 +6680,14 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
             const status = this.buffalo.readUInt32();
 
             return [status, context, plaintextKey, keyData];
-        } else {
-            const status = this.buffalo.readUInt32();
-            const context = this.buffalo.readSecManContext();
-            const plaintextKey = this.buffalo.readSecManKey();
-            const keyData = this.buffalo.readSecManAPSKeyMetadata();
-
-            return [status, context, plaintextKey, keyData];
         }
+
+        const status = this.buffalo.readUInt32();
+        const context = this.buffalo.readSecManContext();
+        const plaintextKey = this.buffalo.readSecManKey();
+        const keyData = this.buffalo.readSecManAPSKeyMetadata();
+
+        return [status, context, plaintextKey, keyData];
     }
 
     /**
@@ -6782,14 +6782,14 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
             const status = this.buffalo.readUInt32();
 
             return [status, context, plaintextKey, keyData];
-        } else {
-            const status = this.buffalo.readUInt32();
-            const context = this.buffalo.readSecManContext();
-            const plaintextKey = this.buffalo.readSecManKey();
-            const keyData = this.buffalo.readSecManAPSKeyMetadata();
-
-            return [status, context, plaintextKey, keyData];
         }
+
+        const status = this.buffalo.readUInt32();
+        const context = this.buffalo.readSecManContext();
+        const plaintextKey = this.buffalo.readSecManKey();
+        const keyData = this.buffalo.readSecManAPSKeyMetadata();
+
+        return [status, context, plaintextKey, keyData];
     }
 
     /**
@@ -6819,14 +6819,14 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
             const status = this.buffalo.readUInt32();
 
             return [status, context, plaintextKey, keyData];
-        } else {
-            const status = this.buffalo.readUInt32();
-            const context = this.buffalo.readSecManContext();
-            const plaintextKey = this.buffalo.readSecManKey();
-            const keyData = this.buffalo.readSecManAPSKeyMetadata();
-
-            return [status, context, plaintextKey, keyData];
         }
+
+        const status = this.buffalo.readUInt32();
+        const context = this.buffalo.readSecManContext();
+        const plaintextKey = this.buffalo.readSecManKey();
+        const keyData = this.buffalo.readSecManAPSKeyMetadata();
+
+        return [status, context, plaintextKey, keyData];
     }
 
     /**

@@ -41,9 +41,9 @@ export class Frame {
 
         if (checksum === fcs) {
             return new Frame(type, subsystem, commandID, data, length, fcs);
-        } else {
-            throw new Error("Invalid checksum");
         }
+
+        throw new Error("Invalid checksum");
     }
 
     private static calculateChecksum(values: Buffer): number {

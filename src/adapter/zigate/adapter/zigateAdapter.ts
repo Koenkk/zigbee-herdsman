@@ -414,9 +414,9 @@ export class ZiGateAdapter extends Adapter {
                         checkedNetworkAddress,
                         discoveredRoute,
                     );
-                } else {
-                    throw error;
                 }
+
+                throw error;
             }
         }
     }

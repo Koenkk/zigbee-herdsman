@@ -409,9 +409,9 @@ export class UartAsh extends EventEmitter<UartAshEventMap> {
 
         if (SocketPortUtils.isTcpPath(this.portOptions.path!)) {
             return this.socketPort ? !this.socketPort.closed : false;
-        } else {
-            return this.serialPort ? this.serialPort.isOpen : false;
         }
+
+        return this.serialPort ? this.serialPort.isOpen : false;
     }
 
     /**
@@ -634,7 +634,9 @@ export class UartAsh extends EventEmitter<UartAshEventMap> {
                 logger.info("======== ASH started ========", NS);
 
                 return EzspStatus.SUCCESS;
-            } else if (this.hostError !== EzspStatus.NO_ERROR || this.ncpError !== EzspStatus.NO_ERROR) {
+            }
+
+            if (this.hostError !== EzspStatus.NO_ERROR || this.ncpError !== EzspStatus.NO_ERROR) {
                 // don't wait for inevitable fail, bail early, let retry logic in EZSP layer do its thing
                 break;
             }
@@ -744,7 +746,9 @@ export class UartAsh extends EventEmitter<UartAshEventMap> {
         // copies data frame to a buffer and appends it to the transmit queue.
         if (len < ASH_MIN_DATA_FIELD_LEN) {
             return EzspStatus.DATA_FRAME_TOO_SHORT;
-        } else if (len > ASH_MAX_DATA_FIELD_LEN) {
+        }
+
+        if (len > ASH_MAX_DATA_FIELD_LEN) {
             return EzspStatus.DATA_FRAME_TOO_LONG;
         }
 
@@ -1088,7 +1092,9 @@ export class UartAsh extends EventEmitter<UartAshEventMap> {
                 logger.info("======== ASH connected ========", NS);
 
                 return EzspStatus.SUCCESS;
-            } else if (frameType === AshFrameType.ERROR) {
+            }
+
+            if (frameType === AshFrameType.ERROR) {
                 logger.error(`Received ERROR from adapter while connecting, with code=${NcpFailedCode[this.rxSHBuffer[2]]}.`, NS);
                 // let Ezsp retry logic handle error
                 // return this.ncpDisconnect(EzspStatus.ASH_NCP_FATAL_ERROR);
@@ -1170,22 +1176,22 @@ export class UartAsh extends EventEmitter<UartAshEventMap> {
 
                     setImmediate(() => this.emit("frame"));
                     return EzspStatus.SUCCESS;
+                }
+
+                // frame is out of sequence
+                if (this.rxSHBuffer[0] & ASH_RFLAG_MASK) {
+                    // if retransmitted, force ACK
+                    this.counters.rxDuplicates += 1;
+                    this.flags |= Flag.ACK;
                 } else {
-                    // frame is out of sequence
-                    if (this.rxSHBuffer[0] & ASH_RFLAG_MASK) {
-                        // if retransmitted, force ACK
-                        this.counters.rxDuplicates += 1;
-                        this.flags |= Flag.ACK;
-                    } else {
-                        // 1st OOS? then set REJ, send NAK
-                        if ((this.flags & Flag.REJ) === 0) {
-                            this.counters.rxOutOfSequence += 1;
+                    // 1st OOS? then set REJ, send NAK
+                    if ((this.flags & Flag.REJ) === 0) {
+                        this.counters.rxOutOfSequence += 1;
 
-                            logger.debug(`<-x- ${frameStr} Out of sequence: expected ${this.frmRx}; got ${frmNum}.`, NS);
-                        }
-
-                        this.rejectFrame();
+                        logger.debug(`<-x- ${frameStr} Out of sequence: expected ${this.frmRx}; got ${frmNum}.`, NS);
                     }
+
+                    this.rejectFrame();
                 }
                 break;
             }
@@ -1530,12 +1536,16 @@ export class UartAsh extends EventEmitter<UartAshEventMap> {
             }
 
             return this.encodeStuffByte(byte);
-        } else if (this.encodeState === 1) {
+        }
+
+        if (this.encodeState === 1) {
             // CRC high byte
             this.encodeState = 2;
 
             return this.encodeStuffByte(this.encodeCrc >> 8);
-        } else if (this.encodeState === 2) {
+        }
+
+        if (this.encodeState === 2) {
             // CRC low byte
             this.encodeState = 3;
 
@@ -1559,9 +1569,9 @@ export class UartAsh extends EventEmitter<UartAshEventMap> {
             this.encodeFlip = byte ^ ASH_FLIP;
 
             return AshReservedByte.ESCAPE;
-        } else {
-            return byte;
         }
+
+        return byte;
     }
 
     /**
@@ -1597,7 +1607,9 @@ export class UartAsh extends EventEmitter<UartAshEventMap> {
                     // if no frame data, not end flag, so ignore it
                     this.decodeFlip = 0; // ignore isolated data escape between flags
                     break;
-                } else if (this.decodeLen === 0xff) {
+                }
+
+                if (this.decodeLen === 0xff) {
                     status = EzspStatus.ASH_COMM_ERROR;
                 } else if (this.decodeCrc !== (this.decodeByte2 << 8) + this.decodeByte1) {
                     status = EzspStatus.ASH_BAD_CRC;

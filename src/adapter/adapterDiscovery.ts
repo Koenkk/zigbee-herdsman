@@ -354,10 +354,10 @@ function matchUsbFingerprint(
             if (score === UsbFingerprintMatchScore.VidPidManuf) {
                 // best possible match, return early
                 return [portInfo.path, UsbFingerprintMatchScore.VidPidManufPath];
-            } else {
-                match = entry;
-                score = UsbFingerprintMatchScore.VidPidPath;
             }
+
+            match = entry;
+            score = UsbFingerprintMatchScore.VidPidPath;
         }
     }
 
@@ -370,7 +370,9 @@ function matchUsbFingerprint(
             }
 
             return [portInfo.path, score];
-        } else if (!conflictProne) {
+        }
+
+        if (!conflictProne) {
             return [portInfo.path, score];
         }
     }
@@ -550,9 +552,13 @@ export async function discoverAdapter(adapter?: Adapter, path?: string): Promise
     if (path) {
         if (path.startsWith("mdns://")) {
             return await findMdnsAdapter(path);
-        } else if (path.startsWith("tcp://") || path.startsWith("socket://")) {
+        }
+
+        if (path.startsWith("tcp://") || path.startsWith("socket://")) {
             return findTcpAdapter(path, adapter);
-        } else if (adapter) {
+        }
+
+        if (adapter) {
             try {
                 const matched = await matchUsbAdapter(adapter, path);
 

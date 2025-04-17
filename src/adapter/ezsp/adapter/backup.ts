@@ -102,8 +102,8 @@ export class EZSPAdapterBackup {
                 throw new Error("This open coordinator backup format not for EZSP adapter");
             }
             return BackupUtils.fromUnifiedBackup(data);
-        } else {
-            throw new Error("Unknown backup format");
         }
+
+        throw new Error("Unknown backup format");
     }
 }

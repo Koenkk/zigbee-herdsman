@@ -788,9 +788,8 @@ export class Driver extends EventEmitter {
             this.eui64ToNodeId.set(eUI64.toString(), nwk);
 
             return eUI64;
-        } else {
-            throw new Error(`Unrecognized nodeId:${nwk}`);
         }
+        throw new Error(`Unrecognized nodeId:${nwk}`);
     }
 
     public async preJoining(seconds: number): Promise<void> {
@@ -875,9 +874,9 @@ export class Driver extends EventEmitter {
     public addTransientLinkKey(partner: EmberEUI64, transientKey: EmberKeyData): Promise<EZSPFrameData> {
         if (this.ezsp.ezspV < 13) {
             return this.ezsp.execCommand("addTransientLinkKey", {partner, transientKey});
-        } else {
-            return this.ezsp.execCommand("importTransientKey", {partner, transientKey, flags: 0});
         }
+
+        return this.ezsp.execCommand("importTransientKey", {partner, transientKey, flags: 0});
     }
 
     public async addInstallCode(ieeeAddress: string, key: Buffer, hashed: boolean): Promise<void> {
@@ -894,40 +893,40 @@ export class Driver extends EventEmitter {
     public async getKey(keyType: EmberKeyType): Promise<EZSPFrameData> {
         if (this.ezsp.ezspV < 13) {
             return await this.ezsp.execCommand("getKey", {keyType});
-        } else {
-            // Mapping EmberKeyType to SecManKeyType (ezsp13)
-            const SecManKeyType = {
-                [EmberKeyType.TRUST_CENTER_LINK_KEY]: 2,
-                [EmberKeyType.CURRENT_NETWORK_KEY]: 1,
-            };
-            const smc = new EmberSecurityManagerContext();
-            smc.type = SecManKeyType[keyType as number];
-            smc.index = 0;
-            smc.derivedType = EmberDerivedKeyType.NONE;
-            smc.eui64 = new EmberEUI64("0x0000000000000000");
-            smc.multiNetworkIndex = 0;
-            smc.flags = 0;
-            smc.psaKeyAlgPermission = 0;
-            const keyInfo = await this.ezsp.execCommand("exportKey", {context: smc});
-
-            if (keyInfo.status !== SLStatus.SL_STATUS_OK) {
-                logger.error(`exportKey(${EmberKeyType.valueToName(EmberKeyType, keyType)}) returned unexpected SL status: ${keyInfo.status}`, NS);
-            }
-            return keyInfo;
         }
+
+        // Mapping EmberKeyType to SecManKeyType (ezsp13)
+        const SecManKeyType = {
+            [EmberKeyType.TRUST_CENTER_LINK_KEY]: 2,
+            [EmberKeyType.CURRENT_NETWORK_KEY]: 1,
+        };
+        const smc = new EmberSecurityManagerContext();
+        smc.type = SecManKeyType[keyType as number];
+        smc.index = 0;
+        smc.derivedType = EmberDerivedKeyType.NONE;
+        smc.eui64 = new EmberEUI64("0x0000000000000000");
+        smc.multiNetworkIndex = 0;
+        smc.flags = 0;
+        smc.psaKeyAlgPermission = 0;
+        const keyInfo = await this.ezsp.execCommand("exportKey", {context: smc});
+
+        if (keyInfo.status !== SLStatus.SL_STATUS_OK) {
+            logger.error(`exportKey(${EmberKeyType.valueToName(EmberKeyType, keyType)}) returned unexpected SL status: ${keyInfo.status}`, NS);
+        }
+        return keyInfo;
     }
 
     public async getNetworkKeyInfo(): Promise<EZSPFrameData> {
         if (this.ezsp.ezspV < 13) {
             throw new Error("getNetKeyInfo(): Invalid call on EZSP < 13.");
-        } else {
-            const keyInfo = await this.ezsp.execCommand("getNetworkKeyInfo");
-            if (keyInfo.status !== SLStatus.SL_STATUS_OK) {
-                logger.error(`getNetworkKeyInfo() returned unexpected SL status: ${keyInfo.status}`, NS);
-            }
-
-            return keyInfo;
         }
+
+        const keyInfo = await this.ezsp.execCommand("getNetworkKeyInfo");
+        if (keyInfo.status !== SLStatus.SL_STATUS_OK) {
+            logger.error(`getNetworkKeyInfo() returned unexpected SL status: ${keyInfo.status}`, NS);
+        }
+
+        return keyInfo;
     }
 
     private async needsToBeRestore(options: TsType.NetworkOptions): Promise<boolean> {

@@ -853,10 +853,10 @@ export class Device extends Entity<ControllerEventMap> {
             this._interviewCompleted = true;
             logger.debug(`Interview - quirks matched on '${match}'`, NS);
             return true;
-        } else {
-            logger.debug("Interview - quirks did not match", NS);
-            return false;
         }
+
+        logger.debug("Interview - quirks did not match", NS);
+        return false;
     }
 
     private async interviewInternal(ignoreCache: boolean): Promise<void> {
@@ -871,10 +871,10 @@ export class Device extends Entity<ControllerEventMap> {
                     if (this.interviewQuirks()) {
                         logger.debug(`Interview - completed for device '${this.ieeeAddr}' because of quirks ('${error}')`, NS);
                         return;
-                    } else {
-                        // Most of the times the first node descriptor query fails and the seconds one succeeds.
-                        logger.debug(`Interview - node descriptor request failed for '${this.ieeeAddr}', attempt ${attempt + 1}`, NS);
                     }
+
+                    // Most of the times the first node descriptor query fails and the seconds one succeeds.
+                    logger.debug(`Interview - node descriptor request failed for '${this.ieeeAddr}', attempt ${attempt + 1}`, NS);
                 }
             }
         } else {

@@ -142,17 +142,17 @@ const mockAdapterSendZdo = vi
 
                     if (!device.nodeDescriptor) {
                         throw new Error("NODE_DESCRIPTOR_REQUEST timeout");
-                    } else {
-                        return device.nodeDescriptor;
                     }
+
+                    return device.nodeDescriptor;
                 }
 
                 case Zdo.ClusterId.ACTIVE_ENDPOINTS_REQUEST: {
                     if (!device.activeEndpoints) {
                         throw new Error("ACTIVE_ENDPOINTS_REQUEST timeout");
-                    } else {
-                        return device.activeEndpoints;
                     }
+
+                    return device.activeEndpoints;
                 }
 
                 case Zdo.ClusterId.SIMPLE_DESCRIPTOR_REQUEST: {
@@ -173,17 +173,17 @@ const mockAdapterSendZdo = vi
                 case Zdo.ClusterId.LQI_TABLE_REQUEST: {
                     if (!device.lqiTable) {
                         throw new Error("LQI_TABLE_REQUEST timeout");
-                    } else {
-                        return device.lqiTable;
                     }
+
+                    return device.lqiTable;
                 }
 
                 case Zdo.ClusterId.ROUTING_TABLE_REQUEST: {
                     if (!device.routingTable) {
                         throw new Error("ROUTING_TABLE_REQUEST timeout");
-                    } else {
-                        return device.routingTable;
                     }
+
+                    return device.routingTable;
                 }
 
                 default: {
@@ -703,7 +703,9 @@ describe("Controller", () => {
             counter++;
             if (counter === 1) {
                 throw new Error("no response");
-            } else if (counter === 2) {
+            }
+
+            if (counter === 2) {
                 return {address: "0x0000012300000000"};
             }
         });
@@ -814,7 +816,9 @@ describe("Controller", () => {
             counter++;
             if (counter === 1) {
                 throw new Error("no response");
-            } else if (counter === 2) {
+            }
+
+            if (counter === 2) {
                 return {address: "0x0000012300000000"};
             }
         });
@@ -1306,6 +1310,7 @@ describe("Controller", () => {
         await controller.start();
         expect(databaseContents().includes("0x129")).toBeFalsy();
         await mockAdapterEvents["deviceJoined"]({networkAddress: 129, ieeeAddr: "0x129"});
+        await flushPromises();
         expect(equalsPartial(events.deviceJoined[0].device, {ID: 2, networkAddress: 129, ieeeAddr: "0x129"})).toBeTruthy();
         expect(events.deviceInterview[0]).toStrictEqual({
             device: {

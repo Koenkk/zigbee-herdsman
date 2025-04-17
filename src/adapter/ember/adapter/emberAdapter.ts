@@ -1155,9 +1155,9 @@ export class EmberAdapter extends Adapter {
             }
 
             return BackupUtils.fromUnifiedBackup(data);
-        } else {
-            throw new Error("[BACKUP] Unknown backup format.");
         }
+
+        throw new Error("[BACKUP] Unknown backup format.");
     }
 
     /**
@@ -1991,11 +1991,15 @@ export class EmberAdapter extends Adapter {
                 // `else if` order matters
                 if (status === SLStatus.OK) {
                     break;
-                } else if (disableRecovery || i == QUEUE_MAX_SEND_ATTEMPTS) {
+                }
+
+                if (disableRecovery || i == QUEUE_MAX_SEND_ATTEMPTS) {
                     throw new Error(
                         `~x~> [ZCL to=${ieeeAddr}:${networkAddress} apsFrame=${JSON.stringify(apsFrame)}] Failed to send request with status=${SLStatus[status]}.`,
                     );
-                } else if (status === SLStatus.ZIGBEE_MAX_MESSAGE_LIMIT_REACHED || status === SLStatus.BUSY) {
+                }
+
+                if (status === SLStatus.ZIGBEE_MAX_MESSAGE_LIMIT_REACHED || status === SLStatus.BUSY) {
                     await wait(QUEUE_BUSY_DEFER_MSEC);
                 } else if (status === SLStatus.NETWORK_DOWN) {
                     await wait(QUEUE_NETWORK_DOWN_DEFER_MSEC);

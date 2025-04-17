@@ -69,14 +69,14 @@ const waitForResult = (payloadOrPromise: Promise<unknown> | ZpiObjectPayload, id
             },
             ID: id,
         };
-    } else {
-        return {
-            start: () => {
-                return {promise: new Promise((r) => r(payloadOrPromise)), ID: id};
-            },
-            ID: id,
-        };
     }
+
+    return {
+        start: () => {
+            return {promise: new Promise((r) => r(payloadOrPromise)), ID: id};
+        },
+        ID: id,
+    };
 };
 
 const networkOptions = {
@@ -455,28 +455,28 @@ class ZnpRequestMockBuilder {
             if (item) {
                 item.value = payload.value;
                 return {payload: {status: 0}};
-            } else {
-                return {payload: {status: 1}};
             }
+
+            return {payload: {status: 1}};
         };
         this.handle(Subsystem.SYS, "osalNvWrite", handleOsalNvWrite);
         this.handle(Subsystem.SYS, "osalNvWriteExt", handleOsalNvWrite);
 
         this.handle(Subsystem.SYS, "osalNvItemInit", (payload, handler) => {
-            const item = handler.nvItems.find((e) => e.id === payload.id);
+            let item = handler.nvItems.find((e) => e.id === payload.id);
             if (item) {
                 if (item.value && item.value.length !== payload.len) {
                     return {payload: {status: 0x0a}};
                 }
                 return {payload: {status: 0x00}};
-            } else {
-                const item = {
-                    id: payload.id,
-                    value: payload.initvalue || null,
-                };
-                handler.nvItems.push(item);
-                return {payload: {status: 0x09}};
             }
+
+            item = {
+                id: payload.id,
+                value: payload.initvalue || null,
+            };
+            handler.nvItems.push(item);
+            return {payload: {status: 0x09}};
         });
         this.handle(Subsystem.SYS, "osalNvLength", (payload, handler) => {
             if (payload.offset !== undefined && payload.offset !== 0) {
@@ -494,9 +494,9 @@ class ZnpRequestMockBuilder {
                 const itemIndex = handler.nvItems.indexOf(item);
                 handler.nvItems.splice(itemIndex, 1);
                 return {payload: {status: 0x00}};
-            } else {
-                return {payload: {status: 0x09}};
             }
+
+            return {payload: {status: 0x09}};
         });
 
         this.handle(Subsystem.SYS, "nvRead", (payload, handler: ZnpRequestMockBuilder) => {
@@ -521,28 +521,28 @@ class ZnpRequestMockBuilder {
             if (item) {
                 item.value = payload.value;
                 return {payload: {status: 0}};
-            } else {
-                return {payload: {status: 1}};
             }
+
+            return {payload: {status: 1}};
         });
 
         this.handle(Subsystem.SYS, "nvCreate", (payload, handler: ZnpRequestMockBuilder) => {
-            const item = handler.nvExtendedItems.find((e) => e.sysId === payload.sysid && e.id === payload.itemid && e.subId === payload.subid);
+            let item = handler.nvExtendedItems.find((e) => e.sysId === payload.sysid && e.id === payload.itemid && e.subId === payload.subid);
             if (item) {
                 if (item.value && item.value.length !== payload.len) {
                     return {payload: {status: 0x0a}};
                 }
                 return {payload: {status: 0x00}};
-            } else {
-                const item = {
-                    sysId: payload.sysid,
-                    id: payload.itemid,
-                    subId: payload.subid,
-                    value: null,
-                };
-                handler.nvExtendedItems.push(item);
-                return {payload: {status: 0x09}};
             }
+
+            item = {
+                sysId: payload.sysid,
+                id: payload.itemid,
+                subId: payload.subid,
+                value: null,
+            };
+            handler.nvExtendedItems.push(item);
+            return {payload: {status: 0x09}};
         });
         this.handle(Subsystem.SYS, "nvLength", (payload, handler) => {
             if (payload.offset !== undefined && payload.offset !== 0) {
@@ -560,9 +560,9 @@ class ZnpRequestMockBuilder {
                 const itemIndex = handler.nvItems.indexOf(item);
                 handler.nvItems.splice(itemIndex, 1);
                 return {payload: {status: 0x00}};
-            } else {
-                return {payload: {status: 0x09}};
             }
+
+            return {payload: {status: 0x09}};
         });
     }
 
@@ -960,13 +960,17 @@ const mockZnpWaitForDefault = () => {
                     },
                 ]),
             );
-        } else if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === "mgmtPermitJoinRsp") {
-            return waitForResult(mockZdoZpiObject("mgmtPermitJoinRsp", target, [Zdo.Status.SUCCESS, undefined]));
-        } else if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === "stateChangeInd") {
-            return waitForResult({payload: {state: 9}});
-        } else {
-            missing();
         }
+
+        if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === "mgmtPermitJoinRsp") {
+            return waitForResult(mockZdoZpiObject("mgmtPermitJoinRsp", target, [Zdo.Status.SUCCESS, undefined]));
+        }
+
+        if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === "stateChangeInd") {
+            return waitForResult({payload: {state: 9}});
+        }
+
+        missing();
     });
 };
 
@@ -988,11 +992,13 @@ const mockZnpWaitForStateChangeIndTimeout = () => {
                     },
                 ]),
             );
-        } else if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === "stateChangeInd") {
-            return;
-        } else {
-            missing();
         }
+
+        if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === "stateChangeInd") {
+            return;
+        }
+
+        missing();
     });
 };
 
@@ -1033,11 +1039,17 @@ const basicMocks = () => {
                     },
                 ]),
             );
-        } else if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === "stateChangeInd") {
+        }
+
+        if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === "stateChangeInd") {
             return waitForResult({payload: {}});
-        } else if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === "mgmtPermitJoinRsp") {
+        }
+
+        if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === "mgmtPermitJoinRsp") {
             return waitForResult(mockZdoZpiObject("mgmtPermitJoinRsp", target, [Zdo.Status.SUCCESS, undefined]));
-        } else if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === "simpleDescRsp") {
+        }
+
+        if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === "simpleDescRsp") {
             let responsePayload: SimpleDescriptorResponse;
             if (simpleDescriptorEndpoint === 1) {
                 responsePayload = {
@@ -1075,7 +1087,9 @@ const basicMocks = () => {
             }
 
             return waitForResult(mockZdoZpiObject<SimpleDescriptorResponse>("simpleDescRsp", target, [Zdo.Status.SUCCESS, responsePayload]));
-        } else if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === "nodeDescRsp") {
+        }
+
+        if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === "nodeDescRsp") {
             if (nodeDescRspErrorOnce) {
                 nodeDescRspErrorOnce = false;
                 return {
@@ -1121,7 +1135,9 @@ const basicMocks = () => {
                     },
                 ]),
             );
-        } else if (type === Type.AREQ && subsystem === Subsystem.AF && command === "dataConfirm") {
+        }
+
+        if (type === Type.AREQ && subsystem === Subsystem.AF && command === "dataConfirm") {
             const status = dataConfirmCode;
             if (dataConfirmCodeReset) {
                 dataConfirmCode = 0;
@@ -1138,10 +1154,12 @@ const basicMocks = () => {
                     },
                     ID: 99,
                 };
-            } else {
-                return waitForResult({payload: {status}}, 99);
             }
-        } else if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === "mgmtLqiRsp" && target === 203) {
+
+            return waitForResult({payload: {status}}, 99);
+        }
+
+        if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === "mgmtLqiRsp" && target === 203) {
             const defaults = {deviceType: 0, extendedPanId: [0], permitJoining: 0, reserved1: 0, reserved2: 0, rxOnWhenIdle: 0};
 
             if (lastStartIndex === 0) {
@@ -1159,7 +1177,9 @@ const basicMocks = () => {
                         },
                     ]),
                 );
-            } else if (lastStartIndex === 2) {
+            }
+
+            if (lastStartIndex === 2) {
                 lastStartIndex += 2;
                 return waitForResult(
                     mockZdoZpiObject<LQITableResponse>("mgmtLqiRsp", target, [
@@ -1174,7 +1194,9 @@ const basicMocks = () => {
                         },
                     ]),
                 );
-            } else if (lastStartIndex === 4) {
+            }
+
+            if (lastStartIndex === 4) {
                 return waitForResult(
                     mockZdoZpiObject<LQITableResponse>("mgmtLqiRsp", target, [
                         Zdo.Status.SUCCESS,
@@ -1211,7 +1233,9 @@ const basicMocks = () => {
                         },
                     ]),
                 );
-            } else if (lastStartIndex === 2) {
+            }
+
+            if (lastStartIndex === 2) {
                 lastStartIndex += 2;
                 return waitForResult(
                     mockZdoZpiObject<RoutingTableResponse>("mgmtRtgRsp", target, [
@@ -1226,7 +1250,9 @@ const basicMocks = () => {
                         },
                     ]),
                 );
-            } else if (lastStartIndex === 4) {
+            }
+
+            if (lastStartIndex === 4) {
                 return waitForResult(
                     mockZdoZpiObject<RoutingTableResponse>("mgmtRtgRsp", target, [
                         Zdo.Status.SUCCESS,
@@ -1920,11 +1946,13 @@ describe("zstack-adapter", () => {
                         },
                     ]),
                 );
-            } else if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === "stateChangeInd") {
-                return waitForResult({payload: {state: 9}});
-            } else {
-                missing();
             }
+
+            if (type === Type.AREQ && subsystem === Subsystem.ZDO && command === "stateChangeInd") {
+                return waitForResult({payload: {state: 9}});
+            }
+
+            missing();
         });
         const result = await adapter.start();
         expect(result).toBe("resumed");
@@ -3652,9 +3680,9 @@ describe("zstack-adapter", () => {
 
             if (subsystem === Subsystem.SYS && command === "ping") {
                 throw new Error("Couldnt lock port");
-            } else {
-                missing();
             }
+
+            missing();
         });
 
         let error;

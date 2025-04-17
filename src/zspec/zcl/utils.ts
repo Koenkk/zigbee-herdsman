@@ -70,11 +70,13 @@ const FOUNDATION_DISCOVER_RSP_IDS = [
 export function getDataTypeClass(dataType: DataType): DataTypeClass {
     if (DATA_TYPE_CLASS_DISCRETE.includes(dataType)) {
         return DataTypeClass.DISCRETE;
-    } else if (DATA_TYPE_CLASS_ANALOG.includes(dataType)) {
-        return DataTypeClass.ANALOG;
-    } else {
-        throw new Error(`Don't know value type for '${DataType[dataType]}'`);
     }
+
+    if (DATA_TYPE_CLASS_ANALOG.includes(dataType)) {
+        return DataTypeClass.ANALOG;
+    }
+
+    throw new Error(`Don't know value type for '${DataType[dataType]}'`);
 }
 
 function hasCustomClusters(customClusters: CustomClusters): boolean {
@@ -107,7 +109,9 @@ function findClusterNameByID(
                 name = clusterName;
                 partialMatch = false;
                 break;
-            } else if (!cluster.manufacturerCode) {
+            }
+
+            if (!cluster.manufacturerCode) {
                 name = clusterName;
                 break;
             }
@@ -196,13 +200,13 @@ function createCluster(name: string, cluster: ClusterDefinition, manufacturerCod
             }
 
             return partialMatchAttr;
-        } else {
-            for (const attrKey in attributes) {
-                const attr = attributes[attrKey];
+        }
 
-                if (attr.name === key) {
-                    return attr;
-                }
+        for (const attrKey in attributes) {
+            const attr = attributes[attrKey];
+
+            if (attr.name === key) {
+                return attr;
             }
         }
 

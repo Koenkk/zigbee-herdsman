@@ -251,10 +251,10 @@ export class ZStackAdapter extends Adapter {
         if (Zdo.Buffalo.checkStatus(result)) {
             return result[1].nwkAddress;
             /* v8 ignore start */
-        } else {
-            // TODO: will disappear once moved upstream
-            throw new Zdo.StatusError(result[0]);
         }
+
+        // TODO: will disappear once moved upstream
+        throw new Zdo.StatusError(result[0]);
         /* v8 ignore stop */
     }
 
@@ -571,86 +571,86 @@ export class ZStackAdapter extends Adapter {
                     assocRemove,
                     assocRestore,
                 );
-            } else {
-                let doAssocRemove = false;
-                if (
-                    !assocRemove &&
-                    dataConfirmResult === ZnpCommandStatus.MAC_TRANSACTION_EXPIRED &&
-                    dataRequestAttempt >= 1 &&
-                    this.supportsAssocRemove()
-                ) {
-                    const match = await this.znp.requestWithReply(Subsystem.UTIL, "assocGetWithAddress", {
-                        extaddr: ieeeAddr,
-                        nwkaddr: networkAddress,
-                    });
-
-                    if (match.payload.nwkaddr !== 0xfffe && match.payload.noderelation !== 255) {
-                        doAssocRemove = true;
-                        assocRestore = {ieeeadr: ieeeAddr, nwkaddr: networkAddress, noderelation: match.payload.noderelation};
-                    }
-
-                    assocRemove = true;
-                }
-
-                // NWK_NO_ROUTE: no network route => rediscover route
-                // MAC_NO_ACK: route may be corrupted
-                // MAC_TRANSACTION_EXPIRED: Mac layer is sleeping
-                if (doAssocRemove) {
-                    /**
-                     * Since child aging is disabled on the firmware, when a end device is directly connected
-                     * to the coordinator and changes parent and the coordinator does not recevie this update,
-                     * it still thinks it's directly connected.
-                     * A discoverRoute() is not send out in this case, therefore remove it from the associated device
-                     * list and try again.
-                     * Note: assocRemove is a custom command, not available by default, only available on recent
-                     * z-stack-firmware firmware version. In case it's not supported by the coordinator we will
-                     * automatically timeout after 60000ms.
-                     */
-                    logger.debug(`assocRemove(${ieeeAddr})`, NS);
-                    await this.znp.request(Subsystem.UTIL, "assocRemove", {ieeeadr: ieeeAddr});
-                } else if (!discoveredRoute && dataRequestAttempt >= 1) {
-                    discoveredRoute = true;
-                    await this.discoverRoute(networkAddress);
-                } else if (!checkedNetworkAddress && dataRequestAttempt >= 1) {
-                    // Figure out once if the network address has been changed.
-                    try {
-                        checkedNetworkAddress = true;
-                        const actualNetworkAddress = await this.requestNetworkAddress(ieeeAddr);
-                        if (networkAddress !== actualNetworkAddress) {
-                            logger.debug("Failed because request was done with wrong network address", NS);
-                            discoveredRoute = true;
-                            networkAddress = actualNetworkAddress;
-                            await this.discoverRoute(actualNetworkAddress);
-                        } else {
-                            logger.debug("Network address did not change", NS);
-                        }
-                        /* v8 ignore start */
-                    } catch {
-                        /* empty */
-                    }
-                    /* v8 ignore stop */
-                } else {
-                    logger.debug("Wait 2000ms", NS);
-                    await wait(2000);
-                }
-
-                return await this.sendZclFrameToEndpointInternal(
-                    ieeeAddr,
-                    networkAddress,
-                    endpoint,
-                    sourceEndpoint,
-                    zclFrame,
-                    timeout,
-                    disableResponse,
-                    disableRecovery,
-                    responseAttempt,
-                    dataRequestAttempt + 1,
-                    checkedNetworkAddress,
-                    discoveredRoute,
-                    assocRemove,
-                    assocRestore,
-                );
             }
+
+            let doAssocRemove = false;
+            if (
+                !assocRemove &&
+                dataConfirmResult === ZnpCommandStatus.MAC_TRANSACTION_EXPIRED &&
+                dataRequestAttempt >= 1 &&
+                this.supportsAssocRemove()
+            ) {
+                const match = await this.znp.requestWithReply(Subsystem.UTIL, "assocGetWithAddress", {
+                    extaddr: ieeeAddr,
+                    nwkaddr: networkAddress,
+                });
+
+                if (match.payload.nwkaddr !== 0xfffe && match.payload.noderelation !== 255) {
+                    doAssocRemove = true;
+                    assocRestore = {ieeeadr: ieeeAddr, nwkaddr: networkAddress, noderelation: match.payload.noderelation};
+                }
+
+                assocRemove = true;
+            }
+
+            // NWK_NO_ROUTE: no network route => rediscover route
+            // MAC_NO_ACK: route may be corrupted
+            // MAC_TRANSACTION_EXPIRED: Mac layer is sleeping
+            if (doAssocRemove) {
+                /**
+                 * Since child aging is disabled on the firmware, when a end device is directly connected
+                 * to the coordinator and changes parent and the coordinator does not recevie this update,
+                 * it still thinks it's directly connected.
+                 * A discoverRoute() is not send out in this case, therefore remove it from the associated device
+                 * list and try again.
+                 * Note: assocRemove is a custom command, not available by default, only available on recent
+                 * z-stack-firmware firmware version. In case it's not supported by the coordinator we will
+                 * automatically timeout after 60000ms.
+                 */
+                logger.debug(`assocRemove(${ieeeAddr})`, NS);
+                await this.znp.request(Subsystem.UTIL, "assocRemove", {ieeeadr: ieeeAddr});
+            } else if (!discoveredRoute && dataRequestAttempt >= 1) {
+                discoveredRoute = true;
+                await this.discoverRoute(networkAddress);
+            } else if (!checkedNetworkAddress && dataRequestAttempt >= 1) {
+                // Figure out once if the network address has been changed.
+                try {
+                    checkedNetworkAddress = true;
+                    const actualNetworkAddress = await this.requestNetworkAddress(ieeeAddr);
+                    if (networkAddress !== actualNetworkAddress) {
+                        logger.debug("Failed because request was done with wrong network address", NS);
+                        discoveredRoute = true;
+                        networkAddress = actualNetworkAddress;
+                        await this.discoverRoute(actualNetworkAddress);
+                    } else {
+                        logger.debug("Network address did not change", NS);
+                    }
+                    /* v8 ignore start */
+                } catch {
+                    /* empty */
+                }
+                /* v8 ignore stop */
+            } else {
+                logger.debug("Wait 2000ms", NS);
+                await wait(2000);
+            }
+
+            return await this.sendZclFrameToEndpointInternal(
+                ieeeAddr,
+                networkAddress,
+                endpoint,
+                sourceEndpoint,
+                zclFrame,
+                timeout,
+                disableResponse,
+                disableRecovery,
+                responseAttempt,
+                dataRequestAttempt + 1,
+                checkedNetworkAddress,
+                discoveredRoute,
+                assocRemove,
+                assocRestore,
+            );
         }
 
         if (response !== null) {
@@ -703,9 +703,9 @@ export class ZStackAdapter extends Adapter {
                         assocRemove,
                         assocRestore,
                     );
-                } else {
-                    throw error;
                 }
+
+                throw error;
             }
         }
     }
@@ -1137,9 +1137,9 @@ export class ZStackAdapter extends Adapter {
                         confirmation,
                         attemptsLeft - 1,
                     );
-                } else {
-                    throw new DataConfirmError(dataConfirm.payload.status);
                 }
+
+                throw new DataConfirmError(dataConfirm.payload.status);
             }
 
             return dataConfirm;

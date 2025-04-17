@@ -874,18 +874,18 @@ export class Endpoint extends Entity {
                 if (cluster.hasAttribute(attributeID)) {
                     const attribute = cluster.getAttribute(attributeID);
                     return attribute.manufacturerCode === undefined ? fallbackManufacturerCode : attribute.manufacturerCode;
-                } else {
-                    // unknown attribute, we should not fail on this here
-                    return fallbackManufacturerCode;
                 }
+
+                // unknown attribute, we should not fail on this here
+                return fallbackManufacturerCode;
             }),
         );
 
         if (manufacturerCodes.size == 1) {
             return manufacturerCodes.values().next().value;
-        } else {
-            throw new Error(`Cannot have attributes with different manufacturerCode in single '${caller}' call`);
         }
+
+        throw new Error(`Cannot have attributes with different manufacturerCode in single '${caller}' call`);
     }
 
     public async addToGroup(group: Group): Promise<void> {

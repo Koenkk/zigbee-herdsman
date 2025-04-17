@@ -400,9 +400,9 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
             }
 
             return {missingRouters};
-        } else {
-            throw new Error("Coordinator does not coordinator check because it doesn't support backups");
         }
+
+        throw new Error("Coordinator does not coordinator check because it doesn't support backups");
     }
 
     public async reset(type: "soft" | "hard"): Promise<void> {
@@ -557,9 +557,9 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
                 }
 
                 return device;
-            } else {
-                throw new Zdo.StatusError(response[0]);
             }
+
+            throw new Zdo.StatusError(response[0]);
         } catch (error) {
             // Catches 2 types of exception: Zdo.StatusError and no response from `adapter.sendZdo()`.
             logger.debug(`Failed to retrieve IEEE address for device '${nwkAddress}': ${error}`, NS);
@@ -745,9 +745,9 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
                 }
 
                 return;
-            } else {
-                logger.debug(`Device '${payload.ieeeAddr}' accepted by handler`, NS);
             }
+
+            logger.debug(`Device '${payload.ieeeAddr}' accepted by handler`, NS);
         }
 
         let device = Device.byIeeeAddr(payload.ieeeAddr, true);
@@ -829,7 +829,9 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
         if (payload.clusterID === Zcl.Clusters.touchlink.ID) {
             // This is handled by touchlink
             return;
-        } else if (payload.clusterID === Zcl.Clusters.greenPower.ID) {
+        }
+
+        if (payload.clusterID === Zcl.Clusters.greenPower.ID) {
             try {
                 // Custom clusters are not supported for Green Power since we need to parse the frame to get the device.
                 frame = Zcl.Frame.fromBuffer(payload.clusterID, payload.header, payload.data, {});
@@ -849,22 +851,18 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
                 if (frame.payload.srcID === undefined) {
                     logger.debug("Data is from unsupported green power device with IEEE addressing, skipping...", NS);
                     return;
-                } else {
-                    const ieeeAddr = GreenPower.sourceIdToIeeeAddress(frame.payload.srcID);
-                    device = Device.byIeeeAddr(ieeeAddr);
-                    frame = await this.greenPower.processCommand(
-                        payload,
-                        frame,
-                        device?.gpSecurityKey ? Buffer.from(device.gpSecurityKey) : undefined,
-                    );
+                }
 
-                    // lookup encapsulated gpDevice for further processing (re-fetch, may have been created by above call)
-                    device = Device.byIeeeAddr(ieeeAddr);
+                const ieeeAddr = GreenPower.sourceIdToIeeeAddress(frame.payload.srcID);
+                device = Device.byIeeeAddr(ieeeAddr);
+                frame = await this.greenPower.processCommand(payload, frame, device?.gpSecurityKey ? Buffer.from(device.gpSecurityKey) : undefined);
 
-                    if (!device) {
-                        logger.debug(`Data is from unknown green power device with address '${ieeeAddr}' (${frame.payload.srcID}), skipping...`, NS);
-                        return;
-                    }
+                // lookup encapsulated gpDevice for further processing (re-fetch, may have been created by above call)
+                device = Device.byIeeeAddr(ieeeAddr);
+
+                if (!device) {
+                    logger.debug(`Data is from unknown green power device with address '${ieeeAddr}' (${frame.payload.srcID}), skipping...`, NS);
+                    return;
                 }
             }
         } else {
