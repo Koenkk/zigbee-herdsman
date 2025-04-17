@@ -782,7 +782,7 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
         this.selfAndDeviceEmit(device, 'lastSeenChanged', {device, reason: 'deviceJoined'});
         device.implicitCheckin();
 
-        if (device.interviewState === InterviewState.PENDING || device.interviewState == InterviewState.FAILED) {
+        if (device.interviewState === InterviewState.PENDING || device.interviewState === InterviewState.FAILED) {
             logger.info(`Interview for '${device.ieeeAddr}' started`, NS);
             this.selfAndDeviceEmit(device, 'deviceInterview', {status: 'started', device});
 
