@@ -60,21 +60,21 @@ vi.mock("../../../src/utils/wait", () => ({
     }),
 }));
 
-const waitForResult = (payloadOrPromise: Promise<unknown> | ZpiObjectPayload, ID?: number) => {
-    ID = ID || 1;
+const waitForResult = (payloadOrPromise: Promise<unknown> | ZpiObjectPayload, id?: number) => {
+    id = id || 1;
     if (payloadOrPromise instanceof Promise) {
         return {
             start: () => {
-                return {promise: payloadOrPromise, ID};
+                return {promise: payloadOrPromise, ID: id};
             },
-            ID,
+            ID: id,
         };
     } else {
         return {
             start: () => {
-                return {promise: new Promise((r) => r(payloadOrPromise)), ID};
+                return {promise: new Promise((r) => r(payloadOrPromise)), ID: id};
             },
-            ID,
+            ID: id,
         };
     }
 };
@@ -618,7 +618,7 @@ class ZnpRequestMockBuilder {
 }
 
 const baseZnpRequestMock = new ZnpRequestMockBuilder()
-    .handle(Subsystem.SYS, "version", (payload) => (equals(payload, {}) ? {payload: {product: ZnpVersion.zStack30x, revision: 20201026}} : undefined))
+    .handle(Subsystem.SYS, "version", (payload) => (equals(payload, {}) ? {payload: {product: ZnpVersion.ZStack30x, revision: 20201026}} : undefined))
     .handle(Subsystem.SYS, "ping", () => ({}))
     .handle(Subsystem.SYS, "resetReq", () => ({}))
     .handle(Subsystem.SYS, "getExtAddr", () => ({payload: {extaddress: "0x00124b0009d69f77"}}))
@@ -811,7 +811,7 @@ const commissioned3AlignedConfigMistmachRequestMock = commissioned3AlignedReques
 
 const empty3x0AlignedRequestMock = baseZnpRequestMock
     .clone()
-    .handle(Subsystem.SYS, "version", (payload) => (equals(payload, {}) ? {payload: {product: ZnpVersion.zStack3x0, revision: 20210430}} : undefined))
+    .handle(Subsystem.SYS, "version", (payload) => (equals(payload, {}) ? {payload: {product: ZnpVersion.ZStack3x0, revision: 20210430}} : undefined))
     .nv(NvItemsIds.ZNP_HAS_CONFIGURED_ZSTACK3, Buffer.from([0x00]))
     .nv(
         NvItemsIds.NIB,
@@ -872,7 +872,7 @@ const commissioned3x0AlignedRequestMock = empty3x0AlignedRequestMock
 
 const empty12UnalignedRequestMock = baseZnpRequestMock
     .clone()
-    .handle(Subsystem.SYS, "version", (payload) => (equals(payload, {}) ? {payload: {product: ZnpVersion.zStack12}} : undefined))
+    .handle(Subsystem.SYS, "version", (payload) => (equals(payload, {}) ? {payload: {product: ZnpVersion.ZStack12}} : undefined))
     .handle(Subsystem.SAPI, "readConfiguration", (payload, handler) => {
         if (payload.configid !== NvItemsIds.PRECFGKEY) {
             throw new Error("Only pre-configured key should be read/written using SAPI layer");
@@ -924,7 +924,7 @@ const mockZnpRequest = vi
     .fn()
     .mockReturnValue(new Promise((resolve) => resolve({payload: {}})))
     .mockImplementation(
-        (subsystem: Subsystem, command: string, payload: any, expectedStatus: ZnpCommandStatus) =>
+        (subsystem: Subsystem, command: string, payload: any, _expectedStatus: ZnpCommandStatus) =>
             new Promise((resolve) => resolve(baseZnpRequestMock.execute({subsystem, command, payload}))),
     );
 const mockZnpRequestZdo = vi.fn();
@@ -937,7 +937,7 @@ const mocks = [mockZnpOpen, mockZnpRequest, mockZnpClose];
 const mockZnpRequestWith = (builder: ZnpRequestMockBuilder) => {
     builder = builder.clone();
     mockZnpRequest.mockImplementation(
-        (subsystem: Subsystem, command: string, payload: any, expectedStatus: ZnpCommandStatus) =>
+        (subsystem: Subsystem, command: string, payload: any, _expectedStatus: ZnpCommandStatus) =>
             new Promise((resolve) => resolve(builder.execute({subsystem, command, payload}))),
     );
 };
@@ -1014,17 +1014,6 @@ const mockZpiObject = (type: Type, subsystem: Subsystem, commandName: string, pa
     return {type, subsystem, payload, command};
 };
 
-interface ZnpWaitFor {
-    type: Type;
-    subsystem: Subsystem;
-    command: string;
-    target?: number | string;
-    transid?: number;
-    state?: number;
-    resolve: (object: unknown) => unknown;
-    reject: (reason: string) => void;
-}
-
 const basicMocks = () => {
     mockZnpRequestWith(commissioned3x0AlignedRequestMock);
     mockZnpWaitFor.mockImplementation((type, subsystem, command, target, transid, state, timeout) => {
@@ -1092,7 +1081,7 @@ const basicMocks = () => {
                 return {
                     start: () => {
                         return {
-                            promise: new Promise((resolve, reject) => {
+                            promise: new Promise((_resolve, reject) => {
                                 reject("timeout after xx");
                             }),
                         };
@@ -1142,7 +1131,7 @@ const basicMocks = () => {
                 return {
                     start: () => {
                         return {
-                            promise: new Promise((resolve, reject) => {
+                            promise: new Promise((_resolve, reject) => {
                                 reject("timeout after xx");
                             }),
                         };
@@ -2041,8 +2030,8 @@ describe("zstack-adapter", () => {
 
     it("LED behaviour: disable LED true, firmware handling leds", async () => {
         mockZnpRequestWith(
-            baseZnpRequestMock.clone().handle(Subsystem.SYS, "version", (payload) => {
-                return {payload: {product: ZnpVersion.zStack30x, revision: 20211030}};
+            baseZnpRequestMock.clone().handle(Subsystem.SYS, "version", (_payload) => {
+                return {payload: {product: ZnpVersion.ZStack30x, revision: 20211030}};
             }),
         );
         adapter = new ZStackAdapter(networkOptions, serialPortOptions, "backup.json", {disableLED: true});
@@ -2060,8 +2049,8 @@ describe("zstack-adapter", () => {
 
     it("LED behaviour: disable LED false, firmware handling leds", async () => {
         mockZnpRequestWith(
-            baseZnpRequestMock.clone().handle(Subsystem.SYS, "version", (payload) => {
-                return {payload: {product: ZnpVersion.zStack30x, revision: 20211030}};
+            baseZnpRequestMock.clone().handle(Subsystem.SYS, "version", (_payload) => {
+                return {payload: {product: ZnpVersion.ZStack30x, revision: 20211030}};
             }),
         );
         adapter = new ZStackAdapter(networkOptions, serialPortOptions, "backup.json", {disableLED: false});
@@ -2155,7 +2144,7 @@ describe("zstack-adapter", () => {
         await adapter.start();
         mockZnpRequest.mockClear();
         mockQueueExecute.mockClear();
-        expect(await adapter.getCoordinatorVersion()).toStrictEqual({type: "zStack3x0", meta: {revision: 20210430, product: 1}});
+        expect(await adapter.getCoordinatorVersion()).toStrictEqual({type: "ZStack3x0", meta: {revision: 20210430, product: 1}});
     });
 
     it("Soft reset", async () => {
@@ -3536,7 +3525,7 @@ describe("zstack-adapter", () => {
         await adapter.start();
         mockZnpRequest.mockClear();
         mockQueueExecute.mockClear();
-        const result = await adapter.restoreChannelInterPAN();
+        await adapter.restoreChannelInterPAN();
         expect(mockZnpRequest).toHaveBeenCalledTimes(1);
         expect(mockZnpRequest).toHaveBeenCalledWith(Subsystem.AF, "interPanCtl", {cmd: 0, data: []});
     });
@@ -3546,7 +3535,7 @@ describe("zstack-adapter", () => {
         await adapter.start();
         mockZnpRequest.mockClear();
         mockQueueExecute.mockClear();
-        const result = await adapter.sendZclFrameInterPANToIeeeAddr(touchlinkIdentifyRequest, "0x0017880104c9cd33");
+        await adapter.sendZclFrameInterPANToIeeeAddr(touchlinkIdentifyRequest, "0x0017880104c9cd33");
         expect(mockZnpRequest).toHaveBeenCalledTimes(1);
         expect(mockZnpRequest).toHaveBeenCalledWith(
             4,
@@ -3654,7 +3643,7 @@ describe("zstack-adapter", () => {
     });
 
     it("Refuse to start when ping fails", async () => {
-        mockZnpRequest.mockImplementation((subsystem, command, payload, expectedStatus) => {
+        mockZnpRequest.mockImplementation((subsystem, command, payload, _expectedStatus) => {
             const missing = () => {
                 const msg = `Not implemented - ${Subsystem[subsystem]} - ${command} - ${JSON.stringify(payload)}`;
                 console.log(msg);

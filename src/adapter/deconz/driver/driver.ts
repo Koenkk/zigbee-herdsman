@@ -8,7 +8,7 @@ import slip from "slip";
 import {logger} from "../../../utils/logger";
 import {SerialPort} from "../../serialPort";
 import SocketPortUtils from "../../socketPortUtils";
-import PARAM, {type ApsDataRequest, type parameterT, type ReceivedDataResponse, type Request} from "./constants";
+import PARAM, {type ApsDataRequest, type ParameterT, type ReceivedDataResponse, type Request} from "./constants";
 import {frameParserEvents} from "./frameParser";
 import Parser from "./parser";
 import Writer from "./writer";
@@ -48,10 +48,10 @@ class Driver extends events.EventEmitter {
     private apsDataIndication: number;
     private configChanged: number;
     private socketPort?: net.Socket;
-    private DELAY: number;
-    private READY_TO_SEND_TIMEOUT: number;
-    private HANDLE_DEVICE_STATUS_DELAY: number;
-    private PROCESS_QUEUES: number;
+    private delay: number;
+    private readyToSendTimeout: number;
+    private handleDeviceStatusDelay: number;
+    private processQueues: number;
     private timeoutCounter = 0;
     private currentBaudRate = 0;
 
@@ -66,10 +66,10 @@ class Driver extends events.EventEmitter {
         this.apsDataConfirm = 0;
         this.apsDataIndication = 0;
         this.configChanged = 0;
-        this.DELAY = 0;
-        this.READY_TO_SEND_TIMEOUT = 1;
-        this.HANDLE_DEVICE_STATUS_DELAY = 5;
-        this.PROCESS_QUEUES = 5;
+        this.delay = 0;
+        this.readyToSendTimeout = 1;
+        this.handleDeviceStatusDelay = 5;
+        this.processQueues = 5;
 
         this.writer = new Writer();
         this.parser = new Parser();
@@ -127,60 +127,60 @@ class Driver extends events.EventEmitter {
 
     public setDelay(delay: number): void {
         logger.debug(`Set delay to ${delay}`, NS);
-        this.DELAY = delay;
-        this.READY_TO_SEND_TIMEOUT = delay;
-        this.PROCESS_QUEUES = delay;
-        this.HANDLE_DEVICE_STATUS_DELAY = delay;
+        this.delay = delay;
+        this.readyToSendTimeout = delay;
+        this.processQueues = delay;
+        this.handleDeviceStatusDelay = delay;
 
-        if (this.READY_TO_SEND_TIMEOUT === 0) {
-            this.READY_TO_SEND_TIMEOUT = 1;
+        if (this.readyToSendTimeout === 0) {
+            this.readyToSendTimeout = 1;
         }
 
-        if (this.PROCESS_QUEUES < 5) {
-            this.PROCESS_QUEUES = 5;
+        if (this.processQueues < 5) {
+            this.processQueues = 5;
         }
 
-        if (this.HANDLE_DEVICE_STATUS_DELAY < 5) {
-            this.HANDLE_DEVICE_STATUS_DELAY = 5;
+        if (this.handleDeviceStatusDelay < 5) {
+            this.handleDeviceStatusDelay = 5;
         }
 
-        if (this.PROCESS_QUEUES > 60) {
-            this.PROCESS_QUEUES = 60;
+        if (this.processQueues > 60) {
+            this.processQueues = 60;
         }
 
-        if (this.HANDLE_DEVICE_STATUS_DELAY > 60) {
-            this.HANDLE_DEVICE_STATUS_DELAY = 60;
+        if (this.handleDeviceStatusDelay > 60) {
+            this.handleDeviceStatusDelay = 60;
         }
 
         this.registerInterval(
             setInterval(() => {
                 this.processQueue();
-            }, this.PROCESS_QUEUES),
+            }, this.processQueues),
         ); // fire non aps requests
         this.registerInterval(
             setInterval(async () => {
                 await this.catchPromise(this.processBusyQueue());
-            }, this.PROCESS_QUEUES),
+            }, this.processQueues),
         ); // check timeouts for non aps requests
         this.registerInterval(
             setInterval(async () => {
                 await this.catchPromise(this.processApsQueue());
-            }, this.PROCESS_QUEUES),
+            }, this.processQueues),
         ); // fire aps request
         this.registerInterval(
             setInterval(() => {
                 this.processApsBusyQueue();
-            }, this.PROCESS_QUEUES),
+            }, this.processQueues),
         ); // check timeouts for all open aps requests
         this.registerInterval(
             setInterval(async () => {
                 this.processApsConfirmIndQueue();
-            }, this.PROCESS_QUEUES),
+            }, this.processQueues),
         ); // fire aps indications and confirms
         this.registerInterval(
             setInterval(async () => {
                 await this.catchPromise(this.handleDeviceStatus());
-            }, this.HANDLE_DEVICE_STATUS_DELAY),
+            }, this.handleDeviceStatusDelay),
         ); // query confirm and indication requests
     }
 
@@ -297,7 +297,7 @@ class Driver extends events.EventEmitter {
         });
     }
 
-    public writeParameterRequest(parameterId: number, parameter: parameterT): Promise<void> {
+    public writeParameterRequest(parameterId: number, parameter: ParameterT): Promise<void> {
         const seqNumber = this.nextSeqNumber();
         return new Promise((resolve, reject): void => {
             //logger.debug(`push write parameter request to queue. seqNr: ${seqNumber} paramId: ${parameterId} parameter: ${parameter}`, NS);
@@ -332,7 +332,7 @@ class Driver extends events.EventEmitter {
         }
     }
 
-    private sendWriteParameterRequest(parameterId: number, value: parameterT, seqNumber: number): void {
+    private sendWriteParameterRequest(parameterId: number, value: ParameterT, seqNumber: number): void {
         /* command id, sequence number, 0, framelength(U16), payloadlength(U16), parameter id, pameter */
         let parameterLength = 0;
         if (parameterId === PARAM.PARAM.STK.Endpoint) {
@@ -402,7 +402,7 @@ class Driver extends events.EventEmitter {
         }
     }
 
-    private parameterBuffer(parameter: parameterT, parameterLength: number): Buffer {
+    private parameterBuffer(parameter: ParameterT, parameterLength: number): Buffer {
         if (typeof parameter === "number") {
             // for parameter <= 4 Byte
             if (parameterLength > 4) throw new Error("parameter to big for type number");
@@ -655,7 +655,7 @@ class Driver extends events.EventEmitter {
                         disableRTS();
                         enableRtsTimeout = setTimeout(() => {
                             enableRTS();
-                        }, this.READY_TO_SEND_TIMEOUT);
+                        }, this.readyToSendTimeout);
                         apsBusyQueue.push(req);
                         this.sendEnqueueSendDataRequest(req.request!, req.seqNumber);
                         break;
@@ -681,7 +681,7 @@ class Driver extends events.EventEmitter {
             switch (req.commandId) {
                 case PARAM.PARAM.APS.DATA_INDICATION:
                     //logger.debug(`read received data request. seqNr: ${req.seqNumber}`, NS);
-                    if (this.DELAY === 0) {
+                    if (this.delay === 0) {
                         this.sendReadReceivedDataRequest(req.seqNumber);
                     } else {
                         this.sendReadReceivedDataRequest(req.seqNumber);
@@ -689,7 +689,7 @@ class Driver extends events.EventEmitter {
                     break;
                 case PARAM.PARAM.APS.DATA_CONFIRM:
                     //logger.debug(`query send data state request. seqNr: ${req.seqNumber}`, NS);
-                    if (this.DELAY === 0) {
+                    if (this.delay === 0) {
                         this.sendQueryDataStateRequest(req.seqNumber);
                     } else {
                         this.sendQueryDataStateRequest(req.seqNumber);

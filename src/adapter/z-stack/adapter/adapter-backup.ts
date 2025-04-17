@@ -81,7 +81,7 @@ export class AdapterBackup {
 
         /* get adapter active key information */
         let activeKeyInfo;
-        if (version === ZnpVersion.zStack12) {
+        if (version === ZnpVersion.ZStack12) {
             const key = Structs.nwkKey(
                 (await this.znp.requestWithReply(Subsystem.SAPI, "readConfiguration", {configid: NvItemsIds.PRECFGKEY})).payload.value,
             );
@@ -114,7 +114,7 @@ export class AdapterBackup {
             `fetched adapter aps link key data table (capacity=${apsLinkKeyDataTable?.usedCount || 0}, used=${apsLinkKeyDataTable?.usedCount || 0})`,
             NS,
         );
-        const tclkSeed = version === ZnpVersion.zStack12 ? null : await this.nv.readItem(NvItemsIds.TCLK_SEED, 0, Structs.nwkKey);
+        const tclkSeed = version === ZnpVersion.ZStack12 ? null : await this.nv.readItem(NvItemsIds.TCLK_SEED, 0, Structs.nwkKey);
         logger.debug("fetched adapter tclk seed", NS);
         const tclkTable = await this.getTclkTable(version);
         logger.debug(`fetched adapter tclk table (capacity=${tclkTable?.usedCount || 0}, used=${tclkTable?.usedCount || 0})`, NS);
@@ -139,7 +139,7 @@ export class AdapterBackup {
         if (!secMaterialDescriptor) {
             secMaterialDescriptor = Structs.nwkSecMaterialDescriptorEntry();
             secMaterialDescriptor.extendedPanID = nib.extendedPANID;
-            secMaterialDescriptor.FrameCounter = version === ZnpVersion.zStack12 ? 0 : 1250;
+            secMaterialDescriptor.FrameCounter = version === ZnpVersion.ZStack12 ? 0 : 1250;
         }
 
         /* return backup structure */
@@ -175,7 +175,7 @@ export class AdapterBackup {
                         let linkKeyInfo: {key: Buffer; rxCounter: number; txCounter: number} | undefined;
                         const sme = securityManagerTable.used.find((e) => e.ami === ami);
                         if (sme) {
-                            const apsKeyDataIndex = version === ZnpVersion.zStack30x ? sme.keyNvId - NvItemsIds.APS_LINK_KEY_DATA_START : sme.keyNvId;
+                            const apsKeyDataIndex = version === ZnpVersion.ZStack30x ? sme.keyNvId - NvItemsIds.APS_LINK_KEY_DATA_START : sme.keyNvId;
                             /* v8 ignore next */
                             const apsKeyData = apsLinkKeyDataTable.used[apsKeyDataIndex] || null;
                             if (apsKeyData) {
@@ -254,7 +254,7 @@ export class AdapterBackup {
         logger.debug("restoring backup", NS);
         const version: ZnpVersion = await this.getAdapterVersion();
         /* v8 ignore start */
-        if (version === ZnpVersion.zStack12) {
+        if (version === ZnpVersion.ZStack12) {
             throw new Error("backup cannot be restored on Z-Stack 1.2 adapter");
         }
         /* v8 ignore stop */
@@ -375,7 +375,7 @@ export class AdapterBackup {
 
                     const apsKeyDataEntryIndex = apsLinkKeyDataTable.indexOf(apsKeyDataEntry);
                     assert(apsKeyDataEntryIndex != null);
-                    sme.keyNvId = version === ZnpVersion.zStack3x0 ? apsKeyDataEntryIndex : NvItemsIds.APS_LINK_KEY_DATA_START + apsKeyDataEntryIndex;
+                    sme.keyNvId = version === ZnpVersion.ZStack3x0 ? apsKeyDataEntryIndex : NvItemsIds.APS_LINK_KEY_DATA_START + apsKeyDataEntryIndex;
                     sme.authenticationOption = SecurityManagerAuthenticationOption.AuthenticatedCBCK;
 
                     linkKeyProcessed = true;
@@ -401,14 +401,14 @@ export class AdapterBackup {
         }
 
         /* write network security material table (nwk frame counters) */
-        if (version === ZnpVersion.zStack3x0) {
+        if (version === ZnpVersion.ZStack3x0) {
             await this.nv.writeTable("extended", NvSystemIds.ZSTACK, NvItemsIds.EX_NWK_SEC_MATERIAL_TABLE, nwkSecurityMaterialTable);
         } else {
             await this.nv.writeTable("legacy", NvItemsIds.LEGACY_NWK_SEC_MATERIAL_TABLE_START, nwkSecurityMaterialTable);
         }
 
         /* write address manager table */
-        if (version === ZnpVersion.zStack3x0) {
+        if (version === ZnpVersion.ZStack3x0) {
             await this.nv.writeTable("extended", NvSystemIds.ZSTACK, NvItemsIds.ZCD_NV_EX_ADDRMGR, addressManagerTable);
         } else {
             await this.nv.writeItem(NvItemsIds.ADDRMGR, addressManagerTable);
@@ -418,14 +418,14 @@ export class AdapterBackup {
         await this.nv.writeItem(NvItemsIds.APS_LINK_KEY_TABLE, securityManagerTable);
 
         /* write aps link key data table */
-        if (version === ZnpVersion.zStack3x0) {
+        if (version === ZnpVersion.ZStack3x0) {
             await this.nv.writeTable("extended", NvSystemIds.ZSTACK, NvItemsIds.ZCD_NV_EX_APS_KEY_DATA_TABLE, apsLinkKeyDataTable);
         } else {
             await this.nv.writeTable("legacy", NvItemsIds.APS_LINK_KEY_DATA_START, apsLinkKeyDataTable);
         }
 
         /* write tclk table */
-        if (version === ZnpVersion.zStack3x0) {
+        if (version === ZnpVersion.ZStack3x0) {
             await this.nv.writeTable("extended", NvSystemIds.ZSTACK, NvItemsIds.EX_TCLK_TABLE, tclkTable);
         } else {
             await this.nv.writeTable("legacy", NvItemsIds.LEGACY_TCLK_TABLE_START, tclkTable);
@@ -450,7 +450,7 @@ export class AdapterBackup {
      * @param version ZNP stack version the adapter is running.
      */
     private async getAddressManagerTable(version: ZnpVersion): Promise<ReturnType<typeof Structs.addressManagerTable>> {
-        if (version === ZnpVersion.zStack3x0) {
+        if (version === ZnpVersion.ZStack3x0) {
             return await this.nv.readTable("extended", NvSystemIds.ZSTACK, NvItemsIds.ZCD_NV_EX_ADDRMGR, undefined, Structs.addressManagerTable);
         } else {
             return await this.nv.readItem(NvItemsIds.ADDRMGR, 0, Structs.addressManagerTable);
@@ -470,7 +470,7 @@ export class AdapterBackup {
      * @param version ZNP stack version the adapter is running.
      */
     private async getApsLinkKeyDataTable(version: ZnpVersion): Promise<ReturnType<typeof Structs.apsLinkKeyDataTable>> {
-        if (version === ZnpVersion.zStack3x0) {
+        if (version === ZnpVersion.ZStack3x0) {
             return await this.nv.readTable(
                 "extended",
                 NvSystemIds.ZSTACK,
@@ -489,7 +489,7 @@ export class AdapterBackup {
      * @param version ZNP stack version the adapter is running.
      */
     private async getTclkTable(version: ZnpVersion): Promise<ReturnType<typeof Structs.apsTcLinkKeyTable>> {
-        if (version === ZnpVersion.zStack3x0) {
+        if (version === ZnpVersion.ZStack3x0) {
             return await this.nv.readTable("extended", NvSystemIds.ZSTACK, NvItemsIds.EX_TCLK_TABLE, undefined, Structs.apsTcLinkKeyTable);
         } else {
             return await this.nv.readTable("legacy", NvItemsIds.LEGACY_TCLK_TABLE_START, 239, Structs.apsTcLinkKeyTable);
@@ -502,7 +502,7 @@ export class AdapterBackup {
      * @param version ZNP stack version the adapter is running.
      */
     private async getNetworkSecurityMaterialTable(version: ZnpVersion): Promise<ReturnType<typeof Structs.nwkSecMaterialDescriptorTable>> {
-        if (version === ZnpVersion.zStack3x0) {
+        if (version === ZnpVersion.ZStack3x0) {
             return await this.nv.readTable(
                 "extended",
                 NvSystemIds.ZSTACK,

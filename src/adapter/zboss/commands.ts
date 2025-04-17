@@ -73,7 +73,7 @@ const commonResponse = [
     {name: "status", type: DataType.UINT8, typed: [StatusCodeGeneric, StatusCodeAPS, StatusCodeCBKE]},
 ];
 
-export const FRAMES: {[key in CommandId]?: ZBOSSFrameDesc} = {
+export const FRAMES: Partial<Record<CommandId, ZBOSSFrameDesc>> = {
     // ------------------------------------------
     // NCP config
     // ------------------------------------------

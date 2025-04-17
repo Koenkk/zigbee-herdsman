@@ -16,37 +16,37 @@ import type {GreenPowerDeviceJoinedPayload} from "./tstype";
 
 const NS = "zh:controller:greenpower";
 
-enum ZigbeeNWKGPAppId {
-    DEFAULT = 0x00,
-    LPED = 0x01,
-    ZGP = 0x02,
+const enum ZigbeeNWKGPAppId {
+    Default = 0x00,
+    Lped = 0x01,
+    Zgp = 0x02,
 }
 
-enum ZigbeeNWKGPSecurityLevel {
+const enum ZigbeeNWKGPSecurityLevel {
     /** No Security  */
-    NO = 0x00,
+    No = 0x00,
     /** Reserved?  */
-    ONELSB = 0x01,
+    OneLsb = 0x01,
     /** 4 Byte Frame Counter and 4 Byte MIC */
-    FULL = 0x02,
+    Full = 0x02,
     /** 4 Byte Frame Counter and 4 Byte MIC with encryption */
-    FULLENCR = 0x03,
+    FullEncr = 0x03,
 }
 
-enum ZigbeeNWKGPSecurityKeyType {
-    NO_KEY = 0x00,
-    ZB_NWK_KEY = 0x01,
-    GPD_GROUP_KEY = 0x02,
-    NWK_KEY_DERIVED_GPD_KEY_GROUP_KEY = 0x03,
-    PRECONFIGURED_INDIVIDUAL_GPD_KEY = 0x04,
-    DERIVED_INDIVIDUAL_GPD_KEY = 0x07,
+const enum ZigbeeNWKGPSecurityKeyType {
+    NoKey = 0x00,
+    ZbNwkKey = 0x01,
+    GpdGroupKey = 0x02,
+    NwkKeyDerivedGpdKeyGroupKey = 0x03,
+    PreconfiguredIndividualGpdKey = 0x04,
+    DerivedIndividualGpdKey = 0x07,
 }
 
-enum GPCommunicationMode {
-    FULL_UNICAST = 0,
-    GROUPCAST_TO_DGROUPID = 1,
-    GROUPCAST_TO_PRECOMMISSIONED_GROUPID = 2,
-    LIGHTWEIGHT_UNICAST = 3,
+const enum GPCommunicationMode {
+    FullUnicast = 0,
+    GroupcastToDgroupId = 1,
+    GroupcastToPrecommissionedGroupId = 2,
+    LightweightUnicast = 3,
 }
 
 type PairingOptions = {
@@ -196,14 +196,14 @@ export class GreenPower extends EventEmitter<GreenPowerEventMap> {
 
         // Set sink address based on communication mode
         switch (options.communicationMode) {
-            case GPCommunicationMode.GROUPCAST_TO_PRECOMMISSIONED_GROUPID:
-            case GPCommunicationMode.GROUPCAST_TO_DGROUPID: {
+            case GPCommunicationMode.GroupcastToPrecommissionedGroupId:
+            case GPCommunicationMode.GroupcastToDgroupId: {
                 payload.sinkGroupID = GP_GROUP_ID;
                 break;
             }
             /* v8 ignore next */
-            case GPCommunicationMode.FULL_UNICAST:
-            case GPCommunicationMode.LIGHTWEIGHT_UNICAST: {
+            case GPCommunicationMode.FullUnicast:
+            case GPCommunicationMode.LightweightUnicast: {
                 payload.sinkIEEEAddr = await this.adapter.getCoordinatorIEEE();
                 payload.sinkNwkAddr = COORDINATOR_ADDRESS;
                 break;
@@ -222,7 +222,7 @@ export class GreenPower extends EventEmitter<GreenPowerEventMap> {
             {},
         );
 
-        if (options.communicationMode !== GPCommunicationMode.LIGHTWEIGHT_UNICAST) {
+        if (options.communicationMode !== GPCommunicationMode.LightweightUnicast) {
             return await this.adapter.sendZclFrameToAll(GP_ENDPOINT, replyFrame, GP_ENDPOINT, BroadcastAddress.RX_ON_WHEN_IDLE);
         } else {
             const device = Device.byNetworkAddress(gppNwkAddr ?? /* v8 ignore next */ COORDINATOR_ADDRESS);
@@ -249,7 +249,7 @@ export class GreenPower extends EventEmitter<GreenPowerEventMap> {
             const securityLevel = isCommissioningNotification ? (frame.payload.options >> 4) & 0x3 : (frame.payload.options >> 6) & 0x3;
 
             if (
-                securityLevel === ZigbeeNWKGPSecurityLevel.FULLENCR &&
+                securityLevel === ZigbeeNWKGPSecurityLevel.FullEncr &&
                 (!isCommissioningNotification || ((frame.payload.options >> 9) & 0x1) === 1) /* security processing failed */
             ) {
                 if (!securityKey) {
@@ -386,14 +386,14 @@ export class GreenPower extends EventEmitter<GreenPowerEventMap> {
 
                         await this.sendPairingCommand(
                             {
-                                appId: ZigbeeNWKGPAppId.DEFAULT,
+                                appId: ZigbeeNWKGPAppId.Default,
                                 addSink: true,
                                 removeGpd: false,
-                                communicationMode: GPCommunicationMode.GROUPCAST_TO_DGROUPID,
+                                communicationMode: GPCommunicationMode.GroupcastToDgroupId,
                                 gpdFixed,
                                 gpdMacSeqNumCapabilities,
-                                securityLevel: ZigbeeNWKGPSecurityLevel.NO,
-                                securityKeyType: ZigbeeNWKGPSecurityKeyType.NO_KEY,
+                                securityLevel: ZigbeeNWKGPSecurityLevel.No,
+                                securityKeyType: ZigbeeNWKGPSecurityKeyType.NoKey,
                                 gpdSecurityFrameCounterPresent: false,
                                 gpdSecurityKeyPresent: false,
                                 assignedAliasPresent: false,
@@ -411,17 +411,17 @@ export class GreenPower extends EventEmitter<GreenPowerEventMap> {
 
                         await this.sendPairingCommand(
                             {
-                                appId: ZigbeeNWKGPAppId.DEFAULT,
+                                appId: ZigbeeNWKGPAppId.Default,
                                 addSink: true,
                                 removeGpd: false,
                                 // keep communication mode matching incoming tx mode
                                 communicationMode: dataPayload.wasBroadcast
-                                    ? GPCommunicationMode.GROUPCAST_TO_PRECOMMISSIONED_GROUPID
-                                    : GPCommunicationMode.LIGHTWEIGHT_UNICAST,
+                                    ? GPCommunicationMode.GroupcastToPrecommissionedGroupId
+                                    : GPCommunicationMode.LightweightUnicast,
                                 gpdFixed,
                                 gpdMacSeqNumCapabilities,
-                                securityLevel: ZigbeeNWKGPSecurityLevel.FULL,
-                                securityKeyType: ZigbeeNWKGPSecurityKeyType.PRECONFIGURED_INDIVIDUAL_GPD_KEY,
+                                securityLevel: ZigbeeNWKGPSecurityLevel.Full,
+                                securityKeyType: ZigbeeNWKGPSecurityKeyType.PreconfiguredIndividualGpdKey,
                                 gpdSecurityFrameCounterPresent: true,
                                 gpdSecurityKeyPresent: true,
                                 assignedAliasPresent: false,
@@ -453,14 +453,14 @@ export class GreenPower extends EventEmitter<GreenPowerEventMap> {
 
                     await this.sendPairingCommand(
                         {
-                            appId: ZigbeeNWKGPAppId.DEFAULT,
+                            appId: ZigbeeNWKGPAppId.Default,
                             addSink: false,
                             removeGpd: true,
-                            communicationMode: GPCommunicationMode.GROUPCAST_TO_DGROUPID,
+                            communicationMode: GPCommunicationMode.GroupcastToDgroupId,
                             gpdFixed: false,
                             gpdMacSeqNumCapabilities: false,
-                            securityLevel: ZigbeeNWKGPSecurityLevel.NO,
-                            securityKeyType: ZigbeeNWKGPSecurityKeyType.NO_KEY,
+                            securityLevel: ZigbeeNWKGPSecurityLevel.No,
+                            securityKeyType: ZigbeeNWKGPSecurityKeyType.NoKey,
                             gpdSecurityFrameCounterPresent: false,
                             gpdSecurityKeyPresent: false,
                             assignedAliasPresent: false,

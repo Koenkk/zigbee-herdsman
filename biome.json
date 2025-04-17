@@ -12,15 +12,53 @@
         "bracketSpacing": false
     },
     "linter": {
+        "ignore": ["src/adapter/ezsp/driver/types/*"],
         "rules": {
             "correctness": {
+                "noUnusedImports": "error",
+                "noUnusedVariables": {
+                    "level": "warn",
+                    "fix": "none"
+                },
                 "noVoidTypeReturn": "off"
             },
             "style": {
                 "noNonNullAssertion": "off",
                 "noParameterAssign": "off",
                 "noUselessElse": "off",
-                "useConst": "off"
+                "useConst": "off",
+                "useNamingConvention": {
+                    "level": "error",
+                    "options": {
+                        "strictCase": false,
+                        "conventions": [
+                            {
+                                "selector": {
+                                    "kind": "objectLiteralProperty"
+                                },
+                                "formats": ["snake_case", "camelCase", "CONSTANT_CASE", "PascalCase"]
+                            },
+                            {
+                                "selector": {
+                                    "kind": "const"
+                                },
+                                "formats": ["snake_case", "camelCase", "CONSTANT_CASE", "PascalCase"]
+                            },
+                            {
+                                "selector": {
+                                    "kind": "typeProperty"
+                                },
+                                "formats": ["snake_case", "camelCase", "CONSTANT_CASE", "PascalCase"]
+                            },
+                            {
+                                "selector": {
+                                    "kind": "enumMember"
+                                },
+                                "formats": ["CONSTANT_CASE", "PascalCase"]
+                            }
+                        ]
+                    }
+                }
             },
             "complexity": {
                 "noUselessSwitchCase": "off",
@@ -32,6 +70,8 @@
                 "noDelete": "off"
             },
             "suspicious": {
+                "noConstEnum": "off",
+                "useAwait": "off",
                 "noImplicitAnyLet": "off",
                 "noExplicitAny": "off",
                 "noConfusingVoidType": "off",
@@ -40,5 +80,17 @@
                 "noAsyncPromiseExecutor": "off"
             }
         }
-    }
+    },
+    "overrides": [
+        {
+            "include": ["src/adapter/ezsp/driver/types/*", "test/**"],
+            "linter": {
+                "rules": {
+                    "style": {
+                        "useNamingConvention": "off"
+                    }
+                }
+            }
+        }
+    ]
 }

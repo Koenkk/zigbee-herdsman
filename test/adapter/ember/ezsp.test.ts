@@ -1,11 +1,9 @@
 import type {Mock, MockInstance} from "vitest";
 
-import {MockBinding, MockPortBinding} from "@serialport/binding-mock";
-import {OpenOptions} from "@serialport/stream";
+import {MockBinding} from "@serialport/binding-mock";
 
 import {EzspStatus} from "../../../src/adapter/ember/enums";
 import {Ezsp} from "../../../src/adapter/ember/ezsp/ezsp";
-import {logger} from "../../../src/utils/logger";
 import {
     ASH_ACK_FIRST_BYTES,
     INCOMING_MESSAGE_HANDLER_FN2_ASH_RAW,
@@ -134,7 +132,7 @@ describe("Ember Ezsp Layer", () => {
         const ashEmitSpy = vi.spyOn(ezsp.ash, "emit");
         let restart: Promise<EzspStatus>;
         // @ts-expect-error private
-        const onAshFatalErrorSpy = vi.spyOn(ezsp, "onAshFatalError").mockImplementationOnce((status: EzspStatus): void => {
+        const onAshFatalErrorSpy = vi.spyOn(ezsp, "onAshFatalError").mockImplementationOnce((_status: EzspStatus): void => {
             // mimic EmberAdapter onNcpNeedsResetAndInit
             restart = new Promise(async (resolve) => {
                 vi.useRealTimers();
@@ -174,7 +172,7 @@ describe("Ember Ezsp Layer", () => {
         const ashEmitSpy = vi.spyOn(ezsp.ash, "emit");
         let restart: Promise<EzspStatus>;
         // @ts-expect-error private
-        const onAshFatalErrorSpy = vi.spyOn(ezsp, "onAshFatalError").mockImplementationOnce((status: EzspStatus): void => {
+        const onAshFatalErrorSpy = vi.spyOn(ezsp, "onAshFatalError").mockImplementationOnce((_status: EzspStatus): void => {
             // mimic EmberAdapter onNcpNeedsResetAndInit
             restart = new Promise(async (resolve) => {
                 vi.useRealTimers();
@@ -214,7 +212,7 @@ describe("Ember Ezsp Layer", () => {
     it("Restarts ASH layer when received ERROR from port", async () => {
         let restart: Promise<EzspStatus>;
         // @ts-expect-error private
-        const onAshFatalErrorSpy = vi.spyOn(ezsp, "onAshFatalError").mockImplementationOnce((status: EzspStatus): void => {
+        const onAshFatalErrorSpy = vi.spyOn(ezsp, "onAshFatalError").mockImplementationOnce((_status: EzspStatus): void => {
             // mimic EmberAdapter onNcpNeedsResetAndInit
             restart = new Promise(async (resolve) => {
                 vi.useRealTimers();

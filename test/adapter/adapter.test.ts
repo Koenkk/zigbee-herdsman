@@ -1,6 +1,6 @@
 import type {MockInstance} from "vitest";
 
-import {Bonjour, type BrowserConfig, type Service} from "bonjour-service";
+import type {BrowserConfig, Service} from "bonjour-service";
 
 import {Adapter, type TsType} from "../../src/adapter";
 import {findAllDevices} from "../../src/adapter/adapterDiscovery";
@@ -41,7 +41,7 @@ const mockBonjourResult = vi.fn().mockImplementation((type) => ({
         radio_type: `${type}`,
     },
 }));
-const mockBonjourFind = vi.fn((opts: BrowserConfig | null, onup?: (service: Service) => void) => {
+const mockBonjourFind = vi.fn((_opts: BrowserConfig | null, onup?: (service: Service) => void) => {
     if (onup) {
         onup(mockBonjourResult("zstack"));
         onup(mockBonjourResult("ezsp")); // expected as `ember` Adapter
@@ -50,7 +50,7 @@ const mockBonjourFind = vi.fn((opts: BrowserConfig | null, onup?: (service: Serv
 
     return {start: vi.fn(), stop: vi.fn()};
 });
-const mockBonjourFindOne = vi.fn((opts: BrowserConfig | null, timeout: number, callback?: (service: Service) => void) => {
+const mockBonjourFindOne = vi.fn((opts: BrowserConfig | null, _timeout: number, callback?: (service: Service) => void) => {
     if (callback) {
         callback(mockBonjourResult(opts?.type));
     }

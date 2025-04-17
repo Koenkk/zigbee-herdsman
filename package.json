@@ -66,11 +66,12 @@
         "test:coverage": "vitest run --config ./test/vitest.config.mts --coverage",
         "test:watch": "vitest watch --config ./test/vitest.config.mts",
         "check": "biome check",
+        "check:w": "biome check --write",
         "clean": "rimraf temp coverage dist tsconfig.tsbuildinfo",
         "prepack": "pnpm run clean && pnpm run build"
     },
     "version": "3.5.1",
     "pnpm": {
-        "onlyBuiltDependencies": ["@serialport/bindings-cpp", "esbuild"]
+        "onlyBuiltDependencies": ["@biomejs/biome", "@serialport/bindings-cpp", "esbuild"]
     }
 }

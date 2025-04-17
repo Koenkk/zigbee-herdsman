@@ -1,12 +1,6 @@
-import type {MockInstance} from "vitest";
-
 import fs from "node:fs";
 import path from "node:path";
-
-import Bonjour, {Browser, BrowserConfig, Service} from "bonjour-service";
 import equals from "fast-deep-equal/es6";
-
-import {Adapter} from "../src/adapter";
 import {ZStackAdapter} from "../src/adapter/z-stack/adapter/zStackAdapter";
 import {Controller} from "../src/controller";
 import type * as Events from "../src/controller/events";
@@ -16,7 +10,6 @@ import zclTransactionSequenceNumber from "../src/controller/helpers/zclTransacti
 import ZclTransactionSequenceNumber from "../src/controller/helpers/zclTransactionSequenceNumber";
 import {Device, Endpoint, Group} from "../src/controller/model";
 import type * as Models from "../src/models";
-import {wait} from "../src/utils";
 import * as Utils from "../src/utils";
 import {setLogger} from "../src/utils/logger";
 import * as ZSpec from "../src/zspec";
@@ -107,7 +100,7 @@ const mockApaterBackup = vi.fn(() => Promise.resolve(mockDummyBackup));
 let sendZdoResponseStatus = Zdo.Status.SUCCESS;
 const mockAdapterSendZdo = vi
     .fn()
-    .mockImplementation(async (ieeeAddress: string, networkAddress: number, clusterId: Zdo.ClusterId, payload: Buffer, disableResponse: true) => {
+    .mockImplementation(async (_ieeeAddress: string, networkAddress: number, clusterId: Zdo.ClusterId, payload: Buffer, _disableResponse: true) => {
         if (sendZdoResponseStatus !== Zdo.Status.SUCCESS) {
             return [sendZdoResponseStatus, undefined];
         }
@@ -207,7 +200,7 @@ let configureReportStatus = 0;
 let configureReportDefaultRsp = false;
 
 const restoreMocksendZclFrameToEndpoint = () => {
-    mocksendZclFrameToEndpoint.mockImplementation((ieeeAddr, networkAddress, endpoint, frame: Zcl.Frame) => {
+    mocksendZclFrameToEndpoint.mockImplementation((_ieeeAddr, networkAddress, endpoint, frame: Zcl.Frame) => {
         if (
             frame.header.isGlobal &&
             frame.isCommand("read") &&
@@ -423,7 +416,7 @@ const events: {
 
 const backupPath = getTempFile("backup");
 
-const mockAcceptJoiningDeviceHandler = vi.fn((ieeeAddr: string): Promise<boolean> => Promise.resolve(true));
+const mockAcceptJoiningDeviceHandler = vi.fn((_ieeeAddr: string): Promise<boolean> => Promise.resolve(true));
 const options = {
     network: {
         panID: 0x1a63,
@@ -647,7 +640,7 @@ describe("Controller", () => {
                     inputClusters: [10],
                     outputClusters: [11],
                     pendingRequests: {
-                        ID: 1,
+                        id: 1,
                         deviceIeeeAddress: "0x0000012300000000",
                         sendInProgress: false,
                     },
@@ -667,7 +660,7 @@ describe("Controller", () => {
                     inputClusters: [1],
                     outputClusters: [0],
                     pendingRequests: {
-                        ID: 2,
+                        id: 2,
                         deviceIeeeAddress: "0x0000012300000000",
                         sendInProgress: false,
                     },
@@ -1274,7 +1267,7 @@ describe("Controller", () => {
                     ID: 1,
                     inputClusters: [0, 1],
                     outputClusters: [2],
-                    pendingRequests: {ID: 1, deviceIeeeAddress: "0x129", sendInProgress: false},
+                    pendingRequests: {id: 1, deviceIeeeAddress: "0x129", sendInProgress: false},
                     deviceNetworkAddress: 129,
                     deviceIeeeAddress: "0x129",
                     _binds: [],
@@ -1354,7 +1347,7 @@ describe("Controller", () => {
                     inputClusters: [0, 1],
                     meta: {},
                     outputClusters: [2],
-                    pendingRequests: {ID: 1, deviceIeeeAddress: "0x129", sendInProgress: false},
+                    pendingRequests: {id: 1, deviceIeeeAddress: "0x129", sendInProgress: false},
                     deviceNetworkAddress: 129,
                     deviceIeeeAddress: "0x129",
                     _binds: [],
@@ -2391,7 +2384,7 @@ describe("Controller", () => {
                         _eventsCount: 0,
                         inputClusters: [0, 1],
                         outputClusters: [2],
-                        pendingRequests: {ID: 1, deviceIeeeAddress: "0x129", sendInProgress: false},
+                        pendingRequests: {id: 1, deviceIeeeAddress: "0x129", sendInProgress: false},
                         _binds: [],
                         _configuredReportings: [],
                         meta: {},
@@ -2430,7 +2423,7 @@ describe("Controller", () => {
                 deviceID: 5,
                 inputClusters: [0, 1],
                 outputClusters: [2],
-                pendingRequests: {ID: 1, deviceIeeeAddress: "0x129", sendInProgress: false},
+                pendingRequests: {id: 1, deviceIeeeAddress: "0x129", sendInProgress: false},
                 deviceNetworkAddress: 129,
                 deviceIeeeAddress: "0x129",
                 _binds: [],
@@ -2508,7 +2501,7 @@ describe("Controller", () => {
                         clusters: {},
                         inputClusters: [0, 1],
                         outputClusters: [2],
-                        pendingRequests: {ID: 1, deviceIeeeAddress: "0x129", sendInProgress: false},
+                        pendingRequests: {id: 1, deviceIeeeAddress: "0x129", sendInProgress: false},
                         deviceNetworkAddress: 129,
                         deviceIeeeAddress: "0x129",
                         _binds: [],
@@ -2541,7 +2534,7 @@ describe("Controller", () => {
                 deviceID: 5,
                 inputClusters: [0, 1],
                 outputClusters: [2],
-                pendingRequests: {ID: 1, deviceIeeeAddress: "0x129", sendInProgress: false},
+                pendingRequests: {id: 1, deviceIeeeAddress: "0x129", sendInProgress: false},
                 deviceNetworkAddress: 129,
                 deviceIeeeAddress: "0x129",
                 _binds: [],
@@ -2561,7 +2554,6 @@ describe("Controller", () => {
     });
 
     it("Receive raw data from unknown cluster", async () => {
-        const buffer = Buffer.from([24, 169, 10, 0, 0, 24, 1]);
         await controller.start();
         await mockAdapterEvents["deviceJoined"]({networkAddress: 129, ieeeAddr: "0x129"});
         await mockAdapterEvents["zclPayload"]({
@@ -2595,7 +2587,7 @@ describe("Controller", () => {
                         clusters: {},
                         inputClusters: [0, 1],
                         outputClusters: [2],
-                        pendingRequests: {ID: 1, deviceIeeeAddress: "0x129", sendInProgress: false},
+                        pendingRequests: {id: 1, deviceIeeeAddress: "0x129", sendInProgress: false},
                         deviceNetworkAddress: 129,
                         deviceIeeeAddress: "0x129",
                         _binds: [],
@@ -2630,7 +2622,7 @@ describe("Controller", () => {
                 deviceID: 5,
                 inputClusters: [0, 1],
                 outputClusters: [2],
-                pendingRequests: {ID: 1, deviceIeeeAddress: "0x129", sendInProgress: false},
+                pendingRequests: {id: 1, deviceIeeeAddress: "0x129", sendInProgress: false},
                 deviceNetworkAddress: 129,
                 deviceIeeeAddress: "0x129",
                 _binds: [],
@@ -2707,7 +2699,7 @@ describe("Controller", () => {
                         _eventsCount: 0,
                         inputClusters: [0, 1],
                         outputClusters: [2],
-                        pendingRequests: {ID: 1, deviceIeeeAddress: "0x129", sendInProgress: false},
+                        pendingRequests: {id: 1, deviceIeeeAddress: "0x129", sendInProgress: false},
                         deviceNetworkAddress: 129,
                         deviceIeeeAddress: "0x129",
                         _binds: [],
@@ -2729,7 +2721,7 @@ describe("Controller", () => {
                         },
                         inputClusters: [],
                         outputClusters: [],
-                        pendingRequests: {ID: 3, deviceIeeeAddress: "0x129", sendInProgress: false},
+                        pendingRequests: {id: 3, deviceIeeeAddress: "0x129", sendInProgress: false},
                         deviceNetworkAddress: 129,
                         deviceIeeeAddress: "0x129",
                         _binds: [],
@@ -2759,7 +2751,7 @@ describe("Controller", () => {
                 _eventsCount: 0,
                 inputClusters: [],
                 outputClusters: [],
-                pendingRequests: {ID: 3, deviceIeeeAddress: "0x129", sendInProgress: false},
+                pendingRequests: {id: 3, deviceIeeeAddress: "0x129", sendInProgress: false},
                 meta: {},
                 deviceNetworkAddress: 129,
                 deviceIeeeAddress: "0x129",
@@ -2831,7 +2823,7 @@ describe("Controller", () => {
                         clusters: {},
                         inputClusters: [0, 1],
                         outputClusters: [2],
-                        pendingRequests: {ID: 1, deviceIeeeAddress: "0x129", sendInProgress: false},
+                        pendingRequests: {id: 1, deviceIeeeAddress: "0x129", sendInProgress: false},
                         deviceNetworkAddress: 129,
                         deviceIeeeAddress: "0x129",
                         _binds: [],
@@ -2864,7 +2856,7 @@ describe("Controller", () => {
                 clusters: {},
                 inputClusters: [0, 1],
                 outputClusters: [2],
-                pendingRequests: {ID: 1, deviceIeeeAddress: "0x129", sendInProgress: false},
+                pendingRequests: {id: 1, deviceIeeeAddress: "0x129", sendInProgress: false},
                 deviceNetworkAddress: 129,
                 deviceIeeeAddress: "0x129",
                 _binds: [],
@@ -3574,7 +3566,7 @@ describe("Controller", () => {
                     },
                     inputClusters: [],
                     outputClusters: [],
-                    pendingRequests: {ID: 1, deviceIeeeAddress: "0x150", sendInProgress: false},
+                    pendingRequests: {id: 1, deviceIeeeAddress: "0x150", sendInProgress: false},
                     deviceNetworkAddress: 150,
                     deviceIeeeAddress: "0x150",
                     _binds: [],
@@ -3628,7 +3620,7 @@ describe("Controller", () => {
                     },
                     inputClusters: [],
                     outputClusters: [],
-                    pendingRequests: {ID: 1, deviceIeeeAddress: "0x151", sendInProgress: false},
+                    pendingRequests: {id: 1, deviceIeeeAddress: "0x151", sendInProgress: false},
                     deviceNetworkAddress: 151,
                     deviceIeeeAddress: "0x151",
                     _binds: [],
@@ -3737,7 +3729,7 @@ describe("Controller", () => {
                         },
                         inputClusters: [0, 1],
                         outputClusters: [2],
-                        pendingRequests: {ID: 1, deviceIeeeAddress: "0x129", sendInProgress: false},
+                        pendingRequests: {id: 1, deviceIeeeAddress: "0x129", sendInProgress: false},
                         deviceNetworkAddress: 129,
                         deviceIeeeAddress: "0x129",
                         _binds: [],
@@ -3770,7 +3762,7 @@ describe("Controller", () => {
                 deviceID: 5,
                 inputClusters: [0, 1],
                 outputClusters: [2],
-                pendingRequests: {ID: 1, deviceIeeeAddress: "0x129", sendInProgress: false},
+                pendingRequests: {id: 1, deviceIeeeAddress: "0x129", sendInProgress: false},
                 deviceNetworkAddress: 129,
                 deviceIeeeAddress: "0x129",
                 _binds: [],
@@ -4041,7 +4033,9 @@ describe("Controller", () => {
         expect(error).toStrictEqual(new Error("Interview - interview already in progress for '0x129'"));
         try {
             await firstInterview;
-        } catch (e) {}
+        } catch {
+            /* empty */
+        }
     });
 
     it("Remove device from network", async () => {
@@ -4196,7 +4190,7 @@ describe("Controller", () => {
         await mockAdapterEvents["deviceJoined"]({networkAddress: 176, ieeeAddr: "0x176"});
         const device = controller.getDeviceByIeeeAddr("0x176")!;
         mocksendZclFrameToEndpoint.mockClear();
-        const result = await device.ping();
+        await device.ping();
         expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(1);
         const call = mocksendZclFrameToEndpoint.mock.calls[0];
         expect(call[0]).toBe("0x176");
@@ -4265,7 +4259,7 @@ describe("Controller", () => {
         expect(device.pendingRequestTimeout).toStrictEqual(0);
         mocksendZclFrameToEndpoint.mockClear();
         mocksendZclFrameToEndpoint.mockReturnValueOnce(null);
-        mocksendZclFrameToEndpoint.mockImplementationOnce((ieeeAddr, networkAddress, endpoint, frame: Zcl.Frame) => {
+        mocksendZclFrameToEndpoint.mockImplementationOnce((_ieeeAddr, _networkAddress, _endpoint, frame: Zcl.Frame) => {
             const payload = [{attrId: 0, status: 0, dataType: 35, attrData: 204}];
             const responseFrame = Zcl.Frame.create(0, 1, true, undefined, 10, "readRsp", frame.cluster.ID, payload, {});
             return {header: responseFrame.header, data: responseFrame.toBuffer(), clusterID: frame.cluster.ID};
@@ -5528,7 +5522,7 @@ describe("Controller", () => {
         mocksendZclFrameToEndpoint.mockClear();
         const buffer = Buffer.from([24, 169, 10, 0, 0, 24, 1]);
         const frame = Zcl.Frame.fromBuffer(Zcl.Utils.getCluster("msOccupancySensing", undefined, {}).ID, Zcl.Header.fromBuffer(buffer), buffer, {});
-        const promise = new Promise((resolve, reject) => resolve({clusterID: frame.cluster.ID, data: frame.toBuffer(), header: frame.header}));
+        const promise = new Promise((resolve, _reject) => resolve({clusterID: frame.cluster.ID, data: frame.toBuffer(), header: frame.header}));
         mockAdapterWaitFor.mockReturnValueOnce({promise, cancel: () => {}});
         const result = endpoint.waitForCommand("genOta", "upgradeEndRequest", 10, 20);
         expect(mockAdapterWaitFor).toHaveBeenCalledTimes(1);
@@ -5550,7 +5544,7 @@ describe("Controller", () => {
         const device = controller.getDeviceByIeeeAddr("0x129")!;
         const endpoint = device.getEndpoint(1)!;
         mocksendZclFrameToEndpoint.mockClear();
-        const promise = new Promise((resolve, reject) => reject(new Error("whoops!")));
+        const promise = new Promise((_resolve, reject) => reject(new Error("whoops!")));
         mockAdapterWaitFor.mockReturnValueOnce({promise, cancel: () => {}});
         const result = endpoint.waitForCommand("genOta", "upgradeEndRequest", 10, 20);
         let error;
@@ -5618,7 +5612,7 @@ describe("Controller", () => {
                     deviceNetworkAddress: 19468,
                     inputClusters: [0, 1, 3, 9, 2821, 4096],
                     outputClusters: [3, 4, 5, 6, 8, 25, 4096],
-                    pendingRequests: {ID: 1, deviceIeeeAddress: "0x90fd9ffffe4b64ae", sendInProgress: false},
+                    pendingRequests: {id: 1, deviceIeeeAddress: "0x90fd9ffffe4b64ae", sendInProgress: false},
                     profileID: 49246,
                 },
             ],
@@ -6591,7 +6585,7 @@ describe("Controller", () => {
                     _binds: [],
                     _configuredReportings: [],
                     meta: {},
-                    pendingRequests: {ID: 1, deviceIeeeAddress: "0x0000012300000000", sendInProgress: false},
+                    pendingRequests: {id: 1, deviceIeeeAddress: "0x0000012300000000", sendInProgress: false},
                 },
                 {
                     deviceID: 5,
@@ -6607,7 +6601,7 @@ describe("Controller", () => {
                     _events: {},
                     _eventsCount: 0,
                     meta: {},
-                    pendingRequests: {ID: 2, deviceIeeeAddress: "0x0000012300000000", sendInProgress: false},
+                    pendingRequests: {id: 2, deviceIeeeAddress: "0x0000012300000000", sendInProgress: false},
                 },
                 {
                     deviceID: 5,
@@ -6623,7 +6617,7 @@ describe("Controller", () => {
                     _events: {},
                     _eventsCount: 0,
                     meta: {},
-                    pendingRequests: {ID: 3, deviceIeeeAddress: "0x0000012300000000", sendInProgress: false},
+                    pendingRequests: {id: 3, deviceIeeeAddress: "0x0000012300000000", sendInProgress: false},
                 },
                 {
                     deviceID: 5,
@@ -6639,7 +6633,7 @@ describe("Controller", () => {
                     _events: {},
                     _eventsCount: 0,
                     meta: {},
-                    pendingRequests: {ID: 4, deviceIeeeAddress: "0x0000012300000000", sendInProgress: false},
+                    pendingRequests: {id: 4, deviceIeeeAddress: "0x0000012300000000", sendInProgress: false},
                 },
                 {
                     deviceID: 5,
@@ -6655,7 +6649,7 @@ describe("Controller", () => {
                     _events: {},
                     _eventsCount: 0,
                     meta: {},
-                    pendingRequests: {ID: 5, deviceIeeeAddress: "0x0000012300000000", sendInProgress: false},
+                    pendingRequests: {id: 5, deviceIeeeAddress: "0x0000012300000000", sendInProgress: false},
                 },
                 {
                     deviceID: 5,
@@ -6671,7 +6665,7 @@ describe("Controller", () => {
                     _events: {},
                     _eventsCount: 0,
                     meta: {},
-                    pendingRequests: {ID: 6, deviceIeeeAddress: "0x0000012300000000", sendInProgress: false},
+                    pendingRequests: {id: 6, deviceIeeeAddress: "0x0000012300000000", sendInProgress: false},
                 },
                 {
                     deviceID: 1024,
@@ -6687,7 +6681,7 @@ describe("Controller", () => {
                     _events: {},
                     _eventsCount: 0,
                     meta: {},
-                    pendingRequests: {ID: 11, deviceIeeeAddress: "0x0000012300000000", sendInProgress: false},
+                    pendingRequests: {id: 11, deviceIeeeAddress: "0x0000012300000000", sendInProgress: false},
                 },
             ],
             _ieeeAddr: "0x0000012300000000",
@@ -6722,7 +6716,7 @@ describe("Controller", () => {
                     deviceNetworkAddress: 40369,
                     inputClusters: [0, 3, 4, 5, 6, 8, 768, 2821, 4096],
                     outputClusters: [5, 25, 32, 4096],
-                    pendingRequests: {ID: 1, deviceIeeeAddress: "0x000b57fffec6a5b2", sendInProgress: false},
+                    pendingRequests: {id: 1, deviceIeeeAddress: "0x000b57fffec6a5b2", sendInProgress: false},
                     profileID: 49246,
                 },
             ],
@@ -6764,7 +6758,7 @@ describe("Controller", () => {
                     _binds: [{type: "endpoint", endpointID: 1, deviceIeeeAddr: "0x000b57fffec6a5b2"}],
                     _configuredReportings: [{cluster: 1, attrId: 0, minRepIntval: 1, maxRepIntval: 20, repChange: 2}],
                     meta: {},
-                    pendingRequests: {ID: 1, deviceIeeeAddress: "0x0017880104e45517", sendInProgress: false},
+                    pendingRequests: {id: 1, deviceIeeeAddress: "0x0017880104e45517", sendInProgress: false},
                 },
                 {
                     deviceID: 12,
@@ -6780,7 +6774,7 @@ describe("Controller", () => {
                     _events: {},
                     _eventsCount: 0,
                     meta: {},
-                    pendingRequests: {ID: 2, deviceIeeeAddress: "0x0017880104e45517", sendInProgress: false},
+                    pendingRequests: {id: 2, deviceIeeeAddress: "0x0017880104e45517", sendInProgress: false},
                 },
             ],
             _hardwareVersion: 1,
@@ -6824,7 +6818,7 @@ describe("Controller", () => {
                     _binds: [],
                     _configuredReportings: [],
                     meta: {},
-                    pendingRequests: {ID: 1, deviceIeeeAddress: "0x0017880104e45518", sendInProgress: false},
+                    pendingRequests: {id: 1, deviceIeeeAddress: "0x0017880104e45518", sendInProgress: false},
                 },
                 {
                     deviceID: 12,
@@ -6840,7 +6834,7 @@ describe("Controller", () => {
                     _events: {},
                     _eventsCount: 0,
                     meta: {},
-                    pendingRequests: {ID: 2, deviceIeeeAddress: "0x0017880104e45518", sendInProgress: false},
+                    pendingRequests: {id: 2, deviceIeeeAddress: "0x0017880104e45518", sendInProgress: false},
                 },
             ],
             _hardwareVersion: 1,
@@ -6884,7 +6878,7 @@ describe("Controller", () => {
                         deviceNetworkAddress: 40369,
                         inputClusters: [0, 3, 4, 5, 6, 8, 768, 2821, 4096],
                         outputClusters: [5, 25, 32, 4096],
-                        pendingRequests: {ID: 1, deviceIeeeAddress: "0x000b57fffec6a5b2", sendInProgress: false},
+                        pendingRequests: {id: 1, deviceIeeeAddress: "0x000b57fffec6a5b2", sendInProgress: false},
                         profileID: 49246,
                     },
                 ],
@@ -6984,7 +6978,7 @@ describe("Controller", () => {
                         deviceID: 5,
                         inputClusters: [0, 1],
                         outputClusters: [2],
-                        pendingRequests: {ID: 1, deviceIeeeAddress: "0x129", sendInProgress: false},
+                        pendingRequests: {id: 1, deviceIeeeAddress: "0x129", sendInProgress: false},
                         profileID: 99,
                         ID: 1,
                         clusters: {},
@@ -7021,7 +7015,7 @@ describe("Controller", () => {
                 deviceID: 5,
                 inputClusters: [0, 1],
                 outputClusters: [2],
-                pendingRequests: {ID: 1, deviceIeeeAddress: "0x129", sendInProgress: false},
+                pendingRequests: {id: 1, deviceIeeeAddress: "0x129", sendInProgress: false},
                 profileID: 99,
                 ID: 1,
                 clusters: {},
@@ -7087,7 +7081,7 @@ describe("Controller", () => {
                         _eventsCount: 0,
                         inputClusters: [0, 1],
                         outputClusters: [2],
-                        pendingRequests: {ID: 1, deviceIeeeAddress: "0x129", sendInProgress: false},
+                        pendingRequests: {id: 1, deviceIeeeAddress: "0x129", sendInProgress: false},
                         profileID: 99,
                         ID: 1,
                         clusters: {},
@@ -7121,7 +7115,7 @@ describe("Controller", () => {
                 deviceID: 5,
                 inputClusters: [0, 1],
                 outputClusters: [2],
-                pendingRequests: {ID: 1, deviceIeeeAddress: "0x129", sendInProgress: false},
+                pendingRequests: {id: 1, deviceIeeeAddress: "0x129", sendInProgress: false},
                 profileID: 99,
                 ID: 1,
                 clusters: {},
@@ -7599,7 +7593,7 @@ describe("Controller", () => {
                     {
                         inputClusters: [],
                         outputClusters: [],
-                        pendingRequests: {ID: ZSpec.GP_ENDPOINT, deviceIeeeAddress: "0x000000000046f4fe", sendInProgress: false},
+                        pendingRequests: {id: ZSpec.GP_ENDPOINT, deviceIeeeAddress: "0x000000000046f4fe", sendInProgress: false},
                         ID: ZSpec.GP_ENDPOINT,
                         clusters: {},
                         deviceIeeeAddress: "0x000000000046f4fe",
@@ -7687,7 +7681,7 @@ describe("Controller", () => {
                         inputClusters: [],
                         meta: {},
                         outputClusters: [],
-                        pendingRequests: {ID: ZSpec.GP_ENDPOINT, deviceIeeeAddress: "0x000000000046f4fe", sendInProgress: false},
+                        pendingRequests: {id: ZSpec.GP_ENDPOINT, deviceIeeeAddress: "0x000000000046f4fe", sendInProgress: false},
                         ID: ZSpec.GP_ENDPOINT,
                         _events: {},
                         _eventsCount: 0,
@@ -7714,7 +7708,7 @@ describe("Controller", () => {
                 inputClusters: [],
                 meta: {},
                 outputClusters: [],
-                pendingRequests: {ID: ZSpec.GP_ENDPOINT, deviceIeeeAddress: "0x000000000046f4fe", sendInProgress: false},
+                pendingRequests: {id: ZSpec.GP_ENDPOINT, deviceIeeeAddress: "0x000000000046f4fe", sendInProgress: false},
                 ID: ZSpec.GP_ENDPOINT,
                 _events: {},
                 _eventsCount: 0,
@@ -8251,7 +8245,7 @@ describe("Controller", () => {
                         inputClusters: [],
                         meta: {},
                         outputClusters: [],
-                        pendingRequests: {ID: ZSpec.GP_ENDPOINT, deviceIeeeAddress: "0x00000000017171f8", sendInProgress: false},
+                        pendingRequests: {id: ZSpec.GP_ENDPOINT, deviceIeeeAddress: "0x00000000017171f8", sendInProgress: false},
                     },
                 ],
                 _ieeeAddr: "0x00000000017171f8",
@@ -8340,7 +8334,7 @@ describe("Controller", () => {
                         _binds: [],
                         _configuredReportings: [],
                         meta: {},
-                        pendingRequests: {sendInProgress: false, ID: ZSpec.GP_ENDPOINT, deviceIeeeAddress: "0x00000000017171f8"},
+                        pendingRequests: {sendInProgress: false, id: ZSpec.GP_ENDPOINT, deviceIeeeAddress: "0x00000000017171f8"},
                     },
                 ],
                 _modelID: "GreenPower_2",
@@ -8365,7 +8359,7 @@ describe("Controller", () => {
                 _binds: [],
                 _configuredReportings: [],
                 meta: {},
-                pendingRequests: {sendInProgress: false, ID: ZSpec.GP_ENDPOINT, deviceIeeeAddress: "0x00000000017171f8"},
+                pendingRequests: {sendInProgress: false, id: ZSpec.GP_ENDPOINT, deviceIeeeAddress: "0x00000000017171f8"},
             },
             data: {
                 options: 21640,
@@ -8424,7 +8418,7 @@ describe("Controller", () => {
                     inputClusters: [],
                     meta: {},
                     outputClusters: [],
-                    pendingRequests: {ID: ZSpec.GP_ENDPOINT, deviceIeeeAddress: "0x00000000017171f8", sendInProgress: false},
+                    pendingRequests: {id: ZSpec.GP_ENDPOINT, deviceIeeeAddress: "0x00000000017171f8", sendInProgress: false},
                 },
             ],
             _ieeeAddr: "0x00000000017171f8",
@@ -8472,7 +8466,7 @@ describe("Controller", () => {
                     inputClusters: [],
                     meta: {},
                     outputClusters: [],
-                    pendingRequests: {ID: ZSpec.GP_ENDPOINT, deviceIeeeAddress: "0x00000000017171f8", sendInProgress: false},
+                    pendingRequests: {id: ZSpec.GP_ENDPOINT, deviceIeeeAddress: "0x00000000017171f8", sendInProgress: false},
                 },
             ],
             _ieeeAddr: "0x00000000017171f8",
@@ -8841,7 +8835,8 @@ describe("Controller", () => {
         mocksendZclFrameToEndpoint.mockReturnValueOnce(createResponse(4));
 
         let result1;
-        let result2: Promise<any>;
+        // biome-ignore lint/correctness/noUnusedVariables: test
+        let result2;
         const nextTick = new Promise(process.nextTick);
         endpoint.write("genOnOff", {onOff: 0, startUpOnOff: 0}, {disableResponse: true});
         await nextTick;
@@ -8862,7 +8857,7 @@ describe("Controller", () => {
 
         //add another non-ZCL request, should go directly to queue without errors
         // @ts-expect-error private
-        const result6 = endpoint.sendRequest(
+        endpoint.sendRequest(
             // @ts-expect-error mock
             5,
             [],
@@ -8880,13 +8875,11 @@ describe("Controller", () => {
         expect(endpoint.pendingRequests.size).toStrictEqual(4);
         expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(2);
 
-        let error = null;
         try {
             // Add the same ZCL request with different payload again, the first one should be rejected and removed from the queue
             result2 = endpoint.write("genOnOff", {onOff: 1}, {disableResponse: true});
             await expect(await result1).rejects.toBe("asas");
-        } catch (e) {
-            error = e;
+        } catch {
             // Queue content:
             // 1. empty
             // 2. ZCL write 'genOnOff' {startUpOnOff: 0}
@@ -8896,7 +8889,7 @@ describe("Controller", () => {
             expect(endpoint.pendingRequests.size).toStrictEqual(4);
         }
         // Now add the same ZCL request with same payload again. The previous one should *not* be rejected but removed from the queue
-        const result3 = endpoint.write("genOnOff", {onOff: 1}, {disableResponse: true});
+        endpoint.write("genOnOff", {onOff: 1}, {disableResponse: true});
         await new Promise(process.nextTick);
         // Queue content:
         // 1. empty
@@ -9020,11 +9013,10 @@ describe("Controller", () => {
 
         updatedMockedDate.setSeconds(updatedMockedDate.getSeconds() + 1001000);
         vi.setSystemTime(updatedMockedDate);
-        let error = null;
         try {
             await result;
-        } catch (e) {
-            error = e;
+        } catch {
+            /* empty */
         }
         expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(1);
         // @ts-expect-error private
@@ -9200,7 +9192,7 @@ describe("Controller", () => {
                         _events: {},
                         _eventsCount: 0,
                         meta: {},
-                        pendingRequests: {ID: 1, deviceIeeeAddress: "0x171", sendInProgress: false},
+                        pendingRequests: {id: 1, deviceIeeeAddress: "0x171", sendInProgress: false},
                     },
                     {
                         inputClusters: [],
@@ -9214,7 +9206,7 @@ describe("Controller", () => {
                         _events: {},
                         _eventsCount: 0,
                         meta: {},
-                        pendingRequests: {ID: 2, deviceIeeeAddress: "0x171", sendInProgress: false},
+                        pendingRequests: {id: 2, deviceIeeeAddress: "0x171", sendInProgress: false},
                     },
                     {
                         inputClusters: [],
@@ -9228,7 +9220,7 @@ describe("Controller", () => {
                         _events: {},
                         _eventsCount: 0,
                         meta: {},
-                        pendingRequests: {ID: 3, deviceIeeeAddress: "0x171", sendInProgress: false},
+                        pendingRequests: {id: 3, deviceIeeeAddress: "0x171", sendInProgress: false},
                     },
                     {
                         inputClusters: [],
@@ -9242,7 +9234,7 @@ describe("Controller", () => {
                         _events: {},
                         _eventsCount: 0,
                         meta: {},
-                        pendingRequests: {ID: 4, deviceIeeeAddress: "0x171", sendInProgress: false},
+                        pendingRequests: {id: 4, deviceIeeeAddress: "0x171", sendInProgress: false},
                     },
                     {
                         inputClusters: [],
@@ -9256,7 +9248,7 @@ describe("Controller", () => {
                         _events: {},
                         _eventsCount: 0,
                         meta: {},
-                        pendingRequests: {ID: 5, deviceIeeeAddress: "0x171", sendInProgress: false},
+                        pendingRequests: {id: 5, deviceIeeeAddress: "0x171", sendInProgress: false},
                     },
                     {
                         inputClusters: [],
@@ -9270,7 +9262,7 @@ describe("Controller", () => {
                         _events: {},
                         _eventsCount: 0,
                         meta: {},
-                        pendingRequests: {ID: 6, deviceIeeeAddress: "0x171", sendInProgress: false},
+                        pendingRequests: {id: 6, deviceIeeeAddress: "0x171", sendInProgress: false},
                     },
                 ],
                 _events: {},
@@ -9307,7 +9299,7 @@ describe("Controller", () => {
                 _events: {},
                 _eventsCount: 0,
                 meta: {},
-                pendingRequests: {ID: 1, deviceIeeeAddress: "0x171", sendInProgress: false},
+                pendingRequests: {id: 1, deviceIeeeAddress: "0x171", sendInProgress: false},
             },
             data: ["mainsVoltage", 9999],
             linkquality: 19,

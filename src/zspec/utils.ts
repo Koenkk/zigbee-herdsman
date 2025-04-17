@@ -1,4 +1,4 @@
-import type {EUI64} from "./tstypes";
+import type {Eui64} from "./tstypes";
 
 import {createCipheriv} from "node:crypto";
 
@@ -45,12 +45,12 @@ export const isBroadcastAddress = (address: number): boolean => {
  *
  * NOTE: the buffer is always copied to avoid reversal in reference
  */
-export const eui64LEBufferToHex = (eui64LEBuf: Buffer): EUI64 => `0x${Buffer.from(eui64LEBuf).reverse().toString("hex")}`;
+export const eui64LEBufferToHex = (eui64LEBuf: Buffer): Eui64 => `0x${Buffer.from(eui64LEBuf).reverse().toString("hex")}`;
 
 /**
  * Represent a big endian buffer in `0x...` form
  */
-export const eui64BEBufferToHex = (eui64BEBuf: Buffer): EUI64 => `0x${eui64BEBuf.toString("hex")}`;
+export const eui64BEBufferToHex = (eui64BEBuf: Buffer): Eui64 => `0x${eui64BEBuf.toString("hex")}`;
 
 /**
  * Calculate the CRC 8, 16 or 32 for the given data.

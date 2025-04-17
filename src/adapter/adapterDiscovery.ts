@@ -12,12 +12,12 @@ import {SerialPort} from "./serialPort";
 
 const NS = "zh:adapter:discovery";
 
-enum UsbFingerprintMatchScore {
-    NONE = 0,
-    VID_PID = 1,
-    VID_PID_MANUF = 2,
-    VID_PID_PATH = 3,
-    VID_PID_MANUF_PATH = 4,
+const enum UsbFingerprintMatchScore {
+    None = 0,
+    VidPid = 1,
+    VidPidManuf = 2,
+    VidPidPath = 3,
+    VidPidManufPath = 4,
 }
 
 /**
@@ -317,7 +317,7 @@ function matchUsbFingerprint(
     }
 
     let match: UsbAdapterFingerprint | undefined;
-    let score: number = UsbFingerprintMatchScore.NONE;
+    let score: number = UsbFingerprintMatchScore.None;
 
     for (const entry of entries) {
         if (!matchString(portInfo.vendorId, entry.vendorId) || !matchString(portInfo.productId, entry.productId)) {
@@ -325,19 +325,19 @@ function matchUsbFingerprint(
         }
 
         // allow matching on vendorId+productId only on Windows
-        if (score < UsbFingerprintMatchScore.VID_PID && isWindows) {
+        if (score < UsbFingerprintMatchScore.VidPid && isWindows) {
             match = entry;
-            score = UsbFingerprintMatchScore.VID_PID;
+            score = UsbFingerprintMatchScore.VidPid;
         }
 
         if (
-            score < UsbFingerprintMatchScore.VID_PID_MANUF &&
+            score < UsbFingerprintMatchScore.VidPidManuf &&
             entry.manufacturer &&
             portInfo.manufacturer &&
             matchString(portInfo.manufacturer, entry.manufacturer)
         ) {
             match = entry;
-            score = UsbFingerprintMatchScore.VID_PID_MANUF;
+            score = UsbFingerprintMatchScore.VidPidManuf;
 
             if (isWindows && !conflictProne) {
                 // path will never match on Windows (COMx), assume vendor+product+manufacturer is "exact match"
@@ -347,24 +347,24 @@ function matchUsbFingerprint(
         }
 
         if (
-            score < UsbFingerprintMatchScore.VID_PID_PATH &&
+            score < UsbFingerprintMatchScore.VidPidPath &&
             entry.pathRegex &&
             (matchRegex(entry.pathRegex, portInfo.path) || matchRegex(entry.pathRegex, portInfo.pnpId))
         ) {
-            if (score === UsbFingerprintMatchScore.VID_PID_MANUF) {
+            if (score === UsbFingerprintMatchScore.VidPidManuf) {
                 // best possible match, return early
-                return [portInfo.path, UsbFingerprintMatchScore.VID_PID_MANUF_PATH];
+                return [portInfo.path, UsbFingerprintMatchScore.VidPidManufPath];
             } else {
                 match = entry;
-                score = UsbFingerprintMatchScore.VID_PID_PATH;
+                score = UsbFingerprintMatchScore.VidPidPath;
             }
         }
     }
 
     // poor match only returned if port info not conflict-prone
     if (match) {
-        if (score > UsbFingerprintMatchScore.VID_PID) {
-            if (conflictProne && score < UsbFingerprintMatchScore.VID_PID_PATH && matchString(match.manufacturer!, "itead")) {
+        if (score > UsbFingerprintMatchScore.VidPid) {
+            if (conflictProne && score < UsbFingerprintMatchScore.VidPidPath && matchString(match.manufacturer!, "itead")) {
                 // can't trust metadata "only" on sonoff dongles with conflicts
                 return undefined;
             }
@@ -406,12 +406,12 @@ export async function matchUsbAdapter(adapter: Adapter, path: string): Promise<b
     return false;
 }
 
-export async function findUsbAdapterBestMatch(
+export function findUsbAdapterBestMatch(
     adapter: Adapter | undefined,
     portInfo: PortInfo,
     isWindows: boolean,
     conflictProne: boolean,
-): Promise<[DiscoverableUsbAdapter, NonNullable<ReturnType<typeof matchUsbFingerprint>>] | undefined> {
+): [DiscoverableUsbAdapter, NonNullable<ReturnType<typeof matchUsbFingerprint>>] | undefined {
     let bestMatch: [DiscoverableUsbAdapter, NonNullable<ReturnType<typeof matchUsbFingerprint>>] | undefined;
 
     for (const key in USB_FINGERPRINTS) {
@@ -425,7 +425,7 @@ export async function findUsbAdapterBestMatch(
         if (match && (!bestMatch || bestMatch[1][1] < match[1])) {
             bestMatch = [key as DiscoverableUsbAdapter, match];
 
-            if (match[1] === UsbFingerprintMatchScore.VID_PID_MANUF_PATH) {
+            if (match[1] === UsbFingerprintMatchScore.VidPidManufPath) {
                 // got best possible match, exit loop
                 break;
             }
@@ -452,7 +452,7 @@ export async function findUsbAdapter(
         }
 
         const conflictProne = USB_FINGERPRINTS_CONFLICT_IDS.includes(`${portInfo.vendorId}:${portInfo.productId}`);
-        const bestMatch = await findUsbAdapterBestMatch(adapter, portInfo, isWindows, conflictProne);
+        const bestMatch = findUsbAdapterBestMatch(adapter, portInfo, isWindows, conflictProne);
 
         if (bestMatch) {
             logger.info(
@@ -516,7 +516,7 @@ export async function findMdnsAdapter(path: string): Promise<[adapter: Adapter, 
     });
 }
 
-export async function findTcpAdapter(path: string, adapter?: Adapter): Promise<[adapter: Adapter, path: string]> {
+export function findTcpAdapter(path: string, adapter?: Adapter): [adapter: Adapter, path: string] {
     try {
         const url = new URL(path);
         assert(url.port !== "");
@@ -551,7 +551,7 @@ export async function discoverAdapter(adapter?: Adapter, path?: string): Promise
         if (path.startsWith("mdns://")) {
             return await findMdnsAdapter(path);
         } else if (path.startsWith("tcp://") || path.startsWith("socket://")) {
-            return await findTcpAdapter(path, adapter);
+            return findTcpAdapter(path, adapter);
         } else if (adapter) {
             try {
                 const matched = await matchUsbAdapter(adapter, path);
@@ -596,7 +596,7 @@ export async function findAllDevices(): Promise<{name: string; path: string; ada
             // override matching on Windows, too many chances of mismatch due to lacking data
             const bestMatch = isWindows
                 ? undefined
-                : await findUsbAdapterBestMatch(
+                : findUsbAdapterBestMatch(
                       undefined,
                       portInfo,
                       isWindows,

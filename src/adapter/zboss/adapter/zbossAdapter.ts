@@ -166,7 +166,7 @@ export class ZBOSSAdapter extends Adapter {
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    public async backup(ieeeAddressesInDatabase: string[]): Promise<Backup> {
+    public async backup(_ieeeAddressesInDatabase: string[]): Promise<Backup> {
         throw new Error("This adapter does not support backup");
     }
 
@@ -244,7 +244,7 @@ export class ZBOSSAdapter extends Adapter {
         disableResponse: false,
     ): Promise<ZdoTypes.RequestToResponseMap[K]>;
     public async sendZdo<K extends keyof ZdoTypes.RequestToResponseMap>(
-        ieeeAddress: string,
+        _ieeeAddress: string,
         networkAddress: number,
         clusterId: K,
         payload: Buffer,
@@ -491,8 +491,8 @@ export class ZBOSSAdapter extends Adapter {
     public waitFor(
         networkAddress: number,
         endpoint: number,
-        frameType: Zcl.FrameType,
-        direction: Zcl.Direction,
+        _frameType: Zcl.FrameType,
+        _direction: Zcl.Direction,
         transactionSequenceNumber: number | undefined,
         clusterID: number,
         commandIdentifier: number,

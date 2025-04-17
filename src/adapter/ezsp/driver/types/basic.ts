@@ -82,7 +82,7 @@ export class uint64_t extends uint_t {
 }
 
 export class LVBytes {
-    static serialize(cls: any, value: any[]): Buffer {
+    static serialize(_cls: any, value: any[]): Buffer {
         if (Buffer.isBuffer(value)) {
             const ret = Buffer.alloc(1);
             ret.writeUInt8(value.length, 0);
@@ -91,7 +91,7 @@ export class LVBytes {
         return Buffer.from([value.length].concat(value));
     }
 
-    static deserialize(cls: any, data: Buffer): any[] {
+    static deserialize(_cls: any, data: Buffer): any[] {
         const l = data.readIntLE(0, 1);
         const s = data.subarray(1, l + 1);
         return [s, data.subarray(l + 1)];
@@ -152,7 +152,7 @@ export function LVList(itemtype: any): List {
 }
 
 export class WordList extends List {
-    static override serialize(cls: any, value: any[]): Buffer {
+    static override serialize(_cls: any, value: any[]): Buffer {
         const data = value.map((i) => Buffer.from(uint16_t.serialize(uint16_t, i)));
         return Buffer.concat(data);
     }
@@ -191,11 +191,11 @@ export function fixed_list(
 }
 
 export class Bytes {
-    static serialize(cls: any, value: any[]): Buffer {
+    static serialize(_cls: any, value: any[]): Buffer {
         return Buffer.from(value);
     }
 
-    static deserialize(cls: any, data: Buffer): any[] {
+    static deserialize(_cls: any, data: Buffer): any[] {
         return [data];
     }
 }

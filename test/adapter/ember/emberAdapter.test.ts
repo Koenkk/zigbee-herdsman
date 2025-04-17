@@ -12,7 +12,7 @@ import {
 } from "../../../src/adapter/ember/adapter/emberAdapter";
 import {FIXED_ENDPOINTS} from "../../../src/adapter/ember/adapter/endpoints";
 import {OneWaitressEvents} from "../../../src/adapter/ember/adapter/oneWaitress";
-import {EMBER_LOW_RAM_CONCENTRATOR, INVALID_RADIO_CHANNEL, SECURITY_LEVEL_Z3} from "../../../src/adapter/ember/consts";
+import {EMBER_LOW_RAM_CONCENTRATOR, SECURITY_LEVEL_Z3} from "../../../src/adapter/ember/consts";
 import {
     EmberApsOption,
     EmberDeviceUpdate,
@@ -33,7 +33,7 @@ import {
 } from "../../../src/adapter/ember/enums";
 import {EZSP_MIN_PROTOCOL_VERSION, EZSP_PROTOCOL_VERSION, EZSP_STACK_TYPE_MESH} from "../../../src/adapter/ember/ezsp/consts";
 import {EzspConfigId, EzspDecisionBitmask, EzspEndpointFlag, EzspPolicyId, EzspValueId} from "../../../src/adapter/ember/ezsp/enums";
-import {type EmberEzspEventMap, Ezsp} from "../../../src/adapter/ember/ezsp/ezsp";
+import type {EmberEzspEventMap} from "../../../src/adapter/ember/ezsp/ezsp";
 import {EzspError} from "../../../src/adapter/ember/ezspError";
 import type {
     EmberApsFrame,
@@ -53,7 +53,7 @@ import type {Backup} from "../../../src/models/backup";
 import type {UnifiedBackupStorage} from "../../../src/models/backup-storage-unified";
 import {logger} from "../../../src/utils/logger";
 import * as ZSpec from "../../../src/zspec";
-import type {EUI64, NodeId, PanId} from "../../../src/zspec/tstypes";
+import type {Eui64, NodeId, PanId} from "../../../src/zspec/tstypes";
 import * as Zcl from "../../../src/zspec/zcl";
 import * as Zdo from "../../../src/zspec/zdo";
 import type * as ZdoTypes from "../../../src/zspec/zdo/definition/tstypes";
@@ -126,7 +126,7 @@ const DEFAULT_BACKUP: Readonly<UnifiedBackupStorage> = {
     },
     devices: [],
 };
-const DEFAULT_COORDINATOR_IEEE: EUI64 = ZSpec.Utils.eui64LEBufferToHex(Buffer.from(DEFAULT_BACKUP.coordinator_ieee, "hex"));
+const DEFAULT_COORDINATOR_IEEE: Eui64 = ZSpec.Utils.eui64LEBufferToHex(Buffer.from(DEFAULT_BACKUP.coordinator_ieee, "hex"));
 const DEFAULT_ADAPTER_NETWORK_PARAMETERS: EmberNetworkParameters = {
     extendedPanId: DEFAULT_NETWORK_OPTIONS.extendedPanID!,
     panId: DEFAULT_NETWORK_OPTIONS.panID,
@@ -169,7 +169,7 @@ const mockEzspSetRadioIeee802154CcaMode = vi.fn().mockResolvedValue(SLStatus.OK)
 // not OK by default since used to detected unreged EP
 const mockEzspGetEndpointFlags = vi.fn().mockResolvedValue([SLStatus.NOT_FOUND, EzspEndpointFlag.DISABLED]);
 const mockEzspAddEndpoint = vi.fn().mockResolvedValue(SLStatus.OK);
-const mockEzspNetworkInit = vi.fn().mockImplementation((networkInitStruct: EmberNetworkInitStruct) => {
+const mockEzspNetworkInit = vi.fn().mockImplementation((_networkInitStruct: EmberNetworkInitStruct) => {
     setTimeout(async () => {
         mockEzspEmitter.emit("stackStatus", SLStatus.NETWORK_UP);
         await flushPromises();
@@ -198,7 +198,7 @@ const mockEzspLeaveNetwork = vi.fn().mockImplementation(() => {
 const mockEzspSetInitialSecurityState = vi.fn().mockResolvedValue(SLStatus.OK);
 const mockEzspSetExtendedSecurityBitmask = vi.fn().mockResolvedValue(SLStatus.OK);
 const mockEzspClearKeyTable = vi.fn().mockResolvedValue(SLStatus.OK);
-const mockEzspFormNetwork = vi.fn().mockImplementation((parameters: EmberNetworkParameters) => {
+const mockEzspFormNetwork = vi.fn().mockImplementation((_parameters: EmberNetworkParameters) => {
     setTimeout(async () => {
         mockEzspEmitter.emit("stackStatus", SLStatus.NETWORK_UP);
         await flushPromises();
@@ -1561,7 +1561,7 @@ describe("Ember Adapter Layer", () => {
             );
             const spyEmit = vi.spyOn(adapter, "emit");
             const sourcePanId: PanId = 0x1234;
-            const sourceAddress: EUI64 = "0x1122334455aabbcc";
+            const sourceAddress: Eui64 = "0x1122334455aabbcc";
             const lastHopLqi = 252;
             const groupId: number = 0;
             const messageContents = Buffer.from("1803010000002003", "hex");
@@ -1657,7 +1657,7 @@ describe("Ember Adapter Layer", () => {
         it("Emits device joined on trust center join", async () => {
             const spyEmit = vi.spyOn(adapter, "emit");
             const newNodeId: NodeId = 1234;
-            const newNodeEui64: EUI64 = "0x11223344eebbccaa";
+            const newNodeEui64: Eui64 = "0x11223344eebbccaa";
             const status: EmberDeviceUpdate = EmberDeviceUpdate.STANDARD_SECURITY_UNSECURED_JOIN;
             const policyDecision: EmberJoinDecision = EmberJoinDecision.USE_PRECONFIGURED_KEY;
             const parentOfNewNodeId: NodeId = 4321;
@@ -1674,7 +1674,7 @@ describe("Ember Adapter Layer", () => {
         it("Emits device leave on trust center join", async () => {
             const spyEmit = vi.spyOn(adapter, "emit");
             const newNodeId: NodeId = 1234;
-            const newNodeEui64: EUI64 = "0x11223344eebbccaa";
+            const newNodeEui64: Eui64 = "0x11223344eebbccaa";
             const status: EmberDeviceUpdate = EmberDeviceUpdate.DEVICE_LEFT;
             const policyDecision: EmberJoinDecision = EmberJoinDecision.NO_ACTION;
             const parentOfNewNodeId: NodeId = 0xffff;
@@ -1690,7 +1690,7 @@ describe("Ember Adapter Layer", () => {
 
         it("Handles DENY_JOIN on trust center join", async () => {
             const newNodeId: NodeId = 1234;
-            const newNodeEui64: EUI64 = "0x11223344eebbccaa";
+            const newNodeEui64: Eui64 = "0x11223344eebbccaa";
             const status: EmberDeviceUpdate = EmberDeviceUpdate.STANDARD_SECURITY_UNSECURED_JOIN;
             const policyDecision: EmberJoinDecision = EmberJoinDecision.DENY_JOIN;
             const parentOfNewNodeId: NodeId = 4321;
@@ -1707,7 +1707,7 @@ describe("Ember Adapter Layer", () => {
         it("Handles device join workaround requiring specific manufacturer code", async () => {
             const spyEmit = vi.spyOn(adapter, "emit");
             const newNodeId: NodeId = 1234;
-            const newNodeEui64: EUI64 = "0x54ef44ffeebbccaa";
+            const newNodeEui64: Eui64 = "0x54ef44ffeebbccaa";
             const status: EmberDeviceUpdate = EmberDeviceUpdate.STANDARD_SECURITY_UNSECURED_JOIN;
             const policyDecision: EmberJoinDecision = EmberJoinDecision.USE_PRECONFIGURED_KEY;
             const parentOfNewNodeId: NodeId = 4321;
@@ -2407,7 +2407,7 @@ describe("Ember Adapter Layer", () => {
             );
 
             const newNodeId: NodeId = 1234;
-            const newNodeEui64: EUI64 = "0x54ef44ffeebbccaa";
+            const newNodeEui64: Eui64 = "0x54ef44ffeebbccaa";
             const status: EmberDeviceUpdate = EmberDeviceUpdate.STANDARD_SECURITY_UNSECURED_JOIN;
             const policyDecision: EmberJoinDecision = EmberJoinDecision.USE_PRECONFIGURED_KEY;
             const parentOfNewNodeId: NodeId = 4321;
@@ -3003,7 +3003,7 @@ describe("Ember Adapter Layer", () => {
 
         it("Adapter impl: sendZdo with EUI64", async () => {
             const sender: NodeId = 0x6789;
-            const senderEUI64: EUI64 = "0x1122334455667788";
+            const senderEUI64: Eui64 = "0x1122334455667788";
             const apsFrame: EmberApsFrame = {
                 profileId: Zdo.ZDO_PROFILE_ID,
                 clusterId: Zdo.ClusterId.NETWORK_ADDRESS_RESPONSE,
@@ -3294,7 +3294,7 @@ describe("Ember Adapter Layer", () => {
         });
 
         it("Adapter impl: sendZclFrameInterPANToIeeeAddr", async () => {
-            const ieee: EUI64 = "0x1122334455667788";
+            const ieee: Eui64 = "0x1122334455667788";
             const zclFrame = Zcl.Frame.create(
                 Zcl.FrameType.GLOBAL,
                 Zcl.Direction.CLIENT_TO_SERVER,
@@ -3315,7 +3315,7 @@ describe("Ember Adapter Layer", () => {
         it("Adapter impl: throws when sendZclFrameInterPANToIeeeAddr request fails", async () => {
             mockEzspSendRawMessage.mockResolvedValueOnce(SLStatus.BUSY);
 
-            const ieee: EUI64 = "0x1122334455667788";
+            const ieee: Eui64 = "0x1122334455667788";
             const zclFrame = Zcl.Frame.create(
                 Zcl.FrameType.GLOBAL,
                 Zcl.Direction.CLIENT_TO_SERVER,
@@ -3348,7 +3348,7 @@ describe("Ember Adapter Layer", () => {
                 {},
             );
             const sourcePanId: PanId = 0x1234;
-            const sourceAddress: EUI64 = "0x1122334455aabbcc";
+            const sourceAddress: Eui64 = "0x1122334455aabbcc";
             const groupId: number = ZSpec.BroadcastAddress.SLEEPY;
             const lastHopLqi = 252;
             // Received Zigbee message from '0x', type 'readResponse', cluster 'genBasic', data '{"zclVersion":3}' from endpoint 1 with groupID 0

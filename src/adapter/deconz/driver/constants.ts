@@ -58,7 +58,7 @@ interface Request {
     commandId: number;
     networkState?: number;
     parameterId?: number;
-    parameter?: parameterT;
+    parameter?: ParameterT;
     request?: ApsDataRequest;
     seqNumber: number;
     resolve: (value: any) => void;
@@ -101,7 +101,7 @@ interface ReceivedDataResponse {
     zdo?: GenericZdoResponse;
 }
 
-interface gpDataInd {
+interface GpDataInd {
     rspId: number;
     seqNr: number;
     id: number;
@@ -155,7 +155,7 @@ type ParamPermitJoin = number;
 type ParamNetworkKey = string;
 
 type Command = ParamMac | ParamPanId | ParamNwkAddr | ParamExtPanId | ParamChannel | ParamChannelMask | ParamPermitJoin | ParamNetworkKey;
-type parameterT = number | number[];
+type ParameterT = number | number[];
 
 export type {
     Request,
@@ -163,7 +163,7 @@ export type {
     ApsDataRequest,
     ReceivedDataResponse,
     DataStateResponse,
-    parameterT,
+    ParameterT,
     Command,
     ParamMac,
     ParamPanId,
@@ -173,7 +173,7 @@ export type {
     ParamChannelMask,
     ParamPermitJoin,
     ParamNetworkKey,
-    gpDataInd,
+    GpDataInd,
 };
 
 export default {PARAM};

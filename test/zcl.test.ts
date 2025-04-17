@@ -1028,7 +1028,6 @@ describe("Zcl", () => {
     });
 
     it("ZclFrame to buffer queryNextImageResponse with zero status and missing parameters", () => {
-        const expected = Buffer.from([9, 8, 2, 1]);
         const payload = {status: 0};
         const frame = Zcl.Frame.create(
             FrameType.SPECIFIC,
@@ -1688,7 +1687,7 @@ describe("Zcl", () => {
         const buffer = Buffer.alloc(7);
         const expected = Buffer.from([5, 0, 0x68, 0x65, 0x6c, 0x6c, 0x6f]);
         const buffalo = new BuffaloZcl(buffer);
-        const result = buffalo.write(DataType.LONG_CHAR_STR, payload, {});
+        buffalo.write(DataType.LONG_CHAR_STR, payload, {});
         expect(buffalo.getPosition()).toBe(7);
         expect(buffer).toStrictEqual(expected);
     });
@@ -1698,7 +1697,7 @@ describe("Zcl", () => {
         const buffer = Buffer.alloc(5);
         const expected = Buffer.from([3, 1, 2, 4, 0]);
         const buffalo = new BuffaloZcl(buffer);
-        const result = buffalo.write(DataType.OCTET_STR, payload, {});
+        buffalo.write(DataType.OCTET_STR, payload, {});
         expect(buffalo.getPosition()).toBe(4);
         expect(buffer).toStrictEqual(expected);
     });
@@ -1819,7 +1818,7 @@ describe("Zcl", () => {
         const expected = Buffer.from([0x41, 0x04, 0x00, 6, 0, 13, 1, 6, 0, 2, 6, 1, 13, 2, 6, 0, 2, 6, 2, 13, 3, 6, 0, 2, 6, 3, 13, 4, 6, 0, 2]);
         const buffer = Buffer.alloc(expected.length);
         const buffalo = new BuffaloZcl(buffer);
-        const result = buffalo.write(DataType.ARRAY, payload, {});
+        buffalo.write(DataType.ARRAY, payload, {});
         expect(buffalo.getPosition()).toBe(expected.length);
         expect(buffer).toStrictEqual(expected);
     });
@@ -1829,7 +1828,7 @@ describe("Zcl", () => {
         const expected = Buffer.from([0x08, 0x04, 0x00, 0, 0, 0, 0]);
         const buffer = Buffer.alloc(expected.length);
         const buffalo = new BuffaloZcl(buffer);
-        const result = buffalo.write(DataType.ARRAY, payload, {});
+        buffalo.write(DataType.ARRAY, payload, {});
         expect(buffalo.getPosition()).toBe(expected.length);
         expect(buffer).toStrictEqual(expected);
     });
@@ -1839,7 +1838,7 @@ describe("Zcl", () => {
         const expected = Buffer.from([0x08, 0x04, 0x00, 0, 0, 0, 0]);
         const buffer = Buffer.alloc(expected.length);
         const buffalo = new BuffaloZcl(buffer);
-        const result = buffalo.write(DataType.ARRAY, payload, {});
+        buffalo.write(DataType.ARRAY, payload, {});
         expect(buffalo.getPosition()).toBe(expected.length);
         expect(buffer).toStrictEqual(expected);
     });
@@ -1852,7 +1851,7 @@ describe("Zcl", () => {
         const expected = Buffer.from([2, 0, Zcl.DataType.UINT8, 3, Zcl.DataType.CHAR_STR, 1, 0x61]);
         const buffer = Buffer.alloc(expected.length);
         const buffalo = new BuffaloZcl(buffer);
-        const result = buffalo.write(DataType.STRUCT, payload, {});
+        buffalo.write(DataType.STRUCT, payload, {});
         expect(buffalo.getPosition()).toBe(expected.length);
         expect(buffer).toStrictEqual(expected);
     });
@@ -1881,7 +1880,7 @@ describe("Zcl", () => {
     ])("BuffaloZcl writeListTuyaDataPointValues %s", (_name, payload, expected) => {
         const buffer = Buffer.alloc(expected.length);
         const buffalo = new BuffaloZcl(buffer);
-        const result = buffalo.write(BuffaloZclDataType.LIST_TUYA_DATAPOINT_VALUES, payload, {});
+        buffalo.write(BuffaloZclDataType.LIST_TUYA_DATAPOINT_VALUES, payload, {});
         expect(buffalo.getPosition()).toBe(expected.length);
         expect(buffer).toStrictEqual(expected);
     });

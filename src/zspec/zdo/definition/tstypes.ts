@@ -1,4 +1,4 @@
-import type {ClusterId, EUI64, ExtendedPanId, NodeId, PanId, ProfileId} from "../../tstypes";
+import type {ClusterId, Eui64, ExtendedPanId, NodeId, PanId, ProfileId} from "../../tstypes";
 import {ClusterId as ZdoClusterId} from "./clusters";
 import type {
     ActiveLinkKeyType,
@@ -105,7 +105,7 @@ export type LQITableEntry = {
      *
      * 64-bit
      */
-    eui64: EUI64;
+    eui64: Eui64;
     /** The 16-bit network address of the neighboring device. 16-bit */
     nwkAddress: NodeId;
     /**
@@ -208,7 +208,7 @@ export type RoutingTableEntry = {
 
 export type BindingTableEntry = {
     /** The source IEEE address for the binding entry. */
-    sourceEui64: EUI64;
+    sourceEui64: Eui64;
     /** The source endpoint for the binding entry. */
     sourceEndpoint: number;
     /** The identifier of the cluster on the source device that is bound to the destination device. */
@@ -223,7 +223,7 @@ export type BindingTableEntry = {
      */
     destAddrMode: number;
     /** The destination address for the binding entry. 2-byte or 8-byte */
-    dest: NodeId | EUI64;
+    dest: NodeId | Eui64;
     /**
      * This field shall be present only if the DstAddrMode field has a value of 0x03 and, if present,
      * shall be the destination endpoint for the binding entry.
@@ -233,7 +233,7 @@ export type BindingTableEntry = {
 
 export type NetworkAddressResponse = {
     /** 64-bit address for the Remote Device. */
-    eui64: EUI64;
+    eui64: Eui64;
     /** 16-bit address for the Remote Device. */
     nwkAddress: NodeId;
     /**
@@ -255,7 +255,7 @@ export type NetworkAddressResponse = {
 
 export type IEEEAddressResponse = {
     /** @see NetworkAddressResponse.eui64 */
-    eui64: EUI64;
+    eui64: Eui64;
     /** @see NetworkAddressResponse.nwkAddress */
     nwkAddress: NodeId;
     /** @see NetworkAddressResponse.startIndex */
@@ -409,7 +409,7 @@ export type MatchDescriptorsResponse = {
 export type EndDeviceAnnounce = {
     /** NWK address for the request. */
     nwkAddress: NodeId;
-    eui64: EUI64;
+    eui64: Eui64;
     capabilities: MACCapabilityFlags;
 };
 
@@ -419,7 +419,7 @@ export type SystemServerDiscoveryResponse = {
 };
 
 export type ParentAnnounceResponse = {
-    children: EUI64[];
+    children: Eui64[];
 };
 
 export type LQITableResponse = {
@@ -508,7 +508,7 @@ export type NwkIEEEJoiningListResponse = {
     /** The starting index in the mibIeeeJoiningList. This field SHALL be omitted if the entryListTotal is 0. */
     startIndex?: number;
     /** A list of IEEE addresses from the mibIeeeJoiningList. This field SHALL be omitted if the entryListTotal is 0. */
-    entryList?: EUI64[];
+    entryList?: Eui64[];
 };
 
 export type NwkUnsolicitedEnhancedUpdateResponse = {
@@ -588,7 +588,7 @@ export type SupportedKeyNegotiationMethodsGlobalTLV = {
      */
     preSharedSecretsBitmask: number;
     /** XXX: Assumed optional from minimum length of TLV in spec */
-    sourceDeviceEui64?: EUI64;
+    sourceDeviceEui64?: Eui64;
 };
 
 export type PanIdConflictReportGlobalTLV = {
@@ -667,12 +667,12 @@ export type FragmentationParametersGlobalTLV = {
 };
 
 export type JoinerEncapsulationGlobalTLV = {
-    additionalTLVs: TLV[];
+    additionalTLVs: Tlv[];
 };
 
 export type BeaconAppendixEncapsulationGlobalTLV = {
     /** At least `SupportedKeyNegotiationMethodsGlobalTLV`, `FragmentationParametersGlobalTLV` */
-    additionalTLVs: TLV[];
+    additionalTLVs: Tlv[];
 };
 
 export type ConfigurationParametersGlobalTLV = {
@@ -698,7 +698,7 @@ export type DeviceCapabilityExtensionGlobalTLV = {
  */
 export type ClearAllBindingsReqEUI64TLV = {
     /** A list of EUI64 that SHALL trigger corresponding bindings to be deleted. */
-    eui64List: EUI64[];
+    eui64List: Eui64[];
 };
 
 export type BeaconSurveyConfigurationTLV = {
@@ -718,7 +718,7 @@ export type BeaconSurveyConfigurationTLV = {
 
 export type Curve25519PublicPointTLV = {
     /** This indicates the EUI64 of the device that generated the public point. */
-    eui64: EUI64;
+    eui64: Eui64;
     /** The 32-byte Curve public point. */
     publicPoint: Buffer;
 };
@@ -730,7 +730,7 @@ export type AuthenticationTokenIdTLV = {
 
 export type TargetIEEEAddressTLV = {
     /** Extended address of the device whose security level is requested. */
-    ieee: EUI64;
+    ieee: Eui64;
 };
 
 export type SelectedKeyNegotiationMethodTLV = {
@@ -743,17 +743,17 @@ export type SelectedKeyNegotiationMethodTLV = {
      */
     presharedSecret: SelectedPreSharedSecret;
     /** The value of the EUI64 of the device sending the message. This field SHALL always be present. */
-    sendingDeviceEui64: EUI64;
+    sendingDeviceEui64: Eui64;
 };
 
 export type DeviceEUI64ListTLV = {
     /** A list of EUI64 that shall trigger decommissioning operations. Count: [0x00-0xFF] */
-    eui64List: EUI64[];
+    eui64List: Eui64[];
 };
 
 export type APSFrameCounterChallengeTLV = {
     /** The EUI64 of the device that generated the frame. */
-    senderEui64: EUI64;
+    senderEui64: Eui64;
     /**
      * A randomly generated 64-bit value sent to a device to prove they have the link key.
      * This allows the initiator to detect replayed challenge response frames.
@@ -763,7 +763,7 @@ export type APSFrameCounterChallengeTLV = {
 
 export type APSFrameCounterResponseTLV = {
     /** The EUI64 of the device that is responding to the Security_Challenge_req with its own challenge. */
-    responderEui64: EUI64;
+    responderEui64: Eui64;
     /** A randomly generated 64-bit value previously received in the APSFrameCounterChallengeTLV. */
     receivedChallengeValue: Buffer;
     /** The current outgoing APS security frame counter held by the Responder EUI64 device. */
@@ -818,7 +818,7 @@ export type PotentialParentsTLV = {
 
 export type DeviceAuthenticationLevelTLV = {
     /** 64-bit address for the node that is being inquired about. */
-    remoteNodeIeee: EUI64;
+    remoteNodeIeee: Eui64;
     /** This indicates the joining method that was used when the device joined the network. */
     initialJoinMethod: InitialJoinMethod;
     /** This indicates what Link Key update method was used to create the current active Link Key. */
@@ -856,7 +856,7 @@ export type LocalTLVType =
 
 export type LocalTLVReader = (length: number) => LocalTLVType;
 
-export type TLV = {
+export type Tlv = {
     /** 1-byte - 0-63: Local, 64-255: Global */
     tagId: number;
     /**
@@ -886,11 +886,11 @@ export type TLV = {
 };
 
 export type TLVs = {
-    tlvs: TLV[];
+    tlvs: Tlv[];
 };
 
 export interface RequestMap {
-    [ZdoClusterId.NETWORK_ADDRESS_REQUEST]: [target: EUI64, reportKids: boolean, childStartIndex: number];
+    [ZdoClusterId.NETWORK_ADDRESS_REQUEST]: [target: Eui64, reportKids: boolean, childStartIndex: number];
     [ZdoClusterId.IEEE_ADDRESS_REQUEST]: [target: NodeId, reportKids: boolean, childStartIndex: number];
     [ZdoClusterId.NODE_DESCRIPTOR_REQUEST]: [target: NodeId, fragmentationParameters?: FragmentationParametersGlobalTLV];
     [ZdoClusterId.POWER_DESCRIPTOR_REQUEST]: [target: NodeId];
@@ -898,22 +898,22 @@ export interface RequestMap {
     [ZdoClusterId.ACTIVE_ENDPOINTS_REQUEST]: [target: NodeId];
     [ZdoClusterId.MATCH_DESCRIPTORS_REQUEST]: [target: NodeId, profileId: ProfileId, inClusterList: ClusterId[], outClusterList: ClusterId[]];
     [ZdoClusterId.SYSTEM_SERVER_DISCOVERY_REQUEST]: [serverMask: ServerMask];
-    [ZdoClusterId.PARENT_ANNOUNCE]: [children: EUI64[]];
+    [ZdoClusterId.PARENT_ANNOUNCE]: [children: Eui64[]];
     [ZdoClusterId.BIND_REQUEST]: [
-        source: EUI64,
+        source: Eui64,
         sourceEndpoint: number,
         clusterId: ClusterId,
         type: number,
-        destination: EUI64,
+        destination: Eui64,
         groupAddress: number,
         destinationEndpoint: number,
     ];
     [ZdoClusterId.UNBIND_REQUEST]: [
-        source: EUI64,
+        source: Eui64,
         sourceEndpoint: number,
         clusterId: ClusterId,
         type: number,
-        destination: EUI64,
+        destination: Eui64,
         groupAddress: number,
         destinationEndpoint: number,
     ];
@@ -921,8 +921,8 @@ export interface RequestMap {
     [ZdoClusterId.LQI_TABLE_REQUEST]: [startIndex: number];
     [ZdoClusterId.ROUTING_TABLE_REQUEST]: [startIndex: number];
     [ZdoClusterId.BINDING_TABLE_REQUEST]: [startIndex: number];
-    [ZdoClusterId.LEAVE_REQUEST]: [deviceAddress: EUI64, leaveRequestFlags: LeaveRequestFlags];
-    [ZdoClusterId.PERMIT_JOINING_REQUEST]: [duration: number, authentication: number, tlvs: TLV[]];
+    [ZdoClusterId.LEAVE_REQUEST]: [deviceAddress: Eui64, leaveRequestFlags: LeaveRequestFlags];
+    [ZdoClusterId.PERMIT_JOINING_REQUEST]: [duration: number, authentication: number, tlvs: Tlv[]];
     [ZdoClusterId.NWK_UPDATE_REQUEST]: [
         channels: number[],
         duration: number,

@@ -1,7 +1,7 @@
 import Buffalo from "../../buffalo/buffalo";
 import {logger} from "../../utils/logger";
 import {DEFAULT_ENCRYPTION_KEY_SIZE, EUI64_SIZE, EXTENDED_PAN_ID_SIZE, PAN_ID_SIZE} from "../consts";
-import type {ClusterId, EUI64, NodeId, ProfileId} from "../tstypes";
+import type {ClusterId, Eui64, NodeId, ProfileId} from "../tstypes";
 import * as ZSpecUtils from "../utils";
 import {ClusterId as ZdoClusterId} from "./definition/clusters";
 import {CHALLENGE_VALUE_SIZE, CURVE_PUBLIC_POINT_SIZE, MULTICAST_BINDING, UNICAST_BINDING, ZDO_MESSAGE_OVERHEAD} from "./definition/consts";
@@ -62,8 +62,8 @@ import type {
     SupportedKeyNegotiationMethodsGlobalTLV,
     SymmetricPassphraseGlobalTLV,
     SystemServerDiscoveryResponse,
-    TLV,
     TargetIEEEAddressTLV,
+    Tlv,
     ValidResponseMap,
 } from "./definition/tstypes";
 import * as Utils from "./utils";
@@ -357,7 +357,7 @@ export class BuffaloZdo extends Buffalo {
         };
     }
 
-    public writeGlobalTLV(tlv: TLV): void {
+    public writeGlobalTLV(tlv: Tlv): void {
         this.writeUInt8(tlv.tagId);
         this.writeUInt8(tlv.length - 1); // remove offset (spec quirk...)
 
@@ -416,7 +416,7 @@ export class BuffaloZdo extends Buffalo {
         }
     }
 
-    public readGlobalTLV(tagId: number, length: number): TLV["tlv"] | undefined {
+    public readGlobalTLV(tagId: number, length: number): Tlv["tlv"] | undefined {
         switch (tagId) {
             case GlobalTLV.MANUFACTURER_SPECIFIC: {
                 return this.readManufacturerSpecificGlobalTLV(length);
@@ -461,7 +461,7 @@ export class BuffaloZdo extends Buffalo {
         }
     }
 
-    public writeGlobalTLVs(tlvs: TLV[]): void {
+    public writeGlobalTLVs(tlvs: Tlv[]): void {
         for (const tlv of tlvs) {
             this.writeGlobalTLV(tlv);
         }
@@ -685,8 +685,8 @@ export class BuffaloZdo extends Buffalo {
      * @param encapsulated Default false. If true, this is reading inside an encapsuled TLV (excludes further encapsulation)
      * @returns
      */
-    public readTLVs(localTLVReaders?: Map<number, LocalTLVReader>, encapsulated = false): TLV[] {
-        const tlvs: TLV[] = [];
+    public readTLVs(localTLVReaders?: Map<number, LocalTLVReader>, encapsulated = false): Tlv[] {
+        const tlvs: Tlv[] = [];
 
         while (this.isMore()) {
             const tagId = this.readUInt8();
@@ -710,7 +710,7 @@ export class BuffaloZdo extends Buffalo {
 
             const nextTLVStart = this.getPosition() + length;
             // undefined == unknown tag
-            let tlv: TLV["tlv"] | undefined;
+            let tlv: Tlv["tlv"] | undefined;
 
             if (tagId < GlobalTLV.MANUFACTURER_SPECIFIC) {
                 if (localTLVReaders) {
@@ -884,7 +884,7 @@ export class BuffaloZdo extends Buffalo {
      * @param reportKids True to request that the target list their children in the response. [request type = 0x01]
      * @param childStartIndex The index of the first child to list in the response. Ignored if reportKids is false.
      */
-    private buildNetworkAddressRequest(target: EUI64, reportKids: boolean, childStartIndex: number): Buffer {
+    private buildNetworkAddressRequest(target: Eui64, reportKids: boolean, childStartIndex: number): Buffer {
         this.writeIeeeAddr(target);
         this.writeUInt8(reportKids ? 1 : 0);
         this.writeUInt8(childStartIndex);
@@ -995,7 +995,7 @@ export class BuffaloZdo extends Buffalo {
      * @see ClusterId.PARENT_ANNOUNCE
      * @param children The IEEE addresses of the children bound to the parent.
      */
-    private buildParentAnnounce(children: EUI64[]): Buffer {
+    private buildParentAnnounce(children: Eui64[]): Buffer {
         this.writeUInt8(children.length);
 
         for (const child of children) {
@@ -1017,11 +1017,11 @@ export class BuffaloZdo extends Buffalo {
      * @param destinationEndpoint The destination endpoint for the binding entry. Only if ::UNICAST_BINDING.
      */
     private buildBindRequest(
-        source: EUI64,
+        source: Eui64,
         sourceEndpoint: number,
         clusterId: ClusterId,
         type: number,
-        destination: EUI64,
+        destination: Eui64,
         groupAddress: number,
         destinationEndpoint: number,
     ): Buffer {
@@ -1059,11 +1059,11 @@ export class BuffaloZdo extends Buffalo {
      * @param destinationEndpoint The destination endpoint for the binding entry. Only if ::UNICAST_BINDING.
      */
     private buildUnbindRequest(
-        source: EUI64,
+        source: Eui64,
         sourceEndpoint: number,
         clusterId: ClusterId,
         type: number,
-        destination: EUI64,
+        destination: Eui64,
         groupAddress: number,
         destinationEndpoint: number,
     ): Buffer {
@@ -1141,7 +1141,7 @@ export class BuffaloZdo extends Buffalo {
      *   the EUI64 of a child of the target device to remove that child.
      * @param leaveRequestFlags A bitmask of leave options. Include ::AND_REJOIN if the target is to rejoin the network immediately after leaving.
      */
-    private buildLeaveRequest(deviceAddress: EUI64, leaveRequestFlags: LeaveRequestFlags): Buffer {
+    private buildLeaveRequest(deviceAddress: Eui64, leaveRequestFlags: LeaveRequestFlags): Buffer {
         this.writeIeeeAddr(deviceAddress);
         this.writeUInt8(leaveRequestFlags);
 
@@ -1155,7 +1155,7 @@ export class BuffaloZdo extends Buffalo {
      *   This field SHALL always have a value of 1, indicating a request to change the Trust Center policy.
      *   If a frame is received with a value of 0, it shall be treated as having a value of 1.
      */
-    private buildPermitJoining(duration: number, authentication: number, tlvs: TLV[]): Buffer {
+    private buildPermitJoining(duration: number, authentication: number, tlvs: Tlv[]): Buffer {
         this.writeUInt8(duration);
         this.writeUInt8(authentication);
         // BeaconAppendixEncapsulationGlobalTLV
@@ -1670,7 +1670,7 @@ export class BuffaloZdo extends Buffalo {
             const maxOutTxSize = this.readUInt16();
             const deprecated1 = this.readUInt8();
             // Global: FragmentationParametersGlobalTLV
-            const tlvs: TLV[] = this.readTLVs();
+            const tlvs: Tlv[] = this.readTLVs();
 
             result = {
                 nwkAddress,
@@ -1838,7 +1838,7 @@ export class BuffaloZdo extends Buffalo {
 
         if (status === Status.SUCCESS) {
             const numberOfChildren = this.readUInt8();
-            const children: EUI64[] = [];
+            const children: Eui64[] = [];
 
             for (let i = 0; i < numberOfChildren; i++) {
                 const childEui64 = this.readIeeeAddr();
@@ -2113,7 +2113,7 @@ export class BuffaloZdo extends Buffalo {
             // [0x00-0xFF]
             const entryListTotal = this.readUInt8();
             let startIndex: number | undefined;
-            let entryList: EUI64[] | undefined;
+            let entryList: Eui64[] | undefined;
 
             if (entryListTotal > 0) {
                 startIndex = this.readUInt8();
@@ -2181,7 +2181,7 @@ export class BuffaloZdo extends Buffalo {
                 // Local: ID: 0x02: PotentialParentsTLV
                 [0x02, this.readPotentialParentsTLV],
             ]);
-            const tlvs: TLV[] = this.readTLVs(localTLVs);
+            const tlvs: Tlv[] = this.readTLVs(localTLVs);
 
             result = {
                 tlvs,
@@ -2204,7 +2204,7 @@ export class BuffaloZdo extends Buffalo {
                 // Local: ID: 0x00: Curve25519PublicPointTLV
                 [0x00, this.readCurve25519PublicPointTLV],
             ]);
-            const tlvs: TLV[] = this.readTLVs(localTLVs);
+            const tlvs: Tlv[] = this.readTLVs(localTLVs);
 
             result = {
                 tlvs,
@@ -2223,7 +2223,7 @@ export class BuffaloZdo extends Buffalo {
 
         if (status === Status.SUCCESS) {
             // no local TLV
-            const tlvs: TLV[] = this.readTLVs();
+            const tlvs: Tlv[] = this.readTLVs();
 
             result = {
                 tlvs,
@@ -2246,7 +2246,7 @@ export class BuffaloZdo extends Buffalo {
                 // Local: ID: 0x00: DeviceAuthenticationLevelTLV
                 [0x00, this.readDeviceAuthenticationLevelTLV],
             ]);
-            const tlvs: TLV[] = this.readTLVs(localTLVs);
+            const tlvs: Tlv[] = this.readTLVs(localTLVs);
 
             result = {
                 tlvs,
@@ -2269,7 +2269,7 @@ export class BuffaloZdo extends Buffalo {
                 // Local: ID: 0x00: ProcessingStatusTLV
                 [0x00, this.readProcessingStatusTLV],
             ]);
-            const tlvs: TLV[] = this.readTLVs(localTLVs);
+            const tlvs: Tlv[] = this.readTLVs(localTLVs);
 
             result = {
                 tlvs,
@@ -2289,7 +2289,7 @@ export class BuffaloZdo extends Buffalo {
 
         if (status === Status.SUCCESS) {
             // Global: IDs: x, y, z
-            const tlvs: TLV[] = this.readTLVs();
+            const tlvs: Tlv[] = this.readTLVs();
 
             result = {
                 tlvs,
@@ -2333,7 +2333,7 @@ export class BuffaloZdo extends Buffalo {
                 // Local: ID: 0x00: APSFrameCounterResponseTLV
                 [0x00, this.readAPSFrameCounterResponseTLV],
             ]);
-            const tlvs: TLV[] = this.readTLVs(localTLVs);
+            const tlvs: Tlv[] = this.readTLVs(localTLVs);
 
             result = {
                 tlvs,

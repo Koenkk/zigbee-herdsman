@@ -7,7 +7,7 @@ import * as Zdo from "../../../zspec/zdo";
 import PARAM, {
     type Command,
     type DataStateResponse,
-    type gpDataInd,
+    type GpDataInd,
     type ParamChannel,
     type ParamChannelMask,
     type ParamExtPanId,
@@ -21,12 +21,6 @@ import PARAM, {
 import {apsBusyQueue, busyQueue, enableRTS, enableRtsTimeout} from "./driver";
 
 const NS = "zh:deconz:frameparser";
-
-interface lastReceivedGpInd {
-    srcId: number;
-    commandId: number;
-    frameCounter: number;
-}
 
 const MIN_BUFFER_SIZE = 3;
 const littleEndian = true;
@@ -393,7 +387,7 @@ function parseReceivedDataNotification(view: DataView): number | null {
     }
 }
 
-function parseGreenPowerDataIndication(view: DataView): gpDataInd | null {
+function parseGreenPowerDataIndication(view: DataView): GpDataInd | null {
     try {
         let id;
         let rspId;
@@ -428,7 +422,7 @@ function parseGreenPowerDataIndication(view: DataView): gpDataInd | null {
             commandFrame = Buffer.from(view.buffer.slice(13, commandFrameSize + 13));
         }
 
-        const ind: gpDataInd = {
+        const ind: GpDataInd = {
             rspId,
             seqNr,
             id,
@@ -458,11 +452,11 @@ function parseGreenPowerDataIndication(view: DataView): gpDataInd | null {
         return null;
     }
 }
-function parseMacPollCommand(view: DataView): number {
+function parseMacPollCommand(_view: DataView): number {
     //logger.debug("Received command MAC_POLL", NS);
     return 28;
 }
-function parseBeaconRequest(view: DataView): number {
+function parseBeaconRequest(_view: DataView): number {
     logger.debug("Received Beacon Request", NS);
     return 31;
 }

@@ -4607,6 +4607,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         commands: {},
         commandsResponse: {},
     },
+    // biome-ignore lint/style/useNamingConvention: cross-repo impact
     manuSpecificTuya_2: {
         ID: 0xe002,
         attributes: {
@@ -4621,6 +4622,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         commands: {},
         commandsResponse: {},
     },
+    // biome-ignore lint/style/useNamingConvention: cross-repo impact
     manuSpecificTuya_3: {
         ID: 0xe001,
         attributes: {

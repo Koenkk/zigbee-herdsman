@@ -266,10 +266,10 @@ export class Struct implements SerializableMemoryObject {
      * *This method is stripped from type on struct `build()`.*
      *
      * @param name Name of the method to be appended.
-     * @param returnType Return type (eg. `Buffer.prototype`).
+     * @param _returnType Return type (eg. `Buffer.prototype`).
      * @param body Function implementation. Takes struct as a first and single input parameter.
      */
-    public method<T, N extends string, R extends this & Record<N, () => T>>(name: N, returnType: T, body: (struct: R) => T): R {
+    public method<T, N extends string, R extends this & Record<N, () => T>>(name: N, _returnType: T, body: (struct: R) => T): R {
         Object.defineProperty(this, name, {
             enumerable: true,
             configurable: false,

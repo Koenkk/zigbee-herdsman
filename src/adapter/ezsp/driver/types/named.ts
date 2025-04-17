@@ -55,7 +55,7 @@ export class EmberEUI64 extends fixed_list(8, basic.uint8_t) {
         return [Buffer.from(r).reverse(), data];
     }
 
-    static serialize(cls: any, value: number[] | EmberEUI64): Buffer {
+    static serialize(_cls: any, value: number[] | EmberEUI64): Buffer {
         if (value instanceof EmberEUI64) {
             value = (value as EmberEUI64).value as number[];
         }

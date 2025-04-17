@@ -12,7 +12,7 @@ import Adapter from "../../adapter";
 import type * as Events from "../../events";
 import type * as TsType from "../../tstype";
 import type {RawAPSDataRequestPayload} from "../driver/commandType";
-import {ADDRESS_MODE, DEVICE_TYPE, ZPSNwkKeyState, ZiGateCommandCode, ZiGateMessageCode} from "../driver/constants";
+import {AddressMode, DeviceType, ZPSNwkKeyState, ZiGateCommandCode, ZiGateMessageCode} from "../driver/constants";
 import type ZiGateObject from "../driver/ziGateObject";
 import Driver from "../driver/zigate";
 import {patchZdoBuffaloBE} from "./patchZdoBuffaloBE";
@@ -80,12 +80,12 @@ export class ZiGateAdapter extends Adapter {
             await this.driver.sendCommand(ZiGateCommandCode.RawMode, {enabled: 0x01});
             // @todo check
             await this.driver.sendCommand(ZiGateCommandCode.SetDeviceType, {
-                deviceType: DEVICE_TYPE.coordinator,
+                deviceType: DeviceType.Coordinator,
             });
             await this.initNetwork();
 
             await this.driver.sendCommand(ZiGateCommandCode.AddGroup, {
-                addressMode: ADDRESS_MODE.short,
+                addressMode: AddressMode.Short,
                 shortAddress: ZSpec.COORDINATOR_ADDRESS,
                 sourceEndpoint: ZSpec.HA_ENDPOINT,
                 destinationEndpoint: ZSpec.HA_ENDPOINT,
@@ -153,7 +153,7 @@ export class ZiGateAdapter extends Adapter {
 
         this.joinPermitted = seconds !== 0;
     }
-    public async addInstallCode(ieeeAddress: string, key: Buffer, hashed: boolean): Promise<void> {
+    public async addInstallCode(_ieeeAddress: string, _key: Buffer, _hashed: boolean): Promise<void> {
         throw new Error("Add install code is not supported");
     }
 
@@ -332,7 +332,7 @@ export class ZiGateAdapter extends Adapter {
         const data = zclFrame.toBuffer();
         const command = zclFrame.command;
         const payload: RawAPSDataRequestPayload = {
-            addressMode: ADDRESS_MODE.short, //nwk
+            addressMode: AddressMode.Short, //nwk
             targetShortAddress: networkAddress,
             sourceEndpoint: sourceEndpoint || ZSpec.HA_ENDPOINT,
             destinationEndpoint: endpoint,
@@ -431,7 +431,7 @@ export class ZiGateAdapter extends Adapter {
 
             const data = zclFrame.toBuffer();
             const payload: RawAPSDataRequestPayload = {
-                addressMode: ADDRESS_MODE.short, //nwk
+                addressMode: AddressMode.Short, //nwk
                 targetShortAddress: destination,
                 sourceEndpoint: sourceEndpoint,
                 destinationEndpoint: endpoint,
@@ -453,7 +453,7 @@ export class ZiGateAdapter extends Adapter {
         return await this.queue.execute<void>(async () => {
             const data = zclFrame.toBuffer();
             const payload: RawAPSDataRequestPayload = {
-                addressMode: ADDRESS_MODE.group, //nwk
+                addressMode: AddressMode.Group, //nwk
                 targetShortAddress: groupID,
                 sourceEndpoint: sourceEndpoint || ZSpec.HA_ENDPOINT,
                 destinationEndpoint: 0xff,
@@ -527,13 +527,13 @@ export class ZiGateAdapter extends Adapter {
     /**
      * InterPAN !!! not implemented
      */
-    public async setChannelInterPAN(channel: number): Promise<void> {
+    public async setChannelInterPAN(_channel: number): Promise<void> {
         throw new Error("Not supported");
     }
-    public async sendZclFrameInterPANToIeeeAddr(zclFrame: Zcl.Frame, ieeeAddress: string): Promise<void> {
+    public async sendZclFrameInterPANToIeeeAddr(_zclFrame: Zcl.Frame, _ieeeAddress: string): Promise<void> {
         throw new Error("Not supported");
     }
-    public async sendZclFrameInterPANBroadcast(zclFrame: Zcl.Frame, timeout: number): Promise<Events.ZclPayload> {
+    public async sendZclFrameInterPANBroadcast(_zclFrame: Zcl.Frame, _timeout: number): Promise<Events.ZclPayload> {
         throw new Error("Not supported");
     }
 

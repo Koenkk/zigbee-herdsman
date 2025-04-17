@@ -7,7 +7,7 @@ import {Queue, Waitress, wait} from "../../../utils";
 import {logger} from "../../../utils/logger";
 import * as ZSpec from "../../../zspec";
 import type {BroadcastAddress} from "../../../zspec/enums";
-import type {EUI64} from "../../../zspec/tstypes";
+import type {Eui64} from "../../../zspec/tstypes";
 import * as Zcl from "../../../zspec/zcl";
 import * as Zdo from "../../../zspec/zdo";
 import type * as ZdoTypes from "../../../zspec/zdo/definition/tstypes";
@@ -123,7 +123,7 @@ export class ZStackAdapter extends Adapter {
             this.version = {transportrev: 2, product: 0, majorrel: 2, minorrel: 0, maintrel: 0, revision: ""};
         }
 
-        const concurrent = this.adapterOptions?.concurrent ? this.adapterOptions.concurrent : this.version.product === ZnpVersion.zStack3x0 ? 16 : 2;
+        const concurrent = this.adapterOptions?.concurrent ? this.adapterOptions.concurrent : this.version.product === ZnpVersion.ZStack3x0 ? 16 : 2;
 
         logger.debug(`Adapter concurrent: ${concurrent}`, NS);
 
@@ -207,7 +207,7 @@ export class ZStackAdapter extends Adapter {
     private async setLED(action: "disable" | "on" | "off"): Promise<void> {
         if (this.supportsLED == undefined) {
             // Only zStack3x0 with 20210430 and greater support LED
-            const zStack3x0 = this.version.product === ZnpVersion.zStack3x0;
+            const zStack3x0 = this.version.product === ZnpVersion.ZStack3x0;
             this.supportsLED = !zStack3x0 || (zStack3x0 && Number.parseInt(this.version.revision) >= 20210430);
         }
 
@@ -244,7 +244,7 @@ export class ZStackAdapter extends Adapter {
         logger.debug(`Request network address of '${ieeeAddr}'`, NS);
 
         const clusterId = Zdo.ClusterId.NETWORK_ADDRESS_REQUEST;
-        const zdoPayload = Zdo.Buffalo.buildRequest(this.hasZdoMessageOverhead, clusterId, ieeeAddr as EUI64, false, 0);
+        const zdoPayload = Zdo.Buffalo.buildRequest(this.hasZdoMessageOverhead, clusterId, ieeeAddr as Eui64, false, 0);
 
         const result = await this.sendZdoInternal(ieeeAddr, ZSpec.NULL_NODE_ID, clusterId, zdoPayload, false, true);
 
@@ -259,11 +259,11 @@ export class ZStackAdapter extends Adapter {
     }
 
     private supportsAssocRemove(): boolean {
-        return this.version.product === ZnpVersion.zStack3x0 && Number.parseInt(this.version.revision) >= 20200805;
+        return this.version.product === ZnpVersion.ZStack3x0 && Number.parseInt(this.version.revision) >= 20200805;
     }
 
     private supportsAssocAdd(): boolean {
-        return this.version.product === ZnpVersion.zStack3x0 && Number.parseInt(this.version.revision) >= 20201026;
+        return this.version.product === ZnpVersion.ZStack3x0 && Number.parseInt(this.version.revision) >= 20201026;
     }
 
     private async discoverRoute(networkAddress: number, waitSettled = true): Promise<void> {
@@ -762,7 +762,7 @@ export class ZStackAdapter extends Adapter {
     }
 
     public async addInstallCode(ieeeAddress: string, key: Buffer, hashed: boolean): Promise<void> {
-        assert(this.version.product !== ZnpVersion.zStack12, "Install code is not supported for ZStack 1.2 adapter");
+        assert(this.version.product !== ZnpVersion.ZStack12, "Install code is not supported for ZStack 1.2 adapter");
         // TODO: always use 0x2? => const hashedKey = hashed ? key : ZSpec.Utils.aes128MmoHash(key);
         const payload = {installCodeFormat: hashed ? 0x2 : 0x1, ieeeaddr: ieeeAddress, installCode: key};
         await this.znp.request(Subsystem.APP_CNF, "bdbAddInstallCode", payload);

@@ -135,10 +135,10 @@ export class EZSPFrameData {
     _isRequest_: boolean;
     [name: string]: any;
 
-    static createFrame(ezspv: number, frame_id: number, isRequest: boolean, params: ParamsDesc | Buffer): EZSPFrameData {
-        const names = FRAME_NAMES_BY_ID[frame_id];
+    static createFrame(ezspv: number, frameId: number, isRequest: boolean, params: ParamsDesc | Buffer): EZSPFrameData {
+        const names = FRAME_NAMES_BY_ID[frameId];
         if (!names) {
-            throw new Error(`Unrecognized frame FrameID ${frame_id}`);
+            throw new Error(`Unrecognized frame FrameID ${frameId}`);
         }
         let frm: EZSPFrameData;
         names.every((frameName) => {

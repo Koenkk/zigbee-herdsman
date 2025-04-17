@@ -30,8 +30,9 @@ export interface LegacyBackupStorage {
     meta: {
         product: ZnpVersion;
     };
-    data: {
-        [key in LegacyNvItemKey]: {
+    data: Record<
+        LegacyNvItemKey,
+        {
             id: number;
             product: ZnpVersion;
             offset: number;
@@ -42,6 +43,6 @@ export interface LegacyBackupStorage {
             /* System ID and Sub ID used in SimpleLink Z-Stack 3.x.0 */
             sysid?: NvSystemIds;
             subid?: number;
-        };
-    };
+        }
+    >;
 }

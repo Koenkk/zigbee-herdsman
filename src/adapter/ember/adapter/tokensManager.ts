@@ -85,9 +85,9 @@ const CREATOR_STACK_ADDITIONAL_CHILD_DATA = 0xe503;
  *
  */
 // NVM3KEY domain base keys
-const NVM3KEY_DOMAIN_USER = 0x00000;
+// const NVM3KEY_DOMAIN_USER = 0x00000;
 const NVM3KEY_DOMAIN_ZIGBEE = 0x10000;
-const NVM3KEY_DOMAIN_COMMON = 0x80000;
+// const NVM3KEY_DOMAIN_COMMON = 0x80000;
 
 // STACK KEYS
 const NVM3KEY_STACK_NVDATA_VERSION = NVM3KEY_DOMAIN_ZIGBEE | 0xff01;
@@ -200,14 +200,14 @@ const NVM3KEY_STACK_GP_INCOMING_FC_IN_SINK = NVM3KEY_DOMAIN_ZIGBEE | 0x0780;
  *
  * See hal/micro/token.h for a more complete explanation.
  */
-const CURRENT_STACK_TOKEN_VERSION = 0x03fc;
+// const CURRENT_STACK_TOKEN_VERSION = 0x03fc;
 
 /** 8-byte IEEE + 16-byte Key + 1-byte info */
-const KEY_TABLE_ENTRY_SIZE = 25;
-const KEY_ENTRY_IEEE_OFFSET = 0;
+// const KEY_TABLE_ENTRY_SIZE = 25;
+// const KEY_ENTRY_IEEE_OFFSET = 0;
 /** first 4 bytes may point to PSA ID if data[KEY_ENTRY_INFO_OFFSET] & KEY_TABLE_ENTRY_HAS_PSA_ID */
 const KEY_ENTRY_KEY_DATA_OFFSET = 8;
-const KEY_ENTRY_INFO_OFFSET = 24;
+// const KEY_ENTRY_INFO_OFFSET = 24;
 
 /** uint16_t */
 const CREATORS: number[] = [

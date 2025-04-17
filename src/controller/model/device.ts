@@ -6,7 +6,7 @@ import {wait} from "../../utils";
 import {logger} from "../../utils/logger";
 import * as ZSpec from "../../zspec";
 import {BroadcastAddress} from "../../zspec/enums";
-import type {EUI64} from "../../zspec/tstypes";
+import type {Eui64} from "../../zspec/tstypes";
 import * as Zcl from "../../zspec/zcl";
 import type {ClusterDefinition, CustomClusters} from "../../zspec/zcl/definition/tstype";
 import * as Zdo from "../../zspec/zdo";
@@ -24,7 +24,7 @@ const OneJanuary2000 = new Date("January 01, 2000 00:00:00 UTC+00:00").getTime()
 
 const NS = "zh:controller:device";
 
-interface LQI {
+interface Lqi {
     neighbors: {
         ieeeAddr: string;
         networkAddress: number;
@@ -41,6 +41,7 @@ interface RoutingTable {
 type CustomReadResponse = (frame: Zcl.Frame, endpoint: Endpoint) => boolean;
 
 export class Device extends Entity<ControllerEventMap> {
+    // biome-ignore lint/style/useNamingConvention: cross-repo impact
     private readonly ID: number;
     private _applicationVersion?: number;
     private _dateCode?: string;
@@ -215,7 +216,7 @@ export class Device extends Entity<ControllerEventMap> {
     private static readonly deletedDevices: Map<string /* IEEE */, Device> = new Map();
     private static readonly nwkToIeeeCache: Map<number /* nwk addr */, string /* IEEE */> = new Map();
 
-    public static readonly ReportablePropertiesMapping: {
+    public static readonly REPORTABLE_PROPERTIES_MAPPING: {
         [s: string]: {
             set: (value: string | number, device: Device) => void;
             key:
@@ -287,7 +288,7 @@ export class Device extends Entity<ControllerEventMap> {
     };
 
     private constructor(
-        ID: number,
+        id: number,
         type: DeviceType,
         ieeeAddr: string,
         networkAddress: number,
@@ -310,7 +311,7 @@ export class Device extends Entity<ControllerEventMap> {
         gpSecurityKey: number[] | undefined,
     ) {
         super();
-        this.ID = ID;
+        this.ID = id;
         this._type = type;
         this._ieeeAddr = ieeeAddr;
         this._networkAddress = networkAddress;
@@ -335,12 +336,12 @@ export class Device extends Entity<ControllerEventMap> {
         this._gpSecurityKey = gpSecurityKey;
     }
 
-    public createEndpoint(ID: number): Endpoint {
-        if (this.getEndpoint(ID)) {
-            throw new Error(`Device '${this.ieeeAddr}' already has an endpoint '${ID}'`);
+    public createEndpoint(id: number): Endpoint {
+        if (this.getEndpoint(id)) {
+            throw new Error(`Device '${this.ieeeAddr}' already has an endpoint '${id}'`);
         }
 
-        const endpoint = Endpoint.create(ID, undefined, undefined, [], [], this.networkAddress, this.ieeeAddr);
+        const endpoint = Endpoint.create(id, undefined, undefined, [], [], this.networkAddress, this.ieeeAddr);
         this.endpoints.push(endpoint);
         this.save();
         return endpoint;
@@ -358,8 +359,8 @@ export class Device extends Entity<ControllerEventMap> {
         this.save();
     }
 
-    public getEndpoint(ID: number): Endpoint | undefined {
-        return this.endpoints.find((e): boolean => e.ID === ID);
+    public getEndpoint(id: number): Endpoint | undefined {
+        return this.endpoints.find((e): boolean => e.ID === id);
     }
 
     // There might be multiple endpoints with same DeviceId but it is not supported and first endpoint is returned
@@ -393,7 +394,7 @@ export class Device extends Entity<ControllerEventMap> {
             const attrKeyValue = ZclFrameConverter.attributeKeyValue(frame, this.manufacturerID, this.customClusters);
 
             for (const key in attrKeyValue) {
-                Device.ReportablePropertiesMapping[key]?.set(attrKeyValue[key], this);
+                Device.REPORTABLE_PROPERTIES_MAPPING[key]?.set(attrKeyValue[key], this);
             }
         }
 
@@ -900,7 +901,7 @@ export class Device extends Entity<ControllerEventMap> {
                 const result = await endpoint.read("genBasic", ["modelId", "manufacturerName"], {sendPolicy: "immediate"});
 
                 for (const key in result) {
-                    Device.ReportablePropertiesMapping[key].set(result[key], this);
+                    Device.REPORTABLE_PROPERTIES_MAPPING[key].set(result[key], this);
                 }
             } catch (error) {
                 logger.debug(`Interview - Tuya read modelID and manufacturerName failed (${error})`, NS);
@@ -936,8 +937,8 @@ export class Device extends Entity<ControllerEventMap> {
             // Read attributes
             // nice to have but not required for successful pairing as most of the attributes are not mandatory in ZCL specification
             if (endpoint.supportsInputCluster("genBasic")) {
-                for (const key in Device.ReportablePropertiesMapping) {
-                    const item = Device.ReportablePropertiesMapping[key];
+                for (const key in Device.REPORTABLE_PROPERTIES_MAPPING) {
+                    const item = Device.REPORTABLE_PROPERTIES_MAPPING[key];
 
                     if (ignoreCache || !this[item.key]) {
                         try {
@@ -1104,7 +1105,7 @@ export class Device extends Entity<ControllerEventMap> {
      */
     public async requestNetworkAddress(): Promise<void> {
         const clusterId = Zdo.ClusterId.NETWORK_ADDRESS_REQUEST;
-        const zdoPayload = Zdo.Buffalo.buildRequest(Entity.adapter!.hasZdoMessageOverhead, clusterId, this.ieeeAddr as EUI64, false, 0);
+        const zdoPayload = Zdo.Buffalo.buildRequest(Entity.adapter!.hasZdoMessageOverhead, clusterId, this.ieeeAddr as Eui64, false, 0);
 
         await Entity.adapter!.sendZdo(this.ieeeAddr, ZSpec.BroadcastAddress.RX_ON_WHEN_IDLE, clusterId, zdoPayload, true);
     }
@@ -1133,7 +1134,7 @@ export class Device extends Entity<ControllerEventMap> {
             const zdoPayload = Zdo.Buffalo.buildRequest(
                 Entity.adapter!.hasZdoMessageOverhead,
                 clusterId,
-                this.ieeeAddr as EUI64,
+                this.ieeeAddr as Eui64,
                 Zdo.LeaveRequestFlags.WITHOUT_REJOIN,
             );
             const response = await Entity.adapter!.sendZdo(this.ieeeAddr, this.networkAddress, clusterId, zdoPayload, false);
@@ -1181,7 +1182,7 @@ export class Device extends Entity<ControllerEventMap> {
         this._endpoints = newEndpoints;
     }
 
-    public async lqi(): Promise<LQI> {
+    public async lqi(): Promise<Lqi> {
         const clusterId = Zdo.ClusterId.LQI_TABLE_REQUEST;
         // TODO return Zdo.LQITableEntry directly (requires updates in other repos)
         const neighbors: LQINeighbor[] = [];

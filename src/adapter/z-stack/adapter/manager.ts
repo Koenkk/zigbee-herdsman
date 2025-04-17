@@ -71,7 +71,7 @@ export class ZnpAdapterManager {
                 break;
             }
             case "restoreBackup": {
-                if (this.options.version === ZnpVersion.zStack12) {
+                if (this.options.version === ZnpVersion.ZStack12) {
                     logger.debug("performing recommissioning instead of restore for z-stack 1.2", NS);
                     await this.beginCommissioning(this.nwkOptions);
                     await this.beginStartup();
@@ -82,7 +82,7 @@ export class ZnpAdapterManager {
                 break;
             }
             case "startCommissioning": {
-                if (this.options.version === ZnpVersion.zStack12) {
+                if (this.options.version === ZnpVersion.ZStack12) {
                     const hasConfigured = await this.nv.readItem(NvItemsIds.ZNP_HAS_CONFIGURED_ZSTACK1, 0, Structs.hasConfigured);
                     await this.beginCommissioning(this.nwkOptions);
                     await this.beginStartup();
@@ -113,11 +113,11 @@ export class ZnpAdapterManager {
 
         /* acquire data from adapter */
         const hasConfiguredNvId =
-            this.options.version === ZnpVersion.zStack12 ? NvItemsIds.ZNP_HAS_CONFIGURED_ZSTACK1 : NvItemsIds.ZNP_HAS_CONFIGURED_ZSTACK3;
+            this.options.version === ZnpVersion.ZStack12 ? NvItemsIds.ZNP_HAS_CONFIGURED_ZSTACK1 : NvItemsIds.ZNP_HAS_CONFIGURED_ZSTACK3;
         const hasConfigured = await this.nv.readItem(hasConfiguredNvId, 0, Structs.hasConfigured);
         const nib = await this.nv.readItem(NvItemsIds.NIB, 0, Structs.nib);
         const preconfiguredKey =
-            this.options.version === ZnpVersion.zStack12
+            this.options.version === ZnpVersion.ZStack12
                 ? Structs.nwkKey(
                       (await this.znp.requestWithReply(Subsystem.SAPI, "readConfiguration", {configid: NvItemsIds.PRECFGKEY})).payload.value,
                   )
@@ -126,7 +126,7 @@ export class ZnpAdapterManager {
         let alternateKeyInfo = await this.nv.readItem(NvItemsIds.NWK_ALTERN_KEY_INFO, 0, Structs.nwkKeyDescriptor);
 
         /* Z-Stack 1.2 does not provide key info entries */
-        if (this.options.version === ZnpVersion.zStack12) {
+        if (this.options.version === ZnpVersion.ZStack12) {
             activeKeyInfo = Structs.nwkKeyDescriptor();
             activeKeyInfo.key = Buffer.from(preconfiguredKey.key);
             alternateKeyInfo = Structs.nwkKeyDescriptor();
@@ -167,10 +167,10 @@ export class ZnpAdapterManager {
 
         const checkRestoreVersionCompatibility = (): void => {
             if (
-                this.options.version === ZnpVersion.zStack12 &&
+                this.options.version === ZnpVersion.ZStack12 &&
                 backup &&
                 backup.znp?.version !== undefined &&
-                backup.znp.version !== ZnpVersion.zStack12
+                backup.znp.version !== ZnpVersion.ZStack12
             ) {
                 throw new Error(
                     "your backup is from newer platform version (Z-Stack 3.0.x+) and cannot be restored onto Z-Stack 1.2 adapter - please remove backup before proceeding",
@@ -360,7 +360,7 @@ export class ZnpAdapterManager {
         /* commission the network as per parameters */
         await this.updateCommissioningNvItems(nwkOptions);
         logger.debug("beginning network commissioning", NS);
-        if ([ZnpVersion.zStack30x, ZnpVersion.zStack3x0].includes(this.options.version)) {
+        if ([ZnpVersion.ZStack30x, ZnpVersion.ZStack3x0].includes(this.options.version)) {
             /* configure channel */
             await this.znp.request(Subsystem.APP_CNF, "bdbSetChannel", {isPrimary: 0x1, channel: Utils.packChannelList(nwkOptions.channelList)});
             await this.znp.request(Subsystem.APP_CNF, "bdbSetChannel", {isPrimary: 0x0, channel: 0x0});
@@ -434,7 +434,7 @@ export class ZnpAdapterManager {
         /* v8 ignore next */
         await this.nv.updateItem(NvItemsIds.PRECFGKEYS_ENABLE, Buffer.from([options.networkKeyDistribute ? 0x01 : 0x00]));
 
-        if ([ZnpVersion.zStack30x, ZnpVersion.zStack3x0].includes(this.options.version)) {
+        if ([ZnpVersion.ZStack30x, ZnpVersion.ZStack3x0].includes(this.options.version)) {
             await this.nv.updateItem(NvItemsIds.PRECFGKEY, options.networkKey);
         } else {
             await this.znp.request(Subsystem.SAPI, "writeConfiguration", {
@@ -544,7 +544,7 @@ export class ZnpAdapterManager {
     private async writeConfigurationFlag(): Promise<void> {
         logger.debug("writing configuration flag to adapter NV memory", NS);
         await this.nv.writeItem(
-            this.options.version === ZnpVersion.zStack12 ? NvItemsIds.ZNP_HAS_CONFIGURED_ZSTACK1 : NvItemsIds.ZNP_HAS_CONFIGURED_ZSTACK3,
+            this.options.version === ZnpVersion.ZStack12 ? NvItemsIds.ZNP_HAS_CONFIGURED_ZSTACK1 : NvItemsIds.ZNP_HAS_CONFIGURED_ZSTACK3,
             Buffer.from([0x55]),
         );
     }

@@ -9,7 +9,7 @@ import {BackupUtils, wait} from "../utils";
 import {logger} from "../utils/logger";
 import {isNumberArrayOfLength} from "../utils/utils";
 import * as ZSpec from "../zspec";
-import type {EUI64} from "../zspec/tstypes";
+import type {Eui64} from "../zspec/tstypes";
 import * as Zcl from "../zspec/zcl";
 import type {FrameControl} from "../zspec/zcl/definition/tstype";
 import * as Zdo from "../zspec/zdo";
@@ -395,7 +395,7 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
             const devicesInBackup = backup.devices.map((d) => ZSpec.Utils.eui64BEBufferToHex(d.ieeeAddress));
             const missingRouters = [];
 
-            for (const device of this.getDevicesIterator((d) => d.type === "Router" && !devicesInBackup.includes(d.ieeeAddr as EUI64))) {
+            for (const device of this.getDevicesIterator((d) => d.type === "Router" && !devicesInBackup.includes(d.ieeeAddr as Eui64))) {
                 missingRouters.push(device);
             }
 
@@ -732,7 +732,7 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
                     const zdoPayload = Zdo.Buffalo.buildRequest(
                         this.adapter.hasZdoMessageOverhead,
                         clusterId,
-                        payload.ieeeAddr as EUI64,
+                        payload.ieeeAddr as Eui64,
                         Zdo.LeaveRequestFlags.WITHOUT_REJOIN,
                     );
                     const response = await this.adapter.sendZdo(payload.ieeeAddr, payload.networkAddress, clusterId, zdoPayload, false);
@@ -995,7 +995,7 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
             if (type === "readResponse" || type === "attributeReport") {
                 // Some device report, e.g. it's modelID through a readResponse or attributeReport
                 for (const key in data) {
-                    const property = Device.ReportablePropertiesMapping[key];
+                    const property = Device.REPORTABLE_PROPERTIES_MAPPING[key];
 
                     if (property && !device[property.key]) {
                         // XXX: data technically can be `KeyValue | (string | number)[]`

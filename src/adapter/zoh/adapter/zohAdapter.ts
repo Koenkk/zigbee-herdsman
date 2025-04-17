@@ -317,7 +317,7 @@ export class ZoHAdapter extends Adapter {
     /* v8 ignore stop */
 
     /* v8 ignore start */
-    public async backup(ieeeAddressesInDatabase: string[]): Promise<Backup> {
+    public async backup(_ieeeAddressesInDatabase: string[]): Promise<Backup> {
         throw new Error("ZigBee on Host handles backup internally");
     }
     /* v8 ignore stop */
@@ -341,8 +341,8 @@ export class ZoHAdapter extends Adapter {
     public waitFor(
         networkAddress: number,
         endpoint: number,
-        frameType: Zcl.FrameType,
-        direction: Zcl.Direction,
+        _frameType: Zcl.FrameType,
+        _direction: Zcl.Direction,
         transactionSequenceNumber: number | undefined,
         clusterID: number,
         commandIdentifier: number,
@@ -765,7 +765,7 @@ export class ZoHAdapter extends Adapter {
             }, 5000);
         }
     }
-    private onDeviceRejoined(source16: number, source64: bigint, capabilities: MACCapabilities): void {
+    private onDeviceRejoined(source16: number, source64: bigint, _capabilities: MACCapabilities): void {
         this.emit("deviceJoined", {networkAddress: source16, ieeeAddr: `0x${bigUInt64ToHexBE(source64)}`});
     }
 
@@ -774,7 +774,7 @@ export class ZoHAdapter extends Adapter {
     }
 
     /* v8 ignore start */
-    private onDeviceAuthorized(source16: number, source64: bigint): void {}
+    private onDeviceAuthorized(_source16: number, _source64: bigint): void {}
     /* v8 ignore stop */
 
     private waitressTimeoutFormatter(matcher: WaitressMatcher, timeout: number): string {

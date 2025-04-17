@@ -91,26 +91,26 @@ describe("Utils", () => {
         vi.useRealTimers();
 
         // reject test
-        const wait1_ = waitress.waitFor(1, 5000).start();
+        const wait1b = waitress.waitFor(1, 5000).start();
         let error1_;
         wait(1000).then(() => {
             waitress.reject("one", "drop");
         });
         try {
-            await wait1_.promise;
+            await wait1b.promise;
         } catch (e) {
             error1_ = e;
         }
         expect(error1_).toStrictEqual(new Error("drop"));
 
         vi.useFakeTimers();
-        const wait2_ = waitress.waitFor(2, 5000).start();
+        const wait2 = waitress.waitFor(2, 5000).start();
         const handled1 = waitress.reject("tree", "drop");
         expect(handled1).toBe(false);
         let error2_;
         vi.advanceTimersByTime(6000);
         try {
-            await wait2_.promise;
+            await wait2.promise;
         } catch (e) {
             error2_ = e;
         }
@@ -118,8 +118,8 @@ describe("Utils", () => {
         const handled2 = waitress.reject("two", "drop");
         expect(handled2).toBe(false);
 
-        const waitClear_1 = waitress.waitFor(2, 10000).start().promise;
-        const waitClear_2 = waitress.waitFor(2, 10000).start().promise;
+        waitress.waitFor(2, 10000).start().promise;
+        waitress.waitFor(2, 10000).start().promise;
 
         await vi.advanceTimersByTimeAsync(2000);
         waitress.clear();
@@ -137,12 +137,11 @@ describe("Utils", () => {
 
         let job1Promise;
         let job2Promise;
-        let job3Promise;
         const job1 = new Promise((resolve) => (job1Promise = resolve));
         const job2 = new Promise((resolve) => (job2Promise = resolve));
-        const job5 = new Promise((resolve) => {});
-        const job6 = new Promise((resolve) => {});
-        const job7 = new Promise((resolve) => {});
+        const job5 = new Promise((_resolve) => {});
+        const job6 = new Promise((_resolve) => {});
+        const job7 = new Promise((_resolve) => {});
 
         const job1Result = queue.execute<string>(async () => {
             await job1;

@@ -9,7 +9,7 @@ import {EmberMulticastTableEntry} from "./types/struct";
 const NS = "zh:ezsp:cast";
 
 export class Multicast {
-    TABLE_SIZE = 16;
+    tableSize = 16;
     private driver: Driver;
     private _multicast: any;
     private _available: Array<any>;
@@ -43,9 +43,9 @@ export class Multicast {
         }
     }
 
-    public async subscribe(group_id: number, endpoint: number): Promise<EmberStatus> {
-        if (this._multicast[group_id] !== undefined) {
-            logger.debug(`${group_id} is already subscribed`, NS);
+    public async subscribe(groupId: number, endpoint: number): Promise<EmberStatus> {
+        if (this._multicast[groupId] !== undefined) {
+            logger.debug(`${groupId} is already subscribed`, NS);
             return EmberStatus.SUCCESS;
         }
 
@@ -53,7 +53,7 @@ export class Multicast {
             const idx = this._available.pop();
             const entry: EmberMulticastTableEntry = new EmberMulticastTableEntry();
             entry.endpoint = endpoint;
-            entry.multicastId = group_id;
+            entry.multicastId = groupId;
             entry.networkIndex = 0;
             const status = await this.driver.ezsp.setMulticastTableEntry(idx, entry);
             if (status !== EmberStatus.SUCCESS) {

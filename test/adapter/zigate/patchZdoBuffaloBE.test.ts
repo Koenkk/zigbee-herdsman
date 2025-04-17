@@ -6,11 +6,11 @@ describe("ZiGate Patch BuffaloZdo to use BE variants when writing", () => {
     beforeAll(async () => {
         vi.resetModules();
 
-        const buf = await import("../../../src/zspec/zdo/buffaloZdo");
+        const buf = await import("../../../src/zspec/zdo/buffaloZdo.js");
         BuffaloZdo = buf.BuffaloZdo;
-        const {ZiGateAdapter} = await import("../../../src/adapter/zigate/adapter/zigateAdapter");
+        const {ZiGateAdapter} = await import("../../../src/adapter/zigate/adapter/zigateAdapter.js");
         // @ts-expect-error bogus, just need to trigger constructor
-        const adapter = new ZiGateAdapter({}, {}, "", {});
+        new ZiGateAdapter({}, {}, "", {});
     });
 
     it("writeUInt16", async () => {

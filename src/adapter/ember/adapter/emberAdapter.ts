@@ -9,7 +9,7 @@ import type {Backup, UnifiedBackupStorage} from "../../../models";
 import {BackupUtils, Queue, wait} from "../../../utils";
 import {logger} from "../../../utils/logger";
 import * as ZSpec from "../../../zspec";
-import type {EUI64, ExtendedPanId, NodeId, PanId} from "../../../zspec/tstypes";
+import type {Eui64, ExtendedPanId, NodeId, PanId} from "../../../zspec/tstypes";
 import * as Zcl from "../../../zspec/zcl";
 import * as Zdo from "../../../zspec/zdo";
 import type * as ZdoTypes from "../../../zspec/zdo/definition/tstypes";
@@ -78,7 +78,7 @@ const NS = "zh:ember";
 
 export type NetworkCache = {
     //-- basic network info
-    eui64: EUI64;
+    eui64: Eui64;
     parameters: EmberNetworkParameters;
 };
 
@@ -89,7 +89,7 @@ export type NetworkCache = {
  *   This key may be hashed and not the actual link key currently in use.
  */
 export type LinkKeyBackupData = {
-    deviceEui64: EUI64;
+    deviceEui64: Eui64;
     key: EmberKeyData;
     outgoingFrameCounter: number;
     incomingFrameCounter: number;
@@ -563,15 +563,15 @@ export class EmberAdapter extends Adapter {
     /**
      * Emitted from @see Ezsp.ezspMacFilterMatchMessageHandler when the message is a valid InterPAN touchlink message.
      *
-     * @param sourcePanId
+     * @param _sourcePanId
      * @param sourceAddress
      * @param groupId
      * @param lastHopLqi
      * @param messageContents
      */
     private async onTouchlinkMessage(
-        sourcePanId: PanId,
-        sourceAddress: EUI64,
+        _sourcePanId: PanId,
+        sourceAddress: Eui64,
         groupId: number,
         lastHopLqi: number,
         messageContents: Buffer,
@@ -605,7 +605,7 @@ export class EmberAdapter extends Adapter {
      */
     private async onTrustCenterJoin(
         newNodeId: NodeId,
-        newNodeEui64: EUI64,
+        newNodeEui64: Eui64,
         status: EmberDeviceUpdate,
         policyDecision: EmberJoinDecision,
         parentOfNewNodeId: NodeId,
@@ -1311,7 +1311,7 @@ export class EmberAdapter extends Adapter {
      * This call caches the results on the host to prevent frequent EZSP transactions.
      * Check against BLANK_EUI64 for validity.
      */
-    public async emberGetEui64(): Promise<EUI64> {
+    public async emberGetEui64(): Promise<Eui64> {
         if (this.networkCache.eui64 === ZSpec.BLANK_EUI64) {
             this.networkCache.eui64 = await this.ezsp.ezspGetEui64();
         }
@@ -1574,7 +1574,7 @@ export class EmberAdapter extends Adapter {
     }
 
     // queued
-    public async backup(ieeeAddressesInDatabase: string[]): Promise<Backup> {
+    public async backup(_ieeeAddressesInDatabase: string[]): Promise<Backup> {
         return await this.queue.execute<Backup>(async () => {
             // grab fresh version here, bypass cache
             const [netStatus, , netParams] = await this.ezsp.ezspGetNetworkParameters();
@@ -1692,7 +1692,7 @@ export class EmberAdapter extends Adapter {
         return await this.queue.execute<void>(async () => {
             // Add the key to the transient key table.
             // This will be used while the DUT joins.
-            const impStatus = await this.ezsp.ezspImportTransientKey(ieeeAddress as EUI64, {contents: hashed ? key : ZSpec.Utils.aes128MmoHash(key)});
+            const impStatus = await this.ezsp.ezspImportTransientKey(ieeeAddress as Eui64, {contents: hashed ? key : ZSpec.Utils.aes128MmoHash(key)});
 
             if (impStatus == SLStatus.OK) {
                 logger.debug(`[ADD INSTALL CODE] Success for '${ieeeAddress}'.`, NS);
@@ -1706,8 +1706,8 @@ export class EmberAdapter extends Adapter {
     public waitFor(
         networkAddress: number | undefined,
         endpoint: number,
-        frameType: Zcl.FrameType,
-        direction: Zcl.Direction,
+        _frameType: Zcl.FrameType,
+        _direction: Zcl.Direction,
         transactionSequenceNumber: number | undefined,
         clusterID: number,
         commandIdentifier: number,
@@ -1836,7 +1836,7 @@ export class EmberAdapter extends Adapter {
                 if (responseClusterId) {
                     return await this.oneWaitress.startWaitingFor(
                         {
-                            target: responseClusterId === Zdo.ClusterId.NETWORK_ADDRESS_RESPONSE ? (ieeeAddress as EUI64) : networkAddress,
+                            target: responseClusterId === Zdo.ClusterId.NETWORK_ADDRESS_RESPONSE ? (ieeeAddress as Eui64) : networkAddress,
                             apsFrame,
                             zdoResponseClusterId: responseClusterId,
                         },
@@ -2051,7 +2051,7 @@ export class EmberAdapter extends Adapter {
             this.checkInterpanLock();
 
             logger.debug(() => `~~~> [ZCL GROUP apsFrame=${JSON.stringify(apsFrame)} header=${JSON.stringify(zclFrame.header)}]`, NS);
-            const [status, messageTag] = await this.ezsp.send(
+            const [status] = await this.ezsp.send(
                 EmberOutgoingMessageType.MULTICAST,
                 groupID, // not used with MULTICAST
                 apsFrame,
@@ -2092,7 +2092,7 @@ export class EmberAdapter extends Adapter {
             this.checkInterpanLock();
 
             logger.debug(() => `~~~> [ZCL BROADCAST apsFrame=${JSON.stringify(apsFrame)} header=${JSON.stringify(zclFrame.header)}]`, NS);
-            const [status, messageTag] = await this.ezsp.send(
+            const [status] = await this.ezsp.send(
                 EmberOutgoingMessageType.BROADCAST,
                 destination,
                 apsFrame,

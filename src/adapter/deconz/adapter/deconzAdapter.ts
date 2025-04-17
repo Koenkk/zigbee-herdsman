@@ -12,7 +12,7 @@ import type * as ZdoTypes from "../../../zspec/zdo/definition/tstypes";
 import Adapter from "../../adapter";
 import type * as Events from "../../events";
 import type {AdapterOptions, CoordinatorVersion, NetworkOptions, NetworkParameters, SerialPortOptions, StartResult} from "../../tstype";
-import PARAM, {type ApsDataRequest, type gpDataInd, type ReceivedDataResponse, type WaitForDataRequest} from "../driver/constants";
+import PARAM, {type ApsDataRequest, type GpDataInd, type ReceivedDataResponse, type WaitForDataRequest} from "../driver/constants";
 import Driver from "../driver/driver";
 import processFrame, {frameParserEvents} from "../driver/frameParser";
 
@@ -35,7 +35,7 @@ export class DeconzAdapter extends Adapter {
     private frameParserEvent = frameParserEvents;
     private fwVersion?: CoordinatorVersion;
     private waitress: Waitress<Events.ZclPayload, WaitressMatcher>;
-    private TX_OPTIONS = 0x00; // No APS ACKS
+    private readonly txOptions;
     private joinPermitted = false;
 
     public constructor(networkOptions: NetworkOptions, serialPortOptions: SerialPortOptions, backupPath: string, adapterOptions: AdapterOptions) {
@@ -53,9 +53,7 @@ export class DeconzAdapter extends Adapter {
         this.driver = new Driver(serialPortOptions.path!);
         this.driver.setDelay(delay);
 
-        if (delay >= 200) {
-            this.TX_OPTIONS = 0x04; // activate APS ACKS
-        }
+        this.txOptions = delay >= 200 ? 0x04 /* activate APS ACKs */ : 0x00 /* no APS ACKs */;
 
         this.driver.on("rxFrame", (frame) => {
             processFrame(frame);
@@ -287,7 +285,7 @@ export class DeconzAdapter extends Adapter {
     public async addInstallCode(ieeeAddress: string, key: Buffer, hashed: boolean): Promise<void> {
         await this.driver.writeLinkKey(ieeeAddress, hashed ? key : ZSpec.Utils.aes128MmoHash(key));
     }
-    public async reset(type: "soft" | "hard"): Promise<void> {
+    public async reset(_type: "soft" | "hard"): Promise<void> {
         return await Promise.reject(new Error("Reset is not supported"));
     }
 
@@ -387,13 +385,13 @@ export class DeconzAdapter extends Adapter {
     }
 
     public async sendZclFrameToEndpoint(
-        ieeeAddr: string,
+        _ieeeAddr: string,
         networkAddress: number,
         endpoint: number,
         zclFrame: Zcl.Frame,
         timeout: number,
         disableResponse: boolean,
-        disableRecovery: boolean,
+        _disableRecovery: boolean,
         sourceEndpoint?: number,
     ): Promise<Events.ZclPayload | void> {
         const transactionID = this.nextTransactionID();
@@ -408,7 +406,7 @@ export class DeconzAdapter extends Adapter {
             srcEndpoint: sourceEndpoint || 1,
             asduLength: payload.length,
             asduPayload: payload,
-            txOptions: this.TX_OPTIONS, // 0x00 normal, 0x04 APS ACK
+            txOptions: this.txOptions, // 0x00 normal, 0x04 APS ACK
             radius: PARAM.PARAM.txRadius.DEFAULT_RADIUS,
             timeout: timeout,
         };
@@ -549,19 +547,19 @@ export class DeconzAdapter extends Adapter {
     public async restoreChannelInterPAN(): Promise<void> {
         throw new Error("not supported");
     }
-    public async sendZclFrameInterPANToIeeeAddr(zclFrame: Zcl.Frame, ieeeAddr: string): Promise<void> {
+    public async sendZclFrameInterPANToIeeeAddr(_zclFrame: Zcl.Frame, _ieeeAddr: string): Promise<void> {
         throw new Error("not supported");
     }
-    public async sendZclFrameInterPANBroadcast(zclFrame: Zcl.Frame, timeout: number): Promise<Events.ZclPayload> {
+    public async sendZclFrameInterPANBroadcast(_zclFrame: Zcl.Frame, _timeout: number): Promise<Events.ZclPayload> {
         throw new Error("not supported");
     }
-    public async sendZclFrameInterPANBroadcastWithResponse(zclFrame: Zcl.Frame, timeout: number): Promise<Events.ZclPayload> {
+    public async sendZclFrameInterPANBroadcastWithResponse(_zclFrame: Zcl.Frame, _timeout: number): Promise<Events.ZclPayload> {
         throw new Error("not supported");
     }
-    public async setChannelInterPAN(channel: number): Promise<void> {
+    public async setChannelInterPAN(_channel: number): Promise<void> {
         throw new Error("not supported");
     }
-    public async sendZclFrameInterPANIeeeAddr(zclFrame: Zcl.Frame, ieeeAddr: string): Promise<void> {
+    public async sendZclFrameInterPANIeeeAddr(_zclFrame: Zcl.Frame, _ieeeAddr: string): Promise<void> {
         throw new Error("not supported");
     }
 
@@ -584,7 +582,7 @@ export class DeconzAdapter extends Adapter {
         });
     }
 
-    private checkReceivedGreenPowerIndication(ind: gpDataInd): void {
+    private checkReceivedGreenPowerIndication(ind: GpDataInd): void {
         const gpdHeader = Buffer.alloc(15); // applicationId === IEEE_ADDRESS ? 20 : 15
         gpdHeader.writeUInt8(0b00000001, 0); // frameControl: FrameType.SPECIFIC + Direction.CLIENT_TO_SERVER + disableDefaultResponse=false
         gpdHeader.writeUInt8(ind.seqNr, 1);

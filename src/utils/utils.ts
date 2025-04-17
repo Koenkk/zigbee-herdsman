@@ -14,6 +14,7 @@ export function assertString(input: unknown): asserts input is string {
 
 export function isObjectEmpty(object: object): boolean {
     // much faster than checking `Object.keys(object).length`
-    for (const k in object) return false;
+    // biome-ignore lint/style/useNamingConvention: not working properly
+    for (const _k in object) return false;
     return true;
 }

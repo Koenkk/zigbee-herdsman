@@ -48,7 +48,7 @@ export interface LQINeighbor {
     depth: number;
 }
 
-export interface LQI {
+export interface Lqi {
     neighbors: LQINeighbor[];
 }
 

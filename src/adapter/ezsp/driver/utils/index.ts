@@ -10,7 +10,7 @@ if (!Symbol.asyncIterator) {
     (<any>Symbol).asyncIterator = Symbol.for("Symbol.asyncIterator");
 }
 
-function ember_security(networkKey: Buffer): EmberInitialSecurityState {
+function emberSecurity(networkKey: Buffer): EmberInitialSecurityState {
     const isc: EmberInitialSecurityState = new EmberInitialSecurityState();
     isc.bitmask =
         EmberInitialSecurityBitmask.HAVE_PRECONFIGURED_KEY |
@@ -28,4 +28,4 @@ function ember_security(networkKey: Buffer): EmberInitialSecurityState {
     return isc;
 }
 
-export {crc16ccitt, ember_security};
+export {crc16ccitt, emberSecurity};

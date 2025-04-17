@@ -9,13 +9,6 @@ import {logger} from "../../../src/utils/logger";
 import * as Zdo from "../../../src/zspec/zdo";
 import {duplicateArray, ieeeaAddr1, ieeeaAddr2} from "../../testUtils";
 
-const mockLogger = {
-    debug: vi.fn(),
-    info: vi.fn(),
-    warning: vi.fn(),
-    error: vi.fn(),
-};
-
 const consoleLogger = logger;
 const mockSerialPortClose = vi.fn().mockImplementation((cb) => (cb ? cb() : null));
 const mockSerialPortFlush = vi.fn().mockImplementation((cb) => cb());
@@ -27,7 +20,7 @@ const mockSerialPortAsyncOpen = vi.fn();
 const mockSerialPortConstructor = vi.fn();
 const mockSerialPortOnce = vi.fn();
 const mockSerialPortAsyncSet = vi.fn();
-const mockSerialPortWrite = vi.fn((buffer, cb) => cb());
+const mockSerialPortWrite = vi.fn((_buffer, cb) => cb());
 let mockSerialPortIsOpen = false;
 
 vi.mock("../../../src/utils/wait", () => ({
@@ -66,7 +59,7 @@ const mockSocketConnect = vi.fn(() => {
 const mockSocketDestroy = vi.fn();
 let requestSpy: MockInstance;
 
-vi.mock("node:net", async (importOriginal) => ({
+vi.mock("node:net", async () => ({
     Socket: vi.fn(() => ({
         setNoDelay: mockSocketSetNoDelay,
         pipe: mockSocketPipe,
@@ -213,7 +206,7 @@ describe("ZNP", () => {
 
     it("Open with error", async () => {
         mockSerialPortAsyncOpen.mockImplementationOnce(() => {
-            return new Promise((resolve, reject) => {
+            return new Promise((_resolve, reject) => {
                 reject("failed!");
             });
         });
@@ -240,7 +233,7 @@ describe("ZNP", () => {
 
     it("Open with error when serialport is not open", async () => {
         mockSerialPortAsyncOpen.mockImplementationOnce(() => {
-            return new Promise((resolve, reject) => {
+            return new Promise((_resolve, reject) => {
                 reject("failed!");
             });
         });
@@ -282,7 +275,7 @@ describe("ZNP", () => {
         const close = vi.fn();
         znp.on("close", close);
         mockSerialPortAsyncFlushAndClose.mockImplementationOnce(() => {
-            return new Promise((resolve, reject) => {
+            return new Promise((_resolve, reject) => {
                 reject("failed!");
             });
         });
@@ -304,7 +297,7 @@ describe("ZNP", () => {
         const close = vi.fn();
         znp.on("close", close);
         mockSerialPortAsyncFlushAndClose.mockImplementationOnce(() => {
-            return new Promise((resolve, reject) => {
+            return new Promise((_resolve, reject) => {
                 reject("failed!");
             });
         });

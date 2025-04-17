@@ -2,10 +2,10 @@
 
 import {Buffalo} from "../../../buffalo";
 import {Utils as ZSpecUtils} from "../../../zspec";
-import type {EUI64} from "../../../zspec/tstypes";
+import type {Eui64} from "../../../zspec/tstypes";
 import type {BuffaloZclOptions} from "../../../zspec/zcl/definition/tstype";
 import {getMacCapFlags} from "../../../zspec/zdo/utils";
-import {LOG_LEVEL} from "./constants";
+import {LogLevel} from "./constants";
 import ParameterType from "./parameterType";
 
 export interface BuffaloZiGateOptions extends BuffaloZclOptions {
@@ -13,7 +13,7 @@ export interface BuffaloZiGateOptions extends BuffaloZclOptions {
 }
 
 class BuffaloZiGate extends Buffalo {
-    public write(type: ParameterType, value: any, options: BuffaloZiGateOptions): void {
+    public write(type: ParameterType, value: any, _options: BuffaloZiGateOptions): void {
         switch (type) {
             case ParameterType.UINT8: {
                 return this.writeUInt8(value);
@@ -132,7 +132,7 @@ class BuffaloZiGate extends Buffalo {
                 return unescape(buffer.toString());
             }
             case ParameterType.LOG_LEVEL: {
-                return LOG_LEVEL[this.readUInt8()];
+                return LogLevel[this.readUInt8()];
             }
             case ParameterType.MAYBE_UINT8: {
                 return this.isMore() ? this.readUInt8() : null;
@@ -181,7 +181,7 @@ class BuffaloZiGate extends Buffalo {
         }
     }
 
-    public readIeeeAddrBE(): EUI64 {
+    public readIeeeAddrBE(): Eui64 {
         return ZSpecUtils.eui64BEBufferToHex(this.readBuffer(8));
     }
 

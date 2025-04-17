@@ -64,7 +64,7 @@ interface ThermoTransition {
     coolSetpoint?: number;
 }
 
-interface GPD {
+interface Gpd {
     deviceID: number;
     options: number;
     extendedOptions: number;
@@ -423,7 +423,7 @@ export class BuffaloZcl extends Buffalo {
         // 0xf6: ZCL Tunneling
     }
 
-    private readGpdFrame(options: BuffaloZclOptions): GPD | GPDChannelRequest | GPDAttributeReport | {raw: Buffer} | Record<string, never> {
+    private readGpdFrame(options: BuffaloZclOptions): Gpd | GPDChannelRequest | GPDAttributeReport | {raw: Buffer} | Record<string, never> {
         // ensure offset by options.payload.payloadSize (if any) at end of parsing to not cause issues with spec changes (until supported)
         const startPosition = this.position;
 

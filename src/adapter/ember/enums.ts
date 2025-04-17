@@ -1713,13 +1713,13 @@ export enum EmberCurrentSecurityBitmask {
 
     /** This denotes that the device is running in a network with ZigBee
      *  Standard Security. */
-    STANDARD_SECURITY_MODE_ = 0x0000,
+    STANDARD_SECURITY_MODE = 0x0000,
     /** This denotes that the device is running in a network without
      *  a centralized Trust Center. */
-    DISTRIBUTED_TRUST_CENTER_MODE_ = 0x0002,
+    DISTRIBUTED_TRUST_CENTER_MODE = 0x0002,
     /** This denotes that the device has a Global Link Key.  The Trust Center
      *  Link Key is the same across multiple nodes. */
-    TRUST_CENTER_GLOBAL_LINK_KEY_ = 0x0004,
+    TRUST_CENTER_GLOBAL_LINK_KEY = 0x0004,
 
     // Bit 3 reserved
 
@@ -1727,7 +1727,7 @@ export enum EmberCurrentSecurityBitmask {
     HAVE_TRUST_CENTER_LINK_KEY = 0x0010,
 
     /** This denotes that the Trust Center is using a Hashed Link Key. */
-    TRUST_CENTER_USES_HASHED_LINK_KEY_ = 0x0084,
+    TRUST_CENTER_USES_HASHED_LINK_KEY = 0x0084,
 
     // Bits 1, 5, 6, and 8-15 reserved.
 }

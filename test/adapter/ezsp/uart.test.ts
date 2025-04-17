@@ -4,20 +4,16 @@ import {SerialDriver} from "../../../src/adapter/ezsp/driver/uart";
 import {Writer} from "../../../src/adapter/ezsp/driver/writer";
 import {SerialPort} from "../../../src/adapter/serialPort";
 
-let mockParser;
 const mockSerialPortClose = vi.fn().mockImplementation((cb) => (cb ? cb() : null));
 const mockSerialPortFlush = vi.fn().mockImplementation((cb) => cb());
 const mockSerialPortAsyncFlushAndClose = vi.fn();
-const mockSerialPortPipe = vi.fn().mockImplementation((parser) => {
-    mockParser = parser;
-});
-const mockSerialPortList = vi.fn().mockReturnValue([]);
+const mockSerialPortPipe = vi.fn();
 const mockSerialPortOpen = vi.fn().mockImplementation((cb) => cb());
 const mockSerialPortAsyncOpen = vi.fn();
 const mockSerialPortConstructor = vi.fn();
 const mockSerialPortOnce = vi.fn();
-const mockSerialPortSet = vi.fn().mockImplementation((opts, cb) => cb());
-const mockSerialPortWrite = vi.fn((buffer, cb) => (cb ? cb() : null));
+const mockSerialPortSet = vi.fn().mockImplementation((_opts, cb) => cb());
+const mockSerialPortWrite = vi.fn((_buffer, cb) => (cb ? cb() : null));
 const mockSerialPortIsOpen = false;
 
 vi.mock("../../../src/adapter/serialPort", () => ({

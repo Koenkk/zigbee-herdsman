@@ -220,7 +220,7 @@ export class EZSPAdapter extends Adapter {
         }
         await this.driver.addInstallCode(ieeeAddress, key, hashed);
     }
-    public async reset(type: "soft" | "hard"): Promise<void> {
+    public async reset(_type: "soft" | "hard"): Promise<void> {
         return await Promise.reject(new Error("Not supported"));
     }
 
@@ -572,8 +572,8 @@ export class EZSPAdapter extends Adapter {
     public waitFor(
         networkAddress: number | undefined,
         endpoint: number,
-        frameType: Zcl.FrameType,
-        direction: Zcl.Direction,
+        _frameType: Zcl.FrameType,
+        _direction: Zcl.Direction,
         transactionSequenceNumber: number | undefined,
         clusterID: number,
         commandIdentifier: number,

@@ -3,7 +3,7 @@ import {defineConfig} from "vitest/config";
 export default defineConfig({
     test: {
         globals: true,
-        onConsoleLog(log: string, type: "stdout" | "stderr"): boolean | void {
+        onConsoleLog(_log: string, _type: "stdout" | "stderr"): boolean | void {
             return false;
         },
         coverage: {

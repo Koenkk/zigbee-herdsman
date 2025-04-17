@@ -3,7 +3,7 @@
 import equals from "fast-deep-equal/es6";
 
 import {TOUCHLINK_PROFILE_ID} from "../../../zspec/consts";
-import type {EUI64, NodeId} from "../../../zspec/tstypes";
+import type {Eui64, NodeId} from "../../../zspec/tstypes";
 import type {ZclPayload} from "../../events";
 import type {EmberApsFrame} from "../types";
 
@@ -21,7 +21,7 @@ type OneWaitressMatcher = {
      * EUI64 is currently only for NetworkAddress Request/Response
      * Except for InterPAN touchlink, it should always be present.
      */
-    target?: NodeId | EUI64;
+    target?: NodeId | Eui64;
     apsFrame: EmberApsFrame;
     /** Cluster ID for ZDO (because request !== response). */
     zdoResponseClusterId?: number;
@@ -111,7 +111,7 @@ export class EmberOneWaitress {
      * @param payload Payload to resolve
      * @returns True if resolved a waiter
      */
-    public resolveZDO(sender: NodeId | EUI64, apsFrame: EmberApsFrame, payload: unknown): boolean {
+    public resolveZDO(sender: NodeId | Eui64, apsFrame: EmberApsFrame, payload: unknown): boolean {
         for (const [index, waiter] of this.waiters.entries()) {
             if (waiter.timedout) {
                 this.waiters.delete(index);

@@ -40,7 +40,7 @@ import {
     EmberRawFrame,
     EmberSecurityManagerContext,
 } from "./types/struct";
-import {ember_security} from "./utils";
+import {emberSecurity} from "./utils";
 
 const NS = "zh:ezsp:driv";
 
@@ -327,7 +327,7 @@ export class Driver extends EventEmitter {
         let backup;
         await this.ezsp.execCommand("clearTransientLinkKeys");
 
-        let initial_security_state: EmberInitialSecurityState;
+        let initialSecurityState: EmberInitialSecurityState;
         if (restore) {
             backup = await this.backupMan.getStoredBackup();
 
@@ -335,15 +335,15 @@ export class Driver extends EventEmitter {
                 throw new Error("No valid backup found.");
             }
 
-            initial_security_state = ember_security(backup.networkOptions.networkKey);
-            initial_security_state.bitmask |= EmberInitialSecurityBitmask.NO_FRAME_COUNTER_RESET;
-            initial_security_state.networkKeySequenceNumber = backup.networkKeyInfo.sequenceNumber;
-            initial_security_state.preconfiguredKey.contents = backup.ezsp!.hashed_tclk!;
+            initialSecurityState = emberSecurity(backup.networkOptions.networkKey);
+            initialSecurityState.bitmask |= EmberInitialSecurityBitmask.NO_FRAME_COUNTER_RESET;
+            initialSecurityState.networkKeySequenceNumber = backup.networkKeyInfo.sequenceNumber;
+            initialSecurityState.preconfiguredKey.contents = backup.ezsp!.hashed_tclk!;
         } else {
             await this.ezsp.execCommand("clearKeyTable");
-            initial_security_state = ember_security(Buffer.from(this.nwkOpt.networkKey!));
+            initialSecurityState = emberSecurity(Buffer.from(this.nwkOpt.networkKey!));
         }
-        await this.ezsp.setInitialSecurityState(initial_security_state);
+        await this.ezsp.setInitialSecurityState(initialSecurityState);
 
         const parameters: EmberNetworkParameters = new EmberNetworkParameters();
         parameters.radioTxPower = transmitPower ?? 5;
@@ -695,7 +695,7 @@ export class Driver extends EventEmitter {
         return result;
     }
 
-    public async mrequest(apsFrame: EmberApsFrame, data: Buffer, timeout = 30000): Promise<boolean> {
+    public async mrequest(apsFrame: EmberApsFrame, data: Buffer, _timeout = 30000): Promise<boolean> {
         try {
             const seq = (apsFrame.sequence + 1) & 0xff;
             await this.ezsp.sendMulticast(apsFrame, seq, data);
@@ -705,7 +705,7 @@ export class Driver extends EventEmitter {
         }
     }
 
-    public async rawrequest(rawFrame: EmberRawFrame, data: Buffer, timeout = 10000): Promise<boolean> {
+    public async rawrequest(rawFrame: EmberRawFrame, data: Buffer, _timeout = 10000): Promise<boolean> {
         try {
             const msgData = Buffer.concat([EmberRawFrame.serialize(EmberRawFrame, rawFrame), data]);
             await this.ezsp.execCommand("sendRawMessage", {message: msgData});
@@ -716,7 +716,7 @@ export class Driver extends EventEmitter {
         }
     }
 
-    public async ieeerawrequest(rawFrame: EmberIeeeRawFrame, data: Buffer, timeout = 10000): Promise<boolean> {
+    public async ieeerawrequest(rawFrame: EmberIeeeRawFrame, data: Buffer, _timeout = 10000): Promise<boolean> {
         try {
             const msgData = Buffer.concat([EmberIeeeRawFrame.serialize(EmberIeeeRawFrame, rawFrame), data]);
             await this.ezsp.execCommand("sendRawMessage", {message: msgData});

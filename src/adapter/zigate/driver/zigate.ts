@@ -16,7 +16,7 @@ import {SerialPort} from "../../serialPort";
 import SocketPortUtils from "../../socketPortUtils";
 import type {SerialPortOptions} from "../../tstype";
 import {type ZiGateResponseMatcher, type ZiGateResponseMatcherRule, equal} from "./commandType";
-import {STATUS, ZDO_REQ_CLUSTER_ID_TO_ZIGATE_COMMAND_ID, ZiGateCommandCode, ZiGateMessageCode, type ZiGateObjectPayload} from "./constants";
+import {Status, ZDO_REQ_CLUSTER_ID_TO_ZIGATE_COMMAND_ID, ZiGateCommandCode, ZiGateMessageCode, type ZiGateObjectPayload} from "./constants";
 import ZiGateFrame from "./frame";
 import ZiGateObject from "./ziGateObject";
 
@@ -144,7 +144,7 @@ export default class ZiGate extends EventEmitter<ZiGateEventMap> {
 
                 if (ziGateObject.command.waitStatus !== false && resultPromise) {
                     const statusResponse: ZiGateObject = await resultPromise;
-                    if (statusResponse.payload.status !== STATUS.E_SL_MSG_STATUS_SUCCESS) {
+                    if (statusResponse.payload.status !== Status.E_SL_MSG_STATUS_SUCCESS) {
                         waitersId.map((id) => this.waitress.remove(id));
                         return await Promise.reject(statusResponse);
                     } else if (waiters.length === 0) {
@@ -187,7 +187,7 @@ export default class ZiGate extends EventEmitter<ZiGateEventMap> {
 
             const statusResponse: ZiGateObject = await statusWaiter.start().promise;
 
-            return statusResponse.payload.status === STATUS.E_SL_MSG_STATUS_SUCCESS;
+            return statusResponse.payload.status === Status.E_SL_MSG_STATUS_SUCCESS;
         });
     }
 

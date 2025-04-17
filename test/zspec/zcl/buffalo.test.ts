@@ -246,7 +246,6 @@ describe("ZCL Buffalo", () => {
 
     it("Writes char str from number array", () => {
         const value = [0x61, 0x62, 0x63, 0x64];
-        const expectedValue = "abcd";
         const expectedPosition = 4; // value.length not written when number array given
         const buffer = Buffer.alloc(10);
         const buffalo = new BuffaloZcl(buffer);

@@ -1,4 +1,4 @@
-import type {EUI64} from "../zspec/tstypes";
+import type {Eui64} from "../zspec/tstypes";
 
 import {Utils as ZSpecUtils} from "../zspec";
 
@@ -239,7 +239,7 @@ export class Buffalo {
         this.writeUInt32(Number.parseInt(value.slice(2, 10), 16));
     }
 
-    public readIeeeAddr(): EUI64 {
+    public readIeeeAddr(): Eui64 {
         return ZSpecUtils.eui64LEBufferToHex(this.readBuffer(8));
     }
 

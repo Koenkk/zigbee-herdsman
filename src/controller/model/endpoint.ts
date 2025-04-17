@@ -4,7 +4,7 @@ import type {Events as AdapterEvents} from "../../adapter";
 import {logger} from "../../utils/logger";
 import * as ZSpec from "../../zspec";
 import {BroadcastAddress} from "../../zspec/enums";
-import type {EUI64} from "../../zspec/tstypes";
+import type {Eui64} from "../../zspec/tstypes";
 import * as Zcl from "../../zspec/zcl";
 import type * as ZclTypes from "../../zspec/zcl/definition/tstype";
 import * as Zdo from "../../zspec/zdo";
@@ -91,6 +91,7 @@ export class Endpoint extends Entity {
     public inputClusters: number[];
     public outputClusters: number[];
     public profileID?: number;
+    // biome-ignore lint/style/useNamingConvention: cross-repo impact
     public readonly ID: number;
     public readonly clusters: Clusters;
     public deviceIeeeAddress: string;
@@ -137,7 +138,7 @@ export class Endpoint extends Entity {
     }
 
     private constructor(
-        ID: number,
+        id: number,
         profileID: number | undefined,
         deviceID: number | undefined,
         inputClusters: number[],
@@ -150,7 +151,7 @@ export class Endpoint extends Entity {
         meta: KeyValue,
     ) {
         super();
-        this.ID = ID;
+        this.ID = id;
         this.profileID = profileID;
         this.deviceID = deviceID;
         this.inputClusters = inputClusters;
@@ -259,7 +260,7 @@ export class Endpoint extends Entity {
     }
 
     public static create(
-        ID: number,
+        id: number,
         profileID: number | undefined,
         deviceID: number | undefined,
         inputClusters: number[],
@@ -267,7 +268,7 @@ export class Endpoint extends Entity {
         deviceNetworkAddress: number,
         deviceIeeeAddress: string,
     ): Endpoint {
-        return new Endpoint(ID, profileID, deviceID, inputClusters, outputClusters, deviceNetworkAddress, deviceIeeeAddress, {}, [], [], {});
+        return new Endpoint(id, profileID, deviceID, inputClusters, outputClusters, deviceNetworkAddress, deviceIeeeAddress, {}, [], [], {});
     }
 
     public saveClusterAttributeKeyValue(clusterKey: number | string, list: KeyValue): void {
@@ -559,11 +560,11 @@ export class Endpoint extends Entity {
             const zdoPayload = Zdo.Buffalo.buildRequest(
                 Entity.adapter!.hasZdoMessageOverhead,
                 zdoClusterId,
-                this.deviceIeeeAddress as EUI64,
+                this.deviceIeeeAddress as Eui64,
                 this.ID,
                 cluster.ID,
                 target instanceof Endpoint ? Zdo.UNICAST_BINDING : Zdo.MULTICAST_BINDING,
-                target instanceof Endpoint ? (target.deviceIeeeAddress as EUI64) : ZSpec.BLANK_EUI64,
+                target instanceof Endpoint ? (target.deviceIeeeAddress as Eui64) : ZSpec.BLANK_EUI64,
                 target instanceof Group ? target.groupID : 0,
                 target instanceof Endpoint ? target.ID : 0xff,
             );
@@ -617,11 +618,11 @@ export class Endpoint extends Entity {
             const zdoPayload = Zdo.Buffalo.buildRequest(
                 Entity.adapter!.hasZdoMessageOverhead,
                 zdoClusterId,
-                this.deviceIeeeAddress as EUI64,
+                this.deviceIeeeAddress as Eui64,
                 this.ID,
                 cluster.ID,
                 target instanceof Endpoint ? Zdo.UNICAST_BINDING : Zdo.MULTICAST_BINDING,
-                target instanceof Endpoint ? (target.deviceIeeeAddress as EUI64) : ZSpec.BLANK_EUI64,
+                target instanceof Endpoint ? (target.deviceIeeeAddress as Eui64) : ZSpec.BLANK_EUI64,
                 target instanceof Group ? target.groupID : 0,
                 target instanceof Endpoint ? target.ID : 0xff,
             );
