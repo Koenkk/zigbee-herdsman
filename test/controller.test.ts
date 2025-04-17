@@ -6876,7 +6876,23 @@ describe("Controller", () => {
         );
     });
 
-    it("Shouldnt load device from group databaseentry", async () => {
+    it('Load database: interviewState migration and reset IN_PROGRESS', async () => {
+        const database =
+            // interviewState=undefined, interviewCompleted=false -> interviewState=FAILED
+            '{"id":3,"type":"Router","ieeeAddr":"0x000b57fffec6a5b2","nwkAddr":40369,"manufId":4476,"manufName":"IKEA of Sweden","powerSource":"Mains (single phase)","modelId":"TRADFRI bulb E27 WS opal 980lm","epList":[1],"endpoints":{"1":{"profId":49246,"epId":1,"devId":544,"inClusterList":[0,3,4,5,6,8,768,2821,4096],"meta":{},"outClusterList":[5,25,32,4096],"clusters":{}}},"appVersion":17,"stackVersion":87,"hwVersion":1,"dateCode":"20170331","swBuildId":"1.2.217","zclVersion":1,"interviewCompleted":false,"meta":{"reporting":1},"_id":"pagvP2f9Bbj3o9TM"}\n' +
+            // interviewState=undefined, interviewCompleted=true -> interviewState=SUCCESSFUL
+            '{"id":4,"type":"Router","ieeeAddr":"0x000b57fffec6a5b3","nwkAddr":40369,"manufId":4476,"manufName":"IKEA of Sweden","powerSource":"Mains (single phase)","modelId":"TRADFRI bulb E27 WS opal 980lm","epList":[1],"endpoints":{"1":{"profId":49246,"epId":1,"devId":544,"inClusterList":[0,3,4,5,6,8,768,2821,4096],"meta":{},"outClusterList":[5,25,32,4096],"clusters":{}}},"appVersion":17,"stackVersion":87,"hwVersion":1,"dateCode":"20170331","swBuildId":"1.2.217","zclVersion":1,"interviewCompleted":true,"meta":{"reporting":1},"_id":"pagvP2f9Bbj3o9TM"}\n' +
+            // interviewState=IN_PROGRESS -> interviewState=PENDING
+            '{"id":5,"type":"Router","ieeeAddr":"0x000b57fffec6a5b4","nwkAddr":40369,"manufId":4476,"manufName":"IKEA of Sweden","powerSource":"Mains (single phase)","modelId":"TRADFRI bulb E27 WS opal 980lm","epList":[1],"endpoints":{"1":{"profId":49246,"epId":1,"devId":544,"inClusterList":[0,3,4,5,6,8,768,2821,4096],"meta":{},"outClusterList":[5,25,32,4096],"clusters":{}}},"appVersion":17,"stackVersion":87,"hwVersion":1,"dateCode":"20170331","swBuildId":"1.2.217","zclVersion":1,"interviewCompleted":true,"interviewState":"IN_PROGRESS","meta":{"reporting":1},"_id":"pagvP2f9Bbj3o9TM"}';
+        fs.writeFileSync(options.databasePath, database);
+        await controller.start();
+
+        expect(controller.getDeviceByIeeeAddr('0x000b57fffec6a5b2')?.interviewState).toStrictEqual(InterviewState.FAILED);
+        expect(controller.getDeviceByIeeeAddr('0x000b57fffec6a5b3')?.interviewState).toStrictEqual(InterviewState.SUCCESSFUL);
+        expect(controller.getDeviceByIeeeAddr('0x000b57fffec6a5b4')?.interviewState).toStrictEqual(InterviewState.PENDING);
+    });
+
+    it('Shouldnt load device from group databaseentry', async () => {
         expect(() => {
             // @ts-ignore
             Device.fromDatabaseEntry({type: "Group", endpoints: []});

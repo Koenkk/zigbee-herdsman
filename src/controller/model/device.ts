@@ -569,6 +569,11 @@ export class Device extends Entity<ControllerEventMap> {
             logger.debug(`Migrated interviewState for '${ieeeAddr}': ${entry.interviewCompleted} -> ${entry.interviewCompleted}`, NS);
         }
 
+        // Can never be IN_PROGRESS in case of a database load, reset to PENDING.
+        if (entry.interviewState === InterviewState.IN_PROGRESS) {
+            entry.interviewState = InterviewState.PENDING;
+        }
+
         return new Device(
             entry.id,
             entry.type,
@@ -639,11 +644,6 @@ export class Device extends Entity<ControllerEventMap> {
             // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
             for (const entry of Entity.database!.getEntriesIterator(["Coordinator", "EndDevice", "Router", "GreenPower", "Unknown"])) {
                 const device = Device.fromDatabaseEntry(entry);
-
-                // Can never be IN_PROGRESS in case of a database load, reset to PENDING.
-                if (device.interviewState === InterviewState.IN_PROGRESS) {
-                    device._interviewState = InterviewState.PENDING;
-                }
 
                 Device.devices.set(device.ieeeAddr, device);
                 Device.nwkToIeeeCache.set(device.networkAddress, device.ieeeAddr);
