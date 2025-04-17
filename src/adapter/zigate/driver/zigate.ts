@@ -141,6 +141,7 @@ export default class ZiGate extends EventEmitter<ZiGateEventMap> {
                 }
 
                 // @ts-expect-error assumed proper based on port type
+                // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
                 this.portWrite!.write(sendBuffer);
 
                 if (ziGateObject.command.waitStatus !== false && resultPromise) {
@@ -186,6 +187,7 @@ export default class ZiGate extends EventEmitter<ZiGateEventMap> {
             const statusWaiter = this.waitress.waitFor({rules: ruleStatus}, timeouts.default);
 
             // @ts-expect-error assumed proper based on port type
+            // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
             this.portWrite!.write(sendBuffer);
 
             const statusResponse: ZiGateObject = await statusWaiter.start().promise;
@@ -269,24 +271,29 @@ export default class ZiGate extends EventEmitter<ZiGateEventMap> {
 
         this.portWrite = this.socketPort;
         return await new Promise((resolve, reject): void => {
+            // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
             this.socketPort!.on("connect", () => {
                 logger.debug("Socket connected", NS);
             });
 
+            // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
             this.socketPort!.on("ready", () => {
                 logger.debug("Socket ready", NS);
                 this.initialized = true;
                 resolve();
             });
 
+            // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
             this.socketPort!.once("close", this.onPortClose.bind(this));
 
+            // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
             this.socketPort!.on("error", (error) => {
                 logger.error(`Socket error ${error}`, NS);
                 reject(new Error("Error while opening socket"));
                 this.initialized = false;
             });
 
+            // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
             this.socketPort!.connect(info.port, info.host);
         });
     }
@@ -387,8 +394,10 @@ export default class ZiGate extends EventEmitter<ZiGateEventMap> {
                     assert(matcher.ziGateObject, "Matcher ziGateObject expected valid.");
                     expectedValue = resolve(rule.expectedProperty, matcher.ziGateObject);
                 } else if (rule.value == undefined && rule.expectedExtraParameter != undefined) {
+                    // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
                     expectedValue = resolve(rule.expectedExtraParameter, matcher.extraParameters!); // XXX: assumed valid?
                 } else {
+                    // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
                     expectedValue = rule.value!; // XXX: assumed valid?
                 }
                 const receivedValue = resolve(rule.receivedProperty, ziGateObject);

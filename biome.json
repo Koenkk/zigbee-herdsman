@@ -22,7 +22,6 @@
                 }
             },
             "style": {
-                "noNonNullAssertion": "off",
                 "noParameterAssign": "off",
                 "useThrowNewError": "error",
                 "useThrowOnlyError": "error",
@@ -76,6 +75,7 @@
             "linter": {
                 "rules": {
                     "style": {
+                        "noNonNullAssertion": "off",
                         "useNamingConvention": "off"
                     }
                 }

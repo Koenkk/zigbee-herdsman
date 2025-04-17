@@ -67,6 +67,7 @@ export class ZBOSSUart extends EventEmitter {
         if (this.closing) {
             return false;
         }
+        // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
         if (SocketPortUtils.isTcpPath(this.portOptions.path!)) {
             return this.socketPort && !this.socketPort.closed;
         }
@@ -104,8 +105,10 @@ export class ZBOSSUart extends EventEmitter {
     private async openPort(): Promise<void> {
         await this.closePort();
 
+        // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
         if (!SocketPortUtils.isTcpPath(this.portOptions.path!)) {
             const serialOpts = {
+                // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
                 path: this.portOptions.path!,
                 baudRate: typeof this.portOptions.baudRate === "number" ? this.portOptions.baudRate : 115200,
                 rtscts: typeof this.portOptions.rtscts === "boolean" ? this.portOptions.rtscts : false,
@@ -137,6 +140,7 @@ export class ZBOSSUart extends EventEmitter {
                 throw error;
             }
         } else {
+            // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
             const info = SocketPortUtils.parseTcpPath(this.portOptions.path!);
             logger.debug(`Opening TCP socket with ${info.host}:${info.port}`, NS);
 

@@ -84,6 +84,7 @@ export class ZStackAdapter extends Adapter {
         super(networkOptions, serialPortOptions, backupPath, adapterOptions);
         this.hasZdoMessageOverhead = false;
         this.manufacturerID = Zcl.ManufacturerCode.TEXAS_INSTRUMENTS;
+        // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
         this.znp = new Znp(this.serialPortOptions.path!, this.serialPortOptions.baudRate!, this.serialPortOptions.rtscts!);
 
         this.transactionID = 0;

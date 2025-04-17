@@ -155,6 +155,7 @@ export class EZSPFrameData {
             }
             return false;
         });
+        // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
         return frm!;
     }
 
@@ -178,6 +179,7 @@ export class EZSPFrameData {
             }
         } else {
             for (const prop of Object.getOwnPropertyNames(frameDesc)) {
+                // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
                 this[prop] = params![prop]; // XXX: assumed defined with logic
             }
         }

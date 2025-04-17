@@ -138,10 +138,12 @@ export class Znp extends events.EventEmitter {
         this.unpiParser.on("parsed", this.onUnpiParsed.bind(this));
 
         return await new Promise((resolve, reject): void => {
+            // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
             this.socketPort!.on("connect", () => {
                 logger.info("Socket connected", NS);
             });
             const self = this;
+            // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
             this.socketPort!.on("ready", async () => {
                 logger.info("Socket ready", NS);
                 await self.skipBootloader();
@@ -149,14 +151,17 @@ export class Znp extends events.EventEmitter {
                 resolve();
             });
 
+            // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
             this.socketPort!.once("close", this.onPortClose.bind(this));
 
+            // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
             this.socketPort!.on("error", (error) => {
                 logger.error(`Socket error ${error}`, NS);
                 reject(new Error("Error while opening socket"));
                 self.initialized = false;
             });
 
+            // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
             this.socketPort!.connect(info.port, info.host);
         });
     }
@@ -204,6 +209,7 @@ export class Znp extends events.EventEmitter {
                     throw error;
                 }
             } else {
+                // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
                 this.socketPort!.destroy();
             }
         }

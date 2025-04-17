@@ -296,6 +296,7 @@ function parseReadReceivedDataResponse(view: DataView): ReceivedDataResponse | n
             srcAddr = srcAddr64;
         }
 
+        // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
         view = new DataView(buf3!); // XXX: not validated?
         const srcEndpoint = view.getUint8(0);
         const profileId = view.getUint16(1, littleEndian);

@@ -86,6 +86,7 @@ export class ZoHAdapter extends Adapter {
                 // TODO: make this configurable
                 eui64: Buffer.from([0x5a, 0x6f, 0x48, 0x6f, 0x6e, 0x5a, 0x32, 0x4d]).readBigUInt64LE(0),
                 panId: this.networkOptions.panID,
+                // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
                 extendedPANId: Buffer.from(this.networkOptions.extendedPanID!).readBigUInt64LE(0),
                 channel,
                 nwkUpdateId: 0,
@@ -93,6 +94,7 @@ export class ZoHAdapter extends Adapter {
                 // ZigBeeAlliance09
                 tcKey: Buffer.from([0x5a, 0x69, 0x67, 0x42, 0x65, 0x65, 0x41, 0x6c, 0x6c, 0x69, 0x61, 0x6e, 0x63, 0x65, 0x30, 0x39]),
                 tcKeyFrameCounter: 0,
+                // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
                 networkKey: Buffer.from(this.networkOptions.networkKey!),
                 networkKeyFrameCounter: 0,
                 networkKeySequenceNumber: 0,
@@ -113,7 +115,9 @@ export class ZoHAdapter extends Adapter {
     public async initPort(): Promise<void> {
         await this.closePort(); // will do nothing if nothing's open
 
+        // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
         if (isTcpPath(this.serialPortOptions.path!)) {
+            // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
             const pathUrl = new URL(this.serialPortOptions.path!);
             const hostname = pathUrl.hostname;
             const port = Number.parseInt(pathUrl.port, 10);
@@ -135,24 +139,32 @@ export class ZoHAdapter extends Adapter {
                     reject(err);
                 };
 
+                // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
                 this.socketPort!.on("connect", () => {
                     logger.debug("Socket connected", NS);
                 });
+                // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
                 this.socketPort!.on("ready", (): void => {
                     logger.info("Socket ready", NS);
+                    // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
                     this.socketPort!.removeListener("error", openError);
+                    // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
                     this.socketPort!.once("close", this.onPortClose.bind(this));
+                    // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
                     this.socketPort!.on("error", this.onPortError.bind(this));
 
                     resolve();
                 });
+                // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
                 this.socketPort!.once("error", openError);
 
+                // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
                 this.socketPort!.connect(port, hostname);
             });
         }
 
         const serialOpts = {
+            // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
             path: this.serialPortOptions.path!,
             baudRate: typeof this.serialPortOptions.baudRate === "number" ? this.serialPortOptions.baudRate : 115200,
             rtscts: typeof this.serialPortOptions.rtscts === "boolean" ? this.serialPortOptions.rtscts : false,
@@ -178,7 +190,9 @@ export class ZoHAdapter extends Adapter {
         this.driver.parser.on("data", this.driver.onFrame.bind(this.driver));
 
         try {
+            // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
             await this.serialPort!.asyncOpen();
+            // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
             await this.serialPort!.asyncFlush();
 
             logger.info("Serial port opened", NS);
@@ -223,6 +237,7 @@ export class ZoHAdapter extends Adapter {
     public async closePort(): Promise<void> {
         if (this.serialPort?.isOpen) {
             try {
+                // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
                 await this.serialPort!.asyncFlushAndClose();
             } catch (err) {
                 logger.error(`Failed to close serial port ${err}.`, NS);
@@ -252,7 +267,9 @@ export class ZoHAdapter extends Adapter {
             if (
                 // TODO: add eui64 whenever added as configurable
                 this.networkOptions.panID !== currentNetParams.panId ||
+                // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
                 Buffer.from(this.networkOptions.extendedPanID!).readBigUInt64LE(0) != currentNetParams.extendedPANId ||
+                // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
                 !Buffer.from(this.networkOptions.networkKey!).equals(currentNetParams.networkKey)
             ) {
                 await this.driver.resetNetwork();
@@ -644,8 +661,10 @@ export class ZoHAdapter extends Adapter {
             logger.debug(() => `<~~~ APS ZDO[sender=${sender16}:${sender64} clusterId=${apsHeader.clusterId}]`, NS);
 
             try {
+                // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
                 const result = Zdo.Buffalo.readResponse(this.hasZdoMessageOverhead, apsHeader.clusterId!, apsPayload);
 
+                // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
                 if (apsHeader.clusterId! === Zdo.ClusterId.NETWORK_ADDRESS_RESPONSE) {
                     // special case to properly resolve a NETWORK_ADDRESS_RESPONSE following a NETWORK_ADDRESS_REQUEST (based on EUI64 from ZDO payload)
                     // NOTE: if response has invalid status (no EUI64 available), response waiter will eventually time out
@@ -653,9 +672,11 @@ export class ZoHAdapter extends Adapter {
                         this.zdoWaitress.resolve({sender: result[1].eui64, clusterId: apsHeader.clusterId, response: result, seqNum: apsPayload[0]});
                     }
                 } else {
+                    // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
                     this.zdoWaitress.resolve({sender: sender16!, clusterId: apsHeader.clusterId!, response: result, seqNum: apsPayload[0]});
                 }
 
+                // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
                 this.emit("zdoResponse", apsHeader.clusterId!, result);
                 /* v8 ignore start */
             } catch (error) {
@@ -666,14 +687,22 @@ export class ZoHAdapter extends Adapter {
             logger.debug(() => `<~~~ APS[sender=${sender16}:${sender64} profileId=${apsHeader.profileId} clusterId=${apsHeader.clusterId}]`, NS);
 
             const payload: ZclPayload = {
+                // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
                 clusterID: apsHeader.clusterId!,
                 header: Zcl.Header.fromBuffer(apsPayload),
-                address: sender64 !== undefined ? `0x${bigUInt64ToHexBE(sender64)}` : sender16!,
+                address:
+                    sender64 !== undefined
+                        ? `0x${bigUInt64ToHexBE(sender64)}`
+                        : // biome-ignore lint/style/noNonNullAssertion: <explanation>
+                          sender16!,
                 data: apsPayload,
+                // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
                 endpoint: apsHeader.sourceEndpoint!,
                 linkquality: rssi, // TODO: convert RSSI to LQA
+                // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
                 groupID: apsHeader.group!,
                 wasBroadcast: apsHeader.frameControl.deliveryMode === 2 /* BCAST */,
+                // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
                 destinationEndpoint: apsHeader.destEndpoint!,
             };
 
@@ -719,12 +748,15 @@ export class ZoHAdapter extends Adapter {
 
         /* v8 ignore start */
         if (nwkHeader.frameControlExt?.appId === 0x02 /* ZGP */) {
+            // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
             data.writeBigUInt64LE(macHeader.source64!, offset);
             offset += 8;
+            // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
             data.writeUInt8(nwkHeader.endpoint!, offset);
             offset += 1;
             /* v8 ignore stop */
         } else {
+            // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
             data.writeUInt32LE(nwkHeader.sourceId!, offset);
             offset += 4;
         }
@@ -741,11 +773,15 @@ export class ZoHAdapter extends Adapter {
             clusterID: 0x21 /* Green Power */,
             header: Zcl.Header.fromBuffer(data),
             address:
-                macHeader.source64 !== undefined ? /* v8 ignore next */ `0x${bigUInt64ToHexBE(macHeader.source64)}` : nwkHeader.sourceId! & 0xffff,
+                macHeader.source64 !== undefined /* v8 ignore next */
+                    ? /* v8 ignore next */ `0x${bigUInt64ToHexBE(macHeader.source64)}`
+                    : // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
+                      nwkHeader.sourceId! & 0xffff,
             data,
             endpoint: ZSpec.GP_ENDPOINT,
             linkquality: rssi, // TODO: convert RSSI to LQA
             groupID: ZSpec.GP_GROUP_ID,
+            // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
             wasBroadcast: macHeader.destination64 === undefined && macHeader.destination16! >= 0xfff8,
             destinationEndpoint: ZSpec.GP_ENDPOINT,
         };
@@ -787,7 +823,9 @@ export class ZoHAdapter extends Adapter {
             (matcher.sender === undefined || payload.address === matcher.sender) &&
             payload.clusterID === matcher.clusterId &&
             payload.endpoint === matcher.endpoint &&
+            // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
             payload.header!.commandIdentifier === matcher.commandId &&
+            // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
             (matcher.transactionSequenceNumber === undefined || payload.header!.transactionSequenceNumber === matcher.transactionSequenceNumber)
         );
     }

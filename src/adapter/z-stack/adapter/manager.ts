@@ -516,7 +516,9 @@ export class ZnpAdapterManager {
         const parsed: Models.NetworkOptions = {
             channelList: channelList,
             panId: options.panID,
+            // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
             extendedPanId: Buffer.from(options.extendedPanID!),
+            // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
             networkKey: Buffer.from(options.networkKey!),
             networkKeyDistribute: Boolean(options.networkKeyDistribute),
         };

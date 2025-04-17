@@ -57,6 +57,7 @@ export class EZSPAdapter extends Adapter {
 
         if (frame.apsFrame.profileId == Zdo.ZDO_PROFILE_ID) {
             if (frame.apsFrame.clusterId >= 0x8000 /* response only */) {
+                // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
                 this.emit("zdoResponse", frame.apsFrame.clusterId, frame.zdoResponse!);
             }
         } else if (frame.apsFrame.profileId == ZSpec.HA_PROFILE_ID || frame.apsFrame.profileId == 0xffff) {
@@ -293,8 +294,16 @@ export class EZSPAdapter extends Adapter {
             if (waiter && responseClusterId !== undefined) {
                 const response = await waiter.start().promise;
 
-                logger.debug(() => `<~~ [ZDO ${Zdo.ClusterId[responseClusterId]} ${JSON.stringify(response.zdoResponse!)}]`, NS);
+                logger.debug(
+                    () =>
+                        `<~~ [ZDO ${Zdo.ClusterId[responseClusterId]} ${
+                            // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
+                            JSON.stringify(response.zdoResponse!)
+                        }]`,
+                    NS,
+                );
 
+                // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
                 return response.zdoResponse! as ZdoTypes.RequestToResponseMap[K];
             }
         }, networkAddress);

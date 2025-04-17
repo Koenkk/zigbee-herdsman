@@ -57,9 +57,12 @@ export class SerialDriver extends EventEmitter {
     }
 
     async connect(options: SerialPortOptions): Promise<void> {
+        // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
         if (SocketPortUtils.isTcpPath(options.path!)) {
+            // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
             await this.openSocketPort(options.path!);
         } else {
+            // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
             await this.openSerialPort(options.path!, options.baudRate!, options.rtscts!);
         }
     }
@@ -134,13 +137,18 @@ export class SerialDriver extends EventEmitter {
                 reject(err);
             };
 
+            // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
             this.socketPort!.on("connect", () => {
                 logger.debug("Socket connected", NS);
             });
+            // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
             this.socketPort!.on("ready", async (): Promise<void> => {
                 logger.debug("Socket ready", NS);
+                // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
                 this.socketPort!.removeListener("error", openError);
+                // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
                 this.socketPort!.once("close", this.onPortClose.bind(this));
+                // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
                 this.socketPort!.on("error", this.onPortError.bind(this));
 
                 // reset
@@ -150,8 +158,10 @@ export class SerialDriver extends EventEmitter {
 
                 resolve();
             });
+            // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
             this.socketPort!.once("error", openError);
 
+            // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
             this.socketPort!.connect(info.port, info.host);
         });
     }
@@ -188,6 +198,7 @@ export class SerialDriver extends EventEmitter {
         } catch (error) {
             this.rejectCondition = true;
             logger.error(`Error while parsing to NpiFrame '${error}'`, NS);
+            // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
             logger.debug((error as Error).stack!, NS);
         }
 
@@ -361,6 +372,7 @@ export class SerialDriver extends EventEmitter {
                     throw error;
                 }
             } else {
+                // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
                 this.socketPort!.destroy();
             }
         }

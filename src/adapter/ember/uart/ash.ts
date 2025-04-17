@@ -409,6 +409,7 @@ export class UartAsh extends EventEmitter<UartAshEventMap> {
             return false;
         }
 
+        // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
         if (SocketPortUtils.isTcpPath(this.portOptions.path!)) {
             return this.socketPort ? !this.socketPort.closed : false;
         }
@@ -461,8 +462,10 @@ export class UartAsh extends EventEmitter<UartAshEventMap> {
     private async initPort(): Promise<void> {
         await this.closePort(); // will do nothing if nothing's open
 
+        // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
         if (!SocketPortUtils.isTcpPath(this.portOptions.path!)) {
             const serialOpts = {
+                // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
                 path: this.portOptions.path!,
                 baudRate: typeof this.portOptions.baudRate === "number" ? this.portOptions.baudRate : 115200,
                 rtscts: typeof this.portOptions.rtscts === "boolean" ? this.portOptions.rtscts : false,
@@ -505,6 +508,7 @@ export class UartAsh extends EventEmitter<UartAshEventMap> {
                 throw error;
             }
         } else {
+            // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
             const info = SocketPortUtils.parseTcpPath(this.portOptions.path!);
             logger.debug(`Opening TCP socket with ${info.host}:${info.port}`, NS);
 
@@ -523,19 +527,26 @@ export class UartAsh extends EventEmitter<UartAshEventMap> {
                     reject(err);
                 };
 
+                // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
                 this.socketPort!.on("connect", () => {
                     logger.debug("Socket connected", NS);
                 });
+                // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
                 this.socketPort!.on("ready", (): void => {
                     logger.info("Socket ready", NS);
+                    // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
                     this.socketPort!.removeListener("error", openError);
+                    // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
                     this.socketPort!.once("close", this.onPortClose.bind(this));
+                    // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
                     this.socketPort!.on("error", this.onPortError.bind(this));
 
                     resolve();
                 });
+                // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
                 this.socketPort!.once("error", openError);
 
+                // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
                 this.socketPort!.connect(info.port, info.host);
             });
         }
@@ -892,6 +903,7 @@ export class UartAsh extends EventEmitter<UartAshEventMap> {
                     } else if (this.flags & Flag.RETX) {
                         // Retransmitting DATA frames for error recovery
                         // buffer assumed valid from loop logic
+                        // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
                         buffer = this.reTxQueue.getNthEntry(mod8(this.frmTx - this.frmReTx))!;
                         len = buffer.len + 1;
                         this.txSHBuffer[0] = AshFrameType.DATA | (this.frmReTx << ASH_FRMNUM_BIT) | (this.frmRx << ASH_ACKNUM_BIT) | ASH_RFLAG_MASK;
@@ -948,6 +960,7 @@ export class UartAsh extends EventEmitter<UartAshEventMap> {
                     // sending OR resending data frame
                     if (this.txOffset !== 0xff) {
                         // buffer assumed valid from loop logic
+                        // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
                         inByte = this.txOffset ? buffer!.data[this.txOffset - 1] : this.txSHBuffer[0];
                         outByte = this.encodeByte(0, inByte);
 

@@ -50,6 +50,7 @@ export class DeconzAdapter extends Adapter {
 
         this.waitress = new Waitress<Events.ZclPayload, WaitressMatcher>(this.waitressValidator, this.waitressTimeoutFormatter);
 
+        // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
         this.driver = new Driver(serialPortOptions.path!);
         this.driver.setDelay(delay);
 
@@ -171,13 +172,18 @@ export class DeconzAdapter extends Adapter {
         }
 
         // check current extended_panid against configuration.yaml
+        // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
         if (this.driver.generalArrayToString(this.networkOptions.extendedPanID!, 8) !== expanid) {
             logger.debug(
-                `extended panid in configuration.yaml (${this.driver.macAddrArrayToString(this.networkOptions.extendedPanID!)}) differs from current extended panid (${expanid}). Changing extended panid.`,
+                `extended panid in configuration.yaml (${
+                    // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
+                    this.driver.macAddrArrayToString(this.networkOptions.extendedPanID!)
+                }) differs from current extended panid (${expanid}). Changing extended panid.`,
                 NS,
             );
 
             try {
+                // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
                 await this.driver.writeParameterRequest(PARAM.PARAM.Network.APS_EXT_PAN_ID, this.networkOptions.extendedPanID!);
                 await wait(500);
                 changed = true;
@@ -187,10 +193,12 @@ export class DeconzAdapter extends Adapter {
         }
 
         // check current network key against configuration.yaml
+        // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
         if (this.driver.generalArrayToString(this.networkOptions.networkKey!, 16) !== networkKey) {
             logger.debug(`network key in configuration.yaml (hidden) differs from current network key (${networkKey}). Changing network key.`, NS);
 
             try {
+                // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
                 await this.driver.writeParameterRequest(PARAM.PARAM.Network.NETWORK_KEY, this.networkOptions.networkKey!);
                 await wait(500);
                 changed = true;
@@ -364,6 +372,7 @@ export class DeconzAdapter extends Adapter {
             if (responseClusterId) {
                 try {
                     const response = await this.waitForData(isNwkAddrRequest ? ieeeAddress : networkAddress, Zdo.ZDO_PROFILE_ID, responseClusterId);
+                    // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
                     return response.zdo! as ZdoTypes.RequestToResponseMap[K];
                 } catch (error) {
                     if (responseClusterId == Zdo.ClusterId.ACTIVE_ENDPOINTS_RESPONSE && networkAddress === 0) {
@@ -447,12 +456,18 @@ export class DeconzAdapter extends Adapter {
 
             if (data !== null) {
                 const response: Events.ZclPayload = {
-                    address: data.srcAddr16 ?? `0x${data.srcAddr64!}`,
+                    address:
+                        data.srcAddr16 ??
+                        `0x${
+                            // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
+                            data.srcAddr64!
+                        }`,
                     data: data.asduPayload,
                     clusterID: zclFrame.cluster.ID,
                     header: Zcl.Header.fromBuffer(data.asduPayload),
                     endpoint: data.srcEndpoint,
                     linkquality: data.lqi,
+                    // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
                     groupID: data.srcAddrMode === 0x01 ? data.srcAddr16! : 0,
                     wasBroadcast: data.srcAddrMode === 0x01 || data.srcAddrMode === 0xf,
                     destinationEndpoint: data.destEndpoint,
@@ -640,11 +655,14 @@ export class DeconzAdapter extends Adapter {
 
             if (resp.profileId === Zdo.ZDO_PROFILE_ID) {
                 if (resp.clusterId === Zdo.ClusterId.NETWORK_ADDRESS_RESPONSE) {
+                    // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
                     if (Zdo.Buffalo.checkStatus<Zdo.ClusterId.NETWORK_ADDRESS_RESPONSE>(resp.zdo!)) {
+                        // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
                         srcEUI64 = resp.zdo![1].eui64;
                     }
                 } else if (resp.clusterId === Zdo.ClusterId.END_DEVICE_ANNOUNCE) {
                     // XXX: using same response for announce (handled by controller) or joined depending on permit join status?
+                    // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
                     if (this.joinPermitted === true && Zdo.Buffalo.checkStatus<Zdo.ClusterId.END_DEVICE_ANNOUNCE>(resp.zdo!)) {
                         const payload = resp.zdo[1];
 
@@ -652,6 +670,7 @@ export class DeconzAdapter extends Adapter {
                     }
                 }
 
+                // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
                 this.emit("zdoResponse", resp.clusterId, resp.zdo!);
             } else {
                 header = Zcl.Header.fromBuffer(resp.asduPayload);
@@ -681,6 +700,7 @@ export class DeconzAdapter extends Adapter {
 
             // Default timeout: 60 seconds.
             // Comparison is negated to prevent orphans when invalid timeout is entered (resulting in NaN).
+            // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
             if (!(now - req.ts! <= (req.timeout ?? 60000))) {
                 //logger.debug("Timeout for request in openRequestsQueue addr: " + req.addr.toString(16) + " clusterId: " + req.clusterId.toString(16) + " profileId: " + req.profileId.toString(16), NS);
                 //remove from busyQueue
@@ -694,9 +714,17 @@ export class DeconzAdapter extends Adapter {
                 clusterID: resp.clusterId,
                 header,
                 data: resp.asduPayload,
-                address: resp.srcAddrMode === 0x03 ? `0x${resp.srcAddr64!}` : resp.srcAddr16!,
+                address:
+                    resp.srcAddrMode === 0x03
+                        ? `0x${
+                              // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
+                              resp.srcAddr64!
+                          }`
+                        : // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
+                          resp.srcAddr16!,
                 endpoint: resp.srcEndpoint,
                 linkquality: resp.lqi,
+                // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
                 groupID: resp.destAddrMode === 0x01 ? resp.destAddr16! : 0,
                 wasBroadcast: resp.destAddrMode === 0x01 || resp.destAddrMode === 0xf,
                 destinationEndpoint: resp.destEndpoint,

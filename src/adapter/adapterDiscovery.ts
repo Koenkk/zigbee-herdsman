@@ -364,6 +364,7 @@ function matchUsbFingerprint(
     // poor match only returned if port info not conflict-prone
     if (match) {
         if (score > UsbFingerprintMatchScore.VidPid) {
+            // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
             if (conflictProne && score < UsbFingerprintMatchScore.VidPidPath && matchString(match.manufacturer!, "itead")) {
                 // can't trust metadata "only" on sonoff dongles with conflicts
                 return undefined;
@@ -421,6 +422,7 @@ export function findUsbAdapterBestMatch(
             continue;
         }
 
+        // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
         const match = matchUsbFingerprint(portInfo, USB_FINGERPRINTS[key as DiscoverableUsbAdapter]!, isWindows, conflictProne);
 
         // register the match if no previous or better score

@@ -537,6 +537,7 @@ export class GreenPower extends EventEmitter<GreenPowerEventMap> {
             }
             /* v8 ignore start */
         } catch (error) {
+            // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
             logger.error((error as Error).stack!, NS);
         }
         /* v8 ignore stop */

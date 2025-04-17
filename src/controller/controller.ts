@@ -268,6 +268,7 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
 
         ieeeAddr = `0x${ieeeAddr}`;
         // match valid else asserted above
+        // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
         key = Buffer.from(key.match(/.{1,2}/g)!.map((d) => Number.parseInt(d, 16)));
 
         // will throw if code cannot be fixed and is invalid
@@ -627,6 +628,7 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
         logger.debug(`Device leave '${payload.ieeeAddr}'`, NS);
 
         // XXX: seems type is not properly detected?
+        // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
         const device = payload.ieeeAddr ? Device.byIeeeAddr(payload.ieeeAddr) : Device.byNetworkAddress(payload.networkAddress!);
 
         if (!device) {

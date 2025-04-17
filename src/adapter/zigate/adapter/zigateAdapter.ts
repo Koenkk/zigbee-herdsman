@@ -52,6 +52,7 @@ export class ZiGateAdapter extends Adapter {
         const concurrent = this.adapterOptions?.concurrent ? this.adapterOptions.concurrent : 2;
         logger.debug(`Adapter concurrent: ${concurrent}`, NS);
         this.queue = new Queue(concurrent);
+        // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
         this.driver = new Driver(serialPortOptions.path!, serialPortOptions);
         this.waitress = new Waitress<Events.ZclPayload, WaitressMatcher>(this.waitressValidator, this.waitressTimeoutFormatter);
 
@@ -489,13 +490,20 @@ export class ZiGateAdapter extends Adapter {
 
         try {
             // The block is wrapped in trapping because if the network is already created, the firmware does not accept the new key.
-            logger.debug(`Set EPanID ${this.networkOptions.extendedPanID!.toString()}`, NS);
+            logger.debug(
+                `Set EPanID ${
+                    // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
+                    this.networkOptions.extendedPanID!.toString()
+                }`,
+                NS,
+            );
             await this.driver.sendCommand(ZiGateCommandCode.SetExtendedPANID, {
                 panId: this.networkOptions.extendedPanID,
             });
 
             await this.driver.sendCommand(ZiGateCommandCode.StartNetwork, {});
         } catch (error) {
+            // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
             logger.error((error as Error).stack!, NS);
         }
     }
@@ -562,6 +570,7 @@ export class ZiGateAdapter extends Adapter {
             data: ziGateObject.payload.payload,
             header: Zcl.Header.fromBuffer(ziGateObject.payload.payload),
             endpoint: <number>ziGateObject.payload.sourceEndpoint,
+            // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
             linkquality: ziGateObject.frame!.readRSSI(), // read: frame valid
             groupID: 0, // @todo
             wasBroadcast: false, // TODO

@@ -107,6 +107,7 @@ class ZiGateObject {
             try {
                 result[parameter.name] = buffalo.read(parameter.parameterType, options);
             } catch (error) {
+                // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
                 logger.error((error as Error).stack!, NS);
             }
         }

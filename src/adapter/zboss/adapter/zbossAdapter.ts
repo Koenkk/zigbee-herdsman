@@ -55,6 +55,7 @@ export class ZBOSSAdapter extends Adapter {
         logger.debug(() => `processMessage: ${JSON.stringify(frame)}`, NS);
 
         if (frame.payload.zdoClusterId !== undefined) {
+            // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
             this.emit("zdoResponse", frame.payload.zdoClusterId, frame.payload.zdo!);
         } else if (frame.type == FrameType.INDICATION) {
             switch (frame.commandId) {
@@ -171,8 +172,11 @@ export class ZBOSSAdapter extends Adapter {
 
     public async getNetworkParameters(): Promise<TsType.NetworkParameters> {
         return await this.queue.execute(async () => {
+            // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
             const channel = this.driver.netInfo!.network.channel;
+            // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
             const panID = this.driver.netInfo!.network.panID!;
+            // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
             const extendedPanID = this.driver.netInfo!.network.extendedPanID;
 
             return await Promise.resolve({
@@ -354,6 +358,7 @@ export class ZBOSSAdapter extends Adapter {
                 endpoint,
                 zclFrame.header.transactionSequenceNumber,
                 zclFrame.cluster.ID,
+                // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
                 command.response!,
                 timeout,
             );

@@ -95,6 +95,7 @@ export class Group extends Entity {
 
     private static loadFromDatabaseIfNecessary(): void {
         if (!Group.loadedFromDatabase) {
+            // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
             for (const entry of Entity.database!.getEntriesIterator(["Group"])) {
                 const group = Group.fromDatabaseEntry(entry);
                 Group.groups.set(group.groupID, group);
@@ -139,8 +140,10 @@ export class Group extends Entity {
             throw new Error(`Group with groupID '${groupID}' already exists`);
         }
 
+        // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
         const databaseID = Entity.database!.newID();
         const group = new Group(databaseID, groupID, [], {});
+        // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
         Entity.database!.insert(group.toDatabaseRecord());
 
         Group.groups.set(group.groupID, group);
@@ -158,7 +161,9 @@ export class Group extends Entity {
     public removeFromDatabase(): void {
         Group.loadFromDatabaseIfNecessary();
 
+        // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
         if (Entity.database!.has(this.databaseID)) {
+            // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
             Entity.database!.remove(this.databaseID);
         }
 
@@ -166,6 +171,7 @@ export class Group extends Entity {
     }
 
     public save(writeDatabase = true): void {
+        // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
         Entity.database!.update(this.toDatabaseRecord(), writeDatabase);
     }
 
@@ -227,10 +233,12 @@ export class Group extends Entity {
                 optionsWithDefaults.reservedBits,
             );
 
+            // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
             await Entity.adapter!.sendZclFrameToGroup(this.groupID, frame, optionsWithDefaults.srcEndpoint);
         } catch (error) {
             const err = error as Error;
             err.message = `${createLogMessage()} failed (${err.message})`;
+            // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
             logger.debug(err.stack!, NS);
 
             throw error;
@@ -264,10 +272,12 @@ export class Group extends Entity {
         logger.debug(createLogMessage, NS);
 
         try {
+            // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
             await Entity.adapter!.sendZclFrameToGroup(this.groupID, frame, optionsWithDefaults.srcEndpoint);
         } catch (error) {
             const err = error as Error;
             err.message = `${createLogMessage()} failed (${err.message})`;
+            // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
             logger.debug(err.stack!, NS);
 
             throw error;
@@ -296,10 +306,12 @@ export class Group extends Entity {
                 optionsWithDefaults.reservedBits,
             );
 
+            // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
             await Entity.adapter!.sendZclFrameToGroup(this.groupID, frame, optionsWithDefaults.srcEndpoint);
         } catch (error) {
             const err = error as Error;
             err.message = `${createLogMessage()} failed (${err.message})`;
+            // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
             logger.debug(err.stack!, NS);
 
             throw error;

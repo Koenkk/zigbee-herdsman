@@ -391,18 +391,22 @@ export class BuffaloZcl extends Buffalo {
             this.writeUInt8(v.options);
 
             if (panIDPresent) {
+                // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
                 this.writeUInt16(v.panID!);
             }
 
             if (gpdSecurityKeyPresent) {
+                // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
                 this.writeBuffer(v.securityKey!, 16);
             }
 
             if (hasGPDKeyMIC) {
+                // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
                 this.writeUInt32(v.keyMic!);
             }
 
             if (hasFrameCounter) {
+                // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
                 this.writeUInt32(v.frameCounter!);
             }
         } else if (value.commandID == 0xf3) {

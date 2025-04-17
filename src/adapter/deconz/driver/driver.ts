@@ -205,11 +205,14 @@ class Driver extends events.EventEmitter {
         this.parser.on("parsed", this.onParsed);
 
         return new Promise((resolve, reject): void => {
+            // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
             this.serialPort!.open((error) => {
                 if (error) {
                     reject(new Error(`Error while opening serialport '${error}'`));
                     this.initialized = false;
+                    // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
                     if (this.serialPort!.isOpen) {
+                        // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
                         this.serialPort!.close();
                     }
                 } else {
@@ -236,24 +239,29 @@ class Driver extends events.EventEmitter {
         this.parser.on("parsed", this.onParsed);
 
         return await new Promise((resolve, reject): void => {
+            // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
             this.socketPort!.on("connect", () => {
                 logger.debug("Socket connected", NS);
             });
 
+            // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
             this.socketPort!.on("ready", () => {
                 logger.debug("Socket ready", NS);
                 this.initialized = true;
                 resolve();
             });
 
+            // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
             this.socketPort!.once("close", this.onPortClose);
 
+            // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
             this.socketPort!.on("error", (error) => {
                 logger.error(`Socket error ${error}`, NS);
                 reject(new Error("Error while opening socket"));
                 this.initialized = false;
             });
 
+            // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
             this.socketPort!.connect(info.port, info.host);
         });
     }
@@ -263,6 +271,7 @@ class Driver extends events.EventEmitter {
             if (this.initialized) {
                 if (this.serialPort) {
                     this.serialPort.flush((): void => {
+                        // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
                         this.serialPort!.close((error): void => {
                             this.initialized = false;
 
@@ -276,6 +285,7 @@ class Driver extends events.EventEmitter {
                         });
                     });
                 } else {
+                    // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
                     this.socketPort!.destroy();
                     resolve();
                 }
@@ -438,6 +448,7 @@ class Driver extends events.EventEmitter {
                 }
             });
         } else {
+            // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
             this.socketPort!.write(slipframe, (err) => {
                 if (err) {
                     logger.debug(`Error writing socket Port: ${err.message}`, NS);
@@ -462,6 +473,7 @@ class Driver extends events.EventEmitter {
             switch (req.commandId) {
                 case PARAM.PARAM.FrameType.ReadParameter:
                     logger.debug(`send read parameter request from queue. seqNr: ${req.seqNumber} paramId: ${req.parameterId}`, NS);
+                    // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
                     this.sendReadParameterRequest(req.parameterId!, req.seqNumber);
                     break;
                 case PARAM.PARAM.FrameType.WriteParameter:
@@ -469,6 +481,7 @@ class Driver extends events.EventEmitter {
                         `send write parameter request from queue. seqNr: ${req.seqNumber} paramId: ${req.parameterId} param: ${req.parameter}`,
                         NS,
                     );
+                    // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
                     this.sendWriteParameterRequest(req.parameterId!, req.parameter!, req.seqNumber);
                     break;
                 case PARAM.PARAM.FrameType.ReadFirmwareVersion:
@@ -481,6 +494,7 @@ class Driver extends events.EventEmitter {
                     break;
                 case PARAM.PARAM.NetworkState.CHANGE_NETWORK_STATE:
                     logger.debug(`send change network state request from queue. seqNr: ${req.seqNumber}`, NS);
+                    // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
                     this.sendChangeNetworkStateRequest(req.seqNumber, req.networkState!);
                     break;
                 default:
@@ -497,6 +511,7 @@ class Driver extends events.EventEmitter {
             const req: Request = busyQueue[i];
             const now = Date.now();
 
+            // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
             if (now - req.ts! > 10000) {
                 logger.debug(`Timeout for request - CMD: 0x${req.commandId.toString(16)} seqNr: ${req.seqNumber}`, NS);
                 //remove from busyQueue
@@ -658,6 +673,7 @@ class Driver extends events.EventEmitter {
                         enableRTS();
                     }, this.readyToSendTimeout);
                     apsBusyQueue.push(req);
+                    // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
                     this.sendEnqueueSendDataRequest(req.request!, req.seqNumber);
                     break;
                 default:
@@ -778,6 +794,7 @@ class Driver extends events.EventEmitter {
             if (req.request != null && req.request.timeout != null) {
                 timeout = req.request.timeout * 1000; // seconds * 1000 = milliseconds
             }
+            // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
             if (now - req.ts! > timeout) {
                 logger.debug(`Timeout for aps request CMD: 0x${req.commandId.toString(16)} seq: ${req.seqNumber}`, NS);
                 //remove from busyQueue

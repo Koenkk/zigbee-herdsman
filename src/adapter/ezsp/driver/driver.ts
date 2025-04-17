@@ -343,9 +343,11 @@ export class Driver extends EventEmitter {
             initialSecurityState = emberSecurity(backup.networkOptions.networkKey);
             initialSecurityState.bitmask |= EmberInitialSecurityBitmask.NO_FRAME_COUNTER_RESET;
             initialSecurityState.networkKeySequenceNumber = backup.networkKeyInfo.sequenceNumber;
+            // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
             initialSecurityState.preconfiguredKey.contents = backup.ezsp!.hashed_tclk!;
         } else {
             await this.ezsp.execCommand("clearKeyTable");
+            // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
             initialSecurityState = emberSecurity(Buffer.from(this.nwkOpt.networkKey!));
         }
         await this.ezsp.setInitialSecurityState(initialSecurityState);
@@ -358,13 +360,18 @@ export class Driver extends EventEmitter {
         parameters.channels = 0x07fff800; // all channels
         if (restore) {
             // `backup` valid from above
+            // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
             parameters.panId = backup!.networkOptions.panId;
+            // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
             parameters.extendedPanId = backup!.networkOptions.extendedPanId;
+            // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
             parameters.radioChannel = backup!.logicalChannel;
+            // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
             parameters.nwkUpdateId = backup!.networkUpdateId;
         } else {
             parameters.radioChannel = this.nwkOpt.channelList[0];
             parameters.panId = this.nwkOpt.panID;
+            // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
             parameters.extendedPanId = Buffer.from(this.nwkOpt.extendedPanID!);
         }
 
@@ -958,14 +965,20 @@ export class Driver extends EventEmitter {
             logger.error("Configuration is not consistent with adapter backup!", NS);
             logger.error(`- PAN ID: configured=${options.panID}, adapter=${networkParams.panId}, backup=${backup.networkOptions.panId}`, NS);
             logger.error(
-                `- Extended PAN ID: configured=${Buffer.from(options.extendedPanID!).toString("hex")}, ` +
+                `- Extended PAN ID: configured=${
+                    // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
+                    Buffer.from(options.extendedPanID!).toString("hex")
+                }, ` +
                     `adapter=${Buffer.from(networkParams.extendedPanId).toString("hex")}, ` +
                     `backup=${Buffer.from(networkParams.extendedPanId).toString("hex")}`,
                 NS,
             );
             logger.error(`- Channel: configured=${options.channelList}, adapter=${networkParams.radioChannel}, backup=${backup.logicalChannel}`, NS);
             logger.error(
-                `- Network key: configured=${Buffer.from(options.networkKey!).toString("hex")}, ` +
+                `- Network key: configured=${
+                    // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
+                    Buffer.from(options.networkKey!).toString("hex")
+                }, ` +
                     `adapter=${Buffer.from(netKey).toString("hex")}, ` +
                     `backup=${backup.networkOptions.networkKey.toString("hex")}`,
                 NS,
@@ -979,7 +992,9 @@ export class Driver extends EventEmitter {
         // if the settings in the backup match the config, then the old network is in the chip and needs to be restored
         valid = valid && options.panID == backup.networkOptions.panId;
         valid = valid && options.channelList.includes(backup.logicalChannel);
+        // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
         valid = valid && Buffer.from(options.extendedPanID!).equals(backup.networkOptions.extendedPanId);
+        // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
         valid = valid && Buffer.from(options.networkKey!).equals(backup.networkOptions.networkKey);
         return valid;
     }

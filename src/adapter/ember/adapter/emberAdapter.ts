@@ -850,6 +850,7 @@ export class EmberAdapter extends Adapter {
             }
         }
 
+        // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
         const configNetworkKey = Buffer.from(this.networkOptions.networkKey!);
         const networkInitStruct: EmberNetworkInitStruct = {
             bitmask: EmberNetworkInitBitmask.PARENT_INFO_IN_TOKEN | EmberNetworkInitBitmask.END_DEVICE_REJOIN_ON_REBOOT,
@@ -928,6 +929,7 @@ export class EmberAdapter extends Adapter {
             if (backup != undefined) {
                 if (
                     this.networkOptions.panID === backup.networkOptions.panId &&
+                    // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
                     Buffer.from(this.networkOptions.extendedPanID!).equals(backup.networkOptions.extendedPanId) &&
                     this.networkOptions.channelList.includes(backup.logicalChannel) &&
                     configNetworkKey.equals(backup.networkOptions.networkKey)
@@ -955,10 +957,14 @@ export class EmberAdapter extends Adapter {
                 logger.info("[INIT TC] Forming from backup.", NS);
                 // `backup` valid in this `action` path (not detected by TS)
                 /* v8 ignore start */
+                // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
                 const keyList: LinkKeyBackupData[] = backup!.devices.map((device) => ({
                     deviceEui64: ZSpec.Utils.eui64BEBufferToHex(device.ieeeAddress),
+                    // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
                     key: {contents: device.linkKey!.key},
+                    // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
                     outgoingFrameCounter: device.linkKey!.txCounter,
+                    // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
                     incomingFrameCounter: device.linkKey!.rxCounter,
                 }));
                 /* v8 ignore stop */
@@ -968,13 +974,21 @@ export class EmberAdapter extends Adapter {
 
                 await this.formNetwork(
                     true /*from backup*/,
+                    // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
                     backup!.networkOptions.networkKey,
+                    // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
                     backup!.networkKeyInfo.sequenceNumber,
+                    // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
                     backup!.networkKeyInfo.frameCounter,
+                    // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
                     backup!.networkOptions.panId,
+                    // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
                     Array.from(backup!.networkOptions.extendedPanId),
+                    // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
                     backup!.logicalChannel,
+                    // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
                     backup!.ezsp!.hashed_tclk!, // valid from getStoredBackup
+                    // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
                     backup!.networkUpdateId,
                 );
 
@@ -989,6 +1003,7 @@ export class EmberAdapter extends Adapter {
                     0,
                     0,
                     this.networkOptions.panID,
+                    // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
                     this.networkOptions.extendedPanID!,
                     this.networkOptions.channelList[0],
                     randomBytes(EMBER_ENCRYPTION_KEY_SIZE), // rnd TC link key

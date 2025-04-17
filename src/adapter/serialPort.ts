@@ -45,6 +45,7 @@ export class SerialPort<T extends AutoDetectTypes = AutoDetectTypes> extends Ser
 
     public async asyncGet(): Promise<{cts: boolean; dsr: boolean; dcd: boolean}> {
         return await new Promise((resolve, reject): void => {
+            // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
             this.get((err, options?) => (err ? reject(err) : resolve(options!)));
         });
     }

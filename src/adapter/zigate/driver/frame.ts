@@ -90,6 +90,7 @@ export default class ZiGateFrame {
             try {
                 if (this.readMsgCode() !== 0x8001) logger.debug(() => `${JSON.stringify(this)}`, NS);
             } catch (error) {
+                // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
                 logger.error((error as Error).stack!, NS);
             }
 
