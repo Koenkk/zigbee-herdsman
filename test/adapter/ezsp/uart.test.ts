@@ -56,11 +56,11 @@ const mocks = [
 
 describe("UART", () => {
     let serialDriver;
-    beforeAll(async () => {
+    beforeAll(() => {
         vi.useFakeTimers();
     });
 
-    afterAll(async () => {
+    afterAll(() => {
         vi.useRealTimers();
         vi.restoreAllMocks();
     });

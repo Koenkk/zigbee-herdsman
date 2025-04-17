@@ -2,7 +2,7 @@ import {MockBinding, type MockPortBinding} from "@serialport/binding-mock";
 import type {OpenOptions} from "@serialport/stream";
 
 import {EzspStatus} from "../../../src/adapter/ember/enums";
-import {EzspBuffalo} from "../../../src/adapter/ember/ezsp/buffalo.ts";
+import {EzspBuffalo} from "../../../src/adapter/ember/ezsp/buffalo";
 import {
     EZSP_EXTENDED_FRAME_CONTROL_LB_INDEX,
     EZSP_FRAME_CONTROL_COMMAND,
@@ -14,7 +14,7 @@ import {
     EZSP_PARAMETERS_INDEX,
     EZSP_SEQUENCE_INDEX,
 } from "../../../src/adapter/ember/ezsp/consts";
-import {EzspFrameID} from "../../../src/adapter/ember/ezsp/enums.ts";
+import {EzspFrameID} from "../../../src/adapter/ember/ezsp/enums";
 import {CONFIG_TX_K, UartAsh} from "../../../src/adapter/ember/uart/ash";
 import {EZSP_HOST_RX_POOL_SIZE, TX_POOL_BUFFERS} from "../../../src/adapter/ember/uart/consts";
 import {EzspBuffer} from "../../../src/adapter/ember/uart/queues";
@@ -48,11 +48,11 @@ describe("Ember UART ASH Protocol", () => {
     let buffalo: EzspBuffalo;
     let frameSequence: number;
 
-    beforeAll(async () => {
+    beforeAll(() => {
         vi.useRealTimers(); // messes with serialport promise handling otherwise?
     });
 
-    afterAll(async () => {
+    afterAll(() => {
         vi.useRealTimers();
     });
 

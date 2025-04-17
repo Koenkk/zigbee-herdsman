@@ -130,7 +130,7 @@ export class ZBOSSAdapter extends Adapter {
     }
 
     public async getCoordinatorIEEE(): Promise<string> {
-        return this.driver.netInfo.ieeeAddr;
+        return await Promise.resolve(this.driver.netInfo.ieeeAddr);
     }
 
     public async getCoordinatorVersion(): Promise<TsType.CoordinatorVersion> {
@@ -158,36 +158,36 @@ export class ZBOSSAdapter extends Adapter {
     }
 
     public async reset(type: "soft" | "hard"): Promise<void> {
-        throw new Error(`This adapter does not reset '${type}'`);
+        await Promise.reject(new Error(`This adapter does not reset '${type}'`));
     }
 
     public async supportsBackup(): Promise<boolean> {
-        return false;
+        return await Promise.resolve(false);
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     public async backup(_ieeeAddressesInDatabase: string[]): Promise<Backup> {
-        throw new Error("This adapter does not support backup");
+        return await Promise.reject(new Error("This adapter does not support backup"));
     }
 
     public async getNetworkParameters(): Promise<TsType.NetworkParameters> {
-        return await this.queue.execute<TsType.NetworkParameters>(async () => {
+        return await this.queue.execute(async () => {
             const channel = this.driver.netInfo!.network.channel;
             const panID = this.driver.netInfo!.network.panID!;
             const extendedPanID = this.driver.netInfo!.network.extendedPanID;
 
-            return {
+            return await Promise.resolve({
                 panID,
                 extendedPanID: ZSpec.Utils.eui64LEBufferToHex(Buffer.from(extendedPanID)),
                 channel,
                 nwkUpdateID: 0,
-            };
+            });
         });
     }
 
     public async addInstallCode(ieeeAddress: string, key: Buffer, hashed: boolean): Promise<void> {
         logger.error(`NOT SUPPORTED: sendZclFrameToGroup(${ieeeAddress},${key.toString("hex")},${hashed}`, NS);
-        throw new Error(`Install code is not supported for 'zboss' yet`);
+        await Promise.reject(new Error(`Install code is not supported for 'zboss' yet`));
     }
 
     public async permitJoin(seconds: number, networkAddress?: number): Promise<void> {
@@ -448,22 +448,20 @@ export class ZBOSSAdapter extends Adapter {
     }
 
     public async setChannelInterPAN(channel: number): Promise<void> {
-        logger.error(`NOT SUPPORTED: setChannelInterPAN(${channel})`, NS);
-        return;
+        await Promise.reject(new Error(`NOT SUPPORTED: setChannelInterPAN(${channel})`));
     }
 
     public async sendZclFrameInterPANToIeeeAddr(zclFrame: Zcl.Frame, ieeeAddress: string): Promise<void> {
-        logger.error(`NOT SUPPORTED: sendZclFrameInterPANToIeeeAddr(${JSON.stringify(zclFrame)},${ieeeAddress})`, NS);
+        await Promise.reject(new Error(`NOT SUPPORTED: sendZclFrameInterPANToIeeeAddr(${JSON.stringify(zclFrame)},${ieeeAddress})`));
         return;
     }
 
     public async sendZclFrameInterPANBroadcast(zclFrame: Zcl.Frame, timeout: number): Promise<ZclPayload> {
-        logger.error(`NOT SUPPORTED: sendZclFrameInterPANBroadcast(${JSON.stringify(zclFrame)},${timeout})`, NS);
-        throw new Error(`Is not supported for 'zboss' yet`);
+        return await Promise.reject(new Error(`NOT SUPPORTED: sendZclFrameInterPANBroadcast(${JSON.stringify(zclFrame)},${timeout})`));
     }
 
     public async restoreChannelInterPAN(): Promise<void> {
-        return;
+        await Promise.reject(new Error("NOT SUPPORTED: restoreChannelInterPAN()"));
     }
 
     private waitForInternal(

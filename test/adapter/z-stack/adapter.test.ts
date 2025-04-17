@@ -1379,11 +1379,11 @@ const mocksClear = [mockLogger.debug, mockLogger.info, mockLogger.warning, mockL
 describe("zstack-adapter", () => {
     let adapter: ZStackAdapter;
 
-    beforeAll(async () => {
+    beforeAll(() => {
         setLogger(mockLogger);
     });
 
-    afterAll(async () => {
+    afterAll(() => {
         vi.useRealTimers();
     });
 
@@ -2068,7 +2068,7 @@ describe("zstack-adapter", () => {
 
     /* Original Tests */
 
-    it("Call znp constructor", async () => {
+    it("Call znp constructor", () => {
         expect(Znp).toHaveBeenCalledWith("dummy", 800, false);
     });
 
@@ -3915,7 +3915,7 @@ describe("zstack-adapter", () => {
         await adapter.start();
         mockZnpRequest.mockClear();
         mockZnpRequestZdo.mockClear();
-        mockZnpRequestZdo.mockRejectedValueOnce("Failed");
+        mockZnpRequestZdo.mockRejectedValueOnce(new Error("Failed"));
 
         const clusterId = Zdo.ClusterId.NODE_DESCRIPTOR_REQUEST;
         const zdoPayload = Zdo.Buffalo.buildRequest(false, clusterId, 1234);

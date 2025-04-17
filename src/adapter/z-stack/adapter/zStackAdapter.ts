@@ -168,7 +168,7 @@ export class ZStackAdapter extends Adapter {
     }
 
     public async getCoordinatorVersion(): Promise<CoordinatorVersion> {
-        return {type: ZnpVersion[this.version.product], meta: this.version};
+        return await Promise.resolve({type: ZnpVersion[this.version.product], meta: this.version});
     }
 
     public async permitJoin(seconds: number, networkAddress?: number): Promise<void> {
@@ -895,7 +895,7 @@ export class ZStackAdapter extends Adapter {
     }
 
     public async supportsBackup(): Promise<boolean> {
-        return true;
+        return await Promise.resolve(true);
     }
 
     public async backup(ieeeAddressesInDatabase: string[]): Promise<Models.Backup> {

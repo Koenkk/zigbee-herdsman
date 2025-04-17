@@ -146,7 +146,7 @@ export default class ZiGate extends EventEmitter<ZiGateEventMap> {
                     const statusResponse: ZiGateObject = await resultPromise;
                     if (statusResponse.payload.status !== Status.E_SL_MSG_STATUS_SUCCESS) {
                         waitersId.map((id) => this.waitress.remove(id));
-                        return await Promise.reject(statusResponse);
+                        return await Promise.reject(new Error(`${statusResponse}`));
                     } else if (waiters.length === 0) {
                         return await Promise.resolve(statusResponse);
                     }
@@ -270,7 +270,7 @@ export default class ZiGate extends EventEmitter<ZiGateEventMap> {
                 logger.debug("Socket connected", NS);
             });
 
-            this.socketPort!.on("ready", async () => {
+            this.socketPort!.on("ready", () => {
                 logger.debug("Socket ready", NS);
                 this.initialized = true;
                 resolve();

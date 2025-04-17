@@ -8,7 +8,7 @@ const coordinator = new Controller({
     databasePath: DB,
 });
 
-coordinator.on("message", async (msg) => {
+coordinator.on("message", (msg) => {
     console.log(msg);
 });
 

@@ -33,7 +33,7 @@ export class AdapterBackup {
     /**
      * Loads currently stored backup and returns it in internal backup model.
      */
-    public async getStoredBackup(): Promise<Models.Backup | undefined> {
+    public getStoredBackup(): Models.Backup | undefined {
         try {
             fs.accessSync(this.defaultPath);
         } catch {

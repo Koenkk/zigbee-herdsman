@@ -515,11 +515,11 @@ export class DeconzAdapter extends Adapter {
     }
 
     public async supportsBackup(): Promise<boolean> {
-        return false;
+        return await Promise.resolve(false);
     }
 
     public async backup(): Promise<Models.Backup> {
-        throw new Error("This adapter does not support backup");
+        return await Promise.reject(new Error("This adapter does not support backup"));
     }
 
     public async getNetworkParameters(): Promise<NetworkParameters> {
@@ -545,22 +545,22 @@ export class DeconzAdapter extends Adapter {
     }
 
     public async restoreChannelInterPAN(): Promise<void> {
-        throw new Error("not supported");
+        await Promise.reject(new Error("not supported"));
     }
     public async sendZclFrameInterPANToIeeeAddr(_zclFrame: Zcl.Frame, _ieeeAddr: string): Promise<void> {
-        throw new Error("not supported");
+        await Promise.reject(new Error("not supported"));
     }
     public async sendZclFrameInterPANBroadcast(_zclFrame: Zcl.Frame, _timeout: number): Promise<Events.ZclPayload> {
-        throw new Error("not supported");
+        return await Promise.reject(new Error("not supported"));
     }
     public async sendZclFrameInterPANBroadcastWithResponse(_zclFrame: Zcl.Frame, _timeout: number): Promise<Events.ZclPayload> {
-        throw new Error("not supported");
+        return await Promise.reject(new Error("not supported"));
     }
     public async setChannelInterPAN(_channel: number): Promise<void> {
-        throw new Error("not supported");
+        await Promise.reject(new Error("not supported"));
     }
     public async sendZclFrameInterPANIeeeAddr(_zclFrame: Zcl.Frame, _ieeeAddr: string): Promise<void> {
-        throw new Error("not supported");
+        await Promise.reject(new Error("not supported"));
     }
 
     /**

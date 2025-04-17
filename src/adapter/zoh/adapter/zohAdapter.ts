@@ -198,7 +198,7 @@ export class ZoHAdapter extends Adapter {
      * @param err A boolean for Socket, an Error for serialport
      */
     /* v8 ignore start */
-    private async onPortClose(error: boolean | Error): Promise<void> {
+    private onPortClose(error: boolean | Error): void {
         if (error) {
             logger.error("Port closed unexpectedly.", NS);
         } else {
@@ -212,7 +212,7 @@ export class ZoHAdapter extends Adapter {
      * @param error
      */
     /* v8 ignore start */
-    private async onPortError(error: Error): Promise<void> {
+    private onPortError(error: Error): void {
         logger.error(`Port ${error}`, NS);
 
         this.emit("disconnected");
@@ -288,11 +288,11 @@ export class ZoHAdapter extends Adapter {
     }
 
     public async getCoordinatorIEEE(): Promise<string> {
-        return `0x${bigUInt64ToHexBE(this.driver.netParams.eui64)}`;
+        return await Promise.resolve(`0x${bigUInt64ToHexBE(this.driver.netParams.eui64)}`);
     }
 
     public async getCoordinatorVersion(): Promise<TsType.CoordinatorVersion> {
-        return {
+        return await Promise.resolve({
             type: "ZigBee on Host",
             meta: {
                 major: this.driver.protocolVersionMajor,
@@ -301,39 +301,39 @@ export class ZoHAdapter extends Adapter {
                 apiVersion: this.driver.rcpAPIVersion,
                 revision: `https://github.com/Nerivec/zigbee-on-host (using: ${this.driver.ncpVersion})`,
             },
-        };
+        });
     }
 
     /* v8 ignore start */
     public async reset(type: "soft" | "hard"): Promise<void> {
-        throw new Error(`Reset ${type} not support`);
+        await Promise.reject(new Error(`Reset ${type} not support`));
     }
     /* v8 ignore stop */
 
     /* v8 ignore start */
     public async supportsBackup(): Promise<boolean> {
-        return false;
+        return await Promise.resolve(false);
     }
     /* v8 ignore stop */
 
     /* v8 ignore start */
     public async backup(_ieeeAddressesInDatabase: string[]): Promise<Backup> {
-        throw new Error("ZigBee on Host handles backup internally");
+        return await Promise.reject(new Error("ZigBee on Host handles backup internally"));
     }
     /* v8 ignore stop */
 
     public async getNetworkParameters(): Promise<TsType.NetworkParameters> {
-        return {
+        return await Promise.resolve({
             panID: this.driver.netParams.panId,
             extendedPanID: `0x${bigUInt64ToHexBE(this.driver.netParams.extendedPANId)}`,
             channel: this.driver.netParams.channel,
             nwkUpdateID: this.driver.netParams.nwkUpdateId,
-        };
+        });
     }
 
     /* v8 ignore start */
     public async addInstallCode(ieeeAddress: string, key: Buffer): Promise<void> {
-        throw new Error(`not supported ${ieeeAddress}, ${key.toString("hex")}`);
+        await Promise.reject(new Error(`not supported ${ieeeAddress}, ${key.toString("hex")}`));
     }
     /* v8 ignore stop */
 
@@ -593,25 +593,25 @@ export class ZoHAdapter extends Adapter {
 
     /* v8 ignore start */
     public async setChannelInterPAN(channel: number): Promise<void> {
-        throw new Error(`not supported ${channel}`);
+        await Promise.reject(new Error(`not supported ${channel}`));
     }
     /* v8 ignore stop */
 
     /* v8 ignore start */
     public async sendZclFrameInterPANToIeeeAddr(zclFrame: Zcl.Frame, ieeeAddress: string): Promise<void> {
-        throw new Error(`not supported ${JSON.stringify(zclFrame)}, ${ieeeAddress}`);
+        await Promise.reject(new Error(`not supported ${JSON.stringify(zclFrame)}, ${ieeeAddress}`));
     }
     /* v8 ignore stop */
 
     /* v8 ignore start */
     public async sendZclFrameInterPANBroadcast(zclFrame: Zcl.Frame, timeout: number): Promise<ZclPayload> {
-        throw new Error(`not supported ${JSON.stringify(zclFrame)}, ${timeout}`);
+        return await Promise.reject(new Error(`not supported ${JSON.stringify(zclFrame)}, ${timeout}`));
     }
     /* v8 ignore stop */
 
     /* v8 ignore start */
     public async restoreChannelInterPAN(): Promise<void> {
-        throw new Error("not supported");
+        await Promise.reject(new Error("not supported"));
     }
     /* v8 ignore stop */
 

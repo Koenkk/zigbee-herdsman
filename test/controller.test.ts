@@ -452,7 +452,7 @@ describe("Controller", () => {
         dummyBackup = await Utils.BackupUtils.toUnifiedBackup(mockDummyBackup);
     });
 
-    afterAll(async () => {
+    afterAll(() => {
         vi.useRealTimers();
         fs.rmSync(TEMP_PATH, {recursive: true, force: true});
     });
@@ -8624,7 +8624,7 @@ describe("Controller", () => {
         // @ts-expect-error private
         const origQueueRequest = endpoint.pendingRequests.queue;
         // @ts-expect-error private
-        endpoint.pendingRequests.queue = async (req) => {
+        endpoint.pendingRequests.queue = (req) => {
             // @ts-expect-error private
             const f = origQueueRequest.call(endpoint.pendingRequests, req);
             vi.advanceTimersByTime(10);
@@ -8633,9 +8633,7 @@ describe("Controller", () => {
         // @ts-expect-error private
         endpoint.pendingRequests.add(new Request(async () => {}, frame, 100));
         mocksendZclFrameToEndpoint.mockClear();
-        mocksendZclFrameToEndpoint.mockImplementationOnce(async () => {
-            throw new Error("Dogs barking too hard");
-        });
+        mocksendZclFrameToEndpoint.mockRejectedValueOnce(new Error("Dogs barking too hard"));
         mocksendZclFrameToEndpoint.mockReturnValueOnce(null);
         const nextTick = new Promise(process.nextTick);
         const result = endpoint.write("genOnOff", {onOff: 1}, {disableResponse: true});
@@ -8663,12 +8661,8 @@ describe("Controller", () => {
             new Request(async () => {}, {}, 100),
         );
         mocksendZclFrameToEndpoint.mockClear();
-        mocksendZclFrameToEndpoint.mockImplementationOnce(async () => {
-            throw new Error("Dogs barking too hard");
-        });
-        mocksendZclFrameToEndpoint.mockImplementationOnce(async () => {
-            throw new Error("Cats barking too hard");
-        });
+        mocksendZclFrameToEndpoint.mockRejectedValueOnce(new Error("Dogs barking too hard"));
+        mocksendZclFrameToEndpoint.mockRejectedValueOnce(new Error("Cats barking too hard"));
         try {
             await endpoint.write("genOnOff", {onOff: 1}, {disableResponse: true, sendPolicy: "immediate"});
         } catch (error) {
@@ -8704,7 +8698,7 @@ describe("Controller", () => {
         // @ts-expect-error private
         const origQueueRequest = endpoint.pendingRequests.queue;
         // @ts-expect-error private
-        endpoint.pendingRequests.queue = async (req) => {
+        endpoint.pendingRequests.queue = (req) => {
             // @ts-expect-error private
             const f = origQueueRequest.call(endpoint.pendingRequests, req);
             vi.advanceTimersByTime(10);
@@ -8730,12 +8724,8 @@ describe("Controller", () => {
         );
 
         mocksendZclFrameToEndpoint.mockClear();
-        mocksendZclFrameToEndpoint.mockImplementationOnce(async () => {
-            throw new Error("Cats barking too hard");
-        });
-        mocksendZclFrameToEndpoint.mockImplementationOnce(async () => {
-            throw new Error("Dogs barking too hard");
-        });
+        mocksendZclFrameToEndpoint.mockRejectedValueOnce(new Error("Cats barking too hard"));
+        mocksendZclFrameToEndpoint.mockRejectedValueOnce(new Error("Dogs barking too hard"));
         let nextTick = new Promise(process.nextTick);
         const result = endpoint.write("genOnOff", {onOff: 1}, {disableResponse: true});
         await nextTick;
@@ -8770,7 +8760,7 @@ describe("Controller", () => {
         // @ts-expect-error private
         const origQueueRequest = endpoint.pendingRequests.queue;
         // @ts-expect-error private
-        endpoint.pendingRequests.queue = async (req) => {
+        endpoint.pendingRequests.queue = (req) => {
             // @ts-expect-error private
             const f = origQueueRequest.call(endpoint.pendingRequests, req);
             vi.advanceTimersByTime(10);
@@ -8786,34 +8776,16 @@ describe("Controller", () => {
         // Queue content:
         // 1. empty request
         mocksendZclFrameToEndpoint.mockClear();
-        mocksendZclFrameToEndpoint.mockImplementationOnce(async () => {
-            throw new Error("Error one");
-        });
-        mocksendZclFrameToEndpoint.mockImplementationOnce(async () => {
-            throw new Error("Error two");
-        });
-        mocksendZclFrameToEndpoint.mockImplementationOnce(async () => {
-            throw new Error("Error three");
-        });
-        mocksendZclFrameToEndpoint.mockImplementationOnce(async () => {
-            throw new Error("Error four");
-        });
-        mocksendZclFrameToEndpoint.mockImplementationOnce(async () => {
-            throw new Error("Error five");
-        });
-        mocksendZclFrameToEndpoint.mockImplementationOnce(async () => {
-            throw new Error("Error six");
-        });
-        mocksendZclFrameToEndpoint.mockImplementationOnce(async () => {
-            throw new Error("Error seven");
-        });
-        mocksendZclFrameToEndpoint.mockImplementationOnce(async () => {
-            throw new Error("Error eight");
-        });
+        mocksendZclFrameToEndpoint.mockRejectedValueOnce(new Error("Error one"));
+        mocksendZclFrameToEndpoint.mockRejectedValueOnce(new Error("Error two"));
+        mocksendZclFrameToEndpoint.mockRejectedValueOnce(new Error("Error three"));
+        mocksendZclFrameToEndpoint.mockRejectedValueOnce(new Error("Error four"));
+        mocksendZclFrameToEndpoint.mockRejectedValueOnce(new Error("Error five"));
+        mocksendZclFrameToEndpoint.mockRejectedValueOnce(new Error("Error six"));
+        mocksendZclFrameToEndpoint.mockRejectedValueOnce(new Error("Error seven"));
+        mocksendZclFrameToEndpoint.mockRejectedValueOnce(new Error("Error eight"));
         mocksendZclFrameToEndpoint.mockImplementationOnce(async () => {});
-        mocksendZclFrameToEndpoint.mockImplementationOnce(async () => {
-            throw new Error("Dogs barking too hard");
-        });
+        mocksendZclFrameToEndpoint.mockRejectedValueOnce(new Error("Dogs barking too hard"));
 
         const createResponse = (attrData: number) => {
             const frame = Zcl.Frame.create(
@@ -8829,10 +8801,10 @@ describe("Controller", () => {
             );
             return {clusterID: frame.cluster.ID, header: frame.header, data: frame.toBuffer()};
         };
-        mocksendZclFrameToEndpoint.mockReturnValueOnce(createResponse(1));
-        mocksendZclFrameToEndpoint.mockReturnValueOnce(createResponse(2));
-        mocksendZclFrameToEndpoint.mockReturnValueOnce(createResponse(3));
-        mocksendZclFrameToEndpoint.mockReturnValueOnce(createResponse(4));
+        mocksendZclFrameToEndpoint.mockResolvedValueOnce(createResponse(1));
+        mocksendZclFrameToEndpoint.mockResolvedValueOnce(createResponse(2));
+        mocksendZclFrameToEndpoint.mockResolvedValueOnce(createResponse(3));
+        mocksendZclFrameToEndpoint.mockResolvedValueOnce(createResponse(4));
 
         let result1;
         // biome-ignore lint/correctness/noUnusedVariables: test
@@ -8971,9 +8943,7 @@ describe("Controller", () => {
         expect(device.checkinInterval).toBe(999);
         expect(device.pendingRequestTimeout).toBe(999000);
         mocksendZclFrameToEndpoint.mockClear();
-        mocksendZclFrameToEndpoint.mockImplementationOnce(async () => {
-            throw new Error("Dogs barking too hard");
-        });
+        mocksendZclFrameToEndpoint.mockRejectedValueOnce(new Error("Dogs barking too hard"));
 
         // We need to send the data after it's been queued, but before we await
         // the promise. Hijacking queueRequest seems easiest.
@@ -9036,7 +9006,7 @@ describe("Controller", () => {
         // @ts-expect-error private
         const origQueueRequest = endpoint.pendingRequests.queue;
         // @ts-expect-error private
-        endpoint.pendingRequests.queue = async (req) => {
+        endpoint.pendingRequests.queue = (req) => {
             // @ts-expect-error private
             const f = origQueueRequest.call(endpoint.pendingRequests, req);
             vi.advanceTimersByTime(10);
@@ -9075,7 +9045,7 @@ describe("Controller", () => {
 
         // onZclData is called via mockAdapterEvents, but we need to wait until it has finished
         const origOnZclData = device.onZclData;
-        device.onZclData = async (a, b, c) => {
+        device.onZclData = (a, b, c) => {
             const f = origOnZclData.call(device, a, b, c);
             vi.advanceTimersByTime(10);
             return f;
@@ -9733,18 +9703,18 @@ describe("Controller", () => {
 
     it("Adapter permitJoin fails during stop", async () => {
         await controller.start();
-        mockAdapterPermitJoin.mockRejectedValueOnce("timeout");
+        mockAdapterPermitJoin.mockRejectedValueOnce(new Error("timeout"));
         await controller.stop();
 
-        expect(mockLogger.error).toHaveBeenCalledWith("Failed to disable join on stop: timeout", "zh:controller");
+        expect(mockLogger.error).toHaveBeenCalledWith("Failed to disable join on stop: Error: timeout", "zh:controller");
     });
 
     it("Adapter stop fails after adapter disconnected", async () => {
         await controller.start();
-        mockAdapterStop.mockRejectedValueOnce("timeout");
+        mockAdapterStop.mockRejectedValueOnce(new Error("timeout"));
         await mockAdapterEvents["disconnected"]();
 
-        expect(mockLogger.error).toHaveBeenCalledWith("Failed to stop adapter on disconnect: timeout", "zh:controller");
+        expect(mockLogger.error).toHaveBeenCalledWith("Failed to stop adapter on disconnect: Error: timeout", "zh:controller");
     });
 
     it("Device network address changed while Z2M was offline, received no notification on start", async () => {

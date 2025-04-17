@@ -150,7 +150,7 @@ export class EZSPAdapter extends Adapter {
         await this.driver.stop();
     }
 
-    public async onDriverClose(): Promise<void> {
+    public onDriverClose(): void {
         logger.debug("onDriverClose()", NS);
 
         if (!this.closing) {
@@ -159,7 +159,7 @@ export class EZSPAdapter extends Adapter {
     }
 
     public async getCoordinatorIEEE(): Promise<string> {
-        return `0x${this.driver.ieee.toString()}`;
+        return await Promise.resolve(`0x${this.driver.ieee.toString()}`);
     }
 
     public async permitJoin(seconds: number, networkAddress?: number): Promise<void> {
@@ -211,7 +211,7 @@ export class EZSPAdapter extends Adapter {
     }
 
     public async getCoordinatorVersion(): Promise<CoordinatorVersion> {
-        return {type: `EZSP v${this.driver.version.product}`, meta: this.driver.version};
+        return await Promise.resolve({type: `EZSP v${this.driver.version.product}`, meta: this.driver.version});
     }
 
     public async addInstallCode(ieeeAddress: string, key: Buffer, hashed: boolean): Promise<void> {
@@ -456,16 +456,16 @@ export class EZSPAdapter extends Adapter {
     }
 
     public async getNetworkParameters(): Promise<NetworkParameters> {
-        return {
+        return await Promise.resolve({
             panID: this.driver.networkParams.panId,
             extendedPanID: ZSpec.Utils.eui64LEBufferToHex(this.driver.networkParams.extendedPanId),
             channel: this.driver.networkParams.radioChannel,
             nwkUpdateID: this.driver.networkParams.nwkUpdateId,
-        };
+        });
     }
 
     public async supportsBackup(): Promise<boolean> {
-        return true;
+        return await Promise.resolve(true);
     }
 
     public async backup(): Promise<Models.Backup> {

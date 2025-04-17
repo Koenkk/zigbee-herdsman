@@ -543,7 +543,7 @@ export class UartAsh extends EventEmitter<UartAshEventMap> {
      * Handle port closing
      * @param err A boolean for Socket, an Error for serialport
      */
-    private async onPortClose(error: boolean | Error): Promise<void> {
+    private onPortClose(error: boolean | Error): void {
         logger.info("Port closed.", NS);
 
         if (error && this.flags !== 0) {
@@ -557,7 +557,7 @@ export class UartAsh extends EventEmitter<UartAshEventMap> {
      * Handle port error
      * @param error
      */
-    private async onPortError(error: Error): Promise<void> {
+    private onPortError(error: Error): void {
         logger.error(`Port ${error}`, NS);
         this.flags = 0;
         this.emit("fatalError", EzspStatus.ERROR_SERIAL_INIT);

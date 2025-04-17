@@ -111,11 +111,11 @@ const mocks = [
 describe("ZNP", () => {
     let znp: Znp;
 
-    beforeAll(async () => {
+    beforeAll(() => {
         vi.useFakeTimers();
     });
 
-    afterAll(async () => {
+    afterAll(() => {
         vi.useRealTimers();
     });
 
@@ -957,13 +957,13 @@ describe("ZNP", () => {
         }).toThrow();
     });
 
-    it("ZpiObject with cmd and non sapi is not reset command", async () => {
+    it("ZpiObject with cmd and non sapi is not reset command", () => {
         // @ts-ignore; make sure we always get a new instance
         const obj = new ZpiObject(UnpiConstants.Type.SREQ, UnpiConstants.Subsystem.AF, "systemReset", 0, {}, []);
         expect(obj.isResetCommand()).toBeFalsy();
     });
 
-    it("ZpiObject parse payload for endDeviceAnnceInd", async () => {
+    it("ZpiObject parse payload for endDeviceAnnceInd", () => {
         const buffer = Buffer.from([0, 0, 0, 1, 1, 2, 3, 4, 5, 6, 7, 8, 5]);
         const frame = new UnpiFrame(UnpiConstants.Type.AREQ, UnpiConstants.Subsystem.ZDO, 193, buffer);
         const obj = ZpiObject.fromUnpiFrame(frame);
@@ -986,7 +986,7 @@ describe("ZNP", () => {
         ]);
     });
 
-    it("ZpiObject parse payload for nwkAddrRsp", async () => {
+    it("ZpiObject parse payload for nwkAddrRsp", () => {
         const buffer = Buffer.from([0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x01, 0x01, 0x00, 0x02, 0x10, 0x10, 0x11, 0x11]);
         const frame = new UnpiFrame(UnpiConstants.Type.AREQ, UnpiConstants.Subsystem.ZDO, 128, buffer);
         const obj = ZpiObject.fromUnpiFrame(frame);

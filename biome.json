@@ -71,7 +71,7 @@
             },
             "suspicious": {
                 "noConstEnum": "off",
-                "useAwait": "off",
+                "useAwait": "error",
                 "noImplicitAnyLet": "off",
                 "noExplicitAny": "off",
                 "noConfusingVoidType": "off",

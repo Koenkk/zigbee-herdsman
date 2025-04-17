@@ -97,7 +97,7 @@ describe("GreenPower", () => {
         logErrorSpy = vi.spyOn(logger, "error");
     });
 
-    beforeEach(async () => {
+    beforeEach(() => {
         clearLogMocks();
 
         gp = new GreenPower(
@@ -111,11 +111,11 @@ describe("GreenPower", () => {
         );
     });
 
-    afterAll(async () => {
+    afterAll(() => {
         vi.useRealTimers();
     });
 
-    it("encodes & decodes pairing options", async () => {
+    it("encodes & decodes pairing options", () => {
         let rawByte = 0b000000000110101000;
         let rawOptions = {
             appId: 0,
@@ -223,7 +223,7 @@ describe("GreenPower", () => {
         expect(rawByte).toStrictEqual(byte);
     });
 
-    it("encodes & decodes commissioning mode options", async () => {
+    it("encodes & decodes commissioning mode options", () => {
         let rawByte = 0x0b;
         let rawOptions = {action: 1, commissioningWindowPresent: true, exitMode: 0b10, channelPresent: false, unicastCommunication: false};
         let options = GreenPower.decodeCommissioningModeOptions(rawByte);

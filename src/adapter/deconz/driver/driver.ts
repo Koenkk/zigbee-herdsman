@@ -98,8 +98,8 @@ class Driver extends events.EventEmitter {
         ); // 8 minutes
 
         this.onParsed = this.onParsed.bind(this);
-        this.frameParserEvent.on("receivedDataNotification", async (data: number) => {
-            await this.catchPromise(this.checkDeviceStatus(data));
+        this.frameParserEvent.on("receivedDataNotification", (data: number) => {
+            this.checkDeviceStatus(data);
         });
 
         this.on("close", () => {
@@ -173,7 +173,7 @@ class Driver extends events.EventEmitter {
             }, this.processQueues),
         ); // check timeouts for all open aps requests
         this.registerInterval(
-            setInterval(async () => {
+            setInterval(() => {
                 this.processApsConfirmIndQueue();
             }, this.processQueues),
         ); // fire aps indications and confirms
@@ -240,7 +240,7 @@ class Driver extends events.EventEmitter {
                 logger.debug("Socket connected", NS);
             });
 
-            this.socketPort!.on("ready", async () => {
+            this.socketPort!.on("ready", () => {
                 logger.debug("Socket ready", NS);
                 this.initialized = true;
                 resolve();
@@ -549,7 +549,7 @@ class Driver extends events.EventEmitter {
         });
     }
 
-    private async checkDeviceStatus(currentDeviceStatus: number): Promise<void> {
+    private checkDeviceStatus(currentDeviceStatus: number): void {
         const networkState = currentDeviceStatus & 0x03;
         this.apsDataConfirm = (currentDeviceStatus >> 2) & 0x01;
         this.apsDataIndication = (currentDeviceStatus >> 3) & 0x01;

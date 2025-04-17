@@ -692,7 +692,7 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
         }
     }
 
-    private async onDeviceLeaveGreenPower(sourceID: number): Promise<void> {
+    private onDeviceLeaveGreenPower(sourceID: number): void {
         logger.debug(`Green power device '${sourceID}' left`, NS);
 
         // Green power devices don't have an ieeeAddr, the sourceID is unique and static so use this.
@@ -792,7 +792,7 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
         }
     }
 
-    private async onZdoResponse(clusterId: Zdo.ClusterId, response: ZdoTypes.GenericZdoResponse): Promise<void> {
+    private onZdoResponse(clusterId: Zdo.ClusterId, response: ZdoTypes.GenericZdoResponse): void {
         logger.debug(
             `Received ZDO response: clusterId=${Zdo.ClusterId[clusterId]}, status=${Zdo.Status[response[0]]}, payload=${JSON.stringify(response[1])}`,
             NS,

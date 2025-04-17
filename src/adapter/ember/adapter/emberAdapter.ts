@@ -512,7 +512,7 @@ export class EmberAdapter extends Adapter {
      * @param sender The sender of the response. Should match `payload.nodeId` in many responses.
      * @param messageContents The content of the response.
      */
-    private async onZDOResponse(apsFrame: EmberApsFrame, sender: NodeId, messageContents: Buffer): Promise<void> {
+    private onZDOResponse(apsFrame: EmberApsFrame, sender: NodeId, messageContents: Buffer): void {
         const result = Zdo.Buffalo.readResponse(this.hasZdoMessageOverhead, apsFrame.clusterId, messageContents);
 
         if (apsFrame.clusterId === Zdo.ClusterId.NETWORK_ADDRESS_RESPONSE) {
@@ -537,13 +537,13 @@ export class EmberAdapter extends Adapter {
      * @param sender
      * @param messageContents
      */
-    private async onIncomingMessage(
+    private onIncomingMessage(
         type: EmberIncomingMessageType,
         apsFrame: EmberApsFrame,
         lastHopLqi: number,
         sender: NodeId,
         messageContents: Buffer,
-    ): Promise<void> {
+    ): void {
         const payload: ZclPayload = {
             clusterID: apsFrame.clusterId,
             header: Zcl.Header.fromBuffer(messageContents),
@@ -569,13 +569,7 @@ export class EmberAdapter extends Adapter {
      * @param lastHopLqi
      * @param messageContents
      */
-    private async onTouchlinkMessage(
-        _sourcePanId: PanId,
-        sourceAddress: Eui64,
-        groupId: number,
-        lastHopLqi: number,
-        messageContents: Buffer,
-    ): Promise<void> {
+    private onTouchlinkMessage(_sourcePanId: PanId, sourceAddress: Eui64, groupId: number, lastHopLqi: number, messageContents: Buffer): void {
         const endpoint = FIXED_ENDPOINTS[0].endpoint;
         const payload: ZclPayload = {
             clusterID: Zcl.Clusters.touchlink.ID,
@@ -1288,7 +1282,7 @@ export class EmberAdapter extends Adapter {
      * Received when EZSP layer alerts of a problem that needs the NCP to be reset.
      * @param status
      */
-    private async onNcpNeedsResetAndInit(status: EzspStatus): Promise<void> {
+    private onNcpNeedsResetAndInit(status: EzspStatus): void {
         logger.error(`Adapter fatal error: ${EzspStatus[status]}`, NS);
         this.emit("disconnected");
     }
@@ -1558,19 +1552,20 @@ export class EmberAdapter extends Adapter {
     }
 
     public async getCoordinatorVersion(): Promise<TsType.CoordinatorVersion> {
-        return {type: "EmberZNet", meta: this.version};
+        return await Promise.resolve({type: "EmberZNet", meta: this.version});
     }
 
     // queued
     public async reset(type: "soft" | "hard"): Promise<void> {
-        throw new Error(`Not supported '${type}'.`);
         // NOTE: although this function is legacy atm, a couple of new untested EZSP functions that could also prove useful:
         // this.ezsp.ezspTokenFactoryReset(true/*excludeOutgoingFC*/, true/*excludeBootCounter*/);
         // this.ezsp.ezspResetNode()
+        /* v8 ignore next */ // weird coverage bug
+        await Promise.reject(new Error(`Not supported '${type}'.`));
     }
 
     public async supportsBackup(): Promise<boolean> {
-        return true;
+        return await Promise.resolve(true);
     }
 
     // queued

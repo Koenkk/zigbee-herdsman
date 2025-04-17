@@ -456,7 +456,7 @@ describe("Ember Adapter Layer", () => {
         loggerSpies.error.mockClear();
     };
 
-    beforeAll(async () => {
+    beforeAll(() => {
         if (!existsSync(TEMP_PATH)) {
             mkdirSync(TEMP_PATH);
         } else {
@@ -466,12 +466,12 @@ describe("Ember Adapter Layer", () => {
         }
     });
 
-    afterAll(async () => {
+    afterAll(() => {
         deleteCoordinatorBackup();
         deleteStackConfig();
     });
 
-    beforeEach(async () => {
+    beforeEach(() => {
         vi.useFakeTimers();
 
         backupPath = path.join(TEMP_PATH, "ember_coordinator_backup.json");
@@ -487,7 +487,7 @@ describe("Ember Adapter Layer", () => {
         clearMocks();
     });
 
-    afterEach(async () => {
+    afterEach(() => {
         vi.useRealTimers();
     });
 
@@ -2069,7 +2069,7 @@ describe("Ember Adapter Layer", () => {
         });
 
         it("Emits adapter disconnected when failed to reset & init NCP", async () => {
-            vi.spyOn(adapter, "stop").mockRejectedValueOnce("mock error");
+            vi.spyOn(adapter, "stop").mockRejectedValueOnce(new Error("mock error"));
             const spyEmit = vi.spyOn(adapter, "emit");
 
             mockEzspEmitter.emit("ncpNeedsResetAndInit", EzspStatus.ERROR_SERIAL_INIT);
@@ -2283,7 +2283,7 @@ describe("Ember Adapter Layer", () => {
             expect(mockEzspImportTransientKey).toHaveBeenCalledTimes(1);
         });
 
-        it("Adapter impl: waitFor", async () => {
+        it("Adapter impl: waitFor", () => {
             const waiter = adapter.waitFor(1234, 1, Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, 10, 0, 1, 15000);
             const spyCancel = vi.spyOn(waiter, "cancel");
 

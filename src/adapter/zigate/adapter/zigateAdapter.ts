@@ -154,7 +154,7 @@ export class ZiGateAdapter extends Adapter {
         this.joinPermitted = seconds !== 0;
     }
     public async addInstallCode(_ieeeAddress: string, _key: Buffer, _hashed: boolean): Promise<void> {
-        throw new Error("Add install code is not supported");
+        await Promise.reject(new Error("Add install code is not supported"));
     }
 
     public async reset(type: "soft" | "hard"): Promise<void> {
@@ -185,11 +185,11 @@ export class ZiGateAdapter extends Adapter {
      * pdm from host
      */
     public async supportsBackup(): Promise<boolean> {
-        return false;
+        return await Promise.resolve(false);
     }
 
     public async backup(): Promise<Models.Backup> {
-        throw new Error("This adapter does not support backup");
+        return await Promise.reject(new Error("This adapter does not support backup"));
     }
 
     public async sendZdo(
@@ -528,17 +528,17 @@ export class ZiGateAdapter extends Adapter {
      * InterPAN !!! not implemented
      */
     public async setChannelInterPAN(_channel: number): Promise<void> {
-        throw new Error("Not supported");
+        await Promise.reject(new Error("Not supported"));
     }
     public async sendZclFrameInterPANToIeeeAddr(_zclFrame: Zcl.Frame, _ieeeAddress: string): Promise<void> {
-        throw new Error("Not supported");
+        await Promise.reject(new Error("Not supported"));
     }
     public async sendZclFrameInterPANBroadcast(_zclFrame: Zcl.Frame, _timeout: number): Promise<Events.ZclPayload> {
-        throw new Error("Not supported");
+        return await Promise.reject(new Error("Not supported"));
     }
 
-    public restoreChannelInterPAN(): Promise<void> {
-        throw new Error("Not supported");
+    public async restoreChannelInterPAN(): Promise<void> {
+        await Promise.reject(new Error("Not supported"));
     }
 
     private deviceAnnounceListener(response: ZdoTypes.EndDeviceAnnounce): void {

@@ -156,10 +156,12 @@ describe("Utils", () => {
 
         queue.execute<void>(async () => {
             finished.push(3);
+            await Promise.resolve();
         }, "mykey");
 
         queue.execute<void>(async () => {
             finished.push(4);
+            await Promise.resolve();
         }, "mykey2");
 
         queue.execute<void>(async () => {
@@ -179,6 +181,7 @@ describe("Utils", () => {
 
         queue.execute<void>(async () => {
             finished.push(8);
+            await Promise.resolve();
         });
 
         expect(finished).toEqual([4]);

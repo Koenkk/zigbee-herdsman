@@ -50,13 +50,13 @@ describe("Ember Ezsp Layer", () => {
     const openOpts = {path: "/dev/ttyACM0", baudRate: 115200, binding: MockBinding};
     let ezsp: Ezsp;
 
-    beforeAll(async () => {
+    beforeAll(() => {
         vi.useRealTimers();
     });
 
-    afterAll(async () => {});
+    afterAll(() => {});
 
-    beforeEach(async () => {
+    beforeEach(() => {
         for (const mock of mocks) {
             mock.mockClear();
         }

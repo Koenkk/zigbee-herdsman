@@ -4,7 +4,7 @@ import * as Zdo from "../../../src/zspec/zdo";
 import type * as ZdoTypes from "../../../src/zspec/zdo/definition/tstypes";
 
 describe("ZBOSS fix non-standard ZDO response payloads", () => {
-    it("No fix needed FrameType.RESPONSE", async () => {
+    it("No fix needed FrameType.RESPONSE", () => {
         expect(readZBOSSFrame(Buffer.from("0001010211000088776655443322113412", "hex"))).toStrictEqual({
             version: 0,
             type: FrameType.RESPONSE,
@@ -26,7 +26,7 @@ describe("ZBOSS fix non-standard ZDO response payloads", () => {
         } as ZBOSSFrame);
     });
 
-    it("No fix needed FrameType.INDICATION", async () => {
+    it("No fix needed FrameType.INDICATION", () => {
         expect(readZBOSSFrame(Buffer.from("00020c020cda603602602bd5b3708e", "hex"))).toStrictEqual({
             version: 0,
             type: FrameType.INDICATION,
@@ -47,7 +47,7 @@ describe("ZBOSS fix non-standard ZDO response payloads", () => {
         } as ZBOSSFrame);
     });
 
-    it("NODE_DESCRIPTOR_RESPONSE", async () => {
+    it("NODE_DESCRIPTOR_RESPONSE", () => {
         expect(readZBOSSFrame(Buffer.from("000104021100000000000000000000432c0000003412", "hex"))).toStrictEqual({
             version: 0,
             type: FrameType.RESPONSE,
@@ -87,7 +87,7 @@ describe("ZBOSS fix non-standard ZDO response payloads", () => {
         } as ZBOSSFrame);
     });
 
-    it("POWER_DESCRIPTOR_RESPONSE", async () => {
+    it("POWER_DESCRIPTOR_RESPONSE", () => {
         expect(readZBOSSFrame(Buffer.from("0001030211000001023412", "hex"))).toStrictEqual({
             version: 0,
             type: FrameType.RESPONSE,
@@ -110,7 +110,7 @@ describe("ZBOSS fix non-standard ZDO response payloads", () => {
         } as ZBOSSFrame);
     });
 
-    it("MATCH_DESCRIPTORS_RESPONSE", async () => {
+    it("MATCH_DESCRIPTORS_RESPONSE", () => {
         expect(readZBOSSFrame(Buffer.from("0001070211000002f2013412", "hex"))).toStrictEqual({
             version: 0,
             type: FrameType.RESPONSE,
@@ -130,7 +130,7 @@ describe("ZBOSS fix non-standard ZDO response payloads", () => {
         } as ZBOSSFrame);
     });
 
-    it("ACTIVE_ENDPOINTS_RESPONSE", async () => {
+    it("ACTIVE_ENDPOINTS_RESPONSE", () => {
         expect(readZBOSSFrame(Buffer.from("0001060211000002f2013412", "hex"))).toStrictEqual({
             version: 0,
             type: FrameType.RESPONSE,
@@ -150,7 +150,7 @@ describe("ZBOSS fix non-standard ZDO response payloads", () => {
         } as ZBOSSFrame);
     });
 
-    it("SIMPLE_DESCRIPTOR_RESPONSE", async () => {
+    it("SIMPLE_DESCRIPTOR_RESPONSE", () => {
         expect(readZBOSSFrame(Buffer.from("0001050211000001040100000301022c2ffefebcbc3412", "hex"))).toStrictEqual({
             version: 0,
             type: FrameType.RESPONSE,

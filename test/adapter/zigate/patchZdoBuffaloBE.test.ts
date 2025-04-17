@@ -13,7 +13,7 @@ describe("ZiGate Patch BuffaloZdo to use BE variants when writing", () => {
         new ZiGateAdapter({}, {}, "", {});
     });
 
-    it("writeUInt16", async () => {
+    it("writeUInt16", () => {
         expect(BuffaloZdo.buildRequest(false, Zdo.ClusterId.IEEE_ADDRESS_REQUEST, 0x1234, false, 0)).toStrictEqual(
             Buffer.from([0x12, 0x34, 0x00, 0x00]),
         );
@@ -24,7 +24,7 @@ describe("ZiGate Patch BuffaloZdo to use BE variants when writing", () => {
         );
     });
 
-    it("writeUInt32", async () => {
+    it("writeUInt32", () => {
         expect(BuffaloZdo.buildRequest(false, Zdo.ClusterId.NWK_UPDATE_REQUEST, [15], 0xfe, undefined, undefined, undefined)).toStrictEqual(
             Buffer.from([0x00, 0x00, 0x80, 0x00, 0xfe]),
         );
@@ -35,7 +35,7 @@ describe("ZiGate Patch BuffaloZdo to use BE variants when writing", () => {
         );
     });
 
-    it("readUInt16 + readUInt32 - LE", async () => {
+    it("readUInt16 + readUInt32 - LE", () => {
         expect(
             BuffaloZdo.readResponse(
                 true,
@@ -51,7 +51,7 @@ describe("ZiGate Patch BuffaloZdo to use BE variants when writing", () => {
         );
     });
 
-    it("writeIeeeAddr", async () => {
+    it("writeIeeeAddr", () => {
         expect(BuffaloZdo.buildRequest(false, Zdo.ClusterId.NETWORK_ADDRESS_REQUEST, "0x1122334455667788", false, 0)).toStrictEqual(
             Buffer.from([0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x00, 0x00]),
         );
@@ -62,7 +62,7 @@ describe("ZiGate Patch BuffaloZdo to use BE variants when writing", () => {
         );
     });
 
-    it("readIeeeAddr - LE", async () => {
+    it("readIeeeAddr - LE", () => {
         expect(
             BuffaloZdo.readResponse(
                 true,

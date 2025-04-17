@@ -158,7 +158,7 @@ export class ZBOSSUart extends EventEmitter {
                 this.socketPort?.on("connect", () => {
                     logger.debug("Socket connected", NS);
                 });
-                this.socketPort?.on("ready", async (): Promise<void> => {
+                this.socketPort?.on("ready", (): void => {
                     logger.info("Socket ready", NS);
                     this.socketPort?.removeListener("error", openError);
                     this.socketPort?.once("close", this.onPortClose.bind(this));
@@ -199,7 +199,7 @@ export class ZBOSSUart extends EventEmitter {
         }
     }
 
-    private async onPortError(error: Error): Promise<void> {
+    private onPortError(error: Error): void {
         logger.info(`Port error: ${error}`, NS);
     }
 
