@@ -16,10 +16,12 @@ export class ZBOSSBuffaloZcl extends BuffaloZcl {
     public override write(type: DataType | BuffaloZclDataType | BuffaloZBOSSDataType, value: any, options: BuffaloZclOptions): void {
         switch (type) {
             case BuffaloZBOSSDataType.EXTENDED_PAN_ID: {
-                return this.writeBuffer(value, 8);
+                this.writeBuffer(value, 8);
+                break;
             }
             default: {
-                return super.write(type as DataType | BuffaloZclDataType, value, options);
+                super.write(type as DataType | BuffaloZclDataType, value, options);
+                break;
             }
         }
     }

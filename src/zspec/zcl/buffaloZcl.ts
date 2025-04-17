@@ -714,7 +714,8 @@ export class BuffaloZcl extends Buffalo {
             case DataType.BITMAP8:
             case DataType.UINT8:
             case DataType.ENUM8: {
-                return this.writeUInt8(value);
+                this.writeUInt8(value);
+                break;
             }
             case DataType.DATA16:
             case DataType.BITMAP16:
@@ -722,168 +723,212 @@ export class BuffaloZcl extends Buffalo {
             case DataType.ENUM16:
             case DataType.CLUSTER_ID:
             case DataType.ATTR_ID: {
-                return this.writeUInt16(value);
+                this.writeUInt16(value);
+                break;
             }
             case DataType.DATA24:
             case DataType.BITMAP24:
             case DataType.UINT24: {
-                return this.writeUInt24(value);
+                this.writeUInt24(value);
+                break;
             }
             case DataType.DATA32:
             case DataType.BITMAP32:
             case DataType.UINT32:
             case DataType.UTC:
             case DataType.BAC_OID: {
-                return this.writeUInt32(value);
+                this.writeUInt32(value);
+                break;
             }
             case DataType.DATA40:
             case DataType.BITMAP40:
             case DataType.UINT40: {
-                return this.writeUInt40(value);
+                this.writeUInt40(value);
+                break;
             }
             case DataType.DATA48:
             case DataType.BITMAP48:
             case DataType.UINT48: {
-                return this.writeUInt48(value);
+                this.writeUInt48(value);
+                break;
             }
             case DataType.DATA56:
             case DataType.BITMAP56:
             case DataType.UINT56: {
-                return this.writeUInt56(value);
+                this.writeUInt56(value);
+                break;
             }
             case DataType.DATA64:
             case DataType.BITMAP64:
             case DataType.UINT64: {
-                return this.writeUInt64(value);
+                this.writeUInt64(value);
+                break;
             }
             case DataType.INT8: {
-                return this.writeInt8(value);
+                this.writeInt8(value);
+                break;
             }
             case DataType.INT16: {
-                return this.writeInt16(value);
+                this.writeInt16(value);
+                break;
             }
             case DataType.INT24: {
-                return this.writeInt24(value);
+                this.writeInt24(value);
+                break;
             }
             case DataType.INT32: {
-                return this.writeInt32(value);
+                this.writeInt32(value);
+                break;
             }
             case DataType.INT40: {
-                return this.writeInt40(value);
+                this.writeInt40(value);
+                break;
             }
             case DataType.INT48: {
-                return this.writeInt48(value);
+                this.writeInt48(value);
+                break;
             }
             case DataType.INT56: {
-                return this.writeInt56(value);
+                this.writeInt56(value);
+                break;
             }
             case DataType.INT64: {
-                return this.writeInt64(value);
+                this.writeInt64(value);
+                break;
             }
             // case DataType.SEMI_PREC: {
             //     // https://tc39.es/proposal-float16array/
             //     // not currently used
-            //     return this.writeSemiFloatLE(value);
+            //     this.writeSemiFloatLE(value);
+            //     break;
             // }
             case DataType.SINGLE_PREC: {
-                return this.writeFloatLE(value);
+                this.writeFloatLE(value);
+                break;
             }
             case DataType.DOUBLE_PREC: {
-                return this.writeDoubleLE(value);
+                this.writeDoubleLE(value);
+                break;
             }
             case DataType.OCTET_STR: {
-                return this.writeOctetStr(value);
+                this.writeOctetStr(value);
+                break;
             }
             case DataType.CHAR_STR: {
-                return this.writeCharStr(value);
+                this.writeCharStr(value);
+                break;
             }
             case DataType.LONG_OCTET_STR: {
-                return this.writeLongOctetStr(value);
+                this.writeLongOctetStr(value);
+                break;
             }
             case DataType.LONG_CHAR_STR: {
-                return this.writeLongCharStr(value);
+                this.writeLongCharStr(value);
+                break;
             }
             case DataType.ARRAY:
             case DataType.SET:
             case DataType.BAG: {
-                return this.writeArray(value);
+                this.writeArray(value);
+                break;
             }
             case DataType.STRUCT: {
-                return this.writeStruct(value);
+                this.writeStruct(value);
+                break;
             }
             case DataType.TOD: {
-                return this.writeToD(value);
+                this.writeToD(value);
+                break;
             }
             case DataType.DATE: {
-                return this.writeDate(value);
+                this.writeDate(value);
+                break;
             }
             case DataType.IEEE_ADDR: {
-                return this.writeIeeeAddr(value);
+                this.writeIeeeAddr(value);
+                break;
             }
             case DataType.SEC_KEY: {
-                return this.writeBuffer(value, SEC_KEY_LENGTH);
+                this.writeBuffer(value, SEC_KEY_LENGTH);
+                break;
             }
             case BuffaloZclDataType.USE_DATA_TYPE: {
                 if (options.dataType == null) {
                     if (Buffer.isBuffer(value) || isNumberArray(value)) {
-                        return this.writeBuffer(value, value.length);
+                        this.writeBuffer(value, value.length);
+                        break;
                     }
 
                     throw new Error("Cannot write USE_DATA_TYPE without dataType option specified");
                 }
 
-                return this.write(options.dataType, value, options);
+                this.write(options.dataType, value, options);
+                break;
             }
             case BuffaloZclDataType.LIST_UINT8: {
-                return this.writeListUInt8(value);
+                this.writeListUInt8(value);
+                break;
             }
             case BuffaloZclDataType.LIST_UINT16: {
-                return this.writeListUInt16(value);
+                this.writeListUInt16(value);
+                break;
             }
             case BuffaloZclDataType.LIST_UINT24: {
-                return this.writeListUInt24(value);
+                this.writeListUInt24(value);
+                break;
             }
             case BuffaloZclDataType.LIST_UINT32: {
-                return this.writeListUInt32(value);
+                this.writeListUInt32(value);
+                break;
             }
             case BuffaloZclDataType.LIST_ZONEINFO: {
-                return this.writeListZoneInfo(value);
+                this.writeListZoneInfo(value);
+                break;
             }
             case BuffaloZclDataType.EXTENSION_FIELD_SETS: {
-                return this.writeExtensionFieldSets(value);
+                this.writeExtensionFieldSets(value);
+                break;
             }
             case BuffaloZclDataType.LIST_THERMO_TRANSITIONS: {
-                return this.writeListThermoTransitions(value);
+                this.writeListThermoTransitions(value);
+                break;
             }
             case BuffaloZclDataType.BUFFER: {
                 // XXX: inconsistent with read that allows partial with options.length, here always "whole"
-                return this.writeBuffer(value, value.length);
+                this.writeBuffer(value, value.length);
+                break;
             }
             case BuffaloZclDataType.GPD_FRAME: {
-                return this.writeGpdFrame(value);
+                this.writeGpdFrame(value);
+                break;
             }
             case BuffaloZclDataType.STRUCTURED_SELECTOR: {
-                return this.writeStructuredSelector(value);
+                this.writeStructuredSelector(value);
+                break;
             }
             case BuffaloZclDataType.LIST_TUYA_DATAPOINT_VALUES: {
-                return this.writeListTuyaDataPointValues(value);
+                this.writeListTuyaDataPointValues(value);
+                break;
             }
             case BuffaloZclDataType.LIST_MIBOXER_ZONES: {
-                return this.writeListMiboxerZones(value);
+                this.writeListMiboxerZones(value);
+                break;
             }
             case BuffaloZclDataType.BIG_ENDIAN_UINT24: {
-                return this.writeBigEndianUInt24(value);
+                this.writeBigEndianUInt24(value);
+                break;
             }
             default: {
                 // In case the type is undefined, write it as a buffer to easily allow for custom types
                 // e.g. for https://github.com/Koenkk/zigbee-herdsman/issues/127
                 if (Buffer.isBuffer(value) || isNumberArray(value)) {
-                    return this.writeBuffer(value, value.length);
+                    this.writeBuffer(value, value.length);
+                    break;
                 }
+
+                throw new Error(`Write for '${type}' not available`);
             }
         }
-
-        throw new Error(`Write for '${type}' not available`);
     }
 
     // biome-ignore lint/suspicious/noExplicitAny: API

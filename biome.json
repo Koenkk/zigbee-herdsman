@@ -19,8 +19,7 @@
                 "noUnusedVariables": {
                     "level": "warn",
                     "fix": "none"
-                },
-                "noVoidTypeReturn": "off"
+                }
             },
             "style": {
                 "noNonNullAssertion": "off",

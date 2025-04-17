@@ -39,48 +39,62 @@ class BuffaloZnp extends Buffalo {
     public write(type: ParameterType, value: any, options: BuffaloZnpOptions): void {
         switch (type) {
             case ParameterType.UINT8: {
-                return this.writeUInt8(value);
+                this.writeUInt8(value);
+                break;
             }
             case ParameterType.UINT16: {
-                return this.writeUInt16(value);
+                this.writeUInt16(value);
+                break;
             }
             case ParameterType.UINT32: {
-                return this.writeUInt32(value);
+                this.writeUInt32(value);
+                break;
             }
             case ParameterType.IEEEADDR: {
-                return this.writeIeeeAddr(value);
+                this.writeIeeeAddr(value);
+                break;
             }
             case ParameterType.BUFFER: {
-                return this.writeBuffer(value, options.length ?? value.length);
+                this.writeBuffer(value, options.length ?? value.length);
+                break;
             }
             case ParameterType.BUFFER8: {
-                return this.writeBuffer(value, 8);
+                this.writeBuffer(value, 8);
+                break;
             }
             case ParameterType.BUFFER16: {
-                return this.writeBuffer(value, 16);
+                this.writeBuffer(value, 16);
+                break;
             }
             case ParameterType.BUFFER18: {
-                return this.writeBuffer(value, 18);
+                this.writeBuffer(value, 18);
+                break;
             }
             case ParameterType.BUFFER32: {
-                return this.writeBuffer(value, 32);
+                this.writeBuffer(value, 32);
+                break;
             }
             case ParameterType.BUFFER42: {
-                return this.writeBuffer(value, 42);
+                this.writeBuffer(value, 42);
+                break;
             }
             case ParameterType.BUFFER100: {
-                return this.writeBuffer(value, 100);
+                this.writeBuffer(value, 100);
+                break;
             }
             case ParameterType.LIST_UINT8: {
-                return this.writeListUInt8(value);
+                this.writeListUInt8(value);
+                break;
             }
             case ParameterType.LIST_UINT16: {
-                return this.writeListUInt16(value);
+                this.writeListUInt16(value);
+                break;
             }
             // NOTE: not writable
             // case ParameterType.LIST_NETWORK:
             case ParameterType.INT8: {
-                return this.writeInt8(value);
+                this.writeInt8(value);
+                break;
             }
             default: {
                 throw new Error(`Write for '${type}' not available`);
