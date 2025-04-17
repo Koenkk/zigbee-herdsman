@@ -70,7 +70,7 @@ const mockDummyBackup: Models.Backup = {
 
 type AdapterEvent = "zclPayload" | "deviceJoined" | "deviceLeave" | "zdoResponse" | "disconnected";
 
-const mockAdapterEvents: Record<AdapterEvent, Function> = {
+const mockAdapterEvents: Record<AdapterEvent, (...args: unknown[]) => void> = {
     zclPayload: () => {},
     deviceJoined: () => {},
     deviceLeave: () => {},
@@ -351,7 +351,7 @@ vi.mock("../src/adapter/z-stack/adapter/zStackAdapter", () => ({
     ZStackAdapter: vi.fn(() => ({
         hasZdoMessageOverhead: false,
         manufacturerID: 0x0007,
-        on: (event: AdapterEvent, handler: Function) => (mockAdapterEvents[event] = handler),
+        on: (event: AdapterEvent, handler: (...args: unknown[]) => void) => (mockAdapterEvents[event] = handler),
         removeAllListeners: (event: AdapterEvent) => delete mockAdapterEvents[event],
         start: mockAdapterStart,
         getCoordinatorIEEE: mockAdapterGetCoordinatorIEEE,
@@ -884,9 +884,9 @@ describe("Controller", () => {
 
     it("Touchlink lock", async () => {
         await controller.start();
-        let resolve: Function | undefined;
+        let resolve: (() => void) | undefined;
         mockSetChannelInterPAN.mockImplementationOnce(() => {
-            return new Promise((r) => {
+            return new Promise<void>((r) => {
                 resolve = r;
             });
         });
