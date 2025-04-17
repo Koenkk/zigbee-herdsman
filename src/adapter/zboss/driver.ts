@@ -135,7 +135,7 @@ export class ZBOSSDriver extends EventEmitter {
         //await this.execCommand(CommandId.SET_ED_TIMEOUT, {timeout: 8});
         //await this.execCommand(CommandId.SET_MAX_CHILDREN, {children: 100});
 
-        if (transmitPower != undefined) {
+        if (transmitPower != null) {
             await this.execCommand(CommandId.SET_TX_POWER, {txPower: transmitPower});
         }
 
@@ -147,8 +147,8 @@ export class ZBOSSDriver extends EventEmitter {
         this.netInfo = await this.getNetworkInfo();
         logger.debug(() => `Current network parameters: ${JSON.stringify(this.netInfo)}`, NS);
         if (this.netInfo) {
-            valid = valid && this.netInfo.nodeType == DeviceType.COORDINATOR;
-            valid = valid && options.panID == this.netInfo.network.panID;
+            valid = valid && this.netInfo.nodeType === DeviceType.COORDINATOR;
+            valid = valid && options.panID === this.netInfo.network.panID;
             valid = valid && options.channelList.includes(this.netInfo.network.channel);
             valid = valid && equals(Buffer.from(options.extendedPanID || []), Buffer.from(this.netInfo.network.extendedPanID));
         } else {
@@ -159,7 +159,7 @@ export class ZBOSSDriver extends EventEmitter {
 
     private async getNetworkInfo(): Promise<ZBOSSNetworkInfo> {
         let result = await this.execCommand(CommandId.GET_JOINED, {});
-        const joined = result.payload.joined == 1;
+        const joined = result.payload.joined === 1;
         if (!joined) {
             logger.debug("Network not formed", NS);
         }
@@ -270,7 +270,7 @@ export class ZBOSSDriver extends EventEmitter {
         return await this.queue.execute<ZBOSSFrame>(async (): Promise<ZBOSSFrame> => {
             const frame = makeFrame(FrameType.REQUEST, commandId, params);
             frame.tsn = this.tsn;
-            const waiter = this.waitFor(commandId, commandId == CommandId.NCP_RESET ? undefined : this.tsn, timeout);
+            const waiter = this.waitFor(commandId, commandId === CommandId.NCP_RESET ? undefined : this.tsn, timeout);
             this.tsn = (this.tsn + 1) & 255;
 
             try {
@@ -304,7 +304,7 @@ export class ZBOSSDriver extends EventEmitter {
     }
 
     private waitressValidator(payload: ZBOSSFrame, matcher: ZBOSSWaitressMatcher): boolean {
-        return (matcher.tsn === undefined || matcher.tsn === payload.tsn) && matcher.commandId == payload.commandId;
+        return (matcher.tsn === undefined || matcher.tsn === payload.tsn) && matcher.commandId === payload.commandId;
     }
 
     public async request(ieee: string, profileID: number, clusterID: number, dstEp: number, srcEp: number, data: Buffer): Promise<ZBOSSFrame> {

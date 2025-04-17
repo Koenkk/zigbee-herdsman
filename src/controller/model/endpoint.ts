@@ -227,7 +227,7 @@ export class Endpoint extends Entity {
         for (const entryKey in record.clusters) {
             const entry = record.clusters[entryKey];
 
-            if (entry.attrs != undefined) {
+            if (entry.attrs != null) {
                 entry.attributes = entry.attrs;
                 delete entry.attrs;
             }
@@ -879,7 +879,7 @@ export class Endpoint extends Entity {
             attributes.map((nameOrID): number | undefined => {
                 let attributeID;
 
-                if (typeof nameOrID == "object") {
+                if (typeof nameOrID === "object") {
                     // ConfigureReportingItem
                     if (typeof nameOrID.attribute !== "object") {
                         attributeID = nameOrID.attribute;
@@ -902,7 +902,7 @@ export class Endpoint extends Entity {
             }),
         );
 
-        if (manufacturerCodes.size == 1) {
+        if (manufacturerCodes.size === 1) {
             return manufacturerCodes.values().next().value;
         }
 
@@ -958,8 +958,8 @@ export class Endpoint extends Entity {
     ): Promise<undefined | Zcl.Frame> {
         const device = this.getDevice();
         const cluster = this.getCluster(clusterKey, device);
-        const command = frameType == Zcl.FrameType.GLOBAL ? Zcl.Utils.getGlobalCommand(commandKey) : cluster.getCommand(commandKey);
-        const hasResponse = frameType == Zcl.FrameType.GLOBAL ? true : command.response != undefined;
+        const command = frameType === Zcl.FrameType.GLOBAL ? Zcl.Utils.getGlobalCommand(commandKey) : cluster.getCommand(commandKey);
+        const hasResponse = frameType === Zcl.FrameType.GLOBAL ? true : command.response !== undefined;
         const optionsWithDefaults = this.getOptionsWithDefaults(options, hasResponse, Zcl.Direction.CLIENT_TO_SERVER, cluster.manufacturerCode);
 
         const frame = Zcl.Frame.create(

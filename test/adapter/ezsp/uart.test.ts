@@ -74,7 +74,7 @@ describe("UART", () => {
         // @ts-ignore; make sure we always get a new instance
         serialDriver = new SerialDriver();
         writeBufferSpy = vi.spyOn(Writer.prototype, "writeBuffer").mockImplementation((buffer) => {
-            if (buffer[0] == 0x1a) {
+            if (buffer[0] === 0x1a) {
                 serialDriver.waitress.resolve({sequence: -1});
             }
         });

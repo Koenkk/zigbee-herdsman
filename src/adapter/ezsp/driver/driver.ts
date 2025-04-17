@@ -253,12 +253,12 @@ export class Driver extends EventEmitter {
 
             logger.debug(`Network state ${res.status}`, NS);
 
-            if (res.status == EmberNetworkStatus.JOINED_NETWORK) {
+            if (res.status === EmberNetworkStatus.JOINED_NETWORK) {
                 logger.info("Leaving current network and forming new network", NS);
 
                 const st = await this.ezsp.leaveNetwork();
 
-                if (st != EmberStatus.NETWORK_DOWN) {
+                if (st !== EmberStatus.NETWORK_DOWN) {
                     logger.error(`leaveNetwork returned unexpected status: ${st}`, NS);
                 }
             }
@@ -281,7 +281,7 @@ export class Driver extends EventEmitter {
 
         const netParams = await this.ezsp.execCommand("getNetworkParameters");
 
-        if (netParams.status != EmberStatus.SUCCESS) {
+        if (netParams.status !== EmberStatus.SUCCESS) {
             logger.error(`Command (getNetworkParameters) returned unexpected state: ${netParams.status}`, NS);
         }
 
@@ -307,7 +307,7 @@ export class Driver extends EventEmitter {
         await this.multicast.subscribe(ZSpec.GP_GROUP_ID, ZSpec.GP_ENDPOINT);
         // await this.multicast.subscribe(1, 901);
 
-        if (transmitPower != undefined && this.networkParams.radioTxPower !== transmitPower) {
+        if (transmitPower != null && this.networkParams.radioTxPower !== transmitPower) {
             await this.ezsp.execCommand("setRadioPower", {power: transmitPower});
         }
 
@@ -320,9 +320,9 @@ export class Driver extends EventEmitter {
         const netParams = await this.ezsp.execCommand("getNetworkParameters");
         const networkParams = netParams.parameters;
         logger.debug(`Current Node type: ${netParams.nodeType}, Network parameters: ${networkParams}`, NS);
-        valid = valid && netParams.status == EmberStatus.SUCCESS;
-        valid = valid && netParams.nodeType == EmberNodeType.COORDINATOR;
-        valid = valid && options.panID == networkParams.panId;
+        valid = valid && netParams.status === EmberStatus.SUCCESS;
+        valid = valid && netParams.nodeType === EmberNodeType.COORDINATOR;
+        valid = valid && options.panID === networkParams.panId;
         valid = valid && options.channelList.includes(networkParams.radioChannel);
         valid = valid && equals(options.extendedPanID, networkParams.extendedPanId);
         return !valid;
@@ -384,7 +384,7 @@ export class Driver extends EventEmitter {
             case frameName === "incomingMessageHandler": {
                 const apsFrame: EmberApsFrame = frame.apsFrame;
 
-                if (apsFrame.profileId == Zdo.ZDO_PROFILE_ID && apsFrame.clusterId >= 0x8000 /* response only */) {
+                if (apsFrame.profileId === Zdo.ZDO_PROFILE_ID && apsFrame.clusterId >= 0x8000 /* response only */) {
                     const zdoResponse = Zdo.Buffalo.readResponse(true, apsFrame.clusterId, frame.message);
 
                     if (apsFrame.clusterId === Zdo.ClusterId.NETWORK_ADDRESS_RESPONSE) {
@@ -473,7 +473,7 @@ export class Driver extends EventEmitter {
             case frameName === "messageSentHandler": {
                 // todo
                 const status = frame.status;
-                if (status != 0) {
+                if (status !== 0) {
                     // send failure
                     logger.debug(() => `Delivery failed for ${JSON.stringify(frame)}.`, NS);
                 } else {
@@ -482,9 +482,9 @@ export class Driver extends EventEmitter {
                     // then we will register the coordinator in this group
                     // Applicable for IKEA remotes
                     const msgType = frame.type;
-                    if (msgType == EmberOutgoingMessageType.OUTGOING_MULTICAST) {
+                    if (msgType === EmberOutgoingMessageType.OUTGOING_MULTICAST) {
                         const apsFrame = frame.apsFrame;
-                        if (apsFrame.destinationEndpoint == 255) {
+                        if (apsFrame.destinationEndpoint === 255) {
                             this.multicast.subscribe(apsFrame.groupId, 1);
                         }
                     }
@@ -519,7 +519,7 @@ export class Driver extends EventEmitter {
             //     }
             //     break;
             // }
-            case frameName == "gpepIncomingMessageHandler": {
+            case frameName === "gpepIncomingMessageHandler": {
                 let commandIdentifier = Clusters.greenPower.commands.notification.ID;
 
                 if (frame.gpdCommandId === 0xe0) {
@@ -628,7 +628,7 @@ export class Driver extends EventEmitter {
         }
 
         for (const rec of IEEE_PREFIX_MFG_ID) {
-            if (Buffer.from(ieee.value).indexOf(Buffer.from(rec.prefix)) == 0) {
+            if (Buffer.from(ieee.value).indexOf(Buffer.from(rec.prefix)) === 0) {
                 // set ManufacturerCode
                 logger.debug(`handleNodeJoined: change ManufacturerCode for ieee ${ieee} to ${rec.mfgId}`, NS);
                 this.resetMfgId(rec.mfgId);
@@ -695,7 +695,7 @@ export class Driver extends EventEmitter {
 
                     await wait(delay);
                 } else {
-                    result = sendResult.status == EmberStatus.SUCCESS;
+                    result = sendResult.status === EmberStatus.SUCCESS;
                     break;
                 }
             } catch (e) {
@@ -957,8 +957,8 @@ export class Driver extends EventEmitter {
         }
 
         // if the settings in the backup match the chip, then need to warn to delete the backup file first
-        valid = valid && networkParams.panId == backup.networkOptions.panId;
-        valid = valid && networkParams.radioChannel == backup.logicalChannel;
+        valid = valid && networkParams.panId === backup.networkOptions.panId;
+        valid = valid && networkParams.radioChannel === backup.logicalChannel;
         valid = valid && Buffer.from(networkParams.extendedPanId).equals(backup.networkOptions.extendedPanId);
         valid = valid && Buffer.from(netKey).equals(backup.networkOptions.networkKey);
         if (valid) {
@@ -990,7 +990,7 @@ export class Driver extends EventEmitter {
         }
         valid = true;
         // if the settings in the backup match the config, then the old network is in the chip and needs to be restored
-        valid = valid && options.panID == backup.networkOptions.panId;
+        valid = valid && options.panID === backup.networkOptions.panId;
         valid = valid && options.channelList.includes(backup.logicalChannel);
         // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
         valid = valid && Buffer.from(options.extendedPanID!).equals(backup.networkOptions.extendedPanId);

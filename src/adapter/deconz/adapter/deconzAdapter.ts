@@ -266,7 +266,7 @@ export class DeconzAdapter extends Adapter {
 
     public async getCoordinatorVersion(): Promise<CoordinatorVersion> {
         // product: number; transportrev: number; majorrel: number; minorrel: number; maintrel: number; revision: string;
-        if (this.fwVersion != undefined) {
+        if (this.fwVersion !== undefined) {
             return this.fwVersion;
         }
 
@@ -375,7 +375,7 @@ export class DeconzAdapter extends Adapter {
                     // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
                     return response.zdo! as ZdoTypes.RequestToResponseMap[K];
                 } catch (error) {
-                    if (responseClusterId == Zdo.ClusterId.ACTIVE_ENDPOINTS_RESPONSE && networkAddress === 0) {
+                    if (responseClusterId === Zdo.ClusterId.ACTIVE_ENDPOINTS_RESPONSE && networkAddress === 0) {
                         logger.warning("Failed to determine active endpoints of coordinator, falling back to [1]", NS);
                         // Some Conbee adapaters don't provide a response to an active endpoint request of the coordinator, always return
                         // an endpoint here. Before an active endpoint request was done to determine the endpoints, they were hardcoded:
@@ -431,7 +431,7 @@ export class DeconzAdapter extends Adapter {
                     NS,
                 );
 
-                if (command.response == undefined || zclFrame.header.frameControl.disableDefaultResponse || !disableResponse) {
+                if (command.response === undefined || zclFrame.header.frameControl.disableDefaultResponse || !disableResponse) {
                     logger.debug(`resolve request (${zclFrame.header.transactionSequenceNumber})`, NS);
                     return Promise.resolve();
                 }
@@ -444,7 +444,7 @@ export class DeconzAdapter extends Adapter {
 
         try {
             let data = null;
-            if ((command.response != undefined && !disableResponse) || !zclFrame.header.frameControl.disableDefaultResponse) {
+            if ((command.response !== undefined && !disableResponse) || !zclFrame.header.frameControl.disableDefaultResponse) {
                 data = await this.waitForData(
                     networkAddress,
                     ZSpec.HA_PROFILE_ID,
@@ -709,7 +709,7 @@ export class DeconzAdapter extends Adapter {
             }
         }
 
-        if (resp && resp.profileId != Zdo.ZDO_PROFILE_ID) {
+        if (resp && resp.profileId !== Zdo.ZDO_PROFILE_ID) {
             const payload: Events.ZclPayload = {
                 clusterID: resp.clusterId,
                 header,

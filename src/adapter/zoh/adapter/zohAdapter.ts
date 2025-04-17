@@ -268,7 +268,7 @@ export class ZoHAdapter extends Adapter {
                 // TODO: add eui64 whenever added as configurable
                 this.networkOptions.panID !== currentNetParams.panId ||
                 // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
-                Buffer.from(this.networkOptions.extendedPanID!).readBigUInt64LE(0) != currentNetParams.extendedPANId ||
+                Buffer.from(this.networkOptions.extendedPanID!).readBigUInt64LE(0) !== currentNetParams.extendedPANId ||
                 // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
                 !Buffer.from(this.networkOptions.networkKey!).equals(currentNetParams.networkKey)
             ) {
@@ -558,7 +558,7 @@ export class ZoHAdapter extends Adapter {
 
                     return;
                 } catch (error) {
-                    if (disableRecovery || i == 1) {
+                    if (disableRecovery || i === 1) {
                         throw error;
                     } // else retry
                 }

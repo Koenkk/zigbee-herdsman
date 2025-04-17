@@ -298,7 +298,7 @@ export class EmberAdapter extends Adapter {
             // set any undefined config to default
             const config: StackConfig = {...DEFAULT_STACK_CONFIG, ...customConfig};
 
-            const inRange = (value: number, min: number, max: number): boolean => !(value == undefined || value < min || value > max);
+            const inRange = (value: number, min: number, max: number): boolean => !(value == null || value < min || value > max);
 
             if (!["high", "low"].includes(config.CONCENTRATOR_RAM_TYPE)) {
                 config.CONCENTRATOR_RAM_TYPE = DEFAULT_STACK_CONFIG.CONCENTRATOR_RAM_TYPE;
@@ -717,7 +717,7 @@ export class EmberAdapter extends Adapter {
             throw new Error(`Failed to get network parameters with status=${SLStatus[status]}.`);
         }
 
-        if (this.adapterOptions.transmitPower != undefined && parameters.radioTxPower !== this.adapterOptions.transmitPower) {
+        if (this.adapterOptions.transmitPower != null && parameters.radioTxPower !== this.adapterOptions.transmitPower) {
             const status = await this.ezsp.ezspSetRadioPower(this.adapterOptions.transmitPower);
 
             if (status !== SLStatus.OK) {
@@ -926,7 +926,7 @@ export class EmberAdapter extends Adapter {
 
         if (initStatus === SLStatus.NOT_JOINED || action === NetworkInitAction.LEFT) {
             // no network
-            if (backup != undefined) {
+            if (backup !== undefined) {
                 if (
                     this.networkOptions.panID === backup.networkOptions.panId &&
                     // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
@@ -1705,7 +1705,7 @@ export class EmberAdapter extends Adapter {
             // This will be used while the DUT joins.
             const impStatus = await this.ezsp.ezspImportTransientKey(ieeeAddress as Eui64, {contents: hashed ? key : ZSpec.Utils.aes128MmoHash(key)});
 
-            if (impStatus == SLStatus.OK) {
+            if (impStatus === SLStatus.OK) {
                 logger.debug(`[ADD INSTALL CODE] Success for '${ieeeAddress}'.`, NS);
             } else {
                 throw new Error(`[ADD INSTALL CODE] Failed for '${ieeeAddress}' with status=${SLStatus[impStatus]}.`);
@@ -2009,7 +2009,7 @@ export class EmberAdapter extends Adapter {
                     break;
                 }
 
-                if (disableRecovery || i == QUEUE_MAX_SEND_ATTEMPTS) {
+                if (disableRecovery || i === QUEUE_MAX_SEND_ATTEMPTS) {
                     throw new Error(
                         `~x~> [ZCL to=${ieeeAddr}:${networkAddress} apsFrame=${JSON.stringify(apsFrame)}] Failed to send request with status=${SLStatus[status]}.`,
                     );

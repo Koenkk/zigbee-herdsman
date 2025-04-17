@@ -187,7 +187,7 @@ export class ZBOSSUart extends EventEmitter {
 
             this.serialPort.removeAllListeners();
             this.serialPort = undefined;
-        } else if (this.socketPort != undefined && !this.socketPort.closed) {
+        } else if (this.socketPort !== undefined && !this.socketPort.closed) {
             this.socketPort.destroy();
             this.socketPort.removeAllListeners();
             this.socketPort = undefined;

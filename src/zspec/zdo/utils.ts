@@ -13,7 +13,7 @@ export const getResponseClusterId = (requestClusterId: ClusterId): ClusterId | u
 
     const responseClusterId = requestClusterId + 0x8000;
 
-    if (ClusterId[responseClusterId] == undefined) {
+    if (ClusterId[responseClusterId] === undefined) {
         return undefined;
     }
 

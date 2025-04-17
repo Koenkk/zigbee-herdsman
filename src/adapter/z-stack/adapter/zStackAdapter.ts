@@ -193,7 +193,7 @@ export class ZStackAdapter extends Adapter {
 
         await this.queue.execute<void>(async () => {
             this.checkInterpanLock();
-            await this.setLED(seconds == 0 ? "off" : "on");
+            await this.setLED(seconds === 0 ? "off" : "on");
         });
     }
 
@@ -206,7 +206,7 @@ export class ZStackAdapter extends Adapter {
     }
 
     private async setLED(action: "disable" | "on" | "off"): Promise<void> {
-        if (this.supportsLED == undefined) {
+        if (this.supportsLED == null) {
             // Only zStack3x0 with 20210430 and greater support LED
             const zStack3x0 = this.version.product === ZnpVersion.ZStack3x0;
             this.supportsLED = !zStack3x0 || (zStack3x0 && Number.parseInt(this.version.revision) >= 20210430);
@@ -478,7 +478,7 @@ export class ZStackAdapter extends Adapter {
         );
         let response = null;
         const command = zclFrame.command;
-        if (command.response != undefined && disableResponse === false) {
+        if (command.response !== undefined && disableResponse === false) {
             response = this.waitForInternal(
                 networkAddress,
                 endpoint,
@@ -676,7 +676,7 @@ export class ZStackAdapter extends Adapter {
                         this.supportsAssocAdd() &&
                         this.supportsAssocRemove() &&
                         match.payload.nwkaddr !== 0xfffe &&
-                        match.payload.noderelation == 1
+                        match.payload.noderelation === 1
                     ) {
                         logger.debug(`Response timeout recovery: Rewrite association table entry (${ieeeAddr})`, NS);
                         await this.znp.request(Subsystem.UTIL, "assocRemove", {ieeeadr: ieeeAddr});
@@ -936,7 +936,7 @@ export class ZStackAdapter extends Adapter {
     public async sendZclFrameInterPANBroadcast(zclFrame: Zcl.Frame, timeout: number): Promise<Events.ZclPayload> {
         return await this.queue.execute<Events.ZclPayload>(async () => {
             const command = zclFrame.command;
-            if (command.response == undefined) {
+            if (command.response === undefined) {
                 throw new Error(`Command '${command.name}' has no response, cannot wait for response`);
             }
 

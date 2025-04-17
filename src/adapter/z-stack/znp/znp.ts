@@ -329,7 +329,7 @@ export class Znp extends events.EventEmitter {
     private waitressValidator(zpiObject: ZpiObject, matcher: WaitressMatcher): boolean {
         return (
             matcher.type === zpiObject.type &&
-            matcher.subsystem == zpiObject.subsystem &&
+            matcher.subsystem === zpiObject.subsystem &&
             matcher.command === zpiObject.command.name &&
             (matcher.target === undefined ||
                 (typeof matcher.target === "number"

@@ -1162,9 +1162,9 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
             case EmberOutgoingMessageType.BROADCAST:
             case EmberOutgoingMessageType.BROADCAST_WITH_ALIAS: {
                 if (
-                    type == EmberOutgoingMessageType.BROADCAST_WITH_ALIAS ||
-                    (apsFrame.sourceEndpoint == ZSpec.GP_ENDPOINT &&
-                        apsFrame.destinationEndpoint == ZSpec.GP_ENDPOINT &&
+                    type === EmberOutgoingMessageType.BROADCAST_WITH_ALIAS ||
+                    (apsFrame.sourceEndpoint === ZSpec.GP_ENDPOINT &&
+                        apsFrame.destinationEndpoint === ZSpec.GP_ENDPOINT &&
                         apsFrame.options & EmberApsOption.USE_ALIAS_SEQUENCE_NUMBER)
                 ) {
                     nwkRadius = apsFrame.radius ?? nwkRadius;
@@ -2094,7 +2094,7 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
                 break;
         }
 
-        if (tokenDataLength != expectedTokenDataLength) {
+        if (tokenDataLength !== expectedTokenDataLength) {
             throw new EzspError(EzspStatus.ERROR_INVALID_VALUE);
         }
 

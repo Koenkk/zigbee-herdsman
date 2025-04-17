@@ -253,11 +253,11 @@ export class BuffaloZdo extends Buffalo {
     private writeFragmentationParametersGlobalTLV(tlv: FragmentationParametersGlobalTLV): void {
         this.writeUInt16(tlv.nwkAddress);
 
-        if (tlv.fragmentationOptions != undefined) {
+        if (tlv.fragmentationOptions !== undefined) {
             this.writeUInt8(tlv.fragmentationOptions);
         }
 
-        if (tlv.maxIncomingTransferUnit != undefined) {
+        if (tlv.maxIncomingTransferUnit !== undefined) {
             this.writeUInt16(tlv.maxIncomingTransferUnit);
         }
     }
@@ -1591,7 +1591,7 @@ export class BuffaloZdo extends Buffalo {
         const status: Status = this.readUInt8();
         let result: NetworkAddressResponse | undefined;
 
-        if (status == Status.SUCCESS) {
+        if (status === Status.SUCCESS) {
             const eui64 = this.readIeeeAddr();
             const nwkAddress = this.readUInt16();
             let assocDevCount = 0;

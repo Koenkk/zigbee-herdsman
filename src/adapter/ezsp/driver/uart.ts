@@ -218,7 +218,7 @@ export class SerialDriver extends EventEmitter {
 
         // Expected package {recvSeq}, but received {frmNum}
         // This happens when the chip sends us a reTx packet, but we are waiting for the next one
-        if (this.recvSeq != frmNum) {
+        if (this.recvSeq !== frmNum) {
             if (reTx) {
                 // if the reTx flag is set, then this is a packet replay
                 logger.debug(`Unexpected DATA packet sequence ${frmNum} | ${this.recvSeq}: packet replay`, NS);

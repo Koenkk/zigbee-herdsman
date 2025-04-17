@@ -64,8 +64,7 @@
             "suspicious": {
                 "noConstEnum": "off",
                 "useAwait": "error",
-                "noImplicitAnyLet": "off",
-                "noDoubleEquals": "off"
+                "noImplicitAnyLet": "off"
             }
         }
     },

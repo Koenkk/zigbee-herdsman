@@ -484,7 +484,7 @@ export class UartAsh extends EventEmitter<UartAshEventMap> {
             }
 
             // @ts-expect-error Jest testing
-            if (this.portOptions.binding != undefined) {
+            if (this.portOptions.binding !== undefined) {
                 // @ts-expect-error Jest testing
                 serialOpts.binding = this.portOptions.binding;
             }
@@ -912,7 +912,7 @@ export class UartAsh extends EventEmitter<UartAshEventMap> {
                             `---> [FRAME type=DATA_RETX frmReTx=${this.frmReTx} frmRx=${this.frmRx}](ackRx=${this.ackRx} frmTx=${this.frmTx})`,
                             NS,
                         );
-                    } else if (this.ackTx != this.frmRx) {
+                    } else if (this.ackTx !== this.frmRx) {
                         // An ACK should be generated
                         this.flags |= Flag.ACK;
                         break;
@@ -1356,7 +1356,7 @@ export class UartAsh extends EventEmitter<UartAshEventMap> {
      * If not already retransmitting, and there are unacked frames, start retransmitting after the last frame that was acked.
      */
     private startRetransmission(): void {
-        if (!(this.flags & Flag.RETX) && this.ackRx != this.frmTx) {
+        if (!(this.flags & Flag.RETX) && this.ackRx !== this.frmTx) {
             this.stopAckTimer();
 
             this.frmReTx = this.ackRx;

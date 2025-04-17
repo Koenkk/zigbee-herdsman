@@ -257,7 +257,7 @@ export class BuffaloZcl extends Buffalo {
     }
 
     private writeDate(value: ZclDate): void {
-        this.writeUInt8(value.year != undefined ? value.year - 1900 : 0xff);
+        this.writeUInt8(value.year !== undefined ? value.year - 1900 : 0xff);
         this.writeUInt8(value.month ?? 0xff);
         this.writeUInt8(value.dayOfMonth ?? 0xff);
         this.writeUInt8(value.dayOfWeek ?? 0xff);
@@ -376,7 +376,7 @@ export class BuffaloZcl extends Buffalo {
     }
 
     private writeGpdFrame(value: GPDCommissioningReply | GPDChannelConfiguration | GPDCustomReply): void {
-        if (value.commandID == 0xf0) {
+        if (value.commandID === 0xf0) {
             // Commissioning Reply
             const v = value as GPDCommissioningReply;
 
@@ -409,13 +409,13 @@ export class BuffaloZcl extends Buffalo {
                 // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
                 this.writeUInt32(v.frameCounter!);
             }
-        } else if (value.commandID == 0xf3) {
+        } else if (value.commandID === 0xf3) {
             // Channel configuration
             const v = value as GPDChannelConfiguration;
 
             this.writeUInt8(1);
             this.writeUInt8((v.operationalChannel & 0xf) | ((v.basic ? 1 : 0) << 4));
-        } else if (value.commandID == 0xf4 || value.commandID == 0xf5 || (value.commandID >= 0xf7 && value.commandID <= 0xff)) {
+        } else if (value.commandID === 0xf4 || value.commandID === 0xf5 || (value.commandID >= 0xf7 && value.commandID <= 0xff)) {
             // Other commands sent to GPD
             const v = value as GPDCustomReply;
 
@@ -530,9 +530,9 @@ export class BuffaloZcl extends Buffalo {
             };
         }
 
-        if (options.payload?.commandID == 0xa1) {
+        if (options.payload?.commandID === 0xa1) {
             // Manufacturer-specific Attribute Reporting
-            if (options.payload.payloadSize == undefined) {
+            if (options.payload.payloadSize === undefined) {
                 throw new Error("Cannot read GPD_FRAME with commandID=0xA1 without payloadSize options specified");
             }
 
@@ -696,7 +696,7 @@ export class BuffaloZcl extends Buffalo {
 
             const remaining = this.buffer.length - this.position;
             if (remaining <= 1) {
-                if (remaining == 1) {
+                if (remaining === 1) {
                     // Some Xiaomi structs have a trailing byte, skip it.
                     this.position += 1;
                 }

@@ -57,7 +57,7 @@ export class ZBOSSAdapter extends Adapter {
         if (frame.payload.zdoClusterId !== undefined) {
             // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
             this.emit("zdoResponse", frame.payload.zdoClusterId, frame.payload.zdo!);
-        } else if (frame.type == FrameType.INDICATION) {
+        } else if (frame.type === FrameType.INDICATION) {
             switch (frame.commandId) {
                 case CommandId.ZDO_DEV_UPDATE_IND: {
                     logger.debug(`Device ${frame.payload.ieee}:${frame.payload.nwk} ${DeviceUpdateStatus[frame.payload.status]}.`, NS);
@@ -278,7 +278,7 @@ export class ZBOSSAdapter extends Adapter {
                 case Zdo.ClusterId.UNBIND_REQUEST: {
                     // use fixed size address
                     const addrType = payload.readUInt8(13); // address type
-                    if (addrType == Zdo.MULTICAST_BINDING) {
+                    if (addrType === Zdo.MULTICAST_BINDING) {
                         payload = Buffer.concat([payload, Buffer.alloc(7)]);
                     }
                     break;

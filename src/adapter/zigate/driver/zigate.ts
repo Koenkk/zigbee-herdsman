@@ -390,10 +390,10 @@ export default class ZiGate extends EventEmitter<ZiGateEventMap> {
         const validator = (rule: ZiGateResponseMatcherRule): boolean => {
             try {
                 let expectedValue: string | number;
-                if (rule.value == undefined && rule.expectedProperty != undefined) {
+                if (rule.value == null && rule.expectedProperty != null) {
                     assert(matcher.ziGateObject, "Matcher ziGateObject expected valid.");
                     expectedValue = resolve(rule.expectedProperty, matcher.ziGateObject);
-                } else if (rule.value == undefined && rule.expectedExtraParameter != undefined) {
+                } else if (rule.value == null && rule.expectedExtraParameter != null) {
                     // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
                     expectedValue = resolve(rule.expectedExtraParameter, matcher.extraParameters!); // XXX: assumed valid?
                 } else {

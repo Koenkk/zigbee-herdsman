@@ -242,7 +242,7 @@ function parseReadReceivedDataResponse(view: DataView): ReceivedDataResponse | n
         const seqNr = view.getUint8(1);
         const status = view.getUint8(2);
 
-        if (status != 0) {
+        if (status !== 0) {
             if (status !== 5) {
                 logger.debug(`DATA_INDICATION RESPONSE - seqNr.: ${seqNr} status: ${status}`, NS);
             }

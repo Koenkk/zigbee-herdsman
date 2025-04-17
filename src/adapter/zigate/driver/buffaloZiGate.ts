@@ -74,7 +74,7 @@ class BuffaloZiGate extends Buffalo {
             }
             case ParameterType.ADDRESS_WITH_TYPE_DEPENDENCY: {
                 const addressMode = this.buffer.readUInt8(this.position - 1);
-                addressMode == 3 ? this.writeIeeeAddrBE(value) : this.writeUInt16BE(value);
+                addressMode === 3 ? this.writeIeeeAddrBE(value) : this.writeUInt16BE(value);
                 break;
             }
             case ParameterType.RAW: {
@@ -137,7 +137,7 @@ class BuffaloZiGate extends Buffalo {
             }
             case ParameterType.ADDRESS_WITH_TYPE_DEPENDENCY: {
                 const addressMode = this.buffer.readUInt8(this.position - 1);
-                return addressMode == 3 ? this.readIeeeAddrBE() : this.readUInt16BE();
+                return addressMode === 3 ? this.readIeeeAddrBE() : this.readUInt16BE();
             }
             case ParameterType.BUFFER_RAW: {
                 const buffer = this.buffer.subarray(this.position);

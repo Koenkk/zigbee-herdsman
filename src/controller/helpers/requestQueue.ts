@@ -102,7 +102,7 @@ export class RequestQueue extends Set<Request> {
                     const filteredPayload = request.frame.payload.filter(
                         (oldEl: {attrId: number}) => !payload.find((newEl: {attrId: number}) => oldEl.attrId === newEl.attrId),
                     );
-                    if (filteredPayload.length == 0) {
+                    if (filteredPayload.length === 0) {
                         logger.debug(`Request Queue (${this.deviceIeeeAddress}/${this.id}): Remove & reject request`, NS);
                         if (JSON.stringify(request.frame.payload) === JSON.stringify(payload)) {
                             newRequest.moveCallbacks(request);

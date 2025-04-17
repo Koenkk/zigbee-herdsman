@@ -47,7 +47,7 @@ export class ZBOSSBuffaloZcl extends BuffaloZcl {
             }
             if (parameter.options) parameter.options(payload, options);
 
-            if (parameter.type == BuffaloZBOSSDataType.LIST_TYPED && parameter.typed) {
+            if (parameter.type === BuffaloZBOSSDataType.LIST_TYPED && parameter.typed) {
                 const internalPaload = payload[parameter.name];
                 for (const value of internalPaload) {
                     this.writeByDesc(value, parameter.typed);
@@ -70,7 +70,7 @@ export class ZBOSSBuffaloZcl extends BuffaloZcl {
             }
             if (parameter.options) parameter.options(payload, options);
 
-            if (parameter.type == BuffaloZBOSSDataType.LIST_TYPED && parameter.typed) {
+            if (parameter.type === BuffaloZBOSSDataType.LIST_TYPED && parameter.typed) {
                 payload[parameter.name] = [];
 
                 if (!this.isMore()) break;

@@ -142,7 +142,7 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
             const adapterChannel = netParams.channel;
             const nwkUpdateID = netParams.nwkUpdateID;
 
-            if (configuredChannel != adapterChannel) {
+            if (configuredChannel !== adapterChannel) {
                 logger.info(`Configured channel '${configuredChannel}' does not match adapter channel '${adapterChannel}', changing channel`, NS);
                 await this.changeChannel(adapterChannel, configuredChannel, nwkUpdateID);
             }
@@ -151,7 +151,7 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
         Entity.injectAdapter(this.adapter);
 
         // log injection
-        logger.debug(`Injected database: ${this.database != undefined}, adapter: ${this.adapter != undefined}`, NS);
+        logger.debug(`Injected database: ${this.database !== undefined}, adapter: ${this.adapter !== undefined}`, NS);
 
         this.greenPower = new GreenPower(this.adapter);
         this.greenPower.on("deviceJoined", this.onDeviceJoinedGreenPower.bind(this));
@@ -882,7 +882,7 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
              */
             device = Device.find(payload.address);
 
-            if (device?.manufacturerName === "LUMI" && device?.type == "Router" && payload.groupID) {
+            if (device?.manufacturerName === "LUMI" && device?.type === "Router" && payload.groupID) {
                 logger.debug(`Handling re-transmitted Xiaomi message ${device.networkAddress} -> ${payload.groupID}`, NS);
                 device = Device.byNetworkAddress(payload.groupID);
             }

@@ -834,7 +834,7 @@ class Driver extends events.EventEmitter {
     }
 
     public macAddrArrayToString(addr: Array<number>): string {
-        if (addr.length != 8) {
+        if (addr.length !== 8) {
             throw new Error(`invalid array length for MAC address: ${addr.length}`);
         }
 

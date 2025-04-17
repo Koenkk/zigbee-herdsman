@@ -12,7 +12,7 @@ interface KeyValue {
 // if the header is lacking the information.
 function getCluster(frame: Zcl.Frame, deviceManufacturerID: number | undefined, customClusters: CustomClusters): Cluster {
     let cluster = frame.cluster;
-    if (!frame?.header?.manufacturerCode && frame?.cluster && deviceManufacturerID == Zcl.ManufacturerCode.LEGRAND_GROUP) {
+    if (!frame?.header?.manufacturerCode && frame?.cluster && deviceManufacturerID === Zcl.ManufacturerCode.LEGRAND_GROUP) {
         cluster = Zcl.Utils.getCluster(frame.cluster.ID, deviceManufacturerID, customClusters);
     }
     return cluster;

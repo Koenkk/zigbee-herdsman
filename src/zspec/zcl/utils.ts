@@ -101,7 +101,7 @@ function findClusterNameByID(
 
         if (cluster.ID === id) {
             // priority on first match when matching only ID
-            if (name == undefined) {
+            if (name === undefined) {
                 name = clusterName;
             }
 
@@ -193,7 +193,7 @@ function createCluster(name: string, cluster: ClusterDefinition, manufacturerCod
                         return attr;
                     }
 
-                    if (attr.manufacturerCode == undefined) {
+                    if (attr.manufacturerCode === undefined) {
                         partialMatchAttr = attr;
                     }
                 }
@@ -314,7 +314,7 @@ export function getGlobalCommand(key: number | string): Command {
         parameters: command.parameters,
     };
 
-    if (command.response != undefined) {
+    if (command.response !== undefined) {
         result.response = command.response;
     }
 

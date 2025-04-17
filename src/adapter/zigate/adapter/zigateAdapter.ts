@@ -93,7 +93,7 @@ export class ZiGateAdapter extends Adapter {
                 groupAddress: default_bind_group,
             });
 
-            if (this.adapterOptions.transmitPower != undefined) {
+            if (this.adapterOptions.transmitPower != null) {
                 await this.driver.sendCommand(ZiGateCommandCode.SetTXpower, {value: this.adapterOptions.transmitPower});
             }
         } catch (error) {
@@ -345,7 +345,7 @@ export class ZiGateAdapter extends Adapter {
             data: data,
         };
 
-        if (command.response != undefined && disableResponse === false) {
+        if (command.response !== undefined && disableResponse === false) {
             response = this.waitFor(
                 networkAddress,
                 endpoint,

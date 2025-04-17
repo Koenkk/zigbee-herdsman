@@ -212,14 +212,14 @@ export class EZSPZDORequestFrameData {
     [name: string]: any;
 
     static getFrame(key: string | number): EZSPFrameDesc {
-        const name = typeof key == "string" ? key : ZDOREQUEST_NAME_BY_ID[key];
+        const name = typeof key === "string" ? key : ZDOREQUEST_NAME_BY_ID[key];
         const frameDesc = ZDOREQUESTS[name];
         if (!frameDesc) throw new Error(`Unrecognized ZDOFrame from FrameID ${key}`);
         return frameDesc;
     }
 
     constructor(key: string | number, isRequest: boolean, params: ParamsDesc | Buffer) {
-        if (typeof key == "string") {
+        if (typeof key === "string") {
             this._cls_ = key;
             this._id_ = ZDOREQUESTS[this._cls_].ID;
         } else {
@@ -268,14 +268,14 @@ export class EZSPZDOResponseFrameData {
     [name: string]: any;
 
     static getFrame(key: string | number): ParamsDesc {
-        const name = typeof key == "string" ? key : ZDORESPONSE_NAME_BY_ID[key];
+        const name = typeof key === "string" ? key : ZDORESPONSE_NAME_BY_ID[key];
         const frameDesc = ZDORESPONSES[name];
         if (!frameDesc) throw new Error(`Unrecognized ZDOFrame from FrameID ${key}`);
         return frameDesc.params;
     }
 
     constructor(key: string | number, params: ParamsDesc | Buffer) {
-        if (typeof key == "string") {
+        if (typeof key === "string") {
             this._cls_ = key;
             this._id_ = ZDORESPONSES[this._cls_].ID;
         } else {
@@ -485,7 +485,7 @@ export class Ezsp extends EventEmitter {
 
         const response = await waiter.start().promise;
 
-        return response.payload.status == EmberStatus.NETWORK_UP;
+        return response.payload.status === EmberStatus.NETWORK_UP;
     }
 
     async leaveNetwork(): Promise<number> {
@@ -739,7 +739,7 @@ export class Ezsp extends EventEmitter {
 
         logger.debug(`Set concentrator type: ${JSON.stringify(res)}`, NS);
 
-        if (res.status != EmberStatus.SUCCESS) {
+        if (res.status !== EmberStatus.SUCCESS) {
             logger.error(`Couldn't set concentrator ${JSON.stringify(res)}`, NS);
         }
 
@@ -771,7 +771,7 @@ export class Ezsp extends EventEmitter {
     }
 
     private waitressValidator(payload: EZSPFrame, matcher: EZSPWaitressMatcher): boolean {
-        const frameNames = typeof matcher.frameId == "string" ? [matcher.frameId] : FRAME_NAMES_BY_ID[matcher.frameId];
+        const frameNames = typeof matcher.frameId === "string" ? [matcher.frameId] : FRAME_NAMES_BY_ID[matcher.frameId];
         return (matcher.sequence == null || payload.sequence === matcher.sequence) && frameNames.includes(payload.frameName);
     }
 

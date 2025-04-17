@@ -32,7 +32,7 @@ export class Parser extends stream.Transform {
             }
         }
 
-        if (this.buffer.length >= MinMessageLength && this.buffer.readUInt8(0) == SOF) {
+        if (this.buffer.length >= MinMessageLength && this.buffer.readUInt8(0) === SOF) {
             const dataLength = this.buffer[PositionDataLength];
             const fcsPosition = DataStart + dataLength;
             const frameLength = fcsPosition + 1;

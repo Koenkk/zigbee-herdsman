@@ -55,12 +55,12 @@ export class EZSPAdapter extends Adapter {
     private async processMessage(frame: EmberIncomingMessage): Promise<void> {
         logger.debug(() => `processMessage: ${JSON.stringify(frame)}`, NS);
 
-        if (frame.apsFrame.profileId == Zdo.ZDO_PROFILE_ID) {
+        if (frame.apsFrame.profileId === Zdo.ZDO_PROFILE_ID) {
             if (frame.apsFrame.clusterId >= 0x8000 /* response only */) {
                 // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
                 this.emit("zdoResponse", frame.apsFrame.clusterId, frame.zdoResponse!);
             }
-        } else if (frame.apsFrame.profileId == ZSpec.HA_PROFILE_ID || frame.apsFrame.profileId == 0xffff) {
+        } else if (frame.apsFrame.profileId === ZSpec.HA_PROFILE_ID || frame.apsFrame.profileId === 0xffff) {
             const payload: ZclPayload = {
                 clusterID: frame.apsFrame.clusterId,
                 header: Zcl.Header.fromBuffer(frame.message),
@@ -75,7 +75,7 @@ export class EZSPAdapter extends Adapter {
 
             this.waitress.resolve(payload);
             this.emit("zclPayload", payload);
-        } else if (frame.apsFrame.profileId == ZSpec.TOUCHLINK_PROFILE_ID && frame.senderEui64) {
+        } else if (frame.apsFrame.profileId === ZSpec.TOUCHLINK_PROFILE_ID && frame.senderEui64) {
             // ZLL Frame
             const payload: ZclPayload = {
                 clusterID: frame.apsFrame.clusterId,
@@ -91,7 +91,7 @@ export class EZSPAdapter extends Adapter {
 
             this.waitress.resolve(payload);
             this.emit("zclPayload", payload);
-        } else if (frame.apsFrame.profileId == ZSpec.GP_PROFILE_ID) {
+        } else if (frame.apsFrame.profileId === ZSpec.GP_PROFILE_ID) {
             // GP Frame
             // Only handle when clusterId == 33 (greenPower), some devices send messages with this profileId
             // while the cluster is not greenPower
@@ -358,7 +358,7 @@ export class EZSPAdapter extends Adapter {
         );
         let response = null;
         const command = zclFrame.command;
-        if (command.response != undefined && disableResponse === false) {
+        if (command.response !== undefined && disableResponse === false) {
             response = this.waitForInternal(
                 networkAddress,
                 endpoint,
@@ -521,7 +521,7 @@ export class EZSPAdapter extends Adapter {
             logger.debug("sendZclFrameInterPANBroadcast", NS);
             const command = zclFrame.command;
 
-            if (command.response == undefined) {
+            if (command.response === undefined) {
                 throw new Error(`Command '${command.name}' has no response, cannot wait for response`);
             }
 

@@ -92,7 +92,7 @@ export class ZclFrame {
                 for (const parameter of command.parameters) {
                     const options: BuffaloZclOptions = {};
 
-                    if (!ZclFrame.conditionsValid(parameter, entry, null)) {
+                    if (!ZclFrame.conditionsValid(parameter, entry, undefined)) {
                         continue;
                     }
 
@@ -125,11 +125,12 @@ export class ZclFrame {
 
     private writePayloadCluster(buffalo: BuffaloZcl): void {
         for (const parameter of this.command.parameters) {
-            if (!ZclFrame.conditionsValid(parameter, this.payload, null)) {
+            if (!ZclFrame.conditionsValid(parameter, this.payload, undefined)) {
                 continue;
             }
 
-            if (this.payload[parameter.name] == undefined) {
+            // TODO: biome migration - safer
+            if (this.payload[parameter.name] == null) {
                 throw new Error(`Parameter '${parameter.name}' is missing`);
             }
 
@@ -279,7 +280,7 @@ export class ZclFrame {
      * Utils
      */
 
-    public static conditionsValid(parameter: ParameterDefinition, entry: ZclPayload, remainingBufferBytes: number | null): boolean {
+    public static conditionsValid(parameter: ParameterDefinition, entry: ZclPayload, remainingBufferBytes: number | undefined): boolean {
         if (parameter.conditions) {
             for (const condition of parameter.conditions) {
                 switch (condition.type) {
@@ -306,7 +307,7 @@ export class ZclFrame {
                         break;
                     }
                     case ParameterCondition.MINIMUM_REMAINING_BUFFER_BYTES: {
-                        if (remainingBufferBytes != null && remainingBufferBytes < condition.value) return false;
+                        if (remainingBufferBytes !== undefined && remainingBufferBytes < condition.value) return false;
                         break;
                     }
                     case ParameterCondition.DATA_TYPE_CLASS_EQUAL: {

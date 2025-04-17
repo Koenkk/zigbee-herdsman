@@ -482,7 +482,7 @@ function getMdnsRadioAdapter(radio: string): Adapter {
 export async function findMdnsAdapter(path: string): Promise<[adapter: Adapter, path: string]> {
     const mdnsDevice = path.substring(7);
 
-    if (mdnsDevice.length == 0) {
+    if (mdnsDevice.length === 0) {
         throw new Error("No mdns device specified. You must specify the coordinator mdns service type after mdns://, e.g. mdns://my-adapter");
     }
 

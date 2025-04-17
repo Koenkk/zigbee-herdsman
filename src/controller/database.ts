@@ -30,7 +30,7 @@ export class Database {
                 try {
                     const json = JSON.parse(row);
 
-                    if (json.id != undefined) {
+                    if (json.id != null) {
                         entries[json.id] = json;
                     }
                 } catch (error) {

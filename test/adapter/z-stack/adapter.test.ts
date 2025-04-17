@@ -1667,7 +1667,7 @@ describe("zstack-adapter", () => {
         fs.writeFileSync(backupFile, JSON.stringify(backupWithMissingDevice), "utf8");
         const devicesInDatabase = backupWithMissingDevice.devices.map((d) => ZSpec.Utils.eui64BEBufferToHex(d.ieee_address));
         const backup = await adapter.backup(devicesInDatabase);
-        const missingDevice = backup.devices.find((d) => d.ieeeAddress.toString("hex") == "00128d11124fa80b");
+        const missingDevice = backup.devices.find((d) => d.ieeeAddress.toString("hex") === "00128d11124fa80b");
         expect(missingDevice).not.toBeNull();
         expect(backupWithMissingDevice.devices.length).toBe(backup.devices.length);
         expect(missingDevice?.linkKey?.key.toString("hex")).toBe("bff550908aa1529ee90eea3c3bdc26fc");
@@ -2216,7 +2216,7 @@ describe("zstack-adapter", () => {
         mockZnpRequest.mockImplementation(
             (_, cmd) =>
                 new Promise((resolve, reject) => {
-                    if (cmd == "ledControl") reject("FAILED");
+                    if (cmd === "ledControl") reject("FAILED");
                     else resolve(undefined);
                 }),
         );
