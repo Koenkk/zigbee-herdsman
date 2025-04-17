@@ -227,8 +227,8 @@ export class ZclFrame {
                     // TODO: not needed, but temp workaroudn to make payload equal to that of zcl-packet
                     // XXX: is this still needed?
                     if (parameter.type === BuffaloZclDataType.USE_DATA_TYPE && entry.dataType === DataType.STRUCT) {
-                        entry["structElms"] = entry.attrData;
-                        entry["numElms"] = entry.attrData.length;
+                        entry.structElms = entry.attrData;
+                        entry.numElms = entry.attrData.length;
                     }
                 }
 

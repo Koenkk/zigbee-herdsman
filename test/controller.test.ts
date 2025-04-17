@@ -127,7 +127,7 @@ const mockAdapterSendZdo = vi
                             [{attrId: 5, status: 0, dataType: 66, attrData: "lumi.occupancy"}],
                             {},
                         );
-                        await mockAdapterEvents["zclPayload"]({
+                        await mockAdapterEvents.zclPayload({
                             wasBroadcast: false,
                             address: networkAddress,
                             clusterID: frame.cluster.ID,
@@ -268,7 +268,7 @@ const restoreMocksendZclFrameToEndpoint = () => {
                 {},
             );
 
-            mockAdapterEvents["zclPayload"]({
+            mockAdapterEvents.zclPayload({
                 wasBroadcast: false,
                 address: 170,
                 clusterID: response.cluster.ID,
@@ -571,7 +571,7 @@ describe("Controller", () => {
         // @ts-expect-error private
         Group.groups.clear();
 
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 129, ieeeAddr: "0x129"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
         // @ts-expect-error private
         expect(Device.devices.size).toStrictEqual(1);
         // @ts-expect-error private
@@ -579,8 +579,8 @@ describe("Controller", () => {
         expect(Device.byIeeeAddr("0x129", false)).toBeInstanceOf(Device);
         expect(Device.byIeeeAddr("0x128", false)).toBeUndefined();
 
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 128, ieeeAddr: "0x128"});
-        await mockAdapterEvents["deviceLeave"]({networkAddress: 128, ieeeAddr: "0x128"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 128, ieeeAddr: "0x128"});
+        await mockAdapterEvents.deviceLeave({networkAddress: 128, ieeeAddr: "0x128"});
         // @ts-expect-error private
         expect(Device.devices.size).toStrictEqual(1);
         // @ts-expect-error private
@@ -588,7 +588,7 @@ describe("Controller", () => {
         expect(Device.byIeeeAddr("0x128", false)).toBeUndefined();
         expect(Device.byIeeeAddr("0x128", true)).toBeInstanceOf(Device);
 
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 128, ieeeAddr: "0x128"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 128, ieeeAddr: "0x128"});
         // @ts-expect-error private
         expect(Device.devices.size).toStrictEqual(2);
         // @ts-expect-error private
@@ -1071,8 +1071,8 @@ describe("Controller", () => {
         );
 
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 129, ieeeAddr: "0x129"});
-        await mockAdapterEvents["zclPayload"]({
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
+        await mockAdapterEvents.zclPayload({
             wasBroadcast: false,
             networkAddress: 129,
             clusterID: frame.cluster.ID,
@@ -1089,9 +1089,9 @@ describe("Controller", () => {
     it("Device should update properties when reported", async () => {
         const frame = Zcl.Frame.create(0, 1, true, undefined, 10, "readRsp", 0, [{attrId: 5, status: 0, dataType: 66, attrData: "new.model.id"}], {});
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 129, ieeeAddr: "0x129"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
         expect(Device.byIeeeAddr("0x129")!.modelID).toBe("myModelID");
-        await mockAdapterEvents["zclPayload"]({
+        await mockAdapterEvents.zclPayload({
             wasBroadcast: false,
             address: 129,
             clusterID: frame.cluster.ID,
@@ -1168,7 +1168,7 @@ describe("Controller", () => {
 
     it("Iterates over all devices", async () => {
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 129, ieeeAddr: "0x129"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
         let devices = 0;
 
         for (const device of controller.getDevicesIterator()) {
@@ -1182,7 +1182,7 @@ describe("Controller", () => {
 
     it("Iterates over devices with predicate", async () => {
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 129, ieeeAddr: "0x129"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
         let devices = 0;
 
         for (const device of controller.getDevicesIterator((d) => d.networkAddress === 129)) {
@@ -1229,7 +1229,7 @@ describe("Controller", () => {
     it("Join a device", async () => {
         await controller.start();
         expect(databaseContents().includes("0x129")).toBeFalsy();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 129, ieeeAddr: "0x129"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
         expect(equalsPartial(events.deviceJoined[0].device, {ID: 2, networkAddress: 129, ieeeAddr: "0x129"})).toBeTruthy();
         expect(events.deviceInterview[0]).toStrictEqual({
             device: {
@@ -1308,7 +1308,7 @@ describe("Controller", () => {
         controller.on("deviceInterview", (device) => events.deviceInterview.push(deepClone(device)));
         await controller.start();
         expect(databaseContents().includes("0x129")).toBeFalsy();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 129, ieeeAddr: "0x129"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
         await flushPromises();
         expect(equalsPartial(events.deviceJoined[0].device, {ID: 2, networkAddress: 129, ieeeAddr: "0x129"})).toBeTruthy();
         expect(events.deviceInterview[0]).toStrictEqual({
@@ -1388,7 +1388,7 @@ describe("Controller", () => {
         await controller.start();
         mockAdapterSendZdo.mockClear();
         expect(databaseContents().includes("0x129")).toBeFalsy();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 129, ieeeAddr: "0x129"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
         expect(events.deviceJoined.length).toBe(0);
         expect(events.deviceInterview.length).toBe(0);
         expect(databaseContents().includes("0x129")).toBeFalsy();
@@ -1406,7 +1406,7 @@ describe("Controller", () => {
         mockAdapterSendZdo.mockClear();
         expect(databaseContents().includes("0x129")).toBeFalsy();
         sendZdoResponseStatus = Zdo.Status.NOT_SUPPORTED;
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 129, ieeeAddr: "0x129"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
         expect(events.deviceJoined.length).toBe(0);
         expect(events.deviceInterview.length).toBe(0);
         expect(databaseContents().includes("0x129")).toBeFalsy();
@@ -1418,7 +1418,7 @@ describe("Controller", () => {
 
     it("Set device powersource by string", async () => {
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 129, ieeeAddr: "0x129"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
         const device = controller.getDeviceByIeeeAddr("0x129")!;
         device.powerSource = "test123";
         expect(device.powerSource).toBe("test123");
@@ -1426,17 +1426,17 @@ describe("Controller", () => {
 
     it("Get device should return same instance", async () => {
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 129, ieeeAddr: "0x129"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
         expect(controller.getDeviceByIeeeAddr("0x129")).toBe(controller.getDeviceByIeeeAddr("0x129"));
     });
 
     it("Device announce event", async () => {
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 129, ieeeAddr: "0x129"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
         expect(events.deviceAnnounce.length).toBe(0);
         // @ts-expect-error private
         const onDeviceAnnounceSpy = vi.spyOn(controller, "onDeviceAnnounce");
-        await mockAdapterEvents["zdoResponse"](Zdo.ClusterId.END_DEVICE_ANNOUNCE, [
+        await mockAdapterEvents.zdoResponse(Zdo.ClusterId.END_DEVICE_ANNOUNCE, [
             Zdo.Status.SUCCESS,
             {nwkAddress: 129, eui64: "0x129", capabilities: Zdo.Utils.getMacCapFlags(0x10)},
         ]);
@@ -1451,7 +1451,7 @@ describe("Controller", () => {
         await controller.start();
         // @ts-expect-error private
         const onDeviceAnnounceSpy = vi.spyOn(controller, "onDeviceAnnounce");
-        await mockAdapterEvents["zdoResponse"](Zdo.ClusterId.END_DEVICE_ANNOUNCE, [
+        await mockAdapterEvents.zdoResponse(Zdo.ClusterId.END_DEVICE_ANNOUNCE, [
             Zdo.Status.SUCCESS,
             {nwkAddress: 12999, eui64: "0x12999", capabilities: Zdo.Utils.getMacCapFlags(0x10)},
         ]);
@@ -1461,12 +1461,12 @@ describe("Controller", () => {
 
     it("Device announce event should update network address when different", async () => {
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 129, ieeeAddr: "0x129"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
         expect(controller.getDeviceByNetworkAddress(129)!.ieeeAddr).toStrictEqual("0x129");
         expect(events.deviceAnnounce.length).toBe(0);
         // @ts-expect-error private
         const onDeviceAnnounceSpy = vi.spyOn(controller, "onDeviceAnnounce");
-        await mockAdapterEvents["zdoResponse"](Zdo.ClusterId.END_DEVICE_ANNOUNCE, [
+        await mockAdapterEvents.zdoResponse(Zdo.ClusterId.END_DEVICE_ANNOUNCE, [
             Zdo.Status.SUCCESS,
             {nwkAddress: 9999, eui64: "0x129", capabilities: Zdo.Utils.getMacCapFlags(0x10)},
         ]);
@@ -1479,11 +1479,11 @@ describe("Controller", () => {
 
     it("Network address event should update network address when different", async () => {
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 129, ieeeAddr: "0x129"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
         expect(controller.getDeviceByNetworkAddress(129)!.ieeeAddr).toStrictEqual("0x129");
         // @ts-expect-error private
         const onNetworkAddressSpy = vi.spyOn(controller, "onNetworkAddress");
-        await mockAdapterEvents["zdoResponse"](Zdo.ClusterId.NETWORK_ADDRESS_RESPONSE, [
+        await mockAdapterEvents.zdoResponse(Zdo.ClusterId.NETWORK_ADDRESS_RESPONSE, [
             Zdo.Status.SUCCESS,
             {nwkAddress: 9999, eui64: "0x129", startIndex: 0, assocDevList: []},
         ]);
@@ -1498,8 +1498,8 @@ describe("Controller", () => {
         await controller.start();
         // @ts-expect-error private
         const onNetworkAddressSpy = vi.spyOn(controller, "onNetworkAddress");
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 129, ieeeAddr: "0x129"});
-        await mockAdapterEvents["zdoResponse"](Zdo.ClusterId.NETWORK_ADDRESS_RESPONSE, [
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
+        await mockAdapterEvents.zdoResponse(Zdo.ClusterId.NETWORK_ADDRESS_RESPONSE, [
             Zdo.Status.SUCCESS,
             {nwkAddress: 129, eui64: "0x129", startIndex: 0, assocDevList: []},
         ]);
@@ -1512,7 +1512,7 @@ describe("Controller", () => {
         await controller.start();
         // @ts-expect-error private
         const onNetworkAddressSpy = vi.spyOn(controller, "onNetworkAddress");
-        await mockAdapterEvents["zdoResponse"](Zdo.ClusterId.NETWORK_ADDRESS_RESPONSE, [
+        await mockAdapterEvents.zdoResponse(Zdo.ClusterId.NETWORK_ADDRESS_RESPONSE, [
             Zdo.Status.SUCCESS,
             {nwkAddress: 19321, eui64: "0x19321", startIndex: 0, assocDevList: []},
         ]);
@@ -1521,12 +1521,12 @@ describe("Controller", () => {
 
     it("Network address event should update the last seen value", async () => {
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 129, ieeeAddr: "0x129"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
         const updatedMockedDate = new Date();
         vi.setSystemTime(updatedMockedDate);
         // @ts-expect-error private
         const onNetworkAddressSpy = vi.spyOn(controller, "onNetworkAddress");
-        await mockAdapterEvents["zdoResponse"](Zdo.ClusterId.NETWORK_ADDRESS_RESPONSE, [
+        await mockAdapterEvents.zdoResponse(Zdo.ClusterId.NETWORK_ADDRESS_RESPONSE, [
             Zdo.Status.SUCCESS,
             {nwkAddress: 129, eui64: "0x129", startIndex: 0, assocDevList: []},
         ]);
@@ -1536,11 +1536,11 @@ describe("Controller", () => {
 
     it("IEEE address event should update network address when different", async () => {
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 129, ieeeAddr: "0x129"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
         expect(controller.getDeviceByNetworkAddress(129)!.ieeeAddr).toStrictEqual("0x129");
         // @ts-expect-error private
         const onIEEEAddressSpy = vi.spyOn(controller, "onIEEEAddress");
-        await mockAdapterEvents["zdoResponse"](Zdo.ClusterId.IEEE_ADDRESS_RESPONSE, [
+        await mockAdapterEvents.zdoResponse(Zdo.ClusterId.IEEE_ADDRESS_RESPONSE, [
             Zdo.Status.SUCCESS,
             {nwkAddress: 9999, eui64: "0x129", startIndex: 0, assocDevList: []},
         ]);
@@ -1555,8 +1555,8 @@ describe("Controller", () => {
         await controller.start();
         // @ts-expect-error private
         const onIEEEAddressSpy = vi.spyOn(controller, "onIEEEAddress");
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 129, ieeeAddr: "0x129"});
-        await mockAdapterEvents["zdoResponse"](Zdo.ClusterId.IEEE_ADDRESS_RESPONSE, [
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
+        await mockAdapterEvents.zdoResponse(Zdo.ClusterId.IEEE_ADDRESS_RESPONSE, [
             Zdo.Status.SUCCESS,
             {nwkAddress: 129, eui64: "0x129", startIndex: 0, assocDevList: []},
         ]);
@@ -1569,7 +1569,7 @@ describe("Controller", () => {
         await controller.start();
         // @ts-expect-error private
         const onIEEEAddressSpy = vi.spyOn(controller, "onIEEEAddress");
-        await mockAdapterEvents["zdoResponse"](Zdo.ClusterId.IEEE_ADDRESS_RESPONSE, [
+        await mockAdapterEvents.zdoResponse(Zdo.ClusterId.IEEE_ADDRESS_RESPONSE, [
             Zdo.Status.SUCCESS,
             {nwkAddress: 19321, eui64: "0x19321", startIndex: 0, assocDevList: []},
         ]);
@@ -1578,12 +1578,12 @@ describe("Controller", () => {
 
     it("IEEE address event should update the last seen value", async () => {
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 129, ieeeAddr: "0x129"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
         const updatedMockedDate = new Date();
         vi.setSystemTime(updatedMockedDate);
         // @ts-expect-error private
         const onIEEEAddressSpy = vi.spyOn(controller, "onIEEEAddress");
-        await mockAdapterEvents["zdoResponse"](Zdo.ClusterId.IEEE_ADDRESS_RESPONSE, [
+        await mockAdapterEvents.zdoResponse(Zdo.ClusterId.IEEE_ADDRESS_RESPONSE, [
             Zdo.Status.SUCCESS,
             {nwkAddress: 129, eui64: "0x129", startIndex: 0, assocDevList: []},
         ]);
@@ -1593,9 +1593,9 @@ describe("Controller", () => {
 
     it("ZDO response for NETWORK_ADDRESS_RESPONSE should update network address when different", async () => {
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 129, ieeeAddr: "0x129"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
         expect(controller.getDeviceByNetworkAddress(129)?.ieeeAddr).toStrictEqual("0x129");
-        await mockAdapterEvents["zdoResponse"](Zdo.ClusterId.NETWORK_ADDRESS_RESPONSE, [
+        await mockAdapterEvents.zdoResponse(Zdo.ClusterId.NETWORK_ADDRESS_RESPONSE, [
             Zdo.Status.SUCCESS,
             {nwkAddress: 9999, eui64: "0x129", assocDevList: [], startIndex: 0},
         ]);
@@ -1607,8 +1607,8 @@ describe("Controller", () => {
 
     it("ZDO response for NETWORK_ADDRESS_RESPONSE shouldnt update network address when the same", async () => {
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 129, ieeeAddr: "0x129"});
-        await mockAdapterEvents["zdoResponse"](Zdo.ClusterId.NETWORK_ADDRESS_RESPONSE, [
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
+        await mockAdapterEvents.zdoResponse(Zdo.ClusterId.NETWORK_ADDRESS_RESPONSE, [
             Zdo.Status.SUCCESS,
             {nwkAddress: 129, eui64: "0x129", assocDevList: [], startIndex: 0},
         ]);
@@ -1618,7 +1618,7 @@ describe("Controller", () => {
 
     it("ZDO response for NETWORK_ADDRESS_RESPONSE from unknown device", async () => {
         await controller.start();
-        await mockAdapterEvents["zdoResponse"](Zdo.ClusterId.NETWORK_ADDRESS_RESPONSE, [
+        await mockAdapterEvents.zdoResponse(Zdo.ClusterId.NETWORK_ADDRESS_RESPONSE, [
             Zdo.Status.SUCCESS,
             {nwkAddress: 19321, eui64: "0x19321", assocDevList: [], startIndex: 0},
         ]);
@@ -1626,10 +1626,10 @@ describe("Controller", () => {
 
     it("ZDO response for NETWORK_ADDRESS_RESPONSE should update the last seen value", async () => {
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 129, ieeeAddr: "0x129"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
         const updatedMockedDate = new Date();
         vi.setSystemTime(updatedMockedDate);
-        await mockAdapterEvents["zdoResponse"](Zdo.ClusterId.NETWORK_ADDRESS_RESPONSE, [
+        await mockAdapterEvents.zdoResponse(Zdo.ClusterId.NETWORK_ADDRESS_RESPONSE, [
             Zdo.Status.SUCCESS,
             {nwkAddress: 129, eui64: "0x129", assocDevList: [], startIndex: 0},
         ]);
@@ -1638,9 +1638,9 @@ describe("Controller", () => {
 
     it("ZDO response for END_DEVICE_ANNOUNCE should bubble up event", async () => {
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 129, ieeeAddr: "0x129"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
         expect(events.deviceAnnounce.length).toBe(0);
-        await mockAdapterEvents["zdoResponse"](Zdo.ClusterId.END_DEVICE_ANNOUNCE, [
+        await mockAdapterEvents.zdoResponse(Zdo.ClusterId.END_DEVICE_ANNOUNCE, [
             Zdo.Status.SUCCESS,
             {
                 nwkAddress: 129,
@@ -1665,9 +1665,9 @@ describe("Controller", () => {
 
     it("ZDO response for END_DEVICE_ANNOUNCE should update network address when different", async () => {
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 129, ieeeAddr: "0x129"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
         expect(controller.getDeviceByNetworkAddress(129)?.ieeeAddr).toStrictEqual("0x129");
-        await mockAdapterEvents["zdoResponse"](Zdo.ClusterId.END_DEVICE_ANNOUNCE, [
+        await mockAdapterEvents.zdoResponse(Zdo.ClusterId.END_DEVICE_ANNOUNCE, [
             Zdo.Status.SUCCESS,
             {
                 nwkAddress: 9999,
@@ -1692,7 +1692,7 @@ describe("Controller", () => {
 
     it("ZDO response for END_DEVICE_ANNOUNCE from unknown device", async () => {
         await controller.start();
-        await mockAdapterEvents["zdoResponse"](Zdo.ClusterId.END_DEVICE_ANNOUNCE, [
+        await mockAdapterEvents.zdoResponse(Zdo.ClusterId.END_DEVICE_ANNOUNCE, [
             Zdo.Status.SUCCESS,
             {
                 nwkAddress: 12999,
@@ -1714,7 +1714,7 @@ describe("Controller", () => {
 
     it("ZDO response for cluster ID with no extra processing", async () => {
         await controller.start();
-        await mockAdapterEvents["zdoResponse"](Zdo.ClusterId.BIND_RESPONSE, [Zdo.Status.SUCCESS, undefined]);
+        await mockAdapterEvents.zdoResponse(Zdo.ClusterId.BIND_RESPONSE, [Zdo.Status.SUCCESS, undefined]);
     });
 
     it("Emit lastSeenChanged event even when no message is emitted from it", async () => {
@@ -1722,9 +1722,9 @@ describe("Controller", () => {
         const buffer = Buffer.from([0x18, 0x04, 0x0b, 0x0c, 0x82]);
         const frame = Zcl.Frame.fromBuffer(Zcl.Clusters.genBasic.ID, Zcl.Header.fromBuffer(buffer)!, buffer, {});
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 129, ieeeAddr: "0x129"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
         events.lastSeenChanged = [];
-        await mockAdapterEvents["zclPayload"]({
+        await mockAdapterEvents.zclPayload({
             wasBroadcast: false,
             address: "0x129",
             clusterID: frame.cluster.ID,
@@ -1742,38 +1742,38 @@ describe("Controller", () => {
 
     it("Device leave event and remove from database", async () => {
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 129, ieeeAddr: "0x129"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
         expect(controller.getDeviceByIeeeAddr("0x129")).toBeInstanceOf(Device);
         expect(events.deviceLeave.length).toBe(0);
-        await mockAdapterEvents["deviceLeave"]({networkAddress: 129, ieeeAddr: "0x129"});
+        await mockAdapterEvents.deviceLeave({networkAddress: 129, ieeeAddr: "0x129"});
         expect(events.deviceLeave.length).toBe(1);
         expect(events.deviceLeave[0]).toStrictEqual({ieeeAddr: "0x129"});
         expect(controller.getDeviceByIeeeAddr("0x129")).toBeUndefined();
 
         // leaves another time when not in database
-        await mockAdapterEvents["deviceLeave"]({networkAddress: 129, ieeeAddr: "0x129"});
+        await mockAdapterEvents.deviceLeave({networkAddress: 129, ieeeAddr: "0x129"});
         expect(events.deviceLeave.length).toBe(1);
     });
 
     it("Device leave event with only nwk addr and remove from database", async () => {
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 129, ieeeAddr: "0x129"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
         expect(controller.getDeviceByNetworkAddress(129)).toBeInstanceOf(Device);
         expect(events.deviceLeave.length).toBe(0);
-        await mockAdapterEvents["deviceLeave"]({networkAddress: 129, ieeeAddr: undefined});
+        await mockAdapterEvents.deviceLeave({networkAddress: 129, ieeeAddr: undefined});
         expect(events.deviceLeave.length).toBe(1);
         expect(events.deviceLeave[0]).toStrictEqual({ieeeAddr: "0x129"});
         expect(controller.getDeviceByNetworkAddress(129)).toBeUndefined();
         expect(Device.byNetworkAddress(129, true)).toBeInstanceOf(Device);
 
         // leaves another time when not in database
-        await mockAdapterEvents["deviceLeave"]({networkAddress: 129, ieeeAddr: undefined});
+        await mockAdapterEvents.deviceLeave({networkAddress: 129, ieeeAddr: undefined});
         expect(events.deviceLeave.length).toBe(1);
     });
 
     it("Start with reset should clear database", async () => {
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 129, ieeeAddr: "0x129"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
         await controller.createGroup(1);
         expect(controller.getGroupByID(1)).toBeInstanceOf(Group);
         expect(controller.getDeviceByIeeeAddr("0x129")).toBeInstanceOf(Device);
@@ -1800,7 +1800,7 @@ describe("Controller", () => {
         fs.writeFileSync(databaseTmpPath, "Hello, World!");
 
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 129, ieeeAddr: "0x129"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
         controller.createGroup(1);
 
         // The old database.db.tmp should be gone
@@ -1820,7 +1820,7 @@ describe("Controller", () => {
         controller = new Controller({...options, databaseBackupPath});
         expect(fs.existsSync(databaseBackupPath)).toBeFalsy();
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 129, ieeeAddr: "0x129"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
         await controller.createGroup(1);
         await controller.stop();
         mockAdapterStart.mockReturnValueOnce("reset");
@@ -2005,7 +2005,7 @@ describe("Controller", () => {
 
     it("Controller permit joining through specific device", async () => {
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 129, ieeeAddr: "0x129"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
         await controller.permitJoin(254, controller.getDeviceByIeeeAddr("0x129"));
 
         expect(mockAdapterPermitJoin).toHaveBeenCalledTimes(1);
@@ -2095,7 +2095,7 @@ describe("Controller", () => {
         expect(controller.isStopping()).toBeFalsy();
         expect(controller.isAdapterDisconnected()).toBeFalsy();
 
-        await mockAdapterEvents["disconnected"]();
+        await mockAdapterEvents.disconnected();
         expect(events.adapterDisconnected.length).toBe(1);
         expect(controller.isAdapterDisconnected()).toBeTruthy();
 
@@ -2110,14 +2110,14 @@ describe("Controller", () => {
 
     it("Device joins another time with different network address", async () => {
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 129, ieeeAddr: "0x129"});
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 129, ieeeAddr: "0x129"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
         expect(controller.getDeviceByNetworkAddress(129)?.ieeeAddr).toStrictEqual("0x129");
         expect(events.deviceJoined.length).toBe(1);
         expect(equalsPartial(events.deviceJoined[0].device, {ID: 2, networkAddress: 129, ieeeAddr: "0x129"})).toBeTruthy();
         expect(controller.getDeviceByIeeeAddr("0x129")?.networkAddress).toBe(129);
 
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 130, ieeeAddr: "0x129"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 130, ieeeAddr: "0x129"});
         expect(events.deviceJoined.length).toBe(1);
         expect(controller.getDeviceByIeeeAddr("0x129")?.networkAddress).toBe(130);
         expect(controller.getDeviceByNetworkAddress(129)).toBeUndefined();
@@ -2126,7 +2126,7 @@ describe("Controller", () => {
 
     it("Device joins and interview succeeds", async () => {
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 129, ieeeAddr: "0x129"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
         expect(events.deviceInterview.length).toBe(2);
         expect(events.deviceInterview[0].status).toBe("started");
         // @ts-expect-error private but deep cloned
@@ -2138,7 +2138,7 @@ describe("Controller", () => {
 
     it("Device joins and interview fails", async () => {
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 140, ieeeAddr: "0x140"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 140, ieeeAddr: "0x140"});
         expect(events.deviceInterview.length).toBe(2);
         expect(events.deviceInterview[0].status).toBe("started");
         // @ts-expect-error private but deep cloned
@@ -2151,7 +2151,7 @@ describe("Controller", () => {
 
     it("Device joins with endpoints [4,1], should read modelID from 1", async () => {
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 161, ieeeAddr: "0x161"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 161, ieeeAddr: "0x161"});
         expect(events.deviceInterview.length).toBe(2);
         expect(events.deviceInterview[0].status).toBe("started");
         // @ts-expect-error private but deep cloned
@@ -2165,7 +2165,7 @@ describe("Controller", () => {
 
     it("Device joins with endpoints [2,1], as 2 is the only endpoint supporting genBasic it should read modelID from that", async () => {
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 162, ieeeAddr: "0x162"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 162, ieeeAddr: "0x162"});
         expect(events.deviceInterview.length).toBe(2);
         expect(events.deviceInterview[0].status).toBe("started");
         // @ts-expect-error private but deep cloned
@@ -2179,7 +2179,7 @@ describe("Controller", () => {
 
     it("Device joins and interview iAs enrollment succeeds", async () => {
         await controller.start();
-        const event = mockAdapterEvents["deviceJoined"]({networkAddress: 170, ieeeAddr: "0x170"});
+        const event = mockAdapterEvents.deviceJoined({networkAddress: 170, ieeeAddr: "0x170"});
         await event;
         expect(events.deviceInterview.length).toBe(2);
         expect(events.deviceInterview[0].status).toBe("started");
@@ -2326,7 +2326,7 @@ describe("Controller", () => {
         MOCK_DEVICES["170"]!.attributes!["1"].zoneState = 0;
         enroll170 = false;
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 170, ieeeAddr: "0x170"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 170, ieeeAddr: "0x170"});
         expect(events.deviceInterview.length).toBe(2);
         expect(events.deviceInterview[0].status).toBe("started");
         // @ts-expect-error private but deep cloned
@@ -2339,7 +2339,7 @@ describe("Controller", () => {
     it("Device joins, shouldnt enroll when already enrolled", async () => {
         await controller.start();
         iasZoneReadState170Count = 1;
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 170, ieeeAddr: "0x170"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 170, ieeeAddr: "0x170"});
         expect(events.deviceInterview.length).toBe(2);
         expect(events.deviceInterview[0].status).toBe("started");
         // @ts-expect-error private but deep cloned
@@ -2354,8 +2354,8 @@ describe("Controller", () => {
         const buffer = Buffer.from([24, 169, 10, 0, 0, 24, 1]);
         const frame = Zcl.Frame.fromBuffer(Zcl.Utils.getCluster("msOccupancySensing", undefined, {}).ID, Zcl.Header.fromBuffer(buffer), buffer, {});
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 129, ieeeAddr: "0x129"});
-        await mockAdapterEvents["zclPayload"]({
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
+        await mockAdapterEvents.zclPayload({
             wasBroadcast: false,
             address: "0x129",
             clusterID: frame.cluster.ID,
@@ -2465,8 +2465,8 @@ describe("Controller", () => {
     it("Receive raw data", async () => {
         await controller.start();
         mocksendZclFrameToAll.mockClear();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 129, ieeeAddr: "0x129"});
-        await mockAdapterEvents["zclPayload"]({
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
+        await mockAdapterEvents.zclPayload({
             clusterID: 9,
             address: 129,
             data: Buffer.from([0, 1]),
@@ -2559,8 +2559,8 @@ describe("Controller", () => {
 
     it("Receive raw data from unknown cluster", async () => {
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 129, ieeeAddr: "0x129"});
-        await mockAdapterEvents["zclPayload"]({
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
+        await mockAdapterEvents.zclPayload({
             clusterID: 99999999,
             address: 129,
             data: Buffer.from([0, 1, 2, 3]),
@@ -2649,8 +2649,8 @@ describe("Controller", () => {
         const buffer = Buffer.from([24, 169, 10, 0, 0, 24, 1]);
         const frame = Zcl.Frame.fromBuffer(Zcl.Utils.getCluster("msOccupancySensing", undefined, {}).ID, Zcl.Header.fromBuffer(buffer), buffer, {});
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 129, ieeeAddr: "0x129"});
-        await mockAdapterEvents["zclPayload"]({
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
+        await mockAdapterEvents.zclPayload({
             wasBroadcast: false,
             networkAddress: 130,
             clusterID: frame.cluster.ID,
@@ -2668,8 +2668,8 @@ describe("Controller", () => {
         const buffer = Buffer.from([8, 1, 1, 1, 0, 0, 32, 3]);
         const frame = Zcl.Frame.fromBuffer(Zcl.Utils.getCluster("genBasic", undefined, {}).ID, Zcl.Header.fromBuffer(buffer), buffer, {});
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 129, ieeeAddr: "0x129"});
-        await mockAdapterEvents["zclPayload"]({
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
+        await mockAdapterEvents.zclPayload({
             wasBroadcast: false,
             address: 129,
             clusterID: frame.cluster.ID,
@@ -2792,8 +2792,8 @@ describe("Controller", () => {
         const buffer = Buffer.from([0x05, 0x7c, 0x11, 0x1d, 0x07, 0x00, 0x01, 0x0d, 0x00]);
         const frame = Zcl.Frame.fromBuffer(5, Zcl.Header.fromBuffer(buffer), buffer, {});
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 129, ieeeAddr: "0x129"});
-        await mockAdapterEvents["zclPayload"]({
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
+        await mockAdapterEvents.zclPayload({
             wasBroadcast: false,
             address: 129,
             clusterID: frame.cluster.ID,
@@ -2910,8 +2910,8 @@ describe("Controller", () => {
             {},
         );
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 129, ieeeAddr: "0x129"});
-        await mockAdapterEvents["zclPayload"]({
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
+        await mockAdapterEvents.zclPayload({
             wasBroadcast: false,
             networkAddress: 129,
             clusterID: frame.cluster.ID,
@@ -2945,9 +2945,9 @@ describe("Controller", () => {
             {},
         );
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 129, ieeeAddr: "0x129"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
         mocksendZclFrameToEndpoint.mockClear();
-        await mockAdapterEvents["zclPayload"]({
+        await mockAdapterEvents.zclPayload({
             wasBroadcast: false,
             address: 129,
             clusterID: frame.cluster.ID,
@@ -3197,12 +3197,12 @@ describe("Controller", () => {
             {},
         );
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 129, ieeeAddr: "0x129"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
         mocksendZclFrameToEndpoint.mockClear();
         const device = controller.getDeviceByIeeeAddr("0x129")!;
         expect(device.skipDefaultResponse).toBeFalsy();
         device.skipDefaultResponse = true;
-        await mockAdapterEvents["zclPayload"]({
+        await mockAdapterEvents.zclPayload({
             wasBroadcast: false,
             address: 129,
             clusterID: frame.cluster.ID,
@@ -3236,11 +3236,11 @@ describe("Controller", () => {
             {},
         );
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 129, ieeeAddr: "0x129"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
         mocksendZclFrameToEndpoint.mockClear();
         const device = controller.getDeviceByIeeeAddr("0x129")!;
         expect(device.skipDefaultResponse).toBeFalsy();
-        await mockAdapterEvents["zclPayload"]({
+        await mockAdapterEvents.zclPayload({
             wasBroadcast: true,
             address: 129,
             clusterID: frame.cluster.ID,
@@ -3274,11 +3274,11 @@ describe("Controller", () => {
         );
         mockAdapterSupportsDiscoverRoute.mockReturnValueOnce(false);
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 129, ieeeAddr: "0x129"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
         mocksendZclFrameToEndpoint.mockClear();
         mockDiscoverRoute.mockClear();
         mocksendZclFrameToEndpoint.mockRejectedValue("");
-        await mockAdapterEvents["zclPayload"]({
+        await mockAdapterEvents.zclPayload({
             wasBroadcast: false,
             address: 129,
             clusterID: frame.cluster.ID,
@@ -3296,9 +3296,9 @@ describe("Controller", () => {
     it("Respond to genTime read", async () => {
         const frame = Zcl.Frame.create(0, 0, true, undefined, 40, 0, 10, [{attrId: 0}, {attrId: 1}, {attrId: 7}, {attrId: 4}], {});
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 129, ieeeAddr: "0x129"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
         mocksendZclFrameToEndpoint.mockClear();
-        await mockAdapterEvents["zclPayload"]({
+        await mockAdapterEvents.zclPayload({
             wasBroadcast: false,
             address: 129,
             clusterID: frame.cluster.ID,
@@ -3372,7 +3372,7 @@ describe("Controller", () => {
 
     it("Allow to override read response through `device.customReadResponse", async () => {
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 129, ieeeAddr: "0x129"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
         mocksendZclFrameToEndpoint.mockClear();
 
         const device = controller.getDeviceByIeeeAddr("0x129")!;
@@ -3390,7 +3390,7 @@ describe("Controller", () => {
             groupID: 10,
         };
 
-        await mockAdapterEvents["zclPayload"](payload);
+        await mockAdapterEvents.zclPayload(payload);
 
         expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(0);
         expect(device.customReadResponse).toHaveBeenCalledTimes(1);
@@ -3400,13 +3400,13 @@ describe("Controller", () => {
 
     it("Respond to read of attribute", async () => {
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 129, ieeeAddr: "0x129"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
         const device = controller.getDeviceByIeeeAddr("0x129")!;
         const endpoint = device.getEndpoint(1)!;
         endpoint.saveClusterAttributeKeyValue("hvacThermostat", {systemMode: 3});
         mocksendZclFrameToEndpoint.mockClear();
         const frame = Zcl.Frame.create(0, 0, true, undefined, 40, 0, 513, [{attrId: 28}, {attrId: 290}], {});
-        await mockAdapterEvents["zclPayload"]({
+        await mockAdapterEvents.zclPayload({
             wasBroadcast: false,
             address: 129,
             clusterID: frame.cluster.ID,
@@ -3445,11 +3445,11 @@ describe("Controller", () => {
 
     it("Respond to genTime read fails", async () => {
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 129, ieeeAddr: "0x129"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
         mocksendZclFrameToEndpoint.mockClear();
         mocksendZclFrameToEndpoint.mockRejectedValueOnce(new Error(""));
         const frame = Zcl.Frame.create(0, 0, true, undefined, 40, 0, 10, [{attrId: 0}], {});
-        await mockAdapterEvents["zclPayload"]({
+        await mockAdapterEvents.zclPayload({
             wasBroadcast: false,
             address: 129,
             clusterID: frame.cluster.ID,
@@ -3468,7 +3468,7 @@ describe("Controller", () => {
         await controller.start();
 
         // Joins
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 173, ieeeAddr: "0x173"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 173, ieeeAddr: "0x173"});
         expect(events.deviceInterview.length).toBe(2);
         expect(events.deviceInterview[0].status).toBe("started");
         // @ts-expect-error private but deep cloned
@@ -3481,14 +3481,14 @@ describe("Controller", () => {
         expect(controller.getDeviceByIeeeAddr("0x173")!.manufacturerName).toBe(undefined);
 
         // Second pair attempt
-        await mockAdapterEvents["deviceLeave"]({networkAddress: 173, ieeeAddr: "0x173"});
+        await mockAdapterEvents.deviceLeave({networkAddress: 173, ieeeAddr: "0x173"});
         // backup
         const descriptor173 = MOCK_DEVICES[173]!.nodeDescriptor;
         const attributes173 = MOCK_DEVICES[173]!.attributes;
         MOCK_DEVICES[173]!.nodeDescriptor = undefined;
         MOCK_DEVICES[173]!.attributes![1] = {modelId: "TS0203", manufacturerName: "_TYZB01_xph99wvr"};
 
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 173, ieeeAddr: "0x173"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 173, ieeeAddr: "0x173"});
         expect(events.deviceInterview.length).toBe(4);
         expect(events.deviceInterview[2].status).toBe("started");
         // @ts-expect-error private but deep cloned
@@ -3510,7 +3510,7 @@ describe("Controller", () => {
     it("Xiaomi WXCJKG11LM join (get simple descriptor for endpoint 2 fails)", async () => {
         // https://github.com/koenkk/zigbee2mqtt/issues/2844
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 171, ieeeAddr: "0x171"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 171, ieeeAddr: "0x171"});
         expect(events.deviceInterview.length).toBe(2);
         expect(events.deviceInterview[0].status).toBe("started");
         // @ts-expect-error private but deep cloned
@@ -3524,7 +3524,7 @@ describe("Controller", () => {
     it("Gledopto GL-C-007/GL-C-008 join (all endpoints support genBasic but only 12 responds)", async () => {
         //  - https://github.com/Koenkk/zigbee2mqtt/issues/2872
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 172, ieeeAddr: "0x172"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 172, ieeeAddr: "0x172"});
         expect(events.deviceInterview.length).toBe(2);
         expect(events.deviceInterview[0].status).toBe("started");
         // @ts-expect-error private but deep cloned
@@ -3537,7 +3537,7 @@ describe("Controller", () => {
 
     it("Xiaomi end device joins (node descriptor fails)", async () => {
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 150, ieeeAddr: "0x150"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 150, ieeeAddr: "0x150"});
         expect(events.deviceInterview.length).toBe(2);
         expect(events.deviceInterview[0].status).toBe("started");
         // @ts-expect-error private but deep cloned
@@ -3591,7 +3591,7 @@ describe("Controller", () => {
 
     it("Xiaomi end device joins (node descriptor succeeds, but active endpoint response fails)", async () => {
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 151, ieeeAddr: "0x151"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 151, ieeeAddr: "0x151"});
         expect(events.deviceInterview.length).toBe(2);
         expect(events.deviceInterview[0].status).toBe("started");
         // @ts-expect-error private but deep cloned
@@ -3646,7 +3646,7 @@ describe("Controller", () => {
     it("Should use cached node descriptor when device is re-interviewed, but retrieve it when ignoreCache=true", async () => {
         await controller.start();
         mockAdapterSendZdo.mockClear();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 129, ieeeAddr: "0x129"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
         expect(mockAdapterSendZdo).toHaveBeenCalledTimes(3); // nodeDesc + activeEp + simpleDesc x1
 
         const device = controller.getDeviceByIeeeAddr("0x129")!;
@@ -3666,7 +3666,7 @@ describe("Controller", () => {
     it("Should remove disappeared endpoints on updateActiveEndpoints", async () => {
         await controller.start();
         mockAdapterSendZdo.mockClear();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 129, ieeeAddr: "0x129"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
 
         const device = controller.getDeviceByIeeeAddr("0x129")!;
         device.endpoints.push(Endpoint.create(2, undefined, undefined, [], [], device.networkAddress, device.ieeeAddr));
@@ -3677,14 +3677,14 @@ describe("Controller", () => {
 
     it("Receive zclData report from unkown attribute", async () => {
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 129, ieeeAddr: "0x129"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
         const buffer = Buffer.from([
             28, 95, 17, 3, 10, 5, 0, 66, 21, 108, 117, 109, 105, 46, 115, 101, 110, 115, 111, 114, 95, 119, 108, 101, 97, 107, 46, 97, 113, 49, 1,
             255, 66, 34, 1, 33, 213, 12, 3, 40, 33, 4, 33, 168, 19, 5, 33, 43, 0, 6, 36, 0, 0, 5, 0, 0, 8, 33, 4, 2, 10, 33, 0, 0, 100, 16, 0,
         ]);
         const frame = Zcl.Frame.fromBuffer(Zcl.Utils.getCluster("genBasic", undefined, {}).ID, Zcl.Header.fromBuffer(buffer), buffer, {});
         vi.spyOn(Zcl.Frame, "fromBuffer").mockReturnValueOnce(frame); // Mock because no Buffalo write isn't supported for this payload
-        await mockAdapterEvents["zclPayload"]({
+        await mockAdapterEvents.zclPayload({
             wasBroadcast: false,
             address: 129,
             clusterID: frame.cluster.ID,
@@ -3823,7 +3823,7 @@ describe("Controller", () => {
 
     it("Should allow to specify custom attributes for existing cluster", async () => {
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 129, ieeeAddr: "0x129"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
         const device = controller.getDeviceByIeeeAddr("0x129")!;
         device.addCustomCluster("genBasic", {
             ID: 0,
@@ -3836,7 +3836,7 @@ describe("Controller", () => {
         });
         const buffer = Buffer.from([24, 169, 10, 0, 1, 24, 3, 0, 0, 24, 1, 2, 0, 24, 1]);
         const header = Zcl.Header.fromBuffer(buffer);
-        await mockAdapterEvents["zclPayload"]({
+        await mockAdapterEvents.zclPayload({
             wasBroadcast: false,
             address: 129,
             clusterID: 0,
@@ -3853,7 +3853,7 @@ describe("Controller", () => {
 
     it("Should allow to specify custom cluster", async () => {
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 129, ieeeAddr: "0x129"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
         const device = controller.getDeviceByIeeeAddr("0x129")!;
         device.addCustomCluster("myCustomCluster", {
             ID: 9123,
@@ -3863,7 +3863,7 @@ describe("Controller", () => {
         });
         const buffer = Buffer.from([24, 169, 10, 0, 1, 24, 3, 0, 0, 24, 1]);
         const header = Zcl.Header.fromBuffer(buffer);
-        await mockAdapterEvents["zclPayload"]({
+        await mockAdapterEvents.zclPayload({
             wasBroadcast: false,
             address: 129,
             clusterID: 9123,
@@ -3880,7 +3880,7 @@ describe("Controller", () => {
 
     it("Should allow to specify custom cluster as override for Zcl cluster", async () => {
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 129, ieeeAddr: "0x129"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
         const device = controller.getDeviceByIeeeAddr("0x129")!;
         device.addCustomCluster("myCustomCluster", {
             ID: Zcl.Clusters.genBasic.ID,
@@ -3890,7 +3890,7 @@ describe("Controller", () => {
         });
         const buffer = Buffer.from([24, 169, 10, 0, 1, 24, 3, 0, 0, 24, 1]);
         const header = Zcl.Header.fromBuffer(buffer);
-        await mockAdapterEvents["zclPayload"]({
+        await mockAdapterEvents.zclPayload({
             wasBroadcast: false,
             address: 129,
             clusterID: Zcl.Clusters.genBasic.ID,
@@ -3907,7 +3907,7 @@ describe("Controller", () => {
 
     it("Send zcl command to all no options", async () => {
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 129, ieeeAddr: "0x129"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
         const device = controller.getDeviceByIeeeAddr("0x129")!;
         device.getEndpoint(1)!.zclCommandBroadcast(255, BroadcastAddress.SLEEPY, Zcl.Clusters.ssIasZone.ID, "initTestMode", {});
         const sentFrame = Zcl.Frame.create(
@@ -3930,7 +3930,7 @@ describe("Controller", () => {
 
     it("Send zcl command to all with manufacturer option", async () => {
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 129, ieeeAddr: "0x129"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
         const device = controller.getDeviceByIeeeAddr("0x129")!;
         device.addCustomCluster("ssIasZone", {
             ID: Zcl.Clusters.ssIasZone.ID,
@@ -3962,7 +3962,7 @@ describe("Controller", () => {
 
     it("Should roll-over transaction ID", async () => {
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 129, ieeeAddr: "0x129"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
         mocksendZclFrameToEndpoint.mockClear();
         const device = controller.getDeviceByIeeeAddr("0x129")!;
         const endpoint = device.getEndpoint(1)!;
@@ -3984,7 +3984,7 @@ describe("Controller", () => {
 
     it("Throw error when creating endpoint which already exists", async () => {
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 129, ieeeAddr: "0x129"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
         const device = controller.getDeviceByIeeeAddr("0x129")!;
         let error;
         try {
@@ -3997,7 +3997,7 @@ describe("Controller", () => {
 
     it("Throw error when device with IEEE address already exists", async () => {
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 140, ieeeAddr: "0x129"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 140, ieeeAddr: "0x129"});
         let error;
         try {
             Device.create("Router", "0x129", 140, undefined, undefined, undefined, undefined, false, undefined);
@@ -4016,14 +4016,14 @@ describe("Controller", () => {
 
     it("Return device from databse when not in lookup", async () => {
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 140, ieeeAddr: "0x129"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 140, ieeeAddr: "0x129"});
         Device.resetCache();
         expect(controller.getDeviceByIeeeAddr("0x129")).toBeInstanceOf(Device);
     });
 
     it("Throw error when interviewing and calling interview again", async () => {
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 140, ieeeAddr: "0x129"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 140, ieeeAddr: "0x129"});
         const device = controller.getDeviceByIeeeAddr("0x129")!;
         const firstInterview = device.interview();
         let error;
@@ -4042,7 +4042,7 @@ describe("Controller", () => {
 
     it("Remove device from network", async () => {
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 140, ieeeAddr: "0x140"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 140, ieeeAddr: "0x140"});
         const device = controller.getDeviceByIeeeAddr("0x140")!;
         await device.removeFromNetwork();
         const zdoPayload = Zdo.Buffalo.buildRequest(false, Zdo.ClusterId.LEAVE_REQUEST, "0x140", Zdo.LeaveRequestFlags.WITHOUT_REJOIN);
@@ -4054,7 +4054,7 @@ describe("Controller", () => {
 
     it("Remove group from network", async () => {
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 129, ieeeAddr: "0x129"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
         const device = controller.getDeviceByIeeeAddr("0x129")!;
         const group = await controller.createGroup(4);
         const endpoint = device.getEndpoint(1)!;
@@ -4163,7 +4163,7 @@ describe("Controller", () => {
 
     it("Device lqi", async () => {
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 140, ieeeAddr: "0x140"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 140, ieeeAddr: "0x140"});
         const device = controller.getDeviceByIeeeAddr("0x140")!;
         const result = await device.lqi();
         expect(result).toStrictEqual({
@@ -4176,7 +4176,7 @@ describe("Controller", () => {
 
     it("Device routing table", async () => {
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 140, ieeeAddr: "0x140"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 140, ieeeAddr: "0x140"});
         const device = controller.getDeviceByIeeeAddr("0x140")!;
         const result = await device.routingTable();
         expect(result).toStrictEqual({
@@ -4189,7 +4189,7 @@ describe("Controller", () => {
 
     it("Device ping", async () => {
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 176, ieeeAddr: "0x176"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 176, ieeeAddr: "0x176"});
         const device = controller.getDeviceByIeeeAddr("0x176")!;
         mocksendZclFrameToEndpoint.mockClear();
         await device.ping();
@@ -4248,7 +4248,7 @@ describe("Controller", () => {
 
     it("Poll control supported", async () => {
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 174, ieeeAddr: "0x174"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 174, ieeeAddr: "0x174"});
         const device = controller.getDeviceByIeeeAddr("0x174")!;
         await device.interview();
         const endpoint = device.getEndpoint(1)!;
@@ -4278,7 +4278,7 @@ describe("Controller", () => {
             {},
             {},
         );
-        await mockAdapterEvents["zclPayload"]({
+        await mockAdapterEvents.zclPayload({
             wasBroadcast: false,
             address: 174,
             clusterID: frame.cluster.ID,
@@ -4306,7 +4306,7 @@ describe("Controller", () => {
             {},
             {},
         );
-        await mockAdapterEvents["zclPayload"]({
+        await mockAdapterEvents.zclPayload({
             wasBroadcast: false,
             address: 174,
             clusterID: frame.cluster.ID,
@@ -4327,7 +4327,7 @@ describe("Controller", () => {
 
     it("Poll control unsupported", async () => {
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 129, ieeeAddr: "0x129"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
         const device = controller.getDeviceByIeeeAddr("0x129")!;
         await device.interview();
         const endpoint = device.getEndpoint(1)!;
@@ -4336,14 +4336,14 @@ describe("Controller", () => {
 
     it("Endpoint get id", async () => {
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 129, ieeeAddr: "0x129"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
         const device = controller.getDeviceByIeeeAddr("0x129")!;
         expect(device.getEndpoint(1)!.ID).toBe(1);
     });
 
     it("Endpoint get id by endpoint device type", async () => {
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 172, ieeeAddr: "0x172"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 172, ieeeAddr: "0x172"});
         const device = controller.getDeviceByIeeeAddr("0x172")!;
         expect(device.getEndpointByDeviceType("ZLLOnOffPluginUnit")).toBeUndefined();
         expect(device.getEndpointByDeviceType("ZLLExtendedColorLight")!.ID).toBe(11);
@@ -4351,8 +4351,8 @@ describe("Controller", () => {
 
     it("Endpoint bind", async () => {
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 129, ieeeAddr: "0x129"});
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 170, ieeeAddr: "0x170"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 170, ieeeAddr: "0x170"});
         const device = controller.getDeviceByIeeeAddr("0x129")!;
         const target = controller.getDeviceByIeeeAddr("0x170")!.getEndpoint(1)!;
         const endpoint = device.getEndpoint(1)!;
@@ -4371,8 +4371,8 @@ describe("Controller", () => {
 
     it("Endpoint addBinding", async () => {
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 129, ieeeAddr: "0x129"});
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 170, ieeeAddr: "0x170"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 170, ieeeAddr: "0x170"});
         const device = controller.getDeviceByIeeeAddr("0x129")!;
         const target = controller.getDeviceByIeeeAddr("0x170")!.getEndpoint(1)!;
         const endpoint = device.getEndpoint(1)!;
@@ -4386,7 +4386,7 @@ describe("Controller", () => {
 
     it("Endpoint get binds non-existing device", async () => {
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 129, ieeeAddr: "0x129"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
         const device = controller.getDeviceByIeeeAddr("0x129")!;
         const endpoint = device.getEndpoint(1)!;
         // @ts-expect-error private
@@ -4401,7 +4401,7 @@ describe("Controller", () => {
 
     it("Group bind", async () => {
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 129, ieeeAddr: "0x129"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
         const group = await controller.createGroup(4);
         const device = controller.getDeviceByIeeeAddr("0x129")!;
         const endpoint = device.getEndpoint(1)!;
@@ -4423,7 +4423,7 @@ describe("Controller", () => {
 
     it("Group addBinding", async () => {
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 129, ieeeAddr: "0x129"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
         const group = await controller.createGroup(4);
         const device = controller.getDeviceByIeeeAddr("0x129")!;
         const endpoint = device.getEndpoint(1)!;
@@ -4433,7 +4433,7 @@ describe("Controller", () => {
 
     it("Group bind by number (should create group)", async () => {
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 129, ieeeAddr: "0x129"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
         expect(Group.byGroupID(11)).toBeUndefined();
         const device = controller.getDeviceByIeeeAddr("0x129")!;
         const endpoint = device.getEndpoint(1)!;
@@ -4456,7 +4456,7 @@ describe("Controller", () => {
 
     it("Group addBinding by number (should create group)", async () => {
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 129, ieeeAddr: "0x129"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
         expect(Group.byGroupID(11)).toBeUndefined();
         const device = controller.getDeviceByIeeeAddr("0x129")!;
         const endpoint = device.getEndpoint(1)!;
@@ -4467,8 +4467,8 @@ describe("Controller", () => {
 
     it("Endpoint unbind", async () => {
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 129, ieeeAddr: "0x129"});
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 170, ieeeAddr: "0x170"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 170, ieeeAddr: "0x170"});
         const device = controller.getDeviceByIeeeAddr("0x129")!;
         const target = controller.getDeviceByIeeeAddr("0x170")!.getEndpoint(1)!;
         const endpoint = device.getEndpoint(1)!;
@@ -4486,7 +4486,7 @@ describe("Controller", () => {
 
     it("Group unbind", async () => {
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 129, ieeeAddr: "0x129"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
         const group = await controller.createGroup(5);
         const device = controller.getDeviceByIeeeAddr("0x129")!;
         const endpoint = device.getEndpoint(1)!;
@@ -4511,7 +4511,7 @@ describe("Controller", () => {
 
     it("Group unbind by number", async () => {
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 129, ieeeAddr: "0x129"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
         const device = controller.getDeviceByIeeeAddr("0x129")!;
         const group = await controller.createGroup(5);
         const endpoint = device.getEndpoint(1)!;
@@ -4536,7 +4536,7 @@ describe("Controller", () => {
 
     it("Endpoint configure reporting", async () => {
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 129, ieeeAddr: "0x129"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
         const device = controller.getDeviceByIeeeAddr("0x129")!;
         const endpoint = device.getEndpoint(1)!;
         mocksendZclFrameToEndpoint.mockClear();
@@ -4617,7 +4617,7 @@ describe("Controller", () => {
 
     it("Should replace legacy configured reportings without manufacturerCode", async () => {
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 129, ieeeAddr: "0x129"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
         const device = controller.getDeviceByIeeeAddr("0x129")!;
         const endpoint = device.getEndpoint(1)!;
         mocksendZclFrameToEndpoint.mockClear();
@@ -4641,7 +4641,7 @@ describe("Controller", () => {
 
     it("Endpoint configure reporting for manufacturer specific attribute", async () => {
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 129, ieeeAddr: "0x129"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
         const device = controller.getDeviceByIeeeAddr("0x129")!;
         // @ts-expect-error private
         device._manufacturerID = 4641;
@@ -4708,7 +4708,7 @@ describe("Controller", () => {
 
     it("Endpoint configure reporting for manufacturer specific attribute from definition", async () => {
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 129, ieeeAddr: "0x129"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
         const device = controller.getDeviceByIeeeAddr("0x129")!;
         // @ts-expect-error private
         device._manufacturerID = 0x10f2;
@@ -4771,7 +4771,7 @@ describe("Controller", () => {
 
     it("Endpoint configure reporting with manufacturer attribute should throw exception", async () => {
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 129, ieeeAddr: "0x129"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
         const device = controller.getDeviceByIeeeAddr("0x129")!;
         // @ts-expect-error private
         device._manufacturerID = 0x10f2;
@@ -4801,7 +4801,7 @@ describe("Controller", () => {
 
     it("Save endpoint configure reporting", async () => {
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 129, ieeeAddr: "0x129"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
         const device = controller.getDeviceByIeeeAddr("0x129")!;
         const endpoint = device.getEndpoint(1)!;
         const genPowerCfg = Zcl.Utils.getCluster("genPowerCfg", undefined, {});
@@ -4870,7 +4870,7 @@ describe("Controller", () => {
     it("Endpoint configure reporting fails when status code is not 0", async () => {
         configureReportStatus = 1;
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 129, ieeeAddr: "0x129"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
         const device = controller.getDeviceByIeeeAddr("0x129")!;
         const endpoint = device.getEndpoint(1)!;
         mocksendZclFrameToEndpoint.mockClear();
@@ -4898,7 +4898,7 @@ describe("Controller", () => {
         configureReportStatus = 1;
         configureReportDefaultRsp = true;
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 129, ieeeAddr: "0x129"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
         const device = controller.getDeviceByIeeeAddr("0x129")!;
         const endpoint = device.getEndpoint(1)!;
         mocksendZclFrameToEndpoint.mockClear();
@@ -4925,7 +4925,7 @@ describe("Controller", () => {
     it("Endpoint configure reporting with disable response", async () => {
         configureReportStatus = 1;
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 129, ieeeAddr: "0x129"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
         const device = controller.getDeviceByIeeeAddr("0x129")!;
         const endpoint = device.getEndpoint(1)!;
         mocksendZclFrameToEndpoint.mockReturnValueOnce(null);
@@ -4970,7 +4970,7 @@ describe("Controller", () => {
 
     it("Add endpoint to group", async () => {
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 129, ieeeAddr: "0x129"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
         const device = controller.getDeviceByIeeeAddr("0x129")!;
         const endpoint = device.getEndpoint(1)!;
         const group = await controller.createGroup(2);
@@ -5078,7 +5078,7 @@ describe("Controller", () => {
 
     it("Remove endpoint from group", async () => {
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 129, ieeeAddr: "0x129"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
         const device = controller.getDeviceByIeeeAddr("0x129")!;
         const endpoint = device.getEndpoint(1)!;
         const group = await controller.createGroup(2);
@@ -5176,7 +5176,7 @@ describe("Controller", () => {
 
     it("Remove endpoint from group by number", async () => {
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 129, ieeeAddr: "0x129"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
         const device = controller.getDeviceByIeeeAddr("0x129")!;
         const endpoint = device.getEndpoint(1)!;
         mocksendZclFrameToEndpoint.mockClear();
@@ -5271,10 +5271,10 @@ describe("Controller", () => {
 
     it("Try to get deleted device from endpoint", async () => {
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 129, ieeeAddr: "0x129"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
         const device = controller.getDeviceByIeeeAddr("0x129")!;
         const endpoint = device.getEndpoint(1)!;
-        await mockAdapterEvents["deviceLeave"]({networkAddress: 129, ieeeAddr: "0x129"});
+        await mockAdapterEvents.deviceLeave({networkAddress: 129, ieeeAddr: "0x129"});
         // @ts-expect-error private
         expect(Device.devices.size).toStrictEqual(1);
         // @ts-expect-error private
@@ -5287,7 +5287,7 @@ describe("Controller", () => {
 
     it("Command response", async () => {
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 129, ieeeAddr: "0x129"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
         const device = controller.getDeviceByIeeeAddr("0x129")!;
         const endpoint = device.getEndpoint(1)!;
         const response = await endpoint.command("genGroups", "add", {groupid: 1, groupname: ""});
@@ -5321,7 +5321,7 @@ describe("Controller", () => {
 
     it("Endpoint command with options", async () => {
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 129, ieeeAddr: "0x129"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
         const device = controller.getDeviceByIeeeAddr("0x129")!;
         const endpoint = device.getEndpoint(1)!;
         mocksendZclFrameToEndpoint.mockClear();
@@ -5348,7 +5348,7 @@ describe("Controller", () => {
 
     it("Endpoint command with duplicate cluster ID", async () => {
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 129, ieeeAddr: "0x129"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
         const device = controller.getDeviceByIeeeAddr("0x129")!;
         const endpoint = device.getEndpoint(1)!;
         mocksendZclFrameToEndpoint.mockClear();
@@ -5361,7 +5361,7 @@ describe("Controller", () => {
 
     it("Endpoint command with duplicate identifier", async () => {
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 129, ieeeAddr: "0x129"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
         const device = controller.getDeviceByIeeeAddr("0x129")!;
         const endpoint = device.getEndpoint(1)!;
         mocksendZclFrameToEndpoint.mockClear();
@@ -5374,7 +5374,7 @@ describe("Controller", () => {
 
     it("Endpoint commandResponse", async () => {
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 129, ieeeAddr: "0x129"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
         const device = controller.getDeviceByIeeeAddr("0x129")!;
         const endpoint = device.getEndpoint(1)!;
         mocksendZclFrameToEndpoint.mockClear();
@@ -5518,7 +5518,7 @@ describe("Controller", () => {
 
     it("Endpoint waitForCommand", async () => {
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 129, ieeeAddr: "0x129"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
         const device = controller.getDeviceByIeeeAddr("0x129")!;
         const endpoint = device.getEndpoint(1)!;
         mocksendZclFrameToEndpoint.mockClear();
@@ -5542,7 +5542,7 @@ describe("Controller", () => {
 
     it("Endpoint waitForCommand error", async () => {
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 129, ieeeAddr: "0x129"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
         const device = controller.getDeviceByIeeeAddr("0x129")!;
         const endpoint = device.getEndpoint(1)!;
         mocksendZclFrameToEndpoint.mockClear();
@@ -5717,7 +5717,7 @@ describe("Controller", () => {
 
     it("Write to endpoint custom attributes", async () => {
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 129, ieeeAddr: "0x129"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
         mocksendZclFrameToEndpoint.mockClear();
         const device = controller.getDeviceByIeeeAddr("0x129")!;
         const endpoint = device.getEndpoint(1)!;
@@ -5785,7 +5785,7 @@ describe("Controller", () => {
 
     it("Write to endpoint custom attributes without specifying manufacturerCode", async () => {
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 129, ieeeAddr: "0x129"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
         mocksendZclFrameToEndpoint.mockClear();
         const device = controller.getDeviceByIeeeAddr("0x129")!;
         // @ts-expect-error private
@@ -5822,7 +5822,7 @@ describe("Controller", () => {
 
     it("WriteUndiv to endpoint custom attributes without response", async () => {
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 129, ieeeAddr: "0x129"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
         mocksendZclFrameToEndpoint.mockClear();
         const device = controller.getDeviceByIeeeAddr("0x129")!;
         const endpoint = device.getEndpoint(1)!;
@@ -5896,7 +5896,7 @@ describe("Controller", () => {
 
     it("Write to endpoint with unknown string attribute", async () => {
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 129, ieeeAddr: "0x129"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
         mocksendZclFrameToEndpoint.mockClear();
         const device = controller.getDeviceByIeeeAddr("0x129")!;
         const endpoint = device.getEndpoint(1)!;
@@ -5912,7 +5912,7 @@ describe("Controller", () => {
 
     it("Write to endpoint with mixed manufacturer attributes", async () => {
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 129, ieeeAddr: "0x129"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
         mocksendZclFrameToEndpoint.mockClear();
         const device = controller.getDeviceByIeeeAddr("0x129")!;
         // @ts-expect-error private
@@ -5929,7 +5929,7 @@ describe("Controller", () => {
 
     it("Write response to endpoint with non ZCL attribute", async () => {
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 129, ieeeAddr: "0x129"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
         mocksendZclFrameToEndpoint.mockClear();
         const device = controller.getDeviceByIeeeAddr("0x129")!;
         const endpoint = device.getEndpoint(1)!;
@@ -5993,7 +5993,7 @@ describe("Controller", () => {
 
     it("Write response to endpoint with unknown string attribute", async () => {
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 129, ieeeAddr: "0x129"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
         mocksendZclFrameToEndpoint.mockClear();
         const device = controller.getDeviceByIeeeAddr("0x129")!;
         const endpoint = device.getEndpoint(1)!;
@@ -6009,7 +6009,7 @@ describe("Controller", () => {
 
     it("Write response to endpoint throw when transaction sequence number provided through options", async () => {
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 129, ieeeAddr: "0x129"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
         mocksendZclFrameToEndpoint.mockClear();
         const device = controller.getDeviceByIeeeAddr("0x129")!;
         const endpoint = device.getEndpoint(1)!;
@@ -6025,7 +6025,7 @@ describe("Controller", () => {
 
     it("Write response to endpoint with no status attribute specified", async () => {
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 129, ieeeAddr: "0x129"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
         mocksendZclFrameToEndpoint.mockClear();
         const device = controller.getDeviceByIeeeAddr("0x129")!;
         const endpoint = device.getEndpoint(1)!;
@@ -6041,7 +6041,7 @@ describe("Controller", () => {
 
     it("Write response to endpoint with ZCL attribute", async () => {
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 129, ieeeAddr: "0x129"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
         mocksendZclFrameToEndpoint.mockClear();
         const device = controller.getDeviceByIeeeAddr("0x129")!;
         const endpoint = device.getEndpoint(1)!;
@@ -6105,7 +6105,7 @@ describe("Controller", () => {
 
     it("WriteResponse error", async () => {
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 129, ieeeAddr: "0x129"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
         const device = controller.getDeviceByIeeeAddr("0x129")!;
         const endpoint = device.getEndpoint(1)!;
         mocksendZclFrameToEndpoint.mockRejectedValueOnce(new Error("timeout occurred"));
@@ -6124,7 +6124,7 @@ describe("Controller", () => {
 
     it("Read from endpoint with string", async () => {
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 129, ieeeAddr: "0x129"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
         mocksendZclFrameToEndpoint.mockClear();
         const device = controller.getDeviceByIeeeAddr("0x129")!;
         const endpoint = device.getEndpoint(1)!;
@@ -6181,7 +6181,7 @@ describe("Controller", () => {
 
     it("Read from endpoint with custom attribute", async () => {
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 129, ieeeAddr: "0x129"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
         mocksendZclFrameToEndpoint.mockClear();
         const device = controller.getDeviceByIeeeAddr("0x129")!;
         // @ts-expect-error private
@@ -6209,7 +6209,7 @@ describe("Controller", () => {
 
     it("Read mixed manufacturer attributes from endpoint", async () => {
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 129, ieeeAddr: "0x129"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
         mocksendZclFrameToEndpoint.mockClear();
         const device = controller.getDeviceByIeeeAddr("0x129")!;
         // @ts-expect-error private
@@ -6226,7 +6226,7 @@ describe("Controller", () => {
 
     it("Read from endpoint unknown attribute with options", async () => {
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 129, ieeeAddr: "0x129"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
         mocksendZclFrameToEndpoint.mockClear();
         const device = controller.getDeviceByIeeeAddr("0x129")!;
         const endpoint = device.getEndpoint(1)!;
@@ -6284,7 +6284,7 @@ describe("Controller", () => {
 
     it("Read response to endpoint with non ZCL attribute", async () => {
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 129, ieeeAddr: "0x129"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
         mocksendZclFrameToEndpoint.mockClear();
         const device = controller.getDeviceByIeeeAddr("0x129")!;
         const endpoint = device.getEndpoint(1)!;
@@ -6350,7 +6350,7 @@ describe("Controller", () => {
 
     it("Read response to endpoint with unknown string attribute", async () => {
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 129, ieeeAddr: "0x129"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
         mocksendZclFrameToEndpoint.mockClear();
         const device = controller.getDeviceByIeeeAddr("0x129")!;
         const endpoint = device.getEndpoint(1)!;
@@ -6366,7 +6366,7 @@ describe("Controller", () => {
 
     it("Read response to endpoint throw when transaction sequence number provided through options", async () => {
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 129, ieeeAddr: "0x129"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
         mocksendZclFrameToEndpoint.mockClear();
         const device = controller.getDeviceByIeeeAddr("0x129")!;
         const endpoint = device.getEndpoint(1)!;
@@ -6382,7 +6382,7 @@ describe("Controller", () => {
 
     it("Configure reporting endpoint custom attributes", async () => {
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 129, ieeeAddr: "0x129"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
         mocksendZclFrameToEndpoint.mockClear();
         const device = controller.getDeviceByIeeeAddr("0x129")!;
         const endpoint = device.getEndpoint(1)!;
@@ -6446,9 +6446,9 @@ describe("Controller", () => {
 
     it("Remove endpoint from all groups", async () => {
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 129, ieeeAddr: "0x129"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
         const device1 = controller.getDeviceByIeeeAddr("0x129")!;
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 170, ieeeAddr: "0x170"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 170, ieeeAddr: "0x170"});
         const device2 = controller.getDeviceByIeeeAddr("0x170")!;
         const group1 = await controller.createGroup(1);
         const group6 = await controller.createGroup(6);
@@ -6898,7 +6898,7 @@ describe("Controller", () => {
 
     it("Should throw datbase basic crud errors", async () => {
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 129, ieeeAddr: "0x129"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
         expect(() => {
             // @ts-expect-error mock
             controller.database.insert({id: 2});
@@ -6918,9 +6918,9 @@ describe("Controller", () => {
     it("Should save received attributes", async () => {
         let buffer = Buffer.from([24, 169, 10, 0, 0, 24, 1]);
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 129, ieeeAddr: "0x129"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
         let frame = Zcl.Frame.fromBuffer(Zcl.Utils.getCluster("msOccupancySensing", undefined, {}).ID, Zcl.Header.fromBuffer(buffer), buffer, {});
-        await mockAdapterEvents["zclPayload"]({
+        await mockAdapterEvents.zclPayload({
             wasBroadcast: false,
             address: 129,
             clusterID: frame.cluster.ID,
@@ -6937,7 +6937,7 @@ describe("Controller", () => {
 
         buffer = Buffer.from([24, 169, 10, 0, 0, 24, 0]);
         frame = Zcl.Frame.fromBuffer(Zcl.Utils.getCluster("msOccupancySensing", undefined, {}).ID, Zcl.Header.fromBuffer(buffer), buffer, {});
-        await mockAdapterEvents["zclPayload"]({
+        await mockAdapterEvents.zclPayload({
             wasBroadcast: false,
             address: 129,
             clusterID: frame.cluster.ID,
@@ -6953,9 +6953,9 @@ describe("Controller", () => {
 
     it("Emit read from device", async () => {
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 129, ieeeAddr: "0x129"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
         const frame = Zcl.Frame.create(0, 0, true, undefined, 40, 0, 1, [{attrId: 0}, {attrId: 9999}], {});
-        await mockAdapterEvents["zclPayload"]({
+        await mockAdapterEvents.zclPayload({
             wasBroadcast: false,
             address: 129,
             // Attrid 9999 does not exist in ZCL
@@ -7051,9 +7051,9 @@ describe("Controller", () => {
 
     it("Emit write from device", async () => {
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 129, ieeeAddr: "0x129"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
         const frame = Zcl.Frame.create(0, 0, true, undefined, 40, 2, 10, [{attrId: 16389, dataType: 32, attrData: 3}], {});
-        await mockAdapterEvents["zclPayload"]({
+        await mockAdapterEvents.zclPayload({
             wasBroadcast: false,
             address: 129,
             // Attrid 9999 does not exist in ZCL
@@ -7151,7 +7151,7 @@ describe("Controller", () => {
 
     it("Endpoint command error", async () => {
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 129, ieeeAddr: "0x129"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
         const device = controller.getDeviceByIeeeAddr("0x129")!;
         const endpoint = device.getEndpoint(1)!;
         mocksendZclFrameToEndpoint.mockRejectedValueOnce(new Error("timeout occurred"));
@@ -7170,7 +7170,7 @@ describe("Controller", () => {
 
     it("Endpoint commandResponse error", async () => {
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 129, ieeeAddr: "0x129"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
         const device = controller.getDeviceByIeeeAddr("0x129")!;
         const endpoint = device.getEndpoint(1)!;
         mocksendZclFrameToEndpoint.mockRejectedValueOnce(new Error("timeout occurred"));
@@ -7189,7 +7189,7 @@ describe("Controller", () => {
 
     it("Endpoint commandResponse error when transactionSequenceNumber provided through options", async () => {
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 129, ieeeAddr: "0x129"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
         const device = controller.getDeviceByIeeeAddr("0x129")!;
         const endpoint = device.getEndpoint(1)!;
         mocksendZclFrameToEndpoint.mockRejectedValueOnce(new Error("timeout occurred"));
@@ -7204,7 +7204,7 @@ describe("Controller", () => {
 
     it("ConfigureReporting error", async () => {
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 129, ieeeAddr: "0x129"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
         const device = controller.getDeviceByIeeeAddr("0x129")!;
         const endpoint = device.getEndpoint(1)!;
         mocksendZclFrameToEndpoint.mockRejectedValueOnce(new Error("timeout occurred"));
@@ -7225,7 +7225,7 @@ describe("Controller", () => {
 
     it("DefaultResponse error", async () => {
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 129, ieeeAddr: "0x129"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
         const device = controller.getDeviceByIeeeAddr("0x129")!;
         const endpoint = device.getEndpoint(1)!;
         mocksendZclFrameToEndpoint.mockRejectedValueOnce(new Error("timeout occurred"));
@@ -7244,7 +7244,7 @@ describe("Controller", () => {
 
     it("DefaultResponse error when transactionSequenceNumber provided through options", async () => {
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 129, ieeeAddr: "0x129"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
         const device = controller.getDeviceByIeeeAddr("0x129")!;
         const endpoint = device.getEndpoint(1)!;
         mocksendZclFrameToEndpoint.mockRejectedValueOnce(new Error("timeout occurred"));
@@ -7259,8 +7259,8 @@ describe("Controller", () => {
 
     it("Skip unbind if not bound", async () => {
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 129, ieeeAddr: "0x129"});
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 170, ieeeAddr: "0x170"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 170, ieeeAddr: "0x170"});
         const endpoint = controller.getDeviceByIeeeAddr("0x129")?.getEndpoint(1)!;
         const target = controller.getDeviceByIeeeAddr("0x170")?.getEndpoint(1)!;
         mockAdapterSendZdo.mockClear();
@@ -7270,7 +7270,7 @@ describe("Controller", () => {
 
     it("Handle unbind with number not matching any group", async () => {
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 129, ieeeAddr: "0x129"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
         const endpoint = controller.getDeviceByIeeeAddr("0x129")!.getEndpoint(1)!;
         let error;
         try {
@@ -7283,8 +7283,8 @@ describe("Controller", () => {
 
     it("Unbind against unbound cluster", async () => {
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 129, ieeeAddr: "0x129"});
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 170, ieeeAddr: "0x170"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 170, ieeeAddr: "0x170"});
         const endpoint = controller.getDeviceByIeeeAddr("0x129")!.getEndpoint(1)!;
         const target = controller.getDeviceByIeeeAddr("0x170")!.getEndpoint(1)!;
         await endpoint.bind("genOnOff", target);
@@ -7311,8 +7311,8 @@ describe("Controller", () => {
 
     it("Unbind error", async () => {
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 129, ieeeAddr: "0x129"});
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 170, ieeeAddr: "0x170"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 170, ieeeAddr: "0x170"});
         const endpoint = controller.getDeviceByIeeeAddr("0x129")!.getEndpoint(1)!;
         const target = controller.getDeviceByIeeeAddr("0x170")!.getEndpoint(1)!;
         await endpoint.bind("genOnOff", target);
@@ -7338,8 +7338,8 @@ describe("Controller", () => {
 
     it("Bind error", async () => {
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 129, ieeeAddr: "0x129"});
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 170, ieeeAddr: "0x170"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 170, ieeeAddr: "0x170"});
         const endpoint = controller.getDeviceByIeeeAddr("0x129")!.getEndpoint(1)!;
         const target = controller.getDeviceByIeeeAddr("0x170")!.getEndpoint(1)!;
         mockAdapterSendZdo.mockClear();
@@ -7364,7 +7364,7 @@ describe("Controller", () => {
 
     it("ReadResponse error", async () => {
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 129, ieeeAddr: "0x129"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
         const device = controller.getDeviceByIeeeAddr("0x129")!;
         const endpoint = device.getEndpoint(1)!;
         mocksendZclFrameToEndpoint.mockRejectedValueOnce(new Error("timeout occurred"));
@@ -7383,7 +7383,7 @@ describe("Controller", () => {
 
     it("Read error", async () => {
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 129, ieeeAddr: "0x129"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
         const device = controller.getDeviceByIeeeAddr("0x129")!;
         const endpoint = device.getEndpoint(1)!;
         mocksendZclFrameToEndpoint.mockRejectedValueOnce(new Error("timeout occurred"));
@@ -7402,7 +7402,7 @@ describe("Controller", () => {
 
     it("Read with disable response", async () => {
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 129, ieeeAddr: "0x129"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
         const device = controller.getDeviceByIeeeAddr("0x129")!;
         const endpoint = device.getEndpoint(1)!;
         mocksendZclFrameToEndpoint.mockReturnValueOnce(null);
@@ -7417,7 +7417,7 @@ describe("Controller", () => {
 
     it("Write error", async () => {
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 129, ieeeAddr: "0x129"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
         const device = controller.getDeviceByIeeeAddr("0x129")!;
         const endpoint = device.getEndpoint(1)!;
         mocksendZclFrameToEndpoint.mockRejectedValueOnce(new Error("timeout occurred"));
@@ -7436,7 +7436,7 @@ describe("Controller", () => {
 
     it("Write with disable response", async () => {
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 129, ieeeAddr: "0x129"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
         const device = controller.getDeviceByIeeeAddr("0x129")!;
         const endpoint = device.getEndpoint(1)!;
         mocksendZclFrameToEndpoint.mockReturnValueOnce(null);
@@ -7465,7 +7465,7 @@ describe("Controller", () => {
     it("Write structured", async () => {
         await controller.start();
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 129, ieeeAddr: "0x129"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
         const device = controller.getDeviceByIeeeAddr("0x129")!;
         const endpoint = device.getEndpoint(1)!;
         mocksendZclFrameToEndpoint.mockReturnValueOnce(null);
@@ -7481,7 +7481,7 @@ describe("Controller", () => {
     it("Write structured with disable response", async () => {
         await controller.start();
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 129, ieeeAddr: "0x129"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
         const device = controller.getDeviceByIeeeAddr("0x129")!;
         const endpoint = device.getEndpoint(1)!;
         mocksendZclFrameToEndpoint.mockReturnValueOnce(null);
@@ -7496,7 +7496,7 @@ describe("Controller", () => {
 
     it("Write structured error", async () => {
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 129, ieeeAddr: "0x129"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
         const device = controller.getDeviceByIeeeAddr("0x129")!;
         const endpoint = device.getEndpoint(1)!;
         mocksendZclFrameToEndpoint.mockRejectedValueOnce(new Error("timeout occurred"));
@@ -7532,7 +7532,7 @@ describe("Controller", () => {
         };
         const frame = Zcl.Frame.create(1, 0, true, undefined, 10, "commissioningNotification", 33, data, {});
         vi.spyOn(Zcl.Frame, "fromBuffer").mockReturnValueOnce(frame); // Mock because no Buffalo write for 0xe0 is implemented
-        await mockAdapterEvents["zclPayload"]({
+        await mockAdapterEvents.zclPayload({
             wasBroadcast: true,
             address: 0x0046f4fe & 0xffff,
             clusterID: frame.cluster.ID,
@@ -7573,7 +7573,7 @@ describe("Controller", () => {
 
         // When joins again, shouldnt emit duplicate event
         vi.spyOn(Zcl.Frame, "fromBuffer").mockReturnValueOnce(frame); // Mock because no Buffalo write for 0xe0 is implemented
-        await mockAdapterEvents["zclPayload"]({
+        await mockAdapterEvents.zclPayload({
             wasBroadcast: true,
             address: 0x0046f4fe & 0xffff,
             clusterID: frame.cluster.ID,
@@ -7658,7 +7658,7 @@ describe("Controller", () => {
         };
         const frameToggle = Zcl.Frame.create(1, 0, true, undefined, 10, "notification", 33, dataToggle, {});
         vi.spyOn(Zcl.Frame, "fromBuffer").mockReturnValueOnce(frameToggle); // Mock because no Buffalo write for 0x22 is implemented
-        await mockAdapterEvents["zclPayload"]({
+        await mockAdapterEvents.zclPayload({
             wasBroadcast: false,
             address: 0x0046f4fe & 0xffff,
             clusterID: frameToggle.cluster.ID,
@@ -7746,7 +7746,7 @@ describe("Controller", () => {
         const frameDecommission = Zcl.Frame.create(1, 0, true, undefined, 10, "notification", 33, dataDecommission, {});
 
         vi.spyOn(Zcl.Frame, "fromBuffer").mockReturnValueOnce(frameDecommission); // Mock because no Buffalo write for 0xe1 is implemented
-        await mockAdapterEvents["zclPayload"]({
+        await mockAdapterEvents.zclPayload({
             wasBroadcast: true,
             address: 0x0046f4fe & 0xffff,
             clusterID: frameDecommission.cluster.ID,
@@ -7786,7 +7786,7 @@ describe("Controller", () => {
         expect(mocksendZclFrameToAll).toHaveBeenCalledTimes(1);
 
         vi.spyOn(Zcl.Frame, "fromBuffer").mockReturnValueOnce(frameDecommission); // Mock because no Buffalo write for 0xe1 is implemented
-        await mockAdapterEvents["zclPayload"]({
+        await mockAdapterEvents.zclPayload({
             wasBroadcast: true,
             address: 0x0046f4fe & 0xffff,
             clusterID: frameDecommission.cluster.ID,
@@ -7807,8 +7807,8 @@ describe("Controller", () => {
         const gpdNwkAddress = 1518266219 & 0xffff;
         const gpdIeeeAddress = `0x${(1518266219).toString(16).padStart(16, "0")}`;
 
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 129, ieeeAddr: "0x129"});
-        await mockAdapterEvents["deviceJoined"]({networkAddress: gpdNwkAddress, ieeeAddr: gpdIeeeAddress});
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
+        await mockAdapterEvents.deviceJoined({networkAddress: gpdNwkAddress, ieeeAddr: gpdIeeeAddress});
 
         const gppDevice = controller.getDeviceByIeeeAddr("0x129")!;
         const processCommandSpy = vi.spyOn(
@@ -7819,7 +7819,7 @@ describe("Controller", () => {
         mockLogger.error.mockClear();
         const commModeBuffer = Buffer.from([25, 10, 2, 11, 254, 0]);
         const commModeFrame = Zcl.Frame.fromBuffer(Zcl.Clusters.greenPower.ID, Zcl.Header.fromBuffer(commModeBuffer)!, commModeBuffer, {});
-        await mockAdapterEvents["zclPayload"]({
+        await mockAdapterEvents.zclPayload({
             wasBroadcast: true,
             address: gpdNwkAddress,
             clusterID: commModeFrame.cluster.ID,
@@ -7831,7 +7831,7 @@ describe("Controller", () => {
         });
         const defaultRspBuffer = Buffer.from([0, 116, 11, 1, 137]);
         const defaultRspFrame = Zcl.Frame.fromBuffer(Zcl.Clusters.greenPower.ID, Zcl.Header.fromBuffer(defaultRspBuffer)!, defaultRspBuffer, {});
-        await mockAdapterEvents["zclPayload"]({
+        await mockAdapterEvents.zclPayload({
             wasBroadcast: false,
             address: gppDevice.networkAddress,
             clusterID: defaultRspFrame.cluster.ID,
@@ -7854,7 +7854,7 @@ describe("Controller", () => {
             "hex",
         );
         const frame = Zcl.Frame.fromBuffer(Zcl.Clusters.greenPower.ID, Zcl.Header.fromBuffer(buffer)!, buffer, {});
-        await mockAdapterEvents["zclPayload"]({
+        await mockAdapterEvents.zclPayload({
             wasBroadcast: true,
             address: 0xf4fe,
             clusterID: frame.cluster.ID,
@@ -7891,7 +7891,7 @@ describe("Controller", () => {
             "hex",
         );
         const frame = Zcl.Frame.fromBuffer(Zcl.Clusters.greenPower.ID, Zcl.Header.fromBuffer(buffer)!, buffer, {});
-        await mockAdapterEvents["zclPayload"]({
+        await mockAdapterEvents.zclPayload({
             wasBroadcast: true,
             address: 0xf4fe,
             clusterID: frame.cluster.ID,
@@ -7911,7 +7911,7 @@ describe("Controller", () => {
         mockLogger.error.mockClear();
         const buffer = Buffer.from("1102040008d755550114000000e01f0785f256b8e010b32e6921aca5d18ab7b7d44d0f063d4d140300001002050229dfe2", "hex");
         const frame = Zcl.Frame.fromBuffer(Zcl.Clusters.greenPower.ID, Zcl.Header.fromBuffer(buffer)!, buffer, {});
-        await mockAdapterEvents["zclPayload"]({
+        await mockAdapterEvents.zclPayload({
             wasBroadcast: true,
             address: 57129,
             clusterID: frame.cluster.ID,
@@ -7937,7 +7937,7 @@ describe("Controller", () => {
 
     it("Should ignore invalid green power frame", async () => {
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 129, ieeeAddr: "0x129"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
         const device = controller.getDeviceByIeeeAddr("0x129")!;
         device.addCustomCluster("myCustomCluster", {
             ID: 9123,
@@ -7947,7 +7947,7 @@ describe("Controller", () => {
         });
         const buffer = Buffer.from([24, 169, 99, 0, 1, 24, 3, 0, 0, 24, 1]);
         const header = Zcl.Header.fromBuffer(buffer);
-        await mockAdapterEvents["zclPayload"]({
+        await mockAdapterEvents.zclPayload({
             wasBroadcast: false,
             address: 129,
             clusterID: 33,
@@ -7964,7 +7964,7 @@ describe("Controller", () => {
         await controller.start();
         const srcID = 0x0046f4fe;
         // mock device as already joined to avoid zclPayload triggering unknown device identification
-        await mockAdapterEvents["deviceJoined"]({ieeeAddr: "0x000000000046f4fe", networkAddress: srcID & 0xffff});
+        await mockAdapterEvents.deviceJoined({ieeeAddr: "0x000000000046f4fe", networkAddress: srcID & 0xffff});
 
         // Channel Request
         const data = {
@@ -7981,7 +7981,7 @@ describe("Controller", () => {
         };
         const frame = Zcl.Frame.create(1, 0, true, undefined, 10, "commissioningNotification", 33, data, {});
         vi.spyOn(Zcl.Frame, "fromBuffer").mockReturnValueOnce(frame); // Mock because no Buffalo write for 0xe3 is implemented
-        await mockAdapterEvents["zclPayload"]({
+        await mockAdapterEvents.zclPayload({
             wasBroadcast: true,
             address: srcID & 0xffff,
             clusterID: frame.cluster.ID,
@@ -8033,7 +8033,7 @@ describe("Controller", () => {
         };
         const frame = Zcl.Frame.create(1, 0, true, undefined, 10, "commissioningNotification", 33, data, {});
         vi.spyOn(Zcl.Frame, "fromBuffer").mockReturnValueOnce(frame); // Mock because no Buffalo write for 0xe0 is implemented
-        await mockAdapterEvents["zclPayload"]({
+        await mockAdapterEvents.zclPayload({
             wasBroadcast: true,
             address: 0x46f4fe,
             clusterID: frame.cluster.ID,
@@ -8120,7 +8120,7 @@ describe("Controller", () => {
 
     it("Green power unicast", async () => {
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 129, ieeeAddr: "0x129"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
         const srcID = 0x017171f8;
         const gppDevice = controller.getDeviceByIeeeAddr("0x129")!;
         const data = {
@@ -8163,7 +8163,7 @@ describe("Controller", () => {
 
         expect(deepClone(receivedFrame)).toStrictEqual(deepClone(expectedFrame));
         vi.spyOn(Zcl.Frame, "fromBuffer").mockReturnValueOnce(expectedFrame); // Mock because no Buffalo write for 0xe0 is implemented
-        await mockAdapterEvents["zclPayload"]({
+        await mockAdapterEvents.zclPayload({
             wasBroadcast: false,
             address: gppDevice.networkAddress,
             clusterID: expectedFrame.cluster.ID,
@@ -8214,7 +8214,7 @@ describe("Controller", () => {
 
         // When joins again, shouldnt emit duplicate event
         vi.spyOn(Zcl.Frame, "fromBuffer").mockReturnValueOnce(expectedFrame); // Mock because no Buffalo write for 0xe0 is implemented
-        await mockAdapterEvents["zclPayload"]({
+        await mockAdapterEvents.zclPayload({
             wasBroadcast: false,
             address: 129,
             clusterID: expectedFrame.cluster.ID,
@@ -8301,7 +8301,7 @@ describe("Controller", () => {
             gppGpdLink: 0xd8,
         };
         const frameScene = Zcl.Frame.create(1, 0, true, undefined, 10, "notification", 33, dataScene, {});
-        await mockAdapterEvents["zclPayload"]({
+        await mockAdapterEvents.zclPayload({
             wasBroadcast: false,
             address: srcID & 0xffff,
             clusterID: frameScene.cluster.ID,
@@ -8437,7 +8437,7 @@ describe("Controller", () => {
 
         // Re-add device
         vi.spyOn(Zcl.Frame, "fromBuffer").mockReturnValueOnce(expectedFrame); // Mock because no Buffalo write for 0xe0 is implemented
-        await mockAdapterEvents["zclPayload"]({
+        await mockAdapterEvents.zclPayload({
             wasBroadcast: false,
             address: 129,
             clusterID: expectedFrame.cluster.ID,
@@ -8486,7 +8486,7 @@ describe("Controller", () => {
 
     it("Get input/ouptut clusters", async () => {
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 172, ieeeAddr: "0x172"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 172, ieeeAddr: "0x172"});
         const device = controller.getDeviceByIeeeAddr("0x172")!;
         const endpoint = device.getEndpoint(11)!;
         expect(endpoint.getInputClusters().map((c) => c.name)).toStrictEqual([
@@ -8504,7 +8504,7 @@ describe("Controller", () => {
 
     it("Report to endpoint custom attributes", async () => {
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 129, ieeeAddr: "0x129"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
         mocksendZclFrameToEndpoint.mockClear();
         const device = controller.getDeviceByIeeeAddr("0x129")!;
         const endpoint = device.getEndpoint(1)!;
@@ -8571,7 +8571,7 @@ describe("Controller", () => {
 
     it("Report to endpoint with unknown string attribute", async () => {
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 129, ieeeAddr: "0x129"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
         mocksendZclFrameToEndpoint.mockClear();
         const device = controller.getDeviceByIeeeAddr("0x129")!;
         const endpoint = device.getEndpoint(1)!;
@@ -8587,7 +8587,7 @@ describe("Controller", () => {
 
     it("Report error", async () => {
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 129, ieeeAddr: "0x129"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
         const device = controller.getDeviceByIeeeAddr("0x129")!;
         const endpoint = device.getEndpoint(1)!;
         mocksendZclFrameToEndpoint.mockRejectedValueOnce(new Error("timeout occurred"));
@@ -8606,7 +8606,7 @@ describe("Controller", () => {
 
     it("Write to device with pendingRequestTimeout > 0", async () => {
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 174, ieeeAddr: "0x129"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 174, ieeeAddr: "0x129"});
         const device = controller.getDeviceByIeeeAddr("0x129")!;
         device.pendingRequestTimeout = 10000;
         const endpoint = device.getEndpoint(1)!;
@@ -8642,17 +8642,17 @@ describe("Controller", () => {
         expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(1);
 
         await nextTick;
-        await mockAdapterEvents["zclPayload"](data);
+        await mockAdapterEvents.zclPayload(data);
         await result;
         expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(2);
         expect(await result).toBe(undefined);
-        await mockAdapterEvents["zclPayload"](data);
+        await mockAdapterEvents.zclPayload(data);
         expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(2);
     });
 
     it("Write to device with pendingRequestTimeout > 0, override default sendPolicy", async () => {
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 174, ieeeAddr: "0x129"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 174, ieeeAddr: "0x129"});
         const device = controller.getDeviceByIeeeAddr("0x129")!;
         device.pendingRequestTimeout = 10000;
         const endpoint = device.getEndpoint(1)!;
@@ -8679,7 +8679,7 @@ describe("Controller", () => {
 
     it("Write to device with pendingRequestTimeout > 0, error", async () => {
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 129, ieeeAddr: "0x129"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
         const device = controller.getDeviceByIeeeAddr("0x129")!;
         device.checkinInterval = 10;
         const buffer = Buffer.from([24, 169, 10, 0, 0, 24, 1]);
@@ -8734,13 +8734,13 @@ describe("Controller", () => {
         expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(1);
 
         nextTick = new Promise(process.nextTick);
-        await mockAdapterEvents["zclPayload"](data);
+        await mockAdapterEvents.zclPayload(data);
         await nextTick;
         expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(2);
         await vi.advanceTimersByTimeAsync(100000);
         let error;
         try {
-            await mockAdapterEvents["zclPayload"](data);
+            await mockAdapterEvents.zclPayload(data);
             await result;
         } catch (e) {
             error = e;
@@ -8753,7 +8753,7 @@ describe("Controller", () => {
 
     it("Write to device with pendingRequestTimeout > 0, replace queued messages", async () => {
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 129, ieeeAddr: "0x129"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
         const device = controller.getDeviceByIeeeAddr("0x129")!;
         device.pendingRequestTimeout = 10000;
         const endpoint = device.getEndpoint(1)!;
@@ -8908,7 +8908,7 @@ describe("Controller", () => {
         // Implicit checkin, there are 5 ZclFrames and 2 other requests left in the queue:
         const buffer = Buffer.from([24, 169, 10, 0, 0, 24, 1]);
         const frame = Zcl.Frame.fromBuffer(Zcl.Utils.getCluster("msOccupancySensing", undefined, {}).ID, Zcl.Header.fromBuffer(buffer), buffer, {});
-        await mockAdapterEvents["zclPayload"]({
+        await mockAdapterEvents.zclPayload({
             wasBroadcast: false,
             address: "0x129",
             clusterID: frame.cluster.ID,
@@ -8936,7 +8936,7 @@ describe("Controller", () => {
         updatedMockedDate.setSeconds(updatedMockedDate.getSeconds() + 1000);
         vi.setSystemTime(updatedMockedDate);
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 174, ieeeAddr: "0x174"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 174, ieeeAddr: "0x174"});
         const device = controller.getDeviceByIeeeAddr("0x174")!;
         MOCK_DEVICES[174]!.attributes![1].checkinInterval = 3996; //999 seconds
 
@@ -8962,7 +8962,7 @@ describe("Controller", () => {
                 buffer,
                 {},
             );
-            await mockAdapterEvents["zclPayload"]({
+            await mockAdapterEvents.zclPayload({
                 wasBroadcast: false,
                 address: 174,
                 clusterID: frame.cluster.ID,
@@ -8997,7 +8997,7 @@ describe("Controller", () => {
 
     it("Implicit checkin while send already in progress", async () => {
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 174, ieeeAddr: "0x174"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 174, ieeeAddr: "0x174"});
         const device = controller.getDeviceByIeeeAddr("0x174")!;
         await device.interview();
         mocksendZclFrameToEndpoint.mockClear();
@@ -9037,8 +9037,8 @@ describe("Controller", () => {
 
     it("Write to device with pendingRequestTimeout > 0, send bulk messages", async () => {
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 174, ieeeAddr: "0x174"});
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 129, ieeeAddr: "0x129"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 174, ieeeAddr: "0x174"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
         const device = controller.getDeviceByIeeeAddr("0x174")!;
         await device.interview();
         const endpoint = device.getEndpoint(1)!;
@@ -9059,7 +9059,7 @@ describe("Controller", () => {
 
         const buffer = Buffer.from([24, 169, 10, 0, 0, 24, 1]);
         let frame = Zcl.Frame.fromBuffer(Zcl.Utils.getCluster("msOccupancySensing", undefined, {}).ID, Zcl.Header.fromBuffer(buffer), buffer, {});
-        await mockAdapterEvents["zclPayload"]({
+        await mockAdapterEvents.zclPayload({
             wasBroadcast: false,
             address: 174,
             clusterID: frame.cluster.ID,
@@ -9083,7 +9083,7 @@ describe("Controller", () => {
             {},
             {},
         );
-        await mockAdapterEvents["zclPayload"]({
+        await mockAdapterEvents.zclPayload({
             wasBroadcast: false,
             address: 174,
             clusterID: frame.cluster.ID,
@@ -9125,11 +9125,11 @@ describe("Controller", () => {
 
     it("Handle retransmitted Xiaomi messages", async () => {
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 175, ieeeAddr: "0x175"});
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 171, ieeeAddr: "0x171"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 175, ieeeAddr: "0x175"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 171, ieeeAddr: "0x171"});
 
         const frame = Zcl.Frame.create(0, 0, true, undefined, 40, 0, 1, [{attrId: 0}, {attrId: 9999}], {});
-        await mockAdapterEvents["zclPayload"]({
+        await mockAdapterEvents.zclPayload({
             wasBroadcast: false,
             address: 175,
             // Attrid 9999 does not exist in ZCL
@@ -9298,7 +9298,7 @@ describe("Controller", () => {
     it("Should do a coordinator check", async () => {
         mockAdapterSupportsBackup.mockReturnValue(true);
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 129, ieeeAddr: "0x129"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
         const result = await controller.coordinatorCheck();
         expect(result.missingRouters.length).toBe(1);
         expect(result.missingRouters[0].ieeeAddr).toBe("0x129");
@@ -9309,7 +9309,7 @@ describe("Controller", () => {
     it("Should resolve manufacturer specific cluster attribute names on specific ZCL frames: generic target device", async () => {
         const buffer = Buffer.from([28, 33, 16, 13, 1, 2, 240, 0, 48, 4]);
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 129, ieeeAddr: "0x129"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
 
         const frame = Zcl.Frame.fromBuffer(
             Zcl.Utils.getCluster("closuresWindowCovering", undefined, {}).ID,
@@ -9317,7 +9317,7 @@ describe("Controller", () => {
             buffer,
             {},
         );
-        await mockAdapterEvents["zclPayload"]({
+        await mockAdapterEvents.zclPayload({
             wasBroadcast: false,
             address: "0x129",
             clusterID: frame.cluster.ID,
@@ -9337,14 +9337,14 @@ describe("Controller", () => {
     it("Should resolve manufacturer specific cluster attribute names on specific ZCL frames: specific target device", async () => {
         const buffer = Buffer.from([28, 33, 16, 13, 1, 2, 240, 0, 48, 4]);
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 177, ieeeAddr: "0x177"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 177, ieeeAddr: "0x177"});
         const frame = Zcl.Frame.fromBuffer(
             Zcl.Utils.getCluster("closuresWindowCovering", undefined, {}).ID,
             Zcl.Header.fromBuffer(buffer),
             buffer,
             {},
         );
-        await mockAdapterEvents["zclPayload"]({
+        await mockAdapterEvents.zclPayload({
             wasBroadcast: false,
             address: "0x177",
             clusterID: frame.cluster.ID,
@@ -9363,14 +9363,14 @@ describe("Controller", () => {
     it("Should resolve generic cluster attribute names on generic ZCL frames: generic target device", async () => {
         const buffer = Buffer.from([24, 242, 10, 2, 240, 48, 4]);
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 129, ieeeAddr: "0x129"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
         const frame = Zcl.Frame.fromBuffer(
             Zcl.Utils.getCluster("closuresWindowCovering", undefined, {}).ID,
             Zcl.Header.fromBuffer(buffer),
             buffer,
             {},
         );
-        await mockAdapterEvents["zclPayload"]({
+        await mockAdapterEvents.zclPayload({
             wasBroadcast: false,
             address: "0x129",
             clusterID: frame.cluster.ID,
@@ -9389,14 +9389,14 @@ describe("Controller", () => {
     it("Should resolve manufacturer specific cluster attribute names on generic ZCL frames: Legrand target device", async () => {
         const buffer = Buffer.from([24, 242, 10, 2, 240, 48, 4]);
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 177, ieeeAddr: "0x177"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 177, ieeeAddr: "0x177"});
         const frame = Zcl.Frame.fromBuffer(
             Zcl.Utils.getCluster("closuresWindowCovering", undefined, {}).ID,
             Zcl.Header.fromBuffer(buffer),
             buffer,
             {},
         );
-        await mockAdapterEvents["zclPayload"]({
+        await mockAdapterEvents.zclPayload({
             wasBroadcast: false,
             address: "0x177",
             clusterID: frame.cluster.ID,
@@ -9413,7 +9413,7 @@ describe("Controller", () => {
 
     it("zclCommand", async () => {
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 129, ieeeAddr: "0x129"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
         const device = controller.getDeviceByIeeeAddr("0x129")!;
         const endpoint = device.getEndpoint(1)!;
         mocksendZclFrameToEndpoint.mockReturnValueOnce(null);
@@ -9428,7 +9428,7 @@ describe("Controller", () => {
 
     it("zclCommand with error", async () => {
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 129, ieeeAddr: "0x129"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
         const device = controller.getDeviceByIeeeAddr("0x129")!;
         const endpoint = device.getEndpoint(1)!;
         console.log(endpoint);
@@ -9491,7 +9491,7 @@ describe("Controller", () => {
 
     it("Node Descriptor on R21 device", async () => {
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 162, ieeeAddr: "0x162"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 162, ieeeAddr: "0x162"});
 
         expect(mockLogger.info).toHaveBeenCalledWith(
             `Device '0x162' is only compliant to revision '21' of the ZigBee specification (current revision: ${ZSpec.ZIGBEE_REVISION}).`,
@@ -9501,7 +9501,7 @@ describe("Controller", () => {
 
     it("Node Descriptor on R pre-21 device", async () => {
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 161, ieeeAddr: "0x161"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 161, ieeeAddr: "0x161"});
 
         expect(mockLogger.info).toHaveBeenCalledWith(
             `Device '0x161' is only compliant to revision 'pre-21' of the ZigBee specification (current revision: ${ZSpec.ZIGBEE_REVISION}).`,
@@ -9511,7 +9511,7 @@ describe("Controller", () => {
 
     it("Device requests network address - unchanged", async () => {
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 129, ieeeAddr: "0x129"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
         mockAdapterSendZdo.mockClear();
         const device = controller.getDeviceByNetworkAddress(129)!;
         expect(device.ieeeAddr).toStrictEqual("0x129");
@@ -9527,7 +9527,7 @@ describe("Controller", () => {
                 } as NetworkAddressResponse,
             ];
 
-            await mockAdapterEvents["zdoResponse"](Zdo.ClusterId.NETWORK_ADDRESS_RESPONSE, zdoResponse);
+            await mockAdapterEvents.zdoResponse(Zdo.ClusterId.NETWORK_ADDRESS_RESPONSE, zdoResponse);
             return zdoResponse;
         });
 
@@ -9548,7 +9548,7 @@ describe("Controller", () => {
 
     it("Device requests network address - changed", async () => {
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 129, ieeeAddr: "0x129"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
         mockAdapterSendZdo.mockClear();
         const device = controller.getDeviceByNetworkAddress(129)!;
         expect(device.ieeeAddr).toStrictEqual("0x129");
@@ -9564,7 +9564,7 @@ describe("Controller", () => {
                 } as NetworkAddressResponse,
             ];
 
-            await mockAdapterEvents["zdoResponse"](Zdo.ClusterId.NETWORK_ADDRESS_RESPONSE, zdoResponse);
+            await mockAdapterEvents.zdoResponse(Zdo.ClusterId.NETWORK_ADDRESS_RESPONSE, zdoResponse);
             return zdoResponse;
         });
 
@@ -9588,7 +9588,7 @@ describe("Controller", () => {
 
     it("Device remove from network fails", async () => {
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 140, ieeeAddr: "0x140"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 140, ieeeAddr: "0x140"});
         const device = controller.getDeviceByIeeeAddr("0x140")!;
         sendZdoResponseStatus = Zdo.Status.INVALID_INDEX;
 
@@ -9601,7 +9601,7 @@ describe("Controller", () => {
 
     it("Device LQI table fails", async () => {
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 140, ieeeAddr: "0x140"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 140, ieeeAddr: "0x140"});
         const device = controller.getDeviceByIeeeAddr("0x140")!;
         sendZdoResponseStatus = Zdo.Status.INVALID_INDEX;
 
@@ -9614,7 +9614,7 @@ describe("Controller", () => {
 
     it("Device routing table fails", async () => {
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 140, ieeeAddr: "0x140"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 140, ieeeAddr: "0x140"});
         const device = controller.getDeviceByIeeeAddr("0x140")!;
         sendZdoResponseStatus = Zdo.Status.INVALID_INDEX;
 
@@ -9627,7 +9627,7 @@ describe("Controller", () => {
 
     it("Device LQI table with more than 1 request", async () => {
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 140, ieeeAddr: "0x140"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 140, ieeeAddr: "0x140"});
         const device = controller.getDeviceByIeeeAddr("0x140")!;
         mockAdapterSendZdo
             .mockImplementationOnce(() => {
@@ -9666,7 +9666,7 @@ describe("Controller", () => {
 
     it("Device routing table with more than 1 request", async () => {
         await controller.start();
-        await mockAdapterEvents["deviceJoined"]({networkAddress: 140, ieeeAddr: "0x140"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 140, ieeeAddr: "0x140"});
         const device = controller.getDeviceByIeeeAddr("0x140")!;
         mockAdapterSendZdo
             .mockImplementationOnce(() => {
@@ -9714,7 +9714,7 @@ describe("Controller", () => {
     it("Adapter stop fails after adapter disconnected", async () => {
         await controller.start();
         mockAdapterStop.mockRejectedValueOnce(new Error("timeout"));
-        await mockAdapterEvents["disconnected"]();
+        await mockAdapterEvents.disconnected();
 
         expect(mockLogger.error).toHaveBeenCalledWith("Failed to stop adapter on disconnect: Error: timeout", "zh:controller");
     });
@@ -9745,12 +9745,12 @@ describe("Controller", () => {
                 } as IEEEAddressResponse,
             ];
 
-            await mockAdapterEvents["zdoResponse"](Zdo.ClusterId.IEEE_ADDRESS_RESPONSE, zdoResponse);
+            await mockAdapterEvents.zdoResponse(Zdo.ClusterId.IEEE_ADDRESS_RESPONSE, zdoResponse);
             return zdoResponse;
         });
 
         const frame = Zcl.Frame.create(0, 1, true, undefined, 10, "readRsp", 0, [{attrId: 5, status: 0, dataType: 66, attrData: "new.model.id"}], {});
-        await mockAdapterEvents["zclPayload"]({
+        await mockAdapterEvents.zclPayload({
             wasBroadcast: false,
             address: newNwkAddress,
             clusterID: frame.cluster.ID,
@@ -9795,12 +9795,12 @@ describe("Controller", () => {
                 } as IEEEAddressResponse,
             ];
 
-            await mockAdapterEvents["zdoResponse"](Zdo.ClusterId.IEEE_ADDRESS_RESPONSE, zdoResponse);
+            await mockAdapterEvents.zdoResponse(Zdo.ClusterId.IEEE_ADDRESS_RESPONSE, zdoResponse);
             return zdoResponse;
         });
 
         const frame = Zcl.Frame.create(0, 1, true, undefined, 10, "readRsp", 0, [{attrId: 5, status: 0, dataType: 66, attrData: "new.model.id"}], {});
-        await mockAdapterEvents["zclPayload"]({
+        await mockAdapterEvents.zclPayload({
             wasBroadcast: false,
             address: oldNwkAddress,
             clusterID: frame.cluster.ID,
@@ -9825,7 +9825,7 @@ describe("Controller", () => {
             [{attrId: 5, status: 0, dataType: 66, attrData: "new.model.id2"}],
             {},
         );
-        await mockAdapterEvents["zclPayload"]({
+        await mockAdapterEvents.zclPayload({
             wasBroadcast: false,
             address: newNwkAddress,
             clusterID: frame2.cluster.ID,
@@ -9862,12 +9862,12 @@ describe("Controller", () => {
         mockAdapterSendZdo.mockImplementationOnce(async () => {
             const zdoResponse = [Zdo.Status.INV_REQUESTTYPE, undefined];
 
-            await mockAdapterEvents["zdoResponse"](Zdo.ClusterId.IEEE_ADDRESS_RESPONSE, zdoResponse);
+            await mockAdapterEvents.zdoResponse(Zdo.ClusterId.IEEE_ADDRESS_RESPONSE, zdoResponse);
             return zdoResponse;
         });
 
         const frame = Zcl.Frame.create(0, 1, true, undefined, 10, "readRsp", 0, [{attrId: 5, status: 0, dataType: 66, attrData: "new.model.id"}], {});
-        await mockAdapterEvents["zclPayload"]({
+        await mockAdapterEvents.zclPayload({
             wasBroadcast: false,
             address: newNwkAddress,
             clusterID: frame.cluster.ID,
@@ -9918,7 +9918,7 @@ describe("Controller", () => {
         };
 
         mockAdapterSendZdo.mockImplementationOnce(async () => {
-            await mockAdapterEvents["zclPayload"](zclPayload);
+            await mockAdapterEvents.zclPayload(zclPayload);
 
             const zdoResponse = [
                 Zdo.Status.SUCCESS,
@@ -9930,11 +9930,11 @@ describe("Controller", () => {
                 } as IEEEAddressResponse,
             ];
 
-            await mockAdapterEvents["zdoResponse"](Zdo.ClusterId.IEEE_ADDRESS_RESPONSE, zdoResponse);
+            await mockAdapterEvents.zdoResponse(Zdo.ClusterId.IEEE_ADDRESS_RESPONSE, zdoResponse);
             return zdoResponse;
         });
 
-        await mockAdapterEvents["zclPayload"](zclPayload);
+        await mockAdapterEvents.zclPayload(zclPayload);
 
         expect(device.networkAddress).toStrictEqual(newNwkAddress);
         expect(device.modelID).toBe("new.model.id");
@@ -9956,7 +9956,7 @@ describe("Controller", () => {
         const identifyUnknownDeviceSpy = vi.spyOn(controller, "identifyUnknownDevice");
 
         const frame = Zcl.Frame.create(0, 1, true, undefined, 10, "readRsp", 0, [{attrId: 5, status: 0, dataType: 66, attrData: "new.model.id"}], {});
-        await mockAdapterEvents["zclPayload"]({
+        await mockAdapterEvents.zclPayload({
             wasBroadcast: false,
             address: nwkAddress,
             clusterID: frame.cluster.ID,
@@ -9971,7 +9971,7 @@ describe("Controller", () => {
         expect(identifyUnknownDeviceSpy).toHaveBeenCalledTimes(1);
         expect(mockLogger.debug).toHaveBeenCalledWith(`Failed to retrieve IEEE address for device '${nwkAddress}': Error: timeout`, "zh:controller");
 
-        await mockAdapterEvents["zclPayload"]({
+        await mockAdapterEvents.zclPayload({
             wasBroadcast: false,
             address: nwkAddress,
             clusterID: frame.cluster.ID,

@@ -61,7 +61,6 @@
                 }
             },
             "complexity": {
-                "useLiteralKeys": "off",
                 "noBannedTypes": "off"
             },
             "performance": {

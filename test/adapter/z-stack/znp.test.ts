@@ -53,8 +53,8 @@ const mockSocketPipe = vi.fn();
 const mockSocketOnce = vi.fn();
 const mockSocketCallbacks = {};
 const mockSocketConnect = vi.fn(() => {
-    mockSocketCallbacks["connect"]();
-    mockSocketCallbacks["ready"]();
+    mockSocketCallbacks.connect();
+    mockSocketCallbacks.ready();
 });
 const mockSocketDestroy = vi.fn();
 let requestSpy: MockInstance;
@@ -188,7 +188,7 @@ describe("ZNP", () => {
 
     it("Open tcp port with socket error", async () => {
         mockSocketConnect.mockImplementationOnce(() => {
-            mockSocketCallbacks["error"]();
+            mockSocketCallbacks.error();
         });
 
         znp = new Znp("tcp://localhost:666", 100, false);
