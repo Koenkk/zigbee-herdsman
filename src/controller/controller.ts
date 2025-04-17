@@ -247,15 +247,15 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
     public async addInstallCode(installCode: string): Promise<void> {
         const aqaraMatch = installCode.match(/^G\$M:.+\$A:(.+)\$I:(.+)$/);
         const pipeMatch = installCode.match(/^(.+)\|(.+)$/);
-        let ieeeAddr;
-        let key;
+        let ieeeAddr: string;
+        let keyStr: string;
 
         if (aqaraMatch) {
             ieeeAddr = aqaraMatch[1];
-            key = aqaraMatch[2];
+            keyStr = aqaraMatch[2];
         } else if (pipeMatch) {
             ieeeAddr = pipeMatch[1];
-            key = pipeMatch[2];
+            keyStr = pipeMatch[2];
         } else {
             assert(
                 installCode.length === 95 || installCode.length === 91,
@@ -263,13 +263,13 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
             );
             const keyStart = installCode.length - (installCode.length === 95 ? 36 : 32);
             ieeeAddr = installCode.substring(keyStart - 19, keyStart - 3);
-            key = installCode.substring(keyStart, installCode.length);
+            keyStr = installCode.substring(keyStart, installCode.length);
         }
 
         ieeeAddr = `0x${ieeeAddr}`;
         // match valid else asserted above
         // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
-        key = Buffer.from(key.match(/.{1,2}/g)!.map((d) => Number.parseInt(d, 16)));
+        const key = Buffer.from(keyStr.match(/.{1,2}/g)!.map((d) => Number.parseInt(d, 16)));
 
         // will throw if code cannot be fixed and is invalid
         const [adjustedKey, adjusted] = ZSpec.Utils.checkInstallCode(key, true);

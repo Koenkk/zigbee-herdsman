@@ -63,8 +63,7 @@
             },
             "suspicious": {
                 "noConstEnum": "off",
-                "useAwait": "error",
-                "noImplicitAnyLet": "off"
+                "useAwait": "error"
             }
         }
     },
@@ -76,6 +75,9 @@
                     "style": {
                         "noNonNullAssertion": "off",
                         "useNamingConvention": "off"
+                    },
+                    "suspicious": {
+                        "noImplicitAnyLet": "off"
                     }
                 }
             }

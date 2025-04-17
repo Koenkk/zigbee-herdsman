@@ -39,21 +39,22 @@ export class AdapterBackup {
         } catch {
             return undefined;
         }
-        let data;
+        let data: Models.UnifiedBackupStorage | Models.LegacyBackupStorage;
         try {
             data = JSON.parse(fs.readFileSync(this.defaultPath).toString());
         } catch (error) {
             throw new Error(`Coordinator backup is corrupted (${error})`);
         }
+
+        if ("adapterType" in data) {
+            return BackupUtils.fromLegacyBackup(data as Models.LegacyBackupStorage);
+        }
+
         if (data.metadata?.format === "zigpy/open-coordinator-backup" && data.metadata?.version) {
             if (data.metadata?.version !== 1) {
                 throw new Error(`Unsupported open coordinator backup version (version=${data.metadata?.version})`);
             }
             return BackupUtils.fromUnifiedBackup(data as Models.UnifiedBackupStorage);
-        }
-
-        if (data.adapterType === "zStack") {
-            return BackupUtils.fromLegacyBackup(data as Models.LegacyBackupStorage);
         }
 
         throw new Error("Unknown backup format");
@@ -82,7 +83,7 @@ export class AdapterBackup {
         logger.debug("fetched adapter nib", NS);
 
         /* get adapter active key information */
-        let activeKeyInfo;
+        let activeKeyInfo: ReturnType<typeof Structs.nwkKeyDescriptor>;
         if (version === ZnpVersion.ZStack12) {
             const key = Structs.nwkKey(
                 (await this.znp.requestWithReply(Subsystem.SAPI, "readConfiguration", {configid: NvItemsIds.PRECFGKEY})).payload.value,
@@ -228,7 +229,7 @@ export class AdapterBackup {
              * does not have the linkKey anymore.
              * Below we don't remove any devices from the backup which have a linkkey and are still in the database (=ieeeAddressesInDatabase)
              */
-            const oldBackup = await this.getStoredBackup();
+            const oldBackup = this.getStoredBackup();
             assert(oldBackup, "Old backup doesn't exist");
             const missing = oldBackup.devices.filter(
                 (d) =>

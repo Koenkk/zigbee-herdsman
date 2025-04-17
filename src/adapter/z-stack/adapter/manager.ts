@@ -134,7 +134,7 @@ export class ZnpAdapterManager {
         }
 
         /* get backup if available and supported by target */
-        const backup = await this.backup.getStoredBackup();
+        const backup = this.backup.getStoredBackup();
 
         /* special treatment for incorrectly reversed Extended PAN IDs from previous releases */
         const isExtendedPanIdReversed = nib && this.nwkOptions.extendedPanId.equals(Buffer.from(nib.extendedPANID).reverse());
@@ -287,7 +287,7 @@ export class ZnpAdapterManager {
      * Internal method to perform adapter restore.
      */
     private async beginRestore(): Promise<void> {
-        const backup = await this.backup.getStoredBackup();
+        const backup = this.backup.getStoredBackup();
         /* v8 ignore start */
         if (!backup) {
             throw new Error("Cannot restore backup - none is available");

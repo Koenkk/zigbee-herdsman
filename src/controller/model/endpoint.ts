@@ -682,24 +682,22 @@ export class Endpoint extends Entity {
         );
 
         const payload = items.map((item): KeyValue => {
-            let dataType;
-            let attrId;
+            let dataType: number | undefined;
+            let attrId: number | undefined;
 
             if (typeof item.attribute === "object") {
                 dataType = item.attribute.type;
                 attrId = item.attribute.ID;
-            } else {
-                if (cluster.hasAttribute(item.attribute)) {
-                    const attribute = cluster.getAttribute(item.attribute);
-                    dataType = attribute.type;
-                    attrId = attribute.ID;
-                }
+            } else if (cluster.hasAttribute(item.attribute)) {
+                const attribute = cluster.getAttribute(item.attribute);
+                dataType = attribute.type;
+                attrId = attribute.ID;
             }
 
             return {
                 direction: Zcl.Direction.CLIENT_TO_SERVER,
-                attrId,
-                dataType,
+                attrId, // TODO: biome migration - can be undefined?
+                dataType, // TODO: biome migration - can be undefined?
                 minRepIntval: item.minimumReportInterval,
                 maxRepIntval: item.maximumReportInterval,
                 repChange: item.reportableChange,
@@ -877,7 +875,7 @@ export class Endpoint extends Entity {
     ): number | undefined {
         const manufacturerCodes = new Set(
             attributes.map((nameOrID): number | undefined => {
-                let attributeID;
+                let attributeID: number | string;
 
                 if (typeof nameOrID === "object") {
                     // ConfigureReportingItem

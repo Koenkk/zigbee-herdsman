@@ -392,7 +392,7 @@ export class ZBOSSDriver extends EventEmitter {
             buf.writeUInt8(this.tsn, 4);
             buf.set(payload, 5);
 
-            let waiter;
+            let waiter: ReturnType<typeof this.waitFor> | undefined;
 
             if (!disableResponse) {
                 waiter = this.waitFor(commandId, this.tsn, 10000);

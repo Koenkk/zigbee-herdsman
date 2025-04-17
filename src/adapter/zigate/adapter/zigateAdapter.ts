@@ -256,7 +256,7 @@ export class ZiGateAdapter extends Adapter {
                 }
             }
 
-            let waiter;
+            let waiter: ReturnType<typeof this.driver.zdoWaitFor> | undefined;
 
             if (!disableResponse) {
                 const responseClusterId = Zdo.Utils.getResponseClusterId(clusterId);

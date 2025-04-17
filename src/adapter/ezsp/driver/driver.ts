@@ -4,6 +4,7 @@ import {EventEmitter} from "node:events";
 
 import equals from "fast-deep-equal/es6";
 
+import type {Backup} from "src/models/backup";
 import {Waitress, wait} from "../../../utils";
 import {logger} from "../../../utils/logger";
 import * as ZSpec from "../../../zspec";
@@ -221,15 +222,15 @@ export class Driver extends EventEmitter {
         //const boardName = await ezsp.execCommand('getMfgToken', EzspMfgTokenId.MFG_BOARD_NAME);
         let verInfo = await this.ezsp.getValue(EzspValueId.VALUE_VERSION_INFO);
         // biome-ignore lint/style/useConst: <explanation>
-        let build;
+        let build: number;
         // biome-ignore lint/style/useConst: <explanation>
-        let major;
+        let major: number;
         // biome-ignore lint/style/useConst: <explanation>
-        let minor;
+        let minor: number;
         // biome-ignore lint/style/useConst: <explanation>
-        let patch;
+        let patch: number;
         // biome-ignore lint/style/useConst: <explanation>
-        let special;
+        let special: number;
         [build, verInfo] = uint16_t.deserialize(uint16_t, verInfo);
         [major, verInfo] = uint8_t.deserialize(uint8_t, verInfo);
         [minor, verInfo] = uint8_t.deserialize(uint8_t, verInfo);
@@ -329,12 +330,12 @@ export class Driver extends EventEmitter {
     }
 
     private async formNetwork(restore: boolean, transmitPower?: number): Promise<void> {
-        let backup;
+        let backup: Backup | undefined;
         await this.ezsp.execCommand("clearTransientLinkKeys");
 
         let initialSecurityState: EmberInitialSecurityState;
         if (restore) {
-            backup = await this.backupMan.getStoredBackup();
+            backup = this.backupMan.getStoredBackup();
 
             if (!backup) {
                 throw new Error("No valid backup found.");
@@ -938,7 +939,7 @@ export class Driver extends EventEmitter {
 
     private async needsToBeRestore(options: TsType.NetworkOptions): Promise<boolean> {
         // if no backup and the settings have been changed, then need to start a new network
-        const backup = await this.backupMan.getStoredBackup();
+        const backup = this.backupMan.getStoredBackup();
         if (!backup) return false;
 
         let valid = true;

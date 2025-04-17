@@ -294,7 +294,7 @@ export class SerialDriver extends EventEmitter {
 
     private handleRSTACK(frame: NpiFrame): void {
         /* Reset acknowledgement frame receive handler */
-        let code;
+        let code: string | number;
         this.rejectCondition = false;
 
         logger.debug(`<-- RSTACK ${frame}`, NS);

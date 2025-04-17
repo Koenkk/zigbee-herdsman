@@ -235,8 +235,8 @@ function parseQuerySendDataStateResponse(view: DataView): DataStateResponse | nu
 function parseReadReceivedDataResponse(view: DataView): ReceivedDataResponse | null {
     // min 28 bytelength
     try {
-        let buf2;
-        let buf3;
+        let buf2: ArrayBuffer;
+        let buf3: ArrayBuffer;
 
         const commandId = view.getUint8(0);
         const seqNr = view.getUint8(1);
@@ -390,14 +390,14 @@ function parseReceivedDataNotification(view: DataView): number | null {
 
 function parseGreenPowerDataIndication(view: DataView): GpDataInd | null {
     try {
-        let id;
-        let rspId;
-        let options;
-        let srcId;
-        let frameCounter;
-        let commandId;
-        let commandFrameSize;
-        let commandFrame;
+        let id: number;
+        let rspId: number;
+        let options: number;
+        let srcId: number;
+        let frameCounter: number;
+        let commandId: number;
+        let commandFrameSize: number;
+        let commandFrame: Buffer;
         const seqNr = view.getUint8(1);
 
         if (view.byteLength < 30) {

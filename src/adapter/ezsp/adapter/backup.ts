@@ -88,7 +88,7 @@ export class EZSPAdapterBackup {
         } catch {
             return undefined;
         }
-        let data;
+        let data: Models.UnifiedBackupStorage;
         try {
             data = JSON.parse(fs.readFileSync(this.defaultPath).toString());
         } catch (error) {
