@@ -220,10 +220,15 @@ export class Driver extends EventEmitter {
         // getting MFG_BOARD_NAME token
         //const boardName = await ezsp.execCommand('getMfgToken', EzspMfgTokenId.MFG_BOARD_NAME);
         let verInfo = await this.ezsp.getValue(EzspValueId.VALUE_VERSION_INFO);
+        // biome-ignore lint/style/useConst: <explanation>
         let build;
+        // biome-ignore lint/style/useConst: <explanation>
         let major;
+        // biome-ignore lint/style/useConst: <explanation>
         let minor;
+        // biome-ignore lint/style/useConst: <explanation>
         let patch;
+        // biome-ignore lint/style/useConst: <explanation>
         let special;
         [build, verInfo] = uint16_t.deserialize(uint16_t, verInfo);
         [major, verInfo] = uint8_t.deserialize(uint8_t, verInfo);

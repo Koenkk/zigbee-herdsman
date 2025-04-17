@@ -26,7 +26,6 @@
                 "noNonNullAssertion": "off",
                 "noParameterAssign": "off",
                 "noUselessElse": "off",
-                "useConst": "off",
                 "useThrowNewError": "error",
                 "useThrowOnlyError": "error",
                 "useNamingConvention": {
