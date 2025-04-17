@@ -69,8 +69,7 @@
                 "noImplicitAnyLet": "off",
                 "noConfusingVoidType": "off",
                 "noDoubleEquals": "off",
-                "noAssignInExpressions": "off",
-                "noAsyncPromiseExecutor": "off"
+                "noAssignInExpressions": "off"
             }
         }
     },

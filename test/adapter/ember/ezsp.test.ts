@@ -130,11 +130,11 @@ describe("Ember Ezsp Layer", () => {
 
     it("Starts ASH layer when received duplicate RSTACK from port right after first ACK", async () => {
         const ashEmitSpy = vi.spyOn(ezsp.ash, "emit");
-        let restart: Promise<EzspStatus>;
+        let restart: () => Promise<EzspStatus>;
         // @ts-expect-error private
         const onAshFatalErrorSpy = vi.spyOn(ezsp, "onAshFatalError").mockImplementationOnce((_status: EzspStatus): void => {
             // mimic EmberAdapter onNcpNeedsResetAndInit
-            restart = new Promise(async (resolve) => {
+            restart = async () => {
                 vi.useRealTimers();
                 await ezsp.stop();
                 vi.useFakeTimers();
@@ -144,8 +144,8 @@ describe("Ember Ezsp Layer", () => {
 
                 await advanceTimeToRSTACK();
                 await emitFromSerial(ezsp, Buffer.from(RECD_RSTACK_BYTES));
-                resolve(startResult);
-            });
+                return await Promise.resolve(startResult);
+            };
         });
         const startResult = ezsp.start();
 
@@ -159,7 +159,7 @@ describe("Ember Ezsp Layer", () => {
         // @ts-expect-error set via emit
         expect(restart).toBeDefined();
         // @ts-expect-error set via emit
-        await expect(restart).resolves.toStrictEqual(EzspStatus.SUCCESS);
+        await expect(restart()).resolves.toStrictEqual(EzspStatus.SUCCESS);
         //@ts-expect-error private
         expect(ezsp.ash.serialPort.port.recording).toStrictEqual(POST_RSTACK_SERIAL_BYTES);
         expect(ashEmitSpy).toHaveBeenCalledWith("fatalError", EzspStatus.HOST_FATAL_ERROR);
@@ -170,11 +170,11 @@ describe("Ember Ezsp Layer", () => {
     it("Starts ASH layer with messy hardware flow control", async () => {
         // https://github.com/Koenkk/zigbee-herdsman/issues/943
         const ashEmitSpy = vi.spyOn(ezsp.ash, "emit");
-        let restart: Promise<EzspStatus>;
+        let restart: () => Promise<EzspStatus>;
         // @ts-expect-error private
         const onAshFatalErrorSpy = vi.spyOn(ezsp, "onAshFatalError").mockImplementationOnce((_status: EzspStatus): void => {
             // mimic EmberAdapter onNcpNeedsResetAndInit
-            restart = new Promise(async (resolve) => {
+            restart = async () => {
                 vi.useRealTimers();
                 await ezsp.stop();
                 vi.useFakeTimers();
@@ -184,8 +184,8 @@ describe("Ember Ezsp Layer", () => {
 
                 await advanceTimeToRSTACK();
                 await emitFromSerial(ezsp, Buffer.from(RECD_RSTACK_BYTES));
-                resolve(startResult);
-            });
+                return await Promise.resolve(startResult);
+            };
         });
         const startResult = ezsp.start();
 
@@ -201,7 +201,7 @@ describe("Ember Ezsp Layer", () => {
         // @ts-expect-error set via emit
         expect(restart).toBeDefined();
         // @ts-expect-error set via emit
-        await expect(restart).resolves.toStrictEqual(EzspStatus.SUCCESS);
+        await expect(restart()).resolves.toStrictEqual(EzspStatus.SUCCESS);
         //@ts-expect-error private
         expect(ezsp.ash.serialPort.port.recording).toStrictEqual(POST_RSTACK_SERIAL_BYTES);
         expect(ashEmitSpy).toHaveBeenCalledWith("fatalError", EzspStatus.HOST_FATAL_ERROR);
@@ -210,11 +210,11 @@ describe("Ember Ezsp Layer", () => {
     });
 
     it("Restarts ASH layer when received ERROR from port", async () => {
-        let restart: Promise<EzspStatus>;
+        let restart: () => Promise<EzspStatus>;
         // @ts-expect-error private
         const onAshFatalErrorSpy = vi.spyOn(ezsp, "onAshFatalError").mockImplementationOnce((_status: EzspStatus): void => {
             // mimic EmberAdapter onNcpNeedsResetAndInit
-            restart = new Promise(async (resolve) => {
+            restart = async () => {
                 vi.useRealTimers();
                 await ezsp.stop();
                 vi.useFakeTimers();
@@ -224,8 +224,8 @@ describe("Ember Ezsp Layer", () => {
 
                 await advanceTimeToRSTACK();
                 await emitFromSerial(ezsp, Buffer.from(RECD_RSTACK_BYTES));
-                resolve(startResult);
-            });
+                return await Promise.resolve(startResult);
+            };
         });
         const startResult = ezsp.start();
 
@@ -255,7 +255,7 @@ describe("Ember Ezsp Layer", () => {
         // @ts-expect-error set via emit
         expect(restart).toBeDefined();
         // @ts-expect-error set via emit
-        await expect(restart).resolves.toStrictEqual(EzspStatus.SUCCESS);
+        await expect(restart()).resolves.toStrictEqual(EzspStatus.SUCCESS);
         //@ts-expect-error private
         expect(ezsp.ash.serialPort.port.recording).toStrictEqual(POST_RSTACK_SERIAL_BYTES);
         expect(onAshFatalErrorSpy).toHaveBeenCalledWith(EzspStatus.HOST_FATAL_ERROR);
