@@ -373,7 +373,7 @@ export class ZBOSSDriver extends EventEmitter {
         return await this.execCommand(CommandId.APSDE_DATA_REQ, payload);
     }
 
-    public async requestZdo(clusterId: Zdo.ClusterId, payload: Buffer, disableResponse: boolean): Promise<ZBOSSFrame | void> {
+    public async requestZdo(clusterId: Zdo.ClusterId, payload: Buffer, disableResponse: boolean): Promise<ZBOSSFrame | undefined> {
         if (!this.port.portOpen) {
             throw new Error("Connection not initialized");
         }
@@ -384,7 +384,7 @@ export class ZBOSSDriver extends EventEmitter {
         const cmdLog = `${Zdo.ClusterId[clusterId]}(cmd: ${commandId})`;
         logger.debug(() => `===> ZDO ${cmdLog}: ${payload.toString("hex")}`, NS);
 
-        return await this.queue.execute<ZBOSSFrame | void>(async () => {
+        return await this.queue.execute<ZBOSSFrame | undefined>(async () => {
             const buf = Buffer.alloc(5 + payload.length);
             buf.writeInt8(0, 0);
             buf.writeInt8(FrameType.REQUEST, 1);

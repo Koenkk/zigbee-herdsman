@@ -386,7 +386,7 @@ export class ZoHAdapter extends Adapter {
         clusterId: K,
         payload: Buffer,
         disableResponse: boolean,
-    ): Promise<ZdoTypes.RequestToResponseMap[K] | void> {
+    ): Promise<ZdoTypes.RequestToResponseMap[K] | undefined> {
         if (networkAddress === ZSpec.COORDINATOR_ADDRESS) {
             // mock ZDO response using driver layer data for coordinator
             // seqNum doesn't matter since waitress bypassed, so don't bother doing any logic for it
@@ -461,7 +461,7 @@ export class ZoHAdapter extends Adapter {
             const result = await this.sendZdo(ZSpec.BLANK_EUI64, networkAddress, clusterId, zdoPayload, false);
 
             /* v8 ignore start */
-            if (!Zdo.Buffalo.checkStatus(result)) {
+            if (!Zdo.Buffalo.checkStatus<Zdo.ClusterId.PERMIT_JOINING_RESPONSE>(result)) {
                 throw new Zdo.StatusError(result[0]);
             }
             /* v8 ignore stop */
@@ -481,7 +481,7 @@ export class ZoHAdapter extends Adapter {
         disableResponse: boolean,
         disableRecovery: boolean,
         sourceEndpoint?: number,
-    ): Promise<ZclPayload | void> {
+    ): Promise<ZclPayload | undefined> {
         /* v8 ignore start */
         if (networkAddress === ZSpec.COORDINATOR_ADDRESS) {
             // TODO: handle e.g. GP permit join
@@ -502,7 +502,7 @@ export class ZoHAdapter extends Adapter {
             commandResponseId = Zcl.Foundation.defaultRsp.ID;
         }
 
-        return await this.queue.execute<ZclPayload | void>(async () => {
+        return await this.queue.execute<ZclPayload | undefined>(async () => {
             this.checkInterpanLock();
 
             logger.debug(

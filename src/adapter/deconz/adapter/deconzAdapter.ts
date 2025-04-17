@@ -235,7 +235,7 @@ export class DeconzAdapter extends Adapter {
 
             const result = await this.sendZdo(ZSpec.BLANK_EUI64, networkAddress, clusterId, zdoPayload, false);
 
-            if (!Zdo.Buffalo.checkStatus(result)) {
+            if (!Zdo.Buffalo.checkStatus<Zdo.ClusterId.PERMIT_JOINING_RESPONSE>(result)) {
                 // TODO: will disappear once moved upstream
                 throw new Zdo.StatusError(result[0]);
             }
@@ -333,7 +333,7 @@ export class DeconzAdapter extends Adapter {
         clusterId: K,
         payload: Buffer,
         disableResponse: boolean,
-    ): Promise<ZdoTypes.RequestToResponseMap[K] | void> {
+    ): Promise<ZdoTypes.RequestToResponseMap[K] | undefined> {
         const transactionID = this.nextTransactionID();
         payload[0] = transactionID;
         const isNwkAddrRequest = clusterId === Zdo.ClusterId.NETWORK_ADDRESS_REQUEST;
@@ -393,7 +393,7 @@ export class DeconzAdapter extends Adapter {
         disableResponse: boolean,
         _disableRecovery: boolean,
         sourceEndpoint?: number,
-    ): Promise<Events.ZclPayload | void> {
+    ): Promise<Events.ZclPayload | undefined> {
         const transactionID = this.nextTransactionID();
         const payload = zclFrame.toBuffer();
         const request: ApsDataRequest = {

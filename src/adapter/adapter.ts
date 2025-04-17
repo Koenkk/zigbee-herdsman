@@ -150,7 +150,7 @@ export abstract class Adapter extends events.EventEmitter<AdapterEventMap> {
         clusterId: K,
         payload: Buffer,
         disableResponse: boolean,
-    ): Promise<ZdoTypes.RequestToResponseMap[K] | void>;
+    ): Promise<ZdoTypes.RequestToResponseMap[K] | undefined>;
 
     public abstract permitJoin(seconds: number, networkAddress?: number): Promise<void>;
 
@@ -167,7 +167,7 @@ export abstract class Adapter extends events.EventEmitter<AdapterEventMap> {
         disableResponse: boolean,
         disableRecovery: boolean,
         sourceEndpoint?: number,
-    ): Promise<AdapterEvents.ZclPayload | void>;
+    ): Promise<AdapterEvents.ZclPayload | undefined>;
 
     public abstract sendZclFrameToGroup(groupID: number, zclFrame: Zcl.Frame, sourceEndpoint?: number): Promise<void>;
 

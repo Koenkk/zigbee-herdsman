@@ -1757,7 +1757,7 @@ export class EmberAdapter extends Adapter {
         clusterId: K,
         payload: Buffer,
         disableResponse: boolean,
-    ): Promise<ZdoTypes.RequestToResponseMap[K] | void> {
+    ): Promise<ZdoTypes.RequestToResponseMap[K] | undefined> {
         return await this.queue.execute(async () => {
             this.checkInterpanLock();
 
@@ -1884,7 +1884,7 @@ export class EmberAdapter extends Adapter {
             const result = await this.sendZdo(ZSpec.BLANK_EUI64, networkAddress, clusterId, zdoPayload, false);
 
             /* v8 ignore start */
-            if (!Zdo.Buffalo.checkStatus(result)) {
+            if (!Zdo.Buffalo.checkStatus<Zdo.ClusterId.PERMIT_JOINING_RESPONSE>(result)) {
                 // TODO: will disappear once moved upstream
                 throw new Zdo.StatusError(result[0]);
             }
@@ -1926,7 +1926,7 @@ export class EmberAdapter extends Adapter {
         disableResponse: boolean,
         disableRecovery: boolean,
         sourceEndpoint?: number,
-    ): Promise<ZclPayload | void> {
+    ): Promise<ZclPayload | undefined> {
         const sourceEndpointInfo = (sourceEndpoint && FIXED_ENDPOINTS.find((epi) => epi.endpoint === sourceEndpoint)) || FIXED_ENDPOINTS[0];
         const command = zclFrame.command;
         let commandResponseId: number | undefined;
@@ -1954,7 +1954,7 @@ export class EmberAdapter extends Adapter {
 
         const data = zclFrame.toBuffer();
 
-        return await this.queue.execute<ZclPayload | void>(async () => {
+        return await this.queue.execute<ZclPayload | undefined>(async () => {
             this.checkInterpanLock();
 
             logger.debug(

@@ -183,7 +183,7 @@ export class ZStackAdapter extends Adapter {
             const result = await this.sendZdo(ZSpec.BLANK_EUI64, networkAddress, clusterId, zdoPayload, false);
 
             /* v8 ignore start */
-            if (!Zdo.Buffalo.checkStatus(result)) {
+            if (!Zdo.Buffalo.checkStatus<Zdo.ClusterId.PERMIT_JOINING_RESPONSE>(result)) {
                 // TODO: will disappear once moved upstream
                 throw new Zdo.StatusError(result[0]);
             }
@@ -248,7 +248,7 @@ export class ZStackAdapter extends Adapter {
 
         const result = await this.sendZdoInternal(ieeeAddr, ZSpec.NULL_NODE_ID, clusterId, zdoPayload, false, true);
 
-        if (Zdo.Buffalo.checkStatus(result)) {
+        if (Zdo.Buffalo.checkStatus<Zdo.ClusterId.NETWORK_ADDRESS_RESPONSE>(result)) {
             return result[1].nwkAddress;
             /* v8 ignore start */
         }
@@ -296,7 +296,7 @@ export class ZStackAdapter extends Adapter {
         clusterId: K,
         payload: Buffer,
         disableResponse: boolean,
-    ): Promise<ZdoTypes.RequestToResponseMap[K] | void> {
+    ): Promise<ZdoTypes.RequestToResponseMap[K] | undefined> {
         return await this.sendZdoInternal(ieeeAddress, networkAddress, clusterId, payload, disableResponse, false);
     }
 
@@ -307,7 +307,7 @@ export class ZStackAdapter extends Adapter {
         payload: Buffer,
         disableResponse: boolean,
         skipQueue: boolean,
-    ): Promise<void>;
+    ): Promise<undefined>;
     private async sendZdoInternal<K extends keyof ZdoTypes.RequestToResponseMap>(
         ieeeAddress: string,
         networkAddress: number,
@@ -323,8 +323,8 @@ export class ZStackAdapter extends Adapter {
         payload: Buffer,
         disableResponse: boolean,
         skipQueue: boolean,
-    ): Promise<ZdoTypes.RequestToResponseMap[K] | void> {
-        const func = async (): Promise<ZdoTypes.RequestToResponseMap[K] | void> => {
+    ): Promise<ZdoTypes.RequestToResponseMap[K] | undefined> {
+        const func = async (): Promise<ZdoTypes.RequestToResponseMap[K] | undefined> => {
             this.checkInterpanLock();
 
             // stack-specific requirements
@@ -432,8 +432,8 @@ export class ZStackAdapter extends Adapter {
         disableResponse: boolean,
         disableRecovery: boolean,
         sourceEndpoint?: number,
-    ): Promise<Events.ZclPayload | void> {
-        return await this.queue.execute<Events.ZclPayload | void>(async () => {
+    ): Promise<Events.ZclPayload | undefined> {
+        return await this.queue.execute<Events.ZclPayload | undefined>(async () => {
             this.checkInterpanLock();
             return await this.sendZclFrameToEndpointInternal(
                 ieeeAddr,
@@ -469,7 +469,7 @@ export class ZStackAdapter extends Adapter {
         discoveredRoute: boolean,
         assocRemove: boolean,
         assocRestore?: {ieeeadr: string; nwkaddr: number; noderelation: number},
-    ): Promise<Events.ZclPayload | void> {
+    ): Promise<Events.ZclPayload | undefined> {
         logger.debug(
             `sendZclFrameToEndpointInternal ${ieeeAddr}:${networkAddress}/${endpoint} ` +
                 `(${responseAttempt},${dataRequestAttempt},${this.queue.count()})`,
@@ -1085,7 +1085,7 @@ export class ZStackAdapter extends Adapter {
         timeout: number,
         confirmation: boolean,
         attemptsLeft = 5,
-    ): Promise<ZpiObject | void> {
+    ): Promise<ZpiObject | undefined> {
         const transactionID = this.nextTransactionID();
         const response = confirmation
             ? this.znp.waitFor(Type.AREQ, Subsystem.AF, "dataConfirm", undefined, transactionID, undefined, timeout)

@@ -970,14 +970,14 @@ export interface ResponseMap {
     [ZdoClusterId.END_DEVICE_ANNOUNCE]: [Status, EndDeviceAnnounce | undefined];
     [ZdoClusterId.SYSTEM_SERVER_DISCOVERY_RESPONSE]: [Status, SystemServerDiscoveryResponse | undefined];
     [ZdoClusterId.PARENT_ANNOUNCE_RESPONSE]: [Status, ParentAnnounceResponse | undefined];
-    [ZdoClusterId.BIND_RESPONSE]: [Status, void | undefined];
-    [ZdoClusterId.UNBIND_RESPONSE]: [Status, void | undefined];
-    [ZdoClusterId.CLEAR_ALL_BINDINGS_RESPONSE]: [Status, void | undefined];
+    [ZdoClusterId.BIND_RESPONSE]: [Status, undefined];
+    [ZdoClusterId.UNBIND_RESPONSE]: [Status, undefined];
+    [ZdoClusterId.CLEAR_ALL_BINDINGS_RESPONSE]: [Status, undefined];
     [ZdoClusterId.LQI_TABLE_RESPONSE]: [Status, LQITableResponse | undefined];
     [ZdoClusterId.ROUTING_TABLE_RESPONSE]: [Status, RoutingTableResponse | undefined];
     [ZdoClusterId.BINDING_TABLE_RESPONSE]: [Status, BindingTableResponse | undefined];
-    [ZdoClusterId.LEAVE_RESPONSE]: [Status, void | undefined];
-    [ZdoClusterId.PERMIT_JOINING_RESPONSE]: [Status, void | undefined];
+    [ZdoClusterId.LEAVE_RESPONSE]: [Status, undefined];
+    [ZdoClusterId.PERMIT_JOINING_RESPONSE]: [Status, undefined];
     [ZdoClusterId.NWK_UPDATE_RESPONSE]: [Status, NwkUpdateResponse | undefined];
     [ZdoClusterId.NWK_ENHANCED_UPDATE_RESPONSE]: [Status, NwkEnhancedUpdateResponse | undefined];
     [ZdoClusterId.NWK_IEEE_JOINING_LIST_RESPONSE]: [Status, NwkIEEEJoiningListResponse | undefined];
@@ -988,8 +988,8 @@ export interface ResponseMap {
     [ZdoClusterId.GET_AUTHENTICATION_LEVEL_RESPONSE]: [Status, GetAuthenticationLevelResponse | undefined];
     [ZdoClusterId.SET_CONFIGURATION_RESPONSE]: [Status, SetConfigurationResponse | undefined];
     [ZdoClusterId.GET_CONFIGURATION_RESPONSE]: [Status, GetConfigurationResponse | undefined];
-    [ZdoClusterId.START_KEY_UPDATE_RESPONSE]: [Status, void | undefined];
-    [ZdoClusterId.DECOMMISSION_RESPONSE]: [Status, void | undefined];
+    [ZdoClusterId.START_KEY_UPDATE_RESPONSE]: [Status, undefined];
+    [ZdoClusterId.DECOMMISSION_RESPONSE]: [Status, undefined];
     [ZdoClusterId.CHALLENGE_RESPONSE]: [Status, ChallengeResponse | undefined];
     // allow passing number to readResponse() from parsed payload without explicitly converting with `as`
     [key: number]: GenericZdoResponse;
@@ -1006,14 +1006,14 @@ export interface ValidResponseMap {
     [ZdoClusterId.END_DEVICE_ANNOUNCE]: [Status.SUCCESS, EndDeviceAnnounce];
     [ZdoClusterId.SYSTEM_SERVER_DISCOVERY_RESPONSE]: [Status.SUCCESS, SystemServerDiscoveryResponse];
     [ZdoClusterId.PARENT_ANNOUNCE_RESPONSE]: [Status.SUCCESS, ParentAnnounceResponse];
-    [ZdoClusterId.BIND_RESPONSE]: [Status.SUCCESS, void];
-    [ZdoClusterId.UNBIND_RESPONSE]: [Status.SUCCESS, void];
-    [ZdoClusterId.CLEAR_ALL_BINDINGS_RESPONSE]: [Status.SUCCESS, void];
+    [ZdoClusterId.BIND_RESPONSE]: [Status.SUCCESS, undefined];
+    [ZdoClusterId.UNBIND_RESPONSE]: [Status.SUCCESS, undefined];
+    [ZdoClusterId.CLEAR_ALL_BINDINGS_RESPONSE]: [Status.SUCCESS, undefined];
     [ZdoClusterId.LQI_TABLE_RESPONSE]: [Status.SUCCESS, LQITableResponse];
     [ZdoClusterId.ROUTING_TABLE_RESPONSE]: [Status.SUCCESS, RoutingTableResponse];
     [ZdoClusterId.BINDING_TABLE_RESPONSE]: [Status.SUCCESS, BindingTableResponse];
-    [ZdoClusterId.LEAVE_RESPONSE]: [Status.SUCCESS, void];
-    [ZdoClusterId.PERMIT_JOINING_RESPONSE]: [Status.SUCCESS, void];
+    [ZdoClusterId.LEAVE_RESPONSE]: [Status.SUCCESS, undefined];
+    [ZdoClusterId.PERMIT_JOINING_RESPONSE]: [Status.SUCCESS, undefined];
     [ZdoClusterId.NWK_UPDATE_RESPONSE]: [Status.SUCCESS, NwkUpdateResponse];
     [ZdoClusterId.NWK_ENHANCED_UPDATE_RESPONSE]: [Status.SUCCESS, NwkEnhancedUpdateResponse];
     [ZdoClusterId.NWK_IEEE_JOINING_LIST_RESPONSE]: [Status.SUCCESS, NwkIEEEJoiningListResponse];
@@ -1024,8 +1024,8 @@ export interface ValidResponseMap {
     [ZdoClusterId.GET_AUTHENTICATION_LEVEL_RESPONSE]: [Status.SUCCESS, GetAuthenticationLevelResponse];
     [ZdoClusterId.SET_CONFIGURATION_RESPONSE]: [Status.SUCCESS, SetConfigurationResponse];
     [ZdoClusterId.GET_CONFIGURATION_RESPONSE]: [Status.SUCCESS, GetConfigurationResponse];
-    [ZdoClusterId.START_KEY_UPDATE_RESPONSE]: [Status.SUCCESS, void];
-    [ZdoClusterId.DECOMMISSION_RESPONSE]: [Status.SUCCESS, void];
+    [ZdoClusterId.START_KEY_UPDATE_RESPONSE]: [Status.SUCCESS, undefined];
+    [ZdoClusterId.DECOMMISSION_RESPONSE]: [Status.SUCCESS, undefined];
     [ZdoClusterId.CHALLENGE_RESPONSE]: [Status.SUCCESS, ChallengeResponse];
 }
 

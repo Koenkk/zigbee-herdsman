@@ -1037,7 +1037,7 @@ export class Device extends Entity<ControllerEventMap> {
         const zdoPayload = Zdo.Buffalo.buildRequest(Entity.adapter!.hasZdoMessageOverhead, clusterId, this.networkAddress);
         const response = await Entity.adapter!.sendZdo(this.ieeeAddr, this.networkAddress, clusterId, zdoPayload, false);
 
-        if (!Zdo.Buffalo.checkStatus(response)) {
+        if (!Zdo.Buffalo.checkStatus<Zdo.ClusterId.NODE_DESCRIPTOR_RESPONSE>(response)) {
             throw new Zdo.StatusError(response[0]);
         }
 
@@ -1078,7 +1078,7 @@ export class Device extends Entity<ControllerEventMap> {
 
         const response = await Entity.adapter!.sendZdo(this.ieeeAddr, this.networkAddress, clusterId, zdoPayload, false);
 
-        if (!Zdo.Buffalo.checkStatus(response)) {
+        if (!Zdo.Buffalo.checkStatus<Zdo.ClusterId.ACTIVE_ENDPOINTS_RESPONSE>(response)) {
             throw new Zdo.StatusError(response[0]);
         }
 
@@ -1139,7 +1139,7 @@ export class Device extends Entity<ControllerEventMap> {
             );
             const response = await Entity.adapter!.sendZdo(this.ieeeAddr, this.networkAddress, clusterId, zdoPayload, false);
 
-            if (!Zdo.Buffalo.checkStatus(response)) {
+            if (!Zdo.Buffalo.checkStatus<Zdo.ClusterId.LEAVE_RESPONSE>(response)) {
                 throw new Zdo.StatusError(response[0]);
             }
         }
@@ -1190,7 +1190,7 @@ export class Device extends Entity<ControllerEventMap> {
             const zdoPayload = Zdo.Buffalo.buildRequest(Entity.adapter!.hasZdoMessageOverhead, clusterId, startIndex);
             const response = await Entity.adapter!.sendZdo(this.ieeeAddr, this.networkAddress, clusterId, zdoPayload, false);
 
-            if (!Zdo.Buffalo.checkStatus(response)) {
+            if (!Zdo.Buffalo.checkStatus<Zdo.ClusterId.LQI_TABLE_RESPONSE>(response)) {
                 throw new Zdo.StatusError(response[0]);
             }
 
@@ -1231,7 +1231,7 @@ export class Device extends Entity<ControllerEventMap> {
             const zdoPayload = Zdo.Buffalo.buildRequest(Entity.adapter!.hasZdoMessageOverhead, clusterId, startIndex);
             const response = await Entity.adapter!.sendZdo(this.ieeeAddr, this.networkAddress, clusterId, zdoPayload, false);
 
-            if (!Zdo.Buffalo.checkStatus(response)) {
+            if (!Zdo.Buffalo.checkStatus<Zdo.ClusterId.ROUTING_TABLE_RESPONSE>(response)) {
                 throw new Zdo.StatusError(response[0]);
             }
 

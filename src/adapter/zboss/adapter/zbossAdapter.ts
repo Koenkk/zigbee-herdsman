@@ -207,7 +207,7 @@ export class ZBOSSAdapter extends Adapter {
                 // `device-only`
                 const result = await this.sendZdo(ZSpec.BLANK_EUI64, networkAddress, clusterId, zdoPayload, false);
 
-                if (!Zdo.Buffalo.checkStatus(result)) {
+                if (!Zdo.Buffalo.checkStatus<Zdo.ClusterId.PERMIT_JOINING_RESPONSE>(result)) {
                     // TODO: will disappear once moved upstream
                     throw new Zdo.StatusError(result[0]);
                 }
@@ -215,7 +215,7 @@ export class ZBOSSAdapter extends Adapter {
                 // `coordinator-only` (for `all` too)
                 const result = await this.sendZdo(ZSpec.BLANK_EUI64, ZSpec.COORDINATOR_ADDRESS, clusterId, zdoPayload, false);
 
-                if (!Zdo.Buffalo.checkStatus(result)) {
+                if (!Zdo.Buffalo.checkStatus<Zdo.ClusterId.PERMIT_JOINING_RESPONSE>(result)) {
                     // TODO: will disappear once moved upstream
                     throw new Zdo.StatusError(result[0]);
                 }
@@ -248,7 +248,7 @@ export class ZBOSSAdapter extends Adapter {
         clusterId: K,
         payload: Buffer,
         disableResponse: boolean,
-    ): Promise<ZdoTypes.RequestToResponseMap[K] | void> {
+    ): Promise<ZdoTypes.RequestToResponseMap[K] | undefined> {
         return await this.queue.execute(async () => {
             // stack-specific requirements
             switch (clusterId) {
@@ -301,8 +301,8 @@ export class ZBOSSAdapter extends Adapter {
         disableResponse: boolean,
         disableRecovery: boolean,
         sourceEndpoint?: number,
-    ): Promise<ZclPayload | void> {
-        return await this.queue.execute<ZclPayload | void>(async () => {
+    ): Promise<ZclPayload | undefined> {
+        return await this.queue.execute<ZclPayload | undefined>(async () => {
             return await this.sendZclFrameToEndpointInternal(
                 ieeeAddr,
                 networkAddress,
@@ -337,7 +337,7 @@ export class ZBOSSAdapter extends Adapter {
         discoveredRoute: boolean,
         assocRemove: boolean,
         assocRestore: {ieeeadr: string; nwkaddr: number; noderelation: number} | null,
-    ): Promise<ZclPayload | void> {
+    ): Promise<ZclPayload | undefined> {
         if (ieeeAddr == null) {
             ieeeAddr = this.driver.netInfo.ieeeAddr;
         }

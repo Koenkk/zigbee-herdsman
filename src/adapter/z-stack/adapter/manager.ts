@@ -450,7 +450,7 @@ export class ZnpAdapterManager {
         const zdoPayload = Zdo.Buffalo.buildRequest(this.adapter.hasZdoMessageOverhead, clusterId, ZSpec.COORDINATOR_ADDRESS);
         const response = await this.adapter.sendZdo(ZSpec.BLANK_EUI64, ZSpec.COORDINATOR_ADDRESS, clusterId, zdoPayload, false);
 
-        if (Zdo.Buffalo.checkStatus(response)) {
+        if (Zdo.Buffalo.checkStatus<Zdo.ClusterId.ACTIVE_ENDPOINTS_RESPONSE>(response)) {
             const activeEndpoints = response[1].endpointList;
 
             for (const endpoint of Endpoints) {

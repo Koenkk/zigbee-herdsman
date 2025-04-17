@@ -121,8 +121,8 @@ class Driver extends events.EventEmitter {
         this.intervals.push(interval);
     }
 
-    protected async catchPromise<T>(val: Promise<T>): Promise<void | Awaited<T>> {
-        return await Promise.resolve(val).catch((err) => logger.debug(`Promise was caught with reason: ${err}`, NS));
+    protected async catchPromise<T>(val: Promise<T>): Promise<undefined | Awaited<T>> {
+        return (await Promise.resolve(val).catch((err) => logger.debug(`Promise was caught with reason: ${err}`, NS))) as undefined | Awaited<T>;
     }
 
     public setDelay(delay: number): void {
@@ -605,7 +605,7 @@ class Driver extends events.EventEmitter {
     }
 
     // DATA_REQ
-    public enqueueSendDataRequest(request: ApsDataRequest): Promise<void | ReceivedDataResponse> {
+    public enqueueSendDataRequest(request: ApsDataRequest): Promise<undefined | ReceivedDataResponse> {
         const seqNumber = this.nextSeqNumber();
         return new Promise((resolve, reject): void => {
             //logger.debug(`push enqueue send data request to apsQueue. seqNr: ${seqNumber}`, NS);

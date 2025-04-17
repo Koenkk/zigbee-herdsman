@@ -547,7 +547,7 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
         try {
             const response = await this.adapter.sendZdo(ZSpec.BLANK_EUI64, nwkAddress, clusterId, zdoPayload, false);
 
-            if (Zdo.Buffalo.checkStatus(response)) {
+            if (Zdo.Buffalo.checkStatus<Zdo.ClusterId.IEEE_ADDRESS_RESPONSE>(response)) {
                 const payload = response[1];
                 const device = Device.byIeeeAddr(payload.eui64);
 
@@ -737,7 +737,7 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
                     );
                     const response = await this.adapter.sendZdo(payload.ieeeAddr, payload.networkAddress, clusterId, zdoPayload, false);
 
-                    if (!Zdo.Buffalo.checkStatus(response)) {
+                    if (!Zdo.Buffalo.checkStatus<Zdo.ClusterId.LEAVE_RESPONSE>(response)) {
                         throw new Zdo.StatusError(response[0]);
                     }
                 } catch (error) {

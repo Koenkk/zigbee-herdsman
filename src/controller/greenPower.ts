@@ -187,7 +187,7 @@ export class GreenPower extends EventEmitter<GreenPowerEventMap> {
         options: PairingOptions,
         payload: PairingPayload,
         gppNwkAddr: number | undefined,
-    ): Promise<AdapterEvents.ZclPayload | void> {
+    ): Promise<AdapterEvents.ZclPayload | undefined> {
         payload.options = GreenPower.encodePairingOptions(options);
         logger.debug(
             `[PAIRING] srcID=${payload.srcID} gpp=${gppNwkAddr ?? "NO"} options=${payload.options} (addSink=${options.addSink} commMode=${options.communicationMode})`,
@@ -223,7 +223,8 @@ export class GreenPower extends EventEmitter<GreenPowerEventMap> {
         );
 
         if (options.communicationMode !== GPCommunicationMode.LightweightUnicast) {
-            return await this.adapter.sendZclFrameToAll(GP_ENDPOINT, replyFrame, GP_ENDPOINT, BroadcastAddress.RX_ON_WHEN_IDLE);
+            await this.adapter.sendZclFrameToAll(GP_ENDPOINT, replyFrame, GP_ENDPOINT, BroadcastAddress.RX_ON_WHEN_IDLE);
+            return;
         }
 
         const device = Device.byNetworkAddress(gppNwkAddr ?? /* v8 ignore next */ COORDINATOR_ADDRESS);

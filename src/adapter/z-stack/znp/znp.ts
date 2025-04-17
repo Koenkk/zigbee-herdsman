@@ -233,14 +233,14 @@ export class Znp extends events.EventEmitter {
         waiterID?: number,
         timeout?: number,
         expectedStatuses: Constants.COMMON.ZnpCommandStatus[] = [ZnpCommandStatus.SUCCESS],
-    ): Promise<ZpiObject | void> {
+    ): Promise<ZpiObject | undefined> {
         if (!this.initialized) {
             throw new Error("Cannot request when znp has not been initialized yet");
         }
 
         const object = ZpiObject.createRequest(subsystem, command, payload);
 
-        return this.queue.execute<ZpiObject | void>(async () => {
+        return this.queue.execute<ZpiObject | undefined>(async () => {
             logger.debug(() => `--> ${object}`, NS);
 
             if (object.type === Type.SREQ) {

@@ -181,7 +181,7 @@ export class EZSPAdapter extends Adapter {
 
             const result = await this.sendZdo(ZSpec.BLANK_EUI64, networkAddress, clusterId, zdoPayload, false);
 
-            if (!Zdo.Buffalo.checkStatus(result)) {
+            if (!Zdo.Buffalo.checkStatus<Zdo.ClusterId.PERMIT_JOINING_RESPONSE>(result)) {
                 // TODO: will disappear once moved upstream
                 throw new Zdo.StatusError(result[0]);
             }
@@ -244,7 +244,7 @@ export class EZSPAdapter extends Adapter {
         clusterId: K,
         payload: Buffer,
         disableResponse: boolean,
-    ): Promise<ZdoTypes.RequestToResponseMap[K] | void> {
+    ): Promise<ZdoTypes.RequestToResponseMap[K] | undefined> {
         return await this.queue.execute(async () => {
             this.checkInterpanLock();
 
@@ -309,8 +309,8 @@ export class EZSPAdapter extends Adapter {
         disableResponse: boolean,
         disableRecovery: boolean,
         sourceEndpoint?: number,
-    ): Promise<ZclPayload | void> {
-        return await this.queue.execute<ZclPayload | void>(async () => {
+    ): Promise<ZclPayload | undefined> {
+        return await this.queue.execute<ZclPayload | undefined>(async () => {
             this.checkInterpanLock();
             return await this.sendZclFrameToEndpointInternal(
                 ieeeAddr,
@@ -338,7 +338,7 @@ export class EZSPAdapter extends Adapter {
         disableRecovery: boolean,
         responseAttempt: number,
         dataRequestAttempt: number,
-    ): Promise<ZclPayload | void> {
+    ): Promise<ZclPayload | undefined> {
         if (ieeeAddr == null) {
             ieeeAddr = `0x${this.driver.ieee.toString()}`;
         }

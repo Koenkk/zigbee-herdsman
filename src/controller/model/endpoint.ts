@@ -496,7 +496,7 @@ export class Endpoint extends Entity {
         const zdoPayload = Zdo.Buffalo.buildRequest(Entity.adapter!.hasZdoMessageOverhead, clusterId, this.deviceNetworkAddress, this.ID);
         const response = await Entity.adapter!.sendZdo(this.deviceIeeeAddress, this.deviceNetworkAddress, clusterId, zdoPayload, false);
 
-        if (!Zdo.Buffalo.checkStatus(response)) {
+        if (!Zdo.Buffalo.checkStatus<Zdo.ClusterId.SIMPLE_DESCRIPTOR_RESPONSE>(response)) {
             throw new Zdo.StatusError(response[0]);
         }
 
@@ -571,7 +571,7 @@ export class Endpoint extends Entity {
 
             const response = await Entity.adapter!.sendZdo(this.deviceIeeeAddress, this.deviceNetworkAddress, zdoClusterId, zdoPayload, false);
 
-            if (!Zdo.Buffalo.checkStatus(response)) {
+            if (!Zdo.Buffalo.checkStatus<Zdo.ClusterId.BIND_RESPONSE>(response)) {
                 throw new Zdo.StatusError(response[0]);
             }
 
@@ -629,7 +629,7 @@ export class Endpoint extends Entity {
 
             const response = await Entity.adapter!.sendZdo(this.deviceIeeeAddress, this.deviceNetworkAddress, zdoClusterId, zdoPayload, false);
 
-            if (!Zdo.Buffalo.checkStatus(response)) {
+            if (!Zdo.Buffalo.checkStatus<Zdo.ClusterId.UNBIND_RESPONSE>(response)) {
                 if (response[0] === Zdo.Status.NO_ENTRY) {
                     logger.debug(`${log} no entry on device, removing entry from database.`, NS);
                 } else {
@@ -728,7 +728,12 @@ export class Endpoint extends Entity {
         // TODO: support `writeStructuredResponse`
     }
 
-    public async command(clusterKey: number | string, commandKey: number | string, payload: KeyValue, options?: Options): Promise<void | KeyValue> {
+    public async command(
+        clusterKey: number | string,
+        commandKey: number | string,
+        payload: KeyValue,
+        options?: Options,
+    ): Promise<undefined | KeyValue> {
         const frame = await this.zclCommand(clusterKey, commandKey, payload, options, undefined, false, Zcl.FrameType.SPECIFIC);
         if (frame) {
             return frame.payload;
@@ -741,7 +746,7 @@ export class Endpoint extends Entity {
         payload: KeyValue,
         options?: Options,
         transactionSequenceNumber?: number,
-    ): Promise<void | KeyValue> {
+    ): Promise<void> {
         assert(options?.transactionSequenceNumber === undefined, "Use parameter");
 
         const device = this.getDevice();
@@ -934,7 +939,7 @@ export class Endpoint extends Entity {
         logPayload?: KeyValue,
         checkStatus = false,
         frameType: Zcl.FrameType = Zcl.FrameType.GLOBAL,
-    ): Promise<void | Zcl.Frame> {
+    ): Promise<undefined | Zcl.Frame> {
         const device = this.getDevice();
         const cluster = this.getCluster(clusterKey, device);
         const command = frameType == Zcl.FrameType.GLOBAL ? Zcl.Utils.getGlobalCommand(commandKey) : cluster.getCommand(commandKey);

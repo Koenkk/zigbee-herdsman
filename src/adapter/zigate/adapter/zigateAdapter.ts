@@ -139,7 +139,7 @@ export class ZiGateAdapter extends Adapter {
 
             const result = await this.sendZdo(ZSpec.BLANK_EUI64, networkAddress, clusterId, zdoPayload, false);
 
-            if (!Zdo.Buffalo.checkStatus(result)) {
+            if (!Zdo.Buffalo.checkStatus<Zdo.ClusterId.PERMIT_JOINING_RESPONSE>(result)) {
                 // TODO: will disappear once moved upstream
                 throw new Zdo.StatusError(result[0]);
             }
@@ -212,7 +212,7 @@ export class ZiGateAdapter extends Adapter {
         clusterId: K,
         payload: Buffer,
         disableResponse: boolean,
-    ): Promise<ZdoTypes.RequestToResponseMap[K] | void> {
+    ): Promise<ZdoTypes.RequestToResponseMap[K] | undefined> {
         return await this.queue.execute(async () => {
             // stack-specific requirements
             // https://zigate.fr/documentation/commandes-zigate/
@@ -290,8 +290,8 @@ export class ZiGateAdapter extends Adapter {
         disableResponse: boolean,
         disableRecovery: boolean,
         sourceEndpoint?: number,
-    ): Promise<Events.ZclPayload | void> {
-        return await this.queue.execute<Events.ZclPayload | void>(async () => {
+    ): Promise<Events.ZclPayload | undefined> {
+        return await this.queue.execute<Events.ZclPayload | undefined>(async () => {
             return await this.sendZclFrameToEndpointInternal(
                 ieeeAddr,
                 networkAddress,
@@ -322,7 +322,7 @@ export class ZiGateAdapter extends Adapter {
         dataRequestAttempt: number,
         checkedNetworkAddress: boolean,
         discoveredRoute: boolean,
-    ): Promise<Events.ZclPayload | void> {
+    ): Promise<Events.ZclPayload | undefined> {
         logger.debug(
             `sendZclFrameToEndpointInternal ${ieeeAddr}:${networkAddress}/${endpoint} (${responseAttempt},${dataRequestAttempt},${this.queue.count()})`,
             NS,
