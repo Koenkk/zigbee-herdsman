@@ -351,7 +351,9 @@ vi.mock("../src/adapter/z-stack/adapter/zStackAdapter", () => ({
     ZStackAdapter: vi.fn(() => ({
         hasZdoMessageOverhead: false,
         manufacturerID: 0x0007,
-        on: (event: AdapterEvent, handler: (...args: unknown[]) => void) => (mockAdapterEvents[event] = handler),
+        on: (event: AdapterEvent, handler: (...args: unknown[]) => void) => {
+            mockAdapterEvents[event] = handler;
+        },
         removeAllListeners: (event: AdapterEvent) => delete mockAdapterEvents[event],
         start: mockAdapterStart,
         getCoordinatorIEEE: mockAdapterGetCoordinatorIEEE,

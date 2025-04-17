@@ -68,8 +68,7 @@
                 "useAwait": "error",
                 "noImplicitAnyLet": "off",
                 "noConfusingVoidType": "off",
-                "noDoubleEquals": "off",
-                "noAssignInExpressions": "off"
+                "noDoubleEquals": "off"
             }
         }
     },

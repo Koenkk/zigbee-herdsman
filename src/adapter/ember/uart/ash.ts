@@ -387,7 +387,8 @@ export class UartAsh extends EventEmitter<UartAshEventMap> {
         this.txFree.link = undefined;
 
         for (let i = 0; i < TX_POOL_BUFFERS; i++) {
-            this.txFree.freeBuffer((this.txPool[i] = new EzspBuffer()));
+            this.txPool[i] = new EzspBuffer();
+            this.txFree.freeBuffer(this.txPool[i]);
         }
 
         // All receive buffers are put into rxFree, and rxQueue is empty.
@@ -395,7 +396,8 @@ export class UartAsh extends EventEmitter<UartAshEventMap> {
         this.rxFree.link = undefined;
 
         for (let i = 0; i < EZSP_HOST_RX_POOL_SIZE; i++) {
-            this.rxFree.freeBuffer((this.rxPool[i] = new EzspBuffer()));
+            this.rxPool[i] = new EzspBuffer();
+            this.rxFree.freeBuffer(this.rxPool[i]);
         }
     }
 

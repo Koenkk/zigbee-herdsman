@@ -22,6 +22,7 @@ export class ZBOSSReader extends Transform {
 
         logger.debug(`<<<  DATA [${chunk.toString("hex")}]`, NS);
         // SIGNATURE - start of package
+        // biome-ignore lint/suspicious/noAssignInExpressions: shorter
         while ((position = data.indexOf(SIGNATURE)) !== -1) {
             // need for read length
             if (data.length > position + 3) {

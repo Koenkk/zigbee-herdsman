@@ -1520,7 +1520,8 @@ export class EmberAdapter extends Adapter {
      * @return uint8_t The next device request sequence number
      */
     private nextZDORequestSequence(): number {
-        return (this.zdoRequestSequence = ++this.zdoRequestSequence & APPLICATION_ZDO_SEQUENCE_MASK);
+        this.zdoRequestSequence = ++this.zdoRequestSequence & APPLICATION_ZDO_SEQUENCE_MASK;
+        return this.zdoRequestSequence;
     }
 
     //---- END Ember ZDO

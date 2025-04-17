@@ -34,7 +34,9 @@ describe("Z-Stack Structs", () => {
 
     it("should throw error on invalid uint8 array length", () => {
         const nib = Structs.nib();
-        expect(() => (nib.extendedPANID = Buffer.alloc(10, 0x01))).toThrowError("Invalid length for member extendedPANID (expected=8, got=10)");
+        expect(() => {
+            nib.extendedPANID = Buffer.alloc(10, 0x01);
+        }).toThrowError("Invalid length for member extendedPANID (expected=8, got=10)");
     });
 
     it("should fail to initialize struct from invalid length source", () => {

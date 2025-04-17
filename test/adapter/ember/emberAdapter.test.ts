@@ -156,7 +156,9 @@ const mockEzspStop = vi.fn();
 
 const mockEzspSend = vi.fn().mockResolvedValue([SLStatus.OK, ++mockMessageTag]);
 const mockEzspSetMulticastTableEntry = vi.fn().mockResolvedValue(SLStatus.OK);
-const mockEzspSetManufacturerCode = vi.fn().mockImplementation((code) => (mockManufCode = code));
+const mockEzspSetManufacturerCode = vi.fn().mockImplementation((code) => {
+    mockManufCode = code;
+});
 const mockEzspReadAndClearCounters = vi.fn().mockResolvedValue([1, 2, 3, 4]); // not matching EmberCounterType, but doesn't matter here
 const mockEzspGetNetworkParameters = vi
     .fn()

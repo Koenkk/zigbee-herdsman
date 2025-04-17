@@ -450,7 +450,8 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
     }
 
     private nextFrameSequence(): number {
-        return (this.frameSequence = ++this.frameSequence & 0xff);
+        this.frameSequence = ++this.frameSequence & 0xff;
+        return this.frameSequence;
     }
 
     private startCommand(command: number): EzspBuffalo {
@@ -1092,7 +1093,8 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
      * @returns uint8_t
      */
     private nextSendSequence(): number {
-        return (this.sendSequence = ++this.sendSequence & MESSAGE_TAG_MASK);
+        this.sendSequence = ++this.sendSequence & MESSAGE_TAG_MASK;
+        return this.sendSequence;
     }
 
     /**

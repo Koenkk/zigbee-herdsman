@@ -20,6 +20,7 @@ export class AshParser extends Transform {
         let data = Buffer.concat([this.buffer, chunk]);
         let position: number;
 
+        // biome-ignore lint/suspicious/noAssignInExpressions: shorter
         while ((position = data.indexOf(AshReservedByte.FLAG)) !== -1) {
             // emit the frame via 'data' event
             const frame = data.subarray(0, position + 1);

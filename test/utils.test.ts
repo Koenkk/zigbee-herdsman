@@ -137,8 +137,12 @@ describe("Utils", () => {
 
         let job1Promise;
         let job2Promise;
-        const job1 = new Promise((resolve) => (job1Promise = resolve));
-        const job2 = new Promise((resolve) => (job2Promise = resolve));
+        const job1 = new Promise((resolve) => {
+            job1Promise = resolve;
+        });
+        const job2 = new Promise((resolve) => {
+            job2Promise = resolve;
+        });
         const job5 = new Promise((_resolve) => {});
         const job6 = new Promise((_resolve) => {});
         const job7 = new Promise((_resolve) => {});

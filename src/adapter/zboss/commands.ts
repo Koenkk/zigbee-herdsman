@@ -259,7 +259,13 @@ export const FRAMES: Partial<Record<CommandId, ZBOSSFrameDesc>> = {
     [CommandId.NVRAM_WRITE]: {
         request: [
             {name: "len", type: DataType.UINT8},
-            {name: "data", type: BuffaloZclDataType.LIST_UINT8, options: (payload, options) => (options.length = payload.len)},
+            {
+                name: "data",
+                type: BuffaloZclDataType.LIST_UINT8,
+                options: (payload, options) => {
+                    options.length = payload.len;
+                },
+            },
         ],
         response: [...commonResponse],
     },
@@ -272,7 +278,13 @@ export const FRAMES: Partial<Record<CommandId, ZBOSSFrameDesc>> = {
             {name: "type", type: DataType.UINT16},
             {name: "version", type: DataType.UINT16},
             {name: "len", type: DataType.UINT16},
-            {name: "data", type: BuffaloZclDataType.LIST_UINT8, options: (payload, options) => (options.length = payload.len)},
+            {
+                name: "data",
+                type: BuffaloZclDataType.LIST_UINT8,
+                options: (payload, options) => {
+                    options.length = payload.len;
+                },
+            },
         ],
     },
     // Erases all datasets in NVRAM
@@ -325,12 +337,16 @@ export const FRAMES: Partial<Record<CommandId, ZBOSSFrameDesc>> = {
             {
                 name: "inputClusters",
                 type: BuffaloZclDataType.LIST_UINT16,
-                options: (payload, options) => (options.length = payload.inputClusterCount),
+                options: (payload, options) => {
+                    options.length = payload.inputClusterCount;
+                },
             },
             {
                 name: "outputClusters",
                 type: BuffaloZclDataType.LIST_UINT16,
-                options: (payload, options) => (options.length = payload.outputClusterCount),
+                options: (payload, options) => {
+                    options.length = payload.outputClusterCount;
+                },
             },
         ],
         response: [...commonResponse],
@@ -702,7 +718,13 @@ export const FRAMES: Partial<Record<CommandId, ZBOSSFrameDesc>> = {
             //{name: 'aliasAddr', type: DataType.UINT16, condition: (payload) => payload.useAlias !== 0},
             {name: "aliasAddr", type: DataType.UINT16},
             {name: "aliasSequence", type: DataType.UINT8},
-            {name: "data", type: BuffaloZclDataType.LIST_UINT8, options: (payload, options) => (options.length = payload.dataLength)},
+            {
+                name: "data",
+                type: BuffaloZclDataType.LIST_UINT8,
+                options: (payload, options) => {
+                    options.length = payload.dataLength;
+                },
+            },
         ],
         response: [
             ...commonResponse,
@@ -774,7 +796,13 @@ export const FRAMES: Partial<Record<CommandId, ZBOSSFrameDesc>> = {
             {name: "lqi", type: DataType.UINT8},
             {name: "rssi", type: DataType.UINT8},
             {name: "apsKey", type: DataType.UINT8},
-            {name: "data", type: BuffaloZclDataType.BUFFER, options: (payload, options) => (options.length = payload.dataLength)},
+            {
+                name: "data",
+                type: BuffaloZclDataType.BUFFER,
+                options: (payload, options) => {
+                    options.length = payload.dataLength;
+                },
+            },
         ],
     },
     // APSME-REMOVE-ALL-GROUPS.request
@@ -796,7 +824,13 @@ export const FRAMES: Partial<Record<CommandId, ZBOSSFrameDesc>> = {
         response: [
             ...commonResponse,
             {name: "length", type: DataType.UINT16},
-            {name: "groups", type: BuffaloZclDataType.LIST_UINT16, options: (payload, options) => (options.length = payload.length)},
+            {
+                name: "groups",
+                type: BuffaloZclDataType.LIST_UINT16,
+                options: (payload, options) => {
+                    options.length = payload.length;
+                },
+            },
         ],
     },
     // Removes all bindings

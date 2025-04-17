@@ -64,7 +64,9 @@ vi.mock("node:net", async () => ({
         setNoDelay: mockSocketSetNoDelay,
         pipe: mockSocketPipe,
         connect: mockSocketConnect,
-        on: (event, cb) => (mockSocketCallbacks[event] = cb),
+        on: (event, cb) => {
+            mockSocketCallbacks[event] = cb;
+        },
         once: mockSocketOnce,
         destroy: mockSocketDestroy,
         setKeepAlive: mockSocketSetKeepAlive,
