@@ -381,7 +381,7 @@ export class EZSPAdapter extends Adapter {
             if (response != null) {
                 response.cancel();
             }
-            throw Error("sendZclFrameToEndpointInternal error");
+            throw new Error("sendZclFrameToEndpointInternal error");
         }
         if (response !== null) {
             try {

@@ -300,7 +300,7 @@ export class ZnpAdapterManager {
         const backup = await this.backup.getStoredBackup();
         /* v8 ignore start */
         if (!backup) {
-            throw Error("Cannot restore backup - none is available");
+            throw new Error("Cannot restore backup - none is available");
         }
         /* v8 ignore stop */
 
