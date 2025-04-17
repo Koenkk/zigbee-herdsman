@@ -13,6 +13,7 @@ export interface BuffaloZiGateOptions extends BuffaloZclOptions {
 }
 
 class BuffaloZiGate extends Buffalo {
+    // biome-ignore lint/suspicious/noExplicitAny: API
     public write(type: ParameterType, value: any, _options: BuffaloZiGateOptions): void {
         switch (type) {
             case ParameterType.UINT8: {

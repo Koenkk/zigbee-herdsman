@@ -702,6 +702,7 @@ export class BuffaloZcl extends Buffalo {
 
         return value;
     }
+    // biome-ignore lint/suspicious/noExplicitAny: API
     public write(type: DataType | BuffaloZclDataType, value: any, options: BuffaloZclOptions): void {
         switch (type) {
             case DataType.NO_DATA:
@@ -884,6 +885,8 @@ export class BuffaloZcl extends Buffalo {
 
         throw new Error(`Write for '${type}' not available`);
     }
+
+    // biome-ignore lint/suspicious/noExplicitAny: API
     public read(type: DataType | BuffaloZclDataType, options: BuffaloZclOptions): any {
         switch (type) {
             case DataType.NO_DATA:

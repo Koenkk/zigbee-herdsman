@@ -7,6 +7,7 @@ import {EmberInitialSecurityState, EmberKeyData} from "../types/struct";
 import crc16ccitt from "./crc16ccitt";
 
 if (!Symbol.asyncIterator) {
+    // biome-ignore lint/suspicious/noExplicitAny: API
     (<any>Symbol).asyncIterator = Symbol.for("Symbol.asyncIterator");
 }
 

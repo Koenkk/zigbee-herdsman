@@ -78,7 +78,7 @@ export class AdapterNvMemory {
             offset += readResponse.payload.value.length;
         }
         if (useStruct) {
-            return (useStruct as any)(buffer, this.memoryAlignment) as T;
+            return useStruct(buffer, this.memoryAlignment) as T;
         }
         return buffer;
     }

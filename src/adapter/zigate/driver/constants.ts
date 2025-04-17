@@ -139,6 +139,7 @@ export enum ZiGateMessageCode {
     ExtendedStatusCallBack = 0x9999,
     AddGroupResponse = 0x8060,
 }
+// biome-ignore lint/suspicious/noExplicitAny: API
 export type ZiGateObjectPayload = any;
 
 export enum ZPSNwkKeyState {

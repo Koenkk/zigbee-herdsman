@@ -66,6 +66,7 @@ export interface Backup {
     adapterType: "zStack";
     time: string;
     meta: {[s: string]: number};
+    // biome-ignore lint/suspicious/noExplicitAny: API
     data: any;
 }
 

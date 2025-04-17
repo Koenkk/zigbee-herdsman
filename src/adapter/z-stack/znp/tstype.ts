@@ -35,6 +35,7 @@ export interface MtCmdSreqZdo extends Omit<MtCmdBase, "request" | "response"> {
 }
 
 export type MtCmd = MtCmdAreq | MtCmdSreq | MtCmdAreqZdo | MtCmdSreqZdo;
+// biome-ignore lint/suspicious/noExplicitAny: API
 export type ZpiObjectPayload = {[s: string]: any};
 
 export interface BuffaloZnpOptions {

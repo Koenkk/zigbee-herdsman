@@ -57,6 +57,7 @@ type ZdoWaitressMatcher = {
 function zeroPad(number: number, size?: number): string {
     return number.toString(16).padStart(size || 4, "0");
 }
+// biome-ignore lint/suspicious/noExplicitAny: API
 function resolve(path: string | [], obj: {[k: string]: any}, separator = "."): any {
     const properties = Array.isArray(path) ? path : path.split(separator);
     return properties.reduce((prev, curr) => prev?.[curr], obj);

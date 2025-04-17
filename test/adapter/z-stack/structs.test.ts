@@ -57,6 +57,7 @@ describe("Z-Stack Structs", () => {
 
     it("should fail if table initialization source is unsupported", () => {
         expect(() => {
+            // biome-ignore lint/suspicious/noExplicitAny: API
             Structs.securityManagerTable("das_garbage" as any);
         }).toThrowError("Unsupported table data source");
     });

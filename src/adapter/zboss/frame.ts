@@ -12,6 +12,7 @@ import {FRAMES, type ParamsDesc, ZBOSS_COMMAND_ID_TO_ZDO_RSP_CLUSTER_ID} from ".
 import {BuffaloZBOSSDataType, type CommandId} from "./enums";
 
 export class ZBOSSBuffaloZcl extends BuffaloZcl {
+    // biome-ignore lint/suspicious/noExplicitAny: API
     public override write(type: DataType | BuffaloZclDataType | BuffaloZBOSSDataType, value: any, options: BuffaloZclOptions): void {
         switch (type) {
             case BuffaloZBOSSDataType.EXTENDED_PAN_ID: {
@@ -22,6 +23,7 @@ export class ZBOSSBuffaloZcl extends BuffaloZcl {
             }
         }
     }
+    // biome-ignore lint/suspicious/noExplicitAny: API
     public override read(type: DataType | BuffaloZclDataType | BuffaloZBOSSDataType, options: BuffaloZclOptions): any {
         switch (type) {
             case BuffaloZBOSSDataType.EXTENDED_PAN_ID: {

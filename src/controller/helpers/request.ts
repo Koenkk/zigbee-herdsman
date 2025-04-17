@@ -1,6 +1,7 @@
 import type * as Zcl from "../../zspec/zcl";
 import type {SendPolicy} from "../tstype";
 
+// biome-ignore lint/suspicious/noExplicitAny: API
 export class Request<Type = any> {
     static defaultSendPolicy: {[key: number]: SendPolicy} = {
         0: "keep-payload", // Read Attributes

@@ -11,8 +11,8 @@ const NS = "zh:ezsp:cast";
 export class Multicast {
     tableSize = 16;
     private driver: Driver;
-    private _multicast: any;
-    private _available: Array<any>;
+    private _multicast: Record<number, [EmberMulticastTableEntry, number]>;
+    private _available: number[];
 
     constructor(driver: Driver) {
         this.driver = driver;
@@ -33,7 +33,7 @@ export class Multicast {
         }
     }
 
-    async startup(enpoints: Array<any>): Promise<void> {
+    async startup(enpoints: {id: number; member_of: number[]}[]): Promise<void> {
         await this._initialize();
         for (const ep of enpoints) {
             if (!ep.id) continue;
@@ -51,6 +51,11 @@ export class Multicast {
 
         try {
             const idx = this._available.pop();
+
+            if (idx === undefined) {
+                throw new Error("No available");
+            }
+
             const entry: EmberMulticastTableEntry = new EmberMulticastTableEntry();
             entry.endpoint = endpoint;
             entry.multicastId = groupId;

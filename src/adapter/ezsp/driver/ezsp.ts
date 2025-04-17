@@ -133,6 +133,7 @@ export class EZSPFrameData {
     _cls_: string;
     _id_: number;
     _isRequest_: boolean;
+    // biome-ignore lint/suspicious/noExplicitAny: API
     [name: string]: any;
 
     static createFrame(ezspv: number, frameId: number, isRequest: boolean, params: ParamsDesc | Buffer): EZSPFrameData {
@@ -205,6 +206,7 @@ export class EZSPZDORequestFrameData {
     _cls_: string;
     _id_: number;
     _isRequest_: boolean;
+    // biome-ignore lint/suspicious/noExplicitAny: API
     [name: string]: any;
 
     static getFrame(key: string | number): EZSPFrameDesc {
@@ -260,6 +262,7 @@ export class EZSPZDORequestFrameData {
 export class EZSPZDOResponseFrameData {
     _cls_: string;
     _id_: number;
+    // biome-ignore lint/suspicious/noExplicitAny: API
     [name: string]: any;
 
     static getFrame(key: string | number): ParamsDesc {

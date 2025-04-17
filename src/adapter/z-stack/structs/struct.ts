@@ -134,8 +134,10 @@ export class Struct implements SerializableMemoryObject {
      */
     public toJSON() {
         return this.members.reduce((a, c) => {
+            // biome-ignore lint/suspicious/noExplicitAny: API
             a[c.key] = (this as any)[c.key];
             return a;
+            // biome-ignore lint/suspicious/noExplicitAny: API
         }, {} as any);
     }
 

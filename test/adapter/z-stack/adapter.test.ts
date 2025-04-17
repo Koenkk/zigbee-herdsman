@@ -432,6 +432,7 @@ const legacyBackup = {
 };
 
 class ZnpRequestMockBuilder {
+    // biome-ignore lint/suspicious/noExplicitAny: API
     public responders: {subsystem: Subsystem; command: string; exec: (payload: any, handler?: ZnpRequestMockBuilder) => any}[] = [];
     public nvItems: {id: NvItemsIds; value?: Buffer}[] = [];
     public nvExtendedItems: {sysId: NvSystemIds; id: NvItemsIds; subId: number; value?: Buffer}[] = [];
@@ -566,6 +567,7 @@ class ZnpRequestMockBuilder {
         });
     }
 
+    // biome-ignore lint/suspicious/noExplicitAny: API
     public handle(subsystem: Subsystem, command: string, exec?: (payload: any, handler?: ZnpRequestMockBuilder) => any) {
         const index = this.responders.findIndex((r) => r.subsystem === subsystem && r.command === command);
         if (index > -1) {
@@ -597,6 +599,7 @@ class ZnpRequestMockBuilder {
         return this;
     }
 
+    // biome-ignore lint/suspicious/noExplicitAny: API
     public execute(message: {subsystem: Subsystem; command: string; payload: any}) {
         const responder = this.responders.find((r) => r.subsystem === message.subsystem && r.command === message.command);
         if (!responder) {
@@ -924,6 +927,7 @@ const mockZnpRequest = vi
     .fn()
     .mockReturnValue(new Promise((resolve) => resolve({payload: {}})))
     .mockImplementation(
+        // biome-ignore lint/suspicious/noExplicitAny: API
         (subsystem: Subsystem, command: string, payload: any, _expectedStatus: ZnpCommandStatus) =>
             new Promise((resolve) => resolve(baseZnpRequestMock.execute({subsystem, command, payload}))),
     );
@@ -937,6 +941,7 @@ const mocks = [mockZnpOpen, mockZnpRequest, mockZnpClose];
 const mockZnpRequestWith = (builder: ZnpRequestMockBuilder) => {
     builder = builder.clone();
     mockZnpRequest.mockImplementation(
+        // biome-ignore lint/suspicious/noExplicitAny: API
         (subsystem: Subsystem, command: string, payload: any, _expectedStatus: ZnpCommandStatus) =>
             new Promise((resolve) => resolve(builder.execute({subsystem, command, payload}))),
     );
@@ -1683,6 +1688,7 @@ describe("zstack-adapter", () => {
             ...backupData,
             metadata: {
                 ...backupData.metadata,
+                // biome-ignore lint/suspicious/noExplicitAny: mock
                 version: 99 as any,
             },
         };

@@ -80,6 +80,7 @@ import {
 } from "./types";
 
 export interface ParamsDesc {
+    // biome-ignore lint/suspicious/noExplicitAny: API
     [s: string]: any;
 }
 

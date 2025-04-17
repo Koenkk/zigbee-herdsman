@@ -165,7 +165,6 @@ export class ZBOSSAdapter extends Adapter {
         return await Promise.resolve(false);
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     public async backup(_ieeeAddressesInDatabase: string[]): Promise<Backup> {
         return await Promise.reject(new Error("This adapter does not support backup"));
     }

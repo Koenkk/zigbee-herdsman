@@ -54,8 +54,10 @@ interface Waiter<A, B> {
  * NOTE: `messageTag` is unreliable, so not used...
  */
 export class EmberOneWaitress {
+    // biome-ignore lint/suspicious/noExplicitAny: API
     private readonly waiters: Map<number, Waiter<OneWaitressMatcher, any>>;
     // NOTE: for now, this could be much simpler (array-like), but more complex events might come into play
+    // biome-ignore lint/suspicious/noExplicitAny: API
     private readonly eventWaiters: Map<number, Waiter<OneWaitressEventMatcher, any>>;
     private currentId: number;
     private currentEventId: number;

@@ -1,4 +1,5 @@
 export interface KeyValue {
+    // biome-ignore lint/suspicious/noExplicitAny: API
     [s: string]: any;
 }
 
@@ -26,6 +27,7 @@ export type EntityType = DeviceType | "Group";
 export interface DatabaseEntry {
     id: number;
     type: EntityType;
+    // biome-ignore lint/suspicious/noExplicitAny: API
     [s: string]: any;
 }
 

@@ -35,6 +35,7 @@ class BuffaloZnp extends Buffalo {
 
         return value;
     }
+    // biome-ignore lint/suspicious/noExplicitAny: API
     public write(type: ParameterType, value: any, options: BuffaloZnpOptions): void {
         switch (type) {
             case ParameterType.UINT8: {
@@ -86,6 +87,7 @@ class BuffaloZnp extends Buffalo {
             }
         }
     }
+    // biome-ignore lint/suspicious/noExplicitAny: API
     public read(type: ParameterType, options: BuffaloZnpOptions): any {
         switch (type) {
             case ParameterType.UINT8: {

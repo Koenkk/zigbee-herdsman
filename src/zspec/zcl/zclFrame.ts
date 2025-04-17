@@ -7,6 +7,8 @@ import type {Status} from "./definition/status";
 import type {BuffaloZclOptions, Cluster, ClusterName, Command, CustomClusters, ParameterDefinition} from "./definition/tstype";
 import * as Utils from "./utils";
 import {ZclHeader} from "./zclHeader";
+
+// biome-ignore lint/suspicious/noExplicitAny: API
 type ZclPayload = any;
 
 const ListTypes: number[] = [
@@ -203,6 +205,7 @@ export class ZclFrame {
             const payload = [];
 
             while (buffalo.isMore()) {
+                // biome-ignore lint/suspicious/noExplicitAny: API
                 const entry: {[s: string]: any} = {};
 
                 for (const parameter of command.parameters) {
@@ -239,6 +242,7 @@ export class ZclFrame {
         }
 
         if (command.parseStrategy === "flat") {
+            // biome-ignore lint/suspicious/noExplicitAny: API
             const payload: {[s: string]: any} = {};
 
             for (const parameter of command.parameters) {
@@ -250,6 +254,7 @@ export class ZclFrame {
 
         if (command.parseStrategy === "oneof") {
             if (Utils.isFoundationDiscoverRsp(command.ID)) {
+                // biome-ignore lint/suspicious/noExplicitAny: API
                 const payload: {discComplete: number; attrInfos: {[k: string]: any}[]} = {
                     discComplete: buffalo.readUInt8(),
                     attrInfos: [],

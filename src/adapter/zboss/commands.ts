@@ -20,8 +20,11 @@ import {
 export interface ParamsDesc {
     name: string;
     type: DataType | BuffaloZclDataType | BuffaloZBOSSDataType;
+    // biome-ignore lint/suspicious/noExplicitAny: API
     condition?: (payload: any, buffalo: any) => boolean;
+    // biome-ignore lint/suspicious/noExplicitAny: API
     typed?: any;
+    // biome-ignore lint/suspicious/noExplicitAny: API
     options?: (payload: any, options: any) => void;
 }
 

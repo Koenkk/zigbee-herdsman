@@ -61,6 +61,7 @@ interface Request {
     parameter?: ParameterT;
     request?: ApsDataRequest;
     seqNumber: number;
+    // biome-ignore lint/suspicious/noExplicitAny: API
     resolve: (value: any) => void;
     reject: (value: Error) => void;
     ts?: number;
