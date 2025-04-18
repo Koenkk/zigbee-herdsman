@@ -1,1 +1,1 @@
-export {Buffalo} from './buffalo';
+export {Buffalo} from "./buffalo";

@@ -1,16 +1,16 @@
-import {bigUInt64ToBufferBE, bigUInt64ToBufferLE, bigUInt64ToHexBE} from '../../../src/adapter/zoh/adapter/utils';
+import {bigUInt64ToBufferBE, bigUInt64ToBufferLE, bigUInt64ToHexBE} from "../../../src/adapter/zoh/adapter/utils";
 
-describe('ZoH Utils', () => {
-    it('handles bigint conversions', () => {
-        const v10x = '0x90395efffec7fd21';
+describe("ZoH Utils", () => {
+    it("handles bigint conversions", () => {
+        const v10x = "0x90395efffec7fd21";
         const v1Buf = Buffer.from([0x21, 0xfd, 0xc7, 0xfe, 0xff, 0x5e, 0x39, 0x90]);
         const v1BigInt = 10392442068718320929n;
 
-        const v20x = '0x9986ffbb4523acef';
+        const v20x = "0x9986ffbb4523acef";
         const v2Buf = Buffer.from([0xef, 0xac, 0x23, 0x45, 0xbb, 0xff, 0x86, 0x99]);
         const v2BigInt = 11062810714466135279n;
 
-        const v30x = '0x0322334455667788';
+        const v30x = "0x0322334455667788";
         const v3Buf = Buffer.from([0x88, 0x77, 0x66, 0x55, 0x44, 0x33, 0x22, 0x03]);
         const v3BigInt = 225799299905517448n;
 

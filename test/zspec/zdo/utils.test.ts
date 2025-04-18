@@ -1,7 +1,7 @@
-import * as Zdo from '../../../src/zspec/zdo';
+import * as Zdo from "../../../src/zspec/zdo";
 
-describe('ZDO Utils', () => {
-    it('Creates status error', () => {
+describe("ZDO Utils", () => {
+    it("Creates status error", () => {
         const zdoError = new Zdo.StatusError(Zdo.Status.INVALID_INDEX);
 
         expect(zdoError).toBeInstanceOf(Zdo.StatusError);
@@ -20,7 +20,7 @@ describe('ZDO Utils', () => {
         [Zdo.ClusterId.ACTIVE_ENDPOINTS_RESPONSE, undefined],
         [Zdo.ClusterId.CHALLENGE_RESPONSE, undefined],
         [0x7999, undefined],
-    ])('Gets response cluster ID for request %s', (request, response) => {
+    ])("Gets response cluster ID for request %s", (request, response) => {
         expect(Zdo.Utils.getResponseClusterId(request)).toStrictEqual(response);
     });
 
@@ -168,7 +168,7 @@ describe('ZDO Utils', () => {
                 allocateAddress: 1,
             },
         ],
-    ])('Gets MAC capabilities flags for %s', (value, expected) => {
+    ])("Gets MAC capabilities flags for %s", (value, expected) => {
         expect(Zdo.Utils.getMacCapFlags(value)).toStrictEqual(expected);
     });
 
@@ -233,7 +233,7 @@ describe('ZDO Utils', () => {
                 stackComplianceRevision: 21,
             },
         ],
-    ])('Gets & Creates server mask for %s', (value, expected) => {
+    ])("Gets & Creates server mask for %s", (value, expected) => {
         expect(Zdo.Utils.getServerMask(value)).toStrictEqual(expected);
         expect(Zdo.Utils.createServerMask(expected)).toStrictEqual(value);
     });

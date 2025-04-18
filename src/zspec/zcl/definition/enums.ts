@@ -133,8 +133,8 @@ export enum DataType {
 
 /** @TODO strings for backwards compat in tests. Should be moved to numbers. */
 export enum DataTypeClass {
-    ANALOG = 'ANALOG',
-    DISCRETE = 'DISCRETE',
+    ANALOG = "ANALOG",
+    DISCRETE = "DISCRETE",
 }
 
 export enum BuffaloZclDataType {
@@ -157,14 +157,14 @@ export enum BuffaloZclDataType {
 
 /** @TODO strings for backwards compat in tests. Should be moved to numbers. */
 export enum ParameterCondition {
-    STATUS_EQUAL = 'statusEquals',
-    STATUS_NOT_EQUAL = 'statusNotEquals',
-    MINIMUM_REMAINING_BUFFER_BYTES = 'minimumRemainingBufferBytes',
-    DIRECTION_EQUAL = 'directionEquals',
-    BITMASK_SET = 'bitMaskSet',
-    BITFIELD_ENUM = 'bitFieldEnum',
-    DATA_TYPE_CLASS_EQUAL = 'dataTypeValueTypeEquals',
-    FIELD_EQUAL = 'fieldEquals',
+    STATUS_EQUAL = "statusEquals",
+    STATUS_NOT_EQUAL = "statusNotEquals",
+    MINIMUM_REMAINING_BUFFER_BYTES = "minimumRemainingBufferBytes",
+    DIRECTION_EQUAL = "directionEquals",
+    BITMASK_SET = "bitMaskSet",
+    BITFIELD_ENUM = "bitFieldEnum",
+    DATA_TYPE_CLASS_EQUAL = "dataTypeValueTypeEquals",
+    FIELD_EQUAL = "fieldEquals",
 }
 
 export enum FrameType {

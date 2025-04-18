@@ -1,11 +1,11 @@
-import {Buffalo} from '../../buffalo';
-import {logger} from '../../utils/logger';
-import {isNumberArray} from '../../utils/utils';
-import {BuffaloZclDataType, DataType, StructuredIndicatorType} from './definition/enums';
-import {BuffaloZclOptions, StructuredSelector, ZclArray} from './definition/tstype';
-import * as Utils from './utils';
+import {Buffalo} from "../../buffalo";
+import {logger} from "../../utils/logger";
+import {isNumberArray} from "../../utils/utils";
+import {BuffaloZclDataType, DataType, StructuredIndicatorType} from "./definition/enums";
+import type {BuffaloZclOptions, StructuredSelector, ZclArray} from "./definition/tstype";
+import * as Utils from "./utils";
 
-const NS = 'zh:zcl:buffalo';
+const NS = "zh:zcl:buffalo";
 
 interface KeyValue {
     [s: string | number]: number | string;
@@ -64,7 +64,7 @@ interface ThermoTransition {
     coolSetpoint?: number;
 }
 
-interface GPD {
+interface Gpd {
     deviceID: number;
     options: number;
     extendedOptions: number;
@@ -144,8 +144,8 @@ export class BuffaloZcl extends Buffalo {
 
     private writeCharStr(value: string | number[]): void {
         // TODO: this does not allow "non-value" 0xFF
-        if (typeof value === 'string') {
-            this.writeUInt8(Buffer.byteLength(value, 'utf8'));
+        if (typeof value === "string") {
+            this.writeUInt8(Buffer.byteLength(value, "utf8"));
             this.writeUtf8String(value);
         } else {
             // XXX: value.length not written?
@@ -156,7 +156,7 @@ export class BuffaloZcl extends Buffalo {
     private readCharStr(): string {
         const length = this.readUInt8();
 
-        return length < 0xff ? this.readUtf8String(length) : '';
+        return length < 0xff ? this.readUtf8String(length) : "";
     }
 
     private writeLongOctetStr(value: number[]): void {
@@ -172,17 +172,17 @@ export class BuffaloZcl extends Buffalo {
 
     private writeLongCharStr(value: string): void {
         // TODO: this does not allow "non-value" 0xFF
-        this.writeUInt16(Buffer.byteLength(value, 'utf8'));
+        this.writeUInt16(Buffer.byteLength(value, "utf8"));
         this.writeUtf8String(value);
     }
 
     private readLongCharStr(): string {
         const length = this.readUInt16();
-        return length < 0xffff ? this.readUtf8String(length) : ''; // non-value
+        return length < 0xffff ? this.readUtf8String(length) : ""; // non-value
     }
 
     private writeArray(value: ZclArray): void {
-        const elTypeNumeric = typeof value.elementType === 'number' ? value.elementType : DataType[value.elementType];
+        const elTypeNumeric = typeof value.elementType === "number" ? value.elementType : DataType[value.elementType];
         this.writeUInt8(elTypeNumeric);
         // TODO: this does not allow writing "non-value" 0xFFFF
         this.writeUInt16(value.elements.length);
@@ -257,7 +257,7 @@ export class BuffaloZcl extends Buffalo {
     }
 
     private writeDate(value: ZclDate): void {
-        this.writeUInt8(value.year != undefined ? value.year - 1900 : 0xff);
+        this.writeUInt8(value.year !== undefined ? value.year - 1900 : 0xff);
         this.writeUInt8(value.month ?? 0xff);
         this.writeUInt8(value.dayOfMonth ?? 0xff);
         this.writeUInt8(value.dayOfWeek ?? 0xff);
@@ -349,7 +349,7 @@ export class BuffaloZcl extends Buffalo {
 
     private readListThermoTransitions(options: BuffaloZclOptions): ThermoTransition[] {
         if (options.payload == null || options.payload.mode == null || options.payload.numoftrans == null) {
-            throw new Error('Cannot read LIST_THERMO_TRANSITIONS without required payload options specified');
+            throw new Error("Cannot read LIST_THERMO_TRANSITIONS without required payload options specified");
         }
 
         const heat = options.payload.mode & 1;
@@ -376,7 +376,7 @@ export class BuffaloZcl extends Buffalo {
     }
 
     private writeGpdFrame(value: GPDCommissioningReply | GPDChannelConfiguration | GPDCustomReply): void {
-        if (value.commandID == 0xf0) {
+        if (value.commandID === 0xf0) {
             // Commissioning Reply
             const v = value as GPDCommissioningReply;
 
@@ -391,27 +391,31 @@ export class BuffaloZcl extends Buffalo {
             this.writeUInt8(v.options);
 
             if (panIDPresent) {
+                // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
                 this.writeUInt16(v.panID!);
             }
 
             if (gpdSecurityKeyPresent) {
+                // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
                 this.writeBuffer(v.securityKey!, 16);
             }
 
             if (hasGPDKeyMIC) {
+                // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
                 this.writeUInt32(v.keyMic!);
             }
 
             if (hasFrameCounter) {
+                // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
                 this.writeUInt32(v.frameCounter!);
             }
-        } else if (value.commandID == 0xf3) {
+        } else if (value.commandID === 0xf3) {
             // Channel configuration
             const v = value as GPDChannelConfiguration;
 
             this.writeUInt8(1);
             this.writeUInt8((v.operationalChannel & 0xf) | ((v.basic ? 1 : 0) << 4));
-        } else if (value.commandID == 0xf4 || value.commandID == 0xf5 || (value.commandID >= 0xf7 && value.commandID <= 0xff)) {
+        } else if (value.commandID === 0xf4 || value.commandID === 0xf5 || (value.commandID >= 0xf7 && value.commandID <= 0xff)) {
             // Other commands sent to GPD
             const v = value as GPDCustomReply;
 
@@ -423,7 +427,7 @@ export class BuffaloZcl extends Buffalo {
         // 0xf6: ZCL Tunneling
     }
 
-    private readGpdFrame(options: BuffaloZclOptions): GPD | GPDChannelRequest | GPDAttributeReport | {raw: Buffer} | Record<string, never> {
+    private readGpdFrame(options: BuffaloZclOptions): Gpd | GPDChannelRequest | GPDAttributeReport | {raw: Buffer} | Record<string, never> {
         // ensure offset by options.payload.payloadSize (if any) at end of parsing to not cause issues with spec changes (until supported)
         const startPosition = this.position;
 
@@ -508,7 +512,9 @@ export class BuffaloZcl extends Buffalo {
             }
 
             return frame;
-        } else if (options.payload?.commandID === 0xe3) {
+        }
+
+        if (options.payload?.commandID === 0xe3) {
             // Channel Request
             const channelOpts = this.readUInt8();
 
@@ -522,10 +528,12 @@ export class BuffaloZcl extends Buffalo {
                 nextChannel: channelOpts & 0xf,
                 nextNextChannel: channelOpts >> 4,
             };
-        } else if (options.payload?.commandID == 0xa1) {
+        }
+
+        if (options.payload?.commandID === 0xa1) {
             // Manufacturer-specific Attribute Reporting
-            if (options.payload.payloadSize == undefined) {
-                throw new Error('Cannot read GPD_FRAME with commandID=0xA1 without payloadSize options specified');
+            if (options.payload.payloadSize === undefined) {
+                throw new Error("Cannot read GPD_FRAME with commandID=0xA1 without payloadSize options specified");
             }
 
             const start = this.position;
@@ -546,7 +554,7 @@ export class BuffaloZcl extends Buffalo {
                     attribute = cluster.getAttribute(attributeID).name;
                 } catch {
                     // this is spammy because of the many manufacturer-specific attributes not currently used
-                    logger.debug('Unknown attribute ' + attributeID + ' in cluster ' + cluster.name, NS);
+                    logger.debug(`Unknown attribute ${attributeID} in cluster ${cluster.name}`, NS);
                 }
 
                 frame.attributes[attribute] = this.read(type, options);
@@ -555,16 +563,18 @@ export class BuffaloZcl extends Buffalo {
             this.position = startPosition + options.payload.payloadSize;
 
             return frame;
-        } else if (options.payload?.payloadSize && this.isMore()) {
+        }
+
+        if (options.payload?.payloadSize && this.isMore()) {
             // might contain `gppNwkAddr`, `gppGpdLink` & `mic` from ZCL cluster, so limit by `payloadSize`
             return {raw: this.readBuffer(options.payload.payloadSize)};
-        } else {
-            if (options.payload?.payloadSize) {
-                this.position = startPosition + options.payload.payloadSize;
-            }
-
-            return {};
         }
+
+        if (options.payload?.payloadSize) {
+            this.position = startPosition + options.payload.payloadSize;
+        }
+
+        return {};
     }
 
     private writeStructuredSelector(value: StructuredSelector): void {
@@ -588,8 +598,10 @@ export class BuffaloZcl extends Buffalo {
         if (indicator === 0) {
             // no indexes, whole attribute value is to be read
             return {indicatorType: StructuredIndicatorType.Whole};
-        } else if (indicator < StructuredIndicatorType.WriteAdd) {
-            const indexes: StructuredSelector['indexes'] = [];
+        }
+
+        if (indicator < StructuredIndicatorType.WriteAdd) {
+            const indexes: StructuredSelector["indexes"] = [];
 
             for (let i = 0; i < indicator; i++) {
                 const index = this.readUInt16();
@@ -597,9 +609,9 @@ export class BuffaloZcl extends Buffalo {
             }
 
             return {indexes};
-        } else {
-            throw new Error(`Read structured selector was outside [0-15] range.`);
         }
+
+        throw new Error("Read structured selector was outside [0-15] range.");
     }
 
     private writeListTuyaDataPointValues(dpValues: TuyaDataPointValue[]): void {
@@ -684,7 +696,7 @@ export class BuffaloZcl extends Buffalo {
 
             const remaining = this.buffer.length - this.position;
             if (remaining <= 1) {
-                if (remaining == 1) {
+                if (remaining === 1) {
                     // Some Xiaomi structs have a trailing byte, skip it.
                     this.position += 1;
                 }
@@ -694,8 +706,7 @@ export class BuffaloZcl extends Buffalo {
 
         return value;
     }
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // biome-ignore lint/suspicious/noExplicitAny: API
     public write(type: DataType | BuffaloZclDataType, value: any, options: BuffaloZclOptions): void {
         switch (type) {
             case DataType.NO_DATA:
@@ -707,7 +718,8 @@ export class BuffaloZcl extends Buffalo {
             case DataType.BITMAP8:
             case DataType.UINT8:
             case DataType.ENUM8: {
-                return this.writeUInt8(value);
+                this.writeUInt8(value);
+                break;
             }
             case DataType.DATA16:
             case DataType.BITMAP16:
@@ -715,171 +727,215 @@ export class BuffaloZcl extends Buffalo {
             case DataType.ENUM16:
             case DataType.CLUSTER_ID:
             case DataType.ATTR_ID: {
-                return this.writeUInt16(value);
+                this.writeUInt16(value);
+                break;
             }
             case DataType.DATA24:
             case DataType.BITMAP24:
             case DataType.UINT24: {
-                return this.writeUInt24(value);
+                this.writeUInt24(value);
+                break;
             }
             case DataType.DATA32:
             case DataType.BITMAP32:
             case DataType.UINT32:
             case DataType.UTC:
             case DataType.BAC_OID: {
-                return this.writeUInt32(value);
+                this.writeUInt32(value);
+                break;
             }
             case DataType.DATA40:
             case DataType.BITMAP40:
             case DataType.UINT40: {
-                return this.writeUInt40(value);
+                this.writeUInt40(value);
+                break;
             }
             case DataType.DATA48:
             case DataType.BITMAP48:
             case DataType.UINT48: {
-                return this.writeUInt48(value);
+                this.writeUInt48(value);
+                break;
             }
             case DataType.DATA56:
             case DataType.BITMAP56:
             case DataType.UINT56: {
-                return this.writeUInt56(value);
+                this.writeUInt56(value);
+                break;
             }
             case DataType.DATA64:
             case DataType.BITMAP64:
             case DataType.UINT64: {
-                return this.writeUInt64(value);
+                this.writeUInt64(value);
+                break;
             }
             case DataType.INT8: {
-                return this.writeInt8(value);
+                this.writeInt8(value);
+                break;
             }
             case DataType.INT16: {
-                return this.writeInt16(value);
+                this.writeInt16(value);
+                break;
             }
             case DataType.INT24: {
-                return this.writeInt24(value);
+                this.writeInt24(value);
+                break;
             }
             case DataType.INT32: {
-                return this.writeInt32(value);
+                this.writeInt32(value);
+                break;
             }
             case DataType.INT40: {
-                return this.writeInt40(value);
+                this.writeInt40(value);
+                break;
             }
             case DataType.INT48: {
-                return this.writeInt48(value);
+                this.writeInt48(value);
+                break;
             }
             case DataType.INT56: {
-                return this.writeInt56(value);
+                this.writeInt56(value);
+                break;
             }
             case DataType.INT64: {
-                return this.writeInt64(value);
+                this.writeInt64(value);
+                break;
             }
             // case DataType.SEMI_PREC: {
             //     // https://tc39.es/proposal-float16array/
             //     // not currently used
-            //     return this.writeSemiFloatLE(value);
+            //     this.writeSemiFloatLE(value);
+            //     break;
             // }
             case DataType.SINGLE_PREC: {
-                return this.writeFloatLE(value);
+                this.writeFloatLE(value);
+                break;
             }
             case DataType.DOUBLE_PREC: {
-                return this.writeDoubleLE(value);
+                this.writeDoubleLE(value);
+                break;
             }
             case DataType.OCTET_STR: {
-                return this.writeOctetStr(value);
+                this.writeOctetStr(value);
+                break;
             }
             case DataType.CHAR_STR: {
-                return this.writeCharStr(value);
+                this.writeCharStr(value);
+                break;
             }
             case DataType.LONG_OCTET_STR: {
-                return this.writeLongOctetStr(value);
+                this.writeLongOctetStr(value);
+                break;
             }
             case DataType.LONG_CHAR_STR: {
-                return this.writeLongCharStr(value);
+                this.writeLongCharStr(value);
+                break;
             }
             case DataType.ARRAY:
             case DataType.SET:
             case DataType.BAG: {
-                return this.writeArray(value);
+                this.writeArray(value);
+                break;
             }
             case DataType.STRUCT: {
-                return this.writeStruct(value);
+                this.writeStruct(value);
+                break;
             }
             case DataType.TOD: {
-                return this.writeToD(value);
+                this.writeToD(value);
+                break;
             }
             case DataType.DATE: {
-                return this.writeDate(value);
+                this.writeDate(value);
+                break;
             }
             case DataType.IEEE_ADDR: {
-                return this.writeIeeeAddr(value);
+                this.writeIeeeAddr(value);
+                break;
             }
             case DataType.SEC_KEY: {
-                return this.writeBuffer(value, SEC_KEY_LENGTH);
+                this.writeBuffer(value, SEC_KEY_LENGTH);
+                break;
             }
             case BuffaloZclDataType.USE_DATA_TYPE: {
                 if (options.dataType == null) {
                     if (Buffer.isBuffer(value) || isNumberArray(value)) {
-                        return this.writeBuffer(value, value.length);
-                    } else {
-                        throw new Error('Cannot write USE_DATA_TYPE without dataType option specified');
+                        this.writeBuffer(value, value.length);
+                        break;
                     }
+
+                    throw new Error("Cannot write USE_DATA_TYPE without dataType option specified");
                 }
 
-                return this.write(options.dataType, value, options);
+                this.write(options.dataType, value, options);
+                break;
             }
             case BuffaloZclDataType.LIST_UINT8: {
-                return this.writeListUInt8(value);
+                this.writeListUInt8(value);
+                break;
             }
             case BuffaloZclDataType.LIST_UINT16: {
-                return this.writeListUInt16(value);
+                this.writeListUInt16(value);
+                break;
             }
             case BuffaloZclDataType.LIST_UINT24: {
-                return this.writeListUInt24(value);
+                this.writeListUInt24(value);
+                break;
             }
             case BuffaloZclDataType.LIST_UINT32: {
-                return this.writeListUInt32(value);
+                this.writeListUInt32(value);
+                break;
             }
             case BuffaloZclDataType.LIST_ZONEINFO: {
-                return this.writeListZoneInfo(value);
+                this.writeListZoneInfo(value);
+                break;
             }
             case BuffaloZclDataType.EXTENSION_FIELD_SETS: {
-                return this.writeExtensionFieldSets(value);
+                this.writeExtensionFieldSets(value);
+                break;
             }
             case BuffaloZclDataType.LIST_THERMO_TRANSITIONS: {
-                return this.writeListThermoTransitions(value);
+                this.writeListThermoTransitions(value);
+                break;
             }
             case BuffaloZclDataType.BUFFER: {
                 // XXX: inconsistent with read that allows partial with options.length, here always "whole"
-                return this.writeBuffer(value, value.length);
+                this.writeBuffer(value, value.length);
+                break;
             }
             case BuffaloZclDataType.GPD_FRAME: {
-                return this.writeGpdFrame(value);
+                this.writeGpdFrame(value);
+                break;
             }
             case BuffaloZclDataType.STRUCTURED_SELECTOR: {
-                return this.writeStructuredSelector(value);
+                this.writeStructuredSelector(value);
+                break;
             }
             case BuffaloZclDataType.LIST_TUYA_DATAPOINT_VALUES: {
-                return this.writeListTuyaDataPointValues(value);
+                this.writeListTuyaDataPointValues(value);
+                break;
             }
             case BuffaloZclDataType.LIST_MIBOXER_ZONES: {
-                return this.writeListMiboxerZones(value);
+                this.writeListMiboxerZones(value);
+                break;
             }
             case BuffaloZclDataType.BIG_ENDIAN_UINT24: {
-                return this.writeBigEndianUInt24(value);
+                this.writeBigEndianUInt24(value);
+                break;
             }
             default: {
                 // In case the type is undefined, write it as a buffer to easily allow for custom types
                 // e.g. for https://github.com/Koenkk/zigbee-herdsman/issues/127
                 if (Buffer.isBuffer(value) || isNumberArray(value)) {
-                    return this.writeBuffer(value, value.length);
+                    this.writeBuffer(value, value.length);
+                    break;
                 }
+
+                throw new Error(`Write for '${type}' not available`);
             }
         }
-
-        throw new Error(`Write for '${type}' not available`);
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // biome-ignore lint/suspicious/noExplicitAny: API
     public read(type: DataType | BuffaloZclDataType, options: BuffaloZclOptions): any {
         switch (type) {
             case DataType.NO_DATA:
@@ -1009,35 +1065,35 @@ export class BuffaloZcl extends Buffalo {
             }
             case BuffaloZclDataType.LIST_UINT8: {
                 if (options.length == null) {
-                    throw new Error('Cannot read LIST_UINT8 without length option specified');
+                    throw new Error("Cannot read LIST_UINT8 without length option specified");
                 }
 
                 return this.readListUInt8(options.length);
             }
             case BuffaloZclDataType.LIST_UINT16: {
                 if (options.length == null) {
-                    throw new Error('Cannot read LIST_UINT16 without length option specified');
+                    throw new Error("Cannot read LIST_UINT16 without length option specified");
                 }
 
                 return this.readListUInt16(options.length);
             }
             case BuffaloZclDataType.LIST_UINT24: {
                 if (options.length == null) {
-                    throw new Error('Cannot read LIST_UINT24 without length option specified');
+                    throw new Error("Cannot read LIST_UINT24 without length option specified");
                 }
 
                 return this.readListUInt24(options.length);
             }
             case BuffaloZclDataType.LIST_UINT32: {
                 if (options.length == null) {
-                    throw new Error('Cannot read LIST_UINT32 without length option specified');
+                    throw new Error("Cannot read LIST_UINT32 without length option specified");
                 }
 
                 return this.readListUInt32(options.length);
             }
             case BuffaloZclDataType.LIST_ZONEINFO: {
                 if (options.length == null) {
-                    throw new Error('Cannot read LIST_ZONEINFO without length option specified');
+                    throw new Error("Cannot read LIST_ZONEINFO without length option specified");
                 }
 
                 return this.readListZoneInfo(options.length);

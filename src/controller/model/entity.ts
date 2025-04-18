@@ -1,9 +1,9 @@
-import events from 'node:events';
+import events from "node:events";
 
-import {Adapter} from '../../adapter';
-import Database from '../database';
+import type {Adapter} from "../../adapter";
+import type Database from "../database";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+// biome-ignore lint/suspicious/noExplicitAny: API
 type EventMap<T> = Record<keyof T, any[]> | DefaultEventMap;
 type DefaultEventMap = [never];
 

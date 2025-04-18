@@ -1,9 +1,9 @@
-import type {EUI64} from './tstypes';
+import type {Eui64} from "./tstypes";
 
-import {createCipheriv} from 'node:crypto';
+import {createCipheriv} from "node:crypto";
 
-import {AES_MMO_128_BLOCK_SIZE, ALL_802_15_4_CHANNELS, INSTALL_CODE_CRC_SIZE, INSTALL_CODE_SIZES} from './consts';
-import {BroadcastAddress} from './enums';
+import {AES_MMO_128_BLOCK_SIZE, ALL_802_15_4_CHANNELS, INSTALL_CODE_CRC_SIZE, INSTALL_CODE_SIZES} from "./consts";
+import {BroadcastAddress} from "./enums";
 
 /**
  * Convert a channels array to a uint32 channel mask.
@@ -45,12 +45,12 @@ export const isBroadcastAddress = (address: number): boolean => {
  *
  * NOTE: the buffer is always copied to avoid reversal in reference
  */
-export const eui64LEBufferToHex = (eui64LEBuf: Buffer): EUI64 => `0x${Buffer.from(eui64LEBuf).reverse().toString('hex')}`;
+export const eui64LEBufferToHex = (eui64LEBuf: Buffer): Eui64 => `0x${Buffer.from(eui64LEBuf).reverse().toString("hex")}`;
 
 /**
  * Represent a big endian buffer in `0x...` form
  */
-export const eui64BEBufferToHex = (eui64BEBuf: Buffer): EUI64 => `0x${eui64BEBuf.toString('hex')}`;
+export const eui64BEBufferToHex = (eui64BEBuf: Buffer): Eui64 => `0x${eui64BEBuf.toString("hex")}`;
 
 /**
  * Calculate the CRC 8, 16 or 32 for the given data.
@@ -73,10 +73,10 @@ function calcCRC(
     data: number[] | Uint8Array | Buffer,
     length: 8 | 16 | 32,
     poly: number,
-    crc: number = 0,
-    xorOut: number = 0,
-    refIn: boolean = false,
-    refOut: boolean = false,
+    crc = 0,
+    xorOut = 0,
+    refIn = false,
+    refOut = false,
 ): number {
     // https://web.archive.org/web/20150226083354/http://leetcode.com/2011/08/reverse-bits.html
     const reflect = (x: number, size: 8 | 16 | 32): number => {
@@ -187,7 +187,7 @@ export function crc16CCITTFALSE(data: number[] | Uint8Array | Buffer): number {
 
 function aes128MmoHashUpdate(result: Buffer, data: Buffer, dataSize: number): void {
     while (dataSize >= AES_MMO_128_BLOCK_SIZE) {
-        const cipher = createCipheriv('aes-128-ecb', result, null);
+        const cipher = createCipheriv("aes-128-ecb", result, null);
         const block = data.subarray(0, AES_MMO_128_BLOCK_SIZE);
         const encryptedBlock = Buffer.concat([cipher.update(block), cipher.final()]);
 
@@ -260,7 +260,7 @@ export function aes128MmoHash(data: Buffer): Buffer {
  *   - If adjust is false, undefined, otherwise, the reason why the code needed adjusting or undefined if not.
  *   - Throws when adjust=false and invalid, or cannot fix.
  */
-export function checkInstallCode(code: Buffer, adjust: boolean = true): [outCode: Buffer, adjusted: 'invalid CRC' | 'missing CRC' | undefined] {
+export function checkInstallCode(code: Buffer, adjust = true): [outCode: Buffer, adjusted: "invalid CRC" | "missing CRC" | undefined] {
     const crcLowByteIndex = code.length - INSTALL_CODE_CRC_SIZE;
     const crcHighByteIndex = code.length - INSTALL_CODE_CRC_SIZE + 1;
 
@@ -278,14 +278,16 @@ export function checkInstallCode(code: Buffer, adjust: boolean = true): [outCode
                     outCode[crcLowByteIndex] = crcLowByte;
                     outCode[crcHighByteIndex] = crcHighByte;
 
-                    return [outCode, 'invalid CRC'];
-                } else {
-                    throw new Error(`Install code ${code.toString('hex')} failed CRC validation`);
+                    return [outCode, "invalid CRC"];
                 }
+
+                throw new Error(`Install code ${code.toString("hex")} failed CRC validation`);
             }
 
             return [code, undefined];
-        } else if (code.length === codeSize - INSTALL_CODE_CRC_SIZE) {
+        }
+
+        if (code.length === codeSize - INSTALL_CODE_CRC_SIZE) {
             if (adjust) {
                 // install code is missing CRC
                 const crc = crc16X25(code);
@@ -294,13 +296,13 @@ export function checkInstallCode(code: Buffer, adjust: boolean = true): [outCode
                 code.copy(outCode, 0);
                 outCode.writeUInt16LE(crc, code.length);
 
-                return [outCode, 'missing CRC'];
-            } else {
-                throw new Error(`Install code ${code.toString('hex')} failed CRC validation`);
+                return [outCode, "missing CRC"];
             }
+
+            throw new Error(`Install code ${code.toString("hex")} failed CRC validation`);
         }
     }
 
     // never returned from within the above loop
-    throw new Error(`Install code ${code.toString('hex')} has invalid size`);
+    throw new Error(`Install code ${code.toString("hex")} has invalid size`);
 }

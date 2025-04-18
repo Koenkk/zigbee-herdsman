@@ -45,6 +45,7 @@ export class Queue {
 
         if (job) {
             // if we get here, start is always defined for job
+            // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
             job.start!();
         }
     }

@@ -1,30 +1,31 @@
 /* v8 ignore start */
 
-import {KeyValue} from '../../controller/tstype';
-import {DataType} from '../../zspec/zcl';
-import {BuffaloZcl} from '../../zspec/zcl/buffaloZcl';
-import {BuffaloZclDataType} from '../../zspec/zcl/definition/enums';
-import {BuffaloZclOptions} from '../../zspec/zcl/definition/tstype';
-import {ClusterId as ZdoClusterId} from '../../zspec/zdo';
-import {BuffaloZdo} from '../../zspec/zdo/buffaloZdo';
-import {GenericZdoResponse} from '../../zspec/zdo/definition/tstypes';
-import {FRAMES, ParamsDesc, ZBOSS_COMMAND_ID_TO_ZDO_RSP_CLUSTER_ID} from './commands';
-import {BuffaloZBOSSDataType, CommandId} from './enums';
+import type {KeyValue} from "../../controller/tstype";
+import type {DataType} from "../../zspec/zcl";
+import {BuffaloZcl} from "../../zspec/zcl/buffaloZcl";
+import type {BuffaloZclDataType} from "../../zspec/zcl/definition/enums";
+import type {BuffaloZclOptions} from "../../zspec/zcl/definition/tstype";
+import {ClusterId as ZdoClusterId} from "../../zspec/zdo";
+import {BuffaloZdo} from "../../zspec/zdo/buffaloZdo";
+import type {GenericZdoResponse} from "../../zspec/zdo/definition/tstypes";
+import {FRAMES, type ParamsDesc, ZBOSS_COMMAND_ID_TO_ZDO_RSP_CLUSTER_ID} from "./commands";
+import {BuffaloZBOSSDataType, type CommandId} from "./enums";
 
 export class ZBOSSBuffaloZcl extends BuffaloZcl {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // biome-ignore lint/suspicious/noExplicitAny: API
     public override write(type: DataType | BuffaloZclDataType | BuffaloZBOSSDataType, value: any, options: BuffaloZclOptions): void {
         switch (type) {
             case BuffaloZBOSSDataType.EXTENDED_PAN_ID: {
-                return this.writeBuffer(value, 8);
+                this.writeBuffer(value, 8);
+                break;
             }
             default: {
-                return super.write(type as DataType | BuffaloZclDataType, value, options);
+                super.write(type as DataType | BuffaloZclDataType, value, options);
+                break;
             }
         }
     }
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // biome-ignore lint/suspicious/noExplicitAny: API
     public override read(type: DataType | BuffaloZclDataType | BuffaloZBOSSDataType, options: BuffaloZclOptions): any {
         switch (type) {
             case BuffaloZBOSSDataType.EXTENDED_PAN_ID: {
@@ -46,7 +47,7 @@ export class ZBOSSBuffaloZcl extends BuffaloZcl {
             }
             if (parameter.options) parameter.options(payload, options);
 
-            if (parameter.type == BuffaloZBOSSDataType.LIST_TYPED && parameter.typed) {
+            if (parameter.type === BuffaloZBOSSDataType.LIST_TYPED && parameter.typed) {
                 const internalPaload = payload[parameter.name];
                 for (const value of internalPaload) {
                     this.writeByDesc(value, parameter.typed);
@@ -69,7 +70,7 @@ export class ZBOSSBuffaloZcl extends BuffaloZcl {
             }
             if (parameter.options) parameter.options(payload, options);
 
-            if (parameter.type == BuffaloZBOSSDataType.LIST_TYPED && parameter.typed) {
+            if (parameter.type === BuffaloZBOSSDataType.LIST_TYPED && parameter.typed) {
                 payload[parameter.name] = [];
 
                 if (!this.isMore()) break;
@@ -159,15 +160,15 @@ export function readZBOSSFrame(buffer: Buffer): ZBOSSFrame {
                 zdo,
             },
         };
-    } else {
-        return {
-            version,
-            type,
-            commandId,
-            tsn,
-            payload: readPayload(type, commandId, buf),
-        };
     }
+
+    return {
+        version,
+        type,
+        commandId,
+        tsn,
+        payload: readPayload(type, commandId, buf),
+    };
 }
 
 export function writeZBOSSFrame(frame: ZBOSSFrame): Buffer {

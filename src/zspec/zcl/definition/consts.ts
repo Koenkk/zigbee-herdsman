@@ -1,12 +1,12 @@
 /** Mapping of power source bits to descriptive string. */
 export const POWER_SOURCES: Readonly<{[s: number]: string}> = {
-    0: 'Unknown',
-    1: 'Mains (single phase)',
-    2: 'Mains (3 phase)',
-    3: 'Battery',
-    4: 'DC Source',
-    5: 'Emergency mains constantly powered',
-    6: 'Emergency mains and transfer switch',
+    0: "Unknown",
+    1: "Mains (single phase)",
+    2: "Mains (3 phase)",
+    3: "Battery",
+    4: "DC Source",
+    5: "Emergency mains constantly powered",
+    6: "Emergency mains and transfer switch",
 };
 
 /** Mapping of device type to ID */

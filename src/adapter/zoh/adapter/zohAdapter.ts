@@ -1,29 +1,29 @@
-import {Socket} from 'node:net';
-import {dirname} from 'node:path';
+import {Socket} from "node:net";
+import {dirname} from "node:path";
 
-import {OTRCPDriver} from 'zigbee-on-host';
-import {setLogger} from 'zigbee-on-host/dist/utils/logger';
-import {MACCapabilities, MACHeader} from 'zigbee-on-host/dist/zigbee/mac';
-import {ZigbeeAPSHeader, ZigbeeAPSPayload} from 'zigbee-on-host/dist/zigbee/zigbee-aps';
-import {ZigbeeNWKGPHeader} from 'zigbee-on-host/dist/zigbee/zigbee-nwkgp';
+import {OTRCPDriver} from "zigbee-on-host";
+import {setLogger} from "zigbee-on-host/dist/utils/logger";
+import type {MACCapabilities, MACHeader} from "zigbee-on-host/dist/zigbee/mac";
+import type {ZigbeeAPSHeader, ZigbeeAPSPayload} from "zigbee-on-host/dist/zigbee/zigbee-aps";
+import type {ZigbeeNWKGPHeader} from "zigbee-on-host/dist/zigbee/zigbee-nwkgp";
 
-import {Backup} from '../../../models/backup';
-import {logger} from '../../../utils/logger';
-import {Queue} from '../../../utils/queue';
-import {wait} from '../../../utils/wait';
-import {Waitress} from '../../../utils/waitress';
-import * as ZSpec from '../../../zspec';
-import * as Zcl from '../../../zspec/zcl';
-import * as Zdo from '../../../zspec/zdo';
-import * as ZdoTypes from '../../../zspec/zdo/definition/tstypes';
-import {Adapter} from '../../adapter';
-import {ZclPayload} from '../../events';
-import {SerialPort} from '../../serialPort';
-import {isTcpPath} from '../../socketPortUtils';
-import * as TsType from '../../tstype';
-import {bigUInt64ToHexBE} from './utils';
+import type {Backup} from "../../../models/backup";
+import {logger} from "../../../utils/logger";
+import {Queue} from "../../../utils/queue";
+import {wait} from "../../../utils/wait";
+import {Waitress} from "../../../utils/waitress";
+import * as ZSpec from "../../../zspec";
+import * as Zcl from "../../../zspec/zcl";
+import * as Zdo from "../../../zspec/zdo";
+import type * as ZdoTypes from "../../../zspec/zdo/definition/tstypes";
+import {Adapter} from "../../adapter";
+import type {ZclPayload} from "../../events";
+import {SerialPort} from "../../serialPort";
+import {isTcpPath} from "../../socketPortUtils";
+import type * as TsType from "../../tstype";
+import {bigUInt64ToHexBE} from "./utils";
 
-const NS = 'zh:zoh';
+const NS = "zh:zoh";
 
 interface WaitressMatcher {
     sender: number | string;
@@ -86,6 +86,7 @@ export class ZoHAdapter extends Adapter {
                 // TODO: make this configurable
                 eui64: Buffer.from([0x5a, 0x6f, 0x48, 0x6f, 0x6e, 0x5a, 0x32, 0x4d]).readBigUInt64LE(0),
                 panId: this.networkOptions.panID,
+                // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
                 extendedPANId: Buffer.from(this.networkOptions.extendedPanID!).readBigUInt64LE(0),
                 channel,
                 nwkUpdateId: 0,
@@ -93,6 +94,7 @@ export class ZoHAdapter extends Adapter {
                 // ZigBeeAlliance09
                 tcKey: Buffer.from([0x5a, 0x69, 0x67, 0x42, 0x65, 0x65, 0x41, 0x6c, 0x6c, 0x69, 0x61, 0x6e, 0x63, 0x65, 0x30, 0x39]),
                 tcKeyFrameCounter: 0,
+                // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
                 networkKey: Buffer.from(this.networkOptions.networkKey!),
                 networkKeyFrameCounter: 0,
                 networkKeySequenceNumber: 0,
@@ -113,7 +115,9 @@ export class ZoHAdapter extends Adapter {
     public async initPort(): Promise<void> {
         await this.closePort(); // will do nothing if nothing's open
 
+        // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
         if (isTcpPath(this.serialPortOptions.path!)) {
+            // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
             const pathUrl = new URL(this.serialPortOptions.path!);
             const hostname = pathUrl.hostname;
             const port = Number.parseInt(pathUrl.port, 10);
@@ -126,7 +130,7 @@ export class ZoHAdapter extends Adapter {
             this.socketPort.setKeepAlive(true, 15000);
             this.driver.writer.pipe(this.socketPort);
             this.socketPort.pipe(this.driver.parser);
-            this.driver.parser.on('data', this.driver.onFrame.bind(this.driver));
+            this.driver.parser.on("data", this.driver.onFrame.bind(this.driver));
 
             return await new Promise((resolve, reject): void => {
                 const openError = async (err: Error): Promise<void> => {
@@ -135,29 +139,37 @@ export class ZoHAdapter extends Adapter {
                     reject(err);
                 };
 
-                this.socketPort!.on('connect', () => {
-                    logger.debug('Socket connected', NS);
+                // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
+                this.socketPort!.on("connect", () => {
+                    logger.debug("Socket connected", NS);
                 });
-                this.socketPort!.on('ready', (): void => {
-                    logger.info('Socket ready', NS);
-                    this.socketPort!.removeListener('error', openError);
-                    this.socketPort!.once('close', this.onPortClose.bind(this));
-                    this.socketPort!.on('error', this.onPortError.bind(this));
+                // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
+                this.socketPort!.on("ready", (): void => {
+                    logger.info("Socket ready", NS);
+                    // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
+                    this.socketPort!.removeListener("error", openError);
+                    // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
+                    this.socketPort!.once("close", this.onPortClose.bind(this));
+                    // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
+                    this.socketPort!.on("error", this.onPortError.bind(this));
 
                     resolve();
                 });
-                this.socketPort!.once('error', openError);
+                // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
+                this.socketPort!.once("error", openError);
 
+                // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
                 this.socketPort!.connect(port, hostname);
             });
         }
 
         const serialOpts = {
+            // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
             path: this.serialPortOptions.path!,
-            baudRate: typeof this.serialPortOptions.baudRate === 'number' ? this.serialPortOptions.baudRate : 115200,
-            rtscts: typeof this.serialPortOptions.rtscts === 'boolean' ? this.serialPortOptions.rtscts : false,
+            baudRate: typeof this.serialPortOptions.baudRate === "number" ? this.serialPortOptions.baudRate : 115200,
+            rtscts: typeof this.serialPortOptions.rtscts === "boolean" ? this.serialPortOptions.rtscts : false,
             autoOpen: false,
-            parity: 'none' as const,
+            parity: "none" as const,
             stopBits: 1 as const,
             xon: false,
             xoff: false,
@@ -165,7 +177,7 @@ export class ZoHAdapter extends Adapter {
 
         // enable software flow control if RTS/CTS not enabled in config
         if (!serialOpts.rtscts) {
-            logger.info('RTS/CTS config is off, enabling software flow control.', NS);
+            logger.info("RTS/CTS config is off, enabling software flow control.", NS);
             serialOpts.xon = true;
             serialOpts.xoff = true;
         }
@@ -175,16 +187,18 @@ export class ZoHAdapter extends Adapter {
 
         this.driver.writer.pipe(this.serialPort);
         this.serialPort.pipe(this.driver.parser);
-        this.driver.parser.on('data', this.driver.onFrame.bind(this.driver));
+        this.driver.parser.on("data", this.driver.onFrame.bind(this.driver));
 
         try {
+            // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
             await this.serialPort!.asyncOpen();
+            // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
             await this.serialPort!.asyncFlush();
 
-            logger.info('Serial port opened', NS);
+            logger.info("Serial port opened", NS);
 
-            this.serialPort.once('close', this.onPortClose.bind(this));
-            this.serialPort.on('error', this.onPortError.bind(this));
+            this.serialPort.once("close", this.onPortClose.bind(this));
+            this.serialPort.on("error", this.onPortError.bind(this));
         } catch (error) {
             await this.stop();
 
@@ -198,11 +212,11 @@ export class ZoHAdapter extends Adapter {
      * @param err A boolean for Socket, an Error for serialport
      */
     /* v8 ignore start */
-    private async onPortClose(error: boolean | Error): Promise<void> {
+    private onPortClose(error: boolean | Error): void {
         if (error) {
-            logger.error('Port closed unexpectedly.', NS);
+            logger.error("Port closed unexpectedly.", NS);
         } else {
-            logger.info('Port closed.', NS);
+            logger.info("Port closed.", NS);
         }
     }
     /* v8 ignore stop */
@@ -212,10 +226,10 @@ export class ZoHAdapter extends Adapter {
      * @param error
      */
     /* v8 ignore start */
-    private async onPortError(error: Error): Promise<void> {
+    private onPortError(error: Error): void {
         logger.error(`Port ${error}`, NS);
 
-        this.emit('disconnected');
+        this.emit("disconnected");
     }
     /* v8 ignore stop */
 
@@ -223,6 +237,7 @@ export class ZoHAdapter extends Adapter {
     public async closePort(): Promise<void> {
         if (this.serialPort?.isOpen) {
             try {
+                // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
                 await this.serialPort!.asyncFlushAndClose();
             } catch (err) {
                 logger.error(`Failed to close serial port ${err}.`, NS);
@@ -244,7 +259,7 @@ export class ZoHAdapter extends Adapter {
         setLogger(logger); // pass the logger to ZoH
         await this.initPort();
 
-        let result: TsType.StartResult = 'resumed';
+        let result: TsType.StartResult = "resumed";
         const currentNetParams = await this.driver.readNetworkState();
 
         if (currentNetParams) {
@@ -252,27 +267,29 @@ export class ZoHAdapter extends Adapter {
             if (
                 // TODO: add eui64 whenever added as configurable
                 this.networkOptions.panID !== currentNetParams.panId ||
-                Buffer.from(this.networkOptions.extendedPanID!).readBigUInt64LE(0) != currentNetParams.extendedPANId ||
+                // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
+                Buffer.from(this.networkOptions.extendedPanID!).readBigUInt64LE(0) !== currentNetParams.extendedPANId ||
+                // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
                 !Buffer.from(this.networkOptions.networkKey!).equals(currentNetParams.networkKey)
             ) {
                 await this.driver.resetNetwork();
 
-                result = 'reset';
+                result = "reset";
             }
         } else {
             // no save detected, brand new network
-            result = 'reset';
+            result = "reset";
         }
 
         await this.driver.start();
         await this.driver.formNetwork();
 
-        this.driver.on('frame', this.onFrame.bind(this));
-        this.driver.on('gpFrame', this.onGPFrame.bind(this));
-        this.driver.on('deviceJoined', this.onDeviceJoined.bind(this));
-        this.driver.on('deviceRejoined', this.onDeviceRejoined.bind(this));
-        this.driver.on('deviceLeft', this.onDeviceLeft.bind(this));
-        this.driver.on('deviceAuthorized', this.onDeviceAuthorized.bind(this));
+        this.driver.on("frame", this.onFrame.bind(this));
+        this.driver.on("gpFrame", this.onGPFrame.bind(this));
+        this.driver.on("deviceJoined", this.onDeviceJoined.bind(this));
+        this.driver.on("deviceRejoined", this.onDeviceRejoined.bind(this));
+        this.driver.on("deviceLeft", this.onDeviceLeft.bind(this));
+        this.driver.on("deviceAuthorized", this.onDeviceAuthorized.bind(this));
 
         return result;
     }
@@ -288,12 +305,12 @@ export class ZoHAdapter extends Adapter {
     }
 
     public async getCoordinatorIEEE(): Promise<string> {
-        return `0x${bigUInt64ToHexBE(this.driver.netParams.eui64)}`;
+        return await Promise.resolve(`0x${bigUInt64ToHexBE(this.driver.netParams.eui64)}`);
     }
 
     public async getCoordinatorVersion(): Promise<TsType.CoordinatorVersion> {
-        return {
-            type: 'ZigBee on Host',
+        return await Promise.resolve({
+            type: "ZigBee on Host",
             meta: {
                 major: this.driver.protocolVersionMajor,
                 minor: this.driver.protocolVersionMinor,
@@ -301,40 +318,39 @@ export class ZoHAdapter extends Adapter {
                 apiVersion: this.driver.rcpAPIVersion,
                 revision: `https://github.com/Nerivec/zigbee-on-host (using: ${this.driver.ncpVersion})`,
             },
-        };
+        });
     }
 
     /* v8 ignore start */
-    public async reset(type: 'soft' | 'hard'): Promise<void> {
-        throw new Error(`Reset ${type} not support`);
+    public async reset(type: "soft" | "hard"): Promise<void> {
+        await Promise.reject(new Error(`Reset ${type} not support`));
     }
     /* v8 ignore stop */
 
     /* v8 ignore start */
     public async supportsBackup(): Promise<boolean> {
-        return false;
+        return await Promise.resolve(false);
     }
     /* v8 ignore stop */
 
     /* v8 ignore start */
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    public async backup(ieeeAddressesInDatabase: string[]): Promise<Backup> {
-        throw new Error('ZigBee on Host handles backup internally');
+    public async backup(_ieeeAddressesInDatabase: string[]): Promise<Backup> {
+        return await Promise.reject(new Error("ZigBee on Host handles backup internally"));
     }
     /* v8 ignore stop */
 
     public async getNetworkParameters(): Promise<TsType.NetworkParameters> {
-        return {
+        return await Promise.resolve({
             panID: this.driver.netParams.panId,
             extendedPanID: `0x${bigUInt64ToHexBE(this.driver.netParams.extendedPANId)}`,
             channel: this.driver.netParams.channel,
             nwkUpdateID: this.driver.netParams.nwkUpdateId,
-        };
+        });
     }
 
     /* v8 ignore start */
     public async addInstallCode(ieeeAddress: string, key: Buffer): Promise<void> {
-        throw new Error(`not supported ${ieeeAddress}, ${key.toString('hex')}`);
+        await Promise.reject(new Error(`not supported ${ieeeAddress}, ${key.toString("hex")}`));
     }
     /* v8 ignore stop */
 
@@ -342,8 +358,8 @@ export class ZoHAdapter extends Adapter {
     public waitFor(
         networkAddress: number,
         endpoint: number,
-        frameType: Zcl.FrameType,
-        direction: Zcl.Direction,
+        _frameType: Zcl.FrameType,
+        _direction: Zcl.Direction,
         transactionSequenceNumber: number | undefined,
         clusterID: number,
         commandIdentifier: number,
@@ -387,7 +403,7 @@ export class ZoHAdapter extends Adapter {
         clusterId: K,
         payload: Buffer,
         disableResponse: boolean,
-    ): Promise<ZdoTypes.RequestToResponseMap[K] | void> {
+    ): Promise<ZdoTypes.RequestToResponseMap[K] | undefined> {
         if (networkAddress === ZSpec.COORDINATOR_ADDRESS) {
             // mock ZDO response using driver layer data for coordinator
             // seqNum doesn't matter since waitress bypassed, so don't bother doing any logic for it
@@ -400,7 +416,7 @@ export class ZoHAdapter extends Adapter {
             const respClusterId = clusterId | 0x8000;
             const result = Zdo.Buffalo.readResponse(this.hasZdoMessageOverhead, respClusterId, response) as ZdoTypes.RequestToResponseMap[K];
 
-            this.emit('zdoResponse', respClusterId, result);
+            this.emit("zdoResponse", respClusterId, result);
 
             return result;
         }
@@ -462,7 +478,7 @@ export class ZoHAdapter extends Adapter {
             const result = await this.sendZdo(ZSpec.BLANK_EUI64, networkAddress, clusterId, zdoPayload, false);
 
             /* v8 ignore start */
-            if (!Zdo.Buffalo.checkStatus(result)) {
+            if (!Zdo.Buffalo.checkStatus<Zdo.ClusterId.PERMIT_JOINING_RESPONSE>(result)) {
                 throw new Zdo.StatusError(result[0]);
             }
             /* v8 ignore stop */
@@ -482,7 +498,7 @@ export class ZoHAdapter extends Adapter {
         disableResponse: boolean,
         disableRecovery: boolean,
         sourceEndpoint?: number,
-    ): Promise<ZclPayload | void> {
+    ): Promise<ZclPayload | undefined> {
         /* v8 ignore start */
         if (networkAddress === ZSpec.COORDINATOR_ADDRESS) {
             // TODO: handle e.g. GP permit join
@@ -503,7 +519,7 @@ export class ZoHAdapter extends Adapter {
             commandResponseId = Zcl.Foundation.defaultRsp.ID;
         }
 
-        return await this.queue.execute<ZclPayload | void>(async () => {
+        return await this.queue.execute<ZclPayload | undefined>(async () => {
             this.checkInterpanLock();
 
             logger.debug(
@@ -542,7 +558,7 @@ export class ZoHAdapter extends Adapter {
 
                     return;
                 } catch (error) {
-                    if (disableRecovery || i == 1) {
+                    if (disableRecovery || i === 1) {
                         throw error;
                     } // else retry
                 }
@@ -594,25 +610,25 @@ export class ZoHAdapter extends Adapter {
 
     /* v8 ignore start */
     public async setChannelInterPAN(channel: number): Promise<void> {
-        throw new Error(`not supported ${channel}`);
+        await Promise.reject(new Error(`not supported ${channel}`));
     }
     /* v8 ignore stop */
 
     /* v8 ignore start */
     public async sendZclFrameInterPANToIeeeAddr(zclFrame: Zcl.Frame, ieeeAddress: string): Promise<void> {
-        throw new Error(`not supported ${JSON.stringify(zclFrame)}, ${ieeeAddress}`);
+        await Promise.reject(new Error(`not supported ${JSON.stringify(zclFrame)}, ${ieeeAddress}`));
     }
     /* v8 ignore stop */
 
     /* v8 ignore start */
     public async sendZclFrameInterPANBroadcast(zclFrame: Zcl.Frame, timeout: number): Promise<ZclPayload> {
-        throw new Error(`not supported ${JSON.stringify(zclFrame)}, ${timeout}`);
+        return await Promise.reject(new Error(`not supported ${JSON.stringify(zclFrame)}, ${timeout}`));
     }
     /* v8 ignore stop */
 
     /* v8 ignore start */
     public async restoreChannelInterPAN(): Promise<void> {
-        throw new Error(`not supported`);
+        await Promise.reject(new Error("not supported"));
     }
     /* v8 ignore stop */
 
@@ -623,7 +639,7 @@ export class ZoHAdapter extends Adapter {
     /* v8 ignore start */
     private checkInterpanLock(): void {
         if (this.interpanLock) {
-            throw new Error(`[INTERPAN MODE] Cannot execute non-InterPAN commands.`);
+            throw new Error("[INTERPAN MODE] Cannot execute non-InterPAN commands.");
         }
     }
     /* v8 ignore stop */
@@ -645,8 +661,10 @@ export class ZoHAdapter extends Adapter {
             logger.debug(() => `<~~~ APS ZDO[sender=${sender16}:${sender64} clusterId=${apsHeader.clusterId}]`, NS);
 
             try {
+                // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
                 const result = Zdo.Buffalo.readResponse(this.hasZdoMessageOverhead, apsHeader.clusterId!, apsPayload);
 
+                // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
                 if (apsHeader.clusterId! === Zdo.ClusterId.NETWORK_ADDRESS_RESPONSE) {
                     // special case to properly resolve a NETWORK_ADDRESS_RESPONSE following a NETWORK_ADDRESS_REQUEST (based on EUI64 from ZDO payload)
                     // NOTE: if response has invalid status (no EUI64 available), response waiter will eventually time out
@@ -654,10 +672,12 @@ export class ZoHAdapter extends Adapter {
                         this.zdoWaitress.resolve({sender: result[1].eui64, clusterId: apsHeader.clusterId, response: result, seqNum: apsPayload[0]});
                     }
                 } else {
+                    // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
                     this.zdoWaitress.resolve({sender: sender16!, clusterId: apsHeader.clusterId!, response: result, seqNum: apsPayload[0]});
                 }
 
-                this.emit('zdoResponse', apsHeader.clusterId!, result);
+                // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
+                this.emit("zdoResponse", apsHeader.clusterId!, result);
                 /* v8 ignore start */
             } catch (error) {
                 logger.error(`${(error as Error).message}`, NS);
@@ -667,19 +687,27 @@ export class ZoHAdapter extends Adapter {
             logger.debug(() => `<~~~ APS[sender=${sender16}:${sender64} profileId=${apsHeader.profileId} clusterId=${apsHeader.clusterId}]`, NS);
 
             const payload: ZclPayload = {
+                // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
                 clusterID: apsHeader.clusterId!,
                 header: Zcl.Header.fromBuffer(apsPayload),
-                address: sender64 !== undefined ? `0x${bigUInt64ToHexBE(sender64)}` : sender16!,
+                address:
+                    sender64 !== undefined
+                        ? `0x${bigUInt64ToHexBE(sender64)}`
+                        : // biome-ignore lint/style/noNonNullAssertion: <explanation>
+                          sender16!,
                 data: apsPayload,
+                // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
                 endpoint: apsHeader.sourceEndpoint!,
                 linkquality: rssi, // TODO: convert RSSI to LQA
+                // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
                 groupID: apsHeader.group!,
                 wasBroadcast: apsHeader.frameControl.deliveryMode === 2 /* BCAST */,
+                // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
                 destinationEndpoint: apsHeader.destEndpoint!,
             };
 
             this.zclWaitress.resolve(payload);
-            this.emit('zclPayload', payload);
+            this.emit("zclPayload", payload);
         }
     }
 
@@ -720,12 +748,15 @@ export class ZoHAdapter extends Adapter {
 
         /* v8 ignore start */
         if (nwkHeader.frameControlExt?.appId === 0x02 /* ZGP */) {
+            // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
             data.writeBigUInt64LE(macHeader.source64!, offset);
             offset += 8;
+            // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
             data.writeUInt8(nwkHeader.endpoint!, offset);
             offset += 1;
             /* v8 ignore stop */
         } else {
+            // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
             data.writeUInt32LE(nwkHeader.sourceId!, offset);
             offset += 4;
         }
@@ -742,43 +773,44 @@ export class ZoHAdapter extends Adapter {
             clusterID: 0x21 /* Green Power */,
             header: Zcl.Header.fromBuffer(data),
             address:
-                macHeader.source64 !== undefined ? /* v8 ignore next */ `0x${bigUInt64ToHexBE(macHeader.source64)}` : nwkHeader.sourceId! & 0xffff,
+                macHeader.source64 !== undefined /* v8 ignore next */
+                    ? /* v8 ignore next */ `0x${bigUInt64ToHexBE(macHeader.source64)}`
+                    : // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
+                      nwkHeader.sourceId! & 0xffff,
             data,
             endpoint: ZSpec.GP_ENDPOINT,
             linkquality: rssi, // TODO: convert RSSI to LQA
             groupID: ZSpec.GP_GROUP_ID,
+            // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
             wasBroadcast: macHeader.destination64 === undefined && macHeader.destination16! >= 0xfff8,
             destinationEndpoint: ZSpec.GP_ENDPOINT,
         };
 
         this.zclWaitress.resolve(zclPayload);
-        this.emit('zclPayload', zclPayload);
+        this.emit("zclPayload", zclPayload);
     }
 
     private onDeviceJoined(source16: number, source64: bigint, capabilities: MACCapabilities): void {
         // XXX: don't delay if no cap? (joined through router)
-        if (capabilities && capabilities.rxOnWhenIdle) {
-            this.emit('deviceJoined', {networkAddress: source16, ieeeAddr: `0x${bigUInt64ToHexBE(source64)}`});
+        if (capabilities?.rxOnWhenIdle) {
+            this.emit("deviceJoined", {networkAddress: source16, ieeeAddr: `0x${bigUInt64ToHexBE(source64)}`});
         } else {
             // XXX: end devices can be finicky about finishing the key authorization, Z2M interview can create a bottleneck, so delay it
             setTimeout(() => {
-                this.emit('deviceJoined', {networkAddress: source16, ieeeAddr: `0x${bigUInt64ToHexBE(source64)}`});
+                this.emit("deviceJoined", {networkAddress: source16, ieeeAddr: `0x${bigUInt64ToHexBE(source64)}`});
             }, 5000);
         }
     }
-
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    private onDeviceRejoined(source16: number, source64: bigint, capabilities: MACCapabilities): void {
-        this.emit('deviceJoined', {networkAddress: source16, ieeeAddr: `0x${bigUInt64ToHexBE(source64)}`});
+    private onDeviceRejoined(source16: number, source64: bigint, _capabilities: MACCapabilities): void {
+        this.emit("deviceJoined", {networkAddress: source16, ieeeAddr: `0x${bigUInt64ToHexBE(source64)}`});
     }
 
     private onDeviceLeft(source16: number, source64: bigint): void {
-        this.emit('deviceLeave', {networkAddress: source16, ieeeAddr: `0x${bigUInt64ToHexBE(source64)}`});
+        this.emit("deviceLeave", {networkAddress: source16, ieeeAddr: `0x${bigUInt64ToHexBE(source64)}`});
     }
 
     /* v8 ignore start */
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    private onDeviceAuthorized(source16: number, source64: bigint): void {}
+    private onDeviceAuthorized(_source16: number, _source64: bigint): void {}
     /* v8 ignore stop */
 
     private waitressTimeoutFormatter(matcher: WaitressMatcher, timeout: number): string {
@@ -791,7 +823,9 @@ export class ZoHAdapter extends Adapter {
             (matcher.sender === undefined || payload.address === matcher.sender) &&
             payload.clusterID === matcher.clusterId &&
             payload.endpoint === matcher.endpoint &&
+            // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
             payload.header!.commandIdentifier === matcher.commandId &&
+            // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
             (matcher.transactionSequenceNumber === undefined || payload.header!.transactionSequenceNumber === matcher.transactionSequenceNumber)
         );
     }

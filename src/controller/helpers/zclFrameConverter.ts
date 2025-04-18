@@ -1,5 +1,5 @@
-import * as Zcl from '../../zspec/zcl';
-import {Cluster, CustomClusters} from '../../zspec/zcl/definition/tstype';
+import * as Zcl from "../../zspec/zcl";
+import type {Cluster, CustomClusters} from "../../zspec/zcl/definition/tstype";
 
 interface KeyValue {
     [s: string]: number | string;
@@ -12,7 +12,7 @@ interface KeyValue {
 // if the header is lacking the information.
 function getCluster(frame: Zcl.Frame, deviceManufacturerID: number | undefined, customClusters: CustomClusters): Cluster {
     let cluster = frame.cluster;
-    if (!frame?.header?.manufacturerCode && frame?.cluster && deviceManufacturerID == Zcl.ManufacturerCode.LEGRAND_GROUP) {
+    if (!frame?.header?.manufacturerCode && frame?.cluster && deviceManufacturerID === Zcl.ManufacturerCode.LEGRAND_GROUP) {
         cluster = Zcl.Utils.getCluster(frame.cluster.ID, deviceManufacturerID, customClusters);
     }
     return cluster;

@@ -1,6 +1,6 @@
-import {ClusterId as ZdoClusterId} from '../../../zspec/zdo';
-import {Type as CommandType} from '../unpi/constants';
-import ParameterType from './parameterType';
+import type {ClusterId as ZdoClusterId} from "../../../zspec/zdo";
+import type {Type as CommandType} from "../unpi/constants";
+import type ParameterType from "./parameterType";
 
 export type MtType = number | number[] | string | Buffer | {[s: string]: number | string}[];
 
@@ -18,25 +18,24 @@ interface MtCmdBase {
     zdoClusterId: ZdoClusterId;
 }
 
-interface MtCmdAreq extends Omit<MtCmdBase, 'response' | 'zdoClusterId'> {
+interface MtCmdAreq extends Omit<MtCmdBase, "response" | "zdoClusterId"> {
     type: CommandType.AREQ;
 }
 
-interface MtCmdSreq extends Omit<MtCmdBase, 'zdoClusterId'> {
+interface MtCmdSreq extends Omit<MtCmdBase, "zdoClusterId"> {
     type: CommandType.SREQ;
 }
 
-export interface MtCmdAreqZdo extends Omit<MtCmdBase, 'request' | 'response'> {
+export interface MtCmdAreqZdo extends Omit<MtCmdBase, "request" | "response"> {
     type: CommandType.AREQ;
 }
 
-export interface MtCmdSreqZdo extends Omit<MtCmdBase, 'request' | 'response'> {
+export interface MtCmdSreqZdo extends Omit<MtCmdBase, "request" | "response"> {
     type: CommandType.SREQ;
 }
 
 export type MtCmd = MtCmdAreq | MtCmdSreq | MtCmdAreqZdo | MtCmdSreqZdo;
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+// biome-ignore lint/suspicious/noExplicitAny: API
 export type ZpiObjectPayload = {[s: string]: any};
 
 export interface BuffaloZnpOptions {

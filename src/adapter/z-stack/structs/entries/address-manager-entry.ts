@@ -1,6 +1,4 @@
-/* eslint-disable @typescript-eslint/explicit-function-return-type */
-
-import {Struct} from '../struct';
+import {Struct} from "../struct";
 
 /**
  * Address manager entry flags present in `user` field.
@@ -37,10 +35,10 @@ const emptyAddress2 = Buffer.alloc(8, 0xff);
  */
 export const addressManagerEntry = (data?: Buffer) => {
     return Struct.new()
-        .member('uint8', 'user')
-        .member('uint16', 'nwkAddr')
-        .member('uint8array-reversed', 'extAddr', 8)
-        .method('isSet', Boolean.prototype, (e) => e.user !== 0x00 && !e.extAddr.equals(emptyAddress1) && !e.extAddr.equals(emptyAddress2))
+        .member("uint8", "user")
+        .member("uint16", "nwkAddr")
+        .member("uint8array-reversed", "extAddr", 8)
+        .method("isSet", Boolean.prototype, (e) => e.user !== 0x00 && !e.extAddr.equals(emptyAddress1) && !e.extAddr.equals(emptyAddress2))
         .padding(0xff)
         .build(data);
 };

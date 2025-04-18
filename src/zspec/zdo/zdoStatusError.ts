@@ -1,4 +1,4 @@
-import {Status} from './definition/status';
+import {Status} from "./definition/status";
 
 export class ZdoStatusError extends Error {
     public code: Status;

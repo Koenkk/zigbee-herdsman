@@ -1,17 +1,17 @@
 /* v8 ignore start */
 
-import {randomBytes} from 'node:crypto';
+import {randomBytes} from "node:crypto";
 
-import {EmberEUI64, EmberInitialSecurityBitmask} from '../types/named';
-import {EmberInitialSecurityState, EmberKeyData} from '../types/struct';
-import crc16ccitt from './crc16ccitt';
+import {EmberEUI64, EmberInitialSecurityBitmask} from "../types/named";
+import {EmberInitialSecurityState, EmberKeyData} from "../types/struct";
+import crc16ccitt from "./crc16ccitt";
 
 if (!Symbol.asyncIterator) {
-    /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
-    (<any>Symbol).asyncIterator = Symbol.for('Symbol.asyncIterator');
+    // biome-ignore lint/suspicious/noExplicitAny: API
+    (<any>Symbol).asyncIterator = Symbol.for("Symbol.asyncIterator");
 }
 
-function ember_security(networkKey: Buffer): EmberInitialSecurityState {
+function emberSecurity(networkKey: Buffer): EmberInitialSecurityState {
     const isc: EmberInitialSecurityState = new EmberInitialSecurityState();
     isc.bitmask =
         EmberInitialSecurityBitmask.HAVE_PRECONFIGURED_KEY |
@@ -29,4 +29,4 @@ function ember_security(networkKey: Buffer): EmberInitialSecurityState {
     return isc;
 }
 
-export {crc16ccitt, ember_security};
+export {crc16ccitt, emberSecurity};

@@ -1,19 +1,19 @@
-import * as Zcl from '../src/zspec/zcl';
-import {BuffaloZcl} from '../src/zspec/zcl/buffaloZcl';
-import {BuffaloZclDataType, DataType, Direction, FrameType, StructuredIndicatorType} from '../src/zspec/zcl/definition/enums';
+import * as Zcl from "../src/zspec/zcl";
+import {BuffaloZcl} from "../src/zspec/zcl/buffaloZcl";
+import {BuffaloZclDataType, DataType, Direction, FrameType, StructuredIndicatorType} from "../src/zspec/zcl/definition/enums";
 
-describe('Zcl', () => {
-    it('Get cluster by name', () => {
-        const cluster = Zcl.Utils.getCluster('genIdentify', undefined, {});
+describe("Zcl", () => {
+    it("Get cluster by name", () => {
+        const cluster = Zcl.Utils.getCluster("genIdentify", undefined, {});
         expect(cluster.ID).toBe(3);
-        expect(cluster.name).toBe('genIdentify');
+        expect(cluster.name).toBe("genIdentify");
         expect(cluster.commands.identifyQuery.ID).toBe(1);
-        expect(cluster.commands.identifyQuery.name).toBe('identifyQuery');
+        expect(cluster.commands.identifyQuery.name).toBe("identifyQuery");
         expect(cluster.commandsResponse.identifyQueryRsp.ID).toBe(0);
-        expect(cluster.commandsResponse.identifyQueryRsp.name).toBe('identifyQueryRsp');
+        expect(cluster.commandsResponse.identifyQueryRsp.name).toBe("identifyQueryRsp");
     });
 
-    it('Get cluster by ID', () => {
+    it("Get cluster by ID", () => {
         const cluster1 = Zcl.Utils.getCluster(0, undefined, {});
         // @ts-expect-error testing
         delete cluster1.getAttribute;
@@ -23,7 +23,7 @@ describe('Zcl', () => {
         delete cluster1.hasAttribute;
         // @ts-expect-error testing
         delete cluster1.getCommandResponse;
-        const cluster2 = Zcl.Utils.getCluster('genBasic', undefined, {});
+        const cluster2 = Zcl.Utils.getCluster("genBasic", undefined, {});
         // @ts-expect-error testing
         delete cluster2.getAttribute;
         // @ts-expect-error testing
@@ -35,90 +35,90 @@ describe('Zcl', () => {
         expect(cluster1).toStrictEqual(cluster2);
     });
 
-    it('Get cluster attribute by ID', () => {
+    it("Get cluster attribute by ID", () => {
         const cluster = Zcl.Utils.getCluster(0, undefined, {});
         const attribute = cluster.getAttribute(1);
-        expect(attribute).toStrictEqual({ID: 1, type: DataType.UINT8, name: 'appVersion'});
+        expect(attribute).toStrictEqual({ID: 1, type: DataType.UINT8, name: "appVersion"});
     });
 
-    it('Cluster has attribute', () => {
+    it("Cluster has attribute", () => {
         const cluster = Zcl.Utils.getCluster(0, undefined, {});
-        expect(cluster.hasAttribute('zclVersion')).toBeTruthy();
-        expect(cluster.hasAttribute('NOTEXISTING')).toBeFalsy();
+        expect(cluster.hasAttribute("zclVersion")).toBeTruthy();
+        expect(cluster.hasAttribute("NOTEXISTING")).toBeFalsy();
         expect(cluster.hasAttribute(0)).toBeTruthy();
         expect(cluster.hasAttribute(910293)).toBeFalsy();
     });
 
-    it('Get specific command by name', () => {
-        const cluster = Zcl.Utils.getCluster('genIdentify', undefined, {});
-        const command = cluster.getCommand('ezmodeInvoke');
+    it("Get specific command by name", () => {
+        const cluster = Zcl.Utils.getCluster("genIdentify", undefined, {});
+        const command = cluster.getCommand("ezmodeInvoke");
         expect(command.ID).toBe(2);
-        expect(command.name).toBe('ezmodeInvoke');
+        expect(command.name).toBe("ezmodeInvoke");
     });
 
-    it('Get global command by name', () => {
-        const command = Zcl.Utils.getGlobalCommand('readRsp');
+    it("Get global command by name", () => {
+        const command = Zcl.Utils.getGlobalCommand("readRsp");
         expect(command.ID).toBe(1);
-        expect(command.name).toBe('readRsp');
+        expect(command.name).toBe("readRsp");
     });
 
-    it('Get global command non existing', () => {
+    it("Get global command non existing", () => {
         expect(() => {
-            Zcl.Utils.getGlobalCommand('nonexisting');
+            Zcl.Utils.getGlobalCommand("nonexisting");
         }).toThrow("Global command with key 'nonexisting' does not exist");
     });
 
-    it('Get cluster by name non-existing', () => {
+    it("Get cluster by name non-existing", () => {
         expect(() => {
-            Zcl.Utils.getCluster('notExisting', undefined, {});
+            Zcl.Utils.getCluster("notExisting", undefined, {});
         }).toThrow("Cluster with name 'notExisting' does not exist");
     });
 
-    it('Get cluster by id non-existing', () => {
+    it("Get cluster by id non-existing", () => {
         expect(JSON.parse(JSON.stringify(Zcl.Utils.getCluster(0x190231, undefined, {})))).toStrictEqual({
             ID: 1638961,
             attributes: {},
-            name: '1638961',
+            name: "1638961",
             commands: {},
             commandsResponse: {},
         });
     });
 
-    it('Get specific command by ID', () => {
-        const cluster = Zcl.Utils.getCluster('genIdentify', undefined, {});
+    it("Get specific command by ID", () => {
+        const cluster = Zcl.Utils.getCluster("genIdentify", undefined, {});
         const command = cluster.getCommand(2);
-        expect(command).toStrictEqual(cluster.getCommand('ezmodeInvoke'));
+        expect(command).toStrictEqual(cluster.getCommand("ezmodeInvoke"));
     });
 
-    it('Get specific command by name server to client', () => {
-        const cluster = Zcl.Utils.getCluster('genIdentify', undefined, {});
+    it("Get specific command by name server to client", () => {
+        const cluster = Zcl.Utils.getCluster("genIdentify", undefined, {});
         const command = cluster.getCommandResponse(0);
         expect(command.ID).toBe(0);
-        expect(command.name).toBe('identifyQueryRsp');
+        expect(command.name).toBe("identifyQueryRsp");
     });
 
-    it('Get specific command by name non existing', () => {
+    it("Get specific command by name non existing", () => {
         expect(() => {
-            const cluster = Zcl.Utils.getCluster('genIdentify', undefined, {});
-            cluster.getCommandResponse('nonexisting');
+            const cluster = Zcl.Utils.getCluster("genIdentify", undefined, {});
+            cluster.getCommandResponse("nonexisting");
         }).toThrow("Cluster 'genIdentify' has no command response 'nonexisting'");
     });
 
-    it('Get discrete or analog of unkown type', () => {
+    it("Get discrete or analog of unkown type", () => {
         expect(() => {
             // @ts-expect-error invalid on purpose
             Zcl.Utils.getDataTypeClass(99999);
         }).toThrow("Don't know value type for 'undefined'");
     });
 
-    it('ZclFrame from buffer parse payload with unknown frame type', () => {
+    it("ZclFrame from buffer parse payload with unknown frame type", () => {
         expect(() => {
             // @ts-ignore
             Zcl.Frame.parsePayload({frameControl: {frameType: 9}}, undefined);
         }).toThrow("Unsupported frameType '9'");
     });
 
-    it('ZclFrame from buffer report', () => {
+    it("ZclFrame from buffer report", () => {
         const buffer = Buffer.from([0x18, 0x4a, 0x0a, 0x55, 0x00, 0x39, 0x00, 0x00, 0x00, 0x00]);
         const frame = Zcl.Frame.fromBuffer(Zcl.Clusters.genAnalogInput.ID, Zcl.Header.fromBuffer(buffer)!, buffer, {});
         const header = new Zcl.Header(
@@ -146,11 +146,11 @@ describe('Zcl', () => {
         expect(frame.payload).toStrictEqual(payload);
         expect(frame.header.isGlobal).toBe(true);
         expect(frame.header.isSpecific).toBe(false);
-        expect(frame.isCluster('genAnalogInput')).toBe(true);
-        expect(frame.isCommand('report')).toBe(true);
+        expect(frame.isCluster("genAnalogInput")).toBe(true);
+        expect(frame.isCommand("report")).toBe(true);
     });
 
-    it('ZclFrame from buffer tradfriArrowSingle', () => {
+    it("ZclFrame from buffer tradfriArrowSingle", () => {
         const buffer = Buffer.from([0x05, 0x7c, 0x11, 0x1d, 0x07, 0x00, 0x01, 0x0d, 0x00]);
         const frame = Zcl.Frame.fromBuffer(Zcl.Clusters.genScenes.ID, Zcl.Header.fromBuffer(buffer)!, buffer, {});
         const header = new Zcl.Header(
@@ -171,10 +171,10 @@ describe('Zcl', () => {
         expect(frame.header).toStrictEqual(header);
         expect(frame.payload).toStrictEqual(payload);
         expect(frame.command.ID).toStrictEqual(7);
-        expect(frame.command.name).toStrictEqual('tradfriArrowSingle');
+        expect(frame.command.name).toStrictEqual("tradfriArrowSingle");
     });
 
-    it('ZclFrame from buffer genGroups getMembership', () => {
+    it("ZclFrame from buffer genGroups getMembership", () => {
         const buffer = Buffer.from([0x11, 0x7c, 0x02, 2, 10, 0, 20, 0]);
         const frame = Zcl.Frame.fromBuffer(Zcl.Clusters.genGroups.ID, Zcl.Header.fromBuffer(buffer)!, buffer, {});
         const header = new Zcl.Header(
@@ -196,7 +196,7 @@ describe('Zcl', () => {
         expect(frame.payload).toStrictEqual(payload);
     });
 
-    it('ZclFrame from buffer genGroups getMembership', () => {
+    it("ZclFrame from buffer genGroups getMembership", () => {
         const buffer = Buffer.from([0x19, 0x7c, 0x03, 0, 10, 0]);
         const frame = Zcl.Frame.fromBuffer(Zcl.Clusters.genGroups.ID, Zcl.Header.fromBuffer(buffer)!, buffer, {});
         const header = new Zcl.Header(
@@ -218,7 +218,7 @@ describe('Zcl', () => {
         expect(frame.payload).toStrictEqual(payload);
     });
 
-    it('ZclFrame from buffer occupancy report', () => {
+    it("ZclFrame from buffer occupancy report", () => {
         const buffer = Buffer.from([24, 169, 10, 0, 0, 24, 1]);
         const frame = Zcl.Frame.fromBuffer(Zcl.Clusters.msOccupancySensing.ID, Zcl.Header.fromBuffer(buffer)!, buffer, {});
         const header = new Zcl.Header(
@@ -240,7 +240,7 @@ describe('Zcl', () => {
         expect(frame.payload).toStrictEqual(payload);
     });
 
-    it('ZclFrame from buffer configReportRsp - short', () => {
+    it("ZclFrame from buffer configReportRsp - short", () => {
         const buffer = Buffer.from([0x08, 0x01, 0x07, 0x00]);
         const frame = Zcl.Frame.fromBuffer(Zcl.Clusters.genPowerCfg.ID, Zcl.Header.fromBuffer(buffer)!, buffer, {});
         const header = new Zcl.Header(
@@ -262,7 +262,7 @@ describe('Zcl', () => {
         expect(frame.payload).toStrictEqual(payload);
     });
 
-    it('ZclFrame from buffer configReportRsp - long', () => {
+    it("ZclFrame from buffer configReportRsp - long", () => {
         const buffer = Buffer.from([0x08, 0x01, 0x07, 0x00, 0x01, 0x34, 0x12, 0x01, 0x01, 0x35, 0x12]);
         const frame = Zcl.Frame.fromBuffer(Zcl.Clusters.genPowerCfg.ID, Zcl.Header.fromBuffer(buffer)!, buffer, {});
         const header = new Zcl.Header(
@@ -287,7 +287,7 @@ describe('Zcl', () => {
         expect(frame.payload).toStrictEqual(payload);
     });
 
-    it('ZclFrame from buffer configReportRsp (hvacThermostat)', () => {
+    it("ZclFrame from buffer configReportRsp (hvacThermostat)", () => {
         const buffer = Buffer.from([0x18, 0x03, 0x07, 0x00, 0x00, 0x12, 0x00]);
         const frame = Zcl.Frame.fromBuffer(Zcl.Clusters.hvacThermostat.ID, Zcl.Header.fromBuffer(buffer)!, buffer, {});
         const header = new Zcl.Header(
@@ -309,7 +309,7 @@ describe('Zcl', () => {
         expect(frame.header).toStrictEqual(header);
     });
 
-    it('ZclFrame from buffer getWeeklyScheduleRsp (hvacThermostat)', () => {
+    it("ZclFrame from buffer getWeeklyScheduleRsp (hvacThermostat)", () => {
         const bufferHeat = Buffer.from([
             9, 7, 0, 6, 64, 1, 104, 1, 252, 8, 58, 2, 152, 8, 208, 2, 102, 8, 72, 3, 102, 8, 222, 3, 252, 8, 100, 5, 52, 8,
         ]);
@@ -361,7 +361,7 @@ describe('Zcl', () => {
         });
     });
 
-    it('ZclFrame to buffer setWeeklyScheduleRsp (hvacThermostat)', () => {
+    it("ZclFrame to buffer setWeeklyScheduleRsp (hvacThermostat)", () => {
         const payloadHeat = {
             numoftrans: 6,
             dayofweek: 64,
@@ -381,7 +381,7 @@ describe('Zcl', () => {
             false,
             undefined,
             8,
-            'setWeeklySchedule',
+            "setWeeklySchedule",
             513,
             payloadHeat,
             {},
@@ -409,7 +409,7 @@ describe('Zcl', () => {
             false,
             undefined,
             8,
-            'setWeeklySchedule',
+            "setWeeklySchedule",
             513,
             payloadCool,
             {},
@@ -430,7 +430,7 @@ describe('Zcl', () => {
             false,
             undefined,
             8,
-            'setWeeklySchedule',
+            "setWeeklySchedule",
             513,
             payloadHeatAndCool,
             {},
@@ -438,7 +438,7 @@ describe('Zcl', () => {
         expect(frameHeatAndCool.toBuffer()).toStrictEqual(Buffer.from([1, 8, 1, 6, 64, 2, 104, 1, 252, 8, 58, 2]));
     });
 
-    it('ZclFrame from buffer configReportRsp failed', () => {
+    it("ZclFrame from buffer configReportRsp failed", () => {
         const buffer = Buffer.from([0x08, 0x01, 0x07, 0x02, 0x01, 0x01, 0x01]);
         const frame = Zcl.Frame.fromBuffer(Zcl.Clusters.genPowerCfg.ID, Zcl.Header.fromBuffer(buffer)!, buffer, {});
         const header = new Zcl.Header(
@@ -460,7 +460,7 @@ describe('Zcl', () => {
         expect(frame.payload).toStrictEqual(payload);
     });
 
-    it('ZclFrame from buffer defaultRsp', () => {
+    it("ZclFrame from buffer defaultRsp", () => {
         const buffer = Buffer.from([0x18, 0x04, 0x0b, 0x0c, 0x82]);
         const frame = Zcl.Frame.fromBuffer(Zcl.Clusters.genBasic.ID, Zcl.Header.fromBuffer(buffer)!, buffer, {});
         const header = new Zcl.Header(
@@ -494,23 +494,23 @@ describe('Zcl', () => {
                     attrId: 65281,
                     dataType: 66,
                     attrData: {
-                        '3': 29,
-                        '5': 11710,
-                        '8': 4655,
-                        '9': 5378,
-                        '10': 9784,
-                        '12': 0,
-                        '100': 1,
-                        '101': 0,
-                        '110': 255,
-                        '111': 255,
-                        '148': 4,
-                        '149': 0.14562499523162842,
-                        '150': 2335.614013671875,
-                        '151': 0.0035429000854492188,
-                        '152': 0,
-                        '155': 1,
-                        '156': 1,
+                        "3": 29,
+                        "5": 11710,
+                        "8": 4655,
+                        "9": 5378,
+                        "10": 9784,
+                        "12": 0,
+                        "100": 1,
+                        "101": 0,
+                        "110": 255,
+                        "111": 255,
+                        "148": 4,
+                        "149": 0.14562499523162842,
+                        "150": 2335.614013671875,
+                        "151": 0.0035429000854492188,
+                        "152": 0,
+                        "155": 1,
+                        "156": 1,
                     },
                 },
             ],
@@ -521,11 +521,11 @@ describe('Zcl', () => {
                 255, 66, 34, 1, 33, 213, 12, 3, 40, 33, 4, 33, 168, 19, 5, 33, 43, 0, 6, 36, 0, 0, 5, 0, 0, 8, 33, 4, 2, 10, 33, 0, 0, 100, 16, 0,
             ],
             [
-                {attrId: 5, dataType: 66, attrData: 'lumi.sensor_wleak.aq1'},
-                {attrId: 65281, dataType: 66, attrData: {'1': 3285, '3': 33, '4': 5032, '5': 43, '6': 327680, '8': 516, '10': 0, '100': 0}},
+                {attrId: 5, dataType: 66, attrData: "lumi.sensor_wleak.aq1"},
+                {attrId: 65281, dataType: 66, attrData: {"1": 3285, "3": 33, "4": 5032, "5": 43, "6": 327680, "8": 516, "10": 0, "100": 0}},
             ],
         ],
-    ])('ZclFrame from buffer xiaomiStruct', (data, payload) => {
+    ])("ZclFrame from buffer xiaomiStruct", (data, payload) => {
         const buffer = Buffer.from(data);
         const frame = Zcl.Frame.fromBuffer(Zcl.Clusters.genBasic.ID, Zcl.Header.fromBuffer(buffer)!, buffer, {});
         const header = new Zcl.Header(
@@ -545,7 +545,7 @@ describe('Zcl', () => {
         expect(frame.payload).toStrictEqual(payload);
     });
 
-    it('ZclFrame from buffer struct', () => {
+    it("ZclFrame from buffer struct", () => {
         const buffer = Buffer.from([28, 52, 18, 194, 10, 2, 255, 76, 6, 0, 16, 1, 33, 206, 11, 33, 168, 67, 36, 1, 0, 0, 0, 0, 33, 48, 2, 32, 86]);
         const frame = Zcl.Frame.fromBuffer(Zcl.Clusters.genBasic.ID, Zcl.Header.fromBuffer(buffer)!, buffer, {});
         const header = new Zcl.Header(
@@ -589,7 +589,7 @@ describe('Zcl', () => {
         expect(frame.payload).toStrictEqual(payload);
     });
 
-    it('ZclFrame from buffer discoverRsp', () => {
+    it("ZclFrame from buffer discoverRsp", () => {
         const buffer = Buffer.from([24, 23, 13, 0, 32, 0, 32, 33, 0, 32, 49, 0, 48, 51, 0, 32, 53, 0, 24]);
         const frame = Zcl.Frame.fromBuffer(Zcl.Clusters.genPowerCfg.ID, Zcl.Header.fromBuffer(buffer)!, buffer, {});
         const header = new Zcl.Header(
@@ -618,18 +618,18 @@ describe('Zcl', () => {
 
         expect(frame.header).toStrictEqual(header);
         expect(frame.payload).toStrictEqual(payload);
-        expect(frame.cluster.name).toEqual('genPowerCfg');
-        expect(frame.command.name).toEqual('discoverRsp');
+        expect(frame.cluster.name).toEqual("genPowerCfg");
+        expect(frame.command.name).toEqual("discoverRsp");
     });
 
-    it('ZclFrame from buffer error on malformed', () => {
+    it("ZclFrame from buffer error on malformed", () => {
         const buffer = Buffer.from([0x08, 0x01]);
         expect(() => {
             Zcl.Frame.fromBuffer(Zcl.Clusters.genPowerCfg.ID, Zcl.Header.fromBuffer(buffer)!, buffer, {});
-        }).toThrow('Invalid ZclHeader');
+        }).toThrow("Invalid ZclHeader");
     });
 
-    it('ZclFrame from buffer readRsp failed', () => {
+    it("ZclFrame from buffer readRsp failed", () => {
         const buffer = Buffer.from([8, 1, 1, 1, 0, 2]);
         const frame = Zcl.Frame.fromBuffer(Zcl.Clusters.genBasic.ID, Zcl.Header.fromBuffer(buffer)!, buffer, {});
         const header = new Zcl.Header(
@@ -651,7 +651,7 @@ describe('Zcl', () => {
         expect(frame.payload).toStrictEqual(payload);
     });
 
-    it('ZclFrame from buffer readRsp success', () => {
+    it("ZclFrame from buffer readRsp success", () => {
         const buffer = Buffer.from([8, 1, 1, 1, 0, 0, 32, 3]);
         const frame = Zcl.Frame.fromBuffer(Zcl.Clusters.genBasic.ID, Zcl.Header.fromBuffer(buffer)!, buffer, {});
         const header = new Zcl.Header(
@@ -673,7 +673,7 @@ describe('Zcl', () => {
         expect(frame.payload).toStrictEqual(payload);
     });
 
-    it('ZclFrame from buffer GPD commission', () => {
+    it("ZclFrame from buffer GPD commission", () => {
         const buffer = Buffer.from([
             0x11, 0x00, 0x04, 0x00, 0x00, 0xfe, 0xf4, 0x46, 0x00, 0xf9, 0x00, 0x00, 0x00, 0xe0, 0x1b, 0x02, 0x81, 0xf2, 0xf1, 0xec, 0x92, 0xab, 0xff,
             0x8f, 0x13, 0x63, 0xe1, 0x46, 0xbe, 0xb5, 0x18, 0xc9, 0x0c, 0xab, 0xa4, 0x46, 0xd4, 0xd5, 0xf9, 0x01, 0x00, 0x00,
@@ -723,7 +723,7 @@ describe('Zcl', () => {
         expect(frame.payload).toStrictEqual(payload);
     });
 
-    it('ZclFrame from buffer GPD scene 0', () => {
+    it("ZclFrame from buffer GPD scene 0", () => {
         const buffer = Buffer.from([0x11, 0x00, 0x00, 0xa0, 0x14, 0xfe, 0xf4, 0x46, 0x00, 0xe5, 0x04, 0x00, 0x00, 0x10, 0xff]);
         const frame = Zcl.Frame.fromBuffer(Zcl.Clusters.greenPower.ID, Zcl.Header.fromBuffer(buffer)!, buffer, {});
         const header = new Zcl.Header(
@@ -752,7 +752,7 @@ describe('Zcl', () => {
         expect(frame.payload).toStrictEqual(payload);
     });
 
-    it('ZclFrame from buffer GPD with extra data', () => {
+    it("ZclFrame from buffer GPD with extra data", () => {
         const buffer = Buffer.from([0x11, 0x00, 0x00, 0xa0, 0x14, 0xfe, 0xf4, 0x46, 0x00, 0xe5, 0x04, 0x00, 0x00, 0x10, 0xff, 0x01]);
         const frame = Zcl.Frame.fromBuffer(Zcl.Clusters.greenPower.ID, Zcl.Header.fromBuffer(buffer)!, buffer, {});
         const header = new Zcl.Header(
@@ -781,7 +781,7 @@ describe('Zcl', () => {
         expect(frame.payload).toStrictEqual(payload);
     });
 
-    it('ZclFrame from buffer GPD pairing', () => {
+    it("ZclFrame from buffer GPD pairing", () => {
         const buffer = Buffer.from([
             0x19, 0x17, 0x01, 0x68, 0xe5, 0x00, 0xf8, 0x71, 0x71, 0x01, 0x47, 0x65, 0xa1, 0x1c, 0x00, 0x4b, 0x12, 0x00, 0x00, 0x00, 0x02, 0x1c, 0x12,
             0x00, 0x00, 0x09, 0x3c, 0xed, 0x1d, 0xbf, 0x25, 0x63, 0xf9, 0x29, 0x5c, 0x0d, 0x3d, 0x9f, 0xc5, 0x76, 0xe1, 0, 0, 0, 0, 0, 0,
@@ -803,7 +803,7 @@ describe('Zcl', () => {
         const payload = {
             options: 0x00e568,
             srcID: 0x017171f8,
-            sinkIEEEAddr: '0x00124b001ca16547',
+            sinkIEEEAddr: "0x00124b001ca16547",
             sinkNwkAddr: 0,
             deviceID: 2,
             frameCounter: 4636,
@@ -814,7 +814,7 @@ describe('Zcl', () => {
         expect(frame.payload).toStrictEqual(payload);
     });
 
-    it('ZclFrame from buffer readRsp alias type', () => {
+    it("ZclFrame from buffer readRsp alias type", () => {
         const buffer = Buffer.from([8, 1, 1, 1, 0, 0, 8, 3]);
         const frame = Zcl.Frame.fromBuffer(Zcl.Clusters.genBasic.ID, Zcl.Header.fromBuffer(buffer)!, buffer, {});
         const header = new Zcl.Header(
@@ -836,7 +836,7 @@ describe('Zcl', () => {
         expect(frame.payload).toStrictEqual(payload);
     });
 
-    it('ZclFrame from buffer configReportRsp server to client', () => {
+    it("ZclFrame from buffer configReportRsp server to client", () => {
         const buffer = Buffer.from([8, 1, 6, 1, 1, 0, 10, 10]);
         const frame = Zcl.Frame.fromBuffer(Zcl.Clusters.genBasic.ID, Zcl.Header.fromBuffer(buffer)!, buffer, {});
         const header = new Zcl.Header(
@@ -858,7 +858,7 @@ describe('Zcl', () => {
         expect(frame.payload).toStrictEqual(payload);
     });
 
-    it('ZclFrame from buffer configReportRsp client to server analog', () => {
+    it("ZclFrame from buffer configReportRsp client to server analog", () => {
         const buffer = Buffer.from([8, 1, 6, 0, 0, 1, 32, 1, 0, 10, 0, 20]);
         const frame = Zcl.Frame.fromBuffer(Zcl.Clusters.genBasic.ID, Zcl.Header.fromBuffer(buffer)!, buffer, {});
         const header = new Zcl.Header(
@@ -880,7 +880,7 @@ describe('Zcl', () => {
         expect(frame.payload).toStrictEqual(payload);
     });
 
-    it('ZclFrame from buffer configReportRsp client to server analog', () => {
+    it("ZclFrame from buffer configReportRsp client to server analog", () => {
         const buffer = Buffer.from([8, 1, 6, 0, 0, 1, 8, 1, 0, 10, 0]);
         const frame = Zcl.Frame.fromBuffer(Zcl.Clusters.genBasic.ID, Zcl.Header.fromBuffer(buffer)!, buffer, {});
         const header = new Zcl.Header(
@@ -902,7 +902,7 @@ describe('Zcl', () => {
         expect(frame.payload).toStrictEqual(payload);
     });
 
-    it('ZclFrame from buffer readRsp', () => {
+    it("ZclFrame from buffer readRsp", () => {
         const buffer = Buffer.from([
             24, 7, 1, 5, 0, 0, 66, 30, 84, 82, 65, 68, 70, 82, 73, 32, 98, 117, 108, 98, 32, 69, 50, 55, 32, 87, 83, 32, 111, 112, 97, 108, 32, 57,
             56, 48, 108, 109, 6, 0, 0, 66, 8, 50, 48, 49, 55, 48, 51, 51, 49, 7, 0, 0, 48, 1, 10, 0, 0, 65, 15, 76, 69, 68, 49, 53, 52, 53, 71, 49,
@@ -923,8 +923,8 @@ describe('Zcl', () => {
         );
 
         const payload = [
-            {attrId: 5, status: 0, dataType: 66, attrData: 'TRADFRI bulb E27 WS opal 980lm'},
-            {attrId: 6, status: 0, dataType: 66, attrData: '20170331'},
+            {attrId: 5, status: 0, dataType: 66, attrData: "TRADFRI bulb E27 WS opal 980lm"},
+            {attrId: 6, status: 0, dataType: 66, attrData: "20170331"},
             {attrId: 7, status: 0, dataType: 48, attrData: 1},
             {attrId: 10, status: 0, dataType: 65, attrData: Buffer.from([76, 69, 68, 49, 53, 52, 53, 71, 49, 50, 69, 50, 55, 69, 85])},
         ];
@@ -933,35 +933,35 @@ describe('Zcl', () => {
         expect(frame.payload).toStrictEqual(payload);
     });
 
-    it('ZclFrame with Assa (manufacturer specific) cluster create', () => {
+    it("ZclFrame with Assa (manufacturer specific) cluster create", () => {
         const payload = [{attrId: 0x0012, status: 0, attrData: 1, dataType: 32}];
-        const frame = Zcl.Frame.create(FrameType.GLOBAL, Direction.CLIENT_TO_SERVER, false, 0x101d, 8, 'readRsp', 0xfc00, payload, {});
+        const frame = Zcl.Frame.create(FrameType.GLOBAL, Direction.CLIENT_TO_SERVER, false, 0x101d, 8, "readRsp", 0xfc00, payload, {});
 
-        expect(frame.cluster.name).toBe('manuSpecificAssaDoorLock');
+        expect(frame.cluster.name).toBe("manuSpecificAssaDoorLock");
     });
 
-    it('ZclFrame with Assa (manufacturer specific) cluster create with non Assamanufcode', () => {
+    it("ZclFrame with Assa (manufacturer specific) cluster create with non Assamanufcode", () => {
         const payload = [{attrId: 0x0012, status: 0, attrData: 1, dataType: 32}];
-        const frame = Zcl.Frame.create(FrameType.GLOBAL, Direction.CLIENT_TO_SERVER, false, 0x10f3, 8, 'readRsp', 0xfc00, payload, {});
+        const frame = Zcl.Frame.create(FrameType.GLOBAL, Direction.CLIENT_TO_SERVER, false, 0x10f3, 8, "readRsp", 0xfc00, payload, {});
 
-        expect(frame.cluster.name).toBe('manuSpecificAssaDoorLock');
+        expect(frame.cluster.name).toBe("manuSpecificAssaDoorLock");
     });
 
-    it('ZclFrame with Assa (manufacturer specific) cluster fromBuffer', () => {
+    it("ZclFrame with Assa (manufacturer specific) cluster fromBuffer", () => {
         const buffer = Buffer.from([0x04, 0xf2, 0x10, 0x08, 0x01, 0x00, 0x00, 0x00, 0x20, 0x01]);
         const frame = Zcl.Frame.fromBuffer(0xfc00, Zcl.Header.fromBuffer(buffer)!, buffer, {});
-        expect(frame.cluster.name).toBe('manuSpecificAssaDoorLock');
+        expect(frame.cluster.name).toBe("manuSpecificAssaDoorLock");
     });
 
-    it('ZclFrame to buffer with reservered bits', () => {
+    it("ZclFrame to buffer with reservered bits", () => {
         const expected = Buffer.from([224, 8, 12, 0, 0, 240]);
         const payload = {startAttrId: 0, maxAttrIds: 240};
-        const frame = Zcl.Frame.create(FrameType.GLOBAL, Direction.CLIENT_TO_SERVER, false, undefined, 8, 'discover', 0, payload, {}, 7);
+        const frame = Zcl.Frame.create(FrameType.GLOBAL, Direction.CLIENT_TO_SERVER, false, undefined, 8, "discover", 0, payload, {}, 7);
 
         expect(frame.toBuffer()).toStrictEqual(expected);
     });
 
-    it('ZclFrame from buffer with reservered bits', () => {
+    it("ZclFrame from buffer with reservered bits", () => {
         const buffer = Buffer.from([224, 8, 12, 0, 0, 240]);
         const frame = Zcl.Frame.fromBuffer(0, Zcl.Header.fromBuffer(buffer)!, buffer, {});
         const header = new Zcl.Header(
@@ -983,15 +983,15 @@ describe('Zcl', () => {
         expect(frame.payload).toStrictEqual(payload);
     });
 
-    it('ZclFrame to buffer discover', () => {
+    it("ZclFrame to buffer discover", () => {
         const expected = Buffer.from([0, 8, 12, 0, 0, 240]);
         const payload = {startAttrId: 0, maxAttrIds: 240};
-        const frame = Zcl.Frame.create(FrameType.GLOBAL, Direction.CLIENT_TO_SERVER, false, undefined, 8, 'discover', 0, payload, {});
+        const frame = Zcl.Frame.create(FrameType.GLOBAL, Direction.CLIENT_TO_SERVER, false, undefined, 8, "discover", 0, payload, {});
 
         expect(frame.toBuffer()).toStrictEqual(expected);
     });
 
-    it('ZclFrame to buffer queryNextImageResponse with non zero status', () => {
+    it("ZclFrame to buffer queryNextImageResponse with non zero status", () => {
         const expected = Buffer.from([9, 8, 2, 1]);
         const payload = {status: 1};
         const frame = Zcl.Frame.create(
@@ -1000,7 +1000,7 @@ describe('Zcl', () => {
             false,
             undefined,
             8,
-            'queryNextImageResponse',
+            "queryNextImageResponse",
             25,
             payload,
             {},
@@ -1009,7 +1009,7 @@ describe('Zcl', () => {
         expect(frame.toBuffer()).toStrictEqual(expected);
     });
 
-    it('ZclFrame to buffer queryNextImageResponse with zero status', () => {
+    it("ZclFrame to buffer queryNextImageResponse with zero status", () => {
         const expected = Buffer.from([9, 8, 2, 0, 1, 0, 3, 0, 5, 0, 0, 0, 6, 0, 0, 0]);
         const payload = {status: 0, manufacturerCode: 1, imageType: 3, fileVersion: 5, imageSize: 6};
         const frame = Zcl.Frame.create(
@@ -1018,7 +1018,7 @@ describe('Zcl', () => {
             false,
             undefined,
             8,
-            'queryNextImageResponse',
+            "queryNextImageResponse",
             25,
             payload,
             {},
@@ -1027,8 +1027,7 @@ describe('Zcl', () => {
         expect(frame.toBuffer()).toStrictEqual(expected);
     });
 
-    it('ZclFrame to buffer queryNextImageResponse with zero status and missing parameters', () => {
-        const expected = Buffer.from([9, 8, 2, 1]);
+    it("ZclFrame to buffer queryNextImageResponse with zero status and missing parameters", () => {
         const payload = {status: 0};
         const frame = Zcl.Frame.create(
             FrameType.SPECIFIC,
@@ -1036,7 +1035,7 @@ describe('Zcl', () => {
             false,
             undefined,
             8,
-            'queryNextImageResponse',
+            "queryNextImageResponse",
             25,
             payload,
             {},
@@ -1051,38 +1050,38 @@ describe('Zcl', () => {
         expect(error).toStrictEqual(new Error(`Parameter 'manufacturerCode' is missing`));
     });
 
-    it('ZclFrame to buffer readRsp UTC', () => {
+    it("ZclFrame to buffer readRsp UTC", () => {
         const expected = Buffer.from([24, 74, 1, 0, 0, 0, 226, 234, 83, 218, 36]);
         const payload = [{attrId: 0, status: 0, attrData: 618288106, dataType: 226}];
-        const frame = Zcl.Frame.create(FrameType.GLOBAL, Direction.SERVER_TO_CLIENT, true, undefined, 74, 'readRsp', 0, payload, {});
+        const frame = Zcl.Frame.create(FrameType.GLOBAL, Direction.SERVER_TO_CLIENT, true, undefined, 74, "readRsp", 0, payload, {});
 
         expect(frame.toBuffer()).toStrictEqual(expected);
     });
 
-    it('ZclFrame to buffer write Livolo malformed', () => {
+    it("ZclFrame to buffer write Livolo malformed", () => {
         // Created as example for https://github.com/Koenkk/zigbee-herdsman/issues/127
         const expectedOn = Buffer.from([0x1c, 0xd2, 0x1a, 0xe9, 0x02, 0x01, 0x00, 0x01, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]);
         const payloadOn = [{attrId: 1, attrData: Buffer.from([1, 0, 0, 0, 0, 0, 0, 0]), dataType: 1}];
-        const frameOn = Zcl.Frame.create(FrameType.GLOBAL, Direction.SERVER_TO_CLIENT, true, 0x1ad2, 233, 'write', 0, payloadOn, {});
+        const frameOn = Zcl.Frame.create(FrameType.GLOBAL, Direction.SERVER_TO_CLIENT, true, 0x1ad2, 233, "write", 0, payloadOn, {});
         expect(frameOn.toBuffer()).toStrictEqual(expectedOn);
 
         const expectedOff = Buffer.from([0x1c, 0xd2, 0x1a, 0xe9, 0x02, 0x01, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]);
         const payloadOff = [{attrId: 1, attrData: Buffer.from([0, 0, 0, 0, 0, 0, 0, 0]), dataType: 1}];
-        const frameOff = Zcl.Frame.create(FrameType.GLOBAL, Direction.SERVER_TO_CLIENT, true, 0x1ad2, 233, 'write', 0, payloadOff, {});
+        const frameOff = Zcl.Frame.create(FrameType.GLOBAL, Direction.SERVER_TO_CLIENT, true, 0x1ad2, 233, "write", 0, payloadOff, {});
         expect(frameOff.toBuffer()).toStrictEqual(expectedOff);
     });
 
-    it('ZclFrame write request with string as bytes array', () => {
+    it("ZclFrame write request with string as bytes array", () => {
         const payload = [{attrId: 0x0401, attrData: [0x07, 0x00, 0x02, 0x01, 0x00, 0x00, 0x00, 0x14], dataType: 0x42}];
-        const frame = Zcl.Frame.create(FrameType.GLOBAL, Direction.CLIENT_TO_SERVER, true, 0x115f, 15, 'write', 0, payload, {});
+        const frame = Zcl.Frame.create(FrameType.GLOBAL, Direction.CLIENT_TO_SERVER, true, 0x115f, 15, "write", 0, payload, {});
 
         const expected = [0x14, 0x5f, 0x11, 0x0f, 0x02, 0x01, 0x04, 0x42, 0x07, 0x00, 0x02, 0x01, 0x00, 0x00, 0x00, 0x14];
         expect(Buffer.from(expected)).toStrictEqual(frame.toBuffer());
     });
 
-    it('ZclFrame write rsp', () => {
+    it("ZclFrame write rsp", () => {
         const payload = [{status: 0x11, attrId: 0x22}];
-        const frame = Zcl.Frame.create(FrameType.GLOBAL, Direction.CLIENT_TO_SERVER, true, 0x115f, 15, 'writeRsp', 0, payload, {});
+        const frame = Zcl.Frame.create(FrameType.GLOBAL, Direction.CLIENT_TO_SERVER, true, 0x115f, 15, "writeRsp", 0, payload, {});
         const buffer = frame.toBuffer();
 
         const expected = [0x14, 0x5f, 0x11, 0x0f, 0x04, 0x11, 0x22, 0x00];
@@ -1090,7 +1089,7 @@ describe('Zcl', () => {
     });
 
     //{ frameType: 0, manufSpec: 0, direction: 0, disDefaultRsp: 0 } 0 8 'discover' { startAttrId: 0, maxAttrIds: 240 }
-    it('ZclFrame to buffer readRsp success', () => {
+    it("ZclFrame to buffer readRsp success", () => {
         const expected = Buffer.from([8, 1, 1, 1, 0, 0, 32, 3]);
         const payload = [{status: Zcl.Status.SUCCESS, attrId: 1, dataType: Zcl.DataType.UINT8, attrData: 3}];
         const frame = Zcl.Frame.create(FrameType.GLOBAL, Direction.SERVER_TO_CLIENT, false, undefined, 1, 1, 0, payload, {});
@@ -1098,7 +1097,7 @@ describe('Zcl', () => {
         expect(frame.toBuffer()).toStrictEqual(expected);
     });
 
-    it('ZclFrame to buffer defaultRsp success', () => {
+    it("ZclFrame to buffer defaultRsp success", () => {
         const expected = Buffer.from([0x18, 0x04, 0x0b, 0x0c, 0x82]);
         const payload = {cmdId: 12, statusCode: 130};
         const frame = Zcl.Frame.create(FrameType.GLOBAL, Direction.SERVER_TO_CLIENT, true, undefined, 4, 11, 0, payload, {});
@@ -1106,7 +1105,7 @@ describe('Zcl', () => {
         expect(frame.toBuffer()).toStrictEqual(expected);
     });
 
-    it('ZclFrame to buffer readStructured single element', () => {
+    it("ZclFrame to buffer readStructured single element", () => {
         const expected = Buffer.from([0x18, 0x02, 0x0e, 0x01, 0x00, 0x01, 0x02, 0x00]);
         const payload = [{attrId: 0x0001, selector: {indexes: [2]}}];
         const frame = Zcl.Frame.create(FrameType.GLOBAL, Direction.SERVER_TO_CLIENT, true, undefined, 2, 0x0e, Zcl.Clusters.genBasic.ID, payload, {});
@@ -1114,7 +1113,7 @@ describe('Zcl', () => {
         expect(frame.toBuffer()).toStrictEqual(expected);
     });
 
-    it('ZclFrame to buffer readStructured multiple elements', () => {
+    it("ZclFrame to buffer readStructured multiple elements", () => {
         const expected = Buffer.from([
             0x18, 0x02, 0x0e, 0x02, 0x00, 0x02, 0x03, 0x00, 0x04, 0x00, 0x05, 0x00, 0x03, 0x06, 0x00, 0x07, 0x00, 0x08, 0x00,
         ]);
@@ -1127,7 +1126,7 @@ describe('Zcl', () => {
         expect(frame.toBuffer()).toStrictEqual(expected);
     });
 
-    it('ZclFrame to buffer readStructured whole attribute', () => {
+    it("ZclFrame to buffer readStructured whole attribute", () => {
         const expected = Buffer.from([0x18, 0x02, 0x0e, 0x09, 0x00, 0x00]);
         const payload = [{attrId: 0x0009, selector: {}}];
         const frame = Zcl.Frame.create(FrameType.GLOBAL, Direction.SERVER_TO_CLIENT, true, undefined, 2, 0x0e, Zcl.Clusters.genBasic.ID, payload, {});
@@ -1135,7 +1134,7 @@ describe('Zcl', () => {
         expect(frame.toBuffer()).toStrictEqual(expected);
     });
 
-    it('ZclFrame from buffer readStructured single elements', () => {
+    it("ZclFrame from buffer readStructured single elements", () => {
         const buffer = Buffer.from([0x18, 0x02, 0x0e, 0x01, 0x00, 0x01, 0x02, 0x00]);
         const frame = Zcl.Frame.fromBuffer(Zcl.Clusters.genBasic.ID, Zcl.Header.fromBuffer(buffer)!, buffer, {});
         const header = new Zcl.Header(
@@ -1156,7 +1155,7 @@ describe('Zcl', () => {
         expect(frame.payload).toStrictEqual(payload);
     });
 
-    it('ZclFrame from buffer readStructured multiple elements', () => {
+    it("ZclFrame from buffer readStructured multiple elements", () => {
         const buffer = Buffer.from([
             0x18, 0x02, 0x0e, 0x02, 0x00, 0x02, 0x03, 0x00, 0x04, 0x00, 0x05, 0x00, 0x03, 0x06, 0x00, 0x07, 0x00, 0x08, 0x00,
         ]);
@@ -1182,7 +1181,7 @@ describe('Zcl', () => {
         expect(frame.payload).toStrictEqual(payload);
     });
 
-    it('ZclFrame from buffer readStructured whole attribute', () => {
+    it("ZclFrame from buffer readStructured whole attribute", () => {
         const buffer = Buffer.from([0x18, 0x02, 0x0e, 0x09, 0x00, 0x00]);
         const frame = Zcl.Frame.fromBuffer(Zcl.Clusters.genBasic.ID, Zcl.Header.fromBuffer(buffer)!, buffer, {});
         const header = new Zcl.Header(
@@ -1203,7 +1202,7 @@ describe('Zcl', () => {
         expect(frame.payload).toStrictEqual(payload);
     });
 
-    it('ZclFrame to buffer writeStructured single element', () => {
+    it("ZclFrame to buffer writeStructured single element", () => {
         const expected = Buffer.from([0x10, 0x02, 0x0f, 0x01, 0x00, 0x01, 0x02, 0x00, 0x20, 0x03]);
         const payload = [{attrId: 0x0001, selector: {indexes: [2]}, dataType: Zcl.DataType.UINT8, elementData: 3}];
         const frame = Zcl.Frame.create(FrameType.GLOBAL, Direction.CLIENT_TO_SERVER, true, undefined, 2, 0x0f, Zcl.Clusters.genBasic.ID, payload, {});
@@ -1211,21 +1210,21 @@ describe('Zcl', () => {
         expect(frame.toBuffer()).toStrictEqual(expected);
     });
 
-    it('ZclFrame to buffer writeStructured multiple elements', () => {
+    it("ZclFrame to buffer writeStructured multiple elements", () => {
         const expected = Buffer.from([
             0x10, 0x02, 0x0f, 0x02, 0x00, 0x02, 0x03, 0x00, 0x04, 0x00, 0x42, 0x03, 0x66, 0x6f, 0x6f, 0x05, 0x00, 0x03, 0x06, 0x00, 0x07, 0x00, 0x08,
             0x00, 0x42, 0x03, 0x62, 0x61, 0x72,
         ]);
         const payload = [
-            {attrId: 0x0002, selector: {indexes: [3, 4]}, dataType: Zcl.DataType.CHAR_STR, elementData: 'foo'},
-            {attrId: 0x0005, selector: {indexes: [6, 7, 8]}, dataType: Zcl.DataType.CHAR_STR, elementData: 'bar'},
+            {attrId: 0x0002, selector: {indexes: [3, 4]}, dataType: Zcl.DataType.CHAR_STR, elementData: "foo"},
+            {attrId: 0x0005, selector: {indexes: [6, 7, 8]}, dataType: Zcl.DataType.CHAR_STR, elementData: "bar"},
         ];
         const frame = Zcl.Frame.create(FrameType.GLOBAL, Direction.CLIENT_TO_SERVER, true, undefined, 2, 0x0f, Zcl.Clusters.genBasic.ID, payload, {});
 
         expect(frame.toBuffer()).toStrictEqual(expected);
     });
 
-    it('ZclFrame to buffer writeStructured whole attribute', () => {
+    it("ZclFrame to buffer writeStructured whole attribute", () => {
         const expected = Buffer.from([0x10, 0x02, 0x0f, 0x09, 0x00, 0x00, 0x48, 0x20, 0x03, 0x00, 0x0a, 0x0b, 0x0c]);
         const payload = [
             {attrId: 0x0009, selector: {}, dataType: Zcl.DataType.ARRAY, elementData: {elementType: Zcl.DataType.UINT8, elements: [10, 11, 12]}},
@@ -1235,27 +1234,27 @@ describe('Zcl', () => {
         expect(frame.toBuffer()).toStrictEqual(expected);
     });
 
-    it('ZclFrame to buffer writeStructured add element into set/bag', () => {
+    it("ZclFrame to buffer writeStructured add element into set/bag", () => {
         const expected = Buffer.from([0x10, 0x02, 0x0f, 0x0d, 0x00, 0x10, 0x42, 0x03, 0x66, 0x6f, 0x6f]);
         const payload = [
-            {attrId: 0x000d, selector: {indicatorType: StructuredIndicatorType.WriteAdd}, dataType: Zcl.DataType.CHAR_STR, elementData: 'foo'},
+            {attrId: 0x000d, selector: {indicatorType: StructuredIndicatorType.WriteAdd}, dataType: Zcl.DataType.CHAR_STR, elementData: "foo"},
         ];
         const frame = Zcl.Frame.create(FrameType.GLOBAL, Direction.CLIENT_TO_SERVER, true, undefined, 2, 0x0f, Zcl.Clusters.genBasic.ID, payload, {});
 
         expect(frame.toBuffer()).toStrictEqual(expected);
     });
 
-    it('ZclFrame to buffer writeStructured remove element from set/bag', () => {
+    it("ZclFrame to buffer writeStructured remove element from set/bag", () => {
         const expected = Buffer.from([0x10, 0x02, 0x0f, 0x0e, 0x00, 0x20, 0x42, 0x03, 0x62, 0x61, 0x72]);
         const payload = [
-            {attrId: 0x000e, selector: {indicatorType: StructuredIndicatorType.WriteRemove}, dataType: Zcl.DataType.CHAR_STR, elementData: 'bar'},
+            {attrId: 0x000e, selector: {indicatorType: StructuredIndicatorType.WriteRemove}, dataType: Zcl.DataType.CHAR_STR, elementData: "bar"},
         ];
         const frame = Zcl.Frame.create(FrameType.GLOBAL, Direction.CLIENT_TO_SERVER, true, undefined, 2, 0x0f, Zcl.Clusters.genBasic.ID, payload, {});
 
         expect(frame.toBuffer()).toStrictEqual(expected);
     });
 
-    it('ZclFrame to buffer writeStructured Livolo malformed', () => {
+    it("ZclFrame to buffer writeStructured Livolo malformed", () => {
         const expected = Buffer.from([0x7c, 0xd2, 0x1a, 0xe9, 0x0f, 0x00, 0x00, 0x00, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]);
         const payload = [{attrId: 0x0000, selector: null, elementData: [0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]}];
         const frame = Zcl.Frame.create(
@@ -1274,7 +1273,7 @@ describe('Zcl', () => {
         expect(frame.toBuffer()).toStrictEqual(expected);
     });
 
-    it('ZclFrame to buffer writeStructuredRsp success', () => {
+    it("ZclFrame to buffer writeStructuredRsp success", () => {
         const expected = Buffer.from([8, 1, 0x10, 0]);
         const payload = [{status: Zcl.Status.SUCCESS}];
         const frame = Zcl.Frame.create(
@@ -1292,7 +1291,7 @@ describe('Zcl', () => {
         expect(frame.toBuffer()).toStrictEqual(expected);
     });
 
-    it('ZclFrame to buffer writeStructuredRsp failed selector unknown or none for type', () => {
+    it("ZclFrame to buffer writeStructuredRsp failed selector unknown or none for type", () => {
         const expected = Buffer.from([8, 1, 0x10, 147, 1, 0, 0]);
         const payload = [{status: Zcl.Status.ACTION_DENIED, attrId: 1, selector: {indicatorType: StructuredIndicatorType.Whole}}];
         const frame = Zcl.Frame.create(
@@ -1310,7 +1309,7 @@ describe('Zcl', () => {
         expect(frame.toBuffer()).toStrictEqual(expected);
     });
 
-    it('ZclFrame to buffer writeStructuredRsp failed with selector', () => {
+    it("ZclFrame to buffer writeStructuredRsp failed with selector", () => {
         const expected = Buffer.from([8, 1, 0x10, 147, 1, 0, 1, 254, 0]);
         const payload = [{status: Zcl.Status.ACTION_DENIED, attrId: 1, selector: {indexes: [254]}}];
         const frame = Zcl.Frame.create(
@@ -1328,7 +1327,7 @@ describe('Zcl', () => {
         expect(frame.toBuffer()).toStrictEqual(expected);
     });
 
-    it('ZclFrame to buffer writeStructuredRsp failed mixed selectors', () => {
+    it("ZclFrame to buffer writeStructuredRsp failed mixed selectors", () => {
         const expected = Buffer.from([8, 1, 0x10, 147, 16, 0, 0, 149, 14, 0, 2, 254, 0, 32, 0]);
         const payload = [
             {status: Zcl.Status.ACTION_DENIED, attrId: 16, selector: {indicatorType: StructuredIndicatorType.Whole}},
@@ -1349,7 +1348,7 @@ describe('Zcl', () => {
         expect(frame.toBuffer()).toStrictEqual(expected);
     });
 
-    it('ZclFrame from buffer writeStructuredRsp success', () => {
+    it("ZclFrame from buffer writeStructuredRsp success", () => {
         const buffer = Buffer.from([8, 1, 0x10, 0]);
         const frame = Zcl.Frame.fromBuffer(Zcl.Clusters.genBasic.ID, Zcl.Header.fromBuffer(buffer)!, buffer, {});
         const header = new Zcl.Header(
@@ -1370,7 +1369,7 @@ describe('Zcl', () => {
         expect(frame.payload).toStrictEqual(payload);
     });
 
-    it('ZclFrame from buffer writeStructuredRsp failed selector unknown or none for type', () => {
+    it("ZclFrame from buffer writeStructuredRsp failed selector unknown or none for type", () => {
         const buffer = Buffer.from([8, 1, 0x10, 147, 1, 0, 0]);
         const frame = Zcl.Frame.fromBuffer(Zcl.Clusters.genBasic.ID, Zcl.Header.fromBuffer(buffer)!, buffer, {});
         const header = new Zcl.Header(
@@ -1391,7 +1390,7 @@ describe('Zcl', () => {
         expect(frame.payload).toStrictEqual(payload);
     });
 
-    it('ZclFrame from buffer writeStructuredRsp failed with selector', () => {
+    it("ZclFrame from buffer writeStructuredRsp failed with selector", () => {
         const buffer = Buffer.from([8, 1, 0x10, 147, 1, 0, 1, 254, 0]);
         const frame = Zcl.Frame.fromBuffer(Zcl.Clusters.genBasic.ID, Zcl.Header.fromBuffer(buffer)!, buffer, {});
         const header = new Zcl.Header(
@@ -1412,7 +1411,7 @@ describe('Zcl', () => {
         expect(frame.payload).toStrictEqual(payload);
     });
 
-    it('ZclFrame from buffer writeStructuredRsp failed mixed selectors', () => {
+    it("ZclFrame from buffer writeStructuredRsp failed mixed selectors", () => {
         const buffer = Buffer.from([8, 1, 0x10, 147, 16, 0, 0, 149, 14, 0, 2, 254, 0, 32, 0]);
         const frame = Zcl.Frame.fromBuffer(Zcl.Clusters.genBasic.ID, Zcl.Header.fromBuffer(buffer)!, buffer, {});
         const header = new Zcl.Header(
@@ -1436,7 +1435,7 @@ describe('Zcl', () => {
         expect(frame.payload).toStrictEqual(payload);
     });
 
-    it('ZclFrame from buffer ssIasAce arm command', () => {
+    it("ZclFrame from buffer ssIasAce arm command", () => {
         const buffer = Buffer.from([1, 87, 0, 0, 6, 49, 50, 51, 52, 53, 54, 0]);
         const frame = Zcl.Frame.fromBuffer(Zcl.Clusters.ssIasAce.ID, Zcl.Header.fromBuffer(buffer)!, buffer, {});
         const header = new Zcl.Header(
@@ -1454,7 +1453,7 @@ describe('Zcl', () => {
 
         const payload = {
             armmode: 0,
-            code: '123456',
+            code: "123456",
             zoneid: 0,
         };
 
@@ -1462,11 +1461,11 @@ describe('Zcl', () => {
         expect(frame.payload).toStrictEqual(payload);
         expect(frame.header.isGlobal).toBe(false);
         expect(frame.header.isSpecific).toBe(true);
-        expect(frame.isCluster('ssIasAce')).toBe(true);
-        expect(frame.isCommand('arm')).toBe(true);
+        expect(frame.isCluster("ssIasAce")).toBe(true);
+        expect(frame.isCommand("arm")).toBe(true);
     });
 
-    it('ZclFrame to buffer discoverRsp', () => {
+    it("ZclFrame to buffer discoverRsp", () => {
         const expected = Buffer.from([24, 23, 13, 0, 32, 0, 32, 33, 0, 32, 49, 0, 48, 51, 0, 32, 53, 0, 24]);
         const payload = {
             discComplete: 0,
@@ -1484,7 +1483,7 @@ describe('Zcl', () => {
         expect(frame.toBuffer()).toStrictEqual(expected);
     });
 
-    it('ZclFrame to buffer tradfriArrowSingle', () => {
+    it("ZclFrame to buffer tradfriArrowSingle", () => {
         const expected = Buffer.from([0x05, 0x7c, 0x11, 0x1d, 0x07, 0x00, 0x01, 0x0d, 0x00]);
         const payload = {value: 256, value2: 13};
 
@@ -1493,7 +1492,7 @@ describe('Zcl', () => {
         expect(frame.toBuffer()).toStrictEqual(expected);
     });
 
-    it('ZclFrame to buffer readRsp failed', () => {
+    it("ZclFrame to buffer readRsp failed", () => {
         const expected = Buffer.from([8, 1, 1, 1, 0, 2]);
         const payload = [{status: 2, attrId: 1}];
 
@@ -1502,7 +1501,7 @@ describe('Zcl', () => {
         expect(frame.toBuffer()).toStrictEqual(expected);
     });
 
-    it('ZclFrame to buffer offWithEffect', () => {
+    it("ZclFrame to buffer offWithEffect", () => {
         const expected = Buffer.from([0x1, 1, 64, 1, 0]);
         const payload = {effectid: 1, effectvariant: 0};
 
@@ -1511,15 +1510,15 @@ describe('Zcl', () => {
         expect(frame.toBuffer()).toStrictEqual(expected);
     });
 
-    it('ZclFrame to buffer offWithEffect', () => {
+    it("ZclFrame to buffer offWithEffect", () => {
         const expected = Buffer.from([9, 9, 0, 1]);
 
-        const frame = Zcl.Frame.create(FrameType.SPECIFIC, Direction.SERVER_TO_CLIENT, false, undefined, 9, 'restartDeviceRsp', 21, {status: 1}, {});
+        const frame = Zcl.Frame.create(FrameType.SPECIFIC, Direction.SERVER_TO_CLIENT, false, undefined, 9, "restartDeviceRsp", 21, {status: 1}, {});
 
         expect(frame.toBuffer()).toStrictEqual(expected);
     });
 
-    it('ZclFrame to buffer invalid frametype', () => {
+    it("ZclFrame to buffer invalid frametype", () => {
         expect(() => {
             Zcl.Frame.create(
                 // @ts-expect-error invalid on purpose
@@ -1536,7 +1535,7 @@ describe('Zcl', () => {
         }).toThrow("Frametype '3' not valid");
     });
 
-    it('BuffaloZcl read array', () => {
+    it("BuffaloZcl read array", () => {
         const buffer = Buffer.from([32, 3, 0, 1, 2, 3]);
         const buffalo = new BuffaloZcl(buffer);
         const value = buffalo.read(DataType.ARRAY, {});
@@ -1544,7 +1543,7 @@ describe('Zcl', () => {
         expect(value).toStrictEqual([1, 2, 3]);
     });
 
-    it('BuffaloZcl read struct', () => {
+    it("BuffaloZcl read struct", () => {
         const buffer = Buffer.from([0, 2, 0, 32, 8, 33, 4, 0]);
         const buffalo = new BuffaloZcl(buffer, 1);
         const value = buffalo.read(DataType.STRUCT, {});
@@ -1555,15 +1554,15 @@ describe('Zcl', () => {
         ]);
     });
 
-    it('BuffaloZcl read longCharStr', () => {
+    it("BuffaloZcl read longCharStr", () => {
         const buffer = Buffer.from([5, 0, 0x68, 0x65, 0x6c, 0x6c, 0x6f]);
         const buffalo = new BuffaloZcl(buffer);
         const value = buffalo.read(DataType.LONG_CHAR_STR, {});
         expect(buffalo.getPosition()).toBe(7);
-        expect(value).toStrictEqual('hello');
+        expect(value).toStrictEqual("hello");
     });
 
-    it('BuffaloZcl read longOctetStr', () => {
+    it("BuffaloZcl read longOctetStr", () => {
         const buffer = Buffer.from([5, 0, 0x68, 0x65, 0x6c, 0x6c, 0x6f]);
         const buffalo = new BuffaloZcl(buffer);
         const value = buffalo.read(DataType.LONG_OCTET_STR, {});
@@ -1571,7 +1570,7 @@ describe('Zcl', () => {
         expect(value).toStrictEqual(buffer.subarray(2));
     });
 
-    it('BuffaloZcl read extensionFieldSets', () => {
+    it("BuffaloZcl read extensionFieldSets", () => {
         const buffer = Buffer.from([0, 3, 8, 1, 0, 2, 0, 3, 0, 4, 5]);
         const buffalo = new BuffaloZcl(buffer);
         const value = buffalo.read(BuffaloZclDataType.EXTENSION_FIELD_SETS, {});
@@ -1579,7 +1578,7 @@ describe('Zcl', () => {
         expect(value).toStrictEqual([{clstId: 768, len: 8, extField: [1, 2, 3, 4, 5]}]);
     });
 
-    it('BuffaloZcl read list zoneinfo', () => {
+    it("BuffaloZcl read list zoneinfo", () => {
         const buffer = Buffer.from([1, 5, 0, 2, 6, 0]);
         const buffalo = new BuffaloZcl(buffer);
         const value = buffalo.read(BuffaloZclDataType.LIST_ZONEINFO, {length: 2});
@@ -1590,7 +1589,7 @@ describe('Zcl', () => {
         ]);
     });
 
-    it.each([DataType.UINT40, DataType.DATA40, DataType.BITMAP40])('BuffaloZcl read uint40, data40, bitmap40', (type) => {
+    it.each([DataType.UINT40, DataType.DATA40, DataType.BITMAP40])("BuffaloZcl read uint40, data40, bitmap40", (type) => {
         const buffer = Buffer.from([1, 5, 4, 5, 6, 7]);
         const buffalo = new BuffaloZcl(buffer);
         const value = buffalo.read(type, {});
@@ -1598,7 +1597,7 @@ describe('Zcl', () => {
         expect(value).toStrictEqual(25853953281);
     });
 
-    it.each([DataType.UINT48, DataType.DATA48, DataType.BITMAP48])('BuffaloZcl read uint48, data48, bitmap48', (type) => {
+    it.each([DataType.UINT48, DataType.DATA48, DataType.BITMAP48])("BuffaloZcl read uint48, data48, bitmap48", (type) => {
         const buffer = Buffer.from([1, 5, 4, 5, 6, 7]);
         const buffalo = new BuffaloZcl(buffer);
         const value = buffalo.read(type, {});
@@ -1606,7 +1605,7 @@ describe('Zcl', () => {
         expect(value).toStrictEqual(7722435347713);
     });
 
-    it.each([DataType.UINT56, DataType.DATA56, DataType.BITMAP56])('BuffaloZcl read uint56, data56, bitmap56', (type) => {
+    it.each([DataType.UINT56, DataType.DATA56, DataType.BITMAP56])("BuffaloZcl read uint56, data56, bitmap56", (type) => {
         const buffer = Buffer.from([1, 5, 4, 5, 6, 7, 7]);
         const buffalo = new BuffaloZcl(buffer);
         const value = buffalo.read(type, {});
@@ -1614,7 +1613,7 @@ describe('Zcl', () => {
         expect(value).toStrictEqual(1978047272322305n);
     });
 
-    it.each([DataType.UINT64, DataType.DATA64, DataType.BITMAP64])('BuffaloZcl read uint64, data64, bitmap64', (type) => {
+    it.each([DataType.UINT64, DataType.DATA64, DataType.BITMAP64])("BuffaloZcl read uint64, data64, bitmap64", (type) => {
         const buffer = Buffer.from([1, 5, 4, 5, 6, 7, 7, 9]);
         const buffalo = new BuffaloZcl(buffer);
         const value = buffalo.read(type, {});
@@ -1622,7 +1621,7 @@ describe('Zcl', () => {
         expect(value).toStrictEqual(0x0907070605040501n);
     });
 
-    it('BuffaloZcl read int40', () => {
+    it("BuffaloZcl read int40", () => {
         const buffer = Buffer.from([254, 255, 255, 255, 127]);
         const buffalo = new BuffaloZcl(buffer);
         const value = buffalo.read(DataType.INT40, {});
@@ -1630,7 +1629,7 @@ describe('Zcl', () => {
         expect(value).toStrictEqual(549755813886);
     });
 
-    it('BuffaloZcl read int56', () => {
+    it("BuffaloZcl read int56", () => {
         const buffer = Buffer.from([1, 5, 4, 5, 6, 7, 7]);
         const buffalo = new BuffaloZcl(buffer);
         const value = buffalo.read(DataType.INT56, {});
@@ -1638,7 +1637,7 @@ describe('Zcl', () => {
         expect(value).toStrictEqual(1978047272322305n);
     });
 
-    it('BuffaloZcl read int64', () => {
+    it("BuffaloZcl read int64", () => {
         const buffer = Buffer.from([1, 5, 4, 5, 6, 7, 7, 9]);
         const buffalo = new BuffaloZcl(buffer);
         const value = buffalo.read(DataType.INT64, {});
@@ -1647,34 +1646,34 @@ describe('Zcl', () => {
     });
 
     it.each([
-        ['no data point', Buffer.from([]), []],
-        ['single data point', Buffer.from([1, 4, 0, 1, 1]), [{dp: 1, datatype: 4, data: Buffer.from([1])}]],
+        ["no data point", Buffer.from([]), []],
+        ["single data point", Buffer.from([1, 4, 0, 1, 1]), [{dp: 1, datatype: 4, data: Buffer.from([1])}]],
         [
-            'two data points',
+            "two data points",
             Buffer.from([1, 4, 0, 1, 1, 4, 2, 0, 4, 0, 0, 0, 90]),
             [
                 {dp: 1, datatype: 4, data: Buffer.from([1])},
                 {dp: 4, datatype: 2, data: Buffer.from([0, 0, 0, 90])},
             ],
         ],
-        ['incomplete data point is ignored', Buffer.from([1, 4, 0, 1, 1, 4]), [{dp: 1, datatype: 4, data: Buffer.from([1])}]],
+        ["incomplete data point is ignored", Buffer.from([1, 4, 0, 1, 1, 4]), [{dp: 1, datatype: 4, data: Buffer.from([1])}]],
         [
-            'incomplete data buffer',
+            "incomplete data buffer",
             Buffer.from([1, 4, 0, 1, 1, 4, 2, 0, 4, 0, 0, 0]),
             [
                 {dp: 1, datatype: 4, data: Buffer.from([1])},
                 {dp: 4, datatype: 2, data: Buffer.from([0, 0, 0])},
             ],
         ],
-    ])('BuffaloZcl read readListTuyaDataPointValues %s', (_name, buffer, payload) => {
+    ])("BuffaloZcl read readListTuyaDataPointValues %s", (_name, buffer, payload) => {
         const buffalo = new BuffaloZcl(buffer);
         const value = buffalo.read(BuffaloZclDataType.LIST_TUYA_DATAPOINT_VALUES, {});
         expect(buffalo.isMore()).not.toBeTruthy();
         expect(value).toStrictEqual(payload);
     });
 
-    it('BuffaloZcl write charStr', () => {
-        const payload = 'hello';
+    it("BuffaloZcl write charStr", () => {
+        const payload = "hello";
         const buffer = Buffer.alloc(7);
         const expected = Buffer.from([5, 0x68, 0x65, 0x6c, 0x6c, 0x6f, 0]);
         const buffalo = new BuffaloZcl(buffer);
@@ -1683,27 +1682,27 @@ describe('Zcl', () => {
         expect(buffer).toStrictEqual(expected);
     });
 
-    it('BuffaloZcl write longCharStr', () => {
-        const payload = 'hello';
+    it("BuffaloZcl write longCharStr", () => {
+        const payload = "hello";
         const buffer = Buffer.alloc(7);
         const expected = Buffer.from([5, 0, 0x68, 0x65, 0x6c, 0x6c, 0x6f]);
         const buffalo = new BuffaloZcl(buffer);
-        const result = buffalo.write(DataType.LONG_CHAR_STR, payload, {});
+        buffalo.write(DataType.LONG_CHAR_STR, payload, {});
         expect(buffalo.getPosition()).toBe(7);
         expect(buffer).toStrictEqual(expected);
     });
 
-    it('BuffaloZcl write octetStr', () => {
+    it("BuffaloZcl write octetStr", () => {
         const payload = [1, 2, 4];
         const buffer = Buffer.alloc(5);
         const expected = Buffer.from([3, 1, 2, 4, 0]);
         const buffalo = new BuffaloZcl(buffer);
-        const result = buffalo.write(DataType.OCTET_STR, payload, {});
+        buffalo.write(DataType.OCTET_STR, payload, {});
         expect(buffalo.getPosition()).toBe(4);
         expect(buffer).toStrictEqual(expected);
     });
 
-    it('BuffaloZcl write longOctetStr', () => {
+    it("BuffaloZcl write longOctetStr", () => {
         const payload = [1, 2, 3, 4, 5];
         const buffer = Buffer.alloc(7);
         const expected = Buffer.from([5, 0, 1, 2, 3, 4, 5]);
@@ -1713,7 +1712,7 @@ describe('Zcl', () => {
         expect(buffer).toStrictEqual(expected);
     });
 
-    it('BuffaloZcl write extensionFieldSets', () => {
+    it("BuffaloZcl write extensionFieldSets", () => {
         const payload = [{clstId: 768, len: 8, extField: [1, 2, 3, 4, 5]}];
         const buffer = Buffer.alloc(12);
         const expected = Buffer.from([0, 3, 8, 1, 0, 2, 0, 3, 0, 4, 5, 0]);
@@ -1723,7 +1722,7 @@ describe('Zcl', () => {
         expect(buffer).toStrictEqual(expected);
     });
 
-    it('BuffaloZcl write zoneinfo', () => {
+    it("BuffaloZcl write zoneinfo", () => {
         const payload = [
             {zoneID: 1, zoneStatus: 5},
             {zoneID: 2, zoneStatus: 6},
@@ -1736,7 +1735,7 @@ describe('Zcl', () => {
         expect(buffer).toStrictEqual(expected);
     });
 
-    it.each([DataType.UINT40, DataType.DATA40, DataType.BITMAP40])('BuffaloZcl write uint40, data40, bitmap40', (type) => {
+    it.each([DataType.UINT40, DataType.DATA40, DataType.BITMAP40])("BuffaloZcl write uint40, data40, bitmap40", (type) => {
         const payload = 1099511627773;
         const buffer = Buffer.alloc(5);
         const expected = Buffer.from([253, 255, 255, 255, 255]);
@@ -1746,7 +1745,7 @@ describe('Zcl', () => {
         expect(buffer).toStrictEqual(expected);
     });
 
-    it.each([DataType.UINT48, DataType.DATA48, DataType.BITMAP48])('BuffaloZcl write uint48, data48, bitmap48', (type) => {
+    it.each([DataType.UINT48, DataType.DATA48, DataType.BITMAP48])("BuffaloZcl write uint48, data48, bitmap48", (type) => {
         const payload = 281474976710653;
         const buffer = Buffer.alloc(6);
         const expected = Buffer.from([253, 255, 255, 255, 255, 255]);
@@ -1756,7 +1755,7 @@ describe('Zcl', () => {
         expect(buffer).toStrictEqual(expected);
     });
 
-    it.each([DataType.UINT56, DataType.DATA56, DataType.BITMAP56])('BuffaloZcl write uint56, data56, bitmap56', (type) => {
+    it.each([DataType.UINT56, DataType.DATA56, DataType.BITMAP56])("BuffaloZcl write uint56, data56, bitmap56", (type) => {
         const payload = 1978047272322305n;
         const buffer = Buffer.alloc(7);
         const expected = Buffer.from([1, 5, 4, 5, 6, 7, 7]);
@@ -1766,7 +1765,7 @@ describe('Zcl', () => {
         expect(buffer).toStrictEqual(expected);
     });
 
-    it.each([DataType.UINT64, DataType.DATA64, DataType.BITMAP64])('BuffaloZcl write uint64, data64, bitmap64', (type) => {
+    it.each([DataType.UINT64, DataType.DATA64, DataType.BITMAP64])("BuffaloZcl write uint64, data64, bitmap64", (type) => {
         const payload = 0x0907070605040501n;
         const buffer = Buffer.alloc(8);
         const expected = Buffer.from([1, 5, 4, 5, 6, 7, 7, 9]);
@@ -1776,7 +1775,7 @@ describe('Zcl', () => {
         expect(buffer).toStrictEqual(expected);
     });
 
-    it('BuffaloZcl write int40', () => {
+    it("BuffaloZcl write int40", () => {
         const payload = 549755813886;
         const buffer = Buffer.alloc(5);
         const expected = Buffer.from([254, 255, 255, 255, 127]);
@@ -1786,7 +1785,7 @@ describe('Zcl', () => {
         expect(buffer).toStrictEqual(expected);
     });
 
-    it('BuffaloZcl write int56', () => {
+    it("BuffaloZcl write int56", () => {
         const payload = 1978047272322305n;
         const buffer = Buffer.alloc(7);
         const expected = Buffer.from([1, 5, 4, 5, 6, 7, 7]);
@@ -1796,7 +1795,7 @@ describe('Zcl', () => {
         expect(buffer).toStrictEqual(expected);
     });
 
-    it('BuffaloZcl write int64', () => {
+    it("BuffaloZcl write int64", () => {
         const payload = 650496393613673729n;
         const buffer = Buffer.alloc(8);
         const expected = Buffer.from([1, 5, 4, 5, 6, 7, 7, 9]);
@@ -1806,7 +1805,7 @@ describe('Zcl', () => {
         expect(buffer).toStrictEqual(expected);
     });
 
-    it('BuffaloZcl write array element type string', () => {
+    it("BuffaloZcl write array element type string", () => {
         const payload = {
             elementType: Zcl.DataType.OCTET_STR,
             elements: [
@@ -1819,45 +1818,45 @@ describe('Zcl', () => {
         const expected = Buffer.from([0x41, 0x04, 0x00, 6, 0, 13, 1, 6, 0, 2, 6, 1, 13, 2, 6, 0, 2, 6, 2, 13, 3, 6, 0, 2, 6, 3, 13, 4, 6, 0, 2]);
         const buffer = Buffer.alloc(expected.length);
         const buffalo = new BuffaloZcl(buffer);
-        const result = buffalo.write(DataType.ARRAY, payload, {});
+        buffalo.write(DataType.ARRAY, payload, {});
         expect(buffalo.getPosition()).toBe(expected.length);
         expect(buffer).toStrictEqual(expected);
     });
 
-    it('BuffaloZcl write array element type numeric', () => {
+    it("BuffaloZcl write array element type numeric", () => {
         const payload = {elementType: Zcl.DataType.DATA8, elements: [0, 0, 0, 0]};
         const expected = Buffer.from([0x08, 0x04, 0x00, 0, 0, 0, 0]);
         const buffer = Buffer.alloc(expected.length);
         const buffalo = new BuffaloZcl(buffer);
-        const result = buffalo.write(DataType.ARRAY, payload, {});
+        buffalo.write(DataType.ARRAY, payload, {});
         expect(buffalo.getPosition()).toBe(expected.length);
         expect(buffer).toStrictEqual(expected);
     });
 
-    it('BuffaloZcl write array element type numeric passed as string of DataType', () => {
-        const payload = {elementType: 'DATA8', elements: [0, 0, 0, 0]};
+    it("BuffaloZcl write array element type numeric passed as string of DataType", () => {
+        const payload = {elementType: "DATA8", elements: [0, 0, 0, 0]};
         const expected = Buffer.from([0x08, 0x04, 0x00, 0, 0, 0, 0]);
         const buffer = Buffer.alloc(expected.length);
         const buffalo = new BuffaloZcl(buffer);
-        const result = buffalo.write(DataType.ARRAY, payload, {});
+        buffalo.write(DataType.ARRAY, payload, {});
         expect(buffalo.getPosition()).toBe(expected.length);
         expect(buffer).toStrictEqual(expected);
     });
 
-    it('BuffaloZcl write struct', () => {
+    it("BuffaloZcl write struct", () => {
         const payload = [
             {elmType: Zcl.DataType.UINT8, elmVal: 3},
-            {elmType: Zcl.DataType.CHAR_STR, elmVal: 'a'},
+            {elmType: Zcl.DataType.CHAR_STR, elmVal: "a"},
         ];
         const expected = Buffer.from([2, 0, Zcl.DataType.UINT8, 3, Zcl.DataType.CHAR_STR, 1, 0x61]);
         const buffer = Buffer.alloc(expected.length);
         const buffalo = new BuffaloZcl(buffer);
-        const result = buffalo.write(DataType.STRUCT, payload, {});
+        buffalo.write(DataType.STRUCT, payload, {});
         expect(buffalo.getPosition()).toBe(expected.length);
         expect(buffer).toStrictEqual(expected);
     });
 
-    it('BuffaloZcl write security key', () => {
+    it("BuffaloZcl write security key", () => {
         const payload = [0x09, 0x07, 0x07, 0x06, 0x05, 0x04, 0x05, 0x01, 0x09, 0x07, 0x07, 0x06, 0x05, 0x04, 0x05, 0x01];
         const buffer = Buffer.alloc(16);
         const expected = Buffer.from([0x09, 0x07, 0x07, 0x06, 0x05, 0x04, 0x05, 0x01, 0x09, 0x07, 0x07, 0x06, 0x05, 0x04, 0x05, 0x01]);
@@ -1868,84 +1867,84 @@ describe('Zcl', () => {
     });
 
     it.each([
-        ['no data point', [], Buffer.from([])],
-        ['single data point', [{dp: 1, datatype: 4, data: Buffer.from([1])}], Buffer.from([1, 4, 0, 1, 1])],
+        ["no data point", [], Buffer.from([])],
+        ["single data point", [{dp: 1, datatype: 4, data: Buffer.from([1])}], Buffer.from([1, 4, 0, 1, 1])],
         [
-            'two data points',
+            "two data points",
             [
                 {dp: 1, datatype: 4, data: Buffer.from([1])},
                 {dp: 4, datatype: 2, data: Buffer.from([0, 0, 0, 90])},
             ],
             Buffer.from([1, 4, 0, 1, 1, 4, 2, 0, 4, 0, 0, 0, 90]),
         ],
-    ])('BuffaloZcl writeListTuyaDataPointValues %s', (_name, payload, expected) => {
+    ])("BuffaloZcl writeListTuyaDataPointValues %s", (_name, payload, expected) => {
         const buffer = Buffer.alloc(expected.length);
         const buffalo = new BuffaloZcl(buffer);
-        const result = buffalo.write(BuffaloZclDataType.LIST_TUYA_DATAPOINT_VALUES, payload, {});
+        buffalo.write(BuffaloZclDataType.LIST_TUYA_DATAPOINT_VALUES, payload, {});
         expect(buffalo.getPosition()).toBe(expected.length);
         expect(buffer).toStrictEqual(expected);
     });
 
-    it('Zcl utils get cluster without manufacturerCode', () => {
+    it("Zcl utils get cluster without manufacturerCode", () => {
         const cluster = Zcl.Utils.getCluster(0xfc00, undefined, {});
         expect(cluster.ID).toBe(0xfc00);
-        expect(cluster.name).toBe('manuSpecificAssaDoorLock');
+        expect(cluster.name).toBe("manuSpecificAssaDoorLock");
     });
 
-    it('Zcl utils get cluster with manufacturerCode', () => {
+    it("Zcl utils get cluster with manufacturerCode", () => {
         const cluster = Zcl.Utils.getCluster(0xfc00, 0x100b, {});
         expect(cluster.ID).toBe(0xfc00);
-        expect(cluster.name).toBe('manuSpecificPhilips');
+        expect(cluster.name).toBe("manuSpecificPhilips");
     });
 
-    it('Zcl utils get cluster manufacturerCode', () => {
+    it("Zcl utils get cluster manufacturerCode", () => {
         const cluster = Zcl.Utils.getCluster(0xfc00, 0x10f2, {});
         expect(cluster.ID).toBe(0xfc00);
-        expect(cluster.name).toBe('manuSpecificAssaDoorLock');
+        expect(cluster.name).toBe("manuSpecificAssaDoorLock");
     });
 
-    it('Zcl utils get cluster manufacturerCode wrong', () => {
+    it("Zcl utils get cluster manufacturerCode wrong", () => {
         const cluster = Zcl.Utils.getCluster(0xfc00, 123, {});
         expect(cluster.ID).toBe(0xfc00);
-        expect(cluster.name).toBe('manuSpecificAssaDoorLock');
+        expect(cluster.name).toBe("manuSpecificAssaDoorLock");
     });
 
-    it('Zcl utils get cluster attributes manufacturerCode', () => {
-        const cluster = Zcl.Utils.getCluster('closuresWindowCovering', 0x1021, {});
+    it("Zcl utils get cluster attributes manufacturerCode", () => {
+        const cluster = Zcl.Utils.getCluster("closuresWindowCovering", 0x1021, {});
         const attribute = cluster.getAttribute(0xf004);
-        expect(attribute).toStrictEqual({ID: 0xf004, manufacturerCode: 0x1021, name: 'stepPositionTilt', type: 48});
+        expect(attribute).toStrictEqual({ID: 0xf004, manufacturerCode: 0x1021, name: "stepPositionTilt", type: 48});
     });
 
-    it('Zcl utils get cluster attributes manufacturerCode wrong', () => {
-        const cluster = Zcl.Utils.getCluster('closuresWindowCovering', 123, {});
+    it("Zcl utils get cluster attributes manufacturerCode wrong", () => {
+        const cluster = Zcl.Utils.getCluster("closuresWindowCovering", 123, {});
         expect(() => cluster.getAttribute(0x1000)).toThrow("Cluster 'closuresWindowCovering' has no attribute '4096'");
     });
 
-    it('Zcl utils get command', () => {
-        const cluster = Zcl.Utils.getCluster('genOnOff', undefined, {});
+    it("Zcl utils get command", () => {
+        const cluster = Zcl.Utils.getCluster("genOnOff", undefined, {});
         const command = cluster.getCommand(0);
-        expect(command.name).toEqual('off');
-        expect(cluster.getCommand('off')).toEqual(command);
+        expect(command.name).toEqual("off");
+        expect(cluster.getCommand("off")).toEqual(command);
     });
 
-    it('Zcl utils get attribute', () => {
-        const cluster = Zcl.Utils.getCluster('genOnOff', undefined, {});
+    it("Zcl utils get attribute", () => {
+        const cluster = Zcl.Utils.getCluster("genOnOff", undefined, {});
         const command = cluster.getAttribute(16385);
-        expect(command.name).toEqual('onTime');
-        expect(cluster.getAttribute('onTime')).toEqual(command);
+        expect(command.name).toEqual("onTime");
+        expect(cluster.getAttribute("onTime")).toEqual(command);
     });
 
-    it('Zcl utils get attribute non-existing', () => {
-        const cluster = Zcl.Utils.getCluster('genOnOff', undefined, {});
-        expect(() => cluster.getAttribute('notExisting')).toThrow("Cluster 'genOnOff' has no attribute 'notExisting'");
+    it("Zcl utils get attribute non-existing", () => {
+        const cluster = Zcl.Utils.getCluster("genOnOff", undefined, {});
+        expect(() => cluster.getAttribute("notExisting")).toThrow("Cluster 'genOnOff' has no attribute 'notExisting'");
     });
 
-    it('Zcl utils get command non-existing', () => {
-        const cluster = Zcl.Utils.getCluster('genOnOff', undefined, {});
-        expect(() => cluster.getCommand('notExisting')).toThrow("Cluster 'genOnOff' has no command 'notExisting'");
+    it("Zcl utils get command non-existing", () => {
+        const cluster = Zcl.Utils.getCluster("genOnOff", undefined, {});
+        expect(() => cluster.getCommand("notExisting")).toThrow("Cluster 'genOnOff' has no command 'notExisting'");
     });
 
-    it('Zcl green power readGpd commissioning', () => {
+    it("Zcl green power readGpd commissioning", () => {
         const buffer = [
             0xff, // device
             0x00, // options
@@ -1979,7 +1978,7 @@ describe('Zcl', () => {
         });
     });
 
-    it('Zcl green power readGpd commissioning all options', () => {
+    it("Zcl green power readGpd commissioning all options", () => {
         const buffer = [
             0xff, // device
             0x80 | 0x04, // options
@@ -2048,7 +2047,7 @@ describe('Zcl', () => {
         });
     });
 
-    it('Zcl green power readGpd channel request', () => {
+    it("Zcl green power readGpd channel request", () => {
         const buffer = [0xfa];
         const frame = new BuffaloZcl(Buffer.from(buffer));
 
@@ -2064,7 +2063,7 @@ describe('Zcl', () => {
         });
     });
 
-    it('Zcl green power readGpd attribute report', () => {
+    it("Zcl green power readGpd attribute report", () => {
         const buffer = [
             0x12,
             0x34, // Manufacturer ID
@@ -2105,14 +2104,14 @@ describe('Zcl', () => {
             manufacturerCode: 13330,
             clusterID: 65535,
             attributes: {
-                '0': 50462976,
-                '1': 'ZIGBEE',
-                '2': 1,
+                "0": 50462976,
+                "1": "ZIGBEE",
+                "2": 1,
             },
         });
     });
 
-    it('Zcl green power writeGpd commissioning', () => {
+    it("Zcl green power writeGpd commissioning", () => {
         const expected = [
             1, // length
             0, // options
@@ -2135,7 +2134,7 @@ describe('Zcl', () => {
         expect(frame.getWritten()).toStrictEqual(Buffer.from(expected));
     });
 
-    it('Zcl green power writeGpd commissioning all options', () => {
+    it("Zcl green power writeGpd commissioning all options", () => {
         const expected = [
             27, // length
             0b11111, // options
@@ -2184,7 +2183,7 @@ describe('Zcl', () => {
         expect(frame.getWritten()).toStrictEqual(Buffer.from(expected));
     });
 
-    it('Zcl green power writeGpd custom reply', () => {
+    it("Zcl green power writeGpd custom reply", () => {
         const expected = [
             6, // length
             90,
@@ -2200,7 +2199,7 @@ describe('Zcl', () => {
             BuffaloZclDataType.GPD_FRAME,
             {
                 commandID: 0xf4,
-                buffer: Buffer.from('ZIGBEE'),
+                buffer: Buffer.from("ZIGBEE"),
             },
             {},
         );
@@ -2208,7 +2207,7 @@ describe('Zcl', () => {
         expect(frame.getWritten()).toStrictEqual(Buffer.from(expected));
     });
 
-    it('Zcl green power writeGpd unhandled command', () => {
+    it("Zcl green power writeGpd unhandled command", () => {
         const frame = new BuffaloZcl(Buffer.alloc(7));
         frame.write(
             BuffaloZclDataType.GPD_FRAME,
@@ -2221,7 +2220,7 @@ describe('Zcl', () => {
         expect(frame.getWritten()).toStrictEqual(Buffer.alloc(0));
     });
 
-    it('Zcl green power writeGpd channel configuration', () => {
+    it("Zcl green power writeGpd channel configuration", () => {
         const expected = [
             1, // length
             0xf, // Channel 26
@@ -2241,7 +2240,7 @@ describe('Zcl', () => {
         expect(frame.getWritten()).toStrictEqual(Buffer.from(expected));
     });
 
-    it('Zcl green power writeGpd channel configuration basic', () => {
+    it("Zcl green power writeGpd channel configuration basic", () => {
         const expected = [
             1, // length
             0x1f, // Channel 26 + Basic
@@ -2261,7 +2260,7 @@ describe('Zcl', () => {
         expect(frame.getWritten()).toStrictEqual(Buffer.from(expected));
     });
 
-    it('ZclFrame parse MiBoxer zone configuration command', () => {
+    it("ZclFrame parse MiBoxer zone configuration command", () => {
         const zoneConfigPayload = Buffer.from([
             0x11, 0x01, 0xf0, 0x08, 0x84, 0x2b, 0x01, 0x98, 0x2b, 0x02, 0xac, 0x2b, 0x03, 0xc0, 0x2b, 0x04, 0xd4, 0x2b, 0x05, 0xe8, 0x2b, 0x06, 0xfc,
             0x2b, 0x07, 0x10, 0x2c, 0x08,
@@ -2278,7 +2277,7 @@ describe('Zcl', () => {
             {zoneNum: 8, groupId: 0x2c10},
         ]);
     });
-    it('ZclFrame serialize MiBoxer zone configuration command', () => {
+    it("ZclFrame serialize MiBoxer zone configuration command", () => {
         const testZones = [
             {zoneNum: 1, groupId: 0x2b84},
             {zoneNum: 2, groupId: 0x2b98},
@@ -2295,7 +2294,7 @@ describe('Zcl', () => {
             true,
             undefined,
             1,
-            'miboxerSetZones',
+            "miboxerSetZones",
             Zcl.Clusters.genGroups.ID,
             {zones: testZones},
             {},
@@ -2308,7 +2307,7 @@ describe('Zcl', () => {
         );
     });
 
-    it('BuffaloZcl read BIG_ENDIAN_UINT24', () => {
+    it("BuffaloZcl read BIG_ENDIAN_UINT24", () => {
         const buffer = Buffer.from([0x01, 0x01, 0x86, 0xa0, 0x02]);
         const buffalo = new BuffaloZcl(buffer, 1);
         const value = buffalo.read(BuffaloZclDataType.BIG_ENDIAN_UINT24, {});
@@ -2316,7 +2315,7 @@ describe('Zcl', () => {
         expect(value).toStrictEqual(100000);
     });
 
-    it('BuffaloZcl write BIG_ENDIAN_UINT24', () => {
+    it("BuffaloZcl write BIG_ENDIAN_UINT24", () => {
         const payload = 16777200;
         const buffer = Buffer.alloc(4);
         const expected = Buffer.from([0x00, 0xff, 0xff, 0xf0]);
@@ -2326,21 +2325,21 @@ describe('Zcl', () => {
         expect(buffer).toStrictEqual(expected);
     });
 
-    it('BuffaloZcl read BUFFER whole', () => {
+    it("BuffaloZcl read BUFFER whole", () => {
         const buffer = Buffer.from([0x01, 0x02, 0x03, 0x04, 0x05]);
         const buffalo = new BuffaloZcl(buffer);
         const value = buffalo.read(BuffaloZclDataType.BUFFER, {});
         expect(value).toStrictEqual(Buffer.from([0x01, 0x02, 0x03, 0x04, 0x05]));
     });
 
-    it('BuffaloZcl read BUFFER with length', () => {
+    it("BuffaloZcl read BUFFER with length", () => {
         const buffer = Buffer.from([0x01, 0x02, 0x03, 0x04, 0x05]);
         const buffalo = new BuffaloZcl(buffer);
         const value = buffalo.read(BuffaloZclDataType.BUFFER, {length: 3});
         expect(value).toStrictEqual(Buffer.from([0x01, 0x02, 0x03]));
     });
 
-    it('BuffaloZcl write BUFFER whole', () => {
+    it("BuffaloZcl write BUFFER whole", () => {
         const buffer = Buffer.alloc(5);
         const expected = Buffer.from([0x01, 0x02, 0x03, 0x04, 0x05]);
         const buffalo = new BuffaloZcl(buffer);
@@ -2348,7 +2347,7 @@ describe('Zcl', () => {
         expect(buffer).toStrictEqual(expected);
     });
 
-    it('BuffaloZcl write BUFFER always whole - length ignored', () => {
+    it("BuffaloZcl write BUFFER always whole - length ignored", () => {
         const buffer = Buffer.alloc(5);
         const expected = Buffer.from([0x01, 0x02, 0x03, 0x04, 0x05]);
         const buffalo = new BuffaloZcl(buffer);
@@ -2356,7 +2355,7 @@ describe('Zcl', () => {
         expect(buffer).toStrictEqual(expected);
     });
 
-    it('BuffaloZcl write non existing type', () => {
+    it("BuffaloZcl write non existing type", () => {
         expect(() => {
             const buffalo = new BuffaloZcl(Buffer.alloc(0));
             // @ts-expect-error invalid typing
@@ -2364,7 +2363,7 @@ describe('Zcl', () => {
         }).toThrow(new Error("Write for '9999' not available"));
     });
 
-    it('BuffaloZcl read non existing type', () => {
+    it("BuffaloZcl read non existing type", () => {
         expect(() => {
             const buffalo = new BuffaloZcl(Buffer.alloc(0));
             // @ts-expect-error invalid typing
@@ -2372,7 +2371,7 @@ describe('Zcl', () => {
         }).toThrow(new Error("Read for '9999' not available"));
     });
 
-    it('BuffaloZcl write TOD', () => {
+    it("BuffaloZcl write TOD", () => {
         const buffer = Buffer.alloc(4);
         const expected = Buffer.from([0, 59, 34, 88]);
         const buffalo = new BuffaloZcl(buffer);
@@ -2381,14 +2380,14 @@ describe('Zcl', () => {
         expect(buffalo.getBuffer()).toStrictEqual(expected);
     });
 
-    it('BuffaloZcl read TOD', () => {
+    it("BuffaloZcl read TOD", () => {
         const expected = {hours: 0, minutes: 59, seconds: 34, hundredths: 88};
         const buffalo = new BuffaloZcl(Buffer.from([0, 59, 34, 88]));
         const value = buffalo.read(DataType.TOD, {});
         expect(value).toStrictEqual(expected);
     });
 
-    it('BuffaloZcl write DATE', () => {
+    it("BuffaloZcl write DATE", () => {
         const buffer = Buffer.alloc(4);
         const expected = Buffer.from([100, 8, 31, 3]);
         const buffalo = new BuffaloZcl(buffer);
@@ -2397,14 +2396,14 @@ describe('Zcl', () => {
         expect(buffalo.getBuffer()).toStrictEqual(expected);
     });
 
-    it('BuffaloZcl read DATE', () => {
+    it("BuffaloZcl read DATE", () => {
         const expected = {year: 2000, month: 8, dayOfMonth: 31, dayOfWeek: 3};
         const buffalo = new BuffaloZcl(Buffer.from([100, 8, 31, 3]));
         const value = buffalo.read(DataType.DATE, {});
         expect(value).toStrictEqual(expected);
     });
 
-    it('BuffaloZcl write TOD non-value', () => {
+    it("BuffaloZcl write TOD non-value", () => {
         const buffer = Buffer.alloc(4);
         const expected = Buffer.from([0xff, 0xff, 0xff, 0xff]);
         const buffalo = new BuffaloZcl(buffer);
@@ -2413,7 +2412,7 @@ describe('Zcl', () => {
         expect(buffalo.getBuffer()).toStrictEqual(expected);
     });
 
-    it('BuffaloZcl read DATE non-value', () => {
+    it("BuffaloZcl read DATE non-value", () => {
         const buffer = Buffer.alloc(4);
         const expected = Buffer.from([0xff, 0xff, 0xff, 0xff]);
         const buffalo = new BuffaloZcl(buffer);
@@ -2422,49 +2421,49 @@ describe('Zcl', () => {
         expect(buffalo.getBuffer()).toStrictEqual(expected);
     });
 
-    it('BuffaloZcl read OCTET_STR non-value', () => {
+    it("BuffaloZcl read OCTET_STR non-value", () => {
         const buffalo = new BuffaloZcl(Buffer.from([0xff]));
         const value = buffalo.read(DataType.OCTET_STR, {});
         expect(value).toStrictEqual(Buffer.from([]));
     });
 
-    it('BuffaloZcl read CHAR_STR non-value', () => {
+    it("BuffaloZcl read CHAR_STR non-value", () => {
         const buffalo = new BuffaloZcl(Buffer.from([0xff]));
         const value = buffalo.read(DataType.CHAR_STR, {});
-        expect(value).toStrictEqual('');
+        expect(value).toStrictEqual("");
     });
 
-    it('BuffaloZcl read MI_STRUCT non-value', () => {
+    it("BuffaloZcl read MI_STRUCT non-value", () => {
         const buffalo = new BuffaloZcl(Buffer.from([0xff]));
         const value = buffalo.read(BuffaloZclDataType.MI_STRUCT, {});
         expect(value).toStrictEqual({});
     });
 
-    it('BuffaloZcl read LONG_OCTET_STR non-value', () => {
+    it("BuffaloZcl read LONG_OCTET_STR non-value", () => {
         const buffalo = new BuffaloZcl(Buffer.from([0xff, 0xff]));
         const value = buffalo.read(DataType.LONG_OCTET_STR, {});
         expect(value).toStrictEqual(Buffer.from([]));
     });
 
-    it('BuffaloZcl read LONG_CHAR_STR non-value', () => {
+    it("BuffaloZcl read LONG_CHAR_STR non-value", () => {
         const buffalo = new BuffaloZcl(Buffer.from([0xff, 0xff]));
         const value = buffalo.read(DataType.LONG_CHAR_STR, {});
-        expect(value).toStrictEqual('');
+        expect(value).toStrictEqual("");
     });
 
-    it('BuffaloZcl read ARRAY non-value', () => {
+    it("BuffaloZcl read ARRAY non-value", () => {
         const buffalo = new BuffaloZcl(Buffer.from([DataType.UINT8, 0xff, 0xff]));
         const value = buffalo.read(DataType.ARRAY, {});
         expect(value).toStrictEqual([]);
     });
 
-    it('BuffaloZcl read STRUCT non-value', () => {
+    it("BuffaloZcl read STRUCT non-value", () => {
         const buffalo = new BuffaloZcl(Buffer.from([0xff, 0xff]));
         const value = buffalo.read(DataType.STRUCT, {});
         expect(value).toStrictEqual([]);
     });
 
-    it('BuffaloZcl write NO_DATA', () => {
+    it("BuffaloZcl write NO_DATA", () => {
         const buffalo = new BuffaloZcl(Buffer.alloc(2));
         const payload = null;
         buffalo.write(DataType.NO_DATA, payload, {});
@@ -2472,14 +2471,14 @@ describe('Zcl', () => {
         expect(buffalo.getBuffer()).toStrictEqual(Buffer.from([0x00, 0x00]));
     });
 
-    it('BuffaloZcl read NO_DATA', () => {
+    it("BuffaloZcl read NO_DATA", () => {
         const buffalo = new BuffaloZcl(Buffer.from([0x00, 0x00]), 1);
         const value = buffalo.read(DataType.NO_DATA, {});
         expect(buffalo.getPosition()).toStrictEqual(1);
         expect(value).toStrictEqual(undefined);
     });
 
-    it('BuffaloZcl write UNKNOWN', () => {
+    it("BuffaloZcl write UNKNOWN", () => {
         const buffalo = new BuffaloZcl(Buffer.alloc(2));
         const payload = null;
         buffalo.write(DataType.UNKNOWN, payload, {});
@@ -2487,32 +2486,32 @@ describe('Zcl', () => {
         expect(buffalo.getBuffer()).toStrictEqual(Buffer.from([0x00, 0x00]));
     });
 
-    it('BuffaloZcl read UNKNOWN', () => {
+    it("BuffaloZcl read UNKNOWN", () => {
         const buffalo = new BuffaloZcl(Buffer.from([0x00, 0x00]), 1);
         const value = buffalo.read(DataType.UNKNOWN, {});
         expect(buffalo.getPosition()).toStrictEqual(1);
         expect(value).toStrictEqual(undefined);
     });
 
-    it('ZclHeader return undefined when too short', () => {
+    it("ZclHeader return undefined when too short", () => {
         const header = Zcl.Header.fromBuffer(Buffer.from([0, 8]));
         expect(header).toStrictEqual(undefined);
     });
 
-    it('ZclHeader return undefined when too short manufacturer specific', () => {
+    it("ZclHeader return undefined when too short manufacturer specific", () => {
         const header = Zcl.Header.fromBuffer(Buffer.from([4, 8, 3]));
         expect(header).toStrictEqual(undefined);
     });
 
-    describe('BuffaloZcl write passthrough to Buffalo', () => {
+    describe("BuffaloZcl write passthrough to Buffalo", () => {
         let buffalo: BuffaloZcl;
 
         beforeEach(() => {
             buffalo = new BuffaloZcl(Buffer.alloc(255));
         });
 
-        it('uint8', () => {
-            const uint8Spy = vi.spyOn(buffalo, 'writeUInt8');
+        it("uint8", () => {
+            const uint8Spy = vi.spyOn(buffalo, "writeUInt8");
             const types = [DataType.DATA8, DataType.BOOLEAN, DataType.BITMAP8, DataType.UINT8, DataType.ENUM8];
             let i = 0;
 
@@ -2522,8 +2521,8 @@ describe('Zcl', () => {
             }
         });
 
-        it('uint16', () => {
-            const uint16Spy = vi.spyOn(buffalo, 'writeUInt16');
+        it("uint16", () => {
+            const uint16Spy = vi.spyOn(buffalo, "writeUInt16");
             const types = [DataType.DATA16, DataType.BITMAP16, DataType.UINT16, DataType.ENUM16, DataType.CLUSTER_ID, DataType.ATTR_ID];
             let i = 0;
 
@@ -2533,8 +2532,8 @@ describe('Zcl', () => {
             }
         });
 
-        it('uint24', () => {
-            const uint24Spy = vi.spyOn(buffalo, 'writeUInt24');
+        it("uint24", () => {
+            const uint24Spy = vi.spyOn(buffalo, "writeUInt24");
             const types = [DataType.DATA24, DataType.BITMAP24, DataType.UINT24];
             let i = 0;
 
@@ -2544,8 +2543,8 @@ describe('Zcl', () => {
             }
         });
 
-        it('uint32', () => {
-            const uint32Spy = vi.spyOn(buffalo, 'writeUInt32');
+        it("uint32", () => {
+            const uint32Spy = vi.spyOn(buffalo, "writeUInt32");
             const types = [DataType.DATA32, DataType.BITMAP32, DataType.UINT32, DataType.UTC, DataType.BAC_OID];
             let i = 0;
 
@@ -2555,56 +2554,56 @@ describe('Zcl', () => {
             }
         });
 
-        it('int8', () => {
-            const int8Spy = vi.spyOn(buffalo, 'writeInt8');
+        it("int8", () => {
+            const int8Spy = vi.spyOn(buffalo, "writeInt8");
             buffalo.write(DataType.INT8, 1, {});
             expect(int8Spy).toHaveBeenCalledTimes(1);
         });
 
-        it('int16', () => {
-            const int16Spy = vi.spyOn(buffalo, 'writeInt16');
+        it("int16", () => {
+            const int16Spy = vi.spyOn(buffalo, "writeInt16");
             buffalo.write(DataType.INT16, 1, {});
             expect(int16Spy).toHaveBeenCalledTimes(1);
         });
 
-        it('int24', () => {
-            const int24Spy = vi.spyOn(buffalo, 'writeInt24');
+        it("int24", () => {
+            const int24Spy = vi.spyOn(buffalo, "writeInt24");
             buffalo.write(DataType.INT24, 1, {});
             expect(int24Spy).toHaveBeenCalledTimes(1);
         });
 
-        it('int32', () => {
-            const int32Spy = vi.spyOn(buffalo, 'writeInt32');
+        it("int32", () => {
+            const int32Spy = vi.spyOn(buffalo, "writeInt32");
             buffalo.write(DataType.INT32, 1, {});
             expect(int32Spy).toHaveBeenCalledTimes(1);
         });
 
-        it('int48', () => {
-            const int48Spy = vi.spyOn(buffalo, 'writeInt48');
+        it("int48", () => {
+            const int48Spy = vi.spyOn(buffalo, "writeInt48");
             buffalo.write(DataType.INT48, 1, {});
             expect(int48Spy).toHaveBeenCalledTimes(1);
         });
 
-        it('list uint8', () => {
-            const listuint8Spy = vi.spyOn(buffalo, 'writeListUInt8');
+        it("list uint8", () => {
+            const listuint8Spy = vi.spyOn(buffalo, "writeListUInt8");
             buffalo.write(BuffaloZclDataType.LIST_UINT8, [1], {});
             expect(listuint8Spy).toHaveBeenCalledTimes(1);
         });
 
-        it('list uint16', () => {
-            const listuint16Spy = vi.spyOn(buffalo, 'writeListUInt16');
+        it("list uint16", () => {
+            const listuint16Spy = vi.spyOn(buffalo, "writeListUInt16");
             buffalo.write(BuffaloZclDataType.LIST_UINT16, [1], {});
             expect(listuint16Spy).toHaveBeenCalledTimes(1);
         });
 
-        it('list uint24', () => {
-            const listuint24Spy = vi.spyOn(buffalo, 'writeListUInt24');
+        it("list uint24", () => {
+            const listuint24Spy = vi.spyOn(buffalo, "writeListUInt24");
             buffalo.write(BuffaloZclDataType.LIST_UINT24, [1], {});
             expect(listuint24Spy).toHaveBeenCalledTimes(1);
         });
 
-        it('list uint32', () => {
-            const listuint32Spy = vi.spyOn(buffalo, 'writeListUInt32');
+        it("list uint32", () => {
+            const listuint32Spy = vi.spyOn(buffalo, "writeListUInt32");
             buffalo.write(BuffaloZclDataType.LIST_UINT32, [1], {});
             expect(listuint32Spy).toHaveBeenCalledTimes(1);
         });
@@ -2616,34 +2615,34 @@ describe('Zcl', () => {
         //     expect(semiPrecSpy).toHaveBeenCalledTimes(1);
         // });
 
-        it('single prec', () => {
-            const singlePrecSpy = vi.spyOn(buffalo, 'writeFloatLE');
+        it("single prec", () => {
+            const singlePrecSpy = vi.spyOn(buffalo, "writeFloatLE");
             buffalo.write(DataType.SINGLE_PREC, 1.1, {});
             expect(singlePrecSpy).toHaveBeenCalledTimes(1);
         });
 
-        it('double prec', () => {
-            const doublePrecSpy = vi.spyOn(buffalo, 'writeDoubleLE');
+        it("double prec", () => {
+            const doublePrecSpy = vi.spyOn(buffalo, "writeDoubleLE");
             buffalo.write(DataType.DOUBLE_PREC, 1.1, {});
             expect(doublePrecSpy).toHaveBeenCalledTimes(1);
         });
 
-        it('ieee add', () => {
-            const doublePrecSpy = vi.spyOn(buffalo, 'writeIeeeAddr');
-            buffalo.write(DataType.IEEE_ADDR, '0xf1f1f1f1f1f1f1f1', {});
+        it("ieee add", () => {
+            const doublePrecSpy = vi.spyOn(buffalo, "writeIeeeAddr");
+            buffalo.write(DataType.IEEE_ADDR, "0xf1f1f1f1f1f1f1f1", {});
             expect(doublePrecSpy).toHaveBeenCalledTimes(1);
         });
     });
 
-    describe('BuffaloZcl read passthrough to Buffalo', () => {
+    describe("BuffaloZcl read passthrough to Buffalo", () => {
         let buffalo: BuffaloZcl;
 
         beforeEach(() => {
             buffalo = new BuffaloZcl(Buffer.alloc(255));
         });
 
-        it('uint8', () => {
-            const uint8Spy = vi.spyOn(buffalo, 'readUInt8');
+        it("uint8", () => {
+            const uint8Spy = vi.spyOn(buffalo, "readUInt8");
             const types = [DataType.DATA8, DataType.BOOLEAN, DataType.BITMAP8, DataType.UINT8, DataType.ENUM8];
             let i = 0;
 
@@ -2653,8 +2652,8 @@ describe('Zcl', () => {
             }
         });
 
-        it('uint16', () => {
-            const uint16Spy = vi.spyOn(buffalo, 'readUInt16');
+        it("uint16", () => {
+            const uint16Spy = vi.spyOn(buffalo, "readUInt16");
             const types = [DataType.DATA16, DataType.BITMAP16, DataType.UINT16, DataType.ENUM16, DataType.CLUSTER_ID, DataType.ATTR_ID];
             let i = 0;
 
@@ -2664,8 +2663,8 @@ describe('Zcl', () => {
             }
         });
 
-        it('uint24', () => {
-            const uint24Spy = vi.spyOn(buffalo, 'readUInt24');
+        it("uint24", () => {
+            const uint24Spy = vi.spyOn(buffalo, "readUInt24");
             const types = [DataType.DATA24, DataType.BITMAP24, DataType.UINT24];
             let i = 0;
 
@@ -2675,8 +2674,8 @@ describe('Zcl', () => {
             }
         });
 
-        it('uint32', () => {
-            const uint32Spy = vi.spyOn(buffalo, 'readUInt32');
+        it("uint32", () => {
+            const uint32Spy = vi.spyOn(buffalo, "readUInt32");
             const types = [DataType.DATA32, DataType.BITMAP32, DataType.UINT32, DataType.UTC, DataType.BAC_OID];
             let i = 0;
 
@@ -2686,56 +2685,56 @@ describe('Zcl', () => {
             }
         });
 
-        it('int8', () => {
-            const int8Spy = vi.spyOn(buffalo, 'readInt8');
+        it("int8", () => {
+            const int8Spy = vi.spyOn(buffalo, "readInt8");
             buffalo.read(DataType.INT8, {});
             expect(int8Spy).toHaveBeenCalledTimes(1);
         });
 
-        it('int16', () => {
-            const int16Spy = vi.spyOn(buffalo, 'readInt16');
+        it("int16", () => {
+            const int16Spy = vi.spyOn(buffalo, "readInt16");
             buffalo.read(DataType.INT16, {});
             expect(int16Spy).toHaveBeenCalledTimes(1);
         });
 
-        it('int24', () => {
-            const int24Spy = vi.spyOn(buffalo, 'readInt24');
+        it("int24", () => {
+            const int24Spy = vi.spyOn(buffalo, "readInt24");
             buffalo.read(DataType.INT24, {});
             expect(int24Spy).toHaveBeenCalledTimes(1);
         });
 
-        it('int32', () => {
-            const int32Spy = vi.spyOn(buffalo, 'readInt32');
+        it("int32", () => {
+            const int32Spy = vi.spyOn(buffalo, "readInt32");
             buffalo.read(DataType.INT32, {});
             expect(int32Spy).toHaveBeenCalledTimes(1);
         });
 
-        it('int48', () => {
-            const int48Spy = vi.spyOn(buffalo, 'readInt48');
+        it("int48", () => {
+            const int48Spy = vi.spyOn(buffalo, "readInt48");
             buffalo.read(DataType.INT48, {});
             expect(int48Spy).toHaveBeenCalledTimes(1);
         });
 
-        it('list uint8', () => {
-            const listuint8Spy = vi.spyOn(buffalo, 'readListUInt8');
+        it("list uint8", () => {
+            const listuint8Spy = vi.spyOn(buffalo, "readListUInt8");
             buffalo.read(BuffaloZclDataType.LIST_UINT8, {length: 1});
             expect(listuint8Spy).toHaveBeenCalledTimes(1);
         });
 
-        it('list uint16', () => {
-            const listuint16Spy = vi.spyOn(buffalo, 'readListUInt16');
+        it("list uint16", () => {
+            const listuint16Spy = vi.spyOn(buffalo, "readListUInt16");
             buffalo.read(BuffaloZclDataType.LIST_UINT16, {length: 1});
             expect(listuint16Spy).toHaveBeenCalledTimes(1);
         });
 
-        it('list uint24', () => {
-            const listuint24Spy = vi.spyOn(buffalo, 'readListUInt24');
+        it("list uint24", () => {
+            const listuint24Spy = vi.spyOn(buffalo, "readListUInt24");
             buffalo.read(BuffaloZclDataType.LIST_UINT24, {length: 1});
             expect(listuint24Spy).toHaveBeenCalledTimes(1);
         });
 
-        it('list uint32', () => {
-            const listuint32Spy = vi.spyOn(buffalo, 'readListUInt32');
+        it("list uint32", () => {
+            const listuint32Spy = vi.spyOn(buffalo, "readListUInt32");
             buffalo.read(BuffaloZclDataType.LIST_UINT32, {length: 1});
             expect(listuint32Spy).toHaveBeenCalledTimes(1);
         });
@@ -2747,20 +2746,20 @@ describe('Zcl', () => {
         //     expect(semiPrecSpy).toHaveBeenCalledTimes(1);
         // });
 
-        it('single prec', () => {
-            const singlePrecSpy = vi.spyOn(buffalo, 'readFloatLE');
+        it("single prec", () => {
+            const singlePrecSpy = vi.spyOn(buffalo, "readFloatLE");
             buffalo.read(DataType.SINGLE_PREC, {});
             expect(singlePrecSpy).toHaveBeenCalledTimes(1);
         });
 
-        it('double prec', () => {
-            const doublePrecSpy = vi.spyOn(buffalo, 'readDoubleLE');
+        it("double prec", () => {
+            const doublePrecSpy = vi.spyOn(buffalo, "readDoubleLE");
             buffalo.read(DataType.DOUBLE_PREC, {});
             expect(doublePrecSpy).toHaveBeenCalledTimes(1);
         });
 
-        it('ieee add', () => {
-            const doublePrecSpy = vi.spyOn(buffalo, 'readIeeeAddr');
+        it("ieee add", () => {
+            const doublePrecSpy = vi.spyOn(buffalo, "readIeeeAddr");
             buffalo.read(DataType.IEEE_ADDR, {});
             expect(doublePrecSpy).toHaveBeenCalledTimes(1);
         });
@@ -2772,14 +2771,14 @@ describe('Zcl', () => {
         BuffaloZclDataType.LIST_UINT24,
         BuffaloZclDataType.LIST_UINT32,
         BuffaloZclDataType.LIST_ZONEINFO,
-    ])('Throws when read is missing required length option - param %s', (type) => {
+    ])("Throws when read is missing required length option - param %s", (type) => {
         expect(() => {
             const buffalo = new BuffaloZcl(Buffer.alloc(1));
             buffalo.read(type, {});
         }).toThrow(`Cannot read ${BuffaloZclDataType[type]} without length option specified`);
     });
 
-    it('Reads as buffer when USE_DATA_TYPE is missing dataType option', () => {
+    it("Reads as buffer when USE_DATA_TYPE is missing dataType option", () => {
         const buffalo = new BuffaloZcl(Buffer.from([12, 34]));
         const value = buffalo.read(BuffaloZclDataType.USE_DATA_TYPE, {});
         expect(value).toStrictEqual(Buffer.from([12, 34]));
@@ -2789,7 +2788,7 @@ describe('Zcl', () => {
         expect(value2).toStrictEqual(Buffer.from([34]));
     });
 
-    it('Writes as buffer when USE_DATA_TYPE is missing dataType option', () => {
+    it("Writes as buffer when USE_DATA_TYPE is missing dataType option", () => {
         const payload = Buffer.from([12, 34]);
         const buffer = Buffer.alloc(2);
         const buffalo = new BuffaloZcl(buffer);
@@ -2797,37 +2796,37 @@ describe('Zcl', () => {
         expect(buffer).toStrictEqual(payload);
     });
 
-    it('Throws when write USE_DATA_TYPE is missing dataType option and value isnt buffer or number array', () => {
+    it("Throws when write USE_DATA_TYPE is missing dataType option and value isnt buffer or number array", () => {
         expect(() => {
-            const payload = 'abcd';
+            const payload = "abcd";
             const buffalo = new BuffaloZcl(Buffer.alloc(2));
             buffalo.write(BuffaloZclDataType.USE_DATA_TYPE, payload, {});
-        }).toThrow(`Cannot write USE_DATA_TYPE without dataType option specified`);
+        }).toThrow("Cannot write USE_DATA_TYPE without dataType option specified");
     });
 
-    it('Throws when read GPD_FRAME is missing payload.payloadSize option when payload.commandID is 0xA1', () => {
+    it("Throws when read GPD_FRAME is missing payload.payloadSize option when payload.commandID is 0xA1", () => {
         expect(() => {
             const buffalo = new BuffaloZcl(Buffer.alloc(1));
             buffalo.read(BuffaloZclDataType.GPD_FRAME, {payload: {commandID: 0xa1}});
-        }).toThrow(`Cannot read GPD_FRAME with commandID=0xA1 without payloadSize options specified`);
+        }).toThrow("Cannot read GPD_FRAME with commandID=0xA1 without payloadSize options specified");
     });
 
-    it('Throws when read LIST_THERMO_TRANSITIONS is missing required payload options', () => {
+    it("Throws when read LIST_THERMO_TRANSITIONS is missing required payload options", () => {
         expect(() => {
             const buffalo = new BuffaloZcl(Buffer.alloc(1));
             buffalo.read(BuffaloZclDataType.LIST_THERMO_TRANSITIONS, {});
-        }).toThrow(`Cannot read LIST_THERMO_TRANSITIONS without required payload options specified`);
+        }).toThrow("Cannot read LIST_THERMO_TRANSITIONS without required payload options specified");
         expect(() => {
             const buffalo = new BuffaloZcl(Buffer.alloc(1));
             buffalo.read(BuffaloZclDataType.LIST_THERMO_TRANSITIONS, {payload: {}});
-        }).toThrow(`Cannot read LIST_THERMO_TRANSITIONS without required payload options specified`);
+        }).toThrow("Cannot read LIST_THERMO_TRANSITIONS without required payload options specified");
         expect(() => {
             const buffalo = new BuffaloZcl(Buffer.alloc(1));
             buffalo.read(BuffaloZclDataType.LIST_THERMO_TRANSITIONS, {payload: {mode: 1}});
-        }).toThrow(`Cannot read LIST_THERMO_TRANSITIONS without required payload options specified`);
+        }).toThrow("Cannot read LIST_THERMO_TRANSITIONS without required payload options specified");
         expect(() => {
             const buffalo = new BuffaloZcl(Buffer.alloc(1));
             buffalo.read(BuffaloZclDataType.LIST_THERMO_TRANSITIONS, {payload: {numoftrans: 1}});
-        }).toThrow(`Cannot read LIST_THERMO_TRANSITIONS without required payload options specified`);
+        }).toThrow("Cannot read LIST_THERMO_TRANSITIONS without required payload options specified");
     });
 });

@@ -1,19 +1,19 @@
-import assert from 'node:assert';
-import events from 'node:events';
-import {Socket} from 'node:net';
+import assert from "node:assert";
+import events from "node:events";
+import {Socket} from "node:net";
 
-import {Queue, wait, Waitress} from '../../../utils';
-import {logger} from '../../../utils/logger';
-import {ClusterId as ZdoClusterId} from '../../../zspec/zdo';
-import {SerialPort} from '../../serialPort';
-import SocketPortUtils from '../../socketPortUtils';
-import * as Constants from '../constants';
-import {Frame as UnpiFrame, Parser as UnpiParser, Writer as UnpiWriter} from '../unpi';
-import {Subsystem, Type} from '../unpi/constants';
-import Definition from './definition';
-import {ZpiObjectPayload} from './tstype';
-import {isMtCmdSreqZdo} from './utils';
-import {ZpiObject} from './zpiObject';
+import {Queue, Waitress, wait} from "../../../utils";
+import {logger} from "../../../utils/logger";
+import {ClusterId as ZdoClusterId} from "../../../zspec/zdo";
+import {SerialPort} from "../../serialPort";
+import SocketPortUtils from "../../socketPortUtils";
+import * as Constants from "../constants";
+import {Frame as UnpiFrame, Parser as UnpiParser, Writer as UnpiWriter} from "../unpi";
+import {Subsystem, Type} from "../unpi/constants";
+import Definition from "./definition";
+import type {ZpiObjectPayload} from "./tstype";
+import {isMtCmdSreqZdo} from "./utils";
+import {ZpiObject} from "./zpiObject";
 
 const {
     COMMON: {ZnpCommandStatus},
@@ -26,7 +26,7 @@ const timeouts = {
     default: 10000,
 };
 
-const NS = 'zh:zstack:znp';
+const NS = "zh:zstack:znp";
 
 interface WaitressMatcher {
     type: Type;
@@ -54,8 +54,8 @@ export class Znp extends events.EventEmitter {
         super();
 
         this.path = path;
-        this.baudRate = typeof baudRate === 'number' ? baudRate : 115200;
-        this.rtscts = typeof rtscts === 'boolean' ? rtscts : false;
+        this.baudRate = typeof baudRate === "number" ? baudRate : 115200;
+        this.rtscts = typeof rtscts === "boolean" ? rtscts : false;
 
         this.initialized = false;
 
@@ -70,7 +70,7 @@ export class Znp extends events.EventEmitter {
             const object = ZpiObject.fromUnpiFrame(frame);
             logger.debug(() => `<-- ${object.toString(object.subsystem !== Subsystem.ZDO)}`, NS);
             this.waitress.resolve(object);
-            this.emit('received', object);
+            this.emit("received", object);
         } catch (error) {
             logger.error(`Error while parsing to ZpiObject '${error}'`, NS);
         }
@@ -85,9 +85,9 @@ export class Znp extends events.EventEmitter {
     }
 
     private onPortClose(): void {
-        logger.info('Port closed', NS);
+        logger.info("Port closed", NS);
         this.initialized = false;
-        this.emit('close');
+        this.emit("close");
     }
 
     public async open(): Promise<void> {
@@ -102,14 +102,14 @@ export class Znp extends events.EventEmitter {
 
         this.unpiWriter.pipe(this.serialPort);
         this.serialPort.pipe(this.unpiParser);
-        this.unpiParser.on('parsed', this.onUnpiParsed.bind(this));
+        this.unpiParser.on("parsed", this.onUnpiParsed.bind(this));
 
         try {
             await this.serialPort.asyncOpen();
-            logger.info('Serialport opened', NS);
+            logger.info("Serialport opened", NS);
 
-            this.serialPort.once('close', this.onPortClose.bind(this));
-            this.serialPort.once('error', this.onPortError.bind(this));
+            this.serialPort.once("close", this.onPortClose.bind(this));
+            this.serialPort.once("error", this.onPortError.bind(this));
 
             this.initialized = true;
 
@@ -135,49 +135,52 @@ export class Znp extends events.EventEmitter {
         this.socketPort.setKeepAlive(true, 15000);
         this.unpiWriter.pipe(this.socketPort);
         this.socketPort.pipe(this.unpiParser);
-        this.unpiParser.on('parsed', this.onUnpiParsed.bind(this));
+        this.unpiParser.on("parsed", this.onUnpiParsed.bind(this));
 
         return await new Promise((resolve, reject): void => {
-            this.socketPort!.on('connect', function () {
-                logger.info('Socket connected', NS);
+            // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
+            this.socketPort!.on("connect", () => {
+                logger.info("Socket connected", NS);
             });
-
-            // eslint-disable-next-line @typescript-eslint/no-this-alias
             const self = this;
-            this.socketPort!.on('ready', async function () {
-                logger.info('Socket ready', NS);
+            // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
+            this.socketPort!.on("ready", async () => {
+                logger.info("Socket ready", NS);
                 await self.skipBootloader();
                 self.initialized = true;
                 resolve();
             });
 
-            this.socketPort!.once('close', this.onPortClose.bind(this));
+            // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
+            this.socketPort!.once("close", this.onPortClose.bind(this));
 
-            this.socketPort!.on('error', function (error) {
+            // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
+            this.socketPort!.on("error", (error) => {
                 logger.error(`Socket error ${error}`, NS);
-                reject(new Error(`Error while opening socket`));
+                reject(new Error("Error while opening socket"));
                 self.initialized = false;
             });
 
+            // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
             this.socketPort!.connect(info.port, info.host);
         });
     }
 
     private async skipBootloader(): Promise<void> {
         try {
-            await this.request(Subsystem.SYS, 'ping', {capabilities: 1}, undefined, 250);
+            await this.request(Subsystem.SYS, "ping", {capabilities: 1}, undefined, 250);
         } catch {
             // Skip bootloader on CC2530/CC2531
             // Send magic byte: https://github.com/Koenkk/zigbee2mqtt/issues/1343 to bootloader
             // and give ZNP 1 second to start.
             try {
-                logger.info('Writing CC2530/CC2531 skip bootloader payload', NS);
+                logger.info("Writing CC2530/CC2531 skip bootloader payload", NS);
                 this.unpiWriter.writeBuffer(Buffer.from([0xef]));
                 await wait(1000);
-                await this.request(Subsystem.SYS, 'ping', {capabilities: 1}, undefined, 250 /* v8 ignore next */);
+                await this.request(Subsystem.SYS, "ping", {capabilities: 1}, undefined, 250 /* v8 ignore next */);
             } catch {
                 // Skip bootloader on some CC2652 devices (e.g. zzh-p)
-                logger.info('Skip bootloader for CC2652/CC1352', NS);
+                logger.info("Skip bootloader for CC2652/CC1352", NS);
                 if (this.serialPort) {
                     await this.serialPort.asyncSet({dtr: false, rts: false});
                     await wait(150);
@@ -191,7 +194,7 @@ export class Znp extends events.EventEmitter {
     }
 
     public async close(): Promise<void> {
-        logger.info('closing', NS);
+        logger.info("closing", NS);
         this.queue.clear();
 
         if (this.initialized) {
@@ -201,16 +204,17 @@ export class Znp extends events.EventEmitter {
                 try {
                     await this.serialPort.asyncFlushAndClose();
                 } catch (error) {
-                    this.emit('close');
+                    this.emit("close");
 
                     throw error;
                 }
             } else {
+                // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
                 this.socketPort!.destroy();
             }
         }
 
-        this.emit('close');
+        this.emit("close");
     }
 
     public async requestWithReply(
@@ -235,23 +239,23 @@ export class Znp extends events.EventEmitter {
         waiterID?: number,
         timeout?: number,
         expectedStatuses: Constants.COMMON.ZnpCommandStatus[] = [ZnpCommandStatus.SUCCESS],
-    ): Promise<ZpiObject | void> {
+    ): Promise<ZpiObject | undefined> {
         if (!this.initialized) {
-            throw new Error('Cannot request when znp has not been initialized yet');
+            throw new Error("Cannot request when znp has not been initialized yet");
         }
 
         const object = ZpiObject.createRequest(subsystem, command, payload);
 
-        return this.queue.execute<ZpiObject | void>(async () => {
+        return this.queue.execute<ZpiObject | undefined>(async () => {
             logger.debug(() => `--> ${object}`, NS);
 
             if (object.type === Type.SREQ) {
-                const t = object.command.name === 'bdbStartCommissioning' || object.command.name === 'startupFromApp' ? 40000 : timeouts.SREQ;
+                const t = object.command.name === "bdbStartCommissioning" || object.command.name === "startupFromApp" ? 40000 : timeouts.SREQ;
                 const waiter = this.waitress.waitFor({type: Type.SRSP, subsystem: object.subsystem, command: object.command.name}, timeout || t);
                 this.unpiWriter.writeFrame(object.unpiFrame);
                 const result = await waiter.start().promise;
                 if (result?.payload.status !== undefined && !expectedStatuses.includes(result.payload.status)) {
-                    if (typeof waiterID === 'number') {
+                    if (typeof waiterID === "number") {
                         this.waitress.remove(waiterID);
                     }
 
@@ -260,23 +264,25 @@ export class Znp extends events.EventEmitter {
                             result.payload.status,
                         )}' (expected '${expectedStatuses.map(statusDescription)}')`,
                     );
-                } else {
-                    return result;
                 }
-            } else if (object.type === Type.AREQ && object.isResetCommand()) {
-                const waiter = this.waitress.waitFor({type: Type.AREQ, subsystem: Subsystem.SYS, command: 'resetInd'}, timeout || timeouts.reset);
+
+                return result;
+            }
+
+            if (object.type === Type.AREQ && object.isResetCommand()) {
+                const waiter = this.waitress.waitFor({type: Type.AREQ, subsystem: Subsystem.SYS, command: "resetInd"}, timeout || timeouts.reset);
                 this.queue.clear();
                 this.unpiWriter.writeFrame(object.unpiFrame);
                 return await waiter.start().promise;
-            } else {
-                if (object.type === Type.AREQ) {
-                    this.unpiWriter.writeFrame(object.unpiFrame);
-                    /* v8 ignore start */
-                } else {
-                    throw new Error(`Unknown type '${object.type}'`);
-                }
-                /* v8 ignore stop */
             }
+
+            if (object.type === Type.AREQ) {
+                this.unpiWriter.writeFrame(object.unpiFrame);
+                /* v8 ignore start */
+            } else {
+                throw new Error(`Unknown type '${object.type}'`);
+            }
+            /* v8 ignore stop */
         });
     }
 
@@ -298,7 +304,7 @@ export class Znp extends events.EventEmitter {
                 }
 
                 throw new Error(
-                    `--> 'SREQ: ZDO - ${ZdoClusterId[clusterId]} - ${payload.toString('hex')}' failed with status '${statusDescription(result.payload.status)}'`,
+                    `--> 'SREQ: ZDO - ${ZdoClusterId[clusterId]} - ${payload.toString("hex")}' failed with status '${statusDescription(result.payload.status)}'`,
                 );
             }
         });
@@ -323,10 +329,10 @@ export class Znp extends events.EventEmitter {
     private waitressValidator(zpiObject: ZpiObject, matcher: WaitressMatcher): boolean {
         return (
             matcher.type === zpiObject.type &&
-            matcher.subsystem == zpiObject.subsystem &&
+            matcher.subsystem === zpiObject.subsystem &&
             matcher.command === zpiObject.command.name &&
             (matcher.target === undefined ||
-                (typeof matcher.target === 'number'
+                (typeof matcher.target === "number"
                     ? matcher.target === zpiObject.payload.srcaddr
                     : matcher.target === zpiObject.payload.zdo?.[1]?.eui64)) &&
             (matcher.transid === undefined || matcher.transid === zpiObject.payload.transid) &&

@@ -1,5 +1,5 @@
-import {ClusterId} from './definition/clusters';
-import {MACCapabilityFlags, ServerMask} from './definition/tstypes';
+import {ClusterId} from "./definition/clusters";
+import type {MACCapabilityFlags, ServerMask} from "./definition/tstypes";
 
 /**
  * Get a the response cluster ID corresponding to a request.
@@ -13,7 +13,7 @@ export const getResponseClusterId = (requestClusterId: ClusterId): ClusterId | u
 
     const responseClusterId = requestClusterId + 0x8000;
 
-    if (ClusterId[responseClusterId] == undefined) {
+    if (ClusterId[responseClusterId] === undefined) {
         return undefined;
     }
 

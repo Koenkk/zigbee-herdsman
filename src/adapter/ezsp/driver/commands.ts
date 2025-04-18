@@ -27,8 +27,8 @@ import {
     EmberMessageDigest,
     EmberMultiAddress,
     EmberMulticastTableEntry,
-    EmberNeighbors,
     EmberNeighborTableEntry,
+    EmberNeighbors,
     EmberNetworkInitStruct /* Structs */,
     EmberNetworkParameters,
     EmberNetworkStatus,
@@ -66,21 +66,21 @@ import {
     EzspStatus,
     EzspValueId,
     EzspZllNetworkOperation,
-    fixed_list /* Basic Types */,
-    int8s,
     LVBytes,
+    SLStatus,
     SecureEzspRandomNumber,
     SecureEzspSecurityLevel,
     SecureEzspSecurityType,
-    SLStatus,
+    WordList,
+    fixed_list /* Basic Types */,
+    int8s,
     uint8_t,
     uint16_t,
     uint32_t,
-    WordList,
-} from './types';
+} from "./types";
 
 export interface ParamsDesc {
-    /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
+    // biome-ignore lint/suspicious/noExplicitAny: API
     [s: string]: any;
 }
 

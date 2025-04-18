@@ -1,4 +1,4 @@
-import {StructMemoryAlignment} from './struct';
+import type {StructMemoryAlignment} from "./struct";
 
 /**
  * Interface for serializable items to be written to NV. Objects implementing this interface
@@ -11,4 +11,4 @@ export interface SerializableMemoryObject {
 /**
  * Signature for factory returning a memory struct or a table.
  */
-export type MemoryObjectFactory<T> = (data?: Buffer | Buffer[]) => T;
+export type MemoryObjectFactory<T> = (data?: Buffer | Buffer[], alignment?: StructMemoryAlignment) => T;

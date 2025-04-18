@@ -1,6 +1,6 @@
-import * as Zcl from '../../../src/zspec/zcl';
-import {BuffaloZcl} from '../../../src/zspec/zcl/buffaloZcl';
-import {uint16To8Array, uint32To8Array, uint56To8Array} from '../../utils/math';
+import * as Zcl from "../../../src/zspec/zcl";
+import {BuffaloZcl} from "../../../src/zspec/zcl/buffaloZcl";
+import {uint16To8Array, uint32To8Array, uint56To8Array} from "../../utils/math";
 
 /** Header with Global frame type */
 const GLOBAL_HEADER = new Zcl.Header(
@@ -277,24 +277,24 @@ const MANUF_SPE_FRAME = Zcl.Frame.create(
 const MANUF_SPE_FRAME_BUFFER = Buffer.concat([MANUF_SPE_HEADER_BUFFER, Buffer.from(uint16To8Array(256))]);
 const MANUF_SPE_FRAME_STRING = `{"header":{"frameControl":{"reservedBits":0,"frameType":0,"direction":0,"disableDefaultResponse":false,"manufacturerSpecific":true},"manufacturerCode":4344,"transactionSequenceNumber":234,"commandIdentifier":0},"payload":[{"attrId":256}],"command":{"ID":0,"name":"read","parameters":[{"name":"attrId","type":33}],"response":1}}`;
 
-describe('ZCL Frame', () => {
-    describe('Validates Parameter Condition', () => {
-        it('STATUS_EQUAL', () => {
+describe("ZCL Frame", () => {
+    describe("Validates Parameter Condition", () => {
+        it("STATUS_EQUAL", () => {
             expect(Zcl.Frame.conditionsValid(Zcl.Foundation.readRsp.parameters[2], {status: 0}, null)).toBeTruthy();
             expect(Zcl.Frame.conditionsValid(Zcl.Foundation.readRsp.parameters[2], {status: 1}, null)).toBeFalsy();
         });
 
-        it('STATUS_NOT_EQUAL', () => {
+        it("STATUS_NOT_EQUAL", () => {
             expect(Zcl.Frame.conditionsValid(Zcl.Foundation.writeRsp.parameters[1], {status: 1}, null)).toBeTruthy();
             expect(Zcl.Frame.conditionsValid(Zcl.Foundation.writeRsp.parameters[1], {status: 0}, null)).toBeFalsy();
         });
 
-        it('MINIMUM_REMAINING_BUFFER_BYTES', () => {
+        it("MINIMUM_REMAINING_BUFFER_BYTES", () => {
             expect(Zcl.Frame.conditionsValid(Zcl.Foundation.configReportRsp.parameters[1], {status: 1}, 3)).toBeTruthy();
             expect(Zcl.Frame.conditionsValid(Zcl.Foundation.configReportRsp.parameters[1], {status: 1}, 2)).toBeFalsy();
         });
 
-        it('DIRECTION_EQUAL', () => {
+        it("DIRECTION_EQUAL", () => {
             expect(
                 Zcl.Frame.conditionsValid(Zcl.Foundation.configReport.parameters[2], {direction: Zcl.Direction.CLIENT_TO_SERVER}, null),
             ).toBeTruthy();
@@ -309,14 +309,14 @@ describe('ZCL Frame', () => {
             ).toBeFalsy();
         });
 
-        it('BITMASK_SET', () => {
+        it("BITMASK_SET", () => {
             expect(Zcl.Frame.conditionsValid(Zcl.Clusters.greenPower.commands.notification.parameters[8], {options: 0x4000}, null)).toBeTruthy();
             expect(Zcl.Frame.conditionsValid(Zcl.Clusters.greenPower.commands.notification.parameters[8], {options: 0x4150}, null)).toBeTruthy();
             expect(Zcl.Frame.conditionsValid(Zcl.Clusters.greenPower.commands.notification.parameters[8], {options: 0x0400}, null)).toBeFalsy();
             expect(Zcl.Frame.conditionsValid(Zcl.Clusters.greenPower.commands.notification.parameters[8], {options: 0x1400}, null)).toBeFalsy();
         });
 
-        it('BITFIELD_ENUM', () => {
+        it("BITFIELD_ENUM", () => {
             // {param:'options', offset: 0, size: 3, value: 0b000}
             expect(Zcl.Frame.conditionsValid(Zcl.Clusters.greenPower.commands.notification.parameters[1], {options: 0b000}, null)).toBeTruthy();
             expect(Zcl.Frame.conditionsValid(Zcl.Clusters.greenPower.commands.notification.parameters[1], {options: 0b1000}, null)).toBeTruthy();
@@ -326,7 +326,7 @@ describe('ZCL Frame', () => {
             expect(Zcl.Frame.conditionsValid(Zcl.Clusters.greenPower.commands.notification.parameters[1], {options: 0b1010}, null)).toBeFalsy();
         });
 
-        it('multiple including DATA_TYPE_CLASS_EQUAL', () => {
+        it("multiple including DATA_TYPE_CLASS_EQUAL", () => {
             expect(
                 Zcl.Frame.conditionsValid(
                     Zcl.Foundation.configReport.parameters[5],
@@ -357,7 +357,7 @@ describe('ZCL Frame', () => {
             ).toBeFalsy();
         });
 
-        it('FIELD_EQUAL', () => {
+        it("FIELD_EQUAL", () => {
             expect(
                 Zcl.Frame.conditionsValid(Zcl.Clusters.touchlink.commandsResponse.scanResponse.parameters[13], {numberOfSubDevices: 1}, null),
             ).toBeTruthy();
@@ -370,10 +370,10 @@ describe('ZCL Frame', () => {
         });
     });
 
-    describe('Header', () => {
+    describe("Header", () => {
         it.each([
             [
-                'global',
+                "global",
                 {
                     frameControl: GLOBAL_HEADER.frameControl,
                     manufacturerCode: GLOBAL_HEADER.manufacturerCode,
@@ -383,7 +383,7 @@ describe('ZCL Frame', () => {
                 {written: GLOBAL_HEADER_BUFFER},
             ],
             [
-                'global response',
+                "global response",
                 {
                     frameControl: GLOBAL_RSP_HEADER.frameControl,
                     manufacturerCode: GLOBAL_RSP_HEADER.manufacturerCode,
@@ -393,7 +393,7 @@ describe('ZCL Frame', () => {
                 {written: GLOBAL_RSP_HEADER_BUFFER},
             ],
             [
-                'specific',
+                "specific",
                 {
                     frameControl: SPECIFIC_HEADER.frameControl,
                     manufacturerCode: SPECIFIC_HEADER.manufacturerCode,
@@ -403,7 +403,7 @@ describe('ZCL Frame', () => {
                 {written: SPECIFIC_HEADER_BUFFER},
             ],
             [
-                'manufacturer-specific',
+                "manufacturer-specific",
                 {
                     frameControl: MANUF_SPE_HEADER.frameControl,
                     manufacturerCode: MANUF_SPE_HEADER.manufacturerCode,
@@ -413,7 +413,7 @@ describe('ZCL Frame', () => {
                 {written: MANUF_SPE_HEADER_BUFFER},
             ],
             [
-                'disable default response',
+                "disable default response",
                 {
                     frameControl: {
                         frameType: Zcl.FrameType.GLOBAL,
@@ -429,7 +429,7 @@ describe('ZCL Frame', () => {
                 {written: Buffer.from([16, 234, 1])},
             ],
             [
-                'reserved bits - non-compliant use',
+                "reserved bits - non-compliant use",
                 {
                     frameControl: {
                         frameType: Zcl.FrameType.GLOBAL,
@@ -445,7 +445,7 @@ describe('ZCL Frame', () => {
                 {written: Buffer.from([224, 234, 1])},
             ],
             [
-                'specific manufacturer-specific',
+                "specific manufacturer-specific",
                 {
                     frameControl: {
                         frameType: Zcl.FrameType.SPECIFIC,
@@ -461,7 +461,7 @@ describe('ZCL Frame', () => {
                 {written: Buffer.from([5, ...uint16To8Array(Zcl.ManufacturerCode.S3C), 234, 1])},
             ],
             [
-                'all non-zero - non-compliant use of reservedBits',
+                "all non-zero - non-compliant use of reservedBits",
                 {
                     frameControl: {
                         frameType: Zcl.FrameType.SPECIFIC,
@@ -476,7 +476,7 @@ describe('ZCL Frame', () => {
                 },
                 {written: Buffer.from([125, ...uint16To8Array(Zcl.ManufacturerCode.BOSCH_SECURITY_SYSTEMS_INC), 234, 1])},
             ],
-        ])('Reads & Writes %s', (_name, payload, expected) => {
+        ])("Reads & Writes %s", (_name, payload, expected) => {
             // write
             {
                 const header = new Zcl.Header(payload.frameControl, payload.manufacturerCode, payload.transactionSequenceNumber, payload.commandId);
@@ -505,44 +505,44 @@ describe('ZCL Frame', () => {
         });
 
         it.each([
-            ['basic', {value: [0, 234]}],
-            ['manufacturer specific', {value: [4, ...uint16To8Array(1234), 234]}],
-        ])('Reads non-compliant header as undefined %s', (_name, payload) => {
+            ["basic", {value: [0, 234]}],
+            ["manufacturer specific", {value: [4, ...uint16To8Array(1234), 234]}],
+        ])("Reads non-compliant header as undefined %s", (_name, payload) => {
             expect(Zcl.Header.fromBuffer(Buffer.from(payload.value))).toStrictEqual(undefined);
         });
     });
 
     it.each([
-        ['global', GLOBAL_FRAME, {string: GLOBAL_FRAME_STRING, header: GLOBAL_HEADER, written: GLOBAL_FRAME_BUFFER}],
+        ["global", GLOBAL_FRAME, {string: GLOBAL_FRAME_STRING, header: GLOBAL_HEADER, written: GLOBAL_FRAME_BUFFER}],
         [
-            'global BigInt',
+            "global BigInt",
             GLOBAL_FRAME_BIG_INT,
             {string: GLOBAL_FRAME_BIG_INT_STRING, header: GLOBAL_HEADER_REPORT, written: GLOBAL_FRAME_BIG_INT_BUFFER},
         ],
-        ['global response', GLOBAL_RSP_FRAME, {string: GLOBAL_RSP_FRAME_STRING, header: GLOBAL_RSP_HEADER, written: GLOBAL_RSP_FRAME_BUFFER}],
+        ["global response", GLOBAL_RSP_FRAME, {string: GLOBAL_RSP_FRAME_STRING, header: GLOBAL_RSP_HEADER, written: GLOBAL_RSP_FRAME_BUFFER}],
         [
-            'global no payload',
+            "global no payload",
             GLOBAL_FRAME_NO_PAYLOAD,
             {string: GLOBAL_FRAME_NO_PAYLOAD_STRING, header: GLOBAL_HEADER, written: GLOBAL_FRAME_NO_PAYLOAD_BUFFER},
         ],
         [
-            'global with condition-based parameters',
+            "global with condition-based parameters",
             GLOBAL_CONDITION_FRAME,
             {string: GLOBAL_CONDITION_FRAME_STRING, header: GLOBAL_CONDITION_HEADER, written: GLOBAL_CONDITION_FRAME_BUFFER},
         ],
-        ['specific', SPECIFIC_FRAME, {string: SPECIFIC_FRAME_STRING, header: SPECIFIC_HEADER, written: SPECIFIC_FRAME_BUFFER}],
+        ["specific", SPECIFIC_FRAME, {string: SPECIFIC_FRAME_STRING, header: SPECIFIC_HEADER, written: SPECIFIC_FRAME_BUFFER}],
         [
-            'specific response',
+            "specific response",
             SPECIFIC_RSP_FRAME,
             {string: SPECIFIC_RSP_FRAME_STRING, header: SPECIFIC_RSP_HEADER, written: SPECIFIC_RSP_FRAME_BUFFER},
         ],
         [
-            'specific with condition-based parameters',
+            "specific with condition-based parameters",
             SPECIFIC_CONDITION_FRAME,
             {string: SPECIFIC_CONDITION_FRAME_STRING, header: SPECIFIC_CONDITION_HEADER, written: SPECIFIC_CONDITION_FRAME_BUFFER},
         ],
-        ['manufacturer-specific', MANUF_SPE_FRAME, {string: MANUF_SPE_FRAME_STRING, header: MANUF_SPE_HEADER, written: MANUF_SPE_FRAME_BUFFER}],
-    ])('Writes & Reads frame %s', (_name, frame, expected) => {
+        ["manufacturer-specific", MANUF_SPE_FRAME, {string: MANUF_SPE_FRAME_STRING, header: MANUF_SPE_HEADER, written: MANUF_SPE_FRAME_BUFFER}],
+    ])("Writes & Reads frame %s", (_name, frame, expected) => {
         expect(frame).toBeDefined();
         expect(frame.toString()).toStrictEqual(expected.string);
         expect(frame.header).toStrictEqual(expected.header);
@@ -551,7 +551,7 @@ describe('ZCL Frame', () => {
         expect(Zcl.Frame.fromBuffer(frame.cluster.ID, frame.header, expected.written, {}).toString()).toStrictEqual(expected.string);
     });
 
-    it('Writes & Reads repetitive strategy', () => {
+    it("Writes & Reads repetitive strategy", () => {
         const expected = [{attrId: 256}, {attrId: 127}];
         const header = new Zcl.Header(
             {
@@ -587,7 +587,7 @@ describe('ZCL Frame', () => {
         expect(readFrame.payload).toStrictEqual(expected);
     });
 
-    it('Writes & Reads flat strategy', () => {
+    it("Writes & Reads flat strategy", () => {
         const expected = {cmdId: 253, statusCode: 127};
         const header = new Zcl.Header(
             {
@@ -623,7 +623,7 @@ describe('ZCL Frame', () => {
         expect(readFrame.payload).toStrictEqual(expected);
     });
 
-    it('Writes & Reads oneof strategy', () => {
+    it("Writes & Reads oneof strategy", () => {
         const expected = {
             discComplete: 123,
             attrInfos: [
@@ -665,7 +665,7 @@ describe('ZCL Frame', () => {
         expect(readFrame.payload).toStrictEqual(expected);
     });
 
-    it('Throws when writting invalid frame type', () => {
+    it("Throws when writting invalid frame type", () => {
         expect(() => {
             const frame = Zcl.Frame.create(
                 // @ts-expect-error invalid on purpose
@@ -685,7 +685,7 @@ describe('ZCL Frame', () => {
         }).toThrow(`Frametype '3' not valid`);
     });
 
-    it('Throws when reading invalid frame type', () => {
+    it("Throws when reading invalid frame type", () => {
         expect(() => {
             Zcl.Frame.fromBuffer(
                 Zcl.Clusters.genBasic.ID,
@@ -696,7 +696,7 @@ describe('ZCL Frame', () => {
         }).toThrow(`Unsupported frameType '2'`);
     });
 
-    it('Throws when reading frame without header', () => {
+    it("Throws when reading frame without header", () => {
         expect(() => {
             Zcl.Frame.fromBuffer(
                 Zcl.Clusters.genBasic.ID,
@@ -705,10 +705,10 @@ describe('ZCL Frame', () => {
                 Buffer.from([]) /*payload*/,
                 {} /*custom clusters*/,
             );
-        }).toThrow(`Invalid ZclHeader.`);
+        }).toThrow("Invalid ZclHeader.");
     });
 
-    it('Throws when writting missing payload', () => {
+    it("Throws when writting missing payload", () => {
         expect(() => {
             const frame = Zcl.Frame.create(
                 SPECIFIC_RSP_HEADER.frameControl.frameType,
@@ -727,31 +727,31 @@ describe('ZCL Frame', () => {
         }).toThrow(`Parameter 'clusterid' is missing`);
     });
 
-    it('Checks cluster match by name', () => {
-        expect(GLOBAL_FRAME.isCluster('genBasic')).toBeTruthy();
-        expect(GLOBAL_FRAME.isCluster('discoverCommands')).toBeFalsy();
+    it("Checks cluster match by name", () => {
+        expect(GLOBAL_FRAME.isCluster("genBasic")).toBeTruthy();
+        expect(GLOBAL_FRAME.isCluster("discoverCommands")).toBeFalsy();
         // @ts-expect-error invalid on purpose
-        expect(GLOBAL_FRAME.isCluster('notacluster')).toBeFalsy();
-        expect(SPECIFIC_FRAME.isCluster('genAlarms')).toBeTruthy();
-        expect(SPECIFIC_FRAME.isCluster('genAnalogInput')).toBeFalsy();
+        expect(GLOBAL_FRAME.isCluster("notacluster")).toBeFalsy();
+        expect(SPECIFIC_FRAME.isCluster("genAlarms")).toBeTruthy();
+        expect(SPECIFIC_FRAME.isCluster("genAnalogInput")).toBeFalsy();
         // @ts-expect-error invalid on purpose
-        expect(SPECIFIC_FRAME.isCluster('notacluster')).toBeFalsy();
+        expect(SPECIFIC_FRAME.isCluster("notacluster")).toBeFalsy();
     });
 
-    it('Checks command match by name', () => {
-        expect(GLOBAL_FRAME.isCommand('read')).toBeTruthy();
-        expect(GLOBAL_FRAME.isCommand('discoverCommands')).toBeFalsy();
+    it("Checks command match by name", () => {
+        expect(GLOBAL_FRAME.isCommand("read")).toBeTruthy();
+        expect(GLOBAL_FRAME.isCommand("discoverCommands")).toBeFalsy();
         // @ts-expect-error invalid on purpose
-        expect(GLOBAL_FRAME.isCommand('notacommand')).toBeFalsy();
-        expect(SPECIFIC_FRAME.isCommand('getAlarm')).toBeTruthy();
-        expect(SPECIFIC_FRAME.isCommand('enrollReq')).toBeFalsy();
+        expect(GLOBAL_FRAME.isCommand("notacommand")).toBeFalsy();
+        expect(SPECIFIC_FRAME.isCommand("getAlarm")).toBeTruthy();
+        expect(SPECIFIC_FRAME.isCommand("enrollReq")).toBeFalsy();
         // @ts-expect-error invalid on purpose
-        expect(SPECIFIC_FRAME.isCommand('notacommand')).toBeFalsy();
+        expect(SPECIFIC_FRAME.isCommand("notacommand")).toBeFalsy();
     });
 
-    it('[workaround] Reads Foundation char str as Mi struct for Xiaomi attridId=65281', () => {
+    it("[workaround] Reads Foundation char str as Mi struct for Xiaomi attridId=65281", () => {
         const expected = [
-            {attrId: 5, dataType: Zcl.DataType.CHAR_STR, attrData: 'lumi.sensor_wleak.aq1'},
+            {attrId: 5, dataType: Zcl.DataType.CHAR_STR, attrData: "lumi.sensor_wleak.aq1"},
             {attrId: 65281, dataType: Zcl.DataType.CHAR_STR, attrData: {1: 3285, 3: 33, 4: 5032, 5: 43, 6: 327680, 8: 516, 10: 0, 100: 0}},
         ];
         const buffer = Buffer.from([
@@ -822,7 +822,7 @@ describe('ZCL Frame', () => {
         expect(frame.payload).toStrictEqual(expected);
     });
 
-    it('[workaround] Reads Foundation struct with extra payload to match zcl-packet', () => {
+    it("[workaround] Reads Foundation struct with extra payload to match zcl-packet", () => {
         const expected = [
             {
                 attrId: 65282,
@@ -875,7 +875,7 @@ describe('ZCL Frame', () => {
         expect(frame.payload).toStrictEqual(expected);
     });
 
-    it('Reads/writes Touchlink Scan Response with different size payloads', () => {
+    it("Reads/writes Touchlink Scan Response with different size payloads", () => {
         const full = Buffer.from([
             0x19, 0x0, 0x1, 0xe0, 0xde, 0x5e, 0x2f, 0xa, 0x5, 0x0, 0x12, 0x0, 0x3d, 0x30, 0x1d, 0x4a, 0x8f, 0xb7, 0xdc, 0x1c, 0x0, 0x4b, 0x12, 0x0,
             0x0, 0xf, 0x62, 0x1a, 0xb3, 0xaa, 0x1, 0x0, 0xb, 0x5e, 0xc0, 0x10, 0x2, 0x2, 0x0,

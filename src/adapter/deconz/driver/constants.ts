@@ -1,6 +1,6 @@
 /* v8 ignore start */
 
-import {GenericZdoResponse} from '../../../zspec/zdo/definition/tstypes';
+import type {GenericZdoResponse} from "../../../zspec/zdo/definition/tstypes";
 
 const PARAM = {
     Network: {
@@ -58,10 +58,10 @@ interface Request {
     commandId: number;
     networkState?: number;
     parameterId?: number;
-    parameter?: parameterT;
+    parameter?: ParameterT;
     request?: ApsDataRequest;
     seqNumber: number;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // biome-ignore lint/suspicious/noExplicitAny: API
     resolve: (value: any) => void;
     reject: (value: Error) => void;
     ts?: number;
@@ -102,7 +102,7 @@ interface ReceivedDataResponse {
     zdo?: GenericZdoResponse;
 }
 
-interface gpDataInd {
+interface GpDataInd {
     rspId: number;
     seqNr: number;
     id: number;
@@ -156,15 +156,15 @@ type ParamPermitJoin = number;
 type ParamNetworkKey = string;
 
 type Command = ParamMac | ParamPanId | ParamNwkAddr | ParamExtPanId | ParamChannel | ParamChannelMask | ParamPermitJoin | ParamNetworkKey;
-type parameterT = number | number[];
+type ParameterT = number | number[];
 
-export {
+export type {
     Request,
     WaitForDataRequest,
     ApsDataRequest,
     ReceivedDataResponse,
     DataStateResponse,
-    parameterT,
+    ParameterT,
     Command,
     ParamMac,
     ParamPanId,
@@ -174,7 +174,7 @@ export {
     ParamChannelMask,
     ParamPermitJoin,
     ParamNetworkKey,
-    gpDataInd,
+    GpDataInd,
 };
 
 export default {PARAM};

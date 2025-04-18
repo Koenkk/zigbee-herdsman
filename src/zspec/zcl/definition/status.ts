@@ -5,7 +5,7 @@ export enum Status {
     FAILURE = 0x01,
     /** The sender of the command does not have authorization to carry out this command. */
     NOT_AUTHORIZED = 0x7e,
-    reserved = 0x7f,
+    RESERVED = 0x7f,
     /**
      * The command appears to contain the wrong fields, as detected either by the presence of one or more invalid
      * field entries or by there being missing fields.
@@ -44,7 +44,7 @@ export enum Status {
     WRITE_ONLY = 0x8f, // DEPRECATED in favor of NOT_AUTHORIZED
     INCONSISTENT_STARTUP_STATE = 0x90, // DEPRECATED in favor of FAILURE
     DEFINED_OUT_OF_BAND = 0x91, // DEPRECATED in favor of FAILURE
-    reserved14 = 0x92,
+    RESERVED14 = 0x92,
     ACTION_DENIED = 0x93, // DEPRECATED in favor of FAILURE
     /** The exchange was aborted due to excessive response time. */
     TIMEOUT = 0x94,
@@ -62,7 +62,7 @@ export enum Status {
     NOTIFICATION_PENDING = 0x9a,
     HARDWARE_FAILURE = 0xc0, // DEPRECATED in favor of FAILURE
     SOFTWARE_FAILURE = 0xc1, // DEPRECATED in favor of FAILURE
-    reserved15 = 0xc2,
+    RESERVED15 = 0xc2,
     /** The cluster is not supported. */
     UNSUPPORTED_CLUSTER = 0xc3,
     LIMIT_REACHED = 0xc4, // DEPRECATED in favor of SUCCESS
