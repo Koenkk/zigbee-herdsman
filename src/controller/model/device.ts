@@ -41,10 +41,10 @@ interface RoutingTable {
 type CustomReadResponse = (frame: Zcl.Frame, endpoint: Endpoint) => boolean;
 
 export enum InterviewState {
-    PENDING = 'PENDING',
-    IN_PROGRESS = 'IN_PROGRESS',
-    SUCCESSFUL = 'SUCCESSFUL',
-    FAILED = 'FAILED',
+    PENDING = "PENDING",
+    IN_PROGRESS = "IN_PROGRESS",
+    SUCCESSFUL = "SUCCESSFUL",
+    FAILED = "FAILED",
 }
 
 export class Device extends Entity<ControllerEventMap> {

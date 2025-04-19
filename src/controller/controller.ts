@@ -19,10 +19,10 @@ import type * as Events from "./events";
 import GreenPower from "./greenPower";
 import {ZclFrameConverter} from "./helpers";
 import {Device, Entity} from "./model";
+import {InterviewState} from "./model/device";
 import Group from "./model/group";
 import Touchlink from "./touchlink";
 import type {DeviceType, GreenPowerDeviceJoinedPayload, KeyValue} from "./tstype";
-import {InterviewState} from "./model/device";
 
 const NS = "zh:controller";
 
