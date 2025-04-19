@@ -1,9 +1,9 @@
 /* v8 ignore start */
 
-import Buffalo from '../../../buffalo/buffalo';
-import {GP_SINK_LIST_ENTRIES} from '../consts';
-import {EmberGpApplicationId, EmberGpSinkType, EzspStatus, SLStatus} from '../enums';
-import {
+import Buffalo from "../../../buffalo/buffalo";
+import {GP_SINK_LIST_ENTRIES} from "../consts";
+import {EmberGpApplicationId, EmberGpSinkType, EzspStatus, SLStatus} from "../enums";
+import type {
     Ember802154RadioPriorities,
     EmberAesMmoHashContext,
     EmberApsFrame,
@@ -24,8 +24,8 @@ import {
     EmberInitialSecurityState,
     EmberKeyData,
     EmberMessageDigest,
-    EmberMulticastTableEntry,
     EmberMultiPhyRadioParameters,
+    EmberMulticastTableEntry,
     EmberMultiprotocolPriorities,
     EmberNeighborTableEntry,
     EmberNetworkInitStruct,
@@ -40,10 +40,10 @@ import {
     EmberSignature283k1Data,
     EmberSignatureData,
     EmberSmacData,
-    EmberTokenData,
-    EmberTokenInfo,
     EmberTokTypeStackZllData,
     EmberTokTypeStackZllSecurity,
+    EmberTokenData,
+    EmberTokenInfo,
     EmberZigbeeNetwork,
     EmberZllAddressAssignment,
     EmberZllDeviceInfoRecord,
@@ -54,8 +54,8 @@ import {
     SecManContext,
     SecManKey,
     SecManNetworkKeyInfo,
-} from '../types';
-import {highByte} from '../utils/math';
+} from "../types";
+import {highByte} from "../utils/math";
 import {
     EMBER_AES_HASH_BLOCK_SIZE,
     EMBER_CERTIFICATE_283K1_SIZE,
@@ -80,8 +80,8 @@ import {
     EZSP_FRAME_CONTROL_INDEX,
     EZSP_FRAME_ID_INDEX,
     EZSP_PARAMETERS_INDEX,
-} from './consts';
-import {EzspFrameID} from './enums';
+} from "./consts";
+import type {EzspFrameID} from "./enums";
 
 /**
  * Handle EmberStatus deprecation in v14+ for previous versions
@@ -178,9 +178,9 @@ export class EzspBuffalo extends Buffalo {
             EZSP_EXTENDED_FRAME_FORMAT_VERSION
         ) {
             return this.getExtFrameId();
-        } else {
-            return this.getResponseByte(EZSP_FRAME_ID_INDEX) as EzspFrameID;
         }
+
+        return this.getResponseByte(EZSP_FRAME_ID_INDEX) as EzspFrameID;
     }
 
     /**
@@ -885,7 +885,9 @@ export class EzspBuffalo extends Buffalo {
             const endpoint = this.readUInt8();
 
             return {applicationId, sourceId, endpoint};
-        } else if (applicationId === EmberGpApplicationId.IEEE_ADDRESS) {
+        }
+
+        if (applicationId === EmberGpApplicationId.IEEE_ADDRESS) {
             const gpdIeeeAddress = this.readIeeeAddr();
             const endpoint = this.readUInt8();
 
@@ -902,22 +904,6 @@ export class EzspBuffalo extends Buffalo {
             const type: EmberGpSinkType = this.readUInt8();
 
             switch (type) {
-                case EmberGpSinkType.FULL_UNICAST:
-                case EmberGpSinkType.LW_UNICAST:
-                case EmberGpSinkType.UNUSED:
-                default: {
-                    const sinkNodeId = this.readUInt16();
-                    const sinkEUI = this.readIeeeAddr();
-
-                    list.push({
-                        type,
-                        unicast: {
-                            sinkNodeId,
-                            sinkEUI,
-                        },
-                    });
-                    break;
-                }
                 case EmberGpSinkType.D_GROUPCAST:
                 case EmberGpSinkType.GROUPCAST: {
                     const alias = this.readUInt16();
@@ -937,6 +923,22 @@ export class EzspBuffalo extends Buffalo {
                     });
                     break;
                 }
+                // case EmberGpSinkType.FULL_UNICAST:
+                // case EmberGpSinkType.LW_UNICAST:
+                // case EmberGpSinkType.UNUSED:
+                default: {
+                    const sinkNodeId = this.readUInt16();
+                    const sinkEUI = this.readIeeeAddr();
+
+                    list.push({
+                        type,
+                        unicast: {
+                            sinkNodeId,
+                            sinkEUI,
+                        },
+                    });
+                    break;
+                }
             }
         }
 
@@ -950,17 +952,8 @@ export class EzspBuffalo extends Buffalo {
             this.writeUInt8(entry.type);
 
             switch (entry.type) {
-                case EmberGpSinkType.FULL_UNICAST:
-                case EmberGpSinkType.LW_UNICAST:
-                case EmberGpSinkType.UNUSED:
-                default:
-                    this.writeUInt16(entry.unicast.sinkNodeId);
-                    this.writeIeeeAddr(entry.unicast.sinkEUI);
-
-                    break;
-
                 case EmberGpSinkType.D_GROUPCAST:
-                case EmberGpSinkType.GROUPCAST:
+                case EmberGpSinkType.GROUPCAST: {
                     this.writeUInt16(entry.groupcast.alias);
                     this.writeUInt16(entry.groupcast.groupID);
                     //fillers
@@ -968,6 +961,17 @@ export class EzspBuffalo extends Buffalo {
                     this.writeUInt16(entry.groupcast.groupID);
                     this.writeUInt16(entry.groupcast.alias);
                     break;
+                }
+
+                // case EmberGpSinkType.FULL_UNICAST:
+                // case EmberGpSinkType.LW_UNICAST:
+                // case EmberGpSinkType.UNUSED:
+                default: {
+                    this.writeUInt16(entry.unicast.sinkNodeId);
+                    this.writeIeeeAddr(entry.unicast.sinkEUI);
+
+                    break;
+                }
             }
         }
     }
@@ -1192,7 +1196,7 @@ export class EzspBuffalo extends Buffalo {
                 sender,
                 extendedPanId,
                 supportedKeyNegotiationMethods: 0,
-                extended_beacon: false,
+                extendedBeacon: false,
                 tcConnectivity: true,
                 longUptime: true,
                 preferParent: true,
@@ -1249,7 +1253,7 @@ export class EzspBuffalo extends Buffalo {
             sender,
             extendedPanId,
             supportedKeyNegotiationMethods: 0,
-            extended_beacon: false,
+            extendedBeacon: false,
             tcConnectivity: true,
             longUptime: true,
             preferParent: true,
@@ -1300,7 +1304,7 @@ export class EzspBuffalo extends Buffalo {
      * @param mapFromEmber If true, map from EmberStatus, otherwise map from EzspStatus
      * @returns EzspStatus, EmberStatus or SLStatus as SLStatus
      */
-    public readStatus(version: number, mapFromEmber: boolean = true): SLStatus {
+    public readStatus(version: number, mapFromEmber = true): SLStatus {
         if (version < 0x0e) {
             const status = this.readUInt8();
 
@@ -1316,9 +1320,9 @@ export class EzspBuffalo extends Buffalo {
 
             // EzspStatus mapping to SLStatus is always same code
             return SLStatus.ZIGBEE_EZSP_ERROR;
-        } else {
-            return this.readUInt32();
         }
+
+        return this.readUInt32();
     }
 
     public readEmberEndpointDescription(): EmberEndpointDescription {

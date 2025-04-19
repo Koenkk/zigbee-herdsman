@@ -1,15 +1,21 @@
 /* v8 ignore start */
 
-import * as fs from 'node:fs';
+import * as fs from "node:fs";
 
-import * as Models from '../../../models';
-import {BackupUtils} from '../../../utils';
-import {logger} from '../../../utils/logger';
-import {uint32MaskToChannels} from '../../../zspec/utils';
-import {Driver} from '../driver';
-import {EmberKeyData, EmberKeyStruct, EmberKeyType, EmberNetworkParameters, EmberSecurityManagerNetworkKeyInfo} from '../driver/types';
+import type * as Models from "../../../models";
+import {BackupUtils} from "../../../utils";
+import {logger} from "../../../utils/logger";
+import {uint32MaskToChannels} from "../../../zspec/utils";
+import type {Driver} from "../driver";
+import {
+    type EmberKeyData,
+    type EmberKeyStruct,
+    EmberKeyType,
+    type EmberNetworkParameters,
+    type EmberSecurityManagerNetworkKeyInfo,
+} from "../driver/types";
 
-const NS = 'zh:ezsp:backup';
+const NS = "zh:ezsp:backup";
 
 export class EZSPAdapterBackup {
     private driver: Driver;
@@ -21,16 +27,16 @@ export class EZSPAdapterBackup {
     }
 
     public async createBackup(): Promise<Models.Backup> {
-        logger.debug('creating backup', NS);
+        logger.debug("creating backup", NS);
         const version: number = await this.driver.ezsp.version();
         const linkResult = await this.driver.getKey(EmberKeyType.TRUST_CENTER_LINK_KEY);
-        const netParams = await this.driver.ezsp.execCommand('getNetworkParameters');
+        const netParams = await this.driver.ezsp.execCommand("getNetworkParameters");
         const networkParams: EmberNetworkParameters = netParams.parameters;
         const netResult = await this.driver.getKey(EmberKeyType.CURRENT_NETWORK_KEY);
         let tclKey: Buffer;
         let netKey: Buffer;
-        let netKeySequenceNumber: number = 0;
-        let netKeyFrameCounter: number = 0;
+        let netKeySequenceNumber = 0;
+        let netKeyFrameCounter = 0;
 
         if (version < 13) {
             tclKey = Buffer.from((linkResult.keyStruct as EmberKeyStruct).key.contents);
@@ -47,7 +53,7 @@ export class EZSPAdapterBackup {
             netKeyFrameCounter = networkKeyInfo.networkKeyFrameCounter;
         }
 
-        const ieee = (await this.driver.ezsp.execCommand('getEui64')).eui64;
+        const ieee = (await this.driver.ezsp.execCommand("getEui64")).eui64;
         /* return backup structure */
         return {
             ezsp: {
@@ -76,28 +82,28 @@ export class EZSPAdapterBackup {
     /**
      * Loads currently stored backup and returns it in internal backup model.
      */
-    public async getStoredBackup(): Promise<Models.Backup | undefined> {
+    public getStoredBackup(): Models.Backup | undefined {
         try {
             fs.accessSync(this.defaultPath);
         } catch {
             return undefined;
         }
-        let data;
+        let data: Models.UnifiedBackupStorage;
         try {
             data = JSON.parse(fs.readFileSync(this.defaultPath).toString());
         } catch (error) {
             throw new Error(`Coordinator backup is corrupted (${(error as Error).stack})`);
         }
-        if (data.metadata?.format === 'zigpy/open-coordinator-backup' && data.metadata?.version) {
+        if (data.metadata?.format === "zigpy/open-coordinator-backup" && data.metadata?.version) {
             if (data.metadata?.version !== 1) {
                 throw new Error(`Unsupported open coordinator backup version (version=${data.metadata?.version})`);
             }
             if (!data.metadata.internal?.ezspVersion) {
-                throw new Error(`This open coordinator backup format not for EZSP adapter`);
+                throw new Error("This open coordinator backup format not for EZSP adapter");
             }
             return BackupUtils.fromUnifiedBackup(data);
-        } else {
-            throw new Error('Unknown backup format');
         }
+
+        throw new Error("Unknown backup format");
     }
 }

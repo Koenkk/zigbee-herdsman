@@ -1,5 +1,5 @@
-export type Adapter = 'deconz' | 'ember' | 'zstack' | 'zboss' | 'zigate' | 'ezsp' | 'zoh';
-export type DiscoverableUsbAdapter = 'deconz' | 'ember' | 'zstack' | 'zboss' | 'zigate';
+export type Adapter = "deconz" | "ember" | "zstack" | "zboss" | "zigate" | "ezsp" | "zoh";
+export type DiscoverableUsbAdapter = "deconz" | "ember" | "zstack" | "zboss" | "zigate";
 
 export type UsbAdapterFingerprint = {
     vendorId: string;
@@ -36,9 +36,9 @@ export interface CoordinatorVersion {
     meta: {[s: string]: number | string};
 }
 
-export type DeviceType = 'Coordinator' | 'EndDevice' | 'Router' | 'Unknown';
+export type DeviceType = "Coordinator" | "EndDevice" | "Router" | "Unknown";
 
-export type StartResult = 'resumed' | 'reset' | 'restored';
+export type StartResult = "resumed" | "reset" | "restored";
 
 export interface LQINeighbor {
     ieeeAddr: string;
@@ -48,7 +48,7 @@ export interface LQINeighbor {
     depth: number;
 }
 
-export interface LQI {
+export interface Lqi {
     neighbors: LQINeighbor[];
 }
 
@@ -63,10 +63,10 @@ export interface RoutingTable {
 }
 
 export interface Backup {
-    adapterType: 'zStack';
+    adapterType: "zStack";
     time: string;
     meta: {[s: string]: number};
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // biome-ignore lint/suspicious/noExplicitAny: API
     data: any;
 }
 

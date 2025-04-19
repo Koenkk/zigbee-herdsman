@@ -1,5 +1,5 @@
-import * as Zcl from '../../../src/zspec/zcl';
-import {Command, CustomClusters} from '../../../src/zspec/zcl/definition/tstype';
+import * as Zcl from "../../../src/zspec/zcl";
+import type {Command, CustomClusters} from "../../../src/zspec/zcl/definition/tstype";
 
 const CUSTOM_CLUSTERS: CustomClusters = {
     genBasic: {ID: Zcl.Clusters.genBasic.ID, commands: {}, commandsResponse: {}, attributes: {myCustomAttr: {ID: 65533, type: Zcl.DataType.UINT8}}},
@@ -19,8 +19,8 @@ const CUSTOM_CLUSTERS: CustomClusters = {
     },
 };
 
-describe('ZCL Utils', () => {
-    it('Creates status error', () => {
+describe("ZCL Utils", () => {
+    it("Creates status error", () => {
         const zclError = new Zcl.StatusError(Zcl.Status.ABORT);
 
         expect(zclError).toBeInstanceOf(Zcl.StatusError);
@@ -28,7 +28,7 @@ describe('ZCL Utils', () => {
         expect(zclError.message).toStrictEqual(`Status '${Zcl.Status[Zcl.Status.ABORT]}'`);
     });
 
-    it('Gets data type class', () => {
+    it("Gets data type class", () => {
         expect(Zcl.Utils.getDataTypeClass(Zcl.DataType.UINT16)).toStrictEqual(Zcl.DataTypeClass.ANALOG);
         expect(Zcl.Utils.getDataTypeClass(Zcl.DataType.DATA16)).toStrictEqual(Zcl.DataTypeClass.DISCRETE);
         expect(() => {
@@ -38,70 +38,70 @@ describe('ZCL Utils', () => {
 
     it.each([
         [
-            'by ID',
+            "by ID",
             {key: Zcl.Clusters.genBasic.ID, manufacturerCode: undefined, customClusters: {}},
-            {cluster: Zcl.Clusters.genBasic, name: 'genBasic'},
+            {cluster: Zcl.Clusters.genBasic, name: "genBasic"},
         ],
-        ['by name', {key: 'genAlarms', manufacturerCode: undefined, customClusters: {}}, {cluster: Zcl.Clusters.genAlarms, name: 'genAlarms'}],
+        ["by name", {key: "genAlarms", manufacturerCode: undefined, customClusters: {}}, {cluster: Zcl.Clusters.genAlarms, name: "genAlarms"}],
         [
-            'by ID with no manufacturer code',
+            "by ID with no manufacturer code",
             {key: Zcl.Clusters.genAlarms.ID, manufacturerCode: 123, customClusters: {}},
-            {cluster: Zcl.Clusters.genAlarms, name: 'genAlarms'},
+            {cluster: Zcl.Clusters.genAlarms, name: "genAlarms"},
         ],
         [
-            'by ID with non-matching manufacturer code',
+            "by ID with non-matching manufacturer code",
             {key: Zcl.Clusters.sprutDevice.ID, manufacturerCode: 123, customClusters: {}},
-            {cluster: Zcl.Clusters.sprutDevice, name: 'sprutDevice'},
+            {cluster: Zcl.Clusters.sprutDevice, name: "sprutDevice"},
         ],
         [
-            'by ID with matching manufacturer code',
+            "by ID with matching manufacturer code",
             {key: Zcl.Clusters.sprutDevice.ID, manufacturerCode: Zcl.Clusters.sprutDevice.manufacturerCode!, customClusters: {}},
-            {cluster: Zcl.Clusters.sprutDevice, name: 'sprutDevice'},
+            {cluster: Zcl.Clusters.sprutDevice, name: "sprutDevice"},
         ],
         [
-            'custom by ID',
+            "custom by ID",
             {key: CUSTOM_CLUSTERS.myCustomCluster.ID, manufacturerCode: undefined, customClusters: CUSTOM_CLUSTERS},
-            {cluster: CUSTOM_CLUSTERS.myCustomCluster, name: 'myCustomCluster'},
+            {cluster: CUSTOM_CLUSTERS.myCustomCluster, name: "myCustomCluster"},
         ],
         [
-            'custom by name',
-            {key: 'myCustomCluster', manufacturerCode: undefined, customClusters: CUSTOM_CLUSTERS},
-            {cluster: CUSTOM_CLUSTERS.myCustomCluster, name: 'myCustomCluster'},
+            "custom by name",
+            {key: "myCustomCluster", manufacturerCode: undefined, customClusters: CUSTOM_CLUSTERS},
+            {cluster: CUSTOM_CLUSTERS.myCustomCluster, name: "myCustomCluster"},
         ],
         [
-            'custom by ID with no manufacturer code',
+            "custom by ID with no manufacturer code",
             {key: CUSTOM_CLUSTERS.myCustomCluster.ID, manufacturerCode: 123, customClusters: CUSTOM_CLUSTERS},
-            {cluster: CUSTOM_CLUSTERS.myCustomCluster, name: 'myCustomCluster'},
+            {cluster: CUSTOM_CLUSTERS.myCustomCluster, name: "myCustomCluster"},
         ],
         [
-            'custom by ID with non-matching manufacturer code',
+            "custom by ID with non-matching manufacturer code",
             {key: CUSTOM_CLUSTERS.myCustomClusterManuf.ID, manufacturerCode: 123, customClusters: CUSTOM_CLUSTERS},
-            {cluster: CUSTOM_CLUSTERS.myCustomClusterManuf, name: 'myCustomClusterManuf'},
+            {cluster: CUSTOM_CLUSTERS.myCustomClusterManuf, name: "myCustomClusterManuf"},
         ],
         [
-            'custom by ID with matching manufacturer code',
+            "custom by ID with matching manufacturer code",
             {
                 key: CUSTOM_CLUSTERS.myCustomClusterManuf.ID,
                 manufacturerCode: CUSTOM_CLUSTERS.myCustomClusterManuf.manufacturerCode!,
                 customClusters: CUSTOM_CLUSTERS,
             },
-            {cluster: CUSTOM_CLUSTERS.myCustomClusterManuf, name: 'myCustomClusterManuf'},
+            {cluster: CUSTOM_CLUSTERS.myCustomClusterManuf, name: "myCustomClusterManuf"},
         ],
         [
-            'custom by ID overriding same Zcl ID entirely',
+            "custom by ID overriding same Zcl ID entirely",
             {key: CUSTOM_CLUSTERS.genBasic.ID, manufacturerCode: undefined, customClusters: CUSTOM_CLUSTERS},
-            {cluster: CUSTOM_CLUSTERS.genBasic, name: 'genBasic'},
+            {cluster: CUSTOM_CLUSTERS.genBasic, name: "genBasic"},
         ],
         [
-            'by ID ignoring same custom ID if Zcl is better match with manufacturer code',
+            "by ID ignoring same custom ID if Zcl is better match with manufacturer code",
             {
                 key: CUSTOM_CLUSTERS.manuSpecificProfalux1NoManuf.ID,
                 manufacturerCode: Zcl.ManufacturerCode.PROFALUX,
                 customClusters: CUSTOM_CLUSTERS,
             },
-            {cluster: Zcl.Clusters.manuSpecificProfalux1, name: 'manuSpecificProfalux1'},
+            {cluster: Zcl.Clusters.manuSpecificProfalux1, name: "manuSpecificProfalux1"},
         ],
-    ])('Gets cluster %s', (_name, payload, expected) => {
+    ])("Gets cluster %s", (_name, payload, expected) => {
         const cluster = Zcl.Utils.getCluster(payload.key, payload.manufacturerCode, payload.customClusters);
 
         expect(cluster.ID).toStrictEqual(expected.cluster.ID);
@@ -119,10 +119,10 @@ describe('ZCL Utils', () => {
         expect(cluster.hasAttribute).toBeInstanceOf(Function);
     });
 
-    it('Creates empty cluster when getting by invalid ID', () => {
+    it("Creates empty cluster when getting by invalid ID", () => {
         const cluster = Zcl.Utils.getCluster(99999, undefined, {});
         expect(cluster.ID).toStrictEqual(99999);
-        expect(cluster.name).toStrictEqual('99999');
+        expect(cluster.name).toStrictEqual("99999");
         expect(cluster.manufacturerCode).toStrictEqual(undefined);
         expect(cluster.attributes).toStrictEqual({});
         expect(cluster.commands).toStrictEqual({});
@@ -133,61 +133,61 @@ describe('ZCL Utils', () => {
         expect(cluster.hasAttribute).toBeInstanceOf(Function);
     });
 
-    it('Throws when getting invalid cluster name', () => {
+    it("Throws when getting invalid cluster name", () => {
         expect(() => {
-            Zcl.Utils.getCluster('invalid', undefined, {});
+            Zcl.Utils.getCluster("invalid", undefined, {});
         }).toThrow();
     });
 
     it.each([
         [
-            'by ID',
+            "by ID",
             {key: Zcl.Clusters.genBasic.attributes.zclVersion.ID, manufacturerCode: undefined, customClusters: {}},
-            {cluster: Zcl.Clusters.genBasic, name: 'zclVersion'},
+            {cluster: Zcl.Clusters.genBasic, name: "zclVersion"},
         ],
-        ['by name', {key: 'alarmCount', manufacturerCode: undefined, customClusters: {}}, {cluster: Zcl.Clusters.genAlarms, name: 'alarmCount'}],
+        ["by name", {key: "alarmCount", manufacturerCode: undefined, customClusters: {}}, {cluster: Zcl.Clusters.genAlarms, name: "alarmCount"}],
         [
-            'by ID with no manufacturer code',
+            "by ID with no manufacturer code",
             {key: Zcl.Clusters.genAlarms.attributes.alarmCount.ID, manufacturerCode: 123, customClusters: {}},
-            {cluster: Zcl.Clusters.genAlarms, name: 'alarmCount'},
+            {cluster: Zcl.Clusters.genAlarms, name: "alarmCount"},
         ],
         [
-            'by ID with matching manufacturer code',
+            "by ID with matching manufacturer code",
             {
                 key: Zcl.Clusters.haDiagnostic.attributes.danfossSystemStatusCode.ID,
                 manufacturerCode: Zcl.ManufacturerCode.DANFOSS_A_S,
                 customClusters: {},
             },
-            {cluster: Zcl.Clusters.haDiagnostic, name: 'danfossSystemStatusCode'},
+            {cluster: Zcl.Clusters.haDiagnostic, name: "danfossSystemStatusCode"},
         ],
         [
-            'custom by ID',
+            "custom by ID",
             {key: CUSTOM_CLUSTERS.genBasic.attributes.myCustomAttr.ID, manufacturerCode: undefined, customClusters: CUSTOM_CLUSTERS},
-            {cluster: Zcl.Clusters.genBasic, name: 'myCustomAttr'},
+            {cluster: Zcl.Clusters.genBasic, name: "myCustomAttr"},
         ],
         [
-            'custom by name',
-            {key: 'myCustomAttr', manufacturerCode: undefined, customClusters: CUSTOM_CLUSTERS},
-            {cluster: Zcl.Clusters.genBasic, name: 'myCustomAttr'},
+            "custom by name",
+            {key: "myCustomAttr", manufacturerCode: undefined, customClusters: CUSTOM_CLUSTERS},
+            {cluster: Zcl.Clusters.genBasic, name: "myCustomAttr"},
         ],
-    ])('Gets and checks cluster attribute %s', (_name, payload, expected) => {
+    ])("Gets and checks cluster attribute %s", (_name, payload, expected) => {
         const cluster = Zcl.Utils.getCluster(expected.cluster.ID, payload.manufacturerCode, payload.customClusters);
         const attribute = cluster.getAttribute(payload.key);
         expect(cluster.hasAttribute(payload.key)).toBeTruthy();
         expect(attribute).toStrictEqual(cluster.attributes[expected.name]);
     });
 
-    it('Throws when getting invalid attribute', () => {
+    it("Throws when getting invalid attribute", () => {
         const cluster = Zcl.Utils.getCluster(Zcl.Clusters.genAlarms.ID, undefined, {});
         expect(() => {
-            cluster.getAttribute('abcd');
+            cluster.getAttribute("abcd");
         }).toThrow();
         expect(() => {
             cluster.getAttribute(99999);
         }).toThrow();
     });
 
-    it('Throws when getting attribute with invalid manufacturer code', () => {
+    it("Throws when getting attribute with invalid manufacturer code", () => {
         const cluster = Zcl.Utils.getCluster(Zcl.Clusters.haDiagnostic.ID, 123, {});
         expect(() => {
             cluster.getAttribute(Zcl.Clusters.haDiagnostic.attributes.danfossSystemStatusCode.ID);
@@ -195,18 +195,18 @@ describe('ZCL Utils', () => {
     });
 
     it.each([
-        ['by ID', {key: Zcl.Clusters.genBasic.commands.resetFactDefault.ID}, {cluster: Zcl.Clusters.genBasic, name: 'resetFactDefault'}],
-        ['by name', {key: 'resetAll'}, {cluster: Zcl.Clusters.genAlarms, name: 'resetAll'}],
-    ])('Gets cluster command %s', (_name, payload, expected) => {
+        ["by ID", {key: Zcl.Clusters.genBasic.commands.resetFactDefault.ID}, {cluster: Zcl.Clusters.genBasic, name: "resetFactDefault"}],
+        ["by name", {key: "resetAll"}, {cluster: Zcl.Clusters.genAlarms, name: "resetAll"}],
+    ])("Gets cluster command %s", (_name, payload, expected) => {
         const cluster = Zcl.Utils.getCluster(expected.cluster.ID, undefined, {});
         const command = cluster.getCommand(payload.key);
         expect(command).toStrictEqual(cluster.commands[expected.name]);
     });
 
-    it('Throws when getting invalid command', () => {
+    it("Throws when getting invalid command", () => {
         const cluster = Zcl.Utils.getCluster(Zcl.Clusters.genAlarms.ID, undefined, {});
         expect(() => {
-            cluster.getCommand('abcd');
+            cluster.getCommand("abcd");
         }).toThrow();
         expect(() => {
             cluster.getCommand(99999);
@@ -215,21 +215,21 @@ describe('ZCL Utils', () => {
 
     it.each([
         [
-            'by ID',
+            "by ID",
             {key: Zcl.Clusters.genIdentify.commandsResponse.identifyQueryRsp.ID},
-            {cluster: Zcl.Clusters.genIdentify, name: 'identifyQueryRsp'},
+            {cluster: Zcl.Clusters.genIdentify, name: "identifyQueryRsp"},
         ],
-        ['by name', {key: 'getEventLog'}, {cluster: Zcl.Clusters.genAlarms, name: 'getEventLog'}],
-    ])('Gets cluster command response %s', (_name, payload, expected) => {
+        ["by name", {key: "getEventLog"}, {cluster: Zcl.Clusters.genAlarms, name: "getEventLog"}],
+    ])("Gets cluster command response %s", (_name, payload, expected) => {
         const cluster = Zcl.Utils.getCluster(expected.cluster.ID, undefined, {});
         const commandResponse = cluster.getCommandResponse(payload.key);
         expect(commandResponse).toStrictEqual(cluster.commandsResponse[expected.name]);
     });
 
-    it('Throws when getting invalid command response', () => {
+    it("Throws when getting invalid command response", () => {
         const cluster = Zcl.Utils.getCluster(Zcl.Clusters.genAlarms.ID, undefined, {});
         expect(() => {
-            cluster.getCommandResponse('abcd');
+            cluster.getCommandResponse("abcd");
         }).toThrow();
         expect(() => {
             cluster.getCommandResponse(99999);
@@ -237,10 +237,10 @@ describe('ZCL Utils', () => {
     });
 
     it.each([
-        ['by ID', {key: Zcl.Foundation.writeUndiv.ID}, {cluster: Zcl.Foundation.writeUndiv, name: 'writeUndiv'}],
-        ['by name', {key: 'read'}, {cluster: Zcl.Foundation.read, name: 'read'}],
-    ])('Gets global command %s', (_name, payload, expected) => {
-        let command: Command = {
+        ["by ID", {key: Zcl.Foundation.writeUndiv.ID}, {cluster: Zcl.Foundation.writeUndiv, name: "writeUndiv"}],
+        ["by name", {key: "read"}, {cluster: Zcl.Foundation.read, name: "read"}],
+    ])("Gets global command %s", (_name, payload, expected) => {
+        const command: Command = {
             ID: expected.cluster.ID,
             name: expected.name,
             parameters: expected.cluster.parameters,
@@ -253,26 +253,26 @@ describe('ZCL Utils', () => {
         expect(Zcl.Utils.getGlobalCommand(payload.key)).toStrictEqual(command);
     });
 
-    it('Throws when getting invalid global command', () => {
+    it("Throws when getting invalid global command", () => {
         expect(() => {
             Zcl.Utils.getGlobalCommand(99999);
         }).toThrow();
         expect(() => {
-            Zcl.Utils.getGlobalCommand('abcd');
+            Zcl.Utils.getGlobalCommand("abcd");
         }).toThrow();
     });
 
-    it('Checks cluster name', () => {
-        expect(Zcl.Utils.isClusterName('genBasic')).toBeTruthy();
-        expect(Zcl.Utils.isClusterName('genAlarms')).toBeTruthy();
-        expect(Zcl.Utils.isClusterName('invalid')).toBeFalsy();
+    it("Checks cluster name", () => {
+        expect(Zcl.Utils.isClusterName("genBasic")).toBeTruthy();
+        expect(Zcl.Utils.isClusterName("genAlarms")).toBeTruthy();
+        expect(Zcl.Utils.isClusterName("invalid")).toBeFalsy();
     });
 
-    it('Gets Foundation command', () => {
+    it("Gets Foundation command", () => {
         expect(Zcl.Utils.getFoundationCommand(0)).toStrictEqual(Zcl.Foundation.read);
     });
 
-    it('Throws when getting invalid Foundation command ID', () => {
+    it("Throws when getting invalid Foundation command ID", () => {
         expect(() => {
             Zcl.Utils.getFoundationCommand(9999);
         }).toThrow(`Foundation command '9999' does not exist.`);

@@ -1,4 +1,4 @@
-declare module 'slip' {
+declare module "slip" {
     export function encode(data: ArrayLike<Uint8Array> | Buffer, options?: object): Uint8Array;
     export class Decoder {
         constructor(options: {

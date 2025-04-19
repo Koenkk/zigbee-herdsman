@@ -1,32 +1,32 @@
-import * as Zcl from '../../zspec/zcl';
-import {SendPolicy} from '../tstype';
+import type * as Zcl from "../../zspec/zcl";
+import type {SendPolicy} from "../tstype";
 
-/* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
+// biome-ignore lint/suspicious/noExplicitAny: API
 export class Request<Type = any> {
     static defaultSendPolicy: {[key: number]: SendPolicy} = {
-        0x00: 'keep-payload', // Read Attributes
-        0x01: 'immediate', // Read Attributes Response
-        0x02: 'keep-command', // Write Attributes
-        0x03: 'keep-cmd-undiv', // Write Attributes Undivided
-        0x04: 'immediate', // Write Attributes Response
-        0x05: 'keep-command', // Write Attributes No Response
-        0x06: 'keep-payload', // Configure Reporting
-        0x07: 'immediate', // Configure Reporting Response
-        0x08: 'keep-payload', // Read Reporting Configuration
-        0x09: 'immediate', // Read Reporting Configuration Response
-        0x0a: 'keep-payload', // Report attributes
-        0x0b: 'immediate', // Default Response
-        0x0c: 'keep-payload', // Discover Attributes
-        0x0d: 'immediate', // Discover Attributes Response
-        0x0e: 'keep-payload', // Read Attributes Structured
-        0x0f: 'keep-payload', // Write Attributes Structured
-        0x10: 'immediate', // Write Attributes Structured response
-        0x11: 'keep-payload', // Discover Commands Received
-        0x12: 'immediate', // Discover Commands Received Response
-        0x13: 'keep-payload', // Discover Commands Generated
-        0x14: 'immediate', // Discover Commands Generated Response
-        0x15: 'keep-payload', // Discover Attributes Extended
-        0x16: 'immediate', // Discover Attributes Extended Response
+        0: "keep-payload", // Read Attributes
+        1: "immediate", // Read Attributes Response
+        2: "keep-command", // Write Attributes
+        3: "keep-cmd-undiv", // Write Attributes Undivided
+        4: "immediate", // Write Attributes Response
+        5: "keep-command", // Write Attributes No Response
+        6: "keep-payload", // Configure Reporting
+        7: "immediate", // Configure Reporting Response
+        8: "keep-payload", // Read Reporting Configuration
+        9: "immediate", // Read Reporting Configuration Response
+        10: "keep-payload", // Report attributes
+        11: "immediate", // Default Response
+        12: "keep-payload", // Discover Attributes
+        13: "immediate", // Discover Attributes Response
+        14: "keep-payload", // Read Attributes Structured
+        15: "keep-payload", // Write Attributes Structured
+        16: "immediate", // Write Attributes Structured response
+        17: "keep-payload", // Discover Commands Received
+        18: "immediate", // Discover Commands Received Response
+        19: "keep-payload", // Discover Commands Generated
+        20: "immediate", // Discover Commands Generated Response
+        21: "keep-payload", // Discover Attributes Extended
+        22: "immediate", // Discover Attributes Extended Response
     };
 
     private func: (frame: Zcl.Frame) => Promise<Type>;
@@ -52,7 +52,7 @@ export class Request<Type = any> {
         this.sendPolicy = sendPolicy ?? (!frame.command ? undefined : Request.defaultSendPolicy[frame.command.ID]);
         this.resolveQueue = resolve === undefined ? new Array<(value: Type) => void>() : new Array<(value: Type) => void>(resolve);
         this.rejectQueue = reject === undefined ? new Array<(error: Error) => void>() : new Array<(error: Error) => void>(reject);
-        this.lastError = lastError ?? Error('Request rejected before first send');
+        this.lastError = lastError ?? Error("Request rejected before first send");
     }
 
     moveCallbacks(from: Request<Type>): void {
@@ -68,12 +68,16 @@ export class Request<Type = any> {
     }
 
     reject(error?: Error): void {
-        this.rejectQueue.forEach((el) => el(error ?? this.lastError));
+        for (const el of this.rejectQueue) {
+            el(error ?? this.lastError);
+        }
         this.rejectQueue.length = 0;
     }
 
     resolve(value: Type): void {
-        this.resolveQueue.forEach((el) => el(value));
+        for (const el of this.resolveQueue) {
+            el(value);
+        }
         this.resolveQueue.length = 0;
     }
 

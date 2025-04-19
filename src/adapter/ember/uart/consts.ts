@@ -1,4 +1,4 @@
-import {EZSP_MAX_FRAME_LENGTH, EZSP_MIN_FRAME_LENGTH} from '../ezsp/consts';
+import {EZSP_MAX_FRAME_LENGTH, EZSP_MIN_FRAME_LENGTH} from "../ezsp/consts";
 
 /**
  * Define the size of the receive buffer pool on the EZSP host.

@@ -1,7 +1,7 @@
 /* v8 ignore start */
 
-import {ZiGateCommandCode, ZiGateMessageCode, ZiGateObjectPayload} from './constants';
-import ParameterType from './parameterType';
+import {ZiGateCommandCode, ZiGateMessageCode, type ZiGateObjectPayload} from "./constants";
+import ParameterType from "./parameterType";
 
 export interface PermitJoinPayload extends ZiGateObjectPayload {
     targetShortAddress: number;
@@ -55,13 +55,13 @@ export const ZiGateCommand: {[key: string]: ZiGateCommandType} = {
     [ZiGateCommandCode.SetDeviceType]: {
         // 0x0023
         request: [
-            {name: 'deviceType', parameterType: ParameterType.UINT8}, //<device type: uint8_t>
+            {name: "deviceType", parameterType: ParameterType.UINT8}, //<device type: uint8_t>
         ],
     },
     [ZiGateCommandCode.StartNetwork]: {
         // 0x0024
         request: [],
-        response: [[{receivedProperty: 'code', matcher: equal, value: ZiGateMessageCode.NetworkJoined}]],
+        response: [[{receivedProperty: "code", matcher: equal, value: ZiGateMessageCode.NetworkJoined}]],
     },
     [ZiGateCommandCode.StartNetworkScan]: {
         request: [],
@@ -69,7 +69,7 @@ export const ZiGateCommand: {[key: string]: ZiGateCommandType} = {
     [ZiGateCommandCode.GetNetworkState]: {
         // 0x0009
         request: [],
-        response: [[{receivedProperty: 'code', matcher: equal, value: ZiGateMessageCode.NetworkState}]],
+        response: [[{receivedProperty: "code", matcher: equal, value: ZiGateMessageCode.NetworkState}]],
     },
     [ZiGateCommandCode.GetTimeServer]: {
         // 0x0017
@@ -81,7 +81,7 @@ export const ZiGateCommand: {[key: string]: ZiGateCommandType} = {
         response: [
             [
                 {
-                    receivedProperty: 'code',
+                    receivedProperty: "code",
                     matcher: equal,
                     value: ZiGateMessageCode.RestartFactoryNew,
                 },
@@ -95,14 +95,14 @@ export const ZiGateCommand: {[key: string]: ZiGateCommandType} = {
         response: [
             [
                 {
-                    receivedProperty: 'code',
+                    receivedProperty: "code",
                     matcher: equal,
                     value: ZiGateMessageCode.RestartNonFactoryNew,
                 },
             ],
             [
                 {
-                    receivedProperty: 'code',
+                    receivedProperty: "code",
                     matcher: equal,
                     value: ZiGateMessageCode.RestartFactoryNew,
                 },
@@ -112,7 +112,7 @@ export const ZiGateCommand: {[key: string]: ZiGateCommandType} = {
     },
     [ZiGateCommandCode.SetTXpower]: {
         // SetTXpower
-        request: [{name: 'value', parameterType: ParameterType.UINT8}],
+        request: [{name: "value", parameterType: ParameterType.UINT8}],
     },
     // [ZiGateCommandCode.ManagementLQI]: {
     //     // 0x004E
@@ -143,25 +143,25 @@ export const ZiGateCommand: {[key: string]: ZiGateCommandType} = {
     [ZiGateCommandCode.SetSecurityStateKey]: {
         // 0x0022
         request: [
-            {name: 'keyType', parameterType: ParameterType.UINT8}, // 	<key type: uint8_t>
-            {name: 'key', parameterType: ParameterType.BUFFER}, //   <key: data>
+            {name: "keyType", parameterType: ParameterType.UINT8}, // 	<key type: uint8_t>
+            {name: "key", parameterType: ParameterType.BUFFER}, //   <key: data>
         ],
     },
     [ZiGateCommandCode.GetVersion]: {
         request: [],
-        response: [[{receivedProperty: 'code', matcher: equal, value: ZiGateMessageCode.VersionList}]],
+        response: [[{receivedProperty: "code", matcher: equal, value: ZiGateMessageCode.VersionList}]],
     },
     [ZiGateCommandCode.RawMode]: {
-        request: [{name: 'enabled', parameterType: ParameterType.INT8}],
+        request: [{name: "enabled", parameterType: ParameterType.INT8}],
     },
     [ZiGateCommandCode.SetExtendedPANID]: {
         request: [
-            {name: 'panId', parameterType: ParameterType.BUFFER}, //<64-bit Extended PAN ID:uint64_t>
+            {name: "panId", parameterType: ParameterType.BUFFER}, //<64-bit Extended PAN ID:uint64_t>
         ],
     },
     [ZiGateCommandCode.SetChannelMask]: {
         request: [
-            {name: 'channelMask', parameterType: ParameterType.UINT32}, //<channel mask:uint32_t>
+            {name: "channelMask", parameterType: ParameterType.UINT32}, //<channel mask:uint32_t>
         ],
     },
 
@@ -202,20 +202,20 @@ export const ZiGateCommand: {[key: string]: ZiGateCommandType} = {
 
     [ZiGateCommandCode.RemoveDevice]: {
         request: [
-            {name: 'parentAddress', parameterType: ParameterType.IEEEADDR}, // <parent address: uint64_t>
-            {name: 'extendedAddress', parameterType: ParameterType.IEEEADDR}, // <extended address: uint64_t>
+            {name: "parentAddress", parameterType: ParameterType.IEEEADDR}, // <parent address: uint64_t>
+            {name: "extendedAddress", parameterType: ParameterType.IEEEADDR}, // <extended address: uint64_t>
         ],
         response: [
             [
                 {
-                    receivedProperty: 'code',
+                    receivedProperty: "code",
                     matcher: equal,
                     value: ZiGateMessageCode.LeaveIndication,
                 },
                 {
-                    receivedProperty: 'payload.extendedAddress',
+                    receivedProperty: "payload.extendedAddress",
                     matcher: equal,
-                    expectedProperty: 'payload.extendedAddress',
+                    expectedProperty: "payload.extendedAddress",
                 },
             ],
         ],
@@ -235,30 +235,30 @@ export const ZiGateCommand: {[key: string]: ZiGateCommandType} = {
     // },
     [ZiGateCommandCode.PermitJoinStatus]: {
         request: [
-            {name: 'targetShortAddress', parameterType: ParameterType.UINT16}, //<target short address: uint16_t> -
+            {name: "targetShortAddress", parameterType: ParameterType.UINT16}, //<target short address: uint16_t> -
             // broadcast 0xfffc
-            {name: 'interval', parameterType: ParameterType.UINT8}, //<interval: uint8_t>
+            {name: "interval", parameterType: ParameterType.UINT8}, //<interval: uint8_t>
             // 0 = Disable Joining
             // 1 – 254 = Time in seconds to allow joins
             // 255 = Allow all joins
-            {name: 'TCsignificance', parameterType: ParameterType.UINT8}, //<TCsignificance: uint8_t>
+            {name: "TCsignificance", parameterType: ParameterType.UINT8}, //<TCsignificance: uint8_t>
             // 0 = No change in authentication
             // 1 = Authentication policy as spec
         ],
-        response: [[{receivedProperty: 'code', matcher: equal, value: ZiGateMessageCode.PermitJoinStatus}]],
+        response: [[{receivedProperty: "code", matcher: equal, value: ZiGateMessageCode.PermitJoinStatus}]],
     },
     [ZiGateCommandCode.RawAPSDataRequest]: {
         request: [
-            {name: 'addressMode', parameterType: ParameterType.UINT8}, // <address mode: uint8_t>
-            {name: 'targetShortAddress', parameterType: ParameterType.UINT16}, // <target short address: uint16_t>
-            {name: 'sourceEndpoint', parameterType: ParameterType.UINT8}, // <source endpoint: uint8_t>
-            {name: 'destinationEndpoint', parameterType: ParameterType.UINT8}, // <destination endpoint: uint8_t>
-            {name: 'clusterID', parameterType: ParameterType.UINT16}, // <cluster ID: uint16_t>
-            {name: 'profileID', parameterType: ParameterType.UINT16}, // <profile ID: uint16_t>
-            {name: 'securityMode', parameterType: ParameterType.UINT8}, // <security mode: uint8_t>
-            {name: 'radius', parameterType: ParameterType.UINT8}, // <radius: uint8_t>
-            {name: 'dataLength', parameterType: ParameterType.UINT8}, // <data length: uint8_t>
-            {name: 'data', parameterType: ParameterType.BUFFER}, // <data: auint8_t>
+            {name: "addressMode", parameterType: ParameterType.UINT8}, // <address mode: uint8_t>
+            {name: "targetShortAddress", parameterType: ParameterType.UINT16}, // <target short address: uint16_t>
+            {name: "sourceEndpoint", parameterType: ParameterType.UINT8}, // <source endpoint: uint8_t>
+            {name: "destinationEndpoint", parameterType: ParameterType.UINT8}, // <destination endpoint: uint8_t>
+            {name: "clusterID", parameterType: ParameterType.UINT16}, // <cluster ID: uint16_t>
+            {name: "profileID", parameterType: ParameterType.UINT16}, // <profile ID: uint16_t>
+            {name: "securityMode", parameterType: ParameterType.UINT8}, // <security mode: uint8_t>
+            {name: "radius", parameterType: ParameterType.UINT8}, // <radius: uint8_t>
+            {name: "dataLength", parameterType: ParameterType.UINT8}, // <data length: uint8_t>
+            {name: "data", parameterType: ParameterType.BUFFER}, // <data: auint8_t>
         ],
     },
     // [ZiGateCommandCode.NodeDescriptor]: {
@@ -408,11 +408,11 @@ export const ZiGateCommand: {[key: string]: ZiGateCommandType} = {
     // },
     [ZiGateCommandCode.AddGroup]: {
         request: [
-            {name: 'addressMode', parameterType: ParameterType.UINT8}, //<device type: uint8_t>
-            {name: 'shortAddress', parameterType: ParameterType.UINT16},
-            {name: 'sourceEndpoint', parameterType: ParameterType.UINT8},
-            {name: 'destinationEndpoint', parameterType: ParameterType.UINT8},
-            {name: 'groupAddress', parameterType: ParameterType.UINT16},
+            {name: "addressMode", parameterType: ParameterType.UINT8}, //<device type: uint8_t>
+            {name: "shortAddress", parameterType: ParameterType.UINT16},
+            {name: "sourceEndpoint", parameterType: ParameterType.UINT8},
+            {name: "destinationEndpoint", parameterType: ParameterType.UINT8},
+            {name: "groupAddress", parameterType: ParameterType.UINT16},
         ],
     },
 };

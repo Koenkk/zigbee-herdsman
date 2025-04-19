@@ -1,6 +1,6 @@
 /* v8 ignore start */
 
-import {Bytes, fixed_list, int8s, list, LVBytes, LVList, uint_t, uint8_t, uint16_t, uint24_t, uint32_t, uint64_t, WordList} from './basic';
+import {Bytes, LVBytes, LVList, WordList, fixed_list, int8s, list, uint8_t, uint16_t, uint24_t, uint32_t, uint64_t, uint_t} from "./basic";
 import {
     Bool,
     EmberApsOption,
@@ -52,12 +52,12 @@ import {
     EzspValueId,
     EzspZllNetworkOperation,
     NcpResetCode,
+    SLStatus,
     SecureEzspRandomNumber,
     SecureEzspSecurityLevel,
     SecureEzspSecurityType,
     SecureEzspSessionId,
-    SLStatus,
-} from './named';
+} from "./named";
 import {
     EmberAesMmoHashContext,
     EmberApsFrame,
@@ -73,8 +73,8 @@ import {
     EmberMessageDigest,
     EmberMultiAddress,
     EmberMulticastTableEntry,
-    EmberNeighbors,
     EmberNeighborTableEntry,
+    EmberNeighbors,
     EmberNetworkInitStruct,
     EmberNetworkParameters,
     EmberNodeDescriptor,
@@ -103,13 +103,12 @@ import {
     EmberZllNetwork,
     EmberZllSecurityAlgorithmData,
     EzspStruct,
-} from './struct';
+} from "./struct";
 
-/* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
 export function deserialize(payload: any, schema: any[]): any[] {
     const result = [];
-    let value,
-        data = payload;
+    let value;
+    let data = payload;
     for (const type of schema) {
         [value, data] = type.deserialize(type, data);
         result.push(value);
@@ -117,7 +116,6 @@ export function deserialize(payload: any, schema: any[]): any[] {
     return [result, data];
 }
 
-/* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
 export function serialize(data: any[], schema: {serialize: (schema: any, item: any) => Buffer}[]): Buffer {
     return Buffer.concat(schema.map((s, idx) => s.serialize(s, data[idx])));
 }
@@ -137,7 +135,6 @@ export {
     fixed_list,
     WordList,
     Bytes,
-
     /* Named Types */
     NcpResetCode,
     EmberRf4ceTxOption,
@@ -194,7 +191,6 @@ export {
     EmberNetworkInitBitmask,
     EmberZDOCmd,
     EmberDerivedKeyType,
-
     /* Structs */
     EzspStruct,
     EmberNetworkParameters,

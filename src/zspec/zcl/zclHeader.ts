@@ -1,9 +1,9 @@
-import {logger} from '../../utils/logger';
-import {BuffaloZcl} from './buffaloZcl';
-import {FrameType} from './definition/enums';
-import {FrameControl} from './definition/tstype';
+import {logger} from "../../utils/logger";
+import {BuffaloZcl} from "./buffaloZcl";
+import {FrameType} from "./definition/enums";
+import type {FrameControl} from "./definition/tstype";
 
-const NS = 'zh:zcl:header';
+const NS = "zh:zcl:header";
 const HEADER_MINIMAL_LENGTH = 3;
 const HEADER_WITH_MANUF_LENGTH = HEADER_MINIMAL_LENGTH + 2;
 /** ZCL Header frame control frame type */
@@ -69,7 +69,7 @@ export class ZclHeader {
     public static fromBuffer(buffer: Buffer): ZclHeader | undefined {
         // Returns `undefined` in case the ZclHeader cannot be parsed.
         if (buffer.length < HEADER_MINIMAL_LENGTH) {
-            logger.debug(`ZclHeader is too short.`, NS);
+            logger.debug("ZclHeader is too short.", NS);
             return undefined;
         }
 
@@ -87,7 +87,7 @@ export class ZclHeader {
 
         if (frameControl.manufacturerSpecific) {
             if (buffer.length < HEADER_WITH_MANUF_LENGTH) {
-                logger.debug(`ZclHeader is too short for control with manufacturer-specific.`, NS);
+                logger.debug("ZclHeader is too short for control with manufacturer-specific.", NS);
                 return undefined;
             }
 

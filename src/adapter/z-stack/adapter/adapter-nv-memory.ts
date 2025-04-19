@@ -1,10 +1,10 @@
-import assert from 'node:assert';
+import assert from "node:assert";
 
-import {NvItemsIds, NvSystemIds, ZnpCommandStatus} from '../constants/common';
-import * as Structs from '../structs';
-import {BuiltTable} from '../structs';
-import {Subsystem} from '../unpi/constants';
-import {Znp} from '../znp';
+import {NvItemsIds, type NvSystemIds, ZnpCommandStatus} from "../constants/common";
+import type * as Structs from "../structs";
+import type {BuiltTable} from "../structs";
+import {Subsystem} from "../unpi/constants";
+import type {Znp} from "../znp";
 
 /**
  * Adapter non-volatile memory instrumentation. This class provides interface to interact
@@ -26,7 +26,7 @@ export class AdapterNvMemory {
     public async init(): Promise<void> {
         /* use `ZCD_NV_NWKKEY` to determine if target platform uses memory alignment (length 21 = unaligned, length 24 = aligned) */
         const rawNwkKey = await this.readItem(NvItemsIds.NWKKEY);
-        this.memoryAlignment = rawNwkKey.length === 21 ? 'unaligned' : 'aligned';
+        this.memoryAlignment = rawNwkKey.length === 21 ? "unaligned" : "aligned";
     }
 
     /**
@@ -58,14 +58,14 @@ export class AdapterNvMemory {
         if (useStruct) {
             this.checkMemoryAlignmentSetup();
         }
-        const lengthResponse = await this.retry(() => this.znp.requestWithReply(Subsystem.SYS, 'osalNvLength', {id}));
+        const lengthResponse = await this.retry(() => this.znp.requestWithReply(Subsystem.SYS, "osalNvLength", {id}));
         if (!lengthResponse?.payload?.length || lengthResponse?.payload?.length === 0) {
             return null;
         }
         const length = lengthResponse.payload.length;
         const buffer = Buffer.alloc(length);
         while (offset < length) {
-            const readResponse = await this.retry(() => this.znp.request(Subsystem.SYS, 'osalNvReadExt', {id, offset}));
+            const readResponse = await this.retry(() => this.znp.request(Subsystem.SYS, "osalNvReadExt", {id, offset}));
             /* v8 ignore start */
             if (!readResponse) {
                 return null;
@@ -78,8 +78,7 @@ export class AdapterNvMemory {
             offset += readResponse.payload.value.length;
         }
         if (useStruct) {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            return (useStruct as any)(buffer, this.memoryAlignment) as T;
+            return useStruct(buffer, this.memoryAlignment) as T;
         }
         return buffer;
     }
@@ -96,7 +95,7 @@ export class AdapterNvMemory {
     public async writeItem(id: NvItemsIds, data: Buffer | Structs.SerializableMemoryObject, offset = 0, autoInit = true): Promise<void> {
         this.checkMemoryAlignmentSetup();
         const buffer = Buffer.isBuffer(data) ? data : data.serialize(this.memoryAlignment);
-        const lengthResponse = await this.retry(() => this.znp.requestWithReply(Subsystem.SYS, 'osalNvLength', {id}));
+        const lengthResponse = await this.retry(() => this.znp.requestWithReply(Subsystem.SYS, "osalNvLength", {id}));
         const exists = lengthResponse.payload.length && lengthResponse.payload.length > 0;
         if (!exists) {
             /* v8 ignore next */
@@ -109,7 +108,7 @@ export class AdapterNvMemory {
             const initResponse = await this.retry(() =>
                 this.znp.requestWithReply(
                     Subsystem.SYS,
-                    'osalNvItemInit',
+                    "osalNvItemInit",
                     {id, len: buffer.length, initlen: initLength, initvalue: buffer.slice(0, initLength)},
                     undefined,
                     undefined,
@@ -131,7 +130,7 @@ export class AdapterNvMemory {
             const dataOffset = buffer.length - remaining;
             const writeData = buffer.slice(dataOffset, dataOffset + writeLength);
             const writeResponse = await this.retry(() =>
-                this.znp.requestWithReply(Subsystem.SYS, 'osalNvWriteExt', {id, offset: dataOffset, len: writeLength, value: writeData}),
+                this.znp.requestWithReply(Subsystem.SYS, "osalNvWriteExt", {id, offset: dataOffset, len: writeLength, value: writeData}),
             );
             /* v8 ignore start */
             if (writeResponse.payload.status !== 0) {
@@ -164,12 +163,12 @@ export class AdapterNvMemory {
      */
     public async deleteItem(id: NvItemsIds): Promise<void> {
         this.checkMemoryAlignmentSetup();
-        const lengthResponse = await this.retry(() => this.znp.requestWithReply(Subsystem.SYS, 'osalNvLength', {id}));
+        const lengthResponse = await this.retry(() => this.znp.requestWithReply(Subsystem.SYS, "osalNvLength", {id}));
         const exists = lengthResponse.payload.length && lengthResponse.payload.length > 0;
 
         if (exists) {
             const deleteResponse = await this.retry(() =>
-                this.znp.requestWithReply(Subsystem.SYS, 'osalNvDelete', {id, len: lengthResponse.payload.length}),
+                this.znp.requestWithReply(Subsystem.SYS, "osalNvDelete", {id, len: lengthResponse.payload.length}),
             );
             /* v8 ignore start */
             if (!deleteResponse || ![ZnpCommandStatus.SUCCESS, ZnpCommandStatus.NV_ITEM_INITIALIZED].includes(deleteResponse.payload.status)) {
@@ -204,11 +203,11 @@ export class AdapterNvMemory {
         useStruct?: Structs.MemoryObjectFactory<T>,
     ): Promise<Buffer | T | null> {
         this.checkMemoryAlignmentSetup();
-        const lengthResponse = await this.retry(() => this.znp.requestWithReply(Subsystem.SYS, 'nvLength', {sysid: sysId, itemid: id, subid: subId}));
+        const lengthResponse = await this.retry(() => this.znp.requestWithReply(Subsystem.SYS, "nvLength", {sysid: sysId, itemid: id, subid: subId}));
         const exists = lengthResponse.payload.len && lengthResponse.payload.len > 0;
         if (exists) {
             const readResponse = await this.retry(() =>
-                this.znp.requestWithReply(Subsystem.SYS, 'nvRead', {
+                this.znp.requestWithReply(Subsystem.SYS, "nvRead", {
                     sysid: sysId,
                     itemid: id,
                     subid: subId,
@@ -249,7 +248,7 @@ export class AdapterNvMemory {
         autoInit = true,
     ): Promise<void> {
         this.checkMemoryAlignmentSetup();
-        const lengthResponse = await this.retry(() => this.znp.requestWithReply(Subsystem.SYS, 'nvLength', {sysid: sysId, itemid: id, subid: subId}));
+        const lengthResponse = await this.retry(() => this.znp.requestWithReply(Subsystem.SYS, "nvLength", {sysid: sysId, itemid: id, subid: subId}));
         const exists = lengthResponse.payload.len && lengthResponse.payload.len > 0;
         /* v8 ignore start */
         if (!exists) {
@@ -257,7 +256,7 @@ export class AdapterNvMemory {
                 throw new Error(`Cannot write NV memory extended table item which does not exist (sudId=${sysId}, id=${id}, subId=${subId})`);
             }
             const createResponse = await this.retry(() =>
-                this.znp.request(Subsystem.SYS, 'nvCreate', {sysid: sysId, itemid: id, subid: subId, len: data.length}),
+                this.znp.request(Subsystem.SYS, "nvCreate", {sysid: sysId, itemid: id, subid: subId, len: data.length}),
             );
             if (!createResponse || createResponse.payload.status !== ZnpCommandStatus.SUCCESS) {
                 throw new Error(`Failed to crate NV memory extended table item with status (sudId=${sysId}, id=${id}, subId=${subId})`);
@@ -265,7 +264,7 @@ export class AdapterNvMemory {
         }
         /* v8 ignore stop */
         const writeResponse = await this.retry(() =>
-            this.znp.requestWithReply(Subsystem.SYS, 'nvWrite', {
+            this.znp.requestWithReply(Subsystem.SYS, "nvWrite", {
                 sysid: sysId,
                 itemid: id,
                 subid: subId,
@@ -291,7 +290,7 @@ export class AdapterNvMemory {
      * @param id The item index at which the table starts.
      * @param maxLength Maximum number of items the table may contain.
      */
-    public async readTable(mode: 'legacy', id: NvItemsIds, maxLength: number): Promise<Buffer[]>;
+    public async readTable(mode: "legacy", id: NvItemsIds, maxLength: number): Promise<Buffer[]>;
 
     /**
      * Reads a legacy table at defined index into a table structure covering struct entries.
@@ -303,7 +302,7 @@ export class AdapterNvMemory {
      * @param useTable Table factory to spawn a table and populate with retrieved data.
      */
     public async readTable<R extends Structs.BuiltStruct, T extends Structs.BuiltTable<R>>(
-        mode: 'legacy',
+        mode: "legacy",
         id: NvItemsIds,
         maxLength: number,
         useTable?: Structs.MemoryObjectFactory<T>,
@@ -318,7 +317,7 @@ export class AdapterNvMemory {
      * @param id Extended table NV index.
      * @param maxLength Maximum number of entries to load from the table.
      */
-    public async readTable(mode: 'extended', sysId: NvSystemIds, id: NvItemsIds, maxLength?: number): Promise<Buffer[]>;
+    public async readTable(mode: "extended", sysId: NvSystemIds, id: NvItemsIds, maxLength?: number): Promise<Buffer[]>;
 
     /**
      * Reads an extended (Z-Stack 3.x.0+) table into a table structure covering struct entries.
@@ -331,7 +330,7 @@ export class AdapterNvMemory {
      * @param useTable Table factory to spawn a table and populate with retrieved data.
      */
     public async readTable<R extends Structs.BuiltStruct, T extends Structs.BuiltTable<R>>(
-        mode: 'extended',
+        mode: "extended",
         sysId: NvSystemIds,
         id: NvItemsIds,
         maxLength?: number,
@@ -339,21 +338,21 @@ export class AdapterNvMemory {
     ): Promise<T>;
 
     public async readTable<R extends Structs.BuiltStruct, T extends Structs.BuiltTable<R>>(
-        mode: 'legacy' | 'extended',
+        mode: "legacy" | "extended",
         p1: NvSystemIds | NvItemsIds,
         p2: NvItemsIds | number,
         p3?: Structs.MemoryObjectFactory<T> | number,
         p4?: Structs.MemoryObjectFactory<T>,
     ): Promise<Buffer[] | T> {
-        const sysId = mode === 'legacy' ? undefined : (p1 as NvSystemIds);
-        const id = (mode === 'legacy' ? p1 : p2) as NvItemsIds;
-        const maxLength = (mode === 'legacy' ? p2 : p3) as number;
-        const useTable = (mode === 'legacy' ? p3 : p4) as Structs.MemoryObjectFactory<T>;
+        const sysId = mode === "legacy" ? undefined : (p1 as NvSystemIds);
+        const id = (mode === "legacy" ? p1 : p2) as NvItemsIds;
+        const maxLength = (mode === "legacy" ? p2 : p3) as number;
+        const useTable = (mode === "legacy" ? p3 : p4) as Structs.MemoryObjectFactory<T>;
 
         const rawEntries: Buffer[] = [];
         let entryOffset = 0;
         let rawEntry = null;
-        if (mode === 'legacy') {
+        if (mode === "legacy") {
             do {
                 rawEntry = await this.readItem(id + entryOffset++);
                 if (rawEntry) {
@@ -382,7 +381,7 @@ export class AdapterNvMemory {
      * @param id Start NV item index.
      * @param table Table structure to write to NV memory.
      */
-    public async writeTable<R extends Structs.BuiltStruct>(mode: 'legacy', id: NvItemsIds, table: BuiltTable<R>): Promise<void>;
+    public async writeTable<R extends Structs.BuiltStruct>(mode: "legacy", id: NvItemsIds, table: BuiltTable<R>): Promise<void>;
 
     /**
      * Writes a struct-based table structure into an extended NV memory position.
@@ -392,20 +391,20 @@ export class AdapterNvMemory {
      * @param id Extended table NV item index.
      * @param table Table structure to write to NV memory.
      */
-    public async writeTable<R extends Structs.BuiltStruct>(mode: 'extended', sysId: NvSystemIds, id: NvItemsIds, table: BuiltTable<R>): Promise<void>;
+    public async writeTable<R extends Structs.BuiltStruct>(mode: "extended", sysId: NvSystemIds, id: NvItemsIds, table: BuiltTable<R>): Promise<void>;
 
     public async writeTable<R extends Structs.BuiltStruct>(
-        mode: 'extended' | 'legacy',
+        mode: "extended" | "legacy",
         p1: NvSystemIds | NvItemsIds,
         p2: NvItemsIds | BuiltTable<R>,
         p3?: BuiltTable<R>,
     ): Promise<void> {
         this.checkMemoryAlignmentSetup();
-        const sysId = mode === 'legacy' ? undefined : (p1 as NvSystemIds);
-        const id = (mode === 'legacy' ? p1 : p2) as NvItemsIds;
-        const table = (mode === 'legacy' ? p2 : p3) as BuiltTable<R>;
+        const sysId = mode === "legacy" ? undefined : (p1 as NvSystemIds);
+        const id = (mode === "legacy" ? p1 : p2) as NvItemsIds;
+        const table = (mode === "legacy" ? p2 : p3) as BuiltTable<R>;
 
-        if (mode === 'legacy') {
+        if (mode === "legacy") {
             for (const [index, entry] of table.entries.entries()) {
                 await this.writeItem(id + index, entry.serialize(this.memoryAlignment));
             }
@@ -451,7 +450,7 @@ export class AdapterNvMemory {
     private checkMemoryAlignmentSetup(): void {
         /* v8 ignore start */
         if (this.memoryAlignment === undefined) {
-            throw new Error('adapter memory alignment unknown - has nv memory driver been initialized?');
+            throw new Error("adapter memory alignment unknown - has nv memory driver been initialized?");
         }
         /* v8 ignore stop */
     }

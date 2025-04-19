@@ -1,15 +1,15 @@
 /* v8 ignore start */
 
-import {EventEmitter} from 'node:events';
-import {Socket} from 'node:net';
+import {EventEmitter} from "node:events";
+import {Socket} from "node:net";
 
-import {wait} from '../../../utils';
-import {logger} from '../../../utils/logger';
-import {SerialPort} from '../../serialPort';
-import SocketPortUtils from '../../socketPortUtils';
-import {SerialPortOptions} from '../../tstype';
-import {EzspStatus} from '../enums';
-import {halCommonCrc16, inc8, mod8, withinRange} from '../utils/math';
+import {wait} from "../../../utils";
+import {logger} from "../../../utils/logger";
+import {SerialPort} from "../../serialPort";
+import SocketPortUtils from "../../socketPortUtils";
+import type {SerialPortOptions} from "../../tstype";
+import {EzspStatus} from "../enums";
+import {halCommonCrc16, inc8, mod8, withinRange} from "../utils/math";
 import {
     ASH_ACKNUM_BIT,
     ASH_ACKNUM_MASK,
@@ -39,13 +39,13 @@ import {
     SH_RX_BUFFER_LEN,
     SH_TX_BUFFER_LEN,
     TX_POOL_BUFFERS,
-} from './consts';
-import {AshFrameType, AshReservedByte, NcpFailedCode} from './enums';
-import {AshParser} from './parser';
-import {EzspBuffer, EzspFreeList, EzspQueue} from './queues';
-import {AshWriter} from './writer';
+} from "./consts";
+import {AshFrameType, AshReservedByte, NcpFailedCode} from "./enums";
+import {AshParser} from "./parser";
+import {EzspBuffer, EzspFreeList, EzspQueue} from "./queues";
+import {AshWriter} from "./writer";
 
-const NS = 'zh:ember:uart:ash';
+const NS = "zh:ember:uart:ash";
 
 /** ASH get rflag in control byte */
 // const ashGetRFlag = (ctrl: number): number => (ctrl & ASH_RFLAG_MASK) >> ASH_RFLAG_BIT;
@@ -387,7 +387,8 @@ export class UartAsh extends EventEmitter<UartAshEventMap> {
         this.txFree.link = undefined;
 
         for (let i = 0; i < TX_POOL_BUFFERS; i++) {
-            this.txFree.freeBuffer((this.txPool[i] = new EzspBuffer()));
+            this.txPool[i] = new EzspBuffer();
+            this.txFree.freeBuffer(this.txPool[i]);
         }
 
         // All receive buffers are put into rxFree, and rxQueue is empty.
@@ -395,7 +396,8 @@ export class UartAsh extends EventEmitter<UartAshEventMap> {
         this.rxFree.link = undefined;
 
         for (let i = 0; i < EZSP_HOST_RX_POOL_SIZE; i++) {
-            this.rxFree.freeBuffer((this.rxPool[i] = new EzspBuffer()));
+            this.rxPool[i] = new EzspBuffer();
+            this.rxFree.freeBuffer(this.rxPool[i]);
         }
     }
 
@@ -407,11 +409,12 @@ export class UartAsh extends EventEmitter<UartAshEventMap> {
             return false;
         }
 
+        // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
         if (SocketPortUtils.isTcpPath(this.portOptions.path!)) {
             return this.socketPort ? !this.socketPort.closed : false;
-        } else {
-            return this.serialPort ? this.serialPort.isOpen : false;
         }
+
+        return this.serialPort ? this.serialPort.isOpen : false;
     }
 
     /**
@@ -459,13 +462,15 @@ export class UartAsh extends EventEmitter<UartAshEventMap> {
     private async initPort(): Promise<void> {
         await this.closePort(); // will do nothing if nothing's open
 
+        // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
         if (!SocketPortUtils.isTcpPath(this.portOptions.path!)) {
             const serialOpts = {
+                // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
                 path: this.portOptions.path!,
-                baudRate: typeof this.portOptions.baudRate === 'number' ? this.portOptions.baudRate : 115200,
-                rtscts: typeof this.portOptions.rtscts === 'boolean' ? this.portOptions.rtscts : false,
+                baudRate: typeof this.portOptions.baudRate === "number" ? this.portOptions.baudRate : 115200,
+                rtscts: typeof this.portOptions.rtscts === "boolean" ? this.portOptions.rtscts : false,
                 autoOpen: false,
-                parity: 'none' as const,
+                parity: "none" as const,
                 stopBits: 1 as const,
                 xon: false,
                 xoff: false,
@@ -473,13 +478,13 @@ export class UartAsh extends EventEmitter<UartAshEventMap> {
 
             // enable software flow control if RTS/CTS not enabled in config
             if (!serialOpts.rtscts) {
-                logger.info(`RTS/CTS config is off, enabling software flow control.`, NS);
+                logger.info("RTS/CTS config is off, enabling software flow control.", NS);
                 serialOpts.xon = true;
                 serialOpts.xoff = true;
             }
 
             // @ts-expect-error Jest testing
-            if (this.portOptions.binding != undefined) {
+            if (this.portOptions.binding !== undefined) {
                 // @ts-expect-error Jest testing
                 serialOpts.binding = this.portOptions.binding;
             }
@@ -489,20 +494,21 @@ export class UartAsh extends EventEmitter<UartAshEventMap> {
 
             this.writer.pipe(this.serialPort);
             this.serialPort.pipe(this.parser);
-            this.parser.on('data', this.onFrame.bind(this));
+            this.parser.on("data", this.onFrame.bind(this));
 
             try {
                 await this.serialPort.asyncOpen();
-                logger.info(`Serial port opened`, NS);
+                logger.info("Serial port opened", NS);
 
-                this.serialPort.once('close', this.onPortClose.bind(this));
-                this.serialPort.on('error', this.onPortError.bind(this));
+                this.serialPort.once("close", this.onPortClose.bind(this));
+                this.serialPort.on("error", this.onPortError.bind(this));
             } catch (error) {
                 await this.stop();
 
                 throw error;
             }
         } else {
+            // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
             const info = SocketPortUtils.parseTcpPath(this.portOptions.path!);
             logger.debug(`Opening TCP socket with ${info.host}:${info.port}`, NS);
 
@@ -512,7 +518,7 @@ export class UartAsh extends EventEmitter<UartAshEventMap> {
             this.socketPort.setKeepAlive(true, 15000);
             this.writer.pipe(this.socketPort);
             this.socketPort.pipe(this.parser);
-            this.parser.on('data', this.onFrame.bind(this));
+            this.parser.on("data", this.onFrame.bind(this));
 
             return await new Promise((resolve, reject): void => {
                 const openError = async (err: Error): Promise<void> => {
@@ -521,19 +527,26 @@ export class UartAsh extends EventEmitter<UartAshEventMap> {
                     reject(err);
                 };
 
-                this.socketPort!.on('connect', () => {
-                    logger.debug(`Socket connected`, NS);
+                // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
+                this.socketPort!.on("connect", () => {
+                    logger.debug("Socket connected", NS);
                 });
-                this.socketPort!.on('ready', (): void => {
-                    logger.info(`Socket ready`, NS);
-                    this.socketPort!.removeListener('error', openError);
-                    this.socketPort!.once('close', this.onPortClose.bind(this));
-                    this.socketPort!.on('error', this.onPortError.bind(this));
+                // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
+                this.socketPort!.on("ready", (): void => {
+                    logger.info("Socket ready", NS);
+                    // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
+                    this.socketPort!.removeListener("error", openError);
+                    // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
+                    this.socketPort!.once("close", this.onPortClose.bind(this));
+                    // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
+                    this.socketPort!.on("error", this.onPortError.bind(this));
 
                     resolve();
                 });
-                this.socketPort!.once('error', openError);
+                // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
+                this.socketPort!.once("error", openError);
 
+                // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
                 this.socketPort!.connect(info.port, info.host);
             });
         }
@@ -543,13 +556,13 @@ export class UartAsh extends EventEmitter<UartAshEventMap> {
      * Handle port closing
      * @param err A boolean for Socket, an Error for serialport
      */
-    private async onPortClose(error: boolean | Error): Promise<void> {
-        logger.info(`Port closed.`, NS);
+    private onPortClose(error: boolean | Error): void {
+        logger.info("Port closed.", NS);
 
         if (error && this.flags !== 0) {
             logger.info(`Port close ${error}`, NS);
             this.flags = 0;
-            this.emit('fatalError', EzspStatus.ERROR_SERIAL_INIT);
+            this.emit("fatalError", EzspStatus.ERROR_SERIAL_INIT);
         }
     }
 
@@ -557,10 +570,10 @@ export class UartAsh extends EventEmitter<UartAshEventMap> {
      * Handle port error
      * @param error
      */
-    private async onPortError(error: Error): Promise<void> {
+    private onPortError(error: Error): void {
         logger.error(`Port ${error}`, NS);
         this.flags = 0;
-        this.emit('fatalError', EzspStatus.ERROR_SERIAL_INIT);
+        this.emit("fatalError", EzspStatus.ERROR_SERIAL_INIT);
     }
 
     /**
@@ -575,7 +588,7 @@ export class UartAsh extends EventEmitter<UartAshEventMap> {
             if (this.flags & Flag.CONNECTED) {
                 this.counters.rxCancelled += 1;
 
-                logger.warning(`Frame(s) in progress cancelled in [${buffer.toString('hex')}]`, NS);
+                logger.warning(`Frame(s) in progress cancelled in [${buffer.toString("hex")}]`, NS);
             }
 
             // get rid of everything up to the CAN flag and start reading frame from there, no need to loop through bytes in vain
@@ -585,7 +598,7 @@ export class UartAsh extends EventEmitter<UartAshEventMap> {
         if (!buffer.length) {
             // skip any CANCEL that results in empty frame (have yet to see one, but just in case...)
             // shouldn't happen for any other reason, unless receiving bad stuff from port?
-            logger.debug(`Received empty frame. Skipping.`, NS);
+            logger.debug("Received empty frame. Skipping.", NS);
             return;
         }
 
@@ -595,7 +608,7 @@ export class UartAsh extends EventEmitter<UartAshEventMap> {
 
         if (status !== EzspStatus.SUCCESS && status !== EzspStatus.ASH_IN_PROGRESS && status !== EzspStatus.NO_RX_DATA) {
             logger.error(`Error while parsing received frame, status=${EzspStatus[status]}.`, NS);
-            this.emit('fatalError', EzspStatus.HOST_FATAL_ERROR);
+            this.emit("fatalError", EzspStatus.HOST_FATAL_ERROR);
             return;
         }
     }
@@ -613,7 +626,7 @@ export class UartAsh extends EventEmitter<UartAshEventMap> {
             return EzspStatus.ERROR_INVALID_CALL;
         }
 
-        logger.info(`======== ASH starting ========`, NS);
+        logger.info("======== ASH starting ========", NS);
 
         try {
             if (this.serialPort) {
@@ -631,10 +644,12 @@ export class UartAsh extends EventEmitter<UartAshEventMap> {
             this.sendExec();
 
             if (this.flags & Flag.CONNECTED) {
-                logger.info(`======== ASH started ========`, NS);
+                logger.info("======== ASH started ========", NS);
 
                 return EzspStatus.SUCCESS;
-            } else if (this.hostError !== EzspStatus.NO_ERROR || this.ncpError !== EzspStatus.NO_ERROR) {
+            }
+
+            if (this.hostError !== EzspStatus.NO_ERROR || this.ncpError !== EzspStatus.NO_ERROR) {
                 // don't wait for inevitable fail, bail early, let retry logic in EZSP layer do its thing
                 break;
             }
@@ -655,7 +670,7 @@ export class UartAsh extends EventEmitter<UartAshEventMap> {
         this.logCounters();
         await this.closePort();
 
-        logger.info(`======== ASH stopped ========`, NS);
+        logger.info("======== ASH stopped ========", NS);
     }
 
     /**
@@ -694,7 +709,7 @@ export class UartAsh extends EventEmitter<UartAshEventMap> {
             return EzspStatus.ERROR_INVALID_CALL;
         }
 
-        logger.info(`======== ASH Adapter reset ========`, NS);
+        logger.info("======== ASH Adapter reset ========", NS);
 
         // ask ncp to reset itself using RST frame
         try {
@@ -744,7 +759,9 @@ export class UartAsh extends EventEmitter<UartAshEventMap> {
         // copies data frame to a buffer and appends it to the transmit queue.
         if (len < ASH_MIN_DATA_FIELD_LEN) {
             return EzspStatus.DATA_FRAME_TOO_SHORT;
-        } else if (len > ASH_MAX_DATA_FIELD_LEN) {
+        }
+
+        if (len > ASH_MAX_DATA_FIELD_LEN) {
             return EzspStatus.DATA_FRAME_TOO_LONG;
         }
 
@@ -774,9 +791,9 @@ export class UartAsh extends EventEmitter<UartAshEventMap> {
      * initialization and error detection and recovery.
      */
     public sendExec(): void {
-        let outByte: number = 0x00;
-        let inByte: number = 0x00;
-        let len: number = 0;
+        let outByte = 0x00;
+        let inByte = 0x00;
+        let len = 0;
         let buffer: EzspBuffer | undefined;
 
         // Check for received acknowledgement timer expiry
@@ -790,7 +807,7 @@ export class UartAsh extends EventEmitter<UartAshEventMap> {
 
                     this.adjustAckPeriod(true);
 
-                    logger.debug(`Timer expired waiting for ACK for ${reTx ? 'frmReTx' : 'frmTx'}=${expectedFrm}, ackRx=${this.ackRx}`, NS);
+                    logger.debug(`Timer expired waiting for ACK for ${reTx ? "frmReTx" : "frmTx"}=${expectedFrm}, ackRx=${this.ackRx}`, NS);
 
                     if (++this.timeouts >= ASH_MAX_TIMEOUTS) {
                         this.hostDisconnect(EzspStatus.ASH_ERROR_TIMEOUTS);
@@ -861,7 +878,7 @@ export class UartAsh extends EventEmitter<UartAshEventMap> {
                         len = 1;
                         this.flags &= ~(Flag.RST | Flag.NAK | Flag.ACK);
                         this.sendState = SendState.SHFRAME;
-                        logger.debug(`---> [FRAME type=RST]`, NS);
+                        logger.debug("---> [FRAME type=RST]", NS);
                     } else if (this.flags & (Flag.NAK | Flag.ACK)) {
                         if (this.flags & Flag.NAK) {
                             this.txSHBuffer[0] = AshFrameType.NAK + (this.frmRx << ASH_ACKNUM_BIT);
@@ -886,6 +903,7 @@ export class UartAsh extends EventEmitter<UartAshEventMap> {
                     } else if (this.flags & Flag.RETX) {
                         // Retransmitting DATA frames for error recovery
                         // buffer assumed valid from loop logic
+                        // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
                         buffer = this.reTxQueue.getNthEntry(mod8(this.frmTx - this.frmReTx))!;
                         len = buffer.len + 1;
                         this.txSHBuffer[0] = AshFrameType.DATA | (this.frmReTx << ASH_FRMNUM_BIT) | (this.frmRx << ASH_ACKNUM_BIT) | ASH_RFLAG_MASK;
@@ -894,7 +912,7 @@ export class UartAsh extends EventEmitter<UartAshEventMap> {
                             `---> [FRAME type=DATA_RETX frmReTx=${this.frmReTx} frmRx=${this.frmRx}](ackRx=${this.ackRx} frmTx=${this.frmTx})`,
                             NS,
                         );
-                    } else if (this.ackTx != this.frmRx) {
+                    } else if (this.ackTx !== this.frmRx) {
                         // An ACK should be generated
                         this.flags |= Flag.ACK;
                         break;
@@ -942,6 +960,7 @@ export class UartAsh extends EventEmitter<UartAshEventMap> {
                     // sending OR resending data frame
                     if (this.txOffset !== 0xff) {
                         // buffer assumed valid from loop logic
+                        // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
                         inByte = this.txOffset ? buffer!.data[this.txOffset - 1] : this.txSHBuffer[0];
                         outByte = this.encodeByte(0, inByte);
 
@@ -991,8 +1010,8 @@ export class UartAsh extends EventEmitter<UartAshEventMap> {
             return EzspStatus.ASH_NCP_FATAL_ERROR;
         }
 
-        let ackNum: number = 0;
-        let frmNum: number = 0;
+        let ackNum = 0;
+        let frmNum = 0;
         let frameType: AshFrameType = AshFrameType.INVALID;
 
         // Read data from serial port and assemble a frame until complete, aborted
@@ -1012,25 +1031,25 @@ export class UartAsh extends EventEmitter<UartAshEventMap> {
                 this.counters.rxCrcErrors += 1;
 
                 this.rejectFrame();
-                logger.error(`Received frame with CRC error`, NS);
+                logger.error("Received frame with CRC error", NS);
                 return EzspStatus.NO_RX_DATA;
             case EzspStatus.ASH_COMM_ERROR:
                 this.counters.rxCommErrors += 1;
 
                 this.rejectFrame();
-                logger.error(`Received frame with comm error`, NS);
+                logger.error("Received frame with comm error", NS);
                 return EzspStatus.NO_RX_DATA;
             case EzspStatus.ASH_TOO_SHORT:
                 this.counters.rxTooShort += 1;
 
                 this.rejectFrame();
-                logger.error(`Received frame shorter than minimum`, NS);
+                logger.error("Received frame shorter than minimum", NS);
                 return EzspStatus.NO_RX_DATA;
             case EzspStatus.ASH_TOO_LONG:
                 this.counters.rxTooLong += 1;
 
                 this.rejectFrame();
-                logger.error(`Received frame longer than maximum`, NS);
+                logger.error("Received frame longer than maximum", NS);
                 return EzspStatus.NO_RX_DATA;
             case EzspStatus.ASH_ERROR_XON_XOFF:
                 return this.hostDisconnect(status);
@@ -1085,10 +1104,12 @@ export class UartAsh extends EventEmitter<UartAshEventMap> {
 
                 this.flags = Flag.CONNECTED | Flag.ACK;
 
-                logger.info(`======== ASH connected ========`, NS);
+                logger.info("======== ASH connected ========", NS);
 
                 return EzspStatus.SUCCESS;
-            } else if (frameType === AshFrameType.ERROR) {
+            }
+
+            if (frameType === AshFrameType.ERROR) {
                 logger.error(`Received ERROR from adapter while connecting, with code=${NcpFailedCode[this.rxSHBuffer[2]]}.`, NS);
                 // let Ezsp retry logic handle error
                 // return this.ncpDisconnect(EzspStatus.ASH_NCP_FATAL_ERROR);
@@ -1168,24 +1189,24 @@ export class UartAsh extends EventEmitter<UartAshEventMap> {
 
                     this.counters.rxData += this.rxDataBuffer.len;
 
-                    setImmediate(() => this.emit('frame'));
+                    setImmediate(() => this.emit("frame"));
                     return EzspStatus.SUCCESS;
+                }
+
+                // frame is out of sequence
+                if (this.rxSHBuffer[0] & ASH_RFLAG_MASK) {
+                    // if retransmitted, force ACK
+                    this.counters.rxDuplicates += 1;
+                    this.flags |= Flag.ACK;
                 } else {
-                    // frame is out of sequence
-                    if (this.rxSHBuffer[0] & ASH_RFLAG_MASK) {
-                        // if retransmitted, force ACK
-                        this.counters.rxDuplicates += 1;
-                        this.flags |= Flag.ACK;
-                    } else {
-                        // 1st OOS? then set REJ, send NAK
-                        if ((this.flags & Flag.REJ) === 0) {
-                            this.counters.rxOutOfSequence += 1;
+                    // 1st OOS? then set REJ, send NAK
+                    if ((this.flags & Flag.REJ) === 0) {
+                        this.counters.rxOutOfSequence += 1;
 
-                            logger.debug(`<-x- ${frameStr} Out of sequence: expected ${this.frmRx}; got ${frmNum}.`, NS);
-                        }
-
-                        this.rejectFrame();
+                        logger.debug(`<-x- ${frameStr} Out of sequence: expected ${this.frmRx}; got ${frmNum}.`, NS);
                     }
+
+                    this.rejectFrame();
                 }
                 break;
             }
@@ -1209,7 +1230,7 @@ export class UartAsh extends EventEmitter<UartAshEventMap> {
                 return this.ncpDisconnect(EzspStatus.ASH_NCP_FATAL_ERROR);
             case AshFrameType.INVALID:
                 // reject invalid frames
-                logger.debug(`<-x- [FRAME type=${frameTypeStr}] Rejecting. ${this.rxSHBuffer.toString('hex')}`, NS);
+                logger.debug(`<-x- [FRAME type=${frameTypeStr}] Rejecting. ${this.rxSHBuffer.toString("hex")}`, NS);
 
                 this.rejectFrame();
                 break;
@@ -1234,9 +1255,9 @@ export class UartAsh extends EventEmitter<UartAshEventMap> {
      */
     private readFrame(buffer: Buffer): EzspStatus {
         let status: EzspStatus = EzspStatus.ERROR_INVALID_CALL; // no actual data to read, something's very wrong
-        let index: number = 0;
+        let index = 0;
         // let inByte: number = 0x00;
-        let outByte: number = 0x00;
+        let outByte = 0x00;
 
         if (!this.decodeInProgress) {
             this.rxLen = 0;
@@ -1335,7 +1356,7 @@ export class UartAsh extends EventEmitter<UartAshEventMap> {
      * If not already retransmitting, and there are unacked frames, start retransmitting after the last frame that was acked.
      */
     private startRetransmission(): void {
-        if (!(this.flags & Flag.RETX) && this.ackRx != this.frmTx) {
+        if (!(this.flags & Flag.RETX) && this.ackRx !== this.frmTx) {
             this.stopAckTimer();
 
             this.frmReTx = this.ackRx;
@@ -1354,7 +1375,7 @@ export class UartAsh extends EventEmitter<UartAshEventMap> {
             if (this.rxFree.length < CONFIG_NR_LOW_LIMIT) {
                 this.flags |= Flag.NR;
 
-                logger.warning(`NOT READY - Signaling adapter`, NS);
+                logger.warning("NOT READY - Signaling adapter", NS);
             } else if (this.rxFree.length > CONFIG_NR_HIGH_LIMIT) {
                 this.flags &= ~Flag.NR;
 
@@ -1530,12 +1551,16 @@ export class UartAsh extends EventEmitter<UartAshEventMap> {
             }
 
             return this.encodeStuffByte(byte);
-        } else if (this.encodeState === 1) {
+        }
+
+        if (this.encodeState === 1) {
             // CRC high byte
             this.encodeState = 2;
 
             return this.encodeStuffByte(this.encodeCrc >> 8);
-        } else if (this.encodeState === 2) {
+        }
+
+        if (this.encodeState === 2) {
             // CRC low byte
             this.encodeState = 3;
 
@@ -1559,9 +1584,9 @@ export class UartAsh extends EventEmitter<UartAshEventMap> {
             this.encodeFlip = byte ^ ASH_FLIP;
 
             return AshReservedByte.ESCAPE;
-        } else {
-            return byte;
         }
+
+        return byte;
     }
 
     /**
@@ -1597,7 +1622,9 @@ export class UartAsh extends EventEmitter<UartAshEventMap> {
                     // if no frame data, not end flag, so ignore it
                     this.decodeFlip = 0; // ignore isolated data escape between flags
                     break;
-                } else if (this.decodeLen === 0xff) {
+                }
+
+                if (this.decodeLen === 0xff) {
                     status = EzspStatus.ASH_COMM_ERROR;
                 } else if (this.decodeCrc !== (this.decodeByte2 << 8) + this.decodeByte1) {
                     status = EzspStatus.ASH_BAD_CRC;
@@ -1917,7 +1944,7 @@ export class UartAsh extends EventEmitter<UartAshEventMap> {
      * Used on ASH layer stop to get 'pre-stop state'.
      */
     private logCounters(): void {
-        logger.info(`ASH COUNTERS since last clear:`, NS);
+        logger.info("ASH COUNTERS since last clear:", NS);
         logger.info(`  Total frames: RX=${this.counters.rxAllFrames}, TX=${this.counters.txAllFrames}`, NS);
         logger.info(`  Cancelled   : RX=${this.counters.rxCancelled}, TX=${this.counters.txCancelled}`, NS);
         logger.info(`  DATA frames : RX=${this.counters.rxDataFrames}, TX=${this.counters.txDataFrames}`, NS);

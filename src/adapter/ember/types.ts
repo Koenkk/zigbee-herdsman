@@ -1,5 +1,5 @@
-import {EUI64, ExtendedPanId, NodeId, PanId} from '../../zspec/tstypes';
-import {
+import type {Eui64, ExtendedPanId, NodeId, PanId} from "../../zspec/tstypes";
+import type {
     EmberApsOption,
     EmberBindingType,
     EmberCurrentSecurityBitmask,
@@ -17,7 +17,7 @@ import {
     SecManDerivedKeyType,
     SecManFlag,
     SecManKeyType,
-} from './enums';
+} from "./enums";
 
 /** 16-bit ZigBee multicast group identifier. uint16_t */
 export type EmberMulticastId = number;
@@ -149,7 +149,7 @@ export type EmberBeaconData = {
     parentPriority: number;
     /** uint8_t */
     supportedKeyNegotiationMethods: number;
-    extended_beacon: boolean;
+    extendedBeacon: boolean;
     /** Enhanced or regular beacon. default true */
     enhanced: boolean;
     /** default true */
@@ -187,7 +187,7 @@ export type EmberMultiPhyRadioParameters = {
 /** This structure contains information about child nodes. */
 export type EmberChildData = {
     /**  */
-    eui64: EUI64;
+    eui64: Eui64;
     /**  */
     type: EmberNodeType;
     /**  */
@@ -238,7 +238,7 @@ export type EmberNeighborTableEntry = {
      * */
     age: number;
     /** The 8 byte EUI64 of the neighbor. */
-    longId: EUI64;
+    longId: Eui64;
 };
 
 /**
@@ -325,7 +325,7 @@ export type EmberBindingTableEntry = {
      * - The destination EUI64, for unicasts.
      * - A 16-bit multicast group address, for multicasts.
      */
-    identifier: EUI64;
+    identifier: Eui64;
     /** The index of the network the binding belongs to. uint8_t */
     networkIndex: number;
 };
@@ -416,7 +416,7 @@ export type EmberInitialSecurityState = {
      * This field must be set when using commissioning mode.
      * It is required to be in little-endian format.
      */
-    preconfiguredTrustCenterEui64: EUI64;
+    preconfiguredTrustCenterEui64: Eui64;
 };
 
 /** This describes the security features used by the stack for a joined device. */
@@ -427,7 +427,7 @@ export type EmberCurrentSecurityState = {
      * This indicates the EUI64 of the Trust Center.
      * It will be all zeroes if the Trust Center Address is not known (i.e., the device is in a Distributed Trust Center network).
      */
-    trustCenterLongAddress: EUI64;
+    trustCenterLongAddress: Eui64;
 };
 
 /**
@@ -440,7 +440,7 @@ export type SecManContext = {
     /** uint8_t */
     keyIndex: number;
     derivedType: SecManDerivedKeyType;
-    eui64: EUI64;
+    eui64: Eui64;
     /** uint8_t */
     multiNetworkIndex: number;
     flags: SecManFlag;
@@ -581,7 +581,7 @@ export type EmberZllSecurityAlgorithmData = {
 export type EmberZllNetwork = {
     zigbeeNetwork: EmberZigbeeNetwork;
     securityAlgorithm: EmberZllSecurityAlgorithmData;
-    eui64: EUI64;
+    eui64: Eui64;
     nodeId: NodeId;
     state: EmberZllState;
     nodeType: EmberNodeType;
@@ -607,7 +607,7 @@ export type EmberZllInitialSecurityState = {
 
 /** Information discovered during a ZLL scan about the ZLL device's endpoint information. */
 export type EmberZllDeviceInfoRecord = {
-    ieeeAddress: EUI64;
+    ieeeAddress: Eui64;
     /** uint8_t */
     endpointId: number;
     /** uint16_t */
@@ -677,7 +677,7 @@ export type EmberGpAddress =
       }
     | {
           /** The IEEE address is used when the application identifier is ::EMBER_GP_APPLICATION_IEEE_ADDRESS. */
-          gpdIeeeAddress: EUI64;
+          gpdIeeeAddress: Eui64;
           /** Application identifier of the GPD. */
           applicationId: EmberGpApplicationId.IEEE_ADDRESS;
           /** Application endpoint, only used when application identifier is ::EMBER_GP_APPLICATION_IEEE_ADDRESS. uint8_t */
@@ -714,7 +714,7 @@ export type EmberGpProxyTableEntry = {
 /** GP Sink Address. */
 export type EmberGpSinkAddress = {
     /** EUI64 or long address of the sink */
-    sinkEUI: EUI64;
+    sinkEUI: Eui64;
     /** Node ID or network address of the sink */
     sinkNodeId: NodeId;
 };
@@ -844,7 +844,7 @@ export type EmberRxPacketInfo = {
      * the EUI64 is present in the message.
      * Also, when not set, the sender long ID is set to all zeros
      */
-    senderLongId: EUI64;
+    senderLongId: Eui64;
     /**
      * The index of the entry in the binding table that matches the sender of the message or 0xFF if there is no matching entry.
      * A binding matches the message if:

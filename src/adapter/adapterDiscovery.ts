@@ -1,23 +1,23 @@
-import type {Adapter, DiscoverableUsbAdapter, UsbAdapterFingerprint} from './tstype';
+import type {Adapter, DiscoverableUsbAdapter, UsbAdapterFingerprint} from "./tstype";
 
-import assert from 'node:assert';
-import {platform} from 'node:os';
+import assert from "node:assert";
+import {platform} from "node:os";
 
-import {PortInfo} from '@serialport/bindings-cpp';
-import {Bonjour, Service} from 'bonjour-service';
+import type {PortInfo} from "@serialport/bindings-cpp";
+import {Bonjour, type Service} from "bonjour-service";
 
-import {wait} from '../utils';
-import {logger} from '../utils/logger';
-import {SerialPort} from './serialPort';
+import {wait} from "../utils";
+import {logger} from "../utils/logger";
+import {SerialPort} from "./serialPort";
 
-const NS = 'zh:adapter:discovery';
+const NS = "zh:adapter:discovery";
 
 const enum UsbFingerprintMatchScore {
-    NONE = 0,
-    VID_PID = 1,
-    VID_PID_MANUF = 2,
-    VID_PID_PATH = 3,
-    VID_PID_MANUF_PATH = 4,
+    None = 0,
+    VidPid = 1,
+    VidPidManuf = 2,
+    VidPidPath = 3,
+    VidPidManufPath = 4,
 }
 
 /**
@@ -36,19 +36,19 @@ const USB_FINGERPRINTS: Record<DiscoverableUsbAdapter, UsbAdapterFingerprint[]> 
     deconz: [
         {
             // Conbee II
-            vendorId: '1cf1',
-            productId: '0030',
-            manufacturer: 'dresden elektronik ingenieurtechnik GmbH',
+            vendorId: "1cf1",
+            productId: "0030",
+            manufacturer: "dresden elektronik ingenieurtechnik GmbH",
             // /dev/serial/by-id/usb-dresden_elektronik_ingenieurtechnik_GmbH_ConBee_II_DE2132111-if00
-            pathRegex: '.*conbee.*',
+            pathRegex: ".*conbee.*",
         },
         {
             // Conbee III
-            vendorId: '0403',
-            productId: '6015',
-            manufacturer: 'dresden elektronik ingenieurtechnik GmbH',
+            vendorId: "0403",
+            productId: "6015",
+            manufacturer: "dresden elektronik ingenieurtechnik GmbH",
             // /dev/serial/by-id/usb-dresden_elektronik_ConBee_III_DE03188111-if00-port0
-            pathRegex: '.*conbee.*',
+            pathRegex: ".*conbee.*",
         },
     ],
     ember: [
@@ -69,11 +69,11 @@ const USB_FINGERPRINTS: Record<DiscoverableUsbAdapter, UsbAdapterFingerprint[]> 
         // },
         {
             // Home Assistant SkyConnect
-            vendorId: '10c4',
-            productId: 'ea60',
-            manufacturer: 'Nabu Casa',
+            vendorId: "10c4",
+            productId: "ea60",
+            manufacturer: "Nabu Casa",
             // /dev/serial/by-id/usb-Nabu_Casa_SkyConnect_v1.0_3abe54797c91ed118fc3cad13b20a111-if00-port0
-            pathRegex: '.*Nabu_Casa_SkyConnect.*',
+            pathRegex: ".*Nabu_Casa_SkyConnect.*",
         },
         // {
         //     // TODO: Home Assistant Yellow
@@ -85,44 +85,44 @@ const USB_FINGERPRINTS: Record<DiscoverableUsbAdapter, UsbAdapterFingerprint[]> 
         // },
         {
             // SMLight slzb-07
-            vendorId: '10c4',
-            productId: 'ea60',
-            manufacturer: 'SMLIGHT',
+            vendorId: "10c4",
+            productId: "ea60",
+            manufacturer: "SMLIGHT",
             // /dev/serial/by-id/usb-SMLIGHT_SMLIGHT_SLZB-07_be9faa0786e1ea11bd68dc2d9a583111-if00-port0
             // /dev/serial/by-id/usb-Silicon_Labs_CP2102N_USB_to_UART_Bridge_Controller_a215650c853bec119a079e957a0af111-if00-port0
-            pathRegex: '.*slzb-07_.*', // `_` to not match 07p7
+            pathRegex: ".*slzb-07_.*", // `_` to not match 07p7
         },
         {
             // SMLight slzb-07mg24
-            vendorId: '10c4',
-            productId: 'ea60',
-            manufacturer: 'SMLIGHT',
-            pathRegex: '.*slzb-07mg24.*',
+            vendorId: "10c4",
+            productId: "ea60",
+            manufacturer: "SMLIGHT",
+            pathRegex: ".*slzb-07mg24.*",
         },
         {
             // Sonoff ZBDongle-E V2 (CH variant)
-            vendorId: '1a86',
-            productId: '55d4',
-            manufacturer: 'ITEAD',
+            vendorId: "1a86",
+            productId: "55d4",
+            manufacturer: "ITEAD",
             // /dev/serial/by-id/usb-ITEAD_SONOFF_Zigbee_3.0_USB_Dongle_Plus_V2_20240122184111-if00
             // /dev/serial/by-id/usb-ITead_Sonoff_Zigbee_3.0_USB_Dongle_Plus_186ff44314e2ed11b891eb5162c61111-if00-port0
-            pathRegex: '.*sonoff.*plus.*',
+            pathRegex: ".*sonoff.*plus.*",
         },
         {
             // Sonoff ZBDongle-E V2 (CP variant)
-            vendorId: '10c4',
-            productId: 'ea60',
-            manufacturer: 'ITEAD',
+            vendorId: "10c4",
+            productId: "ea60",
+            manufacturer: "ITEAD",
             // /dev/serial/by-id/usb-Itead_Sonoff_Zigbee_3.0_USB_Dongle_Plus_V2_a6ee897e4d1fef11aa004ad0639e525b-if00-port0
-            pathRegex: '.*sonoff.*plus_v2_.*',
+            pathRegex: ".*sonoff.*plus_v2_.*",
         },
         {
             // Sonoff ZBDongle-M
-            vendorId: '10c4',
-            productId: 'ea60',
-            manufacturer: 'SONOFF',
+            vendorId: "10c4",
+            productId: "ea60",
+            manufacturer: "SONOFF",
             // /dev/serial/by-id/usb-SONOFF_SONOFF_Dongle_Max_MG24_08965d6b0674ef11b2f4e61e313510fd-if00-port0
-            pathRegex: '.*sonoff.*max.*',
+            pathRegex: ".*sonoff.*max.*",
         },
         // {
         //     // TODO: Z-station by z-wave.me (EFR32MG21A020F1024IM32)
@@ -136,129 +136,129 @@ const USB_FINGERPRINTS: Record<DiscoverableUsbAdapter, UsbAdapterFingerprint[]> 
     zstack: [
         {
             // ZZH
-            vendorId: '0403',
-            productId: '6015',
-            manufacturer: 'Electrolama',
-            pathRegex: '.*electrolama.*',
+            vendorId: "0403",
+            productId: "6015",
+            manufacturer: "Electrolama",
+            pathRegex: ".*electrolama.*",
         },
         {
             // slae.sh cc2652rb
-            vendorId: '10c4',
-            productId: 'ea60',
-            manufacturer: 'Silicon Labs',
+            vendorId: "10c4",
+            productId: "ea60",
+            manufacturer: "Silicon Labs",
             // /dev/serial/by-id/usb-Silicon_Labs_slae.sh_cc2652rb_stick_-_slaesh_s_iot_stuff_00_12_4B_00_21_A8_EC_79-if00-port0
-            pathRegex: '.*slae\\.sh_cc2652rb.*',
+            pathRegex: ".*slae\\.sh_cc2652rb.*",
         },
         {
             // Sonoff ZBDongle-P (CC2652P)
-            vendorId: '10c4',
-            productId: 'ea60',
-            manufacturer: 'ITEAD',
+            vendorId: "10c4",
+            productId: "ea60",
+            manufacturer: "ITEAD",
             // /dev/serial/by-id/usb-Silicon_Labs_Sonoff_Zigbee_3.0_USB_Dongle_Plus_0111-if00-port0
             // /dev/serial/by-id/usb-ITead_Sonoff_Zigbee_3.0_USB_Dongle_Plus_b8b49abd27a6ed11a280eba32981d111-if00-port0
-            pathRegex: '.*sonoff.*plus(?!_v2_).*',
+            pathRegex: ".*sonoff.*plus(?!_v2_).*",
         },
         {
             // CC2538
-            vendorId: '0451',
-            productId: '16c8',
-            manufacturer: 'Texas Instruments',
+            vendorId: "0451",
+            productId: "16c8",
+            manufacturer: "Texas Instruments",
             // zStack30x: /dev/serial/by-id/usb-Texas_Instruments_CC2538_USB_CDC-if00
-            pathRegex: '.*CC2538.*',
+            pathRegex: ".*CC2538.*",
         },
         {
             // CC2531
-            vendorId: '0451',
-            productId: '16a8',
-            manufacturer: 'Texas Instruments',
+            vendorId: "0451",
+            productId: "16a8",
+            manufacturer: "Texas Instruments",
             // /dev/serial/by-id/usb-Texas_Instruments_TI_CC2531_USB_CDC___0X00124B0018ED1111-if00
-            pathRegex: '.*CC2531.*',
+            pathRegex: ".*CC2531.*",
         },
         {
             // Texas instruments launchpads
-            vendorId: '0451',
-            productId: 'bef3',
-            manufacturer: 'Texas Instruments',
-            pathRegex: '.*Texas_Instruments.*',
+            vendorId: "0451",
+            productId: "bef3",
+            manufacturer: "Texas Instruments",
+            pathRegex: ".*Texas_Instruments.*",
         },
         {
             // SMLight slzb-07p7
-            vendorId: '10c4',
-            productId: 'ea60',
-            manufacturer: 'SMLIGHT',
+            vendorId: "10c4",
+            productId: "ea60",
+            manufacturer: "SMLIGHT",
             // /dev/serial/by-id/usb-SMLIGHT_SMLIGHT_SLZB-07p7_be9faa0786e1ea11bd68dc2d9a583111-if00-port0
-            pathRegex: '.*SLZB-07p7.*',
+            pathRegex: ".*SLZB-07p7.*",
         },
         {
             // SMLight slzb-06p7
-            vendorId: '10c4',
-            productId: 'ea60',
-            manufacturer: 'SMLIGHT',
+            vendorId: "10c4",
+            productId: "ea60",
+            manufacturer: "SMLIGHT",
             // /dev/serial/by-id/usb-SMLIGHT_SMLIGHT_SLZB-06p7_82e43faf9872ed118bb924f3fdf7b791-if00-port0
-            pathRegex: '.*SMLIGHT_SLZB-06p7_.*',
+            pathRegex: ".*SMLIGHT_SLZB-06p7_.*",
         },
         {
             // SMLight slzb-06p10
-            vendorId: '10c4',
-            productId: 'ea60',
-            manufacturer: 'SMLIGHT',
+            vendorId: "10c4",
+            productId: "ea60",
+            manufacturer: "SMLIGHT",
             // /dev/serial/by-id/usb-SMLIGHT_SMLIGHT_SLZB-06p10_40df2f3e3977ed11b142f6fafdf7b791-if00-port0
-            pathRegex: '.*SMLIGHT_SLZB-06p10_.*',
+            pathRegex: ".*SMLIGHT_SLZB-06p10_.*",
         },
         {
             // TubesZB ?
-            vendorId: '10c4',
-            productId: 'ea60',
+            vendorId: "10c4",
+            productId: "ea60",
             // manufacturer: '',
-            pathRegex: '.*tubeszb.*',
+            pathRegex: ".*tubeszb.*",
         },
         {
             // TubesZB ?
-            vendorId: '1a86',
-            productId: '7523',
+            vendorId: "1a86",
+            productId: "7523",
             // manufacturer: '',
-            pathRegex: '.*tubeszb.*',
+            pathRegex: ".*tubeszb.*",
         },
         {
             // ZigStar
-            vendorId: '1a86',
-            productId: '7523',
+            vendorId: "1a86",
+            productId: "7523",
             // manufacturer: '',
-            pathRegex: '.*zigstar.*',
+            pathRegex: ".*zigstar.*",
         },
     ],
     zboss: [
         {
             // Nordic Zigbee NCP
-            vendorId: '2fe3',
-            productId: '0100',
-            manufacturer: 'ZEPHYR',
+            vendorId: "2fe3",
+            productId: "0100",
+            manufacturer: "ZEPHYR",
             // /dev/serial/by-id/usb-ZEPHYR_Zigbee_NCP_54ACCFAFA6DAD111-if00
-            pathRegex: '.*ZEPHYR.*',
+            pathRegex: ".*ZEPHYR.*",
         },
     ],
     zigate: [
         {
             // ZiGate PL2303HX (blue)
-            vendorId: '067b',
-            productId: '2303',
-            manufacturer: 'zigate_PL2303',
-            pathRegex: '.*zigate.*',
+            vendorId: "067b",
+            productId: "2303",
+            manufacturer: "zigate_PL2303",
+            pathRegex: ".*zigate.*",
         },
         {
             // ZiGate CP2102 (red)
-            vendorId: '10c4',
-            productId: 'ea60',
-            manufacturer: 'zigate_cp2102',
-            pathRegex: '.*zigate.*',
+            vendorId: "10c4",
+            productId: "ea60",
+            manufacturer: "zigate_cp2102",
+            pathRegex: ".*zigate.*",
         },
         {
             // ZiGate+ V2 CDM_21228
-            vendorId: '0403',
-            productId: '6015',
+            vendorId: "0403",
+            productId: "6015",
             // manufacturer: '',
             // /dev/serial/by-id/usb-FTDI_ZiGate_ZIGATE+-if00-port0
-            pathRegex: '.*zigate.*',
+            pathRegex: ".*zigate.*",
         },
     ],
 };
@@ -266,7 +266,7 @@ const USB_FINGERPRINTS: Record<DiscoverableUsbAdapter, UsbAdapterFingerprint[]> 
 /**
  * Vendor and Product IDs that are prone to conflict if only matching on vendorId+productId.
  */
-const USB_FINGERPRINTS_CONFLICT_IDS: ReadonlyArray<string /* vendorId:productId */> = ['10c4:ea60'];
+const USB_FINGERPRINTS_CONFLICT_IDS: ReadonlyArray<string /* vendorId:productId */> = ["10c4:ea60"];
 
 /** Time allotted for mDNS scanning */
 const MDNS_SCAN_TIME = 2000;
@@ -292,7 +292,7 @@ async function getSerialPortList(): Promise<PortInfo[]> {
  * @returns
  */
 function matchString(str1: string, str2: string): boolean {
-    return str1.localeCompare(str2, undefined, {sensitivity: 'base'}) === 0;
+    return str1.localeCompare(str2, undefined, {sensitivity: "base"}) === 0;
 }
 
 /**
@@ -302,7 +302,7 @@ function matchString(str1: string, str2: string): boolean {
  * @returns
  */
 function matchRegex(regexStr: string, str?: string): boolean {
-    return str !== undefined && new RegExp(regexStr, 'i').test(str);
+    return str !== undefined && new RegExp(regexStr, "i").test(str);
 }
 
 function matchUsbFingerprint(
@@ -310,14 +310,14 @@ function matchUsbFingerprint(
     entries: UsbAdapterFingerprint[],
     isWindows: boolean,
     conflictProne: boolean,
-): [path: PortInfo['path'], score: number] | undefined {
+): [path: PortInfo["path"], score: number] | undefined {
     if (!portInfo.vendorId || !portInfo.productId) {
         // port info is missing essential information for proper matching, ignore it
         return undefined;
     }
 
     let match: UsbAdapterFingerprint | undefined;
-    let score: number = UsbFingerprintMatchScore.NONE;
+    let score: number = UsbFingerprintMatchScore.None;
 
     for (const entry of entries) {
         if (!matchString(portInfo.vendorId, entry.vendorId) || !matchString(portInfo.productId, entry.productId)) {
@@ -325,19 +325,19 @@ function matchUsbFingerprint(
         }
 
         // allow matching on vendorId+productId only on Windows
-        if (score < UsbFingerprintMatchScore.VID_PID && isWindows) {
+        if (score < UsbFingerprintMatchScore.VidPid && isWindows) {
             match = entry;
-            score = UsbFingerprintMatchScore.VID_PID;
+            score = UsbFingerprintMatchScore.VidPid;
         }
 
         if (
-            score < UsbFingerprintMatchScore.VID_PID_MANUF &&
+            score < UsbFingerprintMatchScore.VidPidManuf &&
             entry.manufacturer &&
             portInfo.manufacturer &&
             matchString(portInfo.manufacturer, entry.manufacturer)
         ) {
             match = entry;
-            score = UsbFingerprintMatchScore.VID_PID_MANUF;
+            score = UsbFingerprintMatchScore.VidPidManuf;
 
             if (isWindows && !conflictProne) {
                 // path will never match on Windows (COMx), assume vendor+product+manufacturer is "exact match"
@@ -347,30 +347,33 @@ function matchUsbFingerprint(
         }
 
         if (
-            score < UsbFingerprintMatchScore.VID_PID_PATH &&
+            score < UsbFingerprintMatchScore.VidPidPath &&
             entry.pathRegex &&
             (matchRegex(entry.pathRegex, portInfo.path) || matchRegex(entry.pathRegex, portInfo.pnpId))
         ) {
-            if (score === UsbFingerprintMatchScore.VID_PID_MANUF) {
+            if (score === UsbFingerprintMatchScore.VidPidManuf) {
                 // best possible match, return early
-                return [portInfo.path, UsbFingerprintMatchScore.VID_PID_MANUF_PATH];
-            } else {
-                match = entry;
-                score = UsbFingerprintMatchScore.VID_PID_PATH;
+                return [portInfo.path, UsbFingerprintMatchScore.VidPidManufPath];
             }
+
+            match = entry;
+            score = UsbFingerprintMatchScore.VidPidPath;
         }
     }
 
     // poor match only returned if port info not conflict-prone
     if (match) {
-        if (score > UsbFingerprintMatchScore.VID_PID) {
-            if (conflictProne && score < UsbFingerprintMatchScore.VID_PID_PATH && matchString(match.manufacturer!, 'itead')) {
+        if (score > UsbFingerprintMatchScore.VidPid) {
+            // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
+            if (conflictProne && score < UsbFingerprintMatchScore.VidPidPath && matchString(match.manufacturer!, "itead")) {
                 // can't trust metadata "only" on sonoff dongles with conflicts
                 return undefined;
             }
 
             return [portInfo.path, score];
-        } else if (!conflictProne) {
+        }
+
+        if (!conflictProne) {
             return [portInfo.path, score];
         }
     }
@@ -380,11 +383,11 @@ function matchUsbFingerprint(
 
 export async function matchUsbAdapter(adapter: Adapter, path: string): Promise<boolean> {
     // no point in matching this
-    if (adapter === 'zoh') {
+    if (adapter === "zoh") {
         return false;
     }
 
-    const isWindows = platform() === 'win32';
+    const isWindows = platform() === "win32";
     const portList = await getSerialPortList();
 
     logger.debug(() => `Connected devices: ${JSON.stringify(portList)}`, NS);
@@ -395,7 +398,7 @@ export async function matchUsbAdapter(adapter: Adapter, path: string): Promise<b
         }
 
         const conflictProne = USB_FINGERPRINTS_CONFLICT_IDS.includes(`${portInfo.vendorId}:${portInfo.productId}`);
-        const match = matchUsbFingerprint(portInfo, USB_FINGERPRINTS[adapter === 'ezsp' ? 'ember' : adapter], isWindows, conflictProne);
+        const match = matchUsbFingerprint(portInfo, USB_FINGERPRINTS[adapter === "ezsp" ? "ember" : adapter], isWindows, conflictProne);
 
         if (match) {
             logger.info(() => `Matched adapter: ${JSON.stringify(portInfo)} => ${adapter}: ${JSON.stringify(match[1])}`, NS);
@@ -406,12 +409,12 @@ export async function matchUsbAdapter(adapter: Adapter, path: string): Promise<b
     return false;
 }
 
-export async function findUsbAdapterBestMatch(
+export function findUsbAdapterBestMatch(
     adapter: Adapter | undefined,
     portInfo: PortInfo,
     isWindows: boolean,
     conflictProne: boolean,
-): Promise<[DiscoverableUsbAdapter, NonNullable<ReturnType<typeof matchUsbFingerprint>>] | undefined> {
+): [DiscoverableUsbAdapter, NonNullable<ReturnType<typeof matchUsbFingerprint>>] | undefined {
     let bestMatch: [DiscoverableUsbAdapter, NonNullable<ReturnType<typeof matchUsbFingerprint>>] | undefined;
 
     for (const key in USB_FINGERPRINTS) {
@@ -419,13 +422,14 @@ export async function findUsbAdapterBestMatch(
             continue;
         }
 
+        // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
         const match = matchUsbFingerprint(portInfo, USB_FINGERPRINTS[key as DiscoverableUsbAdapter]!, isWindows, conflictProne);
 
         // register the match if no previous or better score
         if (match && (!bestMatch || bestMatch[1][1] < match[1])) {
             bestMatch = [key as DiscoverableUsbAdapter, match];
 
-            if (match[1] === UsbFingerprintMatchScore.VID_PID_MANUF_PATH) {
+            if (match[1] === UsbFingerprintMatchScore.VidPidManufPath) {
                 // got best possible match, exit loop
                 break;
             }
@@ -438,10 +442,10 @@ export async function findUsbAdapterBestMatch(
 export async function findUsbAdapter(
     adapter?: Adapter,
     path?: string,
-): Promise<[adapter: DiscoverableUsbAdapter, path: PortInfo['path']] | undefined> {
-    const isWindows = platform() === 'win32';
+): Promise<[adapter: DiscoverableUsbAdapter, path: PortInfo["path"]] | undefined> {
+    const isWindows = platform() === "win32";
     // refine to DiscoverableUSBAdapter
-    adapter = adapter && adapter === 'ezsp' ? 'ember' : adapter;
+    adapter = adapter && adapter === "ezsp" ? "ember" : adapter;
     const portList = await getSerialPortList();
 
     logger.debug(() => `Connected devices: ${JSON.stringify(portList)}`, NS);
@@ -452,7 +456,7 @@ export async function findUsbAdapter(
         }
 
         const conflictProne = USB_FINGERPRINTS_CONFLICT_IDS.includes(`${portInfo.vendorId}:${portInfo.productId}`);
-        const bestMatch = await findUsbAdapterBestMatch(adapter, portInfo, isWindows, conflictProne);
+        const bestMatch = findUsbAdapterBestMatch(adapter, portInfo, isWindows, conflictProne);
 
         if (bestMatch) {
             logger.info(
@@ -466,10 +470,10 @@ export async function findUsbAdapter(
 
 function getMdnsRadioAdapter(radio: string): Adapter {
     switch (radio) {
-        case 'znp':
-            return 'zstack';
-        case 'ezsp':
-            return 'ember';
+        case "znp":
+            return "zstack";
+        case "ezsp":
+            return "ember";
         default:
             return radio as Adapter;
     }
@@ -478,8 +482,8 @@ function getMdnsRadioAdapter(radio: string): Adapter {
 export async function findMdnsAdapter(path: string): Promise<[adapter: Adapter, path: string]> {
     const mdnsDevice = path.substring(7);
 
-    if (mdnsDevice.length == 0) {
-        throw new Error(`No mdns device specified. You must specify the coordinator mdns service type after mdns://, e.g. mdns://my-adapter`);
+    if (mdnsDevice.length === 0) {
+        throw new Error("No mdns device specified. You must specify the coordinator mdns service type after mdns://, e.g. mdns://my-adapter");
     }
 
     const bj = new Bonjour();
@@ -504,9 +508,7 @@ export async function findMdnsAdapter(path: string): Promise<[adapter: Adapter, 
                     bj.destroy();
                     reject(
                         new Error(
-                            `Coordinator returned wrong Zeroconf format! The following values are expected:\n` +
-                                `txt.radio_type, got: ${service.txt?.radio_type}\n` +
-                                `port, got: ${service.port}`,
+                            `Coordinator returned wrong Zeroconf format! The following values are expected:\ntxt.radio_type, got: ${service.txt?.radio_type}\nport, got: ${service.port}`,
                         ),
                     );
                 }
@@ -518,12 +520,12 @@ export async function findMdnsAdapter(path: string): Promise<[adapter: Adapter, 
     });
 }
 
-export async function findTcpAdapter(path: string, adapter?: Adapter): Promise<[adapter: Adapter, path: string]> {
+export function findTcpAdapter(path: string, adapter?: Adapter): [adapter: Adapter, path: string] {
     try {
         const url = new URL(path);
-        assert(url.port !== '');
+        assert(url.port !== "");
     } catch {
-        throw new Error(`Invalid TCP path, expected format: tcp://<host>:<port>`);
+        throw new Error("Invalid TCP path, expected format: tcp://<host>:<port>");
     }
 
     if (!adapter) {
@@ -531,7 +533,7 @@ export async function findTcpAdapter(path: string, adapter?: Adapter): Promise<[
     }
 
     // always use `tcp://` format
-    return [adapter, path.replace(/^socket/, 'tcp')];
+    return [adapter, path.replace(/^socket/, "tcp")];
 }
 
 /**
@@ -550,11 +552,15 @@ export async function findTcpAdapter(path: string, adapter?: Adapter): Promise<[
  */
 export async function discoverAdapter(adapter?: Adapter, path?: string): Promise<[adapter: Adapter, path: string]> {
     if (path) {
-        if (path.startsWith('mdns://')) {
+        if (path.startsWith("mdns://")) {
             return await findMdnsAdapter(path);
-        } else if (path.startsWith('tcp://') || path.startsWith('socket://')) {
-            return await findTcpAdapter(path, adapter);
-        } else if (adapter) {
+        }
+
+        if (path.startsWith("tcp://") || path.startsWith("socket://")) {
+            return findTcpAdapter(path, adapter);
+        }
+
+        if (adapter) {
             try {
                 const matched = await matchUsbAdapter(adapter, path);
 
@@ -574,11 +580,11 @@ export async function discoverAdapter(adapter?: Adapter, path?: string): Promise
         const match = await findUsbAdapter(adapter, path);
 
         if (!match) {
-            throw new Error(`No valid USB adapter found`);
+            throw new Error("No valid USB adapter found");
         }
 
         // keep adapter if `ezsp` since findUSBAdapter returns DiscoverableUSBAdapter
-        return adapter && adapter === 'ezsp' ? [adapter, match[1]] : match;
+        return adapter && adapter === "ezsp" ? [adapter, match[1]] : match;
     } catch (error) {
         throw new Error(`USB adapter discovery error (${(error as Error).message}). Specify valid 'adapter' and 'port' in your configuration.`);
     }
@@ -589,7 +595,7 @@ export async function discoverAdapter(adapter?: Adapter, path?: string): Promise
  */
 export async function findAllDevices(): Promise<{name: string; path: string; adapter?: Adapter}[]> {
     const devices: {name: string; path: string; adapter?: Adapter}[] = [];
-    const isWindows = platform() === 'win32';
+    const isWindows = platform() === "win32";
 
     try {
         const portList = await getSerialPortList();
@@ -598,7 +604,7 @@ export async function findAllDevices(): Promise<{name: string; path: string; ada
             // override matching on Windows, too many chances of mismatch due to lacking data
             const bestMatch = isWindows
                 ? undefined
-                : await findUsbAdapterBestMatch(
+                : findUsbAdapterBestMatch(
                       undefined,
                       portInfo,
                       isWindows,
@@ -626,7 +632,7 @@ export async function findAllDevices(): Promise<{name: string; path: string; ada
                 const path = `tcp://${service.addresses?.[0] ?? service.host}:${service.port}`;
 
                 devices.push({
-                    name: `${service.name ?? service.txt.name ?? 'Unknown'} (${path})`,
+                    name: `${service.name ?? service.txt.name ?? "Unknown"} (${path})`,
                     path,
                     adapter: getMdnsRadioAdapter(service.txt.radio_type),
                 });

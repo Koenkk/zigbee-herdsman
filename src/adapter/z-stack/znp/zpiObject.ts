@@ -1,14 +1,14 @@
-import assert from 'node:assert';
+import assert from "node:assert";
 
-import {ClusterId as ZdoClusterId} from '../../../zspec/zdo';
-import {BuffaloZdo} from '../../../zspec/zdo/buffaloZdo';
-import {Frame as UnpiFrame} from '../unpi';
-import {MaxDataSize, Subsystem, Type} from '../unpi/constants';
-import BuffaloZnp from './buffaloZnp';
-import Definition from './definition';
-import ParameterType from './parameterType';
-import {BuffaloZnpOptions, MtCmd, MtParameter, MtType, ZpiObjectPayload} from './tstype';
-import {isMtCmdAreqZdo, isMtCmdSreqZdo} from './utils';
+import {ClusterId as ZdoClusterId} from "../../../zspec/zdo";
+import {BuffaloZdo} from "../../../zspec/zdo/buffaloZdo";
+import {Frame as UnpiFrame} from "../unpi";
+import {MaxDataSize, Subsystem, Type} from "../unpi/constants";
+import BuffaloZnp from "./buffaloZnp";
+import Definition from "./definition";
+import ParameterType from "./parameterType";
+import type {BuffaloZnpOptions, MtCmd, MtParameter, MtType, ZpiObjectPayload} from "./tstype";
+import {isMtCmdAreqZdo, isMtCmdSreqZdo} from "./utils";
 
 const BufferAndListTypes = [
     ParameterType.BUFFER,
@@ -23,21 +23,21 @@ const BufferAndListTypes = [
     ParameterType.LIST_UINT8,
 ];
 
-type ZpiObjectType = 'Request' | 'Response';
+type ZpiObjectType = "Request" | "Response";
 
-export class ZpiObject<T extends ZpiObjectType = 'Response'> {
+export class ZpiObject<T extends ZpiObjectType = "Response"> {
     public readonly type: Type;
     public readonly subsystem: Subsystem;
     public readonly command: MtCmd;
     public readonly payload: ZpiObjectPayload;
-    public readonly unpiFrame: T extends 'Request' ? UnpiFrame : undefined;
+    public readonly unpiFrame: T extends "Request" ? UnpiFrame : undefined;
 
     private constructor(
         type: Type,
         subsystem: Subsystem,
         command: MtCmd,
         payload: ZpiObjectPayload,
-        unpiFrame: T extends 'Request' ? UnpiFrame : undefined,
+        unpiFrame: T extends "Request" ? UnpiFrame : undefined,
     ) {
         this.type = type;
         this.subsystem = subsystem;
@@ -46,7 +46,7 @@ export class ZpiObject<T extends ZpiObjectType = 'Response'> {
         this.unpiFrame = unpiFrame;
     }
 
-    public static createRequest(subsystem: Subsystem, command: string, payload: ZpiObjectPayload): ZpiObject<'Request'> {
+    public static createRequest(subsystem: Subsystem, command: string, payload: ZpiObjectPayload): ZpiObject<"Request"> {
         if (!Definition[subsystem]) {
             throw new Error(`Subsystem '${subsystem}' does not exist`);
         }
@@ -71,7 +71,7 @@ export class ZpiObject<T extends ZpiObjectType = 'Response'> {
         return new ZpiObject(cmd.type, subsystem, cmd, payload, unpiFrame);
     }
 
-    public static fromUnpiFrame(frame: UnpiFrame): ZpiObject<'Response'> {
+    public static fromUnpiFrame(frame: UnpiFrame): ZpiObject<"Response"> {
         const cmd = Definition[frame.subsystem].find((c) => c.ID === frame.commandID);
 
         if (!cmd) {
@@ -100,9 +100,9 @@ export class ZpiObject<T extends ZpiObjectType = 'Response'> {
             assert(
                 parameters,
                 `CommandID '${frame.commandID}' from subsystem '${frame.subsystem}' cannot be a ` +
-                    `${frame.type === Type.SRSP ? 'response' : 'request'}`,
+                    `${frame.type === Type.SRSP ? "response" : "request"}`,
             );
-            payload = this.readParameters(frame.data, parameters);
+            payload = ZpiObject.readParameters(frame.data, parameters);
         }
 
         // GC UnpiFrame as early as possible, no longer needed
@@ -122,7 +122,7 @@ export class ZpiObject<T extends ZpiObjectType = 'Response'> {
                 const lengthParameter = parameters[parameters.indexOf(parameter) - 1];
                 const length: MtType = result[lengthParameter.name];
 
-                if (typeof length === 'number') {
+                if (typeof length === "number") {
                     options.length = length;
                 }
             }
@@ -135,14 +135,14 @@ export class ZpiObject<T extends ZpiObjectType = 'Response'> {
 
     public isResetCommand(): boolean {
         return (
-            (this.command.name === 'resetReq' && this.subsystem === Subsystem.SYS) ||
+            (this.command.name === "resetReq" && this.subsystem === Subsystem.SYS) ||
             /* v8 ignore next */
-            (this.command.name === 'systemReset' && this.subsystem === Subsystem.SAPI)
+            (this.command.name === "systemReset" && this.subsystem === Subsystem.SAPI)
         );
     }
 
     public toString(includePayload = true): string {
         const baseStr = `${Type[this.type]}: ${Subsystem[this.subsystem]} - ${this.command.name}`;
-        return includePayload ? baseStr + ` - ${JSON.stringify(this.payload)}` : baseStr;
+        return includePayload ? `${baseStr} - ${JSON.stringify(this.payload)}` : baseStr;
     }
 }
