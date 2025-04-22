@@ -1,5 +1,22 @@
 # Changelog
 
+## [4.0.0](https://github.com/Koenkk/zigbee-herdsman/compare/v3.5.2...v4.0.0) (2025-04-22)
+
+
+### ⚠ BREAKING CHANGES
+
+* Expose interviewState ([#1391](https://github.com/Koenkk/zigbee-herdsman/issues/1391))
+* Migrate to Biome ([#1387](https://github.com/Koenkk/zigbee-herdsman/issues/1387))
+
+### Features
+
+* Expose interviewState ([#1391](https://github.com/Koenkk/zigbee-herdsman/issues/1391)) ([b9e86b0](https://github.com/Koenkk/zigbee-herdsman/commit/b9e86b01cc2856ce37ff35bdec3059b9d53553a8))
+
+
+### Bug Fixes
+
+* Migrate to Biome ([#1387](https://github.com/Koenkk/zigbee-herdsman/issues/1387)) ([bc30e84](https://github.com/Koenkk/zigbee-herdsman/commit/bc30e84dca168f1b399c3c6fa0042905e5d539ab))
+
 ## [3.5.2](https://github.com/Koenkk/zigbee-herdsman/compare/v3.5.1...v3.5.2) (2025-04-17)
 
 
