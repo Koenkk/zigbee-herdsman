@@ -41,10 +41,10 @@ interface RoutingTable {
 type CustomReadResponse = (frame: Zcl.Frame, endpoint: Endpoint) => boolean;
 
 export enum InterviewState {
-    PENDING = "PENDING",
-    IN_PROGRESS = "IN_PROGRESS",
-    SUCCESSFUL = "SUCCESSFUL",
-    FAILED = "FAILED",
+    Pending = "PENDING",
+    InProgress = "IN_PROGRESS",
+    Successful = "SUCCESSFUL",
+    Failed = "FAILED",
 }
 
 export class Device extends Entity<ControllerEventMap> {
@@ -565,13 +565,8 @@ export class Device extends Entity<ControllerEventMap> {
 
         // Migrate interviewCompleted to interviewState
         if (!entry.interviewState) {
-            entry.interviewState = entry.interviewCompleted ? InterviewState.SUCCESSFUL : InterviewState.FAILED;
-            logger.debug(`Migrated interviewState for '${ieeeAddr}': ${entry.interviewCompleted} -> ${entry.interviewCompleted}`, NS);
-        }
-
-        // Can never be IN_PROGRESS in case of a database load, reset to PENDING.
-        if (entry.interviewState === InterviewState.IN_PROGRESS) {
-            entry.interviewState = InterviewState.PENDING;
+            entry.interviewState = entry.interviewCompleted ? InterviewState.Successful : InterviewState.Failed;
+            logger.debug(`Migrated interviewState for '${ieeeAddr}': ${entry.interviewCompleted} -> ${entry.interviewState}`, NS);
         }
 
         return new Device(
@@ -624,9 +619,9 @@ export class Device extends Entity<ControllerEventMap> {
             dateCode: this.dateCode,
             swBuildId: this.softwareBuildID,
             zclVersion: this.zclVersion,
-            // DEPRECATED: Keep interviewCompleted for backwards compatibility (in case zh gets downgraded).
-            interviewCompleted: this.interviewState === InterviewState.SUCCESSFUL,
-            interviewState: this.interviewState,
+            /** @deprecated Keep interviewCompleted for backwards compatibility (in case zh gets downgraded) */
+            interviewCompleted: this.interviewState === InterviewState.Successful,
+            interviewState: this.interviewState === InterviewState.InProgress ? InterviewState.Pending : this.interviewState,
             meta: this.meta,
             lastSeen: this.lastSeen,
             checkinInterval: this.checkinInterval,
@@ -701,11 +696,9 @@ export class Device extends Entity<ControllerEventMap> {
         }
     }
 
-    public undelete(interviewState?: InterviewState): void {
+    public undelete(): void {
         if (Device.deletedDevices.delete(this.ieeeAddr)) {
             Device.devices.set(this.ieeeAddr, this);
-
-            this._interviewState = interviewState ?? this._interviewState;
 
             // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
             Entity.database!.insert(this.toDatabaseEntry());
@@ -769,26 +762,26 @@ export class Device extends Entity<ControllerEventMap> {
      */
 
     public async interview(ignoreCache = false): Promise<void> {
-        if (this.interviewState === InterviewState.IN_PROGRESS) {
+        if (this.interviewState === InterviewState.InProgress) {
             const message = `Interview - interview already in progress for '${this.ieeeAddr}'`;
             logger.debug(message, NS);
             throw new Error(message);
         }
 
         let err: unknown;
-        this._interviewState = InterviewState.IN_PROGRESS;
+        this._interviewState = InterviewState.InProgress;
         logger.debug(`Interview - start device '${this.ieeeAddr}'`, NS);
 
         try {
             await this.interviewInternal(ignoreCache);
             logger.debug(`Interview - completed for device '${this.ieeeAddr}'`, NS);
-            this._interviewState = InterviewState.SUCCESSFUL;
+            this._interviewState = InterviewState.Successful;
         } catch (error) {
             if (this.interviewQuirks()) {
-                this._interviewState = InterviewState.SUCCESSFUL;
+                this._interviewState = InterviewState.Successful;
                 logger.debug(`Interview - completed for device '${this.ieeeAddr}' because of quirks ('${error}')`, NS);
             } else {
-                this._interviewState = InterviewState.FAILED;
+                this._interviewState = InterviewState.Failed;
                 logger.debug(`Interview - failed for device '${this.ieeeAddr}' with error '${error}'`, NS);
                 err = error;
             }
@@ -1190,7 +1183,8 @@ export class Device extends Entity<ControllerEventMap> {
         Device.devices.delete(this.ieeeAddr);
 
         // Clear all data in case device joins again
-        this._interviewState = InterviewState.PENDING;
+        // Green power devices are never interviewed, keep existing interview state.
+        this._interviewState = this.type === "GreenPower" ? this._interviewState : InterviewState.Pending;
         this.meta = {};
         const newEndpoints: Endpoint[] = [];
         for (const endpoint of this.endpoints) {

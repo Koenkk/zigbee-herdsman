@@ -198,7 +198,7 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
                 undefined,
                 undefined,
                 undefined,
-                InterviewState.SUCCESSFUL,
+                InterviewState.Successful,
                 undefined,
             );
 
@@ -677,7 +677,7 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
                 undefined,
                 undefined,
                 modelID,
-                InterviewState.SUCCESSFUL,
+                InterviewState.Successful,
                 payload.securityKey ? Array.from(payload.securityKey) : /* v8 ignore next */ undefined,
             );
 
@@ -688,7 +688,7 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
         } else if (device.isDeleted) {
             logger.debug(`Deleted green power device '${ieeeAddr}' joined, undeleting`, NS);
 
-            device.undelete(InterviewState.SUCCESSFUL);
+            device.undelete();
 
             this.selfAndDeviceEmit(device, "deviceJoined", {device});
             this.selfAndDeviceEmit(device, "deviceInterview", {status: "successful", device});
@@ -765,7 +765,7 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
                 undefined,
                 undefined,
                 undefined,
-                InterviewState.PENDING,
+                InterviewState.Pending,
                 undefined,
             );
             this.selfAndDeviceEmit(device, "deviceJoined", {device});
@@ -785,7 +785,7 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
         this.selfAndDeviceEmit(device, "lastSeenChanged", {device, reason: "deviceJoined"});
         device.implicitCheckin();
 
-        if (device.interviewState === InterviewState.PENDING || device.interviewState === InterviewState.FAILED) {
+        if (device.interviewState === InterviewState.Pending || device.interviewState === InterviewState.Failed) {
             logger.info(`Interview for '${device.ieeeAddr}' started`, NS);
             this.selfAndDeviceEmit(device, "deviceInterview", {status: "started", device});
 

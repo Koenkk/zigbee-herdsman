@@ -677,7 +677,7 @@ describe("Controller", () => {
                 },
             ],
             _ieeeAddr: "0x0000012300000000",
-            _interviewState: InterviewState.SUCCESSFUL,
+            _interviewState: InterviewState.Successful,
             _skipDefaultResponse: false,
             _manufacturerID: 0x0007,
             _networkAddress: 0,
@@ -1246,7 +1246,7 @@ describe("Controller", () => {
                 _endpoints: [],
                 _type: "Unknown",
                 _ieeeAddr: "0x129",
-                _interviewState: InterviewState.PENDING,
+                _interviewState: InterviewState.Pending,
                 _networkAddress: 129,
             },
             status: "started",
@@ -1291,7 +1291,7 @@ describe("Controller", () => {
             _hardwareVersion: 3,
             _dateCode: "201901",
             _softwareBuildID: "1.01",
-            _interviewState: InterviewState.SUCCESSFUL,
+            _interviewState: InterviewState.Successful,
         };
         expect(events.deviceInterview[1]).toStrictEqual({status: "successful", device: device});
         expect(deepClone(controller.getDeviceByNetworkAddress(129))).toStrictEqual(device);
@@ -1330,7 +1330,7 @@ describe("Controller", () => {
                 _customClusters: {},
                 _endpoints: [],
                 _ieeeAddr: "0x129",
-                _interviewState: InterviewState.PENDING,
+                _interviewState: InterviewState.Pending,
                 _networkAddress: 129,
                 _type: "Unknown",
             },
@@ -1376,7 +1376,7 @@ describe("Controller", () => {
             _hardwareVersion: 3,
             _dateCode: "201901",
             _softwareBuildID: "1.01",
-            _interviewState: InterviewState.SUCCESSFUL,
+            _interviewState: InterviewState.Successful,
         };
         expect(events.deviceInterview[1]).toStrictEqual({status: "successful", device: device});
         expect(deepClone(controller.getDeviceByIeeeAddr("0x129"))).toStrictEqual(device);
@@ -2422,7 +2422,7 @@ describe("Controller", () => {
                 _hardwareVersion: 3,
                 _dateCode: "201901",
                 _softwareBuildID: "1.01",
-                _interviewState: InterviewState.SUCCESSFUL,
+                _interviewState: InterviewState.Successful,
             },
             endpoint: {
                 ID: 1,
@@ -2531,7 +2531,7 @@ describe("Controller", () => {
                 _hardwareVersion: 3,
                 _dateCode: "201901",
                 _softwareBuildID: "1.01",
-                _interviewState: InterviewState.SUCCESSFUL,
+                _interviewState: InterviewState.Successful,
             },
             endpoint: {
                 _events: {},
@@ -2618,7 +2618,7 @@ describe("Controller", () => {
                 _hardwareVersion: 3,
                 _dateCode: "201901",
                 _softwareBuildID: "1.01",
-                _interviewState: InterviewState.SUCCESSFUL,
+                _interviewState: InterviewState.Successful,
             },
             endpoint: {
                 _events: {},
@@ -2747,7 +2747,7 @@ describe("Controller", () => {
                 _hardwareVersion: 3,
                 _dateCode: "201901",
                 _softwareBuildID: "1.01",
-                _interviewState: InterviewState.SUCCESSFUL,
+                _interviewState: InterviewState.Successful,
                 _lastDefaultResponseSequenceNumber: 1,
             },
             endpoint: {
@@ -2850,7 +2850,7 @@ describe("Controller", () => {
                 _hardwareVersion: 3,
                 _dateCode: "201901",
                 _softwareBuildID: "1.01",
-                _interviewState: InterviewState.SUCCESSFUL,
+                _interviewState: InterviewState.Successful,
                 _lastDefaultResponseSequenceNumber: 29,
             },
             endpoint: {
@@ -3584,7 +3584,7 @@ describe("Controller", () => {
             meta: {},
             _powerSource: "Battery",
             _modelID: "lumi.occupancy",
-            _interviewState: InterviewState.SUCCESSFUL,
+            _interviewState: InterviewState.Successful,
         });
     });
 
@@ -3637,7 +3637,7 @@ describe("Controller", () => {
             meta: {},
             _powerSource: "Battery",
             _modelID: "lumi.occupancy",
-            _interviewState: InterviewState.SUCCESSFUL,
+            _interviewState: InterviewState.Successful,
         });
     });
 
@@ -3754,7 +3754,7 @@ describe("Controller", () => {
                 _dateCode: "201901",
                 _pendingRequestTimeout: 0,
                 _softwareBuildID: "1.01",
-                _interviewState: InterviewState.SUCCESSFUL,
+                _interviewState: InterviewState.Successful,
             },
             endpoint: {
                 _events: {},
@@ -3997,7 +3997,7 @@ describe("Controller", () => {
         await mockAdapterEvents.deviceJoined({networkAddress: 140, ieeeAddr: "0x129"});
         let error;
         try {
-            Device.create("Router", "0x129", 140, undefined, undefined, undefined, undefined, InterviewState.PENDING, undefined);
+            Device.create("Router", "0x129", 140, undefined, undefined, undefined, undefined, InterviewState.Pending, undefined);
         } catch (e) {
             error = e;
         }
@@ -4006,7 +4006,7 @@ describe("Controller", () => {
 
     it("Should allow to set type", async () => {
         await controller.start();
-        const device = Device.create("Router", "0x129", 140, undefined, undefined, undefined, undefined, InterviewState.PENDING, undefined);
+        const device = Device.create("Router", "0x129", 140, undefined, undefined, undefined, undefined, InterviewState.Pending, undefined);
         device.type = "EndDevice";
         expect(device.type).toStrictEqual("EndDevice");
     });
@@ -5590,7 +5590,7 @@ describe("Controller", () => {
             dateCode: "20170302",
             swBuildId: "1.2.214",
             zclVersion: 1,
-            interviewState: InterviewState.SUCCESSFUL,
+            interviewState: InterviewState.Successful,
             _id: "fJ5pmjqKRYbNvslK",
         });
         fs.writeFileSync(options.databasePath, `${line}\n`);
@@ -5624,7 +5624,7 @@ describe("Controller", () => {
             ],
             _hardwareVersion: 1,
             _ieeeAddr: "0x90fd9ffffe4b64ae",
-            _interviewState: InterviewState.SUCCESSFUL,
+            _interviewState: InterviewState.Successful,
             _manufacturerID: 4476,
             _manufacturerName: "IKEA of Sweden",
             meta: {},
@@ -6690,7 +6690,7 @@ describe("Controller", () => {
                 },
             ],
             _ieeeAddr: "0x0000012300000000",
-            _interviewState: InterviewState.FAILED,
+            _interviewState: InterviewState.Failed,
             _manufacturerID: 0,
             _networkAddress: 0,
             _type: "Coordinator",
@@ -6726,7 +6726,7 @@ describe("Controller", () => {
             ],
             _hardwareVersion: 1,
             _ieeeAddr: "0x000b57fffec6a5b2",
-            _interviewState: InterviewState.SUCCESSFUL,
+            _interviewState: InterviewState.Successful,
             _manufacturerID: 4476,
             _manufacturerName: "IKEA of Sweden",
             meta: {reporting: 1},
@@ -6782,7 +6782,7 @@ describe("Controller", () => {
             ],
             _hardwareVersion: 1,
             _ieeeAddr: "0x0017880104e45517",
-            _interviewState: InterviewState.SUCCESSFUL,
+            _interviewState: InterviewState.Successful,
             _lastSeen: 123,
             _manufacturerID: 4107,
             _manufacturerName: "Philips",
@@ -6841,7 +6841,7 @@ describe("Controller", () => {
             ],
             _hardwareVersion: 1,
             _ieeeAddr: "0x0017880104e45518",
-            _interviewState: InterviewState.SUCCESSFUL,
+            _interviewState: InterviewState.Successful,
             _manufacturerID: 4107,
             _manufacturerName: "Philips",
             _modelID: "RWL021",
@@ -6893,15 +6893,26 @@ describe("Controller", () => {
             // interviewState=undefined, interviewCompleted=false -> interviewState=FAILED
             '{"id":3,"type":"Router","ieeeAddr":"0x000b57fffec6a5b2","nwkAddr":40369,"manufId":4476,"manufName":"IKEA of Sweden","powerSource":"Mains (single phase)","modelId":"TRADFRI bulb E27 WS opal 980lm","epList":[1],"endpoints":{"1":{"profId":49246,"epId":1,"devId":544,"inClusterList":[0,3,4,5,6,8,768,2821,4096],"meta":{},"outClusterList":[5,25,32,4096],"clusters":{}}},"appVersion":17,"stackVersion":87,"hwVersion":1,"dateCode":"20170331","swBuildId":"1.2.217","zclVersion":1,"interviewCompleted":false,"meta":{"reporting":1},"_id":"pagvP2f9Bbj3o9TM"}\n' +
             // interviewState=undefined, interviewCompleted=true -> interviewState=SUCCESSFUL
-            '{"id":4,"type":"Router","ieeeAddr":"0x000b57fffec6a5b3","nwkAddr":40369,"manufId":4476,"manufName":"IKEA of Sweden","powerSource":"Mains (single phase)","modelId":"TRADFRI bulb E27 WS opal 980lm","epList":[1],"endpoints":{"1":{"profId":49246,"epId":1,"devId":544,"inClusterList":[0,3,4,5,6,8,768,2821,4096],"meta":{},"outClusterList":[5,25,32,4096],"clusters":{}}},"appVersion":17,"stackVersion":87,"hwVersion":1,"dateCode":"20170331","swBuildId":"1.2.217","zclVersion":1,"interviewCompleted":true,"meta":{"reporting":1},"_id":"pagvP2f9Bbj3o9TM"}\n' +
-            // interviewState=IN_PROGRESS -> interviewState=PENDING
-            '{"id":5,"type":"Router","ieeeAddr":"0x000b57fffec6a5b4","nwkAddr":40369,"manufId":4476,"manufName":"IKEA of Sweden","powerSource":"Mains (single phase)","modelId":"TRADFRI bulb E27 WS opal 980lm","epList":[1],"endpoints":{"1":{"profId":49246,"epId":1,"devId":544,"inClusterList":[0,3,4,5,6,8,768,2821,4096],"meta":{},"outClusterList":[5,25,32,4096],"clusters":{}}},"appVersion":17,"stackVersion":87,"hwVersion":1,"dateCode":"20170331","swBuildId":"1.2.217","zclVersion":1,"interviewCompleted":true,"interviewState":"IN_PROGRESS","meta":{"reporting":1},"_id":"pagvP2f9Bbj3o9TM"}';
+            '{"id":4,"type":"Router","ieeeAddr":"0x000b57fffec6a5b3","nwkAddr":40369,"manufId":4476,"manufName":"IKEA of Sweden","powerSource":"Mains (single phase)","modelId":"TRADFRI bulb E27 WS opal 980lm","epList":[1],"endpoints":{"1":{"profId":49246,"epId":1,"devId":544,"inClusterList":[0,3,4,5,6,8,768,2821,4096],"meta":{},"outClusterList":[5,25,32,4096],"clusters":{}}},"appVersion":17,"stackVersion":87,"hwVersion":1,"dateCode":"20170331","swBuildId":"1.2.217","zclVersion":1,"interviewCompleted":true,"meta":{"reporting":1},"_id":"pagvP2f9Bbj3o9TM"}\n';
         fs.writeFileSync(options.databasePath, database);
         await controller.start();
 
-        expect(controller.getDeviceByIeeeAddr("0x000b57fffec6a5b2")?.interviewState).toStrictEqual(InterviewState.FAILED);
-        expect(controller.getDeviceByIeeeAddr("0x000b57fffec6a5b3")?.interviewState).toStrictEqual(InterviewState.SUCCESSFUL);
-        expect(controller.getDeviceByIeeeAddr("0x000b57fffec6a5b4")?.interviewState).toStrictEqual(InterviewState.PENDING);
+        expect(controller.getDeviceByIeeeAddr("0x000b57fffec6a5b2")?.interviewState).toStrictEqual(InterviewState.Failed);
+        expect(controller.getDeviceByIeeeAddr("0x000b57fffec6a5b3")?.interviewState).toStrictEqual(InterviewState.Successful);
+
+        // Check serialization to database
+        // Pending -> InProgress (as Pending should never end up in the database)
+        // Failed maps to interviewCompleted=false
+        // @ts-expect-error: private property
+        controller.getDeviceByIeeeAddr("0x000b57fffec6a5b3")._interviewState = InterviewState.InProgress;
+
+        // @ts-expect-error: private property
+        controller.databaseSave();
+        expect(databaseContents()).toStrictEqual(
+            '{"id":3,"type":"Router","ieeeAddr":"0x000b57fffec6a5b2","nwkAddr":40369,"manufId":4476,"manufName":"IKEA of Sweden","powerSource":"Mains (single phase)","modelId":"TRADFRI bulb E27 WS opal 980lm","epList":[1],"endpoints":{"1":{"profId":49246,"epId":1,"devId":544,"inClusterList":[0,3,4,5,6,8,768,2821,4096],"outClusterList":[5,25,32,4096],"clusters":{},"binds":[],"configuredReportings":[],"meta":{}}},"appVersion":17,"stackVersion":87,"hwVersion":1,"dateCode":"20170331","swBuildId":"1.2.217","zclVersion":1,"interviewCompleted":false,"interviewState":"FAILED","meta":{"reporting":1}}\n' +
+                '{"id":4,"type":"Router","ieeeAddr":"0x000b57fffec6a5b3","nwkAddr":40369,"manufId":4476,"manufName":"IKEA of Sweden","powerSource":"Mains (single phase)","modelId":"TRADFRI bulb E27 WS opal 980lm","epList":[1],"endpoints":{"1":{"profId":49246,"epId":1,"devId":544,"inClusterList":[0,3,4,5,6,8,768,2821,4096],"outClusterList":[5,25,32,4096],"clusters":{},"binds":[],"configuredReportings":[],"meta":{}}},"appVersion":17,"stackVersion":87,"hwVersion":1,"dateCode":"20170331","swBuildId":"1.2.217","zclVersion":1,"interviewCompleted":false,"interviewState":"PENDING","meta":{"reporting":1}}\n' +
+                '{"id":5,"type":"Coordinator","ieeeAddr":"0x0000012300000000","nwkAddr":0,"manufId":7,"epList":[1,2],"endpoints":{"1":{"profId":2,"epId":1,"devId":3,"inClusterList":[10],"outClusterList":[11],"clusters":{},"binds":[],"configuredReportings":[],"meta":{}},"2":{"profId":3,"epId":2,"devId":5,"inClusterList":[1],"outClusterList":[0],"clusters":{},"binds":[],"configuredReportings":[],"meta":{}}},"interviewCompleted":true,"interviewState":"SUCCESSFUL","meta":{}}',
+        );
     });
 
     it("Shouldnt load device from group databaseentry", async () => {
@@ -7012,7 +7023,7 @@ describe("Controller", () => {
                 _events: {},
                 _eventsCount: 0,
                 _ieeeAddr: "0x129",
-                _interviewState: InterviewState.SUCCESSFUL,
+                _interviewState: InterviewState.Successful,
                 _lastSeen: Date.now(),
                 _linkquality: 19,
                 _skipDefaultResponse: false,
@@ -7109,7 +7120,7 @@ describe("Controller", () => {
                 ],
                 _hardwareVersion: 3,
                 _ieeeAddr: "0x129",
-                _interviewState: InterviewState.SUCCESSFUL,
+                _interviewState: InterviewState.Successful,
                 _lastSeen: Date.now(),
                 _linkquality: 19,
                 _skipDefaultResponse: false,
@@ -7623,7 +7634,7 @@ describe("Controller", () => {
                 _events: {},
                 _eventsCount: 0,
                 _ieeeAddr: "0x000000000046f4fe",
-                _interviewState: InterviewState.SUCCESSFUL,
+                _interviewState: InterviewState.Successful,
                 _lastSeen: Date.now(),
                 _linkquality: 50,
                 _modelID: "GreenPower_2",
@@ -7645,7 +7656,7 @@ describe("Controller", () => {
                 _events: {},
                 _eventsCount: 0,
                 _ieeeAddr: "0x000000000046f4fe",
-                _interviewState: InterviewState.SUCCESSFUL,
+                _interviewState: InterviewState.Successful,
                 _modelID: "GreenPower_2",
                 _networkAddress: 0xf4fe,
                 _type: "GreenPower",
@@ -7706,7 +7717,7 @@ describe("Controller", () => {
                     },
                 ],
                 _ieeeAddr: "0x000000000046f4fe",
-                _interviewState: InterviewState.SUCCESSFUL,
+                _interviewState: InterviewState.Successful,
                 _lastSeen: Date.now(),
                 _linkquality: 50,
                 _skipDefaultResponse: false,
@@ -8261,7 +8272,7 @@ describe("Controller", () => {
                     },
                 ],
                 _ieeeAddr: "0x00000000017171f8",
-                _interviewState: InterviewState.SUCCESSFUL,
+                _interviewState: InterviewState.Successful,
                 _lastSeen: Date.now(),
                 _linkquality: 50,
                 _modelID: "GreenPower_2",
@@ -8284,7 +8295,7 @@ describe("Controller", () => {
                 _customClusters: {},
                 _endpoints: [],
                 _ieeeAddr: "0x00000000017171f8",
-                _interviewState: InterviewState.SUCCESSFUL,
+                _interviewState: InterviewState.Successful,
                 _modelID: "GreenPower_2",
                 _networkAddress: 0x71f8,
                 _type: "GreenPower",
@@ -8348,7 +8359,7 @@ describe("Controller", () => {
                     },
                 ],
                 _modelID: "GreenPower_2",
-                _interviewState: InterviewState.SUCCESSFUL,
+                _interviewState: InterviewState.Successful,
                 _skipDefaultResponse: false,
                 meta: {},
                 _gpSecurityKey: [0x21, 0x7f, 0x8c, 0xb2, 0x90, 0xd9, 0x90, 0x14, 0x15, 0xd0, 0x5c, 0xb1, 0x64, 0x7c, 0x44, 0x6c],
@@ -8431,7 +8442,7 @@ describe("Controller", () => {
                 },
             ],
             _ieeeAddr: "0x00000000017171f8",
-            _interviewState: InterviewState.PENDING,
+            _interviewState: InterviewState.Successful,
             _lastSeen: Date.now(),
             _linkquality: 50,
             _modelID: "GreenPower_2",
@@ -8478,7 +8489,7 @@ describe("Controller", () => {
                 },
             ],
             _ieeeAddr: "0x00000000017171f8",
-            _interviewState: InterviewState.SUCCESSFUL,
+            _interviewState: InterviewState.Successful,
             _lastSeen: Date.now(),
             _linkquality: 50,
             _modelID: "GreenPower_2",
@@ -9246,7 +9257,7 @@ describe("Controller", () => {
                 _eventsCount: 0,
                 _hardwareVersion: 3,
                 _ieeeAddr: "0x171",
-                _interviewState: InterviewState.SUCCESSFUL,
+                _interviewState: InterviewState.Successful,
                 _lastSeen: Date.now(),
                 _manufacturerID: 1212,
                 _manufacturerName: "Xioami",
