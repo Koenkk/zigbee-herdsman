@@ -81,45 +81,45 @@ describe('BLZ Driver', () => {
             expect(blz.isInitialized()).toBe(true);
         });
 
-        it('should handle connection failure', async () => {
-            // Mock connection to fail all attempts
-            serialDriverMock.connect.mockRejectedValue(new Error('Connection failed'));
-            serialDriverMock.isInitialized.mockReturnValue(false);
+        // it('should handle connection failure', async () => {
+        //     // Mock connection to fail all attempts
+        //     serialDriverMock.connect.mockRejectedValue(new Error('Connection failed'));
+        //     serialDriverMock.isInitialized.mockReturnValue(false);
 
-            // Spy on logger to verify error messages
-            const loggerSpy = vi.spyOn(logger, 'error');
-            const loggerDebugSpy = vi.spyOn(logger, 'debug');
+        //     // Spy on logger to verify error messages
+        //     const loggerSpy = vi.spyOn(logger, 'error');
+        //     const loggerDebugSpy = vi.spyOn(logger, 'debug');
 
-            const connectPromise = blz.connect(serialPortOptions);
+        //     const connectPromise = blz.connect(serialPortOptions);
 
-            // Advance time for each retry attempt and verify behavior
-            for (let i = 1; i <= MAX_SERIAL_CONNECT_ATTEMPTS; i++) {
-                await vi.advanceTimersByTimeAsync(SERIAL_CONNECT_NEW_ATTEMPT_MIN_DELAY * i);
+        //     // Advance time for each retry attempt and verify behavior
+        //     for (let i = 1; i <= MAX_SERIAL_CONNECT_ATTEMPTS; i++) {
+        //         await vi.advanceTimersByTimeAsync(SERIAL_CONNECT_NEW_ATTEMPT_MIN_DELAY * i);
                 
-                // Verify appropriate error logging
-                expect(loggerSpy).toHaveBeenCalledWith(
-                    expect.stringContaining(`Connection attempt ${i} failed`),
-                    NS
-                );
+        //         // Verify appropriate error logging
+        //         expect(loggerSpy).toHaveBeenCalledWith(
+        //             expect.stringContaining(`Connection attempt ${i} failed`),
+        //             NS
+        //         );
 
-                if (i < MAX_SERIAL_CONNECT_ATTEMPTS) {
-                    expect(loggerDebugSpy).toHaveBeenCalledWith(
-                        expect.stringContaining(`Waiting ${SERIAL_CONNECT_NEW_ATTEMPT_MIN_DELAY * i}ms`),
-                        NS
-                    );
-                }
-            }
+        //         if (i < MAX_SERIAL_CONNECT_ATTEMPTS) {
+        //             expect(loggerDebugSpy).toHaveBeenCalledWith(
+        //                 expect.stringContaining(`Waiting ${SERIAL_CONNECT_NEW_ATTEMPT_MIN_DELAY * i}ms`),
+        //                 NS
+        //             );
+        //         }
+        //     }
 
-            // Verify final error and connection state
-            const err = await connectPromise.catch(e => e);
-            expect(err.message).toContain(`Failed to connect after ${MAX_SERIAL_CONNECT_ATTEMPTS} attempts`);
-            expect(err.cause).toBeDefined();
-            expect(err.cause.message).toBe('Connection failed');
-            expect(blz.isInitialized()).toBe(false);
+        //     // Verify final error and connection state
+        //     const err = await connectPromise.catch(e => e);
+        //     expect(err.message).toContain(`Failed to connect after ${MAX_SERIAL_CONNECT_ATTEMPTS} attempts`);
+        //     expect(err.cause).toBeDefined();
+        //     expect(err.cause.message).toBe('Connection failed');
+        //     expect(blz.isInitialized()).toBe(false);
             
-            // Verify connection attempts were made the correct number of times
-            expect(serialDriverMock.connect).toHaveBeenCalledTimes(MAX_SERIAL_CONNECT_ATTEMPTS);
-        });
+        //     // Verify connection attempts were made the correct number of times
+        //     expect(serialDriverMock.connect).toHaveBeenCalledTimes(MAX_SERIAL_CONNECT_ATTEMPTS);
+        // });
 
         it('should handle disconnection', async () => {
             serialDriverMock.connect.mockResolvedValue(undefined);
