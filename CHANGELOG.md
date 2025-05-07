@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.0.1](https://github.com/Koenkk/zigbee-herdsman/compare/v4.0.0...v4.0.1) (2025-05-07)
+
+
+### Bug Fixes
+
+* Add support for generic science-related clusters ([#1396](https://github.com/Koenkk/zigbee-herdsman/issues/1396)) ([0ddc009](https://github.com/Koenkk/zigbee-herdsman/commit/0ddc009ded6983f4ac1bd530fc394244c26937a6))
+
 ## [4.0.0](https://github.com/Koenkk/zigbee-herdsman/compare/v3.5.2...v4.0.0) (2025-04-22)
 
 
