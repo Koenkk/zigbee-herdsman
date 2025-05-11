@@ -228,7 +228,8 @@ export class ZnpAdapterManager {
                     NS,
                 );
                 logger.error(
-                    `- Network Key: configured=${this.nwkOptions.networkKey.toString("hex")}, adapter=${activeKeyInfo.key.toString("hex")}`,
+                    `- Network Key: configured=${this.nwkOptions.networkKey.toString("hex")}, adapter:active=${activeKeyInfo.key.toString("hex")} ` +
+                        `adapter:preconfigured=${preconfiguredKey.key.toString("hex")}, adapter:alternate=${alternateKeyInfo.key.toString("hex")}`,
                     NS,
                 );
                 logger.error(
