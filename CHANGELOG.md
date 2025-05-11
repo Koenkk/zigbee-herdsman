@@ -1,5 +1,13 @@
 # Changelog
 
+## [4.0.1](https://github.com/Koenkk/zigbee-herdsman/compare/v4.0.0...v4.0.1) (2025-05-11)
+
+
+### Bug Fixes
+
+* Add support for generic science-related clusters ([#1396](https://github.com/Koenkk/zigbee-herdsman/issues/1396)) ([0ddc009](https://github.com/Koenkk/zigbee-herdsman/commit/0ddc009ded6983f4ac1bd530fc394244c26937a6))
+* ZStack: add additional logging when comparing adapter state with config https://github.com/Koenkk/zigbee-herdsman/issues/1403 ([a82b79f](https://github.com/Koenkk/zigbee-herdsman/commit/a82b79fae602bfd74089cdbe1f917e8173b19795))
+
 ## [4.0.0](https://github.com/Koenkk/zigbee-herdsman/compare/v3.5.2...v4.0.0) (2025-04-22)
 
 
