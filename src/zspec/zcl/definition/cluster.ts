@@ -1020,7 +1020,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                     {name: "fileOffset", type: DataType.UINT32},
                     {name: "maximumDataSize", type: DataType.UINT8},
                     {
-                        name: "requestNodeieeeAddress",
+                        name: "requestNodeIeeeAddress",
                         type: DataType.IEEE_ADDR,
                         conditions: [{type: ParameterCondition.BITMASK_SET, param: "fieldControl", mask: 0b1}],
                     },
@@ -1044,7 +1044,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                     {name: "pageSize", type: DataType.UINT16},
                     {name: "responseSpacing", type: DataType.UINT16},
                     {
-                        name: "requestNodeieeeAddress",
+                        name: "requestNodeIeeeAddress",
                         type: DataType.IEEE_ADDR,
                         conditions: [{type: ParameterCondition.BITMASK_SET, param: "fieldControl", mask: 0b1}],
                     },
