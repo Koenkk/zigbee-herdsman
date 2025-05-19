@@ -384,6 +384,7 @@ class Driver extends events.EventEmitter {
     }
 
     private getLengthOfParameter(parameterId: number): number {
+        // TODO(mpi): Magic numbers ...
         switch (parameterId) {
             case 9:
             case 16:
