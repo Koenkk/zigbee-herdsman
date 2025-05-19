@@ -140,7 +140,6 @@ export default class ZiGate extends EventEmitter<ZiGateEventMap> {
                     resultPromise = statusWaiter.promise;
                 }
 
-                // @ts-expect-error assumed proper based on port type
                 // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
                 this.portWrite!.write(sendBuffer);
 
@@ -186,7 +185,6 @@ export default class ZiGate extends EventEmitter<ZiGateEventMap> {
 
             const statusWaiter = this.waitress.waitFor({rules: ruleStatus}, timeouts.default);
 
-            // @ts-expect-error assumed proper based on port type
             // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
             this.portWrite!.write(sendBuffer);
 
