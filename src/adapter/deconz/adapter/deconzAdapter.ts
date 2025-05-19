@@ -45,6 +45,7 @@ export class DeconzAdapter extends Adapter {
 
         // const concurrent = this.adapterOptions && this.adapterOptions.concurrent ? this.adapterOptions.concurrent : 2;
 
+        // TODO(mpi): This needs to go! A delay doesn't make any sense. This looks like trial and error to solve a problem via random delay.
         // TODO: https://github.com/Koenkk/zigbee2mqtt/issues/4884#issuecomment-728903121
         const delay = this.adapterOptions && typeof this.adapterOptions.delay === "number" ? this.adapterOptions.delay : 0;
 
@@ -54,6 +55,7 @@ export class DeconzAdapter extends Adapter {
         this.driver = new Driver(serialPortOptions.path!);
         this.driver.setDelay(delay);
 
+        // TODO(mpi): APS ACKs are subject to each individual request, not a global setting.
         this.txOptions = delay >= 200 ? 0x04 /* activate APS ACKs */ : 0x00 /* no APS ACKs */;
 
         this.driver.on("rxFrame", (frame) => {
@@ -79,6 +81,10 @@ export class DeconzAdapter extends Adapter {
      * Adapter methods
      */
     public async start(): Promise<StartResult> {
+        // TODO(mpi): In future we should simply try which baudrate may work (in a state machine).
+        // E.g. connect with baudrate XY, query firmware, on timeout try other baudrate.
+        // Most units out there are ConBee2/3 which support 115200.
+        // The 38400 default is outdated now and only works for a few units.
         const baudrate = this.serialPortOptions.baudRate || 38400;
         await this.driver.open(baudrate);
 
@@ -87,6 +93,15 @@ export class DeconzAdapter extends Adapter {
         const expanid = await this.driver.readParameterRequest(PARAM.PARAM.Network.APS_EXT_PAN_ID);
         const channel = await this.driver.readParameterRequest(PARAM.PARAM.Network.CHANNEL);
         const networkKey = await this.driver.readParameterRequest(PARAM.PARAM.Network.NETWORK_KEY);
+        const ep1 =  = await this.driver.readParameterRequest(PARAM.PARAM.STK.Endpoint,);
+
+        // TODO(mpi): refactor in state machine based "reconfigure_network" function.
+
+        // TODO(mpi): Read also network state, the network might have proper values but isn't activated.
+
+        // TODO(mpi): If any network parameters need to be reconfigured it should be done directly
+        // here with write parameter request. Instead remember `need_reconfigure`, and start the full proceduce
+        // network = off, configure all parameters, network = on
 
         // check current channel against configuration.yaml
         if (this.networkOptions.channelList[0] !== channel) {
@@ -95,6 +110,7 @@ export class DeconzAdapter extends Adapter {
                 NS,
             );
 
+            // TODO(mpi): Simplify -> channemask = 1 << (channel);
             let setChannelMask = 0;
             switch (this.networkOptions.channelList[0]) {
                 case 11:
@@ -194,6 +210,7 @@ export class DeconzAdapter extends Adapter {
 
         // check current network key against configuration.yaml
         // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
+        // TODO(mpi): options.networkKey can be initially null! (I think)
         if (this.driver.generalArrayToString(this.networkOptions.networkKey!, 16) !== networkKey) {
             logger.debug(`network key in configuration.yaml (hidden) differs from current network key (${networkKey}). Changing network key.`, NS);
 
@@ -214,12 +231,48 @@ export class DeconzAdapter extends Adapter {
             await wait(2000);
         }
 
+        // TODO(mpi): Endpoint configuration should be written like other network parameters and subject to `changed`.
+        // It should happen before NET_CONNECTED is set.
+        // Therefore read endpoint configuration, compare, swap if needed.
+
+        // TODO(mpi): The following code only adjusts first endpoint, with a fixed setting.
+        // Ideally also second endpoint should be configured like deCONZ does.
+
         // write endpoints
+        /* Format of the STK.Endpoint parameter:
+            {
+                u8 endpointIndex // index used by firmware 0..2
+                u8 endpoint // actual zigbee endpoint
+                u16 profileId
+                u16 deviceId
+                u8 deviceVersion
+                u8 serverClusterCount
+                u16 serverClusters[serverClusterCount]
+                u8 clientClusterCount
+                u16 clientClusters[clientClusterCount]
+            }
+         */
         //[ sd1   ep    proId       devId       vers  #inCl iCl1        iCl2        iCl3        iCl4        iCl5        #outC oCl1        oCl2        oCl3        oCl4      ]
         const sd = [
-            0x00, 0x01, 0x04, 0x01, 0x05, 0x00, 0x01, 0x05, 0x00, 0x00, 0x00, 0x06, 0x0a, 0x00, 0x19, 0x00, 0x01, 0x05, 0x04, 0x01, 0x00, 0x20, 0x00,
-            0x00, 0x05, 0x02, 0x05,
+            0x00, // index
+            0x01, // endpoint
+            0x04, 0x01, // profileId
+            0x05, 0x00, // deviceId
+            0x01, // deviceVersion
+            0x05, // serverClusterCount
+            0x00, 0x00, // Basic
+            0x00, 0x06, // On/Off        TODO(mpi): This is wrong byte order! should be 0x06 0x00
+            0x0a, 0x00, // Time
+            0x19, 0x00, // OTA
+            0x01, 0x05, // IAS ACE
+            0x04, // clientClusterCount
+            0x01, 0x00, // Power Configuration
+            0x20, 0x00, // Poll Control
+            0x00, 0x05, // IAS Zone
+            0x02, 0x05 // IAS WD
         ];
+        // TODO(mpi) why is it reversed? That result in invalid endpoint configuration.
+        // Likely the command gets discarded as it results in endpointIndex = 0x05.
         const sd1 = sd.reverse();
         await this.driver.writeParameterRequest(PARAM.PARAM.STK.Endpoint, sd1);
 
@@ -275,13 +328,19 @@ export class DeconzAdapter extends Adapter {
             const buf = Buffer.from(fw);
             const fwString = `0x${buf.readUInt32LE(0).toString(16)}`;
             let type = "";
+
+            logger.debug(`Firmware version: ${fwString} (${fw}) fw[1]=${fw[1]}`, NS);
+
             if (fw[1] === 5) {
                 type = "ConBee/RaspBee";
             } else if (fw[1] === 7) {
                 type = "ConBee2/RaspBee2";
-            } else {
+            } else if (fw[1] == 9) {
                 type = "ConBee3";
+            } else {
+                type = "Unknown";
             }
+
             const meta = {transportrev: 0, product: 0, majorrel: fw[3], minorrel: fw[2], maintrel: 0, revision: fwString};
             this.fwVersion = {type: type, meta: meta};
             return {type: type, meta: meta};
@@ -344,6 +403,8 @@ export class DeconzAdapter extends Adapter {
     ): Promise<ZdoTypes.RequestToResponseMap[K] | undefined> {
         const transactionID = this.nextTransactionID();
         payload[0] = transactionID;
+        // TODO(mpi): this needs a complete review there are many different ZDP requests, some unicast some broadcasts
+        // channel change likely also affected..
         const isNwkAddrRequest = clusterId === Zdo.ClusterId.NETWORK_ADDRESS_REQUEST;
         const req: ApsDataRequest = {
             requestId: transactionID,
@@ -399,7 +460,25 @@ export class DeconzAdapter extends Adapter {
         endpoint: number,
         zclFrame: Zcl.Frame,
         timeout: number,
+        // TODO(mpi): From Ember driver:
+        //        let commandResponseId: number | undefined;
+        //
+        //        if (command.response !== undefined && disableResponse === false) {
+        //            commandResponseId = command.response;
+        //        } else if (!zclFrame.header.frameControl.disableDefaultResponse) {
+        //            commandResponseId = Zcl.Foundation.defaultRsp.ID;
+        //        }
+        // .....................
+        // In case commandResponseId != undefined this Promise should resolve with Events.ZclPayload once the response
+        // is received. The response could be a a normal ZCL frame with the commandId = commandResponseId OR a ZCL Default Response, where the payload is the commandResponseId!
+        // The problem with this is that a device may not send a command with specific ResponseId, but a ZCL Default Response with some status like "unsupported".
+        // Our implementation should wait for any response if disableResponse = false, and match via ZCL sequence number.
+        // If enabled and no response is received within "timeout" the promise should fail.
+        //-----------------------------
         disableResponse: boolean,
+        // TODO(mpi): in ember driver this means keep going enqueue request to firmware (up to 3 times).
+        // In our case this a little different: The firmware may reject the requests because no free APS slots are available,
+        // this is the only case where "recovery" makes sense. Other cases mean the request will never succeed (network offline, invalid request, ...).
         _disableRecovery: boolean,
         sourceEndpoint?: number,
     ): Promise<Events.ZclPayload | undefined> {
@@ -415,8 +494,21 @@ export class DeconzAdapter extends Adapter {
             srcEndpoint: sourceEndpoint || 1,
             asduLength: payload.length,
             asduPayload: payload,
+            // TODO(mpi): This must not be a global option.
+            // Since z2m doesn't provide it, ideally the driver figures this out on its own.
+            // deCONZ keeps an error count for each device, if devices work fine without APS ACKs don't use them.
+            // But if errors occur enable them..
+            //
+            // ember driver enables ACKs based on 'commandResponseId' which imho doesn't make sense at all:
+            //
+            //      don't RETRY if no response expected
+            //      if (commandResponseId === undefined)
+            //         apsFrame.options &= ~EmberApsOption.RETRY;
+            //
+
             txOptions: this.txOptions, // 0x00 normal, 0x04 APS ACK
             radius: PARAM.PARAM.txRadius.DEFAULT_RADIUS,
+            // TODO(mpi): We could treat _disableRecovery = true, to retry if enqueue (valid) requests or APS-confirms fail within timeout period?
             timeout: timeout,
         };
 
@@ -439,8 +531,21 @@ export class DeconzAdapter extends Adapter {
             .catch((error) => {
                 logger.debug(`sendZclFrameToEndpoint ERROR (${zclFrame.header.transactionSequenceNumber})`, NS);
                 logger.debug(error, NS);
+                // TODO(mpi): this should throw an exception?! Otherwise we proceed which doesn't make sense
+
                 //return Promise.reject(new Error("sendZclFrameToEndpoint ERROR " + error));
             });
+
+        // TODO(mpi): Doesn't this try {} block belong into above then() ?
+        // this is an async breakage ...
+        //
+        // PMAIN = Promise for sendZclFrameToEndpoint()
+        // PAPS = Promise to send APS request, resolves/rejects on APS confirm or error
+        // If the PAPS gets resolved, with retries and stuff ..
+        // 1) If disableResponse === true, resolve PMAIN
+        // 2) If disableResponse === false
+        //    wait until response comes matching the request via zcl.sequenceNumber and other fields
+        //    on timeout reject() PMAIN.
 
         try {
             let data = null;
@@ -538,6 +643,7 @@ export class DeconzAdapter extends Adapter {
     }
 
     public async getNetworkParameters(): Promise<NetworkParameters> {
+        // TODO(mpi): This should work, needs more investigation.
         try {
             const panid = await this.driver.readParameterRequest(PARAM.PARAM.Network.PAN_ID);
             const expanid = await this.driver.readParameterRequest(PARAM.PARAM.Network.APS_EXT_PAN_ID);
