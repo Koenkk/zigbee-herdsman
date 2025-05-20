@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.1.0](https://github.com/Koenkk/zigbee-herdsman/compare/v4.0.2...v4.1.0) (2025-05-20)
+
+
+### Features
+
+* Add conditional fieldControl fields to genOta commands ([#1408](https://github.com/Koenkk/zigbee-herdsman/issues/1408)) ([cc889b0](https://github.com/Koenkk/zigbee-herdsman/commit/cc889b03599e36eed6307027e293c1db429496a2))
+
 ## [4.0.2](https://github.com/Koenkk/zigbee-herdsman/compare/v4.0.1...v4.0.2) (2025-05-11)
 
 
