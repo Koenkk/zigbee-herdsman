@@ -1002,6 +1002,11 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                     {name: "manufacturerCode", type: DataType.UINT16},
                     {name: "imageType", type: DataType.UINT16},
                     {name: "fileVersion", type: DataType.UINT32},
+                    {
+                        name: "hardwareVersion",
+                        type: DataType.UINT16,
+                        conditions: [{type: ParameterCondition.BITMASK_SET, param: "fieldControl", mask: 0b1}],
+                    },
                 ],
             },
             imageBlockRequest: {
@@ -1014,6 +1019,16 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                     {name: "fileVersion", type: DataType.UINT32},
                     {name: "fileOffset", type: DataType.UINT32},
                     {name: "maximumDataSize", type: DataType.UINT8},
+                    {
+                        name: "requestNodeIeeeAddress",
+                        type: DataType.IEEE_ADDR,
+                        conditions: [{type: ParameterCondition.BITMASK_SET, param: "fieldControl", mask: 0b1}],
+                    },
+                    {
+                        name: "minimumBlockPeriod",
+                        type: DataType.UINT16,
+                        conditions: [{type: ParameterCondition.BITMASK_SET, param: "fieldControl", mask: 0b10}],
+                    },
                 ],
             },
             imagePageRequest: {
@@ -1028,6 +1043,11 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                     {name: "maximumDataSize", type: DataType.UINT8},
                     {name: "pageSize", type: DataType.UINT16},
                     {name: "responseSpacing", type: DataType.UINT16},
+                    {
+                        name: "requestNodeIeeeAddress",
+                        type: DataType.IEEE_ADDR,
+                        conditions: [{type: ParameterCondition.BITMASK_SET, param: "fieldControl", mask: 0b1}],
+                    },
                 ],
             },
             upgradeEndRequest: {
