@@ -1,4 +1,4 @@
-import "../../utils/patchBigIntSerialization";
+import {jsonReplacer} from "src/utils/json";
 
 import {BuffaloZcl} from "./buffaloZcl";
 import {BuffaloZclDataType, DataType, Direction, FrameType, ParameterCondition} from "./definition/enums";
@@ -33,7 +33,7 @@ export class ZclFrame {
     }
 
     public toString(): string {
-        return JSON.stringify({header: this.header, payload: this.payload, command: this.command});
+        return JSON.stringify({header: this.header, payload: this.payload, command: this.command}, jsonReplacer);
     }
 
     /**
