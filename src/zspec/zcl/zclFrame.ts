@@ -1,4 +1,4 @@
-import {jsonReplacer} from "src/utils/json";
+import {jsonReplacer} from "src/utils";
 
 import {BuffaloZcl} from "./buffaloZcl";
 import {BuffaloZclDataType, DataType, Direction, FrameType, ParameterCondition} from "./definition/enums";

@@ -1,4 +1,4 @@
-import {Queue, Utils, Waitress, wait} from "../src/utils";
+import {Queue, Utils, Waitress, jsonReplacer, wait} from "../src/utils";
 import {logger, setLogger} from "../src/utils/logger";
 
 const mockLogger = {
@@ -223,5 +223,33 @@ describe("Utils", () => {
         expect(mockLogger.warning).toHaveBeenCalledWith("warning", "zh");
         logger.error("error", "zh");
         expect(mockLogger.error).toHaveBeenCalledWith("error", "zh");
+    });
+
+    it("should convert BigInt values to strings", () => {
+        const obj = {a: 10n, b: "foo", c: [20n, 30n], d: {e: 40n}};
+        const str = JSON.stringify(obj, jsonReplacer);
+        const parsed = JSON.parse(str);
+        expect(parsed).toEqual({
+            a: "10",
+            b: "foo",
+            c: ["20", "30"],
+            d: {e: "40"},
+        });
+    });
+
+    it("should leave other types unchanged", () => {
+        const obj = {x: 123, y: false, z: null};
+        const str = JSON.stringify(obj, jsonReplacer);
+        const parsed = JSON.parse(str);
+        expect(parsed).toEqual({x: 123, y: false, z: null});
+    });
+
+    it("should serialize a standalone BigInt when used as root value", () => {
+        const out = JSON.stringify(123n, jsonReplacer);
+        expect(out).toBe('"123"');
+    });
+
+    it("should throw TypeError when serializing BigInt without replacer", () => {
+        expect(() => JSON.stringify(123n)).toThrow(TypeError);
     });
 });
