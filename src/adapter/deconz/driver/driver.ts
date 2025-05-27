@@ -881,7 +881,26 @@ class Driver extends events.EventEmitter {
     }
 
     private onParsed(frame: Uint8Array): void {
-        this.emit("rxFrame", frame);
+        if (frame.length >= 5) { // min. packet length [cmd, seq, status, u16 storedLength]
+
+            const storedLength = frame[4] << 8 | frame[3];
+            if ((storedLength + 2) != frame.length) {// frame without CRC16
+                return;
+            }
+
+            let crc = 0;
+            for (let i = 0; i < storedLength; i++) {
+                crc += frame[i];
+            }
+                
+
+            crc = (~crc + 1) & 0xFFFF;
+            const crcFrame = ((frame[frame.length - 1] << 8) | frame[frame.length - 2]);
+
+            if (crc == crcFrame) {
+                this.emit("rxFrame", frame.slice(0, storedLength));
+            }
+        }
     }
 
     private sleep(ms: number): Promise<void> {
