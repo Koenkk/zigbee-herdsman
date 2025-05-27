@@ -58,19 +58,13 @@ export class DeconzAdapter extends Adapter {
         // TODO(mpi): APS ACKs are subject to each individual request, not a global setting.
         this.txOptions = delay >= 200 ? 0x04 /* activate APS ACKs */ : 0x00 /* no APS ACKs */;
 
-        this.driver.on("rxFrame", (frame) => {
-            processFrame(frame);
-        });
+        this.driver.on("rxFrame", processFrame);
         this.transactionID = 0;
         this.openRequestsQueue = [];
         this.fwVersion = undefined;
 
-        this.frameParserEvent.on("receivedDataPayload", (data) => {
-            this.checkReceivedDataPayload(data);
-        });
-        this.frameParserEvent.on("receivedGreenPowerIndication", (data) => {
-            this.checkReceivedGreenPowerIndication(data);
-        });
+        this.frameParserEvent.on("receivedDataPayload", this.checkReceivedDataPayload);
+        this.frameParserEvent.on("receivedGreenPowerIndication", this.checkReceivedGreenPowerIndication);
 
         setInterval(() => {
             this.checkReceivedDataPayload(null);
