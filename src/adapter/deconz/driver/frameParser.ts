@@ -501,15 +501,16 @@ function getParserForCommandId(id: number): (view: DataView) => Command | object
 
 function processFrame(frame: Uint8Array): void {
     const [seqNumber, status, command, commandId] = parseFrame(frame);
-    //logger.debug(`process frame with seq: ${seqNumber} status: ${status}`, NS);
-
+    // logger.debug(`Process frame with cmd: 0x${commandId.toString(16).padStart(2,'0')}, seq: ${seqNumber} status: ${status}`, NS);
+    
     let queue = busyQueue;
 
     if (commandId === PARAM.PARAM.APS.DATA_INDICATION || commandId === PARAM.PARAM.APS.DATA_REQUEST || commandId === PARAM.PARAM.APS.DATA_CONFIRM) {
+        // TODO(mpi): we really only need a busyQueue and queue.
         queue = apsBusyQueue;
     }
 
-    const i = queue.findIndex((r: Request) => r.seqNumber === seqNumber);
+    const i = queue.findIndex((r: Request) => r.seqNumber === seqNumber && r.commandId === commandId);
     if (i < 0) {
         return;
     }
@@ -537,18 +538,12 @@ function processFrame(frame: Uint8Array): void {
     }
 }
 
-function parseFrame(frame: Uint8Array): [number | null, number | null, ReturnType<ReturnType<typeof getParserForCommandId>>, number | null] {
-    if (frame.length < MIN_BUFFER_SIZE) {
-        logger.debug("received frame size to small - discard frame", NS);
-        return [null, null, null, null];
-    }
-
+function parseFrame(frame: Uint8Array): [number, number, ReturnType<ReturnType<typeof getParserForCommandId>>, number] {
+    // at this point frame.buffer.length is at least 5 bytes long
     const view = new DataView(frame.buffer);
     const commandId = view.getUint8(0);
     const seqNumber = view.getUint8(1);
     const status = view.getUint8(2);
-    //const frameLength = view.getUint16(3, littleEndian);
-    //const payloadLength = view.getUint16(5, littleEndian);
     const parser = getParserForCommandId(commandId);
 
     return [seqNumber, status, parser(view), commandId];
