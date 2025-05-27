@@ -87,7 +87,7 @@ export class DeconzAdapter extends Adapter {
         const expanid = await this.driver.readParameterRequest(PARAM.PARAM.Network.APS_EXT_PAN_ID);
         const channel = await this.driver.readParameterRequest(PARAM.PARAM.Network.CHANNEL);
         const networkKey = await this.driver.readParameterRequest(PARAM.PARAM.Network.NETWORK_KEY);
-        const ep1 =  = await this.driver.readParameterRequest(PARAM.PARAM.STK.Endpoint,);
+        //const ep1 =  = await this.driver.readParameterRequest(PARAM.PARAM.STK.Endpoint,);
 
         // TODO(mpi): refactor in state machine based "reconfigure_network" function.
 
@@ -508,76 +508,71 @@ export class DeconzAdapter extends Adapter {
 
         const command = zclFrame.command;
 
-        this.driver
-            .enqueueSendDataRequest(request)
-            .then(() => {
-                logger.debug(`sendZclFrameToEndpoint - message send with transSeq Nr.: ${zclFrame.header.transactionSequenceNumber}`, NS);
-                logger.debug(
-                    `${command.response !== undefined}, ${zclFrame.header.frameControl.disableDefaultResponse}, ${disableResponse}, ${request.timeout}`,
-                    NS,
-                );
-
-                if (command.response === undefined || zclFrame.header.frameControl.disableDefaultResponse || !disableResponse) {
-                    logger.debug(`resolve request (${zclFrame.header.transactionSequenceNumber})`, NS);
-                    return Promise.resolve();
-                }
-            })
-            .catch((error) => {
-                logger.debug(`sendZclFrameToEndpoint ERROR (${zclFrame.header.transactionSequenceNumber})`, NS);
-                logger.debug(error, NS);
-                // TODO(mpi): this should throw an exception?! Otherwise we proceed which doesn't make sense
-
-                //return Promise.reject(new Error("sendZclFrameToEndpoint ERROR " + error));
-            });
-
-        // TODO(mpi): Doesn't this try {} block belong into above then() ?
-        // this is an async breakage ...
-        //
-        // PMAIN = Promise for sendZclFrameToEndpoint()
-        // PAPS = Promise to send APS request, resolves/rejects on APS confirm or error
-        // If the PAPS gets resolved, with retries and stuff ..
-        // 1) If disableResponse === true, resolve PMAIN
-        // 2) If disableResponse === false
-        //    wait until response comes matching the request via zcl.sequenceNumber and other fields
-        //    on timeout reject() PMAIN.
+        let needWaitResponse = disableResponse === false;;
 
         try {
-            let data = null;
-            if ((command.response !== undefined && !disableResponse) || !zclFrame.header.frameControl.disableDefaultResponse) {
-                data = await this.waitForData(
+            await this.driver.enqueueSendDataRequest(request);
+        } catch (err) {
+            throw new Error(`failed to send ZCL request (${zclFrame.header.transactionSequenceNumber}) ${err}`);
+        }
+
+        logger.debug(`ZCL request sent with transactionSequenceNumber.: ${zclFrame.header.transactionSequenceNumber}`, NS);
+        logger.debug(`command.response: ${command.response}, zcl.disableDefaultResponse: ${zclFrame.header.frameControl.disableDefaultResponse}, z2m.disableResponse: ${disableResponse}, request.timeout: ${request.timeout}`, NS);
+
+        if (needWaitResponse) {
+           try {
+                const data = await this.waitForData(
                     networkAddress,
                     ZSpec.HA_PROFILE_ID,
                     zclFrame.cluster.ID,
                     zclFrame.header.transactionSequenceNumber,
-                    request.timeout,
+                    request.timeout
                 );
-            }
 
-            if (data !== null) {
+                let addr;
+                if (data.srcAddr16 !== undefined)
+                    addr = data.srcAddr16;
+                else if (data.srcAddr64 !== undefined)
+                    addr = '0x' + data.srcAddr64;
+                else
+                    throw new Error("Unexpected waitForData() didn't contain valid address");
+
+                let groupId = 0;
+                let wasBroadCast = false;
+
+                if (data.destAddrMode == PARAM.PARAM.addressMode.GROUP_ADDR) {
+                    wasBroadCast = true;
+                    if (data.destAddr16 === undefined)
+                        throw new Error("Unexpected waitForData() didn't contain valid destination group address");
+                    groupId = data.destAddr16;
+                } else if (data.destAddrMode == PARAM.PARAM.addressMode.NWK_ADDR) {
+                    if (data.destAddr16 === undefined)
+                        throw new Error("Unexpected waitForData() didn't contain valid destination short address");
+                    // BroadcastAll             = 0xFFFF
+                    // BroadcastLowPowerRouters = 0xFFFB
+                    // BroadcastRouters         = 0xFFFC
+                    // BroadcastRxOnWhenIdle    = 0xFFFD
+                    if (data.destAddr16 >= 0xfffb)
+                        wasBroadCast = true;
+                }
+
                 const response: Events.ZclPayload = {
-                    address:
-                        data.srcAddr16 ??
-                        `0x${
-                            // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
-                            data.srcAddr64!
-                        }`,
+                    address: addr,
                     data: data.asduPayload,
                     clusterID: zclFrame.cluster.ID,
                     header: Zcl.Header.fromBuffer(data.asduPayload),
                     endpoint: data.srcEndpoint,
                     linkquality: data.lqi,
                     // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
-                    groupID: data.srcAddrMode === 0x01 ? data.srcAddr16! : 0,
-                    wasBroadcast: data.srcAddrMode === 0x01 || data.srcAddrMode === 0xf,
+                    groupID: groupId,
+                    wasBroadcast: wasBroadCast,
                     destinationEndpoint: data.destEndpoint,
                 };
-                logger.debug(`response received (${zclFrame.header.transactionSequenceNumber})`, NS);
+                logger.debug(`Response received transactionSequenceNumber: ${zclFrame.header.transactionSequenceNumber}`, NS);
                 return response;
+            } catch (err) {
+                throw new Error(`No ZCL response received for (${zclFrame.header.transactionSequenceNumber}) ${err}`);
             }
-
-            logger.debug(`no response expected (${zclFrame.header.transactionSequenceNumber})`, NS);
-        } catch (error) {
-            throw new Error(`no response received (${zclFrame.header.transactionSequenceNumber}) ${error}`);
         }
     }
 
