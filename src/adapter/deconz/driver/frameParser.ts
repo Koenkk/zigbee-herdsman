@@ -120,7 +120,7 @@ function parseReadFirmwareResponse(view: DataView): number[] {
 
 function parseDeviceStateResponse(view: DataView): number {
     const flag = view.getUint8(5);
-    logger.debug(`device state: ${flag.toString(2)}`, NS);
+    logger.debug(`Device state: ${flag.toString(2)}`, NS);
     frameParserEvents.emit("receivedDataNotification", flag);
     return flag;
 }
@@ -232,15 +232,64 @@ function parseQuerySendDataStateResponse(view: DataView): DataStateResponse | nu
     }
 }
 
-function parseReadReceivedDataResponse(view: DataView): ReceivedDataResponse | null {
+class UDataView {
+    littleEndian: boolean = true;
+    pos: number = 0;
+    view: DataView;
+    constructor(view: DataView, littleEndian: boolean) {
+        this.view = view;
+        this.littleEndian = littleEndian;
+    }
+
+    getI8() : number {
+        if (this.pos + 1 <= this.view.byteLength) {
+            this.pos += 1;
+            return this.view.getInt8(this.pos - 1);
+        }
+        throw new RangeError();
+    }
+
+    getU8() : number {
+        if (this.pos + 1 <= this.view.byteLength) {
+            this.pos += 1;
+            return this.view.getUint8(this.pos - 1);
+        }
+        throw new RangeError();
+    }
+
+    getU16() : number {
+        if (this.pos + 2 <= this.view.byteLength) {
+            this.pos += 2;
+            return this.view.getUint16(this.pos - 2, this.littleEndian);
+        }
+        throw new RangeError();
+    }
+
+    getU32() : number {
+        if (this.pos + 4 <= this.view.byteLength) {
+            this.pos += 4;
+            return this.view.getUint16(this.pos - 4, this.littleEndian);
+        }
+        throw new RangeError();
+    }
+
+    getU64() : bigint {
+        if (this.pos + 8 <= this.view.byteLength) {
+            this.pos += 8;
+            return this.view.getBigUint64(this.pos - 8, this.littleEndian);
+        }
+        throw new RangeError();
+    }
+}
+
+function parseReadReceivedDataResponse(inview: DataView): ReceivedDataResponse | null {
     // min 28 bytelength
     try {
-        let buf2: ArrayBuffer;
-        let buf3: ArrayBuffer;
+        const uview = new UDataView(inview, true);
 
-        const commandId = view.getUint8(0);
-        const seqNr = view.getUint8(1);
-        const status = view.getUint8(2);
+        const commandId = uview.getU8();
+        const seqNr = uview.getU8();
+        const status = uview.getU8();
 
         if (status !== 0) {
             if (status !== 5) {
@@ -249,75 +298,74 @@ function parseReadReceivedDataResponse(view: DataView): ReceivedDataResponse | n
             return null;
         }
 
-        const frameLength = view.getUint16(3, littleEndian);
-        const payloadLength = view.getUint16(5, littleEndian);
-        const deviceState = view.getUint8(7);
-        const destAddrMode = view.getUint8(8);
+        const frameLength = uview.getU16();
+        const payloadLength = uview.getU16();
+        //------ start of payload ----------------------------------
+        const deviceState = uview.getU8();
+        const destAddrMode = uview.getU8();
 
         let destAddr64: string | undefined;
         let destAddr16: number | undefined;
-        let destAddr = "";
+        let destAddr;
 
         if (destAddrMode === PARAM.PARAM.addressMode.IEEE_ADDR) {
-            let res = view.getBigUint64(9, littleEndian).toString(16);
-            while (res.length < 16) {
-                res = `0${res}`;
-            }
-            destAddr64 = res;
-            buf2 = view.buffer.slice(17, view.buffer.byteLength);
+            destAddr64 = uview.getU64().toString(16).padStart(16, '0');
             destAddr = destAddr64;
-        } else {
-            destAddr16 = view.getUint16(9, littleEndian);
-            buf2 = view.buffer.slice(11, view.buffer.byteLength);
+        } else if (destAddrMode === PARAM.PARAM.addressMode.NWK_ADDR || destAddrMode === PARAM.PARAM.addressMode.GROUP_ADDR) {
+            destAddr16 = uview.getU16();
             destAddr = destAddr16.toString(16);
+        } else {
+            throw new Error(`unsupported destination address mode: ${destAddrMode}`);
         }
 
-        view = new DataView(buf2);
-        const destEndpoint = view.getUint8(0);
-        const srcAddrMode = view.getUint8(1);
+        const destEndpoint = uview.getU8();
+        const srcAddrMode = uview.getU8();
 
         let srcAddr64: string | undefined;
         let srcAddr16: number | undefined;
-        let srcAddr = "";
+        let srcAddr;
 
-        if (srcAddrMode === PARAM.PARAM.addressMode.NWK_ADDR || srcAddrMode === 0x04) {
-            srcAddr16 = view.getUint16(2, littleEndian);
-            buf3 = view.buffer.slice(4, view.buffer.byteLength);
+        if (srcAddrMode === PARAM.PARAM.addressMode.NWK_ADDR || srcAddrMode === PARAM.PARAM.addressMode.GROUP_ADDR || srcAddrMode === PARAM.PARAM.addressMode.NWK_IEEE_ADDR) {
+            srcAddr16 = uview.getU16();
             srcAddr = srcAddr16.toString(16);
-        }
 
-        if (srcAddrMode === PARAM.PARAM.addressMode.IEEE_ADDR || srcAddrMode === 0x04) {
-            let res = view.getBigUint64(2, littleEndian).toString(16);
-            while (res.length < 16) {
-                res = `0${res}`;
+            if (srcAddrMode === PARAM.PARAM.addressMode.NWK_IEEE_ADDR) {
+                srcAddr64 = uview.getU64().toString(16).padStart(16, '0');
             }
-            srcAddr64 = res;
-            buf3 = view.buffer.slice(10, view.buffer.byteLength);
+        } else if (srcAddrMode === PARAM.PARAM.addressMode.IEEE_ADDR) {
+            srcAddr64 = uview.getU64().toString(16).padStart(16, '0');
             srcAddr = srcAddr64;
         }
 
-        // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
-        view = new DataView(buf3!); // XXX: not validated?
-        const srcEndpoint = view.getUint8(0);
-        const profileId = view.getUint16(1, littleEndian);
-        const clusterId = view.getUint16(3, littleEndian);
-        const asduLength = view.getUint16(5, littleEndian);
-        const asduPayload = Buffer.from(view.buffer.slice(7, asduLength + 7));
-        const lqi = view.getUint8(view.byteLength - 8);
-        const rssi = view.getInt8(view.byteLength - 3);
-
-        let newStatus = deviceState.toString(2);
-
-        for (let l = 0; l <= 8 - newStatus.length; l++) {
-            newStatus = `0${newStatus}`;
+        const srcEndpoint = uview.getU8();
+        const profileId = uview.getU16();
+        const clusterId = uview.getU16();
+        const asduLength = uview.getU16();
+        const asdu = new Uint8Array(asduLength);
+        for (let i = 0; i < asduLength; i++) {
+            asdu[i] = uview.getU8();
         }
+
+        // The following two bytes depends on protocol version 2 or 3
+        // for now just discard
+        uview.getU16();
+
+        const lqi = uview.getU8();
+
+        // version >= 2
+        let rssi = 0;
+        try {
+            rssi = uview.getI8()
+        } catch (e) {}
 
         logger.debug(
             `DATA_INDICATION RESPONSE - seqNr. ${seqNr} srcAddr: 0x${srcAddr} destAddr: 0x${destAddr} profile id: 0x${profileId.toString(16)} cluster id: 0x${clusterId.toString(16)} lqi: ${lqi}`,
             NS,
         );
-        logger.debug(`response payload: ${asduPayload.toString("hex")}`, NS);
+        logger.debug(`response payload: [${Array.from(asdu).map(x =>x.toString(16).padStart(2, '0')).join(' ')}]`, NS);
         frameParserEvents.emit("receivedDataNotification", deviceState);
+
+        const asduPayload = Buffer.from(asdu);
 
         const response: ReceivedDataResponse = {
             commandId,
@@ -344,6 +392,7 @@ function parseReadReceivedDataResponse(view: DataView): ReceivedDataResponse | n
         };
 
         frameParserEvents.emit("receivedDataPayload", response);
+        
         return response;
     } catch (error) {
         logger.debug(`DATA_INDICATION RESPONSE - ${error}`, NS);
