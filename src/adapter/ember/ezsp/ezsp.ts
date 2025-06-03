@@ -5305,7 +5305,10 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
         } else if (
             apsFrame.profileId === ZSpec.HA_PROFILE_ID ||
             apsFrame.profileId === ZSpec.WILDCARD_PROFILE_ID ||
-            (apsFrame.profileId === ZSpec.GP_PROFILE_ID && type !== EmberIncomingMessageType.BROADCAST_LOOPBACK)
+            (apsFrame.profileId === ZSpec.GP_PROFILE_ID && type !== EmberIncomingMessageType.BROADCAST_LOOPBACK) ||
+            // TODO: Better (dynamic) way to handle this?
+            // Shelly WifiSetupCluster uses profileId 0xc001
+            apsFrame.profileId === 0xc001
         ) {
             this.emit("incomingMessage", type, apsFrame, packetInfo.lastHopLqi, packetInfo.senderShortId, messageContents);
         }
