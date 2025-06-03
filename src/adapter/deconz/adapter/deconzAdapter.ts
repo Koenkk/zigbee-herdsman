@@ -402,6 +402,7 @@ export class DeconzAdapter extends Adapter {
         disableResponse: boolean,
         _disableRecovery: boolean,
         sourceEndpoint?: number,
+        profileId?: number,
     ): Promise<Events.ZclPayload | undefined> {
         const transactionID = this.nextTransactionID();
         const payload = zclFrame.toBuffer();
@@ -410,7 +411,7 @@ export class DeconzAdapter extends Adapter {
             destAddrMode: PARAM.PARAM.addressMode.NWK_ADDR,
             destAddr16: networkAddress,
             destEndpoint: endpoint,
-            profileId: sourceEndpoint === 242 && endpoint === 242 ? 0xa1e0 : 0x104,
+            profileId: profileId ?? (sourceEndpoint === 242 && endpoint === 242 ? 0xa1e0 : 0x104),
             clusterId: zclFrame.cluster.ID,
             srcEndpoint: sourceEndpoint || 1,
             asduLength: payload.length,

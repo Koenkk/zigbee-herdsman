@@ -498,6 +498,7 @@ export class ZoHAdapter extends Adapter {
         disableResponse: boolean,
         disableRecovery: boolean,
         sourceEndpoint?: number,
+        profileId?: number,
     ): Promise<ZclPayload | undefined> {
         /* v8 ignore start */
         if (networkAddress === ZSpec.COORDINATOR_ADDRESS) {
@@ -531,7 +532,8 @@ export class ZoHAdapter extends Adapter {
                 try {
                     await this.driver.sendUnicast(
                         zclFrame.toBuffer(),
-                        sourceEndpoint === ZSpec.GP_ENDPOINT && endpoint === ZSpec.GP_ENDPOINT ? ZSpec.GP_PROFILE_ID : ZSpec.HA_PROFILE_ID,
+                        profileId ??
+                            (sourceEndpoint === ZSpec.GP_ENDPOINT && endpoint === ZSpec.GP_ENDPOINT ? ZSpec.GP_PROFILE_ID : ZSpec.HA_PROFILE_ID),
                         zclFrame.cluster.ID,
                         networkAddress, // nwkDest16
                         undefined, // nwkDest64 XXX: avoid passing EUI64 whenever not absolutely necessary

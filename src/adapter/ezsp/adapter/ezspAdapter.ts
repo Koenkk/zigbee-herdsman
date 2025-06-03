@@ -318,6 +318,7 @@ export class EZSPAdapter extends Adapter {
         disableResponse: boolean,
         disableRecovery: boolean,
         sourceEndpoint?: number,
+        profileId?: number,
     ): Promise<ZclPayload | undefined> {
         return await this.queue.execute<ZclPayload | undefined>(async () => {
             this.checkInterpanLock();
@@ -332,6 +333,7 @@ export class EZSPAdapter extends Adapter {
                 disableRecovery,
                 0,
                 0,
+                profileId,
             );
         }, networkAddress);
     }
@@ -347,6 +349,7 @@ export class EZSPAdapter extends Adapter {
         disableRecovery: boolean,
         responseAttempt: number,
         dataRequestAttempt: number,
+        profileId?: number,
     ): Promise<ZclPayload | undefined> {
         if (ieeeAddr == null) {
             ieeeAddr = `0x${this.driver.ieee.toString()}`;
@@ -379,7 +382,7 @@ export class EZSPAdapter extends Adapter {
         }
 
         const frame = this.driver.makeApsFrame(zclFrame.cluster.ID, disableResponse || zclFrame.header.frameControl.disableDefaultResponse);
-        frame.profileId = ZSpec.HA_PROFILE_ID;
+        frame.profileId = profileId ?? ZSpec.HA_PROFILE_ID;
         frame.sourceEndpoint = sourceEndpoint || 0x01;
         frame.destinationEndpoint = endpoint;
         frame.groupId = 0;

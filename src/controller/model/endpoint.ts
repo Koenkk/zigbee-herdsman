@@ -33,6 +33,7 @@ interface Options {
     timeout?: number;
     direction?: Zcl.Direction;
     srcEndpoint?: number;
+    profileId?: number;
     reservedBits?: number;
     transactionSequenceNumber?: number;
     disableRecovery?: boolean;
@@ -318,6 +319,7 @@ export class Endpoint extends Entity {
                 options.disableResponse,
                 options.disableRecovery,
                 options.srcEndpoint,
+                options.profileId,
             ) as Promise<Type>;
         },
     ): Promise<Type> {

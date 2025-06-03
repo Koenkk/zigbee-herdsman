@@ -19,6 +19,7 @@ import {Constants as UnpiConstants} from "../unpi";
 import {Znp, type ZpiObject} from "../znp";
 import Definition from "../znp/definition";
 import {isMtCmdAreqZdo} from "../znp/utils";
+import {Endpoints} from "./endpoints";
 import {ZnpAdapterManager} from "./manager";
 import {ZnpVersion} from "./tstype";
 
@@ -433,14 +434,23 @@ export class ZStackAdapter extends Adapter {
         disableResponse: boolean,
         disableRecovery: boolean,
         sourceEndpoint?: number,
+        profileId?: number,
     ): Promise<Events.ZclPayload | undefined> {
+        // If sourceEndpoint is not provided, try to select the source endpoint based on the profileId. If no profileId is provided, use endpoint 1.
+        const srcEndpoint = sourceEndpoint ?? Endpoints.find((e) => e.appprofid === profileId)?.endpoint ?? 1;
+
+        // Validate that the requested profileId can be satisfied by the adapter.
+        if (profileId !== undefined && Endpoints.find((e) => e.endpoint === srcEndpoint)?.appprofid !== profileId) {
+            throw new Error(`Profile ID ${profileId} is not supported by this adapter.`);
+        }
+
         return await this.queue.execute<Events.ZclPayload | undefined>(async () => {
             this.checkInterpanLock();
             return await this.sendZclFrameToEndpointInternal(
                 ieeeAddr,
                 networkAddress,
                 endpoint,
-                sourceEndpoint || 1,
+                srcEndpoint,
                 zclFrame,
                 timeout,
                 disableResponse,

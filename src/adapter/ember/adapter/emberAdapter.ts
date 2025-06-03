@@ -1941,6 +1941,7 @@ export class EmberAdapter extends Adapter {
         disableResponse: boolean,
         disableRecovery: boolean,
         sourceEndpoint?: number,
+        profileId?: number,
     ): Promise<ZclPayload | undefined> {
         const sourceEndpointInfo = (sourceEndpoint && FIXED_ENDPOINTS.find((epi) => epi.endpoint === sourceEndpoint)) || FIXED_ENDPOINTS[0];
         const command = zclFrame.command;
@@ -1953,7 +1954,7 @@ export class EmberAdapter extends Adapter {
         }
 
         const apsFrame: EmberApsFrame = {
-            profileId: sourceEndpointInfo.profileId,
+            profileId: profileId ?? sourceEndpointInfo.profileId,
             clusterId: zclFrame.cluster.ID,
             sourceEndpoint: sourceEndpoint || FIXED_ENDPOINTS[0].endpoint,
             destinationEndpoint: endpoint,
