@@ -1,6 +1,6 @@
 /* v8 ignore start */
 
-import Device from "../../../controller/model/device";
+//import Device from "../../../controller/model/device";
 import type * as Models from "../../../models";
 import {Waitress, wait} from "../../../utils";
 import {logger} from "../../../utils/logger";
@@ -12,7 +12,14 @@ import type * as ZdoTypes from "../../../zspec/zdo/definition/tstypes";
 import Adapter from "../../adapter";
 import type * as Events from "../../events";
 import type {AdapterOptions, CoordinatorVersion, NetworkOptions, NetworkParameters, SerialPortOptions, StartResult} from "../../tstype";
-import PARAM, {NetworkState, ParamId, type ApsDataRequest, type GpDataInd, type ReceivedDataResponse, type WaitForDataRequest} from "../driver/constants";
+import PARAM, {
+    NetworkState,
+    ParamId,
+    type ApsDataRequest,
+    type GpDataInd,
+    type ReceivedDataResponse,
+    type WaitForDataRequest,
+} from "../driver/constants";
 import Driver from "../driver/driver";
 import processFrame, {frameParserEvents} from "../driver/frameParser";
 
@@ -48,14 +55,14 @@ export class DeconzAdapter extends Adapter {
 
         this.driver = new Driver(serialPortOptions.path || undefined);
 
-        this.driver.on("rxFrame", frame => processFrame(frame));
+        this.driver.on("rxFrame", (frame) => processFrame(frame));
         this.driver.on("connected", () => this.onConnected());
         this.transactionID = 0;
         this.openRequestsQueue = [];
         this.fwVersion = undefined;
 
-        this.frameParserEvent.on("receivedDataPayload", data => this.checkReceivedDataPayload(data));
-        this.frameParserEvent.on("receivedGreenPowerIndication", data => this.checkReceivedGreenPowerIndication(data));
+        this.frameParserEvent.on("receivedDataPayload", (data) => this.checkReceivedDataPayload(data));
+        this.frameParserEvent.on("receivedGreenPowerIndication", (data) => this.checkReceivedGreenPowerIndication(data));
 
         setInterval(() => {
             this.checkWaitForDataRequestTimeouts();
@@ -75,22 +82,19 @@ export class DeconzAdapter extends Adapter {
 
         // wait here until driver is connected and has queried all firmware parameters
         return new Promise((resolve, reject) => {
-
             const start = Date.now();
             const iv = setInterval(() => {
-
                 if (this.driver.started()) {
                     clearInterval(iv);
                     resolve("resumed");
                     return;
                 }
 
-                if (3000 < (Date.now() - start)) {
+                if (3000 < Date.now() - start) {
                     clearInterval(iv);
                     reject("failed to start adapter connection to firmware");
                     return;
                 }
-
             }, 50);
         });
     }
@@ -118,7 +122,7 @@ export class DeconzAdapter extends Adapter {
             logger.debug(`Channel in configuration.yaml (${z2mChannel}) differs from current channel (${channel}). Changing channel.`, NS);
 
             try {
-                await this.driver.writeParameterRequest(ParamId.APS_CHANNEL_MASK, (1 << z2mChannel));
+                await this.driver.writeParameterRequest(ParamId.APS_CHANNEL_MASK, 1 << z2mChannel);
                 await wait(500);
                 changed = true;
             } catch (error) {
@@ -164,7 +168,10 @@ export class DeconzAdapter extends Adapter {
         // check current network key against configuration.yaml
         if (this.networkOptions.networkKey) {
             if (this.driver.generalArrayToString(this.networkOptions.networkKey, 16) !== networkKey) {
-                logger.debug(`network key in configuration.yaml (hidden) differs from current network key (${networkKey}). Changing network key.`, NS);
+                logger.debug(
+                    `network key in configuration.yaml (hidden) differs from current network key (${networkKey}). Changing network key.`,
+                    NS,
+                );
 
                 try {
                     await this.driver.writeParameterRequest(ParamId.STK_NETWORK_KEY, Buffer.from([0x0, ...this.networkOptions.networkKey]));
@@ -234,12 +241,12 @@ export class DeconzAdapter extends Adapter {
         await this.driver.close();
     }
 
-    public async getCoordinatorIEEE(): Promise<string> {
+    public getCoordinatorIEEE(): Promise<string> {
         logger.debug("-------- z2m:getCoordinatorIEEE() ----------------", NS);
         if (this.driver.paramMacAddress.length === 0) {
-            throw new Error("Failed to query coordinator MAC address");
+            return Promise.reject(new Error("Failed to query coordinator MAC address"));
         }
-        return this.driver.paramMacAddress;
+        return Promise.resolve(this.driver.paramMacAddress);
     }
 
     public async permitJoin(seconds: number, networkAddress?: number): Promise<void> {
@@ -272,14 +279,14 @@ export class DeconzAdapter extends Adapter {
         this.joinPermitted = seconds !== 0;
     }
 
-    public async getCoordinatorVersion(): Promise<CoordinatorVersion> {
+    public getCoordinatorVersion(): Promise<CoordinatorVersion> {
         logger.debug("-------- z2m:getCoordinatorVersion() ----------------", NS);
 
         // product: number; transportrev: number; majorrel: number; minorrel: number; maintrel: number; revision: string;
-        
+
         const fw = this.driver.paramFirmwareVersion;
         if (fw === 0) {
-            throw new Error("Failed to query coordinator firmware version");
+            return Promise.reject(new Error("Failed to query coordinator firmware version"));
         }
 
         const fwString = `0x${fw.toString(16).padStart(8, "0")}`;
@@ -287,24 +294,23 @@ export class DeconzAdapter extends Adapter {
         logger.debug(`Firmware version: ${fwString}`, NS);
 
         let type = "Unknown";
-        const platform = ((fw >> 8) & 0xFF);
+        const platform = (fw >> 8) & 0xff;
         if (platform === 5) {
             type = "ConBee/RaspBee";
         } else if (platform === 7) {
             type = "ConBee2/RaspBee2";
-        } else if (platform == 9) {
+        } else if (platform === 9) {
             type = "ConBee3";
         }
 
         // 0x26780700 -> 2.6.78.7.00
-        const major = ((fw >> 28) & 0xF);
-        const minor = ((fw >> 24) & 0xF);
-        const patch = ((fw >> 16) & 0xFF);
+        const major = (fw >> 28) & 0xf;
+        const minor = (fw >> 24) & 0xf;
+        const patch = (fw >> 16) & 0xff;
 
         const meta = {transportrev: 0, product: 0, majorrel: major, minorrel: minor, maintrel: patch, revision: fwString};
         this.fwVersion = {type: type, meta: meta};
-        return {type: type, meta: meta};
-
+        return Promise.resolve({type: type, meta: meta});
     }
 
     public async addInstallCode(ieeeAddress: string, key: Buffer, hashed: boolean): Promise<void> {
@@ -390,7 +396,13 @@ export class DeconzAdapter extends Adapter {
 
             if (responseClusterId) {
                 try {
-                    const response = await this.waitForData(isNwkAddrRequest ? ieeeAddress : networkAddress, Zdo.ZDO_PROFILE_ID, responseClusterId, transactionID, req.timeout);
+                    const response = await this.waitForData(
+                        isNwkAddrRequest ? ieeeAddress : networkAddress,
+                        Zdo.ZDO_PROFILE_ID,
+                        responseClusterId,
+                        transactionID,
+                        req.timeout,
+                    );
                     // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
                     return response.zdo! as ZdoTypes.RequestToResponseMap[K];
                 } catch (error) {
@@ -456,7 +468,7 @@ export class DeconzAdapter extends Adapter {
             //         apsFrame.options &= ~EmberApsOption.RETRY;
             //
 
-            txOptions, 
+            txOptions,
             radius: PARAM.PARAM.txRadius.DEFAULT_RADIUS,
             // TODO(mpi): We could treat _disableRecovery = true, to retry if enqueue (valid) requests or APS-confirms fail within timeout period?
             timeout: timeout,
@@ -489,29 +501,29 @@ export class DeconzAdapter extends Adapter {
         }
 
         logger.debug(`ZCL request sent with transactionSequenceNumber.: ${zclFrame.header.transactionSequenceNumber}`, NS);
-        logger.debug(`command.response: ${command.response}, zcl.disableDefaultResponse: ${zclFrame.header.frameControl.disableDefaultResponse}, z2m.disableResponse: ${disableResponse}, request.timeout: ${request.timeout}`, NS);
+        logger.debug(
+            `command.response: ${command.response}, zcl.disableDefaultResponse: ${zclFrame.header.frameControl.disableDefaultResponse}, z2m.disableResponse: ${disableResponse}, request.timeout: ${request.timeout}`,
+            NS,
+        );
 
         if (needWaitResponse) {
-           try {
+            try {
                 const data = await this.waitForData(
                     networkAddress,
                     ZSpec.HA_PROFILE_ID,
                     zclFrame.cluster.ID,
                     zclFrame.header.transactionSequenceNumber,
-                    request.timeout
+                    request.timeout,
                 );
 
                 // TODO(mpi): This is nuts. Need to make sure that srcAddr16 is always valid.
-                let addr;
-                if (data.srcAddr16 !== undefined)
-                    addr = data.srcAddr16;
-                else if (data.srcAddr64 !== undefined)
-                    addr = '0x' + data.srcAddr64;
-                else
-                    throw new Error("Unexpected waitForData() didn't contain valid address");
+                let addr: string | number;
+                if (data.srcAddr16 !== undefined) addr = data.srcAddr16;
+                else if (data.srcAddr64 !== undefined) addr = `0x${data.srcAddr64}`;
+                else throw new Error("Unexpected waitForData() didn't contain valid address");
 
-                let groupId = 0;
-                let wasBroadCast = false;
+                const groupId = 0;
+                const wasBroadCast = false;
 
                 // NOTE(ERH): This should never be a group/broadcast (remove?).
                 // if (data.destAddrMode == PARAM.PARAM.addressMode.GROUP_ADDR) {
@@ -566,7 +578,7 @@ export class DeconzAdapter extends Adapter {
             asduPayload: payload,
             txOptions: 0,
             radius: PARAM.PARAM.txRadius.UNLIMITED,
-            timeout: PARAM.PARAM.APS.MAX_SEND_TIMEOUT
+            timeout: PARAM.PARAM.APS.MAX_SEND_TIMEOUT,
         };
 
         logger.debug("sendZclFrameToGroup - message send", NS);
@@ -591,7 +603,7 @@ export class DeconzAdapter extends Adapter {
             asduPayload: payload,
             txOptions: 0,
             radius: PARAM.PARAM.txRadius.UNLIMITED,
-            timeout: PARAM.PARAM.APS.MAX_SEND_TIMEOUT
+            timeout: PARAM.PARAM.APS.MAX_SEND_TIMEOUT,
         };
 
         logger.debug("sendZclFrameToAll - message send", NS);
@@ -606,8 +618,7 @@ export class DeconzAdapter extends Adapter {
         return await Promise.reject(new Error("This adapter does not support backup"));
     }
 
-    public async getNetworkParameters(): Promise<NetworkParameters> {
-
+    public getNetworkParameters(): Promise<NetworkParameters> {
         logger.debug("-------- z2m:getNetworkParameters() ----------------", NS);
 
         // TODO(mpi): This works with 0x26780700, needs more investigation with older firmware versions.
@@ -617,14 +628,14 @@ export class DeconzAdapter extends Adapter {
         const nwkUpdateID = this.driver.paramNwkUpdateId;
 
         if (channel === 0 || extendedPanID.length === 0) {
-            throw new Error("Failed to query network parameters");
+            return Promise.reject(new Error("Failed to query network parameters"));
         }
         // TODO(mpi): check this statement, this should work
         // For some reason, reading NWK_UPDATE_ID always returns `null` (tested with `0x26780700` on Conbee II)
         // 0x24 was taken from https://github.com/zigpy/zigpy-deconz/blob/70910bc6a63e607332b4f12754ba470651eb878c/zigpy_deconz/api.py#L152
         // const nwkUpdateId = await this.driver.readParameterRequest(0x24 /*PARAM.PARAM.Network.NWK_UPDATE_ID*/);
 
-        return {panID, extendedPanID, channel, nwkUpdateID};       
+        return Promise.resolve({panID, extendedPanID, channel, nwkUpdateID});
     }
 
     public async restoreChannelInterPAN(): Promise<void> {
@@ -660,8 +671,10 @@ export class DeconzAdapter extends Adapter {
         return new Promise((resolve, reject): void => {
             const ts = Date.now();
             // const commandId = PARAM.PARAM.APS.DATA_INDICATION;
-            if (!timeout)
+            if (!timeout) {
                 timeout = 60000;
+            }
+
             const req: WaitForDataRequest = {addr, profileId, clusterId, transactionSequenceNumber, resolve, reject, ts, timeout};
             this.openRequestsQueue.push(req);
         });
@@ -698,7 +711,6 @@ export class DeconzAdapter extends Adapter {
     }
 
     private checkWaitForDataRequestTimeouts() {
-        
         if (this.openRequestsQueue.length === 0) {
             return;
         }
@@ -706,11 +718,12 @@ export class DeconzAdapter extends Adapter {
         const now = Date.now();
         const req: WaitForDataRequest = this.openRequestsQueue[0];
 
-        const timeout = req.timeout;
-
-        if (req.timeout < (now - req.ts)) {
+        if (req.timeout < now - req.ts) {
             this.openRequestsQueue.shift();
-            logger.debug("Timeout for request in openRequestsQueue addr: " + req.addr.toString(16) + " clusterId: " + req.clusterId.toString(16) + " profileId: " + req.profileId.toString(16), NS);
+            logger.debug(
+                `Timeout for request in openRequestsQueue addr: ${req.addr}, clusterId: ${req.clusterId.toString(16)}, profileId: ${req.profileId.toString(16)}`,
+                NS,
+            );
             req.reject(new Error("waiting for response TIMEOUT"));
         }
     }
@@ -725,7 +738,7 @@ export class DeconzAdapter extends Adapter {
         // TODO(mpi): The following shouldn't be needed anymore.
 
         // if (resp.srcAddr16 != null) {
-            
+        //
         // } else {
         //     // For some devices srcAddr64 is reported by ConBee 3, even if the frame contains both
         //     // srcAddr16 and srcAddr64. This happens even if the request was sent to a short address.
@@ -743,11 +756,11 @@ export class DeconzAdapter extends Adapter {
         //         resp.srcAddr16 = srcAddr;
         //     }
         // }
-
+        //
         // ---------------------------------------------------------------------
         // if (resp.srcAddr16) { // temp test
         //     const dev = Device.byNetworkAddress(resp.srcAddr16);
-
+        //
         //     if (dev) {
         //         logger.debug(`APS-DATA.indication from ${dev.ieeeAddr}, ${dev.modelID} ${dev.manufacturerID}`, NS);
         //     }
@@ -767,7 +780,7 @@ export class DeconzAdapter extends Adapter {
                         this.emit("deviceJoined", {networkAddress: payload.nwkAddress, ieeeAddr: payload.eui64});
                     }
                 }
-            
+
                 // TODO(mpi) it seems that the controller is only interested in NWK, IEEE and DeviceAnnounce command
                 // So maybe we should filter here?
                 this.emit("zdoResponse", resp.clusterId, resp.zdo);
@@ -798,7 +811,7 @@ export class DeconzAdapter extends Adapter {
                     continue; // ZDP sequence number in first byte
                 }
             } else if (header) {
-                if (header.transactionSequenceNumber != req.transactionSequenceNumber) {
+                if (header.transactionSequenceNumber !== req.transactionSequenceNumber) {
                     continue;
                 }
 
@@ -814,7 +827,6 @@ export class DeconzAdapter extends Adapter {
         }
 
         if (resp.profileId !== Zdo.ZDO_PROFILE_ID) {
-
             let groupID = 0;
             let wasBroadCast = false;
 
