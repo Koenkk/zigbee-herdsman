@@ -8,7 +8,8 @@ import slip from "slip";
 import {logger} from "../../../utils/logger";
 import {SerialPort} from "../../serialPort";
 import SocketPortUtils from "../../socketPortUtils";
-import PARAM, {type ApsDataRequest, type ParameterT, type ReceivedDataResponse, type Request} from "./constants";
+import PARAM, { type ApsDataRequest, type ReceivedDataResponse, type ApsRequest, type Request, FirmwareCommand, NetworkState, ParamId, stackParameters, DataType} from "./constants";
+
 import {frameParserEvents} from "./frameParser";
 import Parser from "./parser";
 import Writer from "./writer";
@@ -17,88 +18,94 @@ const NS = "zh:deconz:driver";
 
 const queue: Array<Request> = [];
 export const busyQueue: Array<Request> = [];
-const apsQueue: Array<Request> = [];
-export const apsBusyQueue: Array<Request> = [];
-const apsConfirmIndQueue: Array<Request> = [];
-export let readyToSend = true;
+const apsQueue: Array<ApsRequest> = [];
+export const apsBusyQueue: Array<ApsRequest> = [];
 
-export function enableRTS(): void {
-    if (readyToSend === false) {
-        readyToSend = true;
-    }
+const DRIVER_EVENT = Symbol("drv_ev");
+
+const DEV_STATUS_NET_STATE_MASK = 0x03;
+const DEV_STATUS_APS_CONFIRM = 0x04;
+const DEV_STATUS_APS_INDICATION = 0x08;
+const DEV_STATUS_APS_FREE_SLOTS = 0x20;
+const DEV_STATUS_CONFIG_CHANGED = 0x10;
+
+enum DriverState {
+    Init,
+    Connected,
+    Connecting,
+    ReadConfiguration,
+    WaitToReconnect,
+    Reconfigure
 }
 
-export function disableRTS(): void {
-    readyToSend = false;
+enum TxState {
+    Idle,
+    WaitResponse
 }
 
-export let enableRtsTimeout: NodeJS.Timeout | undefined;
+enum DriverEvent {
+    Action,
+    Connected,
+    Disconnected,
+    DeviceStateUpdated,
+    ConnectError,
+    CloseError,
+    EnqueuedApsDataRequest,
+    Tick,
+    FirmwareCommandSend,
+    FirmwareCommandReceived,
+    FirmwareCommandTimeout
+}
 
 class Driver extends events.EventEmitter {
     private path: string;
     private serialPort?: SerialPort;
-    private initialized: boolean;
     private writer: Writer;
     private parser: Parser;
     private frameParserEvent = frameParserEvents;
     private seqNumber: number;
-    private timeoutResetTimeout?: NodeJS.Timeout;
-    private apsRequestFreeSlots: number;
-    private apsDataConfirm: number;
-    private apsDataIndication: number;
+    private deviceStatus: number = 0;
     private configChanged: number;
     private socketPort?: net.Socket;
-    private delay: number;
-    private readyToSendTimeout: number;
-    private handleDeviceStatusDelay: number;
-    private processQueues: number;
     private timeoutCounter = 0;
     private currentBaudRate = 0;
+    private watchdogTriggeredTime: number = 0;
+    private lastFirmwareRxTime : number= 0;
+    private tickTimer: NodeJS.Timeout;
+    private driverStateStart: number = 0;
+    private driverState : DriverState = DriverState.Init;
+    // in flight lockstep sending commands
+    private txState : TxState = TxState.Idle;
+    private txCommand : number = 0;
+    private txSeq : number = 0;
+    private txTime : number = 0;
 
-    public constructor(path: string) {
+    public paramMacAddress : string = "";
+    public paramFirmwareVersion : number = 0;
+    public paramCurrentChannel : number = 0;
+    public paramNwkPanid : number = 0;
+    public paramNwkKey : string = "";
+    public paramNwkUpdateId : number = 0;
+    public paramChannelMask : number = 0;
+    public paramProtocolVersion : number = 0;
+    public paramApsUseExtPanid : string = "";
+
+
+    public constructor(path: string | undefined) {
         super();
-        this.path = path;
-        this.initialized = false;
+        this.path = path || "";
         this.seqNumber = 0;
-        this.timeoutResetTimeout = undefined;
-
-        this.apsRequestFreeSlots = 1;
-        this.apsDataConfirm = 0;
-        this.apsDataIndication = 0;
         this.configChanged = 0;
-        this.delay = 0;
-        this.readyToSendTimeout = 1;
-        this.handleDeviceStatusDelay = 5;
-        this.processQueues = 5;
 
         this.writer = new Writer();
         this.parser = new Parser();
 
-        setInterval(() => {
-            this.deviceStateRequest()
-                .then(() => {})
-                .catch(() => {});
-        }, 10000);
-
-        setInterval(
-            () => {
-                this.writeParameterRequest(0x26, 600) // reset watchdog // 10 minutes
-                    .then(() => {})
-                    .catch(() => {
-                        //try again
-                        logger.debug("try again to reset watchdog", NS);
-                        this.writeParameterRequest(0x26, 600)
-                            .then(() => {})
-                            .catch(() => {
-                                logger.debug("warning watchdog was not reset", NS);
-                            });
-                    });
-            },
-            1000 * 60 * 8,
-        ); // 8 minutes
+        this.tickTimer = setInterval(() => {
+            this.tick();
+        }, 100);
 
         this.onParsed = this.onParsed.bind(this);
-        this.frameParserEvent.on("receivedDataNotification", (data: number) => {
+        this.frameParserEvent.on("deviceStateUpdated", (data: number) => {
             this.checkDeviceStatus(data);
         });
 
@@ -106,13 +113,27 @@ class Driver extends events.EventEmitter {
             for (const interval of this.intervals) {
                 clearInterval(interval);
             }
+            // TODO(mpi): Reject open promises!!
             queue.length = 0;
             busyQueue.length = 0;
+            for (let i = 0; i < apsQueue.length; i++) {
+                apsQueue[i].reject(new Error("Port closed"));
+            }
             apsQueue.length = 0;
+            for (let i = 0; i < apsBusyQueue.length; i++) {
+                apsBusyQueue[i].reject(new Error("Port closed"));
+            }
             apsBusyQueue.length = 0;
-            apsConfirmIndQueue.length = 0;
             this.timeoutCounter = 0;
         });
+
+        this.on(DRIVER_EVENT, (event, data) => {
+            this.handleStateEvent(event, data);
+        });
+    }
+
+    public started() : boolean {
+        return this.driverState === DriverState.Connected;
     }
 
     protected intervals: NodeJS.Timeout[] = [];
@@ -125,99 +146,345 @@ class Driver extends events.EventEmitter {
         return (await Promise.resolve(val).catch((err) => logger.debug(`Promise was caught with reason: ${err}`, NS))) as undefined | Awaited<T>;
     }
 
-    public setDelay(delay: number): void {
-        logger.debug(`Set delay to ${delay}`, NS);
-        this.delay = delay;
-        this.readyToSendTimeout = delay;
-        this.processQueues = delay;
-        this.handleDeviceStatusDelay = delay;
-
-        if (this.readyToSendTimeout === 0) {
-            this.readyToSendTimeout = 1;
-        }
-
-        if (this.processQueues < 5) {
-            this.processQueues = 5;
-        }
-
-        if (this.handleDeviceStatusDelay < 5) {
-            this.handleDeviceStatusDelay = 5;
-        }
-
-        if (this.processQueues > 60) {
-            this.processQueues = 60;
-        }
-
-        if (this.handleDeviceStatusDelay > 60) {
-            this.handleDeviceStatusDelay = 60;
-        }
-
-        this.registerInterval(
-            setInterval(() => {
-                this.processQueue();
-            }, this.processQueues),
-        ); // fire non aps requests
-        this.registerInterval(
-            setInterval(async () => {
-                await this.catchPromise(this.processBusyQueue());
-            }, this.processQueues),
-        ); // check timeouts for non aps requests
-        this.registerInterval(
-            setInterval(async () => {
-                await this.catchPromise(this.processApsQueue());
-            }, this.processQueues),
-        ); // fire aps request
-        this.registerInterval(
-            setInterval(() => {
-                this.processApsBusyQueue();
-            }, this.processQueues),
-        ); // check timeouts for all open aps requests
-        this.registerInterval(
-            setInterval(() => {
-                this.processApsConfirmIndQueue();
-            }, this.processQueues),
-        ); // fire aps indications and confirms
-        this.registerInterval(
-            setInterval(async () => {
-                await this.catchPromise(this.handleDeviceStatus());
-            }, this.handleDeviceStatusDelay),
-        ); // query confirm and indication requests
+    private tick() : void {
+        this.emitStateEvent(DriverEvent.Tick);
     }
 
-    private onPortClose(): void {
+    private emitStateEvent(event : DriverEvent, data?: any) {
+        this.emit(DRIVER_EVENT, event, data);
+    }
+
+    private checkWatchdog() : boolean {
+
+        const now = Date.now();
+        if ((300*1000) < (now - this.watchdogTriggeredTime)) {
+            logger.debug("Reset firmware watchdog", NS);
+            this.watchdogTriggeredTime = now;
+            this.sendWriteParameterRequest(ParamId.DEV_WATCHDOG_TTL, 600, this.nextSeqNumber());
+            return true;
+        }
+
+        return false;
+    }
+
+    private handleFirmwareEvent(event : DriverEvent, data?: any) : void {
+        if (event === DriverEvent.FirmwareCommandSend) {
+            if (this.txState !== TxState.Idle)
+                throw Error("Unexpected TX state not idle");
+
+            this.txState = TxState.WaitResponse;
+            this.txCommand = data.cmd;
+            this.txSeq = data.seq;
+            this.txTime = Date.now();
+
+            // logger.debug(`tx wait for cmd: ${data.cmd.toString(16).padStart(2, '0')}, seq: ${data.seq}`, NS);
+
+        } else if (event === DriverEvent.FirmwareCommandReceived) {
+            if (this.txState !== TxState.WaitResponse)
+                return;
+                
+            if (this.txCommand == data.cmd && this.txSeq == data.seq) {
+                this.txState = TxState.Idle;
+                // logger.debug(`tx released for cmd: ${data.cmd.toString(16).padStart(2, '0')}, seq: ${data.seq}`, NS);
+            }
+        } else if (event === DriverEvent.FirmwareCommandTimeout) {
+
+            if (this.txState === TxState.WaitResponse) {
+                this.txState = TxState.Idle;
+                logger.debug(`tx timeout for cmd: ${this.txCommand.toString(16).padStart(2, '0')}, seq: ${this.txSeq}`, NS);
+            }
+        } else if (event == DriverEvent.Tick) {
+            if (this.txState === TxState.WaitResponse) {
+                if (Date.now() - this.txTime > 1000) {
+                    this.emitStateEvent(DriverEvent.FirmwareCommandTimeout);
+                }
+            }
+        }
+    }
+
+    private handleConnectedStateEvent(event : DriverEvent, data?: any) : void {
+        if (event === DriverEvent.DeviceStateUpdated) {
+            // logger.debug(`Updated device status: ${data.toString(2)}`, NS);
+
+            const netState = this.deviceStatus & DEV_STATUS_NET_STATE_MASK;
+
+            if (this.txState === TxState.Idle) {
+                if (netState === NetworkState.Connected) {
+                    if (data & DEV_STATUS_APS_CONFIRM) {
+                        this.deviceStatus = 0; // force refresh in response
+                        this.sendReadApsConfirmRequest(this.nextSeqNumber());
+                    } else if (data & DEV_STATUS_APS_INDICATION) {
+                        this.deviceStatus = 0; // force refresh in response
+                        this.sendReadApsIndicationRequest(this.nextSeqNumber());
+                    } else if (data & DEV_STATUS_APS_FREE_SLOTS) {
+                        this.deviceStatus = 0; // force refresh in response
+                        this.processApsQueue();
+                    }
+                }
+            }
+        } else if (event === DriverEvent.Tick) {
+
+            if (this.checkWatchdog()) {
+                return;
+            }
+
+            this.processQueue();
+            this.processBusyQueueTimeouts();
+            this.processApsBusyQueueTimeouts();
+
+            if (this.txState === TxState.Idle) {
+                this.deviceStatus = 0; // force refresh in response
+                this.sendReadDeviceStateRequest(this.nextSeqNumber());
+            }
+        } else if (event === DriverEvent.Disconnected) {
+            logger.debug("Disconnected wait and reconnect", NS);
+            this.driverStateStart = Date.now();
+            this.driverState = DriverState.WaitToReconnect;
+        }
+    }
+
+    private handleConnectingStateEvent(event : DriverEvent, data?: any) : void {
+
+        if (event === DriverEvent.Action) {
+            this.watchdogTriggeredTime = 0; // force reset watchdog
+
+            if (!this.path) {
+                // unlikely but handle it anyway
+                this.driverStateStart = Date.now();
+                this.driverState = DriverState.WaitToReconnect;
+                return;
+            }
+
+            let prom;
+            if (SocketPortUtils.isTcpPath(this.path)) {
+                prom = this.openSocketPort();
+            } else if (this.currentBaudRate) {
+                prom = this.openSerialPort(this.currentBaudRate);
+            } else {
+                // unlikely but handle it anyway
+                this.driverStateStart = Date.now();
+                this.driverState = DriverState.WaitToReconnect;
+            }
+
+            if (prom) {
+                prom.catch(err => {
+                    logger.debug(`${err}`, NS);
+                    this.driverStateStart = Date.now();
+                    this.driverState = DriverState.WaitToReconnect;
+                });
+            }
+        } else if (event === DriverEvent.Connected) {
+            this.driverStateStart = Date.now();
+            this.driverState = DriverState.ReadConfiguration;
+            this.emitStateEvent(DriverEvent.Action);
+        }
+    }
+
+    private handleReadConfigurationStateEvent(event : DriverEvent, data?: any) : void {
+
+        if (event === DriverEvent.Action) {
+
+            logger.debug("Query firmware parameters", NS);
+
+            this.checkWatchdog();
+
+            Promise.all([
+                this.readFirmwareVersionRequest(),
+                this.readParameterRequest(ParamId.MAC_ADDRESS),
+                this.readParameterRequest(ParamId.NWK_PANID),
+                this.readParameterRequest(ParamId.APS_USE_EXTENDED_PANID),
+                this.readParameterRequest(ParamId.STK_CURRENT_CHANNEL),
+                this.readParameterRequest(ParamId.STK_NETWORK_KEY, Buffer.from([0])),
+                this.readParameterRequest(ParamId.STK_NWK_UPDATE_ID),
+                this.readParameterRequest(ParamId.APS_CHANNEL_MASK),
+                this.readParameterRequest(ParamId.STK_PROTOCOL_VERSION)
+            ])
+            .then(([fwVersion, mac, panid, apsUseExtPanid, currentChannel, nwkKey, nwkUpdateId, channelMask, protocolVersion]) => {
+                this.paramFirmwareVersion = fwVersion;
+                this.paramCurrentChannel = currentChannel as number;
+                this.paramApsUseExtPanid = apsUseExtPanid as string;
+                this.paramNwkPanid = panid as number;
+                this.paramNwkKey = nwkKey as string;
+                this.paramNwkUpdateId = nwkUpdateId as number;
+                this.paramMacAddress = mac as string;
+                this.paramChannelMask = channelMask as number;
+                this.paramProtocolVersion = protocolVersion as number;
+
+                console.log({fwVersion, mac, panid, apsUseExtPanid, currentChannel, nwkKey, nwkUpdateId, channelMask, protocolVersion});
+
+                this.driverStateStart = Date.now();
+                this.driverState = DriverState.Connected;
+                this.emit("connected"); // notify adapter
+            })
+            .catch(err =>  {
+                logger.debug("Failed to query firmware parameters", NS);
+                // TODO(MPI): What now? disconnect reconnect?
+                throw err;
+            });
+
+        } else if (event === DriverEvent.Tick) {
+            this.processQueue();
+            this.processBusyQueueTimeouts();
+        }
+    }
+
+    private handleReconfigureStateEvent(event : DriverEvent, data?: any) : void {
+
+        if (event === DriverEvent.Action) {
+
+            logger.debug("Query firmware parameters", NS);
+
+            this.checkWatchdog();
+
+            Promise.all([
+                this.readFirmwareVersionRequest(),
+                this.readParameterRequest(ParamId.MAC_ADDRESS),
+                this.readParameterRequest(ParamId.NWK_PANID),
+                this.readParameterRequest(ParamId.APS_USE_EXTENDED_PANID),
+                this.readParameterRequest(ParamId.STK_CURRENT_CHANNEL),
+                this.readParameterRequest(ParamId.STK_NETWORK_KEY, Buffer.from([0])),
+                this.readParameterRequest(ParamId.STK_NWK_UPDATE_ID),
+                this.readParameterRequest(ParamId.APS_CHANNEL_MASK),
+                this.readParameterRequest(ParamId.STK_PROTOCOL_VERSION)
+            ])
+            .then(([fwVersion, mac, panid, apsUseExtPanid, currentChannel, nwkKey, nwkUpdateId, channelMask, protocolVersion]) => {
+                this.paramFirmwareVersion = fwVersion;
+                this.paramCurrentChannel = currentChannel as number;
+                this.paramApsUseExtPanid = apsUseExtPanid as string;
+                this.paramNwkPanid = panid as number;
+                this.paramNwkKey = nwkKey as string;
+                this.paramNwkUpdateId = nwkUpdateId as number;
+                this.paramMacAddress = mac as string;
+                this.paramChannelMask = channelMask as number;
+                this.paramProtocolVersion = protocolVersion as number;
+
+                console.log({fwVersion, mac, panid, apsUseExtPanid, currentChannel, nwkKey, nwkUpdateId, channelMask, protocolVersion});
+
+                this.driverStateStart = Date.now();
+                this.driverState = DriverState.Connected;
+                this.emit("connected"); // notify adapter
+            })
+            .catch(err =>  {
+                logger.debug("Failed to query firmware parameters", NS);
+                // TODO(MPI): What now? disconnect reconnect?
+                throw err;
+            });
+
+        } else if (event === DriverEvent.Tick) {
+            this.processQueue();
+            this.processBusyQueueTimeouts();
+        }
+    }
+
+    private handleWaitToReconnectStateEvent(event : DriverEvent, data?: any) : void {
+        if (event === DriverEvent.Tick) {
+            if (5000 < Date.now() - this.driverStateStart) {
+                this.driverState = DriverState.Connecting;
+                this.emitStateEvent(DriverEvent.Action);
+            }
+        }
+    }
+
+    private handleStateEvent(event : DriverEvent, data?: any) : void {
+
+        try {
+
+            // all states
+            if (event === DriverEvent.Tick ||
+                event === DriverEvent.FirmwareCommandReceived ||
+                event === DriverEvent.FirmwareCommandSend ||
+                event === DriverEvent.FirmwareCommandTimeout) {
+                    this.handleFirmwareEvent(event, data);
+            }
+
+            if (this.driverState == DriverState.Init) {
+                this.driverState = DriverState.WaitToReconnect;
+                this.driverStateStart = 0; // force fast initial connect
+            } else if (this.driverState == DriverState.Connected) {
+                this.handleConnectedStateEvent(event, data);
+            } else if (this.driverState === DriverState.Connecting) {
+                this.handleConnectingStateEvent(event, data);
+            } else if (this.driverState === DriverState.WaitToReconnect) {
+                this.handleWaitToReconnectStateEvent(event, data);
+            } else if (this.driverState === DriverState.ReadConfiguration) {
+                this.handleReadConfigurationStateEvent(event, data);
+            } else if (this.driverState === DriverState.Reconfigure) {
+                this.handleReconfigureStateEvent(event, data);
+            } else {
+                if (event !== DriverEvent.Tick) {
+                    logger.debug(`handle state: ${DriverState[this.driverState]}, event: ${DriverEvent[event]}`, NS);
+                }
+            }
+        } catch (err) {
+            console.error(err);
+            //logger.error(JSON.stringify(err), NS);
+        }       
+    }
+
+    private onPortClose(error: boolean | Error): void {
         logger.debug("Port closed", NS);
-        this.initialized = false;
+
+        if (error) {
+            logger.info(`Port close ${error}`, NS);
+        }
+
+        this.emitStateEvent(DriverEvent.Disconnected);
         this.emit("close");
     }
 
-    public async open(baudrate: number): Promise<void> {
+    private onPortError(error: Error): void {
+        logger.error(`Port error: ${error}`, NS);
+        this.emitStateEvent(DriverEvent.Disconnected);
+        this.emit("close");
+    }
+
+    public open(baudrate: number): void {
         this.currentBaudRate = baudrate;
-        return await (SocketPortUtils.isTcpPath(this.path) ? this.openSocketPort() : this.openSerialPort(baudrate));
     }
 
     public openSerialPort(baudrate: number): Promise<void> {
-        logger.debug(`Opening with ${this.path}`, NS);
-        this.serialPort = new SerialPort({path: this.path, baudRate: baudrate, autoOpen: false}); //38400 RaspBee //115200 ConBee3
-
-        this.writer.pipe(this.serialPort);
-
-        this.serialPort.pipe(this.parser);
-        this.parser.on("parsed", this.onParsed);
-
         return new Promise((resolve, reject): void => {
-            // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
-            this.serialPort!.open((error) => {
+            if (!this.path) {
+                reject(new Error("Failed to open serial port, path is undefined"));
+            }
+
+            logger.debug(`Opening serial port with ${this.path}`, NS);
+
+            const path = this.path || "";
+
+            if (!this.serialPort) {
+                this.serialPort = new SerialPort({path, baudRate: baudrate, autoOpen: false});
+                this.writer.pipe(this.serialPort);
+                this.serialPort.pipe(this.parser);
+                this.parser.on("parsed", this.onParsed);
+
+
+                this.serialPort.on("close", this.onPortClose.bind(this));
+                this.serialPort.on("error", this.onPortError.bind(this));
+            }
+
+            if (!this.serialPort) {
+                reject(new Error("Failed to create SerialPort instance"));
+                return;
+            }
+
+            if (this.serialPort.isOpen) {
+                reject(new Error("Called openSerialPort() while it is already open"));
+                return;
+            }
+
+            this.serialPort.open((error) => {
                 if (error) {
                     reject(new Error(`Error while opening serialport '${error}'`));
-                    this.initialized = false;
-                    // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
-                    if (this.serialPort!.isOpen) {
+
+                    if (this.serialPort && this.serialPort.isOpen) {
+                        this.emitStateEvent(DriverEvent.ConnectError);
                         // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
-                        this.serialPort!.close();
+                        //this.serialPort!.close();
                     }
                 } else {
                     logger.debug("Serialport opened", NS);
-                    this.initialized = true;
+                    this.emitStateEvent(DriverEvent.Connected);
                     resolve();
                 }
             });
@@ -247,7 +514,7 @@ class Driver extends events.EventEmitter {
             // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
             this.socketPort!.on("ready", () => {
                 logger.debug("Socket ready", NS);
-                this.initialized = true;
+                this.emitStateEvent(DriverEvent.Connected);
                 resolve();
             });
 
@@ -258,7 +525,6 @@ class Driver extends events.EventEmitter {
             this.socketPort!.on("error", (error) => {
                 logger.error(`Socket error ${error}`, NS);
                 reject(new Error("Error while opening socket"));
-                this.initialized = false;
             });
 
             // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
@@ -268,27 +534,29 @@ class Driver extends events.EventEmitter {
 
     public close(): Promise<void> {
         return new Promise((resolve, reject): void => {
-            if (this.initialized) {
-                if (this.serialPort) {
-                    this.serialPort.flush((): void => {
-                        // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
-                        this.serialPort!.close((error): void => {
-                            this.initialized = false;
-
-                            if (error == null) {
-                                resolve();
-                            } else {
-                                reject(new Error(`Error while closing serialport '${error}'`));
-                            }
-
-                            this.emit("close");
-                        });
+            
+            if (this.serialPort) {
+                if (this.serialPort.isOpen) {
+                    // wait until remaining data is written
+                    this.serialPort.flush();
+                    this.serialPort.close((error): void => {
+                        if (error) {
+                            // TODO(mpi): monitor, this must not happen after drain
+                            // close() failes if there is pending data to write!
+                            this.emitStateEvent(DriverEvent.CloseError);
+                            reject(new Error(`Error while closing serialport '${error}'`));
+                            return;
+                        }
                     });
-                } else {
-                    // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
-                    this.socketPort!.destroy();
-                    resolve();
                 }
+
+                this.emitStateEvent(DriverEvent.Disconnected);
+                this.emit("close");
+                resolve();
+            } else if (this.socketPort) {
+                this.socketPort.destroy();
+                this.emitStateEvent(DriverEvent.Disconnected);
+                resolve();
             } else {
                 resolve();
                 this.emit("close");
@@ -296,166 +564,189 @@ class Driver extends events.EventEmitter {
         });
     }
 
-    public readParameterRequest(parameterId: number): Promise<unknown> {
+    public readParameterRequest(parameterId: ParamId, arg?: Buffer | undefined): Promise<unknown> {
         const seqNumber = this.nextSeqNumber();
         return new Promise((resolve, reject): void => {
             //logger.debug(`push read parameter request to queue. seqNr: ${seqNumber} paramId: ${parameterId}`, NS);
             const ts = 0;
-            const commandId = PARAM.PARAM.FrameType.ReadParameter;
-            const req: Request = {commandId, parameterId, seqNumber, resolve, reject, ts};
+            const commandId = FirmwareCommand.ReadParameter;
+            const networkState = NetworkState.Ignore;
+            //TODO(mpi): arguments
+            const req: Request = {commandId, networkState, parameterId, seqNumber, resolve, reject, ts};
             queue.push(req);
         });
     }
 
-    public writeParameterRequest(parameterId: number, parameter: ParameterT): Promise<void> {
+    public writeParameterRequest(parameterId: ParamId, parameter: Buffer | number): Promise<void> {
         const seqNumber = this.nextSeqNumber();
         return new Promise((resolve, reject): void => {
             //logger.debug(`push write parameter request to queue. seqNr: ${seqNumber} paramId: ${parameterId} parameter: ${parameter}`, NS);
             const ts = 0;
-            const commandId = PARAM.PARAM.FrameType.WriteParameter;
-            const req: Request = {commandId, parameterId, parameter, seqNumber, resolve, reject, ts};
+            const commandId = FirmwareCommand.WriteParameter;
+            const networkState = NetworkState.Ignore;
+            const req: Request = {commandId, networkState, parameterId, parameter, seqNumber, resolve, reject, ts};
             queue.push(req);
         });
     }
 
     public async writeLinkKey(ieeeAddress: string, hashedKey: Buffer): Promise<void> {
-        await this.writeParameterRequest(PARAM.PARAM.Network.LINK_KEY, [...this.macAddrStringToArray(ieeeAddress), ...hashedKey]);
+        const mac = this.macAddrStringToArray(ieeeAddress);
+        var buf = Buffer.alloc(8 + 16);
+
+        if (ieeeAddress[1] !== 'x') {
+            ieeeAddress = "0x" + ieeeAddress;
+        }
+        
+        buf.writeBigUint64LE(BigInt(ieeeAddress));
+        for (let i = 0; i < 16; i++) {
+            buf.writeUint8(hashedKey[i], 8 + i);
+        }
+
+        await this.writeParameterRequest(ParamId.STK_LINK_KEY, buf);
     }
 
-    public readFirmwareVersionRequest(): Promise<number[]> {
+    public readFirmwareVersionRequest(): Promise<number> {
         const seqNumber = this.nextSeqNumber();
         return new Promise((resolve, reject): void => {
             //logger.debug(`push read firmware version request to queue. seqNr: ${seqNumber}`, NS);
             const ts = 0;
-            const commandId = PARAM.PARAM.FrameType.ReadFirmwareVersion;
-            const req: Request = {commandId, seqNumber, resolve, reject, ts};
+            const commandId = FirmwareCommand.FirmwareVersion;
+            const networkState = NetworkState.Ignore;
+            const parameterId = ParamId.NONE;
+            const req: Request = {commandId, networkState, parameterId, seqNumber, resolve, reject, ts};
             queue.push(req);
         });
     }
 
-    private sendReadParameterRequest(parameterId: number, seqNumber: number): void {
+    private sendReadParameterRequest(parameterId: ParamId, seqNumber: number): {cmd: number, seq: number} {
         /* command id, sequence number, 0, framelength(U16), payloadlength(U16), parameter id */
-        if (parameterId === PARAM.PARAM.Network.NETWORK_KEY) {
-            this.sendRequest(Buffer.from([PARAM.PARAM.FrameType.ReadParameter, seqNumber, 0x00, 0x09, 0x00, 0x02, 0x00, parameterId, 0x00]));
+        // TODO(mpi): refactor so this proper supports arguments
+        if (parameterId === ParamId.STK_NETWORK_KEY) {
+            return this.sendRequest(Buffer.from([FirmwareCommand.ReadParameter, seqNumber, 0x00, 0x09, 0x00, 0x02, 0x00, parameterId, 0x00]));
         } else {
-            this.sendRequest(Buffer.from([PARAM.PARAM.FrameType.ReadParameter, seqNumber, 0x00, 0x08, 0x00, 0x01, 0x00, parameterId]));
+            return this.sendRequest(Buffer.from([FirmwareCommand.ReadParameter, seqNumber, 0x00, 0x08, 0x00, 0x01, 0x00, parameterId]));
         }
     }
 
-    private sendWriteParameterRequest(parameterId: number, value: ParameterT, seqNumber: number): void {
-        /* command id, sequence number, 0, framelength(U16), payloadlength(U16), parameter id, pameter */
-        let parameterLength = 0;
-        if (parameterId === PARAM.PARAM.STK.Endpoint) {
-            const arrayParameterValue = value as number[];
-            parameterLength = arrayParameterValue.length;
+    private sendWriteParameterRequest(parameterId: ParamId, value: Buffer | number, seqNumber: number): {cmd: number, seq: number} {
+        // command id, sequence number, 0, framelength(U16), payloadlength(U16), parameter id, parameter
+        const param = stackParameters.find(x => x.id === parameterId);
+        if (!param) {
+            throw Error("tried to write unknown stack parameter");
+        }
+
+        const buf = Buffer.alloc(128);
+        let pos = 0;
+        buf.writeUInt8(FirmwareCommand.WriteParameter, pos);
+        pos += 1;
+        buf.writeUInt8(seqNumber, pos);
+        pos += 1;
+        buf.writeUInt8(0, pos); // status: not used
+        pos += 1;
+
+        const posFrameLength = pos; // remember
+        buf.writeUInt16LE(0, pos); // dummy frame length
+        pos += 2;
+        // -------------- actual data ---------------------------------------
+        const posPayloadLength = pos; // remember
+        buf.writeUInt16LE(0, pos); // dummy payload length
+        pos += 2;
+        buf.writeUInt8(parameterId, pos);
+        pos += 1;
+
+        if (value instanceof Buffer) {
+            for (let i = 0; i < value.length; i++) {
+                buf.writeUInt8(value[i], pos);
+                pos += 1;                
+            }
+        } else if (typeof value === "number") {
+            if (param.type === DataType.U8) {
+                buf.writeUInt8(value, pos);
+                pos += 1;
+            } else if (param.type === DataType.U16) {
+                buf.writeUInt16LE(value, pos);
+                pos += 2;
+            } else if (param.type === DataType.U32) {
+                buf.writeUInt32LE(value, pos);
+                pos += 4;
+            } else {
+                throw Error("tried to write unknown parameter number type");
+            }
         } else {
-            parameterLength = this.getLengthOfParameter(parameterId);
+            throw Error("tried to write unknown parameter type");
         }
-        //logger.debug("SEND WRITE_PARAMETER Request - parameter id: " + parameterId + " value: " + value.toString(16) + " length: " + parameterLength, NS);
 
-        const payloadLength = 1 + parameterLength;
-        const frameLength = 7 + payloadLength;
+        const payloadLength = pos - (posPayloadLength + 2);
 
-        const fLength1 = frameLength & 0xff;
-        const fLength2 = frameLength >> 8;
+        buf.writeUInt16LE(payloadLength, posPayloadLength); // actual payload length
+        buf.writeUInt16LE(pos, posFrameLength); // actual frame length
 
-        const pLength1 = payloadLength & 0xff;
-        const pLength2 = payloadLength >> 8;
-
-        if (parameterId === PARAM.PARAM.Network.NETWORK_KEY) {
-            this.sendRequest(
-                Buffer.from([PARAM.PARAM.FrameType.WriteParameter, seqNumber, 0x00, 0x19, 0x00, 0x12, 0x00, parameterId, 0x00].concat(value)),
-            );
-        } else {
-            this.sendRequest(
-                Buffer.from([
-                    PARAM.PARAM.FrameType.WriteParameter,
-                    seqNumber,
-                    0x00,
-                    fLength1,
-                    fLength2,
-                    pLength1,
-                    pLength2,
-                    parameterId,
-                    ...this.parameterBuffer(value, parameterLength),
-                ]),
-            );
-        }
+        const out = buf.subarray(0, pos);
+        return this.sendRequest(out);
     }
 
-    private getLengthOfParameter(parameterId: number): number {
-        // TODO(mpi): Magic numbers ...
-        switch (parameterId) {
-            case 9:
-            case 16:
-            case 21:
-            case 28:
-            case 33:
-            case 36:
-                return 1;
-            case 5:
-            case 7:
-            case 34:
-                return 2;
-            case 10:
-            case 38:
-                return 4;
-            case 1:
-            case 8:
-            case 11:
-            case 14:
-                return 8;
-            case 24:
-            case 25:
-                return 16;
-            default:
-                return 0;
-        }
-    }
-
-    private parameterBuffer(parameter: ParameterT, parameterLength: number): Buffer {
-        if (typeof parameter === "number") {
-            // for parameter <= 4 Byte
-            if (parameterLength > 4) throw new Error("parameter to big for type number");
-
-            const buf = Buffer.alloc(parameterLength);
-            buf.writeUIntLE(parameter, 0, parameterLength);
-
-            return buf;
-        }
-
-        return Buffer.from(parameter.reverse());
-    }
-
-    private sendReadFirmwareVersionRequest(seqNumber: number): void {
+    private sendReadFirmwareVersionRequest(seqNumber: number): {cmd: number, seq: number} {
         /* command id, sequence number, 0, framelength(U16) */
-        this.sendRequest(Buffer.from([PARAM.PARAM.FrameType.ReadFirmwareVersion, seqNumber, 0x00, 0x09, 0x00, 0x00, 0x00, 0x00, 0x00]));
+        return this.sendRequest(Buffer.from([FirmwareCommand.FirmwareVersion, seqNumber, 0x00, 0x09, 0x00, 0x00, 0x00, 0x00, 0x00]));
     }
 
-    private sendReadDeviceStateRequest(seqNumber: number): void {
+    private sendReadDeviceStateRequest(seqNumber: number): {cmd: number, seq: number} {
         /* command id, sequence number, 0, framelength(U16) */
-        this.sendRequest(Buffer.from([PARAM.PARAM.FrameType.ReadDeviceState, seqNumber, 0x00, 0x08, 0x00, 0x00, 0x00, 0x00]));
+        return this.sendRequest(Buffer.from([FirmwareCommand.Status, seqNumber, 0x00, 0x08, 0x00, 0x00, 0x00, 0x00]));
     }
 
-    private sendRequest(buffer: Buffer): void {
+    private sendRequest(buffer: Buffer): {cmd: number, seq: number} {
         const frame = Buffer.concat([buffer, this.calcCrc(buffer)]);
         const slipframe = slip.encode(frame);
 
-        // TODO: write not awaited?
-        if (this.serialPort) {
-            this.serialPort.write(slipframe, (err) => {
-                if (err) {
-                    logger.debug(`Error writing serial Port: ${err.message}`, NS);
-                }
-            });
-        } else {
-            // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
-            this.socketPort!.write(slipframe, (err) => {
-                if (err) {
-                    logger.debug(`Error writing socket Port: ${err.message}`, NS);
-                }
-            });
+        if (frame[0] === 0x00) {
+            throw new Error(`send unexpected frame with invalid command ID: 0x${frame[0].toString(16).padStart(2, "0")}`);
         }
+
+        if (slipframe.length >= 256) {
+            throw new Error("send unexpected long slip frame");
+        }
+
+        let written = false;
+
+        if (this.serialPort) {
+            if (!this.serialPort.isOpen) {
+                throw new Error("Can't write to serial port while it isn't open");
+            }
+
+            for (let retry = 0; retry < 3 && !written; retry++) {
+                written = this.serialPort.write(slipframe, (err) => {
+                    if (err) {
+                        throw new Error(`Failed to write to serial port: ${err.message}`);
+                    }
+                });
+
+                // if written is false, we also need to wait for drain()
+                this.serialPort.drain(); // flush
+            }
+        } else if (this.socketPort) {
+            // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
+            written = this.socketPort.write(slipframe, (err) => {
+                if (err) {
+                    throw new Error(`Failed to write to serial port: ${err.message}`);
+                } else {
+                    written = true;
+                }
+            });
+
+            // handle in upper functions
+            // if (!written) {
+            //     await this.sleep(1000);
+            // }
+        }
+
+        if (!written) {
+            throw new Error(`Failed to send request cmd: ${frame[0]}, seq: ${frame[1]}`);
+        }    
+        
+        const result = {cmd: frame[0], seq: frame[1]};
+        this.emitStateEvent(DriverEvent.FirmwareCommandSend, result);
+        return result;
     }
 
     private processQueue(): void {
@@ -466,270 +757,141 @@ class Driver extends events.EventEmitter {
             return;
         }
 
-        const req = queue.shift();
+        if (this.txState !== TxState.Idle) {
+            return;
+        }
+
+        const req: Request | undefined = queue.shift();
 
         if (req) {
             req.ts = Date.now();
 
-            switch (req.commandId) {
-                case PARAM.PARAM.FrameType.ReadParameter:
-                    logger.debug(`send read parameter request from queue. seqNr: ${req.seqNumber} paramId: ${req.parameterId}`, NS);
-                    // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
-                    this.sendReadParameterRequest(req.parameterId!, req.seqNumber);
-                    break;
-                case PARAM.PARAM.FrameType.WriteParameter:
-                    logger.debug(
-                        `send write parameter request from queue. seqNr: ${req.seqNumber} paramId: ${req.parameterId} param: ${req.parameter}`,
-                        NS,
-                    );
-                    // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
-                    this.sendWriteParameterRequest(req.parameterId!, req.parameter!, req.seqNumber);
-                    break;
-                case PARAM.PARAM.FrameType.ReadFirmwareVersion:
-                    logger.debug(`send read firmware version request from queue. seqNr: ${req.seqNumber}`, NS);
-                    this.sendReadFirmwareVersionRequest(req.seqNumber);
-                    break;
-                case PARAM.PARAM.FrameType.ReadDeviceState:
-                    logger.debug(`send read device state from queue. seqNr: ${req.seqNumber}`, NS);
-                    this.sendReadDeviceStateRequest(req.seqNumber);
-                    break;
-                case PARAM.PARAM.NetworkState.CHANGE_NETWORK_STATE:
-                    logger.debug(`send change network state request from queue. seqNr: ${req.seqNumber}`, NS);
-                    // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
-                    this.sendChangeNetworkStateRequest(req.seqNumber, req.networkState!);
-                    break;
-                default:
-                    throw new Error("process queue - unknown command id");
-            }
+            try {
+                switch (req.commandId) {
+                    case FirmwareCommand.ReadParameter:
 
-            busyQueue.push(req);
+                        logger.debug(`send read parameter request from queue. parameter: ${ParamId[req.parameterId]} seq: ${req.seqNumber}`, NS);
+                        // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
+                        this.sendReadParameterRequest(req.parameterId, req.seqNumber);
+                        break;
+                    case FirmwareCommand.WriteParameter:
+                        if (req.parameter == undefined) {
+                            throw new Error(`Write parameter request without parameter: ${ParamId[req.parameterId]}`);
+                        }
+                        logger.debug(`Send write parameter request from queue. seq: ${req.seqNumber} parameter: ${ParamId[req.parameterId]}`, NS);
+                        // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
+                        this.sendWriteParameterRequest(req.parameterId, req.parameter, req.seqNumber);
+                        break;
+                    case FirmwareCommand.FirmwareVersion:
+                        logger.debug(`Send read firmware version request from queue. seq: ${req.seqNumber}`, NS);
+                        this.sendReadFirmwareVersionRequest(req.seqNumber);
+                        break;
+                    case FirmwareCommand.Status:
+                        //logger.debug(`Send read device state from queue. seqNr: ${req.seqNumber}`, NS);
+                        this.sendReadDeviceStateRequest(req.seqNumber);
+                        break;
+                    case FirmwareCommand.ChangeNetworkState:
+                        logger.debug(`Send change network state request from queue. seq: ${req.seqNumber}`, NS);
+                        // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
+                        this.sendChangeNetworkStateRequest(req.seqNumber, req.networkState!);
+                        break;
+                    default:
+                        throw new Error("process queue - unknown command id");
+                }
+
+                busyQueue.push(req);
+            } catch (err) {
+                req.reject(new Error(`Failed to process request ${FirmwareCommand[req.commandId]}, seq: ${req.seqNumber}`));
+            }
         }
     }
 
-    private async processBusyQueue(): Promise<void> {
+    private processBusyQueueTimeouts(): void {
         let i = busyQueue.length;
         while (i--) {
             const req: Request = busyQueue[i];
             const now = Date.now();
 
-            // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
-            if (now - req.ts! > 10000) {
-                logger.debug(`Timeout for request - CMD: 0x${req.commandId.toString(16)} seqNr: ${req.seqNumber}`, NS);
+            if (10000 < now - req.ts) {
                 //remove from busyQueue
                 busyQueue.splice(i, 1);
                 this.timeoutCounter++;
-                // after a timeout the timeoutcounter will be reset after 1 min. If another timeout happen then the timeoutcounter
-                // will not be reset
-                clearTimeout(this.timeoutResetTimeout);
-                this.timeoutResetTimeout = undefined;
-                this.resetTimeoutCounterAfter1min();
-                req.reject(new Error("TIMEOUT"));
-                if (this.timeoutCounter >= 2) {
-                    this.timeoutCounter = 0;
-                    logger.debug("too many timeouts - restart serial connecion", NS);
-                    if (this.serialPort?.isOpen) {
-                        this.serialPort.close();
-                    }
-                    if (this.socketPort) {
-                        this.socketPort.destroy();
-                    }
-                    await this.open(this.currentBaudRate);
-                }
+                req.reject(new Error(`Timeout for queued command ${FirmwareCommand[req.commandId]}, seq: ${req.seqNumber}`));
             }
         }
     }
 
-    public changeNetworkStateRequest(networkState: number): Promise<void> {
+    public changeNetworkStateRequest(networkState: NetworkState): Promise<void> {
         const seqNumber = this.nextSeqNumber();
         return new Promise((resolve, reject): void => {
             //logger.debug(`push change network state request to apsQueue. seqNr: ${seqNumber}`, NS);
             const ts = 0;
-            const commandId = PARAM.PARAM.NetworkState.CHANGE_NETWORK_STATE;
-            const req: Request = {commandId, networkState, seqNumber, resolve, reject, ts};
+            const commandId = FirmwareCommand.ChangeNetworkState;
+            const parameterId = ParamId.NONE;
+            const req: Request = {commandId, networkState, parameterId, seqNumber, resolve, reject, ts};
             queue.push(req);
         });
     }
 
-    private sendChangeNetworkStateRequest(seqNumber: number, networkState: number): void {
-        this.sendRequest(Buffer.from([PARAM.PARAM.NetworkState.CHANGE_NETWORK_STATE, seqNumber, 0x00, 0x06, 0x00, networkState]));
+    private sendChangeNetworkStateRequest(seqNumber: number, networkState: NetworkState): {cmd: number, seq: number} {
+        return this.sendRequest(Buffer.from([FirmwareCommand.ChangeNetworkState, seqNumber, 0x00, 0x06, 0x00, networkState]));
     }
 
-    private async deviceStateRequest(): Promise<void> {
-        const seqNumber = this.nextSeqNumber();
-        return await new Promise((resolve, reject): void => {
-            //logger.debug(`DEVICE_STATE Request - seqNr: ${seqNumber}`, NS);
-            const ts = 0;
-            const commandId = PARAM.PARAM.FrameType.ReadDeviceState;
-            const req: Request = {commandId, seqNumber, resolve, reject, ts};
-            queue.push(req);
-        });
+    private checkDeviceStatus(deviceStatus: number): void {
+        this.deviceStatus = deviceStatus;
+        this.configChanged = (deviceStatus >> 4) & 0x01;
+        this.emitStateEvent(DriverEvent.DeviceStateUpdated, deviceStatus);
     }
 
-    private checkDeviceStatus(currentDeviceStatus: number): void {
-        const networkState = currentDeviceStatus & 0x03;
-        this.apsDataConfirm = (currentDeviceStatus >> 2) & 0x01;
-        this.apsDataIndication = (currentDeviceStatus >> 3) & 0x01;
-        this.configChanged = (currentDeviceStatus >> 4) & 0x01;
-        this.apsRequestFreeSlots = (currentDeviceStatus >> 5) & 0x01;
-
-        logger.debug(
-            `networkstate: ${networkState} apsDataConfirm: ${this.apsDataConfirm} apsDataIndication: ${this.apsDataIndication} configChanged: ${this.configChanged} apsRequestFreeSlots: ${this.apsRequestFreeSlots}`,
-            NS,
-        );
-    }
-
-    private async handleDeviceStatus(): Promise<void> {
-        if (this.apsDataConfirm === 1) {
-            try {
-                logger.debug("query aps data confirm", NS);
-                this.apsDataConfirm = 0;
-                await this.querySendDataStateRequest();
-            } catch (error) {
-                // @ts-expect-error TODO: this doesn't look right?
-                if (error.status === 5) {
-                    this.apsDataConfirm = 0;
-                }
-            }
-        }
-        if (this.apsDataIndication === 1) {
-            try {
-                logger.debug("query aps data indication", NS);
-                this.apsDataIndication = 0;
-                await this.readReceivedDataRequest();
-            } catch (error) {
-                // @ts-expect-error TODO: this doesn't look right?
-                if (error.status === 5) {
-                    this.apsDataIndication = 0;
-                }
-            }
-        }
-        if (this.configChanged === 1) {
-            // when network settings changed
-        }
-    }
-
-    // DATA_IND
-    private readReceivedDataRequest(): Promise<void> {
-        const seqNumber = this.nextSeqNumber();
-        return new Promise((resolve, reject): void => {
-            //logger.debug(`push read received data request to apsQueue. seqNr: ${seqNumber}`, NS);
-            const ts = 0;
-            const commandId = PARAM.PARAM.APS.DATA_INDICATION;
-            const req: Request = {commandId, seqNumber, resolve, reject, ts};
-            apsConfirmIndQueue.push(req);
-        });
-    }
-
-    // DATA_REQ
-    public enqueueSendDataRequest(request: ApsDataRequest): Promise<undefined | ReceivedDataResponse> {
+    public enqueueApsDataRequest(request: ApsDataRequest): Promise<undefined | ReceivedDataResponse> {
         const seqNumber = this.nextSeqNumber();
         return new Promise((resolve, reject): void => {
             //logger.debug(`push enqueue send data request to apsQueue. seqNr: ${seqNumber}`, NS);
-            const ts = 0;
-            const commandId = PARAM.PARAM.APS.DATA_REQUEST;
-            const req: Request = {commandId, seqNumber, request, resolve, reject, ts};
+            const ts = Date.now();
+            const commandId = FirmwareCommand.ApsDataRequest;
+            const req: ApsRequest = {commandId, seqNumber, request, resolve, reject, ts};
             apsQueue.push(req);
+            this.emitStateEvent(DriverEvent.EnqueuedApsDataRequest, req.seqNumber);
         });
     }
 
-    // DATA_CONF
-    private querySendDataStateRequest(): Promise<void> {
-        const seqNumber = this.nextSeqNumber();
-        return new Promise((resolve, reject): void => {
-            //logger.debug(`push query send data state request to apsQueue. seqNr: ${seqNumber}`, NS);
-            const ts = 0;
-            const commandId = PARAM.PARAM.APS.DATA_CONFIRM;
-            const req: Request = {commandId, seqNumber, resolve, reject, ts};
-            apsConfirmIndQueue.push(req);
-        });
-    }
-
-    private async processApsQueue(): Promise<void> {
+    private processApsQueue(): void {
         if (apsQueue.length === 0) {
             return;
         }
 
-        if (this.apsRequestFreeSlots !== 1) {
-            logger.debug("no free slots. Delay sending of APS Request", NS);
-            await this.sleep(1000);
+        if (this.txState !== TxState.Idle) {
             return;
         }
 
         const req = apsQueue.shift();
 
-        if (req) {
+        if (req && req.request) {
             req.ts = Date.now();
 
-            switch (req.commandId) {
-                case PARAM.PARAM.APS.DATA_REQUEST:
-                    if (readyToSend === false) {
-                        // wait until last request was confirmed or given time elapsed
-                        logger.debug("delay sending of APS Request", NS);
-                        apsQueue.unshift(req);
-                        break;
-                    }
+            if (req.commandId !== FirmwareCommand.ApsDataRequest) // should never happen
+                throw new Error("process APS queue - unknown command id");
 
-                    disableRTS();
-                    enableRtsTimeout = setTimeout(() => {
-                        enableRTS();
-                    }, this.readyToSendTimeout);
-                    apsBusyQueue.push(req);
-                    // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
-                    this.sendEnqueueSendDataRequest(req.request!, req.seqNumber);
-                    break;
-                default:
-                    throw new Error("process APS queue - unknown command id");
+            try {
+                this.sendEnqueueApsDataRequest(req.request, req.seqNumber);
+                apsBusyQueue.push(req);
+            } catch(err) {
+                apsQueue.unshift(req);
             }
         }
     }
 
-    private processApsConfirmIndQueue(): void {
-        if (apsConfirmIndQueue.length === 0) {
-            return;
-        }
-
-        const req = apsConfirmIndQueue.shift();
-
-        if (req) {
-            req.ts = Date.now();
-
-            apsBusyQueue.push(req);
-
-            switch (req.commandId) {
-                case PARAM.PARAM.APS.DATA_INDICATION:
-                    //logger.debug(`read received data request. seqNr: ${req.seqNumber}`, NS);
-                    if (this.delay === 0) {
-                        this.sendReadReceivedDataRequest(req.seqNumber);
-                    } else {
-                        this.sendReadReceivedDataRequest(req.seqNumber);
-                    }
-                    break;
-                case PARAM.PARAM.APS.DATA_CONFIRM:
-                    //logger.debug(`query send data state request. seqNr: ${req.seqNumber}`, NS);
-                    if (this.delay === 0) {
-                        this.sendQueryDataStateRequest(req.seqNumber);
-                    } else {
-                        this.sendQueryDataStateRequest(req.seqNumber);
-                    }
-                    break;
-                default:
-                    throw new Error("process APS Confirm/Ind queue - unknown command id");
-            }
-        }
+    private sendReadApsConfirmRequest(seqNumber: number): {cmd: number, seq: number} {
+        logger.debug(`Request APS-DATA.confirm seq: ${seqNumber}`, NS);
+        return this.sendRequest(Buffer.from([FirmwareCommand.ApsDataConfirm, seqNumber, 0x00, 0x07, 0x00, 0x00, 0x00]));
     }
 
-    private sendQueryDataStateRequest(seqNumber: number): void {
-        logger.debug(`DATA_CONFIRM - sending data state request - SeqNr. ${seqNumber}`, NS);
-        this.sendRequest(Buffer.from([PARAM.PARAM.APS.DATA_CONFIRM, seqNumber, 0x00, 0x07, 0x00, 0x00, 0x00]));
+    private sendReadApsIndicationRequest(seqNumber: number): {cmd: number, seq: number} {
+        logger.debug(`Request APS-DATA.indication seq: ${seqNumber}`, NS);
+        return this.sendRequest(Buffer.from([FirmwareCommand.ApsDataIndication, seqNumber, 0x00, 0x08, 0x00, 0x01, 0x00, 0x01]));
     }
 
-    private sendReadReceivedDataRequest(seqNumber: number): void {
-        logger.debug(`DATA_INDICATION - sending read data request - SeqNr. ${seqNumber}`, NS);
-        // payloadlength = 0, flag = none
-        this.sendRequest(Buffer.from([PARAM.PARAM.APS.DATA_INDICATION, seqNumber, 0x00, 0x08, 0x00, 0x01, 0x00, 0x01]));
-    }
-
-    private sendEnqueueSendDataRequest(request: ApsDataRequest, seqNumber: number): void {
+    private sendEnqueueApsDataRequest(request: ApsDataRequest, seqNumber: number): {cmd: number, seq: number} {
         const payloadLength =
             12 +
             (request.destAddrMode === PARAM.PARAM.addressMode.GROUP_ADDR ? 2 : request.destAddrMode === PARAM.PARAM.addressMode.NWK_ADDR ? 3 : 9) +
@@ -757,11 +919,11 @@ class Driver extends events.EventEmitter {
             dest += request.destEndpoint;
         }
 
-        logger.debug(`DATA_REQUEST - destAddr: 0x${dest} SeqNr. ${seqNumber} request id: ${request.requestId}`, NS);
+        logger.debug(`Request APS-DATA.request: dest: 0x${dest} seq: ${seqNumber} requestId: ${request.requestId}`, NS);
 
-        this.sendRequest(
+        return this.sendRequest(
             Buffer.from([
-                PARAM.PARAM.APS.DATA_REQUEST,
+                FirmwareCommand.ApsDataRequest,
                 seqNumber,
                 0x00,
                 frameLength & 0xff,
@@ -786,7 +948,7 @@ class Driver extends events.EventEmitter {
         );
     }
 
-    private processApsBusyQueue(): void {
+    private processApsBusyQueueTimeouts(): void {
         let i = apsBusyQueue.length;
         while (i--) {
             const req = apsBusyQueue[i];
@@ -795,12 +957,10 @@ class Driver extends events.EventEmitter {
             if (req.request != null && req.request.timeout != null) {
                 timeout = req.request.timeout * 1000; // seconds * 1000 = milliseconds
             }
-            // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
-            if (now - req.ts! > timeout) {
-                logger.debug(`Timeout for aps request CMD: 0x${req.commandId.toString(16)} seq: ${req.seqNumber}`, NS);
+            if (now - req.ts > timeout) {
                 //remove from busyQueue
                 apsBusyQueue.splice(i, 1);
-                req.reject(new Error("APS TIMEOUT"));
+                req.reject(new Error(`Timeout for APS-DATA.request, seq: ${req.seqNumber}`));
             }
         }
     }
@@ -898,22 +1058,19 @@ class Driver extends events.EventEmitter {
             const crcFrame = ((frame[frame.length - 1] << 8) | frame[frame.length - 2]);
 
             if (crc == crcFrame) {
+                this.lastFirmwareRxTime = Date.now();
+                this.emitStateEvent(DriverEvent.FirmwareCommandReceived, {cmd: frame[0], seq: frame[1]});
                 this.emit("rxFrame", frame.slice(0, storedLength));
+            } else {
+                logger.debug("frame CRC invalid (could be ASCII message)", NS);
             }
+        } else {
+            logger.debug(`frame length (${frame.length}) < 5, discard`, NS);
         }
     }
 
     private sleep(ms: number): Promise<void> {
         return new Promise((resolve) => setTimeout(resolve, ms));
-    }
-
-    private resetTimeoutCounterAfter1min(): void {
-        if (this.timeoutResetTimeout === undefined) {
-            this.timeoutResetTimeout = setTimeout(() => {
-                this.timeoutCounter = 0;
-                this.timeoutResetTimeout = undefined;
-            }, 60000);
-        }
     }
 }
 
