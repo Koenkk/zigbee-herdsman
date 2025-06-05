@@ -1,7 +1,6 @@
 /* v8 ignore start */
 
 import {EventEmitter} from "node:events";
-
 import {logger} from "../../../utils/logger";
 import * as Zdo from "../../../zspec/zdo";
 import PARAM, {
@@ -15,13 +14,10 @@ import PARAM, {
     CommandStatus,
     ParamId,
 } from "./constants";
-import Driver, {apsBusyQueue, busyQueue} from "./driver";
-import { stat } from "node:fs";
-//import Request from "src/controller/helpers/request";
+import {apsBusyQueue, busyQueue} from "./driver";
 
 const NS = "zh:deconz:frameparser";
 
-const MIN_BUFFER_SIZE = 3;
 const littleEndian = true;
 const lastReceivedGpInd = {srcId: 0, commandId: 0, frameCounter: 0};
 export const frameParserEvents = new EventEmitter();
@@ -30,12 +26,12 @@ function parseReadParameterResponse(view: DataView): Command | null {
     const seqNumber = view.getUint8(1);
     const status = view.getUint8(2);
     const parameterId = view.getUint8(7);
-    let pos = 8; 
+    let pos = 8;
     let result = null;
 
     switch (parameterId) {
         case ParamId.MAC_ADDRESS: {
-            result = "0x" + view.getBigUint64(pos, littleEndian).toString(16).padStart(16, "0");
+            result = `0x${view.getBigUint64(pos, littleEndian).toString(16).padStart(16, "0")}`;
             break;
         }
         case ParamId.NWK_PANID: {
@@ -51,11 +47,11 @@ function parseReadParameterResponse(view: DataView): Command | null {
             break;
         }
         case ParamId.NWK_EXTENDED_PANID: {
-            result = "0x" + view.getBigUint64(pos, littleEndian).toString(16).padStart(16, "0");
+            result = `0x${view.getBigUint64(pos, littleEndian).toString(16).padStart(16, "0")}`;
             break;
         }
         case ParamId.APS_USE_EXTENDED_PANID: {
-            result = "0x" + view.getBigUint64(pos, littleEndian).toString(16).padStart(16, "0");
+            result = `0x${view.getBigUint64(pos, littleEndian).toString(16).padStart(16, "0")}`;
             break;
         }
         case ParamId.STK_NETWORK_KEY: {
@@ -96,7 +92,8 @@ function parseReadParameterResponse(view: DataView): Command | null {
 
     if (parameterId in ParamId) {
         let p = result;
-        if (parameterId == ParamId.STK_NETWORK_KEY) { // don't show in logs
+        if (parameterId === ParamId.STK_NETWORK_KEY) {
+            // don't show in logs
             p = "<hidden>";
         }
         logger.debug(`Received read parameter response for ${ParamId[parameterId]}, seq: ${seqNumber}, status: ${status}, parameter: ${p}`, NS);
@@ -170,7 +167,8 @@ function parseApsConfirmResponse(view: DataView): DataStateResponse | null {
     const req: ApsRequest = apsBusyQueue[i];
 
     //TODO(mpi): Add enum for possible (MAC,NWK,APS) status codes.
-    if (confirmStatus === 0x00) { // Success
+    if (confirmStatus === 0x00) {
+        // Success
         req.resolve(confirmStatus);
     } else {
         req.reject(new Error(`Failed APS-DATA.request with confirm status: 0x${confirmStatus.toString(16).padStart(2, "0")}`));
@@ -179,7 +177,10 @@ function parseApsConfirmResponse(view: DataView): DataStateResponse | null {
     //remove from busyqueue
     apsBusyQueue.splice(i, 1);
 
-    logger.debug(`APS-DATA.confirm  destAddr: 0x${destAddr} APS request id: ${requestId} confirm status: 0x${confirmStatus.toString(16).padStart(2, "0")}`, NS);
+    logger.debug(
+        `APS-DATA.confirm  destAddr: 0x${destAddr} APS request id: ${requestId} confirm status: 0x${confirmStatus.toString(16).padStart(2, "0")}`,
+        NS,
+    );
     frameParserEvents.emit("deviceStateUpdated", deviceState);
 
     return {
@@ -200,15 +201,15 @@ function parseApsConfirmResponse(view: DataView): DataStateResponse | null {
 }
 
 class UDataView {
-    littleEndian: boolean = true;
-    pos: number = 0;
+    littleEndian = true;
+    pos = 0;
     view: DataView;
     constructor(view: DataView, littleEndian: boolean) {
         this.view = view;
         this.littleEndian = littleEndian;
     }
 
-    getI8() : number {
+    getI8(): number {
         if (this.pos + 1 <= this.view.byteLength) {
             this.pos += 1;
             return this.view.getInt8(this.pos - 1);
@@ -216,7 +217,7 @@ class UDataView {
         throw new RangeError();
     }
 
-    getU8() : number {
+    getU8(): number {
         if (this.pos + 1 <= this.view.byteLength) {
             this.pos += 1;
             return this.view.getUint8(this.pos - 1);
@@ -224,7 +225,7 @@ class UDataView {
         throw new RangeError();
     }
 
-    getU16() : number {
+    getU16(): number {
         if (this.pos + 2 <= this.view.byteLength) {
             this.pos += 2;
             return this.view.getUint16(this.pos - 2, this.littleEndian);
@@ -232,7 +233,7 @@ class UDataView {
         throw new RangeError();
     }
 
-    getU32() : number {
+    getU32(): number {
         if (this.pos + 4 <= this.view.byteLength) {
             this.pos += 4;
             return this.view.getUint16(this.pos - 4, this.littleEndian);
@@ -240,7 +241,7 @@ class UDataView {
         throw new RangeError();
     }
 
-    getU64() : bigint {
+    getU64(): bigint {
         if (this.pos + 8 <= this.view.byteLength) {
             this.pos += 8;
             return this.view.getBigUint64(this.pos - 8, this.littleEndian);
@@ -271,7 +272,7 @@ function parseApsDataIndicationResponse(inview: DataView): ReceivedDataResponse 
 
         let destAddr64: string | undefined;
         let destAddr16: number | undefined;
-        let destAddr;
+        let destAddr: string | number;
 
         if (destAddrMode === PARAM.PARAM.addressMode.IEEE_ADDR) {
             destAddr64 = uview.getU64().toString(16).padStart(16, "0");
@@ -288,10 +289,10 @@ function parseApsDataIndicationResponse(inview: DataView): ReceivedDataResponse 
         const srcAddrMode = uview.getU8();
 
         let srcAddr64: string | undefined;
-        let srcAddr16: number = 0xfffe;
-        let srcAddr;
+        let srcAddr16 = 0xfffe;
+        let srcAddr: string | number;
 
-        if (srcAddrMode === PARAM.PARAM.addressMode.NWK_ADDR || /* srcAddrMode === PARAM.PARAM.addressMode.GROUP_ADDR ||*/ srcAddrMode === PARAM.PARAM.addressMode.NWK_IEEE_ADDR) {
+        if (srcAddrMode === PARAM.PARAM.addressMode.NWK_ADDR || srcAddrMode === PARAM.PARAM.addressMode.NWK_IEEE_ADDR) {
             srcAddr16 = uview.getU16();
             srcAddr = srcAddr16.toString(16);
 
@@ -324,11 +325,14 @@ function parseApsDataIndicationResponse(inview: DataView): ReceivedDataResponse 
         // version >= 2
         let rssi = 0;
         try {
-            rssi = uview.getI8()
-        } catch (e) {}
+            rssi = uview.getI8();
+        } catch (_) {}
 
-        logger.debug(`Response APS-DATA.indication seq: ${seqNr} srcAddr: 0x${srcAddr} destAddr: 0x${destAddr} profile id: 0x${profileId.toString(16).padStart(4, '0')} cluster id: 0x${clusterId.toString(16).padStart(4, '0')} lqi: ${lqi}`, NS);
-        logger.debug(`Response payload: [${Array.from(asdu).map(x =>x.toString(16).padStart(2, '0')).join(' ')}]`, NS);
+        logger.debug(
+            `Response APS-DATA.indication seq: ${seqNr} srcAddr: 0x${srcAddr} destAddr: 0x${destAddr} profile id: 0x${profileId.toString(16).padStart(4, "0")} cluster id: 0x${clusterId.toString(16).padStart(4, "0")} lqi: ${lqi}`,
+            NS,
+        );
+        //logger.debug(`Response payload: [${Array.from(asdu).map(x =>x.toString(16).padStart(2, '0')).join(' ')}]`, NS);
         frameParserEvents.emit("deviceStateUpdated", deviceState);
 
         const asduPayload = Buffer.from(asdu);
@@ -358,7 +362,6 @@ function parseApsDataIndicationResponse(inview: DataView): ReceivedDataResponse 
         };
 
         frameParserEvents.emit("receivedDataPayload", response);
-        
         return response;
     } catch (error) {
         logger.debug(`Response APS-DATA.indication error: ${error}`, NS);
@@ -385,9 +388,10 @@ function parseWriteParameterResponse(view: DataView): number | null {
         const status = view.getUint8(2);
         const parameterId = view.getUint8(7);
 
-        if (parameterId in ParamId) { // should always be true
+        if (parameterId in ParamId) {
+            // should always be true
             logger.debug(`Write parameter response parameter: ${ParamId[parameterId]}, status: ${CommandStatus[status]}`, NS);
-        } 
+        }
 
         return parameterId;
     } catch (error) {
@@ -520,8 +524,8 @@ function getParserForCommandId(id: number): (view: DataView) => Command | object
 
 function processFrame(frame: Uint8Array): void {
     const [seqNumber, status, command, commandId] = parseFrame(frame);
-//    logger.debug(`Process frame with cmd: 0x${commandId.toString(16).padStart(2,'0')}, seq: ${seqNumber} status: ${status}`, NS);
-    
+    // logger.debug(`Process frame with cmd: 0x${commandId.toString(16).padStart(2,'0')}, seq: ${seqNumber} status: ${status}`, NS);
+
     let queue: ApsRequest[] | Request[] = busyQueue;
 
     if (commandId === FirmwareCommand.ApsDataRequest) {
@@ -539,8 +543,8 @@ function processFrame(frame: Uint8Array): void {
         if (status === CommandStatus.Success) {
             // wait for APS-DATA.confirm to arrive
             return;
-        } 
-        
+        }
+
         // TODO(mpi): Within the timeout we should reschedule the APS-DATA.request (given that network state = connected)
         // continue to reject as there will be no APS-DATA.confirm
     }
@@ -551,11 +555,11 @@ function processFrame(frame: Uint8Array): void {
     if (status === CommandStatus.Success) {
         req.resolve(command);
     } else {
-        let cmdName;
+        let cmdName: string;
         if (commandId in FirmwareCommand) {
             cmdName = FirmwareCommand[commandId];
         } else {
-            cmdName = "0x" + commandId.toString(16).padStart(2, "0");
+            cmdName = `0x${commandId.toString(16).padStart(2, "0")}`;
         }
 
         req.reject(new Error(`Command ${cmdName} failed with status: ${CommandStatus[status]}`));
