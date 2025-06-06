@@ -1,5 +1,14 @@
 # Changelog
 
+## [4.1.1](https://github.com/Koenkk/zigbee-herdsman/compare/v4.1.0...v4.1.1) (2025-06-06)
+
+
+### Bug Fixes
+
+* Enable serial port locking by default for ZiGate ([#1380](https://github.com/Koenkk/zigbee-herdsman/issues/1380)) ([f465823](https://github.com/Koenkk/zigbee-herdsman/commit/f4658234a70faba9256b430a30aec804ebb3fbc3))
+* **ignore:** bump @types/node from 22.15.21 to 22.15.29 in the minor-patch group ([#1414](https://github.com/Koenkk/zigbee-herdsman/issues/1414)) ([534cff5](https://github.com/Koenkk/zigbee-herdsman/commit/534cff5742e597104163c593b578ec963ed7e7c1))
+* **ignore:** bump the minor-patch group with 2 updates ([#1416](https://github.com/Koenkk/zigbee-herdsman/issues/1416)) ([949a08c](https://github.com/Koenkk/zigbee-herdsman/commit/949a08c7ffd1685030e8a713c40970c17cee88a3))
+
 ## [4.1.0](https://github.com/Koenkk/zigbee-herdsman/compare/v4.0.2...v4.1.0) (2025-05-20)
 
 
