@@ -429,10 +429,10 @@ export class ZBOSSAdapter extends Adapter {
         }
     }
 
-    public async sendZclFrameToGroup(groupID: number, zclFrame: Zcl.Frame, sourceEndpoint?: number): Promise<void> {
+    public async sendZclFrameToGroup(groupID: number, zclFrame: Zcl.Frame, sourceEndpoint?: number, profileId?: number): Promise<void> {
         await this.driver.grequest(
             groupID,
-            sourceEndpoint === ZSpec.GP_ENDPOINT ? ZSpec.GP_PROFILE_ID : ZSpec.HA_PROFILE_ID,
+            profileId ?? (sourceEndpoint === ZSpec.GP_ENDPOINT ? ZSpec.GP_PROFILE_ID : ZSpec.HA_PROFILE_ID),
             zclFrame.cluster.ID,
             sourceEndpoint || 0x01,
             zclFrame.toBuffer(),
@@ -444,10 +444,11 @@ export class ZBOSSAdapter extends Adapter {
         zclFrame: Zcl.Frame,
         sourceEndpoint: number,
         destination: ZSpec.BroadcastAddress,
+        profileId?: number,
     ): Promise<void> {
         await this.driver.brequest(
             destination,
-            sourceEndpoint === ZSpec.GP_ENDPOINT && endpoint === ZSpec.GP_ENDPOINT ? ZSpec.GP_PROFILE_ID : ZSpec.HA_PROFILE_ID,
+            profileId ?? (sourceEndpoint === ZSpec.GP_ENDPOINT && endpoint === ZSpec.GP_ENDPOINT ? ZSpec.GP_PROFILE_ID : ZSpec.HA_PROFILE_ID),
             zclFrame.cluster.ID,
             endpoint,
             sourceEndpoint || 0x01,

@@ -715,7 +715,9 @@ export class ZStackAdapter extends Adapter {
         }
     }
 
-    public async sendZclFrameToGroup(groupID: number, zclFrame: Zcl.Frame, sourceEndpoint?: number): Promise<void> {
+    public async sendZclFrameToGroup(groupID: number, zclFrame: Zcl.Frame, sourceEndpoint?: number, profileId?: number): Promise<void> {
+        const srcEndpoint = this.selectSourceEndpoint(sourceEndpoint, profileId);
+
         return await this.queue.execute<void>(async () => {
             this.checkInterpanLock();
             await this.dataRequestExtended(
@@ -723,7 +725,7 @@ export class ZStackAdapter extends Adapter {
                 groupID,
                 0xff,
                 0,
-                sourceEndpoint || 1,
+                srcEndpoint,
                 zclFrame.cluster.ID,
                 Constants.AF.DEFAULT_RADIUS,
                 zclFrame.toBuffer(),
@@ -740,7 +742,15 @@ export class ZStackAdapter extends Adapter {
         });
     }
 
-    public async sendZclFrameToAll(endpoint: number, zclFrame: Zcl.Frame, sourceEndpoint: number, destination: BroadcastAddress): Promise<void> {
+    public async sendZclFrameToAll(
+        endpoint: number,
+        zclFrame: Zcl.Frame,
+        sourceEndpoint: number,
+        destination: BroadcastAddress,
+        profileId?: number,
+    ): Promise<void> {
+        const srcEndpoint = this.selectSourceEndpoint(sourceEndpoint, profileId);
+
         return await this.queue.execute<void>(async () => {
             this.checkInterpanLock();
             await this.dataRequestExtended(
@@ -748,7 +758,7 @@ export class ZStackAdapter extends Adapter {
                 destination,
                 endpoint,
                 0,
-                sourceEndpoint,
+                srcEndpoint,
                 zclFrame.cluster.ID,
                 Constants.AF.DEFAULT_RADIUS,
                 zclFrame.toBuffer(),

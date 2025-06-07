@@ -421,12 +421,12 @@ export class EZSPAdapter extends Adapter {
         }
     }
 
-    public async sendZclFrameToGroup(groupID: number, zclFrame: Zcl.Frame): Promise<void> {
+    public async sendZclFrameToGroup(groupID: number, zclFrame: Zcl.Frame, sourceEndpoint?: number, profileId?: number): Promise<void> {
         return await this.queue.execute<void>(async () => {
             this.checkInterpanLock();
             const frame = this.driver.makeApsFrame(zclFrame.cluster.ID, false);
-            frame.profileId = ZSpec.HA_PROFILE_ID;
-            frame.sourceEndpoint = 0x01;
+            frame.profileId = profileId || ZSpec.HA_PROFILE_ID;
+            frame.sourceEndpoint = sourceEndpoint || 0x01;
             frame.destinationEndpoint = 0x01;
             frame.groupId = groupID;
 
@@ -445,11 +445,13 @@ export class EZSPAdapter extends Adapter {
         zclFrame: Zcl.Frame,
         sourceEndpoint: number,
         destination: ZSpec.BroadcastAddress,
+        profileId?: number,
     ): Promise<void> {
         return await this.queue.execute<void>(async () => {
             this.checkInterpanLock();
             const frame = this.driver.makeApsFrame(zclFrame.cluster.ID, false);
-            frame.profileId = sourceEndpoint === ZSpec.GP_ENDPOINT && endpoint === ZSpec.GP_ENDPOINT ? ZSpec.GP_PROFILE_ID : ZSpec.HA_PROFILE_ID;
+            frame.profileId =
+                profileId ?? (sourceEndpoint === ZSpec.GP_ENDPOINT && endpoint === ZSpec.GP_ENDPOINT ? ZSpec.GP_PROFILE_ID : ZSpec.HA_PROFILE_ID);
             frame.sourceEndpoint = sourceEndpoint;
             frame.destinationEndpoint = endpoint;
             frame.groupId = destination;

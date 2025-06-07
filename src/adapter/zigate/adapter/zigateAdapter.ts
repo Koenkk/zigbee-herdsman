@@ -425,7 +425,13 @@ export class ZiGateAdapter extends Adapter {
         }
     }
 
-    public async sendZclFrameToAll(endpoint: number, zclFrame: Zcl.Frame, sourceEndpoint: number, destination: BroadcastAddress): Promise<void> {
+    public async sendZclFrameToAll(
+        endpoint: number,
+        zclFrame: Zcl.Frame,
+        sourceEndpoint: number,
+        destination: BroadcastAddress,
+        profileId?: number,
+    ): Promise<void> {
         return await this.queue.execute<void>(async () => {
             if (sourceEndpoint !== 0x01 /*&& sourceEndpoint !== 242*/) {
                 // @todo on zigate firmware without gp causes hang
@@ -439,7 +445,7 @@ export class ZiGateAdapter extends Adapter {
                 targetShortAddress: destination,
                 sourceEndpoint: sourceEndpoint,
                 destinationEndpoint: endpoint,
-                profileID: /*sourceEndpoint === ZSpec.GP_ENDPOINT ? ZSpec.GP_PROFILE_ID :*/ ZSpec.HA_PROFILE_ID,
+                profileID: profileId ?? ZSpec.HA_PROFILE_ID,
                 clusterID: zclFrame.cluster.ID,
                 securityMode: 0x02,
                 radius: 30,
@@ -453,7 +459,7 @@ export class ZiGateAdapter extends Adapter {
         });
     }
 
-    public async sendZclFrameToGroup(groupID: number, zclFrame: Zcl.Frame, sourceEndpoint?: number): Promise<void> {
+    public async sendZclFrameToGroup(groupID: number, zclFrame: Zcl.Frame, sourceEndpoint?: number, profileId?: number): Promise<void> {
         return await this.queue.execute<void>(async () => {
             const data = zclFrame.toBuffer();
             const payload: RawAPSDataRequestPayload = {
@@ -461,7 +467,7 @@ export class ZiGateAdapter extends Adapter {
                 targetShortAddress: groupID,
                 sourceEndpoint: sourceEndpoint || ZSpec.HA_ENDPOINT,
                 destinationEndpoint: 0xff,
-                profileID: ZSpec.HA_PROFILE_ID,
+                profileID: profileId ?? ZSpec.HA_PROFILE_ID,
                 clusterID: zclFrame.cluster.ID,
                 securityMode: 0x02,
                 radius: 30,

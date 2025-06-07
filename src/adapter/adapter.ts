@@ -170,9 +170,15 @@ export abstract class Adapter extends events.EventEmitter<AdapterEventMap> {
         profileId?: number,
     ): Promise<AdapterEvents.ZclPayload | undefined>;
 
-    public abstract sendZclFrameToGroup(groupID: number, zclFrame: Zcl.Frame, sourceEndpoint?: number): Promise<void>;
+    public abstract sendZclFrameToGroup(groupID: number, zclFrame: Zcl.Frame, sourceEndpoint?: number, profileId?: number): Promise<void>;
 
-    public abstract sendZclFrameToAll(endpoint: number, zclFrame: Zcl.Frame, sourceEndpoint: number, destination: BroadcastAddress): Promise<void>;
+    public abstract sendZclFrameToAll(
+        endpoint: number,
+        zclFrame: Zcl.Frame,
+        sourceEndpoint: number,
+        destination: BroadcastAddress,
+        profileId?: number,
+    ): Promise<void>;
 
     /**
      * InterPAN
