@@ -436,13 +436,7 @@ export class ZStackAdapter extends Adapter {
         sourceEndpoint?: number,
         profileId?: number,
     ): Promise<Events.ZclPayload | undefined> {
-        // If sourceEndpoint is not provided, try to select the source endpoint based on the profileId. If no profileId is provided, use endpoint 1.
-        const srcEndpoint = sourceEndpoint ?? Endpoints.find((e) => e.appprofid === profileId)?.endpoint ?? 1;
-
-        // Validate that the requested profileId can be satisfied by the adapter.
-        if (profileId !== undefined && Endpoints.find((e) => e.endpoint === srcEndpoint)?.appprofid !== profileId) {
-            throw new Error(`Profile ID ${profileId} is not supported by this adapter.`);
-        }
+        const srcEndpoint = this.selectSourceEndpoint(sourceEndpoint, profileId);
 
         return await this.queue.execute<Events.ZclPayload | undefined>(async () => {
             this.checkInterpanLock();
@@ -1196,5 +1190,25 @@ export class ZStackAdapter extends Adapter {
         if (this.interpanLock) {
             throw new Error("Cannot execute command, in Inter-PAN mode");
         }
+    }
+
+    private selectSourceEndpoint(sourceEndpoint?: number, profileId?: number): number {
+        // Use provided sourceEndpoint as the highest priority
+        let srcEndpoint = sourceEndpoint;
+        // If sourceEndpoint is not provided, try to select the source endpoint based on the profileId.
+        if (srcEndpoint === undefined && profileId !== undefined) {
+            srcEndpoint = Endpoints.find((e) => e.appprofid === profileId)?.endpoint;
+        }
+        //If no profileId is provided, or if no corresponding endpoint exists, use endpoint 1.
+        if (srcEndpoint === undefined) {
+            srcEndpoint = 1;
+        }
+
+        // Validate that the requested profileId can be satisfied by the adapter.
+        if (profileId !== undefined && Endpoints.find((e) => e.endpoint === srcEndpoint)?.appprofid !== profileId) {
+            throw new Error(`Profile ID ${profileId} is not supported by this adapter.`);
+        }
+
+        return srcEndpoint;
     }
 }
