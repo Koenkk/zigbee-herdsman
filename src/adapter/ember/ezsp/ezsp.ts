@@ -5308,7 +5308,7 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
             (apsFrame.profileId === ZSpec.GP_PROFILE_ID && type !== EmberIncomingMessageType.BROADCAST_LOOPBACK) ||
             // TODO: Better (dynamic) way to handle this?
             // Shelly custom Clusters require a special profile ID
-            apsFrame.profileId === ZSpec.SHELLY_PROFILE_ID
+            apsFrame.profileId === ZSpec.CUSTOM_SHELLY_PROFILE_ID
         ) {
             this.emit("incomingMessage", type, apsFrame, packetInfo.lastHopLqi, packetInfo.senderShortId, messageContents);
         }
