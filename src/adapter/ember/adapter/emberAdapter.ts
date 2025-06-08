@@ -1943,12 +1943,6 @@ export class EmberAdapter extends Adapter {
         sourceEndpoint?: number,
         profileId?: number,
     ): Promise<ZclPayload | undefined> {
-        let resolvedProfileId = profileId;
-        if (resolvedProfileId === undefined) {
-            const sourceEndpointInfo = (sourceEndpoint && FIXED_ENDPOINTS.find((epi) => epi.endpoint === sourceEndpoint)) || FIXED_ENDPOINTS[0];
-            resolvedProfileId = sourceEndpointInfo.profileId;
-        }
-
         const command = zclFrame.command;
         let commandResponseId: number | undefined;
 
@@ -1959,7 +1953,8 @@ export class EmberAdapter extends Adapter {
         }
 
         const apsFrame: EmberApsFrame = {
-            profileId: resolvedProfileId,
+            profileId:
+                profileId ?? ((sourceEndpoint && FIXED_ENDPOINTS.find((epi) => epi.endpoint === sourceEndpoint)) || FIXED_ENDPOINTS[0]).profileId,
             clusterId: zclFrame.cluster.ID,
             sourceEndpoint: sourceEndpoint || FIXED_ENDPOINTS[0].endpoint,
             destinationEndpoint: endpoint,
@@ -2056,14 +2051,9 @@ export class EmberAdapter extends Adapter {
 
     // queued, non-InterPAN
     public async sendZclFrameToGroup(groupID: number, zclFrame: Zcl.Frame, sourceEndpoint?: number, profileId?: number): Promise<void> {
-        let resolvedProfileId = profileId;
-        if (resolvedProfileId === undefined) {
-            const sourceEndpointInfo = (sourceEndpoint && FIXED_ENDPOINTS.find((epi) => epi.endpoint === sourceEndpoint)) || FIXED_ENDPOINTS[0];
-            resolvedProfileId = sourceEndpointInfo.profileId;
-        }
-
         const apsFrame: EmberApsFrame = {
-            profileId: resolvedProfileId,
+            profileId:
+                profileId ?? ((sourceEndpoint && FIXED_ENDPOINTS.find((epi) => epi.endpoint === sourceEndpoint)) || FIXED_ENDPOINTS[0]).profileId,
             clusterId: zclFrame.cluster.ID,
             sourceEndpoint: sourceEndpoint || FIXED_ENDPOINTS[0].endpoint,
             destinationEndpoint: 0xff,
@@ -2103,14 +2093,9 @@ export class EmberAdapter extends Adapter {
         destination: ZSpec.BroadcastAddress,
         profileId?: number,
     ): Promise<void> {
-        let resolvedProfileId = profileId;
-        if (resolvedProfileId === undefined) {
-            const sourceEndpointInfo = (sourceEndpoint && FIXED_ENDPOINTS.find((epi) => epi.endpoint === sourceEndpoint)) || FIXED_ENDPOINTS[0];
-            resolvedProfileId = sourceEndpointInfo.profileId;
-        }
-
         const apsFrame: EmberApsFrame = {
-            profileId: resolvedProfileId,
+            profileId:
+                profileId ?? ((sourceEndpoint && FIXED_ENDPOINTS.find((epi) => epi.endpoint === sourceEndpoint)) || FIXED_ENDPOINTS[0]).profileId,
             clusterId: zclFrame.cluster.ID,
             sourceEndpoint,
             destinationEndpoint: endpoint,
