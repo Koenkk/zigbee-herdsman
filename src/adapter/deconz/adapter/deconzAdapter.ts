@@ -495,7 +495,7 @@ export class DeconzAdapter extends Adapter {
             destAddr16: groupID,
             profileId: profileId ?? 0x104,
             clusterId: zclFrame.cluster.ID,
-            srcEndpoint: sourceEndpoint || 1,
+            srcEndpoint: sourceEndpoint ?? 1,
             asduLength: payload.length,
             asduPayload: payload,
             txOptions: 0,
