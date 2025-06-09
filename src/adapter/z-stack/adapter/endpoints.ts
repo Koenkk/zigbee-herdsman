@@ -1,3 +1,4 @@
+import * as ZSpec from "../../../zspec";
 import {Clusters} from "../../../zspec/zcl/definition/cluster";
 import * as Constants from "../constants";
 
@@ -54,6 +55,6 @@ export const Endpoints = [
     // OTA - it queries for ZLL profile, but then contacts with HA profile)
     {...EndpointDefaults, endpoint: 47, appprofid: 0x0104},
     // Required for shelly wifi and rpc clusters
-    {...EndpointDefaults, endpoint: 239, appprofid: 0xc001},
+    {...EndpointDefaults, endpoint: 239, appprofid: ZSpec.CUSTOM_SHELLY_PROFILE_ID},
     {...EndpointDefaults, endpoint: 242, appprofid: 0xa1e0},
 ];
