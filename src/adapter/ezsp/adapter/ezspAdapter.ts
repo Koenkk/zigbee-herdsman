@@ -60,7 +60,12 @@ export class EZSPAdapter extends Adapter {
                 // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
                 this.emit("zdoResponse", frame.apsFrame.clusterId, frame.zdoResponse!);
             }
-        } else if (frame.apsFrame.profileId === ZSpec.HA_PROFILE_ID || frame.apsFrame.profileId === 0xffff) {
+        } else if (
+            frame.apsFrame.profileId === ZSpec.HA_PROFILE_ID ||
+            frame.apsFrame.profileId === 0xffff ||
+            // Shelly custom Clusters require a special profile ID
+            frame.apsFrame.profileId === ZSpec.CUSTOM_SHELLY_PROFILE_ID
+        ) {
             const payload: ZclPayload = {
                 clusterID: frame.apsFrame.clusterId,
                 header: Zcl.Header.fromBuffer(frame.message),
