@@ -19,6 +19,7 @@ import {Constants as UnpiConstants} from "../unpi";
 import {Znp, type ZpiObject} from "../znp";
 import Definition from "../znp/definition";
 import {isMtCmdAreqZdo} from "../znp/utils";
+import {Endpoints} from "./endpoints";
 import {ZnpAdapterManager} from "./manager";
 import {ZnpVersion} from "./tstype";
 
@@ -433,14 +434,17 @@ export class ZStackAdapter extends Adapter {
         disableResponse: boolean,
         disableRecovery: boolean,
         sourceEndpoint?: number,
+        profileId?: number,
     ): Promise<Events.ZclPayload | undefined> {
+        const srcEndpoint = this.selectSourceEndpoint(sourceEndpoint, profileId);
+
         return await this.queue.execute<Events.ZclPayload | undefined>(async () => {
             this.checkInterpanLock();
             return await this.sendZclFrameToEndpointInternal(
                 ieeeAddr,
                 networkAddress,
                 endpoint,
-                sourceEndpoint || 1,
+                srcEndpoint,
                 zclFrame,
                 timeout,
                 disableResponse,
@@ -711,7 +715,9 @@ export class ZStackAdapter extends Adapter {
         }
     }
 
-    public async sendZclFrameToGroup(groupID: number, zclFrame: Zcl.Frame, sourceEndpoint?: number): Promise<void> {
+    public async sendZclFrameToGroup(groupID: number, zclFrame: Zcl.Frame, sourceEndpoint?: number, profileId?: number): Promise<void> {
+        const srcEndpoint = this.selectSourceEndpoint(sourceEndpoint, profileId);
+
         return await this.queue.execute<void>(async () => {
             this.checkInterpanLock();
             await this.dataRequestExtended(
@@ -719,7 +725,7 @@ export class ZStackAdapter extends Adapter {
                 groupID,
                 0xff,
                 0,
-                sourceEndpoint || 1,
+                srcEndpoint,
                 zclFrame.cluster.ID,
                 Constants.AF.DEFAULT_RADIUS,
                 zclFrame.toBuffer(),
@@ -736,7 +742,15 @@ export class ZStackAdapter extends Adapter {
         });
     }
 
-    public async sendZclFrameToAll(endpoint: number, zclFrame: Zcl.Frame, sourceEndpoint: number, destination: BroadcastAddress): Promise<void> {
+    public async sendZclFrameToAll(
+        endpoint: number,
+        zclFrame: Zcl.Frame,
+        sourceEndpoint: number,
+        destination: BroadcastAddress,
+        profileId?: number,
+    ): Promise<void> {
+        const srcEndpoint = this.selectSourceEndpoint(sourceEndpoint, profileId);
+
         return await this.queue.execute<void>(async () => {
             this.checkInterpanLock();
             await this.dataRequestExtended(
@@ -744,7 +758,7 @@ export class ZStackAdapter extends Adapter {
                 destination,
                 endpoint,
                 0,
-                sourceEndpoint,
+                srcEndpoint,
                 zclFrame.cluster.ID,
                 Constants.AF.DEFAULT_RADIUS,
                 zclFrame.toBuffer(),
@@ -1186,5 +1200,25 @@ export class ZStackAdapter extends Adapter {
         if (this.interpanLock) {
             throw new Error("Cannot execute command, in Inter-PAN mode");
         }
+    }
+
+    private selectSourceEndpoint(sourceEndpoint?: number, profileId?: number): number {
+        // Use provided sourceEndpoint as the highest priority
+        let srcEndpoint = sourceEndpoint;
+        // If sourceEndpoint is not provided, try to select the source endpoint based on the profileId.
+        if (srcEndpoint === undefined && profileId !== undefined) {
+            srcEndpoint = Endpoints.find((e) => e.appprofid === profileId)?.endpoint;
+        }
+        //If no profileId is provided, or if no corresponding endpoint exists, use endpoint 1.
+        if (srcEndpoint === undefined) {
+            srcEndpoint = 1;
+        }
+
+        // Validate that the requested profileId can be satisfied by the adapter.
+        if (profileId !== undefined && Endpoints.find((e) => e.endpoint === srcEndpoint)?.appprofid !== profileId) {
+            throw new Error(`Profile ID ${profileId} is not supported by this adapter.`);
+        }
+
+        return srcEndpoint;
     }
 }
