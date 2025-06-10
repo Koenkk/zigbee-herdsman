@@ -21,6 +21,20 @@ const PARAM = {
     },
 };
 
+export enum ApsAddressMode {
+    Group = 0x01,
+    Nwk = 0x02,
+    Ieee = 0x03,
+    NwkAndIeee = 0x04,
+}
+
+export enum NwkBroadcastAddress {
+    BroadcastAll = 0xffff,
+    BroadcastLowPowerRouters = 0xfffb,
+    BroadcastRouters = 0xfffc,
+    BroadcastRxOnWhenIdle = 0xfffd,
+}
+
 export enum FirmwareCommand {
     Status = 0x07,
     StatusChangeIndication = 0x0e,
@@ -101,7 +115,7 @@ export const stackParameters = [
     {id: ParamId.STK_NWK_UPDATE_ID, type: DataType.U8},
     {id: ParamId.STK_CURRENT_CHANNEL, type: DataType.U8},
     {id: ParamId.STK_STATIC_NETWORK_ADDRESS, type: DataType.U8},
-    {id: ParamId.STK_PREDEFINED_PANID, type: DataType.U16},
+    {id: ParamId.STK_PREDEFINED_PANID, type: DataType.U8},
     {id: ParamId.STK_NETWORK_KEY, type: [DataType.U8, DataType.SecKey], readArg: 1}, // index, key
     {id: ParamId.STK_LINK_KEY, type: [DataType.U64, DataType.SecKey], readArg: 1}, // mac addess, key
     {id: ParamId.DEV_WATCHDOG_TTL, type: DataType.U32},

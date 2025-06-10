@@ -31,7 +31,6 @@ interface WaitressMatcher {
 export class DeconzAdapter extends Adapter {
     private driver: Driver;
     private openRequestsQueue: WaitForDataRequest[];
-    private transactionID: number;
     private frameParserEvent = frameParserEvents;
     private fwVersion?: CoordinatorVersion;
     private waitress: Waitress<Events.ZclPayload, WaitressMatcher>;
@@ -49,7 +48,6 @@ export class DeconzAdapter extends Adapter {
         this.driver = new Driver(serialPortOptions.path || undefined, networkOptions);
 
         this.driver.on("rxFrame", (frame) => processFrame(frame));
-        this.transactionID = 0;
         this.openRequestsQueue = [];
         this.fwVersion = undefined;
 
@@ -82,7 +80,7 @@ export class DeconzAdapter extends Adapter {
                     return;
                 }
 
-                if (3000 < Date.now() - start) {
+                if (20000 < Date.now() - start) {
                     clearInterval(iv);
                     reject("failed to start adapter connection to firmware");
                     return;
@@ -709,13 +707,7 @@ export class DeconzAdapter extends Adapter {
     }
 
     private nextTransactionID(): number {
-        this.transactionID++;
-
-        if (this.transactionID > 255) {
-            this.transactionID = 1;
-        }
-
-        return this.transactionID;
+        return this.driver.nextTransactionID();
     }
 
     private waitressTimeoutFormatter(matcher: WaitressMatcher, timeout: number): string {
