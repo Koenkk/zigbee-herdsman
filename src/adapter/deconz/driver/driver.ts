@@ -4,6 +4,7 @@ import events from "node:events";
 import net from "node:net";
 
 import slip from "slip";
+import type {NetworkOptions} from "../../tstype";
 
 import {logger} from "../../../utils/logger";
 import {SerialPort} from "../../serialPort";
@@ -46,6 +47,7 @@ enum DriverState {
     ReadConfiguration = 3,
     WaitToReconnect = 4,
     Reconfigure = 5,
+    CloseAndRestart = 6,
 }
 
 enum TxState {
@@ -96,6 +98,7 @@ class Driver extends events.EventEmitter {
     private txCommand = 0;
     private txSeq = 0;
     private txTime = 0;
+    private networkOptions: NetworkOptions;
 
     public paramMacAddress = "";
     public paramFirmwareVersion = 0;
@@ -107,11 +110,12 @@ class Driver extends events.EventEmitter {
     public paramProtocolVersion = 0;
     public paramApsUseExtPanid = "";
 
-    public constructor(path: string | undefined) {
+    public constructor(path: string | undefined, networkOptions: NetworkOptions) {
         super();
         this.path = path || "";
         this.seqNumber = 0;
         this.configChanged = 0;
+        this.networkOptions = networkOptions;
 
         this.writer = new Writer();
         this.parser = new Parser();
@@ -295,14 +299,124 @@ class Driver extends events.EventEmitter {
         }
     }
 
+    private isNetworkConfigurationValid(): boolean {
+        const opts = this.networkOptions;
+
+        if ((this.deviceStatus & DEV_STATUS_NET_STATE_MASK) !== NetworkState.Connected) {
+            return false;
+        }
+
+        if (opts.channelList.find((ch) => ch === this.paramCurrentChannel) === undefined) {
+            return false;
+        }
+
+        if (opts.extendedPanID) {
+            const extPanID = `0x${opts.extendedPanID.map((x) => x.toString(16).padStart(2, "0")).join("")}`;
+            if (extPanID !== this.paramApsUseExtPanid) {
+                return false;
+            }
+        }
+
+        if (opts.panID !== this.paramNwkPanid) {
+            return false;
+        }
+
+        if (opts.networkKey) {
+            const nwkKey = `0x${opts.networkKey.map((x) => x.toString(16).padStart(2, "0")).join("")}`;
+            if (nwkKey !== this.paramNwkKey) {
+                return false;
+            }
+        }
+
+        // TODO(mpi): Check endpoint configuration
+        // const ep1 =  = await this.driver.readParameterRequest(PARAM.PARAM.STK.Endpoint,);
+        return true;
+    }
+
+    private async reconfigureNetwork(): Promise<void> {
+        // first disconnect the network
+        await this.changeNetworkStateRequest(NetworkState.Disconnected);
+
+        // TODO(mpi): If we come along without sleep()
+
+        if (this.networkOptions.channelList.length !== 0) {
+            await this.writeParameterRequest(ParamId.APS_CHANNEL_MASK, 1 << this.networkOptions.channelList[0]);
+        }
+
+        await this.writeParameterRequest(ParamId.NWK_PANID, this.networkOptions.panID);
+        await this.writeParameterRequest(ParamId.STK_PREDEFINED_PANID, 1);
+
+        if (this.networkOptions.extendedPanID) {
+            await this.writeParameterRequest(ParamId.APS_USE_EXTENDED_PANID, Buffer.from(this.networkOptions.extendedPanID));
+        }
+
+        // check current network key against configuration.yaml
+        if (this.networkOptions.networkKey) {
+            await this.writeParameterRequest(ParamId.STK_NETWORK_KEY, Buffer.from([0x0, ...this.networkOptions.networkKey]));
+        }
+
+        // now reconnect, this will also store configuration in nvram
+        await this.changeNetworkStateRequest(NetworkState.Connected);
+
+        // TODO(mpi): Endpoint configuration should be written like other network parameters and subject to `changed`.
+        // It should happen before NET_CONNECTED is set.
+        // Therefore read endpoint configuration, compare, swap if needed.
+
+        // TODO(mpi): The following code only adjusts first endpoint, with a fixed setting.
+        // Ideally also second endpoint should be configured like deCONZ does.
+
+        // write endpoints
+        /* Format of the STK.Endpoint parameter:
+            {
+                u8 endpointIndex // index used by firmware 0..2
+                u8 endpoint // actual zigbee endpoint
+                u16 profileId
+                u16 deviceId
+                u8 deviceVersion
+                u8 serverClusterCount
+                u16 serverClusters[serverClusterCount]
+                u8 clientClusterCount
+                u16 clientClusters[clientClusterCount]
+            }
+            */
+        //[ sd1   ep    proId       devId       vers  #inCl iCl1        iCl2        iCl3        iCl4        iCl5        #outC oCl1        oCl2        oCl3        oCl4      ]
+        //
+        // const sd = [
+        //     0x00, // index
+        //     0x01, // endpoint
+        //     0x04, 0x01, // profileId
+        //     0x05, 0x00, // deviceId
+        //     0x01, // deviceVersion
+        //     0x05, // serverClusterCount
+        //     0x00, 0x00, // Basic
+        //     0x00, 0x06, // On/Off        TODO(mpi): This is wrong byte order! should be 0x06 0x00
+        //     0x0a, 0x00, // Time
+        //     0x19, 0x00, // OTA
+        //     0x01, 0x05, // IAS ACE
+        //     0x04, // clientClusterCount
+        //     0x01, 0x00, // Power Configuration
+        //     0x20, 0x00, // Poll Control
+        //     0x00, 0x05, // IAS Zone
+        //     0x02, 0x05 // IAS WD
+        // ];
+        // // TODO(mpi) why is it reversed? That result in invalid endpoint configuration.
+        // // Likely the command gets discarded as it results in endpointIndex = 0x05.
+        // const sd1 = sd.reverse();
+        // await this.driver.writeParameterRequest(PARAM.PARAM.STK.Endpoint, Buffer.from(sd1));
+
+        return;
+    }
+
     private handleReadConfigurationStateEvent(event: DriverEvent, _data?: DriverEventData): void {
         if (event === DriverEvent.Action) {
             logger.debug("Query firmware parameters", NS);
 
+            this.deviceStatus = 0; // need fresh value
             this.checkWatchdog();
 
             Promise.all([
                 this.readFirmwareVersionRequest(),
+                this.sendReadDeviceStateRequest(this.nextSeqNumber()),
                 this.readParameterRequest(ParamId.MAC_ADDRESS),
                 this.readParameterRequest(ParamId.NWK_PANID),
                 this.readParameterRequest(ParamId.APS_USE_EXTENDED_PANID),
@@ -312,7 +426,7 @@ class Driver extends events.EventEmitter {
                 this.readParameterRequest(ParamId.APS_CHANNEL_MASK),
                 this.readParameterRequest(ParamId.STK_PROTOCOL_VERSION),
             ])
-                .then(([fwVersion, mac, panid, apsUseExtPanid, currentChannel, nwkKey, nwkUpdateId, channelMask, protocolVersion]) => {
+                .then(([fwVersion, _deviceState, mac, panid, apsUseExtPanid, currentChannel, nwkKey, nwkUpdateId, channelMask, protocolVersion]) => {
                     this.paramFirmwareVersion = fwVersion;
                     this.paramCurrentChannel = currentChannel as number;
                     this.paramApsUseExtPanid = apsUseExtPanid as string;
@@ -325,14 +439,20 @@ class Driver extends events.EventEmitter {
 
                     console.log({fwVersion, mac, panid, apsUseExtPanid, currentChannel, nwkKey, nwkUpdateId, channelMask, protocolVersion});
 
-                    this.driverStateStart = Date.now();
-                    this.driverState = DriverState.Connected;
-                    this.emit("connected"); // notify adapter
+                    if (this.isNetworkConfigurationValid()) {
+                        logger.debug("Zigbee configuration valid", NS);
+                        this.driverStateStart = Date.now();
+                        this.driverState = DriverState.Connected;
+                    } else {
+                        this.driverStateStart = Date.now();
+                        this.driverState = DriverState.Reconfigure;
+                        this.emitStateEvent(DriverEvent.Action);
+                    }
                 })
-                .catch((err) => {
+                .catch((_err) => {
+                    this.driverStateStart = Date.now();
+                    this.driverState = DriverState.CloseAndRestart;
                     logger.debug("Failed to query firmware parameters", NS);
-                    // TODO(MPI): What now? disconnect reconnect?
-                    throw err;
                 });
         } else if (event === DriverEvent.Tick) {
             this.processQueue();
@@ -342,46 +462,26 @@ class Driver extends events.EventEmitter {
 
     private handleReconfigureStateEvent(event: DriverEvent, _data?: DriverEventData): void {
         if (event === DriverEvent.Action) {
-            logger.debug("Query firmware parameters", NS);
+            logger.debug("Reconfigure Zigbee network to match configuration", NS);
 
-            this.checkWatchdog();
-
-            Promise.all([
-                this.readFirmwareVersionRequest(),
-                this.readParameterRequest(ParamId.MAC_ADDRESS),
-                this.readParameterRequest(ParamId.NWK_PANID),
-                this.readParameterRequest(ParamId.APS_USE_EXTENDED_PANID),
-                this.readParameterRequest(ParamId.STK_CURRENT_CHANNEL),
-                this.readParameterRequest(ParamId.STK_NETWORK_KEY, Buffer.from([0])),
-                this.readParameterRequest(ParamId.STK_NWK_UPDATE_ID),
-                this.readParameterRequest(ParamId.APS_CHANNEL_MASK),
-                this.readParameterRequest(ParamId.STK_PROTOCOL_VERSION),
-            ])
-                .then(([fwVersion, mac, panid, apsUseExtPanid, currentChannel, nwkKey, nwkUpdateId, channelMask, protocolVersion]) => {
-                    this.paramFirmwareVersion = fwVersion;
-                    this.paramCurrentChannel = currentChannel as number;
-                    this.paramApsUseExtPanid = apsUseExtPanid as string;
-                    this.paramNwkPanid = panid as number;
-                    this.paramNwkKey = nwkKey as string;
-                    this.paramNwkUpdateId = nwkUpdateId as number;
-                    this.paramMacAddress = mac as string;
-                    this.paramChannelMask = channelMask as number;
-                    this.paramProtocolVersion = protocolVersion as number;
-
-                    console.log({fwVersion, mac, panid, apsUseExtPanid, currentChannel, nwkKey, nwkUpdateId, channelMask, protocolVersion});
-
+            this.reconfigureNetwork()
+                .then(() => {
                     this.driverStateStart = Date.now();
                     this.driverState = DriverState.Connected;
-                    this.emit("connected"); // notify adapter
                 })
                 .catch((err) => {
-                    logger.debug("Failed to query firmware parameters", NS);
-                    // TODO(MPI): What now? disconnect reconnect?
-                    throw err;
+                    logger.debug(`Failed to reconfigure Zigbee network, error: ${err}, wait 15 seconds to retry`, NS);
+                    this.driverStateStart = Date.now();
                 });
         } else if (event === DriverEvent.Tick) {
             this.processQueue();
             this.processBusyQueueTimeouts();
+
+            // if we run into this timeout assume some error and retry after waiting a bit
+            if (15000 < Date.now() - this.driverStateStart) {
+                this.driverStateStart = Date.now();
+                this.driverState = DriverState.CloseAndRestart;
+            }
         }
     }
 
@@ -390,6 +490,20 @@ class Driver extends events.EventEmitter {
             if (5000 < Date.now() - this.driverStateStart) {
                 this.driverState = DriverState.Connecting;
                 this.emitStateEvent(DriverEvent.Action);
+            }
+        }
+    }
+
+    private handleCloseAndRestartStateEvent(event: DriverEvent, _data?: DriverEventData): void {
+        if (event === DriverEvent.Tick) {
+            if (1000 < Date.now() - this.driverStateStart) {
+                // if the connection is open try to close it every second.
+                this.driverStateStart = Date.now();
+                if (this.isOpen()) {
+                    this.close();
+                } else {
+                    this.driverState = DriverState.WaitToReconnect;
+                }
             }
         }
     }
@@ -419,6 +533,8 @@ class Driver extends events.EventEmitter {
                 this.handleReadConfigurationStateEvent(event, data);
             } else if (this.driverState === DriverState.Reconfigure) {
                 this.handleReconfigureStateEvent(event, data);
+            } else if (this.driverState === DriverState.CloseAndRestart) {
+                this.handleCloseAndRestartStateEvent(event, data);
             } else {
                 if (event !== DriverEvent.Tick) {
                     logger.debug(`handle state: ${DriverState[this.driverState]}, event: ${DriverEvent[event]}`, NS);
@@ -451,6 +567,12 @@ class Driver extends events.EventEmitter {
         this.currentBaudRate = baudrate;
     }
 
+    private isOpen(): boolean {
+        if (this.serialPort) return this.serialPort.isOpen;
+        if (this.socketPort) return this.socketPort.readyState !== "closed";
+        return false;
+    }
+
     public openSerialPort(baudrate: number): Promise<void> {
         return new Promise((resolve, reject): void => {
             if (!this.path) {
@@ -476,7 +598,7 @@ class Driver extends events.EventEmitter {
             }
 
             if (this.serialPort.isOpen) {
-                reject(new Error("Called openSerialPort() while it is already open"));
+                resolve();
                 return;
             }
 
@@ -562,6 +684,7 @@ class Driver extends events.EventEmitter {
                 resolve();
             } else if (this.socketPort) {
                 this.socketPort.destroy();
+                this.socketPort = undefined;
                 this.emitStateEvent(DriverEvent.Disconnected);
                 resolve();
             } else {

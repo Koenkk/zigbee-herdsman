@@ -2,7 +2,7 @@
 
 //import Device from "../../../controller/model/device";
 import type * as Models from "../../../models";
-import {Waitress, wait} from "../../../utils";
+import {Waitress} from "../../../utils";
 import {logger} from "../../../utils/logger";
 import * as ZSpec from "../../../zspec";
 import type {BroadcastAddress} from "../../../zspec/enums";
@@ -12,14 +12,7 @@ import type * as ZdoTypes from "../../../zspec/zdo/definition/tstypes";
 import Adapter from "../../adapter";
 import type * as Events from "../../events";
 import type {AdapterOptions, CoordinatorVersion, NetworkOptions, NetworkParameters, SerialPortOptions, StartResult} from "../../tstype";
-import PARAM, {
-    NetworkState,
-    ParamId,
-    type ApsDataRequest,
-    type GpDataInd,
-    type ReceivedDataResponse,
-    type WaitForDataRequest,
-} from "../driver/constants";
+import PARAM, {ParamId, type ApsDataRequest, type GpDataInd, type ReceivedDataResponse, type WaitForDataRequest} from "../driver/constants";
 import Driver from "../driver/driver";
 import processFrame, {frameParserEvents} from "../driver/frameParser";
 
@@ -53,10 +46,9 @@ export class DeconzAdapter extends Adapter {
 
         this.waitress = new Waitress<Events.ZclPayload, WaitressMatcher>(this.waitressValidator, this.waitressTimeoutFormatter);
 
-        this.driver = new Driver(serialPortOptions.path || undefined);
+        this.driver = new Driver(serialPortOptions.path || undefined, networkOptions);
 
         this.driver.on("rxFrame", (frame) => processFrame(frame));
-        this.driver.on("connected", () => this.onConnected());
         this.transactionID = 0;
         this.openRequestsQueue = [];
         this.fwVersion = undefined;
@@ -97,144 +89,6 @@ export class DeconzAdapter extends Adapter {
                 }
             }, 50);
         });
-    }
-
-    private async onConnected() {
-        let changed = false;
-        const panid = this.driver.paramNwkPanid;
-        const expanid = this.driver.paramApsUseExtPanid;
-        const channel = this.driver.paramCurrentChannel;
-        const networkKey = this.driver.paramNwkKey;
-        //const ep1 =  = await this.driver.readParameterRequest(PARAM.PARAM.STK.Endpoint,);
-
-        // TODO(mpi): refactor in state machine based "reconfigure_network" function.
-
-        // TODO(mpi): Read also network state, the network might have proper values but isn't activated.
-
-        // TODO(mpi): If any network parameters need to be reconfigured it should be done directly
-        // here with write parameter request. Instead remember `need_reconfigure`, and start the full proceduce
-        // network = off, configure all parameters, network = on
-
-        // check current channel against configuration.yaml
-        const z2mChannel = this.networkOptions.channelList[0] || null;
-
-        if (z2mChannel && z2mChannel !== channel && z2mChannel >= 11 && z2mChannel <= 26) {
-            logger.debug(`Channel in configuration.yaml (${z2mChannel}) differs from current channel (${channel}). Changing channel.`, NS);
-
-            try {
-                await this.driver.writeParameterRequest(ParamId.APS_CHANNEL_MASK, 1 << z2mChannel);
-                await wait(500);
-                changed = true;
-            } catch (error) {
-                logger.debug(`Could not set channel: ${error}`, NS);
-            }
-        }
-
-        // check current panid against configuration.yaml
-        if (this.networkOptions.panID !== panid) {
-            logger.debug(`panid in configuration.yaml (${this.networkOptions.panID}) differs from current panid (${panid}). Changing panid.`, NS);
-
-            try {
-                await this.driver.writeParameterRequest(ParamId.NWK_PANID, this.networkOptions.panID);
-                await this.driver.writeParameterRequest(ParamId.STK_PREDEFINED_PANID, 1);
-                await wait(500);
-                changed = true;
-            } catch (error) {
-                logger.debug(`Could not set panid: ${error}`, NS);
-            }
-        }
-
-        // check current extended_panid against configuration.yaml
-        if (this.networkOptions.extendedPanID) {
-            if (this.driver.generalArrayToString(this.networkOptions.extendedPanID, 8) !== expanid) {
-                logger.debug(
-                    `extended panid in configuration.yaml (${
-                        // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
-                        this.driver.macAddrArrayToString(this.networkOptions.extendedPanID!)
-                    }) differs from current extended panid (${expanid}). Changing extended panid.`,
-                    NS,
-                );
-
-                try {
-                    await this.driver.writeParameterRequest(ParamId.APS_USE_EXTENDED_PANID, Buffer.from(this.networkOptions.extendedPanID));
-                    await wait(500);
-                    changed = true;
-                } catch (error) {
-                    logger.debug(`Could not set extended panid: ${error}`, NS);
-                }
-            }
-        }
-
-        // check current network key against configuration.yaml
-        if (this.networkOptions.networkKey) {
-            if (this.driver.generalArrayToString(this.networkOptions.networkKey, 16) !== networkKey) {
-                logger.debug(
-                    `network key in configuration.yaml (hidden) differs from current network key (${networkKey}). Changing network key.`,
-                    NS,
-                );
-
-                try {
-                    await this.driver.writeParameterRequest(ParamId.STK_NETWORK_KEY, Buffer.from([0x0, ...this.networkOptions.networkKey]));
-                    await wait(500);
-                    changed = true;
-                } catch (error) {
-                    logger.debug(`Could not set network key: ${error}`, NS);
-                }
-            }
-        }
-
-        if (changed) {
-            await this.driver.changeNetworkStateRequest(NetworkState.Disconnected);
-            await wait(2000);
-            await this.driver.changeNetworkStateRequest(NetworkState.Connected);
-            await wait(2000);
-        }
-
-        // TODO(mpi): Endpoint configuration should be written like other network parameters and subject to `changed`.
-        // It should happen before NET_CONNECTED is set.
-        // Therefore read endpoint configuration, compare, swap if needed.
-
-        // TODO(mpi): The following code only adjusts first endpoint, with a fixed setting.
-        // Ideally also second endpoint should be configured like deCONZ does.
-
-        // write endpoints
-        /* Format of the STK.Endpoint parameter:
-            {
-                u8 endpointIndex // index used by firmware 0..2
-                u8 endpoint // actual zigbee endpoint
-                u16 profileId
-                u16 deviceId
-                u8 deviceVersion
-                u8 serverClusterCount
-                u16 serverClusters[serverClusterCount]
-                u8 clientClusterCount
-                u16 clientClusters[clientClusterCount]
-            }
-         */
-        //[ sd1   ep    proId       devId       vers  #inCl iCl1        iCl2        iCl3        iCl4        iCl5        #outC oCl1        oCl2        oCl3        oCl4      ]
-        //
-        // const sd = [
-        //     0x00, // index
-        //     0x01, // endpoint
-        //     0x04, 0x01, // profileId
-        //     0x05, 0x00, // deviceId
-        //     0x01, // deviceVersion
-        //     0x05, // serverClusterCount
-        //     0x00, 0x00, // Basic
-        //     0x00, 0x06, // On/Off        TODO(mpi): This is wrong byte order! should be 0x06 0x00
-        //     0x0a, 0x00, // Time
-        //     0x19, 0x00, // OTA
-        //     0x01, 0x05, // IAS ACE
-        //     0x04, // clientClusterCount
-        //     0x01, 0x00, // Power Configuration
-        //     0x20, 0x00, // Poll Control
-        //     0x00, 0x05, // IAS Zone
-        //     0x02, 0x05 // IAS WD
-        // ];
-        // // TODO(mpi) why is it reversed? That result in invalid endpoint configuration.
-        // // Likely the command gets discarded as it results in endpointIndex = 0x05.
-        // const sd1 = sd.reverse();
-        // await this.driver.writeParameterRequest(PARAM.PARAM.STK.Endpoint, Buffer.from(sd1));
     }
 
     public async stop(): Promise<void> {
