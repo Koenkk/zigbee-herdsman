@@ -19,6 +19,8 @@ import PARAM, {
     ParamId,
     stackParameters,
     DataType,
+    ApsAddressMode,
+    NwkBroadcastAddress,
 } from "./constants";
 
 import {frameParserEvents} from "./frameParser";
@@ -93,6 +95,8 @@ class Driver extends events.EventEmitter {
     private tickTimer: NodeJS.Timeout;
     private driverStateStart = 0;
     private driverState: DriverState = DriverState.Init;
+
+    private transactionID = 0; // for APS and ZDO
     // in flight lockstep sending commands
     private txState: TxState = TxState.Idle;
     private txCommand = 0;
@@ -166,6 +170,16 @@ class Driver extends events.EventEmitter {
         return (await Promise.resolve(val).catch((err) => logger.debug(`Promise was caught with reason: ${err}`, NS))) as undefined | Awaited<T>;
     }
 
+    public nextTransactionID(): number {
+        this.transactionID++;
+
+        if (this.transactionID > 255) {
+            this.transactionID = 1;
+        }
+
+        return this.transactionID;
+    }
+
     private tick(): void {
         this.emitStateEvent(DriverEvent.Tick);
     }
@@ -197,7 +211,7 @@ class Driver extends events.EventEmitter {
             this.txCommand = d.cmd;
             this.txSeq = d.seq;
             this.txTime = Date.now();
-            // logger.debug(`tx wait for cmd: ${data.cmd.toString(16).padStart(2, '0')}, seq: ${data.seq}`, NS);
+            //logger.debug(`tx wait for cmd: ${d.cmd.toString(16).padStart(2, "0")}, seq: ${d.seq}`, NS);
         } else if (event === DriverEvent.FirmwareCommandReceived) {
             if (this.txState !== TxState.WaitResponse) {
                 return;
@@ -206,7 +220,7 @@ class Driver extends events.EventEmitter {
             const d = data as CommandResult;
             if (this.txCommand === d.cmd && this.txSeq === d.seq) {
                 this.txState = TxState.Idle;
-                // logger.debug(`tx released for cmd: ${data.cmd.toString(16).padStart(2, '0')}, seq: ${data.seq}`, NS);
+                //logger.debug(`tx released for cmd: ${d.cmd.toString(16).padStart(2, "0")}, seq: ${d.seq}`, NS);
             }
         } else if (event === DriverEvent.FirmwareCommandTimeout) {
             if (this.txState === TxState.WaitResponse) {
@@ -222,27 +236,9 @@ class Driver extends events.EventEmitter {
         }
     }
 
-    private handleConnectedStateEvent(event: DriverEvent, data?: DriverEventData): void {
+    private handleConnectedStateEvent(event: DriverEvent, _data?: DriverEventData): void {
         if (event === DriverEvent.DeviceStateUpdated) {
-            // logger.debug(`Updated device status: ${data.toString(2)}`, NS);
-
-            const netState = this.deviceStatus & DEV_STATUS_NET_STATE_MASK;
-
-            if (this.txState === TxState.Idle) {
-                if (netState === NetworkState.Connected) {
-                    const status = data as number;
-                    if (status & DEV_STATUS_APS_CONFIRM) {
-                        this.deviceStatus = 0; // force refresh in response
-                        this.sendReadApsConfirmRequest(this.nextSeqNumber());
-                    } else if (status & DEV_STATUS_APS_INDICATION) {
-                        this.deviceStatus = 0; // force refresh in response
-                        this.sendReadApsIndicationRequest(this.nextSeqNumber());
-                    } else if (status & DEV_STATUS_APS_FREE_SLOTS) {
-                        this.deviceStatus = 0; // force refresh in response
-                        this.processApsQueue();
-                    }
-                }
-            }
+            this.handleApsQueueOnDeviceState();
         } else if (event === DriverEvent.Tick) {
             if (this.checkWatchdog()) {
                 return;
@@ -334,10 +330,26 @@ class Driver extends events.EventEmitter {
     }
 
     private async reconfigureNetwork(): Promise<void> {
+        const opts = this.networkOptions;
+
+        // if the configuration has a different channel, broadcast a channel change to the network first
+        if (this.networkOptions.channelList.length !== 0) {
+            if (opts.channelList[0] !== this.paramCurrentChannel) {
+                logger.debug(`change channel from ${this.paramCurrentChannel} to ${opts.channelList[0]}`, NS);
+                // increase the NWK Update ID so devices which search for the network know this is an update
+                this.paramNwkUpdateId = (this.paramNwkUpdateId + 1) % 255;
+                this.paramCurrentChannel = opts.channelList[0];
+
+                if ((this.deviceStatus & DEV_STATUS_NET_STATE_MASK) === NetworkState.Connected) {
+                    await this.sendChangeChannelRequest();
+                }
+            }
+        }
+
         // first disconnect the network
         await this.changeNetworkStateRequest(NetworkState.Disconnected);
 
-        // TODO(mpi): If we come along without sleep()
+        await this.writeParameterRequest(ParamId.STK_NWK_UPDATE_ID, this.paramNwkUpdateId);
 
         if (this.networkOptions.channelList.length !== 0) {
             await this.writeParameterRequest(ParamId.APS_CHANNEL_MASK, 1 << this.networkOptions.channelList[0]);
@@ -476,12 +488,21 @@ class Driver extends events.EventEmitter {
         } else if (event === DriverEvent.Tick) {
             this.processQueue();
             this.processBusyQueueTimeouts();
+            this.processApsBusyQueueTimeouts();
 
             // if we run into this timeout assume some error and retry after waiting a bit
             if (15000 < Date.now() - this.driverStateStart) {
                 this.driverStateStart = Date.now();
                 this.driverState = DriverState.CloseAndRestart;
             }
+
+            if (this.txState === TxState.Idle) {
+                // needed to process channel change ZDP request
+                this.deviceStatus = 0; // force refresh in response
+                this.sendReadDeviceStateRequest(this.nextSeqNumber());
+            }
+        } else if (event === DriverEvent.DeviceStateUpdated) {
+            this.handleApsQueueOnDeviceState();
         }
     }
 
@@ -503,6 +524,28 @@ class Driver extends events.EventEmitter {
                     this.close();
                 } else {
                     this.driverState = DriverState.WaitToReconnect;
+                }
+            }
+        }
+    }
+
+    private handleApsQueueOnDeviceState() {
+        // logger.debug(`Updated device status: ${data.toString(2)}`, NS);
+
+        const netState = this.deviceStatus & DEV_STATUS_NET_STATE_MASK;
+
+        if (this.txState === TxState.Idle) {
+            if (netState === NetworkState.Connected) {
+                const status = this.deviceStatus;
+                if (status & DEV_STATUS_APS_CONFIRM) {
+                    this.deviceStatus = 0; // force refresh in response
+                    this.sendReadApsConfirmRequest(this.nextSeqNumber());
+                } else if (status & DEV_STATUS_APS_INDICATION) {
+                    this.deviceStatus = 0; // force refresh in response
+                    this.sendReadApsIndicationRequest(this.nextSeqNumber());
+                } else if (status & DEV_STATUS_APS_FREE_SLOTS) {
+                    this.deviceStatus = 0; // force refresh in response
+                    this.processApsQueue();
                 }
             }
         }
@@ -717,6 +760,40 @@ class Driver extends events.EventEmitter {
             const req: Request = {commandId, networkState, parameterId, parameter, seqNumber, resolve, reject, ts};
             queue.push(req);
         });
+    }
+
+    private sendChangeChannelRequest(): Promise<undefined | ReceivedDataResponse> {
+        const zdpSeq = this.nextTransactionID();
+        const scanChannels = 1 << this.networkOptions.channelList[0];
+        const scanDuration = 0xfe; // special value = channel change
+
+        const payload = Buffer.alloc(7);
+        let pos = 0;
+        payload.writeUInt8(zdpSeq, pos);
+        pos += 1;
+        payload.writeUInt32LE(scanChannels, pos);
+        pos += 4;
+        payload.writeUInt8(scanDuration, pos);
+        pos += 1;
+        payload.writeUInt8(this.paramNwkUpdateId, pos);
+        pos += 1;
+
+        const req: ApsDataRequest = {
+            requestId: this.nextTransactionID(),
+            destAddrMode: ApsAddressMode.Nwk,
+            destAddr16: NwkBroadcastAddress.BroadcastRxOnWhenIdle,
+            destEndpoint: 0,
+            profileId: 0,
+            clusterId: 0x0038, // ZDP_MGMT_NWK_UPDATE_REQ_CLID
+            srcEndpoint: 0,
+            asduLength: payload.length,
+            asduPayload: payload,
+            txOptions: 0,
+            radius: PARAM.PARAM.txRadius.DEFAULT_RADIUS,
+            timeout: PARAM.PARAM.APS.MAX_SEND_TIMEOUT,
+        };
+
+        return this.enqueueApsDataRequest(req);
     }
 
     public async writeLinkKey(ieeeAddress: string, hashedKey: Buffer): Promise<void> {
