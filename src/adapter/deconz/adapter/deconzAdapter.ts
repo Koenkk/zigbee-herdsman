@@ -1,8 +1,10 @@
 /* v8 ignore start */
 
 //import Device from "../../../controller/model/device";
+import {existsSync, readFileSync} from "node:fs";
 import type * as Models from "../../../models";
-import {Waitress} from "../../../utils";
+import type {Backup, UnifiedBackupStorage} from "../../../models";
+import {BackupUtils, Waitress} from "../../../utils";
 import {logger} from "../../../utils/logger";
 import * as ZSpec from "../../../zspec";
 import type {BroadcastAddress} from "../../../zspec/enums";
@@ -41,11 +43,9 @@ export class DeconzAdapter extends Adapter {
         this.hasZdoMessageOverhead = true;
         this.manufacturerID = Zcl.ManufacturerCode.DRESDEN_ELEKTRONIK_INGENIEURTECHNIK_GMBH;
 
-        // const concurrent = this.adapterOptions && this.adapterOptions.concurrent ? this.adapterOptions.concurrent : 2;
-
         this.waitress = new Waitress<Events.ZclPayload, WaitressMatcher>(this.waitressValidator, this.waitressTimeoutFormatter);
 
-        this.driver = new Driver(serialPortOptions.path || undefined, networkOptions);
+        this.driver = new Driver(serialPortOptions, networkOptions, this.getStoredBackup());
 
         this.driver.on("rxFrame", (frame) => processFrame(frame));
         this.openRequestsQueue = [];
@@ -63,20 +63,17 @@ export class DeconzAdapter extends Adapter {
      * Adapter methods
      */
     public async start(): Promise<StartResult> {
-        // TODO(mpi): In future we should simply try which baudrate may work (in a state machine).
-        // E.g. connect with baudrate XY, query firmware, on timeout try other baudrate.
-        // Most units out there are ConBee2/3 which support 115200.
-        // The 38400 default is outdated now and only works for a few units.
-        const baudrate = this.serialPortOptions.baudRate || 38400;
-        this.driver.open(baudrate);
-
         // wait here until driver is connected and has queried all firmware parameters
         return new Promise((resolve, reject) => {
             const start = Date.now();
             const iv = setInterval(() => {
                 if (this.driver.started()) {
                     clearInterval(iv);
-                    resolve("resumed");
+                    if (this.driver.restoredFromBackup) {
+                        resolve("restored");
+                    } else {
+                        resolve("resumed");
+                    }
                     return;
                 }
 
@@ -95,10 +92,10 @@ export class DeconzAdapter extends Adapter {
 
     public getCoordinatorIEEE(): Promise<string> {
         logger.debug("-------- z2m:getCoordinatorIEEE() ----------------", NS);
-        if (this.driver.paramMacAddress.length === 0) {
+        if (this.driver.paramMacAddress === 0n) {
             return Promise.reject(new Error("Failed to query coordinator MAC address"));
         }
-        return Promise.resolve(this.driver.paramMacAddress);
+        return Promise.resolve(`0x${this.driver.paramMacAddress.toString(16).padStart(16, "0")}`);
     }
 
     public async permitJoin(seconds: number, networkAddress?: number): Promise<void> {
@@ -463,23 +460,86 @@ export class DeconzAdapter extends Adapter {
     }
 
     public async supportsBackup(): Promise<boolean> {
-        return await Promise.resolve(false);
+        return await Promise.resolve(true);
+    }
+
+    /**
+     * Loads currently stored backup and returns it in internal backup model.
+     */
+    private getStoredBackup(): Backup | undefined {
+        if (!existsSync(this.backupPath)) {
+            return undefined;
+        }
+
+        let data: UnifiedBackupStorage;
+
+        try {
+            data = JSON.parse(readFileSync(this.backupPath).toString());
+        } catch (error) {
+            throw new Error(`[BACKUP] Coordinator backup is corrupted. (${(error as Error).stack})`);
+        }
+
+        if (data.metadata?.format === "zigpy/open-coordinator-backup" && data.metadata?.version) {
+            if (data.metadata?.version !== 1) {
+                throw new Error(`[BACKUP] Unsupported open coordinator backup version (version=${data.metadata?.version}).`);
+            }
+
+            // if (data.metadata.internal.ezspVersion < BACKUP_OLDEST_SUPPORTED_EZSP_VERSION) {
+            //     renameSync(this.backupPath, `${this.backupPath}.old`);
+            //     logger.warning("[BACKUP] Current backup file is from an unsupported EZSP version. Renaming and ignoring.", NS);
+            //     return undefined;
+            // }
+
+            return BackupUtils.fromUnifiedBackup(data);
+        }
+
+        throw new Error("[BACKUP] Unknown backup format.");
     }
 
     public async backup(): Promise<Models.Backup> {
-        return await Promise.reject(new Error("This adapter does not support backup"));
+        if (!this.driver.started()) {
+            throw new Error("Can't create backup while driver isn't connected");
+        }
+
+        // NOTE(mpi): The U64 values are put as big endian format into the buffer, same as string (0x001234...)
+        const extendedPanId = Buffer.alloc(8);
+        extendedPanId.writeBigUint64BE(this.driver.paramApsUseExtPanid);
+        const channelList = [this.driver.paramCurrentChannel]; // Utils.unpackChannelList(nib.channelList)
+        const networkKey = this.driver.paramNwkKey;
+        const coordinatorIeeeAddress = Buffer.alloc(8);
+        coordinatorIeeeAddress.writeBigUint64BE(this.driver.paramMacAddress);
+
+        /* return backup structure */
+        const backup: Models.Backup = {
+            networkOptions: {
+                panId: this.driver.paramNwkPanid,
+                extendedPanId,
+                channelList,
+                networkKey,
+                networkKeyDistribute: false,
+            },
+            logicalChannel: this.driver.paramCurrentChannel,
+            networkKeyInfo: {
+                sequenceNumber: 0, // TODO(mpi): on newer firmware versions we can read it
+                frameCounter: this.driver.paramFrameCounter,
+            },
+            securityLevel: 0x05, // AES-CCM-32 (fixed)
+            networkUpdateId: this.driver.paramNwkUpdateId,
+            coordinatorIeeeAddress,
+            devices: [], // TODO(mpi): we currently don't have this, but it will be added once install codes get a proper interface
+        };
+
+        return await Promise.resolve(backup);
     }
 
     public getNetworkParameters(): Promise<NetworkParameters> {
-        logger.debug("-------- z2m:getNetworkParameters() ----------------", NS);
-
         // TODO(mpi): This works with 0x26780700, needs more investigation with older firmware versions.
         const panID = this.driver.paramNwkPanid;
         const extendedPanID = this.driver.paramApsUseExtPanid;
         const channel = this.driver.paramCurrentChannel;
         const nwkUpdateID = this.driver.paramNwkUpdateId;
 
-        if (channel === 0 || extendedPanID.length === 0) {
+        if (channel === 0 || extendedPanID === 0n) {
             return Promise.reject(new Error("Failed to query network parameters"));
         }
         // TODO(mpi): check this statement, this should work
@@ -487,7 +547,7 @@ export class DeconzAdapter extends Adapter {
         // 0x24 was taken from https://github.com/zigpy/zigpy-deconz/blob/70910bc6a63e607332b4f12754ba470651eb878c/zigpy_deconz/api.py#L152
         // const nwkUpdateId = await this.driver.readParameterRequest(0x24 /*PARAM.PARAM.Network.NWK_UPDATE_ID*/);
 
-        return Promise.resolve({panID, extendedPanID, channel, nwkUpdateID});
+        return Promise.resolve({panID, extendedPanID: `0x${extendedPanID.toString(16).padStart(16, "0")}`, channel, nwkUpdateID});
     }
 
     public async restoreChannelInterPAN(): Promise<void> {

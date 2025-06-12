@@ -131,7 +131,7 @@ interface Request {
     commandId: FirmwareCommand;
     networkState: NetworkState;
     parameterId: ParamId;
-    parameter?: Buffer | number;
+    parameter?: Buffer | number | bigint;
     seqNumber: number;
     // biome-ignore lint/suspicious/noExplicitAny: API
     resolve: (value: any) => void;
@@ -228,34 +228,8 @@ interface ApsDataRequest {
     timeout: number; // seconds
 }
 
-type ParamMac = string;
-type ParamPanId = number;
-type ParamExtPanId = string;
-type ParamNwkAddr = number;
-type ParamChannel = number;
-type ParamChannelMask = number;
-type ParamPermitJoin = number;
-type ParamNetworkKey = string;
+type Command = Buffer | number | bigint;
 
-type Command = ParamMac | ParamPanId | ParamNwkAddr | ParamExtPanId | ParamChannel | ParamChannelMask | ParamPermitJoin | ParamNetworkKey;
-
-export type {
-    ApsRequest,
-    Request,
-    WaitForDataRequest,
-    ApsDataRequest,
-    ReceivedDataResponse,
-    DataStateResponse,
-    Command,
-    ParamMac,
-    ParamPanId,
-    ParamNwkAddr,
-    ParamExtPanId,
-    ParamChannel,
-    ParamChannelMask,
-    ParamPermitJoin,
-    ParamNetworkKey,
-    GpDataInd,
-};
+export type {ApsRequest, Request, WaitForDataRequest, ApsDataRequest, ReceivedDataResponse, DataStateResponse, Command, GpDataInd};
 
 export default {PARAM};

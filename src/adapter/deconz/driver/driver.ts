@@ -4,7 +4,8 @@ import events from "node:events";
 import net from "node:net";
 
 import slip from "slip";
-import type {NetworkOptions} from "../../tstype";
+import type {Backup} from "../../../models";
+import type {NetworkOptions, SerialPortOptions} from "../../tstype";
 
 import {logger} from "../../../utils/logger";
 import {SerialPort} from "../../serialPort";
@@ -79,8 +80,8 @@ interface CommandResult {
 type DriverEventData = number | CommandResult;
 
 class Driver extends events.EventEmitter {
-    private path: string;
     private serialPort?: SerialPort;
+    private serialPortOptions: SerialPortOptions;
     private writer: Writer;
     private parser: Parser;
     private frameParserEvent = frameParserEvents;
@@ -89,7 +90,6 @@ class Driver extends events.EventEmitter {
     private configChanged: number;
     private socketPort?: net.Socket;
     private timeoutCounter = 0;
-    private currentBaudRate = 0;
     private watchdogTriggeredTime = 0;
     private lastFirmwareRxTime = 0;
     private tickTimer: NodeJS.Timeout;
@@ -103,23 +103,28 @@ class Driver extends events.EventEmitter {
     private txSeq = 0;
     private txTime = 0;
     private networkOptions: NetworkOptions;
-
-    public paramMacAddress = "";
+    private backup: Backup | undefined;
+    private configMatchesBackup = false;
+    private configIsNewNetwork = false;
+    public restoredFromBackup = false;
+    public paramMacAddress = 0n;
     public paramFirmwareVersion = 0;
     public paramCurrentChannel = 0;
     public paramNwkPanid = 0;
-    public paramNwkKey = "";
+    public paramNwkKey = Buffer.alloc(16);
     public paramNwkUpdateId = 0;
     public paramChannelMask = 0;
     public paramProtocolVersion = 0;
-    public paramApsUseExtPanid = "";
+    public paramFrameCounter = 0;
+    public paramApsUseExtPanid = 0n;
 
-    public constructor(path: string | undefined, networkOptions: NetworkOptions) {
+    public constructor(serialPortOptions: SerialPortOptions, networkOptions: NetworkOptions, backup: Backup | undefined) {
         super();
-        this.path = path || "";
         this.seqNumber = 0;
         this.configChanged = 0;
         this.networkOptions = networkOptions;
+        this.serialPortOptions = serialPortOptions;
+        this.backup = backup;
 
         this.writer = new Writer();
         this.parser = new Parser();
@@ -137,12 +142,13 @@ class Driver extends events.EventEmitter {
             for (const interval of this.intervals) {
                 clearInterval(interval);
             }
-            // TODO(mpi): Reject open promises!!
+
             queue.length = 0;
             busyQueue.length = 0;
             for (let i = 0; i < apsQueue.length; i++) {
                 apsQueue[i].reject(new Error("Port closed"));
             }
+
             apsQueue.length = 0;
             for (let i = 0; i < apsBusyQueue.length; i++) {
                 apsBusyQueue[i].reject(new Error("Port closed"));
@@ -263,7 +269,13 @@ class Driver extends events.EventEmitter {
         if (event === DriverEvent.Action) {
             this.watchdogTriggeredTime = 0; // force reset watchdog
 
-            if (!this.path) {
+            // TODO(mpi): In future we should simply try which baudrate may work (in a state machine).
+            // E.g. connect with baudrate XY, query firmware, on timeout try other baudrate.
+            // Most units out there are ConBee2/3 which support 115200.
+            // The 38400 default is outdated now and only works for a few units.
+            const baudrate = this.serialPortOptions.baudRate || 38400;
+
+            if (!this.serialPortOptions.path) {
                 // unlikely but handle it anyway
                 this.driverStateStart = Date.now();
                 this.driverState = DriverState.WaitToReconnect;
@@ -271,10 +283,10 @@ class Driver extends events.EventEmitter {
             }
 
             let prom: Promise<void> | undefined;
-            if (SocketPortUtils.isTcpPath(this.path)) {
+            if (SocketPortUtils.isTcpPath(this.serialPortOptions.path)) {
                 prom = this.openSocketPort();
-            } else if (this.currentBaudRate) {
-                prom = this.openSerialPort(this.currentBaudRate);
+            } else if (baudrate) {
+                prom = this.openSerialPort(baudrate);
             } else {
                 // unlikely but handle it anyway
                 this.driverStateStart = Date.now();
@@ -298,6 +310,32 @@ class Driver extends events.EventEmitter {
     private isNetworkConfigurationValid(): boolean {
         const opts = this.networkOptions;
 
+        let configExtPanID = 0n;
+        const configNetworkKey = Buffer.from(opts.networkKey || []);
+
+        if (opts.extendedPanID) {
+            // NOTE(mpi): U64 values in buffer are big endian!
+            configExtPanID = Buffer.from(opts.extendedPanID).readBigUInt64BE();
+        }
+
+        if (this.backup) {
+            // NOTE(mpi): U64 values in buffer are big endian!
+            const backupExtPanID = Buffer.from(this.backup.networkOptions.extendedPanId).readBigUInt64BE();
+
+            if (
+                opts.panID === this.backup.networkOptions.panId &&
+                configExtPanID === backupExtPanID &&
+                opts.channelList.includes(this.backup.logicalChannel) &&
+                configNetworkKey.equals(this.backup.networkOptions.networkKey)
+            ) {
+                logger.debug("Configuration matches backup", NS);
+                this.configMatchesBackup = true;
+            } else {
+                logger.debug("Configuration doesn't match backup (ignore backup)", NS);
+                this.configMatchesBackup = false; // ignore Backup
+            }
+        }
+
         if ((this.deviceStatus & DEV_STATUS_NET_STATE_MASK) !== NetworkState.Connected) {
             return false;
         }
@@ -306,9 +344,9 @@ class Driver extends events.EventEmitter {
             return false;
         }
 
-        if (opts.extendedPanID) {
-            const extPanID = `0x${opts.extendedPanID.map((x) => x.toString(16).padStart(2, "0")).join("")}`;
-            if (extPanID !== this.paramApsUseExtPanid) {
+        if (configExtPanID !== 0n) {
+            if (configExtPanID !== this.paramApsUseExtPanid) {
+                this.configIsNewNetwork = true;
                 return false;
             }
         }
@@ -318,10 +356,27 @@ class Driver extends events.EventEmitter {
         }
 
         if (opts.networkKey) {
-            const nwkKey = `0x${opts.networkKey.map((x) => x.toString(16).padStart(2, "0")).join("")}`;
-            if (nwkKey !== this.paramNwkKey) {
+            if (!configNetworkKey.equals(this.paramNwkKey)) {
+                // this.configIsNewNetwork = true; // maybe, but we need to consider key rotation
                 return false;
             }
+        }
+
+        if (this.backup && this.configMatchesBackup) {
+            // The backup might be from another unit, if the mac doesn't match clone it!
+            // NOTE(mpi): U64 values in buffer are big endian!
+            const backupMacAddress = this.backup.coordinatorIeeeAddress.readBigUInt64BE();
+            if (backupMacAddress !== this.paramMacAddress) {
+                this.configIsNewNetwork = true;
+                return false;
+            }
+
+            if (this.paramNwkUpdateId < this.backup.networkUpdateId) {
+                return false;
+            }
+
+            // NOTE(mpi): Ignore the frame counter for now and only handle in case of this.configIsNewNetwork == true.
+            // TODO(mpi): We might also check Trust Center Link Key and key sequence number (unlikely but possible case).
         }
 
         // TODO(mpi): Check endpoint configuration
@@ -349,21 +404,81 @@ class Driver extends events.EventEmitter {
         // first disconnect the network
         await this.changeNetworkStateRequest(NetworkState.Disconnected);
 
+        // check if a backup needs to be applied
+        // Ember check if backup is needed:
+        // - panId, extPanId, network key different -> leave network
+        // - left or not joined -> consider using backup
+        // backup is only used when matching the z2m config: panId, extPanId, channel, network key
+        // parameters restored from backup:
+        // - networkKey,
+        // - networkKeyInfo.sequenceNumber  NOTE(mpi): not a reason for using backup!?
+        // - networkKeyInfo.frameCounter
+        // - networkOptions.panId
+        // - extendedPanId
+        // - logicalChannel
+        // - backup!.ezsp!.hashed_tclk!     NOTE(mpi): not a reason for using backup!?
+        // - backup!.networkUpdateId        NOTE(mpi): not a reason for using backup!?
+
+        let frameCounter = 0;
+
+        if (this.backup && this.configMatchesBackup) {
+            // NOTE(mpi): U64 values in buffer are big endian!
+            const backupMacAddress = this.backup.coordinatorIeeeAddress.readBigUInt64BE();
+            if (backupMacAddress !== this.paramMacAddress) {
+                logger.debug(
+                    `Use mac address from backup 0x${backupMacAddress.toString(16).padStart(16, "0")}, replaces 0x${this.paramMacAddress.toString(16).padStart(16, "0")}`,
+                    NS,
+                );
+                this.paramMacAddress = backupMacAddress;
+                this.restoredFromBackup = true;
+
+                await this.writeParameterRequest(ParamId.MAC_ADDRESS, backupMacAddress);
+            }
+
+            if (this.configIsNewNetwork && this.paramFrameCounter < this.backup.networkKeyInfo.frameCounter) {
+                // delicate situation, only update frame counter if:
+                // - backup counter is higher
+                // - this is in fact a new network
+                // - configIsNewNetwork guards also from mistreating counter overflow
+                logger.debug(`Use higher frame counter from backup ${this.backup.networkKeyInfo.frameCounter}`, NS);
+                // Additionally increase frame counter. Note this might still be too low!
+                frameCounter = this.backup.networkKeyInfo.frameCounter + 1000;
+                this.restoredFromBackup = true;
+            }
+
+            if (this.paramNwkUpdateId < this.backup.networkUpdateId) {
+                logger.debug(`Use network update ID from backup ${this.backup.networkUpdateId}`, NS);
+                this.paramNwkUpdateId = this.backup.networkUpdateId;
+                this.restoredFromBackup = true;
+            }
+
+            // TODO(mpi): Later on also check key sequence number.
+        }
+
+        if (this.configIsNewNetwork && this.paramFrameCounter < frameCounter) {
+            this.paramFrameCounter = frameCounter;
+            await this.writeParameterRequest(ParamId.STK_FRAME_COUNTER, this.paramFrameCounter);
+        }
+
         await this.writeParameterRequest(ParamId.STK_NWK_UPDATE_ID, this.paramNwkUpdateId);
 
         if (this.networkOptions.channelList.length !== 0) {
             await this.writeParameterRequest(ParamId.APS_CHANNEL_MASK, 1 << this.networkOptions.channelList[0]);
         }
 
+        this.paramNwkPanid = this.networkOptions.panID;
         await this.writeParameterRequest(ParamId.NWK_PANID, this.networkOptions.panID);
         await this.writeParameterRequest(ParamId.STK_PREDEFINED_PANID, 1);
 
         if (this.networkOptions.extendedPanID) {
-            await this.writeParameterRequest(ParamId.APS_USE_EXTENDED_PANID, Buffer.from(this.networkOptions.extendedPanID));
+            // NOTE(mpi): U64 values in buffer are big endian!
+            this.paramApsUseExtPanid = Buffer.from(this.networkOptions.extendedPanID).readBigUInt64BE();
+            await this.writeParameterRequest(ParamId.APS_USE_EXTENDED_PANID, this.paramApsUseExtPanid);
         }
 
         // check current network key against configuration.yaml
         if (this.networkOptions.networkKey) {
+            this.paramNwkKey = Buffer.from(this.networkOptions.networkKey);
             await this.writeParameterRequest(ParamId.STK_NETWORK_KEY, Buffer.from([0x0, ...this.networkOptions.networkKey]));
         }
 
@@ -437,30 +552,46 @@ class Driver extends events.EventEmitter {
                 this.readParameterRequest(ParamId.STK_NWK_UPDATE_ID),
                 this.readParameterRequest(ParamId.APS_CHANNEL_MASK),
                 this.readParameterRequest(ParamId.STK_PROTOCOL_VERSION),
+                this.readParameterRequest(ParamId.STK_FRAME_COUNTER),
             ])
-                .then(([fwVersion, _deviceState, mac, panid, apsUseExtPanid, currentChannel, nwkKey, nwkUpdateId, channelMask, protocolVersion]) => {
-                    this.paramFirmwareVersion = fwVersion;
-                    this.paramCurrentChannel = currentChannel as number;
-                    this.paramApsUseExtPanid = apsUseExtPanid as string;
-                    this.paramNwkPanid = panid as number;
-                    this.paramNwkKey = nwkKey as string;
-                    this.paramNwkUpdateId = nwkUpdateId as number;
-                    this.paramMacAddress = mac as string;
-                    this.paramChannelMask = channelMask as number;
-                    this.paramProtocolVersion = protocolVersion as number;
+                .then(
+                    ([
+                        fwVersion,
+                        _deviceState,
+                        mac,
+                        panid,
+                        apsUseExtPanid,
+                        currentChannel,
+                        nwkKey,
+                        nwkUpdateId,
+                        channelMask,
+                        protocolVersion,
+                        frameCounter,
+                    ]) => {
+                        this.paramFirmwareVersion = fwVersion;
+                        this.paramCurrentChannel = currentChannel as number;
+                        this.paramApsUseExtPanid = apsUseExtPanid as bigint;
+                        this.paramNwkPanid = panid as number;
+                        this.paramNwkKey = nwkKey as Buffer;
+                        this.paramNwkUpdateId = nwkUpdateId as number;
+                        this.paramMacAddress = mac as bigint;
+                        this.paramChannelMask = channelMask as number;
+                        this.paramProtocolVersion = protocolVersion as number;
+                        this.paramFrameCounter = frameCounter as number;
 
-                    console.log({fwVersion, mac, panid, apsUseExtPanid, currentChannel, nwkKey, nwkUpdateId, channelMask, protocolVersion});
+                        // console.log({fwVersion, mac, panid, apsUseExtPanid, currentChannel, nwkKey, nwkUpdateId, channelMask, protocolVersion, frameCounter});
 
-                    if (this.isNetworkConfigurationValid()) {
-                        logger.debug("Zigbee configuration valid", NS);
-                        this.driverStateStart = Date.now();
-                        this.driverState = DriverState.Connected;
-                    } else {
-                        this.driverStateStart = Date.now();
-                        this.driverState = DriverState.Reconfigure;
-                        this.emitStateEvent(DriverEvent.Action);
-                    }
-                })
+                        if (this.isNetworkConfigurationValid()) {
+                            logger.debug("Zigbee configuration valid", NS);
+                            this.driverStateStart = Date.now();
+                            this.driverState = DriverState.Connected;
+                        } else {
+                            this.driverStateStart = Date.now();
+                            this.driverState = DriverState.Reconfigure;
+                            this.emitStateEvent(DriverEvent.Action);
+                        }
+                    },
+                )
                 .catch((_err) => {
                     this.driverStateStart = Date.now();
                     this.driverState = DriverState.CloseAndRestart;
@@ -606,10 +737,6 @@ class Driver extends events.EventEmitter {
         this.emit("close");
     }
 
-    public open(baudrate: number): void {
-        this.currentBaudRate = baudrate;
-    }
-
     private isOpen(): boolean {
         if (this.serialPort) return this.serialPort.isOpen;
         if (this.socketPort) return this.socketPort.readyState !== "closed";
@@ -618,13 +745,13 @@ class Driver extends events.EventEmitter {
 
     public openSerialPort(baudrate: number): Promise<void> {
         return new Promise((resolve, reject): void => {
-            if (!this.path) {
+            if (!this.serialPortOptions.path) {
                 reject(new Error("Failed to open serial port, path is undefined"));
             }
 
-            logger.debug(`Opening serial port with ${this.path}`, NS);
+            logger.debug(`Opening serial port: ${this.serialPortOptions.path}`, NS);
 
-            const path = this.path || "";
+            const path = this.serialPortOptions.path || "";
 
             if (!this.serialPort) {
                 this.serialPort = new SerialPort({path, baudRate: baudrate, autoOpen: false});
@@ -665,7 +792,11 @@ class Driver extends events.EventEmitter {
     }
 
     private async openSocketPort(): Promise<void> {
-        const info = SocketPortUtils.parseTcpPath(this.path);
+        if (!this.serialPortOptions.path) {
+            throw new Error("No serial port TCP path specified");
+        }
+
+        const info = SocketPortUtils.parseTcpPath(this.serialPortOptions.path);
         logger.debug(`Opening TCP socket with ${info.host}:${info.port}`, NS);
         this.socketPort = new net.Socket();
         this.socketPort.setNoDelay(true);
@@ -750,7 +881,7 @@ class Driver extends events.EventEmitter {
         });
     }
 
-    public writeParameterRequest(parameterId: ParamId, parameter: Buffer | number): Promise<void> {
+    public writeParameterRequest(parameterId: ParamId, parameter: Buffer | number | bigint): Promise<void> {
         const seqNumber = this.nextSeqNumber();
         return new Promise((resolve, reject): void => {
             //logger.debug(`push write parameter request to queue. seqNr: ${seqNumber} paramId: ${parameterId} parameter: ${parameter}`, NS);
@@ -834,7 +965,7 @@ class Driver extends events.EventEmitter {
         return this.sendRequest(Buffer.from([FirmwareCommand.ReadParameter, seqNumber, 0x00, 0x08, 0x00, 0x01, 0x00, parameterId]));
     }
 
-    private sendWriteParameterRequest(parameterId: ParamId, value: Buffer | number, seqNumber: number): CommandResult {
+    private sendWriteParameterRequest(parameterId: ParamId, value: Buffer | number | bigint, seqNumber: number): CommandResult {
         // command id, sequence number, 0, framelength(U16), payloadlength(U16), parameter id, parameter
         const param = stackParameters.find((x) => x.id === parameterId);
         if (!param) {
@@ -875,6 +1006,13 @@ class Driver extends events.EventEmitter {
             } else if (param.type === DataType.U32) {
                 buf.writeUInt32LE(value, pos);
                 pos += 4;
+            } else {
+                throw new Error("tried to write unknown parameter number type");
+            }
+        } else if (typeof value === "bigint") {
+            if (param.type === DataType.U64) {
+                buf.writeBigUInt64LE(value, pos);
+                pos += 8;
             } else {
                 throw new Error("tried to write unknown parameter number type");
             }

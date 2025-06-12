@@ -31,7 +31,7 @@ function parseReadParameterResponse(view: DataView): Command | null {
 
     switch (parameterId) {
         case ParamId.MAC_ADDRESS: {
-            result = `0x${view.getBigUint64(pos, littleEndian).toString(16).padStart(16, "0")}`;
+            result = view.getBigUint64(pos, littleEndian);
             break;
         }
         case ParamId.NWK_PANID: {
@@ -47,19 +47,18 @@ function parseReadParameterResponse(view: DataView): Command | null {
             break;
         }
         case ParamId.NWK_EXTENDED_PANID: {
-            result = `0x${view.getBigUint64(pos, littleEndian).toString(16).padStart(16, "0")}`;
+            result = view.getBigUint64(pos, littleEndian);
             break;
         }
         case ParamId.APS_USE_EXTENDED_PANID: {
-            result = `0x${view.getBigUint64(pos, littleEndian).toString(16).padStart(16, "0")}`;
+            result = view.getBigUint64(pos, littleEndian);
             break;
         }
         case ParamId.STK_NETWORK_KEY: {
-            result = "0x";
-
+            result = Buffer.alloc(16);
             pos += 1; // key index
             for (let i = 0; i < 16; i++) {
-                result += view.getUint8(pos).toString(16).padStart(2, "0");
+                result[i] = view.getUint8(pos);
                 pos += 1;
             }
             break;
@@ -69,6 +68,10 @@ function parseReadParameterResponse(view: DataView): Command | null {
             break;
         }
         case ParamId.APS_CHANNEL_MASK: {
+            result = view.getUint32(pos, littleEndian);
+            break;
+        }
+        case ParamId.STK_FRAME_COUNTER: {
             result = view.getUint32(pos, littleEndian);
             break;
         }
@@ -91,10 +94,12 @@ function parseReadParameterResponse(view: DataView): Command | null {
     }
 
     if (parameterId in ParamId) {
-        let p = result;
+        let p: Command | string | null = result;
         if (parameterId === ParamId.STK_NETWORK_KEY) {
             // don't show in logs
             p = "<hidden>";
+        } else if (typeof result === "bigint") {
+            p = `0x${result.toString(16).padStart(16, "0")}`;
         }
         logger.debug(`Received read parameter response for ${ParamId[parameterId]}, seq: ${seqNumber}, status: ${status}, parameter: ${p}`, NS);
     }
@@ -200,6 +205,7 @@ function parseApsConfirmResponse(view: DataView): DataStateResponse | null {
     };
 }
 
+// TODO(mpi): The ../buffalo/buffalo.ts already provides this, so we should reuse it instead of a own implementation?!
 class UDataView {
     littleEndian = true;
     pos = 0;
