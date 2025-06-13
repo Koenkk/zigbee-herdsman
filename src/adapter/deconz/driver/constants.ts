@@ -28,6 +28,19 @@ export enum ApsAddressMode {
     NwkAndIeee = 0x04,
 }
 
+export enum ApsStatusCode {
+    Success = 0x00,
+    ApsNoAck = 0xa7,
+    NwkRouteDiscoveryFailed = 0xd0,
+    NwkRouteError = 0xd1,
+    NwkBroadcastTableFull = 0xd2,
+    MacNoChannelAccess = 0xe1,
+    MacInvalidParameterStatus = 0xe8,
+    MacNoAck = 0xe9,
+    MacNoBeacon = 0xea,
+    MacTransactionExpired = 0xf0,
+}
+
 export enum NwkBroadcastAddress {
     BroadcastAll = 0xffff,
     BroadcastLowPowerRouters = 0xfffb,
