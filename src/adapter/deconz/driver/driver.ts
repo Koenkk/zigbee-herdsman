@@ -258,7 +258,7 @@ class Driver extends events.EventEmitter {
             this.handleApsQueueOnDeviceState();
         } else if (event === DriverEvent.Tick) {
             if (this.needWatchdogReset()) {
-                this.resetWatchdog();;
+                this.resetWatchdog();
             }
 
             this.processQueue();
