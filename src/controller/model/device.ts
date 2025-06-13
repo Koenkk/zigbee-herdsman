@@ -843,6 +843,17 @@ export class Device extends Entity<ControllerEventMap> {
             MOT003: {}, // https://github.com/Koenkk/zigbee2mqtt/issues/12471
             "C-ZB-SEDC": {}, //candeo device that doesn't follow IAS enrollment process correctly and therefore fails to complete interview
             "C-ZB-SEMO": {}, //candeo device that doesn't follow IAS enrollment process correctly and therefore fails to complete interview
+            "ZG-204ZM": {}, //hobeian device that doesn't follow IAS enrollment process correctly and therefore fails to complete interview
+            "ZG-102Z": {}, //hobeian device that doesn't follow IAS enrollment process correctly and therefore fails to complete interview
+            "ZG-102ZL": {}, //hobeian device that doesn't follow IAS enrollment process correctly and therefore fails to complete interview
+            "ZG-204ZV": {}, //hobeian device that doesn't follow IAS enrollment process correctly and therefore fails to complete interview
+            "CK-BL702-MWS-01(7016)": {}, //hobeian device that doesn't follow IAS enrollment process correctly and therefore fails to complete interview
+            "ZG-205ZL": {}, //hobeian device that doesn't follow IAS enrollment process correctly and therefore fails to complete interview
+            "ZG-223Z": {}, //hobeian device that doesn't follow IAS enrollment process correctly and therefore fails to complete interview
+            "ZG-102ZM": {}, //hobeian device that doesn't follow IAS enrollment process correctly and therefore fails to complete interview
+            "ZG-204Z": {}, //hobeian device that doesn't follow IAS enrollment process correctly and therefore fails to complete interview
+            "ZG-204ZL": {}, //hobeian device that doesn't follow IAS enrollment process correctly and therefore fails to complete interview
+            "ZG-225Z": {}, //hobeian device that doesn't follow IAS enrollment process correctly and therefore fails to complete interview
         };
 
         let match: string | undefined;
