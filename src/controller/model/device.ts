@@ -854,6 +854,7 @@ export class Device extends Entity<ControllerEventMap> {
             "ZG-204Z": {}, //hobeian device that doesn't follow IAS enrollment process correctly and therefore fails to complete interview
             "ZG-204ZL": {}, //hobeian device that doesn't follow IAS enrollment process correctly and therefore fails to complete interview
             "ZG-225Z": {}, //hobeian device that doesn't follow IAS enrollment process correctly and therefore fails to complete interview
+            "ZG-103Z": {}, //hobeian device that doesn't follow IAS enrollment process correctly and therefore fails to complete interview
         };
 
         let match: string | undefined;
