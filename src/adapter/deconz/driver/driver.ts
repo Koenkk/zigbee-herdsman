@@ -194,16 +194,27 @@ class Driver extends events.EventEmitter {
         this.emit(DRIVER_EVENT, event, data);
     }
 
-    private checkWatchdog(): boolean {
+    private needWatchdogReset(): boolean {
         const now = Date.now();
         if (300 * 1000 < now - this.watchdogTriggeredTime) {
-            logger.debug("Reset firmware watchdog", NS);
-            this.watchdogTriggeredTime = now;
-            this.sendWriteParameterRequest(ParamId.DEV_WATCHDOG_TTL, 600, this.nextSeqNumber());
             return true;
         }
-
         return false;
+    }
+
+    private async resetWatchdog(): Promise<void> {
+        const lastTime = this.watchdogTriggeredTime;
+
+        try {
+            logger.debug("Reset firmware watchdog", NS);
+            // Set timestamp before command to let needWatchdogReset() no trigger multiple times.
+            this.watchdogTriggeredTime = Date.now();
+            await this.writeParameterRequest(ParamId.DEV_WATCHDOG_TTL, 600);
+            logger.debug("Reset firmware watchdog success", NS);
+        } catch (_err) {
+            this.watchdogTriggeredTime = lastTime;
+            logger.debug("Reset firmware watchdog failed", NS);
+        }
     }
 
     private handleFirmwareEvent(event: DriverEvent, data?: DriverEventData): void {
@@ -246,8 +257,8 @@ class Driver extends events.EventEmitter {
         if (event === DriverEvent.DeviceStateUpdated) {
             this.handleApsQueueOnDeviceState();
         } else if (event === DriverEvent.Tick) {
-            if (this.checkWatchdog()) {
-                return;
+            if (this.needWatchdogReset()) {
+                this.resetWatchdog();;
             }
 
             this.processQueue();
@@ -539,11 +550,11 @@ class Driver extends events.EventEmitter {
             logger.debug("Query firmware parameters", NS);
 
             this.deviceStatus = 0; // need fresh value
-            this.checkWatchdog();
 
             Promise.all([
+                this.resetWatchdog(),
                 this.readFirmwareVersionRequest(),
-                this.sendReadDeviceStateRequest(this.nextSeqNumber()),
+                this.readDeviceStatusRequest(),
                 this.readParameterRequest(ParamId.MAC_ADDRESS),
                 this.readParameterRequest(ParamId.NWK_PANID),
                 this.readParameterRequest(ParamId.APS_USE_EXTENDED_PANID),
@@ -556,6 +567,7 @@ class Driver extends events.EventEmitter {
             ])
                 .then(
                     ([
+                        _watchdog,
                         fwVersion,
                         _deviceState,
                         mac,
@@ -948,6 +960,19 @@ class Driver extends events.EventEmitter {
             //logger.debug(`push read firmware version request to queue. seqNr: ${seqNumber}`, NS);
             const ts = 0;
             const commandId = FirmwareCommand.FirmwareVersion;
+            const networkState = NetworkState.Ignore;
+            const parameterId = ParamId.NONE;
+            const req: Request = {commandId, networkState, parameterId, seqNumber, resolve, reject, ts};
+            queue.push(req);
+        });
+    }
+
+    public readDeviceStatusRequest(): Promise<number> {
+        const seqNumber = this.nextSeqNumber();
+        return new Promise((resolve, reject): void => {
+            //logger.debug(`push read firmware version request to queue. seqNr: ${seqNumber}`, NS);
+            const ts = 0;
+            const commandId = FirmwareCommand.Status;
             const networkState = NetworkState.Ignore;
             const parameterId = ParamId.NONE;
             const req: Request = {commandId, networkState, parameterId, seqNumber, resolve, reject, ts};
