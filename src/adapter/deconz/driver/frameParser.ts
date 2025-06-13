@@ -13,8 +13,11 @@ import PARAM, {
     FirmwareCommand,
     CommandStatus,
     ParamId,
+    ApsAddressMode,
+    ApsStatusCode,
 } from "./constants";
 import {apsBusyQueue, busyQueue} from "./driver";
+import { Buffalo } from "../../../buffalo";
 
 const NS = "zh:deconz:frameparser";
 
@@ -127,40 +130,47 @@ function parseChangeNetworkStateResponse(view: DataView): number {
 }
 
 function parseApsConfirmResponse(view: DataView): DataStateResponse | null {
-    const commandId = view.getUint8(0);
-    const seqNr = view.getUint8(1);
-    const status = view.getUint8(2);
+
+    const buf = new Buffalo(Buffer.from(view.buffer));
+
+    const commandId = buf.readUInt8();
+    const seqNr = buf.readUInt8();
+    const status = buf.readUInt8();
 
     if (status !== CommandStatus.Success) {
         logger.debug(`Response APS-DATA.confirm seq: ${seqNr} status: ${CommandStatus[status]} (error)`, NS);
         return null;
     }
 
-    const frameLength = 7;
-    const payloadLength = view.getUint16(5, littleEndian);
-    const deviceState = view.getUint8(7);
-    const requestId = view.getUint8(8);
-    const destAddrMode = view.getUint8(9);
+    const frameLength = buf.readUInt16();
+    const payloadLength = buf.readUInt16();
+    // payload
+    const deviceState = buf.readUInt8();
+    const requestId = buf.readUInt8();
+    const destAddrMode = buf.readUInt8();
 
     let destAddr64: string | undefined;
     let destAddr16: number | undefined;
     let destEndpoint: number | undefined;
     let destAddr = "";
 
-    if (destAddrMode === PARAM.PARAM.addressMode.IEEE_ADDR) {
-        destAddr64 = view.getBigUint64(10, littleEndian).toString(16).padStart(16, "0");
+    if (destAddrMode === ApsAddressMode.Nwk) {
+        destAddr16 = buf.readUInt16();
+        destAddr = destAddr16.toString(16).padStart(4, "0");
+        destEndpoint = buf.readUInt8();
+    } else if (destAddrMode === ApsAddressMode.Group) {
+        destAddr16 = buf.readUInt16();
+        destAddr = destAddr16.toString(16).padStart(4, "0");
+    } else if (destAddrMode === ApsAddressMode.Ieee) {
+        destAddr64 = buf.readUInt64().toString(16).padStart(16, "0");
         destAddr = destAddr64;
+        destEndpoint = buf.readUInt8();
     } else {
-        destAddr16 = view.getUint16(10, littleEndian);
-        destAddr = destAddr16.toString(16);
+        logger.debug(`Response APS-DATA.confirm seq: ${seqNr} unsupported address mode: ${destAddrMode}`, NS);
     }
 
-    if (destAddrMode === PARAM.PARAM.addressMode.NWK_ADDR || destAddrMode === PARAM.PARAM.addressMode.IEEE_ADDR) {
-        destEndpoint = view.getUint8(view.byteLength - 7);
-    }
-
-    const srcEndpoint = view.getUint8(view.byteLength - 6);
-    const confirmStatus = view.getInt8(view.byteLength - 5);
+    const srcEndpoint = buf.readUInt8();
+    const confirmStatus = buf.readUInt8()
 
     // resolve APS-DATA.request promise
     const i = apsBusyQueue.findIndex((r: ApsRequest) => r.request && r.request.requestId === requestId);
@@ -171,19 +181,23 @@ function parseApsConfirmResponse(view: DataView): DataStateResponse | null {
 
     const req: ApsRequest = apsBusyQueue[i];
 
-    //TODO(mpi): Add enum for possible (MAC,NWK,APS) status codes.
-    if (confirmStatus === 0x00) {
-        // Success
+    let strstatus = "unknown";
+    let hexstatus = `0x${confirmStatus.toString(16).padStart(2, "0")}`;
+    if (confirmStatus in ApsStatusCode) {
+        strstatus = ApsStatusCode[confirmStatus];
+    }
+
+    if (confirmStatus === ApsStatusCode.Success) {
         req.resolve(confirmStatus);
     } else {
-        req.reject(new Error(`Failed APS-DATA.request with confirm status: 0x${confirmStatus.toString(16).padStart(2, "0")}`));
+        req.reject(new Error(`Failed APS-DATA.request with confirm status: ${strstatus} (${hexstatus})`));
     }
 
     //remove from busyqueue
     apsBusyQueue.splice(i, 1);
 
     logger.debug(
-        `APS-DATA.confirm  destAddr: 0x${destAddr} APS request id: ${requestId} confirm status: 0x${confirmStatus.toString(16).padStart(2, "0")}`,
+        `APS-DATA.confirm  destAddr: 0x${destAddr} APS request id: ${requestId} confirm status: ${strstatus} ${hexstatus}`,
         NS,
     );
     frameParserEvents.emit("deviceStateUpdated", deviceState);
