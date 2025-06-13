@@ -1,6 +1,7 @@
 /* v8 ignore start */
 
 import {EventEmitter} from "node:events";
+import {Buffalo} from "../../../buffalo";
 import {logger} from "../../../utils/logger";
 import * as Zdo from "../../../zspec/zdo";
 import PARAM, {
@@ -17,7 +18,6 @@ import PARAM, {
     ApsStatusCode,
 } from "./constants";
 import {apsBusyQueue, busyQueue} from "./driver";
-import { Buffalo } from "../../../buffalo";
 
 const NS = "zh:deconz:frameparser";
 
@@ -130,7 +130,6 @@ function parseChangeNetworkStateResponse(view: DataView): number {
 }
 
 function parseApsConfirmResponse(view: DataView): DataStateResponse | null {
-
     const buf = new Buffalo(Buffer.from(view.buffer));
 
     const commandId = buf.readUInt8();
@@ -170,7 +169,7 @@ function parseApsConfirmResponse(view: DataView): DataStateResponse | null {
     }
 
     const srcEndpoint = buf.readUInt8();
-    const confirmStatus = buf.readUInt8()
+    const confirmStatus = buf.readUInt8();
 
     // resolve APS-DATA.request promise
     const i = apsBusyQueue.findIndex((r: ApsRequest) => r.request && r.request.requestId === requestId);
@@ -182,7 +181,7 @@ function parseApsConfirmResponse(view: DataView): DataStateResponse | null {
     const req: ApsRequest = apsBusyQueue[i];
 
     let strstatus = "unknown";
-    let hexstatus = `0x${confirmStatus.toString(16).padStart(2, "0")}`;
+    const hexstatus = `0x${confirmStatus.toString(16).padStart(2, "0")}`;
     if (confirmStatus in ApsStatusCode) {
         strstatus = ApsStatusCode[confirmStatus];
     }
@@ -196,10 +195,7 @@ function parseApsConfirmResponse(view: DataView): DataStateResponse | null {
     //remove from busyqueue
     apsBusyQueue.splice(i, 1);
 
-    logger.debug(
-        `APS-DATA.confirm  destAddr: 0x${destAddr} APS request id: ${requestId} confirm status: ${strstatus} ${hexstatus}`,
-        NS,
-    );
+    logger.debug(`APS-DATA.confirm  destAddr: 0x${destAddr} APS request id: ${requestId} confirm status: ${strstatus} ${hexstatus}`, NS);
     frameParserEvents.emit("deviceStateUpdated", deviceState);
 
     return {
