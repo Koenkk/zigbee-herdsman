@@ -843,6 +843,9 @@ export class Device extends Entity<ControllerEventMap> {
             MOT003: {}, // https://github.com/Koenkk/zigbee2mqtt/issues/12471
             "C-ZB-SEDC": {}, //candeo device that doesn't follow IAS enrollment process correctly and therefore fails to complete interview
             "C-ZB-SEMO": {}, //candeo device that doesn't follow IAS enrollment process correctly and therefore fails to complete interview
+            "^ZG-102ZM$": {
+                powerSource: "Battery", // A tuya device where it errors with "Interview failed because of failed IAS enroll (zoneState didn't change" but is otherwise functional.
+            },
         };
 
         let match: string | undefined;
