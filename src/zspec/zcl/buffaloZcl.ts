@@ -1,12 +1,11 @@
-import type {BuffaloZclOptions, StructuredSelector, ZclArray} from './definition/tstype';
+import {Buffalo} from "../../buffalo";
+import {logger} from "../../utils/logger";
+import {isNumberArray} from "../../utils/utils";
+import {BuffaloZclDataType, DataType, StructuredIndicatorType} from "./definition/enums";
+import type {BuffaloZclOptions, StructuredSelector, ZclArray} from "./definition/tstype";
+import * as Utils from "./utils";
 
-import {Buffalo} from '../../buffalo';
-import {logger} from '../../utils/logger';
-import {isNumberArray} from '../../utils/utils';
-import {BuffaloZclDataType, DataType, StructuredIndicatorType} from './definition/enums';
-import * as Utils from './utils';
-
-const NS = 'zh:zcl:buffalo';
+const NS = "zh:zcl:buffalo";
 
 interface KeyValue {
     [s: string | number]: number | string;
@@ -65,7 +64,7 @@ interface ThermoTransition {
     coolSetpoint?: number;
 }
 
-interface GPD {
+interface Gpd {
     deviceID: number;
     options: number;
     extendedOptions: number;
@@ -85,18 +84,18 @@ interface GPD {
     currentContactStatus: number;
 }
 
-interface GPDChannelRequest {
+interface GpdChannelRequest {
     nextChannel: number;
     nextNextChannel: number;
 }
 
-export interface GPDChannelConfiguration {
+export interface GpdChannelConfiguration {
     commandID: number;
     operationalChannel: number;
     basic: boolean;
 }
 
-export interface GPDCommissioningReply {
+export interface GpdCommissioningReply {
     commandID: number;
     options: number;
     /** expected valid if corresponding `options` bits set */
@@ -109,12 +108,12 @@ export interface GPDCommissioningReply {
     frameCounter?: number;
 }
 
-interface GPDCustomReply {
+interface GpdCustomReply {
     commandID: number;
     buffer: Buffer;
 }
 
-interface GPDAttributeReport {
+interface GpdAttributeReport {
     manufacturerCode: number;
     clusterID: number;
     attributes: KeyValue;
@@ -318,8 +317,8 @@ export class BuffaloZcl extends Buffalo {
 
     private writeCharStr(value?: string | number[]): void {
         if (value) {
-            if (typeof value === 'string') {
-                this.writeUInt8(Buffer.byteLength(value, 'utf8'));
+            if (typeof value === "string") {
+                this.writeUInt8(Buffer.byteLength(value, "utf8"));
                 this.writeUtf8String(value);
             } else {
                 // XXX: value.length not written?
@@ -333,7 +332,7 @@ export class BuffaloZcl extends Buffalo {
     private readCharStr(): string {
         const length = this.readZclUInt8();
 
-        return Number.isNaN(length) ? '' : this.readUtf8String(length);
+        return Number.isNaN(length) ? "" : this.readUtf8String(length);
     }
 
     private writeLongOctetStr(value?: number[]): void {
@@ -352,7 +351,7 @@ export class BuffaloZcl extends Buffalo {
 
     private writeLongCharStr(value?: string): void {
         if (value) {
-            this.writeUInt16(Buffer.byteLength(value, 'utf8'));
+            this.writeUInt16(Buffer.byteLength(value, "utf8"));
             this.writeUtf8String(value);
         } else {
             this.writeUInt16(0xffff); // non-value
@@ -361,12 +360,12 @@ export class BuffaloZcl extends Buffalo {
 
     private readLongCharStr(): string {
         const length = this.readZclUInt16();
-        return Number.isNaN(length) ? '' : this.readUtf8String(length);
+        return Number.isNaN(length) ? "" : this.readUtf8String(length);
     }
 
     private writeArray(value?: ZclArray): void {
         if (value) {
-            const elTypeNumeric = typeof value.elementType === 'number' ? value.elementType : DataType[value.elementType];
+            const elTypeNumeric = typeof value.elementType === "number" ? value.elementType : DataType[value.elementType];
             this.writeUInt8(elTypeNumeric);
             this.writeUInt16(value.elements.length);
 
@@ -539,7 +538,7 @@ export class BuffaloZcl extends Buffalo {
 
     private readListThermoTransitions(options: BuffaloZclOptions): ThermoTransition[] {
         if (options.payload == null || options.payload.mode == null || options.payload.numoftrans == null) {
-            throw new Error('Cannot read LIST_THERMO_TRANSITIONS without required payload options specified');
+            throw new Error("Cannot read LIST_THERMO_TRANSITIONS without required payload options specified");
         }
 
         const heat = options.payload.mode & 1;
@@ -565,10 +564,10 @@ export class BuffaloZcl extends Buffalo {
         return result;
     }
 
-    private writeGpdFrame(value: GPDCommissioningReply | GPDChannelConfiguration | GPDCustomReply): void {
+    private writeGpdFrame(value: GpdCommissioningReply | GpdChannelConfiguration | GpdCustomReply): void {
         if (value.commandID === 0xf0) {
             // Commissioning Reply
-            const v = value as GPDCommissioningReply;
+            const v = value as GpdCommissioningReply;
 
             const panIDPresent = Boolean(v.options & 0x1);
             const gpdSecurityKeyPresent = Boolean(v.options & 0x2);
@@ -581,29 +580,33 @@ export class BuffaloZcl extends Buffalo {
             this.writeUInt8(v.options);
 
             if (panIDPresent) {
+                // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
                 this.writeUInt16(v.panID!);
             }
 
             if (gpdSecurityKeyPresent) {
+                // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
                 this.writeBuffer(v.securityKey!, 16);
             }
 
             if (hasGPDKeyMIC) {
+                // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
                 this.writeUInt32(v.keyMic!);
             }
 
             if (hasFrameCounter) {
+                // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
                 this.writeUInt32(v.frameCounter!);
             }
         } else if (value.commandID === 0xf3) {
             // Channel configuration
-            const v = value as GPDChannelConfiguration;
+            const v = value as GpdChannelConfiguration;
 
             this.writeUInt8(1);
             this.writeUInt8((v.operationalChannel & 0xf) | ((v.basic ? 1 : 0) << 4));
         } else if (value.commandID === 0xf4 || value.commandID === 0xf5 || (value.commandID >= 0xf7 && value.commandID <= 0xff)) {
             // Other commands sent to GPD
-            const v = value as GPDCustomReply;
+            const v = value as GpdCustomReply;
 
             this.writeUInt8(v.buffer.length);
             this.writeBuffer(v.buffer, v.buffer.length);
@@ -613,9 +616,9 @@ export class BuffaloZcl extends Buffalo {
         // 0xf6: ZCL Tunneling
     }
 
-    private readGpdFrame(options: BuffaloZclOptions): GPD | GPDChannelRequest | GPDAttributeReport | {raw: Buffer} | Record<string, never> {
+    private readGpdFrame(options: BuffaloZclOptions): Gpd | GpdChannelRequest | GpdAttributeReport | {raw: Buffer} | Record<string, never> {
         if (options.payload?.payloadSize === undefined) {
-            throw new Error('Cannot read GPD_FRAME without required payload options specified');
+            throw new Error("Cannot read GPD_FRAME without required payload options specified");
         }
 
         if (Number.isNaN(options.payload.payloadSize) || options.payload.payloadSize === 0) {
@@ -777,7 +780,7 @@ export class BuffaloZcl extends Buffalo {
         }
 
         if (indicator < StructuredIndicatorType.WriteAdd) {
-            const indexes: StructuredSelector['indexes'] = [];
+            const indexes: StructuredSelector["indexes"] = [];
 
             for (let i = 0; i < indicator; i++) {
                 const index = this.readUInt16();
@@ -787,7 +790,7 @@ export class BuffaloZcl extends Buffalo {
             return {indexes};
         }
 
-        throw new Error('Read structured selector was outside [0-15] range.');
+        throw new Error("Read structured selector was outside [0-15] range.");
     }
 
     private writeListTuyaDataPointValues(dpValues: TuyaDataPointValue[]): void {
@@ -882,8 +885,7 @@ export class BuffaloZcl extends Buffalo {
 
         return value;
     }
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // biome-ignore lint/suspicious/noExplicitAny: API
     public write(type: DataType | BuffaloZclDataType, value: any, options: BuffaloZclOptions): void {
         switch (type) {
             case DataType.NO_DATA:
@@ -1043,7 +1045,7 @@ export class BuffaloZcl extends Buffalo {
                         break;
                     }
 
-                    throw new Error('Cannot write USE_DATA_TYPE without dataType option specified');
+                    throw new Error("Cannot write USE_DATA_TYPE without dataType option specified");
                 }
 
                 this.write(options.dataType, value, options);
@@ -1115,7 +1117,7 @@ export class BuffaloZcl extends Buffalo {
         }
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // biome-ignore lint/suspicious/noExplicitAny: API
     public read(type: DataType | BuffaloZclDataType, options: BuffaloZclOptions): any {
         switch (type) {
             case DataType.NO_DATA:
@@ -1247,35 +1249,35 @@ export class BuffaloZcl extends Buffalo {
             }
             case BuffaloZclDataType.LIST_UINT8: {
                 if (options.length == null) {
-                    throw new Error('Cannot read LIST_UINT8 without length option specified');
+                    throw new Error("Cannot read LIST_UINT8 without length option specified");
                 }
 
                 return this.readListUInt8(options.length);
             }
             case BuffaloZclDataType.LIST_UINT16: {
                 if (options.length == null) {
-                    throw new Error('Cannot read LIST_UINT16 without length option specified');
+                    throw new Error("Cannot read LIST_UINT16 without length option specified");
                 }
 
                 return this.readListUInt16(options.length);
             }
             case BuffaloZclDataType.LIST_UINT24: {
                 if (options.length == null) {
-                    throw new Error('Cannot read LIST_UINT24 without length option specified');
+                    throw new Error("Cannot read LIST_UINT24 without length option specified");
                 }
 
                 return this.readListUInt24(options.length);
             }
             case BuffaloZclDataType.LIST_UINT32: {
                 if (options.length == null) {
-                    throw new Error('Cannot read LIST_UINT32 without length option specified');
+                    throw new Error("Cannot read LIST_UINT32 without length option specified");
                 }
 
                 return this.readListUInt32(options.length);
             }
             case BuffaloZclDataType.LIST_ZONEINFO: {
                 if (options.length == null) {
-                    throw new Error('Cannot read LIST_ZONEINFO without length option specified');
+                    throw new Error("Cannot read LIST_ZONEINFO without length option specified");
                 }
 
                 return this.readListZoneInfo(options.length);

@@ -1,7 +1,7 @@
 /* v8 ignore start */
 
-import * as basic from './basic';
-import {fixed_list} from './basic';
+import * as basic from "./basic";
+import {fixed_list} from "./basic";
 
 // console.assert(basic.uint8_t);
 
@@ -33,30 +33,29 @@ export class EmberMulticastId extends basic.uint16_t {}
 export class EmberEUI64 extends fixed_list(8, basic.uint8_t) {
     constructor(private _value: ArrayLike<number> | string) {
         super();
-        if (typeof _value === 'string') {
-            if (_value.startsWith('0x')) _value = _value.slice(2);
+        if (typeof _value === "string") {
+            if (_value.startsWith("0x")) _value = _value.slice(2);
             if ((_value as string).length !== 16) {
-                throw new Error('Incorrect value passed');
+                throw new Error("Incorrect value passed");
             }
-            this._value = Buffer.from(_value, 'hex');
+            this._value = Buffer.from(_value, "hex");
         } else {
             if (_value.length !== 8) {
-                throw new Error('Incorrect value passed');
+                throw new Error("Incorrect value passed");
             }
             this._value = _value;
         }
     }
 
-    /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
     static override deserialize(cls: any, data: Buffer): any[] {
+        // biome-ignore lint/complexity/noThisInStatic: <explanation>
         const arr = super.deserialize(cls, data);
         const r = arr[0];
         data = arr[1] as Buffer;
         return [Buffer.from(r).reverse(), data];
     }
 
-    /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
-    static serialize(cls: any, value: number[] | EmberEUI64): Buffer {
+    static serialize(_cls: any, value: number[] | EmberEUI64): Buffer {
         if (value instanceof EmberEUI64) {
             value = (value as EmberEUI64).value as number[];
         }
@@ -68,14 +67,12 @@ export class EmberEUI64 extends fixed_list(8, basic.uint8_t) {
         return Buffer.from(val);
     }
 
-    /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
     public get value(): any {
         return this._value;
     }
 
     public toString(): string {
-        /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
-        return Buffer.from(this._value as any).toString('hex');
+        return Buffer.from(this._value as any).toString("hex");
     }
 }
 

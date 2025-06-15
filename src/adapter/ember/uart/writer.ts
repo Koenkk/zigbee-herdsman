@@ -1,6 +1,6 @@
 /* v8 ignore start */
 
-import {Readable, ReadableOptions} from 'node:stream';
+import {Readable, type ReadableOptions} from "node:stream";
 
 // import {logger} from '../../../utils/logger';
 
@@ -23,7 +23,7 @@ export class AshWriter extends Readable {
         // logger.debug(`>>>> [FRAME raw=${buffer.toString('hex')}]`, NS);
 
         // this.push(buffer);
-        this.emit('data', buffer);
+        this.emit("data", buffer);
     }
 
     public writeByte(byte: number): void {
@@ -33,11 +33,11 @@ export class AshWriter extends Readable {
     public writeAvailable(): boolean {
         if (this.readableLength < this.readableHighWaterMark) {
             return true;
-        } else {
-            this.writeFlush();
-
-            return false;
         }
+
+        this.writeFlush();
+
+        return false;
     }
 
     /**

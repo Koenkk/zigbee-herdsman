@@ -1,14 +1,14 @@
 /* v8 ignore start */
 
-import {logger} from '../../../utils/logger';
+import {logger} from "../../../utils/logger";
 
-const NS = 'zh:zigate:frame';
+const NS = "zh:zigate:frame";
 
 enum ZiGateFrameChunkSize {
     UInt8 = 1,
-    UInt16,
-    UInt32,
-    UInt64,
+    UInt16 = 2,
+    UInt32 = 3,
+    UInt64 = 4,
 }
 
 const hasStartByte = (startByte: number, frame: Buffer): boolean => {
@@ -81,7 +81,7 @@ export default class ZiGateFrame {
             this.msgLengthOffset = -1;
 
             if (!ZiGateFrame.isValid(frame)) {
-                logger.error('Provided frame is not a valid ZiGate frame.', NS);
+                logger.error("Provided frame is not a valid ZiGate frame.", NS);
                 return;
             }
 
@@ -90,11 +90,12 @@ export default class ZiGateFrame {
             try {
                 if (this.readMsgCode() !== 0x8001) logger.debug(() => `${JSON.stringify(this)}`, NS);
             } catch (error) {
+                // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
                 logger.error((error as Error).stack!, NS);
             }
 
             if (this.readChecksum() !== this.calcChecksum()) {
-                logger.error(`Provided frame has an invalid checksum.`, NS);
+                logger.error("Provided frame has an invalid checksum.", NS);
                 return;
             }
         }

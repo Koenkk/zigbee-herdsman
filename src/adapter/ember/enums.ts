@@ -942,21 +942,21 @@ export enum EmberStackError {
 
 export enum EmberGPStatus {
     /** Success Status */
-    OK,
+    OK = 0,
     /** Match Frame */
-    MATCH,
+    MATCH = 1,
     /** Drop Frame */
-    DROP_FRAME,
+    DROP_FRAME = 2,
     /** Frame Unprocessed */
-    UNPROCESSED,
+    UNPROCESSED = 3,
     /** Frame Pass Unprocessed */
-    PASS_UNPROCESSED,
+    PASS_UNPROCESSED = 4,
     /** Frame TX Then Drop */
-    TX_THEN_DROP,
+    TX_THEN_DROP = 5,
     /** No Security */
-    NO_SECURITY,
+    NO_SECURITY = 6,
     /** Security Failure */
-    AUTH_FAILURE,
+    AUTH_FAILURE = 7,
 }
 
 /** Type of Ember software version */
@@ -1350,7 +1350,6 @@ export enum EmberCounterType {
     COUNT = 42,
 }
 
-/* eslint-disable @typescript-eslint/no-duplicate-enum-values */
 /** An enumerated list of library identifiers. */
 export enum EmberLibraryId {
     FIRST = 0x00,
@@ -1404,7 +1403,6 @@ export enum EmberLibraryStatus {
     PACKET_VALIDATE_LIBRARY_ENABLED = 0x01,
     PACKET_VALIDATE_LIBRARY_ENABLE_MASK = 0x01,
 }
-/* eslint-enable @typescript-eslint/no-duplicate-enum-values */
 
 /** Defines the entropy source used by the stack. */
 export enum EmberEntropySource {
@@ -1430,19 +1428,19 @@ export enum EmberNetworkInitBitmask {
 /** Defines the possible join states for a node. uint8_t */
 export enum EmberNetworkStatus {
     /** The node is not associated with a network in any way. */
-    NO_NETWORK,
+    NO_NETWORK = 0,
     /** The node is currently attempting to join a network. */
-    JOINING_NETWORK,
+    JOINING_NETWORK = 1,
     /** The node is joined to a network. */
-    JOINED_NETWORK,
+    JOINED_NETWORK = 2,
     /** The node is an end device joined to a network but its parent is not responding. */
-    JOINED_NETWORK_NO_PARENT,
+    JOINED_NETWORK_NO_PARENT = 3,
     /** The node is a Sleepy-to-Sleepy initiator */
-    JOINED_NETWORK_S2S_INITIATOR,
+    JOINED_NETWORK_S2S_INITIATOR = 4,
     /** The node is a Sleepy-to-Sleepy target */
-    JOINED_NETWORK_S2S_TARGET,
+    JOINED_NETWORK_S2S_TARGET = 5,
     /** The node is in the process of leaving its current network. */
-    LEAVING_NETWORK,
+    LEAVING_NETWORK = 6,
 }
 
 /** Network scan types. */
@@ -1571,35 +1569,35 @@ export enum EmberBindingType {
 /** Defines the possible outgoing message types. uint8_t */
 export enum EmberOutgoingMessageType {
     /** Unicast sent directly to an EmberNodeId. */
-    DIRECT,
+    DIRECT = 0,
     /** Unicast sent using an entry in the address table. */
-    VIA_ADDRESS_TABLE,
+    VIA_ADDRESS_TABLE = 1,
     /** Unicast sent using an entry in the binding table. */
-    VIA_BINDING,
+    VIA_BINDING = 2,
     /** Multicast message. This value is passed to emberMessageSentHandler() only. It may not be passed to emberSendUnicast(). */
-    MULTICAST,
+    MULTICAST = 3,
     /** An aliased multicast message. This value is passed to emberMessageSentHandler() only. It may not be passed to emberSendUnicast(). */
-    MULTICAST_WITH_ALIAS,
+    MULTICAST_WITH_ALIAS = 4,
     /** An aliased Broadcast message. This value is passed to emberMessageSentHandler() only. It may not be passed to emberSendUnicast(). */
-    BROADCAST_WITH_ALIAS,
+    BROADCAST_WITH_ALIAS = 5,
     /** A broadcast message. This value is passed to emberMessageSentHandler() only. It may not be passed to emberSendUnicast(). */
-    BROADCAST,
+    BROADCAST = 6,
 }
 
 /** Defines the possible incoming message types. uint8_t */
 export enum EmberIncomingMessageType {
     /** Unicast. */
-    UNICAST,
+    UNICAST = 0,
     /** Unicast reply. */
-    UNICAST_REPLY,
+    UNICAST_REPLY = 1,
     /** Multicast. */
-    MULTICAST,
+    MULTICAST = 2,
     /** Multicast sent by the local device. */
-    MULTICAST_LOOPBACK,
+    MULTICAST_LOOPBACK = 3,
     /** Broadcast. */
-    BROADCAST,
+    BROADCAST = 4,
     /** Broadcast sent by the local device. */
-    BROADCAST_LOOPBACK,
+    BROADCAST_LOOPBACK = 5,
 }
 
 /**
@@ -1715,13 +1713,13 @@ export enum EmberCurrentSecurityBitmask {
 
     /** This denotes that the device is running in a network with ZigBee
      *  Standard Security. */
-    STANDARD_SECURITY_MODE_ = 0x0000,
+    STANDARD_SECURITY_MODE = 0x0000,
     /** This denotes that the device is running in a network without
      *  a centralized Trust Center. */
-    DISTRIBUTED_TRUST_CENTER_MODE_ = 0x0002,
+    DISTRIBUTED_TRUST_CENTER_MODE = 0x0002,
     /** This denotes that the device has a Global Link Key.  The Trust Center
      *  Link Key is the same across multiple nodes. */
-    TRUST_CENTER_GLOBAL_LINK_KEY_ = 0x0004,
+    TRUST_CENTER_GLOBAL_LINK_KEY = 0x0004,
 
     // Bit 3 reserved
 
@@ -1729,7 +1727,7 @@ export enum EmberCurrentSecurityBitmask {
     HAVE_TRUST_CENTER_LINK_KEY = 0x0010,
 
     /** This denotes that the Trust Center is using a Hashed Link Key. */
-    TRUST_CENTER_USES_HASHED_LINK_KEY_ = 0x0084,
+    TRUST_CENTER_USES_HASHED_LINK_KEY = 0x0084,
 
     // Bits 1, 5, 6, and 8-15 reserved.
 }
@@ -1739,12 +1737,12 @@ export enum EmberCurrentSecurityBitmask {
  * uint8_t
  */
 export enum SecManKeyType {
-    NONE,
+    NONE = 0,
     /**
      * This is the network key, used for encrypting and decrypting network payloads.
      * There is only one of these keys in storage.
      */
-    NETWORK,
+    NETWORK = 1,
     /**
      * This is the Trust Center Link Key. On the joining device, this is the APS
      * key used to communicate with the trust center. On the trust center, this
@@ -1753,7 +1751,7 @@ export enum SecManKeyType {
      * EMBER_TRUST_CENTER_USES_HASHED_LINK_KEY bit set).
      * There is only one of these keys in storage.
      */
-    TC_LINK,
+    TC_LINK = 2,
     /**
      * This is a Trust Center Link Key, but it times out after either
      * ::EMBER_TRANSIENT_KEY_TIMEOUT_S or
@@ -1765,7 +1763,7 @@ export enum SecManKeyType {
      * This is an indexed key, and local storage can fit as many keys as
      * available RAM allows.
      */
-    TC_LINK_WITH_TIMEOUT,
+    TC_LINK_WITH_TIMEOUT = 3,
     /**
      * This is an Application link key. On both joining devices and the trust
      * center, this key is used in APS encryption and decryption when
@@ -1773,20 +1771,20 @@ export enum SecManKeyType {
      * This is an indexed key table of size EMBER_KEY_TABLE_SIZE, so long as there
      * is sufficient nonvolatile memory to store keys.
      */
-    APP_LINK,
+    APP_LINK = 4,
     /** This is the ZLL encryption key for use by algorithms that require it. */
-    ZLL_ENCRYPTION_KEY,
+    ZLL_ENCRYPTION_KEY = 5,
     /** For ZLL, this is the pre-configured link key used during classical ZigBee commissioning. */
-    ZLL_PRECONFIGURED_KEY,
+    ZLL_PRECONFIGURED_KEY = 6,
     /** This is a Green Power Device (GPD) key used on a Proxy device. */
-    GREEN_POWER_PROXY_TABLE_KEY,
+    GREEN_POWER_PROXY_TABLE_KEY = 7,
     /** This is a Green Power Device (GPD) key used on a Sink device. */
-    GREEN_POWER_SINK_TABLE_KEY,
+    GREEN_POWER_SINK_TABLE_KEY = 8,
     /**
      * This is a generic key type intended to be loaded for one-time hashing or crypto operations.
      * This key is not persisted. Intended for use by the Zigbee stack.
      */
-    INTERNAL,
+    INTERNAL = 9,
 }
 
 /**
@@ -1961,13 +1959,13 @@ export enum EmberJoinDecision {
     /** Allow the node to join. The node has the key. */
     USE_PRECONFIGURED_KEY = 0,
     /** Allow the node to join. Send the key to the node. */
-    SEND_KEY_IN_THE_CLEAR,
+    SEND_KEY_IN_THE_CLEAR = 1,
     /** Deny join. */
-    DENY_JOIN,
+    DENY_JOIN = 2,
     /** Take no action. */
-    NO_ACTION,
+    NO_ACTION = 3,
     /** Allow rejoins only.*/
-    ALLOW_REJOINS_ONLY,
+    ALLOW_REJOINS_ONLY = 4,
 }
 
 /** A bitmask indicating the state of the ZLL device. This maps directly to the ZLL information field in the scan response. uint16_t */
@@ -2055,17 +2053,17 @@ export enum EmberGpProxyTableEntryStatus {
 /** GP Sink Type. */
 export enum EmberGpSinkType {
     /** Sink Type is Full Unicast */
-    FULL_UNICAST,
+    FULL_UNICAST = 0,
     /** Sink Type is Derived groupcast, the group ID is derived from the GpdId during commissioning.
      * The sink is added to the APS group with that groupId.
      */
-    D_GROUPCAST,
+    D_GROUPCAST = 1,
     /** Sink type GROUPCAST, the groupId can be obtained from the APS group table
      * or from the sink table.
      */
-    GROUPCAST,
+    GROUPCAST = 2,
     /** Sink Type is Light Weight Unicast. */
-    LW_UNICAST,
+    LW_UNICAST = 3,
     /** Unused sink type */
     UNUSED = 0xff,
 }

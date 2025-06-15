@@ -1,5 +1,5 @@
-import {ZnpVersion} from '../adapter/z-stack/adapter/tstype';
-import {NetworkOptions} from './network-options';
+import type {ZnpVersion} from "../adapter/z-stack/adapter/tstype";
+import type {NetworkOptions} from "./network-options";
 
 /**
  * Internal representation of stored backup. Contains all essential network information.

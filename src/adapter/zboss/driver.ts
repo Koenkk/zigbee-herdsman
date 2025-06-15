@@ -1,22 +1,22 @@
 /* v8 ignore start */
 
-import assert from 'node:assert';
-import EventEmitter from 'node:events';
+import assert from "node:assert";
+import EventEmitter from "node:events";
 
-import equals from 'fast-deep-equal/es6';
+import equals from "fast-deep-equal/es6";
 
-import {TsType} from '..';
-import {KeyValue} from '../../controller/tstype';
-import {Queue, Waitress} from '../../utils';
-import {logger} from '../../utils/logger';
-import * as ZSpec from '../../zspec';
-import * as Zdo from '../../zspec/zdo';
-import {ZDO_REQ_CLUSTER_ID_TO_ZBOSS_COMMAND_ID} from './commands';
-import {CommandId, DeviceType, PolicyType, ResetOptions, StatusCodeGeneric} from './enums';
-import {FrameType, makeFrame, ZBOSSFrame} from './frame';
-import {ZBOSSUart} from './uart';
+import type {TsType} from "..";
+import type {KeyValue} from "../../controller/tstype";
+import {Queue, Waitress} from "../../utils";
+import {logger} from "../../utils/logger";
+import type * as ZSpec from "../../zspec";
+import * as Zdo from "../../zspec/zdo";
+import {ZDO_REQ_CLUSTER_ID_TO_ZBOSS_COMMAND_ID} from "./commands";
+import {CommandId, DeviceType, PolicyType, ResetOptions, StatusCodeGeneric} from "./enums";
+import {FrameType, type ZBOSSFrame, makeFrame} from "./frame";
+import {ZBOSSUart} from "./uart";
 
-const NS = 'zh:zboss:driv';
+const NS = "zh:zboss:driv";
 
 const MAX_INIT_ATTEMPTS = 5;
 
@@ -51,13 +51,13 @@ export class ZBOSSDriver extends EventEmitter {
         this.waitress = new Waitress<ZBOSSFrame, ZBOSSWaitressMatcher>(this.waitressValidator, this.waitressTimeoutFormatter);
 
         this.port = new ZBOSSUart(options);
-        this.port.on('frame', this.onFrame.bind(this));
+        this.port.on("frame", this.onFrame.bind(this));
     }
 
     public async connect(): Promise<boolean> {
-        logger.info(`Driver connecting`, NS);
+        logger.info("Driver connecting", NS);
 
-        let status: boolean = false;
+        let status = false;
 
         for (let i = 0; i < MAX_INIT_ATTEMPTS; i++) {
             status = await this.port.resetNcp();
@@ -70,7 +70,7 @@ export class ZBOSSDriver extends EventEmitter {
             status = await this.port.start();
 
             if (status) {
-                logger.info(`Driver connected`, NS);
+                logger.info("Driver connected", NS);
                 return status;
             }
         }
@@ -79,14 +79,14 @@ export class ZBOSSDriver extends EventEmitter {
     }
 
     private async reset(options = ResetOptions.NoOptions): Promise<void> {
-        logger.info(`Driver reset`, NS);
+        logger.info("Driver reset", NS);
         this.port.inReset = true;
         await this.execCommand(CommandId.NCP_RESET, {options}, 10000);
     }
 
     public async startup(transmitPower?: number): Promise<TsType.StartResult> {
-        logger.info(`Driver startup`, NS);
-        let result: TsType.StartResult = 'resumed';
+        logger.info("Driver startup", NS);
+        let result: TsType.StartResult = "resumed";
 
         if (await this.needsToBeInitialised(this.nwkOpt)) {
             // need to check the backup
@@ -94,7 +94,7 @@ export class ZBOSSDriver extends EventEmitter {
             const restore = false;
 
             if (this.netInfo.joined) {
-                logger.info(`Leaving current network and forming new network`, NS);
+                logger.info("Leaving current network and forming new network", NS);
                 await this.reset(ResetOptions.FactoryReset);
             }
 
@@ -105,9 +105,9 @@ export class ZBOSSDriver extends EventEmitter {
                 // result = 'restored';
             } else {
                 // reset
-                logger.info('Form network', NS);
+                logger.info("Form network", NS);
                 await this.formNetwork(); // false
-                result = 'reset';
+                result = "reset";
             }
         } else {
             await this.execCommand(CommandId.NWK_START_WITHOUT_FORMATION, {});
@@ -135,7 +135,7 @@ export class ZBOSSDriver extends EventEmitter {
         //await this.execCommand(CommandId.SET_ED_TIMEOUT, {timeout: 8});
         //await this.execCommand(CommandId.SET_MAX_CHILDREN, {children: 100});
 
-        if (transmitPower != undefined) {
+        if (transmitPower != null) {
             await this.execCommand(CommandId.SET_TX_POWER, {txPower: transmitPower});
         }
 
@@ -147,8 +147,8 @@ export class ZBOSSDriver extends EventEmitter {
         this.netInfo = await this.getNetworkInfo();
         logger.debug(() => `Current network parameters: ${JSON.stringify(this.netInfo)}`, NS);
         if (this.netInfo) {
-            valid = valid && this.netInfo.nodeType == DeviceType.COORDINATOR;
-            valid = valid && options.panID == this.netInfo.network.panID;
+            valid = valid && this.netInfo.nodeType === DeviceType.COORDINATOR;
+            valid = valid && options.panID === this.netInfo.network.panID;
             valid = valid && options.channelList.includes(this.netInfo.network.channel);
             valid = valid && equals(Buffer.from(options.extendedPanID || []), Buffer.from(this.netInfo.network.extendedPanID));
         } else {
@@ -159,9 +159,9 @@ export class ZBOSSDriver extends EventEmitter {
 
     private async getNetworkInfo(): Promise<ZBOSSNetworkInfo> {
         let result = await this.execCommand(CommandId.GET_JOINED, {});
-        const joined = result.payload.joined == 1;
+        const joined = result.payload.joined === 1;
         if (!joined) {
-            logger.debug('Network not formed', NS);
+            logger.debug("Network not formed", NS);
         }
 
         result = await this.execCommand(CommandId.GET_ZIGBEE_ROLE, {});
@@ -243,7 +243,7 @@ export class ZBOSSDriver extends EventEmitter {
     public async stop(): Promise<void> {
         await this.port.stop();
 
-        logger.info(`Driver stopped`, NS);
+        logger.info("Driver stopped", NS);
     }
 
     private onFrame(frame: ZBOSSFrame): void {
@@ -252,7 +252,7 @@ export class ZBOSSDriver extends EventEmitter {
         const handled = this.waitress.resolve(frame);
 
         if (!handled) {
-            this.emit('frame', frame);
+            this.emit("frame", frame);
         }
     }
 
@@ -260,17 +260,17 @@ export class ZBOSSDriver extends EventEmitter {
         return this.port.portOpen && !this.port.inReset;
     }
 
-    public async execCommand(commandId: number, params: KeyValue = {}, timeout: number = 10000): Promise<ZBOSSFrame> {
+    public async execCommand(commandId: number, params: KeyValue = {}, timeout = 10000): Promise<ZBOSSFrame> {
         logger.debug(() => `==> ${CommandId[commandId]}(${commandId}): ${JSON.stringify(params)}`, NS);
 
         if (!this.port.portOpen) {
-            throw new Error('Connection not initialized');
+            throw new Error("Connection not initialized");
         }
 
         return await this.queue.execute<ZBOSSFrame>(async (): Promise<ZBOSSFrame> => {
             const frame = makeFrame(FrameType.REQUEST, commandId, params);
             frame.tsn = this.tsn;
-            const waiter = this.waitFor(commandId, commandId == CommandId.NCP_RESET ? undefined : this.tsn, timeout);
+            const waiter = this.waitFor(commandId, commandId === CommandId.NCP_RESET ? undefined : this.tsn, timeout);
             this.tsn = (this.tsn + 1) & 255;
 
             try {
@@ -286,7 +286,7 @@ export class ZBOSSDriver extends EventEmitter {
             } catch (error) {
                 this.waitress.remove(waiter.ID);
                 logger.error(`==> Error: ${error}`, NS);
-                throw new Error(`Failure send ${commandId}:` + JSON.stringify(frame));
+                throw new Error(`Failure send ${commandId}:${JSON.stringify(frame)}`);
             }
         });
     }
@@ -304,7 +304,7 @@ export class ZBOSSDriver extends EventEmitter {
     }
 
     private waitressValidator(payload: ZBOSSFrame, matcher: ZBOSSWaitressMatcher): boolean {
-        return (matcher.tsn === undefined || matcher.tsn === payload.tsn) && matcher.commandId == payload.commandId;
+        return (matcher.tsn === undefined || matcher.tsn === payload.tsn) && matcher.commandId === payload.commandId;
     }
 
     public async request(ieee: string, profileID: number, clusterID: number, dstEp: number, srcEp: number, data: Buffer): Promise<ZBOSSFrame> {
@@ -338,7 +338,7 @@ export class ZBOSSDriver extends EventEmitter {
         const payload = {
             paramLength: 21,
             dataLength: data.length,
-            addr: `0x${addr.toString(16).padStart(16, '0')}`,
+            addr: `0x${addr.toString(16).padStart(16, "0")}`,
             profileID: profileID,
             clusterID: clusterID,
             dstEndpoint: dstEp,
@@ -358,7 +358,7 @@ export class ZBOSSDriver extends EventEmitter {
         const payload = {
             paramLength: 20,
             dataLength: data.length,
-            addr: `0x${group.toString(16).padStart(16, '0')}`,
+            addr: `0x${group.toString(16).padStart(16, "0")}`,
             profileID: profileID,
             clusterID: clusterID,
             srcEndpoint: srcEp,
@@ -373,18 +373,18 @@ export class ZBOSSDriver extends EventEmitter {
         return await this.execCommand(CommandId.APSDE_DATA_REQ, payload);
     }
 
-    public async requestZdo(clusterId: Zdo.ClusterId, payload: Buffer, disableResponse: boolean): Promise<ZBOSSFrame | void> {
+    public async requestZdo(clusterId: Zdo.ClusterId, payload: Buffer, disableResponse: boolean): Promise<ZBOSSFrame | undefined> {
         if (!this.port.portOpen) {
-            throw new Error('Connection not initialized');
+            throw new Error("Connection not initialized");
         }
 
         const commandId = ZDO_REQ_CLUSTER_ID_TO_ZBOSS_COMMAND_ID[clusterId];
         assert(commandId !== undefined, `ZDO cluster ID '${clusterId}' not supported.`);
 
         const cmdLog = `${Zdo.ClusterId[clusterId]}(cmd: ${commandId})`;
-        logger.debug(() => `===> ZDO ${cmdLog}: ${payload.toString('hex')}`, NS);
+        logger.debug(() => `===> ZDO ${cmdLog}: ${payload.toString("hex")}`, NS);
 
-        return await this.queue.execute<ZBOSSFrame | void>(async () => {
+        return await this.queue.execute<ZBOSSFrame | undefined>(async () => {
             const buf = Buffer.alloc(5 + payload.length);
             buf.writeInt8(0, 0);
             buf.writeInt8(FrameType.REQUEST, 1);
@@ -392,7 +392,7 @@ export class ZBOSSDriver extends EventEmitter {
             buf.writeUInt8(this.tsn, 4);
             buf.set(payload, 5);
 
-            let waiter;
+            let waiter: ReturnType<typeof this.waitFor> | undefined;
 
             if (!disableResponse) {
                 waiter = this.waitFor(commandId, this.tsn, 10000);

@@ -1,16 +1,11 @@
 {
-    "eslint.enable": true,
-    "eslint.validate": ["javascript", "typescript"],
-    "javascript.format.insertSpaceAfterOpeningAndBeforeClosingNonemptyBraces": false,
-    "javascript.format.insertSpaceAfterOpeningAndBeforeClosingEmptyBraces": false,
-    "editor.defaultFormatter": "dbaeumer.vscode-eslint",
-    "typescript.format.insertSpaceAfterOpeningAndBeforeClosingNonemptyBraces": false,
-    "javascript.preferences.importModuleSpecifier": "relative",
-    "eslint.format.enable": true,
-    "typescript.preferences.importModuleSpecifier": "relative",
+    "editor.defaultFormatter": "biomejs.biome",
+    "notebook.defaultFormatter": "biomejs.biome",
+    "editor.tabSize": 4,
+    "editor.insertSpaces": true,
+    "files.defaultLanguage": "typescript",
+    "files.eol": "\n",
     "[typescript]": {
-        "editor.codeActionsOnSave": {
-            "source.organizeImports": "never"
-        }
+        "editor.defaultFormatter": "biomejs.biome"
     }
 }

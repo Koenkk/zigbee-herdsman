@@ -1,9 +1,9 @@
-import fs from 'node:fs';
+import fs from "node:fs";
 
-import {logger} from '../utils/logger';
-import {DatabaseEntry, EntityType} from './tstype';
+import {logger} from "../utils/logger";
+import type {DatabaseEntry, EntityType} from "./tstype";
 
-const NS = 'zh:controller:database';
+const NS = "zh:controller:database";
 
 export class Database {
     private entries: {[id: number]: DatabaseEntry};
@@ -20,9 +20,9 @@ export class Database {
         const entries: {[id: number]: DatabaseEntry} = {};
 
         if (fs.existsSync(path)) {
-            const file = fs.readFileSync(path, 'utf-8');
+            const file = fs.readFileSync(path, "utf-8");
 
-            for (const row of file.split('\n')) {
+            for (const row of file.split("\n")) {
                 if (!row) {
                     continue;
                 }
@@ -30,7 +30,7 @@ export class Database {
                 try {
                     const json = JSON.parse(row);
 
-                    if (json.id != undefined) {
+                    if (json.id != null) {
                         entries[json.id] = json;
                     }
                 } catch (error) {
@@ -93,17 +93,17 @@ export class Database {
 
     public write(): void {
         logger.debug(`Writing database to '${this.path}'`, NS);
-        let lines = '';
+        let lines = "";
 
         for (const id in this.entries) {
-            lines += JSON.stringify(this.entries[id]) + `\n`;
+            lines += `${JSON.stringify(this.entries[id])}\n`;
         }
 
-        const tmpPath = this.path + '.tmp';
+        const tmpPath = `${this.path}.tmp`;
 
         try {
             // If there already exsits a database.db.tmp, rename it to database.db.tmp.<now>
-            const dateTmpPath = tmpPath + '.' + new Date().toISOString().replaceAll(':', '-');
+            const dateTmpPath = `${tmpPath}.${new Date().toISOString().replaceAll(":", "-")}`;
             fs.renameSync(tmpPath, dateTmpPath);
 
             // If we got this far, we succeeded! Warn the user about this
@@ -112,7 +112,7 @@ export class Database {
             // Nothing to catch; if the renameSync fails, we ignore that exception
         }
 
-        const fd = fs.openSync(tmpPath, 'w');
+        const fd = fs.openSync(tmpPath, "w");
         fs.writeFileSync(fd, lines.slice(0, -1)); // remove last newline, no effect if empty string
         // Ensure file is on disk https://github.com/Koenkk/zigbee2mqtt/issues/11759
         fs.fsyncSync(fd);

@@ -1,7 +1,7 @@
 /* v8 ignore start */
 
-import {RANDOMIZE_SEQ, RANDOMIZE_START} from './consts';
-import crc16ccitt from './utils/crc16ccitt';
+import {RANDOMIZE_SEQ, RANDOMIZE_START} from "./consts";
+import crc16ccitt from "./utils/crc16ccitt";
 
 export enum FrameType {
     UNKNOWN = 0,
@@ -85,7 +85,7 @@ export class Frame {
         const subArr = this.buffer.subarray(-3, -1);
 
         if (!subArr.equals(crcArr)) {
-            throw new Error(`<-- CRC error: ${this.toString()}|${subArr.toString('hex')}|${crcArr.toString('hex')}`);
+            throw new Error(`<-- CRC error: ${this.toString()}|${subArr.toString("hex")}|${crcArr.toString("hex")}`);
         }
     }
 
@@ -94,7 +94,7 @@ export class Frame {
      * @returns Buffer to hex string
      */
     public toString(): string {
-        return this.buffer.toString('hex');
+        return this.buffer.toString("hex");
     }
 }
 

@@ -84,7 +84,7 @@ export enum Status {
     /** Security processing has been attempted on an outgoing frame, and has failed because the security engine produced erroneous output. */
     NWK_LAYER_BAD_CCM_OUTPUT = 0xce,
     /** Reserved for future use. */
-    NWK_LAYER_Reserved = 0xcf,
+    NWK_LAYER_RESERVED = 0xcf,
     /** An attempt to discover a route has failed due to a reason other than a lack of routing capacity. */
     NWK_LAYER_ROUTE_DISCOVERY_FAILED = 0xd0,
     /**

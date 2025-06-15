@@ -1,7 +1,11 @@
-export class ZclTransactionSequenceNumber {
-    private static number = 1;
+class ZclTransactionSequenceNumber {
+    private number = 1;
 
-    public static next(): number {
+    get current() {
+        return this.number;
+    }
+
+    public next(): number {
         this.number++;
 
         if (this.number > 255) {
@@ -12,4 +16,4 @@ export class ZclTransactionSequenceNumber {
     }
 }
 
-export default ZclTransactionSequenceNumber;
+export default new ZclTransactionSequenceNumber();

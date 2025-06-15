@@ -1,22 +1,22 @@
 /* v8 ignore start */
 
-import Device from '../../../controller/model/device';
-import * as Models from '../../../models';
-import {wait, Waitress} from '../../../utils';
-import {logger} from '../../../utils/logger';
-import * as ZSpec from '../../../zspec';
-import {BroadcastAddress} from '../../../zspec/enums';
-import * as Zcl from '../../../zspec/zcl';
-import * as Zdo from '../../../zspec/zdo';
-import * as ZdoTypes from '../../../zspec/zdo/definition/tstypes';
-import Adapter from '../../adapter';
-import * as Events from '../../events';
-import {AdapterOptions, CoordinatorVersion, NetworkOptions, NetworkParameters, SerialPortOptions, StartResult} from '../../tstype';
-import PARAM, {ApsDataRequest, gpDataInd, ReceivedDataResponse, WaitForDataRequest} from '../driver/constants';
-import Driver from '../driver/driver';
-import processFrame, {frameParserEvents} from '../driver/frameParser';
+import Device from "../../../controller/model/device";
+import type * as Models from "../../../models";
+import {Waitress, wait} from "../../../utils";
+import {logger} from "../../../utils/logger";
+import * as ZSpec from "../../../zspec";
+import type {BroadcastAddress} from "../../../zspec/enums";
+import * as Zcl from "../../../zspec/zcl";
+import * as Zdo from "../../../zspec/zdo";
+import type * as ZdoTypes from "../../../zspec/zdo/definition/tstypes";
+import Adapter from "../../adapter";
+import type * as Events from "../../events";
+import type {AdapterOptions, CoordinatorVersion, NetworkOptions, NetworkParameters, SerialPortOptions, StartResult} from "../../tstype";
+import PARAM, {type ApsDataRequest, type GpDataInd, type ReceivedDataResponse, type WaitForDataRequest} from "../driver/constants";
+import Driver from "../driver/driver";
+import processFrame, {frameParserEvents} from "../driver/frameParser";
 
-const NS = 'zh:deconz';
+const NS = "zh:deconz";
 
 interface WaitressMatcher {
     address?: number | string;
@@ -35,8 +35,8 @@ export class DeconzAdapter extends Adapter {
     private frameParserEvent = frameParserEvents;
     private fwVersion?: CoordinatorVersion;
     private waitress: Waitress<Events.ZclPayload, WaitressMatcher>;
-    private TX_OPTIONS = 0x00; // No APS ACKS
-    private joinPermitted: boolean = false;
+    private readonly txOptions;
+    private joinPermitted = false;
 
     public constructor(networkOptions: NetworkOptions, serialPortOptions: SerialPortOptions, backupPath: string, adapterOptions: AdapterOptions) {
         super(networkOptions, serialPortOptions, backupPath, adapterOptions);
@@ -46,28 +46,27 @@ export class DeconzAdapter extends Adapter {
         // const concurrent = this.adapterOptions && this.adapterOptions.concurrent ? this.adapterOptions.concurrent : 2;
 
         // TODO: https://github.com/Koenkk/zigbee2mqtt/issues/4884#issuecomment-728903121
-        const delay = this.adapterOptions && typeof this.adapterOptions.delay === 'number' ? this.adapterOptions.delay : 0;
+        const delay = this.adapterOptions && typeof this.adapterOptions.delay === "number" ? this.adapterOptions.delay : 0;
 
         this.waitress = new Waitress<Events.ZclPayload, WaitressMatcher>(this.waitressValidator, this.waitressTimeoutFormatter);
 
+        // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
         this.driver = new Driver(serialPortOptions.path!);
         this.driver.setDelay(delay);
 
-        if (delay >= 200) {
-            this.TX_OPTIONS = 0x04; // activate APS ACKS
-        }
+        this.txOptions = delay >= 200 ? 0x04 /* activate APS ACKs */ : 0x00 /* no APS ACKs */;
 
-        this.driver.on('rxFrame', (frame) => {
+        this.driver.on("rxFrame", (frame) => {
             processFrame(frame);
         });
         this.transactionID = 0;
         this.openRequestsQueue = [];
         this.fwVersion = undefined;
 
-        this.frameParserEvent.on('receivedDataPayload', (data) => {
+        this.frameParserEvent.on("receivedDataPayload", (data) => {
             this.checkReceivedDataPayload(data);
         });
-        this.frameParserEvent.on('receivedGreenPowerIndication', (data) => {
+        this.frameParserEvent.on("receivedGreenPowerIndication", (data) => {
             this.checkReceivedGreenPowerIndication(data);
         });
 
@@ -83,7 +82,7 @@ export class DeconzAdapter extends Adapter {
         const baudrate = this.serialPortOptions.baudRate || 38400;
         await this.driver.open(baudrate);
 
-        let changed: boolean = false;
+        let changed = false;
         const panid = await this.driver.readParameterRequest(PARAM.PARAM.Network.PAN_ID);
         const expanid = await this.driver.readParameterRequest(PARAM.PARAM.Network.APS_EXT_PAN_ID);
         const channel = await this.driver.readParameterRequest(PARAM.PARAM.Network.CHANNEL);
@@ -92,11 +91,7 @@ export class DeconzAdapter extends Adapter {
         // check current channel against configuration.yaml
         if (this.networkOptions.channelList[0] !== channel) {
             logger.debug(
-                'Channel in configuration.yaml (' +
-                    this.networkOptions.channelList[0] +
-                    ') differs from current channel (' +
-                    channel +
-                    '). Changing channel.',
+                `Channel in configuration.yaml (${this.networkOptions.channelList[0]}) differs from current channel (${channel}). Changing channel.`,
                 NS,
             );
 
@@ -159,59 +154,56 @@ export class DeconzAdapter extends Adapter {
                 await wait(500);
                 changed = true;
             } catch (error) {
-                logger.debug('Could not set channel: ' + error, NS);
+                logger.debug(`Could not set channel: ${error}`, NS);
             }
         }
 
         // check current panid against configuration.yaml
         if (this.networkOptions.panID !== panid) {
-            logger.debug(
-                'panid in configuration.yaml (' + this.networkOptions.panID + ') differs from current panid (' + panid + '). Changing panid.',
-                NS,
-            );
+            logger.debug(`panid in configuration.yaml (${this.networkOptions.panID}) differs from current panid (${panid}). Changing panid.`, NS);
 
             try {
                 await this.driver.writeParameterRequest(PARAM.PARAM.Network.PAN_ID, this.networkOptions.panID);
                 await wait(500);
                 changed = true;
             } catch (error) {
-                logger.debug('Could not set panid: ' + error, NS);
+                logger.debug(`Could not set panid: ${error}`, NS);
             }
         }
 
         // check current extended_panid against configuration.yaml
+        // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
         if (this.driver.generalArrayToString(this.networkOptions.extendedPanID!, 8) !== expanid) {
             logger.debug(
-                'extended panid in configuration.yaml (' +
-                    this.driver.macAddrArrayToString(this.networkOptions.extendedPanID!) +
-                    ') differs from current extended panid (' +
-                    expanid +
-                    '). Changing extended panid.',
+                `extended panid in configuration.yaml (${
+                    // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
+                    this.driver.macAddrArrayToString(this.networkOptions.extendedPanID!)
+                }) differs from current extended panid (${expanid}). Changing extended panid.`,
                 NS,
             );
 
             try {
+                // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
                 await this.driver.writeParameterRequest(PARAM.PARAM.Network.APS_EXT_PAN_ID, this.networkOptions.extendedPanID!);
                 await wait(500);
                 changed = true;
             } catch (error) {
-                logger.debug('Could not set extended panid: ' + error, NS);
+                logger.debug(`Could not set extended panid: ${error}`, NS);
             }
         }
 
         // check current network key against configuration.yaml
+        // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
         if (this.driver.generalArrayToString(this.networkOptions.networkKey!, 16) !== networkKey) {
-            logger.debug(
-                'network key in configuration.yaml (hidden) differs from current network key (' + networkKey + '). Changing network key.',
-                NS,
-            );
+            logger.debug(`network key in configuration.yaml (hidden) differs from current network key (${networkKey}). Changing network key.`, NS);
 
             try {
+                // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
                 await this.driver.writeParameterRequest(PARAM.PARAM.Network.NETWORK_KEY, this.networkOptions.networkKey!);
                 await wait(500);
                 changed = true;
             } catch (error) {
-                logger.debug('Could not set network key: ' + error, NS);
+                logger.debug(`Could not set network key: ${error}`, NS);
             }
         }
 
@@ -231,7 +223,7 @@ export class DeconzAdapter extends Adapter {
         const sd1 = sd.reverse();
         await this.driver.writeParameterRequest(PARAM.PARAM.STK.Endpoint, sd1);
 
-        return 'resumed';
+        return "resumed";
     }
 
     public async stop(): Promise<void> {
@@ -251,7 +243,7 @@ export class DeconzAdapter extends Adapter {
 
             const result = await this.sendZdo(ZSpec.BLANK_EUI64, networkAddress, clusterId, zdoPayload, false);
 
-            if (!Zdo.Buffalo.checkStatus(result)) {
+            if (!Zdo.Buffalo.checkStatus<Zdo.ClusterId.PERMIT_JOINING_RESPONSE>(result)) {
                 // TODO: will disappear once moved upstream
                 throw new Zdo.StatusError(result[0]);
             }
@@ -274,37 +266,35 @@ export class DeconzAdapter extends Adapter {
 
     public async getCoordinatorVersion(): Promise<CoordinatorVersion> {
         // product: number; transportrev: number; majorrel: number; minorrel: number; maintrel: number; revision: string;
-        if (this.fwVersion != undefined) {
+        if (this.fwVersion !== undefined) {
             return this.fwVersion;
-        } else {
-            try {
-                const fw = await this.driver.readFirmwareVersionRequest();
-                const buf = Buffer.from(fw);
-                const fwString = '0x' + buf.readUInt32LE(0).toString(16);
-                let type: string = '';
-                if (fw[1] === 5) {
-                    type = 'ConBee/RaspBee';
-                } else if (fw[1] === 7) {
-                    type = 'ConBee2/RaspBee2';
-                } else {
-                    type = 'ConBee3';
-                }
-                const meta = {transportrev: 0, product: 0, majorrel: fw[3], minorrel: fw[2], maintrel: 0, revision: fwString};
-                this.fwVersion = {type: type, meta: meta};
-                return {type: type, meta: meta};
-            } catch (error) {
-                throw new Error('Get coordinator version Error: ' + error);
+        }
+
+        try {
+            const fw = await this.driver.readFirmwareVersionRequest();
+            const buf = Buffer.from(fw);
+            const fwString = `0x${buf.readUInt32LE(0).toString(16)}`;
+            let type = "";
+            if (fw[1] === 5) {
+                type = "ConBee/RaspBee";
+            } else if (fw[1] === 7) {
+                type = "ConBee2/RaspBee2";
+            } else {
+                type = "ConBee3";
             }
+            const meta = {transportrev: 0, product: 0, majorrel: fw[3], minorrel: fw[2], maintrel: 0, revision: fwString};
+            this.fwVersion = {type: type, meta: meta};
+            return {type: type, meta: meta};
+        } catch (error) {
+            throw new Error(`Get coordinator version Error: ${error}`);
         }
     }
 
     public async addInstallCode(ieeeAddress: string, key: Buffer, hashed: boolean): Promise<void> {
         await this.driver.writeLinkKey(ieeeAddress, hashed ? key : ZSpec.Utils.aes128MmoHash(key));
     }
-
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    public async reset(type: 'soft' | 'hard'): Promise<void> {
-        return await Promise.reject(new Error('Reset is not supported'));
+    public async reset(_type: "soft" | "hard"): Promise<void> {
+        return await Promise.reject(new Error("Reset is not supported"));
     }
 
     public waitFor(
@@ -351,7 +341,7 @@ export class DeconzAdapter extends Adapter {
         clusterId: K,
         payload: Buffer,
         disableResponse: boolean,
-    ): Promise<ZdoTypes.RequestToResponseMap[K] | void> {
+    ): Promise<ZdoTypes.RequestToResponseMap[K] | undefined> {
         const transactionID = this.nextTransactionID();
         payload[0] = transactionID;
         const isNwkAddrRequest = clusterId === Zdo.ClusterId.NETWORK_ADDRESS_REQUEST;
@@ -382,10 +372,11 @@ export class DeconzAdapter extends Adapter {
             if (responseClusterId) {
                 try {
                     const response = await this.waitForData(isNwkAddrRequest ? ieeeAddress : networkAddress, Zdo.ZDO_PROFILE_ID, responseClusterId);
+                    // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
                     return response.zdo! as ZdoTypes.RequestToResponseMap[K];
                 } catch (error) {
-                    if (responseClusterId == Zdo.ClusterId.ACTIVE_ENDPOINTS_RESPONSE && networkAddress === 0) {
-                        logger.warning('Failed to determine active endpoints of coordinator, falling back to [1]', NS);
+                    if (responseClusterId === Zdo.ClusterId.ACTIVE_ENDPOINTS_RESPONSE && networkAddress === 0) {
+                        logger.warning("Failed to determine active endpoints of coordinator, falling back to [1]", NS);
                         // Some Conbee adapaters don't provide a response to an active endpoint request of the coordinator, always return
                         // an endpoint here. Before an active endpoint request was done to determine the endpoints, they were hardcoded:
                         // https://github.com/Koenkk/zigbee-herdsman/blob/d855b3bf85a066cb7c325fe3ef0006873c735add/src/adapter/deconz/adapter/deconzAdapter.ts#L105
@@ -394,24 +385,24 @@ export class DeconzAdapter extends Adapter {
                             {endpointList: [1], nwkAddress: 0},
                         ];
                         return response as ZdoTypes.RequestToResponseMap[K];
-                    } else {
-                        throw error;
                     }
+
+                    throw error;
                 }
             }
         }
     }
 
     public async sendZclFrameToEndpoint(
-        ieeeAddr: string,
+        _ieeeAddr: string,
         networkAddress: number,
         endpoint: number,
         zclFrame: Zcl.Frame,
         timeout: number,
         disableResponse: boolean,
-        disableRecovery: boolean,
+        _disableRecovery: boolean,
         sourceEndpoint?: number,
-    ): Promise<Events.ZclPayload | void> {
+    ): Promise<Events.ZclPayload | undefined> {
         const transactionID = this.nextTransactionID();
         const payload = zclFrame.toBuffer();
         const request: ApsDataRequest = {
@@ -424,7 +415,7 @@ export class DeconzAdapter extends Adapter {
             srcEndpoint: sourceEndpoint || 1,
             asduLength: payload.length,
             asduPayload: payload,
-            txOptions: this.TX_OPTIONS, // 0x00 normal, 0x04 APS ACK
+            txOptions: this.txOptions, // 0x00 normal, 0x04 APS ACK
             radius: PARAM.PARAM.txRadius.DEFAULT_RADIUS,
             timeout: timeout,
         };
@@ -436,17 +427,11 @@ export class DeconzAdapter extends Adapter {
             .then(() => {
                 logger.debug(`sendZclFrameToEndpoint - message send with transSeq Nr.: ${zclFrame.header.transactionSequenceNumber}`, NS);
                 logger.debug(
-                    (command.response !== undefined) +
-                        ', ' +
-                        zclFrame.header.frameControl.disableDefaultResponse +
-                        ', ' +
-                        disableResponse +
-                        ', ' +
-                        request.timeout,
+                    `${command.response !== undefined}, ${zclFrame.header.frameControl.disableDefaultResponse}, ${disableResponse}, ${request.timeout}`,
                     NS,
                 );
 
-                if (command.response == undefined || zclFrame.header.frameControl.disableDefaultResponse || !disableResponse) {
+                if (command.response === undefined || zclFrame.header.frameControl.disableDefaultResponse || !disableResponse) {
                     logger.debug(`resolve request (${zclFrame.header.transactionSequenceNumber})`, NS);
                     return Promise.resolve();
                 }
@@ -459,7 +444,7 @@ export class DeconzAdapter extends Adapter {
 
         try {
             let data = null;
-            if ((command.response != undefined && !disableResponse) || !zclFrame.header.frameControl.disableDefaultResponse) {
+            if ((command.response !== undefined && !disableResponse) || !zclFrame.header.frameControl.disableDefaultResponse) {
                 data = await this.waitForData(
                     networkAddress,
                     ZSpec.HA_PROFILE_ID,
@@ -471,21 +456,27 @@ export class DeconzAdapter extends Adapter {
 
             if (data !== null) {
                 const response: Events.ZclPayload = {
-                    address: data.srcAddr16 ?? `0x${data.srcAddr64!}`,
+                    address:
+                        data.srcAddr16 ??
+                        `0x${
+                            // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
+                            data.srcAddr64!
+                        }`,
                     data: data.asduPayload,
                     clusterID: zclFrame.cluster.ID,
                     header: Zcl.Header.fromBuffer(data.asduPayload),
                     endpoint: data.srcEndpoint,
                     linkquality: data.lqi,
+                    // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
                     groupID: data.srcAddrMode === 0x01 ? data.srcAddr16! : 0,
                     wasBroadcast: data.srcAddrMode === 0x01 || data.srcAddrMode === 0xf,
                     destinationEndpoint: data.destEndpoint,
                 };
                 logger.debug(`response received (${zclFrame.header.transactionSequenceNumber})`, NS);
                 return response;
-            } else {
-                logger.debug(`no response expected (${zclFrame.header.transactionSequenceNumber})`, NS);
             }
+
+            logger.debug(`no response expected (${zclFrame.header.transactionSequenceNumber})`, NS);
         } catch (error) {
             throw new Error(`no response received (${zclFrame.header.transactionSequenceNumber}) ${error}`);
         }
@@ -510,7 +501,7 @@ export class DeconzAdapter extends Adapter {
             radius: PARAM.PARAM.txRadius.UNLIMITED,
         };
 
-        logger.debug(`sendZclFrameToGroup - message send`, NS);
+        logger.debug("sendZclFrameToGroup - message send", NS);
         return await (this.driver.enqueueSendDataRequest(request) as Promise<void>);
     }
 
@@ -534,16 +525,16 @@ export class DeconzAdapter extends Adapter {
             radius: PARAM.PARAM.txRadius.UNLIMITED,
         };
 
-        logger.debug(`sendZclFrameToAll - message send`, NS);
+        logger.debug("sendZclFrameToAll - message send", NS);
         return await (this.driver.enqueueSendDataRequest(request) as Promise<void>);
     }
 
     public async supportsBackup(): Promise<boolean> {
-        return false;
+        return await Promise.resolve(false);
     }
 
     public async backup(): Promise<Models.Backup> {
-        throw new Error('This adapter does not support backup');
+        return await Promise.reject(new Error("This adapter does not support backup"));
     }
 
     public async getNetworkParameters(): Promise<NetworkParameters> {
@@ -562,39 +553,29 @@ export class DeconzAdapter extends Adapter {
                 nwkUpdateID: 0 as number,
             };
         } catch (error) {
-            const msg = 'get network parameters Error:' + error;
+            const msg = `get network parameters Error:${error}`;
             logger.debug(msg, NS);
             return await Promise.reject(new Error(msg));
         }
     }
 
     public async restoreChannelInterPAN(): Promise<void> {
-        throw new Error('not supported');
+        await Promise.reject(new Error("not supported"));
     }
-
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    public async sendZclFrameInterPANToIeeeAddr(zclFrame: Zcl.Frame, ieeeAddr: string): Promise<void> {
-        throw new Error('not supported');
+    public async sendZclFrameInterPANToIeeeAddr(_zclFrame: Zcl.Frame, _ieeeAddr: string): Promise<void> {
+        await Promise.reject(new Error("not supported"));
     }
-
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    public async sendZclFrameInterPANBroadcast(zclFrame: Zcl.Frame, timeout: number): Promise<Events.ZclPayload> {
-        throw new Error('not supported');
+    public async sendZclFrameInterPANBroadcast(_zclFrame: Zcl.Frame, _timeout: number): Promise<Events.ZclPayload> {
+        return await Promise.reject(new Error("not supported"));
     }
-
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    public async sendZclFrameInterPANBroadcastWithResponse(zclFrame: Zcl.Frame, timeout: number): Promise<Events.ZclPayload> {
-        throw new Error('not supported');
+    public async sendZclFrameInterPANBroadcastWithResponse(_zclFrame: Zcl.Frame, _timeout: number): Promise<Events.ZclPayload> {
+        return await Promise.reject(new Error("not supported"));
     }
-
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    public async setChannelInterPAN(channel: number): Promise<void> {
-        throw new Error('not supported');
+    public async setChannelInterPAN(_channel: number): Promise<void> {
+        await Promise.reject(new Error("not supported"));
     }
-
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    public async sendZclFrameInterPANIeeeAddr(zclFrame: Zcl.Frame, ieeeAddr: string): Promise<void> {
-        throw new Error('not supported');
+    public async sendZclFrameInterPANIeeeAddr(_zclFrame: Zcl.Frame, _ieeeAddr: string): Promise<void> {
+        await Promise.reject(new Error("not supported"));
     }
 
     /**
@@ -616,7 +597,7 @@ export class DeconzAdapter extends Adapter {
         });
     }
 
-    private checkReceivedGreenPowerIndication(ind: gpDataInd): void {
+    private checkReceivedGreenPowerIndication(ind: GpDataInd): void {
         const gpdHeader = Buffer.alloc(15); // applicationId === IEEE_ADDRESS ? 20 : 15
         gpdHeader.writeUInt8(0b00000001, 0); // frameControl: FrameType.SPECIFIC + Direction.CLIENT_TO_SERVER + disableDefaultResponse=false
         gpdHeader.writeUInt8(ind.seqNr, 1);
@@ -643,7 +624,7 @@ export class DeconzAdapter extends Adapter {
         };
 
         this.waitress.resolve(payload);
-        this.emit('zclPayload', payload);
+        this.emit("zclPayload", payload);
     }
 
     private checkReceivedDataPayload(resp: ReceivedDataResponse | null): void {
@@ -662,7 +643,7 @@ export class DeconzAdapter extends Adapter {
                 if (resp.srcAddr64 != null) {
                     logger.debug(`Try to find network address of ${resp.srcAddr64}`, NS);
                     // Note: Device expects addresses with a 0x prefix...
-                    srcAddr = Device.byIeeeAddr('0x' + resp.srcAddr64, false)?.networkAddress;
+                    srcAddr = Device.byIeeeAddr(`0x${resp.srcAddr64}`, false)?.networkAddress;
                     // apperantly some functions furhter up in the protocol stack expect this to be set.
                     // so let's make sure they get the network address
                     // Note: srcAddr16 can be undefined after this and this is intended behavior
@@ -674,19 +655,23 @@ export class DeconzAdapter extends Adapter {
 
             if (resp.profileId === Zdo.ZDO_PROFILE_ID) {
                 if (resp.clusterId === Zdo.ClusterId.NETWORK_ADDRESS_RESPONSE) {
+                    // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
                     if (Zdo.Buffalo.checkStatus<Zdo.ClusterId.NETWORK_ADDRESS_RESPONSE>(resp.zdo!)) {
+                        // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
                         srcEUI64 = resp.zdo![1].eui64;
                     }
                 } else if (resp.clusterId === Zdo.ClusterId.END_DEVICE_ANNOUNCE) {
                     // XXX: using same response for announce (handled by controller) or joined depending on permit join status?
+                    // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
                     if (this.joinPermitted === true && Zdo.Buffalo.checkStatus<Zdo.ClusterId.END_DEVICE_ANNOUNCE>(resp.zdo!)) {
                         const payload = resp.zdo[1];
 
-                        this.emit('deviceJoined', {networkAddress: payload.nwkAddress, ieeeAddr: payload.eui64});
+                        this.emit("deviceJoined", {networkAddress: payload.nwkAddress, ieeeAddr: payload.eui64});
                     }
                 }
 
-                this.emit('zdoResponse', resp.clusterId, resp.zdo!);
+                // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
+                this.emit("zdoResponse", resp.clusterId, resp.zdo!);
             } else {
                 header = Zcl.Header.fromBuffer(resp.asduPayload);
             }
@@ -700,7 +685,7 @@ export class DeconzAdapter extends Adapter {
             if (
                 resp &&
                 (req.addr === undefined ||
-                    (typeof req.addr === 'number' ? srcAddr !== undefined && req.addr === srcAddr : srcEUI64 && req.addr === srcEUI64)) &&
+                    (typeof req.addr === "number" ? srcAddr !== undefined && req.addr === srcAddr : srcEUI64 && req.addr === srcEUI64)) &&
                 req.clusterId === resp.clusterId &&
                 req.profileId === resp.profileId &&
                 (header === undefined ||
@@ -715,29 +700,38 @@ export class DeconzAdapter extends Adapter {
 
             // Default timeout: 60 seconds.
             // Comparison is negated to prevent orphans when invalid timeout is entered (resulting in NaN).
+            // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
             if (!(now - req.ts! <= (req.timeout ?? 60000))) {
                 //logger.debug("Timeout for request in openRequestsQueue addr: " + req.addr.toString(16) + " clusterId: " + req.clusterId.toString(16) + " profileId: " + req.profileId.toString(16), NS);
                 //remove from busyQueue
                 this.openRequestsQueue.splice(i, 1);
-                req.reject(new Error('waiting for response TIMEOUT'));
+                req.reject(new Error("waiting for response TIMEOUT"));
             }
         }
 
-        if (resp && resp.profileId != Zdo.ZDO_PROFILE_ID) {
+        if (resp && resp.profileId !== Zdo.ZDO_PROFILE_ID) {
             const payload: Events.ZclPayload = {
                 clusterID: resp.clusterId,
                 header,
                 data: resp.asduPayload,
-                address: resp.srcAddrMode === 0x03 ? `0x${resp.srcAddr64!}` : resp.srcAddr16!,
+                address:
+                    resp.srcAddrMode === 0x03
+                        ? `0x${
+                              // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
+                              resp.srcAddr64!
+                          }`
+                        : // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
+                          resp.srcAddr16!,
                 endpoint: resp.srcEndpoint,
                 linkquality: resp.lqi,
+                // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
                 groupID: resp.destAddrMode === 0x01 ? resp.destAddr16! : 0,
                 wasBroadcast: resp.destAddrMode === 0x01 || resp.destAddrMode === 0xf,
                 destinationEndpoint: resp.destEndpoint,
             };
 
             this.waitress.resolve(payload);
-            this.emit('zclPayload', payload);
+            this.emit("zclPayload", payload);
         }
     }
 

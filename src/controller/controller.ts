@@ -1,29 +1,30 @@
-import assert from 'node:assert';
-import events from 'node:events';
-import fs from 'node:fs';
+import assert from "node:assert";
+import events from "node:events";
+import fs from "node:fs";
 
-import mixinDeep from 'mixin-deep';
+import mixinDeep from "mixin-deep";
 
-import {Adapter, Events as AdapterEvents, TsType as AdapterTsType} from '../adapter';
-import {BackupUtils, wait} from '../utils';
-import {logger} from '../utils/logger';
-import {isNumberArrayOfLength} from '../utils/utils';
-import * as ZSpec from '../zspec';
-import {EUI64} from '../zspec/tstypes';
-import * as Zcl from '../zspec/zcl';
-import {FrameControl} from '../zspec/zcl/definition/tstype';
-import * as Zdo from '../zspec/zdo';
-import * as ZdoTypes from '../zspec/zdo/definition/tstypes';
-import Database from './database';
-import * as Events from './events';
-import GreenPower from './greenPower';
-import {ZclFrameConverter} from './helpers';
-import {Device, Entity} from './model';
-import Group from './model/group';
-import Touchlink from './touchlink';
-import {DeviceType, GreenPowerDeviceJoinedPayload, KeyValue} from './tstype';
+import {Adapter, type Events as AdapterEvents, type TsType as AdapterTsType} from "../adapter";
+import {BackupUtils, wait} from "../utils";
+import {logger} from "../utils/logger";
+import {isNumberArrayOfLength} from "../utils/utils";
+import * as ZSpec from "../zspec";
+import type {Eui64} from "../zspec/tstypes";
+import * as Zcl from "../zspec/zcl";
+import type {FrameControl} from "../zspec/zcl/definition/tstype";
+import * as Zdo from "../zspec/zdo";
+import type * as ZdoTypes from "../zspec/zdo/definition/tstypes";
+import Database from "./database";
+import type * as Events from "./events";
+import GreenPower from "./greenPower";
+import {ZclFrameConverter} from "./helpers";
+import {Device, Entity} from "./model";
+import {InterviewState} from "./model/device";
+import Group from "./model/group";
+import Touchlink from "./touchlink";
+import type {DeviceType, GreenPowerDeviceJoinedPayload, KeyValue} from "./tstype";
 
-const NS = 'zh:controller';
+const NS = "zh:controller";
 
 interface Options {
     network: AdapterTsType.NetworkOptions;
@@ -40,7 +41,7 @@ interface Options {
     acceptJoiningDeviceHandler: (ieeeAddr: string) => Promise<boolean>;
 }
 
-const DefaultOptions: Pick<Options, 'network' | 'serialPort' | 'adapter'> = {
+const DefaultOptions: Pick<Options, "network" | "serialPort" | "adapter"> = {
     network: {
         networkKeyDistribute: false,
         networkKey: [0x01, 0x03, 0x05, 0x07, 0x09, 0x0b, 0x0d, 0x0f, 0x00, 0x02, 0x04, 0x06, 0x08, 0x0a, 0x0c, 0x0d],
@@ -136,13 +137,13 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
         // Check if we have to change the channel, only do this when adapter `resumed` because:
         // - `getNetworkParameters` might be return wrong info because it needs to propogate after backup restore
         // - If result is not `resumed` (`reset` or `restored`), the adapter should comission with the channel from `this.options.network`
-        if (startResult === 'resumed') {
+        if (startResult === "resumed") {
             const netParams = await this.getNetworkParameters();
             const configuredChannel = this.options.network.channelList[0];
             const adapterChannel = netParams.channel;
             const nwkUpdateID = netParams.nwkUpdateID;
 
-            if (configuredChannel != adapterChannel) {
+            if (configuredChannel !== adapterChannel) {
                 logger.info(`Configured channel '${configuredChannel}' does not match adapter channel '${adapterChannel}', changing channel`, NS);
                 await this.changeChannel(adapterChannel, configuredChannel, nwkUpdateID);
             }
@@ -151,25 +152,25 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
         Entity.injectAdapter(this.adapter);
 
         // log injection
-        logger.debug(`Injected database: ${this.database != undefined}, adapter: ${this.adapter != undefined}`, NS);
+        logger.debug(`Injected database: ${this.database !== undefined}, adapter: ${this.adapter !== undefined}`, NS);
 
         this.greenPower = new GreenPower(this.adapter);
-        this.greenPower.on('deviceJoined', this.onDeviceJoinedGreenPower.bind(this));
-        this.greenPower.on('deviceLeave', this.onDeviceLeaveGreenPower.bind(this));
+        this.greenPower.on("deviceJoined", this.onDeviceJoinedGreenPower.bind(this));
+        this.greenPower.on("deviceLeave", this.onDeviceLeaveGreenPower.bind(this));
 
         // Register adapter events
-        this.adapter.on('deviceJoined', this.onDeviceJoined.bind(this));
-        this.adapter.on('zclPayload', this.onZclPayload.bind(this));
-        this.adapter.on('zdoResponse', this.onZdoResponse.bind(this));
-        this.adapter.on('disconnected', this.onAdapterDisconnected.bind(this));
-        this.adapter.on('deviceLeave', this.onDeviceLeave.bind(this));
+        this.adapter.on("deviceJoined", this.onDeviceJoined.bind(this));
+        this.adapter.on("zclPayload", this.onZclPayload.bind(this));
+        this.adapter.on("zdoResponse", this.onZdoResponse.bind(this));
+        this.adapter.on("disconnected", this.onAdapterDisconnected.bind(this));
+        this.adapter.on("deviceLeave", this.onDeviceLeave.bind(this));
 
-        if (startResult === 'reset') {
+        if (startResult === "reset") {
             if (this.options.databaseBackupPath && fs.existsSync(this.options.databasePath)) {
                 fs.copyFileSync(this.options.databasePath, this.options.databaseBackupPath);
             }
 
-            logger.debug('Clearing database...', NS);
+            logger.debug("Clearing database...", NS);
             for (const group of Group.allIterator()) {
                 group.removeFromDatabase();
             }
@@ -180,24 +181,24 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
             Device.resetCache();
         }
 
-        if (startResult === 'reset' || (this.options.backupPath && !fs.existsSync(this.options.backupPath))) {
+        if (startResult === "reset" || (this.options.backupPath && !fs.existsSync(this.options.backupPath))) {
             await this.backup();
         }
 
         // Add coordinator to the database if it is not there yet.
         const coordinatorIEEE = await this.adapter.getCoordinatorIEEE();
 
-        if (Device.byType('Coordinator').length === 0) {
-            logger.debug('No coordinator in database, querying...', NS);
+        if (Device.byType("Coordinator").length === 0) {
+            logger.debug("No coordinator in database, querying...", NS);
             const coordinator = Device.create(
-                'Coordinator',
+                "Coordinator",
                 coordinatorIEEE,
                 ZSpec.COORDINATOR_ADDRESS,
                 this.adapter.manufacturerID,
                 undefined,
                 undefined,
                 undefined,
-                true,
+                InterviewState.Successful,
                 undefined,
             );
 
@@ -211,7 +212,7 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
         }
 
         // Update coordinator ieeeAddr if changed, can happen due to e.g. reflashing
-        const databaseCoordinator = Device.byType('Coordinator')[0];
+        const databaseCoordinator = Device.byType("Coordinator")[0];
         if (databaseCoordinator.ieeeAddr !== coordinatorIEEE) {
             logger.info(`Coordinator address changed, updating to '${coordinatorIEEE}'`, NS);
             databaseCoordinator.changeIeeeAddress(coordinatorIEEE);
@@ -247,14 +248,15 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
     public async addInstallCode(installCode: string): Promise<void> {
         const aqaraMatch = installCode.match(/^G\$M:.+\$A:(.+)\$I:(.+)$/);
         const pipeMatch = installCode.match(/^(.+)\|(.+)$/);
-        let ieeeAddr, key;
+        let ieeeAddr: string;
+        let keyStr: string;
 
         if (aqaraMatch) {
             ieeeAddr = aqaraMatch[1];
-            key = aqaraMatch[2];
+            keyStr = aqaraMatch[2];
         } else if (pipeMatch) {
             ieeeAddr = pipeMatch[1];
-            key = pipeMatch[2];
+            keyStr = pipeMatch[2];
         } else {
             assert(
                 installCode.length === 95 || installCode.length === 91,
@@ -262,12 +264,13 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
             );
             const keyStart = installCode.length - (installCode.length === 95 ? 36 : 32);
             ieeeAddr = installCode.substring(keyStart - 19, keyStart - 3);
-            key = installCode.substring(keyStart, installCode.length);
+            keyStr = installCode.substring(keyStart, installCode.length);
         }
 
         ieeeAddr = `0x${ieeeAddr}`;
         // match valid else asserted above
-        key = Buffer.from(key.match(/.{1,2}/g)!.map((d) => parseInt(d, 16)));
+        // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
+        const key = Buffer.from(keyStr.match(/.{1,2}/g)!.map((d) => Number.parseInt(d, 16)));
 
         // will throw if code cannot be fixed and is invalid
         const [adjustedKey, adjusted] = ZSpec.Utils.checkInstallCode(key, true);
@@ -280,7 +283,7 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
 
         await this.adapter.addInstallCode(ieeeAddr, adjustedKey, false);
 
-        if (adjusted === 'missing CRC') {
+        if (adjusted === "missing CRC") {
             // in case the CRC was missing, could also be a "already-hashed" key, send both
             // XXX: seems to be the case for old HA1.2 devices
             await this.adapter.addInstallCode(ieeeAddr, key, true);
@@ -294,7 +297,7 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
 
         if (time > 0) {
             // never permit more than uint8, and never permit 255 that is often equal to "forever"
-            assert(time <= 254, `Cannot permit join for more than 254 seconds.`);
+            assert(time <= 254, "Cannot permit join for more than 254 seconds.");
 
             await this.adapter.permitJoin(time, device?.networkAddress);
             await this.greenPower.permitJoin(time, device?.networkAddress);
@@ -302,20 +305,20 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
             const timeMs = time * 1000;
             this.permitJoinEnd = Date.now() + timeMs;
             this.permitJoinTimer = setTimeout((): void => {
-                this.emit('permitJoinChanged', {permitted: false});
+                this.emit("permitJoinChanged", {permitted: false});
 
                 this.permitJoinTimer = undefined;
                 this.permitJoinEnd = undefined;
             }, timeMs);
 
-            this.emit('permitJoinChanged', {permitted: true, time});
+            this.emit("permitJoinChanged", {permitted: true, time});
         } else {
-            logger.debug('Disable joining', NS);
+            logger.debug("Disable joining", NS);
 
             await this.greenPower.permitJoin(0);
             await this.adapter.permitJoin(0);
 
-            this.emit('permitJoinChanged', {permitted: false});
+            this.emit("permitJoinChanged", {permitted: false});
         }
     }
 
@@ -378,10 +381,10 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
     public async backup(): Promise<void> {
         this.databaseSave();
         if (this.options.backupPath && (await this.adapter.supportsBackup())) {
-            logger.debug('Creating coordinator backup', NS);
+            logger.debug("Creating coordinator backup", NS);
             const backup = await this.adapter.backup(this.getDeviceIeeeAddresses());
             const unifiedBackup = await BackupUtils.toUnifiedBackup(backup);
-            const tmpBackupPath = this.options.backupPath + '.tmp';
+            const tmpBackupPath = `${this.options.backupPath}.tmp`;
             fs.writeFileSync(tmpBackupPath, JSON.stringify(unifiedBackup, null, 2));
             fs.renameSync(tmpBackupPath, this.options.backupPath);
             logger.info(`Wrote coordinator backup to '${this.options.backupPath}'`, NS);
@@ -394,17 +397,17 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
             const devicesInBackup = backup.devices.map((d) => ZSpec.Utils.eui64BEBufferToHex(d.ieeeAddress));
             const missingRouters = [];
 
-            for (const device of this.getDevicesIterator((d) => d.type === 'Router' && !devicesInBackup.includes(d.ieeeAddr as EUI64))) {
+            for (const device of this.getDevicesIterator((d) => d.type === "Router" && !devicesInBackup.includes(d.ieeeAddr as Eui64))) {
                 missingRouters.push(device);
             }
 
             return {missingRouters};
-        } else {
-            throw new Error("Coordinator does not coordinator check because it doesn't support backups");
         }
+
+        throw new Error("Coordinator does not coordinator check because it doesn't support backups");
     }
 
-    public async reset(type: 'soft' | 'hard'): Promise<void> {
+    public async reset(type: "soft" | "hard"): Promise<void> {
         await this.adapter.reset(type);
     }
 
@@ -546,7 +549,7 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
         try {
             const response = await this.adapter.sendZdo(ZSpec.BLANK_EUI64, nwkAddress, clusterId, zdoPayload, false);
 
-            if (Zdo.Buffalo.checkStatus(response)) {
+            if (Zdo.Buffalo.checkStatus<Zdo.ClusterId.IEEE_ADDRESS_RESPONSE>(response)) {
                 const payload = response[1];
                 const device = Device.byIeeeAddr(payload.eui64);
 
@@ -556,9 +559,9 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
                 }
 
                 return device;
-            } else {
-                throw new Zdo.StatusError(response[0]);
             }
+
+            throw new Zdo.StatusError(response[0]);
         } catch (error) {
             // Catches 2 types of exception: Zdo.StatusError and no response from `adapter.sendZdo()`.
             logger.debug(`Failed to retrieve IEEE address for device '${nwkAddress}': ${error}`, NS);
@@ -574,7 +577,7 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
             device.networkAddress = nwkAddress;
             device.save();
 
-            this.selfAndDeviceEmit(device, 'deviceNetworkAddressChanged', {device});
+            this.selfAndDeviceEmit(device, "deviceNetworkAddressChanged", {device});
         }
     }
 
@@ -588,7 +591,7 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
         }
 
         device.updateLastSeen();
-        this.selfAndDeviceEmit(device, 'lastSeenChanged', {device, reason: 'networkAddress'});
+        this.selfAndDeviceEmit(device, "lastSeenChanged", {device, reason: "networkAddress"});
         this.checkDeviceNetworkAddress(device, payload.eui64, payload.nwkAddress);
     }
 
@@ -602,7 +605,7 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
         }
 
         device.updateLastSeen();
-        this.selfAndDeviceEmit(device, 'lastSeenChanged', {device, reason: 'networkAddress'});
+        this.selfAndDeviceEmit(device, "lastSeenChanged", {device, reason: "networkAddress"});
         this.checkDeviceNetworkAddress(device, payload.eui64, payload.nwkAddress);
     }
 
@@ -616,16 +619,17 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
         }
 
         device.updateLastSeen();
-        this.selfAndDeviceEmit(device, 'lastSeenChanged', {device, reason: 'deviceAnnounce'});
+        this.selfAndDeviceEmit(device, "lastSeenChanged", {device, reason: "deviceAnnounce"});
         device.implicitCheckin();
         this.checkDeviceNetworkAddress(device, payload.eui64, payload.nwkAddress);
-        this.selfAndDeviceEmit(device, 'deviceAnnounce', {device});
+        this.selfAndDeviceEmit(device, "deviceAnnounce", {device});
     }
 
     private onDeviceLeave(payload: AdapterEvents.DeviceLeavePayload): void {
         logger.debug(`Device leave '${payload.ieeeAddr}'`, NS);
 
         // XXX: seems type is not properly detected?
+        // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
         const device = payload.ieeeAddr ? Device.byIeeeAddr(payload.ieeeAddr) : Device.byNetworkAddress(payload.networkAddress!);
 
         if (!device) {
@@ -636,11 +640,11 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
         logger.debug(`Removing device from database '${device.ieeeAddr}'`, NS);
         device.removeFromDatabase();
 
-        this.selfAndDeviceEmit(device, 'deviceLeave', {ieeeAddr: device.ieeeAddr});
+        this.selfAndDeviceEmit(device, "deviceLeave", {ieeeAddr: device.ieeeAddr});
     }
 
     private async onAdapterDisconnected(): Promise<void> {
-        logger.debug(`Adapter disconnected`, NS);
+        logger.debug("Adapter disconnected", NS);
 
         this.adapterDisconnected = true;
 
@@ -650,11 +654,11 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
             logger.error(`Failed to stop adapter on disconnect: ${error}`, NS);
         }
 
-        this.emit('adapterDisconnected');
+        this.emit("adapterDisconnected");
     }
 
     private async onDeviceJoinedGreenPower(payload: GreenPowerDeviceJoinedPayload): Promise<void> {
-        logger.debug(() => `Green power device '${JSON.stringify(payload).replaceAll(/\[[\d,]+\]/g, 'HIDDEN')}' joined`, NS);
+        logger.debug(() => `Green power device '${JSON.stringify(payload).replaceAll(/\[[\d,]+\]/g, "HIDDEN")}' joined`, NS);
 
         // Green power devices don't have an ieeeAddr, the sourceID is unique and static so use this.
         const ieeeAddr = GreenPower.sourceIdToIeeeAddress(payload.sourceID);
@@ -666,32 +670,32 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
             logger.debug(`New green power device '${ieeeAddr}' joined`, NS);
             logger.debug(`Creating device '${ieeeAddr}'`, NS);
             device = Device.create(
-                'GreenPower',
+                "GreenPower",
                 ieeeAddr,
                 payload.networkAddress,
                 undefined,
                 undefined,
                 undefined,
                 modelID,
-                true,
+                InterviewState.Successful,
                 payload.securityKey ? Array.from(payload.securityKey) : /* v8 ignore next */ undefined,
             );
 
             device.save();
 
-            this.selfAndDeviceEmit(device, 'deviceJoined', {device});
-            this.selfAndDeviceEmit(device, 'deviceInterview', {status: 'successful', device});
+            this.selfAndDeviceEmit(device, "deviceJoined", {device});
+            this.selfAndDeviceEmit(device, "deviceInterview", {status: "successful", device});
         } else if (device.isDeleted) {
             logger.debug(`Deleted green power device '${ieeeAddr}' joined, undeleting`, NS);
 
-            device.undelete(true);
+            device.undelete();
 
-            this.selfAndDeviceEmit(device, 'deviceJoined', {device});
-            this.selfAndDeviceEmit(device, 'deviceInterview', {status: 'successful', device});
+            this.selfAndDeviceEmit(device, "deviceJoined", {device});
+            this.selfAndDeviceEmit(device, "deviceInterview", {status: "successful", device});
         }
     }
 
-    private async onDeviceLeaveGreenPower(sourceID: number): Promise<void> {
+    private onDeviceLeaveGreenPower(sourceID: number): void {
         logger.debug(`Green power device '${sourceID}' left`, NS);
 
         // Green power devices don't have an ieeeAddr, the sourceID is unique and static so use this.
@@ -706,7 +710,7 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
         logger.debug(`Removing green power device from database '${device.ieeeAddr}'`, NS);
         device.removeFromDatabase();
 
-        this.selfAndDeviceEmit(device, 'deviceLeave', {ieeeAddr: device.ieeeAddr});
+        this.selfAndDeviceEmit(device, "deviceLeave", {ieeeAddr: device.ieeeAddr});
     }
 
     private selfAndDeviceEmit<K extends keyof ControllerEventMap>(
@@ -731,12 +735,12 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
                     const zdoPayload = Zdo.Buffalo.buildRequest(
                         this.adapter.hasZdoMessageOverhead,
                         clusterId,
-                        payload.ieeeAddr as EUI64,
+                        payload.ieeeAddr as Eui64,
                         Zdo.LeaveRequestFlags.WITHOUT_REJOIN,
                     );
                     const response = await this.adapter.sendZdo(payload.ieeeAddr, payload.networkAddress, clusterId, zdoPayload, false);
 
-                    if (!Zdo.Buffalo.checkStatus(response)) {
+                    if (!Zdo.Buffalo.checkStatus<Zdo.ClusterId.LEAVE_RESPONSE>(response)) {
                         throw new Zdo.StatusError(response[0]);
                     }
                 } catch (error) {
@@ -744,21 +748,31 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
                 }
 
                 return;
-            } else {
-                logger.debug(`Device '${payload.ieeeAddr}' accepted by handler`, NS);
             }
+
+            logger.debug(`Device '${payload.ieeeAddr}' accepted by handler`, NS);
         }
 
         let device = Device.byIeeeAddr(payload.ieeeAddr, true);
         if (!device) {
             logger.debug(`New device '${payload.ieeeAddr}' joined`, NS);
             logger.debug(`Creating device '${payload.ieeeAddr}'`, NS);
-            device = Device.create('Unknown', payload.ieeeAddr, payload.networkAddress, undefined, undefined, undefined, undefined, false, undefined);
-            this.selfAndDeviceEmit(device, 'deviceJoined', {device});
+            device = Device.create(
+                "Unknown",
+                payload.ieeeAddr,
+                payload.networkAddress,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                InterviewState.Pending,
+                undefined,
+            );
+            this.selfAndDeviceEmit(device, "deviceJoined", {device});
         } else if (device.isDeleted) {
             logger.debug(`Deleted device '${payload.ieeeAddr}' joined, undeleting`, NS);
             device.undelete();
-            this.selfAndDeviceEmit(device, 'deviceJoined', {device});
+            this.selfAndDeviceEmit(device, "deviceJoined", {device});
         }
 
         if (device.networkAddress !== payload.networkAddress) {
@@ -768,30 +782,27 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
         }
 
         device.updateLastSeen();
-        this.selfAndDeviceEmit(device, 'lastSeenChanged', {device, reason: 'deviceJoined'});
+        this.selfAndDeviceEmit(device, "lastSeenChanged", {device, reason: "deviceJoined"});
         device.implicitCheckin();
 
-        if (!device.interviewCompleted && !device.interviewing) {
+        if (device.interviewState === InterviewState.Pending || device.interviewState === InterviewState.Failed) {
             logger.info(`Interview for '${device.ieeeAddr}' started`, NS);
-            this.selfAndDeviceEmit(device, 'deviceInterview', {status: 'started', device});
+            this.selfAndDeviceEmit(device, "deviceInterview", {status: "started", device});
 
             try {
                 await device.interview();
                 logger.info(`Succesfully interviewed '${device.ieeeAddr}'`, NS);
-                this.selfAndDeviceEmit(device, 'deviceInterview', {status: 'successful', device});
+                this.selfAndDeviceEmit(device, "deviceInterview", {status: "successful", device});
             } catch (error) {
                 logger.error(`Interview failed for '${device.ieeeAddr} with error '${error}'`, NS);
-                this.selfAndDeviceEmit(device, 'deviceInterview', {status: 'failed', device});
+                this.selfAndDeviceEmit(device, "deviceInterview", {status: "failed", device});
             }
         } else {
-            logger.debug(
-                `Not interviewing '${payload.ieeeAddr}', completed '${device.interviewCompleted}', in progress '${device.interviewing}'`,
-                NS,
-            );
+            logger.debug(`Not interviewing '${payload.ieeeAddr}', interviewState=${device.interviewState}'`, NS);
         }
     }
 
-    private async onZdoResponse(clusterId: Zdo.ClusterId, response: ZdoTypes.GenericZdoResponse): Promise<void> {
+    private onZdoResponse(clusterId: Zdo.ClusterId, response: ZdoTypes.GenericZdoResponse): void {
         logger.debug(
             `Received ZDO response: clusterId=${Zdo.ClusterId[clusterId]}, status=${Zdo.Status[response[0]]}, payload=${JSON.stringify(response[1])}`,
             NS,
@@ -828,7 +839,9 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
         if (payload.clusterID === Zcl.Clusters.touchlink.ID) {
             // This is handled by touchlink
             return;
-        } else if (payload.clusterID === Zcl.Clusters.greenPower.ID) {
+        }
+
+        if (payload.clusterID === Zcl.Clusters.greenPower.ID) {
             try {
                 // Custom clusters are not supported for Green Power since we need to parse the frame to get the device.
                 frame = Zcl.Frame.fromBuffer(payload.clusterID, payload.header, payload.data, {});
@@ -846,24 +859,20 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
                 device = Device.find(payload.address);
             } else {
                 if (frame.payload.srcID === undefined) {
-                    logger.debug(`Data is from unsupported green power device with IEEE addressing, skipping...`, NS);
+                    logger.debug("Data is from unsupported green power device with IEEE addressing, skipping...", NS);
                     return;
-                } else {
-                    const ieeeAddr = GreenPower.sourceIdToIeeeAddress(frame.payload.srcID);
-                    device = Device.byIeeeAddr(ieeeAddr);
-                    frame = await this.greenPower.processCommand(
-                        payload,
-                        frame,
-                        device?.gpSecurityKey ? Buffer.from(device.gpSecurityKey) : undefined,
-                    );
+                }
 
-                    // lookup encapsulated gpDevice for further processing (re-fetch, may have been created by above call)
-                    device = Device.byIeeeAddr(ieeeAddr);
+                const ieeeAddr = GreenPower.sourceIdToIeeeAddress(frame.payload.srcID);
+                device = Device.byIeeeAddr(ieeeAddr);
+                frame = await this.greenPower.processCommand(payload, frame, device?.gpSecurityKey ? Buffer.from(device.gpSecurityKey) : undefined);
 
-                    if (!device) {
-                        logger.debug(`Data is from unknown green power device with address '${ieeeAddr}' (${frame.payload.srcID}), skipping...`, NS);
-                        return;
-                    }
+                // lookup encapsulated gpDevice for further processing (re-fetch, may have been created by above call)
+                device = Device.byIeeeAddr(ieeeAddr);
+
+                if (!device) {
+                    logger.debug(`Data is from unknown green power device with address '${ieeeAddr}' (${frame.payload.srcID}), skipping...`, NS);
+                    return;
                 }
             }
         } else {
@@ -881,7 +890,7 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
              */
             device = Device.find(payload.address);
 
-            if (device?.manufacturerName === 'LUMI' && device?.type == 'Router' && payload.groupID) {
+            if (device?.manufacturerName === "LUMI" && device?.type === "Router" && payload.groupID) {
                 logger.debug(`Handling re-transmitted Xiaomi message ${device.networkAddress} -> ${payload.groupID}`, NS);
                 device = Device.byNetworkAddress(payload.groupID);
             }
@@ -894,7 +903,7 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
         }
 
         if (!device) {
-            if (typeof payload.address === 'number') {
+            if (typeof payload.address === "number") {
                 device = await this.identifyUnknownDevice(payload.address);
             }
 
@@ -914,7 +923,7 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
         device.updateLastSeen();
 
         //no implicit checkin for genPollCtrl data because it might interfere with the explicit checkin
-        if (!frame?.isCluster('genPollCtrl')) {
+        if (!frame?.isCluster("genPollCtrl")) {
             device.implicitCheckin();
         }
 
@@ -931,9 +940,9 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
         }
 
         // Parse command for event
-        let type: Events.MessagePayload['type'] | undefined;
-        let data: Events.MessagePayload['data'] = {};
-        let clusterName: Events.MessagePayload['cluster'];
+        let type: Events.MessagePayload["type"] | undefined;
+        let data: Events.MessagePayload["data"] = {};
+        let clusterName: Events.MessagePayload["cluster"];
         const meta: {
             zclTransactionSequenceNumber?: number;
             manufacturerCode?: number;
@@ -949,31 +958,31 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
 
             if (frame.header.isGlobal) {
                 switch (frame.command.name) {
-                    case 'report': {
-                        type = 'attributeReport';
+                    case "report": {
+                        type = "attributeReport";
                         data = ZclFrameConverter.attributeKeyValue(frame, device.manufacturerID, device.customClusters);
                         break;
                     }
 
-                    case 'read': {
-                        type = 'read';
+                    case "read": {
+                        type = "read";
                         data = ZclFrameConverter.attributeList(frame, device.manufacturerID, device.customClusters);
                         break;
                     }
 
-                    case 'write': {
-                        type = 'write';
+                    case "write": {
+                        type = "write";
                         data = ZclFrameConverter.attributeKeyValue(frame, device.manufacturerID, device.customClusters);
                         break;
                     }
 
-                    case 'readRsp': {
-                        type = 'readResponse';
+                    case "readRsp": {
+                        type = "readResponse";
                         data = ZclFrameConverter.attributeKeyValue(frame, device.manufacturerID, device.customClusters);
                         break;
                     }
 
-                    case 'defaultRsp': {
+                    case "defaultRsp": {
                         if (frame.payload.statusCode !== Zcl.Status.SUCCESS) {
                             logger.debug(
                                 `Failure default response from '${payload.address}': clusterID=${payload.clusterID} cmdId=${frame.payload.cmdId} status=${Zcl.Status[frame.payload.statusCode]}`,
@@ -991,10 +1000,10 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
                 }
             }
 
-            if (type === 'readResponse' || type === 'attributeReport') {
+            if (type === "readResponse" || type === "attributeReport") {
                 // Some device report, e.g. it's modelID through a readResponse or attributeReport
                 for (const key in data) {
-                    const property = Device.ReportablePropertiesMapping[key];
+                    const property = Device.REPORTABLE_PROPERTIES_MAPPING[key];
 
                     if (property && !device[property.key]) {
                         // XXX: data technically can be `KeyValue | (string | number)[]`
@@ -1005,7 +1014,7 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
                 endpoint.saveClusterAttributeKeyValue(frame.cluster.ID, data);
             }
         } else {
-            type = 'raw';
+            type = "raw";
             data = payload.data;
             const name = Zcl.Utils.getCluster(payload.clusterID, device.manufacturerID, device.customClusters).name;
             clusterName = Number.isNaN(Number(name)) ? name : Number(name);
@@ -1015,7 +1024,7 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
             const linkquality = payload.linkquality;
             const groupID = payload.groupID;
 
-            this.selfAndDeviceEmit(device, 'message', {
+            this.selfAndDeviceEmit(device, "message", {
                 type,
                 device,
                 endpoint,
@@ -1025,9 +1034,9 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
                 cluster: clusterName,
                 meta,
             });
-            this.selfAndDeviceEmit(device, 'lastSeenChanged', {device, reason: 'messageEmitted'});
+            this.selfAndDeviceEmit(device, "lastSeenChanged", {device, reason: "messageEmitted"});
         } else {
-            this.selfAndDeviceEmit(device, 'lastSeenChanged', {device, reason: 'messageNonEmitted'});
+            this.selfAndDeviceEmit(device, "lastSeenChanged", {device, reason: "messageNonEmitted"});
         }
 
         if (frame) {

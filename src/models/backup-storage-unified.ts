@@ -6,7 +6,7 @@
  */
 export interface UnifiedBackupStorage {
     metadata: {
-        format: 'zigpy/open-coordinator-backup';
+        format: "zigpy/open-coordinator-backup";
         version: 1;
         source: string;
         internal: {

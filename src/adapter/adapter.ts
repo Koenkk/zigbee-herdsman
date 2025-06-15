@@ -1,13 +1,13 @@
-import events from 'node:events';
+import events from "node:events";
 
-import * as Models from '../models';
-import {BroadcastAddress} from '../zspec/enums';
-import * as Zcl from '../zspec/zcl';
-import * as Zdo from '../zspec/zdo';
-import * as ZdoTypes from '../zspec/zdo/definition/tstypes';
-import {discoverAdapter} from './adapterDiscovery';
-import * as AdapterEvents from './events';
-import * as TsType from './tstype';
+import type * as Models from "../models";
+import type {BroadcastAddress} from "../zspec/enums";
+import * as Zcl from "../zspec/zcl";
+import type * as Zdo from "../zspec/zdo";
+import type * as ZdoTypes from "../zspec/zdo/definition/tstypes";
+import {discoverAdapter} from "./adapterDiscovery";
+import type * as AdapterEvents from "./events";
+import type * as TsType from "./tstype";
 
 interface AdapterEventMap {
     deviceJoined: [payload: AdapterEvents.DeviceJoinedPayload];
@@ -55,39 +55,39 @@ export abstract class Adapter extends events.EventEmitter<AdapterEventMap> {
         serialPortOptions.path = path;
 
         switch (adapter) {
-            case 'zstack': {
-                const {ZStackAdapter} = await import(`./z-stack/adapter/zStackAdapter.js`);
+            case "zstack": {
+                const {ZStackAdapter} = await import("./z-stack/adapter/zStackAdapter.js");
 
                 return new ZStackAdapter(networkOptions, serialPortOptions, backupPath, adapterOptions);
             }
-            case 'ember': {
-                const {EmberAdapter} = await import(`./ember/adapter/emberAdapter.js`);
+            case "ember": {
+                const {EmberAdapter} = await import("./ember/adapter/emberAdapter.js");
 
                 return new EmberAdapter(networkOptions, serialPortOptions, backupPath, adapterOptions);
             }
-            case 'deconz': {
-                const {DeconzAdapter} = await import(`./deconz/adapter/deconzAdapter.js`);
+            case "deconz": {
+                const {DeconzAdapter} = await import("./deconz/adapter/deconzAdapter.js");
 
                 return new DeconzAdapter(networkOptions, serialPortOptions, backupPath, adapterOptions);
             }
-            case 'zigate': {
-                const {ZiGateAdapter} = await import(`./zigate/adapter/zigateAdapter.js`);
+            case "zigate": {
+                const {ZiGateAdapter} = await import("./zigate/adapter/zigateAdapter.js");
 
                 return new ZiGateAdapter(networkOptions, serialPortOptions, backupPath, adapterOptions);
             }
-            case 'zboss': {
-                const {ZBOSSAdapter} = await import(`./zboss/adapter/zbossAdapter.js`);
+            case "zboss": {
+                const {ZBOSSAdapter} = await import("./zboss/adapter/zbossAdapter.js");
 
                 return new ZBOSSAdapter(networkOptions, serialPortOptions, backupPath, adapterOptions);
             }
-            case 'zoh': {
-                const {ZoHAdapter} = await import(`./zoh/adapter/zohAdapter.js`);
+            case "zoh": {
+                const {ZoHAdapter} = await import("./zoh/adapter/zohAdapter.js");
 
                 return new ZoHAdapter(networkOptions, serialPortOptions, backupPath, adapterOptions);
             }
             // @deprecated
-            case 'ezsp': {
-                const {EZSPAdapter} = await import(`./ezsp/adapter/ezspAdapter.js`);
+            case "ezsp": {
+                const {EZSPAdapter} = await import("./ezsp/adapter/ezspAdapter.js");
 
                 return new EZSPAdapter(networkOptions, serialPortOptions, backupPath, adapterOptions);
             }
@@ -105,7 +105,7 @@ export abstract class Adapter extends events.EventEmitter<AdapterEventMap> {
 
     public abstract getCoordinatorVersion(): Promise<TsType.CoordinatorVersion>;
 
-    public abstract reset(type: 'soft' | 'hard'): Promise<void>;
+    public abstract reset(type: "soft" | "hard"): Promise<void>;
 
     public abstract supportsBackup(): Promise<boolean>;
 
@@ -150,7 +150,7 @@ export abstract class Adapter extends events.EventEmitter<AdapterEventMap> {
         clusterId: K,
         payload: Buffer,
         disableResponse: boolean,
-    ): Promise<ZdoTypes.RequestToResponseMap[K] | void>;
+    ): Promise<ZdoTypes.RequestToResponseMap[K] | undefined>;
 
     public abstract permitJoin(seconds: number, networkAddress?: number): Promise<void>;
 
@@ -167,7 +167,7 @@ export abstract class Adapter extends events.EventEmitter<AdapterEventMap> {
         disableResponse: boolean,
         disableRecovery: boolean,
         sourceEndpoint?: number,
-    ): Promise<AdapterEvents.ZclPayload | void>;
+    ): Promise<AdapterEvents.ZclPayload | undefined>;
 
     public abstract sendZclFrameToGroup(groupID: number, zclFrame: Zcl.Frame, sourceEndpoint?: number): Promise<void>;
 

@@ -3,7 +3,7 @@
  * @returns 16-length hex string in big-endian
  */
 export function bigUInt64ToHexBE(value: bigint): string {
-    return value.toString(16).padStart(16, '0');
+    return value.toString(16).padStart(16, "0");
 }
 
 /**

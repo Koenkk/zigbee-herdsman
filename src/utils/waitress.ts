@@ -40,14 +40,14 @@ export class Waitress<TPayload, TMatcher> {
         return this.forEachMatching(payload, (waiter) => waiter.reject(new Error(message)));
     }
 
-    public remove(ID: number): void {
-        const waiter = this.waiters.get(ID);
+    public remove(id: number): void {
+        const waiter = this.waiters.get(id);
         if (waiter) {
             if (!waiter.timedout && waiter.timer) {
                 clearTimeout(waiter.timer);
             }
 
-            this.waiters.delete(ID);
+            this.waiters.delete(id);
         }
     }
 

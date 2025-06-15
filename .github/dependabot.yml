@@ -10,3 +10,9 @@ updates:
               update-types:
                   - minor
                   - patch
+      commit-message:
+        prefix: fix(ignore)
+    - package-ecosystem: github-actions
+      directory: /
+      schedule:
+        interval: weekly

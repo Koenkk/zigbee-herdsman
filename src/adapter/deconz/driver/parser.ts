@@ -1,12 +1,12 @@
 /* v8 ignore start */
 
-import {Transform, TransformCallback} from 'node:stream';
+import {Transform, type TransformCallback} from "node:stream";
 
-import slip from 'slip';
+import slip from "slip";
 
-import {logger} from '../../../utils/logger';
+import {logger} from "../../../utils/logger";
 
-const NS = 'zh:deconz:driver:parser';
+const NS = "zh:deconz:driver:parser";
 
 class Parser extends Transform {
     private decoder: slip.Decoder;
@@ -27,7 +27,7 @@ class Parser extends Transform {
 
     private onMessage(message: Uint8Array): void {
         //logger.debug(`message received: ${message}`, NS);
-        this.emit('parsed', message);
+        this.emit("parsed", message);
     }
 
     private onError(_: Uint8Array, error: string): void {
