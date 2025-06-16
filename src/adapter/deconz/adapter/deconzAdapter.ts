@@ -2,6 +2,7 @@
 
 //import Device from "../../../controller/model/device";
 import {existsSync, readFileSync} from "node:fs";
+import {dirname} from "node:path";
 import type * as Models from "../../../models";
 import type {Backup, UnifiedBackupStorage} from "../../../models";
 import {BackupUtils, Waitress} from "../../../utils";
@@ -45,7 +46,27 @@ export class DeconzAdapter extends Adapter {
 
         this.waitress = new Waitress<Events.ZclPayload, WaitressMatcher>(this.waitressValidator, this.waitressTimeoutFormatter);
 
-        this.driver = new Driver(serialPortOptions, networkOptions, this.getStoredBackup());
+        const firmwareLog = [];
+        if (backupPath) {
+            // optional: get extra logs from the firmware (debug builds)
+            const dirPath = dirname(backupPath);
+            const configPath = `${dirPath}/deconz_options.json`;
+            if (existsSync(configPath)) {
+                try {
+                    const data = JSON.parse(readFileSync(configPath).toString());
+                    const log = data.firmware_log || [];
+                    if (Array.isArray(log)) {
+                        for (const level of log) {
+                            if (level === "APS" || level === "APS_L2") {
+                                firmwareLog.push(level);
+                            }
+                        }
+                    }
+                } catch (_err) {}
+            }
+        }
+
+        this.driver = new Driver(serialPortOptions, networkOptions, this.getStoredBackup(), firmwareLog);
 
         this.driver.on("rxFrame", (frame) => processFrame(frame));
         this.openRequestsQueue = [];

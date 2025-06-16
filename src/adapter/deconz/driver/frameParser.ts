@@ -494,16 +494,50 @@ function parseGreenPowerDataIndication(view: DataView): GpDataInd | null {
 }
 function parseMacPollCommand(_view: DataView): number {
     //logger.debug("Received command MAC_POLL", NS);
-    return 28;
+    return FirmwareCommand.MacPollIndication;
 }
 function parseBeaconRequest(_view: DataView): number {
     logger.debug("Received Beacon Request", NS);
-    return 31;
+    return FirmwareCommand.Beacon;
+}
+
+function parseDebugLog(view: DataView): null {
+    let dbg = "";
+    const buf = new Buffalo(Buffer.from(view.buffer));
+
+    /* const commandId = */ buf.readUInt8();
+    /* const seqNr = */ buf.readUInt8();
+    const status = buf.readUInt8();
+
+    if (status !== CommandStatus.Success) {
+        // unlikely
+        return null;
+    }
+
+    /* const frameLength = */ buf.readUInt16();
+    const payloadLength = buf.readUInt16();
+
+    for (let i = 0; i < payloadLength && buf.isMore(); i++) {
+        const ch = buf.readUInt8();
+        if (ch >= 32 && ch <= 127) {
+            dbg += String.fromCharCode(ch);
+        }
+    }
+
+    if (dbg.length !== 0) {
+        logger.debug(`firmware log: ${dbg}`, NS);
+    }
+
+    return null;
 }
 
 function parseUnknownCommand(view: DataView): number {
     const id = view.getUint8(0);
-    logger.debug(`received unknown command - id ${id}`, NS);
+    if (id in FirmwareCommand) {
+        logger.debug(`received unsupported command: ${FirmwareCommand[id]} id: 0x${id.toString(16).padStart(2, "0")}`, NS);
+    } else {
+        logger.debug(`received unknown command: id: 0x${id.toString(16).padStart(2, "0")}`, NS);
+    }
     return id;
 }
 function getParserForCommandId(id: number): (view: DataView) => Command | object | number | null {
@@ -532,6 +566,8 @@ function getParserForCommandId(id: number): (view: DataView) => Command | object
             return parseMacPollCommand;
         case FirmwareCommand.Beacon:
             return parseBeaconRequest;
+        case FirmwareCommand.DebugLog:
+            return parseDebugLog;
         default:
             return parseUnknownCommand;
         //throw new Error(`unknown command id ${id}`);

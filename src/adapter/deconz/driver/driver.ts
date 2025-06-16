@@ -95,7 +95,7 @@ class Driver extends events.EventEmitter {
     private tickTimer: NodeJS.Timeout;
     private driverStateStart = 0;
     private driverState: DriverState = DriverState.Init;
-
+    private firmwareLog: string[];
     private transactionID = 0; // for APS and ZDO
     // in flight lockstep sending commands
     private txState: TxState = TxState.Idle;
@@ -118,13 +118,14 @@ class Driver extends events.EventEmitter {
     public paramFrameCounter = 0;
     public paramApsUseExtPanid = 0n;
 
-    public constructor(serialPortOptions: SerialPortOptions, networkOptions: NetworkOptions, backup: Backup | undefined) {
+    public constructor(serialPortOptions: SerialPortOptions, networkOptions: NetworkOptions, backup: Backup | undefined, firmwareLog: string[]) {
         super();
         this.seqNumber = 0;
         this.configChanged = 0;
         this.networkOptions = networkOptions;
         this.serialPortOptions = serialPortOptions;
         this.backup = backup;
+        this.firmwareLog = firmwareLog;
 
         this.writer = new Writer();
         this.parser = new Parser();
@@ -260,7 +261,7 @@ class Driver extends events.EventEmitter {
             }
         } else if (event === DriverEvent.Tick) {
             if (this.txState === TxState.WaitResponse) {
-                if (Date.now() - this.txTime > 1000) {
+                if (Date.now() - this.txTime > 2000) {
                     this.emitStateEvent(DriverEvent.FirmwareCommandTimeout);
                 }
             }
@@ -611,6 +612,16 @@ class Driver extends events.EventEmitter {
                             logger.debug("Zigbee configuration valid", NS);
                             this.driverStateStart = Date.now();
                             this.driverState = DriverState.Connected;
+
+                            // enable optional firmware debug messages
+                            let logLevel = 0;
+                            for (const level of this.firmwareLog) {
+                                if (level === "APS") logLevel |= 0x00000100;
+                                else if (level === "APS_L2") logLevel |= 0x00010000;
+                            }
+                            if (logLevel !== 0) {
+                                this.writeParameterRequest(ParamId.STK_DEBUG_LOG_LEVEL, logLevel);
+                            }
                         } else {
                             this.driverStateStart = Date.now();
                             this.driverState = DriverState.Reconfigure;
@@ -1176,7 +1187,8 @@ class Driver extends events.EventEmitter {
                 }
 
                 busyQueue.push(req);
-            } catch (_) {
+            } catch (err) {
+                console.error(err);
                 req.reject(new Error(`Failed to process request ${FirmwareCommand[req.commandId]}, seq: ${req.seqNumber}`));
             }
         }

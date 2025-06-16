@@ -63,6 +63,7 @@ export enum FirmwareCommand {
     MacPollIndication = 0x1c,
     Reboot = 0x1e,
     Beacon = 0x1f,
+    DebugLog = 0x22,
 }
 
 export enum NetworkState {
@@ -107,6 +108,7 @@ export enum ParamId {
     STK_NWK_UPDATE_ID = 0x24,
     DEV_WATCHDOG_TTL = 0x26,
     STK_FRAME_COUNTER = 0x27,
+    STK_DEBUG_LOG_LEVEL = 0x29,
     // internal
     NONE = 0xff,
 }
@@ -136,6 +138,7 @@ export const stackParameters = [
     {id: ParamId.NWK_EXTENDED_PANID, type: DataType.U64},
     {id: ParamId.APS_CHANNEL_MASK, type: DataType.U32},
     {id: ParamId.STK_FRAME_COUNTER, type: DataType.U32},
+    {id: ParamId.STK_DEBUG_LOG_LEVEL, type: DataType.U32},
     {id: ParamId.APS_USE_EXTENDED_PANID, type: DataType.U64},
     {id: ParamId.APS_TRUST_CENTER_ADDRESS, type: DataType.U64},
 ];
