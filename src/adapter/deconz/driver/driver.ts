@@ -143,23 +143,37 @@ class Driver extends events.EventEmitter {
                 clearInterval(interval);
             }
 
-            queue.length = 0;
-            busyQueue.length = 0;
-            for (let i = 0; i < apsQueue.length; i++) {
-                apsQueue[i].reject(new Error("Port closed"));
-            }
-
-            apsQueue.length = 0;
-            for (let i = 0; i < apsBusyQueue.length; i++) {
-                apsBusyQueue[i].reject(new Error("Port closed"));
-            }
-            apsBusyQueue.length = 0;
             this.timeoutCounter = 0;
+            this.cleanupAllQueues();
         });
 
         this.on(DRIVER_EVENT, (event, data) => {
             this.handleStateEvent(event, data);
         });
+    }
+
+    public cleanupAllQueues() {
+        const msg = `Cleanup in state: ${DriverState[this.driverState]}`;
+
+        for (let i = 0; i < queue.length; i++) {
+            queue[i].reject(new Error(msg));
+        }
+        queue.length = 0;
+
+        for (let i = 0; i < busyQueue.length; i++) {
+            busyQueue[i].reject(new Error(msg));
+        }
+        busyQueue.length = 0;
+
+        for (let i = 0; i < apsQueue.length; i++) {
+            apsQueue[i].reject(new Error(msg));
+        }
+        apsQueue.length = 0;
+
+        for (let i = 0; i < apsBusyQueue.length; i++) {
+            apsBusyQueue[i].reject(new Error(msg));
+        }
+        apsBusyQueue.length = 0;
     }
 
     public started(): boolean {
@@ -262,8 +276,6 @@ class Driver extends events.EventEmitter {
             }
 
             this.processQueue();
-            this.processBusyQueueTimeouts();
-            this.processApsBusyQueueTimeouts();
 
             if (this.txState === TxState.Idle) {
                 this.deviceStatus = 0; // force refresh in response
@@ -279,6 +291,8 @@ class Driver extends events.EventEmitter {
     private handleConnectingStateEvent(event: DriverEvent, _data?: DriverEventData): void {
         if (event === DriverEvent.Action) {
             this.watchdogTriggeredTime = 0; // force reset watchdog
+
+            this.cleanupAllQueues(); // start with fresh queues
 
             // TODO(mpi): In future we should simply try which baudrate may work (in a state machine).
             // E.g. connect with baudrate XY, query firmware, on timeout try other baudrate.
@@ -611,7 +625,6 @@ class Driver extends events.EventEmitter {
                 });
         } else if (event === DriverEvent.Tick) {
             this.processQueue();
-            this.processBusyQueueTimeouts();
         }
     }
 
@@ -630,8 +643,6 @@ class Driver extends events.EventEmitter {
                 });
         } else if (event === DriverEvent.Tick) {
             this.processQueue();
-            this.processBusyQueueTimeouts();
-            this.processApsBusyQueueTimeouts();
 
             // if we run into this timeout assume some error and retry after waiting a bit
             if (15000 < Date.now() - this.driverStateStart) {
@@ -704,6 +715,8 @@ class Driver extends events.EventEmitter {
                 event === DriverEvent.FirmwareCommandTimeout
             ) {
                 this.handleFirmwareEvent(event, data);
+                this.processBusyQueueTimeouts();
+                this.processApsBusyQueueTimeouts();
             }
 
             if (this.driverState === DriverState.Init) {
@@ -733,10 +746,10 @@ class Driver extends events.EventEmitter {
     }
 
     private onPortClose(error: boolean | Error): void {
-        logger.debug("Port closed", NS);
-
         if (error) {
-            logger.info(`Port close ${error}`, NS);
+            logger.info(`Port close: state: ${DriverState[this.driverState]}, reason: ${error}`, NS);
+        } else {
+            logger.debug(`Port closed in state: ${DriverState[this.driverState]}`, NS);
         }
 
         this.emitStateEvent(DriverEvent.Disconnected);
