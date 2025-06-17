@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.1.3](https://github.com/Koenkk/zigbee-herdsman/compare/v4.1.2...v4.1.3) (2025-06-17)
+
+
+### Bug Fixes
+
+* **ignore:** bump @types/node from 22.15.30 to 24.0.3 ([#1425](https://github.com/Koenkk/zigbee-herdsman/issues/1425)) ([99b6c97](https://github.com/Koenkk/zigbee-herdsman/commit/99b6c97d4b57c5560607bfd6934ba59410269fcb))
+
 ## [4.1.2](https://github.com/Koenkk/zigbee-herdsman/compare/v4.1.1...v4.1.2) (2025-06-15)
 
 
