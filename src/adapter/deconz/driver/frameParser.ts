@@ -37,6 +37,10 @@ function parseReadParameterResponse(view: DataView): Command | null {
             result = view.getBigUint64(pos, littleEndian);
             break;
         }
+        case ParamId.APS_TRUST_CENTER_ADDRESS: {
+            result = view.getBigUint64(pos, littleEndian);
+            break;
+        }
         case ParamId.NWK_PANID: {
             result = view.getUint16(pos, littleEndian);
             break;

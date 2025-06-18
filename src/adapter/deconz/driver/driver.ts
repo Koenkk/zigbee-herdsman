@@ -108,6 +108,7 @@ class Driver extends events.EventEmitter {
     private configIsNewNetwork = false;
     public restoredFromBackup = false;
     public paramMacAddress = 0n;
+    public paramTcAddress = 0n;
     public paramFirmwareVersion = 0;
     public paramCurrentChannel = 0;
     public paramNwkPanid = 0;
@@ -362,6 +363,10 @@ class Driver extends events.EventEmitter {
             }
         }
 
+        if (this.paramMacAddress !== this.paramTcAddress) {
+            return false;
+        }
+
         if ((this.deviceStatus & DEV_STATUS_NET_STATE_MASK) !== NetworkState.Connected) {
             return false;
         }
@@ -481,9 +486,18 @@ class Driver extends events.EventEmitter {
             // TODO(mpi): Later on also check key sequence number.
         }
 
+        if (this.paramMacAddress !== this.paramTcAddress) {
+            this.paramTcAddress = this.paramMacAddress;
+            await this.writeParameterRequest(ParamId.APS_TRUST_CENTER_ADDRESS, this.paramTcAddress);
+        }
+
         if (this.configIsNewNetwork && this.paramFrameCounter < frameCounter) {
             this.paramFrameCounter = frameCounter;
-            await this.writeParameterRequest(ParamId.STK_FRAME_COUNTER, this.paramFrameCounter);
+            try {
+                await this.writeParameterRequest(ParamId.STK_FRAME_COUNTER, this.paramFrameCounter);
+            } catch (_err) {
+                // on older firmware versions this fails as unsuppored
+            }
         }
 
         await this.writeParameterRequest(ParamId.STK_NWK_UPDATE_ID, this.paramNwkUpdateId);
@@ -571,6 +585,7 @@ class Driver extends events.EventEmitter {
                 this.readFirmwareVersionRequest(),
                 this.readDeviceStatusRequest(),
                 this.readParameterRequest(ParamId.MAC_ADDRESS),
+                this.readParameterRequest(ParamId.APS_TRUST_CENTER_ADDRESS),
                 this.readParameterRequest(ParamId.NWK_PANID),
                 this.readParameterRequest(ParamId.APS_USE_EXTENDED_PANID),
                 this.readParameterRequest(ParamId.STK_CURRENT_CHANNEL),
@@ -586,6 +601,7 @@ class Driver extends events.EventEmitter {
                         fwVersion,
                         _deviceState,
                         mac,
+                        tcAddress,
                         panid,
                         apsUseExtPanid,
                         currentChannel,
@@ -602,6 +618,7 @@ class Driver extends events.EventEmitter {
                         this.paramNwkKey = nwkKey as Buffer;
                         this.paramNwkUpdateId = nwkUpdateId as number;
                         this.paramMacAddress = mac as bigint;
+                        this.paramTcAddress = tcAddress as bigint;
                         this.paramChannelMask = channelMask as number;
                         this.paramProtocolVersion = protocolVersion as number;
                         this.paramFrameCounter = frameCounter as number;
@@ -620,7 +637,13 @@ class Driver extends events.EventEmitter {
                                 else if (level === "APS_L2") logLevel |= 0x00010000;
                             }
                             if (logLevel !== 0) {
-                                this.writeParameterRequest(ParamId.STK_DEBUG_LOG_LEVEL, logLevel);
+                                this.writeParameterRequest(ParamId.STK_DEBUG_LOG_LEVEL, logLevel)
+                                    .then((_x) => {
+                                        logger.debug("Enabled firmware logging", NS);
+                                    })
+                                    .catch((_err) => {
+                                        logger.debug("Firmware logging unsupported by firmware", NS);
+                                    });
                             }
                         } else {
                             this.driverStateStart = Date.now();
