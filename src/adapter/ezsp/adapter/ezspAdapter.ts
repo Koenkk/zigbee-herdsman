@@ -60,7 +60,12 @@ export class EZSPAdapter extends Adapter {
                 // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
                 this.emit("zdoResponse", frame.apsFrame.clusterId, frame.zdoResponse!);
             }
-        } else if (frame.apsFrame.profileId === ZSpec.HA_PROFILE_ID || frame.apsFrame.profileId === 0xffff) {
+        } else if (
+            frame.apsFrame.profileId === ZSpec.HA_PROFILE_ID ||
+            frame.apsFrame.profileId === 0xffff ||
+            // Shelly custom Clusters require a special profile ID
+            frame.apsFrame.profileId === ZSpec.CUSTOM_SHELLY_PROFILE_ID
+        ) {
             const payload: ZclPayload = {
                 clusterID: frame.apsFrame.clusterId,
                 header: Zcl.Header.fromBuffer(frame.message),
@@ -318,6 +323,7 @@ export class EZSPAdapter extends Adapter {
         disableResponse: boolean,
         disableRecovery: boolean,
         sourceEndpoint?: number,
+        profileId?: number,
     ): Promise<ZclPayload | undefined> {
         return await this.queue.execute<ZclPayload | undefined>(async () => {
             this.checkInterpanLock();
@@ -332,6 +338,7 @@ export class EZSPAdapter extends Adapter {
                 disableRecovery,
                 0,
                 0,
+                profileId,
             );
         }, networkAddress);
     }
@@ -347,6 +354,7 @@ export class EZSPAdapter extends Adapter {
         disableRecovery: boolean,
         responseAttempt: number,
         dataRequestAttempt: number,
+        profileId?: number,
     ): Promise<ZclPayload | undefined> {
         if (ieeeAddr == null) {
             ieeeAddr = `0x${this.driver.ieee.toString()}`;
@@ -379,7 +387,7 @@ export class EZSPAdapter extends Adapter {
         }
 
         const frame = this.driver.makeApsFrame(zclFrame.cluster.ID, disableResponse || zclFrame.header.frameControl.disableDefaultResponse);
-        frame.profileId = ZSpec.HA_PROFILE_ID;
+        frame.profileId = profileId ?? ZSpec.HA_PROFILE_ID;
         frame.sourceEndpoint = sourceEndpoint || 0x01;
         frame.destinationEndpoint = endpoint;
         frame.groupId = 0;
@@ -418,12 +426,12 @@ export class EZSPAdapter extends Adapter {
         }
     }
 
-    public async sendZclFrameToGroup(groupID: number, zclFrame: Zcl.Frame): Promise<void> {
+    public async sendZclFrameToGroup(groupID: number, zclFrame: Zcl.Frame, sourceEndpoint?: number, profileId?: number): Promise<void> {
         return await this.queue.execute<void>(async () => {
             this.checkInterpanLock();
             const frame = this.driver.makeApsFrame(zclFrame.cluster.ID, false);
-            frame.profileId = ZSpec.HA_PROFILE_ID;
-            frame.sourceEndpoint = 0x01;
+            frame.profileId = profileId || ZSpec.HA_PROFILE_ID;
+            frame.sourceEndpoint = sourceEndpoint || 0x01;
             frame.destinationEndpoint = 0x01;
             frame.groupId = groupID;
 
@@ -442,11 +450,13 @@ export class EZSPAdapter extends Adapter {
         zclFrame: Zcl.Frame,
         sourceEndpoint: number,
         destination: ZSpec.BroadcastAddress,
+        profileId?: number,
     ): Promise<void> {
         return await this.queue.execute<void>(async () => {
             this.checkInterpanLock();
             const frame = this.driver.makeApsFrame(zclFrame.cluster.ID, false);
-            frame.profileId = sourceEndpoint === ZSpec.GP_ENDPOINT && endpoint === ZSpec.GP_ENDPOINT ? ZSpec.GP_PROFILE_ID : ZSpec.HA_PROFILE_ID;
+            frame.profileId =
+                profileId ?? (sourceEndpoint === ZSpec.GP_ENDPOINT && endpoint === ZSpec.GP_ENDPOINT ? ZSpec.GP_PROFILE_ID : ZSpec.HA_PROFILE_ID);
             frame.sourceEndpoint = sourceEndpoint;
             frame.destinationEndpoint = endpoint;
             frame.groupId = destination;
