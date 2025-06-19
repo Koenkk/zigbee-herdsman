@@ -1,5 +1,17 @@
 # Changelog
 
+## [4.2.0](https://github.com/Koenkk/zigbee-herdsman/compare/v4.1.2...v4.2.0) (2025-06-19)
+
+
+### Features
+
+* Refactor and improve of Deconz adapter ([#1417](https://github.com/Koenkk/zigbee-herdsman/issues/1417)) ([c719ee4](https://github.com/Koenkk/zigbee-herdsman/commit/c719ee45629f52132f0b673cecd5a4491478ee44))
+
+
+### Bug Fixes
+
+* **ignore:** bump @types/node from 22.15.30 to 24.0.3 ([#1425](https://github.com/Koenkk/zigbee-herdsman/issues/1425)) ([99b6c97](https://github.com/Koenkk/zigbee-herdsman/commit/99b6c97d4b57c5560607bfd6934ba59410269fcb))
+
 ## [4.1.2](https://github.com/Koenkk/zigbee-herdsman/compare/v4.1.1...v4.1.2) (2025-06-15)
 
 
