@@ -15,7 +15,15 @@ import type * as ZdoTypes from "../../../zspec/zdo/definition/tstypes";
 import Adapter from "../../adapter";
 import type * as Events from "../../events";
 import type {AdapterOptions, CoordinatorVersion, NetworkOptions, NetworkParameters, SerialPortOptions, StartResult} from "../../tstype";
-import PARAM, {ParamId, type ApsDataRequest, type GpDataInd, type ReceivedDataResponse, type WaitForDataRequest} from "../driver/constants";
+import PARAM, {
+    ApsAddressMode,
+    NwkBroadcastAddress,
+    ParamId,
+    type ApsDataRequest,
+    type GpDataInd,
+    type ReceivedDataResponse,
+    type WaitForDataRequest,
+} from "../driver/constants";
 import Driver from "../driver/driver";
 import processFrame, {frameParserEvents} from "../driver/frameParser";
 
@@ -240,13 +248,17 @@ export class DeconzAdapter extends Adapter {
     ): Promise<ZdoTypes.RequestToResponseMap[K] | undefined> {
         const transactionID = this.nextTransactionID();
         payload[0] = transactionID;
-        // TODO(mpi): this needs a complete review there are many different ZDP requests, some unicast some broadcasts
-        // channel change likely also affected..
+        let txOptions = 0;
+
+        if (networkAddress < NwkBroadcastAddress.BroadcastLowPowerRouters) {
+            txOptions = 0x4; // enable APS ACKs for unicast addresses
+        }
+
         const isNwkAddrRequest = clusterId === Zdo.ClusterId.NETWORK_ADDRESS_REQUEST;
         const req: ApsDataRequest = {
             requestId: transactionID,
-            destAddrMode: isNwkAddrRequest ? PARAM.PARAM.addressMode.IEEE_ADDR : PARAM.PARAM.addressMode.NWK_ADDR,
-            destAddr16: isNwkAddrRequest ? undefined : networkAddress,
+            destAddrMode: ApsAddressMode.Nwk,
+            destAddr16: networkAddress,
             destAddr64: isNwkAddrRequest ? ieeeAddress : undefined,
             destEndpoint: Zdo.ZDO_ENDPOINT,
             profileId: Zdo.ZDO_PROFILE_ID,
@@ -254,45 +266,64 @@ export class DeconzAdapter extends Adapter {
             srcEndpoint: Zdo.ZDO_ENDPOINT,
             asduLength: payload.length,
             asduPayload: payload,
-            txOptions: 0,
+            txOptions,
             radius: PARAM.PARAM.txRadius.DEFAULT_RADIUS,
-            timeout: 30,
+            timeout: 10000,
         };
 
-        await this.driver.enqueueApsDataRequest(req);
+        const responseClusterId = Zdo.Utils.getResponseClusterId(clusterId);
+        const confirm = this.driver.enqueueApsDataRequest(req);
+        let indication: undefined | Promise<ReceivedDataResponse>;
 
         if (!disableResponse) {
-            const responseClusterId = Zdo.Utils.getResponseClusterId(clusterId);
-
             if (responseClusterId) {
-                try {
-                    const response = await this.waitForData(
-                        isNwkAddrRequest ? ieeeAddress : networkAddress,
-                        Zdo.ZDO_PROFILE_ID,
-                        responseClusterId,
-                        transactionID,
-                        req.timeout,
-                    );
-                    // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
-                    return response.zdo! as ZdoTypes.RequestToResponseMap[K];
-                } catch (error) {
-                    if (responseClusterId === Zdo.ClusterId.ACTIVE_ENDPOINTS_RESPONSE && networkAddress === 0) {
-                        // TODO(mpi): Check following statement on older firmware versions.
-                        // If it is true we can always query firmware parameters for endpoints.
+                indication = this.waitForData(
+                    isNwkAddrRequest ? ieeeAddress : networkAddress,
+                    Zdo.ZDO_PROFILE_ID,
+                    responseClusterId,
+                    transactionID,
+                    req.timeout,
+                );
+            }
+        }
 
-                        logger.warning("Failed to determine active endpoints of coordinator, falling back to [1]", NS);
-                        // Some Conbee adapaters don't provide a response to an active endpoint request of the coordinator, always return
-                        // an endpoint here. Before an active endpoint request was done to determine the endpoints, they were hardcoded:
-                        // https://github.com/Koenkk/zigbee-herdsman/blob/d855b3bf85a066cb7c325fe3ef0006873c735add/src/adapter/deconz/adapter/deconzAdapter.ts#L105
-                        const response: ZdoTypes.ResponseMap[Zdo.ClusterId.ACTIVE_ENDPOINTS_RESPONSE] = [
-                            Zdo.Status.SUCCESS,
-                            {endpointList: [1], nwkAddress: 0},
-                        ];
-                        return response as ZdoTypes.RequestToResponseMap[K];
-                    }
+        try {
+            await confirm;
+        } catch (err) {
+            // no need to wait for indication, remove waiter from queue
+            if (indication) {
+                const i = this.openRequestsQueue.findIndex((x) => x.clusterId === responseClusterId && x.transactionSequenceNumber === transactionID);
 
-                    throw error;
+                if (i !== -1) {
+                    this.openRequestsQueue.splice(i, 1);
                 }
+            }
+
+            throw new Error(`failed to send ZDO request seq: (${transactionID}) ${err}`);
+        }
+
+        if (indication) {
+            try {
+                const data = await indication;
+                // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
+                return data.zdo! as ZdoTypes.RequestToResponseMap[K];
+            } catch (error) {
+                if (responseClusterId === Zdo.ClusterId.ACTIVE_ENDPOINTS_RESPONSE && networkAddress === 0) {
+                    // TODO(mpi): Check following statement on older firmware versions.
+                    // If it is true we can always query firmware parameters for endpoints.
+
+                    logger.warning("Failed to determine active endpoints of coordinator, falling back to [1]", NS);
+                    // Some Conbee adapaters don't provide a response to an active endpoint request of the coordinator, always return
+                    // an endpoint here. Before an active endpoint request was done to determine the endpoints, they were hardcoded:
+                    // https://github.com/Koenkk/zigbee-herdsman/blob/d855b3bf85a066cb7c325fe3ef0006873c735add/src/adapter/deconz/adapter/deconzAdapter.ts#L105
+                    const response: ZdoTypes.ResponseMap[Zdo.ClusterId.ACTIVE_ENDPOINTS_RESPONSE] = [
+                        Zdo.Status.SUCCESS,
+                        {endpointList: [1], nwkAddress: 0},
+                    ];
+                    return response as ZdoTypes.RequestToResponseMap[K];
+                }
+
+                throw error;
             }
         }
     }
@@ -318,7 +349,7 @@ export class DeconzAdapter extends Adapter {
 
         const request: ApsDataRequest = {
             requestId: transactionID,
-            destAddrMode: PARAM.PARAM.addressMode.NWK_ADDR,
+            destAddrMode: ApsAddressMode.Nwk,
             destAddr16: networkAddress,
             destEndpoint: endpoint,
             profileId: sourceEndpoint === 242 && endpoint === 242 ? 0xa1e0 : 0x104,
@@ -364,11 +395,7 @@ export class DeconzAdapter extends Adapter {
             needWaitResponse = true;
         }
 
-        try {
-            await this.driver.enqueueApsDataRequest(request);
-        } catch (err) {
-            throw new Error(`failed to send ZCL request (${zclFrame.header.transactionSequenceNumber}) ${err}`);
-        }
+        const confirm = this.driver.enqueueApsDataRequest(request);
 
         logger.debug(`ZCL request sent with transactionSequenceNumber.: ${zclFrame.header.transactionSequenceNumber}`, NS);
         logger.debug(
@@ -376,15 +403,37 @@ export class DeconzAdapter extends Adapter {
             NS,
         );
 
+        let indication: undefined | Promise<ReceivedDataResponse>;
+
         if (needWaitResponse) {
-            try {
-                const data = await this.waitForData(
-                    networkAddress,
-                    ZSpec.HA_PROFILE_ID,
-                    zclFrame.cluster.ID,
-                    zclFrame.header.transactionSequenceNumber,
-                    request.timeout,
+            indication = this.waitForData(
+                networkAddress,
+                ZSpec.HA_PROFILE_ID,
+                zclFrame.cluster.ID,
+                zclFrame.header.transactionSequenceNumber,
+                request.timeout,
+            );
+        }
+
+        try {
+            await confirm;
+        } catch (err) {
+            // no need to wait for indication, remove waiter from queue
+            if (indication) {
+                const i = this.openRequestsQueue.findIndex(
+                    (x) => x.clusterId === zclFrame.cluster.ID && x.transactionSequenceNumber === zclFrame.header.transactionSequenceNumber,
                 );
+
+                if (i !== -1) {
+                    this.openRequestsQueue.splice(i, 1);
+                }
+            }
+            throw new Error(`failed to send ZCL request (${zclFrame.header.transactionSequenceNumber}) ${err}`);
+        }
+
+        if (indication) {
+            try {
+                const data = await indication;
 
                 // TODO(mpi): This is nuts. Need to make sure that srcAddr16 is always valid.
                 let addr: string | number;
@@ -394,23 +443,6 @@ export class DeconzAdapter extends Adapter {
 
                 const groupId = 0;
                 const wasBroadCast = false;
-
-                // NOTE(ERH): This should never be a group/broadcast (remove?).
-                // if (data.destAddrMode == PARAM.PARAM.addressMode.GROUP_ADDR) {
-                //     wasBroadCast = true;
-                //     if (data.destAddr16 === undefined)
-                //         throw new Error("Unexpected waitForData() didn't contain valid destination group address");
-                //     groupId = data.destAddr16;
-                // } else if (data.destAddrMode == PARAM.PARAM.addressMode.NWK_ADDR) {
-                //     if (data.destAddr16 === undefined)
-                //         throw new Error("Unexpected waitForData() didn't contain valid destination short address");
-                //     // BroadcastAll             = 0xFFFF
-                //     // BroadcastLowPowerRouters = 0xFFFB
-                //     // BroadcastRouters         = 0xFFFC
-                //     // BroadcastRxOnWhenIdle    = 0xFFFD
-                //     if (data.destAddr16 >= 0xfffb)
-                //         wasBroadCast = true;
-                // }
 
                 const response: Events.ZclPayload = {
                     address: addr,
@@ -439,7 +471,7 @@ export class DeconzAdapter extends Adapter {
 
         const request: ApsDataRequest = {
             requestId: transactionID,
-            destAddrMode: PARAM.PARAM.addressMode.GROUP_ADDR,
+            destAddrMode: ApsAddressMode.Group,
             destAddr16: groupID,
             profileId: 0x104,
             clusterId: zclFrame.cluster.ID,
@@ -463,7 +495,7 @@ export class DeconzAdapter extends Adapter {
 
         const request: ApsDataRequest = {
             requestId: transactionID,
-            destAddrMode: PARAM.PARAM.addressMode.NWK_ADDR,
+            destAddrMode: ApsAddressMode.Nwk,
             destAddr16: destination,
             destEndpoint: endpoint,
             profileId: sourceEndpoint === 242 && endpoint === 242 ? 0xa1e0 : 0x104,
@@ -603,7 +635,6 @@ export class DeconzAdapter extends Adapter {
     ): Promise<ReceivedDataResponse> {
         return new Promise((resolve, reject): void => {
             const ts = Date.now();
-            // const commandId = PARAM.PARAM.APS.DATA_INDICATION;
             if (!timeout) {
                 timeout = 60000;
             }
@@ -654,7 +685,7 @@ export class DeconzAdapter extends Adapter {
         if (req.timeout < now - req.ts) {
             this.openRequestsQueue.shift();
             logger.debug(
-                `Timeout for request in openRequestsQueue addr: ${req.addr}, clusterId: ${req.clusterId.toString(16)}, profileId: ${req.profileId.toString(16)}`,
+                `Timeout for request in openRequestsQueue addr: ${req.addr}, clusterId: ${req.clusterId.toString(16)}, profileId: ${req.profileId.toString(16)}, seq: ${req.transactionSequenceNumber}`,
                 NS,
             );
             req.reject(new Error("waiting for response TIMEOUT"));
@@ -736,7 +767,7 @@ export class DeconzAdapter extends Adapter {
             }
 
             if (req.profileId === Zdo.ZDO_PROFILE_ID) {
-                if ((req.clusterId | 0x8000) !== resp.clusterId) {
+                if (req.clusterId !== resp.clusterId) {
                     continue;
                 }
 
@@ -763,10 +794,10 @@ export class DeconzAdapter extends Adapter {
             let groupID = 0;
             let wasBroadCast = false;
 
-            if (resp.destAddrMode === PARAM.PARAM.addressMode.GROUP_ADDR) {
+            if (resp.destAddrMode === ApsAddressMode.Group) {
                 groupID = resp.destAddr16;
                 wasBroadCast = true;
-            } else if (resp.destAddrMode === PARAM.PARAM.addressMode.NWK_ADDR && resp.destAddr16 >= 0xfffb) {
+            } else if (resp.destAddrMode === ApsAddressMode.Nwk && resp.destAddr16 >= NwkBroadcastAddress.BroadcastLowPowerRouters) {
                 wasBroadCast = true;
             }
 

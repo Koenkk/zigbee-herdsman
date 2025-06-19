@@ -9,12 +9,6 @@ const PARAM = {
     APS: {
         MAX_SEND_TIMEOUT: 60000,
     },
-    addressMode: {
-        GROUP_ADDR: 0x01,
-        NWK_ADDR: 0x02,
-        IEEE_ADDR: 0x03,
-        NWK_IEEE_ADDR: 0x04,
-    },
     txRadius: {
         DEFAULT_RADIUS: 30,
         UNLIMITED: 0,

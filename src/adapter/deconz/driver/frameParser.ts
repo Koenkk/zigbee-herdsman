@@ -4,18 +4,18 @@ import {EventEmitter} from "node:events";
 import {Buffalo} from "../../../buffalo";
 import {logger} from "../../../utils/logger";
 import * as Zdo from "../../../zspec/zdo";
-import PARAM, {
-    type Command,
-    type DataStateResponse,
-    type GpDataInd,
-    type ReceivedDataResponse,
-    type ApsRequest,
-    type Request,
-    FirmwareCommand,
-    CommandStatus,
-    ParamId,
+import {
     ApsAddressMode,
+    type ApsRequest,
     ApsStatusCode,
+    type Command,
+    CommandStatus,
+    type DataStateResponse,
+    FirmwareCommand,
+    type GpDataInd,
+    ParamId,
+    type ReceivedDataResponse,
+    type Request,
 } from "./constants";
 import {apsBusyQueue, busyQueue} from "./driver";
 
@@ -294,11 +294,11 @@ function parseApsDataIndicationResponse(inview: DataView): ReceivedDataResponse 
         let destAddr16: number | undefined;
         let destAddr: string | number;
 
-        if (destAddrMode === PARAM.PARAM.addressMode.IEEE_ADDR) {
+        if (destAddrMode === ApsAddressMode.Ieee) {
             destAddr64 = uview.getU64().toString(16).padStart(16, "0");
             destAddr16 = 0xfffe;
             destAddr = destAddr64;
-        } else if (destAddrMode === PARAM.PARAM.addressMode.NWK_ADDR || destAddrMode === PARAM.PARAM.addressMode.GROUP_ADDR) {
+        } else if (destAddrMode === ApsAddressMode.Nwk || destAddrMode === ApsAddressMode.Group) {
             destAddr16 = uview.getU16();
             destAddr = destAddr16.toString(16);
         } else {
@@ -312,11 +312,11 @@ function parseApsDataIndicationResponse(inview: DataView): ReceivedDataResponse 
         let srcAddr16 = 0xfffe;
         let srcAddr: string | number;
 
-        if (srcAddrMode === PARAM.PARAM.addressMode.NWK_ADDR || srcAddrMode === PARAM.PARAM.addressMode.NWK_IEEE_ADDR) {
+        if (srcAddrMode === ApsAddressMode.Nwk || srcAddrMode === ApsAddressMode.NwkAndIeee) {
             srcAddr16 = uview.getU16();
             srcAddr = srcAddr16.toString(16);
 
-            if (srcAddrMode === PARAM.PARAM.addressMode.NWK_IEEE_ADDR) {
+            if (srcAddrMode === ApsAddressMode.NwkAndIeee) {
                 srcAddr64 = uview.getU64().toString(16).padStart(16, "0");
             }
         } else {

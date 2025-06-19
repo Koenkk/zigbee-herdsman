@@ -773,9 +773,8 @@ class Driver extends events.EventEmitter {
                     logger.debug(`handle state: ${DriverState[this.driverState]}, event: ${DriverEvent[event]}`, NS);
                 }
             }
-        } catch (err) {
-            console.error(err);
-            //logger.error(JSON.stringify(err), NS);
+        } catch (_err) {
+            // console.error(err);
         }
     }
 
@@ -1210,8 +1209,8 @@ class Driver extends events.EventEmitter {
                 }
 
                 busyQueue.push(req);
-            } catch (err) {
-                console.error(err);
+            } catch (_err) {
+                //console.error(err);
                 req.reject(new Error(`Failed to process request ${FirmwareCommand[req.commandId]}, seq: ${req.seqNumber}`));
             }
         }
@@ -1309,9 +1308,7 @@ class Driver extends events.EventEmitter {
 
     private sendEnqueueApsDataRequest(request: ApsDataRequest, seqNumber: number): CommandResult {
         const payloadLength =
-            12 +
-            (request.destAddrMode === PARAM.PARAM.addressMode.GROUP_ADDR ? 2 : request.destAddrMode === PARAM.PARAM.addressMode.NWK_ADDR ? 3 : 9) +
-            request.asduLength;
+            12 + (request.destAddrMode === ApsAddressMode.Group ? 2 : request.destAddrMode === ApsAddressMode.Nwk ? 3 : 9) + request.asduLength;
         const frameLength = 7 + payloadLength;
         const cid1 = request.clusterId & 0xff;
         const cid2 = (request.clusterId >> 8) & 0xff;
