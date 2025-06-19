@@ -1,5 +1,5 @@
 {
-    "$schema": "https://biomejs.dev/schemas/1.9.4/schema.json",
+    "$schema": "https://biomejs.dev/schemas/2.0.0/schema.json",
     "vcs": {
         "enabled": true,
         "clientKind": "git",
@@ -12,10 +12,10 @@
         "bracketSpacing": false
     },
     "files": {
-        "ignore": ["package.json"]
+        "includes": ["**", "!**/package.json"]
     },
     "linter": {
-        "ignore": ["src/adapter/ezsp/driver/types/*"],
+        "includes": ["**", "!**/src/adapter/ezsp/driver/types/**/*"],
         "rules": {
             "correctness": {
                 "noUnusedImports": "error",
@@ -59,7 +59,16 @@
                             }
                         ]
                     }
-                }
+                },
+                "useAsConstAssertion": "error",
+                "useDefaultParameterLast": "error",
+                "useEnumInitializers": "error",
+                "useSelfClosingElements": "error",
+                "useSingleVarDeclarator": "error",
+                "noUnusedTemplateLiteral": "error",
+                "useNumberNamespace": "error",
+                "noInferrableTypes": "error",
+                "noUselessElse": "error"
             },
             "performance": {
                 "noDelete": "off"
@@ -72,7 +81,7 @@
     },
     "overrides": [
         {
-            "include": ["src/adapter/ezsp/driver/types/*", "test/**"],
+            "includes": ["**/src/adapter/ezsp/driver/types/**/*", "**/test/**"],
             "linter": {
                 "rules": {
                     "style": {

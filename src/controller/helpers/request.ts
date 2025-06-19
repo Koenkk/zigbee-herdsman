@@ -50,8 +50,8 @@ export class Request<Type = any> {
         this.frame = frame;
         this.expires = timeout + Date.now();
         this.sendPolicy = sendPolicy ?? (!frame.command ? undefined : Request.defaultSendPolicy[frame.command.ID]);
-        this.resolveQueue = resolve === undefined ? new Array<(value: Type) => void>() : new Array<(value: Type) => void>(resolve);
-        this.rejectQueue = reject === undefined ? new Array<(error: Error) => void>() : new Array<(error: Error) => void>(reject);
+        this.resolveQueue = resolve === undefined ? ([] as ((value: Type) => void)[]) : new Array<(value: Type) => void>(resolve);
+        this.rejectQueue = reject === undefined ? ([] as ((error: Error) => void)[]) : new Array<(error: Error) => void>(reject);
         this.lastError = lastError ?? Error("Request rejected before first send");
     }
 

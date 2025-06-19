@@ -26,10 +26,10 @@ import {
     EmberVersionType,
     EzspStatus,
     IEEE802154CcaMode,
-    SLStatus,
     SecManDerivedKeyType,
     SecManFlag,
     SecManKeyType,
+    SLStatus,
 } from "../../../src/adapter/ember/enums";
 import {EZSP_MIN_PROTOCOL_VERSION, EZSP_PROTOCOL_VERSION, EZSP_STACK_TYPE_MESH} from "../../../src/adapter/ember/ezsp/consts";
 import {EzspConfigId, EzspDecisionBitmask, EzspEndpointFlag, EzspPolicyId, EzspValueId} from "../../../src/adapter/ember/ezsp/enums";

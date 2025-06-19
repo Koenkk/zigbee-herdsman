@@ -1,5 +1,5 @@
 import {CommandId} from "../../../src/adapter/zboss/enums";
-import {FrameType, type ZBOSSFrame, readZBOSSFrame} from "../../../src/adapter/zboss/frame";
+import {FrameType, readZBOSSFrame, type ZBOSSFrame} from "../../../src/adapter/zboss/frame";
 import * as Zdo from "../../../src/zspec/zdo";
 import type * as ZdoTypes from "../../../src/zspec/zdo/definition/tstypes";
 

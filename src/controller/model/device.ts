@@ -409,7 +409,7 @@ export class Device extends Entity<ControllerEventMap> {
 
         // Reponse to read requests
         if (frame.header.isGlobal && frame.isCommand("read") && !this._customReadResponse?.(frame, endpoint)) {
-            const time = Math.round((new Date().getTime() - OneJanuary2000) / 1000);
+            const time = Math.round((Date.now() - OneJanuary2000) / 1000);
             const attributes: {[s: string]: KeyValue} = {
                 ...endpoint.clusters,
                 genTime: {

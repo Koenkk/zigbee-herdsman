@@ -1397,7 +1397,7 @@ class Driver extends events.EventEmitter {
                 addr = `0${addr}`;
             }
         }
-        const result = new Array<number>();
+        const result: number[] = [];
         let y = 0;
         for (let i = 0; i < 8; i++) {
             result[i] = Number.parseInt(addr.substr(y, 2), 16);

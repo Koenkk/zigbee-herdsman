@@ -1,8 +1,6 @@
 /* v8 ignore start */
 
 import assert from "node:assert";
-
-import {Adapter, type TsType} from "../..";
 import type {Backup} from "../../../models";
 import {Queue, Waitress} from "../../../utils";
 import {logger} from "../../../utils/logger";
@@ -10,6 +8,7 @@ import * as ZSpec from "../../../zspec";
 import * as Zcl from "../../../zspec/zcl";
 import * as Zdo from "../../../zspec/zdo";
 import type * as ZdoTypes from "../../../zspec/zdo/definition/tstypes";
+import {Adapter, type TsType} from "../..";
 import {WORKAROUND_JOIN_MANUF_IEEE_PREFIX_TO_CODE} from "../../const";
 import type {ZclPayload} from "../../events";
 import {ZBOSSDriver} from "../driver";
