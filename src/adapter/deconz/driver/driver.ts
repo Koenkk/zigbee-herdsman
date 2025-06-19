@@ -5,23 +5,22 @@ import net from "node:net";
 
 import slip from "slip";
 import type {Backup} from "../../../models";
-import type {NetworkOptions, SerialPortOptions} from "../../tstype";
-
 import {logger} from "../../../utils/logger";
 import {SerialPort} from "../../serialPort";
 import SocketPortUtils from "../../socketPortUtils";
+import type {NetworkOptions, SerialPortOptions} from "../../tstype";
 import PARAM, {
+    ApsAddressMode,
     type ApsDataRequest,
-    type ReceivedDataResponse,
     type ApsRequest,
-    type Request,
+    DataType,
     FirmwareCommand,
     NetworkState,
-    ParamId,
-    stackParameters,
-    DataType,
-    ApsAddressMode,
     NwkBroadcastAddress,
+    ParamId,
+    type ReceivedDataResponse,
+    type Request,
+    stackParameters,
 } from "./constants";
 
 import {frameParserEvents} from "./frameParser";
