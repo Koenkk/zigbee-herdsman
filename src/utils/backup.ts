@@ -56,6 +56,49 @@ export const toUnifiedBackup = (backup: Models.Backup): Models.UnifiedBackupStor
 };
 
 /**
+ * Converts unified backup storage format to internal backup format.
+ *
+ * @param backup Unified format to convert to internal backup format.
+ */
+export const fromUnifiedBackup = (backup: Models.UnifiedBackupStorage): Models.Backup => {
+    const tclkSeedString = backup.stack_specific?.zstack?.tclk_seed || undefined;
+
+    return {
+        networkOptions: {
+            panId: Number.parseInt(backup.pan_id, 16),
+            extendedPanId: Buffer.from(backup.extended_pan_id, "hex"),
+            channelList: backup.channel_mask,
+            networkKey: Buffer.from(backup.network_key.key, "hex"),
+            networkKeyDistribute: false,
+        },
+        logicalChannel: backup.channel,
+        networkKeyInfo: {
+            sequenceNumber: backup.network_key.sequence_number,
+            frameCounter: backup.network_key.frame_counter,
+        },
+        coordinatorIeeeAddress: Buffer.from(backup.coordinator_ieee, "hex"),
+        securityLevel: backup.security_level,
+        networkUpdateId: backup.nwk_update_id,
+        devices: backup.devices.map((device) => ({
+            networkAddress: device.nwk_address ? Number.parseInt(device.nwk_address, 16) : null,
+            ieeeAddress: Buffer.from(device.ieee_address, "hex"),
+            isDirectChild: typeof device.is_child === "boolean" ? device.is_child : true,
+            linkKey: device.link_key
+                ? {key: Buffer.from(device.link_key.key, "hex"), rxCounter: device.link_key.rx_counter, txCounter: device.link_key.tx_counter}
+                : undefined,
+        })),
+        znp: {
+            version: backup.metadata.internal?.znpVersion || undefined,
+            trustCenterLinkKeySeed: tclkSeedString ? Buffer.from(tclkSeedString, "hex") : undefined,
+        },
+        ezsp: {
+            version: backup.metadata.internal?.ezspVersion || undefined,
+            hashed_tclk: backup.stack_specific?.ezsp?.hashed_tclk ? Buffer.from(backup.stack_specific.ezsp.hashed_tclk, "hex") : undefined,
+        },
+    };
+};
+
+/**
  * Converts legacy Zigbee2MQTT format to internal backup format.
  *
  * @param backup Legacy format to convert.
