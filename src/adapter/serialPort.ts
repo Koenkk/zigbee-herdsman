@@ -1,6 +1,6 @@
 /* v8 ignore start */
 
-import {type AutoDetectTypes, type OpenOptionsFromBinding, type SetOptions, autoDetect} from "@serialport/bindings-cpp";
+import {type AutoDetectTypes, autoDetect, type OpenOptionsFromBinding, type SetOptions} from "@serialport/bindings-cpp";
 // This file was copied from https://github.com/serialport/node-serialport/blob/master/packages/serialport/lib/serialport.ts.
 import {type ErrorCallback, type OpenOptions, SerialPortStream, type StreamOptions} from "@serialport/stream";
 

@@ -3,8 +3,6 @@ import {existsSync, readFileSync, renameSync} from "node:fs";
 import path from "node:path";
 
 import equals from "fast-deep-equal/es6";
-
-import {Adapter, type TsType} from "../..";
 import type {Backup, UnifiedBackupStorage} from "../../../models";
 import {BackupUtils, Queue, wait} from "../../../utils";
 import {logger} from "../../../utils/logger";
@@ -13,6 +11,7 @@ import type {Eui64, ExtendedPanId, NodeId, PanId} from "../../../zspec/tstypes";
 import * as Zcl from "../../../zspec/zcl";
 import * as Zdo from "../../../zspec/zdo";
 import type * as ZdoTypes from "../../../zspec/zdo/definition/tstypes";
+import {Adapter, type TsType} from "../..";
 import {WORKAROUND_JOIN_MANUF_IEEE_PREFIX_TO_CODE} from "../../const";
 import type {DeviceJoinedPayload, DeviceLeavePayload, ZclPayload} from "../../events";
 import {
@@ -48,8 +47,8 @@ import {
     EmberVersionType,
     EzspStatus,
     IEEE802154CcaMode,
-    SLStatus,
     SecManKeyType,
+    SLStatus,
 } from "../enums";
 import {EzspBuffalo} from "../ezsp/buffalo";
 import {EMBER_ENCRYPTION_KEY_SIZE, EZSP_MIN_PROTOCOL_VERSION, EZSP_PROTOCOL_VERSION, EZSP_STACK_TYPE_MESH} from "../ezsp/consts";

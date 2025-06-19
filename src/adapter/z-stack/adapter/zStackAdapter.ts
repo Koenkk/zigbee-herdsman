@@ -226,7 +226,7 @@ export class ZStackAdapter extends Adapter {
 
         const payload = lookup[action];
         if (payload) {
-            this.znp.request(Subsystem.UTIL, "ledControl", payload, undefined, 500).catch(() => {
+            await this.znp.request(Subsystem.UTIL, "ledControl", payload, undefined, 500).catch(() => {
                 // We cannot 100% correctly determine if an adapter supports LED. E.g. the zStack 1.2 20190608
                 // fw supports led on the CC2531 but not on the CC2530. Therefore if a led request fails never thrown
                 // an error but instead mark the led as unsupported.
@@ -809,7 +809,7 @@ export class ZStackAdapter extends Adapter {
                             const debouncer = debounce(
                                 () => {
                                     this.queue.execute<void>(async () => {
-                                        this.discoverRoute(zdoPayload.nwkAddress, false).catch(() => {});
+                                        await this.discoverRoute(zdoPayload.nwkAddress, false).catch(() => {});
                                     }, zdoPayload.nwkAddress);
                                 },
                                 60 * 1000,

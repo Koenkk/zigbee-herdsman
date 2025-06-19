@@ -7,13 +7,13 @@ import {logger} from "../../../utils/logger";
 import type {SerialPortOptions} from "../../tstype";
 import {
     type EZSPFrameDesc,
-    FRAMES,
     FRAME_NAMES_BY_ID,
+    FRAMES,
     type ParamsDesc,
-    ZDOREQUESTS,
     ZDOREQUEST_NAME_BY_ID,
-    ZDORESPONSES,
+    ZDOREQUESTS,
     ZDORESPONSE_NAME_BY_ID,
+    ZDORESPONSES,
 } from "./commands";
 import * as t from "./types";
 import {

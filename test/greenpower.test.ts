@@ -1,6 +1,5 @@
-import type {ZclPayload} from "../src/adapter/events";
-
 import type {MockInstance} from "vitest";
+import type {ZclPayload} from "../src/adapter/events";
 
 import {GreenPower} from "../src/controller/greenPower";
 import type {GreenPowerDeviceJoinedPayload} from "../src/controller/tstype";

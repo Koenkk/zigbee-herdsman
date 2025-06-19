@@ -1,14 +1,11 @@
-import type {Adapter, DiscoverableUsbAdapter, UsbAdapterFingerprint} from "./tstype";
-
 import assert from "node:assert";
 import {platform} from "node:os";
-
 import type {PortInfo} from "@serialport/bindings-cpp";
 import {Bonjour, type Service} from "bonjour-service";
-
 import {wait} from "../utils";
 import {logger} from "../utils/logger";
 import {SerialPort} from "./serialPort";
+import type {Adapter, DiscoverableUsbAdapter, UsbAdapterFingerprint} from "./tstype";
 
 const NS = "zh:adapter:discovery";
 

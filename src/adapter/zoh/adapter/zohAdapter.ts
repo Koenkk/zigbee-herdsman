@@ -693,7 +693,7 @@ export class ZoHAdapter extends Adapter {
                 address:
                     sender64 !== undefined
                         ? `0x${bigUInt64ToHexBE(sender64)}`
-                        : // biome-ignore lint/style/noNonNullAssertion: <explanation>
+                        : // biome-ignore lint/style/noNonNullAssertion: ignore
                           sender16!,
                 data: apsPayload,
                 // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
