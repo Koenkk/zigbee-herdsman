@@ -313,8 +313,8 @@ export class DeconzAdapter extends Adapter {
         const transactionID = this.nextTransactionID();
         const payload = zclFrame.toBuffer();
 
-        // TODO(mpi): Enable APS ACKs for tricky devices, maintain a list of those.
-        const txOptions = 0; // 0x00 normal, 0x04 APS ACK
+        // TODO(mpi): Enable APS ACKs for tricky devices, maintain a list of those, or keep at least a few slots free for non APS ACK requests.
+        const txOptions = 0x4; // 0x00 normal, 0x04 APS ACK
 
         const request: ApsDataRequest = {
             requestId: transactionID,
