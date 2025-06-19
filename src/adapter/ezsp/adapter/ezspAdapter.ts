@@ -168,6 +168,8 @@ export class EZSPAdapter extends Adapter {
             return;
         }
 
+        const clusterId = Zdo.ClusterId.PERMIT_JOINING_REQUEST;
+
         if (networkAddress) {
             // specific device that is not `Coordinator`
             await this.queue.execute<void>(async () => {
