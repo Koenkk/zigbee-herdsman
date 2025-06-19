@@ -52,7 +52,7 @@ export class EZSPAdapter extends Adapter {
         this.driver.on("incomingMessage", this.processMessage.bind(this));
     }
 
-    private async processMessage(frame: EmberIncomingMessage): Promise<void> {
+    private processMessage(frame: EmberIncomingMessage): void {
         logger.debug(() => `processMessage: ${JSON.stringify(frame)}`, NS);
 
         if (frame.apsFrame.profileId === Zdo.ZDO_PROFILE_ID) {
@@ -117,7 +117,7 @@ export class EZSPAdapter extends Adapter {
         }
     }
 
-    private async handleDeviceJoin(nwk: number, ieee: EmberEUI64): Promise<void> {
+    private handleDeviceJoin(nwk: number, ieee: EmberEUI64): void {
         logger.debug(() => `Device join request received: ${nwk} ${ieee.toString()}`, NS);
 
         this.emit("deviceJoined", {

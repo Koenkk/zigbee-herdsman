@@ -4,9 +4,9 @@ import * as Zcl from "../../../src/zspec/zcl";
 import * as Zdo from "../../../src/zspec/zdo";
 import {BuffaloZdo} from "../../../src/zspec/zdo/buffaloZdo";
 import type {
+    ActiveEndpointsResponse,
     APSFrameCounterChallengeTLV,
     APSFrameCounterResponseTLV,
-    ActiveEndpointsResponse,
     AuthenticationTokenIdTLV,
     BeaconAppendixEncapsulationGlobalTLV,
     BeaconSurveyConfigurationTLV,

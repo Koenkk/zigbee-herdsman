@@ -1,6 +1,5 @@
-import type {MockInstance} from "vitest";
-
 import type {BrowserConfig, Service} from "bonjour-service";
+import type {MockInstance} from "vitest";
 
 import {Adapter, type TsType} from "../../src/adapter";
 import {findAllDevices} from "../../src/adapter/adapterDiscovery";

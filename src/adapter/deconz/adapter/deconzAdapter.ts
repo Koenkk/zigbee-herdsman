@@ -17,10 +17,10 @@ import type * as Events from "../../events";
 import type {AdapterOptions, CoordinatorVersion, NetworkOptions, NetworkParameters, SerialPortOptions, StartResult} from "../../tstype";
 import PARAM, {
     ApsAddressMode,
-    NwkBroadcastAddress,
-    ParamId,
     type ApsDataRequest,
     type GpDataInd,
+    NwkBroadcastAddress,
+    ParamId,
     type ReceivedDataResponse,
     type WaitForDataRequest,
 } from "../driver/constants";
@@ -91,7 +91,7 @@ export class DeconzAdapter extends Adapter {
     /**
      * Adapter methods
      */
-    public async start(): Promise<StartResult> {
+    public start(): Promise<StartResult> {
         // wait here until driver is connected and has queried all firmware parameters
         return new Promise((resolve, reject) => {
             const start = Date.now();

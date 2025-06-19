@@ -11,8 +11,8 @@ import * as ZSpec from "../../../zspec";
 import {Clusters} from "../../../zspec/zcl/definition/cluster";
 import * as Zdo from "../../../zspec/zdo";
 import type {GenericZdoResponse} from "../../../zspec/zdo/definition/tstypes";
-import {EZSPAdapterBackup} from "../adapter/backup";
 import type * as TsType from "./../../tstype";
+import {EZSPAdapterBackup} from "../adapter/backup";
 import type {ParamsDesc} from "./commands";
 import {type EZSPFrameData, Ezsp} from "./ezsp";
 import {Multicast} from "./multicast";
@@ -221,15 +221,15 @@ export class Driver extends EventEmitter {
         // getting MFG_BOARD_NAME token
         //const boardName = await ezsp.execCommand('getMfgToken', EzspMfgTokenId.MFG_BOARD_NAME);
         let verInfo = await this.ezsp.getValue(EzspValueId.VALUE_VERSION_INFO);
-        // biome-ignore lint/style/useConst: <explanation>
+        // biome-ignore lint/style/useConst: legacy
         let build: number;
-        // biome-ignore lint/style/useConst: <explanation>
+        // biome-ignore lint/style/useConst: legacy
         let major: number;
-        // biome-ignore lint/style/useConst: <explanation>
+        // biome-ignore lint/style/useConst: legacy
         let minor: number;
-        // biome-ignore lint/style/useConst: <explanation>
+        // biome-ignore lint/style/useConst: legacy
         let patch: number;
-        // biome-ignore lint/style/useConst: <explanation>
+        // biome-ignore lint/style/useConst: legacy
         let special: number;
         [build, verInfo] = uint16_t.deserialize(uint16_t, verInfo);
         [major, verInfo] = uint8_t.deserialize(uint8_t, verInfo);

@@ -48,7 +48,7 @@ export class EmberEUI64 extends fixed_list(8, basic.uint8_t) {
     }
 
     static override deserialize(cls: any, data: Buffer): any[] {
-        // biome-ignore lint/complexity/noThisInStatic: <explanation>
+        // biome-ignore lint/complexity/noThisInStatic: legacy
         const arr = super.deserialize(cls, data);
         const r = arr[0];
         data = arr[1] as Buffer;

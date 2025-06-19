@@ -2,7 +2,7 @@
 
 import {logger} from "../../../utils/logger";
 import {BLANK_EUI64} from "../../../zspec";
-import {SLStatus, SecManFlag, SecManKeyType} from "../enums";
+import {SecManFlag, SecManKeyType, SLStatus} from "../enums";
 import {EMBER_ENCRYPTION_KEY_SIZE, EUI64_SIZE} from "../ezsp/consts";
 import {EzspValueId} from "../ezsp/enums";
 import type {Ezsp} from "../ezsp/ezsp";

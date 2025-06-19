@@ -11,7 +11,7 @@ import type * as Models from "../models";
  *
  * @param backup Backup to create unified backup format from.
  */
-export const toUnifiedBackup = async (backup: Models.Backup): Promise<Models.UnifiedBackupStorage> => {
+export const toUnifiedBackup = (backup: Models.Backup): Models.UnifiedBackupStorage => {
     const packageInfo = JSON.parse(fs.readFileSync(path.join(__dirname, "../../", "package.json")).toString());
 
     return {

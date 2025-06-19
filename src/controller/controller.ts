@@ -383,7 +383,7 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
         if (this.options.backupPath && (await this.adapter.supportsBackup())) {
             logger.debug("Creating coordinator backup", NS);
             const backup = await this.adapter.backup(this.getDeviceIeeeAddresses());
-            const unifiedBackup = await BackupUtils.toUnifiedBackup(backup);
+            const unifiedBackup = BackupUtils.toUnifiedBackup(backup);
             const tmpBackupPath = `${this.options.backupPath}.tmp`;
             fs.writeFileSync(tmpBackupPath, JSON.stringify(unifiedBackup, null, 2));
             fs.renameSync(tmpBackupPath, this.options.backupPath);
@@ -657,7 +657,7 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
         this.emit("adapterDisconnected");
     }
 
-    private async onDeviceJoinedGreenPower(payload: GreenPowerDeviceJoinedPayload): Promise<void> {
+    private onDeviceJoinedGreenPower(payload: GreenPowerDeviceJoinedPayload): void {
         logger.debug(() => `Green power device '${JSON.stringify(payload).replaceAll(/\[[\d,]+\]/g, "HIDDEN")}' joined`, NS);
 
         // Green power devices don't have an ieeeAddr, the sourceID is unique and static so use this.

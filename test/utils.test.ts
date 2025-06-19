@@ -35,7 +35,7 @@ describe("Utils", () => {
         }).toThrow("Input must be a string!");
     });
 
-    it("Test wait", async () => {
+    it("Test wait", () => {
         const setTimeoutSpy = vi.spyOn(globalThis, "setTimeout").mockImplementationOnce(
             // @ts-expect-error mocked
             () => {},
