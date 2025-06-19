@@ -1,5 +1,8 @@
 # Changelog
 
+## [4.1.2](https://github.com/Koenkk/zigbee-herdsman/compare/v4.1.1...v4.1.2) (2025-06-15)
+
+
 ### Bug Fixes
 
 * Fix interview failing for HOBEIAN devices ([#1422](https://github.com/Koenkk/zigbee-herdsman/issues/1422)) ([172d543](https://github.com/Koenkk/zigbee-herdsman/commit/172d5437dfbb01d54a159b3f872442c21f09e998))
