@@ -148,6 +148,7 @@ import {
     type EzspEndpointFlag,
     EzspExtendedValueId,
     EzspFrameID,
+    type EzspMemoryUsageData,
     EzspMfgTokenId,
     type EzspPolicyId,
     EzspSleepMode,
@@ -644,6 +645,14 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
             case EzspFrameID.COUNTER_ROLLOVER_HANDLER: {
                 const type: EmberCounterType = this.callbackBuffalo.readUInt8();
                 this.ezspCounterRolloverHandler(type);
+                break;
+            }
+            case EzspFrameID.MUX_INVALID_RX_HANDLER: {
+                if (this.version >= 0x11) {
+                    const newRxChannel = this.callbackBuffalo.readUInt8();
+                    const oldRxChannel = this.callbackBuffalo.readUInt8();
+                    this.ezspMuxInvalidRxHandler(newRxChannel, oldRxChannel);
+                }
                 break;
             }
             case EzspFrameID.CUSTOM_FRAME_HANDLER: {
@@ -1235,7 +1244,7 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
      * Function for manipulating the endpoints flags on the NCP.
      * Wrapper for `ezspGetExtendedValue`.
      * @param endpoint uint8_t
-     * @returns EzspStatus
+     * @returns SLStatus
      * @returns flags
      */
     public async ezspGetEndpointFlags(endpoint: number): Promise<[SLStatus, flags: EzspEndpointFlag]> {
@@ -1254,7 +1263,7 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
      * Wrapper for `ezspGetExtendedValue`.
      * @param NodeId
      * @param destination
-     * @returns EzspStatus
+     * @returns SLStatus
      * @returns overhead uint8_t
      */
     public async ezspGetSourceRouteOverhead(destination: NodeId): Promise<[SLStatus, overhead: number]> {
@@ -1269,7 +1278,7 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
 
     /**
      * Wrapper for `ezspGetExtendedValue`.
-     * @returns EzspStatus
+     * @returns SLStatus
      * @returns reason
      * @returns nodeId NodeId*
      */
@@ -1281,6 +1290,27 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
         }
 
         return [status, outVal[0], highLowToInt(outVal[2], outVal[1])];
+    }
+
+    /**
+     * Gets memory usage data from sl_memory_manager APIs.
+     * Wrapper for `ezspGetExtendedValue`.
+     * @param type Type of memory usage data to be acquired
+     * @returns SLStatus
+     * @returns Data (in bytes) reflecting current or "boot" memory usage
+     */
+    public async ezspGetMemoryUsageData(type: EzspMemoryUsageData): Promise<[SLStatus, memoryUsageValue: number]> {
+        if (this.version < 0x11) {
+            throw new EzspError(EzspStatus.ERROR_INVALID_FRAME_ID);
+        }
+
+        const [status, outValLen, outVal] = await this.ezspGetExtendedValue(EzspExtendedValueId.MEMORY_USAGE_DATA, type, 4);
+
+        if (outValLen < 4) {
+            throw new EzspError(EzspStatus.ERROR_INVALID_VALUE);
+        }
+
+        return [status, outVal[0] + (outVal[1] << 8) + (outVal[2] << 16) + (outVal[3] << 24)];
     }
 
     /**
@@ -2287,6 +2317,16 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
     ezspCounterRolloverHandler(type: EmberCounterType): void {
         logger.debug(`ezspCounterRolloverHandler: type=${EmberCounterType[type]}`, NS);
         logger.info(`NCP Counter ${EmberCounterType[type]} rolled over.`, NS);
+    }
+
+    /**
+     * Callback
+     * This call is fired when mux detects an invalid rx case, which would be different rx channels for different protocol contexts, when fast channel switching is not enabled
+     * @param newRxChannel uint8_t
+     * @param oldRxChannel uint8_t
+     */
+    ezspMuxInvalidRxHandler(newRxChannel: number, oldRxChannel: number) {
+        logger.debug(`ezspMuxInvalidRxHandler: newRxChannel=${newRxChannel} oldRxChannel=${oldRxChannel}`, NS);
     }
 
     /**
@@ -8522,6 +8562,7 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
      * @param mic uint32_t The received MIC of the GPDF.
      * @param proxyTableIndex uint8_tThe proxy table index of the corresponding proxy table entry to the incoming GPDF.
      * @param gpdCommandPayload uint8_t * The GPD command payload.
+     * @param packetInfo Rx packet information.
      */
     ezspGpepIncomingMessageHandler(
         status: EmberGPStatus,
@@ -8643,6 +8684,41 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
         const index = this.buffalo.readUInt8();
 
         return index;
+    }
+
+    /**
+     * Removes the proxy table entry stored at the passed index.
+     * @param proxyIndex The index of the requested proxy table entry.
+     */
+    async ezspGpProxyTableRemoveEntry(proxyIndex: number): Promise<void> {
+        if (this.version < 0x11) {
+            throw new EzspError(EzspStatus.ERROR_INVALID_FRAME_ID);
+        }
+
+        const sendBuffalo = this.startCommand(EzspFrameID.GP_PROXY_TABLE_REMOVE_ENTRY);
+        sendBuffalo.writeUInt8(proxyIndex);
+
+        const sendStatus = await this.sendCommand(sendBuffalo);
+
+        if (sendStatus !== EzspStatus.SUCCESS) {
+            throw new EzspError(sendStatus);
+        }
+    }
+
+    /**
+     * Clear the entire proxy table
+     */
+    async ezspGpClearProxyTable(): Promise<void> {
+        if (this.version < 0x11) {
+            throw new EzspError(EzspStatus.ERROR_INVALID_FRAME_ID);
+        }
+
+        const sendBuffalo = this.startCommand(EzspFrameID.GP_CLEAR_PROXY_TABLE);
+        const sendStatus = await this.sendCommand(sendBuffalo);
+
+        if (sendStatus !== EzspStatus.SUCCESS) {
+            throw new EzspError(sendStatus);
+        }
     }
 
     /**
