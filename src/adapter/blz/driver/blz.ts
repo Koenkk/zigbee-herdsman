@@ -405,7 +405,7 @@ export class Blz extends EventEmitter {
     }
 
     async networkInit(): Promise<boolean> {
-        logger.debug('Set up stack status handler before initial the network', NS);
+        // logger.debug('Set up stack status handler before initial the network', NS);
         const result = await this.execCommand('networkInit');
         logger.debug(`Network init result: ${JSON.stringify(result)}`, NS);
         if (result.status !== BlzStatus.SUCCESS) {

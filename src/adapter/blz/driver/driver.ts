@@ -220,20 +220,28 @@ export class Driver extends EventEmitter {
     private async needsToBeInitialised(options: TsType.NetworkOptions): Promise<boolean> {
         let valid = true;
         valid = valid && (await this.blz.networkInit());
+        logger.debug(`needToBeInitialized success stack up: , ${valid}`, NS)
         const netParams = await this.blz.execCommand('getNetworkParameters');
         logger.debug(`Current Node type: ${netParams.nodeType}, Network parameters: ${netParams}`, NS);
         valid = valid && netParams.status == BlzStatus.SUCCESS;
+        logger.debug(`needToBeInitialized success get parameters: ${valid}`, NS)
         valid = valid && netParams.nodeType == BlzNodeType.COORDINATOR;
+        logger.debug(`needToBeInitialized is coordinator: ${valid}`, NS)
         valid = valid && options.panID == netParams.panId;
+        logger.debug(`needToBeInitialized same PanID: ${valid}`, NS)
         valid = valid && options.channelList.includes(netParams.channel);
-        // Convert bigint extPanId to 8-byte array
+        logger.debug(`needToBeInitialized valid channel: ${valid}`, NS)
+        // Convert bigint extPanId to 8-byte array in little-endian order
         const extPanIdArray = [];
         let extPanId = netParams.extPanId;
         for (let i = 0; i < 8; i++) {
-            extPanIdArray.unshift(Number(extPanId & 0xFFn));
+            extPanIdArray.push(Number(extPanId & 0xFFn));
             extPanId >>= 8n;
         }
         valid = valid && equals(options.extendedPanID, extPanIdArray);
+        logger.debug(`options.extendedPanID: ${options.extendedPanID}`, NS)
+        logger.debug(`current extendedPanID: ${extPanIdArray}`, NS)
+        logger.debug(`needToBeInitialized same extended PanID: ${valid}`, NS)
         return !valid;
     }
 
@@ -664,13 +672,19 @@ export class Driver extends EventEmitter {
 
     private async needsToBeRestore(options: TsType.NetworkOptions): Promise<boolean> {
         const backup = await this.backupMan.getStoredBackup();
-        if (!backup) return false;
-
+        if (!backup) {
+            logger.debug("needToBeRestore no backup found!", NS)
+            return false;
+        }
         let valid = true;
         valid = valid && options.panID == backup.networkOptions.panId;
+        logger.debug(`needsToBeRestore same PanID: ${valid}`, NS)
         valid = valid && options.channelList.includes(backup.logicalChannel);
+        logger.debug(`needsToBeRestore valid channel: ${valid}`, NS)
         valid = valid && Buffer.from(options.extendedPanID!).equals(backup.networkOptions.extendedPanId);
+        logger.debug(`needsToBeRestore same extendedPanID: ${valid}`, NS)
         valid = valid && Buffer.from(options.networkKey!).equals(backup.networkOptions.networkKey);
+        logger.debug(`needsToBeRestore same network key: ${valid}`, NS)
         return valid;
     }
 }
