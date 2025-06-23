@@ -39,7 +39,7 @@
     "deprecated": false,
     "description": "An open source ZigBee gateway solution with node.js.",
     "devDependencies": {
-        "@biomejs/biome": "^2.0.0",
+        "@biomejs/biome": "^2.0.5",
         "@serialport/binding-mock": "^10.2.2",
         "@types/debounce": "^1.2.4",
         "@types/node": "^24.0.3",
