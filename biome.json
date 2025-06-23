@@ -12,10 +12,10 @@
         "bracketSpacing": false
     },
     "files": {
-        "includes": ["**", "!**/package.json"]
+        "includes": ["**", "!package.json"]
     },
     "linter": {
-        "includes": ["**", "!**/src/adapter/ezsp/driver/types/**/*"],
+        "includes": ["**", "!src/adapter/ezsp/driver/types/**/*"],
         "rules": {
             "correctness": {
                 "noUnusedImports": "error",
@@ -81,7 +81,7 @@
     },
     "overrides": [
         {
-            "includes": ["**/src/adapter/ezsp/driver/types/**/*", "**/test/**"],
+            "includes": ["src/adapter/ezsp/driver/types/**/*", "test/**"],
             "linter": {
                 "rules": {
                     "style": {
