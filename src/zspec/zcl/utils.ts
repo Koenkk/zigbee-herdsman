@@ -82,7 +82,6 @@ export function getDataTypeClass(dataType: DataType): DataTypeClass {
 function hasCustomClusters(customClusters: CustomClusters): boolean {
     // XXX: was there a good reason to not set the parameter `customClusters` optional? it would allow simple undefined check
     // below is twice faster than checking `Object.keys(customClusters).length`
-    // biome-ignore lint/style/useNamingConvention: not working properly
     for (const _k in customClusters) return true;
     return false;
 }

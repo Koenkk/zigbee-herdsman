@@ -1,17 +1,16 @@
 import * as crypto from "node:crypto";
-
-import type {TsType} from "../../";
 import type * as Models from "../../../models";
 import {wait} from "../../../utils";
 import {logger} from "../../../utils/logger";
 import * as ZSpec from "../../../zspec";
 import * as Zdo from "../../../zspec/zdo";
+import type {TsType} from "../../";
 import * as ZnpConstants from "../constants";
 import {DevStates, NvItemsIds, ZnpCommandStatus} from "../constants/common";
 import type {StartupOptions} from "../models/startup-options";
 import * as Structs from "../structs";
-import {Subsystem} from "../unpi/constants";
 import * as UnpiConstants from "../unpi/constants";
+import {Subsystem} from "../unpi/constants";
 import * as Utils from "../utils";
 import type {Znp} from "../znp";
 import {AdapterBackup} from "./adapter-backup";

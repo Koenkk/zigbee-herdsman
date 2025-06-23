@@ -445,13 +445,13 @@ describe("Controller", () => {
     let controller: Controller;
     let mockedDate: Date;
 
-    beforeAll(async () => {
+    beforeAll(() => {
         mockedDate = new Date();
 
         vi.useFakeTimers();
         vi.setSystemTime(mockedDate);
         setLogger(mockLogger);
-        dummyBackup = await Utils.BackupUtils.toUnifiedBackup(mockDummyBackup);
+        dummyBackup = Utils.BackupUtils.toUnifiedBackup(mockDummyBackup);
     });
 
     afterAll(() => {
@@ -459,7 +459,7 @@ describe("Controller", () => {
         fs.rmSync(TEMP_PATH, {recursive: true, force: true});
     });
 
-    beforeEach(async () => {
+    beforeEach(() => {
         vi.setSystemTime(mockedDate);
         sendZdoResponseStatus = Zdo.Status.SUCCESS;
         for (const m of mocksRestore) m.mockRestore();
@@ -512,14 +512,14 @@ describe("Controller", () => {
         );
     }, 10000); // randomly times out for some reason
 
-    it("Call controller constructor error on invalid channel", async () => {
+    it("Call controller constructor error on invalid channel", () => {
         options.network.channelList = [10];
         expect(() => {
             new Controller(options);
         }).toThrowError("'10' is an invalid channel, use a channel between 11 - 26.");
     });
 
-    it("Call controller constructor error when network key too small", async () => {
+    it("Call controller constructor error when network key too small", () => {
         const newOptions = deepClone(options);
         newOptions.network.networkKey = [1, 2, 3];
         expect(() => {
@@ -527,7 +527,7 @@ describe("Controller", () => {
         }).toThrowError(`Network key must be a 16 digits long array, got ${newOptions.network.networkKey}.`);
     });
 
-    it("Call controller constructor error when extendedPanID is too long", async () => {
+    it("Call controller constructor error when extendedPanID is too long", () => {
         const newOptions = deepClone(options);
         newOptions.network.extendedPanID = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16];
         expect(() => {
@@ -535,7 +535,7 @@ describe("Controller", () => {
         }).toThrowError(`ExtendedPanID must be an 8 digits long array, got ${newOptions.network.extendedPanID}.`);
     });
 
-    it("Call controller constructor error with invalid panID", async () => {
+    it("Call controller constructor error with invalid panID", () => {
         const newOptions = deepClone(options);
         newOptions.network.panID = 0xffff;
         expect(() => {
@@ -6802,7 +6802,7 @@ describe("Controller", () => {
         );
     });
 
-    it("Shouldnt load device from group databaseentry", async () => {
+    it("Shouldnt load device from group databaseentry", () => {
         expect(() => {
             // @ts-ignore
             Device.fromDatabaseEntry({type: "Group", endpoints: []});

@@ -1,6 +1,5 @@
-import type {Eui64} from "../zspec/tstypes";
-
 import {Utils as ZSpecUtils} from "../zspec";
+import type {Eui64} from "../zspec/tstypes";
 
 export class Buffalo {
     protected position: number;
