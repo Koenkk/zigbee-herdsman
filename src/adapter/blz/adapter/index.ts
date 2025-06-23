@@ -1,3 +1,3 @@
-import {BLZAdapter} from './blzAdapter';
+import {BLZAdapter} from "./blzAdapter";
 
 export {BLZAdapter};

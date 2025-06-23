@@ -1,6 +1,6 @@
 /* istanbul ignore file */
 
-import crc16ccitt from './utils/crc16ccitt';
+import crc16ccitt from "./utils/crc16ccitt";
 
 
 /**
@@ -48,12 +48,12 @@ export class Frame {
      */
     public checkCRC(): void {
         const data = this.buffer.subarray(0, -2); // Exclude the CRC bytes
-        const crc = crc16ccitt(data, 0xFFFF); // Compute the CRC
+        const crc = crc16ccitt(data, 0xffff); // Compute the CRC
         const crcBytes = Buffer.from([crc >> 8, crc & 0xFF]); // Convert to bytes
         const frameCrc = this.buffer.subarray(-2); // Extract CRC bytes from the frame
 
         if (!frameCrc.equals(crcBytes)) {
-            throw new Error(`CRC mismatch: expected ${crcBytes.toString('hex')}, got ${frameCrc.toString('hex')}`);
+            throw new Error(`CRC mismatch: expected ${crcBytes.toString("hex")}, got ${frameCrc.toString("hex")}`);
         }
     }
 
@@ -62,9 +62,8 @@ export class Frame {
      * @returns Hexadecimal string of the buffer.
      */
     public toString(): string {
-        return this.buffer.toString('hex');
+        return this.buffer.toString("hex");
     }
 }
 
 export default Frame;
-

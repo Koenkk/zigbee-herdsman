@@ -1,6 +1,6 @@
 /* istanbul ignore file */
 
-import {Bytes, fixed_list, int8s, list, LVBytes, LVList, uint_t, uint8_t, uint16_t, uint24_t, uint32_t, uint64_t, WordList} from './basic';
+import {Bytes, fixed_list, int8s, list, LVBytes, LVList, uint_t, uint8_t, uint16_t, uint24_t, uint32_t, uint64_t, WordList} from "./basic";
 import {
     Bool,
     BlzApsOption,
@@ -10,33 +10,35 @@ import {
     BlzOutgoingMessageType,
     BlzStatus,
     BlzValueId,
-
-} from './named';
+} from "./named";
 import {
     BlzApsFrame,
     BlzNetworkParameters,
     BlzStruct,
     BlzMultiAddress,
     BlzNeighbors,
-    BlzNodeDescriptor /* Named Types */,
+    BlzNodeDescriptor,
     BlzRoutingTable,
     BlzSimpleDescriptor,
-} from './struct';
+} from "./struct";
 
-/* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
-export function deserialize(payload: any, schema: any[]): any[] {
-    const result = [];
-    let value,
-        data = payload;
+interface SchemaType {
+    deserialize: (type: unknown, data: Buffer) => [unknown, Buffer];
+    serialize: (schema: unknown, item: unknown) => Buffer;
+}
+
+export function deserialize(payload: Buffer, schema: SchemaType[]): unknown[] {
+    const result: unknown[] = [];
+    let value: unknown;
+    let data = payload;
     for (const type of schema) {
         [value, data] = type.deserialize(type, data);
         result.push(value);
     }
-    return [result, data];
+    return result;
 }
 
-/* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
-export function serialize(data: any[], schema: {serialize: (schema: any, item: any) => Buffer}[]): Buffer {
+export function serialize(data: unknown[], schema: SchemaType[]): Buffer {
     return Buffer.concat(schema.map((s, idx) => s.serialize(s, data[idx])));
 }
 
@@ -68,7 +70,7 @@ export {
 
     /* Structs */
     BlzStruct,
-    BlzNetworkParameters as BlzNetworkParameters,
+    BlzNetworkParameters,
     BlzApsFrame,
     BlzNodeDescriptor,
     BlzSimpleDescriptor,

@@ -85,8 +85,8 @@ export abstract class Adapter extends events.EventEmitter<AdapterEventMap> {
 
                 return new ZoHAdapter(networkOptions, serialPortOptions, backupPath, adapterOptions);
             }
-            case 'blz': {
-                const {BLZAdapter} = await import(`./blz/adapter/blzAdapter.js`);
+            case "blz": {
+                const {BLZAdapter} = await import("./blz/adapter/blzAdapter.js");
 
                 return new BLZAdapter(networkOptions, serialPortOptions, backupPath, adapterOptions);
             }

@@ -1,15 +1,15 @@
 /* istanbul ignore file */
 
-import * as fs from 'fs';
+import * as fs from "node:fs";
 
-import * as Models from '../../../models';
-import {BackupUtils} from '../../../utils';
-import {logger} from '../../../utils/logger';
-import {uint32MaskToChannels} from '../../../zspec/utils';
-import {Driver} from '../driver';
-import {BlzValueId} from '../driver/types/named';
+import type * as Models from "../../../models";
+import {BackupUtils} from "../../../utils";
+import {logger} from "../../../utils/logger";
+import {uint32MaskToChannels} from "../../../zspec/utils";
+import type {Driver} from "../driver";
+import {BlzValueId} from "../driver/types/named";
 
-const NS = 'zh:blz:backup';
+const NS = "zh:blz:backup";
 
 export class BLZAdapterBackup {
     private driver: Driver;
@@ -21,22 +21,19 @@ export class BLZAdapterBackup {
     }
 
     public async createBackup(): Promise<Models.Backup> {
-        logger.debug('creating backup', NS);
+        logger.debug("creating backup", NS);
         const version: number = this.driver.blz.version.product;
         const linkResult = await this.driver.getGlobalTcLinkKey();
-        const netParams = await this.driver.blz.execCommand('getNetworkParameters');
+        const netParams = await this.driver.blz.execCommand("getNetworkParameters");
         const netResult = await this.driver.getNetworkKeyInfo();
-        let tclKey: Buffer;
-        let netKey: Buffer;
-        let netKeySequenceNumber: number = 0;
-        let netKeyFrameCounter: number = 0;
-
-        tclKey = Buffer.from(linkResult.linkKey);
-        netKey = Buffer.from(netResult.nwkKey);
+        const tclKey = Buffer.from(linkResult.linkKey);
+        const netKey = Buffer.from(netResult.nwkKey);
+        let netKeySequenceNumber = 0;
+        let netKeyFrameCounter = 0;
         netKeySequenceNumber = netResult.nwkKeySeqNum;
         netKeyFrameCounter = netResult.outgoingFrameCounter;
 
-        const ieee = (await this.driver.blz.execCommand('getValue', {valueId: BlzValueId.BLZ_VALUE_ID_MAC_ADDRESS})).value;
+        const ieee = (await this.driver.blz.execCommand("getValue", {valueId: BlzValueId.BLZ_VALUE_ID_MAC_ADDRESS})).value;
         /* return backup structure */
         /* istanbul ignore next */
         return {
@@ -77,17 +74,33 @@ export class BLZAdapterBackup {
      */
     public async getStoredBackup(): Promise<Models.Backup | undefined> {
         try {
-            fs.accessSync(this.defaultPath);
+            await fs.promises.access(this.defaultPath);
         } catch {
-            return undefined;
+            return Promise.resolve(undefined);
         }
-        let data;
+        interface BackupData extends Models.UnifiedBackupStorage {
+            metadata: {
+                format: "zigpy/open-coordinator-backup";
+                version: 1;
+                source: string;
+                internal: {
+                    [key: string]: unknown;
+                    date: string;
+                    znpVersion?: number;
+                    ezspVersion?: number;
+                    blzVersion?: number;
+                };
+            };
+        }
+
+        let data: BackupData;
         try {
-            data = JSON.parse(fs.readFileSync(this.defaultPath).toString());
+            const fileContent = await fs.promises.readFile(this.defaultPath);
+            data = JSON.parse(fileContent.toString()) as BackupData;
         } catch (error) {
-            throw new Error(`Coordinator backup is corrupted (${(error as Error).stack})`);
+            return Promise.reject(new Error(`Coordinator backup is corrupted (${(error as Error).stack})`));
         }
-        if (data.metadata?.format === 'zigpy/open-coordinator-backup' && data.metadata?.version) {
+        if (data.metadata?.format === "zigpy/open-coordinator-backup" && data.metadata?.version) {
             if (data.metadata?.version !== 1) {
                 throw new Error(`Unsupported open coordinator backup version (version=${data.metadata?.version})`);
             }
@@ -95,9 +108,12 @@ export class BLZAdapterBackup {
             // if (!data.metadata.internal?.blzVersion) {
             //     throw new Error(`This open coordinator backup format not for BLZ adapter`);
             // }
-            return BackupUtils.fromUnifiedBackup(data);
-        } else {
-            throw new Error('Unknown backup format');
+            // Validate data structure before conversion
+            if (typeof data !== "object" || data === null) {
+                return Promise.reject(new Error("Invalid backup data format"));
+            }
+            return Promise.resolve(BackupUtils.fromUnifiedBackup(data));
         }
+        return Promise.reject(new Error("Unknown backup format"));
     }
 }

@@ -1,12 +1,12 @@
 /* istanbul ignore file */
 
-import * as stream from 'stream';
+import * as stream from "node:stream";
 
-import {logger} from '../../../utils/logger';
-import * as consts from './consts';
-import Frame from './frame';
+import {logger} from "../../../utils/logger";
+import * as consts from "./consts";
+import Frame from "./frame";
 
-const NS = 'zh:blz:uart';
+const NS = "zh:blz:uart";
 
 export class Parser extends stream.Transform {
     private tail: Buffer[];
@@ -17,7 +17,7 @@ export class Parser extends stream.Transform {
     }
 
     public _transform(chunk: Buffer, _: string, cb: () => void): void {
-        logger.debug(`<-- [${chunk.toString('hex')}]`, NS);
+        logger.debug(`<-- [${chunk.toString("hex")}]`, NS);
 
         // Append the new chunk to the tail for processing
         this.tail.push(chunk);
@@ -35,7 +35,7 @@ export class Parser extends stream.Transform {
                 const frame = Frame.fromBuffer(unstuffedBuffer);
 
                 if (frame) {
-                    this.emit('parsed', frame); // Emit the parsed frame
+                    this.emit("parsed", frame); // Emit the parsed frame
                 }
             } catch (error) {
                 logger.debug(`<-- error ${error}`, NS);
@@ -74,4 +74,3 @@ export class Parser extends stream.Transform {
         this.tail.length = 0;
     }
 }
-

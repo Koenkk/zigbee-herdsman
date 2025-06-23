@@ -1,24 +1,24 @@
 /* istanbul ignore file */
 
-import assert from 'assert';
+import assert from "node:assert";
 
-import * as Models from '../../../models';
-import {Queue, wait, Waitress} from '../../../utils';
-import {logger} from '../../../utils/logger';
-import * as ZSpec from '../../../zspec';
-import * as Zcl from '../../../zspec/zcl';
-import * as Zdo from '../../../zspec/zdo';
-import * as ZdoTypes from '../../../zspec/zdo/definition/tstypes';
-import Adapter from '../../adapter';
-import {ZclPayload} from '../../events';
-import {AdapterOptions, CoordinatorVersion, NetworkOptions, NetworkParameters, SerialPortOptions, StartResult} from '../../tstype';
-import {Driver, BlzIncomingMessage} from '../driver';
-import {BlzEUI64, BlzStatus} from '../driver/types';
+import * as Models from "../../../models";
+import {Queue, wait, Waitress} from "../../../utils";
+import {logger} from "../../../utils/logger";
+import * as ZSpec from "../../../zspec";
+import * as Zcl from "../../../zspec/zcl";
+import * as Zdo from "../../../zspec/zdo";
+import * as ZdoTypes from "../../../zspec/zdo/definition/tstypes";
+import Adapter from "../../adapter";
+import {ZclPayload} from "../../events";
+import {AdapterOptions, CoordinatorVersion, NetworkOptions, NetworkParameters, SerialPortOptions, StartResult} from "../../tstype";
+import {Driver, BlzIncomingMessage} from "../driver";
+import {BlzEUI64, BlzStatus} from "../driver/types";
 
-const NS = 'zh:blz';
+const NS = "zh:blz";
 
 const autoDetectDefinitions = [
-    {manufacturer: 'wch.cn', vendorId: '1A86', productId: '7523'}, // ThirdReality Zigbee USB Dongle
+    {manufacturer: "wch.cn", vendorId: "1A86", productId: "7523"}, // ThirdReality Zigbee USB Dongle
 ];
 
 interface WaitressMatcher {
@@ -45,25 +45,27 @@ export class BLZAdapter extends Adapter {
         this.interpanLock = false;
         this.closing = false;
 
-        const concurrent = adapterOptions && adapterOptions.concurrent ? adapterOptions.concurrent : 8;
+        const concurrent = adapterOptions?.concurrent ?? 8;
         logger.debug(`Adapter concurrent: ${concurrent}`, NS);
         this.queue = new Queue(concurrent);
 
         this.driver = new Driver(this.serialPortOptions, this.networkOptions, backupPath);
-        this.driver.on('close', this.onDriverClose.bind(this));
-        this.driver.on('deviceJoined', this.handleDeviceJoin.bind(this));
-        this.driver.on('deviceLeft', this.handleDeviceLeft.bind(this));
-        this.driver.on('incomingMessage', this.processMessage.bind(this));
+        this.driver.on("close", this.onDriverClose.bind(this));
+        this.driver.on("deviceJoined", this.handleDeviceJoin.bind(this));
+        this.driver.on("deviceLeft", this.handleDeviceLeft.bind(this));
+        this.driver.on("incomingMessage", this.processMessage.bind(this));
     }
 
     private async processMessage(frame: BlzIncomingMessage): Promise<void> {
         logger.debug(() => `processMessage: ${JSON.stringify(frame)}`, NS);
 
-        if (frame.apsFrame.profileId == Zdo.ZDO_PROFILE_ID) {
+        if (frame.apsFrame.profileId === Zdo.ZDO_PROFILE_ID) {
             if (frame.apsFrame.clusterId >= 0x8000 /* response only */) {
-                this.emit('zdoResponse', frame.apsFrame.clusterId, frame.zdoResponse!);
+                if (frame.zdoResponse) {
+                    this.emit("zdoResponse", frame.apsFrame.clusterId, frame.zdoResponse);
+                }
             }
-        } else if (frame.apsFrame.profileId == ZSpec.HA_PROFILE_ID || frame.apsFrame.profileId == 0xffff) {
+        } else if (frame.apsFrame.profileId === ZSpec.HA_PROFILE_ID || frame.apsFrame.profileId === 0xffff) {
             const payload: ZclPayload = {
                 clusterID: frame.apsFrame.clusterId,
                 header: Zcl.Header.fromBuffer(frame.message),
@@ -77,10 +79,10 @@ export class BLZAdapter extends Adapter {
             };
 
             this.waitress.resolve(payload);
-            this.emit('zclPayload', payload);
-        } else if (frame.apsFrame.profileId == ZSpec.TOUCHLINK_PROFILE_ID && frame.senderEui64) {
+            this.emit("zclPayload", payload);
+        } else if (frame.apsFrame.profileId === ZSpec.TOUCHLINK_PROFILE_ID && frame.senderEui64) {
             // Touchlink is not supported by BLZ
-        } else if (frame.apsFrame.profileId == ZSpec.GP_PROFILE_ID) {
+        } else if (frame.apsFrame.profileId === ZSpec.GP_PROFILE_ID) {
             // Green Power is not supported by BLZ
         }
     }
@@ -88,7 +90,7 @@ export class BLZAdapter extends Adapter {
     private async handleDeviceJoin(nwk: number, ieee: BlzEUI64): Promise<void> {
         logger.debug(() => `Device join request received: ${nwk} ${ieee.toString()}`, NS);
 
-        this.emit('deviceJoined', {
+        this.emit("deviceJoined", {
             networkAddress: nwk,
             ieeeAddr: `${ieee.toString()}`,
         });
@@ -97,7 +99,7 @@ export class BLZAdapter extends Adapter {
     private handleDeviceLeft(nwk: number, ieee: BlzEUI64): void {
         logger.debug(() => `Device left network request received: ${nwk} ${ieee.toString()}`, NS);
 
-        this.emit('deviceLeave', {
+        this.emit("deviceLeave", {
             networkAddress: nwk,
             ieeeAddr: `0x${ieee.toString()}`,
         });
@@ -117,11 +119,11 @@ export class BLZAdapter extends Adapter {
         await this.driver.stop();
     }
 
-    public async onDriverClose(): Promise<void> {
-        logger.debug(`onDriverClose()`, NS);
+    public onDriverClose(): void {
+        logger.debug("onDriverClose()", NS);
 
         if (!this.closing) {
-            this.emit('disconnected');
+            this.emit("disconnected");
         }
     }
 
@@ -171,12 +173,12 @@ export class BLZAdapter extends Adapter {
     }
 
     public async addInstallCode(ieeeAddress: string, key: Buffer): Promise<void> {
-        throw new Error('Not supported');
+        throw new Error("Not supported");
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    public async reset(type: 'soft' | 'hard'): Promise<void> {
-        return await Promise.reject(new Error('Not supported'));
+    public async reset(type: "soft" | "hard"): Promise<void> {
+        return await Promise.reject(new Error("Not supported"));
     }
 
     public async sendZdo(
@@ -199,7 +201,7 @@ export class BLZAdapter extends Adapter {
         clusterId: K,
         payload: Buffer,
         disableResponse: boolean,
-    ): Promise<ZdoTypes.RequestToResponseMap[K] | void> {
+    ): Promise<ZdoTypes.RequestToResponseMap[K] | undefined> {
         return await this.queue.execute(async () => {
             this.checkInterpanLock();
 
@@ -225,7 +227,7 @@ export class BLZAdapter extends Adapter {
 
                 const req = await this.driver.brequest(networkAddress, frame, payload);
 
-                logger.debug(`~~~> [SENT ZDO BROADCAST]`, NS);
+                logger.debug("~~~> [SENT ZDO BROADCAST]", NS);
 
                 if (!req) {
                     waiter?.cancel();
@@ -236,7 +238,7 @@ export class BLZAdapter extends Adapter {
 
                 const req = await this.driver.request(networkAddress, frame, payload);
 
-                logger.debug(`~~~> [SENT ZDO UNICAST]`, NS);
+                logger.debug("~~~> [SENT ZDO UNICAST]", NS);
 
                 if (!req) {
                     waiter?.cancel();
@@ -335,7 +337,7 @@ export class BLZAdapter extends Adapter {
             if (response != null) {
                 response.cancel();
             }
-            throw Error('sendZclFrameToEndpointInternal error');
+            throw Error("sendZclFrameToEndpointInternal error");
         }
         if (response !== null) {
             try {
@@ -429,12 +431,12 @@ export class BLZAdapter extends Adapter {
     }
 
     public async backup(): Promise<Models.Backup> {
-        assert(this.driver.blz.isInitialized(), 'Cannot make backup when blz is not initialized');
+        assert(this.driver.blz.isInitialized(), "Cannot make backup when blz is not initialized");
         return await this.driver.backupMan.createBackup();
     }
 
     public async restoreChannelInterPAN(): Promise<void> {
-        throw new Error('Not supported');
+        throw new Error("Not supported");
     }
 
     private checkInterpanLock(): void {
@@ -444,19 +446,19 @@ export class BLZAdapter extends Adapter {
     }
 
     public async sendZclFrameInterPANToIeeeAddr(zclFrame: Zcl.Frame, ieeeAddr: string): Promise<void> {
-        throw new Error('Not supported');
+        throw new Error("Not supported");
     }
 
     public async sendZclFrameInterPANBroadcast(zclFrame: Zcl.Frame, timeout: number): Promise<ZclPayload> {
-        throw new Error('Not supported');
+        throw new Error("Not supported");
     }
 
     public async setTransmitPower(value: number): Promise<void> {
-        throw new Error('Not supported');
+        throw new Error("Not supported");
     }
 
     public async setChannelInterPAN(channel: number): Promise<void> {
-        throw new Error('Not supported');
+        throw new Error("Not supported");
     }
 
     private waitForInternal(

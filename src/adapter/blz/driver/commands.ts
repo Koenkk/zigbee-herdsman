@@ -5,7 +5,7 @@ import {
     BlzEUI64,
     BlzMultiAddress,
     BlzNeighbors,
-    BlzNodeDescriptor /* Named Types */,
+    BlzNodeDescriptor,
     BlzNodeId,
     BlzRoutingTable,
     BlzSimpleDescriptor,
@@ -24,9 +24,9 @@ export interface BLZFrameDesc {
     maxV?: number;
 }
 
-import { uint8_t, uint16_t, uint32_t, uint64_t, int8s, Bytes, WordList, LVBytes } from './types';
-import { BlzStatus, BlzValueId} from './types';
-import {Fixed16Bytes} from './types/basic';
+import { Bytes, LVBytes, WordList, int8s, uint8_t, uint16_t, uint32_t, uint64_t } from "./types";
+import { BlzStatus, BlzValueId} from "./types";
+import {Fixed16Bytes} from "./types/basic";
 
 export const FRAMES: { [key: string]: BLZFrameDesc } = {
     // Control Frames
