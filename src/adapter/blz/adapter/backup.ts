@@ -46,9 +46,10 @@ export class BLZAdapterBackup {
                 panId: netParams.panId,
                 extendedPanId: (() => {
                     const bytes = [];
+                    // in zigpy/open-coordinator-backup, all binary sequences in this format need to be stored MSB-LSB (big endian)
                     let extPanId = netParams.extPanId;
                     for (let i = 0; i < 8; i++) {
-                        bytes.unshift(Number(extPanId & 0xFFn));
+                        bytes.push(Number(extPanId & 0xFFn)); 
                         extPanId >>= 8n;
                     }
                     return Buffer.from(bytes);

@@ -158,6 +158,7 @@ export class Driver extends EventEmitter {
 
         this.blz.on('reset', this.onBlzReset.bind(this));
 
+        // TODO: add sleep here to make sure the dongle is connected
         await this.addEndpoint({
             inputClusters: [0x0000, 0x0003, 0x0006, 0x000a, 0x0019, 0x001a],
             outputClusters: [
@@ -169,6 +170,7 @@ export class Driver extends EventEmitter {
 
         if (await this.needsToBeInitialised(this.nwkOpt)) {
             logger.info('The network setup need to be initialized', NS);
+            await wait(1000)
             const restore = await this.needsToBeRestore(this.nwkOpt);
 
             logger.info(`Leaving the current network`, NS);
@@ -179,6 +181,7 @@ export class Driver extends EventEmitter {
                 logger.error(`leaveNetwork returned unexpected status: ${st}`, NS);
             }
 
+            await wait(1000)
             logger.info(`Left the current network`, NS);
 
             if (restore) {
@@ -191,7 +194,7 @@ export class Driver extends EventEmitter {
                 result = 'reset';
             }
         }
-        await wait(3000);
+        await wait(1000);
         // TODO: make sure the stack is running
         logger.info('The Zigbee network is formed', NS);
 
@@ -220,7 +223,7 @@ export class Driver extends EventEmitter {
     private async needsToBeInitialised(options: TsType.NetworkOptions): Promise<boolean> {
         let valid = true;
         valid = valid && (await this.blz.networkInit());
-        logger.debug(`needToBeInitialized success stack up: , ${valid}`, NS)
+        logger.debug(`needToBeInitialized success stack up: ${valid}`, NS)
         const netParams = await this.blz.execCommand('getNetworkParameters');
         logger.debug(`Current Node type: ${netParams.nodeType}, Network parameters: ${netParams}`, NS);
         valid = valid && netParams.status == BlzStatus.SUCCESS;
@@ -253,13 +256,21 @@ export class Driver extends EventEmitter {
             if (!backup) {
                 throw new Error(`No valid backup found.`);
             }
-
             const {sequenceNumber, frameCounter } = backup.networkKeyInfo;
-            const networkKey = backup.networkOptions.networkKey
-            // can only change network key and link key if stack is on and leave the network
+            let networkKey = backup.networkOptions.networkKey;
+            // Convert hex string to Buffer if needed
+            if (typeof networkKey === 'string') {
+                networkKey = Buffer.from(networkKey, 'hex');
+            }
+            // can only change network key and link key when the stack is on and leave the current network
             await this.setNetworkKeyInfo(networkKey, frameCounter, sequenceNumber);
-            await this.setGlobalTcLinkKey(backup.blz!.tclk!, backup.blz!.tclkFrameCounter!);
-        } 
+            // await this.setGlobalTcLinkKey(backup.blz!.tclk!, backup.blz!.tclkFrameCounter!);
+            } else {
+            if (this.nwkOpt.networkKey) {
+                let networkKey = this.nwkOpt.networkKey;
+                await this.setNetworkKeyInfo(Buffer.from(networkKey), 0, 0);
+            }
+        }
 
         if (restore) {
             const [backupextendedPanID] = uint64_t.deserialize(uint64_t, Buffer.from(backup!.networkOptions.extendedPanId));
@@ -591,7 +602,7 @@ export class Driver extends EventEmitter {
         }
     
         logger.debug(
-            `Global TC Key retrieved: Key=${linkKey}, FrameCounter=${outgoingFrameCounter}, TCAddress=${trustCenterAddress}`,
+            `Global TC Key retrieved: Key=${linkKey.toString('hex')}, FrameCounter=${outgoingFrameCounter}, TCAddress=${trustCenterAddress}`,
             NS
         );
     
@@ -635,7 +646,7 @@ export class Driver extends EventEmitter {
         }
     
         logger.debug(
-            `Network Key Info retrieved: Key=${nwkKey}, FrameCounter=${outgoingFrameCounter}, SeqNum=${nwkKeySeqNum}`,
+            `Network Key Info retrieved: Key=${nwkKey.toString('hex')}, FrameCounter=${outgoingFrameCounter}, SeqNum=${nwkKeySeqNum}`,
             NS
         );
     
@@ -647,6 +658,15 @@ export class Driver extends EventEmitter {
         outgoingFrameCounter: uint32_t,
         nwkKeySeqNum: uint8_t
     ): Promise<BlzStatus> {
+        // Validate network key format
+        if (!Buffer.isBuffer(nwkKey) || nwkKey.length !== 16) {
+            throw new Error(`Invalid network key format - must be 16 byte Buffer`);
+        }
+
+        logger.debug(`Setting network key: ${nwkKey.toString('hex')}`, NS);
+        logger.debug(`Frame counter: ${outgoingFrameCounter}`, NS);
+        logger.debug(`Key seq num: ${nwkKeySeqNum}`, NS);
+
         const frameRequest = {
             nwkKey,
             outgoingFrameCounter,
@@ -663,7 +683,7 @@ export class Driver extends EventEmitter {
         }
     
         logger.debug(
-            `Network Security Infos set successfully: Key=${nwkKey}, FrameCounter=${outgoingFrameCounter}, SeqNum=${nwkKeySeqNum}`,
+            `Network Security Infos set successfully: Key=${nwkKey.toString('hex')}, FrameCounter=${outgoingFrameCounter}, SeqNum=${nwkKeySeqNum}`,
             NS
         );
     
@@ -681,10 +701,25 @@ export class Driver extends EventEmitter {
         logger.debug(`needsToBeRestore same PanID: ${valid}`, NS)
         valid = valid && options.channelList.includes(backup.logicalChannel);
         logger.debug(`needsToBeRestore valid channel: ${valid}`, NS)
-        valid = valid && Buffer.from(options.extendedPanID!).equals(backup.networkOptions.extendedPanId);
-        logger.debug(`needsToBeRestore same extendedPanID: ${valid}`, NS)
-        valid = valid && Buffer.from(options.networkKey!).equals(backup.networkOptions.networkKey);
-        logger.debug(`needsToBeRestore same network key: ${valid}`, NS)
+        // Ensure both extendedPanIDs are compared with same endianness
+        const currentExtendedPanID = Buffer.from(options.extendedPanID!);
+        const backupExtendedPanID = backup.networkOptions.extendedPanId;
+        logger.debug(`Configured extendedPanID (raw): ${currentExtendedPanID.toString('hex')}`, NS);
+        logger.debug(`Backup extendedPanID (raw): ${backupExtendedPanID.toString('hex')}`, NS);
+        
+        // Convert both to uint64_t for consistent comparison
+        const [currentPanID] = uint64_t.deserialize(uint64_t, currentExtendedPanID);
+        const [backupPanID] = uint64_t.deserialize(uint64_t, backupExtendedPanID);
+        logger.debug(`Configured extendedPanID (uint64): ${currentPanID.toString(16)}`, NS);
+        logger.debug(`Backup extendedPanID (uint64): ${backupPanID.toString(16)}`, NS);
+        valid = valid && currentPanID === backupPanID;
+        logger.debug(`needsToBeRestore same extendedPanID: ${valid}`, NS);
+        const currentNetworkKey = Buffer.from(options.networkKey!);
+        const backupNetworkKey = backup.networkOptions.networkKey;
+        logger.debug(`Configured networkKey (raw): ${currentNetworkKey.toString('hex')}`, NS);
+        logger.debug(`Backup networkKey (raw): ${backupNetworkKey.toString('hex')}`, NS);
+        valid = valid && currentNetworkKey.equals(backupNetworkKey);
+        logger.debug(`needsToBeRestore same network key: ${valid}`, NS);
         return valid;
     }
 }
