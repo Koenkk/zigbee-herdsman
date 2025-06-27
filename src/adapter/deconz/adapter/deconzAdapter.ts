@@ -84,7 +84,13 @@ export class DeconzAdapter extends Adapter {
         this.frameParserEvent.on("receivedGreenPowerIndication", (data) => this.checkReceivedGreenPowerIndication(data));
 
         setInterval(() => {
-            this.checkWaitForDataRequestTimeouts();
+            // Need to have a try/catch block here since promised can be rejected which don't
+            // have a handler waiting for them anymore.
+            try {
+                this.checkWaitForDataRequestTimeouts();
+            } catch (_err) {
+
+            }
         }, 1000);
     }
 
