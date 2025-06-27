@@ -166,6 +166,7 @@ interface WaitForDataRequest {
     transactionSequenceNumber: number;
     resolve: (value: ReceivedDataResponse | PromiseLike<ReceivedDataResponse>) => void;
     reject: (value: Error) => void;
+    confirmed: boolean;
     ts: number;
     timeout: number;
 }
