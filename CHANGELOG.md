@@ -1,5 +1,14 @@
 # Changelog
 
+## [4.2.1](https://github.com/Koenkk/zigbee-herdsman/compare/v4.2.0...v4.2.1) (2025-06-28)
+
+
+### Bug Fixes
+
+* deCONZ: handle race condition between APS confirm/indication timeouts ([#1432](https://github.com/Koenkk/zigbee-herdsman/issues/1432)) ([8a134cc](https://github.com/Koenkk/zigbee-herdsman/commit/8a134cc5bdd200ea75900660db444ceec9fdfa57))
+* **ignore:** bump the minor-patch group with 2 updates ([#1430](https://github.com/Koenkk/zigbee-herdsman/issues/1430)) ([33e708d](https://github.com/Koenkk/zigbee-herdsman/commit/33e708dbd60d9906540e5ad5f5a5447b1815c64e))
+* **ignore:** Migrate to Biome 2 ([#1427](https://github.com/Koenkk/zigbee-herdsman/issues/1427)) ([a4d7b19](https://github.com/Koenkk/zigbee-herdsman/commit/a4d7b190bff6fb2c01e733bfe20fd6aabd3176cf))
+
 ## [4.2.0](https://github.com/Koenkk/zigbee-herdsman/compare/v4.1.2...v4.2.0) (2025-06-22)
 
 
