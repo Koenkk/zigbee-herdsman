@@ -84,7 +84,11 @@ export class DeconzAdapter extends Adapter {
         this.frameParserEvent.on("receivedGreenPowerIndication", (data) => this.checkReceivedGreenPowerIndication(data));
 
         setInterval(() => {
-            this.checkWaitForDataRequestTimeouts();
+            // Need to have a try/catch block here since promised can be rejected which don't
+            // have a handler waiting for them anymore.
+            try {
+                this.checkWaitForDataRequestTimeouts();
+            } catch (_err) {}
         }, 1000);
     }
 
@@ -289,13 +293,25 @@ export class DeconzAdapter extends Adapter {
 
         try {
             await confirm;
+
+            if (indication) {
+                const indicationIndex = this.openRequestsQueue.findIndex(
+                    (x) => x.clusterId === responseClusterId && x.transactionSequenceNumber === transactionID,
+                );
+
+                if (indicationIndex !== -1) {
+                    this.openRequestsQueue[indicationIndex].confirmed = true;
+                }
+            }
         } catch (err) {
             // no need to wait for indication, remove waiter from queue
             if (indication) {
-                const i = this.openRequestsQueue.findIndex((x) => x.clusterId === responseClusterId && x.transactionSequenceNumber === transactionID);
+                const indicationIndex = this.openRequestsQueue.findIndex(
+                    (x) => x.clusterId === responseClusterId && x.transactionSequenceNumber === transactionID,
+                );
 
-                if (i !== -1) {
-                    this.openRequestsQueue.splice(i, 1);
+                if (indicationIndex !== -1) {
+                    this.openRequestsQueue.splice(indicationIndex, 1);
                 }
             }
 
@@ -417,17 +433,28 @@ export class DeconzAdapter extends Adapter {
 
         try {
             await confirm;
-        } catch (err) {
-            // no need to wait for indication, remove waiter from queue
+
             if (indication) {
-                const i = this.openRequestsQueue.findIndex(
+                const indicationIndex = this.openRequestsQueue.findIndex(
                     (x) => x.clusterId === zclFrame.cluster.ID && x.transactionSequenceNumber === zclFrame.header.transactionSequenceNumber,
                 );
 
-                if (i !== -1) {
-                    this.openRequestsQueue.splice(i, 1);
+                if (indicationIndex !== -1) {
+                    this.openRequestsQueue[indicationIndex].confirmed = true;
                 }
             }
+        } catch (err) {
+            // no need to wait for indication, remove waiter from queue
+            if (indication) {
+                const indicationIndex = this.openRequestsQueue.findIndex(
+                    (x) => x.clusterId === zclFrame.cluster.ID && x.transactionSequenceNumber === zclFrame.header.transactionSequenceNumber,
+                );
+
+                if (indicationIndex !== -1) {
+                    this.openRequestsQueue.splice(indicationIndex, 1);
+                }
+            }
+
             throw new Error(`failed to send ZCL request (${zclFrame.header.transactionSequenceNumber}) ${err}`);
         }
 
@@ -639,7 +666,8 @@ export class DeconzAdapter extends Adapter {
                 timeout = 60000;
             }
 
-            const req: WaitForDataRequest = {addr, profileId, clusterId, transactionSequenceNumber, resolve, reject, ts, timeout};
+            const confirmed = false;
+            const req: WaitForDataRequest = {addr, profileId, clusterId, transactionSequenceNumber, resolve, reject, confirmed, ts, timeout};
             this.openRequestsQueue.push(req);
         });
     }
@@ -682,7 +710,7 @@ export class DeconzAdapter extends Adapter {
         const now = Date.now();
         const req: WaitForDataRequest = this.openRequestsQueue[0];
 
-        if (req.timeout < now - req.ts) {
+        if (req.confirmed && req.timeout < now - req.ts) {
             this.openRequestsQueue.shift();
             logger.debug(
                 `Timeout for request in openRequestsQueue addr: ${req.addr}, clusterId: ${req.clusterId.toString(16)}, profileId: ${req.profileId.toString(16)}, seq: ${req.transactionSequenceNumber}`,
