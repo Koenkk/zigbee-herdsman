@@ -1,14 +1,14 @@
-import assert from 'node:assert';
+import assert from "node:assert";
 
-import {logger} from '../../utils/logger';
-import * as Zcl from '../../zspec/zcl';
-import ZclTransactionSequenceNumber from '../helpers/zclTransactionSequenceNumber';
-import {DatabaseEntry, KeyValue} from '../tstype';
-import Device from './device';
-import Endpoint from './endpoint';
-import Entity from './entity';
+import {logger} from "../../utils/logger";
+import * as Zcl from "../../zspec/zcl";
+import zclTransactionSequenceNumber from "../helpers/zclTransactionSequenceNumber";
+import type {DatabaseEntry, KeyValue} from "../tstype";
+import Device from "./device";
+import type Endpoint from "./endpoint";
+import Entity from "./entity";
 
-const NS = 'zh:controller:group';
+const NS = "zh:controller:group";
 
 interface Options {
     manufacturerCode?: number;
@@ -33,7 +33,7 @@ export class Group extends Entity {
     // This lookup contains all groups that are queried from the database, this is to ensure that always
     // the same instance is returned.
     private static readonly groups: Map<number /* groupID */, Group> = new Map();
-    private static loadedFromDatabase: boolean = false;
+    private static loadedFromDatabase = false;
 
     /** Member endpoints with valid devices (not unknown/deleted) */
     get members(): Endpoint[] {
@@ -80,7 +80,7 @@ export class Group extends Entity {
     }
 
     private toDatabaseRecord(): DatabaseEntry {
-        const members: DatabaseEntry['members'] = [];
+        const members: DatabaseEntry["members"] = [];
 
         for (const member of this._members) {
             const device = member.getDevice();
@@ -90,12 +90,13 @@ export class Group extends Entity {
             }
         }
 
-        return {id: this.databaseID, type: 'Group', groupID: this.groupID, members, meta: this.meta};
+        return {id: this.databaseID, type: "Group", groupID: this.groupID, members, meta: this.meta};
     }
 
     private static loadFromDatabaseIfNecessary(): void {
         if (!Group.loadedFromDatabase) {
-            for (const entry of Entity.database!.getEntriesIterator(['Group'])) {
+            // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
+            for (const entry of Entity.database!.getEntriesIterator(["Group"])) {
                 const group = Group.fromDatabaseEntry(entry);
                 Group.groups.set(group.groupID, group);
             }
@@ -128,10 +129,10 @@ export class Group extends Entity {
     }
 
     public static create(groupID: number): Group {
-        assert(typeof groupID === 'number', 'GroupID must be a number');
+        assert(typeof groupID === "number", "GroupID must be a number");
         // Don't allow groupID 0, from the spec:
         // "Scene identifier 0x00, along with group identifier 0x0000, is reserved for the global scene used by the OnOff cluster"
-        assert(groupID >= 1, 'GroupID must be at least 1');
+        assert(groupID >= 1, "GroupID must be at least 1");
 
         Group.loadFromDatabaseIfNecessary();
 
@@ -139,8 +140,10 @@ export class Group extends Entity {
             throw new Error(`Group with groupID '${groupID}' already exists`);
         }
 
+        // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
         const databaseID = Entity.database!.newID();
         const group = new Group(databaseID, groupID, [], {});
+        // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
         Entity.database!.insert(group.toDatabaseRecord());
 
         Group.groups.set(group.groupID, group);
@@ -158,7 +161,9 @@ export class Group extends Entity {
     public removeFromDatabase(): void {
         Group.loadFromDatabaseIfNecessary();
 
+        // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
         if (Entity.database!.has(this.databaseID)) {
+            // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
             Entity.database!.remove(this.databaseID);
         }
 
@@ -166,6 +171,7 @@ export class Group extends Entity {
     }
 
     public save(writeDatabase = true): void {
+        // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
         Entity.database!.update(this.toDatabaseRecord(), writeDatabase);
     }
 
@@ -202,7 +208,7 @@ export class Group extends Entity {
             if (cluster.hasAttribute(nameOrID)) {
                 const attribute = cluster.getAttribute(nameOrID);
                 payload.push({attrId: attribute.ID, attrData: value, dataType: attribute.type});
-            } else if (!isNaN(Number(nameOrID))) {
+            } else if (!Number.isNaN(Number(nameOrID))) {
                 payload.push({attrId: Number(nameOrID), attrData: value.value, dataType: value.type});
             } else {
                 throw new Error(`Unknown attribute '${nameOrID}', specify either an existing attribute or a number`);
@@ -219,18 +225,20 @@ export class Group extends Entity {
                 optionsWithDefaults.direction,
                 true,
                 optionsWithDefaults.manufacturerCode,
-                optionsWithDefaults.transactionSequenceNumber ?? ZclTransactionSequenceNumber.next(),
-                'write',
+                optionsWithDefaults.transactionSequenceNumber ?? zclTransactionSequenceNumber.next(),
+                "write",
                 cluster.ID,
                 payload,
                 {},
                 optionsWithDefaults.reservedBits,
             );
 
+            // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
             await Entity.adapter!.sendZclFrameToGroup(this.groupID, frame, optionsWithDefaults.srcEndpoint);
         } catch (error) {
             const err = error as Error;
             err.message = `${createLogMessage()} failed (${err.message})`;
+            // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
             logger.debug(err.stack!, NS);
 
             throw error;
@@ -243,7 +251,7 @@ export class Group extends Entity {
         const payload: {attrId: number}[] = [];
 
         for (const attribute of attributes) {
-            payload.push({attrId: typeof attribute === 'number' ? attribute : cluster.getAttribute(attribute).ID});
+            payload.push({attrId: typeof attribute === "number" ? attribute : cluster.getAttribute(attribute).ID});
         }
 
         const frame = Zcl.Frame.create(
@@ -251,8 +259,8 @@ export class Group extends Entity {
             optionsWithDefaults.direction,
             true,
             optionsWithDefaults.manufacturerCode,
-            optionsWithDefaults.transactionSequenceNumber ?? ZclTransactionSequenceNumber.next(),
-            'read',
+            optionsWithDefaults.transactionSequenceNumber ?? zclTransactionSequenceNumber.next(),
+            "read",
             cluster.ID,
             payload,
             {},
@@ -264,10 +272,12 @@ export class Group extends Entity {
         logger.debug(createLogMessage, NS);
 
         try {
+            // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
             await Entity.adapter!.sendZclFrameToGroup(this.groupID, frame, optionsWithDefaults.srcEndpoint);
         } catch (error) {
             const err = error as Error;
             err.message = `${createLogMessage()} failed (${err.message})`;
+            // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
             logger.debug(err.stack!, NS);
 
             throw error;
@@ -288,7 +298,7 @@ export class Group extends Entity {
                 optionsWithDefaults.direction,
                 true,
                 optionsWithDefaults.manufacturerCode,
-                optionsWithDefaults.transactionSequenceNumber || ZclTransactionSequenceNumber.next(),
+                optionsWithDefaults.transactionSequenceNumber || zclTransactionSequenceNumber.next(),
                 command.ID,
                 cluster.ID,
                 payload,
@@ -296,10 +306,12 @@ export class Group extends Entity {
                 optionsWithDefaults.reservedBits,
             );
 
+            // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
             await Entity.adapter!.sendZclFrameToGroup(this.groupID, frame, optionsWithDefaults.srcEndpoint);
         } catch (error) {
             const err = error as Error;
             err.message = `${createLogMessage()} failed (${err.message})`;
+            // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
             logger.debug(err.stack!, NS);
 
             throw error;

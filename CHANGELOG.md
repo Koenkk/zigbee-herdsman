@@ -1,5 +1,112 @@
 # Changelog
 
+## [4.2.1](https://github.com/Koenkk/zigbee-herdsman/compare/v4.2.0...v4.2.1) (2025-06-28)
+
+
+### Bug Fixes
+
+* deCONZ: handle race condition between APS confirm/indication timeouts ([#1432](https://github.com/Koenkk/zigbee-herdsman/issues/1432)) ([8a134cc](https://github.com/Koenkk/zigbee-herdsman/commit/8a134cc5bdd200ea75900660db444ceec9fdfa57))
+* **ignore:** bump the minor-patch group with 2 updates ([#1430](https://github.com/Koenkk/zigbee-herdsman/issues/1430)) ([33e708d](https://github.com/Koenkk/zigbee-herdsman/commit/33e708dbd60d9906540e5ad5f5a5447b1815c64e))
+* **ignore:** Migrate to Biome 2 ([#1427](https://github.com/Koenkk/zigbee-herdsman/issues/1427)) ([a4d7b19](https://github.com/Koenkk/zigbee-herdsman/commit/a4d7b190bff6fb2c01e733bfe20fd6aabd3176cf))
+
+## [4.2.0](https://github.com/Koenkk/zigbee-herdsman/compare/v4.1.2...v4.2.0) (2025-06-22)
+
+
+### Features
+
+* Refactor and improve of Deconz adapter ([#1417](https://github.com/Koenkk/zigbee-herdsman/issues/1417)) ([c719ee4](https://github.com/Koenkk/zigbee-herdsman/commit/c719ee45629f52132f0b673cecd5a4491478ee44))
+* Support for EmberZNet 8.2.0 (EZSP v17 / v2025.6.0) ([#1428](https://github.com/Koenkk/zigbee-herdsman/issues/1428)) ([73a2548](https://github.com/Koenkk/zigbee-herdsman/commit/73a2548b4d9a581038c953177e41f90783597cf1))
+
+
+### Bug Fixes
+
+* **ignore:** bump @types/node from 22.15.30 to 24.0.3 ([#1425](https://github.com/Koenkk/zigbee-herdsman/issues/1425)) ([99b6c97](https://github.com/Koenkk/zigbee-herdsman/commit/99b6c97d4b57c5560607bfd6934ba59410269fcb))
+
+## [4.1.2](https://github.com/Koenkk/zigbee-herdsman/compare/v4.1.1...v4.1.2) (2025-06-15)
+
+
+### Bug Fixes
+
+* Fix interview failing for HOBEIAN devices ([#1422](https://github.com/Koenkk/zigbee-herdsman/issues/1422)) ([172d543](https://github.com/Koenkk/zigbee-herdsman/commit/172d5437dfbb01d54a159b3f872442c21f09e998))
+* **ignore:** bump the minor-patch group with 3 updates ([#1419](https://github.com/Koenkk/zigbee-herdsman/issues/1419)) ([0a9a1c7](https://github.com/Koenkk/zigbee-herdsman/commit/0a9a1c7f41b98a6a65de268ae1c31269366723d5))
+
+## [4.1.1](https://github.com/Koenkk/zigbee-herdsman/compare/v4.1.0...v4.1.1) (2025-06-06)
+
+
+### Bug Fixes
+
+* Enable serial port locking by default for ZiGate ([#1380](https://github.com/Koenkk/zigbee-herdsman/issues/1380)) ([f465823](https://github.com/Koenkk/zigbee-herdsman/commit/f4658234a70faba9256b430a30aec804ebb3fbc3))
+* **ignore:** bump @types/node from 22.15.21 to 22.15.29 in the minor-patch group ([#1414](https://github.com/Koenkk/zigbee-herdsman/issues/1414)) ([534cff5](https://github.com/Koenkk/zigbee-herdsman/commit/534cff5742e597104163c593b578ec963ed7e7c1))
+* **ignore:** bump the minor-patch group with 2 updates ([#1416](https://github.com/Koenkk/zigbee-herdsman/issues/1416)) ([949a08c](https://github.com/Koenkk/zigbee-herdsman/commit/949a08c7ffd1685030e8a713c40970c17cee88a3))
+
+## [4.1.0](https://github.com/Koenkk/zigbee-herdsman/compare/v4.0.2...v4.1.0) (2025-05-20)
+
+
+### Features
+
+* Add conditional fieldControl fields to genOta commands ([#1408](https://github.com/Koenkk/zigbee-herdsman/issues/1408)) ([cc889b0](https://github.com/Koenkk/zigbee-herdsman/commit/cc889b03599e36eed6307027e293c1db429496a2))
+
+## [4.0.2](https://github.com/Koenkk/zigbee-herdsman/compare/v4.0.1...v4.0.2) (2025-05-11)
+
+
+### Bug Fixes
+
+* **ignore:** fix tests ([bd1be3f](https://github.com/Koenkk/zigbee-herdsman/commit/bd1be3fcb1699c9bd954fa0288c3fd5931ed1736))
+
+## [4.0.1](https://github.com/Koenkk/zigbee-herdsman/compare/v4.0.0...v4.0.1) (2025-05-11)
+
+
+### Bug Fixes
+
+* Add support for generic science-related clusters ([#1396](https://github.com/Koenkk/zigbee-herdsman/issues/1396)) ([0ddc009](https://github.com/Koenkk/zigbee-herdsman/commit/0ddc009ded6983f4ac1bd530fc394244c26937a6))
+* ZStack: add additional logging when comparing adapter state with config https://github.com/Koenkk/zigbee-herdsman/issues/1403 ([a82b79f](https://github.com/Koenkk/zigbee-herdsman/commit/a82b79fae602bfd74089cdbe1f917e8173b19795))
+
+## [4.0.0](https://github.com/Koenkk/zigbee-herdsman/compare/v3.5.2...v4.0.0) (2025-04-22)
+
+
+### ⚠ BREAKING CHANGES
+
+* Expose interviewState ([#1391](https://github.com/Koenkk/zigbee-herdsman/issues/1391))
+* Migrate to Biome ([#1387](https://github.com/Koenkk/zigbee-herdsman/issues/1387))
+
+### Features
+
+* Expose interviewState ([#1391](https://github.com/Koenkk/zigbee-herdsman/issues/1391)) ([b9e86b0](https://github.com/Koenkk/zigbee-herdsman/commit/b9e86b01cc2856ce37ff35bdec3059b9d53553a8))
+
+
+### Bug Fixes
+
+* Migrate to Biome ([#1387](https://github.com/Koenkk/zigbee-herdsman/issues/1387)) ([bc30e84](https://github.com/Koenkk/zigbee-herdsman/commit/bc30e84dca168f1b399c3c6fa0042905e5d539ab))
+
+## [3.5.2](https://github.com/Koenkk/zigbee-herdsman/compare/v3.5.1...v3.5.2) (2025-04-17)
+
+
+### Bug Fixes
+
+* **ignore:** update dependencies ([#1388](https://github.com/Koenkk/zigbee-herdsman/issues/1388)) ([8d2da3a](https://github.com/Koenkk/zigbee-herdsman/commit/8d2da3abe61f5870d738dbe8eb8cf1b779be62d2))
+* **ignore:** Update ZoH to v0.1.11 ([#1392](https://github.com/Koenkk/zigbee-herdsman/issues/1392)) ([e9b6bc9](https://github.com/Koenkk/zigbee-herdsman/commit/e9b6bc94a2a61c2e6baada629e006a2aa0776ac0))
+
+## [3.5.1](https://github.com/Koenkk/zigbee-herdsman/compare/v3.5.0...v3.5.1) (2025-04-06)
+
+
+### Bug Fixes
+
+* **ignore:** update dependencies ([#1384](https://github.com/Koenkk/zigbee-herdsman/issues/1384)) ([9e92522](https://github.com/Koenkk/zigbee-herdsman/commit/9e92522ebbfc79006d04467133764d2667110326))
+* Improve Green Power processing ([#1386](https://github.com/Koenkk/zigbee-herdsman/issues/1386)) ([573641b](https://github.com/Koenkk/zigbee-herdsman/commit/573641be043ba5cb4c7a4d14947f37b44a790f92))
+
+## [3.5.0](https://github.com/Koenkk/zigbee-herdsman/compare/v3.4.11...v3.5.0) (2025-04-05)
+
+
+### Features
+
+* add SberDevices manufacturer code ([#1382](https://github.com/Koenkk/zigbee-herdsman/issues/1382)) ([236da5b](https://github.com/Koenkk/zigbee-herdsman/commit/236da5b7b0e007bdbde2d92648bf17bd997bf105))
+* add Tunneling cluster commands ([#1381](https://github.com/Koenkk/zigbee-herdsman/issues/1381)) ([5bf6b40](https://github.com/Koenkk/zigbee-herdsman/commit/5bf6b400f2ed3574c18cdf58245850fa84941413))
+
+
+### Bug Fixes
+
+* Support for Sonoff Dongle Max auto-discovery ([#1378](https://github.com/Koenkk/zigbee-herdsman/issues/1378)) ([38d2885](https://github.com/Koenkk/zigbee-herdsman/commit/38d2885eeb41f4c0839a5ff4e7a79fefd2ad4f48))
+
 ## [3.4.11](https://github.com/Koenkk/zigbee-herdsman/compare/v3.4.10...v3.4.11) (2025-03-31)
 
 

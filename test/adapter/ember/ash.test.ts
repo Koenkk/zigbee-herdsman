@@ -1,8 +1,8 @@
-import {MockBinding, MockPortBinding} from '@serialport/binding-mock';
-import {OpenOptions} from '@serialport/stream';
+import {MockBinding, type MockPortBinding} from "@serialport/binding-mock";
+import type {OpenOptions} from "@serialport/stream";
 
-import {EzspStatus} from '../../../src/adapter/ember/enums';
-import {EzspBuffalo} from '../../../src/adapter/ember/ezsp/buffalo.ts';
+import {EzspStatus} from "../../../src/adapter/ember/enums";
+import {EzspBuffalo} from "../../../src/adapter/ember/ezsp/buffalo";
 import {
     EZSP_EXTENDED_FRAME_CONTROL_LB_INDEX,
     EZSP_FRAME_CONTROL_COMMAND,
@@ -13,14 +13,14 @@ import {
     EZSP_MAX_FRAME_LENGTH,
     EZSP_PARAMETERS_INDEX,
     EZSP_SEQUENCE_INDEX,
-} from '../../../src/adapter/ember/ezsp/consts';
-import {EzspFrameID} from '../../../src/adapter/ember/ezsp/enums.ts';
-import {CONFIG_TX_K, UartAsh} from '../../../src/adapter/ember/uart/ash';
-import {EZSP_HOST_RX_POOL_SIZE, TX_POOL_BUFFERS} from '../../../src/adapter/ember/uart/consts';
-import {EzspBuffer} from '../../../src/adapter/ember/uart/queues';
-import {lowByte} from '../../../src/adapter/ember/utils/math';
-import {wait} from '../../../src/utils/';
-import {adapterSONOFFDongleE, ASH_ACK_FIRST_BYTES, RECD_RSTACK_BYTES, SEND_ACK_FIRST_BYTES, SEND_RST_BYTES} from './consts';
+} from "../../../src/adapter/ember/ezsp/consts";
+import {EzspFrameID} from "../../../src/adapter/ember/ezsp/enums";
+import {CONFIG_TX_K, UartAsh} from "../../../src/adapter/ember/uart/ash";
+import {EZSP_HOST_RX_POOL_SIZE, TX_POOL_BUFFERS} from "../../../src/adapter/ember/uart/consts";
+import {EzspBuffer} from "../../../src/adapter/ember/uart/queues";
+import {lowByte} from "../../../src/adapter/ember/utils/math";
+import {wait} from "../../../src/utils/";
+import {ASH_ACK_FIRST_BYTES, adapterSONOFFDongleE, RECD_RSTACK_BYTES, SEND_ACK_FIRST_BYTES, SEND_RST_BYTES} from "./consts";
 
 const mockSerialPortCloseEvent = vi.fn();
 const mockSerialPortErrorEvent = vi.fn();
@@ -35,8 +35,8 @@ const mockSerialPortErrorEvent = vi.fn();
 
 const mocks = [mockSerialPortCloseEvent, mockSerialPortErrorEvent];
 
-describe('Ember UART ASH Protocol', () => {
-    const openOpts: OpenOptions<MockPortBinding> = {path: '/dev/ttyACM0', baudRate: 115200, binding: MockBinding};
+describe("Ember UART ASH Protocol", () => {
+    const openOpts: OpenOptions<MockPortBinding> = {path: "/dev/ttyACM0", baudRate: 115200, binding: MockBinding};
     /**
      * Mock binding provides:
      *
@@ -48,11 +48,11 @@ describe('Ember UART ASH Protocol', () => {
     let buffalo: EzspBuffalo;
     let frameSequence: number;
 
-    beforeAll(async () => {
+    beforeAll(() => {
         vi.useRealTimers(); // messes with serialport promise handling otherwise?
     });
 
-    afterAll(async () => {
+    afterAll(() => {
         vi.useRealTimers();
     });
 
@@ -64,7 +64,7 @@ describe('Ember UART ASH Protocol', () => {
         frameSequence = 0;
         uartAsh = new UartAsh(openOpts);
         buffalo = new EzspBuffalo(Buffer.alloc(EZSP_MAX_FRAME_LENGTH));
-        MockBinding.createPort('/dev/ttyACM0', {/*echo: true,*/ record: true, /*readyData: emitRSTACK,*/ ...adapterSONOFFDongleE});
+        MockBinding.createPort("/dev/ttyACM0", {/*echo: true,*/ record: true, /*readyData: emitRSTACK,*/ ...adapterSONOFFDongleE});
 
         buffalo.setPosition(0);
     });
@@ -74,7 +74,7 @@ describe('Ember UART ASH Protocol', () => {
         MockBinding.reset();
     });
 
-    it('Inits properly and allocates buffers as needed', () => {
+    it("Inits properly and allocates buffers as needed", () => {
         expect(uartAsh.connected).toStrictEqual(false);
         expect(uartAsh.txQueue).toBeDefined();
         expect(uartAsh.reTxQueue).toBeDefined();
@@ -130,15 +130,15 @@ describe('Ember UART ASH Protocol', () => {
         expect(uartAsh.txFree.length).toStrictEqual(TX_POOL_BUFFERS - 2);
     });
 
-    it('Reaches CONNECTED state', async () => {
+    it("Reaches CONNECTED state", async () => {
         //@ts-expect-error private
-        const initPortSpy = vi.spyOn(uartAsh, 'initPort');
-        const resetNcpSpy = vi.spyOn(uartAsh, 'resetNcp');
-        const sendExecSpy = vi.spyOn(uartAsh, 'sendExec');
+        const initPortSpy = vi.spyOn(uartAsh, "initPort");
+        const resetNcpSpy = vi.spyOn(uartAsh, "resetNcp");
+        const sendExecSpy = vi.spyOn(uartAsh, "sendExec");
         //@ts-expect-error private
-        const onPortCloseSpy = vi.spyOn(uartAsh, 'onPortClose');
+        const onPortCloseSpy = vi.spyOn(uartAsh, "onPortClose");
         //@ts-expect-error private
-        const onPortErrorSpy = vi.spyOn(uartAsh, 'onPortError');
+        const onPortErrorSpy = vi.spyOn(uartAsh, "onPortError");
 
         const resetResult = await uartAsh.resetNcp();
 
@@ -158,7 +158,7 @@ describe('Ember UART ASH Protocol', () => {
         expect(uartAsh.portOpen).toBeTruthy();
 
         //@ts-expect-error private
-        vi.spyOn(uartAsh.serialPort, 'asyncFlush').mockImplementationOnce(vi.fn());
+        vi.spyOn(uartAsh.serialPort, "asyncFlush").mockImplementationOnce(vi.fn());
         //@ts-expect-error private
         uartAsh.serialPort.port.emitData(Buffer.from(RECD_RSTACK_BYTES));
         const startResult = await uartAsh.start();
@@ -174,7 +174,7 @@ describe('Ember UART ASH Protocol', () => {
         expect(uartAsh.counters.rxAllFrames).toStrictEqual(1); // RSTACK
 
         for (const key in uartAsh.counters) {
-            if (key !== 'txAllFrames' && key !== 'rxAllFrames' && key !== 'txAckFrames') {
+            if (key !== "txAllFrames" && key !== "rxAllFrames" && key !== "txAckFrames") {
                 expect(uartAsh.counters[key]).toStrictEqual(0);
             }
         }
@@ -185,13 +185,13 @@ describe('Ember UART ASH Protocol', () => {
         expect(onPortCloseSpy).toHaveBeenCalledTimes(1);
     });
 
-    it.skip('Resets but failed to start b/c error in RSTACK frame returned by NCP', async () => {
+    it.skip("Resets but failed to start b/c error in RSTACK frame returned by NCP", async () => {
         //@ts-expect-error private
-        const rejectFrameSpy = vi.spyOn(uartAsh, 'rejectFrame');
+        const rejectFrameSpy = vi.spyOn(uartAsh, "rejectFrame");
         //@ts-expect-error private
-        const receiveFrameSpy = vi.spyOn(uartAsh, 'receiveFrame');
+        const receiveFrameSpy = vi.spyOn(uartAsh, "receiveFrame");
         //@ts-expect-error private
-        const decodeByteSpy = vi.spyOn(uartAsh, 'decodeByte');
+        const decodeByteSpy = vi.spyOn(uartAsh, "decodeByte");
 
         const resetResult = await uartAsh.resetNcp();
 
@@ -201,7 +201,7 @@ describe('Ember UART ASH Protocol', () => {
         badCrcRSTACK[badCrcRSTACK.length - 2] = 0; // throw CRC low
 
         //@ts-expect-error private
-        vi.spyOn(uartAsh.serialPort, 'asyncFlush').mockImplementationOnce(vi.fn());
+        vi.spyOn(uartAsh.serialPort, "asyncFlush").mockImplementationOnce(vi.fn());
         //@ts-expect-error private
         uartAsh.serialPort.port.emitData(badCrcRSTACK);
         const startResult = await uartAsh.start();
@@ -218,11 +218,11 @@ describe('Ember UART ASH Protocol', () => {
         expect(uartAsh.connected).toBeFalsy();
     });
 
-    describe('In CONNECTED state...', () => {
+    describe("In CONNECTED state...", () => {
         beforeEach(async () => {
             const resetResult = await uartAsh.resetNcp();
             //@ts-expect-error private
-            vi.spyOn(uartAsh.serialPort, 'asyncFlush').mockImplementationOnce(vi.fn());
+            vi.spyOn(uartAsh.serialPort, "asyncFlush").mockImplementationOnce(vi.fn());
             //@ts-expect-error private
             uartAsh.serialPort.port.emitData(Buffer.from(RECD_RSTACK_BYTES));
             const startResult = await uartAsh.start();
@@ -237,7 +237,7 @@ describe('Ember UART ASH Protocol', () => {
         });
         afterEach(async () => {});
 
-        it('Sends DATA frame to NCP', async () => {
+        it("Sends DATA frame to NCP", async () => {
             buffalo.setPosition(EZSP_PARAMETERS_INDEX);
             buffalo.setCommandByte(EZSP_FRAME_ID_INDEX, lowByte(EzspFrameID.VERSION));
             buffalo.setCommandByte(EZSP_SEQUENCE_INDEX, frameSequence++);
@@ -249,7 +249,7 @@ describe('Ember UART ASH Protocol', () => {
             );
             buffalo.writeUInt8(13); // desiredProtocolVersion
 
-            let sendBuf = buffalo.getWritten();
+            const sendBuf = buffalo.getWritten();
 
             uartAsh.send(sendBuf.length, sendBuf);
 
@@ -259,14 +259,14 @@ describe('Ember UART ASH Protocol', () => {
             //@ts-expect-error private
             expect(uartAsh.serialPort.port.recording).toStrictEqual(
                 Buffer.concat([
-                    Buffer.from('1ac038bc7e', 'hex'), // RST
-                    Buffer.from('8070787e', 'hex'), // RSTACK ACK
-                    Buffer.from('004221a8597c057e', 'hex'), // DATA
+                    Buffer.from("1ac038bc7e", "hex"), // RST
+                    Buffer.from("8070787e", "hex"), // RSTACK ACK
+                    Buffer.from("004221a8597c057e", "hex"), // DATA
                 ]),
             );
         });
 
-        it('Sends DATA frame and receives response from NCP', async () => {
+        it("Sends DATA frame and receives response from NCP", async () => {
             buffalo.setPosition(EZSP_PARAMETERS_INDEX);
             buffalo.setCommandByte(EZSP_FRAME_ID_INDEX, lowByte(EzspFrameID.VERSION));
             buffalo.setCommandByte(EZSP_SEQUENCE_INDEX, frameSequence++);
@@ -278,7 +278,7 @@ describe('Ember UART ASH Protocol', () => {
             );
             buffalo.writeUInt8(2); // desiredProtocolVersion
 
-            let sendBuf = buffalo.getWritten();
+            const sendBuf = buffalo.getWritten();
 
             uartAsh.send(sendBuf.length, sendBuf);
 
@@ -293,13 +293,13 @@ describe('Ember UART ASH Protocol', () => {
             expect(uartAsh.counters.rxAckFrames).toStrictEqual(1);
         });
 
-        it('TODO: Sends DATA frame with NR flags when buffers are low on host', async () => {});
+        it("TODO: Sends DATA frame with NR flags when buffers are low on host", async () => {});
 
-        it('TODO: Sends DATA frame but times out waiting for response', async () => {});
+        it("TODO: Sends DATA frame but times out waiting for response", async () => {});
 
-        it('TODO: Resends DATA frame', async () => {});
+        it("TODO: Resends DATA frame", async () => {});
 
-        it('Allows sending up to TX_K frames before receiving ACK', async () => {
+        it("Allows sending up to TX_K frames before receiving ACK", async () => {
             buffalo.setPosition(EZSP_PARAMETERS_INDEX);
             buffalo.setCommandByte(EZSP_FRAME_ID_INDEX, lowByte(EzspFrameID.VERSION));
             buffalo.setCommandByte(EZSP_SEQUENCE_INDEX, frameSequence++);
@@ -311,7 +311,7 @@ describe('Ember UART ASH Protocol', () => {
             );
             buffalo.writeUInt8(13); // desiredProtocolVersion
 
-            let sendBuf = buffalo.getWritten();
+            const sendBuf = buffalo.getWritten();
 
             for (let i = 0; i <= CONFIG_TX_K; i++) {
                 uartAsh.send(sendBuf.length, sendBuf);
@@ -325,11 +325,11 @@ describe('Ember UART ASH Protocol', () => {
             //@ts-expect-error private
             expect(uartAsh.serialPort.port.recording).toStrictEqual(
                 Buffer.concat([
-                    Buffer.from('1ac038bc7e', 'hex'), // RST
-                    Buffer.from('8070787e', 'hex'), // RSTACK ACK
-                    Buffer.from('004221a8597c057e', 'hex'), // DATA 1
-                    Buffer.from('104221a859785f7e', 'hex'), // DATA 2
-                    Buffer.from('204221a85974b17e', 'hex'), // DATA 3
+                    Buffer.from("1ac038bc7e", "hex"), // RST
+                    Buffer.from("8070787e", "hex"), // RSTACK ACK
+                    Buffer.from("004221a8597c057e", "hex"), // DATA 1
+                    Buffer.from("104221a859785f7e", "hex"), // DATA 2
+                    Buffer.from("204221a85974b17e", "hex"), // DATA 3
                 ]),
             );
         });

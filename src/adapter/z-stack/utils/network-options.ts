@@ -1,7 +1,7 @@
 /* v8 ignore start */
 
-import * as Models from '../../../models';
-import {compareChannelLists} from './channel-list';
+import type * as Models from "../../../models";
+import {compareChannelLists} from "./channel-list";
 
 /**
  * Checks if two network options models match.

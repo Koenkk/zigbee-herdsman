@@ -1,15 +1,15 @@
-import assert from 'node:assert';
+import assert from "node:assert";
 
-import {SerializableMemoryObject} from './serializable-memory-object';
+import type {SerializableMemoryObject} from "./serializable-memory-object";
 
 /* Helper Types */
-type StructMemberType = 'uint8' | 'uint16' | 'uint32' | 'uint8array' | 'uint8array-reversed' | 'struct';
-type StructBuildOmitKeys = 'member' | 'method' | 'padding' | 'build' | 'default';
+type StructMemberType = "uint8" | "uint16" | "uint32" | "uint8array" | "uint8array-reversed" | "struct";
+type StructBuildOmitKeys = "member" | "method" | "padding" | "build" | "default";
 type StructChild = {offset: number; struct: Struct};
 export type BuiltStruct<T = Struct> = Omit<T, StructBuildOmitKeys>;
 export type StructFactorySignature<T = Struct> = (data?: Buffer) => T;
 
-export type StructMemoryAlignment = 'unaligned' | 'aligned';
+export type StructMemoryAlignment = "unaligned" | "aligned";
 
 /**
  * Struct provides a builder-like interface to create Buffer-based memory
@@ -38,9 +38,9 @@ export class Struct implements SerializableMemoryObject {
      * Returns raw contents of the structure as a sliced Buffer.
      * Mutations to the returned buffer will not be reflected within struct.
      */
-    public serialize(alignment: StructMemoryAlignment = 'unaligned', padLength = true, parentOffset = 0): Buffer {
+    public serialize(alignment: StructMemoryAlignment = "unaligned", padLength = true, parentOffset = 0): Buffer {
         switch (alignment) {
-            case 'unaligned': {
+            case "unaligned": {
                 /* update child struct values and return as-is (unaligned) */
                 for (const key of Object.keys(this.childStructs)) {
                     const child = this.childStructs[key];
@@ -48,33 +48,33 @@ export class Struct implements SerializableMemoryObject {
                 }
                 return Buffer.from(this.buffer);
             }
-            case 'aligned': {
+            case "aligned": {
                 /* create 16-bit aligned buffer */
                 const aligned = Buffer.alloc(this.getLength(alignment, padLength, parentOffset), this.paddingByte);
                 let offset = 0;
                 for (const member of this.members) {
                     switch (member.type) {
-                        case 'uint8':
+                        case "uint8":
                             aligned.set(this.buffer.slice(member.offset, member.offset + 1), offset);
                             offset += 1;
                             break;
-                        case 'uint16':
+                        case "uint16":
                             offset += offset % 2;
                             aligned.set(this.buffer.slice(member.offset, member.offset + 2), offset);
                             offset += 2;
                             break;
-                        case 'uint32':
+                        case "uint32":
                             offset += offset % 2;
                             aligned.set(this.buffer.slice(member.offset, member.offset + 4), offset);
                             offset += 4;
                             break;
-                        case 'uint8array':
-                        case 'uint8array-reversed':
+                        case "uint8array":
+                        case "uint8array-reversed":
                             assert(member.length !== undefined);
                             aligned.set(this.buffer.slice(member.offset, member.offset + member.length), offset);
                             offset += member.length;
                             break;
-                        case 'struct': {
+                        case "struct": {
                             const structData = this.childStructs[member.key].struct.serialize(alignment, false, offset);
                             aligned.set(structData, offset);
                             offset += structData.length;
@@ -91,31 +91,31 @@ export class Struct implements SerializableMemoryObject {
      * Returns total length of the struct. Struct length is always fixed and configured
      * by calls to `member()` methods.
      */
-    public getLength(alignment: StructMemoryAlignment = 'unaligned', padLength = true, parentOffset = 0): number {
+    public getLength(alignment: StructMemoryAlignment = "unaligned", padLength = true, parentOffset = 0): number {
         switch (alignment) {
-            case 'unaligned': {
+            case "unaligned": {
                 /* return actual length */
                 return this.length;
             }
-            case 'aligned': {
+            case "aligned": {
                 /* compute aligned length and return */
                 let length = this.members.reduce((offset, member) => {
                     switch (member.type) {
-                        case 'uint8':
+                        case "uint8":
                             offset += 1;
                             break;
-                        case 'uint16':
+                        case "uint16":
                             offset += ((parentOffset + offset) % 2) + 2;
                             break;
-                        case 'uint32':
+                        case "uint32":
                             offset += ((parentOffset + offset) % 2) + 4;
                             break;
-                        case 'uint8array':
-                        case 'uint8array-reversed':
+                        case "uint8array":
+                        case "uint8array-reversed":
                             assert(member.length !== undefined);
                             offset += member.length;
                             break;
-                        case 'struct':
+                        case "struct":
                             offset += this.childStructs[member.key].struct.getLength(alignment, false);
                             break;
                     }
@@ -132,13 +132,12 @@ export class Struct implements SerializableMemoryObject {
     /**
      * Returns structure contents in JS object format.
      */
-    // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
     public toJSON() {
         return this.members.reduce((a, c) => {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            // biome-ignore lint/suspicious/noExplicitAny: API
             a[c.key] = (this as any)[c.key];
             return a;
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            // biome-ignore lint/suspicious/noExplicitAny: API
         }, {} as any);
     }
 
@@ -151,7 +150,7 @@ export class Struct implements SerializableMemoryObject {
      * @param type Underlying data type (uint8, uint16 or uint32).
      * @param name Name of the struct member.
      */
-    public member<T extends number, N extends string, R extends this & Record<N, T>>(type: 'uint8' | 'uint16' | 'uint32', name: N): R;
+    public member<T extends number, N extends string, R extends this & Record<N, T>>(type: "uint8" | "uint16" | "uint32", name: N): R;
 
     /**
      * Adds an uint8 array (byte array) as a struct member.
@@ -163,7 +162,7 @@ export class Struct implements SerializableMemoryObject {
      * @param length Length of the byte array.
      */
     public member<T extends Buffer, N extends string, R extends this & Record<N, T>>(
-        type: 'uint8array' | 'uint8array-reversed',
+        type: "uint8array" | "uint8array-reversed",
         name: N,
         length: number,
     ): R;
@@ -179,7 +178,7 @@ export class Struct implements SerializableMemoryObject {
      * @param structFactory Factory providing the wanted child struct.
      */
     public member<T extends BuiltStruct, N extends string, R extends this & Record<N, T>>(
-        type: 'struct',
+        type: "struct",
         name: N,
         structFactory: StructFactorySignature<T>,
     ): R;
@@ -190,11 +189,11 @@ export class Struct implements SerializableMemoryObject {
         lengthOrStructFactory?: number | StructFactorySignature<T>,
     ): R {
         const offset = this.length;
-        const structFactory = type === 'struct' ? (lengthOrStructFactory as StructFactorySignature<T>) : undefined;
+        const structFactory = type === "struct" ? (lengthOrStructFactory as StructFactorySignature<T>) : undefined;
         const length = structFactory ? (structFactory() as unknown as Struct).length : (lengthOrStructFactory as number);
 
         switch (type) {
-            case 'uint8': {
+            case "uint8": {
                 Object.defineProperty(this, name, {
                     enumerable: true,
                     get: () => this.buffer.readUInt8(offset),
@@ -203,7 +202,7 @@ export class Struct implements SerializableMemoryObject {
                 this.length += 1;
                 break;
             }
-            case 'uint16': {
+            case "uint16": {
                 Object.defineProperty(this, name, {
                     enumerable: true,
                     get: () => this.buffer.readUInt16LE(offset),
@@ -212,7 +211,7 @@ export class Struct implements SerializableMemoryObject {
                 this.length += 2;
                 break;
             }
-            case 'uint32': {
+            case "uint32": {
                 Object.defineProperty(this, name, {
                     enumerable: true,
                     get: () => this.buffer.readUInt32LE(offset),
@@ -221,24 +220,24 @@ export class Struct implements SerializableMemoryObject {
                 this.length += 4;
                 break;
             }
-            case 'uint8array':
-            case 'uint8array-reversed': {
+            case "uint8array":
+            case "uint8array-reversed": {
                 /* v8 ignore start */
                 if (!length) {
-                    throw new Error('Struct builder requires length for `uint8array` and `uint8array-reversed` type');
+                    throw new Error("Struct builder requires length for `uint8array` and `uint8array-reversed` type");
                 }
                 /* v8 ignore stop */
                 Object.defineProperty(this, name, {
                     enumerable: true,
                     get: () =>
-                        type === 'uint8array-reversed'
+                        type === "uint8array-reversed"
                             ? Buffer.from(this.buffer.slice(offset, offset + length)).reverse()
                             : Buffer.from(this.buffer.slice(offset, offset + length)),
                     set: (value: Buffer) => {
                         if (value.length !== length) {
                             throw new Error(`Invalid length for member ${name} (expected=${length}, got=${value.length})`);
                         }
-                        if (type === 'uint8array-reversed') {
+                        if (type === "uint8array-reversed") {
                             value = Buffer.from(value).reverse();
                         }
                         for (let i = 0; i < length; i++) {
@@ -249,7 +248,7 @@ export class Struct implements SerializableMemoryObject {
                 this.length += length;
                 break;
             }
-            case 'struct': {
+            case "struct": {
                 assert(structFactory);
                 this.childStructs[name] = {offset, struct: structFactory() as unknown as Struct};
                 Object.defineProperty(this, name, {
@@ -269,10 +268,10 @@ export class Struct implements SerializableMemoryObject {
      * *This method is stripped from type on struct `build()`.*
      *
      * @param name Name of the method to be appended.
-     * @param returnType Return type (eg. `Buffer.prototype`).
+     * @param _returnType Return type (eg. `Buffer.prototype`).
      * @param body Function implementation. Takes struct as a first and single input parameter.
      */
-    public method<T, N extends string, R extends this & Record<N, () => T>>(name: N, returnType: T, body: (struct: R) => T): R {
+    public method<T, N extends string, R extends this & Record<N, () => T>>(name: N, _returnType: T, body: (struct: R) => T): R {
         Object.defineProperty(this, name, {
             enumerable: true,
             configurable: false,
@@ -291,7 +290,7 @@ export class Struct implements SerializableMemoryObject {
     public default(data: Buffer): this {
         /* v8 ignore start */
         if (data.length !== this.length) {
-            throw new Error('Default value needs to have the length of unaligned structure.');
+            throw new Error("Default value needs to have the length of unaligned structure.");
         }
         /* v8 ignore stop */
         this.defaultData = Buffer.from(data);
@@ -316,38 +315,38 @@ export class Struct implements SerializableMemoryObject {
      */
     public build(data?: Buffer): BuiltStruct<this> {
         if (data) {
-            if (data.length === this.getLength('unaligned')) {
+            if (data.length === this.getLength("unaligned")) {
                 this.buffer = Buffer.from(data);
                 for (const key of Object.keys(this.childStructs)) {
                     const child = this.childStructs[key];
                     child.struct.build(this.buffer.slice(child.offset, child.offset + child.struct.length));
                 }
-            } else if (data.length === this.getLength('aligned')) {
+            } else if (data.length === this.getLength("aligned")) {
                 this.buffer = Buffer.alloc(this.length, this.paddingByte);
                 let offset = 0;
                 for (const member of this.members) {
                     switch (member.type) {
-                        case 'uint8':
+                        case "uint8":
                             this.buffer.set(data.slice(offset, offset + 1), member.offset);
                             offset += 1;
                             break;
-                        case 'uint16':
+                        case "uint16":
                             offset += offset % 2;
                             this.buffer.set(data.slice(offset, offset + 2), member.offset);
                             offset += 2;
                             break;
-                        case 'uint32':
+                        case "uint32":
                             offset += offset % 2;
                             this.buffer.set(data.slice(offset, offset + 4), member.offset);
                             offset += 4;
                             break;
-                        case 'uint8array':
-                        case 'uint8array-reversed':
+                        case "uint8array":
+                        case "uint8array-reversed":
                             assert(member.length !== undefined);
                             this.buffer.set(data.slice(offset, offset + member.length), member.offset);
                             offset += member.length;
                             break;
-                        case 'struct': {
+                        case "struct": {
                             const child = this.childStructs[member.key];
                             child.struct.build(data.slice(offset, offset + child.struct.length));
                             this.buffer.set(child.struct.serialize(), member.offset);
@@ -357,7 +356,7 @@ export class Struct implements SerializableMemoryObject {
                     }
                 }
             } else {
-                const expectedLengths = `${this.getLength('unaligned')}/${this.getLength('aligned')}`;
+                const expectedLengths = `${this.getLength("unaligned")}/${this.getLength("aligned")}`;
                 throw new Error(`Struct length mismatch (expected=${expectedLengths}, got=${data.length})`);
             }
         } else {

@@ -1,9 +1,9 @@
-import * as ZSpec from '../../../src/zspec';
-import {ClusterId, EUI64, ExtendedPanId, NodeId} from '../../../src/zspec/tstypes';
-import * as Zcl from '../../../src/zspec/zcl';
-import * as Zdo from '../../../src/zspec/zdo';
-import {BuffaloZdo} from '../../../src/zspec/zdo/buffaloZdo';
-import {
+import * as ZSpec from "../../../src/zspec";
+import type {ClusterId, Eui64, ExtendedPanId, NodeId} from "../../../src/zspec/tstypes";
+import * as Zcl from "../../../src/zspec/zcl";
+import * as Zdo from "../../../src/zspec/zdo";
+import {BuffaloZdo} from "../../../src/zspec/zdo/buffaloZdo";
+import type {
     ActiveEndpointsResponse,
     APSFrameCounterChallengeTLV,
     APSFrameCounterResponseTLV,
@@ -47,12 +47,12 @@ import {
     SymmetricPassphraseGlobalTLV,
     SystemServerDiscoveryResponse,
     TargetIEEEAddressTLV,
-} from '../../../src/zspec/zdo/definition/tstypes';
-import {uint16To8Array, uint32To8Array} from '../../utils/math';
+} from "../../../src/zspec/zdo/definition/tstypes";
+import {uint16To8Array, uint32To8Array} from "../../utils/math";
 
-const IEEE_ADDRESS1: EUI64 = `0xfe34ac2385ff8311`;
+const IEEE_ADDRESS1: Eui64 = "0xfe34ac2385ff8311";
 const IEEE_ADDRESS1_BYTES = [0x11, 0x83, 0xff, 0x85, 0x23, 0xac, 0x34, 0xfe];
-const IEEE_ADDRESS2: EUI64 = `0x28373fecd834ba37`;
+const IEEE_ADDRESS2: Eui64 = "0x28373fecd834ba37";
 const IEEE_ADDRESS2_BYTES = [0x37, 0xba, 0x34, 0xd8, 0xec, 0x3f, 0x37, 0x28];
 const NODE_ID1: NodeId = 0xfe32;
 const NODE_ID1_BYTES = uint16To8Array(NODE_ID1);
@@ -97,8 +97,8 @@ const SERVER_MASK_R23: ServerMask = {
 };
 const SERVER_MASK_R23_BYTE = Zdo.Utils.createServerMask(SERVER_MASK_R23);
 
-describe('ZDO Buffalo', () => {
-    it('Sets & Gets position', () => {
+describe("ZDO Buffalo", () => {
+    it("Sets & Gets position", () => {
         const buffalo = new BuffaloZdo(Buffer.alloc(3));
         expect(buffalo.getPosition()).toStrictEqual(0);
         buffalo.setPosition(3);
@@ -109,7 +109,7 @@ describe('ZDO Buffalo', () => {
         expect(buffalo.getPosition()).toStrictEqual(0);
     });
 
-    it('Sets & Gets bytes without changing internal position', () => {
+    it("Sets & Gets bytes without changing internal position", () => {
         const buffalo = new BuffaloZdo(Buffer.from([1, 2, 3, 255]));
         expect(buffalo.getByte(0)).toStrictEqual(1);
         expect(buffalo.getByte(1)).toStrictEqual(2);
@@ -122,7 +122,7 @@ describe('ZDO Buffalo', () => {
         expect(buffalo.getByte(0)).toStrictEqual(7);
     });
 
-    it('Checks if more available to by amount', () => {
+    it("Checks if more available to by amount", () => {
         const buffalo = new BuffaloZdo(Buffer.from([1, 2, 3, 255]));
         buffalo.setPosition(4);
         expect(buffalo.isMoreBy(0)).toBeTruthy();
@@ -133,7 +133,7 @@ describe('ZDO Buffalo', () => {
         expect(buffalo.isMoreBy(4)).toBeFalsy();
     });
 
-    it('Throws when duplicate TLV tag found and not valid', () => {
+    it("Throws when duplicate TLV tag found and not valid", () => {
         expect(() => {
             new BuffaloZdo(
                 Buffer.from([
@@ -164,7 +164,7 @@ describe('ZDO Buffalo', () => {
         }).not.toThrow();
     });
 
-    it('Throws when encapsulated TLV tag found inside encapsulated', () => {
+    it("Throws when encapsulated TLV tag found inside encapsulated", () => {
         expect(() => {
             new BuffaloZdo(
                 Buffer.from([Zdo.GlobalTLV.BEACON_APPENDIX_ENCAPSULATION, 4 - 1, Zdo.GlobalTLV.JOINER_ENCAPSULATION, 2 - 1, 123, 456]),
@@ -172,13 +172,13 @@ describe('ZDO Buffalo', () => {
         }).toThrow(`Invalid nested encapsulation for tagId=${Zdo.GlobalTLV.JOINER_ENCAPSULATION}.`);
     });
 
-    it('Throws when not enough bytes to read in TLV', () => {
+    it("Throws when not enough bytes to read in TLV", () => {
         expect(() => {
             new BuffaloZdo(Buffer.from([Zdo.GlobalTLV.MANUFACTURER_SPECIFIC, 6 - 1, ...uint16To8Array(Zcl.ManufacturerCode.ABB)])).readTLVs();
         }).toThrow(`Malformed TLV. Invalid data length for tagId=${Zdo.GlobalTLV.MANUFACTURER_SPECIFIC}, expected ${6}.`);
     });
 
-    it('Ignores invalid TLV tag and reads next TLV', () => {
+    it("Ignores invalid TLV tag and reads next TLV", () => {
         const buffalo = new BuffaloZdo(
             Buffer.from([
                 0xff,
@@ -209,7 +209,7 @@ describe('ZDO Buffalo', () => {
         ]);
     });
 
-    it('Throws when writing invalid TLV tag', () => {
+    it("Throws when writing invalid TLV tag", () => {
         const buffalo = new BuffaloZdo(Buffer.alloc(3));
 
         expect(() => {
@@ -218,29 +218,29 @@ describe('ZDO Buffalo', () => {
     });
 
     it.each([
-        ['readProcessingStatusTLV', {length: 6, error: `Malformed TLV. Invalid length '6', expected 5.`, bytes: [2]}],
-        ['readDeviceAuthenticationLevelTLV', {length: 11, error: `Malformed TLV. Invalid length '11', expected 10.`, bytes: []}],
-        ['readPotentialParentsTLV', {length: 3, error: `Malformed TLV. Invalid length '3', expected at least 4.`, bytes: []}],
-        ['readPotentialParentsTLV', {length: 11, error: `Malformed TLV. Invalid length '11', expected 13.`, bytes: [1, 2, 230, 3]}],
-        ['readBeaconSurveyResultsTLV', {length: 6, error: `Malformed TLV. Invalid length '6', expected 4.`, bytes: []}],
-        ['readAPSFrameCounterResponseTLV', {length: 36, error: `Malformed TLV. Invalid length '36', expected 32.`, bytes: []}],
+        ["readProcessingStatusTLV", {length: 6, error: `Malformed TLV. Invalid length '6', expected 5.`, bytes: [2]}],
+        ["readDeviceAuthenticationLevelTLV", {length: 11, error: `Malformed TLV. Invalid length '11', expected 10.`, bytes: []}],
+        ["readPotentialParentsTLV", {length: 3, error: `Malformed TLV. Invalid length '3', expected at least 4.`, bytes: []}],
+        ["readPotentialParentsTLV", {length: 11, error: `Malformed TLV. Invalid length '11', expected 13.`, bytes: [1, 2, 230, 3]}],
+        ["readBeaconSurveyResultsTLV", {length: 6, error: `Malformed TLV. Invalid length '6', expected 4.`, bytes: []}],
+        ["readAPSFrameCounterResponseTLV", {length: 36, error: `Malformed TLV. Invalid length '36', expected 32.`, bytes: []}],
         // ['readDeviceEUI64ListTLV', {length: 36, error: `Malformed TLV. Invalid length '36', expected 41.`, bytes: [5]}],
         // ['readSelectedKeyNegotiationMethodTLV', {length: 11, error: `Malformed TLV. Invalid length '11', expected 10.`, bytes: []}],
         // ['readTargetIEEEAddressTLV', {length: 11, error: `Malformed TLV. Invalid length '11', expected 8.`, bytes: []}],
-        ['readCurve25519PublicPointTLV', {length: 11, error: `Malformed TLV. Invalid length '11', expected 40.`, bytes: []}],
+        ["readCurve25519PublicPointTLV", {length: 11, error: `Malformed TLV. Invalid length '11', expected 40.`, bytes: []}],
         // ['readBeaconSurveyConfigurationTLV', {length: 3, error: `Malformed TLV. Invalid length '3', expected 6.`, bytes: [1]}],
-        ['readConfigurationParametersGlobalTLV', {length: 1, error: `Malformed TLV. Invalid length '1', expected at least 2.`, bytes: []}],
-        ['readBeaconAppendixEncapsulationGlobalTLV', {length: 1, error: `Malformed TLV. Invalid length '1', expected at least 2.`, bytes: []}],
-        ['readJoinerEncapsulationGlobalTLV', {length: 1, error: `Malformed TLV. Invalid length '1', expected at least 2.`, bytes: []}],
-        ['readFragmentationParametersGlobalTLV', {length: 1, error: `Malformed TLV. Invalid length '1', expected at least 2.`, bytes: []}],
-        ['readRouterInformationGlobalTLV', {length: 1, error: `Malformed TLV. Invalid length '1', expected at least 2.`, bytes: []}],
-        ['readSymmetricPassphraseGlobalTLV', {length: 13, error: `Malformed TLV. Invalid length '13', expected at least 16.`, bytes: []}],
-        ['readNextChannelChangeGlobalTLV', {length: 3, error: `Malformed TLV. Invalid length '3', expected at least 4.`, bytes: []}],
-        ['readNextPanIdChangeGlobalTLV', {length: 1, error: `Malformed TLV. Invalid length '1', expected at least 2.`, bytes: []}],
-        ['readPanIdConflictReportGlobalTLV', {length: 1, error: `Malformed TLV. Invalid length '1', expected at least 2.`, bytes: []}],
-        ['readSupportedKeyNegotiationMethodsGlobalTLV', {length: 1, error: `Malformed TLV. Invalid length '1', expected at least 2.`, bytes: []}],
-        ['readManufacturerSpecificGlobalTLV', {length: 1, error: `Malformed TLV. Invalid length '1', expected at least 2.`, bytes: []}],
-    ])('Throws when reading invalid length TLV %s', (func, payload) => {
+        ["readConfigurationParametersGlobalTLV", {length: 1, error: `Malformed TLV. Invalid length '1', expected at least 2.`, bytes: []}],
+        ["readBeaconAppendixEncapsulationGlobalTLV", {length: 1, error: `Malformed TLV. Invalid length '1', expected at least 2.`, bytes: []}],
+        ["readJoinerEncapsulationGlobalTLV", {length: 1, error: `Malformed TLV. Invalid length '1', expected at least 2.`, bytes: []}],
+        ["readFragmentationParametersGlobalTLV", {length: 1, error: `Malformed TLV. Invalid length '1', expected at least 2.`, bytes: []}],
+        ["readRouterInformationGlobalTLV", {length: 1, error: `Malformed TLV. Invalid length '1', expected at least 2.`, bytes: []}],
+        ["readSymmetricPassphraseGlobalTLV", {length: 13, error: `Malformed TLV. Invalid length '13', expected at least 16.`, bytes: []}],
+        ["readNextChannelChangeGlobalTLV", {length: 3, error: `Malformed TLV. Invalid length '3', expected at least 4.`, bytes: []}],
+        ["readNextPanIdChangeGlobalTLV", {length: 1, error: `Malformed TLV. Invalid length '1', expected at least 2.`, bytes: []}],
+        ["readPanIdConflictReportGlobalTLV", {length: 1, error: `Malformed TLV. Invalid length '1', expected at least 2.`, bytes: []}],
+        ["readSupportedKeyNegotiationMethodsGlobalTLV", {length: 1, error: `Malformed TLV. Invalid length '1', expected at least 2.`, bytes: []}],
+        ["readManufacturerSpecificGlobalTLV", {length: 1, error: `Malformed TLV. Invalid length '1', expected at least 2.`, bytes: []}],
+    ])("Throws when reading invalid length TLV %s", (func, payload) => {
         expect(() => {
             const buffalo = new BuffaloZdo(Buffer.from(payload.bytes));
 
@@ -250,7 +250,7 @@ describe('ZDO Buffalo', () => {
 
     it.each([
         [
-            'MANUFACTURER_SPECIFIC',
+            "MANUFACTURER_SPECIFIC",
             [Zdo.GlobalTLV.MANUFACTURER_SPECIFIC, 3 - 1, ...uint16To8Array(256), 123],
             [
                 {
@@ -261,7 +261,7 @@ describe('ZDO Buffalo', () => {
             ],
         ],
         [
-            'SUPPORTED_KEY_NEGOTIATION_METHODS',
+            "SUPPORTED_KEY_NEGOTIATION_METHODS",
             [Zdo.GlobalTLV.SUPPORTED_KEY_NEGOTIATION_METHODS, 2 - 1, 1, 2],
             [
                 {
@@ -276,7 +276,7 @@ describe('ZDO Buffalo', () => {
             ],
         ],
         [
-            'SUPPORTED_KEY_NEGOTIATION_METHODS with IEEE',
+            "SUPPORTED_KEY_NEGOTIATION_METHODS with IEEE",
             [Zdo.GlobalTLV.SUPPORTED_KEY_NEGOTIATION_METHODS, 10 - 1, 1, 2, ...IEEE_ADDRESS1_BYTES],
             [
                 {
@@ -291,22 +291,22 @@ describe('ZDO Buffalo', () => {
             ],
         ],
         [
-            'PAN_ID_CONFLICT_REPORT',
+            "PAN_ID_CONFLICT_REPORT",
             [Zdo.GlobalTLV.PAN_ID_CONFLICT_REPORT, 2 - 1, ...NODE_ID2_BYTES],
             [{tagId: Zdo.GlobalTLV.PAN_ID_CONFLICT_REPORT, length: 2, tlv: {nwkPanIdConflictCount: NODE_ID2} as PanIdConflictReportGlobalTLV}],
         ],
         [
-            'NEXT_PAN_ID_CHANGE',
+            "NEXT_PAN_ID_CHANGE",
             [Zdo.GlobalTLV.NEXT_PAN_ID_CHANGE, 2 - 1, ...uint16To8Array(0xff00)],
             [{tagId: Zdo.GlobalTLV.NEXT_PAN_ID_CHANGE, length: 2, tlv: {panId: 0xff00} as NextPanIdChangeGlobalTLV}],
         ],
         [
-            'NEXT_CHANNEL_CHANGE',
+            "NEXT_CHANNEL_CHANGE",
             [Zdo.GlobalTLV.NEXT_CHANNEL_CHANGE, 4 - 1, ...uint32To8Array(423432)],
             [{tagId: Zdo.GlobalTLV.NEXT_CHANNEL_CHANGE, length: 4, tlv: {channel: 423432} as NextChannelChangeGlobalTLV}],
         ],
         [
-            'SYMMETRIC_PASSPHRASE',
+            "SYMMETRIC_PASSPHRASE",
             [
                 Zdo.GlobalTLV.SYMMETRIC_PASSPHRASE,
                 ZSpec.DEFAULT_ENCRYPTION_KEY_SIZE - 1,
@@ -321,12 +321,12 @@ describe('ZDO Buffalo', () => {
             ],
         ],
         [
-            'ROUTER_INFORMATION',
+            "ROUTER_INFORMATION",
             [Zdo.GlobalTLV.ROUTER_INFORMATION, 2 - 1, ...uint16To8Array(4396)],
             [{tagId: Zdo.GlobalTLV.ROUTER_INFORMATION, length: 2, tlv: {bitmask: 4396} as RouterInformationGlobalTLV}],
         ],
         [
-            'FRAGMENTATION_PARAMETERS',
+            "FRAGMENTATION_PARAMETERS",
             [Zdo.GlobalTLV.FRAGMENTATION_PARAMETERS, 5 - 1, ...NODE_ID1_BYTES, 5, ...uint16To8Array(32456)],
             [
                 {
@@ -337,7 +337,7 @@ describe('ZDO Buffalo', () => {
             ],
         ],
         [
-            'JOINER_ENCAPSULATION',
+            "JOINER_ENCAPSULATION",
             [Zdo.GlobalTLV.JOINER_ENCAPSULATION, 4 - 1, Zdo.GlobalTLV.FRAGMENTATION_PARAMETERS, 2 - 1, ...NODE_ID1_BYTES],
             [
                 {
@@ -356,7 +356,7 @@ describe('ZDO Buffalo', () => {
             ],
         ],
         [
-            'BEACON_APPENDIX_ENCAPSULATION',
+            "BEACON_APPENDIX_ENCAPSULATION",
             [Zdo.GlobalTLV.BEACON_APPENDIX_ENCAPSULATION, 4 - 1, Zdo.GlobalTLV.FRAGMENTATION_PARAMETERS, 2 - 1, ...NODE_ID1_BYTES],
             [
                 {
@@ -375,12 +375,12 @@ describe('ZDO Buffalo', () => {
             ],
         ],
         [
-            'CONFIGURATION_PARAMETERS',
+            "CONFIGURATION_PARAMETERS",
             [Zdo.GlobalTLV.CONFIGURATION_PARAMETERS, 2 - 1, ...uint16To8Array(47593)],
             [{tagId: Zdo.GlobalTLV.CONFIGURATION_PARAMETERS, length: 2, tlv: {configurationParameters: 47593} as ConfigurationParametersGlobalTLV}],
         ],
         [
-            'DEVICE_CAPABILITY_EXTENSION',
+            "DEVICE_CAPABILITY_EXTENSION",
             [Zdo.GlobalTLV.DEVICE_CAPABILITY_EXTENSION, 3 - 1, 3, 1, 2],
             [
                 {
@@ -390,8 +390,8 @@ describe('ZDO Buffalo', () => {
                 },
             ],
         ],
-        ['invalid', [0xfe, 0, 0], []],
-    ])('Reads & Writes global TLV %s', (_name, bytes, expected) => {
+        ["invalid", [0xfe, 0, 0], []],
+    ])("Reads & Writes global TLV %s", (_name, bytes, expected) => {
         const readBuffalo = new BuffaloZdo(Buffer.from(bytes));
         expect(readBuffalo.readTLVs()).toStrictEqual(expected);
 
@@ -400,7 +400,7 @@ describe('ZDO Buffalo', () => {
         expect(writeBuffer.getWritten()).toStrictEqual(Buffer.from(expected.length ? bytes : []));
     });
 
-    it('Throws when building unknown cluster ID', () => {
+    it("Throws when building unknown cluster ID", () => {
         const clusterId = 0x8005;
 
         expect(() => {
@@ -409,7 +409,7 @@ describe('ZDO Buffalo', () => {
         }).toThrow(`Unsupported request building for cluster ID '${clusterId}'.`);
     });
 
-    it('buildNetworkAddressRequest without ZDO_MESSAGE_OVERHEAD', () => {
+    it("buildNetworkAddressRequest without ZDO_MESSAGE_OVERHEAD", () => {
         expect(Zdo.Buffalo.buildRequest(false, Zdo.ClusterId.NETWORK_ADDRESS_REQUEST, IEEE_ADDRESS1, false, 1)).toStrictEqual(
             Buffer.from([...IEEE_ADDRESS1_BYTES, 0, 1]),
         );
@@ -418,7 +418,7 @@ describe('ZDO Buffalo', () => {
         );
     });
 
-    it('buildNetworkAddressRequest', () => {
+    it("buildNetworkAddressRequest", () => {
         expect(Zdo.Buffalo.buildRequest(true, Zdo.ClusterId.NETWORK_ADDRESS_REQUEST, IEEE_ADDRESS1, false, 1)).toStrictEqual(
             Buffer.from([0, ...IEEE_ADDRESS1_BYTES, 0, 1]),
         );
@@ -427,7 +427,7 @@ describe('ZDO Buffalo', () => {
         );
     });
 
-    it('buildIeeeAddressRequest', () => {
+    it("buildIeeeAddressRequest", () => {
         expect(Zdo.Buffalo.buildRequest(true, Zdo.ClusterId.IEEE_ADDRESS_REQUEST, NODE_ID1, false, 1)).toStrictEqual(
             Buffer.from([0, ...NODE_ID1_BYTES, 0, 1]),
         );
@@ -436,7 +436,7 @@ describe('ZDO Buffalo', () => {
         );
     });
 
-    it('buildNodeDescriptorRequest', () => {
+    it("buildNodeDescriptorRequest", () => {
         expect(Zdo.Buffalo.buildRequest(true, Zdo.ClusterId.NODE_DESCRIPTOR_REQUEST, NODE_ID1)).toStrictEqual(Buffer.from([0, ...NODE_ID1_BYTES]));
 
         const tlv: FragmentationParametersGlobalTLV = {
@@ -498,21 +498,21 @@ describe('ZDO Buffalo', () => {
         );
     });
 
-    it('buildPowerDescriptorRequest', () => {
+    it("buildPowerDescriptorRequest", () => {
         expect(Zdo.Buffalo.buildRequest(true, Zdo.ClusterId.POWER_DESCRIPTOR_REQUEST, NODE_ID1)).toStrictEqual(Buffer.from([0, ...NODE_ID1_BYTES]));
     });
 
-    it('buildSimpleDescriptorRequest', () => {
+    it("buildSimpleDescriptorRequest", () => {
         expect(Zdo.Buffalo.buildRequest(true, Zdo.ClusterId.SIMPLE_DESCRIPTOR_REQUEST, NODE_ID1, 3)).toStrictEqual(
             Buffer.from([0, ...NODE_ID1_BYTES, 3]),
         );
     });
 
-    it('buildActiveEndpointsRequest', () => {
+    it("buildActiveEndpointsRequest", () => {
         expect(Zdo.Buffalo.buildRequest(true, Zdo.ClusterId.ACTIVE_ENDPOINTS_REQUEST, NODE_ID1)).toStrictEqual(Buffer.from([0, ...NODE_ID1_BYTES]));
     });
 
-    it('buildMatchDescriptorRequest', () => {
+    it("buildMatchDescriptorRequest", () => {
         expect(
             Zdo.Buffalo.buildRequest(true, Zdo.ClusterId.MATCH_DESCRIPTORS_REQUEST, NODE_ID1, ZSpec.HA_PROFILE_ID, CLUSTER_LIST1, CLUSTER_LIST2),
         ).toStrictEqual(
@@ -531,7 +531,7 @@ describe('ZDO Buffalo', () => {
         ).toStrictEqual(Buffer.from([0, ...NODE_ID1_BYTES, ...uint16To8Array(ZSpec.HA_PROFILE_ID), CLUSTER_LIST1.length, ...CLUSTER_LIST1_BYTES, 0]));
     });
 
-    it('buildSystemServiceDiscoveryRequest', () => {
+    it("buildSystemServiceDiscoveryRequest", () => {
         expect(
             Zdo.Buffalo.buildRequest(true, Zdo.ClusterId.SYSTEM_SERVER_DISCOVERY_REQUEST, {
                 primaryTrustCenter: 1,
@@ -562,14 +562,14 @@ describe('ZDO Buffalo', () => {
         ).toStrictEqual(Buffer.from([0, ...uint16To8Array(0b0010111001000001)]));
     });
 
-    it('buildParentAnnounce', () => {
+    it("buildParentAnnounce", () => {
         const children = [IEEE_ADDRESS1, IEEE_ADDRESS2];
         expect(Zdo.Buffalo.buildRequest(true, Zdo.ClusterId.PARENT_ANNOUNCE, children)).toStrictEqual(
             Buffer.from([0, children.length, ...IEEE_ADDRESS1_BYTES, ...IEEE_ADDRESS2_BYTES]),
         );
     });
 
-    it('buildBindRequest', () => {
+    it("buildBindRequest", () => {
         expect(
             Zdo.Buffalo.buildRequest(
                 true,
@@ -610,7 +610,7 @@ describe('ZDO Buffalo', () => {
         );
     });
 
-    it('buildUnbindRequest', () => {
+    it("buildUnbindRequest", () => {
         expect(
             Zdo.Buffalo.buildRequest(
                 true,
@@ -651,7 +651,7 @@ describe('ZDO Buffalo', () => {
         );
     });
 
-    it('Throws when buildBindRequest/buildUnbindRequest invalid type', () => {
+    it("Throws when buildBindRequest/buildUnbindRequest invalid type", () => {
         expect(() => {
             Zdo.Buffalo.buildRequest(true, Zdo.ClusterId.BIND_REQUEST, IEEE_ADDRESS1, 2, Zcl.Clusters.seMetering.ID, 99, IEEE_ADDRESS2, 123, 64);
         }).toThrow(`Status 'NOT_SUPPORTED'`);
@@ -660,7 +660,7 @@ describe('ZDO Buffalo', () => {
         }).toThrow(`Status 'NOT_SUPPORTED'`);
     });
 
-    it('buildClearAllBindingsRequest', () => {
+    it("buildClearAllBindingsRequest", () => {
         const eui64List = [IEEE_ADDRESS1, IEEE_ADDRESS2];
         expect(Zdo.Buffalo.buildRequest(true, Zdo.ClusterId.CLEAR_ALL_BINDINGS_REQUEST, {eui64List} as ClearAllBindingsReqEUI64TLV)).toStrictEqual(
             Buffer.from([0, 0, ZSpec.EUI64_SIZE * eui64List.length + 1 - 1, eui64List.length, ...IEEE_ADDRESS1_BYTES, ...IEEE_ADDRESS2_BYTES]),
@@ -670,22 +670,22 @@ describe('ZDO Buffalo', () => {
         ).toStrictEqual(Buffer.from([0, 0, 0, 0]));
     });
 
-    it('buildLqiTableRequest', () => {
+    it("buildLqiTableRequest", () => {
         expect(Zdo.Buffalo.buildRequest(true, Zdo.ClusterId.LQI_TABLE_REQUEST, 1)).toStrictEqual(Buffer.from([0, 1]));
         expect(Zdo.Buffalo.buildRequest(true, Zdo.ClusterId.LQI_TABLE_REQUEST, 254)).toStrictEqual(Buffer.from([0, 254]));
     });
 
-    it('buildRoutingTableRequest', () => {
+    it("buildRoutingTableRequest", () => {
         expect(Zdo.Buffalo.buildRequest(true, Zdo.ClusterId.ROUTING_TABLE_REQUEST, 1)).toStrictEqual(Buffer.from([0, 1]));
         expect(Zdo.Buffalo.buildRequest(true, Zdo.ClusterId.ROUTING_TABLE_REQUEST, 254)).toStrictEqual(Buffer.from([0, 254]));
     });
 
-    it('buildBindingTableRequest', () => {
+    it("buildBindingTableRequest", () => {
         expect(Zdo.Buffalo.buildRequest(true, Zdo.ClusterId.BINDING_TABLE_REQUEST, 1)).toStrictEqual(Buffer.from([0, 1]));
         expect(Zdo.Buffalo.buildRequest(true, Zdo.ClusterId.BINDING_TABLE_REQUEST, 254)).toStrictEqual(Buffer.from([0, 254]));
     });
 
-    it('buildLeaveRequest', () => {
+    it("buildLeaveRequest", () => {
         expect(Zdo.Buffalo.buildRequest(true, Zdo.ClusterId.LEAVE_REQUEST, IEEE_ADDRESS2, Zdo.LeaveRequestFlags.WITHOUT_REJOIN)).toStrictEqual(
             Buffer.from([0, ...IEEE_ADDRESS2_BYTES, Zdo.LeaveRequestFlags.WITHOUT_REJOIN]),
         );
@@ -694,7 +694,7 @@ describe('ZDO Buffalo', () => {
         );
     });
 
-    it('buildPermitJoining', () => {
+    it("buildPermitJoining", () => {
         expect(Zdo.Buffalo.buildRequest(true, Zdo.ClusterId.PERMIT_JOINING_REQUEST, 254, 1, [])).toStrictEqual(Buffer.from([0, 254, 1]));
 
         const tlvs = [
@@ -720,7 +720,7 @@ describe('ZDO Buffalo', () => {
         );
     });
 
-    it('buildScanChannelsRequest', () => {
+    it("buildScanChannelsRequest", () => {
         expect(
             Zdo.Buffalo.buildRequest(true, Zdo.ClusterId.NWK_UPDATE_REQUEST, ZSpec.ALL_802_15_4_CHANNELS, 3, 3, undefined, undefined),
         ).toStrictEqual(Buffer.from([0, ...uint32To8Array(ZSpec.ALL_802_15_4_CHANNELS_MASK), 3, 3]));
@@ -729,19 +729,19 @@ describe('ZDO Buffalo', () => {
         ).toStrictEqual(Buffer.from([0, ...uint32To8Array(ZSpec.ALL_802_15_4_CHANNELS_MASK), 64 /*, 3*/]));
     });
 
-    it('buildChannelChangeRequest', () => {
+    it("buildChannelChangeRequest", () => {
         expect(Zdo.Buffalo.buildRequest(true, Zdo.ClusterId.NWK_UPDATE_REQUEST, [15], 0xfe, undefined, 1, undefined)).toStrictEqual(
             Buffer.from([0, ...uint32To8Array(ZSpec.Utils.channelsToUInt32Mask([15])), 0xfe, 1]),
         );
     });
 
-    it('buildSetActiveChannelsAndNwkManagerIdRequest', () => {
+    it("buildSetActiveChannelsAndNwkManagerIdRequest", () => {
         expect(
             Zdo.Buffalo.buildRequest(true, Zdo.ClusterId.NWK_UPDATE_REQUEST, ZSpec.PREFERRED_802_15_4_CHANNELS, 0xff, undefined, 3, 123),
         ).toStrictEqual(Buffer.from([0, ...uint32To8Array(ZSpec.PREFERRED_802_15_4_CHANNELS_MASK), 0xff, 3, ...uint16To8Array(123)]));
     });
 
-    it('buildEnhancedScanChannelsRequest', () => {
+    it("buildEnhancedScanChannelsRequest", () => {
         const channelPages = [123, 54394, 29344];
         expect(Zdo.Buffalo.buildRequest(true, Zdo.ClusterId.NWK_ENHANCED_UPDATE_REQUEST, channelPages, 5, 3, undefined, undefined, 1)).toStrictEqual(
             Buffer.from([
@@ -768,14 +768,14 @@ describe('ZDO Buffalo', () => {
         );
     });
 
-    it('buildEnhancedChannelChangeRequest', () => {
+    it("buildEnhancedChannelChangeRequest", () => {
         const channelPage = 54394;
         expect(
             Zdo.Buffalo.buildRequest(true, Zdo.ClusterId.NWK_ENHANCED_UPDATE_REQUEST, [channelPage], 0xfe, undefined, 3, undefined, 1),
         ).toStrictEqual(Buffer.from([0, 1, ...uint32To8Array(channelPage), 0xfe, 3, 1]));
     });
 
-    it('buildEnhancedSetActiveChannelsAndNwkManagerIdRequest', () => {
+    it("buildEnhancedSetActiveChannelsAndNwkManagerIdRequest", () => {
         const channelPages = [123, 54394, 29344];
         const nwkManagerAddr = 0xfe01;
         expect(
@@ -795,11 +795,11 @@ describe('ZDO Buffalo', () => {
         );
     });
 
-    it('buildNwkIEEEJoiningListRequest', () => {
+    it("buildNwkIEEEJoiningListRequest", () => {
         expect(Zdo.Buffalo.buildRequest(true, Zdo.ClusterId.NWK_IEEE_JOINING_LIST_REQUEST, 3)).toStrictEqual(Buffer.from([0, 3]));
     });
 
-    it('buildNwkBeaconSurveyRequest', () => {
+    it("buildNwkBeaconSurveyRequest", () => {
         const tlv: BeaconSurveyConfigurationTLV = {
             scanChannelList: [],
             configurationBitmask: 0,
@@ -821,7 +821,7 @@ describe('ZDO Buffalo', () => {
         );
     });
 
-    it('buildStartKeyNegotiationRequest', () => {
+    it("buildStartKeyNegotiationRequest", () => {
         const tlv: Curve25519PublicPointTLV = {
             eui64: IEEE_ADDRESS1,
             publicPoint: Buffer.alloc(Zdo.CURVE_PUBLIC_POINT_SIZE).fill(0xcd),
@@ -838,7 +838,7 @@ describe('ZDO Buffalo', () => {
         );
     });
 
-    it('buildRetrieveAuthenticationTokenRequest', () => {
+    it("buildRetrieveAuthenticationTokenRequest", () => {
         const tlv: AuthenticationTokenIdTLV = {tlvTypeTagId: 0};
         expect(Zdo.Buffalo.buildRequest(true, Zdo.ClusterId.RETRIEVE_AUTHENTICATION_TOKEN_REQUEST, tlv)).toStrictEqual(Buffer.from([0, 0, 1 - 1, 0]));
         const tlv2: AuthenticationTokenIdTLV = {tlvTypeTagId: 31};
@@ -847,7 +847,7 @@ describe('ZDO Buffalo', () => {
         );
     });
 
-    it('buildGetAuthenticationLevelRequest', () => {
+    it("buildGetAuthenticationLevelRequest", () => {
         const tlv: TargetIEEEAddressTLV = {ieee: IEEE_ADDRESS2};
         expect(Zdo.Buffalo.buildRequest(true, Zdo.ClusterId.GET_AUTHENTICATION_LEVEL_REQUEST, tlv)).toStrictEqual(
             Buffer.from([0, 0, ZSpec.EUI64_SIZE - 1, ...IEEE_ADDRESS2_BYTES]),
@@ -859,7 +859,7 @@ describe('ZDO Buffalo', () => {
         {panId: 0x1234, channel: 15, configurationParameters: 0},
         {panId: 0x1234, channel: 0, configurationParameters: 1},
         {panId: 0x6543, channel: 45, configurationParameters: 1},
-    ])('buildSetConfigurationRequest', ({panId, channel, configurationParameters}) => {
+    ])("buildSetConfigurationRequest", ({panId, channel, configurationParameters}) => {
         expect(
             Zdo.Buffalo.buildRequest(
                 true,
@@ -884,12 +884,12 @@ describe('ZDO Buffalo', () => {
         );
     });
 
-    it('buildGetConfigurationRequest', () => {
+    it("buildGetConfigurationRequest", () => {
         expect(Zdo.Buffalo.buildRequest(true, Zdo.ClusterId.GET_CONFIGURATION_REQUEST, [84])).toStrictEqual(Buffer.from([0, 1, 84]));
         expect(Zdo.Buffalo.buildRequest(true, Zdo.ClusterId.GET_CONFIGURATION_REQUEST, [67, 71])).toStrictEqual(Buffer.from([0, 2, 67, 71]));
     });
 
-    it('buildStartKeyUpdateRequest', () => {
+    it("buildStartKeyUpdateRequest", () => {
         const method: SelectedKeyNegotiationMethodTLV = {
             protocol: Zdo.SelectedKeyNegotiationProtocol.SPEKE_CURVE25519_SHA256,
             presharedSecret: Zdo.SelectedPreSharedSecret.BASIC_AUTHORIZATION_KEY,
@@ -917,7 +917,7 @@ describe('ZDO Buffalo', () => {
         );
     });
 
-    it('buildDecommissionRequest', () => {
+    it("buildDecommissionRequest", () => {
         const tlv: DeviceEUI64ListTLV = {
             eui64List: [IEEE_ADDRESS1],
         };
@@ -947,7 +947,7 @@ describe('ZDO Buffalo', () => {
         );
     });
 
-    it('buildChallengeRequest', () => {
+    it("buildChallengeRequest", () => {
         const tlv: APSFrameCounterChallengeTLV = {
             senderEui64: IEEE_ADDRESS2,
             challengeValue: Buffer.alloc(Zdo.CHALLENGE_VALUE_SIZE).fill(0xfe),
@@ -996,12 +996,12 @@ describe('ZDO Buffalo', () => {
         Zdo.ClusterId.START_KEY_UPDATE_RESPONSE,
         Zdo.ClusterId.DECOMMISSION_RESPONSE,
         Zdo.ClusterId.CHALLENGE_RESPONSE,
-    ])('Returns status and undefined when reading unsuccessful response for %s', (clusterId) => {
+    ])("Returns status and undefined when reading unsuccessful response for %s", (clusterId) => {
         const buffer = Buffer.from([1, Zdo.Status.INV_REQUESTTYPE, 1, 2, 3]);
         expect(Zdo.Buffalo.readResponse(true, clusterId, buffer)).toStrictEqual([Zdo.Status.INV_REQUESTTYPE, undefined]);
     });
 
-    it('Throws when reading unknown cluster ID', () => {
+    it("Throws when reading unknown cluster ID", () => {
         const clusterId = 0x0005;
 
         expect(() => {
@@ -1009,7 +1009,7 @@ describe('ZDO Buffalo', () => {
         }).toThrow(`Unsupported response reading for cluster ID '${clusterId}'.`);
     });
 
-    it('readNetworkAddressResponse', () => {
+    it("readNetworkAddressResponse", () => {
         const buffer = Buffer.from([1, Zdo.Status.SUCCESS, ...IEEE_ADDRESS1_BYTES, ...NODE_ID1_BYTES]);
         expect(Zdo.Buffalo.readResponse(true, Zdo.ClusterId.NETWORK_ADDRESS_RESPONSE, buffer)).toStrictEqual([
             Zdo.Status.SUCCESS,
@@ -1041,7 +1041,7 @@ describe('ZDO Buffalo', () => {
         ]);
     });
 
-    it('readIEEEAddressResponse', () => {
+    it("readIEEEAddressResponse", () => {
         const buffer = Buffer.from([1, Zdo.Status.SUCCESS, ...IEEE_ADDRESS1_BYTES, ...NODE_ID1_BYTES]);
         expect(Zdo.Buffalo.readResponse(true, Zdo.ClusterId.IEEE_ADDRESS_RESPONSE, buffer)).toStrictEqual([
             Zdo.Status.SUCCESS,
@@ -1073,7 +1073,7 @@ describe('ZDO Buffalo', () => {
         ]);
     });
 
-    it('readNodeDescriptorResponse', () => {
+    it("readNodeDescriptorResponse", () => {
         const buffer = Buffer.from([
             1,
             Zdo.Status.SUCCESS,
@@ -1169,7 +1169,7 @@ describe('ZDO Buffalo', () => {
         ]);
     });
 
-    it('readPowerDescriptorResponse', () => {
+    it("readPowerDescriptorResponse", () => {
         const buffer = Buffer.from([1, Zdo.Status.SUCCESS, ...NODE_ID1_BYTES, 0b10100100, 0b11110100]);
         expect(Zdo.Buffalo.readResponse(true, Zdo.ClusterId.POWER_DESCRIPTOR_RESPONSE, buffer)).toStrictEqual([
             Zdo.Status.SUCCESS,
@@ -1183,7 +1183,7 @@ describe('ZDO Buffalo', () => {
         ]);
     });
 
-    it('readSimpleDescriptorResponse', () => {
+    it("readSimpleDescriptorResponse", () => {
         const buffer = Buffer.from([
             1,
             Zdo.Status.SUCCESS,
@@ -1239,7 +1239,7 @@ describe('ZDO Buffalo', () => {
         ]);
     });
 
-    it('readActiveEndpointsResponse', () => {
+    it("readActiveEndpointsResponse", () => {
         const buffer = Buffer.from([1, Zdo.Status.SUCCESS, ...NODE_ID1_BYTES, 2, 0xef, 0x87]);
         expect(Zdo.Buffalo.readResponse(true, Zdo.ClusterId.ACTIVE_ENDPOINTS_RESPONSE, buffer)).toStrictEqual([
             Zdo.Status.SUCCESS,
@@ -1258,7 +1258,7 @@ describe('ZDO Buffalo', () => {
         ]);
     });
 
-    it('readMatchDescriptorsResponse', () => {
+    it("readMatchDescriptorsResponse", () => {
         const buffer = Buffer.from([1, Zdo.Status.SUCCESS, ...NODE_ID1_BYTES, 2, 0xef, 0x87]);
         expect(Zdo.Buffalo.readResponse(true, Zdo.ClusterId.MATCH_DESCRIPTORS_RESPONSE, buffer)).toStrictEqual([
             Zdo.Status.SUCCESS,
@@ -1277,7 +1277,7 @@ describe('ZDO Buffalo', () => {
         ]);
     });
 
-    it('readEndDeviceAnnounce', () => {
+    it("readEndDeviceAnnounce", () => {
         const buffer = Buffer.from([1, ...NODE_ID1_BYTES, ...IEEE_ADDRESS2_BYTES, 0b01000000]);
         expect(Zdo.Buffalo.readResponse(true, Zdo.ClusterId.END_DEVICE_ANNOUNCE, buffer)).toStrictEqual([
             Zdo.Status.SUCCESS,
@@ -1298,7 +1298,7 @@ describe('ZDO Buffalo', () => {
         ]);
     });
 
-    it('readSystemServerDiscoveryResponse', () => {
+    it("readSystemServerDiscoveryResponse", () => {
         const buffer = Buffer.from([1, Zdo.Status.SUCCESS, ...uint16To8Array(SERVER_MASK_R23_BYTE)]);
         expect(Zdo.Buffalo.readResponse(true, Zdo.ClusterId.SYSTEM_SERVER_DISCOVERY_RESPONSE, buffer)).toStrictEqual([
             Zdo.Status.SUCCESS,
@@ -1308,7 +1308,7 @@ describe('ZDO Buffalo', () => {
         ]);
     });
 
-    it('readParentAnnounceResponse', () => {
+    it("readParentAnnounceResponse", () => {
         const buffer = Buffer.from([1, Zdo.Status.SUCCESS, 2, ...IEEE_ADDRESS2_BYTES, ...IEEE_ADDRESS1_BYTES]);
         expect(Zdo.Buffalo.readResponse(true, Zdo.ClusterId.PARENT_ANNOUNCE_RESPONSE, buffer)).toStrictEqual([
             Zdo.Status.SUCCESS,
@@ -1325,7 +1325,7 @@ describe('ZDO Buffalo', () => {
         ]);
     });
 
-    it('readLQITableResponse', () => {
+    it("readLQITableResponse", () => {
         const buffer = Buffer.from([
             1,
             Zdo.Status.SUCCESS,
@@ -1394,7 +1394,7 @@ describe('ZDO Buffalo', () => {
         ]);
     });
 
-    it('readRoutingTableResponse', () => {
+    it("readRoutingTableResponse", () => {
         const buffer = Buffer.from([1, Zdo.Status.SUCCESS, 4, 3, 1, ...NODE_ID2_BYTES, 0b00101000, ...NODE_ID1_BYTES]);
         expect(Zdo.Buffalo.readResponse(true, Zdo.ClusterId.ROUTING_TABLE_RESPONSE, buffer)).toStrictEqual([
             Zdo.Status.SUCCESS,
@@ -1426,7 +1426,7 @@ describe('ZDO Buffalo', () => {
         ]);
     });
 
-    it('readBindingTableResponse', () => {
+    it("readBindingTableResponse", () => {
         const buffer = Buffer.from([
             1,
             Zdo.Status.SUCCESS,
@@ -1495,7 +1495,7 @@ describe('ZDO Buffalo', () => {
         ]);
     });
 
-    it('readNwkUpdateResponse', () => {
+    it("readNwkUpdateResponse", () => {
         const buffer = Buffer.from([
             1,
             Zdo.Status.SUCCESS,
@@ -1518,7 +1518,7 @@ describe('ZDO Buffalo', () => {
         ]);
     });
 
-    it('readNwkEnhancedUpdateResponse', () => {
+    it("readNwkEnhancedUpdateResponse", () => {
         const buffer = Buffer.from([
             1,
             Zdo.Status.SUCCESS,
@@ -1541,7 +1541,7 @@ describe('ZDO Buffalo', () => {
         ]);
     });
 
-    it('readNwkIEEEJoiningListResponse', () => {
+    it("readNwkIEEEJoiningListResponse", () => {
         const buffer = Buffer.from([
             1,
             Zdo.Status.SUCCESS,
@@ -1576,7 +1576,7 @@ describe('ZDO Buffalo', () => {
         ]);
     });
 
-    it('readNwkUnsolicitedEnhancedUpdateResponse', () => {
+    it("readNwkUnsolicitedEnhancedUpdateResponse", () => {
         const buffer = Buffer.from([
             1,
             Zdo.Status.SUCCESS,
@@ -1598,7 +1598,7 @@ describe('ZDO Buffalo', () => {
         ]);
     });
 
-    it('readNwkBeaconSurveyResponse', () => {
+    it("readNwkBeaconSurveyResponse", () => {
         const buffer = Buffer.from([1, Zdo.Status.SUCCESS, 0x01, 4 - 1, 14, 7, 5, 2, 0x02, 7 - 1, ...NODE_ID1_BYTES, 234, 1, ...NODE_ID2_BYTES, 223]);
         expect(Zdo.Buffalo.readResponse(true, Zdo.ClusterId.NWK_BEACON_SURVEY_RESPONSE, buffer)).toStrictEqual([
             Zdo.Status.SUCCESS,
@@ -1637,7 +1637,7 @@ describe('ZDO Buffalo', () => {
         ]);
     });
 
-    it('readStartKeyNegotiationResponse', () => {
+    it("readStartKeyNegotiationResponse", () => {
         const buffer = Buffer.from([
             1,
             Zdo.Status.SUCCESS,
@@ -1663,7 +1663,7 @@ describe('ZDO Buffalo', () => {
         ]);
     });
 
-    it('readRetrieveAuthenticationTokenResponse', () => {
+    it("readRetrieveAuthenticationTokenResponse", () => {
         // this one has no local TLV, so test with a global one
         const tlv: FragmentationParametersGlobalTLV = {
             nwkAddress: NODE_ID1,
@@ -1695,7 +1695,7 @@ describe('ZDO Buffalo', () => {
         ]);
     });
 
-    it('readGetAuthenticationLevelResponse', () => {
+    it("readGetAuthenticationLevelResponse", () => {
         const buffer = Buffer.from([
             1,
             Zdo.Status.SUCCESS,
@@ -1723,7 +1723,7 @@ describe('ZDO Buffalo', () => {
         ]);
     });
 
-    it('readSetConfigurationResponse', () => {
+    it("readSetConfigurationResponse", () => {
         const buffer = Buffer.from([
             1,
             Zdo.Status.SUCCESS,
@@ -1775,7 +1775,7 @@ describe('ZDO Buffalo', () => {
         ]);
     });
 
-    it('readGetConfigurationResponse', () => {
+    it("readGetConfigurationResponse", () => {
         // this one has no local TLV, so test with a global one
         const tlv: FragmentationParametersGlobalTLV = {
             nwkAddress: NODE_ID1,
@@ -1807,7 +1807,7 @@ describe('ZDO Buffalo', () => {
         ]);
     });
 
-    it('readChallengeResponse', () => {
+    it("readChallengeResponse", () => {
         const buffer = Buffer.from([
             1,
             Zdo.Status.SUCCESS,

@@ -1,6 +1,4 @@
-/* eslint-disable @typescript-eslint/explicit-function-return-type */
-
-import {Struct} from '../struct';
+import {Struct} from "../struct";
 
 /**
  * Creates a APS ME Trust Center Link Key NV Entry struct.
@@ -11,11 +9,11 @@ import {Struct} from '../struct';
  */
 export const apsTcLinkKeyEntry = (data?: Buffer) => {
     return Struct.new()
-        .member('uint32', 'txFrmCntr')
-        .member('uint32', 'rxFrmCntr')
-        .member('uint8array-reversed', 'extAddr', 8)
-        .member('uint8', 'keyAttributes')
-        .member('uint8', 'keyType')
-        .member('uint8', 'SeedShift_IcIndex')
+        .member("uint32", "txFrmCntr")
+        .member("uint32", "rxFrmCntr")
+        .member("uint8array-reversed", "extAddr", 8)
+        .member("uint8", "keyAttributes")
+        .member("uint8", "keyType")
+        .member("uint8", "SeedShift_IcIndex")
         .build(data);
 };

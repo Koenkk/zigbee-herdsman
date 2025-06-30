@@ -3,7 +3,7 @@
  *
  * NOTE: Expected to contain `0x` prefix
  */
-export type EUI64 = `0x${string}`;
+export type Eui64 = `0x${string}`;
 /** IEEE 802.15.4 node ID. Also known as short address. uint16 */
 export type NodeId = number;
 /** IEEE 802.15.4 PAN ID. uint16 */

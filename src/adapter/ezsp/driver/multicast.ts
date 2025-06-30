@@ -1,20 +1,18 @@
 /* v8 ignore start */
 
-import {logger} from '../../../utils/logger';
-import {Driver} from './driver';
-import {EzspConfigId} from './types';
-import {EmberStatus} from './types/named';
-import {EmberMulticastTableEntry} from './types/struct';
+import {logger} from "../../../utils/logger";
+import type {Driver} from "./driver";
+import {EzspConfigId} from "./types";
+import {EmberStatus} from "./types/named";
+import {EmberMulticastTableEntry} from "./types/struct";
 
-const NS = 'zh:ezsp:cast';
+const NS = "zh:ezsp:cast";
 
 export class Multicast {
-    TABLE_SIZE = 16;
+    tableSize = 16;
     private driver: Driver;
-    /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
-    private _multicast: any;
-    /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
-    private _available: Array<any>;
+    private _multicast: Record<number, [EmberMulticastTableEntry, number]>;
+    private _available: number[];
 
     constructor(driver: Driver) {
         this.driver = driver;
@@ -35,8 +33,7 @@ export class Multicast {
         }
     }
 
-    /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
-    async startup(enpoints: Array<any>): Promise<void> {
+    async startup(enpoints: {id: number; member_of: number[]}[]): Promise<void> {
         await this._initialize();
         for (const ep of enpoints) {
             if (!ep.id) continue;
@@ -46,17 +43,22 @@ export class Multicast {
         }
     }
 
-    public async subscribe(group_id: number, endpoint: number): Promise<EmberStatus> {
-        if (this._multicast[group_id] !== undefined) {
-            logger.debug(`${group_id} is already subscribed`, NS);
+    public async subscribe(groupId: number, endpoint: number): Promise<EmberStatus> {
+        if (this._multicast[groupId] !== undefined) {
+            logger.debug(`${groupId} is already subscribed`, NS);
             return EmberStatus.SUCCESS;
         }
 
         try {
             const idx = this._available.pop();
+
+            if (idx === undefined) {
+                throw new Error("No available");
+            }
+
             const entry: EmberMulticastTableEntry = new EmberMulticastTableEntry();
             entry.endpoint = endpoint;
-            entry.multicastId = group_id;
+            entry.multicastId = groupId;
             entry.networkIndex = 0;
             const status = await this.driver.ezsp.setMulticastTableEntry(idx, entry);
             if (status !== EmberStatus.SUCCESS) {

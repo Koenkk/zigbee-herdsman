@@ -1,4 +1,4 @@
-import {ZnpCommandStatus} from './common';
+import {ZnpCommandStatus} from "./common";
 
 function getChannelMask(channels: number[]): number[] {
     const value = channels.reduce((mask, channel) => mask | (1 << channel), 0);
@@ -7,8 +7,8 @@ function getChannelMask(channels: number[]): number[] {
 }
 
 function statusDescription(code: ZnpCommandStatus): string {
-    const hex = '0x' + code.toString(16).padStart(2, '0');
-    return `(${hex}: ${ZnpCommandStatus[code] || 'UNKNOWN'})`;
+    const hex = `0x${code.toString(16).padStart(2, "0")}`;
+    return `(${hex}: ${ZnpCommandStatus[code] || "UNKNOWN"})`;
 }
 
 export {getChannelMask, statusDescription};

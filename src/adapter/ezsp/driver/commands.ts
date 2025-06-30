@@ -77,10 +77,10 @@ import {
     uint16_t,
     uint32_t,
     WordList,
-} from './types';
+} from "./types";
 
 export interface ParamsDesc {
-    /* eslint-disable-next-line @typescript-eslint/no-explicit-any*/
+    // biome-ignore lint/suspicious/noExplicitAny: API
     [s: string]: any;
 }
 

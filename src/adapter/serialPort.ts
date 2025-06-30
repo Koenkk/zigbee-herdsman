@@ -1,12 +1,12 @@
 /* v8 ignore start */
 
-import {autoDetect, AutoDetectTypes, OpenOptionsFromBinding, SetOptions} from '@serialport/bindings-cpp';
+import {type AutoDetectTypes, autoDetect, type OpenOptionsFromBinding, type SetOptions} from "@serialport/bindings-cpp";
 // This file was copied from https://github.com/serialport/node-serialport/blob/master/packages/serialport/lib/serialport.ts.
-import {ErrorCallback, OpenOptions, SerialPortStream, StreamOptions} from '@serialport/stream';
+import {type ErrorCallback, type OpenOptions, SerialPortStream, type StreamOptions} from "@serialport/stream";
 
 const DetectedBinding = autoDetect();
 
-export type SerialPortOpenOptions<T extends AutoDetectTypes> = Omit<StreamOptions<T>, 'binding'> & OpenOptionsFromBinding<T>;
+export type SerialPortOpenOptions<T extends AutoDetectTypes> = Omit<StreamOptions<T>, "binding"> & OpenOptionsFromBinding<T>;
 
 export class SerialPort<T extends AutoDetectTypes = AutoDetectTypes> extends SerialPortStream<T> {
     static list = DetectedBinding.list;
@@ -45,6 +45,7 @@ export class SerialPort<T extends AutoDetectTypes = AutoDetectTypes> extends Ser
 
     public async asyncGet(): Promise<{cts: boolean; dsr: boolean; dcd: boolean}> {
         return await new Promise((resolve, reject): void => {
+            // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
             this.get((err, options?) => (err ? reject(err) : resolve(options!)));
         });
     }

@@ -1,12 +1,12 @@
 /* v8 ignore start */
 
-import * as stream from 'node:stream';
+import * as stream from "node:stream";
 
-import {logger} from '../../../utils/logger';
-import * as consts from './consts';
-import Frame from './frame';
+import {logger} from "../../../utils/logger";
+import * as consts from "./consts";
+import Frame from "./frame";
 
-const NS = 'zh:ezsp:uart';
+const NS = "zh:ezsp:uart";
 
 export class Parser extends stream.Transform {
     private tail: Buffer[];
@@ -28,7 +28,7 @@ export class Parser extends stream.Transform {
             chunk = chunk.subarray(chunk.indexOf(consts.FLAG) + 1);
         }
 
-        logger.debug(`<-- [${chunk.toString('hex')}]`, NS);
+        logger.debug(`<-- [${chunk.toString("hex")}]`, NS);
 
         let delimiterPlace = chunk.indexOf(consts.FLAG);
 
@@ -41,7 +41,7 @@ export class Parser extends stream.Transform {
                 const frame = Frame.fromBuffer(frameBuffer);
 
                 if (frame) {
-                    this.emit('parsed', frame);
+                    this.emit("parsed", frame);
                 }
             } catch (error) {
                 logger.debug(`<-- error ${error}`, NS);

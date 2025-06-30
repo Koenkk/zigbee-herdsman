@@ -1,11 +1,11 @@
 /* v8 ignore start */
 
-import * as ZSpec from '../../../zspec';
-import {NetworkCache} from '../adapter/emberAdapter';
-import {INVALID_RADIO_CHANNEL, ZB_PSA_ALG} from '../consts';
-import {EmberJoinMethod, SecManDerivedKeyType, SecManFlag, SecManKeyType} from '../enums';
-import {EMBER_AES_HASH_BLOCK_SIZE} from '../ezsp/consts';
-import {EmberAesMmoHashContext, SecManContext} from '../types';
+import * as ZSpec from "../../../zspec";
+import type {NetworkCache} from "../adapter/emberAdapter";
+import {INVALID_RADIO_CHANNEL, ZB_PSA_ALG} from "../consts";
+import {EmberJoinMethod, SecManDerivedKeyType, SecManFlag, SecManKeyType} from "../enums";
+import {EMBER_AES_HASH_BLOCK_SIZE} from "../ezsp/consts";
+import type {EmberAesMmoHashContext, SecManContext} from "../types";
 
 /**
  * Initialize a network cache index with proper "invalid" values.
@@ -36,7 +36,7 @@ export const initSecurityManagerContext = (): SecManContext => {
         coreKeyType: SecManKeyType.NONE,
         keyIndex: 0,
         derivedType: SecManDerivedKeyType.NONE,
-        eui64: `0x0000000000000000`,
+        eui64: "0x0000000000000000",
         multiNetworkIndex: 0,
         flags: SecManFlag.NONE,
         psaKeyAlgPermission: ZB_PSA_ALG, // unused for classic key storage

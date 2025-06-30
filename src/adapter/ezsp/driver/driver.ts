@@ -1,21 +1,22 @@
 /* v8 ignore start */
 
-import {EventEmitter} from 'node:events';
+import {EventEmitter} from "node:events";
 
-import equals from 'fast-deep-equal/es6';
+import equals from "fast-deep-equal/es6";
 
-import {wait, Waitress} from '../../../utils';
-import {logger} from '../../../utils/logger';
-import * as ZSpec from '../../../zspec';
-import {Clusters} from '../../../zspec/zcl/definition/cluster';
-import * as Zdo from '../../../zspec/zdo';
-import {GenericZdoResponse} from '../../../zspec/zdo/definition/tstypes';
-import {EZSPAdapterBackup} from '../adapter/backup';
-import * as TsType from './../../tstype';
-import {ParamsDesc} from './commands';
-import {Ezsp, EZSPFrameData} from './ezsp';
-import {Multicast} from './multicast';
-import {EmberApsOption, EmberJoinDecision, EmberKeyData, EmberNodeType, EmberStatus, uint8_t, uint16_t} from './types';
+import type {Backup} from "src/models/backup";
+import {Waitress, wait} from "../../../utils";
+import {logger} from "../../../utils/logger";
+import * as ZSpec from "../../../zspec";
+import {Clusters} from "../../../zspec/zcl/definition/cluster";
+import * as Zdo from "../../../zspec/zdo";
+import type {GenericZdoResponse} from "../../../zspec/zdo/definition/tstypes";
+import type * as TsType from "./../../tstype";
+import {EZSPAdapterBackup} from "../adapter/backup";
+import type {ParamsDesc} from "./commands";
+import {type EZSPFrameData, Ezsp} from "./ezsp";
+import {Multicast} from "./multicast";
+import {EmberApsOption, EmberJoinDecision, EmberKeyData, EmberNodeType, EmberStatus, uint8_t, uint16_t} from "./types";
 import {
     EmberDerivedKeyType,
     EmberDeviceUpdate,
@@ -25,24 +26,24 @@ import {
     EmberKeyType,
     EmberNetworkStatus,
     EmberOutgoingMessageType,
-    EmberStackError,
+    type EmberStackError,
     EzspDecisionBitmask,
     EzspPolicyId,
     EzspValueId,
     SLStatus,
-} from './types/named';
+} from "./types/named";
 import {
     EmberApsFrame,
     EmberIeeeRawFrame,
-    EmberInitialSecurityState,
-    EmberKeyStruct,
+    type EmberInitialSecurityState,
+    type EmberKeyStruct,
     EmberNetworkParameters,
     EmberRawFrame,
     EmberSecurityManagerContext,
-} from './types/struct';
-import {ember_security} from './utils';
+} from "./types/struct";
+import {emberSecurity} from "./utils";
 
-const NS = 'zh:ezsp:driv';
+const NS = "zh:ezsp:driv";
 
 interface AddEndpointParameters {
     endpoint?: number;
@@ -132,7 +133,7 @@ export class Driver extends EventEmitter {
      * @returns
      */
     public async reset(): Promise<void> {
-        logger.debug(`Reset connection.`, NS);
+        logger.debug("Reset connection.", NS);
 
         try {
             // don't emit 'close' on stop since we don't want this to bubble back up as 'disconnected' to the controller.
@@ -142,7 +143,7 @@ export class Driver extends EventEmitter {
         }
         try {
             await wait(1000);
-            logger.debug(`Startup again.`, NS);
+            logger.debug("Startup again.", NS);
             await this.startup();
         } catch (err) {
             logger.debug(`Reset error ${err}`, NS);
@@ -157,17 +158,17 @@ export class Driver extends EventEmitter {
     }
 
     private async onEzspReset(): Promise<void> {
-        logger.debug('onEzspReset()', NS);
+        logger.debug("onEzspReset()", NS);
         await this.reset();
     }
 
     private onEzspClose(): void {
-        logger.debug('onEzspClose()', NS);
-        this.emit('close');
+        logger.debug("onEzspClose()", NS);
+        this.emit("close");
     }
 
-    public async stop(emitClose: boolean = true): Promise<void> {
-        logger.debug('Stopping driver', NS);
+    public async stop(emitClose = true): Promise<void> {
+        logger.debug("Stopping driver", NS);
 
         if (this.ezsp) {
             return await this.ezsp.close(emitClose);
@@ -175,11 +176,11 @@ export class Driver extends EventEmitter {
     }
 
     public async startup(transmitPower?: number): Promise<TsType.StartResult> {
-        let result: TsType.StartResult = 'resumed';
+        let result: TsType.StartResult = "resumed";
         this.transactionID = 1;
         // this.ezsp = undefined;
         this.ezsp = new Ezsp();
-        this.ezsp.on('close', this.onEzspClose.bind(this));
+        this.ezsp.on("close", this.onEzspClose.bind(this));
 
         try {
             await this.ezsp.connect(this.serialOpt);
@@ -189,7 +190,7 @@ export class Driver extends EventEmitter {
             throw error;
         }
 
-        this.ezsp.on('reset', this.onEzspReset.bind(this));
+        this.ezsp.on("reset", this.onEzspReset.bind(this));
 
         await this.ezsp.version();
         await this.ezsp.updateConfig();
@@ -219,15 +220,22 @@ export class Driver extends EventEmitter {
         //const mfgName = await ezsp.execCommand('getMfgToken', EzspMfgTokenId.MFG_STRING);
         // getting MFG_BOARD_NAME token
         //const boardName = await ezsp.execCommand('getMfgToken', EzspMfgTokenId.MFG_BOARD_NAME);
-        /* eslint-disable prefer-const */
         let verInfo = await this.ezsp.getValue(EzspValueId.VALUE_VERSION_INFO);
-        let build, major, minor, patch, special;
+        // biome-ignore lint/style/useConst: legacy
+        let build: number;
+        // biome-ignore lint/style/useConst: legacy
+        let major: number;
+        // biome-ignore lint/style/useConst: legacy
+        let minor: number;
+        // biome-ignore lint/style/useConst: legacy
+        let patch: number;
+        // biome-ignore lint/style/useConst: legacy
+        let special: number;
         [build, verInfo] = uint16_t.deserialize(uint16_t, verInfo);
         [major, verInfo] = uint8_t.deserialize(uint8_t, verInfo);
         [minor, verInfo] = uint8_t.deserialize(uint8_t, verInfo);
         [patch, verInfo] = uint8_t.deserialize(uint8_t, verInfo);
         [special, verInfo] = uint8_t.deserialize(uint8_t, verInfo);
-        /* eslint-enable prefer-const */
         const vers = `${major}.${minor}.${patch}.${special} build ${build}`;
         logger.debug(`EmberZNet version: ${vers}`, NS);
         this.version = {
@@ -242,50 +250,50 @@ export class Driver extends EventEmitter {
             // need to check the backup
             const restore = await this.needsToBeRestore(this.nwkOpt);
 
-            const res = await this.ezsp.execCommand('networkState');
+            const res = await this.ezsp.execCommand("networkState");
 
             logger.debug(`Network state ${res.status}`, NS);
 
-            if (res.status == EmberNetworkStatus.JOINED_NETWORK) {
-                logger.info(`Leaving current network and forming new network`, NS);
+            if (res.status === EmberNetworkStatus.JOINED_NETWORK) {
+                logger.info("Leaving current network and forming new network", NS);
 
                 const st = await this.ezsp.leaveNetwork();
 
-                if (st != EmberStatus.NETWORK_DOWN) {
+                if (st !== EmberStatus.NETWORK_DOWN) {
                     logger.error(`leaveNetwork returned unexpected status: ${st}`, NS);
                 }
             }
 
             if (restore) {
                 // restore
-                logger.info('Restore network from backup', NS);
+                logger.info("Restore network from backup", NS);
                 await this.formNetwork(true, transmitPower);
-                result = 'restored';
+                result = "restored";
             } else {
                 // reset
-                logger.info('Form network', NS);
+                logger.info("Form network", NS);
                 await this.formNetwork(false, transmitPower);
-                result = 'reset';
+                result = "reset";
             }
         }
 
-        const state = (await this.ezsp.execCommand('networkState')).status;
+        const state = (await this.ezsp.execCommand("networkState")).status;
         logger.debug(`Network state ${state}`, NS);
 
-        const netParams = await this.ezsp.execCommand('getNetworkParameters');
+        const netParams = await this.ezsp.execCommand("getNetworkParameters");
 
-        if (netParams.status != EmberStatus.SUCCESS) {
+        if (netParams.status !== EmberStatus.SUCCESS) {
             logger.error(`Command (getNetworkParameters) returned unexpected state: ${netParams.status}`, NS);
         }
 
         this.networkParams = netParams.parameters;
         logger.debug(`Node type: ${netParams.nodeType}, Network parameters: ${this.networkParams}`, NS);
 
-        const nwk = (await this.ezsp.execCommand('getNodeId')).nodeId;
-        const ieee = (await this.ezsp.execCommand('getEui64')).eui64;
+        const nwk = (await this.ezsp.execCommand("getNodeId")).nodeId;
+        const ieee = (await this.ezsp.execCommand("getEui64")).eui64;
         this.ieee = new EmberEUI64(ieee);
-        logger.debug('Network ready', NS);
-        this.ezsp.on('frame', this.handleFrame.bind(this));
+        logger.debug("Network ready", NS);
+        this.ezsp.on("frame", this.handleFrame.bind(this));
         logger.debug(`EZSP nwk=${nwk}, IEEE=0x${this.ieee}`, NS);
         const linkResult = await this.getKey(EmberKeyType.TRUST_CENTER_LINK_KEY);
         logger.debug(`TRUST_CENTER_LINK_KEY: ${JSON.stringify(linkResult)}`, NS);
@@ -293,15 +301,15 @@ export class Driver extends EventEmitter {
         logger.debug(`CURRENT_NETWORK_KEY: ${JSON.stringify(netResult)}`, NS);
 
         await wait(1000);
-        await this.ezsp.execCommand('setManufacturerCode', {code: DEFAULT_MFG_ID});
+        await this.ezsp.execCommand("setManufacturerCode", {code: DEFAULT_MFG_ID});
 
         this.multicast = new Multicast(this);
         await this.multicast.startup([]);
         await this.multicast.subscribe(ZSpec.GP_GROUP_ID, ZSpec.GP_ENDPOINT);
         // await this.multicast.subscribe(1, 901);
 
-        if (transmitPower != undefined && this.networkParams.radioTxPower !== transmitPower) {
-            await this.ezsp.execCommand('setRadioPower', {power: transmitPower});
+        if (transmitPower != null && this.networkParams.radioTxPower !== transmitPower) {
+            await this.ezsp.execCommand("setRadioPower", {power: transmitPower});
         }
 
         return result;
@@ -310,38 +318,40 @@ export class Driver extends EventEmitter {
     private async needsToBeInitialised(options: TsType.NetworkOptions): Promise<boolean> {
         let valid = true;
         valid = valid && (await this.ezsp.networkInit());
-        const netParams = await this.ezsp.execCommand('getNetworkParameters');
+        const netParams = await this.ezsp.execCommand("getNetworkParameters");
         const networkParams = netParams.parameters;
         logger.debug(`Current Node type: ${netParams.nodeType}, Network parameters: ${networkParams}`, NS);
-        valid = valid && netParams.status == EmberStatus.SUCCESS;
-        valid = valid && netParams.nodeType == EmberNodeType.COORDINATOR;
-        valid = valid && options.panID == networkParams.panId;
+        valid = valid && netParams.status === EmberStatus.SUCCESS;
+        valid = valid && netParams.nodeType === EmberNodeType.COORDINATOR;
+        valid = valid && options.panID === networkParams.panId;
         valid = valid && options.channelList.includes(networkParams.radioChannel);
         valid = valid && equals(options.extendedPanID, networkParams.extendedPanId);
         return !valid;
     }
 
     private async formNetwork(restore: boolean, transmitPower?: number): Promise<void> {
-        let backup;
-        await this.ezsp.execCommand('clearTransientLinkKeys');
+        let backup: Backup | undefined;
+        await this.ezsp.execCommand("clearTransientLinkKeys");
 
-        let initial_security_state: EmberInitialSecurityState;
+        let initialSecurityState: EmberInitialSecurityState;
         if (restore) {
-            backup = await this.backupMan.getStoredBackup();
+            backup = this.backupMan.getStoredBackup();
 
             if (!backup) {
-                throw new Error(`No valid backup found.`);
+                throw new Error("No valid backup found.");
             }
 
-            initial_security_state = ember_security(backup.networkOptions.networkKey);
-            initial_security_state.bitmask |= EmberInitialSecurityBitmask.NO_FRAME_COUNTER_RESET;
-            initial_security_state.networkKeySequenceNumber = backup.networkKeyInfo.sequenceNumber;
-            initial_security_state.preconfiguredKey.contents = backup.ezsp!.hashed_tclk!;
+            initialSecurityState = emberSecurity(backup.networkOptions.networkKey);
+            initialSecurityState.bitmask |= EmberInitialSecurityBitmask.NO_FRAME_COUNTER_RESET;
+            initialSecurityState.networkKeySequenceNumber = backup.networkKeyInfo.sequenceNumber;
+            // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
+            initialSecurityState.preconfiguredKey.contents = backup.ezsp!.hashed_tclk!;
         } else {
-            await this.ezsp.execCommand('clearKeyTable');
-            initial_security_state = ember_security(Buffer.from(this.nwkOpt.networkKey!));
+            await this.ezsp.execCommand("clearKeyTable");
+            // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
+            initialSecurityState = emberSecurity(Buffer.from(this.nwkOpt.networkKey!));
         }
-        await this.ezsp.setInitialSecurityState(initial_security_state);
+        await this.ezsp.setInitialSecurityState(initialSecurityState);
 
         const parameters: EmberNetworkParameters = new EmberNetworkParameters();
         parameters.radioTxPower = transmitPower ?? 5;
@@ -351,13 +361,18 @@ export class Driver extends EventEmitter {
         parameters.channels = 0x07fff800; // all channels
         if (restore) {
             // `backup` valid from above
+            // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
             parameters.panId = backup!.networkOptions.panId;
+            // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
             parameters.extendedPanId = backup!.networkOptions.extendedPanId;
+            // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
             parameters.radioChannel = backup!.logicalChannel;
+            // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
             parameters.nwkUpdateId = backup!.networkUpdateId;
         } else {
             parameters.radioChannel = this.nwkOpt.channelList[0];
             parameters.panId = this.nwkOpt.panID;
+            // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
             parameters.extendedPanId = Buffer.from(this.nwkOpt.extendedPanID!);
         }
 
@@ -367,10 +382,10 @@ export class Driver extends EventEmitter {
 
     private handleFrame(frameName: string, frame: EZSPFrameData): void {
         switch (true) {
-            case frameName === 'incomingMessageHandler': {
+            case frameName === "incomingMessageHandler": {
                 const apsFrame: EmberApsFrame = frame.apsFrame;
 
-                if (apsFrame.profileId == Zdo.ZDO_PROFILE_ID && apsFrame.clusterId >= 0x8000 /* response only */) {
+                if (apsFrame.profileId === Zdo.ZDO_PROFILE_ID && apsFrame.clusterId >= 0x8000 /* response only */) {
                     const zdoResponse = Zdo.Buffalo.readResponse(true, apsFrame.clusterId, frame.message);
 
                     if (apsFrame.clusterId === Zdo.ClusterId.NETWORK_ADDRESS_RESPONSE) {
@@ -399,7 +414,7 @@ export class Driver extends EventEmitter {
                     }
 
                     // always pass ZDO to bubble up to controller
-                    this.emit('incomingMessage', {
+                    this.emit("incomingMessage", {
                         messageType: frame.type,
                         apsFrame,
                         lqi: frame.lastHopLqi,
@@ -419,7 +434,7 @@ export class Driver extends EventEmitter {
                     });
 
                     if (!handled) {
-                        this.emit('incomingMessage', {
+                        this.emit("incomingMessage", {
                             messageType: frame.type,
                             apsFrame,
                             lqi: frame.lastHopLqi,
@@ -434,7 +449,7 @@ export class Driver extends EventEmitter {
                 }
                 break;
             }
-            case frameName === 'trustCenterJoinHandler': {
+            case frameName === "trustCenterJoinHandler": {
                 if (frame.status === EmberDeviceUpdate.DEVICE_LEFT) {
                     this.handleNodeLeft(frame.newNodeId, frame.newNodeEui64);
                 } else {
@@ -444,22 +459,22 @@ export class Driver extends EventEmitter {
                 }
                 break;
             }
-            case frameName === 'incomingRouteRecordHandler': {
+            case frameName === "incomingRouteRecordHandler": {
                 this.handleRouteRecord(frame.source, frame.longId, frame.lastHopLqi, frame.lastHopRssi, frame.relay);
                 break;
             }
-            case frameName === 'incomingRouteErrorHandler': {
+            case frameName === "incomingRouteErrorHandler": {
                 this.handleRouteError(frame.status, frame.target);
                 break;
             }
-            case frameName === 'incomingNetworkStatusHandler': {
+            case frameName === "incomingNetworkStatusHandler": {
                 this.handleNetworkStatus(frame.errorCode, frame.target);
                 break;
             }
-            case frameName === 'messageSentHandler': {
+            case frameName === "messageSentHandler": {
                 // todo
                 const status = frame.status;
-                if (status != 0) {
+                if (status !== 0) {
                     // send failure
                     logger.debug(() => `Delivery failed for ${JSON.stringify(frame)}.`, NS);
                 } else {
@@ -468,20 +483,19 @@ export class Driver extends EventEmitter {
                     // then we will register the coordinator in this group
                     // Applicable for IKEA remotes
                     const msgType = frame.type;
-                    if (msgType == EmberOutgoingMessageType.OUTGOING_MULTICAST) {
+                    if (msgType === EmberOutgoingMessageType.OUTGOING_MULTICAST) {
                         const apsFrame = frame.apsFrame;
-                        if (apsFrame.destinationEndpoint == 255) {
-                            // eslint-disable-next-line @typescript-eslint/no-floating-promises
+                        if (apsFrame.destinationEndpoint === 255) {
                             this.multicast.subscribe(apsFrame.groupId, 1);
                         }
                     }
                 }
                 break;
             }
-            case frameName === 'macFilterMatchMessageHandler': {
+            case frameName === "macFilterMatchMessageHandler": {
                 const [rawFrame, data] = EmberIeeeRawFrame.deserialize(EmberIeeeRawFrame, frame.message);
                 logger.debug(`macFilterMatchMessageHandler frame message: ${rawFrame}`, NS);
-                this.emit('incomingMessage', {
+                this.emit("incomingMessage", {
                     messageType: null,
                     apsFrame: rawFrame,
                     lqi: frame.lastHopLqi,
@@ -494,7 +508,7 @@ export class Driver extends EventEmitter {
                 });
                 break;
             }
-            case frameName === 'stackStatusHandler': {
+            case frameName === "stackStatusHandler": {
                 logger.debug(`stackStatusHandler: ${EmberStatus.valueToName(EmberStatus, frame.status)}`, NS);
                 break;
             }
@@ -506,7 +520,7 @@ export class Driver extends EventEmitter {
             //     }
             //     break;
             // }
-            case frameName == 'gpepIncomingMessageHandler': {
+            case frameName === "gpepIncomingMessageHandler": {
                 let commandIdentifier = Clusters.greenPower.commands.notification.ID;
 
                 if (frame.gpdCommandId === 0xe0) {
@@ -543,7 +557,7 @@ export class Driver extends EventEmitter {
                     message: Buffer.concat([gpdHeader, frame.gpdCommandPayload]),
                     sender: frame.addr,
                 };
-                this.emit('incomingMessage', gpdMessage);
+                this.emit("incomingMessage", gpdMessage);
                 break;
             }
             default:
@@ -599,14 +613,14 @@ export class Driver extends EventEmitter {
         }
 
         this.eui64ToNodeId.delete(ieee.toString());
-        this.emit('deviceLeft', nwk, ieee);
+        this.emit("deviceLeft", nwk, ieee);
     }
 
     private async resetMfgId(mfgId: number): Promise<void> {
-        await this.ezsp.execCommand('setManufacturerCode', {code: mfgId});
+        await this.ezsp.execCommand("setManufacturerCode", {code: mfgId});
         // 60 sec for waiting
         await wait(60000);
-        await this.ezsp.execCommand('setManufacturerCode', {code: DEFAULT_MFG_ID});
+        await this.ezsp.execCommand("setManufacturerCode", {code: DEFAULT_MFG_ID});
     }
 
     public handleNodeJoined(nwk: number, ieee: EmberEUI64 | number[]): void {
@@ -615,17 +629,16 @@ export class Driver extends EventEmitter {
         }
 
         for (const rec of IEEE_PREFIX_MFG_ID) {
-            if (Buffer.from(ieee.value).indexOf(Buffer.from(rec.prefix)) == 0) {
+            if (Buffer.from(ieee.value).indexOf(Buffer.from(rec.prefix)) === 0) {
                 // set ManufacturerCode
                 logger.debug(`handleNodeJoined: change ManufacturerCode for ieee ${ieee} to ${rec.mfgId}`, NS);
-                // eslint-disable-next-line @typescript-eslint/no-floating-promises
                 this.resetMfgId(rec.mfgId);
                 break;
             }
         }
 
         this.eui64ToNodeId.set(ieee.toString(), nwk);
-        this.emit('deviceJoined', nwk, ieee);
+        this.emit("deviceJoined", nwk, ieee);
     }
 
     public setNode(nwk: number, ieee: EmberEUI64 | number[]): void {
@@ -644,18 +657,18 @@ export class Driver extends EventEmitter {
                 const seq = (apsFrame.sequence + 1) & 0xff;
                 let eui64: EmberEUI64;
 
-                if (typeof nwk !== 'number') {
+                if (typeof nwk !== "number") {
                     eui64 = nwk as EmberEUI64;
                     const strEui64 = eui64.toString();
                     let nodeId = this.eui64ToNodeId.get(strEui64);
 
                     if (nodeId === undefined) {
-                        nodeId = (await this.ezsp.execCommand('lookupNodeIdByEui64', {eui64: eui64})).nodeId;
+                        nodeId = (await this.ezsp.execCommand("lookupNodeIdByEui64", {eui64: eui64})).nodeId;
 
                         if (nodeId && nodeId !== 0xffff) {
                             this.eui64ToNodeId.set(strEui64, nodeId);
                         } else {
-                            throw new Error('Unknown EUI64:' + strEui64);
+                            throw new Error(`Unknown EUI64:${strEui64}`);
                         }
                     }
                     nwk = nodeId;
@@ -671,7 +684,7 @@ export class Driver extends EventEmitter {
                 }
 
                 if (extendedTimeout) {
-                    await this.ezsp.execCommand('setExtendedTimeout', {remoteEui64: eui64, extendedTimeout: true});
+                    await this.ezsp.execCommand("setExtendedTimeout", {remoteEui64: eui64, extendedTimeout: true});
                 }
 
                 const sendResult = await this.ezsp.sendUnicast(EmberOutgoingMessageType.OUTGOING_DIRECT, nwk, apsFrame, seq, data);
@@ -683,7 +696,7 @@ export class Driver extends EventEmitter {
 
                     await wait(delay);
                 } else {
-                    result = sendResult.status == EmberStatus.SUCCESS;
+                    result = sendResult.status === EmberStatus.SUCCESS;
                     break;
                 }
             } catch (e) {
@@ -695,8 +708,7 @@ export class Driver extends EventEmitter {
         return result;
     }
 
-    /* eslint-disable-next-line @typescript-eslint/no-unused-vars */
-    public async mrequest(apsFrame: EmberApsFrame, data: Buffer, timeout = 30000): Promise<boolean> {
+    public async mrequest(apsFrame: EmberApsFrame, data: Buffer, _timeout = 30000): Promise<boolean> {
         try {
             const seq = (apsFrame.sequence + 1) & 0xff;
             await this.ezsp.sendMulticast(apsFrame, seq, data);
@@ -706,11 +718,10 @@ export class Driver extends EventEmitter {
         }
     }
 
-    /* eslint-disable-next-line @typescript-eslint/no-unused-vars */
-    public async rawrequest(rawFrame: EmberRawFrame, data: Buffer, timeout = 10000): Promise<boolean> {
+    public async rawrequest(rawFrame: EmberRawFrame, data: Buffer, _timeout = 10000): Promise<boolean> {
         try {
             const msgData = Buffer.concat([EmberRawFrame.serialize(EmberRawFrame, rawFrame), data]);
-            await this.ezsp.execCommand('sendRawMessage', {message: msgData});
+            await this.ezsp.execCommand("sendRawMessage", {message: msgData});
             return true;
         } catch (e) {
             logger.debug(`Request error ${e}`, NS);
@@ -718,11 +729,10 @@ export class Driver extends EventEmitter {
         }
     }
 
-    /* eslint-disable-next-line @typescript-eslint/no-unused-vars */
-    public async ieeerawrequest(rawFrame: EmberIeeeRawFrame, data: Buffer, timeout = 10000): Promise<boolean> {
+    public async ieeerawrequest(rawFrame: EmberIeeeRawFrame, data: Buffer, _timeout = 10000): Promise<boolean> {
         try {
             const msgData = Buffer.concat([EmberIeeeRawFrame.serialize(EmberIeeeRawFrame, rawFrame), data]);
-            await this.ezsp.execCommand('sendRawMessage', {message: msgData});
+            await this.ezsp.execCommand("sendRawMessage", {message: msgData});
             return true;
         } catch (e) {
             logger.debug(`Request error ${e}`, NS);
@@ -779,23 +789,22 @@ export class Driver extends EventEmitter {
             if (value === nwk) return new EmberEUI64(eUI64);
         }
 
-        const value = await this.ezsp.execCommand('lookupEui64ByNodeId', {nodeId: nwk});
+        const value = await this.ezsp.execCommand("lookupEui64ByNodeId", {nodeId: nwk});
 
         if (value.status === EmberStatus.SUCCESS) {
             const eUI64 = new EmberEUI64(value.eui64);
             this.eui64ToNodeId.set(eUI64.toString(), nwk);
 
             return eUI64;
-        } else {
-            throw new Error('Unrecognized nodeId:' + nwk);
         }
+        throw new Error(`Unrecognized nodeId:${nwk}`);
     }
 
     public async preJoining(seconds: number): Promise<void> {
         if (seconds) {
-            const ieee = new EmberEUI64('0xFFFFFFFFFFFFFFFF');
+            const ieee = new EmberEUI64("0xFFFFFFFFFFFFFFFF");
             const linkKey = new EmberKeyData();
-            linkKey.contents = Buffer.from('ZigBeeAlliance09');
+            linkKey.contents = Buffer.from("ZigBeeAlliance09");
             const result = await this.addTransientLinkKey(ieee, linkKey);
 
             if (result.status !== EmberStatus.SUCCESS) {
@@ -810,12 +819,12 @@ export class Driver extends EventEmitter {
                 //| EzspDecisionBitmask.JOINS_USE_INSTALL_CODE_KEY
             }
         } else {
-            await this.ezsp.execCommand('clearTransientLinkKeys');
+            await this.ezsp.execCommand("clearTransientLinkKeys");
         }
     }
 
     public async permitJoining(seconds: number): Promise<EZSPFrameData> {
-        return await this.ezsp.execCommand('permitJoining', {duration: seconds});
+        return await this.ezsp.execCommand("permitJoining", {duration: seconds});
     }
 
     public makeZDOframe(name: string | number, params: ParamsDesc): Buffer {
@@ -830,7 +839,7 @@ export class Driver extends EventEmitter {
         inputClusters = [],
         outputClusters = [],
     }: AddEndpointParameters): Promise<void> {
-        const res = await this.ezsp.execCommand('addEndpoint', {
+        const res = await this.ezsp.execCommand("addEndpoint", {
             endpoint: endpoint,
             profileId: profileId,
             deviceId: deviceId,
@@ -867,15 +876,15 @@ export class Driver extends EventEmitter {
     }
 
     public setChannel(channel: number): Promise<EZSPFrameData> {
-        return this.ezsp.execCommand('setLogicalAndRadioChannel', {radioChannel: channel});
+        return this.ezsp.execCommand("setLogicalAndRadioChannel", {radioChannel: channel});
     }
 
     public addTransientLinkKey(partner: EmberEUI64, transientKey: EmberKeyData): Promise<EZSPFrameData> {
         if (this.ezsp.ezspV < 13) {
-            return this.ezsp.execCommand('addTransientLinkKey', {partner, transientKey});
-        } else {
-            return this.ezsp.execCommand('importTransientKey', {partner, transientKey, flags: 0});
+            return this.ezsp.execCommand("addTransientLinkKey", {partner, transientKey});
         }
+
+        return this.ezsp.execCommand("importTransientKey", {partner, transientKey, flags: 0});
     }
 
     public async addInstallCode(ieeeAddress: string, key: Buffer, hashed: boolean): Promise<void> {
@@ -891,51 +900,51 @@ export class Driver extends EventEmitter {
 
     public async getKey(keyType: EmberKeyType): Promise<EZSPFrameData> {
         if (this.ezsp.ezspV < 13) {
-            return await this.ezsp.execCommand('getKey', {keyType});
-        } else {
-            // Mapping EmberKeyType to SecManKeyType (ezsp13)
-            const SecManKeyType = {
-                [EmberKeyType.TRUST_CENTER_LINK_KEY]: 2,
-                [EmberKeyType.CURRENT_NETWORK_KEY]: 1,
-            };
-            const smc = new EmberSecurityManagerContext();
-            smc.type = SecManKeyType[keyType as number];
-            smc.index = 0;
-            smc.derivedType = EmberDerivedKeyType.NONE;
-            smc.eui64 = new EmberEUI64('0x0000000000000000');
-            smc.multiNetworkIndex = 0;
-            smc.flags = 0;
-            smc.psaKeyAlgPermission = 0;
-            const keyInfo = await this.ezsp.execCommand('exportKey', {context: smc});
-
-            if (keyInfo.status !== SLStatus.SL_STATUS_OK) {
-                logger.error(`exportKey(${EmberKeyType.valueToName(EmberKeyType, keyType)}) returned unexpected SL status: ${keyInfo.status}`, NS);
-            }
-            return keyInfo;
+            return await this.ezsp.execCommand("getKey", {keyType});
         }
+
+        // Mapping EmberKeyType to SecManKeyType (ezsp13)
+        const SecManKeyType = {
+            [EmberKeyType.TRUST_CENTER_LINK_KEY]: 2,
+            [EmberKeyType.CURRENT_NETWORK_KEY]: 1,
+        };
+        const smc = new EmberSecurityManagerContext();
+        smc.type = SecManKeyType[keyType as number];
+        smc.index = 0;
+        smc.derivedType = EmberDerivedKeyType.NONE;
+        smc.eui64 = new EmberEUI64("0x0000000000000000");
+        smc.multiNetworkIndex = 0;
+        smc.flags = 0;
+        smc.psaKeyAlgPermission = 0;
+        const keyInfo = await this.ezsp.execCommand("exportKey", {context: smc});
+
+        if (keyInfo.status !== SLStatus.SL_STATUS_OK) {
+            logger.error(`exportKey(${EmberKeyType.valueToName(EmberKeyType, keyType)}) returned unexpected SL status: ${keyInfo.status}`, NS);
+        }
+        return keyInfo;
     }
 
     public async getNetworkKeyInfo(): Promise<EZSPFrameData> {
         if (this.ezsp.ezspV < 13) {
-            throw new Error(`getNetKeyInfo(): Invalid call on EZSP < 13.`);
-        } else {
-            const keyInfo = await this.ezsp.execCommand('getNetworkKeyInfo');
-            if (keyInfo.status !== SLStatus.SL_STATUS_OK) {
-                logger.error(`getNetworkKeyInfo() returned unexpected SL status: ${keyInfo.status}`, NS);
-            }
-
-            return keyInfo;
+            throw new Error("getNetKeyInfo(): Invalid call on EZSP < 13.");
         }
+
+        const keyInfo = await this.ezsp.execCommand("getNetworkKeyInfo");
+        if (keyInfo.status !== SLStatus.SL_STATUS_OK) {
+            logger.error(`getNetworkKeyInfo() returned unexpected SL status: ${keyInfo.status}`, NS);
+        }
+
+        return keyInfo;
     }
 
     private async needsToBeRestore(options: TsType.NetworkOptions): Promise<boolean> {
         // if no backup and the settings have been changed, then need to start a new network
-        const backup = await this.backupMan.getStoredBackup();
+        const backup = this.backupMan.getStoredBackup();
         if (!backup) return false;
 
         let valid = true;
         //valid = valid && (await this.ezsp.networkInit());
-        const netParams = await this.ezsp.execCommand('getNetworkParameters');
+        const netParams = await this.ezsp.execCommand("getNetworkParameters");
         const networkParams = netParams.parameters;
         logger.debug(`Current Node type: ${netParams.nodeType}, Network parameters: ${networkParams}`, NS);
         logger.debug(`Backuped network parameters: ${backup.networkOptions}`, NS);
@@ -949,36 +958,44 @@ export class Driver extends EventEmitter {
         }
 
         // if the settings in the backup match the chip, then need to warn to delete the backup file first
-        valid = valid && networkParams.panId == backup.networkOptions.panId;
-        valid = valid && networkParams.radioChannel == backup.logicalChannel;
+        valid = valid && networkParams.panId === backup.networkOptions.panId;
+        valid = valid && networkParams.radioChannel === backup.logicalChannel;
         valid = valid && Buffer.from(networkParams.extendedPanId).equals(backup.networkOptions.extendedPanId);
         valid = valid && Buffer.from(netKey).equals(backup.networkOptions.networkKey);
         if (valid) {
-            logger.error(`Configuration is not consistent with adapter backup!`, NS);
+            logger.error("Configuration is not consistent with adapter backup!", NS);
             logger.error(`- PAN ID: configured=${options.panID}, adapter=${networkParams.panId}, backup=${backup.networkOptions.panId}`, NS);
             logger.error(
-                `- Extended PAN ID: configured=${Buffer.from(options.extendedPanID!).toString('hex')}, ` +
-                    `adapter=${Buffer.from(networkParams.extendedPanId).toString('hex')}, ` +
-                    `backup=${Buffer.from(networkParams.extendedPanId).toString('hex')}`,
+                `- Extended PAN ID: configured=${
+                    // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
+                    Buffer.from(options.extendedPanID!).toString("hex")
+                }, ` +
+                    `adapter=${Buffer.from(networkParams.extendedPanId).toString("hex")}, ` +
+                    `backup=${Buffer.from(networkParams.extendedPanId).toString("hex")}`,
                 NS,
             );
             logger.error(`- Channel: configured=${options.channelList}, adapter=${networkParams.radioChannel}, backup=${backup.logicalChannel}`, NS);
             logger.error(
-                `- Network key: configured=${Buffer.from(options.networkKey!).toString('hex')}, ` +
-                    `adapter=${Buffer.from(netKey).toString('hex')}, ` +
-                    `backup=${backup.networkOptions.networkKey.toString('hex')}`,
+                `- Network key: configured=${
+                    // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
+                    Buffer.from(options.networkKey!).toString("hex")
+                }, ` +
+                    `adapter=${Buffer.from(netKey).toString("hex")}, ` +
+                    `backup=${backup.networkOptions.networkKey.toString("hex")}`,
                 NS,
             );
-            logger.error(`Please update configuration to prevent further issues.`, NS);
-            logger.error(`If you wish to re-commission your network, please remove coordinator backup.`, NS);
-            logger.error(`Re-commissioning your network will require re-pairing of all devices!`, NS);
-            throw new Error('startup failed - configuration-adapter mismatch - see logs above for more information');
+            logger.error("Please update configuration to prevent further issues.", NS);
+            logger.error("If you wish to re-commission your network, please remove coordinator backup.", NS);
+            logger.error("Re-commissioning your network will require re-pairing of all devices!", NS);
+            throw new Error("startup failed - configuration-adapter mismatch - see logs above for more information");
         }
         valid = true;
         // if the settings in the backup match the config, then the old network is in the chip and needs to be restored
-        valid = valid && options.panID == backup.networkOptions.panId;
+        valid = valid && options.panID === backup.networkOptions.panId;
         valid = valid && options.channelList.includes(backup.logicalChannel);
+        // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
         valid = valid && Buffer.from(options.extendedPanID!).equals(backup.networkOptions.extendedPanId);
+        // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
         valid = valid && Buffer.from(options.networkKey!).equals(backup.networkOptions.networkKey);
         return valid;
     }
