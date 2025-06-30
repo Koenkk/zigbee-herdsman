@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.3.0](https://github.com/Koenkk/zigbee-herdsman/compare/v4.2.1...v4.3.0) (2025-06-30)
+
+
+### Features
+
+* Support discovery for SONOFF Dongle Plus MG21 and MG24 ([#1434](https://github.com/Koenkk/zigbee-herdsman/issues/1434)) ([7bfc343](https://github.com/Koenkk/zigbee-herdsman/commit/7bfc3437bf4ffce5d4bec2e31a1ff7e25c372427))
+
 ## [4.2.1](https://github.com/Koenkk/zigbee-herdsman/compare/v4.2.0...v4.2.1) (2025-06-28)
 
 
