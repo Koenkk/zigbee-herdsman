@@ -32,6 +32,13 @@ function parseReadParameterResponse(view: DataView): Command | null {
     let pos = 8;
     let result = null;
 
+    if (status !== CommandStatus.Success) {
+        if (parameterId in ParamId) {
+            logger.debug(`Received read parameter response for ${ParamId[parameterId]}, seq: ${seqNumber}, status: ${status}`, NS);
+        }
+        return result;
+    }
+
     switch (parameterId) {
         case ParamId.MAC_ADDRESS: {
             result = view.getBigUint64(pos, littleEndian);
@@ -609,6 +616,9 @@ function processFrame(frame: Uint8Array): void {
     queue.splice(i, 1);
 
     if (status === CommandStatus.Success) {
+        req.resolve(command);
+    } else if (status === CommandStatus.Unsupported && commandId === FirmwareCommand.ReadParameter) {
+        // resolve anyway to let higher layer handle unsupported
         req.resolve(command);
     } else {
         let cmdName: string;
