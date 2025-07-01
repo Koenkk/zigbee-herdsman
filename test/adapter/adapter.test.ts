@@ -11,6 +11,7 @@ import {ZStackAdapter} from "../../src/adapter/z-stack/adapter/zStackAdapter";
 import {ZBOSSAdapter} from "../../src/adapter/zboss/adapter/zbossAdapter";
 import {ZiGateAdapter} from "../../src/adapter/zigate/adapter/zigateAdapter";
 import {ZoHAdapter} from "../../src/adapter/zoh/adapter/zohAdapter";
+import {BLZAdapter} from "../../src/adapter/blz/adapter/blzAdapter";
 import {
     DECONZ_CONBEE_II,
     EMBER_SKYCONNECT,
@@ -22,6 +23,7 @@ import {
     ZSTACK_SMLIGHT_SLZB_06P10,
     ZSTACK_SMLIGHT_SLZB_07,
     ZSTACK_ZBDONGLE_P,
+    BLZ_THIRDREALITY,
 } from "../mockAdapters";
 
 const mockPlatform = vi.fn(() => "linux");
@@ -89,6 +91,7 @@ describe("Adapter", () => {
         ["zboss", ZBOSSAdapter],
         ["zigate", ZiGateAdapter],
         ["zoh", ZoHAdapter],
+        ["blz", BLZAdapter],
     ])("Calls adapter contructor for %s", async (name, cls) => {
         const adapter = await Adapter.create(
             {
@@ -694,6 +697,19 @@ describe("Adapter", () => {
                     path: ZIGATE_PLUSV2.path,
                     adapter: "zigate",
                 });
+
+                listSpy.mockReturnValueOnce([BLZ_THIRDREALITY]);
+
+                adapter = await Adapter.create({panID: 0x1a62, channelList: [11]}, {adapter: "blz", path: BLZ_THIRDREALITY.path}, "test.db.backup", {
+                    disableLED: false,
+                });
+
+                expect(adapter).toBeInstanceOf(BLZAdapter);
+                // @ts-expect-error protected
+                expect(adapter.serialPortOptions).toStrictEqual({
+                    path: BLZ_THIRDREALITY.path,
+                    adapter: "blz",
+                });
             });
 
             it("detects with multiple adapters connected", async () => {
@@ -823,7 +839,7 @@ describe("Adapter", () => {
                         "test.db.backup",
                         {disableLED: false},
                     ),
-                ).rejects.toThrow(`Adapter 'invalid' does not exists, possible options: zstack, ember, deconz, zigate, zboss, zoh, ezsp`);
+                ).rejects.toThrow(`Adapter 'invalid' does not exists, possible options: zstack, ember, deconz, zigate, zboss, zoh, blz, ezsp`);
             });
         });
 
@@ -893,6 +909,17 @@ describe("Adapter", () => {
                 expect(adapter.serialPortOptions).toStrictEqual({
                     path: ZIGATE_PLUSV2.path,
                     adapter: "zigate",
+                });
+
+                listSpy.mockReturnValueOnce([BLZ_THIRDREALITY]);
+
+                adapter = await Adapter.create({panID: 0x1a62, channelList: [11]}, {adapter: "blz"}, "test.db.backup", {disableLED: false});
+
+                expect(adapter).toBeInstanceOf(BLZAdapter);
+                // @ts-expect-error protected
+                expect(adapter.serialPortOptions).toStrictEqual({
+                    path: BLZ_THIRDREALITY.path,
+                    adapter: "blz",
                 });
             });
 
@@ -1000,6 +1027,19 @@ describe("Adapter", () => {
                 expect(adapter.serialPortOptions).toStrictEqual({
                     path: ZIGATE_PLUSV2.path,
                     adapter: "zigate",
+                });
+
+                listSpy.mockReturnValueOnce([BLZ_THIRDREALITY]);
+
+                adapter = await Adapter.create({panID: 0x1a62, channelList: [11]}, {path: BLZ_THIRDREALITY.path}, "test.db.backup", {
+                    disableLED: false,
+                });
+
+                expect(adapter).toBeInstanceOf(BLZAdapter);
+                // @ts-expect-error protected
+                expect(adapter.serialPortOptions).toStrictEqual({
+                    path: BLZ_THIRDREALITY.path,
+                    adapter: "blz",
                 });
             });
 
