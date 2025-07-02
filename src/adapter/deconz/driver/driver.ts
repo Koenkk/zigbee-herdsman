@@ -620,7 +620,9 @@ class Driver extends events.EventEmitter {
                         this.paramTcAddress = tcAddress as bigint;
                         this.paramChannelMask = channelMask as number;
                         this.paramProtocolVersion = protocolVersion as number;
-                        this.paramFrameCounter = frameCounter as number;
+                        if (frameCounter !== null) {
+                            this.paramFrameCounter = frameCounter as number;
+                        }
 
                         // console.log({fwVersion, mac, panid, apsUseExtPanid, currentChannel, nwkKey, nwkUpdateId, channelMask, protocolVersion, frameCounter});
 
