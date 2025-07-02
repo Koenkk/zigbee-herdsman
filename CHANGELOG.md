@@ -1,5 +1,13 @@
 # Changelog
 
+## [4.3.1](https://github.com/Koenkk/zigbee-herdsman/compare/v4.3.0...v4.3.1) (2025-07-02)
+
+
+### Bug Fixes
+
+* deCONZ: Handle unsupported status code for read parameter response ([#1438](https://github.com/Koenkk/zigbee-herdsman/issues/1438)) ([00fb686](https://github.com/Koenkk/zigbee-herdsman/commit/00fb6860e0087dc4fd9685e3f88c1bdc75fa6a25))
+* **ignore:** bump the minor-patch group with 2 updates ([#1436](https://github.com/Koenkk/zigbee-herdsman/issues/1436)) ([5b998c9](https://github.com/Koenkk/zigbee-herdsman/commit/5b998c9e29561bac5abc1fd6ad3c20c4366c4d19))
+
 ## [4.3.0](https://github.com/Koenkk/zigbee-herdsman/compare/v4.2.1...v4.3.0) (2025-06-30)
 
 
