@@ -252,11 +252,12 @@ export class DeconzAdapter extends Adapter {
     ): Promise<ZdoTypes.RequestToResponseMap[K] | undefined> {
         const transactionID = this.nextTransactionID();
         payload[0] = transactionID;
-        let txOptions = 0;
+        const txOptions = 0;
 
-        if (networkAddress < NwkBroadcastAddress.BroadcastLowPowerRouters) {
-            txOptions = 0x4; // enable APS ACKs for unicast addresses
-        }
+        // TODO(mpi): Disable APS ACKs for now until we find a better solution to not block queues.
+        //if (networkAddress < NwkBroadcastAddress.BroadcastLowPowerRouters) {
+        //    txOptions = 0x4; // enable APS ACKs for unicast addresses
+        //}
 
         const isNwkAddrRequest = clusterId === Zdo.ClusterId.NETWORK_ADDRESS_REQUEST;
         const req: ApsDataRequest = {
@@ -361,7 +362,9 @@ export class DeconzAdapter extends Adapter {
         const payload = zclFrame.toBuffer();
 
         // TODO(mpi): Enable APS ACKs for tricky devices, maintain a list of those, or keep at least a few slots free for non APS ACK requests.
-        const txOptions = 0x4; // 0x00 normal, 0x04 APS ACK
+        //const txOptions = 0x4; // 0x00 normal, 0x04 APS ACK
+        // TODO(mpi): Disable APS ACKs for now until we find a better solution to not block queues.
+        const txOptions = 0;
 
         const request: ApsDataRequest = {
             requestId: transactionID,
