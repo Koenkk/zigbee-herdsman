@@ -137,6 +137,15 @@ export const stackParameters = [
     {id: ParamId.APS_TRUST_CENTER_ADDRESS, type: DataType.U64},
 ];
 
+export enum ZgpConstants {
+    GpNwkProtocolVersion = 3,
+    GpNwkDataFrame = 0,
+    GpNwkMaintenanceFrame = 1,
+    GpMinMsduSize = 1,
+    GpAutoCommissioningFlag = 1 << 6,
+    GpNwkFrameControlExtensionFlag = 1 << 7,
+}
+
 interface Request {
     commandId: FirmwareCommand;
     networkState: NetworkState;
@@ -196,7 +205,6 @@ interface ReceivedDataResponse {
 }
 
 interface GpDataInd {
-    rspId: number;
     seqNr: number;
     id: number;
     options: number;
