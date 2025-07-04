@@ -1,3 +1,4 @@
+import {checkInstallCode} from "../src/controller/helpers/installCodes";
 import {Queue, Utils, Waitress, wait} from "../src/utils";
 import {logger, setLogger} from "../src/utils/logger";
 
@@ -133,14 +134,14 @@ describe("Utils", () => {
 
     it("Test queue", async () => {
         const queue = new Queue(4);
-        const finished = [];
+        const finished: number[] = [];
 
-        let job1Promise;
-        let job2Promise;
-        const job1 = new Promise((resolve) => {
+        let job1Promise: (() => void) | undefined;
+        let job2Promise: (() => void) | undefined;
+        const job1 = new Promise<void>((resolve) => {
             job1Promise = resolve;
         });
-        const job2 = new Promise((resolve) => {
+        const job2 = new Promise<void>((resolve) => {
             job2Promise = resolve;
         });
         const job5 = new Promise((_resolve) => {});
@@ -189,11 +190,11 @@ describe("Utils", () => {
         });
 
         expect(finished).toEqual([4]);
-        job1Promise();
+        job1Promise?.();
         expect(await job1Result).toBe("finished");
         await job1Result;
         expect(finished).toEqual([4, 1]);
-        job2Promise();
+        job2Promise?.();
         await job2Result;
         expect(finished).toEqual([4, 1, 2, 3]);
         expect(queue.count()).toBe(5);
@@ -223,5 +224,55 @@ describe("Utils", () => {
         expect(mockLogger.warning).toHaveBeenCalledWith("warning", "zh");
         logger.error("error", "zh");
         expect(mockLogger.error).toHaveBeenCalledWith("error", "zh");
+    });
+
+    it("Checks install codes of all lengths", () => {
+        expect(() => checkInstallCode(Buffer.from("001122", "hex"))).toThrow("Install code 001122 has invalid size");
+
+        const code8Valid = Buffer.from("83FED3407A932B70", "hex");
+        const code8Invalid = Buffer.from("FFFED3407A939723", "hex");
+        const code8InvalidFixed = Buffer.from("FFFED3407A93DE84", "hex");
+        const code8MissingCRC = Buffer.from("83FED3407A93", "hex");
+
+        expect(checkInstallCode(code8Valid)).toStrictEqual([code8Valid, undefined]);
+        expect(checkInstallCode(code8Invalid)).toStrictEqual([code8InvalidFixed, "invalid CRC"]);
+        expect(() => checkInstallCode(code8Invalid, false)).toThrow(`Install code ${code8Invalid.toString("hex")} failed CRC validation`);
+        expect(checkInstallCode(code8MissingCRC)).toStrictEqual([code8Valid, "missing CRC"]);
+        expect(() => checkInstallCode(code8MissingCRC, false)).toThrow(`Install code ${code8MissingCRC.toString("hex")} failed CRC validation`);
+
+        const code10Valid = Buffer.from("83FED3407A93972397FC", "hex");
+        const code10Invalid = Buffer.from("FFFED3407A939723A5C6", "hex");
+        const code10InvalidFixed = Buffer.from("FFFED3407A9397238C4F", "hex");
+        // consired as 8-length with invalid CRC
+        const code10MissingCRC = Buffer.from("83FED3407A939723", "hex");
+        const code10MissingCRCFixed = Buffer.from("83FED3407A932B70", "hex");
+
+        expect(checkInstallCode(code10Valid)).toStrictEqual([code10Valid, undefined]);
+        expect(checkInstallCode(code10Invalid)).toStrictEqual([code10InvalidFixed, "invalid CRC"]);
+        expect(() => checkInstallCode(code10Invalid, false)).toThrow(`Install code ${code10Invalid.toString("hex")} failed CRC validation`);
+        expect(checkInstallCode(code10MissingCRC)).toStrictEqual([code10MissingCRCFixed, "invalid CRC"]);
+        expect(() => checkInstallCode(code10MissingCRC, false)).toThrow(`Install code ${code10MissingCRC.toString("hex")} failed CRC validation`);
+
+        const code14Valid = Buffer.from("83FED3407A939723A5C639FF4C12", "hex");
+        const code14Invalid = Buffer.from("FFFED3407A939723A5C639FF4C12", "hex");
+        const code14InvalidFixed = Buffer.from("FFFED3407A939723A5C639FFDE74", "hex");
+        const code14MissingCRC = Buffer.from("83FED3407A939723A5C639FF", "hex");
+
+        expect(checkInstallCode(code14Valid)).toStrictEqual([code14Valid, undefined]);
+        expect(checkInstallCode(code14Invalid)).toStrictEqual([code14InvalidFixed, "invalid CRC"]);
+        expect(() => checkInstallCode(code14Invalid, false)).toThrow(`Install code ${code14Invalid.toString("hex")} failed CRC validation`);
+        expect(checkInstallCode(code14MissingCRC)).toStrictEqual([code14Valid, "missing CRC"]);
+        expect(() => checkInstallCode(code14MissingCRC, false)).toThrow(`Install code ${code14MissingCRC.toString("hex")} failed CRC validation`);
+
+        const code18Valid = Buffer.from("83FED3407A939723A5C639B26916D505C3B5", "hex");
+        const code18Invalid = Buffer.from("FFFED3407A939723A5C639B26916D505C3B5", "hex");
+        const code18InvalidFixed = Buffer.from("FFFED3407A939723A5C639B26916D505EEB1", "hex");
+        const code18MissingCRC = Buffer.from("83FED3407A939723A5C639B26916D505", "hex");
+
+        expect(checkInstallCode(code18Valid)).toStrictEqual([code18Valid, undefined]);
+        expect(checkInstallCode(code18Invalid)).toStrictEqual([code18InvalidFixed, "invalid CRC"]);
+        expect(() => checkInstallCode(code18Invalid, false)).toThrow(`Install code ${code18Invalid.toString("hex")} failed CRC validation`);
+        expect(checkInstallCode(code18MissingCRC)).toStrictEqual([code18Valid, "missing CRC"]);
+        expect(() => checkInstallCode(code18MissingCRC, false)).toThrow(`Install code ${code18MissingCRC.toString("hex")} failed CRC validation`);
     });
 });

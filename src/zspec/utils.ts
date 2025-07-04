@@ -1,5 +1,5 @@
 import {createCipheriv} from "node:crypto";
-import {AES_MMO_128_BLOCK_SIZE, ALL_802_15_4_CHANNELS, INSTALL_CODE_CRC_SIZE, INSTALL_CODE_SIZES} from "./consts";
+import {AES_MMO_128_BLOCK_SIZE, ALL_802_15_4_CHANNELS} from "./consts";
 import {BroadcastAddress} from "./enums";
 import type {Eui64} from "./tstypes";
 
@@ -244,63 +244,4 @@ export function aes128MmoHash(data: Buffer): Buffer {
     }
 
     return result;
-}
-
-/**
- * Check if install code (little-endian) is valid, and if not, and requested, fix it.
- *
- * WARNING: Due to conflicting sizes between 8-length code with invalid CRC, and 10-length code missing CRC, given 8-length codes are always assumed to be 8-length code with invalid CRC (most probable scenario).
- *
- * @param code The code to check. Reference is not modified by this procedure but is returned when code was valid, as `outCode`.
- * @param adjust If false, throws if the install code is invalid, otherwise try to fix it (CRC)
- * @returns
- *   - The adjusted code, or `code` if not adjusted.
- *   - If adjust is false, undefined, otherwise, the reason why the code needed adjusting or undefined if not.
- *   - Throws when adjust=false and invalid, or cannot fix.
- */
-export function checkInstallCode(code: Buffer, adjust = true): [outCode: Buffer, adjusted: "invalid CRC" | "missing CRC" | undefined] {
-    const crcLowByteIndex = code.length - INSTALL_CODE_CRC_SIZE;
-    const crcHighByteIndex = code.length - INSTALL_CODE_CRC_SIZE + 1;
-
-    for (const codeSize of INSTALL_CODE_SIZES) {
-        if (code.length === codeSize) {
-            // install code has CRC, check if valid, if not, replace it
-            const crc = crc16X25(code.subarray(0, -2));
-            const crcHighByte = (crc >> 8) & 0xff;
-            const crcLowByte = crc & 0xff;
-
-            if (code[crcLowByteIndex] !== crcLowByte || code[crcHighByteIndex] !== crcHighByte) {
-                // see WARNING above, 8 is smallest valid length, so always ends up here
-                if (adjust) {
-                    const outCode = Buffer.from(code);
-                    outCode[crcLowByteIndex] = crcLowByte;
-                    outCode[crcHighByteIndex] = crcHighByte;
-
-                    return [outCode, "invalid CRC"];
-                }
-
-                throw new Error(`Install code ${code.toString("hex")} failed CRC validation`);
-            }
-
-            return [code, undefined];
-        }
-
-        if (code.length === codeSize - INSTALL_CODE_CRC_SIZE) {
-            if (adjust) {
-                // install code is missing CRC
-                const crc = crc16X25(code);
-                const outCode = Buffer.alloc(code.length + INSTALL_CODE_CRC_SIZE);
-
-                code.copy(outCode, 0);
-                outCode.writeUInt16LE(crc, code.length);
-
-                return [outCode, "missing CRC"];
-            }
-
-            throw new Error(`Install code ${code.toString("hex")} failed CRC validation`);
-        }
-    }
-
-    // never returned from within the above loop
-    throw new Error(`Install code ${code.toString("hex")} has invalid size`);
 }
