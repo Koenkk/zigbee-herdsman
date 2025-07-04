@@ -438,43 +438,141 @@ function parseDeviceStateChangedNotification(view: DataView): number | null {
     }
 }
 
+// The ApplicationID sub-field contains the information about the application used by the GPD.
+// ApplicationID = 0b000 indicates the GPD_ID field has the length of 4B and contains the GPD SrcID.
+// ApplicationID = 0b010 indicates the GPD_ID field has the length of 8B and contains the GPD IEEE address.
+enum GpApplicationId {
+    SrcId4B = 0,
+    Lped = 1,
+    Ieee8B = 2,
+}
+
+enum GpSecurityLevel {
+    NoSecurity = 0,
+    // TODO(mpi): "Reserved" is noted in the available spec but the code defined it as follows:
+    Reserved = 1, // 0b01 1LSB of frame counter and short (2B) MIC only
+    FrameCounter4BMic4B = 2,
+    EncryptionFrameCounter4BMic4B = 3,
+}
+
+enum ZgpConstants {
+    GpNwkProtocolVersion = 3,
+    GpNwkDataFrame = 0,
+    GpNwkMaintenanceFrame = 1,
+    GpMinMsduSize = 1,
+    GpAutoCommissioningFlag = 1 << 6,
+    GpNwkFrameControlExtensionFlag = 1 << 7,
+}
+
 function parseGreenPowerDataIndication(view: DataView): GpDataInd | null {
     try {
-        let id: number;
-        let rspId: number;
-        let options: number;
-        let srcId: number;
-        let frameCounter: number;
-        let commandId: number;
-        let commandFrameSize: number;
-        let commandFrame: Buffer;
-        const seqNr = view.getUint8(1);
+        let srcId = 0;
+        let frameCounter = 0;
+        let commandId = 0;
+        let commandFrameSize = 0;
+        let commandFrame: Buffer | undefined;
 
-        if (view.byteLength < 30) {
-            logger.debug("GP data notification", NS);
-            id = 0x00; // 0 = notification, 4 = commissioning
-            rspId = 0x01; // 1 = pairing, 2 = commissioning
-            options = 0;
-            view.getUint16(7, littleEndian); // frame ctrl field(7) ext.fcf(8)
-            srcId = view.getUint32(9, littleEndian);
-            frameCounter = view.getUint32(13, littleEndian);
-            commandId = view.getUint8(17);
-            commandFrameSize = view.byteLength - 18 - 6; // cut 18 from begin and 4 (sec mic) and 2 from end (cfc)
-            commandFrame = Buffer.from(view.buffer.slice(18, commandFrameSize + 18));
-        } else {
-            logger.debug("GP commissioning notification", NS);
-            id = 0x04; // 0 = notification, 4 = commissioning
-            rspId = 0x01; // 1 = pairing, 2 = commissioning
-            options = view.getUint16(14, littleEndian); // opt(14) ext.opt(15)
-            srcId = view.getUint32(8, littleEndian);
-            frameCounter = view.getUint32(36, littleEndian);
-            commandId = view.getUint8(12);
-            commandFrameSize = view.byteLength - 13 - 2; // cut 13 from begin and 2 from end (cfc)
-            commandFrame = Buffer.from(view.buffer.slice(13, commandFrameSize + 13));
+        const buf = new Buffalo(Buffer.from(view.buffer));
+
+        const _fwCommandId = buf.readUInt8();
+        const seqNr = buf.readUInt8();
+        const fwStatus = buf.readUInt8();
+
+        if (fwStatus !== CommandStatus.Success) {
+            return null;
+        }
+
+        const _frameLength = buf.readUInt16();
+        const _payloadLength = buf.readUInt16();
+
+        // payload
+
+        // implementation ported from deCONZ GP code
+        const nwkFrameControl = buf.readUInt8();
+
+        // check frame type
+        const frameType = nwkFrameControl & 0x03;
+
+        if (frameType !== ZgpConstants.GpNwkDataFrame && frameType !== ZgpConstants.GpNwkMaintenanceFrame) {
+            return null;
+        }
+
+        // check green power protocol version
+        if (((nwkFrameControl >> 2) & 0x03) !== ZgpConstants.GpNwkProtocolVersion) {
+            return null;
+        }
+
+        // extended frame control
+        let nwkExtFrameControl = 0;
+        const hasExtensionFlag = nwkFrameControl & ZgpConstants.GpNwkFrameControlExtensionFlag;
+        if (hasExtensionFlag) {
+            nwkExtFrameControl = buf.readUInt8();
+        }
+
+        const options = nwkExtFrameControl | (nwkFrameControl << 8);
+
+        const applicationId = nwkExtFrameControl & 7;
+        const securityLevel = (nwkExtFrameControl >> 3) & 3;
+
+        if (applicationId !== GpApplicationId.SrcId4B && applicationId !== GpApplicationId.Ieee8B) {
+            return null; // NOTE: GpApplicationId.Lped (1) should be dropped as per spec
+        }
+
+        // The GPDSrcID field is present if the Frame Type sub-field is set to 0b00 and the ApplicationID sub-
+        // field of the Extended NWK Frame Control field is set to 0b000 (or not present).
+        if (
+            applicationId === GpApplicationId.SrcId4B &&
+            frameType === ZgpConstants.GpNwkDataFrame /*|| (frameType === ZgpConstants.GpNwkMaintenanceFrame && hasExtensionFlag) */
+        ) {
+            srcId = buf.readUInt32();
+        }
+        // TODO(mpi): for applicationId == GpApplicationId.Ieee8B:
+        // currently Ieee addresses aren't supported, do they actually appear?!
+        // these need be extracted from MAC header which we don't have here (this is only the NWK payload).
+
+        // frame counter filed
+        frameCounter = 0;
+        let micSize = 0;
+
+        if (hasExtensionFlag && frameType === ZgpConstants.GpNwkDataFrame) {
+            if (applicationId === GpApplicationId.Ieee8B) {
+                const _endpoint = buf.readUInt8();
+            }
+            // If the SecurityLevel is set to 0b00, the SecurityKey sub-field is ignored on reception, and the
+            // fields Security frame counter and MIC are not present.
+            if (securityLevel === GpSecurityLevel.Reserved) {
+                micSize = 2; // TODO(mpi) does this actually exists? Check recent specs!
+            } else if (securityLevel === GpSecurityLevel.FrameCounter4BMic4B || securityLevel === GpSecurityLevel.EncryptionFrameCounter4BMic4B) {
+                frameCounter = buf.readUInt32();
+                micSize = 4;
+            }
+        }
+
+        if (!buf.isMore()) {
+            return null;
+        }
+
+        if (applicationId === GpApplicationId.SrcId4B || applicationId === GpApplicationId.Ieee8B) {
+            commandId = buf.readUInt8();
+            commandFrameSize = buf.getBuffer().length - buf.getPosition() - micSize;
+            //logger.debug(`GPD payload length: ${commandFrameSize}, mic size: ${micSize}`, NS);
+            if (commandFrameSize < 0) {
+                logger.error(`GPD payload length < 0: ${commandFrameSize}`, NS);
+                return null;
+            }
+            commandFrame = Buffer.from(buf.readBuffer(commandFrameSize)); // copy
+        }
+
+        // NOTE(mpi): The old adapter treated (view.byteLength < 30) as notification, larger as commissioning?!
+        // The controller thus rejected commissioning frames.
+        const id = 0; // 0 = notification, 4 = commissioning
+
+        if (commandFrame === undefined) {
+            logger.debug("GPD discard frame since commandFrame is null?!", NS);
+            return null;
         }
 
         const ind: GpDataInd = {
-            rspId,
             seqNr,
             id,
             options,
@@ -485,6 +583,7 @@ function parseGreenPowerDataIndication(view: DataView): GpDataInd | null {
             commandFrame,
         };
 
+        // TODO(mpi): This only tracks one frame, might be a bit optimistic
         if (!(lastReceivedGpInd.srcId === srcId && lastReceivedGpInd.commandId === commandId && lastReceivedGpInd.frameCounter === frameCounter)) {
             lastReceivedGpInd.srcId = srcId;
             lastReceivedGpInd.commandId = commandId;
@@ -503,6 +602,7 @@ function parseGreenPowerDataIndication(view: DataView): GpDataInd | null {
         return null;
     }
 }
+
 function parseMacPollCommand(_view: DataView): number {
     //logger.debug("Received command MAC_POLL", NS);
     return FirmwareCommand.MacPollIndication;

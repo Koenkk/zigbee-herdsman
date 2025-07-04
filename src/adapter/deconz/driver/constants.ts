@@ -196,7 +196,6 @@ interface ReceivedDataResponse {
 }
 
 interface GpDataInd {
-    rspId: number;
     seqNr: number;
     id: number;
     options: number;
