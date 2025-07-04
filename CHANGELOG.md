@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.3.2](https://github.com/Koenkk/zigbee-herdsman/compare/v4.3.1...v4.3.2) (2025-07-04)
+
+
+### Bug Fixes
+
+* deCONZ: Disable APS ACKs to not block queues for now ([#1440](https://github.com/Koenkk/zigbee-herdsman/issues/1440)) ([fd49db2](https://github.com/Koenkk/zigbee-herdsman/commit/fd49db29b504d36bc5573dd29f743e63f76fff7e))
+
 ## [4.3.1](https://github.com/Koenkk/zigbee-herdsman/compare/v4.3.0...v4.3.1) (2025-07-02)
 
 
