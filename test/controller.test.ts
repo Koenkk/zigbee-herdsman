@@ -1839,7 +1839,7 @@ describe("Controller", () => {
         await controller.addInstallCode(code);
         expect(mockAddInstallCode).toHaveBeenCalledTimes(1);
         expect(mockAddInstallCode).toHaveBeenCalledWith(
-            "0x9035EAFFFE424783",
+            "0x9035eafffe424783",
             Buffer.from([0xae, 0x3b, 0x28, 0x72, 0x81, 0xcf, 0x16, 0xf5, 0x50, 0x73, 0x3a, 0x0c, 0xec, 0x38, 0xaa, 0x31, 0xe8, 0x02]),
             false,
         );
@@ -1851,16 +1851,69 @@ describe("Controller", () => {
         await controller.addInstallCode(code);
         expect(mockAddInstallCode).toHaveBeenCalledTimes(2);
         expect(mockAddInstallCode).toHaveBeenCalledWith(
-            "0x000D6F00179F2BC9",
+            "0x000d6f00179f2bc9",
             Buffer.from([0xd0, 0xf4, 0x71, 0xc9, 0xbb, 0xa2, 0xc0, 0x20, 0x86, 0x08, 0xe9, 0x1e, 0xed, 0x17, 0xe2, 0xb1, 0x9a, 0xec]),
             false,
         );
         expect(mockAddInstallCode).toHaveBeenCalledWith(
-            "0x000D6F00179F2BC9",
+            "0x000d6f00179f2bc9",
             Buffer.from([0xd0, 0xf4, 0x71, 0xc9, 0xbb, 0xa2, 0xc0, 0x20, 0x86, 0x08, 0xe9, 0x1e, 0xed, 0x17, 0xe2, 0xb1]),
             true,
         );
         expect(mockLogger.info).toHaveBeenCalledWith(`Install code was adjusted for reason 'missing CRC'.`, "zh:controller");
+    });
+
+    it("Add install code widely adopted format", async () => {
+        await controller.start();
+        // inovelli
+        const code = "Z:6C5CB1FFFE44FDFD$I:5492072F8DE72829FEE139CF8ACA4F43EF21";
+        await controller.addInstallCode(code);
+        expect(mockAddInstallCode).toHaveBeenNthCalledWith(
+            1,
+            "0x6c5cb1fffe44fdfd",
+            Buffer.from([
+                0x54, 0x92, 0x07, 0x2f, 0x8d, 0xe7, 0x28, 0x29, 0xfe, 0xe1, 0x39, 0xcf, 0x8a, 0xca, 0x4f, 0x43, /*0xef, 0x21 bad CRC?*/ 0x85, 0x44,
+            ]),
+            false,
+        );
+        // danfoss
+        const code2 = "G$M:IC2%Z:540F57FFFE599FAA$I:D79CB21C6D197CE7A3339A683A90DFF2442A%M:1246";
+        await controller.addInstallCode(code2);
+        expect(mockAddInstallCode).toHaveBeenNthCalledWith(
+            2,
+            "0x540f57fffe599faa",
+            Buffer.from([0xd7, 0x9c, 0xb2, 0x1c, 0x6d, 0x19, 0x7c, 0xe7, 0xa3, 0x33, 0x9a, 0x68, 0x3a, 0x90, 0xdf, 0xf2, 0x44, 0x2a]),
+            false,
+        );
+        // ??
+        const code3 = "Z:4CC206FFFE306C43$I:150A1A57D11A1A01362622DBA97ACF0F9185$D:202%B:4CC206306C43$P:983639%M:1220$F:002D";
+        await controller.addInstallCode(code3);
+        expect(mockAddInstallCode).toHaveBeenNthCalledWith(
+            3,
+            "0x4cc206fffe306c43",
+            Buffer.from([
+                0x15, 0x0a, 0x1a, 0x57, 0xd1, 0x1a, 0x1a, 0x01, 0x36, 0x26, 0x22, 0xdb, 0xa9, 0x7a, 0xcf, 0x0f, /*0x91, 0x85 bad CRC?*/ 0x0c, 0xca,
+            ]),
+            false,
+        );
+        // ubisys
+        const code4 = "Z:0102030405060708$I:0102030405060708090A0B0C0D0E0F1090FD%G$M:S1-R%M:10F2";
+        await controller.addInstallCode(code4);
+        expect(mockAddInstallCode).toHaveBeenNthCalledWith(
+            4,
+            "0x0102030405060708",
+            Buffer.from([0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f, 0x10, 0x90, 0xfd]),
+            false,
+        );
+        // ledvance
+        const code5 = "Z:F0D1B8000017389A$I:6AB6973274EE6F720200530162754044C930%M:1189$D:008B452720";
+        await controller.addInstallCode(code5);
+        expect(mockAddInstallCode).toHaveBeenNthCalledWith(
+            5,
+            "0xf0d1b8000017389a",
+            Buffer.from([0x6a, 0xb6, 0x97, 0x32, 0x74, 0xee, 0x6f, 0x72, 0x02, 0x00, 0x53, 0x01, 0x62, 0x75, 0x40, 0x44, 0xc9, 0x30]),
+            false,
+        );
     });
 
     it("Add install code Aqara", async () => {
@@ -1869,8 +1922,20 @@ describe("Controller", () => {
         await controller.addInstallCode(code);
         expect(mockAddInstallCode).toHaveBeenCalledTimes(1);
         expect(mockAddInstallCode).toHaveBeenCalledWith(
-            "0x54EF44100006E7DF",
+            "0x54ef44100006e7df",
             Buffer.from([0x33, 0x13, 0xa0, 0x05, 0xe1, 0x77, 0xa6, 0x47, 0xfc, 0x79, 0x25, 0x62, 0x0a, 0xb2, 0x07, 0xc4, 0xbe, 0xf5]),
+            false,
+        );
+    });
+
+    it("Add install code Hue", async () => {
+        await controller.start();
+        const code = "HUE:Z:0123456789ABCDEF0123456789ABCDEF0123 M:0123456789ABCDEF D:L3B A:1184";
+        await controller.addInstallCode(code);
+        expect(mockAddInstallCode).toHaveBeenCalledTimes(1);
+        expect(mockAddInstallCode).toHaveBeenCalledWith(
+            "0x0123456789abcdef",
+            Buffer.from([0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef, 0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef, 0xe7, 0xb8]),
             false,
         );
     });
@@ -1881,7 +1946,7 @@ describe("Controller", () => {
         await controller.addInstallCode(code);
         expect(mockAddInstallCode).toHaveBeenCalledTimes(1);
         expect(mockAddInstallCode).toHaveBeenCalledWith(
-            "0x54EF44100006E7DF",
+            "0x54ef44100006e7df",
             Buffer.from([0x33, 0x13, 0xa0, 0x05, 0xe1, 0x77, 0xa6, 0x47, 0xfc, 0x79, 0x25, 0x62, 0x0a, 0xb2, 0x07, 0xc4, 0xbe, 0xf5]),
             false,
         );
@@ -1893,6 +1958,18 @@ describe("Controller", () => {
         const code = "54EF44100006E7DF|3313A005E177A647FC7925620AB207";
 
         await expect(controller.addInstallCode(code)).rejects.toThrow("Install code 3313a005e177a647fc7925620ab207 has invalid size");
+
+        expect(mockAddInstallCode).toHaveBeenCalledTimes(0);
+    });
+
+    it("Add install code unknown format", async () => {
+        await controller.start();
+
+        const code = "54EF44100006E7DF`3313A005E177A647FC7925620AB207";
+
+        await expect(controller.addInstallCode(code)).rejects.toThrow(
+            "Unsupported install code, got 47 chars, expected 95 or 91 chars, or known format",
+        );
 
         expect(mockAddInstallCode).toHaveBeenCalledTimes(0);
     });
