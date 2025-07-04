@@ -1,5 +1,18 @@
 # Changelog
 
+## [4.4.0](https://github.com/Koenkk/zigbee-herdsman/compare/v4.3.2...v4.4.0) (2025-07-04)
+
+
+### Features
+
+* Support for more install code formats ([#1444](https://github.com/Koenkk/zigbee-herdsman/issues/1444)) ([aeec6d6](https://github.com/Koenkk/zigbee-herdsman/commit/aeec6d621501c96cb5d495f0485616ace8f2229c))
+
+
+### Bug Fixes
+
+* deCONZ: ZGP implementation ([#1441](https://github.com/Koenkk/zigbee-herdsman/issues/1441)) ([6632085](https://github.com/Koenkk/zigbee-herdsman/commit/66320852b8e4ffd5bd10aa5a9b01930962257dcd))
+* Extend hvacThermostat with Danfoss specific attributes ([#1439](https://github.com/Koenkk/zigbee-herdsman/issues/1439)) ([7027822](https://github.com/Koenkk/zigbee-herdsman/commit/702782274a3ace24f64f97eb35b7240474d6e6a4))
+
 ## [4.3.2](https://github.com/Koenkk/zigbee-herdsman/compare/v4.3.1...v4.3.2) (2025-07-04)
 
 
