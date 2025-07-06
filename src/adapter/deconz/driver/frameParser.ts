@@ -81,6 +81,13 @@ function parseReadParameterResponse(view: DataView): Command | null {
             result = view.getUint8(pos);
             break;
         }
+        case ParamId.STK_ENDPOINT: {
+            result = Buffer.alloc(view.byteLength - pos);
+            for (let i = 0; pos < view.byteLength; i++, pos++) {
+                result[i] = view.getUint8(pos);
+            }
+            break;
+        }
         case ParamId.APS_CHANNEL_MASK: {
             result = view.getUint32(pos, littleEndian);
             break;

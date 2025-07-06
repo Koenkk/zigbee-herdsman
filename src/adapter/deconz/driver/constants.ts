@@ -127,6 +127,7 @@ export const stackParameters = [
     {id: ParamId.STK_PREDEFINED_PANID, type: DataType.U8},
     {id: ParamId.STK_NETWORK_KEY, type: [DataType.U8, DataType.SecKey], readArg: 1}, // index, key
     {id: ParamId.STK_LINK_KEY, type: [DataType.U64, DataType.SecKey], readArg: 1}, // mac addess, key
+    {id: ParamId.STK_ENDPOINT, type: DataType.Custom},
     {id: ParamId.DEV_WATCHDOG_TTL, type: DataType.U32},
     {id: ParamId.STK_PERMIT_JOIN, type: DataType.U8},
     {id: ParamId.NWK_EXTENDED_PANID, type: DataType.U64},
@@ -141,7 +142,7 @@ interface Request {
     commandId: FirmwareCommand;
     networkState: NetworkState;
     parameterId: ParamId;
-    parameter?: Buffer | number | bigint;
+    parameter?: Buffer | number | bigint | undefined;
     seqNumber: number;
     // biome-ignore lint/suspicious/noExplicitAny: API
     resolve: (value: any) => void;
