@@ -4,6 +4,7 @@ import events from "node:events";
 import net from "node:net";
 
 import slip from "slip";
+import {Buffalo} from "../../../buffalo";
 import type {Backup} from "../../../models";
 import {logger} from "../../../utils/logger";
 import {SerialPort} from "../../serialPort";
@@ -112,6 +113,10 @@ class Driver extends events.EventEmitter {
     public paramCurrentChannel = 0;
     public paramNwkPanid = 0;
     public paramNwkKey = Buffer.alloc(16);
+    public paramEndpoint0: Buffer | undefined;
+    public paramEndpoint1: Buffer | undefined;
+    public fixParamEndpoint0: Buffer;
+    public fixParamEndpoint1: Buffer;
     public paramNwkUpdateId = 0;
     public paramChannelMask = 0;
     public paramProtocolVersion = 0;
@@ -129,6 +134,50 @@ class Driver extends events.EventEmitter {
 
         this.writer = new Writer();
         this.parser = new Parser();
+
+        this.fixParamEndpoint0 = Buffer.from([
+            0x00, // index
+            0x01, // endpoint,
+            0x04, // profileId
+            0x01,
+            0x05, // deviceId
+            0x00,
+            0x01, // deviceVersion
+            0x05, // in cluster count
+            0x00, // basic
+            0x00,
+            0x06, // on/off
+            0x00,
+            0x0a, // time
+            0x00,
+            0x19, // ota
+            0x00,
+            0x01, // ias ace
+            0x05,
+            0x04, // out cluster count
+            0x01, // power configuration
+            0x00,
+            0x20, // poll control
+            0x00,
+            0x00, // ias zone
+            0x05,
+            0x02, // ias wd
+            0x05,
+        ]);
+
+        this.fixParamEndpoint1 = Buffer.from([
+            0x01, // index
+            0xf2, // endpoint,
+            0xe0, // profileId
+            0xa1,
+            0x64, // deviceId
+            0x00,
+            0x01, // deviceVersion
+            0x00, // in cluster count
+            0x01, // out cluster count
+            0x21, // green power
+            0x00,
+        ]);
 
         this.tickTimer = setInterval(() => {
             this.tick();
@@ -366,6 +415,16 @@ class Driver extends events.EventEmitter {
             return false;
         }
 
+        if (!this.paramEndpoint0 || this.fixParamEndpoint0.compare(this.paramEndpoint0) !== 0) {
+            logger.debug("Endpoint[0] doesn't match configuration", NS);
+            return false;
+        }
+
+        if (!this.paramEndpoint1 || this.fixParamEndpoint1.compare(this.paramEndpoint1) !== 0) {
+            logger.debug("Endpoint[1] doesn't match configuration", NS);
+            return false;
+        }
+
         if ((this.deviceStatus & DEV_STATUS_NET_STATE_MASK) !== NetworkState.Connected) {
             return false;
         }
@@ -521,55 +580,19 @@ class Driver extends events.EventEmitter {
             await this.writeParameterRequest(ParamId.STK_NETWORK_KEY, Buffer.from([0x0, ...this.networkOptions.networkKey]));
         }
 
+        // check current endpoint configuration
+        if (!this.paramEndpoint0 || this.fixParamEndpoint0.compare(this.paramEndpoint0) !== 0) {
+            this.paramEndpoint0 = this.fixParamEndpoint0;
+            await this.writeParameterRequest(ParamId.STK_ENDPOINT, this.paramEndpoint0);
+        }
+
+        if (!this.paramEndpoint1 || this.fixParamEndpoint1.compare(this.paramEndpoint1) !== 0) {
+            this.paramEndpoint1 = this.fixParamEndpoint1;
+            await this.writeParameterRequest(ParamId.STK_ENDPOINT, this.paramEndpoint1);
+        }
+
         // now reconnect, this will also store configuration in nvram
         await this.changeNetworkStateRequest(NetworkState.Connected);
-
-        // TODO(mpi): Endpoint configuration should be written like other network parameters and subject to `changed`.
-        // It should happen before NET_CONNECTED is set.
-        // Therefore read endpoint configuration, compare, swap if needed.
-
-        // TODO(mpi): The following code only adjusts first endpoint, with a fixed setting.
-        // Ideally also second endpoint should be configured like deCONZ does.
-
-        // write endpoints
-        /* Format of the STK.Endpoint parameter:
-            {
-                u8 endpointIndex // index used by firmware 0..2
-                u8 endpoint // actual zigbee endpoint
-                u16 profileId
-                u16 deviceId
-                u8 deviceVersion
-                u8 serverClusterCount
-                u16 serverClusters[serverClusterCount]
-                u8 clientClusterCount
-                u16 clientClusters[clientClusterCount]
-            }
-            */
-        //[ sd1   ep    proId       devId       vers  #inCl iCl1        iCl2        iCl3        iCl4        iCl5        #outC oCl1        oCl2        oCl3        oCl4      ]
-        //
-        // const sd = [
-        //     0x00, // index
-        //     0x01, // endpoint
-        //     0x04, 0x01, // profileId
-        //     0x05, 0x00, // deviceId
-        //     0x01, // deviceVersion
-        //     0x05, // serverClusterCount
-        //     0x00, 0x00, // Basic
-        //     0x00, 0x06, // On/Off        TODO(mpi): This is wrong byte order! should be 0x06 0x00
-        //     0x0a, 0x00, // Time
-        //     0x19, 0x00, // OTA
-        //     0x01, 0x05, // IAS ACE
-        //     0x04, // clientClusterCount
-        //     0x01, 0x00, // Power Configuration
-        //     0x20, 0x00, // Poll Control
-        //     0x00, 0x05, // IAS Zone
-        //     0x02, 0x05 // IAS WD
-        // ];
-        // // TODO(mpi) why is it reversed? That result in invalid endpoint configuration.
-        // // Likely the command gets discarded as it results in endpointIndex = 0x05.
-        // const sd1 = sd.reverse();
-        // await this.driver.writeParameterRequest(PARAM.PARAM.STK.Endpoint, Buffer.from(sd1));
-
         return;
     }
 
@@ -593,6 +616,8 @@ class Driver extends events.EventEmitter {
                 this.readParameterRequest(ParamId.APS_CHANNEL_MASK),
                 this.readParameterRequest(ParamId.STK_PROTOCOL_VERSION),
                 this.readParameterRequest(ParamId.STK_FRAME_COUNTER),
+                this.readParameterRequest(ParamId.STK_ENDPOINT, Buffer.from([0])),
+                this.readParameterRequest(ParamId.STK_ENDPOINT, Buffer.from([1])),
             ])
                 .then(
                     ([
@@ -609,6 +634,8 @@ class Driver extends events.EventEmitter {
                         channelMask,
                         protocolVersion,
                         frameCounter,
+                        ep0,
+                        ep1,
                     ]) => {
                         this.paramFirmwareVersion = fwVersion;
                         this.paramCurrentChannel = currentChannel as number;
@@ -622,6 +649,13 @@ class Driver extends events.EventEmitter {
                         this.paramProtocolVersion = protocolVersion as number;
                         if (frameCounter !== null) {
                             this.paramFrameCounter = frameCounter as number;
+                        }
+                        if (ep0 !== null) {
+                            this.paramEndpoint0 = ep0 as Buffer;
+                        }
+
+                        if (ep1 !== null) {
+                            this.paramEndpoint1 = ep1 as Buffer;
                         }
 
                         // console.log({fwVersion, mac, panid, apsUseExtPanid, currentChannel, nwkKey, nwkUpdateId, channelMask, protocolVersion, frameCounter});
@@ -927,7 +961,7 @@ class Driver extends events.EventEmitter {
         });
     }
 
-    public readParameterRequest(parameterId: ParamId, parameter?: Buffer | undefined): Promise<unknown> {
+    public readParameterRequest(parameterId: ParamId, parameter?: Buffer | number | bigint): Promise<unknown> {
         const seqNumber = this.nextSeqNumber();
         return new Promise((resolve, reject): void => {
             //logger.debug(`push read parameter request to queue. seqNr: ${seqNumber} paramId: ${parameterId}`, NS);
@@ -1027,14 +1061,29 @@ class Driver extends events.EventEmitter {
         });
     }
 
-    private sendReadParameterRequest(parameterId: ParamId, seqNumber: number): CommandResult {
-        /* command id, sequence number, 0, framelength(U16), payloadlength(U16), parameter id */
-        // TODO(mpi): refactor so this proper supports arguments
-        if (parameterId === ParamId.STK_NETWORK_KEY) {
-            return this.sendRequest(Buffer.from([FirmwareCommand.ReadParameter, seqNumber, 0x00, 0x09, 0x00, 0x02, 0x00, parameterId, 0x00]));
+    private sendReadParameterRequest(parameterId: ParamId, seqNumber: number, arg?: Buffer | number | bigint): CommandResult {
+        let frameLength = 8; // starts with min. frame length
+        let payloadLength = 1; // min. parameterId
+
+        if (arg instanceof Buffer) {
+            payloadLength += arg.byteLength;
+            frameLength += arg.byteLength;
         }
 
-        return this.sendRequest(Buffer.from([FirmwareCommand.ReadParameter, seqNumber, 0x00, 0x08, 0x00, 0x01, 0x00, parameterId]));
+        const buf = new Buffalo(Buffer.alloc(frameLength));
+
+        buf.writeUInt8(FirmwareCommand.ReadParameter);
+        buf.writeUInt8(seqNumber);
+        buf.writeUInt8(0); // reserved, shall be 0
+        buf.writeUInt16(frameLength);
+        buf.writeUInt16(payloadLength);
+        buf.writeUInt8(parameterId);
+
+        if (arg instanceof Buffer) {
+            buf.writeBuffer(arg, arg.byteLength);
+        }
+
+        return this.sendRequest(buf.getBuffer());
     }
 
     private sendWriteParameterRequest(parameterId: ParamId, value: Buffer | number | bigint, seqNumber: number): CommandResult {
@@ -1184,7 +1233,7 @@ class Driver extends events.EventEmitter {
                 switch (req.commandId) {
                     case FirmwareCommand.ReadParameter:
                         logger.debug(`send read parameter request from queue. parameter: ${ParamId[req.parameterId]} seq: ${req.seqNumber}`, NS);
-                        this.sendReadParameterRequest(req.parameterId, req.seqNumber);
+                        this.sendReadParameterRequest(req.parameterId, req.seqNumber, req.parameter);
                         break;
                     case FirmwareCommand.WriteParameter:
                         if (req.parameter === undefined) {
