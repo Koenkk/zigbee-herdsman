@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.4.1](https://github.com/Koenkk/zigbee-herdsman/compare/v4.4.0...v4.4.1) (2025-07-06)
+
+
+### Bug Fixes
+
+* deCONZ: Joining bug in some setups and endpoint configuration ([#1445](https://github.com/Koenkk/zigbee-herdsman/issues/1445)) ([1279617](https://github.com/Koenkk/zigbee-herdsman/commit/1279617329e076670d98090516abed381383f58d))
+
 ## [4.4.0](https://github.com/Koenkk/zigbee-herdsman/compare/v4.3.2...v4.4.0) (2025-07-04)
 
 
