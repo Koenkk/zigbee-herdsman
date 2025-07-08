@@ -52,7 +52,7 @@ export class Group extends Entity {
         this.groupID = groupID;
         this._members = members;
         this.meta = meta;
-        this.#customClusters = this.identifyCustomClusters();
+        this.#customClusters = this.#identifyCustomClusters();
     }
 
     /*
@@ -187,7 +187,7 @@ export class Group extends Entity {
             this._members.push(endpoint);
             this.save();
 
-            this.#customClusters = this.identifyCustomClusters();
+            this.#customClusters = this.#identifyCustomClusters();
         }
     }
 
@@ -198,7 +198,7 @@ export class Group extends Entity {
             this._members.splice(i, 1);
             this.save();
 
-            this.#customClusters = this.identifyCustomClusters();
+            this.#customClusters = this.#identifyCustomClusters();
         }
     }
 
@@ -206,7 +206,7 @@ export class Group extends Entity {
         return this._members.includes(endpoint);
     }
 
-    public identifyCustomClusters(): [input: CustomClusters, output: CustomClusters] {
+    #identifyCustomClusters(): [input: CustomClusters, output: CustomClusters] {
         const members = this.members;
 
         if (members.length > 0) {
