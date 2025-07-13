@@ -192,7 +192,7 @@ describe("Requests", () => {
     );
 
     bench(
-        "group read command",
+        "group command",
         async () => {
             await group.command("genRssiLocation", "getDevCfg", {targetaddr: IEEE_ADDRESS1}, {});
         },
