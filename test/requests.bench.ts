@@ -25,9 +25,9 @@ const database = Database.open("dummy");
 database.write = () => {};
 
 const adapter = {
-    sendZclFrameToEndpoint: () => Promise.resolve(sendZclFrameToEndpointResponse),
-    sendZclFrameToGroup: () => Promise.resolve(),
-    sendZdo: () => Promise.resolve(sendZdoResponse),
+    sendZclFrameToEndpoint: async () => Promise.resolve(sendZclFrameToEndpointResponse),
+    sendZclFrameToGroup: async () => Promise.resolve(),
+    sendZdo: async () => Promise.resolve(sendZdoResponse),
 };
 
 Entity.injectDatabase(database);
