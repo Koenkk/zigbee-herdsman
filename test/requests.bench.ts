@@ -120,18 +120,16 @@ describe("Requests", () => {
         {throws: true},
     );
 
-    // TODO: for each of [device.endpoint, group] bench different parsing: [repetitive strat, flat strat, oneof strat, condition-based attrs, custom cluster]
-
     bench(
-        "device.endpoint write",
+        "device.endpoint write basic",
         async () => {
-            await endpoint.write("genBasic", {49: {value: 0x000b, type: 0x19}, deviceEnabled: true}, {sendPolicy: "immediate"});
+            await endpoint.write("genBasic", {modelId: "Herd-02", manufacturerName: "HerdsmanNew"}, {sendPolicy: "immediate"});
         },
         {throws: true},
     );
 
     bench(
-        "device.endpoint read",
+        "device.endpoint read basic",
         async () => {
             sendZclFrameToEndpointResponse = {
                 clusterID: 0,
@@ -154,17 +152,49 @@ describe("Requests", () => {
     );
 
     bench(
-        "group write",
+        "device.endpoint defaultRsp",
         async () => {
-            await group.write("genBasic", {49: {value: 0x000b, type: 0x19}, deviceEnabled: true}, {});
+            await endpoint.defaultResponse(0, 0, 0, 1);
         },
         {throws: true},
     );
 
     bench(
-        "group read",
+        "device.endpoint command",
         async () => {
-            await group.read("genBasic", ["modelId", "manufacturerName"], {});
+            await endpoint.command("genOnOff", "offWithEffect", {effectid: 1, effectvariant: 2}, {sendPolicy: "immediate"});
+        },
+        {throws: true},
+    );
+
+    bench(
+        "device.endpoint commandResponse",
+        async () => {
+            await endpoint.commandResponse("genAlarms", "alarm", {alarmcode: 123, clusterid: 456}, {sendPolicy: "immediate"});
+        },
+        {throws: true},
+    );
+
+    bench(
+        "group write basic",
+        async () => {
+            await group.write("genBasic", {modelId: "Herd-02", manufacturerName: "HerdsmanNew"});
+        },
+        {throws: true},
+    );
+
+    bench(
+        "group read basic",
+        async () => {
+            await group.read("genBasic", ["modelId", "manufacturerName"]);
+        },
+        {throws: true},
+    );
+
+    bench(
+        "group read command",
+        async () => {
+            await group.command("genRssiLocation", "getDevCfg", {targetaddr: IEEE_ADDRESS1}, {});
         },
         {throws: true},
     );
