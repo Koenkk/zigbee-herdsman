@@ -132,7 +132,7 @@ describe("Requests", () => {
         "device.endpoint read basic",
         async () => {
             sendZclFrameToEndpointResponse = {
-                clusterID: 0,
+                clusterID: Zcl.Clusters.genBasic.ID,
                 header: Zcl.Header.fromBuffer(BASIC_RESP),
                 address: 0x0001,
                 data: BASIC_RESP,
