@@ -18,11 +18,18 @@ function getCluster(frame: Zcl.Frame, deviceManufacturerID: number | undefined, 
     return cluster;
 }
 
+type AttrPayload = {
+    attrId: number;
+    status: Zcl.Status;
+    dataType: number;
+    attrData: number | string;
+}[];
+
 function attributeKeyValue(frame: Zcl.Frame, deviceManufacturerID: number | undefined, customClusters: CustomClusters): KeyValue {
     const payload: KeyValue = {};
     const cluster = getCluster(frame, deviceManufacturerID, customClusters);
 
-    for (const item of frame.payload) {
+    for (const item of frame.payload as AttrPayload) {
         try {
             const attribute = cluster.getAttribute(item.attrId);
             payload[attribute.name] = item.attrData;
@@ -33,11 +40,13 @@ function attributeKeyValue(frame: Zcl.Frame, deviceManufacturerID: number | unde
     return payload;
 }
 
+type AttrListPayload = {attrId: number}[];
+
 function attributeList(frame: Zcl.Frame, deviceManufacturerID: number | undefined, customClusters: CustomClusters): Array<string | number> {
     const payload: Array<string | number> = [];
     const cluster = getCluster(frame, deviceManufacturerID, customClusters);
 
-    for (const item of frame.payload) {
+    for (const item of frame.payload as AttrListPayload) {
         try {
             const attribute = cluster.getAttribute(item.attrId);
             payload.push(attribute.name);
