@@ -139,9 +139,13 @@ const BASIC_RESP = Zcl.Frame.create(
 ).toBuffer();
 
 describe("Controller", () => {
-    bench("Startup with dummy adapter", async () => {
-        await controller.start();
-    });
+    bench(
+        "Startup with dummy adapter",
+        async () => {
+            await controller.start();
+        },
+        {throws: true},
+    );
 
     bench(
         "Receive ZCL message",
@@ -162,6 +166,7 @@ describe("Controller", () => {
             setup: async () => {
                 await controller.start();
             },
+            throws: true,
         },
     );
 
@@ -182,6 +187,7 @@ describe("Controller", () => {
             setup: async () => {
                 await controller.start();
             },
+            throws: true,
         },
     );
 });
