@@ -20,7 +20,6 @@ function getCluster(frame: Zcl.Frame, deviceManufacturerID: number | undefined, 
 
 type AttrPayload = {
     attrId: number;
-    status: Zcl.Status;
     dataType: number;
     attrData: number | string;
 }[];
