@@ -11,7 +11,6 @@ import * as Zcl from "../../zspec/zcl";
 import type {ClusterDefinition, CustomClusters} from "../../zspec/zcl/definition/tstype";
 import * as Zdo from "../../zspec/zdo";
 import type {ControllerEventMap} from "../controller";
-import {ZclFrameConverter} from "../helpers";
 import zclTransactionSequenceNumber from "../helpers/zclTransactionSequenceNumber";
 import type {DatabaseEntry, DeviceType, KeyValue} from "../tstype";
 import Endpoint from "./endpoint";
@@ -391,15 +390,6 @@ export class Device extends Entity<ControllerEventMap> {
     }
 
     public async onZclData(dataPayload: AdapterEvents.ZclPayload, frame: Zcl.Frame, endpoint: Endpoint): Promise<void> {
-        // Update reportable properties
-        if (frame.isCluster("genBasic") && (frame.isCommand("readRsp") || frame.isCommand("report"))) {
-            const attrKeyValue = ZclFrameConverter.attributeKeyValue(frame, this.manufacturerID, this.customClusters);
-
-            for (const key in attrKeyValue) {
-                Device.REPORTABLE_PROPERTIES_MAPPING[key]?.set(attrKeyValue[key], this);
-            }
-        }
-
         // Respond to enroll requests
         if (frame.header.isSpecific && frame.isCluster("ssIasZone") && frame.isCommand("enrollReq")) {
             logger.debug(`IAS - '${this.ieeeAddr}' responding to enroll response`, NS);

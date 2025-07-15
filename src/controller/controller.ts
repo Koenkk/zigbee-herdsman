@@ -980,13 +980,11 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
             }
 
             if (type === "readResponse" || type === "attributeReport") {
-                // Some device report, e.g. it's modelID through a readResponse or attributeReport
-                for (const key in data) {
-                    const property = Device.REPORTABLE_PROPERTIES_MAPPING[key];
-
-                    if (property && !device[property.key]) {
-                        // XXX: data technically can be `KeyValue | (string | number)[]`
-                        property.set((data as KeyValue)[key], device);
+                // devices report attributes through readRsp or attributeReport
+                if (frame.isCluster("genBasic")) {
+                    // data is `KeyValue` from type check above
+                    for (const key in data as KeyValue) {
+                        Device.REPORTABLE_PROPERTIES_MAPPING[key]?.set((data as KeyValue)[key], device);
                     }
                 }
 
