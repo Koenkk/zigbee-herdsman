@@ -172,13 +172,20 @@ function getClusterDefinition(
     return {name, cluster};
 }
 
+function cloneClusterEntriesWithName<T extends Record<string, unknown>>(entries: Record<string, T>): Record<string, {name: string} & T> {
+    const clone: Record<string, {name: string} & T> = {};
+
+    for (const key in entries) {
+        clone[key] = {...entries[key], name: key};
+    }
+
+    return clone;
+}
+
 function createCluster(name: string, cluster: ClusterDefinition, manufacturerCode?: number): Cluster {
-    const attributes: {[s: string]: Attribute} = Object.assign({}, ...Object.entries(cluster.attributes).map(([k, v]) => ({[k]: {...v, name: k}})));
-    const commands: {[s: string]: Command} = Object.assign({}, ...Object.entries(cluster.commands).map(([k, v]) => ({[k]: {...v, name: k}})));
-    const commandsResponse: {[s: string]: Command} = Object.assign(
-        {},
-        ...Object.entries(cluster.commandsResponse).map(([k, v]) => ({[k]: {...v, name: k}})),
-    );
+    const attributes: Record<string, Attribute> = cloneClusterEntriesWithName(cluster.attributes);
+    const commands: Record<string, Command> = cloneClusterEntriesWithName(cluster.commands);
+    const commandsResponse: Record<string, Command> = cloneClusterEntriesWithName(cluster.commandsResponse);
 
     const getAttributeInternal = (key: number | string): Attribute | undefined => {
         if (typeof key === "number") {
