@@ -469,4 +469,49 @@ export const MOCK_DEVICES: {
             },
         },
     },
+    178: {
+        nodeDescriptor: [Zdo.Status.SUCCESS, {...NODE_DESC_DEFAULTS, nwkAddress: 178, logicalType: 0b001, manufacturerCode: 4129}],
+        activeEndpoints: [Zdo.Status.SUCCESS, {nwkAddress: 178, endpointList: [1, 2]}],
+        simpleDescriptor: {
+            1: [
+                Zdo.Status.SUCCESS,
+                {
+                    nwkAddress: 178,
+                    length: 32,
+                    endpoint: 1,
+                    profileId: 260,
+                    deviceId: 514,
+                    deviceVersion: 1,
+                    inClusterList: [0, 3, 258, 4, 5, 15, 64513],
+                    outClusterList: [258, 0, 64513, 5, 25],
+                },
+            ],
+            2: [
+                Zdo.Status.SUCCESS,
+                {
+                    nwkAddress: 178,
+                    length: 32,
+                    endpoint: 1,
+                    profileId: 260,
+                    deviceId: 514,
+                    deviceVersion: 1,
+                    inClusterList: [0, 3, 258, 4, 5, 15],
+                    outClusterList: [258, 0, 64513, 5, 25],
+                },
+            ],
+        },
+        attributes: {
+            1: {
+                modelId: " some other multi-endpoint device",
+                manufacturerName: "Legrand",
+                zclVersion: 2,
+                appVersion: 0,
+                hwVersion: 8,
+                dateCode: "241030",
+                swBuildId: "0039",
+                powerSource: 1,
+                stackVersion: 67,
+            },
+        },
+    },
 };

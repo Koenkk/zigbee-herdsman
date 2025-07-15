@@ -156,7 +156,7 @@ function getClusterDefinition(
               }
             : Clusters[name as ClusterName];
 
-    if (!cluster) {
+    if (!cluster || cluster.ID === undefined) {
         if (typeof key === "number") {
             name = key.toString();
             cluster = {attributes: {}, commands: {}, commandsResponse: {}, manufacturerCode: undefined, ID: key};
