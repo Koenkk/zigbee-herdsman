@@ -131,15 +131,16 @@ interface MiboxerZone {
 }
 
 export class BuffaloZcl extends Buffalo {
-    private writeZclBoolean(value: boolean | undefined): void {
-        this.writeUInt8(value === undefined ? 0xff : value ? 1 : 0);
-    }
+    // TODO: shuffles quite a lot of code (ZH is mostly typed `string | number` and ZHC requires lots of scrutiny)
+    // private writeZclBoolean(value: boolean | undefined): void {
+    //     this.writeUInt8(value === undefined ? 0xff : value ? 1 : 0);
+    // }
 
-    private readZclBoolean(): boolean | undefined {
-        const value = this.readUInt8();
+    // private readZclBoolean(): boolean | undefined {
+    //     const value = this.readUInt8();
 
-        return value === 0xff ? undefined : !!value;
-    }
+    //     return value === 0xff ? undefined : !!value;
+    // }
 
     private writeZclUInt8(value: number): void {
         this.writeUInt8(Number.isNaN(value) ? 0xff : value);
@@ -892,10 +893,7 @@ export class BuffaloZcl extends Buffalo {
             case DataType.UNKNOWN: {
                 return; // nothing to write
             }
-            case DataType.BOOLEAN: {
-                this.writeZclBoolean(value);
-                break;
-            }
+            case DataType.BOOLEAN:
             case DataType.DATA8:
             case DataType.BITMAP8:
             case DataType.UINT8:
@@ -1124,9 +1122,7 @@ export class BuffaloZcl extends Buffalo {
             case DataType.UNKNOWN: {
                 return; // nothing to write
             }
-            case DataType.BOOLEAN: {
-                return this.readZclBoolean();
-            }
+            case DataType.BOOLEAN:
             case DataType.DATA8:
             case DataType.BITMAP8:
             case DataType.UINT8:

@@ -67,8 +67,8 @@ describe("ZCL Buffalo", () => {
     });
 
     it.each([
-        ["boolean", {value: true, types: [Zcl.DataType.BOOLEAN]}, {position: 1, write: "writeUInt8", read: "readUInt8"}],
-        ["boolean", {value: false, types: [Zcl.DataType.BOOLEAN]}, {position: 1, write: "writeUInt8", read: "readUInt8"}],
+        ["boolean", {value: 1, types: [Zcl.DataType.BOOLEAN]}, {position: 1, write: "writeUInt8", read: "readUInt8"}],
+        ["boolean", {value: 0, types: [Zcl.DataType.BOOLEAN]}, {position: 1, write: "writeUInt8", read: "readUInt8"}],
         [
             "uint8-like",
             {value: 250, types: [Zcl.DataType.DATA8, Zcl.DataType.BITMAP8, Zcl.DataType.UINT8, Zcl.DataType.ENUM8]},
@@ -170,7 +170,7 @@ describe("ZCL Buffalo", () => {
     });
 
     it.each([
-        ["boolean", {value: undefined, types: [Zcl.DataType.BOOLEAN]}, {written: 0xff, position: 1, write: "writeUInt8", read: "readUInt8"}],
+        ["boolean", {value: Number.NaN, types: [Zcl.DataType.BOOLEAN]}, {written: 0xff, position: 1, write: "writeUInt8", read: "readUInt8"}],
         [
             "uint8-like",
             {value: Number.NaN, types: [Zcl.DataType.DATA8, Zcl.DataType.BITMAP8, Zcl.DataType.UINT8, Zcl.DataType.ENUM8]},
@@ -449,7 +449,7 @@ describe("ZCL Buffalo", () => {
     });
 
     it("[workaround] Reads char str as Mi struct for Xiaomi attridId=65281", () => {
-        const expectedValue = {"1": 3285, "3": 33, "4": 5032, "5": 43, "6": 327680, "8": 516, "10": 0, "100": false};
+        const expectedValue = {"1": 3285, "3": 33, "4": 5032, "5": 43, "6": 327680, "8": 516, "10": 0, "100": 0};
         const buffer = Buffer.from([
             34,
             1,
@@ -1226,7 +1226,7 @@ describe("ZCL Buffalo", () => {
             expect(buffalo.read(Zcl.BuffaloZclDataType.GPD_FRAME, {payload: {commandID: 0xa1, payloadSize: value.length}})).toStrictEqual({
                 manufacturerCode: 13330,
                 clusterID: 65535,
-                attributes: {"0": 50462976, "1": "ZIGBEE", "2": true},
+                attributes: {"0": 50462976, "1": "ZIGBEE", "2": 1},
             });
         });
 

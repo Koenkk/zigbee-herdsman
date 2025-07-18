@@ -500,8 +500,8 @@ describe("Zcl", () => {
                         "9": 5378,
                         "10": 9784,
                         "12": 0,
-                        "100": true,
-                        "101": false,
+                        "100": 1,
+                        "101": 0,
                         "110": Number.NaN,
                         "111": Number.NaN,
                         "148": 4,
@@ -522,7 +522,7 @@ describe("Zcl", () => {
             ],
             [
                 {attrId: 5, dataType: 66, attrData: "lumi.sensor_wleak.aq1"},
-                {attrId: 65281, dataType: 66, attrData: {"1": 3285, "3": 33, "4": 5032, "5": 43, "6": 327680, "8": 516, "10": 0, "100": false}},
+                {attrId: 65281, dataType: 66, attrData: {"1": 3285, "3": 33, "4": 5032, "5": 43, "6": 327680, "8": 516, "10": 0, "100": 0}},
             ],
         ],
     ])("ZclFrame from buffer xiaomiStruct", (data, payload) => {
@@ -567,7 +567,7 @@ describe("Zcl", () => {
                 dataType: 76,
                 numElms: 6,
                 structElms: [
-                    {elmType: 16, elmVal: true},
+                    {elmType: 16, elmVal: 1},
                     {elmType: 33, elmVal: 3022},
                     {elmType: 33, elmVal: 17320},
                     {elmType: 36, elmVal: 1},
@@ -575,7 +575,7 @@ describe("Zcl", () => {
                     {elmType: 32, elmVal: 86},
                 ],
                 attrData: [
-                    {elmType: 16, elmVal: true},
+                    {elmType: 16, elmVal: 1},
                     {elmType: 33, elmVal: 3022},
                     {elmType: 33, elmVal: 17320},
                     {elmType: 36, elmVal: 1},
@@ -2109,7 +2109,7 @@ describe("Zcl", () => {
             attributes: {
                 "0": 50462976,
                 "1": "ZIGBEE",
-                "2": true,
+                "2": 1,
             },
         });
     });
