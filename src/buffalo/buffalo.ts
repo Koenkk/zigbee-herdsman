@@ -14,6 +14,14 @@ export class Buffalo {
         return this.position;
     }
 
+    /**
+     * Set the position of the internal position tracker.
+     * @param position
+     */
+    public setPosition(position: number): void {
+        this.position = position;
+    }
+
     public getBuffer(): Buffer {
         return this.buffer;
     }
