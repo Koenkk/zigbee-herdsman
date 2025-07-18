@@ -2785,8 +2785,7 @@ describe("Zcl", () => {
         const buffalo = new BuffaloZcl(Buffer.from([12, 34]));
         const value = buffalo.read(BuffaloZclDataType.USE_DATA_TYPE, {});
         expect(value).toStrictEqual(Buffer.from([12, 34]));
-        // @ts-expect-error protected
-        buffalo.position = 1;
+        buffalo.setPosition(1);
         const value2 = buffalo.read(BuffaloZclDataType.USE_DATA_TYPE, {length: 1});
         expect(value2).toStrictEqual(Buffer.from([34]));
     });

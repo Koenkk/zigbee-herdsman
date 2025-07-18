@@ -13,8 +13,7 @@ describe("ZCL Buffalo", () => {
         expect(writeSpy).toHaveBeenCalledWith(value, value.length);
         expect(writeSpy).toHaveBeenCalledTimes(1);
 
-        // @ts-expect-error private
-        buffalo.position = 0;
+        buffalo.setPosition(0);
 
         // @ts-expect-error invalid on purpose
         buffalo.write(99999, Buffer.from(value), {});
@@ -151,17 +150,14 @@ describe("ZCL Buffalo", () => {
         for (const type of payload.types) {
             const buffer = Buffer.alloc(255);
             const buffalo = new BuffaloZcl(buffer);
-            // @ts-expect-error dynamic
-            const writeSpy = vi.spyOn(buffalo, expected.write);
-            // @ts-expect-error dynamic
-            const readSpy = vi.spyOn(buffalo, expected.read);
+            const writeSpy = vi.spyOn(buffalo, expected.write as keyof BuffaloZcl);
+            const readSpy = vi.spyOn(buffalo, expected.read as keyof BuffaloZcl);
 
             buffalo.write(type, payload.value, {});
             expect(writeSpy).toHaveBeenCalledTimes(1);
             expect(buffalo.getPosition()).toStrictEqual(expected.position);
 
-            // @ts-expect-error private
-            buffalo.position = 0;
+            buffalo.setPosition(0);
 
             expect(buffalo.read(type, readOptions)).toStrictEqual(payload.value);
             expect(readSpy).toHaveBeenCalledTimes(1);
@@ -255,10 +251,8 @@ describe("ZCL Buffalo", () => {
         for (const type of payload.types) {
             const buffer = Buffer.alloc(255);
             const buffalo = new BuffaloZcl(buffer);
-            // @ts-expect-error dynamic
-            const writeSpy = vi.spyOn(buffalo, expected.write);
-            // @ts-expect-error dynamic
-            const readSpy = vi.spyOn(buffalo, expected.read);
+            const writeSpy = vi.spyOn(buffalo, expected.write as keyof BuffaloZcl);
+            const readSpy = vi.spyOn(buffalo, expected.read as keyof BuffaloZcl);
 
             buffalo.write(type, payload.value, {});
             expect(writeSpy).toHaveBeenCalledTimes(1);
@@ -279,8 +273,7 @@ describe("ZCL Buffalo", () => {
 
             expect(buffalo.getWritten()).toStrictEqual(expectedWrittenBuf);
 
-            // @ts-expect-error private
-            buffalo.position = 0;
+            buffalo.setPosition(0);
 
             expect(buffalo.read(type, {})).toStrictEqual("valueRead" in expected ? expected.valueRead : payload.value);
             expect(readSpy).toHaveBeenCalledTimes(1);
@@ -312,10 +305,8 @@ describe("ZCL Buffalo", () => {
     ])("Writes & Reads signed non-value for %s", (_name, payload, expected) => {
         const buffer = Buffer.alloc(255);
         const buffalo = new BuffaloZcl(buffer);
-        // @ts-expect-error dynamic
-        const writeSpy = vi.spyOn(buffalo, expected.write);
-        // @ts-expect-error dynamic
-        const readSpy = vi.spyOn(buffalo, expected.read);
+        const writeSpy = vi.spyOn(buffalo, expected.write as keyof BuffaloZcl);
+        const readSpy = vi.spyOn(buffalo, expected.read as keyof BuffaloZcl);
 
         buffalo.write(payload.type, payload.value, {});
         expect(writeSpy).toHaveBeenCalledTimes(1);
@@ -336,8 +327,7 @@ describe("ZCL Buffalo", () => {
 
         expect(buffalo.getWritten()).toStrictEqual(expectedWrittenBuf);
 
-        // @ts-expect-error private
-        buffalo.position = 0;
+        buffalo.setPosition(0);
 
         expect(buffalo.read(payload.type, {})).toStrictEqual("valueRead" in expected ? expected.valueRead : payload.value);
         expect(readSpy).toHaveBeenCalledTimes(1);
@@ -357,8 +347,7 @@ describe("ZCL Buffalo", () => {
         expect(writeSpy).toHaveBeenCalledWith(Buffer.from(value), value.length);
         expect(buffalo.getPosition()).toStrictEqual(value.length);
 
-        // @ts-expect-error private
-        buffalo.position = 0;
+        buffalo.setPosition(0);
 
         expect(buffalo.read(Zcl.BuffaloZclDataType.BUFFER, {})).toStrictEqual(Buffer.from(value));
         expect(readSpy).toHaveBeenCalledTimes(1);
@@ -380,8 +369,7 @@ describe("ZCL Buffalo", () => {
         expect(writeSpy).toHaveBeenCalledWith(Buffer.from(value), value.length);
         expect(buffalo.getPosition()).toStrictEqual(value.length);
 
-        // @ts-expect-error private
-        buffalo.position = 0;
+        buffalo.setPosition(0);
 
         expect(buffalo.read(Zcl.BuffaloZclDataType.BUFFER, {length})).toStrictEqual(Buffer.from([value[0], value[1]]));
         expect(readSpy).toHaveBeenCalledTimes(1);
@@ -398,8 +386,7 @@ describe("ZCL Buffalo", () => {
         expect(buffalo.getPosition()).toStrictEqual(expectedPosition);
         expect(buffalo.getWritten()).toStrictEqual(Buffer.from([value.length, ...value]));
 
-        // @ts-expect-error private
-        buffalo.position = 0;
+        buffalo.setPosition(0);
 
         expect(buffalo.read(Zcl.DataType.OCTET_STR, {})).toStrictEqual(Buffer.from(value));
         expect(buffalo.getPosition()).toStrictEqual(expectedPosition);
@@ -414,8 +401,7 @@ describe("ZCL Buffalo", () => {
         expect(buffalo.getPosition()).toStrictEqual(expectedPosition);
         expect(buffalo.getWritten()).toStrictEqual(Buffer.from([value.length, 0 /*length uint16*/, ...value]));
 
-        // @ts-expect-error private
-        buffalo.position = 0;
+        buffalo.setPosition(0);
 
         expect(buffalo.read(Zcl.DataType.LONG_OCTET_STR, {})).toStrictEqual(Buffer.from(value));
         expect(buffalo.getPosition()).toStrictEqual(expectedPosition);
@@ -441,8 +427,7 @@ describe("ZCL Buffalo", () => {
         expect(buffalo.getPosition()).toStrictEqual(expectedPosition);
         expect(buffalo.getWritten()).toStrictEqual(Buffer.from(expectedValue));
 
-        // @ts-expect-error private
-        buffalo.position = 0;
+        buffalo.setPosition(0);
 
         expect(buffalo.read(Zcl.DataType.CHAR_STR, {})).toStrictEqual(value);
         expect(buffalo.getPosition()).toStrictEqual(expectedPosition);
@@ -494,8 +479,7 @@ describe("ZCL Buffalo", () => {
         expect(buffalo.getPosition()).toStrictEqual(expectedPosition);
         expect(buffalo.getWritten()).toStrictEqual(Buffer.from(expectedValue));
 
-        // @ts-expect-error private
-        buffalo.position = 0;
+        buffalo.setPosition(0);
 
         expect(buffalo.read(Zcl.DataType.LONG_CHAR_STR, {})).toStrictEqual(value);
         expect(buffalo.getPosition()).toStrictEqual(expectedPosition);
@@ -544,8 +528,7 @@ describe("ZCL Buffalo", () => {
         expect(buffalo.getPosition()).toStrictEqual(expected.written.length);
         expect(buffalo.getWritten()).toStrictEqual(Buffer.from(expected.written));
 
-        // @ts-expect-error private
-        buffalo.position = 0;
+        buffalo.setPosition(0);
 
         expect(buffalo.read(Zcl.DataType.ARRAY, {})).toStrictEqual(payload.value.elements);
         expect(buffalo.getPosition()).toStrictEqual(expected.written.length);
@@ -639,8 +622,7 @@ describe("ZCL Buffalo", () => {
         expect(buffalo.getPosition()).toStrictEqual(expected.written.length);
         expect(buffalo.getWritten()).toStrictEqual(Buffer.from(expected.written));
 
-        // @ts-expect-error private
-        buffalo.position = 0;
+        buffalo.setPosition(0);
 
         expect(buffalo.read(Zcl.DataType.STRUCT, {})).toStrictEqual(payload.value);
         expect(buffalo.getPosition()).toStrictEqual(expected.written.length);
@@ -655,8 +637,7 @@ describe("ZCL Buffalo", () => {
         expect(buffalo.getPosition()).toStrictEqual(expectedWritten.length);
         expect(buffalo.getWritten()).toStrictEqual(Buffer.from(expectedWritten));
 
-        // @ts-expect-error private
-        buffalo.position = 0;
+        buffalo.setPosition(0);
 
         expect(buffalo.read(Zcl.DataType.TOD, {})).toStrictEqual(value);
         expect(buffalo.getPosition()).toStrictEqual(expectedWritten.length);
@@ -671,8 +652,7 @@ describe("ZCL Buffalo", () => {
         expect(buffalo.getPosition()).toStrictEqual(expectedWritten.length);
         expect(buffalo.getWritten()).toStrictEqual(Buffer.from(expectedWritten));
 
-        // @ts-expect-error private
-        buffalo.position = 0;
+        buffalo.setPosition(0);
 
         expect(buffalo.read(Zcl.DataType.DATE, {})).toStrictEqual(value);
         expect(buffalo.getPosition()).toStrictEqual(expectedWritten.length);
@@ -731,8 +711,7 @@ describe("ZCL Buffalo", () => {
         expect(buffalo.getPosition()).toStrictEqual(payload.written.length);
         expect(buffalo.getWritten()).toStrictEqual(Buffer.from(payload.written));
 
-        // @ts-expect-error private
-        buffalo.position = 0;
+        buffalo.setPosition(0);
 
         expect(buffalo.read(payload.type, {})).toStrictEqual(payload.value);
         expect(buffalo.getPosition()).toStrictEqual(payload.written.length);
@@ -745,17 +724,14 @@ describe("ZCL Buffalo", () => {
     ])("Writes & Reads Use Data Type for %s", (_name, payload, expected) => {
         const buffer = Buffer.alloc(255);
         const buffalo = new BuffaloZcl(buffer);
-        // @ts-expect-error dynamic
-        const writeSpy = vi.spyOn(buffalo, expected.write);
-        // @ts-expect-error dynamic
-        const readSpy = vi.spyOn(buffalo, expected.read);
+        const writeSpy = vi.spyOn(buffalo, expected.write as keyof BuffaloZcl);
+        const readSpy = vi.spyOn(buffalo, expected.read as keyof BuffaloZcl);
 
         buffalo.write(Zcl.BuffaloZclDataType.USE_DATA_TYPE, payload.value, {dataType: payload.type});
         expect(writeSpy).toHaveBeenCalledTimes(1);
         expect(buffalo.getPosition()).toStrictEqual(expected.position);
 
-        // @ts-expect-error private
-        buffalo.position = 0;
+        buffalo.setPosition(0);
 
         expect(buffalo.read(Zcl.BuffaloZclDataType.USE_DATA_TYPE, {dataType: payload.type})).toStrictEqual(payload.value);
         expect(readSpy).toHaveBeenCalledTimes(1);
@@ -772,15 +748,13 @@ describe("ZCL Buffalo", () => {
         expect(writeSpy).toHaveBeenCalledTimes(1);
         expect(writeSpy).toHaveBeenCalledWith(value, value.length);
 
-        // @ts-expect-error private
-        buffalo.position = 0;
+        buffalo.setPosition(0);
 
         expect(buffalo.read(Zcl.BuffaloZclDataType.USE_DATA_TYPE, {})).toStrictEqual(Buffer.from(value));
         expect(readSpy).toHaveBeenCalledTimes(1);
         expect(readSpy).toHaveBeenCalledWith(value.length);
 
-        // @ts-expect-error private
-        buffalo.position = 0;
+        buffalo.setPosition(0);
 
         expect(buffalo.read(Zcl.BuffaloZclDataType.USE_DATA_TYPE, {length: 1})).toStrictEqual(Buffer.from([value[0]]));
         expect(readSpy).toHaveBeenCalledTimes(2);
@@ -820,8 +794,7 @@ describe("ZCL Buffalo", () => {
         expect(buffalo.getPosition()).toStrictEqual(expectedWritten.length);
         expect(buffalo.getWritten()).toStrictEqual(Buffer.from(expectedWritten));
 
-        // @ts-expect-error private
-        buffalo.position = 0;
+        buffalo.setPosition(0);
 
         expect(buffalo.read(Zcl.BuffaloZclDataType.LIST_ZONEINFO, {length: value.length})).toStrictEqual(value);
         expect(buffalo.getPosition()).toStrictEqual(expectedWritten.length);
@@ -856,8 +829,7 @@ describe("ZCL Buffalo", () => {
         expect(buffalo.getPosition()).toStrictEqual(expected.written.length);
         expect(buffalo.getWritten()).toStrictEqual(Buffer.from(expected.written));
 
-        // @ts-expect-error private
-        buffalo.position = 0;
+        buffalo.setPosition(0);
 
         expect(buffalo.read(Zcl.BuffaloZclDataType.EXTENSION_FIELD_SETS, {})).toStrictEqual(payload.value);
         expect(buffalo.getPosition()).toStrictEqual(expected.written.length);
@@ -932,8 +904,7 @@ describe("ZCL Buffalo", () => {
         expect(buffalo.getPosition()).toStrictEqual(expected.written.length);
         expect(buffalo.getWritten()).toStrictEqual(Buffer.from(expected.written));
 
-        // @ts-expect-error private
-        buffalo.position = 0;
+        buffalo.setPosition(0);
 
         expect(buffalo.read(Zcl.BuffaloZclDataType.LIST_THERMO_TRANSITIONS, payload.readOptions)).toStrictEqual(payload.value);
         expect(buffalo.getPosition()).toStrictEqual(expected.written.length);
@@ -1276,8 +1247,7 @@ describe("ZCL Buffalo", () => {
         expect(buffalo.getPosition()).toStrictEqual(expected.written.length);
         expect(buffalo.getWritten()).toStrictEqual(Buffer.from(expected.written));
 
-        // @ts-expect-error private
-        buffalo.position = 0;
+        buffalo.setPosition(0);
 
         expect(buffalo.read(Zcl.BuffaloZclDataType.STRUCTURED_SELECTOR, {})).toStrictEqual(payload.value);
         expect(buffalo.getPosition()).toStrictEqual(expected.written.length);
@@ -1330,8 +1300,7 @@ describe("ZCL Buffalo", () => {
         expect(buffalo.getPosition()).toStrictEqual(expected.written.length);
         expect(buffalo.getWritten()).toStrictEqual(Buffer.from(expected.written));
 
-        // @ts-expect-error private
-        buffalo.position = 0;
+        buffalo.setPosition(0);
 
         expect(buffalo.read(Zcl.BuffaloZclDataType.LIST_TUYA_DATAPOINT_VALUES, {})).toStrictEqual(payload.value);
         expect(buffalo.getPosition()).toStrictEqual(expected.written.length);
@@ -1380,8 +1349,7 @@ describe("ZCL Buffalo", () => {
         expect(buffalo.getPosition()).toStrictEqual(expectedWritten.length);
         expect(buffalo.getWritten()).toStrictEqual(Buffer.from(expectedWritten));
 
-        // @ts-expect-error private
-        buffalo.position = 0;
+        buffalo.setPosition(0);
 
         expect(buffalo.read(Zcl.BuffaloZclDataType.LIST_MIBOXER_ZONES, {length: value.length})).toStrictEqual(value);
         expect(buffalo.getPosition()).toStrictEqual(expectedWritten.length);
@@ -1397,8 +1365,7 @@ describe("ZCL Buffalo", () => {
         expect(buffalo.getPosition()).toStrictEqual(expectedPosition);
         expect(buffalo.getWritten()).toStrictEqual(Buffer.from(expectedWritten));
 
-        // @ts-expect-error private
-        buffalo.position = 0;
+        buffalo.setPosition(0);
 
         expect(buffalo.read(Zcl.BuffaloZclDataType.BIG_ENDIAN_UINT24, {})).toStrictEqual(value);
         expect(buffalo.getPosition()).toStrictEqual(expectedPosition);

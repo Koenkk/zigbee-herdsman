@@ -705,7 +705,7 @@ export class BuffaloZcl extends Buffalo {
                 }
             }
 
-            this.position = startPosition + options.payload.payloadSize;
+            this.setPosition(startPosition + options.payload.payloadSize);
 
             return frame;
         }
@@ -714,7 +714,7 @@ export class BuffaloZcl extends Buffalo {
             // Channel Request
             const channelOpts = this.readUInt8();
 
-            this.position = startPosition + options.payload.payloadSize;
+            this.setPosition(startPosition + options.payload.payloadSize);
 
             return {
                 nextChannel: channelOpts & 0xf,
@@ -748,7 +748,7 @@ export class BuffaloZcl extends Buffalo {
                 frame.attributes[attribute] = this.read(type, options);
             }
 
-            this.position = startPosition + options.payload.payloadSize;
+            this.setPosition(startPosition + options.payload.payloadSize);
 
             return frame;
         }
