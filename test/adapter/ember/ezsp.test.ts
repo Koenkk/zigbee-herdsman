@@ -1,11 +1,11 @@
-import type {Mock, MockInstance} from "vitest";
-
 import {MockBinding} from "@serialport/binding-mock";
+import type {Mock, MockInstance} from "vitest";
 
 import {EzspStatus} from "../../../src/adapter/ember/enums";
 import {Ezsp} from "../../../src/adapter/ember/ezsp/ezsp";
 import {
     ASH_ACK_FIRST_BYTES,
+    adapterSONOFFDongleE,
     INCOMING_MESSAGE_HANDLER_FN2_ASH_RAW,
     MESSAGE_SENT_HANDLER_FN0_ASH_RAW,
     MESSAGE_SENT_HANDLER_FN1_ASH_RAW,
@@ -20,7 +20,6 @@ import {
     SEND_RST_BYTES,
     SEND_UNICAST_REPLY_FN0_ASH_RAW,
     SET_POLICY_REPLY_FN1_ASH_RAW,
-    adapterSONOFFDongleE,
 } from "./consts";
 
 const emitFromSerial = async (ezsp: Ezsp, data: Buffer, skipAdvanceTimers = false): Promise<void> => {

@@ -12,7 +12,7 @@ import Adapter from "../../adapter";
 import type * as Events from "../../events";
 import type * as TsType from "../../tstype";
 import type {RawAPSDataRequestPayload} from "../driver/commandType";
-import {AddressMode, DeviceType, ZPSNwkKeyState, ZiGateCommandCode, ZiGateMessageCode} from "../driver/constants";
+import {AddressMode, DeviceType, ZiGateCommandCode, ZiGateMessageCode, ZPSNwkKeyState} from "../driver/constants";
 import type ZiGateObject from "../driver/ziGateObject";
 import Driver from "../driver/zigate";
 import {patchZdoBuffaloBE} from "./patchZdoBuffaloBE";

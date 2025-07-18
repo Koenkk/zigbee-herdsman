@@ -1,14 +1,11 @@
-import type {Adapter, DiscoverableUsbAdapter, UsbAdapterFingerprint} from "./tstype";
-
 import assert from "node:assert";
 import {platform} from "node:os";
-
 import type {PortInfo} from "@serialport/bindings-cpp";
 import {Bonjour, type Service} from "bonjour-service";
-
 import {wait} from "../utils";
 import {logger} from "../utils/logger";
 import {SerialPort} from "./serialPort";
+import type {Adapter, DiscoverableUsbAdapter, UsbAdapterFingerprint} from "./tstype";
 
 const NS = "zh:adapter:discovery";
 
@@ -123,6 +120,22 @@ const USB_FINGERPRINTS: Record<DiscoverableUsbAdapter, UsbAdapterFingerprint[]> 
             manufacturer: "SONOFF",
             // /dev/serial/by-id/usb-SONOFF_SONOFF_Dongle_Max_MG24_08965d6b0674ef11b2f4e61e313510fd-if00-port0
             pathRegex: ".*sonoff.*max.*",
+        },
+        {
+            // SONOFF Dongle Plus MG24
+            vendorId: "10c4",
+            productId: "ea60",
+            manufacturer: "SONOFF",
+            // /dev/serial/by-id/usb-SONOFF_SONOFF_Dongle_Plus_MG24_b023a583a66bef118e30a3adc169b110-if00-port0
+            pathRegex: ".*sonoff.*plus.*mg24.*",
+        },
+        {
+            // SONOFF Dongle Lite MG21
+            vendorId: "10c4",
+            productId: "ea60",
+            manufacturer: "SONOFF",
+            // /dev/serial/by-id/usb-SONOFF_SONOFF_Dongle_Lite_MG21_c82fc0a1a36bef11a026a1adc169b110-if00-port0
+            pathRegex: ".*sonoff.*lite.*mg21.*",
         },
         // {
         //     // TODO: Z-station by z-wave.me (EFR32MG21A020F1024IM32)

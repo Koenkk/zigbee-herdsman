@@ -15,7 +15,7 @@ import type {EndDeviceAnnounce, GenericZdoResponse, ResponseMap as ZdoResponseMa
 import {SerialPort} from "../../serialPort";
 import SocketPortUtils from "../../socketPortUtils";
 import type {SerialPortOptions} from "../../tstype";
-import {type ZiGateResponseMatcher, type ZiGateResponseMatcherRule, equal} from "./commandType";
+import {equal, type ZiGateResponseMatcher, type ZiGateResponseMatcherRule} from "./commandType";
 import {Status, ZDO_REQ_CLUSTER_ID_TO_ZIGATE_COMMAND_ID, ZiGateCommandCode, ZiGateMessageCode, type ZiGateObjectPayload} from "./constants";
 import ZiGateFrame from "./frame";
 import ZiGateObject from "./ziGateObject";

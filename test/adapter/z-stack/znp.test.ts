@@ -339,7 +339,7 @@ describe("ZNP", () => {
         errorCb();
     });
 
-    it("znp receive", async () => {
+    it("znp receive", () => {
         let parsedCb;
         const received = vi.fn();
 
@@ -371,7 +371,7 @@ describe("ZNP", () => {
         expect(obj.type).toBe(UnpiConstants.Type.SRSP);
     });
 
-    it("znp receive malformed", async () => {
+    it("znp receive malformed", () => {
         let parsedCb;
         const received = vi.fn();
 
@@ -937,7 +937,7 @@ describe("ZNP", () => {
         }
     });
 
-    it("ZpiObject throw error on missing write parser", async () => {
+    it("ZpiObject throw error on missing write parser", () => {
         // @ts-ignore; make sure we always get a new instance
         const obj = new ZpiObject(0, 0, "dummy", 0, {}, [{name: "nonExisting", parameterType: 9999999}]);
         expect(() => {
@@ -945,14 +945,14 @@ describe("ZNP", () => {
         }).toThrow();
     });
 
-    it("ZpiObject throw error on unknown command", async () => {
+    it("ZpiObject throw error on unknown command", () => {
         const frame = new UnpiFrame(UnpiConstants.Type.SREQ, UnpiConstants.Subsystem.AF, 99999, Buffer.alloc(0));
         expect(() => {
             ZpiObject.fromUnpiFrame(frame);
         }).toThrow();
     });
 
-    it("ZpiObject throw error on unknown parameters", async () => {
+    it("ZpiObject throw error on unknown parameters", () => {
         const frame = new UnpiFrame(UnpiConstants.Type.SRSP, UnpiConstants.Subsystem.AF, 128, Buffer.alloc(0));
         expect(() => {
             ZpiObject.fromUnpiFrame(frame);
@@ -1277,7 +1277,7 @@ describe("ZNP", () => {
         },
     );
 
-    it("Coverage logger", async () => {
+    it("Coverage logger", () => {
         consoleLogger.warning(() => "Test warning", "TestNS");
         consoleLogger.error(() => "Test error", "TestNS");
     });

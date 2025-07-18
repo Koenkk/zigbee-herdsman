@@ -1,6 +1,6 @@
 /* v8 ignore start */
 
-import {Bytes, LVBytes, LVList, WordList, fixed_list, int8s, list, uint8_t, uint16_t, uint24_t, uint32_t, uint64_t, uint_t} from "./basic";
+import {Bytes, fixed_list, int8s, LVBytes, LVList, list, uint_t, uint8_t, uint16_t, uint24_t, uint32_t, uint64_t, WordList} from "./basic";
 import {
     Bool,
     EmberApsOption,
@@ -52,11 +52,11 @@ import {
     EzspValueId,
     EzspZllNetworkOperation,
     NcpResetCode,
-    SLStatus,
     SecureEzspRandomNumber,
     SecureEzspSecurityLevel,
     SecureEzspSecurityType,
     SecureEzspSessionId,
+    SLStatus,
 } from "./named";
 import {
     EmberAesMmoHashContext,
@@ -73,8 +73,8 @@ import {
     EmberMessageDigest,
     EmberMultiAddress,
     EmberMulticastTableEntry,
-    EmberNeighborTableEntry,
     EmberNeighbors,
+    EmberNeighborTableEntry,
     EmberNetworkInitStruct,
     EmberNetworkParameters,
     EmberNodeDescriptor,

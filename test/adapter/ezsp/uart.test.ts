@@ -124,7 +124,7 @@ describe("UART", () => {
         expect(writeBufferSpy).toHaveBeenCalledTimes(2);
     });
 
-    it("Receive data", async () => {
+    it("Receive data", () => {
         const parsed = [];
         const parser = new Parser();
         parser.on("parsed", (result) => parsed.push(result));
@@ -150,7 +150,7 @@ describe("UART", () => {
         expect(parsed[3].type).toBe(FrameType.NAK);
     });
 
-    it("Message in two chunks", async () => {
+    it("Message in two chunks", () => {
         const parsed = [];
         const parser = new Parser();
         parser.on("parsed", (result) => parsed.push(result));
@@ -163,7 +163,7 @@ describe("UART", () => {
         expect(parsed[0].type).toBe(FrameType.DATA);
     });
 
-    it("Two messages in one chunk", async () => {
+    it("Two messages in one chunk", () => {
         const parsed = [];
         const parser = new Parser();
         parser.on("parsed", (result) => parsed.push(result));

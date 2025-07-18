@@ -11,7 +11,6 @@ import * as Zcl from "../../zspec/zcl";
 import type {ClusterDefinition, CustomClusters} from "../../zspec/zcl/definition/tstype";
 import * as Zdo from "../../zspec/zdo";
 import type {ControllerEventMap} from "../controller";
-import {ZclFrameConverter} from "../helpers";
 import zclTransactionSequenceNumber from "../helpers/zclTransactionSequenceNumber";
 import type {DatabaseEntry, DeviceType, KeyValue} from "../tstype";
 import Endpoint from "./endpoint";
@@ -391,15 +390,6 @@ export class Device extends Entity<ControllerEventMap> {
     }
 
     public async onZclData(dataPayload: AdapterEvents.ZclPayload, frame: Zcl.Frame, endpoint: Endpoint): Promise<void> {
-        // Update reportable properties
-        if (frame.isCluster("genBasic") && (frame.isCommand("readRsp") || frame.isCommand("report"))) {
-            const attrKeyValue = ZclFrameConverter.attributeKeyValue(frame, this.manufacturerID, this.customClusters);
-
-            for (const key in attrKeyValue) {
-                Device.REPORTABLE_PROPERTIES_MAPPING[key]?.set(attrKeyValue[key], this);
-            }
-        }
-
         // Respond to enroll requests
         if (frame.header.isSpecific && frame.isCluster("ssIasZone") && frame.isCommand("enrollReq")) {
             logger.debug(`IAS - '${this.ieeeAddr}' responding to enroll response`, NS);
@@ -409,7 +399,7 @@ export class Device extends Entity<ControllerEventMap> {
 
         // Reponse to read requests
         if (frame.header.isGlobal && frame.isCommand("read") && !this._customReadResponse?.(frame, endpoint)) {
-            const time = Math.round((new Date().getTime() - OneJanuary2000) / 1000);
+            const time = Math.round((Date.now() - OneJanuary2000) / 1000);
             const attributes: {[s: string]: KeyValue} = {
                 ...endpoint.clusters,
                 genTime: {
@@ -805,8 +795,11 @@ export class Device extends Entity<ControllerEventMap> {
         // https://github.com/Koenkk/zigbee2mqtt/issues/4655
         //      Device does not change zoneState after enroll (event with original gateway)
         // modelID is mostly in the form of e.g. TS0202 and manufacturerName like e.g. _TYZB01_xph99wvr
-        if (this.modelID?.match("^TS\\d*$") && (this.manufacturerName?.match("^_TZ.*_.*$") || this.manufacturerName?.match("^_TYZB01_.*$"))) {
-            this._powerSource = this._powerSource || "Battery";
+        if (
+            this.manufacturerName === "HOBEIAN" ||
+            (this.modelID?.match("^TS\\d*$") && (this.manufacturerName?.match("^_TZ.*_.*$") || this.manufacturerName?.match("^_TYZB01_.*$")))
+        ) {
+            this._powerSource = this._powerSource ?? "Battery";
             logger.debug("Interview - quirks matched for Tuya end device", NS);
             return true;
         }
