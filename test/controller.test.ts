@@ -8249,7 +8249,6 @@ describe("Controller", () => {
                 _gpSecurityKey: [0x21, 0x7f, 0x8c, 0xb2, 0x90, 0xd9, 0x90, 0x14, 0x15, 0xd0, 0x5c, 0xb1, 0x64, 0x7c, 0x44, 0x6c],
             },
         });
-        console.log(events.deviceInterview);
         expect(events.deviceInterview.length).toBe(3); // gpp[started] + gpp[successful] + gpd
         expect(deepClone(events.deviceInterview[2])).toStrictEqual({
             status: "successful",
