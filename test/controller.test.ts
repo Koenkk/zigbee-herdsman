@@ -211,21 +211,24 @@ const restoreMocksendZclFrameToEndpoint = () => {
             for (const item of frame.payload) {
                 if (item.attrId !== 65314) {
                     const attribute = cluster.getAttribute(item.attrId);
-                    if (frame.isCluster("ssIasZone") && item.attrId === 0) {
-                        iasZoneReadState170Count++;
-                        payload.push({
-                            attrId: item.attrId,
-                            dataType: attribute.type,
-                            attrData: iasZoneReadState170Count === 2 && enroll170 ? 1 : 0,
-                            status: 0,
-                        });
-                    } else {
-                        payload.push({
-                            attrId: item.attrId,
-                            dataType: attribute.type,
-                            attrData: MOCK_DEVICES[networkAddress]!.attributes![endpoint][attribute.name],
-                            status: 0,
-                        });
+
+                    if (attribute) {
+                        if (frame.isCluster("ssIasZone") && item.attrId === 0) {
+                            iasZoneReadState170Count++;
+                            payload.push({
+                                attrId: item.attrId,
+                                dataType: attribute.type,
+                                attrData: iasZoneReadState170Count === 2 && enroll170 ? 1 : 0,
+                                status: 0,
+                            });
+                        } else {
+                            payload.push({
+                                attrId: item.attrId,
+                                dataType: attribute.type,
+                                attrData: MOCK_DEVICES[networkAddress]!.attributes![endpoint][attribute.name],
+                                status: 0,
+                            });
+                        }
                     }
                 }
             }

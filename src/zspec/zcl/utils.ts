@@ -187,7 +187,7 @@ function createCluster(name: string, cluster: ClusterDefinition, manufacturerCod
     const commands: Record<string, Command> = cloneClusterEntriesWithName(cluster.commands);
     const commandsResponse: Record<string, Command> = cloneClusterEntriesWithName(cluster.commandsResponse);
 
-    const getAttributeInternal = (key: number | string): Attribute | undefined => {
+    const getAttribute = (key: number | string): Attribute | undefined => {
         if (typeof key === "number") {
             let partialMatchAttr: Attribute | undefined;
 
@@ -217,20 +217,6 @@ function createCluster(name: string, cluster: ClusterDefinition, manufacturerCod
         }
 
         return undefined;
-    };
-
-    const getAttribute = (key: number | string): Attribute => {
-        const result = getAttributeInternal(key);
-        if (!result) {
-            throw new Error(`Cluster '${name}' has no attribute '${key}'`);
-        }
-
-        return result;
-    };
-
-    const hasAttribute = (key: number | string): boolean => {
-        const result = getAttributeInternal(key);
-        return !!result;
     };
 
     const getCommand = (key: number | string): Command => {
@@ -285,7 +271,6 @@ function createCluster(name: string, cluster: ClusterDefinition, manufacturerCod
         commands,
         commandsResponse,
         getAttribute,
-        hasAttribute,
         getCommand,
         getCommandResponse,
     };
