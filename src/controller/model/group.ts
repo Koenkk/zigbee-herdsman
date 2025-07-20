@@ -312,7 +312,6 @@ export class Group extends Entity {
             if (typeof attribute === "number") {
                 payload.push({attrId: attribute});
             } else {
-                // XXX: used to throw
                 const attr = cluster.getAttribute(attribute);
 
                 if (attr) {

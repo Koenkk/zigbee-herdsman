@@ -293,7 +293,7 @@ export class Endpoint extends Entity {
         const cluster = this.getCluster(clusterKey);
 
         if (this.clusters[cluster.name] && this.clusters[cluster.name].attributes) {
-            // XXX: used to throw
+            // XXX: used to throw (behavior changed in #1455)
             const attribute = cluster.getAttribute(attributeKey);
 
             if (attribute) {
@@ -469,7 +469,6 @@ export class Endpoint extends Entity {
             if (typeof attribute === "number") {
                 payload.push({attrId: attribute});
             } else {
-                // XXX: used to throw
                 const attr = cluster.getAttribute(attribute);
 
                 if (attr) {
