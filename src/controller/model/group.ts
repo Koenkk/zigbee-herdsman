@@ -317,6 +317,8 @@ export class Group extends Entity {
 
                 if (attr) {
                     payload.push({attrId: attr.ID});
+                } else {
+                    logger.warning(`Ignoring unknown attribute ${attribute} in cluster ${cluster.name}`, NS);
                 }
             }
         }

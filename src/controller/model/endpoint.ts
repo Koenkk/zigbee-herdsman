@@ -279,20 +279,26 @@ export class Endpoint extends Entity {
 
     public saveClusterAttributeKeyValue(clusterKey: number | string, list: KeyValue): void {
         const cluster = this.getCluster(clusterKey);
-        if (!this.clusters[cluster.name]) this.clusters[cluster.name] = {attributes: {}};
 
-        for (const [attribute, value] of Object.entries(list)) {
-            this.clusters[cluster.name].attributes[attribute] = value;
+        if (!this.clusters[cluster.name]) {
+            this.clusters[cluster.name] = {attributes: {}};
+        }
+
+        for (const attribute in list) {
+            this.clusters[cluster.name].attributes[attribute] = list[attribute];
         }
     }
 
     public getClusterAttributeValue(clusterKey: number | string, attributeKey: number | string): number | string | undefined {
         const cluster = this.getCluster(clusterKey);
-        // XXX: used to throw
-        const attribute = cluster.getAttribute(attributeKey);
 
-        if (attribute && this.clusters[cluster.name] && this.clusters[cluster.name].attributes) {
-            return this.clusters[cluster.name].attributes[attribute.name];
+        if (this.clusters[cluster.name] && this.clusters[cluster.name].attributes) {
+            // XXX: used to throw
+            const attribute = cluster.getAttribute(attributeKey);
+
+            if (attribute) {
+                return this.clusters[cluster.name].attributes[attribute.name];
+            }
         }
 
         return undefined;
@@ -468,6 +474,8 @@ export class Endpoint extends Entity {
 
                 if (attr) {
                     payload.push({attrId: attr.ID});
+                } else {
+                    logger.warning(`Ignoring unknown attribute ${attribute} in cluster ${cluster.name}`, NS);
                 }
             }
         }
