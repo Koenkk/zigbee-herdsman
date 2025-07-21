@@ -10114,4 +10114,86 @@ describe("Controller", () => {
             await group.read("manuHerdsman", ["customAttr"], {});
         }).rejects.toThrow(new Error(`Cluster with name 'manuHerdsman' does not exist`));
     });
+
+    it("sends command to group with custom cluster when common to all members", async () => {
+        await controller.start();
+        await mockAdapterEvents.deviceJoined({networkAddress: 179, ieeeAddr: "0x179"});
+
+        const device = controller.getDeviceByIeeeAddr("0x179")!;
+
+        device.addCustomCluster("manuSpecificInovelli", {
+            ID: 64561,
+            manufacturerCode: 0x122f,
+            // omitted for brevity (unused here)
+            attributes: {},
+            commands: {
+                ledEffect: {
+                    ID: 1,
+                    parameters: [
+                        {name: "effect", type: Zcl.DataType.UINT8},
+                        {name: "color", type: Zcl.DataType.UINT8},
+                        {name: "level", type: Zcl.DataType.UINT8},
+                        {name: "duration", type: Zcl.DataType.UINT8},
+                    ],
+                },
+                individualLedEffect: {
+                    ID: 3,
+                    parameters: [
+                        {name: "led", type: Zcl.DataType.UINT8},
+                        {name: "effect", type: Zcl.DataType.UINT8},
+                        {name: "color", type: Zcl.DataType.UINT8},
+                        {name: "level", type: Zcl.DataType.UINT8},
+                        {name: "duration", type: Zcl.DataType.UINT8},
+                    ],
+                },
+            },
+            commandsResponse: {},
+        });
+
+        const group = controller.createGroup(33);
+
+        group.addMember(device.getEndpoint(1)!);
+
+        await group.command("manuSpecificInovelli", "individualLedEffect", {
+            led: 3,
+            effect: 8,
+            color: 100,
+            level: 200,
+            duration: 15,
+        });
+
+        expect(mocksendZclFrameToGroup).toHaveBeenCalledTimes(1);
+        expect(mocksendZclFrameToGroup.mock.calls[0][0]).toBe(33);
+        expect(deepClone(mocksendZclFrameToGroup.mock.calls[0][1])).toStrictEqual(
+            deepClone(
+                Zcl.Frame.create(
+                    Zcl.FrameType.SPECIFIC,
+                    Zcl.Direction.CLIENT_TO_SERVER,
+                    true,
+                    undefined,
+                    14,
+                    "individualLedEffect",
+                    64561,
+                    {color: 100, duration: 15, effect: 8, led: 3, level: 200},
+                    device.customClusters,
+                ),
+            ),
+        );
+
+        await mockAdapterEvents.deviceJoined({networkAddress: 178, ieeeAddr: "0x178"});
+
+        const device2 = controller.getDeviceByIeeeAddr("0x178")!;
+
+        group.addMember(device2.getEndpoint(1)!);
+
+        await expect(async () => {
+            await group.command("manuSpecificInovelli", "individualLedEffect", {
+                led: 3,
+                effect: 8,
+                color: 100,
+                level: 200,
+                duration: 15,
+            });
+        }).rejects.toThrow(new Error(`Cluster with name 'manuSpecificInovelli' does not exist`));
+    });
 });

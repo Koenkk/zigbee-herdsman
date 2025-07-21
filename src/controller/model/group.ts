@@ -343,7 +343,8 @@ export class Group extends Entity {
 
     public async command(clusterKey: number | string, commandKey: number | string, payload: KeyValue, options?: Options): Promise<void> {
         const optionsWithDefaults = this.getOptionsWithDefaults(options, Zcl.Direction.CLIENT_TO_SERVER);
-        const cluster = Zcl.Utils.getCluster(clusterKey, undefined, {});
+        const customClusters = this.#customClusters[optionsWithDefaults.direction === Zcl.Direction.CLIENT_TO_SERVER ? 0 : 1];
+        const cluster = Zcl.Utils.getCluster(clusterKey, undefined, customClusters);
         const command = cluster.getCommand(commandKey);
 
         const createLogMessage = (): string => `Command ${this.groupID} ${cluster.name}.${command.name}(${JSON.stringify(payload)})`;
@@ -359,7 +360,7 @@ export class Group extends Entity {
                 command.ID,
                 cluster.ID,
                 payload,
-                {},
+                customClusters,
                 optionsWithDefaults.reservedBits,
             );
 
