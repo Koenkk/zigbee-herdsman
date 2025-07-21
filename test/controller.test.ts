@@ -5003,24 +5003,19 @@ describe("Controller", () => {
         const device = controller.getDeviceByIeeeAddr("0x129")!;
         const endpoint = device.getEndpoint(1)!;
         mocksendZclFrameToEndpoint.mockReturnValueOnce(null);
-        let error;
-        try {
-            await endpoint.configureReporting(
-                "genPowerCfg",
-                [
-                    {
-                        attribute: "mainsFrequency",
-                        minimumReportInterval: 1,
-                        maximumReportInterval: 10,
-                        reportableChange: 1,
-                    },
-                ],
-                {disableResponse: true},
-            );
-        } catch (e) {
-            error = e;
-        }
-        expect(error).toBeUndefined();
+
+        await endpoint.configureReporting(
+            "genPowerCfg",
+            [
+                {
+                    attribute: "mainsFrequency",
+                    minimumReportInterval: 1,
+                    maximumReportInterval: 10,
+                    reportableChange: 1,
+                },
+            ],
+            {disableResponse: true},
+        );
     });
 
     it("Return group from databse when not in lookup", async () => {
@@ -7394,13 +7389,8 @@ describe("Controller", () => {
         const device = controller.getDeviceByIeeeAddr("0x129")!;
         const endpoint = device.getEndpoint(1)!;
         mocksendZclFrameToEndpoint.mockReturnValueOnce(null);
-        let error;
-        try {
-            await endpoint.read("genOnOff", ["onOff"], {disableResponse: true});
-        } catch (e) {
-            error = e;
-        }
-        expect(error).toBeUndefined();
+
+        await endpoint.read("genOnOff", ["onOff"], {disableResponse: true});
     });
 
     it("Write error", async () => {
@@ -7428,13 +7418,8 @@ describe("Controller", () => {
         const device = controller.getDeviceByIeeeAddr("0x129")!;
         const endpoint = device.getEndpoint(1)!;
         mocksendZclFrameToEndpoint.mockReturnValueOnce(null);
-        let error;
-        try {
-            await endpoint.write("genOnOff", {onOff: 1}, {disableResponse: true});
-        } catch (e) {
-            error = e;
-        }
-        expect(error).toBeUndefined();
+
+        await endpoint.write("genOnOff", {onOff: 1}, {disableResponse: true});
     });
 
     it("Group command error", async () => {
@@ -7457,13 +7442,8 @@ describe("Controller", () => {
         const device = controller.getDeviceByIeeeAddr("0x129")!;
         const endpoint = device.getEndpoint(1)!;
         mocksendZclFrameToEndpoint.mockReturnValueOnce(null);
-        let error;
-        try {
-            await endpoint.writeStructured("genPowerCfg", {});
-        } catch (e) {
-            error = e;
-        }
-        expect(error).toBeUndefined();
+
+        await endpoint.writeStructured("genPowerCfg", {});
     });
 
     it("Write structured with disable response", async () => {
@@ -7473,13 +7453,8 @@ describe("Controller", () => {
         const device = controller.getDeviceByIeeeAddr("0x129")!;
         const endpoint = device.getEndpoint(1)!;
         mocksendZclFrameToEndpoint.mockReturnValueOnce(null);
-        let error;
-        try {
-            await endpoint.writeStructured("genPowerCfg", {}, {disableResponse: true});
-        } catch (e) {
-            error = e;
-        }
-        expect(error).toBeUndefined();
+
+        await endpoint.writeStructured("genPowerCfg", {}, {disableResponse: true});
     });
 
     it("Write structured error", async () => {
@@ -9396,13 +9371,20 @@ describe("Controller", () => {
         const device = controller.getDeviceByIeeeAddr("0x129")!;
         const endpoint = device.getEndpoint(1)!;
         mocksendZclFrameToEndpoint.mockReturnValueOnce(null);
-        let error;
-        try {
-            await endpoint.zclCommand("genOnOff", "discover", {startAttrId: 1, maxAttrIds: 255});
-        } catch (e) {
-            error = e;
-        }
-        expect(error).toBeUndefined();
+
+        await endpoint.zclCommand("genOnOff", "discover", {startAttrId: 1, maxAttrIds: 255});
+    });
+
+    it("zclCommand with cluster/command objects", async () => {
+        await controller.start();
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
+        const cluster = Zcl.Utils.getCluster("genOnOff", undefined, {});
+        const command = Zcl.Utils.getGlobalCommand("discover");
+        const device = controller.getDeviceByIeeeAddr("0x129")!;
+        const endpoint = device.getEndpoint(1)!;
+        mocksendZclFrameToEndpoint.mockReturnValueOnce(null);
+
+        await endpoint.zclCommand(cluster, command, {startAttrId: 1, maxAttrIds: 255});
     });
 
     it("zclCommand with error", async () => {
