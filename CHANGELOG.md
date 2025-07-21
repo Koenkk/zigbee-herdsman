@@ -1,5 +1,20 @@
 # Changelog
 
+## [4.5.0](https://github.com/Koenkk/zigbee-herdsman/compare/v4.4.1...v4.5.0) (2025-07-21)
+
+
+### Features
+
+* Support custom clusters for groups ([#1449](https://github.com/Koenkk/zigbee-herdsman/issues/1449)) ([0433283](https://github.com/Koenkk/zigbee-herdsman/commit/0433283a4d0a0d048fcc1c5ec2fe3fec7915a2b4))
+
+
+### Bug Fixes
+
+* **ignore:** add controller-level benchmarks ([#1452](https://github.com/Koenkk/zigbee-herdsman/issues/1452)) ([579d390](https://github.com/Koenkk/zigbee-herdsman/commit/579d390650c06908efd8f3a68fb44945abeaca33))
+* **ignore:** bump @types/node from 24.0.7 to 24.0.10 in the minor-patch group ([#1447](https://github.com/Koenkk/zigbee-herdsman/issues/1447)) ([0e846f7](https://github.com/Koenkk/zigbee-herdsman/commit/0e846f7e005c58e75d710d37362ffff39d86301a))
+* Improve perf when cloning cluster entries ([#1451](https://github.com/Koenkk/zigbee-herdsman/issues/1451)) ([abb8262](https://github.com/Koenkk/zigbee-herdsman/commit/abb8262a2429d210a03226756d4fbc97a2089a5a))
+* Remove duplicate logic to set reportable properties ([#1453](https://github.com/Koenkk/zigbee-herdsman/issues/1453)) ([68e6103](https://github.com/Koenkk/zigbee-herdsman/commit/68e610338bb473fd1b68cd54d0774ce23f6b4359))
+
 ## [4.4.1](https://github.com/Koenkk/zigbee-herdsman/compare/v4.4.0...v4.4.1) (2025-07-06)
 
 
