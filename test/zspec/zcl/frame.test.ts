@@ -280,13 +280,13 @@ const MANUF_SPE_FRAME_STRING = `{"header":{"frameControl":{"reservedBits":0,"fra
 describe("ZCL Frame", () => {
     describe("Validates Parameter Condition", () => {
         it("STATUS_EQUAL", () => {
-            expect(Zcl.Frame.conditionsValid(Zcl.Foundation.readRsp.parameters[2], {status: 0}, null)).toBeTruthy();
-            expect(Zcl.Frame.conditionsValid(Zcl.Foundation.readRsp.parameters[2], {status: 1}, null)).toBeFalsy();
+            expect(Zcl.Frame.conditionsValid(Zcl.Foundation.readRsp.parameters[2], {status: 0}, undefined)).toBeTruthy();
+            expect(Zcl.Frame.conditionsValid(Zcl.Foundation.readRsp.parameters[2], {status: 1}, undefined)).toBeFalsy();
         });
 
         it("STATUS_NOT_EQUAL", () => {
-            expect(Zcl.Frame.conditionsValid(Zcl.Foundation.writeRsp.parameters[1], {status: 1}, null)).toBeTruthy();
-            expect(Zcl.Frame.conditionsValid(Zcl.Foundation.writeRsp.parameters[1], {status: 0}, null)).toBeFalsy();
+            expect(Zcl.Frame.conditionsValid(Zcl.Foundation.writeRsp.parameters[1], {status: 1}, undefined)).toBeTruthy();
+            expect(Zcl.Frame.conditionsValid(Zcl.Foundation.writeRsp.parameters[1], {status: 0}, undefined)).toBeFalsy();
         });
 
         it("MINIMUM_REMAINING_BUFFER_BYTES", () => {
@@ -296,34 +296,34 @@ describe("ZCL Frame", () => {
 
         it("DIRECTION_EQUAL", () => {
             expect(
-                Zcl.Frame.conditionsValid(Zcl.Foundation.configReport.parameters[2], {direction: Zcl.Direction.CLIENT_TO_SERVER}, null),
+                Zcl.Frame.conditionsValid(Zcl.Foundation.configReport.parameters[2], {direction: Zcl.Direction.CLIENT_TO_SERVER}, undefined),
             ).toBeTruthy();
             expect(
-                Zcl.Frame.conditionsValid(Zcl.Foundation.configReport.parameters[2], {direction: Zcl.Direction.SERVER_TO_CLIENT}, null),
+                Zcl.Frame.conditionsValid(Zcl.Foundation.configReport.parameters[2], {direction: Zcl.Direction.SERVER_TO_CLIENT}, undefined),
             ).toBeFalsy();
             expect(
-                Zcl.Frame.conditionsValid(Zcl.Foundation.configReport.parameters[6], {direction: Zcl.Direction.SERVER_TO_CLIENT}, null),
+                Zcl.Frame.conditionsValid(Zcl.Foundation.configReport.parameters[6], {direction: Zcl.Direction.SERVER_TO_CLIENT}, undefined),
             ).toBeTruthy();
             expect(
-                Zcl.Frame.conditionsValid(Zcl.Foundation.configReport.parameters[6], {direction: Zcl.Direction.CLIENT_TO_SERVER}, null),
+                Zcl.Frame.conditionsValid(Zcl.Foundation.configReport.parameters[6], {direction: Zcl.Direction.CLIENT_TO_SERVER}, undefined),
             ).toBeFalsy();
         });
 
         it("BITMASK_SET", () => {
-            expect(Zcl.Frame.conditionsValid(Zcl.Clusters.greenPower.commands.notification.parameters[8], {options: 0x4000}, null)).toBeTruthy();
-            expect(Zcl.Frame.conditionsValid(Zcl.Clusters.greenPower.commands.notification.parameters[8], {options: 0x4150}, null)).toBeTruthy();
-            expect(Zcl.Frame.conditionsValid(Zcl.Clusters.greenPower.commands.notification.parameters[8], {options: 0x0400}, null)).toBeFalsy();
-            expect(Zcl.Frame.conditionsValid(Zcl.Clusters.greenPower.commands.notification.parameters[8], {options: 0x1400}, null)).toBeFalsy();
+            expect(Zcl.Frame.conditionsValid(Zcl.Clusters.greenPower.commands.notification.parameters[8], {options: 0x4000}, undefined)).toBeTruthy();
+            expect(Zcl.Frame.conditionsValid(Zcl.Clusters.greenPower.commands.notification.parameters[8], {options: 0x4150}, undefined)).toBeTruthy();
+            expect(Zcl.Frame.conditionsValid(Zcl.Clusters.greenPower.commands.notification.parameters[8], {options: 0x0400}, undefined)).toBeFalsy();
+            expect(Zcl.Frame.conditionsValid(Zcl.Clusters.greenPower.commands.notification.parameters[8], {options: 0x1400}, undefined)).toBeFalsy();
         });
 
         it("BITFIELD_ENUM", () => {
             // {param:'options', offset: 0, size: 3, value: 0b000}
-            expect(Zcl.Frame.conditionsValid(Zcl.Clusters.greenPower.commands.notification.parameters[1], {options: 0b000}, null)).toBeTruthy();
-            expect(Zcl.Frame.conditionsValid(Zcl.Clusters.greenPower.commands.notification.parameters[1], {options: 0b1000}, null)).toBeTruthy();
-            expect(Zcl.Frame.conditionsValid(Zcl.Clusters.greenPower.commands.notification.parameters[1], {options: 0b001}, null)).toBeFalsy();
-            expect(Zcl.Frame.conditionsValid(Zcl.Clusters.greenPower.commands.notification.parameters[1], {options: 0b011}, null)).toBeFalsy();
-            expect(Zcl.Frame.conditionsValid(Zcl.Clusters.greenPower.commands.notification.parameters[1], {options: 0b100}, null)).toBeFalsy();
-            expect(Zcl.Frame.conditionsValid(Zcl.Clusters.greenPower.commands.notification.parameters[1], {options: 0b1010}, null)).toBeFalsy();
+            expect(Zcl.Frame.conditionsValid(Zcl.Clusters.greenPower.commands.notification.parameters[1], {options: 0b000}, undefined)).toBeTruthy();
+            expect(Zcl.Frame.conditionsValid(Zcl.Clusters.greenPower.commands.notification.parameters[1], {options: 0b1000}, undefined)).toBeTruthy();
+            expect(Zcl.Frame.conditionsValid(Zcl.Clusters.greenPower.commands.notification.parameters[1], {options: 0b001}, undefined)).toBeFalsy();
+            expect(Zcl.Frame.conditionsValid(Zcl.Clusters.greenPower.commands.notification.parameters[1], {options: 0b011}, undefined)).toBeFalsy();
+            expect(Zcl.Frame.conditionsValid(Zcl.Clusters.greenPower.commands.notification.parameters[1], {options: 0b100}, undefined)).toBeFalsy();
+            expect(Zcl.Frame.conditionsValid(Zcl.Clusters.greenPower.commands.notification.parameters[1], {options: 0b1010}, undefined)).toBeFalsy();
         });
 
         it("multiple including DATA_TYPE_CLASS_EQUAL", () => {
@@ -331,41 +331,41 @@ describe("ZCL Frame", () => {
                 Zcl.Frame.conditionsValid(
                     Zcl.Foundation.configReport.parameters[5],
                     {direction: Zcl.Direction.CLIENT_TO_SERVER, dataType: Zcl.DataType.UINT8},
-                    null,
+                    undefined,
                 ),
             ).toBeTruthy();
             expect(
                 Zcl.Frame.conditionsValid(
                     Zcl.Foundation.configReport.parameters[5],
                     {direction: Zcl.Direction.CLIENT_TO_SERVER, dataType: Zcl.DataType.DATA8},
-                    null,
+                    undefined,
                 ),
             ).toBeFalsy();
             expect(
                 Zcl.Frame.conditionsValid(
                     Zcl.Foundation.configReport.parameters[5],
                     {direction: Zcl.Direction.SERVER_TO_CLIENT, dataType: Zcl.DataType.UINT8},
-                    null,
+                    undefined,
                 ),
             ).toBeFalsy();
             expect(
                 Zcl.Frame.conditionsValid(
                     Zcl.Foundation.configReport.parameters[5],
                     {direction: Zcl.Direction.SERVER_TO_CLIENT, dataType: Zcl.DataType.DATA8},
-                    null,
+                    undefined,
                 ),
             ).toBeFalsy();
         });
 
         it("FIELD_EQUAL", () => {
             expect(
-                Zcl.Frame.conditionsValid(Zcl.Clusters.touchlink.commandsResponse.scanResponse.parameters[13], {numberOfSubDevices: 1}, null),
+                Zcl.Frame.conditionsValid(Zcl.Clusters.touchlink.commandsResponse.scanResponse.parameters[13], {numberOfSubDevices: 1}, undefined),
             ).toBeTruthy();
             expect(
-                Zcl.Frame.conditionsValid(Zcl.Clusters.touchlink.commandsResponse.scanResponse.parameters[13], {numberOfSubDevices: 0}, null),
+                Zcl.Frame.conditionsValid(Zcl.Clusters.touchlink.commandsResponse.scanResponse.parameters[13], {numberOfSubDevices: 0}, undefined),
             ).toBeFalsy();
             expect(
-                Zcl.Frame.conditionsValid(Zcl.Clusters.touchlink.commandsResponse.scanResponse.parameters[13], {numberOfSubDevices: 3}, null),
+                Zcl.Frame.conditionsValid(Zcl.Clusters.touchlink.commandsResponse.scanResponse.parameters[13], {numberOfSubDevices: 3}, undefined),
             ).toBeFalsy();
         });
     });

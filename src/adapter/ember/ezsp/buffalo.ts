@@ -132,11 +132,6 @@ export class EzspBuffalo extends Buffalo {
         return this.buffer.length;
     }
 
-    /** Set the position of the internal position tracker. */
-    public setPosition(position: number): void {
-        this.position = position;
-    }
-
     /**
      * Set the byte at given position without affecting the internal position tracker.
      * @param position

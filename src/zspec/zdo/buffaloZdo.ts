@@ -75,15 +75,6 @@ const MAX_BUFFER_SIZE = 255;
 
 export class BuffaloZdo extends Buffalo {
     /**
-     * Set the position of the internal position tracker.
-     * TODO: move to base `Buffalo` class
-     * @param position
-     */
-    public setPosition(position: number): void {
-        this.position = position;
-    }
-
-    /**
      * Set the byte at given position without affecting the internal position tracker.
      * TODO: move to base `Buffalo` class
      * @param position
