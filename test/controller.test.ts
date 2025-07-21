@@ -4785,7 +4785,7 @@ describe("Controller", () => {
         await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
         const device = controller.getDeviceByIeeeAddr("0x129")!;
         // @ts-expect-error private
-        device._manufacturerID = 0x10f2;
+        device._manufacturerID = Zcl.ManufacturerCode.VIESSMANN_ELEKTRONIK_GMBH;
         const endpoint = device.getEndpoint(1)!;
         mocksendZclFrameToEndpoint.mockClear();
         await endpoint.configureReporting("hvacThermostat", [
@@ -4848,7 +4848,7 @@ describe("Controller", () => {
         await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
         const device = controller.getDeviceByIeeeAddr("0x129")!;
         // @ts-expect-error private
-        device._manufacturerID = 0x10f2;
+        device._manufacturerID = Zcl.ManufacturerCode.VIESSMANN_ELEKTRONIK_GMBH;
         const endpoint = device.getEndpoint(1)!;
         mocksendZclFrameToEndpoint.mockClear();
         let error;
@@ -5756,7 +5756,7 @@ describe("Controller", () => {
         mocksendZclFrameToEndpoint.mockClear();
         const device = controller.getDeviceByIeeeAddr("0x129")!;
         // @ts-expect-error private
-        device._manufacturerID = 0x10f2;
+        device._manufacturerID = Zcl.ManufacturerCode.VIESSMANN_ELEKTRONIK_GMBH;
         const endpoint = device.getEndpoint(1)!;
         await endpoint.write("hvacThermostat", {viessmannWindowOpenInternal: 1});
         expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(1);
@@ -5883,7 +5883,7 @@ describe("Controller", () => {
         mocksendZclFrameToEndpoint.mockClear();
         const device = controller.getDeviceByIeeeAddr("0x129")!;
         // @ts-expect-error private
-        device._manufacturerID = 0x10f2;
+        device._manufacturerID = Zcl.ManufacturerCode.VIESSMANN_ELEKTRONIK_GMBH;
         const endpoint = device.getEndpoint(1)!;
         let error;
         try {
@@ -6152,7 +6152,7 @@ describe("Controller", () => {
         mocksendZclFrameToEndpoint.mockClear();
         const device = controller.getDeviceByIeeeAddr("0x129")!;
         // @ts-expect-error private
-        device._manufacturerID = 0x10f2;
+        device._manufacturerID = Zcl.ManufacturerCode.VIESSMANN_ELEKTRONIK_GMBH;
         const endpoint = device.getEndpoint(1)!;
         await endpoint.read("hvacThermostat", ["viessmannWindowOpenInternal"]);
         expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(1);
@@ -6180,7 +6180,7 @@ describe("Controller", () => {
         mocksendZclFrameToEndpoint.mockClear();
         const device = controller.getDeviceByIeeeAddr("0x129")!;
         // @ts-expect-error private
-        device._manufacturerID = 0x10f2;
+        device._manufacturerID = Zcl.ManufacturerCode.VIESSMANN_ELEKTRONIK_GMBH;
         const endpoint = device.getEndpoint(1)!;
         let error;
         try {

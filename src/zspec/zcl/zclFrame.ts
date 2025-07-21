@@ -45,19 +45,21 @@ export class ZclFrame {
         disableDefaultResponse: boolean,
         manufacturerCode: number | undefined,
         transactionSequenceNumber: number,
-        commandKey: number | string,
-        clusterKey: number | string,
+        commandKey: number | string | Command,
+        clusterKey: number | string | Cluster,
         payload: ZclPayload,
         customClusters: CustomClusters,
         reservedBits = 0,
     ): ZclFrame {
-        const cluster = Utils.getCluster(clusterKey, manufacturerCode, customClusters);
+        const cluster = typeof clusterKey === "object" ? clusterKey : Utils.getCluster(clusterKey, manufacturerCode, customClusters);
         const command: Command =
-            frameType === FrameType.GLOBAL
-                ? Utils.getGlobalCommand(commandKey)
-                : direction === Direction.CLIENT_TO_SERVER
-                  ? cluster.getCommand(commandKey)
-                  : cluster.getCommandResponse(commandKey);
+            typeof commandKey === "object"
+                ? commandKey
+                : frameType === FrameType.GLOBAL
+                  ? Utils.getGlobalCommand(commandKey)
+                  : direction === Direction.CLIENT_TO_SERVER
+                    ? cluster.getCommand(commandKey)
+                    : cluster.getCommandResponse(commandKey);
 
         const header = new ZclHeader(
             {reservedBits, frameType, direction, disableDefaultResponse, manufacturerSpecific: manufacturerCode != null},

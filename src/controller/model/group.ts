@@ -201,7 +201,7 @@ export class Group extends Entity {
 
     public async write(clusterKey: number | string, attributes: KeyValue, options?: Options): Promise<void> {
         const optionsWithDefaults = this.getOptionsWithDefaults(options, Zcl.Direction.CLIENT_TO_SERVER);
-        const cluster = Zcl.Utils.getCluster(clusterKey, undefined, {});
+        const cluster = Zcl.Utils.getCluster(clusterKey, optionsWithDefaults.manufacturerCode, {});
         const payload: {attrId: number; dataType: number; attrData: number | string | boolean}[] = [];
 
         for (const [nameOrID, value] of Object.entries(attributes)) {
@@ -227,7 +227,7 @@ export class Group extends Entity {
                 optionsWithDefaults.manufacturerCode,
                 optionsWithDefaults.transactionSequenceNumber ?? zclTransactionSequenceNumber.next(),
                 "write",
-                cluster.ID,
+                cluster,
                 payload,
                 {},
                 optionsWithDefaults.reservedBits,
@@ -247,7 +247,7 @@ export class Group extends Entity {
 
     public async read(clusterKey: number | string, attributes: (string | number)[], options?: Options): Promise<void> {
         const optionsWithDefaults = this.getOptionsWithDefaults(options, Zcl.Direction.CLIENT_TO_SERVER);
-        const cluster = Zcl.Utils.getCluster(clusterKey, undefined, {});
+        const cluster = Zcl.Utils.getCluster(clusterKey, optionsWithDefaults.manufacturerCode, {});
         const payload: {attrId: number}[] = [];
 
         for (const attribute of attributes) {
@@ -261,7 +261,7 @@ export class Group extends Entity {
             optionsWithDefaults.manufacturerCode,
             optionsWithDefaults.transactionSequenceNumber ?? zclTransactionSequenceNumber.next(),
             "read",
-            cluster.ID,
+            cluster,
             payload,
             {},
             optionsWithDefaults.reservedBits,
@@ -286,7 +286,7 @@ export class Group extends Entity {
 
     public async command(clusterKey: number | string, commandKey: number | string, payload: KeyValue, options?: Options): Promise<void> {
         const optionsWithDefaults = this.getOptionsWithDefaults(options, Zcl.Direction.CLIENT_TO_SERVER);
-        const cluster = Zcl.Utils.getCluster(clusterKey, undefined, {});
+        const cluster = Zcl.Utils.getCluster(clusterKey, optionsWithDefaults.manufacturerCode, {});
         const command = cluster.getCommand(commandKey);
 
         const createLogMessage = (): string => `Command ${this.groupID} ${cluster.name}.${command.name}(${JSON.stringify(payload)})`;
@@ -299,8 +299,8 @@ export class Group extends Entity {
                 true,
                 optionsWithDefaults.manufacturerCode,
                 optionsWithDefaults.transactionSequenceNumber || zclTransactionSequenceNumber.next(),
-                command.ID,
-                cluster.ID,
+                command,
+                cluster,
                 payload,
                 {},
                 optionsWithDefaults.reservedBits,
