@@ -10115,7 +10115,7 @@ describe("Controller", () => {
         }).rejects.toThrow(new Error(`Cluster with name 'manuHerdsman' does not exist`));
     });
 
-    it("sends command to group with custom cluster when common to all members", async () => {
+    it("sends & receives command to group with custom cluster when common to all members", async () => {
         await controller.start();
         await mockAdapterEvents.deviceJoined({networkAddress: 179, ieeeAddr: "0x179"});
 
@@ -10198,6 +10198,37 @@ describe("Controller", () => {
                 ),
             ),
         );
+
+        const messageContents = Buffer.from("118a0305010064ff", "hex");
+
+        await mockAdapterEvents.zclPayload({
+            clusterID: 64561,
+            header: Zcl.Header.fromBuffer(messageContents),
+            address: 179,
+            data: messageContents,
+            endpoint: 1,
+            linkquality: 200,
+            groupID: 33,
+            wasBroadcast: false,
+            destinationEndpoint: 1,
+        });
+
+        expect(events.message.length).toBe(1);
+        expect(deepClone(events.message[0])).toMatchObject({
+            cluster: "manuSpecificInovelli",
+            type: "commandIndividualLedEffect",
+            data: {
+                color: 0,
+                duration: 255,
+                effect: 1,
+                led: 5,
+                level: 100,
+            },
+            device: {
+                _ieeeAddr: "0x179",
+            },
+            groupID: 33,
+        });
 
         await mockAdapterEvents.deviceJoined({networkAddress: 178, ieeeAddr: "0x178"});
 
