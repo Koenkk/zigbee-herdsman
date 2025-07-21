@@ -10147,20 +10147,19 @@ describe("Controller", () => {
                     ],
                 },
             },
-            commandsResponse: {},
+            commandsResponse: {
+                bogus: {
+                    ID: 1,
+                    parameters: [{name: "xyz", type: Zcl.DataType.UINT8}],
+                },
+            },
         });
 
         const group = controller.createGroup(33);
 
         group.addMember(device.getEndpoint(1)!);
 
-        await group.command("manuSpecificInovelli", "individualLedEffect", {
-            led: 3,
-            effect: 8,
-            color: 100,
-            level: 200,
-            duration: 15,
-        });
+        await group.command("manuSpecificInovelli", "individualLedEffect", {led: 3, effect: 8, color: 100, level: 200, duration: 15});
 
         expect(mocksendZclFrameToGroup).toHaveBeenCalledTimes(1);
         expect(mocksendZclFrameToGroup.mock.calls[0][0]).toBe(33);
@@ -10174,7 +10173,27 @@ describe("Controller", () => {
                     14,
                     "individualLedEffect",
                     64561,
-                    {color: 100, duration: 15, effect: 8, led: 3, level: 200},
+                    {led: 3, effect: 8, color: 100, level: 200, duration: 15},
+                    device.customClusters,
+                ),
+            ),
+        );
+
+        await group.command("manuSpecificInovelli", "bogus", {xyz: 12}, {direction: Zcl.Direction.SERVER_TO_CLIENT});
+
+        expect(mocksendZclFrameToGroup).toHaveBeenCalledTimes(2);
+        expect(mocksendZclFrameToGroup.mock.calls[1][0]).toBe(33);
+        expect(deepClone(mocksendZclFrameToGroup.mock.calls[1][1])).toStrictEqual(
+            deepClone(
+                Zcl.Frame.create(
+                    Zcl.FrameType.SPECIFIC,
+                    Zcl.Direction.SERVER_TO_CLIENT,
+                    true,
+                    undefined,
+                    15,
+                    "bogus",
+                    64561,
+                    {xyz: 12},
                     device.customClusters,
                 ),
             ),

@@ -345,7 +345,10 @@ export class Group extends Entity {
         const optionsWithDefaults = this.getOptionsWithDefaults(options, Zcl.Direction.CLIENT_TO_SERVER);
         const customClusters = this.#customClusters[optionsWithDefaults.direction === Zcl.Direction.CLIENT_TO_SERVER ? 0 : 1];
         const cluster = Zcl.Utils.getCluster(clusterKey, undefined, customClusters);
-        const command = cluster.getCommand(commandKey);
+        const command =
+            optionsWithDefaults.direction === Zcl.Direction.CLIENT_TO_SERVER
+                ? cluster.getCommand(commandKey)
+                : cluster.getCommandResponse(commandKey);
 
         const createLogMessage = (): string => `Command ${this.groupID} ${cluster.name}.${command.name}(${JSON.stringify(payload)})`;
         logger.debug(createLogMessage, NS);
