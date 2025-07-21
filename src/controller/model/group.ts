@@ -1,7 +1,7 @@
 import assert from "node:assert";
-
 import {logger} from "../../utils/logger";
 import * as Zcl from "../../zspec/zcl";
+import type {CustomClusters} from "../../zspec/zcl/definition/tstype";
 import zclTransactionSequenceNumber from "../helpers/zclTransactionSequenceNumber";
 import type {DatabaseEntry, KeyValue} from "../tstype";
 import Device from "./device";
@@ -27,6 +27,7 @@ export class Group extends Entity {
     private databaseID: number;
     public readonly groupID: number;
     private readonly _members: Endpoint[];
+    #customClusters: [input: CustomClusters, output: CustomClusters];
     // Can be used by applications to store data.
     public readonly meta: KeyValue;
 
@@ -40,12 +41,18 @@ export class Group extends Entity {
         return this._members.filter((e) => e.getDevice() !== undefined);
     }
 
+    /** List of server / client custom clusters common to all devices in the group */
+    get customClusters(): [input: CustomClusters, output: CustomClusters] {
+        return this.#customClusters;
+    }
+
     private constructor(databaseID: number, groupID: number, members: Endpoint[], meta: KeyValue) {
         super();
         this.databaseID = databaseID;
         this.groupID = groupID;
         this._members = members;
         this.meta = meta;
+        this.#customClusters = this.#identifyCustomClusters();
     }
 
     /*
@@ -179,6 +186,8 @@ export class Group extends Entity {
         if (!this._members.includes(endpoint)) {
             this._members.push(endpoint);
             this.save();
+
+            this.#customClusters = this.#identifyCustomClusters();
         }
     }
 
@@ -188,11 +197,57 @@ export class Group extends Entity {
         if (i > -1) {
             this._members.splice(i, 1);
             this.save();
+
+            this.#customClusters = this.#identifyCustomClusters();
         }
     }
 
     public hasMember(endpoint: Endpoint): boolean {
         return this._members.includes(endpoint);
+    }
+
+    #identifyCustomClusters(): [input: CustomClusters, output: CustomClusters] {
+        const members = this.members;
+
+        if (members.length > 0) {
+            const customClusters = members[0].getDevice().customClusters;
+            const inputClusters: CustomClusters = {};
+            const outputClusters: CustomClusters = {};
+
+            for (const clusterName in customClusters) {
+                const customCluster = customClusters[clusterName];
+                let hasInput = true;
+                let hasOutput = true;
+
+                for (const member of members) {
+                    if (clusterName in member.getDevice().customClusters) {
+                        hasInput = member.inputClusters.includes(customCluster.ID);
+                        hasOutput = member.outputClusters.includes(customCluster.ID);
+
+                        if (!hasInput && !hasOutput) {
+                            break;
+                        }
+                    } else {
+                        hasInput = false;
+                        hasOutput = false;
+
+                        break;
+                    }
+                }
+
+                if (hasInput) {
+                    inputClusters[clusterName] = customCluster;
+                }
+
+                if (hasOutput) {
+                    outputClusters[clusterName] = customCluster;
+                }
+            }
+
+            return [inputClusters, outputClusters];
+        }
+
+        return [{}, {}];
     }
 
     /*
@@ -201,7 +256,8 @@ export class Group extends Entity {
 
     public async write(clusterKey: number | string, attributes: KeyValue, options?: Options): Promise<void> {
         const optionsWithDefaults = this.getOptionsWithDefaults(options, Zcl.Direction.CLIENT_TO_SERVER);
-        const cluster = Zcl.Utils.getCluster(clusterKey, optionsWithDefaults.manufacturerCode, {});
+        const customClusters = this.#customClusters[optionsWithDefaults.direction === Zcl.Direction.CLIENT_TO_SERVER ? 0 : 1];
+        const cluster = Zcl.Utils.getCluster(clusterKey, optionsWithDefaults.manufacturerCode, customClusters);
         const payload: {attrId: number; dataType: number; attrData: number | string | boolean}[] = [];
 
         for (const [nameOrID, value] of Object.entries(attributes)) {
@@ -229,7 +285,7 @@ export class Group extends Entity {
                 "write",
                 cluster,
                 payload,
-                {},
+                customClusters,
                 optionsWithDefaults.reservedBits,
             );
 
@@ -247,7 +303,8 @@ export class Group extends Entity {
 
     public async read(clusterKey: number | string, attributes: (string | number)[], options?: Options): Promise<void> {
         const optionsWithDefaults = this.getOptionsWithDefaults(options, Zcl.Direction.CLIENT_TO_SERVER);
-        const cluster = Zcl.Utils.getCluster(clusterKey, optionsWithDefaults.manufacturerCode, {});
+        const customClusters = this.#customClusters[optionsWithDefaults.direction === Zcl.Direction.CLIENT_TO_SERVER ? 0 : 1];
+        const cluster = Zcl.Utils.getCluster(clusterKey, optionsWithDefaults.manufacturerCode, customClusters);
         const payload: {attrId: number}[] = [];
 
         for (const attribute of attributes) {
@@ -263,7 +320,7 @@ export class Group extends Entity {
             "read",
             cluster,
             payload,
-            {},
+            customClusters,
             optionsWithDefaults.reservedBits,
         );
 
@@ -286,8 +343,12 @@ export class Group extends Entity {
 
     public async command(clusterKey: number | string, commandKey: number | string, payload: KeyValue, options?: Options): Promise<void> {
         const optionsWithDefaults = this.getOptionsWithDefaults(options, Zcl.Direction.CLIENT_TO_SERVER);
-        const cluster = Zcl.Utils.getCluster(clusterKey, optionsWithDefaults.manufacturerCode, {});
-        const command = cluster.getCommand(commandKey);
+        const customClusters = this.#customClusters[optionsWithDefaults.direction === Zcl.Direction.CLIENT_TO_SERVER ? 0 : 1];
+        const cluster = Zcl.Utils.getCluster(clusterKey, optionsWithDefaults.manufacturerCode, customClusters);
+        const command =
+            optionsWithDefaults.direction === Zcl.Direction.CLIENT_TO_SERVER
+                ? cluster.getCommand(commandKey)
+                : cluster.getCommandResponse(commandKey);
 
         const createLogMessage = (): string => `Command ${this.groupID} ${cluster.name}.${command.name}(${JSON.stringify(payload)})`;
         logger.debug(createLogMessage, NS);
@@ -302,7 +363,7 @@ export class Group extends Entity {
                 command,
                 cluster,
                 payload,
-                {},
+                customClusters,
                 optionsWithDefaults.reservedBits,
             );
 
