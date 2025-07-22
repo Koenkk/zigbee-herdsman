@@ -1727,9 +1727,9 @@ export class UartAsh extends EventEmitter<UartAshEventMap> {
      *
      * @return True if nrTime == 0
      */
-    private nrTimerIsNotRunning(): boolean {
-        return this.nrTimer === 0;
-    }
+    // private nrTimerIsNotRunning(): boolean {
+    //     return this.nrTimer === 0;
+    // }
 
     /**
      * Sets the acknowledgement timer period (in msec) and stops the timer.

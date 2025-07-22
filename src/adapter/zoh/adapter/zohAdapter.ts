@@ -45,8 +45,6 @@ const DEFAULT_REQUEST_TIMEOUT = 15000;
 export class ZoHAdapter extends Adapter {
     private serialPort?: SerialPort;
     private socketPort?: Socket;
-    /** True when adapter is currently closing */
-    private closing: boolean;
 
     private interpanLock: boolean;
 
@@ -65,7 +63,6 @@ export class ZoHAdapter extends Adapter {
 
         this.hasZdoMessageOverhead = true;
         this.manufacturerID = Zcl.ManufacturerCode.CONNECTIVITY_STANDARDS_ALLIANCE;
-        this.closing = false;
 
         const channel = networkOptions.channelList[0];
         this.driver = new OTRCPDriver(
@@ -295,8 +292,6 @@ export class ZoHAdapter extends Adapter {
     }
 
     public async stop(): Promise<void> {
-        this.closing = true;
-
         this.driver.removeAllListeners();
         this.queue.clear();
         this.zclWaitress.clear();
