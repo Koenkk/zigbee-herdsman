@@ -208,15 +208,7 @@ function createCluster(name: string, cluster: ClusterDefinition, manufacturerCod
             return partialMatchAttr;
         }
 
-        for (const attrKey in attributes) {
-            const attr = attributes[attrKey];
-
-            if (attr.name === key) {
-                return attr;
-            }
-        }
-
-        return undefined;
+        return attributes[key];
     };
 
     const getCommand = (key: number | string): Command => {
@@ -229,12 +221,10 @@ function createCluster(name: string, cluster: ClusterDefinition, manufacturerCod
                 }
             }
         } else {
-            for (const cmdKey in commands) {
-                const cmd = commands[cmdKey];
+            const cmd = commands[key];
 
-                if (cmd.name === key) {
-                    return cmd;
-                }
+            if (cmd) {
+                return cmd;
             }
         }
 
@@ -251,12 +241,10 @@ function createCluster(name: string, cluster: ClusterDefinition, manufacturerCod
                 }
             }
         } else {
-            for (const cmdKey in commandsResponse) {
-                const cmd = commandsResponse[cmdKey];
+            const cmd = commandsResponse[key];
 
-                if (cmd.name === key) {
-                    return cmd;
-                }
+            if (cmd) {
+                return cmd;
             }
         }
 
