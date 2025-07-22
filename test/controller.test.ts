@@ -6084,6 +6084,36 @@ describe("Controller", () => {
         );
     });
 
+    it("Write response to endpoint with options", async () => {
+        await controller.start();
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
+        mocksendZclFrameToEndpoint.mockClear();
+        const device = controller.getDeviceByIeeeAddr("0x129")!;
+        const endpoint = device.getEndpoint(1)!;
+        await endpoint.writeResponse("genBasic", 99, {zclVersion: {status: 0x03}}, {manufacturerCode: Zcl.ManufacturerCode.INOVELLI});
+        expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(1);
+        const call = mocksendZclFrameToEndpoint.mock.calls[0];
+        expect(call[0]).toBe("0x129");
+        expect(call[1]).toBe(129);
+        expect(call[2]).toBe(1);
+        expect(deepClone(call[3])).toStrictEqual(
+            deepClone(
+                Zcl.Frame.create(
+                    Zcl.FrameType.GLOBAL,
+                    Zcl.Direction.SERVER_TO_CLIENT,
+                    true,
+                    Zcl.ManufacturerCode.INOVELLI,
+                    99,
+                    "writeRsp",
+                    0,
+                    [{attrId: 0, status: 0x03}],
+                    {},
+                ),
+            ),
+        );
+        expect(call[4]).toBe(10000);
+    });
+
     it("Read from endpoint with string", async () => {
         await controller.start();
         await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
@@ -10105,7 +10135,7 @@ describe("Controller", () => {
 
         device.addCustomCluster("manuSpecificInovelli", {
             ID: 64561,
-            manufacturerCode: 0x122f,
+            manufacturerCode: Zcl.ManufacturerCode.V_MARK_ENTERPRISES_INC,
             // omitted for brevity (unused here)
             attributes: {},
             commands: {
@@ -10151,7 +10181,7 @@ describe("Controller", () => {
                     Zcl.FrameType.SPECIFIC,
                     Zcl.Direction.CLIENT_TO_SERVER,
                     true,
-                    undefined,
+                    Zcl.ManufacturerCode.V_MARK_ENTERPRISES_INC,
                     14,
                     "individualLedEffect",
                     64561,
@@ -10171,7 +10201,7 @@ describe("Controller", () => {
                     Zcl.FrameType.SPECIFIC,
                     Zcl.Direction.SERVER_TO_CLIENT,
                     true,
-                    undefined,
+                    Zcl.ManufacturerCode.V_MARK_ENTERPRISES_INC,
                     15,
                     "bogus",
                     64561,
