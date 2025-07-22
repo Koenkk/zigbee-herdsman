@@ -107,6 +107,11 @@ const BASIC_RESP = Zcl.Frame.create(
 ).toBuffer();
 
 describe("Requests", () => {
+    beforeEach(() => {
+        sendZclFrameToEndpointResponse = undefined;
+        sendZdoResponse = undefined;
+    });
+
     bench(
         "device lqi",
         async () => {
