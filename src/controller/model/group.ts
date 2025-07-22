@@ -358,7 +358,7 @@ export class Group extends Entity {
                 Zcl.FrameType.SPECIFIC,
                 optionsWithDefaults.direction,
                 true,
-                optionsWithDefaults.manufacturerCode,
+                cluster.manufacturerCode,
                 optionsWithDefaults.transactionSequenceNumber || zclTransactionSequenceNumber.next(),
                 command.ID,
                 cluster.ID,
