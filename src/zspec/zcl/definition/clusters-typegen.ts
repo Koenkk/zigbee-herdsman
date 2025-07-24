@@ -277,7 +277,12 @@ const addParameters = (foundation: Readonly<FoundationDefinition>): ts.TypeNode 
     const elements: ts.PropertySignature[] = [];
 
     for (const parameter of foundation.parameters) {
-        const element = ts.factory.createPropertySignature(undefined, parameter.name, undefined, getTypeFromDataType(parameter.type));
+        const element = ts.factory.createPropertySignature(
+            undefined,
+            parameter.name,
+            parameter.conditions ? ts.factory.createToken(ts.SyntaxKind.QuestionToken) : undefined,
+            getTypeFromDataType(parameter.type),
+        );
 
         elements.push(element);
 
