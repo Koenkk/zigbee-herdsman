@@ -7215,3 +7215,27 @@ export interface TFoundation {
         }[];
     };
 }
+
+export type TFoundationRepetitive = TFoundation["read"] &
+    TFoundation["readRsp"] &
+    TFoundation["write"] &
+    TFoundation["writeUndiv"] &
+    TFoundation["writeRsp"] &
+    TFoundation["writeNoRsp"] &
+    TFoundation["configReport"] &
+    TFoundation["configReportRsp"] &
+    TFoundation["readReportConfig"] &
+    TFoundation["readReportConfigRsp"] &
+    TFoundation["report"] &
+    TFoundation["readStructured"] &
+    TFoundation["writeStructured"] &
+    TFoundation["writeStructuredRsp"];
+export type TFoundationFlat = TFoundation["defaultRsp"] &
+    TFoundation["discover"] &
+    TFoundation["discoverCommands"] &
+    TFoundation["discoverCommandsGen"] &
+    TFoundation["discoverExt"];
+export type TFoundationOneOf = TFoundation["discoverRsp"] &
+    TFoundation["discoverCommandsRsp"] &
+    TFoundation["discoverCommandsGenRsp"] &
+    TFoundation["discoverExtRsp"];
