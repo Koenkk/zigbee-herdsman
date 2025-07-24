@@ -13,6 +13,7 @@
  */
 import {writeFileSync} from "node:fs";
 import ts from "typescript";
+import {isFoundationDiscoverRsp} from "../utils";
 import {Clusters} from "./cluster";
 import {BuffaloZclDataType, DataType} from "./enums";
 import {Foundation, type FoundationCommandName, type FoundationDefinition} from "./foundation";
@@ -293,36 +294,43 @@ const addParameters = (foundation: Readonly<FoundationDefinition>): ts.TypeNode 
     }
 
     switch (foundation.parseStrategy) {
-        case "oneof": {
-            const discComplete = ts.factory.createPropertySignature(
-                undefined,
-                "discComplete",
-                undefined,
-                ts.factory.createKeywordTypeNode(ts.SyntaxKind.NumberKeyword),
-            );
-
-            ts.addSyntheticLeadingComment(discComplete, ts.SyntaxKind.MultiLineCommentTrivia, `* Type: ${DataType[DataType.UINT8]} `, true);
-
-            return ts.factory.createTypeLiteralNode([
-                discComplete,
-                ts.factory.createPropertySignature(
-                    undefined,
-                    "attrInfos",
-                    undefined,
-                    ts.factory.createArrayTypeNode(ts.factory.createTypeLiteralNode(elements)),
-                ),
-            ]);
+        case "repetitive": {
+            return ts.factory.createArrayTypeNode(ts.factory.createTypeLiteralNode(elements));
         }
         case "flat": {
             return ts.factory.createTypeLiteralNode(elements);
         }
-        case "repetitive": {
-            return ts.factory.createArrayTypeNode(ts.factory.createTypeLiteralNode(elements));
+        case "oneof": {
+            if (isFoundationDiscoverRsp(foundation.ID)) {
+                const discComplete = ts.factory.createPropertySignature(
+                    undefined,
+                    "discComplete",
+                    undefined,
+                    ts.factory.createKeywordTypeNode(ts.SyntaxKind.NumberKeyword),
+                );
+
+                ts.addSyntheticLeadingComment(discComplete, ts.SyntaxKind.MultiLineCommentTrivia, `* Type: ${DataType[DataType.UINT8]} `, true);
+
+                return ts.factory.createTypeLiteralNode([
+                    discComplete,
+                    ts.factory.createPropertySignature(
+                        undefined,
+                        "attrInfos",
+                        undefined,
+                        ts.factory.createArrayTypeNode(ts.factory.createTypeLiteralNode(elements)),
+                    ),
+                ]);
+            }
         }
     }
+
+    throw new Error(`Unknown command strategy for ${JSON.stringify(foundation)}`);
 };
 
 const foundationElements: ts.TypeElement[] = [];
+const foundationRepetitiveElements: ts.TypeNode[] = [];
+const foundationFlatElements: ts.TypeNode[] = [];
+const foundationOneOfElements: ts.TypeNode[] = [];
 
 for (const foundationName in Foundation) {
     const foundation = Foundation[foundationName as FoundationCommandName];
@@ -330,6 +338,21 @@ for (const foundationName in Foundation) {
 
     foundationElements.push(element);
     ts.addSyntheticLeadingComment(element, ts.SyntaxKind.MultiLineCommentTrivia, `* ID: ${foundation.ID} `, true);
+
+    switch (foundation.parseStrategy) {
+        case "repetitive": {
+            foundationRepetitiveElements.push(ts.factory.createTypeReferenceNode(`TFoundation["${foundationName}"]`));
+            break;
+        }
+        case "flat": {
+            foundationFlatElements.push(ts.factory.createTypeReferenceNode(`TFoundation["${foundationName}"]`));
+            break;
+        }
+        case "oneof": {
+            foundationOneOfElements.push(ts.factory.createTypeReferenceNode(`TFoundation["${foundationName}"]`));
+            break;
+        }
+    }
 }
 
 const foundationDecl = ts.factory.createInterfaceDeclaration(
@@ -340,11 +363,34 @@ const foundationDecl = ts.factory.createInterfaceDeclaration(
     foundationElements,
 );
 
+const foundationRepetitiveDecl = ts.factory.createTypeAliasDeclaration(
+    [ts.factory.createModifier(ts.SyntaxKind.ExportKeyword)],
+    "TFoundationRepetitive",
+    undefined,
+    ts.factory.createIntersectionTypeNode(foundationRepetitiveElements),
+);
+const foundationFlatDecl = ts.factory.createTypeAliasDeclaration(
+    [ts.factory.createModifier(ts.SyntaxKind.ExportKeyword)],
+    "TFoundationFlat",
+    undefined,
+    ts.factory.createIntersectionTypeNode(foundationFlatElements),
+);
+const foundationOneOfDecl = ts.factory.createTypeAliasDeclaration(
+    [ts.factory.createModifier(ts.SyntaxKind.ExportKeyword)],
+    "TFoundationOneOf",
+    undefined,
+    ts.factory.createIntersectionTypeNode(foundationOneOfElements),
+);
+
 const result = `${printer.printNode(ts.EmitHint.Unspecified, namedImports, file)}
 
 ${printer.printNode(ts.EmitHint.Unspecified, clustersDecl, file)}
 
 ${printer.printNode(ts.EmitHint.Unspecified, foundationDecl, file)}
+
+${printer.printNode(ts.EmitHint.Unspecified, foundationRepetitiveDecl, file)}
+${printer.printNode(ts.EmitHint.Unspecified, foundationFlatDecl, file)}
+${printer.printNode(ts.EmitHint.Unspecified, foundationOneOfDecl, file)}
 `;
 
 writeFileSync(`./src/zspec/zcl/definition/${FILENAME}`, result, {encoding: "utf8"});
