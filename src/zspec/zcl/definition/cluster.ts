@@ -4605,7 +4605,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                     {name: "type", type: DataType.UINT8},
                     {name: "unknown2", type: DataType.UINT8},
                     {name: "time", type: DataType.UINT8},
-                    {name: "unknown2", type: DataType.UINT8},
+                    {name: "unknown3", type: DataType.UINT8},
                 ],
             },
         },
@@ -5001,8 +5001,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         commands: {},
         commandsResponse: {},
     },
-    // biome-ignore lint/style/useNamingConvention: cross-repo impact
-    manuSpecificTuya_2: {
+    manuSpecificTuya2: {
         ID: 0xe002,
         attributes: {
             alarm_temperature_max: {ID: 53258, type: DataType.INT16},
@@ -5016,8 +5015,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         commands: {},
         commandsResponse: {},
     },
-    // biome-ignore lint/style/useNamingConvention: cross-repo impact
-    manuSpecificTuya_3: {
+    manuSpecificTuya3: {
         ID: 0xe001,
         attributes: {
             powerOnBehavior: {ID: 0xd010, type: DataType.ENUM8},

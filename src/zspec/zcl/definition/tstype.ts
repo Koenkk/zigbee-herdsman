@@ -23,6 +23,120 @@ export interface StructuredSelector {
     indicatorType?: StructuredIndicatorType;
 }
 
+export interface KeyZclValue {
+    [s: string | number]: number | string;
+}
+
+export interface Struct {
+    elmType: DataType;
+    elmVal: unknown;
+}
+
+export interface ZclTimeOfDay {
+    /** [0-23] */
+    hours?: number;
+    /** [0-59] */
+    minutes?: number;
+    /** [0-59] */
+    seconds?: number;
+    /** [0-99] */
+    hundredths?: number;
+}
+
+export interface ZclDate {
+    /** [1900-2155], converted to/from [0-255] => value+1900=year */
+    year?: number;
+    /** [1-12] */
+    month?: number;
+    /** [1-31] */
+    dayOfMonth?: number;
+    /** [1-7] */
+    dayOfWeek?: number;
+}
+
+export interface ZoneInfo {
+    zoneID: number;
+    zoneStatus: number;
+}
+
+export interface ExtensionFieldSet {
+    clstId: number;
+    len: number;
+    extField: unknown[];
+}
+
+export interface ThermoTransition {
+    transitionTime: number;
+    heatSetpoint?: number;
+    coolSetpoint?: number;
+}
+
+export interface Gpd {
+    deviceID: number;
+    options: number;
+    extendedOptions: number;
+    securityKey: Buffer;
+    keyMic: number;
+    outgoingCounter: number;
+    applicationInfo: number;
+    manufacturerID: number;
+    modelID: number;
+    numGpdCommands: number;
+    gpdCommandIdList: Buffer;
+    numServerClusters: number;
+    numClientClusters: number;
+    gpdServerClusters: Buffer;
+    gpdClientClusters: Buffer;
+    genericSwitchConfig: number;
+    currentContactStatus: number;
+}
+
+export interface GPDChannelRequest {
+    nextChannel: number;
+    nextNextChannel: number;
+}
+
+export interface GPDChannelConfiguration {
+    commandID: number;
+    operationalChannel: number;
+    basic: boolean;
+}
+
+export interface GPDCommissioningReply {
+    commandID: number;
+    options: number;
+    /** expected valid if corresponding `options` bits set */
+    panID?: number;
+    /** expected valid if corresponding `options` bits set */
+    securityKey?: Buffer;
+    /** expected valid if corresponding `options` bits set */
+    keyMic?: number;
+    /** expected valid if corresponding `options` bits set */
+    frameCounter?: number;
+}
+
+export interface GPDCustomReply {
+    commandID: number;
+    buffer: Buffer;
+}
+
+export interface GPDAttributeReport {
+    manufacturerCode: number;
+    clusterID: number;
+    attributes: KeyZclValue;
+}
+
+export interface TuyaDataPointValue {
+    dp: number;
+    datatype: number;
+    data: Buffer;
+}
+
+export interface MiboxerZone {
+    zoneNum: number;
+    groupId: number;
+}
+
 export interface FrameControl {
     reservedBits: number;
     frameType: FrameType;
@@ -239,8 +353,8 @@ export type ClusterName =
     | "manuSpecificTuya"
     | "manuSpecificLumi"
     | "liXeePrivate"
-    | "manuSpecificTuya_2"
-    | "manuSpecificTuya_3"
+    | "manuSpecificTuya2"
+    | "manuSpecificTuya3"
     | "manuSpecificCentraliteHumidity"
     | "manuSpecificSmartThingsArrivalSensor"
     | "manuSpecificSamsungAccelerometer"
