@@ -7011,9 +7011,9 @@ export interface TFoundation {
         /** Type: UINT8 */
         status: number;
         /** Type: UINT8 */
-        dataType: number;
+        dataType?: number;
         /** Type: USE_DATA_TYPE */
-        attrData: unknown;
+        attrData?: unknown;
     }[];
     /** ID: 2 */
     write: {
@@ -7038,7 +7038,7 @@ export interface TFoundation {
         /** Type: UINT8 */
         status: number;
         /** Type: UINT16 */
-        attrId: number;
+        attrId?: number;
     }[];
     /** ID: 5 */
     writeNoRsp: {
@@ -7056,24 +7056,24 @@ export interface TFoundation {
         /** Type: UINT16 */
         attrId: number;
         /** Type: UINT8 */
-        dataType: number;
+        dataType?: number;
         /** Type: UINT16 */
-        minRepIntval: number;
+        minRepIntval?: number;
         /** Type: UINT16 */
-        maxRepIntval: number;
+        maxRepIntval?: number;
         /** Type: USE_DATA_TYPE */
-        repChange: unknown;
+        repChange?: unknown;
         /** Type: UINT16 */
-        timeout: number;
+        timeout?: number;
     }[];
     /** ID: 7 */
     configReportRsp: {
         /** Type: UINT8 */
         status: number;
         /** Type: UINT8 */
-        direction: number;
+        direction?: number;
         /** Type: UINT16 */
-        attrId: number;
+        attrId?: number;
     }[];
     /** ID: 8 */
     readReportConfig: {
@@ -7091,15 +7091,15 @@ export interface TFoundation {
         /** Type: UINT16 */
         attrId: number;
         /** Type: UINT8 */
-        dataType: number;
+        dataType?: number;
         /** Type: UINT16 */
-        minRepIntval: number;
+        minRepIntval?: number;
         /** Type: UINT16 */
-        maxRepIntval: number;
+        maxRepIntval?: number;
         /** Type: USE_DATA_TYPE */
-        repChange: unknown;
+        repChange?: unknown;
         /** Type: UINT16 */
-        timeout: number;
+        timeout?: number;
     }[];
     /** ID: 10 */
     report: {
@@ -7158,9 +7158,9 @@ export interface TFoundation {
         /** Type: UINT8 */
         status: number;
         /** Type: UINT16 */
-        attrId: number;
+        attrId?: number;
         /** Type: STRUCTURED_SELECTOR */
-        selector: StructuredSelector;
+        selector?: StructuredSelector;
     }[];
     /** ID: 17 */
     discoverCommands: {
