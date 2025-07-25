@@ -29,13 +29,9 @@ function attributeKeyValue(frame: Zcl.Frame, deviceManufacturerID: number | unde
     const cluster = getCluster(frame, deviceManufacturerID, customClusters);
 
     for (const item of frame.payload as AttrPayload) {
-        try {
-            const attribute = cluster.getAttribute(item.attrId);
-            payload[attribute.name] = item.attrData;
-        } catch {
-            payload[item.attrId] = item.attrData;
-        }
+        payload[cluster.getAttribute(item.attrId)?.name ?? item.attrId] = item.attrData;
     }
+
     return payload;
 }
 
@@ -46,13 +42,9 @@ function attributeList(frame: Zcl.Frame, deviceManufacturerID: number | undefine
     const cluster = getCluster(frame, deviceManufacturerID, customClusters);
 
     for (const item of frame.payload as AttrListPayload) {
-        try {
-            const attribute = cluster.getAttribute(item.attrId);
-            payload.push(attribute.name);
-        } catch {
-            payload.push(item.attrId);
-        }
+        payload.push(cluster.getAttribute(item.attrId)?.name ?? item.attrId);
     }
+
     return payload;
 }
 
