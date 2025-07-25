@@ -3,12 +3,12 @@
  * How to run:
  * ```bash
  * npm i -g ts-node
- * ts-node ./src/zspec/zcl/definition/clusters-typegen.ts
+ * ts-node ./src/zspec/zcl/definition/clusters-typegen.ts && pnpm run check:w
  * ```
  * or with compiled:
  * ```bash
  * pnpm run prepack
- * node ./dist/zspec/zcl/definition/clusters-typegen.js
+ * node ./dist/zspec/zcl/definition/clusters-typegen.js && pnpm run check:w
  * ```
  */
 import {writeFileSync} from "node:fs";
@@ -344,17 +344,19 @@ for (const foundationName in Foundation) {
     foundationElements.push(element);
     ts.addSyntheticLeadingComment(element, ts.SyntaxKind.MultiLineCommentTrivia, `* ID: ${foundation.ID} `, true);
 
+    const stratNode = ts.factory.createTypeReferenceNode(`"${foundationName}"`);
+
     switch (foundation.parseStrategy) {
         case "repetitive": {
-            foundationRepetitiveElements.push(ts.factory.createTypeReferenceNode(`TFoundation["${foundationName}"]`));
+            foundationRepetitiveElements.push(stratNode);
             break;
         }
         case "flat": {
-            foundationFlatElements.push(ts.factory.createTypeReferenceNode(`TFoundation["${foundationName}"]`));
+            foundationFlatElements.push(stratNode);
             break;
         }
         case "oneof": {
-            foundationOneOfElements.push(ts.factory.createTypeReferenceNode(`TFoundation["${foundationName}"]`));
+            foundationOneOfElements.push(stratNode);
             break;
         }
     }
@@ -372,19 +374,19 @@ const foundationRepetitiveDecl = ts.factory.createTypeAliasDeclaration(
     [ts.factory.createModifier(ts.SyntaxKind.ExportKeyword)],
     "TFoundationRepetitive",
     undefined,
-    ts.factory.createIntersectionTypeNode(foundationRepetitiveElements),
+    ts.factory.createUnionTypeNode(foundationRepetitiveElements),
 );
 const foundationFlatDecl = ts.factory.createTypeAliasDeclaration(
     [ts.factory.createModifier(ts.SyntaxKind.ExportKeyword)],
     "TFoundationFlat",
     undefined,
-    ts.factory.createIntersectionTypeNode(foundationFlatElements),
+    ts.factory.createUnionTypeNode(foundationFlatElements),
 );
 const foundationOneOfDecl = ts.factory.createTypeAliasDeclaration(
     [ts.factory.createModifier(ts.SyntaxKind.ExportKeyword)],
     "TFoundationOneOf",
     undefined,
-    ts.factory.createIntersectionTypeNode(foundationOneOfElements),
+    ts.factory.createUnionTypeNode(foundationOneOfElements),
 );
 
 const result = `${printer.printNode(ts.EmitHint.Unspecified, namedImports, file)}
