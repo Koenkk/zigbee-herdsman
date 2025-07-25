@@ -147,15 +147,6 @@ const addAttributes = (attributes: Readonly<Record<string, Readonly<AttributeDef
         );
 
         elements.push(element);
-        // elements.push(
-        //     ts.factory.createPropertySignature(
-        //         undefined,
-        //         attribute.ID.toString(),
-        //         // always optional if manuf-specific
-        //         attribute.manufacturerCode ? ts.factory.createToken(ts.SyntaxKind.QuestionToken) : undefined,
-        //         getTypeFromDataType(attribute.type),
-        //     ),
-        // );
 
         let comment = `* ID: ${attribute.ID} | Type: ${DataType[attribute.type] ?? BuffaloZclDataType[attribute.type]} `;
 
@@ -225,14 +216,6 @@ const addCommands = (commands: Readonly<Record<string, Readonly<CommandDefinitio
         );
 
         elements.push(element);
-        // elements.push(
-        //     ts.factory.createPropertySignature(
-        //         undefined,
-        //         command.ID.toString(),
-        //         undefined,
-        //         cmdElements.length > 0 ? ts.factory.createTypeLiteralNode(cmdElements) : emptyObject,
-        //     ),
-        // );
 
         let comment = `* ID: ${command.ID} `;
 
