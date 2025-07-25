@@ -86,8 +86,7 @@ export interface Cluster {
     commandsResponse: {
         [s: string]: Command;
     };
-    getAttribute: (key: number | string) => Attribute;
-    hasAttribute: (key: number | string) => boolean;
+    getAttribute: (key: number | string) => Attribute | undefined;
     getCommand: (key: number | string) => Command;
     getCommandResponse: (key: number | string) => Command;
 }

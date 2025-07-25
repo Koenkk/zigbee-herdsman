@@ -124,9 +124,12 @@ export class Endpoint extends Entity {
 
         return this._configuredReportings.map((entry, index) => {
             const cluster = Zcl.Utils.getCluster(entry.cluster, entry.manufacturerCode, device.customClusters);
-            const attribute: ZclTypes.Attribute = cluster.hasAttribute(entry.attrId)
-                ? cluster.getAttribute(entry.attrId)
-                : {ID: entry.attrId, name: `attr${index}`, type: Zcl.DataType.UNKNOWN, manufacturerCode: undefined};
+            const attribute: ZclTypes.Attribute = cluster.getAttribute(entry.attrId) ?? {
+                ID: entry.attrId,
+                name: `attr${index}`,
+                type: Zcl.DataType.UNKNOWN,
+                manufacturerCode: undefined,
+            };
 
             return {
                 cluster,
@@ -276,19 +279,26 @@ export class Endpoint extends Entity {
 
     public saveClusterAttributeKeyValue(clusterKey: number | string, list: KeyValue): void {
         const cluster = this.getCluster(clusterKey);
-        if (!this.clusters[cluster.name]) this.clusters[cluster.name] = {attributes: {}};
 
-        for (const [attribute, value] of Object.entries(list)) {
-            this.clusters[cluster.name].attributes[attribute] = value;
+        if (!this.clusters[cluster.name]) {
+            this.clusters[cluster.name] = {attributes: {}};
+        }
+
+        for (const attribute in list) {
+            this.clusters[cluster.name].attributes[attribute] = list[attribute];
         }
     }
 
     public getClusterAttributeValue(clusterKey: number | string, attributeKey: number | string): number | string | undefined {
         const cluster = this.getCluster(clusterKey);
-        const attribute = cluster.getAttribute(attributeKey);
 
         if (this.clusters[cluster.name] && this.clusters[cluster.name].attributes) {
-            return this.clusters[cluster.name].attributes[attribute.name];
+            // XXX: used to throw (behavior changed in #1455)
+            const attribute = cluster.getAttribute(attributeKey);
+
+            if (attribute) {
+                return this.clusters[cluster.name].attributes[attribute.name];
+            }
         }
 
         return undefined;
@@ -368,8 +378,9 @@ export class Endpoint extends Entity {
         const payload: {attrId: number; dataType: number; attrData: number | string | boolean}[] = [];
 
         for (const [nameOrID, value] of Object.entries(attributes)) {
-            if (cluster.hasAttribute(nameOrID)) {
-                const attribute = cluster.getAttribute(nameOrID);
+            const attribute = cluster.getAttribute(nameOrID);
+
+            if (attribute) {
                 payload.push({attrId: attribute.ID, attrData: value, dataType: attribute.type});
             } else if (!Number.isNaN(Number(nameOrID))) {
                 payload.push({attrId: Number(nameOrID), attrData: value.value, dataType: value.type});
@@ -393,8 +404,9 @@ export class Endpoint extends Entity {
 
         const payload: {attrId: number; dataType: number; attrData: number | string | boolean}[] = [];
         for (const [nameOrID, value] of Object.entries(attributes)) {
-            if (cluster.hasAttribute(nameOrID)) {
-                const attribute = cluster.getAttribute(nameOrID);
+            const attribute = cluster.getAttribute(nameOrID);
+
+            if (attribute) {
                 payload.push({attrId: attribute.ID, attrData: value, dataType: attribute.type});
             } else if (!Number.isNaN(Number(nameOrID))) {
                 payload.push({attrId: Number(nameOrID), attrData: value.value, dataType: value.type});
@@ -418,8 +430,9 @@ export class Endpoint extends Entity {
 
         for (const [nameOrID, value] of Object.entries(attributes)) {
             if (value.status !== undefined) {
-                if (cluster.hasAttribute(nameOrID)) {
-                    const attribute = cluster.getAttribute(nameOrID);
+                const attribute = cluster.getAttribute(nameOrID);
+
+                if (attribute) {
                     payload.push({attrId: attribute.ID, status: value.status});
                 } else if (!Number.isNaN(Number(nameOrID))) {
                     payload.push({attrId: Number(nameOrID), status: value.status});
@@ -450,10 +463,20 @@ export class Endpoint extends Entity {
             optionsWithDefaults.manufacturerCode,
             "read",
         );
-
         const payload: {attrId: number}[] = [];
+
         for (const attribute of attributes) {
-            payload.push({attrId: typeof attribute === "number" ? attribute : cluster.getAttribute(attribute).ID});
+            if (typeof attribute === "number") {
+                payload.push({attrId: attribute});
+            } else {
+                const attr = cluster.getAttribute(attribute);
+
+                if (attr) {
+                    payload.push({attrId: attr.ID});
+                } else {
+                    logger.warning(`Ignoring unknown attribute ${attribute} in cluster ${cluster.name}`, NS);
+                }
+            }
         }
 
         const resultFrame = await this.zclCommand(clusterKey, "read", payload, optionsWithDefaults, attributes, true);
@@ -476,8 +499,9 @@ export class Endpoint extends Entity {
         const cluster = this.getCluster(clusterKey);
         const payload: {attrId: number; status: number; dataType: number; attrData: number | string}[] = [];
         for (const [nameOrID, value] of Object.entries(attributes)) {
-            if (cluster.hasAttribute(nameOrID)) {
-                const attribute = cluster.getAttribute(nameOrID);
+            const attribute = cluster.getAttribute(nameOrID);
+
+            if (attribute) {
                 payload.push({attrId: attribute.ID, attrData: value, dataType: attribute.type, status: 0});
             } else if (!Number.isNaN(Number(nameOrID))) {
                 payload.push({attrId: Number(nameOrID), attrData: value.value, dataType: value.type, status: 0});
@@ -688,10 +712,13 @@ export class Endpoint extends Entity {
             if (typeof item.attribute === "object") {
                 dataType = item.attribute.type;
                 attrId = item.attribute.ID;
-            } else if (cluster.hasAttribute(item.attribute)) {
+            } else {
                 const attribute = cluster.getAttribute(item.attribute);
-                dataType = attribute.type;
-                attrId = attribute.ID;
+
+                if (attribute) {
+                    dataType = attribute.type;
+                    attrId = attribute.ID;
+                }
             }
 
             return {
@@ -890,8 +917,9 @@ export class Endpoint extends Entity {
                 }
 
                 // we fall back to caller|cluster provided manufacturerCode
-                if (cluster.hasAttribute(attributeID)) {
-                    const attribute = cluster.getAttribute(attributeID);
+                const attribute = cluster.getAttribute(attributeID);
+
+                if (attribute) {
                     return attribute.manufacturerCode === undefined ? fallbackManufacturerCode : attribute.manufacturerCode;
                 }
 

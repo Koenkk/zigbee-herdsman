@@ -20,16 +20,12 @@ describe("Zcl", () => {
         // @ts-expect-error testing
         delete cluster1.getCommand;
         // @ts-expect-error testing
-        delete cluster1.hasAttribute;
-        // @ts-expect-error testing
         delete cluster1.getCommandResponse;
         const cluster2 = Zcl.Utils.getCluster("genBasic", undefined, {});
         // @ts-expect-error testing
         delete cluster2.getAttribute;
         // @ts-expect-error testing
         delete cluster2.getCommand;
-        // @ts-expect-error testing
-        delete cluster2.hasAttribute;
         // @ts-expect-error testing
         delete cluster2.getCommandResponse;
         expect(cluster1).toStrictEqual(cluster2);
@@ -43,10 +39,10 @@ describe("Zcl", () => {
 
     it("Cluster has attribute", () => {
         const cluster = Zcl.Utils.getCluster(0, undefined, {});
-        expect(cluster.hasAttribute("zclVersion")).toBeTruthy();
-        expect(cluster.hasAttribute("NOTEXISTING")).toBeFalsy();
-        expect(cluster.hasAttribute(0)).toBeTruthy();
-        expect(cluster.hasAttribute(910293)).toBeFalsy();
+        expect(cluster.getAttribute("zclVersion")).not.toBeUndefined();
+        expect(cluster.getAttribute("NOTEXISTING")).toBeUndefined();
+        expect(cluster.getAttribute(0)).not.toBeUndefined();
+        expect(cluster.getAttribute(910293)).toBeUndefined();
     });
 
     it("Get specific command by name", () => {
@@ -1917,26 +1913,26 @@ describe("Zcl", () => {
 
     it("Zcl utils get cluster attributes manufacturerCode wrong", () => {
         const cluster = Zcl.Utils.getCluster("closuresWindowCovering", 123, {});
-        expect(() => cluster.getAttribute(0x1000)).toThrow("Cluster 'closuresWindowCovering' has no attribute '4096'");
+        expect(cluster.getAttribute(0x1000)).toBeUndefined();
     });
 
     it("Zcl utils get command", () => {
         const cluster = Zcl.Utils.getCluster("genOnOff", undefined, {});
         const command = cluster.getCommand(0);
-        expect(command.name).toEqual("off");
-        expect(cluster.getCommand("off")).toEqual(command);
+        expect(command.name).toStrictEqual("off");
+        expect(cluster.getCommand("off")).toStrictEqual(command);
     });
 
     it("Zcl utils get attribute", () => {
         const cluster = Zcl.Utils.getCluster("genOnOff", undefined, {});
-        const command = cluster.getAttribute(16385);
-        expect(command.name).toEqual("onTime");
-        expect(cluster.getAttribute("onTime")).toEqual(command);
+        const attribute = cluster.getAttribute(16385);
+        expect(attribute?.name).toStrictEqual("onTime");
+        expect(cluster.getAttribute("onTime")).toStrictEqual(attribute);
     });
 
     it("Zcl utils get attribute non-existing", () => {
         const cluster = Zcl.Utils.getCluster("genOnOff", undefined, {});
-        expect(() => cluster.getAttribute("notExisting")).toThrow("Cluster 'genOnOff' has no attribute 'notExisting'");
+        expect(cluster.getAttribute("notExisting")).toBeUndefined();
     });
 
     it("Zcl utils get command non-existing", () => {

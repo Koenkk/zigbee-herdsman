@@ -211,21 +211,24 @@ const restoreMocksendZclFrameToEndpoint = () => {
             for (const item of frame.payload) {
                 if (item.attrId !== 65314) {
                     const attribute = cluster.getAttribute(item.attrId);
-                    if (frame.isCluster("ssIasZone") && item.attrId === 0) {
-                        iasZoneReadState170Count++;
-                        payload.push({
-                            attrId: item.attrId,
-                            dataType: attribute.type,
-                            attrData: iasZoneReadState170Count === 2 && enroll170 ? 1 : 0,
-                            status: 0,
-                        });
-                    } else {
-                        payload.push({
-                            attrId: item.attrId,
-                            dataType: attribute.type,
-                            attrData: MOCK_DEVICES[networkAddress]!.attributes![endpoint][attribute.name],
-                            status: 0,
-                        });
+
+                    if (attribute) {
+                        if (frame.isCluster("ssIasZone") && item.attrId === 0) {
+                            iasZoneReadState170Count++;
+                            payload.push({
+                                attrId: item.attrId,
+                                dataType: attribute.type,
+                                attrData: iasZoneReadState170Count === 2 && enroll170 ? 1 : 0,
+                                status: 0,
+                            });
+                        } else {
+                            payload.push({
+                                attrId: item.attrId,
+                                dataType: attribute.type,
+                                attrData: MOCK_DEVICES[networkAddress]!.attributes![endpoint][attribute.name],
+                                status: 0,
+                            });
+                        }
                     }
                 }
             }
@@ -3040,218 +3043,21 @@ describe("Controller", () => {
         expect(call[0]).toBe("0x129");
         expect(call[1]).toBe(129);
         expect(call[2]).toBe(1);
-        expect(deepClone(call[3])).toStrictEqual({
-            header: {
-                frameControl: {reservedBits: 0, frameType: 0, direction: 0, disableDefaultResponse: true, manufacturerSpecific: false},
-                transactionSequenceNumber: 29,
-                commandIdentifier: 11,
-            },
-            payload: {cmdId: 1, statusCode: 0},
-            cluster: {
-                ID: 5,
-                attributes: {
-                    count: {ID: 0, type: 32, name: "count"},
-                    currentScene: {ID: 1, type: 32, name: "currentScene"},
-                    currentGroup: {ID: 2, type: 33, name: "currentGroup"},
-                    sceneValid: {ID: 3, type: 16, name: "sceneValid"},
-                    nameSupport: {ID: 4, type: 24, name: "nameSupport"},
-                    lastCfgBy: {ID: 5, type: 240, name: "lastCfgBy"},
-                },
-                name: "genScenes",
-                commands: {
-                    add: {
-                        ID: 0,
-                        response: 0,
-                        parameters: [
-                            {name: "groupid", type: 33},
-                            {name: "sceneid", type: 32},
-                            {name: "transtime", type: 33},
-                            {name: "scenename", type: 66},
-                            {name: "extensionfieldsets", type: 1006},
-                        ],
-                        name: "add",
-                    },
-                    view: {
-                        ID: 1,
-                        response: 1,
-                        parameters: [
-                            {name: "groupid", type: 33},
-                            {name: "sceneid", type: 32},
-                        ],
-                        name: "view",
-                    },
-                    remove: {
-                        ID: 2,
-                        response: 2,
-                        parameters: [
-                            {name: "groupid", type: 33},
-                            {name: "sceneid", type: 32},
-                        ],
-                        name: "remove",
-                    },
-                    removeAll: {ID: 3, response: 3, parameters: [{name: "groupid", type: 33}], name: "removeAll"},
-                    store: {
-                        ID: 4,
-                        response: 4,
-                        parameters: [
-                            {name: "groupid", type: 33},
-                            {name: "sceneid", type: 32},
-                        ],
-                        name: "store",
-                    },
-                    recall: {
-                        ID: 5,
-                        parameters: [
-                            {name: "groupid", type: 33},
-                            {name: "sceneid", type: 32},
-                        ],
-                        name: "recall",
-                    },
-                    getSceneMembership: {ID: 6, response: 6, parameters: [{name: "groupid", type: 33}], name: "getSceneMembership"},
-                    enhancedAdd: {
-                        ID: 64,
-                        response: 64,
-                        parameters: [
-                            {name: "groupid", type: 33},
-                            {name: "sceneid", type: 32},
-                            {name: "transtime", type: 33},
-                            {name: "scenename", type: 66},
-                            {name: "extensionfieldsets", type: 1006},
-                        ],
-                        name: "enhancedAdd",
-                    },
-                    enhancedView: {
-                        ID: 65,
-                        response: 65,
-                        parameters: [
-                            {name: "groupid", type: 33},
-                            {name: "sceneid", type: 32},
-                        ],
-                        name: "enhancedView",
-                    },
-                    copy: {
-                        ID: 66,
-                        response: 66,
-                        parameters: [
-                            {name: "mode", type: 32},
-                            {name: "groupidfrom", type: 33},
-                            {name: "sceneidfrom", type: 32},
-                            {name: "groupidto", type: 33},
-                            {name: "sceneidto", type: 32},
-                        ],
-                        name: "copy",
-                    },
-                    tradfriArrowSingle: {
-                        ID: 7,
-                        parameters: [
-                            {name: "value", type: 33},
-                            {name: "value2", type: 33},
-                        ],
-                        name: "tradfriArrowSingle",
-                    },
-                    tradfriArrowHold: {ID: 8, parameters: [{name: "value", type: 33}], name: "tradfriArrowHold"},
-                    tradfriArrowRelease: {ID: 9, parameters: [{name: "value", type: 33}], name: "tradfriArrowRelease"},
-                },
-                commandsResponse: {
-                    addRsp: {
-                        ID: 0,
-                        parameters: [
-                            {name: "status", type: 32},
-                            {name: "groupId", type: 33},
-                            {name: "sceneId", type: 32},
-                        ],
-                        name: "addRsp",
-                    },
-                    viewRsp: {
-                        ID: 1,
-                        parameters: [
-                            {name: "status", type: 32},
-                            {name: "groupid", type: 33},
-                            {name: "sceneid", type: 32},
-                            {name: "transtime", type: 33, conditions: [{type: "statusEquals", value: 0}]},
-                            {name: "scenename", type: 66, conditions: [{type: "statusEquals", value: 0}]},
-                            {name: "extensionfieldsets", type: 1006, conditions: [{type: "statusEquals", value: 0}]},
-                        ],
-                        name: "viewRsp",
-                    },
-                    removeRsp: {
-                        ID: 2,
-                        parameters: [
-                            {name: "status", type: 32},
-                            {name: "groupid", type: 33},
-                            {name: "sceneid", type: 32},
-                        ],
-                        name: "removeRsp",
-                    },
-                    removeAllRsp: {
-                        ID: 3,
-                        parameters: [
-                            {name: "status", type: 32},
-                            {name: "groupid", type: 33},
-                        ],
-                        name: "removeAllRsp",
-                    },
-                    storeRsp: {
-                        ID: 4,
-                        parameters: [
-                            {name: "status", type: 32},
-                            {name: "groupid", type: 33},
-                            {name: "sceneid", type: 32},
-                        ],
-                        name: "storeRsp",
-                    },
-                    getSceneMembershipRsp: {
-                        ID: 6,
-                        parameters: [
-                            {name: "status", type: 32},
-                            {name: "capacity", type: 32},
-                            {name: "groupid", type: 33},
-                            {name: "scenecount", type: 32, conditions: [{type: "statusEquals", value: 0}]},
-                            {name: "scenelist", type: 1001, conditions: [{type: "statusEquals", value: 0}]},
-                        ],
-                        name: "getSceneMembershipRsp",
-                    },
-                    enhancedAddRsp: {
-                        ID: 64,
-                        parameters: [
-                            {name: "status", type: 32},
-                            {name: "groupId", type: 33},
-                            {name: "sceneId", type: 32},
-                        ],
-                        name: "enhancedAddRsp",
-                    },
-                    enhancedViewRsp: {
-                        ID: 65,
-                        parameters: [
-                            {name: "status", type: 32},
-                            {name: "groupid", type: 33},
-                            {name: "sceneid", type: 32},
-                            {name: "transtime", type: 33, conditions: [{type: "statusEquals", value: 0}]},
-                            {name: "scenename", type: 66, conditions: [{type: "statusEquals", value: 0}]},
-                            {name: "extensionfieldsets", type: 1006, conditions: [{type: "statusEquals", value: 0}]},
-                        ],
-                        name: "enhancedViewRsp",
-                    },
-                    copyRsp: {
-                        ID: 66,
-                        parameters: [
-                            {name: "status", type: 32},
-                            {name: "groupidfrom", type: 33},
-                            {name: "sceneidfrom", type: 32},
-                        ],
-                        name: "copyRsp",
-                    },
-                },
-            },
-            command: {
-                ID: 11,
-                name: "defaultRsp",
-                parameters: [
-                    {name: "cmdId", type: 32},
-                    {name: "statusCode", type: 32},
-                ],
-            },
-        });
+        expect(deepClone(call[3])).toStrictEqual(
+            deepClone(
+                Zcl.Frame.create(
+                    Zcl.FrameType.GLOBAL,
+                    Zcl.Direction.CLIENT_TO_SERVER,
+                    true,
+                    undefined,
+                    29,
+                    "defaultRsp",
+                    5,
+                    {cmdId: 1, statusCode: 0},
+                    {},
+                ),
+            ),
+        );
     });
 
     it("Receive zclData dont send default resopnse with skipDefaultResponse", async () => {
@@ -3410,41 +3216,9 @@ describe("Controller", () => {
         expect(call[0]).toBe("0x129");
         expect(call[1]).toBe(129);
         expect(call[2]).toBe(1);
-        expect(deepClone(call[3])).toStrictEqual({
-            header: {
-                frameControl: {reservedBits: 0, frameType: 0, direction: 1, disableDefaultResponse: true, manufacturerSpecific: false},
-                transactionSequenceNumber: 40,
-                commandIdentifier: 1,
-            },
-            cluster: {
-                ID: 10,
-                attributes: {
-                    time: {ID: 0, type: 226, name: "time"},
-                    timeStatus: {ID: 1, type: 24, name: "timeStatus"},
-                    timeZone: {ID: 2, type: 43, name: "timeZone"},
-                    dstStart: {ID: 3, type: 35, name: "dstStart"},
-                    dstEnd: {ID: 4, type: 35, name: "dstEnd"},
-                    dstShift: {ID: 5, type: 43, name: "dstShift"},
-                    standardTime: {ID: 6, type: 35, name: "standardTime"},
-                    localTime: {ID: 7, type: 35, name: "localTime"},
-                    lastSetTime: {ID: 8, type: 226, name: "lastSetTime"},
-                    validUntilTime: {ID: 9, type: 226, name: "validUntilTime"},
-                },
-                name: "genTime",
-                commands: {},
-                commandsResponse: {},
-            },
-            command: {
-                ID: 1,
-                name: "readRsp",
-                parameters: [
-                    {name: "attrId", type: 33},
-                    {name: "status", type: 32},
-                    {name: "dataType", type: 32, conditions: [{type: "statusEquals", value: 0}]},
-                    {name: "attrData", type: 1000, conditions: [{type: "statusEquals", value: 0}]},
-                ],
-            },
-        });
+        expect(deepClone(call[3])).toStrictEqual(
+            deepClone(Zcl.Frame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.SERVER_TO_CLIENT, true, undefined, 40, "readRsp", 10, undefined, {})),
+        );
     });
 
     it("Allow to override read response through `device.customReadResponse", async () => {
@@ -4142,88 +3916,9 @@ describe("Controller", () => {
         expect(call[0]).toBe("0x129");
         expect(call[1]).toBe(129);
         expect(call[2]).toBe(1);
-        expect(deepClone(call[3])).toStrictEqual({
-            header: {
-                frameControl: {reservedBits: 0, frameType: 1, direction: 0, disableDefaultResponse: true, manufacturerSpecific: false},
-                transactionSequenceNumber: 12,
-                commandIdentifier: 3,
-            },
-            payload: {groupid: 4},
-            cluster: {
-                ID: 4,
-                attributes: {nameSupport: {ID: 0, type: 24, name: "nameSupport"}},
-                name: "genGroups",
-                commands: {
-                    add: {
-                        ID: 0,
-                        response: 0,
-                        parameters: [
-                            {name: "groupid", type: 33},
-                            {name: "groupname", type: 66},
-                        ],
-                        name: "add",
-                    },
-                    view: {ID: 1, response: 1, parameters: [{name: "groupid", type: 33}], name: "view"},
-                    getMembership: {
-                        ID: 2,
-                        response: 2,
-                        parameters: [
-                            {name: "groupcount", type: 32},
-                            {name: "grouplist", type: 1002},
-                        ],
-                        name: "getMembership",
-                    },
-                    miboxerSetZones: {ID: 240, name: "miboxerSetZones", parameters: [{name: "zones", type: 1012}]},
-                    remove: {ID: 3, response: 3, parameters: [{name: "groupid", type: 33}], name: "remove"},
-                    removeAll: {ID: 4, parameters: [], name: "removeAll"},
-                    addIfIdentifying: {
-                        ID: 5,
-                        parameters: [
-                            {name: "groupid", type: 33},
-                            {name: "groupname", type: 66},
-                        ],
-                        name: "addIfIdentifying",
-                    },
-                },
-                commandsResponse: {
-                    addRsp: {
-                        ID: 0,
-                        parameters: [
-                            {name: "status", type: 32},
-                            {name: "groupid", type: 33},
-                        ],
-                        name: "addRsp",
-                    },
-                    viewRsp: {
-                        ID: 1,
-                        parameters: [
-                            {name: "status", type: 32},
-                            {name: "groupid", type: 33},
-                            {name: "groupname", type: 66},
-                        ],
-                        name: "viewRsp",
-                    },
-                    getMembershipRsp: {
-                        ID: 2,
-                        parameters: [
-                            {name: "capacity", type: 32},
-                            {name: "groupcount", type: 32},
-                            {name: "grouplist", type: 1002},
-                        ],
-                        name: "getMembershipRsp",
-                    },
-                    removeRsp: {
-                        ID: 3,
-                        parameters: [
-                            {name: "status", type: 32},
-                            {name: "groupid", type: 33},
-                        ],
-                        name: "removeRsp",
-                    },
-                },
-            },
-            command: {ID: 3, response: 3, parameters: [{name: "groupid", type: 33}], name: "remove"},
-        });
+        expect(deepClone(call[3])).toStrictEqual(
+            deepClone(Zcl.Frame.create(Zcl.FrameType.SPECIFIC, Zcl.Direction.CLIENT_TO_SERVER, true, undefined, 12, "remove", 4, {groupid: 4}, {})),
+        );
     });
 
     it("Remove group from database", async () => {
@@ -4272,48 +3967,9 @@ describe("Controller", () => {
         expect(call[0]).toBe("0x176");
         expect(call[1]).toBe(176);
         expect(call[2]).toBe(1);
-        expect(deepClone(call[3])).toStrictEqual({
-            header: {
-                frameControl: {reservedBits: 0, frameType: 0, direction: 0, disableDefaultResponse: true, manufacturerSpecific: false},
-                transactionSequenceNumber: 2,
-                commandIdentifier: 0,
-            },
-            payload: [{attrId: 0}],
-            cluster: {
-                ID: 0,
-                attributes: {
-                    zclVersion: {ID: 0, type: 32, name: "zclVersion"},
-                    appVersion: {ID: 1, type: 32, name: "appVersion"},
-                    stackVersion: {ID: 2, type: 32, name: "stackVersion"},
-                    hwVersion: {ID: 3, type: 32, name: "hwVersion"},
-                    manufacturerName: {ID: 4, type: 66, name: "manufacturerName"},
-                    modelId: {ID: 5, type: 66, name: "modelId"},
-                    dateCode: {ID: 6, type: 66, name: "dateCode"},
-                    powerSource: {ID: 7, type: 48, name: "powerSource"},
-                    appProfileVersion: {ID: 8, type: 48, name: "appProfileVersion"},
-                    genericDeviceType: {ID: 9, type: 48, name: "genericDeviceType"},
-                    productCode: {ID: 10, type: 65, name: "productCode"},
-                    productUrl: {ID: 11, type: 66, name: "productUrl"},
-                    manufacturerVersionDetails: {ID: 12, type: 66, name: "manufacturerVersionDetails"},
-                    serialNumber: {ID: 13, type: 66, name: "serialNumber"},
-                    productLabel: {ID: 14, type: 66, name: "productLabel"},
-                    locationDesc: {ID: 16, type: 66, name: "locationDesc"},
-                    physicalEnv: {ID: 17, type: 48, name: "physicalEnv"},
-                    deviceEnabled: {ID: 18, type: 16, name: "deviceEnabled"},
-                    alarmMask: {ID: 19, type: 24, name: "alarmMask"},
-                    disableLocalConfig: {ID: 20, type: 24, name: "disableLocalConfig"},
-                    swBuildId: {ID: 16384, type: 66, name: "swBuildId"},
-                    schneiderMeterRadioPower: {ID: 57856, manufacturerCode: 4190, name: "schneiderMeterRadioPower", type: 40},
-                },
-                name: "genBasic",
-                commands: {
-                    resetFactDefault: {ID: 0, parameters: [], name: "resetFactDefault"},
-                    tuyaSetup: {ID: 240, parameters: [], name: "tuyaSetup"},
-                },
-                commandsResponse: {},
-            },
-            command: {ID: 0, name: "read", parameters: [{name: "attrId", type: 33}], response: 1},
-        });
+        expect(deepClone(call[3])).toStrictEqual(
+            deepClone(Zcl.Frame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, true, undefined, 2, "read", 0, [{attrId: 0}], {})),
+        );
         expect(call[4]).toBe(10000);
         expect(call[5]).toBe(false);
         expect(call[6]).toBe(true);
@@ -4627,66 +4283,21 @@ describe("Controller", () => {
         expect(call[0]).toBe("0x129");
         expect(call[1]).toBe(129);
         expect(call[2]).toBe(1);
-        expect(deepClone(call[3])).toStrictEqual({
-            header: {
-                frameControl: {reservedBits: 0, frameType: 0, direction: 0, disableDefaultResponse: true, manufacturerSpecific: false},
-                transactionSequenceNumber: 11,
-                commandIdentifier: 6,
-            },
-            payload: [{direction: 0, attrId: 1, dataType: 32, minRepIntval: 1, maxRepIntval: 10, repChange: 1}],
-            cluster: {
-                ID: 1,
-                attributes: {
-                    mainsVoltage: {ID: 0, type: 33, name: "mainsVoltage"},
-                    mainsFrequency: {ID: 1, type: 32, name: "mainsFrequency"},
-                    mainsAlarmMask: {ID: 16, type: 24, name: "mainsAlarmMask"},
-                    mainsVoltMinThres: {ID: 17, type: 33, name: "mainsVoltMinThres"},
-                    mainsVoltMaxThres: {ID: 18, type: 33, name: "mainsVoltMaxThres"},
-                    mainsVoltageDwellTripPoint: {ID: 19, type: 33, name: "mainsVoltageDwellTripPoint"},
-                    batteryVoltage: {ID: 32, type: 32, name: "batteryVoltage"},
-                    batteryPercentageRemaining: {ID: 33, type: 32, name: "batteryPercentageRemaining"},
-                    batteryManufacturer: {ID: 48, type: 66, name: "batteryManufacturer"},
-                    batterySize: {ID: 49, type: 48, name: "batterySize"},
-                    batteryAHrRating: {ID: 50, type: 33, name: "batteryAHrRating"},
-                    batteryQuantity: {ID: 51, type: 32, name: "batteryQuantity"},
-                    batteryRatedVoltage: {ID: 52, type: 32, name: "batteryRatedVoltage"},
-                    batteryAlarmMask: {ID: 53, type: 24, name: "batteryAlarmMask"},
-                    batteryVoltMinThres: {ID: 54, type: 32, name: "batteryVoltMinThres"},
-                    batteryVoltThres1: {ID: 55, type: 32, name: "batteryVoltThres1"},
-                    batteryVoltThres2: {ID: 56, type: 32, name: "batteryVoltThres2"},
-                    batteryVoltThres3: {ID: 57, type: 32, name: "batteryVoltThres3"},
-                    batteryPercentMinThres: {ID: 58, type: 32, name: "batteryPercentMinThres"},
-                    batteryPercentThres1: {ID: 59, type: 32, name: "batteryPercentThres1"},
-                    batteryPercentThres2: {ID: 60, type: 32, name: "batteryPercentThres2"},
-                    batteryPercentThres3: {ID: 61, type: 32, name: "batteryPercentThres3"},
-                    batteryAlarmState: {ID: 62, type: 27, name: "batteryAlarmState"},
-                },
-                name: "genPowerCfg",
-                commands: {},
-                commandsResponse: {},
-            },
-            command: {
-                ID: 6,
-                name: "configReport",
-                parameters: [
-                    {name: "direction", type: 32},
-                    {name: "attrId", type: 33},
-                    {name: "dataType", type: 32, conditions: [{type: "directionEquals", value: 0}]},
-                    {name: "minRepIntval", type: 33, conditions: [{type: "directionEquals", value: 0}]},
-                    {name: "maxRepIntval", type: 33, conditions: [{type: "directionEquals", value: 0}]},
-                    {
-                        name: "repChange",
-                        type: 1000,
-                        conditions: [
-                            {type: "directionEquals", value: 0},
-                            {type: "dataTypeValueTypeEquals", value: "ANALOG"},
-                        ],
-                    },
-                    {name: "timeout", type: 33, conditions: [{type: "directionEquals", value: 1}]},
-                ],
-                response: 7,
-            },
-        });
+        expect(deepClone(call[3])).toStrictEqual(
+            deepClone(
+                Zcl.Frame.create(
+                    Zcl.FrameType.GLOBAL,
+                    Zcl.Direction.CLIENT_TO_SERVER,
+                    true,
+                    undefined,
+                    11,
+                    "configReport",
+                    1,
+                    [{direction: 0, attrId: 1, dataType: 32, minRepIntval: 1, maxRepIntval: 10, repChange: 1}],
+                    {},
+                ),
+            ),
+        );
     });
 
     it("Should replace legacy configured reportings without manufacturerCode", async () => {
@@ -4738,37 +4349,21 @@ describe("Controller", () => {
         expect(call[0]).toBe("0x129");
         expect(call[1]).toBe(129);
         expect(call[2]).toBe(1);
-        expect({...deepClone(call[3]), cluster: {}}).toStrictEqual({
-            cluster: {},
-            command: {
-                ID: 6,
-                name: "configReport",
-                parameters: [
-                    {name: "direction", type: 32},
-                    {name: "attrId", type: 33},
-                    {conditions: [{type: "directionEquals", value: 0}], name: "dataType", type: 32},
-                    {conditions: [{type: "directionEquals", value: 0}], name: "minRepIntval", type: 33},
-                    {conditions: [{type: "directionEquals", value: 0}], name: "maxRepIntval", type: 33},
-                    {
-                        conditions: [
-                            {type: "directionEquals", value: 0},
-                            {type: "dataTypeValueTypeEquals", value: "ANALOG"},
-                        ],
-                        name: "repChange",
-                        type: 1000,
-                    },
-                    {conditions: [{type: "directionEquals", value: 1}], name: "timeout", type: 33},
-                ],
-                response: 7,
-            },
-            header: {
-                commandIdentifier: 6,
-                frameControl: {direction: 0, disableDefaultResponse: true, frameType: 0, manufacturerSpecific: true, reservedBits: 0},
-                manufacturerCode: 4641,
-                transactionSequenceNumber: 11,
-            },
-            payload: [{attrId: 16384, dataType: 48, direction: 0, maxRepIntval: 10, minRepIntval: 1, repChange: 1}],
-        });
+        expect(deepClone(call[3])).toStrictEqual(
+            deepClone(
+                Zcl.Frame.create(
+                    Zcl.FrameType.GLOBAL,
+                    Zcl.Direction.CLIENT_TO_SERVER,
+                    true,
+                    4641,
+                    11,
+                    "configReport",
+                    513,
+                    [{attrId: 16384, dataType: 48, direction: 0, maxRepIntval: 10, minRepIntval: 1, repChange: 1}],
+                    {},
+                ),
+            ),
+        );
 
         expect(endpoint.configuredReportings.length).toBe(1);
         expect({...endpoint.configuredReportings[0], cluster: undefined}).toStrictEqual({
@@ -4801,37 +4396,21 @@ describe("Controller", () => {
         expect(call[0]).toBe("0x129");
         expect(call[1]).toBe(129);
         expect(call[2]).toBe(1);
-        expect({...deepClone(call[3]), cluster: {}}).toStrictEqual({
-            cluster: {},
-            command: {
-                ID: 6,
-                name: "configReport",
-                parameters: [
-                    {name: "direction", type: 32},
-                    {name: "attrId", type: 33},
-                    {conditions: [{type: "directionEquals", value: 0}], name: "dataType", type: 32},
-                    {conditions: [{type: "directionEquals", value: 0}], name: "minRepIntval", type: 33},
-                    {conditions: [{type: "directionEquals", value: 0}], name: "maxRepIntval", type: 33},
-                    {
-                        conditions: [
-                            {type: "directionEquals", value: 0},
-                            {type: "dataTypeValueTypeEquals", value: "ANALOG"},
-                        ],
-                        name: "repChange",
-                        type: 1000,
-                    },
-                    {conditions: [{type: "directionEquals", value: 1}], name: "timeout", type: 33},
-                ],
-                response: 7,
-            },
-            header: {
-                commandIdentifier: 6,
-                frameControl: {direction: 0, disableDefaultResponse: true, frameType: 0, manufacturerSpecific: true, reservedBits: 0},
-                manufacturerCode: 4641,
-                transactionSequenceNumber: 11,
-            },
-            payload: [{attrId: 16384, dataType: 48, direction: 0, maxRepIntval: 10, minRepIntval: 1, repChange: 1}],
-        });
+        expect(deepClone(call[3])).toStrictEqual(
+            deepClone(
+                Zcl.Frame.create(
+                    Zcl.FrameType.GLOBAL,
+                    Zcl.Direction.CLIENT_TO_SERVER,
+                    true,
+                    4641,
+                    11,
+                    "configReport",
+                    513,
+                    [{attrId: 16384, dataType: 48, direction: 0, maxRepIntval: 10, minRepIntval: 1, repChange: 1}],
+                    {},
+                ),
+            ),
+        );
 
         expect(endpoint.configuredReportings.length).toBe(1);
         expect({...endpoint.configuredReportings[0], cluster: undefined}).toStrictEqual({
@@ -5054,96 +4633,21 @@ describe("Controller", () => {
         expect(call[0]).toBe("0x129");
         expect(call[1]).toBe(129);
         expect(call[2]).toBe(1);
-        expect(deepClone(call[3])).toStrictEqual({
-            header: {
-                frameControl: {reservedBits: 0, frameType: 1, direction: 0, disableDefaultResponse: true, manufacturerSpecific: false},
-                transactionSequenceNumber: 11,
-                commandIdentifier: 0,
-            },
-            payload: {groupid: 2, groupname: ""},
-            cluster: {
-                ID: 4,
-                attributes: {nameSupport: {ID: 0, type: 24, name: "nameSupport"}},
-                name: "genGroups",
-                commands: {
-                    add: {
-                        ID: 0,
-                        response: 0,
-                        parameters: [
-                            {name: "groupid", type: 33},
-                            {name: "groupname", type: 66},
-                        ],
-                        name: "add",
-                    },
-                    view: {ID: 1, response: 1, parameters: [{name: "groupid", type: 33}], name: "view"},
-                    getMembership: {
-                        ID: 2,
-                        response: 2,
-                        parameters: [
-                            {name: "groupcount", type: 32},
-                            {name: "grouplist", type: 1002},
-                        ],
-                        name: "getMembership",
-                    },
-                    miboxerSetZones: {ID: 240, name: "miboxerSetZones", parameters: [{name: "zones", type: 1012}]},
-                    remove: {ID: 3, response: 3, parameters: [{name: "groupid", type: 33}], name: "remove"},
-                    removeAll: {ID: 4, parameters: [], name: "removeAll"},
-                    addIfIdentifying: {
-                        ID: 5,
-                        parameters: [
-                            {name: "groupid", type: 33},
-                            {name: "groupname", type: 66},
-                        ],
-                        name: "addIfIdentifying",
-                    },
-                },
-                commandsResponse: {
-                    addRsp: {
-                        ID: 0,
-                        parameters: [
-                            {name: "status", type: 32},
-                            {name: "groupid", type: 33},
-                        ],
-                        name: "addRsp",
-                    },
-                    viewRsp: {
-                        ID: 1,
-                        parameters: [
-                            {name: "status", type: 32},
-                            {name: "groupid", type: 33},
-                            {name: "groupname", type: 66},
-                        ],
-                        name: "viewRsp",
-                    },
-                    getMembershipRsp: {
-                        ID: 2,
-                        parameters: [
-                            {name: "capacity", type: 32},
-                            {name: "groupcount", type: 32},
-                            {name: "grouplist", type: 1002},
-                        ],
-                        name: "getMembershipRsp",
-                    },
-                    removeRsp: {
-                        ID: 3,
-                        parameters: [
-                            {name: "status", type: 32},
-                            {name: "groupid", type: 33},
-                        ],
-                        name: "removeRsp",
-                    },
-                },
-            },
-            command: {
-                ID: 0,
-                response: 0,
-                parameters: [
-                    {name: "groupid", type: 33},
-                    {name: "groupname", type: 66},
-                ],
-                name: "add",
-            },
-        });
+        expect(deepClone(call[3])).toStrictEqual(
+            deepClone(
+                Zcl.Frame.create(
+                    Zcl.FrameType.SPECIFIC,
+                    Zcl.Direction.CLIENT_TO_SERVER,
+                    true,
+                    undefined,
+                    11,
+                    "add",
+                    4,
+                    {groupid: 2, groupname: ""},
+                    {},
+                ),
+            ),
+        );
         expect(group.members).toContain(endpoint);
         expect(databaseContents()).toContain(
             `
@@ -5170,88 +4674,9 @@ describe("Controller", () => {
         expect(call[0]).toBe("0x129");
         expect(call[1]).toBe(129);
         expect(call[2]).toBe(1);
-        expect(deepClone(call[3])).toStrictEqual({
-            header: {
-                frameControl: {reservedBits: 0, frameType: 1, direction: 0, disableDefaultResponse: true, manufacturerSpecific: false},
-                transactionSequenceNumber: 11,
-                commandIdentifier: 3,
-            },
-            payload: {groupid: 2},
-            cluster: {
-                ID: 4,
-                attributes: {nameSupport: {ID: 0, type: 24, name: "nameSupport"}},
-                name: "genGroups",
-                commands: {
-                    add: {
-                        ID: 0,
-                        response: 0,
-                        parameters: [
-                            {name: "groupid", type: 33},
-                            {name: "groupname", type: 66},
-                        ],
-                        name: "add",
-                    },
-                    view: {ID: 1, response: 1, parameters: [{name: "groupid", type: 33}], name: "view"},
-                    getMembership: {
-                        ID: 2,
-                        response: 2,
-                        parameters: [
-                            {name: "groupcount", type: 32},
-                            {name: "grouplist", type: 1002},
-                        ],
-                        name: "getMembership",
-                    },
-                    miboxerSetZones: {ID: 240, name: "miboxerSetZones", parameters: [{name: "zones", type: 1012}]},
-                    remove: {ID: 3, response: 3, parameters: [{name: "groupid", type: 33}], name: "remove"},
-                    removeAll: {ID: 4, parameters: [], name: "removeAll"},
-                    addIfIdentifying: {
-                        ID: 5,
-                        parameters: [
-                            {name: "groupid", type: 33},
-                            {name: "groupname", type: 66},
-                        ],
-                        name: "addIfIdentifying",
-                    },
-                },
-                commandsResponse: {
-                    addRsp: {
-                        ID: 0,
-                        parameters: [
-                            {name: "status", type: 32},
-                            {name: "groupid", type: 33},
-                        ],
-                        name: "addRsp",
-                    },
-                    viewRsp: {
-                        ID: 1,
-                        parameters: [
-                            {name: "status", type: 32},
-                            {name: "groupid", type: 33},
-                            {name: "groupname", type: 66},
-                        ],
-                        name: "viewRsp",
-                    },
-                    getMembershipRsp: {
-                        ID: 2,
-                        parameters: [
-                            {name: "capacity", type: 32},
-                            {name: "groupcount", type: 32},
-                            {name: "grouplist", type: 1002},
-                        ],
-                        name: "getMembershipRsp",
-                    },
-                    removeRsp: {
-                        ID: 3,
-                        parameters: [
-                            {name: "status", type: 32},
-                            {name: "groupid", type: 33},
-                        ],
-                        name: "removeRsp",
-                    },
-                },
-            },
-            command: {ID: 3, response: 3, parameters: [{name: "groupid", type: 33}], name: "remove"},
-        });
+        expect(deepClone(call[3])).toStrictEqual(
+            deepClone(Zcl.Frame.create(Zcl.FrameType.SPECIFIC, Zcl.Direction.CLIENT_TO_SERVER, true, undefined, 11, "remove", 4, {groupid: 2}, {})),
+        );
         expect(group.members).toStrictEqual([]);
     });
 
@@ -5266,88 +4691,9 @@ describe("Controller", () => {
         expect(call[0]).toBe("0x129");
         expect(call[1]).toBe(129);
         expect(call[2]).toBe(1);
-        expect(deepClone(call[3])).toStrictEqual({
-            header: {
-                frameControl: {reservedBits: 0, frameType: 1, direction: 0, disableDefaultResponse: true, manufacturerSpecific: false},
-                transactionSequenceNumber: 11,
-                commandIdentifier: 3,
-            },
-            payload: {groupid: 4},
-            cluster: {
-                ID: 4,
-                attributes: {nameSupport: {ID: 0, type: 24, name: "nameSupport"}},
-                name: "genGroups",
-                commands: {
-                    add: {
-                        ID: 0,
-                        response: 0,
-                        parameters: [
-                            {name: "groupid", type: 33},
-                            {name: "groupname", type: 66},
-                        ],
-                        name: "add",
-                    },
-                    view: {ID: 1, response: 1, parameters: [{name: "groupid", type: 33}], name: "view"},
-                    getMembership: {
-                        ID: 2,
-                        response: 2,
-                        parameters: [
-                            {name: "groupcount", type: 32},
-                            {name: "grouplist", type: 1002},
-                        ],
-                        name: "getMembership",
-                    },
-                    miboxerSetZones: {ID: 240, name: "miboxerSetZones", parameters: [{name: "zones", type: 1012}]},
-                    remove: {ID: 3, response: 3, parameters: [{name: "groupid", type: 33}], name: "remove"},
-                    removeAll: {ID: 4, parameters: [], name: "removeAll"},
-                    addIfIdentifying: {
-                        ID: 5,
-                        parameters: [
-                            {name: "groupid", type: 33},
-                            {name: "groupname", type: 66},
-                        ],
-                        name: "addIfIdentifying",
-                    },
-                },
-                commandsResponse: {
-                    addRsp: {
-                        ID: 0,
-                        parameters: [
-                            {name: "status", type: 32},
-                            {name: "groupid", type: 33},
-                        ],
-                        name: "addRsp",
-                    },
-                    viewRsp: {
-                        ID: 1,
-                        parameters: [
-                            {name: "status", type: 32},
-                            {name: "groupid", type: 33},
-                            {name: "groupname", type: 66},
-                        ],
-                        name: "viewRsp",
-                    },
-                    getMembershipRsp: {
-                        ID: 2,
-                        parameters: [
-                            {name: "capacity", type: 32},
-                            {name: "groupcount", type: 32},
-                            {name: "grouplist", type: 1002},
-                        ],
-                        name: "getMembershipRsp",
-                    },
-                    removeRsp: {
-                        ID: 3,
-                        parameters: [
-                            {name: "status", type: 32},
-                            {name: "groupid", type: 33},
-                        ],
-                        name: "removeRsp",
-                    },
-                },
-            },
-            command: {ID: 3, response: 3, parameters: [{name: "groupid", type: 33}], name: "remove"},
-        });
+        expect(deepClone(call[3])).toStrictEqual(
+            deepClone(Zcl.Frame.create(Zcl.FrameType.SPECIFIC, Zcl.Direction.CLIENT_TO_SERVER, true, undefined, 11, "remove", 4, {groupid: 4}, {})),
+        );
     });
 
     it("Try to get deleted device from endpoint", async () => {
@@ -5617,6 +4963,21 @@ describe("Controller", () => {
         expect(mocksendZclFrameToGroup.mock.calls[0][2]).toBeUndefined();
     });
 
+    it("Read from group ignores unknown attributes", async () => {
+        await controller.start();
+        const group = await controller.createGroup(2);
+        await group.read("genBasic", ["modelId", 0x01, "notanattr"], {});
+        expect(mocksendZclFrameToGroup).toHaveBeenCalledTimes(1);
+        expect(mocksendZclFrameToGroup.mock.calls[0][0]).toBe(2);
+        expect(deepClone(mocksendZclFrameToGroup.mock.calls[0][1])).toStrictEqual(
+            deepClone(
+                Zcl.Frame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, true, undefined, 2, "read", 0, [{attrId: 5}, {attrId: 1}], {}),
+            ),
+        );
+        expect(mocksendZclFrameToGroup.mock.calls[0][2]).toBeUndefined();
+        expect(mockLogger.warning).toHaveBeenCalledWith("Ignoring unknown attribute notanattr in cluster genBasic", "zh:controller:group");
+    });
+
     it("Read from group fails", async () => {
         await controller.start();
         const group = await controller.createGroup(2);
@@ -5695,58 +5056,21 @@ describe("Controller", () => {
         expect(call[0]).toBe("0x129");
         expect(call[1]).toBe(129);
         expect(call[2]).toBe(1);
-        expect(deepClone(call[3])).toStrictEqual({
-            header: {
-                frameControl: {reservedBits: 0, frameType: 0, direction: 0, disableDefaultResponse: true, manufacturerSpecific: true},
-                transactionSequenceNumber: 11,
-                manufacturerCode: 4107,
-                commandIdentifier: 2,
-            },
-            payload: [{attrId: 49, attrData: 11, dataType: 25}],
-            cluster: {
-                ID: 0,
-                attributes: {
-                    zclVersion: {ID: 0, type: 32, name: "zclVersion"},
-                    appVersion: {ID: 1, type: 32, name: "appVersion"},
-                    stackVersion: {ID: 2, type: 32, name: "stackVersion"},
-                    hwVersion: {ID: 3, type: 32, name: "hwVersion"},
-                    manufacturerName: {ID: 4, type: 66, name: "manufacturerName"},
-                    modelId: {ID: 5, type: 66, name: "modelId"},
-                    dateCode: {ID: 6, type: 66, name: "dateCode"},
-                    powerSource: {ID: 7, type: 48, name: "powerSource"},
-                    appProfileVersion: {ID: 8, type: 48, name: "appProfileVersion"},
-                    genericDeviceType: {ID: 9, type: 48, name: "genericDeviceType"},
-                    productCode: {ID: 10, type: 65, name: "productCode"},
-                    productUrl: {ID: 11, type: 66, name: "productUrl"},
-                    manufacturerVersionDetails: {ID: 12, type: 66, name: "manufacturerVersionDetails"},
-                    serialNumber: {ID: 13, type: 66, name: "serialNumber"},
-                    productLabel: {ID: 14, type: 66, name: "productLabel"},
-                    locationDesc: {ID: 16, type: 66, name: "locationDesc"},
-                    physicalEnv: {ID: 17, type: 48, name: "physicalEnv"},
-                    deviceEnabled: {ID: 18, type: 16, name: "deviceEnabled"},
-                    alarmMask: {ID: 19, type: 24, name: "alarmMask"},
-                    disableLocalConfig: {ID: 20, type: 24, name: "disableLocalConfig"},
-                    swBuildId: {ID: 16384, type: 66, name: "swBuildId"},
-                    schneiderMeterRadioPower: {ID: 57856, manufacturerCode: 4190, name: "schneiderMeterRadioPower", type: 40},
-                },
-                name: "genBasic",
-                commands: {
-                    resetFactDefault: {ID: 0, parameters: [], name: "resetFactDefault"},
-                    tuyaSetup: {ID: 240, parameters: [], name: "tuyaSetup"},
-                },
-                commandsResponse: {},
-            },
-            command: {
-                ID: 2,
-                name: "write",
-                parameters: [
-                    {name: "attrId", type: 33},
-                    {name: "dataType", type: 32},
-                    {name: "attrData", type: 1000},
-                ],
-                response: 4,
-            },
-        });
+        expect(deepClone(call[3])).toStrictEqual(
+            deepClone(
+                Zcl.Frame.create(
+                    Zcl.FrameType.GLOBAL,
+                    Zcl.Direction.CLIENT_TO_SERVER,
+                    true,
+                    4107,
+                    11,
+                    "write",
+                    0,
+                    [{attrId: 49, attrData: 11, dataType: 25}],
+                    {},
+                ),
+            ),
+        );
         expect(call[4]).toBe(12);
     });
 
@@ -5764,26 +5088,21 @@ describe("Controller", () => {
         expect(call[0]).toBe("0x129");
         expect(call[1]).toBe(129);
         expect(call[2]).toBe(1);
-        expect({...deepClone(call[3]), cluster: {}}).toStrictEqual({
-            header: {
-                frameControl: {reservedBits: 0, frameType: 0, direction: 0, disableDefaultResponse: true, manufacturerSpecific: true},
-                transactionSequenceNumber: 11,
-                manufacturerCode: 4641,
-                commandIdentifier: 2,
-            },
-            payload: [{attrId: 16384, attrData: 1, dataType: 48}],
-            cluster: {},
-            command: {
-                ID: 2,
-                name: "write",
-                parameters: [
-                    {name: "attrId", type: 33},
-                    {name: "dataType", type: 32},
-                    {name: "attrData", type: 1000},
-                ],
-                response: 4,
-            },
-        });
+        expect(deepClone(call[3])).toStrictEqual(
+            deepClone(
+                Zcl.Frame.create(
+                    Zcl.FrameType.GLOBAL,
+                    Zcl.Direction.CLIENT_TO_SERVER,
+                    true,
+                    4641,
+                    11,
+                    "write",
+                    513,
+                    [{attrId: 16384, attrData: 1, dataType: 48}],
+                    {},
+                ),
+            ),
+        );
         expect(call[4]).toBe(10000);
     });
 
@@ -5807,57 +5126,21 @@ describe("Controller", () => {
         expect(call[0]).toBe("0x129");
         expect(call[1]).toBe(129);
         expect(call[2]).toBe(1);
-        expect(deepClone(call[3])).toStrictEqual({
-            header: {
-                frameControl: {reservedBits: 0, frameType: 0, direction: 0, disableDefaultResponse: true, manufacturerSpecific: true},
-                transactionSequenceNumber: 11,
-                manufacturerCode: 4107,
-                commandIdentifier: 3,
-            },
-            payload: [{attrId: 49, attrData: 11, dataType: 25}],
-            cluster: {
-                ID: 0,
-                attributes: {
-                    zclVersion: {ID: 0, type: 32, name: "zclVersion"},
-                    appVersion: {ID: 1, type: 32, name: "appVersion"},
-                    stackVersion: {ID: 2, type: 32, name: "stackVersion"},
-                    hwVersion: {ID: 3, type: 32, name: "hwVersion"},
-                    manufacturerName: {ID: 4, type: 66, name: "manufacturerName"},
-                    modelId: {ID: 5, type: 66, name: "modelId"},
-                    dateCode: {ID: 6, type: 66, name: "dateCode"},
-                    powerSource: {ID: 7, type: 48, name: "powerSource"},
-                    appProfileVersion: {ID: 8, type: 48, name: "appProfileVersion"},
-                    genericDeviceType: {ID: 9, type: 48, name: "genericDeviceType"},
-                    productCode: {ID: 10, type: 65, name: "productCode"},
-                    productUrl: {ID: 11, type: 66, name: "productUrl"},
-                    manufacturerVersionDetails: {ID: 12, type: 66, name: "manufacturerVersionDetails"},
-                    serialNumber: {ID: 13, type: 66, name: "serialNumber"},
-                    productLabel: {ID: 14, type: 66, name: "productLabel"},
-                    locationDesc: {ID: 16, type: 66, name: "locationDesc"},
-                    physicalEnv: {ID: 17, type: 48, name: "physicalEnv"},
-                    deviceEnabled: {ID: 18, type: 16, name: "deviceEnabled"},
-                    alarmMask: {ID: 19, type: 24, name: "alarmMask"},
-                    disableLocalConfig: {ID: 20, type: 24, name: "disableLocalConfig"},
-                    swBuildId: {ID: 16384, type: 66, name: "swBuildId"},
-                    schneiderMeterRadioPower: {ID: 57856, manufacturerCode: 4190, name: "schneiderMeterRadioPower", type: 40},
-                },
-                name: "genBasic",
-                commands: {
-                    resetFactDefault: {ID: 0, parameters: [], name: "resetFactDefault"},
-                    tuyaSetup: {ID: 240, parameters: [], name: "tuyaSetup"},
-                },
-                commandsResponse: {},
-            },
-            command: {
-                ID: 3,
-                name: "writeUndiv",
-                parameters: [
-                    {name: "attrId", type: 33},
-                    {name: "dataType", type: 32},
-                    {name: "attrData", type: 1000},
-                ],
-            },
-        });
+        expect(deepClone(call[3])).toStrictEqual(
+            deepClone(
+                Zcl.Frame.create(
+                    Zcl.FrameType.GLOBAL,
+                    Zcl.Direction.CLIENT_TO_SERVER,
+                    true,
+                    4107,
+                    11,
+                    "writeUndiv",
+                    0,
+                    [{attrId: 49, attrData: 11, dataType: 25}],
+                    {},
+                ),
+            ),
+        );
         expect(call[4]).toBe(12);
     });
 
@@ -5906,55 +5189,21 @@ describe("Controller", () => {
         expect(call[0]).toBe("0x129");
         expect(call[1]).toBe(129);
         expect(call[2]).toBe(1);
-        expect(deepClone(call[3])).toStrictEqual({
-            header: {
-                frameControl: {reservedBits: 0, frameType: 0, direction: 1, disableDefaultResponse: true, manufacturerSpecific: false},
-                transactionSequenceNumber: 99,
-                commandIdentifier: 4,
-            },
-            payload: [{attrId: 85, status: 1}],
-            cluster: {
-                ID: 0,
-                attributes: {
-                    zclVersion: {ID: 0, type: 32, name: "zclVersion"},
-                    appVersion: {ID: 1, type: 32, name: "appVersion"},
-                    stackVersion: {ID: 2, type: 32, name: "stackVersion"},
-                    hwVersion: {ID: 3, type: 32, name: "hwVersion"},
-                    manufacturerName: {ID: 4, type: 66, name: "manufacturerName"},
-                    modelId: {ID: 5, type: 66, name: "modelId"},
-                    dateCode: {ID: 6, type: 66, name: "dateCode"},
-                    powerSource: {ID: 7, type: 48, name: "powerSource"},
-                    appProfileVersion: {ID: 8, type: 48, name: "appProfileVersion"},
-                    genericDeviceType: {ID: 9, type: 48, name: "genericDeviceType"},
-                    productCode: {ID: 10, type: 65, name: "productCode"},
-                    productUrl: {ID: 11, type: 66, name: "productUrl"},
-                    manufacturerVersionDetails: {ID: 12, type: 66, name: "manufacturerVersionDetails"},
-                    serialNumber: {ID: 13, type: 66, name: "serialNumber"},
-                    productLabel: {ID: 14, type: 66, name: "productLabel"},
-                    locationDesc: {ID: 16, type: 66, name: "locationDesc"},
-                    physicalEnv: {ID: 17, type: 48, name: "physicalEnv"},
-                    deviceEnabled: {ID: 18, type: 16, name: "deviceEnabled"},
-                    alarmMask: {ID: 19, type: 24, name: "alarmMask"},
-                    disableLocalConfig: {ID: 20, type: 24, name: "disableLocalConfig"},
-                    swBuildId: {ID: 16384, type: 66, name: "swBuildId"},
-                    schneiderMeterRadioPower: {ID: 57856, manufacturerCode: 4190, name: "schneiderMeterRadioPower", type: 40},
-                },
-                name: "genBasic",
-                commands: {
-                    resetFactDefault: {ID: 0, parameters: [], name: "resetFactDefault"},
-                    tuyaSetup: {ID: 240, parameters: [], name: "tuyaSetup"},
-                },
-                commandsResponse: {},
-            },
-            command: {
-                ID: 4,
-                name: "writeRsp",
-                parameters: [
-                    {name: "status", type: 32},
-                    {conditions: [{type: "statusNotEquals", value: 0}], name: "attrId", type: 33},
-                ],
-            },
-        });
+        expect(deepClone(call[3])).toStrictEqual(
+            deepClone(
+                Zcl.Frame.create(
+                    Zcl.FrameType.GLOBAL,
+                    Zcl.Direction.SERVER_TO_CLIENT,
+                    true,
+                    undefined,
+                    99,
+                    "writeRsp",
+                    0,
+                    [{attrId: 85, status: 1}],
+                    {},
+                ),
+            ),
+        );
         expect(call[4]).toBe(10000);
     });
 
@@ -6018,55 +5267,21 @@ describe("Controller", () => {
         expect(call[0]).toBe("0x129");
         expect(call[1]).toBe(129);
         expect(call[2]).toBe(1);
-        expect(deepClone(call[3])).toStrictEqual({
-            header: {
-                frameControl: {reservedBits: 0, frameType: 0, direction: 1, disableDefaultResponse: true, manufacturerSpecific: false},
-                transactionSequenceNumber: 99,
-                commandIdentifier: 4,
-            },
-            payload: [{attrId: 0, status: 1}],
-            cluster: {
-                ID: 0,
-                attributes: {
-                    zclVersion: {ID: 0, type: 32, name: "zclVersion"},
-                    appVersion: {ID: 1, type: 32, name: "appVersion"},
-                    stackVersion: {ID: 2, type: 32, name: "stackVersion"},
-                    hwVersion: {ID: 3, type: 32, name: "hwVersion"},
-                    manufacturerName: {ID: 4, type: 66, name: "manufacturerName"},
-                    modelId: {ID: 5, type: 66, name: "modelId"},
-                    dateCode: {ID: 6, type: 66, name: "dateCode"},
-                    powerSource: {ID: 7, type: 48, name: "powerSource"},
-                    appProfileVersion: {ID: 8, type: 48, name: "appProfileVersion"},
-                    genericDeviceType: {ID: 9, type: 48, name: "genericDeviceType"},
-                    productCode: {ID: 10, type: 65, name: "productCode"},
-                    productUrl: {ID: 11, type: 66, name: "productUrl"},
-                    manufacturerVersionDetails: {ID: 12, type: 66, name: "manufacturerVersionDetails"},
-                    serialNumber: {ID: 13, type: 66, name: "serialNumber"},
-                    productLabel: {ID: 14, type: 66, name: "productLabel"},
-                    locationDesc: {ID: 16, type: 66, name: "locationDesc"},
-                    physicalEnv: {ID: 17, type: 48, name: "physicalEnv"},
-                    deviceEnabled: {ID: 18, type: 16, name: "deviceEnabled"},
-                    alarmMask: {ID: 19, type: 24, name: "alarmMask"},
-                    disableLocalConfig: {ID: 20, type: 24, name: "disableLocalConfig"},
-                    swBuildId: {ID: 16384, type: 66, name: "swBuildId"},
-                    schneiderMeterRadioPower: {ID: 57856, manufacturerCode: 4190, name: "schneiderMeterRadioPower", type: 40},
-                },
-                name: "genBasic",
-                commands: {
-                    resetFactDefault: {ID: 0, parameters: [], name: "resetFactDefault"},
-                    tuyaSetup: {ID: 240, parameters: [], name: "tuyaSetup"},
-                },
-                commandsResponse: {},
-            },
-            command: {
-                ID: 4,
-                name: "writeRsp",
-                parameters: [
-                    {name: "status", type: 32},
-                    {conditions: [{type: "statusNotEquals", value: 0}], name: "attrId", type: 33},
-                ],
-            },
-        });
+        expect(deepClone(call[3])).toStrictEqual(
+            deepClone(
+                Zcl.Frame.create(
+                    Zcl.FrameType.GLOBAL,
+                    Zcl.Direction.SERVER_TO_CLIENT,
+                    true,
+                    undefined,
+                    99,
+                    "writeRsp",
+                    0,
+                    [{attrId: 0, status: 1}],
+                    {},
+                ),
+            ),
+        );
         expect(call[4]).toBe(10000);
     });
 
@@ -6101,49 +5316,29 @@ describe("Controller", () => {
         expect(call[0]).toBe("0x129");
         expect(call[1]).toBe(129);
         expect(call[2]).toBe(1);
-        expect(deepClone(call[3])).toStrictEqual({
-            header: {
-                frameControl: {reservedBits: 0, frameType: 0, direction: 0, disableDefaultResponse: true, manufacturerSpecific: false},
-                transactionSequenceNumber: 11,
-                commandIdentifier: 0,
-            },
-            payload: [{attrId: 2}],
-            cluster: {
-                ID: 0,
-                attributes: {
-                    zclVersion: {ID: 0, type: 32, name: "zclVersion"},
-                    appVersion: {ID: 1, type: 32, name: "appVersion"},
-                    stackVersion: {ID: 2, type: 32, name: "stackVersion"},
-                    hwVersion: {ID: 3, type: 32, name: "hwVersion"},
-                    manufacturerName: {ID: 4, type: 66, name: "manufacturerName"},
-                    modelId: {ID: 5, type: 66, name: "modelId"},
-                    dateCode: {ID: 6, type: 66, name: "dateCode"},
-                    powerSource: {ID: 7, type: 48, name: "powerSource"},
-                    appProfileVersion: {ID: 8, type: 48, name: "appProfileVersion"},
-                    genericDeviceType: {ID: 9, type: 48, name: "genericDeviceType"},
-                    productCode: {ID: 10, type: 65, name: "productCode"},
-                    productUrl: {ID: 11, type: 66, name: "productUrl"},
-                    manufacturerVersionDetails: {ID: 12, type: 66, name: "manufacturerVersionDetails"},
-                    serialNumber: {ID: 13, type: 66, name: "serialNumber"},
-                    productLabel: {ID: 14, type: 66, name: "productLabel"},
-                    locationDesc: {ID: 16, type: 66, name: "locationDesc"},
-                    physicalEnv: {ID: 17, type: 48, name: "physicalEnv"},
-                    deviceEnabled: {ID: 18, type: 16, name: "deviceEnabled"},
-                    alarmMask: {ID: 19, type: 24, name: "alarmMask"},
-                    disableLocalConfig: {ID: 20, type: 24, name: "disableLocalConfig"},
-                    swBuildId: {ID: 16384, type: 66, name: "swBuildId"},
-                    schneiderMeterRadioPower: {ID: 57856, manufacturerCode: 4190, name: "schneiderMeterRadioPower", type: 40},
-                },
-                name: "genBasic",
-                commands: {
-                    resetFactDefault: {ID: 0, parameters: [], name: "resetFactDefault"},
-                    tuyaSetup: {ID: 240, parameters: [], name: "tuyaSetup"},
-                },
-                commandsResponse: {},
-            },
-            command: {ID: 0, name: "read", parameters: [{name: "attrId", type: 33}], response: 1},
-        });
+        expect(deepClone(call[3])).toStrictEqual(
+            deepClone(Zcl.Frame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, true, undefined, 11, "read", 0, [{attrId: 2}], {})),
+        );
         expect(call[4]).toBe(10000);
+    });
+
+    it("Read from endpoint with string ignores unknown", async () => {
+        await controller.start();
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
+        mocksendZclFrameToEndpoint.mockClear();
+        const device = controller.getDeviceByIeeeAddr("0x129")!;
+        const endpoint = device.getEndpoint(1)!;
+        await endpoint.read("genBasic", ["stackVersion", "notanattr"]);
+        expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(1);
+        const call = mocksendZclFrameToEndpoint.mock.calls[0];
+        expect(call[0]).toBe("0x129");
+        expect(call[1]).toBe(129);
+        expect(call[2]).toBe(1);
+        expect(deepClone(call[3])).toStrictEqual(
+            deepClone(Zcl.Frame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, true, undefined, 11, "read", 0, [{attrId: 2}], {})),
+        );
+        expect(call[4]).toBe(10000);
+        expect(mockLogger.warning).toHaveBeenCalledWith("Ignoring unknown attribute notanattr in cluster genBasic", "zh:controller:endpoint");
     });
 
     it("Read from endpoint with custom attribute", async () => {
@@ -6160,17 +5355,9 @@ describe("Controller", () => {
         expect(call[0]).toBe("0x129");
         expect(call[1]).toBe(129);
         expect(call[2]).toBe(1);
-        expect({...deepClone(call[3]), cluster: {}}).toStrictEqual({
-            header: {
-                frameControl: {reservedBits: 0, frameType: 0, direction: 0, disableDefaultResponse: true, manufacturerSpecific: true},
-                transactionSequenceNumber: 11,
-                manufacturerCode: 4641,
-                commandIdentifier: 0,
-            },
-            payload: [{attrId: 16384}],
-            cluster: {},
-            command: {ID: 0, name: "read", parameters: [{name: "attrId", type: 33}], response: 1},
-        });
+        expect(deepClone(call[3])).toStrictEqual(
+            deepClone(Zcl.Frame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, true, 4641, 11, "read", 513, [{attrId: 16384}], {})),
+        );
         expect(call[4]).toBe(10000);
     });
 
@@ -6203,49 +5390,9 @@ describe("Controller", () => {
         expect(call[0]).toBe("0x129");
         expect(call[1]).toBe(129);
         expect(call[2]).toBe(1);
-        expect(deepClone(call[3])).toStrictEqual({
-            header: {
-                frameControl: {reservedBits: 0, frameType: 0, direction: 0, disableDefaultResponse: true, manufacturerSpecific: true},
-                transactionSequenceNumber: 11,
-                manufacturerCode: 4447,
-                commandIdentifier: 0,
-            },
-            payload: [{attrId: 65314}],
-            cluster: {
-                ID: 0,
-                attributes: {
-                    zclVersion: {ID: 0, type: 32, name: "zclVersion"},
-                    appVersion: {ID: 1, type: 32, name: "appVersion"},
-                    stackVersion: {ID: 2, type: 32, name: "stackVersion"},
-                    hwVersion: {ID: 3, type: 32, name: "hwVersion"},
-                    manufacturerName: {ID: 4, type: 66, name: "manufacturerName"},
-                    modelId: {ID: 5, type: 66, name: "modelId"},
-                    dateCode: {ID: 6, type: 66, name: "dateCode"},
-                    powerSource: {ID: 7, type: 48, name: "powerSource"},
-                    appProfileVersion: {ID: 8, type: 48, name: "appProfileVersion"},
-                    genericDeviceType: {ID: 9, type: 48, name: "genericDeviceType"},
-                    productCode: {ID: 10, type: 65, name: "productCode"},
-                    productUrl: {ID: 11, type: 66, name: "productUrl"},
-                    manufacturerVersionDetails: {ID: 12, type: 66, name: "manufacturerVersionDetails"},
-                    serialNumber: {ID: 13, type: 66, name: "serialNumber"},
-                    productLabel: {ID: 14, type: 66, name: "productLabel"},
-                    locationDesc: {ID: 16, type: 66, name: "locationDesc"},
-                    physicalEnv: {ID: 17, type: 48, name: "physicalEnv"},
-                    deviceEnabled: {ID: 18, type: 16, name: "deviceEnabled"},
-                    alarmMask: {ID: 19, type: 24, name: "alarmMask"},
-                    disableLocalConfig: {ID: 20, type: 24, name: "disableLocalConfig"},
-                    swBuildId: {ID: 16384, type: 66, name: "swBuildId"},
-                    schneiderMeterRadioPower: {ID: 57856, manufacturerCode: 4190, name: "schneiderMeterRadioPower", type: 40},
-                },
-                name: "genBasic",
-                commands: {
-                    resetFactDefault: {ID: 0, parameters: [], name: "resetFactDefault"},
-                    tuyaSetup: {ID: 240, parameters: [], name: "tuyaSetup"},
-                },
-                commandsResponse: {},
-            },
-            command: {ID: 0, name: "read", parameters: [{name: "attrId", type: 33}], response: 1},
-        });
+        expect(deepClone(call[3])).toStrictEqual(
+            deepClone(Zcl.Frame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, true, 4447, 11, "read", 0, [{attrId: 65314}], {})),
+        );
         expect(call[4]).toBe(10000);
     });
 
@@ -6261,57 +5408,21 @@ describe("Controller", () => {
         expect(call[0]).toBe("0x129");
         expect(call[1]).toBe(129);
         expect(call[2]).toBe(1);
-        expect(deepClone(call[3])).toStrictEqual({
-            header: {
-                frameControl: {reservedBits: 0, frameType: 0, direction: 1, disableDefaultResponse: true, manufacturerSpecific: false},
-                transactionSequenceNumber: 99,
-                commandIdentifier: 1,
-            },
-            payload: [{attrId: 85, attrData: 11, dataType: 25, status: 0}],
-            cluster: {
-                ID: 0,
-                attributes: {
-                    zclVersion: {ID: 0, type: 32, name: "zclVersion"},
-                    appVersion: {ID: 1, type: 32, name: "appVersion"},
-                    stackVersion: {ID: 2, type: 32, name: "stackVersion"},
-                    hwVersion: {ID: 3, type: 32, name: "hwVersion"},
-                    manufacturerName: {ID: 4, type: 66, name: "manufacturerName"},
-                    modelId: {ID: 5, type: 66, name: "modelId"},
-                    dateCode: {ID: 6, type: 66, name: "dateCode"},
-                    powerSource: {ID: 7, type: 48, name: "powerSource"},
-                    appProfileVersion: {ID: 8, type: 48, name: "appProfileVersion"},
-                    genericDeviceType: {ID: 9, type: 48, name: "genericDeviceType"},
-                    productCode: {ID: 10, type: 65, name: "productCode"},
-                    productUrl: {ID: 11, type: 66, name: "productUrl"},
-                    manufacturerVersionDetails: {ID: 12, type: 66, name: "manufacturerVersionDetails"},
-                    serialNumber: {ID: 13, type: 66, name: "serialNumber"},
-                    productLabel: {ID: 14, type: 66, name: "productLabel"},
-                    locationDesc: {ID: 16, type: 66, name: "locationDesc"},
-                    physicalEnv: {ID: 17, type: 48, name: "physicalEnv"},
-                    deviceEnabled: {ID: 18, type: 16, name: "deviceEnabled"},
-                    alarmMask: {ID: 19, type: 24, name: "alarmMask"},
-                    disableLocalConfig: {ID: 20, type: 24, name: "disableLocalConfig"},
-                    swBuildId: {ID: 16384, type: 66, name: "swBuildId"},
-                    schneiderMeterRadioPower: {ID: 57856, manufacturerCode: 4190, name: "schneiderMeterRadioPower", type: 40},
-                },
-                name: "genBasic",
-                commands: {
-                    resetFactDefault: {ID: 0, parameters: [], name: "resetFactDefault"},
-                    tuyaSetup: {ID: 240, parameters: [], name: "tuyaSetup"},
-                },
-                commandsResponse: {},
-            },
-            command: {
-                ID: 1,
-                name: "readRsp",
-                parameters: [
-                    {name: "attrId", type: 33},
-                    {name: "status", type: 32},
-                    {name: "dataType", type: 32, conditions: [{type: "statusEquals", value: 0}]},
-                    {name: "attrData", type: 1000, conditions: [{type: "statusEquals", value: 0}]},
-                ],
-            },
-        });
+        expect(deepClone(call[3])).toStrictEqual(
+            deepClone(
+                Zcl.Frame.create(
+                    Zcl.FrameType.GLOBAL,
+                    Zcl.Direction.SERVER_TO_CLIENT,
+                    true,
+                    undefined,
+                    99,
+                    "readRsp",
+                    0,
+                    [{attrId: 85, attrData: 11, dataType: 25, status: 0}],
+                    {},
+                ),
+            ),
+        );
         expect(call[4]).toBe(10000);
     });
 
@@ -6367,36 +5478,21 @@ describe("Controller", () => {
         expect(call[0]).toBe("0x129");
         expect(call[1]).toBe(129);
         expect(call[2]).toBe(1);
-        expect({...deepClone(call[3]), cluster: {}}).toStrictEqual({
-            cluster: {},
-            command: {
-                ID: 6,
-                name: "configReport",
-                parameters: [
-                    {name: "direction", type: 32},
-                    {name: "attrId", type: 33},
-                    {conditions: [{type: "directionEquals", value: 0}], name: "dataType", type: 32},
-                    {conditions: [{type: "directionEquals", value: 0}], name: "minRepIntval", type: 33},
-                    {conditions: [{type: "directionEquals", value: 0}], name: "maxRepIntval", type: 33},
-                    {
-                        conditions: [
-                            {type: "directionEquals", value: 0},
-                            {type: "dataTypeValueTypeEquals", value: "ANALOG"},
-                        ],
-                        name: "repChange",
-                        type: 1000,
-                    },
-                    {conditions: [{type: "directionEquals", value: 1}], name: "timeout", type: 33},
-                ],
-                response: 7,
-            },
-            header: {
-                commandIdentifier: 6,
-                frameControl: {direction: 0, disableDefaultResponse: true, frameType: 0, manufacturerSpecific: false, reservedBits: 0},
-                transactionSequenceNumber: 11,
-            },
-            payload: [{attrId: 16388, dataType: 41, direction: 0, maxRepIntval: 3600, minRepIntval: 0, repChange: 25}],
-        });
+        expect(deepClone(call[3])).toStrictEqual(
+            deepClone(
+                Zcl.Frame.create(
+                    Zcl.FrameType.GLOBAL,
+                    Zcl.Direction.CLIENT_TO_SERVER,
+                    true,
+                    undefined,
+                    11,
+                    "configReport",
+                    513,
+                    [{attrId: 16388, dataType: 41, direction: 0, maxRepIntval: 3600, minRepIntval: 0, repChange: 25}],
+                    {},
+                ),
+            ),
+        );
         expect(call[4]).toBe(10000);
 
         const hvacThermostat = Zcl.Utils.getCluster("hvacThermostat", undefined, {});
@@ -6434,88 +5530,9 @@ describe("Controller", () => {
         expect(group1.members).toStrictEqual([]);
         expect(Array.from(group6.members)).toStrictEqual([device2.getEndpoint(1)]);
         expect(Array.from(group7.members)).toStrictEqual([device2.getEndpoint(1)]);
-        expect(deepClone(call[3])).toStrictEqual({
-            header: {
-                frameControl: {reservedBits: 0, frameType: 1, direction: 0, disableDefaultResponse: true, manufacturerSpecific: false},
-                transactionSequenceNumber: 25,
-                commandIdentifier: 4,
-            },
-            payload: {},
-            cluster: {
-                ID: 4,
-                attributes: {nameSupport: {ID: 0, type: 24, name: "nameSupport"}},
-                name: "genGroups",
-                commands: {
-                    add: {
-                        ID: 0,
-                        response: 0,
-                        parameters: [
-                            {name: "groupid", type: 33},
-                            {name: "groupname", type: 66},
-                        ],
-                        name: "add",
-                    },
-                    view: {ID: 1, response: 1, parameters: [{name: "groupid", type: 33}], name: "view"},
-                    getMembership: {
-                        ID: 2,
-                        response: 2,
-                        parameters: [
-                            {name: "groupcount", type: 32},
-                            {name: "grouplist", type: 1002},
-                        ],
-                        name: "getMembership",
-                    },
-                    miboxerSetZones: {ID: 240, name: "miboxerSetZones", parameters: [{name: "zones", type: 1012}]},
-                    remove: {ID: 3, response: 3, parameters: [{name: "groupid", type: 33}], name: "remove"},
-                    removeAll: {ID: 4, parameters: [], name: "removeAll"},
-                    addIfIdentifying: {
-                        ID: 5,
-                        parameters: [
-                            {name: "groupid", type: 33},
-                            {name: "groupname", type: 66},
-                        ],
-                        name: "addIfIdentifying",
-                    },
-                },
-                commandsResponse: {
-                    addRsp: {
-                        ID: 0,
-                        parameters: [
-                            {name: "status", type: 32},
-                            {name: "groupid", type: 33},
-                        ],
-                        name: "addRsp",
-                    },
-                    viewRsp: {
-                        ID: 1,
-                        parameters: [
-                            {name: "status", type: 32},
-                            {name: "groupid", type: 33},
-                            {name: "groupname", type: 66},
-                        ],
-                        name: "viewRsp",
-                    },
-                    getMembershipRsp: {
-                        ID: 2,
-                        parameters: [
-                            {name: "capacity", type: 32},
-                            {name: "groupcount", type: 32},
-                            {name: "grouplist", type: 1002},
-                        ],
-                        name: "getMembershipRsp",
-                    },
-                    removeRsp: {
-                        ID: 3,
-                        parameters: [
-                            {name: "status", type: 32},
-                            {name: "groupid", type: 33},
-                        ],
-                        name: "removeRsp",
-                    },
-                },
-            },
-            command: {ID: 4, parameters: [], name: "removeAll"},
-        });
+        expect(deepClone(call[3])).toStrictEqual(
+            deepClone(Zcl.Frame.create(Zcl.FrameType.SPECIFIC, Zcl.Direction.CLIENT_TO_SERVER, true, undefined, 25, "removeAll", 4, {}, {})),
+        );
     });
 
     it("Load database", async () => {
@@ -8246,7 +7263,6 @@ describe("Controller", () => {
                 _gpSecurityKey: [0x21, 0x7f, 0x8c, 0xb2, 0x90, 0xd9, 0x90, 0x14, 0x15, 0xd0, 0x5c, 0xb1, 0x64, 0x7c, 0x44, 0x6c],
             },
         });
-        console.log(events.deviceInterview);
         expect(events.deviceInterview.length).toBe(3); // gpp[started] + gpp[successful] + gpd
         expect(deepClone(events.deviceInterview[2])).toStrictEqual({
             status: "successful",
@@ -8495,57 +7511,21 @@ describe("Controller", () => {
         expect(call[0]).toBe("0x129");
         expect(call[1]).toBe(129);
         expect(call[2]).toBe(1);
-        expect(deepClone(call[3])).toStrictEqual({
-            header: {
-                frameControl: {reservedBits: 0, frameType: 0, direction: 0, disableDefaultResponse: true, manufacturerSpecific: true},
-                transactionSequenceNumber: 11,
-                manufacturerCode: 4107,
-                commandIdentifier: 10,
-            },
-            payload: [{attrId: 49, attrData: 11, dataType: 25}],
-            cluster: {
-                ID: 0,
-                attributes: {
-                    zclVersion: {ID: 0, type: 32, name: "zclVersion"},
-                    appVersion: {ID: 1, type: 32, name: "appVersion"},
-                    stackVersion: {ID: 2, type: 32, name: "stackVersion"},
-                    hwVersion: {ID: 3, type: 32, name: "hwVersion"},
-                    manufacturerName: {ID: 4, type: 66, name: "manufacturerName"},
-                    modelId: {ID: 5, type: 66, name: "modelId"},
-                    dateCode: {ID: 6, type: 66, name: "dateCode"},
-                    powerSource: {ID: 7, type: 48, name: "powerSource"},
-                    appProfileVersion: {ID: 8, type: 48, name: "appProfileVersion"},
-                    genericDeviceType: {ID: 9, type: 48, name: "genericDeviceType"},
-                    productCode: {ID: 10, type: 65, name: "productCode"},
-                    productUrl: {ID: 11, type: 66, name: "productUrl"},
-                    manufacturerVersionDetails: {ID: 12, type: 66, name: "manufacturerVersionDetails"},
-                    serialNumber: {ID: 13, type: 66, name: "serialNumber"},
-                    productLabel: {ID: 14, type: 66, name: "productLabel"},
-                    locationDesc: {ID: 16, type: 66, name: "locationDesc"},
-                    physicalEnv: {ID: 17, type: 48, name: "physicalEnv"},
-                    deviceEnabled: {ID: 18, type: 16, name: "deviceEnabled"},
-                    alarmMask: {ID: 19, type: 24, name: "alarmMask"},
-                    disableLocalConfig: {ID: 20, type: 24, name: "disableLocalConfig"},
-                    swBuildId: {ID: 16384, type: 66, name: "swBuildId"},
-                    schneiderMeterRadioPower: {ID: 57856, manufacturerCode: 4190, name: "schneiderMeterRadioPower", type: 40},
-                },
-                name: "genBasic",
-                commands: {
-                    resetFactDefault: {ID: 0, parameters: [], name: "resetFactDefault"},
-                    tuyaSetup: {ID: 240, parameters: [], name: "tuyaSetup"},
-                },
-                commandsResponse: {},
-            },
-            command: {
-                ID: 10,
-                name: "report",
-                parameters: [
-                    {name: "attrId", type: 33},
-                    {name: "dataType", type: 32},
-                    {name: "attrData", type: 1000},
-                ],
-            },
-        });
+        expect(deepClone(call[3])).toStrictEqual(
+            deepClone(
+                Zcl.Frame.create(
+                    Zcl.FrameType.GLOBAL,
+                    Zcl.Direction.CLIENT_TO_SERVER,
+                    true,
+                    4107,
+                    11,
+                    "report",
+                    0,
+                    [{attrId: 49, attrData: 11, dataType: 25}],
+                    {},
+                ),
+            ),
+        );
         expect(call[4]).toBe(12);
     });
 

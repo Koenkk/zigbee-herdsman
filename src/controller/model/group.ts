@@ -261,8 +261,9 @@ export class Group extends Entity {
         const payload: {attrId: number; dataType: number; attrData: number | string | boolean}[] = [];
 
         for (const [nameOrID, value] of Object.entries(attributes)) {
-            if (cluster.hasAttribute(nameOrID)) {
-                const attribute = cluster.getAttribute(nameOrID);
+            const attribute = cluster.getAttribute(nameOrID);
+
+            if (attribute) {
                 payload.push({attrId: attribute.ID, attrData: value, dataType: attribute.type});
             } else if (!Number.isNaN(Number(nameOrID))) {
                 payload.push({attrId: Number(nameOrID), attrData: value.value, dataType: value.type});
@@ -308,7 +309,17 @@ export class Group extends Entity {
         const payload: {attrId: number}[] = [];
 
         for (const attribute of attributes) {
-            payload.push({attrId: typeof attribute === "number" ? attribute : cluster.getAttribute(attribute).ID});
+            if (typeof attribute === "number") {
+                payload.push({attrId: attribute});
+            } else {
+                const attr = cluster.getAttribute(attribute);
+
+                if (attr) {
+                    payload.push({attrId: attr.ID});
+                } else {
+                    logger.warning(`Ignoring unknown attribute ${attribute} in cluster ${cluster.name}`, NS);
+                }
+            }
         }
 
         const frame = Zcl.Frame.create(
