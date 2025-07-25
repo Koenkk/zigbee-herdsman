@@ -9,7 +9,7 @@ import {logger} from "../utils/logger";
 import {COORDINATOR_ADDRESS, GP_ENDPOINT, GP_GROUP_ID, INTEROPERABILITY_LINK_KEY} from "../zspec/consts";
 import {BroadcastAddress} from "../zspec/enums";
 import * as Zcl from "../zspec/zcl";
-import type {GPDChannelConfiguration, GPDCommissioningReply} from "../zspec/zcl/buffaloZcl";
+import type {GPDChannelConfiguration, GPDCommissioningReply} from "../zspec/zcl/definition/tstype";
 import zclTransactionSequenceNumber from "./helpers/zclTransactionSequenceNumber";
 import {Device} from "./model";
 import type {GreenPowerDeviceJoinedPayload} from "./tstype";
