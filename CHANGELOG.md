@@ -1,5 +1,16 @@
 # Changelog
 
+## [5.0.0](https://github.com/Koenkk/zigbee-herdsman/compare/v4.5.0...v5.0.0) (2025-07-25)
+
+
+### ⚠ BREAKING CHANGES
+
+* Remove unnecessary throwing ([#1455](https://github.com/Koenkk/zigbee-herdsman/issues/1455))
+
+### Bug Fixes
+
+* Remove unnecessary throwing ([#1455](https://github.com/Koenkk/zigbee-herdsman/issues/1455)) ([e7087d5](https://github.com/Koenkk/zigbee-herdsman/commit/e7087d51f2214ed30076328ce5c06dca5f3f8261))
+
 ## [4.5.0](https://github.com/Koenkk/zigbee-herdsman/compare/v4.4.1...v4.5.0) (2025-07-21)
 
 
