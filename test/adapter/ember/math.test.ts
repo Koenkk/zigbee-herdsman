@@ -1,3 +1,4 @@
+import {describe, expect, it} from "vitest";
 import * as m from "../../../src/adapter/ember/utils/math";
 
 const ASH_CRC_INIT = 0xffff;

@@ -1,3 +1,4 @@
+import {beforeEach, describe, expect, it, test, vi} from "vitest";
 import * as Zcl from "../src/zspec/zcl";
 import {BuffaloZcl} from "../src/zspec/zcl/buffaloZcl";
 import {BuffaloZclDataType, DataType, Direction, FrameType, StructuredIndicatorType} from "../src/zspec/zcl/definition/enums";

@@ -1,3 +1,4 @@
+import {describe, expect, it} from "vitest";
 import * as Zcl from "../../../src/zspec/zcl";
 import type {Command, CustomClusters} from "../../../src/zspec/zcl/definition/tstype";
 

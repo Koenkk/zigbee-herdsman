@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import equals from "fast-deep-equal/es6";
+import {afterAll, beforeAll, beforeEach, describe, expect, it, vi} from "vitest";
 import {ZStackAdapter} from "../src/adapter/z-stack/adapter/zStackAdapter";
 import {Controller} from "../src/controller";
 import type * as Events from "../src/controller/events";

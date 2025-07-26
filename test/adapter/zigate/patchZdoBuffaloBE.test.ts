@@ -1,3 +1,4 @@
+import {beforeAll, describe, expect, it, vi} from "vitest";
 import * as Zdo from "../../../src/zspec/zdo";
 
 describe("ZiGate Patch BuffaloZdo to use BE variants when writing", () => {

@@ -1,3 +1,4 @@
+import {describe, expect, it} from "vitest";
 import * as Structs from "../../../src/adapter/z-stack/structs";
 
 describe("Z-Stack Structs", () => {
