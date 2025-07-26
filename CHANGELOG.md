@@ -1,5 +1,12 @@
 # Changelog
 
+## [5.0.1](https://github.com/Koenkk/zigbee-herdsman/compare/v5.0.0...v5.0.1) (2025-07-26)
+
+
+### Bug Fixes
+
+* Improve perf with ZCL getters, align manuf code behavior ([#1456](https://github.com/Koenkk/zigbee-herdsman/issues/1456)) ([a909f87](https://github.com/Koenkk/zigbee-herdsman/commit/a909f876c26081fa858976827fa08efcac116f3d))
+
 ## [5.0.0](https://github.com/Koenkk/zigbee-herdsman/compare/v4.5.0...v5.0.0) (2025-07-25)
 
 
