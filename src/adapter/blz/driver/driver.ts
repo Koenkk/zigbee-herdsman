@@ -206,9 +206,17 @@ export class Driver extends EventEmitter {
         logger.info(`PanId: ${netParams.panId.toString(16)}`, NS);
         logger.info(`extendedPanId: ${netParams.extPanId.toString(16)}`, NS);
         this.networkParams = new BlzNetworkParameters();
-        this.networkParams.extendedPanId = netParams.extPanId;
+        // Convert number/bigint to 8-byte Buffer in big-endian format
+        const buf = Buffer.alloc(8);
+        if (typeof netParams.extPanId === 'bigint') {
+            buf.writeBigUInt64BE(netParams.extPanId);
+        } else {
+            buf.writeBigUInt64BE(BigInt(netParams.extPanId));
+        }
+        this.networkParams.extendedPanId = buf;
         this.networkParams.panId = netParams.panId;
         this.networkParams.Channel = netParams.channel;
+        this.networkParams.nwkUpdateId = netParams.nwkUpdateId;
         logger.debug(`Node type: ${netParams.nodeType}, Network parameters: ${this.networkParams}`, NS);
 
         const ieee = (await this.blz.execCommand('getValue', {valueId: BlzValueId.BLZ_VALUE_ID_MAC_ADDRESS})).value; 
@@ -232,8 +240,9 @@ export class Driver extends EventEmitter {
         logger.debug(`needToBeInitialized is coordinator: ${valid}`, NS)
         valid = valid && options.panID == netParams.panId;
         logger.debug(`needToBeInitialized same PanID: ${valid}`, NS)
-        valid = valid && options.channelList.includes(netParams.channel);
-        logger.debug(`needToBeInitialized valid channel: ${valid}`, NS)
+        // valid = valid && options.channelList.includes(netParams.channel); 
+        // // try to add support for change channel so if only channel is different, it can still work as resumed
+        logger.debug(`needToBeInitialized valid channel (optional, can be false): ${options.channelList.includes(netParams.channel)}`, NS)
         // Convert bigint extPanId to 8-byte array in little-endian order
         const extPanIdArray = [];
         let extPanId = netParams.extPanId;
