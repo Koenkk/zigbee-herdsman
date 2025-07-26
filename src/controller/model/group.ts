@@ -255,9 +255,9 @@ export class Group extends Entity {
      */
 
     public async write(clusterKey: number | string, attributes: KeyValue, options?: Options): Promise<void> {
-        const optionsWithDefaults = this.getOptionsWithDefaults(options, Zcl.Direction.CLIENT_TO_SERVER);
-        const customClusters = this.#customClusters[optionsWithDefaults.direction === Zcl.Direction.CLIENT_TO_SERVER ? 0 : 1];
-        const cluster = Zcl.Utils.getCluster(clusterKey, undefined, customClusters);
+        const customClusters = this.#customClusters[options?.direction === Zcl.Direction.SERVER_TO_CLIENT ? 1 : 0 /* default to CLIENT_TO_SERVER */];
+        const cluster = Zcl.Utils.getCluster(clusterKey, options?.manufacturerCode, customClusters);
+        const optionsWithDefaults = this.getOptionsWithDefaults(options, Zcl.Direction.CLIENT_TO_SERVER, cluster.manufacturerCode);
         const payload: {attrId: number; dataType: number; attrData: number | string | boolean}[] = [];
 
         for (const [nameOrID, value] of Object.entries(attributes)) {
@@ -284,7 +284,7 @@ export class Group extends Entity {
                 optionsWithDefaults.manufacturerCode,
                 optionsWithDefaults.transactionSequenceNumber ?? zclTransactionSequenceNumber.next(),
                 "write",
-                cluster.ID,
+                cluster,
                 payload,
                 customClusters,
                 optionsWithDefaults.reservedBits,
@@ -303,9 +303,9 @@ export class Group extends Entity {
     }
 
     public async read(clusterKey: number | string, attributes: (string | number)[], options?: Options): Promise<void> {
-        const optionsWithDefaults = this.getOptionsWithDefaults(options, Zcl.Direction.CLIENT_TO_SERVER);
-        const customClusters = this.#customClusters[optionsWithDefaults.direction === Zcl.Direction.CLIENT_TO_SERVER ? 0 : 1];
-        const cluster = Zcl.Utils.getCluster(clusterKey, undefined, customClusters);
+        const customClusters = this.#customClusters[options?.direction === Zcl.Direction.SERVER_TO_CLIENT ? 1 : 0 /* default to CLIENT_TO_SERVER */];
+        const cluster = Zcl.Utils.getCluster(clusterKey, options?.manufacturerCode, customClusters);
+        const optionsWithDefaults = this.getOptionsWithDefaults(options, Zcl.Direction.CLIENT_TO_SERVER, cluster.manufacturerCode);
         const payload: {attrId: number}[] = [];
 
         for (const attribute of attributes) {
@@ -329,7 +329,7 @@ export class Group extends Entity {
             optionsWithDefaults.manufacturerCode,
             optionsWithDefaults.transactionSequenceNumber ?? zclTransactionSequenceNumber.next(),
             "read",
-            cluster.ID,
+            cluster,
             payload,
             customClusters,
             optionsWithDefaults.reservedBits,
@@ -353,9 +353,9 @@ export class Group extends Entity {
     }
 
     public async command(clusterKey: number | string, commandKey: number | string, payload: KeyValue, options?: Options): Promise<void> {
-        const optionsWithDefaults = this.getOptionsWithDefaults(options, Zcl.Direction.CLIENT_TO_SERVER);
-        const customClusters = this.#customClusters[optionsWithDefaults.direction === Zcl.Direction.CLIENT_TO_SERVER ? 0 : 1];
-        const cluster = Zcl.Utils.getCluster(clusterKey, undefined, customClusters);
+        const customClusters = this.#customClusters[options?.direction === Zcl.Direction.SERVER_TO_CLIENT ? 1 : 0 /* default to CLIENT_TO_SERVER */];
+        const cluster = Zcl.Utils.getCluster(clusterKey, options?.manufacturerCode, customClusters);
+        const optionsWithDefaults = this.getOptionsWithDefaults(options, Zcl.Direction.CLIENT_TO_SERVER, cluster.manufacturerCode);
         const command =
             optionsWithDefaults.direction === Zcl.Direction.CLIENT_TO_SERVER
                 ? cluster.getCommand(commandKey)
@@ -371,8 +371,8 @@ export class Group extends Entity {
                 true,
                 optionsWithDefaults.manufacturerCode,
                 optionsWithDefaults.transactionSequenceNumber || zclTransactionSequenceNumber.next(),
-                command.ID,
-                cluster.ID,
+                command,
+                cluster,
                 payload,
                 customClusters,
                 optionsWithDefaults.reservedBits,
@@ -390,12 +390,16 @@ export class Group extends Entity {
         }
     }
 
-    private getOptionsWithDefaults(options: Options | undefined, direction: Zcl.Direction): OptionsWithDefaults {
+    private getOptionsWithDefaults(
+        options: Options | undefined,
+        direction: Zcl.Direction,
+        manufacturerCode: number | undefined,
+    ): OptionsWithDefaults {
         return {
             direction,
             srcEndpoint: undefined,
             reservedBits: 0,
-            manufacturerCode: undefined,
+            manufacturerCode,
             transactionSequenceNumber: undefined,
             ...(options || {}),
         };

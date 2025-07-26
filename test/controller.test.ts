@@ -4380,7 +4380,7 @@ describe("Controller", () => {
         await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
         const device = controller.getDeviceByIeeeAddr("0x129")!;
         // @ts-expect-error private
-        device._manufacturerID = 0x10f2;
+        device._manufacturerID = Zcl.ManufacturerCode.VIESSMANN_ELEKTRONIK_GMBH;
         const endpoint = device.getEndpoint(1)!;
         mocksendZclFrameToEndpoint.mockClear();
         await endpoint.configureReporting("hvacThermostat", [
@@ -4427,7 +4427,7 @@ describe("Controller", () => {
         await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
         const device = controller.getDeviceByIeeeAddr("0x129")!;
         // @ts-expect-error private
-        device._manufacturerID = 0x10f2;
+        device._manufacturerID = Zcl.ManufacturerCode.VIESSMANN_ELEKTRONIK_GMBH;
         const endpoint = device.getEndpoint(1)!;
         mocksendZclFrameToEndpoint.mockClear();
         let error;
@@ -4582,24 +4582,19 @@ describe("Controller", () => {
         const device = controller.getDeviceByIeeeAddr("0x129")!;
         const endpoint = device.getEndpoint(1)!;
         mocksendZclFrameToEndpoint.mockReturnValueOnce(null);
-        let error;
-        try {
-            await endpoint.configureReporting(
-                "genPowerCfg",
-                [
-                    {
-                        attribute: "mainsFrequency",
-                        minimumReportInterval: 1,
-                        maximumReportInterval: 10,
-                        reportableChange: 1,
-                    },
-                ],
-                {disableResponse: true},
-            );
-        } catch (e) {
-            error = e;
-        }
-        expect(error).toBeUndefined();
+
+        await endpoint.configureReporting(
+            "genPowerCfg",
+            [
+                {
+                    attribute: "mainsFrequency",
+                    minimumReportInterval: 1,
+                    maximumReportInterval: 10,
+                    reportableChange: 1,
+                },
+            ],
+            {disableResponse: true},
+        );
     });
 
     it("Return group from databse when not in lookup", async () => {
@@ -5080,7 +5075,7 @@ describe("Controller", () => {
         mocksendZclFrameToEndpoint.mockClear();
         const device = controller.getDeviceByIeeeAddr("0x129")!;
         // @ts-expect-error private
-        device._manufacturerID = 0x10f2;
+        device._manufacturerID = Zcl.ManufacturerCode.VIESSMANN_ELEKTRONIK_GMBH;
         const endpoint = device.getEndpoint(1)!;
         await endpoint.write("hvacThermostat", {viessmannWindowOpenInternal: 1});
         expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(1);
@@ -5166,7 +5161,7 @@ describe("Controller", () => {
         mocksendZclFrameToEndpoint.mockClear();
         const device = controller.getDeviceByIeeeAddr("0x129")!;
         // @ts-expect-error private
-        device._manufacturerID = 0x10f2;
+        device._manufacturerID = Zcl.ManufacturerCode.VIESSMANN_ELEKTRONIK_GMBH;
         const endpoint = device.getEndpoint(1)!;
         let error;
         try {
@@ -5304,6 +5299,36 @@ describe("Controller", () => {
         );
     });
 
+    it("Write response to endpoint with options", async () => {
+        await controller.start();
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
+        mocksendZclFrameToEndpoint.mockClear();
+        const device = controller.getDeviceByIeeeAddr("0x129")!;
+        const endpoint = device.getEndpoint(1)!;
+        await endpoint.writeResponse("genBasic", 99, {zclVersion: {status: 0x03}}, {manufacturerCode: Zcl.ManufacturerCode.INOVELLI});
+        expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(1);
+        const call = mocksendZclFrameToEndpoint.mock.calls[0];
+        expect(call[0]).toBe("0x129");
+        expect(call[1]).toBe(129);
+        expect(call[2]).toBe(1);
+        expect(deepClone(call[3])).toStrictEqual(
+            deepClone(
+                Zcl.Frame.create(
+                    Zcl.FrameType.GLOBAL,
+                    Zcl.Direction.SERVER_TO_CLIENT,
+                    true,
+                    Zcl.ManufacturerCode.INOVELLI,
+                    99,
+                    "writeRsp",
+                    0,
+                    [{attrId: 0, status: 0x03}],
+                    {},
+                ),
+            ),
+        );
+        expect(call[4]).toBe(10000);
+    });
+
     it("Read from endpoint with string", async () => {
         await controller.start();
         await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
@@ -5347,7 +5372,7 @@ describe("Controller", () => {
         mocksendZclFrameToEndpoint.mockClear();
         const device = controller.getDeviceByIeeeAddr("0x129")!;
         // @ts-expect-error private
-        device._manufacturerID = 0x10f2;
+        device._manufacturerID = Zcl.ManufacturerCode.VIESSMANN_ELEKTRONIK_GMBH;
         const endpoint = device.getEndpoint(1)!;
         await endpoint.read("hvacThermostat", ["viessmannWindowOpenInternal"]);
         expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(1);
@@ -5367,7 +5392,7 @@ describe("Controller", () => {
         mocksendZclFrameToEndpoint.mockClear();
         const device = controller.getDeviceByIeeeAddr("0x129")!;
         // @ts-expect-error private
-        device._manufacturerID = 0x10f2;
+        device._manufacturerID = Zcl.ManufacturerCode.VIESSMANN_ELEKTRONIK_GMBH;
         const endpoint = device.getEndpoint(1)!;
         let error;
         try {
@@ -6411,13 +6436,8 @@ describe("Controller", () => {
         const device = controller.getDeviceByIeeeAddr("0x129")!;
         const endpoint = device.getEndpoint(1)!;
         mocksendZclFrameToEndpoint.mockReturnValueOnce(null);
-        let error;
-        try {
-            await endpoint.read("genOnOff", ["onOff"], {disableResponse: true});
-        } catch (e) {
-            error = e;
-        }
-        expect(error).toBeUndefined();
+
+        await endpoint.read("genOnOff", ["onOff"], {disableResponse: true});
     });
 
     it("Write error", async () => {
@@ -6445,13 +6465,8 @@ describe("Controller", () => {
         const device = controller.getDeviceByIeeeAddr("0x129")!;
         const endpoint = device.getEndpoint(1)!;
         mocksendZclFrameToEndpoint.mockReturnValueOnce(null);
-        let error;
-        try {
-            await endpoint.write("genOnOff", {onOff: 1}, {disableResponse: true});
-        } catch (e) {
-            error = e;
-        }
-        expect(error).toBeUndefined();
+
+        await endpoint.write("genOnOff", {onOff: 1}, {disableResponse: true});
     });
 
     it("Group command error", async () => {
@@ -6474,13 +6489,8 @@ describe("Controller", () => {
         const device = controller.getDeviceByIeeeAddr("0x129")!;
         const endpoint = device.getEndpoint(1)!;
         mocksendZclFrameToEndpoint.mockReturnValueOnce(null);
-        let error;
-        try {
-            await endpoint.writeStructured("genPowerCfg", {});
-        } catch (e) {
-            error = e;
-        }
-        expect(error).toBeUndefined();
+
+        await endpoint.writeStructured("genPowerCfg", {});
     });
 
     it("Write structured with disable response", async () => {
@@ -6490,13 +6500,8 @@ describe("Controller", () => {
         const device = controller.getDeviceByIeeeAddr("0x129")!;
         const endpoint = device.getEndpoint(1)!;
         mocksendZclFrameToEndpoint.mockReturnValueOnce(null);
-        let error;
-        try {
-            await endpoint.writeStructured("genPowerCfg", {}, {disableResponse: true});
-        } catch (e) {
-            error = e;
-        }
-        expect(error).toBeUndefined();
+
+        await endpoint.writeStructured("genPowerCfg", {}, {disableResponse: true});
     });
 
     it("Write structured error", async () => {
@@ -8376,13 +8381,20 @@ describe("Controller", () => {
         const device = controller.getDeviceByIeeeAddr("0x129")!;
         const endpoint = device.getEndpoint(1)!;
         mocksendZclFrameToEndpoint.mockReturnValueOnce(null);
-        let error;
-        try {
-            await endpoint.zclCommand("genOnOff", "discover", {startAttrId: 1, maxAttrIds: 255});
-        } catch (e) {
-            error = e;
-        }
-        expect(error).toBeUndefined();
+
+        await endpoint.zclCommand("genOnOff", "discover", {startAttrId: 1, maxAttrIds: 255});
+    });
+
+    it("zclCommand with cluster/command objects", async () => {
+        await controller.start();
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
+        const cluster = Zcl.Utils.getCluster("genOnOff", undefined, {});
+        const command = Zcl.Utils.getGlobalCommand("discover");
+        const device = controller.getDeviceByIeeeAddr("0x129")!;
+        const endpoint = device.getEndpoint(1)!;
+        mocksendZclFrameToEndpoint.mockReturnValueOnce(null);
+
+        await endpoint.zclCommand(cluster, command, {startAttrId: 1, maxAttrIds: 255});
     });
 
     it("zclCommand with error", async () => {
@@ -9103,7 +9115,7 @@ describe("Controller", () => {
 
         device.addCustomCluster("manuSpecificInovelli", {
             ID: 64561,
-            manufacturerCode: 0x122f,
+            manufacturerCode: Zcl.ManufacturerCode.V_MARK_ENTERPRISES_INC,
             // omitted for brevity (unused here)
             attributes: {},
             commands: {
@@ -9149,7 +9161,7 @@ describe("Controller", () => {
                     Zcl.FrameType.SPECIFIC,
                     Zcl.Direction.CLIENT_TO_SERVER,
                     true,
-                    undefined,
+                    Zcl.ManufacturerCode.V_MARK_ENTERPRISES_INC,
                     14,
                     "individualLedEffect",
                     64561,
@@ -9169,7 +9181,7 @@ describe("Controller", () => {
                     Zcl.FrameType.SPECIFIC,
                     Zcl.Direction.SERVER_TO_CLIENT,
                     true,
-                    undefined,
+                    Zcl.ManufacturerCode.V_MARK_ENTERPRISES_INC,
                     15,
                     "bogus",
                     64561,
