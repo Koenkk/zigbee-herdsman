@@ -1,3 +1,4 @@
+import {describe, expect, it} from "vitest";
 import * as ZSpec from "../../../src/zspec";
 import type {ClusterId, Eui64, ExtendedPanId, NodeId} from "../../../src/zspec/tstypes";
 import * as Zcl from "../../../src/zspec/zcl";

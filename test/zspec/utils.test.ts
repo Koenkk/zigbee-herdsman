@@ -1,3 +1,4 @@
+import {describe, expect, it} from "vitest";
 import * as ZSpec from "../../src/zspec";
 
 describe("ZSpec Utils", () => {

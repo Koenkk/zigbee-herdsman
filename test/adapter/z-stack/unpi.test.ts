@@ -1,3 +1,4 @@
+import {beforeEach, describe, expect, it, vi} from "vitest";
 import {Constants, Frame, Parser, Writer} from "../../../src/adapter/z-stack/unpi";
 
 describe("Parser", () => {
