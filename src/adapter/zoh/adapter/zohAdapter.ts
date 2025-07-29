@@ -46,6 +46,7 @@ export class ZoHAdapter extends Adapter {
     private serialPort?: SerialPort;
     private socketPort?: Socket;
     /** True when adapter is currently closing */
+    // biome-ignore lint/correctness/noUnusedPrivateClassMembers: ignore
     private closing: boolean;
 
     private interpanLock: boolean;

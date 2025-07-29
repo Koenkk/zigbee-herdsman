@@ -43,6 +43,7 @@ export class DeconzAdapter extends Adapter {
     private driver: Driver;
     private openRequestsQueue: WaitForDataRequest[];
     private frameParserEvent = frameParserEvents;
+    // biome-ignore lint/correctness/noUnusedPrivateClassMembers: ignore
     private fwVersion?: CoordinatorVersion;
     private waitress: Waitress<Events.ZclPayload, WaitressMatcher>;
     private joinPermitted = false;
