@@ -52,7 +52,8 @@ export class Waitress<TPayload, TMatcher> {
     }
 
     public waitFor(matcher: TMatcher, timeout: number): {ID: number; start: () => {promise: Promise<TPayload>; ID: number}} {
-        const ID = this.currentID++;
+        this.currentID += 1;
+        const ID = this.currentID;
 
         const promise: Promise<TPayload> = new Promise((resolve, reject): void => {
             const object: Waiter<TPayload, TMatcher> = {matcher, resolve, reject, timedout: false, resolved: false, ID};
