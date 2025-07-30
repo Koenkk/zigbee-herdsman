@@ -313,17 +313,16 @@ export class Endpoint extends Entity {
     }
 
     private async sendRequest(frame: Zcl.Frame, options: OptionsWithDefaults): Promise<AdapterEvents.ZclPayload>;
-    private async sendRequest<Type>(frame: Zcl.Frame, options: OptionsWithDefaults, func: (frame: Zcl.Frame) => Promise<Type>): Promise<Type>;
+    private async sendRequest<Type>(frame: Zcl.Frame, options: OptionsWithDefaults, func: () => Promise<Type>): Promise<Type>;
     private async sendRequest<Type>(
         frame: Zcl.Frame,
         options: OptionsWithDefaults,
-        func: (d: Zcl.Frame) => Promise<Type> = (d: Zcl.Frame): Promise<Type> => {
-            // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
-            return Entity.adapter!.sendZclFrameToEndpoint(
+        func: () => Promise<Type> = (): Promise<Type> => {
+            return Entity.adapter.sendZclFrameToEndpoint(
                 this.deviceIeeeAddress,
                 this.deviceNetworkAddress,
                 this.ID,
-                d,
+                frame,
                 options.timeout,
                 options.disableResponse,
                 options.disableRecovery,
@@ -521,10 +520,8 @@ export class Endpoint extends Entity {
 
     public async updateSimpleDescriptor(): Promise<void> {
         const clusterId = Zdo.ClusterId.SIMPLE_DESCRIPTOR_REQUEST;
-        // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
-        const zdoPayload = Zdo.Buffalo.buildRequest(Entity.adapter!.hasZdoMessageOverhead, clusterId, this.deviceNetworkAddress, this.ID);
-        // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
-        const response = await Entity.adapter!.sendZdo(this.deviceIeeeAddress, this.deviceNetworkAddress, clusterId, zdoPayload, false);
+        const zdoPayload = Zdo.Buffalo.buildRequest(Entity.adapter.hasZdoMessageOverhead, clusterId, this.deviceNetworkAddress, this.ID);
+        const response = await Entity.adapter.sendZdo(this.deviceIeeeAddress, this.deviceNetworkAddress, clusterId, zdoPayload, false);
 
         if (!Zdo.Buffalo.checkStatus<Zdo.ClusterId.SIMPLE_DESCRIPTOR_RESPONSE>(response)) {
             throw new Zdo.StatusError(response[0]);
@@ -588,8 +585,7 @@ export class Endpoint extends Entity {
         try {
             const zdoClusterId = Zdo.ClusterId.BIND_REQUEST;
             const zdoPayload = Zdo.Buffalo.buildRequest(
-                // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
-                Entity.adapter!.hasZdoMessageOverhead,
+                Entity.adapter.hasZdoMessageOverhead,
                 zdoClusterId,
                 this.deviceIeeeAddress as Eui64,
                 this.ID,
@@ -600,8 +596,7 @@ export class Endpoint extends Entity {
                 target instanceof Endpoint ? target.ID : 0xff,
             );
 
-            // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
-            const response = await Entity.adapter!.sendZdo(this.deviceIeeeAddress, this.deviceNetworkAddress, zdoClusterId, zdoPayload, false);
+            const response = await Entity.adapter.sendZdo(this.deviceIeeeAddress, this.deviceNetworkAddress, zdoClusterId, zdoPayload, false);
 
             if (!Zdo.Buffalo.checkStatus<Zdo.ClusterId.BIND_RESPONSE>(response)) {
                 throw new Zdo.StatusError(response[0]);
@@ -649,8 +644,7 @@ export class Endpoint extends Entity {
         try {
             const zdoClusterId = Zdo.ClusterId.UNBIND_REQUEST;
             const zdoPayload = Zdo.Buffalo.buildRequest(
-                // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
-                Entity.adapter!.hasZdoMessageOverhead,
+                Entity.adapter.hasZdoMessageOverhead,
                 zdoClusterId,
                 this.deviceIeeeAddress as Eui64,
                 this.ID,
@@ -661,8 +655,7 @@ export class Endpoint extends Entity {
                 target instanceof Endpoint ? target.ID : 0xff,
             );
 
-            // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
-            const response = await Entity.adapter!.sendZdo(this.deviceIeeeAddress, this.deviceNetworkAddress, zdoClusterId, zdoPayload, false);
+            const response = await Entity.adapter.sendZdo(this.deviceIeeeAddress, this.deviceNetworkAddress, zdoClusterId, zdoPayload, false);
 
             if (!Zdo.Buffalo.checkStatus<Zdo.ClusterId.UNBIND_RESPONSE>(response)) {
                 if (response[0] === Zdo.Status.NO_ENTRY) {
@@ -811,25 +804,14 @@ export class Endpoint extends Entity {
         logger.debug(createLogMessage, NS);
 
         try {
-            await this.sendRequest(frame, optionsWithDefaults, async (f) => {
-                // Broadcast Green Power responses
-                if (this.ID === 242) {
-                    // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
-                    await Entity.adapter!.sendZclFrameToAll(242, f, 242, BroadcastAddress.RX_ON_WHEN_IDLE);
-                } else {
-                    // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
-                    await Entity.adapter!.sendZclFrameToEndpoint(
-                        this.deviceIeeeAddress,
-                        this.deviceNetworkAddress,
-                        this.ID,
-                        f,
-                        optionsWithDefaults.timeout,
-                        optionsWithDefaults.disableResponse,
-                        optionsWithDefaults.disableRecovery,
-                        optionsWithDefaults.srcEndpoint,
-                    );
-                }
-            });
+            // Broadcast Green Power responses
+            if (this.ID === 242) {
+                await this.sendRequest(frame, optionsWithDefaults, async () => {
+                    await Entity.adapter.sendZclFrameToAll(242, frame, 242, BroadcastAddress.RX_ON_WHEN_IDLE);
+                });
+            } else {
+                await this.sendRequest(frame, optionsWithDefaults);
+            }
         } catch (error) {
             const err = error as Error;
             err.message = `${createLogMessage()} failed (${err.message})`;
@@ -848,8 +830,7 @@ export class Endpoint extends Entity {
         const device = this.getDevice();
         const cluster = this.getCluster(clusterKey, device);
         const command = cluster.getCommand(commandKey);
-        // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
-        const waiter = Entity.adapter!.waitFor(
+        const waiter = Entity.adapter.waitFor(
             this.deviceNetworkAddress,
             this.ID,
             Zcl.FrameType.SPECIFIC,
@@ -1069,8 +1050,7 @@ export class Endpoint extends Entity {
         );
 
         // if endpoint===0xFF ("broadcast endpoint"), deliver to all endpoints supporting cluster, should be avoided whenever possible
-        // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
-        await Entity.adapter!.sendZclFrameToAll(endpoint, frame, sourceEndpoint, destination);
+        await Entity.adapter.sendZclFrameToAll(endpoint, frame, sourceEndpoint, destination);
     }
 }
 

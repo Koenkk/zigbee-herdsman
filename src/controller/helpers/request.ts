@@ -29,7 +29,7 @@ export class Request<Type = any> {
         22: "immediate", // Discover Attributes Extended Response
     };
 
-    private func: (frame: Zcl.Frame) => Promise<Type>;
+    private func: () => Promise<Type>;
     frame: Zcl.Frame;
     expires: number;
     sendPolicy: SendPolicy | undefined;
@@ -38,7 +38,7 @@ export class Request<Type = any> {
     private lastError: Error;
 
     constructor(
-        func: (frame: Zcl.Frame) => Promise<Type>,
+        func: () => Promise<Type>,
         frame: Zcl.Frame,
         timeout: number,
         sendPolicy?: SendPolicy,
@@ -83,7 +83,7 @@ export class Request<Type = any> {
 
     async send(): Promise<Type> {
         try {
-            return await this.func(this.frame);
+            return await this.func();
         } catch (error) {
             this.lastError = error as Error;
             throw error;
