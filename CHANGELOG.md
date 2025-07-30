@@ -1,5 +1,12 @@
 # Changelog
 
+## [5.0.3](https://github.com/Koenkk/zigbee-herdsman/compare/v5.0.2...v5.0.3) (2025-07-30)
+
+
+### Bug Fixes
+
+* Code cleanup ([#1466](https://github.com/Koenkk/zigbee-herdsman/issues/1466)) ([79782be](https://github.com/Koenkk/zigbee-herdsman/commit/79782beab58d713953e938b191b70ada65d4464a))
+
 ## [5.0.2](https://github.com/Koenkk/zigbee-herdsman/compare/v5.0.1...v5.0.2) (2025-07-29)
 
 
