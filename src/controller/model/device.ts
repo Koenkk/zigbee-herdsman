@@ -620,14 +620,12 @@ export class Device extends Entity<ControllerEventMap> {
     }
 
     public save(writeDatabase = true): void {
-        // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
-        Entity.database!.update(this.toDatabaseEntry(), writeDatabase);
+        Entity.database.update(this.toDatabaseEntry(), writeDatabase);
     }
 
     private static loadFromDatabaseIfNecessary(): void {
         if (!Device.loadedFromDatabase) {
-            // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
-            for (const entry of Entity.database!.getEntriesIterator(["Coordinator", "EndDevice", "Router", "GreenPower", "Unknown"])) {
+            for (const entry of Entity.database.getEntriesIterator(["Coordinator", "EndDevice", "Router", "GreenPower", "Unknown"])) {
                 const device = Device.fromDatabaseEntry(entry);
 
                 Device.devices.set(device.ieeeAddr, device);
@@ -690,8 +688,7 @@ export class Device extends Entity<ControllerEventMap> {
         if (Device.deletedDevices.delete(this.ieeeAddr)) {
             Device.devices.set(this.ieeeAddr, this);
 
-            // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
-            Entity.database!.insert(this.toDatabaseEntry());
+            Entity.database.insert(this.toDatabaseEntry());
         } else {
             throw new Error(`Device '${this.ieeeAddr}' is not deleted`);
         }
@@ -714,8 +711,7 @@ export class Device extends Entity<ControllerEventMap> {
             throw new Error(`Device with IEEE address '${ieeeAddr}' already exists`);
         }
 
-        // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
-        const ID = Entity.database!.newID();
+        const ID = Entity.database.newID();
         const device = new Device(
             ID,
             type,
@@ -740,8 +736,7 @@ export class Device extends Entity<ControllerEventMap> {
             gpSecurityKey,
         );
 
-        // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
-        Entity.database!.insert(device.toDatabaseEntry());
+        Entity.database.insert(device.toDatabaseEntry());
         Device.devices.set(device.ieeeAddr, device);
         Device.nwkToIeeeCache.set(device.networkAddress, device.ieeeAddr);
         return device;
@@ -1037,10 +1032,8 @@ export class Device extends Entity<ControllerEventMap> {
 
     public async updateNodeDescriptor(): Promise<void> {
         const clusterId = Zdo.ClusterId.NODE_DESCRIPTOR_REQUEST;
-        // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
-        const zdoPayload = Zdo.Buffalo.buildRequest(Entity.adapter!.hasZdoMessageOverhead, clusterId, this.networkAddress);
-        // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
-        const response = await Entity.adapter!.sendZdo(this.ieeeAddr, this.networkAddress, clusterId, zdoPayload, false);
+        const zdoPayload = Zdo.Buffalo.buildRequest(Entity.adapter.hasZdoMessageOverhead, clusterId, this.networkAddress);
+        const response = await Entity.adapter.sendZdo(this.ieeeAddr, this.networkAddress, clusterId, zdoPayload, false);
 
         if (!Zdo.Buffalo.checkStatus<Zdo.ClusterId.NODE_DESCRIPTOR_RESPONSE>(response)) {
             throw new Zdo.StatusError(response[0]);
@@ -1079,11 +1072,9 @@ export class Device extends Entity<ControllerEventMap> {
 
     public async updateActiveEndpoints(): Promise<void> {
         const clusterId = Zdo.ClusterId.ACTIVE_ENDPOINTS_REQUEST;
-        // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
-        const zdoPayload = Zdo.Buffalo.buildRequest(Entity.adapter!.hasZdoMessageOverhead, clusterId, this.networkAddress);
+        const zdoPayload = Zdo.Buffalo.buildRequest(Entity.adapter.hasZdoMessageOverhead, clusterId, this.networkAddress);
 
-        // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
-        const response = await Entity.adapter!.sendZdo(this.ieeeAddr, this.networkAddress, clusterId, zdoPayload, false);
+        const response = await Entity.adapter.sendZdo(this.ieeeAddr, this.networkAddress, clusterId, zdoPayload, false);
 
         if (!Zdo.Buffalo.checkStatus<Zdo.ClusterId.ACTIVE_ENDPOINTS_RESPONSE>(response)) {
             throw new Zdo.StatusError(response[0]);
@@ -1112,11 +1103,9 @@ export class Device extends Entity<ControllerEventMap> {
      */
     public async requestNetworkAddress(): Promise<void> {
         const clusterId = Zdo.ClusterId.NETWORK_ADDRESS_REQUEST;
-        // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
-        const zdoPayload = Zdo.Buffalo.buildRequest(Entity.adapter!.hasZdoMessageOverhead, clusterId, this.ieeeAddr as Eui64, false, 0);
+        const zdoPayload = Zdo.Buffalo.buildRequest(Entity.adapter.hasZdoMessageOverhead, clusterId, this.ieeeAddr as Eui64, false, 0);
 
-        // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
-        await Entity.adapter!.sendZdo(this.ieeeAddr, ZSpec.BroadcastAddress.RX_ON_WHEN_IDLE, clusterId, zdoPayload, true);
+        await Entity.adapter.sendZdo(this.ieeeAddr, ZSpec.BroadcastAddress.RX_ON_WHEN_IDLE, clusterId, zdoPayload, true);
     }
 
     public async removeFromNetwork(): Promise<void> {
@@ -1137,19 +1126,16 @@ export class Device extends Entity<ControllerEventMap> {
                 this.customClusters,
             );
 
-            // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
-            await Entity.adapter!.sendZclFrameToAll(242, frame, 242, BroadcastAddress.RX_ON_WHEN_IDLE);
+            await Entity.adapter.sendZclFrameToAll(242, frame, 242, BroadcastAddress.RX_ON_WHEN_IDLE);
         } else {
             const clusterId = Zdo.ClusterId.LEAVE_REQUEST;
             const zdoPayload = Zdo.Buffalo.buildRequest(
-                // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
-                Entity.adapter!.hasZdoMessageOverhead,
+                Entity.adapter.hasZdoMessageOverhead,
                 clusterId,
                 this.ieeeAddr as Eui64,
                 Zdo.LeaveRequestFlags.WITHOUT_REJOIN,
             );
-            // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
-            const response = await Entity.adapter!.sendZdo(this.ieeeAddr, this.networkAddress, clusterId, zdoPayload, false);
+            const response = await Entity.adapter.sendZdo(this.ieeeAddr, this.networkAddress, clusterId, zdoPayload, false);
 
             if (!Zdo.Buffalo.checkStatus<Zdo.ClusterId.LEAVE_RESPONSE>(response)) {
                 throw new Zdo.StatusError(response[0]);
@@ -1166,10 +1152,8 @@ export class Device extends Entity<ControllerEventMap> {
             endpoint.removeFromAllGroupsDatabase();
         }
 
-        // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
-        if (Entity.database!.has(this.ID)) {
-            // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
-            Entity.database!.remove(this.ID);
+        if (Entity.database.has(this.ID)) {
+            Entity.database.remove(this.ID);
         }
 
         Device.deletedDevices.set(this.ieeeAddr, this);
@@ -1201,10 +1185,8 @@ export class Device extends Entity<ControllerEventMap> {
         // TODO return Zdo.LQITableEntry directly (requires updates in other repos)
         const neighbors: LQINeighbor[] = [];
         const request = async (startIndex: number): Promise<[tableEntries: number, entryCount: number]> => {
-            // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
-            const zdoPayload = Zdo.Buffalo.buildRequest(Entity.adapter!.hasZdoMessageOverhead, clusterId, startIndex);
-            // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
-            const response = await Entity.adapter!.sendZdo(this.ieeeAddr, this.networkAddress, clusterId, zdoPayload, false);
+            const zdoPayload = Zdo.Buffalo.buildRequest(Entity.adapter.hasZdoMessageOverhead, clusterId, startIndex);
+            const response = await Entity.adapter.sendZdo(this.ieeeAddr, this.networkAddress, clusterId, zdoPayload, false);
 
             if (!Zdo.Buffalo.checkStatus<Zdo.ClusterId.LQI_TABLE_RESPONSE>(response)) {
                 throw new Zdo.StatusError(response[0]);
@@ -1244,10 +1226,8 @@ export class Device extends Entity<ControllerEventMap> {
         // TODO return Zdo.RoutingTableEntry directly (requires updates in other repos)
         const table: RoutingTableEntry[] = [];
         const request = async (startIndex: number): Promise<[tableEntries: number, entryCount: number]> => {
-            // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
-            const zdoPayload = Zdo.Buffalo.buildRequest(Entity.adapter!.hasZdoMessageOverhead, clusterId, startIndex);
-            // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
-            const response = await Entity.adapter!.sendZdo(this.ieeeAddr, this.networkAddress, clusterId, zdoPayload, false);
+            const zdoPayload = Zdo.Buffalo.buildRequest(Entity.adapter.hasZdoMessageOverhead, clusterId, startIndex);
+            const response = await Entity.adapter.sendZdo(this.ieeeAddr, this.networkAddress, clusterId, zdoPayload, false);
 
             if (!Zdo.Buffalo.checkStatus<Zdo.ClusterId.ROUTING_TABLE_RESPONSE>(response)) {
                 throw new Zdo.StatusError(response[0]);
