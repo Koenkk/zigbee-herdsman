@@ -41,7 +41,7 @@ jobs:
               run: pnpm run test:coverage -- --testTimeout=10000
 
             - name: Bench
-              if: !(github.event_name == 'pull_request' && startsWith(github.head_ref, 'release-please-'))
+              if: github.ref == 'refs/heads/master' || (github.event_name == 'pull_request' && !startsWith(github.head_ref, 'release-please-'))
               uses: CodSpeedHQ/action@v3
               with:
                 run: pnpm run bench
