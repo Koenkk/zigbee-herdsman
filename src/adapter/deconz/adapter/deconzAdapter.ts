@@ -113,7 +113,7 @@ export class DeconzAdapter extends Adapter {
 
                 if (20000 < Date.now() - start) {
                     clearInterval(iv);
-                    reject("failed to start adapter connection to firmware");
+                    reject(new Error("failed to start adapter connection to firmware"));
                     return;
                 }
             }, 50);
