@@ -52,7 +52,7 @@ export interface Command {
 
 export interface AttributeDefinition {
     ID: number;
-    type: DataType;
+    type: DataType | BuffaloZclDataType;
     manufacturerCode?: number;
 }
 
