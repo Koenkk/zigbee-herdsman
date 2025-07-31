@@ -1,3 +1,4 @@
+import {describe, expect, it} from "vitest";
 import * as Zcl from "../../../src/zspec/zcl";
 import {BuffaloZcl} from "../../../src/zspec/zcl/buffaloZcl";
 import {uint16To8Array, uint32To8Array, uint56To8Array} from "../../utils/math";

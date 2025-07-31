@@ -87,11 +87,15 @@ class Driver extends events.EventEmitter {
     private frameParserEvent = frameParserEvents;
     private seqNumber: number;
     private deviceStatus = 0;
+    // biome-ignore lint/correctness/noUnusedPrivateClassMembers: ignore
     private configChanged: number;
     private socketPort?: net.Socket;
+    // biome-ignore lint/correctness/noUnusedPrivateClassMembers: ignore
     private timeoutCounter = 0;
     private watchdogTriggeredTime = 0;
+    // biome-ignore lint/correctness/noUnusedPrivateClassMembers: ignore
     private lastFirmwareRxTime = 0;
+    // biome-ignore lint/correctness/noUnusedPrivateClassMembers: ignore
     private tickTimer: NodeJS.Timeout;
     private driverStateStart = 0;
     private driverState: DriverState = DriverState.Init;
@@ -1530,10 +1534,6 @@ class Driver extends events.EventEmitter {
         } else {
             logger.debug(`frame length (${frame.length}) < 5, discard`, NS);
         }
-    }
-
-    private sleep(ms: number): Promise<void> {
-        return new Promise((resolve) => setTimeout(resolve, ms));
     }
 }
 

@@ -34,20 +34,20 @@
         "fast-deep-equal": "^3.1.3",
         "mixin-deep": "^2.0.1",
         "slip": "^1.0.2",
-        "zigbee-on-host": "^0.1.12"
+        "zigbee-on-host": "^0.1.13"
     },
     "deprecated": false,
     "description": "An open source ZigBee gateway solution with node.js.",
     "devDependencies": {
-        "@biomejs/biome": "^2.0.5",
+        "@biomejs/biome": "^2.1.2",
         "@codspeed/vitest-plugin": "^4.0.1",
         "@serialport/binding-mock": "^10.2.2",
         "@types/debounce": "^1.2.4",
-        "@types/node": "^24.0.10",
+        "@types/node": "^24.1.0",
         "@vitest/coverage-v8": "^3.1.1",
         "rimraf": "^6.0.1",
         "typescript": "^5.8.3",
-        "vitest": "^3.1.1"
+        "vitest": "^3.2.4"
     },
     "homepage": "https://github.com/Koenkk/zigbee-herdsman",
     "keywords": [
@@ -77,7 +77,7 @@
         "clean": "rimraf temp coverage dist tsconfig.tsbuildinfo",
         "prepack": "pnpm run clean && pnpm run build"
     },
-    "version": "4.4.1",
+    "version": "5.0.3",
     "pnpm": {
         "onlyBuiltDependencies": [
             "@biomejs/biome",

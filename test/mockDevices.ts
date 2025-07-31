@@ -1,3 +1,4 @@
+import * as Zcl from "../src/zspec/zcl";
 import * as Zdo from "../src/zspec/zdo";
 import type * as ZdoTypes from "../src/zspec/zdo/definition/tstypes";
 
@@ -438,7 +439,10 @@ export const MOCK_DEVICES: {
         },
     },
     177: {
-        nodeDescriptor: [Zdo.Status.SUCCESS, {...NODE_DESC_DEFAULTS, nwkAddress: 177, logicalType: 0b001, manufacturerCode: 4129}],
+        nodeDescriptor: [
+            Zdo.Status.SUCCESS,
+            {...NODE_DESC_DEFAULTS, nwkAddress: 177, logicalType: 0b001, manufacturerCode: Zcl.ManufacturerCode.LEGRAND_GROUP},
+        ],
         activeEndpoints: [Zdo.Status.SUCCESS, {nwkAddress: 177, endpointList: [1]}],
         simpleDescriptor: {
             1: [
@@ -464,6 +468,128 @@ export const MOCK_DEVICES: {
                 hwVersion: 8,
                 dateCode: "231030",
                 swBuildId: "0038",
+                powerSource: 1,
+                stackVersion: 67,
+            },
+        },
+    },
+    178: {
+        nodeDescriptor: [
+            Zdo.Status.SUCCESS,
+            {...NODE_DESC_DEFAULTS, nwkAddress: 178, logicalType: 0b001, manufacturerCode: Zcl.ManufacturerCode.LEGRAND_GROUP},
+        ],
+        activeEndpoints: [Zdo.Status.SUCCESS, {nwkAddress: 178, endpointList: [1, 2]}],
+        simpleDescriptor: {
+            1: [
+                Zdo.Status.SUCCESS,
+                {
+                    nwkAddress: 178,
+                    length: 32,
+                    endpoint: 1,
+                    profileId: 260,
+                    deviceId: 514,
+                    deviceVersion: 1,
+                    inClusterList: [0, 3, 258, 4, 5, 15, 64513],
+                    outClusterList: [258, 0, 64513, 5, 25],
+                },
+            ],
+            2: [
+                Zdo.Status.SUCCESS,
+                {
+                    nwkAddress: 178,
+                    length: 32,
+                    endpoint: 2,
+                    profileId: 260,
+                    deviceId: 514,
+                    deviceVersion: 1,
+                    inClusterList: [0, 3, 258, 4, 5, 15],
+                    outClusterList: [258, 0, 64513, 5, 25],
+                },
+            ],
+        },
+        attributes: {
+            1: {
+                modelId: " some other multi-endpoint device",
+                manufacturerName: "Legrand",
+                zclVersion: 2,
+                appVersion: 0,
+                hwVersion: 8,
+                dateCode: "241030",
+                swBuildId: "0039",
+                powerSource: 1,
+                stackVersion: 67,
+            },
+        },
+    },
+    179: {
+        nodeDescriptor: [
+            Zdo.Status.SUCCESS,
+            {...NODE_DESC_DEFAULTS, nwkAddress: 179, logicalType: 0b001, manufacturerCode: Zcl.ManufacturerCode.V_MARK_ENTERPRISES_INC},
+        ],
+        activeEndpoints: [Zdo.Status.SUCCESS, {nwkAddress: 179, endpointList: [1, 2, 3, 4]}],
+        simpleDescriptor: {
+            1: [
+                Zdo.Status.SUCCESS,
+                {
+                    nwkAddress: 179,
+                    length: 32,
+                    endpoint: 1,
+                    profileId: 260,
+                    deviceId: 514,
+                    deviceVersion: 1,
+                    inClusterList: [0, 64561],
+                    outClusterList: [64561],
+                },
+            ],
+            2: [
+                Zdo.Status.SUCCESS,
+                {
+                    nwkAddress: 179,
+                    length: 32,
+                    endpoint: 1,
+                    profileId: 260,
+                    deviceId: 514,
+                    deviceVersion: 1,
+                    inClusterList: [0, 64561],
+                    outClusterList: [64561],
+                },
+            ],
+            3: [
+                Zdo.Status.SUCCESS,
+                {
+                    nwkAddress: 179,
+                    length: 32,
+                    endpoint: 1,
+                    profileId: 260,
+                    deviceId: 514,
+                    deviceVersion: 1,
+                    inClusterList: [0, 64561],
+                    outClusterList: [64561],
+                },
+            ],
+            4: [
+                Zdo.Status.SUCCESS,
+                {
+                    nwkAddress: 179,
+                    length: 32,
+                    endpoint: 1,
+                    profileId: 260,
+                    deviceId: 514,
+                    deviceVersion: 1,
+                    inClusterList: [0, 64561],
+                    outClusterList: [64561],
+                },
+            ],
+        },
+        attributes: {
+            1: {
+                modelId: "VZM30-SN",
+                manufacturerName: "Inovelli",
+                zclVersion: 3,
+                appVersion: 0,
+                hwVersion: 8,
+                dateCode: "2025",
+                swBuildId: "0001",
                 powerSource: 1,
                 stackVersion: 67,
             },

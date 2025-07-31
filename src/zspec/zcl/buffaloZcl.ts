@@ -736,13 +736,15 @@ export class BuffaloZcl extends Buffalo {
             while (this.position - start < options.payload.payloadSize) {
                 const attributeID = this.readUInt16();
                 const type = this.readUInt8();
+                /* v8 ignore next */
+                let attribute: string | undefined | number = cluster.getAttribute(attributeID)?.name;
 
-                let attribute: number | string = attributeID;
-                try {
-                    attribute = cluster.getAttribute(attributeID).name;
-                } catch {
+                // number type is only used when going into this if
+                if (!attribute) {
                     // this is spammy because of the many manufacturer-specific attributes not currently used
                     logger.debug(`Unknown attribute ${attributeID} in cluster ${cluster.name}`, NS);
+
+                    attribute = attributeID;
                 }
 
                 frame.attributes[attribute] = this.read(type, options);

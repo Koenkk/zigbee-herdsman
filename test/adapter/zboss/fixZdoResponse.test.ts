@@ -1,3 +1,4 @@
+import {describe, expect, it} from "vitest";
 import {CommandId} from "../../../src/adapter/zboss/enums";
 import {FrameType, readZBOSSFrame, type ZBOSSFrame} from "../../../src/adapter/zboss/frame";
 import * as Zdo from "../../../src/zspec/zdo";
