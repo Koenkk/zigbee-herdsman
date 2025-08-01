@@ -7233,3 +7233,32 @@ export type TFoundationRepetitive =
     | "writeStructuredRsp";
 export type TFoundationFlat = "defaultRsp" | "discover" | "discoverCommands" | "discoverCommandsGen" | "discoverExt";
 export type TFoundationOneOf = "discoverRsp" | "discoverCommandsRsp" | "discoverCommandsGenRsp" | "discoverExtRsp";
+
+// Clusters
+export type TClusterGenericPayload = Record<string, unknown>;
+
+export type TClusterAttributeKeys<Cl extends number | string> = Cl extends keyof TClusters
+    ? (keyof TClusters[Cl]["attributes"])[]
+    : (string | number)[];
+
+export type TClusterAttributes<Cl extends number | string> = Cl extends keyof TClusters ? TClusters[Cl]["attributes"] : TClusterGenericPayload;
+
+export type TPartialClusterAttributes<Cl extends number | string> = Cl extends keyof TClusters
+    ? Partial<TClusters[Cl]["attributes"]>
+    : TClusterGenericPayload;
+
+export type TClusterPayload<Cl extends number | string, Co extends number | string> = Cl extends keyof TClusters
+    ? Co extends keyof TClusters[Cl]["commands"]
+        ? TClusters[Cl]["commands"][Co]
+        : Co extends keyof TClusters[Cl]["commandResponses"]
+          ? TClusters[Cl]["commandResponses"][Co]
+          : TClusterGenericPayload
+    : TClusterGenericPayload;
+
+// Foundation
+export type TFoundationGenericPayload = TFoundation[keyof TFoundation];
+export type TFoundationRepetitivePayload = TFoundation[TFoundationRepetitive];
+export type TFoundationFlatPayload = TFoundation[TFoundationFlat];
+export type TFoundationOneOfPayload = TFoundation[TFoundationOneOf];
+
+export type TFoundationPayload<Co extends number | string> = Co extends keyof TFoundation ? TFoundation[Co] : TFoundationGenericPayload;

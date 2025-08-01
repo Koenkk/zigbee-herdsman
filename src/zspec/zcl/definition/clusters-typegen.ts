@@ -371,6 +371,92 @@ const foundationOneOfDecl = ts.factory.createTypeAliasDeclaration(
     undefined,
     ts.factory.createUnionTypeNode(foundationOneOfElements),
 );
+const clDecl = ts.factory.createTypeParameterDeclaration(
+    undefined,
+    "Cl",
+    ts.factory.createUnionTypeNode([
+        ts.factory.createKeywordTypeNode(ts.SyntaxKind.NumberKeyword),
+        ts.factory.createKeywordTypeNode(ts.SyntaxKind.StringKeyword),
+    ]),
+);
+const coDecl = ts.factory.createTypeParameterDeclaration(
+    undefined,
+    "Co",
+    ts.factory.createUnionTypeNode([
+        ts.factory.createKeywordTypeNode(ts.SyntaxKind.NumberKeyword),
+        ts.factory.createKeywordTypeNode(ts.SyntaxKind.StringKeyword),
+    ]),
+);
+const clusterGenericPayloadDecl = ts.factory.createTypeAliasDeclaration(
+    [ts.factory.createModifier(ts.SyntaxKind.ExportKeyword)],
+    "TClusterGenericPayload",
+    undefined,
+    ts.factory.createTypeReferenceNode("Record<string, unknown>"),
+);
+const clusterAttributeKeysDecl = ts.factory.createTypeAliasDeclaration(
+    [ts.factory.createModifier(ts.SyntaxKind.ExportKeyword)],
+    "TClusterAttributeKeys",
+    [clDecl],
+    ts.factory.createTypeReferenceNode(
+        `Cl extends keyof ${clustersDecl.name.escapedText} ? (keyof ${clustersDecl.name.escapedText}[Cl]["attributes"])[] : (string | number)[];`,
+    ),
+);
+const clusterAttributesDecl = ts.factory.createTypeAliasDeclaration(
+    [ts.factory.createModifier(ts.SyntaxKind.ExportKeyword)],
+    "TClusterAttributes",
+    [clDecl],
+    ts.factory.createTypeReferenceNode(
+        `Cl extends keyof ${clustersDecl.name.escapedText} ? ${clustersDecl.name.escapedText}[Cl]["attributes"] : ${clusterGenericPayloadDecl.name.escapedText}`,
+    ),
+);
+const partialClusterAttributesDecl = ts.factory.createTypeAliasDeclaration(
+    [ts.factory.createModifier(ts.SyntaxKind.ExportKeyword)],
+    "TPartialClusterAttributes",
+    [clDecl],
+    ts.factory.createTypeReferenceNode(
+        `Cl extends keyof ${clustersDecl.name.escapedText} ? Partial<${clustersDecl.name.escapedText}[Cl]["attributes"]> : ${clusterGenericPayloadDecl.name.escapedText}`,
+    ),
+);
+const clusterPayloadDecl = ts.factory.createTypeAliasDeclaration(
+    [ts.factory.createModifier(ts.SyntaxKind.ExportKeyword)],
+    "TClusterPayload",
+    [clDecl, coDecl],
+    ts.factory.createTypeReferenceNode(
+        `Cl extends keyof ${clustersDecl.name.escapedText} ? Co extends keyof ${clustersDecl.name.escapedText}[Cl]["commands"] ? ${clustersDecl.name.escapedText}[Cl]["commands"][Co] : Co extends keyof ${clustersDecl.name.escapedText}[Cl]["commandResponses"] ? ${clustersDecl.name.escapedText}[Cl]["commandResponses"][Co] : ${clusterGenericPayloadDecl.name.escapedText} : ${clusterGenericPayloadDecl.name.escapedText};`,
+    ),
+);
+const foundationGenericPayloadDecl = ts.factory.createTypeAliasDeclaration(
+    [ts.factory.createModifier(ts.SyntaxKind.ExportKeyword)],
+    "TFoundationGenericPayload",
+    undefined,
+    ts.factory.createTypeReferenceNode(`${foundationDecl.name.escapedText}[keyof ${foundationDecl.name.escapedText}]`),
+);
+const foundationRepetitivePayloadDecl = ts.factory.createTypeAliasDeclaration(
+    [ts.factory.createModifier(ts.SyntaxKind.ExportKeyword)],
+    "TFoundationRepetitivePayload",
+    undefined,
+    ts.factory.createTypeReferenceNode(`${foundationDecl.name.escapedText}[${foundationRepetitiveDecl.name.escapedText}]`),
+);
+const foundationFlatPayloadDecl = ts.factory.createTypeAliasDeclaration(
+    [ts.factory.createModifier(ts.SyntaxKind.ExportKeyword)],
+    "TFoundationFlatPayload",
+    undefined,
+    ts.factory.createTypeReferenceNode(`${foundationDecl.name.escapedText}[${foundationFlatDecl.name.escapedText}]`),
+);
+const foundationOneOfPayloadDecl = ts.factory.createTypeAliasDeclaration(
+    [ts.factory.createModifier(ts.SyntaxKind.ExportKeyword)],
+    "TFoundationOneOfPayload",
+    undefined,
+    ts.factory.createTypeReferenceNode(`${foundationDecl.name.escapedText}[${foundationOneOfDecl.name.escapedText}]`),
+);
+const foundationPayloadDecl = ts.factory.createTypeAliasDeclaration(
+    [ts.factory.createModifier(ts.SyntaxKind.ExportKeyword)],
+    "TFoundationPayload",
+    [coDecl],
+    ts.factory.createTypeReferenceNode(
+        `Co extends keyof ${foundationDecl.name.escapedText} ? ${foundationDecl.name.escapedText}[Co] : ${foundationGenericPayloadDecl.name.escapedText}`,
+    ),
+);
 
 const result = `${printer.printNode(ts.EmitHint.Unspecified, namedImports, file)}
 
@@ -381,6 +467,25 @@ ${printer.printNode(ts.EmitHint.Unspecified, foundationDecl, file)}
 ${printer.printNode(ts.EmitHint.Unspecified, foundationRepetitiveDecl, file)}
 ${printer.printNode(ts.EmitHint.Unspecified, foundationFlatDecl, file)}
 ${printer.printNode(ts.EmitHint.Unspecified, foundationOneOfDecl, file)}
+
+// Clusters
+${printer.printNode(ts.EmitHint.Unspecified, clusterGenericPayloadDecl, file)}
+
+${printer.printNode(ts.EmitHint.Unspecified, clusterAttributeKeysDecl, file)}
+
+${printer.printNode(ts.EmitHint.Unspecified, clusterAttributesDecl, file)}
+
+${printer.printNode(ts.EmitHint.Unspecified, partialClusterAttributesDecl, file)}
+
+${printer.printNode(ts.EmitHint.Unspecified, clusterPayloadDecl, file)}
+
+// Foundation
+${printer.printNode(ts.EmitHint.Unspecified, foundationGenericPayloadDecl, file)}
+${printer.printNode(ts.EmitHint.Unspecified, foundationRepetitivePayloadDecl, file)}
+${printer.printNode(ts.EmitHint.Unspecified, foundationFlatPayloadDecl, file)}
+${printer.printNode(ts.EmitHint.Unspecified, foundationOneOfPayloadDecl, file)}
+
+${printer.printNode(ts.EmitHint.Unspecified, foundationPayloadDecl, file)}
 `;
 
 writeFileSync(`./src/zspec/zcl/definition/${FILENAME}`, result, {encoding: "utf8"});
