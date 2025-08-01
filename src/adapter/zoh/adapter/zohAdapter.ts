@@ -499,6 +499,7 @@ export class ZoHAdapter extends Adapter {
         disableResponse: boolean,
         disableRecovery: boolean,
         sourceEndpoint?: number,
+        profileId?: number,
     ): Promise<ZclPayload | undefined> {
         /* v8 ignore start */
         if (networkAddress === ZSpec.COORDINATOR_ADDRESS) {
@@ -532,7 +533,8 @@ export class ZoHAdapter extends Adapter {
                 try {
                     await this.driver.sendUnicast(
                         zclFrame.toBuffer(),
-                        sourceEndpoint === ZSpec.GP_ENDPOINT && endpoint === ZSpec.GP_ENDPOINT ? ZSpec.GP_PROFILE_ID : ZSpec.HA_PROFILE_ID,
+                        profileId ??
+                            (sourceEndpoint === ZSpec.GP_ENDPOINT && endpoint === ZSpec.GP_ENDPOINT ? ZSpec.GP_PROFILE_ID : ZSpec.HA_PROFILE_ID),
                         zclFrame.cluster.ID,
                         networkAddress, // nwkDest16
                         undefined, // nwkDest64 XXX: avoid passing EUI64 whenever not absolutely necessary
@@ -569,13 +571,13 @@ export class ZoHAdapter extends Adapter {
         });
     }
 
-    public async sendZclFrameToGroup(groupID: number, zclFrame: Zcl.Frame, sourceEndpoint?: number): Promise<void> {
+    public async sendZclFrameToGroup(groupID: number, zclFrame: Zcl.Frame, sourceEndpoint?: number, profileId?: number): Promise<void> {
         return await this.queue.execute<void>(async () => {
             this.checkInterpanLock();
 
             logger.debug(() => `~~~> [ZCL GROUP to=${groupID} clusterId=${zclFrame.cluster.ID} sourceEp=${sourceEndpoint}]`, NS);
 
-            await this.driver.sendGroupcast(zclFrame.toBuffer(), ZSpec.HA_PROFILE_ID, zclFrame.cluster.ID, groupID, sourceEndpoint ?? 1);
+            await this.driver.sendGroupcast(zclFrame.toBuffer(), profileId ?? ZSpec.HA_PROFILE_ID, zclFrame.cluster.ID, groupID, sourceEndpoint ?? 1);
             // settle
             await wait(500);
         });
@@ -586,6 +588,7 @@ export class ZoHAdapter extends Adapter {
         zclFrame: Zcl.Frame,
         sourceEndpoint: number,
         destination: ZSpec.BroadcastAddress,
+        profileId?: number,
     ): Promise<void> {
         return await this.queue.execute<void>(async () => {
             this.checkInterpanLock();
@@ -594,7 +597,7 @@ export class ZoHAdapter extends Adapter {
 
             await this.driver.sendBroadcast(
                 zclFrame.toBuffer(),
-                sourceEndpoint === ZSpec.GP_ENDPOINT && endpoint === ZSpec.GP_ENDPOINT ? ZSpec.GP_PROFILE_ID : ZSpec.HA_PROFILE_ID,
+                profileId ?? (sourceEndpoint === ZSpec.GP_ENDPOINT && endpoint === ZSpec.GP_ENDPOINT ? ZSpec.GP_PROFILE_ID : ZSpec.HA_PROFILE_ID),
                 zclFrame.cluster.ID,
                 destination,
                 endpoint,
