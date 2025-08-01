@@ -2,14 +2,29 @@ import {Buffalo} from "../../buffalo";
 import {logger} from "../../utils/logger";
 import {isNumberArray} from "../../utils/utils";
 import {BuffaloZclDataType, DataType, StructuredIndicatorType} from "./definition/enums";
-import type {BuffaloZclOptions, StructuredSelector, ZclArray} from "./definition/tstype";
+import type {
+    BuffaloZclOptions,
+    ExtensionFieldSet,
+    GPDAttributeReport,
+    GPDChannelConfiguration,
+    GPDChannelRequest,
+    GPDCommissioningReply,
+    GPDCustomReply,
+    Gpd,
+    KeyZclValue,
+    MiboxerZone,
+    Struct,
+    StructuredSelector,
+    ThermoTransition,
+    TuyaDataPointValue,
+    ZclArray,
+    ZclDate,
+    ZclTimeOfDay,
+    ZoneInfo,
+} from "./definition/tstype";
 import * as Utils from "./utils";
 
 const NS = "zh:zcl:buffalo";
-
-interface KeyValue {
-    [s: string | number]: number | string;
-}
 
 const SEC_KEY_LENGTH = 16;
 
@@ -19,116 +34,6 @@ const EXTENSION_FIELD_SETS_DATA_TYPE: {[key: number]: DataType[]} = {
     258: [DataType.UINT8, DataType.UINT8],
     768: [DataType.UINT16, DataType.UINT16, DataType.UINT16, DataType.UINT8, DataType.UINT8, DataType.UINT8, DataType.UINT16, DataType.UINT16],
 };
-
-interface Struct {
-    elmType: DataType;
-    elmVal: unknown;
-}
-
-interface ZclTimeOfDay {
-    /** [0-23] */
-    hours?: number;
-    /** [0-59] */
-    minutes?: number;
-    /** [0-59] */
-    seconds?: number;
-    /** [0-99] */
-    hundredths?: number;
-}
-
-interface ZclDate {
-    /** [1900-2155], converted to/from [0-255] => value+1900=year */
-    year?: number;
-    /** [1-12] */
-    month?: number;
-    /** [1-31] */
-    dayOfMonth?: number;
-    /** [1-7] */
-    dayOfWeek?: number;
-}
-
-interface ZoneInfo {
-    zoneID: number;
-    zoneStatus: number;
-}
-
-interface ExtensionFieldSet {
-    clstId: number;
-    len: number;
-    extField: unknown[];
-}
-
-interface ThermoTransition {
-    transitionTime: number;
-    heatSetpoint?: number;
-    coolSetpoint?: number;
-}
-
-interface Gpd {
-    deviceID: number;
-    options: number;
-    extendedOptions: number;
-    securityKey: Buffer;
-    keyMic: number;
-    outgoingCounter: number;
-    applicationInfo: number;
-    manufacturerID: number;
-    modelID: number;
-    numGpdCommands: number;
-    gpdCommandIdList: Buffer;
-    numServerClusters: number;
-    numClientClusters: number;
-    gpdServerClusters: Buffer;
-    gpdClientClusters: Buffer;
-    genericSwitchConfig: number;
-    currentContactStatus: number;
-}
-
-interface GPDChannelRequest {
-    nextChannel: number;
-    nextNextChannel: number;
-}
-
-export interface GPDChannelConfiguration {
-    commandID: number;
-    operationalChannel: number;
-    basic: boolean;
-}
-
-export interface GPDCommissioningReply {
-    commandID: number;
-    options: number;
-    /** expected valid if corresponding `options` bits set */
-    panID?: number;
-    /** expected valid if corresponding `options` bits set */
-    securityKey?: Buffer;
-    /** expected valid if corresponding `options` bits set */
-    keyMic?: number;
-    /** expected valid if corresponding `options` bits set */
-    frameCounter?: number;
-}
-
-interface GPDCustomReply {
-    commandID: number;
-    buffer: Buffer;
-}
-
-interface GPDAttributeReport {
-    manufacturerCode: number;
-    clusterID: number;
-    attributes: KeyValue;
-}
-
-interface TuyaDataPointValue {
-    dp: number;
-    datatype: number;
-    data: Buffer;
-}
-
-interface MiboxerZone {
-    zoneNum: number;
-    groupId: number;
-}
 
 export class BuffaloZcl extends Buffalo {
     private writeOctetStr(value: number[]): void {
@@ -540,7 +445,7 @@ export class BuffaloZcl extends Buffalo {
             const frame = {
                 manufacturerCode: this.readUInt16(),
                 clusterID: this.readUInt16(),
-                attributes: {} as KeyValue,
+                attributes: {} as KeyZclValue,
             };
 
             const cluster = Utils.getCluster(frame.clusterID, frame.manufacturerCode, {});
