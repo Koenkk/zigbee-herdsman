@@ -417,12 +417,28 @@ const partialClusterAttributesDecl = ts.factory.createTypeAliasDeclaration(
         `Cl extends keyof ${clustersDecl.name.escapedText} ? Partial<${clustersDecl.name.escapedText}[Cl]["attributes"]> : ${clusterGenericPayloadDecl.name.escapedText}`,
     ),
 );
+const clusterCommandPayloadDecl = ts.factory.createTypeAliasDeclaration(
+    [ts.factory.createModifier(ts.SyntaxKind.ExportKeyword)],
+    "TClusterCommandPayload",
+    [clDecl, coDecl],
+    ts.factory.createTypeReferenceNode(
+        `Cl extends keyof ${clustersDecl.name.escapedText} ? Co extends keyof ${clustersDecl.name.escapedText}[Cl]["commands"] ? ${clustersDecl.name.escapedText}[Cl]["commands"][Co] : ${clusterGenericPayloadDecl.name.escapedText} : ${clusterGenericPayloadDecl.name.escapedText};`,
+    ),
+);
+const clusterCommandResponsePayloadDecl = ts.factory.createTypeAliasDeclaration(
+    [ts.factory.createModifier(ts.SyntaxKind.ExportKeyword)],
+    "TClusterCommandResponsePayload",
+    [clDecl, coDecl],
+    ts.factory.createTypeReferenceNode(
+        `Cl extends keyof ${clustersDecl.name.escapedText} ? Co extends keyof ${clustersDecl.name.escapedText}[Cl]["commandResponses"] ? ${clustersDecl.name.escapedText}[Cl]["commandResponses"][Co] : ${clusterGenericPayloadDecl.name.escapedText} : ${clusterGenericPayloadDecl.name.escapedText};`,
+    ),
+);
 const clusterPayloadDecl = ts.factory.createTypeAliasDeclaration(
     [ts.factory.createModifier(ts.SyntaxKind.ExportKeyword)],
     "TClusterPayload",
     [clDecl, coDecl],
     ts.factory.createTypeReferenceNode(
-        `Cl extends keyof ${clustersDecl.name.escapedText} ? Co extends keyof ${clustersDecl.name.escapedText}[Cl]["commands"] ? ${clustersDecl.name.escapedText}[Cl]["commands"][Co] : Co extends keyof ${clustersDecl.name.escapedText}[Cl]["commandResponses"] ? ${clustersDecl.name.escapedText}[Cl]["commandResponses"][Co] : ${clusterGenericPayloadDecl.name.escapedText} : ${clusterGenericPayloadDecl.name.escapedText};`,
+        `Cl extends keyof ${clustersDecl.name.escapedText} ? ${clustersDecl.name.escapedText}[Cl]["commands"] extends never ? ${clustersDecl.name.escapedText}[Cl]["commandResponses"] extends never ? never : Co extends keyof ${clustersDecl.name.escapedText}[Cl]["commandResponses"] ? ${clustersDecl.name.escapedText}[Cl]["commandResponses"][Co] : ${clusterGenericPayloadDecl.name.escapedText} : Co extends keyof ${clustersDecl.name.escapedText}[Cl]["commands"] ? ${clustersDecl.name.escapedText}[Cl]["commands"][Co] : Co extends keyof ${clustersDecl.name.escapedText}[Cl]["commandResponses"] ? ${clustersDecl.name.escapedText}[Cl]["commandResponses"][Co] : ${clusterGenericPayloadDecl.name.escapedText} : ${clusterGenericPayloadDecl.name.escapedText};`,
     ),
 );
 const foundationGenericPayloadDecl = ts.factory.createTypeAliasDeclaration(
@@ -476,6 +492,10 @@ ${printer.printNode(ts.EmitHint.Unspecified, clusterAttributeKeysDecl, file)}
 ${printer.printNode(ts.EmitHint.Unspecified, clusterAttributesDecl, file)}
 
 ${printer.printNode(ts.EmitHint.Unspecified, partialClusterAttributesDecl, file)}
+
+${printer.printNode(ts.EmitHint.Unspecified, clusterCommandPayloadDecl, file)}
+
+${printer.printNode(ts.EmitHint.Unspecified, clusterCommandResponsePayloadDecl, file)}
 
 ${printer.printNode(ts.EmitHint.Unspecified, clusterPayloadDecl, file)}
 

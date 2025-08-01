@@ -7247,12 +7247,30 @@ export type TPartialClusterAttributes<Cl extends number | string> = Cl extends k
     ? Partial<TClusters[Cl]["attributes"]>
     : TClusterGenericPayload;
 
-export type TClusterPayload<Cl extends number | string, Co extends number | string> = Cl extends keyof TClusters
+export type TClusterCommandPayload<Cl extends number | string, Co extends number | string> = Cl extends keyof TClusters
     ? Co extends keyof TClusters[Cl]["commands"]
         ? TClusters[Cl]["commands"][Co]
-        : Co extends keyof TClusters[Cl]["commandResponses"]
-          ? TClusters[Cl]["commandResponses"][Co]
-          : TClusterGenericPayload
+        : TClusterGenericPayload
+    : TClusterGenericPayload;
+
+export type TClusterCommandResponsePayload<Cl extends number | string, Co extends number | string> = Cl extends keyof TClusters
+    ? Co extends keyof TClusters[Cl]["commandResponses"]
+        ? TClusters[Cl]["commandResponses"][Co]
+        : TClusterGenericPayload
+    : TClusterGenericPayload;
+
+export type TClusterPayload<Cl extends number | string, Co extends number | string> = Cl extends keyof TClusters
+    ? TClusters[Cl]["commands"] extends never
+        ? TClusters[Cl]["commandResponses"] extends never
+            ? never
+            : Co extends keyof TClusters[Cl]["commandResponses"]
+              ? TClusters[Cl]["commandResponses"][Co]
+              : TClusterGenericPayload
+        : Co extends keyof TClusters[Cl]["commands"]
+          ? TClusters[Cl]["commands"][Co]
+          : Co extends keyof TClusters[Cl]["commandResponses"]
+            ? TClusters[Cl]["commandResponses"][Co]
+            : TClusterGenericPayload
     : TClusterGenericPayload;
 
 // Foundation
