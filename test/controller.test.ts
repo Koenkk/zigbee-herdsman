@@ -9212,7 +9212,7 @@ describe("Controller", () => {
             type: "commandIndividualLedEffect",
             data: {
                 color: 0,
-                duration: 255,
+                duration: null,
                 effect: 1,
                 led: 5,
                 level: 100,
