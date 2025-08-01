@@ -1,5 +1,12 @@
 # Changelog
 
+## [5.0.4](https://github.com/Koenkk/zigbee-herdsman/compare/v5.0.3...v5.0.4) (2025-07-31)
+
+
+### Bug Fixes
+
+* Deconz reject with error instead of string https://github.com/Koenkk/zigbee2mqtt/issues/28078 ([9634b1c](https://github.com/Koenkk/zigbee-herdsman/commit/9634b1c7a29103e837a8a95fe07707c88296dea6))
+
 ## [5.0.3](https://github.com/Koenkk/zigbee-herdsman/compare/v5.0.2...v5.0.3) (2025-07-30)
 
 
