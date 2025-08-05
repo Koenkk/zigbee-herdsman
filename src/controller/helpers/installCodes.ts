@@ -59,7 +59,10 @@ export function parseInstallCode(installCode: string): [ieeeAddr: string, key: s
  *   - If adjust is false, undefined, otherwise, the reason why the code needed adjusting or undefined if not.
  *   - Throws when adjust=false and invalid, or cannot fix.
  */
-export function checkInstallCode(code: Buffer, adjust = true): [outCode: Buffer, adjusted: "invalid CRC" | "missing CRC" | undefined] {
+export function checkInstallCode(
+    code: Buffer<ArrayBuffer>,
+    adjust = true,
+): [outCode: Buffer<ArrayBuffer>, adjusted: "invalid CRC" | "missing CRC" | undefined] {
     const crcLowByteIndex = code.length - INSTALL_CODE_CRC_SIZE;
     const crcHighByteIndex = code.length - INSTALL_CODE_CRC_SIZE + 1;
 

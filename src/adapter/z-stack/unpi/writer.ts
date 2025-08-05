@@ -12,7 +12,7 @@ export class Writer extends stream.Readable {
         this.push(buffer);
     }
 
-    public writeBuffer(buffer: Buffer): void {
+    public writeBuffer(buffer: Buffer<ArrayBuffer>): void {
         logger.debug(`--> buffer [${[...buffer]}]`, NS);
         this.push(buffer);
     }

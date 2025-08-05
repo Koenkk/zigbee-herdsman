@@ -5,4 +5,4 @@ import {Struct} from "../struct";
  *
  * @param data Data to initialize structure with.
  */
-export const channelList = (data?: Buffer) => Struct.new().member("uint32", "channelList").build(data);
+export const channelList = (data?: Buffer<ArrayBuffer>) => Struct.new().member("uint32", "channelList").build(data);

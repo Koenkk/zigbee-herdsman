@@ -103,7 +103,7 @@ function getFrameDesc(type: FrameType, key: CommandId): ParamsDesc[] {
     }
 }
 
-function fixNonStandardZdoRspPayload(clusterId: ZdoClusterId, buffer: Buffer): Buffer {
+function fixNonStandardZdoRspPayload(clusterId: ZdoClusterId, buffer: Buffer<ArrayBuffer>): Buffer<ArrayBuffer> {
     switch (clusterId) {
         case ZdoClusterId.NODE_DESCRIPTOR_RESPONSE:
         case ZdoClusterId.POWER_DESCRIPTOR_RESPONSE:
@@ -133,7 +133,7 @@ function fixNonStandardZdoRspPayload(clusterId: ZdoClusterId, buffer: Buffer): B
     return buffer;
 }
 
-export function readZBOSSFrame(buffer: Buffer): ZBOSSFrame {
+export function readZBOSSFrame(buffer: Buffer<ArrayBuffer>): ZBOSSFrame {
     const buf = new ZBOSSBuffaloZcl(buffer);
     const version = buf.readUInt8();
     const type: FrameType = buf.readUInt8();
@@ -171,7 +171,7 @@ export function readZBOSSFrame(buffer: Buffer): ZBOSSFrame {
     };
 }
 
-export function writeZBOSSFrame(frame: ZBOSSFrame): Buffer {
+export function writeZBOSSFrame(frame: ZBOSSFrame): Buffer<ArrayBuffer> {
     const buf = new ZBOSSBuffaloZcl(Buffer.alloc(247));
     buf.writeInt8(frame.version);
     buf.writeInt8(frame.type);

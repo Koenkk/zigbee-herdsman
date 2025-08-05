@@ -12,7 +12,10 @@ const emptyKey = Buffer.alloc(16, 0x00);
  * @param data Data to initialize table with.
  * @param alignment Memory alignment of initialization data.
  */
-export const apsLinkKeyDataTable = (dataOrCapacity?: Buffer | Buffer[] | number, alignment: StructMemoryAlignment = "unaligned") => {
+export const apsLinkKeyDataTable = (
+    dataOrCapacity?: Buffer<ArrayBuffer> | Buffer<ArrayBuffer>[] | number,
+    alignment: StructMemoryAlignment = "unaligned",
+) => {
     const table = Table.new<ReturnType<typeof apsLinkKeyDataEntry>>()
         .struct(apsLinkKeyDataEntry)
         .occupancy((e) => !e.key.equals(emptyKey));

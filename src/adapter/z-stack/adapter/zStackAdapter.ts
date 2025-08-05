@@ -281,21 +281,21 @@ export class ZStackAdapter extends Adapter {
         ieeeAddress: string,
         networkAddress: number,
         clusterId: Zdo.ClusterId,
-        payload: Buffer,
+        payload: Buffer<ArrayBuffer>,
         disableResponse: true,
     ): Promise<void>;
     public async sendZdo<K extends keyof ZdoTypes.RequestToResponseMap>(
         ieeeAddress: string,
         networkAddress: number,
         clusterId: K,
-        payload: Buffer,
+        payload: Buffer<ArrayBuffer>,
         disableResponse: false,
     ): Promise<ZdoTypes.RequestToResponseMap[K]>;
     public async sendZdo<K extends keyof ZdoTypes.RequestToResponseMap>(
         ieeeAddress: string,
         networkAddress: number,
         clusterId: K,
-        payload: Buffer,
+        payload: Buffer<ArrayBuffer>,
         disableResponse: boolean,
     ): Promise<ZdoTypes.RequestToResponseMap[K] | undefined> {
         return await this.sendZdoInternal(ieeeAddress, networkAddress, clusterId, payload, disableResponse, false);
@@ -305,7 +305,7 @@ export class ZStackAdapter extends Adapter {
         ieeeAddress: string,
         networkAddress: number,
         clusterId: Zdo.ClusterId,
-        payload: Buffer,
+        payload: Buffer<ArrayBuffer>,
         disableResponse: boolean,
         skipQueue: boolean,
     ): Promise<undefined>;
@@ -313,7 +313,7 @@ export class ZStackAdapter extends Adapter {
         ieeeAddress: string,
         networkAddress: number,
         clusterId: K,
-        payload: Buffer,
+        payload: Buffer<ArrayBuffer>,
         disableResponse: false,
         skipQueue: boolean,
     ): Promise<ZdoTypes.RequestToResponseMap[K]>;
@@ -321,7 +321,7 @@ export class ZStackAdapter extends Adapter {
         ieeeAddress: string,
         networkAddress: number,
         clusterId: K,
-        payload: Buffer,
+        payload: Buffer<ArrayBuffer>,
         disableResponse: boolean,
         skipQueue: boolean,
     ): Promise<ZdoTypes.RequestToResponseMap[K] | undefined> {
@@ -762,7 +762,7 @@ export class ZStackAdapter extends Adapter {
         });
     }
 
-    public async addInstallCode(ieeeAddress: string, key: Buffer, hashed: boolean): Promise<void> {
+    public async addInstallCode(ieeeAddress: string, key: Buffer<ArrayBuffer>, hashed: boolean): Promise<void> {
         assert(this.version.product !== ZnpVersion.ZStack12, "Install code is not supported for ZStack 1.2 adapter");
         // TODO: always use 0x2? => const hashedKey = hashed ? key : ZSpec.Utils.aes128MmoHash(key);
         const payload = {installCodeFormat: hashed ? 0x2 : 0x1, ieeeaddr: ieeeAddress, installCode: key};
@@ -1040,7 +1040,7 @@ export class ZStackAdapter extends Adapter {
         sourceEndpoint: number,
         clusterID: number,
         radius: number,
-        data: Buffer,
+        data: Buffer<ArrayBuffer>,
         timeout: number,
     ): Promise<number> {
         const transactionID = this.nextTransactionID();
@@ -1082,7 +1082,7 @@ export class ZStackAdapter extends Adapter {
         sourceEndpoint: number,
         clusterID: number,
         radius: number,
-        data: Buffer,
+        data: Buffer<ArrayBuffer>,
         timeout: number,
         confirmation: boolean,
         attemptsLeft = 5,

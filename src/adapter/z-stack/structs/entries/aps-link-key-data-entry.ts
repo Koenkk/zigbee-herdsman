@@ -7,6 +7,6 @@ import {Struct} from "../struct";
  *
  * @param data Data to initialize structure with.
  */
-export const apsLinkKeyDataEntry = (data?: Buffer) => {
+export const apsLinkKeyDataEntry = (data?: Buffer<ArrayBuffer>) => {
     return Struct.new().member("uint8array", "key", 16).member("uint32", "txFrmCntr").member("uint32", "rxFrmCntr").build(data);
 };

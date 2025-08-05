@@ -69,7 +69,13 @@ Adapter.create = async (networkOptions, serialPortOptions, backupPath, adapterOp
             nwkUpdateID: 1,
         });
     // @ts-expect-error ignore overrides typing
-    adapter.sendZdo = async (_ieeeAddress: string, networkAddress: number, clusterId: Zdo.ClusterId, payload: Buffer, _disableResponse: boolean) => {
+    adapter.sendZdo = async (
+        _ieeeAddress: string,
+        networkAddress: number,
+        clusterId: Zdo.ClusterId,
+        payload: Buffer<ArrayBuffer>,
+        _disableResponse: boolean,
+    ) => {
         if (networkAddress === 0x0000) {
             switch (clusterId) {
                 case Zdo.ClusterId.ACTIVE_ENDPOINTS_REQUEST: {

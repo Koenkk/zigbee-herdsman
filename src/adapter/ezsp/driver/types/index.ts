@@ -116,7 +116,7 @@ export function deserialize(payload: any, schema: any[]): any[] {
     return [result, data];
 }
 
-export function serialize(data: any[], schema: {serialize: (schema: any, item: any) => Buffer}[]): Buffer {
+export function serialize(data: any[], schema: {serialize: (schema: any, item: any) => Buffer<ArrayBuffer>}[]): Buffer<ArrayBuffer> {
     return Buffer.concat(schema.map((s, idx) => s.serialize(s, data[idx])));
 }
 

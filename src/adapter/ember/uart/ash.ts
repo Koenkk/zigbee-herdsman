@@ -224,9 +224,9 @@ export class UartAsh extends EventEmitter<UartAshEventMap> {
     private decodeCrc: number;
 
     /** outgoing short frames */
-    private txSHBuffer: Buffer;
+    private txSHBuffer: Buffer<ArrayBuffer>;
     /** incoming short frames */
-    private rxSHBuffer: Buffer;
+    private rxSHBuffer: Buffer<ArrayBuffer>;
 
     /** bit flags for top-level logic. uint16_t */
     private flags: number;
@@ -582,7 +582,7 @@ export class UartAsh extends EventEmitter<UartAshEventMap> {
      * Handle received frame from AshParser.
      * @param buf
      */
-    private onFrame(buffer: Buffer): void {
+    private onFrame(buffer: Buffer<ArrayBuffer>): void {
         const iCAN = buffer.lastIndexOf(AshReservedByte.CANCEL); // should only be one, but just in case...
 
         if (iCAN !== -1) {
@@ -747,7 +747,7 @@ export class UartAsh extends EventEmitter<UartAshEventMap> {
      * - EzspStatus.DATA_FRAME_TOO_LONG
      * - EzspStatus.NOT_CONNECTED
      */
-    public send(len: number, inBuf: Buffer): EzspStatus {
+    public send(len: number, inBuf: Buffer<ArrayBuffer>): EzspStatus {
         // Check for errors that might have been detected
         if (this.hostError !== EzspStatus.NO_ERROR) {
             return EzspStatus.HOST_FATAL_ERROR;
@@ -1002,7 +1002,7 @@ export class UartAsh extends EventEmitter<UartAshEventMap> {
      * - EzspStatus.HOST_FATAL_ERROR
      * - EzspStatus.ASH_NCP_FATAL_ERROR
      */
-    private receiveFrame(buffer: Buffer): EzspStatus {
+    private receiveFrame(buffer: Buffer<ArrayBuffer>): EzspStatus {
         // Check for errors that might have been detected
         if (this.hostError !== EzspStatus.NO_ERROR) {
             return EzspStatus.HOST_FATAL_ERROR;
@@ -1255,7 +1255,7 @@ export class UartAsh extends EventEmitter<UartAshEventMap> {
      * Retrieve and process serial bytes.
      * @returns
      */
-    private readFrame(buffer: Buffer): EzspStatus {
+    private readFrame(buffer: Buffer<ArrayBuffer>): EzspStatus {
         let status: EzspStatus = EzspStatus.ERROR_INVALID_CALL; // no actual data to read, something's very wrong
         let index = 0;
         // let inByte: number = 0x00;
@@ -1442,7 +1442,7 @@ export class UartAsh extends EventEmitter<UartAshEventMap> {
      * @param buffer IN/OUT
      * @param len
      */
-    public randomizeBuffer(buffer: Buffer, len: number): void {
+    public randomizeBuffer(buffer: Buffer<ArrayBuffer>, len: number): void {
         // If enabled, exclusive-OR buffer data with a pseudo-random sequence
         if (CONFIG_RANDOMIZE) {
             this.randomizeArray(0, buffer, len); // zero inits the random sequence
@@ -1461,7 +1461,7 @@ export class UartAsh extends EventEmitter<UartAshEventMap> {
      *           If a buffer is processed in two or more chunks, as with linked buffers,
      *           this value should be passed back as the value of the seed argument
      */
-    public randomizeArray(seed: number, buf: Buffer, len: number): number {
+    public randomizeArray(seed: number, buf: Buffer<ArrayBuffer>, len: number): number {
         let outIdx = 0;
 
         if (seed === 0) {

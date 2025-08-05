@@ -12,7 +12,7 @@ const emptyExtendedPanId = Buffer.alloc(8, 0x00);
  *
  * @param data Data to initialize structure with.
  */
-export const nwkSecMaterialDescriptorEntry = (data?: Buffer) =>
+export const nwkSecMaterialDescriptorEntry = (data?: Buffer<ArrayBuffer>) =>
     Struct.new()
         .member("uint32", "FrameCounter")
         .member("uint8array-reversed", "extendedPanID", 8)

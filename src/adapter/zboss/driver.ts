@@ -306,7 +306,14 @@ export class ZBOSSDriver extends EventEmitter {
         return (matcher.tsn === undefined || matcher.tsn === payload.tsn) && matcher.commandId === payload.commandId;
     }
 
-    public async request(ieee: string, profileID: number, clusterID: number, dstEp: number, srcEp: number, data: Buffer): Promise<ZBOSSFrame> {
+    public async request(
+        ieee: string,
+        profileID: number,
+        clusterID: number,
+        dstEp: number,
+        srcEp: number,
+        data: Buffer<ArrayBuffer>,
+    ): Promise<ZBOSSFrame> {
         const payload = {
             paramLength: 21,
             dataLength: data.length,
@@ -332,7 +339,7 @@ export class ZBOSSDriver extends EventEmitter {
         clusterID: number,
         dstEp: number,
         srcEp: number,
-        data: Buffer,
+        data: Buffer<ArrayBuffer>,
     ): Promise<ZBOSSFrame> {
         const payload = {
             paramLength: 21,
@@ -353,7 +360,7 @@ export class ZBOSSDriver extends EventEmitter {
         return await this.execCommand(CommandId.APSDE_DATA_REQ, payload);
     }
 
-    public async grequest(group: number, profileID: number, clusterID: number, srcEp: number, data: Buffer): Promise<ZBOSSFrame> {
+    public async grequest(group: number, profileID: number, clusterID: number, srcEp: number, data: Buffer<ArrayBuffer>): Promise<ZBOSSFrame> {
         const payload = {
             paramLength: 20,
             dataLength: data.length,
@@ -372,7 +379,7 @@ export class ZBOSSDriver extends EventEmitter {
         return await this.execCommand(CommandId.APSDE_DATA_REQ, payload);
     }
 
-    public async requestZdo(clusterId: Zdo.ClusterId, payload: Buffer, disableResponse: boolean): Promise<ZBOSSFrame | undefined> {
+    public async requestZdo(clusterId: Zdo.ClusterId, payload: Buffer<ArrayBuffer>, disableResponse: boolean): Promise<ZBOSSFrame | undefined> {
         if (!this.port.portOpen) {
             throw new Error("Connection not initialized");
         }

@@ -10,7 +10,10 @@ import {addressManagerEntry} from "./address-manager-entry";
  * @param data Data to initialize table with.
  * @param alignment Memory alignment of initialization data.
  */
-export const addressManagerTable = (dataOrCapacity?: Buffer | Buffer[] | number, alignment: StructMemoryAlignment = "unaligned") => {
+export const addressManagerTable = (
+    dataOrCapacity?: Buffer<ArrayBuffer> | Buffer<ArrayBuffer>[] | number,
+    alignment: StructMemoryAlignment = "unaligned",
+) => {
     const table = Table.new<ReturnType<typeof addressManagerEntry>>()
         .struct(addressManagerEntry)
         .occupancy((e) => e.isSet() as boolean);

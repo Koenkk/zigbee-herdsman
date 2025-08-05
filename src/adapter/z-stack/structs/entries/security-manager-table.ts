@@ -10,7 +10,10 @@ import {SecurityManagerAuthenticationOption, securityManagerEntry} from "./secur
  * @param data Data to initialize table with.
  * @param alignment Memory alignment of initialization data.
  */
-export const securityManagerTable = (dataOrCapacity?: Buffer | Buffer[] | number, alignment: StructMemoryAlignment = "unaligned") => {
+export const securityManagerTable = (
+    dataOrCapacity?: Buffer<ArrayBuffer> | Buffer<ArrayBuffer>[] | number,
+    alignment: StructMemoryAlignment = "unaligned",
+) => {
     const table = Table.new<ReturnType<typeof securityManagerEntry>>()
         .struct(securityManagerEntry)
         .occupancy(

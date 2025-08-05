@@ -7,7 +7,7 @@ import {Struct} from "../struct";
  *
  * @param data Data to initialize structure with.
  */
-export const apsTcLinkKeyEntry = (data?: Buffer) => {
+export const apsTcLinkKeyEntry = (data?: Buffer<ArrayBuffer>) => {
     return Struct.new()
         .member("uint32", "txFrmCntr")
         .member("uint32", "rxFrmCntr")

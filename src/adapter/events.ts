@@ -12,7 +12,7 @@ export interface ZclPayload {
     address: number | string;
     header: ZclHeader | undefined;
     // This buffer contains the whole Zcl.Frame (including the ZclHeader)
-    data: Buffer;
+    data: Buffer<ArrayBuffer>;
     endpoint: number;
     linkquality: number;
     groupID: number;

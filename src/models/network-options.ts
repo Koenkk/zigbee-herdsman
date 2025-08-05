@@ -3,9 +3,9 @@
  */
 export interface NetworkOptions {
     panId: number;
-    extendedPanId: Buffer;
+    extendedPanId: Buffer<ArrayBuffer>;
     channelList: number[];
-    networkKey: Buffer;
+    networkKey: Buffer<ArrayBuffer>;
     networkKeyDistribute: boolean;
     hasDefaultExtendedPanId?: boolean;
 }

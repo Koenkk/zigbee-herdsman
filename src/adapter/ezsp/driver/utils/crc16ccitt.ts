@@ -2,10 +2,10 @@
 
 import type {Buffer} from "node:buffer";
 
-type CalcFn = (buf: Buffer | number[], previous: number) => number;
+type CalcFn = (buf: Buffer<ArrayBuffer> | number[], previous: number) => number;
 
 function defineCrc(model: string, calc: CalcFn): CalcFn {
-    const fn = (buf: Buffer | number[], previous: number): number => calc(buf, previous) >>> 0;
+    const fn = (buf: Buffer<ArrayBuffer> | number[], previous: number): number => calc(buf, previous) >>> 0;
     fn.signed = calc;
     fn.unsigned = fn;
     fn.model = model;
@@ -32,7 +32,7 @@ const TABLE: number[] = [
     0x2e93, 0x3eb2, 0x0ed1, 0x1ef0,
 ];
 
-const crc16ccitt = defineCrc("ccitt", (buf: Buffer | number[], previous: number): number => {
+const crc16ccitt = defineCrc("ccitt", (buf: Buffer<ArrayBuffer> | number[], previous: number): number => {
     let crc = ~~previous;
     for (const byte of buf) {
         crc = (TABLE[((crc >> 8) ^ byte) & 0xff] ^ (crc << 8)) & 0xffff;

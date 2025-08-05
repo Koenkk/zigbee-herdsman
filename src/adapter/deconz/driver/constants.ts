@@ -142,7 +142,7 @@ interface Request {
     commandId: FirmwareCommand;
     networkState: NetworkState;
     parameterId: ParamId;
-    parameter?: Buffer | number | bigint | undefined;
+    parameter?: Buffer<ArrayBuffer> | number | bigint | undefined;
     seqNumber: number;
     // biome-ignore lint/suspicious/noExplicitAny: API
     resolve: (value: any) => void;
@@ -190,7 +190,7 @@ interface ReceivedDataResponse {
     profileId: number;
     clusterId: number;
     asduLength: number;
-    asduPayload: Buffer;
+    asduPayload: Buffer<ArrayBuffer>;
     lqi: number;
     rssi: number;
     zdo?: GenericZdoResponse;
@@ -204,7 +204,7 @@ interface GpDataInd {
     frameCounter: number;
     commandId: number;
     commandFrameSize: number;
-    commandFrame: Buffer;
+    commandFrame: Buffer<ArrayBuffer>;
 }
 
 interface DataStateResponse {
@@ -233,7 +233,7 @@ interface ApsDataRequest {
     clusterId: number;
     srcEndpoint: number;
     asduLength: number;
-    asduPayload: Buffer;
+    asduPayload: Buffer<ArrayBuffer>;
     txOptions: number;
     radius: number;
     timeout: number; // seconds

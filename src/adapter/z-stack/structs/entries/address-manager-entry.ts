@@ -33,7 +33,7 @@ const emptyAddress2 = Buffer.alloc(8, 0xff);
  *
  * @param data Data to initialize structure with.
  */
-export const addressManagerEntry = (data?: Buffer) => {
+export const addressManagerEntry = (data?: Buffer<ArrayBuffer>) => {
     return Struct.new()
         .member("uint8", "user")
         .member("uint16", "nwkAddr")

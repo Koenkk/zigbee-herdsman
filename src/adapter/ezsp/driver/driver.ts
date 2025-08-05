@@ -56,7 +56,7 @@ interface AddEndpointParameters {
 
 type EmberFrame = {
     address: number | string;
-    payload: Buffer;
+    payload: Buffer<ArrayBuffer>;
     frame: EmberApsFrame;
     zdoResponse?: GenericZdoResponse;
 };
@@ -80,7 +80,7 @@ export interface EmberIncomingMessage {
     sender: number;
     bindingIndex: number;
     addressIndex: number;
-    message: Buffer;
+    message: Buffer<ArrayBuffer>;
     senderEui64: EmberEUI64;
     zdoResponse?: GenericZdoResponse;
 }
@@ -649,7 +649,7 @@ export class Driver extends EventEmitter {
         this.eui64ToNodeId.set(ieee.toString(), nwk);
     }
 
-    public async request(nwk: number | EmberEUI64, apsFrame: EmberApsFrame, data: Buffer, extendedTimeout = false): Promise<boolean> {
+    public async request(nwk: number | EmberEUI64, apsFrame: EmberApsFrame, data: Buffer<ArrayBuffer>, extendedTimeout = false): Promise<boolean> {
         let result = false;
 
         for (const delay of REQUEST_ATTEMPT_DELAYS) {
@@ -708,7 +708,7 @@ export class Driver extends EventEmitter {
         return result;
     }
 
-    public async mrequest(apsFrame: EmberApsFrame, data: Buffer, _timeout = 30000): Promise<boolean> {
+    public async mrequest(apsFrame: EmberApsFrame, data: Buffer<ArrayBuffer>, _timeout = 30000): Promise<boolean> {
         try {
             const seq = (apsFrame.sequence + 1) & 0xff;
             await this.ezsp.sendMulticast(apsFrame, seq, data);
@@ -718,7 +718,7 @@ export class Driver extends EventEmitter {
         }
     }
 
-    public async rawrequest(rawFrame: EmberRawFrame, data: Buffer, _timeout = 10000): Promise<boolean> {
+    public async rawrequest(rawFrame: EmberRawFrame, data: Buffer<ArrayBuffer>, _timeout = 10000): Promise<boolean> {
         try {
             const msgData = Buffer.concat([EmberRawFrame.serialize(EmberRawFrame, rawFrame), data]);
             await this.ezsp.execCommand("sendRawMessage", {message: msgData});
@@ -729,7 +729,7 @@ export class Driver extends EventEmitter {
         }
     }
 
-    public async ieeerawrequest(rawFrame: EmberIeeeRawFrame, data: Buffer, _timeout = 10000): Promise<boolean> {
+    public async ieeerawrequest(rawFrame: EmberIeeeRawFrame, data: Buffer<ArrayBuffer>, _timeout = 10000): Promise<boolean> {
         try {
             const msgData = Buffer.concat([EmberIeeeRawFrame.serialize(EmberIeeeRawFrame, rawFrame), data]);
             await this.ezsp.execCommand("sendRawMessage", {message: msgData});
@@ -740,7 +740,7 @@ export class Driver extends EventEmitter {
         }
     }
 
-    public async brequest(destination: number, apsFrame: EmberApsFrame, data: Buffer): Promise<boolean> {
+    public async brequest(destination: number, apsFrame: EmberApsFrame, data: Buffer<ArrayBuffer>): Promise<boolean> {
         try {
             const seq = (apsFrame.sequence + 1) & 0xff;
             await this.ezsp.sendBroadcast(destination, apsFrame, seq, data);
@@ -827,7 +827,7 @@ export class Driver extends EventEmitter {
         return await this.ezsp.execCommand("permitJoining", {duration: seconds});
     }
 
-    public makeZDOframe(name: string | number, params: ParamsDesc): Buffer {
+    public makeZDOframe(name: string | number, params: ParamsDesc): Buffer<ArrayBuffer> {
         return this.ezsp.makeZDOframe(name, params);
     }
 
@@ -887,7 +887,7 @@ export class Driver extends EventEmitter {
         return this.ezsp.execCommand("importTransientKey", {partner, transientKey, flags: 0});
     }
 
-    public async addInstallCode(ieeeAddress: string, key: Buffer, hashed: boolean): Promise<void> {
+    public async addInstallCode(ieeeAddress: string, key: Buffer<ArrayBuffer>, hashed: boolean): Promise<void> {
         const ieee = new EmberEUI64(ieeeAddress);
         const linkKey = new EmberKeyData();
         linkKey.contents = hashed ? key : ZSpec.Utils.aes128MmoHash(key);
@@ -949,7 +949,7 @@ export class Driver extends EventEmitter {
         logger.debug(`Current Node type: ${netParams.nodeType}, Network parameters: ${networkParams}`, NS);
         logger.debug(`Backuped network parameters: ${backup.networkOptions}`, NS);
         const networkKey = await this.getKey(EmberKeyType.CURRENT_NETWORK_KEY);
-        let netKey: Buffer;
+        let netKey: Buffer<ArrayBuffer>;
 
         if (this.ezsp.ezspV < 13) {
             netKey = Buffer.from((networkKey.keyStruct as EmberKeyStruct).key.contents);

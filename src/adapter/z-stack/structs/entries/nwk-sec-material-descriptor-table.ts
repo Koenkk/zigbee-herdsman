@@ -10,7 +10,10 @@ import {nwkSecMaterialDescriptorEntry} from "./nwk-sec-material-descriptor-entry
  * @param data Data to initialize table with.
  * @param alignment Memory alignment of initialization data.
  */
-export const nwkSecMaterialDescriptorTable = (dataOrCapacity?: Buffer | Buffer[] | number, alignment: StructMemoryAlignment = "unaligned") => {
+export const nwkSecMaterialDescriptorTable = (
+    dataOrCapacity?: Buffer<ArrayBuffer> | Buffer<ArrayBuffer>[] | number,
+    alignment: StructMemoryAlignment = "unaligned",
+) => {
     const table = Table.new<ReturnType<typeof nwkSecMaterialDescriptorEntry>>()
         .struct(nwkSecMaterialDescriptorEntry)
         .occupancy((e) => e.isSet() as boolean);

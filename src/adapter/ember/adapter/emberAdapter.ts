@@ -511,7 +511,7 @@ export class EmberAdapter extends Adapter {
      * @param sender The sender of the response. Should match `payload.nodeId` in many responses.
      * @param messageContents The content of the response.
      */
-    private onZDOResponse(apsFrame: EmberApsFrame, sender: NodeId, messageContents: Buffer): void {
+    private onZDOResponse(apsFrame: EmberApsFrame, sender: NodeId, messageContents: Buffer<ArrayBuffer>): void {
         const result = Zdo.Buffalo.readResponse(this.hasZdoMessageOverhead, apsFrame.clusterId, messageContents);
 
         if (apsFrame.clusterId === Zdo.ClusterId.NETWORK_ADDRESS_RESPONSE) {
@@ -541,7 +541,7 @@ export class EmberAdapter extends Adapter {
         apsFrame: EmberApsFrame,
         lastHopLqi: number,
         sender: NodeId,
-        messageContents: Buffer,
+        messageContents: Buffer<ArrayBuffer>,
     ): void {
         const payload: ZclPayload = {
             clusterID: apsFrame.clusterId,
@@ -568,7 +568,13 @@ export class EmberAdapter extends Adapter {
      * @param lastHopLqi
      * @param messageContents
      */
-    private onTouchlinkMessage(_sourcePanId: PanId, sourceAddress: Eui64, groupId: number, lastHopLqi: number, messageContents: Buffer): void {
+    private onTouchlinkMessage(
+        _sourcePanId: PanId,
+        sourceAddress: Eui64,
+        groupId: number,
+        lastHopLqi: number,
+        messageContents: Buffer<ArrayBuffer>,
+    ): void {
         const endpoint = FIXED_ENDPOINTS[0].endpoint;
         const payload: ZclPayload = {
             clusterID: Zcl.Clusters.touchlink.ID,
@@ -1046,13 +1052,13 @@ export class EmberAdapter extends Adapter {
      */
     private async formNetwork(
         fromBackup: boolean,
-        networkKey: Buffer,
+        networkKey: Buffer<ArrayBuffer>,
         networkKeySequenceNumber: number,
         networkKeyFrameCounter: number,
         panId: PanId,
         extendedPanId: ExtendedPanId,
         radioChannel: number,
-        tcLinkKey: Buffer,
+        tcLinkKey: Buffer<ArrayBuffer>,
         nwkUpdateId: number,
     ): Promise<void> {
         const state: EmberInitialSecurityState = {
@@ -1698,7 +1704,7 @@ export class EmberAdapter extends Adapter {
     }
 
     // queued
-    public async addInstallCode(ieeeAddress: string, key: Buffer, hashed: boolean): Promise<void> {
+    public async addInstallCode(ieeeAddress: string, key: Buffer<ArrayBuffer>, hashed: boolean): Promise<void> {
         return await this.queue.execute<void>(async () => {
             // Add the key to the transient key table.
             // This will be used while the DUT joins.
@@ -1755,21 +1761,21 @@ export class EmberAdapter extends Adapter {
         ieeeAddress: string,
         networkAddress: number,
         clusterId: Zdo.ClusterId,
-        payload: Buffer,
+        payload: Buffer<ArrayBuffer>,
         disableResponse: true,
     ): Promise<void>;
     public async sendZdo<K extends keyof ZdoTypes.RequestToResponseMap>(
         ieeeAddress: string,
         networkAddress: number,
         clusterId: K,
-        payload: Buffer,
+        payload: Buffer<ArrayBuffer>,
         disableResponse: false,
     ): Promise<ZdoTypes.RequestToResponseMap[K]>;
     public async sendZdo<K extends keyof ZdoTypes.RequestToResponseMap>(
         ieeeAddress: string,
         networkAddress: number,
         clusterId: K,
-        payload: Buffer,
+        payload: Buffer<ArrayBuffer>,
         disableResponse: boolean,
     ): Promise<ZdoTypes.RequestToResponseMap[K] | undefined> {
         return await this.queue.execute(async () => {

@@ -375,7 +375,7 @@ export type EmberBeaconClassificationParams = {
 /** This data structure contains the key data that is passed into various other functions. */
 export type EmberKeyData = {
     /** This is the key byte data. uint8_t[EMBER_ENCRYPTION_KEY_SIZE] */
-    contents: Buffer;
+    contents: Buffer<ArrayBuffer>;
 };
 
 /** This describes the Initial Security features and requirements that will be used when forming or joining the network.  */
@@ -483,7 +483,7 @@ export type SecManKey = EmberKeyData;
 /** This data structure contains the context data when calculating an AES MMO hash (message digest). */
 export type EmberAesMmoHashContext = {
     /** uint8_t[EMBER_AES_HASH_BLOCK_SIZE] */
-    result: Buffer;
+    result: Buffer<ArrayBuffer>;
     /** uint32_t */
     length: number;
 };
@@ -491,49 +491,49 @@ export type EmberAesMmoHashContext = {
 /** This data structure contains the public key data that is used for Certificate Based Key Exchange (CBKE). */
 export type EmberPublicKeyData = {
     /** uint8_t[EMBER_PUBLIC_KEY_SIZE] */
-    contents: Buffer;
+    contents: Buffer<ArrayBuffer>;
 };
 
 /** This data structure contains the certificate data that is used for Certificate Based Key Exchange (CBKE). */
 export type EmberCertificateData = {
     /** uint8_t[EMBER_CERTIFICATE_SIZE] */
-    contents: Buffer;
+    contents: Buffer<ArrayBuffer>;
 };
 
 /** This data structure contains the Shared Message Authentication Code SMAC) data that is used for Certificate Based Key Exchange (CBKE). */
 export type EmberSmacData = {
     /** uint8_t[EMBER_SMAC_SIZE] */
-    contents: Buffer;
+    contents: Buffer<ArrayBuffer>;
 };
 
 /** This data structure contains the public key data that is used for Certificate Based Key Exchange (CBKE) in SECT283k1 Elliptical Cryptography. */
 export type EmberPublicKey283k1Data = {
     /** uint8_t[EMBER_PUBLIC_KEY_283K1_SIZE] */
-    contents: Buffer;
+    contents: Buffer<ArrayBuffer>;
 };
 
 /** This data structure contains the private key data that is used for Certificate Based Key Exchange (CBKE) in SECT283k1 Elliptical Cryptography. */
 export type EmberPrivateKey283k1Data = {
     /** uint8_t[EMBER_PRIVATE_KEY_283K1_SIZE] */
-    contents: Buffer;
+    contents: Buffer<ArrayBuffer>;
 };
 
 /** This data structure contains the certificate data that is used for Certificate Based Key Exchange (CBKE) in SECT283k1 Elliptical Cryptography. */
 export type EmberCertificate283k1Data = {
     /* This is the certificate byte data. uint8_t[EMBER_CERTIFICATE_283K1_SIZE] */
-    contents: Buffer;
+    contents: Buffer<ArrayBuffer>;
 };
 
 /** This data structure contains an AES-MMO Hash (the message digest). */
 export type EmberMessageDigest = {
     /** uint8_t[EMBER_AES_HASH_BLOCK_SIZE] */
-    contents: Buffer;
+    contents: Buffer<ArrayBuffer>;
 };
 
 /** This data structure contains a DSA signature. It is the bit concatenation of the 'r' and 's' components of the signature. */
 export type EmberSignatureData = {
     /** uint8_t[EMBER_SIGNATURE_SIZE] */
-    contents: Buffer;
+    contents: Buffer<ArrayBuffer>;
 };
 
 /**
@@ -542,13 +542,13 @@ export type EmberSignatureData = {
  */
 export type EmberSignature283k1Data = {
     /** uint8_t[EMBER_SIGNATURE_283K1_SIZE] */
-    contents: Buffer;
+    contents: Buffer<ArrayBuffer>;
 };
 
 /** This data structure contains the private key data that is used for Certificate Based Key Exchange (CBKE). */
 export type EmberPrivateKeyData = {
     /** uint8_t[EMBER_PRIVATE_KEY_SIZE] */
-    contents: Buffer;
+    contents: Buffer<ArrayBuffer>;
 };
 
 /** Defines a ZigBee network and the associated parameters. */
@@ -654,9 +654,9 @@ export type EmberTokTypeStackZllSecurity = {
     /** uint8_t */
     keyIndex: number;
     /** uint8_t[EMBER_ENCRYPTION_KEY_SIZE] */
-    encryptionKey: Buffer;
+    encryptionKey: Buffer<ArrayBuffer>;
     /** uint8_t[EMBER_ENCRYPTION_KEY_SIZE] */
-    preconfiguredKey: Buffer;
+    preconfiguredKey: Buffer<ArrayBuffer>;
 };
 
 /** 32-bit GPD source identifier uint32_t */
@@ -785,7 +785,7 @@ export type EmberTokenData = {
     /** The size of the token data in number of bytes. uint32_t */
     size: number;
     /** A data pointer pointing to the storage for the token data of above size. void * */
-    data: Buffer;
+    data: Buffer<ArrayBuffer>;
 };
 
 /**

@@ -23,7 +23,7 @@ export enum SecurityManagerAuthenticationOption {
  *
  * @param data Data to initialize structure with.
  */
-export const securityManagerEntry = (data?: Buffer) => {
+export const securityManagerEntry = (data?: Buffer<ArrayBuffer>) => {
     return Struct.new()
         .member("uint16", "ami")
         .member("uint16", "keyNvId")

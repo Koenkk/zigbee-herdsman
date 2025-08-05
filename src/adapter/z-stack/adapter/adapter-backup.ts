@@ -177,7 +177,7 @@ export class AdapterBackup {
                             return null;
                         }
                         /* v8 ignore stop */
-                        let linkKeyInfo: {key: Buffer; rxCounter: number; txCounter: number} | undefined;
+                        let linkKeyInfo: {key: Buffer<ArrayBuffer>; rxCounter: number; txCounter: number} | undefined;
                         const sme = securityManagerTable.used.find((e) => e.ami === ami);
                         if (sme) {
                             const apsKeyDataIndex = version === ZnpVersion.ZStack30x ? sme.keyNvId - NvItemsIds.APS_LINK_KEY_DATA_START : sme.keyNvId;

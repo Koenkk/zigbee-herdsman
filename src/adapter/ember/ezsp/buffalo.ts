@@ -222,7 +222,7 @@ export class EzspBuffalo extends Buffalo {
      * WARNING: Make sure the length is appropriate, if alloc'ed longer, it will return everything until the end.
      * @returns
      */
-    public readRest(): Buffer {
+    public readRest(): Buffer<ArrayBuffer> {
         return Buffer.from(this.buffer.subarray(this.position));
     }
 
@@ -232,7 +232,7 @@ export class EzspBuffalo extends Buffalo {
      * @param length
      * @returns
      */
-    protected readBufferCopy(length: number): Buffer {
+    protected readBufferCopy(length: number): Buffer<ArrayBuffer> {
         return Buffer.from(this.readBuffer(length));
     }
 
@@ -243,7 +243,7 @@ export class EzspBuffalo extends Buffalo {
      *          Should be passed with getWritten() in most cases.
      * @param payload
      */
-    public writePayload(payload: Buffer): void {
+    public writePayload(payload: Buffer<ArrayBuffer>): void {
         this.writeUInt8(payload.length);
 
         this.position += payload.copy(this.buffer, this.position);
@@ -253,7 +253,7 @@ export class EzspBuffalo extends Buffalo {
      * Read a uint8_t for payload length, followed by payload buffer (using post-length position).
      * @returns
      */
-    public readPayload(): Buffer {
+    public readPayload(): Buffer<ArrayBuffer> {
         const messageLength = this.readUInt8();
 
         return this.readBufferCopy(messageLength);

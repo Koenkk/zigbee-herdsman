@@ -207,7 +207,7 @@ export class ZBOSSUart extends EventEmitter {
         logger.info(`Port error: ${error}`, NS);
     }
 
-    private async onPackage(data: Buffer): Promise<void> {
+    private async onPackage(data: Buffer<ArrayBuffer>): Promise<void> {
         if (this.inReset) return;
         const len = data.readUInt16LE(0);
         const pType = data.readUInt8(2);
@@ -273,7 +273,7 @@ export class ZBOSSUart extends EventEmitter {
         }
     }
 
-    public async sendBuffer(buf: Buffer): Promise<void> {
+    public async sendBuffer(buf: Buffer<ArrayBuffer>): Promise<void> {
         try {
             logger.debug(`--> FRAME: ${buf.toString("hex")}`, NS);
             let flags = (this.sendSeq & 0x03) << 2; // sequence
@@ -302,7 +302,7 @@ export class ZBOSSUart extends EventEmitter {
         return await this.sendBuffer(writeZBOSSFrame(frame));
     }
 
-    private async sendDATA(data: Buffer, isACK = false): Promise<void> {
+    private async sendDATA(data: Buffer<ArrayBuffer>, isACK = false): Promise<void> {
         const seq = this.sendSeq;
         const nextSeq = this.sendSeq;
         const ackSeq = this.recvSeq;
@@ -390,12 +390,12 @@ export class ZBOSSUart extends EventEmitter {
         await this.sendDATA(ackPackage, true);
     }
 
-    private writeBuffer(buffer: Buffer): void {
+    private writeBuffer(buffer: Buffer<ArrayBuffer>): void {
         logger.debug(`--> [${buffer.toString("hex")}]`, NS);
         this.writer.push(buffer);
     }
 
-    private makePack(flags: number, data?: Buffer): Buffer {
+    private makePack(flags: number, data?: Buffer<ArrayBuffer>): Buffer<ArrayBuffer> {
         /* Construct a package */
         const packLen = 5 + (data ? data.length + 2 : 0);
         const header = Buffer.alloc(7);

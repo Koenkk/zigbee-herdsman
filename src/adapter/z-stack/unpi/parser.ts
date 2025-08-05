@@ -7,14 +7,14 @@ import {Frame} from "./frame";
 const NS = "zh:zstack:unpi:parser";
 
 export class Parser extends stream.Transform {
-    private buffer: Buffer;
+    private buffer: Buffer<ArrayBuffer>;
 
     public constructor() {
         super();
         this.buffer = Buffer.from([]);
     }
 
-    public override _transform(chunk: Buffer, _: string, cb: () => void): void {
+    public override _transform(chunk: Buffer<ArrayBuffer>, _: string, cb: () => void): void {
         logger.debug(`<-- [${[...chunk]}]`, NS);
         this.buffer = Buffer.concat([this.buffer, chunk]);
         this.parseNext();

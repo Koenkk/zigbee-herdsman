@@ -85,7 +85,7 @@ type PairingPayload = {
     sinkGroupID?: number;
     deviceID?: number;
     frameCounter?: number;
-    gpdKey?: Buffer;
+    gpdKey?: Buffer<ArrayBuffer>;
     assignedAlias?: number;
     groupcastRadius?: number;
 };
@@ -119,7 +119,7 @@ export class GreenPower extends EventEmitter<GreenPowerEventMap> {
         return `0x${sourceId.toString(16).padStart(16, "0")}`;
     }
 
-    private encryptSecurityKey(sourceID: number, securityKey: Buffer): Buffer {
+    private encryptSecurityKey(sourceID: number, securityKey: Buffer<ArrayBuffer>): Buffer<ArrayBuffer> {
         const nonce = Buffer.alloc(13);
 
         nonce.writeUInt32LE(sourceID, 0);
@@ -133,7 +133,12 @@ export class GreenPower extends EventEmitter<GreenPowerEventMap> {
         return Buffer.concat([encrypted, cipher.final()]);
     }
 
-    private decryptPayload(sourceID: number, frameCounter: number, securityKey: Buffer, payload: Buffer): Buffer {
+    private decryptPayload(
+        sourceID: number,
+        frameCounter: number,
+        securityKey: Buffer<ArrayBuffer>,
+        payload: Buffer<ArrayBuffer>,
+    ): Buffer<ArrayBuffer> {
         const nonce = Buffer.alloc(13);
 
         nonce.writeUInt32LE(sourceID, 0);
@@ -242,7 +247,7 @@ export class GreenPower extends EventEmitter<GreenPowerEventMap> {
         );
     }
 
-    public async processCommand(dataPayload: AdapterEvents.ZclPayload, frame: Zcl.Frame, securityKey?: Buffer): Promise<Zcl.Frame> {
+    public async processCommand(dataPayload: AdapterEvents.ZclPayload, frame: Zcl.Frame, securityKey?: Buffer<ArrayBuffer>): Promise<Zcl.Frame> {
         try {
             // notification: A.3.3.4.1
             // commissioningNotification: A.3.3.4.3

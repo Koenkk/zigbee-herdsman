@@ -42,7 +42,7 @@ describe("GreenPower", () => {
         gpdCommandId: number,
         payloadLength: number,
         options?: number,
-    ): Buffer => {
+    ): Buffer<ArrayBuffer> => {
         const gpdHeader = Buffer.alloc(15);
         gpdHeader.writeUInt8(0b00000001, 0); // frameControl: FrameType.SPECIFIC + Direction.CLIENT_TO_SERVER + disableDefaultResponse=false
         gpdHeader.writeUInt8(sequenceNumber, 1);
@@ -56,7 +56,7 @@ describe("GreenPower", () => {
         return gpdHeader;
     };
 
-    const makeFooter = (options: number, gppNwkAddr?: number, gppGpdLink?: number, mic?: number): Buffer => {
+    const makeFooter = (options: number, gppNwkAddr?: number, gppGpdLink?: number, mic?: number): Buffer<ArrayBuffer> => {
         const hasGppData = options & 0x800;
         const hasMic = options & 0x200;
         const gpdFooter = Buffer.alloc((hasGppData ? 3 : 0) + (hasMic ? 4 : 0));
@@ -73,7 +73,7 @@ describe("GreenPower", () => {
         return gpdFooter;
     };
 
-    const makePayload = (sourceId: number, buffer: Buffer, linkQuality: number): ZclPayload => {
+    const makePayload = (sourceId: number, buffer: Buffer<ArrayBuffer>, linkQuality: number): ZclPayload => {
         return {
             clusterID: Zcl.Clusters.greenPower.ID,
             header: Zcl.Header.fromBuffer(buffer),

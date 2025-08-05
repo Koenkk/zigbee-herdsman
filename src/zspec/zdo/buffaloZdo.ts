@@ -752,7 +752,11 @@ export class BuffaloZdo extends Buffalo {
 
     //-- REQUESTS
 
-    public static buildRequest<K extends keyof RequestMap>(hasZdoMessageOverhead: boolean, clusterId: K, ...args: RequestMap[K]): Buffer {
+    public static buildRequest<K extends keyof RequestMap>(
+        hasZdoMessageOverhead: boolean,
+        clusterId: K,
+        ...args: RequestMap[K]
+    ): Buffer<ArrayBuffer> {
         const buffalo = new BuffaloZdo(Buffer.alloc(MAX_BUFFER_SIZE), hasZdoMessageOverhead ? ZDO_MESSAGE_OVERHEAD : 0);
 
         switch (clusterId) {
@@ -884,7 +888,7 @@ export class BuffaloZdo extends Buffalo {
      * @param reportKids True to request that the target list their children in the response. [request type = 0x01]
      * @param childStartIndex The index of the first child to list in the response. Ignored if reportKids is false.
      */
-    private buildNetworkAddressRequest(target: Eui64, reportKids: boolean, childStartIndex: number): Buffer {
+    private buildNetworkAddressRequest(target: Eui64, reportKids: boolean, childStartIndex: number): Buffer<ArrayBuffer> {
         this.writeIeeeAddr(target);
         this.writeUInt8(reportKids ? 1 : 0);
         this.writeUInt8(childStartIndex);
@@ -899,7 +903,7 @@ export class BuffaloZdo extends Buffalo {
      * @param reportKids True to request that the target list their children in the response. [request type = 0x01]
      * @param childStartIndex The index of the first child to list in the response. Ignored if reportKids is false.
      */
-    private buildIeeeAddressRequest(target: NodeId, reportKids: boolean, childStartIndex: number): Buffer {
+    private buildIeeeAddressRequest(target: NodeId, reportKids: boolean, childStartIndex: number): Buffer<ArrayBuffer> {
         this.writeUInt16(target);
         this.writeUInt8(reportKids ? 1 : 0);
         this.writeUInt8(childStartIndex);
@@ -911,7 +915,7 @@ export class BuffaloZdo extends Buffalo {
      * @see ClusterId.NODE_DESCRIPTOR_REQUEST
      * @param target NWK address for the request
      */
-    private buildNodeDescriptorRequest(target: NodeId, fragmentationParameters?: FragmentationParametersGlobalTLV): Buffer {
+    private buildNodeDescriptorRequest(target: NodeId, fragmentationParameters?: FragmentationParametersGlobalTLV): Buffer<ArrayBuffer> {
         this.writeUInt16(target);
 
         if (fragmentationParameters) {
@@ -935,7 +939,7 @@ export class BuffaloZdo extends Buffalo {
      * @see ClusterId.POWER_DESCRIPTOR_REQUEST
      * @param target NWK address for the request
      */
-    private buildPowerDescriptorRequest(target: NodeId): Buffer {
+    private buildPowerDescriptorRequest(target: NodeId): Buffer<ArrayBuffer> {
         this.writeUInt16(target);
 
         return this.getWritten();
@@ -946,7 +950,7 @@ export class BuffaloZdo extends Buffalo {
      * @param target NWK address for the request
      * @param targetEndpoint The endpoint on the destination
      */
-    private buildSimpleDescriptorRequest(target: NodeId, targetEndpoint: number): Buffer {
+    private buildSimpleDescriptorRequest(target: NodeId, targetEndpoint: number): Buffer<ArrayBuffer> {
         this.writeUInt16(target);
         this.writeUInt8(targetEndpoint);
 
@@ -957,7 +961,7 @@ export class BuffaloZdo extends Buffalo {
      * @see ClusterId.ACTIVE_ENDPOINTS_REQUEST
      * @param target NWK address for the request
      */
-    private buildActiveEndpointsRequest(target: NodeId): Buffer {
+    private buildActiveEndpointsRequest(target: NodeId): Buffer<ArrayBuffer> {
         this.writeUInt16(target);
 
         return this.getWritten();
@@ -970,7 +974,12 @@ export class BuffaloZdo extends Buffalo {
      * @param inClusterList List of Input ClusterIDs to be used for matching
      * @param outClusterList List of Output ClusterIDs to be used for matching
      */
-    private buildMatchDescriptorRequest(target: NodeId, profileId: ProfileId, inClusterList: ClusterId[], outClusterList: ClusterId[]): Buffer {
+    private buildMatchDescriptorRequest(
+        target: NodeId,
+        profileId: ProfileId,
+        inClusterList: ClusterId[],
+        outClusterList: ClusterId[],
+    ): Buffer<ArrayBuffer> {
         this.writeUInt16(target);
         this.writeUInt16(profileId);
         this.writeUInt8(inClusterList.length);
@@ -985,7 +994,7 @@ export class BuffaloZdo extends Buffalo {
      * @see ClusterId.SYSTEM_SERVER_DISCOVERY_REQUEST
      * @param serverMask See Table 2-34 for bit assignments.
      */
-    private buildSystemServiceDiscoveryRequest(serverMask: ServerMask): Buffer {
+    private buildSystemServiceDiscoveryRequest(serverMask: ServerMask): Buffer<ArrayBuffer> {
         this.writeUInt16(Utils.createServerMask(serverMask));
 
         return this.getWritten();
@@ -995,7 +1004,7 @@ export class BuffaloZdo extends Buffalo {
      * @see ClusterId.PARENT_ANNOUNCE
      * @param children The IEEE addresses of the children bound to the parent.
      */
-    private buildParentAnnounce(children: Eui64[]): Buffer {
+    private buildParentAnnounce(children: Eui64[]): Buffer<ArrayBuffer> {
         this.writeUInt8(children.length);
 
         for (const child of children) {
@@ -1024,7 +1033,7 @@ export class BuffaloZdo extends Buffalo {
         destination: Eui64,
         groupAddress: number,
         destinationEndpoint: number,
-    ): Buffer {
+    ): Buffer<ArrayBuffer> {
         this.writeIeeeAddr(source);
         this.writeUInt8(sourceEndpoint);
         this.writeUInt16(clusterId);
@@ -1066,7 +1075,7 @@ export class BuffaloZdo extends Buffalo {
         destination: Eui64,
         groupAddress: number,
         destinationEndpoint: number,
-    ): Buffer {
+    ): Buffer<ArrayBuffer> {
         this.writeIeeeAddr(source);
         this.writeUInt8(sourceEndpoint);
         this.writeUInt16(clusterId);
@@ -1092,7 +1101,7 @@ export class BuffaloZdo extends Buffalo {
     /**
      * @see ClusterId.CLEAR_ALL_BINDINGS_REQUEST
      */
-    private buildClearAllBindingsRequest(tlv: ClearAllBindingsReqEUI64TLV): Buffer {
+    private buildClearAllBindingsRequest(tlv: ClearAllBindingsReqEUI64TLV): Buffer<ArrayBuffer> {
         // ClearAllBindingsReqEUI64TLV: Local: ID: 0x00
         this.writeUInt8(0x00);
         this.writeUInt8(tlv.eui64List.length * EUI64_SIZE + 1 - 1);
@@ -1109,7 +1118,7 @@ export class BuffaloZdo extends Buffalo {
      * @see ClusterId.LQI_TABLE_REQUEST
      * @param startIndex Starting Index for the requested elements of the Neighbor Table.
      */
-    private buildLqiTableRequest(startIndex: number): Buffer {
+    private buildLqiTableRequest(startIndex: number): Buffer<ArrayBuffer> {
         this.writeUInt8(startIndex);
 
         return this.getWritten();
@@ -1119,7 +1128,7 @@ export class BuffaloZdo extends Buffalo {
      * @see ClusterId.ROUTING_TABLE_REQUEST
      * @param startIndex Starting Index for the requested elements of the Neighbor Table.
      */
-    private buildRoutingTableRequest(startIndex: number): Buffer {
+    private buildRoutingTableRequest(startIndex: number): Buffer<ArrayBuffer> {
         this.writeUInt8(startIndex);
 
         return this.getWritten();
@@ -1129,7 +1138,7 @@ export class BuffaloZdo extends Buffalo {
      * @see ClusterId.BINDING_TABLE_REQUEST
      * @param startIndex Starting Index for the requested elements of the Neighbor Table.
      */
-    private buildBindingTableRequest(startIndex: number): Buffer {
+    private buildBindingTableRequest(startIndex: number): Buffer<ArrayBuffer> {
         this.writeUInt8(startIndex);
 
         return this.getWritten();
@@ -1141,7 +1150,7 @@ export class BuffaloZdo extends Buffalo {
      *   the EUI64 of a child of the target device to remove that child.
      * @param leaveRequestFlags A bitmask of leave options. Include ::AND_REJOIN if the target is to rejoin the network immediately after leaving.
      */
-    private buildLeaveRequest(deviceAddress: Eui64, leaveRequestFlags: LeaveRequestFlags): Buffer {
+    private buildLeaveRequest(deviceAddress: Eui64, leaveRequestFlags: LeaveRequestFlags): Buffer<ArrayBuffer> {
         this.writeIeeeAddr(deviceAddress);
         this.writeUInt8(leaveRequestFlags);
 
@@ -1155,7 +1164,7 @@ export class BuffaloZdo extends Buffalo {
      *   This field SHALL always have a value of 1, indicating a request to change the Trust Center policy.
      *   If a frame is received with a value of 0, it shall be treated as having a value of 1.
      */
-    private buildPermitJoining(duration: number, authentication: number, tlvs: Tlv[]): Buffer {
+    private buildPermitJoining(duration: number, authentication: number, tlvs: Tlv[]): Buffer<ArrayBuffer> {
         this.writeUInt8(duration);
         this.writeUInt8(authentication);
         // BeaconAppendixEncapsulationGlobalTLV
@@ -1188,7 +1197,7 @@ export class BuffaloZdo extends Buffalo {
         count: number | undefined,
         nwkUpdateId: number | undefined,
         nwkManagerAddr: number | undefined,
-    ): Buffer {
+    ): Buffer<ArrayBuffer> {
         this.writeUInt32(ZSpecUtils.channelsToUInt32Mask(channels));
         this.writeUInt8(duration);
 
@@ -1213,21 +1222,21 @@ export class BuffaloZdo extends Buffalo {
     // /**
     //  * Shortcut for @see BuffaloZdo.buildNwkUpdateRequest
     //  */
-    // private buildScanChannelsRequest(scanChannels: number[], duration: number, count: number): Buffer {
+    // private buildScanChannelsRequest(scanChannels: number[], duration: number, count: number): Buffer<ArrayBuffer> {
     //     return this.buildNwkUpdateRequest(scanChannels, duration, count, undefined, undefined);
     // }
 
     // /**
     //  * Shortcut for @see BuffaloZdo.buildNwkUpdateRequest
     //  */
-    // private buildChannelChangeRequest(channel: number, nwkUpdateId: number | undefined): Buffer {
+    // private buildChannelChangeRequest(channel: number, nwkUpdateId: number | undefined): Buffer<ArrayBuffer> {
     //     return this.buildNwkUpdateRequest([channel], 0xfe, undefined, nwkUpdateId, undefined);
     // }
 
     // /**
     //  * Shortcut for @see BuffaloZdo.buildNwkUpdateRequest
     //  */
-    // private buildSetActiveChannelsAndNwkManagerIdRequest(channels: number[], nwkUpdateId: number | undefined, nwkManagerAddr: NodeId): Buffer {
+    // private buildSetActiveChannelsAndNwkManagerIdRequest(channels: number[], nwkUpdateId: number | undefined, nwkManagerAddr: NodeId): Buffer<ArrayBuffer> {
     //     return this.buildNwkUpdateRequest(channels, 0xff, undefined, nwkUpdateId, nwkManagerAddr);
     // }
 
@@ -1266,7 +1275,7 @@ export class BuffaloZdo extends Buffalo {
         nwkUpdateId: number | undefined,
         nwkManagerAddr: NodeId | undefined,
         configurationBitmask: number | undefined,
-    ): Buffer {
+    ): Buffer<ArrayBuffer> {
         this.writeUInt8(channelPages.length);
 
         for (const channelPage of channelPages) {
@@ -1297,14 +1306,14 @@ export class BuffaloZdo extends Buffalo {
     // /**
     //  * Shortcut for @see BuffaloZdo.buildNwkEnhancedUpdateRequest
     //  */
-    // private buildEnhancedScanChannelsRequest(channelPages: number[], duration: number, count: number, configurationBitmask: number | undefined): Buffer {
+    // private buildEnhancedScanChannelsRequest(channelPages: number[], duration: number, count: number, configurationBitmask: number | undefined): Buffer<ArrayBuffer> {
     //     return this.buildNwkEnhancedUpdateRequest(channelPages, duration, count, undefined, undefined, configurationBitmask);
     // }
 
     // /**
     //  * Shortcut for @see BuffaloZdo.buildNwkEnhancedUpdateRequest
     //  */
-    // private buildEnhancedChannelChangeRequest(channelPage: number, nwkUpdateId: number | undefined, configurationBitmask: number | undefined): Buffer {
+    // private buildEnhancedChannelChangeRequest(channelPage: number, nwkUpdateId: number | undefined, configurationBitmask: number | undefined): Buffer<ArrayBuffer> {
     //     return this.buildNwkEnhancedUpdateRequest([channelPage], 0xfe, undefined, nwkUpdateId, undefined, configurationBitmask);
     // }
 
@@ -1316,7 +1325,7 @@ export class BuffaloZdo extends Buffalo {
     //     nwkUpdateId: number | undefined,
     //     nwkManagerAddr: NodeId,
     //     configurationBitmask: number | undefined,
-    // ): Buffer {
+    // ): Buffer<ArrayBuffer> {
     //     return this.buildNwkEnhancedUpdateRequest(channelPages, 0xff, undefined, nwkUpdateId, nwkManagerAddr, configurationBitmask);
     // }
 
@@ -1324,7 +1333,7 @@ export class BuffaloZdo extends Buffalo {
      * @see ClusterId.NWK_IEEE_JOINING_LIST_REQUEST
      * @param startIndex The starting index into the receiving device’s nwkIeeeJoiningList that SHALL be sent back.
      */
-    private buildNwkIEEEJoiningListRequest(startIndex: number): Buffer {
+    private buildNwkIEEEJoiningListRequest(startIndex: number): Buffer<ArrayBuffer> {
         this.writeUInt8(startIndex);
 
         return this.getWritten();
@@ -1333,7 +1342,7 @@ export class BuffaloZdo extends Buffalo {
     /**
      * @see ClusterId.NWK_BEACON_SURVEY_REQUEST
      */
-    private buildNwkBeaconSurveyRequest(tlv: BeaconSurveyConfigurationTLV): Buffer {
+    private buildNwkBeaconSurveyRequest(tlv: BeaconSurveyConfigurationTLV): Buffer<ArrayBuffer> {
         // BeaconSurveyConfigurationTLV: Local: ID: 0x00
         this.writeUInt8(0x00);
         this.writeUInt8(2 + tlv.scanChannelList.length * 4 - 1);
@@ -1347,7 +1356,7 @@ export class BuffaloZdo extends Buffalo {
     /**
      * @see ClusterId.START_KEY_NEGOTIATION_REQUEST
      */
-    private buildStartKeyNegotiationRequest(tlv: Curve25519PublicPointTLV): Buffer {
+    private buildStartKeyNegotiationRequest(tlv: Curve25519PublicPointTLV): Buffer<ArrayBuffer> {
         // Curve25519PublicPointTLV: Local: ID: 0x00
         this.writeUInt8(0x00);
         this.writeUInt8(EUI64_SIZE + CURVE_PUBLIC_POINT_SIZE - 1);
@@ -1360,7 +1369,7 @@ export class BuffaloZdo extends Buffalo {
     /**
      * @see ClusterId.RETRIEVE_AUTHENTICATION_TOKEN_REQUEST
      */
-    private buildRetrieveAuthenticationTokenRequest(tlv: AuthenticationTokenIdTLV): Buffer {
+    private buildRetrieveAuthenticationTokenRequest(tlv: AuthenticationTokenIdTLV): Buffer<ArrayBuffer> {
         // AuthenticationTokenIdTLV: Local: ID: 0x00
         this.writeUInt8(0x00);
         this.writeUInt8(1 - 1);
@@ -1372,7 +1381,7 @@ export class BuffaloZdo extends Buffalo {
     /**
      * @see ClusterId.GET_AUTHENTICATION_LEVEL_REQUEST
      */
-    private buildGetAuthenticationLevelRequest(tlv: TargetIEEEAddressTLV): Buffer {
+    private buildGetAuthenticationLevelRequest(tlv: TargetIEEEAddressTLV): Buffer<ArrayBuffer> {
         // TargetIEEEAddressTLV: Local: ID: 0x00
         this.writeUInt8(0x00);
         this.writeUInt8(EUI64_SIZE - 1);
@@ -1388,7 +1397,7 @@ export class BuffaloZdo extends Buffalo {
         nextPanIdChange: NextPanIdChangeGlobalTLV,
         nextChannelChange: NextChannelChangeGlobalTLV,
         configurationParameters: ConfigurationParametersGlobalTLV,
-    ): Buffer {
+    ): Buffer<ArrayBuffer> {
         this.writeGlobalTLV({tagId: GlobalTLV.NEXT_PAN_ID_CHANGE, length: PAN_ID_SIZE, tlv: nextPanIdChange});
         this.writeGlobalTLV({tagId: GlobalTLV.NEXT_CHANNEL_CHANGE, length: 4, tlv: nextChannelChange});
         this.writeGlobalTLV({tagId: GlobalTLV.CONFIGURATION_PARAMETERS, length: 2, tlv: configurationParameters});
@@ -1401,7 +1410,7 @@ export class BuffaloZdo extends Buffalo {
      * @param tlvIds The IDs of each TLV that are being requested.
      *   Maximum number dependent on the underlying maximum size of the message as allowed by fragmentation.
      */
-    private buildGetConfigurationRequest(tlvIds: number[]): Buffer {
+    private buildGetConfigurationRequest(tlvIds: number[]): Buffer<ArrayBuffer> {
         this.writeUInt8(tlvIds.length);
 
         for (const tlvId of tlvIds) {
@@ -1417,7 +1426,7 @@ export class BuffaloZdo extends Buffalo {
     private buildStartKeyUpdateRequest(
         selectedKeyNegotiationMethod: SelectedKeyNegotiationMethodTLV,
         fragmentationParameters: FragmentationParametersGlobalTLV,
-    ): Buffer {
+    ): Buffer<ArrayBuffer> {
         // SelectedKeyNegotiationMethodTLV: Local: ID: 0x00
         this.writeUInt8(0x00);
         this.writeUInt8(EUI64_SIZE + 2 - 1);
@@ -1445,7 +1454,7 @@ export class BuffaloZdo extends Buffalo {
     /**
      * @see ClusterId.DECOMMISSION_REQUEST
      */
-    private buildDecommissionRequest(tlv: DeviceEUI64ListTLV): Buffer {
+    private buildDecommissionRequest(tlv: DeviceEUI64ListTLV): Buffer<ArrayBuffer> {
         // DeviceEUI64ListTLV: Local: ID: 0x00
         this.writeUInt8(0x00);
         this.writeUInt8(tlv.eui64List.length * EUI64_SIZE + 1 - 1);
@@ -1461,7 +1470,7 @@ export class BuffaloZdo extends Buffalo {
     /**
      * @see ClusterId.CHALLENGE_REQUEST
      */
-    private buildChallengeRequest(tlv: APSFrameCounterChallengeTLV): Buffer {
+    private buildChallengeRequest(tlv: APSFrameCounterChallengeTLV): Buffer<ArrayBuffer> {
         // APSFrameCounterChallengeTLV: Local: ID: 0x00
         this.writeUInt8(0x00);
         this.writeUInt8(EUI64_SIZE + CHALLENGE_VALUE_SIZE - 1);
@@ -1479,7 +1488,7 @@ export class BuffaloZdo extends Buffalo {
     public static readResponse<K extends number>(
         hasZdoMessageOverhead: boolean,
         clusterId: K extends keyof ResponseMap ? keyof ResponseMap : K,
-        buffer: Buffer,
+        buffer: Buffer<ArrayBuffer>,
     ): ResponseMap[K] {
         const buffalo = new BuffaloZdo(buffer, hasZdoMessageOverhead ? ZDO_MESSAGE_OVERHEAD : 0); // set pos to skip `transaction sequence number`
 

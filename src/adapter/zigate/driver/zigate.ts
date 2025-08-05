@@ -44,7 +44,7 @@ type ZdoWaitressPayload = {
         sourceAddress: number | string;
         destinationAddressMode: number;
         destinationAddress: number | string;
-        payload: Buffer;
+        payload: Buffer<ArrayBuffer>;
     };
     zdo: GenericZdoResponse;
 };
@@ -162,7 +162,7 @@ export default class ZiGate extends EventEmitter<ZiGateEventMap> {
         });
     }
 
-    public async requestZdo(clusterId: Zdo.ClusterId, payload: Buffer): Promise<boolean> {
+    public async requestZdo(clusterId: Zdo.ClusterId, payload: Buffer<ArrayBuffer>): Promise<boolean> {
         return await this.queue.execute(async () => {
             const commandCode = ZDO_REQ_CLUSTER_ID_TO_ZIGATE_COMMAND_ID[clusterId];
             assert(commandCode !== undefined, `ZDO cluster ID '${clusterId}' not supported.`);
@@ -305,7 +305,7 @@ export default class ZiGate extends EventEmitter<ZiGateEventMap> {
         this.emit("close");
     }
 
-    private onSerialData(buffer: Buffer): void {
+    private onSerialData(buffer: Buffer<ArrayBuffer>): void {
         try {
             // logger.debug(() => `--- parseNext ${JSON.stringify(buffer)}`, NS);
 

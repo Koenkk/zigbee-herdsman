@@ -109,7 +109,7 @@ export class ZpiObject<T extends ZpiObjectType = "Response"> {
         return new ZpiObject(frame.type, frame.subsystem, cmd, payload, undefined);
     }
 
-    private static readParameters(buffer: Buffer, parameters: MtParameter[]): ZpiObjectPayload {
+    private static readParameters(buffer: Buffer<ArrayBuffer>, parameters: MtParameter[]): ZpiObjectPayload {
         const buffalo = new BuffaloZnp(buffer);
         const result: ZpiObjectPayload = {};
 

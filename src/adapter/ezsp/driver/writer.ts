@@ -9,7 +9,7 @@ import {crc16ccitt} from "./utils";
 const NS = "zh:ezsp:uart";
 
 export class Writer extends stream.Readable {
-    public writeBuffer(buffer: Buffer): void {
+    public writeBuffer(buffer: Buffer<ArrayBuffer>): void {
         logger.debug(`--> [${buffer.toString("hex")}]`, NS);
         this.push(buffer);
     }
@@ -34,7 +34,7 @@ export class Writer extends stream.Readable {
         this.writeBuffer(rstFrame);
     }
 
-    public sendData(data: Buffer, seq: number, rxmit: number, ackSeq: number): void {
+    public sendData(data: Buffer<ArrayBuffer>, seq: number, rxmit: number, ackSeq: number): void {
         /* Construct a data frame */
         const control = (seq << 4) | (rxmit << 3) | ackSeq;
         const dataFrame = this.makeFrame(control, data);
@@ -53,7 +53,7 @@ export class Writer extends stream.Readable {
         }
     }
 
-    private makeFrame(control: number, data?: Buffer): Buffer {
+    private makeFrame(control: number, data?: Buffer<ArrayBuffer>): Buffer<ArrayBuffer> {
         /* Construct a frame */
         const frm = [control, ...(data || [])];
         const crc = crc16ccitt(frm, 65535);

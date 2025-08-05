@@ -71,7 +71,7 @@ export class ZclFrame {
         return new ZclFrame(header, payload, cluster, command);
     }
 
-    public toBuffer(): Buffer {
+    public toBuffer(): Buffer<ArrayBuffer> {
         const buffalo = new BuffaloZcl(Buffer.alloc(250));
         this.header.write(buffalo);
 
@@ -143,7 +143,12 @@ export class ZclFrame {
     /**
      * Parsing
      */
-    public static fromBuffer(clusterID: number, header: ZclHeader | undefined, buffer: Buffer, customClusters: CustomClusters): ZclFrame {
+    public static fromBuffer(
+        clusterID: number,
+        header: ZclHeader | undefined,
+        buffer: Buffer<ArrayBuffer>,
+        customClusters: CustomClusters,
+    ): ZclFrame {
         if (!header) {
             throw new Error("Invalid ZclHeader.");
         }
