@@ -68,18 +68,18 @@ interface Gpd {
     deviceID: number;
     options: number;
     extendedOptions: number;
-    securityKey: Buffer;
+    securityKey: Buffer<ArrayBuffer>;
     keyMic: number;
     outgoingCounter: number;
     applicationInfo: number;
     manufacturerID: number;
     modelID: number;
     numGpdCommands: number;
-    gpdCommandIdList: Buffer;
+    gpdCommandIdList: Buffer<ArrayBuffer>;
     numServerClusters: number;
     numClientClusters: number;
-    gpdServerClusters: Buffer;
-    gpdClientClusters: Buffer;
+    gpdServerClusters: Buffer<ArrayBuffer>;
+    gpdClientClusters: Buffer<ArrayBuffer>;
     genericSwitchConfig: number;
     currentContactStatus: number;
 }
@@ -101,7 +101,7 @@ export interface GPDCommissioningReply {
     /** expected valid if corresponding `options` bits set */
     panID?: number;
     /** expected valid if corresponding `options` bits set */
-    securityKey?: Buffer;
+    securityKey?: Buffer<ArrayBuffer>;
     /** expected valid if corresponding `options` bits set */
     keyMic?: number;
     /** expected valid if corresponding `options` bits set */
@@ -110,7 +110,7 @@ export interface GPDCommissioningReply {
 
 interface GPDCustomReply {
     commandID: number;
-    buffer: Buffer;
+    buffer: Buffer<ArrayBuffer>;
 }
 
 interface GPDAttributeReport {
@@ -122,7 +122,7 @@ interface GPDAttributeReport {
 interface TuyaDataPointValue {
     dp: number;
     datatype: number;
-    data: Buffer;
+    data: Buffer<ArrayBuffer>;
 }
 
 interface MiboxerZone {
@@ -137,7 +137,7 @@ export class BuffaloZcl extends Buffalo {
         this.writeBuffer(value, value.length);
     }
 
-    private readOctetStr(): Buffer {
+    private readOctetStr(): Buffer<ArrayBuffer> {
         const length = this.readUInt8();
         return length < 0xff ? this.readBuffer(length) : Buffer.from([]); // non-value
     }
@@ -165,7 +165,7 @@ export class BuffaloZcl extends Buffalo {
         this.writeBuffer(value, value.length);
     }
 
-    private readLongOctetStr(): Buffer {
+    private readLongOctetStr(): Buffer<ArrayBuffer> {
         const length = this.readUInt16();
         return length < 0xffff ? this.readBuffer(length) : Buffer.from([]); // non-value
     }
@@ -427,7 +427,9 @@ export class BuffaloZcl extends Buffalo {
         // 0xf6: ZCL Tunneling
     }
 
-    private readGpdFrame(options: BuffaloZclOptions): Gpd | GPDChannelRequest | GPDAttributeReport | {raw: Buffer} | Record<string, never> {
+    private readGpdFrame(
+        options: BuffaloZclOptions,
+    ): Gpd | GPDChannelRequest | GPDAttributeReport | {raw: Buffer<ArrayBuffer>} | Record<string, never> {
         // ensure offset by options.payload.payloadSize (if any) at end of parsing to not cause issues with spec changes (until supported)
         const startPosition = this.position;
 

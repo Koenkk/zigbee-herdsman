@@ -557,7 +557,7 @@ export type ChallengeResponse = TLVs;
 export type ManufacturerSpecificGlobalTLV = {
     /** 2-byte */
     zigbeeManufacturerId: number;
-    additionalData: Buffer;
+    additionalData: Buffer<ArrayBuffer>;
 };
 
 export type SupportedKeyNegotiationMethodsGlobalTLV = {
@@ -608,7 +608,7 @@ export type NextChannelChangeGlobalTLV = {
 
 export type SymmetricPassphraseGlobalTLV = {
     /** 16-byte 128-bit */
-    passphrase: Buffer;
+    passphrase: Buffer<ArrayBuffer>;
 };
 
 export type RouterInformationGlobalTLV = {
@@ -688,7 +688,7 @@ export type ConfigurationParametersGlobalTLV = {
 };
 
 export type DeviceCapabilityExtensionGlobalTLV = {
-    data: Buffer;
+    data: Buffer<ArrayBuffer>;
 };
 
 //-- Local TLVs
@@ -720,7 +720,7 @@ export type Curve25519PublicPointTLV = {
     /** This indicates the EUI64 of the device that generated the public point. */
     eui64: Eui64;
     /** The 32-byte Curve public point. */
-    publicPoint: Buffer;
+    publicPoint: Buffer<ArrayBuffer>;
 };
 
 export type AuthenticationTokenIdTLV = {
@@ -758,14 +758,14 @@ export type APSFrameCounterChallengeTLV = {
      * A randomly generated 64-bit value sent to a device to prove they have the link key.
      * This allows the initiator to detect replayed challenge response frames.
      */
-    challengeValue: Buffer;
+    challengeValue: Buffer<ArrayBuffer>;
 };
 
 export type APSFrameCounterResponseTLV = {
     /** The EUI64 of the device that is responding to the Security_Challenge_req with its own challenge. */
     responderEui64: Eui64;
     /** A randomly generated 64-bit value previously received in the APSFrameCounterChallengeTLV. */
-    receivedChallengeValue: Buffer;
+    receivedChallengeValue: Buffer<ArrayBuffer>;
     /** The current outgoing APS security frame counter held by the Responder EUI64 device. */
     apsFrameCounter: number;
     /**
@@ -778,7 +778,7 @@ export type APSFrameCounterResponseTLV = {
      * The AES-128-CCM 64-bit MIC (security level 2) on all previous fields of this TLV,
      * excluding the challenge security frame counter, including Tag ID and length fields.
      */
-    mic: Buffer;
+    mic: Buffer<ArrayBuffer>;
 };
 
 export type BeaconSurveyResultsTLV = {

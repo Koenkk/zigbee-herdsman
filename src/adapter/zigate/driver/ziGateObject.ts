@@ -69,7 +69,7 @@ class ZiGateObject {
         return ZiGateObject.fromBuffer(code, frame.msgPayloadBytes, frame);
     }
 
-    public static fromBuffer(code: number, buffer: Buffer, frame: ZiGateFrame): ZiGateObject {
+    public static fromBuffer(code: number, buffer: Buffer<ArrayBuffer>, frame: ZiGateFrame): ZiGateObject {
         const msg = ZiGateMessage[code];
 
         if (!msg) {
@@ -86,7 +86,7 @@ class ZiGateObject {
         return new ZiGateObject(code, payload, parameters, frame);
     }
 
-    private static readParameters(buffer: Buffer, parameters: ZiGateParameter[]): ZiGateObjectPayload {
+    private static readParameters(buffer: Buffer<ArrayBuffer>, parameters: ZiGateParameter[]): ZiGateObjectPayload {
         const buffalo = new BuffaloZiGate(buffer);
         const result: ZiGateObjectPayload = {};
 
@@ -132,7 +132,7 @@ class ZiGateObject {
         return frame;
     }
 
-    private createPayloadBuffer(): Buffer {
+    private createPayloadBuffer(): Buffer<ArrayBuffer> {
         const buffalo = new BuffaloZiGate(Buffer.alloc(256)); // hardcode @todo
 
         for (const parameter of this._parameters) {

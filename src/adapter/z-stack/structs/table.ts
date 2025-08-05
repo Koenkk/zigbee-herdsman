@@ -5,7 +5,7 @@ import type {BuiltStruct, StructFactorySignature, StructMemoryAlignment} from ".
 
 type TableBuildOmitKeys = "struct" | "header" | "occupancy" | "load" | "build" | "inlineHeader";
 export type BuiltTable<R extends BuiltStruct, T = Table<R>> = Omit<T, TableBuildOmitKeys>;
-export type TableFactorySignature<R extends BuiltStruct, T = Table<R>> = (data?: Buffer) => T;
+export type TableFactorySignature<R extends BuiltStruct, T = Table<R>> = (data?: Buffer<ArrayBuffer>) => T;
 
 /**
  * Table structure wraps `Struct`-based entries for tables present within ZNP NV memory.
@@ -96,7 +96,7 @@ export class Table<R extends BuiltStruct> implements SerializableMemoryObject {
      *
      * @param alignment Memory alignment to use for export.
      */
-    public serialize(alignment: StructMemoryAlignment = "unaligned"): Buffer {
+    public serialize(alignment: StructMemoryAlignment = "unaligned"): Buffer<ArrayBuffer> {
         const entryLength = this.emptyEntry.getLength(alignment);
         const output = Buffer.alloc((this.hasInlineLengthHeader ? 2 : 0) + this.capacity * entryLength, 0x00);
         let offset = 0;
@@ -149,7 +149,7 @@ export class Table<R extends BuiltStruct> implements SerializableMemoryObject {
      * @param data Buffer to populate table from.
      * @param alignment Memory alignment of the source platform.
      */
-    public build(data: Buffer | Buffer[], alignment?: StructMemoryAlignment): BuiltTable<R>;
+    public build(data: Buffer<ArrayBuffer> | Buffer<ArrayBuffer>[], alignment?: StructMemoryAlignment): BuiltTable<R>;
 
     /**
      * Creates an empty table with set capacity.
@@ -158,7 +158,10 @@ export class Table<R extends BuiltStruct> implements SerializableMemoryObject {
      */
     public build(capacity: number): BuiltTable<R>;
 
-    public build(dataOrCapacity: Buffer | Buffer[] | number, alignment: StructMemoryAlignment = "unaligned"): BuiltTable<R> {
+    public build(
+        dataOrCapacity: Buffer<ArrayBuffer> | Buffer<ArrayBuffer>[] | number,
+        alignment: StructMemoryAlignment = "unaligned",
+    ): BuiltTable<R> {
         /* v8 ignore start */
         if (!this.entryStructFactory) {
             throw new Error("Table requires an entry struct factory.");

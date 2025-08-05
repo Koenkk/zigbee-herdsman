@@ -5,10 +5,10 @@ import type {StructMemoryAlignment} from "./struct";
  * are structs and tables.
  */
 export interface SerializableMemoryObject {
-    serialize(alignment?: StructMemoryAlignment): Buffer;
+    serialize(alignment?: StructMemoryAlignment): Buffer<ArrayBuffer>;
 }
 
 /**
  * Signature for factory returning a memory struct or a table.
  */
-export type MemoryObjectFactory<T> = (data?: Buffer | Buffer[], alignment?: StructMemoryAlignment) => T;
+export type MemoryObjectFactory<T> = (data?: Buffer<ArrayBuffer> | Buffer<ArrayBuffer>[], alignment?: StructMemoryAlignment) => T;

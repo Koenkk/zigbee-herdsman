@@ -22,9 +22,9 @@ export class Frame {
      * Type of the Frame as determined by its control byte.
      */
     public readonly type: FrameType;
-    public readonly buffer: Buffer;
+    public readonly buffer: Buffer<ArrayBuffer>;
 
-    public constructor(buffer: Buffer) {
+    public constructor(buffer: Buffer<ArrayBuffer>) {
         this.buffer = buffer;
 
         const ctrlByte = this.buffer[0];
@@ -50,7 +50,7 @@ export class Frame {
         return this.buffer[0];
     }
 
-    public static fromBuffer(buffer: Buffer): Frame {
+    public static fromBuffer(buffer: Buffer<ArrayBuffer>): Frame {
         return new Frame(buffer);
     }
 
@@ -58,7 +58,7 @@ export class Frame {
      * XOR s with a pseudo-random sequence for transmission.
      * Used only in data frames.
      */
-    public static makeRandomizedBuffer(buffer: Buffer): Buffer {
+    public static makeRandomizedBuffer(buffer: Buffer<ArrayBuffer>): Buffer<ArrayBuffer> {
         let rand = RANDOMIZE_START;
         const out = Buffer.alloc(buffer.length);
         let outIdx = 0;

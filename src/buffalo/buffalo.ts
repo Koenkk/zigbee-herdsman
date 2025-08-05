@@ -3,9 +3,9 @@ import type {Eui64} from "../zspec/tstypes";
 
 export class Buffalo {
     protected position: number;
-    protected buffer: Buffer;
+    protected buffer: Buffer<ArrayBuffer>;
 
-    public constructor(buffer: Buffer, position = 0) {
+    public constructor(buffer: Buffer<ArrayBuffer>, position = 0) {
         this.position = position;
         this.buffer = buffer;
     }
@@ -14,11 +14,11 @@ export class Buffalo {
         return this.position;
     }
 
-    public getBuffer(): Buffer {
+    public getBuffer(): Buffer<ArrayBuffer> {
         return this.buffer;
     }
 
-    public getWritten(): Buffer {
+    public getWritten(): Buffer<ArrayBuffer> {
         return this.buffer.subarray(0, this.position);
     }
 
@@ -242,7 +242,7 @@ export class Buffalo {
         return ZSpecUtils.eui64LEBufferToHex(this.readBuffer(8));
     }
 
-    public writeBuffer(values: Buffer | number[], length: number): void {
+    public writeBuffer(values: Buffer<ArrayBuffer> | number[], length: number): void {
         if (values.length !== length) {
             throw new Error(`Length of values: '${values}' is not consitent with expected length '${length}'`);
         }
@@ -254,7 +254,7 @@ export class Buffalo {
         this.position += values.copy(this.buffer, this.position);
     }
 
-    public readBuffer(length: number): Buffer {
+    public readBuffer(length: number): Buffer<ArrayBuffer> {
         const value = this.buffer.subarray(this.position, this.position + length);
         this.position += length;
         return value;

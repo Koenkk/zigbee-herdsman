@@ -190,11 +190,17 @@ export interface EmberEzspEventMap {
     /** An error was detected that requires resetting the NCP. */
     ncpNeedsResetAndInit: [status: EzspStatus];
     /** @see Ezsp.ezspIncomingMessageHandler */
-    zdoResponse: [apsFrame: EmberApsFrame, sender: NodeId, messageContents: Buffer];
+    zdoResponse: [apsFrame: EmberApsFrame, sender: NodeId, messageContents: Buffer<ArrayBuffer>];
     /** ezspIncomingMessageHandler */
-    incomingMessage: [type: EmberIncomingMessageType, apsFrame: EmberApsFrame, lastHopLqi: number, sender: NodeId, messageContents: Buffer];
+    incomingMessage: [
+        type: EmberIncomingMessageType,
+        apsFrame: EmberApsFrame,
+        lastHopLqi: number,
+        sender: NodeId,
+        messageContents: Buffer<ArrayBuffer>,
+    ];
     /** @see Ezsp.ezspMacFilterMatchMessageHandler */
-    touchlinkMessage: [sourcePanId: PanId, sourceAddress: Eui64, groupId: number, lastHopLqi: number, messageContents: Buffer];
+    touchlinkMessage: [sourcePanId: PanId, sourceAddress: Eui64, groupId: number, lastHopLqi: number, messageContents: Buffer<ArrayBuffer>];
     /** @see Ezsp.ezspStackStatusHandler */
     stackStatus: [status: SLStatus];
     /** @see Ezsp.ezspTrustCenterJoinHandler */
@@ -225,12 +231,12 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
     public readonly ash: UartAsh;
     private readonly buffalo: EzspBuffalo;
     /** The contents of the current EZSP frame. CAREFUL using this guy, it's pre-allocated. */
-    private readonly frameContents: Buffer;
+    private readonly frameContents: Buffer<ArrayBuffer>;
     /** The total Length of the incoming frame */
     private frameLength: number;
     private readonly callbackBuffalo: EzspBuffalo;
     /** The contents of the current EZSP frame. CAREFUL using this guy, it's pre-allocated. */
-    private readonly callbackFrameContents: Buffer;
+    private readonly callbackFrameContents: Buffer<ArrayBuffer>;
     /** The total Length of the incoming frame */
     private callbackFrameLength: number;
 
@@ -1128,7 +1134,7 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
         type: EmberOutgoingMessageType,
         indexOrDestination: number,
         apsFrame: EmberApsFrame,
-        message: Buffer,
+        message: Buffer<ArrayBuffer>,
         alias: NodeId,
         sequence: number,
     ): Promise<[SLStatus, messageTag: number]> {
@@ -1578,7 +1584,7 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
         overrideReadOnlyAndDataType: boolean,
         justTest: boolean,
         dataType: number,
-        data: Buffer,
+        data: Buffer<ArrayBuffer>,
     ): Promise<SLStatus> {
         const sendBuffalo = this.startCommand(EzspFrameID.WRITE_ATTRIBUTE);
         sendBuffalo.writeUInt8(endpoint);
@@ -1982,7 +1988,7 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
      * @param data uint8_t * The data to be echoed back.
      * @returns uint8_t * The echo of the data.
      */
-    async ezspEcho(data: Buffer): Promise<Buffer> {
+    async ezspEcho(data: Buffer<ArrayBuffer>): Promise<Buffer<ArrayBuffer>> {
         const sendBuffalo = this.startCommand(EzspFrameID.ECHO);
         sendBuffalo.writePayload(data);
 
@@ -2142,7 +2148,7 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
      * @param tokenData uint8_t * The manufacturing token data.
      * @returns An SLStatus value indicating success or the reason for failure.
      */
-    async ezspSetMfgToken(tokenId: EzspMfgTokenId, tokenData: Buffer): Promise<SLStatus> {
+    async ezspSetMfgToken(tokenId: EzspMfgTokenId, tokenData: Buffer<ArrayBuffer>): Promise<SLStatus> {
         const sendBuffalo = this.startCommand(EzspFrameID.SET_MFG_TOKEN);
         sendBuffalo.writeUInt8(tokenId);
         sendBuffalo.writePayload(tokenData);
@@ -2257,7 +2263,7 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
      * @param messageContents uint8_t * The binary message.
      * @returns An SLStatus value indicating success or the reason for failure.
      */
-    async ezspDebugWrite(binaryMessage: boolean, messageContents: Buffer): Promise<SLStatus> {
+    async ezspDebugWrite(binaryMessage: boolean, messageContents: Buffer<ArrayBuffer>): Promise<SLStatus> {
         const sendBuffalo = this.startCommand(EzspFrameID.DEBUG_WRITE);
         sendBuffalo.writeUInt8(binaryMessage ? 1 : 0);
         sendBuffalo.writePayload(messageContents);
@@ -2400,7 +2406,7 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
      * @returns The status returned by the custom command.
      * @returns uint8_t *The response.
      */
-    async ezspCustomFrame(payload: Buffer, replyLength: number): Promise<[SLStatus, outReply: Buffer]> {
+    async ezspCustomFrame(payload: Buffer<ArrayBuffer>, replyLength: number): Promise<[SLStatus, outReply: Buffer<ArrayBuffer>]> {
         const sendBuffalo = this.startCommand(EzspFrameID.CUSTOM_FRAME);
         sendBuffalo.writePayload(payload);
 
@@ -2425,7 +2431,7 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
      * A callback indicating a custom EZSP message has been received.
      * @param payload uint8_t * The payload of the custom frame.
      */
-    ezspCustomFrameHandler(payload: Buffer): void {
+    ezspCustomFrameHandler(payload: Buffer<ArrayBuffer>): void {
         logger.debug(`ezspCustomFrameHandler: payload=${payload.toString("hex")}`, NS);
     }
 
@@ -4842,7 +4848,7 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
         indexOrDestination: NodeId,
         apsFrame: EmberApsFrame,
         messageTag: number,
-        messageContents: Buffer,
+        messageContents: Buffer<ArrayBuffer>,
     ): Promise<[SLStatus, apsSequence: number]> {
         const sendBuffalo = this.startCommand(EzspFrameID.SEND_UNICAST);
         sendBuffalo.writeUInt8(type);
@@ -4891,7 +4897,7 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
         apsFrame: EmberApsFrame,
         radius: number,
         messageTag: number,
-        messageContents: Buffer,
+        messageContents: Buffer<ArrayBuffer>,
     ): Promise<[SLStatus, apsSequence: number]> {
         const sendBuffalo = this.startCommand(EzspFrameID.SEND_BROADCAST);
 
@@ -4977,7 +4983,7 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
         alias: NodeId,
         nwkSequence: number,
         messageTag: number,
-        messageContents: Buffer,
+        messageContents: Buffer<ArrayBuffer>,
     ): Promise<[SLStatus, apsSequence: number]> {
         const sendBuffalo = this.startCommand(EzspFrameID.SEND_MULTICAST);
         sendBuffalo.writeEmberApsFrame(apsFrame);
@@ -5028,7 +5034,7 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
      * - SLStatus.BUSY - Either no route or insufficient resources available.
      * - SLStatus.OK - The reply was successfully queued for transmission.
      */
-    async ezspSendReply(sender: NodeId, apsFrame: EmberApsFrame, messageContents: Buffer): Promise<SLStatus> {
+    async ezspSendReply(sender: NodeId, apsFrame: EmberApsFrame, messageContents: Buffer<ArrayBuffer>): Promise<SLStatus> {
         const sendBuffalo = this.startCommand(EzspFrameID.SEND_REPLY);
         sendBuffalo.writeUInt16(sender);
         sendBuffalo.writeEmberApsFrame(apsFrame);
@@ -5065,7 +5071,7 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
         indexOrDestination: number,
         apsFrame: EmberApsFrame,
         messageTag: number,
-        messageContents?: Buffer,
+        messageContents?: Buffer<ArrayBuffer>,
     ): void {
         logger.debug(
             () =>
@@ -5331,7 +5337,7 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
         type: EmberIncomingMessageType,
         apsFrame: EmberApsFrame,
         packetInfo: EmberRxPacketInfo,
-        messageContents: Buffer,
+        messageContents: Buffer<ArrayBuffer>,
     ): void {
         logger.debug(
             () =>
@@ -5825,7 +5831,7 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
      * @param useCca Should we enable CCA or not.
      * @returns An SLStatus value indicating success or the reason for failure.
      */
-    async ezspSendRawMessage(messageContents: Buffer, priority: EmberTransmitPriority, useCca: boolean): Promise<SLStatus> {
+    async ezspSendRawMessage(messageContents: Buffer<ArrayBuffer>, priority: EmberTransmitPriority, useCca: boolean): Promise<SLStatus> {
         const sendBuffalo = this.startCommand(EzspFrameID.SEND_RAW_MESSAGE);
         sendBuffalo.writePayload(messageContents);
         sendBuffalo.writeUInt8(priority);
@@ -5850,7 +5856,11 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
      * @param packetInfo Information about the incoming packet.
      * @param messageContents uint8_t * The raw message that was received.
      */
-    ezspMacPassthroughMessageHandler(messageType: EmberMacPassthroughType, packetInfo: EmberRxPacketInfo, messageContents: Buffer): void {
+    ezspMacPassthroughMessageHandler(
+        messageType: EmberMacPassthroughType,
+        packetInfo: EmberRxPacketInfo,
+        messageContents: Buffer<ArrayBuffer>,
+    ): void {
         logger.debug(
             () =>
                 `ezspMacPassthroughMessageHandler: messageType=${messageType} packetInfo=${JSON.stringify(packetInfo)} messageContents=${messageContents.toString("hex")}`,
@@ -5871,7 +5881,7 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
         filterIndexMatch: number,
         legacyPassthroughType: EmberMacPassthroughType,
         packetInfo: EmberRxPacketInfo,
-        messageContents: Buffer,
+        messageContents: Buffer<ArrayBuffer>,
     ): void {
         logger.debug(
             () =>
@@ -5970,7 +5980,7 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
      * - SLStatus.OK if the transmission was successful,
      * - SLStatus.ZIGBEE_DELIVERY_FAILED if not
      */
-    ezspRawTransmitCompleteHandler(messageContents: Buffer, status: SLStatus): void {
+    ezspRawTransmitCompleteHandler(messageContents: Buffer<ArrayBuffer>, status: SLStatus): void {
         logger.debug(`ezspRawTransmitCompleteHandler: messageContents=${messageContents.toString("hex")} status=${SLStatus[status]}`, NS);
     }
 
@@ -6902,10 +6912,10 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
     async ezspApsCryptMessage(
         encrypt: boolean,
         lengthCombinedArg: number,
-        message: Buffer,
+        message: Buffer<ArrayBuffer>,
         apsHeaderEndIndex: number,
         remoteEui64: Eui64,
-    ): Promise<[SLStatus, cryptedMessage: Buffer]> {
+    ): Promise<[SLStatus, cryptedMessage: Buffer<ArrayBuffer>]> {
         if (this.version < 0x0e) {
             throw new EzspError(EzspStatus.ERROR_INVALID_FRAME_ID);
         }
@@ -7020,7 +7030,7 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
     async ezspAesMmoHash(
         context: EmberAesMmoHashContext,
         finalize: boolean,
-        data: Buffer,
+        data: Buffer<ArrayBuffer>,
     ): Promise<[SLStatus, returnContext: EmberAesMmoHashContext]> {
         const sendBuffalo = this.startCommand(EzspFrameID.AES_MMO_HASH);
         sendBuffalo.writeEmberAesMmoHashContext(context);
@@ -7347,7 +7357,7 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
      * @param messageLength uint8_t The length of the messageContents parameter in bytes.
      * @param messageContents uint8_t *The message and attached which includes the original message and the appended signature.
      */
-    ezspDsaSignHandler(status: SLStatus, messageContents: Buffer): void {
+    ezspDsaSignHandler(status: SLStatus, messageContents: Buffer<ArrayBuffer>): void {
         logger.debug(`ezspDsaSignHandler: status=${SLStatus[status]} messageContents=${messageContents.toString("hex")}`, NS);
     }
 
@@ -7599,7 +7609,7 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
      * @param packetContents uint8_t * The packet to send. The last two bytes will be replaced with the 16-bit CRC.
      * @returns An SLStatus value indicating success or the reason for failure.
      */
-    async mfglibInternalSendPacket(packetContents: Buffer): Promise<SLStatus> {
+    async mfglibInternalSendPacket(packetContents: Buffer<ArrayBuffer>): Promise<SLStatus> {
         const sendBuffalo = this.startCommand(EzspFrameID.MFGLIB_INTERNAL_SEND_PACKET);
         sendBuffalo.writePayload(packetContents);
 
@@ -7705,7 +7715,7 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
      * @param packetContents uint8_t * The received packet (last 2 bytes are not FCS / CRC and may be discarded)
      *        Length will be greater than 3 and less than 123.
      */
-    ezspMfglibRxHandler(linkQuality: number, rssi: number, packetContents: Buffer): void {
+    ezspMfglibRxHandler(linkQuality: number, rssi: number, packetContents: Buffer<ArrayBuffer>): void {
         logger.debug(`ezspMfglibRxHandler: linkQuality=${linkQuality} rssi=${rssi} packetContents=${packetContents.toString("hex")}`, NS);
     }
 
@@ -7745,7 +7755,7 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
      * @param messageContents uint8_t * The multicast message.
      * @returns An SLStatus value indicating success or the reason for failure.
      */
-    async ezspSendBootloadMessage(broadcast: boolean, destEui64: Eui64, messageContents: Buffer): Promise<SLStatus> {
+    async ezspSendBootloadMessage(broadcast: boolean, destEui64: Eui64, messageContents: Buffer<ArrayBuffer>): Promise<SLStatus> {
         const sendBuffalo = this.startCommand(EzspFrameID.SEND_BOOTLOAD_MESSAGE);
         sendBuffalo.writeUInt8(broadcast ? 1 : 0);
         sendBuffalo.writeIeeeAddr(destEui64);
@@ -7800,7 +7810,7 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
      * @param packetInfo Information about the incoming packet.
      * @param messageContents uint8_t *The bootload message that was sent.
      */
-    ezspIncomingBootloadMessageHandler(longId: Eui64, packetInfo: EmberRxPacketInfo, messageContents: Buffer): void {
+    ezspIncomingBootloadMessageHandler(longId: Eui64, packetInfo: EmberRxPacketInfo, messageContents: Buffer<ArrayBuffer>): void {
         logger.debug(
             () =>
                 `ezspIncomingBootloadMessageHandler: longId=${longId} packetInfo=${JSON.stringify(packetInfo)} messageContents=${messageContents.toString("hex")}`,
@@ -7817,7 +7827,7 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
      * @param messageLength uint8_t  The length of the messageContents parameter in bytes.
      * @param messageContents uint8_t * The message that was sent.
      */
-    ezspBootloadTransmitCompleteHandler(status: SLStatus, messageContents: Buffer): void {
+    ezspBootloadTransmitCompleteHandler(status: SLStatus, messageContents: Buffer<ArrayBuffer>): void {
         logger.debug(`ezspBootloadTransmitCompleteHandler: status=${SLStatus[status]} messageContents=${messageContents.toString("hex")}`, NS);
     }
 
@@ -7851,7 +7861,7 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
      * @param messageType uint8_t The type of the incoming message. Currently, the only possibility is MFG_TEST_TYPE_ACK.
      * @param data uint8_t * A pointer to the data received in the current message.
      */
-    ezspIncomingMfgTestMessageHandler(messageType: number, messageContents: Buffer): void {
+    ezspIncomingMfgTestMessageHandler(messageType: number, messageContents: Buffer<ArrayBuffer>): void {
         logger.debug(`ezspIncomingMfgTestMessageHandler: messageType=${messageType} messageContents=${messageContents.toString("hex")}`, NS);
     }
 
@@ -8510,7 +8520,7 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
         useCca: boolean,
         addr: EmberGpAddress,
         gpdCommandId: number,
-        gpdAsdu: Buffer,
+        gpdAsdu: Buffer<ArrayBuffer>,
         gpepHandle: number,
         gpTxQueueEntryLifetimeMs: number,
     ): Promise<SLStatus> {
@@ -8577,7 +8587,7 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
         gpdCommandId: number,
         mic: number,
         proxyTableIndex: number,
-        gpdCommandPayload: Buffer,
+        gpdCommandPayload: Buffer<ArrayBuffer>,
         packetInfo: EmberRxPacketInfo,
     ): void {
         logger.debug(

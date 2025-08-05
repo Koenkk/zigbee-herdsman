@@ -350,7 +350,7 @@ export class ZoHAdapter extends Adapter {
     }
 
     /* v8 ignore start */
-    public async addInstallCode(ieeeAddress: string, key: Buffer): Promise<void> {
+    public async addInstallCode(ieeeAddress: string, key: Buffer<ArrayBuffer>): Promise<void> {
         await Promise.reject(new Error(`not supported ${ieeeAddress}, ${key.toString("hex")}`));
     }
     /* v8 ignore stop */
@@ -388,21 +388,21 @@ export class ZoHAdapter extends Adapter {
         ieeeAddress: string,
         networkAddress: number,
         clusterId: Zdo.ClusterId,
-        payload: Buffer,
+        payload: Buffer<ArrayBuffer>,
         disableResponse: true,
     ): Promise<void>;
     public async sendZdo<K extends keyof ZdoTypes.RequestToResponseMap>(
         ieeeAddress: string,
         networkAddress: number,
         clusterId: K,
-        payload: Buffer,
+        payload: Buffer<ArrayBuffer>,
         disableResponse: false,
     ): Promise<ZdoTypes.RequestToResponseMap[K]>;
     public async sendZdo<K extends keyof ZdoTypes.RequestToResponseMap>(
         ieeeAddress: string,
         networkAddress: number,
         clusterId: K,
-        payload: Buffer,
+        payload: Buffer<ArrayBuffer>,
         disableResponse: boolean,
     ): Promise<ZdoTypes.RequestToResponseMap[K] | undefined> {
         if (networkAddress === ZSpec.COORDINATOR_ADDRESS) {
@@ -712,7 +712,7 @@ export class ZoHAdapter extends Adapter {
         }
     }
 
-    private onGPFrame(cmdId: number, payload: Buffer, macHeader: MACHeader, nwkHeader: ZigbeeNWKGPHeader, rssi: number): void {
+    private onGPFrame(cmdId: number, payload: Buffer<ArrayBuffer>, macHeader: MACHeader, nwkHeader: ZigbeeNWKGPHeader, rssi: number): void {
         // transform into a ZCL frame
         const data = Buffer.alloc((nwkHeader.frameControlExt?.appId === 0x02 /* ZGP */ ? /* v8 ignore next */ 20 : 15) + payload.byteLength);
         let offset = 0;

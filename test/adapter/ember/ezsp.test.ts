@@ -22,7 +22,7 @@ import {
     SET_POLICY_REPLY_FN1_ASH_RAW,
 } from "./consts";
 
-const emitFromSerial = async (ezsp: Ezsp, data: Buffer, skipAdvanceTimers = false): Promise<void> => {
+const emitFromSerial = async (ezsp: Ezsp, data: Buffer<ArrayBuffer>, skipAdvanceTimers = false): Promise<void> => {
     //@ts-expect-error private
     ezsp.ash.serialPort.port.emitData(Buffer.from(data));
 

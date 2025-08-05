@@ -404,7 +404,7 @@ export class SerialDriver extends EventEmitter {
         return this.initialized;
     }
 
-    public async sendDATA(data: Buffer): Promise<void> {
+    public async sendDATA(data: Buffer<ArrayBuffer>): Promise<void> {
         const seq = this.sendSeq;
         this.sendSeq = (seq + 1) % 8; // next
         const nextSeq = this.sendSeq;

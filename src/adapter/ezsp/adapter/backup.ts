@@ -33,8 +33,8 @@ export class EZSPAdapterBackup {
         const netParams = await this.driver.ezsp.execCommand("getNetworkParameters");
         const networkParams: EmberNetworkParameters = netParams.parameters;
         const netResult = await this.driver.getKey(EmberKeyType.CURRENT_NETWORK_KEY);
-        let tclKey: Buffer;
-        let netKey: Buffer;
+        let tclKey: Buffer<ArrayBuffer>;
+        let netKey: Buffer<ArrayBuffer>;
         let netKeySequenceNumber = 0;
         let netKeyFrameCounter = 0;
 

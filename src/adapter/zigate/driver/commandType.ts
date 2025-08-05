@@ -19,7 +19,7 @@ export interface RawAPSDataRequestPayload extends ZiGateObjectPayload {
     securityMode: number;
     radius: number;
     dataLength: number;
-    data: Buffer;
+    data: Buffer<ArrayBuffer>;
 }
 
 export interface ZiGateCommandParameter {

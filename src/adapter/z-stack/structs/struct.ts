@@ -7,7 +7,7 @@ type StructMemberType = "uint8" | "uint16" | "uint32" | "uint8array" | "uint8arr
 type StructBuildOmitKeys = "member" | "method" | "padding" | "build" | "default";
 type StructChild = {offset: number; struct: Struct};
 export type BuiltStruct<T = Struct> = Omit<T, StructBuildOmitKeys>;
-export type StructFactorySignature<T = Struct> = (data?: Buffer) => T;
+export type StructFactorySignature<T = Struct> = (data?: Buffer<ArrayBuffer>) => T;
 
 export type StructMemoryAlignment = "unaligned" | "aligned";
 
@@ -25,8 +25,8 @@ export class Struct implements SerializableMemoryObject {
     }
 
     // @ts-expect-error initialized in `build()`
-    private buffer: Buffer;
-    private defaultData: Buffer | undefined;
+    private buffer: Buffer<ArrayBuffer>;
+    private defaultData: Buffer<ArrayBuffer> | undefined;
     private members: {key: string; offset: number; type: StructMemberType; length?: number}[] = [];
     private childStructs: {[key: string]: StructChild} = {};
     private length = 0;
@@ -38,7 +38,7 @@ export class Struct implements SerializableMemoryObject {
      * Returns raw contents of the structure as a sliced Buffer.
      * Mutations to the returned buffer will not be reflected within struct.
      */
-    public serialize(alignment: StructMemoryAlignment = "unaligned", padLength = true, parentOffset = 0): Buffer {
+    public serialize(alignment: StructMemoryAlignment = "unaligned", padLength = true, parentOffset = 0): Buffer<ArrayBuffer> {
         switch (alignment) {
             case "unaligned": {
                 /* update child struct values and return as-is (unaligned) */
@@ -161,7 +161,7 @@ export class Struct implements SerializableMemoryObject {
      * @param name Name of the struct member.
      * @param length Length of the byte array.
      */
-    public member<T extends Buffer, N extends string, R extends this & Record<N, T>>(
+    public member<T extends Buffer<ArrayBuffer>, N extends string, R extends this & Record<N, T>>(
         type: "uint8array" | "uint8array-reversed",
         name: N,
         length: number,
@@ -233,7 +233,7 @@ export class Struct implements SerializableMemoryObject {
                         type === "uint8array-reversed"
                             ? Buffer.from(this.buffer.slice(offset, offset + length)).reverse()
                             : Buffer.from(this.buffer.slice(offset, offset + length)),
-                    set: (value: Buffer) => {
+                    set: (value: Buffer<ArrayBuffer>) => {
                         if (value.length !== length) {
                             throw new Error(`Invalid length for member ${name} (expected=${length}, got=${value.length})`);
                         }
@@ -287,7 +287,7 @@ export class Struct implements SerializableMemoryObject {
      *
      * @param data Data to initialize empty struct with.
      */
-    public default(data: Buffer): this {
+    public default(data: Buffer<ArrayBuffer>): this {
         /* v8 ignore start */
         if (data.length !== this.length) {
             throw new Error("Default value needs to have the length of unaligned structure.");
@@ -313,7 +313,7 @@ export class Struct implements SerializableMemoryObject {
      *
      * *This method is stripped from type on struct `build()`.*
      */
-    public build(data?: Buffer): BuiltStruct<this> {
+    public build(data?: Buffer<ArrayBuffer>): BuiltStruct<this> {
         if (data) {
             if (data.length === this.getLength("unaligned")) {
                 this.buffer = Buffer.from(data);

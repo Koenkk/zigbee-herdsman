@@ -12,7 +12,10 @@ const emptyAddress = Buffer.alloc(8, 0x00);
  * @param data Data to initialize table with.
  * @param alignment Memory alignment of initialization data.
  */
-export const apsTcLinkKeyTable = (dataOrCapacity?: Buffer | Buffer[] | number, alignment: StructMemoryAlignment = "unaligned") => {
+export const apsTcLinkKeyTable = (
+    dataOrCapacity?: Buffer<ArrayBuffer> | Buffer<ArrayBuffer>[] | number,
+    alignment: StructMemoryAlignment = "unaligned",
+) => {
     const table = Table.new<ReturnType<typeof apsTcLinkKeyEntry>>()
         .struct(apsTcLinkKeyEntry)
         .occupancy((e) => !e.extAddr.equals(emptyAddress));

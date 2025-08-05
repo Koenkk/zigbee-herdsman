@@ -10,7 +10,7 @@ import {nwkKeyDescriptor} from "./nwk-key-descriptor";
  *
  * @param data Data to initialize structure with.
  */
-export const nib = (data?: Buffer | Buffer[]) => {
+export const nib = (data?: Buffer<ArrayBuffer> | Buffer<ArrayBuffer>[]) => {
     assert(!Array.isArray(data));
     return Struct.new()
         .member("uint8", "SequenceNum")

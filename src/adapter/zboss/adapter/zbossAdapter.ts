@@ -187,7 +187,7 @@ export class ZBOSSAdapter extends Adapter {
         });
     }
 
-    public async addInstallCode(ieeeAddress: string, key: Buffer, hashed: boolean): Promise<void> {
+    public async addInstallCode(ieeeAddress: string, key: Buffer<ArrayBuffer>, hashed: boolean): Promise<void> {
         logger.error(`NOT SUPPORTED: sendZclFrameToGroup(${ieeeAddress},${key.toString("hex")},${hashed}`, NS);
         await Promise.reject(new Error(`Install code is not supported for 'zboss' yet`));
     }
@@ -235,21 +235,21 @@ export class ZBOSSAdapter extends Adapter {
         ieeeAddress: string,
         networkAddress: number,
         clusterId: Zdo.ClusterId,
-        payload: Buffer,
+        payload: Buffer<ArrayBuffer>,
         disableResponse: true,
     ): Promise<void>;
     public async sendZdo<K extends keyof ZdoTypes.RequestToResponseMap>(
         ieeeAddress: string,
         networkAddress: number,
         clusterId: K,
-        payload: Buffer,
+        payload: Buffer<ArrayBuffer>,
         disableResponse: false,
     ): Promise<ZdoTypes.RequestToResponseMap[K]>;
     public async sendZdo<K extends keyof ZdoTypes.RequestToResponseMap>(
         _ieeeAddress: string,
         networkAddress: number,
         clusterId: K,
-        payload: Buffer,
+        payload: Buffer<ArrayBuffer>,
         disableResponse: boolean,
     ): Promise<ZdoTypes.RequestToResponseMap[K] | undefined> {
         return await this.queue.execute(async () => {

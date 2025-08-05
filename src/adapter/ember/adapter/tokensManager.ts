@@ -338,12 +338,12 @@ export class EmberTokensManager {
      *
      * @return Saved tokens buffer or null.
      */
-    public static async saveTokens(ezsp: Ezsp, localEui64: Buffer): Promise<Buffer | undefined> {
+    public static async saveTokens(ezsp: Ezsp, localEui64: Buffer<ArrayBuffer>): Promise<Buffer | undefined> {
         logger.info("[TOKENS] Saving tokens...", NS);
         const tokenCount = await ezsp.ezspGetTokenCount();
 
         if (tokenCount) {
-            const chunks: Buffer[] = [Buffer.from([tokenCount])]; // 1 byte
+            const chunks: Buffer<ArrayBuffer>[] = [Buffer.from([tokenCount])]; // 1 byte
             // returns 1 if NCP has secure key storage (where these tokens do not store the key data).
             // Don't compile for scripted test or any non-host code due to linker issues.
             const hasSecureStorage: boolean = await EmberTokensManager.ncpUsesPSAKeyStorage(ezsp);
@@ -427,7 +427,7 @@ export class EmberTokensManager {
      *
      * @return SLStatus status code
      */
-    public static async restoreTokens(ezsp: Ezsp, inBuffer: Buffer): Promise<SLStatus> {
+    public static async restoreTokens(ezsp: Ezsp, inBuffer: Buffer<ArrayBuffer>): Promise<SLStatus> {
         if (!inBuffer?.length) {
             throw new Error("[TOKENS] Restore tokens buffer empty.");
         }
@@ -741,7 +741,7 @@ export class EmberTokensManager {
      *
      * @return SLStatus status code
      */
-    public static async writeNcpTokensToZigbeedTokens(ezsp: Ezsp, inBuffer: Buffer): Promise<SLStatus> {
+    public static async writeNcpTokensToZigbeedTokens(ezsp: Ezsp, inBuffer: Buffer<ArrayBuffer>): Promise<SLStatus> {
         if (!inBuffer?.length) {
             throw new Error("[TOKENS] Restore tokens buffer empty.");
         }

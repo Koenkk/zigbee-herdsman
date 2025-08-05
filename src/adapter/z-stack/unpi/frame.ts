@@ -4,12 +4,12 @@ export class Frame {
     public readonly type: Type;
     public readonly subsystem: Subsystem;
     public readonly commandID: number;
-    public readonly data: Buffer;
+    public readonly data: Buffer<ArrayBuffer>;
 
     public readonly length?: number;
     public readonly fcs?: number;
 
-    public constructor(type: Type, subsystem: Subsystem, commandID: number, data: Buffer, length?: number, fcs?: number) {
+    public constructor(type: Type, subsystem: Subsystem, commandID: number, data: Buffer<ArrayBuffer>, length?: number, fcs?: number) {
         this.type = type;
         this.subsystem = subsystem;
         this.commandID = commandID;
@@ -18,7 +18,7 @@ export class Frame {
         this.fcs = fcs;
     }
 
-    public toBuffer(): Buffer {
+    public toBuffer(): Buffer<ArrayBuffer> {
         const length = this.data.length;
         const cmd0 = ((this.type << 5) & 0xe0) | (this.subsystem & 0x1f);
 
@@ -29,7 +29,7 @@ export class Frame {
         return Buffer.concat([payload, Buffer.from([fcs])]);
     }
 
-    public static fromBuffer(length: number, fcsPosition: number, buffer: Buffer): Frame {
+    public static fromBuffer(length: number, fcsPosition: number, buffer: Buffer<ArrayBuffer>): Frame {
         const subsystem: Subsystem = buffer.readUInt8(PositionCmd0) & 0x1f;
         const type: Type = (buffer.readUInt8(PositionCmd0) & 0xe0) >> 5;
         const commandID = buffer.readUInt8(PositionCmd1);
@@ -46,7 +46,7 @@ export class Frame {
         throw new Error("Invalid checksum");
     }
 
-    private static calculateChecksum(values: Buffer): number {
+    private static calculateChecksum(values: Buffer<ArrayBuffer>): number {
         let checksum = 0;
 
         for (const value of values) {

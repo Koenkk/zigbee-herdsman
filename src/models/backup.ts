@@ -15,23 +15,23 @@ export interface Backup {
     };
     securityLevel: number;
     networkUpdateId: number;
-    coordinatorIeeeAddress: Buffer;
+    coordinatorIeeeAddress: Buffer<ArrayBuffer>;
     devices: {
         networkAddress: number | null;
-        ieeeAddress: Buffer;
+        ieeeAddress: Buffer<ArrayBuffer>;
         isDirectChild: boolean;
         linkKey?: {
-            key: Buffer;
+            key: Buffer<ArrayBuffer>;
             rxCounter: number;
             txCounter: number;
         };
     }[];
     znp?: {
         version?: ZnpVersion;
-        trustCenterLinkKeySeed?: Buffer;
+        trustCenterLinkKeySeed?: Buffer<ArrayBuffer>;
     };
     ezsp?: {
         version?: number;
-        hashed_tclk?: Buffer;
+        hashed_tclk?: Buffer<ArrayBuffer>;
     };
 }

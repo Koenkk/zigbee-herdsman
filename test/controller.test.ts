@@ -101,99 +101,101 @@ const mockApaterBackup = vi.fn(() => Promise.resolve(mockDummyBackup));
 let sendZdoResponseStatus = Zdo.Status.SUCCESS;
 const mockAdapterSendZdo = vi
     .fn()
-    .mockImplementation(async (_ieeeAddress: string, networkAddress: number, clusterId: Zdo.ClusterId, payload: Buffer, _disableResponse: true) => {
-        if (sendZdoResponseStatus !== Zdo.Status.SUCCESS) {
-            return [sendZdoResponseStatus, undefined];
-        }
-
-        if (ZSpec.BroadcastAddress[networkAddress]) {
-            // TODO
-        } else {
-            const device = MOCK_DEVICES[networkAddress];
-
-            if (!device) {
-                throw new Error(`Mock device ${networkAddress} not found`);
+    .mockImplementation(
+        async (_ieeeAddress: string, networkAddress: number, clusterId: Zdo.ClusterId, payload: Buffer<ArrayBuffer>, _disableResponse: true) => {
+            if (sendZdoResponseStatus !== Zdo.Status.SUCCESS) {
+                return [sendZdoResponseStatus, undefined];
             }
 
-            switch (clusterId) {
-                case Zdo.ClusterId.NODE_DESCRIPTOR_REQUEST: {
-                    if (device.key === "xiaomi") {
-                        const frame = Zcl.Frame.create(
-                            0,
-                            1,
-                            true,
-                            undefined,
-                            10,
-                            "readRsp",
-                            0,
-                            [{attrId: 5, status: 0, dataType: 66, attrData: "lumi.occupancy"}],
-                            {},
-                        );
-                        await mockAdapterEvents.zclPayload({
-                            wasBroadcast: false,
-                            address: networkAddress,
-                            clusterID: frame.cluster.ID,
-                            data: frame.toBuffer(),
-                            header: frame.header,
-                            endpoint: 1,
-                            linkquality: 50,
-                            groupID: 1,
-                        });
-                    }
+            if (ZSpec.BroadcastAddress[networkAddress]) {
+                // TODO
+            } else {
+                const device = MOCK_DEVICES[networkAddress];
 
-                    if (!device.nodeDescriptor) {
-                        throw new Error("NODE_DESCRIPTOR_REQUEST timeout");
-                    }
-
-                    return device.nodeDescriptor;
+                if (!device) {
+                    throw new Error(`Mock device ${networkAddress} not found`);
                 }
 
-                case Zdo.ClusterId.ACTIVE_ENDPOINTS_REQUEST: {
-                    if (!device.activeEndpoints) {
-                        throw new Error("ACTIVE_ENDPOINTS_REQUEST timeout");
+                switch (clusterId) {
+                    case Zdo.ClusterId.NODE_DESCRIPTOR_REQUEST: {
+                        if (device.key === "xiaomi") {
+                            const frame = Zcl.Frame.create(
+                                0,
+                                1,
+                                true,
+                                undefined,
+                                10,
+                                "readRsp",
+                                0,
+                                [{attrId: 5, status: 0, dataType: 66, attrData: "lumi.occupancy"}],
+                                {},
+                            );
+                            await mockAdapterEvents.zclPayload({
+                                wasBroadcast: false,
+                                address: networkAddress,
+                                clusterID: frame.cluster.ID,
+                                data: frame.toBuffer(),
+                                header: frame.header,
+                                endpoint: 1,
+                                linkquality: 50,
+                                groupID: 1,
+                            });
+                        }
+
+                        if (!device.nodeDescriptor) {
+                            throw new Error("NODE_DESCRIPTOR_REQUEST timeout");
+                        }
+
+                        return device.nodeDescriptor;
                     }
 
-                    return device.activeEndpoints;
-                }
+                    case Zdo.ClusterId.ACTIVE_ENDPOINTS_REQUEST: {
+                        if (!device.activeEndpoints) {
+                            throw new Error("ACTIVE_ENDPOINTS_REQUEST timeout");
+                        }
 
-                case Zdo.ClusterId.SIMPLE_DESCRIPTOR_REQUEST: {
-                    if (!device.simpleDescriptor) {
-                        throw new Error("SIMPLE_DESCRIPTOR_REQUEST timeout");
+                        return device.activeEndpoints;
                     }
 
-                    // XXX: only valid if hasZdoMessageOverhead === false
-                    const endpoint = payload[2];
+                    case Zdo.ClusterId.SIMPLE_DESCRIPTOR_REQUEST: {
+                        if (!device.simpleDescriptor) {
+                            throw new Error("SIMPLE_DESCRIPTOR_REQUEST timeout");
+                        }
 
-                    if (device.simpleDescriptor[endpoint] === undefined) {
-                        throw new Error(`SIMPLE_DESCRIPTOR_REQUEST(${endpoint}) timeout`);
+                        // XXX: only valid if hasZdoMessageOverhead === false
+                        const endpoint = payload[2];
+
+                        if (device.simpleDescriptor[endpoint] === undefined) {
+                            throw new Error(`SIMPLE_DESCRIPTOR_REQUEST(${endpoint}) timeout`);
+                        }
+
+                        return device.simpleDescriptor[endpoint];
                     }
 
-                    return device.simpleDescriptor[endpoint];
-                }
+                    case Zdo.ClusterId.LQI_TABLE_REQUEST: {
+                        if (!device.lqiTable) {
+                            throw new Error("LQI_TABLE_REQUEST timeout");
+                        }
 
-                case Zdo.ClusterId.LQI_TABLE_REQUEST: {
-                    if (!device.lqiTable) {
-                        throw new Error("LQI_TABLE_REQUEST timeout");
+                        return device.lqiTable;
                     }
 
-                    return device.lqiTable;
-                }
+                    case Zdo.ClusterId.ROUTING_TABLE_REQUEST: {
+                        if (!device.routingTable) {
+                            throw new Error("ROUTING_TABLE_REQUEST timeout");
+                        }
 
-                case Zdo.ClusterId.ROUTING_TABLE_REQUEST: {
-                    if (!device.routingTable) {
-                        throw new Error("ROUTING_TABLE_REQUEST timeout");
+                        return device.routingTable;
                     }
 
-                    return device.routingTable;
-                }
-
-                default: {
-                    // Zdo.ClusterId.LEAVE_REQUEST, Zdo.ClusterId.BIND_REQUEST, Zdo.ClusterId.UNBIND_REQUEST
-                    return [Zdo.Status.SUCCESS, undefined];
+                    default: {
+                        // Zdo.ClusterId.LEAVE_REQUEST, Zdo.ClusterId.BIND_REQUEST, Zdo.ClusterId.UNBIND_REQUEST
+                        return [Zdo.Status.SUCCESS, undefined];
+                    }
                 }
             }
-        }
-    });
+        },
+    );
 
 let iasZoneReadState170Count = 0;
 let enroll170 = true;

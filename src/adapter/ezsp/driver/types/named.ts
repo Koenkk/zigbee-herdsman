@@ -47,15 +47,15 @@ export class EmberEUI64 extends fixed_list(8, basic.uint8_t) {
         }
     }
 
-    static override deserialize(cls: any, data: Buffer): any[] {
+    static override deserialize(cls: any, data: Buffer<ArrayBuffer>): any[] {
         // biome-ignore lint/complexity/noThisInStatic: legacy
         const arr = super.deserialize(cls, data);
         const r = arr[0];
-        data = arr[1] as Buffer;
+        data = arr[1] as Buffer<ArrayBuffer>;
         return [Buffer.from(r).reverse(), data];
     }
 
-    static serialize(_cls: any, value: number[] | EmberEUI64): Buffer {
+    static serialize(_cls: any, value: number[] | EmberEUI64): Buffer<ArrayBuffer> {
         if (value instanceof EmberEUI64) {
             value = (value as EmberEUI64).value as number[];
         }

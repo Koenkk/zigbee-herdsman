@@ -9,7 +9,7 @@ import Frame from "./frame";
 const NS = "zh:ezsp:uart";
 
 export class Parser extends stream.Transform {
-    private tail: Buffer[];
+    private tail: Buffer<ArrayBuffer>[];
 
     public constructor() {
         super();
@@ -17,7 +17,7 @@ export class Parser extends stream.Transform {
         this.tail = [];
     }
 
-    public override _transform(chunk: Buffer, _: string, cb: () => void): void {
+    public override _transform(chunk: Buffer<ArrayBuffer>, _: string, cb: () => void): void {
         if (chunk.indexOf(consts.CANCEL) >= 0) {
             this.reset();
             chunk = chunk.subarray(chunk.lastIndexOf(consts.CANCEL) + 1);
@@ -55,7 +55,7 @@ export class Parser extends stream.Transform {
         cb();
     }
 
-    private *unstuff(buffer: Buffer): Generator<number> {
+    private *unstuff(buffer: Buffer<ArrayBuffer>): Generator<number> {
         /* Unstuff (unescape) a buffer after receipt */
         let escaped = false;
         for (const byte of buffer) {

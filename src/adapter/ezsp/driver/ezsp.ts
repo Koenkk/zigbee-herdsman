@@ -185,7 +185,7 @@ export class EZSPFrameData {
         }
     }
 
-    serialize(): Buffer {
+    serialize(): Buffer<ArrayBuffer> {
         const frame = EZSPFrameData.getFrame(this._cls_);
         const frameDesc = this._isRequest_ ? frame.request || {} : frame.response || {};
         const result = [];
@@ -242,7 +242,7 @@ export class EZSPZDORequestFrameData {
         }
     }
 
-    serialize(): Buffer {
+    serialize(): Buffer<ArrayBuffer> {
         const frame = EZSPZDORequestFrameData.getFrame(this._cls_);
         const frameDesc = this._isRequest_ ? frame.request || {} : frame.response || {};
         const result = [];
@@ -296,7 +296,7 @@ export class EZSPZDOResponseFrameData {
         }
     }
 
-    serialize(): Buffer {
+    serialize(): Buffer<ArrayBuffer> {
         const frameDesc = EZSPZDOResponseFrameData.getFrame(this._cls_);
         const result = [];
         for (const prop of Object.getOwnPropertyNames(frameDesc)) {
@@ -408,7 +408,7 @@ export class Ezsp extends EventEmitter {
      * data randomization removed.
      * @param data
      */
-    private onFrameReceived(data: Buffer): void {
+    private onFrameReceived(data: Buffer<ArrayBuffer>): void {
         logger.debug(`<== Frame: ${data.toString("hex")}`, NS);
 
         let frameId: number;
@@ -581,7 +581,7 @@ export class Ezsp extends EventEmitter {
         return ret;
     }
 
-    async getValue(valueId: t.EzspValueId): Promise<Buffer> {
+    async getValue(valueId: t.EzspValueId): Promise<Buffer<ArrayBuffer>> {
         const valueName = t.EzspValueId.valueToName(t.EzspValueId, valueId);
         logger.debug(`Get ${valueName}`, NS);
         const ret = await this.execCommand("getValue", {valueId});
@@ -631,12 +631,12 @@ export class Ezsp extends EventEmitter {
         }
     }
 
-    public makeZDOframe(name: string | number, params: ParamsDesc): Buffer {
+    public makeZDOframe(name: string | number, params: ParamsDesc): Buffer<ArrayBuffer> {
         const frmData = new EZSPZDORequestFrameData(name, true, params);
         return frmData.serialize();
     }
 
-    private makeFrame(name: string, params: ParamsDesc | undefined, seq: number): Buffer {
+    private makeFrame(name: string, params: ParamsDesc | undefined, seq: number): Buffer<ArrayBuffer> {
         const frmData = new EZSPFrameData(name, true, params);
 
         logger.debug(() => `==> ${JSON.stringify(frmData)}`, NS);
@@ -706,7 +706,13 @@ export class Ezsp extends EventEmitter {
         return response.payload.status;
     }
 
-    public sendUnicast(direct: EmberOutgoingMessageType, nwk: number, apsFrame: EmberApsFrame, seq: number, data: Buffer): Promise<EZSPFrameData> {
+    public sendUnicast(
+        direct: EmberOutgoingMessageType,
+        nwk: number,
+        apsFrame: EmberApsFrame,
+        seq: number,
+        data: Buffer<ArrayBuffer>,
+    ): Promise<EZSPFrameData> {
         return this.execCommand("sendUnicast", {
             type: direct,
             indexOrDestination: nwk,
@@ -716,7 +722,7 @@ export class Ezsp extends EventEmitter {
         });
     }
 
-    public sendMulticast(apsFrame: EmberApsFrame, seq: number, data: Buffer): Promise<EZSPFrameData> {
+    public sendMulticast(apsFrame: EmberApsFrame, seq: number, data: Buffer<ArrayBuffer>): Promise<EZSPFrameData> {
         return this.execCommand("sendMulticast", {
             apsFrame: apsFrame,
             hops: EZSP_DEFAULT_RADIUS,
@@ -748,7 +754,7 @@ export class Ezsp extends EventEmitter {
         }
     }
 
-    public sendBroadcast(destination: number, apsFrame: EmberApsFrame, seq: number, data: Buffer): Promise<EZSPFrameData> {
+    public sendBroadcast(destination: number, apsFrame: EmberApsFrame, seq: number, data: Buffer<ArrayBuffer>): Promise<EZSPFrameData> {
         return this.execCommand("sendBroadcast", {
             destination: destination,
             apsFrame: apsFrame,

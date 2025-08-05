@@ -117,10 +117,10 @@ class Driver extends events.EventEmitter {
     public paramCurrentChannel = 0;
     public paramNwkPanid = 0;
     public paramNwkKey = Buffer.alloc(16);
-    public paramEndpoint0: Buffer | undefined;
-    public paramEndpoint1: Buffer | undefined;
-    public fixParamEndpoint0: Buffer;
-    public fixParamEndpoint1: Buffer;
+    public paramEndpoint0: Buffer<ArrayBuffer> | undefined;
+    public paramEndpoint1: Buffer<ArrayBuffer> | undefined;
+    public fixParamEndpoint0: Buffer<ArrayBuffer>;
+    public fixParamEndpoint1: Buffer<ArrayBuffer>;
     public paramNwkUpdateId = 0;
     public paramChannelMask = 0;
     public paramProtocolVersion = 0;
@@ -645,7 +645,7 @@ class Driver extends events.EventEmitter {
                         this.paramCurrentChannel = currentChannel as number;
                         this.paramApsUseExtPanid = apsUseExtPanid as bigint;
                         this.paramNwkPanid = panid as number;
-                        this.paramNwkKey = nwkKey as Buffer;
+                        this.paramNwkKey = nwkKey as Buffer<ArrayBuffer>;
                         this.paramNwkUpdateId = nwkUpdateId as number;
                         this.paramMacAddress = mac as bigint;
                         this.paramTcAddress = tcAddress as bigint;
@@ -655,11 +655,11 @@ class Driver extends events.EventEmitter {
                             this.paramFrameCounter = frameCounter as number;
                         }
                         if (ep0 !== null) {
-                            this.paramEndpoint0 = ep0 as Buffer;
+                            this.paramEndpoint0 = ep0 as Buffer<ArrayBuffer>;
                         }
 
                         if (ep1 !== null) {
-                            this.paramEndpoint1 = ep1 as Buffer;
+                            this.paramEndpoint1 = ep1 as Buffer<ArrayBuffer>;
                         }
 
                         // console.log({fwVersion, mac, panid, apsUseExtPanid, currentChannel, nwkKey, nwkUpdateId, channelMask, protocolVersion, frameCounter});
@@ -965,7 +965,7 @@ class Driver extends events.EventEmitter {
         });
     }
 
-    public readParameterRequest(parameterId: ParamId, parameter?: Buffer | number | bigint): Promise<unknown> {
+    public readParameterRequest(parameterId: ParamId, parameter?: Buffer<ArrayBuffer> | number | bigint): Promise<unknown> {
         const seqNumber = this.nextSeqNumber();
         return new Promise((resolve, reject): void => {
             //logger.debug(`push read parameter request to queue. seqNr: ${seqNumber} paramId: ${parameterId}`, NS);
@@ -978,7 +978,7 @@ class Driver extends events.EventEmitter {
         });
     }
 
-    public writeParameterRequest(parameterId: ParamId, parameter: Buffer | number | bigint): Promise<void> {
+    public writeParameterRequest(parameterId: ParamId, parameter: Buffer<ArrayBuffer> | number | bigint): Promise<void> {
         const seqNumber = this.nextSeqNumber();
         return new Promise((resolve, reject): void => {
             //logger.debug(`push write parameter request to queue. seqNr: ${seqNumber} paramId: ${parameterId} parameter: ${parameter}`, NS);
@@ -1024,7 +1024,7 @@ class Driver extends events.EventEmitter {
         return this.enqueueApsDataRequest(req);
     }
 
-    public async writeLinkKey(ieeeAddress: string, hashedKey: Buffer): Promise<void> {
+    public async writeLinkKey(ieeeAddress: string, hashedKey: Buffer<ArrayBuffer>): Promise<void> {
         const buf = Buffer.alloc(8 + 16);
 
         if (ieeeAddress[1] !== "x") {
@@ -1065,7 +1065,7 @@ class Driver extends events.EventEmitter {
         });
     }
 
-    private sendReadParameterRequest(parameterId: ParamId, seqNumber: number, arg?: Buffer | number | bigint): CommandResult {
+    private sendReadParameterRequest(parameterId: ParamId, seqNumber: number, arg?: Buffer<ArrayBuffer> | number | bigint): CommandResult {
         let frameLength = 8; // starts with min. frame length
         let payloadLength = 1; // min. parameterId
 
@@ -1090,7 +1090,7 @@ class Driver extends events.EventEmitter {
         return this.sendRequest(buf.getBuffer());
     }
 
-    private sendWriteParameterRequest(parameterId: ParamId, value: Buffer | number | bigint, seqNumber: number): CommandResult {
+    private sendWriteParameterRequest(parameterId: ParamId, value: Buffer<ArrayBuffer> | number | bigint, seqNumber: number): CommandResult {
         // command id, sequence number, 0, framelength(U16), payloadlength(U16), parameter id, parameter
         const param = stackParameters.find((x) => x.id === parameterId);
         if (!param) {
@@ -1164,7 +1164,7 @@ class Driver extends events.EventEmitter {
         return this.sendRequest(Buffer.from([FirmwareCommand.Status, seqNumber, 0x00, 0x08, 0x00, 0x00, 0x00, 0x00]));
     }
 
-    private sendRequest(buffer: Buffer): CommandResult {
+    private sendRequest(buffer: Buffer<ArrayBuffer>): CommandResult {
         const frame = Buffer.concat([buffer, this.calcCrc(buffer)]);
         const slipframe = slip.encode(frame);
 
@@ -1432,7 +1432,7 @@ class Driver extends events.EventEmitter {
         }
     }
 
-    private calcCrc(buffer: Uint8Array): Buffer {
+    private calcCrc(buffer: Uint8Array): Buffer<ArrayBuffer> {
         let crc = 0;
         for (let i = 0; i < buffer.length; i++) {
             crc += buffer[i];

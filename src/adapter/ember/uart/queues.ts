@@ -11,7 +11,7 @@ const NS = "zh:ember:uart:queues";
  */
 export class EzspBuffer {
     /** uint8_t[EZSP_MAX_FRAME_LENGTH] */
-    public data: Buffer;
+    public data: Buffer<ArrayBuffer>;
     public link?: EzspBuffer;
     /** uint8_t */
     public len: number;

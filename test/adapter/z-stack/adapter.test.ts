@@ -433,8 +433,8 @@ const legacyBackup = {
 class ZnpRequestMockBuilder {
     // biome-ignore lint/suspicious/noExplicitAny: API
     public responders: {subsystem: Subsystem; command: string; exec: (payload: any, handler?: ZnpRequestMockBuilder) => any}[] = [];
-    public nvItems: {id: NvItemsIds; value?: Buffer}[] = [];
-    public nvExtendedItems: {sysId: NvSystemIds; id: NvItemsIds; subId: number; value?: Buffer}[] = [];
+    public nvItems: {id: NvItemsIds; value?: Buffer<ArrayBuffer>}[] = [];
+    public nvExtendedItems: {sysId: NvSystemIds; id: NvItemsIds; subId: number; value?: Buffer<ArrayBuffer>}[] = [];
 
     constructor() {
         const handleOsalNvRead = (payload, handler) => {
@@ -576,7 +576,7 @@ class ZnpRequestMockBuilder {
         return this;
     }
 
-    public nv(id: NvItemsIds, value?: Buffer) {
+    public nv(id: NvItemsIds, value?: Buffer<ArrayBuffer>) {
         const index = this.nvItems.findIndex((e) => e.id === id);
         if (index > -1) {
             this.nvItems.splice(index, 1);
@@ -587,7 +587,7 @@ class ZnpRequestMockBuilder {
         return this;
     }
 
-    public nvExtended(sysId: NvSystemIds, id: NvItemsIds, subId: number, value?: Buffer) {
+    public nvExtended(sysId: NvSystemIds, id: NvItemsIds, subId: number, value?: Buffer<ArrayBuffer>) {
         const index = this.nvExtendedItems.findIndex((e) => e.sysId === sysId && e.id === id && e.subId === subId);
         if (index > -1) {
             this.nvExtendedItems.splice(index, 1);

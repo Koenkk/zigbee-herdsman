@@ -43,12 +43,12 @@ export const isBroadcastAddress = (address: number): boolean => {
  *
  * NOTE: the buffer is always copied to avoid reversal in reference
  */
-export const eui64LEBufferToHex = (eui64LEBuf: Buffer): Eui64 => `0x${Buffer.from(eui64LEBuf).reverse().toString("hex")}`;
+export const eui64LEBufferToHex = (eui64LEBuf: Buffer<ArrayBuffer>): Eui64 => `0x${Buffer.from(eui64LEBuf).reverse().toString("hex")}`;
 
 /**
  * Represent a big endian buffer in `0x...` form
  */
-export const eui64BEBufferToHex = (eui64BEBuf: Buffer): Eui64 => `0x${eui64BEBuf.toString("hex")}`;
+export const eui64BEBufferToHex = (eui64BEBuf: Buffer<ArrayBuffer>): Eui64 => `0x${eui64BEBuf.toString("hex")}`;
 
 /**
  * Calculate the CRC 8, 16 or 32 for the given data.
@@ -68,7 +68,7 @@ export const eui64BEBufferToHex = (eui64BEBuf: Buffer): Eui64 => `0x${eui64BEBuf
  *       Specific, needed, algorithms should be defined as exported wrappers below, and coverage added for them.
  */
 function calcCRC(
-    data: number[] | Uint8Array | Buffer,
+    data: number[] | Uint8Array | Buffer<ArrayBuffer>,
     length: 8 | 16 | 32,
     poly: number,
     crc = 0,
@@ -183,7 +183,7 @@ export function crc16CCITTFALSE(data: number[] | Uint8Array | Buffer): number {
     return calcCRC(data, 16, 0x1021, 0xffff);
 }
 
-function aes128MmoHashUpdate(result: Buffer, data: Buffer, dataSize: number): void {
+function aes128MmoHashUpdate(result: Buffer<ArrayBuffer>, data: Buffer<ArrayBuffer>, dataSize: number): void {
     while (dataSize >= AES_MMO_128_BLOCK_SIZE) {
         const cipher = createCipheriv("aes-128-ecb", result, null);
         const block = data.subarray(0, AES_MMO_128_BLOCK_SIZE);
@@ -204,7 +204,7 @@ function aes128MmoHashUpdate(result: Buffer, data: Buffer, dataSize: number): vo
  *
  * Used for Install Codes - see Document 13-0402-13 - 10.1
  */
-export function aes128MmoHash(data: Buffer): Buffer {
+export function aes128MmoHash(data: Buffer<ArrayBuffer>): Buffer<ArrayBuffer> {
     const hashResult = Buffer.alloc(AES_MMO_128_BLOCK_SIZE);
     const temp = Buffer.alloc(AES_MMO_128_BLOCK_SIZE);
     let remainingLength = data.length;

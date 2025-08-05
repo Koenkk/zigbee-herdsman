@@ -160,7 +160,7 @@ class BuffaloZiGate extends Buffalo {
         throw new Error(`Read for '${type}' not available`);
     }
 
-    public writeRaw(value: Buffer): void {
+    public writeRaw(value: Buffer<ArrayBuffer>): void {
         this.buffer.set(value, this.position);
         this.position += value.length;
     }

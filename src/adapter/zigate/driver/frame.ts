@@ -11,11 +11,11 @@ enum ZiGateFrameChunkSize {
     UInt64 = 4,
 }
 
-const hasStartByte = (startByte: number, frame: Buffer): boolean => {
+const hasStartByte = (startByte: number, frame: Buffer<ArrayBuffer>): boolean => {
     return frame.indexOf(startByte, 0) === 0;
 };
 
-const hasStopByte = (stopByte: number, frame: Buffer): boolean => {
+const hasStopByte = (stopByte: number, frame: Buffer<ArrayBuffer>): boolean => {
     return frame.indexOf(stopByte, frame.length - 1) === frame.length - 1;
 };
 
@@ -39,11 +39,11 @@ const decodeBytes = (bytesPair: [number, number]): number => {
     return bytesPair[0] === 0x2 ? bytesPair[1] ^ 0x10 : bytesPair[0];
 };
 
-const readBytes = (bytes: Buffer): number => {
+const readBytes = (bytes: Buffer<ArrayBuffer>): number => {
     return bytes.readUIntBE(0, bytes.length);
 };
 
-const writeBytes = (bytes: Buffer, val: number): void => {
+const writeBytes = (bytes: Buffer<ArrayBuffer>, val: number): void => {
     bytes.writeUIntBE(val, 0, bytes.length);
 };
 
@@ -51,13 +51,13 @@ const xor = (checksum: number, byte: number): number => {
     return checksum ^ byte;
 };
 
-const decodeFrame = (frame: Buffer): Buffer => {
+const decodeFrame = (frame: Buffer<ArrayBuffer>): Buffer<ArrayBuffer> => {
     const arrFrame = Array.from(frame).map(combineBytes).filter(removeDuplicate).map(decodeBytes);
 
     return Buffer.from(arrFrame);
 };
 
-const getFrameChunk = (frame: Buffer, pos: number, size: ZiGateFrameChunkSize): Buffer => {
+const getFrameChunk = (frame: Buffer<ArrayBuffer>, pos: number, size: ZiGateFrameChunkSize): Buffer<ArrayBuffer> => {
     return frame.slice(pos, pos + size);
 };
 
@@ -65,15 +65,15 @@ export default class ZiGateFrame {
     static readonly START_BYTE = 0x1;
     static readonly STOP_BYTE = 0x3;
 
-    msgCodeBytes: Buffer = Buffer.alloc(ZiGateFrameChunkSize.UInt16);
-    msgLengthBytes: Buffer = Buffer.alloc(ZiGateFrameChunkSize.UInt16);
-    checksumBytes: Buffer = Buffer.alloc(ZiGateFrameChunkSize.UInt8);
-    msgPayloadBytes: Buffer = Buffer.alloc(0);
-    rssiBytes: Buffer = Buffer.alloc(0);
+    msgCodeBytes = Buffer.alloc(ZiGateFrameChunkSize.UInt16);
+    msgLengthBytes = Buffer.alloc(ZiGateFrameChunkSize.UInt16);
+    checksumBytes = Buffer.alloc(ZiGateFrameChunkSize.UInt8);
+    msgPayloadBytes = Buffer.alloc(0);
+    rssiBytes = Buffer.alloc(0);
 
     msgLengthOffset = 0;
 
-    constructor(frame?: Buffer) {
+    constructor(frame?: Buffer<ArrayBuffer>) {
         if (frame !== undefined) {
             const decodedFrame = decodeFrame(frame);
             // logger.debug(`decoded frame >>> %o`, decodedFrame, NS);
@@ -101,11 +101,11 @@ export default class ZiGateFrame {
         }
     }
 
-    static isValid(frame: Buffer): boolean {
+    static isValid(frame: Buffer<ArrayBuffer>): boolean {
         return hasStartByte(ZiGateFrame.START_BYTE, frame) && hasStopByte(ZiGateFrame.STOP_BYTE, frame);
     }
 
-    buildChunks(frame: Buffer): void {
+    buildChunks(frame: Buffer<ArrayBuffer>): void {
         this.msgCodeBytes = getFrameChunk(frame, 1, this.msgCodeBytes.length);
         this.msgLengthBytes = getFrameChunk(frame, 3, this.msgLengthBytes.length);
         this.checksumBytes = getFrameChunk(frame, 5, this.checksumBytes.length);
@@ -113,7 +113,7 @@ export default class ZiGateFrame {
         this.rssiBytes = getFrameChunk(frame, 6 + this.readMsgLength(), ZiGateFrameChunkSize.UInt8);
     }
 
-    toBuffer(): Buffer {
+    toBuffer(): Buffer<ArrayBuffer> {
         const length = 5 + this.readMsgLength();
 
         const escapedData = this.escapeData(
@@ -123,7 +123,7 @@ export default class ZiGateFrame {
         return Buffer.concat([Uint8Array.from([ZiGateFrame.START_BYTE]), escapedData, Uint8Array.from([ZiGateFrame.STOP_BYTE])]);
     }
 
-    escapeData(data: Buffer): Buffer {
+    escapeData(data: Buffer<ArrayBuffer>): Buffer<ArrayBuffer> {
         let encodedLength = 0;
         const encodedData = Buffer.alloc(data.length * 2);
         const FRAME_ESCAPE_XOR = 0x10;
@@ -162,7 +162,7 @@ export default class ZiGateFrame {
         return readBytes(this.checksumBytes);
     }
 
-    writeMsgPayload(msgPayload: Buffer): ZiGateFrame {
+    writeMsgPayload(msgPayload: Buffer<ArrayBuffer>): ZiGateFrame {
         this.msgPayloadBytes = Buffer.from(msgPayload);
         this.writeMsgLength(msgPayload.length);
         this.writeChecksum();

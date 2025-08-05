@@ -477,7 +477,7 @@ function parseGreenPowerDataIndication(view: DataView): GpDataInd | null {
         let frameCounter = 0;
         let commandId = 0;
         let commandFrameSize = 0;
-        let commandFrame: Buffer | undefined;
+        let commandFrame: Buffer<ArrayBuffer> | undefined;
 
         const buf = new Buffalo(Buffer.from(view.buffer));
 

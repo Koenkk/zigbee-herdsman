@@ -35,7 +35,7 @@ export class AdapterNvMemory {
      * @param id NV item identifier.
      * @param offset Desired data offset to read from.
      */
-    public async readItem(id: NvItemsIds, offset?: number): Promise<Buffer>;
+    public async readItem(id: NvItemsIds, offset?: number): Promise<Buffer<ArrayBuffer>>;
 
     /**
      * Reads a variable-length item from NV memory and creates a builds a requested struct.
@@ -92,7 +92,7 @@ export class AdapterNvMemory {
      * @param autoInit Whether NV item should be automatically initialized if not present.
      */
 
-    public async writeItem(id: NvItemsIds, data: Buffer | Structs.SerializableMemoryObject, offset = 0, autoInit = true): Promise<void> {
+    public async writeItem(id: NvItemsIds, data: Buffer<ArrayBuffer> | Structs.SerializableMemoryObject, offset = 0, autoInit = true): Promise<void> {
         this.checkMemoryAlignmentSetup();
         const buffer = Buffer.isBuffer(data) ? data : data.serialize(this.memoryAlignment);
         const lengthResponse = await this.retry(() => this.znp.requestWithReply(Subsystem.SYS, "osalNvLength", {id}));
@@ -148,7 +148,7 @@ export class AdapterNvMemory {
      * @param data Desired NV item value.
      * @param autoInit Whether NV item should be automatically initialized if not present.
      */
-    public async updateItem(id: NvItemsIds, data: Buffer, autoInit = true): Promise<void> {
+    public async updateItem(id: NvItemsIds, data: Buffer<ArrayBuffer>, autoInit = true): Promise<void> {
         this.checkMemoryAlignmentSetup();
         const current = await this.readItem(id);
         if (!current || !current.equals(data)) {
@@ -187,7 +187,7 @@ export class AdapterNvMemory {
      * @param subId Entry index.
      * @param offset Data offset to read from.
      */
-    public async readExtendedTableEntry(sysId: NvSystemIds, id: NvItemsIds, subId: number, offset?: number): Promise<Buffer>;
+    public async readExtendedTableEntry(sysId: NvSystemIds, id: NvItemsIds, subId: number, offset?: number): Promise<Buffer<ArrayBuffer>>;
     public async readExtendedTableEntry<T extends Structs.BuiltStruct>(
         sysId: NvSystemIds,
         id: NvItemsIds,
@@ -243,7 +243,7 @@ export class AdapterNvMemory {
         sysId: NvSystemIds,
         id: NvItemsIds,
         subId: number,
-        data: Buffer,
+        data: Buffer<ArrayBuffer>,
         offset?: number,
         autoInit = true,
     ): Promise<void> {
@@ -290,7 +290,7 @@ export class AdapterNvMemory {
      * @param id The item index at which the table starts.
      * @param maxLength Maximum number of items the table may contain.
      */
-    public async readTable(mode: "legacy", id: NvItemsIds, maxLength: number): Promise<Buffer[]>;
+    public async readTable(mode: "legacy", id: NvItemsIds, maxLength: number): Promise<Buffer<ArrayBuffer>[]>;
 
     /**
      * Reads a legacy table at defined index into a table structure covering struct entries.
@@ -317,7 +317,7 @@ export class AdapterNvMemory {
      * @param id Extended table NV index.
      * @param maxLength Maximum number of entries to load from the table.
      */
-    public async readTable(mode: "extended", sysId: NvSystemIds, id: NvItemsIds, maxLength?: number): Promise<Buffer[]>;
+    public async readTable(mode: "extended", sysId: NvSystemIds, id: NvItemsIds, maxLength?: number): Promise<Buffer<ArrayBuffer>[]>;
 
     /**
      * Reads an extended (Z-Stack 3.x.0+) table into a table structure covering struct entries.
@@ -343,13 +343,13 @@ export class AdapterNvMemory {
         p2: NvItemsIds | number,
         p3?: Structs.MemoryObjectFactory<T> | number,
         p4?: Structs.MemoryObjectFactory<T>,
-    ): Promise<Buffer[] | T> {
+    ): Promise<Buffer<ArrayBuffer>[] | T> {
         const sysId = mode === "legacy" ? undefined : (p1 as NvSystemIds);
         const id = (mode === "legacy" ? p1 : p2) as NvItemsIds;
         const maxLength = (mode === "legacy" ? p2 : p3) as number;
         const useTable = (mode === "legacy" ? p3 : p4) as Structs.MemoryObjectFactory<T>;
 
-        const rawEntries: Buffer[] = [];
+        const rawEntries: Buffer<ArrayBuffer>[] = [];
         let entryOffset = 0;
         let rawEntry = null;
         if (mode === "legacy") {

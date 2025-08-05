@@ -7,7 +7,7 @@ import {Struct} from "../struct";
  *
  * @param data Data to initialize structure with.
  */
-export const nwkKey = (data?: Buffer | Buffer[]) => {
+export const nwkKey = (data?: Buffer<ArrayBuffer> | Buffer<ArrayBuffer>[]) => {
     assert(!Array.isArray(data));
     return Struct.new().member("uint8array", "key", 16).build(data);
 };

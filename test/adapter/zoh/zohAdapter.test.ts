@@ -81,7 +81,7 @@ describe("ZigBee on Host", () => {
         rmSync(TEMP_PATH_SAVE, {force: true});
     };
 
-    const makeSpinelLastStatus = (tid: number, status: SpinelStatus = SpinelStatus.OK): Buffer => {
+    const makeSpinelLastStatus = (tid: number, status: SpinelStatus = SpinelStatus.OK): Buffer<ArrayBuffer> => {
         const respSpinelFrame = {
             header: {
                 tid,
@@ -97,7 +97,7 @@ describe("ZigBee on Host", () => {
     };
 
     // biome-ignore lint/correctness/noUnusedVariables: dev
-    const makeSpinelStreamRaw = (tid: number, macFrame: Buffer, spinelMeta?: Buffer): Buffer => {
+    const makeSpinelStreamRaw = (tid: number, macFrame: Buffer<ArrayBuffer>, spinelMeta?: Buffer<ArrayBuffer>): Buffer<ArrayBuffer> => {
         const spinelFrame = {
             header: {
                 tid,

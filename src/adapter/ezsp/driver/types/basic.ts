@@ -2,7 +2,7 @@
 export class int_t {
     static _signed = true;
 
-    static serialize(cls: any, value: number): Buffer {
+    static serialize(cls: any, value: number): Buffer<ArrayBuffer> {
         const buffer = Buffer.alloc(cls._size, 0);
         if (cls._signed) {
             buffer.writeIntLE(value, 0, cls._size);
@@ -12,7 +12,7 @@ export class int_t {
         return buffer;
     }
 
-    static deserialize(cls: any, data: Buffer): any[] {
+    static deserialize(cls: any, data: Buffer<ArrayBuffer>): any[] {
         return [cls._signed ? data.readIntLE(0, cls._size) : data.readUIntLE(0, cls._size), data.subarray(cls._size)];
     }
 
@@ -82,7 +82,7 @@ export class uint64_t extends uint_t {
 }
 
 export class LVBytes {
-    static serialize(_cls: any, value: any[]): Buffer {
+    static serialize(_cls: any, value: any[]): Buffer<ArrayBuffer> {
         if (Buffer.isBuffer(value)) {
             const ret = Buffer.alloc(1);
             ret.writeUInt8(value.length, 0);
@@ -91,7 +91,7 @@ export class LVBytes {
         return Buffer.from([value.length].concat(value));
     }
 
-    static deserialize(_cls: any, data: Buffer): any[] {
+    static deserialize(_cls: any, data: Buffer<ArrayBuffer>): any[] {
         const l = data.readIntLE(0, 1);
         const s = data.subarray(1, l + 1);
         return [s, data.subarray(l + 1)];
@@ -99,12 +99,12 @@ export class LVBytes {
 }
 
 export abstract class List {
-    static serialize(cls: any, value: any[]): Buffer {
+    static serialize(cls: any, value: any[]): Buffer<ArrayBuffer> {
         // console.assert(((cls._length === null) || (cls.length === cls._length)));
         return Buffer.from(value.map((i) => i.serialize(cls, i)));
     }
 
-    static deserialize(cls: any, data: Buffer): any[] {
+    static deserialize(cls: any, data: Buffer<ArrayBuffer>): any[] {
         let item;
         const r: any[] = [];
         while (data) {
@@ -116,13 +116,13 @@ export abstract class List {
 }
 
 class _LVList extends List {
-    static override serialize(cls: any, value: any[]): Buffer {
+    static override serialize(cls: any, value: any[]): Buffer<ArrayBuffer> {
         const head = [cls.length];
         const data = List.serialize(cls, value);
         return Buffer.from(head.concat(data));
     }
 
-    static override deserialize(cls: any, data: Buffer): any[] {
+    static override deserialize(cls: any, data: Buffer<ArrayBuffer>): any[] {
         let item;
         let length;
         const r: any[] = [];
@@ -152,19 +152,19 @@ export function LVList(itemtype: any): List {
 }
 
 export class WordList extends List {
-    static override serialize(_cls: any, value: any[]): Buffer {
+    static override serialize(_cls: any, value: any[]): Buffer<ArrayBuffer> {
         const data = value.map((i) => Buffer.from(uint16_t.serialize(uint16_t, i)));
         return Buffer.concat(data);
     }
 }
 
 class _FixedList extends List {
-    static override serialize(cls: any, value: any[]): Buffer {
+    static override serialize(cls: any, value: any[]): Buffer<ArrayBuffer> {
         const data = value.map((i) => cls.itemtype.serialize(cls.itemtype, i)[0]);
         return Buffer.from(data);
     }
 
-    static override deserialize(cls: any, data: Buffer): any[] {
+    static override deserialize(cls: any, data: Buffer<ArrayBuffer>): any[] {
         let item;
         const r: any[] = [];
         for (let i = 0; i < cls._length; i++) {
@@ -180,7 +180,7 @@ export function fixed_list(
     itemtype: any,
 ): {
     new (): any;
-    deserialize(cls: any, data: Buffer): any;
+    deserialize(cls: any, data: Buffer<ArrayBuffer>): any;
 } {
     class FixedList extends _FixedList {
         static itemtype = itemtype;
@@ -191,11 +191,11 @@ export function fixed_list(
 }
 
 export class Bytes {
-    static serialize(_cls: any, value: any[]): Buffer {
+    static serialize(_cls: any, value: any[]): Buffer<ArrayBuffer> {
         return Buffer.from(value);
     }
 
-    static deserialize(_cls: any, data: Buffer): any[] {
+    static deserialize(_cls: any, data: Buffer<ArrayBuffer>): any[] {
         return [data];
     }
 }

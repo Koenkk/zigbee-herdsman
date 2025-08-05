@@ -4,7 +4,7 @@ import * as basic from "./basic";
 import * as named from "./named";
 
 export class EzspStruct {
-    static serialize(cls: any, obj: any): Buffer {
+    static serialize(cls: any, obj: any): Buffer<ArrayBuffer> {
         return Buffer.concat(
             cls._fields.map((field: any[]) => {
                 const value = obj[field[0]];
@@ -14,7 +14,7 @@ export class EzspStruct {
         );
     }
 
-    static deserialize(cls: any, data: Buffer): any[] {
+    static deserialize(cls: any, data: Buffer<ArrayBuffer>): any[] {
         const r = new cls();
         for (const [field_name, field_type] of cls._fields) {
             let v;
@@ -31,7 +31,7 @@ export class EzspStruct {
 
 export class EmberNetworkParameters extends EzspStruct {
     // @ts-expect-error set via _fields
-    public extendedPanId: Buffer;
+    public extendedPanId: Buffer<ArrayBuffer>;
     // @ts-expect-error set via _fields
     public panId: number;
     // @ts-expect-error set via _fields
@@ -173,7 +173,7 @@ export class EmberMulticastTableEntry extends EzspStruct {
 
 export class EmberKeyData extends EzspStruct {
     // @ts-expect-error set via _fields
-    public contents: Buffer;
+    public contents: Buffer<ArrayBuffer>;
     // A 128- bit key.
     static _fields = [
         // The key data.
@@ -183,7 +183,7 @@ export class EmberKeyData extends EzspStruct {
 
 export class EmberCertificateData extends EzspStruct {
     // @ts-expect-error set via _fields
-    public contents: Buffer;
+    public contents: Buffer<ArrayBuffer>;
     // The implicit certificate used in CBKE.
     static _fields = [
         // The certificate data.
@@ -193,7 +193,7 @@ export class EmberCertificateData extends EzspStruct {
 
 export class EmberPublicKeyData extends EzspStruct {
     // @ts-expect-error set via _fields
-    public contents: Buffer;
+    public contents: Buffer<ArrayBuffer>;
     // The public key data used in CBKE.
     static _fields = [
         // The public key data.
@@ -203,7 +203,7 @@ export class EmberPublicKeyData extends EzspStruct {
 
 export class EmberPrivateKeyData extends EzspStruct {
     // @ts-expect-error set via _fields
-    public contents: Buffer;
+    public contents: Buffer<ArrayBuffer>;
     // The private key data used in CBKE.
     static _fields = [
         // The private key data.
@@ -269,7 +269,7 @@ export class EmberMessageDigest extends EzspStruct {
 
 export class EmberAesMmoHashContext extends EzspStruct {
     // @ts-expect-error set via _fields
-    public result: Buffer;
+    public result: Buffer<ArrayBuffer>;
     // @ts-expect-error set via _fields
     public length: number;
     // The hash context for an ongoing hash operation.
@@ -667,7 +667,7 @@ export class EmberMultiAddress extends EzspStruct {
         ["addrmode", basic.uint8_t],
         ["nwk", named.EmberNodeId],
     ];
-    static override serialize(cls: any, obj: any): Buffer {
+    static override serialize(cls: any, obj: any): Buffer<ArrayBuffer> {
         const addrmode = obj["addrmode"];
 
         const fields = addrmode == 3 ? cls.fields3 : cls.fields1;

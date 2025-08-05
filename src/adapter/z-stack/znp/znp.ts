@@ -286,7 +286,7 @@ export class Znp extends events.EventEmitter {
         });
     }
 
-    public requestZdo(clusterId: ZdoClusterId, payload: Buffer, waiterID?: number): Promise<void> {
+    public requestZdo(clusterId: ZdoClusterId, payload: Buffer<ArrayBuffer>, waiterID?: number): Promise<void> {
         return this.queue.execute(async () => {
             const cmd = Definition[Subsystem.ZDO].find((c) => isMtCmdSreqZdo(c) && c.zdoClusterId === clusterId);
             assert(cmd, `Command for ZDO cluster ID '${clusterId}' not supported.`);

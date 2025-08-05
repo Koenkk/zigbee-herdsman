@@ -113,7 +113,7 @@ export abstract class Adapter extends events.EventEmitter<AdapterEventMap> {
 
     public abstract getNetworkParameters(): Promise<TsType.NetworkParameters>;
 
-    public abstract addInstallCode(ieeeAddress: string, key: Buffer, hashed: boolean): Promise<void>;
+    public abstract addInstallCode(ieeeAddress: string, key: Buffer<ArrayBuffer>, hashed: boolean): Promise<void>;
 
     public abstract waitFor(
         networkAddress: number | undefined,
@@ -134,21 +134,21 @@ export abstract class Adapter extends events.EventEmitter<AdapterEventMap> {
         ieeeAddress: string,
         networkAddress: number,
         clusterId: Zdo.ClusterId,
-        payload: Buffer,
+        payload: Buffer<ArrayBuffer>,
         disableResponse: true,
     ): Promise<void>;
     public abstract sendZdo<K extends keyof ZdoTypes.RequestToResponseMap>(
         ieeeAddress: string,
         networkAddress: number,
         clusterId: K,
-        payload: Buffer,
+        payload: Buffer<ArrayBuffer>,
         disableResponse: false,
     ): Promise<ZdoTypes.RequestToResponseMap[K]>;
     public abstract sendZdo<K extends keyof ZdoTypes.RequestToResponseMap>(
         ieeeAddress: string,
         networkAddress: number,
         clusterId: K,
-        payload: Buffer,
+        payload: Buffer<ArrayBuffer>,
         disableResponse: boolean,
     ): Promise<ZdoTypes.RequestToResponseMap[K] | undefined>;
 

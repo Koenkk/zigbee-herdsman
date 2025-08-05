@@ -10,7 +10,7 @@ export function bigUInt64ToHexBE(value: bigint): string {
  * @param value 64-bit bigint
  * @returns 8-bytelength buffer in little-endian
  */
-export function bigUInt64ToBufferLE(value: bigint): Buffer {
+export function bigUInt64ToBufferLE(value: bigint): Buffer<ArrayBuffer> {
     const b = Buffer.alloc(8);
     b.writeBigUInt64LE(value, 0);
     return b;
@@ -20,7 +20,7 @@ export function bigUInt64ToBufferLE(value: bigint): Buffer {
  * @param value 64-bit bigint
  * @returns 8-bytelength buffer in big-endian
  */
-export function bigUInt64ToBufferBE(value: bigint): Buffer {
+export function bigUInt64ToBufferBE(value: bigint): Buffer<ArrayBuffer> {
     const b = Buffer.alloc(8);
     b.writeBigUInt64BE(value, 0);
     return b;
