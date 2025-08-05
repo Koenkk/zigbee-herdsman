@@ -25,7 +25,7 @@ const littleEndian = true;
 const lastReceivedGpInd = {srcId: 0, commandId: 0, frameCounter: 0};
 export const frameParserEvents = new EventEmitter();
 
-function parseReadParameterResponse(view: DataView): Command | null {
+function parseReadParameterResponse(view: DataView<ArrayBuffer>): Command | null {
     const seqNumber = view.getUint8(1);
     const status = view.getUint8(2);
     const parameterId = view.getUint8(7);
@@ -128,26 +128,26 @@ function parseReadParameterResponse(view: DataView): Command | null {
     return result;
 }
 
-function parseReadFirmwareResponse(view: DataView): number {
+function parseReadFirmwareResponse(view: DataView<ArrayBuffer>): number {
     const fw = view.getUint32(5, littleEndian);
     logger.debug(`read firmware version response - version: 0x${fw.toString(16)}`, NS);
     return fw;
 }
 
-function parseDeviceStateResponse(view: DataView): number {
+function parseDeviceStateResponse(view: DataView<ArrayBuffer>): number {
     const deviceState = view.getUint8(5);
     frameParserEvents.emit("deviceStateUpdated", deviceState);
     return deviceState;
 }
 
-function parseChangeNetworkStateResponse(view: DataView): number {
+function parseChangeNetworkStateResponse(view: DataView<ArrayBuffer>): number {
     const status = view.getUint8(2);
     const state = view.getUint8(5);
     logger.debug(`change network state - status: ${status} new state: ${state}`, NS);
     return state;
 }
 
-function parseApsConfirmResponse(view: DataView): DataStateResponse | null {
+function parseApsConfirmResponse(view: DataView<ArrayBuffer>): DataStateResponse | null {
     const buf = new Buffalo(Buffer.from(view.buffer));
 
     const commandId = buf.readUInt8();
@@ -284,7 +284,7 @@ class UDataView {
     }
 }
 
-function parseApsDataIndicationResponse(inview: DataView): ReceivedDataResponse | null {
+function parseApsDataIndicationResponse(inview: DataView<ArrayBuffer>): ReceivedDataResponse | null {
     // min 28 bytelength
     try {
         const uview = new UDataView(inview, true);
@@ -403,7 +403,7 @@ function parseApsDataIndicationResponse(inview: DataView): ReceivedDataResponse 
     }
 }
 
-function parseApsDataRequestResponse(view: DataView): number | null {
+function parseApsDataRequestResponse(view: DataView<ArrayBuffer>): number | null {
     try {
         const status = view.getUint8(2);
         const requestId = view.getUint8(8);
@@ -417,7 +417,7 @@ function parseApsDataRequestResponse(view: DataView): number | null {
     }
 }
 
-function parseWriteParameterResponse(view: DataView): number | null {
+function parseWriteParameterResponse(view: DataView<ArrayBuffer>): number | null {
     try {
         const status = view.getUint8(2);
         const parameterId = view.getUint8(7);
@@ -434,7 +434,7 @@ function parseWriteParameterResponse(view: DataView): number | null {
     }
 }
 
-function parseDeviceStateChangedNotification(view: DataView): number | null {
+function parseDeviceStateChangedNotification(view: DataView<ArrayBuffer>): number | null {
     try {
         const deviceState = view.getUint8(5);
         frameParserEvents.emit("deviceStateUpdated", deviceState);
@@ -471,7 +471,7 @@ enum ZgpConstants {
     GpNwkFrameControlExtensionFlag = 1 << 7,
 }
 
-function parseGreenPowerDataIndication(view: DataView): GpDataInd | null {
+function parseGreenPowerDataIndication(view: DataView<ArrayBuffer>): GpDataInd | null {
     try {
         let srcId = 0;
         let frameCounter = 0;
@@ -610,16 +610,16 @@ function parseGreenPowerDataIndication(view: DataView): GpDataInd | null {
     }
 }
 
-function parseMacPollCommand(_view: DataView): number {
+function parseMacPollCommand(_view: DataView<ArrayBuffer>): number {
     //logger.debug("Received command MAC_POLL", NS);
     return FirmwareCommand.MacPollIndication;
 }
-function parseBeaconRequest(_view: DataView): number {
+function parseBeaconRequest(_view: DataView<ArrayBuffer>): number {
     logger.debug("Received Beacon Request", NS);
     return FirmwareCommand.Beacon;
 }
 
-function parseDebugLog(view: DataView): null {
+function parseDebugLog(view: DataView<ArrayBuffer>): null {
     let dbg = "";
     const buf = new Buffalo(Buffer.from(view.buffer));
 
@@ -649,7 +649,7 @@ function parseDebugLog(view: DataView): null {
     return null;
 }
 
-function parseUnknownCommand(view: DataView): number {
+function parseUnknownCommand(view: DataView<ArrayBuffer>): number {
     const id = view.getUint8(0);
     if (id in FirmwareCommand) {
         logger.debug(`received unsupported command: ${FirmwareCommand[id]} id: 0x${id.toString(16).padStart(2, "0")}`, NS);
@@ -658,7 +658,7 @@ function parseUnknownCommand(view: DataView): number {
     }
     return id;
 }
-function getParserForCommandId(id: number): (view: DataView) => Command | object | number | null {
+function getParserForCommandId(id: number): (view: DataView<ArrayBuffer>) => Command | object | number | null {
     switch (id) {
         case FirmwareCommand.ReadParameter:
             return parseReadParameterResponse;
@@ -692,7 +692,7 @@ function getParserForCommandId(id: number): (view: DataView) => Command | object
     }
 }
 
-function processFrame(frame: Uint8Array): void {
+function processFrame(frame: Uint8Array<ArrayBuffer>): void {
     const [seqNumber, status, command, commandId] = parseFrame(frame);
     // logger.debug(`Process frame with cmd: 0x${commandId.toString(16).padStart(2,'0')}, seq: ${seqNumber} status: ${status}`, NS);
 
@@ -739,7 +739,7 @@ function processFrame(frame: Uint8Array): void {
     }
 }
 
-function parseFrame(frame: Uint8Array): [number, number, ReturnType<ReturnType<typeof getParserForCommandId>>, number] {
+function parseFrame(frame: Uint8Array<ArrayBuffer>): [number, number, ReturnType<ReturnType<typeof getParserForCommandId>>, number] {
     // at this point frame.buffer.length is at least 5 bytes long
     const view = new DataView(frame.buffer);
     const commandId = view.getUint8(0);
