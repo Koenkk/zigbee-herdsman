@@ -1,8 +1,8 @@
 import type {
     ExtensionFieldSet,
-    GPDAttributeReport,
-    GPDChannelRequest,
     Gpd,
+    GpdAttributeReport,
+    GpdChannelRequest,
     MiboxerZone,
     Struct,
     StructuredSelector,
@@ -1430,8 +1430,8 @@ export interface TClusters {
                 /** Type: GPD_FRAME */
                 commandFrame?:
                     | Gpd
-                    | GPDChannelRequest
-                    | GPDAttributeReport
+                    | GpdChannelRequest
+                    | GpdAttributeReport
                     | {
                           raw: Buffer;
                       }
@@ -1460,8 +1460,8 @@ export interface TClusters {
                 /** Type: GPD_FRAME */
                 commandFrame?:
                     | Gpd
-                    | GPDChannelRequest
-                    | GPDAttributeReport
+                    | GpdChannelRequest
+                    | GpdAttributeReport
                     | {
                           raw: Buffer;
                       }
@@ -1494,8 +1494,8 @@ export interface TClusters {
                 /** Type: GPD_FRAME */
                 gpdPayload:
                     | Gpd
-                    | GPDChannelRequest
-                    | GPDAttributeReport
+                    | GpdChannelRequest
+                    | GpdAttributeReport
                     | {
                           raw: Buffer;
                       }

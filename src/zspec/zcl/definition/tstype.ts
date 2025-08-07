@@ -91,18 +91,18 @@ export interface Gpd {
     currentContactStatus: number;
 }
 
-export interface GPDChannelRequest {
+export interface GpdChannelRequest {
     nextChannel: number;
     nextNextChannel: number;
 }
 
-export interface GPDChannelConfiguration {
+export interface GpdChannelConfiguration {
     commandID: number;
     operationalChannel: number;
     basic: boolean;
 }
 
-export interface GPDCommissioningReply {
+export interface GpdCommissioningReply {
     commandID: number;
     options: number;
     /** expected valid if corresponding `options` bits set */
@@ -115,12 +115,12 @@ export interface GPDCommissioningReply {
     frameCounter?: number;
 }
 
-export interface GPDCustomReply {
+export interface GpdCustomReply {
     commandID: number;
     buffer: Buffer;
 }
 
-export interface GPDAttributeReport {
+export interface GpdAttributeReport {
     manufacturerCode: number;
     clusterID: number;
     attributes: KeyZclValue;

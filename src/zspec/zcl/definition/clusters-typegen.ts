@@ -38,9 +38,9 @@ const namedImports = ts.factory.createImportDeclaration(
         ts.factory.createNamedImports([
             // sorted by name
             ts.factory.createImportSpecifier(false, undefined, ts.factory.createIdentifier("ExtensionFieldSet")),
-            ts.factory.createImportSpecifier(false, undefined, ts.factory.createIdentifier("GPDAttributeReport")),
-            ts.factory.createImportSpecifier(false, undefined, ts.factory.createIdentifier("GPDChannelRequest")),
             ts.factory.createImportSpecifier(false, undefined, ts.factory.createIdentifier("Gpd")),
+            ts.factory.createImportSpecifier(false, undefined, ts.factory.createIdentifier("GpdAttributeReport")),
+            ts.factory.createImportSpecifier(false, undefined, ts.factory.createIdentifier("GpdChannelRequest")),
             ts.factory.createImportSpecifier(false, undefined, ts.factory.createIdentifier("MiboxerZone")),
             ts.factory.createImportSpecifier(false, undefined, ts.factory.createIdentifier("Struct")),
             ts.factory.createImportSpecifier(false, undefined, ts.factory.createIdentifier("StructuredSelector")),
@@ -109,8 +109,8 @@ const getTypeFromDataType = (dataType: DataType | BuffaloZclDataType): ts.TypeNo
         case BuffaloZclDataType.GPD_FRAME: {
             return ts.factory.createUnionTypeNode([
                 ts.factory.createTypeReferenceNode("Gpd"),
-                ts.factory.createTypeReferenceNode("GPDChannelRequest"),
-                ts.factory.createTypeReferenceNode("GPDAttributeReport"),
+                ts.factory.createTypeReferenceNode("GpdChannelRequest"),
+                ts.factory.createTypeReferenceNode("GpdAttributeReport"),
                 ts.factory.createTypeLiteralNode([
                     ts.factory.createPropertySignature(undefined, "raw", undefined, ts.factory.createTypeReferenceNode("Buffer")),
                 ]),

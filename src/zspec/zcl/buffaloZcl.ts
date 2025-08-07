@@ -5,12 +5,12 @@ import {BuffaloZclDataType, DataType, StructuredIndicatorType} from "./definitio
 import type {
     BuffaloZclOptions,
     ExtensionFieldSet,
-    GPDAttributeReport,
-    GPDChannelConfiguration,
-    GPDChannelRequest,
-    GPDCommissioningReply,
-    GPDCustomReply,
     Gpd,
+    GpdAttributeReport,
+    GpdChannelConfiguration,
+    GpdChannelRequest,
+    GpdCommissioningReply,
+    GpdCustomReply,
     KeyZclValue,
     MiboxerZone,
     Struct,
@@ -331,10 +331,10 @@ export class BuffaloZcl extends Buffalo {
     }
 
     private writeToD(value: ZclTimeOfDay): void {
-        this.writeUInt8(Number.isNaN(value.hours) ? 0xff : value.hours);
-        this.writeUInt8(Number.isNaN(value.minutes) ? 0xff : value.minutes);
-        this.writeUInt8(Number.isNaN(value.seconds) ? 0xff : value.seconds);
-        this.writeUInt8(Number.isNaN(value.hundredths) ? 0xff : value.hundredths);
+        this.writeUInt8(value.hours == null || Number.isNaN(value.hours) ? 0xff : value.hours);
+        this.writeUInt8(value.minutes == null || Number.isNaN(value.minutes) ? 0xff : value.minutes);
+        this.writeUInt8(value.seconds == null || Number.isNaN(value.seconds) ? 0xff : value.seconds);
+        this.writeUInt8(value.hundredths == null || Number.isNaN(value.hundredths) ? 0xff : value.hundredths);
     }
 
     private readToD(): ZclTimeOfDay {
@@ -352,10 +352,10 @@ export class BuffaloZcl extends Buffalo {
     }
 
     private writeDate(value: ZclDate): void {
-        this.writeUInt8(Number.isNaN(value.year) ? 0xff : value.year - 1900);
-        this.writeUInt8(Number.isNaN(value.month) ? 0xff : value.month);
-        this.writeUInt8(Number.isNaN(value.dayOfMonth) ? 0xff : value.dayOfMonth);
-        this.writeUInt8(Number.isNaN(value.dayOfWeek) ? 0xff : value.dayOfWeek);
+        this.writeUInt8(value.year == null || Number.isNaN(value.year) ? 0xff : value.year - 1900);
+        this.writeUInt8(value.month == null || Number.isNaN(value.month) ? 0xff : value.month);
+        this.writeUInt8(value.dayOfMonth == null || Number.isNaN(value.dayOfMonth) ? 0xff : value.dayOfMonth);
+        this.writeUInt8(value.dayOfWeek == null || Number.isNaN(value.dayOfWeek) ? 0xff : value.dayOfWeek);
     }
 
     private readDate(): ZclDate {
