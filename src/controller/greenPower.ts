@@ -9,7 +9,7 @@ import {logger} from "../utils/logger";
 import {COORDINATOR_ADDRESS, GP_ENDPOINT, GP_GROUP_ID, INTEROPERABILITY_LINK_KEY} from "../zspec/consts";
 import {BroadcastAddress} from "../zspec/enums";
 import * as Zcl from "../zspec/zcl";
-import type {GPDChannelConfiguration, GPDCommissioningReply} from "../zspec/zcl/definition/tstype";
+import type {GpdChannelConfiguration, GpdCommissioningReply} from "../zspec/zcl/definition/tstype";
 import zclTransactionSequenceNumber from "./helpers/zclTransactionSequenceNumber";
 import {Device} from "./model";
 import type {GreenPowerDeviceJoinedPayload} from "./tstype";
@@ -91,7 +91,7 @@ type PairingPayload = {
 };
 
 /** @see Zcl.Clusters.greenPower.commandsResponse.response */
-type ResponsePayload<T extends GPDCommissioningReply | GPDChannelConfiguration> = {
+type ResponsePayload<T extends GpdCommissioningReply | GpdChannelConfiguration> = {
     options: number;
     tempMaster: number;
     tempMasterTx: number;
@@ -355,7 +355,7 @@ export class GreenPower extends EventEmitter<GreenPowerEventMap> {
 
                         const networkParameters = await this.adapter.getNetworkParameters();
                         // Commissioning reply
-                        const payloadResponse: ResponsePayload<GPDCommissioningReply> = {
+                        const payloadResponse: ResponsePayload<GpdCommissioningReply> = {
                             options: 0,
                             tempMaster: frame.payload.gppNwkAddr ?? /* v8 ignore next */ COORDINATOR_ADDRESS,
                             tempMasterTx: networkParameters.channel - 11,
@@ -488,7 +488,7 @@ export class GreenPower extends EventEmitter<GreenPowerEventMap> {
                     logger.debug(`[CHANNEL_REQUEST] ${logStr}`, NS);
                     const networkParameters = await this.adapter.getNetworkParameters();
                     // Channel notification
-                    const payload: ResponsePayload<GPDChannelConfiguration> = {
+                    const payload: ResponsePayload<GpdChannelConfiguration> = {
                         options: 0,
                         tempMaster: frame.payload.gppNwkAddr ?? /* v8 ignore next */ COORDINATOR_ADDRESS,
                         tempMasterTx: frame.payload.commandFrame.nextChannel,

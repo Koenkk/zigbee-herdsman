@@ -499,8 +499,8 @@ describe("Zcl", () => {
                         "12": 0,
                         "100": 1,
                         "101": 0,
-                        "110": 255,
-                        "111": 255,
+                        "110": Number.NaN,
+                        "111": Number.NaN,
                         "148": 4,
                         "149": 0.14562499523162842,
                         "150": 2335.614013671875,
@@ -742,7 +742,7 @@ describe("Zcl", () => {
             commandID: 16,
             frameCounter: 1253,
             options: 5280,
-            payloadSize: 255,
+            payloadSize: Number.NaN,
         };
 
         expect(frame.header).toStrictEqual(header);
@@ -750,7 +750,7 @@ describe("Zcl", () => {
     });
 
     it("ZclFrame from buffer GPD with extra data", () => {
-        const buffer = Buffer.from([0x11, 0x00, 0x00, 0xa0, 0x14, 0xfe, 0xf4, 0x46, 0x00, 0xe5, 0x04, 0x00, 0x00, 0x10, 0xff, 0x01]);
+        const buffer = Buffer.from([0x11, 0x00, 0x00, 0xa0, 0x14, 0xfe, 0xf4, 0x46, 0x00, 0xe5, 0x04, 0x00, 0x00, 0x10, 0x01, 0x01]);
         const frame = Zcl.Frame.fromBuffer(Zcl.Clusters.greenPower.ID, Zcl.Header.fromBuffer(buffer)!, buffer, {});
         const header = new Zcl.Header(
             {
@@ -771,7 +771,7 @@ describe("Zcl", () => {
             commandID: 16,
             frameCounter: 1253,
             options: 5280,
-            payloadSize: 255,
+            payloadSize: 1,
         };
 
         expect(frame.header).toStrictEqual(header);
@@ -1951,6 +1951,7 @@ describe("Zcl", () => {
         expect(
             frame.read(BuffaloZclDataType.GPD_FRAME, {
                 payload: {
+                    payloadSize: buffer.length,
                     commandID: 0xe0,
                 },
             }),
@@ -2020,6 +2021,7 @@ describe("Zcl", () => {
         expect(
             frame.read(BuffaloZclDataType.GPD_FRAME, {
                 payload: {
+                    payloadSize: buffer.length,
                     commandID: 0xe0,
                 },
             }),
@@ -2051,6 +2053,7 @@ describe("Zcl", () => {
         expect(
             frame.read(BuffaloZclDataType.GPD_FRAME, {
                 payload: {
+                    payloadSize: buffer.length,
                     commandID: 0xe3,
                 },
             }),
@@ -2404,7 +2407,7 @@ describe("Zcl", () => {
         const buffer = Buffer.alloc(4);
         const expected = Buffer.from([0xff, 0xff, 0xff, 0xff]);
         const buffalo = new BuffaloZcl(buffer);
-        const payload = {hours: undefined, minutes: undefined, seconds: undefined, hundredths: undefined};
+        const payload = {hours: Number.NaN, minutes: Number.NaN, seconds: Number.NaN, hundredths: Number.NaN};
         buffalo.write(DataType.TOD, payload, {});
         expect(buffalo.getBuffer()).toStrictEqual(expected);
     });
@@ -2413,7 +2416,7 @@ describe("Zcl", () => {
         const buffer = Buffer.alloc(4);
         const expected = Buffer.from([0xff, 0xff, 0xff, 0xff]);
         const buffalo = new BuffaloZcl(buffer);
-        const payload = {year: undefined, month: undefined, dayOfMonth: undefined, dayOfWeek: undefined};
+        const payload = {year: Number.NaN, month: Number.NaN, dayOfMonth: Number.NaN, dayOfWeek: Number.NaN};
         buffalo.write(DataType.DATE, payload, {});
         expect(buffalo.getBuffer()).toStrictEqual(expected);
     });
@@ -2779,8 +2782,7 @@ describe("Zcl", () => {
         const buffalo = new BuffaloZcl(Buffer.from([12, 34]));
         const value = buffalo.read(BuffaloZclDataType.USE_DATA_TYPE, {});
         expect(value).toStrictEqual(Buffer.from([12, 34]));
-        // @ts-expect-error protected
-        buffalo.position = 1;
+        buffalo.setPosition(1);
         const value2 = buffalo.read(BuffaloZclDataType.USE_DATA_TYPE, {length: 1});
         expect(value2).toStrictEqual(Buffer.from([34]));
     });
@@ -2801,11 +2803,11 @@ describe("Zcl", () => {
         }).toThrow("Cannot write USE_DATA_TYPE without dataType option specified");
     });
 
-    it("Throws when read GPD_FRAME is missing payload.payloadSize option when payload.commandID is 0xA1", () => {
+    it("Throws when read GPD_FRAME is missing payload.payloadSize option", () => {
         expect(() => {
             const buffalo = new BuffaloZcl(Buffer.alloc(1));
             buffalo.read(BuffaloZclDataType.GPD_FRAME, {payload: {commandID: 0xa1}});
-        }).toThrow("Cannot read GPD_FRAME with commandID=0xA1 without payloadSize options specified");
+        }).toThrow("Cannot read GPD_FRAME without required payload options specified");
     });
 
     it("Throws when read LIST_THERMO_TRANSITIONS is missing required payload options", () => {

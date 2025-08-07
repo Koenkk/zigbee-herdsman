@@ -97,10 +97,10 @@ export enum DataType {
     /** class=composite, length=0x0000-0xFFFE, non-value=0xFFFF */
     LONG_CHAR_STR = 0x44,
 
-    /** class=composite, length=variable, non-value=[0]==0xFFFF */
+    /** class=composite, length=variable, non-value=(length=0xFFFF) */
     ARRAY = 0x48,
 
-    /** class=composite, length=variable, non-value=(length) */
+    /** class=composite, length=variable, non-value=(length=0xFFFF) */
     STRUCT = 0x4c,
 
     /** class=composite, length=max(0xFFFE * DataType) non-value=(length=0xFFFF) */
