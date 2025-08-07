@@ -1,5 +1,12 @@
 # Changelog
 
+## [5.0.5](https://github.com/Koenkk/zigbee-herdsman/compare/v5.0.4...v5.0.5) (2025-08-07)
+
+
+### Bug Fixes
+
+* More support for ZCL non-value ([#1424](https://github.com/Koenkk/zigbee-herdsman/issues/1424)) ([6f0b443](https://github.com/Koenkk/zigbee-herdsman/commit/6f0b443e238ee0fa0e20648c6a91303a8b749aa0))
+
 ## [5.0.4](https://github.com/Koenkk/zigbee-herdsman/compare/v5.0.3...v5.0.4) (2025-07-31)
 
 
