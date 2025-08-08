@@ -926,7 +926,8 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
             zclTransactionSequenceNumber?: number;
             manufacturerCode?: number;
             frameControl?: FrameControl;
-        } = {};
+            rawData: Buffer;
+        } = {rawData: payload.data};
 
         if (frame) {
             const command = frame.command;
