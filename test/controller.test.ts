@@ -6401,13 +6401,13 @@ describe("Controller", () => {
         mocksendZclFrameToEndpoint.mockRejectedValueOnce(new Error("timeout occurred"));
         let error;
         try {
-            await endpoint.readResponse("genOnOff", 1, [{onOff: 1}]);
+            await endpoint.readResponse("genOnOff", 1, {onOff: 1});
         } catch (e) {
             error = e;
         }
         expect(error).toStrictEqual(
             new Error(
-                `ZCL command 0x129/1 genOnOff.readRsp([{"onOff":1}], {"timeout":10000,"disableResponse":false,"disableRecovery":false,"disableDefaultResponse":true,"direction":1,"reservedBits":0,"transactionSequenceNumber":1,"writeUndiv":false}) failed (timeout occurred)`,
+                `ZCL command 0x129/1 genOnOff.readRsp({"onOff":1}, {"timeout":10000,"disableResponse":false,"disableRecovery":false,"disableDefaultResponse":true,"direction":1,"reservedBits":0,"transactionSequenceNumber":1,"writeUndiv":false}) failed (timeout occurred)`,
             ),
         );
     });

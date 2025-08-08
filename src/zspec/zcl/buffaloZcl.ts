@@ -2,14 +2,29 @@ import {Buffalo} from "../../buffalo";
 import {logger} from "../../utils/logger";
 import {isNumberArray} from "../../utils/utils";
 import {BuffaloZclDataType, DataType, StructuredIndicatorType} from "./definition/enums";
-import type {BuffaloZclOptions, StructuredSelector, ZclArray} from "./definition/tstype";
+import type {
+    BuffaloZclOptions,
+    ExtensionFieldSet,
+    Gpd,
+    GpdAttributeReport,
+    GpdChannelConfiguration,
+    GpdChannelRequest,
+    GpdCommissioningReply,
+    GpdCustomReply,
+    KeyZclValue,
+    MiboxerZone,
+    Struct,
+    StructuredSelector,
+    ThermoTransition,
+    TuyaDataPointValue,
+    ZclArray,
+    ZclDate,
+    ZclTimeOfDay,
+    ZoneInfo,
+} from "./definition/tstype";
 import * as Utils from "./utils";
 
 const NS = "zh:zcl:buffalo";
-
-interface KeyValue {
-    [s: string | number]: number | string;
-}
 
 const SEC_KEY_LENGTH = 16;
 
@@ -19,116 +34,6 @@ const EXTENSION_FIELD_SETS_DATA_TYPE: {[key: number]: DataType[]} = {
     258: [DataType.UINT8, DataType.UINT8],
     768: [DataType.UINT16, DataType.UINT16, DataType.UINT16, DataType.UINT8, DataType.UINT8, DataType.UINT8, DataType.UINT16, DataType.UINT16],
 };
-
-interface Struct {
-    elmType: DataType;
-    elmVal: unknown;
-}
-
-interface ZclTimeOfDay {
-    /** [0-23], NaN is converted to 0xff */
-    hours: number;
-    /** [0-59], NaN is converted to 0xff */
-    minutes: number;
-    /** [0-59], NaN is converted to 0xff */
-    seconds: number;
-    /** [0-99], NaN is converted to 0xff */
-    hundredths: number;
-}
-
-interface ZclDate {
-    /** [1900-2155], converted to/from [0-255] => value+1900=year, NaN is converted to 0xff */
-    year: number;
-    /** [1-12], NaN is converted to 0xff */
-    month: number;
-    /** [1-31], NaN is converted to 0xff */
-    dayOfMonth: number;
-    /** [1-7], NaN is converted to 0xff */
-    dayOfWeek: number;
-}
-
-interface ZoneInfo {
-    zoneID: number;
-    zoneStatus: number;
-}
-
-interface ExtensionFieldSet {
-    clstId: number;
-    len: number;
-    extField: unknown[];
-}
-
-interface ThermoTransition {
-    transitionTime: number;
-    heatSetpoint?: number;
-    coolSetpoint?: number;
-}
-
-interface Gpd {
-    deviceID: number;
-    options: number;
-    extendedOptions: number;
-    securityKey: Buffer;
-    keyMic: number;
-    outgoingCounter: number;
-    applicationInfo: number;
-    manufacturerID: number;
-    modelID: number;
-    numGpdCommands: number;
-    gpdCommandIdList: Buffer;
-    numServerClusters: number;
-    numClientClusters: number;
-    gpdServerClusters: Buffer;
-    gpdClientClusters: Buffer;
-    genericSwitchConfig: number;
-    currentContactStatus: number;
-}
-
-interface GpdChannelRequest {
-    nextChannel: number;
-    nextNextChannel: number;
-}
-
-export interface GpdChannelConfiguration {
-    commandID: number;
-    operationalChannel: number;
-    basic: boolean;
-}
-
-export interface GpdCommissioningReply {
-    commandID: number;
-    options: number;
-    /** expected valid if corresponding `options` bits set */
-    panID?: number;
-    /** expected valid if corresponding `options` bits set */
-    securityKey?: Buffer;
-    /** expected valid if corresponding `options` bits set */
-    keyMic?: number;
-    /** expected valid if corresponding `options` bits set */
-    frameCounter?: number;
-}
-
-interface GpdCustomReply {
-    commandID: number;
-    buffer: Buffer;
-}
-
-interface GpdAttributeReport {
-    manufacturerCode: number;
-    clusterID: number;
-    attributes: KeyValue;
-}
-
-interface TuyaDataPointValue {
-    dp: number;
-    datatype: number;
-    data: Buffer;
-}
-
-interface MiboxerZone {
-    zoneNum: number;
-    groupId: number;
-}
 
 export class BuffaloZcl extends Buffalo {
     // TODO: shuffles quite a lot of code (ZH is mostly typed `string | number` and ZHC requires lots of scrutiny)
@@ -426,10 +331,10 @@ export class BuffaloZcl extends Buffalo {
     }
 
     private writeToD(value: ZclTimeOfDay): void {
-        this.writeUInt8(Number.isNaN(value.hours) ? 0xff : value.hours);
-        this.writeUInt8(Number.isNaN(value.minutes) ? 0xff : value.minutes);
-        this.writeUInt8(Number.isNaN(value.seconds) ? 0xff : value.seconds);
-        this.writeUInt8(Number.isNaN(value.hundredths) ? 0xff : value.hundredths);
+        this.writeUInt8(value.hours == null || Number.isNaN(value.hours) ? 0xff : value.hours);
+        this.writeUInt8(value.minutes == null || Number.isNaN(value.minutes) ? 0xff : value.minutes);
+        this.writeUInt8(value.seconds == null || Number.isNaN(value.seconds) ? 0xff : value.seconds);
+        this.writeUInt8(value.hundredths == null || Number.isNaN(value.hundredths) ? 0xff : value.hundredths);
     }
 
     private readToD(): ZclTimeOfDay {
@@ -447,10 +352,10 @@ export class BuffaloZcl extends Buffalo {
     }
 
     private writeDate(value: ZclDate): void {
-        this.writeUInt8(Number.isNaN(value.year) ? 0xff : value.year - 1900);
-        this.writeUInt8(Number.isNaN(value.month) ? 0xff : value.month);
-        this.writeUInt8(Number.isNaN(value.dayOfMonth) ? 0xff : value.dayOfMonth);
-        this.writeUInt8(Number.isNaN(value.dayOfWeek) ? 0xff : value.dayOfWeek);
+        this.writeUInt8(value.year == null || Number.isNaN(value.year) ? 0xff : value.year - 1900);
+        this.writeUInt8(value.month == null || Number.isNaN(value.month) ? 0xff : value.month);
+        this.writeUInt8(value.dayOfMonth == null || Number.isNaN(value.dayOfMonth) ? 0xff : value.dayOfMonth);
+        this.writeUInt8(value.dayOfWeek == null || Number.isNaN(value.dayOfWeek) ? 0xff : value.dayOfWeek);
     }
 
     private readDate(): ZclDate {
@@ -728,7 +633,7 @@ export class BuffaloZcl extends Buffalo {
             const frame = {
                 manufacturerCode: this.readUInt16(),
                 clusterID: this.readUInt16(),
-                attributes: {} as KeyValue,
+                attributes: {} as KeyZclValue,
             };
 
             const cluster = Utils.getCluster(frame.clusterID, frame.manufacturerCode, {});
