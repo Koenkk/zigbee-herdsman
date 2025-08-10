@@ -208,7 +208,6 @@ export class UartAsh extends EventEmitter<UartAshEventMap> {
     /** encoder state: 0 = control/data bytes, 1 = crc low byte, 2 = crc high byte, 3 = flag. uint8_t */
     private encodeState: number;
     /** bytes remaining to encode. uint8_t */
-    // biome-ignore lint/correctness/noUnusedPrivateClassMembers: ignore
     private encodeCount: number;
 
     // Variables used in decoding frames
@@ -243,7 +242,6 @@ export class UartAsh extends EventEmitter<UartAshEventMap> {
     /** frame at retx queue's head. uint8_t */
     private frmReTxHead: number;
     /** consecutive timeout counter. uint8_t */
-    // biome-ignore lint/correctness/noUnusedPrivateClassMembers: ignore
     private timeouts: number;
     /** rec'd DATA frame buffer. uint8_t */
     private rxDataBuffer?: EzspBuffer;
