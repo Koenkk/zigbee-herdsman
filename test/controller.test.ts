@@ -16,7 +16,6 @@ import {setLogger} from "../src/utils/logger";
 import * as ZSpec from "../src/zspec";
 import {BroadcastAddress} from "../src/zspec/enums";
 import * as Zcl from "../src/zspec/zcl";
-import {ZclFrame} from "../src/zspec/zcl/zclFrame";
 import * as Zdo from "../src/zspec/zdo";
 import type {IEEEAddressResponse, NetworkAddressResponse} from "../src/zspec/zdo/definition/tstypes";
 import {DEFAULT_184_CHECKIN_INTERVAL, LQI_TABLE_ENTRY_DEFAULTS, MOCK_DEVICES, ROUTING_TABLE_ENTRY_DEFAULTS} from "./mockDevices";
@@ -2477,7 +2476,16 @@ describe("Controller", () => {
             linkquality: 50,
             groupID: 1,
             meta: {
-                frame: expect.any(ZclFrame),
+                zclTransactionSequenceNumber: 169,
+                frameControl: {
+                    reservedBits: 0,
+                    direction: 1,
+                    disableDefaultResponse: true,
+                    frameType: 0,
+                    manufacturerSpecific: false,
+                },
+                manufacturerCode: undefined,
+                rawData: expect.any(Buffer),
             },
         };
         expect(events.message[0]).toStrictEqual(expected);
@@ -2508,65 +2516,16 @@ describe("Controller", () => {
         const expected = {
             cluster: "genAlarms",
             type: "raw",
-            device: {
-                ID: 2,
-                _events: {},
-                _eventsCount: 0,
-                _pendingRequestTimeout: 0,
-                _ieeeAddr: "0x129",
-                _networkAddress: 129,
-                _lastSeen: Date.now(),
-                _linkquality: 50,
-                _skipDefaultResponse: false,
-                _customClusters: {},
-                _endpoints: [
-                    {
-                        ID: 1,
-                        _events: {},
-                        _eventsCount: 0,
-                        clusters: {},
-                        inputClusters: [0, 1],
-                        outputClusters: [2],
-                        pendingRequests: {id: 1, deviceIeeeAddress: "0x129", sendInProgress: false},
-                        deviceNetworkAddress: 129,
-                        deviceIeeeAddress: "0x129",
-                        _binds: [],
-                        _configuredReportings: [],
-                        meta: {},
-                        deviceID: 5,
-                        profileID: 99,
-                    },
-                ],
-                _type: "Router",
-                _manufacturerID: 1212,
-                meta: {},
-                _interviewState: InterviewState.Successful,
-            },
-            endpoint: {
-                _events: {},
-                _eventsCount: 0,
-                clusters: {},
-                ID: 1,
-                deviceID: 5,
-                inputClusters: [0, 1],
-                outputClusters: [2],
-                pendingRequests: {id: 1, deviceIeeeAddress: "0x129", sendInProgress: false},
-                deviceNetworkAddress: 129,
-                deviceIeeeAddress: "0x129",
-                _binds: [],
-                _configuredReportings: [],
-                profileID: 99,
-                meta: {},
-            },
-            data: {
-                data: [0, 1],
-                type: "Buffer",
-            },
+            device: expect.any(Device),
+            endpoint: expect.any(Endpoint),
+            data: Buffer.from([0, 1]),
             linkquality: 50,
             groupID: 1,
-            meta: {},
+            meta: {
+                rawData: expect.any(Buffer),
+            },
         };
-        expect(deepClone(events.message[0])).toStrictEqual(expected);
+        expect(events.message[0]).toStrictEqual(expected);
     });
 
     it("Receive raw data from unknown cluster", async () => {
@@ -2586,65 +2545,16 @@ describe("Controller", () => {
         const expected = {
             cluster: 99999999,
             type: "raw",
-            device: {
-                ID: 2,
-                _ieeeAddr: "0x129",
-                _pendingRequestTimeout: 0,
-                _networkAddress: 129,
-                _lastSeen: Date.now(),
-                _linkquality: 50,
-                _skipDefaultResponse: false,
-                _customClusters: {},
-                _endpoints: [
-                    {
-                        ID: 1,
-                        _events: {},
-                        _eventsCount: 0,
-                        clusters: {},
-                        inputClusters: [0, 1],
-                        outputClusters: [2],
-                        pendingRequests: {id: 1, deviceIeeeAddress: "0x129", sendInProgress: false},
-                        deviceNetworkAddress: 129,
-                        deviceIeeeAddress: "0x129",
-                        _binds: [],
-                        _configuredReportings: [],
-                        meta: {},
-                        deviceID: 5,
-                        profileID: 99,
-                    },
-                ],
-                _events: {},
-                _eventsCount: 0,
-                _type: "Router",
-                _manufacturerID: 1212,
-                meta: {},
-                _interviewState: InterviewState.Successful,
-            },
-            endpoint: {
-                _events: {},
-                _eventsCount: 0,
-                clusters: {},
-                ID: 1,
-                deviceID: 5,
-                inputClusters: [0, 1],
-                outputClusters: [2],
-                pendingRequests: {id: 1, deviceIeeeAddress: "0x129", sendInProgress: false},
-                deviceNetworkAddress: 129,
-                deviceIeeeAddress: "0x129",
-                _binds: [],
-                _configuredReportings: [],
-                profileID: 99,
-                meta: {},
-            },
-            data: {
-                data: [0, 1, 2, 3],
-                type: "Buffer",
-            },
+            device: expect.any(Device),
+            endpoint: expect.any(Endpoint),
+            data: Buffer.from([0, 1, 2, 3]),
             linkquality: 50,
             groupID: 1,
-            meta: {},
+            meta: {
+                rawData: Buffer.from([0, 1, 2, 3]),
+            },
         };
-        expect(deepClone(events.message[0])).toStrictEqual(expected);
+        expect(events.message[0]).toStrictEqual(expected);
     });
 
     it("Receive zclData from unkonwn device shouldnt emit anything", async () => {
@@ -2694,7 +2604,16 @@ describe("Controller", () => {
             },
             linkquality: 52,
             meta: {
-                frame: expect.any(ZclFrame),
+                zclTransactionSequenceNumber: 1,
+                frameControl: {
+                    reservedBits: 0,
+                    direction: 1,
+                    disableDefaultResponse: false,
+                    frameType: 0,
+                    manufacturerSpecific: false,
+                },
+                manufacturerCode: undefined,
+                rawData: expect.any(Buffer),
             },
         };
         expect(events.message[0]).toStrictEqual(expected);
@@ -2730,7 +2649,16 @@ describe("Controller", () => {
             linkquality: 19,
             groupID: 10,
             meta: {
-                frame: expect.any(ZclFrame),
+                zclTransactionSequenceNumber: 29,
+                manufacturerCode: 4476,
+                frameControl: {
+                    reservedBits: 0,
+                    direction: 0,
+                    disableDefaultResponse: false,
+                    frameType: 1,
+                    manufacturerSpecific: true,
+                },
+                rawData: expect.any(Buffer),
             },
         };
         expect(events.message[0]).toStrictEqual(expected);
@@ -3348,7 +3276,16 @@ describe("Controller", () => {
             linkquality: 50,
             groupID: 1,
             meta: {
-                frame: expect.any(ZclFrame),
+                zclTransactionSequenceNumber: 3,
+                manufacturerCode: 4447,
+                frameControl: {
+                    reservedBits: 0,
+                    direction: 1,
+                    disableDefaultResponse: true,
+                    frameType: 0,
+                    manufacturerSpecific: true,
+                },
+                rawData: null,
             },
         };
         expect(events.message[0]).toStrictEqual(expected);
@@ -5701,7 +5638,16 @@ describe("Controller", () => {
             groupID: 10,
             cluster: "genPowerCfg",
             meta: {
-                frame: expect.any(ZclFrame),
+                zclTransactionSequenceNumber: 40,
+                frameControl: {
+                    reservedBits: 0,
+                    direction: 0,
+                    disableDefaultResponse: true,
+                    frameType: 0,
+                    manufacturerSpecific: false,
+                },
+                manufacturerCode: undefined,
+                rawData: expect.any(Buffer),
             },
         };
 
@@ -5736,7 +5682,16 @@ describe("Controller", () => {
             groupID: 10,
             cluster: "genTime",
             meta: {
-                frame: expect.any(ZclFrame),
+                zclTransactionSequenceNumber: 40,
+                frameControl: {
+                    reservedBits: 0,
+                    direction: 0,
+                    disableDefaultResponse: true,
+                    frameType: 0,
+                    manufacturerSpecific: false,
+                },
+                manufacturerCode: undefined,
+                rawData: expect.any(Buffer),
             },
         };
 
@@ -6254,7 +6209,10 @@ describe("Controller", () => {
             groupID: 1,
             cluster: "greenPower",
             meta: {
-                frame: expect.any(ZclFrame),
+                zclTransactionSequenceNumber: 10,
+                frameControl: {reservedBits: 0, frameType: 1, direction: 0, disableDefaultResponse: true, manufacturerSpecific: false},
+                manufacturerCode: undefined,
+                rawData: expect.any(Buffer),
             },
         };
         expect(events.message[0]).toStrictEqual(expected);
@@ -6859,7 +6817,10 @@ describe("Controller", () => {
             groupID: 0,
             cluster: "greenPower",
             meta: {
-                frame: expect.any(ZclFrame),
+                zclTransactionSequenceNumber: 10,
+                frameControl: {reservedBits: 0, frameType: 1, direction: 0, disableDefaultResponse: true, manufacturerSpecific: false},
+                manufacturerCode: undefined,
+                rawData: expect.any(Buffer),
             },
         };
         expect(events.message[0]).toStrictEqual(expected);
@@ -7593,7 +7554,10 @@ describe("Controller", () => {
             groupID: 171,
             cluster: "genPowerCfg",
             meta: {
-                frame: expect.any(ZclFrame),
+                zclTransactionSequenceNumber: 40,
+                frameControl: {reservedBits: 0, frameType: 0, direction: 0, disableDefaultResponse: true, manufacturerSpecific: false},
+                manufacturerCode: undefined,
+                rawData: expect.any(Buffer),
             },
         };
         expect(events.message.length).toBe(1);

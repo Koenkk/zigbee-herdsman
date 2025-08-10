@@ -1,4 +1,4 @@
-import type {ZclFrame} from "../zspec/zcl/zclFrame";
+import type {FrameControl} from "../zspec/zcl/definition/tstype";
 import type {Device, Endpoint} from "./model";
 import type {KeyValue} from "./tstype";
 
@@ -44,6 +44,9 @@ export interface MessagePayload {
     cluster: string | number;
     data: KeyValue | Array<string | number> | Buffer;
     meta: {
-        frame?: ZclFrame;
+        zclTransactionSequenceNumber?: number;
+        manufacturerCode?: number;
+        frameControl?: FrameControl;
+        rawData: Buffer;
     };
 }

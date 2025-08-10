@@ -10,6 +10,7 @@ import * as ZSpec from "../zspec";
 import type {Eui64} from "../zspec/tstypes";
 import * as Zcl from "../zspec/zcl";
 import type {TPartialClusterAttributes} from "../zspec/zcl/definition/clusters-types";
+import type {FrameControl} from "../zspec/zcl/definition/tstype";
 import * as Zdo from "../zspec/zdo";
 import type * as ZdoTypes from "../zspec/zdo/definition/tstypes";
 import Database from "./database";
@@ -920,12 +921,19 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
         let type: Events.MessagePayload["type"] | undefined;
         let data: Events.MessagePayload["data"] = {};
         let clusterName: Events.MessagePayload["cluster"];
-        const meta: {frame?: Zcl.Frame} = {};
+        const meta: {
+            zclTransactionSequenceNumber?: number;
+            manufacturerCode?: number;
+            frameControl?: FrameControl;
+            rawData: Buffer;
+        } = {rawData: payload.data};
 
         if (frame) {
             const command = frame.command;
             clusterName = frame.cluster.name;
-            meta.frame = frame;
+            meta.zclTransactionSequenceNumber = frame.header.transactionSequenceNumber;
+            meta.manufacturerCode = frame.header.manufacturerCode;
+            meta.frameControl = frame.header.frameControl;
 
             if (frame.header.isGlobal) {
                 switch (frame.command.name) {
