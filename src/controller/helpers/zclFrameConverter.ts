@@ -1,9 +1,7 @@
 import * as Zcl from "../../zspec/zcl";
+import type {TFoundation} from "../../zspec/zcl/definition/clusters-types";
 import type {Cluster, CustomClusters} from "../../zspec/zcl/definition/tstype";
-
-interface KeyValue {
-    [s: string]: number | string;
-}
+import type {ClusterOrRawWriteAttributes} from "../tstype";
 
 // Legrand devices (e.g. 4129) fail to set the manufacturerSpecific flag and
 // manufacturerCode in the frame header, despite using specific attributes.
@@ -18,30 +16,28 @@ function getCluster(frame: Zcl.Frame, deviceManufacturerID: number | undefined, 
     return cluster;
 }
 
-type AttrPayload = {
-    attrId: number;
-    dataType: number;
-    attrData: number | string;
-}[];
-
-function attributeKeyValue(frame: Zcl.Frame, deviceManufacturerID: number | undefined, customClusters: CustomClusters): KeyValue {
-    const payload: KeyValue = {};
+function attributeKeyValue<Cl extends number | string>(
+    frame: Zcl.Frame,
+    deviceManufacturerID: number | undefined,
+    customClusters: CustomClusters,
+): ClusterOrRawWriteAttributes<Cl> {
+    const payload: Record<string | number, unknown> = {};
     const cluster = getCluster(frame, deviceManufacturerID, customClusters);
 
-    for (const item of frame.payload as AttrPayload) {
+    // TODO: remove this type once Zcl.Frame is typed
+    for (const item of frame.payload as TFoundation["report" | "write" | "readRsp"]) {
         payload[cluster.getAttribute(item.attrId)?.name ?? item.attrId] = item.attrData;
     }
 
-    return payload;
+    return payload as ClusterOrRawWriteAttributes<Cl>;
 }
-
-type AttrListPayload = {attrId: number}[];
 
 function attributeList(frame: Zcl.Frame, deviceManufacturerID: number | undefined, customClusters: CustomClusters): Array<string | number> {
     const payload: Array<string | number> = [];
     const cluster = getCluster(frame, deviceManufacturerID, customClusters);
 
-    for (const item of frame.payload as AttrListPayload) {
+    // TODO: remove this type once Zcl.Frame is typed
+    for (const item of frame.payload as TFoundation["read"]) {
         payload.push(cluster.getAttribute(item.attrId)?.name ?? item.attrId);
     }
 

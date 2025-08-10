@@ -1,9 +1,7 @@
 import assert from "node:assert";
 import events from "node:events";
 import fs from "node:fs";
-
 import mixinDeep from "mixin-deep";
-
 import {Adapter, type Events as AdapterEvents, type TsType as AdapterTsType} from "../adapter";
 import {BackupUtils, wait} from "../utils";
 import {logger} from "../utils/logger";
@@ -11,6 +9,7 @@ import {isNumberArrayOfLength} from "../utils/utils";
 import * as ZSpec from "../zspec";
 import type {Eui64} from "../zspec/tstypes";
 import * as Zcl from "../zspec/zcl";
+import type {TPartialClusterAttributes} from "../zspec/zcl/definition/clusters-types";
 import type {FrameControl} from "../zspec/zcl/definition/tstype";
 import * as Zdo from "../zspec/zdo";
 import type * as ZdoTypes from "../zspec/zdo/definition/tstypes";
@@ -23,7 +22,7 @@ import {Device, Entity} from "./model";
 import {InterviewState} from "./model/device";
 import Group from "./model/group";
 import Touchlink from "./touchlink";
-import type {DeviceType, GreenPowerDeviceJoinedPayload, KeyValue} from "./tstype";
+import type {DeviceType, GreenPowerDeviceJoinedPayload} from "./tstype";
 
 const NS = "zh:controller";
 
@@ -973,23 +972,20 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
                         break;
                     }
                 }
+
+                if (type === "readResponse" || type === "attributeReport") {
+                    // devices report attributes through readRsp or attributeReport
+                    if (frame.isCluster("genBasic")) {
+                        device.updateGenBasic(data as TPartialClusterAttributes<"genBasic">);
+                    }
+
+                    endpoint.saveClusterAttributeKeyValue(frame.cluster.ID, data);
+                }
             } else {
                 if (frame.header.isSpecific) {
                     type = `command${command.name.charAt(0).toUpperCase()}${command.name.slice(1)}`;
                     data = frame.payload;
                 }
-            }
-
-            if (type === "readResponse" || type === "attributeReport") {
-                // devices report attributes through readRsp or attributeReport
-                if (frame.isCluster("genBasic")) {
-                    // data is `KeyValue` from type check above
-                    for (const key in data as KeyValue) {
-                        Device.REPORTABLE_PROPERTIES_MAPPING[key]?.set((data as KeyValue)[key], device);
-                    }
-                }
-
-                endpoint.saveClusterAttributeKeyValue(frame.cluster.ID, data);
             }
         } else {
             type = "raw";
