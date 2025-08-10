@@ -47,5 +47,6 @@ export interface MessagePayload {
         zclTransactionSequenceNumber?: number;
         manufacturerCode?: number;
         frameControl?: FrameControl;
+        rawData: Buffer;
     };
 }
