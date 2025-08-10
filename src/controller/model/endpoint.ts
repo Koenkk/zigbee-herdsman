@@ -23,7 +23,7 @@ import type {
 import Device from "./device";
 import Entity from "./entity";
 import Group from "./group";
-import {ReadWriteEntity} from "./readWriteEntity";
+import {ZigbeeEntity} from "./zigbeeEntity";
 
 const NS = "zh:controller:endpoint";
 
@@ -94,7 +94,7 @@ interface ConfiguredReporting {
     reportableChange: number;
 }
 
-export class Endpoint extends ReadWriteEntity {
+export class Endpoint extends ZigbeeEntity {
     public deviceID?: number;
     public inputClusters: number[];
     public outputClusters: number[];

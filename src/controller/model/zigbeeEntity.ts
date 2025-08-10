@@ -1,7 +1,7 @@
 import type {ClusterOrRawAttributeKeys, ClusterOrRawAttributes, KeyValue, PartialClusterOrRawWriteAttributes} from "../tstype";
 import Entity from "./entity";
 
-export abstract class ReadWriteEntity extends Entity {
+export abstract class ZigbeeEntity extends Entity {
     public abstract read<Cl extends number | string>(
         clusterKey: Cl,
         attributes: ClusterOrRawAttributeKeys<Cl>,

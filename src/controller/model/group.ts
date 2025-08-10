@@ -8,7 +8,7 @@ import type {ClusterOrRawAttributeKeys, DatabaseEntry, KeyValue, PartialClusterO
 import Device from "./device";
 import type Endpoint from "./endpoint";
 import Entity from "./entity";
-import {ReadWriteEntity} from "./readWriteEntity";
+import {ZigbeeEntity} from "./zigbeeEntity";
 
 const NS = "zh:controller:group";
 
@@ -25,7 +25,7 @@ interface OptionsWithDefaults extends Options {
     reservedBits: number;
 }
 
-export class Group extends ReadWriteEntity {
+export class Group extends ZigbeeEntity {
     private databaseID: number;
     public readonly groupID: number;
     private readonly _members: Endpoint[];
