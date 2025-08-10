@@ -192,3 +192,14 @@ export enum StructuredIndicatorType {
     /** Remove element from the set/bag */
     WriteRemove = 0x20,
 }
+
+/** Mapping of descriptive string power to source bits. */
+export enum PowerSource {
+    Unknown = 0,
+    "Mains (single phase)" = 1,
+    "Mains (3 phase)" = 2,
+    Battery = 3,
+    "DC Source" = 4,
+    "Emergency mains constantly powered" = 5,
+    "Emergency mains and transfer switch" = 6,
+}

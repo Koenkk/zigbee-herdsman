@@ -1,3 +1,5 @@
+import type {TClusterAttributeKeys, TClusterAttributes, TPartialClusterAttributes} from "../zspec/zcl/definition/clusters-types";
+
 export interface KeyValue {
     // biome-ignore lint/suspicious/noExplicitAny: API
     [s: string]: any;
@@ -38,3 +40,31 @@ export interface GreenPowerDeviceJoinedPayload {
     networkAddress: number;
     securityKey?: Buffer;
 }
+
+export type RawClusterAttribute = {
+    value: unknown;
+    /** expected as `Zcl.DataType | Zcl.BuffaloZclDataType` */
+    type: number;
+};
+
+export type RawClusterAttributes = Record<number, RawClusterAttribute>;
+
+export type ClusterOrRawAttributeKeys<Cl extends string | number> = TClusterAttributes<Cl> extends never
+    ? number[]
+    : (TClusterAttributeKeys<Cl>[number] | number)[];
+
+export type ClusterOrRawWriteAttributes<Cl extends string | number> = TClusterAttributes<Cl> extends never
+    ? RawClusterAttributes
+    : TClusterAttributes<Cl> & RawClusterAttributes;
+
+export type PartialClusterOrRawWriteAttributes<Cl extends string | number> = TClusterAttributes<Cl> extends never
+    ? RawClusterAttributes
+    : TPartialClusterAttributes<Cl> & RawClusterAttributes;
+
+export type ClusterOrRawAttributes<Cl extends string | number> = TClusterAttributes<Cl> extends never
+    ? Record<number, unknown>
+    : TClusterAttributes<Cl> & Record<number, unknown>;
+
+export type PartialClusterOrRawAttributes<Cl extends string | number> = TClusterAttributes<Cl> extends never
+    ? Record<number, unknown>
+    : TPartialClusterAttributes<Cl> & Record<number, unknown>;

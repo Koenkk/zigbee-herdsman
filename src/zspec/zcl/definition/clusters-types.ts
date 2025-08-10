@@ -1409,7 +1409,7 @@ export interface TClusters {
         };
     };
     greenPower: {
-        attributes: Record<string, never>;
+        attributes: never;
         commands: {
             /** ID: 0 */
             notification: {
@@ -3761,7 +3761,7 @@ export interface TClusters {
         };
     };
     ssIasAce: {
-        attributes: Record<string, never>;
+        attributes: never;
         commands: {
             /** ID: 0 | Response ID: 0 */
             arm: {
@@ -3975,7 +3975,7 @@ export interface TClusters {
         };
     };
     piBacnetProtocolTunnel: {
-        attributes: Record<string, never>;
+        attributes: never;
         commands: {
             /** ID: 0 */
             transferNpdu: {
@@ -4866,7 +4866,7 @@ export interface TClusters {
         };
     };
     tunneling: {
-        attributes: Record<string, never>;
+        attributes: never;
         commands: {
             /** ID: 0 | Response ID: 0 */
             requestTunnel: {
@@ -5048,7 +5048,7 @@ export interface TClusters {
         commandResponses: never;
     };
     haApplianceEventsAlerts: {
-        attributes: Record<string, never>;
+        attributes: never;
         commands: {
             /** ID: 0 */
             getAlerts: Record<string, never>;
@@ -5568,7 +5568,7 @@ export interface TClusters {
         commandResponses: never;
     };
     touchlink: {
-        attributes: Record<string, never>;
+        attributes: never;
         commands: {
             /** ID: 0 | Response ID: 1 */
             scanRequest: {
@@ -5835,7 +5835,7 @@ export interface TClusters {
         };
     };
     manuSpecificClusterAduroSmart: {
-        attributes: Record<string, never>;
+        attributes: never;
         commands: {
             /** ID: 0 */
             cmd0: Record<string, never>;
@@ -5843,7 +5843,7 @@ export interface TClusters {
         commandResponses: never;
     };
     manuSpecificOsram: {
-        attributes: Record<string, never>;
+        attributes: never;
         commands: {
             /** ID: 1 */
             saveStartupParams: Record<string, never>;
@@ -5990,12 +5990,12 @@ export interface TClusters {
         commandResponses: never;
     };
     manuSpecificLegrandDevices: {
-        attributes: Record<string, never>;
+        attributes: never;
         commands: never;
         commandResponses: never;
     };
     manuSpecificLegrandDevices2: {
-        attributes: Record<string, never>;
+        attributes: never;
         commands: {
             /** ID: 0 */
             command0: {
@@ -6006,7 +6006,7 @@ export interface TClusters {
         commandResponses: never;
     };
     manuSpecificLegrandDevices3: {
-        attributes: Record<string, never>;
+        attributes: never;
         commands: {
             /** ID: 0 */
             command0: {
@@ -6025,7 +6025,7 @@ export interface TClusters {
         commandResponses: never;
     };
     manuSpecificTuya: {
-        attributes: Record<string, never>;
+        attributes: never;
         commands: {
             /** ID: 0 */
             dataRequest: {
@@ -6334,7 +6334,7 @@ export interface TClusters {
         commandResponses: never;
     };
     manuSpecificSmartThingsArrivalSensor: {
-        attributes: Record<string, never>;
+        attributes: never;
         commands: never;
         commandResponses: {
             /** ID: 1 */
@@ -6401,7 +6401,7 @@ export interface TClusters {
         commandResponses: never;
     };
     heimanSpecificScenes: {
-        attributes: Record<string, never>;
+        attributes: never;
         commands: {
             /** ID: 240 */
             cinema: Record<string, never>;
@@ -6417,7 +6417,7 @@ export interface TClusters {
         commandResponses: never;
     };
     tradfriButton: {
-        attributes: Record<string, never>;
+        attributes: never;
         commands: {
             /** ID: 1 */
             action1: {
@@ -6448,7 +6448,7 @@ export interface TClusters {
         commandResponses: never;
     };
     heimanSpecificInfraRedRemote: {
-        attributes: Record<string, never>;
+        attributes: never;
         commands: {
             /** ID: 240 */
             sendKey: {
@@ -6608,7 +6608,7 @@ export interface TClusters {
         commandResponses: never;
     };
     sprutIrBlaster: {
-        attributes: Record<string, never>;
+        attributes: never;
         commands: {
             /** ID: 0 */
             playStore: {
@@ -6655,7 +6655,7 @@ export interface TClusters {
         commandResponses: never;
     };
     owonClearMetering: {
-        attributes: Record<string, never>;
+        attributes: never;
         commands: {
             /** ID: 0 */
             owonClearMeasurementData: Record<string, never>;
@@ -6663,7 +6663,7 @@ export interface TClusters {
         commandResponses: never;
     };
     zosungIRTransmit: {
-        attributes: Record<string, never>;
+        attributes: never;
         commands: {
             /** ID: 0 */
             zosungSendIRCode00: {
@@ -6764,7 +6764,7 @@ export interface TClusters {
         };
     };
     zosungIRControl: {
-        attributes: Record<string, never>;
+        attributes: never;
         commands: {
             /** ID: 0 */
             zosungControlIRCommand00: {
@@ -6916,7 +6916,7 @@ export interface TClusters {
         };
     };
     manuSpecificDoorman: {
-        attributes: Record<string, never>;
+        attributes: never;
         commands: {
             /** ID: 252 */
             getConfigurationParameter: {

@@ -4,7 +4,7 @@ import {EventEmitter} from "node:events";
 
 import equals from "fast-deep-equal/es6";
 
-import type {Backup} from "src/models/backup";
+import type {Backup} from "../../../models/backup";
 import {Waitress, wait} from "../../../utils";
 import {logger} from "../../../utils/logger";
 import * as ZSpec from "../../../zspec";

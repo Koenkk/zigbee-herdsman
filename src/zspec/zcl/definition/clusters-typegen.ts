@@ -157,7 +157,7 @@ const addAttributes = (attributes: Readonly<Record<string, Readonly<AttributeDef
         ts.addSyntheticLeadingComment(element, ts.SyntaxKind.MultiLineCommentTrivia, comment, true);
     }
 
-    return elements.length > 0 ? ts.factory.createTypeLiteralNode(elements) : emptyObject;
+    return elements.length > 0 ? ts.factory.createTypeLiteralNode(elements) : ts.factory.createKeywordTypeNode(ts.SyntaxKind.NeverKeyword);
 };
 
 const addCommands = (commands: Readonly<Record<string, Readonly<CommandDefinition>>>): ts.TypeNode => {
