@@ -1,5 +1,24 @@
 # Changelog
 
+## [6.0.0](https://github.com/Koenkk/zigbee-herdsman/compare/v5.0.4...v6.0.0) (2025-08-11)
+
+
+### ⚠ BREAKING CHANGES
+
+* autotype ZCL clusters ([#1459](https://github.com/Koenkk/zigbee-herdsman/issues/1459))
+
+### Features
+
+* autotype ZCL clusters ([#1459](https://github.com/Koenkk/zigbee-herdsman/issues/1459)) ([a93b073](https://github.com/Koenkk/zigbee-herdsman/commit/a93b07301126d7e9d364b9d2bfcef212d4812291))
+
+
+### Bug Fixes
+
+* Expose rawData on message event ([#1475](https://github.com/Koenkk/zigbee-herdsman/issues/1475)) ([4f6b2b9](https://github.com/Koenkk/zigbee-herdsman/commit/4f6b2b920f1b0bc162e107efe101cc864941d2bb))
+* **ignore:** bump the minor-patch group across 1 directory with 2 updates ([#1478](https://github.com/Koenkk/zigbee-herdsman/issues/1478)) ([667838d](https://github.com/Koenkk/zigbee-herdsman/commit/667838d918f075fe2fdb7dd3022d2f878b1f54ab))
+* More support for ZCL non-value ([#1424](https://github.com/Koenkk/zigbee-herdsman/issues/1424)) ([6f0b443](https://github.com/Koenkk/zigbee-herdsman/commit/6f0b443e238ee0fa0e20648c6a91303a8b749aa0))
+* ZCL condition cleanup ([#1480](https://github.com/Koenkk/zigbee-herdsman/issues/1480)) ([bbead6e](https://github.com/Koenkk/zigbee-herdsman/commit/bbead6e958c927446302940c9b781a244204c272))
+
 ## [5.0.4](https://github.com/Koenkk/zigbee-herdsman/compare/v5.0.3...v5.0.4) (2025-07-31)
 
 
