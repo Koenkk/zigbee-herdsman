@@ -4457,6 +4457,9 @@ describe("Controller", () => {
         const device = controller.getDeviceByIeeeAddr("0x129")!;
         const endpoint = device.getEndpoint(1)!;
         mocksendZclFrameToEndpoint.mockClear();
+        // The buffer below ([24, 169, 10, 0, 0, 24]) is intentionally malformed:
+        // It is missing expected payload bytes for a valid ZCL frame, causing Zcl.Frame.fromBuffer to throw a parsing error.
+        // This triggers the error handling path being tested.
         const buffer = Buffer.from([24, 169, 10, 0, 0, 24]);
         const header = Zcl.Header.fromBuffer(buffer);
         const promise = new Promise((resolve, _reject) => resolve({clusterID: Zcl.Utils.getCluster("msOccupancySensing").ID, data: buffer, header}));
