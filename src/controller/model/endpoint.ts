@@ -782,7 +782,11 @@ export class Endpoint extends ZigbeeEntity {
         this.save();
     }
 
-    public async writeStructured<Cl extends number | string>(clusterKey: Cl, payload: KeyValue, options?: Options): Promise<void> {
+    public async writeStructured<Cl extends number | string>(
+        clusterKey: Cl,
+        payload: TFoundation["writeStructured"],
+        options?: Options,
+    ): Promise<void> {
         await this.zclCommand(clusterKey, "writeStructured", payload, options);
         // TODO: support `writeStructuredResponse`
     }

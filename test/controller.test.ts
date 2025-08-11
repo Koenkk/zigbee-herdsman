@@ -6018,7 +6018,7 @@ describe("Controller", () => {
         const endpoint = device.getEndpoint(1)!;
         mocksendZclFrameToEndpoint.mockReturnValueOnce(null);
 
-        await endpoint.writeStructured("genPowerCfg", {});
+        await endpoint.writeStructured("genPowerCfg", []);
     });
 
     it("Write structured with disable response", async () => {
@@ -6029,7 +6029,7 @@ describe("Controller", () => {
         const endpoint = device.getEndpoint(1)!;
         mocksendZclFrameToEndpoint.mockReturnValueOnce(null);
 
-        await endpoint.writeStructured("genPowerCfg", {}, {disableResponse: true});
+        await endpoint.writeStructured("genPowerCfg", [], {disableResponse: true});
     });
 
     it("Write structured error", async () => {
@@ -6040,13 +6040,13 @@ describe("Controller", () => {
         mocksendZclFrameToEndpoint.mockRejectedValueOnce(new Error("timeout occurred"));
         let error;
         try {
-            await endpoint.writeStructured("genPowerCfg", {});
+            await endpoint.writeStructured("genPowerCfg", []);
         } catch (e) {
             error = e;
         }
         expect(error).toStrictEqual(
             new Error(
-                `ZCL command 0x129/1 genPowerCfg.writeStructured({}, {"timeout":10000,"disableResponse":false,"disableRecovery":false,"disableDefaultResponse":true,"direction":0,"reservedBits":0,"writeUndiv":false}) failed (timeout occurred)`,
+                `ZCL command 0x129/1 genPowerCfg.writeStructured([], {"timeout":10000,"disableResponse":false,"disableRecovery":false,"disableDefaultResponse":true,"direction":0,"reservedBits":0,"writeUndiv":false}) failed (timeout occurred)`,
             ),
         );
     });
