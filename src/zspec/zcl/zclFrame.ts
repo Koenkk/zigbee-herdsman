@@ -3,7 +3,6 @@ import "../../utils/patchBigIntSerialization";
 import {BuffaloZcl} from "./buffaloZcl";
 import {BuffaloZclDataType, DataType, Direction, FrameType, ParameterCondition} from "./definition/enums";
 import type {FoundationCommandName} from "./definition/foundation";
-import type {Status} from "./definition/status";
 import type {BuffaloZclOptions, Cluster, ClusterName, Command, CustomClusters, ParameterDefinition} from "./definition/tstype";
 import * as Utils from "./utils";
 import {ZclHeader} from "./zclHeader";
@@ -195,7 +194,11 @@ export class ZclFrame {
                 }
             }
 
-            payload[parameter.name] = buffalo.read(parameter.type, options);
+            try {
+                payload[parameter.name] = buffalo.read(parameter.type, options);
+            } catch (error) {
+                throw new Error(`Cannot parse '${command.name}:${parameter.name}' (${(error as Error).message})`);
+            }
         }
 
         return payload;
@@ -286,38 +289,53 @@ export class ZclFrame {
         if (parameter.conditions) {
             for (const condition of parameter.conditions) {
                 switch (condition.type) {
-                    case ParameterCondition.STATUS_EQUAL: {
-                        if ((entry.status as Status) !== condition.value) return false;
-                        break;
-                    }
-                    case ParameterCondition.STATUS_NOT_EQUAL: {
-                        if ((entry.status as Status) === condition.value) return false;
-                        break;
-                    }
-                    case ParameterCondition.DIRECTION_EQUAL: {
-                        if ((entry.direction as Direction) !== condition.value) return false;
+                    case ParameterCondition.FIELD_EQUAL: {
+                        if (condition.reversed) {
+                            if (entry[condition.field] === condition.value) {
+                                return false;
+                            }
+                        } else if (entry[condition.field] !== condition.value) {
+                            return false;
+                        }
                         break;
                     }
                     case ParameterCondition.BITMASK_SET: {
                         if (condition.reversed) {
-                            if ((entry[condition.param] & condition.mask) === condition.mask) return false;
-                        } else if ((entry[condition.param] & condition.mask) !== condition.mask) return false;
+                            if ((entry[condition.param] & condition.mask) === condition.mask) {
+                                return false;
+                            }
+                        } else if ((entry[condition.param] & condition.mask) !== condition.mask) {
+                            return false;
+                        }
                         break;
                     }
                     case ParameterCondition.BITFIELD_ENUM: {
-                        if (((entry[condition.param] >> condition.offset) & ((1 << condition.size) - 1)) !== condition.value) return false;
+                        if (((entry[condition.param] >> condition.offset) & ((1 << condition.size) - 1)) !== condition.value) {
+                            return false;
+                        }
                         break;
                     }
                     case ParameterCondition.MINIMUM_REMAINING_BUFFER_BYTES: {
-                        if (remainingBufferBytes !== undefined && remainingBufferBytes < condition.value) return false;
+                        if (remainingBufferBytes !== undefined && remainingBufferBytes < condition.value) {
+                            return false;
+                        }
                         break;
                     }
                     case ParameterCondition.DATA_TYPE_CLASS_EQUAL: {
-                        if (Utils.getDataTypeClass(entry.dataType) !== condition.value) return false;
+                        if (Utils.getDataTypeClass(entry.dataType) !== condition.value) {
+                            return false;
+                        }
                         break;
                     }
-                    case ParameterCondition.FIELD_EQUAL: {
-                        if (entry[condition.field] !== condition.value) return false;
+                    case ParameterCondition.FIELD_GT: {
+                        /*if (condition.reversed) {
+                            if (entry[condition.field] >= condition.value) {
+                                return false;
+                            }
+                        } else */
+                        if (entry[condition.field] <= condition.value) {
+                            return false;
+                        }
                         break;
                     }
                 }

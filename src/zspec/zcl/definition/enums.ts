@@ -157,14 +157,12 @@ export enum BuffaloZclDataType {
 
 /** @TODO strings for backwards compat in tests. Should be moved to numbers. */
 export enum ParameterCondition {
-    STATUS_EQUAL = "statusEquals",
-    STATUS_NOT_EQUAL = "statusNotEquals",
     MINIMUM_REMAINING_BUFFER_BYTES = "minimumRemainingBufferBytes",
-    DIRECTION_EQUAL = "directionEquals",
     BITMASK_SET = "bitMaskSet",
     BITFIELD_ENUM = "bitFieldEnum",
     DATA_TYPE_CLASS_EQUAL = "dataTypeValueTypeEquals",
     FIELD_EQUAL = "fieldEquals",
+    FIELD_GT = "fieldGT",
 }
 
 export enum FrameType {

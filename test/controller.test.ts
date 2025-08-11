@@ -2963,16 +2963,10 @@ describe("Controller", () => {
             },
             payload: [{attrId: 28, attrData: 3, dataType: 48, status: 0}],
             cluster: null,
-            command: {
+            command: expect.objectContaining({
                 ID: 1,
                 name: "readRsp",
-                parameters: [
-                    {name: "attrId", type: 33},
-                    {name: "status", type: 32},
-                    {name: "dataType", type: 32, conditions: [{type: "statusEquals", value: 0}]},
-                    {name: "attrData", type: 1000, conditions: [{type: "statusEquals", value: 0}]},
-                ],
-            },
+            }),
         });
     });
 
@@ -4406,14 +4400,10 @@ describe("Controller", () => {
             },
             payload: {payloadType: 0, queryJitter: 1},
             cluster: expect.objectContaining({name: "genOta"}),
-            command: {
+            command: expect.objectContaining({
                 ID: 0,
-                parameters: [
-                    {name: "payloadType", type: 32},
-                    {name: "queryJitter", type: 32},
-                ],
                 name: "imageNotify",
-            },
+            }),
         };
         expect(deepClone(mocksendZclFrameToEndpoint.mock.calls[0][3])).toStrictEqual(expected);
         expect(mocksendZclFrameToEndpoint.mock.calls[0][4]).toBe(10000);

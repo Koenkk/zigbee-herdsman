@@ -49,8 +49,12 @@ export const Foundation: Readonly<Record<FoundationCommandName, Readonly<Foundat
         parameters: [
             {name: "attrId", type: DataType.UINT16},
             {name: "status", type: DataType.UINT8},
-            {name: "dataType", type: DataType.UINT8, conditions: [{type: ParameterCondition.STATUS_EQUAL, value: Status.SUCCESS}]},
-            {name: "attrData", type: BuffaloZclDataType.USE_DATA_TYPE, conditions: [{type: ParameterCondition.STATUS_EQUAL, value: Status.SUCCESS}]},
+            {name: "dataType", type: DataType.UINT8, conditions: [{type: ParameterCondition.FIELD_EQUAL, field: "status", value: Status.SUCCESS}]},
+            {
+                name: "attrData",
+                type: BuffaloZclDataType.USE_DATA_TYPE,
+                conditions: [{type: ParameterCondition.FIELD_EQUAL, field: "status", value: Status.SUCCESS}],
+            },
         ],
     },
     /** Write Attributes */
@@ -80,7 +84,11 @@ export const Foundation: Readonly<Record<FoundationCommandName, Readonly<Foundat
         parseStrategy: "repetitive",
         parameters: [
             {name: "status", type: DataType.UINT8},
-            {name: "attrId", type: DataType.UINT16, conditions: [{type: ParameterCondition.STATUS_NOT_EQUAL, value: Status.SUCCESS}]},
+            {
+                name: "attrId",
+                type: DataType.UINT16,
+                conditions: [{type: ParameterCondition.FIELD_EQUAL, field: "status", reversed: true, value: Status.SUCCESS}],
+            },
         ],
     },
     /** Write Attributes No Response */
@@ -100,26 +108,34 @@ export const Foundation: Readonly<Record<FoundationCommandName, Readonly<Foundat
         parameters: [
             {name: "direction", type: DataType.UINT8},
             {name: "attrId", type: DataType.UINT16},
-            {name: "dataType", type: DataType.UINT8, conditions: [{type: ParameterCondition.DIRECTION_EQUAL, value: Direction.CLIENT_TO_SERVER}]},
+            {
+                name: "dataType",
+                type: DataType.UINT8,
+                conditions: [{type: ParameterCondition.FIELD_EQUAL, field: "direction", value: Direction.CLIENT_TO_SERVER}],
+            },
             {
                 name: "minRepIntval",
                 type: DataType.UINT16,
-                conditions: [{type: ParameterCondition.DIRECTION_EQUAL, value: Direction.CLIENT_TO_SERVER}],
+                conditions: [{type: ParameterCondition.FIELD_EQUAL, field: "direction", value: Direction.CLIENT_TO_SERVER}],
             },
             {
                 name: "maxRepIntval",
                 type: DataType.UINT16,
-                conditions: [{type: ParameterCondition.DIRECTION_EQUAL, value: Direction.CLIENT_TO_SERVER}],
+                conditions: [{type: ParameterCondition.FIELD_EQUAL, field: "direction", value: Direction.CLIENT_TO_SERVER}],
             },
             {
                 name: "repChange",
                 type: BuffaloZclDataType.USE_DATA_TYPE,
                 conditions: [
-                    {type: ParameterCondition.DIRECTION_EQUAL, value: Direction.CLIENT_TO_SERVER},
+                    {type: ParameterCondition.FIELD_EQUAL, field: "direction", value: Direction.CLIENT_TO_SERVER},
                     {type: ParameterCondition.DATA_TYPE_CLASS_EQUAL, value: DataTypeClass.ANALOG},
                 ],
             },
-            {name: "timeout", type: DataType.UINT16, conditions: [{type: ParameterCondition.DIRECTION_EQUAL, value: Direction.SERVER_TO_CLIENT}]},
+            {
+                name: "timeout",
+                type: DataType.UINT16,
+                conditions: [{type: ParameterCondition.FIELD_EQUAL, field: "direction", value: Direction.SERVER_TO_CLIENT}],
+            },
         ],
         response: 0x07, // configReportRsp
     },
@@ -153,26 +169,34 @@ export const Foundation: Readonly<Record<FoundationCommandName, Readonly<Foundat
             {name: "status", type: DataType.UINT8},
             {name: "direction", type: DataType.UINT8},
             {name: "attrId", type: DataType.UINT16},
-            {name: "dataType", type: DataType.UINT8, conditions: [{type: ParameterCondition.DIRECTION_EQUAL, value: Direction.CLIENT_TO_SERVER}]},
+            {
+                name: "dataType",
+                type: DataType.UINT8,
+                conditions: [{type: ParameterCondition.FIELD_EQUAL, field: "direction", value: Direction.CLIENT_TO_SERVER}],
+            },
             {
                 name: "minRepIntval",
                 type: DataType.UINT16,
-                conditions: [{type: ParameterCondition.DIRECTION_EQUAL, value: Direction.CLIENT_TO_SERVER}],
+                conditions: [{type: ParameterCondition.FIELD_EQUAL, field: "direction", value: Direction.CLIENT_TO_SERVER}],
             },
             {
                 name: "maxRepIntval",
                 type: DataType.UINT16,
-                conditions: [{type: ParameterCondition.DIRECTION_EQUAL, value: Direction.CLIENT_TO_SERVER}],
+                conditions: [{type: ParameterCondition.FIELD_EQUAL, field: "direction", value: Direction.CLIENT_TO_SERVER}],
             },
             {
                 name: "repChange",
                 type: BuffaloZclDataType.USE_DATA_TYPE,
                 conditions: [
-                    {type: ParameterCondition.DIRECTION_EQUAL, value: Direction.CLIENT_TO_SERVER},
+                    {type: ParameterCondition.FIELD_EQUAL, field: "direction", value: Direction.CLIENT_TO_SERVER},
                     {type: ParameterCondition.DATA_TYPE_CLASS_EQUAL, value: DataTypeClass.ANALOG},
                 ],
             },
-            {name: "timeout", type: DataType.UINT16, conditions: [{type: ParameterCondition.DIRECTION_EQUAL, value: Direction.SERVER_TO_CLIENT}]},
+            {
+                name: "timeout",
+                type: DataType.UINT16,
+                conditions: [{type: ParameterCondition.FIELD_EQUAL, field: "direction", value: Direction.SERVER_TO_CLIENT}],
+            },
         ],
     },
     /** Report attributes */
@@ -240,12 +264,16 @@ export const Foundation: Readonly<Record<FoundationCommandName, Readonly<Foundat
         // contains only one SUCCESS record for all written attributes if all written successfully
         parameters: [
             {name: "status", type: DataType.UINT8},
-            {name: "attrId", type: DataType.UINT16, conditions: [{type: ParameterCondition.STATUS_NOT_EQUAL, value: Status.SUCCESS}]},
+            {
+                name: "attrId",
+                type: DataType.UINT16,
+                conditions: [{type: ParameterCondition.FIELD_EQUAL, field: "status", reversed: true, value: Status.SUCCESS}],
+            },
             // always one zero-octet if failed attribute not of type array or structure, otherwise can also be zero if no info on which element caused failure
             {
                 name: "selector",
                 type: BuffaloZclDataType.STRUCTURED_SELECTOR,
-                conditions: [{type: ParameterCondition.STATUS_NOT_EQUAL, value: Status.SUCCESS}],
+                conditions: [{type: ParameterCondition.FIELD_EQUAL, field: "status", reversed: true, value: Status.SUCCESS}],
             },
         ],
     },
