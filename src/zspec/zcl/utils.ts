@@ -264,7 +264,7 @@ function createCluster(name: string, cluster: ClusterDefinition, manufacturerCod
     };
 }
 
-export function getCluster(key: string | number, manufacturerCode: number | undefined, customClusters: CustomClusters): Cluster {
+export function getCluster(key: string | number, manufacturerCode: number | undefined = undefined, customClusters: CustomClusters = {}): Cluster {
     const {name, cluster} = getClusterDefinition(key, manufacturerCode, customClusters);
     return createCluster(name, cluster, manufacturerCode);
 }
