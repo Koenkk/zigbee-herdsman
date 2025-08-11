@@ -1,4 +1,5 @@
 import type {TClusterAttributeKeys, TClusterAttributes, TPartialClusterAttributes} from "../zspec/zcl/definition/clusters-types";
+import type {DataType} from "../zspec/zcl/definition/enums";
 
 export interface KeyValue {
     // biome-ignore lint/suspicious/noExplicitAny: API
@@ -41,11 +42,7 @@ export interface GreenPowerDeviceJoinedPayload {
     securityKey?: Buffer;
 }
 
-export type RawClusterAttribute = {
-    value: unknown;
-    /** expected as `Zcl.DataType | Zcl.BuffaloZclDataType` */
-    type: number;
-};
+export type RawClusterAttribute = {value: unknown; type: DataType};
 
 export type RawClusterAttributes = Record<number, RawClusterAttribute>;
 
