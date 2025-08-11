@@ -844,8 +844,12 @@ export class Endpoint extends Entity {
         const promise = new Promise<{header: Zcl.Header; payload: KeyValue}>((resolve, reject) => {
             waiter.promise.then(
                 (payload) => {
-                    const frame = Zcl.Frame.fromBuffer(payload.clusterID, payload.header, payload.data, device.customClusters);
-                    resolve({header: frame.header, payload: frame.payload});
+                    try {
+                        const frame = Zcl.Frame.fromBuffer(payload.clusterID, payload.header, payload.data, device.customClusters);
+                        resolve({header: frame.header, payload: frame.payload});
+                    } catch (error) {
+                        reject(error);
+                    }
                 },
                 (error) => reject(error),
             );

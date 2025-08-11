@@ -4451,6 +4451,24 @@ describe("Controller", () => {
         expect(error).toStrictEqual(new Error("whoops!"));
     });
 
+    it("Endpoint waitForCommand frame fails to parse", async () => {
+        await controller.start();
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
+        const device = controller.getDeviceByIeeeAddr("0x129")!;
+        const endpoint = device.getEndpoint(1)!;
+        mocksendZclFrameToEndpoint.mockClear();
+        // The buffer below ([24, 169, 10, 0, 0, 24]) is intentionally malformed:
+        // It is missing expected payload bytes for a valid ZCL frame, causing Zcl.Frame.fromBuffer to throw a parsing error.
+        // This triggers the error handling path being tested.
+        const buffer = Buffer.from([24, 169, 10, 0, 0, 24]);
+        const header = Zcl.Header.fromBuffer(buffer);
+        const promise = new Promise((resolve, _reject) => resolve({clusterID: Zcl.Utils.getCluster("msOccupancySensing").ID, data: buffer, header}));
+        mockAdapterWaitFor.mockReturnValueOnce({promise, cancel: () => {}});
+        await expect(endpoint.waitForCommand("genOta", "upgradeEndRequest", 10, 20).promise).rejects.toThrow(
+            `The value of "offset" is out of range. It must be >= 0 and <= 5. Received 6`,
+        );
+    });
+
     it("Device without meta should set meta to {}", async () => {
         Device.resetCache();
         const line = JSON.stringify({
