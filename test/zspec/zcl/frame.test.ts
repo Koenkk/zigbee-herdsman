@@ -932,4 +932,29 @@ describe("ZCL Frame", () => {
         const short2New = short2Zcl.toBuffer();
         expect(short2New).toStrictEqual(short2);
     });
+
+    it("throws when payload too short to continue reading", () => {
+        const b = Buffer.from([1, 3, 3, 0, 33, 16, 18, 0, 255, 69, 81, 0, 62, 0, 0, 0]);
+
+        expect(() => {
+            Zcl.Frame.fromBuffer(Zcl.Clusters.genOta.ID, Zcl.Header.fromBuffer(b), b, {});
+        }).toThrow(
+            `Cannot parse 'imageBlockRequest:maximumDataSize' (The value of "offset" is out of range. It must be >= 0 and <= 15. Received 16)`,
+        );
+    });
+
+    // https://github.com/Koenkk/zigbee2mqtt/issues/28217
+    it("[workaround] Reads genOta imageBlockRequest even if minimumBlockPeriod is missing", () => {
+        const b = Buffer.from([1, 3, 3, 2, 33, 16, 18, 0, 255, 69, 81, 0, 62, 0, 0, 0, 8]);
+        const frame = Zcl.Frame.fromBuffer(Zcl.Clusters.genOta.ID, Zcl.Header.fromBuffer(b), b, {});
+
+        expect(frame.payload).toStrictEqual({
+            fieldControl: 2,
+            manufacturerCode: 4129,
+            imageType: 18,
+            fileVersion: 5326335,
+            fileOffset: 62,
+            maximumDataSize: 8,
+        });
+    });
 });

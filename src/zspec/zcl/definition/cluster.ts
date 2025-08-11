@@ -1047,7 +1047,11 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                     {
                         name: "minimumBlockPeriod",
                         type: DataType.UINT16,
-                        conditions: [{type: ParameterCondition.BITMASK_SET, param: "fieldControl", mask: 0b10}],
+                        conditions: [
+                            {type: ParameterCondition.BITMASK_SET, param: "fieldControl", mask: 0b10},
+                            // WORKAROUND: https://github.com/Koenkk/zigbee2mqtt/issues/28217
+                            {type: ParameterCondition.MINIMUM_REMAINING_BUFFER_BYTES, value: 2},
+                        ],
                     },
                 ],
             },

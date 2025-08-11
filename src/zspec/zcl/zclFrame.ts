@@ -194,7 +194,11 @@ export class ZclFrame {
                 }
             }
 
-            payload[parameter.name] = buffalo.read(parameter.type, options);
+            try {
+                payload[parameter.name] = buffalo.read(parameter.type, options);
+            } catch (error) {
+                throw new Error(`Cannot parse '${command.name}:${parameter.name}' (${(error as Error).message})`);
+            }
         }
 
         return payload;
