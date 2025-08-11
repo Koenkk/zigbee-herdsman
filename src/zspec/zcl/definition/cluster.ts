@@ -334,12 +334,20 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                     {name: "status", type: DataType.UINT8},
                     {name: "groupid", type: DataType.UINT16},
                     {name: "sceneid", type: DataType.UINT8},
-                    {name: "transtime", type: DataType.UINT16, conditions: [{type: ParameterCondition.STATUS_EQUAL, value: Status.SUCCESS}]},
-                    {name: "scenename", type: DataType.CHAR_STR, conditions: [{type: ParameterCondition.STATUS_EQUAL, value: Status.SUCCESS}]},
+                    {
+                        name: "transtime",
+                        type: DataType.UINT16,
+                        conditions: [{type: ParameterCondition.FIELD_EQUAL, field: "status", value: Status.SUCCESS}],
+                    },
+                    {
+                        name: "scenename",
+                        type: DataType.CHAR_STR,
+                        conditions: [{type: ParameterCondition.FIELD_EQUAL, field: "status", value: Status.SUCCESS}],
+                    },
                     {
                         name: "extensionfieldsets",
                         type: BuffaloZclDataType.EXTENSION_FIELD_SETS,
-                        conditions: [{type: ParameterCondition.STATUS_EQUAL, value: Status.SUCCESS}],
+                        conditions: [{type: ParameterCondition.FIELD_EQUAL, field: "status", value: Status.SUCCESS}],
                     },
                 ],
             },
@@ -372,11 +380,15 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                     {name: "status", type: DataType.UINT8},
                     {name: "capacity", type: DataType.UINT8},
                     {name: "groupid", type: DataType.UINT16},
-                    {name: "scenecount", type: DataType.UINT8, conditions: [{type: ParameterCondition.STATUS_EQUAL, value: Status.SUCCESS}]},
+                    {
+                        name: "scenecount",
+                        type: DataType.UINT8,
+                        conditions: [{type: ParameterCondition.FIELD_EQUAL, field: "status", value: Status.SUCCESS}],
+                    },
                     {
                         name: "scenelist",
                         type: BuffaloZclDataType.LIST_UINT8,
-                        conditions: [{type: ParameterCondition.STATUS_EQUAL, value: Status.SUCCESS}],
+                        conditions: [{type: ParameterCondition.FIELD_EQUAL, field: "status", value: Status.SUCCESS}],
                     },
                 ],
             },
@@ -394,12 +406,20 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                     {name: "status", type: DataType.UINT8},
                     {name: "groupid", type: DataType.UINT16},
                     {name: "sceneid", type: DataType.UINT8},
-                    {name: "transtime", type: DataType.UINT16, conditions: [{type: ParameterCondition.STATUS_EQUAL, value: Status.SUCCESS}]},
-                    {name: "scenename", type: DataType.CHAR_STR, conditions: [{type: ParameterCondition.STATUS_EQUAL, value: Status.SUCCESS}]},
+                    {
+                        name: "transtime",
+                        type: DataType.UINT16,
+                        conditions: [{type: ParameterCondition.FIELD_EQUAL, field: "status", value: Status.SUCCESS}],
+                    },
+                    {
+                        name: "scenename",
+                        type: DataType.CHAR_STR,
+                        conditions: [{type: ParameterCondition.FIELD_EQUAL, field: "status", value: Status.SUCCESS}],
+                    },
                     {
                         name: "extensionfieldsets",
                         type: BuffaloZclDataType.EXTENSION_FIELD_SETS,
-                        conditions: [{type: ParameterCondition.STATUS_EQUAL, value: Status.SUCCESS}],
+                        conditions: [{type: ParameterCondition.FIELD_EQUAL, field: "status", value: Status.SUCCESS}],
                     },
                 ],
             },
@@ -1060,6 +1080,17 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                     {name: "fileVersion", type: DataType.UINT32},
                 ],
             },
+            queryDeviceSpecificFileRequest: {
+                ID: 8,
+                response: 9,
+                parameters: [
+                    {name: "eui64", type: DataType.IEEE_ADDR},
+                    {name: "manufacturerCode", type: DataType.UINT16},
+                    {name: "imageType", type: DataType.UINT16},
+                    {name: "fileVersion", type: DataType.UINT32},
+                    {name: "zigbeeStackVersion", type: DataType.UINT16},
+                ],
+            },
         },
         commandsResponse: {
             imageNotify: {
@@ -1067,28 +1098,99 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 parameters: [
                     {name: "payloadType", type: DataType.UINT8},
                     {name: "queryJitter", type: DataType.UINT8},
+                    {
+                        name: "manufacturerCode",
+                        type: DataType.UINT16,
+                        conditions: [{type: ParameterCondition.FIELD_GT, field: "payloadType", value: 0x00}],
+                    },
+                    {
+                        name: "imageType",
+                        type: DataType.UINT16,
+                        conditions: [{type: ParameterCondition.FIELD_GT, field: "payloadType", value: 0x01}],
+                    },
+                    {
+                        name: "fileVersion",
+                        type: DataType.UINT32,
+                        conditions: [{type: ParameterCondition.FIELD_GT, field: "payloadType", value: 0x02}],
+                    },
                 ],
             },
             queryNextImageResponse: {
                 ID: 2,
                 parameters: [
                     {name: "status", type: DataType.UINT8},
-                    {name: "manufacturerCode", type: DataType.UINT16, conditions: [{type: ParameterCondition.STATUS_EQUAL, value: Status.SUCCESS}]},
-                    {name: "imageType", type: DataType.UINT16, conditions: [{type: ParameterCondition.STATUS_EQUAL, value: Status.SUCCESS}]},
-                    {name: "fileVersion", type: DataType.UINT32, conditions: [{type: ParameterCondition.STATUS_EQUAL, value: Status.SUCCESS}]},
-                    {name: "imageSize", type: DataType.UINT32, conditions: [{type: ParameterCondition.STATUS_EQUAL, value: Status.SUCCESS}]},
+                    {
+                        name: "manufacturerCode",
+                        type: DataType.UINT16,
+                        conditions: [{type: ParameterCondition.FIELD_EQUAL, field: "status", value: Status.SUCCESS}],
+                    },
+                    {
+                        name: "imageType",
+                        type: DataType.UINT16,
+                        conditions: [{type: ParameterCondition.FIELD_EQUAL, field: "status", value: Status.SUCCESS}],
+                    },
+                    {
+                        name: "fileVersion",
+                        type: DataType.UINT32,
+                        conditions: [{type: ParameterCondition.FIELD_EQUAL, field: "status", value: Status.SUCCESS}],
+                    },
+                    {
+                        name: "imageSize",
+                        type: DataType.UINT32,
+                        conditions: [{type: ParameterCondition.FIELD_EQUAL, field: "status", value: Status.SUCCESS}],
+                    },
                 ],
             },
             imageBlockResponse: {
                 ID: 5,
                 parameters: [
+                    // alone if Status.ABORT
                     {name: "status", type: DataType.UINT8},
-                    {name: "manufacturerCode", type: DataType.UINT16},
-                    {name: "imageType", type: DataType.UINT16},
-                    {name: "fileVersion", type: DataType.UINT32},
-                    {name: "fileOffset", type: DataType.UINT32},
-                    {name: "dataSize", type: DataType.UINT8},
-                    {name: "data", type: BuffaloZclDataType.BUFFER},
+                    {
+                        name: "manufacturerCode",
+                        type: DataType.UINT16,
+                        conditions: [{type: ParameterCondition.FIELD_EQUAL, field: "status", value: Status.SUCCESS}],
+                    },
+                    {
+                        name: "imageType",
+                        type: DataType.UINT16,
+                        conditions: [{type: ParameterCondition.FIELD_EQUAL, field: "status", value: Status.SUCCESS}],
+                    },
+                    {
+                        name: "fileVersion",
+                        type: DataType.UINT32,
+                        conditions: [{type: ParameterCondition.FIELD_EQUAL, field: "status", value: Status.SUCCESS}],
+                    },
+                    {
+                        name: "fileOffset",
+                        type: DataType.UINT32,
+                        conditions: [{type: ParameterCondition.FIELD_EQUAL, field: "status", value: Status.SUCCESS}],
+                    },
+                    {
+                        name: "dataSize",
+                        type: DataType.UINT8,
+                        conditions: [{type: ParameterCondition.FIELD_EQUAL, field: "status", value: Status.SUCCESS}],
+                    },
+                    {
+                        name: "data",
+                        type: BuffaloZclDataType.BUFFER,
+                        conditions: [{type: ParameterCondition.FIELD_EQUAL, field: "status", value: Status.SUCCESS}],
+                    },
+                    {
+                        name: "currentTime",
+                        type: DataType.UINT32,
+                        conditions: [{type: ParameterCondition.FIELD_EQUAL, field: "status", value: Status.WAIT_FOR_DATA}],
+                    },
+                    {
+                        name: "requestTime",
+                        type: DataType.UINT32,
+                        conditions: [{type: ParameterCondition.FIELD_EQUAL, field: "status", value: Status.WAIT_FOR_DATA}],
+                    },
+                    {
+                        name: "minimumBlockPeriod",
+                        type: DataType.UINT16,
+                        conditions: [{type: ParameterCondition.FIELD_EQUAL, field: "status", value: Status.WAIT_FOR_DATA}],
+                    },
                 ],
             },
             upgradeEndResponse: {
@@ -1099,6 +1201,32 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                     {name: "fileVersion", type: DataType.UINT32},
                     {name: "currentTime", type: DataType.UINT32},
                     {name: "upgradeTime", type: DataType.UINT32},
+                ],
+            },
+            queryDeviceSpecificFileResponse: {
+                ID: 9,
+                parameters: [
+                    {name: "status", type: DataType.UINT8},
+                    {
+                        name: "manufacturerCode",
+                        type: DataType.UINT16,
+                        conditions: [{type: ParameterCondition.FIELD_EQUAL, field: "status", value: Status.SUCCESS}],
+                    },
+                    {
+                        name: "imageType",
+                        type: DataType.UINT16,
+                        conditions: [{type: ParameterCondition.FIELD_EQUAL, field: "status", value: Status.SUCCESS}],
+                    },
+                    {
+                        name: "fileVersion",
+                        type: DataType.UINT32,
+                        conditions: [{type: ParameterCondition.FIELD_EQUAL, field: "status", value: Status.SUCCESS}],
+                    },
+                    {
+                        name: "imageSize",
+                        type: DataType.UINT32,
+                        conditions: [{type: ParameterCondition.FIELD_EQUAL, field: "status", value: Status.SUCCESS}],
+                    },
                 ],
             },
         },

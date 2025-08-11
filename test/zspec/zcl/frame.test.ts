@@ -177,7 +177,7 @@ const GLOBAL_RSP_FRAME_BUFFER = Buffer.concat([
     GLOBAL_RSP_HEADER_BUFFER,
     Buffer.from([...uint16To8Array(256), Zcl.Status.SUCCESS, Zcl.DataType.ENUM8, 127]),
 ]);
-const GLOBAL_RSP_FRAME_STRING = `{"header":{"frameControl":{"reservedBits":0,"frameType":0,"direction":1,"disableDefaultResponse":false,"manufacturerSpecific":false},"transactionSequenceNumber":78,"commandIdentifier":1},"payload":[{"attrId":256,"status":0,"dataType":48,"attrData":127}],"command":{"ID":1,"name":"readRsp","parameters":[{"name":"attrId","type":33},{"name":"status","type":32},{"name":"dataType","type":32,"conditions":[{"type":"statusEquals","value":0}]},{"name":"attrData","type":1000,"conditions":[{"type":"statusEquals","value":0}]}]}}`;
+const GLOBAL_RSP_FRAME_STRING = `{"header":{"frameControl":{"reservedBits":0,"frameType":0,"direction":1,"disableDefaultResponse":false,"manufacturerSpecific":false},"transactionSequenceNumber":78,"commandIdentifier":1},"payload":[{"attrId":256,"status":0,"dataType":48,"attrData":127}],"command":{"ID":1,"name":"readRsp","parameters":[{"name":"attrId","type":33},{"name":"status","type":32},{"name":"dataType","type":32,"conditions":[{"type":"fieldEquals","field":"status","value":0}]},{"name":"attrData","type":1000,"conditions":[{"type":"fieldEquals","field":"status","value":0}]}]}}`;
 
 /** Frame of Global type with no payload */
 const GLOBAL_FRAME_NO_PAYLOAD = Zcl.Frame.create(
@@ -212,7 +212,7 @@ const GLOBAL_CONDITION_FRAME_BUFFER = Buffer.concat([
     GLOBAL_CONDITION_HEADER_BUFFER,
     Buffer.from([Zcl.Direction.SERVER_TO_CLIENT, ...uint16To8Array(256), ...uint16To8Array(10000)]),
 ]);
-const GLOBAL_CONDITION_FRAME_STRING = `{"header":{"frameControl":{"reservedBits":0,"frameType":0,"direction":1,"disableDefaultResponse":false,"manufacturerSpecific":false},"transactionSequenceNumber":78,"commandIdentifier":6},"payload":[{"direction":1,"attrId":256,"timeout":10000}],"command":{"ID":6,"name":"configReport","parameters":[{"name":"direction","type":32},{"name":"attrId","type":33},{"name":"dataType","type":32,"conditions":[{"type":"directionEquals","value":0}]},{"name":"minRepIntval","type":33,"conditions":[{"type":"directionEquals","value":0}]},{"name":"maxRepIntval","type":33,"conditions":[{"type":"directionEquals","value":0}]},{"name":"repChange","type":1000,"conditions":[{"type":"directionEquals","value":0},{"type":"dataTypeValueTypeEquals","value":"ANALOG"}]},{"name":"timeout","type":33,"conditions":[{"type":"directionEquals","value":1}]}],"response":7}}`;
+const GLOBAL_CONDITION_FRAME_STRING = `{"header":{"frameControl":{"reservedBits":0,"frameType":0,"direction":1,"disableDefaultResponse":false,"manufacturerSpecific":false},"transactionSequenceNumber":78,"commandIdentifier":6},"payload":[{"direction":1,"attrId":256,"timeout":10000}],"command":{"ID":6,"name":"configReport","parameters":[{"name":"direction","type":32},{"name":"attrId","type":33},{"name":"dataType","type":32,"conditions":[{"type":"fieldEquals","field":"direction","value":0}]},{"name":"minRepIntval","type":33,"conditions":[{"type":"fieldEquals","field":"direction","value":0}]},{"name":"maxRepIntval","type":33,"conditions":[{"type":"fieldEquals","field":"direction","value":0}]},{"name":"repChange","type":1000,"conditions":[{"type":"fieldEquals","field":"direction","value":0},{"type":"dataTypeValueTypeEquals","value":"ANALOG"}]},{"name":"timeout","type":33,"conditions":[{"type":"fieldEquals","field":"direction","value":1}]}],"response":7}}`;
 
 /** Frame of Specific type */
 const SPECIFIC_FRAME = Zcl.Frame.create(
@@ -260,7 +260,7 @@ const SPECIFIC_CONDITION_FRAME = Zcl.Frame.create(
     SPECIFIC_CONDITION_HEADER.frameControl.reservedBits,
 );
 const SPECIFIC_CONDITION_FRAME_BUFFER = Buffer.concat([SPECIFIC_CONDITION_HEADER_BUFFER, Buffer.from([149])]);
-const SPECIFIC_CONDITION_FRAME_STRING = `{"header":{"frameControl":{"reservedBits":0,"frameType":1,"direction":1,"disableDefaultResponse":false,"manufacturerSpecific":false},"transactionSequenceNumber":45,"commandIdentifier":2},"payload":{"status":149},"command":{"ID":2,"parameters":[{"name":"status","type":32},{"name":"manufacturerCode","type":33,"conditions":[{"type":"statusEquals","value":0}]},{"name":"imageType","type":33,"conditions":[{"type":"statusEquals","value":0}]},{"name":"fileVersion","type":35,"conditions":[{"type":"statusEquals","value":0}]},{"name":"imageSize","type":35,"conditions":[{"type":"statusEquals","value":0}]}],"name":"queryNextImageResponse"}}`;
+const SPECIFIC_CONDITION_FRAME_STRING = `{"header":{"frameControl":{"reservedBits":0,"frameType":1,"direction":1,"disableDefaultResponse":false,"manufacturerSpecific":false},"transactionSequenceNumber":45,"commandIdentifier":2},"payload":{"status":149},"command":{"ID":2,"parameters":[{"name":"status","type":32},{"name":"manufacturerCode","type":33,"conditions":[{"type":"fieldEquals","field":"status","value":0}]},{"name":"imageType","type":33,"conditions":[{"type":"fieldEquals","field":"status","value":0}]},{"name":"fileVersion","type":35,"conditions":[{"type":"fieldEquals","field":"status","value":0}]},{"name":"imageSize","type":35,"conditions":[{"type":"fieldEquals","field":"status","value":0}]}],"name":"queryNextImageResponse"}}`;
 
 /** Frame manufacturer-specific */
 const MANUF_SPE_FRAME = Zcl.Frame.create(
@@ -280,34 +280,9 @@ const MANUF_SPE_FRAME_STRING = `{"header":{"frameControl":{"reservedBits":0,"fra
 
 describe("ZCL Frame", () => {
     describe("Validates Parameter Condition", () => {
-        it("STATUS_EQUAL", () => {
-            expect(Zcl.Frame.conditionsValid(Zcl.Foundation.readRsp.parameters[2], {status: 0}, undefined)).toBeTruthy();
-            expect(Zcl.Frame.conditionsValid(Zcl.Foundation.readRsp.parameters[2], {status: 1}, undefined)).toBeFalsy();
-        });
-
-        it("STATUS_NOT_EQUAL", () => {
-            expect(Zcl.Frame.conditionsValid(Zcl.Foundation.writeRsp.parameters[1], {status: 1}, undefined)).toBeTruthy();
-            expect(Zcl.Frame.conditionsValid(Zcl.Foundation.writeRsp.parameters[1], {status: 0}, undefined)).toBeFalsy();
-        });
-
         it("MINIMUM_REMAINING_BUFFER_BYTES", () => {
             expect(Zcl.Frame.conditionsValid(Zcl.Foundation.configReportRsp.parameters[1], {status: 1}, 3)).toBeTruthy();
             expect(Zcl.Frame.conditionsValid(Zcl.Foundation.configReportRsp.parameters[1], {status: 1}, 2)).toBeFalsy();
-        });
-
-        it("DIRECTION_EQUAL", () => {
-            expect(
-                Zcl.Frame.conditionsValid(Zcl.Foundation.configReport.parameters[2], {direction: Zcl.Direction.CLIENT_TO_SERVER}, undefined),
-            ).toBeTruthy();
-            expect(
-                Zcl.Frame.conditionsValid(Zcl.Foundation.configReport.parameters[2], {direction: Zcl.Direction.SERVER_TO_CLIENT}, undefined),
-            ).toBeFalsy();
-            expect(
-                Zcl.Frame.conditionsValid(Zcl.Foundation.configReport.parameters[6], {direction: Zcl.Direction.SERVER_TO_CLIENT}, undefined),
-            ).toBeTruthy();
-            expect(
-                Zcl.Frame.conditionsValid(Zcl.Foundation.configReport.parameters[6], {direction: Zcl.Direction.CLIENT_TO_SERVER}, undefined),
-            ).toBeFalsy();
         });
 
         it("BITMASK_SET", () => {
@@ -359,6 +334,22 @@ describe("ZCL Frame", () => {
         });
 
         it("FIELD_EQUAL", () => {
+            expect(Zcl.Frame.conditionsValid(Zcl.Foundation.readRsp.parameters[2], {status: 0}, undefined)).toBeTruthy();
+            expect(Zcl.Frame.conditionsValid(Zcl.Foundation.readRsp.parameters[2], {status: 1}, undefined)).toBeFalsy();
+            expect(Zcl.Frame.conditionsValid(Zcl.Foundation.writeRsp.parameters[1], {status: 1}, undefined)).toBeTruthy();
+            expect(Zcl.Frame.conditionsValid(Zcl.Foundation.writeRsp.parameters[1], {status: 0}, undefined)).toBeFalsy();
+            expect(
+                Zcl.Frame.conditionsValid(Zcl.Foundation.configReport.parameters[2], {direction: Zcl.Direction.CLIENT_TO_SERVER}, undefined),
+            ).toBeTruthy();
+            expect(
+                Zcl.Frame.conditionsValid(Zcl.Foundation.configReport.parameters[2], {direction: Zcl.Direction.SERVER_TO_CLIENT}, undefined),
+            ).toBeFalsy();
+            expect(
+                Zcl.Frame.conditionsValid(Zcl.Foundation.configReport.parameters[6], {direction: Zcl.Direction.SERVER_TO_CLIENT}, undefined),
+            ).toBeTruthy();
+            expect(
+                Zcl.Frame.conditionsValid(Zcl.Foundation.configReport.parameters[6], {direction: Zcl.Direction.CLIENT_TO_SERVER}, undefined),
+            ).toBeFalsy();
             expect(
                 Zcl.Frame.conditionsValid(Zcl.Clusters.touchlink.commandsResponse.scanResponse.parameters[13], {numberOfSubDevices: 1}, undefined),
             ).toBeTruthy();
@@ -368,6 +359,24 @@ describe("ZCL Frame", () => {
             expect(
                 Zcl.Frame.conditionsValid(Zcl.Clusters.touchlink.commandsResponse.scanResponse.parameters[13], {numberOfSubDevices: 3}, undefined),
             ).toBeFalsy();
+            expect(
+                Zcl.Frame.conditionsValid(Zcl.Clusters.genOta.commandsResponse.imageNotify.parameters[2], {payloadType: 0}, undefined),
+            ).toBeFalsy();
+            expect(
+                Zcl.Frame.conditionsValid(Zcl.Clusters.genOta.commandsResponse.imageNotify.parameters[2], {payloadType: 1}, undefined),
+            ).toBeTruthy();
+            expect(
+                Zcl.Frame.conditionsValid(Zcl.Clusters.genOta.commandsResponse.imageNotify.parameters[3], {payloadType: 1}, undefined),
+            ).toBeFalsy();
+            expect(
+                Zcl.Frame.conditionsValid(Zcl.Clusters.genOta.commandsResponse.imageNotify.parameters[3], {payloadType: 2}, undefined),
+            ).toBeTruthy();
+            expect(
+                Zcl.Frame.conditionsValid(Zcl.Clusters.genOta.commandsResponse.imageNotify.parameters[4], {payloadType: 2}, undefined),
+            ).toBeFalsy();
+            expect(
+                Zcl.Frame.conditionsValid(Zcl.Clusters.genOta.commandsResponse.imageNotify.parameters[4], {payloadType: 3}, undefined),
+            ).toBeTruthy();
         });
     });
 
