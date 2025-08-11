@@ -199,9 +199,12 @@ let iasZoneReadState170Count = 0;
 let enroll170 = true;
 let configureReportStatus = 0;
 let configureReportDefaultRsp = false;
+let lastSentZclFrameToEndpoint: Buffer | undefined;
 
 const restoreMocksendZclFrameToEndpoint = () => {
     mocksendZclFrameToEndpoint.mockImplementation((_ieeeAddr, networkAddress, endpoint, frame: Zcl.Frame) => {
+        lastSentZclFrameToEndpoint = frame.toBuffer();
+
         if (
             frame.header.isGlobal &&
             frame.isCommand("read") &&
@@ -6012,7 +6015,6 @@ describe("Controller", () => {
 
     it("Write structured", async () => {
         await controller.start();
-        await controller.start();
         await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
         const device = controller.getDeviceByIeeeAddr("0x129")!;
         const endpoint = device.getEndpoint(1)!;
@@ -6022,7 +6024,6 @@ describe("Controller", () => {
     });
 
     it("Write structured with disable response", async () => {
-        await controller.start();
         await controller.start();
         await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
         const device = controller.getDeviceByIeeeAddr("0x129")!;
@@ -6048,6 +6049,60 @@ describe("Controller", () => {
             new Error(
                 `ZCL command 0x129/1 genPowerCfg.writeStructured([], {"timeout":10000,"disableResponse":false,"disableRecovery":false,"disableDefaultResponse":true,"direction":0,"reservedBits":0,"writeUndiv":false}) failed (timeout occurred)`,
             ),
+        );
+    });
+
+    it("Write with custom payload", async () => {
+        await controller.start();
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
+        const device = controller.getDeviceByIeeeAddr("0x129")!;
+        const endpoint = device.getEndpoint(1)!;
+
+        const writeOptions = {
+            frameType: 0,
+            manufacturerCode: 0x1ad2,
+            disableDefaultResponse: true,
+            disableResponse: true,
+            reservedBits: 3,
+            direction: 1,
+            writeUndiv: true,
+            transactionSequenceNumber: 0xe9,
+        };
+
+        await endpoint.writeStructured(
+            "genPowerCfg",
+            [
+                {
+                    attrId: 0x0000,
+                    // @ts-expect-error workaround write custom payload, special case "do not write anything"
+                    selector: null,
+                    elementData: [0x04, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00],
+                    // dataType: undefined,
+                },
+            ],
+            writeOptions,
+        );
+
+        expect(lastSentZclFrameToEndpoint).toStrictEqual(
+            // Note: 0x00 before start of payload is from having dataType=undefined (gets written as zero)
+            Buffer.from([0x7c, 0xd2, 0x1a, 0xe9, 0x0f, 0x00, 0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]),
+        );
+
+        await endpoint.write(
+            "genPowerCfg",
+            {
+                // @ts-expect-error workaround write custom payload
+                4865: {
+                    value: [0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00],
+                    // type: undefined,
+                },
+            },
+            writeOptions,
+        );
+
+        expect(lastSentZclFrameToEndpoint).toStrictEqual(
+            // Note: 0x00 before start of payload is from having dataType=undefined (gets written as zero)
+            Buffer.from([0x7c, 0xd2, 0x1a, 0xe9, 0x03, 0x01, 0x13, 0x00, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]),
         );
     });
 
