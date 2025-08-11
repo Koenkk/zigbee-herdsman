@@ -402,11 +402,11 @@ export interface TClusters {
                 groupid: number;
                 /** Type: UINT8 */
                 sceneid: number;
-                /** Type: UINT16 */
+                /** Type: UINT16, Conditions: [{statusEquals value=0}] */
                 transtime?: number;
-                /** Type: CHAR_STR */
+                /** Type: CHAR_STR, Conditions: [{statusEquals value=0}] */
                 scenename?: string;
-                /** Type: EXTENSION_FIELD_SETS */
+                /** Type: EXTENSION_FIELD_SETS, Conditions: [{statusEquals value=0}] */
                 extensionfieldsets?: ExtensionFieldSet[];
             };
             /** ID: 2 */
@@ -442,9 +442,9 @@ export interface TClusters {
                 capacity: number;
                 /** Type: UINT16 */
                 groupid: number;
-                /** Type: UINT8 */
+                /** Type: UINT8, Conditions: [{statusEquals value=0}] */
                 scenecount?: number;
-                /** Type: LIST_UINT8 */
+                /** Type: LIST_UINT8, Conditions: [{statusEquals value=0}] */
                 scenelist?: number[];
             };
             /** ID: 64 */
@@ -464,11 +464,11 @@ export interface TClusters {
                 groupid: number;
                 /** Type: UINT8 */
                 sceneid: number;
-                /** Type: UINT16 */
+                /** Type: UINT16, Conditions: [{statusEquals value=0}] */
                 transtime?: number;
-                /** Type: CHAR_STR */
+                /** Type: CHAR_STR, Conditions: [{statusEquals value=0}] */
                 scenename?: string;
-                /** Type: EXTENSION_FIELD_SETS */
+                /** Type: EXTENSION_FIELD_SETS, Conditions: [{statusEquals value=0}] */
                 extensionfieldsets?: ExtensionFieldSet[];
             };
             /** ID: 66 */
@@ -1257,7 +1257,7 @@ export interface TClusters {
                 imageType: number;
                 /** Type: UINT32 */
                 fileVersion: number;
-                /** Type: UINT16 */
+                /** Type: UINT16, Conditions: [{bitMaskSet param=fieldControl mask=1}] */
                 hardwareVersion?: number;
             };
             /** ID: 3 | Response ID: 5 */
@@ -1274,9 +1274,9 @@ export interface TClusters {
                 fileOffset: number;
                 /** Type: UINT8 */
                 maximumDataSize: number;
-                /** Type: IEEE_ADDR */
+                /** Type: IEEE_ADDR, Conditions: [{bitMaskSet param=fieldControl mask=1}] */
                 requestNodeIeeeAddress?: string;
-                /** Type: UINT16 */
+                /** Type: UINT16, Conditions: [{bitMaskSet param=fieldControl mask=2}] */
                 minimumBlockPeriod?: number;
             };
             /** ID: 4 | Response ID: 5 */
@@ -1297,7 +1297,7 @@ export interface TClusters {
                 pageSize: number;
                 /** Type: UINT16 */
                 responseSpacing: number;
-                /** Type: IEEE_ADDR */
+                /** Type: IEEE_ADDR, Conditions: [{bitMaskSet param=fieldControl mask=1}] */
                 requestNodeIeeeAddress?: string;
             };
             /** ID: 6 | Response ID: 7 */
@@ -1324,13 +1324,13 @@ export interface TClusters {
             queryNextImageResponse: {
                 /** Type: UINT8 */
                 status: number;
-                /** Type: UINT16 */
+                /** Type: UINT16, Conditions: [{statusEquals value=0}] */
                 manufacturerCode?: number;
-                /** Type: UINT16 */
+                /** Type: UINT16, Conditions: [{statusEquals value=0}] */
                 imageType?: number;
-                /** Type: UINT32 */
+                /** Type: UINT32, Conditions: [{statusEquals value=0}] */
                 fileVersion?: number;
-                /** Type: UINT32 */
+                /** Type: UINT32, Conditions: [{statusEquals value=0}] */
                 imageSize?: number;
             };
             /** ID: 5 */
@@ -1415,11 +1415,11 @@ export interface TClusters {
             notification: {
                 /** Type: BITMAP16 */
                 options: number;
-                /** Type: UINT32 */
+                /** Type: UINT32, Conditions: [{bitFieldEnum param=options offset=0 size=3 value=0}] */
                 srcID?: number;
-                /** Type: IEEE_ADDR */
+                /** Type: IEEE_ADDR, Conditions: [{bitFieldEnum param=options offset=0 size=3 value=2}] */
                 gpdIEEEAddr?: string;
-                /** Type: UINT8 */
+                /** Type: UINT8, Conditions: [{bitFieldEnum param=options offset=0 size=3 value=2}] */
                 gpdEndpoint?: number;
                 /** Type: UINT32 */
                 frameCounter: number;
@@ -1427,7 +1427,7 @@ export interface TClusters {
                 commandID: number;
                 /** Type: UINT8 */
                 payloadSize: number;
-                /** Type: GPD_FRAME */
+                /** Type: GPD_FRAME, Conditions: [{bitMaskSet param=options mask=192 reversed=true}] */
                 commandFrame?:
                     | Gpd
                     | GpdChannelRequest
@@ -1436,20 +1436,20 @@ export interface TClusters {
                           raw: Buffer;
                       }
                     | Record<string, never>;
-                /** Type: UINT16 */
+                /** Type: UINT16, Conditions: [{bitMaskSet param=options mask=16384}] */
                 gppNwkAddr?: number;
-                /** Type: BITMAP8 */
+                /** Type: BITMAP8, Conditions: [{bitMaskSet param=options mask=16384}] */
                 gppGpdLink?: number;
             };
             /** ID: 4 */
             commissioningNotification: {
                 /** Type: BITMAP16 */
                 options: number;
-                /** Type: UINT32 */
+                /** Type: UINT32, Conditions: [{bitFieldEnum param=options offset=0 size=3 value=0}] */
                 srcID?: number;
-                /** Type: IEEE_ADDR */
+                /** Type: IEEE_ADDR, Conditions: [{bitFieldEnum param=options offset=0 size=3 value=2}] */
                 gpdIEEEAddr?: string;
-                /** Type: UINT8 */
+                /** Type: UINT8, Conditions: [{bitFieldEnum param=options offset=0 size=3 value=2}] */
                 gpdEndpoint?: number;
                 /** Type: UINT32 */
                 frameCounter: number;
@@ -1457,7 +1457,7 @@ export interface TClusters {
                 commandID: number;
                 /** Type: UINT8 */
                 payloadSize: number;
-                /** Type: GPD_FRAME */
+                /** Type: GPD_FRAME, Conditions: [{bitMaskSet param=options mask=48 reversed=true}{bitMaskSet param=options mask=512 reversed=true}] */
                 commandFrame?:
                     | Gpd
                     | GpdChannelRequest
@@ -1466,11 +1466,11 @@ export interface TClusters {
                           raw: Buffer;
                       }
                     | Record<string, never>;
-                /** Type: UINT16 */
+                /** Type: UINT16, Conditions: [{bitMaskSet param=options mask=2048}] */
                 gppNwkAddr?: number;
-                /** Type: BITMAP8 */
+                /** Type: BITMAP8, Conditions: [{bitMaskSet param=options mask=2048}] */
                 gppGpdLink?: number;
-                /** Type: UINT32 */
+                /** Type: UINT32, Conditions: [{bitMaskSet param=options mask=512}] */
                 mic?: number;
             };
         };
@@ -1483,11 +1483,11 @@ export interface TClusters {
                 tempMaster: number;
                 /** Type: BITMAP8 */
                 tempMasterTx: number;
-                /** Type: UINT32 */
+                /** Type: UINT32, Conditions: [{bitFieldEnum param=options offset=0 size=3 value=0}] */
                 srcID?: number;
-                /** Type: IEEE_ADDR */
+                /** Type: IEEE_ADDR, Conditions: [{bitFieldEnum param=options offset=0 size=3 value=2}] */
                 gpdIEEEAddr?: string;
-                /** Type: UINT8 */
+                /** Type: UINT8, Conditions: [{bitFieldEnum param=options offset=0 size=3 value=2}] */
                 gpdEndpoint?: number;
                 /** Type: UINT8 */
                 gpdCmd: number;
@@ -1505,36 +1505,36 @@ export interface TClusters {
             pairing: {
                 /** Type: BITMAP24 */
                 options: number;
-                /** Type: UINT32 */
+                /** Type: UINT32, Conditions: [{bitFieldEnum param=options offset=0 size=3 value=0}] */
                 srcID?: number;
-                /** Type: IEEE_ADDR */
+                /** Type: IEEE_ADDR, Conditions: [{bitFieldEnum param=options offset=0 size=3 value=2}] */
                 gpdIEEEAddr?: string;
-                /** Type: UINT8 */
+                /** Type: UINT8, Conditions: [{bitFieldEnum param=options offset=0 size=3 value=2}] */
                 gpdEndpoint?: number;
-                /** Type: IEEE_ADDR */
+                /** Type: IEEE_ADDR, Conditions: [{bitFieldEnum param=options offset=4 size=3 value=6}] */
                 sinkIEEEAddr?: string;
-                /** Type: UINT16 */
+                /** Type: UINT16, Conditions: [{bitFieldEnum param=options offset=4 size=3 value=6}] */
                 sinkNwkAddr?: number;
-                /** Type: UINT16 */
+                /** Type: UINT16, Conditions: [{bitFieldEnum param=options offset=4 size=3 value=4}] */
                 sinkGroupID?: number;
-                /** Type: UINT8 */
+                /** Type: UINT8, Conditions: [{bitMaskSet param=options mask=8}] */
                 deviceID?: number;
-                /** Type: UINT32 */
+                /** Type: UINT32, Conditions: [{bitMaskSet param=options mask=16384}] */
                 frameCounter?: number;
-                /** Type: SEC_KEY */
+                /** Type: SEC_KEY, Conditions: [{bitMaskSet param=options mask=32768}] */
                 gpdKey?: Buffer;
-                /** Type: UINT16 */
+                /** Type: UINT16, Conditions: [{bitMaskSet param=options mask=65536}] */
                 assignedAlias?: number;
-                /** Type: UINT8 */
+                /** Type: UINT8, Conditions: [{bitMaskSet param=options mask=131072}] */
                 groupcastRadius?: number;
             };
             /** ID: 2 */
             commisioningMode: {
                 /** Type: BITMAP8 */
                 options: number;
-                /** Type: UINT16 */
+                /** Type: UINT16, Conditions: [{bitMaskSet param=options mask=2}] */
                 commisioningWindow?: number;
-                /** Type: UINT8 */
+                /** Type: UINT8, Conditions: [{bitMaskSet param=options mask=16}] */
                 channel?: number;
             };
         };
@@ -5748,15 +5748,15 @@ export interface TClusters {
                 numberOfSubDevices: number;
                 /** Type: UINT8 */
                 totalGroupIdentifiers: number;
-                /** Type: UINT8 */
+                /** Type: UINT8, Conditions: [{fieldEquals field=numberOfSubDevices value=1}] */
                 endpointID?: number;
-                /** Type: UINT16 */
+                /** Type: UINT16, Conditions: [{fieldEquals field=numberOfSubDevices value=1}] */
                 profileID?: number;
-                /** Type: UINT16 */
+                /** Type: UINT16, Conditions: [{fieldEquals field=numberOfSubDevices value=1}] */
                 deviceID?: number;
-                /** Type: UINT8 */
+                /** Type: UINT8, Conditions: [{fieldEquals field=numberOfSubDevices value=1}] */
                 version?: number;
-                /** Type: UINT8 */
+                /** Type: UINT8, Conditions: [{fieldEquals field=numberOfSubDevices value=1}] */
                 groupIDCount?: number;
             };
             /** ID: 3 */
@@ -7010,9 +7010,9 @@ export interface TFoundation {
         attrId: number;
         /** Type: UINT8 */
         status: number;
-        /** Type: UINT8 */
+        /** Type: UINT8, Conditions: [{statusEquals value=0}] */
         dataType?: number;
-        /** Type: USE_DATA_TYPE */
+        /** Type: USE_DATA_TYPE, Conditions: [{statusEquals value=0}] */
         attrData?: unknown;
     }[];
     /** ID: 2 */
@@ -7037,7 +7037,7 @@ export interface TFoundation {
     writeRsp: {
         /** Type: UINT8 */
         status: number;
-        /** Type: UINT16 */
+        /** Type: UINT16, Conditions: [{statusNotEquals value=0}] */
         attrId?: number;
     }[];
     /** ID: 5 */
@@ -7055,24 +7055,24 @@ export interface TFoundation {
         direction: number;
         /** Type: UINT16 */
         attrId: number;
-        /** Type: UINT8 */
+        /** Type: UINT8, Conditions: [{directionEquals value=0}] */
         dataType?: number;
-        /** Type: UINT16 */
+        /** Type: UINT16, Conditions: [{directionEquals value=0}] */
         minRepIntval?: number;
-        /** Type: UINT16 */
+        /** Type: UINT16, Conditions: [{directionEquals value=0}] */
         maxRepIntval?: number;
-        /** Type: USE_DATA_TYPE */
+        /** Type: USE_DATA_TYPE, Conditions: [{directionEquals value=0}{dataTypeValueTypeEquals value=ANALOG}] */
         repChange?: unknown;
-        /** Type: UINT16 */
+        /** Type: UINT16, Conditions: [{directionEquals value=1}] */
         timeout?: number;
     }[];
     /** ID: 7 */
     configReportRsp: {
         /** Type: UINT8 */
         status: number;
-        /** Type: UINT8 */
+        /** Type: UINT8, Conditions: [{minimumRemainingBufferBytes value=3}] */
         direction?: number;
-        /** Type: UINT16 */
+        /** Type: UINT16, Conditions: [{minimumRemainingBufferBytes value=2}] */
         attrId?: number;
     }[];
     /** ID: 8 */
@@ -7090,15 +7090,15 @@ export interface TFoundation {
         direction: number;
         /** Type: UINT16 */
         attrId: number;
-        /** Type: UINT8 */
+        /** Type: UINT8, Conditions: [{directionEquals value=0}] */
         dataType?: number;
-        /** Type: UINT16 */
+        /** Type: UINT16, Conditions: [{directionEquals value=0}] */
         minRepIntval?: number;
-        /** Type: UINT16 */
+        /** Type: UINT16, Conditions: [{directionEquals value=0}] */
         maxRepIntval?: number;
-        /** Type: USE_DATA_TYPE */
+        /** Type: USE_DATA_TYPE, Conditions: [{directionEquals value=0}{dataTypeValueTypeEquals value=ANALOG}] */
         repChange?: unknown;
-        /** Type: UINT16 */
+        /** Type: UINT16, Conditions: [{directionEquals value=1}] */
         timeout?: number;
     }[];
     /** ID: 10 */
@@ -7157,9 +7157,9 @@ export interface TFoundation {
     writeStructuredRsp: {
         /** Type: UINT8 */
         status: number;
-        /** Type: UINT16 */
+        /** Type: UINT16, Conditions: [{statusNotEquals value=0}] */
         attrId?: number;
-        /** Type: STRUCTURED_SELECTOR */
+        /** Type: STRUCTURED_SELECTOR, Conditions: [{statusNotEquals value=0}] */
         selector?: StructuredSelector;
     }[];
     /** ID: 17 */

@@ -18,7 +18,7 @@ import {Clusters} from "./cluster";
 import {BuffaloZclDataType, DataType} from "./enums";
 import {Foundation, type FoundationCommandName, type FoundationDefinition} from "./foundation";
 import {ManufacturerCode} from "./manufacturerCode";
-import type {AttributeDefinition, ClusterName, CommandDefinition} from "./tstype";
+import type {AttributeDefinition, ClusterName, CommandDefinition, ParameterDefinition} from "./tstype";
 
 const FILENAME = "clusters-types.ts";
 
@@ -132,6 +132,28 @@ const getTypeFromDataType = (dataType: DataType | BuffaloZclDataType): ts.TypeNo
     }
 };
 
+const getConditionStr = (conditions: ParameterDefinition["conditions"]): string | undefined => {
+    if (conditions) {
+        let str = ", Conditions: [";
+
+        for (const condition of conditions) {
+            str += `{${condition.type}`;
+
+            for (const key in condition) {
+                if (key === "type") {
+                    continue;
+                }
+
+                str += ` ${key}=${condition[key as keyof typeof condition]}`;
+            }
+
+            str += "}";
+        }
+
+        return `${str}]`;
+    }
+};
+
 const addAttributes = (attributes: Readonly<Record<string, Readonly<AttributeDefinition>>>): ts.TypeNode => {
     const elements: ts.PropertySignature[] = [];
 
@@ -179,12 +201,13 @@ const addCommands = (commands: Readonly<Record<string, Readonly<CommandDefinitio
                     parameter.conditions ? ts.factory.createToken(ts.SyntaxKind.QuestionToken) : undefined,
                     paramType,
                 );
+                const conditionComment = getConditionStr(parameter.conditions);
 
                 cmdElements.push(cmdElement);
                 ts.addSyntheticLeadingComment(
                     cmdElement,
                     ts.SyntaxKind.MultiLineCommentTrivia,
-                    `* Type: ${DataType[parameter.type] ?? BuffaloZclDataType[parameter.type]} `,
+                    `* Type: ${DataType[parameter.type] ?? BuffaloZclDataType[parameter.type]}${conditionComment ?? ""} `,
                     true,
                 );
             } else if (
@@ -266,13 +289,14 @@ const addParameters = (foundation: Readonly<FoundationDefinition>): ts.TypeNode 
             parameter.conditions ? ts.factory.createToken(ts.SyntaxKind.QuestionToken) : undefined,
             getTypeFromDataType(parameter.type),
         );
+        const conditionComment = getConditionStr(parameter.conditions);
 
         elements.push(element);
 
         ts.addSyntheticLeadingComment(
             element,
             ts.SyntaxKind.MultiLineCommentTrivia,
-            `* Type: ${DataType[parameter.type] ?? BuffaloZclDataType[parameter.type]} `,
+            `* Type: ${DataType[parameter.type] ?? BuffaloZclDataType[parameter.type]}${conditionComment ?? ""} `,
             true,
         );
     }
