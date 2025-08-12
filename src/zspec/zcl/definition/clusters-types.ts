@@ -6577,14 +6577,6 @@ export interface TClusters {
         commands: never;
         commandResponses: never;
     };
-    sprutDevice: {
-        attributes: {
-            /** ID: 0 | Type: BOOLEAN */
-            debug: number;
-        };
-        commands: never;
-        commandResponses: never;
-    };
     sprutVoc: {
         attributes: {
             /** ID: 26112 | Type: UINT16 */

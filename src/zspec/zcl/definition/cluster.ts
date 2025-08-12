@@ -5438,15 +5438,6 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         commands: {},
         commandsResponse: {},
     },
-    sprutDevice: {
-        ID: 26112,
-        manufacturerCode: 26214,
-        attributes: {
-            debug: {ID: 0, type: DataType.BOOLEAN},
-        },
-        commands: {},
-        commandsResponse: {},
-    },
     sprutVoc: {
         ID: 26113,
         manufacturerCode: 26214,
