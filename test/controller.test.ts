@@ -8367,6 +8367,12 @@ describe("Controller", () => {
     });
 
     it("reads/writes to group with custom cluster when common to all members", async () => {
+        interface CustomManuHerdsman {
+            attributes: {customAttr: number};
+            commands: never;
+            commandResponses: never;
+        }
+
         await controller.start();
         await mockAdapterEvents.deviceJoined({networkAddress: 177, ieeeAddr: "0x177"});
 
@@ -8383,8 +8389,8 @@ describe("Controller", () => {
 
         group.addMember(device.getEndpoint(1)!);
 
-        await group.write("manuHerdsman", {customAttr: 15}, {});
-        await group.read("manuHerdsman", ["customAttr"], {});
+        await group.write<"manuHerdsman", CustomManuHerdsman>("manuHerdsman", {customAttr: 15}, {});
+        await group.read<"manuHerdsman", CustomManuHerdsman>("manuHerdsman", ["customAttr"], {});
 
         expect(mocksendZclFrameToGroup).toHaveBeenCalledTimes(2);
         expect(mocksendZclFrameToGroup.mock.calls[0][0]).toBe(34);
@@ -8443,22 +8449,22 @@ describe("Controller", () => {
             await group.read("manuHerdsman", ["customAttr"], {});
         }).rejects.toThrow(new Error(`Cluster with name 'manuHerdsman' does not exist`));
 
-        await group.write("manuHerdsman", {customAttr: 14}, {direction: Zcl.Direction.SERVER_TO_CLIENT});
-        await group.read("manuHerdsman", ["customAttr"], {direction: Zcl.Direction.SERVER_TO_CLIENT});
+        await group.write<"manuHerdsman", CustomManuHerdsman>("manuHerdsman", {customAttr: 14}, {direction: Zcl.Direction.SERVER_TO_CLIENT});
+        await group.read<"manuHerdsman", CustomManuHerdsman>("manuHerdsman", ["customAttr"], {direction: Zcl.Direction.SERVER_TO_CLIENT});
 
         expect(mocksendZclFrameToGroup).toHaveBeenCalledTimes(4);
 
         group.removeMember(device2.getEndpoint(2)!);
 
-        await group.write("manuHerdsman", {customAttr: 16}, {});
-        await group.read("manuHerdsman", ["customAttr"], {});
+        await group.write<"manuHerdsman", CustomManuHerdsman>("manuHerdsman", {customAttr: 16}, {});
+        await group.read<"manuHerdsman", CustomManuHerdsman>("manuHerdsman", ["customAttr"], {});
 
         expect(mocksendZclFrameToGroup).toHaveBeenCalledTimes(6);
 
         group.addMember(device2.getEndpoint(1)!);
 
-        await group.write("manuHerdsman", {customAttr: 8}, {});
-        await group.read("manuHerdsman", ["customAttr"], {});
+        await group.write<"manuHerdsman", CustomManuHerdsman>("manuHerdsman", {customAttr: 8}, {});
+        await group.read<"manuHerdsman", CustomManuHerdsman>("manuHerdsman", ["customAttr"], {});
 
         expect(mocksendZclFrameToGroup).toHaveBeenCalledTimes(8);
 
