@@ -8,6 +8,7 @@ import type {
     StructuredSelector,
     ThermoTransition,
     TuyaDataPointValue,
+    ZclArray,
     ZoneInfo,
 } from "./tstype";
 
@@ -914,7 +915,7 @@ export interface TClusters {
             /** ID: 85 | Type: SINGLE_PREC */
             presentValue: number;
             /** ID: 87 | Type: ARRAY */
-            priorityArray: unknown[];
+            priorityArray: ZclArray | unknown[];
             /** ID: 103 | Type: ENUM8 */
             reliability: number;
             /** ID: 104 | Type: SINGLE_PREC */
@@ -940,7 +941,7 @@ export interface TClusters {
             /** ID: 85 | Type: SINGLE_PREC */
             presentValue: number;
             /** ID: 87 | Type: ARRAY */
-            priorityArray: unknown[];
+            priorityArray: ZclArray | unknown[];
             /** ID: 103 | Type: ENUM8 */
             reliability: number;
             /** ID: 104 | Type: SINGLE_PREC */
@@ -998,7 +999,7 @@ export interface TClusters {
             /** ID: 85 | Type: BOOLEAN */
             presentValue: number;
             /** ID: 87 | Type: ARRAY */
-            priorityArray: unknown[];
+            priorityArray: ZclArray | unknown[];
             /** ID: 103 | Type: ENUM8 */
             reliability: number;
             /** ID: 104 | Type: BOOLEAN */
@@ -1028,7 +1029,7 @@ export interface TClusters {
             /** ID: 85 | Type: BOOLEAN */
             presentValue: number;
             /** ID: 87 | Type: ARRAY */
-            priorityArray: unknown[];
+            priorityArray: ZclArray | unknown[];
             /** ID: 103 | Type: ENUM8 */
             reliability: number;
             /** ID: 104 | Type: BOOLEAN */
@@ -1044,7 +1045,7 @@ export interface TClusters {
     genMultistateInput: {
         attributes: {
             /** ID: 14 | Type: ARRAY */
-            stateText: unknown[];
+            stateText: ZclArray | unknown[];
             /** ID: 28 | Type: CHAR_STR */
             description: string;
             /** ID: 74 | Type: UINT16 */
@@ -1066,7 +1067,7 @@ export interface TClusters {
     genMultistateOutput: {
         attributes: {
             /** ID: 14 | Type: ARRAY */
-            stateText: unknown[];
+            stateText: ZclArray | unknown[];
             /** ID: 28 | Type: CHAR_STR */
             description: string;
             /** ID: 74 | Type: UINT16 */
@@ -1076,7 +1077,7 @@ export interface TClusters {
             /** ID: 85 | Type: UINT16 */
             presentValue: number;
             /** ID: 87 | Type: ARRAY */
-            priorityArray: unknown[];
+            priorityArray: ZclArray | unknown[];
             /** ID: 103 | Type: ENUM8 */
             reliability: number;
             /** ID: 104 | Type: UINT16 */
@@ -1092,7 +1093,7 @@ export interface TClusters {
     genMultistateValue: {
         attributes: {
             /** ID: 14 | Type: ARRAY */
-            stateText: unknown[];
+            stateText: ZclArray | unknown[];
             /** ID: 28 | Type: CHAR_STR */
             description: string;
             /** ID: 74 | Type: UINT16 */
@@ -1102,7 +1103,7 @@ export interface TClusters {
             /** ID: 85 | Type: UINT16 */
             presentValue: number;
             /** ID: 87 | Type: ARRAY */
-            priorityArray: unknown[];
+            priorityArray: ZclArray | unknown[];
             /** ID: 103 | Type: ENUM8 */
             reliability: number;
             /** ID: 104 | Type: UINT16 */
@@ -4066,7 +4067,7 @@ export interface TClusters {
             /** ID: 113 | Type: UINT8 */
             timeDelay: number;
             /** ID: 130 | Type: ARRAY */
-            eventTimeStamps: unknown[];
+            eventTimeStamps: ZclArray | unknown[];
         };
         commands: {
             /** ID: 0 */
@@ -4123,7 +4124,7 @@ export interface TClusters {
             /** ID: 113 | Type: UINT8 */
             timeDelay: number;
             /** ID: 130 | Type: ARRAY */
-            eventTimeStamps: unknown[];
+            eventTimeStamps: ZclArray | unknown[];
         };
         commands: never;
         commandResponses: never;
@@ -4167,7 +4168,7 @@ export interface TClusters {
             /** ID: 113 | Type: UINT8 */
             timeDelay: number;
             /** ID: 130 | Type: ARRAY */
-            eventTimeStamps: unknown[];
+            eventTimeStamps: ZclArray | unknown[];
         };
         commands: never;
         commandResponses: never;
@@ -4215,7 +4216,7 @@ export interface TClusters {
             /** ID: 113 | Type: UINT8 */
             timeDelay: number;
             /** ID: 130 | Type: ARRAY */
-            eventTimeStamps: unknown[];
+            eventTimeStamps: ZclArray | unknown[];
         };
         commands: never;
         commandResponses: never;
@@ -4263,7 +4264,7 @@ export interface TClusters {
             /** ID: 113 | Type: UINT8 */
             timeDelay: number;
             /** ID: 130 | Type: ARRAY */
-            eventTimeStamps: unknown[];
+            eventTimeStamps: ZclArray | unknown[];
         };
         commands: never;
         commandResponses: never;
@@ -4309,7 +4310,7 @@ export interface TClusters {
             /** ID: 113 | Type: UINT8 */
             timeDelay: number;
             /** ID: 130 | Type: ARRAY */
-            eventTimeStamps: unknown[];
+            eventTimeStamps: ZclArray | unknown[];
         };
         commands: never;
         commandResponses: never;
@@ -4349,7 +4350,7 @@ export interface TClusters {
             /** ID: 113 | Type: UINT8 */
             timeDelay: number;
             /** ID: 130 | Type: ARRAY */
-            eventTimeStamps: unknown[];
+            eventTimeStamps: ZclArray | unknown[];
         };
         commands: never;
         commandResponses: never;
@@ -4387,7 +4388,7 @@ export interface TClusters {
             /** ID: 113 | Type: UINT8 */
             timeDelay: number;
             /** ID: 130 | Type: ARRAY */
-            eventTimeStamps: unknown[];
+            eventTimeStamps: ZclArray | unknown[];
         };
         commands: never;
         commandResponses: never;
@@ -4425,7 +4426,7 @@ export interface TClusters {
             /** ID: 113 | Type: UINT8 */
             timeDelay: number;
             /** ID: 130 | Type: ARRAY */
-            eventTimeStamps: unknown[];
+            eventTimeStamps: ZclArray | unknown[];
         };
         commands: never;
         commandResponses: never;
@@ -4433,7 +4434,7 @@ export interface TClusters {
     pi11073ProtocolTunnel: {
         attributes: {
             /** ID: 0 | Type: ARRAY */
-            deviceidList: unknown[];
+            deviceidList: ZclArray | unknown[];
             /** ID: 1 | Type: IEEE_ADDR */
             managerTarget: string;
             /** ID: 2 | Type: UINT8 */
@@ -6020,7 +6021,7 @@ export interface TClusters {
             /** ID: 301 | Type: INT16 */
             reportLocalTemperature: number;
             /** ID: 576 | Type: ARRAY */
-            flowMeterConfig: unknown[];
+            flowMeterConfig: ZclArray | unknown[];
             /** ID: 643 | Type: UINT8 */
             coldLoadPickupStatus: number;
         };

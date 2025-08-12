@@ -46,6 +46,7 @@ const namedImports = ts.factory.createImportDeclaration(
             ts.factory.createImportSpecifier(false, undefined, ts.factory.createIdentifier("StructuredSelector")),
             ts.factory.createImportSpecifier(false, undefined, ts.factory.createIdentifier("ThermoTransition")),
             ts.factory.createImportSpecifier(false, undefined, ts.factory.createIdentifier("TuyaDataPointValue")),
+            ts.factory.createImportSpecifier(false, undefined, ts.factory.createIdentifier("ZclArray")),
             // ts.factory.createImportSpecifier(false, undefined, ts.factory.createIdentifier("ZclDate")), // XXX: currently unused
             // ts.factory.createImportSpecifier(false, undefined, ts.factory.createIdentifier("ZclTimeOfDay")), // XXX: currently unused
             ts.factory.createImportSpecifier(false, undefined, ts.factory.createIdentifier("ZoneInfo")),
@@ -84,7 +85,11 @@ const getTypeFromDataType = (dataType: DataType | BuffaloZclDataType): ts.TypeNo
         case DataType.ARRAY:
         case DataType.SET:
         case DataType.BAG: {
-            return ts.factory.createArrayTypeNode(ts.factory.createKeywordTypeNode(ts.SyntaxKind.UnknownKeyword));
+            // mismatch on read vs write, have to union
+            return ts.factory.createUnionTypeNode([
+                ts.factory.createTypeReferenceNode("ZclArray"),
+                ts.factory.createArrayTypeNode(ts.factory.createKeywordTypeNode(ts.SyntaxKind.UnknownKeyword)),
+            ]);
         }
         case DataType.STRUCT: {
             return ts.factory.createTypeReferenceNode("Struct");
