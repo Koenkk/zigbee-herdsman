@@ -1,4 +1,4 @@
-import type {TClusterAttributeKeys, TClusterAttributes, TPartialClusterAttributes} from "../zspec/zcl/definition/clusters-types";
+import type {TClusterAttributes, TClusters, TPartialClusterAttributes} from "../zspec/zcl/definition/clusters-types";
 import type {DataType} from "../zspec/zcl/definition/enums";
 
 export interface KeyValue {
@@ -56,57 +56,108 @@ export type ClusterOrRawAttributeKeys<
     Cl extends string | number,
     Custom extends TCustomCluster | undefined = undefined,
 > = TClusterAttributes<Cl> extends never
-    ? number[]
-    : Custom extends TCustomCluster
-      ? Custom["attributes"] extends never
-          ? (TClusterAttributeKeys<Cl>[number] | number)[]
-          : (keyof Custom["attributes"] | TClusterAttributeKeys<Cl>[number] | number)[]
-      : (TClusterAttributeKeys<Cl>[number] | number)[];
+    ? Custom extends TCustomCluster
+        ? Custom["attributes"] extends never
+            ? number[]
+            : (keyof Custom["attributes"] | number)[]
+        : number[]
+    : Cl extends keyof TClusters
+      ? Custom extends TCustomCluster
+          ? Custom["attributes"] extends never
+              ? // don't use `TClusterAttributeKeys<Cl>` as that allows "symbol"
+                (keyof TClusters[Cl]["attributes"] | number)[]
+              : (keyof Custom["attributes"] | keyof TClusters[Cl]["attributes"] | number)[]
+          : (keyof TClusters[Cl]["attributes"] | number)[]
+      : Custom extends TCustomCluster
+        ? Custom["attributes"] extends never
+            ? number[]
+            : (keyof Custom["attributes"] | number)[]
+        : number[];
 
 export type ClusterOrRawWriteAttributes<
     Cl extends string | number,
     Custom extends TCustomCluster | undefined = undefined,
 > = TClusterAttributes<Cl> extends never
-    ? RawClusterAttributes
-    : (Custom extends TCustomCluster
-          ? Custom["attributes"] extends never
-              ? TClusterAttributes<Cl>
-              : Custom["attributes"] & TClusterAttributes<Cl>
-          : TClusterAttributes<Cl>) &
-          RawClusterAttributes;
+    ? Custom extends TCustomCluster
+        ? Custom["attributes"] extends never
+            ? RawClusterAttributes
+            : Custom["attributes"] & RawClusterAttributes
+        : RawClusterAttributes
+    : Cl extends keyof TClusters
+      ? (Custom extends TCustomCluster
+            ? Custom["attributes"] extends never
+                ? TClusterAttributes<Cl>
+                : Custom["attributes"] & TClusterAttributes<Cl>
+            : TClusterAttributes<Cl>) &
+            RawClusterAttributes
+      : Custom extends TCustomCluster
+        ? Custom["attributes"] extends never
+            ? RawClusterAttributes
+            : Custom["attributes"] & RawClusterAttributes
+        : RawClusterAttributes;
 
 export type PartialClusterOrRawWriteAttributes<
     Cl extends string | number,
     Custom extends TCustomCluster | undefined = undefined,
 > = TClusterAttributes<Cl> extends never
-    ? RawClusterAttributes
-    : (Custom extends TCustomCluster
-          ? Custom["attributes"] extends never
-              ? TPartialClusterAttributes<Cl>
-              : Partial<Custom["attributes"]> & TPartialClusterAttributes<Cl>
-          : TPartialClusterAttributes<Cl>) &
-          RawClusterAttributes;
+    ? Custom extends TCustomCluster
+        ? Custom["attributes"] extends never
+            ? RawClusterAttributes
+            : Partial<Custom["attributes"]> & RawClusterAttributes
+        : RawClusterAttributes
+    : Cl extends keyof TClusters
+      ? (Custom extends TCustomCluster
+            ? Custom["attributes"] extends never
+                ? TPartialClusterAttributes<Cl>
+                : Partial<Custom["attributes"]> & TPartialClusterAttributes<Cl>
+            : TPartialClusterAttributes<Cl>) &
+            RawClusterAttributes
+      : Custom extends TCustomCluster
+        ? Custom["attributes"] extends never
+            ? RawClusterAttributes
+            : Partial<Custom["attributes"]> & RawClusterAttributes
+        : RawClusterAttributes;
 
 export type ClusterOrRawAttributes<
     Cl extends string | number,
     Custom extends TCustomCluster | undefined = undefined,
 > = TClusterAttributes<Cl> extends never
-    ? Record<number, unknown>
-    : (Custom extends TCustomCluster
-          ? Custom["attributes"] extends never
-              ? TClusterAttributes<Cl>
-              : Custom["attributes"] & TClusterAttributes<Cl>
-          : TClusterAttributes<Cl>) &
-          Record<number, unknown>;
+    ? Custom extends TCustomCluster
+        ? Custom["attributes"] extends never
+            ? Record<number, unknown>
+            : Custom["attributes"] & Record<number, unknown>
+        : Record<number, unknown>
+    : Cl extends keyof TClusters
+      ? (Custom extends TCustomCluster
+            ? Custom["attributes"] extends never
+                ? TClusterAttributes<Cl>
+                : Custom["attributes"] & TClusterAttributes<Cl>
+            : TClusterAttributes<Cl>) &
+            Record<number, unknown>
+      : Custom extends TCustomCluster
+        ? Custom["attributes"] extends never
+            ? Record<number, unknown>
+            : Custom["attributes"] & Record<number, unknown>
+        : Record<number, unknown>;
 
 export type PartialClusterOrRawAttributes<
     Cl extends string | number,
     Custom extends TCustomCluster | undefined = undefined,
 > = TClusterAttributes<Cl> extends never
-    ? Record<number, unknown>
-    : (Custom extends TCustomCluster
-          ? Custom["attributes"] extends never
-              ? TPartialClusterAttributes<Cl>
-              : Partial<Custom["attributes"]> & TPartialClusterAttributes<Cl>
-          : TPartialClusterAttributes<Cl>) &
-          Record<number, unknown>;
+    ? Custom extends TCustomCluster
+        ? Custom["attributes"] extends never
+            ? Record<number, unknown>
+            : Partial<Custom["attributes"]> & Record<number, unknown>
+        : Record<number, unknown>
+    : Cl extends keyof TClusters
+      ? (Custom extends TCustomCluster
+            ? Custom["attributes"] extends never
+                ? TPartialClusterAttributes<Cl>
+                : Partial<Custom["attributes"]> & TPartialClusterAttributes<Cl>
+            : TPartialClusterAttributes<Cl>) &
+            Record<number, unknown>
+      : Custom extends TCustomCluster
+        ? Custom["attributes"] extends never
+            ? Record<number, unknown>
+            : Partial<Custom["attributes"]> & Record<number, unknown>
+        : Record<number, unknown>;
