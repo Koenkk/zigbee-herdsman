@@ -42,26 +42,71 @@ export interface GreenPowerDeviceJoinedPayload {
     securityKey?: Buffer;
 }
 
+export interface TCustomCluster {
+    attributes: Record<string, unknown> | never;
+    commands: Record<string, Record<string, unknown | never>> | never;
+    commandResponses: Record<string, Record<string, unknown | never>> | never;
+}
+
 export type RawClusterAttribute = {value: unknown; type: DataType};
 
 export type RawClusterAttributes = Record<number, RawClusterAttribute>;
 
-export type ClusterOrRawAttributeKeys<Cl extends string | number> = TClusterAttributes<Cl> extends never
+export type ClusterOrRawAttributeKeys<
+    Cl extends string | number,
+    Custom extends TCustomCluster | undefined = undefined,
+> = TClusterAttributes<Cl> extends never
     ? number[]
-    : (TClusterAttributeKeys<Cl>[number] | number)[];
+    : Custom extends TCustomCluster
+      ? Custom["attributes"] extends never
+          ? (TClusterAttributeKeys<Cl>[number] | number)[]
+          : (keyof Custom["attributes"] | TClusterAttributeKeys<Cl>[number] | number)[]
+      : (TClusterAttributeKeys<Cl>[number] | number)[];
 
-export type ClusterOrRawWriteAttributes<Cl extends string | number> = TClusterAttributes<Cl> extends never
+export type ClusterOrRawWriteAttributes<
+    Cl extends string | number,
+    Custom extends TCustomCluster | undefined = undefined,
+> = TClusterAttributes<Cl> extends never
     ? RawClusterAttributes
-    : TClusterAttributes<Cl> & RawClusterAttributes;
+    : (Custom extends TCustomCluster
+          ? Custom["attributes"] extends never
+              ? TClusterAttributes<Cl>
+              : Custom["attributes"] & TClusterAttributes<Cl>
+          : TClusterAttributes<Cl>) &
+          RawClusterAttributes;
 
-export type PartialClusterOrRawWriteAttributes<Cl extends string | number> = TClusterAttributes<Cl> extends never
+export type PartialClusterOrRawWriteAttributes<
+    Cl extends string | number,
+    Custom extends TCustomCluster | undefined = undefined,
+> = TClusterAttributes<Cl> extends never
     ? RawClusterAttributes
-    : TPartialClusterAttributes<Cl> & RawClusterAttributes;
+    : (Custom extends TCustomCluster
+          ? Custom["attributes"] extends never
+              ? TPartialClusterAttributes<Cl>
+              : Partial<Custom["attributes"]> & TPartialClusterAttributes<Cl>
+          : TPartialClusterAttributes<Cl>) &
+          RawClusterAttributes;
 
-export type ClusterOrRawAttributes<Cl extends string | number> = TClusterAttributes<Cl> extends never
+export type ClusterOrRawAttributes<
+    Cl extends string | number,
+    Custom extends TCustomCluster | undefined = undefined,
+> = TClusterAttributes<Cl> extends never
     ? Record<number, unknown>
-    : TClusterAttributes<Cl> & Record<number, unknown>;
+    : (Custom extends TCustomCluster
+          ? Custom["attributes"] extends never
+              ? TClusterAttributes<Cl>
+              : Custom["attributes"] & TClusterAttributes<Cl>
+          : TClusterAttributes<Cl>) &
+          Record<number, unknown>;
 
-export type PartialClusterOrRawAttributes<Cl extends string | number> = TClusterAttributes<Cl> extends never
+export type PartialClusterOrRawAttributes<
+    Cl extends string | number,
+    Custom extends TCustomCluster | undefined = undefined,
+> = TClusterAttributes<Cl> extends never
     ? Record<number, unknown>
-    : TPartialClusterAttributes<Cl> & Record<number, unknown>;
+    : (Custom extends TCustomCluster
+          ? Custom["attributes"] extends never
+              ? TPartialClusterAttributes<Cl>
+              : Partial<Custom["attributes"]> & TPartialClusterAttributes<Cl>
+          : TPartialClusterAttributes<Cl>) &
+          Record<number, unknown>;

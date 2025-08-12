@@ -1,7 +1,7 @@
 import * as Zcl from "../../zspec/zcl";
 import type {TFoundation} from "../../zspec/zcl/definition/clusters-types";
 import type {Cluster, CustomClusters} from "../../zspec/zcl/definition/tstype";
-import type {ClusterOrRawWriteAttributes} from "../tstype";
+import type {ClusterOrRawWriteAttributes, TCustomCluster} from "../tstype";
 
 // Legrand devices (e.g. 4129) fail to set the manufacturerSpecific flag and
 // manufacturerCode in the frame header, despite using specific attributes.
@@ -16,11 +16,11 @@ function getCluster(frame: Zcl.Frame, deviceManufacturerID: number | undefined, 
     return cluster;
 }
 
-function attributeKeyValue<Cl extends number | string>(
+function attributeKeyValue<Cl extends number | string, Custom extends TCustomCluster | undefined = undefined>(
     frame: Zcl.Frame,
     deviceManufacturerID: number | undefined,
     customClusters: CustomClusters,
-): ClusterOrRawWriteAttributes<Cl> {
+): ClusterOrRawWriteAttributes<Cl, Custom> {
     const payload: Record<string | number, unknown> = {};
     const cluster = getCluster(frame, deviceManufacturerID, customClusters);
 
@@ -29,7 +29,7 @@ function attributeKeyValue<Cl extends number | string>(
         payload[cluster.getAttribute(item.attrId)?.name ?? item.attrId] = item.attrData;
     }
 
-    return payload as ClusterOrRawWriteAttributes<Cl>;
+    return payload as ClusterOrRawWriteAttributes<Cl, Custom>;
 }
 
 function attributeList(frame: Zcl.Frame, deviceManufacturerID: number | undefined, customClusters: CustomClusters): Array<string | number> {

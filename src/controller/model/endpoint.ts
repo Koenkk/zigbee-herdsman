@@ -5,7 +5,7 @@ import * as ZSpec from "../../zspec";
 import {BroadcastAddress} from "../../zspec/enums";
 import type {Eui64} from "../../zspec/tstypes";
 import * as Zcl from "../../zspec/zcl";
-import type {TClusterAttributes, TFoundation} from "../../zspec/zcl/definition/clusters-types";
+import type {TFoundation} from "../../zspec/zcl/definition/clusters-types";
 import type * as ZclTypes from "../../zspec/zcl/definition/tstype";
 import * as Zdo from "../../zspec/zdo";
 import Request from "../helpers/request";
@@ -19,6 +19,7 @@ import type {
     KeyValue,
     PartialClusterOrRawWriteAttributes,
     SendPolicy,
+    TCustomCluster,
 } from "../tstype";
 import Device from "./device";
 import Entity from "./entity";
@@ -27,10 +28,8 @@ import {ZigbeeEntity} from "./zigbeeEntity";
 
 const NS = "zh:controller:endpoint";
 
-export interface ConfigureReportingItem<Cl extends string | number> {
-    attribute:
-        | (Cl extends keyof Zcl.ClusterTypes.TClusters ? keyof Zcl.ClusterTypes.TClusters[Cl]["attributes"] : number)
-        | {ID: number; type: number};
+export interface ConfigureReportingItem<Cl extends string | number, Custom extends TCustomCluster | undefined = undefined> {
+    attribute: ClusterOrRawAttributeKeys<Cl, Custom>[number] | {ID: number; type: number};
     minimumReportInterval: number;
     maximumReportInterval: number;
     reportableChange: number;
@@ -382,9 +381,9 @@ export class Endpoint extends ZigbeeEntity {
         if (invalid) throw new Zcl.StatusError(invalid);
     }
 
-    public async report<Cl extends number | string>(
+    public async report<Cl extends number | string, Custom extends TCustomCluster | undefined = undefined>(
         clusterKey: Cl,
-        attributes: PartialClusterOrRawWriteAttributes<Cl>,
+        attributes: PartialClusterOrRawWriteAttributes<Cl, Custom>,
         options?: Options,
     ): Promise<void> {
         const cluster = this.getCluster(clusterKey, undefined, options?.manufacturerCode);
@@ -407,14 +406,14 @@ export class Endpoint extends ZigbeeEntity {
         await this.zclCommand(cluster, "report", payload, options, attributes);
     }
 
-    public async write<Cl extends number | string>(
+    public async write<Cl extends number | string, Custom extends TCustomCluster | undefined = undefined>(
         clusterKey: Cl,
-        attributes: PartialClusterOrRawWriteAttributes<Cl>,
+        attributes: PartialClusterOrRawWriteAttributes<Cl, Custom>,
         options?: Options,
     ): Promise<void> {
         const cluster = this.getCluster(clusterKey, undefined, options?.manufacturerCode);
         const optionsWithDefaults = this.getOptionsWithDefaults(options, true, Zcl.Direction.CLIENT_TO_SERVER, cluster.manufacturerCode);
-        optionsWithDefaults.manufacturerCode = this.ensureManufacturerCodeIsUniqueAndGet<Cl>(
+        optionsWithDefaults.manufacturerCode = this.ensureManufacturerCodeIsUniqueAndGet<Cl, Custom>(
             cluster,
             Object.keys(attributes),
             optionsWithDefaults.manufacturerCode,
@@ -439,10 +438,11 @@ export class Endpoint extends ZigbeeEntity {
         await this.zclCommand(cluster, optionsWithDefaults.writeUndiv ? "writeUndiv" : "write", payload, optionsWithDefaults, attributes, true);
     }
 
-    public async writeResponse<Cl extends number | string>(
+    public async writeResponse<Cl extends number | string, Custom extends TCustomCluster | undefined = undefined>(
         clusterKey: Cl,
         transactionSequenceNumber: number,
-        attributes: Partial<Record<keyof TClusterAttributes<Cl>, TFoundation["writeRsp"][number]>> & Record<number, TFoundation["writeRsp"][number]>,
+        attributes: Partial<Record<ClusterOrRawAttributeKeys<Cl, Custom>[number], TFoundation["writeRsp"][number]>> &
+            Record<number, TFoundation["writeRsp"][number]>,
         options?: Options,
     ): Promise<void> {
         assert(options?.transactionSequenceNumber === undefined, "Use parameter");
@@ -478,15 +478,15 @@ export class Endpoint extends ZigbeeEntity {
     }
 
     // XXX: ideally, the return type should limit to the contents of the `attributes` param
-    public async read<Cl extends number | string>(
+    public async read<Cl extends number | string, Custom extends TCustomCluster | undefined = undefined>(
         clusterKey: Cl,
-        attributes: ClusterOrRawAttributeKeys<Cl>,
+        attributes: ClusterOrRawAttributeKeys<Cl, Custom>,
         options?: Options,
-    ): Promise<ClusterOrRawAttributes<Cl>> {
+    ): Promise<ClusterOrRawAttributes<Cl, Custom>> {
         const device = this.getDevice();
         const cluster = this.getCluster(clusterKey, device, options?.manufacturerCode);
         const optionsWithDefaults = this.getOptionsWithDefaults(options, true, Zcl.Direction.CLIENT_TO_SERVER, cluster.manufacturerCode);
-        optionsWithDefaults.manufacturerCode = this.ensureManufacturerCodeIsUniqueAndGet<Cl>(
+        optionsWithDefaults.manufacturerCode = this.ensureManufacturerCodeIsUniqueAndGet<Cl, Custom>(
             cluster,
             attributes,
             optionsWithDefaults.manufacturerCode,
@@ -511,14 +511,14 @@ export class Endpoint extends ZigbeeEntity {
         const resultFrame = await this.zclCommand(cluster, "read", payload, optionsWithDefaults, attributes, true);
 
         return resultFrame
-            ? ZclFrameConverter.attributeKeyValue<Cl>(resultFrame, device.manufacturerID, device.customClusters)
-            : ({} as ClusterOrRawWriteAttributes<Cl>);
+            ? ZclFrameConverter.attributeKeyValue<Cl, Custom>(resultFrame, device.manufacturerID, device.customClusters)
+            : ({} as ClusterOrRawWriteAttributes<Cl, Custom>);
     }
 
-    public async readResponse<Cl extends number | string>(
+    public async readResponse<Cl extends number | string, Custom extends TCustomCluster | undefined = undefined>(
         clusterKey: Cl,
         transactionSequenceNumber: number,
-        attributes: PartialClusterOrRawWriteAttributes<Cl>,
+        attributes: PartialClusterOrRawWriteAttributes<Cl, Custom>,
         options?: Options,
     ): Promise<void> {
         assert(options?.transactionSequenceNumber === undefined, "Use parameter");
@@ -719,14 +719,14 @@ export class Endpoint extends ZigbeeEntity {
         await this.zclCommand(clusterID, "defaultRsp", payload, {direction: Zcl.Direction.SERVER_TO_CLIENT, ...options, transactionSequenceNumber});
     }
 
-    public async configureReporting<Cl extends number | string>(
+    public async configureReporting<Cl extends number | string, Custom extends TCustomCluster | undefined = undefined>(
         clusterKey: Cl,
-        items: ConfigureReportingItem<Cl>[],
+        items: ConfigureReportingItem<Cl, Custom>[],
         options?: Options,
     ): Promise<void> {
         const cluster = this.getCluster(clusterKey, undefined, options?.manufacturerCode);
         const optionsWithDefaults = this.getOptionsWithDefaults(options, true, Zcl.Direction.CLIENT_TO_SERVER, cluster.manufacturerCode);
-        optionsWithDefaults.manufacturerCode = this.ensureManufacturerCodeIsUniqueAndGet<Cl>(
+        optionsWithDefaults.manufacturerCode = this.ensureManufacturerCodeIsUniqueAndGet<Cl, Custom>(
             cluster,
             items,
             optionsWithDefaults.manufacturerCode,
@@ -921,9 +921,9 @@ export class Endpoint extends ZigbeeEntity {
         };
     }
 
-    private ensureManufacturerCodeIsUniqueAndGet<Cl extends string | number>(
+    private ensureManufacturerCodeIsUniqueAndGet<Cl extends string | number, Custom extends TCustomCluster | undefined = undefined>(
         cluster: ZclTypes.Cluster,
-        attributes: (string | number)[] | ConfigureReportingItem<Cl>[],
+        attributes: (string | number)[] | ConfigureReportingItem<Cl, Custom>[],
         fallbackManufacturerCode: number | undefined, // XXX: problematic undefined for a "fallback"?
         caller: string,
     ): number | undefined {

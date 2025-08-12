@@ -4,7 +4,7 @@ import * as Zcl from "../../zspec/zcl";
 import type {TFoundation} from "../../zspec/zcl/definition/clusters-types";
 import type {CustomClusters} from "../../zspec/zcl/definition/tstype";
 import zclTransactionSequenceNumber from "../helpers/zclTransactionSequenceNumber";
-import type {ClusterOrRawAttributeKeys, DatabaseEntry, KeyValue, PartialClusterOrRawWriteAttributes} from "../tstype";
+import type {ClusterOrRawAttributeKeys, DatabaseEntry, KeyValue, PartialClusterOrRawWriteAttributes, TCustomCluster} from "../tstype";
 import Device from "./device";
 import type Endpoint from "./endpoint";
 import Entity from "./entity";
@@ -250,9 +250,9 @@ export class Group extends ZigbeeEntity {
      * Zigbee functions
      */
 
-    public async write<Cl extends number | string>(
+    public async write<Cl extends number | string, Custom extends TCustomCluster | undefined = undefined>(
         clusterKey: Cl,
-        attributes: PartialClusterOrRawWriteAttributes<Cl>,
+        attributes: PartialClusterOrRawWriteAttributes<Cl, Custom>,
         options?: Options,
     ): Promise<void> {
         const customClusters = this.#customClusters[options?.direction === Zcl.Direction.SERVER_TO_CLIENT ? 1 : 0 /* default to CLIENT_TO_SERVER */];
@@ -303,7 +303,11 @@ export class Group extends ZigbeeEntity {
         }
     }
 
-    public async read<Cl extends number | string>(clusterKey: Cl, attributes: ClusterOrRawAttributeKeys<Cl>, options?: Options): Promise<undefined> {
+    public async read<Cl extends number | string, Custom extends TCustomCluster | undefined = undefined>(
+        clusterKey: Cl,
+        attributes: ClusterOrRawAttributeKeys<Cl, Custom>,
+        options?: Options,
+    ): Promise<undefined> {
         const customClusters = this.#customClusters[options?.direction === Zcl.Direction.SERVER_TO_CLIENT ? 1 : 0 /* default to CLIENT_TO_SERVER */];
         const cluster = Zcl.Utils.getCluster(clusterKey, options?.manufacturerCode, customClusters);
         const optionsWithDefaults = this.getOptionsWithDefaults(options, Zcl.Direction.CLIENT_TO_SERVER, cluster.manufacturerCode);
