@@ -3919,6 +3919,36 @@ describe("Controller", () => {
         );
     });
 
+    it("throws when trying to configure reporting on endpoint with bad attribute", async () => {
+        await controller.start();
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
+        const device = controller.getDeviceByIeeeAddr("0x129")!;
+        const endpoint = device.getEndpoint(1)!;
+        mocksendZclFrameToEndpoint.mockClear();
+
+        await expect(async () => {
+            await endpoint.configureReporting("genPowerCfg", [
+                {
+                    attribute: "doesnotexist",
+                    minimumReportInterval: 1,
+                    maximumReportInterval: 10,
+                    reportableChange: 1,
+                },
+            ]);
+        }).rejects.toThrow(`Invalid attribute 'doesnotexist' for cluster 'genPowerCfg'`);
+
+        await expect(async () => {
+            await endpoint.configureReporting("genBasic", [
+                {
+                    attribute: 99999,
+                    minimumReportInterval: 1,
+                    maximumReportInterval: 10,
+                    reportableChange: 1,
+                },
+            ]);
+        }).rejects.toThrow(`Invalid attribute '99999' for cluster 'genBasic'`);
+    });
+
     it("Should replace legacy configured reportings without manufacturerCode", async () => {
         await controller.start();
         await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});

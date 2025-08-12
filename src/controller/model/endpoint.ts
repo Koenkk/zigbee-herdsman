@@ -27,8 +27,10 @@ import {ZigbeeEntity} from "./zigbeeEntity";
 
 const NS = "zh:controller:endpoint";
 
-export interface ConfigureReportingItem {
-    attribute: string | number | {ID: number; type: number};
+export interface ConfigureReportingItem<Cl extends string | number> {
+    attribute:
+        | (Cl extends keyof Zcl.ClusterTypes.TClusters ? keyof Zcl.ClusterTypes.TClusters[Cl]["attributes"] : number)
+        | {ID: number; type: number};
     minimumReportInterval: number;
     maximumReportInterval: number;
     reportableChange: number;
@@ -412,7 +414,7 @@ export class Endpoint extends ZigbeeEntity {
     ): Promise<void> {
         const cluster = this.getCluster(clusterKey, undefined, options?.manufacturerCode);
         const optionsWithDefaults = this.getOptionsWithDefaults(options, true, Zcl.Direction.CLIENT_TO_SERVER, cluster.manufacturerCode);
-        optionsWithDefaults.manufacturerCode = this.ensureManufacturerCodeIsUniqueAndGet(
+        optionsWithDefaults.manufacturerCode = this.ensureManufacturerCodeIsUniqueAndGet<Cl>(
             cluster,
             Object.keys(attributes),
             optionsWithDefaults.manufacturerCode,
@@ -484,7 +486,7 @@ export class Endpoint extends ZigbeeEntity {
         const device = this.getDevice();
         const cluster = this.getCluster(clusterKey, device, options?.manufacturerCode);
         const optionsWithDefaults = this.getOptionsWithDefaults(options, true, Zcl.Direction.CLIENT_TO_SERVER, cluster.manufacturerCode);
-        optionsWithDefaults.manufacturerCode = this.ensureManufacturerCodeIsUniqueAndGet(
+        optionsWithDefaults.manufacturerCode = this.ensureManufacturerCodeIsUniqueAndGet<Cl>(
             cluster,
             attributes,
             optionsWithDefaults.manufacturerCode,
@@ -717,19 +719,23 @@ export class Endpoint extends ZigbeeEntity {
         await this.zclCommand(clusterID, "defaultRsp", payload, {direction: Zcl.Direction.SERVER_TO_CLIENT, ...options, transactionSequenceNumber});
     }
 
-    public async configureReporting(clusterKey: number | string, items: ConfigureReportingItem[], options?: Options): Promise<void> {
+    public async configureReporting<Cl extends number | string>(
+        clusterKey: Cl,
+        items: ConfigureReportingItem<Cl>[],
+        options?: Options,
+    ): Promise<void> {
         const cluster = this.getCluster(clusterKey, undefined, options?.manufacturerCode);
         const optionsWithDefaults = this.getOptionsWithDefaults(options, true, Zcl.Direction.CLIENT_TO_SERVER, cluster.manufacturerCode);
-        optionsWithDefaults.manufacturerCode = this.ensureManufacturerCodeIsUniqueAndGet(
+        optionsWithDefaults.manufacturerCode = this.ensureManufacturerCodeIsUniqueAndGet<Cl>(
             cluster,
             items,
             optionsWithDefaults.manufacturerCode,
             "configureReporting",
         );
 
-        const payload = items.map((item): KeyValue => {
-            let dataType: number | undefined;
-            let attrId: number | undefined;
+        const payload = items.map((item): TFoundation["configReport"][number] => {
+            let dataType: number;
+            let attrId: number;
 
             if (typeof item.attribute === "object") {
                 dataType = item.attribute.type;
@@ -740,13 +746,15 @@ export class Endpoint extends ZigbeeEntity {
                 if (attribute) {
                     dataType = attribute.type;
                     attrId = attribute.ID;
+                } else {
+                    throw new Error(`Invalid attribute '${item.attribute}' for cluster '${clusterKey}'`);
                 }
             }
 
             return {
                 direction: Zcl.Direction.CLIENT_TO_SERVER,
-                attrId, // TODO: biome migration - can be undefined?
-                dataType, // TODO: biome migration - can be undefined?
+                attrId,
+                dataType,
                 minRepIntval: item.minimumReportInterval,
                 maxRepIntval: item.maximumReportInterval,
                 repChange: item.reportableChange,
@@ -771,9 +779,10 @@ export class Endpoint extends ZigbeeEntity {
                 this._configuredReportings.push({
                     cluster: cluster.ID,
                     attrId: entry.attrId,
-                    minRepIntval: entry.minRepIntval,
-                    maxRepIntval: entry.maxRepIntval,
-                    repChange: entry.repChange,
+                    minRepIntval: entry.minRepIntval as number,
+                    maxRepIntval: entry.maxRepIntval as number,
+                    // expects items[].attribute to always point to a number DataType
+                    repChange: entry.repChange as number,
                     manufacturerCode: optionsWithDefaults.manufacturerCode,
                 });
             }
@@ -912,9 +921,9 @@ export class Endpoint extends ZigbeeEntity {
         };
     }
 
-    private ensureManufacturerCodeIsUniqueAndGet(
+    private ensureManufacturerCodeIsUniqueAndGet<Cl extends string | number>(
         cluster: ZclTypes.Cluster,
-        attributes: (string | number)[] | ConfigureReportingItem[],
+        attributes: (string | number)[] | ConfigureReportingItem<Cl>[],
         fallbackManufacturerCode: number | undefined, // XXX: problematic undefined for a "fallback"?
         caller: string,
     ): number | undefined {
