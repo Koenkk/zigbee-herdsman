@@ -52,6 +52,20 @@ export type RawClusterAttribute = {value: unknown; type: DataType};
 
 export type RawClusterAttributes = Record<number, RawClusterAttribute>;
 
+// below Cluster types follow roughly the same logic:
+//   - if cluster has attributes/commands/commandsResponse
+//     - if Custom is defined and has attributes/commands/commandsResponse, use Custom and/or raw
+//     - else use raw
+//   - else
+//     - if cluster is ZCL
+//       - if Custom is defined and has attributes/commands/commandsResponse, use Custom and/or ZCL and/or raw
+//       - else use ZCL and/or raw
+//     - else
+//       - if Custom is defined, use Custom and/or raw
+//       - else use raw
+//
+// where `raw` represents the type used for full manual input (usually using ID)
+
 export type ClusterOrRawAttributeKeys<
     Cl extends string | number,
     Custom extends TCustomCluster | undefined = undefined,
