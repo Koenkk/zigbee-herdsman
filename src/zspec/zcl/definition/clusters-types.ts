@@ -402,11 +402,11 @@ export interface TClusters {
                 groupid: number;
                 /** Type: UINT8 */
                 sceneid: number;
-                /** Type: UINT16, Conditions: [{statusEquals value=0}] */
+                /** Type: UINT16, Conditions: [{fieldEquals field=status value=0}] */
                 transtime?: number;
-                /** Type: CHAR_STR, Conditions: [{statusEquals value=0}] */
+                /** Type: CHAR_STR, Conditions: [{fieldEquals field=status value=0}] */
                 scenename?: string;
-                /** Type: EXTENSION_FIELD_SETS, Conditions: [{statusEquals value=0}] */
+                /** Type: EXTENSION_FIELD_SETS, Conditions: [{fieldEquals field=status value=0}] */
                 extensionfieldsets?: ExtensionFieldSet[];
             };
             /** ID: 2 */
@@ -442,9 +442,9 @@ export interface TClusters {
                 capacity: number;
                 /** Type: UINT16 */
                 groupid: number;
-                /** Type: UINT8, Conditions: [{statusEquals value=0}] */
+                /** Type: UINT8, Conditions: [{fieldEquals field=status value=0}] */
                 scenecount?: number;
-                /** Type: LIST_UINT8, Conditions: [{statusEquals value=0}] */
+                /** Type: LIST_UINT8, Conditions: [{fieldEquals field=status value=0}] */
                 scenelist?: number[];
             };
             /** ID: 64 */
@@ -464,11 +464,11 @@ export interface TClusters {
                 groupid: number;
                 /** Type: UINT8 */
                 sceneid: number;
-                /** Type: UINT16, Conditions: [{statusEquals value=0}] */
+                /** Type: UINT16, Conditions: [{fieldEquals field=status value=0}] */
                 transtime?: number;
-                /** Type: CHAR_STR, Conditions: [{statusEquals value=0}] */
+                /** Type: CHAR_STR, Conditions: [{fieldEquals field=status value=0}] */
                 scenename?: string;
-                /** Type: EXTENSION_FIELD_SETS, Conditions: [{statusEquals value=0}] */
+                /** Type: EXTENSION_FIELD_SETS, Conditions: [{fieldEquals field=status value=0}] */
                 extensionfieldsets?: ExtensionFieldSet[];
             };
             /** ID: 66 */
@@ -1276,7 +1276,7 @@ export interface TClusters {
                 maximumDataSize: number;
                 /** Type: IEEE_ADDR, Conditions: [{bitMaskSet param=fieldControl mask=1}] */
                 requestNodeIeeeAddress?: string;
-                /** Type: UINT16, Conditions: [{bitMaskSet param=fieldControl mask=2}] */
+                /** Type: UINT16, Conditions: [{bitMaskSet param=fieldControl mask=2}{minimumRemainingBufferBytes value=2}] */
                 minimumBlockPeriod?: number;
             };
             /** ID: 4 | Response ID: 5 */
@@ -1311,6 +1311,19 @@ export interface TClusters {
                 /** Type: UINT32 */
                 fileVersion: number;
             };
+            /** ID: 8 | Response ID: 9 */
+            queryDeviceSpecificFileRequest: {
+                /** Type: IEEE_ADDR */
+                eui64: string;
+                /** Type: UINT16 */
+                manufacturerCode: number;
+                /** Type: UINT16 */
+                imageType: number;
+                /** Type: UINT32 */
+                fileVersion: number;
+                /** Type: UINT16 */
+                zigbeeStackVersion: number;
+            };
         };
         commandResponses: {
             /** ID: 0 */
@@ -1319,36 +1332,48 @@ export interface TClusters {
                 payloadType: number;
                 /** Type: UINT8 */
                 queryJitter: number;
+                /** Type: UINT16, Conditions: [{fieldGT field=payloadType value=0}] */
+                manufacturerCode?: number;
+                /** Type: UINT16, Conditions: [{fieldGT field=payloadType value=1}] */
+                imageType?: number;
+                /** Type: UINT32, Conditions: [{fieldGT field=payloadType value=2}] */
+                fileVersion?: number;
             };
             /** ID: 2 */
             queryNextImageResponse: {
                 /** Type: UINT8 */
                 status: number;
-                /** Type: UINT16, Conditions: [{statusEquals value=0}] */
+                /** Type: UINT16, Conditions: [{fieldEquals field=status value=0}] */
                 manufacturerCode?: number;
-                /** Type: UINT16, Conditions: [{statusEquals value=0}] */
+                /** Type: UINT16, Conditions: [{fieldEquals field=status value=0}] */
                 imageType?: number;
-                /** Type: UINT32, Conditions: [{statusEquals value=0}] */
+                /** Type: UINT32, Conditions: [{fieldEquals field=status value=0}] */
                 fileVersion?: number;
-                /** Type: UINT32, Conditions: [{statusEquals value=0}] */
+                /** Type: UINT32, Conditions: [{fieldEquals field=status value=0}] */
                 imageSize?: number;
             };
             /** ID: 5 */
             imageBlockResponse: {
                 /** Type: UINT8 */
                 status: number;
-                /** Type: UINT16 */
-                manufacturerCode: number;
-                /** Type: UINT16 */
-                imageType: number;
-                /** Type: UINT32 */
-                fileVersion: number;
-                /** Type: UINT32 */
-                fileOffset: number;
-                /** Type: UINT8 */
-                dataSize: number;
-                /** Type: BUFFER */
-                data: Buffer;
+                /** Type: UINT16, Conditions: [{fieldEquals field=status value=0}] */
+                manufacturerCode?: number;
+                /** Type: UINT16, Conditions: [{fieldEquals field=status value=0}] */
+                imageType?: number;
+                /** Type: UINT32, Conditions: [{fieldEquals field=status value=0}] */
+                fileVersion?: number;
+                /** Type: UINT32, Conditions: [{fieldEquals field=status value=0}] */
+                fileOffset?: number;
+                /** Type: UINT8, Conditions: [{fieldEquals field=status value=0}] */
+                dataSize?: number;
+                /** Type: BUFFER, Conditions: [{fieldEquals field=status value=0}] */
+                data?: Buffer;
+                /** Type: UINT32, Conditions: [{fieldEquals field=status value=151}] */
+                currentTime?: number;
+                /** Type: UINT32, Conditions: [{fieldEquals field=status value=151}] */
+                requestTime?: number;
+                /** Type: UINT16, Conditions: [{fieldEquals field=status value=151}] */
+                minimumBlockPeriod?: number;
             };
             /** ID: 7 */
             upgradeEndResponse: {
@@ -1362,6 +1387,19 @@ export interface TClusters {
                 currentTime: number;
                 /** Type: UINT32 */
                 upgradeTime: number;
+            };
+            /** ID: 9 */
+            queryDeviceSpecificFileResponse: {
+                /** Type: UINT8 */
+                status: number;
+                /** Type: UINT16, Conditions: [{fieldEquals field=status value=0}] */
+                manufacturerCode?: number;
+                /** Type: UINT16, Conditions: [{fieldEquals field=status value=0}] */
+                imageType?: number;
+                /** Type: UINT32, Conditions: [{fieldEquals field=status value=0}] */
+                fileVersion?: number;
+                /** Type: UINT32, Conditions: [{fieldEquals field=status value=0}] */
+                imageSize?: number;
             };
         };
     };
@@ -4574,7 +4612,7 @@ export interface TClusters {
             /** ID: 515 | Type: UINT24 */
             hoursInFault: number;
             /** ID: 516 | Type: BITMAP64 */
-            extendedStatus: number;
+            extendedStatus: bigint;
             /** ID: 768 | Type: ENUM8 */
             unitOfMeasure: number;
             /** ID: 769 | Type: UINT24 */
@@ -4990,7 +5028,7 @@ export interface TClusters {
     haApplianceIdentification: {
         attributes: {
             /** ID: 0 | Type: UINT56 */
-            basicIdentification: number;
+            basicIdentification: bigint;
             /** ID: 16 | Type: CHAR_STR */
             companyName: string;
             /** ID: 17 | Type: UINT16 */
@@ -7010,9 +7048,9 @@ export interface TFoundation {
         attrId: number;
         /** Type: UINT8 */
         status: number;
-        /** Type: UINT8, Conditions: [{statusEquals value=0}] */
+        /** Type: UINT8, Conditions: [{fieldEquals field=status value=0}] */
         dataType?: number;
-        /** Type: USE_DATA_TYPE, Conditions: [{statusEquals value=0}] */
+        /** Type: USE_DATA_TYPE, Conditions: [{fieldEquals field=status value=0}] */
         attrData?: unknown;
     }[];
     /** ID: 2 */
@@ -7037,7 +7075,7 @@ export interface TFoundation {
     writeRsp: {
         /** Type: UINT8 */
         status: number;
-        /** Type: UINT16, Conditions: [{statusNotEquals value=0}] */
+        /** Type: UINT16, Conditions: [{fieldEquals field=status reversed=true value=0}] */
         attrId?: number;
     }[];
     /** ID: 5 */
@@ -7055,15 +7093,15 @@ export interface TFoundation {
         direction: number;
         /** Type: UINT16 */
         attrId: number;
-        /** Type: UINT8, Conditions: [{directionEquals value=0}] */
+        /** Type: UINT8, Conditions: [{fieldEquals field=direction value=0}] */
         dataType?: number;
-        /** Type: UINT16, Conditions: [{directionEquals value=0}] */
+        /** Type: UINT16, Conditions: [{fieldEquals field=direction value=0}] */
         minRepIntval?: number;
-        /** Type: UINT16, Conditions: [{directionEquals value=0}] */
+        /** Type: UINT16, Conditions: [{fieldEquals field=direction value=0}] */
         maxRepIntval?: number;
-        /** Type: USE_DATA_TYPE, Conditions: [{directionEquals value=0}{dataTypeValueTypeEquals value=ANALOG}] */
+        /** Type: USE_DATA_TYPE, Conditions: [{fieldEquals field=direction value=0}{dataTypeValueTypeEquals value=ANALOG}] */
         repChange?: unknown;
-        /** Type: UINT16, Conditions: [{directionEquals value=1}] */
+        /** Type: UINT16, Conditions: [{fieldEquals field=direction value=1}] */
         timeout?: number;
     }[];
     /** ID: 7 */
@@ -7090,15 +7128,15 @@ export interface TFoundation {
         direction: number;
         /** Type: UINT16 */
         attrId: number;
-        /** Type: UINT8, Conditions: [{directionEquals value=0}] */
+        /** Type: UINT8, Conditions: [{fieldEquals field=direction value=0}] */
         dataType?: number;
-        /** Type: UINT16, Conditions: [{directionEquals value=0}] */
+        /** Type: UINT16, Conditions: [{fieldEquals field=direction value=0}] */
         minRepIntval?: number;
-        /** Type: UINT16, Conditions: [{directionEquals value=0}] */
+        /** Type: UINT16, Conditions: [{fieldEquals field=direction value=0}] */
         maxRepIntval?: number;
-        /** Type: USE_DATA_TYPE, Conditions: [{directionEquals value=0}{dataTypeValueTypeEquals value=ANALOG}] */
+        /** Type: USE_DATA_TYPE, Conditions: [{fieldEquals field=direction value=0}{dataTypeValueTypeEquals value=ANALOG}] */
         repChange?: unknown;
-        /** Type: UINT16, Conditions: [{directionEquals value=1}] */
+        /** Type: UINT16, Conditions: [{fieldEquals field=direction value=1}] */
         timeout?: number;
     }[];
     /** ID: 10 */
@@ -7157,9 +7195,9 @@ export interface TFoundation {
     writeStructuredRsp: {
         /** Type: UINT8 */
         status: number;
-        /** Type: UINT16, Conditions: [{statusNotEquals value=0}] */
+        /** Type: UINT16, Conditions: [{fieldEquals field=status reversed=true value=0}] */
         attrId?: number;
-        /** Type: STRUCTURED_SELECTOR, Conditions: [{statusNotEquals value=0}] */
+        /** Type: STRUCTURED_SELECTOR, Conditions: [{fieldEquals field=status reversed=true value=0}] */
         selector?: StructuredSelector;
     }[];
     /** ID: 17 */

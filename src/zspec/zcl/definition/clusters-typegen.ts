@@ -61,6 +61,16 @@ const getTypeFromDataType = (dataType: DataType | BuffaloZclDataType): ts.TypeNo
         case DataType.UNKNOWN: {
             return ts.factory.createKeywordTypeNode(ts.SyntaxKind.NeverKeyword);
         }
+        case DataType.DATA56:
+        case DataType.BITMAP56:
+        case DataType.UINT56:
+        case DataType.DATA64:
+        case DataType.BITMAP64:
+        case DataType.UINT64:
+        case DataType.INT56:
+        case DataType.INT64: {
+            return ts.factory.createKeywordTypeNode(ts.SyntaxKind.BigIntKeyword);
+        }
         case DataType.OCTET_STR:
         case DataType.LONG_OCTET_STR:
         case DataType.SEC_KEY: {
