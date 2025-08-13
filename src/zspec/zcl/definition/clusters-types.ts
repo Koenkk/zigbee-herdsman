@@ -2,7 +2,10 @@ import type {
     ExtensionFieldSet,
     Gpd,
     GpdAttributeReport,
+    GpdChannelConfiguration,
     GpdChannelRequest,
+    GpdCommissioningReply,
+    GpdCustomReply,
     MiboxerZone,
     Struct,
     StructuredSelector,
@@ -1474,7 +1477,10 @@ export interface TClusters {
                     | {
                           raw: Buffer;
                       }
-                    | Record<string, never>;
+                    | Record<string, never>
+                    | GpdCommissioningReply
+                    | GpdChannelConfiguration
+                    | GpdCustomReply;
                 /** Type: UINT16, Conditions: [{bitMaskSet param=options mask=16384}] */
                 gppNwkAddr?: number;
                 /** Type: BITMAP8, Conditions: [{bitMaskSet param=options mask=16384}] */
@@ -1504,7 +1510,10 @@ export interface TClusters {
                     | {
                           raw: Buffer;
                       }
-                    | Record<string, never>;
+                    | Record<string, never>
+                    | GpdCommissioningReply
+                    | GpdChannelConfiguration
+                    | GpdCustomReply;
                 /** Type: UINT16, Conditions: [{bitMaskSet param=options mask=2048}] */
                 gppNwkAddr?: number;
                 /** Type: BITMAP8, Conditions: [{bitMaskSet param=options mask=2048}] */
@@ -1538,7 +1547,10 @@ export interface TClusters {
                     | {
                           raw: Buffer;
                       }
-                    | Record<string, never>;
+                    | Record<string, never>
+                    | GpdCommissioningReply
+                    | GpdChannelConfiguration
+                    | GpdCustomReply;
             };
             /** ID: 1 */
             pairing: {

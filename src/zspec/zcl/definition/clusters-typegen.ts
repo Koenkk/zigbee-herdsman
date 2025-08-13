@@ -40,7 +40,10 @@ const namedImports = ts.factory.createImportDeclaration(
             ts.factory.createImportSpecifier(false, undefined, ts.factory.createIdentifier("ExtensionFieldSet")),
             ts.factory.createImportSpecifier(false, undefined, ts.factory.createIdentifier("Gpd")),
             ts.factory.createImportSpecifier(false, undefined, ts.factory.createIdentifier("GpdAttributeReport")),
+            ts.factory.createImportSpecifier(false, undefined, ts.factory.createIdentifier("GpdChannelConfiguration")),
             ts.factory.createImportSpecifier(false, undefined, ts.factory.createIdentifier("GpdChannelRequest")),
+            ts.factory.createImportSpecifier(false, undefined, ts.factory.createIdentifier("GpdCommissioningReply")),
+            ts.factory.createImportSpecifier(false, undefined, ts.factory.createIdentifier("GpdCustomReply")),
             ts.factory.createImportSpecifier(false, undefined, ts.factory.createIdentifier("MiboxerZone")),
             ts.factory.createImportSpecifier(false, undefined, ts.factory.createIdentifier("Struct")),
             ts.factory.createImportSpecifier(false, undefined, ts.factory.createIdentifier("StructuredSelector")),
@@ -130,6 +133,9 @@ const getTypeFromDataType = (dataType: DataType | BuffaloZclDataType): ts.TypeNo
                     ts.factory.createPropertySignature(undefined, "raw", undefined, ts.factory.createTypeReferenceNode("Buffer")),
                 ]),
                 ts.factory.createTypeReferenceNode("Record<string, never>"),
+                ts.factory.createTypeReferenceNode("GpdCommissioningReply"),
+                ts.factory.createTypeReferenceNode("GpdChannelConfiguration"),
+                ts.factory.createTypeReferenceNode("GpdCustomReply"),
             ]);
         }
         case BuffaloZclDataType.STRUCTURED_SELECTOR: {
