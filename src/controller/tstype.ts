@@ -4,6 +4,9 @@ import type {
     TClusterCommands,
     TClusterPayload,
     TClusters,
+    TFoundation,
+    TFoundationGenericPayload,
+    TFoundationPayload,
     TPartialClusterAttributes,
 } from "../zspec/zcl/definition/clusters-types";
 import type {DataType} from "../zspec/zcl/definition/enums";
@@ -261,3 +264,11 @@ export type ClusterOrRawPayload<
                 ? never
                 : TCustomClusterPayload<Custom, Co>
             : never;
+
+export type FoundationOrRawPayload<Co extends string | number> = Co extends number
+    ? TFoundationGenericPayload
+    : TFoundationPayload<Co> extends never
+      ? never
+      : Co extends keyof TFoundation
+        ? TFoundationPayload<Co>
+        : never;

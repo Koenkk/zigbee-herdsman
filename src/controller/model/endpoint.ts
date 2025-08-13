@@ -17,6 +17,7 @@ import type {
     ClusterOrRawAttributes,
     ClusterOrRawPayload,
     ClusterOrRawWriteAttributes,
+    FoundationOrRawPayload,
     KeyValue,
     PartialClusterOrRawWriteAttributes,
     SendPolicy,
@@ -1005,10 +1006,10 @@ export class Endpoint extends ZigbeeEntity {
         }
     }
 
-    public async zclCommand(
-        clusterKey: number | string | ZclTypes.Cluster,
-        commandKey: number | string | ZclTypes.Command,
-        payload: KeyValue,
+    public async zclCommand<Cl extends number | string, Co extends number | string, Custom extends TCustomCluster | undefined = undefined>(
+        clusterKey: Cl | ZclTypes.Cluster,
+        commandKey: Co | ZclTypes.Command,
+        payload: ClusterOrRawPayload<Cl, Co, Custom> | FoundationOrRawPayload<Co>,
         options?: Options,
         logPayload?: KeyValue,
         checkStatus = false,
@@ -1062,12 +1063,12 @@ export class Endpoint extends ZigbeeEntity {
         }
     }
 
-    public async zclCommandBroadcast(
+    public async zclCommandBroadcast<Cl extends number | string, Co extends number | string, Custom extends TCustomCluster | undefined = undefined>(
         endpoint: number,
         destination: BroadcastAddress,
-        clusterKey: number | string,
-        commandKey: number | string,
-        payload: unknown,
+        clusterKey: Cl,
+        commandKey: Co,
+        payload: ClusterOrRawPayload<Cl, Co, Custom> | FoundationOrRawPayload<Co>,
         options?: Options,
     ): Promise<void> {
         const device = this.getDevice();
