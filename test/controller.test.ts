@@ -3671,7 +3671,7 @@ describe("Controller", () => {
         expect(call[2]).toBe(1);
         expect(call[3].cluster.name).toBe("genPollCtrl");
         expect(call[3].command.name).toBe("checkinRsp");
-        expect(call[3].payload).toStrictEqual({startFastPolling: false, fastPollTimeout: 0});
+        expect(call[3].payload).toStrictEqual({startFastPolling: 0, fastPollTimeout: 0});
     });
 
     it("Poll control unsupported", async () => {
@@ -7599,7 +7599,7 @@ describe("Controller", () => {
         expect(checkinrsp[2]).toBe(1);
         expect(checkinrsp[3].cluster.name).toBe("genPollCtrl");
         expect(checkinrsp[3].command.name).toBe("checkinRsp");
-        expect(checkinrsp[3].payload).toStrictEqual({startFastPolling: true, fastPollTimeout: 0});
+        expect(checkinrsp[3].payload).toStrictEqual({startFastPolling: 1, fastPollTimeout: 0});
 
         expect(await result).toBe(undefined);
 

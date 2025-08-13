@@ -390,12 +390,16 @@ export class Device extends Entity<ControllerEventMap> {
         if (frame.header.isSpecific && frame.isCluster("genPollCtrl") && frame.isCommand("checkin")) {
             try {
                 if (this.hasPendingRequests() || this._checkinInterval === undefined) {
-                    const payload = {
-                        startFastPolling: true,
-                        fastPollTimeout: 0,
-                    };
                     logger.debug(`check-in from ${this.ieeeAddr}: accepting fast-poll`, NS);
-                    await endpoint.command(frame.cluster.ID, "checkinRsp", payload, {sendPolicy: "immediate"});
+                    await endpoint.command(
+                        frame.cluster.name as "genPollCtrl",
+                        "checkinRsp",
+                        {
+                            startFastPolling: 1,
+                            fastPollTimeout: 0,
+                        },
+                        {sendPolicy: "immediate"},
+                    );
 
                     // This is a good time to read the checkin interval if we haven't stored it previously
                     if (this._checkinInterval === undefined) {
@@ -409,14 +413,18 @@ export class Device extends Entity<ControllerEventMap> {
                     // We *must* end fast-poll when we're done sending things. Otherwise
                     // we cause undue power-drain.
                     logger.debug(`check-in from ${this.ieeeAddr}: stopping fast-poll`, NS);
-                    await endpoint.command(frame.cluster.ID, "fastPollStop", {}, {sendPolicy: "immediate"});
+                    await endpoint.command(frame.cluster.name as "genPollCtrl", "fastPollStop", {}, {sendPolicy: "immediate"});
                 } else {
-                    const payload = {
-                        startFastPolling: false,
-                        fastPollTimeout: 0,
-                    };
                     logger.debug(`check-in from ${this.ieeeAddr}: declining fast-poll`, NS);
-                    await endpoint.command(frame.cluster.ID, "checkinRsp", payload, {sendPolicy: "immediate"});
+                    await endpoint.command(
+                        frame.cluster.name as "genPollCtrl",
+                        "checkinRsp",
+                        {
+                            startFastPolling: 0,
+                            fastPollTimeout: 0,
+                        },
+                        {sendPolicy: "immediate"},
+                    );
                 }
             } catch (error) {
                 logger.error(`Handling of poll check-in from ${this.ieeeAddr} failed (${(error as Error).message})`, NS);

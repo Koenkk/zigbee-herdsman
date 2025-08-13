@@ -1,4 +1,4 @@
-import type {TClusterAttributes, TClusters, TPartialClusterAttributes} from "../zspec/zcl/definition/clusters-types";
+import type {TClusterAttributes, TClusterPayload, TClusters, TPartialClusterAttributes} from "../zspec/zcl/definition/clusters-types";
 import type {DataType} from "../zspec/zcl/definition/enums";
 
 export interface KeyValue {
@@ -175,3 +175,41 @@ export type PartialClusterOrRawAttributes<
             ? Record<number, unknown>
             : Partial<Custom["attributes"]> & Record<number, unknown>
         : Record<number, unknown>;
+
+export type TCustomClusterPayload<Custom extends TCustomCluster, Co extends string | number> = Custom["commands"] extends never
+    ? Custom["commandResponses"] extends never
+        ? never
+        : Co extends keyof Custom["commandResponses"]
+          ? Custom["commandResponses"][Co]
+          : never
+    : Co extends keyof Custom["commands"]
+      ? Custom["commands"][Co]
+      : Co extends keyof Custom["commandResponses"]
+        ? Custom["commandResponses"][Co]
+        : never;
+
+export type ClusterOrRawPayload<
+    Cl extends string | number,
+    Co extends string | number,
+    Custom extends TCustomCluster | undefined = undefined,
+> = Cl extends number
+    ? Record<string, unknown>
+    : Co extends number
+      ? Record<string, unknown>
+      : TClusterPayload<Cl, Co> extends never
+        ? Custom extends TCustomCluster
+            ? TCustomClusterPayload<Custom, Co> extends never
+                ? never
+                : TCustomClusterPayload<Custom, Co>
+            : never
+        : Cl extends keyof TClusters
+          ? Custom extends TCustomCluster
+              ? TCustomClusterPayload<Custom, Co> extends never
+                  ? TClusterPayload<Cl, Co>
+                  : TCustomClusterPayload<Custom, Co> & TClusterPayload<Cl, Co>
+              : TClusterPayload<Cl, Co>
+          : Custom extends TCustomCluster
+            ? TCustomClusterPayload<Custom, Co> extends never
+                ? never
+                : TCustomClusterPayload<Custom, Co>
+            : never;

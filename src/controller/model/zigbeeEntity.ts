@@ -1,4 +1,11 @@
-import type {ClusterOrRawAttributeKeys, ClusterOrRawAttributes, KeyValue, PartialClusterOrRawWriteAttributes, TCustomCluster} from "../tstype";
+import type {
+    ClusterOrRawAttributeKeys,
+    ClusterOrRawAttributes,
+    ClusterOrRawPayload,
+    KeyValue,
+    PartialClusterOrRawWriteAttributes,
+    TCustomCluster,
+} from "../tstype";
 import Entity from "./entity";
 
 export abstract class ZigbeeEntity extends Entity {
@@ -14,10 +21,10 @@ export abstract class ZigbeeEntity extends Entity {
         options?: KeyValue,
     ): Promise<void>;
 
-    public abstract command<Cl extends number | string, Co extends number | string>(
+    public abstract command<Cl extends number | string, Co extends number | string, Custom extends TCustomCluster | undefined = undefined>(
         clusterKey: Cl,
         commandKey: Co,
-        payload: KeyValue,
+        payload: ClusterOrRawPayload<Cl, Co, Custom>,
         options?: KeyValue,
     ): Promise<undefined | KeyValue>;
 }

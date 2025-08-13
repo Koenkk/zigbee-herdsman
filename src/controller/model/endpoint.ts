@@ -15,6 +15,7 @@ import zclTransactionSequenceNumber from "../helpers/zclTransactionSequenceNumbe
 import type {
     ClusterOrRawAttributeKeys,
     ClusterOrRawAttributes,
+    ClusterOrRawPayload,
     ClusterOrRawWriteAttributes,
     KeyValue,
     PartialClusterOrRawWriteAttributes,
@@ -800,10 +801,10 @@ export class Endpoint extends ZigbeeEntity {
         // TODO: support `writeStructuredResponse`
     }
 
-    public async command<Cl extends number | string, Co extends number | string>(
+    public async command<Cl extends number | string, Co extends number | string, Custom extends TCustomCluster | undefined = undefined>(
         clusterKey: Cl,
         commandKey: Co,
-        payload: KeyValue,
+        payload: ClusterOrRawPayload<Cl, Co, Custom>,
         options?: Options,
     ): Promise<undefined | KeyValue> {
         const frame = await this.zclCommand(clusterKey, commandKey, payload, options, undefined, false, Zcl.FrameType.SPECIFIC);
@@ -812,10 +813,10 @@ export class Endpoint extends ZigbeeEntity {
         }
     }
 
-    public async commandResponse(
-        clusterKey: number | string,
-        commandKey: number | string,
-        payload: KeyValue,
+    public async commandResponse<Cl extends number | string, Co extends number | string, Custom extends TCustomCluster | undefined = undefined>(
+        clusterKey: Cl,
+        commandKey: Co,
+        payload: ClusterOrRawPayload<Cl, Co, Custom>,
         options?: Options,
         transactionSequenceNumber?: number,
     ): Promise<void> {

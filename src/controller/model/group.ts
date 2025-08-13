@@ -4,7 +4,14 @@ import * as Zcl from "../../zspec/zcl";
 import type {TFoundation} from "../../zspec/zcl/definition/clusters-types";
 import type {CustomClusters} from "../../zspec/zcl/definition/tstype";
 import zclTransactionSequenceNumber from "../helpers/zclTransactionSequenceNumber";
-import type {ClusterOrRawAttributeKeys, DatabaseEntry, KeyValue, PartialClusterOrRawWriteAttributes, TCustomCluster} from "../tstype";
+import type {
+    ClusterOrRawAttributeKeys,
+    ClusterOrRawPayload,
+    DatabaseEntry,
+    KeyValue,
+    PartialClusterOrRawWriteAttributes,
+    TCustomCluster,
+} from "../tstype";
 import Device from "./device";
 import type Endpoint from "./endpoint";
 import Entity from "./entity";
@@ -356,10 +363,10 @@ export class Group extends ZigbeeEntity {
         }
     }
 
-    public async command<Cl extends number | string, Co extends number | string>(
+    public async command<Cl extends number | string, Co extends number | string, Custom extends TCustomCluster | undefined = undefined>(
         clusterKey: Cl,
         commandKey: Co,
-        payload: KeyValue,
+        payload: ClusterOrRawPayload<Cl, Co, Custom>,
         options?: Options,
     ): Promise<undefined> {
         const customClusters = this.#customClusters[options?.direction === Zcl.Direction.SERVER_TO_CLIENT ? 1 : 0 /* default to CLIENT_TO_SERVER */];
