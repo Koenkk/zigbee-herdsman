@@ -7294,6 +7294,16 @@ export type TClusterAttributes<Cl extends number | string> = Cl extends keyof TC
 
 export type TPartialClusterAttributes<Cl extends number | string> = Cl extends keyof TClusters ? Partial<TClusters[Cl]["attributes"]> : never;
 
+export type TClusterCommandKeys<Cl extends number | string> = Cl extends keyof TClusters ? (keyof TClusters[Cl]["commands"])[] : (string | number)[];
+
+export type TClusterCommandResponseKeys<Cl extends number | string> = Cl extends keyof TClusters
+    ? (keyof TClusters[Cl]["commandResponses"])[]
+    : (string | number)[];
+
+export type TClusterCommands<Cl extends number | string> = Cl extends keyof TClusters ? TClusters[Cl]["commands"] : never;
+
+export type TClusterCommandResponses<Cl extends number | string> = Cl extends keyof TClusters ? TClusters[Cl]["commandResponses"] : never;
+
 export type TClusterCommandPayload<Cl extends number | string, Co extends number | string> = Cl extends keyof TClusters
     ? Co extends keyof TClusters[Cl]["commands"]
         ? TClusters[Cl]["commands"][Co]

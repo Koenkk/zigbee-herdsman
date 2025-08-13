@@ -1,4 +1,11 @@
-import type {TClusterAttributes, TClusterPayload, TClusters, TPartialClusterAttributes} from "../zspec/zcl/definition/clusters-types";
+import type {
+    TClusterAttributes,
+    TClusterCommandResponses,
+    TClusterCommands,
+    TClusterPayload,
+    TClusters,
+    TPartialClusterAttributes,
+} from "../zspec/zcl/definition/clusters-types";
 import type {DataType} from "../zspec/zcl/definition/enums";
 
 export interface KeyValue {
@@ -175,6 +182,47 @@ export type PartialClusterOrRawAttributes<
             ? Record<number, unknown>
             : Partial<Custom["attributes"]> & Record<number, unknown>
         : Record<number, unknown>;
+
+export type ClusterCommandKeys<Cl extends string | number, Custom extends TCustomCluster | undefined = undefined> = TClusterCommands<Cl> extends never
+    ? Custom extends TCustomCluster
+        ? Custom["commands"] extends never
+            ? number[]
+            : (keyof Custom["commands"] | number)[]
+        : number[]
+    : Cl extends keyof TClusters
+      ? Custom extends TCustomCluster
+          ? Custom["commands"] extends never
+              ? // don't use `TClusterCommandKeys<Cl>` as that allows "symbol"
+                (keyof TClusters[Cl]["commands"] | number)[]
+              : (keyof Custom["commands"] | keyof TClusters[Cl]["commands"] | number)[]
+          : (keyof TClusters[Cl]["commands"] | number)[]
+      : Custom extends TCustomCluster
+        ? Custom["commands"] extends never
+            ? number[]
+            : (keyof Custom["commands"] | number)[]
+        : number[];
+
+export type ClusterCommandResponseKeys<
+    Cl extends string | number,
+    Custom extends TCustomCluster | undefined = undefined,
+> = TClusterCommandResponses<Cl> extends never
+    ? Custom extends TCustomCluster
+        ? Custom["commandResponses"] extends never
+            ? number[]
+            : (keyof Custom["commandResponses"] | number)[]
+        : number[]
+    : Cl extends keyof TClusters
+      ? Custom extends TCustomCluster
+          ? Custom["commandResponses"] extends never
+              ? // don't use `TClusterCommandResponseKeys<Cl>` as that allows "symbol"
+                (keyof TClusters[Cl]["commandResponses"] | number)[]
+              : (keyof Custom["commandResponses"] | keyof TClusters[Cl]["commandResponses"] | number)[]
+          : (keyof TClusters[Cl]["commandResponses"] | number)[]
+      : Custom extends TCustomCluster
+        ? Custom["commandResponses"] extends never
+            ? number[]
+            : (keyof Custom["commandResponses"] | number)[]
+        : number[];
 
 export type TCustomClusterPayload<Custom extends TCustomCluster, Co extends string | number> = Custom["commands"] extends never
     ? Custom["commandResponses"] extends never

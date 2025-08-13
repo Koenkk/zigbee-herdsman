@@ -456,6 +456,38 @@ const partialClusterAttributesDecl = ts.factory.createTypeAliasDeclaration(
         `Cl extends keyof ${clustersDecl.name.escapedText} ? Partial<${clustersDecl.name.escapedText}[Cl]["attributes"]> : never`,
     ),
 );
+const clusterCommandKeysDecl = ts.factory.createTypeAliasDeclaration(
+    [ts.factory.createModifier(ts.SyntaxKind.ExportKeyword)],
+    "TClusterCommandKeys",
+    [clDecl],
+    ts.factory.createTypeReferenceNode(
+        `Cl extends keyof ${clustersDecl.name.escapedText} ? (keyof ${clustersDecl.name.escapedText}[Cl]["commands"])[] : (string | number)[];`,
+    ),
+);
+const clusterCommandResponseKeysDecl = ts.factory.createTypeAliasDeclaration(
+    [ts.factory.createModifier(ts.SyntaxKind.ExportKeyword)],
+    "TClusterCommandResponseKeys",
+    [clDecl],
+    ts.factory.createTypeReferenceNode(
+        `Cl extends keyof ${clustersDecl.name.escapedText} ? (keyof ${clustersDecl.name.escapedText}[Cl]["commandResponses"])[] : (string | number)[];`,
+    ),
+);
+const clusterCommandsDecl = ts.factory.createTypeAliasDeclaration(
+    [ts.factory.createModifier(ts.SyntaxKind.ExportKeyword)],
+    "TClusterCommands",
+    [clDecl],
+    ts.factory.createTypeReferenceNode(
+        `Cl extends keyof ${clustersDecl.name.escapedText} ? ${clustersDecl.name.escapedText}[Cl]["commands"] : never`,
+    ),
+);
+const clusterCommandResponsesDecl = ts.factory.createTypeAliasDeclaration(
+    [ts.factory.createModifier(ts.SyntaxKind.ExportKeyword)],
+    "TClusterCommandResponses",
+    [clDecl],
+    ts.factory.createTypeReferenceNode(
+        `Cl extends keyof ${clustersDecl.name.escapedText} ? ${clustersDecl.name.escapedText}[Cl]["commandResponses"] : never`,
+    ),
+);
 const clusterCommandPayloadDecl = ts.factory.createTypeAliasDeclaration(
     [ts.factory.createModifier(ts.SyntaxKind.ExportKeyword)],
     "TClusterCommandPayload",
@@ -529,6 +561,14 @@ ${printer.printNode(ts.EmitHint.Unspecified, clusterAttributeKeysDecl, file)}
 ${printer.printNode(ts.EmitHint.Unspecified, clusterAttributesDecl, file)}
 
 ${printer.printNode(ts.EmitHint.Unspecified, partialClusterAttributesDecl, file)}
+
+${printer.printNode(ts.EmitHint.Unspecified, clusterCommandKeysDecl, file)}
+
+${printer.printNode(ts.EmitHint.Unspecified, clusterCommandResponseKeysDecl, file)}
+
+${printer.printNode(ts.EmitHint.Unspecified, clusterCommandsDecl, file)}
+
+${printer.printNode(ts.EmitHint.Unspecified, clusterCommandResponsesDecl, file)}
 
 ${printer.printNode(ts.EmitHint.Unspecified, clusterCommandPayloadDecl, file)}
 
