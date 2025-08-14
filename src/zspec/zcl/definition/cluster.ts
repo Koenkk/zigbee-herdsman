@@ -2167,6 +2167,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             },
             getWeeklySchedule: {
                 ID: 2,
+                response: 0,
                 parameters: [
                     {name: "daystoreturn", type: DataType.UINT8},
                     {name: "modetoreturn", type: DataType.UINT8},
@@ -2178,6 +2179,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             },
             getRelayStatusLog: {
                 ID: 4,
+                response: 1,
                 parameters: [],
             },
             danfossSetpointCommand: {
