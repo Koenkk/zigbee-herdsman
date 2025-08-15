@@ -1,5 +1,5 @@
 export {Clusters} from "./definition/cluster";
-export type * as ClusterTypes from "./definition/clusters-types";
+export type * as ClustersTypes from "./definition/clusters-types";
 export * from "./definition/consts";
 export * from "./definition/enums";
 export {Foundation} from "./definition/foundation";
