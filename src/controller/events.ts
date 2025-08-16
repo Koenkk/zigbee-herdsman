@@ -42,7 +42,7 @@ export interface MessagePayload {
     linkquality: number;
     groupID: number;
     cluster: string | number;
-    data: KeyValue | Array<string | number>;
+    data: KeyValue | Array<string | number> | Buffer;
     meta: {
         zclTransactionSequenceNumber?: number;
         manufacturerCode?: number;

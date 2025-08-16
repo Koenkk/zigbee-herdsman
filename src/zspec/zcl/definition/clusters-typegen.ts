@@ -18,11 +18,11 @@ import {Clusters} from "./cluster";
 import {BuffaloZclDataType, DataType} from "./enums";
 import {Foundation, type FoundationCommandName, type FoundationDefinition} from "./foundation";
 import {ManufacturerCode} from "./manufacturerCode";
-import type {AttributeDefinition, ClusterName, CommandDefinition} from "./tstype";
+import type {AttributeDefinition, ClusterName, CommandDefinition, ParameterDefinition} from "./tstype";
 
 const FILENAME = "clusters-types.ts";
 
-const file = ts.createSourceFile(FILENAME, "", ts.ScriptTarget.ES2022, false, ts.ScriptKind.TS);
+const file = ts.createSourceFile(FILENAME, "", ts.ScriptTarget.ESNext, false, ts.ScriptKind.TS);
 const printer = ts.createPrinter({newLine: ts.NewLineKind.LineFeed});
 
 const emptyObject = ts.factory.createTypeReferenceNode("Record", [
@@ -40,12 +40,16 @@ const namedImports = ts.factory.createImportDeclaration(
             ts.factory.createImportSpecifier(false, undefined, ts.factory.createIdentifier("ExtensionFieldSet")),
             ts.factory.createImportSpecifier(false, undefined, ts.factory.createIdentifier("Gpd")),
             ts.factory.createImportSpecifier(false, undefined, ts.factory.createIdentifier("GpdAttributeReport")),
+            ts.factory.createImportSpecifier(false, undefined, ts.factory.createIdentifier("GpdChannelConfiguration")),
             ts.factory.createImportSpecifier(false, undefined, ts.factory.createIdentifier("GpdChannelRequest")),
+            ts.factory.createImportSpecifier(false, undefined, ts.factory.createIdentifier("GpdCommissioningReply")),
+            ts.factory.createImportSpecifier(false, undefined, ts.factory.createIdentifier("GpdCustomReply")),
             ts.factory.createImportSpecifier(false, undefined, ts.factory.createIdentifier("MiboxerZone")),
             ts.factory.createImportSpecifier(false, undefined, ts.factory.createIdentifier("Struct")),
             ts.factory.createImportSpecifier(false, undefined, ts.factory.createIdentifier("StructuredSelector")),
             ts.factory.createImportSpecifier(false, undefined, ts.factory.createIdentifier("ThermoTransition")),
             ts.factory.createImportSpecifier(false, undefined, ts.factory.createIdentifier("TuyaDataPointValue")),
+            ts.factory.createImportSpecifier(false, undefined, ts.factory.createIdentifier("ZclArray")),
             // ts.factory.createImportSpecifier(false, undefined, ts.factory.createIdentifier("ZclDate")), // XXX: currently unused
             // ts.factory.createImportSpecifier(false, undefined, ts.factory.createIdentifier("ZclTimeOfDay")), // XXX: currently unused
             ts.factory.createImportSpecifier(false, undefined, ts.factory.createIdentifier("ZoneInfo")),
@@ -61,6 +65,16 @@ const getTypeFromDataType = (dataType: DataType | BuffaloZclDataType): ts.TypeNo
         case DataType.UNKNOWN: {
             return ts.factory.createKeywordTypeNode(ts.SyntaxKind.NeverKeyword);
         }
+        case DataType.DATA56:
+        case DataType.BITMAP56:
+        case DataType.UINT56:
+        case DataType.DATA64:
+        case DataType.BITMAP64:
+        case DataType.UINT64:
+        case DataType.INT56:
+        case DataType.INT64: {
+            return ts.factory.createKeywordTypeNode(ts.SyntaxKind.BigIntKeyword);
+        }
         case DataType.OCTET_STR:
         case DataType.LONG_OCTET_STR:
         case DataType.SEC_KEY: {
@@ -74,7 +88,11 @@ const getTypeFromDataType = (dataType: DataType | BuffaloZclDataType): ts.TypeNo
         case DataType.ARRAY:
         case DataType.SET:
         case DataType.BAG: {
-            return ts.factory.createArrayTypeNode(ts.factory.createKeywordTypeNode(ts.SyntaxKind.UnknownKeyword));
+            // mismatch on read vs write, have to union
+            return ts.factory.createUnionTypeNode([
+                ts.factory.createTypeReferenceNode("ZclArray"),
+                ts.factory.createArrayTypeNode(ts.factory.createKeywordTypeNode(ts.SyntaxKind.UnknownKeyword)),
+            ]);
         }
         case DataType.STRUCT: {
             return ts.factory.createTypeReferenceNode("Struct");
@@ -115,6 +133,9 @@ const getTypeFromDataType = (dataType: DataType | BuffaloZclDataType): ts.TypeNo
                     ts.factory.createPropertySignature(undefined, "raw", undefined, ts.factory.createTypeReferenceNode("Buffer")),
                 ]),
                 ts.factory.createTypeReferenceNode("Record<string, never>"),
+                ts.factory.createTypeReferenceNode("GpdCommissioningReply"),
+                ts.factory.createTypeReferenceNode("GpdChannelConfiguration"),
+                ts.factory.createTypeReferenceNode("GpdCustomReply"),
             ]);
         }
         case BuffaloZclDataType.STRUCTURED_SELECTOR: {
@@ -129,6 +150,28 @@ const getTypeFromDataType = (dataType: DataType | BuffaloZclDataType): ts.TypeNo
         default: {
             return ts.factory.createKeywordTypeNode(ts.SyntaxKind.NumberKeyword);
         }
+    }
+};
+
+const getConditionStr = (conditions: ParameterDefinition["conditions"]): string | undefined => {
+    if (conditions) {
+        let str = ", Conditions: [";
+
+        for (const condition of conditions) {
+            str += `{${condition.type}`;
+
+            for (const key in condition) {
+                if (key === "type") {
+                    continue;
+                }
+
+                str += ` ${key}=${condition[key as keyof typeof condition]}`;
+            }
+
+            str += "}";
+        }
+
+        return `${str}]`;
     }
 };
 
@@ -157,7 +200,7 @@ const addAttributes = (attributes: Readonly<Record<string, Readonly<AttributeDef
         ts.addSyntheticLeadingComment(element, ts.SyntaxKind.MultiLineCommentTrivia, comment, true);
     }
 
-    return elements.length > 0 ? ts.factory.createTypeLiteralNode(elements) : emptyObject;
+    return elements.length > 0 ? ts.factory.createTypeLiteralNode(elements) : ts.factory.createKeywordTypeNode(ts.SyntaxKind.NeverKeyword);
 };
 
 const addCommands = (commands: Readonly<Record<string, Readonly<CommandDefinition>>>): ts.TypeNode => {
@@ -179,12 +222,13 @@ const addCommands = (commands: Readonly<Record<string, Readonly<CommandDefinitio
                     parameter.conditions ? ts.factory.createToken(ts.SyntaxKind.QuestionToken) : undefined,
                     paramType,
                 );
+                const conditionComment = getConditionStr(parameter.conditions);
 
                 cmdElements.push(cmdElement);
                 ts.addSyntheticLeadingComment(
                     cmdElement,
                     ts.SyntaxKind.MultiLineCommentTrivia,
-                    `* Type: ${DataType[parameter.type] ?? BuffaloZclDataType[parameter.type]} `,
+                    `* Type: ${DataType[parameter.type] ?? BuffaloZclDataType[parameter.type]}${conditionComment ?? ""} `,
                     true,
                 );
             } else if (
@@ -266,13 +310,14 @@ const addParameters = (foundation: Readonly<FoundationDefinition>): ts.TypeNode 
             parameter.conditions ? ts.factory.createToken(ts.SyntaxKind.QuestionToken) : undefined,
             getTypeFromDataType(parameter.type),
         );
+        const conditionComment = getConditionStr(parameter.conditions);
 
         elements.push(element);
 
         ts.addSyntheticLeadingComment(
             element,
             ts.SyntaxKind.MultiLineCommentTrivia,
-            `* Type: ${DataType[parameter.type] ?? BuffaloZclDataType[parameter.type]} `,
+            `* Type: ${DataType[parameter.type] ?? BuffaloZclDataType[parameter.type]}${conditionComment ?? ""} `,
             true,
         );
     }
@@ -387,12 +432,6 @@ const coDecl = ts.factory.createTypeParameterDeclaration(
         ts.factory.createKeywordTypeNode(ts.SyntaxKind.StringKeyword),
     ]),
 );
-const clusterGenericPayloadDecl = ts.factory.createTypeAliasDeclaration(
-    [ts.factory.createModifier(ts.SyntaxKind.ExportKeyword)],
-    "TClusterGenericPayload",
-    undefined,
-    ts.factory.createTypeReferenceNode("Record<string, unknown>"),
-);
 const clusterAttributeKeysDecl = ts.factory.createTypeAliasDeclaration(
     [ts.factory.createModifier(ts.SyntaxKind.ExportKeyword)],
     "TClusterAttributeKeys",
@@ -406,7 +445,7 @@ const clusterAttributesDecl = ts.factory.createTypeAliasDeclaration(
     "TClusterAttributes",
     [clDecl],
     ts.factory.createTypeReferenceNode(
-        `Cl extends keyof ${clustersDecl.name.escapedText} ? ${clustersDecl.name.escapedText}[Cl]["attributes"] : ${clusterGenericPayloadDecl.name.escapedText}`,
+        `Cl extends keyof ${clustersDecl.name.escapedText} ? ${clustersDecl.name.escapedText}[Cl]["attributes"] : never`,
     ),
 );
 const partialClusterAttributesDecl = ts.factory.createTypeAliasDeclaration(
@@ -414,7 +453,39 @@ const partialClusterAttributesDecl = ts.factory.createTypeAliasDeclaration(
     "TPartialClusterAttributes",
     [clDecl],
     ts.factory.createTypeReferenceNode(
-        `Cl extends keyof ${clustersDecl.name.escapedText} ? Partial<${clustersDecl.name.escapedText}[Cl]["attributes"]> : ${clusterGenericPayloadDecl.name.escapedText}`,
+        `Cl extends keyof ${clustersDecl.name.escapedText} ? Partial<${clustersDecl.name.escapedText}[Cl]["attributes"]> : never`,
+    ),
+);
+const clusterCommandKeysDecl = ts.factory.createTypeAliasDeclaration(
+    [ts.factory.createModifier(ts.SyntaxKind.ExportKeyword)],
+    "TClusterCommandKeys",
+    [clDecl],
+    ts.factory.createTypeReferenceNode(
+        `Cl extends keyof ${clustersDecl.name.escapedText} ? (keyof ${clustersDecl.name.escapedText}[Cl]["commands"])[] : (string | number)[];`,
+    ),
+);
+const clusterCommandResponseKeysDecl = ts.factory.createTypeAliasDeclaration(
+    [ts.factory.createModifier(ts.SyntaxKind.ExportKeyword)],
+    "TClusterCommandResponseKeys",
+    [clDecl],
+    ts.factory.createTypeReferenceNode(
+        `Cl extends keyof ${clustersDecl.name.escapedText} ? (keyof ${clustersDecl.name.escapedText}[Cl]["commandResponses"])[] : (string | number)[];`,
+    ),
+);
+const clusterCommandsDecl = ts.factory.createTypeAliasDeclaration(
+    [ts.factory.createModifier(ts.SyntaxKind.ExportKeyword)],
+    "TClusterCommands",
+    [clDecl],
+    ts.factory.createTypeReferenceNode(
+        `Cl extends keyof ${clustersDecl.name.escapedText} ? ${clustersDecl.name.escapedText}[Cl]["commands"] : never`,
+    ),
+);
+const clusterCommandResponsesDecl = ts.factory.createTypeAliasDeclaration(
+    [ts.factory.createModifier(ts.SyntaxKind.ExportKeyword)],
+    "TClusterCommandResponses",
+    [clDecl],
+    ts.factory.createTypeReferenceNode(
+        `Cl extends keyof ${clustersDecl.name.escapedText} ? ${clustersDecl.name.escapedText}[Cl]["commandResponses"] : never`,
     ),
 );
 const clusterCommandPayloadDecl = ts.factory.createTypeAliasDeclaration(
@@ -422,7 +493,7 @@ const clusterCommandPayloadDecl = ts.factory.createTypeAliasDeclaration(
     "TClusterCommandPayload",
     [clDecl, coDecl],
     ts.factory.createTypeReferenceNode(
-        `Cl extends keyof ${clustersDecl.name.escapedText} ? Co extends keyof ${clustersDecl.name.escapedText}[Cl]["commands"] ? ${clustersDecl.name.escapedText}[Cl]["commands"][Co] : ${clusterGenericPayloadDecl.name.escapedText} : ${clusterGenericPayloadDecl.name.escapedText};`,
+        `Cl extends keyof ${clustersDecl.name.escapedText} ? Co extends keyof ${clustersDecl.name.escapedText}[Cl]["commands"] ? ${clustersDecl.name.escapedText}[Cl]["commands"][Co] : never : never;`,
     ),
 );
 const clusterCommandResponsePayloadDecl = ts.factory.createTypeAliasDeclaration(
@@ -430,7 +501,7 @@ const clusterCommandResponsePayloadDecl = ts.factory.createTypeAliasDeclaration(
     "TClusterCommandResponsePayload",
     [clDecl, coDecl],
     ts.factory.createTypeReferenceNode(
-        `Cl extends keyof ${clustersDecl.name.escapedText} ? Co extends keyof ${clustersDecl.name.escapedText}[Cl]["commandResponses"] ? ${clustersDecl.name.escapedText}[Cl]["commandResponses"][Co] : ${clusterGenericPayloadDecl.name.escapedText} : ${clusterGenericPayloadDecl.name.escapedText};`,
+        `Cl extends keyof ${clustersDecl.name.escapedText} ? Co extends keyof ${clustersDecl.name.escapedText}[Cl]["commandResponses"] ? ${clustersDecl.name.escapedText}[Cl]["commandResponses"][Co] : never : never;`,
     ),
 );
 const clusterPayloadDecl = ts.factory.createTypeAliasDeclaration(
@@ -438,7 +509,7 @@ const clusterPayloadDecl = ts.factory.createTypeAliasDeclaration(
     "TClusterPayload",
     [clDecl, coDecl],
     ts.factory.createTypeReferenceNode(
-        `Cl extends keyof ${clustersDecl.name.escapedText} ? ${clustersDecl.name.escapedText}[Cl]["commands"] extends never ? ${clustersDecl.name.escapedText}[Cl]["commandResponses"] extends never ? never : Co extends keyof ${clustersDecl.name.escapedText}[Cl]["commandResponses"] ? ${clustersDecl.name.escapedText}[Cl]["commandResponses"][Co] : ${clusterGenericPayloadDecl.name.escapedText} : Co extends keyof ${clustersDecl.name.escapedText}[Cl]["commands"] ? ${clustersDecl.name.escapedText}[Cl]["commands"][Co] : Co extends keyof ${clustersDecl.name.escapedText}[Cl]["commandResponses"] ? ${clustersDecl.name.escapedText}[Cl]["commandResponses"][Co] : ${clusterGenericPayloadDecl.name.escapedText} : ${clusterGenericPayloadDecl.name.escapedText};`,
+        `Cl extends keyof ${clustersDecl.name.escapedText} ? ${clustersDecl.name.escapedText}[Cl]["commands"] extends never ? ${clustersDecl.name.escapedText}[Cl]["commandResponses"] extends never ? never : Co extends keyof ${clustersDecl.name.escapedText}[Cl]["commandResponses"] ? ${clustersDecl.name.escapedText}[Cl]["commandResponses"][Co] : never : Co extends keyof ${clustersDecl.name.escapedText}[Cl]["commands"] ? ${clustersDecl.name.escapedText}[Cl]["commands"][Co] : Co extends keyof ${clustersDecl.name.escapedText}[Cl]["commandResponses"] ? ${clustersDecl.name.escapedText}[Cl]["commandResponses"][Co] : never : never;`,
     ),
 );
 const foundationGenericPayloadDecl = ts.factory.createTypeAliasDeclaration(
@@ -485,13 +556,19 @@ ${printer.printNode(ts.EmitHint.Unspecified, foundationFlatDecl, file)}
 ${printer.printNode(ts.EmitHint.Unspecified, foundationOneOfDecl, file)}
 
 // Clusters
-${printer.printNode(ts.EmitHint.Unspecified, clusterGenericPayloadDecl, file)}
-
 ${printer.printNode(ts.EmitHint.Unspecified, clusterAttributeKeysDecl, file)}
 
 ${printer.printNode(ts.EmitHint.Unspecified, clusterAttributesDecl, file)}
 
 ${printer.printNode(ts.EmitHint.Unspecified, partialClusterAttributesDecl, file)}
+
+${printer.printNode(ts.EmitHint.Unspecified, clusterCommandKeysDecl, file)}
+
+${printer.printNode(ts.EmitHint.Unspecified, clusterCommandResponseKeysDecl, file)}
+
+${printer.printNode(ts.EmitHint.Unspecified, clusterCommandsDecl, file)}
+
+${printer.printNode(ts.EmitHint.Unspecified, clusterCommandResponsesDecl, file)}
 
 ${printer.printNode(ts.EmitHint.Unspecified, clusterCommandPayloadDecl, file)}
 

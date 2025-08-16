@@ -2,12 +2,16 @@ import type {
     ExtensionFieldSet,
     Gpd,
     GpdAttributeReport,
+    GpdChannelConfiguration,
     GpdChannelRequest,
+    GpdCommissioningReply,
+    GpdCustomReply,
     MiboxerZone,
     Struct,
     StructuredSelector,
     ThermoTransition,
     TuyaDataPointValue,
+    ZclArray,
     ZoneInfo,
 } from "./tstype";
 
@@ -402,11 +406,11 @@ export interface TClusters {
                 groupid: number;
                 /** Type: UINT8 */
                 sceneid: number;
-                /** Type: UINT16 */
+                /** Type: UINT16, Conditions: [{fieldEquals field=status value=0}] */
                 transtime?: number;
-                /** Type: CHAR_STR */
+                /** Type: CHAR_STR, Conditions: [{fieldEquals field=status value=0}] */
                 scenename?: string;
-                /** Type: EXTENSION_FIELD_SETS */
+                /** Type: EXTENSION_FIELD_SETS, Conditions: [{fieldEquals field=status value=0}] */
                 extensionfieldsets?: ExtensionFieldSet[];
             };
             /** ID: 2 */
@@ -442,9 +446,9 @@ export interface TClusters {
                 capacity: number;
                 /** Type: UINT16 */
                 groupid: number;
-                /** Type: UINT8 */
+                /** Type: UINT8, Conditions: [{fieldEquals field=status value=0}] */
                 scenecount?: number;
-                /** Type: LIST_UINT8 */
+                /** Type: LIST_UINT8, Conditions: [{fieldEquals field=status value=0}] */
                 scenelist?: number[];
             };
             /** ID: 64 */
@@ -464,11 +468,11 @@ export interface TClusters {
                 groupid: number;
                 /** Type: UINT8 */
                 sceneid: number;
-                /** Type: UINT16 */
+                /** Type: UINT16, Conditions: [{fieldEquals field=status value=0}] */
                 transtime?: number;
-                /** Type: CHAR_STR */
+                /** Type: CHAR_STR, Conditions: [{fieldEquals field=status value=0}] */
                 scenename?: string;
-                /** Type: EXTENSION_FIELD_SETS */
+                /** Type: EXTENSION_FIELD_SETS, Conditions: [{fieldEquals field=status value=0}] */
                 extensionfieldsets?: ExtensionFieldSet[];
             };
             /** ID: 66 */
@@ -914,7 +918,7 @@ export interface TClusters {
             /** ID: 85 | Type: SINGLE_PREC */
             presentValue: number;
             /** ID: 87 | Type: ARRAY */
-            priorityArray: unknown[];
+            priorityArray: ZclArray | unknown[];
             /** ID: 103 | Type: ENUM8 */
             reliability: number;
             /** ID: 104 | Type: SINGLE_PREC */
@@ -940,7 +944,7 @@ export interface TClusters {
             /** ID: 85 | Type: SINGLE_PREC */
             presentValue: number;
             /** ID: 87 | Type: ARRAY */
-            priorityArray: unknown[];
+            priorityArray: ZclArray | unknown[];
             /** ID: 103 | Type: ENUM8 */
             reliability: number;
             /** ID: 104 | Type: SINGLE_PREC */
@@ -998,7 +1002,7 @@ export interface TClusters {
             /** ID: 85 | Type: BOOLEAN */
             presentValue: number;
             /** ID: 87 | Type: ARRAY */
-            priorityArray: unknown[];
+            priorityArray: ZclArray | unknown[];
             /** ID: 103 | Type: ENUM8 */
             reliability: number;
             /** ID: 104 | Type: BOOLEAN */
@@ -1028,7 +1032,7 @@ export interface TClusters {
             /** ID: 85 | Type: BOOLEAN */
             presentValue: number;
             /** ID: 87 | Type: ARRAY */
-            priorityArray: unknown[];
+            priorityArray: ZclArray | unknown[];
             /** ID: 103 | Type: ENUM8 */
             reliability: number;
             /** ID: 104 | Type: BOOLEAN */
@@ -1044,7 +1048,7 @@ export interface TClusters {
     genMultistateInput: {
         attributes: {
             /** ID: 14 | Type: ARRAY */
-            stateText: unknown[];
+            stateText: ZclArray | unknown[];
             /** ID: 28 | Type: CHAR_STR */
             description: string;
             /** ID: 74 | Type: UINT16 */
@@ -1066,7 +1070,7 @@ export interface TClusters {
     genMultistateOutput: {
         attributes: {
             /** ID: 14 | Type: ARRAY */
-            stateText: unknown[];
+            stateText: ZclArray | unknown[];
             /** ID: 28 | Type: CHAR_STR */
             description: string;
             /** ID: 74 | Type: UINT16 */
@@ -1076,7 +1080,7 @@ export interface TClusters {
             /** ID: 85 | Type: UINT16 */
             presentValue: number;
             /** ID: 87 | Type: ARRAY */
-            priorityArray: unknown[];
+            priorityArray: ZclArray | unknown[];
             /** ID: 103 | Type: ENUM8 */
             reliability: number;
             /** ID: 104 | Type: UINT16 */
@@ -1092,7 +1096,7 @@ export interface TClusters {
     genMultistateValue: {
         attributes: {
             /** ID: 14 | Type: ARRAY */
-            stateText: unknown[];
+            stateText: ZclArray | unknown[];
             /** ID: 28 | Type: CHAR_STR */
             description: string;
             /** ID: 74 | Type: UINT16 */
@@ -1102,7 +1106,7 @@ export interface TClusters {
             /** ID: 85 | Type: UINT16 */
             presentValue: number;
             /** ID: 87 | Type: ARRAY */
-            priorityArray: unknown[];
+            priorityArray: ZclArray | unknown[];
             /** ID: 103 | Type: ENUM8 */
             reliability: number;
             /** ID: 104 | Type: UINT16 */
@@ -1257,7 +1261,7 @@ export interface TClusters {
                 imageType: number;
                 /** Type: UINT32 */
                 fileVersion: number;
-                /** Type: UINT16 */
+                /** Type: UINT16, Conditions: [{bitMaskSet param=fieldControl mask=1}] */
                 hardwareVersion?: number;
             };
             /** ID: 3 | Response ID: 5 */
@@ -1274,9 +1278,9 @@ export interface TClusters {
                 fileOffset: number;
                 /** Type: UINT8 */
                 maximumDataSize: number;
-                /** Type: IEEE_ADDR */
+                /** Type: IEEE_ADDR, Conditions: [{bitMaskSet param=fieldControl mask=1}] */
                 requestNodeIeeeAddress?: string;
-                /** Type: UINT16 */
+                /** Type: UINT16, Conditions: [{bitMaskSet param=fieldControl mask=2}{minimumRemainingBufferBytes value=2}] */
                 minimumBlockPeriod?: number;
             };
             /** ID: 4 | Response ID: 5 */
@@ -1297,7 +1301,7 @@ export interface TClusters {
                 pageSize: number;
                 /** Type: UINT16 */
                 responseSpacing: number;
-                /** Type: IEEE_ADDR */
+                /** Type: IEEE_ADDR, Conditions: [{bitMaskSet param=fieldControl mask=1}] */
                 requestNodeIeeeAddress?: string;
             };
             /** ID: 6 | Response ID: 7 */
@@ -1311,6 +1315,19 @@ export interface TClusters {
                 /** Type: UINT32 */
                 fileVersion: number;
             };
+            /** ID: 8 | Response ID: 9 */
+            queryDeviceSpecificFileRequest: {
+                /** Type: IEEE_ADDR */
+                eui64: string;
+                /** Type: UINT16 */
+                manufacturerCode: number;
+                /** Type: UINT16 */
+                imageType: number;
+                /** Type: UINT32 */
+                fileVersion: number;
+                /** Type: UINT16 */
+                zigbeeStackVersion: number;
+            };
         };
         commandResponses: {
             /** ID: 0 */
@@ -1319,36 +1336,48 @@ export interface TClusters {
                 payloadType: number;
                 /** Type: UINT8 */
                 queryJitter: number;
+                /** Type: UINT16, Conditions: [{fieldGT field=payloadType value=0}] */
+                manufacturerCode?: number;
+                /** Type: UINT16, Conditions: [{fieldGT field=payloadType value=1}] */
+                imageType?: number;
+                /** Type: UINT32, Conditions: [{fieldGT field=payloadType value=2}] */
+                fileVersion?: number;
             };
             /** ID: 2 */
             queryNextImageResponse: {
                 /** Type: UINT8 */
                 status: number;
-                /** Type: UINT16 */
+                /** Type: UINT16, Conditions: [{fieldEquals field=status value=0}] */
                 manufacturerCode?: number;
-                /** Type: UINT16 */
+                /** Type: UINT16, Conditions: [{fieldEquals field=status value=0}] */
                 imageType?: number;
-                /** Type: UINT32 */
+                /** Type: UINT32, Conditions: [{fieldEquals field=status value=0}] */
                 fileVersion?: number;
-                /** Type: UINT32 */
+                /** Type: UINT32, Conditions: [{fieldEquals field=status value=0}] */
                 imageSize?: number;
             };
             /** ID: 5 */
             imageBlockResponse: {
                 /** Type: UINT8 */
                 status: number;
-                /** Type: UINT16 */
-                manufacturerCode: number;
-                /** Type: UINT16 */
-                imageType: number;
-                /** Type: UINT32 */
-                fileVersion: number;
-                /** Type: UINT32 */
-                fileOffset: number;
-                /** Type: UINT8 */
-                dataSize: number;
-                /** Type: BUFFER */
-                data: Buffer;
+                /** Type: UINT16, Conditions: [{fieldEquals field=status value=0}] */
+                manufacturerCode?: number;
+                /** Type: UINT16, Conditions: [{fieldEquals field=status value=0}] */
+                imageType?: number;
+                /** Type: UINT32, Conditions: [{fieldEquals field=status value=0}] */
+                fileVersion?: number;
+                /** Type: UINT32, Conditions: [{fieldEquals field=status value=0}] */
+                fileOffset?: number;
+                /** Type: UINT8, Conditions: [{fieldEquals field=status value=0}] */
+                dataSize?: number;
+                /** Type: BUFFER, Conditions: [{fieldEquals field=status value=0}] */
+                data?: Buffer;
+                /** Type: UINT32, Conditions: [{fieldEquals field=status value=151}] */
+                currentTime?: number;
+                /** Type: UINT32, Conditions: [{fieldEquals field=status value=151}] */
+                requestTime?: number;
+                /** Type: UINT16, Conditions: [{fieldEquals field=status value=151}] */
+                minimumBlockPeriod?: number;
             };
             /** ID: 7 */
             upgradeEndResponse: {
@@ -1362,6 +1391,19 @@ export interface TClusters {
                 currentTime: number;
                 /** Type: UINT32 */
                 upgradeTime: number;
+            };
+            /** ID: 9 */
+            queryDeviceSpecificFileResponse: {
+                /** Type: UINT8 */
+                status: number;
+                /** Type: UINT16, Conditions: [{fieldEquals field=status value=0}] */
+                manufacturerCode?: number;
+                /** Type: UINT16, Conditions: [{fieldEquals field=status value=0}] */
+                imageType?: number;
+                /** Type: UINT32, Conditions: [{fieldEquals field=status value=0}] */
+                fileVersion?: number;
+                /** Type: UINT32, Conditions: [{fieldEquals field=status value=0}] */
+                imageSize?: number;
             };
         };
     };
@@ -1409,17 +1451,17 @@ export interface TClusters {
         };
     };
     greenPower: {
-        attributes: Record<string, never>;
+        attributes: never;
         commands: {
             /** ID: 0 */
             notification: {
                 /** Type: BITMAP16 */
                 options: number;
-                /** Type: UINT32 */
+                /** Type: UINT32, Conditions: [{bitFieldEnum param=options offset=0 size=3 value=0}] */
                 srcID?: number;
-                /** Type: IEEE_ADDR */
+                /** Type: IEEE_ADDR, Conditions: [{bitFieldEnum param=options offset=0 size=3 value=2}] */
                 gpdIEEEAddr?: string;
-                /** Type: UINT8 */
+                /** Type: UINT8, Conditions: [{bitFieldEnum param=options offset=0 size=3 value=2}] */
                 gpdEndpoint?: number;
                 /** Type: UINT32 */
                 frameCounter: number;
@@ -1427,7 +1469,7 @@ export interface TClusters {
                 commandID: number;
                 /** Type: UINT8 */
                 payloadSize: number;
-                /** Type: GPD_FRAME */
+                /** Type: GPD_FRAME, Conditions: [{bitMaskSet param=options mask=192 reversed=true}] */
                 commandFrame?:
                     | Gpd
                     | GpdChannelRequest
@@ -1435,21 +1477,24 @@ export interface TClusters {
                     | {
                           raw: Buffer;
                       }
-                    | Record<string, never>;
-                /** Type: UINT16 */
+                    | Record<string, never>
+                    | GpdCommissioningReply
+                    | GpdChannelConfiguration
+                    | GpdCustomReply;
+                /** Type: UINT16, Conditions: [{bitMaskSet param=options mask=16384}] */
                 gppNwkAddr?: number;
-                /** Type: BITMAP8 */
+                /** Type: BITMAP8, Conditions: [{bitMaskSet param=options mask=16384}] */
                 gppGpdLink?: number;
             };
             /** ID: 4 */
             commissioningNotification: {
                 /** Type: BITMAP16 */
                 options: number;
-                /** Type: UINT32 */
+                /** Type: UINT32, Conditions: [{bitFieldEnum param=options offset=0 size=3 value=0}] */
                 srcID?: number;
-                /** Type: IEEE_ADDR */
+                /** Type: IEEE_ADDR, Conditions: [{bitFieldEnum param=options offset=0 size=3 value=2}] */
                 gpdIEEEAddr?: string;
-                /** Type: UINT8 */
+                /** Type: UINT8, Conditions: [{bitFieldEnum param=options offset=0 size=3 value=2}] */
                 gpdEndpoint?: number;
                 /** Type: UINT32 */
                 frameCounter: number;
@@ -1457,7 +1502,7 @@ export interface TClusters {
                 commandID: number;
                 /** Type: UINT8 */
                 payloadSize: number;
-                /** Type: GPD_FRAME */
+                /** Type: GPD_FRAME, Conditions: [{bitMaskSet param=options mask=48 reversed=true}{bitMaskSet param=options mask=512 reversed=true}] */
                 commandFrame?:
                     | Gpd
                     | GpdChannelRequest
@@ -1465,12 +1510,15 @@ export interface TClusters {
                     | {
                           raw: Buffer;
                       }
-                    | Record<string, never>;
-                /** Type: UINT16 */
+                    | Record<string, never>
+                    | GpdCommissioningReply
+                    | GpdChannelConfiguration
+                    | GpdCustomReply;
+                /** Type: UINT16, Conditions: [{bitMaskSet param=options mask=2048}] */
                 gppNwkAddr?: number;
-                /** Type: BITMAP8 */
+                /** Type: BITMAP8, Conditions: [{bitMaskSet param=options mask=2048}] */
                 gppGpdLink?: number;
-                /** Type: UINT32 */
+                /** Type: UINT32, Conditions: [{bitMaskSet param=options mask=512}] */
                 mic?: number;
             };
         };
@@ -1483,11 +1531,11 @@ export interface TClusters {
                 tempMaster: number;
                 /** Type: BITMAP8 */
                 tempMasterTx: number;
-                /** Type: UINT32 */
+                /** Type: UINT32, Conditions: [{bitFieldEnum param=options offset=0 size=3 value=0}] */
                 srcID?: number;
-                /** Type: IEEE_ADDR */
+                /** Type: IEEE_ADDR, Conditions: [{bitFieldEnum param=options offset=0 size=3 value=2}] */
                 gpdIEEEAddr?: string;
-                /** Type: UINT8 */
+                /** Type: UINT8, Conditions: [{bitFieldEnum param=options offset=0 size=3 value=2}] */
                 gpdEndpoint?: number;
                 /** Type: UINT8 */
                 gpdCmd: number;
@@ -1499,42 +1547,45 @@ export interface TClusters {
                     | {
                           raw: Buffer;
                       }
-                    | Record<string, never>;
+                    | Record<string, never>
+                    | GpdCommissioningReply
+                    | GpdChannelConfiguration
+                    | GpdCustomReply;
             };
             /** ID: 1 */
             pairing: {
                 /** Type: BITMAP24 */
                 options: number;
-                /** Type: UINT32 */
+                /** Type: UINT32, Conditions: [{bitFieldEnum param=options offset=0 size=3 value=0}] */
                 srcID?: number;
-                /** Type: IEEE_ADDR */
+                /** Type: IEEE_ADDR, Conditions: [{bitFieldEnum param=options offset=0 size=3 value=2}] */
                 gpdIEEEAddr?: string;
-                /** Type: UINT8 */
+                /** Type: UINT8, Conditions: [{bitFieldEnum param=options offset=0 size=3 value=2}] */
                 gpdEndpoint?: number;
-                /** Type: IEEE_ADDR */
+                /** Type: IEEE_ADDR, Conditions: [{bitFieldEnum param=options offset=4 size=3 value=6}] */
                 sinkIEEEAddr?: string;
-                /** Type: UINT16 */
+                /** Type: UINT16, Conditions: [{bitFieldEnum param=options offset=4 size=3 value=6}] */
                 sinkNwkAddr?: number;
-                /** Type: UINT16 */
+                /** Type: UINT16, Conditions: [{bitFieldEnum param=options offset=4 size=3 value=4}] */
                 sinkGroupID?: number;
-                /** Type: UINT8 */
+                /** Type: UINT8, Conditions: [{bitMaskSet param=options mask=8}] */
                 deviceID?: number;
-                /** Type: UINT32 */
+                /** Type: UINT32, Conditions: [{bitMaskSet param=options mask=16384}] */
                 frameCounter?: number;
-                /** Type: SEC_KEY */
+                /** Type: SEC_KEY, Conditions: [{bitMaskSet param=options mask=32768}] */
                 gpdKey?: Buffer;
-                /** Type: UINT16 */
+                /** Type: UINT16, Conditions: [{bitMaskSet param=options mask=65536}] */
                 assignedAlias?: number;
-                /** Type: UINT8 */
+                /** Type: UINT8, Conditions: [{bitMaskSet param=options mask=131072}] */
                 groupcastRadius?: number;
             };
             /** ID: 2 */
             commisioningMode: {
                 /** Type: BITMAP8 */
                 options: number;
-                /** Type: UINT16 */
+                /** Type: UINT16, Conditions: [{bitMaskSet param=options mask=2}] */
                 commisioningWindow?: number;
-                /** Type: UINT8 */
+                /** Type: UINT8, Conditions: [{bitMaskSet param=options mask=16}] */
                 channel?: number;
             };
         };
@@ -3761,7 +3812,7 @@ export interface TClusters {
         };
     };
     ssIasAce: {
-        attributes: Record<string, never>;
+        attributes: never;
         commands: {
             /** ID: 0 | Response ID: 0 */
             arm: {
@@ -3975,7 +4026,7 @@ export interface TClusters {
         };
     };
     piBacnetProtocolTunnel: {
-        attributes: Record<string, never>;
+        attributes: never;
         commands: {
             /** ID: 0 */
             transferNpdu: {
@@ -4028,7 +4079,7 @@ export interface TClusters {
             /** ID: 113 | Type: UINT8 */
             timeDelay: number;
             /** ID: 130 | Type: ARRAY */
-            eventTimeStamps: unknown[];
+            eventTimeStamps: ZclArray | unknown[];
         };
         commands: {
             /** ID: 0 */
@@ -4085,7 +4136,7 @@ export interface TClusters {
             /** ID: 113 | Type: UINT8 */
             timeDelay: number;
             /** ID: 130 | Type: ARRAY */
-            eventTimeStamps: unknown[];
+            eventTimeStamps: ZclArray | unknown[];
         };
         commands: never;
         commandResponses: never;
@@ -4129,7 +4180,7 @@ export interface TClusters {
             /** ID: 113 | Type: UINT8 */
             timeDelay: number;
             /** ID: 130 | Type: ARRAY */
-            eventTimeStamps: unknown[];
+            eventTimeStamps: ZclArray | unknown[];
         };
         commands: never;
         commandResponses: never;
@@ -4177,7 +4228,7 @@ export interface TClusters {
             /** ID: 113 | Type: UINT8 */
             timeDelay: number;
             /** ID: 130 | Type: ARRAY */
-            eventTimeStamps: unknown[];
+            eventTimeStamps: ZclArray | unknown[];
         };
         commands: never;
         commandResponses: never;
@@ -4225,7 +4276,7 @@ export interface TClusters {
             /** ID: 113 | Type: UINT8 */
             timeDelay: number;
             /** ID: 130 | Type: ARRAY */
-            eventTimeStamps: unknown[];
+            eventTimeStamps: ZclArray | unknown[];
         };
         commands: never;
         commandResponses: never;
@@ -4271,7 +4322,7 @@ export interface TClusters {
             /** ID: 113 | Type: UINT8 */
             timeDelay: number;
             /** ID: 130 | Type: ARRAY */
-            eventTimeStamps: unknown[];
+            eventTimeStamps: ZclArray | unknown[];
         };
         commands: never;
         commandResponses: never;
@@ -4311,7 +4362,7 @@ export interface TClusters {
             /** ID: 113 | Type: UINT8 */
             timeDelay: number;
             /** ID: 130 | Type: ARRAY */
-            eventTimeStamps: unknown[];
+            eventTimeStamps: ZclArray | unknown[];
         };
         commands: never;
         commandResponses: never;
@@ -4349,7 +4400,7 @@ export interface TClusters {
             /** ID: 113 | Type: UINT8 */
             timeDelay: number;
             /** ID: 130 | Type: ARRAY */
-            eventTimeStamps: unknown[];
+            eventTimeStamps: ZclArray | unknown[];
         };
         commands: never;
         commandResponses: never;
@@ -4387,7 +4438,7 @@ export interface TClusters {
             /** ID: 113 | Type: UINT8 */
             timeDelay: number;
             /** ID: 130 | Type: ARRAY */
-            eventTimeStamps: unknown[];
+            eventTimeStamps: ZclArray | unknown[];
         };
         commands: never;
         commandResponses: never;
@@ -4395,7 +4446,7 @@ export interface TClusters {
     pi11073ProtocolTunnel: {
         attributes: {
             /** ID: 0 | Type: ARRAY */
-            deviceidList: unknown[];
+            deviceidList: ZclArray | unknown[];
             /** ID: 1 | Type: IEEE_ADDR */
             managerTarget: string;
             /** ID: 2 | Type: UINT8 */
@@ -4574,7 +4625,7 @@ export interface TClusters {
             /** ID: 515 | Type: UINT24 */
             hoursInFault: number;
             /** ID: 516 | Type: BITMAP64 */
-            extendedStatus: number;
+            extendedStatus: bigint;
             /** ID: 768 | Type: ENUM8 */
             unitOfMeasure: number;
             /** ID: 769 | Type: UINT24 */
@@ -4866,7 +4917,7 @@ export interface TClusters {
         };
     };
     tunneling: {
-        attributes: Record<string, never>;
+        attributes: never;
         commands: {
             /** ID: 0 | Response ID: 0 */
             requestTunnel: {
@@ -4990,7 +5041,7 @@ export interface TClusters {
     haApplianceIdentification: {
         attributes: {
             /** ID: 0 | Type: UINT56 */
-            basicIdentification: number;
+            basicIdentification: bigint;
             /** ID: 16 | Type: CHAR_STR */
             companyName: string;
             /** ID: 17 | Type: UINT16 */
@@ -5048,7 +5099,7 @@ export interface TClusters {
         commandResponses: never;
     };
     haApplianceEventsAlerts: {
-        attributes: Record<string, never>;
+        attributes: never;
         commands: {
             /** ID: 0 */
             getAlerts: Record<string, never>;
@@ -5568,7 +5619,7 @@ export interface TClusters {
         commandResponses: never;
     };
     touchlink: {
-        attributes: Record<string, never>;
+        attributes: never;
         commands: {
             /** ID: 0 | Response ID: 1 */
             scanRequest: {
@@ -5748,15 +5799,15 @@ export interface TClusters {
                 numberOfSubDevices: number;
                 /** Type: UINT8 */
                 totalGroupIdentifiers: number;
-                /** Type: UINT8 */
+                /** Type: UINT8, Conditions: [{fieldEquals field=numberOfSubDevices value=1}] */
                 endpointID?: number;
-                /** Type: UINT16 */
+                /** Type: UINT16, Conditions: [{fieldEquals field=numberOfSubDevices value=1}] */
                 profileID?: number;
-                /** Type: UINT16 */
+                /** Type: UINT16, Conditions: [{fieldEquals field=numberOfSubDevices value=1}] */
                 deviceID?: number;
-                /** Type: UINT8 */
+                /** Type: UINT8, Conditions: [{fieldEquals field=numberOfSubDevices value=1}] */
                 version?: number;
-                /** Type: UINT8 */
+                /** Type: UINT8, Conditions: [{fieldEquals field=numberOfSubDevices value=1}] */
                 groupIDCount?: number;
             };
             /** ID: 3 */
@@ -5835,7 +5886,7 @@ export interface TClusters {
         };
     };
     manuSpecificClusterAduroSmart: {
-        attributes: Record<string, never>;
+        attributes: never;
         commands: {
             /** ID: 0 */
             cmd0: Record<string, never>;
@@ -5843,7 +5894,7 @@ export interface TClusters {
         commandResponses: never;
     };
     manuSpecificOsram: {
-        attributes: Record<string, never>;
+        attributes: never;
         commands: {
             /** ID: 1 */
             saveStartupParams: Record<string, never>;
@@ -5982,7 +6033,7 @@ export interface TClusters {
             /** ID: 301 | Type: INT16 */
             reportLocalTemperature: number;
             /** ID: 576 | Type: ARRAY */
-            flowMeterConfig: unknown[];
+            flowMeterConfig: ZclArray | unknown[];
             /** ID: 643 | Type: UINT8 */
             coldLoadPickupStatus: number;
         };
@@ -5990,12 +6041,12 @@ export interface TClusters {
         commandResponses: never;
     };
     manuSpecificLegrandDevices: {
-        attributes: Record<string, never>;
+        attributes: never;
         commands: never;
         commandResponses: never;
     };
     manuSpecificLegrandDevices2: {
-        attributes: Record<string, never>;
+        attributes: never;
         commands: {
             /** ID: 0 */
             command0: {
@@ -6006,7 +6057,7 @@ export interface TClusters {
         commandResponses: never;
     };
     manuSpecificLegrandDevices3: {
-        attributes: Record<string, never>;
+        attributes: never;
         commands: {
             /** ID: 0 */
             command0: {
@@ -6025,7 +6076,7 @@ export interface TClusters {
         commandResponses: never;
     };
     manuSpecificTuya: {
-        attributes: Record<string, never>;
+        attributes: never;
         commands: {
             /** ID: 0 */
             dataRequest: {
@@ -6334,7 +6385,7 @@ export interface TClusters {
         commandResponses: never;
     };
     manuSpecificSmartThingsArrivalSensor: {
-        attributes: Record<string, never>;
+        attributes: never;
         commands: never;
         commandResponses: {
             /** ID: 1 */
@@ -6401,7 +6452,7 @@ export interface TClusters {
         commandResponses: never;
     };
     heimanSpecificScenes: {
-        attributes: Record<string, never>;
+        attributes: never;
         commands: {
             /** ID: 240 */
             cinema: Record<string, never>;
@@ -6417,7 +6468,7 @@ export interface TClusters {
         commandResponses: never;
     };
     tradfriButton: {
-        attributes: Record<string, never>;
+        attributes: never;
         commands: {
             /** ID: 1 */
             action1: {
@@ -6448,7 +6499,7 @@ export interface TClusters {
         commandResponses: never;
     };
     heimanSpecificInfraRedRemote: {
-        attributes: Record<string, never>;
+        attributes: never;
         commands: {
             /** ID: 240 */
             sendKey: {
@@ -6600,7 +6651,7 @@ export interface TClusters {
         commandResponses: never;
     };
     sprutIrBlaster: {
-        attributes: Record<string, never>;
+        attributes: never;
         commands: {
             /** ID: 0 */
             playStore: {
@@ -6647,7 +6698,7 @@ export interface TClusters {
         commandResponses: never;
     };
     owonClearMetering: {
-        attributes: Record<string, never>;
+        attributes: never;
         commands: {
             /** ID: 0 */
             owonClearMeasurementData: Record<string, never>;
@@ -6655,7 +6706,7 @@ export interface TClusters {
         commandResponses: never;
     };
     zosungIRTransmit: {
-        attributes: Record<string, never>;
+        attributes: never;
         commands: {
             /** ID: 0 */
             zosungSendIRCode00: {
@@ -6756,7 +6807,7 @@ export interface TClusters {
         };
     };
     zosungIRControl: {
-        attributes: Record<string, never>;
+        attributes: never;
         commands: {
             /** ID: 0 */
             zosungControlIRCommand00: {
@@ -6908,7 +6959,7 @@ export interface TClusters {
         };
     };
     manuSpecificDoorman: {
-        attributes: Record<string, never>;
+        attributes: never;
         commands: {
             /** ID: 252 */
             getConfigurationParameter: {
@@ -7002,9 +7053,9 @@ export interface TFoundation {
         attrId: number;
         /** Type: UINT8 */
         status: number;
-        /** Type: UINT8 */
+        /** Type: UINT8, Conditions: [{fieldEquals field=status value=0}] */
         dataType?: number;
-        /** Type: USE_DATA_TYPE */
+        /** Type: USE_DATA_TYPE, Conditions: [{fieldEquals field=status value=0}] */
         attrData?: unknown;
     }[];
     /** ID: 2 */
@@ -7029,7 +7080,7 @@ export interface TFoundation {
     writeRsp: {
         /** Type: UINT8 */
         status: number;
-        /** Type: UINT16 */
+        /** Type: UINT16, Conditions: [{fieldEquals field=status reversed=true value=0}] */
         attrId?: number;
     }[];
     /** ID: 5 */
@@ -7047,24 +7098,24 @@ export interface TFoundation {
         direction: number;
         /** Type: UINT16 */
         attrId: number;
-        /** Type: UINT8 */
+        /** Type: UINT8, Conditions: [{fieldEquals field=direction value=0}] */
         dataType?: number;
-        /** Type: UINT16 */
+        /** Type: UINT16, Conditions: [{fieldEquals field=direction value=0}] */
         minRepIntval?: number;
-        /** Type: UINT16 */
+        /** Type: UINT16, Conditions: [{fieldEquals field=direction value=0}] */
         maxRepIntval?: number;
-        /** Type: USE_DATA_TYPE */
+        /** Type: USE_DATA_TYPE, Conditions: [{fieldEquals field=direction value=0}{dataTypeValueTypeEquals value=ANALOG}] */
         repChange?: unknown;
-        /** Type: UINT16 */
+        /** Type: UINT16, Conditions: [{fieldEquals field=direction value=1}] */
         timeout?: number;
     }[];
     /** ID: 7 */
     configReportRsp: {
         /** Type: UINT8 */
         status: number;
-        /** Type: UINT8 */
+        /** Type: UINT8, Conditions: [{minimumRemainingBufferBytes value=3}] */
         direction?: number;
-        /** Type: UINT16 */
+        /** Type: UINT16, Conditions: [{minimumRemainingBufferBytes value=2}] */
         attrId?: number;
     }[];
     /** ID: 8 */
@@ -7082,15 +7133,15 @@ export interface TFoundation {
         direction: number;
         /** Type: UINT16 */
         attrId: number;
-        /** Type: UINT8 */
+        /** Type: UINT8, Conditions: [{fieldEquals field=direction value=0}] */
         dataType?: number;
-        /** Type: UINT16 */
+        /** Type: UINT16, Conditions: [{fieldEquals field=direction value=0}] */
         minRepIntval?: number;
-        /** Type: UINT16 */
+        /** Type: UINT16, Conditions: [{fieldEquals field=direction value=0}] */
         maxRepIntval?: number;
-        /** Type: USE_DATA_TYPE */
+        /** Type: USE_DATA_TYPE, Conditions: [{fieldEquals field=direction value=0}{dataTypeValueTypeEquals value=ANALOG}] */
         repChange?: unknown;
-        /** Type: UINT16 */
+        /** Type: UINT16, Conditions: [{fieldEquals field=direction value=1}] */
         timeout?: number;
     }[];
     /** ID: 10 */
@@ -7149,9 +7200,9 @@ export interface TFoundation {
     writeStructuredRsp: {
         /** Type: UINT8 */
         status: number;
-        /** Type: UINT16 */
+        /** Type: UINT16, Conditions: [{fieldEquals field=status reversed=true value=0}] */
         attrId?: number;
-        /** Type: STRUCTURED_SELECTOR */
+        /** Type: STRUCTURED_SELECTOR, Conditions: [{fieldEquals field=status reversed=true value=0}] */
         selector?: StructuredSelector;
     }[];
     /** ID: 17 */
@@ -7227,29 +7278,35 @@ export type TFoundationFlat = "defaultRsp" | "discover" | "discoverCommands" | "
 export type TFoundationOneOf = "discoverRsp" | "discoverCommandsRsp" | "discoverCommandsGenRsp" | "discoverExtRsp";
 
 // Clusters
-export type TClusterGenericPayload = Record<string, unknown>;
-
 export type TClusterAttributeKeys<Cl extends number | string> = Cl extends keyof TClusters
     ? (keyof TClusters[Cl]["attributes"])[]
     : (string | number)[];
 
-export type TClusterAttributes<Cl extends number | string> = Cl extends keyof TClusters ? TClusters[Cl]["attributes"] : TClusterGenericPayload;
+export type TClusterAttributes<Cl extends number | string> = Cl extends keyof TClusters ? TClusters[Cl]["attributes"] : never;
 
-export type TPartialClusterAttributes<Cl extends number | string> = Cl extends keyof TClusters
-    ? Partial<TClusters[Cl]["attributes"]>
-    : TClusterGenericPayload;
+export type TPartialClusterAttributes<Cl extends number | string> = Cl extends keyof TClusters ? Partial<TClusters[Cl]["attributes"]> : never;
+
+export type TClusterCommandKeys<Cl extends number | string> = Cl extends keyof TClusters ? (keyof TClusters[Cl]["commands"])[] : (string | number)[];
+
+export type TClusterCommandResponseKeys<Cl extends number | string> = Cl extends keyof TClusters
+    ? (keyof TClusters[Cl]["commandResponses"])[]
+    : (string | number)[];
+
+export type TClusterCommands<Cl extends number | string> = Cl extends keyof TClusters ? TClusters[Cl]["commands"] : never;
+
+export type TClusterCommandResponses<Cl extends number | string> = Cl extends keyof TClusters ? TClusters[Cl]["commandResponses"] : never;
 
 export type TClusterCommandPayload<Cl extends number | string, Co extends number | string> = Cl extends keyof TClusters
     ? Co extends keyof TClusters[Cl]["commands"]
         ? TClusters[Cl]["commands"][Co]
-        : TClusterGenericPayload
-    : TClusterGenericPayload;
+        : never
+    : never;
 
 export type TClusterCommandResponsePayload<Cl extends number | string, Co extends number | string> = Cl extends keyof TClusters
     ? Co extends keyof TClusters[Cl]["commandResponses"]
         ? TClusters[Cl]["commandResponses"][Co]
-        : TClusterGenericPayload
-    : TClusterGenericPayload;
+        : never
+    : never;
 
 export type TClusterPayload<Cl extends number | string, Co extends number | string> = Cl extends keyof TClusters
     ? TClusters[Cl]["commands"] extends never
@@ -7257,13 +7314,13 @@ export type TClusterPayload<Cl extends number | string, Co extends number | stri
             ? never
             : Co extends keyof TClusters[Cl]["commandResponses"]
               ? TClusters[Cl]["commandResponses"][Co]
-              : TClusterGenericPayload
+              : never
         : Co extends keyof TClusters[Cl]["commands"]
           ? TClusters[Cl]["commands"][Co]
           : Co extends keyof TClusters[Cl]["commandResponses"]
             ? TClusters[Cl]["commandResponses"][Co]
-            : TClusterGenericPayload
-    : TClusterGenericPayload;
+            : never
+    : never;
 
 // Foundation
 export type TFoundationGenericPayload = TFoundation[keyof TFoundation];

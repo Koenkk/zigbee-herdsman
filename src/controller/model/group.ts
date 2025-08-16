@@ -1,12 +1,21 @@
 import assert from "node:assert";
 import {logger} from "../../utils/logger";
 import * as Zcl from "../../zspec/zcl";
+import type {TFoundation} from "../../zspec/zcl/definition/clusters-types";
 import type {CustomClusters} from "../../zspec/zcl/definition/tstype";
 import zclTransactionSequenceNumber from "../helpers/zclTransactionSequenceNumber";
-import type {DatabaseEntry, KeyValue} from "../tstype";
+import type {
+    ClusterOrRawAttributeKeys,
+    ClusterOrRawPayload,
+    DatabaseEntry,
+    KeyValue,
+    PartialClusterOrRawWriteAttributes,
+    TCustomCluster,
+} from "../tstype";
 import Device from "./device";
 import type Endpoint from "./endpoint";
 import Entity from "./entity";
+import {ZigbeeEntity} from "./zigbeeEntity";
 
 const NS = "zh:controller:group";
 
@@ -23,7 +32,7 @@ interface OptionsWithDefaults extends Options {
     reservedBits: number;
 }
 
-export class Group extends Entity {
+export class Group extends ZigbeeEntity {
     private databaseID: number;
     public readonly groupID: number;
     private readonly _members: Endpoint[];
@@ -248,18 +257,24 @@ export class Group extends Entity {
      * Zigbee functions
      */
 
-    public async write(clusterKey: number | string, attributes: KeyValue, options?: Options): Promise<void> {
+    public async write<Cl extends number | string, Custom extends TCustomCluster | undefined = undefined>(
+        clusterKey: Cl,
+        attributes: PartialClusterOrRawWriteAttributes<Cl, Custom>,
+        options?: Options,
+    ): Promise<void> {
         const customClusters = this.#customClusters[options?.direction === Zcl.Direction.SERVER_TO_CLIENT ? 1 : 0 /* default to CLIENT_TO_SERVER */];
         const cluster = Zcl.Utils.getCluster(clusterKey, options?.manufacturerCode, customClusters);
         const optionsWithDefaults = this.getOptionsWithDefaults(options, Zcl.Direction.CLIENT_TO_SERVER, cluster.manufacturerCode);
-        const payload: {attrId: number; dataType: number; attrData: number | string | boolean}[] = [];
+        const payload: TFoundation["write"] = [];
 
-        for (const [nameOrID, value] of Object.entries(attributes)) {
+        for (const nameOrID in attributes) {
             const attribute = cluster.getAttribute(nameOrID);
 
             if (attribute) {
-                payload.push({attrId: attribute.ID, attrData: value, dataType: attribute.type});
+                payload.push({attrId: attribute.ID, attrData: attributes[nameOrID], dataType: attribute.type});
             } else if (!Number.isNaN(Number(nameOrID))) {
+                const value = attributes[nameOrID];
+
                 payload.push({attrId: Number(nameOrID), attrData: value.value, dataType: value.type});
             } else {
                 throw new Error(`Unknown attribute '${nameOrID}', specify either an existing attribute or a number`);
@@ -295,11 +310,15 @@ export class Group extends Entity {
         }
     }
 
-    public async read(clusterKey: number | string, attributes: (string | number)[], options?: Options): Promise<void> {
+    public async read<Cl extends number | string, Custom extends TCustomCluster | undefined = undefined>(
+        clusterKey: Cl,
+        attributes: ClusterOrRawAttributeKeys<Cl, Custom>,
+        options?: Options,
+    ): Promise<undefined> {
         const customClusters = this.#customClusters[options?.direction === Zcl.Direction.SERVER_TO_CLIENT ? 1 : 0 /* default to CLIENT_TO_SERVER */];
         const cluster = Zcl.Utils.getCluster(clusterKey, options?.manufacturerCode, customClusters);
         const optionsWithDefaults = this.getOptionsWithDefaults(options, Zcl.Direction.CLIENT_TO_SERVER, cluster.manufacturerCode);
-        const payload: {attrId: number}[] = [];
+        const payload: TFoundation["read"] = [];
 
         for (const attribute of attributes) {
             if (typeof attribute === "number") {
@@ -344,7 +363,12 @@ export class Group extends Entity {
         }
     }
 
-    public async command(clusterKey: number | string, commandKey: number | string, payload: KeyValue, options?: Options): Promise<void> {
+    public async command<Cl extends number | string, Co extends number | string, Custom extends TCustomCluster | undefined = undefined>(
+        clusterKey: Cl,
+        commandKey: Co,
+        payload: ClusterOrRawPayload<Cl, Co, Custom>,
+        options?: Options,
+    ): Promise<undefined> {
         const customClusters = this.#customClusters[options?.direction === Zcl.Direction.SERVER_TO_CLIENT ? 1 : 0 /* default to CLIENT_TO_SERVER */];
         const cluster = Zcl.Utils.getCluster(clusterKey, options?.manufacturerCode, customClusters);
         const optionsWithDefaults = this.getOptionsWithDefaults(options, Zcl.Direction.CLIENT_TO_SERVER, cluster.manufacturerCode);

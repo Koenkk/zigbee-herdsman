@@ -199,9 +199,12 @@ let iasZoneReadState170Count = 0;
 let enroll170 = true;
 let configureReportStatus = 0;
 let configureReportDefaultRsp = false;
+let lastSentZclFrameToEndpoint: Buffer | undefined;
 
 const restoreMocksendZclFrameToEndpoint = () => {
     mocksendZclFrameToEndpoint.mockImplementation((_ieeeAddr, networkAddress, endpoint, frame: Zcl.Frame) => {
+        lastSentZclFrameToEndpoint = frame.toBuffer();
+
         if (
             frame.header.isGlobal &&
             frame.isCommand("read") &&
@@ -401,6 +404,7 @@ const mocksRestore = [mockAdapterPermitJoin, mockAdapterStop, mocksendZclFrameTo
 const events: {
     deviceJoined: Events.DeviceJoinedPayload[];
     deviceInterview: Events.DeviceInterviewPayload[];
+    deviceInterviewRaw: Events.DeviceInterviewPayload[];
     adapterDisconnected: number[];
     deviceAnnounce: Events.DeviceAnnouncePayload[];
     deviceLeave: Events.DeviceLeavePayload[];
@@ -411,6 +415,7 @@ const events: {
 } = {
     deviceJoined: [],
     deviceInterview: [],
+    deviceInterviewRaw: [],
     adapterDisconnected: [],
     deviceAnnounce: [],
     deviceLeave: [],
@@ -490,7 +495,10 @@ describe("Controller", () => {
         controller = new Controller(options);
         controller.on("permitJoinChanged", (data) => events.permitJoinChanged.push(data));
         controller.on("deviceJoined", (data) => events.deviceJoined.push(data));
-        controller.on("deviceInterview", (data) => events.deviceInterview.push(deepClone(data)));
+        controller.on("deviceInterview", (data) => {
+            events.deviceInterview.push(deepClone(data));
+            events.deviceInterviewRaw.push(data);
+        });
         controller.on("adapterDisconnected", () => events.adapterDisconnected.push(1));
         controller.on("deviceAnnounce", (data) => events.deviceAnnounce.push(data));
         controller.on("deviceLeave", (data) => events.deviceLeave.push(data));
@@ -1286,18 +1294,21 @@ describe("Controller", () => {
                 },
             ],
             _manufacturerID: 1212,
-            _manufacturerName: "KoenAndCo",
-            _powerSource: "Mains (single phase)",
-            _modelID: "myModelID",
-            _applicationVersion: 2,
-            _stackVersion: 101,
-            _zclVersion: 1,
-            _hardwareVersion: 3,
-            _dateCode: "201901",
-            _softwareBuildID: "1.01",
             _interviewState: InterviewState.Successful,
         };
+        const deviceGenBasic = {
+            manufacturerName: "KoenAndCo",
+            powerSource: Zcl.PowerSource["Mains (single phase)"],
+            modelId: "myModelID",
+            appVersion: 2,
+            stackVersion: 101,
+            zclVersion: 1,
+            hwVersion: 3,
+            dateCode: "201901",
+            swBuildId: "1.01",
+        };
         expect(events.deviceInterview[1]).toStrictEqual({status: "successful", device: device});
+        expect(events.deviceInterviewRaw[1].device.genBasic).toStrictEqual(deviceGenBasic);
         expect(deepClone(controller.getDeviceByNetworkAddress(129))).toStrictEqual(device);
         expect(events.deviceInterview.length).toBe(2);
         expect(databaseContents()).toStrictEqual(
@@ -1316,7 +1327,10 @@ describe("Controller", () => {
     it("Join a device and explictly accept it", async () => {
         controller = new Controller(options);
         controller.on("deviceJoined", (device) => events.deviceJoined.push(device));
-        controller.on("deviceInterview", (device) => events.deviceInterview.push(deepClone(device)));
+        controller.on("deviceInterview", (data) => {
+            events.deviceInterview.push(deepClone(data));
+            events.deviceInterviewRaw.push(data);
+        });
         await controller.start();
         expect(databaseContents().includes("0x129")).toBeFalsy();
         await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
@@ -1371,18 +1385,21 @@ describe("Controller", () => {
                 },
             ],
             _manufacturerID: 1212,
-            _manufacturerName: "KoenAndCo",
-            _powerSource: "Mains (single phase)",
-            _modelID: "myModelID",
-            _applicationVersion: 2,
-            _stackVersion: 101,
-            _zclVersion: 1,
-            _hardwareVersion: 3,
-            _dateCode: "201901",
-            _softwareBuildID: "1.01",
             _interviewState: InterviewState.Successful,
         };
+        const deviceGenBasic = {
+            manufacturerName: "KoenAndCo",
+            powerSource: Zcl.PowerSource["Mains (single phase)"],
+            modelId: "myModelID",
+            appVersion: 2,
+            stackVersion: 101,
+            zclVersion: 1,
+            hwVersion: 3,
+            dateCode: "201901",
+            swBuildId: "1.01",
+        };
         expect(events.deviceInterview[1]).toStrictEqual({status: "successful", device: device});
+        expect(events.deviceInterviewRaw[1].device.genBasic).toStrictEqual(deviceGenBasic);
         expect(deepClone(controller.getDeviceByIeeeAddr("0x129"))).toStrictEqual(device);
         expect(events.deviceInterview.length).toBe(2);
         expect(databaseContents().includes("0x129")).toBeTruthy();
@@ -1429,8 +1446,8 @@ describe("Controller", () => {
         await controller.start();
         await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
         const device = controller.getDeviceByIeeeAddr("0x129")!;
-        device.powerSource = "test123";
-        expect(device.powerSource).toBe("test123");
+        device.powerSource = "DC Source";
+        expect(device.powerSource).toBe("DC Source");
     });
 
     it("Get device should return same instance", async () => {
@@ -2245,8 +2262,7 @@ describe("Controller", () => {
         expect(events.deviceInterview[1].status).toBe("successful");
         // @ts-expect-error private but deep cloned
         expect(events.deviceInterview[1].device._ieeeAddr).toBe("0x161");
-        // @ts-expect-error private but deep cloned
-        expect(events.deviceInterview[1].device._modelID).toBe("myDevice9123");
+        expect(events.deviceInterviewRaw[1].device.genBasic.modelId).toBe("myDevice9123");
     });
 
     it("Device joins with endpoints [2,1], as 2 is the only endpoint supporting genBasic it should read modelID from that", async () => {
@@ -2259,8 +2275,7 @@ describe("Controller", () => {
         expect(events.deviceInterview[1].status).toBe("successful");
         // @ts-expect-error private but deep cloned
         expect(events.deviceInterview[1].device._ieeeAddr).toBe("0x162");
-        // @ts-expect-error private but deep cloned
-        expect(events.deviceInterview[1].device._modelID).toBe("myDevice9124");
+        expect(events.deviceInterviewRaw[1].device.genBasic.modelId).toBe("myDevice9124");
     });
 
     it("Device joins and interview iAs enrollment succeeds", async () => {
@@ -3107,11 +3122,19 @@ describe("Controller", () => {
             ],
             _type: "EndDevice",
             _manufacturerID: 4151,
-            _manufacturerName: "LUMI",
             meta: {},
-            _powerSource: "Battery",
-            _modelID: "lumi.occupancy",
             _interviewState: InterviewState.Successful,
+        });
+        expect(controller.getDeviceByIeeeAddr("0x150")?.genBasic).toStrictEqual({
+            appVersion: undefined,
+            dateCode: undefined,
+            hwVersion: undefined,
+            manufacturerName: "LUMI",
+            modelId: "lumi.occupancy",
+            powerSource: Zcl.PowerSource.Battery,
+            stackVersion: undefined,
+            swBuildId: undefined,
+            zclVersion: undefined,
         });
     });
 
@@ -3160,11 +3183,19 @@ describe("Controller", () => {
             ],
             _type: "EndDevice",
             _manufacturerID: 1219,
-            _manufacturerName: "LUMI",
             meta: {},
-            _powerSource: "Battery",
-            _modelID: "lumi.occupancy",
             _interviewState: InterviewState.Successful,
+        });
+        expect(controller.getDeviceByIeeeAddr("0x151")?.genBasic).toStrictEqual({
+            appVersion: undefined,
+            dateCode: undefined,
+            hwVersion: undefined,
+            manufacturerName: "LUMI",
+            modelId: "lumi.occupancy",
+            powerSource: Zcl.PowerSource.Battery,
+            stackVersion: undefined,
+            swBuildId: undefined,
+            zclVersion: undefined,
         });
     });
 
@@ -3640,7 +3671,7 @@ describe("Controller", () => {
         expect(call[2]).toBe(1);
         expect(call[3].cluster.name).toBe("genPollCtrl");
         expect(call[3].command.name).toBe("checkinRsp");
-        expect(call[3].payload).toStrictEqual({startFastPolling: false, fastPollTimeout: 0});
+        expect(call[3].payload).toStrictEqual({startFastPolling: 0, fastPollTimeout: 0});
     });
 
     it("Poll control unsupported", async () => {
@@ -3886,6 +3917,36 @@ describe("Controller", () => {
                 ),
             ),
         );
+    });
+
+    it("throws when trying to configure reporting on endpoint with bad attribute", async () => {
+        await controller.start();
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
+        const device = controller.getDeviceByIeeeAddr("0x129")!;
+        const endpoint = device.getEndpoint(1)!;
+        mocksendZclFrameToEndpoint.mockClear();
+
+        await expect(async () => {
+            await endpoint.configureReporting("genPowerCfg", [
+                {
+                    attribute: "doesnotexist",
+                    minimumReportInterval: 1,
+                    maximumReportInterval: 10,
+                    reportableChange: 1,
+                },
+            ]);
+        }).rejects.toThrow(`Invalid attribute 'doesnotexist' for cluster 'genPowerCfg'`);
+
+        await expect(async () => {
+            await endpoint.configureReporting("genBasic", [
+                {
+                    attribute: 99999,
+                    minimumReportInterval: 1,
+                    maximumReportInterval: 10,
+                    reportableChange: 1,
+                },
+            ]);
+        }).rejects.toThrow(`Invalid attribute '99999' for cluster 'genBasic'`);
     });
 
     it("Should replace legacy configured reportings without manufacturerCode", async () => {
@@ -4508,8 +4569,6 @@ describe("Controller", () => {
             _eventsCount: 0,
             _pendingRequestTimeout: 0,
             _skipDefaultResponse: false,
-            _applicationVersion: 17,
-            _dateCode: "20170302",
             _customClusters: {},
             _endpoints: [
                 {
@@ -4529,21 +4588,25 @@ describe("Controller", () => {
                     profileID: 49246,
                 },
             ],
-            _hardwareVersion: 1,
             _ieeeAddr: "0x90fd9ffffe4b64ae",
             _interviewState: InterviewState.Successful,
             _manufacturerID: 4476,
-            _manufacturerName: "IKEA of Sweden",
             meta: {},
-            _modelID: "TRADFRI remote control",
             _networkAddress: 19468,
-            _powerSource: "Battery",
-            _softwareBuildID: "1.2.214",
-            _stackVersion: 87,
             _type: "EndDevice",
-            _zclVersion: 1,
         };
         expect(deepClone(controller.getDeviceByIeeeAddr("0x90fd9ffffe4b64ae"))).toStrictEqual(expected);
+        expect(controller.getDeviceByIeeeAddr("0x90fd9ffffe4b64ae")?.genBasic).toStrictEqual({
+            manufacturerName: "IKEA of Sweden",
+            modelId: "TRADFRI remote control",
+            powerSource: Zcl.PowerSource.Battery,
+            swBuildId: "1.2.214",
+            stackVersion: 87,
+            zclVersion: 1,
+            appVersion: 17,
+            dateCode: "20170302",
+            hwVersion: 1,
+        });
     });
 
     it("Read from group", async () => {
@@ -4591,7 +4654,7 @@ describe("Controller", () => {
     it("Write to group", async () => {
         await controller.start();
         const group = await controller.createGroup(2);
-        await group.write("genBasic", {49: {value: 0x000b, type: 0x19}, deviceEnabled: true}, {});
+        await group.write("genBasic", {49: {value: 0x000b, type: 0x19}, deviceEnabled: 1}, {});
         expect(mocksendZclFrameToGroup).toHaveBeenCalledTimes(1);
         expect(mocksendZclFrameToGroup.mock.calls[0][0]).toBe(2);
         expect(deepClone(mocksendZclFrameToGroup.mock.calls[0][1])).toStrictEqual(
@@ -4606,7 +4669,7 @@ describe("Controller", () => {
                     0,
                     [
                         {attrData: 11, attrId: 49, dataType: 25},
-                        {attrData: true, attrId: 18, dataType: 16},
+                        {attrData: 1, attrId: 18, dataType: 16},
                     ],
                     {},
                 ),
@@ -4620,7 +4683,7 @@ describe("Controller", () => {
         const group = await controller.createGroup(2);
         let error;
         try {
-            await group.write("genBasic", {UNKNOWN: {value: 0x000b, type: 0x19}, deviceEnabled: true}, {});
+            await group.write("genBasic", {UNKNOWN: {value: 0x000b, type: 0x19}, deviceEnabled: 1}, {});
         } catch (e) {
             error = e;
         }
@@ -5311,8 +5374,6 @@ describe("Controller", () => {
             _eventsCount: 0,
             _pendingRequestTimeout: 0,
             _skipDefaultResponse: false,
-            _applicationVersion: 17,
-            _dateCode: "20170331",
             _customClusters: {},
             _endpoints: [
                 {
@@ -5332,27 +5393,29 @@ describe("Controller", () => {
                     profileID: 49246,
                 },
             ],
-            _hardwareVersion: 1,
             _ieeeAddr: "0x000b57fffec6a5b2",
             _interviewState: InterviewState.Successful,
             _manufacturerID: 4476,
-            _manufacturerName: "IKEA of Sweden",
             meta: {reporting: 1},
-            _modelID: "TRADFRI bulb E27 WS opal 980lm",
             _networkAddress: 40369,
-            _powerSource: "Mains (single phase)",
-            _softwareBuildID: "1.2.217",
-            _stackVersion: 87,
             _type: "Router",
-            _zclVersion: 1,
+        });
+        expect(controller.getDeviceByIeeeAddr("0x000b57fffec6a5b2")?.genBasic).toStrictEqual({
+            appVersion: 17,
+            dateCode: "20170331",
+            hwVersion: 1,
+            manufacturerName: "IKEA of Sweden",
+            modelId: "TRADFRI bulb E27 WS opal 980lm",
+            powerSource: Zcl.PowerSource["Mains (single phase)"],
+            swBuildId: "1.2.217",
+            stackVersion: 87,
+            zclVersion: 1,
         });
         expect(deepClone(controller.getDeviceByIeeeAddr("0x0017880104e45517"))).toStrictEqual({
             ID: 4,
             _events: {},
             _eventsCount: 0,
             _pendingRequestTimeout: 0,
-            _applicationVersion: 2,
-            _dateCode: "20160302",
             _customClusters: {},
             _endpoints: [
                 {
@@ -5388,21 +5451,25 @@ describe("Controller", () => {
                     pendingRequests: {id: 2, deviceIeeeAddress: "0x0017880104e45517", sendInProgress: false},
                 },
             ],
-            _hardwareVersion: 1,
             _ieeeAddr: "0x0017880104e45517",
             _interviewState: InterviewState.Successful,
             _lastSeen: 123,
             _manufacturerID: 4107,
-            _manufacturerName: "Philips",
-            _modelID: "RWL021",
             _networkAddress: 6538,
-            _powerSource: "Battery",
-            _softwareBuildID: "5.45.1.17846",
-            _stackVersion: 1,
             _type: "EndDevice",
-            _zclVersion: 1,
             _skipDefaultResponse: false,
             meta: {configured: 1},
+        });
+        expect(controller.getDeviceByIeeeAddr("0x0017880104e45517")?.genBasic).toStrictEqual({
+            appVersion: 2,
+            dateCode: "20160302",
+            hwVersion: 1,
+            manufacturerName: "Philips",
+            modelId: "RWL021",
+            powerSource: Zcl.PowerSource.Battery,
+            swBuildId: "5.45.1.17846",
+            stackVersion: 1,
+            zclVersion: 1,
         });
         expect(deepClone(controller.getDeviceByIeeeAddr("0x0017880104e45518"))).toStrictEqual({
             ID: 6,
@@ -5410,8 +5477,6 @@ describe("Controller", () => {
             _events: {},
             _eventsCount: 0,
             _pendingRequestTimeout: 123456000,
-            _applicationVersion: 2,
-            _dateCode: "20160302",
             _customClusters: {},
             _endpoints: [
                 {
@@ -5447,20 +5512,24 @@ describe("Controller", () => {
                     pendingRequests: {id: 2, deviceIeeeAddress: "0x0017880104e45518", sendInProgress: false},
                 },
             ],
-            _hardwareVersion: 1,
             _ieeeAddr: "0x0017880104e45518",
             _interviewState: InterviewState.Successful,
             _manufacturerID: 4107,
-            _manufacturerName: "Philips",
-            _modelID: "RWL021",
             _networkAddress: 6536,
-            _powerSource: "Battery",
-            _softwareBuildID: "5.45.1.17846",
-            _stackVersion: 1,
             _type: "EndDevice",
-            _zclVersion: 1,
             _skipDefaultResponse: false,
             meta: {configured: 1},
+        });
+        expect(controller.getDeviceByIeeeAddr("0x0017880104e45518")?.genBasic).toStrictEqual({
+            appVersion: 2,
+            dateCode: "20160302",
+            hwVersion: 1,
+            manufacturerName: "Philips",
+            modelId: "RWL021",
+            powerSource: Zcl.PowerSource.Battery,
+            swBuildId: "5.45.1.17846",
+            stackVersion: 1,
+            zclVersion: 1,
         });
         expect((await controller.getGroups()).length).toBe(2);
 
@@ -5976,24 +6045,22 @@ describe("Controller", () => {
 
     it("Write structured", async () => {
         await controller.start();
-        await controller.start();
         await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
         const device = controller.getDeviceByIeeeAddr("0x129")!;
         const endpoint = device.getEndpoint(1)!;
         mocksendZclFrameToEndpoint.mockReturnValueOnce(null);
 
-        await endpoint.writeStructured("genPowerCfg", {});
+        await endpoint.writeStructured("genPowerCfg", []);
     });
 
     it("Write structured with disable response", async () => {
         await controller.start();
-        await controller.start();
         await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
         const device = controller.getDeviceByIeeeAddr("0x129")!;
         const endpoint = device.getEndpoint(1)!;
         mocksendZclFrameToEndpoint.mockReturnValueOnce(null);
 
-        await endpoint.writeStructured("genPowerCfg", {}, {disableResponse: true});
+        await endpoint.writeStructured("genPowerCfg", [], {disableResponse: true});
     });
 
     it("Write structured error", async () => {
@@ -6004,14 +6071,68 @@ describe("Controller", () => {
         mocksendZclFrameToEndpoint.mockRejectedValueOnce(new Error("timeout occurred"));
         let error;
         try {
-            await endpoint.writeStructured("genPowerCfg", {});
+            await endpoint.writeStructured("genPowerCfg", []);
         } catch (e) {
             error = e;
         }
         expect(error).toStrictEqual(
             new Error(
-                `ZCL command 0x129/1 genPowerCfg.writeStructured({}, {"timeout":10000,"disableResponse":false,"disableRecovery":false,"disableDefaultResponse":true,"direction":0,"reservedBits":0,"writeUndiv":false}) failed (timeout occurred)`,
+                `ZCL command 0x129/1 genPowerCfg.writeStructured([], {"timeout":10000,"disableResponse":false,"disableRecovery":false,"disableDefaultResponse":true,"direction":0,"reservedBits":0,"writeUndiv":false}) failed (timeout occurred)`,
             ),
+        );
+    });
+
+    it("Write with custom payload", async () => {
+        await controller.start();
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
+        const device = controller.getDeviceByIeeeAddr("0x129")!;
+        const endpoint = device.getEndpoint(1)!;
+
+        const writeOptions = {
+            frameType: 0,
+            manufacturerCode: 0x1ad2,
+            disableDefaultResponse: true,
+            disableResponse: true,
+            reservedBits: 3,
+            direction: 1,
+            writeUndiv: true,
+            transactionSequenceNumber: 0xe9,
+        };
+
+        await endpoint.writeStructured(
+            "genPowerCfg",
+            [
+                {
+                    attrId: 0x0000,
+                    // @ts-expect-error workaround write custom payload, special case "do not write anything"
+                    selector: null,
+                    elementData: [0x04, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00],
+                    // dataType: undefined,
+                },
+            ],
+            writeOptions,
+        );
+
+        expect(lastSentZclFrameToEndpoint).toStrictEqual(
+            // Note: 0x00 before start of payload is from having dataType=undefined (gets written as zero)
+            Buffer.from([0x7c, 0xd2, 0x1a, 0xe9, 0x0f, 0x00, 0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]),
+        );
+
+        await endpoint.write(
+            "genPowerCfg",
+            {
+                // @ts-expect-error workaround write custom payload
+                4865: {
+                    value: [0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00],
+                    // type: undefined,
+                },
+            },
+            writeOptions,
+        );
+
+        expect(lastSentZclFrameToEndpoint).toStrictEqual(
+            // Note: 0x00 before start of payload is from having dataType=undefined (gets written as zero)
+            Buffer.from([0x7c, 0xd2, 0x1a, 0xe9, 0x03, 0x01, 0x13, 0x00, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]),
         );
     });
 
@@ -6115,7 +6236,6 @@ describe("Controller", () => {
                 _interviewState: InterviewState.Successful,
                 _lastSeen: Date.now(),
                 _linkquality: 50,
-                _modelID: "GreenPower_2",
                 _networkAddress: 0xf4fe,
                 _type: "GreenPower",
                 meta: {},
@@ -6135,12 +6255,15 @@ describe("Controller", () => {
                 _eventsCount: 0,
                 _ieeeAddr: "0x000000000046f4fe",
                 _interviewState: InterviewState.Successful,
-                _modelID: "GreenPower_2",
                 _networkAddress: 0xf4fe,
                 _type: "GreenPower",
                 meta: {},
                 _gpSecurityKey: [0xf1, 0xec, 0x92, 0xab, 0xff, 0x8f, 0x13, 0x63, 0xe1, 0x46, 0xbe, 0xb5, 0x18, 0xc9, 0x0c, 0xab],
             },
+        });
+        expect(deepClone(events.deviceInterviewRaw[0].device.genBasic)).toStrictEqual({
+            modelId: "GreenPower_2",
+            powerSource: 0,
         });
         expect(controller.getDeviceByIeeeAddr("0x000000000046f4fe")!.networkAddress).toBe(0xf4fe);
         expect(events.message.length).toBe(2);
@@ -6710,13 +6833,13 @@ describe("Controller", () => {
                 _interviewState: InterviewState.Successful,
                 _lastSeen: Date.now(),
                 _linkquality: 50,
-                _modelID: "GreenPower_2",
                 _networkAddress: 0x71f8,
                 _type: "GreenPower",
                 meta: {},
                 _gpSecurityKey: [0x21, 0x7f, 0x8c, 0xb2, 0x90, 0xd9, 0x90, 0x14, 0x15, 0xd0, 0x5c, 0xb1, 0x64, 0x7c, 0x44, 0x6c],
             },
         });
+        expect(controller.getDeviceByIeeeAddr("0x00000000017171f8")?.genBasic.modelId).toStrictEqual("GreenPower_2");
         expect(events.deviceInterview.length).toBe(3); // gpp[started] + gpp[successful] + gpd
         expect(deepClone(events.deviceInterview[2])).toStrictEqual({
             status: "successful",
@@ -6730,12 +6853,15 @@ describe("Controller", () => {
                 _endpoints: [],
                 _ieeeAddr: "0x00000000017171f8",
                 _interviewState: InterviewState.Successful,
-                _modelID: "GreenPower_2",
                 _networkAddress: 0x71f8,
                 _type: "GreenPower",
                 meta: {},
                 _gpSecurityKey: [0x21, 0x7f, 0x8c, 0xb2, 0x90, 0xd9, 0x90, 0x14, 0x15, 0xd0, 0x5c, 0xb1, 0x64, 0x7c, 0x44, 0x6c],
             },
+        });
+        expect(deepClone(events.deviceInterviewRaw[2].device.genBasic)).toStrictEqual({
+            modelId: "GreenPower_2",
+            powerSource: Zcl.PowerSource.Unknown,
         });
         expect(controller.getDeviceByIeeeAddr("0x00000000017171f8")!.networkAddress).toBe(0x71f8);
         expect(events.message.length).toBe(2);
@@ -6836,12 +6962,12 @@ describe("Controller", () => {
             _interviewState: InterviewState.Successful,
             _lastSeen: Date.now(),
             _linkquality: 50,
-            _modelID: "GreenPower_2",
             _networkAddress: 0x71f8,
             _type: "GreenPower",
             meta: {},
             _gpSecurityKey: [0x21, 0x7f, 0x8c, 0xb2, 0x90, 0xd9, 0x90, 0x14, 0x15, 0xd0, 0x5c, 0xb1, 0x64, 0x7c, 0x44, 0x6c],
         });
+        expect(Device.byIeeeAddr("0x00000000017171f8", true)?.genBasic.modelId).toStrictEqual("GreenPower_2");
 
         // Re-add device
         vi.spyOn(Zcl.Frame, "fromBuffer").mockReturnValueOnce(expectedFrame); // Mock because no Buffalo write for 0xe0 is implemented
@@ -6883,12 +7009,12 @@ describe("Controller", () => {
             _interviewState: InterviewState.Successful,
             _lastSeen: Date.now(),
             _linkquality: 50,
-            _modelID: "GreenPower_2",
             _networkAddress: 0x71f8,
             _type: "GreenPower",
             meta: {},
             _gpSecurityKey: [0x21, 0x7f, 0x8c, 0xb2, 0x90, 0xd9, 0x90, 0x14, 0x15, 0xd0, 0x5c, 0xb1, 0x64, 0x7c, 0x44, 0x6c],
         });
+        expect(Device.byIeeeAddr("0x00000000017171f8")?.genBasic.modelId).toStrictEqual("GreenPower_2");
     });
 
     it("Get input/ouptut clusters", async () => {
@@ -7473,7 +7599,7 @@ describe("Controller", () => {
         expect(checkinrsp[2]).toBe(1);
         expect(checkinrsp[3].cluster.name).toBe("genPollCtrl");
         expect(checkinrsp[3].command.name).toBe("checkinRsp");
-        expect(checkinrsp[3].payload).toStrictEqual({startFastPolling: true, fastPollTimeout: 0});
+        expect(checkinrsp[3].payload).toStrictEqual({startFastPolling: 1, fastPollTimeout: 0});
 
         expect(await result).toBe(undefined);
 
@@ -8241,6 +8367,12 @@ describe("Controller", () => {
     });
 
     it("reads/writes to group with custom cluster when common to all members", async () => {
+        interface CustomManuHerdsman {
+            attributes: {customAttr: number};
+            commands: never;
+            commandResponses: never;
+        }
+
         await controller.start();
         await mockAdapterEvents.deviceJoined({networkAddress: 177, ieeeAddr: "0x177"});
 
@@ -8257,8 +8389,8 @@ describe("Controller", () => {
 
         group.addMember(device.getEndpoint(1)!);
 
-        await group.write("manuHerdsman", {customAttr: 15}, {});
-        await group.read("manuHerdsman", ["customAttr"], {});
+        await group.write<"manuHerdsman", CustomManuHerdsman>("manuHerdsman", {customAttr: 15}, {});
+        await group.read<"manuHerdsman", CustomManuHerdsman>("manuHerdsman", ["customAttr"], {});
 
         expect(mocksendZclFrameToGroup).toHaveBeenCalledTimes(2);
         expect(mocksendZclFrameToGroup.mock.calls[0][0]).toBe(34);
@@ -8317,22 +8449,22 @@ describe("Controller", () => {
             await group.read("manuHerdsman", ["customAttr"], {});
         }).rejects.toThrow(new Error(`Cluster with name 'manuHerdsman' does not exist`));
 
-        await group.write("manuHerdsman", {customAttr: 14}, {direction: Zcl.Direction.SERVER_TO_CLIENT});
-        await group.read("manuHerdsman", ["customAttr"], {direction: Zcl.Direction.SERVER_TO_CLIENT});
+        await group.write<"manuHerdsman", CustomManuHerdsman>("manuHerdsman", {customAttr: 14}, {direction: Zcl.Direction.SERVER_TO_CLIENT});
+        await group.read<"manuHerdsman", CustomManuHerdsman>("manuHerdsman", ["customAttr"], {direction: Zcl.Direction.SERVER_TO_CLIENT});
 
         expect(mocksendZclFrameToGroup).toHaveBeenCalledTimes(4);
 
         group.removeMember(device2.getEndpoint(2)!);
 
-        await group.write("manuHerdsman", {customAttr: 16}, {});
-        await group.read("manuHerdsman", ["customAttr"], {});
+        await group.write<"manuHerdsman", CustomManuHerdsman>("manuHerdsman", {customAttr: 16}, {});
+        await group.read<"manuHerdsman", CustomManuHerdsman>("manuHerdsman", ["customAttr"], {});
 
         expect(mocksendZclFrameToGroup).toHaveBeenCalledTimes(6);
 
         group.addMember(device2.getEndpoint(1)!);
 
-        await group.write("manuHerdsman", {customAttr: 8}, {});
-        await group.read("manuHerdsman", ["customAttr"], {});
+        await group.write<"manuHerdsman", CustomManuHerdsman>("manuHerdsman", {customAttr: 8}, {});
+        await group.read<"manuHerdsman", CustomManuHerdsman>("manuHerdsman", ["customAttr"], {});
 
         expect(mocksendZclFrameToGroup).toHaveBeenCalledTimes(8);
 
@@ -8518,5 +8650,53 @@ describe("Controller", () => {
                 duration: 15,
             });
         }).rejects.toThrow(new Error(`Cluster with name 'manuSpecificInovelli' does not exist`));
+    });
+
+    it("Updates a device genBasic properties", async () => {
+        await controller.start();
+        expect(databaseContents().includes("0x129")).toBeFalsy();
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
+
+        const device = controller.getDeviceByIeeeAddr("0x129")!;
+
+        expect(device.applicationVersion).toStrictEqual(2);
+        expect(device.dateCode).toStrictEqual("201901");
+        expect(device.hardwareVersion).toStrictEqual(3);
+        expect(device.manufacturerName).toStrictEqual("KoenAndCo");
+        expect(device.modelID).toStrictEqual("myModelID");
+        expect(device.powerSource).toStrictEqual("Mains (single phase)");
+        expect(device.softwareBuildID).toStrictEqual("1.01");
+        expect(device.stackVersion).toStrictEqual(101);
+        expect(device.zclVersion).toStrictEqual(1);
+
+        device.applicationVersion = 3;
+        device.dateCode = "202501";
+        device.hardwareVersion = 4;
+        device.manufacturerName = "Test";
+        device.modelID = "Me";
+        device.powerSource = "DC Source";
+        device.softwareBuildID = "2.01";
+        device.stackVersion = 202;
+        device.zclVersion = 2;
+
+        expect(device.applicationVersion).toStrictEqual(3);
+        expect(device.dateCode).toStrictEqual("202501");
+        expect(device.hardwareVersion).toStrictEqual(4);
+        expect(device.manufacturerName).toStrictEqual("Test");
+        expect(device.modelID).toStrictEqual("Me");
+        expect(device.powerSource).toStrictEqual("DC Source");
+        expect(device.softwareBuildID).toStrictEqual("2.01");
+        expect(device.stackVersion).toStrictEqual(202);
+        expect(device.zclVersion).toStrictEqual(2);
+
+        expect(device.genBasic.appVersion).toStrictEqual(3);
+        expect(device.genBasic.dateCode).toStrictEqual("202501");
+        expect(device.genBasic.hwVersion).toStrictEqual(4);
+        expect(device.genBasic.manufacturerName).toStrictEqual("Test");
+        expect(device.genBasic.modelId).toStrictEqual("Me");
+        expect(device.genBasic.powerSource).toStrictEqual(Zcl.PowerSource["DC Source"]);
+        expect(device.genBasic.swBuildId).toStrictEqual("2.01");
+        expect(device.genBasic.stackVersion).toStrictEqual(202);
+        expect(device.genBasic.zclVersion).toStrictEqual(2);
     });
 });

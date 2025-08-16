@@ -83,7 +83,9 @@ export class Request<Type = any> {
 
     async send(): Promise<Type> {
         try {
-            return await this.func();
+            const ret = await this.func();
+
+            return ret;
         } catch (error) {
             this.lastError = error as Error;
             throw error;
