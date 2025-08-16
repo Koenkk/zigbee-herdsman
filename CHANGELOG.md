@@ -1,5 +1,15 @@
 # Changelog
 
+## [6.0.1](https://github.com/Koenkk/zigbee-herdsman/compare/v6.0.0...v6.0.1) (2025-08-16)
+
+
+### Bug Fixes
+
+* Handle parsing errors in Endpoint waitForCommand ([#1481](https://github.com/Koenkk/zigbee-herdsman/issues/1481)) ([ef0825b](https://github.com/Koenkk/zigbee-herdsman/commit/ef0825b5f4471e75b623bacd5c4319ce858eb7ed))
+* Map responses for some hvacThermostat cluster commands ([#1472](https://github.com/Koenkk/zigbee-herdsman/issues/1472)) ([5e55a56](https://github.com/Koenkk/zigbee-herdsman/commit/5e55a563d55e709dd9af481ac7b0b4bbfd18a02a))
+* Remove `sprutDevice` cluster ([#1484](https://github.com/Koenkk/zigbee-herdsman/issues/1484)) ([d5bde3c](https://github.com/Koenkk/zigbee-herdsman/commit/d5bde3cc284781c3aa83b0e38302eb8a3df681c5))
+* Type Endpoint & Group ZCL, refactor to fit ([#1479](https://github.com/Koenkk/zigbee-herdsman/issues/1479)) ([500d4d1](https://github.com/Koenkk/zigbee-herdsman/commit/500d4d1aa201db71de39abc7cbe1a5dfca4a4ad3))
+
 ## [6.0.0](https://github.com/Koenkk/zigbee-herdsman/compare/v5.0.4...v6.0.0) (2025-08-11)
 
 
