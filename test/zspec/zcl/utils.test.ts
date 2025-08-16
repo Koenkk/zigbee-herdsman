@@ -51,13 +51,13 @@ describe("ZCL Utils", () => {
         ],
         [
             "by ID with non-matching manufacturer code",
-            {key: Zcl.Clusters.sprutDevice.ID, manufacturerCode: 123, customClusters: {}},
-            {cluster: Zcl.Clusters.sprutDevice, name: "sprutDevice"},
+            {key: Zcl.Clusters.manuSpecificSinope.ID, manufacturerCode: 123, customClusters: {}},
+            {cluster: Zcl.Clusters.manuSpecificSinope, name: "manuSpecificSinope"},
         ],
         [
             "by ID with matching manufacturer code",
-            {key: Zcl.Clusters.sprutDevice.ID, manufacturerCode: Zcl.Clusters.sprutDevice.manufacturerCode!, customClusters: {}},
-            {cluster: Zcl.Clusters.sprutDevice, name: "sprutDevice"},
+            {key: Zcl.Clusters.manuSpecificSinope.ID, manufacturerCode: Zcl.Clusters.manuSpecificSinope.manufacturerCode!, customClusters: {}},
+            {cluster: Zcl.Clusters.manuSpecificSinope, name: "manuSpecificSinope"},
         ],
         [
             "custom by ID",
