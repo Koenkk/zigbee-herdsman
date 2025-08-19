@@ -68,11 +68,11 @@ describe("UART", () => {
 
     beforeEach(() => {
         for (const mock of mocks) {
-            // @ts-ignore
+            // @ts-expect-error
             mock.mockClear();
         }
 
-        // @ts-ignore; make sure we always get a new instance
+        // @ts-expect-error; make sure we always get a new instance
         serialDriver = new SerialDriver();
         writeBufferSpy = vi.spyOn(Writer.prototype, "writeBuffer").mockImplementation((buffer) => {
             if (buffer[0] === 0x1a) {
