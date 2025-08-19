@@ -7,6 +7,7 @@ import Database from "../src/controller/database";
 import {setLogger} from "../src/utils/logger";
 import * as Zcl from "../src/zspec/zcl";
 import * as Zdo from "../src/zspec/zdo";
+import {BENCH_OPTIONS} from "./benchOptions";
 
 // mock necessary functions to avoid system calls / adapter interactions
 
@@ -26,91 +27,105 @@ const NETWORK_OPTIONS = {
     // networkKeyDistribute?: boolean;
 };
 const COORD_IEEE = "0x1234567812345678";
-const controller = new Controller({
-    network: NETWORK_OPTIONS,
-    serialPort: {
-        baudRate: 115200,
-        rtscts: false,
-        path: "/dev/ttyDummy0",
-        adapter: "ember",
-    },
-    databasePath: "database.db",
-    databaseBackupPath: "database.db.backup",
-    backupPath: "coordinator_backup.json",
-    adapter: {
-        // concurrent?: number;
-        // delay?: number;
-        disableLED: false,
-        // transmitPower?: number;
-        // forceStartWithInconsistentAdapterConfiguration?: boolean;
-    },
-    acceptJoiningDeviceHandler: async () => true,
-});
-controller.backup = async () => {};
-const dbOpen = Database.open;
-Database.open = (path) => {
-    const db = dbOpen(path);
-    // no-op
-    db.write = () => {};
 
-    return db;
-};
+let controller: Controller;
 let adapter: Adapter;
-const adapterCreate = Adapter.create;
-Adapter.create = async (networkOptions, serialPortOptions, backupPath, adapterOptions) => {
-    adapter = await adapterCreate(networkOptions, serialPortOptions, backupPath, adapterOptions);
-    adapter.start = async () => await Promise.resolve("resumed");
-    adapter.getCoordinatorIEEE = async () => await Promise.resolve(COORD_IEEE);
-    adapter.getNetworkParameters = async () =>
-        await Promise.resolve({
-            panID: NETWORK_OPTIONS.panID,
-            extendedPanID: `${Buffer.from(NETWORK_OPTIONS.extendedPanID!).toString("hex")}`,
-            channel: NETWORK_OPTIONS.channelList[0],
-            nwkUpdateID: 1,
-        });
-    // @ts-expect-error ignore overrides typing
-    adapter.sendZdo = async (_ieeeAddress: string, networkAddress: number, clusterId: Zdo.ClusterId, payload: Buffer, _disableResponse: boolean) => {
-        if (networkAddress === 0x0000) {
-            switch (clusterId) {
-                case Zdo.ClusterId.ACTIVE_ENDPOINTS_REQUEST: {
-                    return await Promise.resolve([
-                        Zdo.Status.SUCCESS,
-                        {
-                            nwkAddress: 0x0000,
-                            endpointList: [FIXED_ENDPOINTS[0].endpoint, FIXED_ENDPOINTS[1].endpoint],
-                        },
-                    ]);
-                }
-                case Zdo.ClusterId.SIMPLE_DESCRIPTOR_REQUEST: {
-                    if (payload.readUInt8(3) === FIXED_ENDPOINTS[0].endpoint) {
+
+const makeController = () => {
+    controller = new Controller({
+        network: NETWORK_OPTIONS,
+        serialPort: {
+            baudRate: 115200,
+            rtscts: false,
+            path: "/dev/ttyDummy0",
+            adapter: "ember",
+        },
+        databasePath: "database.db",
+        databaseBackupPath: "database.db.backup",
+        backupPath: "coordinator_backup.json",
+        adapter: {
+            // concurrent?: number;
+            // delay?: number;
+            disableLED: false,
+            // transmitPower?: number;
+            // forceStartWithInconsistentAdapterConfiguration?: boolean;
+        },
+        acceptJoiningDeviceHandler: async () => true,
+    });
+    controller.backup = async () => {};
+
+    const dbOpen = Database.open;
+    Database.open = (path) => {
+        const db = dbOpen(path);
+        // no-op
+        db.write = () => {};
+
+        return db;
+    };
+    const adapterCreate = Adapter.create;
+    Adapter.create = async (networkOptions, serialPortOptions, backupPath, adapterOptions) => {
+        adapter = await adapterCreate(networkOptions, serialPortOptions, backupPath, adapterOptions);
+        adapter.start = async () => await Promise.resolve("resumed");
+        adapter.getCoordinatorIEEE = async () => await Promise.resolve(COORD_IEEE);
+        adapter.getNetworkParameters = async () =>
+            await Promise.resolve({
+                panID: NETWORK_OPTIONS.panID,
+                extendedPanID: `${Buffer.from(NETWORK_OPTIONS.extendedPanID!).toString("hex")}`,
+                channel: NETWORK_OPTIONS.channelList[0],
+                nwkUpdateID: 1,
+            });
+        // @ts-expect-error ignore overrides typing
+        adapter.sendZdo = async (
+            _ieeeAddress: string,
+            networkAddress: number,
+            clusterId: Zdo.ClusterId,
+            payload: Buffer,
+            _disableResponse: boolean,
+        ) => {
+            if (networkAddress === 0x0000) {
+                switch (clusterId) {
+                    case Zdo.ClusterId.ACTIVE_ENDPOINTS_REQUEST: {
                         return await Promise.resolve([
                             Zdo.Status.SUCCESS,
                             {
                                 nwkAddress: 0x0000,
-                                length: 1, // unused
-                                ...FIXED_ENDPOINTS[0],
+                                endpointList: [FIXED_ENDPOINTS[0].endpoint, FIXED_ENDPOINTS[1].endpoint],
                             },
                         ]);
                     }
+                    case Zdo.ClusterId.SIMPLE_DESCRIPTOR_REQUEST: {
+                        if (payload.readUInt8(3) === FIXED_ENDPOINTS[0].endpoint) {
+                            return await Promise.resolve([
+                                Zdo.Status.SUCCESS,
+                                {
+                                    nwkAddress: 0x0000,
+                                    length: 1, // unused
+                                    ...FIXED_ENDPOINTS[0],
+                                },
+                            ]);
+                        }
 
-                    if (payload.readUInt8(3) === FIXED_ENDPOINTS[1].endpoint) {
-                        return await Promise.resolve([
-                            Zdo.Status.SUCCESS,
-                            {
-                                nwkAddress: 0x0000,
-                                length: 1, // unused
-                                ...FIXED_ENDPOINTS[1],
-                            },
-                        ]);
+                        if (payload.readUInt8(3) === FIXED_ENDPOINTS[1].endpoint) {
+                            return await Promise.resolve([
+                                Zdo.Status.SUCCESS,
+                                {
+                                    nwkAddress: 0x0000,
+                                    length: 1, // unused
+                                    ...FIXED_ENDPOINTS[1],
+                                },
+                            ]);
+                        }
                     }
                 }
             }
-        }
 
-        return await Promise.resolve([Zdo.Status.NOT_SUPPORTED]);
+            return await Promise.resolve([Zdo.Status.NOT_SUPPORTED]);
+        };
+
+        return adapter;
     };
 
-    return adapter;
+    return controller;
 };
 
 const BASIC_RESP = Zcl.Frame.create(
@@ -142,9 +157,11 @@ describe("Controller", () => {
     bench(
         "Startup with dummy adapter",
         async () => {
+            makeController(); // always use brand new Controller for this bench
+
             await controller.start();
         },
-        {throws: true},
+        BENCH_OPTIONS,
     );
 
     bench(
@@ -163,10 +180,12 @@ describe("Controller", () => {
             } satisfies ZclPayload);
         },
         {
-            setup: async () => {
+            ...BENCH_OPTIONS,
+            setup: async (task, mode) => {
+                await BENCH_OPTIONS.setup!(task, mode);
+                makeController();
                 await controller.start();
             },
-            throws: true,
         },
     );
 
@@ -184,10 +203,12 @@ describe("Controller", () => {
             ]);
         },
         {
-            setup: async () => {
+            ...BENCH_OPTIONS,
+            setup: async (task, mode) => {
+                await BENCH_OPTIONS.setup!(task, mode);
+                makeController();
                 await controller.start();
             },
-            throws: true,
         },
     );
 });
