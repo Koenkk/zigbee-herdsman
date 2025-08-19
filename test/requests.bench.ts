@@ -7,6 +7,7 @@ import {InterviewState} from "../src/controller/model/device";
 import {setLogger} from "../src/utils/logger";
 import * as Zcl from "../src/zspec/zcl";
 import * as Zdo from "../src/zspec/zdo";
+import {BENCH_OPTIONS} from "./benchOptions";
 import {uint16To8Array} from "./utils/math";
 
 let sendZclFrameToEndpointResponse: ZclPayload | undefined;
@@ -107,14 +108,12 @@ const BASIC_RESP = Zcl.Frame.create(
 ).toBuffer();
 
 describe("Requests", () => {
-    beforeEach(() => {
-        sendZclFrameToEndpointResponse = undefined;
-        sendZdoResponse = undefined;
-    });
-
     bench(
         "device lqi",
         async () => {
+            sendZclFrameToEndpointResponse = undefined;
+            sendZdoResponse = undefined;
+
             sendZdoResponse = Zdo.Buffalo.readResponse(true, Zdo.ClusterId.LQI_TABLE_RESPONSE, LQI_TABLE_RESPONSE);
             const resp = await device.lqi();
 
@@ -122,20 +121,26 @@ describe("Requests", () => {
                 throw new Error("Invalid response");
             }
         },
-        {throws: true},
+        BENCH_OPTIONS,
     );
 
     bench(
         "device.endpoint write basic",
         async () => {
+            sendZclFrameToEndpointResponse = undefined;
+            sendZdoResponse = undefined;
+
             await endpoint.write("genBasic", {modelId: "Herd-02", manufacturerName: "HerdsmanNew"}, {sendPolicy: "immediate"});
         },
-        {throws: true},
+        BENCH_OPTIONS,
     );
 
     bench(
         "device.endpoint read basic",
         async () => {
+            sendZclFrameToEndpointResponse = undefined;
+            sendZdoResponse = undefined;
+
             sendZclFrameToEndpointResponse = {
                 clusterID: Zcl.Clusters.genBasic.ID,
                 header: Zcl.Header.fromBuffer(BASIC_RESP),
@@ -153,54 +158,72 @@ describe("Requests", () => {
                 throw new Error("Invalid response");
             }
         },
-        {throws: true},
+        BENCH_OPTIONS,
     );
 
     bench(
         "device.endpoint defaultRsp",
         async () => {
+            sendZclFrameToEndpointResponse = undefined;
+            sendZdoResponse = undefined;
+
             await endpoint.defaultResponse(0, 0, 0, 1);
         },
-        {throws: true},
+        BENCH_OPTIONS,
     );
 
     bench(
         "device.endpoint command",
         async () => {
+            sendZclFrameToEndpointResponse = undefined;
+            sendZdoResponse = undefined;
+
             await endpoint.command("genOnOff", "offWithEffect", {effectid: 1, effectvariant: 2}, {sendPolicy: "immediate"});
         },
-        {throws: true},
+        BENCH_OPTIONS,
     );
 
     bench(
         "device.endpoint commandResponse",
         async () => {
+            sendZclFrameToEndpointResponse = undefined;
+            sendZdoResponse = undefined;
+
             await endpoint.commandResponse("genAlarms", "alarm", {alarmcode: 123, clusterid: 456}, {sendPolicy: "immediate"});
         },
-        {throws: true},
+        BENCH_OPTIONS,
     );
 
     bench(
         "group write basic",
         async () => {
+            sendZclFrameToEndpointResponse = undefined;
+            sendZdoResponse = undefined;
+
             await group.write("genBasic", {modelId: "Herd-02", manufacturerName: "HerdsmanNew"});
         },
-        {throws: true},
+        BENCH_OPTIONS,
     );
 
     bench(
         "group read basic",
         async () => {
+            sendZclFrameToEndpointResponse = undefined;
+            sendZdoResponse = undefined;
+
             await group.read("genBasic", ["modelId", "manufacturerName"]);
         },
-        {throws: true},
+        BENCH_OPTIONS,
     );
 
     bench(
         "group command",
         async () => {
+            sendZclFrameToEndpointResponse = undefined;
+            sendZdoResponse = undefined;
+
             await group.command("genRssiLocation", "getDevCfg", {targetaddr: IEEE_ADDRESS1}, {});
         },
-        {throws: true},
+        BENCH_OPTIONS,
     );
 });

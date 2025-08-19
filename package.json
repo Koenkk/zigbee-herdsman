@@ -40,7 +40,6 @@
     "description": "An open source ZigBee gateway solution with node.js.",
     "devDependencies": {
         "@biomejs/biome": "^2.2.0",
-        "@codspeed/vitest-plugin": "^4.0.1",
         "@serialport/binding-mock": "^10.2.2",
         "@types/debounce": "^1.2.4",
         "@types/node": "^24.3.0",
