@@ -118,10 +118,10 @@ export class ZiGateAdapter extends Adapter {
         const meta = {
             transportrev: 0,
             product: 0,
-            majorrel: Number.parseInt(<string>result.payload.major).toString(16),
-            minorrel: Number.parseInt(<string>result.payload.minor).toString(16),
-            maintrel: Number.parseInt(<string>result.payload.revision).toString(16),
-            revision: Number.parseInt(<string>result.payload.revision).toString(16),
+            majorrel: Number.parseInt(<string>result.payload.major, 10).toString(16),
+            minorrel: Number.parseInt(<string>result.payload.minor, 10).toString(16),
+            maintrel: Number.parseInt(<string>result.payload.revision, 10).toString(16),
+            revision: Number.parseInt(<string>result.payload.revision, 10).toString(16),
         };
 
         return {

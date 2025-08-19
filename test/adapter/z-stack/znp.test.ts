@@ -123,11 +123,11 @@ describe("ZNP", () => {
 
     beforeEach(() => {
         for (const mock of mocks) {
-            // @ts-ignore
+            // @ts-expect-error
             mock.mockClear();
         }
 
-        // @ts-ignore; make sure we always get a new instance
+        // @ts-expect-error; make sure we always get a new instance
         znp = new Znp("/dev/ttyACM0", 100, true);
         requestSpy = vi.spyOn(znp, "request").mockImplementation(() => {});
     });
@@ -938,7 +938,7 @@ describe("ZNP", () => {
     });
 
     it("ZpiObject throw error on missing write parser", () => {
-        // @ts-ignore; make sure we always get a new instance
+        // @ts-expect-error; make sure we always get a new instance
         const obj = new ZpiObject(0, 0, "dummy", 0, {}, [{name: "nonExisting", parameterType: 9999999}]);
         expect(() => {
             obj.createPayloadBuffer();
@@ -960,7 +960,7 @@ describe("ZNP", () => {
     });
 
     it("ZpiObject with cmd and non sapi is not reset command", () => {
-        // @ts-ignore; make sure we always get a new instance
+        // @ts-expect-error; make sure we always get a new instance
         const obj = new ZpiObject(UnpiConstants.Type.SREQ, UnpiConstants.Subsystem.AF, "systemReset", 0, {}, []);
         expect(obj.isResetCommand()).toBeFalsy();
     });

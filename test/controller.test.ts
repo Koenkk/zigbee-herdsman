@@ -4191,7 +4191,7 @@ describe("Controller", () => {
         }
         expect(error instanceof Zcl.StatusError).toBeTruthy();
         expect((error as Zcl.StatusError).message).toStrictEqual(
-            `ZCL command 0x129/1 genPowerCfg.configReport([{\"attribute\":\"mainsFrequency\",\"minimumReportInterval\":1,\"maximumReportInterval\":10,\"reportableChange\":1}], {\"timeout\":10000,\"disableResponse\":false,\"disableRecovery\":false,\"disableDefaultResponse\":true,\"direction\":0,\"reservedBits\":0,\"writeUndiv\":false}) failed (Status 'FAILURE')`,
+            `ZCL command 0x129/1 genPowerCfg.configReport([{"attribute":"mainsFrequency","minimumReportInterval":1,"maximumReportInterval":10,"reportableChange":1}], {"timeout":10000,"disableResponse":false,"disableRecovery":false,"disableDefaultResponse":true,"direction":0,"reservedBits":0,"writeUndiv":false}) failed (Status 'FAILURE')`,
         );
         expect((error as Zcl.StatusError).code).toBe(1);
     });
@@ -4219,7 +4219,7 @@ describe("Controller", () => {
         }
         expect(error instanceof Zcl.StatusError).toBeTruthy();
         expect((error as Zcl.StatusError).message).toStrictEqual(
-            `ZCL command 0x129/1 genPowerCfg.configReport([{\"attribute\":\"mainsFrequency\",\"minimumReportInterval\":1,\"maximumReportInterval\":10,\"reportableChange\":1}], {\"timeout\":10000,\"disableResponse\":false,\"disableRecovery\":false,\"disableDefaultResponse\":true,\"direction\":0,\"reservedBits\":0,\"writeUndiv\":false}) failed (Status 'FAILURE')`,
+            `ZCL command 0x129/1 genPowerCfg.configReport([{"attribute":"mainsFrequency","minimumReportInterval":1,"maximumReportInterval":10,"reportableChange":1}], {"timeout":10000,"disableResponse":false,"disableRecovery":false,"disableDefaultResponse":true,"direction":0,"reservedBits":0,"writeUndiv":false}) failed (Status 'FAILURE')`,
         );
         expect((error as Zcl.StatusError).code).toBe(1);
     });
@@ -5594,7 +5594,7 @@ describe("Controller", () => {
 
     it("Shouldnt load device from group databaseentry", () => {
         expect(() => {
-            // @ts-ignore
+            // @ts-expect-error
             Device.fromDatabaseEntry({type: "Group", endpoints: []});
         }).toThrow("Cannot load device from group");
     });
@@ -7166,7 +7166,7 @@ describe("Controller", () => {
             await endpoint.write("genOnOff", {onOff: 1}, {disableResponse: true, sendPolicy: "immediate"});
         } catch (error) {
             expect((error as Error).message).toStrictEqual(
-                `ZCL command 0x129/1 genOnOff.write({\"onOff\":1}, {"timeout":10000,"disableResponse":true,"disableRecovery":false,"disableDefaultResponse":true,"direction":0,"reservedBits":0,"writeUndiv":false,"sendPolicy":"immediate"}) failed (Dogs barking too hard)`,
+                `ZCL command 0x129/1 genOnOff.write({"onOff":1}, {"timeout":10000,"disableResponse":true,"disableRecovery":false,"disableDefaultResponse":true,"direction":0,"reservedBits":0,"writeUndiv":false,"sendPolicy":"immediate"}) failed (Dogs barking too hard)`,
             );
         }
         expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(1);
@@ -7244,7 +7244,7 @@ describe("Controller", () => {
         }
         expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(2);
         expect((error as Error).message).toStrictEqual(
-            `ZCL command 0x129/1 genOnOff.write({\"onOff\":1}, {"timeout":10000,"disableResponse":true,"disableRecovery":false,"disableDefaultResponse":true,"direction":0,"reservedBits":0,"writeUndiv":false}) failed (Dogs barking too hard)`,
+            `ZCL command 0x129/1 genOnOff.write({"onOff":1}, {"timeout":10000,"disableResponse":true,"disableRecovery":false,"disableDefaultResponse":true,"direction":0,"reservedBits":0,"writeUndiv":false}) failed (Dogs barking too hard)`,
         );
     });
 

@@ -110,7 +110,7 @@ describe("Zcl", () => {
 
     it("ZclFrame from buffer parse payload with unknown frame type", () => {
         expect(() => {
-            // @ts-ignore
+            // @ts-expect-error
             Zcl.Frame.parsePayload({frameControl: {frameType: 9}}, undefined);
         }).toThrow("Unsupported frameType '9'");
     });

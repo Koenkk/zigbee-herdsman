@@ -209,7 +209,7 @@ export class ZStackAdapter extends Adapter {
         if (this.supportsLED == null) {
             // Only zStack3x0 with 20210430 and greater support LED
             const zStack3x0 = this.version.product === ZnpVersion.ZStack3x0;
-            this.supportsLED = !zStack3x0 || (zStack3x0 && Number.parseInt(this.version.revision) >= 20210430);
+            this.supportsLED = !zStack3x0 || (zStack3x0 && Number.parseInt(this.version.revision, 10) >= 20210430);
         }
 
         if (!this.supportsLED || (this.adapterOptions.disableLED && action !== "disable")) {
@@ -217,7 +217,7 @@ export class ZStackAdapter extends Adapter {
         }
 
         // Firmwares build on and after 20211029 should handle LED themselves
-        const firmwareControlsLed = Number.parseInt(this.version.revision) >= 20211029;
+        const firmwareControlsLed = Number.parseInt(this.version.revision, 10) >= 20211029;
         const lookup = {
             disable: firmwareControlsLed ? {ledid: 0xff, mode: 5} : {ledid: 3, mode: 0},
             on: firmwareControlsLed ? null : {ledid: 3, mode: 1},
@@ -260,11 +260,11 @@ export class ZStackAdapter extends Adapter {
     }
 
     private supportsAssocRemove(): boolean {
-        return this.version.product === ZnpVersion.ZStack3x0 && Number.parseInt(this.version.revision) >= 20200805;
+        return this.version.product === ZnpVersion.ZStack3x0 && Number.parseInt(this.version.revision, 10) >= 20200805;
     }
 
     private supportsAssocAdd(): boolean {
-        return this.version.product === ZnpVersion.ZStack3x0 && Number.parseInt(this.version.revision) >= 20201026;
+        return this.version.product === ZnpVersion.ZStack3x0 && Number.parseInt(this.version.revision, 10) >= 20201026;
     }
 
     private async discoverRoute(networkAddress: number, waitSettled = true): Promise<void> {
