@@ -9,7 +9,7 @@ import {SerialPort} from "../serialPort";
 import SocketPortUtils from "../socketPortUtils";
 import type {SerialPortOptions} from "../tstype";
 import {SIGNATURE, ZBOSS_FLAG_FIRST_FRAGMENT, ZBOSS_FLAG_LAST_FRAGMENT, ZBOSS_NCP_API_HL} from "./consts";
-import {type ZBOSSFrame, readZBOSSFrame, writeZBOSSFrame} from "./frame";
+import {readZBOSSFrame, writeZBOSSFrame, type ZBOSSFrame} from "./frame";
 import {ZBOSSReader} from "./reader";
 import {crc8, crc16} from "./utils";
 import {ZBOSSWriter} from "./writer";

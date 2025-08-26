@@ -4,16 +4,15 @@ import assert from "node:assert";
 import EventEmitter from "node:events";
 
 import equals from "fast-deep-equal/es6";
-
-import type {TsType} from "..";
 import type {KeyValue} from "../../controller/tstype";
 import {Queue, Waitress} from "../../utils";
 import {logger} from "../../utils/logger";
 import type * as ZSpec from "../../zspec";
 import * as Zdo from "../../zspec/zdo";
+import type {TsType} from "..";
 import {ZDO_REQ_CLUSTER_ID_TO_ZBOSS_COMMAND_ID} from "./commands";
 import {CommandId, DeviceType, PolicyType, ResetOptions, StatusCodeGeneric} from "./enums";
-import {FrameType, type ZBOSSFrame, makeFrame} from "./frame";
+import {FrameType, makeFrame, type ZBOSSFrame} from "./frame";
 import {ZBOSSUart} from "./uart";
 
 const NS = "zh:zboss:driv";

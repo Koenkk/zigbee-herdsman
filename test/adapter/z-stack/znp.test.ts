@@ -1,5 +1,5 @@
 import type {MockInstance} from "vitest";
-
+import {afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi} from "vitest";
 import {SerialPort} from "../../../src/adapter/serialPort";
 import {Constants as UnpiConstants, Frame as UnpiFrame} from "../../../src/adapter/z-stack/unpi";
 import {Znp, ZpiObject} from "../../../src/adapter/z-stack/znp";
@@ -123,11 +123,11 @@ describe("ZNP", () => {
 
     beforeEach(() => {
         for (const mock of mocks) {
-            // @ts-ignore
+            // @ts-expect-error
             mock.mockClear();
         }
 
-        // @ts-ignore; make sure we always get a new instance
+        // @ts-expect-error; make sure we always get a new instance
         znp = new Znp("/dev/ttyACM0", 100, true);
         requestSpy = vi.spyOn(znp, "request").mockImplementation(() => {});
     });
@@ -339,7 +339,7 @@ describe("ZNP", () => {
         errorCb();
     });
 
-    it("znp receive", async () => {
+    it("znp receive", () => {
         let parsedCb;
         const received = vi.fn();
 
@@ -371,7 +371,7 @@ describe("ZNP", () => {
         expect(obj.type).toBe(UnpiConstants.Type.SRSP);
     });
 
-    it("znp receive malformed", async () => {
+    it("znp receive malformed", () => {
         let parsedCb;
         const received = vi.fn();
 
@@ -937,22 +937,22 @@ describe("ZNP", () => {
         }
     });
 
-    it("ZpiObject throw error on missing write parser", async () => {
-        // @ts-ignore; make sure we always get a new instance
+    it("ZpiObject throw error on missing write parser", () => {
+        // @ts-expect-error; make sure we always get a new instance
         const obj = new ZpiObject(0, 0, "dummy", 0, {}, [{name: "nonExisting", parameterType: 9999999}]);
         expect(() => {
             obj.createPayloadBuffer();
         }).toThrow();
     });
 
-    it("ZpiObject throw error on unknown command", async () => {
+    it("ZpiObject throw error on unknown command", () => {
         const frame = new UnpiFrame(UnpiConstants.Type.SREQ, UnpiConstants.Subsystem.AF, 99999, Buffer.alloc(0));
         expect(() => {
             ZpiObject.fromUnpiFrame(frame);
         }).toThrow();
     });
 
-    it("ZpiObject throw error on unknown parameters", async () => {
+    it("ZpiObject throw error on unknown parameters", () => {
         const frame = new UnpiFrame(UnpiConstants.Type.SRSP, UnpiConstants.Subsystem.AF, 128, Buffer.alloc(0));
         expect(() => {
             ZpiObject.fromUnpiFrame(frame);
@@ -960,7 +960,7 @@ describe("ZNP", () => {
     });
 
     it("ZpiObject with cmd and non sapi is not reset command", () => {
-        // @ts-ignore; make sure we always get a new instance
+        // @ts-expect-error; make sure we always get a new instance
         const obj = new ZpiObject(UnpiConstants.Type.SREQ, UnpiConstants.Subsystem.AF, "systemReset", 0, {}, []);
         expect(obj.isResetCommand()).toBeFalsy();
     });
@@ -1277,7 +1277,7 @@ describe("ZNP", () => {
         },
     );
 
-    it("Coverage logger", async () => {
+    it("Coverage logger", () => {
         consoleLogger.warning(() => "Test warning", "TestNS");
         consoleLogger.error(() => "Test error", "TestNS");
     });

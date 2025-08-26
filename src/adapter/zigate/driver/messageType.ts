@@ -272,7 +272,7 @@ export const ZiGateMessage: {[k: number]: ZiGateMessageType} = {
             // https://github.com/fairecasoimeme/ZiGate/blob/aac14153db332eb5b898cba0f57f5999e5cf11eb/Module%20Radio/Firmware/src/sdk/JN-SW-4170/Components/ZPSNWK/Include/zps_nwk_pub.h#L89
         ],
     },
-    [0x8001]: {
+    32769: {
         response: [
             {name: "logLevel", parameterType: ParameterType.LOG_LEVEL},
             {name: "log", parameterType: ParameterType.STRING},

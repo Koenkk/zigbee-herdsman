@@ -24,8 +24,8 @@ import type {
     EmberInitialSecurityState,
     EmberKeyData,
     EmberMessageDigest,
-    EmberMultiPhyRadioParameters,
     EmberMulticastTableEntry,
+    EmberMultiPhyRadioParameters,
     EmberMultiprotocolPriorities,
     EmberNeighborTableEntry,
     EmberNetworkInitStruct,
@@ -40,10 +40,10 @@ import type {
     EmberSignature283k1Data,
     EmberSignatureData,
     EmberSmacData,
-    EmberTokTypeStackZllData,
-    EmberTokTypeStackZllSecurity,
     EmberTokenData,
     EmberTokenInfo,
+    EmberTokTypeStackZllData,
+    EmberTokTypeStackZllSecurity,
     EmberZigbeeNetwork,
     EmberZllAddressAssignment,
     EmberZllDeviceInfoRecord,
@@ -130,11 +130,6 @@ const EMBER_TO_SL_STATUS_MAP: ReadonlyMap<number, SLStatus> = new Map([
 export class EzspBuffalo extends Buffalo {
     public getBufferLength(): number {
         return this.buffer.length;
-    }
-
-    /** Set the position of the internal position tracker. */
-    public setPosition(position: number): void {
-        this.position = position;
     }
 
     /**

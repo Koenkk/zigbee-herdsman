@@ -1,3 +1,4 @@
+import {describe, expect, it} from "vitest";
 import * as Zcl from "../../../src/zspec/zcl";
 import type {Command, CustomClusters} from "../../../src/zspec/zcl/definition/tstype";
 
@@ -50,13 +51,13 @@ describe("ZCL Utils", () => {
         ],
         [
             "by ID with non-matching manufacturer code",
-            {key: Zcl.Clusters.sprutDevice.ID, manufacturerCode: 123, customClusters: {}},
-            {cluster: Zcl.Clusters.sprutDevice, name: "sprutDevice"},
+            {key: Zcl.Clusters.manuSpecificSinope.ID, manufacturerCode: 123, customClusters: {}},
+            {cluster: Zcl.Clusters.manuSpecificSinope, name: "manuSpecificSinope"},
         ],
         [
             "by ID with matching manufacturer code",
-            {key: Zcl.Clusters.sprutDevice.ID, manufacturerCode: Zcl.Clusters.sprutDevice.manufacturerCode!, customClusters: {}},
-            {cluster: Zcl.Clusters.sprutDevice, name: "sprutDevice"},
+            {key: Zcl.Clusters.manuSpecificSinope.ID, manufacturerCode: Zcl.Clusters.manuSpecificSinope.manufacturerCode!, customClusters: {}},
+            {cluster: Zcl.Clusters.manuSpecificSinope, name: "manuSpecificSinope"},
         ],
         [
             "custom by ID",
@@ -116,7 +117,6 @@ describe("ZCL Utils", () => {
         expect(cluster.getAttribute).toBeInstanceOf(Function);
         expect(cluster.getCommand).toBeInstanceOf(Function);
         expect(cluster.getCommandResponse).toBeInstanceOf(Function);
-        expect(cluster.hasAttribute).toBeInstanceOf(Function);
     });
 
     it("Creates empty cluster when getting by invalid ID", () => {
@@ -130,7 +130,6 @@ describe("ZCL Utils", () => {
         expect(cluster.getAttribute).toBeInstanceOf(Function);
         expect(cluster.getCommand).toBeInstanceOf(Function);
         expect(cluster.getCommandResponse).toBeInstanceOf(Function);
-        expect(cluster.hasAttribute).toBeInstanceOf(Function);
     });
 
     it("Throws when getting invalid cluster name", () => {
@@ -173,25 +172,19 @@ describe("ZCL Utils", () => {
     ])("Gets and checks cluster attribute %s", (_name, payload, expected) => {
         const cluster = Zcl.Utils.getCluster(expected.cluster.ID, payload.manufacturerCode, payload.customClusters);
         const attribute = cluster.getAttribute(payload.key);
-        expect(cluster.hasAttribute(payload.key)).toBeTruthy();
+        expect(attribute).not.toBeUndefined();
         expect(attribute).toStrictEqual(cluster.attributes[expected.name]);
     });
 
-    it("Throws when getting invalid attribute", () => {
+    it("Returns undefined when getting invalid attribute", () => {
         const cluster = Zcl.Utils.getCluster(Zcl.Clusters.genAlarms.ID, undefined, {});
-        expect(() => {
-            cluster.getAttribute("abcd");
-        }).toThrow();
-        expect(() => {
-            cluster.getAttribute(99999);
-        }).toThrow();
+        expect(cluster.getAttribute("abcd")).toBeUndefined();
+        expect(cluster.getAttribute(99999)).toBeUndefined();
     });
 
-    it("Throws when getting attribute with invalid manufacturer code", () => {
+    it("Returns undefined when getting attribute with invalid manufacturer code", () => {
         const cluster = Zcl.Utils.getCluster(Zcl.Clusters.haDiagnostic.ID, 123, {});
-        expect(() => {
-            cluster.getAttribute(Zcl.Clusters.haDiagnostic.attributes.danfossSystemStatusCode.ID);
-        }).toThrow();
+        expect(cluster.getAttribute(Zcl.Clusters.haDiagnostic.attributes.danfossSystemStatusCode.ID)).toBeUndefined();
     });
 
     it.each([

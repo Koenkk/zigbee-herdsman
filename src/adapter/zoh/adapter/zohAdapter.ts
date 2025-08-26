@@ -46,6 +46,7 @@ export class ZoHAdapter extends Adapter {
     private serialPort?: SerialPort;
     private socketPort?: Socket;
     /** True when adapter is currently closing */
+    // biome-ignore lint/correctness/noUnusedPrivateClassMembers: ignore
     private closing: boolean;
 
     private interpanLock: boolean;
@@ -693,7 +694,7 @@ export class ZoHAdapter extends Adapter {
                 address:
                     sender64 !== undefined
                         ? `0x${bigUInt64ToHexBE(sender64)}`
-                        : // biome-ignore lint/style/noNonNullAssertion: <explanation>
+                        : // biome-ignore lint/style/noNonNullAssertion: ignore
                           sender16!,
                 data: apsPayload,
                 // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`

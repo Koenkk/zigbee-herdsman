@@ -1,6 +1,6 @@
 import {MockBinding, type MockPortBinding} from "@serialport/binding-mock";
 import type {OpenOptions} from "@serialport/stream";
-
+import {afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi} from "vitest";
 import {EzspStatus} from "../../../src/adapter/ember/enums";
 import {EzspBuffalo} from "../../../src/adapter/ember/ezsp/buffalo";
 import {
@@ -20,7 +20,7 @@ import {EZSP_HOST_RX_POOL_SIZE, TX_POOL_BUFFERS} from "../../../src/adapter/embe
 import {EzspBuffer} from "../../../src/adapter/ember/uart/queues";
 import {lowByte} from "../../../src/adapter/ember/utils/math";
 import {wait} from "../../../src/utils/";
-import {ASH_ACK_FIRST_BYTES, RECD_RSTACK_BYTES, SEND_ACK_FIRST_BYTES, SEND_RST_BYTES, adapterSONOFFDongleE} from "./consts";
+import {ASH_ACK_FIRST_BYTES, adapterSONOFFDongleE, RECD_RSTACK_BYTES, SEND_ACK_FIRST_BYTES, SEND_RST_BYTES} from "./consts";
 
 const mockSerialPortCloseEvent = vi.fn();
 const mockSerialPortErrorEvent = vi.fn();

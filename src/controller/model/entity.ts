@@ -8,8 +8,8 @@ type EventMap<T> = Record<keyof T, any[]> | DefaultEventMap;
 type DefaultEventMap = [never];
 
 export abstract class Entity<T extends EventMap<T> = DefaultEventMap> extends events.EventEmitter<T> {
-    protected static database?: Database;
-    protected static adapter?: Adapter;
+    protected static database: Database;
+    protected static adapter: Adapter;
 
     public static injectDatabase(database: Database): void {
         Entity.database = database;

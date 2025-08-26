@@ -1,3 +1,4 @@
+import {describe, expect, it} from "vitest";
 import {EzspError} from "../../../src/adapter/ember/ezspError";
 import {EzspStatus} from "../../../src/adapter/ezsp/driver/types";
 

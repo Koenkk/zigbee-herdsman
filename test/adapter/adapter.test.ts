@@ -1,7 +1,7 @@
+import type {BrowserConfig, Service} from "bonjour-service";
 import type {MockInstance} from "vitest";
 
-import type {BrowserConfig, Service} from "bonjour-service";
-
+import {afterAll, beforeAll, beforeEach, describe, expect, it, vi} from "vitest";
 import {Adapter, type TsType} from "../../src/adapter";
 import {findAllDevices} from "../../src/adapter/adapterDiscovery";
 import {DeconzAdapter} from "../../src/adapter/deconz/adapter/deconzAdapter";

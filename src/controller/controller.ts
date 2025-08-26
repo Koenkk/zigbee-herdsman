@@ -1,9 +1,7 @@
 import assert from "node:assert";
 import events from "node:events";
 import fs from "node:fs";
-
 import mixinDeep from "mixin-deep";
-
 import {Adapter, type Events as AdapterEvents, type TsType as AdapterTsType} from "../adapter";
 import {BackupUtils, wait} from "../utils";
 import {logger} from "../utils/logger";
@@ -11,6 +9,7 @@ import {isNumberArrayOfLength} from "../utils/utils";
 import * as ZSpec from "../zspec";
 import type {Eui64} from "../zspec/tstypes";
 import * as Zcl from "../zspec/zcl";
+import type {TPartialClusterAttributes} from "../zspec/zcl/definition/clusters-types";
 import type {FrameControl} from "../zspec/zcl/definition/tstype";
 import * as Zdo from "../zspec/zdo";
 import type * as ZdoTypes from "../zspec/zdo/definition/tstypes";
@@ -18,11 +17,12 @@ import Database from "./database";
 import type * as Events from "./events";
 import GreenPower from "./greenPower";
 import {ZclFrameConverter} from "./helpers";
+import {checkInstallCode, parseInstallCode} from "./helpers/installCodes";
 import {Device, Entity} from "./model";
 import {InterviewState} from "./model/device";
 import Group from "./model/group";
 import Touchlink from "./touchlink";
-import type {DeviceType, GreenPowerDeviceJoinedPayload, KeyValue} from "./tstype";
+import type {DeviceType, GreenPowerDeviceJoinedPayload} from "./tstype";
 
 const NS = "zh:controller";
 
@@ -246,34 +246,12 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
     }
 
     public async addInstallCode(installCode: string): Promise<void> {
-        const aqaraMatch = installCode.match(/^G\$M:.+\$A:(.+)\$I:(.+)$/);
-        const pipeMatch = installCode.match(/^(.+)\|(.+)$/);
-        let ieeeAddr: string;
-        let keyStr: string;
-
-        if (aqaraMatch) {
-            ieeeAddr = aqaraMatch[1];
-            keyStr = aqaraMatch[2];
-        } else if (pipeMatch) {
-            ieeeAddr = pipeMatch[1];
-            keyStr = pipeMatch[2];
-        } else {
-            assert(
-                installCode.length === 95 || installCode.length === 91,
-                `Unsupported install code, got ${installCode.length} chars, expected 95 or 91`,
-            );
-            const keyStart = installCode.length - (installCode.length === 95 ? 36 : 32);
-            ieeeAddr = installCode.substring(keyStart - 19, keyStart - 3);
-            keyStr = installCode.substring(keyStart, installCode.length);
-        }
-
-        ieeeAddr = `0x${ieeeAddr}`;
-        // match valid else asserted above
-        // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
+        // will throw if code cannot be parsed
+        const [ieeeAddr, keyStr] = parseInstallCode(installCode);
+        // biome-ignore lint/style/noNonNullAssertion: valid from above parsing
         const key = Buffer.from(keyStr.match(/.{1,2}/g)!.map((d) => Number.parseInt(d, 16)));
-
         // will throw if code cannot be fixed and is invalid
-        const [adjustedKey, adjusted] = ZSpec.Utils.checkInstallCode(key, true);
+        const [adjustedKey, adjusted] = checkInstallCode(key, true);
 
         if (adjusted) {
             logger.info(`Install code was adjusted for reason '${adjusted}'.`, NS);
@@ -383,7 +361,7 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
         if (this.options.backupPath && (await this.adapter.supportsBackup())) {
             logger.debug("Creating coordinator backup", NS);
             const backup = await this.adapter.backup(this.getDeviceIeeeAddresses());
-            const unifiedBackup = await BackupUtils.toUnifiedBackup(backup);
+            const unifiedBackup = BackupUtils.toUnifiedBackup(backup);
             const tmpBackupPath = `${this.options.backupPath}.tmp`;
             fs.writeFileSync(tmpBackupPath, JSON.stringify(unifiedBackup, null, 2));
             fs.renameSync(tmpBackupPath, this.options.backupPath);
@@ -657,7 +635,7 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
         this.emit("adapterDisconnected");
     }
 
-    private async onDeviceJoinedGreenPower(payload: GreenPowerDeviceJoinedPayload): Promise<void> {
+    private onDeviceJoinedGreenPower(payload: GreenPowerDeviceJoinedPayload): void {
         logger.debug(() => `Green power device '${JSON.stringify(payload).replaceAll(/\[[\d,]+\]/g, "HIDDEN")}' joined`, NS);
 
         // Green power devices don't have an ieeeAddr, the sourceID is unique and static so use this.
@@ -947,7 +925,8 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
             zclTransactionSequenceNumber?: number;
             manufacturerCode?: number;
             frameControl?: FrameControl;
-        } = {};
+            rawData: Buffer;
+        } = {rawData: payload.data};
 
         if (frame) {
             const command = frame.command;
@@ -993,25 +972,20 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
                         break;
                     }
                 }
+
+                if (type === "readResponse" || type === "attributeReport") {
+                    // devices report attributes through readRsp or attributeReport
+                    if (frame.isCluster("genBasic")) {
+                        device.updateGenBasic(data as TPartialClusterAttributes<"genBasic">);
+                    }
+
+                    endpoint.saveClusterAttributeKeyValue(frame.cluster.ID, data);
+                }
             } else {
                 if (frame.header.isSpecific) {
                     type = `command${command.name.charAt(0).toUpperCase()}${command.name.slice(1)}`;
                     data = frame.payload;
                 }
-            }
-
-            if (type === "readResponse" || type === "attributeReport") {
-                // Some device report, e.g. it's modelID through a readResponse or attributeReport
-                for (const key in data) {
-                    const property = Device.REPORTABLE_PROPERTIES_MAPPING[key];
-
-                    if (property && !device[property.key]) {
-                        // XXX: data technically can be `KeyValue | (string | number)[]`
-                        property.set((data as KeyValue)[key], device);
-                    }
-                }
-
-                endpoint.saveClusterAttributeKeyValue(frame.cluster.ID, data);
             }
         } else {
             type = "raw";

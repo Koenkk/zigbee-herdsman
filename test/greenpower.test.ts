@@ -1,7 +1,6 @@
-import type {ZclPayload} from "../src/adapter/events";
-
 import type {MockInstance} from "vitest";
-
+import {afterAll, beforeAll, beforeEach, describe, expect, it, vi} from "vitest";
+import type {ZclPayload} from "../src/adapter/events";
 import {GreenPower} from "../src/controller/greenPower";
 import type {GreenPowerDeviceJoinedPayload} from "../src/controller/tstype";
 import {logger} from "../src/utils/logger";
@@ -394,18 +393,6 @@ describe("GreenPower", () => {
             gpdCommandId,
             gpdCommandPayload.length,
         );
-
-        {
-            // mock bad frame, allows to bypass options check and validate that this errors out (trying to parse as CHANNEL_REQUEST)
-            const alteredSecurityGpdHeader = Buffer.from(gpdHeader);
-            alteredSecurityGpdHeader[3] = 0;
-            alteredSecurityGpdHeader[4] = 0;
-            const payload = makePayload(addr.sourceId, Buffer.concat([alteredSecurityGpdHeader, gpdCommandPayload]), gpdLink);
-
-            expect(() => {
-                Zcl.Frame.fromBuffer(payload.clusterID, payload.header, payload.data, {});
-            }).toThrow('The value of "offset" is out of range. It must be >= 0 and <= 14. Received 15');
-        }
 
         const payload = makePayload(addr.sourceId, Buffer.concat([gpdHeader, gpdCommandPayload]), gpdLink);
         const frame = Zcl.Frame.fromBuffer(payload.clusterID, payload.header, payload.data, {});

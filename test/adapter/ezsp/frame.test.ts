@@ -1,3 +1,4 @@
+import {describe, expect, it} from "vitest";
 import {EZSPFrameData} from "../../../src/adapter/ezsp/driver/ezsp";
 
 describe("FRAME Parsing", () => {

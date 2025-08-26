@@ -2,7 +2,8 @@ import {randomBytes} from "node:crypto";
 import {mkdirSync, rmSync, writeFileSync} from "node:fs";
 import {join} from "node:path";
 
-import {SPINEL_HEADER_FLG_SPINEL, encodeSpinelFrame} from "zigbee-on-host/dist/spinel/spinel";
+import {afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi} from "vitest";
+import {encodeSpinelFrame, SPINEL_HEADER_FLG_SPINEL} from "zigbee-on-host/dist/spinel/spinel";
 import {SpinelStatus} from "zigbee-on-host/dist/spinel/statuses";
 import type {MACCapabilities} from "zigbee-on-host/dist/zigbee/mac";
 import type {ZigbeeNWKLinkStatus} from "zigbee-on-host/dist/zigbee/zigbee-nwk";
@@ -283,7 +284,7 @@ describe("ZigBee on Host", () => {
         rmSync(TEMP_PATH, {force: true, recursive: true});
     });
 
-    beforeEach(async () => {
+    beforeEach(() => {
         deleteZoHSave();
 
         adapter = new ZoHAdapter(

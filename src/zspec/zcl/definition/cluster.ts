@@ -334,12 +334,20 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                     {name: "status", type: DataType.UINT8},
                     {name: "groupid", type: DataType.UINT16},
                     {name: "sceneid", type: DataType.UINT8},
-                    {name: "transtime", type: DataType.UINT16, conditions: [{type: ParameterCondition.STATUS_EQUAL, value: Status.SUCCESS}]},
-                    {name: "scenename", type: DataType.CHAR_STR, conditions: [{type: ParameterCondition.STATUS_EQUAL, value: Status.SUCCESS}]},
+                    {
+                        name: "transtime",
+                        type: DataType.UINT16,
+                        conditions: [{type: ParameterCondition.FIELD_EQUAL, field: "status", value: Status.SUCCESS}],
+                    },
+                    {
+                        name: "scenename",
+                        type: DataType.CHAR_STR,
+                        conditions: [{type: ParameterCondition.FIELD_EQUAL, field: "status", value: Status.SUCCESS}],
+                    },
                     {
                         name: "extensionfieldsets",
                         type: BuffaloZclDataType.EXTENSION_FIELD_SETS,
-                        conditions: [{type: ParameterCondition.STATUS_EQUAL, value: Status.SUCCESS}],
+                        conditions: [{type: ParameterCondition.FIELD_EQUAL, field: "status", value: Status.SUCCESS}],
                     },
                 ],
             },
@@ -372,11 +380,15 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                     {name: "status", type: DataType.UINT8},
                     {name: "capacity", type: DataType.UINT8},
                     {name: "groupid", type: DataType.UINT16},
-                    {name: "scenecount", type: DataType.UINT8, conditions: [{type: ParameterCondition.STATUS_EQUAL, value: Status.SUCCESS}]},
+                    {
+                        name: "scenecount",
+                        type: DataType.UINT8,
+                        conditions: [{type: ParameterCondition.FIELD_EQUAL, field: "status", value: Status.SUCCESS}],
+                    },
                     {
                         name: "scenelist",
                         type: BuffaloZclDataType.LIST_UINT8,
-                        conditions: [{type: ParameterCondition.STATUS_EQUAL, value: Status.SUCCESS}],
+                        conditions: [{type: ParameterCondition.FIELD_EQUAL, field: "status", value: Status.SUCCESS}],
                     },
                 ],
             },
@@ -394,12 +406,20 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                     {name: "status", type: DataType.UINT8},
                     {name: "groupid", type: DataType.UINT16},
                     {name: "sceneid", type: DataType.UINT8},
-                    {name: "transtime", type: DataType.UINT16, conditions: [{type: ParameterCondition.STATUS_EQUAL, value: Status.SUCCESS}]},
-                    {name: "scenename", type: DataType.CHAR_STR, conditions: [{type: ParameterCondition.STATUS_EQUAL, value: Status.SUCCESS}]},
+                    {
+                        name: "transtime",
+                        type: DataType.UINT16,
+                        conditions: [{type: ParameterCondition.FIELD_EQUAL, field: "status", value: Status.SUCCESS}],
+                    },
+                    {
+                        name: "scenename",
+                        type: DataType.CHAR_STR,
+                        conditions: [{type: ParameterCondition.FIELD_EQUAL, field: "status", value: Status.SUCCESS}],
+                    },
                     {
                         name: "extensionfieldsets",
                         type: BuffaloZclDataType.EXTENSION_FIELD_SETS,
-                        conditions: [{type: ParameterCondition.STATUS_EQUAL, value: Status.SUCCESS}],
+                        conditions: [{type: ParameterCondition.FIELD_EQUAL, field: "status", value: Status.SUCCESS}],
                     },
                 ],
             },
@@ -1002,6 +1022,11 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                     {name: "manufacturerCode", type: DataType.UINT16},
                     {name: "imageType", type: DataType.UINT16},
                     {name: "fileVersion", type: DataType.UINT32},
+                    {
+                        name: "hardwareVersion",
+                        type: DataType.UINT16,
+                        conditions: [{type: ParameterCondition.BITMASK_SET, param: "fieldControl", mask: 0b1}],
+                    },
                 ],
             },
             imageBlockRequest: {
@@ -1014,6 +1039,20 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                     {name: "fileVersion", type: DataType.UINT32},
                     {name: "fileOffset", type: DataType.UINT32},
                     {name: "maximumDataSize", type: DataType.UINT8},
+                    {
+                        name: "requestNodeIeeeAddress",
+                        type: DataType.IEEE_ADDR,
+                        conditions: [{type: ParameterCondition.BITMASK_SET, param: "fieldControl", mask: 0b1}],
+                    },
+                    {
+                        name: "minimumBlockPeriod",
+                        type: DataType.UINT16,
+                        conditions: [
+                            {type: ParameterCondition.BITMASK_SET, param: "fieldControl", mask: 0b10},
+                            // WORKAROUND: https://github.com/Koenkk/zigbee2mqtt/issues/28217
+                            {type: ParameterCondition.MINIMUM_REMAINING_BUFFER_BYTES, value: 2},
+                        ],
+                    },
                 ],
             },
             imagePageRequest: {
@@ -1028,6 +1067,11 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                     {name: "maximumDataSize", type: DataType.UINT8},
                     {name: "pageSize", type: DataType.UINT16},
                     {name: "responseSpacing", type: DataType.UINT16},
+                    {
+                        name: "requestNodeIeeeAddress",
+                        type: DataType.IEEE_ADDR,
+                        conditions: [{type: ParameterCondition.BITMASK_SET, param: "fieldControl", mask: 0b1}],
+                    },
                 ],
             },
             upgradeEndRequest: {
@@ -1040,6 +1084,17 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                     {name: "fileVersion", type: DataType.UINT32},
                 ],
             },
+            queryDeviceSpecificFileRequest: {
+                ID: 8,
+                response: 9,
+                parameters: [
+                    {name: "eui64", type: DataType.IEEE_ADDR},
+                    {name: "manufacturerCode", type: DataType.UINT16},
+                    {name: "imageType", type: DataType.UINT16},
+                    {name: "fileVersion", type: DataType.UINT32},
+                    {name: "zigbeeStackVersion", type: DataType.UINT16},
+                ],
+            },
         },
         commandsResponse: {
             imageNotify: {
@@ -1047,28 +1102,99 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 parameters: [
                     {name: "payloadType", type: DataType.UINT8},
                     {name: "queryJitter", type: DataType.UINT8},
+                    {
+                        name: "manufacturerCode",
+                        type: DataType.UINT16,
+                        conditions: [{type: ParameterCondition.FIELD_GT, field: "payloadType", value: 0x00}],
+                    },
+                    {
+                        name: "imageType",
+                        type: DataType.UINT16,
+                        conditions: [{type: ParameterCondition.FIELD_GT, field: "payloadType", value: 0x01}],
+                    },
+                    {
+                        name: "fileVersion",
+                        type: DataType.UINT32,
+                        conditions: [{type: ParameterCondition.FIELD_GT, field: "payloadType", value: 0x02}],
+                    },
                 ],
             },
             queryNextImageResponse: {
                 ID: 2,
                 parameters: [
                     {name: "status", type: DataType.UINT8},
-                    {name: "manufacturerCode", type: DataType.UINT16, conditions: [{type: ParameterCondition.STATUS_EQUAL, value: Status.SUCCESS}]},
-                    {name: "imageType", type: DataType.UINT16, conditions: [{type: ParameterCondition.STATUS_EQUAL, value: Status.SUCCESS}]},
-                    {name: "fileVersion", type: DataType.UINT32, conditions: [{type: ParameterCondition.STATUS_EQUAL, value: Status.SUCCESS}]},
-                    {name: "imageSize", type: DataType.UINT32, conditions: [{type: ParameterCondition.STATUS_EQUAL, value: Status.SUCCESS}]},
+                    {
+                        name: "manufacturerCode",
+                        type: DataType.UINT16,
+                        conditions: [{type: ParameterCondition.FIELD_EQUAL, field: "status", value: Status.SUCCESS}],
+                    },
+                    {
+                        name: "imageType",
+                        type: DataType.UINT16,
+                        conditions: [{type: ParameterCondition.FIELD_EQUAL, field: "status", value: Status.SUCCESS}],
+                    },
+                    {
+                        name: "fileVersion",
+                        type: DataType.UINT32,
+                        conditions: [{type: ParameterCondition.FIELD_EQUAL, field: "status", value: Status.SUCCESS}],
+                    },
+                    {
+                        name: "imageSize",
+                        type: DataType.UINT32,
+                        conditions: [{type: ParameterCondition.FIELD_EQUAL, field: "status", value: Status.SUCCESS}],
+                    },
                 ],
             },
             imageBlockResponse: {
                 ID: 5,
                 parameters: [
+                    // alone if Status.ABORT
                     {name: "status", type: DataType.UINT8},
-                    {name: "manufacturerCode", type: DataType.UINT16},
-                    {name: "imageType", type: DataType.UINT16},
-                    {name: "fileVersion", type: DataType.UINT32},
-                    {name: "fileOffset", type: DataType.UINT32},
-                    {name: "dataSize", type: DataType.UINT8},
-                    {name: "data", type: BuffaloZclDataType.BUFFER},
+                    {
+                        name: "manufacturerCode",
+                        type: DataType.UINT16,
+                        conditions: [{type: ParameterCondition.FIELD_EQUAL, field: "status", value: Status.SUCCESS}],
+                    },
+                    {
+                        name: "imageType",
+                        type: DataType.UINT16,
+                        conditions: [{type: ParameterCondition.FIELD_EQUAL, field: "status", value: Status.SUCCESS}],
+                    },
+                    {
+                        name: "fileVersion",
+                        type: DataType.UINT32,
+                        conditions: [{type: ParameterCondition.FIELD_EQUAL, field: "status", value: Status.SUCCESS}],
+                    },
+                    {
+                        name: "fileOffset",
+                        type: DataType.UINT32,
+                        conditions: [{type: ParameterCondition.FIELD_EQUAL, field: "status", value: Status.SUCCESS}],
+                    },
+                    {
+                        name: "dataSize",
+                        type: DataType.UINT8,
+                        conditions: [{type: ParameterCondition.FIELD_EQUAL, field: "status", value: Status.SUCCESS}],
+                    },
+                    {
+                        name: "data",
+                        type: BuffaloZclDataType.BUFFER,
+                        conditions: [{type: ParameterCondition.FIELD_EQUAL, field: "status", value: Status.SUCCESS}],
+                    },
+                    {
+                        name: "currentTime",
+                        type: DataType.UINT32,
+                        conditions: [{type: ParameterCondition.FIELD_EQUAL, field: "status", value: Status.WAIT_FOR_DATA}],
+                    },
+                    {
+                        name: "requestTime",
+                        type: DataType.UINT32,
+                        conditions: [{type: ParameterCondition.FIELD_EQUAL, field: "status", value: Status.WAIT_FOR_DATA}],
+                    },
+                    {
+                        name: "minimumBlockPeriod",
+                        type: DataType.UINT16,
+                        conditions: [{type: ParameterCondition.FIELD_EQUAL, field: "status", value: Status.WAIT_FOR_DATA}],
+                    },
                 ],
             },
             upgradeEndResponse: {
@@ -1079,6 +1205,32 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                     {name: "fileVersion", type: DataType.UINT32},
                     {name: "currentTime", type: DataType.UINT32},
                     {name: "upgradeTime", type: DataType.UINT32},
+                ],
+            },
+            queryDeviceSpecificFileResponse: {
+                ID: 9,
+                parameters: [
+                    {name: "status", type: DataType.UINT8},
+                    {
+                        name: "manufacturerCode",
+                        type: DataType.UINT16,
+                        conditions: [{type: ParameterCondition.FIELD_EQUAL, field: "status", value: Status.SUCCESS}],
+                    },
+                    {
+                        name: "imageType",
+                        type: DataType.UINT16,
+                        conditions: [{type: ParameterCondition.FIELD_EQUAL, field: "status", value: Status.SUCCESS}],
+                    },
+                    {
+                        name: "fileVersion",
+                        type: DataType.UINT32,
+                        conditions: [{type: ParameterCondition.FIELD_EQUAL, field: "status", value: Status.SUCCESS}],
+                    },
+                    {
+                        name: "imageSize",
+                        type: DataType.UINT32,
+                        conditions: [{type: ParameterCondition.FIELD_EQUAL, field: "status", value: Status.SUCCESS}],
+                    },
                 ],
             },
         },
@@ -1972,6 +2124,9 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             danfossRoomFloorSensorMode: {ID: 0x4120, type: DataType.ENUM8, manufacturerCode: ManufacturerCode.DANFOSS_A_S},
             danfossFloorMinSetpoint: {ID: 0x4121, type: DataType.INT16, manufacturerCode: ManufacturerCode.DANFOSS_A_S},
             danfossFloorMaxSetpoint: {ID: 0x4122, type: DataType.INT16, manufacturerCode: ManufacturerCode.DANFOSS_A_S},
+            danfossScheduleTypeUsed: {ID: 0x4130, type: DataType.ENUM8, manufacturerCode: ManufacturerCode.DANFOSS_A_S},
+            danfossIcon2PreHeat: {ID: 0x4131, type: DataType.ENUM8, manufacturerCode: ManufacturerCode.DANFOSS_A_S},
+            danfossIcon2PreHeatStatus: {ID: 0x414f, type: DataType.ENUM8, manufacturerCode: ManufacturerCode.DANFOSS_A_S},
             elkoLoad: {ID: 0x0401, type: DataType.UINT16},
             elkoDisplayText: {ID: 0x0402, type: DataType.CHAR_STR},
             elkoSensor: {ID: 0x0403, type: DataType.ENUM8},
@@ -2012,6 +2167,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             },
             getWeeklySchedule: {
                 ID: 2,
+                response: 0,
                 parameters: [
                     {name: "daystoreturn", type: DataType.UINT8},
                     {name: "modetoreturn", type: DataType.UINT8},
@@ -2023,6 +2179,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             },
             getRelayStatusLog: {
                 ID: 4,
+                response: 1,
                 parameters: [],
             },
             danfossSetpointCommand: {
@@ -2411,7 +2568,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         commandsResponse: {},
     },
     msIlluminanceMeasurement: {
-        ID: 1024,
+        ID: 1024, // 0x0400
         attributes: {
             measuredValue: {ID: 0, type: DataType.UINT16},
             minMeasuredValue: {ID: 1, type: DataType.UINT16},
@@ -2423,7 +2580,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         commandsResponse: {},
     },
     msIlluminanceLevelSensing: {
-        ID: 1025,
+        ID: 1025, // 0x0401
         attributes: {
             levelStatus: {ID: 0, type: DataType.ENUM8},
             lightSensorType: {ID: 1, type: DataType.ENUM8},
@@ -2433,7 +2590,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         commandsResponse: {},
     },
     msTemperatureMeasurement: {
-        ID: 1026,
+        ID: 1026, // 0x0402
         attributes: {
             measuredValue: {ID: 0, type: DataType.INT16},
             minMeasuredValue: {ID: 1, type: DataType.INT16},
@@ -2447,7 +2604,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         commandsResponse: {},
     },
     msPressureMeasurement: {
-        ID: 1027,
+        ID: 1027, // 0x0403
         attributes: {
             measuredValue: {ID: 0, type: DataType.INT16},
             minMeasuredValue: {ID: 1, type: DataType.INT16},
@@ -2463,7 +2620,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         commandsResponse: {},
     },
     msFlowMeasurement: {
-        ID: 1028,
+        ID: 1028, // 0x0404
         attributes: {
             measuredValue: {ID: 0, type: DataType.UINT16},
             minMeasuredValue: {ID: 1, type: DataType.UINT16},
@@ -2474,7 +2631,8 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         commandsResponse: {},
     },
     msRelativeHumidity: {
-        ID: 1029,
+        // Water Content
+        ID: 1029, // 0x0405
         attributes: {
             measuredValue: {ID: 0, type: DataType.UINT16},
             minMeasuredValue: {ID: 1, type: DataType.UINT16},
@@ -2486,7 +2644,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         commandsResponse: {},
     },
     msOccupancySensing: {
-        ID: 1030,
+        ID: 1030, // 0x0406
         attributes: {
             occupancy: {ID: 0x0000, type: DataType.BITMAP8},
             occupancySensorType: {ID: 0x0001, type: DataType.ENUM8},
@@ -2510,8 +2668,19 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         commands: {},
         commandsResponse: {},
     },
+    msLeafWetness: {
+        ID: 1031, // 0x0407
+        attributes: {
+            measuredValue: {ID: 0, type: DataType.UINT16},
+            minMeasuredValue: {ID: 1, type: DataType.UINT16},
+            maxMeasuredValue: {ID: 2, type: DataType.UINT16},
+            tolerance: {ID: 3, type: DataType.UINT16},
+        },
+        commands: {},
+        commandsResponse: {},
+    },
     msSoilMoisture: {
-        ID: 1032,
+        ID: 1032, // 0x0408
         attributes: {
             measuredValue: {ID: 0, type: DataType.UINT16},
             minMeasuredValue: {ID: 1, type: DataType.UINT16},
@@ -2522,7 +2691,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         commandsResponse: {},
     },
     pHMeasurement: {
-        ID: 1033,
+        ID: 1033, // 0x0409
         attributes: {
             measuredValue: {ID: 0, type: DataType.UINT16},
             minMeasuredValue: {ID: 1, type: DataType.UINT16},
@@ -2532,58 +2701,414 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         commands: {},
         commandsResponse: {},
     },
-    msCO2: {
-        ID: 1037,
+    msElectricalConductivity: {
+        ID: 1034, // 0x040a
+        attributes: {
+            measuredValue: {ID: 0, type: DataType.UINT16},
+            minMeasuredValue: {ID: 1, type: DataType.UINT16},
+            maxMeasuredValue: {ID: 2, type: DataType.UINT16},
+            tolerance: {ID: 3, type: DataType.UINT16},
+        },
+        commands: {},
+        commandsResponse: {},
+    },
+    msWindSpeed: {
+        ID: 1035, // 0x040b
+        attributes: {
+            measuredValue: {ID: 0, type: DataType.UINT16},
+            minMeasuredValue: {ID: 1, type: DataType.UINT16},
+            maxMeasuredValue: {ID: 2, type: DataType.UINT16},
+            tolerance: {ID: 3, type: DataType.UINT16},
+        },
+        commands: {},
+        commandsResponse: {},
+    },
+    msCarbonMonoxide: {
+        // CO
+        ID: 1036, // 0x040c
         attributes: {
             measuredValue: {ID: 0, type: DataType.SINGLE_PREC},
             minMeasuredValue: {ID: 1, type: DataType.SINGLE_PREC},
             maxMeasuredValue: {ID: 2, type: DataType.SINGLE_PREC},
+            tolerance: {ID: 3, type: DataType.SINGLE_PREC},
+        },
+        commands: {},
+        commandsResponse: {},
+    },
+    msCO2: {
+        // Carbon Dioxide
+        ID: 1037, // 0x040d
+        attributes: {
+            measuredValue: {ID: 0, type: DataType.SINGLE_PREC},
+            minMeasuredValue: {ID: 1, type: DataType.SINGLE_PREC},
+            maxMeasuredValue: {ID: 2, type: DataType.SINGLE_PREC},
+            tolerance: {ID: 3, type: DataType.SINGLE_PREC},
             sprutCO2Calibration: {ID: 0x6600, type: DataType.BOOLEAN, manufacturerCode: ManufacturerCode.CUSTOM_SPRUT_DEVICE},
             sprutCO2AutoCalibration: {ID: 0x6601, type: DataType.BOOLEAN, manufacturerCode: ManufacturerCode.CUSTOM_SPRUT_DEVICE},
         },
         commands: {},
         commandsResponse: {},
     },
+    msEthylene: {
+        // CH2
+        ID: 1038, // 0x040e
+        attributes: {
+            measuredValue: {ID: 0, type: DataType.SINGLE_PREC},
+            minMeasuredValue: {ID: 1, type: DataType.SINGLE_PREC},
+            maxMeasuredValue: {ID: 2, type: DataType.SINGLE_PREC},
+            tolerance: {ID: 3, type: DataType.SINGLE_PREC},
+        },
+        commands: {},
+        commandsResponse: {},
+    },
+    msEthyleneOxide: {
+        // C2H4O
+        ID: 1039, // 0x040f
+        attributes: {
+            measuredValue: {ID: 0, type: DataType.SINGLE_PREC},
+            minMeasuredValue: {ID: 1, type: DataType.SINGLE_PREC},
+            maxMeasuredValue: {ID: 2, type: DataType.SINGLE_PREC},
+            tolerance: {ID: 3, type: DataType.SINGLE_PREC},
+        },
+        commands: {},
+        commandsResponse: {},
+    },
+    msHydrogen: {
+        // H
+        ID: 1040, // 0x0410
+        attributes: {
+            measuredValue: {ID: 0, type: DataType.SINGLE_PREC},
+            minMeasuredValue: {ID: 1, type: DataType.SINGLE_PREC},
+            maxMeasuredValue: {ID: 2, type: DataType.SINGLE_PREC},
+            tolerance: {ID: 3, type: DataType.SINGLE_PREC},
+        },
+        commands: {},
+        commandsResponse: {},
+    },
+    msHydrogenSulfide: {
+        // H2S
+        ID: 1041, // 0x0411
+        attributes: {
+            measuredValue: {ID: 0, type: DataType.SINGLE_PREC},
+            minMeasuredValue: {ID: 1, type: DataType.SINGLE_PREC},
+            maxMeasuredValue: {ID: 2, type: DataType.SINGLE_PREC},
+            tolerance: {ID: 3, type: DataType.SINGLE_PREC},
+        },
+        commands: {},
+        commandsResponse: {},
+    },
+    msNitricOxide: {
+        // NO
+        ID: 1042, // 0x0412
+        attributes: {
+            measuredValue: {ID: 0, type: DataType.SINGLE_PREC},
+            minMeasuredValue: {ID: 1, type: DataType.SINGLE_PREC},
+            maxMeasuredValue: {ID: 2, type: DataType.SINGLE_PREC},
+            tolerance: {ID: 3, type: DataType.SINGLE_PREC},
+        },
+        commands: {},
+        commandsResponse: {},
+    },
+    msNitrogenDioxide: {
+        // NO2
+        ID: 1043, // 0x0413
+        attributes: {
+            measuredValue: {ID: 0, type: DataType.SINGLE_PREC},
+            minMeasuredValue: {ID: 1, type: DataType.SINGLE_PREC},
+            maxMeasuredValue: {ID: 2, type: DataType.SINGLE_PREC},
+            tolerance: {ID: 3, type: DataType.SINGLE_PREC},
+        },
+        commands: {},
+        commandsResponse: {},
+    },
+    msOxygen: {
+        // O2
+        ID: 1044, // 0x0414
+        attributes: {
+            measuredValue: {ID: 0, type: DataType.SINGLE_PREC},
+            minMeasuredValue: {ID: 1, type: DataType.SINGLE_PREC},
+            maxMeasuredValue: {ID: 2, type: DataType.SINGLE_PREC},
+            tolerance: {ID: 3, type: DataType.SINGLE_PREC},
+        },
+        commands: {},
+        commandsResponse: {},
+    },
+    msOzone: {
+        // O3
+        ID: 1045, // 0x0415
+        attributes: {
+            measuredValue: {ID: 0, type: DataType.SINGLE_PREC},
+            minMeasuredValue: {ID: 1, type: DataType.SINGLE_PREC},
+            maxMeasuredValue: {ID: 2, type: DataType.SINGLE_PREC},
+            tolerance: {ID: 3, type: DataType.SINGLE_PREC},
+        },
+        commands: {},
+        commandsResponse: {},
+    },
+    msSulfurDioxide: {
+        // SO2
+        ID: 1046, // 0x0416
+        attributes: {
+            measuredValue: {ID: 0, type: DataType.SINGLE_PREC},
+            minMeasuredValue: {ID: 1, type: DataType.SINGLE_PREC},
+            maxMeasuredValue: {ID: 2, type: DataType.SINGLE_PREC},
+            tolerance: {ID: 3, type: DataType.SINGLE_PREC},
+        },
+        commands: {},
+        commandsResponse: {},
+    },
+    msDissolvedOxygen: {
+        // DO
+        ID: 1047, // 0x0417
+        attributes: {
+            measuredValue: {ID: 0, type: DataType.SINGLE_PREC},
+            minMeasuredValue: {ID: 1, type: DataType.SINGLE_PREC},
+            maxMeasuredValue: {ID: 2, type: DataType.SINGLE_PREC},
+            tolerance: {ID: 3, type: DataType.SINGLE_PREC},
+        },
+        commands: {},
+        commandsResponse: {},
+    },
+    msBromate: {
+        ID: 1048, // 0x0418
+        attributes: {
+            measuredValue: {ID: 0, type: DataType.SINGLE_PREC},
+            minMeasuredValue: {ID: 1, type: DataType.SINGLE_PREC},
+            maxMeasuredValue: {ID: 2, type: DataType.SINGLE_PREC},
+            tolerance: {ID: 3, type: DataType.SINGLE_PREC},
+        },
+        commands: {},
+        commandsResponse: {},
+    },
+    msChloramines: {
+        ID: 1049, // 0x0419
+        attributes: {
+            measuredValue: {ID: 0, type: DataType.SINGLE_PREC},
+            minMeasuredValue: {ID: 1, type: DataType.SINGLE_PREC},
+            maxMeasuredValue: {ID: 2, type: DataType.SINGLE_PREC},
+            tolerance: {ID: 3, type: DataType.SINGLE_PREC},
+        },
+        commands: {},
+        commandsResponse: {},
+    },
+    msChlorine: {
+        ID: 1050, // 0x041a
+        attributes: {
+            measuredValue: {ID: 0, type: DataType.SINGLE_PREC},
+            minMeasuredValue: {ID: 1, type: DataType.SINGLE_PREC},
+            maxMeasuredValue: {ID: 2, type: DataType.SINGLE_PREC},
+            tolerance: {ID: 3, type: DataType.SINGLE_PREC},
+        },
+        commands: {},
+        commandsResponse: {},
+    },
+    msFecalColiformAndEColi: {
+        ID: 1051, // 0x041b
+        attributes: {
+            measuredValue: {ID: 0, type: DataType.SINGLE_PREC},
+            minMeasuredValue: {ID: 1, type: DataType.SINGLE_PREC},
+            maxMeasuredValue: {ID: 2, type: DataType.SINGLE_PREC},
+            tolerance: {ID: 3, type: DataType.SINGLE_PREC},
+        },
+        commands: {},
+        commandsResponse: {},
+    },
+    msFluoride: {
+        ID: 1052, // 0x041c
+        attributes: {
+            measuredValue: {ID: 0, type: DataType.SINGLE_PREC},
+            minMeasuredValue: {ID: 1, type: DataType.SINGLE_PREC},
+            maxMeasuredValue: {ID: 2, type: DataType.SINGLE_PREC},
+            tolerance: {ID: 3, type: DataType.SINGLE_PREC},
+        },
+        commands: {},
+        commandsResponse: {},
+    },
+    msHaloaceticAcids: {
+        ID: 1053, // 0x041d
+        attributes: {
+            measuredValue: {ID: 0, type: DataType.SINGLE_PREC},
+            minMeasuredValue: {ID: 1, type: DataType.SINGLE_PREC},
+            maxMeasuredValue: {ID: 2, type: DataType.SINGLE_PREC},
+            tolerance: {ID: 3, type: DataType.SINGLE_PREC},
+        },
+        commands: {},
+        commandsResponse: {},
+    },
+    msTotalTrihalomethanes: {
+        ID: 1054, // 0x041e
+        attributes: {
+            measuredValue: {ID: 0, type: DataType.SINGLE_PREC},
+            minMeasuredValue: {ID: 1, type: DataType.SINGLE_PREC},
+            maxMeasuredValue: {ID: 2, type: DataType.SINGLE_PREC},
+            tolerance: {ID: 3, type: DataType.SINGLE_PREC},
+        },
+        commands: {},
+        commandsResponse: {},
+    },
+    msTotalColiformBacteria: {
+        ID: 1055, // 0x041f
+        attributes: {
+            measuredValue: {ID: 0, type: DataType.SINGLE_PREC},
+            minMeasuredValue: {ID: 1, type: DataType.SINGLE_PREC},
+            maxMeasuredValue: {ID: 2, type: DataType.SINGLE_PREC},
+            tolerance: {ID: 3, type: DataType.SINGLE_PREC},
+        },
+        commands: {},
+        commandsResponse: {},
+    },
+    msTurbidity: {
+        ID: 1056, // 0x0420
+        attributes: {
+            measuredValue: {ID: 0, type: DataType.SINGLE_PREC},
+            minMeasuredValue: {ID: 1, type: DataType.SINGLE_PREC},
+            maxMeasuredValue: {ID: 2, type: DataType.SINGLE_PREC},
+            tolerance: {ID: 3, type: DataType.SINGLE_PREC},
+        },
+        commands: {},
+        commandsResponse: {},
+    },
+    msCopper: {
+        ID: 1057, // 0x0421
+        attributes: {
+            measuredValue: {ID: 0, type: DataType.SINGLE_PREC},
+            minMeasuredValue: {ID: 1, type: DataType.SINGLE_PREC},
+            maxMeasuredValue: {ID: 2, type: DataType.SINGLE_PREC},
+            tolerance: {ID: 3, type: DataType.SINGLE_PREC},
+        },
+        commands: {},
+        commandsResponse: {},
+    },
+    msLead: {
+        ID: 1058, // 0x0422
+        attributes: {
+            measuredValue: {ID: 0, type: DataType.SINGLE_PREC},
+            minMeasuredValue: {ID: 1, type: DataType.SINGLE_PREC},
+            maxMeasuredValue: {ID: 2, type: DataType.SINGLE_PREC},
+            tolerance: {ID: 3, type: DataType.SINGLE_PREC},
+        },
+        commands: {},
+        commandsResponse: {},
+    },
+    msManganese: {
+        ID: 1059, // 0x0423
+        attributes: {
+            measuredValue: {ID: 0, type: DataType.SINGLE_PREC},
+            minMeasuredValue: {ID: 1, type: DataType.SINGLE_PREC},
+            maxMeasuredValue: {ID: 2, type: DataType.SINGLE_PREC},
+            tolerance: {ID: 3, type: DataType.SINGLE_PREC},
+        },
+        commands: {},
+        commandsResponse: {},
+    },
+    msSulfate: {
+        ID: 1060, // 0x0424
+        attributes: {
+            measuredValue: {ID: 0, type: DataType.SINGLE_PREC},
+            minMeasuredValue: {ID: 1, type: DataType.SINGLE_PREC},
+            maxMeasuredValue: {ID: 2, type: DataType.SINGLE_PREC},
+            tolerance: {ID: 3, type: DataType.SINGLE_PREC},
+        },
+        commands: {},
+        commandsResponse: {},
+    },
+    msBromodichloromethane: {
+        ID: 1061, // 0x0425
+        attributes: {
+            measuredValue: {ID: 0, type: DataType.SINGLE_PREC},
+            minMeasuredValue: {ID: 1, type: DataType.SINGLE_PREC},
+            maxMeasuredValue: {ID: 2, type: DataType.SINGLE_PREC},
+            tolerance: {ID: 3, type: DataType.SINGLE_PREC},
+        },
+        commands: {},
+        commandsResponse: {},
+    },
+    msBromoform: {
+        ID: 1062, // 0x0426
+        attributes: {
+            measuredValue: {ID: 0, type: DataType.SINGLE_PREC},
+            minMeasuredValue: {ID: 1, type: DataType.SINGLE_PREC},
+            maxMeasuredValue: {ID: 2, type: DataType.SINGLE_PREC},
+            tolerance: {ID: 3, type: DataType.SINGLE_PREC},
+        },
+        commands: {},
+        commandsResponse: {},
+    },
+    msChlorodibromomethane: {
+        ID: 1063, // 0x0427
+        attributes: {
+            measuredValue: {ID: 0, type: DataType.SINGLE_PREC},
+            minMeasuredValue: {ID: 1, type: DataType.SINGLE_PREC},
+            maxMeasuredValue: {ID: 2, type: DataType.SINGLE_PREC},
+            tolerance: {ID: 3, type: DataType.SINGLE_PREC},
+        },
+        commands: {},
+        commandsResponse: {},
+    },
+    msChloroform: {
+        ID: 1064, // 0x0428
+        attributes: {
+            measuredValue: {ID: 0, type: DataType.SINGLE_PREC},
+            minMeasuredValue: {ID: 1, type: DataType.SINGLE_PREC},
+            maxMeasuredValue: {ID: 2, type: DataType.SINGLE_PREC},
+            tolerance: {ID: 3, type: DataType.SINGLE_PREC},
+        },
+        commands: {},
+        commandsResponse: {},
+    },
+    msSodium: {
+        ID: 1065, // 0x0429
+        attributes: {
+            measuredValue: {ID: 0, type: DataType.SINGLE_PREC},
+            minMeasuredValue: {ID: 1, type: DataType.SINGLE_PREC},
+            maxMeasuredValue: {ID: 2, type: DataType.SINGLE_PREC},
+            tolerance: {ID: 3, type: DataType.SINGLE_PREC},
+        },
+        commands: {},
+        commandsResponse: {},
+    },
     pm25Measurement: {
-        ID: 0x042a,
+        ID: 1066, // 0x042a
         attributes: {
             measuredValue: {ID: 0x0000, type: DataType.SINGLE_PREC},
             measuredMinValue: {ID: 0x0001, type: DataType.SINGLE_PREC},
             measuredMaxValue: {ID: 0x0002, type: DataType.SINGLE_PREC},
-            measuredTolerance: {ID: 0x0003, type: DataType.SINGLE_PREC},
+            tolerance: {ID: 0x0003, type: DataType.SINGLE_PREC},
         },
         commands: {},
         commandsResponse: {},
     },
     msFormaldehyde: {
-        ID: 0x042b,
+        ID: 1067, // 0x042b
         attributes: {
             measuredValue: {ID: 0x0000, type: DataType.SINGLE_PREC},
             minMeasuredValue: {ID: 0x0001, type: DataType.SINGLE_PREC},
             maxMeasuredValue: {ID: 0x0002, type: DataType.SINGLE_PREC},
-            measuredTolerance: {ID: 0x0003, type: DataType.SINGLE_PREC},
+            tolerance: {ID: 0x0003, type: DataType.SINGLE_PREC},
         },
         commands: {},
         commandsResponse: {},
     },
     pm1Measurement: {
-        ID: 0x042c,
+        // XXX: not in R8 spec?
+        ID: 1068, // 0x042c
         attributes: {
             measuredValue: {ID: 0x0000, type: DataType.SINGLE_PREC},
             measuredMinValue: {ID: 0x0001, type: DataType.SINGLE_PREC},
             measuredMaxValue: {ID: 0x0002, type: DataType.SINGLE_PREC},
-            measuredTolerance: {ID: 0x0003, type: DataType.SINGLE_PREC},
+            tolerance: {ID: 0x0003, type: DataType.SINGLE_PREC},
         },
         commands: {},
         commandsResponse: {},
     },
     pm10Measurement: {
-        ID: 0x042d,
+        // XXX: not in R8 spec?
+        ID: 1069, // 0x042d
         attributes: {
             measuredValue: {ID: 0x0000, type: DataType.SINGLE_PREC},
             measuredMinValue: {ID: 0x0001, type: DataType.SINGLE_PREC},
             measuredMaxValue: {ID: 0x0002, type: DataType.SINGLE_PREC},
-            measuredTolerance: {ID: 0x0003, type: DataType.SINGLE_PREC},
+            tolerance: {ID: 0x0003, type: DataType.SINGLE_PREC},
         },
         commands: {},
         commandsResponse: {},
@@ -3892,8 +4417,11 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             lastMessageLqi: {ID: 284, type: DataType.UINT8},
             lastMessageRssi: {ID: 285, type: DataType.INT8},
             danfossSystemStatusCode: {ID: 0x4000, type: DataType.BITMAP16, manufacturerCode: ManufacturerCode.DANFOSS_A_S},
+            danfossHeatSupplyRequest: {ID: 0x4031, type: DataType.ENUM8, manufacturerCode: ManufacturerCode.DANFOSS_A_S},
             danfossSystemStatusWater: {ID: 0x4200, type: DataType.ENUM8, manufacturerCode: ManufacturerCode.DANFOSS_A_S},
             danfossMultimasterRole: {ID: 0x4201, type: DataType.ENUM8, manufacturerCode: ManufacturerCode.DANFOSS_A_S},
+            danfossIconApplication: {ID: 0x4210, type: DataType.ENUM8, manufacturerCode: ManufacturerCode.DANFOSS_A_S},
+            danfossIconForcedHeatingCooling: {ID: 0x4220, type: DataType.ENUM8, manufacturerCode: ManufacturerCode.DANFOSS_A_S},
             schneiderMeterStatus: {ID: 0xff01, type: DataType.UINT32, manufacturerCode: ManufacturerCode.SCHNEIDER_ELECTRIC},
             schneiderDiagnosticRegister1: {ID: 0xff02, type: DataType.UINT32, manufacturerCode: ManufacturerCode.SCHNEIDER_ELECTRIC},
             schneiderCommunicationQuality: {ID: 0x4000, type: DataType.UINT8, manufacturerCode: ManufacturerCode.SCHNEIDER_ELECTRIC},
@@ -4211,7 +4739,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                     {name: "type", type: DataType.UINT8},
                     {name: "unknown2", type: DataType.UINT8},
                     {name: "time", type: DataType.UINT8},
-                    {name: "unknown2", type: DataType.UINT8},
+                    {name: "unknown3", type: DataType.UINT8},
                 ],
             },
         },
@@ -4607,8 +5135,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         commands: {},
         commandsResponse: {},
     },
-    // biome-ignore lint/style/useNamingConvention: cross-repo impact
-    manuSpecificTuya_2: {
+    manuSpecificTuya2: {
         ID: 0xe002,
         attributes: {
             alarm_temperature_max: {ID: 53258, type: DataType.INT16},
@@ -4622,8 +5149,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         commands: {},
         commandsResponse: {},
     },
-    // biome-ignore lint/style/useNamingConvention: cross-repo impact
-    manuSpecificTuya_3: {
+    manuSpecificTuya3: {
         ID: 0xe001,
         attributes: {
             powerOnBehavior: {ID: 0xd010, type: DataType.ENUM8},
@@ -4910,15 +5436,6 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         attributes: {
             ledIndication: {ID: 0x0002, type: DataType.UINT8},
             ledOrientation: {ID: 0x0060, type: DataType.UINT8},
-        },
-        commands: {},
-        commandsResponse: {},
-    },
-    sprutDevice: {
-        ID: 26112,
-        manufacturerCode: 26214,
-        attributes: {
-            debug: {ID: 0, type: DataType.BOOLEAN},
         },
         commands: {},
         commandsResponse: {},

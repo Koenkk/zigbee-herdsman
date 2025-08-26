@@ -97,10 +97,10 @@ export enum DataType {
     /** class=composite, length=0x0000-0xFFFE, non-value=0xFFFF */
     LONG_CHAR_STR = 0x44,
 
-    /** class=composite, length=variable, non-value=[0]==0xFFFF */
+    /** class=composite, length=variable, non-value=(length=0xFFFF) */
     ARRAY = 0x48,
 
-    /** class=composite, length=variable, non-value=(length) */
+    /** class=composite, length=variable, non-value=(length=0xFFFF) */
     STRUCT = 0x4c,
 
     /** class=composite, length=max(0xFFFE * DataType) non-value=(length=0xFFFF) */
@@ -157,14 +157,12 @@ export enum BuffaloZclDataType {
 
 /** @TODO strings for backwards compat in tests. Should be moved to numbers. */
 export enum ParameterCondition {
-    STATUS_EQUAL = "statusEquals",
-    STATUS_NOT_EQUAL = "statusNotEquals",
     MINIMUM_REMAINING_BUFFER_BYTES = "minimumRemainingBufferBytes",
-    DIRECTION_EQUAL = "directionEquals",
     BITMASK_SET = "bitMaskSet",
     BITFIELD_ENUM = "bitFieldEnum",
     DATA_TYPE_CLASS_EQUAL = "dataTypeValueTypeEquals",
     FIELD_EQUAL = "fieldEquals",
+    FIELD_GT = "fieldGT",
 }
 
 export enum FrameType {
@@ -191,4 +189,15 @@ export enum StructuredIndicatorType {
     WriteAdd = 0x10,
     /** Remove element from the set/bag */
     WriteRemove = 0x20,
+}
+
+/** Mapping of descriptive string power to source bits. */
+export enum PowerSource {
+    Unknown = 0,
+    "Mains (single phase)" = 1,
+    "Mains (3 phase)" = 2,
+    Battery = 3,
+    "DC Source" = 4,
+    "Emergency mains constantly powered" = 5,
+    "Emergency mains and transfer switch" = 6,
 }

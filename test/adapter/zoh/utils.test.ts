@@ -1,3 +1,4 @@
+import {describe, expect, it} from "vitest";
 import {bigUInt64ToBufferBE, bigUInt64ToBufferLE, bigUInt64ToHexBE} from "../../../src/adapter/zoh/adapter/utils";
 
 describe("ZoH Utils", () => {

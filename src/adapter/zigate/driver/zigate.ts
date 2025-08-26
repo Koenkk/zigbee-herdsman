@@ -15,7 +15,7 @@ import type {EndDeviceAnnounce, GenericZdoResponse, ResponseMap as ZdoResponseMa
 import {SerialPort} from "../../serialPort";
 import SocketPortUtils from "../../socketPortUtils";
 import type {SerialPortOptions} from "../../tstype";
-import {type ZiGateResponseMatcher, type ZiGateResponseMatcherRule, equal} from "./commandType";
+import {equal, type ZiGateResponseMatcher, type ZiGateResponseMatcherRule} from "./commandType";
 import {Status, ZDO_REQ_CLUSTER_ID_TO_ZIGATE_COMMAND_ID, ZiGateCommandCode, ZiGateMessageCode, type ZiGateObjectPayload} from "./constants";
 import ZiGateFrame from "./frame";
 import ZiGateObject from "./ziGateObject";
@@ -140,7 +140,6 @@ export default class ZiGate extends EventEmitter<ZiGateEventMap> {
                     resultPromise = statusWaiter.promise;
                 }
 
-                // @ts-expect-error assumed proper based on port type
                 // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
                 this.portWrite!.write(sendBuffer);
 
@@ -186,7 +185,6 @@ export default class ZiGate extends EventEmitter<ZiGateEventMap> {
 
             const statusWaiter = this.waitress.waitFor({rules: ruleStatus}, timeouts.default);
 
-            // @ts-expect-error assumed proper based on port type
             // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
             this.portWrite!.write(sendBuffer);
 
@@ -231,7 +229,6 @@ export default class ZiGate extends EventEmitter<ZiGateEventMap> {
             dataBits: 8,
             parity: "none" /* one of ['none', 'even', 'mark', 'odd', 'space'] */,
             stopBits: 1 /* one of [1,2] */,
-            lock: false,
             autoOpen: false,
         });
         this.parser = this.serialPort.pipe(new DelimiterParser({delimiter: [ZiGateFrame.STOP_BYTE], includeDelimiter: true}));

@@ -1,3 +1,4 @@
+import {describe, expect, it} from "vitest";
 import * as Zdo from "../../../src/zspec/zdo";
 
 describe("ZDO Utils", () => {

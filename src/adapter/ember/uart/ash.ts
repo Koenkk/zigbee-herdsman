@@ -159,7 +159,7 @@ const CONFIG_ACK_TIME_MIN = 400;
 /**  "     "     "     "     " maximum value */
 const CONFIG_ACK_TIME_MAX = 2400;
 /** time allowed to receive RSTACK after ncp is reset */
-const CONFIG_TIME_RST = 2500;
+const CONFIG_TIME_RST = 5000;
 /** time between checks for received RSTACK (CONNECTED status) */
 const CONFIG_TIME_RST_CHECK = 100;
 /** if free buffers < limit, host receiver isn't ready, will hold off the ncp from sending normal priority frames */
@@ -1720,15 +1720,6 @@ export class UartAsh extends EventEmitter<UartAshEventMap> {
         }
 
         return !this.nrTimer;
-    }
-
-    /**
-     * Indicates whether or not Not Ready timer is currently running.
-     *
-     * @return True if nrTime == 0
-     */
-    private nrTimerIsNotRunning(): boolean {
-        return this.nrTimer === 0;
     }
 
     /**

@@ -1,5 +1,4 @@
 import type {BuffaloZclDataType, DataType, DataTypeClass, Direction, FrameType, ParameterCondition, StructuredIndicatorType} from "./enums";
-import type {Status} from "./status";
 
 export interface BuffaloZclOptions {
     length?: number;
@@ -21,6 +20,120 @@ export interface ZclArray {
 export interface StructuredSelector {
     indexes?: number[];
     indicatorType?: StructuredIndicatorType;
+}
+
+export interface KeyZclValue {
+    [s: string | number]: number | string;
+}
+
+export interface Struct {
+    elmType: DataType;
+    elmVal: unknown;
+}
+
+export interface ZclTimeOfDay {
+    /** [0-23] */
+    hours?: number;
+    /** [0-59] */
+    minutes?: number;
+    /** [0-59] */
+    seconds?: number;
+    /** [0-99] */
+    hundredths?: number;
+}
+
+export interface ZclDate {
+    /** [1900-2155], converted to/from [0-255] => value+1900=year */
+    year?: number;
+    /** [1-12] */
+    month?: number;
+    /** [1-31] */
+    dayOfMonth?: number;
+    /** [1-7] */
+    dayOfWeek?: number;
+}
+
+export interface ZoneInfo {
+    zoneID: number;
+    zoneStatus: number;
+}
+
+export interface ExtensionFieldSet {
+    clstId: number;
+    len: number;
+    extField: unknown[];
+}
+
+export interface ThermoTransition {
+    transitionTime: number;
+    heatSetpoint?: number;
+    coolSetpoint?: number;
+}
+
+export interface Gpd {
+    deviceID: number;
+    options: number;
+    extendedOptions: number;
+    securityKey: Buffer;
+    keyMic: number;
+    outgoingCounter: number;
+    applicationInfo: number;
+    manufacturerID: number;
+    modelID: number;
+    numGpdCommands: number;
+    gpdCommandIdList: Buffer;
+    numServerClusters: number;
+    numClientClusters: number;
+    gpdServerClusters: Buffer;
+    gpdClientClusters: Buffer;
+    genericSwitchConfig: number;
+    currentContactStatus: number;
+}
+
+export interface GpdChannelRequest {
+    nextChannel: number;
+    nextNextChannel: number;
+}
+
+export interface GpdChannelConfiguration {
+    commandID: number;
+    operationalChannel: number;
+    basic: boolean;
+}
+
+export interface GpdCommissioningReply {
+    commandID: number;
+    options: number;
+    /** expected valid if corresponding `options` bits set */
+    panID?: number;
+    /** expected valid if corresponding `options` bits set */
+    securityKey?: Buffer;
+    /** expected valid if corresponding `options` bits set */
+    keyMic?: number;
+    /** expected valid if corresponding `options` bits set */
+    frameCounter?: number;
+}
+
+export interface GpdCustomReply {
+    commandID: number;
+    buffer: Buffer;
+}
+
+export interface GpdAttributeReport {
+    manufacturerCode: number;
+    clusterID: number;
+    attributes: KeyZclValue;
+}
+
+export interface TuyaDataPointValue {
+    dp: number;
+    datatype: number;
+    data: Buffer;
+}
+
+export interface MiboxerZone {
+    zoneNum: number;
+    groupId: number;
 }
 
 export interface FrameControl {
@@ -58,14 +171,12 @@ export interface AttributeDefinition {
 
 export interface ParameterDefinition extends Parameter {
     conditions?: (
-        | {type: ParameterCondition.STATUS_EQUAL; value: Status}
-        | {type: ParameterCondition.STATUS_NOT_EQUAL; value: Status}
         | {type: ParameterCondition.MINIMUM_REMAINING_BUFFER_BYTES; value: number}
-        | {type: ParameterCondition.DIRECTION_EQUAL; value: Direction}
         | {type: ParameterCondition.BITMASK_SET; param: string; mask: number /* not set */; reversed?: boolean}
         | {type: ParameterCondition.BITFIELD_ENUM; param: string; offset: number; size: number; value: number}
         | {type: ParameterCondition.DATA_TYPE_CLASS_EQUAL; value: DataTypeClass}
-        | {type: ParameterCondition.FIELD_EQUAL; field: string; value: unknown}
+        | {type: ParameterCondition.FIELD_EQUAL; field: string; value: unknown; reversed?: boolean}
+        | {type: ParameterCondition.FIELD_GT; field: string; value: number /*; reversed?: boolean*/}
     )[];
 }
 
@@ -86,8 +197,7 @@ export interface Cluster {
     commandsResponse: {
         [s: string]: Command;
     };
-    getAttribute: (key: number | string) => Attribute;
-    hasAttribute: (key: number | string) => boolean;
+    getAttribute: (key: number | string) => Attribute | undefined;
     getCommand: (key: number | string) => Command;
     getCommandResponse: (key: number | string) => Command;
 }
@@ -151,13 +261,45 @@ export type ClusterName =
     | "msFlowMeasurement"
     | "msRelativeHumidity"
     | "msOccupancySensing"
+    | "msLeafWetness"
     | "msSoilMoisture"
     | "pHMeasurement"
+    | "msElectricalConductivity"
+    | "msWindSpeed"
+    | "msCarbonMonoxide"
     | "msCO2"
-    | "pm1Measurement"
-    | "msFormaldehyde"
-    | "pm10Measurement"
+    | "msEthylene"
+    | "msEthyleneOxide"
+    | "msHydrogen"
+    | "msHydrogenSulfide"
+    | "msNitricOxide"
+    | "msNitrogenDioxide"
+    | "msOxygen"
+    | "msOzone"
+    | "msSulfurDioxide"
+    | "msDissolvedOxygen"
+    | "msBromate"
+    | "msChloramines"
+    | "msChlorine"
+    | "msFecalColiformAndEColi"
+    | "msFluoride"
+    | "msHaloaceticAcids"
+    | "msTotalTrihalomethanes"
+    | "msTotalColiformBacteria"
+    | "msTurbidity"
+    | "msCopper"
+    | "msLead"
+    | "msManganese"
+    | "msSulfate"
+    | "msBromodichloromethane"
+    | "msBromoform"
+    | "msChlorodibromomethane"
+    | "msChloroform"
+    | "msSodium"
     | "pm25Measurement"
+    | "msFormaldehyde"
+    | "pm1Measurement"
+    | "pm10Measurement"
     | "ssIasZone"
     | "ssIasAce"
     | "ssIasWd"
@@ -208,8 +350,8 @@ export type ClusterName =
     | "manuSpecificTuya"
     | "manuSpecificLumi"
     | "liXeePrivate"
-    | "manuSpecificTuya_2"
-    | "manuSpecificTuya_3"
+    | "manuSpecificTuya2"
+    | "manuSpecificTuya3"
     | "manuSpecificCentraliteHumidity"
     | "manuSpecificSmartThingsArrivalSensor"
     | "manuSpecificSamsungAccelerometer"
@@ -222,7 +364,6 @@ export type ClusterName =
     | "elkoSwitchConfigurationClusterServer"
     | "manuSpecificSchneiderLightSwitchConfiguration"
     | "manuSpecificSchneiderFanSwitchConfiguration"
-    | "sprutDevice"
     | "sprutVoc"
     | "sprutNoise"
     | "sprutIrBlaster"

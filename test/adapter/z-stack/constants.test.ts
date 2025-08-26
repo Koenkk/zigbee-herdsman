@@ -1,3 +1,4 @@
+import {describe, expect, it} from "vitest";
 import * as Constants from "../../../src/adapter/z-stack/constants";
 
 describe("zstack-constants", () => {

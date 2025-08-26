@@ -1,3 +1,4 @@
+import {beforeEach, describe, expect, it, test, vi} from "vitest";
 import * as Zcl from "../src/zspec/zcl";
 import {BuffaloZcl} from "../src/zspec/zcl/buffaloZcl";
 import {BuffaloZclDataType, DataType, Direction, FrameType, StructuredIndicatorType} from "../src/zspec/zcl/definition/enums";
@@ -20,16 +21,12 @@ describe("Zcl", () => {
         // @ts-expect-error testing
         delete cluster1.getCommand;
         // @ts-expect-error testing
-        delete cluster1.hasAttribute;
-        // @ts-expect-error testing
         delete cluster1.getCommandResponse;
         const cluster2 = Zcl.Utils.getCluster("genBasic", undefined, {});
         // @ts-expect-error testing
         delete cluster2.getAttribute;
         // @ts-expect-error testing
         delete cluster2.getCommand;
-        // @ts-expect-error testing
-        delete cluster2.hasAttribute;
         // @ts-expect-error testing
         delete cluster2.getCommandResponse;
         expect(cluster1).toStrictEqual(cluster2);
@@ -43,10 +40,10 @@ describe("Zcl", () => {
 
     it("Cluster has attribute", () => {
         const cluster = Zcl.Utils.getCluster(0, undefined, {});
-        expect(cluster.hasAttribute("zclVersion")).toBeTruthy();
-        expect(cluster.hasAttribute("NOTEXISTING")).toBeFalsy();
-        expect(cluster.hasAttribute(0)).toBeTruthy();
-        expect(cluster.hasAttribute(910293)).toBeFalsy();
+        expect(cluster.getAttribute("zclVersion")).not.toBeUndefined();
+        expect(cluster.getAttribute("NOTEXISTING")).toBeUndefined();
+        expect(cluster.getAttribute(0)).not.toBeUndefined();
+        expect(cluster.getAttribute(910293)).toBeUndefined();
     });
 
     it("Get specific command by name", () => {
@@ -113,7 +110,7 @@ describe("Zcl", () => {
 
     it("ZclFrame from buffer parse payload with unknown frame type", () => {
         expect(() => {
-            // @ts-ignore
+            // @ts-expect-error
             Zcl.Frame.parsePayload({frameControl: {frameType: 9}}, undefined);
         }).toThrow("Unsupported frameType '9'");
     });
@@ -502,8 +499,8 @@ describe("Zcl", () => {
                         "12": 0,
                         "100": 1,
                         "101": 0,
-                        "110": 255,
-                        "111": 255,
+                        "110": Number.NaN,
+                        "111": Number.NaN,
                         "148": 4,
                         "149": 0.14562499523162842,
                         "150": 2335.614013671875,
@@ -745,7 +742,7 @@ describe("Zcl", () => {
             commandID: 16,
             frameCounter: 1253,
             options: 5280,
-            payloadSize: 255,
+            payloadSize: Number.NaN,
         };
 
         expect(frame.header).toStrictEqual(header);
@@ -753,7 +750,7 @@ describe("Zcl", () => {
     });
 
     it("ZclFrame from buffer GPD with extra data", () => {
-        const buffer = Buffer.from([0x11, 0x00, 0x00, 0xa0, 0x14, 0xfe, 0xf4, 0x46, 0x00, 0xe5, 0x04, 0x00, 0x00, 0x10, 0xff, 0x01]);
+        const buffer = Buffer.from([0x11, 0x00, 0x00, 0xa0, 0x14, 0xfe, 0xf4, 0x46, 0x00, 0xe5, 0x04, 0x00, 0x00, 0x10, 0x01, 0x01]);
         const frame = Zcl.Frame.fromBuffer(Zcl.Clusters.greenPower.ID, Zcl.Header.fromBuffer(buffer)!, buffer, {});
         const header = new Zcl.Header(
             {
@@ -774,7 +771,7 @@ describe("Zcl", () => {
             commandID: 16,
             frameCounter: 1253,
             options: 5280,
-            payloadSize: 255,
+            payloadSize: 1,
         };
 
         expect(frame.header).toStrictEqual(header);
@@ -1917,26 +1914,26 @@ describe("Zcl", () => {
 
     it("Zcl utils get cluster attributes manufacturerCode wrong", () => {
         const cluster = Zcl.Utils.getCluster("closuresWindowCovering", 123, {});
-        expect(() => cluster.getAttribute(0x1000)).toThrow("Cluster 'closuresWindowCovering' has no attribute '4096'");
+        expect(cluster.getAttribute(0x1000)).toBeUndefined();
     });
 
     it("Zcl utils get command", () => {
         const cluster = Zcl.Utils.getCluster("genOnOff", undefined, {});
         const command = cluster.getCommand(0);
-        expect(command.name).toEqual("off");
-        expect(cluster.getCommand("off")).toEqual(command);
+        expect(command.name).toStrictEqual("off");
+        expect(cluster.getCommand("off")).toStrictEqual(command);
     });
 
     it("Zcl utils get attribute", () => {
         const cluster = Zcl.Utils.getCluster("genOnOff", undefined, {});
-        const command = cluster.getAttribute(16385);
-        expect(command.name).toEqual("onTime");
-        expect(cluster.getAttribute("onTime")).toEqual(command);
+        const attribute = cluster.getAttribute(16385);
+        expect(attribute?.name).toStrictEqual("onTime");
+        expect(cluster.getAttribute("onTime")).toStrictEqual(attribute);
     });
 
     it("Zcl utils get attribute non-existing", () => {
         const cluster = Zcl.Utils.getCluster("genOnOff", undefined, {});
-        expect(() => cluster.getAttribute("notExisting")).toThrow("Cluster 'genOnOff' has no attribute 'notExisting'");
+        expect(cluster.getAttribute("notExisting")).toBeUndefined();
     });
 
     it("Zcl utils get command non-existing", () => {
@@ -1954,6 +1951,7 @@ describe("Zcl", () => {
         expect(
             frame.read(BuffaloZclDataType.GPD_FRAME, {
                 payload: {
+                    payloadSize: buffer.length,
                     commandID: 0xe0,
                 },
             }),
@@ -2023,6 +2021,7 @@ describe("Zcl", () => {
         expect(
             frame.read(BuffaloZclDataType.GPD_FRAME, {
                 payload: {
+                    payloadSize: buffer.length,
                     commandID: 0xe0,
                 },
             }),
@@ -2054,6 +2053,7 @@ describe("Zcl", () => {
         expect(
             frame.read(BuffaloZclDataType.GPD_FRAME, {
                 payload: {
+                    payloadSize: buffer.length,
                     commandID: 0xe3,
                 },
             }),
@@ -2407,7 +2407,7 @@ describe("Zcl", () => {
         const buffer = Buffer.alloc(4);
         const expected = Buffer.from([0xff, 0xff, 0xff, 0xff]);
         const buffalo = new BuffaloZcl(buffer);
-        const payload = {hours: undefined, minutes: undefined, seconds: undefined, hundredths: undefined};
+        const payload = {hours: Number.NaN, minutes: Number.NaN, seconds: Number.NaN, hundredths: Number.NaN};
         buffalo.write(DataType.TOD, payload, {});
         expect(buffalo.getBuffer()).toStrictEqual(expected);
     });
@@ -2416,7 +2416,7 @@ describe("Zcl", () => {
         const buffer = Buffer.alloc(4);
         const expected = Buffer.from([0xff, 0xff, 0xff, 0xff]);
         const buffalo = new BuffaloZcl(buffer);
-        const payload = {year: undefined, month: undefined, dayOfMonth: undefined, dayOfWeek: undefined};
+        const payload = {year: Number.NaN, month: Number.NaN, dayOfMonth: Number.NaN, dayOfWeek: Number.NaN};
         buffalo.write(DataType.DATE, payload, {});
         expect(buffalo.getBuffer()).toStrictEqual(expected);
     });
@@ -2782,8 +2782,7 @@ describe("Zcl", () => {
         const buffalo = new BuffaloZcl(Buffer.from([12, 34]));
         const value = buffalo.read(BuffaloZclDataType.USE_DATA_TYPE, {});
         expect(value).toStrictEqual(Buffer.from([12, 34]));
-        // @ts-expect-error protected
-        buffalo.position = 1;
+        buffalo.setPosition(1);
         const value2 = buffalo.read(BuffaloZclDataType.USE_DATA_TYPE, {length: 1});
         expect(value2).toStrictEqual(Buffer.from([34]));
     });
@@ -2804,11 +2803,11 @@ describe("Zcl", () => {
         }).toThrow("Cannot write USE_DATA_TYPE without dataType option specified");
     });
 
-    it("Throws when read GPD_FRAME is missing payload.payloadSize option when payload.commandID is 0xA1", () => {
+    it("Throws when read GPD_FRAME is missing payload.payloadSize option", () => {
         expect(() => {
             const buffalo = new BuffaloZcl(Buffer.alloc(1));
             buffalo.read(BuffaloZclDataType.GPD_FRAME, {payload: {commandID: 0xa1}});
-        }).toThrow("Cannot read GPD_FRAME with commandID=0xA1 without payloadSize options specified");
+        }).toThrow("Cannot read GPD_FRAME without required payload options specified");
     });
 
     it("Throws when read LIST_THERMO_TRANSITIONS is missing required payload options", () => {

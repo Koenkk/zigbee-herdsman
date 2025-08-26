@@ -1,6 +1,7 @@
 version: 2
 updates:
     - package-ecosystem: npm
+      versioning-strategy: increase
       directory: /
       schedule:
           interval: weekly
@@ -10,3 +11,12 @@ updates:
               update-types:
                   - minor
                   - patch
+      commit-message:
+        prefix: fix(ignore)
+      ignore:
+          # https://github.com/Koenkk/zigbee-herdsman/pull/1471
+          - dependency-name: typescript
+    - package-ecosystem: github-actions
+      directory: /
+      schedule:
+        interval: weekly

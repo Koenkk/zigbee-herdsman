@@ -8,9 +8,9 @@ import {CHALLENGE_VALUE_SIZE, CURVE_PUBLIC_POINT_SIZE, MULTICAST_BINDING, UNICAS
 import {GlobalTLV, type LeaveRequestFlags, RoutingTableStatus} from "./definition/enums";
 import {Status} from "./definition/status";
 import type {
+    ActiveEndpointsResponse,
     APSFrameCounterChallengeTLV,
     APSFrameCounterResponseTLV,
-    ActiveEndpointsResponse,
     AuthenticationTokenIdTLV,
     BeaconAppendixEncapsulationGlobalTLV,
     BeaconSurveyConfigurationTLV,
@@ -29,9 +29,9 @@ import type {
     GetConfigurationResponse,
     IEEEAddressResponse,
     JoinerEncapsulationGlobalTLV,
+    LocalTLVReader,
     LQITableEntry,
     LQITableResponse,
-    LocalTLVReader,
     ManufacturerSpecificGlobalTLV,
     MatchDescriptorsResponse,
     NetworkAddressResponse,
@@ -74,15 +74,6 @@ const NS = "zh:zdo:buffalo";
 const MAX_BUFFER_SIZE = 255;
 
 export class BuffaloZdo extends Buffalo {
-    /**
-     * Set the position of the internal position tracker.
-     * TODO: move to base `Buffalo` class
-     * @param position
-     */
-    public setPosition(position: number): void {
-        this.position = position;
-    }
-
     /**
      * Set the byte at given position without affecting the internal position tracker.
      * TODO: move to base `Buffalo` class

@@ -1,6 +1,5 @@
-import type {Eui64} from "../zspec/tstypes";
-
 import {Utils as ZSpecUtils} from "../zspec";
+import type {Eui64} from "../zspec/tstypes";
 
 export class Buffalo {
     protected position: number;
@@ -13,6 +12,14 @@ export class Buffalo {
 
     public getPosition(): number {
         return this.position;
+    }
+
+    /**
+     * Set the position of the internal position tracker.
+     * @param position
+     */
+    public setPosition(position: number): void {
+        this.position = position;
     }
 
     public getBuffer(): Buffer {

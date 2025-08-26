@@ -1,8 +1,7 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
-
 import equals from "fast-deep-equal/es6";
-
+import {afterAll, beforeAll, beforeEach, describe, expect, it, vi} from "vitest";
 import type {ZclPayload} from "../../../src/adapter/events";
 import {ZnpVersion} from "../../../src/adapter/z-stack/adapter/tstype";
 import {ZStackAdapter} from "../../../src/adapter/z-stack/adapter/zStackAdapter";
@@ -1871,7 +1870,7 @@ describe("zstack-adapter", () => {
         expect(mockLogger.error.mock.calls[1][0]).toBe("- PAN ID: configured=124, adapter=123");
         expect(mockLogger.error.mock.calls[2][0]).toBe("- Extended PAN ID: configured=00124b0009d69f77, adapter=00124b0009d69f77");
         expect(mockLogger.error.mock.calls[3][0]).toBe(
-            "- Network Key: configured=01030507090b0d0f00020406080a0c0d, adapter=01030507090b0d0f00020406080a0c0d",
+            "- Network Key: configured=01030507090b0d0f00020406080a0c0d, adapter:active=01030507090b0d0f00020406080a0c0d adapter:preconfigured=01030507090b0d0f00020406080a0c0d, adapter:alternate=01030507090b0d0f00020406080a0c0d",
         );
         expect(mockLogger.error.mock.calls[4][0]).toBe("- Channel List: configured=21, adapter=21");
         expect(mockLogger.error.mock.calls[5][0]).toBe("Please update configuration to prevent further issues.");
@@ -1896,7 +1895,7 @@ describe("zstack-adapter", () => {
         expect(mockLogger.error.mock.calls[1][0]).toBe("- PAN ID: configured=124, adapter=123");
         expect(mockLogger.error.mock.calls[2][0]).toBe("- Extended PAN ID: configured=00124b0009d69f77, adapter=00124b0009d69f77");
         expect(mockLogger.error.mock.calls[3][0]).toBe(
-            "- Network Key: configured=01030507090b0d0f00020406080a0c0d, adapter=01030507090b0d0f00020406080a0c0d",
+            "- Network Key: configured=01030507090b0d0f00020406080a0c0d, adapter:active=01030507090b0d0f00020406080a0c0d adapter:preconfigured=01030507090b0d0f00020406080a0c0d, adapter:alternate=01030507090b0d0f00020406080a0c0d",
         );
         expect(mockLogger.error.mock.calls[4][0]).toBe("- Channel List: configured=21, adapter=21");
         expect(mockLogger.error.mock.calls[5][0]).toBe("Please update configuration to prevent further issues.");

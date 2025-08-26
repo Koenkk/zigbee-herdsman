@@ -1,3 +1,4 @@
+import {afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi} from "vitest";
 import {FrameType} from "../../../src/adapter/ezsp/driver/frame";
 import {Parser} from "../../../src/adapter/ezsp/driver/parser";
 import {SerialDriver} from "../../../src/adapter/ezsp/driver/uart";
@@ -67,11 +68,11 @@ describe("UART", () => {
 
     beforeEach(() => {
         for (const mock of mocks) {
-            // @ts-ignore
+            // @ts-expect-error
             mock.mockClear();
         }
 
-        // @ts-ignore; make sure we always get a new instance
+        // @ts-expect-error; make sure we always get a new instance
         serialDriver = new SerialDriver();
         writeBufferSpy = vi.spyOn(Writer.prototype, "writeBuffer").mockImplementation((buffer) => {
             if (buffer[0] === 0x1a) {
@@ -124,7 +125,7 @@ describe("UART", () => {
         expect(writeBufferSpy).toHaveBeenCalledTimes(2);
     });
 
-    it("Receive data", async () => {
+    it("Receive data", () => {
         const parsed = [];
         const parser = new Parser();
         parser.on("parsed", (result) => parsed.push(result));
@@ -150,7 +151,7 @@ describe("UART", () => {
         expect(parsed[3].type).toBe(FrameType.NAK);
     });
 
-    it("Message in two chunks", async () => {
+    it("Message in two chunks", () => {
         const parsed = [];
         const parser = new Parser();
         parser.on("parsed", (result) => parsed.push(result));
@@ -163,7 +164,7 @@ describe("UART", () => {
         expect(parsed[0].type).toBe(FrameType.DATA);
     });
 
-    it("Two messages in one chunk", async () => {
+    it("Two messages in one chunk", () => {
         const parsed = [];
         const parser = new Parser();
         parser.on("parsed", (result) => parsed.push(result));

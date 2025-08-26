@@ -209,7 +209,7 @@ export class ZStackAdapter extends Adapter {
         if (this.supportsLED == null) {
             // Only zStack3x0 with 20210430 and greater support LED
             const zStack3x0 = this.version.product === ZnpVersion.ZStack3x0;
-            this.supportsLED = !zStack3x0 || (zStack3x0 && Number.parseInt(this.version.revision) >= 20210430);
+            this.supportsLED = !zStack3x0 || (zStack3x0 && Number.parseInt(this.version.revision, 10) >= 20210430);
         }
 
         if (!this.supportsLED || (this.adapterOptions.disableLED && action !== "disable")) {
@@ -217,7 +217,7 @@ export class ZStackAdapter extends Adapter {
         }
 
         // Firmwares build on and after 20211029 should handle LED themselves
-        const firmwareControlsLed = Number.parseInt(this.version.revision) >= 20211029;
+        const firmwareControlsLed = Number.parseInt(this.version.revision, 10) >= 20211029;
         const lookup = {
             disable: firmwareControlsLed ? {ledid: 0xff, mode: 5} : {ledid: 3, mode: 0},
             on: firmwareControlsLed ? null : {ledid: 3, mode: 1},
@@ -226,7 +226,7 @@ export class ZStackAdapter extends Adapter {
 
         const payload = lookup[action];
         if (payload) {
-            this.znp.request(Subsystem.UTIL, "ledControl", payload, undefined, 500).catch(() => {
+            await this.znp.request(Subsystem.UTIL, "ledControl", payload, undefined, 500).catch(() => {
                 // We cannot 100% correctly determine if an adapter supports LED. E.g. the zStack 1.2 20190608
                 // fw supports led on the CC2531 but not on the CC2530. Therefore if a led request fails never thrown
                 // an error but instead mark the led as unsupported.
@@ -260,11 +260,11 @@ export class ZStackAdapter extends Adapter {
     }
 
     private supportsAssocRemove(): boolean {
-        return this.version.product === ZnpVersion.ZStack3x0 && Number.parseInt(this.version.revision) >= 20200805;
+        return this.version.product === ZnpVersion.ZStack3x0 && Number.parseInt(this.version.revision, 10) >= 20200805;
     }
 
     private supportsAssocAdd(): boolean {
-        return this.version.product === ZnpVersion.ZStack3x0 && Number.parseInt(this.version.revision) >= 20201026;
+        return this.version.product === ZnpVersion.ZStack3x0 && Number.parseInt(this.version.revision, 10) >= 20201026;
     }
 
     private async discoverRoute(networkAddress: number, waitSettled = true): Promise<void> {
@@ -809,7 +809,7 @@ export class ZStackAdapter extends Adapter {
                             const debouncer = debounce(
                                 () => {
                                     this.queue.execute<void>(async () => {
-                                        this.discoverRoute(zdoPayload.nwkAddress, false).catch(() => {});
+                                        await this.discoverRoute(zdoPayload.nwkAddress, false).catch(() => {});
                                     }, zdoPayload.nwkAddress);
                                 },
                                 60 * 1000,

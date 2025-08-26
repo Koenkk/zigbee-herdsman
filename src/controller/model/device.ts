@@ -1,5 +1,4 @@
 import assert from "node:assert";
-
 import type {Events as AdapterEvents} from "../../adapter";
 import type {LQINeighbor, RoutingTableEntry} from "../../adapter/tstype";
 import {wait} from "../../utils";
@@ -8,10 +7,10 @@ import * as ZSpec from "../../zspec";
 import {BroadcastAddress} from "../../zspec/enums";
 import type {Eui64} from "../../zspec/tstypes";
 import * as Zcl from "../../zspec/zcl";
+import type {TPartialClusterAttributes} from "../../zspec/zcl/definition/clusters-types";
 import type {ClusterDefinition, CustomClusters} from "../../zspec/zcl/definition/tstype";
 import * as Zdo from "../../zspec/zdo";
 import type {ControllerEventMap} from "../controller";
-import {ZclFrameConverter} from "../helpers";
 import zclTransactionSequenceNumber from "../helpers/zclTransactionSequenceNumber";
 import type {DatabaseEntry, DeviceType, KeyValue} from "../tstype";
 import Endpoint from "./endpoint";
@@ -23,6 +22,18 @@ import Entity from "./entity";
 const OneJanuary2000 = new Date("January 01, 2000 00:00:00 UTC+00:00").getTime();
 
 const NS = "zh:controller:device";
+
+const INTERVIEW_GENBASIC_ATTRIBUTES = [
+    "modelId",
+    "manufacturerName",
+    "powerSource",
+    "zclVersion",
+    "appVersion",
+    "stackVersion",
+    "hwVersion",
+    "dateCode",
+    "swBuildId",
+] as const;
 
 interface Lqi {
     neighbors: {
@@ -50,22 +61,14 @@ export enum InterviewState {
 export class Device extends Entity<ControllerEventMap> {
     // biome-ignore lint/style/useNamingConvention: cross-repo impact
     private readonly ID: number;
-    private _applicationVersion?: number;
-    private _dateCode?: string;
+    #genBasic: TPartialClusterAttributes<"genBasic"> = {};
     private _endpoints: Endpoint[];
-    private _hardwareVersion?: number;
     private _ieeeAddr: string;
     private _interviewState: InterviewState;
     private _lastSeen?: number;
     private _manufacturerID?: number;
-    private _manufacturerName?: string;
-    private _modelID?: string;
     private _networkAddress: number;
-    private _powerSource?: string;
-    private _softwareBuildID?: string;
-    private _stackVersion?: number;
     private _type: DeviceType;
-    private _zclVersion?: number;
     private _linkquality?: number;
     private _skipDefaultResponse: boolean;
     private _customReadResponse?: CustomReadResponse;
@@ -83,10 +86,10 @@ export class Device extends Entity<ControllerEventMap> {
         this._ieeeAddr = ieeeAddr;
     }
     get applicationVersion(): number | undefined {
-        return this._applicationVersion;
+        return this.#genBasic.appVersion;
     }
-    set applicationVersion(applicationVersion: number) {
-        this._applicationVersion = applicationVersion;
+    set applicationVersion(version: number) {
+        this.#genBasic.appVersion = version;
     }
     get endpoints(): Endpoint[] {
         return this._endpoints;
@@ -110,28 +113,28 @@ export class Device extends Entity<ControllerEventMap> {
         return this._type;
     }
     get dateCode(): string | undefined {
-        return this._dateCode;
+        return this.#genBasic.dateCode;
     }
-    set dateCode(dateCode: string) {
-        this._dateCode = dateCode;
+    set dateCode(code: string) {
+        this.#genBasic.dateCode = code;
     }
-    set hardwareVersion(hardwareVersion: number) {
-        this._hardwareVersion = hardwareVersion;
+    set hardwareVersion(version: number) {
+        this.#genBasic.hwVersion = version;
     }
     get hardwareVersion(): number | undefined {
-        return this._hardwareVersion;
+        return this.#genBasic.hwVersion;
     }
     get manufacturerName(): string | undefined {
-        return this._manufacturerName;
+        return this.#genBasic.manufacturerName;
     }
-    set manufacturerName(manufacturerName: string | undefined) {
-        this._manufacturerName = manufacturerName;
+    set manufacturerName(name: string | undefined) {
+        this.#genBasic.manufacturerName = name;
     }
-    set modelID(modelID: string) {
-        this._modelID = modelID;
+    set modelID(id: string) {
+        this.#genBasic.modelId = id;
     }
     get modelID(): string | undefined {
-        return this._modelID;
+        return this.#genBasic.modelId;
     }
     get networkAddress(): number {
         return this._networkAddress;
@@ -148,28 +151,39 @@ export class Device extends Entity<ControllerEventMap> {
         }
     }
     get powerSource(): string | undefined {
-        return this._powerSource;
+        return this.#genBasic.powerSource ? Zcl.POWER_SOURCES[this.#genBasic.powerSource] : undefined;
     }
-    set powerSource(powerSource: string) {
-        this._powerSource = typeof powerSource === "number" ? Zcl.POWER_SOURCES[powerSource & ~(1 << 7)] : powerSource;
+    set powerSource(source: string | number) {
+        if (typeof source === "number") {
+            this.#genBasic.powerSource = source & ~(1 << 7);
+        } else {
+            for (const key in Zcl.POWER_SOURCES) {
+                const val = Zcl.POWER_SOURCES[key];
+
+                if (val === source) {
+                    this.#genBasic.powerSource = Number(key);
+                    break;
+                }
+            }
+        }
     }
     get softwareBuildID(): string | undefined {
-        return this._softwareBuildID;
+        return this.#genBasic.swBuildId;
     }
-    set softwareBuildID(softwareBuildID: string) {
-        this._softwareBuildID = softwareBuildID;
+    set softwareBuildID(id: string) {
+        this.#genBasic.swBuildId = id;
     }
     get stackVersion(): number | undefined {
-        return this._stackVersion;
+        return this.#genBasic.stackVersion;
     }
-    set stackVersion(stackVersion: number) {
-        this._stackVersion = stackVersion;
+    set stackVersion(version: number) {
+        this.#genBasic.stackVersion = version;
     }
     get zclVersion(): number | undefined {
-        return this._zclVersion;
+        return this.#genBasic.zclVersion;
     }
-    set zclVersion(zclVersion: number) {
-        this._zclVersion = zclVersion;
+    set zclVersion(version: number) {
+        this.#genBasic.zclVersion = version;
     }
     get linkquality(): number | undefined {
         return this._linkquality;
@@ -209,6 +223,9 @@ export class Device extends Entity<ControllerEventMap> {
     get gpSecurityKey(): number[] | undefined {
         return this._gpSecurityKey;
     }
+    get genBasic(): TPartialClusterAttributes<"genBasic"> {
+        return this.#genBasic;
+    }
 
     public meta: KeyValue;
 
@@ -218,77 +235,6 @@ export class Device extends Entity<ControllerEventMap> {
     private static loadedFromDatabase = false;
     private static readonly deletedDevices: Map<string /* IEEE */, Device> = new Map();
     private static readonly nwkToIeeeCache: Map<number /* nwk addr */, string /* IEEE */> = new Map();
-
-    public static readonly REPORTABLE_PROPERTIES_MAPPING: {
-        [s: string]: {
-            set: (value: string | number, device: Device) => void;
-            key:
-                | "modelID"
-                | "manufacturerName"
-                | "applicationVersion"
-                | "zclVersion"
-                | "powerSource"
-                | "stackVersion"
-                | "dateCode"
-                | "softwareBuildID"
-                | "hardwareVersion";
-        };
-    } = {
-        modelId: {
-            key: "modelID",
-            set: (v: string | number, d: Device): void => {
-                d.modelID = v as string;
-            },
-        },
-        manufacturerName: {
-            key: "manufacturerName",
-            set: (v: string | number, d: Device): void => {
-                d.manufacturerName = v as string;
-            },
-        },
-        powerSource: {
-            key: "powerSource",
-            set: (v: string | number, d: Device): void => {
-                d.powerSource = v as string;
-            },
-        },
-        zclVersion: {
-            key: "zclVersion",
-            set: (v: string | number, d: Device): void => {
-                d.zclVersion = v as number;
-            },
-        },
-        appVersion: {
-            key: "applicationVersion",
-            set: (v: string | number, d: Device): void => {
-                d.applicationVersion = v as number;
-            },
-        },
-        stackVersion: {
-            key: "stackVersion",
-            set: (v: string | number, d: Device): void => {
-                d.stackVersion = v as number;
-            },
-        },
-        hwVersion: {
-            key: "hardwareVersion",
-            set: (v: string | number, d: Device): void => {
-                d.hardwareVersion = v as number;
-            },
-        },
-        dateCode: {
-            key: "dateCode",
-            set: (v: string | number, d: Device): void => {
-                d.dateCode = v as string;
-            },
-        },
-        swBuildId: {
-            key: "softwareBuildID",
-            set: (v: string | number, d: Device): void => {
-                d.softwareBuildID = v as string;
-            },
-        },
-    };
 
     private constructor(
         id: number,
@@ -320,15 +266,15 @@ export class Device extends Entity<ControllerEventMap> {
         this._networkAddress = networkAddress;
         this._manufacturerID = manufacturerID;
         this._endpoints = endpoints;
-        this._manufacturerName = manufacturerName;
-        this._powerSource = powerSource;
-        this._modelID = modelID;
-        this._applicationVersion = applicationVersion;
-        this._stackVersion = stackVersion;
-        this._zclVersion = zclVersion;
-        this._hardwareVersion = hardwareVersion;
-        this._dateCode = dateCode;
-        this._softwareBuildID = softwareBuildID;
+        this.#genBasic.manufacturerName = manufacturerName;
+        this.powerSource = powerSource ?? Zcl.PowerSource.Unknown;
+        this.#genBasic.modelId = modelID;
+        this.#genBasic.appVersion = applicationVersion;
+        this.#genBasic.stackVersion = stackVersion;
+        this.#genBasic.zclVersion = zclVersion;
+        this.#genBasic.hwVersion = hardwareVersion;
+        this.#genBasic.dateCode = dateCode;
+        this.#genBasic.swBuildId = softwareBuildID;
         this._interviewState = interviewState;
         this._skipDefaultResponse = false;
         this.meta = meta;
@@ -371,6 +317,10 @@ export class Device extends Entity<ControllerEventMap> {
         return this.endpoints.find((d): boolean => d.deviceID === deviceID);
     }
 
+    public updateGenBasic(data: TPartialClusterAttributes<"genBasic">): void {
+        Object.assign(this.#genBasic, data);
+    }
+
     public implicitCheckin(): void {
         // No need to do anythign in `catch` as `endpoint.sendRequest` already logs failures.
         Promise.allSettled(this.endpoints.map((e) => e.sendPendingRequests(false))).catch(() => {});
@@ -391,15 +341,6 @@ export class Device extends Entity<ControllerEventMap> {
     }
 
     public async onZclData(dataPayload: AdapterEvents.ZclPayload, frame: Zcl.Frame, endpoint: Endpoint): Promise<void> {
-        // Update reportable properties
-        if (frame.isCluster("genBasic") && (frame.isCommand("readRsp") || frame.isCommand("report"))) {
-            const attrKeyValue = ZclFrameConverter.attributeKeyValue(frame, this.manufacturerID, this.customClusters);
-
-            for (const key in attrKeyValue) {
-                Device.REPORTABLE_PROPERTIES_MAPPING[key]?.set(attrKeyValue[key], this);
-            }
-        }
-
         // Respond to enroll requests
         if (frame.header.isSpecific && frame.isCluster("ssIasZone") && frame.isCommand("enrollReq")) {
             logger.debug(`IAS - '${this.ieeeAddr}' responding to enroll response`, NS);
@@ -409,7 +350,7 @@ export class Device extends Entity<ControllerEventMap> {
 
         // Reponse to read requests
         if (frame.header.isGlobal && frame.isCommand("read") && !this._customReadResponse?.(frame, endpoint)) {
-            const time = Math.round((new Date().getTime() - OneJanuary2000) / 1000);
+            const time = Math.round((Date.now() - OneJanuary2000) / 1000);
             const attributes: {[s: string]: KeyValue} = {
                 ...endpoint.clusters,
                 genTime: {
@@ -426,12 +367,12 @@ export class Device extends Entity<ControllerEventMap> {
 
             if (frame.cluster.name in attributes) {
                 const response: KeyValue = {};
+
                 for (const entry of frame.payload) {
-                    if (frame.cluster.hasAttribute(entry.attrId)) {
-                        const name = frame.cluster.getAttribute(entry.attrId).name;
-                        if (name in attributes[frame.cluster.name].attributes) {
-                            response[name] = attributes[frame.cluster.name].attributes[name];
-                        }
+                    const name = frame.cluster.getAttribute(entry.attrId)?.name;
+
+                    if (name && name in attributes[frame.cluster.name].attributes) {
+                        response[name] = attributes[frame.cluster.name].attributes[name];
                     }
                 }
 
@@ -449,12 +390,16 @@ export class Device extends Entity<ControllerEventMap> {
         if (frame.header.isSpecific && frame.isCluster("genPollCtrl") && frame.isCommand("checkin")) {
             try {
                 if (this.hasPendingRequests() || this._checkinInterval === undefined) {
-                    const payload = {
-                        startFastPolling: true,
-                        fastPollTimeout: 0,
-                    };
                     logger.debug(`check-in from ${this.ieeeAddr}: accepting fast-poll`, NS);
-                    await endpoint.command(frame.cluster.ID, "checkinRsp", payload, {sendPolicy: "immediate"});
+                    await endpoint.command(
+                        frame.cluster.name as "genPollCtrl",
+                        "checkinRsp",
+                        {
+                            startFastPolling: 1,
+                            fastPollTimeout: 0,
+                        },
+                        {sendPolicy: "immediate"},
+                    );
 
                     // This is a good time to read the checkin interval if we haven't stored it previously
                     if (this._checkinInterval === undefined) {
@@ -468,14 +413,18 @@ export class Device extends Entity<ControllerEventMap> {
                     // We *must* end fast-poll when we're done sending things. Otherwise
                     // we cause undue power-drain.
                     logger.debug(`check-in from ${this.ieeeAddr}: stopping fast-poll`, NS);
-                    await endpoint.command(frame.cluster.ID, "fastPollStop", {}, {sendPolicy: "immediate"});
+                    await endpoint.command(frame.cluster.name as "genPollCtrl", "fastPollStop", {}, {sendPolicy: "immediate"});
                 } else {
-                    const payload = {
-                        startFastPolling: false,
-                        fastPollTimeout: 0,
-                    };
                     logger.debug(`check-in from ${this.ieeeAddr}: declining fast-poll`, NS);
-                    await endpoint.command(frame.cluster.ID, "checkinRsp", payload, {sendPolicy: "immediate"});
+                    await endpoint.command(
+                        frame.cluster.name as "genPollCtrl",
+                        "checkinRsp",
+                        {
+                            startFastPolling: 0,
+                            fastPollTimeout: 0,
+                        },
+                        {sendPolicy: "immediate"},
+                    );
                 }
             } catch (error) {
                 logger.error(`Handling of poll check-in from ${this.ieeeAddr} failed (${(error as Error).message})`, NS);
@@ -630,14 +579,12 @@ export class Device extends Entity<ControllerEventMap> {
     }
 
     public save(writeDatabase = true): void {
-        // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
-        Entity.database!.update(this.toDatabaseEntry(), writeDatabase);
+        Entity.database.update(this.toDatabaseEntry(), writeDatabase);
     }
 
     private static loadFromDatabaseIfNecessary(): void {
         if (!Device.loadedFromDatabase) {
-            // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
-            for (const entry of Entity.database!.getEntriesIterator(["Coordinator", "EndDevice", "Router", "GreenPower", "Unknown"])) {
+            for (const entry of Entity.database.getEntriesIterator(["Coordinator", "EndDevice", "Router", "GreenPower", "Unknown"])) {
                 const device = Device.fromDatabaseEntry(entry);
 
                 Device.devices.set(device.ieeeAddr, device);
@@ -700,8 +647,7 @@ export class Device extends Entity<ControllerEventMap> {
         if (Device.deletedDevices.delete(this.ieeeAddr)) {
             Device.devices.set(this.ieeeAddr, this);
 
-            // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
-            Entity.database!.insert(this.toDatabaseEntry());
+            Entity.database.insert(this.toDatabaseEntry());
         } else {
             throw new Error(`Device '${this.ieeeAddr}' is not deleted`);
         }
@@ -724,8 +670,7 @@ export class Device extends Entity<ControllerEventMap> {
             throw new Error(`Device with IEEE address '${ieeeAddr}' already exists`);
         }
 
-        // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
-        const ID = Entity.database!.newID();
+        const ID = Entity.database.newID();
         const device = new Device(
             ID,
             type,
@@ -750,8 +695,7 @@ export class Device extends Entity<ControllerEventMap> {
             gpSecurityKey,
         );
 
-        // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
-        Entity.database!.insert(device.toDatabaseEntry());
+        Entity.database.insert(device.toDatabaseEntry());
         Device.devices.set(device.ieeeAddr, device);
         Device.nwkToIeeeCache.set(device.networkAddress, device.ieeeAddr);
         return device;
@@ -805,8 +749,11 @@ export class Device extends Entity<ControllerEventMap> {
         // https://github.com/Koenkk/zigbee2mqtt/issues/4655
         //      Device does not change zoneState after enroll (event with original gateway)
         // modelID is mostly in the form of e.g. TS0202 and manufacturerName like e.g. _TYZB01_xph99wvr
-        if (this.modelID?.match("^TS\\d*$") && (this.manufacturerName?.match("^_TZ.*_.*$") || this.manufacturerName?.match("^_TYZB01_.*$"))) {
-            this._powerSource = this._powerSource || "Battery";
+        if (
+            this.manufacturerName === "HOBEIAN" ||
+            (this.modelID?.match("^TS\\d*$") && (this.manufacturerName?.match("^_TZ.*_.*$") || this.manufacturerName?.match("^_TYZB01_.*$")))
+        ) {
+            this.#genBasic.powerSource = this.#genBasic.powerSource || Zcl.PowerSource.Battery;
             logger.debug("Interview - quirks matched for Tuya end device", NS);
             return true;
         }
@@ -819,24 +766,24 @@ export class Device extends Entity<ControllerEventMap> {
                 type?: DeviceType;
                 manufacturerID?: number;
                 manufacturerName?: string;
-                powerSource?: string;
+                powerSource?: Zcl.PowerSource;
             };
         } = {
             "^3R.*?Z": {
                 type: "EndDevice",
-                powerSource: "Battery",
+                powerSource: Zcl.PowerSource.Battery,
             },
             "lumi..*": {
                 type: "EndDevice",
                 manufacturerID: 4151,
                 manufacturerName: "LUMI",
-                powerSource: "Battery",
+                powerSource: Zcl.PowerSource.Battery,
             },
             "TERNCY-PP01": {
                 type: "EndDevice",
                 manufacturerID: 4648,
                 manufacturerName: "TERNCY",
-                powerSource: "Battery",
+                powerSource: Zcl.PowerSource.Battery,
             },
             "3RWS18BZ": {}, // https://github.com/Koenkk/zigbee-herdsman-converters/pull/2710
             "MULTI-MECI--EA01": {},
@@ -859,8 +806,8 @@ export class Device extends Entity<ControllerEventMap> {
             logger.debug(`Interview procedure failed but got modelID matching '${match}', assuming interview succeeded`, NS);
             this._type = this._type === "Unknown" && info.type ? info.type : this._type;
             this._manufacturerID = this._manufacturerID || info.manufacturerID;
-            this._manufacturerName = this._manufacturerName || info.manufacturerName;
-            this._powerSource = this._powerSource || info.powerSource;
+            this.#genBasic.manufacturerName = this.#genBasic.manufacturerName || info.manufacturerName;
+            this.#genBasic.powerSource = (this.#genBasic.powerSource || info.powerSource) /* v8 ignore next */ ?? Zcl.PowerSource.Unknown;
             logger.debug(`Interview - quirks matched on '${match}'`, NS);
             return true;
         }
@@ -910,9 +857,7 @@ export class Device extends Entity<ControllerEventMap> {
                 const endpoint = Endpoint.create(1, undefined, undefined, [], [], this.networkAddress, this.ieeeAddr);
                 const result = await endpoint.read("genBasic", ["modelId", "manufacturerName"], {sendPolicy: "immediate"});
 
-                for (const key in result) {
-                    Device.REPORTABLE_PROPERTIES_MAPPING[key].set(result[key], this);
-                }
+                this.updateGenBasic(result);
             } catch (error) {
                 logger.debug(`Interview - Tuya read modelID and manufacturerName failed (${error})`, NS);
             }
@@ -947,12 +892,10 @@ export class Device extends Entity<ControllerEventMap> {
             // Read attributes
             // nice to have but not required for successful pairing as most of the attributes are not mandatory in ZCL specification
             if (endpoint.supportsInputCluster("genBasic")) {
-                for (const key in Device.REPORTABLE_PROPERTIES_MAPPING) {
-                    const item = Device.REPORTABLE_PROPERTIES_MAPPING[key];
-
-                    if (ignoreCache || !this[item.key]) {
+                for (const key of INTERVIEW_GENBASIC_ATTRIBUTES) {
+                    if (ignoreCache || !this.#genBasic[key]) {
                         try {
-                            let result: KeyValue;
+                            let result: TPartialClusterAttributes<"genBasic">;
 
                             try {
                                 result = await endpoint.read("genBasic", [key], {sendPolicy: "immediate"});
@@ -961,8 +904,8 @@ export class Device extends Entity<ControllerEventMap> {
                                 // while joining like in:
                                 // https://github.com/Koenkk/zigbee-herdsman-converters/issues/2485.
                                 // The modelID and manufacturerName are crucial for device identification, so retry.
-                                if (item.key === "modelID" || item.key === "manufacturerName") {
-                                    logger.debug(`Interview - first ${item.key} retrieval attempt failed, retrying after 10 seconds...`, NS);
+                                if (key === "modelId" || key === "manufacturerName") {
+                                    logger.debug(`Interview - first ${key} retrieval attempt failed, retrying after 10 seconds...`, NS);
                                     await wait(10000);
                                     result = await endpoint.read("genBasic", [key], {sendPolicy: "immediate"});
                                 } else {
@@ -970,10 +913,10 @@ export class Device extends Entity<ControllerEventMap> {
                                 }
                             }
 
-                            item.set(result[key], this);
-                            logger.debug(`Interview - got '${item.key}' for device '${this.ieeeAddr}'`, NS);
+                            this.updateGenBasic(result);
+                            logger.debug(`Interview - got '${key}' for device '${this.ieeeAddr}'`, NS);
                         } catch (error) {
-                            logger.debug(`Interview - failed to read attribute '${item.key}' from endpoint '${endpoint.ID}' (${error})`, NS);
+                            logger.debug(`Interview - failed to read attribute '${key}' from endpoint '${endpoint.ID}' (${error})`, NS);
                         }
                     }
                 }
@@ -1044,10 +987,8 @@ export class Device extends Entity<ControllerEventMap> {
 
     public async updateNodeDescriptor(): Promise<void> {
         const clusterId = Zdo.ClusterId.NODE_DESCRIPTOR_REQUEST;
-        // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
-        const zdoPayload = Zdo.Buffalo.buildRequest(Entity.adapter!.hasZdoMessageOverhead, clusterId, this.networkAddress);
-        // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
-        const response = await Entity.adapter!.sendZdo(this.ieeeAddr, this.networkAddress, clusterId, zdoPayload, false);
+        const zdoPayload = Zdo.Buffalo.buildRequest(Entity.adapter.hasZdoMessageOverhead, clusterId, this.networkAddress);
+        const response = await Entity.adapter.sendZdo(this.ieeeAddr, this.networkAddress, clusterId, zdoPayload, false);
 
         if (!Zdo.Buffalo.checkStatus<Zdo.ClusterId.NODE_DESCRIPTOR_RESPONSE>(response)) {
             throw new Zdo.StatusError(response[0]);
@@ -1086,11 +1027,9 @@ export class Device extends Entity<ControllerEventMap> {
 
     public async updateActiveEndpoints(): Promise<void> {
         const clusterId = Zdo.ClusterId.ACTIVE_ENDPOINTS_REQUEST;
-        // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
-        const zdoPayload = Zdo.Buffalo.buildRequest(Entity.adapter!.hasZdoMessageOverhead, clusterId, this.networkAddress);
+        const zdoPayload = Zdo.Buffalo.buildRequest(Entity.adapter.hasZdoMessageOverhead, clusterId, this.networkAddress);
 
-        // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
-        const response = await Entity.adapter!.sendZdo(this.ieeeAddr, this.networkAddress, clusterId, zdoPayload, false);
+        const response = await Entity.adapter.sendZdo(this.ieeeAddr, this.networkAddress, clusterId, zdoPayload, false);
 
         if (!Zdo.Buffalo.checkStatus<Zdo.ClusterId.ACTIVE_ENDPOINTS_RESPONSE>(response)) {
             throw new Zdo.StatusError(response[0]);
@@ -1119,11 +1058,9 @@ export class Device extends Entity<ControllerEventMap> {
      */
     public async requestNetworkAddress(): Promise<void> {
         const clusterId = Zdo.ClusterId.NETWORK_ADDRESS_REQUEST;
-        // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
-        const zdoPayload = Zdo.Buffalo.buildRequest(Entity.adapter!.hasZdoMessageOverhead, clusterId, this.ieeeAddr as Eui64, false, 0);
+        const zdoPayload = Zdo.Buffalo.buildRequest(Entity.adapter.hasZdoMessageOverhead, clusterId, this.ieeeAddr as Eui64, false, 0);
 
-        // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
-        await Entity.adapter!.sendZdo(this.ieeeAddr, ZSpec.BroadcastAddress.RX_ON_WHEN_IDLE, clusterId, zdoPayload, true);
+        await Entity.adapter.sendZdo(this.ieeeAddr, ZSpec.BroadcastAddress.RX_ON_WHEN_IDLE, clusterId, zdoPayload, true);
     }
 
     public async removeFromNetwork(): Promise<void> {
@@ -1144,19 +1081,16 @@ export class Device extends Entity<ControllerEventMap> {
                 this.customClusters,
             );
 
-            // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
-            await Entity.adapter!.sendZclFrameToAll(242, frame, 242, BroadcastAddress.RX_ON_WHEN_IDLE);
+            await Entity.adapter.sendZclFrameToAll(242, frame, 242, BroadcastAddress.RX_ON_WHEN_IDLE);
         } else {
             const clusterId = Zdo.ClusterId.LEAVE_REQUEST;
             const zdoPayload = Zdo.Buffalo.buildRequest(
-                // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
-                Entity.adapter!.hasZdoMessageOverhead,
+                Entity.adapter.hasZdoMessageOverhead,
                 clusterId,
                 this.ieeeAddr as Eui64,
                 Zdo.LeaveRequestFlags.WITHOUT_REJOIN,
             );
-            // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
-            const response = await Entity.adapter!.sendZdo(this.ieeeAddr, this.networkAddress, clusterId, zdoPayload, false);
+            const response = await Entity.adapter.sendZdo(this.ieeeAddr, this.networkAddress, clusterId, zdoPayload, false);
 
             if (!Zdo.Buffalo.checkStatus<Zdo.ClusterId.LEAVE_RESPONSE>(response)) {
                 throw new Zdo.StatusError(response[0]);
@@ -1173,10 +1107,8 @@ export class Device extends Entity<ControllerEventMap> {
             endpoint.removeFromAllGroupsDatabase();
         }
 
-        // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
-        if (Entity.database!.has(this.ID)) {
-            // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
-            Entity.database!.remove(this.ID);
+        if (Entity.database.has(this.ID)) {
+            Entity.database.remove(this.ID);
         }
 
         Device.deletedDevices.set(this.ieeeAddr, this);
@@ -1208,10 +1140,8 @@ export class Device extends Entity<ControllerEventMap> {
         // TODO return Zdo.LQITableEntry directly (requires updates in other repos)
         const neighbors: LQINeighbor[] = [];
         const request = async (startIndex: number): Promise<[tableEntries: number, entryCount: number]> => {
-            // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
-            const zdoPayload = Zdo.Buffalo.buildRequest(Entity.adapter!.hasZdoMessageOverhead, clusterId, startIndex);
-            // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
-            const response = await Entity.adapter!.sendZdo(this.ieeeAddr, this.networkAddress, clusterId, zdoPayload, false);
+            const zdoPayload = Zdo.Buffalo.buildRequest(Entity.adapter.hasZdoMessageOverhead, clusterId, startIndex);
+            const response = await Entity.adapter.sendZdo(this.ieeeAddr, this.networkAddress, clusterId, zdoPayload, false);
 
             if (!Zdo.Buffalo.checkStatus<Zdo.ClusterId.LQI_TABLE_RESPONSE>(response)) {
                 throw new Zdo.StatusError(response[0]);
@@ -1251,10 +1181,8 @@ export class Device extends Entity<ControllerEventMap> {
         // TODO return Zdo.RoutingTableEntry directly (requires updates in other repos)
         const table: RoutingTableEntry[] = [];
         const request = async (startIndex: number): Promise<[tableEntries: number, entryCount: number]> => {
-            // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
-            const zdoPayload = Zdo.Buffalo.buildRequest(Entity.adapter!.hasZdoMessageOverhead, clusterId, startIndex);
-            // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
-            const response = await Entity.adapter!.sendZdo(this.ieeeAddr, this.networkAddress, clusterId, zdoPayload, false);
+            const zdoPayload = Zdo.Buffalo.buildRequest(Entity.adapter.hasZdoMessageOverhead, clusterId, startIndex);
+            const response = await Entity.adapter.sendZdo(this.ieeeAddr, this.networkAddress, clusterId, zdoPayload, false);
 
             if (!Zdo.Buffalo.checkStatus<Zdo.ClusterId.ROUTING_TABLE_RESPONSE>(response)) {
                 throw new Zdo.StatusError(response[0]);

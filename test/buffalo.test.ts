@@ -1,3 +1,4 @@
+import {describe, expect, it} from "vitest";
 import {Buffalo} from "../src/buffalo";
 import {ieeeaAddr1, ieeeaAddr2} from "./testUtils";
 
