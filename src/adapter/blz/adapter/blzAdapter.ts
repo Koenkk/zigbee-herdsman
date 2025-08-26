@@ -508,7 +508,7 @@ export class BLZAdapter extends Adapter {
         await this.driver.setNetworkKeyInfo(
             networkKeyInfo.nwkKey,
             networkKeyInfo.outgoingFrameCounter,
-            nwkUpdateId
+            networkKeyInfo.nwkKeySeqNum
         );
         await this.driver.setGlobalTcLinkKey(
             tcLinkKeyInfo.linkKey,
