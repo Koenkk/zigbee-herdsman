@@ -26,7 +26,7 @@ jobs:
             - name: Generate docs
               run: typedoc --gitRevision "$(git describe --tag --abbrev=0)" --tsconfig tsconfig.json --excludePrivate --excludeProtected --excludeExternals --entryPointStrategy expand ./src --sourceLinkTemplate "https://github.com/Koenkk/zigbee-herdsman/blob/{gitRevision}/{path}#L{line}" -out typedoc
 
-            - uses: actions/upload-pages-artifact@v3
+            - uses: actions/upload-pages-artifact@v4
               with:
                   name: github-pages
                   # typedoc "out" path
