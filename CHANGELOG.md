@@ -1,5 +1,14 @@
 # Changelog
 
+## [6.0.2](https://github.com/Koenkk/zigbee-herdsman/compare/v6.0.1...v6.0.2) (2025-08-28)
+
+
+### Bug Fixes
+
+* Ignore iAS enroll failure for CS-T9C-A0-BG https://github.com/Koenkk/zigbee2mqtt/issues/27822 ([f5bedb5](https://github.com/Koenkk/zigbee-herdsman/commit/f5bedb59c8e58cdc28a3da75ee86b88c1d231faf))
+* **ignore:** bump @biomejs/biome from 2.2.0 to 2.2.2 in the minor-patch group ([#1490](https://github.com/Koenkk/zigbee-herdsman/issues/1490)) ([0103e99](https://github.com/Koenkk/zigbee-herdsman/commit/0103e997071cf6322be671db838f784a31830035))
+* **ignore:** bump the minor-patch group with 2 updates ([#1486](https://github.com/Koenkk/zigbee-herdsman/issues/1486)) ([00637e8](https://github.com/Koenkk/zigbee-herdsman/commit/00637e89bff7666079b85cd4bff6bc8ecbb2c308))
+
 ## [6.0.1](https://github.com/Koenkk/zigbee-herdsman/compare/v6.0.0...v6.0.1) (2025-08-16)
 
 
