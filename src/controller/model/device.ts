@@ -790,6 +790,7 @@ export class Device extends Entity<ControllerEventMap> {
             MOT003: {}, // https://github.com/Koenkk/zigbee2mqtt/issues/12471
             "C-ZB-SEDC": {}, //candeo device that doesn't follow IAS enrollment process correctly and therefore fails to complete interview
             "C-ZB-SEMO": {}, //candeo device that doesn't follow IAS enrollment process correctly and therefore fails to complete interview
+            "CS-T9C-A0-BG": {}, // iAS enroll fails: https://github.com/Koenkk/zigbee2mqtt/issues/27822
         };
 
         let match: string | undefined;
