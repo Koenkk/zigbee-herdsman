@@ -57,9 +57,18 @@
         "zigate"
     ],
     "license": "MIT",
-    "main": "dist/index.js",
-    "types": "dist/index.d.ts",
+    "type": "commonjs",
+    "main": "./dist/index.js",
+    "types": "./dist/index.d.ts",
+    "module": "./dist/index.js",
+    "exports": {
+        ".": "./dist/index.js"
+    },
     "name": "zigbee-herdsman",
+    "files": [
+        "./dist",
+        "./CHANGELOG.md"
+    ],
     "repository": {
         "type": "git",
         "url": "git+https://github.com/Koenkk/zigbee-herdsman.git"
