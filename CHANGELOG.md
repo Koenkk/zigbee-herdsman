@@ -1,5 +1,12 @@
 # Changelog
 
+## [6.0.3](https://github.com/Koenkk/zigbee-herdsman/compare/v6.0.2...v6.0.3) (2025-09-01)
+
+
+### Bug Fixes
+
+* **ignore:** fix npm publishing ([#1491](https://github.com/Koenkk/zigbee-herdsman/issues/1491)) ([89495b6](https://github.com/Koenkk/zigbee-herdsman/commit/89495b69cbd41b602af578829e7ea6b40be0fe4c))
+
 ## [6.0.2](https://github.com/Koenkk/zigbee-herdsman/compare/v6.0.1...v6.0.2) (2025-08-28)
 
 
