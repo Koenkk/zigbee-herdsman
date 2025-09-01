@@ -278,56 +278,52 @@ export class ZStackAdapter extends Adapter {
     }
 
     /**
-    * Retrieve all data for AF_INCOMING_MSG_EXT with huge data byte count.
-    *
-    * @param timestamp
-    * @param length full data length
-    *
-    * @returns Buffer containing the full data or undefined on error
-    */
-   private async dataRetrieveAll(
-       timestamp: number,
-       length: number,
-   ) : Promise<Buffer | undefined> {
+     * Retrieve all data for AF_INCOMING_MSG_EXT with huge data byte count.
+     *
+     * @param timestamp
+     * @param length full data length
+     *
+     * @returns Buffer containing the full data or undefined on error
+     */
+    private async dataRetrieveAll(timestamp: number, length: number): Promise<Buffer | undefined> {
+        const buf = Buffer.alloc(length);
+        const blockSize = 240;
 
-       const buf = Buffer.alloc(length);
-       const blockSize = 240;
-
-       const freeExtMessage = async () => {
-          // A length of zero is special and triggers the freeing of
-          // the corresponding incoming message.
-           await this.znp.requestWithReply(
-               Subsystem.AF,
-               "dataRetrieve",
-               { timestamp: timestamp, index: 0, length: 0 }
-           );
-       }
-       for (let index = 0; index < length; index += blockSize) {
-           const chunkSize = Math.min(blockSize, length - index);
-           const rsp = await this.znp.requestWithReply(
-               Subsystem.AF,
-               "dataRetrieve",
-               {
-                   timestamp: timestamp,
-                   index: index,
-                   length: chunkSize
-               },
-               undefined,
-           );
-           if (rsp.payload.status !== 0x00) { // afStatus_SUCCESS
-               logger.error(`dataRetrieve [timestamp: ${timestamp}, index: ${index}, chunkSize: ${chunkSize}] error status: ${rsp.payload.status}`, NS);
-               await freeExtMessage();
-               return undefined;
-           }
-           if (rsp.payload.length != chunkSize) {
-               logger.error(`dataRetrieve length mismatch [${chunkSize} requested, ${rsp.payload.length} returned`, NS);
-               await freeExtMessage();
-               return undefined;
-           }
-           rsp.payload.data.copy(buf, index);
-       }
-       await freeExtMessage();
-       return buf;
+        const freeExtMessage = async () => {
+            // A length of zero is special and triggers the freeing of
+            // the corresponding incoming message.
+            await this.znp.requestWithReply(Subsystem.AF, "dataRetrieve", {timestamp: timestamp, index: 0, length: 0});
+        };
+        for (let index = 0; index < length; index += blockSize) {
+            const chunkSize = Math.min(blockSize, length - index);
+            const rsp = await this.znp.requestWithReply(
+                Subsystem.AF,
+                "dataRetrieve",
+                {
+                    timestamp: timestamp,
+                    index: index,
+                    length: chunkSize,
+                },
+                undefined,
+            );
+            // 0x00 = afStatus_SUCCESS
+            if (rsp.payload.status !== 0x00) {
+                logger.error(
+                    `dataRetrieve [timestamp: ${timestamp}, index: ${index}, chunkSize: ${chunkSize}] error status: ${rsp.payload.status}`,
+                    NS,
+                );
+                await freeExtMessage();
+                return undefined;
+            }
+            if (rsp.payload.length !== chunkSize) {
+                logger.error(`dataRetrieve length mismatch [${chunkSize} requested, ${rsp.payload.length} returned`, NS);
+                await freeExtMessage();
+                return undefined;
+            }
+            rsp.payload.data.copy(buf, index);
+        }
+        await freeExtMessage();
+        return buf;
     }
 
     public async sendZdo(
@@ -913,7 +909,6 @@ export class ZStackAdapter extends Adapter {
         } else {
             if (object.subsystem === Subsystem.AF) {
                 if (object.command.name === "incomingMsg" || object.command.name === "incomingMsgExt") {
-
                     // TI ZNP API docs
                     // ---------------
                     // AF_INCOMING_MSG_EXT - SrcAddrMode
@@ -928,11 +923,12 @@ export class ZStackAdapter extends Adapter {
 
                     const isEui64Addr = typeof object.payload.srcaddr === "string";
 
-                    const srcaddr = object.command.name === "incomingMsgExt" && object.payload.srcaddrmode != 0x03
-                        ? isEui64Addr
-                            ? parseInt(object.payload.srcaddr.slice(-4), 16)
-                            : object.payload.srcaddr
-                        : object.payload.srcaddr;
+                    const srcaddr =
+                        object.command.name === "incomingMsgExt" && object.payload.srcaddrmode !== 0x03
+                            ? isEui64Addr
+                                ? Number.parseInt(object.payload.srcaddr.slice(-4), 16)
+                                : object.payload.srcaddr
+                            : object.payload.srcaddr;
 
                     // TI ZNP API docs suggest that payload.data should be zero length for messages
                     // with huge data, but testing shows it is 3-bytes, the first two of which are
@@ -942,7 +938,6 @@ export class ZStackAdapter extends Adapter {
                     //if (object.command.name === "incomingMsgExt" && object.payload.len > 0 && object.payload.data.length === 0) {
 
                     if (object.command.name === "incomingMsgExt" && object.payload.data.length < object.payload.len) {
-
                         // The ZNP will send incomingMsgExt (AF_INCOMING_MSG_EXT)
                         // when data length is > about 223 bytes (or if INTER_PAN network
                         // is used).
@@ -952,30 +947,30 @@ export class ZStackAdapter extends Adapter {
                         // AF_DATA_RETRIEVE message.
 
                         this.queue.execute<void>(async () => {
-                            this.dataRetrieveAll(object.payload.timestamp, object.payload.len)
-                                .then(data => {
-                                    if (data === undefined) {
-                                        logger.error(`Failed to retrieve chunked payload for incomingMsgExt`, NS);
-                                    } else {
-                                        logger.debug(`Retrieved ${data.length} bytes from huge data buffer for msg with timestamp ${object.payload.timestamp}`, NS);
-                                        const payload: Events.ZclPayload = {
-                                            clusterID: object.payload.clusterid,
-                                            data: data,
-                                            header: Zcl.Header.fromBuffer(data),
-                                            address: srcaddr,
-                                            endpoint: object.payload.srcendpoint,
-                                            linkquality: object.payload.linkquality,
-                                            groupID: object.payload.groupid,
-                                            wasBroadcast: object.payload.wasbroadcast === 1,
-                                            destinationEndpoint: object.payload.dstendpoint,
-                                        };
-                                        this.waitress.resolve(payload);
-                                        this.emit("zclPayload", payload);
-                                    }
-                                });
+                            const data = await this.dataRetrieveAll(object.payload.timestamp, object.payload.len);
+                            if (data === undefined) {
+                                logger.error("Failed to retrieve chunked payload for incomingMsgExt", NS);
+                            } else {
+                                logger.debug(
+                                    `Retrieved ${data.length} bytes from huge data buffer for msg with timestamp ${object.payload.timestamp}`,
+                                    NS,
+                                );
+                                const payload: Events.ZclPayload = {
+                                    clusterID: object.payload.clusterid,
+                                    data: data,
+                                    header: Zcl.Header.fromBuffer(data),
+                                    address: srcaddr,
+                                    endpoint: object.payload.srcendpoint,
+                                    linkquality: object.payload.linkquality,
+                                    groupID: object.payload.groupid,
+                                    wasBroadcast: object.payload.wasbroadcast === 1,
+                                    destinationEndpoint: object.payload.dstendpoint,
+                                };
+                                this.waitress.resolve(payload);
+                                this.emit("zclPayload", payload);
+                            }
                         });
                     } else {
-
                         // incomingMsg OR incomingMsgExt with data
                         // in the payload (i.e. INTER_PAN network)
 
