@@ -1,5 +1,12 @@
 # Changelog
 
+## [6.0.4](https://github.com/Koenkk/zigbee-herdsman/compare/v6.0.3...v6.0.4) (2025-09-01)
+
+
+### Bug Fixes
+
+* **ignore:** fix package exports ([#1494](https://github.com/Koenkk/zigbee-herdsman/issues/1494)) ([b20c6d6](https://github.com/Koenkk/zigbee-herdsman/commit/b20c6d6c5cff327f1d935ebf1956351693b00934))
+
 ## [6.0.3](https://github.com/Koenkk/zigbee-herdsman/compare/v6.0.2...v6.0.3) (2025-09-01)
 
 
