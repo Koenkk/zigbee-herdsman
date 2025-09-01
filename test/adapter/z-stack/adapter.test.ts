@@ -3312,7 +3312,7 @@ describe("zstack-adapter", () => {
         expect(await adapter.supportsBackup()).toBeTruthy();
     });
 
-    it("Incoming message extended", async () => {
+    it("Incoming message extended (inter PAN) - 16-bit address", async () => {
         basicMocks();
         await adapter.start();
         let zclData;
@@ -3327,13 +3327,69 @@ describe("zstack-adapter", () => {
             [{attrId: 0, attrData: 2, dataType: 32, status: 0}],
             {},
         );
+        const responseBuffer = responseFrame.toBuffer();
         const object = mockZpiObject(Type.AREQ, Subsystem.AF, "incomingMsgExt", {
-            clusterid: 0,
-            srcendpoint: 20,
-            srcaddr: 2,
-            linkquality: 101,
             groupid: 12,
-            data: responseFrame.toBuffer(),
+            clusterid: 0,
+            srcaddrmode: 2,
+            srcaddr: "0x1234567812345678",
+            srcendpoint: 20,
+            //srcpanid
+            dstendpoint: 1,
+            //wasbroadcast
+            linkquality: 101,
+            //securityuse
+            timestamp: 0x12345678,
+            //transseqnumber
+            len: responseBuffer.length,
+            data: responseBuffer,
+        });
+        adapter.on("zclPayload", (p) => {
+            zclData = p;
+        });
+
+        znpReceived(object);
+
+        expect(zclData.endpoint).toStrictEqual(20);
+        expect(zclData.groupID).toStrictEqual(12);
+        expect(zclData.linkquality).toStrictEqual(101);
+        expect(zclData.address).toStrictEqual(0x5678);
+        expect(zclData.groupID).toStrictEqual(12);
+        expect(zclData.data).toStrictEqual(Buffer.from([24, 100, 1, 0, 0, 0, 32, 2]));
+        expect(zclData.header.commandIdentifier).toBe(1);
+    });
+
+    it("Incoming message extended (inter PAN) - 64-bit address", async () => {
+        basicMocks();
+        await adapter.start();
+        let zclData;
+        const responseFrame = Zcl.Frame.create(
+            Zcl.FrameType.GLOBAL,
+            Zcl.Direction.SERVER_TO_CLIENT,
+            true,
+            undefined,
+            100,
+            "readRsp",
+            0,
+            [{attrId: 0, attrData: 2, dataType: 32, status: 0}],
+            {},
+        );
+        const responseBuffer = responseFrame.toBuffer();
+        const object = mockZpiObject(Type.AREQ, Subsystem.AF, "incomingMsgExt", {
+            groupid: 12,
+            clusterid: 0,
+            srcaddrmode: 3,
+            srcaddr: "0x1234567812345678",
+            srcendpoint: 20,
+            //srcpanid
+            dstendpoint: 1,
+            //wasbroadcast
+            linkquality: 101,
+            //securityuse
+            timestamp: 0x12345678,
+            //transseqnumber
+            len: responseBuffer.length,
+            data: responseBuffer,
         });
         adapter.on("zclPayload", (p) => {
             zclData = p;
@@ -3342,7 +3398,7 @@ describe("zstack-adapter", () => {
         expect(zclData.endpoint).toStrictEqual(20);
         expect(zclData.groupID).toStrictEqual(12);
         expect(zclData.linkquality).toStrictEqual(101);
-        expect(zclData.address).toStrictEqual(2);
+        expect(zclData.address).toStrictEqual("0x1234567812345678");
         expect(zclData.groupID).toStrictEqual(12);
         expect(zclData.data).toStrictEqual(Buffer.from([24, 100, 1, 0, 0, 0, 32, 2]));
         expect(zclData.header.commandIdentifier).toBe(1);
