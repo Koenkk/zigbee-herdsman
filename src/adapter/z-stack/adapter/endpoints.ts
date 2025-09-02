@@ -1,3 +1,4 @@
+import * as ZSpec from "../../../zspec";
 import {Clusters} from "../../../zspec/zcl/definition/cluster";
 import * as Constants from "../constants";
 
@@ -53,5 +54,7 @@ export const Endpoints = [
     // Insta/Jung/Gira: OTA fallback EP (since it's buggy in firmware 10023202 when it tries to find a matching EP for
     // OTA - it queries for ZLL profile, but then contacts with HA profile)
     {...EndpointDefaults, endpoint: 47, appprofid: 0x0104},
+    // Required for shelly wifi and rpc clusters
+    {...EndpointDefaults, endpoint: 239, appprofid: ZSpec.CUSTOM_SHELLY_PROFILE_ID},
     {...EndpointDefaults, endpoint: 242, appprofid: 0xa1e0},
 ];
