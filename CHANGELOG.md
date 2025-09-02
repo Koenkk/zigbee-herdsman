@@ -1,5 +1,12 @@
 # Changelog
 
+## [6.1.0](https://github.com/Koenkk/zigbee-herdsman/compare/v6.0.4...v6.1.0) (2025-09-02)
+
+
+### Features
+
+* Make profileId overwritable per frame to support custom Shelly clusters ([#1418](https://github.com/Koenkk/zigbee-herdsman/issues/1418)) ([a369f61](https://github.com/Koenkk/zigbee-herdsman/commit/a369f618f046a6ef01862e120c24c59e78c966fa))
+
 ## [6.0.4](https://github.com/Koenkk/zigbee-herdsman/compare/v6.0.3...v6.0.4) (2025-09-01)
 
 
