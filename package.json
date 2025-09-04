@@ -61,9 +61,6 @@
     "main": "./dist/index.js",
     "types": "./dist/index.d.ts",
     "module": "./dist/index.js",
-    "exports": {
-        ".": "./dist/index.js"
-    },
     "name": "zigbee-herdsman",
     "files": [
         "./dist",
@@ -85,7 +82,7 @@
         "clean": "rimraf temp coverage dist tsconfig.tsbuildinfo",
         "prepack": "pnpm run clean && pnpm run build"
     },
-    "version": "6.0.2",
+    "version": "6.1.0",
     "pnpm": {
         "onlyBuiltDependencies": [
             "@biomejs/biome",
