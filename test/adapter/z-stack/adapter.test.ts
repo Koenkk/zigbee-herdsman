@@ -3643,7 +3643,7 @@ describe("zstack-adapter", () => {
         expect(zclData.header.commandIdentifier).toBe(1);
     });
 
-    it("Incoming message extended (huge data byte count) with dataRetreive error return", async () => {
+    it("Incoming message extended (huge data byte count) with dataRetrieve error return", async () => {
         mockZnpRequestWith(incomingMsgExtHugeDataReqMock);
 
         await adapter.start();
