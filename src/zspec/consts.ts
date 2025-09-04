@@ -16,6 +16,8 @@ export const GP_PROFILE_ID = 0xa1e0;
 export const TOUCHLINK_PROFILE_ID = 0xc05e;
 /** The profile ID used to address all the public profiles. */
 export const WILDCARD_PROFILE_ID = 0xffff;
+/** The profile ID used to access Shelly devices custom clusters. */
+export const CUSTOM_SHELLY_PROFILE_ID = 0xc001;
 
 /** The default HA endpoint. */
 export const HA_ENDPOINT = 0x01;

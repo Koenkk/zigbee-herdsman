@@ -1,5 +1,26 @@
 # Changelog
 
+## [6.1.0](https://github.com/Koenkk/zigbee-herdsman/compare/v6.0.4...v6.1.0) (2025-09-02)
+
+
+### Features
+
+* Make profileId overwritable per frame to support custom Shelly clusters ([#1418](https://github.com/Koenkk/zigbee-herdsman/issues/1418)) ([a369f61](https://github.com/Koenkk/zigbee-herdsman/commit/a369f618f046a6ef01862e120c24c59e78c966fa))
+
+## [6.0.4](https://github.com/Koenkk/zigbee-herdsman/compare/v6.0.3...v6.0.4) (2025-09-01)
+
+
+### Bug Fixes
+
+* **ignore:** fix package exports ([#1494](https://github.com/Koenkk/zigbee-herdsman/issues/1494)) ([b20c6d6](https://github.com/Koenkk/zigbee-herdsman/commit/b20c6d6c5cff327f1d935ebf1956351693b00934))
+
+## [6.0.3](https://github.com/Koenkk/zigbee-herdsman/compare/v6.0.2...v6.0.3) (2025-09-01)
+
+
+### Bug Fixes
+
+* **ignore:** fix npm publishing ([#1491](https://github.com/Koenkk/zigbee-herdsman/issues/1491)) ([89495b6](https://github.com/Koenkk/zigbee-herdsman/commit/89495b69cbd41b602af578829e7ea6b40be0fe4c))
+
 ## [6.0.2](https://github.com/Koenkk/zigbee-herdsman/compare/v6.0.1...v6.0.2) (2025-08-28)
 
 

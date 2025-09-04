@@ -304,6 +304,7 @@ export class ZBOSSAdapter extends Adapter {
         disableResponse: boolean,
         disableRecovery: boolean,
         sourceEndpoint?: number,
+        profileId?: number,
     ): Promise<ZclPayload | undefined> {
         return await this.queue.execute<ZclPayload | undefined>(async () => {
             return await this.sendZclFrameToEndpointInternal(
@@ -321,6 +322,7 @@ export class ZBOSSAdapter extends Adapter {
                 false,
                 false,
                 null,
+                profileId,
             );
         }, networkAddress);
     }
@@ -340,6 +342,7 @@ export class ZBOSSAdapter extends Adapter {
         discoveredRoute: boolean,
         assocRemove: boolean,
         assocRestore: {ieeeadr: string; nwkaddr: number; noderelation: number} | null,
+        profileId?: number,
     ): Promise<ZclPayload | undefined> {
         if (ieeeAddr == null) {
             ieeeAddr = this.driver.netInfo.ieeeAddr;
@@ -374,7 +377,7 @@ export class ZBOSSAdapter extends Adapter {
         try {
             const dataConfirmResult = await this.driver.request(
                 ieeeAddr,
-                0x0104,
+                profileId ?? 0x0104,
                 zclFrame.cluster.ID,
                 endpoint,
                 sourceEndpoint || 0x01,
@@ -408,6 +411,7 @@ export class ZBOSSAdapter extends Adapter {
                             discoveredRoute,
                             assocRemove,
                             assocRestore,
+                            profileId,
                         );
                     }
 
@@ -424,10 +428,10 @@ export class ZBOSSAdapter extends Adapter {
         }
     }
 
-    public async sendZclFrameToGroup(groupID: number, zclFrame: Zcl.Frame, sourceEndpoint?: number): Promise<void> {
+    public async sendZclFrameToGroup(groupID: number, zclFrame: Zcl.Frame, sourceEndpoint?: number, profileId?: number): Promise<void> {
         await this.driver.grequest(
             groupID,
-            sourceEndpoint === ZSpec.GP_ENDPOINT ? ZSpec.GP_PROFILE_ID : ZSpec.HA_PROFILE_ID,
+            profileId ?? (sourceEndpoint === ZSpec.GP_ENDPOINT ? ZSpec.GP_PROFILE_ID : ZSpec.HA_PROFILE_ID),
             zclFrame.cluster.ID,
             sourceEndpoint || 0x01,
             zclFrame.toBuffer(),
@@ -439,10 +443,11 @@ export class ZBOSSAdapter extends Adapter {
         zclFrame: Zcl.Frame,
         sourceEndpoint: number,
         destination: ZSpec.BroadcastAddress,
+        profileId?: number,
     ): Promise<void> {
         await this.driver.brequest(
             destination,
-            sourceEndpoint === ZSpec.GP_ENDPOINT && endpoint === ZSpec.GP_ENDPOINT ? ZSpec.GP_PROFILE_ID : ZSpec.HA_PROFILE_ID,
+            profileId ?? (sourceEndpoint === ZSpec.GP_ENDPOINT && endpoint === ZSpec.GP_ENDPOINT ? ZSpec.GP_PROFILE_ID : ZSpec.HA_PROFILE_ID),
             zclFrame.cluster.ID,
             endpoint,
             sourceEndpoint || 0x01,

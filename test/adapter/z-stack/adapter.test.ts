@@ -2735,6 +2735,60 @@ describe("zstack-adapter", () => {
         expect(mockZnpRequest).toHaveBeenCalledTimes(1);
     });
 
+    it("Send zcl frame network address fails because requested profileId is not configured", async () => {
+        basicMocks();
+        await adapter.start();
+
+        mockZnpRequest.mockClear();
+        mockQueueExecute.mockClear();
+        const frame = Zcl.Frame.create(
+            Zcl.FrameType.GLOBAL,
+            Zcl.Direction.CLIENT_TO_SERVER,
+            true,
+            undefined,
+            100,
+            "writeNoRsp",
+            0,
+            [{attrId: 0, dataType: 0, attrData: null}],
+            {},
+        );
+        const response = adapter.sendZclFrameToEndpoint("0x02", 2, 20, frame, 10000, false, false, undefined, 9999);
+        let error;
+        try {
+            await response;
+        } catch (e) {
+            error = e;
+        }
+
+        expect(error.message).toStrictEqual("Profile ID 9999 is not supported by this adapter.");
+    });
+
+    it("Source Endpoint is selected based on profileId", async () => {
+        basicMocks();
+        await adapter.start();
+
+        mockZnpRequest.mockClear();
+        mockQueueExecute.mockClear();
+        const frame = Zcl.Frame.create(
+            Zcl.FrameType.GLOBAL,
+            Zcl.Direction.CLIENT_TO_SERVER,
+            true,
+            undefined,
+            100,
+            "writeNoRsp",
+            0,
+            [{attrId: 0, dataType: 0, attrData: null}],
+            {},
+        );
+        await adapter.sendZclFrameToEndpoint("0x02", 2, 20, frame, 10000, false, false, undefined, 0x0109);
+        expect(mockZnpRequest).toHaveBeenCalledWith(
+            4,
+            "dataRequest",
+            {clusterid: 0, data: frame.toBuffer(), destendpoint: 20, dstaddr: 2, len: 6, options: 0, radius: 30, srcendpoint: 6, transid: 1},
+            99,
+        );
+    });
+
     it("Send zcl frame network address should retry on dataconfirm timeout", async () => {
         basicMocks();
         await adapter.start();
