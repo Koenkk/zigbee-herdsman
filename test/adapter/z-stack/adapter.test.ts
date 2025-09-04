@@ -39,6 +39,13 @@ const DUMMY_NODE_DESC_RSP_CAPABILITIES = {
     securityCapability: 0,
 };
 
+const STR_500_BYTES =
+    "123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 " +
+    "123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 " +
+    "123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 " +
+    "123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 " +
+    "123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 ";
+
 const mockLogger = {
     debug: vi.fn(),
     info: vi.fn(),
@@ -3452,13 +3459,6 @@ describe("zstack-adapter", () => {
 
         await adapter.start();
 
-        const str500bytes =
-            "123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 " +
-            "123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 " +
-            "123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 " +
-            "123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 " +
-            "123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 ";
-
         const responseFrame = Zcl.Frame.create(
             Zcl.FrameType.GLOBAL,
             Zcl.Direction.SERVER_TO_CLIENT,
@@ -3483,9 +3483,9 @@ describe("zstack-adapter", () => {
 
         const rspFrameBuf = responseFrame.toBuffer();
 
-        const zclLongString = Buffer.alloc(str500bytes.length + 2);
-        zclLongString.writeUint16LE(Buffer.byteLength(str500bytes, "utf8"));
-        zclLongString.write(str500bytes, 2, "utf8");
+        const zclLongString = Buffer.alloc(STR_500_BYTES.length + 2);
+        zclLongString.writeUint16LE(Buffer.byteLength(STR_500_BYTES, "utf8"));
+        zclLongString.write(STR_500_BYTES, 2, "utf8");
 
         const response = Buffer.concat([
             rspFrameBuf.subarray(0, rspFrameBuf.length - 2), // remove existing ZCL long string len
@@ -3550,13 +3550,6 @@ describe("zstack-adapter", () => {
 
         await adapter.start();
 
-        const str500bytes =
-            "123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 " +
-            "123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 " +
-            "123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 " +
-            "123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 " +
-            "123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 ";
-
         const responseFrame = Zcl.Frame.create(
             Zcl.FrameType.GLOBAL,
             Zcl.Direction.SERVER_TO_CLIENT,
@@ -3581,9 +3574,9 @@ describe("zstack-adapter", () => {
 
         const rspFrameBuf = responseFrame.toBuffer();
 
-        const zclLongString = Buffer.alloc(str500bytes.length + 2);
-        zclLongString.writeUint16LE(Buffer.byteLength(str500bytes, "utf8"));
-        zclLongString.write(str500bytes, 2, "utf8");
+        const zclLongString = Buffer.alloc(STR_500_BYTES.length + 2);
+        zclLongString.writeUint16LE(Buffer.byteLength(STR_500_BYTES, "utf8"));
+        zclLongString.write(STR_500_BYTES, 2, "utf8");
 
         const response = Buffer.concat([
             rspFrameBuf.subarray(0, rspFrameBuf.length - 2), // remove existing ZCL long string len
@@ -3648,13 +3641,6 @@ describe("zstack-adapter", () => {
 
         await adapter.start();
 
-        const str500bytes =
-            "123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 " +
-            "123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 " +
-            "123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 " +
-            "123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 " +
-            "123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 ";
-
         const responseFrame = Zcl.Frame.create(
             Zcl.FrameType.GLOBAL,
             Zcl.Direction.SERVER_TO_CLIENT,
@@ -3679,9 +3665,9 @@ describe("zstack-adapter", () => {
 
         const rspFrameBuf = responseFrame.toBuffer();
 
-        const zclLongString = Buffer.alloc(str500bytes.length + 2);
-        zclLongString.writeUint16LE(Buffer.byteLength(str500bytes, "utf8"));
-        zclLongString.write(str500bytes, 2, "utf8");
+        const zclLongString = Buffer.alloc(STR_500_BYTES.length + 2);
+        zclLongString.writeUint16LE(Buffer.byteLength(STR_500_BYTES, "utf8"));
+        zclLongString.write(STR_500_BYTES, 2, "utf8");
 
         const response = Buffer.concat([
             rspFrameBuf.subarray(0, rspFrameBuf.length - 2), // remove existing ZCL long string len
@@ -3715,17 +3701,10 @@ describe("zstack-adapter", () => {
         //expect(mockLogger.error.mock.calls[1][0]).toBe("Failed to retrieve chunked payload for incomingMsgExt");
     });
 
-    it("Incoming message extended (huge data byte count) with dataRetreive invalid data length return", async () => {
+    it("Incoming message extended (huge data byte count) with dataRetrieve invalid data length return", async () => {
         mockZnpRequestWith(incomingMsgExtHugeDataReqMock);
 
         await adapter.start();
-
-        const str500bytes =
-            "123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 " +
-            "123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 " +
-            "123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 " +
-            "123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 " +
-            "123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 ";
 
         const responseFrame = Zcl.Frame.create(
             Zcl.FrameType.GLOBAL,
@@ -3751,9 +3730,9 @@ describe("zstack-adapter", () => {
 
         const rspFrameBuf = responseFrame.toBuffer();
 
-        const zclLongString = Buffer.alloc(str500bytes.length + 2);
-        zclLongString.writeUint16LE(Buffer.byteLength(str500bytes, "utf8"));
-        zclLongString.write(str500bytes, 2, "utf8");
+        const zclLongString = Buffer.alloc(STR_500_BYTES.length + 2);
+        zclLongString.writeUint16LE(Buffer.byteLength(STR_500_BYTES, "utf8"));
+        zclLongString.write(STR_500_BYTES, 2, "utf8");
 
         const response = Buffer.concat([
             rspFrameBuf.subarray(0, rspFrameBuf.length - 2), // remove existing ZCL long string len
