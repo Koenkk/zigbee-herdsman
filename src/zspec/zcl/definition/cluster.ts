@@ -658,19 +658,30 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
     genRssiLocation: {
         ID: 11,
         attributes: {
+            /** read/write | [2: coordinator system, 1: 2-D, 1: absolute] */
             type: {ID: 0, type: DataType.DATA8},
+            /** read/write | @see LocationMethod */
             method: {ID: 1, type: DataType.ENUM8},
             age: {ID: 2, type: DataType.UINT16},
+            /** 0x00..0x64 i.e. zero..complete confidence */
             qualityMeasure: {ID: 3, type: DataType.UINT8},
             numOfDevices: {ID: 4, type: DataType.UINT8},
+            /** read/write | -0x8000..0x7fff */
             coordinate1: {ID: 16, type: DataType.INT16},
+            /** read/write | -0x8000..0x7fff */
             coordinate2: {ID: 17, type: DataType.INT16},
+            /** read/write | -0x8000..0x7fff | optional */
             coordinate3: {ID: 18, type: DataType.INT16},
+            /** read/write | -0x8000..0x7fff */
             power: {ID: 19, type: DataType.INT16},
+            /** read/write | 0x0000..0xffff */
             pathLossExponent: {ID: 20, type: DataType.UINT16},
+            /** read/write | 0x0000..0xffff | optional */
             reportingPeriod: {ID: 21, type: DataType.UINT16},
+            /** read/write | 0x0000..0xffff | optional */
             calcPeriod: {ID: 22, type: DataType.UINT16},
-            numRSSIMeasurements: {ID: 23, type: DataType.UINT16},
+            /** read/write | 0x01..0xff */
+            numRSSIMeasurements: {ID: 23, type: DataType.UINT8},
         },
         commands: {
             setAbsolute: {
@@ -680,87 +691,227 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                     {name: "coord2", type: DataType.INT16},
                     {name: "coord3", type: DataType.INT16},
                     {name: "power", type: DataType.INT16},
-                    {name: "pathlossexponent", type: DataType.UINT16},
+                    {name: "pathLossExponent", type: DataType.UINT16},
                 ],
             },
-            setDevCfg: {
+            setDeviceConfig: {
                 ID: 1,
                 parameters: [
                     {name: "power", type: DataType.INT16},
-                    {name: "pathlossexponent", type: DataType.UINT16},
-                    {name: "calperiod", type: DataType.UINT16},
-                    {name: "numrssimeasurements", type: DataType.UINT8},
-                    {name: "reportingperiod", type: DataType.UINT16},
+                    {name: "pathLossExponent", type: DataType.UINT16},
+                    {name: "calcPeriod", type: DataType.UINT16},
+                    {name: "numRssiMeasurements", type: DataType.UINT8},
+                    {name: "reportingPeriod", type: DataType.UINT16},
                 ],
             },
-            getDevCfg: {
+            getDeviceConfig: {
                 ID: 2,
-                parameters: [{name: "targetaddr", type: DataType.IEEE_ADDR}],
+                parameters: [{name: "targetAddr", type: DataType.IEEE_ADDR}],
             },
-            getData: {
+            getLocationData: {
                 ID: 3,
                 parameters: [
-                    {name: "getdatainfo", type: DataType.UINT8},
-                    {name: "numrsp", type: DataType.UINT8},
-                    {name: "targetaddr", type: DataType.IEEE_ADDR},
+                    /** [3: reserved, 1: compactResponse, 1: broadcastResponse, 1: broadcastIndicator, 1: recalculate, 1: absoluteOnly] */
+                    {name: "info", type: DataType.BITMAP8},
+                    {name: "numResponses", type: DataType.UINT8},
+                    {
+                        name: "targetAddr",
+                        type: DataType.IEEE_ADDR,
+                        conditions: [{type: ParameterCondition.BITMASK_SET, param: "info", mask: 0b100, reversed: true}],
+                    },
+                ],
+            },
+            rssiResponse: {
+                ID: 4,
+                parameters: [
+                    {name: "replyingDevice", type: DataType.IEEE_ADDR},
+                    {name: "x", type: DataType.INT16},
+                    {name: "y", type: DataType.INT16},
+                    {name: "z", type: DataType.INT16},
+                    {name: "rssi", type: DataType.INT8},
+                    {name: "numRssiMeasurements", type: DataType.UINT8},
+                ],
+            },
+            sendPings: {
+                ID: 5,
+                parameters: [
+                    {name: "targetAddr", type: DataType.IEEE_ADDR},
+                    {name: "numRssiMeasurements", type: DataType.UINT8},
+                    {name: "calcPeriod", type: DataType.UINT16},
+                ],
+            },
+            anchorNodeAnnounce: {
+                ID: 6,
+                parameters: [
+                    {name: "anchorNodeAddr", type: DataType.IEEE_ADDR},
+                    {name: "x", type: DataType.INT16},
+                    {name: "y", type: DataType.INT16},
+                    {name: "z", type: DataType.INT16},
                 ],
             },
         },
         commandsResponse: {
-            devCfgRsp: {
+            deviceConfigResponse: {
                 ID: 0,
                 parameters: [
-                    {name: "status", type: DataType.UINT8},
-                    {name: "power", type: DataType.INT16},
-                    {name: "pathlossexp", type: DataType.UINT16},
-                    {name: "calperiod", type: DataType.UINT16},
-                    {name: "numrssimeasurements", type: DataType.UINT8},
-                    {name: "reportingperiod", type: DataType.UINT16},
+                    {name: "status", type: DataType.ENUM8},
+                    {
+                        name: "power",
+                        type: DataType.INT16,
+                        conditions: [{type: ParameterCondition.FIELD_EQUAL, field: "status", value: Status.SUCCESS}],
+                    },
+                    {
+                        name: "pathLossExponent",
+                        type: DataType.UINT16,
+                        conditions: [{type: ParameterCondition.FIELD_EQUAL, field: "status", value: Status.SUCCESS}],
+                    },
+                    {
+                        name: "calcPeriod",
+                        type: DataType.UINT16,
+                        conditions: [{type: ParameterCondition.FIELD_EQUAL, field: "status", value: Status.SUCCESS}],
+                    },
+                    {
+                        name: "numRssiMeasurements",
+                        type: DataType.UINT8,
+                        conditions: [{type: ParameterCondition.FIELD_EQUAL, field: "status", value: Status.SUCCESS}],
+                    },
+                    {
+                        name: "reportingPeriod",
+                        type: DataType.UINT16,
+                        conditions: [{type: ParameterCondition.FIELD_EQUAL, field: "status", value: Status.SUCCESS}],
+                    },
                 ],
             },
-            dataRsp: {
+            locationDataResponse: {
                 ID: 1,
                 parameters: [
-                    {name: "status", type: DataType.UINT8},
-                    {name: "locationtype", type: DataType.UINT8},
-                    {name: "coord1", type: DataType.INT16},
-                    {name: "coord2", type: DataType.INT16},
-                    {name: "coord3", type: DataType.INT16},
-                    {name: "power", type: DataType.INT16},
-                    {name: "pathlossexp", type: DataType.UINT16},
-                    {name: "locationmethod", type: DataType.UINT8},
-                    {name: "qualitymeasure", type: DataType.UINT8},
-                    {name: "locationage", type: DataType.UINT16},
+                    {name: "status", type: DataType.ENUM8},
+                    {
+                        name: "type",
+                        type: DataType.DATA8,
+                        conditions: [{type: ParameterCondition.FIELD_EQUAL, field: "status", value: Status.SUCCESS}],
+                    },
+                    {
+                        name: "coord1",
+                        type: DataType.INT16,
+                        conditions: [{type: ParameterCondition.FIELD_EQUAL, field: "status", value: Status.SUCCESS}],
+                    },
+                    {
+                        name: "coord2",
+                        type: DataType.INT16,
+                        conditions: [{type: ParameterCondition.FIELD_EQUAL, field: "status", value: Status.SUCCESS}],
+                    },
+                    {
+                        name: "coord3",
+                        type: DataType.INT16,
+                        conditions: [{type: ParameterCondition.FIELD_EQUAL, field: "status", value: Status.SUCCESS}],
+                    },
+                    {
+                        name: "power",
+                        type: DataType.INT16,
+                        conditions: [{type: ParameterCondition.FIELD_EQUAL, field: "status", value: Status.SUCCESS}],
+                    },
+                    {
+                        name: "pathLossExponent",
+                        type: DataType.UINT16,
+                        conditions: [{type: ParameterCondition.FIELD_EQUAL, field: "status", value: Status.SUCCESS}],
+                    },
+                    {
+                        name: "method",
+                        type: DataType.ENUM8,
+                        conditions: [{type: ParameterCondition.FIELD_EQUAL, field: "status", value: Status.SUCCESS}],
+                    },
+                    {
+                        name: "qualityMeasure",
+                        type: DataType.UINT8,
+                        conditions: [{type: ParameterCondition.FIELD_EQUAL, field: "status", value: Status.SUCCESS}],
+                    },
+                    {
+                        name: "age",
+                        type: DataType.UINT16,
+                        conditions: [{type: ParameterCondition.FIELD_EQUAL, field: "status", value: Status.SUCCESS}],
+                    },
                 ],
             },
-            dataNotif: {
+            locationDataNotification: {
                 ID: 2,
                 parameters: [
-                    {name: "locationtype", type: DataType.UINT8},
+                    {name: "type", type: DataType.DATA8},
                     {name: "coord1", type: DataType.INT16},
                     {name: "coord2", type: DataType.INT16},
-                    {name: "coord3", type: DataType.INT16},
+                    {
+                        name: "coord3",
+                        type: DataType.INT16,
+                        conditions: [{type: ParameterCondition.BITMASK_SET, param: "type", mask: 0b10, reversed: true}],
+                    },
                     {name: "power", type: DataType.INT16},
-                    {name: "pathlossexp", type: DataType.UINT16},
-                    {name: "locationmethod", type: DataType.UINT8},
-                    {name: "qualitymeasure", type: DataType.UINT8},
-                    {name: "locationage", type: DataType.UINT16},
+                    {name: "pathLossExponent", type: DataType.UINT16},
+                    {
+                        name: "method",
+                        type: DataType.ENUM8,
+                        conditions: [{type: ParameterCondition.BITMASK_SET, param: "type", mask: 0b1, reversed: true}],
+                    },
+                    {
+                        name: "qualityMeasure",
+                        type: DataType.UINT8,
+                        conditions: [{type: ParameterCondition.BITMASK_SET, param: "type", mask: 0b1, reversed: true}],
+                    },
+                    {
+                        name: "age",
+                        type: DataType.UINT16,
+                        conditions: [{type: ParameterCondition.BITMASK_SET, param: "type", mask: 0b1, reversed: true}],
+                    },
                 ],
             },
-            compactDataNotif: {
+            compactLocationDataNotification: {
                 ID: 3,
                 parameters: [
-                    {name: "locationtype", type: DataType.UINT8},
+                    {name: "type", type: DataType.DATA8},
                     {name: "coord1", type: DataType.INT16},
                     {name: "coord2", type: DataType.INT16},
-                    {name: "coord3", type: DataType.INT16},
-                    {name: "qualitymeasure", type: DataType.UINT8},
-                    {name: "locationage", type: DataType.UINT16},
+                    {
+                        name: "coord3",
+                        type: DataType.INT16,
+                        conditions: [{type: ParameterCondition.BITMASK_SET, param: "type", mask: 0b10, reversed: true}],
+                    },
+                    {
+                        name: "qualityMeasure",
+                        type: DataType.UINT8,
+                        conditions: [{type: ParameterCondition.BITMASK_SET, param: "type", mask: 0b1, reversed: true}],
+                    },
+                    {
+                        name: "age",
+                        type: DataType.UINT16,
+                        conditions: [{type: ParameterCondition.BITMASK_SET, param: "type", mask: 0b1, reversed: true}],
+                    },
                 ],
             },
             rssiPing: {
                 ID: 4,
-                parameters: [{name: "locationtype", type: DataType.UINT8}],
+                parameters: [{name: "type", type: DataType.DATA8}],
+            },
+            rssiRequest: {
+                ID: 5,
+                parameters: [],
+            },
+            reportRssiMeasurements: {
+                ID: 6,
+                parameters: [
+                    {name: "measuringDeviceAddr", type: DataType.IEEE_ADDR},
+                    {name: "numNeighbors", type: DataType.UINT8},
+                    // TODO: needs special Buffalo read(/write)
+                    // {name: "neighborInfo", type: DataType.ARRAY},
+                    //   {name: "neighbor", type: DataType.IEEE_ADDR},
+                    //   {name: "x", type: DataType.INT16},
+                    //   {name: "y", type: DataType.INT16},
+                    //   {name: "z", type: DataType.INT16},
+                    //   {name: "rssi", type: DataType.INT8},
+                    //   {name: "numRssiMeasurements", type: DataType.UINT8},
+                ],
+            },
+            requestOwnLocation: {
+                ID: 7,
+                parameters: [{name: "blindNodeAddr", type: DataType.IEEE_ADDR}],
             },
         },
     },
