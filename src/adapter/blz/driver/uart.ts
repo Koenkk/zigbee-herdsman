@@ -11,6 +11,7 @@ import {SerialPortOptions} from '../../tstype';
 import {Frame} from './frame';
 import {Parser} from './parser';
 import {Writer} from './writer';
+import {FRAMES} from './commands';
 
 const NS = 'zh:blz:uart';
 
@@ -305,7 +306,11 @@ export class SerialDriver extends EventEmitter {
             try {
                 this.writer.sendData(data, seq, ackSeq, frameId, true, isRetransmission);
                 this.sendSeq = (seq + 1) & 0x0F;
-                await waiter.start().promise;
+                
+                // Don't wait for response if this is a reset command
+                if (frameId !== FRAMES.reset.ID) {
+                    await waiter.start().promise;
+                }
                 return;
             } catch (e) {
                 logger.error(
@@ -318,7 +323,7 @@ export class SerialDriver extends EventEmitter {
                 }
 
                 // Wait before retry
-                await wait(100);
+                await wait(1000);
             }
         }
     }

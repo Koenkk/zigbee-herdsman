@@ -104,6 +104,8 @@ export class Driver extends EventEmitter {
         logger.debug(`Reset connection.`, NS);
 
         try {
+            await this.blz.execCommand('reset');
+            await wait(2000);
             // don't emit 'close' on stop since we don't want this to bubble back up as 'disconnected' to the controller.
             await this.stop(false);
         } catch (err) {
@@ -157,6 +159,9 @@ export class Driver extends EventEmitter {
         }
 
         this.blz.on('reset', this.onBlzReset.bind(this));
+
+        await this.blz.execCommand('reset');
+        await wait(2000);
 
         // TODO: add sleep here to make sure the dongle is connected
         await this.addEndpoint({
@@ -380,7 +385,7 @@ export class Driver extends EventEmitter {
                 if (frame.status === BlzStatus.SUCCESS) {
                     logger.debug(`APS confirmed`, NS);
                 } else {
-                    logger.error(`APS Request failed`, NS);
+                    logger.warning(`APS Request failed`, NS);
                 }
                 break;
             }
@@ -388,7 +393,7 @@ export class Driver extends EventEmitter {
                 if (frame.status === BlzStatus.SUCCESS) {
                     logger.debug(`Stack status is success`, NS);
                 } else {
-                    logger.error(`Stack status failed`, NS);
+                    logger.warning(`Stack status failed`, NS);
                 }
                 break;
             }

@@ -35,7 +35,7 @@ const MTOR_MAX_INTERVAL = 90;
 const MTOR_ROUTE_ERROR_THRESHOLD = 4;
 const MTOR_DELIVERY_FAIL_THRESHOLD = 3;
 const MAX_WATCHDOG_FAILURES = 4;
-const WATCHDOG_WAKE_PERIOD = 10; // in sec
+const WATCHDOG_WAKE_PERIOD = 30; // in sec
 const BLZ_DEFAULT_RADIUS = 0;
 
 /**
@@ -394,9 +394,14 @@ export class Blz extends EventEmitter {
             try {
                 await this.serialDriver.sendDATA(data, FRAMES[name].ID);
 
-                const response = await waiter.start().promise;
-
-                return response.payload;
+                // Don't wait for response if this is a reset command
+                if (name !== 'reset') {
+                    const response = await waiter.start().promise;
+                    return response.payload;
+                } else {
+                    // For reset command, return empty BLZFrameData since we don't wait for response
+                    return new BLZFrameData('reset', false, {});
+                }
             } catch {
                 this.waitress.remove(waiter.ID);
                 throw new Error(`Failure send ${name}:` + JSON.stringify(data));
@@ -466,7 +471,7 @@ export class Blz extends EventEmitter {
             logger.error(`Command (getValue(${valueName})) returned unexpected state: ${JSON.stringify(ret)}`, NS);
         }
 
-        logger.debug(`Got ${valueName} = ${ret.value}`, NS);
+        // logger.debug(`Got ${valueName} = ${ret.value}`, NS);
         return ret.value;
     }
 
@@ -575,20 +580,20 @@ export class Blz extends EventEmitter {
             return;
         }
 
-        // try {
-        //     await this.execCommand('nop');
-        // } catch (error) {
-        //     logger.error(`Watchdog heartbeat timeout ${error}`, NS);
+        try {
+            await this.getVersion();
+        } catch (error) {
+            logger.error(`Watchdog heartbeat timeout ${error}`, NS);
 
-        //     if (!this.inResetingProcess) {
-        //         this.failures += 1;
+            if (!this.inResetingProcess) {
+                this.failures += 1;
 
-        //         if (this.failures > MAX_WATCHDOG_FAILURES) {
-        //             this.failures = 0;
+                if (this.failures > MAX_WATCHDOG_FAILURES) {
+                    this.failures = 0;
 
-        //             this.emit('reset');
-        //         }
-        //     }
-        // }
+                    this.emit('reset');
+                }
+            }
+        }
     }
 }
