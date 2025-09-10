@@ -41,6 +41,7 @@ export class Writer extends stream.Readable {
     ): void {
         const control = this.makeControlByte(isDebug, isRetransmission);
         const frame = this.makeFrame(control, seq, ackSeq, 0x0003); // RESET frameId
+        logger.debug(`--> RESET frame: ${frame.toString('hex')}`, NS);
         this.writeBuffer(frame);
     }
 

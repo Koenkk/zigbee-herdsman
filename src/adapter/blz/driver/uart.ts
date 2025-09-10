@@ -230,9 +230,9 @@ export class SerialDriver extends EventEmitter {
 
         return this.queue.execute(async () => {
             try {
-                // const waiter = this.waitFor(-1, 10000);
+                logger.debug(`UART reset: sending reset frame with seq=${this.sendSeq}, ackSeq=${this.recvSeq}`, NS);
                 this.writer.sendReset(this.sendSeq, this.recvSeq);
-                // await waiter.start().promise;
+                logger.debug('UART reset frame sent successfully', NS);
             } catch (e) {
                 logger.error(`Reset failed: ${e}`, NS);
                 this.emit('reset');

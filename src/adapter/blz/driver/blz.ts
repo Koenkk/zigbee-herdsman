@@ -35,7 +35,7 @@ const MTOR_MAX_INTERVAL = 90;
 const MTOR_ROUTE_ERROR_THRESHOLD = 4;
 const MTOR_DELIVERY_FAIL_THRESHOLD = 3;
 const MAX_WATCHDOG_FAILURES = 4;
-const WATCHDOG_WAKE_PERIOD = 30; // in sec
+const WATCHDOG_WAKE_PERIOD = 10; // in sec
 const BLZ_DEFAULT_RADIUS = 0;
 
 /**
@@ -335,6 +335,25 @@ export class Blz extends EventEmitter {
         clearTimeout(this.watchdogTimer);
         this.queue.clear();
         await this.serialDriver.close(emitClose);
+    }
+
+    /**
+     * Force a direct UART-level reset, bypassing the normal command queue.
+     */
+    public async forceReset(): Promise<void> {
+        logger.debug('Forcing direct UART reset', NS);
+        
+        if (!this.serialDriver.isInitialized()) {
+            throw new Error('Connection not initialized');
+        }
+
+        try {
+            await this.serialDriver.reset();
+            logger.debug('Direct UART reset sent successfully', NS);
+        } catch (error) {
+            logger.error(`Direct UART reset failed: ${error}`, NS);
+            throw error;
+        }
     }
 
     private onFrameReceived(data: Buffer): void {

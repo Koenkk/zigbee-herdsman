@@ -104,7 +104,7 @@ export class Driver extends EventEmitter {
         logger.debug(`Reset connection.`, NS);
 
         try {
-            await this.blz.execCommand('reset');
+            await this.blz.forceReset();
             await wait(2000);
             // don't emit 'close' on stop since we don't want this to bubble back up as 'disconnected' to the controller.
             await this.stop(false);
@@ -160,7 +160,7 @@ export class Driver extends EventEmitter {
 
         this.blz.on('reset', this.onBlzReset.bind(this));
 
-        await this.blz.execCommand('reset');
+        await this.blz.forceReset();
         await wait(2000);
 
         // TODO: add sleep here to make sure the dongle is connected
