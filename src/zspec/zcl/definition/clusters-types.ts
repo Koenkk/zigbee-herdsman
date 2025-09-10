@@ -752,7 +752,7 @@ export interface TClusters {
             reportingPeriod: number;
             /** ID: 22 | Type: UINT16 */
             calcPeriod: number;
-            /** ID: 23 | Type: UINT16 */
+            /** ID: 23 | Type: UINT8 */
             numRSSIMeasurements: number;
         };
         commands: {
@@ -767,115 +767,164 @@ export interface TClusters {
                 /** Type: INT16 */
                 power: number;
                 /** Type: UINT16 */
-                pathlossexponent: number;
+                pathLossExponent: number;
             };
             /** ID: 1 */
-            setDevCfg: {
+            setDeviceConfig: {
                 /** Type: INT16 */
                 power: number;
                 /** Type: UINT16 */
-                pathlossexponent: number;
+                pathLossExponent: number;
                 /** Type: UINT16 */
-                calperiod: number;
+                calcPeriod: number;
                 /** Type: UINT8 */
-                numrssimeasurements: number;
+                numRssiMeasurements: number;
                 /** Type: UINT16 */
-                reportingperiod: number;
+                reportingPeriod: number;
             };
             /** ID: 2 */
-            getDevCfg: {
+            getDeviceConfig: {
                 /** Type: IEEE_ADDR */
-                targetaddr: string;
+                targetAddr: string;
             };
             /** ID: 3 */
-            getData: {
+            getLocationData: {
+                /** Type: BITMAP8 */
+                info: number;
                 /** Type: UINT8 */
-                getdatainfo: number;
-                /** Type: UINT8 */
-                numrsp: number;
+                numResponses: number;
+                /** Type: IEEE_ADDR, Conditions: [{bitMaskSet param=info mask=4 reversed=true}] */
+                targetAddr?: string;
+            };
+            /** ID: 4 */
+            rssiResponse: {
                 /** Type: IEEE_ADDR */
-                targetaddr: string;
+                replyingDevice: string;
+                /** Type: INT16 */
+                x: number;
+                /** Type: INT16 */
+                y: number;
+                /** Type: INT16 */
+                z: number;
+                /** Type: INT8 */
+                rssi: number;
+                /** Type: UINT8 */
+                numRssiMeasurements: number;
+            };
+            /** ID: 5 */
+            sendPings: {
+                /** Type: IEEE_ADDR */
+                targetAddr: string;
+                /** Type: UINT8 */
+                numRssiMeasurements: number;
+                /** Type: UINT16 */
+                calcPeriod: number;
+            };
+            /** ID: 6 */
+            anchorNodeAnnounce: {
+                /** Type: IEEE_ADDR */
+                anchorNodeAddr: string;
+                /** Type: INT16 */
+                x: number;
+                /** Type: INT16 */
+                y: number;
+                /** Type: INT16 */
+                z: number;
             };
         };
         commandResponses: {
             /** ID: 0 */
-            devCfgRsp: {
-                /** Type: UINT8 */
+            deviceConfigResponse: {
+                /** Type: ENUM8 */
                 status: number;
-                /** Type: INT16 */
-                power: number;
-                /** Type: UINT16 */
-                pathlossexp: number;
-                /** Type: UINT16 */
-                calperiod: number;
-                /** Type: UINT8 */
-                numrssimeasurements: number;
-                /** Type: UINT16 */
-                reportingperiod: number;
+                /** Type: INT16, Conditions: [{fieldEquals field=status value=0}] */
+                power?: number;
+                /** Type: UINT16, Conditions: [{fieldEquals field=status value=0}] */
+                pathLossExponent?: number;
+                /** Type: UINT16, Conditions: [{fieldEquals field=status value=0}] */
+                calcPeriod?: number;
+                /** Type: UINT8, Conditions: [{fieldEquals field=status value=0}] */
+                numRssiMeasurements?: number;
+                /** Type: UINT16, Conditions: [{fieldEquals field=status value=0}] */
+                reportingPeriod?: number;
             };
             /** ID: 1 */
-            dataRsp: {
-                /** Type: UINT8 */
+            locationDataResponse: {
+                /** Type: ENUM8 */
                 status: number;
-                /** Type: UINT8 */
-                locationtype: number;
-                /** Type: INT16 */
-                coord1: number;
-                /** Type: INT16 */
-                coord2: number;
-                /** Type: INT16 */
-                coord3: number;
-                /** Type: INT16 */
-                power: number;
-                /** Type: UINT16 */
-                pathlossexp: number;
-                /** Type: UINT8 */
-                locationmethod: number;
-                /** Type: UINT8 */
-                qualitymeasure: number;
-                /** Type: UINT16 */
-                locationage: number;
+                /** Type: DATA8, Conditions: [{fieldEquals field=status value=0}] */
+                type?: number;
+                /** Type: INT16, Conditions: [{fieldEquals field=status value=0}] */
+                coord1?: number;
+                /** Type: INT16, Conditions: [{fieldEquals field=status value=0}] */
+                coord2?: number;
+                /** Type: INT16, Conditions: [{fieldEquals field=status value=0}] */
+                coord3?: number;
+                /** Type: INT16, Conditions: [{fieldEquals field=status value=0}] */
+                power?: number;
+                /** Type: UINT16, Conditions: [{fieldEquals field=status value=0}] */
+                pathLossExponent?: number;
+                /** Type: ENUM8, Conditions: [{fieldEquals field=status value=0}] */
+                method?: number;
+                /** Type: UINT8, Conditions: [{fieldEquals field=status value=0}] */
+                qualityMeasure?: number;
+                /** Type: UINT16, Conditions: [{fieldEquals field=status value=0}] */
+                age?: number;
             };
             /** ID: 2 */
-            dataNotif: {
-                /** Type: UINT8 */
-                locationtype: number;
+            locationDataNotification: {
+                /** Type: DATA8 */
+                type: number;
                 /** Type: INT16 */
                 coord1: number;
                 /** Type: INT16 */
                 coord2: number;
-                /** Type: INT16 */
-                coord3: number;
+                /** Type: INT16, Conditions: [{bitMaskSet param=type mask=2 reversed=true}] */
+                coord3?: number;
                 /** Type: INT16 */
                 power: number;
                 /** Type: UINT16 */
-                pathlossexp: number;
-                /** Type: UINT8 */
-                locationmethod: number;
-                /** Type: UINT8 */
-                qualitymeasure: number;
-                /** Type: UINT16 */
-                locationage: number;
+                pathLossExponent: number;
+                /** Type: ENUM8, Conditions: [{bitMaskSet param=type mask=1 reversed=true}] */
+                method?: number;
+                /** Type: UINT8, Conditions: [{bitMaskSet param=type mask=1 reversed=true}] */
+                qualityMeasure?: number;
+                /** Type: UINT16, Conditions: [{bitMaskSet param=type mask=1 reversed=true}] */
+                age?: number;
             };
             /** ID: 3 */
-            compactDataNotif: {
-                /** Type: UINT8 */
-                locationtype: number;
+            compactLocationDataNotification: {
+                /** Type: DATA8 */
+                type: number;
                 /** Type: INT16 */
                 coord1: number;
                 /** Type: INT16 */
                 coord2: number;
-                /** Type: INT16 */
-                coord3: number;
-                /** Type: UINT8 */
-                qualitymeasure: number;
-                /** Type: UINT16 */
-                locationage: number;
+                /** Type: INT16, Conditions: [{bitMaskSet param=type mask=2 reversed=true}] */
+                coord3?: number;
+                /** Type: UINT8, Conditions: [{bitMaskSet param=type mask=1 reversed=true}] */
+                qualityMeasure?: number;
+                /** Type: UINT16, Conditions: [{bitMaskSet param=type mask=1 reversed=true}] */
+                age?: number;
             };
             /** ID: 4 */
             rssiPing: {
+                /** Type: DATA8 */
+                type: number;
+            };
+            /** ID: 5 */
+            rssiRequest: Record<string, never>;
+            /** ID: 6 */
+            reportRssiMeasurements: {
+                /** Type: IEEE_ADDR */
+                measuringDeviceAddr: string;
                 /** Type: UINT8 */
-                locationtype: number;
+                numNeighbors: number;
+            };
+            /** ID: 7 */
+            requestOwnLocation: {
+                /** Type: IEEE_ADDR */
+                blindNodeAddr: string;
             };
         };
     };
@@ -2556,7 +2605,7 @@ export interface TClusters {
                 /** Type: LIST_THERMO_TRANSITIONS */
                 transitions: ThermoTransition[];
             };
-            /** ID: 2 */
+            /** ID: 2 | Response ID: 0 */
             getWeeklySchedule: {
                 /** Type: UINT8 */
                 daystoreturn: number;
@@ -2565,7 +2614,7 @@ export interface TClusters {
             };
             /** ID: 3 */
             clearWeeklySchedule: Record<string, never>;
-            /** ID: 4 */
+            /** ID: 4 | Response ID: 1 */
             getRelayStatusLog: Record<string, never>;
             /** ID: 64 */
             danfossSetpointCommand: {
