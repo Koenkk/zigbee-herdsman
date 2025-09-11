@@ -116,7 +116,7 @@ class Driver extends events.EventEmitter {
     public paramFirmwareVersion = 0;
     public paramCurrentChannel = 0;
     public paramNwkPanid = 0;
-    public paramNwkKey = Buffer.alloc(16);
+    public paramNwkKey: Buffer<ArrayBufferLike> = Buffer.alloc(16);
     public paramEndpoint0: Buffer | undefined;
     public paramEndpoint1: Buffer | undefined;
     public fixParamEndpoint0: Buffer;

@@ -55,8 +55,8 @@ importers:
         specifier: ^6.0.1
         version: 6.0.1
       typescript:
-        specifier: ^5.8.3
-        version: 5.8.3
+        specifier: ^5.9.2
+        version: 5.9.2
       vitest:
         specifier: ^3.2.4
         version: 3.2.4(@types/node@24.3.0)(yaml@2.7.0)
@@ -866,8 +866,8 @@ packages:
     resolution: {integrity: sha512-t2T/WLB2WRgZ9EpE4jgPJ9w+i66UZfDc8wHh0xrwiRNN+UwH98GIJkTeZqX9rg0i0ptwzqW+uYeIF0T4F8LR7A==}
     engines: {node: '>=14.0.0'}
 
-  typescript@5.8.3:
-    resolution: {integrity: sha512-p1diW6TqL9L07nNxvRMM7hMMw4c5XOo/1ibL4aAIGmSAt9slTE1Xgw5KWuof2uTOvCg9BY7ZRi+GaF+7sfgPeQ==}
+  typescript@5.9.2:
+    resolution: {integrity: sha512-CWBzXQrc/qOkhidw1OzBTQuYRbfyxDXJMVJ1XNwUHGROVmuaeiEm3OslpZ1RV96d7SKKjZKrSJu3+t/xlw3R9A==}
     engines: {node: '>=14.17'}
     hasBin: true
 
@@ -1669,7 +1669,7 @@ snapshots:
 
   tinyspy@4.0.3: {}
 
-  typescript@5.8.3: {}
+  typescript@5.9.2: {}
 
   undici-types@7.10.0: {}
 
