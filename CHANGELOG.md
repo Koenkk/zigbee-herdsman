@@ -1,5 +1,14 @@
 # Changelog
 
+## [6.1.1](https://github.com/Koenkk/zigbee-herdsman/compare/v6.1.0...v6.1.1) (2025-09-11)
+
+
+### Bug Fixes
+
+* **ignore:** update typescript to 5.9.2 ([#1502](https://github.com/Koenkk/zigbee-herdsman/issues/1502)) ([48dc210](https://github.com/Koenkk/zigbee-herdsman/commit/48dc210ae0b5de82a85c1cd9871e08e58f360bd1))
+* RSSI Location cluster support ([#1501](https://github.com/Koenkk/zigbee-herdsman/issues/1501)) ([752292b](https://github.com/Koenkk/zigbee-herdsman/commit/752292b48e0aba47dee77815c2a5bcec5231464a))
+* ZStack: support messages with huge data ([#1492](https://github.com/Koenkk/zigbee-herdsman/issues/1492)) ([a7f0d87](https://github.com/Koenkk/zigbee-herdsman/commit/a7f0d871f299d9393519f2a6e7ea39e644996227))
+
 ## [6.1.0](https://github.com/Koenkk/zigbee-herdsman/compare/v6.0.4...v6.1.0) (2025-09-02)
 
 
