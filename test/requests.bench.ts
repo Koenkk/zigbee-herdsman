@@ -222,7 +222,7 @@ describe("Requests", () => {
             sendZclFrameToEndpointResponse = undefined;
             sendZdoResponse = undefined;
 
-            await group.command("genRssiLocation", "getDevCfg", {targetaddr: IEEE_ADDRESS1}, {});
+            await group.command("genRssiLocation", "getDeviceConfig", {targetAddr: IEEE_ADDRESS1}, {});
         },
         BENCH_OPTIONS,
     );
