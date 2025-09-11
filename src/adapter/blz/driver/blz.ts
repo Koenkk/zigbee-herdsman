@@ -34,8 +34,8 @@ const MTOR_MIN_INTERVAL = 10;
 const MTOR_MAX_INTERVAL = 90;
 const MTOR_ROUTE_ERROR_THRESHOLD = 4;
 const MTOR_DELIVERY_FAIL_THRESHOLD = 3;
-const MAX_WATCHDOG_FAILURES = 4;
-const WATCHDOG_WAKE_PERIOD = 10; // in sec
+const MAX_WATCHDOG_FAILURES = 2;
+const WATCHDOG_WAKE_PERIOD = 30; // in sec
 const BLZ_DEFAULT_RADIUS = 0;
 
 /**
@@ -327,6 +327,11 @@ export class Blz extends EventEmitter {
         if (!this.inResetingProcess) {
             this.emit('close');
         }
+    }
+
+    public setResetingProcess(value: boolean): void {
+        logger.debug(`Setting inResetingProcess to ${value}`, NS);
+        this.inResetingProcess = value;
     }
 
     public async close(emitClose: boolean): Promise<void> {

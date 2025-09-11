@@ -104,7 +104,13 @@ export class Driver extends EventEmitter {
         logger.debug(`Reset connection.`, NS);
 
         try {
-            await this.blz.forceReset();
+            // logger.debug(`Ready to reset in 10 seconds`, NS);
+            // await wait(10000);
+            if (this.blz) {
+                this.blz.setResetingProcess(true);
+                await this.blz.forceReset();
+            }
+            
             await wait(2000);
             // don't emit 'close' on stop since we don't want this to bubble back up as 'disconnected' to the controller.
             await this.stop(false);
@@ -115,8 +121,13 @@ export class Driver extends EventEmitter {
             await wait(1000);
             logger.debug(`Startup again.`, NS);
             await this.startup();
+            // Clear reset state after successful startup
+            if (this.blz) {
+                this.blz.setResetingProcess(false);
+            }
         } catch (err) {
             logger.debug(`Reset error ${err}`, NS);
+            // Clear reset state on error
 
             try {
                 // here we let emit
@@ -163,7 +174,6 @@ export class Driver extends EventEmitter {
         await this.blz.forceReset();
         await wait(2000);
 
-        // TODO: add sleep here to make sure the dongle is connected
         await this.addEndpoint({
             inputClusters: [0x0000, 0x0003, 0x0006, 0x000a, 0x0019, 0x001a],
             outputClusters: [
