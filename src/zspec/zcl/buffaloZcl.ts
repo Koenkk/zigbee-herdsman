@@ -36,17 +36,6 @@ const EXTENSION_FIELD_SETS_DATA_TYPE: {[key: number]: DataType[]} = {
 };
 
 export class BuffaloZcl extends Buffalo {
-    // TODO: shuffles quite a lot of code (ZH is mostly typed `string | number` and ZHC requires lots of scrutiny)
-    // private writeZclBoolean(value: boolean | undefined): void {
-    //     this.writeUInt8(value === undefined ? 0xff : value ? 1 : 0);
-    // }
-
-    // private readZclBoolean(): boolean | undefined {
-    //     const value = this.readUInt8();
-
-    //     return value === 0xff ? undefined : !!value;
-    // }
-
     private writeZclUInt8(value: number): void {
         this.writeUInt8(Number.isNaN(value) ? 0xff : value);
     }
@@ -540,18 +529,18 @@ export class BuffaloZcl extends Buffalo {
                 deviceID: this.readUInt8(),
                 options: this.readUInt8(),
                 extendedOptions: 0,
-                securityKey: Buffer.alloc(16),
+                securityKey: Buffer.alloc(16) as Buffer<ArrayBufferLike>,
                 keyMic: 0,
                 outgoingCounter: 0,
                 applicationInfo: 0,
                 manufacturerID: 0,
                 modelID: 0,
                 numGpdCommands: 0,
-                gpdCommandIdList: Buffer.alloc(0),
+                gpdCommandIdList: Buffer.alloc(0) as Buffer<ArrayBufferLike>,
                 numServerClusters: 0,
                 numClientClusters: 0,
-                gpdServerClusters: Buffer.alloc(0),
-                gpdClientClusters: Buffer.alloc(0),
+                gpdServerClusters: Buffer.alloc(0) as Buffer<ArrayBufferLike>,
+                gpdClientClusters: Buffer.alloc(0) as Buffer<ArrayBufferLike>,
                 genericSwitchConfig: 0,
                 currentContactStatus: 0,
             };
