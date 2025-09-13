@@ -144,30 +144,58 @@ export interface FrameControl {
     disableDefaultResponse: boolean;
 }
 
+/**
+ * Extra metadata:
+ * - writableIf: Indicates an expression that specifies the writability of the attribute. Defaults to true. Note: An attribute is only writable if this attribute and the writable attribute are true.
+ * - requiredIf: Allows for an expression to be implemented which indicates the conditions in which an attribute is mandatory. Defaults to false
+ */
 export interface Attribute {
     ID: number;
     name: string;
     type: DataType;
     manufacturerCode?: number;
+    /** If the attribute is readable OTA. Defaults to true */
+    readable?: false;
+    /** If the attribute is writable OTA. Defaults to false. */
+    writable?: true;
+    /** If the attribute is specified as writable this indicates if the write is required. Defaults to false. */
+    writeOptional?: true;
+    /** If attribute is required to be reportable. Defaults to false */
+    reportRequired?: true;
+    /** If attribute is required to be part of the scene extensions. Defaults to false */
+    sceneRequired?: true;
+    /** If the attribute is mandatory. Defaults to false */
+    required?: true;
+    /** A decimal integer specifying the min value (inclusive). Not for use on strings, use minLength restriction instead. Defaults to 0 */
+    min?: number;
+    /** A decimal integer specifiying the max value (inclusive). Not for use on strings, use maxLength restriction instead. No Default. */
+    max?: number;
+    /** Specifies the default value of an attribute. No Default */
+    default?: number | string;
+    /** If attribute is client side */
+    client?: true;
 }
 
 export interface Parameter {
     name: string;
     type: DataType | BuffaloZclDataType;
+    arrayLengthSize?: number;
 }
 
+/**
+ * Extra metadata:
+ * - requiredIf: Allows for an expression to be implemented which indicates the conditions in which a command is mandatory. Defaults to false
+ */
 export interface Command {
     ID: number;
     name: string;
     parameters: readonly Parameter[];
     response?: number;
+    /** If the command is mandatory. Defaults to false */
+    required?: true;
 }
 
-export interface AttributeDefinition {
-    ID: number;
-    type: DataType;
-    manufacturerCode?: number;
-}
+export interface AttributeDefinition extends Omit<Attribute, "name"> {}
 
 export interface ParameterDefinition extends Parameter {
     conditions?: (
@@ -180,10 +208,8 @@ export interface ParameterDefinition extends Parameter {
     )[];
 }
 
-export interface CommandDefinition {
-    ID: number;
+export interface CommandDefinition extends Omit<Command, "name"> {
     parameters: readonly ParameterDefinition[];
-    response?: number;
 }
 
 export interface Cluster {

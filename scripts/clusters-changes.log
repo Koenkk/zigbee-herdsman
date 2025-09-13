@@ -1,0 +1,11 @@
+Comparison complete. Found 3 changes.
+Compared:
+  - OLD: D:\Dev\FORKS\zigbee-herdsman\src\zspec\zcl\definition\cluster-old.ts
+  - NEW: D:\Dev\FORKS\zigbee-herdsman\src\zspec\zcl\definition\cluster.ts
+--------------------------------------------------
+
+
+[CHANGED] Clusters > closuresShadeCfg > attributes > mode > ID: 18 (0x0012) -> 17 (0x0011)
+[CHANGED] Clusters > closuresDoorLock > attributes > lockType > ID: 38 (0x0026) -> 1 (0x0001)
+
+[ADDED]   Clusters > closuresDoorLock > attributes > supportedOperatingModes: 38 (0x0026)

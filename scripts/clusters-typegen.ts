@@ -1,24 +1,15 @@
-/* v8 ignore start */
 /**
- * How to run:
- * ```bash
- * npm i -g ts-node
- * ts-node ./src/zspec/zcl/definition/clusters-typegen.ts && pnpm run check:w
- * ```
- * or with compiled:
- * ```bash
- * pnpm run prepack
- * node ./dist/zspec/zcl/definition/clusters-typegen.js && pnpm run check:w
- * ```
+ * Usage:
+ *   tsx scripts/clusters-typegen.ts && pnpm run check:w
  */
 import {writeFileSync} from "node:fs";
 import ts from "typescript";
-import {isFoundationDiscoverRsp} from "../utils";
-import {Clusters} from "./cluster";
-import {BuffaloZclDataType, DataType} from "./enums";
-import {Foundation, type FoundationCommandName, type FoundationDefinition} from "./foundation";
-import {ManufacturerCode} from "./manufacturerCode";
-import type {AttributeDefinition, ClusterName, CommandDefinition, ParameterDefinition} from "./tstype";
+import {Clusters} from "../src/zspec/zcl/definition/cluster";
+import {BuffaloZclDataType, DataType} from "../src/zspec/zcl/definition/enums";
+import {Foundation, type FoundationCommandName, type FoundationDefinition} from "../src/zspec/zcl/definition/foundation";
+import {ManufacturerCode} from "../src/zspec/zcl/definition/manufacturerCode";
+import type {AttributeDefinition, ClusterName, CommandDefinition, ParameterDefinition} from "../src/zspec/zcl/definition/tstype";
+import {isFoundationDiscoverRsp} from "../src/zspec/zcl/utils";
 
 const FILENAME = "clusters-types.ts";
 
@@ -33,7 +24,7 @@ const emptyObject = ts.factory.createTypeReferenceNode("Record", [
 const namedImports = ts.factory.createImportDeclaration(
     undefined,
     ts.factory.createImportClause(
-        true,
+        ts.SyntaxKind.TypeKeyword,
         undefined,
         ts.factory.createNamedImports([
             // sorted by name
@@ -51,7 +42,7 @@ const namedImports = ts.factory.createImportDeclaration(
             ts.factory.createImportSpecifier(false, undefined, ts.factory.createIdentifier("TuyaDataPointValue")),
             ts.factory.createImportSpecifier(false, undefined, ts.factory.createIdentifier("ZclArray")),
             // ts.factory.createImportSpecifier(false, undefined, ts.factory.createIdentifier("ZclDate")), // XXX: currently unused
-            // ts.factory.createImportSpecifier(false, undefined, ts.factory.createIdentifier("ZclTimeOfDay")), // XXX: currently unused
+            ts.factory.createImportSpecifier(false, undefined, ts.factory.createIdentifier("ZclTimeOfDay")),
             ts.factory.createImportSpecifier(false, undefined, ts.factory.createIdentifier("ZoneInfo")),
         ]),
     ),
