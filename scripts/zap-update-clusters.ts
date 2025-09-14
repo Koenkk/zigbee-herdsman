@@ -28,9 +28,8 @@ import {BuffaloZclDataType, DataType} from "../src/zspec/zcl/definition/enums.js
 import {fuzzyMatch} from "./utils.js";
 import {applyXmlOverrides, parseOverrides} from "./zap-xml-clusters-overrides.js";
 
-/* ------------------------------------------------------------------------------------------------
- * XML Type Definitions
- * ----------------------------------------------------------------------------------------------*/
+// #region Type Definitions
+
 export interface XMLAttr<T> {
     // biome-ignore lint/style/useNamingConvention: API
     $: T;
@@ -149,9 +148,141 @@ interface XMLTypeType
     bitmap?: unknown[];
 }
 
-/* ------------------------------------------------------------------------------------------------
- * Library / XML loading
- * ----------------------------------------------------------------------------------------------*/
+interface ParsedXMLClusterData {
+    id: number;
+    name: string;
+    attributes: ParsedXMLAttribute[];
+    serverCommands: ParsedXMLCommand[];
+    clientCommands: ParsedXMLCommand[];
+}
+
+interface ParsedXMLAttribute {
+    id: number;
+    name: string;
+    dataTypeExpr: string;
+    meta?: XMLAttributeDefinition;
+    client?: boolean;
+}
+
+interface ParsedXMLCommand {
+    id: number;
+    name: string;
+    isResponse: boolean;
+    parameters: ParsedXMLCommandParameter[];
+    meta?: XMLCommandDefinition;
+    client?: boolean;
+}
+
+interface ParsedXMLCommandParameter {
+    name: string;
+    dataTypeExpr: string;
+    meta?: XMLFieldDefinition;
+    isLength?: boolean;
+}
+
+interface ValidationRecord {
+    warnings: string[];
+    errors: string[];
+    unknownTypes: Set<string>;
+    addedAttributes: string[];
+    addedCommands: string[];
+    addedParameters: string[];
+    scannedClusters: string[];
+    changedClusters: string[];
+    xmlClustersMissingFromTs: Map<string, string>;
+    tsClustersMissingFromXml: string[];
+}
+
+// #endregion
+
+// #region Helpers
+
+function parseAttributeOrCommandId(hexId: string): number {
+    const clean = hexId.trim().toLowerCase();
+
+    return Number.parseInt(clean, 16);
+}
+
+function normalizeAttributeOrCommandName(name: string): string {
+    if (!name) {
+        return name;
+    }
+
+    const first = name[0].toLowerCase();
+
+    return `${first}${name.slice(1)}`.replace(/[^A-Za-z0-9]/g, "");
+}
+
+function findBestFuzzyAttrMatch(
+    refName: string,
+    candidates: ParsedXMLAttribute[],
+    existingTsNames: Map<number, string>,
+    factory: ts.NodeFactory,
+): ts.StringLiteral | undefined {
+    if (candidates.length === 0) {
+        return undefined;
+    }
+
+    let bestMatch: {score: number; attribute: ParsedXMLAttribute | undefined} = {score: -1, attribute: undefined};
+    const normalizedRefName = normalizeAttributeOrCommandName(refName);
+
+    for (const candidate of candidates) {
+        const score = fuzzyMatch(normalizedRefName, candidate.name);
+
+        if (score > bestMatch.score) {
+            bestMatch = {score, attribute: candidate};
+        }
+    }
+
+    if (bestMatch.attribute && bestMatch.score > 0.7) {
+        // If a match is found, check if it has a corresponding name in the existing TS file.
+        // If so, use that name. Otherwise, fall back to the normalized XML name.
+        const tsName = existingTsNames.get(bestMatch.attribute.id);
+        const finalName = tsName || bestMatch.attribute.name;
+
+        return factory.createStringLiteral(finalName);
+    }
+
+    return undefined;
+}
+
+function findBestFuzzyParamMatch(
+    refName: string,
+    candidates: ParsedXMLCommandParameter[],
+    existingTsParamNames: Map<string, string>,
+    factory: ts.NodeFactory,
+): ts.StringLiteral | undefined {
+    if (candidates.length === 0) {
+        return undefined;
+    }
+
+    let bestMatch: {score: number; parameter: ParsedXMLCommandParameter | undefined} = {score: -1, parameter: undefined};
+    const normalizedRefName = normalizeAttributeOrCommandName(refName);
+
+    for (const candidate of candidates) {
+        const score = fuzzyMatch(normalizedRefName, candidate.name);
+
+        if (score > bestMatch.score) {
+            bestMatch = {score, parameter: candidate};
+        }
+    }
+
+    if (bestMatch.parameter && bestMatch.score > 0.7) {
+        // If a match is found, check if it has a corresponding name in the existing TS file.
+        // If so, use that name. Otherwise, fall back to the normalized XML name.
+        const tsName = existingTsParamNames.get(bestMatch.parameter.name);
+        const finalName = tsName || bestMatch.parameter.name;
+
+        return factory.createStringLiteral(finalName);
+    }
+
+    return undefined;
+}
+
+// #endregion
+
+// #region XML processing
+
 async function collectFromLibrary(libraryFile: string): Promise<{includeFiles: string[]; libraryTypes: XMLTypeType[]}> {
     const txt = await fs.readFile(libraryFile, "utf8");
 
@@ -222,9 +353,169 @@ async function parseXMLCluster(file: string): Promise<XMLCluster[]> {
     return clusters;
 }
 
-/* ------------------------------------------------------------------------------------------------
- * Type resolution
- * ----------------------------------------------------------------------------------------------*/
+function processClusterSide(
+    side: XMLClusterSide | undefined,
+    isClient: boolean,
+    resolver: TypeResolver,
+    validation: ValidationRecord,
+): {attributes: ParsedXMLAttribute[]; commands: ParsedXMLCommand[]} {
+    const attributes: ParsedXMLAttribute[] = [];
+    const commands: ParsedXMLCommand[] = [];
+
+    if (!side) {
+        return {attributes, commands};
+    }
+
+    if (side.attributes && side.attributes.length > 0) {
+        const attrs = side.attributes[0].attribute;
+
+        if (attrs) {
+            for (const a of attrs) {
+                if (!a?.$?.id) {
+                    continue;
+                }
+
+                const attrId = parseAttributeOrCommandId(a.$.id);
+                const attrTypeShortRaw = a.$.type.trim().toLowerCase();
+                const baseShort = resolver.resolve(attrTypeShortRaw);
+                const mappedDataType = mapZclTypeToDataType(baseShort);
+
+                if (mappedDataType === "DataType.UNKNOWN" && attrTypeShortRaw !== "unk") {
+                    validation.unknownTypes.add(attrTypeShortRaw);
+                }
+
+                const attrName = normalizeAttributeOrCommandName(a.$.name);
+                const attribute: ParsedXMLAttribute = {id: attrId, name: attrName, dataTypeExpr: mappedDataType, meta: a};
+
+                if (isClient) {
+                    attribute.client = true;
+                }
+
+                attributes.push(attribute);
+            }
+        }
+    }
+
+    if (side.commands && side.commands.length > 0) {
+        const cmds = side.commands[0].command;
+
+        if (cmds) {
+            for (const cmd of cmds) {
+                if (!cmd?.$?.id) {
+                    continue;
+                }
+
+                const cmdId = parseAttributeOrCommandId(cmd.$.id);
+                const cmdNameRaw = cmd.$.name;
+                const cmdName = normalizeAttributeOrCommandName(cmdNameRaw);
+                const parameters: ParsedXMLCommandParameter[] = [];
+
+                if (cmd.fields && cmd.fields.length > 0) {
+                    const fields = cmd.fields[0].field;
+
+                    if (fields) {
+                        for (const [paramIndex, fld] of fields.entries()) {
+                            const paramName = normalizeAttributeOrCommandName(fld.$.name);
+                            const typeShortRaw = fld.$.type.trim().toLowerCase();
+                            const baseShort = resolver.resolve(typeShortRaw);
+                            let mapped = mapZclTypeToDataType(baseShort);
+                            const arrayFlag = fld.$.array === "true";
+
+                            if (mapped === "DataType.UNKNOWN" && typeShortRaw !== "unk") {
+                                validation.unknownTypes.add(typeShortRaw);
+                            }
+
+                            if (arrayFlag && !fld.$.arrayLengthSize && !fld.$.arrayLengthField) {
+                                // This field represents an array with an implicit count.
+                                // Create the count parameter.
+                                parameters.push({
+                                    name: `${paramName}Count`,
+                                    dataTypeExpr: "DataType.UINT8", // The implicit count is usually UINT8
+                                    meta: fld, // Carry over meta for context, but it's for the count
+                                    isLength: true,
+                                });
+
+                                // Now, create the actual array parameter.
+                                mapped = mapToBuffaloZclDataType(mapped);
+
+                                parameters.push({
+                                    name: paramName,
+                                    dataTypeExpr: mapped,
+                                    meta: fld,
+                                });
+                            } else {
+                                // Original logic for non-arrays or arrays with explicit length fields.
+                                if (arrayFlag) {
+                                    mapped = mapToBuffaloZclDataType(mapped);
+                                }
+
+                                parameters.push({
+                                    name: paramName || `param${paramIndex}`,
+                                    dataTypeExpr: mapped,
+                                    meta: fld,
+                                });
+                            }
+                        }
+                    }
+                }
+
+                const command: ParsedXMLCommand = {id: cmdId, name: cmdName, isResponse: isClient, parameters, meta: cmd};
+
+                if (isClient) {
+                    command.client = true;
+                }
+
+                commands.push(command);
+            }
+        }
+    }
+
+    return {attributes, commands};
+}
+
+function parseClustersFromXML(list: XMLCluster[], globalResolver: TypeResolver, validation: ValidationRecord): ParsedXMLClusterData[] {
+    const out: ParsedXMLClusterData[] = [];
+
+    for (const cluster of list) {
+        const idHex = cluster.$.id;
+
+        if (!idHex) {
+            continue;
+        }
+
+        // Create a new resolver for this specific cluster, with the global resolver as its parent.
+        const clusterResolver = new TypeResolver(globalResolver);
+
+        // Add only this cluster's local types to it.
+        clusterResolver.add(cluster["type:type"]);
+
+        const idNum = parseAttributeOrCommandId(idHex);
+        const idHexStr = `0x${idNum.toString(16).padStart(4, "0")}`;
+        const name = cluster.$.name;
+
+        validation.scannedClusters.push(`${idHexStr} ${name}`);
+        validation.xmlClustersMissingFromTs.set(idHexStr, `${idHexStr} ${name}`);
+
+        // Process the cluster using its own scoped resolver.
+        const serverData = processClusterSide(cluster.server?.[0], false, clusterResolver, validation);
+        const clientData = processClusterSide(cluster.client?.[0], true, clusterResolver, validation);
+
+        out.push({
+            id: idNum,
+            name,
+            attributes: [...serverData.attributes, ...clientData.attributes],
+            serverCommands: serverData.commands,
+            clientCommands: clientData.commands,
+        });
+    }
+
+    return out;
+}
+
+// #endregion
+
+// #region Mapping types
+
 class TypeResolver {
     #map: Map<string, string | undefined /* inheritsFrom */>;
     #parent?: TypeResolver;
@@ -258,9 +549,6 @@ class TypeResolver {
     }
 }
 
-/* ------------------------------------------------------------------------------------------------
- * Mapping types
- * ----------------------------------------------------------------------------------------------*/
 function mapZclTypeToDataType(base: string): string {
     const t = base.toLowerCase();
 
@@ -396,143 +684,6 @@ function isNumericDataType(dataTypeExpr: string): boolean {
     }
 }
 
-/* ------------------------------------------------------------------------------------------------
- * Helpers
- * ----------------------------------------------------------------------------------------------*/
-function parseAttributeOrCommandId(hexId: string): number {
-    const clean = hexId.trim().toLowerCase();
-
-    return Number.parseInt(clean, 16);
-}
-
-function findBestFuzzyAttrMatch(
-    refName: string,
-    candidates: ParsedXMLAttribute[],
-    existingTsNames: Map<number, string>,
-    factory: ts.NodeFactory,
-): ts.StringLiteral | undefined {
-    if (candidates.length === 0) {
-        return undefined;
-    }
-
-    let bestMatch: {score: number; attribute: ParsedXMLAttribute | undefined} = {score: -1, attribute: undefined};
-    const normalizedRefName = normalizeName(refName);
-
-    for (const candidate of candidates) {
-        const score = fuzzyMatch(normalizedRefName, candidate.name);
-
-        if (score > bestMatch.score) {
-            bestMatch = {score, attribute: candidate};
-        }
-    }
-
-    if (bestMatch.attribute && bestMatch.score > 0.7) {
-        // If a match is found, check if it has a corresponding name in the existing TS file.
-        // If so, use that name. Otherwise, fall back to the normalized XML name.
-        const tsName = existingTsNames.get(bestMatch.attribute.id);
-        const finalName = tsName || bestMatch.attribute.name;
-
-        return factory.createStringLiteral(finalName);
-    }
-
-    return undefined;
-}
-
-function findBestFuzzyParamMatch(
-    refName: string,
-    candidates: ParsedXMLCommandParameter[],
-    existingTsParamNames: Map<string, string>,
-    factory: ts.NodeFactory,
-): ts.StringLiteral | undefined {
-    if (candidates.length === 0) {
-        return undefined;
-    }
-
-    let bestMatch: {score: number; parameter: ParsedXMLCommandParameter | undefined} = {score: -1, parameter: undefined};
-    const normalizedRefName = normalizeName(refName);
-
-    for (const candidate of candidates) {
-        const score = fuzzyMatch(normalizedRefName, candidate.name);
-
-        if (score > bestMatch.score) {
-            bestMatch = {score, parameter: candidate};
-        }
-    }
-
-    if (bestMatch.parameter && bestMatch.score > 0.7) {
-        // If a match is found, check if it has a corresponding name in the existing TS file.
-        // If so, use that name. Otherwise, fall back to the normalized XML name.
-        const tsName = existingTsParamNames.get(bestMatch.parameter.name);
-        const finalName = tsName || bestMatch.parameter.name;
-
-        return factory.createStringLiteral(finalName);
-    }
-
-    return undefined;
-}
-
-/* ------------------------------------------------------------------------------------------------
- * Parsed representations
- * ----------------------------------------------------------------------------------------------*/
-interface ParsedXMLClusterData {
-    id: number;
-    name: string;
-    attributes: ParsedXMLAttribute[];
-    serverCommands: ParsedXMLCommand[];
-    clientCommands: ParsedXMLCommand[];
-}
-
-interface ParsedXMLAttribute {
-    id: number;
-    name: string;
-    dataTypeExpr: string;
-    meta?: XMLAttributeDefinition;
-    client?: boolean;
-}
-
-interface ParsedXMLCommand {
-    id: number;
-    name: string;
-    isResponse: boolean;
-    parameters: ParsedXMLCommandParameter[];
-    meta?: XMLCommandDefinition;
-    client?: boolean;
-}
-
-interface ParsedXMLCommandParameter {
-    name: string;
-    dataTypeExpr: string;
-    meta?: XMLFieldDefinition;
-    isLength?: boolean;
-}
-
-/** camelCase name for use with parameters `name` or attribute name (property key) */
-function normalizeName(name: string): string {
-    if (!name) {
-        return name;
-    }
-
-    const first = name[0].toLowerCase();
-
-    return `${first}${name.slice(1)}`.replace(/[^A-Za-z0-9]/g, "");
-}
-
-/* ------------------------------------------------------------------------------------------------
- * Validation
- * ----------------------------------------------------------------------------------------------*/
-interface ValidationRecord {
-    warnings: string[];
-    errors: string[];
-    unknownTypes: Set<string>;
-    addedAttributes: string[];
-    addedCommands: string[];
-    addedParameters: string[];
-    scannedClusters: string[];
-    changedClusters: string[];
-    xmlClustersMissingFromTs: Map<string, string>;
-    tsClustersMissingFromXml: string[];
-}
-
 function mapToBuffaloZclDataType(base: string): string {
     if (base === "DataType.UINT8") return "BuffaloZclDataType.LIST_UINT8";
     if (base === "DataType.UINT16") return "BuffaloZclDataType.LIST_UINT16";
@@ -543,168 +694,10 @@ function mapToBuffaloZclDataType(base: string): string {
     return base;
 }
 
-function processClusterSide(
-    side: XMLClusterSide | undefined,
-    isClient: boolean,
-    resolver: TypeResolver,
-    validation: ValidationRecord,
-): {attributes: ParsedXMLAttribute[]; commands: ParsedXMLCommand[]} {
-    const attributes: ParsedXMLAttribute[] = [];
-    const commands: ParsedXMLCommand[] = [];
+// #endregion
 
-    if (!side) {
-        return {attributes, commands};
-    }
+// #region AST Transformer
 
-    if (side.attributes && side.attributes.length > 0) {
-        const attrs = side.attributes[0].attribute;
-
-        if (attrs) {
-            for (const a of attrs) {
-                if (!a?.$?.id) {
-                    continue;
-                }
-
-                const attrId = parseAttributeOrCommandId(a.$.id);
-                const attrTypeShortRaw = a.$.type.trim().toLowerCase();
-                const baseShort = resolver.resolve(attrTypeShortRaw);
-                const mappedDataType = mapZclTypeToDataType(baseShort);
-
-                if (mappedDataType === "DataType.UNKNOWN" && attrTypeShortRaw !== "unk") {
-                    validation.unknownTypes.add(attrTypeShortRaw);
-                }
-
-                const attrName = normalizeName(a.$.name);
-                const attribute: ParsedXMLAttribute = {id: attrId, name: attrName, dataTypeExpr: mappedDataType, meta: a};
-
-                if (isClient) {
-                    attribute.client = true;
-                }
-
-                attributes.push(attribute);
-            }
-        }
-    }
-
-    if (side.commands && side.commands.length > 0) {
-        const cmds = side.commands[0].command;
-
-        if (cmds) {
-            for (const cmd of cmds) {
-                if (!cmd?.$?.id) {
-                    continue;
-                }
-
-                const cmdId = parseAttributeOrCommandId(cmd.$.id);
-                const cmdNameRaw = cmd.$.name;
-                const cmdName = normalizeName(cmdNameRaw);
-                const parameters: ParsedXMLCommandParameter[] = [];
-
-                if (cmd.fields && cmd.fields.length > 0) {
-                    const fields = cmd.fields[0].field;
-
-                    if (fields) {
-                        for (const [paramIndex, fld] of fields.entries()) {
-                            const paramName = normalizeName(fld.$.name);
-                            const typeShortRaw = fld.$.type.trim().toLowerCase();
-                            const baseShort = resolver.resolve(typeShortRaw);
-                            let mapped = mapZclTypeToDataType(baseShort);
-                            const arrayFlag = fld.$.array === "true";
-
-                            if (mapped === "DataType.UNKNOWN" && typeShortRaw !== "unk") {
-                                validation.unknownTypes.add(typeShortRaw);
-                            }
-
-                            if (arrayFlag && !fld.$.arrayLengthSize && !fld.$.arrayLengthField) {
-                                // This field represents an array with an implicit count.
-                                // Create the count parameter.
-                                parameters.push({
-                                    name: `${paramName}Count`,
-                                    dataTypeExpr: "DataType.UINT8", // The implicit count is usually UINT8
-                                    meta: fld, // Carry over meta for context, but it's for the count
-                                    isLength: true,
-                                });
-
-                                // Now, create the actual array parameter.
-                                mapped = mapToBuffaloZclDataType(mapped);
-
-                                parameters.push({
-                                    name: paramName,
-                                    dataTypeExpr: mapped,
-                                    meta: fld,
-                                });
-                            } else {
-                                // Original logic for non-arrays or arrays with explicit length fields.
-                                if (arrayFlag) {
-                                    mapped = mapToBuffaloZclDataType(mapped);
-                                }
-
-                                parameters.push({
-                                    name: paramName || `param${paramIndex}`,
-                                    dataTypeExpr: mapped,
-                                    meta: fld,
-                                });
-                            }
-                        }
-                    }
-                }
-
-                const command: ParsedXMLCommand = {id: cmdId, name: cmdName, isResponse: isClient, parameters, meta: cmd};
-
-                if (isClient) {
-                    command.client = true;
-                }
-
-                commands.push(command);
-            }
-        }
-    }
-
-    return {attributes, commands};
-}
-
-function parseClustersFromXML(list: XMLCluster[], globalResolver: TypeResolver, validation: ValidationRecord): ParsedXMLClusterData[] {
-    const out: ParsedXMLClusterData[] = [];
-
-    for (const cluster of list) {
-        const idHex = cluster.$.id;
-
-        if (!idHex) {
-            continue;
-        }
-
-        // Create a new resolver for this specific cluster, with the global resolver as its parent.
-        const clusterResolver = new TypeResolver(globalResolver);
-
-        // Add only this cluster's local types to it.
-        clusterResolver.add(cluster["type:type"]);
-
-        const idNum = parseAttributeOrCommandId(idHex);
-        const idHexStr = `0x${idNum.toString(16).padStart(4, "0")}`;
-        const name = cluster.$.name;
-
-        validation.scannedClusters.push(`${idHexStr} ${name}`);
-        validation.xmlClustersMissingFromTs.set(idHexStr, `${idHexStr} ${name}`);
-
-        // Process the cluster using its own scoped resolver.
-        const serverData = processClusterSide(cluster.server?.[0], false, clusterResolver, validation);
-        const clientData = processClusterSide(cluster.client?.[0], true, clusterResolver, validation);
-
-        out.push({
-            id: idNum,
-            name,
-            attributes: [...serverData.attributes, ...clientData.attributes],
-            serverCommands: serverData.commands,
-            clientCommands: clientData.commands,
-        });
-    }
-
-    return out;
-}
-
-/* ------------------------------------------------------------------------------------------------
- * AST Transformer
- * ----------------------------------------------------------------------------------------------*/
 const findProperty = (obj: ts.ObjectLiteralExpression, name: string): ts.PropertyAssignment | undefined => {
     for (const p of obj.properties) {
         if (ts.isPropertyAssignment(p) && ts.isIdentifier(p.name) && p.name.text === name) {
@@ -1071,7 +1064,10 @@ function updateAttributes(
                 }
 
                 propsToAdd.push(
-                    factory.createPropertyAssignment("defaultRef", matched ?? factory.createStringLiteral(normalizeName(meta.defaultRef))),
+                    factory.createPropertyAssignment(
+                        "defaultRef",
+                        matched ?? factory.createStringLiteral(normalizeAttributeOrCommandName(meta.defaultRef)),
+                    ),
                 );
             }
         }
@@ -1114,7 +1110,10 @@ function updateAttributes(
                             }
 
                             propsToAdd.push(
-                                factory.createPropertyAssignment(facet.name, matched ?? factory.createStringLiteral(normalizeName(facet.value))),
+                                factory.createPropertyAssignment(
+                                    facet.name,
+                                    matched ?? factory.createStringLiteral(normalizeAttributeOrCommandName(facet.value)),
+                                ),
                             );
                         } else {
                             if (facet.name === "minLength" && facet.value === "0") {
@@ -1336,7 +1335,7 @@ function updateCommands(
                 paramPropsToAdd.push(
                     factory.createPropertyAssignment(
                         "arrayLengthField",
-                        matched ?? factory.createStringLiteral(normalizeName(xmlParam.meta.$.arrayLengthField)),
+                        matched ?? factory.createStringLiteral(normalizeAttributeOrCommandName(xmlParam.meta.$.arrayLengthField)),
                     ),
                 );
             }
@@ -1382,7 +1381,10 @@ function updateCommands(
                                 }
 
                                 paramPropsToAdd.push(
-                                    factory.createPropertyAssignment(facet.name, matched ?? factory.createStringLiteral(normalizeName(facet.value))),
+                                    factory.createPropertyAssignment(
+                                        facet.name,
+                                        matched ?? factory.createStringLiteral(normalizeAttributeOrCommandName(facet.value)),
+                                    ),
                                 );
                             } else {
                                 // a few entries are in hex form like "fd", this is obviously flawed, entries that are too complex should be overriden instead
@@ -1473,9 +1475,10 @@ function updateCommands(
     return factory.updatePropertyAssignment(commandsProp, commandsProp.name, updatedInitializer);
 }
 
-/* ------------------------------------------------------------------------------------------------
- * Main
- * ----------------------------------------------------------------------------------------------*/
+// #endregion
+
+// #region Main
+
 async function main(): Promise<void> {
     const args = process.argv.slice(2);
 
@@ -1603,3 +1606,5 @@ main().catch((err) => {
     console.error(err);
     process.exit(1);
 });
+
+// #endregion
