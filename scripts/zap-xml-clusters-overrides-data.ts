@@ -1,4 +1,4 @@
-import type {XmlOverride} from "./zap-clusters-overrides.js";
+import type {XmlOverride} from "./zap-xml-clusters-overrides.js";
 
 /**
  * This file contains overrides for the raw XML data before it is parsed into the ZCL format.
