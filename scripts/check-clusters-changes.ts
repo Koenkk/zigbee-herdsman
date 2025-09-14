@@ -73,7 +73,7 @@ function formatChange(change: Change): string {
 
     switch (change.type) {
         case "added": {
-            return `[ADDED]   ${path}: ${change.to}${hexTo}`;
+            return `[ADDED]   ${path}${change.to ? `: ${change.to}${hexTo}` : ""}`;
         }
         case "removed": {
             return `[REMOVED] ${path}: ${change.from}${hexFrom}`;

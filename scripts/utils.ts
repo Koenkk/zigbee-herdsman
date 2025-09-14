@@ -1,37 +1,88 @@
-import ts from "typescript";
+/**
+ * Scores a string against a pattern for fuzzy matching.
+ *
+ * The score is higher for more accurate matches. A score of 0 indicates no match.
+ *
+ * Scoring logic:
+ * - A bonus is awarded for each matched character.
+ * - A bonus is awarded for consecutive matched characters (a "combo").
+ * - A large bonus is given if a character matches the beginning of a word (e.g., 'U' in "someUtils" or 's' in "some_utils").
+ * - A bonus is given for matching character case.
+ * - A penalty is applied for each character in the target string that is skipped.
+ *
+ * @param pattern The pattern to search for (e.g., "mtHandS").
+ * @param str The string to score against the pattern (e.g., "moveToHueAndSaturation").
+ * @returns The match score, or 0 if there is no match.
+ */
+export function fuzzyMatch(pattern: string, str: string): number {
+    if (pattern.length === 0) {
+        return 1; // Or some other value indicating a trivial match
+    }
 
-export function createHexIdTransformer(): ts.TransformerFactory<ts.SourceFile> {
-    return (context) => {
-        const factory = context.factory;
+    if (str.length === 0) {
+        return 0;
+    }
 
-        const visitor: ts.Visitor = (node) => {
-            if (ts.isPropertyAssignment(node) && ts.isIdentifier(node.name) && node.name.text === "ID" && ts.isNumericLiteral(node.initializer)) {
-                const num = Number(node.initializer.text);
+    let score = 0;
+    let patternIndex = 0;
+    let strIndex = 0;
+    let lastMatchIndex = -1;
+    let inCombo = false;
 
-                if (!Number.isNaN(num) && !node.initializer.text.startsWith("0x")) {
-                    let pad = 4; // Default to 4 for clusters and attributes
-                    let current: ts.Node = node.parent;
+    const SCORE_MATCH = 10;
+    const SCORE_COMBO = 15;
+    const SCORE_WORD_START = 20;
+    const SCORE_CASE_MATCH = 5;
+    const PENALTY_SKIP = -1;
 
-                    // Traverse up to find if the ID is inside a `commands` or `commandsResponse` block.
-                    while (current?.parent) {
-                        if (ts.isPropertyAssignment(current.parent) && ts.isIdentifier(current.parent.name)) {
-                            const parentName = current.parent.name.text;
-                            if (parentName === "commands" || parentName === "commandsResponse") {
-                                pad = 2;
-                                break;
-                            }
-                        }
-                        current = current.parent;
-                    }
+    while (strIndex < str.length && patternIndex < pattern.length) {
+        const patternChar = pattern[patternIndex];
+        const strChar = str[strIndex];
 
-                    const hex = `0x${num.toString(16).padStart(pad, "0")}`;
+        if (patternChar.toLowerCase() === strChar.toLowerCase()) {
+            score += SCORE_MATCH;
 
-                    return factory.updatePropertyAssignment(node, node.name, factory.createNumericLiteral(hex));
-                }
+            // Bonus for case-sensitive match
+            if (patternChar === strChar) {
+                score += SCORE_CASE_MATCH;
             }
-            return ts.visitEachChild(node, visitor, context);
-        };
 
-        return (sourceFile) => ts.visitNode(sourceFile, visitor) as ts.SourceFile;
-    };
+            // Bonus for being a word start
+            const prevStrChar = strIndex > 0 ? str[strIndex - 1] : " ";
+            const isWordStart =
+                (prevStrChar === "_" || prevStrChar === " " || (prevStrChar.toLowerCase() === prevStrChar && strChar.toUpperCase() === strChar)) &&
+                strChar.toLowerCase() !== strChar;
+            if (isWordStart) {
+                score += SCORE_WORD_START;
+            }
+
+            // Bonus for consecutive matches
+            if (lastMatchIndex === strIndex - 1) {
+                if (inCombo) {
+                    score += SCORE_COMBO;
+                } else {
+                    inCombo = true;
+                }
+            } else {
+                inCombo = false;
+            }
+
+            lastMatchIndex = strIndex;
+            patternIndex += 1;
+        } else {
+            score += PENALTY_SKIP;
+        }
+
+        strIndex += 1;
+    }
+
+    // If the entire pattern was not found, it's not a match.
+    if (patternIndex !== pattern.length) {
+        return 0;
+    }
+
+    // Normalize score against the length of the string to penalize longer, less-specific matches.
+    const finalScore = score / str.length;
+
+    return finalScore > 0 ? finalScore : 0;
 }
