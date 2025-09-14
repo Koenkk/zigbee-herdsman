@@ -25,7 +25,7 @@ import ts from "typescript";
 import {parseStringPromise} from "xml2js";
 // biome-ignore lint/correctness/noUnusedImports: reference names (not executed in script context, but helps validation if compiled in-project)
 import {BuffaloZclDataType, DataType} from "../src/zspec/zcl/definition/enums.js";
-import {createHexIdTransformer} from "./utils.js";
+import {fuzzyMatch} from "./utils.js";
 import {applyXmlOverrides, parseOverrides} from "./zap-clusters-overrides.js";
 
 /* ------------------------------------------------------------------------------------------------
@@ -160,7 +160,9 @@ async function collectFromLibrary(libraryFile: string): Promise<{includeFiles: s
     const libs = parsed["zcl:library"];
 
     if (libs) {
-        for (const lib of Array.isArray(libs) ? libs : [libs]) {
+        const libsArray = Array.isArray(libs) ? libs : [libs];
+
+        for (const lib of libsArray) {
             if (lib["type:type"]) {
                 for (const t of lib["type:type"]) {
                     libraryTypes.push(t);
@@ -201,11 +203,13 @@ async function parseXMLCluster(file: string): Promise<XMLCluster[]> {
     const derivedClusters = parsed["zcl:derivedCluster"];
 
     if (baseClusters) {
-        clusters.push(...(Array.isArray(baseClusters) ? baseClusters : [baseClusters]));
+        const baseClustersArray = Array.isArray(baseClusters) ? baseClusters : [baseClusters];
+        clusters.push(...baseClustersArray);
     }
 
     if (derivedClusters) {
-        clusters.push(...(Array.isArray(derivedClusters) ? derivedClusters : [derivedClusters]));
+        const derivedClustersArray = Array.isArray(derivedClusters) ? derivedClusters : [derivedClusters];
+        clusters.push(...derivedClustersArray);
     }
 
     return clusters;
@@ -389,12 +393,6 @@ function parseAttributeOrCommandId(hexId: string): number {
     return Number.parseInt(clean, 16);
 }
 
-function isResponseCommand(name: string): boolean {
-    const lower = name.toLowerCase();
-
-    return lower.endsWith("response") || lower.endsWith("rsp") || lower.endsWith("notification");
-}
-
 /* ------------------------------------------------------------------------------------------------
  * Parsed representations
  * ----------------------------------------------------------------------------------------------*/
@@ -447,28 +445,13 @@ interface ValidationRecord {
     warnings: string[];
     errors: string[];
     unknownTypes: Set<string>;
-    addedAttributes: number;
-    addedCommands: number;
-    addedParameters: number;
-    scannedClusters: number;
-    changedClusters: number;
+    addedAttributes: string[];
+    addedCommands: string[];
+    addedParameters: string[];
+    scannedClusters: string[];
+    changedClusters: string[];
     xmlClustersMissingFromTs: Map<string, string>;
-    tsClustersMissingFromXml: Map<string, string>;
-}
-
-function createValidation(): ValidationRecord {
-    return {
-        warnings: [],
-        errors: [],
-        unknownTypes: new Set(),
-        addedAttributes: 0,
-        addedCommands: 0,
-        addedParameters: 0,
-        scannedClusters: 0,
-        changedClusters: 0,
-        xmlClustersMissingFromTs: new Map(),
-        tsClustersMissingFromXml: new Map(),
-    };
+    tsClustersMissingFromXml: string[];
 }
 
 function processClusterSide(
@@ -526,7 +509,6 @@ function processClusterSide(
                 const cmdId = parseAttributeOrCommandId(cmd.$.id);
                 const cmdNameRaw = cmd.$.name;
                 const cmdName = normalizeAttributeName(cmdNameRaw);
-                const isResp = isResponseCommand(cmd.$.name);
                 const parameters: ParsedXMLCommandParameter[] = [];
 
                 if (cmd.fields && cmd.fields.length > 0) {
@@ -590,7 +572,7 @@ function processClusterSide(
                     }
                 }
 
-                const command: ParsedXMLCommand = {id: cmdId, name: cmdName, isResponse: isResp, parameters, meta: cmd.$};
+                const command: ParsedXMLCommand = {id: cmdId, name: cmdName, isResponse: isClient, parameters, meta: cmd.$};
 
                 if (isClient) {
                     command.client = true;
@@ -621,10 +603,11 @@ function parseClustersFromXML(list: XMLCluster[], globalResolver: TypeResolver, 
         clusterResolver.add(cluster["type:type"]);
 
         const idNum = parseAttributeOrCommandId(idHex);
+        const idHexStr = `0x${idNum.toString(16).padStart(4, "0")}`;
         const name = cluster.$.name;
 
-        validation.scannedClusters++;
-        validation.xmlClustersMissingFromTs.set(`0x${idNum.toString(16).padStart(4, "0")}`, name);
+        validation.scannedClusters.push(`${idHexStr} ${name}`);
+        validation.xmlClustersMissingFromTs.set(idHexStr, `${idHexStr} ${name}`);
 
         // Process the cluster using its own scoped resolver.
         const serverData = processClusterSide(cluster.server?.[0], false, clusterResolver, validation);
@@ -646,7 +629,13 @@ function parseClustersFromXML(list: XMLCluster[], globalResolver: TypeResolver, 
  * AST Transformer
  * ----------------------------------------------------------------------------------------------*/
 const findProperty = (obj: ts.ObjectLiteralExpression, name: string): ts.PropertyAssignment | undefined => {
-    return obj.properties.find((p): p is ts.PropertyAssignment => ts.isPropertyAssignment(p) && ts.isIdentifier(p.name) && p.name.text === name);
+    for (const p of obj.properties) {
+        if (ts.isPropertyAssignment(p) && ts.isIdentifier(p.name) && p.name.text === name) {
+            return p;
+        }
+    }
+
+    return undefined;
 };
 
 const extractNumericId = (node: ts.Node): number | undefined => {
@@ -713,9 +702,13 @@ function createUpdateTransformer(
                 ts.isObjectLiteralExpression(node.initializer)
             ) {
                 const tsClusterIds = new Set<number>();
-                const newClusterProps = node.initializer.properties.map((prop) => {
+                const newClusterProps: ts.ObjectLiteralElementLike[] = [];
+
+                for (const prop of node.initializer.properties) {
                     if (!ts.isPropertyAssignment(prop) || !ts.isObjectLiteralExpression(prop.initializer)) {
-                        return prop;
+                        newClusterProps.push(prop);
+
+                        continue;
                     }
 
                     const clusterId = extractNumericId(prop);
@@ -723,25 +716,37 @@ function createUpdateTransformer(
                     if (clusterId !== undefined) {
                         tsClusterIds.add(clusterId);
                     } else {
-                        return prop;
+                        newClusterProps.push(prop);
+
+                        continue;
                     }
 
                     const xmlCluster = xmlClusterData.get(clusterId);
 
                     if (!xmlCluster) {
-                        return prop;
+                        newClusterProps.push(prop);
+
+                        continue;
                     }
 
-                    validation.xmlClustersMissingFromTs.delete(`0x${clusterId.toString(16).padStart(4, "0")}`); // Found it
-                    let changed = false;
+                    const clusterIdHexStr = `0x${clusterId.toString(16).padStart(4, "0")}`;
 
-                    const newSubProps = prop.initializer.properties.map((subProp) => {
+                    validation.xmlClustersMissingFromTs.delete(clusterIdHexStr); // Found it
+
+                    let changed = false;
+                    const newSubProps: ts.ObjectLiteralElementLike[] = [];
+
+                    for (const subProp of prop.initializer.properties) {
                         if (!ts.isPropertyAssignment(subProp) || !ts.isIdentifier(subProp.name)) {
-                            return subProp;
+                            newSubProps.push(subProp);
+
+                            continue;
                         }
 
                         if (!ts.isObjectLiteralExpression(subProp.initializer)) {
-                            return subProp;
+                            newSubProps.push(subProp);
+
+                            continue;
                         }
 
                         const subPropName = subProp.name.text;
@@ -758,41 +763,71 @@ function createUpdateTransformer(
                         if (updatedProp && updatedProp !== subProp) {
                             changed = true;
 
-                            return updatedProp;
+                            newSubProps.push(updatedProp);
+                        } else {
+                            newSubProps.push(subProp);
                         }
-
-                        return subProp;
-                    });
-
-                    if (changed) {
-                        validation.changedClusters++;
-
-                        return factory.updatePropertyAssignment(
-                            prop,
-                            prop.name,
-                            factory.updateObjectLiteralExpression(prop.initializer, newSubProps),
-                        );
                     }
 
-                    return prop;
-                });
+                    if (changed) {
+                        validation.changedClusters.push(`${clusterIdHexStr} ${xmlCluster.name}`);
+                        const updatedInitializer = factory.updateObjectLiteralExpression(prop.initializer, newSubProps);
+                        const updatedProperty = factory.updatePropertyAssignment(prop, prop.name, updatedInitializer);
+
+                        newClusterProps.push(updatedProperty);
+                    } else {
+                        newClusterProps.push(prop);
+                    }
+                }
 
                 // Populate clusters present in TS but not in XML
                 for (const id of tsClusterIds) {
                     if (!xmlClusterData.has(id) && id <= 0x7fff /* std cluster */) {
-                        validation.tsClustersMissingFromXml.set(`0x${id.toString(16).padStart(4, "0")}`, "Unknown (ID only)");
+                        validation.tsClustersMissingFromXml.push(`0x${id.toString(16).padStart(4, "0")}`);
                     }
                 }
 
-                return factory.updateVariableDeclaration(
-                    node,
-                    node.name,
-                    node.exclamationToken,
-                    node.type,
-                    factory.updateObjectLiteralExpression(node.initializer, newClusterProps),
-                );
+                const updatedInitializer = factory.updateObjectLiteralExpression(node.initializer, newClusterProps);
+
+                return factory.updateVariableDeclaration(node, node.name, node.exclamationToken, node.type, updatedInitializer);
             }
 
+            return ts.visitEachChild(node, visitor, context);
+        };
+
+        return (sourceFile) => ts.visitNode(sourceFile, visitor) as ts.SourceFile;
+    };
+}
+
+function createHexIdTransformer(): ts.TransformerFactory<ts.SourceFile> {
+    return (context) => {
+        const factory = context.factory;
+
+        const visitor: ts.Visitor = (node) => {
+            if (ts.isPropertyAssignment(node) && ts.isIdentifier(node.name) && node.name.text === "ID" && ts.isNumericLiteral(node.initializer)) {
+                const num = Number(node.initializer.text);
+
+                if (!Number.isNaN(num) && !node.initializer.text.startsWith("0x")) {
+                    let pad = 4; // Default to 4 for clusters and attributes
+                    let current: ts.Node = node.parent;
+
+                    // Traverse up to find if the ID is inside a `commands` or `commandsResponse` block.
+                    while (current?.parent) {
+                        if (ts.isPropertyAssignment(current.parent) && ts.isIdentifier(current.parent.name)) {
+                            const parentName = current.parent.name.text;
+                            if (parentName === "commands" || parentName === "commandsResponse") {
+                                pad = 2;
+                                break;
+                            }
+                        }
+                        current = current.parent;
+                    }
+
+                    const hex = `0x${num.toString(16).padStart(pad, "0")}`;
+
+                    return factory.updatePropertyAssignment(node, node.name, factory.createNumericLiteral(hex));
+                }
+            }
             return ts.visitEachChild(node, visitor, context);
         };
 
@@ -842,28 +877,22 @@ function updateAttributes(
             }
         }
 
-        const attributeName = existingAttrNode ? existingAttrNode.name : factory.createIdentifier(xmlAttr.name);
+        const attributeName = existingAttrNode ? (existingAttrNode.name as ts.Identifier) : factory.createIdentifier(xmlAttr.name);
         const existingProps =
             existingAttrNode && ts.isObjectLiteralExpression(existingAttrNode.initializer) ? [...existingAttrNode.initializer.properties] : [];
-        const existingPropNames = new Set(existingProps.map((p) => (p.name as ts.Identifier)?.text));
-        const propsToAdd: ts.PropertyAssignment[] = [];
-        const comments: string[] = [];
+        const existingPropNames = new Set<string>();
 
-        // Unified logic to build required properties and comments
+        for (const p of existingProps) {
+            if (p.name && ts.isIdentifier(p.name)) {
+                existingPropNames.add(p.name.text);
+            }
+        }
+
+        const propsToAdd: ts.PropertyAssignment[] = [];
+
+        // Unified logic to build required properties
         if (xmlAttr.meta) {
             const meta = xmlAttr.meta;
-
-            if (meta.deprecated === "true") {
-                comments.push("@deprecated");
-            }
-
-            if (meta.writableIf && meta.writableIf !== "true") {
-                comments.push(`@writableIf ${meta.writableIf}`);
-            }
-
-            if (meta.requiredIf && meta.requiredIf !== "false") {
-                comments.push(`@requiredIf ${meta.requiredIf}`);
-            }
 
             if (xmlAttr.client && !existingPropNames.has("client")) {
                 propsToAdd.push(factory.createPropertyAssignment("client", factory.createTrue()));
@@ -901,42 +930,24 @@ function updateAttributes(
         let finalNode: ts.PropertyAssignment;
 
         if (existingAttrNode) {
-            // Update existing node
-            const finalProps = [...existingProps, ...propsToAdd];
-            const newInitializer = factory.updateObjectLiteralExpression(existingAttrNode.initializer as ts.ObjectLiteralExpression, finalProps);
-            finalNode = factory.updatePropertyAssignment(existingAttrNode, attributeName, newInitializer);
-
             processedTsNodes.add(existingAttrNode);
+            const finalProps = [...existingProps, ...propsToAdd];
+            const finalInitializer = factory.updateObjectLiteralExpression(existingAttrNode.initializer as ts.ObjectLiteralExpression, finalProps);
+            finalNode = factory.updatePropertyAssignment(existingAttrNode, attributeName, finalInitializer);
         } else {
-            // Create new node
-            validation.addedAttributes++;
+            validation.addedAttributes.push(`0x${xmlAttr.id.toString(16).padStart(4, "0")} ${xmlAttr.name}`);
             const typeIdentifierParts = xmlAttr.dataTypeExpr.split(".");
             const typeIdentifier =
                 typeIdentifierParts.length > 1
                     ? factory.createPropertyAccessExpression(factory.createIdentifier(typeIdentifierParts[0]), typeIdentifierParts[1])
                     : factory.createIdentifier(xmlAttr.dataTypeExpr);
-            const baseProps = [
+            const finalProps = [
                 factory.createPropertyAssignment("ID", factory.createNumericLiteral(String(xmlAttr.id))),
                 factory.createPropertyAssignment("type", typeIdentifier),
+                ...propsToAdd,
             ];
-            finalNode = factory.createPropertyAssignment(attributeName, factory.createObjectLiteralExpression([...baseProps, ...propsToAdd], true));
-        }
-
-        // Apply comments idempotently
-        if (comments.length > 0) {
-            const existingComments = ts.getSyntheticLeadingComments(finalNode)?.map((c) => c.text.replace(/\*/g, "").trim()) ?? [];
-            const commentsToAdd = comments.filter((c) => !existingComments.some((ec) => ec.includes(c.split(" ")[0])));
-
-            if (commentsToAdd.length > 0) {
-                const newCommentText = `*\n * ${[...new Set([...existingComments, ...commentsToAdd])].join("\n * ")}\n `;
-                const allComments = ts.getSyntheticLeadingComments(finalNode);
-
-                if (allComments) {
-                    ts.setSyntheticLeadingComments(finalNode, []); // Clear existing
-                }
-
-                finalNode = ts.addSyntheticLeadingComment(finalNode, ts.SyntaxKind.MultiLineCommentTrivia, newCommentText, true);
-            }
+            const finalInitializer = factory.createObjectLiteralExpression(finalProps, true);
+            finalNode = factory.createPropertyAssignment(attributeName, finalInitializer);
         }
 
         finalAttributes.push(finalNode);
@@ -976,7 +987,9 @@ function updateAttributes(
         return 0;
     });
 
-    return factory.updatePropertyAssignment(attributesProp, attributesProp.name, factory.updateObjectLiteralExpression(initializer, finalAttributes));
+    const updatedInitializer = factory.updateObjectLiteralExpression(initializer, finalAttributes);
+
+    return factory.updatePropertyAssignment(attributesProp, attributesProp.name, updatedInitializer);
 }
 
 function updateCommands(
@@ -987,13 +1000,19 @@ function updateCommands(
     validation: ValidationRecord,
 ): ts.PropertyAssignment {
     const initializer = commandsProp.initializer as ts.ObjectLiteralExpression;
-    const existingCommandIds = new Map<number, ts.PropertyAssignment>();
+    const existingCommandIds = new Map<number, ts.PropertyAssignment[]>();
 
     for (const cmd of initializer.properties) {
         if (ts.isPropertyAssignment(cmd)) {
             const id = extractNumericId(cmd);
+
             if (id !== undefined) {
-                existingCommandIds.set(id, cmd);
+                if (!existingCommandIds.has(id)) {
+                    existingCommandIds.set(id, []);
+                }
+
+                // biome-ignore lint/style/noNonNullAssertion: set above if not exist
+                existingCommandIds.get(id)!.push(cmd);
             }
         }
     }
@@ -1008,7 +1027,28 @@ function updateCommands(
     }
 
     for (const xmlCmd of xmlCommandsForScope) {
-        const existingCmdNode = existingCommandIds.get(xmlCmd.id);
+        const existingCmdNodes = existingCommandIds.get(xmlCmd.id);
+        let existingCmdNode: ts.PropertyAssignment | undefined;
+
+        if (existingCmdNodes) {
+            if (existingCmdNodes.length === 1) {
+                existingCmdNode = existingCmdNodes[0];
+            } else if (existingCmdNodes.length > 1) {
+                let bestMatch: {score: number; node: ts.PropertyAssignment | undefined} = {score: -1, node: undefined};
+
+                for (const node of existingCmdNodes) {
+                    const nodeName = ts.isIdentifier(node.name) ? node.name.text : "";
+                    const score = fuzzyMatch(xmlCmd.name, nodeName);
+
+                    if (score > bestMatch.score) {
+                        bestMatch = {score, node};
+                    }
+                }
+
+                existingCmdNode = bestMatch.node;
+            }
+        }
+
         const commandName = existingCmdNode ? existingCmdNode.name : factory.createIdentifier(xmlCmd.name);
         let finalNode: ts.PropertyAssignment;
 
@@ -1073,7 +1113,7 @@ function updateCommands(
                     newParams.push(factory.createObjectLiteralExpression(Array.from(existingParamProps.values()), true));
                 } else if (xmlParam) {
                     // Add new param from XML that was not in the TS file
-                    validation.addedParameters++;
+                    validation.addedParameters.push(`0x${xmlCmd.id.toString(16).padStart(2, "0")} ${xmlCmd.name} > ${xmlParam.name}`);
                     const typeIdentifierParts = xmlParam.dataTypeExpr.split(".");
                     const typeIdentifier =
                         typeIdentifierParts.length > 1
@@ -1099,20 +1139,25 @@ function updateCommands(
             }
 
             // Rebuild the command with the preserved and updated properties.
-            finalNode = factory.updatePropertyAssignment(
-                existingCmdNode,
-                commandName,
-                factory.updateObjectLiteralExpression(existingCmdInitializer, Array.from(newProps.values())),
-            );
+            const updatedInitializer = factory.updateObjectLiteralExpression(existingCmdInitializer, Array.from(newProps.values()));
+            finalNode = factory.updatePropertyAssignment(existingCmdNode, commandName, updatedInitializer);
 
-            existingCommandIds.delete(xmlCmd.id);
+            const nodesForId = existingCommandIds.get(xmlCmd.id);
+
+            if (nodesForId) {
+                const index = nodesForId.indexOf(existingCmdNode);
+
+                if (index > -1) {
+                    nodesForId.splice(index, 1);
+                }
+            }
         } else {
             // A new command is being added. Build it from scratch.
-            validation.addedCommands++;
+            validation.addedCommands.push(`0x${xmlCmd.id.toString(16).padStart(2, "0")} ${xmlCmd.name}`);
             const newParams: ts.ObjectLiteralExpression[] = [];
 
             for (const xmlParam of xmlCmd.parameters) {
-                validation.addedParameters++;
+                validation.addedParameters.push(`0x${xmlCmd.id.toString(16).padStart(2, "0")} ${xmlCmd.name} > ${xmlParam.name}`);
                 const typeIdentifierParts = xmlParam.dataTypeExpr.split(".");
                 const typeIdentifier =
                     typeIdentifierParts.length > 1
@@ -1147,17 +1192,22 @@ function updateCommands(
     }
 
     // Add back any TS-only commands
-    for (const tsOnlyCmd of existingCommandIds.values()) {
-        finalCommands.push(tsOnlyCmd);
+    for (const tsOnlyCmds of existingCommandIds.values()) {
+        for (const tsOnlyCmd of tsOnlyCmds) {
+            finalCommands.push(tsOnlyCmd);
+        }
     }
 
     finalCommands.sort((a, b) => {
         const idA = extractNumericId(a) ?? -1;
         const idB = extractNumericId(b) ?? -1;
+
         return idA - idB;
     });
 
-    return factory.updatePropertyAssignment(commandsProp, commandsProp.name, factory.updateObjectLiteralExpression(initializer, finalCommands));
+    const updatedInitializer = factory.updateObjectLiteralExpression(initializer, finalCommands);
+
+    return factory.updatePropertyAssignment(commandsProp, commandsProp.name, updatedInitializer);
 }
 
 /* ------------------------------------------------------------------------------------------------
@@ -1173,7 +1223,18 @@ async function main(): Promise<void> {
     const xmlPath = args[0];
     const clusterFile = "src/zspec/zcl/definition/cluster.ts";
     const overridesFile = "scripts/zap-clusters-overrides-data.ts";
-    const validation = createValidation();
+    const validation: ValidationRecord = {
+        warnings: [],
+        errors: [],
+        unknownTypes: new Set(),
+        addedAttributes: [],
+        addedCommands: [],
+        addedParameters: [],
+        scannedClusters: [],
+        changedClusters: [],
+        xmlClustersMissingFromTs: new Map(),
+        tsClustersMissingFromXml: [],
+    };
     const allXmlClusters: XMLCluster[] = [];
 
     const globalResolver = new TypeResolver();
@@ -1236,7 +1297,7 @@ async function main(): Promise<void> {
     }
 
     const clusterFileContent = await fs.readFile(clusterFile, "utf8");
-    const sourceFile = ts.createSourceFile(clusterFile, clusterFileContent, ts.ScriptTarget.Latest, true);
+    const sourceFile = ts.createSourceFile(clusterFile, clusterFileContent, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
     const updateTransformer = createUpdateTransformer(xmlClusterDataMap, validation);
     const hexTransformer = createHexIdTransformer();
     const result1 = ts.transform(sourceFile, [updateTransformer]);
@@ -1278,8 +1339,8 @@ async function main(): Promise<void> {
         addedCommands: validation.addedCommands,
         addedParameters: validation.addedParameters,
         unknownTypes: Array.from(validation.unknownTypes.values()),
-        xmlClustersMissingFromTs: Object.fromEntries(validation.xmlClustersMissingFromTs),
-        tsClustersMissingFromXml: Array.from(validation.tsClustersMissingFromXml.keys()),
+        xmlClustersMissingFromTs: Array.from(validation.xmlClustersMissingFromTs.values()),
+        tsClustersMissingFromXml: validation.tsClustersMissingFromXml,
         warnings: validation.warnings,
         errors: validation.errors,
         timestamp: new Date().toISOString(),
