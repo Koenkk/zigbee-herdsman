@@ -30,4 +30,23 @@ export const OVERRIDES: XmlOverride[] = [
             {id: 0x0109, new: {id: "0019"}},
         ],
     },
+    // {
+    //     clusterId: 0x0005, // Scenes
+    //     commands: [
+    //         {
+    //             id: 0x06,
+    //             parameters: [
+    //                 {
+    //                     name: "Capacity",
+    //                     restrictions: [
+    //                         {
+    //                             type: "type:maxInclusive",
+    //                             new: {value: "253"}, // Original as "fd" (most entries are number strings, so have to correct this)
+    //                         },
+    //                     ],
+    //                 },
+    //             ],
+    //         },
+    //     ],
+    // },
 ];
