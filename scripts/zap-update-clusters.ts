@@ -341,6 +341,7 @@ function mapZclTypeToDataType(base: string): string {
 
     if (t === "sextensionfieldsetlist") return "BuffaloZclDataType.EXTENSION_FIELD_SETS";
     if (t === "transitiontype") return "BuffaloZclDataType.LIST_THERMO_TRANSITIONS";
+    if (t === "iasacezonestatusrecord") return "BuffaloZclDataType.LIST_ZONEINFO";
 
     return "DataType.UNKNOWN";
 }
@@ -532,6 +533,16 @@ interface ValidationRecord {
     tsClustersMissingFromXml: string[];
 }
 
+function mapToBuffaloZclDataType(base: string): string {
+    if (base === "DataType.UINT8") return "BuffaloZclDataType.LIST_UINT8";
+    if (base === "DataType.UINT16") return "BuffaloZclDataType.LIST_UINT16";
+    if (base === "DataType.UINT24") return "BuffaloZclDataType.LIST_UINT24";
+    if (base === "DataType.UINT32") return "BuffaloZclDataType.LIST_UINT32";
+    if (base.startsWith("DataType")) return "BuffaloZclDataType.BUFFER";
+
+    return base;
+}
+
 function processClusterSide(
     side: XMLClusterSide | undefined,
     isClient: boolean,
@@ -615,13 +626,7 @@ function processClusterSide(
                                 });
 
                                 // Now, create the actual array parameter.
-                                if (mapped === "DataType.UINT16") {
-                                    mapped = "BuffaloZclDataType.LIST_UINT16";
-                                } else if (mapped === "DataType.UINT8") {
-                                    mapped = "BuffaloZclDataType.LIST_UINT8";
-                                } else {
-                                    mapped = "BuffaloZclDataType.BUFFER";
-                                }
+                                mapped = mapToBuffaloZclDataType(mapped);
 
                                 parameters.push({
                                     name: paramName,
@@ -631,13 +636,7 @@ function processClusterSide(
                             } else {
                                 // Original logic for non-arrays or arrays with explicit length fields.
                                 if (arrayFlag) {
-                                    if (mapped === "DataType.UINT16") {
-                                        mapped = "BuffaloZclDataType.LIST_UINT16";
-                                    } else if (mapped === "DataType.UINT8") {
-                                        mapped = "BuffaloZclDataType.LIST_UINT8";
-                                    } else if (mapped.startsWith("DataType")) {
-                                        mapped = "BuffaloZclDataType.BUFFER";
-                                    }
+                                    mapped = mapToBuffaloZclDataType(mapped);
                                 }
 
                                 parameters.push({
@@ -926,7 +925,6 @@ function createUpdateTransformer(
 function createHexIdTransformer(): ts.TransformerFactory<ts.SourceFile> {
     return (context) => {
         const factory = context.factory;
-
         const visitor: ts.Visitor = (node) => {
             if (ts.isPropertyAssignment(node) && ts.isIdentifier(node.name) && node.name.text === "ID" && ts.isNumericLiteral(node.initializer)) {
                 const num = Number(node.initializer.text);
@@ -939,11 +937,13 @@ function createHexIdTransformer(): ts.TransformerFactory<ts.SourceFile> {
                     while (current?.parent) {
                         if (ts.isPropertyAssignment(current.parent) && ts.isIdentifier(current.parent.name)) {
                             const parentName = current.parent.name.text;
+
                             if (parentName === "commands" || parentName === "commandsResponse") {
                                 pad = 2;
                                 break;
                             }
                         }
+
                         current = current.parent;
                     }
 
@@ -952,6 +952,7 @@ function createHexIdTransformer(): ts.TransformerFactory<ts.SourceFile> {
                     return factory.updatePropertyAssignment(node, node.name, factory.createNumericLiteral(hex));
                 }
             }
+
             return ts.visitEachChild(node, visitor, context);
         };
 
@@ -1039,7 +1040,7 @@ function updateAttributes(
                 propsToAdd.push(factory.createPropertyAssignment("reportRequired", factory.createTrue()));
             }
 
-            if (meta.min && meta.min !== "0" && !existingPropNames.has("min")) {
+            if (meta.min && !existingPropNames.has("min")) {
                 // skip when too long for number format (not especially useful anyway)
                 if (xmlAttr.dataTypeExpr !== "DataType.IEEE_ADDR" && xmlAttr.dataTypeExpr !== "DataType.SEC_KEY") {
                     propsToAdd.push(factory.createPropertyAssignment("min", createSafeNumericLiteral(meta.min, factory)));
@@ -1254,277 +1255,198 @@ function updateCommands(
         }
 
         const commandName = existingCmdNode ? existingCmdNode.name : factory.createIdentifier(xmlCmd.name);
-        let finalNode: ts.PropertyAssignment;
+        const existingCmdProps =
+            existingCmdNode && ts.isObjectLiteralExpression(existingCmdNode.initializer) ? [...existingCmdNode.initializer.properties] : [];
+        const existingCmdPropNames = new Set<string>();
 
-        if (existingCmdNode) {
-            processedTsNodes.add(existingCmdNode);
-            // An existing command was found. Preserve its properties.
-            const existingCmdInitializer = existingCmdNode.initializer as ts.ObjectLiteralExpression;
-            const newProps = new Map<string, ts.PropertyAssignment>();
-
-            for (const prop of existingCmdInitializer.properties) {
-                if (ts.isPropertyAssignment(prop) && prop.name && ts.isIdentifier(prop.name)) {
-                    newProps.set(prop.name.text, prop);
-                }
+        for (const p of existingCmdProps) {
+            if (p.name && ts.isIdentifier(p.name)) {
+                existingCmdPropNames.add(p.name.text);
             }
+        }
 
-            // Find and update only the 'parameters' property if it exists.
-            const paramsProp = newProps.get("parameters");
-            const existingParamsArray: ts.ObjectLiteralExpression[] = [];
-            const existingTsParamNames = new Map<string, string>(); // Map from normalized XML name to TS name
+        // --- Unified Parameter Logic ---
+        const paramsProp = existingCmdNode ? findProperty(existingCmdNode.initializer as ts.ObjectLiteralExpression, "parameters") : undefined;
+        const existingParamsArray: ts.ObjectLiteralExpression[] = [];
+        const existingTsParamNames = new Map<string, string>(); // Map from normalized XML name to TS name
 
-            if (paramsProp && ts.isArrayLiteralExpression(paramsProp.initializer)) {
-                for (const [i, el] of paramsProp.initializer.elements.entries()) {
-                    if (ts.isObjectLiteralExpression(el)) {
-                        existingParamsArray.push(el);
-                        const nameProp = findProperty(el, "name");
+        if (paramsProp && ts.isArrayLiteralExpression(paramsProp.initializer)) {
+            for (const [i, el] of paramsProp.initializer.elements.entries()) {
+                if (ts.isObjectLiteralExpression(el)) {
+                    existingParamsArray.push(el);
+                    const nameProp = findProperty(el, "name");
 
-                        if (nameProp && ts.isStringLiteral(nameProp.initializer) && xmlCmd.parameters[i]) {
-                            existingTsParamNames.set(xmlCmd.parameters[i].name, nameProp.initializer.text);
-                        }
+                    if (nameProp && ts.isStringLiteral(nameProp.initializer) && xmlCmd.parameters[i]) {
+                        existingTsParamNames.set(xmlCmd.parameters[i].name, nameProp.initializer.text);
                     }
                 }
             }
+        }
 
-            const newParams: ts.Expression[] = [];
-            const maxParams = Math.max(xmlCmd.parameters.length, existingParamsArray.length);
+        const newParams: ts.ObjectLiteralExpression[] = [];
+        const maxParams = Math.max(xmlCmd.parameters.length, existingParamsArray.length);
 
-            for (let i = 0; i < maxParams; i++) {
-                const xmlParam = xmlCmd.parameters[i];
-                const existingParamExpr = existingParamsArray[i];
+        for (let i = 0; i < maxParams; i++) {
+            const xmlParam = xmlCmd.parameters[i];
+            const existingParamExpr = existingParamsArray[i];
 
-                if (existingParamExpr) {
-                    // Keep existing param, but ensure name and type are there if missing from TS but present in XML
-                    const existingParamProps = new Map<string, ts.PropertyAssignment>();
-                    const existingParamPropNames = new Set<string>();
+            if (!xmlParam && existingParamExpr) {
+                newParams.push(existingParamExpr);
 
-                    if (ts.isObjectLiteralExpression(existingParamExpr)) {
-                        for (const prop of existingParamExpr.properties) {
-                            if (ts.isPropertyAssignment(prop) && prop.name && ts.isIdentifier(prop.name)) {
-                                existingParamProps.set(prop.name.text, prop);
-                                existingParamPropNames.add(prop.name.text);
-                            }
-                        }
-                    }
-
-                    if (xmlParam) {
-                        if (!existingParamProps.has("name")) {
-                            existingParamProps.set("name", factory.createPropertyAssignment("name", factory.createStringLiteral(xmlParam.name)));
-                        }
-
-                        if (!existingParamProps.has("type")) {
-                            const typeIdentifierParts = xmlParam.dataTypeExpr.split(".");
-                            const typeIdentifier =
-                                typeIdentifierParts.length > 1
-                                    ? factory.createPropertyAccessExpression(factory.createIdentifier(typeIdentifierParts[0]), typeIdentifierParts[1])
-                                    : factory.createIdentifier(xmlParam.dataTypeExpr);
-
-                            existingParamProps.set("type", factory.createPropertyAssignment("type", typeIdentifier));
-                        }
-
-                        const otherParams = xmlCmd.parameters.filter((_p, index) => index !== i);
-
-                        if (xmlParam.meta?.$.arrayLengthField && !existingParamPropNames.has("arrayLengthField")) {
-                            const matched = findBestFuzzyParamMatch(xmlParam.meta.$.arrayLengthField, otherParams, existingTsParamNames, factory);
-
-                            if (!matched) {
-                                console.log(`\x1b[31mCould not find match for parameter ${xmlParam.meta.$.arrayLengthField}.\x1b[0m`);
-                            }
-
-                            existingParamProps.set(
-                                "arrayLengthField",
-                                factory.createPropertyAssignment(
-                                    "arrayLengthField",
-                                    matched ?? factory.createStringLiteral(normalizeName(xmlParam.meta.$.arrayLengthField)),
-                                ),
-                            );
-                        }
-
-                        // Add restrictions for existing params
-                        if (xmlParam.meta?.restriction?.[0]) {
-                            const restriction = xmlParam.meta.restriction[0];
-                            const restrictionFacets: {
-                                name: string;
-                                value: string | {name: string; value: string}[] | undefined;
-                                isRef?: boolean;
-                            }[] = [
-                                {name: "length", value: restriction["type:length"]?.[0]?.$?.value},
-                                {name: "minLength", value: restriction["type:minLength"]?.[0]?.$?.value},
-                                {name: "maxLength", value: restriction["type:maxLength"]?.[0]?.$?.value},
-                                {name: "minExclusive", value: restriction["type:minExclusive"]?.[0]?.$?.value},
-                                {name: "minInclusive", value: restriction["type:minInclusive"]?.[0]?.$?.value},
-                                {name: "maxExclusive", value: restriction["type:maxExclusive"]?.[0]?.$?.value},
-                                {name: "maxInclusive", value: restriction["type:maxInclusive"]?.[0]?.$?.value},
-                                {name: "minInclusiveRef", value: restriction["type:minInclusiveRef"]?.[0]?.$?.ref, isRef: true},
-                                {name: "minExclusiveRef", value: restriction["type:minExclusiveRef"]?.[0]?.$?.ref, isRef: true},
-                                {name: "maxInclusiveRef", value: restriction["type:maxInclusiveRef"]?.[0]?.$?.ref, isRef: true},
-                                {name: "maxExclusiveRef", value: restriction["type:maxExclusiveRef"]?.[0]?.$?.ref, isRef: true},
-                                {name: "special", value: restriction["type:special"]?.map((s) => s.$)},
-                            ];
-
-                            for (const facet of restrictionFacets) {
-                                if (facet.value && !existingParamPropNames.has(facet.name)) {
-                                    if (facet.name === "special" && Array.isArray(facet.value)) {
-                                        const specialArray = factory.createArrayLiteralExpression(
-                                            facet.value.map((s) =>
-                                                factory.createArrayLiteralExpression([
-                                                    factory.createStringLiteral(s.name),
-                                                    factory.createStringLiteral(s.value),
-                                                ]),
-                                            ),
-                                            true,
-                                        );
-
-                                        existingParamProps.set(facet.name, factory.createPropertyAssignment(facet.name, specialArray));
-                                    } else if (typeof facet.value === "string") {
-                                        if (facet.isRef) {
-                                            let matched = findBestFuzzyAttrMatch(facet.value, xmlAttributes, existingTsAttributeNames, factory);
-
-                                            if (!matched) {
-                                                matched = findBestFuzzyParamMatch(facet.value, otherParams, existingTsParamNames, factory);
-                                            }
-
-                                            if (!matched) {
-                                                console.log(`\x1b[31mCould not find match for ref ${facet.value}.\x1b[0m`);
-                                            }
-
-                                            existingParamProps.set(
-                                                facet.name,
-                                                factory.createPropertyAssignment(
-                                                    facet.name,
-                                                    matched ?? factory.createStringLiteral(normalizeName(facet.value)),
-                                                ),
-                                            );
-                                        } else {
-                                            // a few entries are in hex form like "fd", this is obviously flawed, entries that are too complex should be overriden instead
-                                            if (facet.value.match(/^[0-9]+$/)) {
-                                                existingParamProps.set(
-                                                    facet.name,
-                                                    factory.createPropertyAssignment(facet.name, createSafeNumericLiteral(facet.value, factory)),
-                                                );
-                                            } else if (facet.value.match(/^[0-9a-fA-F]+$/)) {
-                                                console.log(`Writing ${JSON.stringify(facet)} as hex number`);
-                                                existingParamProps.set(
-                                                    facet.name,
-                                                    factory.createPropertyAssignment(
-                                                        facet.name,
-                                                        createSafeNumericLiteral(`0x${facet.value}`, factory),
-                                                    ),
-                                                );
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    newParams.push(factory.createObjectLiteralExpression(Array.from(existingParamProps.values()), true));
-                } else if (xmlParam) {
-                    // Add new param from XML that was not in the TS file
-                    validation.addedParameters.push(`0x${xmlCmd.id.toString(16).padStart(2, "0")} ${xmlCmd.name} > ${xmlParam.name}`);
-                    const typeIdentifierParts = xmlParam.dataTypeExpr.split(".");
-                    const typeIdentifier =
-                        typeIdentifierParts.length > 1
-                            ? factory.createPropertyAccessExpression(factory.createIdentifier(typeIdentifierParts[0]), typeIdentifierParts[1])
-                            : factory.createIdentifier(xmlParam.dataTypeExpr);
-                    const paramProps = [
-                        factory.createPropertyAssignment("name", factory.createStringLiteral(xmlParam.name)),
-                        factory.createPropertyAssignment("type", typeIdentifier),
-                    ];
-
-                    if (xmlParam.meta?.$.arrayLengthSize) {
-                        paramProps.push(
-                            factory.createPropertyAssignment("arrayLengthSize", factory.createNumericLiteral(xmlParam.meta.$.arrayLengthSize)),
-                        );
-                    }
-
-                    if (xmlParam.meta?.$.arrayLengthField) {
-                        const otherParams = xmlCmd.parameters.filter((p) => p.name !== xmlParam.name);
-                        const matched = findBestFuzzyParamMatch(xmlParam.meta.$.arrayLengthField, otherParams, existingTsParamNames, factory);
-
-                        if (!matched) {
-                            console.log(`\x1b[31mCould not find match for parameter ${xmlParam.meta.$.arrayLengthField}.\x1b[0m`);
-                        }
-
-                        paramProps.push(
-                            factory.createPropertyAssignment(
-                                "arrayLengthField",
-                                matched ?? factory.createStringLiteral(normalizeName(xmlParam.meta.$.arrayLengthField)),
-                            ),
-                        );
-                    }
-
-                    newParams.push(factory.createObjectLiteralExpression(paramProps, true));
-                }
+                continue;
             }
 
-            const newParamsArrayLiteral = factory.createArrayLiteralExpression(newParams, true);
-
-            if (paramsProp) {
-                // Update the existing 'parameters' property
-                newProps.set("parameters", factory.updatePropertyAssignment(paramsProp, paramsProp.name, newParamsArrayLiteral));
-            } else if (newParams.length > 0) {
-                // Add 'parameters' property if it was missing and we have params
-                newProps.set("parameters", factory.createPropertyAssignment("parameters", newParamsArrayLiteral));
+            if (!xmlParam) {
+                continue;
             }
 
-            // Rebuild the command with the preserved and updated properties.
-            const updatedInitializer = factory.updateObjectLiteralExpression(existingCmdInitializer, Array.from(newProps.values()));
-            finalNode = factory.updatePropertyAssignment(existingCmdNode, commandName, updatedInitializer);
-        } else {
-            // A new command is being added. Build it from scratch.
-            validation.addedCommands.push(`0x${xmlCmd.id.toString(16).padStart(2, "0")} ${xmlCmd.name}`);
-            const newParams: ts.ObjectLiteralExpression[] = [];
+            const existingParamProps = existingParamExpr ? [...existingParamExpr.properties] : [];
+            const existingParamPropNames = new Set(existingParamProps.flatMap((p) => (p.name && ts.isIdentifier(p.name) ? [p.name.text] : [])));
+            const paramPropsToAdd: ts.PropertyAssignment[] = [];
+            const otherParams = xmlCmd.parameters.filter((_p, index) => index !== i);
 
-            for (const xmlParam of xmlCmd.parameters) {
-                validation.addedParameters.push(`0x${xmlCmd.id.toString(16).padStart(2, "0")} ${xmlCmd.name} > ${xmlParam.name}`);
+            // Add name/type if missing
+            if (!existingParamPropNames.has("name")) {
+                paramPropsToAdd.push(factory.createPropertyAssignment("name", factory.createStringLiteral(xmlParam.name)));
+            }
+            if (!existingParamPropNames.has("type")) {
                 const typeIdentifierParts = xmlParam.dataTypeExpr.split(".");
                 const typeIdentifier =
                     typeIdentifierParts.length > 1
                         ? factory.createPropertyAccessExpression(factory.createIdentifier(typeIdentifierParts[0]), typeIdentifierParts[1])
                         : factory.createIdentifier(xmlParam.dataTypeExpr);
 
-                const paramProps = [
-                    factory.createPropertyAssignment("name", factory.createStringLiteral(xmlParam.name)),
-                    factory.createPropertyAssignment("type", typeIdentifier),
+                paramPropsToAdd.push(factory.createPropertyAssignment("type", typeIdentifier));
+            }
+
+            // Add metadata
+            if (xmlParam.meta?.$.arrayLengthSize && !existingParamPropNames.has("arrayLengthSize")) {
+                paramPropsToAdd.push(
+                    factory.createPropertyAssignment("arrayLengthSize", factory.createNumericLiteral(xmlParam.meta.$.arrayLengthSize)),
+                );
+            }
+
+            if (xmlParam.meta?.$.arrayLengthField && !existingParamPropNames.has("arrayLengthField")) {
+                const matched = findBestFuzzyParamMatch(xmlParam.meta.$.arrayLengthField, otherParams, existingTsParamNames, factory);
+
+                if (!matched) {
+                    console.log(`\x1b[31mCould not find match for parameter ${xmlParam.meta.$.arrayLengthField}.\x1b[0m`);
+                }
+
+                paramPropsToAdd.push(
+                    factory.createPropertyAssignment(
+                        "arrayLengthField",
+                        matched ?? factory.createStringLiteral(normalizeName(xmlParam.meta.$.arrayLengthField)),
+                    ),
+                );
+            }
+
+            // Add all restrictions
+            if (xmlParam.meta?.restriction?.[0]) {
+                const restriction = xmlParam.meta.restriction[0];
+                const restrictionFacets: {name: string; value: string | {name: string; value: string}[] | undefined; isRef?: boolean}[] = [
+                    {name: "length", value: restriction["type:length"]?.[0]?.$?.value},
+                    {name: "minLength", value: restriction["type:minLength"]?.[0]?.$?.value},
+                    {name: "maxLength", value: restriction["type:maxLength"]?.[0]?.$?.value},
+                    {name: "minExclusive", value: restriction["type:minExclusive"]?.[0]?.$?.value},
+                    {name: "minInclusive", value: restriction["type:minInclusive"]?.[0]?.$?.value},
+                    {name: "maxExclusive", value: restriction["type:maxExclusive"]?.[0]?.$?.value},
+                    {name: "maxInclusive", value: restriction["type:maxInclusive"]?.[0]?.$?.value},
+                    {name: "minInclusiveRef", value: restriction["type:minInclusiveRef"]?.[0]?.$?.ref, isRef: true},
+                    {name: "minExclusiveRef", value: restriction["type:minExclusiveRef"]?.[0]?.$?.ref, isRef: true},
+                    {name: "maxInclusiveRef", value: restriction["type:maxInclusiveRef"]?.[0]?.$?.ref, isRef: true},
+                    {name: "maxExclusiveRef", value: restriction["type:maxExclusiveRef"]?.[0]?.$?.ref, isRef: true},
+                    {name: "special", value: restriction["type:special"]?.map((s) => s.$)},
                 ];
 
-                if (xmlParam.meta?.$.arrayLengthSize) {
-                    paramProps.push(
-                        factory.createPropertyAssignment("arrayLengthSize", factory.createNumericLiteral(xmlParam.meta.$.arrayLengthSize)),
-                    );
-                }
+                for (const facet of restrictionFacets) {
+                    if (facet.value && !existingParamPropNames.has(facet.name)) {
+                        if (facet.name === "special" && Array.isArray(facet.value)) {
+                            const specialArray = factory.createArrayLiteralExpression(
+                                facet.value.map((s) =>
+                                    factory.createArrayLiteralExpression([factory.createStringLiteral(s.name), factory.createStringLiteral(s.value)]),
+                                ),
+                                true,
+                            );
+                            paramPropsToAdd.push(factory.createPropertyAssignment(facet.name, specialArray));
+                        } else if (typeof facet.value === "string") {
+                            if (facet.isRef) {
+                                let matched = findBestFuzzyAttrMatch(facet.value, xmlAttributes, existingTsAttributeNames, factory);
 
-                if (xmlParam.meta?.$.arrayLengthField) {
-                    const otherParams = xmlCmd.parameters.filter((p) => p.name !== xmlParam.name);
-                    const matched = findBestFuzzyParamMatch(xmlParam.meta.$.arrayLengthField, otherParams, new Map(), factory);
+                                if (!matched) {
+                                    matched = findBestFuzzyParamMatch(facet.value, otherParams, existingTsParamNames, factory);
+                                }
 
-                    if (!matched) {
-                        console.log(`\x1b[31mCould not find match for parameter ${xmlParam.meta.$.arrayLengthField}.\x1b[0m`);
+                                if (!matched) {
+                                    console.log(`\x1b[31mCould not find match for ref ${facet.value}.\x1b[0m`);
+                                }
+
+                                paramPropsToAdd.push(
+                                    factory.createPropertyAssignment(facet.name, matched ?? factory.createStringLiteral(normalizeName(facet.value))),
+                                );
+                            } else {
+                                // a few entries are in hex form like "fd", this is obviously flawed, entries that are too complex should be overriden instead
+                                if (facet.value.match(/^[0-9]+$/)) {
+                                    paramPropsToAdd.push(
+                                        factory.createPropertyAssignment(facet.name, createSafeNumericLiteral(facet.value, factory)),
+                                    );
+                                } else if (facet.value.match(/^[0-9a-fA-F]+$/)) {
+                                    console.log(`Writing ${JSON.stringify(facet)} as hex number`);
+                                    paramPropsToAdd.push(
+                                        factory.createPropertyAssignment(facet.name, createSafeNumericLiteral(`0x${facet.value}`, factory)),
+                                    );
+                                }
+                            }
+                        }
                     }
-
-                    paramProps.push(
-                        factory.createPropertyAssignment(
-                            "arrayLengthField",
-                            matched ?? factory.createStringLiteral(normalizeName(xmlParam.meta.$.arrayLengthField)),
-                        ),
-                    );
                 }
-
-                newParams.push(factory.createObjectLiteralExpression(paramProps, true));
             }
 
-            const cmdProps = [
-                factory.createPropertyAssignment("ID", factory.createNumericLiteral(String(xmlCmd.id))),
-                factory.createPropertyAssignment("parameters", factory.createArrayLiteralExpression(newParams, true)),
-            ];
+            if (existingParamExpr) {
+                newParams.push(factory.updateObjectLiteralExpression(existingParamExpr, [...existingParamProps, ...paramPropsToAdd]));
+            } else {
+                validation.addedParameters.push(`0x${xmlCmd.id.toString(16).padStart(2, "0")} ${xmlCmd.name} > ${xmlParam.name}`);
+                newParams.push(factory.createObjectLiteralExpression(paramPropsToAdd, true));
+            }
+        }
+        // --- End Unified Parameter Logic ---
 
-            if (xmlCmd.meta?.$.required === "true") {
-                cmdProps.push(factory.createPropertyAssignment("required", factory.createTrue()));
+        const cmdPropsToAdd: ts.PropertyAssignment[] = [];
+
+        cmdPropsToAdd.push(factory.createPropertyAssignment("parameters", factory.createArrayLiteralExpression(newParams, true)));
+
+        if (xmlCmd.meta?.$.required === "true" && !existingCmdPropNames.has("required")) {
+            cmdPropsToAdd.push(factory.createPropertyAssignment("required", factory.createTrue()));
+        }
+
+        let finalNode: ts.PropertyAssignment;
+
+        if (existingCmdNode) {
+            processedTsNodes.add(existingCmdNode);
+
+            const finalProps = [...existingCmdProps];
+
+            for (const propToAdd of cmdPropsToAdd) {
+                const propName = (propToAdd.name as ts.Identifier).text;
+                const existingIndex = finalProps.findIndex((p) => ts.isPropertyAssignment(p) && ts.isIdentifier(p.name) && p.name.text === propName);
+
+                if (existingIndex !== -1) {
+                    finalProps[existingIndex] = propToAdd;
+                } else {
+                    finalProps.push(propToAdd);
+                }
             }
 
-            finalNode = factory.createPropertyAssignment(commandName, factory.createObjectLiteralExpression(cmdProps, true));
+            const finalInitializer = factory.updateObjectLiteralExpression(existingCmdNode.initializer as ts.ObjectLiteralExpression, finalProps);
+            finalNode = factory.updatePropertyAssignment(existingCmdNode, commandName, finalInitializer);
+        } else {
+            const hexId = `0x${xmlCmd.id.toString(16).padStart(2, "0")}`;
+
+            validation.addedCommands.push(`${hexId} ${xmlCmd.name}`);
+
+            const finalProps = [factory.createPropertyAssignment("ID", factory.createNumericLiteral(hexId)), ...cmdPropsToAdd];
+            const finalInitializer = factory.createObjectLiteralExpression(finalProps, true);
+            finalNode = factory.createPropertyAssignment(commandName, finalInitializer);
         }
 
         finalCommands.push(finalNode);
