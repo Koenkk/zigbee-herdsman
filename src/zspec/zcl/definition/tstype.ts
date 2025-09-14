@@ -306,6 +306,7 @@ export type ClusterName =
     | "genMultistateValue"
     | "genCommissioning"
     | "genOta"
+    | "pulseWidthModulation"
     | "genPollCtrl"
     | "greenPower"
     | "mobileDeviceCfg"
