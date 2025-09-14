@@ -986,16 +986,16 @@ function updateAttributes(
             const otherAttributes = xmlAttributes.filter((a) => a.id !== xmlAttr.id);
             const restrictionFacets: {name: string; value: string | {name: string; value: string}[] | undefined; isRef?: boolean}[] = [
                 {name: "length", value: restriction["type:length"]?.[0]?.$?.value},
-                {name: "minLength", value: restriction["type:minLength"]?.[0]?.$?.value},
-                {name: "maxLength", value: restriction["type:maxLength"]?.[0]?.$?.value},
-                {name: "minExclusive", value: restriction["type:minExclusive"]?.[0]?.$?.value},
-                {name: "minInclusive", value: restriction["type:minInclusive"]?.[0]?.$?.value},
-                {name: "maxExclusive", value: restriction["type:maxExclusive"]?.[0]?.$?.value},
-                {name: "maxInclusive", value: restriction["type:maxInclusive"]?.[0]?.$?.value},
-                {name: "minInclusiveRef", value: restriction["type:minInclusiveRef"]?.[0]?.$?.ref, isRef: true},
-                {name: "minExclusiveRef", value: restriction["type:minExclusiveRef"]?.[0]?.$?.ref, isRef: true},
-                {name: "maxInclusiveRef", value: restriction["type:maxInclusiveRef"]?.[0]?.$?.ref, isRef: true},
-                {name: "maxExclusiveRef", value: restriction["type:maxExclusiveRef"]?.[0]?.$?.ref, isRef: true},
+                {name: "minLen", value: restriction["type:minLength"]?.[0]?.$?.value},
+                {name: "maxLen", value: restriction["type:maxLength"]?.[0]?.$?.value},
+                {name: "minExcl", value: restriction["type:minExclusive"]?.[0]?.$?.value},
+                {name: "min", value: restriction["type:minInclusive"]?.[0]?.$?.value},
+                {name: "maxExcl", value: restriction["type:maxExclusive"]?.[0]?.$?.value},
+                {name: "max", value: restriction["type:maxInclusive"]?.[0]?.$?.value},
+                {name: "minRef", value: restriction["type:minInclusiveRef"]?.[0]?.$?.ref, isRef: true},
+                {name: "minExclRef", value: restriction["type:minExclusiveRef"]?.[0]?.$?.ref, isRef: true},
+                {name: "maxRef", value: restriction["type:maxInclusiveRef"]?.[0]?.$?.ref, isRef: true},
+                {name: "maxExclRef", value: restriction["type:maxExclusiveRef"]?.[0]?.$?.ref, isRef: true},
                 {name: "special", value: restriction["type:special"]?.map((s) => s.$)},
             ];
 
@@ -1255,16 +1255,16 @@ function updateCommands(
                 const restriction = xmlParam.meta.restriction[0];
                 const restrictionFacets: {name: string; value: string | {name: string; value: string}[] | undefined; isRef?: boolean}[] = [
                     {name: "length", value: restriction["type:length"]?.[0]?.$?.value},
-                    {name: "minLength", value: restriction["type:minLength"]?.[0]?.$?.value},
-                    {name: "maxLength", value: restriction["type:maxLength"]?.[0]?.$?.value},
-                    {name: "minExclusive", value: restriction["type:minExclusive"]?.[0]?.$?.value},
-                    {name: "minInclusive", value: restriction["type:minInclusive"]?.[0]?.$?.value},
-                    {name: "maxExclusive", value: restriction["type:maxExclusive"]?.[0]?.$?.value},
-                    {name: "maxInclusive", value: restriction["type:maxInclusive"]?.[0]?.$?.value},
-                    {name: "minInclusiveRef", value: restriction["type:minInclusiveRef"]?.[0]?.$?.ref, isRef: true},
-                    {name: "minExclusiveRef", value: restriction["type:minExclusiveRef"]?.[0]?.$?.ref, isRef: true},
-                    {name: "maxInclusiveRef", value: restriction["type:maxInclusiveRef"]?.[0]?.$?.ref, isRef: true},
-                    {name: "maxExclusiveRef", value: restriction["type:maxExclusiveRef"]?.[0]?.$?.ref, isRef: true},
+                    {name: "minLen", value: restriction["type:minLength"]?.[0]?.$?.value},
+                    {name: "maxLen", value: restriction["type:maxLength"]?.[0]?.$?.value},
+                    {name: "minExcl", value: restriction["type:minExclusive"]?.[0]?.$?.value},
+                    {name: "min", value: restriction["type:minInclusive"]?.[0]?.$?.value},
+                    {name: "maxExcl", value: restriction["type:maxExclusive"]?.[0]?.$?.value},
+                    {name: "max", value: restriction["type:maxInclusive"]?.[0]?.$?.value},
+                    {name: "minRef", value: restriction["type:minInclusiveRef"]?.[0]?.$?.ref, isRef: true},
+                    {name: "minExclRef", value: restriction["type:minExclusiveRef"]?.[0]?.$?.ref, isRef: true},
+                    {name: "maxRef", value: restriction["type:maxInclusiveRef"]?.[0]?.$?.ref, isRef: true},
+                    {name: "maxExclRef", value: restriction["type:maxExclusiveRef"]?.[0]?.$?.ref, isRef: true},
                     {name: "special", value: restriction["type:special"]?.map((s) => s.$)},
                 ];
 

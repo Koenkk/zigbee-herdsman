@@ -1,4 +1,4 @@
-Comparison complete. Found 123 changes.
+Comparison complete. Found 124 changes.
 Compared:
   - OLD: D:\Dev\FORKS\zigbee-herdsman\src\zspec\zcl\definition\cluster-old.ts
   - NEW: D:\Dev\FORKS\zigbee-herdsman\src\zspec\zcl\definition\cluster.ts
@@ -8,6 +8,7 @@ Compared:
 [CHANGED] Clusters > closuresShadeCfg > attributes > mode > ID: 18 (0x0012) -> 17 (0x0011)
 [CHANGED] Clusters > closuresDoorLock > attributes > lockType > ID: 38 (0x0026) -> 1 (0x0001)
 
+[ADDED]   Clusters > pulseWidthModulation: 28 (0x001c)
 [ADDED]   Clusters > genPowerCfg > attributes > battery2Voltage: 64 (0x0040)
 [ADDED]   Clusters > genPowerCfg > attributes > battery2PercentageRemaining: 65 (0x0041)
 [ADDED]   Clusters > genPowerCfg > attributes > battery2Manufacturer: 80 (0x0050)
