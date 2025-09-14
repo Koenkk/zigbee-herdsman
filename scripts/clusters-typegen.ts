@@ -152,7 +152,7 @@ const getPropertyStr = (key: string, val: unknown, padId = 4) => {
     } else if (key === "type") {
         valStr = `${DataType[val as number] ?? BuffaloZclDataType[val as number]}`;
     } else if (key === "manufacturerCode") {
-        valStr = `${ManufacturerCode[val as number]} (${val})`;
+        valStr = `${ManufacturerCode[val as number]}(0x${Number(val).toString(16).padStart(4, "0")})`;
     }
 
     return valStr;
