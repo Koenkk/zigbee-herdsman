@@ -385,6 +385,7 @@ function isNumericDataType(dataTypeExpr: string): boolean {
         case "DataType.CLUSTER_ID":
         case "DataType.ATTR_ID":
         case "DataType.BAC_OID":
+        case "DataType.UTC":
             return true;
         default:
             return false;
@@ -398,6 +399,39 @@ function parseAttributeOrCommandId(hexId: string): number {
     const clean = hexId.trim().toLowerCase();
 
     return Number.parseInt(clean, 16);
+}
+
+function findBestFuzzyMatch(
+    refName: string,
+    candidates: ParsedXMLAttribute[],
+    existingTsNames: Map<number, string>,
+    factory: ts.NodeFactory,
+): ts.StringLiteral | undefined {
+    if (candidates.length === 0) {
+        return undefined;
+    }
+
+    let bestMatch: {score: number; attribute: ParsedXMLAttribute | undefined} = {score: -1, attribute: undefined};
+    const normalizedRefName = normalizeAttributeName(refName);
+
+    for (const candidate of candidates) {
+        const score = fuzzyMatch(normalizedRefName, candidate.name);
+
+        if (score > bestMatch.score) {
+            bestMatch = {score, attribute: candidate};
+        }
+    }
+
+    if (bestMatch.attribute && bestMatch.score > 0.7) {
+        // If a match is found, check if it has a corresponding name in the existing TS file.
+        // If so, use that name. Otherwise, fall back to the normalized XML name.
+        const tsName = existingTsNames.get(bestMatch.attribute.id);
+        const finalName = tsName || bestMatch.attribute.name;
+
+        return factory.createStringLiteral(finalName);
+    }
+
+    return undefined;
 }
 
 /* ------------------------------------------------------------------------------------------------
@@ -850,6 +884,7 @@ function updateAttributes(
 ): ts.PropertyAssignment {
     const initializer = attributesProp.initializer as ts.ObjectLiteralExpression;
     const existingTsAttributes = new Map<number, ts.PropertyAssignment[]>();
+    const existingTsNames = new Map<number, string>();
 
     for (const attr of initializer.properties) {
         if (ts.isPropertyAssignment(attr)) {
@@ -862,6 +897,10 @@ function updateAttributes(
 
                 // biome-ignore lint/style/noNonNullAssertion: set above if not exist
                 existingTsAttributes.get(id)!.push(attr);
+
+                if (ts.isIdentifier(attr.name) && !existingTsNames.has(id)) {
+                    existingTsNames.set(id, attr.name.text);
+                }
             }
         }
     }
@@ -932,11 +971,21 @@ function updateAttributes(
                     propsToAdd.push(factory.createPropertyAssignment("default", factory.createStringLiteral(meta.default)));
                 }
             }
+
+            if (meta.defaultRef && !existingPropNames.has("defaultRef")) {
+                const otherAttributes = xmlAttributes.filter((a) => a.id !== xmlAttr.id);
+                const matched = findBestFuzzyMatch(meta.defaultRef, otherAttributes, existingTsNames, factory);
+
+                if (matched) {
+                    propsToAdd.push(factory.createPropertyAssignment("defaultRef", matched));
+                }
+            }
         }
 
         if (xmlAttr.meta?.restriction?.[0]) {
             const restriction = xmlAttr.meta.restriction[0];
-            const restrictionFacets: {name: string; value: string | {name: string; value: string}[] | undefined}[] = [
+            const otherAttributes = xmlAttributes.filter((a) => a.id !== xmlAttr.id);
+            const restrictionFacets: {name: string; value: string | {name: string; value: string}[] | undefined; isRef?: boolean}[] = [
                 {name: "length", value: restriction["type:length"]?.[0]?.$?.value},
                 {name: "minLength", value: restriction["type:minLength"]?.[0]?.$?.value},
                 {name: "maxLength", value: restriction["type:maxLength"]?.[0]?.$?.value},
@@ -944,10 +993,10 @@ function updateAttributes(
                 {name: "minInclusive", value: restriction["type:minInclusive"]?.[0]?.$?.value},
                 {name: "maxExclusive", value: restriction["type:maxExclusive"]?.[0]?.$?.value},
                 {name: "maxInclusive", value: restriction["type:maxInclusive"]?.[0]?.$?.value},
-                {name: "minInclusiveRef", value: restriction["type:minInclusiveRef"]?.[0]?.$?.ref},
-                {name: "minExclusiveRef", value: restriction["type:minExclusiveRef"]?.[0]?.$?.ref},
-                {name: "maxInclusiveRef", value: restriction["type:maxInclusiveRef"]?.[0]?.$?.ref},
-                {name: "maxExclusiveRef", value: restriction["type:maxExclusiveRef"]?.[0]?.$?.ref},
+                {name: "minInclusiveRef", value: restriction["type:minInclusiveRef"]?.[0]?.$?.ref, isRef: true},
+                {name: "minExclusiveRef", value: restriction["type:minExclusiveRef"]?.[0]?.$?.ref, isRef: true},
+                {name: "maxInclusiveRef", value: restriction["type:maxInclusiveRef"]?.[0]?.$?.ref, isRef: true},
+                {name: "maxExclusiveRef", value: restriction["type:maxExclusiveRef"]?.[0]?.$?.ref, isRef: true},
                 {name: "special", value: restriction["type:special"]?.map((s) => s.$)},
             ];
 
@@ -963,8 +1012,11 @@ function updateAttributes(
 
                         propsToAdd.push(factory.createPropertyAssignment(facet.name, specialArray));
                     } else if (typeof facet.value === "string") {
-                        if (facet.name.endsWith("Ref")) {
-                            propsToAdd.push(factory.createPropertyAssignment(facet.name, factory.createStringLiteral(facet.value)));
+                        if (facet.isRef) {
+                            const matched = findBestFuzzyMatch(facet.value, otherAttributes, existingTsNames, factory);
+                            if (matched) {
+                                propsToAdd.push(factory.createPropertyAssignment(facet.name, matched));
+                            }
                         } else {
                             if (facet.name === "minLength" && facet.value === "0") {
                                 continue;
@@ -1324,18 +1376,6 @@ async function main(): Promise<void> {
     const xmlClusterDataMap = new Map<number, ParsedXMLClusterData>();
 
     for (const d of parsedData) {
-        // Resolve defaultRefs here, before mapping
-        for (const attr of d.attributes) {
-            if (attr.meta?.$.defaultRef) {
-                const refName = normalizeAttributeName(attr.meta.$.defaultRef);
-                const referencedAttr = d.attributes.find((a) => a.name === refName);
-
-                if (referencedAttr?.meta?.$.default != null) {
-                    attr.meta.$.default = referencedAttr.meta.$.default;
-                }
-            }
-        }
-
         const existing = xmlClusterDataMap.get(d.id);
 
         if (existing) {
