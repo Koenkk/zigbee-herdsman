@@ -1034,14 +1034,14 @@ function updateAttributes(
             }
 
             if (meta.min && !existingPropNames.has("min")) {
-                // skip when too long for number format (not especially useful anyway)
+                // skip when too long for number format (not especially useful anyway for these types)
                 if (xmlAttr.dataTypeExpr !== "DataType.IEEE_ADDR" && xmlAttr.dataTypeExpr !== "DataType.SEC_KEY") {
                     propsToAdd.push(factory.createPropertyAssignment("min", createSafeNumericLiteral(meta.min, factory)));
                 }
             }
 
             if (meta.max && !existingPropNames.has("max")) {
-                // skip when too long for number format (not especially useful anyway)
+                // skip when too long for number format (not especially useful anyway for these types)
                 if (xmlAttr.dataTypeExpr !== "DataType.IEEE_ADDR" && xmlAttr.dataTypeExpr !== "DataType.SEC_KEY") {
                     propsToAdd.push(factory.createPropertyAssignment("max", createSafeNumericLiteral(meta.max, factory)));
                 }
@@ -1308,6 +1308,7 @@ function updateCommands(
             if (!existingParamPropNames.has("name")) {
                 paramPropsToAdd.push(factory.createPropertyAssignment("name", factory.createStringLiteral(xmlParam.name)));
             }
+
             if (!existingParamPropNames.has("type")) {
                 const typeIdentifierParts = xmlParam.dataTypeExpr.split(".");
                 const typeIdentifier =
