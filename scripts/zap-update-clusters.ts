@@ -957,11 +957,17 @@ function updateAttributes(
             }
 
             if (meta.min && meta.min !== "0" && !existingPropNames.has("min")) {
-                propsToAdd.push(factory.createPropertyAssignment("min", createSafeNumericLiteral(meta.min, factory)));
+                // skip when too long for number format (not especially useful anyway)
+                if (xmlAttr.dataTypeExpr !== "DataType.IEEE_ADDR" && xmlAttr.dataTypeExpr !== "DataType.SEC_KEY") {
+                    propsToAdd.push(factory.createPropertyAssignment("min", createSafeNumericLiteral(meta.min, factory)));
+                }
             }
 
             if (meta.max && !existingPropNames.has("max")) {
-                propsToAdd.push(factory.createPropertyAssignment("max", createSafeNumericLiteral(meta.max, factory)));
+                // skip when too long for number format (not especially useful anyway)
+                if (xmlAttr.dataTypeExpr !== "DataType.IEEE_ADDR" && xmlAttr.dataTypeExpr !== "DataType.SEC_KEY") {
+                    propsToAdd.push(factory.createPropertyAssignment("max", createSafeNumericLiteral(meta.max, factory)));
+                }
             }
 
             if (meta.default != null && !existingPropNames.has("default")) {

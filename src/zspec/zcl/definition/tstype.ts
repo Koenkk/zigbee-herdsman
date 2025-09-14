@@ -172,7 +172,10 @@ interface Restrictions {
     maxInclusiveRef?: string;
     /** sets a maximum that is based on the value of the referenced attribute. The value of the referenced attribute is excluded from the range */
     maxExclusiveRef?: string;
-    /** specifies a special value, see the Special Values section below */
+    /**
+     * specifies a special value, see the Special Values section below.
+     * `value` is kept as string for easier handling (will be checked on spot if used anyway) though most often is a hex number string (without 0x)
+     */
     special?: [name: string, value: string][];
 }
 
