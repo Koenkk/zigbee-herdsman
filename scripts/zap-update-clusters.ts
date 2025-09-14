@@ -26,7 +26,7 @@ import {parseStringPromise} from "xml2js";
 // biome-ignore lint/correctness/noUnusedImports: reference names (not executed in script context, but helps validation if compiled in-project)
 import {BuffaloZclDataType, DataType} from "../src/zspec/zcl/definition/enums.js";
 import {fuzzyMatch} from "./utils.js";
-import {applyXmlOverrides, parseOverrides} from "./zap-clusters-overrides.js";
+import {applyXmlOverrides, parseOverrides} from "./zap-xml-clusters-overrides.js";
 
 /* ------------------------------------------------------------------------------------------------
  * XML Type Definitions
@@ -338,6 +338,9 @@ function mapZclTypeToDataType(base: string): string {
     if (t === "profileintervalperiod") return "DataType.ENUM8";
     if (t === "iaszonetype") return "DataType.ENUM16";
     if (t === "iaszonestatus") return "DataType.BITMAP16";
+
+    if (t === "sextensionfieldsetlist") return "BuffaloZclDataType.EXTENSION_FIELD_SETS";
+    if (t === "transitiontype") return "BuffaloZclDataType.LIST_THERMO_TRANSITIONS";
 
     return "DataType.UNKNOWN";
 }
@@ -1439,7 +1442,7 @@ async function main(): Promise<void> {
 
     const xmlPath = args[0];
     const clusterFile = "src/zspec/zcl/definition/cluster.ts";
-    const overridesFile = "scripts/zap-clusters-overrides-data.ts";
+    const overridesFile = "scripts/zap-xml-clusters-overrides-data.ts";
     const validation: ValidationRecord = {
         warnings: [],
         errors: [],
