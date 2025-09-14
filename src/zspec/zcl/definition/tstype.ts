@@ -168,7 +168,7 @@ interface Restrictions {
     minInclusiveRef?: string;
     /** sets a minimum that is based on the value of the referenced attribute. The value of the referenced attribute is excluded from the range */
     minExclusiveRef?: string;
-    /** sets a maximum that is based on the value of the referenced attribute. */
+    /** sets a maximum that is based on the value of the referenced attribute. The value of the referenced attribute is included in the range */
     maxInclusiveRef?: string;
     /** sets a maximum that is based on the value of the referenced attribute. The value of the referenced attribute is excluded from the range */
     maxExclusiveRef?: string;

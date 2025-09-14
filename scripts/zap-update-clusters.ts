@@ -1029,8 +1029,20 @@ function updateAttributes(
                 propsToAdd.push(factory.createPropertyAssignment("writable", factory.createTrue()));
             }
 
+            if (meta.writeOptional === "true" && !existingPropNames.has("writeOptional")) {
+                propsToAdd.push(factory.createPropertyAssignment("writeOptional", factory.createTrue()));
+            }
+
             if (meta.reportRequired === "true" && !existingPropNames.has("reportRequired")) {
                 propsToAdd.push(factory.createPropertyAssignment("reportRequired", factory.createTrue()));
+            }
+
+            if (meta.sceneRequired === "true" && !existingPropNames.has("sceneRequired")) {
+                propsToAdd.push(factory.createPropertyAssignment("sceneRequired", factory.createTrue()));
+            }
+
+            if (meta.required === "true" && !existingPropNames.has("required")) {
+                propsToAdd.push(factory.createPropertyAssignment("required", factory.createTrue()));
             }
 
             if (meta.min && !existingPropNames.has("min")) {
@@ -1341,8 +1353,8 @@ function updateCommands(
                 );
             }
 
-            // Add all restrictions
-            if (xmlParam.meta?.restriction?.[0]) {
+            // Add all restrictions ("..Count" params don't have metas)
+            if (xmlParam.meta?.restriction?.[0] && !xmlParam.isLength) {
                 const restriction = xmlParam.meta.restriction[0];
                 const restrictionFacets: {name: string; value: string | {name: string; value: string}[] | undefined; isRef?: boolean}[] = [
                     {name: "length", value: restriction["type:length"]?.[0]?.$?.value},
@@ -1394,7 +1406,7 @@ function updateCommands(
                                         factory.createPropertyAssignment(facet.name, createSafeNumericLiteral(facet.value, factory)),
                                     );
                                 } else if (facet.value.match(/^[0-9a-fA-F]+$/)) {
-                                    console.log(`Writing ${JSON.stringify(facet)} as hex number`);
+                                    console.log(`\x1b[33mWriting ${JSON.stringify(facet)} as hex number\x1b[0m`);
                                     paramPropsToAdd.push(
                                         factory.createPropertyAssignment(facet.name, createSafeNumericLiteral(`0x${facet.value}`, factory)),
                                     );
