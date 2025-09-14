@@ -145,11 +145,44 @@ export interface FrameControl {
 }
 
 /**
+ * @see https://github.com/project-chip/zap/blob/master/zcl-builtin/dotdot/README.md#restrictions
+ */
+interface Restrictions {
+    /** specifies an exact length, generally used for a string. */
+    length?: number;
+    /** specifies the minimum length that a type must take, generally used for a string or a list/array */
+    minLength?: number;
+    /** specifies the maximum length that a type must take, generally used for a string or a list/array */
+    maxLength?: number;
+    /** sets a minimum that doesn't include the value specified, i.e. a field of this type must be strictly greater than the value */
+    minExclusive?: number;
+    /** sets a minimum that includes the value specified, i.e. a field of this type must be greater than or equal than the value */
+    minInclusive?: number;
+    /** sets a maximum that doesn't include the value specified, i.e. a field of this type must be strictly less than the value */
+    maxExclusive?: number;
+    /** sets a maximum that includes the value specified, i.e. a field of this type must be less than or equal to the value */
+    maxInclusive?: number;
+    /** species an invalid value as defined in the Zigbee specification */
+    invalid?: number | string;
+    /** sets a minimum that is based on the value of the referenced attribute. The value of the referenced attribute is included in the range */
+    minInclusiveRef?: string;
+    /** sets a minimum that is based on the value of the referenced attribute. The value of the referenced attribute is excluded from the range */
+    minExclusiveRef?: string;
+    /** sets a maximum that is based on the value of the referenced attribute. */
+    maxInclusiveRef?: string;
+    /** sets a maximum that is based on the value of the referenced attribute. The value of the referenced attribute is excluded from the range */
+    maxExclusiveRef?: string;
+    /** specifies a special value, see the Special Values section below */
+    special?: [name: string, value: string][];
+}
+
+/**
+ * @see https://github.com/project-chip/zap/blob/master/zcl-builtin/dotdot/README.md#attributes
  * Extra metadata:
  * - writableIf: Indicates an expression that specifies the writability of the attribute. Defaults to true. Note: An attribute is only writable if this attribute and the writable attribute are true.
  * - requiredIf: Allows for an expression to be implemented which indicates the conditions in which an attribute is mandatory. Defaults to false
  */
-export interface Attribute {
+export interface Attribute extends Restrictions {
     ID: number;
     name: string;
     type: DataType;
@@ -172,17 +205,20 @@ export interface Attribute {
     max?: number;
     /** Specifies the default value of an attribute. No Default */
     default?: number | string;
+    /** Specifies that the default value of the attribute takes the value of the referenced attribute. Must be another attriibute in this cluster. Referenced by name, schema forces this during validation. */
+    defaultRef?: string;
     /** If attribute is client side */
     client?: true;
 }
 
-export interface Parameter {
+export interface Parameter extends Restrictions {
     name: string;
     type: DataType | BuffaloZclDataType;
     arrayLengthSize?: number;
 }
 
 /**
+ * @see https://github.com/project-chip/zap/blob/master/zcl-builtin/dotdot/README.md#commands
  * Extra metadata:
  * - requiredIf: Allows for an expression to be implemented which indicates the conditions in which a command is mandatory. Defaults to false
  */

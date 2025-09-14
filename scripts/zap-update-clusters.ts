@@ -31,6 +31,11 @@ import {applyXmlOverrides, parseOverrides} from "./zap-clusters-overrides.js";
 /* ------------------------------------------------------------------------------------------------
  * XML Type Definitions
  * ----------------------------------------------------------------------------------------------*/
+interface XMLAttr<T> {
+    // biome-ignore lint/style/useNamingConvention: API
+    $: T;
+}
+
 interface XMLClusterRoot {
     "zcl:cluster"?: XMLCluster | XMLCluster[];
     "zcl:derivedCluster"?: XMLDerivedCluster | XMLDerivedCluster[];
@@ -38,31 +43,20 @@ interface XMLClusterRoot {
 }
 
 interface XMLLibrary {
-    "xi:include"?: Array<{
-        // biome-ignore lint/style/useNamingConvention: API
-        $: {href: string; parse?: string};
-    }>;
+    "xi:include"?: XMLAttr<{href: string; parse?: string}>[];
     "type:type"?: XMLTypeType[];
 }
 
-export interface XMLCluster {
-    // biome-ignore lint/style/useNamingConvention: API
-    $: {
+export interface XMLCluster
+    extends XMLAttr<{
         id: string;
         revision: string;
         name: string;
         manufacturer?: string;
-    };
-    classification: Array<{
-        // biome-ignore lint/style/useNamingConvention: API
-        $: {
-            role?: string;
-            picsCode: string;
-            primaryTransaction?: string;
-        };
-    }>;
-    server?: Array<XMLClusterSide>;
-    client?: Array<XMLClusterSide>;
+    }> {
+    classification: XMLAttr<{role?: string; picsCode: string; primaryTransaction?: string}>[];
+    server?: XMLClusterSide[];
+    client?: XMLClusterSide[];
     "type:type"?: XMLTypeType[];
 }
 
@@ -74,13 +68,29 @@ interface XMLDerivedCluster extends XMLCluster {
 }
 
 interface XMLClusterSide {
-    attributes?: Array<{attribute: XMLAttributeDefinition[]}>;
-    commands?: Array<{command: XMLCommandDefinition[]}>;
+    attributes?: {attribute: XMLAttributeDefinition[]}[];
+    commands?: {command: XMLCommandDefinition[]}[];
 }
 
-export interface XMLAttributeDefinition {
-    // biome-ignore lint/style/useNamingConvention: API
-    $: {
+interface XMLRestriction {
+    "type:length"?: XMLAttr<{value: string}>[];
+    "type:minLength"?: XMLAttr<{value: string}>[];
+    "type:maxLength"?: XMLAttr<{value: string}>[];
+    "type:minExclusive"?: XMLAttr<{value: string}>[];
+    "type:minInclusive"?: XMLAttr<{value: string}>[];
+    "type:maxExclusive"?: XMLAttr<{value: string}>[];
+    "type:maxInclusive"?: XMLAttr<{value: string}>[];
+    /** only used for `type:type` (data type non-value) */
+    "type:invalid"?: XMLAttr<{value: string}>[];
+    "type:minInclusiveRef"?: XMLAttr<{ref: string}>[];
+    "type:minExclusiveRef"?: XMLAttr<{ref: string}>[];
+    "type:maxInclusiveRef"?: XMLAttr<{ref: string}>[];
+    "type:maxExclusiveRef"?: XMLAttr<{ref: string}>[];
+    "type:special"?: XMLAttr<{name: string; value: string}>[];
+}
+
+export interface XMLAttributeDefinition
+    extends XMLAttr<{
         id: string;
         name: string;
         type: string;
@@ -97,26 +107,24 @@ export interface XMLAttributeDefinition {
         default?: string;
         defaultRef?: string; // NamedElement
         deprecated?: string; // default="false"
-    };
-    restriction?: Array<unknown>;
-    bitmap?: Array<unknown>;
+    }> {
+    restriction?: XMLRestriction[];
+    bitmap?: unknown[];
 }
 
-export interface XMLCommandDefinition {
-    // biome-ignore lint/style/useNamingConvention: API
-    $: {
+export interface XMLCommandDefinition
+    extends XMLAttr<{
         id: string;
         name: string;
         required?: string; // default="false"
         requiredIf?: string; // DependencyExpression
         deprecated?: string; // default="false"
-    };
-    fields?: Array<{field: XMLFieldDefinition[]}>;
+    }> {
+    fields?: {field: XMLFieldDefinition[]}[];
 }
 
-interface XMLFieldDefinition {
-    // biome-ignore lint/style/useNamingConvention: API
-    $: {
+interface XMLFieldDefinition
+    extends XMLAttr<{
         name: string;
         type: string;
         array?: string;
@@ -124,22 +132,21 @@ interface XMLFieldDefinition {
         arrayLengthField?: string;
         presentIf?: string;
         deprecated?: string;
-    };
-    restriction?: Array<unknown>;
-    bitmap?: Array<unknown>;
+    }> {
+    restriction?: XMLRestriction[];
+    bitmap?: unknown[];
 }
 
-interface XMLTypeType {
-    // biome-ignore lint/style/useNamingConvention: API
-    $: {
+interface XMLTypeType
+    extends XMLAttr<{
         id: string;
         name: string;
         short: string;
         inheritsFrom?: string;
         discrete?: string;
-    };
-    restriction?: Array<unknown>;
-    bitmap?: Array<unknown>;
+    }> {
+    restriction?: XMLRestriction[];
+    bitmap?: unknown[];
 }
 
 /* ------------------------------------------------------------------------------------------------
@@ -408,7 +415,7 @@ interface ParsedXMLAttribute {
     id: number;
     name: string;
     dataTypeExpr: string;
-    meta?: XMLAttributeDefinition["$"];
+    meta?: XMLAttributeDefinition;
     client?: boolean;
 }
 
@@ -417,14 +424,14 @@ interface ParsedXMLCommand {
     name: string;
     isResponse: boolean;
     parameters: ParsedXMLCommandParameter[];
-    meta?: XMLCommandDefinition["$"];
+    meta?: XMLCommandDefinition;
     client?: boolean;
 }
 
 interface ParsedXMLCommandParameter {
     name: string;
     dataTypeExpr: string;
-    meta?: XMLFieldDefinition["$"];
+    meta?: XMLFieldDefinition;
     isLength?: boolean;
 }
 
@@ -486,7 +493,7 @@ function processClusterSide(
                 }
 
                 const attrName = normalizeAttributeName(a.$.name);
-                const attribute: ParsedXMLAttribute = {id: attrId, name: attrName, dataTypeExpr: mappedDataType, meta: a.$};
+                const attribute: ParsedXMLAttribute = {id: attrId, name: attrName, dataTypeExpr: mappedDataType, meta: a};
 
                 if (isClient) {
                     attribute.client = true;
@@ -532,7 +539,7 @@ function processClusterSide(
                                 parameters.push({
                                     name: `${paramName}Count`,
                                     dataTypeExpr: "DataType.UINT8", // The implicit count is usually UINT8
-                                    meta: fld.$, // Carry over meta for context, but it's for the count
+                                    meta: fld, // Carry over meta for context, but it's for the count
                                     isLength: true,
                                 });
 
@@ -548,7 +555,7 @@ function processClusterSide(
                                 parameters.push({
                                     name: paramName,
                                     dataTypeExpr: mapped,
-                                    meta: fld.$,
+                                    meta: fld,
                                 });
                             } else {
                                 // Original logic for non-arrays or arrays with explicit length fields.
@@ -565,14 +572,14 @@ function processClusterSide(
                                 parameters.push({
                                     name: paramName || `param${paramIndex}`,
                                     dataTypeExpr: mapped,
-                                    meta: fld.$,
+                                    meta: fld,
                                 });
                             }
                         }
                     }
                 }
 
-                const command: ParsedXMLCommand = {id: cmdId, name: cmdName, isResponse: isClient, parameters, meta: cmd.$};
+                const command: ParsedXMLCommand = {id: cmdId, name: cmdName, isResponse: isClient, parameters, meta: cmd};
 
                 if (isClient) {
                     command.client = true;
@@ -892,7 +899,7 @@ function updateAttributes(
 
         // Unified logic to build required properties
         if (xmlAttr.meta) {
-            const meta = xmlAttr.meta;
+            const meta = xmlAttr.meta.$;
 
             if (xmlAttr.client && !existingPropNames.has("client")) {
                 propsToAdd.push(factory.createPropertyAssignment("client", factory.createTrue()));
@@ -923,6 +930,49 @@ function updateAttributes(
                     propsToAdd.push(factory.createPropertyAssignment("default", createSafeNumericLiteral(meta.default, factory)));
                 } else {
                     propsToAdd.push(factory.createPropertyAssignment("default", factory.createStringLiteral(meta.default)));
+                }
+            }
+        }
+
+        if (xmlAttr.meta?.restriction?.[0]) {
+            const restriction = xmlAttr.meta.restriction[0];
+            const restrictionFacets: {name: string; value: string | {name: string; value: string}[] | undefined}[] = [
+                {name: "length", value: restriction["type:length"]?.[0]?.$?.value},
+                {name: "minLength", value: restriction["type:minLength"]?.[0]?.$?.value},
+                {name: "maxLength", value: restriction["type:maxLength"]?.[0]?.$?.value},
+                {name: "minExclusive", value: restriction["type:minExclusive"]?.[0]?.$?.value},
+                {name: "minInclusive", value: restriction["type:minInclusive"]?.[0]?.$?.value},
+                {name: "maxExclusive", value: restriction["type:maxExclusive"]?.[0]?.$?.value},
+                {name: "maxInclusive", value: restriction["type:maxInclusive"]?.[0]?.$?.value},
+                {name: "minInclusiveRef", value: restriction["type:minInclusiveRef"]?.[0]?.$?.ref},
+                {name: "minExclusiveRef", value: restriction["type:minExclusiveRef"]?.[0]?.$?.ref},
+                {name: "maxInclusiveRef", value: restriction["type:maxInclusiveRef"]?.[0]?.$?.ref},
+                {name: "maxExclusiveRef", value: restriction["type:maxExclusiveRef"]?.[0]?.$?.ref},
+                {name: "special", value: restriction["type:special"]?.map((s) => s.$)},
+            ];
+
+            for (const facet of restrictionFacets) {
+                if (facet.value && !existingPropNames.has(facet.name)) {
+                    if (facet.name === "special" && Array.isArray(facet.value)) {
+                        const specialArray = factory.createArrayLiteralExpression(
+                            facet.value.map((s) =>
+                                factory.createArrayLiteralExpression([factory.createStringLiteral(s.name), factory.createStringLiteral(s.value)]),
+                            ),
+                            true,
+                        );
+
+                        propsToAdd.push(factory.createPropertyAssignment(facet.name, specialArray));
+                    } else if (typeof facet.value === "string") {
+                        if (facet.name.endsWith("Ref")) {
+                            propsToAdd.push(factory.createPropertyAssignment(facet.name, factory.createStringLiteral(facet.value)));
+                        } else {
+                            if (facet.name === "minLength" && facet.value === "0") {
+                                continue;
+                            }
+
+                            propsToAdd.push(factory.createPropertyAssignment(facet.name, createSafeNumericLiteral(facet.value, factory)));
+                        }
+                    }
                 }
             }
         }
@@ -1169,8 +1219,10 @@ function updateCommands(
                     factory.createPropertyAssignment("type", typeIdentifier),
                 ];
 
-                if (xmlParam.meta?.arrayLengthSize) {
-                    paramProps.push(factory.createPropertyAssignment("arrayLengthSize", factory.createNumericLiteral(xmlParam.meta.arrayLengthSize)));
+                if (xmlParam.meta?.$.arrayLengthSize) {
+                    paramProps.push(
+                        factory.createPropertyAssignment("arrayLengthSize", factory.createNumericLiteral(xmlParam.meta.$.arrayLengthSize)),
+                    );
                 }
 
                 newParams.push(factory.createObjectLiteralExpression(paramProps, true));
@@ -1181,7 +1233,7 @@ function updateCommands(
                 factory.createPropertyAssignment("parameters", factory.createArrayLiteralExpression(newParams, true)),
             ];
 
-            if (xmlCmd.meta?.required === "true") {
+            if (xmlCmd.meta?.$.required === "true") {
                 cmdProps.push(factory.createPropertyAssignment("required", factory.createTrue()));
             }
 
@@ -1274,12 +1326,12 @@ async function main(): Promise<void> {
     for (const d of parsedData) {
         // Resolve defaultRefs here, before mapping
         for (const attr of d.attributes) {
-            if (attr.meta?.defaultRef) {
-                const refName = normalizeAttributeName(attr.meta.defaultRef);
+            if (attr.meta?.$.defaultRef) {
+                const refName = normalizeAttributeName(attr.meta.$.defaultRef);
                 const referencedAttr = d.attributes.find((a) => a.name === refName);
 
-                if (referencedAttr?.meta?.default) {
-                    attr.meta.default = referencedAttr.meta.default;
+                if (referencedAttr?.meta?.$.default != null) {
+                    attr.meta.$.default = referencedAttr.meta.$.default;
                 }
             }
         }
@@ -1343,14 +1395,9 @@ async function main(): Promise<void> {
         tsClustersMissingFromXml: validation.tsClustersMissingFromXml,
         warnings: validation.warnings,
         errors: validation.errors,
-        timestamp: new Date().toISOString(),
     };
 
-    try {
-        await fs.writeFile("scripts/zap-update-clusters-report.json", JSON.stringify(report, null, 2), "utf8");
-    } catch (e) {
-        console.error(`Failed writing report JSON: ${(e as Error).message}`);
-    }
+    await fs.writeFile("scripts/zap-update-clusters-report.json", JSON.stringify(report, null, 2), "utf8");
 }
 
 main().catch((err) => {
