@@ -162,7 +162,7 @@ interface Restrictions {
     maxExclusive?: number;
     /** sets a maximum that includes the value specified, i.e. a field of this type must be less than or equal to the value */
     maxInclusive?: number;
-    /** species an invalid value as defined in the Zigbee specification */
+    /** For some data types of fields, a specific value is defined to indicate the data contained is invalid / unused / absent / ignored. */
     invalid?: number | string;
     /** sets a minimum that is based on the value of the referenced attribute. The value of the referenced attribute is included in the range */
     minInclusiveRef?: string;
@@ -173,7 +173,9 @@ interface Restrictions {
     /** sets a maximum that is based on the value of the referenced attribute. The value of the referenced attribute is excluded from the range */
     maxExclusiveRef?: string;
     /**
-     * specifies a special value, see the Special Values section below.
+     * In some cases, a special value is defined by the Zigbee specification.
+     * In these cases, the special value along with a descriptor should be defined using this tag.
+     * Special values take precedence over other restrictions imposed (e.g. a special value may fall outside the min/max range for the attribute).
      * `value` is kept as string for easier handling (will be checked on spot if used anyway) though most often is a hex number string (without 0x)
      */
     special?: [name: string, value: string][];
