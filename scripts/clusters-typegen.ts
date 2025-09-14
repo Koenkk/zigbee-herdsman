@@ -42,7 +42,7 @@ const namedImports = ts.factory.createImportDeclaration(
             ts.factory.createImportSpecifier(false, undefined, ts.factory.createIdentifier("TuyaDataPointValue")),
             ts.factory.createImportSpecifier(false, undefined, ts.factory.createIdentifier("ZclArray")),
             // ts.factory.createImportSpecifier(false, undefined, ts.factory.createIdentifier("ZclDate")), // XXX: currently unused
-            ts.factory.createImportSpecifier(false, undefined, ts.factory.createIdentifier("ZclTimeOfDay")),
+            // ts.factory.createImportSpecifier(false, undefined, ts.factory.createIdentifier("ZclTimeOfDay")), // XXX: currently unused
             ts.factory.createImportSpecifier(false, undefined, ts.factory.createIdentifier("ZoneInfo")),
         ]),
     ),
@@ -144,9 +144,23 @@ const getTypeFromDataType = (dataType: DataType | BuffaloZclDataType): ts.TypeNo
     }
 };
 
+const getPropertyStr = (key: string, val: unknown, padId = 4) => {
+    let valStr = `${val}`;
+
+    if (key === "ID") {
+        valStr = `0x${Number(val).toString(16).padStart(padId, "0")}`;
+    } else if (key === "type") {
+        valStr = `${DataType[val as number] ?? BuffaloZclDataType[val as number]}`;
+    } else if (key === "manufacturerCode") {
+        valStr = `${ManufacturerCode[val as number]} (${val})`;
+    }
+
+    return valStr;
+};
+
 const getConditionStr = (conditions: ParameterDefinition["conditions"]): string | undefined => {
     if (conditions) {
-        let str = ", Conditions: [";
+        let str = "conditions=[";
 
         for (const condition of conditions) {
             str += `{${condition.type}`;
@@ -182,11 +196,13 @@ const addAttributes = (attributes: Readonly<Record<string, Readonly<AttributeDef
 
         elements.push(element);
 
-        let comment = `* ID: ${attribute.ID} | Type: ${DataType[attribute.type] ?? BuffaloZclDataType[attribute.type]} `;
+        const commentChunks: string[] = [];
 
-        if (attribute.manufacturerCode !== undefined) {
-            comment += `| Specific to manufacturer: ${ManufacturerCode[attribute.manufacturerCode]} (${attribute.manufacturerCode}) `;
+        for (const key in attribute) {
+            commentChunks.push(`${key}=${getPropertyStr(key, attribute[key as keyof typeof attribute], 4)}`);
         }
+
+        const comment = `* ${commentChunks.join(" | ")} `;
 
         ts.addSyntheticLeadingComment(element, ts.SyntaxKind.MultiLineCommentTrivia, comment, true);
     }
@@ -213,15 +229,22 @@ const addCommands = (commands: Readonly<Record<string, Readonly<CommandDefinitio
                     parameter.conditions ? ts.factory.createToken(ts.SyntaxKind.QuestionToken) : undefined,
                     paramType,
                 );
+
                 const conditionComment = getConditionStr(parameter.conditions);
+                const commentChunks: string[] = [];
+
+                for (const key in parameter) {
+                    if (key === "name" || key === "conditions") {
+                        continue;
+                    }
+
+                    commentChunks.push(`${key}=${getPropertyStr(key, parameter[key as keyof typeof parameter])}`);
+                }
+
+                const comment = `* ${commentChunks.join(" | ")}${conditionComment ? ` | ${conditionComment}` : ""} `;
 
                 cmdElements.push(cmdElement);
-                ts.addSyntheticLeadingComment(
-                    cmdElement,
-                    ts.SyntaxKind.MultiLineCommentTrivia,
-                    `* Type: ${DataType[parameter.type] ?? BuffaloZclDataType[parameter.type]}${conditionComment ?? ""} `,
-                    true,
-                );
+                ts.addSyntheticLeadingComment(cmdElement, ts.SyntaxKind.MultiLineCommentTrivia, comment, true);
             } else if (
                 // @ts-expect-error bad typing?
                 existing.type?.typeName?.escapedText &&
@@ -252,11 +275,17 @@ const addCommands = (commands: Readonly<Record<string, Readonly<CommandDefinitio
 
         elements.push(element);
 
-        let comment = `* ID: ${command.ID} `;
+        const commentChunks: string[] = [];
 
-        if (command.response !== undefined) {
-            comment += `| Response ID: ${command.response} `;
+        for (const key in command) {
+            if (key === "parameters") {
+                continue;
+            }
+
+            commentChunks.push(`${key}=${getPropertyStr(key, command[key as keyof typeof command], 2)}`);
         }
+
+        const comment = `* ${commentChunks.join(" | ")} `;
 
         ts.addSyntheticLeadingComment(element, ts.SyntaxKind.MultiLineCommentTrivia, comment, true);
     }
