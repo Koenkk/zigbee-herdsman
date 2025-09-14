@@ -217,7 +217,7 @@ async function collectFromLibrary(libraryFile: string): Promise<{includeFiles: s
     return {includeFiles, libraryTypes};
 }
 
-async function parseXMLCluster(file: string): Promise<XMLCluster[]> {
+async function parseXMLClusters(file: string): Promise<XMLCluster[]> {
     const text = await fs.readFile(file, "utf8");
 
     const parsed = (await parseStringPromise(text, {
@@ -229,17 +229,23 @@ async function parseXMLCluster(file: string): Promise<XMLCluster[]> {
 
     const clusters: XMLCluster[] = [];
     const baseClusters = parsed["zcl:cluster"];
-    const derivedClusters = parsed["zcl:derivedCluster"];
+    // const derivedClusters = parsed["zcl:derivedCluster"];
 
     if (baseClusters) {
-        const baseClustersArray = Array.isArray(baseClusters) ? baseClusters : [baseClusters];
-        clusters.push(...baseClustersArray);
+        if (Array.isArray(baseClusters)) {
+            clusters.push(...baseClusters);
+        } else {
+            clusters.push(baseClusters);
+        }
     }
 
-    if (derivedClusters) {
-        const derivedClustersArray = Array.isArray(derivedClusters) ? derivedClusters : [derivedClusters];
-        clusters.push(...derivedClustersArray);
-    }
+    // if (derivedClusters) {
+    //     if (Array.isArray(derivedClusters)) {
+    //         clusters.push(...derivedClusters);
+    //     } else {
+    //         clusters.push(derivedClusters);
+    //     }
+    // }
 
     return clusters;
 }
@@ -1421,7 +1427,7 @@ async function main(): Promise<void> {
                 continue;
             }
             try {
-                const clusters = await parseXMLCluster(f);
+                const clusters = await parseXMLClusters(f);
                 allXmlClusters.push(...clusters);
             } catch (e) {
                 validation.errors.push(`Failed parsing XML ${f}: ${(e as Error).message}`);
