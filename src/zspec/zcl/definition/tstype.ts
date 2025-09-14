@@ -151,27 +151,25 @@ interface Restrictions {
     /** specifies an exact length, generally used for a string. */
     length?: number;
     /** specifies the minimum length that a type must take, generally used for a string or a list/array */
-    minLength?: number;
+    minLen?: number;
     /** specifies the maximum length that a type must take, generally used for a string or a list/array */
-    maxLength?: number;
+    maxLen?: number;
     /** sets a minimum that doesn't include the value specified, i.e. a field of this type must be strictly greater than the value */
-    minExclusive?: number;
+    minExcl?: number;
     /** sets a minimum that includes the value specified, i.e. a field of this type must be greater than or equal than the value */
-    minInclusive?: number;
+    min?: number;
     /** sets a maximum that doesn't include the value specified, i.e. a field of this type must be strictly less than the value */
-    maxExclusive?: number;
+    maxExcl?: number;
     /** sets a maximum that includes the value specified, i.e. a field of this type must be less than or equal to the value */
-    maxInclusive?: number;
-    /** For some data types of fields, a specific value is defined to indicate the data contained is invalid / unused / absent / ignored. */
-    invalid?: number | string;
+    max?: number;
     /** sets a minimum that is based on the value of the referenced attribute. The value of the referenced attribute is included in the range */
-    minInclusiveRef?: string;
+    minRef?: string;
     /** sets a minimum that is based on the value of the referenced attribute. The value of the referenced attribute is excluded from the range */
-    minExclusiveRef?: string;
+    minExclRef?: string;
     /** sets a maximum that is based on the value of the referenced attribute. The value of the referenced attribute is included in the range */
-    maxInclusiveRef?: string;
+    maxRef?: string;
     /** sets a maximum that is based on the value of the referenced attribute. The value of the referenced attribute is excluded from the range */
-    maxExclusiveRef?: string;
+    maxExclRef?: string;
     /**
      * In some cases, a special value is defined by the Zigbee specification.
      * In these cases, the special value along with a descriptor should be defined using this tag.
@@ -204,10 +202,6 @@ export interface Attribute extends Restrictions {
     sceneRequired?: true;
     /** If the attribute is mandatory. Defaults to false */
     required?: true;
-    /** A decimal integer specifying the min value (inclusive). Not for use on strings, use minLength restriction instead. Defaults to 0 */
-    min?: number;
-    /** A decimal integer specifiying the max value (inclusive). Not for use on strings, use maxLength restriction instead. No Default. */
-    max?: number;
     /** Specifies the default value of an attribute. No Default */
     default?: number | string;
     /** Specifies that the default value of the attribute takes the value of the referenced attribute. Must be another attriibute in this cluster. Referenced by name, schema forces this during validation. */
