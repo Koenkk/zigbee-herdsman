@@ -218,6 +218,7 @@ export interface Parameter extends Restrictions {
     name: string;
     type: DataType | BuffaloZclDataType;
     arrayLengthSize?: number;
+    arrayLengthField?: string;
 }
 
 /**

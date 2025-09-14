@@ -415,7 +415,7 @@ function findBestFuzzyAttrMatch(
     }
 
     let bestMatch: {score: number; attribute: ParsedXMLAttribute | undefined} = {score: -1, attribute: undefined};
-    const normalizedRefName = normalizeAttributeName(refName);
+    const normalizedRefName = normalizeName(refName);
 
     for (const candidate of candidates) {
         const score = fuzzyMatch(normalizedRefName, candidate.name);
@@ -448,7 +448,7 @@ function findBestFuzzyParamMatch(
     }
 
     let bestMatch: {score: number; parameter: ParsedXMLCommandParameter | undefined} = {score: -1, parameter: undefined};
-    const normalizedRefName = normalizeAttributeName(refName);
+    const normalizedRefName = normalizeName(refName);
 
     for (const candidate of candidates) {
         const score = fuzzyMatch(normalizedRefName, candidate.name);
@@ -505,7 +505,8 @@ interface ParsedXMLCommandParameter {
     isLength?: boolean;
 }
 
-function normalizeAttributeName(name: string): string {
+/** camelCase name for use with parameters `name` or attribute name (property key) */
+function normalizeName(name: string): string {
     if (!name) {
         return name;
     }
@@ -562,7 +563,7 @@ function processClusterSide(
                     validation.unknownTypes.add(attrTypeShortRaw);
                 }
 
-                const attrName = normalizeAttributeName(a.$.name);
+                const attrName = normalizeName(a.$.name);
                 const attribute: ParsedXMLAttribute = {id: attrId, name: attrName, dataTypeExpr: mappedDataType, meta: a};
 
                 if (isClient) {
@@ -585,7 +586,7 @@ function processClusterSide(
 
                 const cmdId = parseAttributeOrCommandId(cmd.$.id);
                 const cmdNameRaw = cmd.$.name;
-                const cmdName = normalizeAttributeName(cmdNameRaw);
+                const cmdName = normalizeName(cmdNameRaw);
                 const parameters: ParsedXMLCommandParameter[] = [];
 
                 if (cmd.fields && cmd.fields.length > 0) {
@@ -593,7 +594,7 @@ function processClusterSide(
 
                     if (fields) {
                         for (const [paramIndex, fld] of fields.entries()) {
-                            const paramName = normalizeAttributeName(fld.$.name);
+                            const paramName = normalizeName(fld.$.name);
                             const typeShortRaw = fld.$.type.trim().toLowerCase();
                             const baseShort = resolver.resolve(typeShortRaw);
                             let mapped = mapZclTypeToDataType(baseShort);
@@ -763,6 +764,26 @@ function createSafeNumericLiteral(value: string | number, factory: ts.NodeFactor
     return factory.createNumericLiteral(num);
 }
 
+function getExistingTsAttributeNames(attributesProp: ts.PropertyAssignment | undefined): Map<number, string> {
+    const existingTsNames = new Map<number, string>();
+
+    if (!attributesProp || !ts.isObjectLiteralExpression(attributesProp.initializer)) {
+        return existingTsNames;
+    }
+
+    for (const attr of attributesProp.initializer.properties) {
+        if (ts.isPropertyAssignment(attr)) {
+            const id = extractNumericId(attr);
+
+            if (id !== undefined && ts.isIdentifier(attr.name) && !existingTsNames.has(id)) {
+                existingTsNames.set(id, attr.name.text);
+            }
+        }
+    }
+
+    return existingTsNames;
+}
+
 function createUpdateTransformer(
     xmlClusterData: Map<number, ParsedXMLClusterData>,
     validation: ValidationRecord,
@@ -812,6 +833,16 @@ function createUpdateTransformer(
 
                     let changed = false;
                     const newSubProps: ts.ObjectLiteralElementLike[] = [];
+                    const subPropsMap = new Map<string, ts.PropertyAssignment>();
+
+                    for (const subProp of prop.initializer.properties) {
+                        if (ts.isPropertyAssignment(subProp) && ts.isIdentifier(subProp.name)) {
+                            subPropsMap.set(subProp.name.text, subProp);
+                        }
+                    }
+
+                    const attributesProp = subPropsMap.get("attributes");
+                    const existingTsAttributeNames = getExistingTsAttributeNames(attributesProp);
 
                     for (const subProp of prop.initializer.properties) {
                         if (!ts.isPropertyAssignment(subProp) || !ts.isIdentifier(subProp.name)) {
@@ -832,9 +863,25 @@ function createUpdateTransformer(
                         if (subPropName === "attributes") {
                             updatedProp = updateAttributes(subProp, xmlCluster.attributes, factory, validation);
                         } else if (subPropName === "commands") {
-                            updatedProp = updateCommands(subProp, xmlCluster.serverCommands, false, factory, validation);
+                            updatedProp = updateCommands(
+                                subProp,
+                                xmlCluster.serverCommands,
+                                xmlCluster.attributes,
+                                existingTsAttributeNames,
+                                false,
+                                factory,
+                                validation,
+                            );
                         } else if (subPropName === "commandsResponse") {
-                            updatedProp = updateCommands(subProp, xmlCluster.clientCommands, true, factory, validation);
+                            updatedProp = updateCommands(
+                                subProp,
+                                xmlCluster.clientCommands,
+                                xmlCluster.attributes,
+                                existingTsAttributeNames,
+                                true,
+                                factory,
+                                validation,
+                            );
                         }
 
                         if (updatedProp && updatedProp !== subProp) {
@@ -1018,9 +1065,13 @@ function updateAttributes(
                 const otherAttributes = xmlAttributes.filter((a) => a.id !== xmlAttr.id);
                 const matched = findBestFuzzyAttrMatch(meta.defaultRef, otherAttributes, existingTsNames, factory);
 
-                if (matched) {
-                    propsToAdd.push(factory.createPropertyAssignment("defaultRef", matched));
+                if (!matched) {
+                    console.log(`\x1b[31mCould not find match for attribute ${meta.defaultRef}.\x1b[0m`);
                 }
+
+                propsToAdd.push(
+                    factory.createPropertyAssignment("defaultRef", matched ?? factory.createStringLiteral(normalizeName(meta.defaultRef))),
+                );
             }
         }
 
@@ -1056,9 +1107,14 @@ function updateAttributes(
                     } else if (typeof facet.value === "string") {
                         if (facet.isRef) {
                             const matched = findBestFuzzyAttrMatch(facet.value, otherAttributes, existingTsNames, factory);
-                            if (matched) {
-                                propsToAdd.push(factory.createPropertyAssignment(facet.name, matched));
+
+                            if (!matched) {
+                                console.log(`\x1b[31mCould not find match for attribute ${facet.value}.\x1b[0m`);
                             }
+
+                            propsToAdd.push(
+                                factory.createPropertyAssignment(facet.name, matched ?? factory.createStringLiteral(normalizeName(facet.value))),
+                            );
                         } else {
                             if (facet.name === "minLength" && facet.value === "0") {
                                 continue;
@@ -1139,6 +1195,8 @@ function updateAttributes(
 function updateCommands(
     commandsProp: ts.PropertyAssignment,
     xmlCommands: ParsedXMLCommand[],
+    xmlAttributes: ParsedXMLAttribute[],
+    existingTsAttributeNames: Map<number, string>,
     isResponse: boolean,
     factory: ts.NodeFactory,
     validation: ValidationRecord,
@@ -1170,6 +1228,8 @@ function updateCommands(
         }
     }
 
+    const processedTsNodes = new Set<ts.PropertyAssignment>();
+
     for (const xmlCmd of xmlCommandsForScope) {
         const existingCmdNodes = existingCommandIds.get(xmlCmd.id);
         let existingCmdNode: ts.PropertyAssignment | undefined;
@@ -1197,6 +1257,7 @@ function updateCommands(
         let finalNode: ts.PropertyAssignment;
 
         if (existingCmdNode) {
+            processedTsNodes.add(existingCmdNode);
             // An existing command was found. Preserve its properties.
             const existingCmdInitializer = existingCmdNode.initializer as ts.ObjectLiteralExpression;
             const newProps = new Map<string, ts.PropertyAssignment>();
@@ -1261,10 +1322,27 @@ function updateCommands(
                             existingParamProps.set("type", factory.createPropertyAssignment("type", typeIdentifier));
                         }
 
+                        const otherParams = xmlCmd.parameters.filter((_p, index) => index !== i);
+
+                        if (xmlParam.meta?.$.arrayLengthField && !existingParamPropNames.has("arrayLengthField")) {
+                            const matched = findBestFuzzyParamMatch(xmlParam.meta.$.arrayLengthField, otherParams, existingTsParamNames, factory);
+
+                            if (!matched) {
+                                console.log(`\x1b[31mCould not find match for parameter ${xmlParam.meta.$.arrayLengthField}.\x1b[0m`);
+                            }
+
+                            existingParamProps.set(
+                                "arrayLengthField",
+                                factory.createPropertyAssignment(
+                                    "arrayLengthField",
+                                    matched ?? factory.createStringLiteral(normalizeName(xmlParam.meta.$.arrayLengthField)),
+                                ),
+                            );
+                        }
+
                         // Add restrictions for existing params
                         if (xmlParam.meta?.restriction?.[0]) {
                             const restriction = xmlParam.meta.restriction[0];
-                            const otherParams = xmlCmd.parameters.filter((_p, index) => index !== i);
                             const restrictionFacets: {
                                 name: string;
                                 value: string | {name: string; value: string}[] | undefined;
@@ -1300,10 +1378,23 @@ function updateCommands(
                                         existingParamProps.set(facet.name, factory.createPropertyAssignment(facet.name, specialArray));
                                     } else if (typeof facet.value === "string") {
                                         if (facet.isRef) {
-                                            const matched = findBestFuzzyParamMatch(facet.value, otherParams, existingTsParamNames, factory);
-                                            if (matched) {
-                                                existingParamProps.set(facet.name, factory.createPropertyAssignment(facet.name, matched));
+                                            let matched = findBestFuzzyAttrMatch(facet.value, xmlAttributes, existingTsAttributeNames, factory);
+
+                                            if (!matched) {
+                                                matched = findBestFuzzyParamMatch(facet.value, otherParams, existingTsParamNames, factory);
                                             }
+
+                                            if (!matched) {
+                                                console.log(`\x1b[31mCould not find match for ref ${facet.value}.\x1b[0m`);
+                                            }
+
+                                            existingParamProps.set(
+                                                facet.name,
+                                                factory.createPropertyAssignment(
+                                                    facet.name,
+                                                    matched ?? factory.createStringLiteral(normalizeName(facet.value)),
+                                                ),
+                                            );
                                         } else {
                                             // a few entries are in hex form like "fd", this is obviously flawed, entries that are too complex should be overriden instead
                                             if (facet.value.match(/^[0-9]+$/)) {
@@ -1342,6 +1433,28 @@ function updateCommands(
                         factory.createPropertyAssignment("type", typeIdentifier),
                     ];
 
+                    if (xmlParam.meta?.$.arrayLengthSize) {
+                        paramProps.push(
+                            factory.createPropertyAssignment("arrayLengthSize", factory.createNumericLiteral(xmlParam.meta.$.arrayLengthSize)),
+                        );
+                    }
+
+                    if (xmlParam.meta?.$.arrayLengthField) {
+                        const otherParams = xmlCmd.parameters.filter((p) => p.name !== xmlParam.name);
+                        const matched = findBestFuzzyParamMatch(xmlParam.meta.$.arrayLengthField, otherParams, existingTsParamNames, factory);
+
+                        if (!matched) {
+                            console.log(`\x1b[31mCould not find match for parameter ${xmlParam.meta.$.arrayLengthField}.\x1b[0m`);
+                        }
+
+                        paramProps.push(
+                            factory.createPropertyAssignment(
+                                "arrayLengthField",
+                                matched ?? factory.createStringLiteral(normalizeName(xmlParam.meta.$.arrayLengthField)),
+                            ),
+                        );
+                    }
+
                     newParams.push(factory.createObjectLiteralExpression(paramProps, true));
                 }
             }
@@ -1359,16 +1472,6 @@ function updateCommands(
             // Rebuild the command with the preserved and updated properties.
             const updatedInitializer = factory.updateObjectLiteralExpression(existingCmdInitializer, Array.from(newProps.values()));
             finalNode = factory.updatePropertyAssignment(existingCmdNode, commandName, updatedInitializer);
-
-            const nodesForId = existingCommandIds.get(xmlCmd.id);
-
-            if (nodesForId) {
-                const index = nodesForId.indexOf(existingCmdNode);
-
-                if (index > -1) {
-                    nodesForId.splice(index, 1);
-                }
-            }
         } else {
             // A new command is being added. Build it from scratch.
             validation.addedCommands.push(`0x${xmlCmd.id.toString(16).padStart(2, "0")} ${xmlCmd.name}`);
@@ -1393,6 +1496,22 @@ function updateCommands(
                     );
                 }
 
+                if (xmlParam.meta?.$.arrayLengthField) {
+                    const otherParams = xmlCmd.parameters.filter((p) => p.name !== xmlParam.name);
+                    const matched = findBestFuzzyParamMatch(xmlParam.meta.$.arrayLengthField, otherParams, new Map(), factory);
+
+                    if (!matched) {
+                        console.log(`\x1b[31mCould not find match for parameter ${xmlParam.meta.$.arrayLengthField}.\x1b[0m`);
+                    }
+
+                    paramProps.push(
+                        factory.createPropertyAssignment(
+                            "arrayLengthField",
+                            matched ?? factory.createStringLiteral(normalizeName(xmlParam.meta.$.arrayLengthField)),
+                        ),
+                    );
+                }
+
                 newParams.push(factory.createObjectLiteralExpression(paramProps, true));
             }
 
@@ -1414,7 +1533,9 @@ function updateCommands(
     // Add back any TS-only commands
     for (const tsOnlyCmds of existingCommandIds.values()) {
         for (const tsOnlyCmd of tsOnlyCmds) {
-            finalCommands.push(tsOnlyCmd);
+            if (!processedTsNodes.has(tsOnlyCmd)) {
+                finalCommands.push(tsOnlyCmd);
+            }
         }
     }
 
