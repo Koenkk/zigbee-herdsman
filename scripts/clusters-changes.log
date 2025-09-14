@@ -1,4 +1,4 @@
-Comparison complete. Found 3 changes.
+Comparison complete. Found 123 changes.
 Compared:
   - OLD: D:\Dev\FORKS\zigbee-herdsman\src\zspec\zcl\definition\cluster-old.ts
   - NEW: D:\Dev\FORKS\zigbee-herdsman\src\zspec\zcl\definition\cluster.ts
@@ -8,4 +8,124 @@ Compared:
 [CHANGED] Clusters > closuresShadeCfg > attributes > mode > ID: 18 (0x0012) -> 17 (0x0011)
 [CHANGED] Clusters > closuresDoorLock > attributes > lockType > ID: 38 (0x0026) -> 1 (0x0001)
 
+[ADDED]   Clusters > genPowerCfg > attributes > battery2Voltage: 64 (0x0040)
+[ADDED]   Clusters > genPowerCfg > attributes > battery2PercentageRemaining: 65 (0x0041)
+[ADDED]   Clusters > genPowerCfg > attributes > battery2Manufacturer: 80 (0x0050)
+[ADDED]   Clusters > genPowerCfg > attributes > battery2Size: 81 (0x0051)
+[ADDED]   Clusters > genPowerCfg > attributes > battery2AHrRating: 82 (0x0052)
+[ADDED]   Clusters > genPowerCfg > attributes > battery2Quantity: 83 (0x0053)
+[ADDED]   Clusters > genPowerCfg > attributes > battery2RatedVoltage: 84 (0x0054)
+[ADDED]   Clusters > genPowerCfg > attributes > battery2AlarmMask: 85 (0x0055)
+[ADDED]   Clusters > genPowerCfg > attributes > battery2VoltageMinThreshold: 86 (0x0056)
+[ADDED]   Clusters > genPowerCfg > attributes > battery2VoltageThreshold1: 87 (0x0057)
+[ADDED]   Clusters > genPowerCfg > attributes > battery2VoltageThreshold2: 88 (0x0058)
+[ADDED]   Clusters > genPowerCfg > attributes > battery2VoltageThreshold3: 89 (0x0059)
+[ADDED]   Clusters > genPowerCfg > attributes > battery2PercentageMinThreshold: 90 (0x005a)
+[ADDED]   Clusters > genPowerCfg > attributes > battery2PercentageThreshold1: 91 (0x005b)
+[ADDED]   Clusters > genPowerCfg > attributes > battery2PercentageThreshold2: 92 (0x005c)
+[ADDED]   Clusters > genPowerCfg > attributes > battery2PercentageThreshold3: 93 (0x005d)
+[ADDED]   Clusters > genPowerCfg > attributes > battery2AlarmState: 94 (0x005e)
+[ADDED]   Clusters > genPowerCfg > attributes > battery3Voltage: 96 (0x0060)
+[ADDED]   Clusters > genPowerCfg > attributes > battery3PercentageRemaining: 97 (0x0061)
+[ADDED]   Clusters > genPowerCfg > attributes > battery3Manufacturer: 112 (0x0070)
+[ADDED]   Clusters > genPowerCfg > attributes > battery3Size: 113 (0x0071)
+[ADDED]   Clusters > genPowerCfg > attributes > battery3AHrRating: 114 (0x0072)
+[ADDED]   Clusters > genPowerCfg > attributes > battery3Quantity: 115 (0x0073)
+[ADDED]   Clusters > genPowerCfg > attributes > battery3RatedVoltage: 116 (0x0074)
+[ADDED]   Clusters > genPowerCfg > attributes > battery3AlarmMask: 117 (0x0075)
+[ADDED]   Clusters > genPowerCfg > attributes > battery3VoltageMinThreshold: 118 (0x0076)
+[ADDED]   Clusters > genPowerCfg > attributes > battery3VoltageThreshold1: 119 (0x0077)
+[ADDED]   Clusters > genPowerCfg > attributes > battery3VoltageThreshold2: 120 (0x0078)
+[ADDED]   Clusters > genPowerCfg > attributes > battery3VoltageThreshold3: 121 (0x0079)
+[ADDED]   Clusters > genPowerCfg > attributes > battery3PercentageMinThreshold: 122 (0x007a)
+[ADDED]   Clusters > genPowerCfg > attributes > battery3PercentageThreshold1: 123 (0x007b)
+[ADDED]   Clusters > genPowerCfg > attributes > battery3PercentageThreshold2: 124 (0x007c)
+[ADDED]   Clusters > genPowerCfg > attributes > battery3PercentageThreshold3: 125 (0x007d)
+[ADDED]   Clusters > genPowerCfg > attributes > battery3AlarmState: 126 (0x007e)
+[ADDED]   Clusters > genScenes > commands > recall > parameters > transitionTime
+[ADDED]   Clusters > genLevelCtrl > attributes > currentFrequency: 4 (0x0004)
+[ADDED]   Clusters > genLevelCtrl > attributes > minFrequency: 5 (0x0005)
+[ADDED]   Clusters > genLevelCtrl > attributes > maxFrequency: 6 (0x0006)
+[ADDED]   Clusters > genLevelCtrl > commands > moveToLevel > parameters > optionsMask
+[ADDED]   Clusters > genLevelCtrl > commands > moveToLevel > parameters > optionsOverride
+[ADDED]   Clusters > genLevelCtrl > commands > move > parameters > optionsMask
+[ADDED]   Clusters > genLevelCtrl > commands > move > parameters > optionsOverride
+[ADDED]   Clusters > genLevelCtrl > commands > step > parameters > optionsMask
+[ADDED]   Clusters > genLevelCtrl > commands > step > parameters > optionsOverride
+[ADDED]   Clusters > genLevelCtrl > commands > stop > parameters > optionsMask
+[ADDED]   Clusters > genLevelCtrl > commands > stop > parameters > optionsOverride
+[ADDED]   Clusters > genLevelCtrl > commands > moveToLevelWithOnOff > parameters > optionsMask
+[ADDED]   Clusters > genLevelCtrl > commands > moveToLevelWithOnOff > parameters > optionsOverride
+[ADDED]   Clusters > genLevelCtrl > commands > moveWithOnOff > parameters > optionsMask
+[ADDED]   Clusters > genLevelCtrl > commands > moveWithOnOff > parameters > optionsOverride
+[ADDED]   Clusters > genLevelCtrl > commands > stepWithOnOff > parameters > optionsMask
+[ADDED]   Clusters > genLevelCtrl > commands > stepWithOnOff > parameters > optionsOverride
+[ADDED]   Clusters > genLevelCtrl > commands > stopWithOnOff > parameters > optionsMask
+[ADDED]   Clusters > genLevelCtrl > commands > stopWithOnOff > parameters > optionsOverride
+[ADDED]   Clusters > genLevelCtrl > commands > moveToClosestFrequency: 8 (0x0008)
+[ADDED]   Clusters > genOta > attributes > upgradeActivationPolicy: 11 (0x000b)
+[ADDED]   Clusters > genOta > attributes > upgradeTimeoutPolicy: 12 (0x000c)
+[ADDED]   Clusters > genPollCtrl > commandsResponse > checkin > parameters > startFastPolling
+[ADDED]   Clusters > genPollCtrl > commandsResponse > checkin > parameters > fastPollTimeout
+[ADDED]   Clusters > genPollCtrl > commandsResponse > fastPollStop: 1 (0x0001)
+[ADDED]   Clusters > genPollCtrl > commandsResponse > setLongPollInterval: 2 (0x0002)
+[ADDED]   Clusters > genPollCtrl > commandsResponse > setShortPollInterval: 3 (0x0003)
 [ADDED]   Clusters > closuresDoorLock > attributes > supportedOperatingModes: 38 (0x0026)
+[ADDED]   Clusters > hvacThermostat > attributes > occupiedSetback: 52 (0x0034)
+[ADDED]   Clusters > hvacThermostat > attributes > occupiedSetbackMin: 53 (0x0035)
+[ADDED]   Clusters > hvacThermostat > attributes > occupiedSetbackMax: 54 (0x0036)
+[ADDED]   Clusters > hvacThermostat > attributes > unoccupiedSetback: 55 (0x0037)
+[ADDED]   Clusters > hvacThermostat > attributes > unoccupiedSetbackMin: 56 (0x0038)
+[ADDED]   Clusters > hvacThermostat > attributes > unoccupiedSetbackMax: 57 (0x0039)
+[ADDED]   Clusters > hvacThermostat > attributes > emergencyHeatDelta: 58 (0x003a)
+[ADDED]   Clusters > lightingColorCtrl > commands > moveToHue > parameters > optionsMask
+[ADDED]   Clusters > lightingColorCtrl > commands > moveToHue > parameters > optionsOverride
+[ADDED]   Clusters > lightingColorCtrl > commands > moveHue > parameters > optionsMask
+[ADDED]   Clusters > lightingColorCtrl > commands > moveHue > parameters > optionsOverride
+[ADDED]   Clusters > lightingColorCtrl > commands > stepHue > parameters > optionsMask
+[ADDED]   Clusters > lightingColorCtrl > commands > stepHue > parameters > optionsOverride
+[ADDED]   Clusters > lightingColorCtrl > commands > moveToSaturation > parameters > optionsMask
+[ADDED]   Clusters > lightingColorCtrl > commands > moveToSaturation > parameters > optionsOverride
+[ADDED]   Clusters > lightingColorCtrl > commands > moveSaturation > parameters > optionsMask
+[ADDED]   Clusters > lightingColorCtrl > commands > moveSaturation > parameters > optionsOverride
+[ADDED]   Clusters > lightingColorCtrl > commands > stepSaturation > parameters > optionsMask
+[ADDED]   Clusters > lightingColorCtrl > commands > stepSaturation > parameters > optionsOverride
+[ADDED]   Clusters > lightingColorCtrl > commands > moveToHueAndSaturation > parameters > optionsMask
+[ADDED]   Clusters > lightingColorCtrl > commands > moveToHueAndSaturation > parameters > optionsOverride
+[ADDED]   Clusters > lightingColorCtrl > commands > moveToColor > parameters > optionsMask
+[ADDED]   Clusters > lightingColorCtrl > commands > moveToColor > parameters > optionsOverride
+[ADDED]   Clusters > lightingColorCtrl > commands > moveColor > parameters > optionsMask
+[ADDED]   Clusters > lightingColorCtrl > commands > moveColor > parameters > optionsOverride
+[ADDED]   Clusters > lightingColorCtrl > commands > stepColor > parameters > optionsMask
+[ADDED]   Clusters > lightingColorCtrl > commands > stepColor > parameters > optionsOverride
+[ADDED]   Clusters > lightingColorCtrl > commands > moveToColorTemp > parameters > optionsMask
+[ADDED]   Clusters > lightingColorCtrl > commands > moveToColorTemp > parameters > optionsOverride
+[ADDED]   Clusters > lightingColorCtrl > commands > enhancedMoveToHue > parameters > optionsMask
+[ADDED]   Clusters > lightingColorCtrl > commands > enhancedMoveToHue > parameters > optionsOverride
+[ADDED]   Clusters > lightingColorCtrl > commands > enhancedMoveHue > parameters > optionsMask
+[ADDED]   Clusters > lightingColorCtrl > commands > enhancedMoveHue > parameters > optionsOverride
+[ADDED]   Clusters > lightingColorCtrl > commands > enhancedStepHue > parameters > optionsMask
+[ADDED]   Clusters > lightingColorCtrl > commands > enhancedStepHue > parameters > optionsOverride
+[ADDED]   Clusters > lightingColorCtrl > commands > enhancedMoveToHueAndSaturation > parameters > optionsMask
+[ADDED]   Clusters > lightingColorCtrl > commands > enhancedMoveToHueAndSaturation > parameters > optionsOverride
+[ADDED]   Clusters > lightingColorCtrl > commands > colorLoopSet > parameters > optionsMask
+[ADDED]   Clusters > lightingColorCtrl > commands > colorLoopSet > parameters > optionsOverride
+[ADDED]   Clusters > lightingColorCtrl > commands > moveColorTemp > parameters > optionsMask
+[ADDED]   Clusters > lightingColorCtrl > commands > moveColorTemp > parameters > optionsOverride
+[ADDED]   Clusters > lightingColorCtrl > commands > stepColorTemp > parameters > optionsMask
+[ADDED]   Clusters > lightingColorCtrl > commands > stepColorTemp > parameters > optionsOverride
+[ADDED]   Clusters > ssIasZone > commands > initTestMode > parameters > testModeDuration
+[ADDED]   Clusters > ssIasZone > commands > initTestMode > parameters > currentZoneSensitivityLevel
+[ADDED]   Clusters > ssIasZone > commandsResponse > statusChangeNotification > parameters > zoneID
+[ADDED]   Clusters > ssIasZone > commandsResponse > statusChangeNotification > parameters > delay
+[ADDED]   Clusters > ssIasAce > commands > bypass > parameters > armDisarmCode
+[ADDED]   Clusters > haElectricalMeasurement > commands > getProfileInfo > parameters > profileCount
+[ADDED]   Clusters > haElectricalMeasurement > commands > getProfileInfo > parameters > profileIntervalPeriod
+[ADDED]   Clusters > haElectricalMeasurement > commands > getProfileInfo > parameters > maxNumberOfIntervals
+[ADDED]   Clusters > haElectricalMeasurement > commands > getProfileInfo > parameters > listOfAttributes
+[ADDED]   Clusters > haElectricalMeasurement > commands > getMeasurementProfile > parameters > numberOfIntervalsDelivered
+[ADDED]   Clusters > haElectricalMeasurement > commands > getMeasurementProfile > parameters > attributeId
+[ADDED]   Clusters > haElectricalMeasurement > commands > getMeasurementProfile > parameters > intervals
+[ADDED]   Clusters > touchlink > commandsResponse > deviceInformation > parameters > deviceInformationRecordList
+[ADDED]   Clusters > touchlink > commandsResponse > getGroupIdentifiers > parameters > groupInformationRecordList
+[ADDED]   Clusters > touchlink > commandsResponse > getEndpointList > parameters > endpointInformationRecordList
