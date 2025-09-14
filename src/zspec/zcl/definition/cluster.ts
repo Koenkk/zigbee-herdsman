@@ -2,120 +2,104 @@ import {BuffaloZclDataType, DataType, ParameterCondition} from "./enums";
 import {ManufacturerCode} from "./manufacturerCode";
 import {Status} from "./status";
 import type {ClusterDefinition, ClusterName} from "./tstype";
-
 export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>> = {
     genBasic: {
-        ID: 0,
+        ID: 0x0000,
         attributes: {
-            zclVersion: {ID: 0, type: DataType.UINT8},
-            appVersion: {ID: 1, type: DataType.UINT8},
-            stackVersion: {ID: 2, type: DataType.UINT8},
-            hwVersion: {ID: 3, type: DataType.UINT8},
-            manufacturerName: {ID: 4, type: DataType.CHAR_STR},
-            modelId: {ID: 5, type: DataType.CHAR_STR},
-            dateCode: {ID: 6, type: DataType.CHAR_STR},
-            powerSource: {ID: 7, type: DataType.ENUM8},
-            appProfileVersion: {ID: 8, type: DataType.ENUM8},
-            genericDeviceType: {ID: 9, type: DataType.ENUM8},
-            productCode: {ID: 10, type: DataType.OCTET_STR},
-            productUrl: {ID: 11, type: DataType.CHAR_STR},
-            manufacturerVersionDetails: {ID: 12, type: DataType.CHAR_STR},
-            serialNumber: {ID: 13, type: DataType.CHAR_STR},
-            productLabel: {ID: 14, type: DataType.CHAR_STR},
-            locationDesc: {ID: 16, type: DataType.CHAR_STR},
-            physicalEnv: {ID: 17, type: DataType.ENUM8},
-            deviceEnabled: {ID: 18, type: DataType.BOOLEAN},
-            alarmMask: {ID: 19, type: DataType.BITMAP8},
-            disableLocalConfig: {ID: 20, type: DataType.BITMAP8},
+            zclVersion: {ID: 0x0000, type: DataType.UINT8},
+            appVersion: {ID: 0x0001, type: DataType.UINT8},
+            stackVersion: {ID: 0x0002, type: DataType.UINT8},
+            hwVersion: {ID: 0x0003, type: DataType.UINT8},
+            manufacturerName: {ID: 0x0004, type: DataType.CHAR_STR},
+            modelId: {ID: 0x0005, type: DataType.CHAR_STR},
+            dateCode: {ID: 0x0006, type: DataType.CHAR_STR},
+            powerSource: {ID: 0x0007, type: DataType.ENUM8},
+            appProfileVersion: {ID: 0x0008, type: DataType.ENUM8},
+            genericDeviceType: {ID: 0x0009, type: DataType.ENUM8},
+            productCode: {ID: 0x000a, type: DataType.OCTET_STR},
+            productUrl: {ID: 0x000b, type: DataType.CHAR_STR},
+            manufacturerVersionDetails: {ID: 0x000c, type: DataType.CHAR_STR},
+            serialNumber: {ID: 0x000d, type: DataType.CHAR_STR},
+            productLabel: {ID: 0x000e, type: DataType.CHAR_STR},
+            locationDesc: {ID: 0x0010, type: DataType.CHAR_STR},
+            physicalEnv: {ID: 0x0011, type: DataType.ENUM8},
+            deviceEnabled: {ID: 0x0012, type: DataType.BOOLEAN},
+            alarmMask: {ID: 0x0013, type: DataType.BITMAP8},
+            disableLocalConfig: {ID: 0x0014, type: DataType.BITMAP8},
             swBuildId: {ID: 0x4000, type: DataType.CHAR_STR},
             schneiderMeterRadioPower: {ID: 0xe200, type: DataType.INT8, manufacturerCode: ManufacturerCode.SCHNEIDER_ELECTRIC},
         },
         commands: {
-            resetFactDefault: {
-                ID: 0,
-                parameters: [],
-            },
-            tuyaSetup: {
-                ID: 0xf0,
-                parameters: [],
-            },
+            resetFactDefault: {ID: 0x00, parameters: []},
+            tuyaSetup: {ID: 0xf0, parameters: []},
         },
         commandsResponse: {},
     },
     genPowerCfg: {
-        ID: 1,
+        ID: 0x0001,
         attributes: {
-            mainsVoltage: {ID: 0, type: DataType.UINT16},
-            mainsFrequency: {ID: 1, type: DataType.UINT8},
-            mainsAlarmMask: {ID: 16, type: DataType.BITMAP8},
-            mainsVoltMinThres: {ID: 17, type: DataType.UINT16},
-            mainsVoltMaxThres: {ID: 18, type: DataType.UINT16},
-            mainsVoltageDwellTripPoint: {ID: 19, type: DataType.UINT16},
-            batteryVoltage: {ID: 32, type: DataType.UINT8},
-            batteryPercentageRemaining: {ID: 33, type: DataType.UINT8},
-            batteryManufacturer: {ID: 48, type: DataType.CHAR_STR},
-            batterySize: {ID: 49, type: DataType.ENUM8},
-            batteryAHrRating: {ID: 50, type: DataType.UINT16},
-            batteryQuantity: {ID: 51, type: DataType.UINT8},
-            batteryRatedVoltage: {ID: 52, type: DataType.UINT8},
-            batteryAlarmMask: {ID: 53, type: DataType.BITMAP8},
-            batteryVoltMinThres: {ID: 54, type: DataType.UINT8},
-            batteryVoltThres1: {ID: 55, type: DataType.UINT8},
-            batteryVoltThres2: {ID: 56, type: DataType.UINT8},
-            batteryVoltThres3: {ID: 57, type: DataType.UINT8},
-            batteryPercentMinThres: {ID: 58, type: DataType.UINT8},
-            batteryPercentThres1: {ID: 59, type: DataType.UINT8},
-            batteryPercentThres2: {ID: 60, type: DataType.UINT8},
-            batteryPercentThres3: {ID: 61, type: DataType.UINT8},
-            batteryAlarmState: {ID: 62, type: DataType.BITMAP32},
+            mainsVoltage: {ID: 0x0000, type: DataType.UINT16},
+            mainsFrequency: {ID: 0x0001, type: DataType.UINT8},
+            mainsAlarmMask: {ID: 0x0010, type: DataType.BITMAP8},
+            mainsVoltMinThres: {ID: 0x0011, type: DataType.UINT16},
+            mainsVoltMaxThres: {ID: 0x0012, type: DataType.UINT16},
+            mainsVoltageDwellTripPoint: {ID: 0x0013, type: DataType.UINT16},
+            batteryVoltage: {ID: 0x0020, type: DataType.UINT8},
+            batteryPercentageRemaining: {ID: 0x0021, type: DataType.UINT8},
+            batteryManufacturer: {ID: 0x0030, type: DataType.CHAR_STR},
+            batterySize: {ID: 0x0031, type: DataType.ENUM8},
+            batteryAHrRating: {ID: 0x0032, type: DataType.UINT16},
+            batteryQuantity: {ID: 0x0033, type: DataType.UINT8},
+            batteryRatedVoltage: {ID: 0x0034, type: DataType.UINT8},
+            batteryAlarmMask: {ID: 0x0035, type: DataType.BITMAP8},
+            batteryVoltMinThres: {ID: 0x0036, type: DataType.UINT8},
+            batteryVoltThres1: {ID: 0x0037, type: DataType.UINT8},
+            batteryVoltThres2: {ID: 0x0038, type: DataType.UINT8},
+            batteryVoltThres3: {ID: 0x0039, type: DataType.UINT8},
+            batteryPercentMinThres: {ID: 0x003a, type: DataType.UINT8},
+            batteryPercentThres1: {ID: 0x003b, type: DataType.UINT8},
+            batteryPercentThres2: {ID: 0x003c, type: DataType.UINT8},
+            batteryPercentThres3: {ID: 0x003d, type: DataType.UINT8},
+            batteryAlarmState: {ID: 0x003e, type: DataType.BITMAP32},
         },
         commands: {},
         commandsResponse: {},
     },
     genDeviceTempCfg: {
-        ID: 2,
+        ID: 0x0002,
         attributes: {
-            currentTemperature: {ID: 0, type: DataType.INT16},
-            minTempExperienced: {ID: 1, type: DataType.INT16},
-            maxTempExperienced: {ID: 2, type: DataType.INT16},
-            overTempTotalDwell: {ID: 3, type: DataType.UINT16},
-            devTempAlarmMask: {ID: 16, type: DataType.BITMAP8},
-            lowTempThres: {ID: 17, type: DataType.INT16},
-            highTempThres: {ID: 18, type: DataType.INT16},
-            lowTempDwellTripPoint: {ID: 19, type: DataType.UINT24},
-            highTempDwellTripPoint: {ID: 20, type: DataType.UINT24},
+            currentTemperature: {ID: 0x0000, type: DataType.INT16},
+            minTempExperienced: {ID: 0x0001, type: DataType.INT16},
+            maxTempExperienced: {ID: 0x0002, type: DataType.INT16},
+            overTempTotalDwell: {ID: 0x0003, type: DataType.UINT16},
+            devTempAlarmMask: {ID: 0x0010, type: DataType.BITMAP8},
+            lowTempThres: {ID: 0x0011, type: DataType.INT16},
+            highTempThres: {ID: 0x0012, type: DataType.INT16},
+            lowTempDwellTripPoint: {ID: 0x0013, type: DataType.UINT24},
+            highTempDwellTripPoint: {ID: 0x0014, type: DataType.UINT24},
         },
         commands: {},
         commandsResponse: {},
     },
     genIdentify: {
-        ID: 3,
+        ID: 0x0003,
         attributes: {
-            identifyTime: {ID: 0, type: DataType.UINT16},
-            identifyCommissionState: {ID: 1, type: DataType.UNKNOWN},
+            identifyTime: {ID: 0x0000, type: DataType.UINT16},
+            identifyCommissionState: {ID: 0x0001, type: DataType.UNKNOWN},
         },
         commands: {
-            identify: {
-                ID: 0,
-                parameters: [{name: "identifytime", type: DataType.UINT16}],
-            },
-            identifyQuery: {
-                ID: 1,
-                parameters: [],
-            },
-            ezmodeInvoke: {
-                ID: 2,
-                parameters: [{name: "action", type: DataType.UINT8}],
-            },
+            identify: {ID: 0x00, parameters: [{name: "identifytime", type: DataType.UINT16}]},
+            identifyQuery: {ID: 0x01, parameters: []},
+            ezmodeInvoke: {ID: 0x02, parameters: [{name: "action", type: DataType.UINT8}]},
             updateCommissionState: {
-                ID: 3,
+                ID: 0x03,
                 parameters: [
                     {name: "action", type: DataType.UINT8},
                     {name: "commstatemask", type: DataType.UINT8},
                 ],
             },
             triggerEffect: {
-                ID: 64,
+                ID: 0x40,
                 parameters: [
                     {name: "effectid", type: DataType.UINT8},
                     {name: "effectvariant", type: DataType.UINT8},
@@ -123,70 +107,53 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             },
         },
         commandsResponse: {
-            identifyQueryRsp: {
-                ID: 0,
-                parameters: [{name: "timeout", type: DataType.UINT16}],
-            },
+            identifyQueryRsp: {ID: 0x00, parameters: [{name: "timeout", type: DataType.UINT16}]},
         },
     },
     genGroups: {
-        ID: 4,
+        ID: 0x0004,
         attributes: {
-            nameSupport: {ID: 0, type: DataType.BITMAP8},
+            nameSupport: {ID: 0x0000, type: DataType.BITMAP8},
         },
         commands: {
             add: {
-                ID: 0,
+                ID: 0x00,
                 response: 0,
                 parameters: [
                     {name: "groupid", type: DataType.UINT16},
                     {name: "groupname", type: DataType.CHAR_STR},
                 ],
             },
-            view: {
-                ID: 1,
-                response: 1,
-                parameters: [{name: "groupid", type: DataType.UINT16}],
-            },
+            view: {ID: 0x01, response: 1, parameters: [{name: "groupid", type: DataType.UINT16}]},
             getMembership: {
-                ID: 2,
+                ID: 0x02,
                 response: 2,
                 parameters: [
                     {name: "groupcount", type: DataType.UINT8},
                     {name: "grouplist", type: BuffaloZclDataType.LIST_UINT16},
                 ],
             },
-            remove: {
-                ID: 3,
-                response: 3,
-                parameters: [{name: "groupid", type: DataType.UINT16}],
-            },
-            removeAll: {
-                ID: 4,
-                parameters: [],
-            },
+            remove: {ID: 0x03, response: 3, parameters: [{name: "groupid", type: DataType.UINT16}]},
+            removeAll: {ID: 0x04, parameters: []},
             addIfIdentifying: {
-                ID: 5,
+                ID: 0x05,
                 parameters: [
                     {name: "groupid", type: DataType.UINT16},
                     {name: "groupname", type: DataType.CHAR_STR},
                 ],
             },
-            miboxerSetZones: {
-                ID: 0xf0,
-                parameters: [{name: "zones", type: BuffaloZclDataType.LIST_MIBOXER_ZONES}],
-            },
+            miboxerSetZones: {ID: 0xf0, parameters: [{name: "zones", type: BuffaloZclDataType.LIST_MIBOXER_ZONES}]},
         },
         commandsResponse: {
             addRsp: {
-                ID: 0,
+                ID: 0x00,
                 parameters: [
                     {name: "status", type: DataType.UINT8},
                     {name: "groupid", type: DataType.UINT16},
                 ],
             },
             viewRsp: {
-                ID: 1,
+                ID: 0x01,
                 parameters: [
                     {name: "status", type: DataType.UINT8},
                     {name: "groupid", type: DataType.UINT16},
@@ -194,7 +161,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 ],
             },
             getMembershipRsp: {
-                ID: 2,
+                ID: 0x02,
                 parameters: [
                     {name: "capacity", type: DataType.UINT8},
                     {name: "groupcount", type: DataType.UINT8},
@@ -202,7 +169,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 ],
             },
             removeRsp: {
-                ID: 3,
+                ID: 0x03,
                 parameters: [
                     {name: "status", type: DataType.UINT8},
                     {name: "groupid", type: DataType.UINT16},
@@ -211,18 +178,18 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         },
     },
     genScenes: {
-        ID: 5,
+        ID: 0x0005,
         attributes: {
-            count: {ID: 0, type: DataType.UINT8},
-            currentScene: {ID: 1, type: DataType.UINT8},
-            currentGroup: {ID: 2, type: DataType.UINT16},
-            sceneValid: {ID: 3, type: DataType.BOOLEAN},
-            nameSupport: {ID: 4, type: DataType.BITMAP8},
-            lastCfgBy: {ID: 5, type: DataType.IEEE_ADDR},
+            count: {ID: 0x0000, type: DataType.UINT8},
+            currentScene: {ID: 0x0001, type: DataType.UINT8},
+            currentGroup: {ID: 0x0002, type: DataType.UINT16},
+            sceneValid: {ID: 0x0003, type: DataType.BOOLEAN},
+            nameSupport: {ID: 0x0004, type: DataType.BITMAP8},
+            lastCfgBy: {ID: 0x0005, type: DataType.IEEE_ADDR},
         },
         commands: {
             add: {
-                ID: 0,
+                ID: 0x00,
                 response: 0,
                 parameters: [
                     {name: "groupid", type: DataType.UINT16},
@@ -233,7 +200,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 ],
             },
             view: {
-                ID: 1,
+                ID: 0x01,
                 response: 1,
                 parameters: [
                     {name: "groupid", type: DataType.UINT16},
@@ -241,20 +208,16 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 ],
             },
             remove: {
-                ID: 2,
+                ID: 0x02,
                 response: 2,
                 parameters: [
                     {name: "groupid", type: DataType.UINT16},
                     {name: "sceneid", type: DataType.UINT8},
                 ],
             },
-            removeAll: {
-                ID: 3,
-                response: 3,
-                parameters: [{name: "groupid", type: DataType.UINT16}],
-            },
+            removeAll: {ID: 0x03, response: 3, parameters: [{name: "groupid", type: DataType.UINT16}]},
             store: {
-                ID: 4,
+                ID: 0x04,
                 response: 4,
                 parameters: [
                     {name: "groupid", type: DataType.UINT16},
@@ -262,19 +225,15 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 ],
             },
             recall: {
-                ID: 5,
+                ID: 0x05,
                 parameters: [
                     {name: "groupid", type: DataType.UINT16},
                     {name: "sceneid", type: DataType.UINT8},
                 ],
             },
-            getSceneMembership: {
-                ID: 6,
-                response: 6,
-                parameters: [{name: "groupid", type: DataType.UINT16}],
-            },
+            getSceneMembership: {ID: 0x06, response: 6, parameters: [{name: "groupid", type: DataType.UINT16}]},
             enhancedAdd: {
-                ID: 64,
+                ID: 0x40,
                 response: 64,
                 parameters: [
                     {name: "groupid", type: DataType.UINT16},
@@ -285,7 +244,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 ],
             },
             enhancedView: {
-                ID: 65,
+                ID: 0x41,
                 response: 65,
                 parameters: [
                     {name: "groupid", type: DataType.UINT16},
@@ -293,7 +252,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 ],
             },
             copy: {
-                ID: 66,
+                ID: 0x42,
                 response: 66,
                 parameters: [
                     {name: "mode", type: DataType.UINT8},
@@ -304,24 +263,18 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 ],
             },
             tradfriArrowSingle: {
-                ID: 7,
+                ID: 0x07,
                 parameters: [
                     {name: "value", type: DataType.UINT16},
                     {name: "value2", type: DataType.UINT16},
                 ],
             },
-            tradfriArrowHold: {
-                ID: 8,
-                parameters: [{name: "value", type: DataType.UINT16}],
-            },
-            tradfriArrowRelease: {
-                ID: 9,
-                parameters: [{name: "value", type: DataType.UINT16}],
-            },
+            tradfriArrowHold: {ID: 0x08, parameters: [{name: "value", type: DataType.UINT16}]},
+            tradfriArrowRelease: {ID: 0x09, parameters: [{name: "value", type: DataType.UINT16}]},
         },
         commandsResponse: {
             addRsp: {
-                ID: 0,
+                ID: 0x00,
                 parameters: [
                     {name: "status", type: DataType.UINT8},
                     {name: "groupId", type: DataType.UINT16},
@@ -329,7 +282,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 ],
             },
             viewRsp: {
-                ID: 1,
+                ID: 0x01,
                 parameters: [
                     {name: "status", type: DataType.UINT8},
                     {name: "groupid", type: DataType.UINT16},
@@ -352,7 +305,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 ],
             },
             removeRsp: {
-                ID: 2,
+                ID: 0x02,
                 parameters: [
                     {name: "status", type: DataType.UINT8},
                     {name: "groupid", type: DataType.UINT16},
@@ -360,14 +313,14 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 ],
             },
             removeAllRsp: {
-                ID: 3,
+                ID: 0x03,
                 parameters: [
                     {name: "status", type: DataType.UINT8},
                     {name: "groupid", type: DataType.UINT16},
                 ],
             },
             storeRsp: {
-                ID: 4,
+                ID: 0x04,
                 parameters: [
                     {name: "status", type: DataType.UINT8},
                     {name: "groupid", type: DataType.UINT16},
@@ -375,7 +328,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 ],
             },
             getSceneMembershipRsp: {
-                ID: 6,
+                ID: 0x06,
                 parameters: [
                     {name: "status", type: DataType.UINT8},
                     {name: "capacity", type: DataType.UINT8},
@@ -393,7 +346,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 ],
             },
             enhancedAddRsp: {
-                ID: 64,
+                ID: 0x40,
                 parameters: [
                     {name: "status", type: DataType.UINT8},
                     {name: "groupId", type: DataType.UINT16},
@@ -401,7 +354,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 ],
             },
             enhancedViewRsp: {
-                ID: 65,
+                ID: 0x41,
                 parameters: [
                     {name: "status", type: DataType.UINT8},
                     {name: "groupid", type: DataType.UINT16},
@@ -424,7 +377,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 ],
             },
             copyRsp: {
-                ID: 66,
+                ID: 0x42,
                 parameters: [
                     {name: "status", type: DataType.UINT8},
                     {name: "groupidfrom", type: DataType.UINT16},
@@ -434,13 +387,13 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         },
     },
     genOnOff: {
-        ID: 6,
+        ID: 0x0006,
         attributes: {
-            onOff: {ID: 0, type: DataType.BOOLEAN},
-            globalSceneCtrl: {ID: 16384, type: DataType.BOOLEAN},
-            onTime: {ID: 16385, type: DataType.UINT16},
-            offWaitTime: {ID: 16386, type: DataType.UINT16},
-            startUpOnOff: {ID: 16387, type: DataType.ENUM8},
+            onOff: {ID: 0x0000, type: DataType.BOOLEAN},
+            globalSceneCtrl: {ID: 0x4000, type: DataType.BOOLEAN},
+            onTime: {ID: 0x4001, type: DataType.UINT16},
+            offWaitTime: {ID: 0x4002, type: DataType.UINT16},
+            startUpOnOff: {ID: 0x4003, type: DataType.ENUM8},
             tuyaBacklightSwitch: {ID: 0x5000, type: DataType.ENUM8},
             tuyaBacklightMode: {ID: 0x8001, type: DataType.ENUM8},
             moesStartUpOnOff: {ID: 0x8002, type: DataType.ENUM8},
@@ -451,31 +404,19 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             nodonTransitionTime: {ID: 0x0001, type: DataType.UINT16, manufacturerCode: ManufacturerCode.NODON},
         },
         commands: {
-            off: {
-                ID: 0,
-                parameters: [],
-            },
-            on: {
-                ID: 1,
-                parameters: [],
-            },
-            toggle: {
-                ID: 2,
-                parameters: [],
-            },
+            off: {ID: 0x00, parameters: []},
+            on: {ID: 0x01, parameters: []},
+            toggle: {ID: 0x02, parameters: []},
             offWithEffect: {
-                ID: 64,
+                ID: 0x40,
                 parameters: [
                     {name: "effectid", type: DataType.UINT8},
                     {name: "effectvariant", type: DataType.UINT8},
                 ],
             },
-            onWithRecallGlobalScene: {
-                ID: 65,
-                parameters: [],
-            },
+            onWithRecallGlobalScene: {ID: 0x41, parameters: []},
             onWithTimedOff: {
-                ID: 66,
+                ID: 0x42,
                 parameters: [
                     {name: "ctrlbits", type: DataType.UINT8},
                     {name: "ontime", type: DataType.UINT16},
@@ -489,94 +430,85 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                     {name: "data", type: BuffaloZclDataType.BUFFER},
                 ],
             },
-            tuyaAction2: {
-                ID: 0xfc,
-                parameters: [{name: "value", type: DataType.UINT8}],
-            },
+            tuyaAction2: {ID: 0xfc, parameters: [{name: "value", type: DataType.UINT8}]},
         },
         commandsResponse: {},
     },
     genOnOffSwitchCfg: {
-        ID: 7,
+        ID: 0x0007,
         attributes: {
-            switchType: {ID: 0, type: DataType.ENUM8},
-            switchMultiFunction: {ID: 2, type: DataType.UNKNOWN},
-            switchActions: {ID: 16, type: DataType.ENUM8},
+            switchType: {ID: 0x0000, type: DataType.ENUM8},
+            switchMultiFunction: {ID: 0x0002, type: DataType.UNKNOWN},
+            switchActions: {ID: 0x0010, type: DataType.ENUM8},
         },
         commands: {},
         commandsResponse: {},
     },
     genLevelCtrl: {
-        ID: 8,
+        ID: 0x0008,
         attributes: {
-            currentLevel: {ID: 0, type: DataType.UINT8},
-            remainingTime: {ID: 1, type: DataType.UINT16},
-            minLevel: {ID: 2, type: DataType.UINT8},
-            maxLevel: {ID: 3, type: DataType.UINT8},
-            options: {ID: 15, type: DataType.BITMAP8},
-            onOffTransitionTime: {ID: 16, type: DataType.UINT16},
-            onLevel: {ID: 17, type: DataType.UINT8},
-            onTransitionTime: {ID: 18, type: DataType.UINT16},
-            offTransitionTime: {ID: 19, type: DataType.UINT16},
-            defaultMoveRate: {ID: 20, type: DataType.UINT16},
-            startUpCurrentLevel: {ID: 16384, type: DataType.UINT8},
+            currentLevel: {ID: 0x0000, type: DataType.UINT8},
+            remainingTime: {ID: 0x0001, type: DataType.UINT16},
+            minLevel: {ID: 0x0002, type: DataType.UINT8},
+            maxLevel: {ID: 0x0003, type: DataType.UINT8},
+            options: {ID: 0x000f, type: DataType.BITMAP8},
+            onOffTransitionTime: {ID: 0x0010, type: DataType.UINT16},
+            onLevel: {ID: 0x0011, type: DataType.UINT8},
+            onTransitionTime: {ID: 0x0012, type: DataType.UINT16},
+            offTransitionTime: {ID: 0x0013, type: DataType.UINT16},
+            defaultMoveRate: {ID: 0x0014, type: DataType.UINT16},
+            startUpCurrentLevel: {ID: 0x4000, type: DataType.UINT8},
             elkoStartUpCurrentLevel: {ID: 0x4000, type: DataType.UINT8, manufacturerCode: ManufacturerCode.ADEO},
         },
         commands: {
             moveToLevel: {
-                ID: 0,
+                ID: 0x00,
                 parameters: [
                     {name: "level", type: DataType.UINT8},
                     {name: "transtime", type: DataType.UINT16},
                 ],
             },
             move: {
-                ID: 1,
+                ID: 0x01,
                 parameters: [
                     {name: "movemode", type: DataType.UINT8},
                     {name: "rate", type: DataType.UINT8},
                 ],
             },
             step: {
-                ID: 2,
+                ID: 0x02,
                 parameters: [
                     {name: "stepmode", type: DataType.UINT8},
                     {name: "stepsize", type: DataType.UINT8},
                     {name: "transtime", type: DataType.UINT16},
                 ],
             },
-            stop: {
-                ID: 3,
-                parameters: [],
-            },
+            stop: {ID: 0x03, parameters: []},
             moveToLevelWithOnOff: {
-                ID: 4,
+                ID: 0x04,
                 parameters: [
                     {name: "level", type: DataType.UINT8},
                     {name: "transtime", type: DataType.UINT16},
                 ],
             },
             moveWithOnOff: {
-                ID: 5,
+                ID: 0x05,
                 parameters: [
                     {name: "movemode", type: DataType.UINT8},
                     {name: "rate", type: DataType.UINT8},
                 ],
             },
             stepWithOnOff: {
-                ID: 6,
+                ID: 0x06,
                 parameters: [
                     {name: "stepmode", type: DataType.UINT8},
                     {name: "stepsize", type: DataType.UINT8},
                     {name: "transtime", type: DataType.UINT16},
                 ],
             },
-            stopWithOnOff: {
-                ID: 7,
-                parameters: [],
-            },
+            stopWithOnOff: {ID: 0x07, parameters: []},
             moveToLevelTuya: {
-                ID: 240,
+                ID: 0xf0,
                 parameters: [
                     {name: "level", type: DataType.UINT16},
                     {name: "transtime", type: DataType.UINT16},
@@ -586,45 +518,33 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         commandsResponse: {},
     },
     genAlarms: {
-        ID: 9,
+        ID: 0x0009,
         attributes: {
-            alarmCount: {ID: 0, type: DataType.UINT16},
+            alarmCount: {ID: 0x0000, type: DataType.UINT16},
         },
         commands: {
             reset: {
-                ID: 0,
+                ID: 0x00,
                 parameters: [
                     {name: "alarmcode", type: DataType.UINT8},
                     {name: "clusterid", type: DataType.UINT16},
                 ],
             },
-            resetAll: {
-                ID: 1,
-                parameters: [],
-            },
-            getAlarm: {
-                ID: 2,
-                parameters: [],
-            },
-            resetLog: {
-                ID: 3,
-                parameters: [],
-            },
-            publishEventLog: {
-                ID: 4,
-                parameters: [],
-            },
+            resetAll: {ID: 0x01, parameters: []},
+            getAlarm: {ID: 0x02, parameters: []},
+            resetLog: {ID: 0x03, parameters: []},
+            publishEventLog: {ID: 0x04, parameters: []},
         },
         commandsResponse: {
             alarm: {
-                ID: 0,
+                ID: 0x00,
                 parameters: [
                     {name: "alarmcode", type: DataType.UINT8},
                     {name: "clusterid", type: DataType.UINT16},
                 ],
             },
             getRsp: {
-                ID: 1,
+                ID: 0x01,
                 parameters: [
                     {name: "status", type: DataType.UINT8},
                     {name: "alarmcode", type: DataType.UINT8},
@@ -632,60 +552,57 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                     {name: "timestamp", type: DataType.UINT32},
                 ],
             },
-            getEventLog: {
-                ID: 2,
-                parameters: [],
-            },
+            getEventLog: {ID: 0x02, parameters: []},
         },
     },
     genTime: {
-        ID: 10,
+        ID: 0x000a,
         attributes: {
-            time: {ID: 0, type: DataType.UTC},
-            timeStatus: {ID: 1, type: DataType.BITMAP8},
-            timeZone: {ID: 2, type: DataType.INT32},
-            dstStart: {ID: 3, type: DataType.UINT32},
-            dstEnd: {ID: 4, type: DataType.UINT32},
-            dstShift: {ID: 5, type: DataType.INT32},
-            standardTime: {ID: 6, type: DataType.UINT32},
-            localTime: {ID: 7, type: DataType.UINT32},
-            lastSetTime: {ID: 8, type: DataType.UTC},
-            validUntilTime: {ID: 9, type: DataType.UTC},
+            time: {ID: 0x0000, type: DataType.UTC},
+            timeStatus: {ID: 0x0001, type: DataType.BITMAP8},
+            timeZone: {ID: 0x0002, type: DataType.INT32},
+            dstStart: {ID: 0x0003, type: DataType.UINT32},
+            dstEnd: {ID: 0x0004, type: DataType.UINT32},
+            dstShift: {ID: 0x0005, type: DataType.INT32},
+            standardTime: {ID: 0x0006, type: DataType.UINT32},
+            localTime: {ID: 0x0007, type: DataType.UINT32},
+            lastSetTime: {ID: 0x0008, type: DataType.UTC},
+            validUntilTime: {ID: 0x0009, type: DataType.UTC},
         },
         commands: {},
         commandsResponse: {},
     },
     genRssiLocation: {
-        ID: 11,
+        ID: 0x000b,
         attributes: {
             /** read/write | [2: coordinator system, 1: 2-D, 1: absolute] */
-            type: {ID: 0, type: DataType.DATA8},
+            type: {ID: 0x0000, type: DataType.DATA8},
             /** read/write | @see LocationMethod */
-            method: {ID: 1, type: DataType.ENUM8},
-            age: {ID: 2, type: DataType.UINT16},
+            method: {ID: 0x0001, type: DataType.ENUM8},
+            age: {ID: 0x0002, type: DataType.UINT16},
             /** 0x00..0x64 i.e. zero..complete confidence */
-            qualityMeasure: {ID: 3, type: DataType.UINT8},
-            numOfDevices: {ID: 4, type: DataType.UINT8},
+            qualityMeasure: {ID: 0x0003, type: DataType.UINT8},
+            numOfDevices: {ID: 0x0004, type: DataType.UINT8},
             /** read/write | -0x8000..0x7fff */
-            coordinate1: {ID: 16, type: DataType.INT16},
+            coordinate1: {ID: 0x0010, type: DataType.INT16},
             /** read/write | -0x8000..0x7fff */
-            coordinate2: {ID: 17, type: DataType.INT16},
+            coordinate2: {ID: 0x0011, type: DataType.INT16},
             /** read/write | -0x8000..0x7fff | optional */
-            coordinate3: {ID: 18, type: DataType.INT16},
+            coordinate3: {ID: 0x0012, type: DataType.INT16},
             /** read/write | -0x8000..0x7fff */
-            power: {ID: 19, type: DataType.INT16},
+            power: {ID: 0x0013, type: DataType.INT16},
             /** read/write | 0x0000..0xffff */
-            pathLossExponent: {ID: 20, type: DataType.UINT16},
+            pathLossExponent: {ID: 0x0014, type: DataType.UINT16},
             /** read/write | 0x0000..0xffff | optional */
-            reportingPeriod: {ID: 21, type: DataType.UINT16},
+            reportingPeriod: {ID: 0x0015, type: DataType.UINT16},
             /** read/write | 0x0000..0xffff | optional */
-            calcPeriod: {ID: 22, type: DataType.UINT16},
+            calcPeriod: {ID: 0x0016, type: DataType.UINT16},
             /** read/write | 0x01..0xff */
-            numRSSIMeasurements: {ID: 23, type: DataType.UINT8},
+            numRSSIMeasurements: {ID: 0x0017, type: DataType.UINT8},
         },
         commands: {
             setAbsolute: {
-                ID: 0,
+                ID: 0x00,
                 parameters: [
                     {name: "coord1", type: DataType.INT16},
                     {name: "coord2", type: DataType.INT16},
@@ -695,7 +612,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 ],
             },
             setDeviceConfig: {
-                ID: 1,
+                ID: 0x01,
                 parameters: [
                     {name: "power", type: DataType.INT16},
                     {name: "pathLossExponent", type: DataType.UINT16},
@@ -704,12 +621,9 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                     {name: "reportingPeriod", type: DataType.UINT16},
                 ],
             },
-            getDeviceConfig: {
-                ID: 2,
-                parameters: [{name: "targetAddr", type: DataType.IEEE_ADDR}],
-            },
+            getDeviceConfig: {ID: 0x02, parameters: [{name: "targetAddr", type: DataType.IEEE_ADDR}]},
             getLocationData: {
-                ID: 3,
+                ID: 0x03,
                 parameters: [
                     /** [3: reserved, 1: compactResponse, 1: broadcastResponse, 1: broadcastIndicator, 1: recalculate, 1: absoluteOnly] */
                     {name: "info", type: DataType.BITMAP8},
@@ -722,7 +636,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 ],
             },
             rssiResponse: {
-                ID: 4,
+                ID: 0x04,
                 parameters: [
                     {name: "replyingDevice", type: DataType.IEEE_ADDR},
                     {name: "x", type: DataType.INT16},
@@ -733,7 +647,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 ],
             },
             sendPings: {
-                ID: 5,
+                ID: 0x05,
                 parameters: [
                     {name: "targetAddr", type: DataType.IEEE_ADDR},
                     {name: "numRssiMeasurements", type: DataType.UINT8},
@@ -741,7 +655,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 ],
             },
             anchorNodeAnnounce: {
-                ID: 6,
+                ID: 0x06,
                 parameters: [
                     {name: "anchorNodeAddr", type: DataType.IEEE_ADDR},
                     {name: "x", type: DataType.INT16},
@@ -752,7 +666,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         },
         commandsResponse: {
             deviceConfigResponse: {
-                ID: 0,
+                ID: 0x00,
                 parameters: [
                     {name: "status", type: DataType.ENUM8},
                     {
@@ -783,7 +697,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 ],
             },
             locationDataResponse: {
-                ID: 1,
+                ID: 0x01,
                 parameters: [
                     {name: "status", type: DataType.ENUM8},
                     {
@@ -834,7 +748,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 ],
             },
             locationDataNotification: {
-                ID: 2,
+                ID: 0x02,
                 parameters: [
                     {name: "type", type: DataType.DATA8},
                     {name: "coord1", type: DataType.INT16},
@@ -864,7 +778,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 ],
             },
             compactLocationDataNotification: {
-                ID: 3,
+                ID: 0x03,
                 parameters: [
                     {name: "type", type: DataType.DATA8},
                     {name: "coord1", type: DataType.INT16},
@@ -886,16 +800,10 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                     },
                 ],
             },
-            rssiPing: {
-                ID: 4,
-                parameters: [{name: "type", type: DataType.DATA8}],
-            },
-            rssiRequest: {
-                ID: 5,
-                parameters: [],
-            },
+            rssiPing: {ID: 0x04, parameters: [{name: "type", type: DataType.DATA8}]},
+            rssiRequest: {ID: 0x05, parameters: []},
             reportRssiMeasurements: {
-                ID: 6,
+                ID: 0x06,
                 parameters: [
                     {name: "measuringDeviceAddr", type: DataType.IEEE_ADDR},
                     {name: "numNeighbors", type: DataType.UINT8},
@@ -909,199 +817,196 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                     //   {name: "numRssiMeasurements", type: DataType.UINT8},
                 ],
             },
-            requestOwnLocation: {
-                ID: 7,
-                parameters: [{name: "blindNodeAddr", type: DataType.IEEE_ADDR}],
-            },
+            requestOwnLocation: {ID: 0x07, parameters: [{name: "blindNodeAddr", type: DataType.IEEE_ADDR}]},
         },
     },
     genAnalogInput: {
-        ID: 12,
+        ID: 0x000c,
         attributes: {
-            description: {ID: 28, type: DataType.CHAR_STR},
-            maxPresentValue: {ID: 65, type: DataType.SINGLE_PREC},
-            minPresentValue: {ID: 69, type: DataType.SINGLE_PREC},
-            outOfService: {ID: 81, type: DataType.BOOLEAN},
-            presentValue: {ID: 85, type: DataType.SINGLE_PREC},
-            reliability: {ID: 103, type: DataType.ENUM8},
-            resolution: {ID: 106, type: DataType.SINGLE_PREC},
-            statusFlags: {ID: 111, type: DataType.BITMAP8},
-            engineeringUnits: {ID: 117, type: DataType.ENUM16},
-            applicationType: {ID: 256, type: DataType.UINT32},
+            description: {ID: 0x001c, type: DataType.CHAR_STR},
+            maxPresentValue: {ID: 0x0041, type: DataType.SINGLE_PREC},
+            minPresentValue: {ID: 0x0045, type: DataType.SINGLE_PREC},
+            outOfService: {ID: 0x0051, type: DataType.BOOLEAN},
+            presentValue: {ID: 0x0055, type: DataType.SINGLE_PREC},
+            reliability: {ID: 0x0067, type: DataType.ENUM8},
+            resolution: {ID: 0x006a, type: DataType.SINGLE_PREC},
+            statusFlags: {ID: 0x006f, type: DataType.BITMAP8},
+            engineeringUnits: {ID: 0x0075, type: DataType.ENUM16},
+            applicationType: {ID: 0x0100, type: DataType.UINT32},
         },
         commands: {},
         commandsResponse: {},
     },
     genAnalogOutput: {
-        ID: 13,
+        ID: 0x000d,
         attributes: {
-            description: {ID: 28, type: DataType.CHAR_STR},
-            maxPresentValue: {ID: 65, type: DataType.SINGLE_PREC},
-            minPresentValue: {ID: 69, type: DataType.SINGLE_PREC},
-            outOfService: {ID: 81, type: DataType.BOOLEAN},
-            presentValue: {ID: 85, type: DataType.SINGLE_PREC},
-            priorityArray: {ID: 87, type: DataType.ARRAY},
-            reliability: {ID: 103, type: DataType.ENUM8},
-            relinquishDefault: {ID: 104, type: DataType.SINGLE_PREC},
-            resolution: {ID: 106, type: DataType.SINGLE_PREC},
-            statusFlags: {ID: 111, type: DataType.BITMAP8},
-            engineeringUnits: {ID: 117, type: DataType.ENUM16},
-            applicationType: {ID: 256, type: DataType.UINT32},
+            description: {ID: 0x001c, type: DataType.CHAR_STR},
+            maxPresentValue: {ID: 0x0041, type: DataType.SINGLE_PREC},
+            minPresentValue: {ID: 0x0045, type: DataType.SINGLE_PREC},
+            outOfService: {ID: 0x0051, type: DataType.BOOLEAN},
+            presentValue: {ID: 0x0055, type: DataType.SINGLE_PREC},
+            priorityArray: {ID: 0x0057, type: DataType.ARRAY},
+            reliability: {ID: 0x0067, type: DataType.ENUM8},
+            relinquishDefault: {ID: 0x0068, type: DataType.SINGLE_PREC},
+            resolution: {ID: 0x006a, type: DataType.SINGLE_PREC},
+            statusFlags: {ID: 0x006f, type: DataType.BITMAP8},
+            engineeringUnits: {ID: 0x0075, type: DataType.ENUM16},
+            applicationType: {ID: 0x0100, type: DataType.UINT32},
         },
         commands: {},
         commandsResponse: {},
     },
     genAnalogValue: {
-        ID: 14,
+        ID: 0x000e,
         attributes: {
-            description: {ID: 28, type: DataType.CHAR_STR},
-            outOfService: {ID: 81, type: DataType.BOOLEAN},
-            presentValue: {ID: 85, type: DataType.SINGLE_PREC},
-            priorityArray: {ID: 87, type: DataType.ARRAY},
-            reliability: {ID: 103, type: DataType.ENUM8},
-            relinquishDefault: {ID: 104, type: DataType.SINGLE_PREC},
-            statusFlags: {ID: 111, type: DataType.BITMAP8},
-            engineeringUnits: {ID: 117, type: DataType.ENUM16},
-            applicationType: {ID: 256, type: DataType.UINT32},
+            description: {ID: 0x001c, type: DataType.CHAR_STR},
+            outOfService: {ID: 0x0051, type: DataType.BOOLEAN},
+            presentValue: {ID: 0x0055, type: DataType.SINGLE_PREC},
+            priorityArray: {ID: 0x0057, type: DataType.ARRAY},
+            reliability: {ID: 0x0067, type: DataType.ENUM8},
+            relinquishDefault: {ID: 0x0068, type: DataType.SINGLE_PREC},
+            statusFlags: {ID: 0x006f, type: DataType.BITMAP8},
+            engineeringUnits: {ID: 0x0075, type: DataType.ENUM16},
+            applicationType: {ID: 0x0100, type: DataType.UINT32},
         },
         commands: {},
         commandsResponse: {},
     },
     genBinaryInput: {
-        ID: 15,
+        ID: 0x000f,
         attributes: {
-            activeText: {ID: 4, type: DataType.CHAR_STR},
-            description: {ID: 28, type: DataType.CHAR_STR},
-            inactiveText: {ID: 46, type: DataType.CHAR_STR},
-            outOfService: {ID: 81, type: DataType.BOOLEAN},
-            polarity: {ID: 84, type: DataType.ENUM8},
-            presentValue: {ID: 85, type: DataType.BOOLEAN},
-            reliability: {ID: 103, type: DataType.ENUM8},
-            statusFlags: {ID: 111, type: DataType.BITMAP8},
-            applicationType: {ID: 256, type: DataType.UINT32},
+            activeText: {ID: 0x0004, type: DataType.CHAR_STR},
+            description: {ID: 0x001c, type: DataType.CHAR_STR},
+            inactiveText: {ID: 0x002e, type: DataType.CHAR_STR},
+            outOfService: {ID: 0x0051, type: DataType.BOOLEAN},
+            polarity: {ID: 0x0054, type: DataType.ENUM8},
+            presentValue: {ID: 0x0055, type: DataType.BOOLEAN},
+            reliability: {ID: 0x0067, type: DataType.ENUM8},
+            statusFlags: {ID: 0x006f, type: DataType.BITMAP8},
+            applicationType: {ID: 0x0100, type: DataType.UINT32},
         },
         commands: {},
         commandsResponse: {},
     },
     genBinaryOutput: {
-        ID: 16,
+        ID: 0x0010,
         attributes: {
-            activeText: {ID: 4, type: DataType.CHAR_STR},
-            description: {ID: 28, type: DataType.CHAR_STR},
-            inactiveText: {ID: 46, type: DataType.CHAR_STR},
-            minimumOffTime: {ID: 66, type: DataType.UINT32},
-            minimumOnTime: {ID: 67, type: DataType.UINT32},
-            outOfService: {ID: 81, type: DataType.BOOLEAN},
-            polarity: {ID: 84, type: DataType.ENUM8},
-            presentValue: {ID: 85, type: DataType.BOOLEAN},
-            priorityArray: {ID: 87, type: DataType.ARRAY},
-            reliability: {ID: 103, type: DataType.ENUM8},
-            relinquishDefault: {ID: 104, type: DataType.BOOLEAN},
-            statusFlags: {ID: 111, type: DataType.BITMAP8},
-            applicationType: {ID: 256, type: DataType.UINT32},
+            activeText: {ID: 0x0004, type: DataType.CHAR_STR},
+            description: {ID: 0x001c, type: DataType.CHAR_STR},
+            inactiveText: {ID: 0x002e, type: DataType.CHAR_STR},
+            minimumOffTime: {ID: 0x0042, type: DataType.UINT32},
+            minimumOnTime: {ID: 0x0043, type: DataType.UINT32},
+            outOfService: {ID: 0x0051, type: DataType.BOOLEAN},
+            polarity: {ID: 0x0054, type: DataType.ENUM8},
+            presentValue: {ID: 0x0055, type: DataType.BOOLEAN},
+            priorityArray: {ID: 0x0057, type: DataType.ARRAY},
+            reliability: {ID: 0x0067, type: DataType.ENUM8},
+            relinquishDefault: {ID: 0x0068, type: DataType.BOOLEAN},
+            statusFlags: {ID: 0x006f, type: DataType.BITMAP8},
+            applicationType: {ID: 0x0100, type: DataType.UINT32},
         },
         commands: {},
         commandsResponse: {},
     },
     genBinaryValue: {
-        ID: 17,
+        ID: 0x0011,
         attributes: {
-            activeText: {ID: 4, type: DataType.CHAR_STR},
-            description: {ID: 28, type: DataType.CHAR_STR},
-            inactiveText: {ID: 46, type: DataType.CHAR_STR},
-            minimumOffTime: {ID: 66, type: DataType.UINT32},
-            minimumOnTime: {ID: 67, type: DataType.UINT32},
-            outOfService: {ID: 81, type: DataType.BOOLEAN},
-            presentValue: {ID: 85, type: DataType.BOOLEAN},
-            priorityArray: {ID: 87, type: DataType.ARRAY},
-            reliability: {ID: 103, type: DataType.ENUM8},
-            relinquishDefault: {ID: 104, type: DataType.BOOLEAN},
-            statusFlags: {ID: 111, type: DataType.BITMAP8},
-            applicationType: {ID: 256, type: DataType.UINT32},
+            activeText: {ID: 0x0004, type: DataType.CHAR_STR},
+            description: {ID: 0x001c, type: DataType.CHAR_STR},
+            inactiveText: {ID: 0x002e, type: DataType.CHAR_STR},
+            minimumOffTime: {ID: 0x0042, type: DataType.UINT32},
+            minimumOnTime: {ID: 0x0043, type: DataType.UINT32},
+            outOfService: {ID: 0x0051, type: DataType.BOOLEAN},
+            presentValue: {ID: 0x0055, type: DataType.BOOLEAN},
+            priorityArray: {ID: 0x0057, type: DataType.ARRAY},
+            reliability: {ID: 0x0067, type: DataType.ENUM8},
+            relinquishDefault: {ID: 0x0068, type: DataType.BOOLEAN},
+            statusFlags: {ID: 0x006f, type: DataType.BITMAP8},
+            applicationType: {ID: 0x0100, type: DataType.UINT32},
         },
         commands: {},
         commandsResponse: {},
     },
     genMultistateInput: {
-        ID: 18,
+        ID: 0x0012,
         attributes: {
-            stateText: {ID: 14, type: DataType.ARRAY},
-            description: {ID: 28, type: DataType.CHAR_STR},
-            numberOfStates: {ID: 74, type: DataType.UINT16},
-            outOfService: {ID: 81, type: DataType.BOOLEAN},
-            presentValue: {ID: 85, type: DataType.UINT16},
-            reliability: {ID: 103, type: DataType.ENUM8},
-            statusFlags: {ID: 111, type: DataType.BITMAP8},
-            applicationType: {ID: 256, type: DataType.UINT32},
+            stateText: {ID: 0x000e, type: DataType.ARRAY},
+            description: {ID: 0x001c, type: DataType.CHAR_STR},
+            numberOfStates: {ID: 0x004a, type: DataType.UINT16},
+            outOfService: {ID: 0x0051, type: DataType.BOOLEAN},
+            presentValue: {ID: 0x0055, type: DataType.UINT16},
+            reliability: {ID: 0x0067, type: DataType.ENUM8},
+            statusFlags: {ID: 0x006f, type: DataType.BITMAP8},
+            applicationType: {ID: 0x0100, type: DataType.UINT32},
         },
         commands: {},
         commandsResponse: {},
     },
     genMultistateOutput: {
-        ID: 19,
+        ID: 0x0013,
         attributes: {
-            stateText: {ID: 14, type: DataType.ARRAY},
-            description: {ID: 28, type: DataType.CHAR_STR},
-            numberOfStates: {ID: 74, type: DataType.UINT16},
-            outOfService: {ID: 81, type: DataType.BOOLEAN},
-            presentValue: {ID: 85, type: DataType.UINT16},
-            priorityArray: {ID: 87, type: DataType.ARRAY},
-            reliability: {ID: 103, type: DataType.ENUM8},
-            relinquishDefault: {ID: 104, type: DataType.UINT16},
-            statusFlags: {ID: 111, type: DataType.BITMAP8},
-            applicationType: {ID: 256, type: DataType.UINT32},
+            stateText: {ID: 0x000e, type: DataType.ARRAY},
+            description: {ID: 0x001c, type: DataType.CHAR_STR},
+            numberOfStates: {ID: 0x004a, type: DataType.UINT16},
+            outOfService: {ID: 0x0051, type: DataType.BOOLEAN},
+            presentValue: {ID: 0x0055, type: DataType.UINT16},
+            priorityArray: {ID: 0x0057, type: DataType.ARRAY},
+            reliability: {ID: 0x0067, type: DataType.ENUM8},
+            relinquishDefault: {ID: 0x0068, type: DataType.UINT16},
+            statusFlags: {ID: 0x006f, type: DataType.BITMAP8},
+            applicationType: {ID: 0x0100, type: DataType.UINT32},
         },
         commands: {},
         commandsResponse: {},
     },
     genMultistateValue: {
-        ID: 20,
+        ID: 0x0014,
         attributes: {
-            stateText: {ID: 14, type: DataType.ARRAY},
-            description: {ID: 28, type: DataType.CHAR_STR},
-            numberOfStates: {ID: 74, type: DataType.UINT16},
-            outOfService: {ID: 81, type: DataType.BOOLEAN},
-            presentValue: {ID: 85, type: DataType.UINT16},
-            priorityArray: {ID: 87, type: DataType.ARRAY},
-            reliability: {ID: 103, type: DataType.ENUM8},
-            relinquishDefault: {ID: 104, type: DataType.UINT16},
-            statusFlags: {ID: 111, type: DataType.BITMAP8},
-            applicationType: {ID: 256, type: DataType.UINT32},
+            stateText: {ID: 0x000e, type: DataType.ARRAY},
+            description: {ID: 0x001c, type: DataType.CHAR_STR},
+            numberOfStates: {ID: 0x004a, type: DataType.UINT16},
+            outOfService: {ID: 0x0051, type: DataType.BOOLEAN},
+            presentValue: {ID: 0x0055, type: DataType.UINT16},
+            priorityArray: {ID: 0x0057, type: DataType.ARRAY},
+            reliability: {ID: 0x0067, type: DataType.ENUM8},
+            relinquishDefault: {ID: 0x0068, type: DataType.UINT16},
+            statusFlags: {ID: 0x006f, type: DataType.BITMAP8},
+            applicationType: {ID: 0x0100, type: DataType.UINT32},
         },
         commands: {},
         commandsResponse: {},
     },
     genCommissioning: {
-        ID: 21,
+        ID: 0x0015,
         attributes: {
-            shortress: {ID: 0, type: DataType.UINT16},
-            extendedPANId: {ID: 1, type: DataType.IEEE_ADDR},
-            panId: {ID: 2, type: DataType.UINT16},
-            channelmask: {ID: 3, type: DataType.BITMAP32},
-            protocolVersion: {ID: 4, type: DataType.UINT8},
-            stackProfile: {ID: 5, type: DataType.UINT8},
-            startupControl: {ID: 6, type: DataType.ENUM8},
-            trustCenterress: {ID: 16, type: DataType.IEEE_ADDR},
-            trustCenterMasterKey: {ID: 17, type: DataType.SEC_KEY},
-            networkKey: {ID: 18, type: DataType.SEC_KEY},
-            useInsecureJoin: {ID: 19, type: DataType.BOOLEAN},
-            preconfiguredLinkKey: {ID: 20, type: DataType.SEC_KEY},
-            networkKeySeqNum: {ID: 21, type: DataType.UINT8},
-            networkKeyType: {ID: 22, type: DataType.ENUM8},
-            networkManagerress: {ID: 23, type: DataType.UINT16},
-            scanAttempts: {ID: 32, type: DataType.UINT8},
-            timeBetweenScans: {ID: 33, type: DataType.UINT16},
-            rejoinInterval: {ID: 34, type: DataType.UINT16},
-            maxRejoinInterval: {ID: 35, type: DataType.UINT16},
-            indirectPollRate: {ID: 48, type: DataType.UINT16},
-            parentRetryThreshold: {ID: 49, type: DataType.UINT8},
-            concentratorFlag: {ID: 64, type: DataType.BOOLEAN},
-            concentratorRus: {ID: 65, type: DataType.UINT8},
-            concentratorDiscoveryTime: {ID: 66, type: DataType.UINT8},
+            shortress: {ID: 0x0000, type: DataType.UINT16},
+            extendedPANId: {ID: 0x0001, type: DataType.IEEE_ADDR},
+            panId: {ID: 0x0002, type: DataType.UINT16},
+            channelmask: {ID: 0x0003, type: DataType.BITMAP32},
+            protocolVersion: {ID: 0x0004, type: DataType.UINT8},
+            stackProfile: {ID: 0x0005, type: DataType.UINT8},
+            startupControl: {ID: 0x0006, type: DataType.ENUM8},
+            trustCenterress: {ID: 0x0010, type: DataType.IEEE_ADDR},
+            trustCenterMasterKey: {ID: 0x0011, type: DataType.SEC_KEY},
+            networkKey: {ID: 0x0012, type: DataType.SEC_KEY},
+            useInsecureJoin: {ID: 0x0013, type: DataType.BOOLEAN},
+            preconfiguredLinkKey: {ID: 0x0014, type: DataType.SEC_KEY},
+            networkKeySeqNum: {ID: 0x0015, type: DataType.UINT8},
+            networkKeyType: {ID: 0x0016, type: DataType.ENUM8},
+            networkManagerress: {ID: 0x0017, type: DataType.UINT16},
+            scanAttempts: {ID: 0x0020, type: DataType.UINT8},
+            timeBetweenScans: {ID: 0x0021, type: DataType.UINT16},
+            rejoinInterval: {ID: 0x0022, type: DataType.UINT16},
+            maxRejoinInterval: {ID: 0x0023, type: DataType.UINT16},
+            indirectPollRate: {ID: 0x0030, type: DataType.UINT16},
+            parentRetryThreshold: {ID: 0x0031, type: DataType.UINT8},
+            concentratorFlag: {ID: 0x0040, type: DataType.BOOLEAN},
+            concentratorRus: {ID: 0x0041, type: DataType.UINT8},
+            concentratorDiscoveryTime: {ID: 0x0042, type: DataType.UINT8},
         },
         commands: {
             restartDevice: {
-                ID: 0,
+                ID: 0x00,
                 parameters: [
                     {name: "options", type: DataType.UINT8},
                     {name: "delay", type: DataType.UINT8},
@@ -1109,21 +1014,21 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 ],
             },
             saveStartupParams: {
-                ID: 1,
+                ID: 0x01,
                 parameters: [
                     {name: "options", type: DataType.UINT8},
                     {name: "index", type: DataType.UINT8},
                 ],
             },
             restoreStartupParams: {
-                ID: 2,
+                ID: 0x02,
                 parameters: [
                     {name: "options", type: DataType.UINT8},
                     {name: "index", type: DataType.UINT8},
                 ],
             },
             resetStartupParams: {
-                ID: 3,
+                ID: 0x03,
                 parameters: [
                     {name: "options", type: DataType.UINT8},
                     {name: "index", type: DataType.UINT8},
@@ -1131,42 +1036,30 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             },
         },
         commandsResponse: {
-            restartDeviceRsp: {
-                ID: 0,
-                parameters: [{name: "status", type: DataType.UINT8}],
-            },
-            saveStartupParamsRsp: {
-                ID: 1,
-                parameters: [{name: "status", type: DataType.UINT8}],
-            },
-            restoreStartupParamsRsp: {
-                ID: 2,
-                parameters: [{name: "status", type: DataType.UINT8}],
-            },
-            resetStartupParamsRsp: {
-                ID: 3,
-                parameters: [{name: "status", type: DataType.UINT8}],
-            },
+            restartDeviceRsp: {ID: 0x00, parameters: [{name: "status", type: DataType.UINT8}]},
+            saveStartupParamsRsp: {ID: 0x01, parameters: [{name: "status", type: DataType.UINT8}]},
+            restoreStartupParamsRsp: {ID: 0x02, parameters: [{name: "status", type: DataType.UINT8}]},
+            resetStartupParamsRsp: {ID: 0x03, parameters: [{name: "status", type: DataType.UINT8}]},
         },
     },
     genOta: {
-        ID: 25,
+        ID: 0x0019,
         attributes: {
-            upgradeServerId: {ID: 0, type: DataType.IEEE_ADDR},
-            fileOffset: {ID: 1, type: DataType.UINT32},
-            currentFileVersion: {ID: 2, type: DataType.UINT32},
-            currentZigbeeStackVersion: {ID: 3, type: DataType.UINT16},
-            downloadedFileVersion: {ID: 4, type: DataType.UINT32},
-            downloadedZigbeeStackVersion: {ID: 5, type: DataType.UINT16},
-            imageUpgradeStatus: {ID: 6, type: DataType.ENUM8},
-            manufacturerId: {ID: 7, type: DataType.UINT16},
-            imageTypeId: {ID: 8, type: DataType.UINT16},
-            minimumBlockReqDelay: {ID: 9, type: DataType.UINT16},
-            imageStamp: {ID: 10, type: DataType.UINT32},
+            upgradeServerId: {ID: 0x0000, type: DataType.IEEE_ADDR},
+            fileOffset: {ID: 0x0001, type: DataType.UINT32},
+            currentFileVersion: {ID: 0x0002, type: DataType.UINT32},
+            currentZigbeeStackVersion: {ID: 0x0003, type: DataType.UINT16},
+            downloadedFileVersion: {ID: 0x0004, type: DataType.UINT32},
+            downloadedZigbeeStackVersion: {ID: 0x0005, type: DataType.UINT16},
+            imageUpgradeStatus: {ID: 0x0006, type: DataType.ENUM8},
+            manufacturerId: {ID: 0x0007, type: DataType.UINT16},
+            imageTypeId: {ID: 0x0008, type: DataType.UINT16},
+            minimumBlockReqDelay: {ID: 0x0009, type: DataType.UINT16},
+            imageStamp: {ID: 0x000a, type: DataType.UINT32},
         },
         commands: {
             queryNextImageRequest: {
-                ID: 1,
+                ID: 0x01,
                 response: 2,
                 parameters: [
                     {name: "fieldControl", type: DataType.UINT8},
@@ -1181,7 +1074,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 ],
             },
             imageBlockRequest: {
-                ID: 3,
+                ID: 0x03,
                 response: 5,
                 parameters: [
                     {name: "fieldControl", type: DataType.UINT8},
@@ -1207,7 +1100,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 ],
             },
             imagePageRequest: {
-                ID: 4,
+                ID: 0x04,
                 response: 5,
                 parameters: [
                     {name: "fieldControl", type: DataType.UINT8},
@@ -1226,7 +1119,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 ],
             },
             upgradeEndRequest: {
-                ID: 6,
+                ID: 0x06,
                 response: 7,
                 parameters: [
                     {name: "status", type: DataType.UINT8},
@@ -1236,7 +1129,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 ],
             },
             queryDeviceSpecificFileRequest: {
-                ID: 8,
+                ID: 0x08,
                 response: 9,
                 parameters: [
                     {name: "eui64", type: DataType.IEEE_ADDR},
@@ -1249,7 +1142,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         },
         commandsResponse: {
             imageNotify: {
-                ID: 0,
+                ID: 0x00,
                 parameters: [
                     {name: "payloadType", type: DataType.UINT8},
                     {name: "queryJitter", type: DataType.UINT8},
@@ -1258,11 +1151,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                         type: DataType.UINT16,
                         conditions: [{type: ParameterCondition.FIELD_GT, field: "payloadType", value: 0x00}],
                     },
-                    {
-                        name: "imageType",
-                        type: DataType.UINT16,
-                        conditions: [{type: ParameterCondition.FIELD_GT, field: "payloadType", value: 0x01}],
-                    },
+                    {name: "imageType", type: DataType.UINT16, conditions: [{type: ParameterCondition.FIELD_GT, field: "payloadType", value: 0x01}]},
                     {
                         name: "fileVersion",
                         type: DataType.UINT32,
@@ -1271,7 +1160,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 ],
             },
             queryNextImageResponse: {
-                ID: 2,
+                ID: 0x02,
                 parameters: [
                     {name: "status", type: DataType.UINT8},
                     {
@@ -1297,7 +1186,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 ],
             },
             imageBlockResponse: {
-                ID: 5,
+                ID: 0x05,
                 parameters: [
                     // alone if Status.ABORT
                     {name: "status", type: DataType.UINT8},
@@ -1349,7 +1238,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 ],
             },
             upgradeEndResponse: {
-                ID: 7,
+                ID: 0x07,
                 parameters: [
                     {name: "manufacturerCode", type: DataType.UINT16},
                     {name: "imageType", type: DataType.UINT16},
@@ -1359,7 +1248,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 ],
             },
             queryDeviceSpecificFileResponse: {
-                ID: 9,
+                ID: 0x09,
                 parameters: [
                     {name: "status", type: DataType.UINT8},
                     {
@@ -1387,50 +1276,38 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         },
     },
     genPollCtrl: {
-        ID: 32,
+        ID: 0x0020,
         attributes: {
-            checkinInterval: {ID: 0, type: DataType.UINT32},
-            longPollInterval: {ID: 1, type: DataType.UINT32},
-            shortPollInterval: {ID: 2, type: DataType.UINT16},
-            fastPollTimeout: {ID: 3, type: DataType.UINT16},
-            checkinIntervalMin: {ID: 4, type: DataType.UINT32},
-            longPollIntervalMin: {ID: 5, type: DataType.UINT32},
-            fastPollTimeoutMax: {ID: 6, type: DataType.UINT16},
+            checkinInterval: {ID: 0x0000, type: DataType.UINT32},
+            longPollInterval: {ID: 0x0001, type: DataType.UINT32},
+            shortPollInterval: {ID: 0x0002, type: DataType.UINT16},
+            fastPollTimeout: {ID: 0x0003, type: DataType.UINT16},
+            checkinIntervalMin: {ID: 0x0004, type: DataType.UINT32},
+            longPollIntervalMin: {ID: 0x0005, type: DataType.UINT32},
+            fastPollTimeoutMax: {ID: 0x0006, type: DataType.UINT16},
         },
         commands: {
             checkinRsp: {
-                ID: 0,
+                ID: 0x00,
                 parameters: [
                     {name: "startFastPolling", type: DataType.BOOLEAN},
                     {name: "fastPollTimeout", type: DataType.UINT16},
                 ],
             },
-            fastPollStop: {
-                ID: 1,
-                parameters: [],
-            },
-            setLongPollInterval: {
-                ID: 2,
-                parameters: [{name: "newLongPollInterval", type: DataType.UINT32}],
-            },
-            setShortPollInterval: {
-                ID: 3,
-                parameters: [{name: "newShortPollInterval", type: DataType.UINT16}],
-            },
+            fastPollStop: {ID: 0x01, parameters: []},
+            setLongPollInterval: {ID: 0x02, parameters: [{name: "newLongPollInterval", type: DataType.UINT32}]},
+            setShortPollInterval: {ID: 0x03, parameters: [{name: "newShortPollInterval", type: DataType.UINT16}]},
         },
         commandsResponse: {
-            checkin: {
-                ID: 0,
-                parameters: [],
-            },
+            checkin: {ID: 0x00, parameters: []},
         },
     },
     greenPower: {
-        ID: 33,
+        ID: 0x0021,
         attributes: {},
         commands: {
             notification: {
-                ID: 0,
+                ID: 0x00,
                 parameters: [
                     {name: "options", type: DataType.BITMAP16},
                     {
@@ -1467,7 +1344,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 ],
             },
             commissioningNotification: {
-                ID: 4,
+                ID: 0x04,
                 parameters: [
                     {name: "options", type: DataType.BITMAP16},
                     {
@@ -1506,7 +1383,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         },
         commandsResponse: {
             response: {
-                ID: 6,
+                ID: 0x06,
                 parameters: [
                     {name: "options", type: DataType.UINT8},
                     {name: "tempMaster", type: DataType.UINT16},
@@ -1531,7 +1408,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 ],
             },
             pairing: {
-                ID: 1,
+                ID: 0x01,
                 parameters: [
                     {name: "options", type: DataType.BITMAP24},
                     {
@@ -1599,7 +1476,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 ],
             },
             commisioningMode: {
-                ID: 2,
+                ID: 0x02,
                 parameters: [
                     {name: "options", type: DataType.BITMAP8},
                     {
@@ -1613,121 +1490,105 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         },
     },
     mobileDeviceCfg: {
-        ID: 34,
+        ID: 0x0022,
         attributes: {
-            keepAliveTime: {ID: 0, type: DataType.UINT16},
-            rejoinTimeout: {ID: 1, type: DataType.UINT16},
+            keepAliveTime: {ID: 0x0000, type: DataType.UINT16},
+            rejoinTimeout: {ID: 0x0001, type: DataType.UINT16},
         },
         commands: {},
         commandsResponse: {},
     },
     neighborCleaning: {
-        ID: 35,
+        ID: 0x0023,
         attributes: {
-            neighborCleaningTimeout: {ID: 0, type: DataType.UINT16},
+            neighborCleaningTimeout: {ID: 0x0000, type: DataType.UINT16},
         },
         commands: {},
         commandsResponse: {},
     },
     nearestGateway: {
-        ID: 36,
+        ID: 0x0024,
         attributes: {
-            nearestGateway: {ID: 0, type: DataType.UINT16},
-            newMobileNode: {ID: 1, type: DataType.UINT16},
+            nearestGateway: {ID: 0x0000, type: DataType.UINT16},
+            newMobileNode: {ID: 0x0001, type: DataType.UINT16},
         },
         commands: {},
         commandsResponse: {},
     },
     closuresShadeCfg: {
-        ID: 256,
+        ID: 0x0100,
         attributes: {
-            physicalClosedLimit: {ID: 0, type: DataType.UINT16},
-            motorStepSize: {ID: 1, type: DataType.UINT8},
-            status: {ID: 2, type: DataType.BITMAP8},
-            losedLimit: {ID: 16, type: DataType.UINT16},
-            mode: {ID: 17, type: DataType.ENUM8},
+            physicalClosedLimit: {ID: 0x0000, type: DataType.UINT16},
+            motorStepSize: {ID: 0x0001, type: DataType.UINT8},
+            status: {ID: 0x0002, type: DataType.BITMAP8},
+            losedLimit: {ID: 0x0010, type: DataType.UINT16},
+            mode: {ID: 0x0011, type: DataType.ENUM8},
         },
         commands: {},
         commandsResponse: {},
     },
     closuresDoorLock: {
-        ID: 257,
+        ID: 0x0101,
         attributes: {
-            lockState: {ID: 0, type: DataType.ENUM8},
-            lockType: {ID: 1, type: DataType.BITMAP16},
-            actuatorEnabled: {ID: 2, type: DataType.BOOLEAN},
-            doorState: {ID: 3, type: DataType.ENUM8},
-            doorOpenEvents: {ID: 4, type: DataType.UINT32},
-            doorClosedEvents: {ID: 5, type: DataType.UINT32},
-            openPeriod: {ID: 6, type: DataType.UINT16},
-            numOfLockRecordsSupported: {ID: 16, type: DataType.UINT16},
-            numOfTotalUsersSupported: {ID: 17, type: DataType.UINT16},
-            numOfPinUsersSupported: {ID: 18, type: DataType.UINT16},
-            numOfRfidUsersSupported: {ID: 19, type: DataType.UINT16},
-            numOfWeekDaySchedulesSupportedPerUser: {ID: 20, type: DataType.UINT8},
-            numOfYearDaySchedulesSupportedPerUser: {ID: 21, type: DataType.UINT8},
-            numOfHolidayScheduledsSupported: {ID: 22, type: DataType.UINT8},
-            maxPinLen: {ID: 23, type: DataType.UINT8},
-            minPinLen: {ID: 24, type: DataType.UINT8},
-            maxRfidLen: {ID: 25, type: DataType.UINT8},
-            minRfidLen: {ID: 26, type: DataType.UINT8},
-            enableLogging: {ID: 32, type: DataType.BOOLEAN},
-            language: {ID: 33, type: DataType.CHAR_STR},
-            ledSettings: {ID: 34, type: DataType.UINT8},
-            autoRelockTime: {ID: 35, type: DataType.UINT32},
-            soundVolume: {ID: 36, type: DataType.UINT8},
-            operatingMode: {ID: 37, type: DataType.UINT32},
-            supportedOperatingModes: {ID: 38, type: DataType.BITMAP16},
-            defaultConfigurationRegister: {ID: 39, type: DataType.BITMAP16},
-            enableLocalProgramming: {ID: 40, type: DataType.BOOLEAN},
-            enableOneTouchLocking: {ID: 41, type: DataType.BOOLEAN},
-            enableInsideStatusLed: {ID: 42, type: DataType.BOOLEAN},
-            enablePrivacyModeButton: {ID: 43, type: DataType.BOOLEAN},
-            wrongCodeEntryLimit: {ID: 48, type: DataType.UINT8},
-            userCodeTemporaryDisableTime: {ID: 49, type: DataType.UINT8},
-            sendPinOta: {ID: 50, type: DataType.BOOLEAN},
-            requirePinForRfOperation: {ID: 51, type: DataType.BOOLEAN},
-            zigbeeSecurityLevel: {ID: 52, type: DataType.UINT8},
-            alarmMask: {ID: 64, type: DataType.BITMAP16},
-            keypadOperationEventMask: {ID: 65, type: DataType.BITMAP16},
-            rfOperationEventMask: {ID: 66, type: DataType.BITMAP16},
-            manualOperationEventMask: {ID: 67, type: DataType.BITMAP16},
-            rfidOperationEventMask: {ID: 68, type: DataType.BITMAP16},
-            keypadProgrammingEventMask: {ID: 69, type: DataType.BITMAP16},
-            rfProgrammingEventMask: {ID: 70, type: DataType.BITMAP16},
-            rfidProgrammingEventMask: {ID: 71, type: DataType.BITMAP16},
+            lockState: {ID: 0x0000, type: DataType.ENUM8},
+            lockType: {ID: 0x0001, type: DataType.BITMAP16},
+            actuatorEnabled: {ID: 0x0002, type: DataType.BOOLEAN},
+            doorState: {ID: 0x0003, type: DataType.ENUM8},
+            doorOpenEvents: {ID: 0x0004, type: DataType.UINT32},
+            doorClosedEvents: {ID: 0x0005, type: DataType.UINT32},
+            openPeriod: {ID: 0x0006, type: DataType.UINT16},
+            numOfLockRecordsSupported: {ID: 0x0010, type: DataType.UINT16},
+            numOfTotalUsersSupported: {ID: 0x0011, type: DataType.UINT16},
+            numOfPinUsersSupported: {ID: 0x0012, type: DataType.UINT16},
+            numOfRfidUsersSupported: {ID: 0x0013, type: DataType.UINT16},
+            numOfWeekDaySchedulesSupportedPerUser: {ID: 0x0014, type: DataType.UINT8},
+            numOfYearDaySchedulesSupportedPerUser: {ID: 0x0015, type: DataType.UINT8},
+            numOfHolidayScheduledsSupported: {ID: 0x0016, type: DataType.UINT8},
+            maxPinLen: {ID: 0x0017, type: DataType.UINT8},
+            minPinLen: {ID: 0x0018, type: DataType.UINT8},
+            maxRfidLen: {ID: 0x0019, type: DataType.UINT8},
+            minRfidLen: {ID: 0x001a, type: DataType.UINT8},
+            enableLogging: {ID: 0x0020, type: DataType.BOOLEAN},
+            language: {ID: 0x0021, type: DataType.CHAR_STR},
+            ledSettings: {ID: 0x0022, type: DataType.UINT8},
+            autoRelockTime: {ID: 0x0023, type: DataType.UINT32},
+            soundVolume: {ID: 0x0024, type: DataType.UINT8},
+            operatingMode: {ID: 0x0025, type: DataType.UINT32},
+            supportedOperatingModes: {ID: 0x0026, type: DataType.BITMAP16},
+            defaultConfigurationRegister: {ID: 0x0027, type: DataType.BITMAP16},
+            enableLocalProgramming: {ID: 0x0028, type: DataType.BOOLEAN},
+            enableOneTouchLocking: {ID: 0x0029, type: DataType.BOOLEAN},
+            enableInsideStatusLed: {ID: 0x002a, type: DataType.BOOLEAN},
+            enablePrivacyModeButton: {ID: 0x002b, type: DataType.BOOLEAN},
+            wrongCodeEntryLimit: {ID: 0x0030, type: DataType.UINT8},
+            userCodeTemporaryDisableTime: {ID: 0x0031, type: DataType.UINT8},
+            sendPinOta: {ID: 0x0032, type: DataType.BOOLEAN},
+            requirePinForRfOperation: {ID: 0x0033, type: DataType.BOOLEAN},
+            zigbeeSecurityLevel: {ID: 0x0034, type: DataType.UINT8},
+            alarmMask: {ID: 0x0040, type: DataType.BITMAP16},
+            keypadOperationEventMask: {ID: 0x0041, type: DataType.BITMAP16},
+            rfOperationEventMask: {ID: 0x0042, type: DataType.BITMAP16},
+            manualOperationEventMask: {ID: 0x0043, type: DataType.BITMAP16},
+            rfidOperationEventMask: {ID: 0x0044, type: DataType.BITMAP16},
+            keypadProgrammingEventMask: {ID: 0x0045, type: DataType.BITMAP16},
+            rfProgrammingEventMask: {ID: 0x0046, type: DataType.BITMAP16},
+            rfidProgrammingEventMask: {ID: 0x0047, type: DataType.BITMAP16},
         },
         commands: {
-            lockDoor: {
-                ID: 0,
-                response: 0,
-                parameters: [{name: "pincodevalue", type: DataType.CHAR_STR}],
-            },
-            unlockDoor: {
-                ID: 1,
-                response: 1,
-                parameters: [{name: "pincodevalue", type: DataType.CHAR_STR}],
-            },
-            toggleDoor: {
-                ID: 2,
-                response: 2,
-                parameters: [{name: "pincodevalue", type: DataType.CHAR_STR}],
-            },
+            lockDoor: {ID: 0x00, response: 0, parameters: [{name: "pincodevalue", type: DataType.CHAR_STR}]},
+            unlockDoor: {ID: 0x01, response: 1, parameters: [{name: "pincodevalue", type: DataType.CHAR_STR}]},
+            toggleDoor: {ID: 0x02, response: 2, parameters: [{name: "pincodevalue", type: DataType.CHAR_STR}]},
             unlockWithTimeout: {
-                ID: 3,
+                ID: 0x03,
                 response: 3,
                 parameters: [
                     {name: "timeout", type: DataType.UINT16},
                     {name: "pincodevalue", type: DataType.CHAR_STR},
                 ],
             },
-            getLogRecord: {
-                ID: 4,
-                response: 4,
-                parameters: [{name: "logindex", type: DataType.UINT16}],
-            },
+            getLogRecord: {ID: 0x04, response: 4, parameters: [{name: "logindex", type: DataType.UINT16}]},
             setPinCode: {
-                ID: 5,
+                ID: 0x05,
                 response: 5,
                 parameters: [
                     {name: "userid", type: DataType.UINT16},
@@ -1736,36 +1597,20 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                     {name: "pincodevalue", type: DataType.CHAR_STR},
                 ],
             },
-            getPinCode: {
-                ID: 6,
-                response: 6,
-                parameters: [{name: "userid", type: DataType.UINT16}],
-            },
-            clearPinCode: {
-                ID: 7,
-                response: 7,
-                parameters: [{name: "userid", type: DataType.UINT16}],
-            },
-            clearAllPinCodes: {
-                ID: 8,
-                response: 8,
-                parameters: [],
-            },
+            getPinCode: {ID: 0x06, response: 6, parameters: [{name: "userid", type: DataType.UINT16}]},
+            clearPinCode: {ID: 0x07, response: 7, parameters: [{name: "userid", type: DataType.UINT16}]},
+            clearAllPinCodes: {ID: 0x08, response: 8, parameters: []},
             setUserStatus: {
-                ID: 9,
+                ID: 0x09,
                 response: 9,
                 parameters: [
                     {name: "userid", type: DataType.UINT16},
                     {name: "userstatus", type: DataType.UINT8},
                 ],
             },
-            getUserStatus: {
-                ID: 10,
-                response: 10,
-                parameters: [{name: "userid", type: DataType.UINT16}],
-            },
+            getUserStatus: {ID: 0x0a, response: 10, parameters: [{name: "userid", type: DataType.UINT16}]},
             setWeekDaySchedule: {
-                ID: 11,
+                ID: 0x0b,
                 response: 11,
                 parameters: [
                     {name: "scheduleid", type: DataType.UINT8},
@@ -1778,7 +1623,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 ],
             },
             getWeekDaySchedule: {
-                ID: 12,
+                ID: 0x0c,
                 response: 12,
                 parameters: [
                     {name: "scheduleid", type: DataType.UINT8},
@@ -1786,7 +1631,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 ],
             },
             clearWeekDaySchedule: {
-                ID: 13,
+                ID: 0x0d,
                 response: 13,
                 parameters: [
                     {name: "scheduleid", type: DataType.UINT8},
@@ -1794,7 +1639,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 ],
             },
             setYearDaySchedule: {
-                ID: 14,
+                ID: 0x0e,
                 response: 14,
                 parameters: [
                     {name: "scheduleid", type: DataType.UINT8},
@@ -1804,7 +1649,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 ],
             },
             getYearDaySchedule: {
-                ID: 15,
+                ID: 0x0f,
                 response: 15,
                 parameters: [
                     {name: "scheduleid", type: DataType.UINT8},
@@ -1812,7 +1657,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 ],
             },
             clearYearDaySchedule: {
-                ID: 16,
+                ID: 0x10,
                 response: 16,
                 parameters: [
                     {name: "scheduleid", type: DataType.UINT8},
@@ -1820,7 +1665,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 ],
             },
             setHolidaySchedule: {
-                ID: 17,
+                ID: 0x11,
                 response: 17,
                 parameters: [
                     {name: "holidayscheduleid", type: DataType.UINT8},
@@ -1829,31 +1674,19 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                     {name: "opermodelduringholiday", type: DataType.UINT8},
                 ],
             },
-            getHolidaySchedule: {
-                ID: 18,
-                response: 18,
-                parameters: [{name: "holidayscheduleid", type: DataType.UINT8}],
-            },
-            clearHolidaySchedule: {
-                ID: 19,
-                response: 19,
-                parameters: [{name: "holidayscheduleid", type: DataType.UINT8}],
-            },
+            getHolidaySchedule: {ID: 0x12, response: 18, parameters: [{name: "holidayscheduleid", type: DataType.UINT8}]},
+            clearHolidaySchedule: {ID: 0x13, response: 19, parameters: [{name: "holidayscheduleid", type: DataType.UINT8}]},
             setUserType: {
-                ID: 20,
+                ID: 0x14,
                 response: 20,
                 parameters: [
                     {name: "userid", type: DataType.UINT16},
                     {name: "usertype", type: DataType.UINT8},
                 ],
             },
-            getUserType: {
-                ID: 21,
-                response: 21,
-                parameters: [{name: "userid", type: DataType.UINT16}],
-            },
+            getUserType: {ID: 0x15, response: 21, parameters: [{name: "userid", type: DataType.UINT16}]},
             setRfidCode: {
-                ID: 22,
+                ID: 0x16,
                 response: 22,
                 parameters: [
                     {name: "userid", type: DataType.UINT16},
@@ -1862,41 +1695,17 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                     {name: "pincodevalue", type: DataType.CHAR_STR},
                 ],
             },
-            getRfidCode: {
-                ID: 23,
-                response: 23,
-                parameters: [{name: "userid", type: DataType.UINT16}],
-            },
-            clearRfidCode: {
-                ID: 24,
-                response: 24,
-                parameters: [{name: "userid", type: DataType.UINT16}],
-            },
-            clearAllRfidCodes: {
-                ID: 25,
-                response: 25,
-                parameters: [],
-            },
+            getRfidCode: {ID: 0x17, response: 23, parameters: [{name: "userid", type: DataType.UINT16}]},
+            clearRfidCode: {ID: 0x18, response: 24, parameters: [{name: "userid", type: DataType.UINT16}]},
+            clearAllRfidCodes: {ID: 0x19, response: 25, parameters: []},
         },
         commandsResponse: {
-            lockDoorRsp: {
-                ID: 0,
-                parameters: [{name: "status", type: DataType.UINT8}],
-            },
-            unlockDoorRsp: {
-                ID: 1,
-                parameters: [{name: "status", type: DataType.UINT8}],
-            },
-            toggleDoorRsp: {
-                ID: 2,
-                parameters: [{name: "status", type: DataType.UINT8}],
-            },
-            unlockWithTimeoutRsp: {
-                ID: 3,
-                parameters: [{name: "status", type: DataType.UINT8}],
-            },
+            lockDoorRsp: {ID: 0x00, parameters: [{name: "status", type: DataType.UINT8}]},
+            unlockDoorRsp: {ID: 0x01, parameters: [{name: "status", type: DataType.UINT8}]},
+            toggleDoorRsp: {ID: 0x02, parameters: [{name: "status", type: DataType.UINT8}]},
+            unlockWithTimeoutRsp: {ID: 0x03, parameters: [{name: "status", type: DataType.UINT8}]},
             getLogRecordRsp: {
-                ID: 4,
+                ID: 0x04,
                 parameters: [
                     {name: "logentryid", type: DataType.UINT16},
                     {name: "timestamp", type: DataType.UINT32},
@@ -1907,12 +1716,9 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                     {name: "pincodevalue", type: DataType.CHAR_STR},
                 ],
             },
-            setPinCodeRsp: {
-                ID: 5,
-                parameters: [{name: "status", type: DataType.UINT8}],
-            },
+            setPinCodeRsp: {ID: 0x05, parameters: [{name: "status", type: DataType.UINT8}]},
             getPinCodeRsp: {
-                ID: 6,
+                ID: 0x06,
                 parameters: [
                     {name: "userid", type: DataType.UINT16},
                     {name: "userstatus", type: DataType.UINT8},
@@ -1920,31 +1726,19 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                     {name: "pincodevalue", type: DataType.CHAR_STR},
                 ],
             },
-            clearPinCodeRsp: {
-                ID: 7,
-                parameters: [{name: "status", type: DataType.UINT8}],
-            },
-            clearAllPinCodesRsp: {
-                ID: 8,
-                parameters: [{name: "status", type: DataType.UINT8}],
-            },
-            setUserStatusRsp: {
-                ID: 9,
-                parameters: [{name: "status", type: DataType.UINT8}],
-            },
+            clearPinCodeRsp: {ID: 0x07, parameters: [{name: "status", type: DataType.UINT8}]},
+            clearAllPinCodesRsp: {ID: 0x08, parameters: [{name: "status", type: DataType.UINT8}]},
+            setUserStatusRsp: {ID: 0x09, parameters: [{name: "status", type: DataType.UINT8}]},
             getUserStatusRsp: {
-                ID: 10,
+                ID: 0x0a,
                 parameters: [
                     {name: "userid", type: DataType.UINT16},
                     {name: "userstatus", type: DataType.UINT8},
                 ],
             },
-            setWeekDayScheduleRsp: {
-                ID: 11,
-                parameters: [{name: "status", type: DataType.UINT8}],
-            },
+            setWeekDayScheduleRsp: {ID: 0x0b, parameters: [{name: "status", type: DataType.UINT8}]},
             getWeekDayScheduleRsp: {
-                ID: 12,
+                ID: 0x0c,
                 parameters: [
                     {name: "scheduleid", type: DataType.UINT8},
                     {name: "userid", type: DataType.UINT16},
@@ -1956,16 +1750,10 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                     {name: "endminute", type: DataType.UINT8},
                 ],
             },
-            clearWeekDayScheduleRsp: {
-                ID: 13,
-                parameters: [{name: "status", type: DataType.UINT8}],
-            },
-            setYearDayScheduleRsp: {
-                ID: 14,
-                parameters: [{name: "status", type: DataType.UINT8}],
-            },
+            clearWeekDayScheduleRsp: {ID: 0x0d, parameters: [{name: "status", type: DataType.UINT8}]},
+            setYearDayScheduleRsp: {ID: 0x0e, parameters: [{name: "status", type: DataType.UINT8}]},
             getYearDayScheduleRsp: {
-                ID: 15,
+                ID: 0x0f,
                 parameters: [
                     {name: "scheduleid", type: DataType.UINT8},
                     {name: "userid", type: DataType.UINT16},
@@ -1974,16 +1762,10 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                     {name: "zigbeelocalendtime", type: DataType.UINT32},
                 ],
             },
-            clearYearDayScheduleRsp: {
-                ID: 16,
-                parameters: [{name: "status", type: DataType.UINT8}],
-            },
-            setHolidayScheduleRsp: {
-                ID: 17,
-                parameters: [{name: "status", type: DataType.UINT8}],
-            },
+            clearYearDayScheduleRsp: {ID: 0x10, parameters: [{name: "status", type: DataType.UINT8}]},
+            setHolidayScheduleRsp: {ID: 0x11, parameters: [{name: "status", type: DataType.UINT8}]},
             getHolidayScheduleRsp: {
-                ID: 18,
+                ID: 0x12,
                 parameters: [
                     {name: "holidayscheduleid", type: DataType.UINT8},
                     {name: "status", type: DataType.UINT8},
@@ -1992,27 +1774,18 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                     {name: "opermodelduringholiday", type: DataType.UINT8},
                 ],
             },
-            clearHolidayScheduleRsp: {
-                ID: 19,
-                parameters: [{name: "status", type: DataType.UINT8}],
-            },
-            setUserTypeRsp: {
-                ID: 20,
-                parameters: [{name: "status", type: DataType.UINT8}],
-            },
+            clearHolidayScheduleRsp: {ID: 0x13, parameters: [{name: "status", type: DataType.UINT8}]},
+            setUserTypeRsp: {ID: 0x14, parameters: [{name: "status", type: DataType.UINT8}]},
             getUserTypeRsp: {
-                ID: 21,
+                ID: 0x15,
                 parameters: [
                     {name: "userid", type: DataType.UINT16},
                     {name: "usertype", type: DataType.UINT8},
                 ],
             },
-            setRfidCodeRsp: {
-                ID: 22,
-                parameters: [{name: "status", type: DataType.UINT8}],
-            },
+            setRfidCodeRsp: {ID: 0x16, parameters: [{name: "status", type: DataType.UINT8}]},
             getRfidCodeRsp: {
-                ID: 23,
+                ID: 0x17,
                 parameters: [
                     {name: "userid", type: DataType.UINT16},
                     {name: "userstatus", type: DataType.UINT8},
@@ -2020,16 +1793,10 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                     {name: "pincodevalue", type: DataType.CHAR_STR},
                 ],
             },
-            clearRfidCodeRsp: {
-                ID: 24,
-                parameters: [{name: "status", type: DataType.UINT8}],
-            },
-            clearAllRfidCodesRsp: {
-                ID: 25,
-                parameters: [{name: "status", type: DataType.UINT8}],
-            },
+            clearRfidCodeRsp: {ID: 0x18, parameters: [{name: "status", type: DataType.UINT8}]},
+            clearAllRfidCodesRsp: {ID: 0x19, parameters: [{name: "status", type: DataType.UINT8}]},
             operationEventNotification: {
-                ID: 32,
+                ID: 0x20,
                 parameters: [
                     {name: "opereventsrc", type: DataType.UINT8},
                     {name: "opereventcode", type: DataType.UINT8},
@@ -2040,7 +1807,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 ],
             },
             programmingEventNotification: {
-                ID: 33,
+                ID: 0x21,
                 parameters: [
                     {name: "programeventsrc", type: DataType.UINT8},
                     {name: "programeventcode", type: DataType.UINT8},
@@ -2055,29 +1822,29 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         },
     },
     closuresWindowCovering: {
-        ID: 258,
+        ID: 0x0102,
         attributes: {
-            windowCoveringType: {ID: 0, type: DataType.ENUM8},
-            physicalClosedLimitLiftCm: {ID: 1, type: DataType.UINT16},
-            physicalClosedLimitTiltDdegree: {ID: 2, type: DataType.UINT16},
-            currentPositionLiftCm: {ID: 3, type: DataType.UINT16},
-            currentPositionTiltDdegree: {ID: 4, type: DataType.UINT16},
-            numOfActuationsLift: {ID: 5, type: DataType.UINT16},
-            numOfActuationsTilt: {ID: 6, type: DataType.UINT16},
-            configStatus: {ID: 7, type: DataType.BITMAP8},
-            currentPositionLiftPercentage: {ID: 8, type: DataType.UINT8},
-            currentPositionTiltPercentage: {ID: 9, type: DataType.UINT8},
-            operationalStatus: {ID: 10, type: DataType.BITMAP8},
-            installedOpenLimitLiftCm: {ID: 16, type: DataType.UINT16},
-            installedClosedLimitLiftCm: {ID: 17, type: DataType.UINT16},
-            installedOpenLimitTiltDdegree: {ID: 18, type: DataType.UINT16},
-            installedClosedLimitTiltDdegree: {ID: 19, type: DataType.UINT16},
-            velocityLift: {ID: 20, type: DataType.UINT16},
-            accelerationTimeLift: {ID: 21, type: DataType.UINT16},
-            decelerationTimeLift: {ID: 22, type: DataType.UINT16},
-            windowCoveringMode: {ID: 23, type: DataType.BITMAP8},
-            intermediateSetpointsLift: {ID: 24, type: DataType.OCTET_STR},
-            intermediateSetpointsTilt: {ID: 25, type: DataType.OCTET_STR},
+            windowCoveringType: {ID: 0x0000, type: DataType.ENUM8},
+            physicalClosedLimitLiftCm: {ID: 0x0001, type: DataType.UINT16},
+            physicalClosedLimitTiltDdegree: {ID: 0x0002, type: DataType.UINT16},
+            currentPositionLiftCm: {ID: 0x0003, type: DataType.UINT16},
+            currentPositionTiltDdegree: {ID: 0x0004, type: DataType.UINT16},
+            numOfActuationsLift: {ID: 0x0005, type: DataType.UINT16},
+            numOfActuationsTilt: {ID: 0x0006, type: DataType.UINT16},
+            configStatus: {ID: 0x0007, type: DataType.BITMAP8},
+            currentPositionLiftPercentage: {ID: 0x0008, type: DataType.UINT8},
+            currentPositionTiltPercentage: {ID: 0x0009, type: DataType.UINT8},
+            operationalStatus: {ID: 0x000a, type: DataType.BITMAP8},
+            installedOpenLimitLiftCm: {ID: 0x0010, type: DataType.UINT16},
+            installedClosedLimitLiftCm: {ID: 0x0011, type: DataType.UINT16},
+            installedOpenLimitTiltDdegree: {ID: 0x0012, type: DataType.UINT16},
+            installedClosedLimitTiltDdegree: {ID: 0x0013, type: DataType.UINT16},
+            velocityLift: {ID: 0x0014, type: DataType.UINT16},
+            accelerationTimeLift: {ID: 0x0015, type: DataType.UINT16},
+            decelerationTimeLift: {ID: 0x0016, type: DataType.UINT16},
+            windowCoveringMode: {ID: 0x0017, type: DataType.BITMAP8},
+            intermediateSetpointsLift: {ID: 0x0018, type: DataType.OCTET_STR},
+            intermediateSetpointsTilt: {ID: 0x0019, type: DataType.OCTET_STR},
             tuyaMovingState: {ID: 0xf000, type: DataType.ENUM8},
             tuyaCalibration: {ID: 0xf001, type: DataType.ENUM8},
             stepPositionLift: {ID: 0xf001, type: DataType.ENUM8, manufacturerCode: ManufacturerCode.LEGRAND_GROUP},
@@ -2098,34 +1865,13 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             nikoCalibrationTimeDown: {ID: 0xfcc2, type: DataType.UINT16, manufacturerCode: ManufacturerCode.NIKO_NV},
         },
         commands: {
-            upOpen: {
-                ID: 0,
-                parameters: [],
-            },
-            downClose: {
-                ID: 1,
-                parameters: [],
-            },
-            stop: {
-                ID: 2,
-                parameters: [],
-            },
-            goToLiftValue: {
-                ID: 4,
-                parameters: [{name: "liftvalue", type: DataType.UINT16}],
-            },
-            goToLiftPercentage: {
-                ID: 5,
-                parameters: [{name: "percentageliftvalue", type: DataType.UINT8}],
-            },
-            goToTiltValue: {
-                ID: 7,
-                parameters: [{name: "tiltvalue", type: DataType.UINT16}],
-            },
-            goToTiltPercentage: {
-                ID: 8,
-                parameters: [{name: "percentagetiltvalue", type: DataType.UINT8}],
-            },
+            upOpen: {ID: 0x00, parameters: []},
+            downClose: {ID: 0x01, parameters: []},
+            stop: {ID: 0x02, parameters: []},
+            goToLiftValue: {ID: 0x04, parameters: [{name: "liftvalue", type: DataType.UINT16}]},
+            goToLiftPercentage: {ID: 0x05, parameters: [{name: "percentageliftvalue", type: DataType.UINT8}]},
+            goToTiltValue: {ID: 0x07, parameters: [{name: "tiltvalue", type: DataType.UINT16}]},
+            goToTiltPercentage: {ID: 0x08, parameters: [{name: "percentagetiltvalue", type: DataType.UINT8}]},
             elkoStopOrStepLiftPercentage: {
                 ID: 0x80,
                 parameters: [
@@ -2137,112 +1883,106 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         commandsResponse: {},
     },
     barrierControl: {
-        ID: 259,
+        ID: 0x0103,
         attributes: {
-            movingState: {ID: 1, type: DataType.ENUM8},
-            safetyStatus: {ID: 2, type: DataType.BITMAP16},
-            capabilities: {ID: 3, type: DataType.BITMAP8},
-            openEvents: {ID: 4, type: DataType.UINT16},
-            closeEvents: {ID: 5, type: DataType.UINT16},
-            commandOpenEvents: {ID: 6, type: DataType.UINT16},
-            commandCloseEvents: {ID: 7, type: DataType.UINT16},
-            openPeriod: {ID: 8, type: DataType.UINT16},
-            closePeriod: {ID: 9, type: DataType.UINT16},
-            barrierPosition: {ID: 10, type: DataType.UINT8},
+            movingState: {ID: 0x0001, type: DataType.ENUM8},
+            safetyStatus: {ID: 0x0002, type: DataType.BITMAP16},
+            capabilities: {ID: 0x0003, type: DataType.BITMAP8},
+            openEvents: {ID: 0x0004, type: DataType.UINT16},
+            closeEvents: {ID: 0x0005, type: DataType.UINT16},
+            commandOpenEvents: {ID: 0x0006, type: DataType.UINT16},
+            commandCloseEvents: {ID: 0x0007, type: DataType.UINT16},
+            openPeriod: {ID: 0x0008, type: DataType.UINT16},
+            closePeriod: {ID: 0x0009, type: DataType.UINT16},
+            barrierPosition: {ID: 0x000a, type: DataType.UINT8},
         },
         commands: {
-            goToPercent: {
-                ID: 0,
-                parameters: [{name: "percentOpen", type: DataType.UINT8}],
-            },
-            stop: {
-                ID: 1,
-                parameters: [],
-            },
+            goToPercent: {ID: 0x00, parameters: [{name: "percentOpen", type: DataType.UINT8}]},
+            stop: {ID: 0x01, parameters: []},
         },
         commandsResponse: {},
     },
     hvacPumpCfgCtrl: {
-        ID: 512,
+        ID: 0x0200,
         attributes: {
-            maxPressure: {ID: 0, type: DataType.INT16},
-            maxSpeed: {ID: 1, type: DataType.UINT16},
-            maxFlow: {ID: 2, type: DataType.UINT16},
-            minConstPressure: {ID: 3, type: DataType.INT16},
-            maxConstPressure: {ID: 4, type: DataType.INT16},
-            minCompPressure: {ID: 5, type: DataType.INT16},
-            maxCompPressure: {ID: 6, type: DataType.INT16},
-            minConstSpeed: {ID: 7, type: DataType.UINT16},
-            maxConstSpeed: {ID: 8, type: DataType.UINT16},
-            minConstFlow: {ID: 9, type: DataType.UINT16},
-            maxConstFlow: {ID: 10, type: DataType.UINT16},
-            minConstTemp: {ID: 11, type: DataType.INT16},
-            maxConstTemp: {ID: 12, type: DataType.INT16},
-            pumpStatus: {ID: 16, type: DataType.BITMAP16},
-            effectiveOperationMode: {ID: 17, type: DataType.ENUM8},
-            effectiveControlMode: {ID: 18, type: DataType.ENUM8},
-            capacity: {ID: 19, type: DataType.INT16},
-            speed: {ID: 20, type: DataType.UINT16},
-            lifetimeRunningHours: {ID: 21, type: DataType.UINT24},
-            power: {ID: 22, type: DataType.UINT24},
-            lifetimeEnergyConsumed: {ID: 23, type: DataType.UINT32},
-            operationMode: {ID: 32, type: DataType.ENUM8},
-            controlMode: {ID: 33, type: DataType.ENUM8},
-            alarmMask: {ID: 34, type: DataType.BITMAP16},
+            maxPressure: {ID: 0x0000, type: DataType.INT16},
+            maxSpeed: {ID: 0x0001, type: DataType.UINT16},
+            maxFlow: {ID: 0x0002, type: DataType.UINT16},
+            minConstPressure: {ID: 0x0003, type: DataType.INT16},
+            maxConstPressure: {ID: 0x0004, type: DataType.INT16},
+            minCompPressure: {ID: 0x0005, type: DataType.INT16},
+            maxCompPressure: {ID: 0x0006, type: DataType.INT16},
+            minConstSpeed: {ID: 0x0007, type: DataType.UINT16},
+            maxConstSpeed: {ID: 0x0008, type: DataType.UINT16},
+            minConstFlow: {ID: 0x0009, type: DataType.UINT16},
+            maxConstFlow: {ID: 0x000a, type: DataType.UINT16},
+            minConstTemp: {ID: 0x000b, type: DataType.INT16},
+            maxConstTemp: {ID: 0x000c, type: DataType.INT16},
+            pumpStatus: {ID: 0x0010, type: DataType.BITMAP16},
+            effectiveOperationMode: {ID: 0x0011, type: DataType.ENUM8},
+            effectiveControlMode: {ID: 0x0012, type: DataType.ENUM8},
+            capacity: {ID: 0x0013, type: DataType.INT16},
+            speed: {ID: 0x0014, type: DataType.UINT16},
+            lifetimeRunningHours: {ID: 0x0015, type: DataType.UINT24},
+            power: {ID: 0x0016, type: DataType.UINT24},
+            lifetimeEnergyConsumed: {ID: 0x0017, type: DataType.UINT32},
+            operationMode: {ID: 0x0020, type: DataType.ENUM8},
+            controlMode: {ID: 0x0021, type: DataType.ENUM8},
+            alarmMask: {ID: 0x0022, type: DataType.BITMAP16},
         },
         commands: {},
         commandsResponse: {},
     },
     hvacThermostat: {
-        ID: 513,
+        ID: 0x0201,
         attributes: {
-            localTemp: {ID: 0, type: DataType.INT16},
-            outdoorTemp: {ID: 1, type: DataType.INT16},
-            occupancy: {ID: 2, type: DataType.BITMAP8},
-            absMinHeatSetpointLimit: {ID: 3, type: DataType.INT16},
-            absMaxHeatSetpointLimit: {ID: 4, type: DataType.INT16},
-            absMinCoolSetpointLimit: {ID: 5, type: DataType.INT16},
-            absMaxCoolSetpointLimit: {ID: 6, type: DataType.INT16},
-            pICoolingDemand: {ID: 7, type: DataType.UINT8},
-            pIHeatingDemand: {ID: 8, type: DataType.UINT8},
-            systemTypeConfig: {ID: 9, type: DataType.BITMAP8},
-            localTemperatureCalibration: {ID: 16, type: DataType.INT8},
-            occupiedCoolingSetpoint: {ID: 17, type: DataType.INT16},
-            occupiedHeatingSetpoint: {ID: 18, type: DataType.INT16},
-            unoccupiedCoolingSetpoint: {ID: 19, type: DataType.INT16},
-            unoccupiedHeatingSetpoint: {ID: 20, type: DataType.INT16},
-            minHeatSetpointLimit: {ID: 21, type: DataType.INT16},
-            maxHeatSetpointLimit: {ID: 22, type: DataType.INT16},
-            minCoolSetpointLimit: {ID: 23, type: DataType.INT16},
-            maxCoolSetpointLimit: {ID: 24, type: DataType.INT16},
-            minSetpointDeadBand: {ID: 25, type: DataType.INT8},
-            remoteSensing: {ID: 26, type: DataType.BITMAP8},
-            ctrlSeqeOfOper: {ID: 27, type: DataType.ENUM8},
-            systemMode: {ID: 28, type: DataType.ENUM8},
-            alarmMask: {ID: 29, type: DataType.BITMAP8},
-            runningMode: {ID: 30, type: DataType.ENUM8},
-            startOfWeek: {ID: 32, type: DataType.ENUM8},
-            numberOfWeeklyTrans: {ID: 33, type: DataType.UINT8},
-            numberOfDailyTrans: {ID: 34, type: DataType.UINT8},
-            tempSetpointHold: {ID: 35, type: DataType.ENUM8},
-            tempSetpointHoldDuration: {ID: 36, type: DataType.UINT16},
-            programingOperMode: {ID: 37, type: DataType.BITMAP8},
-            runningState: {ID: 41, type: DataType.BITMAP16},
-            setpointChangeSource: {ID: 48, type: DataType.ENUM8},
-            setpointChangeAmount: {ID: 49, type: DataType.INT16},
-            setpointChangeSourceTimeStamp: {ID: 50, type: DataType.UTC},
-            acType: {ID: 64, type: DataType.ENUM8},
-            acCapacity: {ID: 65, type: DataType.UINT16},
-            acRefrigerantType: {ID: 66, type: DataType.ENUM8},
-            acConpressorType: {ID: 67, type: DataType.ENUM8},
-            acErrorCode: {ID: 68, type: DataType.BITMAP32},
-            acLouverPosition: {ID: 69, type: DataType.ENUM8},
-            acCollTemp: {ID: 70, type: DataType.INT16},
-            acCapacityFormat: {ID: 71, type: DataType.ENUM8},
-            SinopeOccupancy: {ID: 1024, type: DataType.ENUM8, manufacturerCode: ManufacturerCode.SINOPE_TECHNOLOGIES},
-            SinopeMainCycleOutput: {ID: 1025, type: DataType.UINT16, manufacturerCode: ManufacturerCode.SINOPE_TECHNOLOGIES},
-            SinopeBacklight: {ID: 1026, type: DataType.ENUM8, manufacturerCode: ManufacturerCode.SINOPE_TECHNOLOGIES},
-            SinopeAuxCycleOutput: {ID: 1028, type: DataType.UINT16, manufacturerCode: ManufacturerCode.SINOPE_TECHNOLOGIES},
+            localTemp: {ID: 0x0000, type: DataType.INT16},
+            outdoorTemp: {ID: 0x0001, type: DataType.INT16},
+            occupancy: {ID: 0x0002, type: DataType.BITMAP8},
+            absMinHeatSetpointLimit: {ID: 0x0003, type: DataType.INT16},
+            absMaxHeatSetpointLimit: {ID: 0x0004, type: DataType.INT16},
+            absMinCoolSetpointLimit: {ID: 0x0005, type: DataType.INT16},
+            absMaxCoolSetpointLimit: {ID: 0x0006, type: DataType.INT16},
+            pICoolingDemand: {ID: 0x0007, type: DataType.UINT8},
+            pIHeatingDemand: {ID: 0x0008, type: DataType.UINT8},
+            systemTypeConfig: {ID: 0x0009, type: DataType.BITMAP8},
+            localTemperatureCalibration: {ID: 0x0010, type: DataType.INT8},
+            occupiedCoolingSetpoint: {ID: 0x0011, type: DataType.INT16},
+            occupiedHeatingSetpoint: {ID: 0x0012, type: DataType.INT16},
+            unoccupiedCoolingSetpoint: {ID: 0x0013, type: DataType.INT16},
+            unoccupiedHeatingSetpoint: {ID: 0x0014, type: DataType.INT16},
+            minHeatSetpointLimit: {ID: 0x0015, type: DataType.INT16},
+            maxHeatSetpointLimit: {ID: 0x0016, type: DataType.INT16},
+            minCoolSetpointLimit: {ID: 0x0017, type: DataType.INT16},
+            maxCoolSetpointLimit: {ID: 0x0018, type: DataType.INT16},
+            minSetpointDeadBand: {ID: 0x0019, type: DataType.INT8},
+            remoteSensing: {ID: 0x001a, type: DataType.BITMAP8},
+            ctrlSeqeOfOper: {ID: 0x001b, type: DataType.ENUM8},
+            systemMode: {ID: 0x001c, type: DataType.ENUM8},
+            alarmMask: {ID: 0x001d, type: DataType.BITMAP8},
+            runningMode: {ID: 0x001e, type: DataType.ENUM8},
+            startOfWeek: {ID: 0x0020, type: DataType.ENUM8},
+            numberOfWeeklyTrans: {ID: 0x0021, type: DataType.UINT8},
+            numberOfDailyTrans: {ID: 0x0022, type: DataType.UINT8},
+            tempSetpointHold: {ID: 0x0023, type: DataType.ENUM8},
+            tempSetpointHoldDuration: {ID: 0x0024, type: DataType.UINT16},
+            programingOperMode: {ID: 0x0025, type: DataType.BITMAP8},
+            runningState: {ID: 0x0029, type: DataType.BITMAP16},
+            setpointChangeSource: {ID: 0x0030, type: DataType.ENUM8},
+            setpointChangeAmount: {ID: 0x0031, type: DataType.INT16},
+            setpointChangeSourceTimeStamp: {ID: 0x0032, type: DataType.UTC},
+            acType: {ID: 0x0040, type: DataType.ENUM8},
+            acCapacity: {ID: 0x0041, type: DataType.UINT16},
+            acRefrigerantType: {ID: 0x0042, type: DataType.ENUM8},
+            acConpressorType: {ID: 0x0043, type: DataType.ENUM8},
+            acErrorCode: {ID: 0x0044, type: DataType.BITMAP32},
+            acLouverPosition: {ID: 0x0045, type: DataType.ENUM8},
+            acCollTemp: {ID: 0x0046, type: DataType.INT16},
+            acCapacityFormat: {ID: 0x0047, type: DataType.ENUM8},
+            SinopeOccupancy: {ID: 0x0400, type: DataType.ENUM8, manufacturerCode: ManufacturerCode.SINOPE_TECHNOLOGIES},
+            SinopeMainCycleOutput: {ID: 0x0401, type: DataType.UINT16, manufacturerCode: ManufacturerCode.SINOPE_TECHNOLOGIES},
+            SinopeBacklight: {ID: 0x0402, type: DataType.ENUM8, manufacturerCode: ManufacturerCode.SINOPE_TECHNOLOGIES},
+            SinopeAuxCycleOutput: {ID: 0x0404, type: DataType.UINT16, manufacturerCode: ManufacturerCode.SINOPE_TECHNOLOGIES},
             StelproSystemMode: {ID: 0x401c, type: DataType.ENUM8},
             StelproOutdoorTemp: {ID: 0x4001, type: DataType.INT16},
             viessmannWindowOpenInternal: {ID: 0x4000, type: DataType.ENUM8, manufacturerCode: ManufacturerCode.VIESSMANN_ELEKTRONIK_GMBH},
@@ -2302,14 +2042,14 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         },
         commands: {
             setpointRaiseLower: {
-                ID: 0,
+                ID: 0x00,
                 parameters: [
                     {name: "mode", type: DataType.UINT8},
                     {name: "amount", type: DataType.INT8},
                 ],
             },
             setWeeklySchedule: {
-                ID: 1,
+                ID: 0x01,
                 parameters: [
                     {name: "numoftrans", type: DataType.UINT8},
                     {name: "dayofweek", type: DataType.UINT8},
@@ -2318,24 +2058,17 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 ],
             },
             getWeeklySchedule: {
-                ID: 2,
+                ID: 0x02,
                 response: 0,
                 parameters: [
                     {name: "daystoreturn", type: DataType.UINT8},
                     {name: "modetoreturn", type: DataType.UINT8},
                 ],
             },
-            clearWeeklySchedule: {
-                ID: 3,
-                parameters: [],
-            },
-            getRelayStatusLog: {
-                ID: 4,
-                response: 1,
-                parameters: [],
-            },
+            clearWeeklySchedule: {ID: 0x03, parameters: []},
+            getRelayStatusLog: {ID: 0x04, response: 1, parameters: []},
             danfossSetpointCommand: {
-                ID: 64,
+                ID: 0x40,
                 parameters: [
                     {name: "setpointType", type: DataType.ENUM8},
                     {name: "setpoint", type: DataType.INT16},
@@ -2351,7 +2084,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 ],
             },
             wiserSmartSetSetpoint: {
-                ID: 224,
+                ID: 0xe0,
                 parameters: [
                     {name: "operatingmode", type: DataType.UINT8},
                     {name: "zonemode", type: DataType.UINT8},
@@ -2360,25 +2093,19 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 ],
             },
             wiserSmartSetFipMode: {
-                ID: 225,
+                ID: 0xe1,
                 parameters: [
                     {name: "zonemode", type: DataType.UINT8},
                     {name: "fipmode", type: DataType.ENUM8},
                     {name: "reserved", type: DataType.UINT8},
                 ],
             },
-            wiserSmartCalibrateValve: {
-                ID: 226,
-                parameters: [],
-            },
-            plugwiseCalibrateValve: {
-                ID: 0xa0,
-                parameters: [],
-            },
+            wiserSmartCalibrateValve: {ID: 0xe2, parameters: []},
+            plugwiseCalibrateValve: {ID: 0xa0, parameters: []},
         },
         commandsResponse: {
             getWeeklyScheduleRsp: {
-                ID: 0,
+                ID: 0x00,
                 parameters: [
                     {name: "numoftrans", type: DataType.UINT8},
                     {name: "dayofweek", type: DataType.UINT8},
@@ -2387,7 +2114,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 ],
             },
             getRelayStatusLogRsp: {
-                ID: 1,
+                ID: 0x01,
                 parameters: [
                     {name: "timeofday", type: DataType.UINT16},
                     {name: "relaystatus", type: DataType.UINT16},
@@ -2400,101 +2127,101 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         },
     },
     hvacFanCtrl: {
-        ID: 514,
+        ID: 0x0202,
         attributes: {
-            fanMode: {ID: 0, type: DataType.ENUM8},
-            fanModeSequence: {ID: 1, type: DataType.ENUM8},
+            fanMode: {ID: 0x0000, type: DataType.ENUM8},
+            fanModeSequence: {ID: 0x0001, type: DataType.ENUM8},
         },
         commands: {},
         commandsResponse: {},
     },
     hvacDehumidificationCtrl: {
-        ID: 515,
+        ID: 0x0203,
         attributes: {
-            relativeHumidity: {ID: 0, type: DataType.UINT8},
-            dehumidCooling: {ID: 1, type: DataType.UINT8},
-            rhDehumidSetpoint: {ID: 16, type: DataType.UINT8},
-            relativeHumidityMode: {ID: 17, type: DataType.ENUM8},
-            dehumidLockout: {ID: 18, type: DataType.ENUM8},
-            dehumidHysteresis: {ID: 19, type: DataType.UINT8},
-            dehumidMaxCool: {ID: 20, type: DataType.UINT8},
-            relativeHumidDisplay: {ID: 21, type: DataType.ENUM8},
+            relativeHumidity: {ID: 0x0000, type: DataType.UINT8},
+            dehumidCooling: {ID: 0x0001, type: DataType.UINT8},
+            rhDehumidSetpoint: {ID: 0x0010, type: DataType.UINT8},
+            relativeHumidityMode: {ID: 0x0011, type: DataType.ENUM8},
+            dehumidLockout: {ID: 0x0012, type: DataType.ENUM8},
+            dehumidHysteresis: {ID: 0x0013, type: DataType.UINT8},
+            dehumidMaxCool: {ID: 0x0014, type: DataType.UINT8},
+            relativeHumidDisplay: {ID: 0x0015, type: DataType.ENUM8},
         },
         commands: {},
         commandsResponse: {},
     },
     hvacUserInterfaceCfg: {
-        ID: 516,
+        ID: 0x0204,
         attributes: {
-            tempDisplayMode: {ID: 0, type: DataType.ENUM8},
-            keypadLockout: {ID: 1, type: DataType.ENUM8},
-            programmingVisibility: {ID: 2, type: DataType.ENUM8},
+            tempDisplayMode: {ID: 0x0000, type: DataType.ENUM8},
+            keypadLockout: {ID: 0x0001, type: DataType.ENUM8},
+            programmingVisibility: {ID: 0x0002, type: DataType.ENUM8},
             danfossViewingDirection: {ID: 0x4000, type: DataType.ENUM8, manufacturerCode: ManufacturerCode.DANFOSS_A_S},
         },
         commands: {},
         commandsResponse: {},
     },
     lightingColorCtrl: {
-        ID: 768,
+        ID: 0x0300,
         attributes: {
-            currentHue: {ID: 0, type: DataType.UINT8},
-            currentSaturation: {ID: 1, type: DataType.UINT8},
-            remainingTime: {ID: 2, type: DataType.UINT16},
-            currentX: {ID: 3, type: DataType.UINT16},
-            currentY: {ID: 4, type: DataType.UINT16},
-            driftCompensation: {ID: 5, type: DataType.ENUM8},
-            compensationText: {ID: 6, type: DataType.CHAR_STR},
-            colorTemperature: {ID: 7, type: DataType.UINT16},
-            colorMode: {ID: 8, type: DataType.ENUM8},
-            options: {ID: 15, type: DataType.BITMAP8},
-            numPrimaries: {ID: 16, type: DataType.UINT8},
-            primary1X: {ID: 17, type: DataType.UINT16},
-            primary1Y: {ID: 18, type: DataType.UINT16},
-            primary1Intensity: {ID: 19, type: DataType.UINT8},
-            primary2X: {ID: 21, type: DataType.UINT16},
-            primary2Y: {ID: 22, type: DataType.UINT16},
-            primary2Intensity: {ID: 23, type: DataType.UINT8},
-            primary3X: {ID: 25, type: DataType.UINT16},
-            primary3Y: {ID: 26, type: DataType.UINT16},
-            primary3Intensity: {ID: 27, type: DataType.UINT8},
-            primary4X: {ID: 32, type: DataType.UINT16},
-            primary4Y: {ID: 33, type: DataType.UINT16},
-            primary4Intensity: {ID: 34, type: DataType.UINT8},
-            primary5X: {ID: 36, type: DataType.UINT16},
-            primary5Y: {ID: 37, type: DataType.UINT16},
-            primary5Intensity: {ID: 38, type: DataType.UINT8},
-            primary6X: {ID: 40, type: DataType.UINT16},
-            primary6Y: {ID: 41, type: DataType.UINT16},
-            primary6Intensity: {ID: 42, type: DataType.UINT8},
-            whitePointX: {ID: 48, type: DataType.UINT16},
-            whitePointY: {ID: 49, type: DataType.UINT16},
-            colorPointRX: {ID: 50, type: DataType.UINT16},
-            colorPointRY: {ID: 51, type: DataType.UINT16},
-            colorPointRIntensity: {ID: 52, type: DataType.UINT8},
-            colorPointGX: {ID: 54, type: DataType.UINT16},
-            colorPointGY: {ID: 55, type: DataType.UINT16},
-            colorPointGIntensity: {ID: 56, type: DataType.UINT8},
-            colorPointBX: {ID: 58, type: DataType.UINT16},
-            colorPointBY: {ID: 59, type: DataType.UINT16},
-            colorPointBIntensity: {ID: 60, type: DataType.UINT8},
-            enhancedCurrentHue: {ID: 16384, type: DataType.UINT16},
-            enhancedColorMode: {ID: 16385, type: DataType.ENUM8},
-            colorLoopActive: {ID: 16386, type: DataType.UINT8},
-            colorLoopDirection: {ID: 16387, type: DataType.UINT8},
-            colorLoopTime: {ID: 16388, type: DataType.UINT16},
-            colorLoopStartEnhancedHue: {ID: 16389, type: DataType.UINT16},
-            colorLoopStoredEnhancedHue: {ID: 16390, type: DataType.UINT16},
-            colorCapabilities: {ID: 16394, type: DataType.UINT16},
-            colorTempPhysicalMin: {ID: 16395, type: DataType.UINT16},
-            colorTempPhysicalMax: {ID: 16396, type: DataType.UINT16},
-            coupleColorTempToLevelMin: {ID: 16397, type: DataType.UINT16},
-            startUpColorTemperature: {ID: 16400, type: DataType.UINT16},
-            tuyaBrightness: {ID: 61441, type: DataType.UINT8},
-            tuyaRgbMode: {ID: 61440, type: DataType.UINT8},
+            currentHue: {ID: 0x0000, type: DataType.UINT8},
+            currentSaturation: {ID: 0x0001, type: DataType.UINT8},
+            remainingTime: {ID: 0x0002, type: DataType.UINT16},
+            currentX: {ID: 0x0003, type: DataType.UINT16},
+            currentY: {ID: 0x0004, type: DataType.UINT16},
+            driftCompensation: {ID: 0x0005, type: DataType.ENUM8},
+            compensationText: {ID: 0x0006, type: DataType.CHAR_STR},
+            colorTemperature: {ID: 0x0007, type: DataType.UINT16},
+            colorMode: {ID: 0x0008, type: DataType.ENUM8},
+            options: {ID: 0x000f, type: DataType.BITMAP8},
+            numPrimaries: {ID: 0x0010, type: DataType.UINT8},
+            primary1X: {ID: 0x0011, type: DataType.UINT16},
+            primary1Y: {ID: 0x0012, type: DataType.UINT16},
+            primary1Intensity: {ID: 0x0013, type: DataType.UINT8},
+            primary2X: {ID: 0x0015, type: DataType.UINT16},
+            primary2Y: {ID: 0x0016, type: DataType.UINT16},
+            primary2Intensity: {ID: 0x0017, type: DataType.UINT8},
+            primary3X: {ID: 0x0019, type: DataType.UINT16},
+            primary3Y: {ID: 0x001a, type: DataType.UINT16},
+            primary3Intensity: {ID: 0x001b, type: DataType.UINT8},
+            primary4X: {ID: 0x0020, type: DataType.UINT16},
+            primary4Y: {ID: 0x0021, type: DataType.UINT16},
+            primary4Intensity: {ID: 0x0022, type: DataType.UINT8},
+            primary5X: {ID: 0x0024, type: DataType.UINT16},
+            primary5Y: {ID: 0x0025, type: DataType.UINT16},
+            primary5Intensity: {ID: 0x0026, type: DataType.UINT8},
+            primary6X: {ID: 0x0028, type: DataType.UINT16},
+            primary6Y: {ID: 0x0029, type: DataType.UINT16},
+            primary6Intensity: {ID: 0x002a, type: DataType.UINT8},
+            whitePointX: {ID: 0x0030, type: DataType.UINT16},
+            whitePointY: {ID: 0x0031, type: DataType.UINT16},
+            colorPointRX: {ID: 0x0032, type: DataType.UINT16},
+            colorPointRY: {ID: 0x0033, type: DataType.UINT16},
+            colorPointRIntensity: {ID: 0x0034, type: DataType.UINT8},
+            colorPointGX: {ID: 0x0036, type: DataType.UINT16},
+            colorPointGY: {ID: 0x0037, type: DataType.UINT16},
+            colorPointGIntensity: {ID: 0x0038, type: DataType.UINT8},
+            colorPointBX: {ID: 0x003a, type: DataType.UINT16},
+            colorPointBY: {ID: 0x003b, type: DataType.UINT16},
+            colorPointBIntensity: {ID: 0x003c, type: DataType.UINT8},
+            enhancedCurrentHue: {ID: 0x4000, type: DataType.UINT16},
+            enhancedColorMode: {ID: 0x4001, type: DataType.ENUM8},
+            colorLoopActive: {ID: 0x4002, type: DataType.UINT8},
+            colorLoopDirection: {ID: 0x4003, type: DataType.UINT8},
+            colorLoopTime: {ID: 0x4004, type: DataType.UINT16},
+            colorLoopStartEnhancedHue: {ID: 0x4005, type: DataType.UINT16},
+            colorLoopStoredEnhancedHue: {ID: 0x4006, type: DataType.UINT16},
+            colorCapabilities: {ID: 0x400a, type: DataType.UINT16},
+            colorTempPhysicalMin: {ID: 0x400b, type: DataType.UINT16},
+            colorTempPhysicalMax: {ID: 0x400c, type: DataType.UINT16},
+            coupleColorTempToLevelMin: {ID: 0x400d, type: DataType.UINT16},
+            startUpColorTemperature: {ID: 0x4010, type: DataType.UINT16},
+            tuyaBrightness: {ID: 0xf001, type: DataType.UINT8},
+            tuyaRgbMode: {ID: 0xf000, type: DataType.UINT8},
         },
         commands: {
             moveToHue: {
-                ID: 0,
+                ID: 0x00,
                 parameters: [
                     {name: "hue", type: DataType.UINT8},
                     {name: "direction", type: DataType.UINT8},
@@ -2502,14 +2229,14 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 ],
             },
             moveHue: {
-                ID: 1,
+                ID: 0x01,
                 parameters: [
                     {name: "movemode", type: DataType.UINT8},
                     {name: "rate", type: DataType.UINT8},
                 ],
             },
             stepHue: {
-                ID: 2,
+                ID: 0x02,
                 parameters: [
                     {name: "stepmode", type: DataType.UINT8},
                     {name: "stepsize", type: DataType.UINT8},
@@ -2517,21 +2244,21 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 ],
             },
             moveToSaturation: {
-                ID: 3,
+                ID: 0x03,
                 parameters: [
                     {name: "saturation", type: DataType.UINT8},
                     {name: "transtime", type: DataType.UINT16},
                 ],
             },
             moveSaturation: {
-                ID: 4,
+                ID: 0x04,
                 parameters: [
                     {name: "movemode", type: DataType.UINT8},
                     {name: "rate", type: DataType.UINT8},
                 ],
             },
             stepSaturation: {
-                ID: 5,
+                ID: 0x05,
                 parameters: [
                     {name: "stepmode", type: DataType.UINT8},
                     {name: "stepsize", type: DataType.UINT8},
@@ -2539,7 +2266,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 ],
             },
             moveToHueAndSaturation: {
-                ID: 6,
+                ID: 0x06,
                 parameters: [
                     {name: "hue", type: DataType.UINT8},
                     {name: "saturation", type: DataType.UINT8},
@@ -2547,7 +2274,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 ],
             },
             tuyaMoveToHueAndSaturationBrightness: {
-                ID: 6,
+                ID: 0x06,
                 parameters: [
                     {name: "hue", type: DataType.UINT8},
                     {name: "saturation", type: DataType.UINT8},
@@ -2556,7 +2283,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 ],
             },
             moveToColor: {
-                ID: 7,
+                ID: 0x07,
                 parameters: [
                     {name: "colorx", type: DataType.UINT16},
                     {name: "colory", type: DataType.UINT16},
@@ -2564,14 +2291,14 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 ],
             },
             moveColor: {
-                ID: 8,
+                ID: 0x08,
                 parameters: [
                     {name: "ratex", type: DataType.INT16},
                     {name: "ratey", type: DataType.INT16},
                 ],
             },
             stepColor: {
-                ID: 9,
+                ID: 0x09,
                 parameters: [
                     {name: "stepx", type: DataType.INT16},
                     {name: "stepy", type: DataType.INT16},
@@ -2579,14 +2306,14 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 ],
             },
             moveToColorTemp: {
-                ID: 10,
+                ID: 0x0a,
                 parameters: [
                     {name: "colortemp", type: DataType.UINT16},
                     {name: "transtime", type: DataType.UINT16},
                 ],
             },
             enhancedMoveToHue: {
-                ID: 64,
+                ID: 0x40,
                 parameters: [
                     {name: "enhancehue", type: DataType.UINT16},
                     {name: "direction", type: DataType.UINT8},
@@ -2594,14 +2321,14 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 ],
             },
             enhancedMoveHue: {
-                ID: 65,
+                ID: 0x41,
                 parameters: [
                     {name: "movemode", type: DataType.UINT8},
                     {name: "rate", type: DataType.UINT16},
                 ],
             },
             enhancedStepHue: {
-                ID: 66,
+                ID: 0x42,
                 parameters: [
                     {name: "stepmode", type: DataType.UINT8},
                     {name: "stepsize", type: DataType.UINT16},
@@ -2609,7 +2336,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 ],
             },
             enhancedMoveToHueAndSaturation: {
-                ID: 67,
+                ID: 0x43,
                 parameters: [
                     {name: "enhancehue", type: DataType.UINT16},
                     {name: "saturation", type: DataType.UINT8},
@@ -2617,7 +2344,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 ],
             },
             colorLoopSet: {
-                ID: 68,
+                ID: 0x44,
                 parameters: [
                     {name: "updateflags", type: DataType.UINT8},
                     {name: "action", type: DataType.UINT8},
@@ -2627,7 +2354,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 ],
             },
             stopMoveStep: {
-                ID: 71,
+                ID: 0x47,
                 parameters: [
                     {name: "bits", type: DataType.UINT8},
                     {name: "bytee", type: DataType.UINT8},
@@ -2638,7 +2365,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 ],
             },
             moveColorTemp: {
-                ID: 75,
+                ID: 0x4b,
                 parameters: [
                     {name: "movemode", type: DataType.UINT8},
                     {name: "rate", type: DataType.UINT16},
@@ -2647,7 +2374,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 ],
             },
             stepColorTemp: {
-                ID: 76,
+                ID: 0x4c,
                 parameters: [
                     {name: "stepmode", type: DataType.UINT8},
                     {name: "stepsize", type: DataType.UINT16},
@@ -2656,35 +2383,26 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                     {name: "maximum", type: DataType.UINT16},
                 ],
             },
-            tuyaSetMinimumBrightness: {
-                ID: 224,
-                parameters: [{name: "minimum", type: DataType.UINT16}],
-            },
+            tuyaSetMinimumBrightness: {ID: 0xe0, parameters: [{name: "minimum", type: DataType.UINT16}]},
             tuyaMoveToHueAndSaturationBrightness2: {
-                ID: 225,
+                ID: 0xe1,
                 parameters: [
                     {name: "hue", type: DataType.UINT16},
                     {name: "saturation", type: DataType.UINT16},
                     {name: "brightness", type: DataType.UINT16},
                 ],
             },
-            tuyaRgbMode: {
-                ID: 240,
-                parameters: [{name: "enable", type: DataType.UINT8}],
-            },
+            tuyaRgbMode: {ID: 0xf0, parameters: [{name: "enable", type: DataType.UINT8}]},
             tuyaOnStartUp: {
-                ID: 249,
+                ID: 0xf9,
                 parameters: [
                     {name: "mode", type: DataType.UINT16},
                     {name: "data", type: BuffaloZclDataType.LIST_UINT8},
                 ],
             },
-            tuyaDoNotDisturb: {
-                ID: 250,
-                parameters: [{name: "enable", type: DataType.UINT8}],
-            },
+            tuyaDoNotDisturb: {ID: 0xfa, parameters: [{name: "enable", type: DataType.UINT8}]},
             tuyaOnOffTransitionTime: {
-                ID: 251,
+                ID: 0xfb,
                 parameters: [
                     {name: "unknown", type: DataType.UINT8},
                     {name: "onTransitionTime", type: BuffaloZclDataType.BIG_ENDIAN_UINT24},
@@ -2695,24 +2413,24 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         commandsResponse: {},
     },
     lightingBallastCfg: {
-        ID: 769,
+        ID: 0x0301,
         attributes: {
-            physicalMinLevel: {ID: 0, type: DataType.UINT8},
-            physicalMaxLevel: {ID: 1, type: DataType.UINT8},
-            ballastStatus: {ID: 2, type: DataType.BITMAP8},
-            minLevel: {ID: 16, type: DataType.UINT8},
-            maxLevel: {ID: 17, type: DataType.UINT8},
-            powerOnLevel: {ID: 18, type: DataType.UINT8},
-            powerOnFadeTime: {ID: 19, type: DataType.UINT16},
-            intrinsicBallastFactor: {ID: 20, type: DataType.UINT8},
-            ballastFactorAdjustment: {ID: 21, type: DataType.UINT8},
-            lampQuantity: {ID: 32, type: DataType.UINT8},
-            lampType: {ID: 48, type: DataType.CHAR_STR},
-            lampManufacturer: {ID: 49, type: DataType.CHAR_STR},
-            lampRatedHours: {ID: 50, type: DataType.UINT24},
-            lampBurnHours: {ID: 51, type: DataType.UINT24},
-            lampAlarmMode: {ID: 52, type: DataType.BITMAP8},
-            lampBurnHoursTripPoint: {ID: 53, type: DataType.UINT24},
+            physicalMinLevel: {ID: 0x0000, type: DataType.UINT8},
+            physicalMaxLevel: {ID: 0x0001, type: DataType.UINT8},
+            ballastStatus: {ID: 0x0002, type: DataType.BITMAP8},
+            minLevel: {ID: 0x0010, type: DataType.UINT8},
+            maxLevel: {ID: 0x0011, type: DataType.UINT8},
+            powerOnLevel: {ID: 0x0012, type: DataType.UINT8},
+            powerOnFadeTime: {ID: 0x0013, type: DataType.UINT16},
+            intrinsicBallastFactor: {ID: 0x0014, type: DataType.UINT8},
+            ballastFactorAdjustment: {ID: 0x0015, type: DataType.UINT8},
+            lampQuantity: {ID: 0x0020, type: DataType.UINT8},
+            lampType: {ID: 0x0030, type: DataType.CHAR_STR},
+            lampManufacturer: {ID: 0x0031, type: DataType.CHAR_STR},
+            lampRatedHours: {ID: 0x0032, type: DataType.UINT24},
+            lampBurnHours: {ID: 0x0033, type: DataType.UINT24},
+            lampAlarmMode: {ID: 0x0034, type: DataType.BITMAP8},
+            lampBurnHoursTripPoint: {ID: 0x0035, type: DataType.UINT24},
             elkoControlMode: {ID: 0xe000, type: DataType.ENUM8, manufacturerCode: ManufacturerCode.ADEO},
             wiserControlMode: {ID: 0xe000, type: DataType.ENUM8, manufacturerCode: ManufacturerCode.SCHNEIDER_ELECTRIC},
         },
@@ -2720,48 +2438,48 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         commandsResponse: {},
     },
     msIlluminanceMeasurement: {
-        ID: 1024, // 0x0400
+        ID: 0x0400, // 0x0400
         attributes: {
-            measuredValue: {ID: 0, type: DataType.UINT16},
-            minMeasuredValue: {ID: 1, type: DataType.UINT16},
-            maxMeasuredValue: {ID: 2, type: DataType.UINT16},
-            tolerance: {ID: 3, type: DataType.UINT16},
-            lightSensorType: {ID: 4, type: DataType.ENUM8},
+            measuredValue: {ID: 0x0000, type: DataType.UINT16},
+            minMeasuredValue: {ID: 0x0001, type: DataType.UINT16},
+            maxMeasuredValue: {ID: 0x0002, type: DataType.UINT16},
+            tolerance: {ID: 0x0003, type: DataType.UINT16},
+            lightSensorType: {ID: 0x0004, type: DataType.ENUM8},
         },
         commands: {},
         commandsResponse: {},
     },
     msIlluminanceLevelSensing: {
-        ID: 1025, // 0x0401
+        ID: 0x0401, // 0x0401
         attributes: {
-            levelStatus: {ID: 0, type: DataType.ENUM8},
-            lightSensorType: {ID: 1, type: DataType.ENUM8},
-            illuminanceTargetLevel: {ID: 16, type: DataType.UINT16},
+            levelStatus: {ID: 0x0000, type: DataType.ENUM8},
+            lightSensorType: {ID: 0x0001, type: DataType.ENUM8},
+            illuminanceTargetLevel: {ID: 0x0010, type: DataType.UINT16},
         },
         commands: {},
         commandsResponse: {},
     },
     msTemperatureMeasurement: {
-        ID: 1026, // 0x0402
+        ID: 0x0402, // 0x0402
         attributes: {
-            measuredValue: {ID: 0, type: DataType.INT16},
-            minMeasuredValue: {ID: 1, type: DataType.INT16},
-            maxMeasuredValue: {ID: 2, type: DataType.INT16},
-            tolerance: {ID: 3, type: DataType.UINT16},
-            minPercentChange: {ID: 16, type: DataType.UNKNOWN},
-            minAbsoluteChange: {ID: 17, type: DataType.UNKNOWN},
+            measuredValue: {ID: 0x0000, type: DataType.INT16},
+            minMeasuredValue: {ID: 0x0001, type: DataType.INT16},
+            maxMeasuredValue: {ID: 0x0002, type: DataType.INT16},
+            tolerance: {ID: 0x0003, type: DataType.UINT16},
+            minPercentChange: {ID: 0x0010, type: DataType.UNKNOWN},
+            minAbsoluteChange: {ID: 0x0011, type: DataType.UNKNOWN},
             sprutTemperatureOffset: {ID: 0x6600, type: DataType.INT16, manufacturerCode: ManufacturerCode.CUSTOM_SPRUT_DEVICE},
         },
         commands: {},
         commandsResponse: {},
     },
     msPressureMeasurement: {
-        ID: 1027, // 0x0403
+        ID: 0x0403, // 0x0403
         attributes: {
-            measuredValue: {ID: 0, type: DataType.INT16},
-            minMeasuredValue: {ID: 1, type: DataType.INT16},
-            maxMeasuredValue: {ID: 2, type: DataType.INT16},
-            tolerance: {ID: 3, type: DataType.UINT16},
+            measuredValue: {ID: 0x0000, type: DataType.INT16},
+            minMeasuredValue: {ID: 0x0001, type: DataType.INT16},
+            maxMeasuredValue: {ID: 0x0002, type: DataType.INT16},
+            tolerance: {ID: 0x0003, type: DataType.UINT16},
             scaledValue: {ID: 0x0010, type: DataType.INT16},
             minScaledValue: {ID: 0x0011, type: DataType.INT16},
             maxScaledValue: {ID: 0x0012, type: DataType.INT16},
@@ -2772,31 +2490,31 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         commandsResponse: {},
     },
     msFlowMeasurement: {
-        ID: 1028, // 0x0404
+        ID: 0x0404, // 0x0404
         attributes: {
-            measuredValue: {ID: 0, type: DataType.UINT16},
-            minMeasuredValue: {ID: 1, type: DataType.UINT16},
-            maxMeasuredValue: {ID: 2, type: DataType.UINT16},
-            tolerance: {ID: 3, type: DataType.UINT16},
+            measuredValue: {ID: 0x0000, type: DataType.UINT16},
+            minMeasuredValue: {ID: 0x0001, type: DataType.UINT16},
+            maxMeasuredValue: {ID: 0x0002, type: DataType.UINT16},
+            tolerance: {ID: 0x0003, type: DataType.UINT16},
         },
         commands: {},
         commandsResponse: {},
     },
     msRelativeHumidity: {
         // Water Content
-        ID: 1029, // 0x0405
+        ID: 0x0405, // 0x0405
         attributes: {
-            measuredValue: {ID: 0, type: DataType.UINT16},
-            minMeasuredValue: {ID: 1, type: DataType.UINT16},
-            maxMeasuredValue: {ID: 2, type: DataType.UINT16},
-            tolerance: {ID: 3, type: DataType.UINT16},
+            measuredValue: {ID: 0x0000, type: DataType.UINT16},
+            minMeasuredValue: {ID: 0x0001, type: DataType.UINT16},
+            maxMeasuredValue: {ID: 0x0002, type: DataType.UINT16},
+            tolerance: {ID: 0x0003, type: DataType.UINT16},
             sprutHeater: {ID: 0x6600, type: DataType.BOOLEAN, manufacturerCode: ManufacturerCode.CUSTOM_SPRUT_DEVICE},
         },
         commands: {},
         commandsResponse: {},
     },
     msOccupancySensing: {
-        ID: 1030, // 0x0406
+        ID: 0x0406, // 0x0406
         attributes: {
             occupancy: {ID: 0x0000, type: DataType.BITMAP8},
             occupancySensorType: {ID: 0x0001, type: DataType.ENUM8},
@@ -2821,80 +2539,80 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         commandsResponse: {},
     },
     msLeafWetness: {
-        ID: 1031, // 0x0407
+        ID: 0x0407, // 0x0407
         attributes: {
-            measuredValue: {ID: 0, type: DataType.UINT16},
-            minMeasuredValue: {ID: 1, type: DataType.UINT16},
-            maxMeasuredValue: {ID: 2, type: DataType.UINT16},
-            tolerance: {ID: 3, type: DataType.UINT16},
+            measuredValue: {ID: 0x0000, type: DataType.UINT16},
+            minMeasuredValue: {ID: 0x0001, type: DataType.UINT16},
+            maxMeasuredValue: {ID: 0x0002, type: DataType.UINT16},
+            tolerance: {ID: 0x0003, type: DataType.UINT16},
         },
         commands: {},
         commandsResponse: {},
     },
     msSoilMoisture: {
-        ID: 1032, // 0x0408
+        ID: 0x0408, // 0x0408
         attributes: {
-            measuredValue: {ID: 0, type: DataType.UINT16},
-            minMeasuredValue: {ID: 1, type: DataType.UINT16},
-            maxMeasuredValue: {ID: 2, type: DataType.UINT16},
-            tolerance: {ID: 3, type: DataType.UINT16},
+            measuredValue: {ID: 0x0000, type: DataType.UINT16},
+            minMeasuredValue: {ID: 0x0001, type: DataType.UINT16},
+            maxMeasuredValue: {ID: 0x0002, type: DataType.UINT16},
+            tolerance: {ID: 0x0003, type: DataType.UINT16},
         },
         commands: {},
         commandsResponse: {},
     },
     pHMeasurement: {
-        ID: 1033, // 0x0409
+        ID: 0x0409, // 0x0409
         attributes: {
-            measuredValue: {ID: 0, type: DataType.UINT16},
-            minMeasuredValue: {ID: 1, type: DataType.UINT16},
-            maxMeasuredValue: {ID: 2, type: DataType.UINT16},
-            tolerance: {ID: 3, type: DataType.UINT16},
+            measuredValue: {ID: 0x0000, type: DataType.UINT16},
+            minMeasuredValue: {ID: 0x0001, type: DataType.UINT16},
+            maxMeasuredValue: {ID: 0x0002, type: DataType.UINT16},
+            tolerance: {ID: 0x0003, type: DataType.UINT16},
         },
         commands: {},
         commandsResponse: {},
     },
     msElectricalConductivity: {
-        ID: 1034, // 0x040a
+        ID: 0x040a, // 0x040a
         attributes: {
-            measuredValue: {ID: 0, type: DataType.UINT16},
-            minMeasuredValue: {ID: 1, type: DataType.UINT16},
-            maxMeasuredValue: {ID: 2, type: DataType.UINT16},
-            tolerance: {ID: 3, type: DataType.UINT16},
+            measuredValue: {ID: 0x0000, type: DataType.UINT16},
+            minMeasuredValue: {ID: 0x0001, type: DataType.UINT16},
+            maxMeasuredValue: {ID: 0x0002, type: DataType.UINT16},
+            tolerance: {ID: 0x0003, type: DataType.UINT16},
         },
         commands: {},
         commandsResponse: {},
     },
     msWindSpeed: {
-        ID: 1035, // 0x040b
+        ID: 0x040b, // 0x040b
         attributes: {
-            measuredValue: {ID: 0, type: DataType.UINT16},
-            minMeasuredValue: {ID: 1, type: DataType.UINT16},
-            maxMeasuredValue: {ID: 2, type: DataType.UINT16},
-            tolerance: {ID: 3, type: DataType.UINT16},
+            measuredValue: {ID: 0x0000, type: DataType.UINT16},
+            minMeasuredValue: {ID: 0x0001, type: DataType.UINT16},
+            maxMeasuredValue: {ID: 0x0002, type: DataType.UINT16},
+            tolerance: {ID: 0x0003, type: DataType.UINT16},
         },
         commands: {},
         commandsResponse: {},
     },
     msCarbonMonoxide: {
         // CO
-        ID: 1036, // 0x040c
+        ID: 0x040c, // 0x040c
         attributes: {
-            measuredValue: {ID: 0, type: DataType.SINGLE_PREC},
-            minMeasuredValue: {ID: 1, type: DataType.SINGLE_PREC},
-            maxMeasuredValue: {ID: 2, type: DataType.SINGLE_PREC},
-            tolerance: {ID: 3, type: DataType.SINGLE_PREC},
+            measuredValue: {ID: 0x0000, type: DataType.SINGLE_PREC},
+            minMeasuredValue: {ID: 0x0001, type: DataType.SINGLE_PREC},
+            maxMeasuredValue: {ID: 0x0002, type: DataType.SINGLE_PREC},
+            tolerance: {ID: 0x0003, type: DataType.SINGLE_PREC},
         },
         commands: {},
         commandsResponse: {},
     },
     msCO2: {
         // Carbon Dioxide
-        ID: 1037, // 0x040d
+        ID: 0x040d, // 0x040d
         attributes: {
-            measuredValue: {ID: 0, type: DataType.SINGLE_PREC},
-            minMeasuredValue: {ID: 1, type: DataType.SINGLE_PREC},
-            maxMeasuredValue: {ID: 2, type: DataType.SINGLE_PREC},
-            tolerance: {ID: 3, type: DataType.SINGLE_PREC},
+            measuredValue: {ID: 0x0000, type: DataType.SINGLE_PREC},
+            minMeasuredValue: {ID: 0x0001, type: DataType.SINGLE_PREC},
+            maxMeasuredValue: {ID: 0x0002, type: DataType.SINGLE_PREC},
+            tolerance: {ID: 0x0003, type: DataType.SINGLE_PREC},
             sprutCO2Calibration: {ID: 0x6600, type: DataType.BOOLEAN, manufacturerCode: ManufacturerCode.CUSTOM_SPRUT_DEVICE},
             sprutCO2AutoCalibration: {ID: 0x6601, type: DataType.BOOLEAN, manufacturerCode: ManufacturerCode.CUSTOM_SPRUT_DEVICE},
         },
@@ -2903,324 +2621,324 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
     },
     msEthylene: {
         // CH2
-        ID: 1038, // 0x040e
+        ID: 0x040e, // 0x040e
         attributes: {
-            measuredValue: {ID: 0, type: DataType.SINGLE_PREC},
-            minMeasuredValue: {ID: 1, type: DataType.SINGLE_PREC},
-            maxMeasuredValue: {ID: 2, type: DataType.SINGLE_PREC},
-            tolerance: {ID: 3, type: DataType.SINGLE_PREC},
+            measuredValue: {ID: 0x0000, type: DataType.SINGLE_PREC},
+            minMeasuredValue: {ID: 0x0001, type: DataType.SINGLE_PREC},
+            maxMeasuredValue: {ID: 0x0002, type: DataType.SINGLE_PREC},
+            tolerance: {ID: 0x0003, type: DataType.SINGLE_PREC},
         },
         commands: {},
         commandsResponse: {},
     },
     msEthyleneOxide: {
         // C2H4O
-        ID: 1039, // 0x040f
+        ID: 0x040f, // 0x040f
         attributes: {
-            measuredValue: {ID: 0, type: DataType.SINGLE_PREC},
-            minMeasuredValue: {ID: 1, type: DataType.SINGLE_PREC},
-            maxMeasuredValue: {ID: 2, type: DataType.SINGLE_PREC},
-            tolerance: {ID: 3, type: DataType.SINGLE_PREC},
+            measuredValue: {ID: 0x0000, type: DataType.SINGLE_PREC},
+            minMeasuredValue: {ID: 0x0001, type: DataType.SINGLE_PREC},
+            maxMeasuredValue: {ID: 0x0002, type: DataType.SINGLE_PREC},
+            tolerance: {ID: 0x0003, type: DataType.SINGLE_PREC},
         },
         commands: {},
         commandsResponse: {},
     },
     msHydrogen: {
         // H
-        ID: 1040, // 0x0410
+        ID: 0x0410, // 0x0410
         attributes: {
-            measuredValue: {ID: 0, type: DataType.SINGLE_PREC},
-            minMeasuredValue: {ID: 1, type: DataType.SINGLE_PREC},
-            maxMeasuredValue: {ID: 2, type: DataType.SINGLE_PREC},
-            tolerance: {ID: 3, type: DataType.SINGLE_PREC},
+            measuredValue: {ID: 0x0000, type: DataType.SINGLE_PREC},
+            minMeasuredValue: {ID: 0x0001, type: DataType.SINGLE_PREC},
+            maxMeasuredValue: {ID: 0x0002, type: DataType.SINGLE_PREC},
+            tolerance: {ID: 0x0003, type: DataType.SINGLE_PREC},
         },
         commands: {},
         commandsResponse: {},
     },
     msHydrogenSulfide: {
         // H2S
-        ID: 1041, // 0x0411
+        ID: 0x0411, // 0x0411
         attributes: {
-            measuredValue: {ID: 0, type: DataType.SINGLE_PREC},
-            minMeasuredValue: {ID: 1, type: DataType.SINGLE_PREC},
-            maxMeasuredValue: {ID: 2, type: DataType.SINGLE_PREC},
-            tolerance: {ID: 3, type: DataType.SINGLE_PREC},
+            measuredValue: {ID: 0x0000, type: DataType.SINGLE_PREC},
+            minMeasuredValue: {ID: 0x0001, type: DataType.SINGLE_PREC},
+            maxMeasuredValue: {ID: 0x0002, type: DataType.SINGLE_PREC},
+            tolerance: {ID: 0x0003, type: DataType.SINGLE_PREC},
         },
         commands: {},
         commandsResponse: {},
     },
     msNitricOxide: {
         // NO
-        ID: 1042, // 0x0412
+        ID: 0x0412, // 0x0412
         attributes: {
-            measuredValue: {ID: 0, type: DataType.SINGLE_PREC},
-            minMeasuredValue: {ID: 1, type: DataType.SINGLE_PREC},
-            maxMeasuredValue: {ID: 2, type: DataType.SINGLE_PREC},
-            tolerance: {ID: 3, type: DataType.SINGLE_PREC},
+            measuredValue: {ID: 0x0000, type: DataType.SINGLE_PREC},
+            minMeasuredValue: {ID: 0x0001, type: DataType.SINGLE_PREC},
+            maxMeasuredValue: {ID: 0x0002, type: DataType.SINGLE_PREC},
+            tolerance: {ID: 0x0003, type: DataType.SINGLE_PREC},
         },
         commands: {},
         commandsResponse: {},
     },
     msNitrogenDioxide: {
         // NO2
-        ID: 1043, // 0x0413
+        ID: 0x0413, // 0x0413
         attributes: {
-            measuredValue: {ID: 0, type: DataType.SINGLE_PREC},
-            minMeasuredValue: {ID: 1, type: DataType.SINGLE_PREC},
-            maxMeasuredValue: {ID: 2, type: DataType.SINGLE_PREC},
-            tolerance: {ID: 3, type: DataType.SINGLE_PREC},
+            measuredValue: {ID: 0x0000, type: DataType.SINGLE_PREC},
+            minMeasuredValue: {ID: 0x0001, type: DataType.SINGLE_PREC},
+            maxMeasuredValue: {ID: 0x0002, type: DataType.SINGLE_PREC},
+            tolerance: {ID: 0x0003, type: DataType.SINGLE_PREC},
         },
         commands: {},
         commandsResponse: {},
     },
     msOxygen: {
         // O2
-        ID: 1044, // 0x0414
+        ID: 0x0414, // 0x0414
         attributes: {
-            measuredValue: {ID: 0, type: DataType.SINGLE_PREC},
-            minMeasuredValue: {ID: 1, type: DataType.SINGLE_PREC},
-            maxMeasuredValue: {ID: 2, type: DataType.SINGLE_PREC},
-            tolerance: {ID: 3, type: DataType.SINGLE_PREC},
+            measuredValue: {ID: 0x0000, type: DataType.SINGLE_PREC},
+            minMeasuredValue: {ID: 0x0001, type: DataType.SINGLE_PREC},
+            maxMeasuredValue: {ID: 0x0002, type: DataType.SINGLE_PREC},
+            tolerance: {ID: 0x0003, type: DataType.SINGLE_PREC},
         },
         commands: {},
         commandsResponse: {},
     },
     msOzone: {
         // O3
-        ID: 1045, // 0x0415
+        ID: 0x0415, // 0x0415
         attributes: {
-            measuredValue: {ID: 0, type: DataType.SINGLE_PREC},
-            minMeasuredValue: {ID: 1, type: DataType.SINGLE_PREC},
-            maxMeasuredValue: {ID: 2, type: DataType.SINGLE_PREC},
-            tolerance: {ID: 3, type: DataType.SINGLE_PREC},
+            measuredValue: {ID: 0x0000, type: DataType.SINGLE_PREC},
+            minMeasuredValue: {ID: 0x0001, type: DataType.SINGLE_PREC},
+            maxMeasuredValue: {ID: 0x0002, type: DataType.SINGLE_PREC},
+            tolerance: {ID: 0x0003, type: DataType.SINGLE_PREC},
         },
         commands: {},
         commandsResponse: {},
     },
     msSulfurDioxide: {
         // SO2
-        ID: 1046, // 0x0416
+        ID: 0x0416, // 0x0416
         attributes: {
-            measuredValue: {ID: 0, type: DataType.SINGLE_PREC},
-            minMeasuredValue: {ID: 1, type: DataType.SINGLE_PREC},
-            maxMeasuredValue: {ID: 2, type: DataType.SINGLE_PREC},
-            tolerance: {ID: 3, type: DataType.SINGLE_PREC},
+            measuredValue: {ID: 0x0000, type: DataType.SINGLE_PREC},
+            minMeasuredValue: {ID: 0x0001, type: DataType.SINGLE_PREC},
+            maxMeasuredValue: {ID: 0x0002, type: DataType.SINGLE_PREC},
+            tolerance: {ID: 0x0003, type: DataType.SINGLE_PREC},
         },
         commands: {},
         commandsResponse: {},
     },
     msDissolvedOxygen: {
         // DO
-        ID: 1047, // 0x0417
+        ID: 0x0417, // 0x0417
         attributes: {
-            measuredValue: {ID: 0, type: DataType.SINGLE_PREC},
-            minMeasuredValue: {ID: 1, type: DataType.SINGLE_PREC},
-            maxMeasuredValue: {ID: 2, type: DataType.SINGLE_PREC},
-            tolerance: {ID: 3, type: DataType.SINGLE_PREC},
+            measuredValue: {ID: 0x0000, type: DataType.SINGLE_PREC},
+            minMeasuredValue: {ID: 0x0001, type: DataType.SINGLE_PREC},
+            maxMeasuredValue: {ID: 0x0002, type: DataType.SINGLE_PREC},
+            tolerance: {ID: 0x0003, type: DataType.SINGLE_PREC},
         },
         commands: {},
         commandsResponse: {},
     },
     msBromate: {
-        ID: 1048, // 0x0418
+        ID: 0x0418, // 0x0418
         attributes: {
-            measuredValue: {ID: 0, type: DataType.SINGLE_PREC},
-            minMeasuredValue: {ID: 1, type: DataType.SINGLE_PREC},
-            maxMeasuredValue: {ID: 2, type: DataType.SINGLE_PREC},
-            tolerance: {ID: 3, type: DataType.SINGLE_PREC},
+            measuredValue: {ID: 0x0000, type: DataType.SINGLE_PREC},
+            minMeasuredValue: {ID: 0x0001, type: DataType.SINGLE_PREC},
+            maxMeasuredValue: {ID: 0x0002, type: DataType.SINGLE_PREC},
+            tolerance: {ID: 0x0003, type: DataType.SINGLE_PREC},
         },
         commands: {},
         commandsResponse: {},
     },
     msChloramines: {
-        ID: 1049, // 0x0419
+        ID: 0x0419, // 0x0419
         attributes: {
-            measuredValue: {ID: 0, type: DataType.SINGLE_PREC},
-            minMeasuredValue: {ID: 1, type: DataType.SINGLE_PREC},
-            maxMeasuredValue: {ID: 2, type: DataType.SINGLE_PREC},
-            tolerance: {ID: 3, type: DataType.SINGLE_PREC},
+            measuredValue: {ID: 0x0000, type: DataType.SINGLE_PREC},
+            minMeasuredValue: {ID: 0x0001, type: DataType.SINGLE_PREC},
+            maxMeasuredValue: {ID: 0x0002, type: DataType.SINGLE_PREC},
+            tolerance: {ID: 0x0003, type: DataType.SINGLE_PREC},
         },
         commands: {},
         commandsResponse: {},
     },
     msChlorine: {
-        ID: 1050, // 0x041a
+        ID: 0x041a, // 0x041a
         attributes: {
-            measuredValue: {ID: 0, type: DataType.SINGLE_PREC},
-            minMeasuredValue: {ID: 1, type: DataType.SINGLE_PREC},
-            maxMeasuredValue: {ID: 2, type: DataType.SINGLE_PREC},
-            tolerance: {ID: 3, type: DataType.SINGLE_PREC},
+            measuredValue: {ID: 0x0000, type: DataType.SINGLE_PREC},
+            minMeasuredValue: {ID: 0x0001, type: DataType.SINGLE_PREC},
+            maxMeasuredValue: {ID: 0x0002, type: DataType.SINGLE_PREC},
+            tolerance: {ID: 0x0003, type: DataType.SINGLE_PREC},
         },
         commands: {},
         commandsResponse: {},
     },
     msFecalColiformAndEColi: {
-        ID: 1051, // 0x041b
+        ID: 0x041b, // 0x041b
         attributes: {
-            measuredValue: {ID: 0, type: DataType.SINGLE_PREC},
-            minMeasuredValue: {ID: 1, type: DataType.SINGLE_PREC},
-            maxMeasuredValue: {ID: 2, type: DataType.SINGLE_PREC},
-            tolerance: {ID: 3, type: DataType.SINGLE_PREC},
+            measuredValue: {ID: 0x0000, type: DataType.SINGLE_PREC},
+            minMeasuredValue: {ID: 0x0001, type: DataType.SINGLE_PREC},
+            maxMeasuredValue: {ID: 0x0002, type: DataType.SINGLE_PREC},
+            tolerance: {ID: 0x0003, type: DataType.SINGLE_PREC},
         },
         commands: {},
         commandsResponse: {},
     },
     msFluoride: {
-        ID: 1052, // 0x041c
+        ID: 0x041c, // 0x041c
         attributes: {
-            measuredValue: {ID: 0, type: DataType.SINGLE_PREC},
-            minMeasuredValue: {ID: 1, type: DataType.SINGLE_PREC},
-            maxMeasuredValue: {ID: 2, type: DataType.SINGLE_PREC},
-            tolerance: {ID: 3, type: DataType.SINGLE_PREC},
+            measuredValue: {ID: 0x0000, type: DataType.SINGLE_PREC},
+            minMeasuredValue: {ID: 0x0001, type: DataType.SINGLE_PREC},
+            maxMeasuredValue: {ID: 0x0002, type: DataType.SINGLE_PREC},
+            tolerance: {ID: 0x0003, type: DataType.SINGLE_PREC},
         },
         commands: {},
         commandsResponse: {},
     },
     msHaloaceticAcids: {
-        ID: 1053, // 0x041d
+        ID: 0x041d, // 0x041d
         attributes: {
-            measuredValue: {ID: 0, type: DataType.SINGLE_PREC},
-            minMeasuredValue: {ID: 1, type: DataType.SINGLE_PREC},
-            maxMeasuredValue: {ID: 2, type: DataType.SINGLE_PREC},
-            tolerance: {ID: 3, type: DataType.SINGLE_PREC},
+            measuredValue: {ID: 0x0000, type: DataType.SINGLE_PREC},
+            minMeasuredValue: {ID: 0x0001, type: DataType.SINGLE_PREC},
+            maxMeasuredValue: {ID: 0x0002, type: DataType.SINGLE_PREC},
+            tolerance: {ID: 0x0003, type: DataType.SINGLE_PREC},
         },
         commands: {},
         commandsResponse: {},
     },
     msTotalTrihalomethanes: {
-        ID: 1054, // 0x041e
+        ID: 0x041e, // 0x041e
         attributes: {
-            measuredValue: {ID: 0, type: DataType.SINGLE_PREC},
-            minMeasuredValue: {ID: 1, type: DataType.SINGLE_PREC},
-            maxMeasuredValue: {ID: 2, type: DataType.SINGLE_PREC},
-            tolerance: {ID: 3, type: DataType.SINGLE_PREC},
+            measuredValue: {ID: 0x0000, type: DataType.SINGLE_PREC},
+            minMeasuredValue: {ID: 0x0001, type: DataType.SINGLE_PREC},
+            maxMeasuredValue: {ID: 0x0002, type: DataType.SINGLE_PREC},
+            tolerance: {ID: 0x0003, type: DataType.SINGLE_PREC},
         },
         commands: {},
         commandsResponse: {},
     },
     msTotalColiformBacteria: {
-        ID: 1055, // 0x041f
+        ID: 0x041f, // 0x041f
         attributes: {
-            measuredValue: {ID: 0, type: DataType.SINGLE_PREC},
-            minMeasuredValue: {ID: 1, type: DataType.SINGLE_PREC},
-            maxMeasuredValue: {ID: 2, type: DataType.SINGLE_PREC},
-            tolerance: {ID: 3, type: DataType.SINGLE_PREC},
+            measuredValue: {ID: 0x0000, type: DataType.SINGLE_PREC},
+            minMeasuredValue: {ID: 0x0001, type: DataType.SINGLE_PREC},
+            maxMeasuredValue: {ID: 0x0002, type: DataType.SINGLE_PREC},
+            tolerance: {ID: 0x0003, type: DataType.SINGLE_PREC},
         },
         commands: {},
         commandsResponse: {},
     },
     msTurbidity: {
-        ID: 1056, // 0x0420
+        ID: 0x0420, // 0x0420
         attributes: {
-            measuredValue: {ID: 0, type: DataType.SINGLE_PREC},
-            minMeasuredValue: {ID: 1, type: DataType.SINGLE_PREC},
-            maxMeasuredValue: {ID: 2, type: DataType.SINGLE_PREC},
-            tolerance: {ID: 3, type: DataType.SINGLE_PREC},
+            measuredValue: {ID: 0x0000, type: DataType.SINGLE_PREC},
+            minMeasuredValue: {ID: 0x0001, type: DataType.SINGLE_PREC},
+            maxMeasuredValue: {ID: 0x0002, type: DataType.SINGLE_PREC},
+            tolerance: {ID: 0x0003, type: DataType.SINGLE_PREC},
         },
         commands: {},
         commandsResponse: {},
     },
     msCopper: {
-        ID: 1057, // 0x0421
+        ID: 0x0421, // 0x0421
         attributes: {
-            measuredValue: {ID: 0, type: DataType.SINGLE_PREC},
-            minMeasuredValue: {ID: 1, type: DataType.SINGLE_PREC},
-            maxMeasuredValue: {ID: 2, type: DataType.SINGLE_PREC},
-            tolerance: {ID: 3, type: DataType.SINGLE_PREC},
+            measuredValue: {ID: 0x0000, type: DataType.SINGLE_PREC},
+            minMeasuredValue: {ID: 0x0001, type: DataType.SINGLE_PREC},
+            maxMeasuredValue: {ID: 0x0002, type: DataType.SINGLE_PREC},
+            tolerance: {ID: 0x0003, type: DataType.SINGLE_PREC},
         },
         commands: {},
         commandsResponse: {},
     },
     msLead: {
-        ID: 1058, // 0x0422
+        ID: 0x0422, // 0x0422
         attributes: {
-            measuredValue: {ID: 0, type: DataType.SINGLE_PREC},
-            minMeasuredValue: {ID: 1, type: DataType.SINGLE_PREC},
-            maxMeasuredValue: {ID: 2, type: DataType.SINGLE_PREC},
-            tolerance: {ID: 3, type: DataType.SINGLE_PREC},
+            measuredValue: {ID: 0x0000, type: DataType.SINGLE_PREC},
+            minMeasuredValue: {ID: 0x0001, type: DataType.SINGLE_PREC},
+            maxMeasuredValue: {ID: 0x0002, type: DataType.SINGLE_PREC},
+            tolerance: {ID: 0x0003, type: DataType.SINGLE_PREC},
         },
         commands: {},
         commandsResponse: {},
     },
     msManganese: {
-        ID: 1059, // 0x0423
+        ID: 0x0423, // 0x0423
         attributes: {
-            measuredValue: {ID: 0, type: DataType.SINGLE_PREC},
-            minMeasuredValue: {ID: 1, type: DataType.SINGLE_PREC},
-            maxMeasuredValue: {ID: 2, type: DataType.SINGLE_PREC},
-            tolerance: {ID: 3, type: DataType.SINGLE_PREC},
+            measuredValue: {ID: 0x0000, type: DataType.SINGLE_PREC},
+            minMeasuredValue: {ID: 0x0001, type: DataType.SINGLE_PREC},
+            maxMeasuredValue: {ID: 0x0002, type: DataType.SINGLE_PREC},
+            tolerance: {ID: 0x0003, type: DataType.SINGLE_PREC},
         },
         commands: {},
         commandsResponse: {},
     },
     msSulfate: {
-        ID: 1060, // 0x0424
+        ID: 0x0424, // 0x0424
         attributes: {
-            measuredValue: {ID: 0, type: DataType.SINGLE_PREC},
-            minMeasuredValue: {ID: 1, type: DataType.SINGLE_PREC},
-            maxMeasuredValue: {ID: 2, type: DataType.SINGLE_PREC},
-            tolerance: {ID: 3, type: DataType.SINGLE_PREC},
+            measuredValue: {ID: 0x0000, type: DataType.SINGLE_PREC},
+            minMeasuredValue: {ID: 0x0001, type: DataType.SINGLE_PREC},
+            maxMeasuredValue: {ID: 0x0002, type: DataType.SINGLE_PREC},
+            tolerance: {ID: 0x0003, type: DataType.SINGLE_PREC},
         },
         commands: {},
         commandsResponse: {},
     },
     msBromodichloromethane: {
-        ID: 1061, // 0x0425
+        ID: 0x0425, // 0x0425
         attributes: {
-            measuredValue: {ID: 0, type: DataType.SINGLE_PREC},
-            minMeasuredValue: {ID: 1, type: DataType.SINGLE_PREC},
-            maxMeasuredValue: {ID: 2, type: DataType.SINGLE_PREC},
-            tolerance: {ID: 3, type: DataType.SINGLE_PREC},
+            measuredValue: {ID: 0x0000, type: DataType.SINGLE_PREC},
+            minMeasuredValue: {ID: 0x0001, type: DataType.SINGLE_PREC},
+            maxMeasuredValue: {ID: 0x0002, type: DataType.SINGLE_PREC},
+            tolerance: {ID: 0x0003, type: DataType.SINGLE_PREC},
         },
         commands: {},
         commandsResponse: {},
     },
     msBromoform: {
-        ID: 1062, // 0x0426
+        ID: 0x0426, // 0x0426
         attributes: {
-            measuredValue: {ID: 0, type: DataType.SINGLE_PREC},
-            minMeasuredValue: {ID: 1, type: DataType.SINGLE_PREC},
-            maxMeasuredValue: {ID: 2, type: DataType.SINGLE_PREC},
-            tolerance: {ID: 3, type: DataType.SINGLE_PREC},
+            measuredValue: {ID: 0x0000, type: DataType.SINGLE_PREC},
+            minMeasuredValue: {ID: 0x0001, type: DataType.SINGLE_PREC},
+            maxMeasuredValue: {ID: 0x0002, type: DataType.SINGLE_PREC},
+            tolerance: {ID: 0x0003, type: DataType.SINGLE_PREC},
         },
         commands: {},
         commandsResponse: {},
     },
     msChlorodibromomethane: {
-        ID: 1063, // 0x0427
+        ID: 0x0427, // 0x0427
         attributes: {
-            measuredValue: {ID: 0, type: DataType.SINGLE_PREC},
-            minMeasuredValue: {ID: 1, type: DataType.SINGLE_PREC},
-            maxMeasuredValue: {ID: 2, type: DataType.SINGLE_PREC},
-            tolerance: {ID: 3, type: DataType.SINGLE_PREC},
+            measuredValue: {ID: 0x0000, type: DataType.SINGLE_PREC},
+            minMeasuredValue: {ID: 0x0001, type: DataType.SINGLE_PREC},
+            maxMeasuredValue: {ID: 0x0002, type: DataType.SINGLE_PREC},
+            tolerance: {ID: 0x0003, type: DataType.SINGLE_PREC},
         },
         commands: {},
         commandsResponse: {},
     },
     msChloroform: {
-        ID: 1064, // 0x0428
+        ID: 0x0428, // 0x0428
         attributes: {
-            measuredValue: {ID: 0, type: DataType.SINGLE_PREC},
-            minMeasuredValue: {ID: 1, type: DataType.SINGLE_PREC},
-            maxMeasuredValue: {ID: 2, type: DataType.SINGLE_PREC},
-            tolerance: {ID: 3, type: DataType.SINGLE_PREC},
+            measuredValue: {ID: 0x0000, type: DataType.SINGLE_PREC},
+            minMeasuredValue: {ID: 0x0001, type: DataType.SINGLE_PREC},
+            maxMeasuredValue: {ID: 0x0002, type: DataType.SINGLE_PREC},
+            tolerance: {ID: 0x0003, type: DataType.SINGLE_PREC},
         },
         commands: {},
         commandsResponse: {},
     },
     msSodium: {
-        ID: 1065, // 0x0429
+        ID: 0x0429, // 0x0429
         attributes: {
-            measuredValue: {ID: 0, type: DataType.SINGLE_PREC},
-            minMeasuredValue: {ID: 1, type: DataType.SINGLE_PREC},
-            maxMeasuredValue: {ID: 2, type: DataType.SINGLE_PREC},
-            tolerance: {ID: 3, type: DataType.SINGLE_PREC},
+            measuredValue: {ID: 0x0000, type: DataType.SINGLE_PREC},
+            minMeasuredValue: {ID: 0x0001, type: DataType.SINGLE_PREC},
+            maxMeasuredValue: {ID: 0x0002, type: DataType.SINGLE_PREC},
+            tolerance: {ID: 0x0003, type: DataType.SINGLE_PREC},
         },
         commands: {},
         commandsResponse: {},
     },
     pm25Measurement: {
-        ID: 1066, // 0x042a
+        ID: 0x042a, // 0x042a
         attributes: {
             measuredValue: {ID: 0x0000, type: DataType.SINGLE_PREC},
             measuredMinValue: {ID: 0x0001, type: DataType.SINGLE_PREC},
@@ -3231,7 +2949,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         commandsResponse: {},
     },
     msFormaldehyde: {
-        ID: 1067, // 0x042b
+        ID: 0x042b, // 0x042b
         attributes: {
             measuredValue: {ID: 0x0000, type: DataType.SINGLE_PREC},
             minMeasuredValue: {ID: 0x0001, type: DataType.SINGLE_PREC},
@@ -3243,7 +2961,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
     },
     pm1Measurement: {
         // XXX: not in R8 spec?
-        ID: 1068, // 0x042c
+        ID: 0x042c, // 0x042c
         attributes: {
             measuredValue: {ID: 0x0000, type: DataType.SINGLE_PREC},
             measuredMinValue: {ID: 0x0001, type: DataType.SINGLE_PREC},
@@ -3255,7 +2973,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
     },
     pm10Measurement: {
         // XXX: not in R8 spec?
-        ID: 1069, // 0x042d
+        ID: 0x042d, // 0x042d
         attributes: {
             measuredValue: {ID: 0x0000, type: DataType.SINGLE_PREC},
             measuredMinValue: {ID: 0x0001, type: DataType.SINGLE_PREC},
@@ -3266,44 +2984,38 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         commandsResponse: {},
     },
     ssIasZone: {
-        ID: 1280,
+        ID: 0x0500,
         attributes: {
-            zoneState: {ID: 0, type: DataType.ENUM8},
-            zoneType: {ID: 1, type: DataType.ENUM16},
-            zoneStatus: {ID: 2, type: DataType.BITMAP16},
-            iasCieAddr: {ID: 16, type: DataType.IEEE_ADDR},
-            zoneId: {ID: 17, type: DataType.UINT8},
-            numZoneSensitivityLevelsSupported: {ID: 18, type: DataType.UINT8},
-            currentZoneSensitivityLevel: {ID: 19, type: DataType.UINT8},
+            zoneState: {ID: 0x0000, type: DataType.ENUM8},
+            zoneType: {ID: 0x0001, type: DataType.ENUM16},
+            zoneStatus: {ID: 0x0002, type: DataType.BITMAP16},
+            iasCieAddr: {ID: 0x0010, type: DataType.IEEE_ADDR},
+            zoneId: {ID: 0x0011, type: DataType.UINT8},
+            numZoneSensitivityLevelsSupported: {ID: 0x0012, type: DataType.UINT8},
+            currentZoneSensitivityLevel: {ID: 0x0013, type: DataType.UINT8},
             develcoAlarmOffDelay: {ID: 0x8001, type: DataType.UINT16, manufacturerCode: ManufacturerCode.DEVELCO},
         },
         commands: {
             enrollRsp: {
-                ID: 0,
+                ID: 0x00,
                 parameters: [
                     {name: "enrollrspcode", type: DataType.UINT8},
                     {name: "zoneid", type: DataType.UINT8},
                 ],
             },
-            initNormalOpMode: {
-                ID: 1,
-                parameters: [],
-            },
-            initTestMode: {
-                ID: 2,
-                parameters: [],
-            },
+            initNormalOpMode: {ID: 0x01, parameters: []},
+            initTestMode: {ID: 0x02, parameters: []},
         },
         commandsResponse: {
             statusChangeNotification: {
-                ID: 0,
+                ID: 0x00,
                 parameters: [
                     {name: "zonestatus", type: DataType.UINT16},
                     {name: "extendedstatus", type: DataType.UINT8},
                 ],
             },
             enrollReq: {
-                ID: 1,
+                ID: 0x01,
                 parameters: [
                     {name: "zonetype", type: DataType.UINT16},
                     {name: "manucode", type: DataType.UINT16},
@@ -3312,11 +3024,11 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         },
     },
     ssIasAce: {
-        ID: 1281,
+        ID: 0x0501,
         attributes: {},
         commands: {
             arm: {
-                ID: 0,
+                ID: 0x00,
                 response: 0,
                 parameters: [
                     {name: "armmode", type: DataType.UINT8},
@@ -3325,45 +3037,21 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 ],
             },
             bypass: {
-                ID: 1,
+                ID: 0x01,
                 parameters: [
                     {name: "numofzones", type: DataType.UINT8},
                     {name: "zoneidlist", type: BuffaloZclDataType.LIST_UINT8},
                 ],
             },
-            emergency: {
-                ID: 2,
-                parameters: [],
-            },
-            fire: {
-                ID: 3,
-                parameters: [],
-            },
-            panic: {
-                ID: 4,
-                parameters: [],
-            },
-            getZoneIDMap: {
-                ID: 5,
-                response: 1,
-                parameters: [],
-            },
-            getZoneInfo: {
-                ID: 6,
-                response: 2,
-                parameters: [{name: "zoneid", type: DataType.UINT8}],
-            },
-            getPanelStatus: {
-                ID: 7,
-                response: 5,
-                parameters: [],
-            },
-            getBypassedZoneList: {
-                ID: 8,
-                parameters: [],
-            },
+            emergency: {ID: 0x02, parameters: []},
+            fire: {ID: 0x03, parameters: []},
+            panic: {ID: 0x04, parameters: []},
+            getZoneIDMap: {ID: 0x05, response: 1, parameters: []},
+            getZoneInfo: {ID: 0x06, response: 2, parameters: [{name: "zoneid", type: DataType.UINT8}]},
+            getPanelStatus: {ID: 0x07, response: 5, parameters: []},
+            getBypassedZoneList: {ID: 0x08, parameters: []},
             getZoneStatus: {
-                ID: 9,
+                ID: 0x09,
                 response: 8,
                 parameters: [
                     {name: "startzoneid", type: DataType.UINT8},
@@ -3374,12 +3062,9 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             },
         },
         commandsResponse: {
-            armRsp: {
-                ID: 0,
-                parameters: [{name: "armnotification", type: DataType.UINT8}],
-            },
+            armRsp: {ID: 0x00, parameters: [{name: "armnotification", type: DataType.UINT8}]},
             getZoneIDMapRsp: {
-                ID: 1,
+                ID: 0x01,
                 parameters: [
                     {name: "zoneidmapsection0", type: DataType.UINT16},
                     {name: "zoneidmapsection1", type: DataType.UINT16},
@@ -3400,7 +3085,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 ],
             },
             getZoneInfoRsp: {
-                ID: 2,
+                ID: 0x02,
                 parameters: [
                     {name: "zoneid", type: DataType.UINT8},
                     {name: "zonetype", type: DataType.UINT16},
@@ -3409,7 +3094,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 ],
             },
             zoneStatusChanged: {
-                ID: 3,
+                ID: 0x03,
                 parameters: [
                     {name: "zoneid", type: DataType.UINT8},
                     {name: "zonestatus", type: DataType.UINT16},
@@ -3418,7 +3103,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 ],
             },
             panelStatusChanged: {
-                ID: 4,
+                ID: 0x04,
                 parameters: [
                     {name: "panelstatus", type: DataType.UINT8},
                     {name: "secondsremain", type: DataType.UINT8},
@@ -3427,7 +3112,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 ],
             },
             getPanelStatusRsp: {
-                ID: 5,
+                ID: 0x05,
                 parameters: [
                     {name: "panelstatus", type: DataType.UINT8},
                     {name: "secondsremain", type: DataType.UINT8},
@@ -3436,21 +3121,21 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 ],
             },
             setBypassedZoneList: {
-                ID: 6,
+                ID: 0x06,
                 parameters: [
                     {name: "numofzones", type: DataType.UINT8},
                     {name: "zoneid", type: BuffaloZclDataType.LIST_UINT8},
                 ],
             },
             bypassRsp: {
-                ID: 7,
+                ID: 0x07,
                 parameters: [
                     {name: "numofzones", type: DataType.UINT8},
                     {name: "bypassresult", type: BuffaloZclDataType.LIST_UINT8},
                 ],
             },
             getZoneStatusRsp: {
-                ID: 8,
+                ID: 0x08,
                 parameters: [
                     {name: "zonestatuscomplete", type: DataType.UINT8},
                     {name: "numofzones", type: DataType.UINT8},
@@ -3460,13 +3145,13 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         },
     },
     ssIasWd: {
-        ID: 1282,
+        ID: 0x0502,
         attributes: {
-            maxDuration: {ID: 0, type: DataType.UINT16},
+            maxDuration: {ID: 0x0000, type: DataType.UINT16},
         },
         commands: {
             startWarning: {
-                ID: 0,
+                ID: 0x00,
                 parameters: [
                     {name: "startwarninginfo", type: DataType.UINT8},
                     {name: "warningduration", type: DataType.UINT16},
@@ -3474,514 +3159,478 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                     {name: "strobelevel", type: DataType.UINT8},
                 ],
             },
-            squawk: {
-                ID: 1,
-                parameters: [{name: "squawkinfo", type: DataType.UINT8}],
-            },
+            squawk: {ID: 0x01, parameters: [{name: "squawkinfo", type: DataType.UINT8}]},
         },
         commandsResponse: {},
     },
     piGenericTunnel: {
-        ID: 1536,
+        ID: 0x0600,
         attributes: {
-            maxIncomeTransSize: {ID: 1, type: DataType.UINT16},
-            maxOutgoTransSize: {ID: 2, type: DataType.UINT16},
-            protocolAddr: {ID: 3, type: DataType.OCTET_STR},
+            maxIncomeTransSize: {ID: 0x0001, type: DataType.UINT16},
+            maxOutgoTransSize: {ID: 0x0002, type: DataType.UINT16},
+            protocolAddr: {ID: 0x0003, type: DataType.OCTET_STR},
         },
         commands: {
-            matchProtocolAddr: {
-                ID: 0,
-                parameters: [{name: "protocoladdr", type: DataType.CHAR_STR}],
-            },
+            matchProtocolAddr: {ID: 0x00, parameters: [{name: "protocoladdr", type: DataType.CHAR_STR}]},
         },
         commandsResponse: {
             matchProtocolAddrRsp: {
-                ID: 0,
+                ID: 0x00,
                 parameters: [
                     {name: "devieeeaddr", type: DataType.IEEE_ADDR},
                     {name: "protocoladdr", type: DataType.CHAR_STR},
                 ],
             },
-            advertiseProtocolAddr: {
-                ID: 1,
-                parameters: [{name: "protocoladdr", type: DataType.CHAR_STR}],
-            },
+            advertiseProtocolAddr: {ID: 0x01, parameters: [{name: "protocoladdr", type: DataType.CHAR_STR}]},
         },
     },
     piBacnetProtocolTunnel: {
-        ID: 1537,
+        ID: 0x0601,
         attributes: {},
         commands: {
-            transferNpdu: {
-                ID: 0,
-                parameters: [{name: "npdu", type: DataType.UINT8}],
-            },
+            transferNpdu: {ID: 0x00, parameters: [{name: "npdu", type: DataType.UINT8}]},
         },
         commandsResponse: {},
     },
     piAnalogInputReg: {
-        ID: 1538,
+        ID: 0x0602,
         attributes: {
-            covIncrement: {ID: 22, type: DataType.SINGLE_PREC},
-            deviceType: {ID: 31, type: DataType.CHAR_STR},
-            objectId: {ID: 75, type: DataType.BAC_OID},
-            objectName: {ID: 77, type: DataType.CHAR_STR},
-            objectType: {ID: 79, type: DataType.ENUM16},
-            updateInterval: {ID: 118, type: DataType.UINT8},
-            profileName: {ID: 168, type: DataType.CHAR_STR},
+            covIncrement: {ID: 0x0016, type: DataType.SINGLE_PREC},
+            deviceType: {ID: 0x001f, type: DataType.CHAR_STR},
+            objectId: {ID: 0x004b, type: DataType.BAC_OID},
+            objectName: {ID: 0x004d, type: DataType.CHAR_STR},
+            objectType: {ID: 0x004f, type: DataType.ENUM16},
+            updateInterval: {ID: 0x0076, type: DataType.UINT8},
+            profileName: {ID: 0x00a8, type: DataType.CHAR_STR},
         },
         commands: {},
         commandsResponse: {},
     },
     piAnalogInputExt: {
-        ID: 1539,
+        ID: 0x0603,
         attributes: {
-            ackedTransitions: {ID: 0, type: DataType.BITMAP8},
-            notificationClass: {ID: 17, type: DataType.UINT16},
-            deadband: {ID: 25, type: DataType.SINGLE_PREC},
-            eventEnable: {ID: 35, type: DataType.BITMAP8},
-            eventState: {ID: 36, type: DataType.ENUM8},
-            highLimit: {ID: 45, type: DataType.SINGLE_PREC},
-            limitEnable: {ID: 52, type: DataType.BITMAP8},
-            lowLimit: {ID: 59, type: DataType.SINGLE_PREC},
-            notifyType: {ID: 72, type: DataType.ENUM8},
-            timeDelay: {ID: 113, type: DataType.UINT8},
-            eventTimeStamps: {ID: 130, type: DataType.ARRAY},
+            ackedTransitions: {ID: 0x0000, type: DataType.BITMAP8},
+            notificationClass: {ID: 0x0011, type: DataType.UINT16},
+            deadband: {ID: 0x0019, type: DataType.SINGLE_PREC},
+            eventEnable: {ID: 0x0023, type: DataType.BITMAP8},
+            eventState: {ID: 0x0024, type: DataType.ENUM8},
+            highLimit: {ID: 0x002d, type: DataType.SINGLE_PREC},
+            limitEnable: {ID: 0x0034, type: DataType.BITMAP8},
+            lowLimit: {ID: 0x003b, type: DataType.SINGLE_PREC},
+            notifyType: {ID: 0x0048, type: DataType.ENUM8},
+            timeDelay: {ID: 0x0071, type: DataType.UINT8},
+            eventTimeStamps: {ID: 0x0082, type: DataType.ARRAY},
         },
         commands: {
-            transferApdu: {
-                ID: 0,
-                parameters: [],
-            },
-            connectReq: {
-                ID: 1,
-                parameters: [],
-            },
-            disconnectReq: {
-                ID: 2,
-                parameters: [],
-            },
-            connectStatusNoti: {
-                ID: 3,
-                parameters: [],
-            },
+            transferApdu: {ID: 0x00, parameters: []},
+            connectReq: {ID: 0x01, parameters: []},
+            disconnectReq: {ID: 0x02, parameters: []},
+            connectStatusNoti: {ID: 0x03, parameters: []},
         },
         commandsResponse: {},
     },
     piAnalogOutputReg: {
-        ID: 1540,
+        ID: 0x0604,
         attributes: {
-            covIncrement: {ID: 22, type: DataType.SINGLE_PREC},
-            deviceType: {ID: 31, type: DataType.CHAR_STR},
-            objectId: {ID: 75, type: DataType.BAC_OID},
-            objectName: {ID: 77, type: DataType.CHAR_STR},
-            objectType: {ID: 79, type: DataType.ENUM16},
-            updateInterval: {ID: 118, type: DataType.UINT8},
-            profileName: {ID: 168, type: DataType.CHAR_STR},
+            covIncrement: {ID: 0x0016, type: DataType.SINGLE_PREC},
+            deviceType: {ID: 0x001f, type: DataType.CHAR_STR},
+            objectId: {ID: 0x004b, type: DataType.BAC_OID},
+            objectName: {ID: 0x004d, type: DataType.CHAR_STR},
+            objectType: {ID: 0x004f, type: DataType.ENUM16},
+            updateInterval: {ID: 0x0076, type: DataType.UINT8},
+            profileName: {ID: 0x00a8, type: DataType.CHAR_STR},
         },
         commands: {},
         commandsResponse: {},
     },
     piAnalogOutputExt: {
-        ID: 1541,
+        ID: 0x0605,
         attributes: {
-            ackedTransitions: {ID: 0, type: DataType.BITMAP8},
-            notificationClass: {ID: 17, type: DataType.UINT16},
-            deadband: {ID: 25, type: DataType.SINGLE_PREC},
-            eventEnable: {ID: 35, type: DataType.BITMAP8},
-            eventState: {ID: 36, type: DataType.ENUM8},
-            highLimit: {ID: 45, type: DataType.SINGLE_PREC},
-            limitEnable: {ID: 52, type: DataType.BITMAP8},
-            lowLimit: {ID: 59, type: DataType.SINGLE_PREC},
-            notifyType: {ID: 72, type: DataType.ENUM8},
-            timeDelay: {ID: 113, type: DataType.UINT8},
-            eventTimeStamps: {ID: 130, type: DataType.ARRAY},
+            ackedTransitions: {ID: 0x0000, type: DataType.BITMAP8},
+            notificationClass: {ID: 0x0011, type: DataType.UINT16},
+            deadband: {ID: 0x0019, type: DataType.SINGLE_PREC},
+            eventEnable: {ID: 0x0023, type: DataType.BITMAP8},
+            eventState: {ID: 0x0024, type: DataType.ENUM8},
+            highLimit: {ID: 0x002d, type: DataType.SINGLE_PREC},
+            limitEnable: {ID: 0x0034, type: DataType.BITMAP8},
+            lowLimit: {ID: 0x003b, type: DataType.SINGLE_PREC},
+            notifyType: {ID: 0x0048, type: DataType.ENUM8},
+            timeDelay: {ID: 0x0071, type: DataType.UINT8},
+            eventTimeStamps: {ID: 0x0082, type: DataType.ARRAY},
         },
         commands: {},
         commandsResponse: {},
     },
     piAnalogValueReg: {
-        ID: 1542,
+        ID: 0x0606,
         attributes: {
-            covIncrement: {ID: 22, type: DataType.SINGLE_PREC},
-            objectId: {ID: 75, type: DataType.BAC_OID},
-            objectName: {ID: 77, type: DataType.CHAR_STR},
-            objectType: {ID: 79, type: DataType.ENUM16},
-            profileName: {ID: 168, type: DataType.CHAR_STR},
+            covIncrement: {ID: 0x0016, type: DataType.SINGLE_PREC},
+            objectId: {ID: 0x004b, type: DataType.BAC_OID},
+            objectName: {ID: 0x004d, type: DataType.CHAR_STR},
+            objectType: {ID: 0x004f, type: DataType.ENUM16},
+            profileName: {ID: 0x00a8, type: DataType.CHAR_STR},
         },
         commands: {},
         commandsResponse: {},
     },
     piAnalogValueExt: {
-        ID: 1543,
+        ID: 0x0607,
         attributes: {
-            ackedTransitions: {ID: 0, type: DataType.BITMAP8},
-            notificationClass: {ID: 17, type: DataType.UINT16},
-            deadband: {ID: 25, type: DataType.SINGLE_PREC},
-            eventEnable: {ID: 35, type: DataType.BITMAP8},
-            eventState: {ID: 36, type: DataType.ENUM8},
-            highLimit: {ID: 45, type: DataType.SINGLE_PREC},
-            limitEnable: {ID: 52, type: DataType.BITMAP8},
-            lowLimit: {ID: 59, type: DataType.SINGLE_PREC},
-            notifyType: {ID: 72, type: DataType.ENUM8},
-            timeDelay: {ID: 113, type: DataType.UINT8},
-            eventTimeStamps: {ID: 130, type: DataType.ARRAY},
+            ackedTransitions: {ID: 0x0000, type: DataType.BITMAP8},
+            notificationClass: {ID: 0x0011, type: DataType.UINT16},
+            deadband: {ID: 0x0019, type: DataType.SINGLE_PREC},
+            eventEnable: {ID: 0x0023, type: DataType.BITMAP8},
+            eventState: {ID: 0x0024, type: DataType.ENUM8},
+            highLimit: {ID: 0x002d, type: DataType.SINGLE_PREC},
+            limitEnable: {ID: 0x0034, type: DataType.BITMAP8},
+            lowLimit: {ID: 0x003b, type: DataType.SINGLE_PREC},
+            notifyType: {ID: 0x0048, type: DataType.ENUM8},
+            timeDelay: {ID: 0x0071, type: DataType.UINT8},
+            eventTimeStamps: {ID: 0x0082, type: DataType.ARRAY},
         },
         commands: {},
         commandsResponse: {},
     },
     piBinaryInputReg: {
-        ID: 1544,
+        ID: 0x0608,
         attributes: {
-            changeOfStateCount: {ID: 15, type: DataType.UINT32},
-            changeOfStateTime: {ID: 16, type: DataType.STRUCT},
-            deviceType: {ID: 31, type: DataType.CHAR_STR},
-            elapsedActiveTime: {ID: 33, type: DataType.UINT32},
-            objectIdentifier: {ID: 75, type: DataType.BAC_OID},
-            objectName: {ID: 77, type: DataType.CHAR_STR},
-            objectType: {ID: 79, type: DataType.ENUM16},
-            timeOfATReset: {ID: 114, type: DataType.STRUCT},
-            timeOfSCReset: {ID: 115, type: DataType.STRUCT},
-            profileName: {ID: 168, type: DataType.CHAR_STR},
+            changeOfStateCount: {ID: 0x000f, type: DataType.UINT32},
+            changeOfStateTime: {ID: 0x0010, type: DataType.STRUCT},
+            deviceType: {ID: 0x001f, type: DataType.CHAR_STR},
+            elapsedActiveTime: {ID: 0x0021, type: DataType.UINT32},
+            objectIdentifier: {ID: 0x004b, type: DataType.BAC_OID},
+            objectName: {ID: 0x004d, type: DataType.CHAR_STR},
+            objectType: {ID: 0x004f, type: DataType.ENUM16},
+            timeOfATReset: {ID: 0x0072, type: DataType.STRUCT},
+            timeOfSCReset: {ID: 0x0073, type: DataType.STRUCT},
+            profileName: {ID: 0x00a8, type: DataType.CHAR_STR},
         },
         commands: {},
         commandsResponse: {},
     },
     piBinaryInputExt: {
-        ID: 1545,
+        ID: 0x0609,
         attributes: {
-            ackedTransitions: {ID: 0, type: DataType.BITMAP8},
-            alarmValue: {ID: 6, type: DataType.BOOLEAN},
-            notificationClass: {ID: 17, type: DataType.UINT16},
-            eventEnable: {ID: 35, type: DataType.BITMAP8},
-            eventState: {ID: 36, type: DataType.ENUM8},
-            notifyType: {ID: 72, type: DataType.ENUM8},
-            timeDelay: {ID: 113, type: DataType.UINT8},
-            eventTimeStamps: {ID: 130, type: DataType.ARRAY},
+            ackedTransitions: {ID: 0x0000, type: DataType.BITMAP8},
+            alarmValue: {ID: 0x0006, type: DataType.BOOLEAN},
+            notificationClass: {ID: 0x0011, type: DataType.UINT16},
+            eventEnable: {ID: 0x0023, type: DataType.BITMAP8},
+            eventState: {ID: 0x0024, type: DataType.ENUM8},
+            notifyType: {ID: 0x0048, type: DataType.ENUM8},
+            timeDelay: {ID: 0x0071, type: DataType.UINT8},
+            eventTimeStamps: {ID: 0x0082, type: DataType.ARRAY},
         },
         commands: {},
         commandsResponse: {},
     },
     piBinaryOutputReg: {
-        ID: 1546,
+        ID: 0x060a,
         attributes: {
-            changeOfStateCount: {ID: 15, type: DataType.UINT32},
-            changeOfStateTime: {ID: 16, type: DataType.STRUCT},
-            deviceType: {ID: 31, type: DataType.CHAR_STR},
-            elapsedActiveTime: {ID: 33, type: DataType.UINT32},
-            feedBackValue: {ID: 40, type: DataType.ENUM8},
-            objectIdentifier: {ID: 75, type: DataType.BAC_OID},
-            objectName: {ID: 77, type: DataType.CHAR_STR},
-            objectType: {ID: 79, type: DataType.ENUM16},
-            timeOfATReset: {ID: 114, type: DataType.STRUCT},
-            timeOfSCReset: {ID: 115, type: DataType.STRUCT},
-            profileName: {ID: 168, type: DataType.CHAR_STR},
+            changeOfStateCount: {ID: 0x000f, type: DataType.UINT32},
+            changeOfStateTime: {ID: 0x0010, type: DataType.STRUCT},
+            deviceType: {ID: 0x001f, type: DataType.CHAR_STR},
+            elapsedActiveTime: {ID: 0x0021, type: DataType.UINT32},
+            feedBackValue: {ID: 0x0028, type: DataType.ENUM8},
+            objectIdentifier: {ID: 0x004b, type: DataType.BAC_OID},
+            objectName: {ID: 0x004d, type: DataType.CHAR_STR},
+            objectType: {ID: 0x004f, type: DataType.ENUM16},
+            timeOfATReset: {ID: 0x0072, type: DataType.STRUCT},
+            timeOfSCReset: {ID: 0x0073, type: DataType.STRUCT},
+            profileName: {ID: 0x00a8, type: DataType.CHAR_STR},
         },
         commands: {},
         commandsResponse: {},
     },
     piBinaryOutputExt: {
-        ID: 1547,
+        ID: 0x060b,
         attributes: {
-            ackedTransitions: {ID: 0, type: DataType.BITMAP8},
-            notificationClass: {ID: 17, type: DataType.UINT16},
-            eventEnable: {ID: 35, type: DataType.BITMAP8},
-            eventState: {ID: 36, type: DataType.ENUM8},
-            notifyType: {ID: 72, type: DataType.ENUM8},
-            timeDelay: {ID: 113, type: DataType.UINT8},
-            eventTimeStamps: {ID: 130, type: DataType.ARRAY},
+            ackedTransitions: {ID: 0x0000, type: DataType.BITMAP8},
+            notificationClass: {ID: 0x0011, type: DataType.UINT16},
+            eventEnable: {ID: 0x0023, type: DataType.BITMAP8},
+            eventState: {ID: 0x0024, type: DataType.ENUM8},
+            notifyType: {ID: 0x0048, type: DataType.ENUM8},
+            timeDelay: {ID: 0x0071, type: DataType.UINT8},
+            eventTimeStamps: {ID: 0x0082, type: DataType.ARRAY},
         },
         commands: {},
         commandsResponse: {},
     },
     piBinaryValueReg: {
-        ID: 1548,
+        ID: 0x060c,
         attributes: {
-            changeOfStateCount: {ID: 15, type: DataType.UINT32},
-            changeOfStateTime: {ID: 16, type: DataType.STRUCT},
-            elapsedActiveTime: {ID: 33, type: DataType.UINT32},
-            objectIdentifier: {ID: 75, type: DataType.BAC_OID},
-            objectName: {ID: 77, type: DataType.CHAR_STR},
-            objectType: {ID: 79, type: DataType.ENUM16},
-            timeOfATReset: {ID: 114, type: DataType.STRUCT},
-            timeOfSCReset: {ID: 115, type: DataType.STRUCT},
-            profileName: {ID: 168, type: DataType.CHAR_STR},
+            changeOfStateCount: {ID: 0x000f, type: DataType.UINT32},
+            changeOfStateTime: {ID: 0x0010, type: DataType.STRUCT},
+            elapsedActiveTime: {ID: 0x0021, type: DataType.UINT32},
+            objectIdentifier: {ID: 0x004b, type: DataType.BAC_OID},
+            objectName: {ID: 0x004d, type: DataType.CHAR_STR},
+            objectType: {ID: 0x004f, type: DataType.ENUM16},
+            timeOfATReset: {ID: 0x0072, type: DataType.STRUCT},
+            timeOfSCReset: {ID: 0x0073, type: DataType.STRUCT},
+            profileName: {ID: 0x00a8, type: DataType.CHAR_STR},
         },
         commands: {},
         commandsResponse: {},
     },
     piBinaryValueExt: {
-        ID: 1549,
+        ID: 0x060d,
         attributes: {
-            ackedTransitions: {ID: 0, type: DataType.BITMAP8},
-            alarmValue: {ID: 6, type: DataType.BOOLEAN},
-            notificationClass: {ID: 17, type: DataType.UINT16},
-            eventEnable: {ID: 35, type: DataType.BITMAP8},
-            eventState: {ID: 36, type: DataType.ENUM8},
-            notifyType: {ID: 72, type: DataType.ENUM8},
-            timeDelay: {ID: 113, type: DataType.UINT8},
-            eventTimeStamps: {ID: 130, type: DataType.ARRAY},
+            ackedTransitions: {ID: 0x0000, type: DataType.BITMAP8},
+            alarmValue: {ID: 0x0006, type: DataType.BOOLEAN},
+            notificationClass: {ID: 0x0011, type: DataType.UINT16},
+            eventEnable: {ID: 0x0023, type: DataType.BITMAP8},
+            eventState: {ID: 0x0024, type: DataType.ENUM8},
+            notifyType: {ID: 0x0048, type: DataType.ENUM8},
+            timeDelay: {ID: 0x0071, type: DataType.UINT8},
+            eventTimeStamps: {ID: 0x0082, type: DataType.ARRAY},
         },
         commands: {},
         commandsResponse: {},
     },
     piMultistateInputReg: {
-        ID: 1550,
+        ID: 0x060e,
         attributes: {
-            deviceType: {ID: 31, type: DataType.CHAR_STR},
-            objectId: {ID: 75, type: DataType.BAC_OID},
-            objectName: {ID: 77, type: DataType.CHAR_STR},
-            objectType: {ID: 79, type: DataType.ENUM16},
-            profileName: {ID: 168, type: DataType.CHAR_STR},
+            deviceType: {ID: 0x001f, type: DataType.CHAR_STR},
+            objectId: {ID: 0x004b, type: DataType.BAC_OID},
+            objectName: {ID: 0x004d, type: DataType.CHAR_STR},
+            objectType: {ID: 0x004f, type: DataType.ENUM16},
+            profileName: {ID: 0x00a8, type: DataType.CHAR_STR},
         },
         commands: {},
         commandsResponse: {},
     },
     piMultistateInputExt: {
-        ID: 1551,
+        ID: 0x060f,
         attributes: {
-            ackedTransitions: {ID: 0, type: DataType.BITMAP8},
-            alarmValue: {ID: 6, type: DataType.UINT16},
-            notificationClass: {ID: 17, type: DataType.UINT16},
-            eventEnable: {ID: 35, type: DataType.BITMAP8},
-            eventState: {ID: 36, type: DataType.ENUM8},
-            faultValues: {ID: 37, type: DataType.UINT16},
-            notifyType: {ID: 72, type: DataType.ENUM8},
-            timeDelay: {ID: 113, type: DataType.UINT8},
-            eventTimeStamps: {ID: 130, type: DataType.ARRAY},
+            ackedTransitions: {ID: 0x0000, type: DataType.BITMAP8},
+            alarmValue: {ID: 0x0006, type: DataType.UINT16},
+            notificationClass: {ID: 0x0011, type: DataType.UINT16},
+            eventEnable: {ID: 0x0023, type: DataType.BITMAP8},
+            eventState: {ID: 0x0024, type: DataType.ENUM8},
+            faultValues: {ID: 0x0025, type: DataType.UINT16},
+            notifyType: {ID: 0x0048, type: DataType.ENUM8},
+            timeDelay: {ID: 0x0071, type: DataType.UINT8},
+            eventTimeStamps: {ID: 0x0082, type: DataType.ARRAY},
         },
         commands: {},
         commandsResponse: {},
     },
     piMultistateOutputReg: {
-        ID: 1552,
+        ID: 0x0610,
         attributes: {
-            deviceType: {ID: 31, type: DataType.CHAR_STR},
-            feedBackValue: {ID: 40, type: DataType.ENUM8},
-            objectId: {ID: 75, type: DataType.BAC_OID},
-            objectName: {ID: 77, type: DataType.CHAR_STR},
-            objectType: {ID: 79, type: DataType.ENUM16},
-            profileName: {ID: 168, type: DataType.CHAR_STR},
+            deviceType: {ID: 0x001f, type: DataType.CHAR_STR},
+            feedBackValue: {ID: 0x0028, type: DataType.ENUM8},
+            objectId: {ID: 0x004b, type: DataType.BAC_OID},
+            objectName: {ID: 0x004d, type: DataType.CHAR_STR},
+            objectType: {ID: 0x004f, type: DataType.ENUM16},
+            profileName: {ID: 0x00a8, type: DataType.CHAR_STR},
         },
         commands: {},
         commandsResponse: {},
     },
     piMultistateOutputExt: {
-        ID: 1553,
+        ID: 0x0611,
         attributes: {
-            ackedTransitions: {ID: 0, type: DataType.BITMAP8},
-            notificationClass: {ID: 17, type: DataType.UINT16},
-            eventEnable: {ID: 35, type: DataType.BITMAP8},
-            eventState: {ID: 36, type: DataType.ENUM8},
-            notifyType: {ID: 72, type: DataType.ENUM8},
-            timeDelay: {ID: 113, type: DataType.UINT8},
-            eventTimeStamps: {ID: 130, type: DataType.ARRAY},
+            ackedTransitions: {ID: 0x0000, type: DataType.BITMAP8},
+            notificationClass: {ID: 0x0011, type: DataType.UINT16},
+            eventEnable: {ID: 0x0023, type: DataType.BITMAP8},
+            eventState: {ID: 0x0024, type: DataType.ENUM8},
+            notifyType: {ID: 0x0048, type: DataType.ENUM8},
+            timeDelay: {ID: 0x0071, type: DataType.UINT8},
+            eventTimeStamps: {ID: 0x0082, type: DataType.ARRAY},
         },
         commands: {},
         commandsResponse: {},
     },
     piMultistateValueReg: {
-        ID: 1554,
+        ID: 0x0612,
         attributes: {
-            objectId: {ID: 75, type: DataType.BAC_OID},
-            objectName: {ID: 77, type: DataType.CHAR_STR},
-            objectType: {ID: 79, type: DataType.ENUM16},
-            profileName: {ID: 168, type: DataType.CHAR_STR},
+            objectId: {ID: 0x004b, type: DataType.BAC_OID},
+            objectName: {ID: 0x004d, type: DataType.CHAR_STR},
+            objectType: {ID: 0x004f, type: DataType.ENUM16},
+            profileName: {ID: 0x00a8, type: DataType.CHAR_STR},
         },
         commands: {},
         commandsResponse: {},
     },
     piMultistateValueExt: {
-        ID: 1555,
+        ID: 0x0613,
         attributes: {
-            ackedTransitions: {ID: 0, type: DataType.BITMAP8},
-            alarmValue: {ID: 6, type: DataType.UINT16},
-            notificationClass: {ID: 17, type: DataType.UINT16},
-            eventEnable: {ID: 35, type: DataType.BITMAP8},
-            eventState: {ID: 36, type: DataType.ENUM8},
-            faultValues: {ID: 37, type: DataType.UINT16},
-            notifyType: {ID: 72, type: DataType.ENUM8},
-            timeDelay: {ID: 113, type: DataType.UINT8},
-            eventTimeStamps: {ID: 130, type: DataType.ARRAY},
+            ackedTransitions: {ID: 0x0000, type: DataType.BITMAP8},
+            alarmValue: {ID: 0x0006, type: DataType.UINT16},
+            notificationClass: {ID: 0x0011, type: DataType.UINT16},
+            eventEnable: {ID: 0x0023, type: DataType.BITMAP8},
+            eventState: {ID: 0x0024, type: DataType.ENUM8},
+            faultValues: {ID: 0x0025, type: DataType.UINT16},
+            notifyType: {ID: 0x0048, type: DataType.ENUM8},
+            timeDelay: {ID: 0x0071, type: DataType.UINT8},
+            eventTimeStamps: {ID: 0x0082, type: DataType.ARRAY},
         },
         commands: {},
         commandsResponse: {},
     },
     pi11073ProtocolTunnel: {
-        ID: 1556,
+        ID: 0x0614,
         attributes: {
-            deviceidList: {ID: 0, type: DataType.ARRAY},
-            managerTarget: {ID: 1, type: DataType.IEEE_ADDR},
-            managerEndpoint: {ID: 2, type: DataType.UINT8},
-            connected: {ID: 3, type: DataType.BOOLEAN},
-            preemptible: {ID: 4, type: DataType.BOOLEAN},
-            idleTimeout: {ID: 5, type: DataType.UINT16},
+            deviceidList: {ID: 0x0000, type: DataType.ARRAY},
+            managerTarget: {ID: 0x0001, type: DataType.IEEE_ADDR},
+            managerEndpoint: {ID: 0x0002, type: DataType.UINT8},
+            connected: {ID: 0x0003, type: DataType.BOOLEAN},
+            preemptible: {ID: 0x0004, type: DataType.BOOLEAN},
+            idleTimeout: {ID: 0x0005, type: DataType.UINT16},
         },
         commands: {
-            transferApdu: {
-                ID: 0,
-                parameters: [],
-            },
-            connectReq: {
-                ID: 1,
-                parameters: [],
-            },
-            disconnectReq: {
-                ID: 2,
-                parameters: [],
-            },
-            connectStatusNoti: {
-                ID: 3,
-                parameters: [],
-            },
+            transferApdu: {ID: 0x00, parameters: []},
+            connectReq: {ID: 0x01, parameters: []},
+            disconnectReq: {ID: 0x02, parameters: []},
+            connectStatusNoti: {ID: 0x03, parameters: []},
         },
         commandsResponse: {},
     },
     piIso7818ProtocolTunnel: {
-        ID: 1557,
+        ID: 0x0615,
         attributes: {
-            status: {ID: 0, type: DataType.UINT8},
+            status: {ID: 0x0000, type: DataType.UINT8},
         },
         commands: {},
         commandsResponse: {},
     },
     piRetailTunnel: {
-        ID: 1559,
+        ID: 0x0617,
         attributes: {
-            manufacturerCode: {ID: 0, type: DataType.UINT16},
-            msProfile: {ID: 1, type: DataType.UINT16},
+            manufacturerCode: {ID: 0x0000, type: DataType.UINT16},
+            msProfile: {ID: 0x0001, type: DataType.UINT16},
         },
         commands: {},
         commandsResponse: {},
     },
     seMetering: {
-        ID: 1794,
+        ID: 0x0702,
         attributes: {
-            currentSummDelivered: {ID: 0, type: DataType.UINT48},
-            currentSummReceived: {ID: 1, type: DataType.UINT48},
-            currentMaxDemandDelivered: {ID: 2, type: DataType.UINT48},
-            currentMaxDemandReceived: {ID: 3, type: DataType.UINT48},
-            dftSumm: {ID: 4, type: DataType.UINT48},
-            dailyFreezeTime: {ID: 5, type: DataType.UINT16},
-            powerFactor: {ID: 6, type: DataType.INT8},
-            readingSnapshotTime: {ID: 7, type: DataType.UTC},
-            currentMaxDemandDeliverdTime: {ID: 8, type: DataType.UTC},
-            currentMaxDemandReceivedTime: {ID: 9, type: DataType.UTC},
-            defaultUpdatePeriod: {ID: 10, type: DataType.UINT8},
-            fastPollUpdatePeriod: {ID: 11, type: DataType.UINT8},
-            currentBlockPeriodConsumpDelivered: {ID: 12, type: DataType.UINT48},
-            dailyConsumpTarget: {ID: 13, type: DataType.UINT24},
-            currentBlock: {ID: 14, type: DataType.ENUM8},
-            profileIntervalPeriod: {ID: 15, type: DataType.ENUM8},
-            intervalReadReportingPeriod: {ID: 16, type: DataType.UINT16},
-            presetReadingTime: {ID: 17, type: DataType.UINT16},
-            volumePerReport: {ID: 18, type: DataType.UINT16},
-            flowRestriction: {ID: 19, type: DataType.UINT8},
-            supplyStatus: {ID: 20, type: DataType.ENUM8},
-            currentInEnergyCarrierSumm: {ID: 21, type: DataType.UINT48},
-            currentOutEnergyCarrierSumm: {ID: 22, type: DataType.UINT48},
-            inletTempreature: {ID: 23, type: DataType.INT24},
-            outletTempreature: {ID: 24, type: DataType.INT24},
-            controlTempreature: {ID: 25, type: DataType.INT24},
-            currentInEnergyCarrierDemand: {ID: 26, type: DataType.INT24},
-            currentOutEnergyCarrierDemand: {ID: 27, type: DataType.INT24},
-            currentBlockPeriodConsumpReceived: {ID: 29, type: DataType.UINT48},
-            currentBlockReceived: {ID: 30, type: DataType.UINT48},
-            DFTSummationReceived: {ID: 31, type: DataType.UINT48},
-            activeRegisterTierDelivered: {ID: 32, type: DataType.ENUM8},
-            activeRegisterTierReceived: {ID: 33, type: DataType.ENUM8},
-            currentTier1SummDelivered: {ID: 256, type: DataType.UINT48},
-            currentTier1SummReceived: {ID: 257, type: DataType.UINT48},
-            currentTier2SummDelivered: {ID: 258, type: DataType.UINT48},
-            currentTier2SummReceived: {ID: 259, type: DataType.UINT48},
-            currentTier3SummDelivered: {ID: 260, type: DataType.UINT48},
-            currentTier3SummReceived: {ID: 261, type: DataType.UINT48},
-            currentTier4SummDelivered: {ID: 262, type: DataType.UINT48},
-            currentTier4SummReceived: {ID: 263, type: DataType.UINT48},
-            currentTier5SummDelivered: {ID: 264, type: DataType.UINT48},
-            currentTier5SummReceived: {ID: 265, type: DataType.UINT48},
-            currentTier6SummDelivered: {ID: 266, type: DataType.UINT48},
-            currentTier6SummReceived: {ID: 267, type: DataType.UINT48},
-            currentTier7SummDelivered: {ID: 268, type: DataType.UINT48},
-            currentTier7SummReceived: {ID: 269, type: DataType.UINT48},
-            currentTier8SummDelivered: {ID: 270, type: DataType.UINT48},
-            currentTier8SummReceived: {ID: 271, type: DataType.UINT48},
-            currentTier9SummDelivered: {ID: 272, type: DataType.UINT48},
-            currentTier9SummReceived: {ID: 273, type: DataType.UINT48},
-            currentTier10SummDelivered: {ID: 274, type: DataType.UINT48},
-            currentTier10SummReceived: {ID: 275, type: DataType.UINT48},
-            currentTier11SummDelivered: {ID: 276, type: DataType.UINT48},
-            currentTier11SummReceived: {ID: 277, type: DataType.UINT48},
-            currentTier12SummDelivered: {ID: 278, type: DataType.UINT48},
-            currentTier12SummReceived: {ID: 279, type: DataType.UINT48},
-            currentTier13SummDelivered: {ID: 280, type: DataType.UINT48},
-            currentTier13SummReceived: {ID: 281, type: DataType.UINT48},
-            currentTier14SummDelivered: {ID: 282, type: DataType.UINT48},
-            currentTier14SummReceived: {ID: 283, type: DataType.UINT48},
-            currentTier15SummDelivered: {ID: 284, type: DataType.UINT48},
-            currentTier15SummReceived: {ID: 285, type: DataType.UINT48},
-            status: {ID: 512, type: DataType.BITMAP8},
-            remainingBattLife: {ID: 513, type: DataType.UINT8},
-            hoursInOperation: {ID: 514, type: DataType.UINT24},
-            hoursInFault: {ID: 515, type: DataType.UINT24},
-            extendedStatus: {ID: 516, type: DataType.BITMAP64},
-            unitOfMeasure: {ID: 768, type: DataType.ENUM8},
-            multiplier: {ID: 769, type: DataType.UINT24},
-            divisor: {ID: 770, type: DataType.UINT24},
-            summaFormatting: {ID: 771, type: DataType.BITMAP8},
-            demandFormatting: {ID: 772, type: DataType.BITMAP8},
-            historicalConsumpFormatting: {ID: 773, type: DataType.BITMAP8},
-            meteringDeviceType: {ID: 774, type: DataType.BITMAP8},
-            siteId: {ID: 775, type: DataType.OCTET_STR},
-            meterSerialNumber: {ID: 776, type: DataType.OCTET_STR},
-            energyCarrierUnitOfMeas: {ID: 777, type: DataType.ENUM8},
-            energyCarrierSummFormatting: {ID: 778, type: DataType.BITMAP8},
-            energyCarrierDemandFormatting: {ID: 779, type: DataType.BITMAP8},
-            temperatureUnitOfMeas: {ID: 780, type: DataType.ENUM8},
-            temperatureFormatting: {ID: 781, type: DataType.BITMAP8},
-            moduleSerialNumber: {ID: 782, type: DataType.OCTET_STR},
-            operatingTariffLevel: {ID: 783, type: DataType.OCTET_STR},
-            instantaneousDemand: {ID: 1024, type: DataType.INT24},
-            currentdayConsumpDelivered: {ID: 1025, type: DataType.UINT24},
-            currentdayConsumpReceived: {ID: 1026, type: DataType.UINT24},
-            previousdayConsumpDelivered: {ID: 1027, type: DataType.UINT24},
-            previousdayConsumpReceived: {ID: 1028, type: DataType.UINT24},
-            curPartProfileIntStartTimeDelivered: {ID: 1029, type: DataType.UTC},
-            curPartProfileIntStartTimeReceived: {ID: 1030, type: DataType.UTC},
-            curPartProfileIntValueDelivered: {ID: 1031, type: DataType.UINT24},
-            curPartProfileIntValueReceived: {ID: 1032, type: DataType.UINT24},
-            currentDayMaxPressure: {ID: 1033, type: DataType.UINT48},
-            currentDayMinPressure: {ID: 1034, type: DataType.UINT48},
-            previousDayMaxPressure: {ID: 1035, type: DataType.UINT48},
-            previousDayMinPressure: {ID: 1036, type: DataType.UINT48},
-            currentDayMaxDemand: {ID: 1037, type: DataType.INT24},
-            previousDayMaxDemand: {ID: 1038, type: DataType.INT24},
-            currentMonthMaxDemand: {ID: 1039, type: DataType.INT24},
-            currentYearMaxDemand: {ID: 1040, type: DataType.INT24},
-            currentdayMaxEnergyCarrDemand: {ID: 1041, type: DataType.INT24},
-            previousdayMaxEnergyCarrDemand: {ID: 1042, type: DataType.INT24},
-            curMonthMaxEnergyCarrDemand: {ID: 1043, type: DataType.INT24},
-            curMonthMinEnergyCarrDemand: {ID: 1044, type: DataType.INT24},
-            curYearMaxEnergyCarrDemand: {ID: 1045, type: DataType.INT24},
-            curYearMinEnergyCarrDemand: {ID: 1046, type: DataType.INT24},
-            maxNumberOfPeriodsDelivered: {ID: 1280, type: DataType.UINT8},
-            currentDemandDelivered: {ID: 1536, type: DataType.UINT24},
-            demandLimit: {ID: 1537, type: DataType.UINT24},
-            demandIntegrationPeriod: {ID: 1538, type: DataType.UINT8},
-            numberOfDemandSubintervals: {ID: 1539, type: DataType.UINT8},
-            demandLimitArmDuration: {ID: 1540, type: DataType.UINT16},
-            genericAlarmMask: {ID: 2048, type: DataType.BITMAP16},
-            electricityAlarmMask: {ID: 2049, type: DataType.BITMAP32},
-            genFlowPressureAlarmMask: {ID: 2050, type: DataType.BITMAP16},
-            waterSpecificAlarmMask: {ID: 2051, type: DataType.BITMAP16},
-            heatCoolSpecificAlarmMASK: {ID: 2052, type: DataType.BITMAP16},
-            gasSpecificAlarmMask: {ID: 2053, type: DataType.BITMAP16},
-            extendedGenericAlarmMask: {ID: 2054, type: DataType.BITMAP48},
-            manufactureAlarmMask: {ID: 2055, type: DataType.BITMAP16},
-            billToDate: {ID: 2560, type: DataType.UINT32},
-            billToDateTimeStamp: {ID: 2561, type: DataType.UTC},
-            projectedBill: {ID: 2562, type: DataType.UINT32},
-            projectedBillTimeStamp: {ID: 2563, type: DataType.UTC},
+            currentSummDelivered: {ID: 0x0000, type: DataType.UINT48},
+            currentSummReceived: {ID: 0x0001, type: DataType.UINT48},
+            currentMaxDemandDelivered: {ID: 0x0002, type: DataType.UINT48},
+            currentMaxDemandReceived: {ID: 0x0003, type: DataType.UINT48},
+            dftSumm: {ID: 0x0004, type: DataType.UINT48},
+            dailyFreezeTime: {ID: 0x0005, type: DataType.UINT16},
+            powerFactor: {ID: 0x0006, type: DataType.INT8},
+            readingSnapshotTime: {ID: 0x0007, type: DataType.UTC},
+            currentMaxDemandDeliverdTime: {ID: 0x0008, type: DataType.UTC},
+            currentMaxDemandReceivedTime: {ID: 0x0009, type: DataType.UTC},
+            defaultUpdatePeriod: {ID: 0x000a, type: DataType.UINT8},
+            fastPollUpdatePeriod: {ID: 0x000b, type: DataType.UINT8},
+            currentBlockPeriodConsumpDelivered: {ID: 0x000c, type: DataType.UINT48},
+            dailyConsumpTarget: {ID: 0x000d, type: DataType.UINT24},
+            currentBlock: {ID: 0x000e, type: DataType.ENUM8},
+            profileIntervalPeriod: {ID: 0x000f, type: DataType.ENUM8},
+            intervalReadReportingPeriod: {ID: 0x0010, type: DataType.UINT16},
+            presetReadingTime: {ID: 0x0011, type: DataType.UINT16},
+            volumePerReport: {ID: 0x0012, type: DataType.UINT16},
+            flowRestriction: {ID: 0x0013, type: DataType.UINT8},
+            supplyStatus: {ID: 0x0014, type: DataType.ENUM8},
+            currentInEnergyCarrierSumm: {ID: 0x0015, type: DataType.UINT48},
+            currentOutEnergyCarrierSumm: {ID: 0x0016, type: DataType.UINT48},
+            inletTempreature: {ID: 0x0017, type: DataType.INT24},
+            outletTempreature: {ID: 0x0018, type: DataType.INT24},
+            controlTempreature: {ID: 0x0019, type: DataType.INT24},
+            currentInEnergyCarrierDemand: {ID: 0x001a, type: DataType.INT24},
+            currentOutEnergyCarrierDemand: {ID: 0x001b, type: DataType.INT24},
+            currentBlockPeriodConsumpReceived: {ID: 0x001d, type: DataType.UINT48},
+            currentBlockReceived: {ID: 0x001e, type: DataType.UINT48},
+            DFTSummationReceived: {ID: 0x001f, type: DataType.UINT48},
+            activeRegisterTierDelivered: {ID: 0x0020, type: DataType.ENUM8},
+            activeRegisterTierReceived: {ID: 0x0021, type: DataType.ENUM8},
+            currentTier1SummDelivered: {ID: 0x0100, type: DataType.UINT48},
+            currentTier1SummReceived: {ID: 0x0101, type: DataType.UINT48},
+            currentTier2SummDelivered: {ID: 0x0102, type: DataType.UINT48},
+            currentTier2SummReceived: {ID: 0x0103, type: DataType.UINT48},
+            currentTier3SummDelivered: {ID: 0x0104, type: DataType.UINT48},
+            currentTier3SummReceived: {ID: 0x0105, type: DataType.UINT48},
+            currentTier4SummDelivered: {ID: 0x0106, type: DataType.UINT48},
+            currentTier4SummReceived: {ID: 0x0107, type: DataType.UINT48},
+            currentTier5SummDelivered: {ID: 0x0108, type: DataType.UINT48},
+            currentTier5SummReceived: {ID: 0x0109, type: DataType.UINT48},
+            currentTier6SummDelivered: {ID: 0x010a, type: DataType.UINT48},
+            currentTier6SummReceived: {ID: 0x010b, type: DataType.UINT48},
+            currentTier7SummDelivered: {ID: 0x010c, type: DataType.UINT48},
+            currentTier7SummReceived: {ID: 0x010d, type: DataType.UINT48},
+            currentTier8SummDelivered: {ID: 0x010e, type: DataType.UINT48},
+            currentTier8SummReceived: {ID: 0x010f, type: DataType.UINT48},
+            currentTier9SummDelivered: {ID: 0x0110, type: DataType.UINT48},
+            currentTier9SummReceived: {ID: 0x0111, type: DataType.UINT48},
+            currentTier10SummDelivered: {ID: 0x0112, type: DataType.UINT48},
+            currentTier10SummReceived: {ID: 0x0113, type: DataType.UINT48},
+            currentTier11SummDelivered: {ID: 0x0114, type: DataType.UINT48},
+            currentTier11SummReceived: {ID: 0x0115, type: DataType.UINT48},
+            currentTier12SummDelivered: {ID: 0x0116, type: DataType.UINT48},
+            currentTier12SummReceived: {ID: 0x0117, type: DataType.UINT48},
+            currentTier13SummDelivered: {ID: 0x0118, type: DataType.UINT48},
+            currentTier13SummReceived: {ID: 0x0119, type: DataType.UINT48},
+            currentTier14SummDelivered: {ID: 0x011a, type: DataType.UINT48},
+            currentTier14SummReceived: {ID: 0x011b, type: DataType.UINT48},
+            currentTier15SummDelivered: {ID: 0x011c, type: DataType.UINT48},
+            currentTier15SummReceived: {ID: 0x011d, type: DataType.UINT48},
+            status: {ID: 0x0200, type: DataType.BITMAP8},
+            remainingBattLife: {ID: 0x0201, type: DataType.UINT8},
+            hoursInOperation: {ID: 0x0202, type: DataType.UINT24},
+            hoursInFault: {ID: 0x0203, type: DataType.UINT24},
+            extendedStatus: {ID: 0x0204, type: DataType.BITMAP64},
+            unitOfMeasure: {ID: 0x0300, type: DataType.ENUM8},
+            multiplier: {ID: 0x0301, type: DataType.UINT24},
+            divisor: {ID: 0x0302, type: DataType.UINT24},
+            summaFormatting: {ID: 0x0303, type: DataType.BITMAP8},
+            demandFormatting: {ID: 0x0304, type: DataType.BITMAP8},
+            historicalConsumpFormatting: {ID: 0x0305, type: DataType.BITMAP8},
+            meteringDeviceType: {ID: 0x0306, type: DataType.BITMAP8},
+            siteId: {ID: 0x0307, type: DataType.OCTET_STR},
+            meterSerialNumber: {ID: 0x0308, type: DataType.OCTET_STR},
+            energyCarrierUnitOfMeas: {ID: 0x0309, type: DataType.ENUM8},
+            energyCarrierSummFormatting: {ID: 0x030a, type: DataType.BITMAP8},
+            energyCarrierDemandFormatting: {ID: 0x030b, type: DataType.BITMAP8},
+            temperatureUnitOfMeas: {ID: 0x030c, type: DataType.ENUM8},
+            temperatureFormatting: {ID: 0x030d, type: DataType.BITMAP8},
+            moduleSerialNumber: {ID: 0x030e, type: DataType.OCTET_STR},
+            operatingTariffLevel: {ID: 0x030f, type: DataType.OCTET_STR},
+            instantaneousDemand: {ID: 0x0400, type: DataType.INT24},
+            currentdayConsumpDelivered: {ID: 0x0401, type: DataType.UINT24},
+            currentdayConsumpReceived: {ID: 0x0402, type: DataType.UINT24},
+            previousdayConsumpDelivered: {ID: 0x0403, type: DataType.UINT24},
+            previousdayConsumpReceived: {ID: 0x0404, type: DataType.UINT24},
+            curPartProfileIntStartTimeDelivered: {ID: 0x0405, type: DataType.UTC},
+            curPartProfileIntStartTimeReceived: {ID: 0x0406, type: DataType.UTC},
+            curPartProfileIntValueDelivered: {ID: 0x0407, type: DataType.UINT24},
+            curPartProfileIntValueReceived: {ID: 0x0408, type: DataType.UINT24},
+            currentDayMaxPressure: {ID: 0x0409, type: DataType.UINT48},
+            currentDayMinPressure: {ID: 0x040a, type: DataType.UINT48},
+            previousDayMaxPressure: {ID: 0x040b, type: DataType.UINT48},
+            previousDayMinPressure: {ID: 0x040c, type: DataType.UINT48},
+            currentDayMaxDemand: {ID: 0x040d, type: DataType.INT24},
+            previousDayMaxDemand: {ID: 0x040e, type: DataType.INT24},
+            currentMonthMaxDemand: {ID: 0x040f, type: DataType.INT24},
+            currentYearMaxDemand: {ID: 0x0410, type: DataType.INT24},
+            currentdayMaxEnergyCarrDemand: {ID: 0x0411, type: DataType.INT24},
+            previousdayMaxEnergyCarrDemand: {ID: 0x0412, type: DataType.INT24},
+            curMonthMaxEnergyCarrDemand: {ID: 0x0413, type: DataType.INT24},
+            curMonthMinEnergyCarrDemand: {ID: 0x0414, type: DataType.INT24},
+            curYearMaxEnergyCarrDemand: {ID: 0x0415, type: DataType.INT24},
+            curYearMinEnergyCarrDemand: {ID: 0x0416, type: DataType.INT24},
+            maxNumberOfPeriodsDelivered: {ID: 0x0500, type: DataType.UINT8},
+            currentDemandDelivered: {ID: 0x0600, type: DataType.UINT24},
+            demandLimit: {ID: 0x0601, type: DataType.UINT24},
+            demandIntegrationPeriod: {ID: 0x0602, type: DataType.UINT8},
+            numberOfDemandSubintervals: {ID: 0x0603, type: DataType.UINT8},
+            demandLimitArmDuration: {ID: 0x0604, type: DataType.UINT16},
+            genericAlarmMask: {ID: 0x0800, type: DataType.BITMAP16},
+            electricityAlarmMask: {ID: 0x0801, type: DataType.BITMAP32},
+            genFlowPressureAlarmMask: {ID: 0x0802, type: DataType.BITMAP16},
+            waterSpecificAlarmMask: {ID: 0x0803, type: DataType.BITMAP16},
+            heatCoolSpecificAlarmMASK: {ID: 0x0804, type: DataType.BITMAP16},
+            gasSpecificAlarmMask: {ID: 0x0805, type: DataType.BITMAP16},
+            extendedGenericAlarmMask: {ID: 0x0806, type: DataType.BITMAP48},
+            manufactureAlarmMask: {ID: 0x0807, type: DataType.BITMAP16},
+            billToDate: {ID: 0x0a00, type: DataType.UINT32},
+            billToDateTimeStamp: {ID: 0x0a01, type: DataType.UTC},
+            projectedBill: {ID: 0x0a02, type: DataType.UINT32},
+            projectedBillTimeStamp: {ID: 0x0a03, type: DataType.UTC},
             develcoPulseConfiguration: {ID: 0x0300, type: DataType.UINT16, manufacturerCode: ManufacturerCode.DEVELCO},
             develcoCurrentSummation: {ID: 0x0301, type: DataType.UINT48, manufacturerCode: ManufacturerCode.DEVELCO},
             develcoInterfaceMode: {ID: 0x0302, type: DataType.ENUM16, manufacturerCode: ManufacturerCode.DEVELCO},
@@ -4054,68 +3703,23 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             schneiderEnergyCountersReportingPeriod: {ID: 0x4600, type: DataType.UINT16, manufacturerCode: ManufacturerCode.SCHNEIDER_ELECTRIC},
         },
         commands: {
-            getProfile: {
-                ID: 0,
-                parameters: [],
-            },
-            reqMirror: {
-                ID: 1,
-                parameters: [],
-            },
-            mirrorRem: {
-                ID: 2,
-                parameters: [],
-            },
-            reqFastPollMode: {
-                ID: 3,
-                parameters: [],
-            },
-            getSnapshot: {
-                ID: 4,
-                parameters: [],
-            },
-            takeSnapshot: {
-                ID: 5,
-                parameters: [],
-            },
-            mirrorReportAttrRsp: {
-                ID: 6,
-                parameters: [],
-            },
-            owonGetHistoryRecord: {
-                ID: 0x20,
-                parameters: [],
-            },
-            owonStopSendingHistoricalRecord: {
-                ID: 0x21,
-                parameters: [],
-            },
+            getProfile: {ID: 0x00, parameters: []},
+            reqMirror: {ID: 0x01, parameters: []},
+            mirrorRem: {ID: 0x02, parameters: []},
+            reqFastPollMode: {ID: 0x03, parameters: []},
+            getSnapshot: {ID: 0x04, parameters: []},
+            takeSnapshot: {ID: 0x05, parameters: []},
+            mirrorReportAttrRsp: {ID: 0x06, parameters: []},
+            owonGetHistoryRecord: {ID: 0x20, parameters: []},
+            owonStopSendingHistoricalRecord: {ID: 0x21, parameters: []},
         },
         commandsResponse: {
-            getProfileRsp: {
-                ID: 0,
-                parameters: [],
-            },
-            reqMirrorRsp: {
-                ID: 1,
-                parameters: [],
-            },
-            mirrorRemRsp: {
-                ID: 2,
-                parameters: [],
-            },
-            reqFastPollModeRsp: {
-                ID: 3,
-                parameters: [],
-            },
-            getSnapshotRsp: {
-                ID: 4,
-                parameters: [],
-            },
-            owonGetHistoryRecordRsp: {
-                ID: 0x20,
-                parameters: [],
-            },
+            getProfileRsp: {ID: 0x00, parameters: []},
+            reqMirrorRsp: {ID: 0x01, parameters: []},
+            mirrorRemRsp: {ID: 0x02, parameters: []},
+            reqFastPollModeRsp: {ID: 0x03, parameters: []},
+            getSnapshotRsp: {ID: 0x04, parameters: []},
+            owonGetHistoryRecordRsp: {ID: 0x20, parameters: []},
         },
     },
     tunneling: {
@@ -4123,7 +3727,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         attributes: {},
         commands: {
             requestTunnel: {
-                ID: 0,
+                ID: 0x00,
                 response: 0,
                 parameters: [
                     {name: "protocolId", type: DataType.ENUM8},
@@ -4132,19 +3736,16 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                     {name: "mtuSize", type: DataType.UINT16},
                 ],
             },
-            closeTunnel: {
-                ID: 1,
-                parameters: [{name: "tunnelId", type: DataType.UINT16}],
-            },
+            closeTunnel: {ID: 0x01, parameters: [{name: "tunnelId", type: DataType.UINT16}]},
             transferData: {
-                ID: 2,
+                ID: 0x02,
                 parameters: [
                     {name: "tunnelId", type: DataType.UINT16},
                     {name: "data", type: BuffaloZclDataType.BUFFER},
                 ],
             },
             transferDataError: {
-                ID: 3,
+                ID: 0x03,
                 parameters: [
                     {name: "tunnelId", type: DataType.UINT16},
                     {name: "status", type: DataType.UINT8},
@@ -4153,7 +3754,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         },
         commandsResponse: {
             requestTunnelResp: {
-                ID: 0,
+                ID: 0x00,
                 parameters: [
                     {name: "tunnelId", type: DataType.UINT16},
                     {name: "tunnelStatus", type: DataType.UINT8},
@@ -4161,14 +3762,14 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 ],
             },
             transferDataResp: {
-                ID: 1,
+                ID: 0x01,
                 parameters: [
                     {name: "tunnelId", type: DataType.UINT16},
                     {name: "data", type: BuffaloZclDataType.BUFFER},
                 ],
             },
             transferDataErrorResp: {
-                ID: 2,
+                ID: 0x02,
                 parameters: [
                     {name: "tunnelId", type: DataType.UINT16},
                     {name: "status", type: DataType.UINT8},
@@ -4177,112 +3778,109 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         },
     },
     telecommunicationsInformation: {
-        ID: 2304,
+        ID: 0x0900,
         attributes: {
-            nodeDescription: {ID: 0, type: DataType.CHAR_STR},
-            deliveryEnable: {ID: 1, type: DataType.BOOLEAN},
-            pushInformationTimer: {ID: 2, type: DataType.UINT32},
-            enableSecureConfiguration: {ID: 3, type: DataType.BOOLEAN},
-            numberOfContents: {ID: 16, type: DataType.UINT16},
-            contentRootID: {ID: 17, type: DataType.UINT16},
+            nodeDescription: {ID: 0x0000, type: DataType.CHAR_STR},
+            deliveryEnable: {ID: 0x0001, type: DataType.BOOLEAN},
+            pushInformationTimer: {ID: 0x0002, type: DataType.UINT32},
+            enableSecureConfiguration: {ID: 0x0003, type: DataType.BOOLEAN},
+            numberOfContents: {ID: 0x0010, type: DataType.UINT16},
+            contentRootID: {ID: 0x0011, type: DataType.UINT16},
         },
         commands: {},
         commandsResponse: {},
     },
     telecommunicationsVoiceOverZigbee: {
-        ID: 2308,
+        ID: 0x0904,
         attributes: {
-            codecType: {ID: 0, type: DataType.ENUM8},
-            samplingFrequency: {ID: 1, type: DataType.ENUM8},
-            codecrate: {ID: 2, type: DataType.ENUM8},
-            establishmentTimeout: {ID: 3, type: DataType.UINT8},
-            codecTypeSub1: {ID: 4, type: DataType.ENUM8},
-            codecTypeSub2: {ID: 5, type: DataType.ENUM8},
-            codecTypeSub3: {ID: 6, type: DataType.ENUM8},
-            compressionType: {ID: 7, type: DataType.ENUM8},
-            compressionRate: {ID: 8, type: DataType.ENUM8},
-            optionFlags: {ID: 9, type: DataType.BITMAP8},
-            threshold: {ID: 10, type: DataType.UINT8},
+            codecType: {ID: 0x0000, type: DataType.ENUM8},
+            samplingFrequency: {ID: 0x0001, type: DataType.ENUM8},
+            codecrate: {ID: 0x0002, type: DataType.ENUM8},
+            establishmentTimeout: {ID: 0x0003, type: DataType.UINT8},
+            codecTypeSub1: {ID: 0x0004, type: DataType.ENUM8},
+            codecTypeSub2: {ID: 0x0005, type: DataType.ENUM8},
+            codecTypeSub3: {ID: 0x0006, type: DataType.ENUM8},
+            compressionType: {ID: 0x0007, type: DataType.ENUM8},
+            compressionRate: {ID: 0x0008, type: DataType.ENUM8},
+            optionFlags: {ID: 0x0009, type: DataType.BITMAP8},
+            threshold: {ID: 0x000a, type: DataType.UINT8},
         },
         commands: {},
         commandsResponse: {},
     },
     telecommunicationsChatting: {
-        ID: 2309,
+        ID: 0x0905,
         attributes: {
-            uID: {ID: 0, type: DataType.UINT16},
-            nickname: {ID: 1, type: DataType.CHAR_STR},
-            cID: {ID: 16, type: DataType.UINT16},
-            name: {ID: 17, type: DataType.CHAR_STR},
-            enableAddChat: {ID: 18, type: DataType.BOOLEAN},
+            uID: {ID: 0x0000, type: DataType.UINT16},
+            nickname: {ID: 0x0001, type: DataType.CHAR_STR},
+            cID: {ID: 0x0010, type: DataType.UINT16},
+            name: {ID: 0x0011, type: DataType.CHAR_STR},
+            enableAddChat: {ID: 0x0012, type: DataType.BOOLEAN},
         },
         commands: {},
         commandsResponse: {},
     },
     haApplianceIdentification: {
-        ID: 2816,
+        ID: 0x0b00,
         attributes: {
-            basicIdentification: {ID: 0, type: DataType.UINT56},
-            companyName: {ID: 16, type: DataType.CHAR_STR},
-            companyId: {ID: 17, type: DataType.UINT16},
-            brandName: {ID: 18, type: DataType.CHAR_STR},
-            brandId: {ID: 19, type: DataType.UINT16},
-            model: {ID: 20, type: DataType.OCTET_STR},
-            partNumber: {ID: 21, type: DataType.OCTET_STR},
-            productRevision: {ID: 22, type: DataType.OCTET_STR},
-            softwareRevision: {ID: 23, type: DataType.OCTET_STR},
-            productTypeName: {ID: 24, type: DataType.OCTET_STR},
-            productTypeId: {ID: 25, type: DataType.UINT16},
-            cecedSpecificationVersion: {ID: 26, type: DataType.UINT8},
+            basicIdentification: {ID: 0x0000, type: DataType.UINT56},
+            companyName: {ID: 0x0010, type: DataType.CHAR_STR},
+            companyId: {ID: 0x0011, type: DataType.UINT16},
+            brandName: {ID: 0x0012, type: DataType.CHAR_STR},
+            brandId: {ID: 0x0013, type: DataType.UINT16},
+            model: {ID: 0x0014, type: DataType.OCTET_STR},
+            partNumber: {ID: 0x0015, type: DataType.OCTET_STR},
+            productRevision: {ID: 0x0016, type: DataType.OCTET_STR},
+            softwareRevision: {ID: 0x0017, type: DataType.OCTET_STR},
+            productTypeName: {ID: 0x0018, type: DataType.OCTET_STR},
+            productTypeId: {ID: 0x0019, type: DataType.UINT16},
+            cecedSpecificationVersion: {ID: 0x001a, type: DataType.UINT8},
         },
         commands: {},
         commandsResponse: {},
     },
     haMeterIdentification: {
-        ID: 2817,
+        ID: 0x0b01,
         attributes: {
-            companyName: {ID: 0, type: DataType.CHAR_STR},
-            meterTypeId: {ID: 1, type: DataType.UINT16},
-            dataQualityId: {ID: 4, type: DataType.UINT16},
-            customerName: {ID: 5, type: DataType.CHAR_STR},
-            model: {ID: 6, type: DataType.CHAR_STR},
-            partNumber: {ID: 7, type: DataType.CHAR_STR},
-            productRevision: {ID: 8, type: DataType.CHAR_STR},
-            softwareRevision: {ID: 10, type: DataType.CHAR_STR},
-            utilityName: {ID: 11, type: DataType.CHAR_STR},
-            pod: {ID: 12, type: DataType.CHAR_STR},
-            availablePower: {ID: 13, type: DataType.INT24},
-            powerThreshold: {ID: 14, type: DataType.INT24},
+            companyName: {ID: 0x0000, type: DataType.CHAR_STR},
+            meterTypeId: {ID: 0x0001, type: DataType.UINT16},
+            dataQualityId: {ID: 0x0004, type: DataType.UINT16},
+            customerName: {ID: 0x0005, type: DataType.CHAR_STR},
+            model: {ID: 0x0006, type: DataType.CHAR_STR},
+            partNumber: {ID: 0x0007, type: DataType.CHAR_STR},
+            productRevision: {ID: 0x0008, type: DataType.CHAR_STR},
+            softwareRevision: {ID: 0x000a, type: DataType.CHAR_STR},
+            utilityName: {ID: 0x000b, type: DataType.CHAR_STR},
+            pod: {ID: 0x000c, type: DataType.CHAR_STR},
+            availablePower: {ID: 0x000d, type: DataType.INT24},
+            powerThreshold: {ID: 0x000e, type: DataType.INT24},
         },
         commands: {},
         commandsResponse: {},
     },
     haApplianceEventsAlerts: {
-        ID: 2818,
+        ID: 0x0b02,
         attributes: {},
         commands: {
-            getAlerts: {
-                ID: 0,
-                parameters: [],
-            },
+            getAlerts: {ID: 0x00, parameters: []},
         },
         commandsResponse: {
             getAlertsRsp: {
-                ID: 0,
+                ID: 0x00,
                 parameters: [
                     {name: "alertscount", type: DataType.UINT8},
                     {name: "aalert", type: BuffaloZclDataType.LIST_UINT24},
                 ],
             },
             alertsNotification: {
-                ID: 1,
+                ID: 0x01,
                 parameters: [
                     {name: "alertscount", type: DataType.UINT8},
                     {name: "aalert", type: BuffaloZclDataType.LIST_UINT24},
                 ],
             },
             eventNotification: {
-                ID: 2,
+                ID: 0x02,
                 parameters: [
                     {name: "eventheader", type: DataType.UINT8},
                     {name: "eventid", type: DataType.UINT8},
@@ -4291,24 +3889,18 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         },
     },
     haApplianceStatistics: {
-        ID: 2819,
+        ID: 0x0b03,
         attributes: {
-            logMaxSize: {ID: 0, type: DataType.UINT32},
-            logQueueMaxSize: {ID: 1, type: DataType.UINT8},
+            logMaxSize: {ID: 0x0000, type: DataType.UINT32},
+            logQueueMaxSize: {ID: 0x0001, type: DataType.UINT8},
         },
         commands: {
-            log: {
-                ID: 0,
-                parameters: [{name: "logid", type: DataType.UINT32}],
-            },
-            logQueue: {
-                ID: 1,
-                parameters: [],
-            },
+            log: {ID: 0x00, parameters: [{name: "logid", type: DataType.UINT32}]},
+            logQueue: {ID: 0x01, parameters: []},
         },
         commandsResponse: {
             logNotification: {
-                ID: 0,
+                ID: 0x00,
                 parameters: [
                     {name: "timestamp", type: DataType.UINT32},
                     {name: "logid", type: DataType.UINT32},
@@ -4317,7 +3909,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 ],
             },
             logRsp: {
-                ID: 1,
+                ID: 0x01,
                 parameters: [
                     {name: "timestamp", type: DataType.UINT32},
                     {name: "logid", type: DataType.UINT32},
@@ -4326,14 +3918,14 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 ],
             },
             logQueueRsp: {
-                ID: 2,
+                ID: 0x02,
                 parameters: [
                     {name: "logqueuesize", type: DataType.UINT8},
                     {name: "logid", type: BuffaloZclDataType.LIST_UINT32},
                 ],
             },
             statisticsAvailable: {
-                ID: 3,
+                ID: 0x03,
                 parameters: [
                     {name: "logqueuesize", type: DataType.UINT8},
                     {name: "logid", type: BuffaloZclDataType.LIST_UINT32},
@@ -4342,137 +3934,137 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         },
     },
     haElectricalMeasurement: {
-        ID: 2820,
+        ID: 0x0b04,
         attributes: {
-            measurementType: {ID: 0, type: DataType.BITMAP32},
-            dcVoltage: {ID: 256, type: DataType.INT16},
-            dcVoltageMin: {ID: 257, type: DataType.INT16},
-            dcvoltagemax: {ID: 258, type: DataType.INT16},
-            dcCurrent: {ID: 259, type: DataType.INT16},
-            dcCurrentMin: {ID: 260, type: DataType.INT16},
-            dcCurrentMax: {ID: 261, type: DataType.INT16},
-            dcPower: {ID: 262, type: DataType.INT16},
-            dcPowerMin: {ID: 263, type: DataType.INT16},
-            dcPowerMax: {ID: 264, type: DataType.INT16},
-            dcVoltageMultiplier: {ID: 512, type: DataType.UINT16},
-            dcVoltageDivisor: {ID: 513, type: DataType.UINT16},
-            dcCurrentMultiplier: {ID: 514, type: DataType.UINT16},
-            dcCurrentDivisor: {ID: 515, type: DataType.UINT16},
-            dcPowerMultiplier: {ID: 516, type: DataType.UINT16},
-            dcPowerDivisor: {ID: 517, type: DataType.UINT16},
-            acFrequency: {ID: 768, type: DataType.UINT16},
-            acFrequencyMin: {ID: 769, type: DataType.UINT16},
-            acFrequencyMax: {ID: 770, type: DataType.UINT16},
-            neutralCurrent: {ID: 771, type: DataType.UINT16},
-            totalActivePower: {ID: 772, type: DataType.INT32},
-            totalReactivePower: {ID: 773, type: DataType.INT32},
-            totalApparentPower: {ID: 774, type: DataType.UINT32},
-            meas1stHarmonicCurrent: {ID: 775, type: DataType.INT16},
-            meas3rdHarmonicCurrent: {ID: 776, type: DataType.INT16},
-            meas5thHarmonicCurrent: {ID: 777, type: DataType.INT16},
-            meas7thHarmonicCurrent: {ID: 778, type: DataType.INT16},
-            meas9thHarmonicCurrent: {ID: 779, type: DataType.INT16},
-            meas11thHarmonicCurrent: {ID: 780, type: DataType.INT16},
-            measPhase1stHarmonicCurrent: {ID: 781, type: DataType.INT16},
-            measPhase3rdHarmonicCurrent: {ID: 782, type: DataType.INT16},
-            measPhase5thHarmonicCurrent: {ID: 783, type: DataType.INT16},
-            measPhase7thHarmonicCurrent: {ID: 784, type: DataType.INT16},
-            measPhase9thHarmonicCurrent: {ID: 785, type: DataType.INT16},
-            measPhase11thHarmonicCurrent: {ID: 786, type: DataType.INT16},
-            acFrequencyMultiplier: {ID: 1024, type: DataType.UINT16},
-            acFrequencyDivisor: {ID: 1025, type: DataType.UINT16},
-            powerMultiplier: {ID: 1026, type: DataType.UINT32},
-            powerDivisor: {ID: 1027, type: DataType.UINT32},
-            harmonicCurrentMultiplier: {ID: 1028, type: DataType.INT8},
-            phaseHarmonicCurrentMultiplier: {ID: 1029, type: DataType.INT8},
-            instantaneousVoltage: {ID: 1280, type: DataType.INT16},
-            instantaneousLineCurrent: {ID: 1281, type: DataType.UINT16},
-            instantaneousActiveCurrent: {ID: 1282, type: DataType.INT16},
-            instantaneousReactiveCurrent: {ID: 1283, type: DataType.INT16},
-            instantaneousPower: {ID: 1284, type: DataType.INT16},
-            rmsVoltage: {ID: 1285, type: DataType.UINT16},
-            rmsVoltageMin: {ID: 1286, type: DataType.UINT16},
-            rmsVoltageMax: {ID: 1287, type: DataType.UINT16},
-            rmsCurrent: {ID: 1288, type: DataType.UINT16},
-            rmsCurrentMin: {ID: 1289, type: DataType.UINT16},
-            rmsCurrentMax: {ID: 1290, type: DataType.UINT16},
-            activePower: {ID: 1291, type: DataType.INT16},
-            activePowerMin: {ID: 1292, type: DataType.INT16},
-            activePowerMax: {ID: 1293, type: DataType.INT16},
-            reactivePower: {ID: 1294, type: DataType.INT16},
-            apparentPower: {ID: 1295, type: DataType.UINT16},
-            powerFactor: {ID: 1296, type: DataType.INT8},
-            averageRmsVoltageMeasPeriod: {ID: 1297, type: DataType.UINT16},
-            averageRmsOverVoltageCounter: {ID: 1298, type: DataType.UINT16},
-            averageRmsUnderVoltageCounter: {ID: 1299, type: DataType.UINT16},
-            rmsExtremeOverVoltagePeriod: {ID: 1300, type: DataType.UINT16},
-            rmsExtremeUnderVoltagePeriod: {ID: 1301, type: DataType.UINT16},
-            rmsVoltageSagPeriod: {ID: 1302, type: DataType.UINT16},
-            rmsVoltageSwellPeriod: {ID: 1303, type: DataType.UINT16},
-            acVoltageMultiplier: {ID: 1536, type: DataType.UINT16},
-            acVoltageDivisor: {ID: 1537, type: DataType.UINT16},
-            acCurrentMultiplier: {ID: 1538, type: DataType.UINT16},
-            acCurrentDivisor: {ID: 1539, type: DataType.UINT16},
-            acPowerMultiplier: {ID: 1540, type: DataType.UINT16},
-            acPowerDivisor: {ID: 1541, type: DataType.UINT16},
-            dcOverloadAlarmsMask: {ID: 1792, type: DataType.BITMAP8},
-            dcVoltageOverload: {ID: 1793, type: DataType.INT16},
-            dcCurrentOverload: {ID: 1794, type: DataType.INT16},
-            acAlarmsMask: {ID: 2048, type: DataType.BITMAP16},
-            acVoltageOverload: {ID: 2049, type: DataType.INT16},
-            acCurrentOverload: {ID: 2050, type: DataType.INT16},
-            acActivePowerOverload: {ID: 2051, type: DataType.INT16},
-            acReactivePowerOverload: {ID: 2052, type: DataType.INT16},
-            averageRmsOverVoltage: {ID: 2053, type: DataType.INT16},
-            averageRmsUnderVoltage: {ID: 2054, type: DataType.INT16},
-            rmsExtremeOverVoltage: {ID: 2055, type: DataType.INT16},
-            rmsExtremeUnderVoltage: {ID: 2056, type: DataType.INT16},
-            rmsVoltageSag: {ID: 2057, type: DataType.INT16},
-            rmsVoltageSwell: {ID: 2058, type: DataType.INT16},
-            lineCurrentPhB: {ID: 2305, type: DataType.UINT16},
-            activeCurrentPhB: {ID: 2306, type: DataType.INT16},
-            reactiveCurrentPhB: {ID: 2307, type: DataType.INT16},
-            rmsVoltagePhB: {ID: 2309, type: DataType.UINT16},
-            rmsVoltageMinPhB: {ID: 2310, type: DataType.UINT16},
-            rmsVoltageMaxPhB: {ID: 2311, type: DataType.UINT16},
-            rmsCurrentPhB: {ID: 2312, type: DataType.UINT16},
-            rmsCurrentMinPhB: {ID: 2313, type: DataType.UINT16},
-            rmsCurrentMaxPhB: {ID: 2314, type: DataType.UINT16},
-            activePowerPhB: {ID: 2315, type: DataType.INT16},
-            activePowerMinPhB: {ID: 2316, type: DataType.INT16},
-            activePowerMaxPhB: {ID: 2317, type: DataType.INT16},
-            reactivePowerPhB: {ID: 2318, type: DataType.INT16},
-            apparentPowerPhB: {ID: 2319, type: DataType.UINT16},
-            powerFactorPhB: {ID: 2320, type: DataType.INT8},
-            averageRmsVoltageMeasurePeriodPhB: {ID: 2321, type: DataType.UINT16},
-            averageRmsOverVoltageCounterPhB: {ID: 2322, type: DataType.UINT16},
-            averageUnderVoltageCounterPhB: {ID: 2323, type: DataType.UINT16},
-            rmsExtremeOverVoltagePeriodPhB: {ID: 2324, type: DataType.UINT16},
-            rmsExtremeUnderVoltagePeriodPhB: {ID: 2325, type: DataType.UINT16},
-            rmsVoltageSagPeriodPhB: {ID: 2326, type: DataType.UINT16},
-            rmsVoltageSwellPeriodPhB: {ID: 2327, type: DataType.UINT16},
-            lineCurrentPhC: {ID: 2561, type: DataType.UINT16},
-            activeCurrentPhC: {ID: 2562, type: DataType.INT16},
-            reactiveCurrentPhC: {ID: 2563, type: DataType.INT16},
-            rmsVoltagePhC: {ID: 2565, type: DataType.UINT16},
-            rmsVoltageMinPhC: {ID: 2566, type: DataType.UINT16},
-            rmsVoltageMaxPhC: {ID: 2567, type: DataType.UINT16},
-            rmsCurrentPhC: {ID: 2568, type: DataType.UINT16},
-            rmsCurrentMinPhC: {ID: 2569, type: DataType.UINT16},
-            rmsCurrentMaxPhC: {ID: 2570, type: DataType.UINT16},
-            activePowerPhC: {ID: 2571, type: DataType.INT16},
-            activePowerMinPhC: {ID: 2572, type: DataType.INT16},
-            activePowerMaxPhC: {ID: 2573, type: DataType.INT16},
-            reactivePowerPhC: {ID: 2574, type: DataType.INT16},
-            apparentPowerPhC: {ID: 2575, type: DataType.UINT16},
-            powerFactorPhC: {ID: 2576, type: DataType.INT8},
-            averageRmsVoltageMeasPeriodPhC: {ID: 2577, type: DataType.UINT16},
-            averageRmsOverVoltageCounterPhC: {ID: 2578, type: DataType.UINT16},
-            averageUnderVoltageCounterPhC: {ID: 2579, type: DataType.UINT16},
-            rmsExtremeOverVoltagePeriodPhC: {ID: 2580, type: DataType.UINT16},
-            rmsExtremeUnderVoltagePeriodPhC: {ID: 2581, type: DataType.UINT16},
-            rmsVoltageSagPeriodPhC: {ID: 2582, type: DataType.UINT16},
-            rmsVoltageSwellPeriodPhC: {ID: 2583, type: DataType.UINT16},
+            measurementType: {ID: 0x0000, type: DataType.BITMAP32},
+            dcVoltage: {ID: 0x0100, type: DataType.INT16},
+            dcVoltageMin: {ID: 0x0101, type: DataType.INT16},
+            dcvoltagemax: {ID: 0x0102, type: DataType.INT16},
+            dcCurrent: {ID: 0x0103, type: DataType.INT16},
+            dcCurrentMin: {ID: 0x0104, type: DataType.INT16},
+            dcCurrentMax: {ID: 0x0105, type: DataType.INT16},
+            dcPower: {ID: 0x0106, type: DataType.INT16},
+            dcPowerMin: {ID: 0x0107, type: DataType.INT16},
+            dcPowerMax: {ID: 0x0108, type: DataType.INT16},
+            dcVoltageMultiplier: {ID: 0x0200, type: DataType.UINT16},
+            dcVoltageDivisor: {ID: 0x0201, type: DataType.UINT16},
+            dcCurrentMultiplier: {ID: 0x0202, type: DataType.UINT16},
+            dcCurrentDivisor: {ID: 0x0203, type: DataType.UINT16},
+            dcPowerMultiplier: {ID: 0x0204, type: DataType.UINT16},
+            dcPowerDivisor: {ID: 0x0205, type: DataType.UINT16},
+            acFrequency: {ID: 0x0300, type: DataType.UINT16},
+            acFrequencyMin: {ID: 0x0301, type: DataType.UINT16},
+            acFrequencyMax: {ID: 0x0302, type: DataType.UINT16},
+            neutralCurrent: {ID: 0x0303, type: DataType.UINT16},
+            totalActivePower: {ID: 0x0304, type: DataType.INT32},
+            totalReactivePower: {ID: 0x0305, type: DataType.INT32},
+            totalApparentPower: {ID: 0x0306, type: DataType.UINT32},
+            meas1stHarmonicCurrent: {ID: 0x0307, type: DataType.INT16},
+            meas3rdHarmonicCurrent: {ID: 0x0308, type: DataType.INT16},
+            meas5thHarmonicCurrent: {ID: 0x0309, type: DataType.INT16},
+            meas7thHarmonicCurrent: {ID: 0x030a, type: DataType.INT16},
+            meas9thHarmonicCurrent: {ID: 0x030b, type: DataType.INT16},
+            meas11thHarmonicCurrent: {ID: 0x030c, type: DataType.INT16},
+            measPhase1stHarmonicCurrent: {ID: 0x030d, type: DataType.INT16},
+            measPhase3rdHarmonicCurrent: {ID: 0x030e, type: DataType.INT16},
+            measPhase5thHarmonicCurrent: {ID: 0x030f, type: DataType.INT16},
+            measPhase7thHarmonicCurrent: {ID: 0x0310, type: DataType.INT16},
+            measPhase9thHarmonicCurrent: {ID: 0x0311, type: DataType.INT16},
+            measPhase11thHarmonicCurrent: {ID: 0x0312, type: DataType.INT16},
+            acFrequencyMultiplier: {ID: 0x0400, type: DataType.UINT16},
+            acFrequencyDivisor: {ID: 0x0401, type: DataType.UINT16},
+            powerMultiplier: {ID: 0x0402, type: DataType.UINT32},
+            powerDivisor: {ID: 0x0403, type: DataType.UINT32},
+            harmonicCurrentMultiplier: {ID: 0x0404, type: DataType.INT8},
+            phaseHarmonicCurrentMultiplier: {ID: 0x0405, type: DataType.INT8},
+            instantaneousVoltage: {ID: 0x0500, type: DataType.INT16},
+            instantaneousLineCurrent: {ID: 0x0501, type: DataType.UINT16},
+            instantaneousActiveCurrent: {ID: 0x0502, type: DataType.INT16},
+            instantaneousReactiveCurrent: {ID: 0x0503, type: DataType.INT16},
+            instantaneousPower: {ID: 0x0504, type: DataType.INT16},
+            rmsVoltage: {ID: 0x0505, type: DataType.UINT16},
+            rmsVoltageMin: {ID: 0x0506, type: DataType.UINT16},
+            rmsVoltageMax: {ID: 0x0507, type: DataType.UINT16},
+            rmsCurrent: {ID: 0x0508, type: DataType.UINT16},
+            rmsCurrentMin: {ID: 0x0509, type: DataType.UINT16},
+            rmsCurrentMax: {ID: 0x050a, type: DataType.UINT16},
+            activePower: {ID: 0x050b, type: DataType.INT16},
+            activePowerMin: {ID: 0x050c, type: DataType.INT16},
+            activePowerMax: {ID: 0x050d, type: DataType.INT16},
+            reactivePower: {ID: 0x050e, type: DataType.INT16},
+            apparentPower: {ID: 0x050f, type: DataType.UINT16},
+            powerFactor: {ID: 0x0510, type: DataType.INT8},
+            averageRmsVoltageMeasPeriod: {ID: 0x0511, type: DataType.UINT16},
+            averageRmsOverVoltageCounter: {ID: 0x0512, type: DataType.UINT16},
+            averageRmsUnderVoltageCounter: {ID: 0x0513, type: DataType.UINT16},
+            rmsExtremeOverVoltagePeriod: {ID: 0x0514, type: DataType.UINT16},
+            rmsExtremeUnderVoltagePeriod: {ID: 0x0515, type: DataType.UINT16},
+            rmsVoltageSagPeriod: {ID: 0x0516, type: DataType.UINT16},
+            rmsVoltageSwellPeriod: {ID: 0x0517, type: DataType.UINT16},
+            acVoltageMultiplier: {ID: 0x0600, type: DataType.UINT16},
+            acVoltageDivisor: {ID: 0x0601, type: DataType.UINT16},
+            acCurrentMultiplier: {ID: 0x0602, type: DataType.UINT16},
+            acCurrentDivisor: {ID: 0x0603, type: DataType.UINT16},
+            acPowerMultiplier: {ID: 0x0604, type: DataType.UINT16},
+            acPowerDivisor: {ID: 0x0605, type: DataType.UINT16},
+            dcOverloadAlarmsMask: {ID: 0x0700, type: DataType.BITMAP8},
+            dcVoltageOverload: {ID: 0x0701, type: DataType.INT16},
+            dcCurrentOverload: {ID: 0x0702, type: DataType.INT16},
+            acAlarmsMask: {ID: 0x0800, type: DataType.BITMAP16},
+            acVoltageOverload: {ID: 0x0801, type: DataType.INT16},
+            acCurrentOverload: {ID: 0x0802, type: DataType.INT16},
+            acActivePowerOverload: {ID: 0x0803, type: DataType.INT16},
+            acReactivePowerOverload: {ID: 0x0804, type: DataType.INT16},
+            averageRmsOverVoltage: {ID: 0x0805, type: DataType.INT16},
+            averageRmsUnderVoltage: {ID: 0x0806, type: DataType.INT16},
+            rmsExtremeOverVoltage: {ID: 0x0807, type: DataType.INT16},
+            rmsExtremeUnderVoltage: {ID: 0x0808, type: DataType.INT16},
+            rmsVoltageSag: {ID: 0x0809, type: DataType.INT16},
+            rmsVoltageSwell: {ID: 0x080a, type: DataType.INT16},
+            lineCurrentPhB: {ID: 0x0901, type: DataType.UINT16},
+            activeCurrentPhB: {ID: 0x0902, type: DataType.INT16},
+            reactiveCurrentPhB: {ID: 0x0903, type: DataType.INT16},
+            rmsVoltagePhB: {ID: 0x0905, type: DataType.UINT16},
+            rmsVoltageMinPhB: {ID: 0x0906, type: DataType.UINT16},
+            rmsVoltageMaxPhB: {ID: 0x0907, type: DataType.UINT16},
+            rmsCurrentPhB: {ID: 0x0908, type: DataType.UINT16},
+            rmsCurrentMinPhB: {ID: 0x0909, type: DataType.UINT16},
+            rmsCurrentMaxPhB: {ID: 0x090a, type: DataType.UINT16},
+            activePowerPhB: {ID: 0x090b, type: DataType.INT16},
+            activePowerMinPhB: {ID: 0x090c, type: DataType.INT16},
+            activePowerMaxPhB: {ID: 0x090d, type: DataType.INT16},
+            reactivePowerPhB: {ID: 0x090e, type: DataType.INT16},
+            apparentPowerPhB: {ID: 0x090f, type: DataType.UINT16},
+            powerFactorPhB: {ID: 0x0910, type: DataType.INT8},
+            averageRmsVoltageMeasurePeriodPhB: {ID: 0x0911, type: DataType.UINT16},
+            averageRmsOverVoltageCounterPhB: {ID: 0x0912, type: DataType.UINT16},
+            averageUnderVoltageCounterPhB: {ID: 0x0913, type: DataType.UINT16},
+            rmsExtremeOverVoltagePeriodPhB: {ID: 0x0914, type: DataType.UINT16},
+            rmsExtremeUnderVoltagePeriodPhB: {ID: 0x0915, type: DataType.UINT16},
+            rmsVoltageSagPeriodPhB: {ID: 0x0916, type: DataType.UINT16},
+            rmsVoltageSwellPeriodPhB: {ID: 0x0917, type: DataType.UINT16},
+            lineCurrentPhC: {ID: 0x0a01, type: DataType.UINT16},
+            activeCurrentPhC: {ID: 0x0a02, type: DataType.INT16},
+            reactiveCurrentPhC: {ID: 0x0a03, type: DataType.INT16},
+            rmsVoltagePhC: {ID: 0x0a05, type: DataType.UINT16},
+            rmsVoltageMinPhC: {ID: 0x0a06, type: DataType.UINT16},
+            rmsVoltageMaxPhC: {ID: 0x0a07, type: DataType.UINT16},
+            rmsCurrentPhC: {ID: 0x0a08, type: DataType.UINT16},
+            rmsCurrentMinPhC: {ID: 0x0a09, type: DataType.UINT16},
+            rmsCurrentMaxPhC: {ID: 0x0a0a, type: DataType.UINT16},
+            activePowerPhC: {ID: 0x0a0b, type: DataType.INT16},
+            activePowerMinPhC: {ID: 0x0a0c, type: DataType.INT16},
+            activePowerMaxPhC: {ID: 0x0a0d, type: DataType.INT16},
+            reactivePowerPhC: {ID: 0x0a0e, type: DataType.INT16},
+            apparentPowerPhC: {ID: 0x0a0f, type: DataType.UINT16},
+            powerFactorPhC: {ID: 0x0a10, type: DataType.INT8},
+            averageRmsVoltageMeasPeriodPhC: {ID: 0x0a11, type: DataType.UINT16},
+            averageRmsOverVoltageCounterPhC: {ID: 0x0a12, type: DataType.UINT16},
+            averageUnderVoltageCounterPhC: {ID: 0x0a13, type: DataType.UINT16},
+            rmsExtremeOverVoltagePeriodPhC: {ID: 0x0a14, type: DataType.UINT16},
+            rmsExtremeUnderVoltagePeriodPhC: {ID: 0x0a15, type: DataType.UINT16},
+            rmsVoltageSagPeriodPhC: {ID: 0x0a16, type: DataType.UINT16},
+            rmsVoltageSwellPeriodPhC: {ID: 0x0a17, type: DataType.UINT16},
             schneiderActivePowerDemandTotal: {ID: 0x4300, type: DataType.INT32, manufacturerCode: ManufacturerCode.SCHNEIDER_ELECTRIC},
             schneiderReactivePowerDemandTotal: {ID: 0x4303, type: DataType.INT32, manufacturerCode: ManufacturerCode.SCHNEIDER_ELECTRIC},
             schneiderApparentPowerDemandTotal: {ID: 0x4318, type: DataType.INT32, manufacturerCode: ManufacturerCode.SCHNEIDER_ELECTRIC},
@@ -4496,12 +4088,9 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             schneiderCurrentSensorMultiplier: {ID: 0x4e00, type: DataType.UINT8, manufacturerCode: ManufacturerCode.SCHNEIDER_ELECTRIC},
         },
         commands: {
-            getProfileInfo: {
-                ID: 0,
-                parameters: [],
-            },
+            getProfileInfo: {ID: 0x00, parameters: []},
             getMeasurementProfile: {
-                ID: 1,
+                ID: 0x01,
                 parameters: [
                     {name: "attrId", type: DataType.UINT16},
                     {name: "starttime", type: DataType.UINT32},
@@ -4511,7 +4100,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         },
         commandsResponse: {
             getProfileInfoRsp: {
-                ID: 0,
+                ID: 0x00,
                 parameters: [
                     {name: "profilecount", type: DataType.UINT8},
                     {name: "profileintervalperiod", type: DataType.UINT8},
@@ -4521,7 +4110,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 ],
             },
             getMeasurementProfileRsp: {
-                ID: 1,
+                ID: 0x01,
                 parameters: [
                     {name: "starttime", type: DataType.UINT32},
                     {name: "status", type: DataType.UINT8},
@@ -4534,40 +4123,40 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         },
     },
     haDiagnostic: {
-        ID: 2821,
+        ID: 0x0b05,
         attributes: {
-            numberOfResets: {ID: 0, type: DataType.UINT16},
-            persistentMemoryWrites: {ID: 1, type: DataType.UINT16},
-            macRxBcast: {ID: 256, type: DataType.UINT32},
-            macTxBcast: {ID: 257, type: DataType.UINT32},
-            macRxUcast: {ID: 258, type: DataType.UINT32},
-            macTxUcast: {ID: 259, type: DataType.UINT32},
-            macTxUcastRetry: {ID: 260, type: DataType.UINT16},
-            macTxUcastFail: {ID: 261, type: DataType.UINT16},
-            aPSRxBcast: {ID: 262, type: DataType.UINT16},
-            aPSTxBcast: {ID: 263, type: DataType.UINT16},
-            aPSRxUcast: {ID: 264, type: DataType.UINT16},
-            aPSTxUcastSuccess: {ID: 265, type: DataType.UINT16},
-            aPSTxUcastRetry: {ID: 266, type: DataType.UINT16},
-            aPSTxUcastFail: {ID: 267, type: DataType.UINT16},
-            routeDiscInitiated: {ID: 268, type: DataType.UINT16},
-            neighborAdded: {ID: 269, type: DataType.UINT16},
-            neighborRemoved: {ID: 270, type: DataType.UINT16},
-            neighborStale: {ID: 271, type: DataType.UINT16},
-            joinIndication: {ID: 272, type: DataType.UINT16},
-            childMoved: {ID: 273, type: DataType.UINT16},
-            nwkFcFailure: {ID: 274, type: DataType.UINT16},
-            apsFcFailure: {ID: 275, type: DataType.UINT16},
-            apsUnauthorizedKey: {ID: 276, type: DataType.UINT16},
-            nwkDecryptFailures: {ID: 277, type: DataType.UINT16},
-            apsDecryptFailures: {ID: 278, type: DataType.UINT16},
-            packetBufferAllocateFailures: {ID: 279, type: DataType.UINT16},
-            relayedUcast: {ID: 280, type: DataType.UINT16},
-            phyToMacQueueLimitReached: {ID: 281, type: DataType.UINT16},
-            packetValidateDropCount: {ID: 282, type: DataType.UINT16},
-            averageMacRetryPerApsMessageSent: {ID: 283, type: DataType.UINT16},
-            lastMessageLqi: {ID: 284, type: DataType.UINT8},
-            lastMessageRssi: {ID: 285, type: DataType.INT8},
+            numberOfResets: {ID: 0x0000, type: DataType.UINT16},
+            persistentMemoryWrites: {ID: 0x0001, type: DataType.UINT16},
+            macRxBcast: {ID: 0x0100, type: DataType.UINT32},
+            macTxBcast: {ID: 0x0101, type: DataType.UINT32},
+            macRxUcast: {ID: 0x0102, type: DataType.UINT32},
+            macTxUcast: {ID: 0x0103, type: DataType.UINT32},
+            macTxUcastRetry: {ID: 0x0104, type: DataType.UINT16},
+            macTxUcastFail: {ID: 0x0105, type: DataType.UINT16},
+            aPSRxBcast: {ID: 0x0106, type: DataType.UINT16},
+            aPSTxBcast: {ID: 0x0107, type: DataType.UINT16},
+            aPSRxUcast: {ID: 0x0108, type: DataType.UINT16},
+            aPSTxUcastSuccess: {ID: 0x0109, type: DataType.UINT16},
+            aPSTxUcastRetry: {ID: 0x010a, type: DataType.UINT16},
+            aPSTxUcastFail: {ID: 0x010b, type: DataType.UINT16},
+            routeDiscInitiated: {ID: 0x010c, type: DataType.UINT16},
+            neighborAdded: {ID: 0x010d, type: DataType.UINT16},
+            neighborRemoved: {ID: 0x010e, type: DataType.UINT16},
+            neighborStale: {ID: 0x010f, type: DataType.UINT16},
+            joinIndication: {ID: 0x0110, type: DataType.UINT16},
+            childMoved: {ID: 0x0111, type: DataType.UINT16},
+            nwkFcFailure: {ID: 0x0112, type: DataType.UINT16},
+            apsFcFailure: {ID: 0x0113, type: DataType.UINT16},
+            apsUnauthorizedKey: {ID: 0x0114, type: DataType.UINT16},
+            nwkDecryptFailures: {ID: 0x0115, type: DataType.UINT16},
+            apsDecryptFailures: {ID: 0x0116, type: DataType.UINT16},
+            packetBufferAllocateFailures: {ID: 0x0117, type: DataType.UINT16},
+            relayedUcast: {ID: 0x0118, type: DataType.UINT16},
+            phyToMacQueueLimitReached: {ID: 0x0119, type: DataType.UINT16},
+            packetValidateDropCount: {ID: 0x011a, type: DataType.UINT16},
+            averageMacRetryPerApsMessageSent: {ID: 0x011b, type: DataType.UINT16},
+            lastMessageLqi: {ID: 0x011c, type: DataType.UINT8},
+            lastMessageRssi: {ID: 0x011d, type: DataType.INT8},
             danfossSystemStatusCode: {ID: 0x4000, type: DataType.BITMAP16, manufacturerCode: ManufacturerCode.DANFOSS_A_S},
             danfossHeatSupplyRequest: {ID: 0x4031, type: DataType.ENUM8, manufacturerCode: ManufacturerCode.DANFOSS_A_S},
             danfossSystemStatusWater: {ID: 0x4200, type: DataType.ENUM8, manufacturerCode: ManufacturerCode.DANFOSS_A_S},
@@ -4582,7 +4171,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         commandsResponse: {},
     },
     touchlink: {
-        ID: 4096,
+        ID: 0x1000,
         attributes: {},
         commands: {
             scanRequest: {
@@ -4609,10 +4198,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                     {name: "duration", type: DataType.UINT16},
                 ],
             },
-            resetToFactoryNew: {
-                ID: 0x07,
-                parameters: [{name: "transactionID", type: DataType.UINT32}],
-            },
+            resetToFactoryNew: {ID: 0x07, parameters: [{name: "transactionID", type: DataType.UINT32}]},
             networkStart: {
                 ID: 0x10,
                 response: 0x11,
@@ -4685,16 +4271,8 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                     {name: "nwkAddr", type: DataType.UINT16},
                 ],
             },
-            getGroupIdentifiers: {
-                ID: 0x41,
-                response: 0x41,
-                parameters: [{name: "startIndex", type: DataType.UINT8}],
-            },
-            getEndpointList: {
-                ID: 0x42,
-                response: 0x42,
-                parameters: [{name: "startIndex", type: DataType.UINT8}],
-            },
+            getGroupIdentifiers: {ID: 0x41, response: 0x41, parameters: [{name: "startIndex", type: DataType.UINT8}]},
+            getEndpointList: {ID: 0x42, response: 0x42, parameters: [{name: "startIndex", type: DataType.UINT8}]},
         },
         commandsResponse: {
             scanResponse: {
@@ -4845,46 +4423,34 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         },
     },
     manuSpecificClusterAduroSmart: {
-        ID: 64716,
+        ID: 0xfccc,
         attributes: {},
         commands: {
-            cmd0: {
-                ID: 0,
-                parameters: [],
-            },
+            cmd0: {ID: 0x00, parameters: []},
         },
         commandsResponse: {},
     },
     manuSpecificOsram: {
-        ID: 64527,
+        ID: 0xfc0f,
         attributes: {},
         commands: {
-            saveStartupParams: {
-                ID: 1,
-                parameters: [],
-            },
-            resetStartupParams: {
-                ID: 2,
-                parameters: [],
-            },
+            saveStartupParams: {ID: 0x01, parameters: []},
+            resetStartupParams: {ID: 0x02, parameters: []},
         },
         commandsResponse: {
-            saveStartupParamsRsp: {
-                ID: 0,
-                parameters: [],
-            },
+            saveStartupParamsRsp: {ID: 0x00, parameters: []},
         },
     },
     manuSpecificPhilips: {
         ID: 0xfc00,
         manufacturerCode: ManufacturerCode.SIGNIFY_NETHERLANDS_B_V,
         attributes: {
-            config: {ID: 49, type: DataType.BITMAP16},
+            config: {ID: 0x0031, type: DataType.BITMAP16},
         },
         commands: {},
         commandsResponse: {
             hueNotification: {
-                ID: 0,
+                ID: 0x00,
                 parameters: [
                     {name: "button", type: DataType.UINT8},
                     {name: "unknown1", type: DataType.UINT24},
@@ -4903,66 +4469,63 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             state: {ID: 0x0002, type: DataType.OCTET_STR},
         },
         commands: {
-            multiColor: {
-                ID: 0,
-                parameters: [{name: "data", type: BuffaloZclDataType.BUFFER}],
-            },
+            multiColor: {ID: 0x00, parameters: [{name: "data", type: BuffaloZclDataType.BUFFER}]},
         },
         commandsResponse: {},
     },
     manuSpecificSinope: {
-        ID: 65281,
+        ID: 0xff01,
         manufacturerCode: ManufacturerCode.SINOPE_TECHNOLOGIES,
         attributes: {
             // attribute ID :1's readable
-            keypadLockout: {ID: 2, type: DataType.ENUM8},
+            keypadLockout: {ID: 0x0002, type: DataType.ENUM8},
             // 'firmware number': {ID: 3, type: DataType.UNKNOWN},
-            firmwareVersion: {ID: 4, type: DataType.CHAR_STR},
-            outdoorTempToDisplay: {ID: 16, type: DataType.INT16},
-            outdoorTempToDisplayTimeout: {ID: 17, type: DataType.UINT16},
-            secondScreenBehavior: {ID: 18, type: DataType.ENUM8}, // auto:0,setpoint:1,outside:2
-            currentTimeToDisplay: {ID: 32, type: DataType.UINT32},
-            ledIntensityOn: {ID: 82, type: DataType.UINT8},
-            ledIntensityOff: {ID: 83, type: DataType.UINT8},
-            ledColorOn: {ID: 80, type: DataType.UINT24}, // inversed hex BBGGRR
-            ledColorOff: {ID: 81, type: DataType.UINT24},
-            onLedIntensity: {ID: 82, type: DataType.UINT8}, // percent
-            offLedIntensity: {ID: 83, type: DataType.UINT8}, // percent
-            actionReport: {ID: 84, type: DataType.ENUM8}, // singleTapUp: 1,2, doubleTapUp: 1,4, singleTapDown: 17,18, doubleTapDown: 17,20
-            minimumBrightness: {ID: 85, type: DataType.UINT16},
-            connectedLoadRM: {ID: 96, type: DataType.UINT16}, // unit watt/hr for Calypso RM3500 & Load Controller RM3250
-            currentLoad: {ID: 112, type: DataType.BITMAP8}, // related to ecoMode(s)
-            ecoMode: {ID: 113, type: DataType.INT8}, // default:-128||-100-0-100%
-            ecoMode1: {ID: 114, type: DataType.UINT8}, // default:255||0-99
-            ecoMode2: {ID: 115, type: DataType.UINT8}, // default 255||0-100
-            unknown: {ID: 117, type: DataType.BITMAP32}, // RW *testing*
-            drConfigWaterTempMin: {ID: 118, type: DataType.UINT8}, // value 45 or 0
-            drConfigWaterTempTime: {ID: 119, type: DataType.UINT8}, // default 2
-            drWTTimeOn: {ID: 120, type: DataType.UINT16},
-            unknown1: {ID: 128, type: DataType.UINT32}, // readOnly stringNumber *testing*
-            dimmerTimmer: {ID: 160, type: DataType.UINT32},
-            unknown2: {ID: 256, type: DataType.UINT8}, // readOnly *testing*
-            floorControlMode: {ID: 261, type: DataType.ENUM8}, // airFloorMode
-            auxOutputMode: {ID: 262, type: DataType.ENUM8},
-            floorTemperature: {ID: 263, type: DataType.INT16},
-            ambiantMaxHeatSetpointLimit: {ID: 264, type: DataType.INT16},
-            floorMinHeatSetpointLimit: {ID: 265, type: DataType.INT16},
-            floorMaxHeatSetpointLimit: {ID: 266, type: DataType.INT16},
-            temperatureSensor: {ID: 267, type: DataType.ENUM8},
-            floorLimitStatus: {ID: 268, type: DataType.ENUM8},
-            roomTemperature: {ID: 269, type: DataType.INT16},
-            timeFormatToDisplay: {ID: 276, type: DataType.ENUM8},
-            GFCiStatus: {ID: 277, type: DataType.ENUM8},
-            auxConnectedLoad: {ID: 280, type: DataType.UINT16},
-            connectedLoad: {ID: 281, type: DataType.UINT16},
-            pumpProtection: {ID: 296, type: DataType.UINT8},
-            unknown3: {ID: 298, type: DataType.ENUM8}, // RW default:60||5,10,15,20,30,60 *testing*
-            currentSetpoint: {ID: 299, type: DataType.INT16}, // W:to ocuppiedHeatSetpoint, R:depends of SinopeOccupancy
+            firmwareVersion: {ID: 0x0004, type: DataType.CHAR_STR},
+            outdoorTempToDisplay: {ID: 0x0010, type: DataType.INT16},
+            outdoorTempToDisplayTimeout: {ID: 0x0011, type: DataType.UINT16},
+            secondScreenBehavior: {ID: 0x0012, type: DataType.ENUM8}, // auto:0,setpoint:1,outside:2
+            currentTimeToDisplay: {ID: 0x0020, type: DataType.UINT32},
+            ledIntensityOn: {ID: 0x0052, type: DataType.UINT8},
+            ledIntensityOff: {ID: 0x0053, type: DataType.UINT8},
+            ledColorOn: {ID: 0x0050, type: DataType.UINT24}, // inversed hex BBGGRR
+            ledColorOff: {ID: 0x0051, type: DataType.UINT24},
+            onLedIntensity: {ID: 0x0052, type: DataType.UINT8}, // percent
+            offLedIntensity: {ID: 0x0053, type: DataType.UINT8}, // percent
+            actionReport: {ID: 0x0054, type: DataType.ENUM8}, // singleTapUp: 1,2, doubleTapUp: 1,4, singleTapDown: 17,18, doubleTapDown: 17,20
+            minimumBrightness: {ID: 0x0055, type: DataType.UINT16},
+            connectedLoadRM: {ID: 0x0060, type: DataType.UINT16}, // unit watt/hr for Calypso RM3500 & Load Controller RM3250
+            currentLoad: {ID: 0x0070, type: DataType.BITMAP8}, // related to ecoMode(s)
+            ecoMode: {ID: 0x0071, type: DataType.INT8}, // default:-128||-100-0-100%
+            ecoMode1: {ID: 0x0072, type: DataType.UINT8}, // default:255||0-99
+            ecoMode2: {ID: 0x0073, type: DataType.UINT8}, // default 255||0-100
+            unknown: {ID: 0x0075, type: DataType.BITMAP32}, // RW *testing*
+            drConfigWaterTempMin: {ID: 0x0076, type: DataType.UINT8}, // value 45 or 0
+            drConfigWaterTempTime: {ID: 0x0077, type: DataType.UINT8}, // default 2
+            drWTTimeOn: {ID: 0x0078, type: DataType.UINT16},
+            unknown1: {ID: 0x0080, type: DataType.UINT32}, // readOnly stringNumber *testing*
+            dimmerTimmer: {ID: 0x00a0, type: DataType.UINT32},
+            unknown2: {ID: 0x0100, type: DataType.UINT8}, // readOnly *testing*
+            floorControlMode: {ID: 0x0105, type: DataType.ENUM8}, // airFloorMode
+            auxOutputMode: {ID: 0x0106, type: DataType.ENUM8},
+            floorTemperature: {ID: 0x0107, type: DataType.INT16},
+            ambiantMaxHeatSetpointLimit: {ID: 0x0108, type: DataType.INT16},
+            floorMinHeatSetpointLimit: {ID: 0x0109, type: DataType.INT16},
+            floorMaxHeatSetpointLimit: {ID: 0x010a, type: DataType.INT16},
+            temperatureSensor: {ID: 0x010b, type: DataType.ENUM8},
+            floorLimitStatus: {ID: 0x010c, type: DataType.ENUM8},
+            roomTemperature: {ID: 0x010d, type: DataType.INT16},
+            timeFormatToDisplay: {ID: 0x0114, type: DataType.ENUM8},
+            GFCiStatus: {ID: 0x0115, type: DataType.ENUM8},
+            auxConnectedLoad: {ID: 0x0118, type: DataType.UINT16},
+            connectedLoad: {ID: 0x0119, type: DataType.UINT16},
+            pumpProtection: {ID: 0x0128, type: DataType.UINT8},
+            unknown3: {ID: 0x012a, type: DataType.ENUM8}, // RW default:60||5,10,15,20,30,60 *testing*
+            currentSetpoint: {ID: 0x012b, type: DataType.INT16}, // W:to ocuppiedHeatSetpoint, R:depends of SinopeOccupancy
             // attribute ID: 300's readable, returns a buffer
-            reportLocalTemperature: {ID: 301, type: DataType.INT16},
+            reportLocalTemperature: {ID: 0x012d, type: DataType.INT16},
             // attribute ID: 512's readable
-            flowMeterConfig: {ID: 576, type: DataType.ARRAY},
-            coldLoadPickupStatus: {ID: 643, type: DataType.UINT8},
+            flowMeterConfig: {ID: 0x0240, type: DataType.ARRAY},
+            coldLoadPickupStatus: {ID: 0x0283, type: DataType.UINT8},
         },
         commands: {},
         commandsResponse: {},
@@ -4981,10 +4544,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         manufacturerCode: ManufacturerCode.LEGRAND_GROUP,
         attributes: {},
         commands: {
-            command0: {
-                ID: 0,
-                parameters: [{name: "data", type: BuffaloZclDataType.BUFFER}],
-            },
+            command0: {ID: 0x00, parameters: [{name: "data", type: BuffaloZclDataType.BUFFER}]},
         },
         commandsResponse: {},
     },
@@ -4993,17 +4553,14 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         manufacturerCode: ManufacturerCode.LEGRAND_GROUP,
         attributes: {},
         commands: {
-            command0: {
-                ID: 0,
-                parameters: [{name: "data", type: BuffaloZclDataType.BUFFER}],
-            },
+            command0: {ID: 0x00, parameters: [{name: "data", type: BuffaloZclDataType.BUFFER}]},
         },
         commandsResponse: {},
     },
     wiserDeviceInfo: {
         ID: 0xfe03, // 65027
         attributes: {
-            deviceInfo: {ID: 32, type: DataType.CHAR_STR},
+            deviceInfo: {ID: 0x0020, type: DataType.CHAR_STR},
         },
         commands: {},
         commandsResponse: {},
@@ -5026,7 +4583,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
              * Gateway-side data request
              */
             dataRequest: {
-                ID: 0,
+                ID: 0x00,
                 parameters: [
                     {name: "seq", type: DataType.UINT16},
                     {name: "dpValues", type: BuffaloZclDataType.LIST_TUYA_DATAPOINT_VALUES},
@@ -5036,18 +4593,11 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
              * GW send, trigger MCU side to report all current information, no zcl payload.
              * Note: Device side can make a policy, data better not to report centrally
              */
-            dataQuery: {
-                ID: 3,
-                parameters: [],
-            },
+            dataQuery: {ID: 0x03, parameters: []},
             /**
              * Gw->Zigbee gateway query MCU version
              */
-            mcuVersionRequest: {
-                ID: 0x10,
-                parameters: [{name: "seq", type: DataType.UINT16}],
-            },
-
+            mcuVersionRequest: {ID: 0x10, parameters: [{name: "seq", type: DataType.UINT16}]},
             /**
              * FIXME: This command is not listed in Tuya zigbee cluster description,
              *  but there is some command 0x04 (description is: Command Issuance)
@@ -5055,13 +4605,12 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
              *  So, need to investigate more information about it
              */
             sendData: {
-                ID: 4,
+                ID: 0x04,
                 parameters: [
                     {name: "seq", type: DataType.UINT16},
                     {name: "dpValues", type: BuffaloZclDataType.LIST_TUYA_DATAPOINT_VALUES},
                 ],
             },
-
             /**
              * Gw->Zigbee gateway notifies MCU of upgrade
              */
@@ -5081,7 +4630,6 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                     {name: "crc", type: DataType.UINT32},
                 ],
             },
-
             /**
              * Gw->Zigbee gateway returns the requested upgrade package for MCU
              */
@@ -5097,7 +4645,6 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                     {name: "imageData", type: BuffaloZclDataType.LIST_UINT8},
                 ],
             },
-
             /**
              * Time synchronization (bidirectional)
              */
@@ -5108,7 +4655,6 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                     {name: "payload", type: BuffaloZclDataType.LIST_UINT8},
                 ],
             },
-
             /**
              * Gateway connection status (bidirectional)
              */
@@ -5125,7 +4671,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
              * Reply to MCU-side data request
              */
             dataResponse: {
-                ID: 1,
+                ID: 0x01,
                 parameters: [
                     {name: "seq", type: DataType.UINT16},
                     {name: "dpValues", type: BuffaloZclDataType.LIST_TUYA_DATAPOINT_VALUES},
@@ -5135,7 +4681,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
              * MCU-side data active upload (bidirectional)
              */
             dataReport: {
-                ID: 2,
+                ID: 0x02,
                 parameters: [
                     {name: "seq", type: DataType.UINT16},
                     {name: "dpValues", type: BuffaloZclDataType.LIST_TUYA_DATAPOINT_VALUES},
@@ -5148,7 +4694,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
              *  So, need to investigate more information about it
              */
             activeStatusReportAlt: {
-                ID: 5,
+                ID: 0x05,
                 parameters: [
                     {name: "seq", type: DataType.UINT16},
                     {name: "dpValues", type: BuffaloZclDataType.LIST_TUYA_DATAPOINT_VALUES},
@@ -5161,7 +4707,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
              *  So, need to investigate more information about it
              */
             activeStatusReport: {
-                ID: 6,
+                ID: 0x06,
                 parameters: [
                     {name: "seq", type: DataType.UINT16},
                     {name: "dpValues", type: BuffaloZclDataType.LIST_TUYA_DATAPOINT_VALUES},
@@ -5177,7 +4723,6 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                     {name: "version", type: DataType.UINT8},
                 ],
             },
-
             /**
              * Zigbee->Gw requests an upgrade package for the MCU
              */
@@ -5192,7 +4737,6 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                     {name: "size", type: DataType.UINT32},
                 ],
             },
-
             /**
              * Zigbee->Gw returns the upgrade result for the mcu
              */
@@ -5206,22 +4750,14 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                     {name: "version", type: DataType.UINT8},
                 ],
             },
-
             /**
              * Time synchronization (bidirectional)
              */
-            mcuSyncTime: {
-                ID: 0x24,
-                parameters: [{name: "payloadSize", type: DataType.UINT16}],
-            },
-
+            mcuSyncTime: {ID: 0x24, parameters: [{name: "payloadSize", type: DataType.UINT16}]},
             /**
              * Gateway connection status (bidirectional)
              */
-            mcuGatewayConnectionStatus: {
-                ID: 0x25,
-                parameters: [{name: "payloadSize", type: DataType.UINT16}],
-            },
+            mcuGatewayConnectionStatus: {ID: 0x25, parameters: [{name: "payloadSize", type: DataType.UINT16}]},
         },
     },
     manuSpecificLumi: {
@@ -5290,13 +4826,13 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
     manuSpecificTuya2: {
         ID: 0xe002,
         attributes: {
-            alarm_temperature_max: {ID: 53258, type: DataType.INT16},
-            alarm_temperature_min: {ID: 53259, type: DataType.INT16},
-            alarm_humidity_max: {ID: 53261, type: DataType.INT16},
-            alarm_humidity_min: {ID: 53262, type: DataType.INT16},
-            alarm_humidity: {ID: 53263, type: DataType.ENUM8},
-            alarm_temperature: {ID: 53254, type: DataType.ENUM8},
-            unknown: {ID: 53264, type: DataType.UINT8},
+            alarm_temperature_max: {ID: 0xd00a, type: DataType.INT16},
+            alarm_temperature_min: {ID: 0xd00b, type: DataType.INT16},
+            alarm_humidity_max: {ID: 0xd00d, type: DataType.INT16},
+            alarm_humidity_min: {ID: 0xd00e, type: DataType.INT16},
+            alarm_humidity: {ID: 0xd00f, type: DataType.ENUM8},
+            alarm_temperature: {ID: 0xd006, type: DataType.ENUM8},
+            unknown: {ID: 0xd010, type: DataType.UINT8},
         },
         commands: {},
         commandsResponse: {},
@@ -5309,18 +4845,9 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             switchType: {ID: 0xd030, type: DataType.ENUM8},
         },
         commands: {
-            setOptions1: {
-                ID: 0xe5,
-                parameters: [{name: "data", type: BuffaloZclDataType.BUFFER}],
-            },
-            setOptions2: {
-                ID: 0xe6,
-                parameters: [{name: "data", type: BuffaloZclDataType.BUFFER}],
-            },
-            setOptions3: {
-                ID: 0xe7,
-                parameters: [{name: "data", type: BuffaloZclDataType.BUFFER}],
-            },
+            setOptions1: {ID: 0xe5, parameters: [{name: "data", type: BuffaloZclDataType.BUFFER}]},
+            setOptions2: {ID: 0xe6, parameters: [{name: "data", type: BuffaloZclDataType.BUFFER}]},
+            setOptions3: {ID: 0xe7, parameters: [{name: "data", type: BuffaloZclDataType.BUFFER}]},
         },
         commandsResponse: {},
     },
@@ -5328,7 +4855,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         ID: 0xfc45,
         manufacturerCode: ManufacturerCode.CENTRALITE_SYSTEMS_INC,
         attributes: {
-            measuredValue: {ID: 0, type: DataType.UINT16},
+            measuredValue: {ID: 0x0000, type: DataType.UINT16},
         },
         commands: {},
         commandsResponse: {},
@@ -5339,22 +4866,19 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         attributes: {},
         commands: {},
         commandsResponse: {
-            arrivalSensorNotify: {
-                ID: 1,
-                parameters: [],
-            },
+            arrivalSensorNotify: {ID: 0x01, parameters: []},
         },
     },
     manuSpecificSamsungAccelerometer: {
         ID: 0xfc02,
         manufacturerCode: ManufacturerCode.SMARTTHINGS_INC,
         attributes: {
-            motion_threshold_multiplier: {ID: 0, type: DataType.UINT8},
-            motion_threshold: {ID: 2, type: DataType.UINT16},
-            acceleration: {ID: 16, type: DataType.BITMAP8},
-            x_axis: {ID: 18, type: DataType.INT16},
-            y_axis: {ID: 19, type: DataType.INT16},
-            z_axis: {ID: 20, type: DataType.INT16},
+            motion_threshold_multiplier: {ID: 0x0000, type: DataType.UINT8},
+            motion_threshold: {ID: 0x0002, type: DataType.UINT16},
+            acceleration: {ID: 0x0010, type: DataType.BITMAP8},
+            x_axis: {ID: 0x0012, type: DataType.INT16},
+            y_axis: {ID: 0x0013, type: DataType.INT16},
+            z_axis: {ID: 0x0014, type: DataType.INT16},
         },
         commands: {},
         commandsResponse: {},
@@ -5378,23 +4902,20 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         },
         commands: {
             setLanguage: {
-                ID: 0x011b,
+                ID: 0x11b,
                 parameters: [
                     // (1: English 0: Chinese)
                     {name: "languageCode", type: DataType.UINT8},
                 ],
             },
             setUnitOfTemperature: {
-                ID: 0x011c,
+                ID: 0x11c,
                 parameters: [
                     // (0: ℉ 1: ℃)
                     {name: "unitsCode", type: DataType.UINT8},
                 ],
             },
-            getTime: {
-                ID: 0x011d,
-                parameters: [],
-            },
+            getTime: {ID: 0x11d, parameters: []},
         },
         commandsResponse: {},
     },
@@ -5404,26 +4925,11 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         manufacturerCode: ManufacturerCode.HEIMAN_TECHNOLOGY_CO_LTD,
         attributes: {},
         commands: {
-            cinema: {
-                ID: 0xf0,
-                parameters: [],
-            },
-            atHome: {
-                ID: 0xf1,
-                parameters: [],
-            },
-            sleep: {
-                ID: 0xf2,
-                parameters: [],
-            },
-            goOut: {
-                ID: 0xf3,
-                parameters: [],
-            },
-            repast: {
-                ID: 0xf4,
-                parameters: [],
-            },
+            cinema: {ID: 0xf0, parameters: []},
+            atHome: {ID: 0xf1, parameters: []},
+            sleep: {ID: 0xf2, parameters: []},
+            goOut: {ID: 0xf3, parameters: []},
+            repast: {ID: 0xf4, parameters: []},
         },
         commandsResponse: {},
     },
@@ -5432,26 +4938,11 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         manufacturerCode: ManufacturerCode.IKEA_OF_SWEDEN,
         attributes: {},
         commands: {
-            action1: {
-                ID: 1,
-                parameters: [{name: "data", type: DataType.UINT8}],
-            },
-            action2: {
-                ID: 2,
-                parameters: [{name: "data", type: DataType.UINT8}],
-            },
-            action3: {
-                ID: 3,
-                parameters: [{name: "data", type: DataType.UINT8}],
-            },
-            action4: {
-                ID: 4,
-                parameters: [{name: "data", type: DataType.UINT8}],
-            },
-            action6: {
-                ID: 6,
-                parameters: [{name: "data", type: DataType.UINT8}],
-            },
+            action1: {ID: 0x01, parameters: [{name: "data", type: DataType.UINT8}]},
+            action2: {ID: 0x02, parameters: [{name: "data", type: DataType.UINT8}]},
+            action3: {ID: 0x03, parameters: [{name: "data", type: DataType.UINT8}]},
+            action4: {ID: 0x04, parameters: [{name: "data", type: DataType.UINT8}]},
+            action6: {ID: 0x06, parameters: [{name: "data", type: DataType.UINT8}]},
         },
         commandsResponse: {},
     },
@@ -5593,59 +5084,38 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         commandsResponse: {},
     },
     sprutVoc: {
-        ID: 26113,
+        ID: 0x6601,
         manufacturerCode: 26214,
         attributes: {
-            voc: {ID: 26112, type: DataType.UINT16},
+            voc: {ID: 0x6600, type: DataType.UINT16},
         },
         commands: {},
         commandsResponse: {},
     },
     sprutNoise: {
-        ID: 26114,
+        ID: 0x6602,
         manufacturerCode: 26214,
         attributes: {
-            noise: {ID: 26112, type: DataType.SINGLE_PREC},
-            noiseDetected: {ID: 26113, type: DataType.BITMAP8},
-            noiseDetectLevel: {ID: 26114, type: DataType.SINGLE_PREC},
-            noiseAfterDetectDelay: {ID: 26115, type: DataType.UINT16},
+            noise: {ID: 0x6600, type: DataType.SINGLE_PREC},
+            noiseDetected: {ID: 0x6601, type: DataType.BITMAP8},
+            noiseDetectLevel: {ID: 0x6602, type: DataType.SINGLE_PREC},
+            noiseAfterDetectDelay: {ID: 0x6603, type: DataType.UINT16},
         },
         commands: {},
         commandsResponse: {},
     },
     sprutIrBlaster: {
-        ID: 26115,
+        ID: 0x6603,
         manufacturerCode: 26214,
         attributes: {},
         commands: {
-            playStore: {
-                ID: 0x00,
-                parameters: [{name: "param", type: DataType.UINT8}],
-            },
-            learnStart: {
-                ID: 0x01,
-                parameters: [{name: "value", type: DataType.UINT8}],
-            },
-            learnStop: {
-                ID: 0x02,
-                parameters: [{name: "value", type: DataType.UINT8}],
-            },
-            clearStore: {
-                ID: 0x03,
-                parameters: [],
-            },
-            playRam: {
-                ID: 0x04,
-                parameters: [],
-            },
-            learnRamStart: {
-                ID: 0x05,
-                parameters: [],
-            },
-            learnRamStop: {
-                ID: 0x06,
-                parameters: [],
-            },
+            playStore: {ID: 0x00, parameters: [{name: "param", type: DataType.UINT8}]},
+            learnStart: {ID: 0x01, parameters: [{name: "value", type: DataType.UINT8}]},
+            learnStop: {ID: 0x02, parameters: [{name: "value", type: DataType.UINT8}]},
+            clearStore: {ID: 0x03, parameters: []},
+            playRam: {ID: 0x04, parameters: []},
+            learnRamStart: {ID: 0x05, parameters: []},
+            learnRamStop: {ID: 0x06, parameters: []},
         },
         commandsResponse: {},
     },
@@ -5672,10 +5142,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         manufacturerCode: ManufacturerCode.OWON_TECHNOLOGY_INC,
         attributes: {},
         commands: {
-            owonClearMeasurementData: {
-                ID: 0x00,
-                parameters: [],
-            },
+            owonClearMeasurementData: {ID: 0x00, parameters: []},
         },
         commandsResponse: {},
     },
@@ -5684,7 +5151,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         attributes: {},
         commands: {
             zosungSendIRCode00: {
-                ID: 0,
+                ID: 0x00,
                 parameters: [
                     {name: "seq", type: DataType.UINT16},
                     {name: "length", type: DataType.UINT32},
@@ -5696,7 +5163,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 ],
             },
             zosungSendIRCode01: {
-                ID: 1,
+                ID: 0x01,
                 parameters: [
                     {name: "zero", type: DataType.UINT8},
                     {name: "seq", type: DataType.UINT16},
@@ -5709,7 +5176,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 ],
             },
             zosungSendIRCode02: {
-                ID: 2,
+                ID: 0x02,
                 parameters: [
                     {name: "seq", type: DataType.UINT16},
                     {name: "position", type: DataType.UINT32},
@@ -5717,7 +5184,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 ],
             },
             zosungSendIRCode03: {
-                ID: 3,
+                ID: 0x03,
                 parameters: [
                     {name: "zero", type: DataType.UINT8},
                     {name: "seq", type: DataType.UINT16},
@@ -5727,7 +5194,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 ],
             },
             zosungSendIRCode04: {
-                ID: 4,
+                ID: 0x04,
                 parameters: [
                     {name: "zero0", type: DataType.UINT8},
                     {name: "seq", type: DataType.UINT16},
@@ -5735,7 +5202,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 ],
             },
             zosungSendIRCode05: {
-                ID: 5,
+                ID: 0x05,
                 parameters: [
                     {name: "seq", type: DataType.UINT16},
                     {name: "zero", type: DataType.UINT16},
@@ -5744,7 +5211,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         },
         commandsResponse: {
             zosungSendIRCode03Resp: {
-                ID: 3,
+                ID: 0x03,
                 parameters: [
                     {name: "zero", type: DataType.UINT8},
                     {name: "seq", type: DataType.UINT16},
@@ -5754,7 +5221,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 ],
             },
             zosungSendIRCode05Resp: {
-                ID: 5,
+                ID: 0x05,
                 parameters: [
                     {name: "seq", type: DataType.UINT16},
                     {name: "zero", type: DataType.UINT16},
@@ -5767,7 +5234,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         attributes: {},
         commands: {
             zosungControlIRCommand00: {
-                ID: 0,
+                ID: 0x00,
                 parameters: [
                     // JSON string with a command.
                     {name: "data", type: BuffaloZclDataType.BUFFER},
@@ -5797,21 +5264,10 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             alarmMask: {ID: 0x0050, type: DataType.UINT8},
         },
         commands: {
-            getLockStatus: {
-                ID: 0x10,
-                response: 0,
-                parameters: [],
-            },
-            getBatteryLevel: {
-                ID: 0x12,
-                parameters: [],
-            },
-            setRFLockoutTime: {
-                ID: 0x13,
-                parameters: [],
-            },
-            /* getLogRecord: {
-                ID: 0x20,
+            getLockStatus: {ID: 0x10, response: 0, parameters: []},
+            getBatteryLevel: {ID: 0x12, parameters: []},
+            setRFLockoutTime: {ID: 0x13, parameters: []},
+            /* getLogRecord: {ID: 0x20,
                 parameters: [],
             },*/ // marked in C4 driver as not supported
             userCodeSet: {
@@ -5835,30 +5291,12 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                     {name: "payload", type: DataType.CHAR_STR},
                 ],
             },
-            clearAllUserCodes: {
-                ID: 0x33,
-                parameters: [],
-            },
-            setUserCodeStatus: {
-                ID: 0x34,
-                parameters: [],
-            },
-            getUserCodeStatus: {
-                ID: 0x35,
-                parameters: [],
-            },
-            getLastUserIdEntered: {
-                ID: 0x36,
-                parameters: [],
-            },
-            userAdded: {
-                ID: 0x37,
-                parameters: [],
-            },
-            userDeleted: {
-                ID: 0x38,
-                parameters: [],
-            },
+            clearAllUserCodes: {ID: 0x33, parameters: []},
+            setUserCodeStatus: {ID: 0x34, parameters: []},
+            getUserCodeStatus: {ID: 0x35, parameters: []},
+            getLastUserIdEntered: {ID: 0x36, parameters: []},
+            userAdded: {ID: 0x37, parameters: []},
+            userDeleted: {ID: 0x38, parameters: []},
             setScheduleSlot: {
                 ID: 0x40,
                 parameters: [
@@ -5904,84 +5342,38 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                     {name: "payload", type: DataType.CHAR_STR},
                 ],
             },
-            getReflashLock: {
-                ID: 0x90,
-                parameters: [],
-            },
-            getHistory: {
-                ID: 0xa0,
-                parameters: [],
-            },
-            getLogin: {
-                ID: 0xa1,
-                parameters: [],
-            },
-            getUser: {
-                ID: 0xa2,
-                parameters: [],
-            },
-            getUsers: {
-                ID: 0xa3,
-                parameters: [],
-            },
-            getMandatoryAttributes: {
-                ID: 0xb0,
-                parameters: [],
-            },
-            readAttribute: {
-                ID: 0xb1,
-                parameters: [],
-            },
-            writeAttribute: {
-                ID: 0xb2,
-                parameters: [],
-            },
-            configureReporting: {
-                ID: 0xb3,
-                parameters: [],
-            },
-            getBasicClusterAttributes: {
-                ID: 0xb4,
-                parameters: [],
-            },
+            getReflashLock: {ID: 0x90, parameters: []},
+            getHistory: {ID: 0xa0, parameters: []},
+            getLogin: {ID: 0xa1, parameters: []},
+            getUser: {ID: 0xa2, parameters: []},
+            getUsers: {ID: 0xa3, parameters: []},
+            getMandatoryAttributes: {ID: 0xb0, parameters: []},
+            readAttribute: {ID: 0xb1, parameters: []},
+            writeAttribute: {ID: 0xb2, parameters: []},
+            configureReporting: {ID: 0xb3, parameters: []},
+            getBasicClusterAttributes: {ID: 0xb4, parameters: []},
         },
         commandsResponse: {
-            getLockStatusRsp: {
-                ID: 0,
-                parameters: [{name: "status", type: DataType.UINT8}],
-            },
-            reflashRsp: {
-                ID: 1,
-                parameters: [{name: "status", type: DataType.UINT8}],
-            },
-            reflashDataRsp: {
-                ID: 2,
-                parameters: [{name: "status", type: DataType.UINT8}],
-            },
-            reflashStatusRsp: {
-                ID: 3,
-                parameters: [{name: "status", type: DataType.UINT8}],
-            },
-            /* boltStateRsp: {
-                ID: 4,
+            getLockStatusRsp: {ID: 0x00, parameters: [{name: "status", type: DataType.UINT8}]},
+            reflashRsp: {ID: 0x01, parameters: [{name: "status", type: DataType.UINT8}]},
+            reflashDataRsp: {ID: 0x02, parameters: [{name: "status", type: DataType.UINT8}]},
+            reflashStatusRsp: {ID: 0x03, parameters: [{name: "status", type: DataType.UINT8}]},
+            /* boltStateRsp: {ID: 4,
                 parameters: [
                     {name: 'state', type: DataType.UINT8},
                 ],
             },*/ // C4 driver has this response yet there is no command - maybe a non-specific cluster response?
-            /* lockStatusReportRsp: {
-                ID: 5,
+            /* lockStatusReportRsp: {ID: 5,
                 parameters: [
                     {name: 'status', type: DataType.UINT8},
                 ],
             },*/ // C4 driver has this response yet there is no command - maybe a non-specific cluster response?
-            /* handleStateRsp: {
-                ID: 6,
+            /* handleStateRsp: {ID: 6,
                 parameters: [
                     {name: 'state', type: DataType.UINT8},
                 ],
             },*/ // C4 driver has this response yet there is no command - maybe a non-specific cluster response?
-            /* userStatusRsp: {
-                ID: 7,
+            /* userStatusRsp: {ID: 7,
                 parameters: [
                     {name: 'status', type: DataType.UINT8},
                 ],
@@ -6027,7 +5419,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         ID: 0xfc21, // Config cluster, 0xfc20 mostly for commands it seems
         manufacturerCode: ManufacturerCode.PROFALUX,
         attributes: {
-            motorCoverType: {ID: 0, type: DataType.UINT8}, // 0 : rolling shutters (volet), 1 : rolling shutters with tilt (BSO), 2: shade (store)
+            motorCoverType: {ID: 0x0000, type: DataType.UINT8}, // 0 : rolling shutters (volet), 1 : rolling shutters with tilt (BSO), 2: shade (store)
         },
         commands: {},
         commandsResponse: {},
@@ -6057,10 +5449,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             clusterRevision: {ID: 0xfffd, type: DataType.UINT16},
         },
         commands: {
-            clearBindingTable: {
-                ID: 0x0a,
-                parameters: [],
-            },
+            clearBindingTable: {ID: 0x0a, parameters: []},
         },
         commandsResponse: {},
     },
