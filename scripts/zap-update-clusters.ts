@@ -31,7 +31,7 @@ import {applyXmlOverrides, parseOverrides} from "./zap-clusters-overrides.js";
 /* ------------------------------------------------------------------------------------------------
  * XML Type Definitions
  * ----------------------------------------------------------------------------------------------*/
-interface XMLAttr<T> {
+export interface XMLAttr<T> {
     // biome-ignore lint/style/useNamingConvention: API
     $: T;
 }
@@ -72,7 +72,7 @@ interface XMLClusterSide {
     commands?: {command: XMLCommandDefinition[]}[];
 }
 
-interface XMLRestriction {
+export interface XMLRestriction {
     "type:length"?: XMLAttr<{value: string}>[];
     "type:minLength"?: XMLAttr<{value: string}>[];
     "type:maxLength"?: XMLAttr<{value: string}>[];
@@ -1302,10 +1302,22 @@ function updateCommands(
                                                 existingParamProps.set(facet.name, factory.createPropertyAssignment(facet.name, matched));
                                             }
                                         } else {
-                                            existingParamProps.set(
-                                                facet.name,
-                                                factory.createPropertyAssignment(facet.name, createSafeNumericLiteral(facet.value, factory)),
-                                            );
+                                            // a few entries are in hex form like "fd", this is obviously flawed, entries that are too complex should be overriden instead
+                                            if (facet.value.match(/^[0-9]+$/)) {
+                                                existingParamProps.set(
+                                                    facet.name,
+                                                    factory.createPropertyAssignment(facet.name, createSafeNumericLiteral(facet.value, factory)),
+                                                );
+                                            } else if (facet.value.match(/^[0-9a-fA-F]+$/)) {
+                                                console.log(`Writing ${JSON.stringify(facet)} as hex number`);
+                                                existingParamProps.set(
+                                                    facet.name,
+                                                    factory.createPropertyAssignment(
+                                                        facet.name,
+                                                        createSafeNumericLiteral(`0x${facet.value}`, factory),
+                                                    ),
+                                                );
+                                            }
                                         }
                                     }
                                 }
