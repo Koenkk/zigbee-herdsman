@@ -35,7 +35,7 @@ describe("Zcl", () => {
     it("Get cluster attribute by ID", () => {
         const cluster = Zcl.Utils.getCluster(0, undefined, {});
         const attribute = cluster.getAttribute(1);
-        expect(attribute).toStrictEqual({ID: 1, type: DataType.UINT8, name: "appVersion"});
+        expect(attribute).toStrictEqual({ID: 1, type: DataType.UINT8, name: "appVersion", default: 0, max: 255});
     });
 
     it("Cluster has attribute", () => {
@@ -499,8 +499,8 @@ describe("Zcl", () => {
                         "12": 0,
                         "100": 1,
                         "101": 0,
-                        "110": Number.NaN,
-                        "111": Number.NaN,
+                        "110": 255,
+                        "111": 255,
                         "148": 4,
                         "149": 0.14562499523162842,
                         "150": 2335.614013671875,
@@ -742,7 +742,7 @@ describe("Zcl", () => {
             commandID: 16,
             frameCounter: 1253,
             options: 5280,
-            payloadSize: Number.NaN,
+            payloadSize: 255,
         };
 
         expect(frame.header).toStrictEqual(header);
