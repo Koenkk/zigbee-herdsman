@@ -181,6 +181,101 @@ export enum IasZoneStatusShiftRight {
 }
 
 /**
+ * @type unk
+ */
+export interface AnyType {
+    type: number;
+    value: unknown;
+}
+
+export interface ReadAttributeResponseRecord {
+    attributeIdentifier: number;
+    status: number;
+    atttribute?: AnyType;
+}
+
+export interface WriteAttributeRecord {
+    attributeIdentifier: number;
+    attribute: AnyType;
+}
+
+export interface WriteAttributeResponseRecord {
+    status: number;
+    attributeIdentifier?: number;
+}
+
+/**
+ * @type enum8
+ */
+export enum ReportingRole {
+    Generator = 0x00,
+    Recipient = 0x01,
+}
+
+export interface ConfigureReportingRecord {
+    direction: number;
+    attributeIdentifier: number;
+    attributeType?: number;
+    minimumReportingInterval?: number;
+    maximumReportingInterval?: number;
+    reportableChange?: unknown;
+    timeout?: number;
+}
+
+export interface ConfigureReportingResponseRecord {
+    status: number;
+    direction?: number;
+    attributeIdentifier?: number;
+}
+
+export interface ReadReportingConfigurationRecord {
+    direction: number;
+    attributeIdentifier: number;
+}
+
+export interface ReadReportingConfigurationResponseRecord {
+    direction: number;
+    attributeIdentifier: number;
+    attributeType?: number;
+    minimumReportingInterval?: number;
+    maximumReportingInterval?: number;
+    reportableChange?: unknown;
+    timeout?: number;
+}
+
+export interface AttributeReportRecord {
+    attributeIdentifier: number;
+    attribute: AnyType;
+}
+
+export interface DiscoverAtttributesResponseRecord {
+    attributeIdentifier: number;
+    attributeType: number;
+}
+
+export interface ReadStructuredRecord {
+    attributeIdentifier: number;
+    index: number;
+}
+
+export interface WriteStructuredRecord {
+    attributeIdentifier: number;
+    selector: number;
+    attribute: AnyType;
+}
+
+export interface WriteStructuredResponseRecord {
+    status: number;
+    attributeIdentifier?: number;
+    selector?: number;
+}
+
+export interface DiscoverAtttributesExtendedResponseRecord {
+    attributeIdentifier: number;
+    accessControl: number;
+}
+
+/**
  * @cluster Basic
  * @type enum8
  */
@@ -983,8 +1078,8 @@ export enum PumpStatusShiftRight {
  */
 export interface TransitionType {
     transitionTime: number;
-    heatSetPoint: number;
-    coolSetPoint: number;
+    heatSetPoint?: number;
+    coolSetPoint?: number;
 }
 
 /**
@@ -2274,3 +2369,86 @@ export enum PayloadType {
     QueryJitterManufacturerCodeAndImageType = 0x02,
     QueryJitterManufacturerCodeImageTypeAndNewFileVersion = 0x03,
 }
+
+/** ZCL non-values by type name (key of `ZclType`). */
+export const ZCL_TYPE_INVALID_BY_TYPE_NAME: Readonly<Record<string, number | bigint>> = {
+    Bool: 255,
+    Uint8: 255,
+    Uint16: 65535,
+    Uint24: 16777215,
+    Uint32: 4294967295,
+    Uint40: 1099511627775,
+    Uint48: 281474976710655,
+    Uint56: 72057594037927935n,
+    Uint64: 18446744073709551615n,
+    Int8: -128,
+    Int16: -32768,
+    Int24: -8388608,
+    Int32: -2147483648,
+    Int40: -549755813888,
+    Int48: -140737488355328,
+    Int56: -36028797018963968n,
+    Int64: -9223372036854775808n,
+    Enum8: 255,
+    Enum16: 65535,
+    ToD: 4294967295,
+    Date: 4294967295,
+    Utc: 4294967295,
+    ClusterId: 65535,
+    AttribId: 65535,
+    BacOid: 4294967295,
+};
+
+/** ZCL non-values by type ID (value of `ZclType`). */
+export const ZCL_TYPE_INVALID_BY_TYPE: Readonly<Record<number, number | bigint>> = {
+    /** Bool */
+    16: 255,
+    /** Uint8 */
+    32: 255,
+    /** Uint16 */
+    33: 65535,
+    /** Uint24 */
+    34: 16777215,
+    /** Uint32 */
+    35: 4294967295,
+    /** Uint40 */
+    36: 1099511627775,
+    /** Uint48 */
+    37: 281474976710655,
+    /** Uint56 */
+    38: 72057594037927935n,
+    /** Uint64 */
+    39: 18446744073709551615n,
+    /** Int8 */
+    40: -128,
+    /** Int16 */
+    41: -32768,
+    /** Int24 */
+    42: -8388608,
+    /** Int32 */
+    43: -2147483648,
+    /** Int40 */
+    44: -549755813888,
+    /** Int48 */
+    45: -140737488355328,
+    /** Int56 */
+    46: -36028797018963968n,
+    /** Int64 */
+    47: -9223372036854775808n,
+    /** Enum8 */
+    48: 255,
+    /** Enum16 */
+    49: 65535,
+    /** ToD */
+    224: 4294967295,
+    /** Date */
+    225: 4294967295,
+    /** Utc */
+    226: 4294967295,
+    /** ClusterId */
+    232: 65535,
+    /** AttribId */
+    233: 65535,
+    /** BacOid */
+    234: 4294967295,
+};

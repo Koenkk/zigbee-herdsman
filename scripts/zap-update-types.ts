@@ -32,7 +32,7 @@ interface ParsedXMLTypeType extends XMLTypeType {
 
 interface ParsedType {
     name: string;
-    node: ts.EnumDeclaration | ts.InterfaceDeclaration | ts.TypeAliasDeclaration;
+    node: ts.EnumDeclaration | ts.InterfaceDeclaration | ts.TypeAliasDeclaration | ts.VariableStatement;
 }
 
 // #endregion
@@ -142,10 +142,58 @@ function toHex(value: string, pad4 = false): string {
 
 // #region XML Parsing and Type Collection
 
+const createSyntheticType = (
+    clusterName: string,
+    name: string,
+    parent: XMLAttr<{type: string}> & {restriction?: XMLRestriction[]; bitmap?: XMLBitmapDefinition[]},
+): ParsedXMLTypeType | undefined => {
+    if (parent.restriction || parent.bitmap) {
+        return {
+            // biome-ignore lint/style/useNamingConvention: API
+            $: {id: "", name: name, short: name, inheritsFrom: parent.$.type},
+            clusterName: clusterName,
+            restriction: parent.restriction,
+            bitmap: parent.bitmap,
+        };
+    }
+
+    return undefined;
+};
+
 async function collectAllTypes(startFile: string): Promise<ParsedXMLTypeType[]> {
     const allTypes: ParsedXMLTypeType[] = [];
     const visitedFiles = new Set<string>();
     const filesToProcess: string[] = [startFile];
+
+    const processSide = (clusterName: string, side: XMLClusterSide | undefined) => {
+        if (!side) {
+            return;
+        }
+
+        if (side.attributes) {
+            for (const attr of side.attributes[0].attribute) {
+                const synthetic = createSyntheticType(clusterName, attr.$.name, attr);
+
+                if (synthetic) {
+                    allTypes.push(synthetic);
+                }
+            }
+        }
+
+        if (side.commands) {
+            for (const cmd of side.commands[0].command) {
+                if (cmd.fields) {
+                    for (const field of cmd.fields[0].field) {
+                        const synthetic = createSyntheticType(clusterName, field.$.name, field);
+
+                        if (synthetic) {
+                            allTypes.push(synthetic);
+                        }
+                    }
+                }
+            }
+        }
+    };
 
     while (filesToProcess.length > 0) {
         const currentFile = filesToProcess.shift();
@@ -164,6 +212,7 @@ async function collectAllTypes(startFile: string): Promise<ParsedXMLTypeType[]> 
                 explicitRoot: true,
             })) as XMLRoot;
             const libraries = parsed["zcl:library"];
+            const global = parsed["zcl:global"];
             const clusters = parsed["zcl:cluster"];
 
             if (libraries) {
@@ -184,23 +233,13 @@ async function collectAllTypes(startFile: string): Promise<ParsedXMLTypeType[]> 
                 }
             }
 
-            const createSyntheticType = (
-                clusterName: string,
-                name: string,
-                parent: XMLAttr<{type: string}> & {restriction?: XMLRestriction[]; bitmap?: XMLBitmapDefinition[]},
-            ): ParsedXMLTypeType | undefined => {
-                if (parent.restriction || parent.bitmap) {
-                    return {
-                        // biome-ignore lint/style/useNamingConvention: API
-                        $: {id: "", name: name, short: name, inheritsFrom: parent.$.type},
-                        clusterName: clusterName,
-                        restriction: parent.restriction,
-                        bitmap: parent.bitmap,
-                    };
+            if (global) {
+                for (const lib of Array.isArray(global) ? global : [global]) {
+                    if (lib["type:type"]) {
+                        allTypes.push(...lib["type:type"]);
+                    }
                 }
-
-                return undefined;
-            };
+            }
 
             if (clusters) {
                 for (const cluster of Array.isArray(clusters) ? clusters : [clusters]) {
@@ -210,42 +249,12 @@ async function collectAllTypes(startFile: string): Promise<ParsedXMLTypeType[]> 
                         }
                     }
 
-                    const processSide = (side: XMLClusterSide | undefined) => {
-                        if (!side) {
-                            return;
-                        }
-
-                        if (side.attributes) {
-                            for (const attr of side.attributes[0].attribute) {
-                                const synthetic = createSyntheticType(cluster.$.name, attr.$.name, attr);
-
-                                if (synthetic) {
-                                    allTypes.push(synthetic);
-                                }
-                            }
-                        }
-
-                        if (side.commands) {
-                            for (const cmd of side.commands[0].command) {
-                                if (cmd.fields) {
-                                    for (const field of cmd.fields[0].field) {
-                                        const synthetic = createSyntheticType(cluster.$.name, field.$.name, field);
-
-                                        if (synthetic) {
-                                            allTypes.push(synthetic);
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    };
-
                     if (cluster.server) {
-                        processSide(cluster.server[0]);
+                        processSide(cluster.$.name, cluster.server[0]);
                     }
 
                     if (cluster.client) {
-                        processSide(cluster.client[0]);
+                        processSide(cluster.$.name, cluster.client[0]);
                     }
                 }
             }
@@ -273,7 +282,7 @@ class TypeResolver {
     resolve(short: string, factory: ts.NodeFactory): ts.TypeNode {
         const type = this.#typesByShort.get(short.toLowerCase());
 
-        if (type?.$.inheritsFrom) {
+        if (type?.$.inheritsFrom && !type.restriction?.some((r) => r["type:sequence"])) {
             return this.resolve(type.$.inheritsFrom, factory);
         }
 
@@ -339,7 +348,7 @@ class TypeResolver {
                 return factory.createTypeReferenceNode("Buffer");
 
             default:
-                if (type) {
+                if (type && type.$.short !== "unk") {
                     return factory.createTypeReferenceNode(simplePascalCase(type.$.short));
                 }
 
@@ -472,7 +481,14 @@ function createInterfaceFromSequence(
 
         const propertyType = resolver.resolve(f.$.type, factory);
 
-        members.push(factory.createPropertySignature(undefined, propertyName, undefined, propertyType));
+        members.push(
+            factory.createPropertySignature(
+                undefined,
+                propertyName,
+                f.$.presentIf ? factory.createToken(ts.SyntaxKind.QuestionToken) : undefined,
+                propertyType,
+            ),
+        );
     }
 
     const interfaceDeclaration = factory.createInterfaceDeclaration(
@@ -486,6 +502,100 @@ function createInterfaceFromSequence(
     addComments(factory, interfaceDeclaration, type);
 
     return interfaceDeclaration;
+}
+
+function createSafeNumericLiteral(value: string | number, bigInt: boolean, factory: ts.NodeFactory): ts.Expression {
+    if (bigInt) {
+        const num = BigInt(value);
+        const str = String(value);
+
+        return factory.createBigIntLiteral({base10Value: num < 0 ? str.slice(1) : str, negative: num < 0});
+    }
+
+    const num = Number(value);
+
+    if (num < 0) {
+        return factory.createPrefixUnaryExpression(ts.SyntaxKind.MinusToken, factory.createNumericLiteral(Math.abs(num)));
+    }
+
+    return factory.createNumericLiteral(num);
+}
+
+function createZclTypeInvalidConstants(
+    factory: ts.NodeFactory,
+    types: ParsedXMLTypeType[],
+): [byName: ts.VariableStatement, byType: ts.VariableStatement] | undefined {
+    const zclType = types.find((t) => t.$.short === "zclType");
+
+    if (!zclType?.restriction?.[0]?.["type:enumeration"]) {
+        return undefined;
+    }
+
+    const zclTypeEnumMap = new Map(zclType.restriction[0]["type:enumeration"].map((e) => [e.$.name, e.$.value]));
+    const byNameProperties: ts.PropertyAssignment[] = [];
+    const byTypeProperties: ts.PropertyAssignment[] = [];
+
+    for (const type of types) {
+        const invalidValue = type.restriction?.[0]?.["type:invalid"]?.[0]?.$?.value;
+        const typeId = zclTypeEnumMap.get(type.$.short);
+
+        if (invalidValue && typeId) {
+            const name = pascalCase(type.$.short);
+            const invalidValueLiteral = createSafeNumericLiteral(invalidValue, name.endsWith("56") || name.endsWith("64"), factory);
+
+            byNameProperties.push(factory.createPropertyAssignment(factory.createIdentifier(name), invalidValueLiteral));
+
+            const byTypeProp = factory.createPropertyAssignment(factory.createNumericLiteral(Number.parseInt(typeId, 16)), invalidValueLiteral);
+            const commentText = `* ${name} `;
+
+            ts.addSyntheticLeadingComment(byTypeProp, ts.SyntaxKind.MultiLineCommentTrivia, commentText, true);
+            byTypeProperties.push(byTypeProp);
+        }
+    }
+
+    const invalidVal = factory.createUnionTypeNode([
+        factory.createKeywordTypeNode(ts.SyntaxKind.NumberKeyword),
+        factory.createKeywordTypeNode(ts.SyntaxKind.BigIntKeyword),
+    ]);
+    const byNameCommentText = "* ZCL non-values by type name (key of `ZclType`). ";
+    const byNameConst = factory.createVariableStatement(
+        [factory.createToken(ts.SyntaxKind.ExportKeyword)],
+        factory.createVariableDeclarationList(
+            [
+                factory.createVariableDeclaration(
+                    "ZCL_TYPE_INVALID_BY_TYPE_NAME",
+                    undefined,
+                    factory.createTypeReferenceNode("Readonly", [
+                        factory.createTypeReferenceNode("Record", [factory.createKeywordTypeNode(ts.SyntaxKind.StringKeyword), invalidVal]),
+                    ]),
+                    factory.createObjectLiteralExpression(byNameProperties, true),
+                ),
+            ],
+            ts.NodeFlags.Const,
+        ),
+    );
+    const byTypeCommentText = "* ZCL non-values by type ID (value of `ZclType`). ";
+    const byTypeConst = factory.createVariableStatement(
+        [factory.createToken(ts.SyntaxKind.ExportKeyword)],
+        factory.createVariableDeclarationList(
+            [
+                factory.createVariableDeclaration(
+                    "ZCL_TYPE_INVALID_BY_TYPE",
+                    undefined,
+                    factory.createTypeReferenceNode("Readonly", [
+                        factory.createTypeReferenceNode("Record", [factory.createKeywordTypeNode(ts.SyntaxKind.NumberKeyword), invalidVal]),
+                    ]),
+                    factory.createObjectLiteralExpression(byTypeProperties, true),
+                ),
+            ],
+            ts.NodeFlags.Const,
+        ),
+    );
+
+    ts.addSyntheticLeadingComment(byNameConst, ts.SyntaxKind.MultiLineCommentTrivia, byNameCommentText, true);
+    ts.addSyntheticLeadingComment(byTypeConst, ts.SyntaxKind.MultiLineCommentTrivia, byTypeCommentText, true);
+
+    return [byNameConst, byTypeConst];
 }
 
 function processTypes(factory: ts.NodeFactory, types: ParsedXMLTypeType[], resolver: TypeResolver): ParsedType[] {
@@ -531,6 +641,13 @@ function processTypes(factory: ts.NodeFactory, types: ParsedXMLTypeType[], resol
                 processedNames.add(name);
             }
         }
+    }
+
+    const zclTypeInvalidConsts = createZclTypeInvalidConstants(factory, types);
+
+    if (zclTypeInvalidConsts) {
+        processed.push({name: "ZCL_TYPE_INVALID_BY_TYPE_NAME", node: zclTypeInvalidConsts[0]});
+        processed.push({name: "ZCL_TYPE_INVALID_BY_TYPE", node: zclTypeInvalidConsts[1]});
     }
 
     return processed;

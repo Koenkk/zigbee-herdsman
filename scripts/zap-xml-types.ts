@@ -15,7 +15,12 @@ export interface XMLSequence {
     field: XMLSequenceField[];
 }
 
-export interface XMLSequenceField extends XMLAttr<{name: string; type: string}> {}
+export interface XMLSequenceField
+    extends XMLAttr<{
+        name: string;
+        type: string;
+        presentIf?: string;
+    }> {}
 
 export interface XMLTypeType
     extends XMLAttr<{
@@ -34,6 +39,12 @@ export interface XMLLibrary {
     "type:type"?: XMLTypeType[];
 }
 
+export interface XMLGlobal {
+    "type:type"?: XMLTypeType[];
+    attributes?: {attribute: XMLAttributeDefinition[]}[];
+    commands?: {command: XMLCommandDefinition[]}[];
+}
+
 export interface XMLRestriction {
     "type:length"?: XMLAttr<{value: string}>[];
     "type:minLength"?: XMLAttr<{value: string}>[];
@@ -42,13 +53,13 @@ export interface XMLRestriction {
     "type:minInclusive"?: XMLAttr<{value: string}>[];
     "type:maxExclusive"?: XMLAttr<{value: string}>[];
     "type:maxInclusive"?: XMLAttr<{value: string}>[];
-    /** only used for `type:type` (data type non-value) */
-    "type:invalid"?: XMLAttr<{value: string}>[];
     "type:minInclusiveRef"?: XMLAttr<{ref: string}>[];
     "type:minExclusiveRef"?: XMLAttr<{ref: string}>[];
     "type:maxInclusiveRef"?: XMLAttr<{ref: string}>[];
     "type:maxExclusiveRef"?: XMLAttr<{ref: string}>[];
     "type:special"?: XMLAttr<{name: string; value: string}>[];
+    /** only used for `type:type` (data type non-value) */
+    "type:invalid"?: XMLAttr<{value: string}>[];
     /** for types gen */
     "type:enumeration"?: XMLEnumeration[];
     "type:sequence"?: XMLSequence[];
@@ -131,4 +142,5 @@ export interface XMLRoot {
     "zcl:cluster"?: XMLCluster | XMLCluster[];
     "zcl:derivedCluster"?: XMLDerivedCluster | XMLDerivedCluster[];
     "zcl:library"?: XMLLibrary | XMLLibrary[];
+    "zcl:global"?: XMLGlobal | XMLGlobal[];
 }
