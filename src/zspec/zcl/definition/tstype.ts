@@ -182,8 +182,11 @@ interface Restrictions {
 /**
  * @see https://github.com/project-chip/zap/blob/master/zcl-builtin/dotdot/README.md#attributes
  * Extra metadata:
- * - writableIf: Indicates an expression that specifies the writability of the attribute. Defaults to true. Note: An attribute is only writable if this attribute and the writable attribute are true.
- * - requiredIf: Allows for an expression to be implemented which indicates the conditions in which an attribute is mandatory. Defaults to false
+ * - writableIf: Indicates an expression that specifies the writability of the attribute.
+ *               Defaults to true.
+ *               Note: An attribute is only writable if this attribute and the writable attribute are true.
+ * - requiredIf: Allows for an expression to be implemented which indicates the conditions in which an attribute is mandatory.
+ *               Defaults to false
  */
 export interface Attribute extends Restrictions {
     ID: number;
@@ -204,7 +207,11 @@ export interface Attribute extends Restrictions {
     required?: true;
     /** Specifies the default value of an attribute. No Default */
     default?: number | string;
-    /** Specifies that the default value of the attribute takes the value of the referenced attribute. Must be another attriibute in this cluster. Referenced by name, schema forces this during validation. */
+    /**
+     * Specifies that the default value of the attribute takes the value of the referenced attribute.
+     * Must be another attriibute in this cluster.
+     * Referenced by name, schema forces this during validation.
+     */
     defaultRef?: string;
     /** If attribute is client side */
     client?: true;
@@ -213,7 +220,15 @@ export interface Attribute extends Restrictions {
 export interface Parameter extends Restrictions {
     name: string;
     type: DataType | BuffaloZclDataType;
+    /**
+     * When an array is present, specifies the size (in octets) of the field that specifies the array length.
+     * Defaults to 1.
+     */
     arrayLengthSize?: number;
+    /**
+     * When the number of elements in an array field is specified by another field which does not immediately precede an array field,
+     * that field may be referenced using this attribute.
+     */
     arrayLengthField?: string;
 }
 
