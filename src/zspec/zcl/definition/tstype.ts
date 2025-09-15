@@ -193,15 +193,15 @@ export interface Attribute extends Restrictions {
     name: string;
     type: DataType;
     manufacturerCode?: number;
-    /** If the attribute is readable OTA. Defaults to true */
+    /** If the attribute is readable OTA. Defaults to true. NOTE: marked as `R` in spec PDF */
     readable?: false;
-    /** If the attribute is writable OTA. Defaults to false. */
+    /** If the attribute is writable OTA. Defaults to false. NOTE: marked as `W` in spec PDF */
     writable?: true;
     /** If the attribute is specified as writable this indicates if the write is required. Defaults to false. */
     writeOptional?: true;
-    /** If attribute is required to be reportable. Defaults to false */
+    /** If attribute is required to be reportable. Defaults to false. NOTE: marked as `P` in spec PDF */
     reportRequired?: true;
-    /** If attribute is required to be part of the scene extensions. Defaults to false */
+    /** If attribute is required to be part of the scene extensions. Defaults to false. NOTE: marked as `S` in spec PDF */
     sceneRequired?: true;
     /** If the attribute is mandatory. Defaults to false */
     required?: true;
