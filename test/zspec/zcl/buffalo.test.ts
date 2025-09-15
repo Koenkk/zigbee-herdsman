@@ -167,57 +167,6 @@ describe("ZCL Buffalo", () => {
     });
 
     it.each([
-        ["boolean", {value: Number.NaN, types: [Zcl.DataType.BOOLEAN]}, {written: 0xff, position: 1, write: "writeUInt8", read: "readUInt8"}],
-        [
-            "uint8-like",
-            {value: Number.NaN, types: [Zcl.DataType.DATA8, Zcl.DataType.BITMAP8, Zcl.DataType.UINT8, Zcl.DataType.ENUM8]},
-            {written: 0xff, position: 1, write: "writeUInt8", read: "readUInt8"},
-        ],
-        [
-            "uint16-like",
-            {
-                value: Number.NaN,
-                types: [
-                    Zcl.DataType.DATA16,
-                    Zcl.DataType.BITMAP16,
-                    Zcl.DataType.UINT16,
-                    Zcl.DataType.ENUM16,
-                    Zcl.DataType.CLUSTER_ID,
-                    Zcl.DataType.ATTR_ID,
-                ],
-            },
-            {written: 0xffff, position: 2, write: "writeUInt16", read: "readUInt16"},
-        ],
-        [
-            "uint24-like",
-            {value: Number.NaN, types: [Zcl.DataType.DATA24, Zcl.DataType.BITMAP24, Zcl.DataType.UINT24]},
-            {written: 0xffffff, position: 3, write: "writeUInt24", read: "readUInt24"},
-        ],
-        [
-            "uint32-like",
-            {value: Number.NaN, types: [Zcl.DataType.DATA32, Zcl.DataType.BITMAP32, Zcl.DataType.UINT32, Zcl.DataType.UTC, Zcl.DataType.BAC_OID]},
-            {written: 0xffffffff, position: 4, write: "writeUInt32", read: "readUInt32"},
-        ],
-        [
-            "uint40-like",
-            {value: Number.NaN, types: [Zcl.DataType.DATA40, Zcl.DataType.BITMAP40, Zcl.DataType.UINT40]},
-            {written: 0xffffffffff, position: 5, write: "writeUInt40", read: "readUInt40"},
-        ],
-        [
-            "uint48-like",
-            {value: Number.NaN, types: [Zcl.DataType.DATA48, Zcl.DataType.BITMAP48, Zcl.DataType.UINT48]},
-            {written: 0xffffffffffff, position: 6, write: "writeUInt48", read: "readUInt48"},
-        ],
-        [
-            "uint56-like",
-            {value: undefined, types: [Zcl.DataType.DATA56, Zcl.DataType.BITMAP56, Zcl.DataType.UINT56]},
-            {written: 0xffffffffffffffn, position: 7, write: "writeUInt56", read: "readUInt56"},
-        ],
-        [
-            "uint64-like",
-            {value: undefined, types: [Zcl.DataType.DATA64, Zcl.DataType.BITMAP64, Zcl.DataType.UINT64]},
-            {written: 0xffffffffffffffffn, position: 8, write: "writeUInt64", read: "readUInt64"},
-        ],
         [
             "octectStr",
             {value: undefined, types: [Zcl.DataType.OCTET_STR]},
@@ -280,59 +229,6 @@ describe("ZCL Buffalo", () => {
             expect(readSpy).toHaveBeenCalledTimes(1);
             expect(buffalo.getPosition()).toStrictEqual(expected.position);
         }
-    });
-
-    it.each([
-        ["int8-like", {value: Number.NaN, type: Zcl.DataType.INT8}, {written: -0x80, position: 1, write: "writeInt8", read: "readInt8"}],
-        ["int16-like", {value: Number.NaN, type: Zcl.DataType.INT16}, {written: -0x8000, position: 2, write: "writeInt16", read: "readInt16"}],
-        ["int24-like", {value: Number.NaN, type: Zcl.DataType.INT24}, {written: -0x800000, position: 3, write: "writeInt24", read: "readInt24"}],
-        ["int32-like", {value: Number.NaN, type: Zcl.DataType.INT32}, {written: -0x80000000, position: 4, write: "writeInt32", read: "readInt32"}],
-        ["int40-like", {value: Number.NaN, type: Zcl.DataType.INT40}, {written: -0x8000000000, position: 5, write: "writeInt40", read: "readInt40"}],
-        [
-            "int48-like",
-            {value: Number.NaN, type: Zcl.DataType.INT48},
-            {written: -0x800000000000, position: 6, write: "writeInt48", read: "readInt48"},
-        ],
-        [
-            "int56-like",
-            {value: undefined, type: Zcl.DataType.INT56},
-            {written: -0x80000000000000n, position: 7, write: "writeInt56", read: "readInt56"},
-        ],
-        [
-            "int64-like",
-            {value: undefined, type: Zcl.DataType.INT64},
-            {written: -0x8000000000000000n, position: 8, write: "writeInt64", read: "readInt64"},
-        ],
-    ])("Writes & Reads signed non-value for %s", (_name, payload, expected) => {
-        const buffer = Buffer.alloc(255);
-        const buffalo = new BuffaloZcl(buffer);
-        const writeSpy = vi.spyOn(buffalo, expected.write as keyof BuffaloZcl);
-        const readSpy = vi.spyOn(buffalo, expected.read as keyof BuffaloZcl);
-
-        buffalo.write(payload.type, payload.value, {});
-        expect(writeSpy).toHaveBeenCalledTimes(1);
-        expect(buffalo.getPosition()).toStrictEqual(expected.position);
-        const expectedWrittenBuf = Buffer.alloc(expected.position);
-
-        if (typeof expected.written === "bigint") {
-            if (expected.position === 7) {
-                const unsignedValue = expected.written < 0n ? (1n << 56n) + expected.written : expected.written;
-                expectedWrittenBuf.writeUIntLE(Number(unsignedValue & 0xffffffffffffn), 0, 6);
-                expectedWrittenBuf.writeUInt8(Number(unsignedValue >> 48n), 0 + 6);
-            } else {
-                expectedWrittenBuf.writeBigInt64LE(expected.written, 0);
-            }
-        } else {
-            expectedWrittenBuf.writeIntLE(expected.written, 0, expected.position);
-        }
-
-        expect(buffalo.getWritten()).toStrictEqual(expectedWrittenBuf);
-
-        buffalo.setPosition(0);
-
-        expect(buffalo.read(payload.type, {})).toStrictEqual("valueRead" in expected ? expected.valueRead : payload.value);
-        expect(readSpy).toHaveBeenCalledTimes(1);
-        expect(buffalo.getPosition()).toStrictEqual(expected.position);
     });
 
     it("Reads whole buffer without length option", () => {

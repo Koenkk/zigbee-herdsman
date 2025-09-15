@@ -18,130 +18,198 @@ import type {
 export interface TClusters {
     genBasic: {
         attributes: {
-            /** ID: 0 | Type: UINT8 */
+            /** ID=0x0000 | type=UINT8 | required=true | max=255 | default=3 */
             zclVersion: number;
-            /** ID: 1 | Type: UINT8 */
+            /** ID=0x0001 | type=UINT8 | max=255 | default=0 */
             appVersion: number;
-            /** ID: 2 | Type: UINT8 */
+            /** ID=0x0002 | type=UINT8 | max=255 | default=0 */
             stackVersion: number;
-            /** ID: 3 | Type: UINT8 */
+            /** ID=0x0003 | type=UINT8 | max=255 | default=0 */
             hwVersion: number;
-            /** ID: 4 | Type: CHAR_STR */
+            /** ID=0x0004 | type=CHAR_STR | default= | maxLength=32 */
             manufacturerName: string;
-            /** ID: 5 | Type: CHAR_STR */
+            /** ID=0x0005 | type=CHAR_STR | default= | maxLength=32 */
             modelId: string;
-            /** ID: 6 | Type: CHAR_STR */
+            /** ID=0x0006 | type=CHAR_STR | default= | maxLength=16 */
             dateCode: string;
-            /** ID: 7 | Type: ENUM8 */
+            /** ID=0x0007 | type=ENUM8 | required=true | default=0 */
             powerSource: number;
-            /** ID: 8 | Type: ENUM8 */
+            /** ID=0x0008 | type=ENUM8 | default=255 */
             appProfileVersion: number;
-            /** ID: 9 | Type: ENUM8 */
+            /** ID=0x0009 | type=ENUM8 | default=255 */
             genericDeviceType: number;
-            /** ID: 10 | Type: OCTET_STR */
+            /** ID=0x000a | type=OCTET_STR | default= */
             productCode: Buffer;
-            /** ID: 11 | Type: CHAR_STR */
+            /** ID=0x000b | type=CHAR_STR | default= */
             productUrl: string;
-            /** ID: 12 | Type: CHAR_STR */
+            /** ID=0x000c | type=CHAR_STR | default= */
             manufacturerVersionDetails: string;
-            /** ID: 13 | Type: CHAR_STR */
+            /** ID=0x000d | type=CHAR_STR | default= */
             serialNumber: string;
-            /** ID: 14 | Type: CHAR_STR */
+            /** ID=0x000e | type=CHAR_STR | default= */
             productLabel: string;
-            /** ID: 16 | Type: CHAR_STR */
+            /** ID=0x0010 | type=CHAR_STR | writable=true | default= | maxLength=16 */
             locationDesc: string;
-            /** ID: 17 | Type: ENUM8 */
+            /** ID=0x0011 | type=ENUM8 | writable=true | default=0 */
             physicalEnv: number;
-            /** ID: 18 | Type: BOOLEAN */
+            /** ID=0x0012 | type=BOOLEAN | writable=true | default=1 */
             deviceEnabled: number;
-            /** ID: 19 | Type: BITMAP8 */
+            /** ID=0x0013 | type=BITMAP8 | writable=true | default=0 */
             alarmMask: number;
-            /** ID: 20 | Type: BITMAP8 */
+            /** ID=0x0014 | type=BITMAP8 | writable=true | default=0 */
             disableLocalConfig: number;
-            /** ID: 16384 | Type: CHAR_STR */
+            /** ID=0x4000 | type=CHAR_STR | default= | maxLength=16 */
             swBuildId: string;
-            /** ID: 57856 | Type: INT8 | Specific to manufacturer: SCHNEIDER_ELECTRIC (4190) */
+            /** ID=0xe200 | type=INT8 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) */
             schneiderMeterRadioPower?: number;
         };
         commands: {
-            /** ID: 0 */
+            /** ID=0x00 */
             resetFactDefault: Record<string, never>;
-            /** ID: 240 */
+            /** ID=0xf0 */
             tuyaSetup: Record<string, never>;
         };
         commandResponses: never;
     };
     genPowerCfg: {
         attributes: {
-            /** ID: 0 | Type: UINT16 */
+            /** ID=0x0000 | type=UINT16 | max=65535 */
             mainsVoltage: number;
-            /** ID: 1 | Type: UINT8 */
+            /** ID=0x0001 | type=UINT8 | max=255 */
             mainsFrequency: number;
-            /** ID: 16 | Type: BITMAP8 */
+            /** ID=0x0010 | type=BITMAP8 | writable=true | default=0 */
             mainsAlarmMask: number;
-            /** ID: 17 | Type: UINT16 */
+            /** ID=0x0011 | type=UINT16 | writable=true | max=65535 | default=0 */
             mainsVoltMinThres: number;
-            /** ID: 18 | Type: UINT16 */
+            /** ID=0x0012 | type=UINT16 | writable=true | max=65535 | default=65535 */
             mainsVoltMaxThres: number;
-            /** ID: 19 | Type: UINT16 */
+            /** ID=0x0013 | type=UINT16 | writable=true | max=65535 | default=0 */
             mainsVoltageDwellTripPoint: number;
-            /** ID: 32 | Type: UINT8 */
+            /** ID=0x0020 | type=UINT8 | max=255 */
             batteryVoltage: number;
-            /** ID: 33 | Type: UINT8 */
+            /** ID=0x0021 | type=UINT8 | reportRequired=true | max=255 | default=0 */
             batteryPercentageRemaining: number;
-            /** ID: 48 | Type: CHAR_STR */
+            /** ID=0x0030 | type=CHAR_STR | writable=true | default= | maxLength=16 */
             batteryManufacturer: string;
-            /** ID: 49 | Type: ENUM8 */
+            /** ID=0x0031 | type=ENUM8 | writable=true | default=255 */
             batterySize: number;
-            /** ID: 50 | Type: UINT16 */
+            /** ID=0x0032 | type=UINT16 | writable=true | max=65535 */
             batteryAHrRating: number;
-            /** ID: 51 | Type: UINT8 */
+            /** ID=0x0033 | type=UINT8 | writable=true | max=255 */
             batteryQuantity: number;
-            /** ID: 52 | Type: UINT8 */
+            /** ID=0x0034 | type=UINT8 | writable=true | max=255 */
             batteryRatedVoltage: number;
-            /** ID: 53 | Type: BITMAP8 */
+            /** ID=0x0035 | type=BITMAP8 | writable=true | default=0 */
             batteryAlarmMask: number;
-            /** ID: 54 | Type: UINT8 */
+            /** ID=0x0036 | type=UINT8 | writable=true | max=255 | default=0 */
             batteryVoltMinThres: number;
-            /** ID: 55 | Type: UINT8 */
+            /** ID=0x0037 | type=UINT8 | writable=true | writeOptional=true | max=255 | default=0 */
             batteryVoltThres1: number;
-            /** ID: 56 | Type: UINT8 */
+            /** ID=0x0038 | type=UINT8 | writable=true | writeOptional=true | max=255 | default=0 */
             batteryVoltThres2: number;
-            /** ID: 57 | Type: UINT8 */
+            /** ID=0x0039 | type=UINT8 | writable=true | writeOptional=true | max=255 | default=0 */
             batteryVoltThres3: number;
-            /** ID: 58 | Type: UINT8 */
+            /** ID=0x003a | type=UINT8 | writable=true | writeOptional=true | max=255 | default=0 */
             batteryPercentMinThres: number;
-            /** ID: 59 | Type: UINT8 */
+            /** ID=0x003b | type=UINT8 | writable=true | writeOptional=true | max=255 | default=0 */
             batteryPercentThres1: number;
-            /** ID: 60 | Type: UINT8 */
+            /** ID=0x003c | type=UINT8 | writable=true | writeOptional=true | max=255 | default=0 */
             batteryPercentThres2: number;
-            /** ID: 61 | Type: UINT8 */
+            /** ID=0x003d | type=UINT8 | writable=true | writeOptional=true | max=255 | default=0 */
             batteryPercentThres3: number;
-            /** ID: 62 | Type: BITMAP32 */
+            /** ID=0x003e | type=BITMAP32 | default=0 */
             batteryAlarmState: number;
+            /** ID=0x0040 | type=UINT8 | max=255 */
+            battery2Voltage: number;
+            /** ID=0x0041 | type=UINT8 | reportRequired=true | max=255 | default=0 */
+            battery2PercentageRemaining: number;
+            /** ID=0x0050 | type=CHAR_STR | writable=true | default= | maxLength=16 */
+            battery2Manufacturer: string;
+            /** ID=0x0051 | type=ENUM8 | writable=true | default=255 */
+            battery2Size: number;
+            /** ID=0x0052 | type=UINT16 | writable=true | max=65535 */
+            battery2AHrRating: number;
+            /** ID=0x0053 | type=UINT8 | writable=true | max=255 */
+            battery2Quantity: number;
+            /** ID=0x0054 | type=UINT8 | writable=true | max=255 */
+            battery2RatedVoltage: number;
+            /** ID=0x0055 | type=BITMAP8 | writable=true | default=0 */
+            battery2AlarmMask: number;
+            /** ID=0x0056 | type=UINT8 | writable=true | max=255 | default=0 */
+            battery2VoltageMinThreshold: number;
+            /** ID=0x0057 | type=UINT8 | writable=true | writeOptional=true | max=255 | default=0 */
+            battery2VoltageThreshold1: number;
+            /** ID=0x0058 | type=UINT8 | writable=true | writeOptional=true | max=255 | default=0 */
+            battery2VoltageThreshold2: number;
+            /** ID=0x0059 | type=UINT8 | writable=true | writeOptional=true | max=255 | default=0 */
+            battery2VoltageThreshold3: number;
+            /** ID=0x005a | type=UINT8 | writable=true | writeOptional=true | max=255 | default=0 */
+            battery2PercentageMinThreshold: number;
+            /** ID=0x005b | type=UINT8 | writable=true | writeOptional=true | max=255 | default=0 */
+            battery2PercentageThreshold1: number;
+            /** ID=0x005c | type=UINT8 | writable=true | writeOptional=true | max=255 | default=0 */
+            battery2PercentageThreshold2: number;
+            /** ID=0x005d | type=UINT8 | writable=true | writeOptional=true | max=255 | default=0 */
+            battery2PercentageThreshold3: number;
+            /** ID=0x005e | type=BITMAP32 | default=0 */
+            battery2AlarmState: number;
+            /** ID=0x0060 | type=UINT8 | max=255 */
+            battery3Voltage: number;
+            /** ID=0x0061 | type=UINT8 | reportRequired=true | max=255 | default=0 */
+            battery3PercentageRemaining: number;
+            /** ID=0x0070 | type=CHAR_STR | writable=true | default= | maxLength=16 */
+            battery3Manufacturer: string;
+            /** ID=0x0071 | type=ENUM8 | writable=true | default=255 */
+            battery3Size: number;
+            /** ID=0x0072 | type=UINT16 | writable=true | max=65535 */
+            battery3AHrRating: number;
+            /** ID=0x0073 | type=UINT8 | writable=true | max=255 */
+            battery3Quantity: number;
+            /** ID=0x0074 | type=UINT8 | writable=true | max=255 */
+            battery3RatedVoltage: number;
+            /** ID=0x0075 | type=BITMAP8 | writable=true | default=0 */
+            battery3AlarmMask: number;
+            /** ID=0x0076 | type=UINT8 | writable=true | max=255 | default=0 */
+            battery3VoltageMinThreshold: number;
+            /** ID=0x0077 | type=UINT8 | writable=true | writeOptional=true | max=255 | default=0 */
+            battery3VoltageThreshold1: number;
+            /** ID=0x0078 | type=UINT8 | writable=true | writeOptional=true | max=255 | default=0 */
+            battery3VoltageThreshold2: number;
+            /** ID=0x0079 | type=UINT8 | writable=true | writeOptional=true | max=255 | default=0 */
+            battery3VoltageThreshold3: number;
+            /** ID=0x007a | type=UINT8 | writable=true | writeOptional=true | max=255 | default=0 */
+            battery3PercentageMinThreshold: number;
+            /** ID=0x007b | type=UINT8 | writable=true | writeOptional=true | max=255 | default=0 */
+            battery3PercentageThreshold1: number;
+            /** ID=0x007c | type=UINT8 | writable=true | writeOptional=true | max=255 | default=0 */
+            battery3PercentageThreshold2: number;
+            /** ID=0x007d | type=UINT8 | writable=true | writeOptional=true | max=255 | default=0 */
+            battery3PercentageThreshold3: number;
+            /** ID=0x007e | type=BITMAP32 | default=0 */
+            battery3AlarmState: number;
         };
         commands: never;
         commandResponses: never;
     };
     genDeviceTempCfg: {
         attributes: {
-            /** ID: 0 | Type: INT16 */
+            /** ID=0x0000 | type=INT16 | required=true | min=-200 | max=200 */
             currentTemperature: number;
-            /** ID: 1 | Type: INT16 */
+            /** ID=0x0001 | type=INT16 | min=-200 | max=200 */
             minTempExperienced: number;
-            /** ID: 2 | Type: INT16 */
+            /** ID=0x0002 | type=INT16 | min=-200 | max=200 */
             maxTempExperienced: number;
-            /** ID: 3 | Type: UINT16 */
+            /** ID=0x0003 | type=UINT16 | max=65535 | default=0 */
             overTempTotalDwell: number;
-            /** ID: 16 | Type: BITMAP8 */
+            /** ID=0x0010 | type=BITMAP8 | writable=true | default=0 */
             devTempAlarmMask: number;
-            /** ID: 17 | Type: INT16 */
+            /** ID=0x0011 | type=INT16 | writable=true | min=-200 | max=200 | maxExclusiveRef=highTempThres */
             lowTempThres: number;
-            /** ID: 18 | Type: INT16 */
+            /** ID=0x0012 | type=INT16 | writable=true | min=-200 | max=200 | minExclusiveRef=lowTempThres */
             highTempThres: number;
-            /** ID: 19 | Type: UINT24 */
+            /** ID=0x0013 | type=UINT24 | writable=true | max=16777215 */
             lowTempDwellTripPoint: number;
-            /** ID: 20 | Type: UINT24 */
+            /** ID=0x0014 | type=UINT24 | writable=true | max=16777215 */
             highTempDwellTripPoint: number;
         };
         commands: never;
@@ -149,419 +217,421 @@ export interface TClusters {
     };
     genIdentify: {
         attributes: {
-            /** ID: 0 | Type: UINT16 */
+            /** ID=0x0000 | type=UINT16 | writable=true | required=true | max=65535 | default=0 */
             identifyTime: number;
-            /** ID: 1 | Type: UNKNOWN */
+            /** ID=0x0001 | type=UNKNOWN */
             identifyCommissionState: never;
         };
         commands: {
-            /** ID: 0 */
+            /** ID=0x00 | required=true */
             identify: {
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 identifytime: number;
             };
-            /** ID: 1 */
+            /** ID=0x01 | required=true */
             identifyQuery: Record<string, never>;
-            /** ID: 2 */
+            /** ID=0x02 */
             ezmodeInvoke: {
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 action: number;
             };
-            /** ID: 3 */
+            /** ID=0x03 */
             updateCommissionState: {
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 action: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 commstatemask: number;
             };
-            /** ID: 64 */
+            /** ID=0x40 */
             triggerEffect: {
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 effectid: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 effectvariant: number;
             };
         };
         commandResponses: {
-            /** ID: 0 */
+            /** ID=0x00 | required=true */
             identifyQueryRsp: {
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 timeout: number;
             };
         };
     };
     genGroups: {
         attributes: {
-            /** ID: 0 | Type: BITMAP8 */
+            /** ID=0x0000 | type=BITMAP8 | required=true */
             nameSupport: number;
         };
         commands: {
-            /** ID: 0 | Response ID: 0 */
+            /** ID=0x00 | response=0 | required=true */
             add: {
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 groupid: number;
-                /** Type: CHAR_STR */
+                /** type=CHAR_STR */
                 groupname: string;
             };
-            /** ID: 1 | Response ID: 1 */
+            /** ID=0x01 | response=1 | required=true */
             view: {
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 groupid: number;
             };
-            /** ID: 2 | Response ID: 2 */
+            /** ID=0x02 | response=2 | required=true */
             getMembership: {
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 groupcount: number;
-                /** Type: LIST_UINT16 */
+                /** type=LIST_UINT16 */
                 grouplist: number[];
             };
-            /** ID: 3 | Response ID: 3 */
+            /** ID=0x03 | response=3 | required=true */
             remove: {
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 groupid: number;
             };
-            /** ID: 4 */
+            /** ID=0x04 | required=true */
             removeAll: Record<string, never>;
-            /** ID: 5 */
+            /** ID=0x05 | required=true */
             addIfIdentifying: {
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 groupid: number;
-                /** Type: CHAR_STR */
+                /** type=CHAR_STR */
                 groupname: string;
             };
-            /** ID: 240 */
+            /** ID=0xf0 */
             miboxerSetZones: {
-                /** Type: LIST_MIBOXER_ZONES */
+                /** type=LIST_MIBOXER_ZONES */
                 zones: MiboxerZone[];
             };
         };
         commandResponses: {
-            /** ID: 0 */
+            /** ID=0x00 | required=true */
             addRsp: {
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 status: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 groupid: number;
             };
-            /** ID: 1 */
+            /** ID=0x01 | required=true */
             viewRsp: {
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 status: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 groupid: number;
-                /** Type: CHAR_STR */
+                /** type=CHAR_STR */
                 groupname: string;
             };
-            /** ID: 2 */
+            /** ID=0x02 | required=true */
             getMembershipRsp: {
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 capacity: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 groupcount: number;
-                /** Type: LIST_UINT16 */
+                /** type=LIST_UINT16 */
                 grouplist: number[];
             };
-            /** ID: 3 */
+            /** ID=0x03 | required=true */
             removeRsp: {
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 status: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 groupid: number;
             };
         };
     };
     genScenes: {
         attributes: {
-            /** ID: 0 | Type: UINT8 */
+            /** ID=0x0000 | type=UINT8 | required=true | default=0 */
             count: number;
-            /** ID: 1 | Type: UINT8 */
+            /** ID=0x0001 | type=UINT8 | required=true | default=0 */
             currentScene: number;
-            /** ID: 2 | Type: UINT16 */
+            /** ID=0x0002 | type=UINT16 | required=true | default=0 */
             currentGroup: number;
-            /** ID: 3 | Type: BOOLEAN */
+            /** ID=0x0003 | type=BOOLEAN | required=true | default=0 */
             sceneValid: number;
-            /** ID: 4 | Type: BITMAP8 */
+            /** ID=0x0004 | type=BITMAP8 | required=true */
             nameSupport: number;
-            /** ID: 5 | Type: IEEE_ADDR */
+            /** ID=0x0005 | type=IEEE_ADDR | special=UnknownOrNotConfigured,ffffffffffffffff */
             lastCfgBy: string;
         };
         commands: {
-            /** ID: 0 | Response ID: 0 */
+            /** ID=0x00 | response=0 | required=true */
             add: {
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 groupid: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 sceneid: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 transtime: number;
-                /** Type: CHAR_STR */
+                /** type=CHAR_STR */
                 scenename: string;
-                /** Type: EXTENSION_FIELD_SETS */
+                /** type=EXTENSION_FIELD_SETS | arrayLengthSize=0 */
                 extensionfieldsets: ExtensionFieldSet[];
             };
-            /** ID: 1 | Response ID: 1 */
+            /** ID=0x01 | response=1 | required=true */
             view: {
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 groupid: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 sceneid: number;
             };
-            /** ID: 2 | Response ID: 2 */
+            /** ID=0x02 | response=2 | required=true */
             remove: {
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 groupid: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 sceneid: number;
             };
-            /** ID: 3 | Response ID: 3 */
+            /** ID=0x03 | response=3 | required=true */
             removeAll: {
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 groupid: number;
             };
-            /** ID: 4 | Response ID: 4 */
+            /** ID=0x04 | response=4 | required=true */
             store: {
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 groupid: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 sceneid: number;
             };
-            /** ID: 5 */
+            /** ID=0x05 | required=true */
             recall: {
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 groupid: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 sceneid: number;
+                /** type=UINT16 */
+                transitionTime: number;
             };
-            /** ID: 6 | Response ID: 6 */
+            /** ID=0x06 | response=6 | required=true */
             getSceneMembership: {
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 groupid: number;
             };
-            /** ID: 64 | Response ID: 64 */
-            enhancedAdd: {
-                /** Type: UINT16 */
-                groupid: number;
-                /** Type: UINT8 */
-                sceneid: number;
-                /** Type: UINT16 */
-                transtime: number;
-                /** Type: CHAR_STR */
-                scenename: string;
-                /** Type: EXTENSION_FIELD_SETS */
-                extensionfieldsets: ExtensionFieldSet[];
-            };
-            /** ID: 65 | Response ID: 65 */
-            enhancedView: {
-                /** Type: UINT16 */
-                groupid: number;
-                /** Type: UINT8 */
-                sceneid: number;
-            };
-            /** ID: 66 | Response ID: 66 */
-            copy: {
-                /** Type: UINT8 */
-                mode: number;
-                /** Type: UINT16 */
-                groupidfrom: number;
-                /** Type: UINT8 */
-                sceneidfrom: number;
-                /** Type: UINT16 */
-                groupidto: number;
-                /** Type: UINT8 */
-                sceneidto: number;
-            };
-            /** ID: 7 */
+            /** ID=0x07 */
             tradfriArrowSingle: {
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 value: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 value2: number;
             };
-            /** ID: 8 */
+            /** ID=0x08 */
             tradfriArrowHold: {
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 value: number;
             };
-            /** ID: 9 */
+            /** ID=0x09 */
             tradfriArrowRelease: {
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 value: number;
+            };
+            /** ID=0x40 | response=64 */
+            enhancedAdd: {
+                /** type=UINT16 */
+                groupid: number;
+                /** type=UINT8 */
+                sceneid: number;
+                /** type=UINT16 */
+                transtime: number;
+                /** type=CHAR_STR */
+                scenename: string;
+                /** type=EXTENSION_FIELD_SETS | arrayLengthSize=0 */
+                extensionfieldsets: ExtensionFieldSet[];
+            };
+            /** ID=0x41 | response=65 */
+            enhancedView: {
+                /** type=UINT16 */
+                groupid: number;
+                /** type=UINT8 */
+                sceneid: number;
+            };
+            /** ID=0x42 | response=66 */
+            copy: {
+                /** type=UINT8 */
+                mode: number;
+                /** type=UINT16 */
+                groupidfrom: number;
+                /** type=UINT8 */
+                sceneidfrom: number;
+                /** type=UINT16 */
+                groupidto: number;
+                /** type=UINT8 */
+                sceneidto: number;
             };
         };
         commandResponses: {
-            /** ID: 0 */
+            /** ID=0x00 | required=true */
             addRsp: {
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 status: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 groupId: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 sceneId: number;
             };
-            /** ID: 1 */
+            /** ID=0x01 | required=true */
             viewRsp: {
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 status: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 groupid: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 sceneid: number;
-                /** Type: UINT16, Conditions: [{fieldEquals field=status value=0}] */
+                /** type=UINT16 | conditions=[{fieldEquals field=status value=0}] */
                 transtime?: number;
-                /** Type: CHAR_STR, Conditions: [{fieldEquals field=status value=0}] */
+                /** type=CHAR_STR | conditions=[{fieldEquals field=status value=0}] */
                 scenename?: string;
-                /** Type: EXTENSION_FIELD_SETS, Conditions: [{fieldEquals field=status value=0}] */
+                /** type=EXTENSION_FIELD_SETS | arrayLengthSize=0 | conditions=[{fieldEquals field=status value=0}] */
                 extensionfieldsets?: ExtensionFieldSet[];
             };
-            /** ID: 2 */
+            /** ID=0x02 | required=true */
             removeRsp: {
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 status: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 groupid: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 sceneid: number;
             };
-            /** ID: 3 */
+            /** ID=0x03 | required=true */
             removeAllRsp: {
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 status: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 groupid: number;
             };
-            /** ID: 4 */
+            /** ID=0x04 | required=true */
             storeRsp: {
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 status: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 groupid: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 sceneid: number;
             };
-            /** ID: 6 */
+            /** ID=0x06 | required=true */
             getSceneMembershipRsp: {
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 status: number;
-                /** Type: UINT8 */
+                /** type=UINT8 | minInclusive=1 | maxInclusive=253 | special=NoFurtherScenesMayBeAdded,00,AtLeastOneFurtherSceneMayBeAdded,fe,Unknown,ff */
                 capacity: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 groupid: number;
-                /** Type: UINT8, Conditions: [{fieldEquals field=status value=0}] */
+                /** type=UINT8 | conditions=[{fieldEquals field=status value=0}] */
                 scenecount?: number;
-                /** Type: LIST_UINT8, Conditions: [{fieldEquals field=status value=0}] */
+                /** type=LIST_UINT8 | conditions=[{fieldEquals field=status value=0}] */
                 scenelist?: number[];
             };
-            /** ID: 64 */
+            /** ID=0x40 */
             enhancedAddRsp: {
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 status: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 groupId: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 sceneId: number;
             };
-            /** ID: 65 */
+            /** ID=0x41 */
             enhancedViewRsp: {
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 status: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 groupid: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 sceneid: number;
-                /** Type: UINT16, Conditions: [{fieldEquals field=status value=0}] */
+                /** type=UINT16 | conditions=[{fieldEquals field=status value=0}] */
                 transtime?: number;
-                /** Type: CHAR_STR, Conditions: [{fieldEquals field=status value=0}] */
+                /** type=CHAR_STR | conditions=[{fieldEquals field=status value=0}] */
                 scenename?: string;
-                /** Type: EXTENSION_FIELD_SETS, Conditions: [{fieldEquals field=status value=0}] */
+                /** type=EXTENSION_FIELD_SETS | arrayLengthSize=0 | conditions=[{fieldEquals field=status value=0}] */
                 extensionfieldsets?: ExtensionFieldSet[];
             };
-            /** ID: 66 */
+            /** ID=0x42 */
             copyRsp: {
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 status: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 groupidfrom: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 sceneidfrom: number;
             };
         };
     };
     genOnOff: {
         attributes: {
-            /** ID: 0 | Type: BOOLEAN */
+            /** ID=0x0000 | type=BOOLEAN | reportRequired=true | sceneRequired=true | required=true | max=1 | default=0 */
             onOff: number;
-            /** ID: 16384 | Type: BOOLEAN */
-            globalSceneCtrl: number;
-            /** ID: 16385 | Type: UINT16 */
-            onTime: number;
-            /** ID: 16386 | Type: UINT16 */
-            offWaitTime: number;
-            /** ID: 16387 | Type: ENUM8 */
-            startUpOnOff: number;
-            /** ID: 20480 | Type: ENUM8 */
-            tuyaBacklightSwitch: number;
-            /** ID: 32769 | Type: ENUM8 */
-            tuyaBacklightMode: number;
-            /** ID: 32770 | Type: ENUM8 */
-            moesStartUpOnOff: number;
-            /** ID: 32772 | Type: ENUM8 */
-            tuyaOperationMode: number;
-            /** ID: 57344 | Type: UINT16 | Specific to manufacturer: ADEO (4727) */
-            elkoPreWarningTime?: number;
-            /** ID: 57345 | Type: UINT32 | Specific to manufacturer: ADEO (4727) */
-            elkoOnTimeReload?: number;
-            /** ID: 57346 | Type: BITMAP8 | Specific to manufacturer: ADEO (4727) */
-            elkoOnTimeReloadOptions?: number;
-            /** ID: 1 | Type: UINT16 | Specific to manufacturer: NODON (4747) */
+            /** ID=0x0001 | type=UINT16 | manufacturerCode=NODON(0x128b) */
             nodonTransitionTime?: number;
+            /** ID=0x4000 | type=BOOLEAN | max=1 | default=1 */
+            globalSceneCtrl: number;
+            /** ID=0x4001 | type=UINT16 | writable=true | max=65535 | default=0 */
+            onTime: number;
+            /** ID=0x4002 | type=UINT16 | writable=true | max=65535 | default=0 */
+            offWaitTime: number;
+            /** ID=0x4003 | type=ENUM8 | writable=true */
+            startUpOnOff: number;
+            /** ID=0x5000 | type=ENUM8 */
+            tuyaBacklightSwitch: number;
+            /** ID=0x8001 | type=ENUM8 */
+            tuyaBacklightMode: number;
+            /** ID=0x8002 | type=ENUM8 */
+            moesStartUpOnOff: number;
+            /** ID=0x8004 | type=ENUM8 */
+            tuyaOperationMode: number;
+            /** ID=0xe000 | type=UINT16 | manufacturerCode=ADEO(0x1277) */
+            elkoPreWarningTime?: number;
+            /** ID=0xe001 | type=UINT32 | manufacturerCode=ADEO(0x1277) */
+            elkoOnTimeReload?: number;
+            /** ID=0xe002 | type=BITMAP8 | manufacturerCode=ADEO(0x1277) */
+            elkoOnTimeReloadOptions?: number;
         };
         commands: {
-            /** ID: 0 */
+            /** ID=0x00 | required=true */
             off: Record<string, never>;
-            /** ID: 1 */
+            /** ID=0x01 | required=true */
             on: Record<string, never>;
-            /** ID: 2 */
+            /** ID=0x02 | required=true */
             toggle: Record<string, never>;
-            /** ID: 64 */
+            /** ID=0x40 */
             offWithEffect: {
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 effectid: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 effectvariant: number;
             };
-            /** ID: 65 */
+            /** ID=0x41 */
             onWithRecallGlobalScene: Record<string, never>;
-            /** ID: 66 */
+            /** ID=0x42 */
             onWithTimedOff: {
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 ctrlbits: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 ontime: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 offwaittime: number;
             };
-            /** ID: 253 */
-            tuyaAction: {
-                /** Type: UINT8 */
-                value: number;
-                /** Type: BUFFER */
-                data: Buffer;
-            };
-            /** ID: 252 */
+            /** ID=0xfc */
             tuyaAction2: {
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 value: number;
+            };
+            /** ID=0xfd */
+            tuyaAction: {
+                /** type=UINT8 */
+                value: number;
+                /** type=BUFFER */
+                data: Buffer;
             };
         };
         commandResponses: never;
     };
     genOnOffSwitchCfg: {
         attributes: {
-            /** ID: 0 | Type: ENUM8 */
+            /** ID=0x0000 | type=ENUM8 */
             switchType: number;
-            /** ID: 2 | Type: UNKNOWN */
+            /** ID=0x0002 | type=UNKNOWN */
             switchMultiFunction: never;
-            /** ID: 16 | Type: ENUM8 */
+            /** ID=0x0010 | type=ENUM8 */
             switchActions: number;
         };
         commands: never;
@@ -569,87 +639,132 @@ export interface TClusters {
     };
     genLevelCtrl: {
         attributes: {
-            /** ID: 0 | Type: UINT8 */
+            /** ID=0x0000 | type=UINT8 | reportRequired=true | sceneRequired=true | required=true | default=255 | minInclusiveRef=minLevel | maxInclusiveRef=maxLevel */
             currentLevel: number;
-            /** ID: 1 | Type: UINT16 */
+            /** ID=0x0001 | type=UINT16 | max=65535 | default=0 */
             remainingTime: number;
-            /** ID: 2 | Type: UINT8 */
+            /** ID=0x0002 | type=UINT8 | default=0 | maxInclusiveRef=maxLevel */
             minLevel: number;
-            /** ID: 3 | Type: UINT8 */
+            /** ID=0x0003 | type=UINT8 | max=255 | default=255 | minInclusiveRef=minLevel */
             maxLevel: number;
-            /** ID: 15 | Type: BITMAP8 */
+            /** ID=0x0004 | type=UINT16 | reportRequired=true | sceneRequired=true | default=0 | minInclusiveRef=minFrequency | maxInclusiveRef=maxFrequency */
+            currentFrequency: number;
+            /** ID=0x0005 | type=UINT16 | default=0 | maxInclusiveRef=maxFrequency */
+            minFrequency: number;
+            /** ID=0x0006 | type=UINT16 | max=65535 | default=0 | minInclusiveRef=minFrequency */
+            maxFrequency: number;
+            /** ID=0x000f | type=BITMAP8 | writable=true | default=0 */
             options: number;
-            /** ID: 16 | Type: UINT16 */
+            /** ID=0x0010 | type=UINT16 | writable=true | max=65535 | default=0 */
             onOffTransitionTime: number;
-            /** ID: 17 | Type: UINT8 */
+            /** ID=0x0011 | type=UINT8 | writable=true | default=255 | minInclusiveRef=minLevel | maxInclusiveRef=maxLevel */
             onLevel: number;
-            /** ID: 18 | Type: UINT16 */
+            /** ID=0x0012 | type=UINT16 | writable=true | max=65534 | default=65535 */
             onTransitionTime: number;
-            /** ID: 19 | Type: UINT16 */
+            /** ID=0x0013 | type=UINT16 | writable=true | max=65534 | default=65535 */
             offTransitionTime: number;
-            /** ID: 20 | Type: UINT16 */
+            /** ID=0x0014 | type=UINT16 | writable=true | max=254 */
             defaultMoveRate: number;
-            /** ID: 16384 | Type: UINT8 */
+            /** ID=0x4000 | type=UINT8 | writable=true | max=255 | special=MinimumDeviceValuePermitted,00,SetToPreviousValue,ff */
             startUpCurrentLevel: number;
-            /** ID: 16384 | Type: UINT8 | Specific to manufacturer: ADEO (4727) */
+            /** ID=0x4000 | type=UINT8 | manufacturerCode=ADEO(0x1277) */
             elkoStartUpCurrentLevel?: number;
         };
         commands: {
-            /** ID: 0 */
+            /** ID=0x00 | required=true */
             moveToLevel: {
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 level: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 transtime: number;
+                /** type=BITMAP8 */
+                optionsMask: number;
+                /** type=BITMAP8 */
+                optionsOverride: number;
             };
-            /** ID: 1 */
+            /** ID=0x01 | required=true */
             move: {
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 movemode: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 rate: number;
+                /** type=BITMAP8 */
+                optionsMask: number;
+                /** type=BITMAP8 */
+                optionsOverride: number;
             };
-            /** ID: 2 */
+            /** ID=0x02 | required=true */
             step: {
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 stepmode: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 stepsize: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 transtime: number;
+                /** type=BITMAP8 */
+                optionsMask: number;
+                /** type=BITMAP8 */
+                optionsOverride: number;
             };
-            /** ID: 3 */
-            stop: Record<string, never>;
-            /** ID: 4 */
+            /** ID=0x03 | required=true */
+            stop: {
+                /** type=BITMAP8 */
+                optionsMask: number;
+                /** type=BITMAP8 */
+                optionsOverride: number;
+            };
+            /** ID=0x04 | required=true */
             moveToLevelWithOnOff: {
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 level: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 transtime: number;
+                /** type=BITMAP8 */
+                optionsMask: number;
+                /** type=BITMAP8 */
+                optionsOverride: number;
             };
-            /** ID: 5 */
+            /** ID=0x05 | required=true */
             moveWithOnOff: {
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 movemode: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 rate: number;
+                /** type=BITMAP8 */
+                optionsMask: number;
+                /** type=BITMAP8 */
+                optionsOverride: number;
             };
-            /** ID: 6 */
+            /** ID=0x06 | required=true */
             stepWithOnOff: {
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 stepmode: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 stepsize: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 transtime: number;
+                /** type=BITMAP8 */
+                optionsMask: number;
+                /** type=BITMAP8 */
+                optionsOverride: number;
             };
-            /** ID: 7 */
-            stopWithOnOff: Record<string, never>;
-            /** ID: 240 */
+            /** ID=0x07 | required=true */
+            stopWithOnOff: {
+                /** type=BITMAP8 */
+                optionsMask: number;
+                /** type=BITMAP8 */
+                optionsOverride: number;
+            };
+            /** ID=0x08 */
+            moveToClosestFrequency: {
+                /** type=UINT16 */
+                frequency: number;
+            };
+            /** ID=0xf0 */
             moveToLevelTuya: {
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 level: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 transtime: number;
             };
         };
@@ -657,70 +772,70 @@ export interface TClusters {
     };
     genAlarms: {
         attributes: {
-            /** ID: 0 | Type: UINT16 */
+            /** ID=0x0000 | type=UINT16 | default=0 */
             alarmCount: number;
         };
         commands: {
-            /** ID: 0 */
+            /** ID=0x00 | required=true */
             reset: {
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 alarmcode: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 clusterid: number;
             };
-            /** ID: 1 */
+            /** ID=0x01 | required=true */
             resetAll: Record<string, never>;
-            /** ID: 2 */
+            /** ID=0x02 */
             getAlarm: Record<string, never>;
-            /** ID: 3 */
+            /** ID=0x03 */
             resetLog: Record<string, never>;
-            /** ID: 4 */
+            /** ID=0x04 */
             publishEventLog: Record<string, never>;
         };
         commandResponses: {
-            /** ID: 0 */
+            /** ID=0x00 | required=true */
             alarm: {
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 alarmcode: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 clusterid: number;
             };
-            /** ID: 1 */
+            /** ID=0x01 */
             getRsp: {
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 status: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 alarmcode: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 clusterid: number;
-                /** Type: UINT32 */
+                /** type=UINT32 */
                 timestamp: number;
             };
-            /** ID: 2 */
+            /** ID=0x02 */
             getEventLog: Record<string, never>;
         };
     };
     genTime: {
         attributes: {
-            /** ID: 0 | Type: UTC */
+            /** ID=0x0000 | type=UTC | writable=true | required=true | max=4294967294 | default=4294967295 */
             time: number;
-            /** ID: 1 | Type: BITMAP8 */
+            /** ID=0x0001 | type=BITMAP8 | writable=true | required=true | default=0 */
             timeStatus: number;
-            /** ID: 2 | Type: INT32 */
+            /** ID=0x0002 | type=INT32 | writable=true | min=-86400 | max=86400 | default=0 */
             timeZone: number;
-            /** ID: 3 | Type: UINT32 */
+            /** ID=0x0003 | type=UINT32 | writable=true | max=4294967294 | default=4294967295 */
             dstStart: number;
-            /** ID: 4 | Type: UINT32 */
+            /** ID=0x0004 | type=UINT32 | writable=true | max=4294967294 | default=4294967295 */
             dstEnd: number;
-            /** ID: 5 | Type: INT32 */
+            /** ID=0x0005 | type=INT32 | writable=true | min=-86400 | max=86400 | default=0 */
             dstShift: number;
-            /** ID: 6 | Type: UINT32 */
+            /** ID=0x0006 | type=UINT32 | max=4294967294 | default=4294967295 */
             standardTime: number;
-            /** ID: 7 | Type: UINT32 */
+            /** ID=0x0007 | type=UINT32 | max=4294967294 | default=4294967295 */
             localTime: number;
-            /** ID: 8 | Type: UTC */
+            /** ID=0x0008 | type=UTC | default=4294967295 */
             lastSetTime: number;
-            /** ID: 9 | Type: UTC */
+            /** ID=0x0009 | type=UTC | writable=true | default=4294967295 */
             validUntilTime: number;
         };
         commands: never;
@@ -728,227 +843,227 @@ export interface TClusters {
     };
     genRssiLocation: {
         attributes: {
-            /** ID: 0 | Type: DATA8 */
+            /** ID=0x0000 | type=DATA8 */
             type: number;
-            /** ID: 1 | Type: ENUM8 */
+            /** ID=0x0001 | type=ENUM8 */
             method: number;
-            /** ID: 2 | Type: UINT16 */
+            /** ID=0x0002 | type=UINT16 */
             age: number;
-            /** ID: 3 | Type: UINT8 */
+            /** ID=0x0003 | type=UINT8 */
             qualityMeasure: number;
-            /** ID: 4 | Type: UINT8 */
+            /** ID=0x0004 | type=UINT8 */
             numOfDevices: number;
-            /** ID: 16 | Type: INT16 */
+            /** ID=0x0010 | type=INT16 */
             coordinate1: number;
-            /** ID: 17 | Type: INT16 */
+            /** ID=0x0011 | type=INT16 */
             coordinate2: number;
-            /** ID: 18 | Type: INT16 */
+            /** ID=0x0012 | type=INT16 */
             coordinate3: number;
-            /** ID: 19 | Type: INT16 */
+            /** ID=0x0013 | type=INT16 */
             power: number;
-            /** ID: 20 | Type: UINT16 */
+            /** ID=0x0014 | type=UINT16 */
             pathLossExponent: number;
-            /** ID: 21 | Type: UINT16 */
+            /** ID=0x0015 | type=UINT16 */
             reportingPeriod: number;
-            /** ID: 22 | Type: UINT16 */
+            /** ID=0x0016 | type=UINT16 */
             calcPeriod: number;
-            /** ID: 23 | Type: UINT8 */
+            /** ID=0x0017 | type=UINT8 */
             numRSSIMeasurements: number;
         };
         commands: {
-            /** ID: 0 */
+            /** ID=0x00 */
             setAbsolute: {
-                /** Type: INT16 */
+                /** type=INT16 */
                 coord1: number;
-                /** Type: INT16 */
+                /** type=INT16 */
                 coord2: number;
-                /** Type: INT16 */
+                /** type=INT16 */
                 coord3: number;
-                /** Type: INT16 */
+                /** type=INT16 */
                 power: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 pathLossExponent: number;
             };
-            /** ID: 1 */
+            /** ID=0x01 */
             setDeviceConfig: {
-                /** Type: INT16 */
+                /** type=INT16 */
                 power: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 pathLossExponent: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 calcPeriod: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 numRssiMeasurements: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 reportingPeriod: number;
             };
-            /** ID: 2 */
+            /** ID=0x02 */
             getDeviceConfig: {
-                /** Type: IEEE_ADDR */
+                /** type=IEEE_ADDR */
                 targetAddr: string;
             };
-            /** ID: 3 */
+            /** ID=0x03 */
             getLocationData: {
-                /** Type: BITMAP8 */
+                /** type=BITMAP8 */
                 info: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 numResponses: number;
-                /** Type: IEEE_ADDR, Conditions: [{bitMaskSet param=info mask=4 reversed=true}] */
+                /** type=IEEE_ADDR | conditions=[{bitMaskSet param=info mask=4 reversed=true}] */
                 targetAddr?: string;
             };
-            /** ID: 4 */
+            /** ID=0x04 */
             rssiResponse: {
-                /** Type: IEEE_ADDR */
+                /** type=IEEE_ADDR */
                 replyingDevice: string;
-                /** Type: INT16 */
+                /** type=INT16 */
                 x: number;
-                /** Type: INT16 */
+                /** type=INT16 */
                 y: number;
-                /** Type: INT16 */
+                /** type=INT16 */
                 z: number;
-                /** Type: INT8 */
+                /** type=INT8 */
                 rssi: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 numRssiMeasurements: number;
             };
-            /** ID: 5 */
+            /** ID=0x05 */
             sendPings: {
-                /** Type: IEEE_ADDR */
+                /** type=IEEE_ADDR */
                 targetAddr: string;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 numRssiMeasurements: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 calcPeriod: number;
             };
-            /** ID: 6 */
+            /** ID=0x06 */
             anchorNodeAnnounce: {
-                /** Type: IEEE_ADDR */
+                /** type=IEEE_ADDR */
                 anchorNodeAddr: string;
-                /** Type: INT16 */
+                /** type=INT16 */
                 x: number;
-                /** Type: INT16 */
+                /** type=INT16 */
                 y: number;
-                /** Type: INT16 */
+                /** type=INT16 */
                 z: number;
             };
         };
         commandResponses: {
-            /** ID: 0 */
+            /** ID=0x00 */
             deviceConfigResponse: {
-                /** Type: ENUM8 */
+                /** type=ENUM8 */
                 status: number;
-                /** Type: INT16, Conditions: [{fieldEquals field=status value=0}] */
+                /** type=INT16 | conditions=[{fieldEquals field=status value=0}] */
                 power?: number;
-                /** Type: UINT16, Conditions: [{fieldEquals field=status value=0}] */
+                /** type=UINT16 | conditions=[{fieldEquals field=status value=0}] */
                 pathLossExponent?: number;
-                /** Type: UINT16, Conditions: [{fieldEquals field=status value=0}] */
+                /** type=UINT16 | conditions=[{fieldEquals field=status value=0}] */
                 calcPeriod?: number;
-                /** Type: UINT8, Conditions: [{fieldEquals field=status value=0}] */
+                /** type=UINT8 | conditions=[{fieldEquals field=status value=0}] */
                 numRssiMeasurements?: number;
-                /** Type: UINT16, Conditions: [{fieldEquals field=status value=0}] */
+                /** type=UINT16 | conditions=[{fieldEquals field=status value=0}] */
                 reportingPeriod?: number;
             };
-            /** ID: 1 */
+            /** ID=0x01 */
             locationDataResponse: {
-                /** Type: ENUM8 */
+                /** type=ENUM8 */
                 status: number;
-                /** Type: DATA8, Conditions: [{fieldEquals field=status value=0}] */
+                /** type=DATA8 | conditions=[{fieldEquals field=status value=0}] */
                 type?: number;
-                /** Type: INT16, Conditions: [{fieldEquals field=status value=0}] */
+                /** type=INT16 | conditions=[{fieldEquals field=status value=0}] */
                 coord1?: number;
-                /** Type: INT16, Conditions: [{fieldEquals field=status value=0}] */
+                /** type=INT16 | conditions=[{fieldEquals field=status value=0}] */
                 coord2?: number;
-                /** Type: INT16, Conditions: [{fieldEquals field=status value=0}] */
+                /** type=INT16 | conditions=[{fieldEquals field=status value=0}] */
                 coord3?: number;
-                /** Type: INT16, Conditions: [{fieldEquals field=status value=0}] */
+                /** type=INT16 | conditions=[{fieldEquals field=status value=0}] */
                 power?: number;
-                /** Type: UINT16, Conditions: [{fieldEquals field=status value=0}] */
+                /** type=UINT16 | conditions=[{fieldEquals field=status value=0}] */
                 pathLossExponent?: number;
-                /** Type: ENUM8, Conditions: [{fieldEquals field=status value=0}] */
+                /** type=ENUM8 | conditions=[{fieldEquals field=status value=0}] */
                 method?: number;
-                /** Type: UINT8, Conditions: [{fieldEquals field=status value=0}] */
+                /** type=UINT8 | conditions=[{fieldEquals field=status value=0}] */
                 qualityMeasure?: number;
-                /** Type: UINT16, Conditions: [{fieldEquals field=status value=0}] */
+                /** type=UINT16 | conditions=[{fieldEquals field=status value=0}] */
                 age?: number;
             };
-            /** ID: 2 */
+            /** ID=0x02 */
             locationDataNotification: {
-                /** Type: DATA8 */
+                /** type=DATA8 */
                 type: number;
-                /** Type: INT16 */
+                /** type=INT16 */
                 coord1: number;
-                /** Type: INT16 */
+                /** type=INT16 */
                 coord2: number;
-                /** Type: INT16, Conditions: [{bitMaskSet param=type mask=2 reversed=true}] */
+                /** type=INT16 | conditions=[{bitMaskSet param=type mask=2 reversed=true}] */
                 coord3?: number;
-                /** Type: INT16 */
+                /** type=INT16 */
                 power: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 pathLossExponent: number;
-                /** Type: ENUM8, Conditions: [{bitMaskSet param=type mask=1 reversed=true}] */
+                /** type=ENUM8 | conditions=[{bitMaskSet param=type mask=1 reversed=true}] */
                 method?: number;
-                /** Type: UINT8, Conditions: [{bitMaskSet param=type mask=1 reversed=true}] */
+                /** type=UINT8 | conditions=[{bitMaskSet param=type mask=1 reversed=true}] */
                 qualityMeasure?: number;
-                /** Type: UINT16, Conditions: [{bitMaskSet param=type mask=1 reversed=true}] */
+                /** type=UINT16 | conditions=[{bitMaskSet param=type mask=1 reversed=true}] */
                 age?: number;
             };
-            /** ID: 3 */
+            /** ID=0x03 */
             compactLocationDataNotification: {
-                /** Type: DATA8 */
+                /** type=DATA8 */
                 type: number;
-                /** Type: INT16 */
+                /** type=INT16 */
                 coord1: number;
-                /** Type: INT16 */
+                /** type=INT16 */
                 coord2: number;
-                /** Type: INT16, Conditions: [{bitMaskSet param=type mask=2 reversed=true}] */
+                /** type=INT16 | conditions=[{bitMaskSet param=type mask=2 reversed=true}] */
                 coord3?: number;
-                /** Type: UINT8, Conditions: [{bitMaskSet param=type mask=1 reversed=true}] */
+                /** type=UINT8 | conditions=[{bitMaskSet param=type mask=1 reversed=true}] */
                 qualityMeasure?: number;
-                /** Type: UINT16, Conditions: [{bitMaskSet param=type mask=1 reversed=true}] */
+                /** type=UINT16 | conditions=[{bitMaskSet param=type mask=1 reversed=true}] */
                 age?: number;
             };
-            /** ID: 4 */
+            /** ID=0x04 */
             rssiPing: {
-                /** Type: DATA8 */
+                /** type=DATA8 */
                 type: number;
             };
-            /** ID: 5 */
+            /** ID=0x05 */
             rssiRequest: Record<string, never>;
-            /** ID: 6 */
+            /** ID=0x06 */
             reportRssiMeasurements: {
-                /** Type: IEEE_ADDR */
+                /** type=IEEE_ADDR */
                 measuringDeviceAddr: string;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 numNeighbors: number;
             };
-            /** ID: 7 */
+            /** ID=0x07 */
             requestOwnLocation: {
-                /** Type: IEEE_ADDR */
+                /** type=IEEE_ADDR */
                 blindNodeAddr: string;
             };
         };
     };
     genAnalogInput: {
         attributes: {
-            /** ID: 28 | Type: CHAR_STR */
+            /** ID=0x001c | type=CHAR_STR */
             description: string;
-            /** ID: 65 | Type: SINGLE_PREC */
+            /** ID=0x0041 | type=SINGLE_PREC */
             maxPresentValue: number;
-            /** ID: 69 | Type: SINGLE_PREC */
+            /** ID=0x0045 | type=SINGLE_PREC */
             minPresentValue: number;
-            /** ID: 81 | Type: BOOLEAN */
+            /** ID=0x0051 | type=BOOLEAN */
             outOfService: number;
-            /** ID: 85 | Type: SINGLE_PREC */
+            /** ID=0x0055 | type=SINGLE_PREC */
             presentValue: number;
-            /** ID: 103 | Type: ENUM8 */
+            /** ID=0x0067 | type=ENUM8 */
             reliability: number;
-            /** ID: 106 | Type: SINGLE_PREC */
+            /** ID=0x006a | type=SINGLE_PREC */
             resolution: number;
-            /** ID: 111 | Type: BITMAP8 */
+            /** ID=0x006f | type=BITMAP8 */
             statusFlags: number;
-            /** ID: 117 | Type: ENUM16 */
+            /** ID=0x0075 | type=ENUM16 */
             engineeringUnits: number;
-            /** ID: 256 | Type: UINT32 */
+            /** ID=0x0100 | type=UINT32 */
             applicationType: number;
         };
         commands: never;
@@ -956,29 +1071,29 @@ export interface TClusters {
     };
     genAnalogOutput: {
         attributes: {
-            /** ID: 28 | Type: CHAR_STR */
+            /** ID=0x001c | type=CHAR_STR */
             description: string;
-            /** ID: 65 | Type: SINGLE_PREC */
+            /** ID=0x0041 | type=SINGLE_PREC */
             maxPresentValue: number;
-            /** ID: 69 | Type: SINGLE_PREC */
+            /** ID=0x0045 | type=SINGLE_PREC */
             minPresentValue: number;
-            /** ID: 81 | Type: BOOLEAN */
+            /** ID=0x0051 | type=BOOLEAN */
             outOfService: number;
-            /** ID: 85 | Type: SINGLE_PREC */
+            /** ID=0x0055 | type=SINGLE_PREC */
             presentValue: number;
-            /** ID: 87 | Type: ARRAY */
+            /** ID=0x0057 | type=ARRAY */
             priorityArray: ZclArray | unknown[];
-            /** ID: 103 | Type: ENUM8 */
+            /** ID=0x0067 | type=ENUM8 */
             reliability: number;
-            /** ID: 104 | Type: SINGLE_PREC */
+            /** ID=0x0068 | type=SINGLE_PREC */
             relinquishDefault: number;
-            /** ID: 106 | Type: SINGLE_PREC */
+            /** ID=0x006a | type=SINGLE_PREC */
             resolution: number;
-            /** ID: 111 | Type: BITMAP8 */
+            /** ID=0x006f | type=BITMAP8 */
             statusFlags: number;
-            /** ID: 117 | Type: ENUM16 */
+            /** ID=0x0075 | type=ENUM16 */
             engineeringUnits: number;
-            /** ID: 256 | Type: UINT32 */
+            /** ID=0x0100 | type=UINT32 */
             applicationType: number;
         };
         commands: never;
@@ -986,23 +1101,23 @@ export interface TClusters {
     };
     genAnalogValue: {
         attributes: {
-            /** ID: 28 | Type: CHAR_STR */
+            /** ID=0x001c | type=CHAR_STR */
             description: string;
-            /** ID: 81 | Type: BOOLEAN */
+            /** ID=0x0051 | type=BOOLEAN */
             outOfService: number;
-            /** ID: 85 | Type: SINGLE_PREC */
+            /** ID=0x0055 | type=SINGLE_PREC */
             presentValue: number;
-            /** ID: 87 | Type: ARRAY */
+            /** ID=0x0057 | type=ARRAY */
             priorityArray: ZclArray | unknown[];
-            /** ID: 103 | Type: ENUM8 */
+            /** ID=0x0067 | type=ENUM8 */
             reliability: number;
-            /** ID: 104 | Type: SINGLE_PREC */
+            /** ID=0x0068 | type=SINGLE_PREC */
             relinquishDefault: number;
-            /** ID: 111 | Type: BITMAP8 */
+            /** ID=0x006f | type=BITMAP8 */
             statusFlags: number;
-            /** ID: 117 | Type: ENUM16 */
+            /** ID=0x0075 | type=ENUM16 */
             engineeringUnits: number;
-            /** ID: 256 | Type: UINT32 */
+            /** ID=0x0100 | type=UINT32 */
             applicationType: number;
         };
         commands: never;
@@ -1010,23 +1125,23 @@ export interface TClusters {
     };
     genBinaryInput: {
         attributes: {
-            /** ID: 4 | Type: CHAR_STR */
+            /** ID=0x0004 | type=CHAR_STR */
             activeText: string;
-            /** ID: 28 | Type: CHAR_STR */
+            /** ID=0x001c | type=CHAR_STR */
             description: string;
-            /** ID: 46 | Type: CHAR_STR */
+            /** ID=0x002e | type=CHAR_STR */
             inactiveText: string;
-            /** ID: 81 | Type: BOOLEAN */
+            /** ID=0x0051 | type=BOOLEAN */
             outOfService: number;
-            /** ID: 84 | Type: ENUM8 */
+            /** ID=0x0054 | type=ENUM8 */
             polarity: number;
-            /** ID: 85 | Type: BOOLEAN */
+            /** ID=0x0055 | type=BOOLEAN */
             presentValue: number;
-            /** ID: 103 | Type: ENUM8 */
+            /** ID=0x0067 | type=ENUM8 */
             reliability: number;
-            /** ID: 111 | Type: BITMAP8 */
+            /** ID=0x006f | type=BITMAP8 */
             statusFlags: number;
-            /** ID: 256 | Type: UINT32 */
+            /** ID=0x0100 | type=UINT32 */
             applicationType: number;
         };
         commands: never;
@@ -1034,31 +1149,31 @@ export interface TClusters {
     };
     genBinaryOutput: {
         attributes: {
-            /** ID: 4 | Type: CHAR_STR */
+            /** ID=0x0004 | type=CHAR_STR */
             activeText: string;
-            /** ID: 28 | Type: CHAR_STR */
+            /** ID=0x001c | type=CHAR_STR */
             description: string;
-            /** ID: 46 | Type: CHAR_STR */
+            /** ID=0x002e | type=CHAR_STR */
             inactiveText: string;
-            /** ID: 66 | Type: UINT32 */
+            /** ID=0x0042 | type=UINT32 */
             minimumOffTime: number;
-            /** ID: 67 | Type: UINT32 */
+            /** ID=0x0043 | type=UINT32 */
             minimumOnTime: number;
-            /** ID: 81 | Type: BOOLEAN */
+            /** ID=0x0051 | type=BOOLEAN */
             outOfService: number;
-            /** ID: 84 | Type: ENUM8 */
+            /** ID=0x0054 | type=ENUM8 */
             polarity: number;
-            /** ID: 85 | Type: BOOLEAN */
+            /** ID=0x0055 | type=BOOLEAN */
             presentValue: number;
-            /** ID: 87 | Type: ARRAY */
+            /** ID=0x0057 | type=ARRAY */
             priorityArray: ZclArray | unknown[];
-            /** ID: 103 | Type: ENUM8 */
+            /** ID=0x0067 | type=ENUM8 */
             reliability: number;
-            /** ID: 104 | Type: BOOLEAN */
+            /** ID=0x0068 | type=BOOLEAN */
             relinquishDefault: number;
-            /** ID: 111 | Type: BITMAP8 */
+            /** ID=0x006f | type=BITMAP8 */
             statusFlags: number;
-            /** ID: 256 | Type: UINT32 */
+            /** ID=0x0100 | type=UINT32 */
             applicationType: number;
         };
         commands: never;
@@ -1066,29 +1181,29 @@ export interface TClusters {
     };
     genBinaryValue: {
         attributes: {
-            /** ID: 4 | Type: CHAR_STR */
+            /** ID=0x0004 | type=CHAR_STR */
             activeText: string;
-            /** ID: 28 | Type: CHAR_STR */
+            /** ID=0x001c | type=CHAR_STR */
             description: string;
-            /** ID: 46 | Type: CHAR_STR */
+            /** ID=0x002e | type=CHAR_STR */
             inactiveText: string;
-            /** ID: 66 | Type: UINT32 */
+            /** ID=0x0042 | type=UINT32 */
             minimumOffTime: number;
-            /** ID: 67 | Type: UINT32 */
+            /** ID=0x0043 | type=UINT32 */
             minimumOnTime: number;
-            /** ID: 81 | Type: BOOLEAN */
+            /** ID=0x0051 | type=BOOLEAN */
             outOfService: number;
-            /** ID: 85 | Type: BOOLEAN */
+            /** ID=0x0055 | type=BOOLEAN */
             presentValue: number;
-            /** ID: 87 | Type: ARRAY */
+            /** ID=0x0057 | type=ARRAY */
             priorityArray: ZclArray | unknown[];
-            /** ID: 103 | Type: ENUM8 */
+            /** ID=0x0067 | type=ENUM8 */
             reliability: number;
-            /** ID: 104 | Type: BOOLEAN */
+            /** ID=0x0068 | type=BOOLEAN */
             relinquishDefault: number;
-            /** ID: 111 | Type: BITMAP8 */
+            /** ID=0x006f | type=BITMAP8 */
             statusFlags: number;
-            /** ID: 256 | Type: UINT32 */
+            /** ID=0x0100 | type=UINT32 */
             applicationType: number;
         };
         commands: never;
@@ -1096,21 +1211,21 @@ export interface TClusters {
     };
     genMultistateInput: {
         attributes: {
-            /** ID: 14 | Type: ARRAY */
+            /** ID=0x000e | type=ARRAY */
             stateText: ZclArray | unknown[];
-            /** ID: 28 | Type: CHAR_STR */
+            /** ID=0x001c | type=CHAR_STR */
             description: string;
-            /** ID: 74 | Type: UINT16 */
+            /** ID=0x004a | type=UINT16 */
             numberOfStates: number;
-            /** ID: 81 | Type: BOOLEAN */
+            /** ID=0x0051 | type=BOOLEAN */
             outOfService: number;
-            /** ID: 85 | Type: UINT16 */
+            /** ID=0x0055 | type=UINT16 */
             presentValue: number;
-            /** ID: 103 | Type: ENUM8 */
+            /** ID=0x0067 | type=ENUM8 */
             reliability: number;
-            /** ID: 111 | Type: BITMAP8 */
+            /** ID=0x006f | type=BITMAP8 */
             statusFlags: number;
-            /** ID: 256 | Type: UINT32 */
+            /** ID=0x0100 | type=UINT32 */
             applicationType: number;
         };
         commands: never;
@@ -1118,25 +1233,25 @@ export interface TClusters {
     };
     genMultistateOutput: {
         attributes: {
-            /** ID: 14 | Type: ARRAY */
+            /** ID=0x000e | type=ARRAY */
             stateText: ZclArray | unknown[];
-            /** ID: 28 | Type: CHAR_STR */
+            /** ID=0x001c | type=CHAR_STR */
             description: string;
-            /** ID: 74 | Type: UINT16 */
+            /** ID=0x004a | type=UINT16 */
             numberOfStates: number;
-            /** ID: 81 | Type: BOOLEAN */
+            /** ID=0x0051 | type=BOOLEAN */
             outOfService: number;
-            /** ID: 85 | Type: UINT16 */
+            /** ID=0x0055 | type=UINT16 */
             presentValue: number;
-            /** ID: 87 | Type: ARRAY */
+            /** ID=0x0057 | type=ARRAY */
             priorityArray: ZclArray | unknown[];
-            /** ID: 103 | Type: ENUM8 */
+            /** ID=0x0067 | type=ENUM8 */
             reliability: number;
-            /** ID: 104 | Type: UINT16 */
+            /** ID=0x0068 | type=UINT16 */
             relinquishDefault: number;
-            /** ID: 111 | Type: BITMAP8 */
+            /** ID=0x006f | type=BITMAP8 */
             statusFlags: number;
-            /** ID: 256 | Type: UINT32 */
+            /** ID=0x0100 | type=UINT32 */
             applicationType: number;
         };
         commands: never;
@@ -1144,25 +1259,25 @@ export interface TClusters {
     };
     genMultistateValue: {
         attributes: {
-            /** ID: 14 | Type: ARRAY */
+            /** ID=0x000e | type=ARRAY */
             stateText: ZclArray | unknown[];
-            /** ID: 28 | Type: CHAR_STR */
+            /** ID=0x001c | type=CHAR_STR */
             description: string;
-            /** ID: 74 | Type: UINT16 */
+            /** ID=0x004a | type=UINT16 */
             numberOfStates: number;
-            /** ID: 81 | Type: BOOLEAN */
+            /** ID=0x0051 | type=BOOLEAN */
             outOfService: number;
-            /** ID: 85 | Type: UINT16 */
+            /** ID=0x0055 | type=UINT16 */
             presentValue: number;
-            /** ID: 87 | Type: ARRAY */
+            /** ID=0x0057 | type=ARRAY */
             priorityArray: ZclArray | unknown[];
-            /** ID: 103 | Type: ENUM8 */
+            /** ID=0x0067 | type=ENUM8 */
             reliability: number;
-            /** ID: 104 | Type: UINT16 */
+            /** ID=0x0068 | type=UINT16 */
             relinquishDefault: number;
-            /** ID: 111 | Type: BITMAP8 */
+            /** ID=0x006f | type=BITMAP8 */
             statusFlags: number;
-            /** ID: 256 | Type: UINT32 */
+            /** ID=0x0100 | type=UINT32 */
             applicationType: number;
         };
         commands: never;
@@ -1170,355 +1285,376 @@ export interface TClusters {
     };
     genCommissioning: {
         attributes: {
-            /** ID: 0 | Type: UINT16 */
+            /** ID=0x0000 | type=UINT16 | writable=true | required=true | max=65527 */
             shortress: number;
-            /** ID: 1 | Type: IEEE_ADDR */
+            /** ID=0x0001 | type=IEEE_ADDR | writable=true | required=true | default=18446744073709551616 | special=PANIdUnspecified,ffffffffffffffff */
             extendedPANId: string;
-            /** ID: 2 | Type: UINT16 */
+            /** ID=0x0002 | type=UINT16 | writable=true | required=true */
             panId: number;
-            /** ID: 3 | Type: BITMAP32 */
+            /** ID=0x0003 | type=BITMAP32 | writable=true | required=true */
             channelmask: number;
-            /** ID: 4 | Type: UINT8 */
+            /** ID=0x0004 | type=UINT8 | writable=true | required=true */
             protocolVersion: number;
-            /** ID: 5 | Type: UINT8 */
+            /** ID=0x0005 | type=UINT8 | writable=true | required=true */
             stackProfile: number;
-            /** ID: 6 | Type: ENUM8 */
+            /** ID=0x0006 | type=ENUM8 | writable=true | required=true */
             startupControl: number;
-            /** ID: 16 | Type: IEEE_ADDR */
+            /** ID=0x0010 | type=IEEE_ADDR | writable=true | required=true | default=0 | special=AddressUnspecified,0000000000000000 */
             trustCenterress: string;
-            /** ID: 17 | Type: SEC_KEY */
+            /** ID=0x0011 | type=SEC_KEY | writable=true | default=0 */
             trustCenterMasterKey: Buffer;
-            /** ID: 18 | Type: SEC_KEY */
+            /** ID=0x0012 | type=SEC_KEY | writable=true | required=true | default=0 */
             networkKey: Buffer;
-            /** ID: 19 | Type: BOOLEAN */
+            /** ID=0x0013 | type=BOOLEAN | writable=true | required=true | default=0 */
             useInsecureJoin: number;
-            /** ID: 20 | Type: SEC_KEY */
+            /** ID=0x0014 | type=SEC_KEY | writable=true | required=true | default=0 */
             preconfiguredLinkKey: Buffer;
-            /** ID: 21 | Type: UINT8 */
+            /** ID=0x0015 | type=UINT8 | writable=true | required=true | default=0 */
             networkKeySeqNum: number;
-            /** ID: 22 | Type: ENUM8 */
+            /** ID=0x0016 | type=ENUM8 | writable=true | required=true */
             networkKeyType: number;
-            /** ID: 23 | Type: UINT16 */
+            /** ID=0x0017 | type=UINT16 | writable=true | required=true | default=0 */
             networkManagerress: number;
-            /** ID: 32 | Type: UINT8 */
+            /** ID=0x0020 | type=UINT8 | writable=true | min=1 | default=5 */
             scanAttempts: number;
-            /** ID: 33 | Type: UINT16 */
+            /** ID=0x0021 | type=UINT16 | writable=true | min=1 | default=100 */
             timeBetweenScans: number;
-            /** ID: 34 | Type: UINT16 */
+            /** ID=0x0022 | type=UINT16 | writable=true | min=1 | default=60 | maxInclusiveRef=maxRejoinInterval */
             rejoinInterval: number;
-            /** ID: 35 | Type: UINT16 */
+            /** ID=0x0023 | type=UINT16 | writable=true | min=1 | default=3600 */
             maxRejoinInterval: number;
-            /** ID: 48 | Type: UINT16 */
+            /** ID=0x0030 | type=UINT16 | writable=true */
             indirectPollRate: number;
-            /** ID: 49 | Type: UINT8 */
+            /** ID=0x0031 | type=UINT8 */
             parentRetryThreshold: number;
-            /** ID: 64 | Type: BOOLEAN */
+            /** ID=0x0040 | type=BOOLEAN | writable=true | default=0 */
             concentratorFlag: number;
-            /** ID: 65 | Type: UINT8 */
+            /** ID=0x0041 | type=UINT8 | writable=true | default=15 */
             concentratorRus: number;
-            /** ID: 66 | Type: UINT8 */
+            /** ID=0x0042 | type=UINT8 | writable=true | default=0 */
             concentratorDiscoveryTime: number;
         };
         commands: {
-            /** ID: 0 */
+            /** ID=0x00 | required=true */
             restartDevice: {
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 options: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 delay: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 jitter: number;
             };
-            /** ID: 1 */
+            /** ID=0x01 */
             saveStartupParams: {
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 options: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 index: number;
             };
-            /** ID: 2 */
+            /** ID=0x02 */
             restoreStartupParams: {
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 options: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 index: number;
             };
-            /** ID: 3 */
+            /** ID=0x03 | required=true */
             resetStartupParams: {
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 options: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 index: number;
             };
         };
         commandResponses: {
-            /** ID: 0 */
+            /** ID=0x00 | required=true */
             restartDeviceRsp: {
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 status: number;
             };
-            /** ID: 1 */
+            /** ID=0x01 | required=true */
             saveStartupParamsRsp: {
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 status: number;
             };
-            /** ID: 2 */
+            /** ID=0x02 | required=true */
             restoreStartupParamsRsp: {
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 status: number;
             };
-            /** ID: 3 */
+            /** ID=0x03 | required=true */
             resetStartupParamsRsp: {
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 status: number;
             };
         };
     };
     genOta: {
         attributes: {
-            /** ID: 0 | Type: IEEE_ADDR */
+            /** ID=0x0000 | type=IEEE_ADDR | client=true | required=true | default=18446744073709551615 */
             upgradeServerId: string;
-            /** ID: 1 | Type: UINT32 */
+            /** ID=0x0001 | type=UINT32 | client=true | default=4294967294 */
             fileOffset: number;
-            /** ID: 2 | Type: UINT32 */
+            /** ID=0x0002 | type=UINT32 | client=true | default=4294967294 */
             currentFileVersion: number;
-            /** ID: 3 | Type: UINT16 */
+            /** ID=0x0003 | type=UINT16 | client=true | default=65535 */
             currentZigbeeStackVersion: number;
-            /** ID: 4 | Type: UINT32 */
+            /** ID=0x0004 | type=UINT32 | client=true | default=4294967294 */
             downloadedFileVersion: number;
-            /** ID: 5 | Type: UINT16 */
+            /** ID=0x0005 | type=UINT16 | client=true | default=65535 */
             downloadedZigbeeStackVersion: number;
-            /** ID: 6 | Type: ENUM8 */
+            /** ID=0x0006 | type=ENUM8 | client=true | required=true | default=0 */
             imageUpgradeStatus: number;
-            /** ID: 7 | Type: UINT16 */
+            /** ID=0x0007 | type=UINT16 | client=true */
             manufacturerId: number;
-            /** ID: 8 | Type: UINT16 */
+            /** ID=0x0008 | type=UINT16 | client=true */
             imageTypeId: number;
-            /** ID: 9 | Type: UINT16 */
+            /** ID=0x0009 | type=UINT16 | client=true | default=0 */
             minimumBlockReqDelay: number;
-            /** ID: 10 | Type: UINT32 */
+            /** ID=0x000a | type=UINT32 | client=true */
             imageStamp: number;
+            /** ID=0x000b | type=ENUM8 | client=true | default=0 */
+            upgradeActivationPolicy: number;
+            /** ID=0x000c | type=ENUM8 | client=true | default=0 */
+            upgradeTimeoutPolicy: number;
         };
         commands: {
-            /** ID: 1 | Response ID: 2 */
+            /** ID=0x01 | response=2 | required=true */
             queryNextImageRequest: {
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 fieldControl: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 manufacturerCode: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 imageType: number;
-                /** Type: UINT32 */
+                /** type=UINT32 */
                 fileVersion: number;
-                /** Type: UINT16, Conditions: [{bitMaskSet param=fieldControl mask=1}] */
+                /** type=UINT16 | conditions=[{bitMaskSet param=fieldControl mask=1}] */
                 hardwareVersion?: number;
             };
-            /** ID: 3 | Response ID: 5 */
+            /** ID=0x03 | response=5 | required=true */
             imageBlockRequest: {
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 fieldControl: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 manufacturerCode: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 imageType: number;
-                /** Type: UINT32 */
+                /** type=UINT32 */
                 fileVersion: number;
-                /** Type: UINT32 */
+                /** type=UINT32 */
                 fileOffset: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 maximumDataSize: number;
-                /** Type: IEEE_ADDR, Conditions: [{bitMaskSet param=fieldControl mask=1}] */
+                /** type=IEEE_ADDR | conditions=[{bitMaskSet param=fieldControl mask=1}] */
                 requestNodeIeeeAddress?: string;
-                /** Type: UINT16, Conditions: [{bitMaskSet param=fieldControl mask=2}{minimumRemainingBufferBytes value=2}] */
+                /** type=UINT16 | conditions=[{bitMaskSet param=fieldControl mask=2}{minimumRemainingBufferBytes value=2}] */
                 minimumBlockPeriod?: number;
             };
-            /** ID: 4 | Response ID: 5 */
+            /** ID=0x04 | response=5 */
             imagePageRequest: {
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 fieldControl: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 manufacturerCode: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 imageType: number;
-                /** Type: UINT32 */
+                /** type=UINT32 */
                 fileVersion: number;
-                /** Type: UINT32 */
+                /** type=UINT32 */
                 fileOffset: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 maximumDataSize: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 pageSize: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 responseSpacing: number;
-                /** Type: IEEE_ADDR, Conditions: [{bitMaskSet param=fieldControl mask=1}] */
+                /** type=IEEE_ADDR | conditions=[{bitMaskSet param=fieldControl mask=1}] */
                 requestNodeIeeeAddress?: string;
             };
-            /** ID: 6 | Response ID: 7 */
+            /** ID=0x06 | response=7 | required=true */
             upgradeEndRequest: {
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 status: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 manufacturerCode: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 imageType: number;
-                /** Type: UINT32 */
+                /** type=UINT32 */
                 fileVersion: number;
             };
-            /** ID: 8 | Response ID: 9 */
+            /** ID=0x08 | response=9 */
             queryDeviceSpecificFileRequest: {
-                /** Type: IEEE_ADDR */
+                /** type=IEEE_ADDR */
                 eui64: string;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 manufacturerCode: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 imageType: number;
-                /** Type: UINT32 */
+                /** type=UINT32 */
                 fileVersion: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 zigbeeStackVersion: number;
             };
         };
         commandResponses: {
-            /** ID: 0 */
+            /** ID=0x00 */
             imageNotify: {
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 payloadType: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 queryJitter: number;
-                /** Type: UINT16, Conditions: [{fieldGT field=payloadType value=0}] */
+                /** type=UINT16 | conditions=[{fieldGT field=payloadType value=0}] */
                 manufacturerCode?: number;
-                /** Type: UINT16, Conditions: [{fieldGT field=payloadType value=1}] */
+                /** type=UINT16 | conditions=[{fieldGT field=payloadType value=1}] */
                 imageType?: number;
-                /** Type: UINT32, Conditions: [{fieldGT field=payloadType value=2}] */
+                /** type=UINT32 | conditions=[{fieldGT field=payloadType value=2}] */
                 fileVersion?: number;
             };
-            /** ID: 2 */
+            /** ID=0x02 | required=true */
             queryNextImageResponse: {
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 status: number;
-                /** Type: UINT16, Conditions: [{fieldEquals field=status value=0}] */
+                /** type=UINT16 | conditions=[{fieldEquals field=status value=0}] */
                 manufacturerCode?: number;
-                /** Type: UINT16, Conditions: [{fieldEquals field=status value=0}] */
+                /** type=UINT16 | conditions=[{fieldEquals field=status value=0}] */
                 imageType?: number;
-                /** Type: UINT32, Conditions: [{fieldEquals field=status value=0}] */
+                /** type=UINT32 | conditions=[{fieldEquals field=status value=0}] */
                 fileVersion?: number;
-                /** Type: UINT32, Conditions: [{fieldEquals field=status value=0}] */
+                /** type=UINT32 | conditions=[{fieldEquals field=status value=0}] */
                 imageSize?: number;
             };
-            /** ID: 5 */
+            /** ID=0x05 | required=true */
             imageBlockResponse: {
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 status: number;
-                /** Type: UINT16, Conditions: [{fieldEquals field=status value=0}] */
+                /** type=UINT16 | conditions=[{fieldEquals field=status value=0}] */
                 manufacturerCode?: number;
-                /** Type: UINT16, Conditions: [{fieldEquals field=status value=0}] */
+                /** type=UINT16 | conditions=[{fieldEquals field=status value=0}] */
                 imageType?: number;
-                /** Type: UINT32, Conditions: [{fieldEquals field=status value=0}] */
+                /** type=UINT32 | conditions=[{fieldEquals field=status value=0}] */
                 fileVersion?: number;
-                /** Type: UINT32, Conditions: [{fieldEquals field=status value=0}] */
+                /** type=UINT32 | conditions=[{fieldEquals field=status value=0}] */
                 fileOffset?: number;
-                /** Type: UINT8, Conditions: [{fieldEquals field=status value=0}] */
+                /** type=UINT8 | conditions=[{fieldEquals field=status value=0}] */
                 dataSize?: number;
-                /** Type: BUFFER, Conditions: [{fieldEquals field=status value=0}] */
+                /** type=BUFFER | conditions=[{fieldEquals field=status value=0}] */
                 data?: Buffer;
-                /** Type: UINT32, Conditions: [{fieldEquals field=status value=151}] */
+                /** type=UINT32 | conditions=[{fieldEquals field=status value=151}] */
                 currentTime?: number;
-                /** Type: UINT32, Conditions: [{fieldEquals field=status value=151}] */
+                /** type=UINT32 | conditions=[{fieldEquals field=status value=151}] */
                 requestTime?: number;
-                /** Type: UINT16, Conditions: [{fieldEquals field=status value=151}] */
+                /** type=UINT16 | conditions=[{fieldEquals field=status value=151}] */
                 minimumBlockPeriod?: number;
             };
-            /** ID: 7 */
+            /** ID=0x07 | required=true */
             upgradeEndResponse: {
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 manufacturerCode: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 imageType: number;
-                /** Type: UINT32 */
+                /** type=UINT32 */
                 fileVersion: number;
-                /** Type: UINT32 */
+                /** type=UINT32 */
                 currentTime: number;
-                /** Type: UINT32 */
+                /** type=UINT32 */
                 upgradeTime: number;
             };
-            /** ID: 9 */
+            /** ID=0x09 */
             queryDeviceSpecificFileResponse: {
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 status: number;
-                /** Type: UINT16, Conditions: [{fieldEquals field=status value=0}] */
+                /** type=UINT16 | conditions=[{fieldEquals field=status value=0}] */
                 manufacturerCode?: number;
-                /** Type: UINT16, Conditions: [{fieldEquals field=status value=0}] */
+                /** type=UINT16 | conditions=[{fieldEquals field=status value=0}] */
                 imageType?: number;
-                /** Type: UINT32, Conditions: [{fieldEquals field=status value=0}] */
+                /** type=UINT32 | conditions=[{fieldEquals field=status value=0}] */
                 fileVersion?: number;
-                /** Type: UINT32, Conditions: [{fieldEquals field=status value=0}] */
+                /** type=UINT32 | conditions=[{fieldEquals field=status value=0}] */
                 imageSize?: number;
             };
         };
     };
     genPollCtrl: {
         attributes: {
-            /** ID: 0 | Type: UINT32 */
+            /** ID=0x0000 | type=UINT32 | writable=true | required=true | max=7208960 | default=14400 */
             checkinInterval: number;
-            /** ID: 1 | Type: UINT32 */
+            /** ID=0x0001 | type=UINT32 | required=true | min=4 | max=7208960 | default=20 */
             longPollInterval: number;
-            /** ID: 2 | Type: UINT16 */
+            /** ID=0x0002 | type=UINT16 | required=true | min=1 | max=65535 | default=2 */
             shortPollInterval: number;
-            /** ID: 3 | Type: UINT16 */
+            /** ID=0x0003 | type=UINT16 | writable=true | required=true | min=1 | max=65535 | default=40 */
             fastPollTimeout: number;
-            /** ID: 4 | Type: UINT32 */
+            /** ID=0x0004 | type=UINT32 | default=0 */
             checkinIntervalMin: number;
-            /** ID: 5 | Type: UINT32 */
+            /** ID=0x0005 | type=UINT32 | default=0 */
             longPollIntervalMin: number;
-            /** ID: 6 | Type: UINT16 */
+            /** ID=0x0006 | type=UINT16 | default=0 */
             fastPollTimeoutMax: number;
         };
         commands: {
-            /** ID: 0 */
+            /** ID=0x00 | required=true */
             checkinRsp: {
-                /** Type: BOOLEAN */
+                /** type=BOOLEAN */
                 startFastPolling: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 fastPollTimeout: number;
             };
-            /** ID: 1 */
+            /** ID=0x01 */
             fastPollStop: Record<string, never>;
-            /** ID: 2 */
+            /** ID=0x02 */
             setLongPollInterval: {
-                /** Type: UINT32 */
+                /** type=UINT32 */
                 newLongPollInterval: number;
             };
-            /** ID: 3 */
+            /** ID=0x03 */
             setShortPollInterval: {
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 newShortPollInterval: number;
             };
         };
         commandResponses: {
-            /** ID: 0 */
-            checkin: Record<string, never>;
+            /** ID=0x00 | required=true */
+            checkin: {
+                /** type=BOOLEAN */
+                startFastPolling: number;
+                /** type=UINT16 */
+                fastPollTimeout: number;
+            };
+            /** ID=0x01 | required=true */
+            fastPollStop: Record<string, never>;
+            /** ID=0x02 */
+            setLongPollInterval: {
+                /** type=UINT32 */
+                newLongPollInterval: number;
+            };
+            /** ID=0x03 */
+            setShortPollInterval: {
+                /** type=UINT16 */
+                newShortPollInterval: number;
+            };
         };
     };
     greenPower: {
         attributes: never;
         commands: {
-            /** ID: 0 */
+            /** ID=0x00 */
             notification: {
-                /** Type: BITMAP16 */
+                /** type=BITMAP16 */
                 options: number;
-                /** Type: UINT32, Conditions: [{bitFieldEnum param=options offset=0 size=3 value=0}] */
+                /** type=UINT32 | conditions=[{bitFieldEnum param=options offset=0 size=3 value=0}] */
                 srcID?: number;
-                /** Type: IEEE_ADDR, Conditions: [{bitFieldEnum param=options offset=0 size=3 value=2}] */
+                /** type=IEEE_ADDR | conditions=[{bitFieldEnum param=options offset=0 size=3 value=2}] */
                 gpdIEEEAddr?: string;
-                /** Type: UINT8, Conditions: [{bitFieldEnum param=options offset=0 size=3 value=2}] */
+                /** type=UINT8 | conditions=[{bitFieldEnum param=options offset=0 size=3 value=2}] */
                 gpdEndpoint?: number;
-                /** Type: UINT32 */
+                /** type=UINT32 */
                 frameCounter: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 commandID: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 payloadSize: number;
-                /** Type: GPD_FRAME, Conditions: [{bitMaskSet param=options mask=192 reversed=true}] */
+                /** type=GPD_FRAME | conditions=[{bitMaskSet param=options mask=192 reversed=true}] */
                 commandFrame?:
                     | Gpd
                     | GpdChannelRequest
@@ -1530,28 +1666,28 @@ export interface TClusters {
                     | GpdCommissioningReply
                     | GpdChannelConfiguration
                     | GpdCustomReply;
-                /** Type: UINT16, Conditions: [{bitMaskSet param=options mask=16384}] */
+                /** type=UINT16 | conditions=[{bitMaskSet param=options mask=16384}] */
                 gppNwkAddr?: number;
-                /** Type: BITMAP8, Conditions: [{bitMaskSet param=options mask=16384}] */
+                /** type=BITMAP8 | conditions=[{bitMaskSet param=options mask=16384}] */
                 gppGpdLink?: number;
             };
-            /** ID: 4 */
+            /** ID=0x04 */
             commissioningNotification: {
-                /** Type: BITMAP16 */
+                /** type=BITMAP16 */
                 options: number;
-                /** Type: UINT32, Conditions: [{bitFieldEnum param=options offset=0 size=3 value=0}] */
+                /** type=UINT32 | conditions=[{bitFieldEnum param=options offset=0 size=3 value=0}] */
                 srcID?: number;
-                /** Type: IEEE_ADDR, Conditions: [{bitFieldEnum param=options offset=0 size=3 value=2}] */
+                /** type=IEEE_ADDR | conditions=[{bitFieldEnum param=options offset=0 size=3 value=2}] */
                 gpdIEEEAddr?: string;
-                /** Type: UINT8, Conditions: [{bitFieldEnum param=options offset=0 size=3 value=2}] */
+                /** type=UINT8 | conditions=[{bitFieldEnum param=options offset=0 size=3 value=2}] */
                 gpdEndpoint?: number;
-                /** Type: UINT32 */
+                /** type=UINT32 */
                 frameCounter: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 commandID: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 payloadSize: number;
-                /** Type: GPD_FRAME, Conditions: [{bitMaskSet param=options mask=48 reversed=true}{bitMaskSet param=options mask=512 reversed=true}] */
+                /** type=GPD_FRAME | conditions=[{bitMaskSet param=options mask=48 reversed=true}{bitMaskSet param=options mask=512 reversed=true}] */
                 commandFrame?:
                     | Gpd
                     | GpdChannelRequest
@@ -1563,32 +1699,32 @@ export interface TClusters {
                     | GpdCommissioningReply
                     | GpdChannelConfiguration
                     | GpdCustomReply;
-                /** Type: UINT16, Conditions: [{bitMaskSet param=options mask=2048}] */
+                /** type=UINT16 | conditions=[{bitMaskSet param=options mask=2048}] */
                 gppNwkAddr?: number;
-                /** Type: BITMAP8, Conditions: [{bitMaskSet param=options mask=2048}] */
+                /** type=BITMAP8 | conditions=[{bitMaskSet param=options mask=2048}] */
                 gppGpdLink?: number;
-                /** Type: UINT32, Conditions: [{bitMaskSet param=options mask=512}] */
+                /** type=UINT32 | conditions=[{bitMaskSet param=options mask=512}] */
                 mic?: number;
             };
         };
         commandResponses: {
-            /** ID: 6 */
+            /** ID=0x06 */
             response: {
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 options: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 tempMaster: number;
-                /** Type: BITMAP8 */
+                /** type=BITMAP8 */
                 tempMasterTx: number;
-                /** Type: UINT32, Conditions: [{bitFieldEnum param=options offset=0 size=3 value=0}] */
+                /** type=UINT32 | conditions=[{bitFieldEnum param=options offset=0 size=3 value=0}] */
                 srcID?: number;
-                /** Type: IEEE_ADDR, Conditions: [{bitFieldEnum param=options offset=0 size=3 value=2}] */
+                /** type=IEEE_ADDR | conditions=[{bitFieldEnum param=options offset=0 size=3 value=2}] */
                 gpdIEEEAddr?: string;
-                /** Type: UINT8, Conditions: [{bitFieldEnum param=options offset=0 size=3 value=2}] */
+                /** type=UINT8 | conditions=[{bitFieldEnum param=options offset=0 size=3 value=2}] */
                 gpdEndpoint?: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 gpdCmd: number;
-                /** Type: GPD_FRAME */
+                /** type=GPD_FRAME */
                 gpdPayload:
                     | Gpd
                     | GpdChannelRequest
@@ -1601,49 +1737,49 @@ export interface TClusters {
                     | GpdChannelConfiguration
                     | GpdCustomReply;
             };
-            /** ID: 1 */
+            /** ID=0x01 */
             pairing: {
-                /** Type: BITMAP24 */
+                /** type=BITMAP24 */
                 options: number;
-                /** Type: UINT32, Conditions: [{bitFieldEnum param=options offset=0 size=3 value=0}] */
+                /** type=UINT32 | conditions=[{bitFieldEnum param=options offset=0 size=3 value=0}] */
                 srcID?: number;
-                /** Type: IEEE_ADDR, Conditions: [{bitFieldEnum param=options offset=0 size=3 value=2}] */
+                /** type=IEEE_ADDR | conditions=[{bitFieldEnum param=options offset=0 size=3 value=2}] */
                 gpdIEEEAddr?: string;
-                /** Type: UINT8, Conditions: [{bitFieldEnum param=options offset=0 size=3 value=2}] */
+                /** type=UINT8 | conditions=[{bitFieldEnum param=options offset=0 size=3 value=2}] */
                 gpdEndpoint?: number;
-                /** Type: IEEE_ADDR, Conditions: [{bitFieldEnum param=options offset=4 size=3 value=6}] */
+                /** type=IEEE_ADDR | conditions=[{bitFieldEnum param=options offset=4 size=3 value=6}] */
                 sinkIEEEAddr?: string;
-                /** Type: UINT16, Conditions: [{bitFieldEnum param=options offset=4 size=3 value=6}] */
+                /** type=UINT16 | conditions=[{bitFieldEnum param=options offset=4 size=3 value=6}] */
                 sinkNwkAddr?: number;
-                /** Type: UINT16, Conditions: [{bitFieldEnum param=options offset=4 size=3 value=4}] */
+                /** type=UINT16 | conditions=[{bitFieldEnum param=options offset=4 size=3 value=4}] */
                 sinkGroupID?: number;
-                /** Type: UINT8, Conditions: [{bitMaskSet param=options mask=8}] */
+                /** type=UINT8 | conditions=[{bitMaskSet param=options mask=8}] */
                 deviceID?: number;
-                /** Type: UINT32, Conditions: [{bitMaskSet param=options mask=16384}] */
+                /** type=UINT32 | conditions=[{bitMaskSet param=options mask=16384}] */
                 frameCounter?: number;
-                /** Type: SEC_KEY, Conditions: [{bitMaskSet param=options mask=32768}] */
+                /** type=SEC_KEY | conditions=[{bitMaskSet param=options mask=32768}] */
                 gpdKey?: Buffer;
-                /** Type: UINT16, Conditions: [{bitMaskSet param=options mask=65536}] */
+                /** type=UINT16 | conditions=[{bitMaskSet param=options mask=65536}] */
                 assignedAlias?: number;
-                /** Type: UINT8, Conditions: [{bitMaskSet param=options mask=131072}] */
+                /** type=UINT8 | conditions=[{bitMaskSet param=options mask=131072}] */
                 groupcastRadius?: number;
             };
-            /** ID: 2 */
+            /** ID=0x02 */
             commisioningMode: {
-                /** Type: BITMAP8 */
+                /** type=BITMAP8 */
                 options: number;
-                /** Type: UINT16, Conditions: [{bitMaskSet param=options mask=2}] */
+                /** type=UINT16 | conditions=[{bitMaskSet param=options mask=2}] */
                 commisioningWindow?: number;
-                /** Type: UINT8, Conditions: [{bitMaskSet param=options mask=16}] */
+                /** type=UINT8 | conditions=[{bitMaskSet param=options mask=16}] */
                 channel?: number;
             };
         };
     };
     mobileDeviceCfg: {
         attributes: {
-            /** ID: 0 | Type: UINT16 */
+            /** ID=0x0000 | type=UINT16 */
             keepAliveTime: number;
-            /** ID: 1 | Type: UINT16 */
+            /** ID=0x0001 | type=UINT16 */
             rejoinTimeout: number;
         };
         commands: never;
@@ -1651,7 +1787,7 @@ export interface TClusters {
     };
     neighborCleaning: {
         attributes: {
-            /** ID: 0 | Type: UINT16 */
+            /** ID=0x0000 | type=UINT16 */
             neighborCleaningTimeout: number;
         };
         commands: never;
@@ -1659,9 +1795,9 @@ export interface TClusters {
     };
     nearestGateway: {
         attributes: {
-            /** ID: 0 | Type: UINT16 */
+            /** ID=0x0000 | type=UINT16 */
             nearestGateway: number;
-            /** ID: 1 | Type: UINT16 */
+            /** ID=0x0001 | type=UINT16 */
             newMobileNode: number;
         };
         commands: never;
@@ -1669,15 +1805,15 @@ export interface TClusters {
     };
     closuresShadeCfg: {
         attributes: {
-            /** ID: 0 | Type: UINT16 */
+            /** ID=0x0000 | type=UINT16 | min=1 */
             physicalClosedLimit: number;
-            /** ID: 1 | Type: UINT8 */
+            /** ID=0x0001 | type=UINT8 | max=254 */
             motorStepSize: number;
-            /** ID: 2 | Type: BITMAP8 */
+            /** ID=0x0002 | type=BITMAP8 | writable=true | required=true | default=0 */
             status: number;
-            /** ID: 16 | Type: UINT16 */
+            /** ID=0x0010 | type=UINT16 | writable=true | required=true | min=1 | default=1 */
             losedLimit: number;
-            /** ID: 18 | Type: ENUM8 */
+            /** ID=0x0011 | type=ENUM8 | writable=true | required=true | default=0 */
             mode: number;
         };
         commands: never;
@@ -1685,605 +1821,607 @@ export interface TClusters {
     };
     closuresDoorLock: {
         attributes: {
-            /** ID: 0 | Type: ENUM8 */
+            /** ID=0x0000 | type=ENUM8 | reportRequired=true | required=true */
             lockState: number;
-            /** ID: 38 | Type: BITMAP16 */
+            /** ID=0x0001 | type=BITMAP16 | required=true */
             lockType: number;
-            /** ID: 2 | Type: BOOLEAN */
+            /** ID=0x0002 | type=BOOLEAN | required=true */
             actuatorEnabled: number;
-            /** ID: 3 | Type: ENUM8 */
+            /** ID=0x0003 | type=ENUM8 | reportRequired=true */
             doorState: number;
-            /** ID: 4 | Type: UINT32 */
+            /** ID=0x0004 | type=UINT32 | writable=true */
             doorOpenEvents: number;
-            /** ID: 5 | Type: UINT32 */
+            /** ID=0x0005 | type=UINT32 | writable=true */
             doorClosedEvents: number;
-            /** ID: 6 | Type: UINT16 */
+            /** ID=0x0006 | type=UINT16 | writable=true */
             openPeriod: number;
-            /** ID: 16 | Type: UINT16 */
+            /** ID=0x0010 | type=UINT16 | default=0 */
             numOfLockRecordsSupported: number;
-            /** ID: 17 | Type: UINT16 */
+            /** ID=0x0011 | type=UINT16 | default=0 */
             numOfTotalUsersSupported: number;
-            /** ID: 18 | Type: UINT16 */
+            /** ID=0x0012 | type=UINT16 | default=0 */
             numOfPinUsersSupported: number;
-            /** ID: 19 | Type: UINT16 */
+            /** ID=0x0013 | type=UINT16 | default=0 */
             numOfRfidUsersSupported: number;
-            /** ID: 20 | Type: UINT8 */
+            /** ID=0x0014 | type=UINT8 | default=0 */
             numOfWeekDaySchedulesSupportedPerUser: number;
-            /** ID: 21 | Type: UINT8 */
+            /** ID=0x0015 | type=UINT8 | default=0 */
             numOfYearDaySchedulesSupportedPerUser: number;
-            /** ID: 22 | Type: UINT8 */
+            /** ID=0x0016 | type=UINT8 | default=0 */
             numOfHolidayScheduledsSupported: number;
-            /** ID: 23 | Type: UINT8 */
+            /** ID=0x0017 | type=UINT8 | default=8 */
             maxPinLen: number;
-            /** ID: 24 | Type: UINT8 */
+            /** ID=0x0018 | type=UINT8 | default=4 */
             minPinLen: number;
-            /** ID: 25 | Type: UINT8 */
+            /** ID=0x0019 | type=UINT8 | default=20 */
             maxRfidLen: number;
-            /** ID: 26 | Type: UINT8 */
+            /** ID=0x001a | type=UINT8 | default=8 */
             minRfidLen: number;
-            /** ID: 32 | Type: BOOLEAN */
+            /** ID=0x0020 | type=BOOLEAN | writable=true | writeOptional=true | reportRequired=true | default=0 */
             enableLogging: number;
-            /** ID: 33 | Type: CHAR_STR */
+            /** ID=0x0021 | type=CHAR_STR | writable=true | writeOptional=true | reportRequired=true | default= | length=2 */
             language: string;
-            /** ID: 34 | Type: UINT8 */
+            /** ID=0x0022 | type=UINT8 | writable=true | writeOptional=true | reportRequired=true | default=0 */
             ledSettings: number;
-            /** ID: 35 | Type: UINT32 */
+            /** ID=0x0023 | type=UINT32 | writable=true | writeOptional=true | reportRequired=true | default=0 | special=Disabled,0 */
             autoRelockTime: number;
-            /** ID: 36 | Type: UINT8 */
+            /** ID=0x0024 | type=UINT8 | writable=true | writeOptional=true | reportRequired=true | default=0 */
             soundVolume: number;
-            /** ID: 37 | Type: UINT32 */
+            /** ID=0x0025 | type=UINT32 | writable=true | writeOptional=true | reportRequired=true | default=0 */
             operatingMode: number;
-            /** ID: 39 | Type: BITMAP16 */
+            /** ID=0x0026 | type=BITMAP16 | default=1 */
+            supportedOperatingModes: number;
+            /** ID=0x0027 | type=BITMAP16 | reportRequired=true | default=0 */
             defaultConfigurationRegister: number;
-            /** ID: 40 | Type: BOOLEAN */
+            /** ID=0x0028 | type=BOOLEAN | writable=true | writeOptional=true | reportRequired=true | default=1 */
             enableLocalProgramming: number;
-            /** ID: 41 | Type: BOOLEAN */
+            /** ID=0x0029 | type=BOOLEAN | writable=true | reportRequired=true | default=0 */
             enableOneTouchLocking: number;
-            /** ID: 42 | Type: BOOLEAN */
+            /** ID=0x002a | type=BOOLEAN | writable=true | reportRequired=true | default=0 */
             enableInsideStatusLed: number;
-            /** ID: 43 | Type: BOOLEAN */
+            /** ID=0x002b | type=BOOLEAN | writable=true | reportRequired=true | default=0 */
             enablePrivacyModeButton: number;
-            /** ID: 48 | Type: UINT8 */
+            /** ID=0x0030 | type=UINT8 | writable=true | writeOptional=true | reportRequired=true | default=0 */
             wrongCodeEntryLimit: number;
-            /** ID: 49 | Type: UINT8 */
+            /** ID=0x0031 | type=UINT8 | writable=true | writeOptional=true | reportRequired=true | default=0 */
             userCodeTemporaryDisableTime: number;
-            /** ID: 50 | Type: BOOLEAN */
+            /** ID=0x0032 | type=BOOLEAN | writable=true | writeOptional=true | reportRequired=true | default=0 */
             sendPinOta: number;
-            /** ID: 51 | Type: BOOLEAN */
+            /** ID=0x0033 | type=BOOLEAN | writable=true | writeOptional=true | reportRequired=true | default=0 */
             requirePinForRfOperation: number;
-            /** ID: 52 | Type: UINT8 */
+            /** ID=0x0034 | type=UINT8 | reportRequired=true | default=0 */
             zigbeeSecurityLevel: number;
-            /** ID: 64 | Type: BITMAP16 */
+            /** ID=0x0040 | type=BITMAP16 | writable=true | reportRequired=true | default=0 */
             alarmMask: number;
-            /** ID: 65 | Type: BITMAP16 */
+            /** ID=0x0041 | type=BITMAP16 | writable=true | reportRequired=true | default=0 */
             keypadOperationEventMask: number;
-            /** ID: 66 | Type: BITMAP16 */
+            /** ID=0x0042 | type=BITMAP16 | writable=true | reportRequired=true | default=0 */
             rfOperationEventMask: number;
-            /** ID: 67 | Type: BITMAP16 */
+            /** ID=0x0043 | type=BITMAP16 | writable=true | reportRequired=true | default=0 */
             manualOperationEventMask: number;
-            /** ID: 68 | Type: BITMAP16 */
+            /** ID=0x0044 | type=BITMAP16 | writable=true | reportRequired=true | default=0 */
             rfidOperationEventMask: number;
-            /** ID: 69 | Type: BITMAP16 */
+            /** ID=0x0045 | type=BITMAP16 | writable=true | reportRequired=true | default=0 */
             keypadProgrammingEventMask: number;
-            /** ID: 70 | Type: BITMAP16 */
+            /** ID=0x0046 | type=BITMAP16 | writable=true | reportRequired=true | default=0 */
             rfProgrammingEventMask: number;
-            /** ID: 71 | Type: BITMAP16 */
+            /** ID=0x0047 | type=BITMAP16 | writable=true | reportRequired=true | default=0 */
             rfidProgrammingEventMask: number;
         };
         commands: {
-            /** ID: 0 | Response ID: 0 */
+            /** ID=0x00 | response=0 | required=true */
             lockDoor: {
-                /** Type: CHAR_STR */
+                /** type=CHAR_STR */
                 pincodevalue: string;
             };
-            /** ID: 1 | Response ID: 1 */
+            /** ID=0x01 | response=1 | required=true */
             unlockDoor: {
-                /** Type: CHAR_STR */
+                /** type=CHAR_STR */
                 pincodevalue: string;
             };
-            /** ID: 2 | Response ID: 2 */
+            /** ID=0x02 | response=2 */
             toggleDoor: {
-                /** Type: CHAR_STR */
+                /** type=CHAR_STR */
                 pincodevalue: string;
             };
-            /** ID: 3 | Response ID: 3 */
+            /** ID=0x03 | response=3 */
             unlockWithTimeout: {
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 timeout: number;
-                /** Type: CHAR_STR */
+                /** type=CHAR_STR */
                 pincodevalue: string;
             };
-            /** ID: 4 | Response ID: 4 */
+            /** ID=0x04 | response=4 */
             getLogRecord: {
-                /** Type: UINT16 */
+                /** type=UINT16 | special=MostRecent,0 */
                 logindex: number;
             };
-            /** ID: 5 | Response ID: 5 */
+            /** ID=0x05 | response=5 */
             setPinCode: {
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 userid: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 userstatus: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 usertype: number;
-                /** Type: CHAR_STR */
+                /** type=CHAR_STR */
                 pincodevalue: string;
             };
-            /** ID: 6 | Response ID: 6 */
+            /** ID=0x06 | response=6 */
             getPinCode: {
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 userid: number;
             };
-            /** ID: 7 | Response ID: 7 */
+            /** ID=0x07 | response=7 */
             clearPinCode: {
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 userid: number;
             };
-            /** ID: 8 | Response ID: 8 */
+            /** ID=0x08 | response=8 */
             clearAllPinCodes: Record<string, never>;
-            /** ID: 9 | Response ID: 9 */
+            /** ID=0x09 | response=9 */
             setUserStatus: {
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 userid: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 userstatus: number;
             };
-            /** ID: 10 | Response ID: 10 */
+            /** ID=0x0a | response=10 */
             getUserStatus: {
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 userid: number;
             };
-            /** ID: 11 | Response ID: 11 */
+            /** ID=0x0b | response=11 */
             setWeekDaySchedule: {
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 scheduleid: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 userid: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 daysmask: number;
-                /** Type: UINT8 */
+                /** type=UINT8 | minInclusive=0 | maxInclusive=23 */
                 starthour: number;
-                /** Type: UINT8 */
+                /** type=UINT8 | minInclusive=0 | maxInclusive=59 */
                 startminute: number;
-                /** Type: UINT8 */
+                /** type=UINT8 | minInclusive=0 | maxInclusive=23 */
                 endhour: number;
-                /** Type: UINT8 */
+                /** type=UINT8 | minInclusive=0 | maxInclusive=59 */
                 endminute: number;
             };
-            /** ID: 12 | Response ID: 12 */
+            /** ID=0x0c | response=12 */
             getWeekDaySchedule: {
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 scheduleid: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 userid: number;
             };
-            /** ID: 13 | Response ID: 13 */
+            /** ID=0x0d | response=13 */
             clearWeekDaySchedule: {
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 scheduleid: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 userid: number;
             };
-            /** ID: 14 | Response ID: 14 */
+            /** ID=0x0e | response=14 */
             setYearDaySchedule: {
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 scheduleid: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 userid: number;
-                /** Type: UINT32 */
+                /** type=UINT32 */
                 zigbeelocalstarttime: number;
-                /** Type: UINT32 */
+                /** type=UINT32 | minExclusiveRef=zigbeelocalstarttime */
                 zigbeelocalendtime: number;
             };
-            /** ID: 15 | Response ID: 15 */
+            /** ID=0x0f | response=15 */
             getYearDaySchedule: {
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 scheduleid: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 userid: number;
             };
-            /** ID: 16 | Response ID: 16 */
+            /** ID=0x10 | response=16 */
             clearYearDaySchedule: {
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 scheduleid: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 userid: number;
             };
-            /** ID: 17 | Response ID: 17 */
+            /** ID=0x11 | response=17 */
             setHolidaySchedule: {
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 holidayscheduleid: number;
-                /** Type: UINT32 */
+                /** type=UINT32 */
                 zigbeelocalstarttime: number;
-                /** Type: UINT32 */
+                /** type=UINT32 | minExclusiveRef=zigbeelocalstarttime */
                 zigbeelocalendtime: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 opermodelduringholiday: number;
             };
-            /** ID: 18 | Response ID: 18 */
+            /** ID=0x12 | response=18 */
             getHolidaySchedule: {
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 holidayscheduleid: number;
             };
-            /** ID: 19 | Response ID: 19 */
+            /** ID=0x13 | response=19 */
             clearHolidaySchedule: {
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 holidayscheduleid: number;
             };
-            /** ID: 20 | Response ID: 20 */
+            /** ID=0x14 | response=20 */
             setUserType: {
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 userid: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 usertype: number;
             };
-            /** ID: 21 | Response ID: 21 */
+            /** ID=0x15 | response=21 */
             getUserType: {
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 userid: number;
             };
-            /** ID: 22 | Response ID: 22 */
+            /** ID=0x16 | response=22 */
             setRfidCode: {
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 userid: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 userstatus: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 usertype: number;
-                /** Type: CHAR_STR */
+                /** type=CHAR_STR */
                 pincodevalue: string;
             };
-            /** ID: 23 | Response ID: 23 */
+            /** ID=0x17 | response=23 */
             getRfidCode: {
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 userid: number;
             };
-            /** ID: 24 | Response ID: 24 */
+            /** ID=0x18 | response=24 */
             clearRfidCode: {
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 userid: number;
             };
-            /** ID: 25 | Response ID: 25 */
+            /** ID=0x19 | response=25 */
             clearAllRfidCodes: Record<string, never>;
         };
         commandResponses: {
-            /** ID: 0 */
+            /** ID=0x00 | required=true */
             lockDoorRsp: {
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 status: number;
             };
-            /** ID: 1 */
+            /** ID=0x01 | required=true */
             unlockDoorRsp: {
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 status: number;
             };
-            /** ID: 2 */
+            /** ID=0x02 */
             toggleDoorRsp: {
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 status: number;
             };
-            /** ID: 3 */
+            /** ID=0x03 */
             unlockWithTimeoutRsp: {
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 status: number;
             };
-            /** ID: 4 */
+            /** ID=0x04 */
             getLogRecordRsp: {
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 logentryid: number;
-                /** Type: UINT32 */
+                /** type=UINT32 */
                 timestamp: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 eventtype: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 source: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 eventidalarmcode: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 userid: number;
-                /** Type: CHAR_STR */
+                /** type=CHAR_STR */
                 pincodevalue: string;
             };
-            /** ID: 5 */
+            /** ID=0x05 */
             setPinCodeRsp: {
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 status: number;
             };
-            /** ID: 6 */
+            /** ID=0x06 */
             getPinCodeRsp: {
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 userid: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 userstatus: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 usertype: number;
-                /** Type: CHAR_STR */
+                /** type=CHAR_STR */
                 pincodevalue: string;
             };
-            /** ID: 7 */
+            /** ID=0x07 */
             clearPinCodeRsp: {
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 status: number;
             };
-            /** ID: 8 */
+            /** ID=0x08 */
             clearAllPinCodesRsp: {
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 status: number;
             };
-            /** ID: 9 */
+            /** ID=0x09 */
             setUserStatusRsp: {
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 status: number;
             };
-            /** ID: 10 */
+            /** ID=0x0a */
             getUserStatusRsp: {
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 userid: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 userstatus: number;
             };
-            /** ID: 11 */
+            /** ID=0x0b */
             setWeekDayScheduleRsp: {
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 status: number;
             };
-            /** ID: 12 */
+            /** ID=0x0c */
             getWeekDayScheduleRsp: {
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 scheduleid: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 userid: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 status: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 daysmask: number;
-                /** Type: UINT8 */
+                /** type=UINT8 | minInclusive=0 | maxInclusive=23 */
                 starthour: number;
-                /** Type: UINT8 */
+                /** type=UINT8 | minInclusive=0 | maxInclusive=59 */
                 startminute: number;
-                /** Type: UINT8 */
+                /** type=UINT8 | minInclusive=0 | maxInclusive=23 */
                 endhour: number;
-                /** Type: UINT8 */
+                /** type=UINT8 | minInclusive=0 | maxInclusive=59 */
                 endminute: number;
             };
-            /** ID: 13 */
+            /** ID=0x0d */
             clearWeekDayScheduleRsp: {
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 status: number;
             };
-            /** ID: 14 */
+            /** ID=0x0e */
             setYearDayScheduleRsp: {
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 status: number;
             };
-            /** ID: 15 */
+            /** ID=0x0f */
             getYearDayScheduleRsp: {
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 scheduleid: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 userid: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 status: number;
-                /** Type: UINT32 */
+                /** type=UINT32 */
                 zigbeelocalstarttime: number;
-                /** Type: UINT32 */
+                /** type=UINT32 | minExclusiveRef=zigbeelocalstarttime */
                 zigbeelocalendtime: number;
             };
-            /** ID: 16 */
+            /** ID=0x10 */
             clearYearDayScheduleRsp: {
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 status: number;
             };
-            /** ID: 17 */
+            /** ID=0x11 */
             setHolidayScheduleRsp: {
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 status: number;
             };
-            /** ID: 18 */
+            /** ID=0x12 */
             getHolidayScheduleRsp: {
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 holidayscheduleid: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 status: number;
-                /** Type: UINT32 */
+                /** type=UINT32 */
                 zigbeelocalstarttime: number;
-                /** Type: UINT32 */
+                /** type=UINT32 | minExclusiveRef=zigbeelocalstarttime */
                 zigbeelocalendtime: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 opermodelduringholiday: number;
             };
-            /** ID: 19 */
+            /** ID=0x13 */
             clearHolidayScheduleRsp: {
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 status: number;
             };
-            /** ID: 20 */
+            /** ID=0x14 */
             setUserTypeRsp: {
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 status: number;
             };
-            /** ID: 21 */
+            /** ID=0x15 */
             getUserTypeRsp: {
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 userid: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 usertype: number;
             };
-            /** ID: 22 */
+            /** ID=0x16 */
             setRfidCodeRsp: {
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 status: number;
             };
-            /** ID: 23 */
+            /** ID=0x17 */
             getRfidCodeRsp: {
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 userid: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 userstatus: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 usertype: number;
-                /** Type: CHAR_STR */
+                /** type=CHAR_STR */
                 pincodevalue: string;
             };
-            /** ID: 24 */
+            /** ID=0x18 */
             clearRfidCodeRsp: {
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 status: number;
             };
-            /** ID: 25 */
+            /** ID=0x19 */
             clearAllRfidCodesRsp: {
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 status: number;
             };
-            /** ID: 32 */
+            /** ID=0x20 */
             operationEventNotification: {
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 opereventsrc: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 opereventcode: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 userid: number;
-                /** Type: OCTET_STR */
+                /** type=OCTET_STR */
                 pin: Buffer;
-                /** Type: UINT32 */
+                /** type=UINT32 */
                 zigbeelocaltime: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 data: number;
             };
-            /** ID: 33 */
+            /** ID=0x21 */
             programmingEventNotification: {
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 programeventsrc: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 programeventcode: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 userid: number;
-                /** Type: OCTET_STR */
+                /** type=OCTET_STR */
                 pin: Buffer;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 usertype: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 userstatus: number;
-                /** Type: UINT32 */
+                /** type=UINT32 */
                 zigbeelocaltime: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 data: number;
             };
         };
     };
     closuresWindowCovering: {
         attributes: {
-            /** ID: 0 | Type: ENUM8 */
+            /** ID=0x0000 | type=ENUM8 | required=true | default=0 */
             windowCoveringType: number;
-            /** ID: 1 | Type: UINT16 */
+            /** ID=0x0001 | type=UINT16 | default=0 */
             physicalClosedLimitLiftCm: number;
-            /** ID: 2 | Type: UINT16 */
+            /** ID=0x0002 | type=UINT16 | default=0 */
             physicalClosedLimitTiltDdegree: number;
-            /** ID: 3 | Type: UINT16 */
+            /** ID=0x0003 | type=UINT16 | default=0 */
             currentPositionLiftCm: number;
-            /** ID: 4 | Type: UINT16 */
+            /** ID=0x0004 | type=UINT16 | default=0 */
             currentPositionTiltDdegree: number;
-            /** ID: 5 | Type: UINT16 */
+            /** ID=0x0005 | type=UINT16 | default=0 */
             numOfActuationsLift: number;
-            /** ID: 6 | Type: UINT16 */
+            /** ID=0x0006 | type=UINT16 | default=0 */
             numOfActuationsTilt: number;
-            /** ID: 7 | Type: BITMAP8 */
+            /** ID=0x0007 | type=BITMAP8 | required=true | default=3 */
             configStatus: number;
-            /** ID: 8 | Type: UINT8 */
+            /** ID=0x0008 | type=UINT8 | reportRequired=true | sceneRequired=true | max=100 | default=0 */
             currentPositionLiftPercentage: number;
-            /** ID: 9 | Type: UINT8 */
+            /** ID=0x0009 | type=UINT8 | reportRequired=true | sceneRequired=true | max=100 | default=0 */
             currentPositionTiltPercentage: number;
-            /** ID: 10 | Type: BITMAP8 */
+            /** ID=0x000a | type=BITMAP8 */
             operationalStatus: number;
-            /** ID: 16 | Type: UINT16 */
+            /** ID=0x0010 | type=UINT16 | default=0 */
             installedOpenLimitLiftCm: number;
-            /** ID: 17 | Type: UINT16 */
+            /** ID=0x0011 | type=UINT16 | default=65535 */
             installedClosedLimitLiftCm: number;
-            /** ID: 18 | Type: UINT16 */
+            /** ID=0x0012 | type=UINT16 | default=0 */
             installedOpenLimitTiltDdegree: number;
-            /** ID: 19 | Type: UINT16 */
+            /** ID=0x0013 | type=UINT16 | default=65535 */
             installedClosedLimitTiltDdegree: number;
-            /** ID: 20 | Type: UINT16 */
+            /** ID=0x0014 | type=UINT16 | writable=true | default=0 */
             velocityLift: number;
-            /** ID: 21 | Type: UINT16 */
+            /** ID=0x0015 | type=UINT16 | writable=true | default=0 */
             accelerationTimeLift: number;
-            /** ID: 22 | Type: UINT16 */
+            /** ID=0x0016 | type=UINT16 | writable=true | default=0 */
             decelerationTimeLift: number;
-            /** ID: 23 | Type: BITMAP8 */
+            /** ID=0x0017 | type=BITMAP8 | required=true | default=4 */
             windowCoveringMode: number;
-            /** ID: 24 | Type: OCTET_STR */
+            /** ID=0x0018 | type=OCTET_STR | default=1,0x0000 */
             intermediateSetpointsLift: Buffer;
-            /** ID: 25 | Type: OCTET_STR */
+            /** ID=0x0019 | type=OCTET_STR | default=1,0x0000 */
             intermediateSetpointsTilt: Buffer;
-            /** ID: 61440 | Type: ENUM8 */
-            tuyaMovingState: number;
-            /** ID: 61441 | Type: ENUM8 */
-            tuyaCalibration: number;
-            /** ID: 61441 | Type: ENUM8 | Specific to manufacturer: LEGRAND_GROUP (4129) */
-            stepPositionLift?: number;
-            /** ID: 61442 | Type: ENUM8 */
-            tuyaMotorReversal: number;
-            /** ID: 61442 | Type: ENUM8 | Specific to manufacturer: LEGRAND_GROUP (4129) */
-            calibrationMode?: number;
-            /** ID: 61443 | Type: UINT16 */
-            moesCalibrationTime: number;
-            /** ID: 61443 | Type: ENUM8 | Specific to manufacturer: LEGRAND_GROUP (4129) */
-            targetPositionTiltPercentage?: number;
-            /** ID: 61444 | Type: ENUM8 | Specific to manufacturer: LEGRAND_GROUP (4129) */
-            stepPositionTilt?: number;
-            /** ID: 57344 | Type: UINT16 | Specific to manufacturer: ADEO (4727) */
+            /** ID=0xe000 | type=UINT16 | manufacturerCode=ADEO(0x1277) */
             elkoDriveCloseDuration?: number;
-            /** ID: 57360 | Type: BITMAP8 | Specific to manufacturer: ADEO (4727) */
+            /** ID=0xe010 | type=BITMAP8 | manufacturerCode=ADEO(0x1277) */
             elkoProtectionStatus?: number;
-            /** ID: 57363 | Type: BITMAP8 | Specific to manufacturer: ADEO (4727) */
-            elkoProtectionSensor?: number;
-            /** ID: 57362 | Type: UINT16 | Specific to manufacturer: ADEO (4727) */
+            /** ID=0xe012 | type=UINT16 | manufacturerCode=ADEO(0x1277) */
             elkoSunProtectionIlluminanceThreshold?: number;
-            /** ID: 57364 | Type: UINT16 | Specific to manufacturer: ADEO (4727) */
+            /** ID=0xe013 | type=BITMAP8 | manufacturerCode=ADEO(0x1277) */
+            elkoProtectionSensor?: number;
+            /** ID=0xe014 | type=UINT16 | manufacturerCode=ADEO(0x1277) */
             elkoLiftDriveUpTime?: number;
-            /** ID: 57365 | Type: UINT16 | Specific to manufacturer: ADEO (4727) */
+            /** ID=0xe015 | type=UINT16 | manufacturerCode=ADEO(0x1277) */
             elkoLiftDriveDownTime?: number;
-            /** ID: 57366 | Type: UINT16 | Specific to manufacturer: ADEO (4727) */
+            /** ID=0xe016 | type=UINT16 | manufacturerCode=ADEO(0x1277) */
             elkoTiltOpenCloseAndStepTime?: number;
-            /** ID: 57367 | Type: UINT8 | Specific to manufacturer: ADEO (4727) */
+            /** ID=0xe017 | type=UINT8 | manufacturerCode=ADEO(0x1277) */
             elkoTiltPositionPercentageAfterMoveToLevel?: number;
-            /** ID: 64705 | Type: UINT16 | Specific to manufacturer: NIKO_NV (4703) */
+            /** ID=0xf000 | type=ENUM8 */
+            tuyaMovingState: number;
+            /** ID=0xf001 | type=ENUM8 */
+            tuyaCalibration: number;
+            /** ID=0xf001 | type=ENUM8 | manufacturerCode=LEGRAND_GROUP(0x1021) */
+            stepPositionLift?: number;
+            /** ID=0xf002 | type=ENUM8 */
+            tuyaMotorReversal: number;
+            /** ID=0xf002 | type=ENUM8 | manufacturerCode=LEGRAND_GROUP(0x1021) */
+            calibrationMode?: number;
+            /** ID=0xf003 | type=UINT16 */
+            moesCalibrationTime: number;
+            /** ID=0xf003 | type=ENUM8 | manufacturerCode=LEGRAND_GROUP(0x1021) */
+            targetPositionTiltPercentage?: number;
+            /** ID=0xf004 | type=ENUM8 | manufacturerCode=LEGRAND_GROUP(0x1021) */
+            stepPositionTilt?: number;
+            /** ID=0xfcc1 | type=UINT16 | manufacturerCode=NIKO_NV(0x125f) */
             nikoCalibrationTimeUp?: number;
-            /** ID: 64706 | Type: UINT16 | Specific to manufacturer: NIKO_NV (4703) */
+            /** ID=0xfcc2 | type=UINT16 | manufacturerCode=NIKO_NV(0x125f) */
             nikoCalibrationTimeDown?: number;
         };
         commands: {
-            /** ID: 0 */
+            /** ID=0x00 | required=true */
             upOpen: Record<string, never>;
-            /** ID: 1 */
+            /** ID=0x01 | required=true */
             downClose: Record<string, never>;
-            /** ID: 2 */
+            /** ID=0x02 | required=true */
             stop: Record<string, never>;
-            /** ID: 4 */
+            /** ID=0x04 */
             goToLiftValue: {
-                /** Type: UINT16 */
+                /** type=UINT16 | minInclusiveRef=installedClosedLimitLiftCm | maxInclusiveRef=installedOpenLimitLiftCm */
                 liftvalue: number;
             };
-            /** ID: 5 */
+            /** ID=0x05 */
             goToLiftPercentage: {
-                /** Type: UINT8 */
+                /** type=UINT8 | maxInclusive=100 */
                 percentageliftvalue: number;
             };
-            /** ID: 7 */
+            /** ID=0x07 */
             goToTiltValue: {
-                /** Type: UINT16 */
+                /** type=UINT16 | minInclusiveRef=installedClosedLimitTiltDdegree | maxInclusiveRef=installedOpenLimitTiltDdegree */
                 tiltvalue: number;
             };
-            /** ID: 8 */
+            /** ID=0x08 */
             goToTiltPercentage: {
-                /** Type: UINT8 */
+                /** type=UINT8 | maxInclusive=100 */
                 percentagetiltvalue: number;
             };
-            /** ID: 128 */
+            /** ID=0x80 */
             elkoStopOrStepLiftPercentage: {
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 direction: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 stepvalue: number;
             };
         };
@@ -2291,87 +2429,87 @@ export interface TClusters {
     };
     barrierControl: {
         attributes: {
-            /** ID: 1 | Type: ENUM8 */
+            /** ID=0x0001 | type=ENUM8 | reportRequired=true | required=true */
             movingState: number;
-            /** ID: 2 | Type: BITMAP16 */
+            /** ID=0x0002 | type=BITMAP16 | reportRequired=true | required=true */
             safetyStatus: number;
-            /** ID: 3 | Type: BITMAP8 */
+            /** ID=0x0003 | type=BITMAP8 | required=true */
             capabilities: number;
-            /** ID: 4 | Type: UINT16 */
+            /** ID=0x0004 | type=UINT16 | writable=true | default=0 */
             openEvents: number;
-            /** ID: 5 | Type: UINT16 */
+            /** ID=0x0005 | type=UINT16 | writable=true | default=0 */
             closeEvents: number;
-            /** ID: 6 | Type: UINT16 */
+            /** ID=0x0006 | type=UINT16 | writable=true | default=0 */
             commandOpenEvents: number;
-            /** ID: 7 | Type: UINT16 */
+            /** ID=0x0007 | type=UINT16 | writable=true | default=0 */
             commandCloseEvents: number;
-            /** ID: 8 | Type: UINT16 */
+            /** ID=0x0008 | type=UINT16 | writable=true */
             openPeriod: number;
-            /** ID: 9 | Type: UINT16 */
+            /** ID=0x0009 | type=UINT16 | writable=true */
             closePeriod: number;
-            /** ID: 10 | Type: UINT8 */
+            /** ID=0x000a | type=UINT8 | reportRequired=true | sceneRequired=true | required=true | max=100 | special=PositionUnknown,FF */
             barrierPosition: number;
         };
         commands: {
-            /** ID: 0 */
+            /** ID=0x00 | required=true */
             goToPercent: {
-                /** Type: UINT8 */
+                /** type=UINT8 | minInclusive=0 | maxInclusive=100 */
                 percentOpen: number;
             };
-            /** ID: 1 */
+            /** ID=0x01 | required=true */
             stop: Record<string, never>;
         };
         commandResponses: never;
     };
     hvacPumpCfgCtrl: {
         attributes: {
-            /** ID: 0 | Type: INT16 */
+            /** ID=0x0000 | type=INT16 | required=true | min=-32767 | max=32767 */
             maxPressure: number;
-            /** ID: 1 | Type: UINT16 */
+            /** ID=0x0001 | type=UINT16 | required=true | max=65534 */
             maxSpeed: number;
-            /** ID: 2 | Type: UINT16 */
+            /** ID=0x0002 | type=UINT16 | required=true | max=65534 */
             maxFlow: number;
-            /** ID: 3 | Type: INT16 */
+            /** ID=0x0003 | type=INT16 | min=-32767 | max=32767 */
             minConstPressure: number;
-            /** ID: 4 | Type: INT16 */
+            /** ID=0x0004 | type=INT16 | min=-32767 | max=32767 */
             maxConstPressure: number;
-            /** ID: 5 | Type: INT16 */
+            /** ID=0x0005 | type=INT16 | min=-32767 | max=32767 */
             minCompPressure: number;
-            /** ID: 6 | Type: INT16 */
+            /** ID=0x0006 | type=INT16 | min=-32767 | max=32767 */
             maxCompPressure: number;
-            /** ID: 7 | Type: UINT16 */
+            /** ID=0x0007 | type=UINT16 | max=65534 */
             minConstSpeed: number;
-            /** ID: 8 | Type: UINT16 */
+            /** ID=0x0008 | type=UINT16 | max=65534 */
             maxConstSpeed: number;
-            /** ID: 9 | Type: UINT16 */
+            /** ID=0x0009 | type=UINT16 | max=65534 */
             minConstFlow: number;
-            /** ID: 10 | Type: UINT16 */
+            /** ID=0x000a | type=UINT16 | max=65534 */
             maxConstFlow: number;
-            /** ID: 11 | Type: INT16 */
+            /** ID=0x000b | type=INT16 | min=-27315 | max=32767 */
             minConstTemp: number;
-            /** ID: 12 | Type: INT16 */
+            /** ID=0x000c | type=INT16 | min=-27315 | max=32767 */
             maxConstTemp: number;
-            /** ID: 16 | Type: BITMAP16 */
+            /** ID=0x0010 | type=BITMAP16 */
             pumpStatus: number;
-            /** ID: 17 | Type: ENUM8 */
+            /** ID=0x0011 | type=ENUM8 | required=true */
             effectiveOperationMode: number;
-            /** ID: 18 | Type: ENUM8 */
+            /** ID=0x0012 | type=ENUM8 | required=true */
             effectiveControlMode: number;
-            /** ID: 19 | Type: INT16 */
+            /** ID=0x0013 | type=INT16 | reportRequired=true | required=true | min=0 | max=32767 */
             capacity: number;
-            /** ID: 20 | Type: UINT16 */
+            /** ID=0x0014 | type=UINT16 | max=65534 */
             speed: number;
-            /** ID: 21 | Type: UINT24 */
+            /** ID=0x0015 | type=UINT24 | writable=true | max=16777214 | default=0 */
             lifetimeRunningHours: number;
-            /** ID: 22 | Type: UINT24 */
+            /** ID=0x0016 | type=UINT24 | writable=true | max=16777214 */
             power: number;
-            /** ID: 23 | Type: UINT32 */
+            /** ID=0x0017 | type=UINT32 | max=4294967294 | default=0 */
             lifetimeEnergyConsumed: number;
-            /** ID: 32 | Type: ENUM8 */
+            /** ID=0x0020 | type=ENUM8 | writable=true | required=true | default=0 */
             operationMode: number;
-            /** ID: 33 | Type: ENUM8 */
+            /** ID=0x0021 | type=ENUM8 | writable=true | default=0 */
             controlMode: number;
-            /** ID: 34 | Type: BITMAP16 */
+            /** ID=0x0022 | type=BITMAP16 */
             alarmMask: number;
         };
         commands: never;
@@ -2379,320 +2517,334 @@ export interface TClusters {
     };
     hvacThermostat: {
         attributes: {
-            /** ID: 0 | Type: INT16 */
+            /** ID=0x0000 | type=INT16 | reportRequired=true | required=true | min=-27315 | max=32767 */
             localTemp: number;
-            /** ID: 1 | Type: INT16 */
+            /** ID=0x0001 | type=INT16 | min=-27315 | max=32767 */
             outdoorTemp: number;
-            /** ID: 2 | Type: BITMAP8 */
+            /** ID=0x0002 | type=BITMAP8 | default=0 */
             occupancy: number;
-            /** ID: 3 | Type: INT16 */
+            /** ID=0x0003 | type=INT16 | min=-27315 | max=32767 | default=700 */
             absMinHeatSetpointLimit: number;
-            /** ID: 4 | Type: INT16 */
+            /** ID=0x0004 | type=INT16 | min=-27315 | max=32767 | default=3000 */
             absMaxHeatSetpointLimit: number;
-            /** ID: 5 | Type: INT16 */
+            /** ID=0x0005 | type=INT16 | min=-27315 | max=32767 | default=1600 */
             absMinCoolSetpointLimit: number;
-            /** ID: 6 | Type: INT16 */
+            /** ID=0x0006 | type=INT16 | min=-27315 | max=32767 | default=3200 */
             absMaxCoolSetpointLimit: number;
-            /** ID: 7 | Type: UINT8 */
+            /** ID=0x0007 | type=UINT8 | reportRequired=true | max=100 */
             pICoolingDemand: number;
-            /** ID: 8 | Type: UINT8 */
+            /** ID=0x0008 | type=UINT8 | reportRequired=true | max=100 */
             pIHeatingDemand: number;
-            /** ID: 9 | Type: BITMAP8 */
+            /** ID=0x0009 | type=BITMAP8 | writable=true | default=0 */
             systemTypeConfig: number;
-            /** ID: 16 | Type: INT8 */
+            /** ID=0x0010 | type=INT8 | writable=true | min=-25 | max=25 | default=0 */
             localTemperatureCalibration: number;
-            /** ID: 17 | Type: INT16 */
+            /** ID=0x0011 | type=INT16 | writable=true | sceneRequired=true | default=2600 | minInclusiveRef=minCoolSetpointLimit | maxInclusiveRef=maxCoolSetpointLimit */
             occupiedCoolingSetpoint: number;
-            /** ID: 18 | Type: INT16 */
+            /** ID=0x0012 | type=INT16 | writable=true | sceneRequired=true | default=2000 | minInclusiveRef=minHeatSetpointLimit | maxInclusiveRef=maxHeatSetpointLimit */
             occupiedHeatingSetpoint: number;
-            /** ID: 19 | Type: INT16 */
+            /** ID=0x0013 | type=INT16 | writable=true | default=2600 | minInclusiveRef=minCoolSetpointLimit | maxInclusiveRef=maxCoolSetpointLimit */
             unoccupiedCoolingSetpoint: number;
-            /** ID: 20 | Type: INT16 */
+            /** ID=0x0014 | type=INT16 | writable=true | default=2000 | minInclusiveRef=minHeatSetpointLimit | maxInclusiveRef=maxHeatSetpointLimit */
             unoccupiedHeatingSetpoint: number;
-            /** ID: 21 | Type: INT16 */
+            /** ID=0x0015 | type=INT16 | writable=true | min=-27315 | max=32767 | default=700 */
             minHeatSetpointLimit: number;
-            /** ID: 22 | Type: INT16 */
+            /** ID=0x0016 | type=INT16 | writable=true | min=-27315 | max=32767 | default=3000 */
             maxHeatSetpointLimit: number;
-            /** ID: 23 | Type: INT16 */
+            /** ID=0x0017 | type=INT16 | writable=true | min=-27315 | max=32767 | default=1600 */
             minCoolSetpointLimit: number;
-            /** ID: 24 | Type: INT16 */
+            /** ID=0x0018 | type=INT16 | writable=true | min=-27315 | max=32767 | default=3200 */
             maxCoolSetpointLimit: number;
-            /** ID: 25 | Type: INT8 */
+            /** ID=0x0019 | type=INT8 | writable=true | min=10 | max=25 | default=25 */
             minSetpointDeadBand: number;
-            /** ID: 26 | Type: BITMAP8 */
+            /** ID=0x001a | type=BITMAP8 | writable=true | default=0 */
             remoteSensing: number;
-            /** ID: 27 | Type: ENUM8 */
+            /** ID=0x001b | type=ENUM8 | writable=true | required=true | default=4 */
             ctrlSeqeOfOper: number;
-            /** ID: 28 | Type: ENUM8 */
+            /** ID=0x001c | type=ENUM8 | writable=true | required=true | default=1 */
             systemMode: number;
-            /** ID: 29 | Type: BITMAP8 */
+            /** ID=0x001d | type=BITMAP8 | default=0 */
             alarmMask: number;
-            /** ID: 30 | Type: ENUM8 */
+            /** ID=0x001e | type=ENUM8 | default=0 */
             runningMode: number;
-            /** ID: 32 | Type: ENUM8 */
+            /** ID=0x0020 | type=ENUM8 */
             startOfWeek: number;
-            /** ID: 33 | Type: UINT8 */
+            /** ID=0x0021 | type=UINT8 | max=255 */
             numberOfWeeklyTrans: number;
-            /** ID: 34 | Type: UINT8 */
+            /** ID=0x0022 | type=UINT8 | max=255 */
             numberOfDailyTrans: number;
-            /** ID: 35 | Type: ENUM8 */
+            /** ID=0x0023 | type=ENUM8 | writable=true | default=0 */
             tempSetpointHold: number;
-            /** ID: 36 | Type: UINT16 */
+            /** ID=0x0024 | type=UINT16 | writable=true | min=0 | max=1440 | default=65535 */
             tempSetpointHoldDuration: number;
-            /** ID: 37 | Type: BITMAP8 */
+            /** ID=0x0025 | type=BITMAP8 | writable=true | reportRequired=true | default=0 */
             programingOperMode: number;
-            /** ID: 41 | Type: BITMAP16 */
+            /** ID=0x0029 | type=BITMAP16 */
             runningState: number;
-            /** ID: 48 | Type: ENUM8 */
+            /** ID=0x0030 | type=ENUM8 | default=0 */
             setpointChangeSource: number;
-            /** ID: 49 | Type: INT16 */
+            /** ID=0x0031 | type=INT16 | default=32768 */
             setpointChangeAmount: number;
-            /** ID: 50 | Type: UTC */
+            /** ID=0x0032 | type=UTC | default=0 */
             setpointChangeSourceTimeStamp: number;
-            /** ID: 64 | Type: ENUM8 */
+            /** ID=0x0034 | type=UINT8 | writable=true | default=255 | minInclusiveRef=occupiedSetbackMin | maxInclusiveRef=occupiedSetbackMax */
+            occupiedSetback: number;
+            /** ID=0x0035 | type=UINT8 | default=255 | minInclusive=0 | maxExclusiveRef=occupiedSetbackMax */
+            occupiedSetbackMin: number;
+            /** ID=0x0036 | type=UINT8 | default=255 | maxInclusive=255 | minExclusiveRef=occupiedSetbackMin */
+            occupiedSetbackMax: number;
+            /** ID=0x0037 | type=UINT8 | writable=true | default=255 | minInclusiveRef=unoccupiedSetbackMin | maxInclusiveRef=unoccupiedSetbackMax */
+            unoccupiedSetback: number;
+            /** ID=0x0038 | type=UINT8 | default=255 | minInclusive=0 | maxExclusiveRef=unoccupiedSetbackMax */
+            unoccupiedSetbackMin: number;
+            /** ID=0x0039 | type=UINT8 | default=255 | maxInclusive=255 | minExclusiveRef=unoccupiedSetbackMin */
+            unoccupiedSetbackMax: number;
+            /** ID=0x003a | type=UINT8 | writable=true | max=255 | default=255 */
+            emergencyHeatDelta: number;
+            /** ID=0x0040 | type=ENUM8 | writable=true | default=0 */
             acType: number;
-            /** ID: 65 | Type: UINT16 */
+            /** ID=0x0041 | type=UINT16 | writable=true | default=0 */
             acCapacity: number;
-            /** ID: 66 | Type: ENUM8 */
+            /** ID=0x0042 | type=ENUM8 | writable=true | default=0 */
             acRefrigerantType: number;
-            /** ID: 67 | Type: ENUM8 */
+            /** ID=0x0043 | type=ENUM8 | writable=true | default=0 */
             acConpressorType: number;
-            /** ID: 68 | Type: BITMAP32 */
+            /** ID=0x0044 | type=BITMAP32 | writable=true | default=0 */
             acErrorCode: number;
-            /** ID: 69 | Type: ENUM8 */
+            /** ID=0x0045 | type=ENUM8 | writable=true | default=0 */
             acLouverPosition: number;
-            /** ID: 70 | Type: INT16 */
+            /** ID=0x0046 | type=INT16 | min=-27315 | max=32767 */
             acCollTemp: number;
-            /** ID: 71 | Type: ENUM8 */
+            /** ID=0x0047 | type=ENUM8 | writable=true | default=0 */
             acCapacityFormat: number;
-            /** ID: 1024 | Type: ENUM8 | Specific to manufacturer: SINOPE_TECHNOLOGIES (4508) */
-            SinopeOccupancy?: number;
-            /** ID: 1025 | Type: UINT16 | Specific to manufacturer: SINOPE_TECHNOLOGIES (4508) */
-            SinopeMainCycleOutput?: number;
-            /** ID: 1026 | Type: ENUM8 | Specific to manufacturer: SINOPE_TECHNOLOGIES (4508) */
-            SinopeBacklight?: number;
-            /** ID: 1028 | Type: UINT16 | Specific to manufacturer: SINOPE_TECHNOLOGIES (4508) */
-            SinopeAuxCycleOutput?: number;
-            /** ID: 16412 | Type: ENUM8 */
-            StelproSystemMode: number;
-            /** ID: 16385 | Type: INT16 */
-            StelproOutdoorTemp: number;
-            /** ID: 16384 | Type: ENUM8 | Specific to manufacturer: VIESSMANN_ELEKTRONIK_GMBH (4641) */
-            viessmannWindowOpenInternal?: number;
-            /** ID: 16387 | Type: BOOLEAN | Specific to manufacturer: VIESSMANN_ELEKTRONIK_GMBH (4641) */
-            viessmannWindowOpenForce?: number;
-            /** ID: 16402 | Type: BOOLEAN | Specific to manufacturer: VIESSMANN_ELEKTRONIK_GMBH (4641) */
-            viessmannAssemblyMode?: number;
-            /** ID: 57616 | Type: ENUM8 | Specific to manufacturer: SCHNEIDER_ELECTRIC (4190) */
-            schneiderWiserSpecific?: number;
-            /** ID: 16384 | Type: ENUM8 | Specific to manufacturer: DANFOSS_A_S (4678) */
-            danfossWindowOpenInternal?: number;
-            /** ID: 16387 | Type: BOOLEAN | Specific to manufacturer: DANFOSS_A_S (4678) */
-            danfossWindowOpenExternal?: number;
-            /** ID: 16400 | Type: ENUM8 | Specific to manufacturer: DANFOSS_A_S (4678) */
-            danfossDayOfWeek?: number;
-            /** ID: 16401 | Type: UINT16 | Specific to manufacturer: DANFOSS_A_S (4678) */
-            danfossTriggerTime?: number;
-            /** ID: 16402 | Type: BOOLEAN | Specific to manufacturer: DANFOSS_A_S (4678) */
-            danfossMountedModeActive?: number;
-            /** ID: 16403 | Type: BOOLEAN | Specific to manufacturer: DANFOSS_A_S (4678) */
-            danfossMountedModeControl?: number;
-            /** ID: 16404 | Type: BOOLEAN | Specific to manufacturer: DANFOSS_A_S (4678) */
-            danfossThermostatOrientation?: number;
-            /** ID: 16405 | Type: INT16 | Specific to manufacturer: DANFOSS_A_S (4678) */
-            danfossExternalMeasuredRoomSensor?: number;
-            /** ID: 16406 | Type: BOOLEAN | Specific to manufacturer: DANFOSS_A_S (4678) */
-            danfossRadiatorCovered?: number;
-            /** ID: 16416 | Type: UINT8 | Specific to manufacturer: DANFOSS_A_S (4678) */
-            danfossAlgorithmScaleFactor?: number;
-            /** ID: 16432 | Type: BOOLEAN | Specific to manufacturer: DANFOSS_A_S (4678) */
-            danfossHeatAvailable?: number;
-            /** ID: 16433 | Type: BOOLEAN | Specific to manufacturer: DANFOSS_A_S (4678) */
-            danfossHeatRequired?: number;
-            /** ID: 16434 | Type: BOOLEAN | Specific to manufacturer: DANFOSS_A_S (4678) */
-            danfossLoadBalancingEnable?: number;
-            /** ID: 16448 | Type: INT16 | Specific to manufacturer: DANFOSS_A_S (4678) */
-            danfossLoadRoomMean?: number;
-            /** ID: 16458 | Type: INT16 | Specific to manufacturer: DANFOSS_A_S (4678) */
-            danfossLoadEstimate?: number;
-            /** ID: 16459 | Type: INT8 | Specific to manufacturer: DANFOSS_A_S (4678) */
-            danfossRegulationSetpointOffset?: number;
-            /** ID: 16460 | Type: ENUM8 | Specific to manufacturer: DANFOSS_A_S (4678) */
-            danfossAdaptionRunControl?: number;
-            /** ID: 16461 | Type: BITMAP8 | Specific to manufacturer: DANFOSS_A_S (4678) */
-            danfossAdaptionRunStatus?: number;
-            /** ID: 16462 | Type: BITMAP8 | Specific to manufacturer: DANFOSS_A_S (4678) */
-            danfossAdaptionRunSettings?: number;
-            /** ID: 16463 | Type: BOOLEAN | Specific to manufacturer: DANFOSS_A_S (4678) */
-            danfossPreheatStatus?: number;
-            /** ID: 16464 | Type: UINT32 | Specific to manufacturer: DANFOSS_A_S (4678) */
-            danfossPreheatTime?: number;
-            /** ID: 16465 | Type: BOOLEAN | Specific to manufacturer: DANFOSS_A_S (4678) */
-            danfossWindowOpenFeatureEnable?: number;
-            /** ID: 16640 | Type: BITMAP16 | Specific to manufacturer: DANFOSS_A_S (4678) */
-            danfossRoomStatusCode?: number;
-            /** ID: 16656 | Type: ENUM8 | Specific to manufacturer: DANFOSS_A_S (4678) */
-            danfossOutputStatus?: number;
-            /** ID: 16672 | Type: ENUM8 | Specific to manufacturer: DANFOSS_A_S (4678) */
-            danfossRoomFloorSensorMode?: number;
-            /** ID: 16673 | Type: INT16 | Specific to manufacturer: DANFOSS_A_S (4678) */
-            danfossFloorMinSetpoint?: number;
-            /** ID: 16674 | Type: INT16 | Specific to manufacturer: DANFOSS_A_S (4678) */
-            danfossFloorMaxSetpoint?: number;
-            /** ID: 16688 | Type: ENUM8 | Specific to manufacturer: DANFOSS_A_S (4678) */
-            danfossScheduleTypeUsed?: number;
-            /** ID: 16689 | Type: ENUM8 | Specific to manufacturer: DANFOSS_A_S (4678) */
-            danfossIcon2PreHeat?: number;
-            /** ID: 16719 | Type: ENUM8 | Specific to manufacturer: DANFOSS_A_S (4678) */
-            danfossIcon2PreHeatStatus?: number;
-            /** ID: 1025 | Type: UINT16 */
-            elkoLoad: number;
-            /** ID: 1026 | Type: CHAR_STR */
-            elkoDisplayText: string;
-            /** ID: 1027 | Type: ENUM8 */
-            elkoSensor: number;
-            /** ID: 1028 | Type: UINT8 */
-            elkoRegulatorTime: number;
-            /** ID: 1029 | Type: BOOLEAN */
-            elkoRegulatorMode: number;
-            /** ID: 1030 | Type: BOOLEAN */
-            elkoPowerStatus: number;
-            /** ID: 1031 | Type: OCTET_STR */
-            elkoDateTime: Buffer;
-            /** ID: 1032 | Type: UINT16 */
-            elkoMeanPower: number;
-            /** ID: 1033 | Type: INT16 */
-            elkoExternalTemp: number;
-            /** ID: 1041 | Type: BOOLEAN */
-            elkoNightSwitching: number;
-            /** ID: 1042 | Type: BOOLEAN */
-            elkoFrostGuard: number;
-            /** ID: 1043 | Type: BOOLEAN */
-            elkoChildLock: number;
-            /** ID: 1044 | Type: UINT8 */
-            elkoMaxFloorTemp: number;
-            /** ID: 1045 | Type: BOOLEAN */
-            elkoRelayState: number;
-            /** ID: 1046 | Type: OCTET_STR */
-            elkoVersion: Buffer;
-            /** ID: 1047 | Type: INT8 */
-            elkoCalibration: number;
-            /** ID: 1048 | Type: UINT8 */
-            elkoLastMessageId: number;
-            /** ID: 1049 | Type: UINT8 */
-            elkoLastMessageStatus: number;
-            /** ID: 257 | Type: UINT16 | Specific to manufacturer: ASTREL_GROUP_SRL (4209) */
+            /** ID=0x0101 | type=UINT16 | manufacturerCode=ASTREL_GROUP_SRL(0x1071) */
             fourNoksHysteresisHigh?: number;
-            /** ID: 258 | Type: UINT16 | Specific to manufacturer: ASTREL_GROUP_SRL (4209) */
+            /** ID=0x0102 | type=UINT16 | manufacturerCode=ASTREL_GROUP_SRL(0x1071) */
             fourNoksHysteresisLow?: number;
+            /** ID=0x0400 | type=ENUM8 | manufacturerCode=SINOPE_TECHNOLOGIES(0x119c) */
+            SinopeOccupancy?: number;
+            /** ID=0x0401 | type=UINT16 */
+            elkoLoad: number;
+            /** ID=0x0401 | type=UINT16 | manufacturerCode=SINOPE_TECHNOLOGIES(0x119c) */
+            SinopeMainCycleOutput?: number;
+            /** ID=0x0402 | type=CHAR_STR */
+            elkoDisplayText: string;
+            /** ID=0x0402 | type=ENUM8 | manufacturerCode=SINOPE_TECHNOLOGIES(0x119c) */
+            SinopeBacklight?: number;
+            /** ID=0x0403 | type=ENUM8 */
+            elkoSensor: number;
+            /** ID=0x0404 | type=UINT8 */
+            elkoRegulatorTime: number;
+            /** ID=0x0404 | type=UINT16 | manufacturerCode=SINOPE_TECHNOLOGIES(0x119c) */
+            SinopeAuxCycleOutput?: number;
+            /** ID=0x0405 | type=BOOLEAN */
+            elkoRegulatorMode: number;
+            /** ID=0x0406 | type=BOOLEAN */
+            elkoPowerStatus: number;
+            /** ID=0x0407 | type=OCTET_STR */
+            elkoDateTime: Buffer;
+            /** ID=0x0408 | type=UINT16 */
+            elkoMeanPower: number;
+            /** ID=0x0409 | type=INT16 */
+            elkoExternalTemp: number;
+            /** ID=0x0411 | type=BOOLEAN */
+            elkoNightSwitching: number;
+            /** ID=0x0412 | type=BOOLEAN */
+            elkoFrostGuard: number;
+            /** ID=0x0413 | type=BOOLEAN */
+            elkoChildLock: number;
+            /** ID=0x0414 | type=UINT8 */
+            elkoMaxFloorTemp: number;
+            /** ID=0x0415 | type=BOOLEAN */
+            elkoRelayState: number;
+            /** ID=0x0416 | type=OCTET_STR */
+            elkoVersion: Buffer;
+            /** ID=0x0417 | type=INT8 */
+            elkoCalibration: number;
+            /** ID=0x0418 | type=UINT8 */
+            elkoLastMessageId: number;
+            /** ID=0x0419 | type=UINT8 */
+            elkoLastMessageStatus: number;
+            /** ID=0x4000 | type=ENUM8 | manufacturerCode=VIESSMANN_ELEKTRONIK_GMBH(0x1221) */
+            viessmannWindowOpenInternal?: number;
+            /** ID=0x4000 | type=ENUM8 | manufacturerCode=DANFOSS_A_S(0x1246) */
+            danfossWindowOpenInternal?: number;
+            /** ID=0x4001 | type=INT16 */
+            StelproOutdoorTemp: number;
+            /** ID=0x4003 | type=BOOLEAN | manufacturerCode=VIESSMANN_ELEKTRONIK_GMBH(0x1221) */
+            viessmannWindowOpenForce?: number;
+            /** ID=0x4003 | type=BOOLEAN | manufacturerCode=DANFOSS_A_S(0x1246) */
+            danfossWindowOpenExternal?: number;
+            /** ID=0x4010 | type=ENUM8 | manufacturerCode=DANFOSS_A_S(0x1246) */
+            danfossDayOfWeek?: number;
+            /** ID=0x4011 | type=UINT16 | manufacturerCode=DANFOSS_A_S(0x1246) */
+            danfossTriggerTime?: number;
+            /** ID=0x4012 | type=BOOLEAN | manufacturerCode=VIESSMANN_ELEKTRONIK_GMBH(0x1221) */
+            viessmannAssemblyMode?: number;
+            /** ID=0x4012 | type=BOOLEAN | manufacturerCode=DANFOSS_A_S(0x1246) */
+            danfossMountedModeActive?: number;
+            /** ID=0x4013 | type=BOOLEAN | manufacturerCode=DANFOSS_A_S(0x1246) */
+            danfossMountedModeControl?: number;
+            /** ID=0x4014 | type=BOOLEAN | manufacturerCode=DANFOSS_A_S(0x1246) */
+            danfossThermostatOrientation?: number;
+            /** ID=0x4015 | type=INT16 | manufacturerCode=DANFOSS_A_S(0x1246) */
+            danfossExternalMeasuredRoomSensor?: number;
+            /** ID=0x4016 | type=BOOLEAN | manufacturerCode=DANFOSS_A_S(0x1246) */
+            danfossRadiatorCovered?: number;
+            /** ID=0x401c | type=ENUM8 */
+            StelproSystemMode: number;
+            /** ID=0x4020 | type=UINT8 | manufacturerCode=DANFOSS_A_S(0x1246) */
+            danfossAlgorithmScaleFactor?: number;
+            /** ID=0x4030 | type=BOOLEAN | manufacturerCode=DANFOSS_A_S(0x1246) */
+            danfossHeatAvailable?: number;
+            /** ID=0x4031 | type=BOOLEAN | manufacturerCode=DANFOSS_A_S(0x1246) */
+            danfossHeatRequired?: number;
+            /** ID=0x4032 | type=BOOLEAN | manufacturerCode=DANFOSS_A_S(0x1246) */
+            danfossLoadBalancingEnable?: number;
+            /** ID=0x4040 | type=INT16 | manufacturerCode=DANFOSS_A_S(0x1246) */
+            danfossLoadRoomMean?: number;
+            /** ID=0x404a | type=INT16 | manufacturerCode=DANFOSS_A_S(0x1246) */
+            danfossLoadEstimate?: number;
+            /** ID=0x404b | type=INT8 | manufacturerCode=DANFOSS_A_S(0x1246) */
+            danfossRegulationSetpointOffset?: number;
+            /** ID=0x404c | type=ENUM8 | manufacturerCode=DANFOSS_A_S(0x1246) */
+            danfossAdaptionRunControl?: number;
+            /** ID=0x404d | type=BITMAP8 | manufacturerCode=DANFOSS_A_S(0x1246) */
+            danfossAdaptionRunStatus?: number;
+            /** ID=0x404e | type=BITMAP8 | manufacturerCode=DANFOSS_A_S(0x1246) */
+            danfossAdaptionRunSettings?: number;
+            /** ID=0x404f | type=BOOLEAN | manufacturerCode=DANFOSS_A_S(0x1246) */
+            danfossPreheatStatus?: number;
+            /** ID=0x4050 | type=UINT32 | manufacturerCode=DANFOSS_A_S(0x1246) */
+            danfossPreheatTime?: number;
+            /** ID=0x4051 | type=BOOLEAN | manufacturerCode=DANFOSS_A_S(0x1246) */
+            danfossWindowOpenFeatureEnable?: number;
+            /** ID=0x4100 | type=BITMAP16 | manufacturerCode=DANFOSS_A_S(0x1246) */
+            danfossRoomStatusCode?: number;
+            /** ID=0x4110 | type=ENUM8 | manufacturerCode=DANFOSS_A_S(0x1246) */
+            danfossOutputStatus?: number;
+            /** ID=0x4120 | type=ENUM8 | manufacturerCode=DANFOSS_A_S(0x1246) */
+            danfossRoomFloorSensorMode?: number;
+            /** ID=0x4121 | type=INT16 | manufacturerCode=DANFOSS_A_S(0x1246) */
+            danfossFloorMinSetpoint?: number;
+            /** ID=0x4122 | type=INT16 | manufacturerCode=DANFOSS_A_S(0x1246) */
+            danfossFloorMaxSetpoint?: number;
+            /** ID=0x4130 | type=ENUM8 | manufacturerCode=DANFOSS_A_S(0x1246) */
+            danfossScheduleTypeUsed?: number;
+            /** ID=0x4131 | type=ENUM8 | manufacturerCode=DANFOSS_A_S(0x1246) */
+            danfossIcon2PreHeat?: number;
+            /** ID=0x414f | type=ENUM8 | manufacturerCode=DANFOSS_A_S(0x1246) */
+            danfossIcon2PreHeatStatus?: number;
+            /** ID=0xe110 | type=ENUM8 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) */
+            schneiderWiserSpecific?: number;
         };
         commands: {
-            /** ID: 0 */
+            /** ID=0x00 | required=true */
             setpointRaiseLower: {
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 mode: number;
-                /** Type: INT8 */
+                /** type=INT8 */
                 amount: number;
             };
-            /** ID: 1 */
+            /** ID=0x01 */
             setWeeklySchedule: {
-                /** Type: UINT8 */
+                /** type=UINT8 | minInclusive=0 | maxInclusive=10 */
                 numoftrans: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 dayofweek: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 mode: number;
-                /** Type: LIST_THERMO_TRANSITIONS */
+                /** type=LIST_THERMO_TRANSITIONS | arrayLengthField=numoftrans */
                 transitions: ThermoTransition[];
             };
-            /** ID: 2 | Response ID: 0 */
+            /** ID=0x02 | response=0 */
             getWeeklySchedule: {
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 daystoreturn: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 modetoreturn: number;
             };
-            /** ID: 3 */
+            /** ID=0x03 */
             clearWeeklySchedule: Record<string, never>;
-            /** ID: 4 | Response ID: 1 */
+            /** ID=0x04 | response=1 */
             getRelayStatusLog: Record<string, never>;
-            /** ID: 64 */
+            /** ID=0x40 */
             danfossSetpointCommand: {
-                /** Type: ENUM8 */
+                /** type=ENUM8 */
                 setpointType: number;
-                /** Type: INT16 */
+                /** type=INT16 */
                 setpoint: number;
             };
-            /** ID: 128 */
+            /** ID=0x80 */
             schneiderWiserThermostatBoost: {
-                /** Type: ENUM8 */
+                /** type=ENUM8 */
                 command: number;
-                /** Type: ENUM8 */
+                /** type=ENUM8 */
                 enable: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 temperature: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 duration: number;
             };
-            /** ID: 224 */
-            wiserSmartSetSetpoint: {
-                /** Type: UINT8 */
-                operatingmode: number;
-                /** Type: UINT8 */
-                zonemode: number;
-                /** Type: INT16 */
-                setpoint: number;
-                /** Type: UINT8 */
-                reserved: number;
-            };
-            /** ID: 225 */
-            wiserSmartSetFipMode: {
-                /** Type: UINT8 */
-                zonemode: number;
-                /** Type: ENUM8 */
-                fipmode: number;
-                /** Type: UINT8 */
-                reserved: number;
-            };
-            /** ID: 226 */
-            wiserSmartCalibrateValve: Record<string, never>;
-            /** ID: 160 */
+            /** ID=0xa0 */
             plugwiseCalibrateValve: Record<string, never>;
+            /** ID=0xe0 */
+            wiserSmartSetSetpoint: {
+                /** type=UINT8 */
+                operatingmode: number;
+                /** type=UINT8 */
+                zonemode: number;
+                /** type=INT16 */
+                setpoint: number;
+                /** type=UINT8 */
+                reserved: number;
+            };
+            /** ID=0xe1 */
+            wiserSmartSetFipMode: {
+                /** type=UINT8 */
+                zonemode: number;
+                /** type=ENUM8 */
+                fipmode: number;
+                /** type=UINT8 */
+                reserved: number;
+            };
+            /** ID=0xe2 */
+            wiserSmartCalibrateValve: Record<string, never>;
         };
         commandResponses: {
-            /** ID: 0 */
+            /** ID=0x00 */
             getWeeklyScheduleRsp: {
-                /** Type: UINT8 */
+                /** type=UINT8 | minInclusive=0 | maxInclusive=10 */
                 numoftrans: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 dayofweek: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 mode: number;
-                /** Type: LIST_THERMO_TRANSITIONS */
+                /** type=LIST_THERMO_TRANSITIONS | arrayLengthField=numoftrans */
                 transitions: ThermoTransition[];
             };
-            /** ID: 1 */
+            /** ID=0x01 */
             getRelayStatusLogRsp: {
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 timeofday: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 relaystatus: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 localtemp: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 humidity: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 setpoint: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 unreadentries: number;
             };
         };
     };
     hvacFanCtrl: {
         attributes: {
-            /** ID: 0 | Type: ENUM8 */
+            /** ID=0x0000 | type=ENUM8 | writable=true | required=true | default=5 */
             fanMode: number;
-            /** ID: 1 | Type: ENUM8 */
+            /** ID=0x0001 | type=ENUM8 | writable=true | required=true | default=2 */
             fanModeSequence: number;
         };
         commands: never;
@@ -2700,21 +2852,21 @@ export interface TClusters {
     };
     hvacDehumidificationCtrl: {
         attributes: {
-            /** ID: 0 | Type: UINT8 */
+            /** ID=0x0000 | type=UINT8 | max=100 */
             relativeHumidity: number;
-            /** ID: 1 | Type: UINT8 */
+            /** ID=0x0001 | type=UINT8 | reportRequired=true | required=true | maxInclusiveRef=dehumidMaxCool */
             dehumidCooling: number;
-            /** ID: 16 | Type: UINT8 */
+            /** ID=0x0010 | type=UINT8 | writable=true | required=true | min=30 | max=100 | default=50 */
             rhDehumidSetpoint: number;
-            /** ID: 17 | Type: ENUM8 */
+            /** ID=0x0011 | type=ENUM8 | writable=true | default=0 */
             relativeHumidityMode: number;
-            /** ID: 18 | Type: ENUM8 */
+            /** ID=0x0012 | type=ENUM8 | writable=true | default=1 */
             dehumidLockout: number;
-            /** ID: 19 | Type: UINT8 */
+            /** ID=0x0013 | type=UINT8 | writable=true | required=true | min=2 | max=20 | default=2 */
             dehumidHysteresis: number;
-            /** ID: 20 | Type: UINT8 */
+            /** ID=0x0014 | type=UINT8 | writable=true | required=true | min=20 | max=100 | default=20 */
             dehumidMaxCool: number;
-            /** ID: 21 | Type: ENUM8 */
+            /** ID=0x0015 | type=ENUM8 | writable=true | default=0 */
             relativeHumidDisplay: number;
         };
         commands: never;
@@ -2722,13 +2874,13 @@ export interface TClusters {
     };
     hvacUserInterfaceCfg: {
         attributes: {
-            /** ID: 0 | Type: ENUM8 */
+            /** ID=0x0000 | type=ENUM8 | writable=true | required=true | default=0 */
             tempDisplayMode: number;
-            /** ID: 1 | Type: ENUM8 */
+            /** ID=0x0001 | type=ENUM8 | writable=true | required=true | default=0 */
             keypadLockout: number;
-            /** ID: 2 | Type: ENUM8 */
+            /** ID=0x0002 | type=ENUM8 | writable=true | default=0 */
             programmingVisibility: number;
-            /** ID: 16384 | Type: ENUM8 | Specific to manufacturer: DANFOSS_A_S (4678) */
+            /** ID=0x4000 | type=ENUM8 | manufacturerCode=DANFOSS_A_S(0x1246) */
             danfossViewingDirection?: number;
         };
         commands: never;
@@ -2736,340 +2888,412 @@ export interface TClusters {
     };
     lightingColorCtrl: {
         attributes: {
-            /** ID: 0 | Type: UINT8 */
+            /** ID=0x0000 | type=UINT8 | reportRequired=true | max=254 | default=0 */
             currentHue: number;
-            /** ID: 1 | Type: UINT8 */
+            /** ID=0x0001 | type=UINT8 | reportRequired=true | sceneRequired=true | max=254 | default=0 */
             currentSaturation: number;
-            /** ID: 2 | Type: UINT16 */
+            /** ID=0x0002 | type=UINT16 | max=65534 | default=0 */
             remainingTime: number;
-            /** ID: 3 | Type: UINT16 */
+            /** ID=0x0003 | type=UINT16 | reportRequired=true | sceneRequired=true | max=65279 | default=24939 */
             currentX: number;
-            /** ID: 4 | Type: UINT16 */
+            /** ID=0x0004 | type=UINT16 | reportRequired=true | sceneRequired=true | max=65279 | default=24701 */
             currentY: number;
-            /** ID: 5 | Type: ENUM8 */
+            /** ID=0x0005 | type=ENUM8 */
             driftCompensation: number;
-            /** ID: 6 | Type: CHAR_STR */
+            /** ID=0x0006 | type=CHAR_STR | maxLength=254 */
             compensationText: string;
-            /** ID: 7 | Type: UINT16 */
+            /** ID=0x0007 | type=UINT16 | reportRequired=true | sceneRequired=true | max=65279 | default=250 | minInclusiveRef=colorTempPhysicalMin | maxInclusiveRef=colorTempPhysicalMax | special=Undefined,0000 */
             colorTemperature: number;
-            /** ID: 8 | Type: ENUM8 */
+            /** ID=0x0008 | type=ENUM8 | required=true | default=1 */
             colorMode: number;
-            /** ID: 15 | Type: BITMAP8 */
+            /** ID=0x000f | type=BITMAP8 | writable=true | required=true | default=0 */
             options: number;
-            /** ID: 16 | Type: UINT8 */
+            /** ID=0x0010 | type=UINT8 | required=true | max=6 */
             numPrimaries: number;
-            /** ID: 17 | Type: UINT16 */
+            /** ID=0x0011 | type=UINT16 | max=65279 */
             primary1X: number;
-            /** ID: 18 | Type: UINT16 */
+            /** ID=0x0012 | type=UINT16 | max=65279 */
             primary1Y: number;
-            /** ID: 19 | Type: UINT8 */
+            /** ID=0x0013 | type=UINT8 | max=255 */
             primary1Intensity: number;
-            /** ID: 21 | Type: UINT16 */
+            /** ID=0x0015 | type=UINT16 | max=65279 */
             primary2X: number;
-            /** ID: 22 | Type: UINT16 */
+            /** ID=0x0016 | type=UINT16 | max=65279 */
             primary2Y: number;
-            /** ID: 23 | Type: UINT8 */
+            /** ID=0x0017 | type=UINT8 */
             primary2Intensity: number;
-            /** ID: 25 | Type: UINT16 */
+            /** ID=0x0019 | type=UINT16 | max=65279 */
             primary3X: number;
-            /** ID: 26 | Type: UINT16 */
+            /** ID=0x001a | type=UINT16 | max=65279 */
             primary3Y: number;
-            /** ID: 27 | Type: UINT8 */
+            /** ID=0x001b | type=UINT8 | max=255 */
             primary3Intensity: number;
-            /** ID: 32 | Type: UINT16 */
+            /** ID=0x0020 | type=UINT16 | max=65279 */
             primary4X: number;
-            /** ID: 33 | Type: UINT16 */
+            /** ID=0x0021 | type=UINT16 | max=65279 */
             primary4Y: number;
-            /** ID: 34 | Type: UINT8 */
+            /** ID=0x0022 | type=UINT8 | max=255 */
             primary4Intensity: number;
-            /** ID: 36 | Type: UINT16 */
+            /** ID=0x0024 | type=UINT16 | max=65279 */
             primary5X: number;
-            /** ID: 37 | Type: UINT16 */
+            /** ID=0x0025 | type=UINT16 | max=65279 */
             primary5Y: number;
-            /** ID: 38 | Type: UINT8 */
+            /** ID=0x0026 | type=UINT8 | max=255 */
             primary5Intensity: number;
-            /** ID: 40 | Type: UINT16 */
+            /** ID=0x0028 | type=UINT16 | max=65279 */
             primary6X: number;
-            /** ID: 41 | Type: UINT16 */
+            /** ID=0x0029 | type=UINT16 | max=65279 */
             primary6Y: number;
-            /** ID: 42 | Type: UINT8 */
+            /** ID=0x002a | type=UINT8 | max=255 */
             primary6Intensity: number;
-            /** ID: 48 | Type: UINT16 */
+            /** ID=0x0030 | type=UINT16 | writable=true | max=65279 */
             whitePointX: number;
-            /** ID: 49 | Type: UINT16 */
+            /** ID=0x0031 | type=UINT16 | writable=true | max=65279 */
             whitePointY: number;
-            /** ID: 50 | Type: UINT16 */
+            /** ID=0x0032 | type=UINT16 | writable=true | max=65279 */
             colorPointRX: number;
-            /** ID: 51 | Type: UINT16 */
+            /** ID=0x0033 | type=UINT16 | writable=true | max=65279 */
             colorPointRY: number;
-            /** ID: 52 | Type: UINT8 */
+            /** ID=0x0034 | type=UINT8 | writable=true | max=255 */
             colorPointRIntensity: number;
-            /** ID: 54 | Type: UINT16 */
+            /** ID=0x0036 | type=UINT16 | writable=true | max=65279 */
             colorPointGX: number;
-            /** ID: 55 | Type: UINT16 */
+            /** ID=0x0037 | type=UINT16 | writable=true | max=65279 */
             colorPointGY: number;
-            /** ID: 56 | Type: UINT8 */
+            /** ID=0x0038 | type=UINT8 | writable=true | max=255 */
             colorPointGIntensity: number;
-            /** ID: 58 | Type: UINT16 */
+            /** ID=0x003a | type=UINT16 | writable=true | max=65279 */
             colorPointBX: number;
-            /** ID: 59 | Type: UINT16 */
+            /** ID=0x003b | type=UINT16 | writable=true | max=65279 */
             colorPointBY: number;
-            /** ID: 60 | Type: UINT8 */
+            /** ID=0x003c | type=UINT8 | writable=true | max=255 */
             colorPointBIntensity: number;
-            /** ID: 16384 | Type: UINT16 */
+            /** ID=0x4000 | type=UINT16 | sceneRequired=true | max=65535 | default=0 */
             enhancedCurrentHue: number;
-            /** ID: 16385 | Type: ENUM8 */
+            /** ID=0x4001 | type=ENUM8 | required=true | default=1 */
             enhancedColorMode: number;
-            /** ID: 16386 | Type: UINT8 */
+            /** ID=0x4002 | type=UINT8 | sceneRequired=true | max=255 | default=0 */
             colorLoopActive: number;
-            /** ID: 16387 | Type: UINT8 */
+            /** ID=0x4003 | type=UINT8 | sceneRequired=true | max=255 | default=0 */
             colorLoopDirection: number;
-            /** ID: 16388 | Type: UINT16 */
+            /** ID=0x4004 | type=UINT16 | sceneRequired=true | max=65535 | default=25 */
             colorLoopTime: number;
-            /** ID: 16389 | Type: UINT16 */
+            /** ID=0x4005 | type=UINT16 | max=65535 | default=8960 */
             colorLoopStartEnhancedHue: number;
-            /** ID: 16390 | Type: UINT16 */
+            /** ID=0x4006 | type=UINT16 | max=65535 | default=0 */
             colorLoopStoredEnhancedHue: number;
-            /** ID: 16394 | Type: UINT16 */
+            /** ID=0x400a | type=UINT16 | required=true | default=0 */
             colorCapabilities: number;
-            /** ID: 16395 | Type: UINT16 */
+            /** ID=0x400b | type=UINT16 | max=65279 | default=0 | maxInclusiveRef=colorTempPhysicalMax */
             colorTempPhysicalMin: number;
-            /** ID: 16396 | Type: UINT16 */
+            /** ID=0x400c | type=UINT16 | max=65279 | default=65279 | minInclusiveRef=colorTempPhysicalMin */
             colorTempPhysicalMax: number;
-            /** ID: 16397 | Type: UINT16 */
+            /** ID=0x400d | type=UINT16 | minInclusiveRef=colorTempPhysicalMin | maxInclusiveRef=colorTemperature */
             coupleColorTempToLevelMin: number;
-            /** ID: 16400 | Type: UINT16 */
+            /** ID=0x4010 | type=UINT16 | writable=true | max=65279 | special=SetColorTempToPreviousValue,ffff */
             startUpColorTemperature: number;
-            /** ID: 61441 | Type: UINT8 */
-            tuyaBrightness: number;
-            /** ID: 61440 | Type: UINT8 */
+            /** ID=0xf000 | type=UINT8 */
             tuyaRgbMode: number;
+            /** ID=0xf001 | type=UINT8 */
+            tuyaBrightness: number;
         };
         commands: {
-            /** ID: 0 */
+            /** ID=0x00 */
             moveToHue: {
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 hue: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 direction: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 transtime: number;
+                /** type=BITMAP8 */
+                optionsMask: number;
+                /** type=BITMAP8 */
+                optionsOverride: number;
             };
-            /** ID: 1 */
+            /** ID=0x01 */
             moveHue: {
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 movemode: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 rate: number;
+                /** type=BITMAP8 */
+                optionsMask: number;
+                /** type=BITMAP8 */
+                optionsOverride: number;
             };
-            /** ID: 2 */
+            /** ID=0x02 */
             stepHue: {
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 stepmode: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 stepsize: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 transtime: number;
+                /** type=BITMAP8 */
+                optionsMask: number;
+                /** type=BITMAP8 */
+                optionsOverride: number;
             };
-            /** ID: 3 */
+            /** ID=0x03 */
             moveToSaturation: {
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 saturation: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 transtime: number;
+                /** type=BITMAP8 */
+                optionsMask: number;
+                /** type=BITMAP8 */
+                optionsOverride: number;
             };
-            /** ID: 4 */
+            /** ID=0x04 */
             moveSaturation: {
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 movemode: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 rate: number;
+                /** type=BITMAP8 */
+                optionsMask: number;
+                /** type=BITMAP8 */
+                optionsOverride: number;
             };
-            /** ID: 5 */
+            /** ID=0x05 */
             stepSaturation: {
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 stepmode: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 stepsize: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 transtime: number;
+                /** type=BITMAP8 */
+                optionsMask: number;
+                /** type=BITMAP8 */
+                optionsOverride: number;
             };
-            /** ID: 6 */
+            /** ID=0x06 */
             moveToHueAndSaturation: {
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 hue: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 saturation: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 transtime: number;
+                /** type=BITMAP8 */
+                optionsMask: number;
+                /** type=BITMAP8 */
+                optionsOverride: number;
             };
-            /** ID: 6 */
+            /** ID=0x06 */
             tuyaMoveToHueAndSaturationBrightness: {
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 hue: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 saturation: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 transtime: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 brightness: number;
             };
-            /** ID: 7 */
+            /** ID=0x07 */
             moveToColor: {
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 colorx: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 colory: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 transtime: number;
+                /** type=BITMAP8 */
+                optionsMask: number;
+                /** type=BITMAP8 */
+                optionsOverride: number;
             };
-            /** ID: 8 */
+            /** ID=0x08 */
             moveColor: {
-                /** Type: INT16 */
+                /** type=INT16 */
                 ratex: number;
-                /** Type: INT16 */
+                /** type=INT16 */
                 ratey: number;
+                /** type=BITMAP8 */
+                optionsMask: number;
+                /** type=BITMAP8 */
+                optionsOverride: number;
             };
-            /** ID: 9 */
+            /** ID=0x09 */
             stepColor: {
-                /** Type: INT16 */
+                /** type=INT16 */
                 stepx: number;
-                /** Type: INT16 */
+                /** type=INT16 */
                 stepy: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 transtime: number;
+                /** type=BITMAP8 */
+                optionsMask: number;
+                /** type=BITMAP8 */
+                optionsOverride: number;
             };
-            /** ID: 10 */
+            /** ID=0x0a */
             moveToColorTemp: {
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 colortemp: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 transtime: number;
+                /** type=BITMAP8 */
+                optionsMask: number;
+                /** type=BITMAP8 */
+                optionsOverride: number;
             };
-            /** ID: 64 */
+            /** ID=0x40 */
             enhancedMoveToHue: {
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 enhancehue: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 direction: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 transtime: number;
+                /** type=BITMAP8 */
+                optionsMask: number;
+                /** type=BITMAP8 */
+                optionsOverride: number;
             };
-            /** ID: 65 */
+            /** ID=0x41 */
             enhancedMoveHue: {
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 movemode: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 rate: number;
+                /** type=BITMAP8 */
+                optionsMask: number;
+                /** type=BITMAP8 */
+                optionsOverride: number;
             };
-            /** ID: 66 */
+            /** ID=0x42 */
             enhancedStepHue: {
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 stepmode: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 stepsize: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 transtime: number;
+                /** type=BITMAP8 */
+                optionsMask: number;
+                /** type=BITMAP8 */
+                optionsOverride: number;
             };
-            /** ID: 67 */
+            /** ID=0x43 */
             enhancedMoveToHueAndSaturation: {
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 enhancehue: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 saturation: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 transtime: number;
+                /** type=BITMAP8 */
+                optionsMask: number;
+                /** type=BITMAP8 */
+                optionsOverride: number;
             };
-            /** ID: 68 */
+            /** ID=0x44 */
             colorLoopSet: {
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 updateflags: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 action: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 direction: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 time: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 starthue: number;
+                /** type=BITMAP8 */
+                optionsMask: number;
+                /** type=BITMAP8 */
+                optionsOverride: number;
             };
-            /** ID: 71 */
+            /** ID=0x47 | required=true */
             stopMoveStep: {
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 bits: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 bytee: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 action: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 direction: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 time: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 starthue: number;
             };
-            /** ID: 75 */
+            /** ID=0x4b */
             moveColorTemp: {
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 movemode: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 rate: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 minimum: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 maximum: number;
+                /** type=BITMAP8 */
+                optionsMask: number;
+                /** type=BITMAP8 */
+                optionsOverride: number;
             };
-            /** ID: 76 */
+            /** ID=0x4c */
             stepColorTemp: {
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 stepmode: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 stepsize: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 transtime: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 minimum: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 maximum: number;
+                /** type=BITMAP8 */
+                optionsMask: number;
+                /** type=BITMAP8 */
+                optionsOverride: number;
             };
-            /** ID: 224 */
+            /** ID=0xe0 */
             tuyaSetMinimumBrightness: {
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 minimum: number;
             };
-            /** ID: 225 */
+            /** ID=0xe1 */
             tuyaMoveToHueAndSaturationBrightness2: {
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 hue: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 saturation: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 brightness: number;
             };
-            /** ID: 240 */
+            /** ID=0xf0 */
             tuyaRgbMode: {
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 enable: number;
             };
-            /** ID: 249 */
+            /** ID=0xf9 */
             tuyaOnStartUp: {
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 mode: number;
-                /** Type: LIST_UINT8 */
+                /** type=LIST_UINT8 */
                 data: number[];
             };
-            /** ID: 250 */
+            /** ID=0xfa */
             tuyaDoNotDisturb: {
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 enable: number;
             };
-            /** ID: 251 */
+            /** ID=0xfb */
             tuyaOnOffTransitionTime: {
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 unknown: number;
-                /** Type: BIG_ENDIAN_UINT24 */
+                /** type=BIG_ENDIAN_UINT24 */
                 onTransitionTime: number;
-                /** Type: BIG_ENDIAN_UINT24 */
+                /** type=BIG_ENDIAN_UINT24 */
                 offTransitionTime: number;
             };
         };
@@ -3077,41 +3301,41 @@ export interface TClusters {
     };
     lightingBallastCfg: {
         attributes: {
-            /** ID: 0 | Type: UINT8 */
+            /** ID=0x0000 | type=UINT8 | required=true | min=1 | max=254 | default=1 */
             physicalMinLevel: number;
-            /** ID: 1 | Type: UINT8 */
+            /** ID=0x0001 | type=UINT8 | required=true | min=1 | max=254 | default=254 */
             physicalMaxLevel: number;
-            /** ID: 2 | Type: BITMAP8 */
+            /** ID=0x0002 | type=BITMAP8 | default=0 */
             ballastStatus: number;
-            /** ID: 16 | Type: UINT8 */
+            /** ID=0x0010 | type=UINT8 | writable=true | required=true | min=1 | max=254 | defaultRef=physicalMinLevel | minInclusiveRef=physicalMinLevel | maxInclusiveRef=maxLevel */
             minLevel: number;
-            /** ID: 17 | Type: UINT8 */
+            /** ID=0x0011 | type=UINT8 | writable=true | required=true | min=1 | max=254 | defaultRef=physicalMaxLevel | minInclusiveRef=minLevel | maxInclusiveRef=physicalMaxLevel */
             maxLevel: number;
-            /** ID: 18 | Type: UINT8 */
+            /** ID=0x0012 | type=UINT8 | writable=true | max=254 | defaultRef=physicalMaxLevel */
             powerOnLevel: number;
-            /** ID: 19 | Type: UINT16 */
+            /** ID=0x0013 | type=UINT16 | writable=true | max=65534 | default=0 */
             powerOnFadeTime: number;
-            /** ID: 20 | Type: UINT8 */
+            /** ID=0x0014 | type=UINT8 | writable=true | max=254 */
             intrinsicBallastFactor: number;
-            /** ID: 21 | Type: UINT8 */
+            /** ID=0x0015 | type=UINT8 | writable=true | min=100 | default=255 */
             ballastFactorAdjustment: number;
-            /** ID: 32 | Type: UINT8 */
+            /** ID=0x0020 | type=UINT8 | max=254 */
             lampQuantity: number;
-            /** ID: 48 | Type: CHAR_STR */
+            /** ID=0x0030 | type=CHAR_STR | writable=true | default= | maxLength=16 */
             lampType: string;
-            /** ID: 49 | Type: CHAR_STR */
+            /** ID=0x0031 | type=CHAR_STR | writable=true | default= | maxLength=16 */
             lampManufacturer: string;
-            /** ID: 50 | Type: UINT24 */
+            /** ID=0x0032 | type=UINT24 | writable=true | max=16777214 | default=16777215 */
             lampRatedHours: number;
-            /** ID: 51 | Type: UINT24 */
+            /** ID=0x0033 | type=UINT24 | writable=true | max=16777214 | default=0 */
             lampBurnHours: number;
-            /** ID: 52 | Type: BITMAP8 */
+            /** ID=0x0034 | type=BITMAP8 | writable=true | default=0 */
             lampAlarmMode: number;
-            /** ID: 53 | Type: UINT24 */
+            /** ID=0x0035 | type=UINT24 | writable=true | max=16777214 | default=16777215 */
             lampBurnHoursTripPoint: number;
-            /** ID: 57344 | Type: ENUM8 | Specific to manufacturer: ADEO (4727) */
+            /** ID=0xe000 | type=ENUM8 | manufacturerCode=ADEO(0x1277) */
             elkoControlMode?: number;
-            /** ID: 57344 | Type: ENUM8 | Specific to manufacturer: SCHNEIDER_ELECTRIC (4190) */
+            /** ID=0xe000 | type=ENUM8 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) */
             wiserControlMode?: number;
         };
         commands: never;
@@ -3119,15 +3343,15 @@ export interface TClusters {
     };
     msIlluminanceMeasurement: {
         attributes: {
-            /** ID: 0 | Type: UINT16 */
+            /** ID=0x0000 | type=UINT16 | reportRequired=true | required=true | max=65535 | default=0 */
             measuredValue: number;
-            /** ID: 1 | Type: UINT16 */
+            /** ID=0x0001 | type=UINT16 | required=true | min=1 | max=65533 | maxExclusiveRef=maxMeasuredValue */
             minMeasuredValue: number;
-            /** ID: 2 | Type: UINT16 */
+            /** ID=0x0002 | type=UINT16 | required=true | min=2 | max=65534 | minExclusiveRef=minMeasuredValue */
             maxMeasuredValue: number;
-            /** ID: 3 | Type: UINT16 */
+            /** ID=0x0003 | type=UINT16 | max=2048 */
             tolerance: number;
-            /** ID: 4 | Type: ENUM8 */
+            /** ID=0x0004 | type=ENUM8 | default=255 */
             lightSensorType: number;
         };
         commands: never;
@@ -3135,11 +3359,11 @@ export interface TClusters {
     };
     msIlluminanceLevelSensing: {
         attributes: {
-            /** ID: 0 | Type: ENUM8 */
+            /** ID=0x0000 | type=ENUM8 | reportRequired=true | required=true */
             levelStatus: number;
-            /** ID: 1 | Type: ENUM8 */
+            /** ID=0x0001 | type=ENUM8 */
             lightSensorType: number;
-            /** ID: 16 | Type: UINT16 */
+            /** ID=0x0010 | type=UINT16 | writable=true | required=true | max=65534 */
             illuminanceTargetLevel: number;
         };
         commands: never;
@@ -3147,19 +3371,19 @@ export interface TClusters {
     };
     msTemperatureMeasurement: {
         attributes: {
-            /** ID: 0 | Type: INT16 */
+            /** ID=0x0000 | type=INT16 | reportRequired=true | required=true | default=-32768 | minInclusiveRef=minMeasuredValue | maxInclusiveRef=maxMeasuredValue */
             measuredValue: number;
-            /** ID: 1 | Type: INT16 */
+            /** ID=0x0001 | type=INT16 | required=true | min=-27315 | max=32766 | default=-32768 | maxExclusiveRef=maxMeasuredValue */
             minMeasuredValue: number;
-            /** ID: 2 | Type: INT16 */
+            /** ID=0x0002 | type=INT16 | required=true | min=-27314 | max=32767 | default=-32768 | minExclusiveRef=minMeasuredValue */
             maxMeasuredValue: number;
-            /** ID: 3 | Type: UINT16 */
+            /** ID=0x0003 | type=UINT16 | max=2048 */
             tolerance: number;
-            /** ID: 16 | Type: UNKNOWN */
+            /** ID=0x0010 | type=UNKNOWN */
             minPercentChange: never;
-            /** ID: 17 | Type: UNKNOWN */
+            /** ID=0x0011 | type=UNKNOWN */
             minAbsoluteChange: never;
-            /** ID: 26112 | Type: INT16 | Specific to manufacturer: CUSTOM_SPRUT_DEVICE (26214) */
+            /** ID=0x6600 | type=INT16 | manufacturerCode=CUSTOM_SPRUT_DEVICE(0x6666) */
             sprutTemperatureOffset?: number;
         };
         commands: never;
@@ -3167,23 +3391,23 @@ export interface TClusters {
     };
     msPressureMeasurement: {
         attributes: {
-            /** ID: 0 | Type: INT16 */
+            /** ID=0x0000 | type=INT16 | reportRequired=true | required=true | default=-32768 | minInclusiveRef=minMeasuredValue | maxInclusiveRef=maxMeasuredValue */
             measuredValue: number;
-            /** ID: 1 | Type: INT16 */
+            /** ID=0x0001 | type=INT16 | required=true | min=-32767 | max=32766 | default=-32768 | maxExclusiveRef=maxMeasuredValue */
             minMeasuredValue: number;
-            /** ID: 2 | Type: INT16 */
+            /** ID=0x0002 | type=INT16 | required=true | min=-32766 | max=32767 | default=-32768 | minExclusiveRef=minMeasuredValue */
             maxMeasuredValue: number;
-            /** ID: 3 | Type: UINT16 */
+            /** ID=0x0003 | type=UINT16 | max=2048 */
             tolerance: number;
-            /** ID: 16 | Type: INT16 */
+            /** ID=0x0010 | type=INT16 | default=0 | minInclusiveRef=minScaledValue | maxInclusiveRef=maxScaledValue */
             scaledValue: number;
-            /** ID: 17 | Type: INT16 */
+            /** ID=0x0011 | type=INT16 | min=-32767 | max=32766 | default=-32768 | maxExclusiveRef=maxScaledValue */
             minScaledValue: number;
-            /** ID: 18 | Type: INT16 */
+            /** ID=0x0012 | type=INT16 | min=-32766 | max=32767 | default=-32768 | minExclusiveRef=minScaledValue */
             maxScaledValue: number;
-            /** ID: 19 | Type: UINT16 */
+            /** ID=0x0013 | type=UINT16 | max=2048 */
             scaledTolerance: number;
-            /** ID: 20 | Type: INT8 */
+            /** ID=0x0014 | type=INT8 | min=-127 | max=127 */
             scale: number;
         };
         commands: never;
@@ -3191,13 +3415,13 @@ export interface TClusters {
     };
     msFlowMeasurement: {
         attributes: {
-            /** ID: 0 | Type: UINT16 */
+            /** ID=0x0000 | type=UINT16 | reportRequired=true | required=true | default=65535 | minInclusiveRef=minMeasuredValue | maxInclusiveRef=maxMeasuredValue */
             measuredValue: number;
-            /** ID: 1 | Type: UINT16 */
+            /** ID=0x0001 | type=UINT16 | required=true | max=65533 | default=65535 | maxExclusiveRef=maxMeasuredValue */
             minMeasuredValue: number;
-            /** ID: 2 | Type: UINT16 */
+            /** ID=0x0002 | type=UINT16 | required=true | min=1 | max=65534 | default=65535 | minExclusiveRef=minMeasuredValue */
             maxMeasuredValue: number;
-            /** ID: 3 | Type: UINT16 */
+            /** ID=0x0003 | type=UINT16 | max=2048 */
             tolerance: number;
         };
         commands: never;
@@ -3205,15 +3429,15 @@ export interface TClusters {
     };
     msRelativeHumidity: {
         attributes: {
-            /** ID: 0 | Type: UINT16 */
+            /** ID=0x0000 | type=UINT16 | reportRequired=true | required=true | default=65535 | minInclusiveRef=minMeasuredValue | maxInclusiveRef=maxMeasuredValue */
             measuredValue: number;
-            /** ID: 1 | Type: UINT16 */
+            /** ID=0x0001 | type=UINT16 | required=true | max=9999 | default=65535 | maxExclusiveRef=maxMeasuredValue */
             minMeasuredValue: number;
-            /** ID: 2 | Type: UINT16 */
+            /** ID=0x0002 | type=UINT16 | required=true | min=1 | max=10000 | default=65535 | minExclusiveRef=minMeasuredValue */
             maxMeasuredValue: number;
-            /** ID: 3 | Type: UINT16 */
+            /** ID=0x0003 | type=UINT16 | max=2048 */
             tolerance: number;
-            /** ID: 26112 | Type: BOOLEAN | Specific to manufacturer: CUSTOM_SPRUT_DEVICE (26214) */
+            /** ID=0x6600 | type=BOOLEAN | manufacturerCode=CUSTOM_SPRUT_DEVICE(0x6666) */
             sprutHeater?: number;
         };
         commands: never;
@@ -3221,55 +3445,55 @@ export interface TClusters {
     };
     msOccupancySensing: {
         attributes: {
-            /** ID: 0 | Type: BITMAP8 */
+            /** ID=0x0000 | type=BITMAP8 | reportRequired=true | required=true */
             occupancy: number;
-            /** ID: 1 | Type: ENUM8 */
+            /** ID=0x0001 | type=ENUM8 | required=true | default=0 */
             occupancySensorType: number;
-            /** ID: 2 | Type: BITMAP8 */
+            /** ID=0x0002 | type=BITMAP8 | required=true */
             occupancySensorTypeBitmap: number;
-            /** ID: 16 | Type: UINT16 */
+            /** ID=0x0010 | type=UINT16 | writable=true | max=65534 | default=0 */
             pirOToUDelay: number;
-            /** ID: 17 | Type: UINT16 */
+            /** ID=0x0011 | type=UINT16 | writable=true | max=65534 | default=0 */
             pirUToODelay: number;
-            /** ID: 18 | Type: UINT8 */
+            /** ID=0x0012 | type=UINT8 | writable=true | min=1 | max=254 | default=1 */
             pirUToOThreshold: number;
-            /** ID: 32 | Type: UINT16 */
+            /** ID=0x0020 | type=UINT16 | writable=true | max=65534 | default=0 */
             ultrasonicOToUDelay: number;
-            /** ID: 33 | Type: UINT16 */
+            /** ID=0x0021 | type=UINT16 | writable=true | max=65534 | default=0 */
             ultrasonicUToODelay: number;
-            /** ID: 34 | Type: UINT8 */
+            /** ID=0x0022 | type=UINT8 | writable=true | min=1 | max=254 | default=1 */
             ultrasonicUToOThreshold: number;
-            /** ID: 48 | Type: UINT16 */
+            /** ID=0x0030 | type=UINT16 | writable=true | max=65534 | default=0 */
             contactOToUDelay: number;
-            /** ID: 49 | Type: UINT16 */
+            /** ID=0x0031 | type=UINT16 | writable=true | max=65534 | default=0 */
             contactUToODelay: number;
-            /** ID: 50 | Type: UINT8 */
+            /** ID=0x0032 | type=UINT8 | writable=true | min=1 | max=254 | default=1 */
             contactUToOThreshold: number;
-            /** ID: 57344 | Type: ENUM8 | Specific to manufacturer: ADEO (4727) */
-            elkoOccupancyDfltOperationMode?: number;
-            /** ID: 57345 | Type: ENUM8 | Specific to manufacturer: ADEO (4727) */
-            elkoOccupancyOperationMode?: number;
-            /** ID: 57346 | Type: UINT16 | Specific to manufacturer: ADEO (4727) */
-            elkoForceOffTimeout?: number;
-            /** ID: 57347 | Type: UINT8 | Specific to manufacturer: ADEO (4727) */
-            elkoOccupancySensitivity?: number;
-            /** ID: 26112 | Type: UINT16 | Specific to manufacturer: CUSTOM_SPRUT_DEVICE (26214) */
+            /** ID=0x6600 | type=UINT16 | manufacturerCode=CUSTOM_SPRUT_DEVICE(0x6666) */
             sprutOccupancyLevel?: number;
-            /** ID: 26113 | Type: UINT16 | Specific to manufacturer: CUSTOM_SPRUT_DEVICE (26214) */
+            /** ID=0x6601 | type=UINT16 | manufacturerCode=CUSTOM_SPRUT_DEVICE(0x6666) */
             sprutOccupancySensitivity?: number;
+            /** ID=0xe000 | type=ENUM8 | manufacturerCode=ADEO(0x1277) */
+            elkoOccupancyDfltOperationMode?: number;
+            /** ID=0xe001 | type=ENUM8 | manufacturerCode=ADEO(0x1277) */
+            elkoOccupancyOperationMode?: number;
+            /** ID=0xe002 | type=UINT16 | manufacturerCode=ADEO(0x1277) */
+            elkoForceOffTimeout?: number;
+            /** ID=0xe003 | type=UINT8 | manufacturerCode=ADEO(0x1277) */
+            elkoOccupancySensitivity?: number;
         };
         commands: never;
         commandResponses: never;
     };
     msLeafWetness: {
         attributes: {
-            /** ID: 0 | Type: UINT16 */
+            /** ID=0x0000 | type=UINT16 */
             measuredValue: number;
-            /** ID: 1 | Type: UINT16 */
+            /** ID=0x0001 | type=UINT16 */
             minMeasuredValue: number;
-            /** ID: 2 | Type: UINT16 */
+            /** ID=0x0002 | type=UINT16 */
             maxMeasuredValue: number;
-            /** ID: 3 | Type: UINT16 */
+            /** ID=0x0003 | type=UINT16 */
             tolerance: number;
         };
         commands: never;
@@ -3277,13 +3501,13 @@ export interface TClusters {
     };
     msSoilMoisture: {
         attributes: {
-            /** ID: 0 | Type: UINT16 */
+            /** ID=0x0000 | type=UINT16 */
             measuredValue: number;
-            /** ID: 1 | Type: UINT16 */
+            /** ID=0x0001 | type=UINT16 */
             minMeasuredValue: number;
-            /** ID: 2 | Type: UINT16 */
+            /** ID=0x0002 | type=UINT16 */
             maxMeasuredValue: number;
-            /** ID: 3 | Type: UINT16 */
+            /** ID=0x0003 | type=UINT16 */
             tolerance: number;
         };
         commands: never;
@@ -3291,13 +3515,13 @@ export interface TClusters {
     };
     pHMeasurement: {
         attributes: {
-            /** ID: 0 | Type: UINT16 */
+            /** ID=0x0000 | type=UINT16 | reportRequired=true | required=true | default=65535 | minInclusiveRef=minMeasuredValue | maxInclusiveRef=maxMeasuredValue */
             measuredValue: number;
-            /** ID: 1 | Type: UINT16 */
+            /** ID=0x0001 | type=UINT16 | required=true | default=65535 | maxExclusiveRef=maxMeasuredValue */
             minMeasuredValue: number;
-            /** ID: 2 | Type: UINT16 */
+            /** ID=0x0002 | type=UINT16 | required=true | max=1400 | default=65535 | minExclusiveRef=minMeasuredValue */
             maxMeasuredValue: number;
-            /** ID: 3 | Type: UINT16 */
+            /** ID=0x0003 | type=UINT16 | max=200 | default=0 */
             tolerance: number;
         };
         commands: never;
@@ -3305,13 +3529,13 @@ export interface TClusters {
     };
     msElectricalConductivity: {
         attributes: {
-            /** ID: 0 | Type: UINT16 */
+            /** ID=0x0000 | type=UINT16 | reportRequired=true | required=true | default=65535 | minInclusiveRef=minMeasuredValue | maxInclusiveRef=maxMeasuredValue */
             measuredValue: number;
-            /** ID: 1 | Type: UINT16 */
+            /** ID=0x0001 | type=UINT16 | required=true | default=65535 | maxExclusiveRef=maxMeasuredValue */
             minMeasuredValue: number;
-            /** ID: 2 | Type: UINT16 */
+            /** ID=0x0002 | type=UINT16 | required=true | max=65534 | default=65535 | minExclusiveRef=minMeasuredValue */
             maxMeasuredValue: number;
-            /** ID: 3 | Type: UINT16 */
+            /** ID=0x0003 | type=UINT16 | max=100 */
             tolerance: number;
         };
         commands: never;
@@ -3319,13 +3543,13 @@ export interface TClusters {
     };
     msWindSpeed: {
         attributes: {
-            /** ID: 0 | Type: UINT16 */
+            /** ID=0x0000 | type=UINT16 | reportRequired=true | required=true | default=65535 | minInclusiveRef=minMeasuredValue | maxInclusiveRef=maxMeasuredValue */
             measuredValue: number;
-            /** ID: 1 | Type: UINT16 */
+            /** ID=0x0001 | type=UINT16 | required=true | default=65535 | maxExclusiveRef=maxMeasuredValue */
             minMeasuredValue: number;
-            /** ID: 2 | Type: UINT16 */
+            /** ID=0x0002 | type=UINT16 | required=true | max=65534 | default=65535 | minExclusiveRef=minMeasuredValue */
             maxMeasuredValue: number;
-            /** ID: 3 | Type: UINT16 */
+            /** ID=0x0003 | type=UINT16 | max=776 | default=0 */
             tolerance: number;
         };
         commands: never;
@@ -3333,13 +3557,13 @@ export interface TClusters {
     };
     msCarbonMonoxide: {
         attributes: {
-            /** ID: 0 | Type: SINGLE_PREC */
+            /** ID=0x0000 | type=SINGLE_PREC | reportRequired=true | required=true | minInclusiveRef=minMeasuredValue | maxInclusiveRef=maxMeasuredValue */
             measuredValue: number;
-            /** ID: 1 | Type: SINGLE_PREC */
+            /** ID=0x0001 | type=SINGLE_PREC | required=true | min=0 | maxExclusiveRef=maxMeasuredValue */
             minMeasuredValue: number;
-            /** ID: 2 | Type: SINGLE_PREC */
+            /** ID=0x0002 | type=SINGLE_PREC | required=true | max=1 | minExclusiveRef=minMeasuredValue */
             maxMeasuredValue: number;
-            /** ID: 3 | Type: SINGLE_PREC */
+            /** ID=0x0003 | type=SINGLE_PREC */
             tolerance: number;
         };
         commands: never;
@@ -3347,17 +3571,17 @@ export interface TClusters {
     };
     msCO2: {
         attributes: {
-            /** ID: 0 | Type: SINGLE_PREC */
+            /** ID=0x0000 | type=SINGLE_PREC */
             measuredValue: number;
-            /** ID: 1 | Type: SINGLE_PREC */
+            /** ID=0x0001 | type=SINGLE_PREC */
             minMeasuredValue: number;
-            /** ID: 2 | Type: SINGLE_PREC */
+            /** ID=0x0002 | type=SINGLE_PREC */
             maxMeasuredValue: number;
-            /** ID: 3 | Type: SINGLE_PREC */
+            /** ID=0x0003 | type=SINGLE_PREC */
             tolerance: number;
-            /** ID: 26112 | Type: BOOLEAN | Specific to manufacturer: CUSTOM_SPRUT_DEVICE (26214) */
+            /** ID=0x6600 | type=BOOLEAN | manufacturerCode=CUSTOM_SPRUT_DEVICE(0x6666) */
             sprutCO2Calibration?: number;
-            /** ID: 26113 | Type: BOOLEAN | Specific to manufacturer: CUSTOM_SPRUT_DEVICE (26214) */
+            /** ID=0x6601 | type=BOOLEAN | manufacturerCode=CUSTOM_SPRUT_DEVICE(0x6666) */
             sprutCO2AutoCalibration?: number;
         };
         commands: never;
@@ -3365,13 +3589,13 @@ export interface TClusters {
     };
     msEthylene: {
         attributes: {
-            /** ID: 0 | Type: SINGLE_PREC */
+            /** ID=0x0000 | type=SINGLE_PREC */
             measuredValue: number;
-            /** ID: 1 | Type: SINGLE_PREC */
+            /** ID=0x0001 | type=SINGLE_PREC */
             minMeasuredValue: number;
-            /** ID: 2 | Type: SINGLE_PREC */
+            /** ID=0x0002 | type=SINGLE_PREC */
             maxMeasuredValue: number;
-            /** ID: 3 | Type: SINGLE_PREC */
+            /** ID=0x0003 | type=SINGLE_PREC */
             tolerance: number;
         };
         commands: never;
@@ -3379,13 +3603,13 @@ export interface TClusters {
     };
     msEthyleneOxide: {
         attributes: {
-            /** ID: 0 | Type: SINGLE_PREC */
+            /** ID=0x0000 | type=SINGLE_PREC */
             measuredValue: number;
-            /** ID: 1 | Type: SINGLE_PREC */
+            /** ID=0x0001 | type=SINGLE_PREC */
             minMeasuredValue: number;
-            /** ID: 2 | Type: SINGLE_PREC */
+            /** ID=0x0002 | type=SINGLE_PREC */
             maxMeasuredValue: number;
-            /** ID: 3 | Type: SINGLE_PREC */
+            /** ID=0x0003 | type=SINGLE_PREC */
             tolerance: number;
         };
         commands: never;
@@ -3393,13 +3617,13 @@ export interface TClusters {
     };
     msHydrogen: {
         attributes: {
-            /** ID: 0 | Type: SINGLE_PREC */
+            /** ID=0x0000 | type=SINGLE_PREC */
             measuredValue: number;
-            /** ID: 1 | Type: SINGLE_PREC */
+            /** ID=0x0001 | type=SINGLE_PREC */
             minMeasuredValue: number;
-            /** ID: 2 | Type: SINGLE_PREC */
+            /** ID=0x0002 | type=SINGLE_PREC */
             maxMeasuredValue: number;
-            /** ID: 3 | Type: SINGLE_PREC */
+            /** ID=0x0003 | type=SINGLE_PREC */
             tolerance: number;
         };
         commands: never;
@@ -3407,13 +3631,13 @@ export interface TClusters {
     };
     msHydrogenSulfide: {
         attributes: {
-            /** ID: 0 | Type: SINGLE_PREC */
+            /** ID=0x0000 | type=SINGLE_PREC */
             measuredValue: number;
-            /** ID: 1 | Type: SINGLE_PREC */
+            /** ID=0x0001 | type=SINGLE_PREC */
             minMeasuredValue: number;
-            /** ID: 2 | Type: SINGLE_PREC */
+            /** ID=0x0002 | type=SINGLE_PREC */
             maxMeasuredValue: number;
-            /** ID: 3 | Type: SINGLE_PREC */
+            /** ID=0x0003 | type=SINGLE_PREC */
             tolerance: number;
         };
         commands: never;
@@ -3421,13 +3645,13 @@ export interface TClusters {
     };
     msNitricOxide: {
         attributes: {
-            /** ID: 0 | Type: SINGLE_PREC */
+            /** ID=0x0000 | type=SINGLE_PREC */
             measuredValue: number;
-            /** ID: 1 | Type: SINGLE_PREC */
+            /** ID=0x0001 | type=SINGLE_PREC */
             minMeasuredValue: number;
-            /** ID: 2 | Type: SINGLE_PREC */
+            /** ID=0x0002 | type=SINGLE_PREC */
             maxMeasuredValue: number;
-            /** ID: 3 | Type: SINGLE_PREC */
+            /** ID=0x0003 | type=SINGLE_PREC */
             tolerance: number;
         };
         commands: never;
@@ -3435,13 +3659,13 @@ export interface TClusters {
     };
     msNitrogenDioxide: {
         attributes: {
-            /** ID: 0 | Type: SINGLE_PREC */
+            /** ID=0x0000 | type=SINGLE_PREC */
             measuredValue: number;
-            /** ID: 1 | Type: SINGLE_PREC */
+            /** ID=0x0001 | type=SINGLE_PREC */
             minMeasuredValue: number;
-            /** ID: 2 | Type: SINGLE_PREC */
+            /** ID=0x0002 | type=SINGLE_PREC */
             maxMeasuredValue: number;
-            /** ID: 3 | Type: SINGLE_PREC */
+            /** ID=0x0003 | type=SINGLE_PREC */
             tolerance: number;
         };
         commands: never;
@@ -3449,13 +3673,13 @@ export interface TClusters {
     };
     msOxygen: {
         attributes: {
-            /** ID: 0 | Type: SINGLE_PREC */
+            /** ID=0x0000 | type=SINGLE_PREC */
             measuredValue: number;
-            /** ID: 1 | Type: SINGLE_PREC */
+            /** ID=0x0001 | type=SINGLE_PREC */
             minMeasuredValue: number;
-            /** ID: 2 | Type: SINGLE_PREC */
+            /** ID=0x0002 | type=SINGLE_PREC */
             maxMeasuredValue: number;
-            /** ID: 3 | Type: SINGLE_PREC */
+            /** ID=0x0003 | type=SINGLE_PREC */
             tolerance: number;
         };
         commands: never;
@@ -3463,13 +3687,13 @@ export interface TClusters {
     };
     msOzone: {
         attributes: {
-            /** ID: 0 | Type: SINGLE_PREC */
+            /** ID=0x0000 | type=SINGLE_PREC */
             measuredValue: number;
-            /** ID: 1 | Type: SINGLE_PREC */
+            /** ID=0x0001 | type=SINGLE_PREC */
             minMeasuredValue: number;
-            /** ID: 2 | Type: SINGLE_PREC */
+            /** ID=0x0002 | type=SINGLE_PREC */
             maxMeasuredValue: number;
-            /** ID: 3 | Type: SINGLE_PREC */
+            /** ID=0x0003 | type=SINGLE_PREC */
             tolerance: number;
         };
         commands: never;
@@ -3477,13 +3701,13 @@ export interface TClusters {
     };
     msSulfurDioxide: {
         attributes: {
-            /** ID: 0 | Type: SINGLE_PREC */
+            /** ID=0x0000 | type=SINGLE_PREC */
             measuredValue: number;
-            /** ID: 1 | Type: SINGLE_PREC */
+            /** ID=0x0001 | type=SINGLE_PREC */
             minMeasuredValue: number;
-            /** ID: 2 | Type: SINGLE_PREC */
+            /** ID=0x0002 | type=SINGLE_PREC */
             maxMeasuredValue: number;
-            /** ID: 3 | Type: SINGLE_PREC */
+            /** ID=0x0003 | type=SINGLE_PREC */
             tolerance: number;
         };
         commands: never;
@@ -3491,13 +3715,13 @@ export interface TClusters {
     };
     msDissolvedOxygen: {
         attributes: {
-            /** ID: 0 | Type: SINGLE_PREC */
+            /** ID=0x0000 | type=SINGLE_PREC */
             measuredValue: number;
-            /** ID: 1 | Type: SINGLE_PREC */
+            /** ID=0x0001 | type=SINGLE_PREC */
             minMeasuredValue: number;
-            /** ID: 2 | Type: SINGLE_PREC */
+            /** ID=0x0002 | type=SINGLE_PREC */
             maxMeasuredValue: number;
-            /** ID: 3 | Type: SINGLE_PREC */
+            /** ID=0x0003 | type=SINGLE_PREC */
             tolerance: number;
         };
         commands: never;
@@ -3505,13 +3729,13 @@ export interface TClusters {
     };
     msBromate: {
         attributes: {
-            /** ID: 0 | Type: SINGLE_PREC */
+            /** ID=0x0000 | type=SINGLE_PREC */
             measuredValue: number;
-            /** ID: 1 | Type: SINGLE_PREC */
+            /** ID=0x0001 | type=SINGLE_PREC */
             minMeasuredValue: number;
-            /** ID: 2 | Type: SINGLE_PREC */
+            /** ID=0x0002 | type=SINGLE_PREC */
             maxMeasuredValue: number;
-            /** ID: 3 | Type: SINGLE_PREC */
+            /** ID=0x0003 | type=SINGLE_PREC */
             tolerance: number;
         };
         commands: never;
@@ -3519,13 +3743,13 @@ export interface TClusters {
     };
     msChloramines: {
         attributes: {
-            /** ID: 0 | Type: SINGLE_PREC */
+            /** ID=0x0000 | type=SINGLE_PREC */
             measuredValue: number;
-            /** ID: 1 | Type: SINGLE_PREC */
+            /** ID=0x0001 | type=SINGLE_PREC */
             minMeasuredValue: number;
-            /** ID: 2 | Type: SINGLE_PREC */
+            /** ID=0x0002 | type=SINGLE_PREC */
             maxMeasuredValue: number;
-            /** ID: 3 | Type: SINGLE_PREC */
+            /** ID=0x0003 | type=SINGLE_PREC */
             tolerance: number;
         };
         commands: never;
@@ -3533,13 +3757,13 @@ export interface TClusters {
     };
     msChlorine: {
         attributes: {
-            /** ID: 0 | Type: SINGLE_PREC */
+            /** ID=0x0000 | type=SINGLE_PREC */
             measuredValue: number;
-            /** ID: 1 | Type: SINGLE_PREC */
+            /** ID=0x0001 | type=SINGLE_PREC */
             minMeasuredValue: number;
-            /** ID: 2 | Type: SINGLE_PREC */
+            /** ID=0x0002 | type=SINGLE_PREC */
             maxMeasuredValue: number;
-            /** ID: 3 | Type: SINGLE_PREC */
+            /** ID=0x0003 | type=SINGLE_PREC */
             tolerance: number;
         };
         commands: never;
@@ -3547,13 +3771,13 @@ export interface TClusters {
     };
     msFecalColiformAndEColi: {
         attributes: {
-            /** ID: 0 | Type: SINGLE_PREC */
+            /** ID=0x0000 | type=SINGLE_PREC */
             measuredValue: number;
-            /** ID: 1 | Type: SINGLE_PREC */
+            /** ID=0x0001 | type=SINGLE_PREC */
             minMeasuredValue: number;
-            /** ID: 2 | Type: SINGLE_PREC */
+            /** ID=0x0002 | type=SINGLE_PREC */
             maxMeasuredValue: number;
-            /** ID: 3 | Type: SINGLE_PREC */
+            /** ID=0x0003 | type=SINGLE_PREC */
             tolerance: number;
         };
         commands: never;
@@ -3561,13 +3785,13 @@ export interface TClusters {
     };
     msFluoride: {
         attributes: {
-            /** ID: 0 | Type: SINGLE_PREC */
+            /** ID=0x0000 | type=SINGLE_PREC */
             measuredValue: number;
-            /** ID: 1 | Type: SINGLE_PREC */
+            /** ID=0x0001 | type=SINGLE_PREC */
             minMeasuredValue: number;
-            /** ID: 2 | Type: SINGLE_PREC */
+            /** ID=0x0002 | type=SINGLE_PREC */
             maxMeasuredValue: number;
-            /** ID: 3 | Type: SINGLE_PREC */
+            /** ID=0x0003 | type=SINGLE_PREC */
             tolerance: number;
         };
         commands: never;
@@ -3575,13 +3799,13 @@ export interface TClusters {
     };
     msHaloaceticAcids: {
         attributes: {
-            /** ID: 0 | Type: SINGLE_PREC */
+            /** ID=0x0000 | type=SINGLE_PREC */
             measuredValue: number;
-            /** ID: 1 | Type: SINGLE_PREC */
+            /** ID=0x0001 | type=SINGLE_PREC */
             minMeasuredValue: number;
-            /** ID: 2 | Type: SINGLE_PREC */
+            /** ID=0x0002 | type=SINGLE_PREC */
             maxMeasuredValue: number;
-            /** ID: 3 | Type: SINGLE_PREC */
+            /** ID=0x0003 | type=SINGLE_PREC */
             tolerance: number;
         };
         commands: never;
@@ -3589,13 +3813,13 @@ export interface TClusters {
     };
     msTotalTrihalomethanes: {
         attributes: {
-            /** ID: 0 | Type: SINGLE_PREC */
+            /** ID=0x0000 | type=SINGLE_PREC */
             measuredValue: number;
-            /** ID: 1 | Type: SINGLE_PREC */
+            /** ID=0x0001 | type=SINGLE_PREC */
             minMeasuredValue: number;
-            /** ID: 2 | Type: SINGLE_PREC */
+            /** ID=0x0002 | type=SINGLE_PREC */
             maxMeasuredValue: number;
-            /** ID: 3 | Type: SINGLE_PREC */
+            /** ID=0x0003 | type=SINGLE_PREC */
             tolerance: number;
         };
         commands: never;
@@ -3603,13 +3827,13 @@ export interface TClusters {
     };
     msTotalColiformBacteria: {
         attributes: {
-            /** ID: 0 | Type: SINGLE_PREC */
+            /** ID=0x0000 | type=SINGLE_PREC */
             measuredValue: number;
-            /** ID: 1 | Type: SINGLE_PREC */
+            /** ID=0x0001 | type=SINGLE_PREC */
             minMeasuredValue: number;
-            /** ID: 2 | Type: SINGLE_PREC */
+            /** ID=0x0002 | type=SINGLE_PREC */
             maxMeasuredValue: number;
-            /** ID: 3 | Type: SINGLE_PREC */
+            /** ID=0x0003 | type=SINGLE_PREC */
             tolerance: number;
         };
         commands: never;
@@ -3617,13 +3841,13 @@ export interface TClusters {
     };
     msTurbidity: {
         attributes: {
-            /** ID: 0 | Type: SINGLE_PREC */
+            /** ID=0x0000 | type=SINGLE_PREC */
             measuredValue: number;
-            /** ID: 1 | Type: SINGLE_PREC */
+            /** ID=0x0001 | type=SINGLE_PREC */
             minMeasuredValue: number;
-            /** ID: 2 | Type: SINGLE_PREC */
+            /** ID=0x0002 | type=SINGLE_PREC */
             maxMeasuredValue: number;
-            /** ID: 3 | Type: SINGLE_PREC */
+            /** ID=0x0003 | type=SINGLE_PREC */
             tolerance: number;
         };
         commands: never;
@@ -3631,13 +3855,13 @@ export interface TClusters {
     };
     msCopper: {
         attributes: {
-            /** ID: 0 | Type: SINGLE_PREC */
+            /** ID=0x0000 | type=SINGLE_PREC */
             measuredValue: number;
-            /** ID: 1 | Type: SINGLE_PREC */
+            /** ID=0x0001 | type=SINGLE_PREC */
             minMeasuredValue: number;
-            /** ID: 2 | Type: SINGLE_PREC */
+            /** ID=0x0002 | type=SINGLE_PREC */
             maxMeasuredValue: number;
-            /** ID: 3 | Type: SINGLE_PREC */
+            /** ID=0x0003 | type=SINGLE_PREC */
             tolerance: number;
         };
         commands: never;
@@ -3645,13 +3869,13 @@ export interface TClusters {
     };
     msLead: {
         attributes: {
-            /** ID: 0 | Type: SINGLE_PREC */
+            /** ID=0x0000 | type=SINGLE_PREC */
             measuredValue: number;
-            /** ID: 1 | Type: SINGLE_PREC */
+            /** ID=0x0001 | type=SINGLE_PREC */
             minMeasuredValue: number;
-            /** ID: 2 | Type: SINGLE_PREC */
+            /** ID=0x0002 | type=SINGLE_PREC */
             maxMeasuredValue: number;
-            /** ID: 3 | Type: SINGLE_PREC */
+            /** ID=0x0003 | type=SINGLE_PREC */
             tolerance: number;
         };
         commands: never;
@@ -3659,13 +3883,13 @@ export interface TClusters {
     };
     msManganese: {
         attributes: {
-            /** ID: 0 | Type: SINGLE_PREC */
+            /** ID=0x0000 | type=SINGLE_PREC */
             measuredValue: number;
-            /** ID: 1 | Type: SINGLE_PREC */
+            /** ID=0x0001 | type=SINGLE_PREC */
             minMeasuredValue: number;
-            /** ID: 2 | Type: SINGLE_PREC */
+            /** ID=0x0002 | type=SINGLE_PREC */
             maxMeasuredValue: number;
-            /** ID: 3 | Type: SINGLE_PREC */
+            /** ID=0x0003 | type=SINGLE_PREC */
             tolerance: number;
         };
         commands: never;
@@ -3673,13 +3897,13 @@ export interface TClusters {
     };
     msSulfate: {
         attributes: {
-            /** ID: 0 | Type: SINGLE_PREC */
+            /** ID=0x0000 | type=SINGLE_PREC */
             measuredValue: number;
-            /** ID: 1 | Type: SINGLE_PREC */
+            /** ID=0x0001 | type=SINGLE_PREC */
             minMeasuredValue: number;
-            /** ID: 2 | Type: SINGLE_PREC */
+            /** ID=0x0002 | type=SINGLE_PREC */
             maxMeasuredValue: number;
-            /** ID: 3 | Type: SINGLE_PREC */
+            /** ID=0x0003 | type=SINGLE_PREC */
             tolerance: number;
         };
         commands: never;
@@ -3687,13 +3911,13 @@ export interface TClusters {
     };
     msBromodichloromethane: {
         attributes: {
-            /** ID: 0 | Type: SINGLE_PREC */
+            /** ID=0x0000 | type=SINGLE_PREC */
             measuredValue: number;
-            /** ID: 1 | Type: SINGLE_PREC */
+            /** ID=0x0001 | type=SINGLE_PREC */
             minMeasuredValue: number;
-            /** ID: 2 | Type: SINGLE_PREC */
+            /** ID=0x0002 | type=SINGLE_PREC */
             maxMeasuredValue: number;
-            /** ID: 3 | Type: SINGLE_PREC */
+            /** ID=0x0003 | type=SINGLE_PREC */
             tolerance: number;
         };
         commands: never;
@@ -3701,13 +3925,13 @@ export interface TClusters {
     };
     msBromoform: {
         attributes: {
-            /** ID: 0 | Type: SINGLE_PREC */
+            /** ID=0x0000 | type=SINGLE_PREC */
             measuredValue: number;
-            /** ID: 1 | Type: SINGLE_PREC */
+            /** ID=0x0001 | type=SINGLE_PREC */
             minMeasuredValue: number;
-            /** ID: 2 | Type: SINGLE_PREC */
+            /** ID=0x0002 | type=SINGLE_PREC */
             maxMeasuredValue: number;
-            /** ID: 3 | Type: SINGLE_PREC */
+            /** ID=0x0003 | type=SINGLE_PREC */
             tolerance: number;
         };
         commands: never;
@@ -3715,13 +3939,13 @@ export interface TClusters {
     };
     msChlorodibromomethane: {
         attributes: {
-            /** ID: 0 | Type: SINGLE_PREC */
+            /** ID=0x0000 | type=SINGLE_PREC */
             measuredValue: number;
-            /** ID: 1 | Type: SINGLE_PREC */
+            /** ID=0x0001 | type=SINGLE_PREC */
             minMeasuredValue: number;
-            /** ID: 2 | Type: SINGLE_PREC */
+            /** ID=0x0002 | type=SINGLE_PREC */
             maxMeasuredValue: number;
-            /** ID: 3 | Type: SINGLE_PREC */
+            /** ID=0x0003 | type=SINGLE_PREC */
             tolerance: number;
         };
         commands: never;
@@ -3729,13 +3953,13 @@ export interface TClusters {
     };
     msChloroform: {
         attributes: {
-            /** ID: 0 | Type: SINGLE_PREC */
+            /** ID=0x0000 | type=SINGLE_PREC */
             measuredValue: number;
-            /** ID: 1 | Type: SINGLE_PREC */
+            /** ID=0x0001 | type=SINGLE_PREC */
             minMeasuredValue: number;
-            /** ID: 2 | Type: SINGLE_PREC */
+            /** ID=0x0002 | type=SINGLE_PREC */
             maxMeasuredValue: number;
-            /** ID: 3 | Type: SINGLE_PREC */
+            /** ID=0x0003 | type=SINGLE_PREC */
             tolerance: number;
         };
         commands: never;
@@ -3743,13 +3967,13 @@ export interface TClusters {
     };
     msSodium: {
         attributes: {
-            /** ID: 0 | Type: SINGLE_PREC */
+            /** ID=0x0000 | type=SINGLE_PREC */
             measuredValue: number;
-            /** ID: 1 | Type: SINGLE_PREC */
+            /** ID=0x0001 | type=SINGLE_PREC */
             minMeasuredValue: number;
-            /** ID: 2 | Type: SINGLE_PREC */
+            /** ID=0x0002 | type=SINGLE_PREC */
             maxMeasuredValue: number;
-            /** ID: 3 | Type: SINGLE_PREC */
+            /** ID=0x0003 | type=SINGLE_PREC */
             tolerance: number;
         };
         commands: never;
@@ -3757,13 +3981,13 @@ export interface TClusters {
     };
     pm25Measurement: {
         attributes: {
-            /** ID: 0 | Type: SINGLE_PREC */
+            /** ID=0x0000 | type=SINGLE_PREC */
             measuredValue: number;
-            /** ID: 1 | Type: SINGLE_PREC */
+            /** ID=0x0001 | type=SINGLE_PREC */
             measuredMinValue: number;
-            /** ID: 2 | Type: SINGLE_PREC */
+            /** ID=0x0002 | type=SINGLE_PREC */
             measuredMaxValue: number;
-            /** ID: 3 | Type: SINGLE_PREC */
+            /** ID=0x0003 | type=SINGLE_PREC */
             tolerance: number;
         };
         commands: never;
@@ -3771,13 +3995,13 @@ export interface TClusters {
     };
     msFormaldehyde: {
         attributes: {
-            /** ID: 0 | Type: SINGLE_PREC */
+            /** ID=0x0000 | type=SINGLE_PREC */
             measuredValue: number;
-            /** ID: 1 | Type: SINGLE_PREC */
+            /** ID=0x0001 | type=SINGLE_PREC */
             minMeasuredValue: number;
-            /** ID: 2 | Type: SINGLE_PREC */
+            /** ID=0x0002 | type=SINGLE_PREC */
             maxMeasuredValue: number;
-            /** ID: 3 | Type: SINGLE_PREC */
+            /** ID=0x0003 | type=SINGLE_PREC */
             tolerance: number;
         };
         commands: never;
@@ -3785,13 +4009,13 @@ export interface TClusters {
     };
     pm1Measurement: {
         attributes: {
-            /** ID: 0 | Type: SINGLE_PREC */
+            /** ID=0x0000 | type=SINGLE_PREC */
             measuredValue: number;
-            /** ID: 1 | Type: SINGLE_PREC */
+            /** ID=0x0001 | type=SINGLE_PREC */
             measuredMinValue: number;
-            /** ID: 2 | Type: SINGLE_PREC */
+            /** ID=0x0002 | type=SINGLE_PREC */
             measuredMaxValue: number;
-            /** ID: 3 | Type: SINGLE_PREC */
+            /** ID=0x0003 | type=SINGLE_PREC */
             tolerance: number;
         };
         commands: never;
@@ -3799,13 +4023,13 @@ export interface TClusters {
     };
     pm10Measurement: {
         attributes: {
-            /** ID: 0 | Type: SINGLE_PREC */
+            /** ID=0x0000 | type=SINGLE_PREC */
             measuredValue: number;
-            /** ID: 1 | Type: SINGLE_PREC */
+            /** ID=0x0001 | type=SINGLE_PREC */
             measuredMinValue: number;
-            /** ID: 2 | Type: SINGLE_PREC */
+            /** ID=0x0002 | type=SINGLE_PREC */
             measuredMaxValue: number;
-            /** ID: 3 | Type: SINGLE_PREC */
+            /** ID=0x0003 | type=SINGLE_PREC */
             tolerance: number;
         };
         commands: never;
@@ -3813,49 +4037,58 @@ export interface TClusters {
     };
     ssIasZone: {
         attributes: {
-            /** ID: 0 | Type: ENUM8 */
+            /** ID=0x0000 | type=ENUM8 | required=true | max=255 | default=0 */
             zoneState: number;
-            /** ID: 1 | Type: ENUM16 */
+            /** ID=0x0001 | type=ENUM16 | required=true */
             zoneType: number;
-            /** ID: 2 | Type: BITMAP16 */
+            /** ID=0x0002 | type=BITMAP16 | required=true | default=0 */
             zoneStatus: number;
-            /** ID: 16 | Type: IEEE_ADDR */
+            /** ID=0x0010 | type=IEEE_ADDR | writable=true | required=true */
             iasCieAddr: string;
-            /** ID: 17 | Type: UINT8 */
+            /** ID=0x0011 | type=UINT8 | required=true | max=255 | default=255 */
             zoneId: number;
-            /** ID: 18 | Type: UINT8 */
+            /** ID=0x0012 | type=UINT8 | min=2 | max=255 | default=2 */
             numZoneSensitivityLevelsSupported: number;
-            /** ID: 19 | Type: UINT8 */
+            /** ID=0x0013 | type=UINT8 | writable=true | max=255 | default=0 */
             currentZoneSensitivityLevel: number;
-            /** ID: 32769 | Type: UINT16 | Specific to manufacturer: DEVELCO (4117) */
+            /** ID=0x8001 | type=UINT16 | manufacturerCode=DEVELCO(0x1015) */
             develcoAlarmOffDelay?: number;
         };
         commands: {
-            /** ID: 0 */
+            /** ID=0x00 | required=true */
             enrollRsp: {
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 enrollrspcode: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 zoneid: number;
             };
-            /** ID: 1 */
+            /** ID=0x01 */
             initNormalOpMode: Record<string, never>;
-            /** ID: 2 */
-            initTestMode: Record<string, never>;
+            /** ID=0x02 */
+            initTestMode: {
+                /** type=UINT8 */
+                testModeDuration: number;
+                /** type=UINT8 */
+                currentZoneSensitivityLevel: number;
+            };
         };
         commandResponses: {
-            /** ID: 0 */
+            /** ID=0x00 | required=true */
             statusChangeNotification: {
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 zonestatus: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 extendedstatus: number;
+                /** type=UINT8 */
+                zoneID: number;
+                /** type=UINT16 */
+                delay: number;
             };
-            /** ID: 1 */
+            /** ID=0x01 | required=true */
             enrollReq: {
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 zonetype: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 manucode: number;
             };
         };
@@ -3863,181 +4096,183 @@ export interface TClusters {
     ssIasAce: {
         attributes: never;
         commands: {
-            /** ID: 0 | Response ID: 0 */
+            /** ID=0x00 | response=0 | required=true */
             arm: {
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 armmode: number;
-                /** Type: CHAR_STR */
+                /** type=CHAR_STR */
                 code: string;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 zoneid: number;
             };
-            /** ID: 1 */
+            /** ID=0x01 | required=true */
             bypass: {
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 numofzones: number;
-                /** Type: LIST_UINT8 */
+                /** type=LIST_UINT8 */
                 zoneidlist: number[];
+                /** type=CHAR_STR */
+                armDisarmCode: string;
             };
-            /** ID: 2 */
+            /** ID=0x02 | required=true */
             emergency: Record<string, never>;
-            /** ID: 3 */
+            /** ID=0x03 | required=true */
             fire: Record<string, never>;
-            /** ID: 4 */
+            /** ID=0x04 | required=true */
             panic: Record<string, never>;
-            /** ID: 5 | Response ID: 1 */
+            /** ID=0x05 | response=1 | required=true */
             getZoneIDMap: Record<string, never>;
-            /** ID: 6 | Response ID: 2 */
+            /** ID=0x06 | response=2 | required=true */
             getZoneInfo: {
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 zoneid: number;
             };
-            /** ID: 7 | Response ID: 5 */
+            /** ID=0x07 | response=5 | required=true */
             getPanelStatus: Record<string, never>;
-            /** ID: 8 */
+            /** ID=0x08 | required=true */
             getBypassedZoneList: Record<string, never>;
-            /** ID: 9 | Response ID: 8 */
+            /** ID=0x09 | response=8 | required=true */
             getZoneStatus: {
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 startzoneid: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 maxnumzoneid: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 zonestatusmaskflag: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 zonestatusmask: number;
             };
         };
         commandResponses: {
-            /** ID: 0 */
+            /** ID=0x00 | required=true */
             armRsp: {
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 armnotification: number;
             };
-            /** ID: 1 */
+            /** ID=0x01 | required=true */
             getZoneIDMapRsp: {
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 zoneidmapsection0: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 zoneidmapsection1: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 zoneidmapsection2: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 zoneidmapsection3: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 zoneidmapsection4: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 zoneidmapsection5: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 zoneidmapsection6: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 zoneidmapsection7: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 zoneidmapsection8: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 zoneidmapsection9: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 zoneidmapsection10: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 zoneidmapsection11: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 zoneidmapsection12: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 zoneidmapsection13: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 zoneidmapsection14: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 zoneidmapsection15: number;
             };
-            /** ID: 2 */
+            /** ID=0x02 | required=true */
             getZoneInfoRsp: {
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 zoneid: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 zonetype: number;
-                /** Type: IEEE_ADDR */
+                /** type=IEEE_ADDR */
                 ieeeaddr: string;
-                /** Type: CHAR_STR */
+                /** type=CHAR_STR */
                 zonelabel: string;
             };
-            /** ID: 3 */
+            /** ID=0x03 | required=true */
             zoneStatusChanged: {
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 zoneid: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 zonestatus: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 audiblenotif: number;
-                /** Type: CHAR_STR */
+                /** type=CHAR_STR */
                 zonelabel: string;
             };
-            /** ID: 4 */
+            /** ID=0x04 | required=true */
             panelStatusChanged: {
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 panelstatus: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 secondsremain: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 audiblenotif: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 alarmstatus: number;
             };
-            /** ID: 5 */
+            /** ID=0x05 | required=true */
             getPanelStatusRsp: {
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 panelstatus: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 secondsremain: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 audiblenotif: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 alarmstatus: number;
             };
-            /** ID: 6 */
+            /** ID=0x06 | required=true */
             setBypassedZoneList: {
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 numofzones: number;
-                /** Type: LIST_UINT8 */
+                /** type=LIST_UINT8 */
                 zoneid: number[];
             };
-            /** ID: 7 */
+            /** ID=0x07 | required=true */
             bypassRsp: {
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 numofzones: number;
-                /** Type: LIST_UINT8 */
+                /** type=LIST_UINT8 */
                 bypassresult: number[];
             };
-            /** ID: 8 */
+            /** ID=0x08 | required=true */
             getZoneStatusRsp: {
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 zonestatuscomplete: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 numofzones: number;
-                /** Type: LIST_ZONEINFO */
+                /** type=LIST_ZONEINFO */
                 zoneinfo: ZoneInfo[];
             };
         };
     };
     ssIasWd: {
         attributes: {
-            /** ID: 0 | Type: UINT16 */
+            /** ID=0x0000 | type=UINT16 | writable=true | required=true | max=65534 | default=240 */
             maxDuration: number;
         };
         commands: {
-            /** ID: 0 */
+            /** ID=0x00 | required=true */
             startWarning: {
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 startwarninginfo: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 warningduration: number;
-                /** Type: UINT8 */
+                /** type=UINT8 | maxInclusive=100 */
                 strobedutycycle: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 strobelevel: number;
             };
-            /** ID: 1 */
+            /** ID=0x01 | required=true */
             squawk: {
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 squawkinfo: number;
             };
         };
@@ -4045,31 +4280,31 @@ export interface TClusters {
     };
     piGenericTunnel: {
         attributes: {
-            /** ID: 1 | Type: UINT16 */
+            /** ID=0x0001 | type=UINT16 */
             maxIncomeTransSize: number;
-            /** ID: 2 | Type: UINT16 */
+            /** ID=0x0002 | type=UINT16 */
             maxOutgoTransSize: number;
-            /** ID: 3 | Type: OCTET_STR */
+            /** ID=0x0003 | type=OCTET_STR */
             protocolAddr: Buffer;
         };
         commands: {
-            /** ID: 0 */
+            /** ID=0x00 */
             matchProtocolAddr: {
-                /** Type: CHAR_STR */
+                /** type=CHAR_STR */
                 protocoladdr: string;
             };
         };
         commandResponses: {
-            /** ID: 0 */
+            /** ID=0x00 */
             matchProtocolAddrRsp: {
-                /** Type: IEEE_ADDR */
+                /** type=IEEE_ADDR */
                 devieeeaddr: string;
-                /** Type: CHAR_STR */
+                /** type=CHAR_STR */
                 protocoladdr: string;
             };
-            /** ID: 1 */
+            /** ID=0x01 */
             advertiseProtocolAddr: {
-                /** Type: CHAR_STR */
+                /** type=CHAR_STR */
                 protocoladdr: string;
             };
         };
@@ -4077,9 +4312,9 @@ export interface TClusters {
     piBacnetProtocolTunnel: {
         attributes: never;
         commands: {
-            /** ID: 0 */
+            /** ID=0x00 */
             transferNpdu: {
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 npdu: number;
             };
         };
@@ -4087,19 +4322,19 @@ export interface TClusters {
     };
     piAnalogInputReg: {
         attributes: {
-            /** ID: 22 | Type: SINGLE_PREC */
+            /** ID=0x0016 | type=SINGLE_PREC */
             covIncrement: number;
-            /** ID: 31 | Type: CHAR_STR */
+            /** ID=0x001f | type=CHAR_STR */
             deviceType: string;
-            /** ID: 75 | Type: BAC_OID */
+            /** ID=0x004b | type=BAC_OID */
             objectId: number;
-            /** ID: 77 | Type: CHAR_STR */
+            /** ID=0x004d | type=CHAR_STR */
             objectName: string;
-            /** ID: 79 | Type: ENUM16 */
+            /** ID=0x004f | type=ENUM16 */
             objectType: number;
-            /** ID: 118 | Type: UINT8 */
+            /** ID=0x0076 | type=UINT8 */
             updateInterval: number;
-            /** ID: 168 | Type: CHAR_STR */
+            /** ID=0x00a8 | type=CHAR_STR */
             profileName: string;
         };
         commands: never;
@@ -4107,56 +4342,56 @@ export interface TClusters {
     };
     piAnalogInputExt: {
         attributes: {
-            /** ID: 0 | Type: BITMAP8 */
+            /** ID=0x0000 | type=BITMAP8 */
             ackedTransitions: number;
-            /** ID: 17 | Type: UINT16 */
+            /** ID=0x0011 | type=UINT16 */
             notificationClass: number;
-            /** ID: 25 | Type: SINGLE_PREC */
+            /** ID=0x0019 | type=SINGLE_PREC */
             deadband: number;
-            /** ID: 35 | Type: BITMAP8 */
+            /** ID=0x0023 | type=BITMAP8 */
             eventEnable: number;
-            /** ID: 36 | Type: ENUM8 */
+            /** ID=0x0024 | type=ENUM8 */
             eventState: number;
-            /** ID: 45 | Type: SINGLE_PREC */
+            /** ID=0x002d | type=SINGLE_PREC */
             highLimit: number;
-            /** ID: 52 | Type: BITMAP8 */
+            /** ID=0x0034 | type=BITMAP8 */
             limitEnable: number;
-            /** ID: 59 | Type: SINGLE_PREC */
+            /** ID=0x003b | type=SINGLE_PREC */
             lowLimit: number;
-            /** ID: 72 | Type: ENUM8 */
+            /** ID=0x0048 | type=ENUM8 */
             notifyType: number;
-            /** ID: 113 | Type: UINT8 */
+            /** ID=0x0071 | type=UINT8 */
             timeDelay: number;
-            /** ID: 130 | Type: ARRAY */
+            /** ID=0x0082 | type=ARRAY */
             eventTimeStamps: ZclArray | unknown[];
         };
         commands: {
-            /** ID: 0 */
+            /** ID=0x00 */
             transferApdu: Record<string, never>;
-            /** ID: 1 */
+            /** ID=0x01 */
             connectReq: Record<string, never>;
-            /** ID: 2 */
+            /** ID=0x02 */
             disconnectReq: Record<string, never>;
-            /** ID: 3 */
+            /** ID=0x03 */
             connectStatusNoti: Record<string, never>;
         };
         commandResponses: never;
     };
     piAnalogOutputReg: {
         attributes: {
-            /** ID: 22 | Type: SINGLE_PREC */
+            /** ID=0x0016 | type=SINGLE_PREC */
             covIncrement: number;
-            /** ID: 31 | Type: CHAR_STR */
+            /** ID=0x001f | type=CHAR_STR */
             deviceType: string;
-            /** ID: 75 | Type: BAC_OID */
+            /** ID=0x004b | type=BAC_OID */
             objectId: number;
-            /** ID: 77 | Type: CHAR_STR */
+            /** ID=0x004d | type=CHAR_STR */
             objectName: string;
-            /** ID: 79 | Type: ENUM16 */
+            /** ID=0x004f | type=ENUM16 */
             objectType: number;
-            /** ID: 118 | Type: UINT8 */
+            /** ID=0x0076 | type=UINT8 */
             updateInterval: number;
-            /** ID: 168 | Type: CHAR_STR */
+            /** ID=0x00a8 | type=CHAR_STR */
             profileName: string;
         };
         commands: never;
@@ -4164,27 +4399,27 @@ export interface TClusters {
     };
     piAnalogOutputExt: {
         attributes: {
-            /** ID: 0 | Type: BITMAP8 */
+            /** ID=0x0000 | type=BITMAP8 */
             ackedTransitions: number;
-            /** ID: 17 | Type: UINT16 */
+            /** ID=0x0011 | type=UINT16 */
             notificationClass: number;
-            /** ID: 25 | Type: SINGLE_PREC */
+            /** ID=0x0019 | type=SINGLE_PREC */
             deadband: number;
-            /** ID: 35 | Type: BITMAP8 */
+            /** ID=0x0023 | type=BITMAP8 */
             eventEnable: number;
-            /** ID: 36 | Type: ENUM8 */
+            /** ID=0x0024 | type=ENUM8 */
             eventState: number;
-            /** ID: 45 | Type: SINGLE_PREC */
+            /** ID=0x002d | type=SINGLE_PREC */
             highLimit: number;
-            /** ID: 52 | Type: BITMAP8 */
+            /** ID=0x0034 | type=BITMAP8 */
             limitEnable: number;
-            /** ID: 59 | Type: SINGLE_PREC */
+            /** ID=0x003b | type=SINGLE_PREC */
             lowLimit: number;
-            /** ID: 72 | Type: ENUM8 */
+            /** ID=0x0048 | type=ENUM8 */
             notifyType: number;
-            /** ID: 113 | Type: UINT8 */
+            /** ID=0x0071 | type=UINT8 */
             timeDelay: number;
-            /** ID: 130 | Type: ARRAY */
+            /** ID=0x0082 | type=ARRAY */
             eventTimeStamps: ZclArray | unknown[];
         };
         commands: never;
@@ -4192,15 +4427,15 @@ export interface TClusters {
     };
     piAnalogValueReg: {
         attributes: {
-            /** ID: 22 | Type: SINGLE_PREC */
+            /** ID=0x0016 | type=SINGLE_PREC */
             covIncrement: number;
-            /** ID: 75 | Type: BAC_OID */
+            /** ID=0x004b | type=BAC_OID */
             objectId: number;
-            /** ID: 77 | Type: CHAR_STR */
+            /** ID=0x004d | type=CHAR_STR */
             objectName: string;
-            /** ID: 79 | Type: ENUM16 */
+            /** ID=0x004f | type=ENUM16 */
             objectType: number;
-            /** ID: 168 | Type: CHAR_STR */
+            /** ID=0x00a8 | type=CHAR_STR */
             profileName: string;
         };
         commands: never;
@@ -4208,27 +4443,27 @@ export interface TClusters {
     };
     piAnalogValueExt: {
         attributes: {
-            /** ID: 0 | Type: BITMAP8 */
+            /** ID=0x0000 | type=BITMAP8 */
             ackedTransitions: number;
-            /** ID: 17 | Type: UINT16 */
+            /** ID=0x0011 | type=UINT16 */
             notificationClass: number;
-            /** ID: 25 | Type: SINGLE_PREC */
+            /** ID=0x0019 | type=SINGLE_PREC */
             deadband: number;
-            /** ID: 35 | Type: BITMAP8 */
+            /** ID=0x0023 | type=BITMAP8 */
             eventEnable: number;
-            /** ID: 36 | Type: ENUM8 */
+            /** ID=0x0024 | type=ENUM8 */
             eventState: number;
-            /** ID: 45 | Type: SINGLE_PREC */
+            /** ID=0x002d | type=SINGLE_PREC */
             highLimit: number;
-            /** ID: 52 | Type: BITMAP8 */
+            /** ID=0x0034 | type=BITMAP8 */
             limitEnable: number;
-            /** ID: 59 | Type: SINGLE_PREC */
+            /** ID=0x003b | type=SINGLE_PREC */
             lowLimit: number;
-            /** ID: 72 | Type: ENUM8 */
+            /** ID=0x0048 | type=ENUM8 */
             notifyType: number;
-            /** ID: 113 | Type: UINT8 */
+            /** ID=0x0071 | type=UINT8 */
             timeDelay: number;
-            /** ID: 130 | Type: ARRAY */
+            /** ID=0x0082 | type=ARRAY */
             eventTimeStamps: ZclArray | unknown[];
         };
         commands: never;
@@ -4236,25 +4471,25 @@ export interface TClusters {
     };
     piBinaryInputReg: {
         attributes: {
-            /** ID: 15 | Type: UINT32 */
+            /** ID=0x000f | type=UINT32 */
             changeOfStateCount: number;
-            /** ID: 16 | Type: STRUCT */
+            /** ID=0x0010 | type=STRUCT */
             changeOfStateTime: Struct;
-            /** ID: 31 | Type: CHAR_STR */
+            /** ID=0x001f | type=CHAR_STR */
             deviceType: string;
-            /** ID: 33 | Type: UINT32 */
+            /** ID=0x0021 | type=UINT32 */
             elapsedActiveTime: number;
-            /** ID: 75 | Type: BAC_OID */
+            /** ID=0x004b | type=BAC_OID */
             objectIdentifier: number;
-            /** ID: 77 | Type: CHAR_STR */
+            /** ID=0x004d | type=CHAR_STR */
             objectName: string;
-            /** ID: 79 | Type: ENUM16 */
+            /** ID=0x004f | type=ENUM16 */
             objectType: number;
-            /** ID: 114 | Type: STRUCT */
+            /** ID=0x0072 | type=STRUCT */
             timeOfATReset: Struct;
-            /** ID: 115 | Type: STRUCT */
+            /** ID=0x0073 | type=STRUCT */
             timeOfSCReset: Struct;
-            /** ID: 168 | Type: CHAR_STR */
+            /** ID=0x00a8 | type=CHAR_STR */
             profileName: string;
         };
         commands: never;
@@ -4262,21 +4497,21 @@ export interface TClusters {
     };
     piBinaryInputExt: {
         attributes: {
-            /** ID: 0 | Type: BITMAP8 */
+            /** ID=0x0000 | type=BITMAP8 */
             ackedTransitions: number;
-            /** ID: 6 | Type: BOOLEAN */
+            /** ID=0x0006 | type=BOOLEAN */
             alarmValue: number;
-            /** ID: 17 | Type: UINT16 */
+            /** ID=0x0011 | type=UINT16 */
             notificationClass: number;
-            /** ID: 35 | Type: BITMAP8 */
+            /** ID=0x0023 | type=BITMAP8 */
             eventEnable: number;
-            /** ID: 36 | Type: ENUM8 */
+            /** ID=0x0024 | type=ENUM8 */
             eventState: number;
-            /** ID: 72 | Type: ENUM8 */
+            /** ID=0x0048 | type=ENUM8 */
             notifyType: number;
-            /** ID: 113 | Type: UINT8 */
+            /** ID=0x0071 | type=UINT8 */
             timeDelay: number;
-            /** ID: 130 | Type: ARRAY */
+            /** ID=0x0082 | type=ARRAY */
             eventTimeStamps: ZclArray | unknown[];
         };
         commands: never;
@@ -4284,27 +4519,27 @@ export interface TClusters {
     };
     piBinaryOutputReg: {
         attributes: {
-            /** ID: 15 | Type: UINT32 */
+            /** ID=0x000f | type=UINT32 */
             changeOfStateCount: number;
-            /** ID: 16 | Type: STRUCT */
+            /** ID=0x0010 | type=STRUCT */
             changeOfStateTime: Struct;
-            /** ID: 31 | Type: CHAR_STR */
+            /** ID=0x001f | type=CHAR_STR */
             deviceType: string;
-            /** ID: 33 | Type: UINT32 */
+            /** ID=0x0021 | type=UINT32 */
             elapsedActiveTime: number;
-            /** ID: 40 | Type: ENUM8 */
+            /** ID=0x0028 | type=ENUM8 */
             feedBackValue: number;
-            /** ID: 75 | Type: BAC_OID */
+            /** ID=0x004b | type=BAC_OID */
             objectIdentifier: number;
-            /** ID: 77 | Type: CHAR_STR */
+            /** ID=0x004d | type=CHAR_STR */
             objectName: string;
-            /** ID: 79 | Type: ENUM16 */
+            /** ID=0x004f | type=ENUM16 */
             objectType: number;
-            /** ID: 114 | Type: STRUCT */
+            /** ID=0x0072 | type=STRUCT */
             timeOfATReset: Struct;
-            /** ID: 115 | Type: STRUCT */
+            /** ID=0x0073 | type=STRUCT */
             timeOfSCReset: Struct;
-            /** ID: 168 | Type: CHAR_STR */
+            /** ID=0x00a8 | type=CHAR_STR */
             profileName: string;
         };
         commands: never;
@@ -4312,19 +4547,19 @@ export interface TClusters {
     };
     piBinaryOutputExt: {
         attributes: {
-            /** ID: 0 | Type: BITMAP8 */
+            /** ID=0x0000 | type=BITMAP8 */
             ackedTransitions: number;
-            /** ID: 17 | Type: UINT16 */
+            /** ID=0x0011 | type=UINT16 */
             notificationClass: number;
-            /** ID: 35 | Type: BITMAP8 */
+            /** ID=0x0023 | type=BITMAP8 */
             eventEnable: number;
-            /** ID: 36 | Type: ENUM8 */
+            /** ID=0x0024 | type=ENUM8 */
             eventState: number;
-            /** ID: 72 | Type: ENUM8 */
+            /** ID=0x0048 | type=ENUM8 */
             notifyType: number;
-            /** ID: 113 | Type: UINT8 */
+            /** ID=0x0071 | type=UINT8 */
             timeDelay: number;
-            /** ID: 130 | Type: ARRAY */
+            /** ID=0x0082 | type=ARRAY */
             eventTimeStamps: ZclArray | unknown[];
         };
         commands: never;
@@ -4332,23 +4567,23 @@ export interface TClusters {
     };
     piBinaryValueReg: {
         attributes: {
-            /** ID: 15 | Type: UINT32 */
+            /** ID=0x000f | type=UINT32 */
             changeOfStateCount: number;
-            /** ID: 16 | Type: STRUCT */
+            /** ID=0x0010 | type=STRUCT */
             changeOfStateTime: Struct;
-            /** ID: 33 | Type: UINT32 */
+            /** ID=0x0021 | type=UINT32 */
             elapsedActiveTime: number;
-            /** ID: 75 | Type: BAC_OID */
+            /** ID=0x004b | type=BAC_OID */
             objectIdentifier: number;
-            /** ID: 77 | Type: CHAR_STR */
+            /** ID=0x004d | type=CHAR_STR */
             objectName: string;
-            /** ID: 79 | Type: ENUM16 */
+            /** ID=0x004f | type=ENUM16 */
             objectType: number;
-            /** ID: 114 | Type: STRUCT */
+            /** ID=0x0072 | type=STRUCT */
             timeOfATReset: Struct;
-            /** ID: 115 | Type: STRUCT */
+            /** ID=0x0073 | type=STRUCT */
             timeOfSCReset: Struct;
-            /** ID: 168 | Type: CHAR_STR */
+            /** ID=0x00a8 | type=CHAR_STR */
             profileName: string;
         };
         commands: never;
@@ -4356,21 +4591,21 @@ export interface TClusters {
     };
     piBinaryValueExt: {
         attributes: {
-            /** ID: 0 | Type: BITMAP8 */
+            /** ID=0x0000 | type=BITMAP8 */
             ackedTransitions: number;
-            /** ID: 6 | Type: BOOLEAN */
+            /** ID=0x0006 | type=BOOLEAN */
             alarmValue: number;
-            /** ID: 17 | Type: UINT16 */
+            /** ID=0x0011 | type=UINT16 */
             notificationClass: number;
-            /** ID: 35 | Type: BITMAP8 */
+            /** ID=0x0023 | type=BITMAP8 */
             eventEnable: number;
-            /** ID: 36 | Type: ENUM8 */
+            /** ID=0x0024 | type=ENUM8 */
             eventState: number;
-            /** ID: 72 | Type: ENUM8 */
+            /** ID=0x0048 | type=ENUM8 */
             notifyType: number;
-            /** ID: 113 | Type: UINT8 */
+            /** ID=0x0071 | type=UINT8 */
             timeDelay: number;
-            /** ID: 130 | Type: ARRAY */
+            /** ID=0x0082 | type=ARRAY */
             eventTimeStamps: ZclArray | unknown[];
         };
         commands: never;
@@ -4378,15 +4613,15 @@ export interface TClusters {
     };
     piMultistateInputReg: {
         attributes: {
-            /** ID: 31 | Type: CHAR_STR */
+            /** ID=0x001f | type=CHAR_STR */
             deviceType: string;
-            /** ID: 75 | Type: BAC_OID */
+            /** ID=0x004b | type=BAC_OID */
             objectId: number;
-            /** ID: 77 | Type: CHAR_STR */
+            /** ID=0x004d | type=CHAR_STR */
             objectName: string;
-            /** ID: 79 | Type: ENUM16 */
+            /** ID=0x004f | type=ENUM16 */
             objectType: number;
-            /** ID: 168 | Type: CHAR_STR */
+            /** ID=0x00a8 | type=CHAR_STR */
             profileName: string;
         };
         commands: never;
@@ -4394,23 +4629,23 @@ export interface TClusters {
     };
     piMultistateInputExt: {
         attributes: {
-            /** ID: 0 | Type: BITMAP8 */
+            /** ID=0x0000 | type=BITMAP8 */
             ackedTransitions: number;
-            /** ID: 6 | Type: UINT16 */
+            /** ID=0x0006 | type=UINT16 */
             alarmValue: number;
-            /** ID: 17 | Type: UINT16 */
+            /** ID=0x0011 | type=UINT16 */
             notificationClass: number;
-            /** ID: 35 | Type: BITMAP8 */
+            /** ID=0x0023 | type=BITMAP8 */
             eventEnable: number;
-            /** ID: 36 | Type: ENUM8 */
+            /** ID=0x0024 | type=ENUM8 */
             eventState: number;
-            /** ID: 37 | Type: UINT16 */
+            /** ID=0x0025 | type=UINT16 */
             faultValues: number;
-            /** ID: 72 | Type: ENUM8 */
+            /** ID=0x0048 | type=ENUM8 */
             notifyType: number;
-            /** ID: 113 | Type: UINT8 */
+            /** ID=0x0071 | type=UINT8 */
             timeDelay: number;
-            /** ID: 130 | Type: ARRAY */
+            /** ID=0x0082 | type=ARRAY */
             eventTimeStamps: ZclArray | unknown[];
         };
         commands: never;
@@ -4418,17 +4653,17 @@ export interface TClusters {
     };
     piMultistateOutputReg: {
         attributes: {
-            /** ID: 31 | Type: CHAR_STR */
+            /** ID=0x001f | type=CHAR_STR */
             deviceType: string;
-            /** ID: 40 | Type: ENUM8 */
+            /** ID=0x0028 | type=ENUM8 */
             feedBackValue: number;
-            /** ID: 75 | Type: BAC_OID */
+            /** ID=0x004b | type=BAC_OID */
             objectId: number;
-            /** ID: 77 | Type: CHAR_STR */
+            /** ID=0x004d | type=CHAR_STR */
             objectName: string;
-            /** ID: 79 | Type: ENUM16 */
+            /** ID=0x004f | type=ENUM16 */
             objectType: number;
-            /** ID: 168 | Type: CHAR_STR */
+            /** ID=0x00a8 | type=CHAR_STR */
             profileName: string;
         };
         commands: never;
@@ -4436,19 +4671,19 @@ export interface TClusters {
     };
     piMultistateOutputExt: {
         attributes: {
-            /** ID: 0 | Type: BITMAP8 */
+            /** ID=0x0000 | type=BITMAP8 */
             ackedTransitions: number;
-            /** ID: 17 | Type: UINT16 */
+            /** ID=0x0011 | type=UINT16 */
             notificationClass: number;
-            /** ID: 35 | Type: BITMAP8 */
+            /** ID=0x0023 | type=BITMAP8 */
             eventEnable: number;
-            /** ID: 36 | Type: ENUM8 */
+            /** ID=0x0024 | type=ENUM8 */
             eventState: number;
-            /** ID: 72 | Type: ENUM8 */
+            /** ID=0x0048 | type=ENUM8 */
             notifyType: number;
-            /** ID: 113 | Type: UINT8 */
+            /** ID=0x0071 | type=UINT8 */
             timeDelay: number;
-            /** ID: 130 | Type: ARRAY */
+            /** ID=0x0082 | type=ARRAY */
             eventTimeStamps: ZclArray | unknown[];
         };
         commands: never;
@@ -4456,13 +4691,13 @@ export interface TClusters {
     };
     piMultistateValueReg: {
         attributes: {
-            /** ID: 75 | Type: BAC_OID */
+            /** ID=0x004b | type=BAC_OID */
             objectId: number;
-            /** ID: 77 | Type: CHAR_STR */
+            /** ID=0x004d | type=CHAR_STR */
             objectName: string;
-            /** ID: 79 | Type: ENUM16 */
+            /** ID=0x004f | type=ENUM16 */
             objectType: number;
-            /** ID: 168 | Type: CHAR_STR */
+            /** ID=0x00a8 | type=CHAR_STR */
             profileName: string;
         };
         commands: never;
@@ -4470,23 +4705,23 @@ export interface TClusters {
     };
     piMultistateValueExt: {
         attributes: {
-            /** ID: 0 | Type: BITMAP8 */
+            /** ID=0x0000 | type=BITMAP8 */
             ackedTransitions: number;
-            /** ID: 6 | Type: UINT16 */
+            /** ID=0x0006 | type=UINT16 */
             alarmValue: number;
-            /** ID: 17 | Type: UINT16 */
+            /** ID=0x0011 | type=UINT16 */
             notificationClass: number;
-            /** ID: 35 | Type: BITMAP8 */
+            /** ID=0x0023 | type=BITMAP8 */
             eventEnable: number;
-            /** ID: 36 | Type: ENUM8 */
+            /** ID=0x0024 | type=ENUM8 */
             eventState: number;
-            /** ID: 37 | Type: UINT16 */
+            /** ID=0x0025 | type=UINT16 */
             faultValues: number;
-            /** ID: 72 | Type: ENUM8 */
+            /** ID=0x0048 | type=ENUM8 */
             notifyType: number;
-            /** ID: 113 | Type: UINT8 */
+            /** ID=0x0071 | type=UINT8 */
             timeDelay: number;
-            /** ID: 130 | Type: ARRAY */
+            /** ID=0x0082 | type=ARRAY */
             eventTimeStamps: ZclArray | unknown[];
         };
         commands: never;
@@ -4494,34 +4729,34 @@ export interface TClusters {
     };
     pi11073ProtocolTunnel: {
         attributes: {
-            /** ID: 0 | Type: ARRAY */
+            /** ID=0x0000 | type=ARRAY */
             deviceidList: ZclArray | unknown[];
-            /** ID: 1 | Type: IEEE_ADDR */
+            /** ID=0x0001 | type=IEEE_ADDR */
             managerTarget: string;
-            /** ID: 2 | Type: UINT8 */
+            /** ID=0x0002 | type=UINT8 */
             managerEndpoint: number;
-            /** ID: 3 | Type: BOOLEAN */
+            /** ID=0x0003 | type=BOOLEAN */
             connected: number;
-            /** ID: 4 | Type: BOOLEAN */
+            /** ID=0x0004 | type=BOOLEAN */
             preemptible: number;
-            /** ID: 5 | Type: UINT16 */
+            /** ID=0x0005 | type=UINT16 */
             idleTimeout: number;
         };
         commands: {
-            /** ID: 0 */
+            /** ID=0x00 */
             transferApdu: Record<string, never>;
-            /** ID: 1 */
+            /** ID=0x01 */
             connectReq: Record<string, never>;
-            /** ID: 2 */
+            /** ID=0x02 */
             disconnectReq: Record<string, never>;
-            /** ID: 3 */
+            /** ID=0x03 */
             connectStatusNoti: Record<string, never>;
         };
         commandResponses: never;
     };
     piIso7818ProtocolTunnel: {
         attributes: {
-            /** ID: 0 | Type: UINT8 */
+            /** ID=0x0000 | type=UINT8 */
             status: number;
         };
         commands: never;
@@ -4529,9 +4764,9 @@ export interface TClusters {
     };
     piRetailTunnel: {
         attributes: {
-            /** ID: 0 | Type: UINT16 */
+            /** ID=0x0000 | type=UINT16 */
             manufacturerCode: number;
-            /** ID: 1 | Type: UINT16 */
+            /** ID=0x0001 | type=UINT16 */
             msProfile: number;
         };
         commands: never;
@@ -4539,505 +4774,505 @@ export interface TClusters {
     };
     seMetering: {
         attributes: {
-            /** ID: 0 | Type: UINT48 */
+            /** ID=0x0000 | type=UINT48 */
             currentSummDelivered: number;
-            /** ID: 1 | Type: UINT48 */
+            /** ID=0x0001 | type=UINT48 */
             currentSummReceived: number;
-            /** ID: 2 | Type: UINT48 */
+            /** ID=0x0002 | type=UINT48 */
             currentMaxDemandDelivered: number;
-            /** ID: 3 | Type: UINT48 */
+            /** ID=0x0003 | type=UINT48 */
             currentMaxDemandReceived: number;
-            /** ID: 4 | Type: UINT48 */
+            /** ID=0x0004 | type=UINT48 */
             dftSumm: number;
-            /** ID: 5 | Type: UINT16 */
+            /** ID=0x0005 | type=UINT16 */
             dailyFreezeTime: number;
-            /** ID: 6 | Type: INT8 */
+            /** ID=0x0006 | type=INT8 */
             powerFactor: number;
-            /** ID: 7 | Type: UTC */
+            /** ID=0x0007 | type=UTC */
             readingSnapshotTime: number;
-            /** ID: 8 | Type: UTC */
+            /** ID=0x0008 | type=UTC */
             currentMaxDemandDeliverdTime: number;
-            /** ID: 9 | Type: UTC */
+            /** ID=0x0009 | type=UTC */
             currentMaxDemandReceivedTime: number;
-            /** ID: 10 | Type: UINT8 */
+            /** ID=0x000a | type=UINT8 */
             defaultUpdatePeriod: number;
-            /** ID: 11 | Type: UINT8 */
+            /** ID=0x000b | type=UINT8 */
             fastPollUpdatePeriod: number;
-            /** ID: 12 | Type: UINT48 */
+            /** ID=0x000c | type=UINT48 */
             currentBlockPeriodConsumpDelivered: number;
-            /** ID: 13 | Type: UINT24 */
+            /** ID=0x000d | type=UINT24 */
             dailyConsumpTarget: number;
-            /** ID: 14 | Type: ENUM8 */
+            /** ID=0x000e | type=ENUM8 */
             currentBlock: number;
-            /** ID: 15 | Type: ENUM8 */
+            /** ID=0x000f | type=ENUM8 */
             profileIntervalPeriod: number;
-            /** ID: 16 | Type: UINT16 */
+            /** ID=0x0010 | type=UINT16 */
             intervalReadReportingPeriod: number;
-            /** ID: 17 | Type: UINT16 */
+            /** ID=0x0011 | type=UINT16 */
             presetReadingTime: number;
-            /** ID: 18 | Type: UINT16 */
+            /** ID=0x0012 | type=UINT16 */
             volumePerReport: number;
-            /** ID: 19 | Type: UINT8 */
+            /** ID=0x0013 | type=UINT8 */
             flowRestriction: number;
-            /** ID: 20 | Type: ENUM8 */
+            /** ID=0x0014 | type=ENUM8 */
             supplyStatus: number;
-            /** ID: 21 | Type: UINT48 */
+            /** ID=0x0015 | type=UINT48 */
             currentInEnergyCarrierSumm: number;
-            /** ID: 22 | Type: UINT48 */
+            /** ID=0x0016 | type=UINT48 */
             currentOutEnergyCarrierSumm: number;
-            /** ID: 23 | Type: INT24 */
+            /** ID=0x0017 | type=INT24 */
             inletTempreature: number;
-            /** ID: 24 | Type: INT24 */
+            /** ID=0x0018 | type=INT24 */
             outletTempreature: number;
-            /** ID: 25 | Type: INT24 */
+            /** ID=0x0019 | type=INT24 */
             controlTempreature: number;
-            /** ID: 26 | Type: INT24 */
+            /** ID=0x001a | type=INT24 */
             currentInEnergyCarrierDemand: number;
-            /** ID: 27 | Type: INT24 */
+            /** ID=0x001b | type=INT24 */
             currentOutEnergyCarrierDemand: number;
-            /** ID: 29 | Type: UINT48 */
+            /** ID=0x001d | type=UINT48 */
             currentBlockPeriodConsumpReceived: number;
-            /** ID: 30 | Type: UINT48 */
+            /** ID=0x001e | type=UINT48 */
             currentBlockReceived: number;
-            /** ID: 31 | Type: UINT48 */
+            /** ID=0x001f | type=UINT48 */
             DFTSummationReceived: number;
-            /** ID: 32 | Type: ENUM8 */
+            /** ID=0x0020 | type=ENUM8 */
             activeRegisterTierDelivered: number;
-            /** ID: 33 | Type: ENUM8 */
+            /** ID=0x0021 | type=ENUM8 */
             activeRegisterTierReceived: number;
-            /** ID: 256 | Type: UINT48 */
+            /** ID=0x0100 | type=UINT48 */
             currentTier1SummDelivered: number;
-            /** ID: 257 | Type: UINT48 */
+            /** ID=0x0101 | type=UINT48 */
             currentTier1SummReceived: number;
-            /** ID: 258 | Type: UINT48 */
+            /** ID=0x0102 | type=UINT48 */
             currentTier2SummDelivered: number;
-            /** ID: 259 | Type: UINT48 */
+            /** ID=0x0103 | type=UINT48 */
             currentTier2SummReceived: number;
-            /** ID: 260 | Type: UINT48 */
+            /** ID=0x0104 | type=UINT48 */
             currentTier3SummDelivered: number;
-            /** ID: 261 | Type: UINT48 */
+            /** ID=0x0105 | type=UINT48 */
             currentTier3SummReceived: number;
-            /** ID: 262 | Type: UINT48 */
+            /** ID=0x0106 | type=UINT48 */
             currentTier4SummDelivered: number;
-            /** ID: 263 | Type: UINT48 */
+            /** ID=0x0107 | type=UINT48 */
             currentTier4SummReceived: number;
-            /** ID: 264 | Type: UINT48 */
+            /** ID=0x0108 | type=UINT48 */
             currentTier5SummDelivered: number;
-            /** ID: 265 | Type: UINT48 */
+            /** ID=0x0109 | type=UINT48 */
             currentTier5SummReceived: number;
-            /** ID: 266 | Type: UINT48 */
+            /** ID=0x010a | type=UINT48 */
             currentTier6SummDelivered: number;
-            /** ID: 267 | Type: UINT48 */
+            /** ID=0x010b | type=UINT48 */
             currentTier6SummReceived: number;
-            /** ID: 268 | Type: UINT48 */
+            /** ID=0x010c | type=UINT48 */
             currentTier7SummDelivered: number;
-            /** ID: 269 | Type: UINT48 */
+            /** ID=0x010d | type=UINT48 */
             currentTier7SummReceived: number;
-            /** ID: 270 | Type: UINT48 */
+            /** ID=0x010e | type=UINT48 */
             currentTier8SummDelivered: number;
-            /** ID: 271 | Type: UINT48 */
+            /** ID=0x010f | type=UINT48 */
             currentTier8SummReceived: number;
-            /** ID: 272 | Type: UINT48 */
+            /** ID=0x0110 | type=UINT48 */
             currentTier9SummDelivered: number;
-            /** ID: 273 | Type: UINT48 */
+            /** ID=0x0111 | type=UINT48 */
             currentTier9SummReceived: number;
-            /** ID: 274 | Type: UINT48 */
+            /** ID=0x0112 | type=UINT48 */
             currentTier10SummDelivered: number;
-            /** ID: 275 | Type: UINT48 */
+            /** ID=0x0113 | type=UINT48 */
             currentTier10SummReceived: number;
-            /** ID: 276 | Type: UINT48 */
+            /** ID=0x0114 | type=UINT48 */
             currentTier11SummDelivered: number;
-            /** ID: 277 | Type: UINT48 */
+            /** ID=0x0115 | type=UINT48 */
             currentTier11SummReceived: number;
-            /** ID: 278 | Type: UINT48 */
+            /** ID=0x0116 | type=UINT48 */
             currentTier12SummDelivered: number;
-            /** ID: 279 | Type: UINT48 */
+            /** ID=0x0117 | type=UINT48 */
             currentTier12SummReceived: number;
-            /** ID: 280 | Type: UINT48 */
+            /** ID=0x0118 | type=UINT48 */
             currentTier13SummDelivered: number;
-            /** ID: 281 | Type: UINT48 */
+            /** ID=0x0119 | type=UINT48 */
             currentTier13SummReceived: number;
-            /** ID: 282 | Type: UINT48 */
+            /** ID=0x011a | type=UINT48 */
             currentTier14SummDelivered: number;
-            /** ID: 283 | Type: UINT48 */
+            /** ID=0x011b | type=UINT48 */
             currentTier14SummReceived: number;
-            /** ID: 284 | Type: UINT48 */
+            /** ID=0x011c | type=UINT48 */
             currentTier15SummDelivered: number;
-            /** ID: 285 | Type: UINT48 */
+            /** ID=0x011d | type=UINT48 */
             currentTier15SummReceived: number;
-            /** ID: 512 | Type: BITMAP8 */
+            /** ID=0x0200 | type=BITMAP8 */
             status: number;
-            /** ID: 513 | Type: UINT8 */
+            /** ID=0x0201 | type=UINT8 */
             remainingBattLife: number;
-            /** ID: 514 | Type: UINT24 */
+            /** ID=0x0202 | type=UINT24 */
             hoursInOperation: number;
-            /** ID: 515 | Type: UINT24 */
+            /** ID=0x0203 | type=UINT24 */
             hoursInFault: number;
-            /** ID: 516 | Type: BITMAP64 */
+            /** ID=0x0204 | type=BITMAP64 */
             extendedStatus: bigint;
-            /** ID: 768 | Type: ENUM8 */
+            /** ID=0x0300 | type=ENUM8 */
             unitOfMeasure: number;
-            /** ID: 769 | Type: UINT24 */
+            /** ID=0x0301 | type=UINT24 */
             multiplier: number;
-            /** ID: 770 | Type: UINT24 */
+            /** ID=0x0302 | type=UINT24 */
             divisor: number;
-            /** ID: 771 | Type: BITMAP8 */
+            /** ID=0x0303 | type=BITMAP8 */
             summaFormatting: number;
-            /** ID: 772 | Type: BITMAP8 */
+            /** ID=0x0304 | type=BITMAP8 */
             demandFormatting: number;
-            /** ID: 773 | Type: BITMAP8 */
+            /** ID=0x0305 | type=BITMAP8 */
             historicalConsumpFormatting: number;
-            /** ID: 774 | Type: BITMAP8 */
+            /** ID=0x0306 | type=BITMAP8 */
             meteringDeviceType: number;
-            /** ID: 775 | Type: OCTET_STR */
+            /** ID=0x0307 | type=OCTET_STR */
             siteId: Buffer;
-            /** ID: 776 | Type: OCTET_STR */
+            /** ID=0x0308 | type=OCTET_STR */
             meterSerialNumber: Buffer;
-            /** ID: 777 | Type: ENUM8 */
+            /** ID=0x0309 | type=ENUM8 */
             energyCarrierUnitOfMeas: number;
-            /** ID: 778 | Type: BITMAP8 */
+            /** ID=0x030a | type=BITMAP8 */
             energyCarrierSummFormatting: number;
-            /** ID: 779 | Type: BITMAP8 */
+            /** ID=0x030b | type=BITMAP8 */
             energyCarrierDemandFormatting: number;
-            /** ID: 780 | Type: ENUM8 */
+            /** ID=0x030c | type=ENUM8 */
             temperatureUnitOfMeas: number;
-            /** ID: 781 | Type: BITMAP8 */
+            /** ID=0x030d | type=BITMAP8 */
             temperatureFormatting: number;
-            /** ID: 782 | Type: OCTET_STR */
+            /** ID=0x030e | type=OCTET_STR */
             moduleSerialNumber: Buffer;
-            /** ID: 783 | Type: OCTET_STR */
+            /** ID=0x030f | type=OCTET_STR */
             operatingTariffLevel: Buffer;
-            /** ID: 1024 | Type: INT24 */
+            /** ID=0x0400 | type=INT24 */
             instantaneousDemand: number;
-            /** ID: 1025 | Type: UINT24 */
+            /** ID=0x0401 | type=UINT24 */
             currentdayConsumpDelivered: number;
-            /** ID: 1026 | Type: UINT24 */
+            /** ID=0x0402 | type=UINT24 */
             currentdayConsumpReceived: number;
-            /** ID: 1027 | Type: UINT24 */
+            /** ID=0x0403 | type=UINT24 */
             previousdayConsumpDelivered: number;
-            /** ID: 1028 | Type: UINT24 */
+            /** ID=0x0404 | type=UINT24 */
             previousdayConsumpReceived: number;
-            /** ID: 1029 | Type: UTC */
+            /** ID=0x0405 | type=UTC */
             curPartProfileIntStartTimeDelivered: number;
-            /** ID: 1030 | Type: UTC */
+            /** ID=0x0406 | type=UTC */
             curPartProfileIntStartTimeReceived: number;
-            /** ID: 1031 | Type: UINT24 */
+            /** ID=0x0407 | type=UINT24 */
             curPartProfileIntValueDelivered: number;
-            /** ID: 1032 | Type: UINT24 */
+            /** ID=0x0408 | type=UINT24 */
             curPartProfileIntValueReceived: number;
-            /** ID: 1033 | Type: UINT48 */
+            /** ID=0x0409 | type=UINT48 */
             currentDayMaxPressure: number;
-            /** ID: 1034 | Type: UINT48 */
+            /** ID=0x040a | type=UINT48 */
             currentDayMinPressure: number;
-            /** ID: 1035 | Type: UINT48 */
+            /** ID=0x040b | type=UINT48 */
             previousDayMaxPressure: number;
-            /** ID: 1036 | Type: UINT48 */
+            /** ID=0x040c | type=UINT48 */
             previousDayMinPressure: number;
-            /** ID: 1037 | Type: INT24 */
+            /** ID=0x040d | type=INT24 */
             currentDayMaxDemand: number;
-            /** ID: 1038 | Type: INT24 */
+            /** ID=0x040e | type=INT24 */
             previousDayMaxDemand: number;
-            /** ID: 1039 | Type: INT24 */
+            /** ID=0x040f | type=INT24 */
             currentMonthMaxDemand: number;
-            /** ID: 1040 | Type: INT24 */
+            /** ID=0x0410 | type=INT24 */
             currentYearMaxDemand: number;
-            /** ID: 1041 | Type: INT24 */
+            /** ID=0x0411 | type=INT24 */
             currentdayMaxEnergyCarrDemand: number;
-            /** ID: 1042 | Type: INT24 */
+            /** ID=0x0412 | type=INT24 */
             previousdayMaxEnergyCarrDemand: number;
-            /** ID: 1043 | Type: INT24 */
+            /** ID=0x0413 | type=INT24 */
             curMonthMaxEnergyCarrDemand: number;
-            /** ID: 1044 | Type: INT24 */
+            /** ID=0x0414 | type=INT24 */
             curMonthMinEnergyCarrDemand: number;
-            /** ID: 1045 | Type: INT24 */
+            /** ID=0x0415 | type=INT24 */
             curYearMaxEnergyCarrDemand: number;
-            /** ID: 1046 | Type: INT24 */
+            /** ID=0x0416 | type=INT24 */
             curYearMinEnergyCarrDemand: number;
-            /** ID: 1280 | Type: UINT8 */
+            /** ID=0x0500 | type=UINT8 */
             maxNumberOfPeriodsDelivered: number;
-            /** ID: 1536 | Type: UINT24 */
+            /** ID=0x0600 | type=UINT24 */
             currentDemandDelivered: number;
-            /** ID: 1537 | Type: UINT24 */
+            /** ID=0x0601 | type=UINT24 */
             demandLimit: number;
-            /** ID: 1538 | Type: UINT8 */
+            /** ID=0x0602 | type=UINT8 */
             demandIntegrationPeriod: number;
-            /** ID: 1539 | Type: UINT8 */
+            /** ID=0x0603 | type=UINT8 */
             numberOfDemandSubintervals: number;
-            /** ID: 1540 | Type: UINT16 */
+            /** ID=0x0604 | type=UINT16 */
             demandLimitArmDuration: number;
-            /** ID: 2048 | Type: BITMAP16 */
+            /** ID=0x0800 | type=BITMAP16 */
             genericAlarmMask: number;
-            /** ID: 2049 | Type: BITMAP32 */
+            /** ID=0x0801 | type=BITMAP32 */
             electricityAlarmMask: number;
-            /** ID: 2050 | Type: BITMAP16 */
+            /** ID=0x0802 | type=BITMAP16 */
             genFlowPressureAlarmMask: number;
-            /** ID: 2051 | Type: BITMAP16 */
+            /** ID=0x0803 | type=BITMAP16 */
             waterSpecificAlarmMask: number;
-            /** ID: 2052 | Type: BITMAP16 */
+            /** ID=0x0804 | type=BITMAP16 */
             heatCoolSpecificAlarmMASK: number;
-            /** ID: 2053 | Type: BITMAP16 */
+            /** ID=0x0805 | type=BITMAP16 */
             gasSpecificAlarmMask: number;
-            /** ID: 2054 | Type: BITMAP48 */
+            /** ID=0x0806 | type=BITMAP48 */
             extendedGenericAlarmMask: number;
-            /** ID: 2055 | Type: BITMAP16 */
+            /** ID=0x0807 | type=BITMAP16 */
             manufactureAlarmMask: number;
-            /** ID: 2560 | Type: UINT32 */
+            /** ID=0x0a00 | type=UINT32 */
             billToDate: number;
-            /** ID: 2561 | Type: UTC */
+            /** ID=0x0a01 | type=UTC */
             billToDateTimeStamp: number;
-            /** ID: 2562 | Type: UINT32 */
+            /** ID=0x0a02 | type=UINT32 */
             projectedBill: number;
-            /** ID: 2563 | Type: UTC */
+            /** ID=0x0a03 | type=UTC */
             projectedBillTimeStamp: number;
-            /** ID: 768 | Type: UINT16 | Specific to manufacturer: DEVELCO (4117) */
+            /** ID=0x0300 | type=UINT16 | manufacturerCode=DEVELCO(0x1015) */
             develcoPulseConfiguration?: number;
-            /** ID: 769 | Type: UINT48 | Specific to manufacturer: DEVELCO (4117) */
+            /** ID=0x0301 | type=UINT48 | manufacturerCode=DEVELCO(0x1015) */
             develcoCurrentSummation?: number;
-            /** ID: 770 | Type: ENUM16 | Specific to manufacturer: DEVELCO (4117) */
+            /** ID=0x0302 | type=ENUM16 | manufacturerCode=DEVELCO(0x1015) */
             develcoInterfaceMode?: number;
-            /** ID: 8192 | Type: INT24 | Specific to manufacturer: OWON_TECHNOLOGY_INC (4412) */
+            /** ID=0x2000 | type=INT24 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) */
             owonL1PhasePower?: number;
-            /** ID: 8193 | Type: INT24 | Specific to manufacturer: OWON_TECHNOLOGY_INC (4412) */
+            /** ID=0x2001 | type=INT24 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) */
             owonL2PhasePower?: number;
-            /** ID: 8194 | Type: INT24 | Specific to manufacturer: OWON_TECHNOLOGY_INC (4412) */
+            /** ID=0x2002 | type=INT24 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) */
             owonL3PhasePower?: number;
-            /** ID: 8448 | Type: INT24 | Specific to manufacturer: OWON_TECHNOLOGY_INC (4412) */
+            /** ID=0x2100 | type=INT24 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) */
             owonL1PhaseReactivePower?: number;
-            /** ID: 8449 | Type: INT24 | Specific to manufacturer: OWON_TECHNOLOGY_INC (4412) */
+            /** ID=0x2101 | type=INT24 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) */
             owonL2PhaseReactivePower?: number;
-            /** ID: 8450 | Type: INT24 | Specific to manufacturer: OWON_TECHNOLOGY_INC (4412) */
+            /** ID=0x2102 | type=INT24 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) */
             owonL3PhaseReactivePower?: number;
-            /** ID: 8451 | Type: INT24 | Specific to manufacturer: OWON_TECHNOLOGY_INC (4412) */
+            /** ID=0x2103 | type=INT24 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) */
             owonReactivePowerSum?: number;
-            /** ID: 12288 | Type: UINT24 | Specific to manufacturer: OWON_TECHNOLOGY_INC (4412) */
+            /** ID=0x3000 | type=UINT24 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) */
             owonL1PhaseVoltage?: number;
-            /** ID: 12289 | Type: UINT24 | Specific to manufacturer: OWON_TECHNOLOGY_INC (4412) */
+            /** ID=0x3001 | type=UINT24 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) */
             owonL2PhaseVoltage?: number;
-            /** ID: 12290 | Type: UINT24 | Specific to manufacturer: OWON_TECHNOLOGY_INC (4412) */
+            /** ID=0x3002 | type=UINT24 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) */
             owonL3PhaseVoltage?: number;
-            /** ID: 12544 | Type: UINT24 | Specific to manufacturer: OWON_TECHNOLOGY_INC (4412) */
+            /** ID=0x3100 | type=UINT24 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) */
             owonL1PhaseCurrent?: number;
-            /** ID: 12545 | Type: UINT24 | Specific to manufacturer: OWON_TECHNOLOGY_INC (4412) */
+            /** ID=0x3101 | type=UINT24 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) */
             owonL2PhaseCurrent?: number;
-            /** ID: 12546 | Type: UINT24 | Specific to manufacturer: OWON_TECHNOLOGY_INC (4412) */
+            /** ID=0x3102 | type=UINT24 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) */
             owonL3PhaseCurrent?: number;
-            /** ID: 12547 | Type: UINT24 | Specific to manufacturer: OWON_TECHNOLOGY_INC (4412) */
+            /** ID=0x3103 | type=UINT24 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) */
             owonCurrentSum?: number;
-            /** ID: 12548 | Type: UINT24 | Specific to manufacturer: OWON_TECHNOLOGY_INC (4412) */
+            /** ID=0x3104 | type=UINT24 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) */
             owonLeakageCurrent?: number;
-            /** ID: 16384 | Type: UINT48 | Specific to manufacturer: OWON_TECHNOLOGY_INC (4412) */
+            /** ID=0x4000 | type=UINT48 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) */
             owonL1Energy?: number;
-            /** ID: 16385 | Type: UINT48 | Specific to manufacturer: OWON_TECHNOLOGY_INC (4412) */
+            /** ID=0x4001 | type=UINT48 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) */
             owonL2Energy?: number;
-            /** ID: 16386 | Type: UINT48 | Specific to manufacturer: OWON_TECHNOLOGY_INC (4412) */
+            /** ID=0x4002 | type=UINT48 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) */
             owonL3Energy?: number;
-            /** ID: 16640 | Type: UINT48 | Specific to manufacturer: OWON_TECHNOLOGY_INC (4412) */
+            /** ID=0x4100 | type=UINT48 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) */
             owonL1ReactiveEnergy?: number;
-            /** ID: 16641 | Type: UINT48 | Specific to manufacturer: OWON_TECHNOLOGY_INC (4412) */
+            /** ID=0x4101 | type=UINT48 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) */
             owonL2ReactiveEnergy?: number;
-            /** ID: 16642 | Type: UINT48 | Specific to manufacturer: OWON_TECHNOLOGY_INC (4412) */
+            /** ID=0x4102 | type=UINT48 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) */
             owonL3ReactiveEnergy?: number;
-            /** ID: 16643 | Type: UINT48 | Specific to manufacturer: OWON_TECHNOLOGY_INC (4412) */
+            /** ID=0x4103 | type=UINT48 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) */
             owonReactiveEnergySum?: number;
-            /** ID: 16644 | Type: INT8 | Specific to manufacturer: OWON_TECHNOLOGY_INC (4412) */
+            /** ID=0x4104 | type=INT8 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) */
             owonL1PowerFactor?: number;
-            /** ID: 16645 | Type: INT8 | Specific to manufacturer: OWON_TECHNOLOGY_INC (4412) */
+            /** ID=0x4105 | type=INT8 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) */
             owonL2PowerFactor?: number;
-            /** ID: 16646 | Type: INT8 | Specific to manufacturer: OWON_TECHNOLOGY_INC (4412) */
+            /** ID=0x4106 | type=INT8 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) */
             owonL3PowerFactor?: number;
-            /** ID: 20485 | Type: UINT8 | Specific to manufacturer: OWON_TECHNOLOGY_INC (4412) */
+            /** ID=0x5005 | type=UINT8 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) */
             owonFrequency?: number;
-            /** ID: 4096 | Type: BITMAP8 | Specific to manufacturer: OWON_TECHNOLOGY_INC (4412) */
+            /** ID=0x1000 | type=BITMAP8 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) */
             owonReportMap?: number;
-            /** ID: 20480 | Type: UINT32 | Specific to manufacturer: OWON_TECHNOLOGY_INC (4412) */
+            /** ID=0x5000 | type=UINT32 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) */
             owonLastHistoricalRecordTime?: number;
-            /** ID: 20481 | Type: UINT32 | Specific to manufacturer: OWON_TECHNOLOGY_INC (4412) */
+            /** ID=0x5001 | type=UINT32 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) */
             owonOldestHistoricalRecordTime?: number;
-            /** ID: 20482 | Type: UINT32 | Specific to manufacturer: OWON_TECHNOLOGY_INC (4412) */
+            /** ID=0x5002 | type=UINT32 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) */
             owonMinimumReportCycle?: number;
-            /** ID: 20483 | Type: UINT32 | Specific to manufacturer: OWON_TECHNOLOGY_INC (4412) */
+            /** ID=0x5003 | type=UINT32 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) */
             owonMaximumReportCycle?: number;
-            /** ID: 20484 | Type: UINT8 | Specific to manufacturer: OWON_TECHNOLOGY_INC (4412) */
+            /** ID=0x5004 | type=UINT8 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) */
             owonSentHistoricalRecordState?: number;
-            /** ID: 20486 | Type: UINT8 | Specific to manufacturer: OWON_TECHNOLOGY_INC (4412) */
+            /** ID=0x5006 | type=UINT8 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) */
             owonAccumulativeEnergyThreshold?: number;
-            /** ID: 20487 | Type: UINT8 | Specific to manufacturer: OWON_TECHNOLOGY_INC (4412) */
+            /** ID=0x5007 | type=UINT8 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) */
             owonReportMode?: number;
-            /** ID: 20488 | Type: UINT8 | Specific to manufacturer: OWON_TECHNOLOGY_INC (4412) */
+            /** ID=0x5008 | type=UINT8 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) */
             owonPercentChangeInPower?: number;
-            /** ID: 16400 | Type: INT48 | Specific to manufacturer: SCHNEIDER_ELECTRIC (4190) */
+            /** ID=0x4010 | type=INT48 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) */
             schneiderActiveEnergyTotal?: number;
-            /** ID: 16401 | Type: INT48 | Specific to manufacturer: SCHNEIDER_ELECTRIC (4190) */
+            /** ID=0x4011 | type=INT48 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) */
             schneiderReactiveEnergyTotal?: number;
-            /** ID: 16402 | Type: INT48 | Specific to manufacturer: SCHNEIDER_ELECTRIC (4190) */
+            /** ID=0x4012 | type=INT48 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) */
             schneiderApparentEnergyTotal?: number;
-            /** ID: 16404 | Type: INT48 | Specific to manufacturer: SCHNEIDER_ELECTRIC (4190) */
+            /** ID=0x4014 | type=INT48 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) */
             schneiderPartialActiveEnergyTotal?: number;
-            /** ID: 16405 | Type: INT48 | Specific to manufacturer: SCHNEIDER_ELECTRIC (4190) */
+            /** ID=0x4015 | type=INT48 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) */
             schneiderPartialReactiveEnergyTotal?: number;
-            /** ID: 16406 | Type: INT48 | Specific to manufacturer: SCHNEIDER_ELECTRIC (4190) */
+            /** ID=0x4016 | type=INT48 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) */
             schneiderPartialApparentEnergyTotal?: number;
-            /** ID: 16640 | Type: INT48 | Specific to manufacturer: SCHNEIDER_ELECTRIC (4190) */
+            /** ID=0x4100 | type=INT48 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) */
             schneiderPartialActiveEnergyL1Phase?: number;
-            /** ID: 16641 | Type: INT48 | Specific to manufacturer: SCHNEIDER_ELECTRIC (4190) */
+            /** ID=0x4101 | type=INT48 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) */
             schneiderPartialReactiveEnergyL1Phase?: number;
-            /** ID: 16642 | Type: INT48 | Specific to manufacturer: SCHNEIDER_ELECTRIC (4190) */
+            /** ID=0x4102 | type=INT48 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) */
             schneiderPartialApparentEnergyL1Phase?: number;
-            /** ID: 16643 | Type: INT48 | Specific to manufacturer: SCHNEIDER_ELECTRIC (4190) */
+            /** ID=0x4103 | type=INT48 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) */
             schneiderActiveEnergyL1Phase?: number;
-            /** ID: 16644 | Type: INT48 | Specific to manufacturer: SCHNEIDER_ELECTRIC (4190) */
+            /** ID=0x4104 | type=INT48 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) */
             schneiderReactiveEnergyL1Phase?: number;
-            /** ID: 16645 | Type: INT48 | Specific to manufacturer: SCHNEIDER_ELECTRIC (4190) */
+            /** ID=0x4105 | type=INT48 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) */
             schneiderApparentEnergyL1Phase?: number;
-            /** ID: 16896 | Type: INT48 | Specific to manufacturer: SCHNEIDER_ELECTRIC (4190) */
+            /** ID=0x4200 | type=INT48 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) */
             schneiderPartialActiveEnergyL2Phase?: number;
-            /** ID: 16897 | Type: INT48 | Specific to manufacturer: SCHNEIDER_ELECTRIC (4190) */
+            /** ID=0x4201 | type=INT48 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) */
             schneiderPartialReactiveEnergyL2Phase?: number;
-            /** ID: 16898 | Type: INT48 | Specific to manufacturer: SCHNEIDER_ELECTRIC (4190) */
+            /** ID=0x4202 | type=INT48 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) */
             schneiderPartialApparentEnergyL2Phase?: number;
-            /** ID: 16899 | Type: INT48 | Specific to manufacturer: SCHNEIDER_ELECTRIC (4190) */
+            /** ID=0x4203 | type=INT48 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) */
             schneiderActiveEnergyL2Phase?: number;
-            /** ID: 16900 | Type: INT48 | Specific to manufacturer: SCHNEIDER_ELECTRIC (4190) */
+            /** ID=0x4204 | type=INT48 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) */
             schneiderReactiveEnergyL2Phase?: number;
-            /** ID: 16901 | Type: INT48 | Specific to manufacturer: SCHNEIDER_ELECTRIC (4190) */
+            /** ID=0x4205 | type=INT48 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) */
             schneiderApparentEnergyL2Phase?: number;
-            /** ID: 17152 | Type: INT48 | Specific to manufacturer: SCHNEIDER_ELECTRIC (4190) */
+            /** ID=0x4300 | type=INT48 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) */
             schneiderPartialActiveEnergyL3Phase?: number;
-            /** ID: 17153 | Type: INT48 | Specific to manufacturer: SCHNEIDER_ELECTRIC (4190) */
+            /** ID=0x4301 | type=INT48 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) */
             schneiderPartialReactiveEnergyL3Phase?: number;
-            /** ID: 17154 | Type: INT48 | Specific to manufacturer: SCHNEIDER_ELECTRIC (4190) */
+            /** ID=0x4302 | type=INT48 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) */
             schneiderPartialApparentEnergyL3Phase?: number;
-            /** ID: 17155 | Type: INT48 | Specific to manufacturer: SCHNEIDER_ELECTRIC (4190) */
+            /** ID=0x4303 | type=INT48 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) */
             schneiderActiveEnergyL3Phase?: number;
-            /** ID: 17156 | Type: INT48 | Specific to manufacturer: SCHNEIDER_ELECTRIC (4190) */
+            /** ID=0x4304 | type=INT48 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) */
             schneiderReactiveEnergyL3Phase?: number;
-            /** ID: 17157 | Type: INT48 | Specific to manufacturer: SCHNEIDER_ELECTRIC (4190) */
+            /** ID=0x4305 | type=INT48 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) */
             schneiderApparentEnergyL3Phase?: number;
-            /** ID: 17408 | Type: UINT24 | Specific to manufacturer: SCHNEIDER_ELECTRIC (4190) */
+            /** ID=0x4400 | type=UINT24 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) */
             schneiderActiveEnergyMultiplier?: number;
-            /** ID: 17409 | Type: UINT24 | Specific to manufacturer: SCHNEIDER_ELECTRIC (4190) */
+            /** ID=0x4401 | type=UINT24 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) */
             schneiderActiveEnergyDivisor?: number;
-            /** ID: 17410 | Type: UINT24 | Specific to manufacturer: SCHNEIDER_ELECTRIC (4190) */
+            /** ID=0x4402 | type=UINT24 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) */
             schneiderReactiveEnergyMultiplier?: number;
-            /** ID: 17411 | Type: UINT24 | Specific to manufacturer: SCHNEIDER_ELECTRIC (4190) */
+            /** ID=0x4403 | type=UINT24 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) */
             schneiderReactiveEnergyDivisor?: number;
-            /** ID: 17412 | Type: UINT24 | Specific to manufacturer: SCHNEIDER_ELECTRIC (4190) */
+            /** ID=0x4404 | type=UINT24 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) */
             schneiderApparentEnergyMultiplier?: number;
-            /** ID: 17413 | Type: UINT24 | Specific to manufacturer: SCHNEIDER_ELECTRIC (4190) */
+            /** ID=0x4405 | type=UINT24 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) */
             schneiderApparentEnergyDivisor?: number;
-            /** ID: 17665 | Type: UTC | Specific to manufacturer: SCHNEIDER_ELECTRIC (4190) */
+            /** ID=0x4501 | type=UTC | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) */
             schneiderEnergyResetDateTime?: number;
-            /** ID: 17920 | Type: UINT16 | Specific to manufacturer: SCHNEIDER_ELECTRIC (4190) */
+            /** ID=0x4600 | type=UINT16 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) */
             schneiderEnergyCountersReportingPeriod?: number;
         };
         commands: {
-            /** ID: 0 */
+            /** ID=0x00 */
             getProfile: Record<string, never>;
-            /** ID: 1 */
+            /** ID=0x01 */
             reqMirror: Record<string, never>;
-            /** ID: 2 */
+            /** ID=0x02 */
             mirrorRem: Record<string, never>;
-            /** ID: 3 */
+            /** ID=0x03 */
             reqFastPollMode: Record<string, never>;
-            /** ID: 4 */
+            /** ID=0x04 */
             getSnapshot: Record<string, never>;
-            /** ID: 5 */
+            /** ID=0x05 */
             takeSnapshot: Record<string, never>;
-            /** ID: 6 */
+            /** ID=0x06 */
             mirrorReportAttrRsp: Record<string, never>;
-            /** ID: 32 */
+            /** ID=0x20 */
             owonGetHistoryRecord: Record<string, never>;
-            /** ID: 33 */
+            /** ID=0x21 */
             owonStopSendingHistoricalRecord: Record<string, never>;
         };
         commandResponses: {
-            /** ID: 0 */
+            /** ID=0x00 */
             getProfileRsp: Record<string, never>;
-            /** ID: 1 */
+            /** ID=0x01 */
             reqMirrorRsp: Record<string, never>;
-            /** ID: 2 */
+            /** ID=0x02 */
             mirrorRemRsp: Record<string, never>;
-            /** ID: 3 */
+            /** ID=0x03 */
             reqFastPollModeRsp: Record<string, never>;
-            /** ID: 4 */
+            /** ID=0x04 */
             getSnapshotRsp: Record<string, never>;
-            /** ID: 32 */
+            /** ID=0x20 */
             owonGetHistoryRecordRsp: Record<string, never>;
         };
     };
     tunneling: {
         attributes: never;
         commands: {
-            /** ID: 0 | Response ID: 0 */
+            /** ID=0x00 | response=0 */
             requestTunnel: {
-                /** Type: ENUM8 */
+                /** type=ENUM8 */
                 protocolId: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 manufCode: number;
-                /** Type: BOOLEAN */
+                /** type=BOOLEAN */
                 flowControl: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 mtuSize: number;
             };
-            /** ID: 1 */
+            /** ID=0x01 */
             closeTunnel: {
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 tunnelId: number;
             };
-            /** ID: 2 */
+            /** ID=0x02 */
             transferData: {
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 tunnelId: number;
-                /** Type: BUFFER */
+                /** type=BUFFER */
                 data: Buffer;
             };
-            /** ID: 3 */
+            /** ID=0x03 */
             transferDataError: {
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 tunnelId: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 status: number;
             };
         };
         commandResponses: {
-            /** ID: 0 */
+            /** ID=0x00 */
             requestTunnelResp: {
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 tunnelId: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 tunnelStatus: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 mtuSize: number;
             };
-            /** ID: 1 */
+            /** ID=0x01 */
             transferDataResp: {
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 tunnelId: number;
-                /** Type: BUFFER */
+                /** type=BUFFER */
                 data: Buffer;
             };
-            /** ID: 2 */
+            /** ID=0x02 */
             transferDataErrorResp: {
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 tunnelId: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 status: number;
             };
         };
     };
     telecommunicationsInformation: {
         attributes: {
-            /** ID: 0 | Type: CHAR_STR */
+            /** ID=0x0000 | type=CHAR_STR */
             nodeDescription: string;
-            /** ID: 1 | Type: BOOLEAN */
+            /** ID=0x0001 | type=BOOLEAN */
             deliveryEnable: number;
-            /** ID: 2 | Type: UINT32 */
+            /** ID=0x0002 | type=UINT32 */
             pushInformationTimer: number;
-            /** ID: 3 | Type: BOOLEAN */
+            /** ID=0x0003 | type=BOOLEAN */
             enableSecureConfiguration: number;
-            /** ID: 16 | Type: UINT16 */
+            /** ID=0x0010 | type=UINT16 */
             numberOfContents: number;
-            /** ID: 17 | Type: UINT16 */
+            /** ID=0x0011 | type=UINT16 */
             contentRootID: number;
         };
         commands: never;
@@ -5045,27 +5280,27 @@ export interface TClusters {
     };
     telecommunicationsVoiceOverZigbee: {
         attributes: {
-            /** ID: 0 | Type: ENUM8 */
+            /** ID=0x0000 | type=ENUM8 */
             codecType: number;
-            /** ID: 1 | Type: ENUM8 */
+            /** ID=0x0001 | type=ENUM8 */
             samplingFrequency: number;
-            /** ID: 2 | Type: ENUM8 */
+            /** ID=0x0002 | type=ENUM8 */
             codecrate: number;
-            /** ID: 3 | Type: UINT8 */
+            /** ID=0x0003 | type=UINT8 */
             establishmentTimeout: number;
-            /** ID: 4 | Type: ENUM8 */
+            /** ID=0x0004 | type=ENUM8 */
             codecTypeSub1: number;
-            /** ID: 5 | Type: ENUM8 */
+            /** ID=0x0005 | type=ENUM8 */
             codecTypeSub2: number;
-            /** ID: 6 | Type: ENUM8 */
+            /** ID=0x0006 | type=ENUM8 */
             codecTypeSub3: number;
-            /** ID: 7 | Type: ENUM8 */
+            /** ID=0x0007 | type=ENUM8 */
             compressionType: number;
-            /** ID: 8 | Type: ENUM8 */
+            /** ID=0x0008 | type=ENUM8 */
             compressionRate: number;
-            /** ID: 9 | Type: BITMAP8 */
+            /** ID=0x0009 | type=BITMAP8 */
             optionFlags: number;
-            /** ID: 10 | Type: UINT8 */
+            /** ID=0x000a | type=UINT8 */
             threshold: number;
         };
         commands: never;
@@ -5073,15 +5308,15 @@ export interface TClusters {
     };
     telecommunicationsChatting: {
         attributes: {
-            /** ID: 0 | Type: UINT16 */
+            /** ID=0x0000 | type=UINT16 */
             uID: number;
-            /** ID: 1 | Type: CHAR_STR */
+            /** ID=0x0001 | type=CHAR_STR */
             nickname: string;
-            /** ID: 16 | Type: UINT16 */
+            /** ID=0x0010 | type=UINT16 */
             cID: number;
-            /** ID: 17 | Type: CHAR_STR */
+            /** ID=0x0011 | type=CHAR_STR */
             name: string;
-            /** ID: 18 | Type: BOOLEAN */
+            /** ID=0x0012 | type=BOOLEAN */
             enableAddChat: number;
         };
         commands: never;
@@ -5089,29 +5324,29 @@ export interface TClusters {
     };
     haApplianceIdentification: {
         attributes: {
-            /** ID: 0 | Type: UINT56 */
+            /** ID=0x0000 | type=UINT56 */
             basicIdentification: bigint;
-            /** ID: 16 | Type: CHAR_STR */
+            /** ID=0x0010 | type=CHAR_STR */
             companyName: string;
-            /** ID: 17 | Type: UINT16 */
+            /** ID=0x0011 | type=UINT16 */
             companyId: number;
-            /** ID: 18 | Type: CHAR_STR */
+            /** ID=0x0012 | type=CHAR_STR */
             brandName: string;
-            /** ID: 19 | Type: UINT16 */
+            /** ID=0x0013 | type=UINT16 */
             brandId: number;
-            /** ID: 20 | Type: OCTET_STR */
+            /** ID=0x0014 | type=OCTET_STR */
             model: Buffer;
-            /** ID: 21 | Type: OCTET_STR */
+            /** ID=0x0015 | type=OCTET_STR */
             partNumber: Buffer;
-            /** ID: 22 | Type: OCTET_STR */
+            /** ID=0x0016 | type=OCTET_STR */
             productRevision: Buffer;
-            /** ID: 23 | Type: OCTET_STR */
+            /** ID=0x0017 | type=OCTET_STR */
             softwareRevision: Buffer;
-            /** ID: 24 | Type: OCTET_STR */
+            /** ID=0x0018 | type=OCTET_STR */
             productTypeName: Buffer;
-            /** ID: 25 | Type: UINT16 */
+            /** ID=0x0019 | type=UINT16 */
             productTypeId: number;
-            /** ID: 26 | Type: UINT8 */
+            /** ID=0x001a | type=UINT8 */
             cecedSpecificationVersion: number;
         };
         commands: never;
@@ -5119,29 +5354,29 @@ export interface TClusters {
     };
     haMeterIdentification: {
         attributes: {
-            /** ID: 0 | Type: CHAR_STR */
+            /** ID=0x0000 | type=CHAR_STR */
             companyName: string;
-            /** ID: 1 | Type: UINT16 */
+            /** ID=0x0001 | type=UINT16 */
             meterTypeId: number;
-            /** ID: 4 | Type: UINT16 */
+            /** ID=0x0004 | type=UINT16 */
             dataQualityId: number;
-            /** ID: 5 | Type: CHAR_STR */
+            /** ID=0x0005 | type=CHAR_STR */
             customerName: string;
-            /** ID: 6 | Type: CHAR_STR */
+            /** ID=0x0006 | type=CHAR_STR */
             model: string;
-            /** ID: 7 | Type: CHAR_STR */
+            /** ID=0x0007 | type=CHAR_STR */
             partNumber: string;
-            /** ID: 8 | Type: CHAR_STR */
+            /** ID=0x0008 | type=CHAR_STR */
             productRevision: string;
-            /** ID: 10 | Type: CHAR_STR */
+            /** ID=0x000a | type=CHAR_STR */
             softwareRevision: string;
-            /** ID: 11 | Type: CHAR_STR */
+            /** ID=0x000b | type=CHAR_STR */
             utilityName: string;
-            /** ID: 12 | Type: CHAR_STR */
+            /** ID=0x000c | type=CHAR_STR */
             pod: string;
-            /** ID: 13 | Type: INT24 */
+            /** ID=0x000d | type=INT24 */
             availablePower: number;
-            /** ID: 14 | Type: INT24 */
+            /** ID=0x000e | type=INT24 */
             powerThreshold: number;
         };
         commands: never;
@@ -5150,519 +5385,534 @@ export interface TClusters {
     haApplianceEventsAlerts: {
         attributes: never;
         commands: {
-            /** ID: 0 */
+            /** ID=0x00 */
             getAlerts: Record<string, never>;
         };
         commandResponses: {
-            /** ID: 0 */
+            /** ID=0x00 */
             getAlertsRsp: {
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 alertscount: number;
-                /** Type: LIST_UINT24 */
+                /** type=LIST_UINT24 */
                 aalert: number[];
             };
-            /** ID: 1 */
+            /** ID=0x01 */
             alertsNotification: {
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 alertscount: number;
-                /** Type: LIST_UINT24 */
+                /** type=LIST_UINT24 */
                 aalert: number[];
             };
-            /** ID: 2 */
+            /** ID=0x02 */
             eventNotification: {
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 eventheader: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 eventid: number;
             };
         };
     };
     haApplianceStatistics: {
         attributes: {
-            /** ID: 0 | Type: UINT32 */
+            /** ID=0x0000 | type=UINT32 */
             logMaxSize: number;
-            /** ID: 1 | Type: UINT8 */
+            /** ID=0x0001 | type=UINT8 */
             logQueueMaxSize: number;
         };
         commands: {
-            /** ID: 0 */
+            /** ID=0x00 */
             log: {
-                /** Type: UINT32 */
+                /** type=UINT32 */
                 logid: number;
             };
-            /** ID: 1 */
+            /** ID=0x01 */
             logQueue: Record<string, never>;
         };
         commandResponses: {
-            /** ID: 0 */
+            /** ID=0x00 */
             logNotification: {
-                /** Type: UINT32 */
+                /** type=UINT32 */
                 timestamp: number;
-                /** Type: UINT32 */
+                /** type=UINT32 */
                 logid: number;
-                /** Type: UINT32 */
+                /** type=UINT32 */
                 loglength: number;
-                /** Type: LIST_UINT8 */
+                /** type=LIST_UINT8 */
                 logpayload: number[];
             };
-            /** ID: 1 */
+            /** ID=0x01 */
             logRsp: {
-                /** Type: UINT32 */
+                /** type=UINT32 */
                 timestamp: number;
-                /** Type: UINT32 */
+                /** type=UINT32 */
                 logid: number;
-                /** Type: UINT32 */
+                /** type=UINT32 */
                 loglength: number;
-                /** Type: LIST_UINT8 */
+                /** type=LIST_UINT8 */
                 logpayload: number[];
             };
-            /** ID: 2 */
+            /** ID=0x02 */
             logQueueRsp: {
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 logqueuesize: number;
-                /** Type: LIST_UINT32 */
+                /** type=LIST_UINT32 */
                 logid: number[];
             };
-            /** ID: 3 */
+            /** ID=0x03 */
             statisticsAvailable: {
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 logqueuesize: number;
-                /** Type: LIST_UINT32 */
+                /** type=LIST_UINT32 */
                 logid: number[];
             };
         };
     };
     haElectricalMeasurement: {
         attributes: {
-            /** ID: 0 | Type: BITMAP32 */
+            /** ID=0x0000 | type=BITMAP32 | required=true | default=0 */
             measurementType: number;
-            /** ID: 256 | Type: INT16 */
+            /** ID=0x0100 | type=INT16 | reportRequired=true | min=-32767 | default=-32768 */
             dcVoltage: number;
-            /** ID: 257 | Type: INT16 */
+            /** ID=0x0101 | type=INT16 | min=-32767 | default=-32768 */
             dcVoltageMin: number;
-            /** ID: 258 | Type: INT16 */
+            /** ID=0x0102 | type=INT16 | min=-32767 | default=-32768 */
             dcvoltagemax: number;
-            /** ID: 259 | Type: INT16 */
+            /** ID=0x0103 | type=INT16 | reportRequired=true | min=-32767 | default=-32768 */
             dcCurrent: number;
-            /** ID: 260 | Type: INT16 */
+            /** ID=0x0104 | type=INT16 | min=-32767 | default=-32768 */
             dcCurrentMin: number;
-            /** ID: 261 | Type: INT16 */
+            /** ID=0x0105 | type=INT16 | min=-32767 | default=-32768 */
             dcCurrentMax: number;
-            /** ID: 262 | Type: INT16 */
+            /** ID=0x0106 | type=INT16 | reportRequired=true | min=-32767 | default=-32768 */
             dcPower: number;
-            /** ID: 263 | Type: INT16 */
+            /** ID=0x0107 | type=INT16 | min=-32767 | default=-32768 */
             dcPowerMin: number;
-            /** ID: 264 | Type: INT16 */
+            /** ID=0x0108 | type=INT16 | min=-32767 | default=-32768 */
             dcPowerMax: number;
-            /** ID: 512 | Type: UINT16 */
+            /** ID=0x0200 | type=UINT16 | reportRequired=true | min=1 | default=1 */
             dcVoltageMultiplier: number;
-            /** ID: 513 | Type: UINT16 */
+            /** ID=0x0201 | type=UINT16 | reportRequired=true | min=1 | default=1 */
             dcVoltageDivisor: number;
-            /** ID: 514 | Type: UINT16 */
+            /** ID=0x0202 | type=UINT16 | reportRequired=true | min=1 | default=1 */
             dcCurrentMultiplier: number;
-            /** ID: 515 | Type: UINT16 */
+            /** ID=0x0203 | type=UINT16 | reportRequired=true | min=1 | default=1 */
             dcCurrentDivisor: number;
-            /** ID: 516 | Type: UINT16 */
+            /** ID=0x0204 | type=UINT16 | reportRequired=true | min=1 | default=1 */
             dcPowerMultiplier: number;
-            /** ID: 517 | Type: UINT16 */
+            /** ID=0x0205 | type=UINT16 | reportRequired=true | min=1 | default=1 */
             dcPowerDivisor: number;
-            /** ID: 768 | Type: UINT16 */
+            /** ID=0x0300 | type=UINT16 | reportRequired=true | default=65535 */
             acFrequency: number;
-            /** ID: 769 | Type: UINT16 */
+            /** ID=0x0301 | type=UINT16 | default=65535 */
             acFrequencyMin: number;
-            /** ID: 770 | Type: UINT16 */
+            /** ID=0x0302 | type=UINT16 | default=65535 */
             acFrequencyMax: number;
-            /** ID: 771 | Type: UINT16 */
+            /** ID=0x0303 | type=UINT16 | reportRequired=true | default=65535 */
             neutralCurrent: number;
-            /** ID: 772 | Type: INT32 */
+            /** ID=0x0304 | type=INT32 | reportRequired=true | min=-8388607 | max=8388607 */
             totalActivePower: number;
-            /** ID: 773 | Type: INT32 */
+            /** ID=0x0305 | type=INT32 | reportRequired=true | min=-8388607 | max=8388607 */
             totalReactivePower: number;
-            /** ID: 774 | Type: UINT32 */
+            /** ID=0x0306 | type=UINT32 | reportRequired=true | max=16777215 */
             totalApparentPower: number;
-            /** ID: 775 | Type: INT16 */
+            /** ID=0x0307 | type=INT16 | reportRequired=true | default=-32768 */
             meas1stHarmonicCurrent: number;
-            /** ID: 776 | Type: INT16 */
+            /** ID=0x0308 | type=INT16 | reportRequired=true | default=-32768 */
             meas3rdHarmonicCurrent: number;
-            /** ID: 777 | Type: INT16 */
+            /** ID=0x0309 | type=INT16 | reportRequired=true | default=-32768 */
             meas5thHarmonicCurrent: number;
-            /** ID: 778 | Type: INT16 */
+            /** ID=0x030a | type=INT16 | reportRequired=true | default=-32768 */
             meas7thHarmonicCurrent: number;
-            /** ID: 779 | Type: INT16 */
+            /** ID=0x030b | type=INT16 | reportRequired=true | default=-32768 */
             meas9thHarmonicCurrent: number;
-            /** ID: 780 | Type: INT16 */
+            /** ID=0x030c | type=INT16 | reportRequired=true | default=-32768 */
             meas11thHarmonicCurrent: number;
-            /** ID: 781 | Type: INT16 */
+            /** ID=0x030d | type=INT16 | reportRequired=true | default=-32768 */
             measPhase1stHarmonicCurrent: number;
-            /** ID: 782 | Type: INT16 */
+            /** ID=0x030e | type=INT16 | reportRequired=true | default=-32768 */
             measPhase3rdHarmonicCurrent: number;
-            /** ID: 783 | Type: INT16 */
+            /** ID=0x030f | type=INT16 | reportRequired=true | default=-32768 */
             measPhase5thHarmonicCurrent: number;
-            /** ID: 784 | Type: INT16 */
+            /** ID=0x0310 | type=INT16 | reportRequired=true | default=-32768 */
             measPhase7thHarmonicCurrent: number;
-            /** ID: 785 | Type: INT16 */
+            /** ID=0x0311 | type=INT16 | reportRequired=true | default=-32768 */
             measPhase9thHarmonicCurrent: number;
-            /** ID: 786 | Type: INT16 */
+            /** ID=0x0312 | type=INT16 | reportRequired=true | default=-32768 */
             measPhase11thHarmonicCurrent: number;
-            /** ID: 1024 | Type: UINT16 */
+            /** ID=0x0400 | type=UINT16 | reportRequired=true | min=1 | default=1 */
             acFrequencyMultiplier: number;
-            /** ID: 1025 | Type: UINT16 */
+            /** ID=0x0401 | type=UINT16 | reportRequired=true | min=1 | default=1 */
             acFrequencyDivisor: number;
-            /** ID: 1026 | Type: UINT32 */
+            /** ID=0x0402 | type=UINT32 | reportRequired=true | max=16777215 | default=1 */
             powerMultiplier: number;
-            /** ID: 1027 | Type: UINT32 */
+            /** ID=0x0403 | type=UINT32 | reportRequired=true | max=16777215 | default=1 */
             powerDivisor: number;
-            /** ID: 1028 | Type: INT8 */
+            /** ID=0x0404 | type=INT8 | reportRequired=true | min=-127 | default=0 */
             harmonicCurrentMultiplier: number;
-            /** ID: 1029 | Type: INT8 */
+            /** ID=0x0405 | type=INT8 | reportRequired=true | min=-127 | default=0 */
             phaseHarmonicCurrentMultiplier: number;
-            /** ID: 1280 | Type: INT16 */
+            /** ID=0x0500 | type=INT16 */
             instantaneousVoltage: number;
-            /** ID: 1281 | Type: UINT16 */
+            /** ID=0x0501 | type=UINT16 | reportRequired=true | default=65535 */
             instantaneousLineCurrent: number;
-            /** ID: 1282 | Type: INT16 */
+            /** ID=0x0502 | type=INT16 | reportRequired=true | default=-32768 */
             instantaneousActiveCurrent: number;
-            /** ID: 1283 | Type: INT16 */
+            /** ID=0x0503 | type=INT16 | reportRequired=true | default=-32768 */
             instantaneousReactiveCurrent: number;
-            /** ID: 1284 | Type: INT16 */
+            /** ID=0x0504 | type=INT16 */
             instantaneousPower: number;
-            /** ID: 1285 | Type: UINT16 */
+            /** ID=0x0505 | type=UINT16 | reportRequired=true | default=65535 */
             rmsVoltage: number;
-            /** ID: 1286 | Type: UINT16 */
+            /** ID=0x0506 | type=UINT16 | default=65535 */
             rmsVoltageMin: number;
-            /** ID: 1287 | Type: UINT16 */
+            /** ID=0x0507 | type=UINT16 | default=65535 */
             rmsVoltageMax: number;
-            /** ID: 1288 | Type: UINT16 */
+            /** ID=0x0508 | type=UINT16 | reportRequired=true | default=65535 */
             rmsCurrent: number;
-            /** ID: 1289 | Type: UINT16 */
+            /** ID=0x0509 | type=UINT16 | default=65535 */
             rmsCurrentMin: number;
-            /** ID: 1290 | Type: UINT16 */
+            /** ID=0x050a | type=UINT16 | default=65535 */
             rmsCurrentMax: number;
-            /** ID: 1291 | Type: INT16 */
+            /** ID=0x050b | type=INT16 | reportRequired=true | default=-32768 */
             activePower: number;
-            /** ID: 1292 | Type: INT16 */
+            /** ID=0x050c | type=INT16 | default=-32768 */
             activePowerMin: number;
-            /** ID: 1293 | Type: INT16 */
+            /** ID=0x050d | type=INT16 | default=-32768 */
             activePowerMax: number;
-            /** ID: 1294 | Type: INT16 */
+            /** ID=0x050e | type=INT16 | reportRequired=true | default=-32768 */
             reactivePower: number;
-            /** ID: 1295 | Type: UINT16 */
+            /** ID=0x050f | type=UINT16 | reportRequired=true | default=65535 */
             apparentPower: number;
-            /** ID: 1296 | Type: INT8 */
+            /** ID=0x0510 | type=INT8 | min=-100 | max=100 | default=0 */
             powerFactor: number;
-            /** ID: 1297 | Type: UINT16 */
+            /** ID=0x0511 | type=UINT16 | writable=true | default=0 */
             averageRmsVoltageMeasPeriod: number;
-            /** ID: 1298 | Type: UINT16 */
+            /** ID=0x0512 | type=UINT16 | writable=true | default=0 */
             averageRmsOverVoltageCounter: number;
-            /** ID: 1299 | Type: UINT16 */
+            /** ID=0x0513 | type=UINT16 | writable=true | default=0 */
             averageRmsUnderVoltageCounter: number;
-            /** ID: 1300 | Type: UINT16 */
+            /** ID=0x0514 | type=UINT16 | writable=true | default=0 */
             rmsExtremeOverVoltagePeriod: number;
-            /** ID: 1301 | Type: UINT16 */
+            /** ID=0x0515 | type=UINT16 | writable=true | default=0 */
             rmsExtremeUnderVoltagePeriod: number;
-            /** ID: 1302 | Type: UINT16 */
+            /** ID=0x0516 | type=UINT16 | writable=true | default=0 */
             rmsVoltageSagPeriod: number;
-            /** ID: 1303 | Type: UINT16 */
+            /** ID=0x0517 | type=UINT16 | writable=true | default=0 */
             rmsVoltageSwellPeriod: number;
-            /** ID: 1536 | Type: UINT16 */
+            /** ID=0x0600 | type=UINT16 | reportRequired=true | min=1 | default=1 */
             acVoltageMultiplier: number;
-            /** ID: 1537 | Type: UINT16 */
+            /** ID=0x0601 | type=UINT16 | reportRequired=true | min=1 | default=1 */
             acVoltageDivisor: number;
-            /** ID: 1538 | Type: UINT16 */
+            /** ID=0x0602 | type=UINT16 | reportRequired=true | min=1 | default=1 */
             acCurrentMultiplier: number;
-            /** ID: 1539 | Type: UINT16 */
+            /** ID=0x0603 | type=UINT16 | reportRequired=true | min=1 | default=1 */
             acCurrentDivisor: number;
-            /** ID: 1540 | Type: UINT16 */
+            /** ID=0x0604 | type=UINT16 | reportRequired=true | min=1 | default=1 */
             acPowerMultiplier: number;
-            /** ID: 1541 | Type: UINT16 */
+            /** ID=0x0605 | type=UINT16 | reportRequired=true | min=1 | default=1 */
             acPowerDivisor: number;
-            /** ID: 1792 | Type: BITMAP8 */
+            /** ID=0x0700 | type=BITMAP8 | writable=true | default=0 */
             dcOverloadAlarmsMask: number;
-            /** ID: 1793 | Type: INT16 */
+            /** ID=0x0701 | type=INT16 | default=-1 */
             dcVoltageOverload: number;
-            /** ID: 1794 | Type: INT16 */
+            /** ID=0x0702 | type=INT16 | default=-1 */
             dcCurrentOverload: number;
-            /** ID: 2048 | Type: BITMAP16 */
+            /** ID=0x0800 | type=BITMAP16 | writable=true | default=0 */
             acAlarmsMask: number;
-            /** ID: 2049 | Type: INT16 */
+            /** ID=0x0801 | type=INT16 | default=-1 */
             acVoltageOverload: number;
-            /** ID: 2050 | Type: INT16 */
+            /** ID=0x0802 | type=INT16 | default=-1 */
             acCurrentOverload: number;
-            /** ID: 2051 | Type: INT16 */
+            /** ID=0x0803 | type=INT16 | default=-1 */
             acActivePowerOverload: number;
-            /** ID: 2052 | Type: INT16 */
+            /** ID=0x0804 | type=INT16 | default=-1 */
             acReactivePowerOverload: number;
-            /** ID: 2053 | Type: INT16 */
+            /** ID=0x0805 | type=INT16 */
             averageRmsOverVoltage: number;
-            /** ID: 2054 | Type: INT16 */
+            /** ID=0x0806 | type=INT16 */
             averageRmsUnderVoltage: number;
-            /** ID: 2055 | Type: INT16 */
+            /** ID=0x0807 | type=INT16 | writable=true */
             rmsExtremeOverVoltage: number;
-            /** ID: 2056 | Type: INT16 */
+            /** ID=0x0808 | type=INT16 | writable=true */
             rmsExtremeUnderVoltage: number;
-            /** ID: 2057 | Type: INT16 */
+            /** ID=0x0809 | type=INT16 | writable=true */
             rmsVoltageSag: number;
-            /** ID: 2058 | Type: INT16 */
+            /** ID=0x080a | type=INT16 | writable=true */
             rmsVoltageSwell: number;
-            /** ID: 2305 | Type: UINT16 */
+            /** ID=0x0901 | type=UINT16 | reportRequired=true | default=65535 */
             lineCurrentPhB: number;
-            /** ID: 2306 | Type: INT16 */
+            /** ID=0x0902 | type=INT16 | reportRequired=true | default=-32768 */
             activeCurrentPhB: number;
-            /** ID: 2307 | Type: INT16 */
+            /** ID=0x0903 | type=INT16 | reportRequired=true | default=-32768 */
             reactiveCurrentPhB: number;
-            /** ID: 2309 | Type: UINT16 */
+            /** ID=0x0905 | type=UINT16 | reportRequired=true | default=65535 */
             rmsVoltagePhB: number;
-            /** ID: 2310 | Type: UINT16 */
+            /** ID=0x0906 | type=UINT16 | default=32768 */
             rmsVoltageMinPhB: number;
-            /** ID: 2311 | Type: UINT16 */
+            /** ID=0x0907 | type=UINT16 | default=32768 */
             rmsVoltageMaxPhB: number;
-            /** ID: 2312 | Type: UINT16 */
+            /** ID=0x0908 | type=UINT16 | reportRequired=true | default=65535 */
             rmsCurrentPhB: number;
-            /** ID: 2313 | Type: UINT16 */
+            /** ID=0x0909 | type=UINT16 | default=65535 */
             rmsCurrentMinPhB: number;
-            /** ID: 2314 | Type: UINT16 */
+            /** ID=0x090a | type=UINT16 | default=65535 */
             rmsCurrentMaxPhB: number;
-            /** ID: 2315 | Type: INT16 */
+            /** ID=0x090b | type=INT16 | reportRequired=true | default=-32768 */
             activePowerPhB: number;
-            /** ID: 2316 | Type: INT16 */
+            /** ID=0x090c | type=INT16 | default=-32768 */
             activePowerMinPhB: number;
-            /** ID: 2317 | Type: INT16 */
+            /** ID=0x090d | type=INT16 | default=-32768 */
             activePowerMaxPhB: number;
-            /** ID: 2318 | Type: INT16 */
+            /** ID=0x090e | type=INT16 | reportRequired=true | default=-32768 */
             reactivePowerPhB: number;
-            /** ID: 2319 | Type: UINT16 */
+            /** ID=0x090f | type=UINT16 | reportRequired=true | default=65535 */
             apparentPowerPhB: number;
-            /** ID: 2320 | Type: INT8 */
+            /** ID=0x0910 | type=INT8 | min=-100 | max=100 | default=0 */
             powerFactorPhB: number;
-            /** ID: 2321 | Type: UINT16 */
+            /** ID=0x0911 | type=UINT16 | writable=true | default=0 */
             averageRmsVoltageMeasurePeriodPhB: number;
-            /** ID: 2322 | Type: UINT16 */
+            /** ID=0x0912 | type=UINT16 | writable=true | default=0 */
             averageRmsOverVoltageCounterPhB: number;
-            /** ID: 2323 | Type: UINT16 */
+            /** ID=0x0913 | type=UINT16 | writable=true | default=0 */
             averageUnderVoltageCounterPhB: number;
-            /** ID: 2324 | Type: UINT16 */
+            /** ID=0x0914 | type=UINT16 | writable=true | default=0 */
             rmsExtremeOverVoltagePeriodPhB: number;
-            /** ID: 2325 | Type: UINT16 */
+            /** ID=0x0915 | type=UINT16 | writable=true | default=0 */
             rmsExtremeUnderVoltagePeriodPhB: number;
-            /** ID: 2326 | Type: UINT16 */
+            /** ID=0x0916 | type=UINT16 | writable=true | default=0 */
             rmsVoltageSagPeriodPhB: number;
-            /** ID: 2327 | Type: UINT16 */
+            /** ID=0x0917 | type=UINT16 | writable=true | default=0 */
             rmsVoltageSwellPeriodPhB: number;
-            /** ID: 2561 | Type: UINT16 */
+            /** ID=0x0a01 | type=UINT16 | reportRequired=true | default=65535 */
             lineCurrentPhC: number;
-            /** ID: 2562 | Type: INT16 */
+            /** ID=0x0a02 | type=INT16 | reportRequired=true | default=-32768 */
             activeCurrentPhC: number;
-            /** ID: 2563 | Type: INT16 */
+            /** ID=0x0a03 | type=INT16 | reportRequired=true | default=-32768 */
             reactiveCurrentPhC: number;
-            /** ID: 2565 | Type: UINT16 */
+            /** ID=0x0a05 | type=UINT16 | reportRequired=true | default=65535 */
             rmsVoltagePhC: number;
-            /** ID: 2566 | Type: UINT16 */
+            /** ID=0x0a06 | type=UINT16 | default=32768 */
             rmsVoltageMinPhC: number;
-            /** ID: 2567 | Type: UINT16 */
+            /** ID=0x0a07 | type=UINT16 | default=32768 */
             rmsVoltageMaxPhC: number;
-            /** ID: 2568 | Type: UINT16 */
+            /** ID=0x0a08 | type=UINT16 | reportRequired=true | default=65535 */
             rmsCurrentPhC: number;
-            /** ID: 2569 | Type: UINT16 */
+            /** ID=0x0a09 | type=UINT16 | default=65535 */
             rmsCurrentMinPhC: number;
-            /** ID: 2570 | Type: UINT16 */
+            /** ID=0x0a0a | type=UINT16 | default=65535 */
             rmsCurrentMaxPhC: number;
-            /** ID: 2571 | Type: INT16 */
+            /** ID=0x0a0b | type=INT16 | reportRequired=true | default=-32768 */
             activePowerPhC: number;
-            /** ID: 2572 | Type: INT16 */
+            /** ID=0x0a0c | type=INT16 | default=-32768 */
             activePowerMinPhC: number;
-            /** ID: 2573 | Type: INT16 */
+            /** ID=0x0a0d | type=INT16 | default=-32768 */
             activePowerMaxPhC: number;
-            /** ID: 2574 | Type: INT16 */
+            /** ID=0x0a0e | type=INT16 | reportRequired=true | default=-32768 */
             reactivePowerPhC: number;
-            /** ID: 2575 | Type: UINT16 */
+            /** ID=0x0a0f | type=UINT16 | reportRequired=true | default=65535 */
             apparentPowerPhC: number;
-            /** ID: 2576 | Type: INT8 */
+            /** ID=0x0a10 | type=INT8 | min=-100 | max=100 | default=0 */
             powerFactorPhC: number;
-            /** ID: 2577 | Type: UINT16 */
+            /** ID=0x0a11 | type=UINT16 | writable=true | default=0 */
             averageRmsVoltageMeasPeriodPhC: number;
-            /** ID: 2578 | Type: UINT16 */
+            /** ID=0x0a12 | type=UINT16 | writable=true | default=0 */
             averageRmsOverVoltageCounterPhC: number;
-            /** ID: 2579 | Type: UINT16 */
+            /** ID=0x0a13 | type=UINT16 | writable=true | default=0 */
             averageUnderVoltageCounterPhC: number;
-            /** ID: 2580 | Type: UINT16 */
+            /** ID=0x0a14 | type=UINT16 | writable=true | default=0 */
             rmsExtremeOverVoltagePeriodPhC: number;
-            /** ID: 2581 | Type: UINT16 */
+            /** ID=0x0a15 | type=UINT16 | writable=true | default=0 */
             rmsExtremeUnderVoltagePeriodPhC: number;
-            /** ID: 2582 | Type: UINT16 */
+            /** ID=0x0a16 | type=UINT16 | writable=true | default=0 */
             rmsVoltageSagPeriodPhC: number;
-            /** ID: 2583 | Type: UINT16 */
+            /** ID=0x0a17 | type=UINT16 | writable=true | default=0 */
             rmsVoltageSwellPeriodPhC: number;
-            /** ID: 17152 | Type: INT32 | Specific to manufacturer: SCHNEIDER_ELECTRIC (4190) */
+            /** ID=0x4300 | type=INT32 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) */
             schneiderActivePowerDemandTotal?: number;
-            /** ID: 17155 | Type: INT32 | Specific to manufacturer: SCHNEIDER_ELECTRIC (4190) */
+            /** ID=0x4303 | type=INT32 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) */
             schneiderReactivePowerDemandTotal?: number;
-            /** ID: 17176 | Type: INT32 | Specific to manufacturer: SCHNEIDER_ELECTRIC (4190) */
+            /** ID=0x4318 | type=INT32 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) */
             schneiderApparentPowerDemandTotal?: number;
-            /** ID: 17177 | Type: UINT24 | Specific to manufacturer: SCHNEIDER_ELECTRIC (4190) */
+            /** ID=0x4319 | type=UINT24 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) */
             schneiderDemandIntervalDuration?: number;
-            /** ID: 17184 | Type: UTC | Specific to manufacturer: SCHNEIDER_ELECTRIC (4190) */
+            /** ID=0x4320 | type=UTC | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) */
             schneiderDemandDateTime?: number;
-            /** ID: 17673 | Type: INT32 | Specific to manufacturer: SCHNEIDER_ELECTRIC (4190) */
+            /** ID=0x4509 | type=INT32 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) */
             schneiderActivePowerDemandPhase1?: number;
-            /** ID: 17674 | Type: INT32 | Specific to manufacturer: SCHNEIDER_ELECTRIC (4190) */
+            /** ID=0x450a | type=INT32 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) */
             schneiderReactivePowerDemandPhase1?: number;
-            /** ID: 17675 | Type: INT32 | Specific to manufacturer: SCHNEIDER_ELECTRIC (4190) */
+            /** ID=0x450b | type=INT32 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) */
             schneiderApparentPowerDemandPhase1?: number;
-            /** ID: 17680 | Type: UINT16 | Specific to manufacturer: SCHNEIDER_ELECTRIC (4190) */
+            /** ID=0x4510 | type=UINT16 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) */
             schneiderDemandIntervalMinimalVoltageL1?: number;
-            /** ID: 17683 | Type: UINT16 | Specific to manufacturer: SCHNEIDER_ELECTRIC (4190) */
+            /** ID=0x4513 | type=UINT16 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) */
             schneiderDemandIntervalMaximalCurrentI1?: number;
-            /** ID: 18697 | Type: INT32 | Specific to manufacturer: SCHNEIDER_ELECTRIC (4190) */
+            /** ID=0x4909 | type=INT32 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) */
             schneiderActivePowerDemandPhase2?: number;
-            /** ID: 18698 | Type: INT32 | Specific to manufacturer: SCHNEIDER_ELECTRIC (4190) */
+            /** ID=0x490a | type=INT32 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) */
             schneiderReactivePowerDemandPhase2?: number;
-            /** ID: 18699 | Type: INT32 | Specific to manufacturer: SCHNEIDER_ELECTRIC (4190) */
+            /** ID=0x490b | type=INT32 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) */
             schneiderApparentPowerDemandPhase2?: number;
-            /** ID: 18704 | Type: UINT16 | Specific to manufacturer: SCHNEIDER_ELECTRIC (4190) */
+            /** ID=0x4910 | type=UINT16 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) */
             schneiderDemandIntervalMinimalVoltageL2?: number;
-            /** ID: 18707 | Type: UINT16 | Specific to manufacturer: SCHNEIDER_ELECTRIC (4190) */
+            /** ID=0x4913 | type=UINT16 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) */
             schneiderDemandIntervalMaximalCurrentI2?: number;
-            /** ID: 18953 | Type: INT32 | Specific to manufacturer: SCHNEIDER_ELECTRIC (4190) */
+            /** ID=0x4a09 | type=INT32 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) */
             schneiderActivePowerDemandPhase3?: number;
-            /** ID: 18954 | Type: INT32 | Specific to manufacturer: SCHNEIDER_ELECTRIC (4190) */
+            /** ID=0x4a0a | type=INT32 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) */
             schneiderReactivePowerDemandPhase3?: number;
-            /** ID: 18955 | Type: INT32 | Specific to manufacturer: SCHNEIDER_ELECTRIC (4190) */
+            /** ID=0x4a0b | type=INT32 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) */
             schneiderApparentPowerDemandPhase3?: number;
-            /** ID: 18960 | Type: UINT16 | Specific to manufacturer: SCHNEIDER_ELECTRIC (4190) */
+            /** ID=0x4a10 | type=UINT16 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) */
             schneiderDemandIntervalMinimalVoltageL3?: number;
-            /** ID: 18963 | Type: UINT16 | Specific to manufacturer: SCHNEIDER_ELECTRIC (4190) */
+            /** ID=0x4a13 | type=UINT16 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) */
             schneiderDemandIntervalMaximalCurrentI3?: number;
-            /** ID: 19968 | Type: UINT8 | Specific to manufacturer: SCHNEIDER_ELECTRIC (4190) */
+            /** ID=0x4e00 | type=UINT8 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) */
             schneiderCurrentSensorMultiplier?: number;
         };
         commands: {
-            /** ID: 0 */
-            getProfileInfo: Record<string, never>;
-            /** ID: 1 */
+            /** ID=0x00 */
+            getProfileInfo: {
+                /** type=UINT8 */
+                profileCount: number;
+                /** type=ENUM8 */
+                profileIntervalPeriod: number;
+                /** type=UINT8 */
+                maxNumberOfIntervals: number;
+                /** type=BUFFER | arrayLengthSize=0 */
+                listOfAttributes: Buffer;
+            };
+            /** ID=0x01 */
             getMeasurementProfile: {
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 attrId: number;
-                /** Type: UINT32 */
+                /** type=UINT32 */
                 starttime: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 numofuntervals: number;
+                /** type=UINT8 */
+                numberOfIntervalsDelivered: number;
+                /** type=ATTR_ID */
+                attributeId: number;
+                /** type=BUFFER | arrayLengthSize=0 */
+                intervals: Buffer;
             };
         };
         commandResponses: {
-            /** ID: 0 */
+            /** ID=0x00 */
             getProfileInfoRsp: {
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 profilecount: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 profileintervalperiod: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 maxnumofintervals: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 numofattrs: number;
-                /** Type: LIST_UINT16 */
+                /** type=LIST_UINT16 */
                 listofattr: number[];
             };
-            /** ID: 1 */
+            /** ID=0x01 */
             getMeasurementProfileRsp: {
-                /** Type: UINT32 */
+                /** type=UINT32 */
                 starttime: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 status: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 profileintervalperiod: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 numofintervalsdeliv: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 attrId: number;
-                /** Type: LIST_UINT8 */
+                /** type=LIST_UINT8 */
                 intervals: number[];
             };
         };
     };
     haDiagnostic: {
         attributes: {
-            /** ID: 0 | Type: UINT16 */
+            /** ID=0x0000 | type=UINT16 | max=65535 | default=0 */
             numberOfResets: number;
-            /** ID: 1 | Type: UINT16 */
+            /** ID=0x0001 | type=UINT16 | max=65535 | default=0 */
             persistentMemoryWrites: number;
-            /** ID: 256 | Type: UINT32 */
+            /** ID=0x0100 | type=UINT32 | max=4294967295 | default=0 */
             macRxBcast: number;
-            /** ID: 257 | Type: UINT32 */
+            /** ID=0x0101 | type=UINT32 | max=4294967295 | default=0 */
             macTxBcast: number;
-            /** ID: 258 | Type: UINT32 */
+            /** ID=0x0102 | type=UINT32 | max=4294967295 | default=0 */
             macRxUcast: number;
-            /** ID: 259 | Type: UINT32 */
+            /** ID=0x0103 | type=UINT32 | max=4294967295 | default=0 */
             macTxUcast: number;
-            /** ID: 260 | Type: UINT16 */
+            /** ID=0x0104 | type=UINT16 | max=65535 | default=0 */
             macTxUcastRetry: number;
-            /** ID: 261 | Type: UINT16 */
+            /** ID=0x0105 | type=UINT16 | max=65535 | default=0 */
             macTxUcastFail: number;
-            /** ID: 262 | Type: UINT16 */
+            /** ID=0x0106 | type=UINT16 | max=65535 | default=0 */
             aPSRxBcast: number;
-            /** ID: 263 | Type: UINT16 */
+            /** ID=0x0107 | type=UINT16 | max=65535 | default=0 */
             aPSTxBcast: number;
-            /** ID: 264 | Type: UINT16 */
+            /** ID=0x0108 | type=UINT16 | max=65535 | default=0 */
             aPSRxUcast: number;
-            /** ID: 265 | Type: UINT16 */
+            /** ID=0x0109 | type=UINT16 | max=65535 | default=0 */
             aPSTxUcastSuccess: number;
-            /** ID: 266 | Type: UINT16 */
+            /** ID=0x010a | type=UINT16 | max=65535 | default=0 */
             aPSTxUcastRetry: number;
-            /** ID: 267 | Type: UINT16 */
+            /** ID=0x010b | type=UINT16 | max=65535 | default=0 */
             aPSTxUcastFail: number;
-            /** ID: 268 | Type: UINT16 */
+            /** ID=0x010c | type=UINT16 | max=65535 | default=0 */
             routeDiscInitiated: number;
-            /** ID: 269 | Type: UINT16 */
+            /** ID=0x010d | type=UINT16 | max=65535 | default=0 */
             neighborAdded: number;
-            /** ID: 270 | Type: UINT16 */
+            /** ID=0x010e | type=UINT16 | max=65535 | default=0 */
             neighborRemoved: number;
-            /** ID: 271 | Type: UINT16 */
+            /** ID=0x010f | type=UINT16 | max=65535 | default=0 */
             neighborStale: number;
-            /** ID: 272 | Type: UINT16 */
+            /** ID=0x0110 | type=UINT16 | max=65535 | default=0 */
             joinIndication: number;
-            /** ID: 273 | Type: UINT16 */
+            /** ID=0x0111 | type=UINT16 | max=65535 | default=0 */
             childMoved: number;
-            /** ID: 274 | Type: UINT16 */
+            /** ID=0x0112 | type=UINT16 | max=65535 | default=0 */
             nwkFcFailure: number;
-            /** ID: 275 | Type: UINT16 */
+            /** ID=0x0113 | type=UINT16 | max=65535 | default=0 */
             apsFcFailure: number;
-            /** ID: 276 | Type: UINT16 */
+            /** ID=0x0114 | type=UINT16 | max=65535 | default=0 */
             apsUnauthorizedKey: number;
-            /** ID: 277 | Type: UINT16 */
+            /** ID=0x0115 | type=UINT16 | max=65535 | default=0 */
             nwkDecryptFailures: number;
-            /** ID: 278 | Type: UINT16 */
+            /** ID=0x0116 | type=UINT16 | max=65535 | default=0 */
             apsDecryptFailures: number;
-            /** ID: 279 | Type: UINT16 */
+            /** ID=0x0117 | type=UINT16 | max=65535 | default=0 */
             packetBufferAllocateFailures: number;
-            /** ID: 280 | Type: UINT16 */
+            /** ID=0x0118 | type=UINT16 | max=65535 | default=0 */
             relayedUcast: number;
-            /** ID: 281 | Type: UINT16 */
+            /** ID=0x0119 | type=UINT16 | max=65535 | default=0 */
             phyToMacQueueLimitReached: number;
-            /** ID: 282 | Type: UINT16 */
+            /** ID=0x011a | type=UINT16 | max=65535 | default=0 */
             packetValidateDropCount: number;
-            /** ID: 283 | Type: UINT16 */
+            /** ID=0x011b | type=UINT16 | max=65535 | default=0 */
             averageMacRetryPerApsMessageSent: number;
-            /** ID: 284 | Type: UINT8 */
+            /** ID=0x011c | type=UINT8 | max=255 | default=0 */
             lastMessageLqi: number;
-            /** ID: 285 | Type: INT8 */
+            /** ID=0x011d | type=INT8 | min=-127 | max=127 | default=0 */
             lastMessageRssi: number;
-            /** ID: 16384 | Type: BITMAP16 | Specific to manufacturer: DANFOSS_A_S (4678) */
+            /** ID=0x4000 | type=BITMAP16 | manufacturerCode=DANFOSS_A_S(0x1246) */
             danfossSystemStatusCode?: number;
-            /** ID: 16433 | Type: ENUM8 | Specific to manufacturer: DANFOSS_A_S (4678) */
-            danfossHeatSupplyRequest?: number;
-            /** ID: 16896 | Type: ENUM8 | Specific to manufacturer: DANFOSS_A_S (4678) */
-            danfossSystemStatusWater?: number;
-            /** ID: 16897 | Type: ENUM8 | Specific to manufacturer: DANFOSS_A_S (4678) */
-            danfossMultimasterRole?: number;
-            /** ID: 16912 | Type: ENUM8 | Specific to manufacturer: DANFOSS_A_S (4678) */
-            danfossIconApplication?: number;
-            /** ID: 16928 | Type: ENUM8 | Specific to manufacturer: DANFOSS_A_S (4678) */
-            danfossIconForcedHeatingCooling?: number;
-            /** ID: 65281 | Type: UINT32 | Specific to manufacturer: SCHNEIDER_ELECTRIC (4190) */
-            schneiderMeterStatus?: number;
-            /** ID: 65282 | Type: UINT32 | Specific to manufacturer: SCHNEIDER_ELECTRIC (4190) */
-            schneiderDiagnosticRegister1?: number;
-            /** ID: 16384 | Type: UINT8 | Specific to manufacturer: SCHNEIDER_ELECTRIC (4190) */
+            /** ID=0x4000 | type=UINT8 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) */
             schneiderCommunicationQuality?: number;
+            /** ID=0x4031 | type=ENUM8 | manufacturerCode=DANFOSS_A_S(0x1246) */
+            danfossHeatSupplyRequest?: number;
+            /** ID=0x4200 | type=ENUM8 | manufacturerCode=DANFOSS_A_S(0x1246) */
+            danfossSystemStatusWater?: number;
+            /** ID=0x4201 | type=ENUM8 | manufacturerCode=DANFOSS_A_S(0x1246) */
+            danfossMultimasterRole?: number;
+            /** ID=0x4210 | type=ENUM8 | manufacturerCode=DANFOSS_A_S(0x1246) */
+            danfossIconApplication?: number;
+            /** ID=0x4220 | type=ENUM8 | manufacturerCode=DANFOSS_A_S(0x1246) */
+            danfossIconForcedHeatingCooling?: number;
+            /** ID=0xff01 | type=UINT32 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) */
+            schneiderMeterStatus?: number;
+            /** ID=0xff02 | type=UINT32 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) */
+            schneiderDiagnosticRegister1?: number;
         };
         commands: never;
         commandResponses: never;
@@ -5670,274 +5920,280 @@ export interface TClusters {
     touchlink: {
         attributes: never;
         commands: {
-            /** ID: 0 | Response ID: 1 */
+            /** ID=0x00 | response=1 | required=true */
             scanRequest: {
-                /** Type: UINT32 */
+                /** type=UINT32 */
                 transactionID: number;
-                /** Type: BITMAP8 */
+                /** type=BITMAP8 */
                 zigbeeInformation: number;
-                /** Type: BITMAP8 */
+                /** type=BITMAP8 */
                 touchlinkInformation: number;
             };
-            /** ID: 2 | Response ID: 3 */
+            /** ID=0x02 | response=3 | required=true */
             deviceInformation: {
-                /** Type: UINT32 */
+                /** type=UINT32 */
                 transactionID: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 startIndex: number;
             };
-            /** ID: 6 */
+            /** ID=0x06 | required=true */
             identifyRequest: {
-                /** Type: UINT32 */
+                /** type=UINT32 */
                 transactionID: number;
-                /** Type: UINT16 */
+                /** type=UINT16 | special=ExitIdentifyMode,0000,IdentifyForReceiverKnownTime,ffff */
                 duration: number;
             };
-            /** ID: 7 */
+            /** ID=0x07 | required=true */
             resetToFactoryNew: {
-                /** Type: UINT32 */
+                /** type=UINT32 */
                 transactionID: number;
             };
-            /** ID: 16 | Response ID: 17 */
+            /** ID=0x10 | response=17 | required=true */
             networkStart: {
-                /** Type: UINT32 */
+                /** type=UINT32 */
                 transactionID: number;
-                /** Type: IEEE_ADDR */
+                /** type=IEEE_ADDR */
                 extendedPANID: string;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 keyIndex: number;
-                /** Type: SEC_KEY */
+                /** type=SEC_KEY */
                 encryptedNetworkKey: Buffer;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 logicalChannel: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 panID: number;
-                /** Type: UINT16 */
+                /** type=UINT16 | minInclusive=1 | maxInclusive=65527 */
                 nwkAddr: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 groupIDsBegin: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 groupIDsEnd: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 freeNwkAddrRangeBegin: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 freeNwkAddrRangeEnd: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 freeGroupIDRangeBegin: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 freeGroupIDRangeEnd: number;
-                /** Type: IEEE_ADDR */
+                /** type=IEEE_ADDR */
                 initiatorIEEE: string;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 initiatorNwkAddr: number;
             };
-            /** ID: 18 | Response ID: 19 */
+            /** ID=0x12 | response=19 | required=true */
             networkJoinRouter: {
-                /** Type: UINT32 */
+                /** type=UINT32 */
                 transactionID: number;
-                /** Type: IEEE_ADDR */
+                /** type=IEEE_ADDR */
                 extendedPANID: string;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 keyIndex: number;
-                /** Type: SEC_KEY */
+                /** type=SEC_KEY */
                 encryptedNetworkKey: Buffer;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 networkUpdateID: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 logicalChannel: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 panID: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 nwkAddr: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 groupIDsBegin: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 groupIDsEnd: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 freeNwkAddrRangeBegin: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 freeNwkAddrRangeEnd: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 freeGroupIDRangeBegin: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 freeGroupIDRangeEnd: number;
             };
-            /** ID: 20 | Response ID: 21 */
+            /** ID=0x14 | response=21 | required=true */
             networkJoinEndDevice: {
-                /** Type: UINT32 */
+                /** type=UINT32 */
                 transactionID: number;
-                /** Type: IEEE_ADDR */
+                /** type=IEEE_ADDR */
                 extendedPANID: string;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 keyIndex: number;
-                /** Type: SEC_KEY */
+                /** type=SEC_KEY */
                 encryptedNetworkKey: Buffer;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 networkUpdateID: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 logicalChannel: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 panID: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 nwkAddr: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 groupIDsBegin: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 groupIDsEnd: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 freeNwkAddrRangeBegin: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 freeNwkAddrRangeEnd: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 freeGroupIDRangeBegin: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 freeGroupIDRangeEnd: number;
             };
-            /** ID: 22 */
+            /** ID=0x16 | required=true */
             networkUpdate: {
-                /** Type: UINT32 */
+                /** type=UINT32 */
                 transactionID: number;
-                /** Type: IEEE_ADDR */
+                /** type=IEEE_ADDR */
                 extendedPANID: string;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 networkUpdateID: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 logicalChannel: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 panID: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 nwkAddr: number;
             };
-            /** ID: 65 | Response ID: 65 */
+            /** ID=0x41 | response=65 */
             getGroupIdentifiers: {
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 startIndex: number;
             };
-            /** ID: 66 | Response ID: 66 */
+            /** ID=0x42 | response=66 */
             getEndpointList: {
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 startIndex: number;
             };
         };
         commandResponses: {
-            /** ID: 1 */
+            /** ID=0x01 | required=true */
             scanResponse: {
-                /** Type: UINT32 */
+                /** type=UINT32 */
                 transactionID: number;
-                /** Type: UINT8 */
+                /** type=UINT8 | minInclusive=0 | maxInclusive=20 */
                 rssiCorrection: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 zigbeeInformation: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 touchlinkInformation: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 keyBitmask: number;
-                /** Type: UINT32 */
+                /** type=UINT32 */
                 responseID: number;
-                /** Type: IEEE_ADDR */
+                /** type=IEEE_ADDR */
                 extendedPanID: string;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 networkUpdateID: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 logicalChannel: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 panID: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 networkAddress: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 numberOfSubDevices: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 totalGroupIdentifiers: number;
-                /** Type: UINT8, Conditions: [{fieldEquals field=numberOfSubDevices value=1}] */
+                /** type=UINT8 | conditions=[{fieldEquals field=numberOfSubDevices value=1}] */
                 endpointID?: number;
-                /** Type: UINT16, Conditions: [{fieldEquals field=numberOfSubDevices value=1}] */
+                /** type=UINT16 | conditions=[{fieldEquals field=numberOfSubDevices value=1}] */
                 profileID?: number;
-                /** Type: UINT16, Conditions: [{fieldEquals field=numberOfSubDevices value=1}] */
+                /** type=UINT16 | conditions=[{fieldEquals field=numberOfSubDevices value=1}] */
                 deviceID?: number;
-                /** Type: UINT8, Conditions: [{fieldEquals field=numberOfSubDevices value=1}] */
+                /** type=UINT8 | conditions=[{fieldEquals field=numberOfSubDevices value=1}] */
                 version?: number;
-                /** Type: UINT8, Conditions: [{fieldEquals field=numberOfSubDevices value=1}] */
+                /** type=UINT8 | conditions=[{fieldEquals field=numberOfSubDevices value=1}] */
                 groupIDCount?: number;
             };
-            /** ID: 3 */
+            /** ID=0x03 | required=true */
             deviceInformation: {
-                /** Type: UINT32 */
+                /** type=UINT32 */
                 transactionID: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 numberOfSubDevices: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 startIndex: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 deviceInfoCount: number;
+                /** type=BUFFER | minLength=0 | maxLength=5 */
+                deviceInformationRecordList: Buffer;
             };
-            /** ID: 17 */
+            /** ID=0x11 | required=true */
             networkStart: {
-                /** Type: UINT32 */
+                /** type=UINT32 */
                 transactionID: number;
-                /** Type: ENUM8 */
+                /** type=ENUM8 */
                 status: number;
-                /** Type: IEEE_ADDR */
+                /** type=IEEE_ADDR */
                 extendedPANID: string;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 networkUpdateID: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 logicalChannel: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 panID: number;
             };
-            /** ID: 19 */
+            /** ID=0x13 | required=true */
             networkJoinRouter: {
-                /** Type: UINT32 */
+                /** type=UINT32 */
                 transactionID: number;
-                /** Type: ENUM8 */
+                /** type=ENUM8 */
                 status: number;
             };
-            /** ID: 21 */
+            /** ID=0x15 | required=true */
             networkJoinEndDevice: {
-                /** Type: UINT32 */
+                /** type=UINT32 */
                 transactionID: number;
-                /** Type: ENUM8 */
+                /** type=ENUM8 */
                 status: number;
             };
-            /** ID: 64 */
+            /** ID=0x40 */
             endpointInformation: {
-                /** Type: IEEE_ADDR */
+                /** type=IEEE_ADDR */
                 ieeeAddress: string;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 networkAddress: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 endpointID: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 profileID: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 deviceID: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 version: number;
             };
-            /** ID: 65 */
+            /** ID=0x41 */
             getGroupIdentifiers: {
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 total: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 startIndex: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 count: number;
+                /** type=BUFFER */
+                groupInformationRecordList: Buffer;
             };
-            /** ID: 66 */
+            /** ID=0x42 */
             getEndpointList: {
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 total: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 startIndex: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 count: number;
+                /** type=BUFFER */
+                endpointInformationRecordList: Buffer;
             };
         };
     };
     manuSpecificClusterAduroSmart: {
         attributes: never;
         commands: {
-            /** ID: 0 */
+            /** ID=0x00 */
             cmd0: Record<string, never>;
         };
         commandResponses: never;
@@ -5945,49 +6201,49 @@ export interface TClusters {
     manuSpecificOsram: {
         attributes: never;
         commands: {
-            /** ID: 1 */
+            /** ID=0x01 */
             saveStartupParams: Record<string, never>;
-            /** ID: 2 */
+            /** ID=0x02 */
             resetStartupParams: Record<string, never>;
         };
         commandResponses: {
-            /** ID: 0 */
+            /** ID=0x00 */
             saveStartupParamsRsp: Record<string, never>;
         };
     };
     manuSpecificPhilips: {
         attributes: {
-            /** ID: 49 | Type: BITMAP16 */
+            /** ID=0x0031 | type=BITMAP16 */
             config: number;
         };
         commands: never;
         commandResponses: {
-            /** ID: 0 */
+            /** ID=0x00 */
             hueNotification: {
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 button: number;
-                /** Type: UINT24 */
+                /** type=UINT24 */
                 unknown1: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 type: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 unknown2: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 time: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 unknown3: number;
             };
         };
     };
     manuSpecificPhilips2: {
         attributes: {
-            /** ID: 2 | Type: OCTET_STR */
+            /** ID=0x0002 | type=OCTET_STR */
             state: Buffer;
         };
         commands: {
-            /** ID: 0 */
+            /** ID=0x00 */
             multiColor: {
-                /** Type: BUFFER */
+                /** type=BUFFER */
                 data: Buffer;
             };
         };
@@ -5995,95 +6251,95 @@ export interface TClusters {
     };
     manuSpecificSinope: {
         attributes: {
-            /** ID: 2 | Type: ENUM8 */
+            /** ID=0x0002 | type=ENUM8 */
             keypadLockout: number;
-            /** ID: 4 | Type: CHAR_STR */
+            /** ID=0x0004 | type=CHAR_STR */
             firmwareVersion: string;
-            /** ID: 16 | Type: INT16 */
+            /** ID=0x0010 | type=INT16 */
             outdoorTempToDisplay: number;
-            /** ID: 17 | Type: UINT16 */
+            /** ID=0x0011 | type=UINT16 */
             outdoorTempToDisplayTimeout: number;
-            /** ID: 18 | Type: ENUM8 */
+            /** ID=0x0012 | type=ENUM8 */
             secondScreenBehavior: number;
-            /** ID: 32 | Type: UINT32 */
+            /** ID=0x0020 | type=UINT32 */
             currentTimeToDisplay: number;
-            /** ID: 82 | Type: UINT8 */
+            /** ID=0x0052 | type=UINT8 */
             ledIntensityOn: number;
-            /** ID: 83 | Type: UINT8 */
+            /** ID=0x0053 | type=UINT8 */
             ledIntensityOff: number;
-            /** ID: 80 | Type: UINT24 */
+            /** ID=0x0050 | type=UINT24 */
             ledColorOn: number;
-            /** ID: 81 | Type: UINT24 */
+            /** ID=0x0051 | type=UINT24 */
             ledColorOff: number;
-            /** ID: 82 | Type: UINT8 */
+            /** ID=0x0052 | type=UINT8 */
             onLedIntensity: number;
-            /** ID: 83 | Type: UINT8 */
+            /** ID=0x0053 | type=UINT8 */
             offLedIntensity: number;
-            /** ID: 84 | Type: ENUM8 */
+            /** ID=0x0054 | type=ENUM8 */
             actionReport: number;
-            /** ID: 85 | Type: UINT16 */
+            /** ID=0x0055 | type=UINT16 */
             minimumBrightness: number;
-            /** ID: 96 | Type: UINT16 */
+            /** ID=0x0060 | type=UINT16 */
             connectedLoadRM: number;
-            /** ID: 112 | Type: BITMAP8 */
+            /** ID=0x0070 | type=BITMAP8 */
             currentLoad: number;
-            /** ID: 113 | Type: INT8 */
+            /** ID=0x0071 | type=INT8 */
             ecoMode: number;
-            /** ID: 114 | Type: UINT8 */
+            /** ID=0x0072 | type=UINT8 */
             ecoMode1: number;
-            /** ID: 115 | Type: UINT8 */
+            /** ID=0x0073 | type=UINT8 */
             ecoMode2: number;
-            /** ID: 117 | Type: BITMAP32 */
+            /** ID=0x0075 | type=BITMAP32 */
             unknown: number;
-            /** ID: 118 | Type: UINT8 */
+            /** ID=0x0076 | type=UINT8 */
             drConfigWaterTempMin: number;
-            /** ID: 119 | Type: UINT8 */
+            /** ID=0x0077 | type=UINT8 */
             drConfigWaterTempTime: number;
-            /** ID: 120 | Type: UINT16 */
+            /** ID=0x0078 | type=UINT16 */
             drWTTimeOn: number;
-            /** ID: 128 | Type: UINT32 */
+            /** ID=0x0080 | type=UINT32 */
             unknown1: number;
-            /** ID: 160 | Type: UINT32 */
+            /** ID=0x00a0 | type=UINT32 */
             dimmerTimmer: number;
-            /** ID: 256 | Type: UINT8 */
+            /** ID=0x0100 | type=UINT8 */
             unknown2: number;
-            /** ID: 261 | Type: ENUM8 */
+            /** ID=0x0105 | type=ENUM8 */
             floorControlMode: number;
-            /** ID: 262 | Type: ENUM8 */
+            /** ID=0x0106 | type=ENUM8 */
             auxOutputMode: number;
-            /** ID: 263 | Type: INT16 */
+            /** ID=0x0107 | type=INT16 */
             floorTemperature: number;
-            /** ID: 264 | Type: INT16 */
+            /** ID=0x0108 | type=INT16 */
             ambiantMaxHeatSetpointLimit: number;
-            /** ID: 265 | Type: INT16 */
+            /** ID=0x0109 | type=INT16 */
             floorMinHeatSetpointLimit: number;
-            /** ID: 266 | Type: INT16 */
+            /** ID=0x010a | type=INT16 */
             floorMaxHeatSetpointLimit: number;
-            /** ID: 267 | Type: ENUM8 */
+            /** ID=0x010b | type=ENUM8 */
             temperatureSensor: number;
-            /** ID: 268 | Type: ENUM8 */
+            /** ID=0x010c | type=ENUM8 */
             floorLimitStatus: number;
-            /** ID: 269 | Type: INT16 */
+            /** ID=0x010d | type=INT16 */
             roomTemperature: number;
-            /** ID: 276 | Type: ENUM8 */
+            /** ID=0x0114 | type=ENUM8 */
             timeFormatToDisplay: number;
-            /** ID: 277 | Type: ENUM8 */
+            /** ID=0x0115 | type=ENUM8 */
             GFCiStatus: number;
-            /** ID: 280 | Type: UINT16 */
+            /** ID=0x0118 | type=UINT16 */
             auxConnectedLoad: number;
-            /** ID: 281 | Type: UINT16 */
+            /** ID=0x0119 | type=UINT16 */
             connectedLoad: number;
-            /** ID: 296 | Type: UINT8 */
+            /** ID=0x0128 | type=UINT8 */
             pumpProtection: number;
-            /** ID: 298 | Type: ENUM8 */
+            /** ID=0x012a | type=ENUM8 */
             unknown3: number;
-            /** ID: 299 | Type: INT16 */
+            /** ID=0x012b | type=INT16 */
             currentSetpoint: number;
-            /** ID: 301 | Type: INT16 */
+            /** ID=0x012d | type=INT16 */
             reportLocalTemperature: number;
-            /** ID: 576 | Type: ARRAY */
+            /** ID=0x0240 | type=ARRAY */
             flowMeterConfig: ZclArray | unknown[];
-            /** ID: 643 | Type: UINT8 */
+            /** ID=0x0283 | type=UINT8 */
             coldLoadPickupStatus: number;
         };
         commands: never;
@@ -6097,9 +6353,9 @@ export interface TClusters {
     manuSpecificLegrandDevices2: {
         attributes: never;
         commands: {
-            /** ID: 0 */
+            /** ID=0x00 */
             command0: {
-                /** Type: BUFFER */
+                /** type=BUFFER */
                 data: Buffer;
             };
         };
@@ -6108,9 +6364,9 @@ export interface TClusters {
     manuSpecificLegrandDevices3: {
         attributes: never;
         commands: {
-            /** ID: 0 */
+            /** ID=0x00 */
             command0: {
-                /** Type: BUFFER */
+                /** type=BUFFER */
                 data: Buffer;
             };
         };
@@ -6118,7 +6374,7 @@ export interface TClusters {
     };
     wiserDeviceInfo: {
         attributes: {
-            /** ID: 32 | Type: CHAR_STR */
+            /** ID=0x0020 | type=CHAR_STR */
             deviceInfo: string;
         };
         commands: never;
@@ -6127,165 +6383,165 @@ export interface TClusters {
     manuSpecificTuya: {
         attributes: never;
         commands: {
-            /** ID: 0 */
+            /** ID=0x00 */
             dataRequest: {
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 seq: number;
-                /** Type: LIST_TUYA_DATAPOINT_VALUES */
+                /** type=LIST_TUYA_DATAPOINT_VALUES */
                 dpValues: TuyaDataPointValue[];
             };
-            /** ID: 3 */
+            /** ID=0x03 */
             dataQuery: Record<string, never>;
-            /** ID: 16 */
+            /** ID=0x10 */
             mcuVersionRequest: {
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 seq: number;
             };
-            /** ID: 4 */
+            /** ID=0x04 */
             sendData: {
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 seq: number;
-                /** Type: LIST_TUYA_DATAPOINT_VALUES */
+                /** type=LIST_TUYA_DATAPOINT_VALUES */
                 dpValues: TuyaDataPointValue[];
             };
-            /** ID: 18 */
+            /** ID=0x12 */
             mcuOtaNotify: {
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 seq: number;
-                /** Type: UINT32 */
+                /** type=UINT32 */
                 key_hi: number;
-                /** Type: UINT32 */
+                /** type=UINT32 */
                 key_lo: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 version: number;
-                /** Type: UINT32 */
+                /** type=UINT32 */
                 imageSize: number;
-                /** Type: UINT32 */
+                /** type=UINT32 */
                 crc: number;
             };
-            /** ID: 20 */
+            /** ID=0x14 */
             mcuOtaBlockDataResponse: {
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 seq: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 status: number;
-                /** Type: UINT32 */
+                /** type=UINT32 */
                 key_hi: number;
-                /** Type: UINT32 */
+                /** type=UINT32 */
                 key_lo: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 version: number;
-                /** Type: UINT32 */
+                /** type=UINT32 */
                 offset: number;
-                /** Type: LIST_UINT8 */
+                /** type=LIST_UINT8 */
                 imageData: number[];
             };
-            /** ID: 36 */
+            /** ID=0x24 */
             mcuSyncTime: {
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 payloadSize: number;
-                /** Type: LIST_UINT8 */
+                /** type=LIST_UINT8 */
                 payload: number[];
             };
-            /** ID: 37 */
+            /** ID=0x25 */
             mcuGatewayConnectionStatus: {
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 payloadSize: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 payload: number;
             };
         };
         commandResponses: {
-            /** ID: 1 */
+            /** ID=0x01 */
             dataResponse: {
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 seq: number;
-                /** Type: LIST_TUYA_DATAPOINT_VALUES */
+                /** type=LIST_TUYA_DATAPOINT_VALUES */
                 dpValues: TuyaDataPointValue[];
             };
-            /** ID: 2 */
+            /** ID=0x02 */
             dataReport: {
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 seq: number;
-                /** Type: LIST_TUYA_DATAPOINT_VALUES */
+                /** type=LIST_TUYA_DATAPOINT_VALUES */
                 dpValues: TuyaDataPointValue[];
             };
-            /** ID: 5 */
+            /** ID=0x05 */
             activeStatusReportAlt: {
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 seq: number;
-                /** Type: LIST_TUYA_DATAPOINT_VALUES */
+                /** type=LIST_TUYA_DATAPOINT_VALUES */
                 dpValues: TuyaDataPointValue[];
             };
-            /** ID: 6 */
+            /** ID=0x06 */
             activeStatusReport: {
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 seq: number;
-                /** Type: LIST_TUYA_DATAPOINT_VALUES */
+                /** type=LIST_TUYA_DATAPOINT_VALUES */
                 dpValues: TuyaDataPointValue[];
             };
-            /** ID: 17 */
+            /** ID=0x11 */
             mcuVersionResponse: {
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 seq: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 version: number;
             };
-            /** ID: 19 */
+            /** ID=0x13 */
             mcuOtaBlockDataRequest: {
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 seq: number;
-                /** Type: UINT32 */
+                /** type=UINT32 */
                 key_hi: number;
-                /** Type: UINT32 */
+                /** type=UINT32 */
                 key_lo: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 version: number;
-                /** Type: UINT32 */
+                /** type=UINT32 */
                 offset: number;
-                /** Type: UINT32 */
+                /** type=UINT32 */
                 size: number;
             };
-            /** ID: 21 */
+            /** ID=0x15 */
             mcuOtaResult: {
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 seq: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 status: number;
-                /** Type: UINT32 */
+                /** type=UINT32 */
                 key_hi: number;
-                /** Type: UINT32 */
+                /** type=UINT32 */
                 key_lo: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 version: number;
             };
-            /** ID: 36 */
+            /** ID=0x24 */
             mcuSyncTime: {
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 payloadSize: number;
             };
-            /** ID: 37 */
+            /** ID=0x25 */
             mcuGatewayConnectionStatus: {
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 payloadSize: number;
             };
         };
     };
     manuSpecificLumi: {
         attributes: {
-            /** ID: 9 | Type: UINT8 */
+            /** ID=0x0009 | type=UINT8 */
             mode: number;
-            /** ID: 274 | Type: UINT32 */
+            /** ID=0x0112 | type=UINT32 */
             illuminance: number;
-            /** ID: 276 | Type: UINT8 */
+            /** ID=0x0114 | type=UINT8 */
             displayUnit: number;
-            /** ID: 297 | Type: UINT8 */
+            /** ID=0x0129 | type=UINT8 */
             airQuality: number;
-            /** ID: 1024 | Type: BOOLEAN */
+            /** ID=0x0400 | type=BOOLEAN */
             curtainReverse: number;
-            /** ID: 1025 | Type: BOOLEAN */
+            /** ID=0x0401 | type=BOOLEAN */
             curtainHandOpen: number;
-            /** ID: 1026 | Type: BOOLEAN */
+            /** ID=0x0402 | type=BOOLEAN */
             curtainCalibrated: number;
         };
         commands: never;
@@ -6293,85 +6549,85 @@ export interface TClusters {
     };
     liXeePrivate: {
         attributes: {
-            /** ID: 0 | Type: CHAR_STR */
+            /** ID=0x0000 | type=CHAR_STR */
             currentTarif: string;
-            /** ID: 1 | Type: CHAR_STR */
+            /** ID=0x0001 | type=CHAR_STR */
             tomorrowColor: string;
-            /** ID: 2 | Type: UINT8 */
+            /** ID=0x0002 | type=UINT8 */
             scheduleHPHC: number;
-            /** ID: 3 | Type: UINT8 */
+            /** ID=0x0003 | type=UINT8 */
             presencePotential: number;
-            /** ID: 4 | Type: UINT8 */
+            /** ID=0x0004 | type=UINT8 */
             startNoticeEJP: number;
-            /** ID: 5 | Type: UINT16 */
+            /** ID=0x0005 | type=UINT16 */
             warnDPS: number;
-            /** ID: 6 | Type: UINT16 */
+            /** ID=0x0006 | type=UINT16 */
             warnDIR1: number;
-            /** ID: 7 | Type: UINT16 */
+            /** ID=0x0007 | type=UINT16 */
             warnDIR2: number;
-            /** ID: 8 | Type: UINT16 */
+            /** ID=0x0008 | type=UINT16 */
             warnDIR3: number;
-            /** ID: 9 | Type: CHAR_STR */
+            /** ID=0x0009 | type=CHAR_STR */
             motDEtat: string;
-            /** ID: 512 | Type: CHAR_STR */
+            /** ID=0x0200 | type=CHAR_STR */
             currentPrice: string;
-            /** ID: 513 | Type: UINT8 */
+            /** ID=0x0201 | type=UINT8 */
             currentIndexTarif: number;
-            /** ID: 514 | Type: CHAR_STR */
+            /** ID=0x0202 | type=CHAR_STR */
             currentDate: string;
-            /** ID: 515 | Type: UINT32 */
+            /** ID=0x0203 | type=UINT32 */
             activeEnergyOutD01: number;
-            /** ID: 516 | Type: UINT32 */
+            /** ID=0x0204 | type=UINT32 */
             activeEnergyOutD02: number;
-            /** ID: 517 | Type: UINT32 */
+            /** ID=0x0205 | type=UINT32 */
             activeEnergyOutD03: number;
-            /** ID: 518 | Type: UINT32 */
+            /** ID=0x0206 | type=UINT32 */
             activeEnergyOutD04: number;
-            /** ID: 519 | Type: UINT16 */
+            /** ID=0x0207 | type=UINT16 */
             injectedVA: number;
-            /** ID: 520 | Type: INT16 */
+            /** ID=0x0208 | type=INT16 */
             injectedVAMaxN: number;
-            /** ID: 521 | Type: INT16 */
+            /** ID=0x0209 | type=INT16 */
             injectedVAMaxN1: number;
-            /** ID: 528 | Type: INT16 */
+            /** ID=0x0210 | type=INT16 */
             injectedActiveLoadN: number;
-            /** ID: 529 | Type: INT16 */
+            /** ID=0x0211 | type=INT16 */
             injectedActiveLoadN1: number;
-            /** ID: 530 | Type: INT16 */
+            /** ID=0x0212 | type=INT16 */
             drawnVAMaxN1: number;
-            /** ID: 531 | Type: INT16 */
+            /** ID=0x0213 | type=INT16 */
             drawnVAMaxN1P2: number;
-            /** ID: 532 | Type: INT16 */
+            /** ID=0x0214 | type=INT16 */
             drawnVAMaxN1P3: number;
-            /** ID: 533 | Type: CHAR_STR */
+            /** ID=0x0215 | type=CHAR_STR */
             message1: string;
-            /** ID: 534 | Type: CHAR_STR */
+            /** ID=0x0216 | type=CHAR_STR */
             message2: string;
-            /** ID: 535 | Type: OCTET_STR */
+            /** ID=0x0217 | type=OCTET_STR */
             statusRegister: Buffer;
-            /** ID: 536 | Type: UINT8 */
+            /** ID=0x0218 | type=UINT8 */
             startMobilePoint1: number;
-            /** ID: 537 | Type: UINT8 */
+            /** ID=0x0219 | type=UINT8 */
             stopMobilePoint1: number;
-            /** ID: 544 | Type: UINT8 */
+            /** ID=0x0220 | type=UINT8 */
             startMobilePoint2: number;
-            /** ID: 545 | Type: UINT8 */
+            /** ID=0x0221 | type=UINT8 */
             stopMobilePoint2: number;
-            /** ID: 546 | Type: UINT8 */
+            /** ID=0x0222 | type=UINT8 */
             startMobilePoint3: number;
-            /** ID: 547 | Type: UINT8 */
+            /** ID=0x0223 | type=UINT8 */
             stopMobilePoint3: number;
-            /** ID: 548 | Type: UINT16 */
+            /** ID=0x0224 | type=UINT16 */
             relais: number;
-            /** ID: 549 | Type: UINT8 */
+            /** ID=0x0225 | type=UINT8 */
             daysNumberCurrentCalendar: number;
-            /** ID: 550 | Type: UINT8 */
+            /** ID=0x0226 | type=UINT8 */
             daysNumberNextCalendar: number;
-            /** ID: 551 | Type: LONG_OCTET_STR */
+            /** ID=0x0227 | type=LONG_OCTET_STR */
             daysProfileCurrentCalendar: Buffer;
-            /** ID: 552 | Type: LONG_OCTET_STR */
+            /** ID=0x0228 | type=LONG_OCTET_STR */
             daysProfileNextCalendar: Buffer;
-            /** ID: 768 | Type: UINT8 */
+            /** ID=0x0300 | type=UINT8 */
             linkyMode: number;
         };
         commands: never;
@@ -6379,19 +6635,19 @@ export interface TClusters {
     };
     manuSpecificTuya2: {
         attributes: {
-            /** ID: 53258 | Type: INT16 */
+            /** ID=0xd00a | type=INT16 */
             alarm_temperature_max: number;
-            /** ID: 53259 | Type: INT16 */
+            /** ID=0xd00b | type=INT16 */
             alarm_temperature_min: number;
-            /** ID: 53261 | Type: INT16 */
+            /** ID=0xd00d | type=INT16 */
             alarm_humidity_max: number;
-            /** ID: 53262 | Type: INT16 */
+            /** ID=0xd00e | type=INT16 */
             alarm_humidity_min: number;
-            /** ID: 53263 | Type: ENUM8 */
+            /** ID=0xd00f | type=ENUM8 */
             alarm_humidity: number;
-            /** ID: 53254 | Type: ENUM8 */
+            /** ID=0xd006 | type=ENUM8 */
             alarm_temperature: number;
-            /** ID: 53264 | Type: UINT8 */
+            /** ID=0xd010 | type=UINT8 */
             unknown: number;
         };
         commands: never;
@@ -6399,27 +6655,27 @@ export interface TClusters {
     };
     manuSpecificTuya3: {
         attributes: {
-            /** ID: 53264 | Type: ENUM8 */
+            /** ID=0xd010 | type=ENUM8 */
             powerOnBehavior: number;
-            /** ID: 53280 | Type: ENUM8 */
+            /** ID=0xd020 | type=ENUM8 */
             switchMode: number;
-            /** ID: 53296 | Type: ENUM8 */
+            /** ID=0xd030 | type=ENUM8 */
             switchType: number;
         };
         commands: {
-            /** ID: 229 */
+            /** ID=0xe5 */
             setOptions1: {
-                /** Type: BUFFER */
+                /** type=BUFFER */
                 data: Buffer;
             };
-            /** ID: 230 */
+            /** ID=0xe6 */
             setOptions2: {
-                /** Type: BUFFER */
+                /** type=BUFFER */
                 data: Buffer;
             };
-            /** ID: 231 */
+            /** ID=0xe7 */
             setOptions3: {
-                /** Type: BUFFER */
+                /** type=BUFFER */
                 data: Buffer;
             };
         };
@@ -6427,7 +6683,7 @@ export interface TClusters {
     };
     manuSpecificCentraliteHumidity: {
         attributes: {
-            /** ID: 0 | Type: UINT16 */
+            /** ID=0x0000 | type=UINT16 */
             measuredValue: number;
         };
         commands: never;
@@ -6437,23 +6693,23 @@ export interface TClusters {
         attributes: never;
         commands: never;
         commandResponses: {
-            /** ID: 1 */
+            /** ID=0x01 */
             arrivalSensorNotify: Record<string, never>;
         };
     };
     manuSpecificSamsungAccelerometer: {
         attributes: {
-            /** ID: 0 | Type: UINT8 */
+            /** ID=0x0000 | type=UINT8 */
             motion_threshold_multiplier: number;
-            /** ID: 2 | Type: UINT16 */
+            /** ID=0x0002 | type=UINT16 */
             motion_threshold: number;
-            /** ID: 16 | Type: BITMAP8 */
+            /** ID=0x0010 | type=BITMAP8 */
             acceleration: number;
-            /** ID: 18 | Type: INT16 */
+            /** ID=0x0012 | type=INT16 */
             x_axis: number;
-            /** ID: 19 | Type: INT16 */
+            /** ID=0x0013 | type=INT16 */
             y_axis: number;
-            /** ID: 20 | Type: INT16 */
+            /** ID=0x0014 | type=INT16 */
             z_axis: number;
         };
         commands: never;
@@ -6461,41 +6717,41 @@ export interface TClusters {
     };
     heimanSpecificAirQuality: {
         attributes: {
-            /** ID: 61440 | Type: UINT8 */
+            /** ID=0xf000 | type=UINT8 */
             language: number;
-            /** ID: 61441 | Type: UINT8 */
+            /** ID=0xf001 | type=UINT8 */
             unitOfMeasure: number;
-            /** ID: 61442 | Type: UINT8 */
+            /** ID=0xf002 | type=UINT8 */
             batteryState: number;
-            /** ID: 61443 | Type: UINT16 */
+            /** ID=0xf003 | type=UINT16 */
             pm10measuredValue: number;
-            /** ID: 61444 | Type: UINT16 */
+            /** ID=0xf004 | type=UINT16 */
             tvocMeasuredValue: number;
-            /** ID: 61445 | Type: UINT16 */
+            /** ID=0xf005 | type=UINT16 */
             aqiMeasuredValue: number;
-            /** ID: 61446 | Type: INT16 */
+            /** ID=0xf006 | type=INT16 */
             temperatureMeasuredMax: number;
-            /** ID: 61447 | Type: INT16 */
+            /** ID=0xf007 | type=INT16 */
             temperatureMeasuredMin: number;
-            /** ID: 61448 | Type: UINT16 */
+            /** ID=0xf008 | type=UINT16 */
             humidityMeasuredMax: number;
-            /** ID: 61449 | Type: UINT16 */
+            /** ID=0xf009 | type=UINT16 */
             humidityMeasuredMin: number;
-            /** ID: 61450 | Type: UINT16 */
+            /** ID=0xf00a | type=UINT16 */
             alarmEnable: number;
         };
         commands: {
-            /** ID: 283 */
+            /** ID=0x11b */
             setLanguage: {
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 languageCode: number;
             };
-            /** ID: 284 */
+            /** ID=0x11c */
             setUnitOfTemperature: {
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 unitsCode: number;
             };
-            /** ID: 285 */
+            /** ID=0x11d */
             getTime: Record<string, never>;
         };
         commandResponses: never;
@@ -6503,15 +6759,15 @@ export interface TClusters {
     heimanSpecificScenes: {
         attributes: never;
         commands: {
-            /** ID: 240 */
+            /** ID=0xf0 */
             cinema: Record<string, never>;
-            /** ID: 241 */
+            /** ID=0xf1 */
             atHome: Record<string, never>;
-            /** ID: 242 */
+            /** ID=0xf2 */
             sleep: Record<string, never>;
-            /** ID: 243 */
+            /** ID=0xf3 */
             goOut: Record<string, never>;
-            /** ID: 244 */
+            /** ID=0xf4 */
             repast: Record<string, never>;
         };
         commandResponses: never;
@@ -6519,29 +6775,29 @@ export interface TClusters {
     tradfriButton: {
         attributes: never;
         commands: {
-            /** ID: 1 */
+            /** ID=0x01 */
             action1: {
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 data: number;
             };
-            /** ID: 2 */
+            /** ID=0x02 */
             action2: {
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 data: number;
             };
-            /** ID: 3 */
+            /** ID=0x03 */
             action3: {
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 data: number;
             };
-            /** ID: 4 */
+            /** ID=0x04 */
             action4: {
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 data: number;
             };
-            /** ID: 6 */
+            /** ID=0x06 */
             action6: {
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 data: number;
             };
         };
@@ -6550,68 +6806,68 @@ export interface TClusters {
     heimanSpecificInfraRedRemote: {
         attributes: never;
         commands: {
-            /** ID: 240 */
+            /** ID=0xf0 */
             sendKey: {
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 id: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 keyCode: number;
             };
-            /** ID: 241 */
+            /** ID=0xf1 */
             studyKey: {
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 id: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 keyCode: number;
             };
-            /** ID: 243 */
+            /** ID=0xf3 */
             deleteKey: {
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 id: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 keyCode: number;
             };
-            /** ID: 244 */
+            /** ID=0xf4 */
             createId: {
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 modelType: number;
             };
-            /** ID: 246 */
+            /** ID=0xf6 */
             getIdAndKeyCodeList: Record<string, never>;
         };
         commandResponses: {
-            /** ID: 242 */
+            /** ID=0xf2 */
             studyKeyRsp: {
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 id: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 keyCode: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 result: number;
             };
-            /** ID: 245 */
+            /** ID=0xf5 */
             createIdRsp: {
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 id: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 modelType: number;
             };
-            /** ID: 247 */
+            /** ID=0xf7 */
             getIdAndKeyCodeListRsp: {
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 packetsTotal: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 packetNumber: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 packetLength: number;
-                /** Type: LIST_UINT8 */
+                /** type=LIST_UINT8 */
                 learnedDevicesList: number[];
             };
         };
     };
     schneiderSpecificPilotMode: {
         attributes: {
-            /** ID: 49 | Type: ENUM8 */
+            /** ID=0x0031 | type=ENUM8 */
             pilotMode: number;
         };
         commands: never;
@@ -6619,13 +6875,13 @@ export interface TClusters {
     };
     elkoOccupancySettingClusterServer: {
         attributes: {
-            /** ID: 0 | Type: UINT16 */
+            /** ID=0x0000 | type=UINT16 */
             AmbienceLightThreshold: number;
-            /** ID: 1 | Type: ENUM8 */
+            /** ID=0x0001 | type=ENUM8 */
             OccupancyActions: number;
-            /** ID: 2 | Type: UINT8 */
+            /** ID=0x0002 | type=UINT8 */
             UnoccupiedLevelDflt: number;
-            /** ID: 3 | Type: UINT8 */
+            /** ID=0x0003 | type=UINT8 */
             UnoccupiedLevel: number;
         };
         commands: never;
@@ -6633,17 +6889,17 @@ export interface TClusters {
     };
     elkoSwitchConfigurationClusterServer: {
         attributes: {
-            /** ID: 0 | Type: ENUM8 */
+            /** ID=0x0000 | type=ENUM8 */
             SwitchIndication: number;
-            /** ID: 16 | Type: UINT8 */
+            /** ID=0x0010 | type=UINT8 */
             UpSceneID: number;
-            /** ID: 17 | Type: UINT16 */
+            /** ID=0x0011 | type=UINT16 */
             UpGroupID: number;
-            /** ID: 32 | Type: UINT8 */
+            /** ID=0x0020 | type=UINT8 */
             DownSceneID: number;
-            /** ID: 33 | Type: UINT16 */
+            /** ID=0x0021 | type=UINT16 */
             DownGroupID: number;
-            /** ID: 1 | Type: ENUM8 */
+            /** ID=0x0001 | type=ENUM8 */
             SwitchActions: number;
         };
         commands: never;
@@ -6651,17 +6907,17 @@ export interface TClusters {
     };
     manuSpecificSchneiderLightSwitchConfiguration: {
         attributes: {
-            /** ID: 0 | Type: ENUM8 */
+            /** ID=0x0000 | type=ENUM8 */
             ledIndication: number;
-            /** ID: 16 | Type: UINT8 */
+            /** ID=0x0010 | type=UINT8 */
             upSceneID: number;
-            /** ID: 17 | Type: UINT16 */
+            /** ID=0x0011 | type=UINT16 */
             upGroupID: number;
-            /** ID: 32 | Type: UINT8 */
+            /** ID=0x0020 | type=UINT8 */
             downSceneID: number;
-            /** ID: 33 | Type: UINT16 */
+            /** ID=0x0021 | type=UINT16 */
             downGroupID: number;
-            /** ID: 1 | Type: ENUM8 */
+            /** ID=0x0001 | type=ENUM8 */
             switchActions: number;
         };
         commands: never;
@@ -6669,9 +6925,9 @@ export interface TClusters {
     };
     manuSpecificSchneiderFanSwitchConfiguration: {
         attributes: {
-            /** ID: 2 | Type: UINT8 */
+            /** ID=0x0002 | type=UINT8 */
             ledIndication: number;
-            /** ID: 96 | Type: UINT8 */
+            /** ID=0x0060 | type=UINT8 */
             ledOrientation: number;
         };
         commands: never;
@@ -6679,7 +6935,7 @@ export interface TClusters {
     };
     sprutVoc: {
         attributes: {
-            /** ID: 26112 | Type: UINT16 */
+            /** ID=0x6600 | type=UINT16 */
             voc: number;
         };
         commands: never;
@@ -6687,13 +6943,13 @@ export interface TClusters {
     };
     sprutNoise: {
         attributes: {
-            /** ID: 26112 | Type: SINGLE_PREC */
+            /** ID=0x6600 | type=SINGLE_PREC */
             noise: number;
-            /** ID: 26113 | Type: BITMAP8 */
+            /** ID=0x6601 | type=BITMAP8 */
             noiseDetected: number;
-            /** ID: 26114 | Type: SINGLE_PREC */
+            /** ID=0x6602 | type=SINGLE_PREC */
             noiseDetectLevel: number;
-            /** ID: 26115 | Type: UINT16 */
+            /** ID=0x6603 | type=UINT16 */
             noiseAfterDetectDelay: number;
         };
         commands: never;
@@ -6702,45 +6958,45 @@ export interface TClusters {
     sprutIrBlaster: {
         attributes: never;
         commands: {
-            /** ID: 0 */
+            /** ID=0x00 */
             playStore: {
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 param: number;
             };
-            /** ID: 1 */
+            /** ID=0x01 */
             learnStart: {
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 value: number;
             };
-            /** ID: 2 */
+            /** ID=0x02 */
             learnStop: {
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 value: number;
             };
-            /** ID: 3 */
+            /** ID=0x03 */
             clearStore: Record<string, never>;
-            /** ID: 4 */
+            /** ID=0x04 */
             playRam: Record<string, never>;
-            /** ID: 5 */
+            /** ID=0x05 */
             learnRamStart: Record<string, never>;
-            /** ID: 6 */
+            /** ID=0x06 */
             learnRamStop: Record<string, never>;
         };
         commandResponses: never;
     };
     manuSpecificSiglisZigfred: {
         attributes: {
-            /** ID: 8 | Type: UINT32 */
+            /** ID=0x0008 | type=UINT32 */
             buttonEvent: number;
         };
         commands: {
-            /** ID: 2 */
+            /** ID=0x02 */
             siglisZigfredButtonEvent: {
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 button: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 type: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 duration: number;
             };
         };
@@ -6749,7 +7005,7 @@ export interface TClusters {
     owonClearMetering: {
         attributes: never;
         commands: {
-            /** ID: 0 */
+            /** ID=0x00 */
             owonClearMeasurementData: Record<string, never>;
         };
         commandResponses: never;
@@ -6757,100 +7013,100 @@ export interface TClusters {
     zosungIRTransmit: {
         attributes: never;
         commands: {
-            /** ID: 0 */
+            /** ID=0x00 */
             zosungSendIRCode00: {
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 seq: number;
-                /** Type: UINT32 */
+                /** type=UINT32 */
                 length: number;
-                /** Type: UINT32 */
+                /** type=UINT32 */
                 unk1: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 unk2: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 unk3: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 cmd: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 unk4: number;
             };
-            /** ID: 1 */
+            /** ID=0x01 */
             zosungSendIRCode01: {
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 zero: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 seq: number;
-                /** Type: UINT32 */
+                /** type=UINT32 */
                 length: number;
-                /** Type: UINT32 */
+                /** type=UINT32 */
                 unk1: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 unk2: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 unk3: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 cmd: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 unk4: number;
             };
-            /** ID: 2 */
+            /** ID=0x02 */
             zosungSendIRCode02: {
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 seq: number;
-                /** Type: UINT32 */
+                /** type=UINT32 */
                 position: number;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 maxlen: number;
             };
-            /** ID: 3 */
+            /** ID=0x03 */
             zosungSendIRCode03: {
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 zero: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 seq: number;
-                /** Type: UINT32 */
+                /** type=UINT32 */
                 position: number;
-                /** Type: OCTET_STR */
+                /** type=OCTET_STR */
                 msgpart: Buffer;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 msgpartcrc: number;
             };
-            /** ID: 4 */
+            /** ID=0x04 */
             zosungSendIRCode04: {
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 zero0: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 seq: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 zero1: number;
             };
-            /** ID: 5 */
+            /** ID=0x05 */
             zosungSendIRCode05: {
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 seq: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 zero: number;
             };
         };
         commandResponses: {
-            /** ID: 3 */
+            /** ID=0x03 */
             zosungSendIRCode03Resp: {
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 zero: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 seq: number;
-                /** Type: UINT32 */
+                /** type=UINT32 */
                 position: number;
-                /** Type: OCTET_STR */
+                /** type=OCTET_STR */
                 msgpart: Buffer;
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 msgpartcrc: number;
             };
-            /** ID: 5 */
+            /** ID=0x05 */
             zosungSendIRCode05Resp: {
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 seq: number;
-                /** Type: UINT16 */
+                /** type=UINT16 */
                 zero: number;
             };
         };
@@ -6858,9 +7114,9 @@ export interface TClusters {
     zosungIRControl: {
         attributes: never;
         commands: {
-            /** ID: 0 */
+            /** ID=0x00 */
             zosungControlIRCommand00: {
-                /** Type: BUFFER */
+                /** type=BUFFER */
                 data: Buffer;
             };
         };
@@ -6868,141 +7124,141 @@ export interface TClusters {
     };
     manuSpecificAssaDoorLock: {
         attributes: {
-            /** ID: 18 | Type: UINT8 */
+            /** ID=0x0012 | type=UINT8 */
             autoLockTime: number;
-            /** ID: 19 | Type: UINT8 */
+            /** ID=0x0013 | type=UINT8 */
             wrongCodeAttempts: number;
-            /** ID: 20 | Type: UINT8 */
+            /** ID=0x0014 | type=UINT8 */
             shutdownTime: number;
-            /** ID: 21 | Type: UINT8 */
+            /** ID=0x0015 | type=UINT8 */
             batteryLevel: number;
-            /** ID: 22 | Type: UINT8 */
+            /** ID=0x0016 | type=UINT8 */
             insideEscutcheonLED: number;
-            /** ID: 23 | Type: UINT8 */
+            /** ID=0x0017 | type=UINT8 */
             volume: number;
-            /** ID: 24 | Type: UINT8 */
+            /** ID=0x0018 | type=UINT8 */
             lockMode: number;
-            /** ID: 25 | Type: UINT8 */
+            /** ID=0x0019 | type=UINT8 */
             language: number;
-            /** ID: 26 | Type: BOOLEAN */
+            /** ID=0x001a | type=BOOLEAN */
             allCodesLockout: number;
-            /** ID: 27 | Type: BOOLEAN */
+            /** ID=0x001b | type=BOOLEAN */
             oneTouchLocking: number;
-            /** ID: 28 | Type: BOOLEAN */
+            /** ID=0x001c | type=BOOLEAN */
             privacyButtonSetting: number;
-            /** ID: 33 | Type: UINT16 */
+            /** ID=0x0021 | type=UINT16 */
             numberLogRecordsSupported: number;
-            /** ID: 48 | Type: UINT8 */
+            /** ID=0x0030 | type=UINT8 */
             numberPinsSupported: number;
-            /** ID: 64 | Type: UINT8 */
+            /** ID=0x0040 | type=UINT8 */
             numberScheduleSlotsPerUser: number;
-            /** ID: 80 | Type: UINT8 */
+            /** ID=0x0050 | type=UINT8 */
             alarmMask: number;
         };
         commands: {
-            /** ID: 16 | Response ID: 0 */
+            /** ID=0x10 | response=0 */
             getLockStatus: Record<string, never>;
-            /** ID: 18 */
+            /** ID=0x12 */
             getBatteryLevel: Record<string, never>;
-            /** ID: 19 */
+            /** ID=0x13 */
             setRFLockoutTime: Record<string, never>;
-            /** ID: 48 */
+            /** ID=0x30 */
             userCodeSet: {
-                /** Type: CHAR_STR */
+                /** type=CHAR_STR */
                 payload: string;
             };
-            /** ID: 49 */
+            /** ID=0x31 */
             userCodeGet: {
-                /** Type: CHAR_STR */
+                /** type=CHAR_STR */
                 payload: string;
             };
-            /** ID: 50 */
+            /** ID=0x32 */
             userCodeClear: {
-                /** Type: CHAR_STR */
+                /** type=CHAR_STR */
                 payload: string;
             };
-            /** ID: 51 */
+            /** ID=0x33 */
             clearAllUserCodes: Record<string, never>;
-            /** ID: 52 */
+            /** ID=0x34 */
             setUserCodeStatus: Record<string, never>;
-            /** ID: 53 */
+            /** ID=0x35 */
             getUserCodeStatus: Record<string, never>;
-            /** ID: 54 */
+            /** ID=0x36 */
             getLastUserIdEntered: Record<string, never>;
-            /** ID: 55 */
+            /** ID=0x37 */
             userAdded: Record<string, never>;
-            /** ID: 56 */
+            /** ID=0x38 */
             userDeleted: Record<string, never>;
-            /** ID: 64 */
+            /** ID=0x40 */
             setScheduleSlot: {
-                /** Type: CHAR_STR */
+                /** type=CHAR_STR */
                 payload: string;
             };
-            /** ID: 65 */
+            /** ID=0x41 */
             getScheduleSlot: {
-                /** Type: CHAR_STR */
+                /** type=CHAR_STR */
                 payload: string;
             };
-            /** ID: 66 */
+            /** ID=0x42 */
             setScheduleSlotStatus: {
-                /** Type: CHAR_STR */
+                /** type=CHAR_STR */
                 payload: string;
             };
-            /** ID: 96 | Response ID: 1 */
+            /** ID=0x60 | response=1 */
             reflash: {
-                /** Type: CHAR_STR */
+                /** type=CHAR_STR */
                 payload: string;
             };
-            /** ID: 97 | Response ID: 2 */
+            /** ID=0x61 | response=2 */
             reflashData: {
-                /** Type: CHAR_STR */
+                /** type=CHAR_STR */
                 payload: string;
             };
-            /** ID: 98 | Response ID: 3 */
+            /** ID=0x62 | response=3 */
             reflashStatus: {
-                /** Type: CHAR_STR */
+                /** type=CHAR_STR */
                 payload: string;
             };
-            /** ID: 144 */
+            /** ID=0x90 */
             getReflashLock: Record<string, never>;
-            /** ID: 160 */
+            /** ID=0xa0 */
             getHistory: Record<string, never>;
-            /** ID: 161 */
+            /** ID=0xa1 */
             getLogin: Record<string, never>;
-            /** ID: 162 */
+            /** ID=0xa2 */
             getUser: Record<string, never>;
-            /** ID: 163 */
+            /** ID=0xa3 */
             getUsers: Record<string, never>;
-            /** ID: 176 */
+            /** ID=0xb0 */
             getMandatoryAttributes: Record<string, never>;
-            /** ID: 177 */
+            /** ID=0xb1 */
             readAttribute: Record<string, never>;
-            /** ID: 178 */
+            /** ID=0xb2 */
             writeAttribute: Record<string, never>;
-            /** ID: 179 */
+            /** ID=0xb3 */
             configureReporting: Record<string, never>;
-            /** ID: 180 */
+            /** ID=0xb4 */
             getBasicClusterAttributes: Record<string, never>;
         };
         commandResponses: {
-            /** ID: 0 */
+            /** ID=0x00 */
             getLockStatusRsp: {
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 status: number;
             };
-            /** ID: 1 */
+            /** ID=0x01 */
             reflashRsp: {
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 status: number;
             };
-            /** ID: 2 */
+            /** ID=0x02 */
             reflashDataRsp: {
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 status: number;
             };
-            /** ID: 3 */
+            /** ID=0x03 */
             reflashStatusRsp: {
-                /** Type: UINT8 */
+                /** type=UINT8 */
                 status: number;
             };
         };
@@ -7010,24 +7266,24 @@ export interface TClusters {
     manuSpecificDoorman: {
         attributes: never;
         commands: {
-            /** ID: 252 */
+            /** ID=0xfc */
             getConfigurationParameter: {
-                /** Type: CHAR_STR */
+                /** type=CHAR_STR */
                 payload: string;
             };
-            /** ID: 253 */
+            /** ID=0xfd */
             setConfigurationParameter: {
-                /** Type: CHAR_STR */
+                /** type=CHAR_STR */
                 payload: string;
             };
-            /** ID: 37 */
+            /** ID=0x25 */
             integrationModeActivation: {
-                /** Type: CHAR_STR */
+                /** type=CHAR_STR */
                 payload: string;
             };
-            /** ID: 78 */
+            /** ID=0x4e */
             armDisarm: {
-                /** Type: CHAR_STR */
+                /** type=CHAR_STR */
                 payload: string;
             };
         };
@@ -7035,7 +7291,7 @@ export interface TClusters {
     };
     manuSpecificProfalux1: {
         attributes: {
-            /** ID: 0 | Type: UINT8 */
+            /** ID=0x0000 | type=UINT8 */
             motorCoverType: number;
         };
         commands: never;
@@ -7043,47 +7299,47 @@ export interface TClusters {
     };
     manuSpecificAmazonWWAH: {
         attributes: {
-            /** ID: 2 | Type: BOOLEAN */
+            /** ID=0x0002 | type=BOOLEAN */
             disableOTADowngrades: number;
-            /** ID: 3 | Type: BOOLEAN */
+            /** ID=0x0003 | type=BOOLEAN */
             mgmtLeaveWithoutRejoinEnabled: number;
-            /** ID: 4 | Type: UINT8 */
+            /** ID=0x0004 | type=UINT8 */
             nwkRetryCount: number;
-            /** ID: 5 | Type: UINT8 */
+            /** ID=0x0005 | type=UINT8 */
             macRetryCount: number;
-            /** ID: 6 | Type: BOOLEAN */
+            /** ID=0x0006 | type=BOOLEAN */
             routerCheckInEnabled: number;
-            /** ID: 7 | Type: BOOLEAN */
+            /** ID=0x0007 | type=BOOLEAN */
             touchlinkInterpanEnabled: number;
-            /** ID: 8 | Type: BOOLEAN */
+            /** ID=0x0008 | type=BOOLEAN */
             wwahParentClassificationEnabled: number;
-            /** ID: 9 | Type: BOOLEAN */
+            /** ID=0x0009 | type=BOOLEAN */
             wwahAppEventRetryEnabled: number;
-            /** ID: 10 | Type: UINT8 */
+            /** ID=0x000a | type=UINT8 */
             wwahAppEventRetryQueueSize: number;
-            /** ID: 11 | Type: BOOLEAN */
+            /** ID=0x000b | type=BOOLEAN */
             wwahRejoinEnabled: number;
-            /** ID: 12 | Type: UINT8 */
+            /** ID=0x000c | type=UINT8 */
             macPollFailureWaitTime: number;
-            /** ID: 13 | Type: BOOLEAN */
+            /** ID=0x000d | type=BOOLEAN */
             configurationModeEnabled: number;
-            /** ID: 14 | Type: UINT8 */
+            /** ID=0x000e | type=UINT8 */
             currentDebugReportID: number;
-            /** ID: 15 | Type: BOOLEAN */
+            /** ID=0x000f | type=BOOLEAN */
             tcSecurityOnNwkKeyRotationEnabled: number;
-            /** ID: 16 | Type: BOOLEAN */
+            /** ID=0x0010 | type=BOOLEAN */
             wwahBadParentRecoveryEnabled: number;
-            /** ID: 17 | Type: UINT8 */
+            /** ID=0x0011 | type=UINT8 */
             pendingNetworkUpdateChannel: number;
-            /** ID: 18 | Type: UINT16 */
+            /** ID=0x0012 | type=UINT16 */
             pendingNetworkUpdatePANID: number;
-            /** ID: 19 | Type: UINT16 */
+            /** ID=0x0013 | type=UINT16 */
             otaMaxOfflineDuration: number;
-            /** ID: 65533 | Type: UINT16 */
+            /** ID=0xfffd | type=UINT16 */
             clusterRevision: number;
         };
         commands: {
-            /** ID: 10 */
+            /** ID=0x0a */
             clearBindingTable: Record<string, never>;
         };
         commandResponses: never;
@@ -7102,9 +7358,9 @@ export interface TFoundation {
         attrId: number;
         /** Type: UINT8 */
         status: number;
-        /** Type: UINT8, Conditions: [{fieldEquals field=status value=0}] */
+        /** Type: UINT8conditions=[{fieldEquals field=status value=0}] */
         dataType?: number;
-        /** Type: USE_DATA_TYPE, Conditions: [{fieldEquals field=status value=0}] */
+        /** Type: USE_DATA_TYPEconditions=[{fieldEquals field=status value=0}] */
         attrData?: unknown;
     }[];
     /** ID: 2 */
@@ -7129,7 +7385,7 @@ export interface TFoundation {
     writeRsp: {
         /** Type: UINT8 */
         status: number;
-        /** Type: UINT16, Conditions: [{fieldEquals field=status reversed=true value=0}] */
+        /** Type: UINT16conditions=[{fieldEquals field=status reversed=true value=0}] */
         attrId?: number;
     }[];
     /** ID: 5 */
@@ -7147,24 +7403,24 @@ export interface TFoundation {
         direction: number;
         /** Type: UINT16 */
         attrId: number;
-        /** Type: UINT8, Conditions: [{fieldEquals field=direction value=0}] */
+        /** Type: UINT8conditions=[{fieldEquals field=direction value=0}] */
         dataType?: number;
-        /** Type: UINT16, Conditions: [{fieldEquals field=direction value=0}] */
+        /** Type: UINT16conditions=[{fieldEquals field=direction value=0}] */
         minRepIntval?: number;
-        /** Type: UINT16, Conditions: [{fieldEquals field=direction value=0}] */
+        /** Type: UINT16conditions=[{fieldEquals field=direction value=0}] */
         maxRepIntval?: number;
-        /** Type: USE_DATA_TYPE, Conditions: [{fieldEquals field=direction value=0}{dataTypeValueTypeEquals value=ANALOG}] */
+        /** Type: USE_DATA_TYPEconditions=[{fieldEquals field=direction value=0}{dataTypeValueTypeEquals value=ANALOG}] */
         repChange?: unknown;
-        /** Type: UINT16, Conditions: [{fieldEquals field=direction value=1}] */
+        /** Type: UINT16conditions=[{fieldEquals field=direction value=1}] */
         timeout?: number;
     }[];
     /** ID: 7 */
     configReportRsp: {
         /** Type: UINT8 */
         status: number;
-        /** Type: UINT8, Conditions: [{minimumRemainingBufferBytes value=3}] */
+        /** Type: UINT8conditions=[{minimumRemainingBufferBytes value=3}] */
         direction?: number;
-        /** Type: UINT16, Conditions: [{minimumRemainingBufferBytes value=2}] */
+        /** Type: UINT16conditions=[{minimumRemainingBufferBytes value=2}] */
         attrId?: number;
     }[];
     /** ID: 8 */
@@ -7182,15 +7438,15 @@ export interface TFoundation {
         direction: number;
         /** Type: UINT16 */
         attrId: number;
-        /** Type: UINT8, Conditions: [{fieldEquals field=direction value=0}] */
+        /** Type: UINT8conditions=[{fieldEquals field=direction value=0}] */
         dataType?: number;
-        /** Type: UINT16, Conditions: [{fieldEquals field=direction value=0}] */
+        /** Type: UINT16conditions=[{fieldEquals field=direction value=0}] */
         minRepIntval?: number;
-        /** Type: UINT16, Conditions: [{fieldEquals field=direction value=0}] */
+        /** Type: UINT16conditions=[{fieldEquals field=direction value=0}] */
         maxRepIntval?: number;
-        /** Type: USE_DATA_TYPE, Conditions: [{fieldEquals field=direction value=0}{dataTypeValueTypeEquals value=ANALOG}] */
+        /** Type: USE_DATA_TYPEconditions=[{fieldEquals field=direction value=0}{dataTypeValueTypeEquals value=ANALOG}] */
         repChange?: unknown;
-        /** Type: UINT16, Conditions: [{fieldEquals field=direction value=1}] */
+        /** Type: UINT16conditions=[{fieldEquals field=direction value=1}] */
         timeout?: number;
     }[];
     /** ID: 10 */
@@ -7249,9 +7505,9 @@ export interface TFoundation {
     writeStructuredRsp: {
         /** Type: UINT8 */
         status: number;
-        /** Type: UINT16, Conditions: [{fieldEquals field=status reversed=true value=0}] */
+        /** Type: UINT16conditions=[{fieldEquals field=status reversed=true value=0}] */
         attrId?: number;
-        /** Type: STRUCTURED_SELECTOR, Conditions: [{fieldEquals field=status reversed=true value=0}] */
+        /** Type: STRUCTURED_SELECTORconditions=[{fieldEquals field=status reversed=true value=0}] */
         selector?: StructuredSelector;
     }[];
     /** ID: 17 */
