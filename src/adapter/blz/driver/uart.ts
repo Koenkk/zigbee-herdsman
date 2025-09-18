@@ -218,8 +218,8 @@ export class SerialDriver extends EventEmitter {
     }
 
     private async handleError(frame: Frame): Promise<void> {
-        logger.debug(`<-- Error: ${frame}`, NS);
-        await this.reset();
+        logger.error(`<-- Error: NCP is in error state`, NS);
+        // await this.reset();
     }
 
     async reset(): Promise<void> {
