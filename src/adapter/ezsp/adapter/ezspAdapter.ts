@@ -616,7 +616,7 @@ export class EZSPAdapter extends Adapter {
             payload.header &&
                 (!matcher.address || payload.address === matcher.address) &&
                 payload.endpoint === matcher.endpoint &&
-                (!matcher.transactionSequenceNumber || payload.header.transactionSequenceNumber === matcher.transactionSequenceNumber) &&
+                (matcher.transactionSequenceNumber === undefined || payload.header.transactionSequenceNumber === matcher.transactionSequenceNumber) &&
                 payload.clusterID === matcher.clusterID &&
                 matcher.commandIdentifier === payload.header.commandIdentifier,
         );
