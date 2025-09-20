@@ -828,7 +828,7 @@ export class Endpoint extends ZigbeeEntity {
         const device = this.getDevice();
         const cluster = this.getCluster(clusterKey, device, options?.manufacturerCode);
         const command = cluster.getCommandResponse(commandKey);
-        transactionSequenceNumber = transactionSequenceNumber || zclTransactionSequenceNumber.next();
+        transactionSequenceNumber = transactionSequenceNumber ?? zclTransactionSequenceNumber.next();
         const optionsWithDefaults = this.getOptionsWithDefaults(options, true, Zcl.Direction.SERVER_TO_CLIENT, cluster.manufacturerCode);
 
         const frame = Zcl.Frame.create(
