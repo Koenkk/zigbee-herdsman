@@ -1,5 +1,13 @@
 # Changelog
 
+## [6.1.2](https://github.com/Koenkk/zigbee-herdsman/compare/v6.1.1...v6.1.2) (2025-09-21)
+
+
+### Bug Fixes
+
+* **ignore:** bump the minor-patch group with 2 updates ([#1504](https://github.com/Koenkk/zigbee-herdsman/issues/1504)) ([7bacab1](https://github.com/Koenkk/zigbee-herdsman/commit/7bacab180ddc3aa54e15674adbee232c0dea6e49))
+* Improve ZCL TSN handling ([#1507](https://github.com/Koenkk/zigbee-herdsman/issues/1507)) ([a58c700](https://github.com/Koenkk/zigbee-herdsman/commit/a58c7006cc704095a51d1573170a3be684246092))
+
 ## [6.1.1](https://github.com/Koenkk/zigbee-herdsman/compare/v6.1.0...v6.1.1) (2025-09-11)
 
 
