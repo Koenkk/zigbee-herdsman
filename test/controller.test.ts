@@ -475,7 +475,7 @@ describe("Controller", () => {
         for (const m of mocksClear) m.mockClear();
         MOCK_DEVICES[174]!.attributes![1].checkinInterval = DEFAULT_184_CHECKIN_INTERVAL;
         // @ts-expect-error mock
-        zclTransactionSequenceNumber.number = 1;
+        zclTransactionSequenceNumber.sequence = -1;
         iasZoneReadState170Count = 0;
         configureReportStatus = 0;
         configureReportDefaultRsp = false;
@@ -2013,7 +2013,7 @@ describe("Controller", () => {
         expect(controller.getPermitJoinEnd()).toStrictEqual(updatedMockedDate.getTime() + 254 * 1000);
 
         // Green power
-        const commisionFrameEnable = Zcl.Frame.create(1, 1, true, undefined, 2, "commisioningMode", 33, {options: 0x0b, commisioningWindow: 254}, {});
+        const commisionFrameEnable = Zcl.Frame.create(1, 1, true, undefined, 0, "commisioningMode", 33, {options: 0x0b, commisioningWindow: 254}, {});
 
         expect(mocksendZclFrameToAll).toHaveBeenCalledTimes(1);
         expect(mocksendZclFrameToAll).toHaveBeenNthCalledWith(
@@ -2063,7 +2063,7 @@ describe("Controller", () => {
         expect(controller.getPermitJoinEnd()).toStrictEqual(updatedMockedDate.getTime() + 254 * 1000);
 
         // Green power
-        const commisionFrameEnable = Zcl.Frame.create(1, 1, true, undefined, 2, "commisioningMode", 33, {options: 0x0b, commisioningWindow: 254}, {});
+        const commisionFrameEnable = Zcl.Frame.create(1, 1, true, undefined, 0, "commisioningMode", 33, {options: 0x0b, commisioningWindow: 254}, {});
 
         expect(mocksendZclFrameToAll).toHaveBeenCalledTimes(1);
         expect(mocksendZclFrameToAll).toHaveBeenNthCalledWith(
@@ -2093,7 +2093,7 @@ describe("Controller", () => {
         expect(controller.getPermitJoinEnd()).toBeUndefined();
 
         // Green power
-        const commissionFrameDisable = Zcl.Frame.create(1, 1, true, undefined, 3, "commisioningMode", 33, {options: 0x0a, commisioningWindow: 0}, {});
+        const commissionFrameDisable = Zcl.Frame.create(1, 1, true, undefined, 1, "commisioningMode", 33, {options: 0x0a, commisioningWindow: 0}, {});
 
         expect(mocksendZclFrameToAll).toHaveBeenCalledTimes(2);
         expect(mocksendZclFrameToAll).toHaveBeenNthCalledWith(
@@ -2297,7 +2297,7 @@ describe("Controller", () => {
         expect(deepClone(write[3])).toStrictEqual({
             header: {
                 frameControl: {reservedBits: 0, frameType: 0, direction: 0, disableDefaultResponse: true, manufacturerSpecific: false},
-                transactionSequenceNumber: 12,
+                transactionSequenceNumber: 10,
                 commandIdentifier: 2,
             },
             payload: [{attrId: 16, attrData: "0x0000012300000000", dataType: 240}],
@@ -2364,7 +2364,7 @@ describe("Controller", () => {
         expect(deepClone(enrollRsp[3])).toStrictEqual({
             header: {
                 frameControl: {reservedBits: 0, frameType: 1, direction: 0, disableDefaultResponse: true, manufacturerSpecific: false},
-                transactionSequenceNumber: 13,
+                transactionSequenceNumber: 11,
                 commandIdentifier: 0,
             },
             payload: {enrollrspcode: 0, zoneid: 23},
@@ -3536,7 +3536,7 @@ describe("Controller", () => {
         expect(call[1]).toBe(129);
         expect(call[2]).toBe(1);
         expect(deepClone(call[3])).toStrictEqual(
-            deepClone(Zcl.Frame.create(Zcl.FrameType.SPECIFIC, Zcl.Direction.CLIENT_TO_SERVER, true, undefined, 12, "remove", 4, {groupid: 4}, {})),
+            deepClone(Zcl.Frame.create(Zcl.FrameType.SPECIFIC, Zcl.Direction.CLIENT_TO_SERVER, true, undefined, 10, "remove", 4, {groupid: 4}, {})),
         );
     });
 
@@ -3587,7 +3587,7 @@ describe("Controller", () => {
         expect(call[1]).toBe(176);
         expect(call[2]).toBe(1);
         expect(deepClone(call[3])).toStrictEqual(
-            deepClone(Zcl.Frame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, true, undefined, 2, "read", 0, [{attrId: 0}], {})),
+            deepClone(Zcl.Frame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, true, undefined, 0, "read", 0, [{attrId: 0}], {})),
         );
         expect(call[4]).toBe(10000);
         expect(call[5]).toBe(false);
@@ -3909,7 +3909,7 @@ describe("Controller", () => {
                     Zcl.Direction.CLIENT_TO_SERVER,
                     true,
                     undefined,
-                    11,
+                    9,
                     "configReport",
                     1,
                     [{direction: 0, attrId: 1, dataType: 32, minRepIntval: 1, maxRepIntval: 10, repChange: 1}],
@@ -4005,7 +4005,7 @@ describe("Controller", () => {
                     Zcl.Direction.CLIENT_TO_SERVER,
                     true,
                     4641,
-                    11,
+                    9,
                     "configReport",
                     513,
                     [{attrId: 16384, dataType: 48, direction: 0, maxRepIntval: 10, minRepIntval: 1, repChange: 1}],
@@ -4052,7 +4052,7 @@ describe("Controller", () => {
                     Zcl.Direction.CLIENT_TO_SERVER,
                     true,
                     4641,
-                    11,
+                    9,
                     "configReport",
                     513,
                     [{attrId: 16384, dataType: 48, direction: 0, maxRepIntval: 10, minRepIntval: 1, repChange: 1}],
@@ -4284,7 +4284,7 @@ describe("Controller", () => {
                     Zcl.Direction.CLIENT_TO_SERVER,
                     true,
                     undefined,
-                    11,
+                    9,
                     "add",
                     4,
                     {groupid: 2, groupname: ""},
@@ -4319,7 +4319,7 @@ describe("Controller", () => {
         expect(call[1]).toBe(129);
         expect(call[2]).toBe(1);
         expect(deepClone(call[3])).toStrictEqual(
-            deepClone(Zcl.Frame.create(Zcl.FrameType.SPECIFIC, Zcl.Direction.CLIENT_TO_SERVER, true, undefined, 11, "remove", 4, {groupid: 2}, {})),
+            deepClone(Zcl.Frame.create(Zcl.FrameType.SPECIFIC, Zcl.Direction.CLIENT_TO_SERVER, true, undefined, 9, "remove", 4, {groupid: 2}, {})),
         );
         expect(group.members).toStrictEqual([]);
     });
@@ -4336,7 +4336,7 @@ describe("Controller", () => {
         expect(call[1]).toBe(129);
         expect(call[2]).toBe(1);
         expect(deepClone(call[3])).toStrictEqual(
-            deepClone(Zcl.Frame.create(Zcl.FrameType.SPECIFIC, Zcl.Direction.CLIENT_TO_SERVER, true, undefined, 11, "remove", 4, {groupid: 4}, {})),
+            deepClone(Zcl.Frame.create(Zcl.FrameType.SPECIFIC, Zcl.Direction.CLIENT_TO_SERVER, true, undefined, 9, "remove", 4, {groupid: 4}, {})),
         );
     });
 
@@ -4374,7 +4374,7 @@ describe("Controller", () => {
         expect({...deepClone(call[1]), cluster: null}).toStrictEqual({
             header: {
                 frameControl: {reservedBits: 0, frameType: 1, direction: 0, disableDefaultResponse: true, manufacturerSpecific: false},
-                transactionSequenceNumber: 2,
+                transactionSequenceNumber: 0,
                 commandIdentifier: 64,
             },
             payload: {effectid: 9, effectvariant: 10},
@@ -4403,7 +4403,7 @@ describe("Controller", () => {
         expect({...deepClone(mocksendZclFrameToEndpoint.mock.calls[0][3]), cluster: null}).toStrictEqual({
             header: {
                 frameControl: {reservedBits: 0, frameType: 1, direction: 0, disableDefaultResponse: true, manufacturerSpecific: true},
-                transactionSequenceNumber: 11,
+                transactionSequenceNumber: 9,
                 manufacturerCode: 100,
                 commandIdentifier: 0,
             },
@@ -4427,7 +4427,7 @@ describe("Controller", () => {
         expect(mocksendZclFrameToEndpoint.mock.calls[0][0]).toBe("0x129");
         expect(mocksendZclFrameToEndpoint.mock.calls[0][1]).toBe(129);
         expect(mocksendZclFrameToEndpoint.mock.calls[0][2]).toBe(1);
-        expect(mocksendZclFrameToEndpoint.mock.calls[0][3].toBuffer()).toStrictEqual(Buffer.from([1, 11, 18]));
+        expect(mocksendZclFrameToEndpoint.mock.calls[0][3].toBuffer()).toStrictEqual(Buffer.from([1, 9, 18]));
     });
 
     it("Endpoint command with duplicate identifier", async () => {
@@ -4440,7 +4440,7 @@ describe("Controller", () => {
         expect(mocksendZclFrameToEndpoint.mock.calls[0][0]).toBe("0x129");
         expect(mocksendZclFrameToEndpoint.mock.calls[0][1]).toBe(129);
         expect(mocksendZclFrameToEndpoint.mock.calls[0][2]).toBe(1);
-        expect(mocksendZclFrameToEndpoint.mock.calls[0][3].toBuffer()).toStrictEqual(Buffer.from([1, 11, 6, 1, 1, 0, 0, 22]));
+        expect(mocksendZclFrameToEndpoint.mock.calls[0][3].toBuffer()).toStrictEqual(Buffer.from([1, 9, 6, 1, 1, 0, 0, 22]));
     });
 
     it("Endpoint commandResponse", async () => {
@@ -4456,7 +4456,7 @@ describe("Controller", () => {
         const expected = {
             header: {
                 frameControl: {reservedBits: 0, frameType: 1, direction: 1, disableDefaultResponse: true, manufacturerSpecific: false},
-                transactionSequenceNumber: 11,
+                transactionSequenceNumber: 9,
                 commandIdentifier: 0,
             },
             payload: {payloadType: 0, queryJitter: 1},
@@ -4617,7 +4617,7 @@ describe("Controller", () => {
         expect(mocksendZclFrameToGroup.mock.calls[0][0]).toBe(2);
         expect(deepClone(mocksendZclFrameToGroup.mock.calls[0][1])).toStrictEqual(
             deepClone(
-                Zcl.Frame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, true, undefined, 2, "read", 0, [{attrId: 5}, {attrId: 1}], {}),
+                Zcl.Frame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, true, undefined, 0, "read", 0, [{attrId: 5}, {attrId: 1}], {}),
             ),
         );
         expect(mocksendZclFrameToGroup.mock.calls[0][2]).toBeUndefined();
@@ -4631,7 +4631,7 @@ describe("Controller", () => {
         expect(mocksendZclFrameToGroup.mock.calls[0][0]).toBe(2);
         expect(deepClone(mocksendZclFrameToGroup.mock.calls[0][1])).toStrictEqual(
             deepClone(
-                Zcl.Frame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, true, undefined, 2, "read", 0, [{attrId: 5}, {attrId: 1}], {}),
+                Zcl.Frame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, true, undefined, 0, "read", 0, [{attrId: 5}, {attrId: 1}], {}),
             ),
         );
         expect(mocksendZclFrameToGroup.mock.calls[0][2]).toBeUndefined();
@@ -4664,7 +4664,7 @@ describe("Controller", () => {
                     Zcl.Direction.CLIENT_TO_SERVER,
                     true,
                     undefined,
-                    2,
+                    0,
                     "write",
                     0,
                     [
@@ -4723,7 +4723,7 @@ describe("Controller", () => {
                     Zcl.Direction.CLIENT_TO_SERVER,
                     true,
                     4107,
-                    11,
+                    9,
                     "write",
                     0,
                     [{attrId: 49, attrData: 11, dataType: 25}],
@@ -4755,7 +4755,7 @@ describe("Controller", () => {
                     Zcl.Direction.CLIENT_TO_SERVER,
                     true,
                     4641,
-                    11,
+                    9,
                     "write",
                     513,
                     [{attrId: 16384, attrData: 1, dataType: 48}],
@@ -4793,7 +4793,7 @@ describe("Controller", () => {
                     Zcl.Direction.CLIENT_TO_SERVER,
                     true,
                     4107,
-                    11,
+                    9,
                     "writeUndiv",
                     0,
                     [{attrId: 49, attrData: 11, dataType: 25}],
@@ -5007,7 +5007,7 @@ describe("Controller", () => {
         expect(call[1]).toBe(129);
         expect(call[2]).toBe(1);
         expect(deepClone(call[3])).toStrictEqual(
-            deepClone(Zcl.Frame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, true, undefined, 11, "read", 0, [{attrId: 2}], {})),
+            deepClone(Zcl.Frame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, true, undefined, 9, "read", 0, [{attrId: 2}], {})),
         );
         expect(call[4]).toBe(10000);
     });
@@ -5025,7 +5025,7 @@ describe("Controller", () => {
         expect(call[1]).toBe(129);
         expect(call[2]).toBe(1);
         expect(deepClone(call[3])).toStrictEqual(
-            deepClone(Zcl.Frame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, true, undefined, 11, "read", 0, [{attrId: 2}], {})),
+            deepClone(Zcl.Frame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, true, undefined, 9, "read", 0, [{attrId: 2}], {})),
         );
         expect(call[4]).toBe(10000);
         expect(mockLogger.warning).toHaveBeenCalledWith("Ignoring unknown attribute notanattr in cluster genBasic", "zh:controller:endpoint");
@@ -5046,7 +5046,7 @@ describe("Controller", () => {
         expect(call[1]).toBe(129);
         expect(call[2]).toBe(1);
         expect(deepClone(call[3])).toStrictEqual(
-            deepClone(Zcl.Frame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, true, 4641, 11, "read", 513, [{attrId: 16384}], {})),
+            deepClone(Zcl.Frame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, true, 4641, 9, "read", 513, [{attrId: 16384}], {})),
         );
         expect(call[4]).toBe(10000);
     });
@@ -5081,7 +5081,7 @@ describe("Controller", () => {
         expect(call[1]).toBe(129);
         expect(call[2]).toBe(1);
         expect(deepClone(call[3])).toStrictEqual(
-            deepClone(Zcl.Frame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, true, 4447, 11, "read", 0, [{attrId: 65314}], {})),
+            deepClone(Zcl.Frame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, true, 4447, 9, "read", 0, [{attrId: 65314}], {})),
         );
         expect(call[4]).toBe(10000);
     });
@@ -5175,7 +5175,7 @@ describe("Controller", () => {
                     Zcl.Direction.CLIENT_TO_SERVER,
                     true,
                     undefined,
-                    11,
+                    9,
                     "configReport",
                     513,
                     [{attrId: 16388, dataType: 41, direction: 0, maxRepIntval: 3600, minRepIntval: 0, repChange: 25}],
@@ -5221,7 +5221,7 @@ describe("Controller", () => {
         expect(Array.from(group6.members)).toStrictEqual([device2.getEndpoint(1)]);
         expect(Array.from(group7.members)).toStrictEqual([device2.getEndpoint(1)]);
         expect(deepClone(call[3])).toStrictEqual(
-            deepClone(Zcl.Frame.create(Zcl.FrameType.SPECIFIC, Zcl.Direction.CLIENT_TO_SERVER, true, undefined, 25, "removeAll", 4, {}, {})),
+            deepClone(Zcl.Frame.create(Zcl.FrameType.SPECIFIC, Zcl.Direction.CLIENT_TO_SERVER, true, undefined, 23, "removeAll", 4, {}, {})),
         );
     });
 
@@ -6187,7 +6187,7 @@ describe("Controller", () => {
             frameCounter: 1252,
             gpdKey: Buffer.from([29, 213, 18, 52, 213, 52, 152, 88, 183, 49, 101, 110, 209, 248, 244, 140]),
         };
-        const frameResponse = Zcl.Frame.create(1, 1, true, undefined, 2, "pairing", 33, dataPairing, {});
+        const frameResponse = Zcl.Frame.create(1, 1, true, undefined, 0, "pairing", 33, dataPairing, {});
 
         expect(mocksendZclFrameToAll.mock.calls[0][0]).toBe(ZSpec.GP_ENDPOINT);
         expect(deepClone(mocksendZclFrameToAll.mock.calls[0][1])).toStrictEqual(deepClone(frameResponse));
@@ -6357,7 +6357,7 @@ describe("Controller", () => {
             srcID: 0x0046f4fe,
             sinkGroupID: 0x0b84,
         };
-        const decommFrameResponse = Zcl.Frame.create(1, 1, true, undefined, 4, "pairing", 33, decommDataPairing, {});
+        const decommFrameResponse = Zcl.Frame.create(1, 1, true, undefined, 2, "pairing", 33, decommDataPairing, {});
 
         expect(mocksendZclFrameToAll.mock.calls[0][0]).toBe(ZSpec.GP_ENDPOINT);
         expect(deepClone(mocksendZclFrameToAll.mock.calls[0][1])).toStrictEqual(deepClone(decommFrameResponse));
@@ -6584,7 +6584,7 @@ describe("Controller", () => {
             },
         };
 
-        const frameResponse = Zcl.Frame.create(1, 1, true, undefined, 2, "response", 33, commissioningReply, {});
+        const frameResponse = Zcl.Frame.create(1, 1, true, undefined, 0, "response", 33, commissioningReply, {});
 
         expect(mocksendZclFrameToAll).toHaveBeenCalledTimes(1);
         expect(mocksendZclFrameToAll.mock.calls[0][0]).toBe(ZSpec.GP_ENDPOINT);
@@ -6638,7 +6638,7 @@ describe("Controller", () => {
             },
         };
 
-        const frameResponse = Zcl.Frame.create(1, 1, true, undefined, 2, "response", 33, commissioningReply, {});
+        const frameResponse = Zcl.Frame.create(1, 1, true, undefined, 0, "response", 33, commissioningReply, {});
 
         expect(mocksendZclFrameToAll).toHaveBeenCalledTimes(2);
         expect(mocksendZclFrameToAll.mock.calls[0][0]).toBe(ZSpec.GP_ENDPOINT);
@@ -6664,7 +6664,7 @@ describe("Controller", () => {
             sinkGroupID: 0x0b84,
             deviceID: 2,
         };
-        const pairing = Zcl.Frame.create(1, 1, true, undefined, 3, "pairing", 33, pairingData, {});
+        const pairing = Zcl.Frame.create(1, 1, true, undefined, 1, "pairing", 33, pairingData, {});
 
         expect(mocksendZclFrameToAll.mock.calls[1][0]).toBe(ZSpec.GP_ENDPOINT);
         expect(deepClone(mocksendZclFrameToAll.mock.calls[1][1])).toStrictEqual(deepClone(pairing));
@@ -6689,7 +6689,7 @@ describe("Controller", () => {
             disableDefaultResponse: true,
         });
 
-        const response = Zcl.Frame.create(1, 1, true, undefined, 4, "response", 33, payload, {});
+        const response = Zcl.Frame.create(1, 1, true, undefined, 2, "response", 33, payload, {});
 
         expect(mocksendZclFrameToAll).toHaveBeenCalledTimes(1);
         expect(mocksendZclFrameToAll.mock.calls[0][0]).toBe(ZSpec.GP_ENDPOINT);
@@ -6775,7 +6775,7 @@ describe("Controller", () => {
             frameCounter: 4600,
             gpdKey: Buffer.from([0x09, 0x3c, 0xed, 0x1d, 0xbf, 0x25, 0x63, 0xf9, 0x29, 0x5c, 0x0d, 0x3d, 0x9f, 0xc5, 0x76, 0xe1]),
         };
-        const frameResponse = Zcl.Frame.create(1, 1, true, undefined, 11, "pairing", 33, dataPairing, {});
+        const frameResponse = Zcl.Frame.create(1, 1, true, undefined, 9, "pairing", 33, dataPairing, {});
 
         expect(mocksendZclFrameToEndpoint).toHaveBeenLastCalledWith(
             gppDevice.ieeeAddr,
@@ -6923,7 +6923,7 @@ describe("Controller", () => {
             options: 0x002550,
             srcID,
         };
-        const removeFrame = Zcl.Frame.create(1, 1, true, undefined, 13, "pairing", 33, removeCommand, {});
+        const removeFrame = Zcl.Frame.create(1, 1, true, undefined, 11, "pairing", 33, removeCommand, {});
 
         events.message = [];
         const device = controller.getDeviceByIeeeAddr("0x00000000017171f8")!;
@@ -7055,7 +7055,7 @@ describe("Controller", () => {
                     Zcl.Direction.CLIENT_TO_SERVER,
                     true,
                     4107,
-                    11,
+                    9,
                     "report",
                     0,
                     [{attrId: 49, attrData: 11, dataType: 25}],
@@ -8401,7 +8401,7 @@ describe("Controller", () => {
                     Zcl.Direction.CLIENT_TO_SERVER,
                     true,
                     undefined,
-                    11,
+                    9,
                     "write",
                     64513,
                     [{attrData: 15, attrId: 0, dataType: 32}],
@@ -8418,7 +8418,7 @@ describe("Controller", () => {
                     Zcl.Direction.CLIENT_TO_SERVER,
                     true,
                     undefined,
-                    12,
+                    10,
                     "read",
                     64513,
                     [{attrId: 0}],
@@ -8575,7 +8575,7 @@ describe("Controller", () => {
                     Zcl.Direction.CLIENT_TO_SERVER,
                     true,
                     Zcl.ManufacturerCode.V_MARK_ENTERPRISES_INC,
-                    14,
+                    12,
                     "individualLedEffect",
                     64561,
                     {led: 3, effect: 8, color: 100, level: 200, duration: 15},
@@ -8595,7 +8595,7 @@ describe("Controller", () => {
                     Zcl.Direction.SERVER_TO_CLIENT,
                     true,
                     Zcl.ManufacturerCode.V_MARK_ENTERPRISES_INC,
-                    15,
+                    13,
                     "bogus",
                     64561,
                     {xyz: 12},

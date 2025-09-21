@@ -386,7 +386,7 @@ export class Group extends ZigbeeEntity {
                 optionsWithDefaults.direction,
                 true,
                 optionsWithDefaults.manufacturerCode,
-                optionsWithDefaults.transactionSequenceNumber || zclTransactionSequenceNumber.next(),
+                optionsWithDefaults.transactionSequenceNumber ?? zclTransactionSequenceNumber.next(),
                 command,
                 cluster,
                 payload,
