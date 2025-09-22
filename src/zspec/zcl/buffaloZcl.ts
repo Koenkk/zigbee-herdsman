@@ -43,7 +43,12 @@ export class BuffaloZcl extends Buffalo {
     private readZclUInt8(): number {
         const value = this.readUInt8();
 
-        return value === 0xff ? Number.NaN : value;
+        return value;
+
+        // TEMP: return value instead of Number.NaN.
+        // Will be replaced by https://github.com/Koenkk/zigbee-herdsman/pull/1503
+        // https://github.com/Koenkk/zigbee-herdsman/issues/1498
+        // return value === 0xff ? Number.NaN : value;
     }
 
     private writeZclUInt16(value: number): void {
