@@ -35,9 +35,16 @@ const EXTENSION_FIELD_SETS_DATA_TYPE: {[key: number]: DataType[]} = {
     768: [DataType.UINT16, DataType.UINT16, DataType.UINT16, DataType.UINT8, DataType.UINT8, DataType.UINT8, DataType.UINT16, DataType.UINT16],
 };
 
+// UINT8_TMP_FIX: temporary return 0xff instead of Number.NaN
+// Will be replaced by https://github.com/Koenkk/zigbee-herdsman/pull/1503
+// https://github.com/Koenkk/zigbee-herdsman/issues/1498
+// https://github.com/Koenkk/zigbee-herdsman/pull/1510
+
 export class BuffaloZcl extends Buffalo {
     private writeZclUInt8(value: number): void {
-        this.writeUInt8(Number.isNaN(value) ? 0xff : value);
+        this.writeUInt8(value);
+        // See UINT8_TMP_FIX
+        // this.writeUInt8(Number.isNaN(value) ? 0xff : value);
     }
 
     private readZclUInt8(): number {
@@ -45,9 +52,7 @@ export class BuffaloZcl extends Buffalo {
 
         return value;
 
-        // TEMP: return value instead of Number.NaN.
-        // Will be replaced by https://github.com/Koenkk/zigbee-herdsman/pull/1503
-        // https://github.com/Koenkk/zigbee-herdsman/issues/1498
+        // See UINT8_TMP_FIX
         // return value === 0xff ? Number.NaN : value;
     }
 
@@ -205,14 +210,20 @@ export class BuffaloZcl extends Buffalo {
         if (value) {
             this.writeUInt8(value.length);
             this.writeBuffer(value, value.length);
-        } else {
-            this.writeUInt8(0xff); // non-value
         }
+        // See UINT8_TMP_FIX
+        // else {
+        //     this.writeUInt8(0xff); // non-value
+        // }
     }
 
     private readOctetStr(): Buffer {
         const length = this.readZclUInt8();
-        return Number.isNaN(length) ? Buffer.from([]) : this.readBuffer(length);
+
+        // See UINT8_TMP_FIX
+        return this.readBuffer(length);
+
+        // return Number.isNaN(length) ? Buffer.from([]) : this.readBuffer(length);
     }
 
     private writeCharStr(value?: string | number[]): void {
@@ -232,7 +243,9 @@ export class BuffaloZcl extends Buffalo {
     private readCharStr(): string {
         const length = this.readZclUInt8();
 
-        return Number.isNaN(length) ? "" : this.readUtf8String(length);
+        // See UINT8_TMP_FIX
+        return this.readUtf8String(length);
+        // return Number.isNaN(length) ? "" : this.readUtf8String(length);
     }
 
     private writeLongOctetStr(value?: number[]): void {
