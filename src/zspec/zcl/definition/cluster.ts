@@ -2,20 +2,21 @@ import {BuffaloZclDataType, DataType, ParameterCondition} from "./enums";
 import {ManufacturerCode} from "./manufacturerCode";
 import {Status} from "./status";
 import type {ClusterDefinition, ClusterName} from "./tstype";
+
 export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>> = {
     genBasic: {
         ID: 0x0000,
         attributes: {
-            zclVersion: {ID: 0x0000, type: DataType.UINT8, required: true, max: 255, default: 3},
-            appVersion: {ID: 0x0001, type: DataType.UINT8, max: 255, default: 0},
-            stackVersion: {ID: 0x0002, type: DataType.UINT8, max: 255, default: 0},
-            hwVersion: {ID: 0x0003, type: DataType.UINT8, max: 255, default: 0},
+            zclVersion: {ID: 0x0000, type: DataType.UINT8, required: true, max: 0xff, default: 8},
+            appVersion: {ID: 0x0001, type: DataType.UINT8, max: 0xff, default: 0},
+            stackVersion: {ID: 0x0002, type: DataType.UINT8, max: 0xff, default: 0},
+            hwVersion: {ID: 0x0003, type: DataType.UINT8, max: 0xff, default: 0},
             manufacturerName: {ID: 0x0004, type: DataType.CHAR_STR, default: "", maxLen: 32},
             modelId: {ID: 0x0005, type: DataType.CHAR_STR, default: "", maxLen: 32},
             dateCode: {ID: 0x0006, type: DataType.CHAR_STR, default: "", maxLen: 16},
-            powerSource: {ID: 0x0007, type: DataType.ENUM8, required: true, default: 0},
-            appProfileVersion: {ID: 0x0008, type: DataType.ENUM8, default: 255},
-            genericDeviceType: {ID: 0x0009, type: DataType.ENUM8, default: 255},
+            powerSource: {ID: 0x0007, type: DataType.ENUM8, required: true, default: 0xff},
+            genericDeviceClass: {ID: 0x0008, type: DataType.ENUM8, default: 0xff},
+            genericDeviceType: {ID: 0x0009, type: DataType.ENUM8, default: 0xff},
             productCode: {ID: 0x000a, type: DataType.OCTET_STR, default: ""},
             productUrl: {ID: 0x000b, type: DataType.CHAR_STR, default: ""},
             manufacturerVersionDetails: {ID: 0x000c, type: DataType.CHAR_STR, default: ""},
@@ -27,10 +28,12 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             alarmMask: {ID: 0x0013, type: DataType.BITMAP8, writable: true, default: 0},
             disableLocalConfig: {ID: 0x0014, type: DataType.BITMAP8, writable: true, default: 0},
             swBuildId: {ID: 0x4000, type: DataType.CHAR_STR, default: "", maxLen: 16},
+            // custom
             schneiderMeterRadioPower: {ID: 0xe200, type: DataType.INT8, manufacturerCode: ManufacturerCode.SCHNEIDER_ELECTRIC},
         },
         commands: {
             resetFactDefault: {ID: 0x00, parameters: []},
+            // custom
             tuyaSetup: {ID: 0xf0, parameters: []},
         },
         commandsResponse: {},
@@ -38,63 +41,63 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
     genPowerCfg: {
         ID: 0x0001,
         attributes: {
-            mainsVoltage: {ID: 0x0000, type: DataType.UINT16, max: 65535},
-            mainsFrequency: {ID: 0x0001, type: DataType.UINT8, max: 255},
+            mainsVoltage: {ID: 0x0000, type: DataType.UINT16, max: 0xffff},
+            mainsFrequency: {ID: 0x0001, type: DataType.UINT8, max: 0xff},
             mainsAlarmMask: {ID: 0x0010, type: DataType.BITMAP8, writable: true, default: 0},
-            mainsVoltMinThres: {ID: 0x0011, type: DataType.UINT16, writable: true, max: 65535, default: 0},
-            mainsVoltMaxThres: {ID: 0x0012, type: DataType.UINT16, writable: true, max: 65535, default: 65535},
-            mainsVoltageDwellTripPoint: {ID: 0x0013, type: DataType.UINT16, writable: true, max: 65535, default: 0},
-            batteryVoltage: {ID: 0x0020, type: DataType.UINT8, max: 255},
-            batteryPercentageRemaining: {ID: 0x0021, type: DataType.UINT8, reportRequired: true, max: 255, default: 0},
+            mainsVoltMinThres: {ID: 0x0011, type: DataType.UINT16, writable: true, max: 0xffff, default: 0},
+            mainsVoltMaxThres: {ID: 0x0012, type: DataType.UINT16, writable: true, max: 0xffff, default: 0xffff},
+            mainsVoltageDwellTripPoint: {ID: 0x0013, type: DataType.UINT16, writable: true, max: 0xffff, default: 0},
+            batteryVoltage: {ID: 0x0020, type: DataType.UINT8, max: 0xff},
+            batteryPercentageRemaining: {ID: 0x0021, type: DataType.UINT8, reportRequired: true, max: 0xff, default: 0},
             batteryManufacturer: {ID: 0x0030, type: DataType.CHAR_STR, writable: true, default: "", maxLen: 16},
-            batterySize: {ID: 0x0031, type: DataType.ENUM8, writable: true, default: 255},
-            batteryAHrRating: {ID: 0x0032, type: DataType.UINT16, writable: true, max: 65535},
-            batteryQuantity: {ID: 0x0033, type: DataType.UINT8, writable: true, max: 255},
-            batteryRatedVoltage: {ID: 0x0034, type: DataType.UINT8, writable: true, max: 255},
+            batterySize: {ID: 0x0031, type: DataType.ENUM8, writable: true, default: 0xff},
+            batteryAHrRating: {ID: 0x0032, type: DataType.UINT16, writable: true, max: 0xffff},
+            batteryQuantity: {ID: 0x0033, type: DataType.UINT8, writable: true, max: 0xff},
+            batteryRatedVoltage: {ID: 0x0034, type: DataType.UINT8, writable: true, max: 0xff},
             batteryAlarmMask: {ID: 0x0035, type: DataType.BITMAP8, writable: true, default: 0},
-            batteryVoltMinThres: {ID: 0x0036, type: DataType.UINT8, writable: true, max: 255, default: 0},
-            batteryVoltThres1: {ID: 0x0037, type: DataType.UINT8, writable: true, writeOptional: true, max: 255, default: 0},
-            batteryVoltThres2: {ID: 0x0038, type: DataType.UINT8, writable: true, writeOptional: true, max: 255, default: 0},
-            batteryVoltThres3: {ID: 0x0039, type: DataType.UINT8, writable: true, writeOptional: true, max: 255, default: 0},
-            batteryPercentMinThres: {ID: 0x003a, type: DataType.UINT8, writable: true, writeOptional: true, max: 255, default: 0},
-            batteryPercentThres1: {ID: 0x003b, type: DataType.UINT8, writable: true, writeOptional: true, max: 255, default: 0},
-            batteryPercentThres2: {ID: 0x003c, type: DataType.UINT8, writable: true, writeOptional: true, max: 255, default: 0},
-            batteryPercentThres3: {ID: 0x003d, type: DataType.UINT8, writable: true, writeOptional: true, max: 255, default: 0},
-            batteryAlarmState: {ID: 0x003e, type: DataType.BITMAP32, default: 0},
-            battery2Voltage: {ID: 0x0040, type: DataType.UINT8, max: 255},
-            battery2PercentageRemaining: {ID: 0x0041, type: DataType.UINT8, reportRequired: true, max: 255, default: 0},
+            batteryVoltMinThres: {ID: 0x0036, type: DataType.UINT8, writable: true, max: 0xff, default: 0},
+            batteryVoltThres1: {ID: 0x0037, type: DataType.UINT8, writable: true, writeOptional: true, max: 0xff, default: 0},
+            batteryVoltThres2: {ID: 0x0038, type: DataType.UINT8, writable: true, writeOptional: true, max: 0xff, default: 0},
+            batteryVoltThres3: {ID: 0x0039, type: DataType.UINT8, writable: true, writeOptional: true, max: 0xff, default: 0},
+            batteryPercentMinThres: {ID: 0x003a, type: DataType.UINT8, writable: true, writeOptional: true, max: 0xff, default: 0},
+            batteryPercentThres1: {ID: 0x003b, type: DataType.UINT8, writable: true, writeOptional: true, max: 0xff, default: 0},
+            batteryPercentThres2: {ID: 0x003c, type: DataType.UINT8, writable: true, writeOptional: true, max: 0xff, default: 0},
+            batteryPercentThres3: {ID: 0x003d, type: DataType.UINT8, writable: true, writeOptional: true, max: 0xff, default: 0},
+            batteryAlarmState: {ID: 0x003e, type: DataType.BITMAP32, reportRequired: true, default: 0},
+            battery2Voltage: {ID: 0x0040, type: DataType.UINT8, max: 0xff},
+            battery2PercentageRemaining: {ID: 0x0041, type: DataType.UINT8, reportRequired: true, max: 0xff, default: 0},
             battery2Manufacturer: {ID: 0x0050, type: DataType.CHAR_STR, writable: true, default: "", maxLen: 16},
-            battery2Size: {ID: 0x0051, type: DataType.ENUM8, writable: true, default: 255},
-            battery2AHrRating: {ID: 0x0052, type: DataType.UINT16, writable: true, max: 65535},
-            battery2Quantity: {ID: 0x0053, type: DataType.UINT8, writable: true, max: 255},
-            battery2RatedVoltage: {ID: 0x0054, type: DataType.UINT8, writable: true, max: 255},
+            battery2Size: {ID: 0x0051, type: DataType.ENUM8, writable: true, default: 0xff},
+            battery2AHrRating: {ID: 0x0052, type: DataType.UINT16, writable: true, max: 0xffff},
+            battery2Quantity: {ID: 0x0053, type: DataType.UINT8, writable: true, max: 0xff},
+            battery2RatedVoltage: {ID: 0x0054, type: DataType.UINT8, writable: true, max: 0xff},
             battery2AlarmMask: {ID: 0x0055, type: DataType.BITMAP8, writable: true, default: 0},
-            battery2VoltageMinThreshold: {ID: 0x0056, type: DataType.UINT8, writable: true, max: 255, default: 0},
-            battery2VoltageThreshold1: {ID: 0x0057, type: DataType.UINT8, writable: true, writeOptional: true, max: 255, default: 0},
-            battery2VoltageThreshold2: {ID: 0x0058, type: DataType.UINT8, writable: true, writeOptional: true, max: 255, default: 0},
-            battery2VoltageThreshold3: {ID: 0x0059, type: DataType.UINT8, writable: true, writeOptional: true, max: 255, default: 0},
-            battery2PercentageMinThreshold: {ID: 0x005a, type: DataType.UINT8, writable: true, writeOptional: true, max: 255, default: 0},
-            battery2PercentageThreshold1: {ID: 0x005b, type: DataType.UINT8, writable: true, writeOptional: true, max: 255, default: 0},
-            battery2PercentageThreshold2: {ID: 0x005c, type: DataType.UINT8, writable: true, writeOptional: true, max: 255, default: 0},
-            battery2PercentageThreshold3: {ID: 0x005d, type: DataType.UINT8, writable: true, writeOptional: true, max: 255, default: 0},
-            battery2AlarmState: {ID: 0x005e, type: DataType.BITMAP32, default: 0},
-            battery3Voltage: {ID: 0x0060, type: DataType.UINT8, max: 255},
-            battery3PercentageRemaining: {ID: 0x0061, type: DataType.UINT8, reportRequired: true, max: 255, default: 0},
+            battery2VoltageMinThreshold: {ID: 0x0056, type: DataType.UINT8, writable: true, max: 0xff, default: 0},
+            battery2VoltageThreshold1: {ID: 0x0057, type: DataType.UINT8, writable: true, writeOptional: true, max: 0xff, default: 0},
+            battery2VoltageThreshold2: {ID: 0x0058, type: DataType.UINT8, writable: true, writeOptional: true, max: 0xff, default: 0},
+            battery2VoltageThreshold3: {ID: 0x0059, type: DataType.UINT8, writable: true, writeOptional: true, max: 0xff, default: 0},
+            battery2PercentageMinThreshold: {ID: 0x005a, type: DataType.UINT8, writable: true, writeOptional: true, max: 0xff, default: 0},
+            battery2PercentageThreshold1: {ID: 0x005b, type: DataType.UINT8, writable: true, writeOptional: true, max: 0xff, default: 0},
+            battery2PercentageThreshold2: {ID: 0x005c, type: DataType.UINT8, writable: true, writeOptional: true, max: 0xff, default: 0},
+            battery2PercentageThreshold3: {ID: 0x005d, type: DataType.UINT8, writable: true, writeOptional: true, max: 0xff, default: 0},
+            battery2AlarmState: {ID: 0x005e, type: DataType.BITMAP32, reportRequired: true, default: 0},
+            battery3Voltage: {ID: 0x0060, type: DataType.UINT8, max: 0xff},
+            battery3PercentageRemaining: {ID: 0x0061, type: DataType.UINT8, reportRequired: true, max: 0xff, default: 0},
             battery3Manufacturer: {ID: 0x0070, type: DataType.CHAR_STR, writable: true, default: "", maxLen: 16},
-            battery3Size: {ID: 0x0071, type: DataType.ENUM8, writable: true, default: 255},
-            battery3AHrRating: {ID: 0x0072, type: DataType.UINT16, writable: true, max: 65535},
-            battery3Quantity: {ID: 0x0073, type: DataType.UINT8, writable: true, max: 255},
-            battery3RatedVoltage: {ID: 0x0074, type: DataType.UINT8, writable: true, max: 255},
+            battery3Size: {ID: 0x0071, type: DataType.ENUM8, writable: true, default: 0xff},
+            battery3AHrRating: {ID: 0x0072, type: DataType.UINT16, writable: true, max: 0xffff},
+            battery3Quantity: {ID: 0x0073, type: DataType.UINT8, writable: true, max: 0xff},
+            battery3RatedVoltage: {ID: 0x0074, type: DataType.UINT8, writable: true, max: 0xff},
             battery3AlarmMask: {ID: 0x0075, type: DataType.BITMAP8, writable: true, default: 0},
-            battery3VoltageMinThreshold: {ID: 0x0076, type: DataType.UINT8, writable: true, max: 255, default: 0},
-            battery3VoltageThreshold1: {ID: 0x0077, type: DataType.UINT8, writable: true, writeOptional: true, max: 255, default: 0},
-            battery3VoltageThreshold2: {ID: 0x0078, type: DataType.UINT8, writable: true, writeOptional: true, max: 255, default: 0},
-            battery3VoltageThreshold3: {ID: 0x0079, type: DataType.UINT8, writable: true, writeOptional: true, max: 255, default: 0},
-            battery3PercentageMinThreshold: {ID: 0x007a, type: DataType.UINT8, writable: true, writeOptional: true, max: 255, default: 0},
-            battery3PercentageThreshold1: {ID: 0x007b, type: DataType.UINT8, writable: true, writeOptional: true, max: 255, default: 0},
-            battery3PercentageThreshold2: {ID: 0x007c, type: DataType.UINT8, writable: true, writeOptional: true, max: 255, default: 0},
-            battery3PercentageThreshold3: {ID: 0x007d, type: DataType.UINT8, writable: true, writeOptional: true, max: 255, default: 0},
-            battery3AlarmState: {ID: 0x007e, type: DataType.BITMAP32, default: 0},
+            battery3VoltageMinThreshold: {ID: 0x0076, type: DataType.UINT8, writable: true, max: 0xff, default: 0},
+            battery3VoltageThreshold1: {ID: 0x0077, type: DataType.UINT8, writable: true, writeOptional: true, max: 0xff, default: 0},
+            battery3VoltageThreshold2: {ID: 0x0078, type: DataType.UINT8, writable: true, writeOptional: true, max: 0xff, default: 0},
+            battery3VoltageThreshold3: {ID: 0x0079, type: DataType.UINT8, writable: true, writeOptional: true, max: 0xff, default: 0},
+            battery3PercentageMinThreshold: {ID: 0x007a, type: DataType.UINT8, writable: true, writeOptional: true, max: 0xff, default: 0},
+            battery3PercentageThreshold1: {ID: 0x007b, type: DataType.UINT8, writable: true, writeOptional: true, max: 0xff, default: 0},
+            battery3PercentageThreshold2: {ID: 0x007c, type: DataType.UINT8, writable: true, writeOptional: true, max: 0xff, default: 0},
+            battery3PercentageThreshold3: {ID: 0x007d, type: DataType.UINT8, writable: true, writeOptional: true, max: 0xff, default: 0},
+            battery3AlarmState: {ID: 0x007e, type: DataType.BITMAP32, reportRequired: true, default: 0},
         },
         commands: {},
         commandsResponse: {},
@@ -105,12 +108,12 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             currentTemperature: {ID: 0x0000, type: DataType.INT16, required: true, min: -200, max: 200},
             minTempExperienced: {ID: 0x0001, type: DataType.INT16, min: -200, max: 200},
             maxTempExperienced: {ID: 0x0002, type: DataType.INT16, min: -200, max: 200},
-            overTempTotalDwell: {ID: 0x0003, type: DataType.UINT16, max: 65535, default: 0},
+            overTempTotalDwell: {ID: 0x0003, type: DataType.UINT16, max: 0xffff, default: 0},
             devTempAlarmMask: {ID: 0x0010, type: DataType.BITMAP8, writable: true, default: 0},
             lowTempThres: {ID: 0x0011, type: DataType.INT16, writable: true, min: -200, max: 200, maxExclRef: "highTempThres"},
             highTempThres: {ID: 0x0012, type: DataType.INT16, writable: true, min: -200, max: 200, minExclRef: "lowTempThres"},
-            lowTempDwellTripPoint: {ID: 0x0013, type: DataType.UINT24, writable: true, max: 16777215},
-            highTempDwellTripPoint: {ID: 0x0014, type: DataType.UINT24, writable: true, max: 16777215},
+            lowTempDwellTripPoint: {ID: 0x0013, type: DataType.UINT24, writable: true, max: 0xffffff},
+            highTempDwellTripPoint: {ID: 0x0014, type: DataType.UINT24, writable: true, max: 0xffffff},
         },
         commands: {},
         commandsResponse: {},
@@ -118,25 +121,27 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
     genIdentify: {
         ID: 0x0003,
         attributes: {
-            identifyTime: {ID: 0x0000, type: DataType.UINT16, writable: true, required: true, max: 65535, default: 0},
+            identifyTime: {ID: 0x0000, type: DataType.UINT16, writable: true, required: true, max: 0xffff, default: 0},
+            // custom
             identifyCommissionState: {ID: 0x0001, type: DataType.UNKNOWN},
         },
         commands: {
             identify: {ID: 0x00, parameters: [{name: "identifytime", type: DataType.UINT16}], required: true},
             identifyQuery: {ID: 0x01, parameters: [], required: true},
+            triggerEffect: {
+                ID: 0x40,
+                parameters: [
+                    {name: "effectid", type: DataType.ENUM8},
+                    {name: "effectvariant", type: DataType.ENUM8},
+                ],
+            },
+            // custom
             ezmodeInvoke: {ID: 0x02, parameters: [{name: "action", type: DataType.UINT8}]},
             updateCommissionState: {
                 ID: 0x03,
                 parameters: [
                     {name: "action", type: DataType.UINT8},
                     {name: "commstatemask", type: DataType.UINT8},
-                ],
-            },
-            triggerEffect: {
-                ID: 0x40,
-                parameters: [
-                    {name: "effectid", type: DataType.UINT8},
-                    {name: "effectvariant", type: DataType.UINT8},
                 ],
             },
         },
@@ -147,7 +152,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
     genGroups: {
         ID: 0x0004,
         attributes: {
-            nameSupport: {ID: 0x0000, type: DataType.BITMAP8, required: true},
+            nameSupport: {ID: 0x0000, type: DataType.BITMAP8, required: true, default: 0},
         },
         commands: {
             add: {
@@ -179,13 +184,14 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 ],
                 required: true,
             },
+            // custom
             miboxerSetZones: {ID: 0xf0, parameters: [{name: "zones", type: BuffaloZclDataType.LIST_MIBOXER_ZONES}]},
         },
         commandsResponse: {
             addRsp: {
                 ID: 0x00,
                 parameters: [
-                    {name: "status", type: DataType.UINT8},
+                    {name: "status", type: DataType.ENUM8},
                     {name: "groupid", type: DataType.UINT16},
                 ],
                 required: true,
@@ -193,7 +199,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             viewRsp: {
                 ID: 0x01,
                 parameters: [
-                    {name: "status", type: DataType.UINT8},
+                    {name: "status", type: DataType.ENUM8},
                     {name: "groupid", type: DataType.UINT16},
                     {name: "groupname", type: DataType.CHAR_STR},
                 ],
@@ -211,7 +217,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             removeRsp: {
                 ID: 0x03,
                 parameters: [
-                    {name: "status", type: DataType.UINT8},
+                    {name: "status", type: DataType.ENUM8},
                     {name: "groupid", type: DataType.UINT16},
                 ],
                 required: true,
@@ -221,11 +227,11 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
     genScenes: {
         ID: 0x0005,
         attributes: {
-            count: {ID: 0x0000, type: DataType.UINT8, required: true, default: 0},
-            currentScene: {ID: 0x0001, type: DataType.UINT8, required: true, default: 0},
-            currentGroup: {ID: 0x0002, type: DataType.UINT16, required: true, default: 0},
+            count: {ID: 0x0000, type: DataType.UINT8, required: true, max: 0xff, default: 0},
+            currentScene: {ID: 0x0001, type: DataType.UINT8, required: true, max: 0xff, default: 0},
+            currentGroup: {ID: 0x0002, type: DataType.UINT16, required: true, max: 0xfff7, default: 0},
             sceneValid: {ID: 0x0003, type: DataType.BOOLEAN, required: true, default: 0},
-            nameSupport: {ID: 0x0004, type: DataType.BITMAP8, required: true},
+            nameSupport: {ID: 0x0004, type: DataType.BITMAP8, required: true, default: 0},
             lastCfgBy: {ID: 0x0005, type: DataType.IEEE_ADDR, special: [["UnknownOrNotConfigured", "ffffffffffffffff"]]},
         },
         commands: {
@@ -279,15 +285,6 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 required: true,
             },
             getSceneMembership: {ID: 0x06, response: 6, parameters: [{name: "groupid", type: DataType.UINT16}], required: true},
-            tradfriArrowSingle: {
-                ID: 0x07,
-                parameters: [
-                    {name: "value", type: DataType.UINT16},
-                    {name: "value2", type: DataType.UINT16},
-                ],
-            },
-            tradfriArrowHold: {ID: 0x08, parameters: [{name: "value", type: DataType.UINT16}]},
-            tradfriArrowRelease: {ID: 0x09, parameters: [{name: "value", type: DataType.UINT16}]},
             enhancedAdd: {
                 ID: 0x40,
                 response: 64,
@@ -311,19 +308,29 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 ID: 0x42,
                 response: 66,
                 parameters: [
-                    {name: "mode", type: DataType.UINT8},
+                    {name: "mode", type: DataType.BITMAP8},
                     {name: "groupidfrom", type: DataType.UINT16},
                     {name: "sceneidfrom", type: DataType.UINT8},
                     {name: "groupidto", type: DataType.UINT16},
                     {name: "sceneidto", type: DataType.UINT8},
                 ],
             },
+            // custom
+            tradfriArrowSingle: {
+                ID: 0x07,
+                parameters: [
+                    {name: "value", type: DataType.UINT16},
+                    {name: "value2", type: DataType.UINT16},
+                ],
+            },
+            tradfriArrowHold: {ID: 0x08, parameters: [{name: "value", type: DataType.UINT16}]},
+            tradfriArrowRelease: {ID: 0x09, parameters: [{name: "value", type: DataType.UINT16}]},
         },
         commandsResponse: {
             addRsp: {
                 ID: 0x00,
                 parameters: [
-                    {name: "status", type: DataType.UINT8},
+                    {name: "status", type: DataType.ENUM8},
                     {name: "groupId", type: DataType.UINT16},
                     {name: "sceneId", type: DataType.UINT8},
                 ],
@@ -332,7 +339,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             viewRsp: {
                 ID: 0x01,
                 parameters: [
-                    {name: "status", type: DataType.UINT8},
+                    {name: "status", type: DataType.ENUM8},
                     {name: "groupid", type: DataType.UINT16},
                     {name: "sceneid", type: DataType.UINT8},
                     {
@@ -357,7 +364,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             removeRsp: {
                 ID: 0x02,
                 parameters: [
-                    {name: "status", type: DataType.UINT8},
+                    {name: "status", type: DataType.ENUM8},
                     {name: "groupid", type: DataType.UINT16},
                     {name: "sceneid", type: DataType.UINT8},
                 ],
@@ -366,7 +373,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             removeAllRsp: {
                 ID: 0x03,
                 parameters: [
-                    {name: "status", type: DataType.UINT8},
+                    {name: "status", type: DataType.ENUM8},
                     {name: "groupid", type: DataType.UINT16},
                 ],
                 required: true,
@@ -374,7 +381,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             storeRsp: {
                 ID: 0x04,
                 parameters: [
-                    {name: "status", type: DataType.UINT8},
+                    {name: "status", type: DataType.ENUM8},
                     {name: "groupid", type: DataType.UINT16},
                     {name: "sceneid", type: DataType.UINT8},
                 ],
@@ -383,12 +390,12 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             getSceneMembershipRsp: {
                 ID: 0x06,
                 parameters: [
-                    {name: "status", type: DataType.UINT8},
+                    {name: "status", type: DataType.ENUM8},
                     {
                         name: "capacity",
                         type: DataType.UINT8,
                         min: 1,
-                        max: 253,
+                        max: 0xff,
                         special: [
                             ["NoFurtherScenesMayBeAdded", "00"],
                             ["AtLeastOneFurtherSceneMayBeAdded", "fe"],
@@ -412,7 +419,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             enhancedAddRsp: {
                 ID: 0x40,
                 parameters: [
-                    {name: "status", type: DataType.UINT8},
+                    {name: "status", type: DataType.ENUM8},
                     {name: "groupId", type: DataType.UINT16},
                     {name: "sceneId", type: DataType.UINT8},
                 ],
@@ -420,7 +427,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             enhancedViewRsp: {
                 ID: 0x41,
                 parameters: [
-                    {name: "status", type: DataType.UINT8},
+                    {name: "status", type: DataType.ENUM8},
                     {name: "groupid", type: DataType.UINT16},
                     {name: "sceneid", type: DataType.UINT8},
                     {
@@ -444,7 +451,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             copyRsp: {
                 ID: 0x42,
                 parameters: [
-                    {name: "status", type: DataType.UINT8},
+                    {name: "status", type: DataType.ENUM8},
                     {name: "groupidfrom", type: DataType.UINT16},
                     {name: "sceneidfrom", type: DataType.UINT8},
                 ],
@@ -454,12 +461,13 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
     genOnOff: {
         ID: 0x0006,
         attributes: {
-            onOff: {ID: 0x0000, type: DataType.BOOLEAN, reportRequired: true, sceneRequired: true, required: true, max: 1, default: 0},
+            onOff: {ID: 0x0000, type: DataType.BOOLEAN, reportRequired: true, sceneRequired: true, required: true, default: 0},
+            globalSceneCtrl: {ID: 0x4000, type: DataType.BOOLEAN, default: 1},
+            onTime: {ID: 0x4001, type: DataType.UINT16, writable: true, max: 0xffff, default: 0},
+            offWaitTime: {ID: 0x4002, type: DataType.UINT16, writable: true, max: 0xffff, default: 0},
+            startUpOnOff: {ID: 0x4003, type: DataType.ENUM8, writable: true, max: 0xff, special: [["SetToPreviousValue", "ff"]]},
+            // custom
             nodonTransitionTime: {ID: 0x0001, type: DataType.UINT16, manufacturerCode: ManufacturerCode.NODON},
-            globalSceneCtrl: {ID: 0x4000, type: DataType.BOOLEAN, max: 1, default: 1},
-            onTime: {ID: 0x4001, type: DataType.UINT16, writable: true, max: 65535, default: 0},
-            offWaitTime: {ID: 0x4002, type: DataType.UINT16, writable: true, max: 65535, default: 0},
-            startUpOnOff: {ID: 0x4003, type: DataType.ENUM8, writable: true},
             tuyaBacklightSwitch: {ID: 0x5000, type: DataType.ENUM8},
             tuyaBacklightMode: {ID: 0x8001, type: DataType.ENUM8},
             moesStartUpOnOff: {ID: 0x8002, type: DataType.ENUM8},
@@ -475,7 +483,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             offWithEffect: {
                 ID: 0x40,
                 parameters: [
-                    {name: "effectid", type: DataType.UINT8},
+                    {name: "effectid", type: DataType.ENUM8},
                     {name: "effectvariant", type: DataType.UINT8},
                 ],
             },
@@ -488,6 +496,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                     {name: "offwaittime", type: DataType.UINT16},
                 ],
             },
+            // custom
             tuyaAction2: {ID: 0xfc, parameters: [{name: "value", type: DataType.UINT8}]},
             tuyaAction: {
                 ID: 0xfd,
@@ -502,9 +511,11 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
     genOnOffSwitchCfg: {
         ID: 0x0007,
         attributes: {
-            switchType: {ID: 0x0000, type: DataType.ENUM8},
+            switchType: {ID: 0x0000, type: DataType.ENUM8, required: true, min: 0x00, max: 0x02},
+            switchActions: {ID: 0x0010, type: DataType.ENUM8, required: true, writable: true, min: 0, max: 2},
+            // custom
+            // TODO: doesn't exist?
             switchMultiFunction: {ID: 0x0002, type: DataType.UNKNOWN},
-            switchActions: {ID: 0x0010, type: DataType.ENUM8},
         },
         commands: {},
         commandsResponse: {},
@@ -518,13 +529,13 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 reportRequired: true,
                 sceneRequired: true,
                 required: true,
-                default: 255,
+                default: 0xff,
                 minRef: "minLevel",
                 maxRef: "maxLevel",
             },
-            remainingTime: {ID: 0x0001, type: DataType.UINT16, max: 65535, default: 0},
+            remainingTime: {ID: 0x0001, type: DataType.UINT16, max: 0xffff, default: 0},
             minLevel: {ID: 0x0002, type: DataType.UINT8, default: 0, maxRef: "maxLevel"},
-            maxLevel: {ID: 0x0003, type: DataType.UINT8, max: 255, default: 255, minRef: "minLevel"},
+            maxLevel: {ID: 0x0003, type: DataType.UINT8, max: 0xff, default: 0xff, minRef: "minLevel"},
             currentFrequency: {
                 ID: 0x0004,
                 type: DataType.UINT16,
@@ -535,23 +546,25 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 maxRef: "maxFrequency",
             },
             minFrequency: {ID: 0x0005, type: DataType.UINT16, default: 0, maxRef: "maxFrequency"},
-            maxFrequency: {ID: 0x0006, type: DataType.UINT16, max: 65535, default: 0, minRef: "minFrequency"},
+            maxFrequency: {ID: 0x0006, type: DataType.UINT16, max: 0xffff, default: 0, minRef: "minFrequency"},
             options: {ID: 0x000f, type: DataType.BITMAP8, writable: true, default: 0},
-            onOffTransitionTime: {ID: 0x0010, type: DataType.UINT16, writable: true, max: 65535, default: 0},
-            onLevel: {ID: 0x0011, type: DataType.UINT8, writable: true, default: 255, minRef: "minLevel", maxRef: "maxLevel"},
-            onTransitionTime: {ID: 0x0012, type: DataType.UINT16, writable: true, max: 65534, default: 65535},
-            offTransitionTime: {ID: 0x0013, type: DataType.UINT16, writable: true, max: 65534, default: 65535},
-            defaultMoveRate: {ID: 0x0014, type: DataType.UINT16, writable: true, max: 254},
+            onOffTransitionTime: {ID: 0x0010, type: DataType.UINT16, writable: true, max: 0xffff, default: 0},
+            onLevel: {ID: 0x0011, type: DataType.UINT8, writable: true, default: 0xff, minRef: "minLevel", maxRef: "maxLevel"},
+            onTransitionTime: {ID: 0x0012, type: DataType.UINT16, writable: true, max: 0xfffe, default: 0xffff},
+            offTransitionTime: {ID: 0x0013, type: DataType.UINT16, writable: true, max: 0xfffe, default: 0xffff},
+            defaultMoveRate: {ID: 0x0014, type: DataType.UINT8, writable: true, max: 0xfe},
             startUpCurrentLevel: {
                 ID: 0x4000,
                 type: DataType.UINT8,
                 writable: true,
-                max: 255,
+                max: 0xff,
                 special: [
                     ["MinimumDeviceValuePermitted", "00"],
                     ["SetToPreviousValue", "ff"],
                 ],
             },
+            // custom
+            // TODO: needed?
             elkoStartUpCurrentLevel: {ID: 0x4000, type: DataType.UINT8, manufacturerCode: ManufacturerCode.ADEO},
         },
         commands: {
@@ -568,7 +581,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             move: {
                 ID: 0x01,
                 parameters: [
-                    {name: "movemode", type: DataType.UINT8},
+                    {name: "movemode", type: DataType.ENUM8},
                     {name: "rate", type: DataType.UINT8},
                     {name: "optionsMask", type: DataType.BITMAP8},
                     {name: "optionsOverride", type: DataType.BITMAP8},
@@ -578,7 +591,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             step: {
                 ID: 0x02,
                 parameters: [
-                    {name: "stepmode", type: DataType.UINT8},
+                    {name: "stepmode", type: DataType.ENUM8},
                     {name: "stepsize", type: DataType.UINT8},
                     {name: "transtime", type: DataType.UINT16},
                     {name: "optionsMask", type: DataType.BITMAP8},
@@ -607,7 +620,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             moveWithOnOff: {
                 ID: 0x05,
                 parameters: [
-                    {name: "movemode", type: DataType.UINT8},
+                    {name: "movemode", type: DataType.ENUM8},
                     {name: "rate", type: DataType.UINT8},
                     {name: "optionsMask", type: DataType.BITMAP8},
                     {name: "optionsOverride", type: DataType.BITMAP8},
@@ -617,7 +630,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             stepWithOnOff: {
                 ID: 0x06,
                 parameters: [
-                    {name: "stepmode", type: DataType.UINT8},
+                    {name: "stepmode", type: DataType.ENUM8},
                     {name: "stepsize", type: DataType.UINT8},
                     {name: "transtime", type: DataType.UINT16},
                     {name: "optionsMask", type: DataType.BITMAP8},
@@ -633,7 +646,9 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 ],
                 required: true,
             },
+            // only `required: true` if `currentFrequency` attribute supported
             moveToClosestFrequency: {ID: 0x08, parameters: [{name: "frequency", type: DataType.UINT16}]},
+            // custom
             moveToLevelTuya: {
                 ID: 0xf0,
                 parameters: [
@@ -647,56 +662,70 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
     genAlarms: {
         ID: 0x0009,
         attributes: {
-            alarmCount: {ID: 0x0000, type: DataType.UINT16, default: 0},
+            alarmCount: {ID: 0x0000, type: DataType.UINT16, max: 0xffff, default: 0},
         },
         commands: {
             reset: {
                 ID: 0x00,
                 parameters: [
-                    {name: "alarmcode", type: DataType.UINT8},
-                    {name: "clusterid", type: DataType.UINT16},
+                    {name: "alarmcode", type: DataType.ENUM8},
+                    {name: "clusterid", type: DataType.CLUSTER_ID},
                 ],
                 required: true,
             },
             resetAll: {ID: 0x01, parameters: [], required: true},
             getAlarm: {ID: 0x02, parameters: []},
             resetLog: {ID: 0x03, parameters: []},
+            // custom
             publishEventLog: {ID: 0x04, parameters: []},
         },
         commandsResponse: {
             alarm: {
                 ID: 0x00,
                 parameters: [
-                    {name: "alarmcode", type: DataType.UINT8},
-                    {name: "clusterid", type: DataType.UINT16},
+                    {name: "alarmcode", type: DataType.ENUM8},
+                    {name: "clusterid", type: DataType.CLUSTER_ID},
                 ],
                 required: true,
             },
             getRsp: {
                 ID: 0x01,
                 parameters: [
-                    {name: "status", type: DataType.UINT8},
-                    {name: "alarmcode", type: DataType.UINT8},
-                    {name: "clusterid", type: DataType.UINT16},
-                    {name: "timestamp", type: DataType.UINT32},
+                    {name: "status", type: DataType.ENUM8},
+                    {
+                        name: "alarmcode",
+                        type: DataType.ENUM8,
+                        conditions: [{type: ParameterCondition.FIELD_EQUAL, field: "status", value: Status.SUCCESS}],
+                    },
+                    {
+                        name: "clusterid",
+                        type: DataType.CLUSTER_ID,
+                        conditions: [{type: ParameterCondition.FIELD_EQUAL, field: "status", value: Status.SUCCESS}],
+                    },
+                    {
+                        name: "timestamp",
+                        type: DataType.UINT32,
+                        conditions: [{type: ParameterCondition.FIELD_EQUAL, field: "status", value: Status.SUCCESS}],
+                    },
                 ],
             },
+            // custom
             getEventLog: {ID: 0x02, parameters: []},
         },
     },
     genTime: {
         ID: 0x000a,
         attributes: {
-            time: {ID: 0x0000, type: DataType.UTC, writable: true, required: true, max: 4294967294, default: 4294967295},
+            time: {ID: 0x0000, type: DataType.UTC, writable: true, required: true, max: 0xfffffffe, default: 0xffffffff},
             timeStatus: {ID: 0x0001, type: DataType.BITMAP8, writable: true, required: true, default: 0},
             timeZone: {ID: 0x0002, type: DataType.INT32, writable: true, min: -86400, max: 86400, default: 0},
-            dstStart: {ID: 0x0003, type: DataType.UINT32, writable: true, max: 4294967294, default: 4294967295},
-            dstEnd: {ID: 0x0004, type: DataType.UINT32, writable: true, max: 4294967294, default: 4294967295},
+            dstStart: {ID: 0x0003, type: DataType.UINT32, writable: true, max: 0xfffffffe, default: 0xffffffff},
+            dstEnd: {ID: 0x0004, type: DataType.UINT32, writable: true, max: 0xfffffffe, default: 0xffffffff},
             dstShift: {ID: 0x0005, type: DataType.INT32, writable: true, min: -86400, max: 86400, default: 0},
-            standardTime: {ID: 0x0006, type: DataType.UINT32, max: 4294967294, default: 4294967295},
-            localTime: {ID: 0x0007, type: DataType.UINT32, max: 4294967294, default: 4294967295},
-            lastSetTime: {ID: 0x0008, type: DataType.UTC, default: 4294967295},
-            validUntilTime: {ID: 0x0009, type: DataType.UTC, writable: true, default: 4294967295},
+            standardTime: {ID: 0x0006, type: DataType.UINT32, max: 0xfffffffe, default: 0xffffffff},
+            localTime: {ID: 0x0007, type: DataType.UINT32, max: 0xfffffffe, default: 0xffffffff},
+            lastSetTime: {ID: 0x0008, type: DataType.UTC, default: 0xffffffff},
+            validUntilTime: {ID: 0x0009, type: DataType.UTC, writable: true, default: 0xffffffff},
         },
         commands: {},
         commandsResponse: {},
@@ -704,30 +733,20 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
     genRssiLocation: {
         ID: 0x000b,
         attributes: {
-            /** read/write | [2: coordinator system, 1: 2-D, 1: absolute] */
-            type: {ID: 0x0000, type: DataType.DATA8},
-            /** read/write | @see LocationMethod */
-            method: {ID: 0x0001, type: DataType.ENUM8},
-            age: {ID: 0x0002, type: DataType.UINT16},
-            /** 0x00..0x64 i.e. zero..complete confidence */
-            qualityMeasure: {ID: 0x0003, type: DataType.UINT8},
-            numOfDevices: {ID: 0x0004, type: DataType.UINT8},
-            /** read/write | -0x8000..0x7fff */
-            coordinate1: {ID: 0x0010, type: DataType.INT16},
-            /** read/write | -0x8000..0x7fff */
-            coordinate2: {ID: 0x0011, type: DataType.INT16},
-            /** read/write | -0x8000..0x7fff | optional */
-            coordinate3: {ID: 0x0012, type: DataType.INT16},
-            /** read/write | -0x8000..0x7fff */
-            power: {ID: 0x0013, type: DataType.INT16},
-            /** read/write | 0x0000..0xffff */
-            pathLossExponent: {ID: 0x0014, type: DataType.UINT16},
-            /** read/write | 0x0000..0xffff | optional */
-            reportingPeriod: {ID: 0x0015, type: DataType.UINT16},
-            /** read/write | 0x0000..0xffff | optional */
-            calcPeriod: {ID: 0x0016, type: DataType.UINT16},
-            /** read/write | 0x01..0xff */
-            numRSSIMeasurements: {ID: 0x0017, type: DataType.UINT8},
+            /** [2: coordinator system, 1: 2-D, 1: absolute] */
+            type: {ID: 0x0000, type: DataType.DATA8, required: true, writable: true},
+            method: {ID: 0x0001, type: DataType.ENUM8, required: true, writable: true},
+            age: {ID: 0x0002, type: DataType.UINT16, max: 0xffff},
+            qualityMeasure: {ID: 0x0003, type: DataType.UINT8, max: 0x64},
+            numOfDevices: {ID: 0x0004, type: DataType.UINT8, max: 0xff},
+            coordinate1: {ID: 0x0010, type: DataType.INT16, required: true, writable: true, min: -0x8000, max: 0x7fff},
+            coordinate2: {ID: 0x0011, type: DataType.INT16, required: true, writable: true, min: -0x8000, max: 0x7fff},
+            coordinate3: {ID: 0x0012, type: DataType.INT16, writable: true, min: -0x8000, max: 0x7fff},
+            power: {ID: 0x0013, type: DataType.INT16, required: true, writable: true, min: -0x8000, max: 0x7fff},
+            pathLossExponent: {ID: 0x0014, type: DataType.UINT16, required: true, writable: true},
+            reportingPeriod: {ID: 0x0015, type: DataType.UINT16, writable: true, max: 0xffff},
+            calcPeriod: {ID: 0x0016, type: DataType.UINT16, writable: true, max: 0xffff},
+            numRSSIMeasurements: {ID: 0x0017, type: DataType.UINT8, required: true, writable: true, min: 0x01, max: 0xff},
         },
         commands: {
             setAbsolute: {
@@ -739,6 +758,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                     {name: "power", type: DataType.INT16},
                     {name: "pathLossExponent", type: DataType.UINT16},
                 ],
+                required: true,
             },
             setDeviceConfig: {
                 ID: 0x01,
@@ -749,8 +769,9 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                     {name: "numRssiMeasurements", type: DataType.UINT8},
                     {name: "reportingPeriod", type: DataType.UINT16},
                 ],
+                required: true,
             },
-            getDeviceConfig: {ID: 0x02, parameters: [{name: "targetAddr", type: DataType.IEEE_ADDR}]},
+            getDeviceConfig: {ID: 0x02, parameters: [{name: "targetAddr", type: DataType.IEEE_ADDR}], required: true},
             getLocationData: {
                 ID: 0x03,
                 parameters: [
@@ -763,6 +784,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                         conditions: [{type: ParameterCondition.BITMASK_SET, param: "info", mask: 0b100, reversed: true}],
                     },
                 ],
+                required: true,
             },
             rssiResponse: {
                 ID: 0x04,
@@ -824,6 +846,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                         conditions: [{type: ParameterCondition.FIELD_EQUAL, field: "status", value: Status.SUCCESS}],
                     },
                 ],
+                required: true,
             },
             locationDataResponse: {
                 ID: 0x01,
@@ -875,6 +898,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                         conditions: [{type: ParameterCondition.FIELD_EQUAL, field: "status", value: Status.SUCCESS}],
                     },
                 ],
+                required: true,
             },
             locationDataNotification: {
                 ID: 0x02,
@@ -928,8 +952,9 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                         conditions: [{type: ParameterCondition.BITMASK_SET, param: "type", mask: 0b1, reversed: true}],
                     },
                 ],
+                required: true,
             },
-            rssiPing: {ID: 0x04, parameters: [{name: "type", type: DataType.DATA8}]},
+            rssiPing: {ID: 0x04, parameters: [{name: "type", type: DataType.DATA8}], required: true},
             rssiRequest: {ID: 0x05, parameters: []},
             reportRssiMeasurements: {
                 ID: 0x06,
@@ -937,7 +962,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                     {name: "measuringDeviceAddr", type: DataType.IEEE_ADDR},
                     {name: "numNeighbors", type: DataType.UINT8},
                     // TODO: needs special Buffalo read(/write)
-                    // {name: "neighborInfo", type: DataType.ARRAY},
+                    // {name: "neighborInfo", type: DataType.LIST_NEIGHBORS_INFO},
                     //   {name: "neighbor", type: DataType.IEEE_ADDR},
                     //   {name: "x", type: DataType.INT16},
                     //   {name: "y", type: DataType.INT16},
@@ -1441,7 +1466,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 minRef: "minLevel",
                 maxRef: "maxLevel",
             },
-            remainingTime: {ID: 0x0001, type: DataType.UINT16, max: 65535, default: 0},
+            remainingTime: {ID: 0x0001, type: DataType.UINT16, max: 0xffff, default: 0},
             minLevel: {ID: 0x0002, type: DataType.UINT8, default: 0, maxRef: "maxLevel", required: true},
             maxLevel: {ID: 0x0003, type: DataType.UINT8, max: 100, default: 100, minRef: "minLevel", required: true},
             currentFrequency: {
@@ -1455,18 +1480,18 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 required: true,
             },
             minFrequency: {ID: 0x0005, type: DataType.UINT16, default: 0, maxRef: "maxFrequency", required: true},
-            maxFrequency: {ID: 0x0006, type: DataType.UINT16, max: 65535, default: 0, minRef: "minFrequency", required: true},
+            maxFrequency: {ID: 0x0006, type: DataType.UINT16, max: 0xffff, default: 0, minRef: "minFrequency", required: true},
             options: {ID: 0x000f, type: DataType.BITMAP8, writable: true, default: 0},
-            onOffTransitionTime: {ID: 0x0010, type: DataType.UINT16, writable: true, max: 65535, default: 0},
-            onLevel: {ID: 0x0011, type: DataType.UINT8, writable: true, default: 255, minRef: "minLevel", maxRef: "maxLevel"},
-            onTransitionTime: {ID: 0x0012, type: DataType.UINT16, writable: true, max: 65534, default: 65535},
-            offTransitionTime: {ID: 0x0013, type: DataType.UINT16, writable: true, max: 65534, default: 65535},
-            defaultMoveRate: {ID: 0x0014, type: DataType.UINT16, writable: true, max: 254},
+            onOffTransitionTime: {ID: 0x0010, type: DataType.UINT16, writable: true, max: 0xffff, default: 0},
+            onLevel: {ID: 0x0011, type: DataType.UINT8, writable: true, default: 0xff, minRef: "minLevel", maxRef: "maxLevel"},
+            onTransitionTime: {ID: 0x0012, type: DataType.UINT16, writable: true, max: 0xfffe, default: 0xffff},
+            offTransitionTime: {ID: 0x0013, type: DataType.UINT16, writable: true, max: 0xfffe, default: 0xffff},
+            defaultMoveRate: {ID: 0x0014, type: DataType.UINT8, writable: true, max: 0xfe},
             startUpCurrentLevel: {
                 ID: 0x4000,
                 type: DataType.UINT8,
                 writable: true,
-                max: 255,
+                max: 0xff,
                 special: [
                     ["MinimumDeviceValuePermitted", "00"],
                     ["SetToPreviousValue", "ff"],
@@ -1561,8 +1586,8 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         attributes: {
             checkinInterval: {ID: 0x0000, type: DataType.UINT32, writable: true, required: true, max: 7208960, default: 14400},
             longPollInterval: {ID: 0x0001, type: DataType.UINT32, required: true, min: 4, max: 7208960, default: 20},
-            shortPollInterval: {ID: 0x0002, type: DataType.UINT16, required: true, min: 1, max: 65535, default: 2},
-            fastPollTimeout: {ID: 0x0003, type: DataType.UINT16, writable: true, required: true, min: 1, max: 65535, default: 40},
+            shortPollInterval: {ID: 0x0002, type: DataType.UINT16, required: true, min: 1, max: 0xffff, default: 2},
+            fastPollTimeout: {ID: 0x0003, type: DataType.UINT16, writable: true, required: true, min: 1, max: 0xffff, default: 40},
             checkinIntervalMin: {ID: 0x0004, type: DataType.UINT32, default: 0},
             longPollIntervalMin: {ID: 0x0005, type: DataType.UINT32, default: 0},
             fastPollTimeoutMax: {ID: 0x0006, type: DataType.UINT16, default: 0},
@@ -2320,8 +2345,8 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             alarmMask: {ID: 0x001d, type: DataType.BITMAP8, default: 0},
             runningMode: {ID: 0x001e, type: DataType.ENUM8, default: 0},
             startOfWeek: {ID: 0x0020, type: DataType.ENUM8},
-            numberOfWeeklyTrans: {ID: 0x0021, type: DataType.UINT8, max: 255},
-            numberOfDailyTrans: {ID: 0x0022, type: DataType.UINT8, max: 255},
+            numberOfWeeklyTrans: {ID: 0x0021, type: DataType.UINT8, max: 0xff},
+            numberOfDailyTrans: {ID: 0x0022, type: DataType.UINT8, max: 0xff},
             tempSetpointHold: {ID: 0x0023, type: DataType.ENUM8, writable: true, default: 0},
             tempSetpointHoldDuration: {ID: 0x0024, type: DataType.UINT16, writable: true, min: 0, max: 1440, default: 65535},
             programingOperMode: {ID: 0x0025, type: DataType.BITMAP8, writable: true, reportRequired: true, default: 0},
@@ -2338,7 +2363,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 maxRef: "occupiedSetbackMax",
             },
             occupiedSetbackMin: {ID: 0x0035, type: DataType.UINT8, default: 255, min: 0, maxExclRef: "occupiedSetbackMax"},
-            occupiedSetbackMax: {ID: 0x0036, type: DataType.UINT8, default: 255, max: 255, minExclRef: "occupiedSetbackMin"},
+            occupiedSetbackMax: {ID: 0x0036, type: DataType.UINT8, default: 255, max: 0xff, minExclRef: "occupiedSetbackMin"},
             unoccupiedSetback: {
                 ID: 0x0037,
                 type: DataType.UINT8,
@@ -2348,8 +2373,8 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 maxRef: "unoccupiedSetbackMax",
             },
             unoccupiedSetbackMin: {ID: 0x0038, type: DataType.UINT8, default: 255, min: 0, maxExclRef: "unoccupiedSetbackMax"},
-            unoccupiedSetbackMax: {ID: 0x0039, type: DataType.UINT8, default: 255, max: 255, minExclRef: "unoccupiedSetbackMin"},
-            emergencyHeatDelta: {ID: 0x003a, type: DataType.UINT8, writable: true, max: 255, default: 255},
+            unoccupiedSetbackMax: {ID: 0x0039, type: DataType.UINT8, default: 255, max: 0xff, minExclRef: "unoccupiedSetbackMin"},
+            emergencyHeatDelta: {ID: 0x003a, type: DataType.UINT8, writable: true, max: 0xff, default: 0xff},
             acType: {ID: 0x0040, type: DataType.ENUM8, writable: true, default: 0},
             acCapacity: {ID: 0x0041, type: DataType.UINT16, writable: true, default: 0},
             acRefrigerantType: {ID: 0x0042, type: DataType.ENUM8, writable: true, default: 0},
@@ -2567,40 +2592,40 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             numPrimaries: {ID: 0x0010, type: DataType.UINT8, required: true, max: 6},
             primary1X: {ID: 0x0011, type: DataType.UINT16, max: 65279},
             primary1Y: {ID: 0x0012, type: DataType.UINT16, max: 65279},
-            primary1Intensity: {ID: 0x0013, type: DataType.UINT8, max: 255},
+            primary1Intensity: {ID: 0x0013, type: DataType.UINT8, max: 0xff},
             primary2X: {ID: 0x0015, type: DataType.UINT16, max: 65279},
             primary2Y: {ID: 0x0016, type: DataType.UINT16, max: 65279},
             primary2Intensity: {ID: 0x0017, type: DataType.UINT8},
             primary3X: {ID: 0x0019, type: DataType.UINT16, max: 65279},
             primary3Y: {ID: 0x001a, type: DataType.UINT16, max: 65279},
-            primary3Intensity: {ID: 0x001b, type: DataType.UINT8, max: 255},
+            primary3Intensity: {ID: 0x001b, type: DataType.UINT8, max: 0xff},
             primary4X: {ID: 0x0020, type: DataType.UINT16, max: 65279},
             primary4Y: {ID: 0x0021, type: DataType.UINT16, max: 65279},
-            primary4Intensity: {ID: 0x0022, type: DataType.UINT8, max: 255},
+            primary4Intensity: {ID: 0x0022, type: DataType.UINT8, max: 0xff},
             primary5X: {ID: 0x0024, type: DataType.UINT16, max: 65279},
             primary5Y: {ID: 0x0025, type: DataType.UINT16, max: 65279},
-            primary5Intensity: {ID: 0x0026, type: DataType.UINT8, max: 255},
+            primary5Intensity: {ID: 0x0026, type: DataType.UINT8, max: 0xff},
             primary6X: {ID: 0x0028, type: DataType.UINT16, max: 65279},
             primary6Y: {ID: 0x0029, type: DataType.UINT16, max: 65279},
-            primary6Intensity: {ID: 0x002a, type: DataType.UINT8, max: 255},
+            primary6Intensity: {ID: 0x002a, type: DataType.UINT8, max: 0xff},
             whitePointX: {ID: 0x0030, type: DataType.UINT16, writable: true, max: 65279},
             whitePointY: {ID: 0x0031, type: DataType.UINT16, writable: true, max: 65279},
             colorPointRX: {ID: 0x0032, type: DataType.UINT16, writable: true, max: 65279},
             colorPointRY: {ID: 0x0033, type: DataType.UINT16, writable: true, max: 65279},
-            colorPointRIntensity: {ID: 0x0034, type: DataType.UINT8, writable: true, max: 255},
+            colorPointRIntensity: {ID: 0x0034, type: DataType.UINT8, writable: true, max: 0xff},
             colorPointGX: {ID: 0x0036, type: DataType.UINT16, writable: true, max: 65279},
             colorPointGY: {ID: 0x0037, type: DataType.UINT16, writable: true, max: 65279},
-            colorPointGIntensity: {ID: 0x0038, type: DataType.UINT8, writable: true, max: 255},
+            colorPointGIntensity: {ID: 0x0038, type: DataType.UINT8, writable: true, max: 0xff},
             colorPointBX: {ID: 0x003a, type: DataType.UINT16, writable: true, max: 65279},
             colorPointBY: {ID: 0x003b, type: DataType.UINT16, writable: true, max: 65279},
-            colorPointBIntensity: {ID: 0x003c, type: DataType.UINT8, writable: true, max: 255},
-            enhancedCurrentHue: {ID: 0x4000, type: DataType.UINT16, sceneRequired: true, max: 65535, default: 0},
+            colorPointBIntensity: {ID: 0x003c, type: DataType.UINT8, writable: true, max: 0xff},
+            enhancedCurrentHue: {ID: 0x4000, type: DataType.UINT16, sceneRequired: true, max: 0xffff, default: 0},
             enhancedColorMode: {ID: 0x4001, type: DataType.ENUM8, required: true, default: 1},
-            colorLoopActive: {ID: 0x4002, type: DataType.UINT8, sceneRequired: true, max: 255, default: 0},
-            colorLoopDirection: {ID: 0x4003, type: DataType.UINT8, sceneRequired: true, max: 255, default: 0},
-            colorLoopTime: {ID: 0x4004, type: DataType.UINT16, sceneRequired: true, max: 65535, default: 25},
-            colorLoopStartEnhancedHue: {ID: 0x4005, type: DataType.UINT16, max: 65535, default: 8960},
-            colorLoopStoredEnhancedHue: {ID: 0x4006, type: DataType.UINT16, max: 65535, default: 0},
+            colorLoopActive: {ID: 0x4002, type: DataType.UINT8, sceneRequired: true, max: 0xff, default: 0},
+            colorLoopDirection: {ID: 0x4003, type: DataType.UINT8, sceneRequired: true, max: 0xff, default: 0},
+            colorLoopTime: {ID: 0x4004, type: DataType.UINT16, sceneRequired: true, max: 0xffff, default: 25},
+            colorLoopStartEnhancedHue: {ID: 0x4005, type: DataType.UINT16, max: 0xffff, default: 8960},
+            colorLoopStoredEnhancedHue: {ID: 0x4006, type: DataType.UINT16, max: 0xffff, default: 0},
             colorCapabilities: {ID: 0x400a, type: DataType.UINT16, required: true, default: 0},
             colorTempPhysicalMin: {ID: 0x400b, type: DataType.UINT16, max: 65279, default: 0, maxRef: "colorTempPhysicalMax"},
             colorTempPhysicalMax: {ID: 0x400c, type: DataType.UINT16, max: 65279, default: 65279, minRef: "colorTempPhysicalMin"},
@@ -2881,7 +2906,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             powerOnLevel: {ID: 0x0012, type: DataType.UINT8, writable: true, max: 254, defaultRef: "physicalMaxLevel"},
             powerOnFadeTime: {ID: 0x0013, type: DataType.UINT16, writable: true, max: 65534, default: 0},
             intrinsicBallastFactor: {ID: 0x0014, type: DataType.UINT8, writable: true, max: 254},
-            ballastFactorAdjustment: {ID: 0x0015, type: DataType.UINT8, writable: true, min: 100, default: 255},
+            ballastFactorAdjustment: {ID: 0x0015, type: DataType.UINT8, writable: true, min: 100, default: 0xff},
             lampQuantity: {ID: 0x0020, type: DataType.UINT8, max: 254},
             lampType: {ID: 0x0030, type: DataType.CHAR_STR, writable: true, default: "", maxLen: 16},
             lampManufacturer: {ID: 0x0031, type: DataType.CHAR_STR, writable: true, default: "", maxLen: 16},
@@ -2898,11 +2923,11 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
     msIlluminanceMeasurement: {
         ID: 0x0400, // 0x0400
         attributes: {
-            measuredValue: {ID: 0x0000, type: DataType.UINT16, reportRequired: true, required: true, max: 65535, default: 0},
+            measuredValue: {ID: 0x0000, type: DataType.UINT16, reportRequired: true, required: true, max: 0xffff, default: 0},
             minMeasuredValue: {ID: 0x0001, type: DataType.UINT16, required: true, min: 1, max: 65533, maxExclRef: "maxMeasuredValue"},
             maxMeasuredValue: {ID: 0x0002, type: DataType.UINT16, required: true, min: 2, max: 65534, minExclRef: "minMeasuredValue"},
             tolerance: {ID: 0x0003, type: DataType.UINT16, max: 2048},
-            lightSensorType: {ID: 0x0004, type: DataType.ENUM8, default: 255},
+            lightSensorType: {ID: 0x0004, type: DataType.ENUM8, default: 0xff},
         },
         commands: {},
         commandsResponse: {},
@@ -3555,13 +3580,13 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
     ssIasZone: {
         ID: 0x0500,
         attributes: {
-            zoneState: {ID: 0x0000, type: DataType.ENUM8, required: true, max: 255, default: 0},
+            zoneState: {ID: 0x0000, type: DataType.ENUM8, required: true, max: 0xff, default: 0},
             zoneType: {ID: 0x0001, type: DataType.ENUM16, required: true},
             zoneStatus: {ID: 0x0002, type: DataType.BITMAP16, required: true, default: 0},
             iasCieAddr: {ID: 0x0010, type: DataType.IEEE_ADDR, writable: true, required: true},
-            zoneId: {ID: 0x0011, type: DataType.UINT8, required: true, max: 255, default: 255},
-            numZoneSensitivityLevelsSupported: {ID: 0x0012, type: DataType.UINT8, min: 2, max: 255, default: 2},
-            currentZoneSensitivityLevel: {ID: 0x0013, type: DataType.UINT8, writable: true, max: 255, default: 0},
+            zoneId: {ID: 0x0011, type: DataType.UINT8, required: true, max: 0xff, default: 0xff},
+            numZoneSensitivityLevelsSupported: {ID: 0x0012, type: DataType.UINT8, min: 2, max: 0xff, default: 2},
+            currentZoneSensitivityLevel: {ID: 0x0013, type: DataType.UINT8, writable: true, max: 0xff, default: 0},
             develcoAlarmOffDelay: {ID: 0x8001, type: DataType.UINT16, manufacturerCode: ManufacturerCode.DEVELCO},
         },
         commands: {
@@ -4729,37 +4754,37 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
     haDiagnostic: {
         ID: 0x0b05,
         attributes: {
-            numberOfResets: {ID: 0x0000, type: DataType.UINT16, max: 65535, default: 0},
-            persistentMemoryWrites: {ID: 0x0001, type: DataType.UINT16, max: 65535, default: 0},
+            numberOfResets: {ID: 0x0000, type: DataType.UINT16, max: 0xffff, default: 0},
+            persistentMemoryWrites: {ID: 0x0001, type: DataType.UINT16, max: 0xffff, default: 0},
             macRxBcast: {ID: 0x0100, type: DataType.UINT32, max: 4294967295, default: 0},
             macTxBcast: {ID: 0x0101, type: DataType.UINT32, max: 4294967295, default: 0},
             macRxUcast: {ID: 0x0102, type: DataType.UINT32, max: 4294967295, default: 0},
             macTxUcast: {ID: 0x0103, type: DataType.UINT32, max: 4294967295, default: 0},
-            macTxUcastRetry: {ID: 0x0104, type: DataType.UINT16, max: 65535, default: 0},
-            macTxUcastFail: {ID: 0x0105, type: DataType.UINT16, max: 65535, default: 0},
-            aPSRxBcast: {ID: 0x0106, type: DataType.UINT16, max: 65535, default: 0},
-            aPSTxBcast: {ID: 0x0107, type: DataType.UINT16, max: 65535, default: 0},
-            aPSRxUcast: {ID: 0x0108, type: DataType.UINT16, max: 65535, default: 0},
-            aPSTxUcastSuccess: {ID: 0x0109, type: DataType.UINT16, max: 65535, default: 0},
-            aPSTxUcastRetry: {ID: 0x010a, type: DataType.UINT16, max: 65535, default: 0},
-            aPSTxUcastFail: {ID: 0x010b, type: DataType.UINT16, max: 65535, default: 0},
-            routeDiscInitiated: {ID: 0x010c, type: DataType.UINT16, max: 65535, default: 0},
-            neighborAdded: {ID: 0x010d, type: DataType.UINT16, max: 65535, default: 0},
-            neighborRemoved: {ID: 0x010e, type: DataType.UINT16, max: 65535, default: 0},
-            neighborStale: {ID: 0x010f, type: DataType.UINT16, max: 65535, default: 0},
-            joinIndication: {ID: 0x0110, type: DataType.UINT16, max: 65535, default: 0},
-            childMoved: {ID: 0x0111, type: DataType.UINT16, max: 65535, default: 0},
-            nwkFcFailure: {ID: 0x0112, type: DataType.UINT16, max: 65535, default: 0},
-            apsFcFailure: {ID: 0x0113, type: DataType.UINT16, max: 65535, default: 0},
-            apsUnauthorizedKey: {ID: 0x0114, type: DataType.UINT16, max: 65535, default: 0},
-            nwkDecryptFailures: {ID: 0x0115, type: DataType.UINT16, max: 65535, default: 0},
-            apsDecryptFailures: {ID: 0x0116, type: DataType.UINT16, max: 65535, default: 0},
-            packetBufferAllocateFailures: {ID: 0x0117, type: DataType.UINT16, max: 65535, default: 0},
-            relayedUcast: {ID: 0x0118, type: DataType.UINT16, max: 65535, default: 0},
-            phyToMacQueueLimitReached: {ID: 0x0119, type: DataType.UINT16, max: 65535, default: 0},
-            packetValidateDropCount: {ID: 0x011a, type: DataType.UINT16, max: 65535, default: 0},
-            averageMacRetryPerApsMessageSent: {ID: 0x011b, type: DataType.UINT16, max: 65535, default: 0},
-            lastMessageLqi: {ID: 0x011c, type: DataType.UINT8, max: 255, default: 0},
+            macTxUcastRetry: {ID: 0x0104, type: DataType.UINT16, max: 0xffff, default: 0},
+            macTxUcastFail: {ID: 0x0105, type: DataType.UINT16, max: 0xffff, default: 0},
+            aPSRxBcast: {ID: 0x0106, type: DataType.UINT16, max: 0xffff, default: 0},
+            aPSTxBcast: {ID: 0x0107, type: DataType.UINT16, max: 0xffff, default: 0},
+            aPSRxUcast: {ID: 0x0108, type: DataType.UINT16, max: 0xffff, default: 0},
+            aPSTxUcastSuccess: {ID: 0x0109, type: DataType.UINT16, max: 0xffff, default: 0},
+            aPSTxUcastRetry: {ID: 0x010a, type: DataType.UINT16, max: 0xffff, default: 0},
+            aPSTxUcastFail: {ID: 0x010b, type: DataType.UINT16, max: 0xffff, default: 0},
+            routeDiscInitiated: {ID: 0x010c, type: DataType.UINT16, max: 0xffff, default: 0},
+            neighborAdded: {ID: 0x010d, type: DataType.UINT16, max: 0xffff, default: 0},
+            neighborRemoved: {ID: 0x010e, type: DataType.UINT16, max: 0xffff, default: 0},
+            neighborStale: {ID: 0x010f, type: DataType.UINT16, max: 0xffff, default: 0},
+            joinIndication: {ID: 0x0110, type: DataType.UINT16, max: 0xffff, default: 0},
+            childMoved: {ID: 0x0111, type: DataType.UINT16, max: 0xffff, default: 0},
+            nwkFcFailure: {ID: 0x0112, type: DataType.UINT16, max: 0xffff, default: 0},
+            apsFcFailure: {ID: 0x0113, type: DataType.UINT16, max: 0xffff, default: 0},
+            apsUnauthorizedKey: {ID: 0x0114, type: DataType.UINT16, max: 0xffff, default: 0},
+            nwkDecryptFailures: {ID: 0x0115, type: DataType.UINT16, max: 0xffff, default: 0},
+            apsDecryptFailures: {ID: 0x0116, type: DataType.UINT16, max: 0xffff, default: 0},
+            packetBufferAllocateFailures: {ID: 0x0117, type: DataType.UINT16, max: 0xffff, default: 0},
+            relayedUcast: {ID: 0x0118, type: DataType.UINT16, max: 0xffff, default: 0},
+            phyToMacQueueLimitReached: {ID: 0x0119, type: DataType.UINT16, max: 0xffff, default: 0},
+            packetValidateDropCount: {ID: 0x011a, type: DataType.UINT16, max: 0xffff, default: 0},
+            averageMacRetryPerApsMessageSent: {ID: 0x011b, type: DataType.UINT16, max: 0xffff, default: 0},
+            lastMessageLqi: {ID: 0x011c, type: DataType.UINT8, max: 0xff, default: 0},
             lastMessageRssi: {ID: 0x011d, type: DataType.INT8, min: -127, max: 127, default: 0},
             danfossSystemStatusCode: {ID: 0x4000, type: DataType.BITMAP16, manufacturerCode: ManufacturerCode.DANFOSS_A_S},
             schneiderCommunicationQuality: {ID: 0x4000, type: DataType.UINT8, manufacturerCode: ManufacturerCode.SCHNEIDER_ELECTRIC},

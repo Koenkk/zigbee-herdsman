@@ -197,7 +197,7 @@ export interface Attribute extends Restrictions {
     readable?: false;
     /** If the attribute is writable OTA. Defaults to false. NOTE: marked as `W` in spec PDF */
     writable?: true;
-    /** If the attribute is specified as writable this indicates if the write is required. Defaults to false. */
+    /** If the attribute is specified as writable this indicates if the write is required (returns READ_ONLY if not). Defaults to false. */
     writeOptional?: true;
     /** If attribute is required to be reportable. Defaults to false. NOTE: marked as `P` in spec PDF */
     reportRequired?: true;
