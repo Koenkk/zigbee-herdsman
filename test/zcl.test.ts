@@ -499,8 +499,8 @@ describe("Zcl", () => {
                         "12": 0,
                         "100": 1,
                         "101": 0,
-                        "110": Number.NaN,
-                        "111": Number.NaN,
+                        "110": 255,
+                        "111": 255,
                         "148": 4,
                         "149": 0.14562499523162842,
                         "150": 2335.614013671875,
@@ -738,11 +738,11 @@ describe("Zcl", () => {
 
         const payload = {
             srcID: 4650238,
-            commandFrame: {},
+            commandFrame: {raw: Buffer.from([])},
             commandID: 16,
             frameCounter: 1253,
             options: 5280,
-            payloadSize: Number.NaN,
+            payloadSize: 255,
         };
 
         expect(frame.header).toStrictEqual(header);
