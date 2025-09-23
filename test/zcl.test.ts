@@ -738,7 +738,7 @@ describe("Zcl", () => {
 
         const payload = {
             srcID: 4650238,
-            commandFrame: {},
+            commandFrame: {raw: Buffer.from([])},
             commandID: 16,
             frameCounter: 1253,
             options: 5280,
