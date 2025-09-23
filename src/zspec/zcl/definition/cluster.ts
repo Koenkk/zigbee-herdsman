@@ -3538,10 +3538,18 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         // Carbon Dioxide
         ID: 0x040d,
         attributes: {
-            measuredValue: {ID: 0x0000, type: DataType.SINGLE_PREC},
-            minMeasuredValue: {ID: 0x0001, type: DataType.SINGLE_PREC},
-            maxMeasuredValue: {ID: 0x0002, type: DataType.SINGLE_PREC},
+            measuredValue: {
+                ID: 0x0000,
+                type: DataType.SINGLE_PREC,
+                reportRequired: true,
+                required: true,
+                minRef: "minMeasuredValue",
+                maxRef: "maxMeasuredValue",
+            },
+            minMeasuredValue: {ID: 0x0001, type: DataType.SINGLE_PREC, required: true, min: 0, maxExclRef: "maxMeasuredValue"},
+            maxMeasuredValue: {ID: 0x0002, type: DataType.SINGLE_PREC, required: true, max: 1, minExclRef: "minMeasuredValue"},
             tolerance: {ID: 0x0003, type: DataType.SINGLE_PREC},
+            // custom
             sprutCO2Calibration: {ID: 0x6600, type: DataType.BOOLEAN, manufacturerCode: ManufacturerCode.CUSTOM_SPRUT_DEVICE},
             sprutCO2AutoCalibration: {ID: 0x6601, type: DataType.BOOLEAN, manufacturerCode: ManufacturerCode.CUSTOM_SPRUT_DEVICE},
         },
@@ -3552,9 +3560,16 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         // CH2
         ID: 0x040e,
         attributes: {
-            measuredValue: {ID: 0x0000, type: DataType.SINGLE_PREC},
-            minMeasuredValue: {ID: 0x0001, type: DataType.SINGLE_PREC},
-            maxMeasuredValue: {ID: 0x0002, type: DataType.SINGLE_PREC},
+            measuredValue: {
+                ID: 0x0000,
+                type: DataType.SINGLE_PREC,
+                reportRequired: true,
+                required: true,
+                minRef: "minMeasuredValue",
+                maxRef: "maxMeasuredValue",
+            },
+            minMeasuredValue: {ID: 0x0001, type: DataType.SINGLE_PREC, required: true, min: 0, maxExclRef: "maxMeasuredValue"},
+            maxMeasuredValue: {ID: 0x0002, type: DataType.SINGLE_PREC, required: true, max: 1, minExclRef: "minMeasuredValue"},
             tolerance: {ID: 0x0003, type: DataType.SINGLE_PREC},
         },
         commands: {},
@@ -3564,9 +3579,16 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         // C2H4O
         ID: 0x040f,
         attributes: {
-            measuredValue: {ID: 0x0000, type: DataType.SINGLE_PREC},
-            minMeasuredValue: {ID: 0x0001, type: DataType.SINGLE_PREC},
-            maxMeasuredValue: {ID: 0x0002, type: DataType.SINGLE_PREC},
+            measuredValue: {
+                ID: 0x0000,
+                type: DataType.SINGLE_PREC,
+                reportRequired: true,
+                required: true,
+                minRef: "minMeasuredValue",
+                maxRef: "maxMeasuredValue",
+            },
+            minMeasuredValue: {ID: 0x0001, type: DataType.SINGLE_PREC, required: true, min: 0, maxExclRef: "maxMeasuredValue"},
+            maxMeasuredValue: {ID: 0x0002, type: DataType.SINGLE_PREC, required: true, max: 1, minExclRef: "minMeasuredValue"},
             tolerance: {ID: 0x0003, type: DataType.SINGLE_PREC},
         },
         commands: {},
@@ -3576,9 +3598,16 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         // H
         ID: 0x0410,
         attributes: {
-            measuredValue: {ID: 0x0000, type: DataType.SINGLE_PREC},
-            minMeasuredValue: {ID: 0x0001, type: DataType.SINGLE_PREC},
-            maxMeasuredValue: {ID: 0x0002, type: DataType.SINGLE_PREC},
+            measuredValue: {
+                ID: 0x0000,
+                type: DataType.SINGLE_PREC,
+                reportRequired: true,
+                required: true,
+                minRef: "minMeasuredValue",
+                maxRef: "maxMeasuredValue",
+            },
+            minMeasuredValue: {ID: 0x0001, type: DataType.SINGLE_PREC, required: true, min: 0, maxExclRef: "maxMeasuredValue"},
+            maxMeasuredValue: {ID: 0x0002, type: DataType.SINGLE_PREC, required: true, max: 1, minExclRef: "minMeasuredValue"},
             tolerance: {ID: 0x0003, type: DataType.SINGLE_PREC},
         },
         commands: {},
@@ -3588,9 +3617,16 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         // H2S
         ID: 0x0411,
         attributes: {
-            measuredValue: {ID: 0x0000, type: DataType.SINGLE_PREC},
-            minMeasuredValue: {ID: 0x0001, type: DataType.SINGLE_PREC},
-            maxMeasuredValue: {ID: 0x0002, type: DataType.SINGLE_PREC},
+            measuredValue: {
+                ID: 0x0000,
+                type: DataType.SINGLE_PREC,
+                reportRequired: true,
+                required: true,
+                minRef: "minMeasuredValue",
+                maxRef: "maxMeasuredValue",
+            },
+            minMeasuredValue: {ID: 0x0001, type: DataType.SINGLE_PREC, required: true, min: 0, maxExclRef: "maxMeasuredValue"},
+            maxMeasuredValue: {ID: 0x0002, type: DataType.SINGLE_PREC, required: true, max: 1, minExclRef: "minMeasuredValue"},
             tolerance: {ID: 0x0003, type: DataType.SINGLE_PREC},
         },
         commands: {},
@@ -3600,9 +3636,16 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         // NO
         ID: 0x0412,
         attributes: {
-            measuredValue: {ID: 0x0000, type: DataType.SINGLE_PREC},
-            minMeasuredValue: {ID: 0x0001, type: DataType.SINGLE_PREC},
-            maxMeasuredValue: {ID: 0x0002, type: DataType.SINGLE_PREC},
+            measuredValue: {
+                ID: 0x0000,
+                type: DataType.SINGLE_PREC,
+                reportRequired: true,
+                required: true,
+                minRef: "minMeasuredValue",
+                maxRef: "maxMeasuredValue",
+            },
+            minMeasuredValue: {ID: 0x0001, type: DataType.SINGLE_PREC, required: true, min: 0, maxExclRef: "maxMeasuredValue"},
+            maxMeasuredValue: {ID: 0x0002, type: DataType.SINGLE_PREC, required: true, max: 1, minExclRef: "minMeasuredValue"},
             tolerance: {ID: 0x0003, type: DataType.SINGLE_PREC},
         },
         commands: {},
@@ -3612,9 +3655,16 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         // NO2
         ID: 0x0413,
         attributes: {
-            measuredValue: {ID: 0x0000, type: DataType.SINGLE_PREC},
-            minMeasuredValue: {ID: 0x0001, type: DataType.SINGLE_PREC},
-            maxMeasuredValue: {ID: 0x0002, type: DataType.SINGLE_PREC},
+            measuredValue: {
+                ID: 0x0000,
+                type: DataType.SINGLE_PREC,
+                reportRequired: true,
+                required: true,
+                minRef: "minMeasuredValue",
+                maxRef: "maxMeasuredValue",
+            },
+            minMeasuredValue: {ID: 0x0001, type: DataType.SINGLE_PREC, required: true, min: 0, maxExclRef: "maxMeasuredValue"},
+            maxMeasuredValue: {ID: 0x0002, type: DataType.SINGLE_PREC, required: true, max: 1, minExclRef: "minMeasuredValue"},
             tolerance: {ID: 0x0003, type: DataType.SINGLE_PREC},
         },
         commands: {},
@@ -3624,9 +3674,16 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         // O2
         ID: 0x0414,
         attributes: {
-            measuredValue: {ID: 0x0000, type: DataType.SINGLE_PREC},
-            minMeasuredValue: {ID: 0x0001, type: DataType.SINGLE_PREC},
-            maxMeasuredValue: {ID: 0x0002, type: DataType.SINGLE_PREC},
+            measuredValue: {
+                ID: 0x0000,
+                type: DataType.SINGLE_PREC,
+                reportRequired: true,
+                required: true,
+                minRef: "minMeasuredValue",
+                maxRef: "maxMeasuredValue",
+            },
+            minMeasuredValue: {ID: 0x0001, type: DataType.SINGLE_PREC, required: true, min: 0, maxExclRef: "maxMeasuredValue"},
+            maxMeasuredValue: {ID: 0x0002, type: DataType.SINGLE_PREC, required: true, max: 1, minExclRef: "minMeasuredValue"},
             tolerance: {ID: 0x0003, type: DataType.SINGLE_PREC},
         },
         commands: {},
@@ -3636,9 +3693,16 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         // O3
         ID: 0x0415,
         attributes: {
-            measuredValue: {ID: 0x0000, type: DataType.SINGLE_PREC},
-            minMeasuredValue: {ID: 0x0001, type: DataType.SINGLE_PREC},
-            maxMeasuredValue: {ID: 0x0002, type: DataType.SINGLE_PREC},
+            measuredValue: {
+                ID: 0x0000,
+                type: DataType.SINGLE_PREC,
+                reportRequired: true,
+                required: true,
+                minRef: "minMeasuredValue",
+                maxRef: "maxMeasuredValue",
+            },
+            minMeasuredValue: {ID: 0x0001, type: DataType.SINGLE_PREC, required: true, min: 0, maxExclRef: "maxMeasuredValue"},
+            maxMeasuredValue: {ID: 0x0002, type: DataType.SINGLE_PREC, required: true, max: 1, minExclRef: "minMeasuredValue"},
             tolerance: {ID: 0x0003, type: DataType.SINGLE_PREC},
         },
         commands: {},
@@ -3648,9 +3712,16 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         // SO2
         ID: 0x0416,
         attributes: {
-            measuredValue: {ID: 0x0000, type: DataType.SINGLE_PREC},
-            minMeasuredValue: {ID: 0x0001, type: DataType.SINGLE_PREC},
-            maxMeasuredValue: {ID: 0x0002, type: DataType.SINGLE_PREC},
+            measuredValue: {
+                ID: 0x0000,
+                type: DataType.SINGLE_PREC,
+                reportRequired: true,
+                required: true,
+                minRef: "minMeasuredValue",
+                maxRef: "maxMeasuredValue",
+            },
+            minMeasuredValue: {ID: 0x0001, type: DataType.SINGLE_PREC, required: true, min: 0, maxExclRef: "maxMeasuredValue"},
+            maxMeasuredValue: {ID: 0x0002, type: DataType.SINGLE_PREC, required: true, max: 1, minExclRef: "minMeasuredValue"},
             tolerance: {ID: 0x0003, type: DataType.SINGLE_PREC},
         },
         commands: {},
@@ -3660,9 +3731,16 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         // DO
         ID: 0x0417,
         attributes: {
-            measuredValue: {ID: 0x0000, type: DataType.SINGLE_PREC},
-            minMeasuredValue: {ID: 0x0001, type: DataType.SINGLE_PREC},
-            maxMeasuredValue: {ID: 0x0002, type: DataType.SINGLE_PREC},
+            measuredValue: {
+                ID: 0x0000,
+                type: DataType.SINGLE_PREC,
+                reportRequired: true,
+                required: true,
+                minRef: "minMeasuredValue",
+                maxRef: "maxMeasuredValue",
+            },
+            minMeasuredValue: {ID: 0x0001, type: DataType.SINGLE_PREC, required: true, min: 0, maxExclRef: "maxMeasuredValue"},
+            maxMeasuredValue: {ID: 0x0002, type: DataType.SINGLE_PREC, required: true, max: 1, minExclRef: "minMeasuredValue"},
             tolerance: {ID: 0x0003, type: DataType.SINGLE_PREC},
         },
         commands: {},
@@ -3671,9 +3749,16 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
     msBromate: {
         ID: 0x0418,
         attributes: {
-            measuredValue: {ID: 0x0000, type: DataType.SINGLE_PREC},
-            minMeasuredValue: {ID: 0x0001, type: DataType.SINGLE_PREC},
-            maxMeasuredValue: {ID: 0x0002, type: DataType.SINGLE_PREC},
+            measuredValue: {
+                ID: 0x0000,
+                type: DataType.SINGLE_PREC,
+                reportRequired: true,
+                required: true,
+                minRef: "minMeasuredValue",
+                maxRef: "maxMeasuredValue",
+            },
+            minMeasuredValue: {ID: 0x0001, type: DataType.SINGLE_PREC, required: true, min: 0, maxExclRef: "maxMeasuredValue"},
+            maxMeasuredValue: {ID: 0x0002, type: DataType.SINGLE_PREC, required: true, max: 1, minExclRef: "minMeasuredValue"},
             tolerance: {ID: 0x0003, type: DataType.SINGLE_PREC},
         },
         commands: {},
@@ -3682,9 +3767,16 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
     msChloramines: {
         ID: 0x0419,
         attributes: {
-            measuredValue: {ID: 0x0000, type: DataType.SINGLE_PREC},
-            minMeasuredValue: {ID: 0x0001, type: DataType.SINGLE_PREC},
-            maxMeasuredValue: {ID: 0x0002, type: DataType.SINGLE_PREC},
+            measuredValue: {
+                ID: 0x0000,
+                type: DataType.SINGLE_PREC,
+                reportRequired: true,
+                required: true,
+                minRef: "minMeasuredValue",
+                maxRef: "maxMeasuredValue",
+            },
+            minMeasuredValue: {ID: 0x0001, type: DataType.SINGLE_PREC, required: true, min: 0, maxExclRef: "maxMeasuredValue"},
+            maxMeasuredValue: {ID: 0x0002, type: DataType.SINGLE_PREC, required: true, max: 1, minExclRef: "minMeasuredValue"},
             tolerance: {ID: 0x0003, type: DataType.SINGLE_PREC},
         },
         commands: {},
@@ -3693,9 +3785,16 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
     msChlorine: {
         ID: 0x041a,
         attributes: {
-            measuredValue: {ID: 0x0000, type: DataType.SINGLE_PREC},
-            minMeasuredValue: {ID: 0x0001, type: DataType.SINGLE_PREC},
-            maxMeasuredValue: {ID: 0x0002, type: DataType.SINGLE_PREC},
+            measuredValue: {
+                ID: 0x0000,
+                type: DataType.SINGLE_PREC,
+                reportRequired: true,
+                required: true,
+                minRef: "minMeasuredValue",
+                maxRef: "maxMeasuredValue",
+            },
+            minMeasuredValue: {ID: 0x0001, type: DataType.SINGLE_PREC, required: true, min: 0, maxExclRef: "maxMeasuredValue"},
+            maxMeasuredValue: {ID: 0x0002, type: DataType.SINGLE_PREC, required: true, max: 1, minExclRef: "minMeasuredValue"},
             tolerance: {ID: 0x0003, type: DataType.SINGLE_PREC},
         },
         commands: {},
@@ -3704,9 +3803,16 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
     msFecalColiformAndEColi: {
         ID: 0x041b,
         attributes: {
-            measuredValue: {ID: 0x0000, type: DataType.SINGLE_PREC},
-            minMeasuredValue: {ID: 0x0001, type: DataType.SINGLE_PREC},
-            maxMeasuredValue: {ID: 0x0002, type: DataType.SINGLE_PREC},
+            measuredValue: {
+                ID: 0x0000,
+                type: DataType.SINGLE_PREC,
+                reportRequired: true,
+                required: true,
+                minRef: "minMeasuredValue",
+                maxRef: "maxMeasuredValue",
+            },
+            minMeasuredValue: {ID: 0x0001, type: DataType.SINGLE_PREC, required: true, min: 0, maxExclRef: "maxMeasuredValue"},
+            maxMeasuredValue: {ID: 0x0002, type: DataType.SINGLE_PREC, required: true, max: 1, minExclRef: "minMeasuredValue"},
             tolerance: {ID: 0x0003, type: DataType.SINGLE_PREC},
         },
         commands: {},
@@ -3715,9 +3821,16 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
     msFluoride: {
         ID: 0x041c,
         attributes: {
-            measuredValue: {ID: 0x0000, type: DataType.SINGLE_PREC},
-            minMeasuredValue: {ID: 0x0001, type: DataType.SINGLE_PREC},
-            maxMeasuredValue: {ID: 0x0002, type: DataType.SINGLE_PREC},
+            measuredValue: {
+                ID: 0x0000,
+                type: DataType.SINGLE_PREC,
+                reportRequired: true,
+                required: true,
+                minRef: "minMeasuredValue",
+                maxRef: "maxMeasuredValue",
+            },
+            minMeasuredValue: {ID: 0x0001, type: DataType.SINGLE_PREC, required: true, min: 0, maxExclRef: "maxMeasuredValue"},
+            maxMeasuredValue: {ID: 0x0002, type: DataType.SINGLE_PREC, required: true, max: 1, minExclRef: "minMeasuredValue"},
             tolerance: {ID: 0x0003, type: DataType.SINGLE_PREC},
         },
         commands: {},
@@ -3726,9 +3839,16 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
     msHaloaceticAcids: {
         ID: 0x041d,
         attributes: {
-            measuredValue: {ID: 0x0000, type: DataType.SINGLE_PREC},
-            minMeasuredValue: {ID: 0x0001, type: DataType.SINGLE_PREC},
-            maxMeasuredValue: {ID: 0x0002, type: DataType.SINGLE_PREC},
+            measuredValue: {
+                ID: 0x0000,
+                type: DataType.SINGLE_PREC,
+                reportRequired: true,
+                required: true,
+                minRef: "minMeasuredValue",
+                maxRef: "maxMeasuredValue",
+            },
+            minMeasuredValue: {ID: 0x0001, type: DataType.SINGLE_PREC, required: true, min: 0, maxExclRef: "maxMeasuredValue"},
+            maxMeasuredValue: {ID: 0x0002, type: DataType.SINGLE_PREC, required: true, max: 1, minExclRef: "minMeasuredValue"},
             tolerance: {ID: 0x0003, type: DataType.SINGLE_PREC},
         },
         commands: {},
@@ -3737,9 +3857,16 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
     msTotalTrihalomethanes: {
         ID: 0x041e,
         attributes: {
-            measuredValue: {ID: 0x0000, type: DataType.SINGLE_PREC},
-            minMeasuredValue: {ID: 0x0001, type: DataType.SINGLE_PREC},
-            maxMeasuredValue: {ID: 0x0002, type: DataType.SINGLE_PREC},
+            measuredValue: {
+                ID: 0x0000,
+                type: DataType.SINGLE_PREC,
+                reportRequired: true,
+                required: true,
+                minRef: "minMeasuredValue",
+                maxRef: "maxMeasuredValue",
+            },
+            minMeasuredValue: {ID: 0x0001, type: DataType.SINGLE_PREC, required: true, min: 0, maxExclRef: "maxMeasuredValue"},
+            maxMeasuredValue: {ID: 0x0002, type: DataType.SINGLE_PREC, required: true, max: 1, minExclRef: "minMeasuredValue"},
             tolerance: {ID: 0x0003, type: DataType.SINGLE_PREC},
         },
         commands: {},
@@ -3748,9 +3875,16 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
     msTotalColiformBacteria: {
         ID: 0x041f,
         attributes: {
-            measuredValue: {ID: 0x0000, type: DataType.SINGLE_PREC},
-            minMeasuredValue: {ID: 0x0001, type: DataType.SINGLE_PREC},
-            maxMeasuredValue: {ID: 0x0002, type: DataType.SINGLE_PREC},
+            measuredValue: {
+                ID: 0x0000,
+                type: DataType.SINGLE_PREC,
+                reportRequired: true,
+                required: true,
+                minRef: "minMeasuredValue",
+                maxRef: "maxMeasuredValue",
+            },
+            minMeasuredValue: {ID: 0x0001, type: DataType.SINGLE_PREC, required: true, min: 0, maxExclRef: "maxMeasuredValue"},
+            maxMeasuredValue: {ID: 0x0002, type: DataType.SINGLE_PREC, required: true, max: 1, minExclRef: "minMeasuredValue"},
             tolerance: {ID: 0x0003, type: DataType.SINGLE_PREC},
         },
         commands: {},
@@ -3759,9 +3893,16 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
     msTurbidity: {
         ID: 0x0420,
         attributes: {
-            measuredValue: {ID: 0x0000, type: DataType.SINGLE_PREC},
-            minMeasuredValue: {ID: 0x0001, type: DataType.SINGLE_PREC},
-            maxMeasuredValue: {ID: 0x0002, type: DataType.SINGLE_PREC},
+            measuredValue: {
+                ID: 0x0000,
+                type: DataType.SINGLE_PREC,
+                reportRequired: true,
+                required: true,
+                minRef: "minMeasuredValue",
+                maxRef: "maxMeasuredValue",
+            },
+            minMeasuredValue: {ID: 0x0001, type: DataType.SINGLE_PREC, required: true, min: 0, maxExclRef: "maxMeasuredValue"},
+            maxMeasuredValue: {ID: 0x0002, type: DataType.SINGLE_PREC, required: true, max: 1, minExclRef: "minMeasuredValue"},
             tolerance: {ID: 0x0003, type: DataType.SINGLE_PREC},
         },
         commands: {},
@@ -3770,9 +3911,16 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
     msCopper: {
         ID: 0x0421,
         attributes: {
-            measuredValue: {ID: 0x0000, type: DataType.SINGLE_PREC},
-            minMeasuredValue: {ID: 0x0001, type: DataType.SINGLE_PREC},
-            maxMeasuredValue: {ID: 0x0002, type: DataType.SINGLE_PREC},
+            measuredValue: {
+                ID: 0x0000,
+                type: DataType.SINGLE_PREC,
+                reportRequired: true,
+                required: true,
+                minRef: "minMeasuredValue",
+                maxRef: "maxMeasuredValue",
+            },
+            minMeasuredValue: {ID: 0x0001, type: DataType.SINGLE_PREC, required: true, min: 0, maxExclRef: "maxMeasuredValue"},
+            maxMeasuredValue: {ID: 0x0002, type: DataType.SINGLE_PREC, required: true, max: 1, minExclRef: "minMeasuredValue"},
             tolerance: {ID: 0x0003, type: DataType.SINGLE_PREC},
         },
         commands: {},
@@ -3781,9 +3929,16 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
     msLead: {
         ID: 0x0422,
         attributes: {
-            measuredValue: {ID: 0x0000, type: DataType.SINGLE_PREC},
-            minMeasuredValue: {ID: 0x0001, type: DataType.SINGLE_PREC},
-            maxMeasuredValue: {ID: 0x0002, type: DataType.SINGLE_PREC},
+            measuredValue: {
+                ID: 0x0000,
+                type: DataType.SINGLE_PREC,
+                reportRequired: true,
+                required: true,
+                minRef: "minMeasuredValue",
+                maxRef: "maxMeasuredValue",
+            },
+            minMeasuredValue: {ID: 0x0001, type: DataType.SINGLE_PREC, required: true, min: 0, maxExclRef: "maxMeasuredValue"},
+            maxMeasuredValue: {ID: 0x0002, type: DataType.SINGLE_PREC, required: true, max: 1, minExclRef: "minMeasuredValue"},
             tolerance: {ID: 0x0003, type: DataType.SINGLE_PREC},
         },
         commands: {},
@@ -3792,9 +3947,16 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
     msManganese: {
         ID: 0x0423,
         attributes: {
-            measuredValue: {ID: 0x0000, type: DataType.SINGLE_PREC},
-            minMeasuredValue: {ID: 0x0001, type: DataType.SINGLE_PREC},
-            maxMeasuredValue: {ID: 0x0002, type: DataType.SINGLE_PREC},
+            measuredValue: {
+                ID: 0x0000,
+                type: DataType.SINGLE_PREC,
+                reportRequired: true,
+                required: true,
+                minRef: "minMeasuredValue",
+                maxRef: "maxMeasuredValue",
+            },
+            minMeasuredValue: {ID: 0x0001, type: DataType.SINGLE_PREC, required: true, min: 0, maxExclRef: "maxMeasuredValue"},
+            maxMeasuredValue: {ID: 0x0002, type: DataType.SINGLE_PREC, required: true, max: 1, minExclRef: "minMeasuredValue"},
             tolerance: {ID: 0x0003, type: DataType.SINGLE_PREC},
         },
         commands: {},
@@ -3803,9 +3965,16 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
     msSulfate: {
         ID: 0x0424,
         attributes: {
-            measuredValue: {ID: 0x0000, type: DataType.SINGLE_PREC},
-            minMeasuredValue: {ID: 0x0001, type: DataType.SINGLE_PREC},
-            maxMeasuredValue: {ID: 0x0002, type: DataType.SINGLE_PREC},
+            measuredValue: {
+                ID: 0x0000,
+                type: DataType.SINGLE_PREC,
+                reportRequired: true,
+                required: true,
+                minRef: "minMeasuredValue",
+                maxRef: "maxMeasuredValue",
+            },
+            minMeasuredValue: {ID: 0x0001, type: DataType.SINGLE_PREC, required: true, min: 0, maxExclRef: "maxMeasuredValue"},
+            maxMeasuredValue: {ID: 0x0002, type: DataType.SINGLE_PREC, required: true, max: 1, minExclRef: "minMeasuredValue"},
             tolerance: {ID: 0x0003, type: DataType.SINGLE_PREC},
         },
         commands: {},
@@ -3814,9 +3983,16 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
     msBromodichloromethane: {
         ID: 0x0425,
         attributes: {
-            measuredValue: {ID: 0x0000, type: DataType.SINGLE_PREC},
-            minMeasuredValue: {ID: 0x0001, type: DataType.SINGLE_PREC},
-            maxMeasuredValue: {ID: 0x0002, type: DataType.SINGLE_PREC},
+            measuredValue: {
+                ID: 0x0000,
+                type: DataType.SINGLE_PREC,
+                reportRequired: true,
+                required: true,
+                minRef: "minMeasuredValue",
+                maxRef: "maxMeasuredValue",
+            },
+            minMeasuredValue: {ID: 0x0001, type: DataType.SINGLE_PREC, required: true, min: 0, maxExclRef: "maxMeasuredValue"},
+            maxMeasuredValue: {ID: 0x0002, type: DataType.SINGLE_PREC, required: true, max: 1, minExclRef: "minMeasuredValue"},
             tolerance: {ID: 0x0003, type: DataType.SINGLE_PREC},
         },
         commands: {},
@@ -3825,9 +4001,16 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
     msBromoform: {
         ID: 0x0426,
         attributes: {
-            measuredValue: {ID: 0x0000, type: DataType.SINGLE_PREC},
-            minMeasuredValue: {ID: 0x0001, type: DataType.SINGLE_PREC},
-            maxMeasuredValue: {ID: 0x0002, type: DataType.SINGLE_PREC},
+            measuredValue: {
+                ID: 0x0000,
+                type: DataType.SINGLE_PREC,
+                reportRequired: true,
+                required: true,
+                minRef: "minMeasuredValue",
+                maxRef: "maxMeasuredValue",
+            },
+            minMeasuredValue: {ID: 0x0001, type: DataType.SINGLE_PREC, required: true, min: 0, maxExclRef: "maxMeasuredValue"},
+            maxMeasuredValue: {ID: 0x0002, type: DataType.SINGLE_PREC, required: true, max: 1, minExclRef: "minMeasuredValue"},
             tolerance: {ID: 0x0003, type: DataType.SINGLE_PREC},
         },
         commands: {},
@@ -3836,9 +4019,16 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
     msChlorodibromomethane: {
         ID: 0x0427,
         attributes: {
-            measuredValue: {ID: 0x0000, type: DataType.SINGLE_PREC},
-            minMeasuredValue: {ID: 0x0001, type: DataType.SINGLE_PREC},
-            maxMeasuredValue: {ID: 0x0002, type: DataType.SINGLE_PREC},
+            measuredValue: {
+                ID: 0x0000,
+                type: DataType.SINGLE_PREC,
+                reportRequired: true,
+                required: true,
+                minRef: "minMeasuredValue",
+                maxRef: "maxMeasuredValue",
+            },
+            minMeasuredValue: {ID: 0x0001, type: DataType.SINGLE_PREC, required: true, min: 0, maxExclRef: "maxMeasuredValue"},
+            maxMeasuredValue: {ID: 0x0002, type: DataType.SINGLE_PREC, required: true, max: 1, minExclRef: "minMeasuredValue"},
             tolerance: {ID: 0x0003, type: DataType.SINGLE_PREC},
         },
         commands: {},
@@ -3847,9 +4037,16 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
     msChloroform: {
         ID: 0x0428,
         attributes: {
-            measuredValue: {ID: 0x0000, type: DataType.SINGLE_PREC},
-            minMeasuredValue: {ID: 0x0001, type: DataType.SINGLE_PREC},
-            maxMeasuredValue: {ID: 0x0002, type: DataType.SINGLE_PREC},
+            measuredValue: {
+                ID: 0x0000,
+                type: DataType.SINGLE_PREC,
+                reportRequired: true,
+                required: true,
+                minRef: "minMeasuredValue",
+                maxRef: "maxMeasuredValue",
+            },
+            minMeasuredValue: {ID: 0x0001, type: DataType.SINGLE_PREC, required: true, min: 0, maxExclRef: "maxMeasuredValue"},
+            maxMeasuredValue: {ID: 0x0002, type: DataType.SINGLE_PREC, required: true, max: 1, minExclRef: "minMeasuredValue"},
             tolerance: {ID: 0x0003, type: DataType.SINGLE_PREC},
         },
         commands: {},
@@ -3858,9 +4055,16 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
     msSodium: {
         ID: 0x0429,
         attributes: {
-            measuredValue: {ID: 0x0000, type: DataType.SINGLE_PREC},
-            minMeasuredValue: {ID: 0x0001, type: DataType.SINGLE_PREC},
-            maxMeasuredValue: {ID: 0x0002, type: DataType.SINGLE_PREC},
+            measuredValue: {
+                ID: 0x0000,
+                type: DataType.SINGLE_PREC,
+                reportRequired: true,
+                required: true,
+                minRef: "minMeasuredValue",
+                maxRef: "maxMeasuredValue",
+            },
+            minMeasuredValue: {ID: 0x0001, type: DataType.SINGLE_PREC, required: true, min: 0, maxExclRef: "maxMeasuredValue"},
+            maxMeasuredValue: {ID: 0x0002, type: DataType.SINGLE_PREC, required: true, max: 1, minExclRef: "minMeasuredValue"},
             tolerance: {ID: 0x0003, type: DataType.SINGLE_PREC},
         },
         commands: {},
@@ -3868,10 +4072,18 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
     },
     pm25Measurement: {
         ID: 0x042a,
+        // XXX: attrs not named same as other concentration measurement clusters
         attributes: {
-            measuredValue: {ID: 0x0000, type: DataType.SINGLE_PREC},
-            measuredMinValue: {ID: 0x0001, type: DataType.SINGLE_PREC},
-            measuredMaxValue: {ID: 0x0002, type: DataType.SINGLE_PREC},
+            measuredValue: {
+                ID: 0x0000,
+                type: DataType.SINGLE_PREC,
+                reportRequired: true,
+                required: true,
+                minRef: "minMeasuredValue",
+                maxRef: "maxMeasuredValue",
+            },
+            measuredMinValue: {ID: 0x0001, type: DataType.SINGLE_PREC, required: true, min: 0, maxExclRef: "maxMeasuredValue"},
+            measuredMaxValue: {ID: 0x0002, type: DataType.SINGLE_PREC, required: true, max: 1, minExclRef: "minMeasuredValue"},
             tolerance: {ID: 0x0003, type: DataType.SINGLE_PREC},
         },
         commands: {},
@@ -3880,33 +4092,16 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
     msFormaldehyde: {
         ID: 0x042b,
         attributes: {
-            measuredValue: {ID: 0x0000, type: DataType.SINGLE_PREC},
-            minMeasuredValue: {ID: 0x0001, type: DataType.SINGLE_PREC},
-            maxMeasuredValue: {ID: 0x0002, type: DataType.SINGLE_PREC},
-            tolerance: {ID: 0x0003, type: DataType.SINGLE_PREC},
-        },
-        commands: {},
-        commandsResponse: {},
-    },
-    pm1Measurement: {
-        // XXX: not in R8 spec?
-        ID: 0x042c,
-        attributes: {
-            measuredValue: {ID: 0x0000, type: DataType.SINGLE_PREC},
-            measuredMinValue: {ID: 0x0001, type: DataType.SINGLE_PREC},
-            measuredMaxValue: {ID: 0x0002, type: DataType.SINGLE_PREC},
-            tolerance: {ID: 0x0003, type: DataType.SINGLE_PREC},
-        },
-        commands: {},
-        commandsResponse: {},
-    },
-    pm10Measurement: {
-        // XXX: not in R8 spec?
-        ID: 0x042d,
-        attributes: {
-            measuredValue: {ID: 0x0000, type: DataType.SINGLE_PREC},
-            measuredMinValue: {ID: 0x0001, type: DataType.SINGLE_PREC},
-            measuredMaxValue: {ID: 0x0002, type: DataType.SINGLE_PREC},
+            measuredValue: {
+                ID: 0x0000,
+                type: DataType.SINGLE_PREC,
+                reportRequired: true,
+                required: true,
+                minRef: "minMeasuredValue",
+                maxRef: "maxMeasuredValue",
+            },
+            minMeasuredValue: {ID: 0x0001, type: DataType.SINGLE_PREC, required: true, min: 0, maxExclRef: "maxMeasuredValue"},
+            maxMeasuredValue: {ID: 0x0002, type: DataType.SINGLE_PREC, required: true, max: 1, minExclRef: "minMeasuredValue"},
             tolerance: {ID: 0x0003, type: DataType.SINGLE_PREC},
         },
         commands: {},

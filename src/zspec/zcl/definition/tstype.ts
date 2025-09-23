@@ -379,8 +379,6 @@ export type ClusterName =
     | "msSodium"
     | "pm25Measurement"
     | "msFormaldehyde"
-    | "pm1Measurement"
-    | "pm10Measurement"
     | "ssIasZone"
     | "ssIasAce"
     | "ssIasWd"
