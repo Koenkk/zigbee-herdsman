@@ -1637,22 +1637,16 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 ],
                 required: true,
             },
-            fastPollStop: {ID: 0x01, parameters: []},
+            fastPollStop: {ID: 0x01, parameters: [], required: true},
             setLongPollInterval: {ID: 0x02, parameters: [{name: "newLongPollInterval", type: DataType.UINT32}]},
             setShortPollInterval: {ID: 0x03, parameters: [{name: "newShortPollInterval", type: DataType.UINT16}]},
         },
         commandsResponse: {
             checkin: {
                 ID: 0x00,
-                parameters: [
-                    {name: "startFastPolling", type: DataType.BOOLEAN},
-                    {name: "fastPollTimeout", type: DataType.UINT16},
-                ],
+                parameters: [],
                 required: true,
             },
-            fastPollStop: {ID: 0x01, parameters: [], required: true},
-            setLongPollInterval: {ID: 0x02, parameters: [{name: "newLongPollInterval", type: DataType.UINT32}]},
-            setShortPollInterval: {ID: 0x03, parameters: [{name: "newShortPollInterval", type: DataType.UINT16}]},
         },
     },
     greenPower: {
@@ -4792,10 +4786,10 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         attributes: {
             numberOfResets: {ID: 0x0000, type: DataType.UINT16, max: 0xffff, default: 0},
             persistentMemoryWrites: {ID: 0x0001, type: DataType.UINT16, max: 0xffff, default: 0},
-            macRxBcast: {ID: 0x0100, type: DataType.UINT32, max: 4294967295, default: 0},
-            macTxBcast: {ID: 0x0101, type: DataType.UINT32, max: 4294967295, default: 0},
-            macRxUcast: {ID: 0x0102, type: DataType.UINT32, max: 4294967295, default: 0},
-            macTxUcast: {ID: 0x0103, type: DataType.UINT32, max: 4294967295, default: 0},
+            macRxBcast: {ID: 0x0100, type: DataType.UINT32, max: 0xffffffff, default: 0},
+            macTxBcast: {ID: 0x0101, type: DataType.UINT32, max: 0xffffffff, default: 0},
+            macRxUcast: {ID: 0x0102, type: DataType.UINT32, max: 0xffffffff, default: 0},
+            macTxUcast: {ID: 0x0103, type: DataType.UINT32, max: 0xffffffff, default: 0},
             macTxUcastRetry: {ID: 0x0104, type: DataType.UINT16, max: 0xffff, default: 0},
             macTxUcastFail: {ID: 0x0105, type: DataType.UINT16, max: 0xffff, default: 0},
             aPSRxBcast: {ID: 0x0106, type: DataType.UINT16, max: 0xffff, default: 0},
@@ -4822,6 +4816,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             averageMacRetryPerApsMessageSent: {ID: 0x011b, type: DataType.UINT16, max: 0xffff, default: 0},
             lastMessageLqi: {ID: 0x011c, type: DataType.UINT8, max: 0xff, default: 0},
             lastMessageRssi: {ID: 0x011d, type: DataType.INT8, min: -127, max: 127, default: 0},
+            // custom
             danfossSystemStatusCode: {ID: 0x4000, type: DataType.BITMAP16, manufacturerCode: ManufacturerCode.DANFOSS_A_S},
             schneiderCommunicationQuality: {ID: 0x4000, type: DataType.UINT8, manufacturerCode: ManufacturerCode.SCHNEIDER_ELECTRIC},
             danfossHeatSupplyRequest: {ID: 0x4031, type: DataType.ENUM8, manufacturerCode: ManufacturerCode.DANFOSS_A_S},
