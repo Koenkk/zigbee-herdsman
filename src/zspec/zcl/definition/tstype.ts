@@ -322,6 +322,7 @@ export type ClusterName =
     | "mobileDeviceCfg"
     | "neighborCleaning"
     | "nearestGateway"
+    | "keepAlive"
     | "closuresShadeCfg"
     | "closuresDoorLock"
     | "closuresWindowCovering"

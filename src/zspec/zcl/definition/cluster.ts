@@ -2050,6 +2050,15 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         commands: {},
         commandsResponse: {},
     },
+    keepAlive: {
+        ID: 0x0025,
+        attributes: {
+            tcKeepAliveBase: {ID: 0x0000, type: DataType.UINT8, required: true, max: 0xff, default: 0x0a},
+            tcKeepAliveJitter: {ID: 0x0001, type: DataType.UINT16, required: true, max: 0xffff, default: 0x012c},
+        },
+        commands: {},
+        commandsResponse: {},
+    },
     closuresShadeCfg: {
         ID: 0x0100,
         attributes: {
