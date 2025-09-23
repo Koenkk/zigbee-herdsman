@@ -8624,7 +8624,7 @@ describe("Controller", () => {
             type: "commandIndividualLedEffect",
             data: {
                 color: 0,
-                duration: null,
+                duration: 255,
                 effect: 1,
                 led: 5,
                 level: 100,
