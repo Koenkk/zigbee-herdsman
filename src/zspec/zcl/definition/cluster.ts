@@ -1489,6 +1489,194 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             },
         },
     },
+    powerProfile: {
+        ID: 0x001a,
+        attributes: {
+            totalProfileNum: {ID: 0x0000, type: DataType.UINT8, required: true, min: 1, max: 0xfe, default: 1},
+            multipleScheduling: {ID: 0x0001, type: DataType.BOOLEAN, required: true, default: 0},
+            energyFormatting: {ID: 0x0002, type: DataType.BITMAP8, required: true, default: 1},
+            energyRemote: {ID: 0x0003, type: DataType.BOOLEAN, required: true, default: 0},
+            scheduleMode: {ID: 0x0004, type: DataType.BITMAP8, required: true, writable: true, reportRequired: true, default: 0x00},
+        },
+        commands: {
+            powerProfileRequest: {ID: 0x00, parameters: [{name: "powerProfileId", type: DataType.UINT8}], required: true},
+            powerProfileStateRequest: {ID: 0x01, parameters: [], required: true},
+            getPowerProfilePriceResponse: {
+                ID: 0x02,
+                parameters: [
+                    {name: "powerProfileId", type: DataType.UINT8},
+                    {name: "currency", type: DataType.UINT16},
+                    {name: "price", type: DataType.UINT32},
+                    {name: "priceTrailingDigit", type: DataType.UINT8},
+                ],
+                required: true,
+            },
+            getOverallSchedulePriceResponse: {
+                ID: 0x03,
+                parameters: [
+                    {name: "currency", type: DataType.UINT16},
+                    {name: "price", type: DataType.UINT32},
+                    {name: "priceTrailingDigit", type: DataType.UINT8},
+                ],
+                required: true,
+            },
+            energyPhasesScheduleNotification: {
+                ID: 0x04,
+                parameters: [
+                    {name: "powerProfileId", type: DataType.UINT8},
+                    {name: "numScheduledPhases", type: DataType.UINT8},
+                    // TODO: special Buffalo write/read
+                    // {name: "scheduledPhases", type: BuffaloZclDataType.LIST_SCHEDULED_PHASES},
+                    //  {name: "energyPhaseId", type: DataType.UINT8},
+                    //  {name: "scheduledTime", type: DataType.UINT16},
+                ],
+                required: true,
+            },
+            energyPhasesScheduleResponse: {
+                ID: 0x05,
+                parameters: [
+                    {name: "powerProfileId", type: DataType.UINT8},
+                    {name: "numScheduledPhases", type: DataType.UINT8},
+                    // TODO: special Buffalo write/read
+                    // {name: "scheduledPhases", type: BuffaloZclDataType.LIST_SCHEDULED_PHASES},
+                    //  {name: "energyPhaseId", type: DataType.UINT8},
+                    //  {name: "scheduledTime", type: DataType.UINT16},
+                ],
+                required: true,
+            },
+            powerProfileScheduleConstraintsRequest: {ID: 0x06, parameters: [{name: "powerProfileId", type: DataType.UINT8}], required: true},
+            energyPhasesScheduleStateRequest: {ID: 0x07, parameters: [{name: "powerProfileId", type: DataType.UINT8}], required: true},
+            getPowerProfilePriceExtendedResponse: {
+                ID: 0x08,
+                parameters: [
+                    {name: "powerProfileId", type: DataType.UINT8},
+                    {name: "currency", type: DataType.UINT16},
+                    {name: "price", type: DataType.UINT32},
+                    {name: "priceTrailingDigit", type: DataType.UINT8},
+                ],
+                required: true,
+            },
+        },
+        commandsResponse: {
+            powerProfileNotification: {
+                ID: 0x00,
+                parameters: [
+                    {name: "totalProfileNum", type: DataType.UINT8},
+                    {name: "powerProfileId", type: DataType.UINT8},
+                    {name: "numTransferredPhases", type: DataType.UINT8},
+                    // TODO: special Buffalo write/read
+                    // {name: "transferredPhases", type: DataType.LIST_TRANSFERRED_PHASES},
+                    //  {name: "energyPhaseId", type: DataType.UINT8},
+                    //  {name: "macroPhaseId", type: DataType.UINT8},
+                    //  {name: "expectedDuration", type: DataType.UINT16},
+                    //  {name: "peakPower", type: DataType.UINT16},
+                    //  {name: "energy", type: DataType.UINT16},
+                    //  {name: "maxActivationDelay", type: DataType.UINT16},
+                ],
+                required: true,
+            },
+            powerProfileResponse: {
+                ID: 0x01,
+                parameters: [
+                    {name: "totalProfileNum", type: DataType.UINT8},
+                    {name: "powerProfileId", type: DataType.UINT8},
+                    {name: "numTransferredPhases", type: DataType.UINT8},
+                    // TODO: special Buffalo write/read
+                    // {name: "transferredPhases", type: DataType.LIST_TRANSFERRED_PHASES},
+                    //  {name: "energyPhaseId", type: DataType.UINT8},
+                    //  {name: "macroPhaseId", type: DataType.UINT8},
+                    //  {name: "expectedDuration", type: DataType.UINT16},
+                    //  {name: "peakPower", type: DataType.UINT16},
+                    //  {name: "energy", type: DataType.UINT16},
+                    //  {name: "maxActivationDelay", type: DataType.UINT16},
+                ],
+                required: true,
+            },
+            powerProfileStateResponse: {
+                ID: 0x02,
+                parameters: [
+                    {name: "powerProfileCount", type: DataType.UINT8},
+                    // TODO: special Buffalo write/read
+                    // {name: "powerProfiles", type: BuffaloZclDataType.LIST_POWER_PROFILE},
+                    //  {name: "powerProfileId", type: DataType.UINT8},
+                    //  {name: "energyPhaseId", type: DataType.UINT8},
+                    //  {name: "powerProfileRemoteControl", type: DataType.BOOLEAN},
+                    //  {name: "powerProfileState", type: DataType.ENUM8},
+                ],
+                required: true,
+            },
+            getPowerProfilePrice: {ID: 0x03, parameters: [{name: "powerProfileId", type: DataType.UINT8}]},
+            powerProfilesStateNotification: {
+                ID: 0x04,
+                parameters: [
+                    {name: "powerProfileCount", type: DataType.UINT8},
+                    // TODO: special Buffalo write/read
+                    // {name: "powerProfiles", type: BuffaloZclDataType.LIST_POWER_PROFILE},
+                    //  {name: "powerProfileId", type: DataType.UINT8},
+                    //  {name: "energyPhaseId", type: DataType.UINT8},
+                    //  {name: "powerProfileRemoteControl", type: DataType.BOOLEAN},
+                    //  {name: "powerProfileState", type: DataType.ENUM8},
+                ],
+                required: true,
+            },
+            getOverallSchedulePrice: {ID: 0x05, parameters: []},
+            energyPhasesScheduleRequest: {ID: 0x06, parameters: [{name: "powerProfileId", type: DataType.UINT8}], required: true},
+            energyPhasesScheduleStateResponse: {
+                ID: 0x07,
+                parameters: [
+                    {name: "powerProfileId", type: DataType.UINT8},
+                    {name: "numScheduledPhases", type: DataType.UINT8},
+                    // TODO: special Buffalo write/read
+                    // {name: "scheduledPhases", type: BuffaloZclDataType.LIST_SCHEDULED_PHASES},
+                    //  {name: "energyPhaseId", type: DataType.UINT8},
+                    //  {name: "scheduledTime", type: DataType.UINT16},
+                ],
+                required: true,
+            },
+            energyPhasesScheduleStateNotification: {
+                ID: 0x08,
+                parameters: [
+                    {name: "powerProfileId", type: DataType.UINT8},
+                    {name: "numScheduledPhases", type: DataType.UINT8},
+                    // TODO: special Buffalo write/read
+                    // {name: "scheduledPhases", type: BuffaloZclDataType.LIST_SCHEDULED_PHASES},
+                    //  {name: "energyPhaseId", type: DataType.UINT8},
+                    //  {name: "scheduledTime", type: DataType.UINT16},
+                ],
+                required: true,
+            },
+            powerProfileScheduleConstraintsNotification: {
+                ID: 0x09,
+                parameters: [
+                    {name: "powerProfileId", type: DataType.UINT8},
+                    {name: "startAfter", type: DataType.UINT16},
+                    {name: "stopBefore", type: DataType.UINT16},
+                ],
+                required: true,
+            },
+            powerProfileScheduleConstraintsResponse: {
+                ID: 0x0a,
+                parameters: [
+                    {name: "powerProfileId", type: DataType.UINT8},
+                    {name: "startAfter", type: DataType.UINT16},
+                    {name: "stopBefore", type: DataType.UINT16},
+                ],
+                required: true,
+            },
+            getPowerProfilePriceExtended: {
+                ID: 0x0b,
+                parameters: [
+                    {name: "options", type: DataType.BITMAP8},
+                    {name: "powerProfileId", type: DataType.UINT8},
+                    {
+                        name: "powerProfileStartTime",
+                        type: DataType.UINT16,
+                        conditions: [{type: ParameterCondition.MINIMUM_REMAINING_BUFFER_BYTES, value: 2}],
+                    },
+                ],
+            },
+        },
+    },
     pulseWidthModulation: {
         ID: 0x001c,
         attributes: {
