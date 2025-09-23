@@ -3282,7 +3282,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         commandsResponse: {},
     },
     msIlluminanceMeasurement: {
-        ID: 0x0400, // 0x0400
+        ID: 0x0400,
         attributes: {
             measuredValue: {ID: 0x0000, type: DataType.UINT16, reportRequired: true, required: true, max: 0xffff, default: 0},
             minMeasuredValue: {ID: 0x0001, type: DataType.UINT16, required: true, min: 1, max: 65533, maxExclRef: "maxMeasuredValue"},
@@ -3294,7 +3294,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         commandsResponse: {},
     },
     msIlluminanceLevelSensing: {
-        ID: 0x0401, // 0x0401
+        ID: 0x0401,
         attributes: {
             levelStatus: {ID: 0x0000, type: DataType.ENUM8, reportRequired: true, required: true},
             lightSensorType: {ID: 0x0001, type: DataType.ENUM8},
@@ -3304,7 +3304,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         commandsResponse: {},
     },
     msTemperatureMeasurement: {
-        ID: 0x0402, // 0x0402
+        ID: 0x0402,
         attributes: {
             measuredValue: {
                 ID: 0x0000,
@@ -3342,7 +3342,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         commandsResponse: {},
     },
     msPressureMeasurement: {
-        ID: 0x0403, // 0x0403
+        ID: 0x0403,
         attributes: {
             measuredValue: {
                 ID: 0x0000,
@@ -3382,7 +3382,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         commandsResponse: {},
     },
     msFlowMeasurement: {
-        ID: 0x0404, // 0x0404
+        ID: 0x0404,
         attributes: {
             measuredValue: {
                 ID: 0x0000,
@@ -3410,7 +3410,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
     },
     msRelativeHumidity: {
         // Water Content
-        ID: 0x0405, // 0x0405
+        ID: 0x0405,
         attributes: {
             measuredValue: {
                 ID: 0x0000,
@@ -3438,7 +3438,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         commandsResponse: {},
     },
     msOccupancySensing: {
-        ID: 0x0406, // 0x0406
+        ID: 0x0406,
         attributes: {
             occupancy: {ID: 0x0000, type: DataType.BITMAP8, reportRequired: true, required: true},
             occupancySensorType: {ID: 0x0001, type: DataType.ENUM8, required: true, default: 0},
@@ -3463,7 +3463,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         commandsResponse: {},
     },
     msLeafWetness: {
-        ID: 0x0407, // 0x0407
+        ID: 0x0407,
         attributes: {
             measuredValue: {ID: 0x0000, type: DataType.UINT16},
             minMeasuredValue: {ID: 0x0001, type: DataType.UINT16},
@@ -3474,7 +3474,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         commandsResponse: {},
     },
     msSoilMoisture: {
-        ID: 0x0408, // 0x0408
+        ID: 0x0408,
         attributes: {
             measuredValue: {ID: 0x0000, type: DataType.UINT16},
             minMeasuredValue: {ID: 0x0001, type: DataType.UINT16},
@@ -3485,7 +3485,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         commandsResponse: {},
     },
     pHMeasurement: {
-        ID: 0x0409, // 0x0409
+        ID: 0x0409,
         attributes: {
             measuredValue: {
                 ID: 0x0000,
@@ -3504,7 +3504,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         commandsResponse: {},
     },
     msElectricalConductivity: {
-        ID: 0x040a, // 0x040a
+        ID: 0x040a,
         attributes: {
             measuredValue: {
                 ID: 0x0000,
@@ -3523,7 +3523,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         commandsResponse: {},
     },
     msWindSpeed: {
-        ID: 0x040b, // 0x040b
+        ID: 0x040b,
         attributes: {
             measuredValue: {
                 ID: 0x0000,
@@ -3543,7 +3543,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
     },
     msCarbonMonoxide: {
         // CO
-        ID: 0x040c, // 0x040c
+        ID: 0x040c,
         attributes: {
             measuredValue: {
                 ID: 0x0000,
@@ -3562,7 +3562,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
     },
     msCO2: {
         // Carbon Dioxide
-        ID: 0x040d, // 0x040d
+        ID: 0x040d,
         attributes: {
             measuredValue: {ID: 0x0000, type: DataType.SINGLE_PREC},
             minMeasuredValue: {ID: 0x0001, type: DataType.SINGLE_PREC},
@@ -3576,7 +3576,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
     },
     msEthylene: {
         // CH2
-        ID: 0x040e, // 0x040e
+        ID: 0x040e,
         attributes: {
             measuredValue: {ID: 0x0000, type: DataType.SINGLE_PREC},
             minMeasuredValue: {ID: 0x0001, type: DataType.SINGLE_PREC},
@@ -3588,7 +3588,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
     },
     msEthyleneOxide: {
         // C2H4O
-        ID: 0x040f, // 0x040f
+        ID: 0x040f,
         attributes: {
             measuredValue: {ID: 0x0000, type: DataType.SINGLE_PREC},
             minMeasuredValue: {ID: 0x0001, type: DataType.SINGLE_PREC},
@@ -3600,7 +3600,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
     },
     msHydrogen: {
         // H
-        ID: 0x0410, // 0x0410
+        ID: 0x0410,
         attributes: {
             measuredValue: {ID: 0x0000, type: DataType.SINGLE_PREC},
             minMeasuredValue: {ID: 0x0001, type: DataType.SINGLE_PREC},
@@ -3612,7 +3612,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
     },
     msHydrogenSulfide: {
         // H2S
-        ID: 0x0411, // 0x0411
+        ID: 0x0411,
         attributes: {
             measuredValue: {ID: 0x0000, type: DataType.SINGLE_PREC},
             minMeasuredValue: {ID: 0x0001, type: DataType.SINGLE_PREC},
@@ -3624,7 +3624,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
     },
     msNitricOxide: {
         // NO
-        ID: 0x0412, // 0x0412
+        ID: 0x0412,
         attributes: {
             measuredValue: {ID: 0x0000, type: DataType.SINGLE_PREC},
             minMeasuredValue: {ID: 0x0001, type: DataType.SINGLE_PREC},
@@ -3636,7 +3636,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
     },
     msNitrogenDioxide: {
         // NO2
-        ID: 0x0413, // 0x0413
+        ID: 0x0413,
         attributes: {
             measuredValue: {ID: 0x0000, type: DataType.SINGLE_PREC},
             minMeasuredValue: {ID: 0x0001, type: DataType.SINGLE_PREC},
@@ -3648,7 +3648,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
     },
     msOxygen: {
         // O2
-        ID: 0x0414, // 0x0414
+        ID: 0x0414,
         attributes: {
             measuredValue: {ID: 0x0000, type: DataType.SINGLE_PREC},
             minMeasuredValue: {ID: 0x0001, type: DataType.SINGLE_PREC},
@@ -3660,7 +3660,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
     },
     msOzone: {
         // O3
-        ID: 0x0415, // 0x0415
+        ID: 0x0415,
         attributes: {
             measuredValue: {ID: 0x0000, type: DataType.SINGLE_PREC},
             minMeasuredValue: {ID: 0x0001, type: DataType.SINGLE_PREC},
@@ -3672,7 +3672,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
     },
     msSulfurDioxide: {
         // SO2
-        ID: 0x0416, // 0x0416
+        ID: 0x0416,
         attributes: {
             measuredValue: {ID: 0x0000, type: DataType.SINGLE_PREC},
             minMeasuredValue: {ID: 0x0001, type: DataType.SINGLE_PREC},
@@ -3684,7 +3684,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
     },
     msDissolvedOxygen: {
         // DO
-        ID: 0x0417, // 0x0417
+        ID: 0x0417,
         attributes: {
             measuredValue: {ID: 0x0000, type: DataType.SINGLE_PREC},
             minMeasuredValue: {ID: 0x0001, type: DataType.SINGLE_PREC},
@@ -3695,7 +3695,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         commandsResponse: {},
     },
     msBromate: {
-        ID: 0x0418, // 0x0418
+        ID: 0x0418,
         attributes: {
             measuredValue: {ID: 0x0000, type: DataType.SINGLE_PREC},
             minMeasuredValue: {ID: 0x0001, type: DataType.SINGLE_PREC},
@@ -3706,7 +3706,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         commandsResponse: {},
     },
     msChloramines: {
-        ID: 0x0419, // 0x0419
+        ID: 0x0419,
         attributes: {
             measuredValue: {ID: 0x0000, type: DataType.SINGLE_PREC},
             minMeasuredValue: {ID: 0x0001, type: DataType.SINGLE_PREC},
@@ -3717,7 +3717,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         commandsResponse: {},
     },
     msChlorine: {
-        ID: 0x041a, // 0x041a
+        ID: 0x041a,
         attributes: {
             measuredValue: {ID: 0x0000, type: DataType.SINGLE_PREC},
             minMeasuredValue: {ID: 0x0001, type: DataType.SINGLE_PREC},
@@ -3728,7 +3728,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         commandsResponse: {},
     },
     msFecalColiformAndEColi: {
-        ID: 0x041b, // 0x041b
+        ID: 0x041b,
         attributes: {
             measuredValue: {ID: 0x0000, type: DataType.SINGLE_PREC},
             minMeasuredValue: {ID: 0x0001, type: DataType.SINGLE_PREC},
@@ -3739,7 +3739,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         commandsResponse: {},
     },
     msFluoride: {
-        ID: 0x041c, // 0x041c
+        ID: 0x041c,
         attributes: {
             measuredValue: {ID: 0x0000, type: DataType.SINGLE_PREC},
             minMeasuredValue: {ID: 0x0001, type: DataType.SINGLE_PREC},
@@ -3750,7 +3750,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         commandsResponse: {},
     },
     msHaloaceticAcids: {
-        ID: 0x041d, // 0x041d
+        ID: 0x041d,
         attributes: {
             measuredValue: {ID: 0x0000, type: DataType.SINGLE_PREC},
             minMeasuredValue: {ID: 0x0001, type: DataType.SINGLE_PREC},
@@ -3761,7 +3761,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         commandsResponse: {},
     },
     msTotalTrihalomethanes: {
-        ID: 0x041e, // 0x041e
+        ID: 0x041e,
         attributes: {
             measuredValue: {ID: 0x0000, type: DataType.SINGLE_PREC},
             minMeasuredValue: {ID: 0x0001, type: DataType.SINGLE_PREC},
@@ -3772,7 +3772,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         commandsResponse: {},
     },
     msTotalColiformBacteria: {
-        ID: 0x041f, // 0x041f
+        ID: 0x041f,
         attributes: {
             measuredValue: {ID: 0x0000, type: DataType.SINGLE_PREC},
             minMeasuredValue: {ID: 0x0001, type: DataType.SINGLE_PREC},
@@ -3783,7 +3783,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         commandsResponse: {},
     },
     msTurbidity: {
-        ID: 0x0420, // 0x0420
+        ID: 0x0420,
         attributes: {
             measuredValue: {ID: 0x0000, type: DataType.SINGLE_PREC},
             minMeasuredValue: {ID: 0x0001, type: DataType.SINGLE_PREC},
@@ -3794,7 +3794,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         commandsResponse: {},
     },
     msCopper: {
-        ID: 0x0421, // 0x0421
+        ID: 0x0421,
         attributes: {
             measuredValue: {ID: 0x0000, type: DataType.SINGLE_PREC},
             minMeasuredValue: {ID: 0x0001, type: DataType.SINGLE_PREC},
@@ -3805,7 +3805,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         commandsResponse: {},
     },
     msLead: {
-        ID: 0x0422, // 0x0422
+        ID: 0x0422,
         attributes: {
             measuredValue: {ID: 0x0000, type: DataType.SINGLE_PREC},
             minMeasuredValue: {ID: 0x0001, type: DataType.SINGLE_PREC},
@@ -3816,7 +3816,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         commandsResponse: {},
     },
     msManganese: {
-        ID: 0x0423, // 0x0423
+        ID: 0x0423,
         attributes: {
             measuredValue: {ID: 0x0000, type: DataType.SINGLE_PREC},
             minMeasuredValue: {ID: 0x0001, type: DataType.SINGLE_PREC},
@@ -3827,7 +3827,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         commandsResponse: {},
     },
     msSulfate: {
-        ID: 0x0424, // 0x0424
+        ID: 0x0424,
         attributes: {
             measuredValue: {ID: 0x0000, type: DataType.SINGLE_PREC},
             minMeasuredValue: {ID: 0x0001, type: DataType.SINGLE_PREC},
@@ -3838,7 +3838,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         commandsResponse: {},
     },
     msBromodichloromethane: {
-        ID: 0x0425, // 0x0425
+        ID: 0x0425,
         attributes: {
             measuredValue: {ID: 0x0000, type: DataType.SINGLE_PREC},
             minMeasuredValue: {ID: 0x0001, type: DataType.SINGLE_PREC},
@@ -3849,7 +3849,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         commandsResponse: {},
     },
     msBromoform: {
-        ID: 0x0426, // 0x0426
+        ID: 0x0426,
         attributes: {
             measuredValue: {ID: 0x0000, type: DataType.SINGLE_PREC},
             minMeasuredValue: {ID: 0x0001, type: DataType.SINGLE_PREC},
@@ -3860,7 +3860,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         commandsResponse: {},
     },
     msChlorodibromomethane: {
-        ID: 0x0427, // 0x0427
+        ID: 0x0427,
         attributes: {
             measuredValue: {ID: 0x0000, type: DataType.SINGLE_PREC},
             minMeasuredValue: {ID: 0x0001, type: DataType.SINGLE_PREC},
@@ -3871,7 +3871,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         commandsResponse: {},
     },
     msChloroform: {
-        ID: 0x0428, // 0x0428
+        ID: 0x0428,
         attributes: {
             measuredValue: {ID: 0x0000, type: DataType.SINGLE_PREC},
             minMeasuredValue: {ID: 0x0001, type: DataType.SINGLE_PREC},
@@ -3882,7 +3882,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         commandsResponse: {},
     },
     msSodium: {
-        ID: 0x0429, // 0x0429
+        ID: 0x0429,
         attributes: {
             measuredValue: {ID: 0x0000, type: DataType.SINGLE_PREC},
             minMeasuredValue: {ID: 0x0001, type: DataType.SINGLE_PREC},
@@ -3893,7 +3893,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         commandsResponse: {},
     },
     pm25Measurement: {
-        ID: 0x042a, // 0x042a
+        ID: 0x042a,
         attributes: {
             measuredValue: {ID: 0x0000, type: DataType.SINGLE_PREC},
             measuredMinValue: {ID: 0x0001, type: DataType.SINGLE_PREC},
@@ -3904,7 +3904,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         commandsResponse: {},
     },
     msFormaldehyde: {
-        ID: 0x042b, // 0x042b
+        ID: 0x042b,
         attributes: {
             measuredValue: {ID: 0x0000, type: DataType.SINGLE_PREC},
             minMeasuredValue: {ID: 0x0001, type: DataType.SINGLE_PREC},
@@ -3916,7 +3916,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
     },
     pm1Measurement: {
         // XXX: not in R8 spec?
-        ID: 0x042c, // 0x042c
+        ID: 0x042c,
         attributes: {
             measuredValue: {ID: 0x0000, type: DataType.SINGLE_PREC},
             measuredMinValue: {ID: 0x0001, type: DataType.SINGLE_PREC},
@@ -3928,7 +3928,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
     },
     pm10Measurement: {
         // XXX: not in R8 spec?
-        ID: 0x042d, // 0x042d
+        ID: 0x042d,
         attributes: {
             measuredValue: {ID: 0x0000, type: DataType.SINGLE_PREC},
             measuredMinValue: {ID: 0x0001, type: DataType.SINGLE_PREC},
