@@ -402,6 +402,10 @@ function processRestrictions<T>(entry: Attribute | Parameter, value: T, refs?: R
         }
     }
 
+    if (entry.length !== undefined && (value as string | unknown[] | Buffer).length !== entry.length) {
+        throw new Error(`${entry.name} requires length of ${entry.length}`);
+    }
+
     if (entry.minLen !== undefined && (value as string | unknown[] | Buffer).length < entry.minLen) {
         throw new Error(`${entry.name} requires min length of ${entry.minLen}`);
     }

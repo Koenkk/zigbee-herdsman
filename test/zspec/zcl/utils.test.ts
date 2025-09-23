@@ -512,6 +512,11 @@ describe("ZCL Utils", () => {
             expect(fn(attr, 20, {myRef: 20})).toStrictEqual(19);
         });
 
+        it("throws not length", () => {
+            const attr = createAttribute({writable: true, length: 10});
+            expect(() => fn(attr, "abcde")).toThrow(/requires length/i);
+        });
+
         it("throws below minLen", () => {
             const attr = createAttribute({writable: true, minLen: 10});
             expect(() => fn(attr, "abcde")).toThrow(/requires min length/i);
@@ -595,6 +600,11 @@ describe("ZCL Utils", () => {
         it("clamps at maxExcl ref value", () => {
             const attr = createParameter({maxExclRef: "myRef"});
             expect(fn(attr, 20, {myRef: 20})).toStrictEqual(19);
+        });
+
+        it("throws not length", () => {
+            const attr = createParameter({length: 10});
+            expect(() => fn(attr, "abcde")).toThrow(/requires length/i);
         });
 
         it("throws below minLen", () => {
