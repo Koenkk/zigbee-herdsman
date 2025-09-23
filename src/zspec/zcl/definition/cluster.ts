@@ -659,6 +659,140 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         },
         commandsResponse: {},
     },
+    genLevelCtrlForLighting: {
+        // derived from `genLevelCtrl` (same ID), should use this one in most cases
+        ID: 0x0008,
+        attributes: {
+            currentLevel: {
+                ID: 0x0000,
+                type: DataType.UINT8,
+                reportRequired: true,
+                sceneRequired: true,
+                required: true,
+                min: 1,
+                max: 0xfe,
+                default: 0xff,
+                minRef: "minLevel",
+                maxRef: "maxLevel",
+            },
+            remainingTime: {ID: 0x0001, type: DataType.UINT16, max: 0xffff, default: 0},
+            minLevel: {ID: 0x0002, type: DataType.UINT8, default: 0, maxRef: "maxLevel"},
+            maxLevel: {ID: 0x0003, type: DataType.UINT8, max: 0xff, default: 0xff, minRef: "minLevel"},
+            currentFrequency: {
+                ID: 0x0004,
+                type: DataType.UINT16,
+                reportRequired: true,
+                sceneRequired: true,
+                default: 0,
+                minRef: "minFrequency",
+                maxRef: "maxFrequency",
+                special: [["Unknown", "0000"]],
+            },
+            // only `required: true` if `currentFrequency` attribute supported
+            minFrequency: {ID: 0x0005, type: DataType.UINT16, default: 0, maxRef: "maxFrequency"},
+            // only `required: true` if `currentFrequency` attribute supported
+            maxFrequency: {ID: 0x0006, type: DataType.UINT16, max: 0xffff, default: 0, minRef: "minFrequency"},
+            options: {ID: 0x000f, type: DataType.BITMAP8, required: true, writable: true, default: 0},
+            onOffTransitionTime: {ID: 0x0010, type: DataType.UINT16, writable: true, max: 0xffff, default: 0},
+            onLevel: {ID: 0x0011, type: DataType.UINT8, writable: true, default: 0xff, minRef: "minLevel", maxRef: "maxLevel"},
+            onTransitionTime: {ID: 0x0012, type: DataType.UINT16, writable: true, max: 0xfffe, default: 0xffff},
+            offTransitionTime: {ID: 0x0013, type: DataType.UINT16, writable: true, max: 0xfffe, default: 0xffff},
+            defaultMoveRate: {ID: 0x0014, type: DataType.UINT8, writable: true, max: 0xfe},
+            startUpCurrentLevel: {
+                ID: 0x4000,
+                type: DataType.UINT8,
+                writable: true,
+                max: 0xff,
+                special: [
+                    ["MinimumDeviceValuePermitted", "00"],
+                    ["SetToPreviousValue", "ff"],
+                ],
+            },
+        },
+        commands: {
+            moveToLevel: {
+                ID: 0x00,
+                parameters: [
+                    {name: "level", type: DataType.UINT8},
+                    {name: "transtime", type: DataType.UINT16},
+                    {name: "optionsMask", type: DataType.BITMAP8},
+                    {name: "optionsOverride", type: DataType.BITMAP8},
+                ],
+                required: true,
+            },
+            move: {
+                ID: 0x01,
+                parameters: [
+                    {name: "movemode", type: DataType.ENUM8},
+                    {name: "rate", type: DataType.UINT8},
+                    {name: "optionsMask", type: DataType.BITMAP8},
+                    {name: "optionsOverride", type: DataType.BITMAP8},
+                ],
+                required: true,
+            },
+            step: {
+                ID: 0x02,
+                parameters: [
+                    {name: "stepmode", type: DataType.ENUM8},
+                    {name: "stepsize", type: DataType.UINT8},
+                    {name: "transtime", type: DataType.UINT16},
+                    {name: "optionsMask", type: DataType.BITMAP8},
+                    {name: "optionsOverride", type: DataType.BITMAP8},
+                ],
+                required: true,
+            },
+            stop: {
+                ID: 0x03,
+                parameters: [
+                    {name: "optionsMask", type: DataType.BITMAP8},
+                    {name: "optionsOverride", type: DataType.BITMAP8},
+                ],
+                required: true,
+            },
+            moveToLevelWithOnOff: {
+                ID: 0x04,
+                parameters: [
+                    {name: "level", type: DataType.UINT8},
+                    {name: "transtime", type: DataType.UINT16},
+                    {name: "optionsMask", type: DataType.BITMAP8},
+                    {name: "optionsOverride", type: DataType.BITMAP8},
+                ],
+                required: true,
+            },
+            moveWithOnOff: {
+                ID: 0x05,
+                parameters: [
+                    {name: "movemode", type: DataType.ENUM8},
+                    {name: "rate", type: DataType.UINT8},
+                    {name: "optionsMask", type: DataType.BITMAP8},
+                    {name: "optionsOverride", type: DataType.BITMAP8},
+                ],
+                required: true,
+            },
+            stepWithOnOff: {
+                ID: 0x06,
+                parameters: [
+                    {name: "stepmode", type: DataType.ENUM8},
+                    {name: "stepsize", type: DataType.UINT8},
+                    {name: "transtime", type: DataType.UINT16},
+                    {name: "optionsMask", type: DataType.BITMAP8},
+                    {name: "optionsOverride", type: DataType.BITMAP8},
+                ],
+                required: true,
+            },
+            stopWithOnOff: {
+                ID: 0x07,
+                parameters: [
+                    {name: "optionsMask", type: DataType.BITMAP8},
+                    {name: "optionsOverride", type: DataType.BITMAP8},
+                ],
+                required: true,
+            },
+            // only `required: true` if `currentFrequency` attribute supported
+            moveToClosestFrequency: {ID: 0x08, parameters: [{name: "frequency", type: DataType.UINT16}]},
+        },
+        commandsResponse: {},
+    },
     genAlarms: {
         ID: 0x0009,
         attributes: {

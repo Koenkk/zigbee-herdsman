@@ -301,6 +301,7 @@ export type ClusterName =
     | "genOnOff"
     | "genOnOffSwitchCfg"
     | "genLevelCtrl"
+    | "genLevelCtrlForLighting"
     | "genAlarms"
     | "genTime"
     | "genRssiLocation"
