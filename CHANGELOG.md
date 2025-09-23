@@ -1,5 +1,13 @@
 # Changelog
 
+## [6.1.3](https://github.com/Koenkk/zigbee-herdsman/compare/v6.1.2...v6.1.3) (2025-09-23)
+
+
+### Bug Fixes
+
+* Fix uint8 `NaN` value ([#1510](https://github.com/Koenkk/zigbee-herdsman/issues/1510)) ([8ee5b6d](https://github.com/Koenkk/zigbee-herdsman/commit/8ee5b6d898b88ae84703f178c89b85941e3a7dee))
+* **ignore:** bump @types/node from 24.4.0 to 24.5.2 in the minor-patch group ([#1508](https://github.com/Koenkk/zigbee-herdsman/issues/1508)) ([938b417](https://github.com/Koenkk/zigbee-herdsman/commit/938b4179a560f4c364850e130ee5de4782bbca6c))
+
 ## [6.1.2](https://github.com/Koenkk/zigbee-herdsman/compare/v6.1.1...v6.1.2) (2025-09-21)
 
 
