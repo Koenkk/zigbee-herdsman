@@ -210,19 +210,19 @@ export class BuffaloZcl extends Buffalo {
         if (value) {
             this.writeUInt8(value.length);
             this.writeBuffer(value, value.length);
+            /* v8 ignore start */
+        } else {
+            // ignore because of UINT8_TMP_FIX
+            this.writeUInt8(0xff); // non-value
         }
-        // See UINT8_TMP_FIX
-        // else {
-        //     this.writeUInt8(0xff); // non-value
-        // }
+        /* v8 ignore stop */
     }
 
     private readOctetStr(): Buffer {
         const length = this.readZclUInt8();
 
         // See UINT8_TMP_FIX
-        return this.readBuffer(length);
-
+        return length < 0xff ? this.readBuffer(length) : Buffer.from([]); // non-value
         // return Number.isNaN(length) ? Buffer.from([]) : this.readBuffer(length);
     }
 
@@ -244,7 +244,7 @@ export class BuffaloZcl extends Buffalo {
         const length = this.readZclUInt8();
 
         // See UINT8_TMP_FIX
-        return this.readUtf8String(length);
+        return length < 0xff ? this.readUtf8String(length) : ""; // non-value
         // return Number.isNaN(length) ? "" : this.readUtf8String(length);
     }
 
