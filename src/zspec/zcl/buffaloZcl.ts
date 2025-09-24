@@ -280,11 +280,11 @@ export class BuffaloZcl extends Buffalo {
             this.writeUInt16(entry.transitionTime);
 
             if (entry.heatSetpoint != null) {
-                this.writeUInt16(entry.heatSetpoint);
+                this.writeInt16(entry.heatSetpoint);
             }
 
             if (entry.coolSetpoint != null) {
-                this.writeUInt16(entry.coolSetpoint);
+                this.writeInt16(entry.coolSetpoint);
             }
         }
     }
@@ -304,11 +304,11 @@ export class BuffaloZcl extends Buffalo {
             };
 
             if (heat) {
-                entry.heatSetpoint = this.readUInt16();
+                entry.heatSetpoint = this.readInt16();
             }
 
             if (cool) {
-                entry.coolSetpoint = this.readUInt16();
+                entry.coolSetpoint = this.readInt16();
             }
 
             result.push(entry);
