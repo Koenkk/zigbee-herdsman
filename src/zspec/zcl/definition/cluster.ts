@@ -871,7 +871,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             type: {ID: 0x0000, type: DataType.DATA8, required: true, writable: true},
             method: {ID: 0x0001, type: DataType.ENUM8, required: true, writable: true},
             age: {ID: 0x0002, type: DataType.UINT16, max: 0xffff},
-            qualityMeasure: {ID: 0x0003, type: DataType.UINT8, max: 0x64},
+            qualityMeasure: {ID: 0x0003, type: DataType.UINT8, max: 100},
             numOfDevices: {ID: 0x0004, type: DataType.UINT8, max: 0xff},
             coordinate1: {ID: 0x0010, type: DataType.INT16, required: true, writable: true, min: -0x8000, max: 0x7fff},
             coordinate2: {ID: 0x0011, type: DataType.INT16, required: true, writable: true, min: -0x8000, max: 0x7fff},
@@ -2930,79 +2930,111 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
     lightingColorCtrl: {
         ID: 0x0300,
         attributes: {
-            currentHue: {ID: 0x0000, type: DataType.UINT8, reportRequired: true, max: 254, default: 0},
-            currentSaturation: {ID: 0x0001, type: DataType.UINT8, reportRequired: true, sceneRequired: true, max: 254, default: 0},
-            remainingTime: {ID: 0x0002, type: DataType.UINT16, max: 65534, default: 0},
-            currentX: {ID: 0x0003, type: DataType.UINT16, reportRequired: true, sceneRequired: true, max: 65279, default: 24939},
-            currentY: {ID: 0x0004, type: DataType.UINT16, reportRequired: true, sceneRequired: true, max: 65279, default: 24701},
-            driftCompensation: {ID: 0x0005, type: DataType.ENUM8},
+            // `required: true` only if bit 0 of colorCapabilities attribute is 1
+            currentHue: {ID: 0x0000, type: DataType.UINT8, reportRequired: true, max: 0xfe, default: 0},
+            // `required: true` only if bit 0 of colorCapabilities attribute is 1
+            currentSaturation: {ID: 0x0001, type: DataType.UINT8, reportRequired: true, sceneRequired: true, max: 0xfe, default: 0},
+            remainingTime: {ID: 0x0002, type: DataType.UINT16, max: 0xfffe, default: 0},
+            // `required: true` only if bit 3 of colorCapabilities attribute is 1
+            currentX: {ID: 0x0003, type: DataType.UINT16, reportRequired: true, sceneRequired: true, max: 0xfeff, default: 0x616b},
+            // `required: true` only if bit 3 of colorCapabilities attribute is 1
+            currentY: {ID: 0x0004, type: DataType.UINT16, reportRequired: true, sceneRequired: true, max: 0xfeff, default: 0x607d},
+            driftCompensation: {ID: 0x0005, type: DataType.ENUM8, max: 0x04},
             compensationText: {ID: 0x0006, type: DataType.CHAR_STR, maxLen: 254},
+            // `required: true` only if bit 4 of colorCapabilities attribute is 1
             colorTemperature: {
                 ID: 0x0007,
                 type: DataType.UINT16,
                 reportRequired: true,
                 sceneRequired: true,
-                max: 65279,
-                default: 250,
+                max: 0xfeff,
+                default: 0x00fa,
                 minRef: "colorTempPhysicalMin",
                 maxRef: "colorTempPhysicalMax",
                 special: [["Undefined", "0000"]],
             },
-            colorMode: {ID: 0x0008, type: DataType.ENUM8, required: true, default: 1},
+            colorMode: {ID: 0x0008, type: DataType.ENUM8, required: true, max: 0x02, default: 1},
             options: {ID: 0x000f, type: DataType.BITMAP8, writable: true, required: true, default: 0},
-            numPrimaries: {ID: 0x0010, type: DataType.UINT8, required: true, max: 6},
-            primary1X: {ID: 0x0011, type: DataType.UINT16, max: 65279},
-            primary1Y: {ID: 0x0012, type: DataType.UINT16, max: 65279},
+
+            numPrimaries: {ID: 0x0010, type: DataType.UINT8, required: true, max: 0x06},
+            // all `primary1..` `required: true` only if numPrimaries > 0
+            primary1X: {ID: 0x0011, type: DataType.UINT16, max: 0xfeff},
+            primary1Y: {ID: 0x0012, type: DataType.UINT16, max: 0xfeff},
             primary1Intensity: {ID: 0x0013, type: DataType.UINT8, max: 0xff},
-            primary2X: {ID: 0x0015, type: DataType.UINT16, max: 65279},
-            primary2Y: {ID: 0x0016, type: DataType.UINT16, max: 65279},
+            // 0x0014: reserved
+            // all `primary2..` `required: true` only if numPrimaries > 1
+            primary2X: {ID: 0x0015, type: DataType.UINT16, max: 0xfeff},
+            primary2Y: {ID: 0x0016, type: DataType.UINT16, max: 0xfeff},
             primary2Intensity: {ID: 0x0017, type: DataType.UINT8},
-            primary3X: {ID: 0x0019, type: DataType.UINT16, max: 65279},
-            primary3Y: {ID: 0x001a, type: DataType.UINT16, max: 65279},
+            // 0x0018: reserved
+            // all `primary3..` `required: true` only if numPrimaries > 2
+            primary3X: {ID: 0x0019, type: DataType.UINT16, max: 0xfeff},
+            primary3Y: {ID: 0x001a, type: DataType.UINT16, max: 0xfeff},
             primary3Intensity: {ID: 0x001b, type: DataType.UINT8, max: 0xff},
-            primary4X: {ID: 0x0020, type: DataType.UINT16, max: 65279},
-            primary4Y: {ID: 0x0021, type: DataType.UINT16, max: 65279},
+
+            // all `primary4..` `required: true` only if numPrimaries > 3
+            primary4X: {ID: 0x0020, type: DataType.UINT16, max: 0xfeff},
+            primary4Y: {ID: 0x0021, type: DataType.UINT16, max: 0xfeff},
             primary4Intensity: {ID: 0x0022, type: DataType.UINT8, max: 0xff},
-            primary5X: {ID: 0x0024, type: DataType.UINT16, max: 65279},
-            primary5Y: {ID: 0x0025, type: DataType.UINT16, max: 65279},
+            // 0x0023: reserved
+            // all `primary5..` `required: true` only if numPrimaries > 4
+            primary5X: {ID: 0x0024, type: DataType.UINT16, max: 0xfeff},
+            primary5Y: {ID: 0x0025, type: DataType.UINT16, max: 0xfeff},
             primary5Intensity: {ID: 0x0026, type: DataType.UINT8, max: 0xff},
-            primary6X: {ID: 0x0028, type: DataType.UINT16, max: 65279},
-            primary6Y: {ID: 0x0029, type: DataType.UINT16, max: 65279},
+            // 0x0027: reserved
+            // all `primary6..` `required: true` only if numPrimaries > 5
+            primary6X: {ID: 0x0028, type: DataType.UINT16, max: 0xfeff},
+            primary6Y: {ID: 0x0029, type: DataType.UINT16, max: 0xfeff},
             primary6Intensity: {ID: 0x002a, type: DataType.UINT8, max: 0xff},
-            whitePointX: {ID: 0x0030, type: DataType.UINT16, writable: true, max: 65279},
-            whitePointY: {ID: 0x0031, type: DataType.UINT16, writable: true, max: 65279},
-            colorPointRX: {ID: 0x0032, type: DataType.UINT16, writable: true, max: 65279},
-            colorPointRY: {ID: 0x0033, type: DataType.UINT16, writable: true, max: 65279},
+
+            whitePointX: {ID: 0x0030, type: DataType.UINT16, writable: true, max: 0xfeff},
+            whitePointY: {ID: 0x0031, type: DataType.UINT16, writable: true, max: 0xfeff},
+            colorPointRX: {ID: 0x0032, type: DataType.UINT16, writable: true, max: 0xfeff},
+            colorPointRY: {ID: 0x0033, type: DataType.UINT16, writable: true, max: 0xfeff},
             colorPointRIntensity: {ID: 0x0034, type: DataType.UINT8, writable: true, max: 0xff},
-            colorPointGX: {ID: 0x0036, type: DataType.UINT16, writable: true, max: 65279},
-            colorPointGY: {ID: 0x0037, type: DataType.UINT16, writable: true, max: 65279},
+            // 0x0035: reserved
+            colorPointGX: {ID: 0x0036, type: DataType.UINT16, writable: true, max: 0xfeff},
+            colorPointGY: {ID: 0x0037, type: DataType.UINT16, writable: true, max: 0xfeff},
             colorPointGIntensity: {ID: 0x0038, type: DataType.UINT8, writable: true, max: 0xff},
-            colorPointBX: {ID: 0x003a, type: DataType.UINT16, writable: true, max: 65279},
-            colorPointBY: {ID: 0x003b, type: DataType.UINT16, writable: true, max: 65279},
+            // 0x0039: reserved
+            colorPointBX: {ID: 0x003a, type: DataType.UINT16, writable: true, max: 0xfeff},
+            colorPointBY: {ID: 0x003b, type: DataType.UINT16, writable: true, max: 0xfeff},
             colorPointBIntensity: {ID: 0x003c, type: DataType.UINT8, writable: true, max: 0xff},
+
+            // `required: true` only if bit 1 of colorCapabilities attribute is 1
             enhancedCurrentHue: {ID: 0x4000, type: DataType.UINT16, sceneRequired: true, max: 0xffff, default: 0},
-            enhancedColorMode: {ID: 0x4001, type: DataType.ENUM8, required: true, default: 1},
+            enhancedColorMode: {ID: 0x4001, type: DataType.ENUM8, required: true, max: 0xff, default: 1},
+            // `required: true` only if bit 2 of colorCapabilities attribute is 1
             colorLoopActive: {ID: 0x4002, type: DataType.UINT8, sceneRequired: true, max: 0xff, default: 0},
+            // `required: true` only if bit 2 of colorCapabilities attribute is 1
             colorLoopDirection: {ID: 0x4003, type: DataType.UINT8, sceneRequired: true, max: 0xff, default: 0},
-            colorLoopTime: {ID: 0x4004, type: DataType.UINT16, sceneRequired: true, max: 0xffff, default: 25},
-            colorLoopStartEnhancedHue: {ID: 0x4005, type: DataType.UINT16, max: 0xffff, default: 8960},
+            // `required: true` only if bit 2 of colorCapabilities attribute is 1
+            colorLoopTime: {ID: 0x4004, type: DataType.UINT16, sceneRequired: true, max: 0xffff, default: 0x0019},
+            // `required: true` only if bit 2 of colorCapabilities attribute is 1
+            colorLoopStartEnhancedHue: {ID: 0x4005, type: DataType.UINT16, max: 0xffff, default: 0x2300},
+            // `required: true` only if bit 2 of colorCapabilities attribute is 1
             colorLoopStoredEnhancedHue: {ID: 0x4006, type: DataType.UINT16, max: 0xffff, default: 0},
-            colorCapabilities: {ID: 0x400a, type: DataType.UINT16, required: true, default: 0},
-            colorTempPhysicalMin: {ID: 0x400b, type: DataType.UINT16, max: 65279, default: 0, maxRef: "colorTempPhysicalMax"},
-            colorTempPhysicalMax: {ID: 0x400c, type: DataType.UINT16, max: 65279, default: 65279, minRef: "colorTempPhysicalMin"},
+            colorCapabilities: {ID: 0x400a, type: DataType.BITMAP16, required: true, max: 0x001f, default: 0},
+            // `required: true` only if bit 4 of colorCapabilities attribute is 1
+            colorTempPhysicalMin: {ID: 0x400b, type: DataType.UINT16, max: 0xfeff, default: 0, maxRef: "colorTempPhysicalMax"},
+            // `required: true` only if bit 4 of colorCapabilities attribute is 1
+            colorTempPhysicalMax: {ID: 0x400c, type: DataType.UINT16, max: 0xfeff, default: 0xfeff, minRef: "colorTempPhysicalMin"},
+            // `required: true` only if bit 4 of colorCapabilities attribute is 1 AND colorTemperature supported
             coupleColorTempToLevelMin: {
                 ID: 0x400d,
                 type: DataType.UINT16,
                 minRef: "colorTempPhysicalMin",
                 maxRef: "colorTemperature",
             },
+            // `required: true` only if bit 4 of colorCapabilities attribute is 1 AND colorTemperature supported
             startUpColorTemperature: {
                 ID: 0x4010,
                 type: DataType.UINT16,
                 writable: true,
-                max: 65279,
+                max: 0xfeff,
                 special: [["SetColorTempToPreviousValue", "ffff"]],
             },
+            // custom
             tuyaRgbMode: {ID: 0xf000, type: DataType.UINT8},
             tuyaBrightness: {ID: 0xf001, type: DataType.UINT8},
         },
@@ -3011,30 +3043,33 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 ID: 0x00,
                 parameters: [
                     {name: "hue", type: DataType.UINT8},
-                    {name: "direction", type: DataType.UINT8},
+                    {name: "direction", type: DataType.ENUM8},
                     {name: "transtime", type: DataType.UINT16},
                     {name: "optionsMask", type: DataType.BITMAP8},
                     {name: "optionsOverride", type: DataType.BITMAP8},
                 ],
+                // required: true only if bit 0 of colorCapabilities attribute is 1
             },
             moveHue: {
                 ID: 0x01,
                 parameters: [
-                    {name: "movemode", type: DataType.UINT8},
+                    {name: "movemode", type: DataType.ENUM8},
                     {name: "rate", type: DataType.UINT8},
                     {name: "optionsMask", type: DataType.BITMAP8},
                     {name: "optionsOverride", type: DataType.BITMAP8},
                 ],
+                // required: true only if bit 0 of colorCapabilities attribute is 1
             },
             stepHue: {
                 ID: 0x02,
                 parameters: [
-                    {name: "stepmode", type: DataType.UINT8},
+                    {name: "stepmode", type: DataType.ENUM8},
                     {name: "stepsize", type: DataType.UINT8},
                     {name: "transtime", type: DataType.UINT8},
                     {name: "optionsMask", type: DataType.BITMAP8},
                     {name: "optionsOverride", type: DataType.BITMAP8},
                 ],
+                // required: true only if bit 0 of colorCapabilities attribute is 1
             },
             moveToSaturation: {
                 ID: 0x03,
@@ -3044,25 +3079,28 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                     {name: "optionsMask", type: DataType.BITMAP8},
                     {name: "optionsOverride", type: DataType.BITMAP8},
                 ],
+                // required: true only if bit 0 of colorCapabilities attribute is 1
             },
             moveSaturation: {
                 ID: 0x04,
                 parameters: [
-                    {name: "movemode", type: DataType.UINT8},
+                    {name: "movemode", type: DataType.ENUM8},
                     {name: "rate", type: DataType.UINT8},
                     {name: "optionsMask", type: DataType.BITMAP8},
                     {name: "optionsOverride", type: DataType.BITMAP8},
                 ],
+                // required: true only if bit 0 of colorCapabilities attribute is 1
             },
             stepSaturation: {
                 ID: 0x05,
                 parameters: [
-                    {name: "stepmode", type: DataType.UINT8},
+                    {name: "stepmode", type: DataType.ENUM8},
                     {name: "stepsize", type: DataType.UINT8},
                     {name: "transtime", type: DataType.UINT8},
                     {name: "optionsMask", type: DataType.BITMAP8},
                     {name: "optionsOverride", type: DataType.BITMAP8},
                 ],
+                // required: true only if bit 0 of colorCapabilities attribute is 1
             },
             moveToHueAndSaturation: {
                 ID: 0x06,
@@ -3073,15 +3111,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                     {name: "optionsMask", type: DataType.BITMAP8},
                     {name: "optionsOverride", type: DataType.BITMAP8},
                 ],
-            },
-            tuyaMoveToHueAndSaturationBrightness: {
-                ID: 0x06,
-                parameters: [
-                    {name: "hue", type: DataType.UINT8},
-                    {name: "saturation", type: DataType.UINT8},
-                    {name: "transtime", type: DataType.UINT16},
-                    {name: "brightness", type: DataType.UINT8},
-                ],
+                // required: true only if bit 0 of colorCapabilities attribute is 1
             },
             moveToColor: {
                 ID: 0x07,
@@ -3092,6 +3122,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                     {name: "optionsMask", type: DataType.BITMAP8},
                     {name: "optionsOverride", type: DataType.BITMAP8},
                 ],
+                // required: true only if bit 3 of colorCapabilities attribute is 1
             },
             moveColor: {
                 ID: 0x08,
@@ -3101,6 +3132,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                     {name: "optionsMask", type: DataType.BITMAP8},
                     {name: "optionsOverride", type: DataType.BITMAP8},
                 ],
+                // required: true only if bit 3 of colorCapabilities attribute is 1
             },
             stepColor: {
                 ID: 0x09,
@@ -3111,6 +3143,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                     {name: "optionsMask", type: DataType.BITMAP8},
                     {name: "optionsOverride", type: DataType.BITMAP8},
                 ],
+                // required: true only if bit 3 of colorCapabilities attribute is 1
             },
             moveToColorTemp: {
                 ID: 0x0a,
@@ -3120,35 +3153,39 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                     {name: "optionsMask", type: DataType.BITMAP8},
                     {name: "optionsOverride", type: DataType.BITMAP8},
                 ],
+                // required: true only if bit 4 of colorCapabilities attribute is 1
             },
             enhancedMoveToHue: {
                 ID: 0x40,
                 parameters: [
                     {name: "enhancehue", type: DataType.UINT16},
-                    {name: "direction", type: DataType.UINT8},
+                    {name: "direction", type: DataType.ENUM8},
                     {name: "transtime", type: DataType.UINT16},
                     {name: "optionsMask", type: DataType.BITMAP8},
                     {name: "optionsOverride", type: DataType.BITMAP8},
                 ],
+                // required: true only if bit 1 of colorCapabilities attribute is 1
             },
             enhancedMoveHue: {
                 ID: 0x41,
                 parameters: [
-                    {name: "movemode", type: DataType.UINT8},
+                    {name: "movemode", type: DataType.ENUM8},
                     {name: "rate", type: DataType.UINT16},
                     {name: "optionsMask", type: DataType.BITMAP8},
                     {name: "optionsOverride", type: DataType.BITMAP8},
                 ],
+                // required: true only if bit 1 of colorCapabilities attribute is 1
             },
             enhancedStepHue: {
                 ID: 0x42,
                 parameters: [
-                    {name: "stepmode", type: DataType.UINT8},
+                    {name: "stepmode", type: DataType.ENUM8},
                     {name: "stepsize", type: DataType.UINT16},
                     {name: "transtime", type: DataType.UINT16},
                     {name: "optionsMask", type: DataType.BITMAP8},
                     {name: "optionsOverride", type: DataType.BITMAP8},
                 ],
+                // required: true only if bit 1 of colorCapabilities attribute is 1
             },
             enhancedMoveToHueAndSaturation: {
                 ID: 0x43,
@@ -3159,52 +3196,62 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                     {name: "optionsMask", type: DataType.BITMAP8},
                     {name: "optionsOverride", type: DataType.BITMAP8},
                 ],
+                // required: true only if bit 1 of colorCapabilities attribute is 1
             },
             colorLoopSet: {
                 ID: 0x44,
                 parameters: [
-                    {name: "updateflags", type: DataType.UINT8},
-                    {name: "action", type: DataType.UINT8},
-                    {name: "direction", type: DataType.UINT8},
+                    {name: "updateflags", type: DataType.BITMAP8},
+                    {name: "action", type: DataType.ENUM8},
+                    {name: "direction", type: DataType.ENUM8},
                     {name: "time", type: DataType.UINT16},
                     {name: "starthue", type: DataType.UINT16},
                     {name: "optionsMask", type: DataType.BITMAP8},
                     {name: "optionsOverride", type: DataType.BITMAP8},
                 ],
+                // required: true only if bit 2 of colorCapabilities attribute is 1
             },
             stopMoveStep: {
                 ID: 0x47,
                 parameters: [
-                    {name: "bits", type: DataType.UINT8},
-                    {name: "bytee", type: DataType.UINT8},
-                    {name: "action", type: DataType.UINT8},
-                    {name: "direction", type: DataType.UINT8},
-                    {name: "time", type: DataType.UINT16},
-                    {name: "starthue", type: DataType.UINT16},
+                    {name: "optionsMask", type: DataType.BITMAP8},
+                    {name: "optionsOverride", type: DataType.BITMAP8},
                 ],
-                required: true,
+                // required: true only if bit 0, 1, 3 or 4 of colorCapabilities attribute is 1
             },
             moveColorTemp: {
                 ID: 0x4b,
                 parameters: [
-                    {name: "movemode", type: DataType.UINT8},
+                    {name: "movemode", type: DataType.ENUM8},
                     {name: "rate", type: DataType.UINT16},
                     {name: "minimum", type: DataType.UINT16},
                     {name: "maximum", type: DataType.UINT16},
                     {name: "optionsMask", type: DataType.BITMAP8},
                     {name: "optionsOverride", type: DataType.BITMAP8},
                 ],
+                // required: true only if bit 4 of colorCapabilities attribute is 1
             },
             stepColorTemp: {
                 ID: 0x4c,
                 parameters: [
-                    {name: "stepmode", type: DataType.UINT8},
+                    {name: "stepmode", type: DataType.ENUM8},
                     {name: "stepsize", type: DataType.UINT16},
                     {name: "transtime", type: DataType.UINT16},
                     {name: "minimum", type: DataType.UINT16},
                     {name: "maximum", type: DataType.UINT16},
                     {name: "optionsMask", type: DataType.BITMAP8},
                     {name: "optionsOverride", type: DataType.BITMAP8},
+                ],
+                // required: true only if bit 0 of colorCapabilities attribute is 1
+            },
+            // custom
+            tuyaMoveToHueAndSaturationBrightness: {
+                ID: 0x06,
+                parameters: [
+                    {name: "hue", type: DataType.UINT8},
+                    {name: "saturation", type: DataType.UINT8},
+                    {name: "transtime", type: DataType.UINT16},
+                    {name: "brightness", type: DataType.UINT8},
                 ],
             },
             tuyaSetMinimumBrightness: {ID: 0xe0, parameters: [{name: "minimum", type: DataType.UINT16}]},
@@ -3239,16 +3286,17 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
     lightingBallastCfg: {
         ID: 0x0301,
         attributes: {
-            physicalMinLevel: {ID: 0x0000, type: DataType.UINT8, required: true, min: 1, max: 254, default: 1},
-            physicalMaxLevel: {ID: 0x0001, type: DataType.UINT8, required: true, min: 1, max: 254, default: 254},
+            physicalMinLevel: {ID: 0x0000, type: DataType.UINT8, required: true, min: 1, max: 0xfe, default: 1},
+            physicalMaxLevel: {ID: 0x0001, type: DataType.UINT8, required: true, min: 1, max: 0xfe, default: 0xfe},
             ballastStatus: {ID: 0x0002, type: DataType.BITMAP8, default: 0},
+
             minLevel: {
                 ID: 0x0010,
                 type: DataType.UINT8,
                 writable: true,
                 required: true,
                 min: 1,
-                max: 254,
+                max: 0xfe,
                 defaultRef: "physicalMinLevel",
                 minRef: "physicalMinLevel",
                 maxRef: "maxLevel",
@@ -3259,22 +3307,25 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 writable: true,
                 required: true,
                 min: 1,
-                max: 254,
+                max: 0xfe,
                 defaultRef: "physicalMaxLevel",
                 minRef: "minLevel",
                 maxRef: "physicalMaxLevel",
             },
-            powerOnLevel: {ID: 0x0012, type: DataType.UINT8, writable: true, max: 254, defaultRef: "physicalMaxLevel"},
-            powerOnFadeTime: {ID: 0x0013, type: DataType.UINT16, writable: true, max: 65534, default: 0},
-            intrinsicBallastFactor: {ID: 0x0014, type: DataType.UINT8, writable: true, max: 254},
+            powerOnLevel: {ID: 0x0012, type: DataType.UINT8, writable: true, max: 0xfe, defaultRef: "physicalMaxLevel"},
+            powerOnFadeTime: {ID: 0x0013, type: DataType.UINT16, writable: true, max: 0xfffe, default: 0},
+            intrinsicBallastFactor: {ID: 0x0014, type: DataType.UINT8, writable: true, max: 0xfe},
             ballastFactorAdjustment: {ID: 0x0015, type: DataType.UINT8, writable: true, min: 100, default: 0xff},
-            lampQuantity: {ID: 0x0020, type: DataType.UINT8, max: 254},
+
+            lampQuantity: {ID: 0x0020, type: DataType.UINT8, max: 0xfe},
+
             lampType: {ID: 0x0030, type: DataType.CHAR_STR, writable: true, default: "", maxLen: 16},
             lampManufacturer: {ID: 0x0031, type: DataType.CHAR_STR, writable: true, default: "", maxLen: 16},
-            lampRatedHours: {ID: 0x0032, type: DataType.UINT24, writable: true, max: 16777214, default: 16777215},
-            lampBurnHours: {ID: 0x0033, type: DataType.UINT24, writable: true, max: 16777214, default: 0},
+            lampRatedHours: {ID: 0x0032, type: DataType.UINT24, writable: true, max: 0xfffffe, default: 0xffffff},
+            lampBurnHours: {ID: 0x0033, type: DataType.UINT24, writable: true, max: 0xfffffe, default: 0},
             lampAlarmMode: {ID: 0x0034, type: DataType.BITMAP8, writable: true, default: 0},
-            lampBurnHoursTripPoint: {ID: 0x0035, type: DataType.UINT24, writable: true, max: 16777214, default: 16777215},
+            lampBurnHoursTripPoint: {ID: 0x0035, type: DataType.UINT24, writable: true, max: 0xfffffe, default: 0xffffff},
+            // custom
             elkoControlMode: {ID: 0xe000, type: DataType.ENUM8, manufacturerCode: ManufacturerCode.ADEO},
             wiserControlMode: {ID: 0xe000, type: DataType.ENUM8, manufacturerCode: ManufacturerCode.SCHNEIDER_ELECTRIC},
         },
