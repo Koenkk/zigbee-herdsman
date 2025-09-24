@@ -3352,7 +3352,7 @@ describe("Controller", () => {
         const device = controller.getDeviceByIeeeAddr("0x129")!;
         device.addCustomCluster("ssIasZone", {
             ID: Zcl.Clusters.ssIasZone.ID,
-            commands: {boschSmokeAlarmSiren: {ID: 0x80, parameters: [{name: "data", type: Zcl.DataType.UINT16}]}},
+            commands: {boschSmokeAlarmSiren: {ID: 0x80, parameters: [{name: "data", type: Zcl.DataType.UINT16, writable: true, max: 0xffff}]}},
             commandsResponse: {},
             attributes: {},
         });
@@ -4333,7 +4333,7 @@ describe("Controller", () => {
             command: {
                 ID: 64,
                 parameters: [
-                    {name: "effectid", type: 32},
+                    {name: "effectid", type: 48},
                     {name: "effectvariant", type: 32},
                 ],
                 name: "offWithEffect",
@@ -8575,7 +8575,7 @@ describe("Controller", () => {
             type: "commandIndividualLedEffect",
             data: {
                 color: 0,
-                duration: 255,
+                duration: null,
                 effect: 1,
                 led: 5,
                 level: 100,

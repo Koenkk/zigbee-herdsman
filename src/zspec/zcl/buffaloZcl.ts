@@ -374,7 +374,7 @@ export class BuffaloZcl extends Buffalo {
             throw new Error("Cannot read GPD_FRAME without required payload options specified");
         }
 
-        if (options.payload.payloadSize === UINT8_NON_VALUE || options.payload.payloadSize === 0) {
+        if (Number.isNaN(options.payload.payloadSize) || options.payload.payloadSize === 0) {
             return {}; // non-value, don't move position
         }
 

@@ -738,11 +738,11 @@ describe("Zcl", () => {
 
         const payload = {
             srcID: 4650238,
-            commandFrame: {raw: Buffer.from([])},
+            commandFrame: {},
             commandID: 16,
             frameCounter: 1253,
             options: 5280,
-            payloadSize: 255,
+            payloadSize: Number.NaN,
         };
 
         expect(frame.header).toStrictEqual(header);
