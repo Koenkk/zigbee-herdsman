@@ -1486,27 +1486,27 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         ID: 0x0019,
         attributes: {
             upgradeServerId: {ID: 0x0000, type: DataType.IEEE_ADDR, client: true, required: true, default: "0xffffffffffffffff"},
-            fileOffset: {ID: 0x0001, type: DataType.UINT32, client: true, default: 4294967294},
-            currentFileVersion: {ID: 0x0002, type: DataType.UINT32, client: true, default: 4294967294},
-            currentZigbeeStackVersion: {ID: 0x0003, type: DataType.UINT16, client: true, default: 65535},
-            downloadedFileVersion: {ID: 0x0004, type: DataType.UINT32, client: true, default: 4294967294},
-            downloadedZigbeeStackVersion: {ID: 0x0005, type: DataType.UINT16, client: true, default: 65535},
-            imageUpgradeStatus: {ID: 0x0006, type: DataType.ENUM8, client: true, required: true, default: 0},
-            manufacturerId: {ID: 0x0007, type: DataType.UINT16, client: true},
-            imageTypeId: {ID: 0x0008, type: DataType.UINT16, client: true},
-            minimumBlockReqDelay: {ID: 0x0009, type: DataType.UINT16, client: true, default: 0},
-            imageStamp: {ID: 0x000a, type: DataType.UINT32, client: true},
+            fileOffset: {ID: 0x0001, type: DataType.UINT32, client: true, max: 0xffffffff, default: 0xffffffff},
+            currentFileVersion: {ID: 0x0002, type: DataType.UINT32, client: true, max: 0xffffffff, default: 0xffffffff},
+            currentZigbeeStackVersion: {ID: 0x0003, type: DataType.UINT16, client: true, max: 0xffff, default: 0xffff},
+            downloadedFileVersion: {ID: 0x0004, type: DataType.UINT32, client: true, max: 0xffffffff, default: 0xffffffff},
+            downloadedZigbeeStackVersion: {ID: 0x0005, type: DataType.UINT16, client: true, max: 0xffff, default: 0xffff},
+            imageUpgradeStatus: {ID: 0x0006, type: DataType.ENUM8, client: true, required: true, max: 0xff, default: 0x00},
+            manufacturerId: {ID: 0x0007, type: DataType.UINT16, client: true, max: 0xffff},
+            imageTypeId: {ID: 0x0008, type: DataType.UINT16, client: true, max: 0xffff},
+            minimumBlockReqDelay: {ID: 0x0009, type: DataType.UINT16, client: true, max: 0xfffe, default: 0},
+            imageStamp: {ID: 0x000a, type: DataType.UINT32, client: true, max: 0xffffffff},
             upgradeActivationPolicy: {ID: 0x000b, type: DataType.ENUM8, client: true, default: 0},
             upgradeTimeoutPolicy: {ID: 0x000c, type: DataType.ENUM8, client: true, default: 0},
         },
         commands: {
             queryNextImageRequest: {
                 ID: 0x01,
-                response: 2,
+                response: 0x02,
                 parameters: [
-                    {name: "fieldControl", type: DataType.UINT8},
+                    {name: "fieldControl", type: DataType.BITMAP8},
                     {name: "manufacturerCode", type: DataType.UINT16},
-                    {name: "imageType", type: DataType.UINT16},
+                    {name: "imageType", type: DataType.UINT16, max: 0xffbf},
                     {name: "fileVersion", type: DataType.UINT32},
                     {
                         name: "hardwareVersion",
@@ -1518,11 +1518,11 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             },
             imageBlockRequest: {
                 ID: 0x03,
-                response: 5,
+                response: 0x05,
                 parameters: [
-                    {name: "fieldControl", type: DataType.UINT8},
+                    {name: "fieldControl", type: DataType.BITMAP8},
                     {name: "manufacturerCode", type: DataType.UINT16},
-                    {name: "imageType", type: DataType.UINT16},
+                    {name: "imageType", type: DataType.UINT16, max: 0xffbf},
                     {name: "fileVersion", type: DataType.UINT32},
                     {name: "fileOffset", type: DataType.UINT32},
                     {name: "maximumDataSize", type: DataType.UINT8},
@@ -1545,11 +1545,11 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             },
             imagePageRequest: {
                 ID: 0x04,
-                response: 5,
+                response: 0x05,
                 parameters: [
-                    {name: "fieldControl", type: DataType.UINT8},
+                    {name: "fieldControl", type: DataType.BITMAP8},
                     {name: "manufacturerCode", type: DataType.UINT16},
-                    {name: "imageType", type: DataType.UINT16},
+                    {name: "imageType", type: DataType.UINT16, max: 0xffbf},
                     {name: "fileVersion", type: DataType.UINT32},
                     {name: "fileOffset", type: DataType.UINT32},
                     {name: "maximumDataSize", type: DataType.UINT8},
@@ -1564,22 +1564,22 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             },
             upgradeEndRequest: {
                 ID: 0x06,
-                response: 7,
+                response: 0x07,
                 parameters: [
-                    {name: "status", type: DataType.UINT8},
+                    {name: "status", type: DataType.ENUM8},
                     {name: "manufacturerCode", type: DataType.UINT16},
-                    {name: "imageType", type: DataType.UINT16},
+                    {name: "imageType", type: DataType.UINT16, max: 0xffbf},
                     {name: "fileVersion", type: DataType.UINT32},
                 ],
                 required: true,
             },
             queryDeviceSpecificFileRequest: {
                 ID: 0x08,
-                response: 9,
+                response: 0x09,
                 parameters: [
                     {name: "eui64", type: DataType.IEEE_ADDR},
                     {name: "manufacturerCode", type: DataType.UINT16},
-                    {name: "imageType", type: DataType.UINT16},
+                    {name: "imageType", type: DataType.UINT16, min: 0xffc0, max: 0xfffe},
                     {name: "fileVersion", type: DataType.UINT32},
                     {name: "zigbeeStackVersion", type: DataType.UINT16},
                 ],
@@ -1589,25 +1589,31 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             imageNotify: {
                 ID: 0x00,
                 parameters: [
-                    {name: "payloadType", type: DataType.UINT8},
+                    {name: "payloadType", type: DataType.ENUM8},
                     {name: "queryJitter", type: DataType.UINT8},
                     {
                         name: "manufacturerCode",
                         type: DataType.UINT16,
                         conditions: [{type: ParameterCondition.FIELD_GT, field: "payloadType", value: 0x00}],
                     },
-                    {name: "imageType", type: DataType.UINT16, conditions: [{type: ParameterCondition.FIELD_GT, field: "payloadType", value: 0x01}]},
+                    {
+                        name: "imageType",
+                        type: DataType.UINT16,
+                        conditions: [{type: ParameterCondition.FIELD_GT, field: "payloadType", value: 0x01}],
+                        max: 0xffff,
+                    },
                     {
                         name: "fileVersion",
                         type: DataType.UINT32,
                         conditions: [{type: ParameterCondition.FIELD_GT, field: "payloadType", value: 0x02}],
+                        max: 0xffffffff,
                     },
                 ],
             },
             queryNextImageResponse: {
                 ID: 0x02,
                 parameters: [
-                    {name: "status", type: DataType.UINT8},
+                    {name: "status", type: DataType.ENUM8},
                     {
                         name: "manufacturerCode",
                         type: DataType.UINT16,
@@ -1617,6 +1623,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                         name: "imageType",
                         type: DataType.UINT16,
                         conditions: [{type: ParameterCondition.FIELD_EQUAL, field: "status", value: Status.SUCCESS}],
+                        max: 0xffbf,
                     },
                     {
                         name: "fileVersion",
@@ -1635,7 +1642,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 ID: 0x05,
                 parameters: [
                     // alone if Status.ABORT
-                    {name: "status", type: DataType.UINT8},
+                    {name: "status", type: DataType.ENUM8},
                     {
                         name: "manufacturerCode",
                         type: DataType.UINT16,
@@ -1645,6 +1652,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                         name: "imageType",
                         type: DataType.UINT16,
                         conditions: [{type: ParameterCondition.FIELD_EQUAL, field: "status", value: Status.SUCCESS}],
+                        max: 0xffbf,
                     },
                     {
                         name: "fileVersion",
@@ -1687,18 +1695,18 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             upgradeEndResponse: {
                 ID: 0x07,
                 parameters: [
-                    {name: "manufacturerCode", type: DataType.UINT16},
-                    {name: "imageType", type: DataType.UINT16},
-                    {name: "fileVersion", type: DataType.UINT32},
-                    {name: "currentTime", type: DataType.UINT32},
-                    {name: "upgradeTime", type: DataType.UINT32},
+                    {name: "manufacturerCode", type: DataType.UINT16, max: 0xfffff},
+                    {name: "imageType", type: DataType.UINT16, max: 0xfffff},
+                    {name: "fileVersion", type: DataType.UINT32, max: 0xfffffffff},
+                    {name: "currentTime", type: DataType.UTC},
+                    {name: "upgradeTime", type: DataType.UTC},
                 ],
                 required: true,
             },
             queryDeviceSpecificFileResponse: {
                 ID: 0x09,
                 parameters: [
-                    {name: "status", type: DataType.UINT8},
+                    {name: "status", type: DataType.ENUM8},
                     {
                         name: "manufacturerCode",
                         type: DataType.UINT16,
@@ -1708,6 +1716,8 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                         name: "imageType",
                         type: DataType.UINT16,
                         conditions: [{type: ParameterCondition.FIELD_EQUAL, field: "status", value: Status.SUCCESS}],
+                        min: 0xffc0,
+                        max: 0xfffe,
                     },
                     {
                         name: "fileVersion",
