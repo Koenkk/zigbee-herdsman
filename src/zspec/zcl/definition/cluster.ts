@@ -4184,20 +4184,24 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
     ssIasZone: {
         ID: 0x0500,
         attributes: {
-            zoneState: {ID: 0x0000, type: DataType.ENUM8, required: true, max: 0xff, default: 0},
+            zoneState: {ID: 0x0000, type: DataType.ENUM8, required: true, default: 0},
             zoneType: {ID: 0x0001, type: DataType.ENUM16, required: true},
             zoneStatus: {ID: 0x0002, type: DataType.BITMAP16, required: true, default: 0},
+
             iasCieAddr: {ID: 0x0010, type: DataType.IEEE_ADDR, writable: true, required: true},
             zoneId: {ID: 0x0011, type: DataType.UINT8, required: true, max: 0xff, default: 0xff},
+            // if currentZoneSensitivityLevel is supported, this one should be too (`required: true`)
             numZoneSensitivityLevelsSupported: {ID: 0x0012, type: DataType.UINT8, min: 2, max: 0xff, default: 2},
+            // if numZoneSensitivityLevelsSupported is supported, this one should be too (`required: true`)
             currentZoneSensitivityLevel: {ID: 0x0013, type: DataType.UINT8, writable: true, max: 0xff, default: 0},
+            // custom
             develcoAlarmOffDelay: {ID: 0x8001, type: DataType.UINT16, manufacturerCode: ManufacturerCode.DEVELCO},
         },
         commands: {
             enrollRsp: {
                 ID: 0x00,
                 parameters: [
-                    {name: "enrollrspcode", type: DataType.UINT8},
+                    {name: "enrollrspcode", type: DataType.ENUM8},
                     {name: "zoneid", type: DataType.UINT8},
                 ],
                 required: true,
@@ -4215,8 +4219,8 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             statusChangeNotification: {
                 ID: 0x00,
                 parameters: [
-                    {name: "zonestatus", type: DataType.UINT16},
-                    {name: "extendedstatus", type: DataType.UINT8},
+                    {name: "zonestatus", type: DataType.BITMAP16},
+                    {name: "extendedstatus", type: DataType.BITMAP8},
                     {name: "zoneID", type: DataType.UINT8},
                     {name: "delay", type: DataType.UINT16},
                 ],
@@ -4225,7 +4229,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             enrollReq: {
                 ID: 0x01,
                 parameters: [
-                    {name: "zonetype", type: DataType.UINT16},
+                    {name: "zonetype", type: DataType.ENUM16},
                     {name: "manucode", type: DataType.UINT16},
                 ],
                 required: true,
@@ -4240,7 +4244,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 ID: 0x00,
                 response: 0,
                 parameters: [
-                    {name: "armmode", type: DataType.UINT8},
+                    {name: "armmode", type: DataType.ENUM8},
                     {name: "code", type: DataType.CHAR_STR},
                     {name: "zoneid", type: DataType.UINT8},
                 ],
@@ -4268,33 +4272,33 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 parameters: [
                     {name: "startzoneid", type: DataType.UINT8},
                     {name: "maxnumzoneid", type: DataType.UINT8},
-                    {name: "zonestatusmaskflag", type: DataType.UINT8},
-                    {name: "zonestatusmask", type: DataType.UINT16},
+                    {name: "zonestatusmaskflag", type: DataType.BOOLEAN},
+                    {name: "zonestatusmask", type: DataType.BITMAP16},
                 ],
                 required: true,
             },
         },
         commandsResponse: {
-            armRsp: {ID: 0x00, parameters: [{name: "armnotification", type: DataType.UINT8}], required: true},
+            armRsp: {ID: 0x00, parameters: [{name: "armnotification", type: DataType.ENUM8}], required: true},
             getZoneIDMapRsp: {
                 ID: 0x01,
                 parameters: [
-                    {name: "zoneidmapsection0", type: DataType.UINT16},
-                    {name: "zoneidmapsection1", type: DataType.UINT16},
-                    {name: "zoneidmapsection2", type: DataType.UINT16},
-                    {name: "zoneidmapsection3", type: DataType.UINT16},
-                    {name: "zoneidmapsection4", type: DataType.UINT16},
-                    {name: "zoneidmapsection5", type: DataType.UINT16},
-                    {name: "zoneidmapsection6", type: DataType.UINT16},
-                    {name: "zoneidmapsection7", type: DataType.UINT16},
-                    {name: "zoneidmapsection8", type: DataType.UINT16},
-                    {name: "zoneidmapsection9", type: DataType.UINT16},
-                    {name: "zoneidmapsection10", type: DataType.UINT16},
-                    {name: "zoneidmapsection11", type: DataType.UINT16},
-                    {name: "zoneidmapsection12", type: DataType.UINT16},
-                    {name: "zoneidmapsection13", type: DataType.UINT16},
-                    {name: "zoneidmapsection14", type: DataType.UINT16},
-                    {name: "zoneidmapsection15", type: DataType.UINT16},
+                    {name: "zoneidmapsection0", type: DataType.BITMAP16},
+                    {name: "zoneidmapsection1", type: DataType.BITMAP16},
+                    {name: "zoneidmapsection2", type: DataType.BITMAP16},
+                    {name: "zoneidmapsection3", type: DataType.BITMAP16},
+                    {name: "zoneidmapsection4", type: DataType.BITMAP16},
+                    {name: "zoneidmapsection5", type: DataType.BITMAP16},
+                    {name: "zoneidmapsection6", type: DataType.BITMAP16},
+                    {name: "zoneidmapsection7", type: DataType.BITMAP16},
+                    {name: "zoneidmapsection8", type: DataType.BITMAP16},
+                    {name: "zoneidmapsection9", type: DataType.BITMAP16},
+                    {name: "zoneidmapsection10", type: DataType.BITMAP16},
+                    {name: "zoneidmapsection11", type: DataType.BITMAP16},
+                    {name: "zoneidmapsection12", type: DataType.BITMAP16},
+                    {name: "zoneidmapsection13", type: DataType.BITMAP16},
+                    {name: "zoneidmapsection14", type: DataType.BITMAP16},
+                    {name: "zoneidmapsection15", type: DataType.BITMAP16},
                 ],
                 required: true,
             },
@@ -4302,7 +4306,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 ID: 0x02,
                 parameters: [
                     {name: "zoneid", type: DataType.UINT8},
-                    {name: "zonetype", type: DataType.UINT16},
+                    {name: "zonetype", type: DataType.ENUM16},
                     {name: "ieeeaddr", type: DataType.IEEE_ADDR},
                     {name: "zonelabel", type: DataType.CHAR_STR},
                 ],
@@ -4312,8 +4316,8 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 ID: 0x03,
                 parameters: [
                     {name: "zoneid", type: DataType.UINT8},
-                    {name: "zonestatus", type: DataType.UINT16},
-                    {name: "audiblenotif", type: DataType.UINT8},
+                    {name: "zonestatus", type: DataType.ENUM16},
+                    {name: "audiblenotif", type: DataType.ENUM8},
                     {name: "zonelabel", type: DataType.CHAR_STR},
                 ],
                 required: true,
@@ -4321,20 +4325,20 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             panelStatusChanged: {
                 ID: 0x04,
                 parameters: [
-                    {name: "panelstatus", type: DataType.UINT8},
+                    {name: "panelstatus", type: DataType.ENUM8},
                     {name: "secondsremain", type: DataType.UINT8},
-                    {name: "audiblenotif", type: DataType.UINT8},
-                    {name: "alarmstatus", type: DataType.UINT8},
+                    {name: "audiblenotif", type: DataType.ENUM8},
+                    {name: "alarmstatus", type: DataType.ENUM8},
                 ],
                 required: true,
             },
             getPanelStatusRsp: {
                 ID: 0x05,
                 parameters: [
-                    {name: "panelstatus", type: DataType.UINT8},
+                    {name: "panelstatus", type: DataType.ENUM8},
                     {name: "secondsremain", type: DataType.UINT8},
-                    {name: "audiblenotif", type: DataType.UINT8},
-                    {name: "alarmstatus", type: DataType.UINT8},
+                    {name: "audiblenotif", type: DataType.ENUM8},
+                    {name: "alarmstatus", type: DataType.ENUM8},
                 ],
                 required: true,
             },
@@ -4357,7 +4361,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             getZoneStatusRsp: {
                 ID: 0x08,
                 parameters: [
-                    {name: "zonestatuscomplete", type: DataType.UINT8},
+                    {name: "zonestatuscomplete", type: DataType.BOOLEAN},
                     {name: "numofzones", type: DataType.UINT8},
                     {name: "zoneinfo", type: BuffaloZclDataType.LIST_ZONEINFO},
                 ],
@@ -4368,20 +4372,28 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
     ssIasWd: {
         ID: 0x0502,
         attributes: {
-            maxDuration: {ID: 0x0000, type: DataType.UINT16, writable: true, required: true, max: 65534, default: 240},
+            maxDuration: {ID: 0x0000, type: DataType.UINT16, writable: true, required: true, max: 0xfffe, default: 240},
         },
         commands: {
             startWarning: {
                 ID: 0x00,
                 parameters: [
-                    {name: "startwarninginfo", type: DataType.UINT8},
+                    /** [4: warning mode, 2: strobe, 2: siren level] */
+                    {name: "startwarninginfo", type: DataType.BITMAP8},
                     {name: "warningduration", type: DataType.UINT16},
                     {name: "strobedutycycle", type: DataType.UINT8, max: 100},
-                    {name: "strobelevel", type: DataType.UINT8},
+                    {name: "strobelevel", type: DataType.ENUM8},
                 ],
                 required: true,
             },
-            squawk: {ID: 0x01, parameters: [{name: "squawkinfo", type: DataType.UINT8}], required: true},
+            squawk: {
+                ID: 0x01,
+                parameters: [
+                    /** [4: squawk mode, 1: strobe, 1: reserved, 2: squawk level] */
+                    {name: "squawkinfo", type: DataType.BITMAP8},
+                ],
+                required: true,
+            },
         },
         commandsResponse: {},
     },
