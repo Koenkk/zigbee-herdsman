@@ -6,6 +6,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import {fileURLToPath, pathToFileURL} from "node:url";
+import {BuffaloZclDataType, DataType} from "../src/zspec/zcl/definition/enums";
 import type {ClusterDefinition, ClusterName} from "../src/zspec/zcl/definition/tstype";
 
 // #region Types
@@ -163,7 +164,12 @@ class ClusterComparator {
 
         // Check type change (for attributes)
         if ("type" in oldItem && "type" in newItem && oldItem.type !== newItem.type) {
-            this.#changes.push({type: "changed", path: [...currentPath, "type"], from: oldItem.type, to: newItem.type});
+            this.#changes.push({
+                type: "changed",
+                path: [...currentPath, "type"],
+                from: DataType[oldItem.type] ?? BuffaloZclDataType[oldItem.type],
+                to: DataType[newItem.type] ?? BuffaloZclDataType[newItem.type],
+            });
         }
 
         // Check parameters (for commands)
@@ -176,8 +182,8 @@ class ClusterComparator {
      * Compares the `parameters` array of two commands.
      */
     #compareParameters(
-        oldParams: readonly {name: string; type: unknown}[] | undefined,
-        newParams: readonly {name: string; type: unknown}[] | undefined,
+        oldParams: readonly {name: string; type: number}[] | undefined,
+        newParams: readonly {name: string; type: number}[] | undefined,
         currentPath: Loggable[],
     ): void {
         oldParams ??= [];
@@ -196,8 +202,8 @@ class ClusterComparator {
                     this.#changes.push({
                         type: "changed",
                         path: [...paramPath, "type"],
-                        from: oldParam.type as string | number | undefined,
-                        to: newParam.type as string | number | undefined,
+                        from: DataType[oldParam.type] ?? BuffaloZclDataType[oldParam.type],
+                        to: DataType[newParam.type] ?? BuffaloZclDataType[newParam.type],
                     });
                 }
             } else {
@@ -288,11 +294,7 @@ async function main(): Promise<void> {
         return;
     }
 
-    const logHeader = `Comparison complete. Found ${changes.length} changes.
-Compared:
-  - OLD: ${oldFilePath}
-  - NEW: ${CURRENT_FILE}
---------------------------------------------------\n\n`;
+    const logHeader = `Found ${changes.length} changes.\n`;
 
     const formattedChanges: string[] = [];
 
