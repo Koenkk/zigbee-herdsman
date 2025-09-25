@@ -1309,7 +1309,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 type: DataType.IEEE_ADDR,
                 writable: true,
                 required: true,
-                default: "18446744073709551616",
+                default: "0xffffffffffffffff",
                 special: [["PANIdUnspecified", "ffffffffffffffff"]],
             },
             panId: {ID: 0x0002, type: DataType.UINT16, writable: true, required: true},
@@ -1322,7 +1322,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 type: DataType.IEEE_ADDR,
                 writable: true,
                 required: true,
-                default: "0",
+                default: "0x0000000000000000",
                 special: [["AddressUnspecified", "0000000000000000"]],
             },
             trustCenterMasterKey: {ID: 0x0011, type: DataType.SEC_KEY, writable: true, default: "0"},
@@ -1485,7 +1485,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
     genOta: {
         ID: 0x0019,
         attributes: {
-            upgradeServerId: {ID: 0x0000, type: DataType.IEEE_ADDR, client: true, required: true, default: "18446744073709551615"},
+            upgradeServerId: {ID: 0x0000, type: DataType.IEEE_ADDR, client: true, required: true, default: "0xffffffffffffffff"},
             fileOffset: {ID: 0x0001, type: DataType.UINT32, client: true, default: 4294967294},
             currentFileVersion: {ID: 0x0002, type: DataType.UINT32, client: true, default: 4294967294},
             currentZigbeeStackVersion: {ID: 0x0003, type: DataType.UINT16, client: true, default: 65535},
