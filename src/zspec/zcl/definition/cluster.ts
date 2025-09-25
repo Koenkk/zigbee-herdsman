@@ -5393,57 +5393,106 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
     // seMessaging: {ID: 0x0703},
     seTunneling: {
         ID: 0x0704,
-        attributes: {},
+        attributes: {
+            closeTunnelTimeout: {ID: 0x0000, type: DataType.UINT16, required: true, min: 1, default: 0xffff},
+        },
         commands: {
             requestTunnel: {
                 ID: 0x00,
-                response: 0,
+                response: 0x00,
                 parameters: [
-                    {name: "protocolId", type: DataType.ENUM8},
-                    {name: "manufCode", type: DataType.UINT16},
+                    {name: "protocolId", type: DataType.ENUM8, min: 0x01, max: 0xff},
+                    {name: "manufacturerCode", type: DataType.UINT16, max: 0xffff},
                     {name: "flowControl", type: DataType.BOOLEAN},
-                    {name: "mtuSize", type: DataType.UINT16},
+                    {name: "maxIncomingTransferSize", type: DataType.UINT16, max: 0xffff},
                 ],
+                required: true,
             },
-            closeTunnel: {ID: 0x01, parameters: [{name: "tunnelId", type: DataType.UINT16}]},
+            closeTunnel: {ID: 0x01, parameters: [{name: "tunnelId", type: DataType.UINT16, max: 0xffff}], required: true},
             transferData: {
                 ID: 0x02,
                 parameters: [
-                    {name: "tunnelId", type: DataType.UINT16},
+                    {name: "tunnelId", type: DataType.UINT16, max: 0xffff},
                     {name: "data", type: BuffaloZclDataType.BUFFER},
                 ],
+                required: true,
             },
             transferDataError: {
                 ID: 0x03,
                 parameters: [
-                    {name: "tunnelId", type: DataType.UINT16},
+                    {name: "tunnelId", type: DataType.UINT16, max: 0xffff},
                     {name: "status", type: DataType.UINT8},
                 ],
+                required: true,
             },
+            ackTransferData: {
+                ID: 0x04,
+                parameters: [
+                    {name: "tunnelId", type: DataType.UINT16, max: 0xffff},
+                    {name: "numberOfBytesLeft", type: DataType.UINT16},
+                ],
+            },
+            readyData: {
+                ID: 0x05,
+                parameters: [
+                    {name: "tunnelId", type: DataType.UINT16, max: 0xffff},
+                    {name: "numberOfOctetsLeft", type: DataType.UINT16},
+                ],
+            },
+            getSupportedTunnelProtocols: {ID: 0x06, parameters: [{name: "protocolOffset", type: DataType.UINT8}]},
         },
         commandsResponse: {
-            requestTunnelResp: {
+            requestTunnelRsp: {
                 ID: 0x00,
                 parameters: [
-                    {name: "tunnelId", type: DataType.UINT16},
-                    {name: "tunnelStatus", type: DataType.UINT8},
-                    {name: "mtuSize", type: DataType.UINT16},
+                    {name: "tunnelId", type: DataType.UINT16, max: 0xffff},
+                    {name: "status", type: DataType.UINT8},
+                    {name: "maxIncomingTransferSize", type: DataType.UINT16},
                 ],
+                required: true,
             },
-            transferDataResp: {
+            transferData: {
                 ID: 0x01,
                 parameters: [
-                    {name: "tunnelId", type: DataType.UINT16},
+                    {name: "tunnelId", type: DataType.UINT16, max: 0xffff},
                     {name: "data", type: BuffaloZclDataType.BUFFER},
                 ],
+                required: true,
             },
-            transferDataErrorResp: {
+            transferDataError: {
                 ID: 0x02,
                 parameters: [
-                    {name: "tunnelId", type: DataType.UINT16},
+                    {name: "tunnelId", type: DataType.UINT16, max: 0xffff},
                     {name: "status", type: DataType.UINT8},
                 ],
+                required: true,
             },
+            ackTransferData: {
+                ID: 0x03,
+                parameters: [
+                    {name: "tunnelId", type: DataType.UINT16, max: 0xffff},
+                    {name: "numberOfBytesLeft", type: DataType.UINT16},
+                ],
+            },
+            readyData: {
+                ID: 0x04,
+                parameters: [
+                    {name: "tunnelId", type: DataType.UINT16, max: 0xffff},
+                    {name: "numberOfOctetsLeft", type: DataType.UINT16},
+                ],
+            },
+            supportedProtocolsRsp: {
+                ID: 0x05,
+                parameters: [
+                    {name: "listComplete", type: DataType.BOOLEAN},
+                    {name: "count", type: DataType.UINT8},
+                    // TODO: need BuffaloZcl read/write
+                    // {name: "protocols", type: BuffaloZclDataType.LIST_PROTOCOLS},
+                    //   {name: "manufacturerCode", type: DataType.UINT16},
+                    //   {name: "protocolId", type: DataType.ENUM8},
+                ],
+            },
+            closureNotification: {ID: 0x06, parameters: [{name: "tunnelId", type: DataType.UINT16}]},
         },
     },
     // sePrepayment: {ID: 0x0705},
@@ -5517,18 +5566,18 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
     seMeterIdentification: {
         ID: 0x0b01,
         attributes: {
-            companyName: {ID: 0x0000, type: DataType.CHAR_STR},
-            meterTypeId: {ID: 0x0001, type: DataType.UINT16},
-            dataQualityId: {ID: 0x0004, type: DataType.UINT16},
-            customerName: {ID: 0x0005, type: DataType.CHAR_STR},
-            model: {ID: 0x0006, type: DataType.CHAR_STR},
-            partNumber: {ID: 0x0007, type: DataType.CHAR_STR},
-            productRevision: {ID: 0x0008, type: DataType.CHAR_STR},
-            softwareRevision: {ID: 0x000a, type: DataType.CHAR_STR},
-            utilityName: {ID: 0x000b, type: DataType.CHAR_STR},
-            pod: {ID: 0x000c, type: DataType.CHAR_STR},
-            availablePower: {ID: 0x000d, type: DataType.INT24},
-            powerThreshold: {ID: 0x000e, type: DataType.INT24},
+            companyName: {ID: 0x0000, type: DataType.CHAR_STR, required: true, minLen: 0, maxLen: 16},
+            meterTypeId: {ID: 0x0001, type: DataType.UINT16, required: true, max: 0xffff},
+            dataQualityId: {ID: 0x0004, type: DataType.UINT16, required: true, max: 0xffff},
+            customerName: {ID: 0x0005, type: DataType.CHAR_STR, writable: true, minLen: 0, maxLen: 16},
+            model: {ID: 0x0006, type: DataType.OCTET_STR, minLen: 0, maxLen: 16},
+            partNumber: {ID: 0x0007, type: DataType.OCTET_STR, minLen: 0, maxLen: 16},
+            productRevision: {ID: 0x0008, type: DataType.OCTET_STR, minLen: 0, maxLen: 16},
+            softwareRevision: {ID: 0x000a, type: DataType.OCTET_STR, minLen: 0, maxLen: 16},
+            utilityName: {ID: 0x000b, type: DataType.CHAR_STR, minLen: 0, maxLen: 16},
+            pod: {ID: 0x000c, type: DataType.CHAR_STR, required: true, minLen: 0, maxLen: 16},
+            availablePower: {ID: 0x000d, type: DataType.INT24, required: true, max: 0xffffff},
+            powerThreshold: {ID: 0x000e, type: DataType.INT24, required: true, max: 0xffffff},
         },
         commands: {},
         commandsResponse: {},
