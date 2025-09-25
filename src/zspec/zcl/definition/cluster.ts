@@ -1432,7 +1432,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                     // TODO: need special BuffaloZcl read/write
                     // {name: "attributeRecords", type: BuffaloZclDataType.LIST_WRITE_ATTR_RECORD},
                     //   {name: "id", type: DataType.UINT16},
-                    //   {name: "dataType", type: DataType.UINT8},
+                    //   {name: "dataType", type: DataType.DATA8},
                     //   {name: "data", type: BuffaloZclDataType.USE_DATA_TYPE},
                 ],
                 required: true,
@@ -1475,7 +1475,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                     // {name: "attributeRecords", type: BuffaloZclDataType.LIST_READ_ATTR_RECORD},
                     //   {name: "id", type: DataType.UINT16},
                     //   {name: "status", type: DataType.UINT16},
-                    //   {name: "dataType", type: DataType.UINT8, conditions: [{type: ParameterCondition.FIELD_EQUAL, field: "Status", value: Status.SUCCESS}]},
+                    //   {name: "dataType", type: DataType.DATA8, conditions: [{type: ParameterCondition.FIELD_EQUAL, field: "Status", value: Status.SUCCESS}]},
                     //   {name: "data", type: BuffaloZclDataType.USE_DATA_TYPE, conditions: [{type: ParameterCondition.FIELD_EQUAL, field: "Status", value: Status.SUCCESS}]},
                 ],
                 required: true,
@@ -5514,45 +5514,253 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
     telecommunicationsInformation: {
         ID: 0x0900,
         attributes: {
-            nodeDescription: {ID: 0x0000, type: DataType.CHAR_STR},
-            deliveryEnable: {ID: 0x0001, type: DataType.BOOLEAN},
+            nodeDescription: {ID: 0x0000, type: DataType.CHAR_STR, required: true},
+            deliveryEnable: {ID: 0x0001, type: DataType.BOOLEAN, required: true},
             pushInformationTimer: {ID: 0x0002, type: DataType.UINT32},
-            enableSecureConfiguration: {ID: 0x0003, type: DataType.BOOLEAN},
-            numberOfContents: {ID: 0x0010, type: DataType.UINT16},
-            contentRootID: {ID: 0x0011, type: DataType.UINT16},
+            enableSecureConfiguration: {ID: 0x0003, type: DataType.BOOLEAN, required: true},
+
+            numberOfContents: {ID: 0x0010, type: DataType.UINT16, max: 0xffff},
+            contentRootID: {ID: 0x0011, type: DataType.UINT16, max: 0xffff},
         },
-        commands: {},
-        commandsResponse: {},
+        commands: {
+            // TODO: most of these require custom BuffaloZcl read/write
+            requestInfo: {ID: 0x00, parameters: [], response: 0x00, required: true},
+            pushInfoResponse: {ID: 0x01, parameters: [], required: true},
+            sendPreference: {ID: 0x02, parameters: [], response: 0x02},
+            requestPreferenceRsp: {ID: 0x03, parameters: []},
+            update: {ID: 0x04, parameters: [], response: 0x05},
+            delete: {ID: 0x05, parameters: [], response: 0x06},
+            configureNodeDescription: {ID: 0x06, parameters: []},
+            configureDeliveryEnable: {ID: 0x07, parameters: []},
+            configurePushInfoTimer: {ID: 0x08, parameters: []},
+            configureSetRootId: {ID: 0x09, parameters: []},
+        },
+        commandsResponse: {
+            // TODO: most of these require custom BuffaloZcl read/write
+            requestInfoRsp: {ID: 0x00, parameters: [], required: true},
+            pushInfo: {ID: 0x01, parameters: [], required: true},
+            sendPreferenceRsp: {ID: 0x02, parameters: [], required: true},
+            serverRequestPreference: {ID: 0x03, parameters: [], required: true},
+            requestPreferenceConfirmation: {ID: 0x04, parameters: [], required: true},
+            updateRsp: {ID: 0x05, parameters: [], required: true},
+            deleteRsp: {ID: 0x06, parameters: [], required: true},
+        },
     },
     telecommunicationsVoiceOverZigbee: {
         ID: 0x0904,
         attributes: {
-            codecType: {ID: 0x0000, type: DataType.ENUM8},
-            samplingFrequency: {ID: 0x0001, type: DataType.ENUM8},
-            codecrate: {ID: 0x0002, type: DataType.ENUM8},
-            establishmentTimeout: {ID: 0x0003, type: DataType.UINT8},
-            codecTypeSub1: {ID: 0x0004, type: DataType.ENUM8},
-            codecTypeSub2: {ID: 0x0005, type: DataType.ENUM8},
-            codecTypeSub3: {ID: 0x0006, type: DataType.ENUM8},
+            codecType: {ID: 0x0000, type: DataType.ENUM8, required: true, writable: true},
+            samplingFrequency: {ID: 0x0001, type: DataType.ENUM8, required: true, writable: true},
+            codecrate: {ID: 0x0002, type: DataType.ENUM8, required: true, writable: true},
+            establishmentTimeout: {ID: 0x0003, type: DataType.UINT8, required: true, min: 0x01, max: 0xff},
+            codecTypeSub1: {ID: 0x0004, type: DataType.ENUM8, writable: true},
+            codecTypeSub2: {ID: 0x0005, type: DataType.ENUM8, writable: true},
+            codecTypeSub3: {ID: 0x0006, type: DataType.ENUM8, writable: true},
             compressionType: {ID: 0x0007, type: DataType.ENUM8},
             compressionRate: {ID: 0x0008, type: DataType.ENUM8},
-            optionFlags: {ID: 0x0009, type: DataType.BITMAP8},
-            threshold: {ID: 0x000a, type: DataType.UINT8},
+            optionFlags: {ID: 0x0009, type: DataType.BITMAP8, writable: true, max: 0xff},
+            threshold: {ID: 0x000a, type: DataType.UINT8, writable: true, max: 0xff},
         },
-        commands: {},
-        commandsResponse: {},
+        commands: {
+            establishmentRequest: {
+                ID: 0x00,
+                parameters: [
+                    /** [3: reserved, 1: compression, 1: codecTypeS3, 1: codecTypeS2, 1: codecTypeS1] */
+                    {name: "flag", type: DataType.BITMAP8},
+                    {name: "codecType", type: DataType.ENUM8},
+                    {name: "sampFreq", type: DataType.ENUM8},
+                    {name: "codecRate", type: DataType.ENUM8},
+                    {name: "serviceType", type: DataType.ENUM8},
+                    {name: "codecTypeS1", type: DataType.ENUM8, conditions: [{type: ParameterCondition.BITMASK_SET, param: "flag", mask: 0b0001}]},
+                    {name: "codecTypeS2", type: DataType.ENUM8, conditions: [{type: ParameterCondition.BITMASK_SET, param: "flag", mask: 0b0010}]},
+                    {name: "codecTypeS3", type: DataType.ENUM8, conditions: [{type: ParameterCondition.BITMASK_SET, param: "flag", mask: 0b0100}]},
+                    {name: "compType", type: DataType.ENUM8, conditions: [{type: ParameterCondition.BITMASK_SET, param: "flag", mask: 0b1000}]},
+                    {name: "compRate", type: DataType.ENUM8, conditions: [{type: ParameterCondition.BITMASK_SET, param: "flag", mask: 0b1000}]},
+                ],
+                response: 0x00,
+                required: true,
+            },
+            voiceTransmission: {ID: 0x00, parameters: [{name: "voiceData", type: DataType.UNKNOWN}], required: true},
+            voiceTransmissionCompletion: {ID: 0x00, parameters: [{name: "zclHeader", type: DataType.UNKNOWN}]},
+            controlResponse: {ID: 0x00, parameters: [{name: "status", type: DataType.ENUM8}]},
+        },
+        commandsResponse: {
+            establishmentRsp: {
+                ID: 0x00,
+                parameters: [
+                    {name: "status", type: DataType.ENUM8},
+                    {name: "codecType", type: DataType.ENUM8},
+                ],
+                required: true,
+            },
+            voiceTransmissionRsp: {
+                ID: 0x01,
+                parameters: [
+                    {name: "zclHeaderSeqNum", type: DataType.UINT8},
+                    {name: "errorFlag", type: DataType.ENUM8},
+                ],
+                required: true,
+            },
+            control: {ID: 0x02, parameters: [{name: "controlType", type: DataType.ENUM8}]},
+        },
     },
     telecommunicationsChatting: {
         ID: 0x0905,
         attributes: {
-            uID: {ID: 0x0000, type: DataType.UINT16},
-            nickname: {ID: 0x0001, type: DataType.CHAR_STR},
-            cID: {ID: 0x0010, type: DataType.UINT16},
-            name: {ID: 0x0011, type: DataType.CHAR_STR},
+            uID: {ID: 0x0000, type: DataType.UINT16, required: true, max: 0xffff},
+            nickname: {ID: 0x0001, type: DataType.CHAR_STR, required: true},
+
+            cID: {ID: 0x0010, type: DataType.UINT16, required: true, max: 0xffff},
+            name: {ID: 0x0011, type: DataType.CHAR_STR, required: true},
             enableAddChat: {ID: 0x0012, type: DataType.BOOLEAN},
         },
-        commands: {},
-        commandsResponse: {},
+        commands: {
+            joinChatReq: {
+                ID: 0x00,
+                parameters: [
+                    {name: "uID", type: DataType.UINT16},
+                    {name: "nickname", type: DataType.CHAR_STR},
+                    {name: "cID", type: DataType.UINT16},
+                ],
+                response: 0x01,
+                required: true,
+            },
+            leaveChatReq: {
+                ID: 0x01,
+                parameters: [
+                    {name: "cID", type: DataType.UINT16},
+                    {name: "uID", type: DataType.UINT16},
+                ],
+                required: true,
+            },
+            searchChatReq: {ID: 0x02, parameters: [], response: 0x04, required: true},
+            switchCharmanRsp: {
+                ID: 0x03,
+                parameters: [
+                    {name: "cID", type: DataType.UINT16},
+                    {name: "uID", type: DataType.UINT16},
+                ],
+            },
+            startChatReq: {
+                ID: 0x04,
+                parameters: [
+                    {name: "name", type: DataType.CHAR_STR},
+                    {name: "uID", type: DataType.UINT16},
+                    {name: "nickname", type: DataType.CHAR_STR},
+                ],
+                response: 0x00,
+            },
+            chatMessage: {
+                ID: 0x05,
+                parameters: [
+                    {name: "destUID", type: DataType.UINT16},
+                    {name: "srcUID", type: DataType.UINT16},
+                    {name: "cID", type: DataType.UINT16},
+                    {name: "nickname", type: DataType.CHAR_STR},
+                    {name: "message", type: DataType.CHAR_STR},
+                ],
+                required: true,
+            },
+            getNodeInfoReq: {
+                ID: 0x06,
+                parameters: [
+                    {name: "cID", type: DataType.UINT16},
+                    {name: "uID", type: DataType.UINT16},
+                ],
+                response: 0x08,
+            },
+        },
+        commandsResponse: {
+            startChatRsp: {
+                ID: 0x00,
+                parameters: [
+                    {name: "status", type: DataType.ENUM8},
+                    {name: "cID", type: DataType.UINT16},
+                ],
+                required: true,
+            },
+            joinChatRsp: {
+                ID: 0x01,
+                parameters: [
+                    {name: "status", type: DataType.ENUM8},
+                    {name: "cID", type: DataType.UINT16},
+                    // TODO: need BuffaloZcl read/write
+                    // {
+                    //     name: "users",
+                    //     type: BuffaloZclDataType.LIST_CHAT_NODES,
+                    //     conditions: [{type: ParameterCondition.FIELD_EQUAL, field: "status", value: Status.SUCCESS}],
+                    // },
+                    //   {name: "uId", type: DataType.UINT16},
+                    //   {name: "nickname", type: DataType.CHAR_STR},
+                ],
+                required: true,
+            },
+            userLeft: {
+                ID: 0x02,
+                parameters: [
+                    {name: "cID", type: DataType.UINT16},
+                    {name: "uID", type: DataType.UINT16},
+                    {name: "nickName", type: DataType.CHAR_STR},
+                ],
+                required: true,
+            },
+            userJoined: {
+                ID: 0x03,
+                parameters: [
+                    {name: "cID", type: DataType.UINT16},
+                    {name: "uID", type: DataType.UINT16},
+                    {name: "nickName", type: DataType.CHAR_STR},
+                ],
+                required: true,
+            },
+            searchChatRsp: {
+                ID: 0x04,
+                parameters: [
+                    {name: "options", type: DataType.BITMAP8},
+                    // TODO: need BuffaloZcl read/write
+                    // {name: "chats", type: BuffaloZclDataType.LIST_CHATS },
+                    //   {name: "cID", type: DataType.UINT16},
+                    //   {name: "name", type: DataType.CHAR_STR},
+                ],
+                required: true,
+            },
+            switchChairmanReq: {ID: 0x05, parameters: [{name: "cID", type: DataType.UINT16}], required: true},
+            switchChairmanConfirm: {
+                ID: 0x06,
+                parameters: [
+                    {name: "cID", type: DataType.UINT16},
+                    // TODO: need BuffaloZcl read/write
+                    // {name: "nodeInfo", type: BuffaloZclDataType.LIST_CHAT_NODE_INFO},
+                    //   {name: "uID", type: DataType.UINT16},
+                    //   {name: "address", type: DataType.DATA16},
+                    //   {name: "endpoint", type: DataType.UINT8},
+                    //   {name: "nickName", type: DataType.CHAR_STR},
+                ],
+                required: true,
+            },
+            switchChairmanNotification: {
+                ID: 0x07,
+                parameters: [
+                    {name: "cID", type: DataType.UINT16},
+                    {name: "uID", type: DataType.UINT16},
+                    {name: "address", type: DataType.DATA16},
+                    {name: "endpoint", type: DataType.UINT8},
+                ],
+                required: true,
+            },
+            getNodeInfoRsp: {
+                ID: 0x08,
+                parameters: [
+                    {name: "status", type: DataType.ENUM8},
+                    {name: "cID", type: DataType.UINT16},
+                    {name: "uID", type: DataType.UINT16},
+                    {name: "address", type: DataType.DATA16},
+                    {name: "endpoint", type: DataType.UINT8},
+                    {name: "nickName", type: DataType.CHAR_STR},
+                ],
+                required: true,
+            },
+        },
     },
     haApplianceIdentification: {
         ID: 0x0b00,
