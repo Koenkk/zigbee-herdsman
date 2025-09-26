@@ -1909,7 +1909,7 @@ describe("Zcl", () => {
     it("Zcl utils get cluster attributes manufacturerCode", () => {
         const cluster = Zcl.Utils.getCluster("closuresWindowCovering", 0x1021, {});
         const attribute = cluster.getAttribute(0xf004);
-        expect(attribute).toStrictEqual({ID: 0xf004, manufacturerCode: 0x1021, name: "stepPositionTilt", type: 48});
+        expect(attribute).toStrictEqual(expect.objectContaining({ID: 0xf004, manufacturerCode: 0x1021, name: "stepPositionTilt", type: 48}));
     });
 
     it("Zcl utils get cluster attributes manufacturerCode wrong", () => {

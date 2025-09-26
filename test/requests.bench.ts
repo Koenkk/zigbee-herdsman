@@ -130,7 +130,7 @@ describe("Requests", () => {
             sendZclFrameToEndpointResponse = undefined;
             sendZdoResponse = undefined;
 
-            await endpoint.write("genBasic", {modelId: "Herd-02", manufacturerName: "HerdsmanNew"}, {sendPolicy: "immediate"});
+            await endpoint.write("genBasic", {physicalEnv: 2, deviceEnabled: 1}, {sendPolicy: "immediate"});
         },
         BENCH_OPTIONS,
     );
@@ -200,7 +200,7 @@ describe("Requests", () => {
             sendZclFrameToEndpointResponse = undefined;
             sendZdoResponse = undefined;
 
-            await group.write("genBasic", {modelId: "Herd-02", manufacturerName: "HerdsmanNew"});
+            await group.write("genBasic", {physicalEnv: 2, deviceEnabled: 1});
         },
         BENCH_OPTIONS,
     );

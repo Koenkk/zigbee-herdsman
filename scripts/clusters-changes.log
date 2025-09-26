@@ -1,4 +1,4 @@
-Found 558 changes.
+Found 582 changes.
 
 [REMOVED] Clusters > pm1Measurement: 1068 (0x042c)
 [REMOVED] Clusters > pm10Measurement: 1069 (0x042d)
@@ -36,6 +36,18 @@ Found 558 changes.
 [CHANGED] Clusters > genAlarms > commandsResponse > getRsp > parameters > status > type: UINT8 -> ENUM8
 [CHANGED] Clusters > genAlarms > commandsResponse > getRsp > parameters > alarmcode > type: UINT8 -> ENUM8
 [CHANGED] Clusters > genAlarms > commandsResponse > getRsp > parameters > clusterid > type: UINT16 -> CLUSTER_ID
+[REMOVED] Clusters > genRssiLocation > commands > setAbsolute > parameters > coord1: undefined
+[REMOVED] Clusters > genRssiLocation > commands > setAbsolute > parameters > coord2: undefined
+[REMOVED] Clusters > genRssiLocation > commands > setAbsolute > parameters > coord3: undefined
+[REMOVED] Clusters > genRssiLocation > commandsResponse > locationDataResponse > parameters > coord1: undefined
+[REMOVED] Clusters > genRssiLocation > commandsResponse > locationDataResponse > parameters > coord2: undefined
+[REMOVED] Clusters > genRssiLocation > commandsResponse > locationDataResponse > parameters > coord3: undefined
+[REMOVED] Clusters > genRssiLocation > commandsResponse > locationDataNotification > parameters > coord1: undefined
+[REMOVED] Clusters > genRssiLocation > commandsResponse > locationDataNotification > parameters > coord2: undefined
+[REMOVED] Clusters > genRssiLocation > commandsResponse > locationDataNotification > parameters > coord3: undefined
+[REMOVED] Clusters > genRssiLocation > commandsResponse > compactLocationDataNotification > parameters > coord1: undefined
+[REMOVED] Clusters > genRssiLocation > commandsResponse > compactLocationDataNotification > parameters > coord2: undefined
+[REMOVED] Clusters > genRssiLocation > commandsResponse > compactLocationDataNotification > parameters > coord3: undefined
 [CHANGED] Clusters > genCommissioning > attributes > name > 65: concentratorRus -> concentratorRadius
 [CHANGED] Clusters > genCommissioning > commands > restartDevice > parameters > options > type: UINT8 -> BITMAP8
 [CHANGED] Clusters > genCommissioning > commands > saveStartupParams > parameters > options > type: UINT8 -> BITMAP8
@@ -276,6 +288,18 @@ Found 558 changes.
 [ADDED]   Clusters > genLevelCtrl > commands > stopWithOnOff > parameters > optionsMask
 [ADDED]   Clusters > genLevelCtrl > commands > stopWithOnOff > parameters > optionsOverride
 [ADDED]   Clusters > genLevelCtrl > commands > moveToClosestFrequency: 8 (0x0008)
+[ADDED]   Clusters > genRssiLocation > commands > setAbsolute > parameters > coordinate1
+[ADDED]   Clusters > genRssiLocation > commands > setAbsolute > parameters > coordinate2
+[ADDED]   Clusters > genRssiLocation > commands > setAbsolute > parameters > coordinate3
+[ADDED]   Clusters > genRssiLocation > commandsResponse > locationDataResponse > parameters > coordinate1
+[ADDED]   Clusters > genRssiLocation > commandsResponse > locationDataResponse > parameters > coordinate2
+[ADDED]   Clusters > genRssiLocation > commandsResponse > locationDataResponse > parameters > coordinate3
+[ADDED]   Clusters > genRssiLocation > commandsResponse > locationDataNotification > parameters > coordinate1
+[ADDED]   Clusters > genRssiLocation > commandsResponse > locationDataNotification > parameters > coordinate2
+[ADDED]   Clusters > genRssiLocation > commandsResponse > locationDataNotification > parameters > coordinate3
+[ADDED]   Clusters > genRssiLocation > commandsResponse > compactLocationDataNotification > parameters > coordinate1
+[ADDED]   Clusters > genRssiLocation > commandsResponse > compactLocationDataNotification > parameters > coordinate2
+[ADDED]   Clusters > genRssiLocation > commandsResponse > compactLocationDataNotification > parameters > coordinate3
 [ADDED]   Clusters > genCommissioning > attributes > concentratorRadius: 65 (0x0041)
 [ADDED]   Clusters > genOta > attributes > upgradeActivationPolicy: 11 (0x000b)
 [ADDED]   Clusters > genOta > attributes > upgradeTimeoutPolicy: 12 (0x000c)

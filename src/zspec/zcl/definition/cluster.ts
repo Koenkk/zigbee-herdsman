@@ -887,9 +887,9 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             setAbsolute: {
                 ID: 0x00,
                 parameters: [
-                    {name: "coord1", type: DataType.INT16},
-                    {name: "coord2", type: DataType.INT16},
-                    {name: "coord3", type: DataType.INT16},
+                    {name: "coordinate1", type: DataType.INT16},
+                    {name: "coordinate2", type: DataType.INT16},
+                    {name: "coordinate3", type: DataType.INT16},
                     {name: "power", type: DataType.INT16},
                     {name: "pathLossExponent", type: DataType.UINT16},
                 ],
@@ -993,17 +993,17 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                         conditions: [{type: ParameterCondition.FIELD_EQUAL, field: "status", value: Status.SUCCESS}],
                     },
                     {
-                        name: "coord1",
+                        name: "coordinate1",
                         type: DataType.INT16,
                         conditions: [{type: ParameterCondition.FIELD_EQUAL, field: "status", value: Status.SUCCESS}],
                     },
                     {
-                        name: "coord2",
+                        name: "coordinate2",
                         type: DataType.INT16,
                         conditions: [{type: ParameterCondition.FIELD_EQUAL, field: "status", value: Status.SUCCESS}],
                     },
                     {
-                        name: "coord3",
+                        name: "coordinate3",
                         type: DataType.INT16,
                         conditions: [{type: ParameterCondition.FIELD_EQUAL, field: "status", value: Status.SUCCESS}],
                     },
@@ -1039,10 +1039,10 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 ID: 0x02,
                 parameters: [
                     {name: "type", type: DataType.DATA8},
-                    {name: "coord1", type: DataType.INT16},
-                    {name: "coord2", type: DataType.INT16},
+                    {name: "coordinate1", type: DataType.INT16},
+                    {name: "coordinate2", type: DataType.INT16},
                     {
-                        name: "coord3",
+                        name: "coordinate3",
                         type: DataType.INT16,
                         conditions: [{type: ParameterCondition.BITMASK_SET, param: "type", mask: 0b10, reversed: true}],
                     },
@@ -1069,10 +1069,10 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 ID: 0x03,
                 parameters: [
                     {name: "type", type: DataType.DATA8},
-                    {name: "coord1", type: DataType.INT16},
-                    {name: "coord2", type: DataType.INT16},
+                    {name: "coordinate1", type: DataType.INT16},
+                    {name: "coordinate2", type: DataType.INT16},
                     {
-                        name: "coord3",
+                        name: "coordinate3",
                         type: DataType.INT16,
                         conditions: [{type: ParameterCondition.BITMASK_SET, param: "type", mask: 0b10, reversed: true}],
                     },

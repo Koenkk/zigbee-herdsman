@@ -304,31 +304,62 @@ describe("ZCL Utils", () => {
             expect(Zcl.Utils.processAttributeWrite(attr, null)).toStrictEqual(42);
         });
 
-        it("NaN with default -> returns default", () => {
+        it("NaN with default returns default", () => {
             const attr = createAttribute({writable: true, default: 7});
             expect(Zcl.Utils.processAttributeWrite(attr, Number.NaN)).toStrictEqual(7);
         });
 
-        it("NaN with default ref -> returns ref value", () => {
+        it("NaN with default ref returns ref value", () => {
             const attr = createAttribute({writable: true, defaultRef: "myRef"});
             expect(Zcl.Utils.processAttributeWrite(attr, Number.NaN, {myRef: 9})).toStrictEqual(9);
         });
 
-        it("NaN without default -> returns non-value sentinel", () => {
+        it("NaN without default returns non-value sentinel", () => {
             const type = Zcl.DataType.UINT8;
             const sentinel = ZCL_TYPE_INVALID_BY_TYPE[type];
             expect(sentinel).not.toBeUndefined();
-            const attr = createAttribute({writable: true, type, default: undefined});
+            const attr = createAttribute({writable: true, type});
             expect(Zcl.Utils.processAttributeWrite(attr, Number.NaN)).toStrictEqual(sentinel);
         });
 
-        it("NaN with default ref value not available -> returns non-value sentinel", () => {
+        it("NaN with default ref value not available returns non-value sentinel", () => {
             const type = Zcl.DataType.UINT8;
             const sentinel = ZCL_TYPE_INVALID_BY_TYPE[type];
             expect(sentinel).not.toBeUndefined();
             const attr = createAttribute({writable: true, type, defaultRef: "myRef"});
             expect(Zcl.Utils.processAttributeWrite(attr, Number.NaN, {notMyRef: 9})).toStrictEqual(sentinel);
             expect(Zcl.Utils.processAttributeWrite(attr, Number.NaN)).toStrictEqual(sentinel);
+        });
+
+        it("throws when trying to write non-value on unsupported datatype", () => {
+            const type = Zcl.DataType.DATA8;
+            const sentinel = ZCL_TYPE_INVALID_BY_TYPE[type];
+            expect(sentinel).toBeUndefined();
+            const attr = createAttribute({writable: true, type});
+            expect(() => Zcl.Utils.processAttributeWrite(attr, Number.NaN)).toThrow(/does not have a default nor a non-value/i);
+        });
+
+        it("level control for lighting attributes currentLevel and options", () => {
+            const cluster = Zcl.Utils.getCluster("genLevelCtrlForLighting");
+            let result = Zcl.Utils.processAttributeWrite(cluster.getAttribute("options")!, 0x00);
+            expect(result).toStrictEqual(0x00);
+            result = Zcl.Utils.processAttributeWrite(cluster.getAttribute("options")!, 0xff);
+            expect(result).toStrictEqual(0xff);
+            expect(() => Zcl.Utils.processAttributeWrite(cluster.getAttribute("currentLevel")!, 0x01)).toThrow(/not writable/i);
+        });
+
+        it("rssi location attributes coordinate1 and pathLossExponent", () => {
+            const cluster = Zcl.Utils.getCluster("genRssiLocation");
+            let result = Zcl.Utils.processAttributeWrite(cluster.getAttribute("coordinate1")!, -0x8000);
+            expect(result).toStrictEqual(-0x8000);
+            result = Zcl.Utils.processAttributeWrite(cluster.getAttribute("coordinate1")!, 0x7fff);
+            expect(result).toStrictEqual(0x7fff);
+            result = Zcl.Utils.processAttributeWrite(cluster.getAttribute("coordinate1")!, 0x0012);
+            expect(result).toStrictEqual(0x0012);
+            result = Zcl.Utils.processAttributeWrite(cluster.getAttribute("pathLossExponent")!, 0xff);
+            expect(result).toStrictEqual(0xff);
+            result = Zcl.Utils.processAttributeWrite(cluster.getAttribute("pathLossExponent")!, Number.NaN);
+            expect(result).toStrictEqual(0xffff);
         });
     });
 
@@ -358,12 +389,21 @@ describe("ZCL Utils", () => {
             expect(Number.isNaN(result)).toStrictEqual(true);
         });
 
-        it("returns value unchanged if same as min (skips invalid sentinel)", () => {
+        it("returns invalid sentinel unchanged if same as min (ignore invalid sentinel)", () => {
             const type = Zcl.DataType.INT16;
             const sentinel = ZCL_TYPE_INVALID_BY_TYPE[type];
             expect(sentinel).not.toBeUndefined();
             const attr = createAttribute({writable: true, type, min: sentinel as number});
             const result = Zcl.Utils.processAttributePostRead(attr, sentinel);
+            expect(result).toStrictEqual(sentinel);
+        });
+
+        it("returns invalid sentinel unchanged if same as min ref value (ignore invalid sentinel)", () => {
+            const type = Zcl.DataType.INT16;
+            const sentinel = ZCL_TYPE_INVALID_BY_TYPE[type];
+            expect(sentinel).not.toBeUndefined();
+            const attr = createAttribute({writable: true, type, minRef: "myRef"});
+            const result = Zcl.Utils.processAttributePostRead(attr, sentinel, {myRef: sentinel as number});
             expect(result).toStrictEqual(sentinel);
         });
 
@@ -376,13 +416,91 @@ describe("ZCL Utils", () => {
             expect(Number.isNaN(result)).toStrictEqual(true);
         });
 
-        it("returns value unchanged if same as max (skips invalid sentinel)", () => {
+        it("returns invalid sentinel unchanged if same as max (ignore invalid sentinel)", () => {
             const type = Zcl.DataType.UINT16;
             const sentinel = ZCL_TYPE_INVALID_BY_TYPE[type];
             expect(sentinel).not.toBeUndefined();
             const attr = createAttribute({writable: true, type, max: sentinel as number});
             const result = Zcl.Utils.processAttributePostRead(attr, sentinel);
             expect(result).toStrictEqual(sentinel);
+        });
+
+        it("returns invalid sentinel unchanged if same as max ref value (ignore invalid sentinel)", () => {
+            const type = Zcl.DataType.UINT16;
+            const sentinel = ZCL_TYPE_INVALID_BY_TYPE[type];
+            expect(sentinel).not.toBeUndefined();
+            const attr = createAttribute({writable: true, type, maxRef: "myRef"});
+            const result = Zcl.Utils.processAttributePostRead(attr, sentinel, {myRef: sentinel as number});
+            expect(result).toStrictEqual(sentinel);
+        });
+
+        it("basic attributes zclVersion and powerSource", () => {
+            const cluster = Zcl.Utils.getCluster("genBasic");
+            // max: 0xff
+            let result = Zcl.Utils.processAttributePostRead(cluster.getAttribute("zclVersion")!, 0xff);
+            expect(result).toStrictEqual(0xff);
+            // default: 0xff
+            result = Zcl.Utils.processAttributePostRead(cluster.getAttribute("powerSource")!, 0xff);
+            expect(result).toStrictEqual(0xff);
+            result = Zcl.Utils.processAttributePostRead(cluster.getAttribute("zclVersion")!, 0x02);
+            expect(result).toStrictEqual(0x02);
+            result = Zcl.Utils.processAttributePostRead(cluster.getAttribute("powerSource")!, 0x03);
+            expect(result).toStrictEqual(0x03);
+        });
+
+        it("device temperature config attribute currentTemperature", () => {
+            const cluster = Zcl.Utils.getCluster("genDeviceTempCfg");
+            let result = Zcl.Utils.processAttributePostRead(cluster.getAttribute("currentTemperature")!, -32768);
+            expect(Number.isNaN(result)).toStrictEqual(true);
+            result = Zcl.Utils.processAttributePostRead(cluster.getAttribute("currentTemperature")!, 200);
+            expect(result).toStrictEqual(200);
+            result = Zcl.Utils.processAttributePostRead(cluster.getAttribute("currentTemperature")!, -200);
+            expect(result).toStrictEqual(-200);
+            expect(() => Zcl.Utils.processAttributePostRead(cluster.getAttribute("currentTemperature")!, 201)).toThrow(/requires max/i);
+        });
+
+        it("level control for lighting attributes currentLevel and options", () => {
+            const cluster = Zcl.Utils.getCluster("genLevelCtrlForLighting");
+            let result = Zcl.Utils.processAttributePostRead(cluster.getAttribute("currentLevel")!, 0xff);
+            expect(Number.isNaN(result)).toStrictEqual(true);
+            result = Zcl.Utils.processAttributePostRead(cluster.getAttribute("currentLevel")!, 0xfe);
+            expect(result).toStrictEqual(0xfe);
+            result = Zcl.Utils.processAttributePostRead(cluster.getAttribute("currentLevel")!, 200);
+            expect(result).toStrictEqual(200);
+            expect(() => Zcl.Utils.processAttributePostRead(cluster.getAttribute("currentLevel")!, 201, {maxLevel: 200})).toThrow(
+                /requires max of 200 from ref maxLevel/i,
+            );
+            result = Zcl.Utils.processAttributePostRead(cluster.getAttribute("options")!, 0x00);
+            expect(result).toStrictEqual(0x00);
+            result = Zcl.Utils.processAttributePostRead(cluster.getAttribute("options")!, 0xff);
+            expect(result).toStrictEqual(0xff);
+        });
+    });
+
+    describe("processParameterWrite specific", () => {
+        it("throws when trying to write non-value on unsupported datatype", () => {
+            const type = Zcl.DataType.DATA8;
+            const sentinel = ZCL_TYPE_INVALID_BY_TYPE[type];
+            expect(sentinel).toBeUndefined();
+            const param = createParameter({type});
+            expect(() => Zcl.Utils.processParameterWrite(param, Number.NaN)).toThrow(/does not have a non-value/i);
+        });
+
+        it("rssi location cmd setAbsolute parameters coordinate1 and pathLossExponent", () => {
+            const cluster = Zcl.Utils.getCluster("genRssiLocation");
+            const cmd = cluster.getCommand("setAbsolute")!;
+            const paramCoordinate1 = cmd.parameters.find((p) => p.name === "coordinate1")!;
+            const paramPathLossExponent = cmd.parameters.find((p) => p.name === "pathLossExponent")!;
+            let result = Zcl.Utils.processParameterWrite(paramCoordinate1, -0x8000);
+            expect(result).toStrictEqual(-0x8000);
+            result = Zcl.Utils.processParameterWrite(paramCoordinate1, 0x7fff);
+            expect(result).toStrictEqual(0x7fff);
+            result = Zcl.Utils.processParameterWrite(paramCoordinate1, 0x0012);
+            expect(result).toStrictEqual(0x0012);
+            result = Zcl.Utils.processParameterWrite(paramPathLossExponent, 0xff);
+            expect(result).toStrictEqual(0xff);
+            result = Zcl.Utils.processParameterWrite(paramPathLossExponent, Number.NaN);
+            expect(result).toStrictEqual(0xffff);
         });
     });
 
@@ -405,12 +523,21 @@ describe("ZCL Utils", () => {
             expect(Number.isNaN(result)).toStrictEqual(true);
         });
 
-        it("returns value unchanged if same as min (skips invalid sentinel)", () => {
+        it("returns invalid sentinel unchanged if same as min (skips invalid sentinel)", () => {
             const type = Zcl.DataType.INT16;
             const sentinel = ZCL_TYPE_INVALID_BY_TYPE[type];
             expect(sentinel).not.toBeUndefined();
             const attr = createParameter({type, min: sentinel as number});
             const result = Zcl.Utils.processParameterRead(attr, sentinel);
+            expect(result).toStrictEqual(sentinel);
+        });
+
+        it("returns invalid sentinel unchanged if same as min ref value (skips invalid sentinel)", () => {
+            const type = Zcl.DataType.INT16;
+            const sentinel = ZCL_TYPE_INVALID_BY_TYPE[type];
+            expect(sentinel).not.toBeUndefined();
+            const attr = createParameter({type, minRef: "myRef"});
+            const result = Zcl.Utils.processParameterRead(attr, sentinel, {myRef: sentinel as number});
             expect(result).toStrictEqual(sentinel);
         });
 
@@ -423,13 +550,39 @@ describe("ZCL Utils", () => {
             expect(Number.isNaN(result)).toStrictEqual(true);
         });
 
-        it("returns value unchanged if same as max (skips invalid sentinel)", () => {
+        it("returns invalid sentinel unchanged if same as max (skips invalid sentinel)", () => {
             const type = Zcl.DataType.UINT16;
             const sentinel = ZCL_TYPE_INVALID_BY_TYPE[type];
             expect(sentinel).not.toBeUndefined();
             const attr = createParameter({type, max: sentinel as number});
             const result = Zcl.Utils.processParameterRead(attr, sentinel);
             expect(result).toStrictEqual(sentinel);
+        });
+
+        it("returns invalid sentinel unchanged if same as max ref value (skips invalid sentinel)", () => {
+            const type = Zcl.DataType.UINT16;
+            const sentinel = ZCL_TYPE_INVALID_BY_TYPE[type];
+            expect(sentinel).not.toBeUndefined();
+            const attr = createParameter({type, maxRef: "myRef"});
+            const result = Zcl.Utils.processParameterRead(attr, sentinel, {myRef: sentinel as number});
+            expect(result).toStrictEqual(sentinel);
+        });
+
+        it("rssi location cmd rsp locationDataNotification parameters coordinate1 and pathLossExponent", () => {
+            const cluster = Zcl.Utils.getCluster("genRssiLocation");
+            const cmd = cluster.getCommandResponse("locationDataNotification")!;
+            const paramCoordinate1 = cmd.parameters.find((p) => p.name === "coordinate1")!;
+            const paramPathLossExponent = cmd.parameters.find((p) => p.name === "pathLossExponent")!;
+            let result = Zcl.Utils.processParameterRead(paramCoordinate1, -0x8000);
+            expect(Number.isNaN(result)).toStrictEqual(true);
+            result = Zcl.Utils.processParameterRead(paramCoordinate1, 0x7fff);
+            expect(result).toStrictEqual(0x7fff);
+            result = Zcl.Utils.processParameterRead(paramCoordinate1, 0x0012);
+            expect(result).toStrictEqual(0x0012);
+            result = Zcl.Utils.processParameterRead(paramPathLossExponent, 0xff);
+            expect(result).toStrictEqual(0xff);
+            result = Zcl.Utils.processParameterRead(paramPathLossExponent, 0xffff);
+            expect(Number.isNaN(result)).toStrictEqual(true);
         });
     });
 
