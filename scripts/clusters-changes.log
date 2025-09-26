@@ -1,4 +1,4 @@
-Found 556 changes.
+Found 558 changes.
 
 [REMOVED] Clusters > pm1Measurement: 1068 (0x042c)
 [REMOVED] Clusters > pm10Measurement: 1069 (0x042d)
@@ -6,6 +6,7 @@ Found 556 changes.
 [CHANGED] Clusters > name > 1796: tunneling -> seTunneling
 [CHANGED] Clusters > name > 2817: haMeterIdentification -> seMeterIdentification
 [CHANGED] Clusters > genBasic > attributes > name > 8: appProfileVersion -> genericDeviceClass
+[REMOVED] Clusters > genIdentify > attributes > identifyCommissionState: 1 (0x0001)
 [CHANGED] Clusters > genIdentify > commands > triggerEffect > parameters > effectid > type: UINT8 -> ENUM8
 [CHANGED] Clusters > genIdentify > commands > triggerEffect > parameters > effectvariant > type: UINT8 -> ENUM8
 [CHANGED] Clusters > genGroups > commandsResponse > addRsp > parameters > status > type: UINT8 -> ENUM8
@@ -22,6 +23,7 @@ Found 556 changes.
 [CHANGED] Clusters > genScenes > commandsResponse > enhancedViewRsp > parameters > status > type: UINT8 -> ENUM8
 [CHANGED] Clusters > genScenes > commandsResponse > copyRsp > parameters > status > type: UINT8 -> ENUM8
 [CHANGED] Clusters > genOnOff > commands > offWithEffect > parameters > effectid > type: UINT8 -> ENUM8
+[REMOVED] Clusters > genOnOffSwitchCfg > attributes > switchMultiFunction: 2 (0x0002)
 [CHANGED] Clusters > genLevelCtrl > attributes > defaultMoveRate > type: UINT16 -> UINT8
 [CHANGED] Clusters > genLevelCtrl > commands > move > parameters > movemode > type: UINT8 -> ENUM8
 [CHANGED] Clusters > genLevelCtrl > commands > step > parameters > stepmode > type: UINT8 -> ENUM8
