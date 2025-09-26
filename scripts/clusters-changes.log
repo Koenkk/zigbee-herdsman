@@ -1,14 +1,224 @@
-Comparison complete. Found 124 changes.
-Compared:
-  - OLD: D:\Dev\FORKS\zigbee-herdsman\src\zspec\zcl\definition\cluster-old.ts
-  - NEW: D:\Dev\FORKS\zigbee-herdsman\src\zspec\zcl\definition\cluster.ts
---------------------------------------------------
+Found 556 changes.
 
-
+[REMOVED] Clusters > pm1Measurement: 1068 (0x042c)
+[REMOVED] Clusters > pm10Measurement: 1069 (0x042d)
+[CHANGED] Clusters > name > 1559: piRetailTunnel -> retailTunnel
+[CHANGED] Clusters > name > 1796: tunneling -> seTunneling
+[CHANGED] Clusters > name > 2817: haMeterIdentification -> seMeterIdentification
+[CHANGED] Clusters > genBasic > attributes > name > 8: appProfileVersion -> genericDeviceClass
+[CHANGED] Clusters > genIdentify > commands > triggerEffect > parameters > effectid > type: UINT8 -> ENUM8
+[CHANGED] Clusters > genIdentify > commands > triggerEffect > parameters > effectvariant > type: UINT8 -> ENUM8
+[CHANGED] Clusters > genGroups > commandsResponse > addRsp > parameters > status > type: UINT8 -> ENUM8
+[CHANGED] Clusters > genGroups > commandsResponse > viewRsp > parameters > status > type: UINT8 -> ENUM8
+[CHANGED] Clusters > genGroups > commandsResponse > removeRsp > parameters > status > type: UINT8 -> ENUM8
+[CHANGED] Clusters > genScenes > commands > copy > parameters > mode > type: UINT8 -> BITMAP8
+[CHANGED] Clusters > genScenes > commandsResponse > addRsp > parameters > status > type: UINT8 -> ENUM8
+[CHANGED] Clusters > genScenes > commandsResponse > viewRsp > parameters > status > type: UINT8 -> ENUM8
+[CHANGED] Clusters > genScenes > commandsResponse > removeRsp > parameters > status > type: UINT8 -> ENUM8
+[CHANGED] Clusters > genScenes > commandsResponse > removeAllRsp > parameters > status > type: UINT8 -> ENUM8
+[CHANGED] Clusters > genScenes > commandsResponse > storeRsp > parameters > status > type: UINT8 -> ENUM8
+[CHANGED] Clusters > genScenes > commandsResponse > getSceneMembershipRsp > parameters > status > type: UINT8 -> ENUM8
+[CHANGED] Clusters > genScenes > commandsResponse > enhancedAddRsp > parameters > status > type: UINT8 -> ENUM8
+[CHANGED] Clusters > genScenes > commandsResponse > enhancedViewRsp > parameters > status > type: UINT8 -> ENUM8
+[CHANGED] Clusters > genScenes > commandsResponse > copyRsp > parameters > status > type: UINT8 -> ENUM8
+[CHANGED] Clusters > genOnOff > commands > offWithEffect > parameters > effectid > type: UINT8 -> ENUM8
+[CHANGED] Clusters > genLevelCtrl > attributes > defaultMoveRate > type: UINT16 -> UINT8
+[CHANGED] Clusters > genLevelCtrl > commands > move > parameters > movemode > type: UINT8 -> ENUM8
+[CHANGED] Clusters > genLevelCtrl > commands > step > parameters > stepmode > type: UINT8 -> ENUM8
+[CHANGED] Clusters > genLevelCtrl > commands > moveWithOnOff > parameters > movemode > type: UINT8 -> ENUM8
+[CHANGED] Clusters > genLevelCtrl > commands > stepWithOnOff > parameters > stepmode > type: UINT8 -> ENUM8
+[CHANGED] Clusters > genAlarms > commands > reset > parameters > alarmcode > type: UINT8 -> ENUM8
+[CHANGED] Clusters > genAlarms > commands > reset > parameters > clusterid > type: UINT16 -> CLUSTER_ID
+[CHANGED] Clusters > genAlarms > commandsResponse > alarm > parameters > alarmcode > type: UINT8 -> ENUM8
+[CHANGED] Clusters > genAlarms > commandsResponse > alarm > parameters > clusterid > type: UINT16 -> CLUSTER_ID
+[CHANGED] Clusters > genAlarms > commandsResponse > getRsp > parameters > status > type: UINT8 -> ENUM8
+[CHANGED] Clusters > genAlarms > commandsResponse > getRsp > parameters > alarmcode > type: UINT8 -> ENUM8
+[CHANGED] Clusters > genAlarms > commandsResponse > getRsp > parameters > clusterid > type: UINT16 -> CLUSTER_ID
+[CHANGED] Clusters > genCommissioning > attributes > name > 65: concentratorRus -> concentratorRadius
+[CHANGED] Clusters > genCommissioning > commands > restartDevice > parameters > options > type: UINT8 -> BITMAP8
+[CHANGED] Clusters > genCommissioning > commands > saveStartupParams > parameters > options > type: UINT8 -> BITMAP8
+[CHANGED] Clusters > genCommissioning > commands > restoreStartupParams > parameters > options > type: UINT8 -> BITMAP8
+[CHANGED] Clusters > genCommissioning > commands > resetStartupParams > parameters > options > type: UINT8 -> BITMAP8
+[CHANGED] Clusters > genCommissioning > commandsResponse > restartDeviceRsp > parameters > status > type: UINT8 -> ENUM8
+[CHANGED] Clusters > genCommissioning > commandsResponse > saveStartupParamsRsp > parameters > status > type: UINT8 -> ENUM8
+[CHANGED] Clusters > genCommissioning > commandsResponse > restoreStartupParamsRsp > parameters > status > type: UINT8 -> ENUM8
+[CHANGED] Clusters > genCommissioning > commandsResponse > resetStartupParamsRsp > parameters > status > type: UINT8 -> ENUM8
+[CHANGED] Clusters > genOta > commands > queryNextImageRequest > parameters > fieldControl > type: UINT8 -> BITMAP8
+[CHANGED] Clusters > genOta > commands > imageBlockRequest > parameters > fieldControl > type: UINT8 -> BITMAP8
+[CHANGED] Clusters > genOta > commands > imagePageRequest > parameters > fieldControl > type: UINT8 -> BITMAP8
+[CHANGED] Clusters > genOta > commands > upgradeEndRequest > parameters > status > type: UINT8 -> ENUM8
+[CHANGED] Clusters > genOta > commandsResponse > imageNotify > parameters > payloadType > type: UINT8 -> ENUM8
+[CHANGED] Clusters > genOta > commandsResponse > queryNextImageResponse > parameters > status > type: UINT8 -> ENUM8
+[CHANGED] Clusters > genOta > commandsResponse > imageBlockResponse > parameters > status > type: UINT8 -> ENUM8
+[CHANGED] Clusters > genOta > commandsResponse > upgradeEndResponse > parameters > currentTime > type: UINT32 -> UTC
+[CHANGED] Clusters > genOta > commandsResponse > upgradeEndResponse > parameters > upgradeTime > type: UINT32 -> UTC
+[CHANGED] Clusters > genOta > commandsResponse > queryDeviceSpecificFileResponse > parameters > status > type: UINT8 -> ENUM8
 [CHANGED] Clusters > closuresShadeCfg > attributes > mode > ID: 18 (0x0012) -> 17 (0x0011)
 [CHANGED] Clusters > closuresDoorLock > attributes > lockType > ID: 38 (0x0026) -> 1 (0x0001)
+[CHANGED] Clusters > closuresDoorLock > attributes > lockType > type: BITMAP16 -> ENUM8
+[CHANGED] Clusters > closuresDoorLock > attributes > operatingMode > type: UINT32 -> ENUM8
+[CHANGED] Clusters > closuresDoorLock > attributes > zigbeeSecurityLevel > type: UINT8 -> ENUM8
+[CHANGED] Clusters > closuresDoorLock > commands > lockDoor > parameters > pincodevalue > type: CHAR_STR -> OCTET_STR
+[CHANGED] Clusters > closuresDoorLock > commands > unlockDoor > parameters > pincodevalue > type: CHAR_STR -> OCTET_STR
+[CHANGED] Clusters > closuresDoorLock > commands > toggleDoor > parameters > pincodevalue > type: CHAR_STR -> OCTET_STR
+[CHANGED] Clusters > closuresDoorLock > commands > unlockWithTimeout > parameters > pincodevalue > type: CHAR_STR -> OCTET_STR
+[CHANGED] Clusters > closuresDoorLock > commands > setPinCode > parameters > usertype > type: UINT8 -> ENUM8
+[CHANGED] Clusters > closuresDoorLock > commands > setPinCode > parameters > pincodevalue > type: CHAR_STR -> OCTET_STR
+[CHANGED] Clusters > closuresDoorLock > commands > setWeekDaySchedule > parameters > daysmask > type: UINT8 -> BITMAP8
+[CHANGED] Clusters > closuresDoorLock > commands > setHolidaySchedule > parameters > opermodelduringholiday > type: UINT8 -> ENUM8
+[CHANGED] Clusters > closuresDoorLock > commands > setUserType > parameters > usertype > type: UINT8 -> ENUM8
+[CHANGED] Clusters > closuresDoorLock > commands > setRfidCode > parameters > usertype > type: UINT8 -> ENUM8
+[CHANGED] Clusters > closuresDoorLock > commands > setRfidCode > parameters > pincodevalue > type: CHAR_STR -> OCTET_STR
+[CHANGED] Clusters > closuresDoorLock > commandsResponse > lockDoorRsp > parameters > status > type: UINT8 -> ENUM8
+[CHANGED] Clusters > closuresDoorLock > commandsResponse > unlockDoorRsp > parameters > status > type: UINT8 -> ENUM8
+[CHANGED] Clusters > closuresDoorLock > commandsResponse > toggleDoorRsp > parameters > status > type: UINT8 -> ENUM8
+[CHANGED] Clusters > closuresDoorLock > commandsResponse > unlockWithTimeoutRsp > parameters > status > type: UINT8 -> ENUM8
+[CHANGED] Clusters > closuresDoorLock > commandsResponse > getLogRecordRsp > parameters > eventtype > type: UINT8 -> ENUM8
+[CHANGED] Clusters > closuresDoorLock > commandsResponse > getLogRecordRsp > parameters > pincodevalue > type: CHAR_STR -> OCTET_STR
+[CHANGED] Clusters > closuresDoorLock > commandsResponse > getPinCodeRsp > parameters > usertype > type: UINT8 -> ENUM8
+[CHANGED] Clusters > closuresDoorLock > commandsResponse > getPinCodeRsp > parameters > pincodevalue > type: CHAR_STR -> OCTET_STR
+[CHANGED] Clusters > closuresDoorLock > commandsResponse > getWeekDayScheduleRsp > parameters > daysmask > type: UINT8 -> BITMAP8
+[CHANGED] Clusters > closuresDoorLock > commandsResponse > getYearDayScheduleRsp > parameters > status > type: UINT8 -> ENUM8
+[CHANGED] Clusters > closuresDoorLock > commandsResponse > getHolidayScheduleRsp > parameters > opermodelduringholiday > type: UINT8 -> ENUM8
+[CHANGED] Clusters > closuresDoorLock > commandsResponse > getUserTypeRsp > parameters > usertype > type: UINT8 -> ENUM8
+[CHANGED] Clusters > closuresDoorLock > commandsResponse > getRfidCodeRsp > parameters > usertype > type: UINT8 -> ENUM8
+[CHANGED] Clusters > closuresDoorLock > commandsResponse > getRfidCodeRsp > parameters > pincodevalue > type: CHAR_STR -> OCTET_STR
+[CHANGED] Clusters > closuresDoorLock > commandsResponse > operationEventNotification > parameters > data > type: UINT8 -> CHAR_STR
+[CHANGED] Clusters > closuresDoorLock > commandsResponse > programmingEventNotification > parameters > usertype > type: UINT8 -> ENUM8
+[CHANGED] Clusters > closuresDoorLock > commandsResponse > programmingEventNotification > parameters > data > type: UINT8 -> CHAR_STR
+[CHANGED] Clusters > hvacThermostat > commands > setpointRaiseLower > parameters > mode > type: UINT8 -> ENUM8
+[CHANGED] Clusters > hvacThermostat > commands > setWeeklySchedule > parameters > dayofweek > type: UINT8 -> BITMAP8
+[CHANGED] Clusters > hvacThermostat > commands > setWeeklySchedule > parameters > mode > type: UINT8 -> BITMAP8
+[CHANGED] Clusters > hvacThermostat > commands > getWeeklySchedule > parameters > daystoreturn > type: UINT8 -> BITMAP8
+[CHANGED] Clusters > hvacThermostat > commands > getWeeklySchedule > parameters > modetoreturn > type: UINT8 -> BITMAP8
+[CHANGED] Clusters > hvacThermostat > commandsResponse > getWeeklyScheduleRsp > parameters > dayofweek > type: UINT8 -> BITMAP8
+[CHANGED] Clusters > hvacThermostat > commandsResponse > getWeeklyScheduleRsp > parameters > mode > type: UINT8 -> BITMAP8
+[CHANGED] Clusters > hvacThermostat > commandsResponse > getRelayStatusLogRsp > parameters > relaystatus > type: UINT16 -> BITMAP8
+[CHANGED] Clusters > hvacThermostat > commandsResponse > getRelayStatusLogRsp > parameters > localtemp > type: UINT16 -> INT16
+[CHANGED] Clusters > hvacThermostat > commandsResponse > getRelayStatusLogRsp > parameters > setpoint > type: UINT16 -> INT16
+[CHANGED] Clusters > lightingColorCtrl > attributes > colorCapabilities > type: UINT16 -> BITMAP16
+[CHANGED] Clusters > lightingColorCtrl > commands > moveToHue > parameters > direction > type: UINT8 -> ENUM8
+[CHANGED] Clusters > lightingColorCtrl > commands > moveHue > parameters > movemode > type: UINT8 -> ENUM8
+[CHANGED] Clusters > lightingColorCtrl > commands > stepHue > parameters > stepmode > type: UINT8 -> ENUM8
+[CHANGED] Clusters > lightingColorCtrl > commands > moveSaturation > parameters > movemode > type: UINT8 -> ENUM8
+[CHANGED] Clusters > lightingColorCtrl > commands > stepSaturation > parameters > stepmode > type: UINT8 -> ENUM8
+[CHANGED] Clusters > lightingColorCtrl > commands > enhancedMoveToHue > parameters > direction > type: UINT8 -> ENUM8
+[CHANGED] Clusters > lightingColorCtrl > commands > enhancedMoveHue > parameters > movemode > type: UINT8 -> ENUM8
+[CHANGED] Clusters > lightingColorCtrl > commands > enhancedStepHue > parameters > stepmode > type: UINT8 -> ENUM8
+[CHANGED] Clusters > lightingColorCtrl > commands > colorLoopSet > parameters > updateflags > type: UINT8 -> BITMAP8
+[CHANGED] Clusters > lightingColorCtrl > commands > colorLoopSet > parameters > action > type: UINT8 -> ENUM8
+[CHANGED] Clusters > lightingColorCtrl > commands > colorLoopSet > parameters > direction > type: UINT8 -> ENUM8
+[REMOVED] Clusters > lightingColorCtrl > commands > stopMoveStep > parameters > bits: undefined
+[REMOVED] Clusters > lightingColorCtrl > commands > stopMoveStep > parameters > bytee: undefined
+[REMOVED] Clusters > lightingColorCtrl > commands > stopMoveStep > parameters > action: undefined
+[REMOVED] Clusters > lightingColorCtrl > commands > stopMoveStep > parameters > direction: undefined
+[REMOVED] Clusters > lightingColorCtrl > commands > stopMoveStep > parameters > time: undefined
+[REMOVED] Clusters > lightingColorCtrl > commands > stopMoveStep > parameters > starthue: undefined
+[CHANGED] Clusters > lightingColorCtrl > commands > moveColorTemp > parameters > movemode > type: UINT8 -> ENUM8
+[CHANGED] Clusters > lightingColorCtrl > commands > stepColorTemp > parameters > stepmode > type: UINT8 -> ENUM8
+[CHANGED] Clusters > ssIasZone > commands > enrollRsp > parameters > enrollrspcode > type: UINT8 -> ENUM8
+[CHANGED] Clusters > ssIasZone > commandsResponse > statusChangeNotification > parameters > zonestatus > type: UINT16 -> BITMAP16
+[CHANGED] Clusters > ssIasZone > commandsResponse > statusChangeNotification > parameters > extendedstatus > type: UINT8 -> BITMAP8
+[CHANGED] Clusters > ssIasZone > commandsResponse > enrollReq > parameters > zonetype > type: UINT16 -> ENUM16
+[CHANGED] Clusters > ssIasAce > commands > arm > parameters > armmode > type: UINT8 -> ENUM8
+[CHANGED] Clusters > ssIasAce > commands > getZoneStatus > parameters > zonestatusmaskflag > type: UINT8 -> BOOLEAN
+[CHANGED] Clusters > ssIasAce > commands > getZoneStatus > parameters > zonestatusmask > type: UINT16 -> BITMAP16
+[CHANGED] Clusters > ssIasAce > commandsResponse > armRsp > parameters > armnotification > type: UINT8 -> ENUM8
+[CHANGED] Clusters > ssIasAce > commandsResponse > getZoneIDMapRsp > parameters > zoneidmapsection0 > type: UINT16 -> BITMAP16
+[CHANGED] Clusters > ssIasAce > commandsResponse > getZoneIDMapRsp > parameters > zoneidmapsection1 > type: UINT16 -> BITMAP16
+[CHANGED] Clusters > ssIasAce > commandsResponse > getZoneIDMapRsp > parameters > zoneidmapsection2 > type: UINT16 -> BITMAP16
+[CHANGED] Clusters > ssIasAce > commandsResponse > getZoneIDMapRsp > parameters > zoneidmapsection3 > type: UINT16 -> BITMAP16
+[CHANGED] Clusters > ssIasAce > commandsResponse > getZoneIDMapRsp > parameters > zoneidmapsection4 > type: UINT16 -> BITMAP16
+[CHANGED] Clusters > ssIasAce > commandsResponse > getZoneIDMapRsp > parameters > zoneidmapsection5 > type: UINT16 -> BITMAP16
+[CHANGED] Clusters > ssIasAce > commandsResponse > getZoneIDMapRsp > parameters > zoneidmapsection6 > type: UINT16 -> BITMAP16
+[CHANGED] Clusters > ssIasAce > commandsResponse > getZoneIDMapRsp > parameters > zoneidmapsection7 > type: UINT16 -> BITMAP16
+[CHANGED] Clusters > ssIasAce > commandsResponse > getZoneIDMapRsp > parameters > zoneidmapsection8 > type: UINT16 -> BITMAP16
+[CHANGED] Clusters > ssIasAce > commandsResponse > getZoneIDMapRsp > parameters > zoneidmapsection9 > type: UINT16 -> BITMAP16
+[CHANGED] Clusters > ssIasAce > commandsResponse > getZoneIDMapRsp > parameters > zoneidmapsection10 > type: UINT16 -> BITMAP16
+[CHANGED] Clusters > ssIasAce > commandsResponse > getZoneIDMapRsp > parameters > zoneidmapsection11 > type: UINT16 -> BITMAP16
+[CHANGED] Clusters > ssIasAce > commandsResponse > getZoneIDMapRsp > parameters > zoneidmapsection12 > type: UINT16 -> BITMAP16
+[CHANGED] Clusters > ssIasAce > commandsResponse > getZoneIDMapRsp > parameters > zoneidmapsection13 > type: UINT16 -> BITMAP16
+[CHANGED] Clusters > ssIasAce > commandsResponse > getZoneIDMapRsp > parameters > zoneidmapsection14 > type: UINT16 -> BITMAP16
+[CHANGED] Clusters > ssIasAce > commandsResponse > getZoneIDMapRsp > parameters > zoneidmapsection15 > type: UINT16 -> BITMAP16
+[CHANGED] Clusters > ssIasAce > commandsResponse > getZoneInfoRsp > parameters > zonetype > type: UINT16 -> ENUM16
+[CHANGED] Clusters > ssIasAce > commandsResponse > zoneStatusChanged > parameters > zonestatus > type: UINT16 -> ENUM16
+[CHANGED] Clusters > ssIasAce > commandsResponse > zoneStatusChanged > parameters > audiblenotif > type: UINT8 -> ENUM8
+[CHANGED] Clusters > ssIasAce > commandsResponse > panelStatusChanged > parameters > panelstatus > type: UINT8 -> ENUM8
+[CHANGED] Clusters > ssIasAce > commandsResponse > panelStatusChanged > parameters > audiblenotif > type: UINT8 -> ENUM8
+[CHANGED] Clusters > ssIasAce > commandsResponse > panelStatusChanged > parameters > alarmstatus > type: UINT8 -> ENUM8
+[CHANGED] Clusters > ssIasAce > commandsResponse > getPanelStatusRsp > parameters > panelstatus > type: UINT8 -> ENUM8
+[CHANGED] Clusters > ssIasAce > commandsResponse > getPanelStatusRsp > parameters > audiblenotif > type: UINT8 -> ENUM8
+[CHANGED] Clusters > ssIasAce > commandsResponse > getPanelStatusRsp > parameters > alarmstatus > type: UINT8 -> ENUM8
+[CHANGED] Clusters > ssIasAce > commandsResponse > getZoneStatusRsp > parameters > zonestatuscomplete > type: UINT8 -> BOOLEAN
+[CHANGED] Clusters > ssIasWd > commands > startWarning > parameters > startwarninginfo > type: UINT8 -> BITMAP8
+[CHANGED] Clusters > ssIasWd > commands > startWarning > parameters > strobelevel > type: UINT8 -> ENUM8
+[CHANGED] Clusters > ssIasWd > commands > squawk > parameters > squawkinfo > type: UINT8 -> BITMAP8
+[CHANGED] Clusters > piGenericTunnel > commands > matchProtocolAddr > parameters > protocoladdr > type: CHAR_STR -> OCTET_STR
+[CHANGED] Clusters > piGenericTunnel > commandsResponse > matchProtocolAddrRsp > parameters > protocoladdr > type: CHAR_STR -> OCTET_STR
+[CHANGED] Clusters > piGenericTunnel > commandsResponse > advertiseProtocolAddr > parameters > protocoladdr > type: CHAR_STR -> OCTET_STR
+[CHANGED] Clusters > piBacnetProtocolTunnel > commands > transferNpdu > parameters > npdu > type: UINT8 -> LIST_UINT8
+[REMOVED] Clusters > piAnalogOutputReg > attributes > updateInterval: 118 (0x0076)
+[CHANGED] Clusters > piMultistateInputReg > attributes > name > 75: objectId -> objectIdentifier
+[CHANGED] Clusters > piMultistateInputExt > attributes > name > 6: alarmValue -> alarmValues
+[CHANGED] Clusters > piMultistateInputExt > attributes > alarmValues > type: UINT16 -> SET
+[CHANGED] Clusters > piMultistateInputExt > attributes > faultValues > type: UINT16 -> SET
+[CHANGED] Clusters > piMultistateOutputReg > attributes > name > 75: objectId -> objectIdentifier
+[CHANGED] Clusters > piMultistateValueReg > attributes > name > 75: objectId -> objectIdentifier
+[CHANGED] Clusters > piMultistateValueExt > attributes > name > 6: alarmValue -> alarmValues
+[CHANGED] Clusters > piMultistateValueExt > attributes > alarmValues > type: UINT16 -> SET
+[CHANGED] Clusters > piMultistateValueExt > attributes > faultValues > type: UINT16 -> SET
+[CHANGED] Clusters > pi11073ProtocolTunnel > commands > name > 1: connectReq -> connectRequest
+[CHANGED] Clusters > pi11073ProtocolTunnel > commands > name > 2: disconnectReq -> disconnectRequest
+[CHANGED] Clusters > pi11073ProtocolTunnel > commands > name > 3: connectStatusNoti -> connectStatusNotification
+[REMOVED] Clusters > seMetering > attributes > intervalReadReportingPeriod: 16 (0x0010)
+[CHANGED] Clusters > seMetering > attributes > currentBlockReceived > type: UINT48 -> ENUM8
+[CHANGED] Clusters > seMetering > attributes > name > 783: operatingTariffLevel -> operatingTariffLevelDelivered
+[CHANGED] Clusters > seMetering > attributes > name > 1025: currentdayConsumpDelivered -> currentDayConsumpDelivered
+[CHANGED] Clusters > seMetering > attributes > name > 1026: currentdayConsumpReceived -> currentDayConsumpReceived
+[CHANGED] Clusters > seMetering > attributes > name > 1027: previousdayConsumpDelivered -> previousDayConsumpDelivered
+[CHANGED] Clusters > seMetering > attributes > name > 1028: previousdayConsumpReceived -> previousDayConsumpReceived
+[CHANGED] Clusters > seMetering > attributes > name > 1041: currentdayMaxEnergyCarrDemand -> currentDayMaxEnergyCarrDemand
+[CHANGED] Clusters > seMetering > attributes > name > 1042: previousdayMaxEnergyCarrDemand -> previousDayMaxEnergyCarrDemand
+[CHANGED] Clusters > seMetering > attributes > name > 2560: billToDate -> billToDateDelivered
+[CHANGED] Clusters > seMetering > attributes > name > 2561: billToDateTimeStamp -> billToDateTimeStampDelivered
+[CHANGED] Clusters > seMetering > attributes > name > 2562: projectedBill -> projectedBillDelivered
+[CHANGED] Clusters > seMetering > attributes > name > 2563: projectedBillTimeStamp -> projectedBillTimeStampDelivered
+[CHANGED] Clusters > seMetering > commands > name > 1: reqMirror -> requestMirrorRsp
+[CHANGED] Clusters > seMetering > commands > name > 2: mirrorRem -> mirrorRemoved
+[CHANGED] Clusters > seMetering > commands > name > 3: reqFastPollMode -> requestFastPollMode
+[CHANGED] Clusters > seMetering > commands > getSnapshot > ID: 4 (0x0004) -> 6 (0x0006)
+[CHANGED] Clusters > seMetering > commands > name > 6: mirrorReportAttrRsp -> getSnapshot
+[CHANGED] Clusters > seMetering > commandsResponse > name > 1: reqMirrorRsp -> requestMirror
+[CHANGED] Clusters > seMetering > commandsResponse > name > 2: mirrorRemRsp -> removeMirror
+[CHANGED] Clusters > seMetering > commandsResponse > name > 3: reqFastPollModeRsp -> requestFastPollModeRsp
+[CHANGED] Clusters > seMetering > commandsResponse > name > 4: getSnapshotRsp -> scheduleSnapshotRsp
+[CHANGED] Clusters > haApplianceStatistics > commandsResponse > logNotification > parameters > timestamp > type: UINT32 -> UTC
+[CHANGED] Clusters > haApplianceStatistics > commandsResponse > logRsp > parameters > timestamp > type: UINT32 -> UTC
+[CHANGED] Clusters > haElectricalMeasurement > commands > getMeasurementProfile > parameters > attrId > type: UINT16 -> ATTR_ID
+[CHANGED] Clusters > haElectricalMeasurement > commands > getMeasurementProfile > parameters > starttime > type: UINT32 -> UTC
+[CHANGED] Clusters > haElectricalMeasurement > commandsResponse > getProfileInfoRsp > parameters > profileintervalperiod > type: UINT8 -> ENUM8
+[CHANGED] Clusters > haElectricalMeasurement > commandsResponse > getMeasurementProfileRsp > parameters > starttime > type: UINT32 -> UTC
+[CHANGED] Clusters > haElectricalMeasurement > commandsResponse > getMeasurementProfileRsp > parameters > status > type: UINT8 -> ENUM8
+[CHANGED] Clusters > haElectricalMeasurement > commandsResponse > getMeasurementProfileRsp > parameters > profileintervalperiod > type: UINT8 -> ENUM8
+[CHANGED] Clusters > haElectricalMeasurement > commandsResponse > getMeasurementProfileRsp > parameters > attrId > type: UINT16 -> ATTR_ID
+[CHANGED] Clusters > haElectricalMeasurement > commandsResponse > getMeasurementProfileRsp > parameters > intervals > type: LIST_UINT8 -> BUFFER
+[CHANGED] Clusters > touchlink > commandsResponse > scanResponse > parameters > zigbeeInformation > type: UINT8 -> BITMAP8
+[CHANGED] Clusters > touchlink > commandsResponse > scanResponse > parameters > touchlinkInformation > type: UINT8 -> BITMAP8
+[CHANGED] Clusters > touchlink > commandsResponse > scanResponse > parameters > keyBitmask > type: UINT16 -> BITMAP16
+[CHANGED] Clusters > touchlink > commandsResponse > networkStart > parameters > status > type: ENUM8 -> UINT8
+[CHANGED] Clusters > touchlink > commandsResponse > networkJoinRouter > parameters > status > type: ENUM8 -> UINT8
+[CHANGED] Clusters > touchlink > commandsResponse > networkJoinEndDevice > parameters > status > type: ENUM8 -> UINT8
 
+[ADDED]   Clusters > genLevelCtrlForLighting: 8 (0x0008)
+[ADDED]   Clusters > piPartition: 22 (0x0016)
+[ADDED]   Clusters > powerProfile: 26 (0x001a)
+[ADDED]   Clusters > haApplianceControl: 27 (0x001b)
 [ADDED]   Clusters > pulseWidthModulation: 28 (0x001c)
+[ADDED]   Clusters > keepAlive: 37 (0x0025)
+[ADDED]   Clusters > retailTunnel: 1559 (0x0617)
+[ADDED]   Clusters > seTunneling: 1796 (0x0704)
+[ADDED]   Clusters > seMeterIdentification: 2817 (0x0b01)
+[ADDED]   Clusters > genBasic > attributes > genericDeviceClass: 8 (0x0008)
 [ADDED]   Clusters > genPowerCfg > attributes > battery2Voltage: 64 (0x0040)
 [ADDED]   Clusters > genPowerCfg > attributes > battery2PercentageRemaining: 65 (0x0041)
 [ADDED]   Clusters > genPowerCfg > attributes > battery2Manufacturer: 80 (0x0050)
@@ -64,13 +274,41 @@ Compared:
 [ADDED]   Clusters > genLevelCtrl > commands > stopWithOnOff > parameters > optionsMask
 [ADDED]   Clusters > genLevelCtrl > commands > stopWithOnOff > parameters > optionsOverride
 [ADDED]   Clusters > genLevelCtrl > commands > moveToClosestFrequency: 8 (0x0008)
+[ADDED]   Clusters > genCommissioning > attributes > concentratorRadius: 65 (0x0041)
 [ADDED]   Clusters > genOta > attributes > upgradeActivationPolicy: 11 (0x000b)
 [ADDED]   Clusters > genOta > attributes > upgradeTimeoutPolicy: 12 (0x000c)
-[ADDED]   Clusters > genPollCtrl > commandsResponse > checkin > parameters > startFastPolling
-[ADDED]   Clusters > genPollCtrl > commandsResponse > checkin > parameters > fastPollTimeout
-[ADDED]   Clusters > genPollCtrl > commandsResponse > fastPollStop: 1 (0x0001)
-[ADDED]   Clusters > genPollCtrl > commandsResponse > setLongPollInterval: 2 (0x0002)
-[ADDED]   Clusters > genPollCtrl > commandsResponse > setShortPollInterval: 3 (0x0003)
+[ADDED]   Clusters > greenPower > attributes > gpsMaxSinkTableEntries
+[ADDED]   Clusters > greenPower > attributes > sinkTable: 1 (0x0001)
+[ADDED]   Clusters > greenPower > attributes > gpsCommunicationMode: 2 (0x0002)
+[ADDED]   Clusters > greenPower > attributes > gpsCommissioningExitMode: 3 (0x0003)
+[ADDED]   Clusters > greenPower > attributes > gpsCommissioningWindow: 4 (0x0004)
+[ADDED]   Clusters > greenPower > attributes > gpsSecurityLevel: 5 (0x0005)
+[ADDED]   Clusters > greenPower > attributes > gpsFunctionality: 6 (0x0006)
+[ADDED]   Clusters > greenPower > attributes > gpsActiveFunctionality: 7 (0x0007)
+[ADDED]   Clusters > greenPower > attributes > gpsMaxProxyTableEntries: 16 (0x0010)
+[ADDED]   Clusters > greenPower > attributes > proxyTable: 17 (0x0011)
+[ADDED]   Clusters > greenPower > attributes > gppNotificationRetryNumber: 18 (0x0012)
+[ADDED]   Clusters > greenPower > attributes > gppNotificationRetryTimer: 19 (0x0013)
+[ADDED]   Clusters > greenPower > attributes > gppMaxSearchCounter: 20 (0x0014)
+[ADDED]   Clusters > greenPower > attributes > gppBlockGpdId: 21 (0x0015)
+[ADDED]   Clusters > greenPower > attributes > gppFunctionality: 22 (0x0016)
+[ADDED]   Clusters > greenPower > attributes > gppActiveFunctionality: 23 (0x0017)
+[ADDED]   Clusters > greenPower > attributes > gpSharedSecurityKeyType: 32 (0x0020)
+[ADDED]   Clusters > greenPower > attributes > gpSharedSecurityKey: 33 (0x0021)
+[ADDED]   Clusters > greenPower > attributes > gpLinkKey: 34 (0x0022)
+[ADDED]   Clusters > greenPower > commands > pairingSearch: 1 (0x0001)
+[ADDED]   Clusters > greenPower > commands > tunnelingStop: 3 (0x0003)
+[ADDED]   Clusters > greenPower > commands > sinkCommissioningMode: 4 (0x0004)
+[ADDED]   Clusters > greenPower > commands > translationTableUpdate: 7 (0x0007)
+[ADDED]   Clusters > greenPower > commands > translationTableReq: 8 (0x0008)
+[ADDED]   Clusters > greenPower > commands > sinkTableReq: 10 (0x000a)
+[ADDED]   Clusters > greenPower > commands > proxyTableRsp: 11 (0x000b)
+[ADDED]   Clusters > greenPower > commandsResponse > notificationResponse
+[ADDED]   Clusters > greenPower > commandsResponse > translationTableRsp: 8 (0x0008)
+[ADDED]   Clusters > greenPower > commandsResponse > sinkTableRsp: 10 (0x000a)
+[ADDED]   Clusters > greenPower > commandsResponse > proxyTableReq: 11 (0x000b)
+[ADDED]   Clusters > mobileDeviceCfg > commandsResponse > keepAliveNotification
+[ADDED]   Clusters > neighborCleaning > commands > purgeEntries
 [ADDED]   Clusters > closuresDoorLock > attributes > supportedOperatingModes: 38 (0x0026)
 [ADDED]   Clusters > hvacThermostat > attributes > occupiedSetback: 52 (0x0034)
 [ADDED]   Clusters > hvacThermostat > attributes > occupiedSetbackMin: 53 (0x0035)
@@ -111,6 +349,8 @@ Compared:
 [ADDED]   Clusters > lightingColorCtrl > commands > enhancedMoveToHueAndSaturation > parameters > optionsOverride
 [ADDED]   Clusters > lightingColorCtrl > commands > colorLoopSet > parameters > optionsMask
 [ADDED]   Clusters > lightingColorCtrl > commands > colorLoopSet > parameters > optionsOverride
+[ADDED]   Clusters > lightingColorCtrl > commands > stopMoveStep > parameters > optionsMask
+[ADDED]   Clusters > lightingColorCtrl > commands > stopMoveStep > parameters > optionsOverride
 [ADDED]   Clusters > lightingColorCtrl > commands > moveColorTemp > parameters > optionsMask
 [ADDED]   Clusters > lightingColorCtrl > commands > moveColorTemp > parameters > optionsOverride
 [ADDED]   Clusters > lightingColorCtrl > commands > stepColorTemp > parameters > optionsMask
@@ -120,13 +360,200 @@ Compared:
 [ADDED]   Clusters > ssIasZone > commandsResponse > statusChangeNotification > parameters > zoneID
 [ADDED]   Clusters > ssIasZone > commandsResponse > statusChangeNotification > parameters > delay
 [ADDED]   Clusters > ssIasAce > commands > bypass > parameters > armDisarmCode
-[ADDED]   Clusters > haElectricalMeasurement > commands > getProfileInfo > parameters > profileCount
-[ADDED]   Clusters > haElectricalMeasurement > commands > getProfileInfo > parameters > profileIntervalPeriod
-[ADDED]   Clusters > haElectricalMeasurement > commands > getProfileInfo > parameters > maxNumberOfIntervals
-[ADDED]   Clusters > haElectricalMeasurement > commands > getProfileInfo > parameters > listOfAttributes
-[ADDED]   Clusters > haElectricalMeasurement > commands > getMeasurementProfile > parameters > numberOfIntervalsDelivered
-[ADDED]   Clusters > haElectricalMeasurement > commands > getMeasurementProfile > parameters > attributeId
-[ADDED]   Clusters > haElectricalMeasurement > commands > getMeasurementProfile > parameters > intervals
-[ADDED]   Clusters > touchlink > commandsResponse > deviceInformation > parameters > deviceInformationRecordList
-[ADDED]   Clusters > touchlink > commandsResponse > getGroupIdentifiers > parameters > groupInformationRecordList
-[ADDED]   Clusters > touchlink > commandsResponse > getEndpointList > parameters > endpointInformationRecordList
+[ADDED]   Clusters > piMultistateInputReg > attributes > objectIdentifier: 75 (0x004b)
+[ADDED]   Clusters > piMultistateInputExt > attributes > alarmValues: 6 (0x0006)
+[ADDED]   Clusters > piMultistateOutputReg > attributes > objectIdentifier: 75 (0x004b)
+[ADDED]   Clusters > piMultistateValueReg > attributes > objectIdentifier: 75 (0x004b)
+[ADDED]   Clusters > piMultistateValueExt > attributes > alarmValues: 6 (0x0006)
+[ADDED]   Clusters > pi11073ProtocolTunnel > commands > transferApdu > parameters > apdu
+[ADDED]   Clusters > pi11073ProtocolTunnel > commands > connectRequest > parameters > control
+[ADDED]   Clusters > pi11073ProtocolTunnel > commands > connectRequest > parameters > idleTimeout
+[ADDED]   Clusters > pi11073ProtocolTunnel > commands > connectRequest > parameters > managerTarget
+[ADDED]   Clusters > pi11073ProtocolTunnel > commands > connectRequest > parameters > managerEndpoint
+[ADDED]   Clusters > pi11073ProtocolTunnel > commands > disconnectRequest > parameters > managerTarget
+[ADDED]   Clusters > pi11073ProtocolTunnel > commands > connectStatusNotification > parameters > status
+[ADDED]   Clusters > pi11073ProtocolTunnel > commands > connectRequest: 1 (0x0001)
+[ADDED]   Clusters > pi11073ProtocolTunnel > commands > disconnectRequest: 2 (0x0002)
+[ADDED]   Clusters > pi11073ProtocolTunnel > commands > connectStatusNotification: 3 (0x0003)
+[ADDED]   Clusters > piIso7818ProtocolTunnel > commands > transferApdu
+[ADDED]   Clusters > piIso7818ProtocolTunnel > commands > insertSmartCard: 1 (0x0001)
+[ADDED]   Clusters > piIso7818ProtocolTunnel > commands > extractSmartCard: 2 (0x0002)
+[ADDED]   Clusters > piIso7818ProtocolTunnel > commandsResponse > transferApdu
+[ADDED]   Clusters > seMetering > attributes > previousBlockPeriodConsumpReceived: 28 (0x001c)
+[ADDED]   Clusters > seMetering > attributes > lastBlockSwitchTime: 34 (0x0022)
+[ADDED]   Clusters > seMetering > attributes > cpp1SummationDelivered: 508 (0x01fc)
+[ADDED]   Clusters > seMetering > attributes > cpp2SummationDelivered: 510 (0x01fe)
+[ADDED]   Clusters > seMetering > attributes > remainingBattLifeInDays: 517 (0x0205)
+[ADDED]   Clusters > seMetering > attributes > currentMeterId: 518 (0x0206)
+[ADDED]   Clusters > seMetering > attributes > ambientConsumptionIndicator: 519 (0x0207)
+[ADDED]   Clusters > seMetering > attributes > operatingTariffLevelDelivered: 783 (0x030f)
+[ADDED]   Clusters > seMetering > attributes > operatingTariffLevelReceived: 784 (0x0310)
+[ADDED]   Clusters > seMetering > attributes > customIdNumber: 785 (0x0311)
+[ADDED]   Clusters > seMetering > attributes > alternativeUnitOfMeasure: 786 (0x0312)
+[ADDED]   Clusters > seMetering > attributes > alternativeDemandFormatting: 786 (0x0312)
+[ADDED]   Clusters > seMetering > attributes > alternativeConsumptionFormatting: 786 (0x0312)
+[ADDED]   Clusters > seMetering > attributes > currentDayConsumpDelivered: 1025 (0x0401)
+[ADDED]   Clusters > seMetering > attributes > currentDayConsumpReceived: 1026 (0x0402)
+[ADDED]   Clusters > seMetering > attributes > previousDayConsumpDelivered: 1027 (0x0403)
+[ADDED]   Clusters > seMetering > attributes > previousDayConsumpReceived: 1028 (0x0404)
+[ADDED]   Clusters > seMetering > attributes > currentDayMaxEnergyCarrDemand: 1041 (0x0411)
+[ADDED]   Clusters > seMetering > attributes > previousDayMaxEnergyCarrDemand: 1042 (0x0412)
+[ADDED]   Clusters > seMetering > attributes > previousDay2ConsumptionDelivered: 1056 (0x0420)
+[ADDED]   Clusters > seMetering > attributes > previousDay2ConsumptionReceived: 1057 (0x0421)
+[ADDED]   Clusters > seMetering > attributes > previousDay3ConsumptionDelivered: 1058 (0x0422)
+[ADDED]   Clusters > seMetering > attributes > previousDay3ConsumptionReceived: 1059 (0x0423)
+[ADDED]   Clusters > seMetering > attributes > previousDay4ConsumptionDelivered: 1060 (0x0424)
+[ADDED]   Clusters > seMetering > attributes > previousDay4ConsumptionReceived: 1061 (0x0425)
+[ADDED]   Clusters > seMetering > attributes > previousDay5ConsumptionDelivered: 1062 (0x0426)
+[ADDED]   Clusters > seMetering > attributes > previousDay5ConsumptionReceived: 1063 (0x0427)
+[ADDED]   Clusters > seMetering > attributes > previousDay6ConsumptionDelivered: 1064 (0x0428)
+[ADDED]   Clusters > seMetering > attributes > previousDay6ConsumptionReceived: 1056 (0x0420)
+[ADDED]   Clusters > seMetering > attributes > previousDay7ConsumptionDelivered: 1066 (0x042a)
+[ADDED]   Clusters > seMetering > attributes > previousDay7ConsumptionReceived: 1067 (0x042b)
+[ADDED]   Clusters > seMetering > attributes > previousDay8ConsumptionDelivered: 1068 (0x042c)
+[ADDED]   Clusters > seMetering > attributes > previousDay8ConsumptionReceived: 1069 (0x042d)
+[ADDED]   Clusters > seMetering > attributes > currentWeekConsumptionDelivered: 1072 (0x0430)
+[ADDED]   Clusters > seMetering > attributes > currentWeekConsumptionReceived: 1073 (0x0431)
+[ADDED]   Clusters > seMetering > attributes > previousWeekConsumptionDelivered: 1074 (0x0432)
+[ADDED]   Clusters > seMetering > attributes > previousWeekConsumptionReceived: 1075 (0x0433)
+[ADDED]   Clusters > seMetering > attributes > previousWeek2ConsumptionDelivered: 1076 (0x0434)
+[ADDED]   Clusters > seMetering > attributes > previousWeek2ConsumptionReceived: 1077 (0x0435)
+[ADDED]   Clusters > seMetering > attributes > previousWeek3ConsumptionDelivered: 1078 (0x0436)
+[ADDED]   Clusters > seMetering > attributes > previousWeek3ConsumptionReceived: 1079 (0x0437)
+[ADDED]   Clusters > seMetering > attributes > previousWeek4ConsumptionDelivered: 1080 (0x0438)
+[ADDED]   Clusters > seMetering > attributes > previousWeek4ConsumptionReceived: 1081 (0x0439)
+[ADDED]   Clusters > seMetering > attributes > previousWeek5ConsumptionDelivered: 1082 (0x043a)
+[ADDED]   Clusters > seMetering > attributes > previousWeek5ConsumptionReceived: 1083 (0x043b)
+[ADDED]   Clusters > seMetering > attributes > currentMonthConsumptionDelivered: 1088 (0x0440)
+[ADDED]   Clusters > seMetering > attributes > currentMonthConsumptionReceived: 1089 (0x0441)
+[ADDED]   Clusters > seMetering > attributes > previousMonthConsumptionDelivered: 1090 (0x0442)
+[ADDED]   Clusters > seMetering > attributes > previousMonthConsumptionReceived: 1091 (0x0443)
+[ADDED]   Clusters > seMetering > attributes > previousMonth2ConsumptionDelivered: 1092 (0x0444)
+[ADDED]   Clusters > seMetering > attributes > previousMonth2ConsumptionReceived: 1093 (0x0445)
+[ADDED]   Clusters > seMetering > attributes > previousMonth3ConsumptionDelivered: 1094 (0x0446)
+[ADDED]   Clusters > seMetering > attributes > previousMonth3ConsumptionReceived: 1095 (0x0447)
+[ADDED]   Clusters > seMetering > attributes > previousMonth4ConsumptionDelivered: 1096 (0x0448)
+[ADDED]   Clusters > seMetering > attributes > previousMonth4ConsumptionReceived: 1097 (0x0449)
+[ADDED]   Clusters > seMetering > attributes > previousMonth5ConsumptionDelivered: 1098 (0x044a)
+[ADDED]   Clusters > seMetering > attributes > previousMonth5ConsumptionReceived: 1099 (0x044b)
+[ADDED]   Clusters > seMetering > attributes > previousMonth6ConsumptionDelivered: 1100 (0x044c)
+[ADDED]   Clusters > seMetering > attributes > previousMonth6ConsumptionReceived: 1101 (0x044d)
+[ADDED]   Clusters > seMetering > attributes > previousMonth7ConsumptionDelivered: 1102 (0x044e)
+[ADDED]   Clusters > seMetering > attributes > previousMonth7ConsumptionReceived: 1103 (0x044f)
+[ADDED]   Clusters > seMetering > attributes > previousMonth8ConsumptionDelivered: 1104 (0x0450)
+[ADDED]   Clusters > seMetering > attributes > previousMonth8ConsumptionReceived: 1105 (0x0451)
+[ADDED]   Clusters > seMetering > attributes > previousMonth9ConsumptionDelivered: 1106 (0x0452)
+[ADDED]   Clusters > seMetering > attributes > previousMonth9ConsumptionReceived: 1107 (0x0453)
+[ADDED]   Clusters > seMetering > attributes > previousMonth10ConsumptionDelivered: 1108 (0x0454)
+[ADDED]   Clusters > seMetering > attributes > previousMonth10ConsumptionReceived: 1109 (0x0455)
+[ADDED]   Clusters > seMetering > attributes > previousMonth11ConsumptionDelivered: 1110 (0x0456)
+[ADDED]   Clusters > seMetering > attributes > previousMonth11ConsumptionReceived: 1111 (0x0457)
+[ADDED]   Clusters > seMetering > attributes > previousMonth12ConsumptionDelivered: 1112 (0x0458)
+[ADDED]   Clusters > seMetering > attributes > previousMonth12ConsumptionReceived: 1113 (0x0459)
+[ADDED]   Clusters > seMetering > attributes > previousMonth13ConsumptionDelivered: 1114 (0x045a)
+[ADDED]   Clusters > seMetering > attributes > previousMonth13ConsumptionReceived: 1115 (0x045b)
+[ADDED]   Clusters > seMetering > attributes > historicalFreezeTime: 1116 (0x045c)
+[ADDED]   Clusters > seMetering > attributes > loadLimitSupplyState: 1541 (0x0605)
+[ADDED]   Clusters > seMetering > attributes > loadLimitCounter: 1542 (0x0606)
+[ADDED]   Clusters > seMetering > attributes > supplyTamperState: 1543 (0x0607)
+[ADDED]   Clusters > seMetering > attributes > supplyDepletionState: 1544 (0x0608)
+[ADDED]   Clusters > seMetering > attributes > supplyUncontrolledFlowState: 1545 (0x0609)
+[ADDED]   Clusters > seMetering > attributes > billToDateDelivered: 2560 (0x0a00)
+[ADDED]   Clusters > seMetering > attributes > billToDateTimeStampDelivered: 2561 (0x0a01)
+[ADDED]   Clusters > seMetering > attributes > projectedBillDelivered: 2562 (0x0a02)
+[ADDED]   Clusters > seMetering > attributes > projectedBillTimeStampDelivered: 2563 (0x0a03)
+[ADDED]   Clusters > seMetering > attributes > billDeliveredTrailingDigit: 2564 (0x0a04)
+[ADDED]   Clusters > seMetering > attributes > billToDateReceived: 2576 (0x0a10)
+[ADDED]   Clusters > seMetering > attributes > billToDateTimeStampReceived: 2577 (0x0a11)
+[ADDED]   Clusters > seMetering > attributes > projectedBillReceived: 2578 (0x0a12)
+[ADDED]   Clusters > seMetering > attributes > projectedBillTimeStampReceived: 2579 (0x0a13)
+[ADDED]   Clusters > seMetering > attributes > billReceivedTrailingDigit: 2580 (0x0a14)
+[ADDED]   Clusters > seMetering > commands > getProfile > parameters > intervalChannel
+[ADDED]   Clusters > seMetering > commands > getProfile > parameters > endTime
+[ADDED]   Clusters > seMetering > commands > getProfile > parameters > numberOfPeriods
+[ADDED]   Clusters > seMetering > commands > requestMirrorRsp > parameters > endpointId
+[ADDED]   Clusters > seMetering > commands > mirrorRemoved > parameters > removedEndpointId
+[ADDED]   Clusters > seMetering > commands > requestFastPollMode > parameters > fastPollUpdatePeriod
+[ADDED]   Clusters > seMetering > commands > requestFastPollMode > parameters > duration
+[ADDED]   Clusters > seMetering > commands > getSnapshot > parameters > earliestStartTime
+[ADDED]   Clusters > seMetering > commands > getSnapshot > parameters > latestEndTime
+[ADDED]   Clusters > seMetering > commands > getSnapshot > parameters > offset
+[ADDED]   Clusters > seMetering > commands > getSnapshot > parameters > cause
+[ADDED]   Clusters > seMetering > commands > takeSnapshot > parameters > cause
+[ADDED]   Clusters > seMetering > commands > getSnapshot > parameters > earliestStartTime
+[ADDED]   Clusters > seMetering > commands > getSnapshot > parameters > latestEndTime
+[ADDED]   Clusters > seMetering > commands > getSnapshot > parameters > offset
+[ADDED]   Clusters > seMetering > commands > getSnapshot > parameters > cause
+[ADDED]   Clusters > seMetering > commands > requestMirrorRsp: 1 (0x0001)
+[ADDED]   Clusters > seMetering > commands > mirrorRemoved: 2 (0x0002)
+[ADDED]   Clusters > seMetering > commands > requestFastPollMode: 3 (0x0003)
+[ADDED]   Clusters > seMetering > commands > schneduleSnapshot: 4 (0x0004)
+[ADDED]   Clusters > seMetering > commands > startSampling: 7 (0x0007)
+[ADDED]   Clusters > seMetering > commands > getSampledData: 8 (0x0008)
+[ADDED]   Clusters > seMetering > commands > mirrorReportAttributeRsp: 9 (0x0009)
+[ADDED]   Clusters > seMetering > commands > resetLoadLimitCounter: 10 (0x000a)
+[ADDED]   Clusters > seMetering > commands > changeSupply: 11 (0x000b)
+[ADDED]   Clusters > seMetering > commands > localChangeSupply: 12 (0x000c)
+[ADDED]   Clusters > seMetering > commands > setSupplyStatus: 13 (0x000d)
+[ADDED]   Clusters > seMetering > commands > setUncontrolledFlowThreshold: 14 (0x000e)
+[ADDED]   Clusters > seMetering > commandsResponse > getProfileRsp > parameters > endTime
+[ADDED]   Clusters > seMetering > commandsResponse > getProfileRsp > parameters > status
+[ADDED]   Clusters > seMetering > commandsResponse > getProfileRsp > parameters > profileIntervalPeriod
+[ADDED]   Clusters > seMetering > commandsResponse > getProfileRsp > parameters > numberOfPeriodsDelivered
+[ADDED]   Clusters > seMetering > commandsResponse > getProfileRsp > parameters > intervals
+[ADDED]   Clusters > seMetering > commandsResponse > requestFastPollModeRsp > parameters > appliedUpdatePeriod
+[ADDED]   Clusters > seMetering > commandsResponse > requestFastPollModeRsp > parameters > fastPollModeEndTime
+[ADDED]   Clusters > seMetering > commandsResponse > scheduleSnapshotRsp > parameters > issuerEventId
+[ADDED]   Clusters > seMetering > commandsResponse > requestMirror: 1 (0x0001)
+[ADDED]   Clusters > seMetering > commandsResponse > removeMirror: 2 (0x0002)
+[ADDED]   Clusters > seMetering > commandsResponse > requestFastPollModeRsp: 3 (0x0003)
+[ADDED]   Clusters > seMetering > commandsResponse > scheduleSnapshotRsp: 4 (0x0004)
+[ADDED]   Clusters > seMetering > commandsResponse > takeSnapshotRsp: 5 (0x0005)
+[ADDED]   Clusters > seMetering > commandsResponse > publishSnapshot: 6 (0x0006)
+[ADDED]   Clusters > seMetering > commandsResponse > getSampledDataRsp: 7 (0x0007)
+[ADDED]   Clusters > seMetering > commandsResponse > configureMirror: 8 (0x0008)
+[ADDED]   Clusters > seMetering > commandsResponse > configureNotificationScheme: 9 (0x0009)
+[ADDED]   Clusters > seMetering > commandsResponse > configureNotificationFlag: 10 (0x000a)
+[ADDED]   Clusters > seMetering > commandsResponse > getNotifiedMessage: 11 (0x000b)
+[ADDED]   Clusters > seMetering > commandsResponse > supplyStatusRsp: 12 (0x000c)
+[ADDED]   Clusters > seMetering > commandsResponse > startSamplingRsp: 13 (0x000d)
+[ADDED]   Clusters > telecommunicationsInformation > commands > requestInfo
+[ADDED]   Clusters > telecommunicationsInformation > commands > pushInfoResponse: 1 (0x0001)
+[ADDED]   Clusters > telecommunicationsInformation > commands > sendPreference: 2 (0x0002)
+[ADDED]   Clusters > telecommunicationsInformation > commands > requestPreferenceRsp: 3 (0x0003)
+[ADDED]   Clusters > telecommunicationsInformation > commands > update: 4 (0x0004)
+[ADDED]   Clusters > telecommunicationsInformation > commands > delete: 5 (0x0005)
+[ADDED]   Clusters > telecommunicationsInformation > commands > configureNodeDescription: 6 (0x0006)
+[ADDED]   Clusters > telecommunicationsInformation > commands > configureDeliveryEnable: 7 (0x0007)
+[ADDED]   Clusters > telecommunicationsInformation > commands > configurePushInfoTimer: 8 (0x0008)
+[ADDED]   Clusters > telecommunicationsInformation > commands > configureSetRootId: 9 (0x0009)
+[ADDED]   Clusters > telecommunicationsInformation > commandsResponse > requestInfoRsp
+[ADDED]   Clusters > telecommunicationsInformation > commandsResponse > pushInfo: 1 (0x0001)
+[ADDED]   Clusters > telecommunicationsInformation > commandsResponse > sendPreferenceRsp: 2 (0x0002)
+[ADDED]   Clusters > telecommunicationsInformation > commandsResponse > serverRequestPreference: 3 (0x0003)
+[ADDED]   Clusters > telecommunicationsInformation > commandsResponse > requestPreferenceConfirmation: 4 (0x0004)
+[ADDED]   Clusters > telecommunicationsInformation > commandsResponse > updateRsp: 5 (0x0005)
+[ADDED]   Clusters > telecommunicationsInformation > commandsResponse > deleteRsp: 6 (0x0006)
+[ADDED]   Clusters > telecommunicationsVoiceOverZigbee > commands > establishmentRequest
+[ADDED]   Clusters > telecommunicationsVoiceOverZigbee > commands > voiceTransmission
+[ADDED]   Clusters > telecommunicationsVoiceOverZigbee > commands > voiceTransmissionCompletion
+[ADDED]   Clusters > telecommunicationsVoiceOverZigbee > commands > controlResponse
+[ADDED]   Clusters > telecommunicationsVoiceOverZigbee > commandsResponse > establishmentRsp
+[ADDED]   Clusters > telecommunicationsVoiceOverZigbee > commandsResponse > voiceTransmissionRsp: 1 (0x0001)
+[ADDED]   Clusters > telecommunicationsVoiceOverZigbee > commandsResponse > control: 2 (0x0002)
+[ADDED]   Clusters > telecommunicationsChatting > commands > joinChatReq
+[ADDED]   Clusters > telecommunicationsChatting > commands > leaveChatReq: 1 (0x0001)
+[ADDED]   Clusters > telecommunicationsChatting > commands > searchChatReq: 2 (0x0002)
+[ADDED]   Clusters > telecommunicationsChatting > commands > switchCharmanRsp: 3 (0x0003)
+[ADDED]   Clusters > telecommunicationsChatting > commands > startChatReq: 4 (0x0004)
+[ADDED]   Clusters > telecommunicationsChatting > commands > chatMessage: 5 (0x0005)
+[ADDED]   Clusters > telecommunicationsChatting > commands > getNodeInfoReq: 6 (0x0006)
+[ADDED]   Clusters > telecommunicationsChatting > commandsResponse > startChatRsp
+[ADDED]   Clusters > telecommunicationsChatting > commandsResponse > joinChatRsp: 1 (0x0001)
+[ADDED]   Clusters > telecommunicationsChatting > commandsResponse > userLeft: 2 (0x0002)
+[ADDED]   Clusters > telecommunicationsChatting > commandsResponse > userJoined: 3 (0x0003)
+[ADDED]   Clusters > telecommunicationsChatting > commandsResponse > searchChatRsp: 4 (0x0004)
+[ADDED]   Clusters > telecommunicationsChatting > commandsResponse > switchChairmanReq: 5 (0x0005)
+[ADDED]   Clusters > telecommunicationsChatting > commandsResponse > switchChairmanConfirm: 6 (0x0006)
+[ADDED]   Clusters > telecommunicationsChatting > commandsResponse > switchChairmanNotification: 7 (0x0007)
+[ADDED]   Clusters > telecommunicationsChatting > commandsResponse > getNodeInfoRsp: 8 (0x0008)
