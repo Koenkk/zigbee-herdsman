@@ -58,7 +58,7 @@ export const FIXED_ENDPOINTS: readonly FixedEndpointInfo[] = [
             Clusters.msOccupancySensing.ID, // 0x0406,// Occupancy Sensing
             Clusters.ssIasZone.ID, // 0x0500,// IAS Zone
             Clusters.seMetering.ID, // 0x0702,// Simple Metering
-            Clusters.haMeterIdentification.ID, // 0x0B01,// Meter Identification
+            Clusters.seMeterIdentification.ID, // 0x0B01,// Meter Identification
             Clusters.haApplianceStatistics.ID, // 0x0B03,// Appliance Statistics
             Clusters.haElectricalMeasurement.ID, // 0x0B04,// Electrical Measurement
             Clusters.touchlink.ID, // 0x1000, // touchlink

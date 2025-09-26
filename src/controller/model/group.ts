@@ -271,7 +271,10 @@ export class Group extends ZigbeeEntity {
             const attribute = cluster.getAttribute(nameOrID);
 
             if (attribute) {
-                payload.push({attrId: attribute.ID, attrData: attributes[nameOrID], dataType: attribute.type});
+                // TODO: refs are not processed (pre-loop?)
+                const attrData = Zcl.Utils.processAttributeWrite(attribute, attributes[nameOrID], attributes);
+
+                payload.push({attrId: attribute.ID, attrData, dataType: attribute.type});
             } else if (!Number.isNaN(Number(nameOrID))) {
                 const value = attributes[nameOrID];
 
@@ -320,6 +323,8 @@ export class Group extends ZigbeeEntity {
         const optionsWithDefaults = this.getOptionsWithDefaults(options, Zcl.Direction.CLIENT_TO_SERVER, cluster.manufacturerCode);
         const payload: TFoundation["read"] = [];
 
+        // TODO: handle `attr.required !== true` => should not throw
+
         for (const attribute of attributes) {
             if (typeof attribute === "number") {
                 payload.push({attrId: attribute});
@@ -327,6 +332,7 @@ export class Group extends ZigbeeEntity {
                 const attr = cluster.getAttribute(attribute);
 
                 if (attr) {
+                    Zcl.Utils.processAttributePreRead(attr);
                     payload.push({attrId: attr.ID});
                 } else {
                     logger.warning(`Ignoring unknown attribute ${attribute} in cluster ${cluster.name}`, NS);
