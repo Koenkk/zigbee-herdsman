@@ -6750,19 +6750,19 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         ID: 0xfc00,
         manufacturerCode: ManufacturerCode.SIGNIFY_NETHERLANDS_B_V,
         attributes: {
-            config: {ID: 0x0031, type: DataType.BITMAP16},
+            config: {ID: 0x0031, type: DataType.BITMAP16, writable: true},
         },
         commands: {},
         commandsResponse: {
             hueNotification: {
                 ID: 0x00,
                 parameters: [
-                    {name: "button", type: DataType.UINT8},
-                    {name: "unknown1", type: DataType.UINT24},
-                    {name: "type", type: DataType.UINT8},
-                    {name: "unknown2", type: DataType.UINT8},
-                    {name: "time", type: DataType.UINT8},
-                    {name: "unknown3", type: DataType.UINT8},
+                    {name: "button", type: DataType.UINT8, max: 0xff},
+                    {name: "unknown1", type: DataType.UINT24, max: 0xffffff},
+                    {name: "type", type: DataType.UINT8, max: 0xff},
+                    {name: "unknown2", type: DataType.UINT8, max: 0xff},
+                    {name: "time", type: DataType.UINT8, max: 0xff},
+                    {name: "unknown3", type: DataType.UINT8, max: 0xff},
                 ],
             },
         },
@@ -6771,7 +6771,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         ID: 0xfc03,
         manufacturerCode: ManufacturerCode.SIGNIFY_NETHERLANDS_B_V,
         attributes: {
-            state: {ID: 0x0002, type: DataType.OCTET_STR},
+            state: {ID: 0x0002, type: DataType.OCTET_STR, writable: true},
         },
         commands: {
             multiColor: {ID: 0x00, parameters: [{name: "data", type: BuffaloZclDataType.BUFFER}]},
@@ -6783,54 +6783,54 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         manufacturerCode: ManufacturerCode.SINOPE_TECHNOLOGIES,
         attributes: {
             // attribute ID :1's readable
-            keypadLockout: {ID: 0x0002, type: DataType.ENUM8},
-            // 'firmware number': {ID: 3, type: DataType.UNKNOWN},
-            firmwareVersion: {ID: 0x0004, type: DataType.CHAR_STR},
-            outdoorTempToDisplay: {ID: 0x0010, type: DataType.INT16},
-            outdoorTempToDisplayTimeout: {ID: 0x0011, type: DataType.UINT16},
-            secondScreenBehavior: {ID: 0x0012, type: DataType.ENUM8}, // auto:0,setpoint:1,outside:2
-            currentTimeToDisplay: {ID: 0x0020, type: DataType.UINT32},
-            ledIntensityOn: {ID: 0x0052, type: DataType.UINT8},
-            ledIntensityOff: {ID: 0x0053, type: DataType.UINT8},
-            ledColorOn: {ID: 0x0050, type: DataType.UINT24}, // inversed hex BBGGRR
-            ledColorOff: {ID: 0x0051, type: DataType.UINT24},
-            onLedIntensity: {ID: 0x0052, type: DataType.UINT8}, // percent
-            offLedIntensity: {ID: 0x0053, type: DataType.UINT8}, // percent
-            actionReport: {ID: 0x0054, type: DataType.ENUM8}, // singleTapUp: 1,2, doubleTapUp: 1,4, singleTapDown: 17,18, doubleTapDown: 17,20
-            minimumBrightness: {ID: 0x0055, type: DataType.UINT16},
-            connectedLoadRM: {ID: 0x0060, type: DataType.UINT16}, // unit watt/hr for Calypso RM3500 & Load Controller RM3250
-            currentLoad: {ID: 0x0070, type: DataType.BITMAP8}, // related to ecoMode(s)
-            ecoMode: {ID: 0x0071, type: DataType.INT8}, // default:-128||-100-0-100%
-            ecoMode1: {ID: 0x0072, type: DataType.UINT8}, // default:255||0-99
-            ecoMode2: {ID: 0x0073, type: DataType.UINT8}, // default 255||0-100
-            unknown: {ID: 0x0075, type: DataType.BITMAP32}, // RW *testing*
-            drConfigWaterTempMin: {ID: 0x0076, type: DataType.UINT8}, // value 45 or 0
-            drConfigWaterTempTime: {ID: 0x0077, type: DataType.UINT8}, // default 2
-            drWTTimeOn: {ID: 0x0078, type: DataType.UINT16},
-            unknown1: {ID: 0x0080, type: DataType.UINT32}, // readOnly stringNumber *testing*
-            dimmerTimmer: {ID: 0x00a0, type: DataType.UINT32},
-            unknown2: {ID: 0x0100, type: DataType.UINT8}, // readOnly *testing*
-            floorControlMode: {ID: 0x0105, type: DataType.ENUM8}, // airFloorMode
-            auxOutputMode: {ID: 0x0106, type: DataType.ENUM8},
-            floorTemperature: {ID: 0x0107, type: DataType.INT16},
-            ambiantMaxHeatSetpointLimit: {ID: 0x0108, type: DataType.INT16},
-            floorMinHeatSetpointLimit: {ID: 0x0109, type: DataType.INT16},
-            floorMaxHeatSetpointLimit: {ID: 0x010a, type: DataType.INT16},
-            temperatureSensor: {ID: 0x010b, type: DataType.ENUM8},
-            floorLimitStatus: {ID: 0x010c, type: DataType.ENUM8},
-            roomTemperature: {ID: 0x010d, type: DataType.INT16},
-            timeFormatToDisplay: {ID: 0x0114, type: DataType.ENUM8},
-            GFCiStatus: {ID: 0x0115, type: DataType.ENUM8},
-            auxConnectedLoad: {ID: 0x0118, type: DataType.UINT16},
-            connectedLoad: {ID: 0x0119, type: DataType.UINT16},
-            pumpProtection: {ID: 0x0128, type: DataType.UINT8},
-            unknown3: {ID: 0x012a, type: DataType.ENUM8}, // RW default:60||5,10,15,20,30,60 *testing*
-            currentSetpoint: {ID: 0x012b, type: DataType.INT16}, // W:to ocuppiedHeatSetpoint, R:depends of SinopeOccupancy
+            keypadLockout: {ID: 0x0002, type: DataType.ENUM8, writable: true, max: 0xff},
+            // 'firmware number': {ID: 3, type: DataType.UNKNOWN}, writable: true,
+            firmwareVersion: {ID: 0x0004, type: DataType.CHAR_STR, writable: true},
+            outdoorTempToDisplay: {ID: 0x0010, type: DataType.INT16, writable: true, max: 0xffff},
+            outdoorTempToDisplayTimeout: {ID: 0x0011, type: DataType.UINT16, writable: true, max: 0xffff},
+            secondScreenBehavior: {ID: 0x0012, type: DataType.ENUM8, writable: true, max: 0xff}, // auto:0,setpoint:1,outside:2
+            currentTimeToDisplay: {ID: 0x0020, type: DataType.UINT32, writable: true, max: 0xffffffff},
+            ledIntensityOn: {ID: 0x0052, type: DataType.UINT8, writable: true, max: 0xff},
+            ledIntensityOff: {ID: 0x0053, type: DataType.UINT8, writable: true, max: 0xff},
+            ledColorOn: {ID: 0x0050, type: DataType.UINT24, writable: true, max: 0xffffff}, // inversed hex BBGGRR
+            ledColorOff: {ID: 0x0051, type: DataType.UINT24, writable: true, max: 0xffffff},
+            onLedIntensity: {ID: 0x0052, type: DataType.UINT8, writable: true, max: 0xff}, // percent
+            offLedIntensity: {ID: 0x0053, type: DataType.UINT8, writable: true, max: 0xff}, // percent
+            actionReport: {ID: 0x0054, type: DataType.ENUM8, writable: true, max: 0xff}, // singleTapUp: 1,2, doubleTapUp: 1,4, singleTapDown: 17,18, doubleTapDown: 17,20
+            minimumBrightness: {ID: 0x0055, type: DataType.UINT16, writable: true, max: 0xffff},
+            connectedLoadRM: {ID: 0x0060, type: DataType.UINT16, writable: true, max: 0xffff}, // unit watt/hr for Calypso RM3500 & Load Controller RM3250
+            currentLoad: {ID: 0x0070, type: DataType.BITMAP8, writable: true}, // related to ecoMode(s)
+            ecoMode: {ID: 0x0071, type: DataType.INT8, writable: true, min: -128, max: 127, default: -128}, // -100-0-100%
+            ecoMode1: {ID: 0x0072, type: DataType.UINT8, writable: true, max: 0xff, default: 0xff}, // 0-99
+            ecoMode2: {ID: 0x0073, type: DataType.UINT8, writable: true, max: 0xff, default: 0xff}, // 0-100
+            unknown: {ID: 0x0075, type: DataType.BITMAP32, writable: true, max: 0xffffffff}, // RW *testing*
+            drConfigWaterTempMin: {ID: 0x0076, type: DataType.UINT8, writable: true, max: 0xff}, // value 45 or 0
+            drConfigWaterTempTime: {ID: 0x0077, type: DataType.UINT8, writable: true, max: 0xff, default: 2}, // default 2
+            drWTTimeOn: {ID: 0x0078, type: DataType.UINT16, writable: true, max: 0xffff},
+            unknown1: {ID: 0x0080, type: DataType.UINT32, max: 0xffffffff}, // readOnly stringNumber *testing*
+            dimmerTimmer: {ID: 0x00a0, type: DataType.UINT32, writable: true, max: 0xffffffff},
+            unknown2: {ID: 0x0100, type: DataType.UINT8, max: 0xff}, // readOnly *testing*
+            floorControlMode: {ID: 0x0105, type: DataType.ENUM8, writable: true, max: 0xff}, // airFloorMode
+            auxOutputMode: {ID: 0x0106, type: DataType.ENUM8, writable: true, max: 0xff},
+            floorTemperature: {ID: 0x0107, type: DataType.INT16, writable: true, max: 0xffff},
+            ambiantMaxHeatSetpointLimit: {ID: 0x0108, type: DataType.INT16, writable: true, max: 0xffff},
+            floorMinHeatSetpointLimit: {ID: 0x0109, type: DataType.INT16, writable: true, max: 0xffff},
+            floorMaxHeatSetpointLimit: {ID: 0x010a, type: DataType.INT16, writable: true, max: 0xffff},
+            temperatureSensor: {ID: 0x010b, type: DataType.ENUM8, writable: true, max: 0xff},
+            floorLimitStatus: {ID: 0x010c, type: DataType.ENUM8, writable: true, max: 0xff},
+            roomTemperature: {ID: 0x010d, type: DataType.INT16, writable: true, max: 0xffff},
+            timeFormatToDisplay: {ID: 0x0114, type: DataType.ENUM8, writable: true, max: 0xff},
+            GFCiStatus: {ID: 0x0115, type: DataType.ENUM8, writable: true, max: 0xff},
+            auxConnectedLoad: {ID: 0x0118, type: DataType.UINT16, writable: true, max: 0xff},
+            connectedLoad: {ID: 0x0119, type: DataType.UINT16, writable: true, max: 0xffff},
+            pumpProtection: {ID: 0x0128, type: DataType.UINT8, writable: true, max: 0xff},
+            unknown3: {ID: 0x012a, type: DataType.ENUM8, writable: true, max: 0xff, default: 60}, // RW 5,10,15,20,30,60 *testing*
+            currentSetpoint: {ID: 0x012b, type: DataType.INT16, writable: true, max: 0xffff}, // W:to ocuppiedHeatSetpoint, R:depends of SinopeOccupancy
             // attribute ID: 300's readable, returns a buffer
-            reportLocalTemperature: {ID: 0x012d, type: DataType.INT16},
+            reportLocalTemperature: {ID: 0x012d, type: DataType.INT16, writable: true, min: -32768, max: 32767},
             // attribute ID: 512's readable
-            flowMeterConfig: {ID: 0x0240, type: DataType.ARRAY},
-            coldLoadPickupStatus: {ID: 0x0283, type: DataType.UINT8},
+            flowMeterConfig: {ID: 0x0240, type: DataType.ARRAY, writable: true},
+            coldLoadPickupStatus: {ID: 0x0283, type: DataType.UINT8, writable: true, max: 0xff},
         },
         commands: {},
         commandsResponse: {},
@@ -6865,7 +6865,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
     wiserDeviceInfo: {
         ID: 0xfe03, // 65027
         attributes: {
-            deviceInfo: {ID: 0x0020, type: DataType.CHAR_STR},
+            deviceInfo: {ID: 0x0020, type: DataType.CHAR_STR, writable: true},
         },
         commands: {},
         commandsResponse: {},
@@ -6890,7 +6890,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             dataRequest: {
                 ID: 0x00,
                 parameters: [
-                    {name: "seq", type: DataType.UINT16},
+                    {name: "seq", type: DataType.UINT16, max: 0xffff},
                     {name: "dpValues", type: BuffaloZclDataType.LIST_TUYA_DATAPOINT_VALUES},
                 ],
             },
@@ -6902,7 +6902,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             /**
              * Gw->Zigbee gateway query MCU version
              */
-            mcuVersionRequest: {ID: 0x10, parameters: [{name: "seq", type: DataType.UINT16}]},
+            mcuVersionRequest: {ID: 0x10, parameters: [{name: "seq", type: DataType.UINT16, max: 0xffff}]},
             /**
              * FIXME: This command is not listed in Tuya zigbee cluster description,
              *  but there is some command 0x04 (description is: Command Issuance)
@@ -6912,7 +6912,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             sendData: {
                 ID: 0x04,
                 parameters: [
-                    {name: "seq", type: DataType.UINT16},
+                    {name: "seq", type: DataType.UINT16, max: 0xffff},
                     {name: "dpValues", type: BuffaloZclDataType.LIST_TUYA_DATAPOINT_VALUES},
                 ],
             },
@@ -6922,17 +6922,17 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             mcuOtaNotify: {
                 ID: 0x12,
                 parameters: [
-                    {name: "seq", type: DataType.UINT16},
+                    {name: "seq", type: DataType.UINT16, max: 0xffff},
                     // FIXME: key is fixed (8 byte) uint8 array
                     //  Ask Koen is there any type to read fixed size uint_8t.
                     //  currently there is `length` property in options but sems it is
                     //  ignored in `writePayloadCluster()` and other methods.
                     //  So, as workaround we use hi/low for key, which is not best solution
-                    {name: "key_hi", type: DataType.UINT32},
-                    {name: "key_lo", type: DataType.UINT32},
-                    {name: "version", type: DataType.UINT8},
-                    {name: "imageSize", type: DataType.UINT32},
-                    {name: "crc", type: DataType.UINT32},
+                    {name: "key_hi", type: DataType.UINT32, max: 0xffffffff},
+                    {name: "key_lo", type: DataType.UINT32, max: 0xffffffff},
+                    {name: "version", type: DataType.UINT8, max: 0xff},
+                    {name: "imageSize", type: DataType.UINT32, max: 0xffffffff},
+                    {name: "crc", type: DataType.UINT32, max: 0xffffffff},
                 ],
             },
             /**
@@ -6941,12 +6941,12 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             mcuOtaBlockDataResponse: {
                 ID: 0x14,
                 parameters: [
-                    {name: "seq", type: DataType.UINT16},
-                    {name: "status", type: DataType.UINT8},
-                    {name: "key_hi", type: DataType.UINT32},
-                    {name: "key_lo", type: DataType.UINT32},
-                    {name: "version", type: DataType.UINT8},
-                    {name: "offset", type: DataType.UINT32},
+                    {name: "seq", type: DataType.UINT16, max: 0xffff},
+                    {name: "status", type: DataType.UINT8, max: 0xff},
+                    {name: "key_hi", type: DataType.UINT32, max: 0xffffffff},
+                    {name: "key_lo", type: DataType.UINT32, max: 0xffffffff},
+                    {name: "version", type: DataType.UINT8, max: 0xff},
+                    {name: "offset", type: DataType.UINT32, max: 0xffffffff},
                     {name: "imageData", type: BuffaloZclDataType.LIST_UINT8},
                 ],
             },
@@ -6956,7 +6956,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             mcuSyncTime: {
                 ID: 0x24,
                 parameters: [
-                    {name: "payloadSize", type: DataType.UINT16},
+                    {name: "payloadSize", type: DataType.UINT16, max: 0xffff},
                     {name: "payload", type: BuffaloZclDataType.LIST_UINT8},
                 ],
             },
@@ -6966,8 +6966,8 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             mcuGatewayConnectionStatus: {
                 ID: 0x25,
                 parameters: [
-                    {name: "payloadSize", type: DataType.UINT16},
-                    {name: "payload", type: DataType.UINT8},
+                    {name: "payloadSize", type: DataType.UINT16, max: 0xffff},
+                    {name: "payload", type: DataType.UINT8, max: 0xff},
                 ],
             },
         },
@@ -6978,7 +6978,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             dataResponse: {
                 ID: 0x01,
                 parameters: [
-                    {name: "seq", type: DataType.UINT16},
+                    {name: "seq", type: DataType.UINT16, max: 0xffff},
                     {name: "dpValues", type: BuffaloZclDataType.LIST_TUYA_DATAPOINT_VALUES},
                 ],
             },
@@ -6988,7 +6988,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             dataReport: {
                 ID: 0x02,
                 parameters: [
-                    {name: "seq", type: DataType.UINT16},
+                    {name: "seq", type: DataType.UINT16, max: 0xffff},
                     {name: "dpValues", type: BuffaloZclDataType.LIST_TUYA_DATAPOINT_VALUES},
                 ],
             },
@@ -7001,7 +7001,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             activeStatusReportAlt: {
                 ID: 0x05,
                 parameters: [
-                    {name: "seq", type: DataType.UINT16},
+                    {name: "seq", type: DataType.UINT16, max: 0xffff},
                     {name: "dpValues", type: BuffaloZclDataType.LIST_TUYA_DATAPOINT_VALUES},
                 ],
             },
@@ -7014,7 +7014,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             activeStatusReport: {
                 ID: 0x06,
                 parameters: [
-                    {name: "seq", type: DataType.UINT16},
+                    {name: "seq", type: DataType.UINT16, max: 0xffff},
                     {name: "dpValues", type: BuffaloZclDataType.LIST_TUYA_DATAPOINT_VALUES},
                 ],
             },
@@ -7024,8 +7024,8 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             mcuVersionResponse: {
                 ID: 0x11,
                 parameters: [
-                    {name: "seq", type: DataType.UINT16},
-                    {name: "version", type: DataType.UINT8},
+                    {name: "seq", type: DataType.UINT16, max: 0xffff},
+                    {name: "version", type: DataType.UINT8, max: 0xff},
                 ],
             },
             /**
@@ -7034,12 +7034,12 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             mcuOtaBlockDataRequest: {
                 ID: 0x13,
                 parameters: [
-                    {name: "seq", type: DataType.UINT16},
-                    {name: "key_hi", type: DataType.UINT32},
-                    {name: "key_lo", type: DataType.UINT32},
-                    {name: "version", type: DataType.UINT8},
-                    {name: "offset", type: DataType.UINT32},
-                    {name: "size", type: DataType.UINT32},
+                    {name: "seq", type: DataType.UINT16, max: 0xffff},
+                    {name: "key_hi", type: DataType.UINT32, max: 0xffffffff},
+                    {name: "key_lo", type: DataType.UINT32, max: 0xffffffff},
+                    {name: "version", type: DataType.UINT8, max: 0xff},
+                    {name: "offset", type: DataType.UINT32, max: 0xffffffff},
+                    {name: "size", type: DataType.UINT32, max: 0xffffffff},
                 ],
             },
             /**
@@ -7048,34 +7048,34 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             mcuOtaResult: {
                 ID: 0x15,
                 parameters: [
-                    {name: "seq", type: DataType.UINT16},
-                    {name: "status", type: DataType.UINT8},
-                    {name: "key_hi", type: DataType.UINT32},
-                    {name: "key_lo", type: DataType.UINT32},
-                    {name: "version", type: DataType.UINT8},
+                    {name: "seq", type: DataType.UINT16, max: 0xffff},
+                    {name: "status", type: DataType.UINT8, max: 0xff},
+                    {name: "key_hi", type: DataType.UINT32, max: 0xffffffff},
+                    {name: "key_lo", type: DataType.UINT32, max: 0xffffffff},
+                    {name: "version", type: DataType.UINT8, max: 0xff},
                 ],
             },
             /**
              * Time synchronization (bidirectional)
              */
-            mcuSyncTime: {ID: 0x24, parameters: [{name: "payloadSize", type: DataType.UINT16}]},
+            mcuSyncTime: {ID: 0x24, parameters: [{name: "payloadSize", type: DataType.UINT16, max: 0xffff}]},
             /**
              * Gateway connection status (bidirectional)
              */
-            mcuGatewayConnectionStatus: {ID: 0x25, parameters: [{name: "payloadSize", type: DataType.UINT16}]},
+            mcuGatewayConnectionStatus: {ID: 0x25, parameters: [{name: "payloadSize", type: DataType.UINT16, max: 0xffff}]},
         },
     },
     manuSpecificLumi: {
         ID: 0xfcc0,
         manufacturerCode: ManufacturerCode.LUMI_UNITED_TECHOLOGY_LTD_SHENZHEN,
         attributes: {
-            mode: {ID: 0x0009, type: DataType.UINT8},
-            illuminance: {ID: 0x0112, type: DataType.UINT32},
-            displayUnit: {ID: 0x0114, type: DataType.UINT8},
-            airQuality: {ID: 0x0129, type: DataType.UINT8},
-            curtainReverse: {ID: 0x0400, type: DataType.BOOLEAN},
-            curtainHandOpen: {ID: 0x0401, type: DataType.BOOLEAN},
-            curtainCalibrated: {ID: 0x0402, type: DataType.BOOLEAN},
+            mode: {ID: 0x0009, type: DataType.UINT8, writable: true, max: 0xff},
+            illuminance: {ID: 0x0112, type: DataType.UINT32, writable: true, max: 0xffffffff},
+            displayUnit: {ID: 0x0114, type: DataType.UINT8, writable: true, max: 0xff},
+            airQuality: {ID: 0x0129, type: DataType.UINT8, writable: true, max: 0xff},
+            curtainReverse: {ID: 0x0400, type: DataType.BOOLEAN, writable: true},
+            curtainHandOpen: {ID: 0x0401, type: DataType.BOOLEAN, writable: true},
+            curtainCalibrated: {ID: 0x0402, type: DataType.BOOLEAN, writable: true},
         },
         commands: {},
         commandsResponse: {},
@@ -7084,46 +7084,46 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         ID: 0xff66,
         manufacturerCode: ManufacturerCode.NXP_SEMICONDUCTORS,
         attributes: {
-            currentTarif: {ID: 0x0000, type: DataType.CHAR_STR},
-            tomorrowColor: {ID: 0x0001, type: DataType.CHAR_STR},
-            scheduleHPHC: {ID: 0x0002, type: DataType.UINT8},
-            presencePotential: {ID: 0x0003, type: DataType.UINT8},
-            startNoticeEJP: {ID: 0x0004, type: DataType.UINT8},
-            warnDPS: {ID: 0x0005, type: DataType.UINT16},
-            warnDIR1: {ID: 0x0006, type: DataType.UINT16},
-            warnDIR2: {ID: 0x0007, type: DataType.UINT16},
-            warnDIR3: {ID: 0x0008, type: DataType.UINT16},
-            motDEtat: {ID: 0x0009, type: DataType.CHAR_STR},
-            currentPrice: {ID: 0x0200, type: DataType.CHAR_STR},
-            currentIndexTarif: {ID: 0x0201, type: DataType.UINT8},
-            currentDate: {ID: 0x0202, type: DataType.CHAR_STR},
-            activeEnergyOutD01: {ID: 0x0203, type: DataType.UINT32},
-            activeEnergyOutD02: {ID: 0x0204, type: DataType.UINT32},
-            activeEnergyOutD03: {ID: 0x0205, type: DataType.UINT32},
-            activeEnergyOutD04: {ID: 0x0206, type: DataType.UINT32},
-            injectedVA: {ID: 0x0207, type: DataType.UINT16},
-            injectedVAMaxN: {ID: 0x0208, type: DataType.INT16},
-            injectedVAMaxN1: {ID: 0x0209, type: DataType.INT16},
-            injectedActiveLoadN: {ID: 0x0210, type: DataType.INT16},
-            injectedActiveLoadN1: {ID: 0x0211, type: DataType.INT16},
-            drawnVAMaxN1: {ID: 0x0212, type: DataType.INT16},
-            drawnVAMaxN1P2: {ID: 0x0213, type: DataType.INT16},
-            drawnVAMaxN1P3: {ID: 0x0214, type: DataType.INT16},
-            message1: {ID: 0x0215, type: DataType.CHAR_STR},
-            message2: {ID: 0x0216, type: DataType.CHAR_STR},
-            statusRegister: {ID: 0x0217, type: DataType.OCTET_STR},
-            startMobilePoint1: {ID: 0x0218, type: DataType.UINT8},
-            stopMobilePoint1: {ID: 0x0219, type: DataType.UINT8},
-            startMobilePoint2: {ID: 0x0220, type: DataType.UINT8},
-            stopMobilePoint2: {ID: 0x0221, type: DataType.UINT8},
-            startMobilePoint3: {ID: 0x0222, type: DataType.UINT8},
-            stopMobilePoint3: {ID: 0x0223, type: DataType.UINT8},
-            relais: {ID: 0x0224, type: DataType.UINT16},
-            daysNumberCurrentCalendar: {ID: 0x0225, type: DataType.UINT8},
-            daysNumberNextCalendar: {ID: 0x0226, type: DataType.UINT8},
-            daysProfileCurrentCalendar: {ID: 0x0227, type: DataType.LONG_OCTET_STR},
-            daysProfileNextCalendar: {ID: 0x0228, type: DataType.LONG_OCTET_STR},
-            linkyMode: {ID: 0x0300, type: DataType.UINT8},
+            currentTarif: {ID: 0x0000, type: DataType.CHAR_STR, writable: true},
+            tomorrowColor: {ID: 0x0001, type: DataType.CHAR_STR, writable: true},
+            scheduleHPHC: {ID: 0x0002, type: DataType.UINT8, writable: true, max: 0xff},
+            presencePotential: {ID: 0x0003, type: DataType.UINT8, writable: true, max: 0xff},
+            startNoticeEJP: {ID: 0x0004, type: DataType.UINT8, writable: true, max: 0xff},
+            warnDPS: {ID: 0x0005, type: DataType.UINT16, writable: true, max: 0xffff},
+            warnDIR1: {ID: 0x0006, type: DataType.UINT16, writable: true, max: 0xffff},
+            warnDIR2: {ID: 0x0007, type: DataType.UINT16, writable: true, max: 0xffff},
+            warnDIR3: {ID: 0x0008, type: DataType.UINT16, writable: true, max: 0xffff},
+            motDEtat: {ID: 0x0009, type: DataType.CHAR_STR, writable: true},
+            currentPrice: {ID: 0x0200, type: DataType.CHAR_STR, writable: true},
+            currentIndexTarif: {ID: 0x0201, type: DataType.UINT8, writable: true, max: 0xff},
+            currentDate: {ID: 0x0202, type: DataType.CHAR_STR, writable: true},
+            activeEnergyOutD01: {ID: 0x0203, type: DataType.UINT32, writable: true, max: 0xffffffff},
+            activeEnergyOutD02: {ID: 0x0204, type: DataType.UINT32, writable: true, max: 0xffffffff},
+            activeEnergyOutD03: {ID: 0x0205, type: DataType.UINT32, writable: true, max: 0xffffffff},
+            activeEnergyOutD04: {ID: 0x0206, type: DataType.UINT32, writable: true, max: 0xffffffff},
+            injectedVA: {ID: 0x0207, type: DataType.UINT16, writable: true, max: 0xffff},
+            injectedVAMaxN: {ID: 0x0208, type: DataType.INT16, writable: true, min: -32768, max: 32767},
+            injectedVAMaxN1: {ID: 0x0209, type: DataType.INT16, writable: true, min: -32768, max: 32767},
+            injectedActiveLoadN: {ID: 0x0210, type: DataType.INT16, writable: true, min: -32768, max: 32767},
+            injectedActiveLoadN1: {ID: 0x0211, type: DataType.INT16, writable: true, min: -32768, max: 32767},
+            drawnVAMaxN1: {ID: 0x0212, type: DataType.INT16, writable: true, min: -32768, max: 32767},
+            drawnVAMaxN1P2: {ID: 0x0213, type: DataType.INT16, writable: true, min: -32768, max: 32767},
+            drawnVAMaxN1P3: {ID: 0x0214, type: DataType.INT16, writable: true, min: -32768, max: 32767},
+            message1: {ID: 0x0215, type: DataType.CHAR_STR, writable: true},
+            message2: {ID: 0x0216, type: DataType.CHAR_STR, writable: true},
+            statusRegister: {ID: 0x0217, type: DataType.OCTET_STR, writable: true},
+            startMobilePoint1: {ID: 0x0218, type: DataType.UINT8, writable: true, max: 0xff},
+            stopMobilePoint1: {ID: 0x0219, type: DataType.UINT8, writable: true, max: 0xff},
+            startMobilePoint2: {ID: 0x0220, type: DataType.UINT8, writable: true, max: 0xff},
+            stopMobilePoint2: {ID: 0x0221, type: DataType.UINT8, writable: true, max: 0xff},
+            startMobilePoint3: {ID: 0x0222, type: DataType.UINT8, writable: true, max: 0xff},
+            stopMobilePoint3: {ID: 0x0223, type: DataType.UINT8, writable: true, max: 0xff},
+            relais: {ID: 0x0224, type: DataType.UINT16, writable: true, max: 0xffff},
+            daysNumberCurrentCalendar: {ID: 0x0225, type: DataType.UINT8, writable: true, max: 0xff},
+            daysNumberNextCalendar: {ID: 0x0226, type: DataType.UINT8, writable: true, max: 0xff},
+            daysProfileCurrentCalendar: {ID: 0x0227, type: DataType.LONG_OCTET_STR, writable: true},
+            daysProfileNextCalendar: {ID: 0x0228, type: DataType.LONG_OCTET_STR, writable: true},
+            linkyMode: {ID: 0x0300, type: DataType.UINT8, writable: true, max: 0xff},
         },
         commands: {},
         commandsResponse: {},
@@ -7131,13 +7131,13 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
     manuSpecificTuya2: {
         ID: 0xe002,
         attributes: {
-            alarm_temperature_max: {ID: 0xd00a, type: DataType.INT16},
-            alarm_temperature_min: {ID: 0xd00b, type: DataType.INT16},
-            alarm_humidity_max: {ID: 0xd00d, type: DataType.INT16},
-            alarm_humidity_min: {ID: 0xd00e, type: DataType.INT16},
-            alarm_humidity: {ID: 0xd00f, type: DataType.ENUM8},
-            alarm_temperature: {ID: 0xd006, type: DataType.ENUM8},
-            unknown: {ID: 0xd010, type: DataType.UINT8},
+            alarm_temperature_max: {ID: 0xd00a, type: DataType.INT16, writable: true, min: -32768, max: 32767},
+            alarm_temperature_min: {ID: 0xd00b, type: DataType.INT16, writable: true, min: -32768, max: 32767},
+            alarm_humidity_max: {ID: 0xd00d, type: DataType.INT16, writable: true, min: -32768, max: 32767},
+            alarm_humidity_min: {ID: 0xd00e, type: DataType.INT16, writable: true, min: -32768, max: 32767},
+            alarm_humidity: {ID: 0xd00f, type: DataType.ENUM8, writable: true, max: 0xff},
+            alarm_temperature: {ID: 0xd006, type: DataType.ENUM8, writable: true, max: 0xff},
+            unknown: {ID: 0xd010, type: DataType.UINT8, writable: true, max: 0xff},
         },
         commands: {},
         commandsResponse: {},
@@ -7145,9 +7145,9 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
     manuSpecificTuya3: {
         ID: 0xe001,
         attributes: {
-            powerOnBehavior: {ID: 0xd010, type: DataType.ENUM8},
-            switchMode: {ID: 0xd020, type: DataType.ENUM8},
-            switchType: {ID: 0xd030, type: DataType.ENUM8},
+            powerOnBehavior: {ID: 0xd010, type: DataType.ENUM8, writable: true, max: 0xff},
+            switchMode: {ID: 0xd020, type: DataType.ENUM8, writable: true, max: 0xff},
+            switchType: {ID: 0xd030, type: DataType.ENUM8, writable: true, max: 0xff},
         },
         commands: {
             setOptions1: {ID: 0xe5, parameters: [{name: "data", type: BuffaloZclDataType.BUFFER}]},
@@ -7160,7 +7160,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         ID: 0xfc45,
         manufacturerCode: ManufacturerCode.CENTRALITE_SYSTEMS_INC,
         attributes: {
-            measuredValue: {ID: 0x0000, type: DataType.UINT16},
+            measuredValue: {ID: 0x0000, type: DataType.UINT16, writable: true, max: 0xffff},
         },
         commands: {},
         commandsResponse: {},
@@ -7178,12 +7178,12 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         ID: 0xfc02,
         manufacturerCode: ManufacturerCode.SMARTTHINGS_INC,
         attributes: {
-            motion_threshold_multiplier: {ID: 0x0000, type: DataType.UINT8},
-            motion_threshold: {ID: 0x0002, type: DataType.UINT16},
-            acceleration: {ID: 0x0010, type: DataType.BITMAP8},
-            x_axis: {ID: 0x0012, type: DataType.INT16},
-            y_axis: {ID: 0x0013, type: DataType.INT16},
-            z_axis: {ID: 0x0014, type: DataType.INT16},
+            motion_threshold_multiplier: {ID: 0x0000, type: DataType.UINT8, writable: true, max: 0xff},
+            motion_threshold: {ID: 0x0002, type: DataType.UINT16, writable: true, max: 0xffff},
+            acceleration: {ID: 0x0010, type: DataType.BITMAP8, writable: true, max: 0xff},
+            x_axis: {ID: 0x0012, type: DataType.INT16, writable: true, min: -32768, max: 32767},
+            y_axis: {ID: 0x0013, type: DataType.INT16, writable: true, min: -32768, max: 32767},
+            z_axis: {ID: 0x0014, type: DataType.INT16, writable: true, min: -32768, max: 32767},
         },
         commands: {},
         commandsResponse: {},
@@ -7193,31 +7193,31 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         ID: 0xfc81,
         manufacturerCode: ManufacturerCode.HEIMAN_TECHNOLOGY_CO_LTD,
         attributes: {
-            language: {ID: 0xf000, type: DataType.UINT8},
-            unitOfMeasure: {ID: 0xf001, type: DataType.UINT8},
-            batteryState: {ID: 0xf002, type: DataType.UINT8}, //  (0 is not charged, 1 is charging, 2 is fully charged)
-            pm10measuredValue: {ID: 0xf003, type: DataType.UINT16},
-            tvocMeasuredValue: {ID: 0xf004, type: DataType.UINT16},
-            aqiMeasuredValue: {ID: 0xf005, type: DataType.UINT16},
-            temperatureMeasuredMax: {ID: 0xf006, type: DataType.INT16},
-            temperatureMeasuredMin: {ID: 0xf007, type: DataType.INT16},
-            humidityMeasuredMax: {ID: 0xf008, type: DataType.UINT16},
-            humidityMeasuredMin: {ID: 0xf009, type: DataType.UINT16},
-            alarmEnable: {ID: 0xf00a, type: DataType.UINT16},
+            language: {ID: 0xf000, type: DataType.UINT8, writable: true, max: 0xff},
+            unitOfMeasure: {ID: 0xf001, type: DataType.UINT8, writable: true, max: 0xff},
+            batteryState: {ID: 0xf002, type: DataType.UINT8, writable: true, max: 0xff}, //  (0 is not charged, 1 is charging, 2 is fully charged)
+            pm10measuredValue: {ID: 0xf003, type: DataType.UINT16, writable: true, max: 0xffff},
+            tvocMeasuredValue: {ID: 0xf004, type: DataType.UINT16, writable: true, max: 0xffff},
+            aqiMeasuredValue: {ID: 0xf005, type: DataType.UINT16, writable: true, max: 0xffff},
+            temperatureMeasuredMax: {ID: 0xf006, type: DataType.INT16, writable: true, min: -32768, max: 32767},
+            temperatureMeasuredMin: {ID: 0xf007, type: DataType.INT16, writable: true, min: -32768, max: 32767},
+            humidityMeasuredMax: {ID: 0xf008, type: DataType.UINT16, writable: true, max: 0xffff},
+            humidityMeasuredMin: {ID: 0xf009, type: DataType.UINT16, writable: true, max: 0xffff},
+            alarmEnable: {ID: 0xf00a, type: DataType.UINT16, writable: true, max: 0xffff},
         },
         commands: {
             setLanguage: {
                 ID: 0x11b,
                 parameters: [
                     // (1: English 0: Chinese)
-                    {name: "languageCode", type: DataType.UINT8},
+                    {name: "languageCode", type: DataType.UINT8, max: 0xff},
                 ],
             },
             setUnitOfTemperature: {
                 ID: 0x11c,
                 parameters: [
                     // (0: ℉ 1: ℃)
-                    {name: "unitsCode", type: DataType.UINT8},
+                    {name: "unitsCode", type: DataType.UINT8, max: 0xff},
                 ],
             },
             getTime: {ID: 0x11d, parameters: []},
@@ -7243,11 +7243,11 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         manufacturerCode: ManufacturerCode.IKEA_OF_SWEDEN,
         attributes: {},
         commands: {
-            action1: {ID: 0x01, parameters: [{name: "data", type: DataType.UINT8}]},
-            action2: {ID: 0x02, parameters: [{name: "data", type: DataType.UINT8}]},
-            action3: {ID: 0x03, parameters: [{name: "data", type: DataType.UINT8}]},
-            action4: {ID: 0x04, parameters: [{name: "data", type: DataType.UINT8}]},
-            action6: {ID: 0x06, parameters: [{name: "data", type: DataType.UINT8}]},
+            action1: {ID: 0x01, parameters: [{name: "data", type: DataType.UINT8, max: 0xff}]},
+            action2: {ID: 0x02, parameters: [{name: "data", type: DataType.UINT8, max: 0xff}]},
+            action3: {ID: 0x03, parameters: [{name: "data", type: DataType.UINT8, max: 0xff}]},
+            action4: {ID: 0x04, parameters: [{name: "data", type: DataType.UINT8, max: 0xff}]},
+            action6: {ID: 0x06, parameters: [{name: "data", type: DataType.UINT8, max: 0xff}]},
         },
         commandsResponse: {},
     },
@@ -7260,8 +7260,8 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             sendKey: {
                 ID: 0xf0,
                 parameters: [
-                    {name: "id", type: DataType.UINT8},
-                    {name: "keyCode", type: DataType.UINT8},
+                    {name: "id", type: DataType.UINT8, max: 0xff},
+                    {name: "keyCode", type: DataType.UINT8, max: 0xff},
                 ],
             },
             studyKey: {
@@ -7269,24 +7269,24 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 ID: 0xf1,
                 // response: 0xf2,
                 parameters: [
-                    {name: "id", type: DataType.UINT8},
-                    {name: "keyCode", type: DataType.UINT8},
+                    {name: "id", type: DataType.UINT8, max: 0xff},
+                    {name: "keyCode", type: DataType.UINT8, max: 0xff},
                 ],
             },
             deleteKey: {
                 ID: 0xf3,
                 parameters: [
                     // 1-15 - Delete specific ID, >= 16 - Delete All
-                    {name: "id", type: DataType.UINT8},
+                    {name: "id", type: DataType.UINT8, max: 0xff},
                     // 1-30 - Delete specific keycode, >= 31 - Delete All keycodes for the ID
-                    {name: "keyCode", type: DataType.UINT8},
+                    {name: "keyCode", type: DataType.UINT8, max: 0xff},
                 ],
             },
             createId: {
                 // Total we can have 15 device IDs (1..15).
                 ID: 0xf4,
                 // response: 0xf5,
-                parameters: [{name: "modelType", type: DataType.UINT8}],
+                parameters: [{name: "modelType", type: DataType.UINT8, max: 0xff}],
             },
             getIdAndKeyCodeList: {
                 ID: 0xf6,
@@ -7298,24 +7298,24 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             studyKeyRsp: {
                 ID: 0xf2,
                 parameters: [
-                    {name: "id", type: DataType.UINT8},
-                    {name: "keyCode", type: DataType.UINT8},
-                    {name: "result", type: DataType.UINT8}, // 0 - success, 1 - fail
+                    {name: "id", type: DataType.UINT8, max: 0xff},
+                    {name: "keyCode", type: DataType.UINT8, max: 0xff},
+                    {name: "result", type: DataType.UINT8, max: 0xff}, // 0 - success, 1 - fail
                 ],
             },
             createIdRsp: {
                 ID: 0xf5,
                 parameters: [
-                    {name: "id", type: DataType.UINT8}, // 0xFF - create failed
-                    {name: "modelType", type: DataType.UINT8},
+                    {name: "id", type: DataType.UINT8, max: 0xff}, // 0xFF - create failed
+                    {name: "modelType", type: DataType.UINT8, max: 0xff},
                 ],
             },
             getIdAndKeyCodeListRsp: {
                 ID: 0xf7,
                 parameters: [
-                    {name: "packetsTotal", type: DataType.UINT8},
-                    {name: "packetNumber", type: DataType.UINT8},
-                    {name: "packetLength", type: DataType.UINT8}, // Max length is 70 bytes
+                    {name: "packetsTotal", type: DataType.UINT8, max: 0xff},
+                    {name: "packetNumber", type: DataType.UINT8, max: 0xff},
+                    {name: "packetLength", type: DataType.UINT8, max: 0xff}, // Max length is 70 bytes
                     // HELP for learnedDevicesList data structure:
                     //   struct structPacketPayload {
                     //     uint8_t ID;
@@ -7333,7 +7333,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         ID: 0xff23,
         manufacturerCode: ManufacturerCode.SCHNEIDER_ELECTRIC,
         attributes: {
-            pilotMode: {ID: 0x0031, type: DataType.ENUM8},
+            pilotMode: {ID: 0x0031, type: DataType.ENUM8, writable: true, max: 0xff},
         },
         commands: {},
         commandsResponse: {},
@@ -7342,10 +7342,10 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         ID: 0xff19,
         manufacturerCode: ManufacturerCode.ADEO,
         attributes: {
-            AmbienceLightThreshold: {ID: 0x0000, type: DataType.UINT16},
-            OccupancyActions: {ID: 0x0001, type: DataType.ENUM8},
-            UnoccupiedLevelDflt: {ID: 0x0002, type: DataType.UINT8},
-            UnoccupiedLevel: {ID: 0x0003, type: DataType.UINT8},
+            AmbienceLightThreshold: {ID: 0x0000, type: DataType.UINT16, writable: true, max: 0xffff},
+            OccupancyActions: {ID: 0x0001, type: DataType.ENUM8, writable: true, max: 0xff},
+            UnoccupiedLevelDflt: {ID: 0x0002, type: DataType.UINT8, writable: true, max: 0xff},
+            UnoccupiedLevel: {ID: 0x0003, type: DataType.UINT8, writable: true, max: 0xff},
         },
         commands: {},
         commandsResponse: {},
@@ -7354,12 +7354,12 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         ID: 0xff17,
         manufacturerCode: ManufacturerCode.ADEO,
         attributes: {
-            SwitchIndication: {ID: 0x0000, type: DataType.ENUM8},
-            UpSceneID: {ID: 0x0010, type: DataType.UINT8},
-            UpGroupID: {ID: 0x0011, type: DataType.UINT16},
-            DownSceneID: {ID: 0x0020, type: DataType.UINT8},
-            DownGroupID: {ID: 0x0021, type: DataType.UINT16},
-            SwitchActions: {ID: 0x0001, type: DataType.ENUM8},
+            SwitchIndication: {ID: 0x0000, type: DataType.ENUM8, writable: true, max: 0xff},
+            UpSceneID: {ID: 0x0010, type: DataType.UINT8, writable: true, max: 0xff},
+            UpGroupID: {ID: 0x0011, type: DataType.UINT16, writable: true, max: 0xffff},
+            DownSceneID: {ID: 0x0020, type: DataType.UINT8, writable: true, max: 0xff},
+            DownGroupID: {ID: 0x0021, type: DataType.UINT16, writable: true, max: 0xffff},
+            SwitchActions: {ID: 0x0001, type: DataType.ENUM8, writable: true, max: 0xff},
         },
         commands: {},
         commandsResponse: {},
@@ -7368,12 +7368,12 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         ID: 0xff17,
         manufacturerCode: ManufacturerCode.SCHNEIDER_ELECTRIC,
         attributes: {
-            ledIndication: {ID: 0x0000, type: DataType.ENUM8},
-            upSceneID: {ID: 0x0010, type: DataType.UINT8},
-            upGroupID: {ID: 0x0011, type: DataType.UINT16},
-            downSceneID: {ID: 0x0020, type: DataType.UINT8},
-            downGroupID: {ID: 0x0021, type: DataType.UINT16},
-            switchActions: {ID: 0x0001, type: DataType.ENUM8},
+            ledIndication: {ID: 0x0000, type: DataType.ENUM8, writable: true, max: 0xff},
+            upSceneID: {ID: 0x0010, type: DataType.UINT8, writable: true, max: 0xff},
+            upGroupID: {ID: 0x0011, type: DataType.UINT16, writable: true, max: 0xffff},
+            downSceneID: {ID: 0x0020, type: DataType.UINT8, writable: true, max: 0xff},
+            downGroupID: {ID: 0x0021, type: DataType.UINT16, writable: true, max: 0xffff},
+            switchActions: {ID: 0x0001, type: DataType.ENUM8, writable: true, max: 0xff},
         },
         commands: {},
         commandsResponse: {},
@@ -7382,8 +7382,8 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         ID: 0xfc04,
         manufacturerCode: ManufacturerCode.SCHNEIDER_ELECTRIC,
         attributes: {
-            ledIndication: {ID: 0x0002, type: DataType.UINT8},
-            ledOrientation: {ID: 0x0060, type: DataType.UINT8},
+            ledIndication: {ID: 0x0002, type: DataType.UINT8, writable: true, max: 0xff},
+            ledOrientation: {ID: 0x0060, type: DataType.UINT8, writable: true, max: 0xff},
         },
         commands: {},
         commandsResponse: {},
@@ -7392,7 +7392,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         ID: 0x6601,
         manufacturerCode: 26214,
         attributes: {
-            voc: {ID: 0x6600, type: DataType.UINT16},
+            voc: {ID: 0x6600, type: DataType.UINT16, writable: true, max: 0xffff},
         },
         commands: {},
         commandsResponse: {},
@@ -7401,10 +7401,10 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         ID: 0x6602,
         manufacturerCode: 26214,
         attributes: {
-            noise: {ID: 0x6600, type: DataType.SINGLE_PREC},
-            noiseDetected: {ID: 0x6601, type: DataType.BITMAP8},
-            noiseDetectLevel: {ID: 0x6602, type: DataType.SINGLE_PREC},
-            noiseAfterDetectDelay: {ID: 0x6603, type: DataType.UINT16},
+            noise: {ID: 0x6600, type: DataType.SINGLE_PREC, writable: true},
+            noiseDetected: {ID: 0x6601, type: DataType.BITMAP8, writable: true},
+            noiseDetectLevel: {ID: 0x6602, type: DataType.SINGLE_PREC, writable: true},
+            noiseAfterDetectDelay: {ID: 0x6603, type: DataType.UINT16, writable: true, max: 0xffff},
         },
         commands: {},
         commandsResponse: {},
@@ -7414,9 +7414,9 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         manufacturerCode: 26214,
         attributes: {},
         commands: {
-            playStore: {ID: 0x00, parameters: [{name: "param", type: DataType.UINT8}]},
-            learnStart: {ID: 0x01, parameters: [{name: "value", type: DataType.UINT8}]},
-            learnStop: {ID: 0x02, parameters: [{name: "value", type: DataType.UINT8}]},
+            playStore: {ID: 0x00, parameters: [{name: "param", type: DataType.UINT8, max: 0xff}]},
+            learnStart: {ID: 0x01, parameters: [{name: "value", type: DataType.UINT8, max: 0xff}]},
+            learnStop: {ID: 0x02, parameters: [{name: "value", type: DataType.UINT8, max: 0xff}]},
             clearStore: {ID: 0x03, parameters: []},
             playRam: {ID: 0x04, parameters: []},
             learnRamStart: {ID: 0x05, parameters: []},
@@ -7428,15 +7428,15 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         ID: 0xfc42,
         manufacturerCode: 0x129c,
         attributes: {
-            buttonEvent: {ID: 0x0008, type: DataType.UINT32},
+            buttonEvent: {ID: 0x0008, type: DataType.UINT32, writable: true, max: 0xffffffff},
         },
         commands: {
             siglisZigfredButtonEvent: {
                 ID: 0x02,
                 parameters: [
-                    {name: "button", type: DataType.UINT8},
-                    {name: "type", type: DataType.UINT8},
-                    {name: "duration", type: DataType.UINT16},
+                    {name: "button", type: DataType.UINT8, max: 0xff},
+                    {name: "type", type: DataType.UINT8, max: 0xff},
+                    {name: "duration", type: DataType.UINT16, max: 0xffff},
                 ],
             },
         },
@@ -7458,59 +7458,59 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             zosungSendIRCode00: {
                 ID: 0x00,
                 parameters: [
-                    {name: "seq", type: DataType.UINT16},
-                    {name: "length", type: DataType.UINT32},
-                    {name: "unk1", type: DataType.UINT32},
-                    {name: "unk2", type: DataType.UINT16},
-                    {name: "unk3", type: DataType.UINT8},
-                    {name: "cmd", type: DataType.UINT8},
-                    {name: "unk4", type: DataType.UINT16},
+                    {name: "seq", type: DataType.UINT16, max: 0xffff},
+                    {name: "length", type: DataType.UINT32, max: 0xffffffff},
+                    {name: "unk1", type: DataType.UINT32, max: 0xffffffff},
+                    {name: "unk2", type: DataType.UINT16, max: 0xffff},
+                    {name: "unk3", type: DataType.UINT8, max: 0xff},
+                    {name: "cmd", type: DataType.UINT8, max: 0xff},
+                    {name: "unk4", type: DataType.UINT16, max: 0xffff},
                 ],
             },
             zosungSendIRCode01: {
                 ID: 0x01,
                 parameters: [
-                    {name: "zero", type: DataType.UINT8},
-                    {name: "seq", type: DataType.UINT16},
-                    {name: "length", type: DataType.UINT32},
-                    {name: "unk1", type: DataType.UINT32},
-                    {name: "unk2", type: DataType.UINT16},
-                    {name: "unk3", type: DataType.UINT8},
-                    {name: "cmd", type: DataType.UINT8},
-                    {name: "unk4", type: DataType.UINT16},
+                    {name: "zero", type: DataType.UINT8, max: 0xff},
+                    {name: "seq", type: DataType.UINT16, max: 0xffff},
+                    {name: "length", type: DataType.UINT32, max: 0xffffffff},
+                    {name: "unk1", type: DataType.UINT32, max: 0xffffffff},
+                    {name: "unk2", type: DataType.UINT16, max: 0xffff},
+                    {name: "unk3", type: DataType.UINT8, max: 0xff},
+                    {name: "cmd", type: DataType.UINT8, max: 0xff},
+                    {name: "unk4", type: DataType.UINT16, max: 0xffff},
                 ],
             },
             zosungSendIRCode02: {
                 ID: 0x02,
                 parameters: [
-                    {name: "seq", type: DataType.UINT16},
-                    {name: "position", type: DataType.UINT32},
-                    {name: "maxlen", type: DataType.UINT8},
+                    {name: "seq", type: DataType.UINT16, max: 0xffff},
+                    {name: "position", type: DataType.UINT32, max: 0xffffffff},
+                    {name: "maxlen", type: DataType.UINT8, max: 0xff},
                 ],
             },
             zosungSendIRCode03: {
                 ID: 0x03,
                 parameters: [
-                    {name: "zero", type: DataType.UINT8},
-                    {name: "seq", type: DataType.UINT16},
-                    {name: "position", type: DataType.UINT32},
+                    {name: "zero", type: DataType.UINT8, max: 0xff},
+                    {name: "seq", type: DataType.UINT16, max: 0xffff},
+                    {name: "position", type: DataType.UINT32, max: 0xffffffff},
                     {name: "msgpart", type: DataType.OCTET_STR},
-                    {name: "msgpartcrc", type: DataType.UINT8},
+                    {name: "msgpartcrc", type: DataType.UINT8, max: 0xff},
                 ],
             },
             zosungSendIRCode04: {
                 ID: 0x04,
                 parameters: [
-                    {name: "zero0", type: DataType.UINT8},
-                    {name: "seq", type: DataType.UINT16},
-                    {name: "zero1", type: DataType.UINT16},
+                    {name: "zero0", type: DataType.UINT8, max: 0xff},
+                    {name: "seq", type: DataType.UINT16, max: 0xffff},
+                    {name: "zero1", type: DataType.UINT16, max: 0xffff},
                 ],
             },
             zosungSendIRCode05: {
                 ID: 0x05,
                 parameters: [
-                    {name: "seq", type: DataType.UINT16},
-                    {name: "zero", type: DataType.UINT16},
+                    {name: "seq", type: DataType.UINT16, max: 0xffff},
+                    {name: "zero", type: DataType.UINT16, max: 0xffff},
                 ],
             },
         },
@@ -7518,18 +7518,18 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             zosungSendIRCode03Resp: {
                 ID: 0x03,
                 parameters: [
-                    {name: "zero", type: DataType.UINT8},
-                    {name: "seq", type: DataType.UINT16},
-                    {name: "position", type: DataType.UINT32},
+                    {name: "zero", type: DataType.UINT8, max: 0xff},
+                    {name: "seq", type: DataType.UINT16, max: 0xffff},
+                    {name: "position", type: DataType.UINT32, max: 0xffffffff},
                     {name: "msgpart", type: DataType.OCTET_STR},
-                    {name: "msgpartcrc", type: DataType.UINT8},
+                    {name: "msgpartcrc", type: DataType.UINT8, max: 0xff},
                 ],
             },
             zosungSendIRCode05Resp: {
                 ID: 0x05,
                 parameters: [
-                    {name: "seq", type: DataType.UINT16},
-                    {name: "zero", type: DataType.UINT16},
+                    {name: "seq", type: DataType.UINT16, max: 0xffff},
+                    {name: "zero", type: DataType.UINT16, max: 0xffff},
                 ],
             },
         },
@@ -7551,22 +7551,22 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
     manuSpecificAssaDoorLock: {
         ID: 0xfc00,
         attributes: {
-            autoLockTime: {ID: 0x0012, type: DataType.UINT8},
-            wrongCodeAttempts: {ID: 0x0013, type: DataType.UINT8},
-            shutdownTime: {ID: 0x0014, type: DataType.UINT8},
-            batteryLevel: {ID: 0x0015, type: DataType.UINT8},
-            insideEscutcheonLED: {ID: 0x0016, type: DataType.UINT8},
-            volume: {ID: 0x0017, type: DataType.UINT8},
-            lockMode: {ID: 0x0018, type: DataType.UINT8},
-            language: {ID: 0x0019, type: DataType.UINT8},
-            allCodesLockout: {ID: 0x001a, type: DataType.BOOLEAN},
-            oneTouchLocking: {ID: 0x001b, type: DataType.BOOLEAN},
-            privacyButtonSetting: {ID: 0x001c, type: DataType.BOOLEAN},
-            /* enableLogging: {ID: 0x0020, type: DataType.BOOLEAN},*/ // marked in C4 driver as not supported
-            numberLogRecordsSupported: {ID: 0x0021, type: DataType.UINT16},
-            numberPinsSupported: {ID: 0x0030, type: DataType.UINT8},
-            numberScheduleSlotsPerUser: {ID: 0x0040, type: DataType.UINT8},
-            alarmMask: {ID: 0x0050, type: DataType.UINT8},
+            autoLockTime: {ID: 0x0012, type: DataType.UINT8, writable: true, max: 0xff},
+            wrongCodeAttempts: {ID: 0x0013, type: DataType.UINT8, writable: true, max: 0xff},
+            shutdownTime: {ID: 0x0014, type: DataType.UINT8, writable: true, max: 0xff},
+            batteryLevel: {ID: 0x0015, type: DataType.UINT8, writable: true, max: 0xff},
+            insideEscutcheonLED: {ID: 0x0016, type: DataType.UINT8, writable: true, max: 0xff},
+            volume: {ID: 0x0017, type: DataType.UINT8, writable: true, max: 0xff},
+            lockMode: {ID: 0x0018, type: DataType.UINT8, writable: true, max: 0xff},
+            language: {ID: 0x0019, type: DataType.UINT8, writable: true, max: 0xff},
+            allCodesLockout: {ID: 0x001a, type: DataType.BOOLEAN, writable: true},
+            oneTouchLocking: {ID: 0x001b, type: DataType.BOOLEAN, writable: true},
+            privacyButtonSetting: {ID: 0x001c, type: DataType.BOOLEAN, writable: true},
+            /* enableLogging: {ID: 0x0020, type: DataType.BOOLEAN, writable: true},*/ // marked in C4 driver as not supported
+            numberLogRecordsSupported: {ID: 0x0021, type: DataType.UINT16, writable: true, max: 0xffff},
+            numberPinsSupported: {ID: 0x0030, type: DataType.UINT8, writable: true, max: 0xff},
+            numberScheduleSlotsPerUser: {ID: 0x0040, type: DataType.UINT8, writable: true, max: 0xff},
+            alarmMask: {ID: 0x0050, type: DataType.UINT8, writable: true, max: 0xff},
         },
         commands: {
             getLockStatus: {ID: 0x10, response: 0, parameters: []},
@@ -7659,28 +7659,28 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             getBasicClusterAttributes: {ID: 0xb4, parameters: []},
         },
         commandsResponse: {
-            getLockStatusRsp: {ID: 0x00, parameters: [{name: "status", type: DataType.UINT8}]},
-            reflashRsp: {ID: 0x01, parameters: [{name: "status", type: DataType.UINT8}]},
-            reflashDataRsp: {ID: 0x02, parameters: [{name: "status", type: DataType.UINT8}]},
-            reflashStatusRsp: {ID: 0x03, parameters: [{name: "status", type: DataType.UINT8}]},
+            getLockStatusRsp: {ID: 0x00, parameters: [{name: "status", type: DataType.UINT8, max: 0xff}]},
+            reflashRsp: {ID: 0x01, parameters: [{name: "status", type: DataType.UINT8, max: 0xff}]},
+            reflashDataRsp: {ID: 0x02, parameters: [{name: "status", type: DataType.UINT8, max: 0xff}]},
+            reflashStatusRsp: {ID: 0x03, parameters: [{name: "status", type: DataType.UINT8, max: 0xff}]},
             /* boltStateRsp: {ID: 4,
                 parameters: [
-                    {name: 'state', type: DataType.UINT8},
+                    {name: 'state', type: DataType.UINT8, max: 0xff},
                 ],
             },*/ // C4 driver has this response yet there is no command - maybe a non-specific cluster response?
             /* lockStatusReportRsp: {ID: 5,
                 parameters: [
-                    {name: 'status', type: DataType.UINT8},
+                    {name: 'status', type: DataType.UINT8, max: 0xff},
                 ],
             },*/ // C4 driver has this response yet there is no command - maybe a non-specific cluster response?
             /* handleStateRsp: {ID: 6,
                 parameters: [
-                    {name: 'state', type: DataType.UINT8},
+                    {name: 'state', type: DataType.UINT8, max: 0xff},
                 ],
             },*/ // C4 driver has this response yet there is no command - maybe a non-specific cluster response?
             /* userStatusRsp: {ID: 7,
                 parameters: [
-                    {name: 'status', type: DataType.UINT8},
+                    {name: 'status', type: DataType.UINT8, max: 0xff},
                 ],
             },*/ // C4 driver has this response yet there is no command - maybe a non-specific cluster response?
         },
@@ -7724,7 +7724,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         ID: 0xfc21, // Config cluster, 0xfc20 mostly for commands it seems
         manufacturerCode: ManufacturerCode.PROFALUX,
         attributes: {
-            motorCoverType: {ID: 0x0000, type: DataType.UINT8}, // 0 : rolling shutters (volet), 1 : rolling shutters with tilt (BSO), 2: shade (store)
+            motorCoverType: {ID: 0x0000, type: DataType.UINT8, writable: true, max: 0xff}, // 0 : rolling shutters (volet), 1 : rolling shutters with tilt (BSO), 2: shade (store)
         },
         commands: {},
         commandsResponse: {},
@@ -7733,25 +7733,25 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         ID: 0xfc57,
         manufacturerCode: ManufacturerCode.AMAZON_LAB126,
         attributes: {
-            disableOTADowngrades: {ID: 0x0002, type: DataType.BOOLEAN},
-            mgmtLeaveWithoutRejoinEnabled: {ID: 0x0003, type: DataType.BOOLEAN},
-            nwkRetryCount: {ID: 0x0004, type: DataType.UINT8},
-            macRetryCount: {ID: 0x0005, type: DataType.UINT8},
-            routerCheckInEnabled: {ID: 0x0006, type: DataType.BOOLEAN},
-            touchlinkInterpanEnabled: {ID: 0x0007, type: DataType.BOOLEAN},
-            wwahParentClassificationEnabled: {ID: 0x0008, type: DataType.BOOLEAN},
-            wwahAppEventRetryEnabled: {ID: 0x0009, type: DataType.BOOLEAN},
-            wwahAppEventRetryQueueSize: {ID: 0x000a, type: DataType.UINT8},
-            wwahRejoinEnabled: {ID: 0x000b, type: DataType.BOOLEAN},
-            macPollFailureWaitTime: {ID: 0x000c, type: DataType.UINT8},
-            configurationModeEnabled: {ID: 0x000d, type: DataType.BOOLEAN},
-            currentDebugReportID: {ID: 0x000e, type: DataType.UINT8},
-            tcSecurityOnNwkKeyRotationEnabled: {ID: 0x000f, type: DataType.BOOLEAN},
-            wwahBadParentRecoveryEnabled: {ID: 0x0010, type: DataType.BOOLEAN},
-            pendingNetworkUpdateChannel: {ID: 0x0011, type: DataType.UINT8},
-            pendingNetworkUpdatePANID: {ID: 0x0012, type: DataType.UINT16},
-            otaMaxOfflineDuration: {ID: 0x0013, type: DataType.UINT16},
-            clusterRevision: {ID: 0xfffd, type: DataType.UINT16},
+            disableOTADowngrades: {ID: 0x0002, type: DataType.BOOLEAN, writable: true},
+            mgmtLeaveWithoutRejoinEnabled: {ID: 0x0003, type: DataType.BOOLEAN, writable: true},
+            nwkRetryCount: {ID: 0x0004, type: DataType.UINT8, writable: true, max: 0xff},
+            macRetryCount: {ID: 0x0005, type: DataType.UINT8, writable: true, max: 0xff},
+            routerCheckInEnabled: {ID: 0x0006, type: DataType.BOOLEAN, writable: true},
+            touchlinkInterpanEnabled: {ID: 0x0007, type: DataType.BOOLEAN, writable: true},
+            wwahParentClassificationEnabled: {ID: 0x0008, type: DataType.BOOLEAN, writable: true},
+            wwahAppEventRetryEnabled: {ID: 0x0009, type: DataType.BOOLEAN, writable: true},
+            wwahAppEventRetryQueueSize: {ID: 0x000a, type: DataType.UINT8, writable: true, max: 0xff},
+            wwahRejoinEnabled: {ID: 0x000b, type: DataType.BOOLEAN, writable: true},
+            macPollFailureWaitTime: {ID: 0x000c, type: DataType.UINT8, writable: true, max: 0xff},
+            configurationModeEnabled: {ID: 0x000d, type: DataType.BOOLEAN, writable: true},
+            currentDebugReportID: {ID: 0x000e, type: DataType.UINT8, writable: true, max: 0xff},
+            tcSecurityOnNwkKeyRotationEnabled: {ID: 0x000f, type: DataType.BOOLEAN, writable: true},
+            wwahBadParentRecoveryEnabled: {ID: 0x0010, type: DataType.BOOLEAN, writable: true},
+            pendingNetworkUpdateChannel: {ID: 0x0011, type: DataType.UINT8, writable: true, max: 0xff},
+            pendingNetworkUpdatePANID: {ID: 0x0012, type: DataType.UINT16, writable: true, max: 0xffff},
+            otaMaxOfflineDuration: {ID: 0x0013, type: DataType.UINT16, writable: true, max: 0xffff},
+            clusterRevision: {ID: 0xfffd, type: DataType.UINT16, writable: true, max: 0xffff},
         },
         commands: {
             clearBindingTable: {ID: 0x0a, parameters: []},
