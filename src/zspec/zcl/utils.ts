@@ -327,11 +327,10 @@ function isMinOrMax<T>(entry: Attribute | Parameter, value: T, refs?: Record<str
         return true;
     }
 
-    if (
-        refs !== undefined &&
-        ((entry.maxRef !== undefined && value === refs[entry.maxRef]) || (entry.minRef !== undefined && value === refs[entry.minRef]))
-    ) {
-        return true;
+    if (refs !== undefined) {
+        if ((entry.maxRef !== undefined && value === refs[entry.maxRef]) || (entry.minRef !== undefined && value === refs[entry.minRef])) {
+            return true;
+        }
     }
 
     return false;

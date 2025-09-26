@@ -220,16 +220,17 @@ export interface Attribute extends Restrictions {
 export interface Parameter extends Restrictions {
     name: string;
     type: DataType | BuffaloZclDataType;
+    // XXX: current have no use for neither of below
     /**
      * When an array is present, specifies the size (in octets) of the field that specifies the array length.
      * Defaults to 1.
      */
-    arrayLengthSize?: number;
+    // arrayLengthSize?: number;
     /**
      * When the number of elements in an array field is specified by another field which does not immediately precede an array field,
      * that field may be referenced using this attribute.
      */
-    arrayLengthField?: string;
+    // arrayLengthField?: string;
 }
 
 /**

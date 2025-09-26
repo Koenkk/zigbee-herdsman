@@ -250,7 +250,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                     {name: "sceneid", type: DataType.UINT8},
                     {name: "transtime", type: DataType.UINT16},
                     {name: "scenename", type: DataType.CHAR_STR},
-                    {name: "extensionfieldsets", type: BuffaloZclDataType.EXTENSION_FIELD_SETS, arrayLengthSize: 0},
+                    {name: "extensionfieldsets", type: BuffaloZclDataType.EXTENSION_FIELD_SETS},
                 ],
                 required: true,
             },
@@ -300,7 +300,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                     {name: "sceneid", type: DataType.UINT8},
                     {name: "transtime", type: DataType.UINT16},
                     {name: "scenename", type: DataType.CHAR_STR},
-                    {name: "extensionfieldsets", type: BuffaloZclDataType.EXTENSION_FIELD_SETS, arrayLengthSize: 0},
+                    {name: "extensionfieldsets", type: BuffaloZclDataType.EXTENSION_FIELD_SETS},
                 ],
             },
             enhancedView: {
@@ -363,7 +363,6 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                         name: "extensionfieldsets",
                         type: BuffaloZclDataType.EXTENSION_FIELD_SETS,
                         conditions: [{type: ParameterCondition.FIELD_EQUAL, field: "status", value: Status.SUCCESS}],
-                        arrayLengthSize: 0,
                     },
                 ],
                 required: true,
@@ -451,7 +450,6 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                         name: "extensionfieldsets",
                         type: BuffaloZclDataType.EXTENSION_FIELD_SETS,
                         conditions: [{type: ParameterCondition.FIELD_EQUAL, field: "status", value: Status.SUCCESS}],
-                        arrayLengthSize: 0,
                     },
                 ],
             },
@@ -1141,7 +1139,6 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 ID: 0x0057,
                 type: DataType.ARRAY, // TODO: BuffaloZclDataType.LIST_ANALOG_PRIORITY
                 writable: true,
-                length: 16,
                 // default: [[0, 0.0],[0, 0.0],[0, 0.0],[0, 0.0],[0, 0.0],[0, 0.0],[0, 0.0],[0, 0.0],[0, 0.0],[0, 0.0],[0, 0.0],[0, 0.0],[0, 0.0],[0, 0.0],[0, 0.0],[0, 0.0]],
             },
             reliability: {ID: 0x0067, type: DataType.ENUM8, writable: true, writeOptional: true, default: 0x00},
@@ -1164,7 +1161,6 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 ID: 0x0057,
                 type: DataType.ARRAY, // TODO: BuffaloZclDataType.LIST_ANALOG_PRIORITY
                 writable: true,
-                length: 16,
                 // default: [[0, 0.0],[0, 0.0],[0, 0.0],[0, 0.0],[0, 0.0],[0, 0.0],[0, 0.0],[0, 0.0],[0, 0.0],[0, 0.0],[0, 0.0],[0, 0.0],[0, 0.0],[0, 0.0],[0, 0.0],[0, 0.0]],
             },
             reliability: {ID: 0x0067, type: DataType.ENUM8, writable: true, writeOptional: true, default: 0x00},
@@ -1207,7 +1203,6 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 ID: 0x0057,
                 type: DataType.ARRAY, // TODO: BuffaloZclDataType.LIST_BINARY_PRIORITY
                 writable: true,
-                length: 16,
                 // default: [[0, 0],[0, 0],[0, 0],[0, 0],[0, 0],[0, 0],[0, 0],[0, 0],[0, 0],[0, 0],[0, 0],[0, 0],[0, 0],[0, 0],[0, 0],[0, 0]],
             },
             reliability: {ID: 0x0067, type: DataType.ENUM8, writable: true, writeOptional: true},
@@ -1232,7 +1227,6 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 ID: 0x0057,
                 type: DataType.ARRAY, // TODO: BuffaloZclDataType.LIST_BINARY_PRIORITY
                 writable: true,
-                length: 16,
                 // default: [[0, 0],[0, 0],[0, 0],[0, 0],[0, 0],[0, 0],[0, 0],[0, 0],[0, 0],[0, 0],[0, 0],[0, 0],[0, 0],[0, 0],[0, 0],[0, 0]],
             },
             reliability: {ID: 0x0067, type: DataType.ENUM8, writable: true, writeOptional: true},
@@ -1270,7 +1264,6 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 ID: 0x0057,
                 type: DataType.ARRAY, // TODO: BuffaloZclDataType.LIST_BINARY_PRIORITY
                 writable: true,
-                length: 16,
                 // default: [[0, 0],[0, 0],[0, 0],[0, 0],[0, 0],[0, 0],[0, 0],[0, 0],[0, 0],[0, 0],[0, 0],[0, 0],[0, 0],[0, 0],[0, 0],[0, 0]],
             },
             reliability: {ID: 0x0067, type: DataType.ENUM8, writable: true, writeOptional: true, default: 0x00},
@@ -1293,7 +1286,6 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 ID: 0x0057,
                 type: DataType.ARRAY, // TODO: BuffaloZclDataType.LIST_BINARY_PRIORITY
                 writable: true,
-                length: 16,
                 // default: [[0, 0],[0, 0],[0, 0],[0, 0],[0, 0],[0, 0],[0, 0],[0, 0],[0, 0],[0, 0],[0, 0],[0, 0],[0, 0],[0, 0],[0, 0],[0, 0]],
             },
             reliability: {ID: 0x0067, type: DataType.ENUM8, writable: true, writeOptional: true, default: 0x00},
@@ -3388,7 +3380,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                     {name: "numoftrans", type: DataType.UINT8, min: 0, max: 10},
                     {name: "dayofweek", type: DataType.BITMAP8},
                     {name: "mode", type: DataType.BITMAP8},
-                    {name: "transitions", type: BuffaloZclDataType.LIST_THERMO_TRANSITIONS, arrayLengthField: "numoftrans"},
+                    {name: "transitions", type: BuffaloZclDataType.LIST_THERMO_TRANSITIONS},
                 ],
             },
             getWeeklySchedule: {
@@ -3445,7 +3437,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                     {name: "numoftrans", type: DataType.UINT8, min: 0, max: 10},
                     {name: "dayofweek", type: DataType.BITMAP8},
                     {name: "mode", type: DataType.BITMAP8},
-                    {name: "transitions", type: BuffaloZclDataType.LIST_THERMO_TRANSITIONS, arrayLengthField: "numoftrans"},
+                    {name: "transitions", type: BuffaloZclDataType.LIST_THERMO_TRANSITIONS},
                 ],
             },
             getRelayStatusLogRsp: {
@@ -5021,8 +5013,8 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             lowLimit: {ID: 0x003b, type: DataType.SINGLE_PREC, required: true, writable: true, writeOptional: true, default: 0},
             notifyType: {ID: 0x0048, type: DataType.ENUM8, required: true, writable: true, writeOptional: true, default: 0},
             timeDelay: {ID: 0x0071, type: DataType.UINT8, required: true, writable: true, writeOptional: true, default: 0},
-            // each index is any of: UINT16 | TOD | struct(DATE, TOD)
-            eventTimeStamps: {ID: 0x0082, type: DataType.ARRAY, length: 3},
+            // length 3, each index is any of: UINT16 | TOD | struct(DATE, TOD)
+            eventTimeStamps: {ID: 0x0082, type: DataType.ARRAY},
         },
         commands: {
             transferApdu: {ID: 0x00, parameters: []},
@@ -7093,7 +7085,6 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                     {name: "profilecount", type: DataType.UINT8},
                     {name: "profileintervalperiod", type: DataType.ENUM8},
                     {name: "maxnumofintervals", type: DataType.UINT8},
-                    // {name: "listofattr", type: BuffaloZclDataType.LIST_UINT16, arrayLengthSize: 0},
                     // TODO invalid, no `numofattrs` present?
                     {name: "numofattrs", type: DataType.UINT8},
                     {name: "listofattr", type: BuffaloZclDataType.LIST_UINT16},
