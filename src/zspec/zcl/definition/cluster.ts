@@ -154,6 +154,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             identifyQueryRsp: {ID: 0x00, parameters: [{name: "timeout", type: DataType.UINT16, max: 0xffff}], required: true},
         },
     },
+    /** Note: an end device being "sleepy" makes everything optional, even if marked mandatory */
     genGroups: {
         ID: 0x0004,
         attributes: {
@@ -229,6 +230,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             },
         },
     },
+    /** Note: an end device being "sleepy" makes everything optional, even if marked mandatory */
     genScenes: {
         ID: 0x0005,
         attributes: {
