@@ -673,7 +673,6 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 required: true,
                 min: 1,
                 max: 0xfe,
-                default: 0xff,
                 minRef: "minLevel",
                 maxRef: "maxLevel",
             },
