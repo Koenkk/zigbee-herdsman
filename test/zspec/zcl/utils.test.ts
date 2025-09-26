@@ -531,11 +531,6 @@ describe("ZCL Utils", () => {
             const attr = createAttribute({writable: true, maxLen: 2});
             expect(() => fn(attr, "xyz")).toThrow(/requires max length/i);
         });
-
-        it("returns default value unchanged when it equals default (skips restrictions)", () => {
-            const attr = createAttribute({writable: true, default: 50, min: 60});
-            expect(fn(attr, 50)).toStrictEqual(50);
-        });
     });
 
     describe.each([

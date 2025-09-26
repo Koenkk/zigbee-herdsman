@@ -478,13 +478,13 @@ export function processAttributePostRead<T>(attribute: Attribute, value: T, refs
         return value;
     }
 
-    // if value is same as max or min, always valid (bypass invalid sentinel)
-    if (isMinOrMax(attribute, value, refs)) {
-        return value;
-    }
-
     // if type does not have an `invalid` (undefined) it won't match since value is checked above
     if (value === ZCL_TYPE_INVALID_BY_TYPE[attribute.type]) {
+        // if value is same as max or min, ignore invalid sentinel
+        if (isMinOrMax(attribute, value, refs)) {
+            return value;
+        }
+
         // return NaN for both number & bigint to keep logic consistent
         return Number.NaN as T;
     }
@@ -521,13 +521,13 @@ export function processParameterRead<T>(parameter: Parameter, value: T, refs?: R
         return value;
     }
 
-    // if value is same as max or min, always valid (bypass invalid sentinel)
-    if (isMinOrMax(parameter, value, refs)) {
-        return value;
-    }
-
     // if type does not have an `invalid` (undefined) it won't match since value is checked above
     if (value === ZCL_TYPE_INVALID_BY_TYPE[parameter.type]) {
+        // if value is same as max or min, ignore invalid sentinel
+        if (isMinOrMax(parameter, value, refs)) {
+            return value;
+        }
+
         // return NaN for both number & bigint to keep logic consistent
         return Number.NaN as T;
     }
