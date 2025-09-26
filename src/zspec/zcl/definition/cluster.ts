@@ -2278,25 +2278,44 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
     mobileDeviceCfg: {
         ID: 0x0022,
         attributes: {
-            keepAliveTime: {ID: 0x0000, type: DataType.UINT16},
-            rejoinTimeout: {ID: 0x0001, type: DataType.UINT16},
+            keepAliveTime: {ID: 0x0000, type: DataType.UINT16, required: true, writable: true, min: 1, max: 65535, default: 15},
+            rejoinTimeout: {
+                ID: 0x0001,
+                type: DataType.UINT16,
+                required: true,
+                writable: true,
+                max: 0xffff,
+                default: 0xffff,
+                special: [["Never", "ffff"]],
+            },
         },
         commands: {},
-        commandsResponse: {},
+        commandsResponse: {
+            keepAliveNotification: {
+                ID: 0x00,
+                parameters: [
+                    {name: "keepAliveTime", type: DataType.UINT16},
+                    {name: "rejoinTimeout", type: DataType.UINT16},
+                ],
+                required: true,
+            },
+        },
     },
     neighborCleaning: {
         ID: 0x0023,
         attributes: {
-            neighborCleaningTimeout: {ID: 0x0000, type: DataType.UINT16},
+            neighborCleaningTimeout: {ID: 0x0000, type: DataType.UINT16, required: true, writable: true, min: 1, max: 65535, default: 30},
         },
-        commands: {},
+        commands: {
+            purgeEntries: {ID: 0x00, parameters: [], required: true},
+        },
         commandsResponse: {},
     },
     nearestGateway: {
         ID: 0x0024,
         attributes: {
-            nearestGateway: {ID: 0x0000, type: DataType.UINT16},
-            newMobileNode: {ID: 0x0001, type: DataType.UINT16},
+            nearestGateway: {ID: 0x0000, type: DataType.UINT16, required: true, writable: true, max: 0xfff8, default: 0},
+            newMobileNode: {ID: 0x0001, type: DataType.UINT16, required: true, readable: false, writable: true, max: 0xfff8, default: 0},
         },
         commands: {},
         commandsResponse: {},
@@ -2739,7 +2758,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 sceneRequired: true,
                 required: true,
                 max: 100,
-                special: [["PositionUnknown", "FF"]],
+                special: [["PositionUnknown", "ff"]],
             },
         },
         commands: {
@@ -4872,10 +4891,12 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
     retailTunnel: {
         ID: 0x0617,
         attributes: {
-            manufacturerCode: {ID: 0x0000, type: DataType.UINT16},
-            msProfile: {ID: 0x0001, type: DataType.UINT16},
+            manufacturerCode: {ID: 0x0000, type: DataType.UINT16, required: true, min: 0x1000, max: 0x10ff},
+            msProfile: {ID: 0x0001, type: DataType.UINT16, required: true, min: 0xc000, max: 0xffff},
         },
-        commands: {},
+        commands: {
+            transferApdu: {ID: 0x00, parameters: [{name: "apdu", type: DataType.OCTET_STR}], required: true},
+        },
         commandsResponse: {},
     },
     // sePrice: {ID: 0x0700},
