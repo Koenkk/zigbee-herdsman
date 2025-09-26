@@ -337,69 +337,65 @@ function isMinOrMax<T>(entry: Attribute | Parameter, value: T, refs?: Record<str
     return false;
 }
 
-function processRestrictions<T>(entry: Attribute | Parameter, value: T, refs?: Record<string, unknown>): T {
-    if (entry.min !== undefined) {
-        if ((value as number) < entry.min) {
-            return entry.min as T;
-        }
-    } else if (entry.minExcl !== undefined) {
-        if ((value as number) <= entry.minExcl) {
-            return (entry.minExcl + 1) as T;
-        }
-    } else if (entry.minRef !== undefined) {
-        // XXX: throw when missing needed ref?
-        if (refs !== undefined) {
+function processRestrictions<T>(entry: Attribute | Parameter, value: T, refs?: Record<string, unknown>): void {
+    // XXX: throw when missing needed ref?
+    if (refs !== undefined) {
+        // refs first since non-ref equivs are "absolute overrides"
+        if (entry.minRef !== undefined) {
             const minRefValue = refs[entry.minRef] as number | undefined;
 
             if (minRefValue !== undefined) {
                 if ((value as number) < minRefValue) {
-                    return minRefValue as T;
+                    throw new Error(`${entry.name} requires min of ${minRefValue} from ref ${entry.minRef}`);
                 }
             }
         }
-    } else if (entry.minExclRef !== undefined) {
-        // XXX: throw when missing needed ref?
-        if (refs !== undefined) {
+
+        if (entry.minExclRef !== undefined) {
             const minExclRefValue = refs[entry.minExclRef] as number | undefined;
 
             if (minExclRefValue !== undefined) {
                 if ((value as number) <= minExclRefValue) {
-                    return (minExclRefValue + 1) as T;
+                    throw new Error(`${entry.name} requires min exclusive of ${minExclRefValue} from ref ${entry.minExclRef}`);
+                }
+            }
+        }
+
+        if (entry.maxRef !== undefined) {
+            const maxRefValue = refs[entry.maxRef] as number | undefined;
+
+            if (maxRefValue !== undefined) {
+                if ((value as number) > maxRefValue) {
+                    throw new Error(`${entry.name} requires max of ${maxRefValue} from ref ${entry.maxRef}`);
+                }
+            }
+        }
+
+        if (entry.maxExclRef !== undefined) {
+            const maxExclRefValue = refs[entry.maxExclRef] as number | undefined;
+
+            if (maxExclRefValue !== undefined) {
+                if ((value as number) >= maxExclRefValue) {
+                    throw new Error(`${entry.name} requires max exclusive of ${maxExclRefValue} from ref ${entry.maxExclRef}`);
                 }
             }
         }
     }
 
-    if (entry.max !== undefined) {
-        if ((value as number) > entry.max) {
-            return entry.max as T;
-        }
-    } else if (entry.maxExcl !== undefined) {
-        if ((value as number) >= entry.maxExcl) {
-            return (entry.maxExcl - 1) as T;
-        }
-    } else if (entry.maxRef !== undefined) {
-        // XXX: throw when missing needed ref?
-        if (refs !== undefined) {
-            const maxRefValue = refs[entry.maxRef] as number | undefined;
+    if (entry.min !== undefined && (value as number) < entry.min) {
+        throw new Error(`${entry.name} requires min of ${entry.min}`);
+    }
 
-            if (maxRefValue !== undefined) {
-                if ((value as number) > maxRefValue) {
-                    return maxRefValue as T;
-                }
-            }
-        }
-    } else if (entry.maxExclRef !== undefined) {
-        // XXX: throw when missing needed ref?
-        if (refs !== undefined) {
-            const maxExclRefValue = refs[entry.maxExclRef] as number | undefined;
+    if (entry.minExcl !== undefined && (value as number) <= entry.minExcl) {
+        throw new Error(`${entry.name} requires min exclusive of ${entry.minExcl}`);
+    }
 
-            if (maxExclRefValue !== undefined) {
-                if ((value as number) >= maxExclRefValue) {
-                    return (maxExclRefValue - 1) as T;
-                }
-            }
-        }
+    if (entry.max !== undefined && (value as number) > entry.max) {
+        throw new Error(`${entry.name} requires max of ${entry.max}`);
+    }
+
+    if (entry.maxExcl !== undefined && (value as number) >= entry.maxExcl) {
+        throw new Error(`${entry.name} requires max exclusive of ${entry.maxExcl}`);
     }
 
     if (entry.length !== undefined && (value as string | unknown[] | Buffer).length !== entry.length) {
@@ -413,8 +409,6 @@ function processRestrictions<T>(entry: Attribute | Parameter, value: T, refs?: R
     if (entry.maxLen !== undefined && (value as string | unknown[] | Buffer).length > entry.maxLen) {
         throw new Error(`${entry.name} requires max length of ${entry.maxLen}`);
     }
-
-    return value;
 }
 
 export function processAttributeWrite<T>(attribute: Attribute, value: T, refs?: Record<string, unknown>): T {
@@ -458,7 +452,9 @@ export function processAttributeWrite<T>(attribute: Attribute, value: T, refs?: 
         return attribute.default as T;
     }
 
-    return processRestrictions(attribute, value, refs);
+    processRestrictions(attribute, value, refs);
+
+    return value;
 }
 
 export function processAttributePreRead(attribute: Attribute): void {
@@ -494,7 +490,9 @@ export function processAttributePostRead<T>(attribute: Attribute, value: T, refs
         return Number.NaN as T;
     }
 
-    return processRestrictions(attribute, value, refs);
+    processRestrictions(attribute, value, refs);
+
+    return value;
 }
 
 export function processParameterWrite<T>(parameter: Parameter, value: T, refs?: Record<string, unknown>): T {
@@ -513,7 +511,9 @@ export function processParameterWrite<T>(parameter: Parameter, value: T, refs?: 
         return nonValue as T;
     }
 
-    return processRestrictions(parameter, value, refs);
+    processRestrictions(parameter, value, refs);
+
+    return value;
 }
 
 export function processParameterRead<T>(parameter: Parameter, value: T, refs?: Record<string, unknown>): T {
@@ -533,5 +533,7 @@ export function processParameterRead<T>(parameter: Parameter, value: T, refs?: R
         return Number.NaN as T;
     }
 
-    return processRestrictions(parameter, value, refs);
+    processRestrictions(parameter, value, refs);
+
+    return value;
 }

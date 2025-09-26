@@ -452,64 +452,69 @@ describe("ZCL Utils", () => {
             expect(fn(attr, 50, {myRef: 50})).toStrictEqual(50);
         });
 
-        it("clamps below min", () => {
+        it("throws below min", () => {
             const attr = createAttribute({writable: true, min: 10});
-            expect(fn(attr, 5)).toStrictEqual(10);
+            expect(() => fn(attr, 5)).toThrow(/requires min/i);
         });
 
-        it("clamps below minExcl", () => {
+        it("throws below minExcl", () => {
             const attr = createAttribute({writable: true, minExcl: 10});
-            expect(fn(attr, 5)).toStrictEqual(11);
+            expect(() => fn(attr, 5)).toThrow(/requires min exclusive/i);
         });
 
-        it("clamps at minExcl", () => {
+        it("throws at minExcl", () => {
             const attr = createAttribute({writable: true, minExcl: 10});
-            expect(fn(attr, 10)).toStrictEqual(11);
+            expect(() => fn(attr, 10)).toThrow(/requires min exclusive/i);
         });
 
-        it("clamps above max", () => {
+        it("throws above max", () => {
             const attr = createAttribute({writable: true, max: 20});
-            expect(fn(attr, 30)).toStrictEqual(20);
+            expect(() => fn(attr, 30)).toThrow(/requires max/i);
         });
 
-        it("clamps above maxExcl", () => {
+        it("throws above maxExcl", () => {
             const attr = createAttribute({writable: true, maxExcl: 20});
-            expect(fn(attr, 30)).toStrictEqual(19);
+            expect(() => fn(attr, 30)).toThrow(/requires max exclusive/i);
         });
 
-        it("clamps at maxExcl", () => {
+        it("throws at maxExcl", () => {
             const attr = createAttribute({writable: true, maxExcl: 20});
-            expect(fn(attr, 20)).toStrictEqual(19);
+            expect(() => fn(attr, 20)).toThrow(/requires max exclusive/i);
         });
 
-        it("clamps below min ref value", () => {
+        it("throws below min ref value", () => {
             const attr = createAttribute({writable: true, minRef: "myRef"});
-            expect(fn(attr, 5, {myRef: 10})).toStrictEqual(10);
+            expect(() => fn(attr, 5, {myRef: 10})).toThrow(/requires min.*from ref/i);
         });
 
-        it("clamps below minExcl ref value", () => {
+        it("throws below minExcl ref value", () => {
             const attr = createAttribute({writable: true, minExclRef: "myRef"});
-            expect(fn(attr, 5, {myRef: 10})).toStrictEqual(11);
+            expect(() => fn(attr, 5, {myRef: 10})).toThrow(/requires min exclusive.*from ref/i);
         });
 
-        it("clamps at minExcl ref value", () => {
+        it("throws at minExcl ref value", () => {
             const attr = createAttribute({writable: true, minExclRef: "myRef"});
-            expect(fn(attr, 10, {myRef: 10})).toStrictEqual(11);
+            expect(() => fn(attr, 10, {myRef: 10})).toThrow(/requires min exclusive.*from ref/i);
         });
 
-        it("clamps above max ref value", () => {
+        it("throws above max ref value", () => {
             const attr = createAttribute({writable: true, maxRef: "myRef"});
-            expect(fn(attr, 30, {myRef: 20})).toStrictEqual(20);
+            expect(() => fn(attr, 30, {myRef: 20})).toThrow(/requires max.*from ref/i);
         });
 
-        it("clamps above maxExcl ref value", () => {
+        it("throws above maxExcl ref value", () => {
             const attr = createAttribute({writable: true, maxExclRef: "myRef"});
-            expect(fn(attr, 30, {myRef: 20})).toStrictEqual(19);
+            expect(() => fn(attr, 30, {myRef: 20})).toThrow(/requires max exclusive.*from ref/i);
         });
 
-        it("clamps at maxExcl ref value", () => {
+        it("throws at maxExcl ref value", () => {
             const attr = createAttribute({writable: true, maxExclRef: "myRef"});
-            expect(fn(attr, 20, {myRef: 20})).toStrictEqual(19);
+            expect(() => fn(attr, 20, {myRef: 20})).toThrow(/requires max exclusive.*from ref/i);
+        });
+
+        it("throws on non-ref even if ok with ref value", () => {
+            const attr = createAttribute({writable: true, min: 10, minRef: "myRef"});
+            expect(() => fn(attr, 5, {myRef: 4})).toThrow(/requires min of 10/i);
         });
 
         it("throws not length", () => {
@@ -542,64 +547,69 @@ describe("ZCL Utils", () => {
             expect(fn(p, null)).toBeNull();
         });
 
-        it("clamps below min", () => {
+        it("throws below min", () => {
             const attr = createParameter({min: 10});
-            expect(fn(attr, 5)).toStrictEqual(10);
+            expect(() => fn(attr, 5)).toThrow(/requires min/i);
         });
 
-        it("clamps below minExcl", () => {
+        it("throws below minExcl", () => {
             const attr = createParameter({minExcl: 10});
-            expect(fn(attr, 5)).toStrictEqual(11);
+            expect(() => fn(attr, 5)).toThrow(/requires min exclusive/i);
         });
 
-        it("clamps at minExcl", () => {
+        it("throws at minExcl", () => {
             const attr = createParameter({minExcl: 10});
-            expect(fn(attr, 10)).toStrictEqual(11);
+            expect(() => fn(attr, 10)).toThrow(/requires min exclusive/i);
         });
 
-        it("clamps above max", () => {
+        it("throws above max", () => {
             const attr = createParameter({max: 20});
-            expect(fn(attr, 30)).toStrictEqual(20);
+            expect(() => fn(attr, 30)).toThrow(/requires max/i);
         });
 
-        it("clamps above maxExcl", () => {
+        it("throws above maxExcl", () => {
             const attr = createParameter({maxExcl: 20});
-            expect(fn(attr, 30)).toStrictEqual(19);
+            expect(() => fn(attr, 30)).toThrow(/requires max exclusive/i);
         });
 
-        it("clamps at maxExcl", () => {
+        it("throws at maxExcl", () => {
             const attr = createParameter({maxExcl: 20});
-            expect(fn(attr, 20)).toStrictEqual(19);
+            expect(() => fn(attr, 20)).toThrow(/requires max exclusive/i);
         });
 
-        it("clamps below min ref value", () => {
+        it("throws below min ref value", () => {
             const attr = createParameter({minRef: "myRef"});
-            expect(fn(attr, 5, {myRef: 10})).toStrictEqual(10);
+            expect(() => fn(attr, 5, {myRef: 10})).toThrow(/requires min.*from ref/i);
         });
 
-        it("clamps below minExcl ref value", () => {
+        it("throws below minExcl ref value", () => {
             const attr = createParameter({minExclRef: "myRef"});
-            expect(fn(attr, 5, {myRef: 10})).toStrictEqual(11);
+            expect(() => fn(attr, 5, {myRef: 10})).toThrow(/requires min exclusive.*from ref/i);
         });
 
-        it("clamps at minExcl ref value", () => {
+        it("throws at minExcl ref value", () => {
             const attr = createParameter({minExclRef: "myRef"});
-            expect(fn(attr, 10, {myRef: 10})).toStrictEqual(11);
+            expect(() => fn(attr, 10, {myRef: 10})).toThrow(/requires min exclusive.*from ref/i);
         });
 
-        it("clamps above max ref value", () => {
+        it("throws above max ref value", () => {
             const attr = createParameter({maxRef: "myRef"});
-            expect(fn(attr, 30, {myRef: 20})).toStrictEqual(20);
+            expect(() => fn(attr, 30, {myRef: 20})).toThrow(/requires max.*from ref/i);
         });
 
-        it("clamps above maxExcl ref value", () => {
+        it("throws above maxExcl ref value", () => {
             const attr = createParameter({maxExclRef: "myRef"});
-            expect(fn(attr, 30, {myRef: 20})).toStrictEqual(19);
+            expect(() => fn(attr, 30, {myRef: 20})).toThrow(/requires max exclusive.*from ref/i);
         });
 
-        it("clamps at maxExcl ref value", () => {
+        it("throws at maxExcl ref value", () => {
             const attr = createParameter({maxExclRef: "myRef"});
-            expect(fn(attr, 20, {myRef: 20})).toStrictEqual(19);
+            expect(() => fn(attr, 20, {myRef: 20})).toThrow(/requires max exclusive.*from ref/i);
+        });
+
+        it("throws on non-ref even if ok with ref value", () => {
+            const attr = createParameter({min: 10, minRef: "myRef"});
+            expect(() => fn(attr, 5, {myRef: 4})).toThrow(/requires min of 10/i);
         });
 
         it("throws not length", () => {
