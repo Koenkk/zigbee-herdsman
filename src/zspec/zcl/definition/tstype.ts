@@ -318,6 +318,7 @@ export type ClusterName =
     | "piPartition"
     | "genOta"
     | "powerProfile"
+    | "haApplianceControl"
     | "pulseWidthModulation"
     | "genPollCtrl"
     | "greenPower"

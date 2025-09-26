@@ -1928,6 +1928,61 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             },
         },
     },
+    haApplianceControl: {
+        ID: 0x001b,
+        attributes: {
+            startTime: {ID: 0x0000, type: DataType.UINT16, required: true, reportRequired: true, max: 0xffff, default: 0},
+            finishTime: {ID: 0x0001, type: DataType.UINT16, required: true, reportRequired: true, max: 0xffff, default: 0},
+            remainingTime: {ID: 0x0002, type: DataType.UINT16, reportRequired: true, max: 0xffff, default: 0},
+        },
+        commands: {
+            executionOfCommand: {ID: 0x00, parameters: [{name: "commandId", type: DataType.ENUM8}]},
+            signalState: {ID: 0x01, parameters: [], response: 0x00, required: true},
+            writeFunctions: {
+                ID: 0x02,
+                parameters: [
+                    // TODO: need BuffaloZcl read/write
+                    // {name: "functions", type: BuffaloZclDataType.LIST_FUNCTIONS},
+                    //   {name: "id", type: DataType.UINT16},
+                    //   {name: "dataType", type: DataType.DATA8},
+                    //   {name: "data", type: BuffaloZclDataType.USE_DATA_TYPE},
+                ],
+            },
+            overloadPauseResume: {ID: 0x03, parameters: []},
+            overloadPause: {ID: 0x04, parameters: []},
+            overloadWarning: {ID: 0x05, parameters: [{name: "warningEvent", type: DataType.ENUM8}]},
+        },
+        commandsResponse: {
+            signalStateRsp: {
+                ID: 0x00,
+                parameters: [
+                    {name: "applianceStatus", type: DataType.ENUM8},
+                    /** [4: device status 2, 4: remote enable flags] */
+                    {name: "remoteEnableFlagsAndDeviceStatus2", type: DataType.BITMAP8},
+                    {
+                        name: "applianceStatus2",
+                        type: DataType.UINT24,
+                        conditions: [{type: ParameterCondition.MINIMUM_REMAINING_BUFFER_BYTES, value: 3}],
+                    },
+                ],
+                required: true,
+            },
+            signalStateNotification: {
+                ID: 0x00,
+                parameters: [
+                    {name: "applianceStatus", type: DataType.ENUM8},
+                    /** [4: device status 2, 4: remote enable flags] */
+                    {name: "remoteEnableFlagsAndDeviceStatus2", type: DataType.BITMAP8},
+                    {
+                        name: "applianceStatus2",
+                        type: DataType.UINT24,
+                        conditions: [{type: ParameterCondition.MINIMUM_REMAINING_BUFFER_BYTES, value: 3}],
+                    },
+                ],
+                required: true,
+            },
+        },
+    },
     pulseWidthModulation: {
         ID: 0x001c,
         attributes: {
@@ -5793,18 +5848,19 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
     haApplianceIdentification: {
         ID: 0x0b00,
         attributes: {
-            basicIdentification: {ID: 0x0000, type: DataType.UINT56},
-            companyName: {ID: 0x0010, type: DataType.CHAR_STR},
-            companyId: {ID: 0x0011, type: DataType.UINT16},
-            brandName: {ID: 0x0012, type: DataType.CHAR_STR},
-            brandId: {ID: 0x0013, type: DataType.UINT16},
-            model: {ID: 0x0014, type: DataType.OCTET_STR},
-            partNumber: {ID: 0x0015, type: DataType.OCTET_STR},
-            productRevision: {ID: 0x0016, type: DataType.OCTET_STR},
-            softwareRevision: {ID: 0x0017, type: DataType.OCTET_STR},
-            productTypeName: {ID: 0x0018, type: DataType.OCTET_STR},
-            productTypeId: {ID: 0x0019, type: DataType.UINT16},
-            cecedSpecificationVersion: {ID: 0x001a, type: DataType.UINT8},
+            basicIdentification: {ID: 0x0000, type: DataType.UINT56, required: true},
+
+            companyName: {ID: 0x0010, type: DataType.CHAR_STR, maxLen: 16},
+            companyId: {ID: 0x0011, type: DataType.UINT16, max: 0xffff},
+            brandName: {ID: 0x0012, type: DataType.CHAR_STR, maxLen: 16},
+            brandId: {ID: 0x0013, type: DataType.UINT16, max: 0xffff},
+            model: {ID: 0x0014, type: DataType.OCTET_STR, maxLen: 16},
+            partNumber: {ID: 0x0015, type: DataType.OCTET_STR, maxLen: 16},
+            productRevision: {ID: 0x0016, type: DataType.OCTET_STR, maxLen: 6},
+            softwareRevision: {ID: 0x0017, type: DataType.OCTET_STR, maxLen: 6},
+            productTypeName: {ID: 0x0018, type: DataType.OCTET_STR, length: 2},
+            productTypeId: {ID: 0x0019, type: DataType.UINT16, max: 0xffff},
+            cecedSpecificationVersion: {ID: 0x001a, type: DataType.UINT8, max: 0xff},
         },
         commands: {},
         commandsResponse: {},
@@ -5832,7 +5888,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         ID: 0x0b02,
         attributes: {},
         commands: {
-            getAlerts: {ID: 0x00, parameters: []},
+            getAlerts: {ID: 0x00, parameters: [], required: true},
         },
         commandsResponse: {
             getAlertsRsp: {
@@ -5841,6 +5897,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                     {name: "alertscount", type: DataType.UINT8},
                     {name: "aalert", type: BuffaloZclDataType.LIST_UINT24},
                 ],
+                required: true,
             },
             alertsNotification: {
                 ID: 0x01,
@@ -5848,44 +5905,50 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                     {name: "alertscount", type: DataType.UINT8},
                     {name: "aalert", type: BuffaloZclDataType.LIST_UINT24},
                 ],
+                required: true,
             },
             eventNotification: {
                 ID: 0x02,
                 parameters: [
                     {name: "eventheader", type: DataType.UINT8},
-                    {name: "eventid", type: DataType.UINT8},
+                    {name: "eventid", type: DataType.UINT8, max: 0xff},
                 ],
+                required: true,
             },
         },
     },
     haApplianceStatistics: {
         ID: 0x0b03,
         attributes: {
-            logMaxSize: {ID: 0x0000, type: DataType.UINT32},
-            logQueueMaxSize: {ID: 0x0001, type: DataType.UINT8},
+            logMaxSize: {ID: 0x0000, type: DataType.UINT32, required: true, default: 0x0000003c},
+            logQueueMaxSize: {ID: 0x0001, type: DataType.UINT8, required: true, default: 0x01},
         },
         commands: {
-            log: {ID: 0x00, parameters: [{name: "logid", type: DataType.UINT32}]},
-            logQueue: {ID: 0x01, parameters: []},
+            log: {ID: 0x00, parameters: [{name: "logid", type: DataType.UINT32}], required: true},
+            logQueue: {ID: 0x01, parameters: [], required: true},
         },
         commandsResponse: {
             logNotification: {
                 ID: 0x00,
                 parameters: [
-                    {name: "timestamp", type: DataType.UINT32},
+                    {name: "timestamp", type: DataType.UTC},
                     {name: "logid", type: DataType.UINT32},
                     {name: "loglength", type: DataType.UINT32},
+                    // TODO: LIST_DATA8
                     {name: "logpayload", type: BuffaloZclDataType.LIST_UINT8},
                 ],
+                required: true,
             },
             logRsp: {
                 ID: 0x01,
                 parameters: [
-                    {name: "timestamp", type: DataType.UINT32},
+                    {name: "timestamp", type: DataType.UTC},
                     {name: "logid", type: DataType.UINT32},
                     {name: "loglength", type: DataType.UINT32},
+                    // TODO: LIST_DATA8
                     {name: "logpayload", type: BuffaloZclDataType.LIST_UINT8},
                 ],
+                required: true,
             },
             logQueueRsp: {
                 ID: 0x02,
@@ -5893,6 +5956,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                     {name: "logqueuesize", type: DataType.UINT8},
                     {name: "logid", type: BuffaloZclDataType.LIST_UINT32},
                 ],
+                required: true,
             },
             statisticsAvailable: {
                 ID: 0x03,
@@ -5900,6 +5964,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                     {name: "logqueuesize", type: DataType.UINT8},
                     {name: "logid", type: BuffaloZclDataType.LIST_UINT32},
                 ],
+                required: true,
             },
         },
     },
