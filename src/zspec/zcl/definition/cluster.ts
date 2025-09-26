@@ -1303,7 +1303,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
     genCommissioning: {
         ID: 0x0015,
         attributes: {
-            shortress: {ID: 0x0000, type: DataType.UINT16, writable: true, required: true, max: 65527},
+            shortress: {ID: 0x0000, type: DataType.UINT16, writable: true, required: true, max: 0xfff7},
             extendedPANId: {
                 ID: 0x0001,
                 type: DataType.IEEE_ADDR,
@@ -1312,11 +1312,11 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 default: "0xffffffffffffffff",
                 special: [["PANIdUnspecified", "ffffffffffffffff"]],
             },
-            panId: {ID: 0x0002, type: DataType.UINT16, writable: true, required: true},
+            panId: {ID: 0x0002, type: DataType.UINT16, writable: true, required: true, max: 0xffff},
             channelmask: {ID: 0x0003, type: DataType.BITMAP32, writable: true, required: true},
-            protocolVersion: {ID: 0x0004, type: DataType.UINT8, writable: true, required: true},
-            stackProfile: {ID: 0x0005, type: DataType.UINT8, writable: true, required: true},
-            startupControl: {ID: 0x0006, type: DataType.ENUM8, writable: true, required: true},
+            protocolVersion: {ID: 0x0004, type: DataType.UINT8, writable: true, required: true, min: 0x02, max: 0x02},
+            stackProfile: {ID: 0x0005, type: DataType.UINT8, writable: true, required: true, min: 0x01, max: 0x02},
+            startupControl: {ID: 0x0006, type: DataType.ENUM8, writable: true, required: true, max: 0x03},
             trustCenterress: {
                 ID: 0x0010,
                 type: DataType.IEEE_ADDR,
@@ -1325,28 +1325,32 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 default: "0x0000000000000000",
                 special: [["AddressUnspecified", "0000000000000000"]],
             },
-            trustCenterMasterKey: {ID: 0x0011, type: DataType.SEC_KEY, writable: true, default: "0"},
-            networkKey: {ID: 0x0012, type: DataType.SEC_KEY, writable: true, required: true, default: "0"},
-            useInsecureJoin: {ID: 0x0013, type: DataType.BOOLEAN, writable: true, required: true, default: 0},
-            preconfiguredLinkKey: {ID: 0x0014, type: DataType.SEC_KEY, writable: true, required: true, default: "0"},
-            networkKeySeqNum: {ID: 0x0015, type: DataType.UINT8, writable: true, required: true, default: 0},
+            trustCenterMasterKey: {ID: 0x0011, type: DataType.SEC_KEY, writable: true},
+            networkKey: {ID: 0x0012, type: DataType.SEC_KEY, writable: true, required: true},
+            useInsecureJoin: {ID: 0x0013, type: DataType.BOOLEAN, writable: true, required: true, default: 1},
+            preconfiguredLinkKey: {ID: 0x0014, type: DataType.SEC_KEY, writable: true, required: true},
+            networkKeySeqNum: {ID: 0x0015, type: DataType.UINT8, writable: true, required: true, max: 0xff, default: 0},
             networkKeyType: {ID: 0x0016, type: DataType.ENUM8, writable: true, required: true},
             networkManagerress: {ID: 0x0017, type: DataType.UINT16, writable: true, required: true, default: 0},
-            scanAttempts: {ID: 0x0020, type: DataType.UINT8, writable: true, min: 1, default: 5},
-            timeBetweenScans: {ID: 0x0021, type: DataType.UINT16, writable: true, min: 1, default: 100},
+
+            scanAttempts: {ID: 0x0020, type: DataType.UINT8, writable: true, min: 1, max: 255, default: 5},
+            timeBetweenScans: {ID: 0x0021, type: DataType.UINT16, writable: true, min: 1, max: 65535, default: 100},
             rejoinInterval: {ID: 0x0022, type: DataType.UINT16, writable: true, min: 1, default: 60, maxRef: "maxRejoinInterval"},
-            maxRejoinInterval: {ID: 0x0023, type: DataType.UINT16, writable: true, min: 1, default: 3600},
-            indirectPollRate: {ID: 0x0030, type: DataType.UINT16, writable: true},
-            parentRetryThreshold: {ID: 0x0031, type: DataType.UINT8},
+            maxRejoinInterval: {ID: 0x0023, type: DataType.UINT16, writable: true, min: 1, max: 65535, default: 3600},
+
+            indirectPollRate: {ID: 0x0030, type: DataType.UINT16, writable: true, max: 65535},
+            parentRetryThreshold: {ID: 0x0031, type: DataType.UINT8, max: 255},
+
             concentratorFlag: {ID: 0x0040, type: DataType.BOOLEAN, writable: true, default: 0},
-            concentratorRus: {ID: 0x0041, type: DataType.UINT8, writable: true, default: 15},
-            concentratorDiscoveryTime: {ID: 0x0042, type: DataType.UINT8, writable: true, default: 0},
+            concentratorRadius: {ID: 0x0041, type: DataType.UINT8, writable: true, max: 255, default: 15},
+            concentratorDiscoveryTime: {ID: 0x0042, type: DataType.UINT8, writable: true, max: 255, default: 0},
         },
         commands: {
             restartDevice: {
                 ID: 0x00,
                 parameters: [
-                    {name: "options", type: DataType.UINT8},
+                    /** [4: reserved, 1: immediate, 3: startup mode] */
+                    {name: "options", type: DataType.BITMAP8},
                     {name: "delay", type: DataType.UINT8},
                     {name: "jitter", type: DataType.UINT8},
                 ],
@@ -1355,31 +1359,34 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             saveStartupParams: {
                 ID: 0x01,
                 parameters: [
-                    {name: "options", type: DataType.UINT8},
+                    /** reserved */
+                    {name: "options", type: DataType.BITMAP8},
                     {name: "index", type: DataType.UINT8},
                 ],
             },
             restoreStartupParams: {
                 ID: 0x02,
                 parameters: [
-                    {name: "options", type: DataType.UINT8},
+                    /** reserved */
+                    {name: "options", type: DataType.BITMAP8},
                     {name: "index", type: DataType.UINT8},
                 ],
             },
             resetStartupParams: {
                 ID: 0x03,
                 parameters: [
-                    {name: "options", type: DataType.UINT8},
+                    /** [5: reserved, 1: erase index, 1: reset all, 1: reset current] */
+                    {name: "options", type: DataType.BITMAP8},
                     {name: "index", type: DataType.UINT8},
                 ],
                 required: true,
             },
         },
         commandsResponse: {
-            restartDeviceRsp: {ID: 0x00, parameters: [{name: "status", type: DataType.UINT8}], required: true},
-            saveStartupParamsRsp: {ID: 0x01, parameters: [{name: "status", type: DataType.UINT8}], required: true},
-            restoreStartupParamsRsp: {ID: 0x02, parameters: [{name: "status", type: DataType.UINT8}], required: true},
-            resetStartupParamsRsp: {ID: 0x03, parameters: [{name: "status", type: DataType.UINT8}], required: true},
+            restartDeviceRsp: {ID: 0x00, parameters: [{name: "status", type: DataType.ENUM8}], required: true},
+            saveStartupParamsRsp: {ID: 0x01, parameters: [{name: "status", type: DataType.ENUM8}], required: true},
+            restoreStartupParamsRsp: {ID: 0x02, parameters: [{name: "status", type: DataType.ENUM8}], required: true},
+            resetStartupParamsRsp: {ID: 0x03, parameters: [{name: "status", type: DataType.ENUM8}], required: true},
         },
     },
     piPartition: {
@@ -6140,7 +6147,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 ID: 0x00,
                 response: 0x01,
                 parameters: [
-                    {name: "transactionID", type: DataType.UINT32},
+                    {name: "transactionID", type: DataType.UINT32, min: 1},
                     {name: "zigbeeInformation", type: DataType.BITMAP8},
                     {name: "touchlinkInformation", type: DataType.BITMAP8},
                 ],
@@ -6150,7 +6157,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 ID: 0x02,
                 response: 0x03,
                 parameters: [
-                    {name: "transactionID", type: DataType.UINT32},
+                    {name: "transactionID", type: DataType.UINT32, min: 1},
                     {name: "startIndex", type: DataType.UINT8},
                 ],
                 required: true,
@@ -6158,10 +6165,11 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             identifyRequest: {
                 ID: 0x06,
                 parameters: [
-                    {name: "transactionID", type: DataType.UINT32},
+                    {name: "transactionID", type: DataType.UINT32, min: 1},
                     {
                         name: "duration",
                         type: DataType.UINT16,
+                        max: 0xffff,
                         special: [
                             ["ExitIdentifyMode", "0000"],
                             ["IdentifyForReceiverKnownTime", "ffff"],
@@ -6170,18 +6178,18 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 ],
                 required: true,
             },
-            resetToFactoryNew: {ID: 0x07, parameters: [{name: "transactionID", type: DataType.UINT32}], required: true},
+            resetToFactoryNew: {ID: 0x07, parameters: [{name: "transactionID", type: DataType.UINT32, min: 1}], required: true},
             networkStart: {
                 ID: 0x10,
                 response: 0x11,
                 parameters: [
-                    {name: "transactionID", type: DataType.UINT32},
+                    {name: "transactionID", type: DataType.UINT32, min: 1},
                     {name: "extendedPANID", type: DataType.IEEE_ADDR},
-                    {name: "keyIndex", type: DataType.UINT8},
+                    {name: "keyIndex", type: DataType.UINT8, max: 0x0f},
                     {name: "encryptedNetworkKey", type: DataType.SEC_KEY},
                     {name: "logicalChannel", type: DataType.UINT8},
-                    {name: "panID", type: DataType.UINT16},
-                    {name: "nwkAddr", type: DataType.UINT16, min: 1, max: 65527},
+                    {name: "panID", type: DataType.UINT16, max: 0xfffe},
+                    {name: "nwkAddr", type: DataType.UINT16, min: 0x0001, max: 0xfff7},
                     {name: "groupIDsBegin", type: DataType.UINT16},
                     {name: "groupIDsEnd", type: DataType.UINT16},
                     {name: "freeNwkAddrRangeBegin", type: DataType.UINT16},
@@ -6197,14 +6205,14 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 ID: 0x12,
                 response: 0x13,
                 parameters: [
-                    {name: "transactionID", type: DataType.UINT32},
+                    {name: "transactionID", type: DataType.UINT32, min: 1},
                     {name: "extendedPANID", type: DataType.IEEE_ADDR},
-                    {name: "keyIndex", type: DataType.UINT8},
+                    {name: "keyIndex", type: DataType.UINT8, max: 0x0f},
                     {name: "encryptedNetworkKey", type: DataType.SEC_KEY},
                     {name: "networkUpdateID", type: DataType.UINT8},
                     {name: "logicalChannel", type: DataType.UINT8},
-                    {name: "panID", type: DataType.UINT16},
-                    {name: "nwkAddr", type: DataType.UINT16},
+                    {name: "panID", type: DataType.UINT16, min: 0x0001, max: 0xfffe},
+                    {name: "nwkAddr", type: DataType.UINT16, min: 0x0001, max: 0xfff7},
                     {name: "groupIDsBegin", type: DataType.UINT16},
                     {name: "groupIDsEnd", type: DataType.UINT16},
                     {name: "freeNwkAddrRangeBegin", type: DataType.UINT16},
@@ -6218,14 +6226,14 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 ID: 0x14,
                 response: 0x15,
                 parameters: [
-                    {name: "transactionID", type: DataType.UINT32},
+                    {name: "transactionID", type: DataType.UINT32, min: 1},
                     {name: "extendedPANID", type: DataType.IEEE_ADDR},
-                    {name: "keyIndex", type: DataType.UINT8},
+                    {name: "keyIndex", type: DataType.UINT8, max: 0x0f},
                     {name: "encryptedNetworkKey", type: DataType.SEC_KEY},
                     {name: "networkUpdateID", type: DataType.UINT8},
                     {name: "logicalChannel", type: DataType.UINT8},
-                    {name: "panID", type: DataType.UINT16},
-                    {name: "nwkAddr", type: DataType.UINT16},
+                    {name: "panID", type: DataType.UINT16, min: 0x0001, max: 0xfffe},
+                    {name: "nwkAddr", type: DataType.UINT16, min: 0x0001, max: 0xfff7},
                     {name: "groupIDsBegin", type: DataType.UINT16},
                     {name: "groupIDsEnd", type: DataType.UINT16},
                     {name: "freeNwkAddrRangeBegin", type: DataType.UINT16},
@@ -6238,12 +6246,12 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             networkUpdate: {
                 ID: 0x16,
                 parameters: [
-                    {name: "transactionID", type: DataType.UINT32},
+                    {name: "transactionID", type: DataType.UINT32, min: 1},
                     {name: "extendedPANID", type: DataType.IEEE_ADDR},
                     {name: "networkUpdateID", type: DataType.UINT8},
                     {name: "logicalChannel", type: DataType.UINT8},
-                    {name: "panID", type: DataType.UINT16},
-                    {name: "nwkAddr", type: DataType.UINT16},
+                    {name: "panID", type: DataType.UINT16, min: 0x0001, max: 0xfffe},
+                    {name: "nwkAddr", type: DataType.UINT16, min: 0x0001, max: 0xfff7},
                 ],
                 required: true,
             },
@@ -6254,17 +6262,17 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             scanResponse: {
                 ID: 0x01,
                 parameters: [
-                    {name: "transactionID", type: DataType.UINT32},
+                    {name: "transactionID", type: DataType.UINT32, min: 1},
                     {name: "rssiCorrection", type: DataType.UINT8, min: 0, max: 20},
-                    {name: "zigbeeInformation", type: DataType.UINT8},
-                    {name: "touchlinkInformation", type: DataType.UINT8},
-                    {name: "keyBitmask", type: DataType.UINT16},
+                    {name: "zigbeeInformation", type: DataType.BITMAP8},
+                    {name: "touchlinkInformation", type: DataType.BITMAP8},
+                    {name: "keyBitmask", type: DataType.BITMAP16},
                     {name: "responseID", type: DataType.UINT32},
                     {name: "extendedPanID", type: DataType.IEEE_ADDR},
                     {name: "networkUpdateID", type: DataType.UINT8},
                     {name: "logicalChannel", type: DataType.UINT8},
                     {name: "panID", type: DataType.UINT16},
-                    {name: "networkAddress", type: DataType.UINT16},
+                    {name: "networkAddress", type: DataType.UINT16, min: 0x0001, max: 0xfff7},
                     {name: "numberOfSubDevices", type: DataType.UINT8},
                     {name: "totalGroupIdentifiers", type: DataType.UINT8},
                     {
@@ -6298,24 +6306,28 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             deviceInformation: {
                 ID: 0x03,
                 parameters: [
-                    {name: "transactionID", type: DataType.UINT32},
+                    {name: "transactionID", type: DataType.UINT32, min: 1},
                     {name: "numberOfSubDevices", type: DataType.UINT8},
                     {name: "startIndex", type: DataType.UINT8},
-                    {name: "deviceInfoCount", type: DataType.UINT8},
-                    {name: "deviceInformationRecordList", type: BuffaloZclDataType.BUFFER, minLen: 0, maxLen: 5},
+                    {name: "deviceInfoCount", type: DataType.UINT8, max: 5},
+                    // TODO: need BuffaloZcl read/write
+                    // {name: "deviceInfoRecords", type: BuffaloZclDataType.LIST_TOUCHLINK_DEVICE_INFO},
+                    //   {name: "ieeeAddress", type: DataType.IEEE_ADDR},
+                    //   {name: "endpointID", type: DataType.UINT8},
+                    //   {name: "profileID", type: DataType.UINT16},
+                    //   {name: "deviceID", type: DataType.UINT16},
+                    //   {name: "version", type: DataType.UINT8},
+                    //   {name: "groupIdCount", type: DataType.UINT8},
+                    //   {name: "sort", type: DataType.UINT8},
                 ],
                 required: true,
             },
             networkStart: {
                 ID: 0x11,
                 parameters: [
-                    {name: "transactionID", type: DataType.UINT32},
-                    /**
-                     * - 0x00 Success
-                     * - 0x01 Failure
-                     * - 0x02 – 0xff Reserved
-                     */
-                    {name: "status", type: DataType.ENUM8},
+                    {name: "transactionID", type: DataType.UINT32, min: 1},
+                    /** 0x00 Success, 0x01 Failure, 0x02 – 0xff Reserved */
+                    {name: "status", type: DataType.UINT8},
                     {name: "extendedPANID", type: DataType.IEEE_ADDR},
                     {name: "networkUpdateID", type: DataType.UINT8},
                     {name: "logicalChannel", type: DataType.UINT8},
@@ -6326,26 +6338,18 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             networkJoinRouter: {
                 ID: 0x13,
                 parameters: [
-                    {name: "transactionID", type: DataType.UINT32},
-                    /**
-                     * - 0x00 Success
-                     * - 0x01 Failure
-                     * - 0x02 – 0xff Reserved
-                     */
-                    {name: "status", type: DataType.ENUM8},
+                    {name: "transactionID", type: DataType.UINT32, min: 1},
+                    /** 0x00 Success, 0x01 Failure, 0x02 – 0xff Reserved */
+                    {name: "status", type: DataType.UINT8},
                 ],
                 required: true,
             },
             networkJoinEndDevice: {
                 ID: 0x15,
                 parameters: [
-                    {name: "transactionID", type: DataType.UINT32},
-                    /**
-                     * - 0x00 Success
-                     * - 0x01 Failure
-                     * - 0x02 – 0xff Reserved
-                     */
-                    {name: "status", type: DataType.ENUM8},
+                    {name: "transactionID", type: DataType.UINT32, min: 1},
+                    /** 0x00 Success, 0x01 Failure, 0x02 – 0xff Reserved */
+                    {name: "status", type: DataType.UINT8},
                 ],
                 required: true,
             },
@@ -6366,8 +6370,12 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                     {name: "total", type: DataType.UINT8},
                     {name: "startIndex", type: DataType.UINT8},
                     {name: "count", type: DataType.UINT8},
-                    {name: "groupInformationRecordList", type: BuffaloZclDataType.BUFFER},
+                    // TODO: need BuffaloZcl read/write
+                    // {name: "groupInfoRecords", type: BuffaloZclDataType.LIST_TOUCHLINK_GROUP_INFO},
+                    //   {name: "id", type: DataType.UINT16},
+                    //   {name: "type", type: DataType.UINT8},
                 ],
+                // required: true only if request supported
             },
             getEndpointList: {
                 ID: 0x42,
@@ -6375,8 +6383,15 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                     {name: "total", type: DataType.UINT8},
                     {name: "startIndex", type: DataType.UINT8},
                     {name: "count", type: DataType.UINT8},
-                    {name: "endpointInformationRecordList", type: BuffaloZclDataType.BUFFER},
+                    // TODO: need BuffaloZcl read/write
+                    // {name: "endpointInfoRecords", type: BuffaloZclDataType.LIST_TOUCHLINK_ENDPOINT_INFO},
+                    //   {name: "networkAddress", type: DataType.UINT16},
+                    //   {name: "endpointID", type: DataType.UINT8},
+                    //   {name: "profileID", type: DataType.UINT16},
+                    //   {name: "deviceID", type: DataType.UINT16},
+                    //   {name: "version", type: DataType.UINT8},
                 ],
+                // required: true only if request supported
             },
         },
     },
