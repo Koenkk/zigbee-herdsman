@@ -2145,7 +2145,35 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
     },
     greenPower: {
         ID: 0x0021,
-        attributes: {},
+        attributes: {
+            gpsMaxSinkTableEntries: {ID: 0x0000, type: DataType.UINT8, required: true, max: 0xff},
+            sinkTable: {ID: 0x0001, type: DataType.LONG_OCTET_STR, required: true},
+            /** 0b00: full unicast forward, 0b01: groupcast forward to DGroupID, 0b10: groupcast forward to pre-comm GroupID, 0b11: unicast forward */
+            gpsCommunicationMode: {ID: 0x0002, type: DataType.BITMAP8, required: true, writable: true, default: 0x01},
+            /** [5: reserved, 1: on GP proxy commiss mode, 1: on first pairing success, 1: on commiss window expiration] */
+            gpsCommissioningExitMode: {ID: 0x0003, type: DataType.BITMAP8, required: true, writable: true, default: 0x02},
+            gpsCommissioningWindow: {ID: 0x0004, type: DataType.UINT16, writable: true, max: 65535, default: 180},
+            /** [4: reserved, 1: involve TC, 1: protection with gpLinkKey, 1: minimal GPD security level] */
+            gpsSecurityLevel: {ID: 0x0005, type: DataType.BITMAP8, required: true, writable: true, default: 0x06},
+            /** see A.3.3.2.7 of 14-0563-19 */
+            gpsFunctionality: {ID: 0x0006, type: DataType.BITMAP24, required: true},
+            /** see A.3.3.2.8 of 14-0563-19 */
+            gpsActiveFunctionality: {ID: 0x0007, type: DataType.BITMAP24, required: true, default: 0xffffff},
+
+            gpsMaxProxyTableEntries: {ID: 0x0010, type: DataType.UINT8, required: true, max: 0xff, default: 0x14, client: true},
+            proxyTable: {ID: 0x0011, type: DataType.LONG_OCTET_STR, required: true, default: 0, client: true},
+            gppNotificationRetryNumber: {ID: 0x0012, type: DataType.UINT8, writable: true, max: 5, default: 2, client: true},
+            gppNotificationRetryTimer: {ID: 0x0013, type: DataType.UINT8, writable: true, max: 255, default: 100, client: true},
+            gppMaxSearchCounter: {ID: 0x0014, type: DataType.UINT8, writable: true, max: 255, default: 10, client: true},
+            gppBlockGpdId: {ID: 0x0015, type: DataType.LONG_OCTET_STR, client: true},
+            gppFunctionality: {ID: 0x0016, type: DataType.BITMAP24, required: true, client: true},
+            gppActiveFunctionality: {ID: 0x0017, type: DataType.BITMAP24, required: true, client: true},
+
+            /** 0b000: no key, 0b001: nwk key, 0b010: GP group key, 0b011: nwk key derived GP group key, 0b111: derived individual GPD key */
+            gpSharedSecurityKeyType: {ID: 0x0020, type: DataType.BITMAP8, writable: true, max: 0x07, default: 0},
+            gpSharedSecurityKey: {ID: 0x0021, type: DataType.SEC_KEY, writable: true},
+            gpLinkKey: {ID: 0x0022, type: DataType.SEC_KEY, writable: true /* default: "ZigBeeAlliance09" */},
+        },
         commands: {
             notification: {
                 ID: 0x00,
@@ -2182,6 +2210,51 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                         type: DataType.BITMAP8,
                         conditions: [{type: ParameterCondition.BITMASK_SET, param: "options", mask: 0x4000}],
                     },
+                ],
+            },
+            pairingSearch: {
+                ID: 0x01,
+                parameters: [
+                    {name: "options", type: DataType.BITMAP16},
+                    {
+                        name: "srcID",
+                        type: DataType.UINT32,
+                        conditions: [{type: ParameterCondition.BITFIELD_ENUM, param: "options", offset: 0, size: 3, value: 0b000}],
+                    },
+                    {
+                        name: "gpdIEEEAddr",
+                        type: DataType.IEEE_ADDR,
+                        conditions: [{type: ParameterCondition.BITFIELD_ENUM, param: "options", offset: 0, size: 3, value: 0b010}],
+                    },
+                    {
+                        name: "gpdEndpoint",
+                        type: DataType.UINT8,
+                        conditions: [{type: ParameterCondition.BITFIELD_ENUM, param: "options", offset: 0, size: 3, value: 0b010}],
+                    },
+                ],
+            },
+            tunnelingStop: {
+                ID: 0x03,
+                parameters: [
+                    {name: "options", type: DataType.BITMAP8},
+                    {
+                        name: "srcID",
+                        type: DataType.UINT32,
+                        conditions: [{type: ParameterCondition.BITFIELD_ENUM, param: "options", offset: 0, size: 3, value: 0b000}],
+                    },
+                    {
+                        name: "gpdIEEEAddr",
+                        type: DataType.IEEE_ADDR,
+                        conditions: [{type: ParameterCondition.BITFIELD_ENUM, param: "options", offset: 0, size: 3, value: 0b010}],
+                    },
+                    {
+                        name: "gpdEndpoint",
+                        type: DataType.UINT8,
+                        conditions: [{type: ParameterCondition.BITFIELD_ENUM, param: "options", offset: 0, size: 3, value: 0b010}],
+                    },
+                    {name: "gpdSecurityFrameCounter", type: DataType.UINT32},
+                    {name: "gppShortAddress", type: DataType.UINT16},
+                    {name: "gppGpdLink", type: DataType.BITMAP8},
                 ],
             },
             commissioningNotification: {
@@ -2221,14 +2294,19 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                     {name: "mic", type: DataType.UINT32, conditions: [{type: ParameterCondition.BITMASK_SET, param: "options", mask: 0x200}]},
                 ],
             },
-        },
-        commandsResponse: {
-            response: {
-                ID: 0x06,
+            sinkCommissioningMode: {
+                ID: 0x04,
                 parameters: [
-                    {name: "options", type: DataType.UINT8},
-                    {name: "tempMaster", type: DataType.UINT16},
-                    {name: "tempMasterTx", type: DataType.BITMAP8},
+                    {name: "options", type: DataType.BITMAP8},
+                    {name: "gpmAddressForSecurity", type: DataType.UINT16, max: 0xffff /* default: 0xffff */},
+                    {name: "gpmAddressForPairing", type: DataType.UINT16, max: 0xffff /* default: 0xffff */},
+                    {name: "sinkEndpoint", type: DataType.UINT8},
+                ],
+            },
+            translationTableUpdate: {
+                ID: 0x07,
+                parameters: [
+                    {name: "options", type: DataType.BITMAP16},
                     {
                         name: "srcID",
                         type: DataType.UINT32,
@@ -2244,8 +2322,79 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                         type: DataType.UINT8,
                         conditions: [{type: ParameterCondition.BITFIELD_ENUM, param: "options", offset: 0, size: 3, value: 0b010}],
                     },
-                    {name: "gpdCmd", type: DataType.UINT8},
-                    {name: "gpdPayload", type: BuffaloZclDataType.GPD_FRAME},
+                    // TODO: need BuffaloZcl read/write (length from options bits 5..7)
+                    // {name: "translations", type: BuffaloZclDataType.LIST_WRITE_GP_TRANSLATION_ENTRY},
+                    //   {name: "index", type: DataType.UINT8},
+                    //   {name: "commandId", type: DataType.UINT8},
+                    //   {name: "endpoint", type: DataType.UINT8},
+                    //   {name: "profile", type: DataType.UINT16},
+                    //   {name: "cluster", type: DataType.UINT16},
+                    //   {name: "zigbeeCommandId", type: DataType.UINT8},
+                    //   {name: "zigbeeCommandPayloadLength", type: DataType.UINT8},
+                    //   {name: "zigbeeCommandPayload", type: BuffaloZclDataType.LIST_UINT8},
+                    //   {name: "additionalInfoBlockCount", type: DataType.UINT8},
+                    //   {name: "additionalInfoBlock", type: BuffaloZclDataType.LIST_UINT8},
+                ],
+            },
+            translationTableReq: {ID: 0x08, parameters: [{name: "startIndex", type: DataType.UINT8}], response: 0x08},
+            // TODO: logic too complex for current frame parsing method
+            // pairingConfiguration: {ID: 0x09},
+            sinkTableReq: {
+                ID: 0x0a,
+                parameters: [
+                    {name: "options", type: DataType.BITMAP8},
+                    {
+                        name: "srcID",
+                        type: DataType.UINT32,
+                        conditions: [{type: ParameterCondition.BITFIELD_ENUM, param: "options", offset: 0, size: 3, value: 0b000}],
+                    },
+                    {
+                        name: "gpdIEEEAddr",
+                        type: DataType.IEEE_ADDR,
+                        conditions: [{type: ParameterCondition.BITFIELD_ENUM, param: "options", offset: 0, size: 3, value: 0b010}],
+                    },
+                    {
+                        name: "gpdEndpoint",
+                        type: DataType.UINT8,
+                        conditions: [{type: ParameterCondition.BITFIELD_ENUM, param: "options", offset: 0, size: 3, value: 0b010}],
+                    },
+                    {name: "index", type: DataType.UINT8},
+                ],
+                response: 0x0a,
+            },
+            proxyTableRsp: {
+                ID: 0x0b,
+                parameters: [
+                    {name: "status", type: DataType.ENUM8},
+                    {name: "totalNumberNonEmptyEntries", type: DataType.UINT8},
+                    {name: "startIndex", type: DataType.UINT8},
+                    {name: "entriesCount", type: DataType.UINT8},
+                    // TODO: need BuffaloZcl read/write
+                    // {name: "entries", type: BuffaloZclDataType.LIST_OCTET_STR},
+                ],
+            },
+        },
+        commandsResponse: {
+            notificationResponse: {
+                ID: 0x00,
+                parameters: [
+                    {name: "options", type: DataType.BITMAP8},
+                    {
+                        name: "srcID",
+                        type: DataType.UINT32,
+                        conditions: [{type: ParameterCondition.BITFIELD_ENUM, param: "options", offset: 0, size: 3, value: 0b000}],
+                    },
+                    {
+                        name: "gpdIEEEAddr",
+                        type: DataType.IEEE_ADDR,
+                        conditions: [{type: ParameterCondition.BITFIELD_ENUM, param: "options", offset: 0, size: 3, value: 0b010}],
+                    },
+                    {
+                        name: "gpdEndpoint",
+                        type: DataType.UINT8,
+                        conditions: [{type: ParameterCondition.BITFIELD_ENUM, param: "options", offset: 0, size: 3, value: 0b010}],
+                    },
+                    {name: "gpdSecurityFrameCounter", type: DataType.UINT32},
                 ],
             },
             pairing: {
@@ -2316,6 +2465,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                     },
                 ],
             },
+            /** A.K.A. proxyCommisioningMode */
             commisioningMode: {
                 ID: 0x02,
                 parameters: [
@@ -2326,6 +2476,102 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                         conditions: [{type: ParameterCondition.BITMASK_SET, param: "options", mask: 0x2}],
                     },
                     {name: "channel", type: DataType.UINT8, conditions: [{type: ParameterCondition.BITMASK_SET, param: "options", mask: 0x10}]},
+                ],
+            },
+            response: {
+                ID: 0x06,
+                parameters: [
+                    {name: "options", type: DataType.UINT8},
+                    /** A.K.A. selectedSenderShortAddress */
+                    {name: "tempMaster", type: DataType.UINT16},
+                    /** A.K.A. selectedSenderTxChannel */
+                    {name: "tempMasterTx", type: DataType.BITMAP8},
+                    {
+                        name: "srcID",
+                        type: DataType.UINT32,
+                        conditions: [{type: ParameterCondition.BITFIELD_ENUM, param: "options", offset: 0, size: 3, value: 0b000}],
+                    },
+                    {
+                        name: "gpdIEEEAddr",
+                        type: DataType.IEEE_ADDR,
+                        conditions: [{type: ParameterCondition.BITFIELD_ENUM, param: "options", offset: 0, size: 3, value: 0b010}],
+                    },
+                    {
+                        name: "gpdEndpoint",
+                        type: DataType.UINT8,
+                        conditions: [{type: ParameterCondition.BITFIELD_ENUM, param: "options", offset: 0, size: 3, value: 0b010}],
+                    },
+                    {name: "gpdCmd", type: DataType.UINT8},
+                    {name: "gpdPayload", type: BuffaloZclDataType.GPD_FRAME},
+                ],
+            },
+            translationTableRsp: {
+                ID: 0x08,
+                parameters: [
+                    {name: "status", type: DataType.ENUM8},
+                    {name: "options", type: DataType.BITMAP8},
+                    {name: "totalNumberEntries", type: DataType.UINT8},
+                    {name: "startIndex", type: DataType.UINT8},
+                    {name: "entriesCount", type: DataType.UINT8},
+                    // TODO: need BuffaloZcl read/write
+                    // {name: "translations", type: BuffaloZclDataType.LIST_READ_GP_TRANSLATION_ENTRY},
+                    //   {
+                    //       name: "srcID",
+                    //       type: DataType.UINT32,
+                    //       conditions: [{type: ParameterCondition.BITFIELD_ENUM, param: "options", offset: 0, size: 3, value: 0b000}],
+                    //   },
+                    //   {
+                    //       name: "gpdIEEEAddr",
+                    //       type: DataType.IEEE_ADDR,
+                    //       conditions: [{type: ParameterCondition.BITFIELD_ENUM, param: "options", offset: 0, size: 3, value: 0b010}],
+                    //   },
+                    //   {
+                    //       name: "gpdEndpoint",
+                    //       type: DataType.UINT8,
+                    //       conditions: [{type: ParameterCondition.BITFIELD_ENUM, param: "options", offset: 0, size: 3, value: 0b010}],
+                    //   },
+                    //   {name: "commandId", type: DataType.UINT8},
+                    //   {name: "endpoint", type: DataType.UINT8},
+                    //   {name: "profile", type: DataType.UINT16},
+                    //   {name: "cluster", type: DataType.UINT16},
+                    //   {name: "zigbeeCommandId", type: DataType.UINT8},
+                    //   {name: "zigbeeCommandPayloadLength", type: DataType.UINT8},
+                    //   {name: "zigbeeCommandPayload", type: BuffaloZclDataType.LIST_UINT8},
+                    //   {name: "additionalInfoBlockCount", type: DataType.UINT8},
+                    //   {name: "additionalInfoBlock", type: BuffaloZclDataType.LIST_UINT8},
+                ],
+            },
+            sinkTableRsp: {
+                ID: 0x0a,
+                parameters: [
+                    {name: "status", type: DataType.ENUM8},
+                    {name: "totalNumberNonEmptyEntries", type: DataType.UINT8},
+                    {name: "startIndex", type: DataType.UINT8},
+                    {name: "entriesCount", type: DataType.UINT8},
+                    // TODO: need BuffaloZcl read/write
+                    // {name: "entries", type: BuffaloZclDataType.LIST_OCTET_STR},
+                ],
+            },
+            proxyTableReq: {
+                ID: 0x0b,
+                parameters: [
+                    {name: "options", type: DataType.BITMAP8},
+                    {
+                        name: "srcID",
+                        type: DataType.UINT32,
+                        conditions: [{type: ParameterCondition.BITFIELD_ENUM, param: "options", offset: 0, size: 3, value: 0b000}],
+                    },
+                    {
+                        name: "gpdIEEEAddr",
+                        type: DataType.IEEE_ADDR,
+                        conditions: [{type: ParameterCondition.BITFIELD_ENUM, param: "options", offset: 0, size: 3, value: 0b010}],
+                    },
+                    {
+                        name: "gpdEndpoint",
+                        type: DataType.UINT8,
+                        conditions: [{type: ParameterCondition.BITFIELD_ENUM, param: "options", offset: 0, size: 3, value: 0b010}],
+                    },
+                    {name: "index", type: DataType.UINT8},
                 ],
             },
         },
