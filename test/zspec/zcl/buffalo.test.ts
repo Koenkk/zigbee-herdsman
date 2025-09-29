@@ -314,6 +314,17 @@ describe("ZCL Buffalo", () => {
         expect(buffalo.getWritten()).toStrictEqual(Buffer.from(value)); // see above comment
     });
 
+    it.each([
+        ["char str", Zcl.DataType.CHAR_STR, [0], 1],
+        ["long char str", Zcl.DataType.LONG_CHAR_STR, [0, 0], 2],
+    ])("Writes empty %s", (_name, type, expectedWritten, expectedPosition) => {
+        const buffer = Buffer.alloc(10);
+        const buffalo = new BuffaloZcl(buffer);
+        buffalo.write(type, "", {});
+        expect(buffalo.getPosition()).toStrictEqual(expectedPosition);
+        expect(buffalo.getWritten()).toStrictEqual(Buffer.from(expectedWritten));
+    });
+
     it("Writes & Reads char str from string", () => {
         const value = "abcd";
         const expectedValue = [value.length, 0x61, 0x62, 0x63, 0x64];

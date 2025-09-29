@@ -68,7 +68,10 @@ export class BuffaloZcl extends Buffalo {
 
     // TODO: support read/write with specific `length` from attribute metadata (CHAR_STR & LONG_CHAR_STR)
     private writeCharStr(value?: string | number[]): void {
-        if (value) {
+        // In case of an empty string, send 0 length, from the spec:
+        // "Setting this sub-field to 0x00 represents a character string with no character data (an “empty string”). Setting
+        // this sub-field to 0xff represents the non-value. In both cases the character data sub-field has zero length."
+        if (value != null) {
             if (typeof value === "string") {
                 this.writeUInt8(Buffer.byteLength(value, "utf8"));
                 this.writeUtf8String(value);
@@ -102,7 +105,11 @@ export class BuffaloZcl extends Buffalo {
     }
 
     private writeLongCharStr(value?: string): void {
-        if (value) {
+        // In case of an empty string, send 0 length, from the spec:
+        // "Setting this sub-field to 0x0000 represents a long character string with no character data (an “empty string”).
+        // Setting this sub-field to 0xffff represents an non-value long character string value. In both cases the character
+        // data sub-field has zero length"
+        if (value != null) {
             this.writeUInt16(Buffer.byteLength(value, "utf8"));
             this.writeUtf8String(value);
         } else {
