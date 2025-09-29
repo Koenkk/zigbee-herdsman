@@ -218,21 +218,21 @@ describe("ZCL Buffalo", () => {
             {value: undefined, types: [Zcl.DataType.DATA64, Zcl.DataType.BITMAP64, Zcl.DataType.UINT64]},
             {written: 0xffffffffffffffffn, position: 8, write: "writeUInt64", read: "readUInt64"},
         ],
-        // [
-        //     "octectStr",
-        //     {value: undefined, types: [Zcl.DataType.OCTET_STR]},
-        //     {written: 0xff, valueRead: Buffer.from([]), position: 1, write: "writeUInt8", read: "readUInt8"},
-        // ],
+        [
+            "octectStr",
+            {value: undefined, types: [Zcl.DataType.OCTET_STR]},
+            {written: 0xff, valueRead: Buffer.from([]), position: 1, write: "writeUInt8", read: "readUInt8"},
+        ],
         [
             "longOctectStr",
             {value: undefined, types: [Zcl.DataType.LONG_OCTET_STR]},
             {written: 0xffff, valueRead: Buffer.from([]), position: 2, write: "writeUInt16", read: "readUInt16"},
         ],
-        // [
-        //     "charStr",
-        //     {value: undefined, types: [Zcl.DataType.CHAR_STR]},
-        //     {written: 0xff, valueRead: "", position: 1, write: "writeUInt8", read: "readUInt8"},
-        // ],
+        [
+            "charStr",
+            {value: undefined, types: [Zcl.DataType.CHAR_STR]},
+            {written: 0xff, valueRead: "", position: 1, write: "writeUInt8", read: "readUInt8"},
+        ],
         [
             "longCharStr",
             {value: undefined, types: [Zcl.DataType.LONG_CHAR_STR]},
@@ -416,6 +416,17 @@ describe("ZCL Buffalo", () => {
         buffalo.write(Zcl.DataType.CHAR_STR, value, {});
         expect(buffalo.getPosition()).toStrictEqual(expectedPosition);
         expect(buffalo.getWritten()).toStrictEqual(Buffer.from(value)); // see above comment
+    });
+
+    it.each([
+        ["char str", Zcl.DataType.CHAR_STR, [0], 1],
+        ["long char str", Zcl.DataType.LONG_CHAR_STR, [0, 0], 2],
+    ])("Writes empty %s", (_name, type, expectedWritten, expectedPosition) => {
+        const buffer = Buffer.alloc(10);
+        const buffalo = new BuffaloZcl(buffer);
+        buffalo.write(type, "", {});
+        expect(buffalo.getPosition()).toStrictEqual(expectedPosition);
+        expect(buffalo.getWritten()).toStrictEqual(Buffer.from(expectedWritten));
     });
 
     it("Writes & Reads char str from string", () => {
