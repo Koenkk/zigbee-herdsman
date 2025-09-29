@@ -1,5 +1,12 @@
 # Changelog
 
+## [6.1.4](https://github.com/Koenkk/zigbee-herdsman/compare/v6.1.3...v6.1.4) (2025-09-29)
+
+
+### Bug Fixes
+
+* Fix writing empty (long) char str ([#1511](https://github.com/Koenkk/zigbee-herdsman/issues/1511)) ([d13c070](https://github.com/Koenkk/zigbee-herdsman/commit/d13c070d8937a1fea17a1d1191d468aee71b56ae))
+
 ## [6.1.3](https://github.com/Koenkk/zigbee-herdsman/compare/v6.1.2...v6.1.3) (2025-09-23)
 
 
