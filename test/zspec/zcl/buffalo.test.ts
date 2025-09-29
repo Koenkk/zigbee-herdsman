@@ -55,6 +55,26 @@ describe("ZCL Buffalo", () => {
             expect(buffer).toStrictEqual(Buffer.from([0, 0, 0]));
             expect(buffalo.getPosition()).toStrictEqual(0);
         }
+
+        // what ZCL spec calls "empty string"
+        {
+            const buffer = Buffer.alloc(3);
+            const buffalo = new BuffaloZcl(buffer);
+
+            buffalo.write(Zcl.DataType.CHAR_STR, "", {});
+            expect(buffer).toStrictEqual(Buffer.from([0, 0, 0]));
+            expect(buffalo.getPosition()).toStrictEqual(1); // length
+        }
+
+        // what ZCL spec calls "empty string"
+        {
+            const buffer = Buffer.alloc(3);
+            const buffalo = new BuffaloZcl(buffer);
+
+            buffalo.write(Zcl.DataType.OCTET_STR, [], {});
+            expect(buffer).toStrictEqual(Buffer.from([0, 0, 0]));
+            expect(buffalo.getPosition()).toStrictEqual(1); // length
+        }
     });
 
     it("Reads nothing", () => {
@@ -63,6 +83,21 @@ describe("ZCL Buffalo", () => {
             const buffalo = new BuffaloZcl(buffer);
             expect(buffalo.read(type, {})).toStrictEqual(undefined);
             expect(buffalo.getPosition()).toStrictEqual(0);
+        }
+
+        // what ZCL spec calls "empty string"
+        {
+            const buffer = Buffer.from([0, 2, 3]);
+            const buffalo = new BuffaloZcl(buffer);
+            expect(buffalo.read(Zcl.DataType.CHAR_STR, {})).toStrictEqual("");
+            expect(buffalo.getPosition()).toStrictEqual(1); // length
+        }
+        // what ZCL spec calls "empty string"
+        {
+            const buffer = Buffer.from([0, 2, 3]);
+            const buffalo = new BuffaloZcl(buffer);
+            expect(buffalo.read(Zcl.DataType.OCTET_STR, {})).toStrictEqual(Buffer.from([]));
+            expect(buffalo.getPosition()).toStrictEqual(1); // length
         }
     });
 

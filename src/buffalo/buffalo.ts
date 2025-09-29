@@ -255,6 +255,10 @@ export class Buffalo {
             throw new Error(`Length of values: '${values}' is not consitent with expected length '${length}'`);
         }
 
+        if (values.length === 0) {
+            return;
+        }
+
         if (!(values instanceof Buffer)) {
             values = Buffer.from(values);
         }
@@ -327,12 +331,20 @@ export class Buffalo {
     }
 
     public writeUtf8String(value: string): void {
-        // value==='' is supported and is identified as "empty string"
+        if (value === "") {
+            // identified as "empty string", no need to write anything
+            return;
+        }
+
         this.position += this.buffer.write(value, this.position, "utf8");
     }
 
     public readUtf8String(length: number): string {
-        // length===0 is supported and is identified as "empty string"
+        if (length === 0) {
+            // is identified as "empty string", no need to read anything
+            return "";
+        }
+
         const value = this.buffer.toString("utf8", this.position, this.position + length);
         this.position += length;
         return value;
