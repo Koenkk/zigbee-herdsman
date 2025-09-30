@@ -348,16 +348,20 @@ export class Device extends Entity<ControllerEventMap> {
             await endpoint.command("ssIasZone", "enrollRsp", payload, {disableDefaultResponse: true});
         }
 
-        // Reponse to read requests
+        // Response to read requests
         if (frame.header.isGlobal && frame.isCommand("read") && !this._customReadResponse?.(frame, endpoint)) {
             const time = Math.round((Date.now() - OneJanuary2000) / 1000);
             const attributes: {[s: string]: KeyValue} = {
                 ...endpoint.clusters,
                 genTime: {
                     attributes: {
-                        timeStatus: 3, // Time-master + synchronised
                         time: time,
+                        timeStatus: 3, // Time-master + synchronised
                         timeZone: new Date().getTimezoneOffset() * -1 * 60,
+                        dstStart: 0xffffffff, // Not supported
+                        dstEnd: 0xffffffff, // Not supported
+                        dstShift: 0x00, // Not supported
+                        standardTime: 0xffffffff, // Not supported
                         localTime: time - new Date().getTimezoneOffset() * 60,
                         lastSetTime: time,
                         validUntilTime: time + 24 * 60 * 60, // valid for 24 hours

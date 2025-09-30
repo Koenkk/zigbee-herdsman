@@ -2874,7 +2874,7 @@ describe("Controller", () => {
     });
 
     it("Respond to genTime read", async () => {
-        const frame = Zcl.Frame.create(0, 0, true, undefined, 40, 0, 10, [{attrId: 0}, {attrId: 1}, {attrId: 7}, {attrId: 4}], {});
+        const frame = Zcl.Frame.create(0, 0, true, undefined, 40, 0, 10, [{attrId: 0}, {attrId: 1}, {attrId: 7}], {});
         await controller.start();
         await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
         mocksendZclFrameToEndpoint.mockClear();
