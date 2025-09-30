@@ -358,10 +358,10 @@ export class Device extends Entity<ControllerEventMap> {
                         time: time,
                         timeStatus: 3, // Time-master + synchronised
                         timeZone: new Date().getTimezoneOffset() * -1 * 60,
-                        dstStart: 0xffffffff, // Not supported
-                        dstEnd: 0xffffffff, // Not supported
-                        dstShift: 0x00, // Not supported
-                        standardTime: 0xffffffff, // Not supported
+                        dstStart: 0, // Not supported
+                        dstEnd: 0, // Not supported
+                        dstShift: 0, // Not supported
+                        standardTime: 0, // Not supported
                         localTime: time - new Date().getTimezoneOffset() * 60,
                         lastSetTime: time,
                         validUntilTime: time + 24 * 60 * 60, // valid for 24 hours
