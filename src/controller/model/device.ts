@@ -361,7 +361,6 @@ export class Device extends Entity<ControllerEventMap> {
                         dstStart: 0, // Not supported
                         dstEnd: 0, // Not supported
                         dstShift: 0, // Not supported
-                        standardTime: 0, // Not supported
                         localTime: time - new Date().getTimezoneOffset() * 60,
                         lastSetTime: time,
                         validUntilTime: time + 24 * 60 * 60, // valid for 24 hours
