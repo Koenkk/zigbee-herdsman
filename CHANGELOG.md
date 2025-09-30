@@ -1,5 +1,12 @@
 # Changelog
 
+## [6.1.5](https://github.com/Koenkk/zigbee-herdsman/compare/v6.1.4...v6.1.5) (2025-09-29)
+
+
+### Bug Fixes
+
+* Performance: skip buffalo write if empty (str/arr) ([#1513](https://github.com/Koenkk/zigbee-herdsman/issues/1513)) ([4385acb](https://github.com/Koenkk/zigbee-herdsman/commit/4385acb3e91699995ad89fcd4046649a8dabf3f8))
+
 ## [6.1.4](https://github.com/Koenkk/zigbee-herdsman/compare/v6.1.3...v6.1.4) (2025-09-29)
 
 
