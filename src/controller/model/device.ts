@@ -378,8 +378,8 @@ export class Device extends Entity<ControllerEventMap> {
                     dstEnd = dstChangesThisYear[1].date.getTime();
                     dstChange = dstChangesThisYear[0].change * 60;
                 } else {
-                    const dstStartIsInLastYear = localTime < dstChangesThisYear[0].date.getTime();
-                    if (dstStartIsInLastYear) {
+                    const dstStartIsInPreviousYear = localTime < dstChangesThisYear[0].date.getTime();
+                    if (dstStartIsInPreviousYear) {
                         const dstChangesLastYear = tzScan(localTimeZone, {
                             start: new Date(currentYear - 1, 1),
                             end: new Date(currentYear - 1, 12),

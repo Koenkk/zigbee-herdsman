@@ -2935,7 +2935,7 @@ describe("Controller", () => {
             expectedLocalTime: 815458069,
         },
         {
-            testCase: "Southern Hemisphere, timezone with DST, DST active with start in last year",
+            testCase: "Southern Hemisphere, timezone with DST, DST active with start in previous year",
             timeZone: "Australia/Sydney",
             localTime: "Mon Jan 19 2026 03:08:11 GMT+1100 (Australian Eastern Daylight Time)",
             expectedTime: 822067691,
