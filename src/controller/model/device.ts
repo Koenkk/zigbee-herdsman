@@ -351,7 +351,7 @@ export class Device extends Entity<ControllerEventMap> {
             const currentYear = currentDate.getUTCFullYear();
 
             // Default values considering the timezone has no DST
-            let timeZoneDifferenceToUtc = currentDate.getTimezoneOffset() * -1 * 60;
+            let timeZoneDifferenceToUtc = currentDate.getTimezoneOffset() !== 0 ? currentDate.getTimezoneOffset() * -1 * 60 : 0;
             let dstStart = 0xffffffff;
             let dstEnd = 0xffffffff;
             let dstChange = 0;

@@ -2879,7 +2879,7 @@ describe("Controller", () => {
             timeZone: "Atlantic/Reykjavik",
             localTime: "Wed Oct 01 2025 17:06:08 GMT+0000 (Greenwich Mean Time)",
             expectedTime: 812653568,
-            expectedTimeZone: -0,
+            expectedTimeZone: 0,
             expectedDstStart: 0xffffffff,
             expectedDstEnd: 0xffffffff,
             expectedDstShift: 0,
