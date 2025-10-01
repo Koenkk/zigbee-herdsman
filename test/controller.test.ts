@@ -19,7 +19,6 @@ import * as Zcl from "../src/zspec/zcl";
 import * as Zdo from "../src/zspec/zdo";
 import type {IEEEAddressResponse, NetworkAddressResponse} from "../src/zspec/zdo/definition/tstypes";
 import {DEFAULT_184_CHECKIN_INTERVAL, LQI_TABLE_ENTRY_DEFAULTS, MOCK_DEVICES, ROUTING_TABLE_ENTRY_DEFAULTS} from "./mockDevices";
-import {Clusters, DataType} from "../src/zspec/zcl";
 
 const globalSetImmediate = setImmediate;
 const flushPromises = () => new Promise(globalSetImmediate);
