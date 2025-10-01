@@ -2887,7 +2887,7 @@ describe("Controller", () => {
             expectedLocalTime: 812653568,
         },
         {
-            testCase: "Northern atmosphere, timezone with DST, DST active",
+            testCase: "Northern Hemisphere, timezone with DST, DST active",
             timeZone: "Europe/Berlin",
             localTime: "Wed Oct 01 2025 18:49:34 GMT+0200 (Central European Summer Time)",
             expectedTime: 812652574,
@@ -2899,7 +2899,7 @@ describe("Controller", () => {
             expectedLocalTime: 812663374,
         },
         {
-            testCase: "Northern atmosphere, timezone with DST, DST inactive",
+            testCase: "Northern Hemisphere, timezone with DST, DST inactive",
             timeZone: "Europe/Berlin",
             localTime: "Mon Mar 02 2026 19:04:12 GMT+0100 (Central European Standard Time)",
             expectedTime: 825789852,
@@ -2911,7 +2911,7 @@ describe("Controller", () => {
             expectedLocalTime: 825793452,
         },
         {
-            testCase: "Southern atmosphere, timezone with DST, DST inactive",
+            testCase: "Southern Hemisphere, timezone with DST, DST inactive",
             timeZone: "Australia/Sydney",
             localTime: "Thu Oct 02 2025 03:03:25 GMT+1000 (Australian Eastern Standard Time)",
             expectedTime: 812653405,
@@ -2923,7 +2923,7 @@ describe("Controller", () => {
             expectedLocalTime: 812689405,
         },
         {
-            testCase: "Southern atmosphere, timezone with DST, DST active with start in current year",
+            testCase: "Southern Hemisphere, timezone with DST, DST active with start in current year",
             timeZone: "Australia/Sydney",
             localTime: "Mon Nov 03 2025 03:07:49 GMT+1100 (Australian Eastern Daylight Time)",
             expectedTime: 815414869,
@@ -2935,7 +2935,7 @@ describe("Controller", () => {
             expectedLocalTime: 815458069,
         },
         {
-            testCase: "Southern atmosphere, timezone with DST, DST active with start in last year",
+            testCase: "Southern Hemisphere, timezone with DST, DST active with start in last year",
             timeZone: "Australia/Sydney",
             localTime: "Mon Jan 19 2026 03:08:11 GMT+1100 (Australian Eastern Daylight Time)",
             expectedTime: 822067691,
