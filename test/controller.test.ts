@@ -19,6 +19,7 @@ import * as Zcl from "../src/zspec/zcl";
 import * as Zdo from "../src/zspec/zdo";
 import type {IEEEAddressResponse, NetworkAddressResponse} from "../src/zspec/zdo/definition/tstypes";
 import {DEFAULT_184_CHECKIN_INTERVAL, LQI_TABLE_ENTRY_DEFAULTS, MOCK_DEVICES, ROUTING_TABLE_ENTRY_DEFAULTS} from "./mockDevices";
+import {Clusters, DataType} from "../src/zspec/zcl";
 
 const globalSetImmediate = setImmediate;
 const flushPromises = () => new Promise(globalSetImmediate);
@@ -2873,50 +2874,198 @@ describe("Controller", () => {
         expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(1);
     });
 
-    it("Respond to genTime read", async () => {
-        const frame = Zcl.Frame.create(0, 0, true, undefined, 40, 0, 10, [{attrId: 0}, {attrId: 1}, {attrId: 7}, {attrId: 4}], {});
-        await controller.start();
-        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
-        mocksendZclFrameToEndpoint.mockClear();
-        await mockAdapterEvents.zclPayload({
-            wasBroadcast: false,
-            address: 129,
-            clusterID: frame.cluster.ID,
-            data: frame.toBuffer(),
-            header: frame.header,
-            endpoint: 1,
-            linkquality: 19,
-            groupID: 10,
-        });
+    it.each([
+        {
+            testCase: "Timezone without DST",
+            timeZone: "Atlantic/Reykjavik",
+            localTime: "Wed Oct 01 2025 17:06:08 GMT+0000 (Greenwich Mean Time)",
+            expectedTime: 812653568,
+            expectedTimeZone: -0,
+            expectedDstStart: 0xffffffff,
+            expectedDstEnd: 0xffffffff,
+            expectedDstShift: 0,
+            expectedStandardTime: 812653568,
+            expectedLocalTime: 812653568,
+        },
+        {
+            testCase: "Northern atmosphere, timezone with DST, DST active",
+            timeZone: "Europe/Berlin",
+            localTime: "Wed Oct 01 2025 18:49:34 GMT+0200 (Central European Summer Time)",
+            expectedTime: 812652574,
+            expectedTimeZone: 3600,
+            expectedDstStart: 796611600,
+            expectedDstEnd: 814755600,
+            expectedDstShift: 3600,
+            expectedStandardTime: 812659774,
+            expectedLocalTime: 812663374,
+        },
+        {
+            testCase: "Northern atmosphere, timezone with DST, DST inactive",
+            timeZone: "Europe/Berlin",
+            localTime: "Mon Mar 02 2026 19:04:12 GMT+0100 (Central European Standard Time)",
+            expectedTime: 825789852,
+            expectedTimeZone: 3600,
+            expectedDstStart: 828061200,
+            expectedDstEnd: 846205200,
+            expectedDstShift: 3600,
+            expectedStandardTime: 825793452,
+            expectedLocalTime: 825793452,
+        },
+        {
+            testCase: "Southern atmosphere, timezone with DST, DST inactive",
+            timeZone: "Australia/Sydney",
+            localTime: "Thu Oct 02 2025 03:03:25 GMT+1000 (Australian Eastern Standard Time)",
+            expectedTime: 812653405,
+            expectedTimeZone: 36000,
+            expectedDstStart: 812908800,
+            expectedDstEnd: 828633600,
+            expectedDstShift: 3600,
+            expectedStandardTime: 812689405,
+            expectedLocalTime: 812689405,
+        },
+        {
+            testCase: "Southern atmosphere, timezone with DST, DST active with start in current year",
+            timeZone: "Australia/Sydney",
+            localTime: "Mon Nov 03 2025 03:07:49 GMT+1100 (Australian Eastern Daylight Time)",
+            expectedTime: 815414869,
+            expectedTimeZone: 36000,
+            expectedDstStart: 812908800,
+            expectedDstEnd: 828633600,
+            expectedDstShift: 3600,
+            expectedStandardTime: 815454469,
+            expectedLocalTime: 815458069,
+        },
+        {
+            testCase: "Southern atmosphere, timezone with DST, DST active with start in last year",
+            timeZone: "Australia/Sydney",
+            localTime: "Mon Jan 19 2026 03:08:11 GMT+1100 (Australian Eastern Daylight Time)",
+            expectedTime: 822067691,
+            expectedTimeZone: 36000,
+            expectedDstStart: 812908800,
+            expectedDstEnd: 828633600,
+            expectedDstShift: 3600,
+            expectedStandardTime: 822107291,
+            expectedLocalTime: 822110891,
+        },
+    ])(
+        "Respond to genTime read ($testCase)",
+        async ({
+            timeZone,
+            localTime,
+            expectedTime,
+            expectedTimeZone,
+            expectedDstStart,
+            expectedDstEnd,
+            expectedDstShift,
+            expectedStandardTime,
+            expectedLocalTime,
+        }) => {
+            vi.setSystemTime(new Date(localTime));
+            vi.stubEnv("TZ", timeZone);
 
-        expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(1);
-        expect(mocksendZclFrameToEndpoint.mock.calls[0][0]).toBe("0x129");
-        expect(mocksendZclFrameToEndpoint.mock.calls[0][1]).toBe(129);
-        expect(mocksendZclFrameToEndpoint.mock.calls[0][2]).toBe(1);
-        const message = mocksendZclFrameToEndpoint.mock.calls[0][3];
-        // attrId 9 is not supported by controller.ts therefore should not be in the response
-        expect(message.payload.length).toBe(3);
-        expect(message.payload[0].attrId).toBe(0);
-        expect(message.payload[0].dataType).toBe(226);
-        expect(message.payload[0].status).toBe(0);
-        expect(message.payload[0].attrData).toBeGreaterThan(600822353);
-        expect(message.payload[1].attrId).toBe(1);
-        expect(message.payload[1].dataType).toBe(24);
-        expect(message.payload[1].status).toBe(0);
-        expect(message.payload[1].attrData).toBe(3);
-        expect(message.payload[2].attrId).toBe(7);
-        expect(message.payload[2].dataType).toBe(35);
-        expect(message.payload[2].status).toBe(0);
-        expect(message.payload[2].attrData).toBeGreaterThan(600822353);
-        delete message.payload;
-        const call = mocksendZclFrameToEndpoint.mock.calls[0];
-        expect(call[0]).toBe("0x129");
-        expect(call[1]).toBe(129);
-        expect(call[2]).toBe(1);
-        expect(deepClone(call[3])).toStrictEqual(
-            deepClone(Zcl.Frame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.SERVER_TO_CLIENT, true, undefined, 40, "readRsp", 10, undefined, {})),
-        );
-    });
+            const frame = Zcl.Frame.create(
+                0,
+                0,
+                true,
+                undefined,
+                40,
+                0,
+                10,
+                [{attrId: 0}, {attrId: 1}, {attrId: 2}, {attrId: 3}, {attrId: 4}, {attrId: 5}, {attrId: 6}, {attrId: 7}, {attrId: 8}, {attrId: 9}],
+                {},
+            );
+            await controller.start();
+            await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
+            mocksendZclFrameToEndpoint.mockClear();
+            await mockAdapterEvents.zclPayload({
+                wasBroadcast: false,
+                address: 129,
+                clusterID: frame.cluster.ID,
+                data: frame.toBuffer(),
+                header: frame.header,
+                endpoint: 1,
+                linkquality: 19,
+                groupID: 10,
+            });
+
+            expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(1);
+            expect(mocksendZclFrameToEndpoint.mock.calls[0][0]).toBe("0x129");
+            expect(mocksendZclFrameToEndpoint.mock.calls[0][1]).toBe(129);
+            expect(mocksendZclFrameToEndpoint.mock.calls[0][2]).toBe(1);
+            const message = mocksendZclFrameToEndpoint.mock.calls[0][3];
+            expect(message.payload.length).toBe(10);
+
+            // Time
+            expect(message.payload[0].attrId).toBe(Zcl.Clusters.genTime.attributes["time"].ID);
+            expect(message.payload[0].dataType).toBe(Zcl.DataType.UTC);
+            expect(message.payload[0].status).toBe(Zcl.Status.SUCCESS);
+            expect(message.payload[0].attrData).toBe(expectedTime);
+
+            // TimeStatus
+            expect(message.payload[1].attrId).toBe(Zcl.Clusters.genTime.attributes["timeStatus"].ID);
+            expect(message.payload[1].dataType).toBe(Zcl.DataType.BITMAP8);
+            expect(message.payload[1].status).toBe(Zcl.Status.SUCCESS);
+            expect(message.payload[1].attrData).toBe(3);
+
+            // TimeZone
+            expect(message.payload[2].attrId).toBe(Zcl.Clusters.genTime.attributes["timeZone"].ID);
+            expect(message.payload[2].dataType).toBe(Zcl.DataType.INT32);
+            expect(message.payload[2].status).toBe(Zcl.Status.SUCCESS);
+            expect(message.payload[2].attrData).toBe(expectedTimeZone);
+
+            // DstStart
+            expect(message.payload[3].attrId).toBe(Zcl.Clusters.genTime.attributes["dstStart"].ID);
+            expect(message.payload[3].dataType).toBe(Zcl.DataType.UINT32);
+            expect(message.payload[3].status).toBe(Zcl.Status.SUCCESS);
+            expect(message.payload[3].attrData).toBe(expectedDstStart);
+
+            // DstEnd
+            expect(message.payload[4].attrId).toBe(Zcl.Clusters.genTime.attributes["dstEnd"].ID);
+            expect(message.payload[4].dataType).toBe(Zcl.DataType.UINT32);
+            expect(message.payload[4].status).toBe(Zcl.Status.SUCCESS);
+            expect(message.payload[4].attrData).toBe(expectedDstEnd);
+
+            // DstShift
+            expect(message.payload[5].attrId).toBe(Zcl.Clusters.genTime.attributes["dstShift"].ID);
+            expect(message.payload[5].dataType).toBe(Zcl.DataType.INT32);
+            expect(message.payload[5].status).toBe(Zcl.Status.SUCCESS);
+            expect(message.payload[5].attrData).toBe(expectedDstShift);
+
+            // StandardTime
+            expect(message.payload[6].attrId).toBe(Zcl.Clusters.genTime.attributes["standardTime"].ID);
+            expect(message.payload[6].dataType).toBe(Zcl.DataType.UINT32);
+            expect(message.payload[6].status).toBe(Zcl.Status.SUCCESS);
+            expect(message.payload[6].attrData).toBe(expectedStandardTime);
+
+            // LocalTime
+            expect(message.payload[7].attrId).toBe(Zcl.Clusters.genTime.attributes["localTime"].ID);
+            expect(message.payload[7].dataType).toBe(Zcl.DataType.UINT32);
+            expect(message.payload[7].status).toBe(Zcl.Status.SUCCESS);
+            expect(message.payload[7].attrData).toBe(expectedLocalTime);
+
+            // LastSetTime
+            expect(message.payload[8].attrId).toBe(Zcl.Clusters.genTime.attributes["lastSetTime"].ID);
+            expect(message.payload[8].dataType).toBe(Zcl.DataType.UTC);
+            expect(message.payload[8].status).toBe(Zcl.Status.SUCCESS);
+            expect(message.payload[8].attrData).toBe(expectedTime);
+
+            // ValidUntilTime
+            expect(message.payload[9].attrId).toBe(Zcl.Clusters.genTime.attributes["validUntilTime"].ID);
+            expect(message.payload[9].dataType).toBe(Zcl.DataType.UTC);
+            expect(message.payload[9].status).toBe(Zcl.Status.SUCCESS);
+            expect(message.payload[9].attrData).toBe(expectedTime + 24 * 60 * 60);
+
+            delete message.payload;
+            const call = mocksendZclFrameToEndpoint.mock.calls[0];
+            expect(call[0]).toBe("0x129");
+            expect(call[1]).toBe(129);
+            expect(call[2]).toBe(1);
+            expect(deepClone(call[3])).toStrictEqual(
+                deepClone(Zcl.Frame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.SERVER_TO_CLIENT, true, undefined, 40, "readRsp", 10, undefined, {})),
+            );
+
+        },
+    );
 
     it("Allow to override read response through `device.customReadResponse", async () => {
         await controller.start();
