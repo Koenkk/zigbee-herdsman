@@ -415,7 +415,7 @@ export class Device extends Entity<ControllerEventMap> {
             }
 
             function toZigbeeUtcTime(timestamp: number) {
-                if(timestamp === 0xffffffff) {
+                if (timestamp === 0xffffffff) {
                     return timestamp;
                 }
 
