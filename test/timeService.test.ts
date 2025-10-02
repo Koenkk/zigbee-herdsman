@@ -166,6 +166,9 @@ describe("TimeService", () => {
     });
 
     it("Should not use cached data for dynamic attributes", () => {
+        vi.stubEnv("TZ", "Europe/Berlin");
+        vi.setSystemTime(new Date(2025, 0));
+
         const firstRun = timeService.getTimeClusterAttributes();
 
         // 1 hour
@@ -180,6 +183,9 @@ describe("TimeService", () => {
     });
 
     it("Should return cached information within 24 hours", () => {
+        vi.stubEnv("TZ", "Europe/Berlin");
+        vi.setSystemTime(new Date(2025, 0));
+
         const firstRun = timeService.getTimeClusterAttributes();
 
         // 23 hours
@@ -191,6 +197,9 @@ describe("TimeService", () => {
     });
 
     it("Should recalculate the cache after 24 hours", () => {
+        vi.stubEnv("TZ", "Europe/Berlin");
+        vi.setSystemTime(new Date(2025, 0));
+
         const firstRun = timeService.getTimeClusterAttributes();
 
         // 24 hours

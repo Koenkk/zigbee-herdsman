@@ -26,6 +26,7 @@ interface CachedTimeData {
 
 const OneJanuary2000 = new Date("January 01, 2000 00:00:00 UTC+00:00").getTime();
 const OneDayInMilliseconds = 24 * 60 * 60 * 1000;
+let dstActive: boolean;
 
 let cachedTimeData: CachedTimeData = <CachedTimeData>{};
 
@@ -38,15 +39,15 @@ function timestampToZigbeeUtcTime(timestamp: number) {
 }
 
 function zigbeeUtcTimeToTimestamp(zigbeeTime: number) {
-    return zigbeeTime * 1000 + OneJanuary2000;
-}
+        return zigbeeTime * 1000 + OneJanuary2000;
+    }
 
 export function clearCachedTimeData() {
     cachedTimeData = <CachedTimeData>{};
 }
 
 function cachedTimeDataIsValid(): boolean {
-    return timestampToZigbeeUtcTime(Date.now()) < cachedTimeData.validUntilTime;
+    return timestampToZigbeeUtcTime(Date.now()) < cachedTimeData.validUntilTime
 }
 
 export function getTimeClusterAttributes(): TimeClusterAttributes {
@@ -58,10 +59,6 @@ export function getTimeClusterAttributes(): TimeClusterAttributes {
     const standardTime = currentTime + cachedTimeData.timeZoneInMilliseconds;
     let localTime = standardTime;
 
-    // tzScan provides the first second where the change is being applied, not
-    // the last second before the change (as assumed in the ZCL documentation).
-    const dstActive =
-        currentTime >= zigbeeUtcTimeToTimestamp(cachedTimeData.dstStart) && currentTime < zigbeeUtcTimeToTimestamp(cachedTimeData.dstEnd);
     if (dstActive) {
         localTime = standardTime + cachedTimeData.dstShiftInMilliseconds;
     }
@@ -76,7 +73,7 @@ export function getTimeClusterAttributes(): TimeClusterAttributes {
         standardTime: timestampToZigbeeUtcTime(standardTime),
         localTime: timestampToZigbeeUtcTime(localTime),
         lastSetTime: cachedTimeData.lastSetTime,
-        validUntilTime: cachedTimeData.validUntilTime,
+        validUntilTime: cachedTimeData.validUntilTime
     };
 }
 
@@ -89,7 +86,7 @@ function recalculateTimeData() {
     let timeZoneDifferenceToUtc = currentDate.getTimezoneOffset() !== 0 ? currentDate.getTimezoneOffset() * -1 * 60 : 0;
     let dstStart = 0xffffffff;
     let dstEnd = 0xffffffff;
-    let dstChange = 0;
+    let dstShift = 0;
     const validUntilTime = currentTime + OneDayInMilliseconds;
 
     const localTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -110,7 +107,7 @@ function recalculateTimeData() {
             timeZoneDifferenceToUtc = dstChangesThisYear[1].offset * 60;
             dstStart = dstChangesThisYear[0].date.getTime();
             dstEnd = dstChangesThisYear[1].date.getTime();
-            dstChange = dstChangesThisYear[0].change * 60;
+            dstShift = dstChangesThisYear[0].change * 60;
         } else {
             const dstStartIsInPreviousYear = currentTime < dstChangesThisYear[0].date.getTime();
             if (dstStartIsInPreviousYear) {
@@ -124,7 +121,7 @@ function recalculateTimeData() {
                     timeZoneDifferenceToUtc = dstChangesThisYear[0].offset * 60;
                     dstStart = dstChangesLastYear[1].date.getTime();
                     dstEnd = dstChangesThisYear[0].date.getTime();
-                    dstChange = dstChangesLastYear[1].change * 60;
+                    dstShift = dstChangesLastYear[1].change * 60;
                 }
             } else {
                 const dstChangesNextYear = tzScan(localTimeZone, {
@@ -137,10 +134,24 @@ function recalculateTimeData() {
                     timeZoneDifferenceToUtc = dstChangesNextYear[0].offset * 60;
                     dstStart = dstChangesThisYear[1].date.getTime();
                     dstEnd = dstChangesNextYear[0].date.getTime();
-                    dstChange = dstChangesThisYear[1].change * 60;
+                    dstShift = dstChangesThisYear[1].change * 60;
                 }
             }
         }
+
+        if(currentTime < dstStart) {
+            dstActive = false;
+            const dstStartDelay = currentTime - dstStart;
+            setTimeout(() => {dstActive = true}, dstStartDelay);
+        }
+
+        if(currentTime < dstEnd && currentTime > dstStart) {
+            dstActive = true;
+            const dstEndDelay = currentTime - dstEnd;
+            setTimeout(() => {dstActive = false}, dstEndDelay);
+        }
+    } else {
+        dstActive = false;
     }
 
     cachedTimeData = {
@@ -148,8 +159,8 @@ function recalculateTimeData() {
         timeZoneInMilliseconds: timeZoneDifferenceToUtc * 1000,
         dstStart: timestampToZigbeeUtcTime(dstStart),
         dstEnd: timestampToZigbeeUtcTime(dstEnd),
-        dstShift: dstChange,
-        dstShiftInMilliseconds: dstChange * 1000,
+        dstShift: dstShift,
+        dstShiftInMilliseconds: dstShift * 1000,
         lastSetTime: timestampToZigbeeUtcTime(currentTime),
         validUntilTime: timestampToZigbeeUtcTime(validUntilTime),
     };
