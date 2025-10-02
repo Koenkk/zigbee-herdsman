@@ -5118,6 +5118,14 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                     {name: "payload", type: DataType.UINT8},
                 ],
             },
+
+            /**
+             * Weather forecast synchronization (check requestWeatherInformation)
+             */
+            tuyaWeatherSync: {
+                ID: 0x61,
+                parameters: [{name: "payload", type: BuffaloZclDataType.BUFFER}],
+            },
         },
         commandsResponse: {
             /**
@@ -5220,6 +5228,18 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             mcuGatewayConnectionStatus: {
                 ID: 0x25,
                 parameters: [{name: "payloadSize", type: DataType.UINT16}],
+            },
+
+            /**
+             * Device can request weather forecast information and expects response respecting given parameters.
+             * This command ID seem to be device speciffic, because there is simmilar structure documented in Tuya Serial Communication Protocol,
+             * but with different ID (0x3a and 0x3b respectively). In this case, I'm not sure if the name should reflect the one from
+             * docs or be also speciffic (providing space for the implementation of the correct one in the future)?
+             *
+             */
+            tuyaWeatherRequest: {
+                ID: 0x60,
+                parameters: [{name: "payload", type: BuffaloZclDataType.BUFFER}],
             },
         },
     },
