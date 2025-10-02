@@ -2887,15 +2887,7 @@ describe("Controller", () => {
         },
     ])(
         "Respond to genTime read",
-        async ({
-            expectedTime,
-            expectedTimeZone,
-            expectedDstStart,
-            expectedDstEnd,
-            expectedDstShift,
-            expectedStandardTime,
-            expectedLocalTime,
-        }) => {
+        async ({expectedTime, expectedTimeZone, expectedDstStart, expectedDstEnd, expectedDstShift, expectedStandardTime, expectedLocalTime}) => {
             // Mock the timeService, as we don't want to test that
             vi.mock("../src/utils/timeService");
             vi.mocked(timeService.getTimeCluster).mockReturnValue({
