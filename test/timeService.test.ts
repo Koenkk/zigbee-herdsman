@@ -92,7 +92,7 @@ describe("TimeService", () => {
             expectedLocalTime: 822107291,
         },
     ])(
-        "Should process daylight saving time correctly for $testCase",
+        "Should work correctly for specific dates ($testCase)",
         ({
             timeZone,
             localTime,
