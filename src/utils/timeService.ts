@@ -25,20 +25,20 @@ function toZigbeeUtcTime(timestamp: number) {
     return Math.round((timestamp - OneJanuary2000) / 1000);
 }
 
-function isCachedTimeClusterValid(): boolean {
+export function clearCachedTimeCluster() {
+    cachedTimeCluster = <TimeCluster>{};
+}
+
+function cachedTimeClusterIsValid(): boolean {
     return toZigbeeUtcTime(Date.now()) < cachedTimeCluster.validUntilTime;
 }
 
 export function getTimeCluster(): TimeCluster {
-    if (!isCachedTimeClusterValid()) {
+    if (!cachedTimeClusterIsValid()) {
         calculateTimeCluster();
     }
 
     return cachedTimeCluster;
-}
-
-export function destroyTimeCache() {
-    cachedTimeCluster = <TimeCluster>{};
 }
 
 function calculateTimeCluster() {
