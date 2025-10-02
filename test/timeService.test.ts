@@ -16,7 +16,7 @@ describe("TimeService", () => {
 
     afterEach(() => {
         vi.unstubAllEnvs();
-    })
+    });
 
     it.each([
         {

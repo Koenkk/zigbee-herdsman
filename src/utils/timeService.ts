@@ -61,8 +61,7 @@ export function getTimeCluster(): TimeCluster {
     // tzScan provides the first second where the change is being applied, not
     // the last second before the change (as assumed in the ZCL documentation).
     const dstActive =
-        currentTime >= zigbeeUtcTimeToTimestamp(cachedTimeData.dstStart) &&
-        currentTime < zigbeeUtcTimeToTimestamp(cachedTimeData.dstEnd);
+        currentTime >= zigbeeUtcTimeToTimestamp(cachedTimeData.dstStart) && currentTime < zigbeeUtcTimeToTimestamp(cachedTimeData.dstEnd);
     if (dstActive) {
         localTime = standardTime + cachedTimeData.dstShiftInMilliseconds;
     }
@@ -105,7 +104,6 @@ function recalculateTimeData() {
     const hasRegularDst = dstChangesThisYear.length === 2;
     if (hasRegularDst) {
         const firstDstChangeOfTheYear = dstChangesThisYear[0];
-        const localTime = currentTime + timeZoneDifferenceToUtc * 1000;
 
         const isNorthernHemisphere = firstDstChangeOfTheYear.change > 0;
         if (isNorthernHemisphere) {
