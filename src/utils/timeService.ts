@@ -38,16 +38,12 @@ function timestampToZigbeeUtcTime(timestamp: number) {
     return Math.round((timestamp - OneJanuary2000) / 1000);
 }
 
-function zigbeeUtcTimeToTimestamp(zigbeeTime: number) {
-        return zigbeeTime * 1000 + OneJanuary2000;
-    }
-
 export function clearCachedTimeData() {
     cachedTimeData = <CachedTimeData>{};
 }
 
 function cachedTimeDataIsValid(): boolean {
-    return timestampToZigbeeUtcTime(Date.now()) < cachedTimeData.validUntilTime
+    return timestampToZigbeeUtcTime(Date.now()) < cachedTimeData.validUntilTime;
 }
 
 export function getTimeClusterAttributes(): TimeClusterAttributes {
@@ -73,7 +69,7 @@ export function getTimeClusterAttributes(): TimeClusterAttributes {
         standardTime: timestampToZigbeeUtcTime(standardTime),
         localTime: timestampToZigbeeUtcTime(localTime),
         lastSetTime: cachedTimeData.lastSetTime,
-        validUntilTime: cachedTimeData.validUntilTime
+        validUntilTime: cachedTimeData.validUntilTime,
     };
 }
 
@@ -139,16 +135,20 @@ function recalculateTimeData() {
             }
         }
 
-        if(currentTime < dstStart) {
+        if (currentTime < dstStart) {
             dstActive = false;
             const dstStartDelay = currentTime - dstStart;
-            setTimeout(() => {dstActive = true}, dstStartDelay);
+            setTimeout(() => {
+                dstActive = true;
+            }, dstStartDelay);
         }
 
-        if(currentTime < dstEnd && currentTime > dstStart) {
+        if (currentTime < dstEnd && currentTime > dstStart) {
             dstActive = true;
             const dstEndDelay = currentTime - dstEnd;
-            setTimeout(() => {dstActive = false}, dstEndDelay);
+            setTimeout(() => {
+                dstActive = false;
+            }, dstEndDelay);
         }
     } else {
         dstActive = false;
