@@ -12,7 +12,7 @@ describe("TimeService", () => {
     });
 
     beforeEach(() => {
-        timeService.destroyTimeCache();
+        timeService.clearCachedTimeCluster();
     });
 
     it.each([
