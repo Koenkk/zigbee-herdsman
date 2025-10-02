@@ -1,4 +1,4 @@
-import {afterAll, beforeAll, beforeEach, describe, expect, it, vi} from "vitest";
+import {afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi} from "vitest";
 import * as timeService from "../src/utils/timeService";
 
 describe("TimeService", () => {
@@ -7,13 +7,16 @@ describe("TimeService", () => {
     });
 
     afterAll(() => {
-        vi.unstubAllEnvs();
         vi.useRealTimers();
     });
 
     beforeEach(() => {
         timeService.clearCachedTimeData();
     });
+
+    afterEach(() => {
+        vi.unstubAllEnvs();
+    })
 
     it.each([
         {
@@ -118,6 +121,49 @@ describe("TimeService", () => {
             expect(timeCluster.validUntilTime).toBe(expectedTime + 24 * 60 * 60);
         },
     );
+
+    it.each([
+        {
+            testCase: "daylight saving time begins (Europe/Berlin)",
+            timeZone: "Europe/Berlin",
+            localTime: "Sun Mar 30 2025 01:59:59 GMT+0100 (Central European Standard Time)",
+            expectedShiftBefore: 0,
+            expectedShiftAfter: 3600,
+        },
+        {
+            testCase: "daylight saving time ends (Europe/Berlin)",
+            timeZone: "Europe/Berlin",
+            localTime: "Sun Oct 26 2025 02:59:59 GMT+0200 (Central European Summer Time)",
+            expectedShiftBefore: 3600,
+            expectedShiftAfter: 0,
+        },
+        {
+            testCase: "daylight saving time begins (Australia/Sydney)",
+            timeZone: "Australia/Sydney",
+            localTime: "Sun Oct 5 2025 01:59:59 GMT+1000 (Australian Eastern Standard Time)",
+            expectedShiftBefore: 0,
+            expectedShiftAfter: 3600,
+        },
+        {
+            testCase: "daylight saving time ends (Australia/Sydney)",
+            timeZone: "Australia/Sydney",
+            localTime: "Sun Apr 05 2026 02:59:59 GMT+1100 (Australian Eastern Daylight Time)",
+            expectedShiftBefore: 3600,
+            expectedShiftAfter: 0,
+        },
+    ])("Should handle $testCase correctly", ({timeZone, localTime, expectedShiftBefore, expectedShiftAfter}) => {
+        vi.stubEnv("TZ", timeZone);
+        vi.setSystemTime(Date.parse(localTime));
+
+        const firstRun = timeService.getTimeCluster();
+
+        vi.advanceTimersByTime(1000);
+
+        const secondRun = timeService.getTimeCluster();
+
+        expect(firstRun.localTime - firstRun.standardTime).toBe(expectedShiftBefore);
+        expect(secondRun.localTime - secondRun.standardTime).toBe(expectedShiftAfter);
+    });
 
     it("Should not use cached data for dynamic attributes", () => {
         const firstRun = timeService.getTimeCluster();
