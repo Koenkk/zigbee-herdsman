@@ -124,34 +124,34 @@ describe("TimeService", () => {
 
     it.each([
         {
-            testCase: "daylight saving time begins (Europe/Berlin)",
+            testCase: "begins (Europe/Berlin)",
             timeZone: "Europe/Berlin",
             localTime: "Sun Mar 30 2025 01:59:59 GMT+0100 (Central European Standard Time)",
             expectedShiftBefore: 0,
             expectedShiftAfter: 3600,
         },
         {
-            testCase: "daylight saving time ends (Europe/Berlin)",
+            testCase: "ends (Europe/Berlin)",
             timeZone: "Europe/Berlin",
             localTime: "Sun Oct 26 2025 02:59:59 GMT+0200 (Central European Summer Time)",
             expectedShiftBefore: 3600,
             expectedShiftAfter: 0,
         },
         {
-            testCase: "daylight saving time begins (Australia/Sydney)",
+            testCase: "begins (Australia/Sydney)",
             timeZone: "Australia/Sydney",
             localTime: "Sun Oct 5 2025 01:59:59 GMT+1000 (Australian Eastern Standard Time)",
             expectedShiftBefore: 0,
             expectedShiftAfter: 3600,
         },
         {
-            testCase: "daylight saving time ends (Australia/Sydney)",
+            testCase: "ends (Australia/Sydney)",
             timeZone: "Australia/Sydney",
             localTime: "Sun Apr 05 2026 02:59:59 GMT+1100 (Australian Eastern Daylight Time)",
             expectedShiftBefore: 3600,
             expectedShiftAfter: 0,
         },
-    ])("Should handle $testCase correctly", ({timeZone, localTime, expectedShiftBefore, expectedShiftAfter}) => {
+    ])("Should handle daylight saving time $testCase correctly", ({timeZone, localTime, expectedShiftBefore, expectedShiftAfter}) => {
         vi.stubEnv("TZ", timeZone);
         vi.setSystemTime(Date.parse(localTime));
 
