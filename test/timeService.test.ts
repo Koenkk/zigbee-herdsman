@@ -122,6 +122,7 @@ describe("TimeService", () => {
     it("Should return cached time cluster", () => {
         const firstRun = timeService.getTimeCluster();
 
+        // 23 hours
         vi.advanceTimersByTime(23 * 60 * 60 * 1000);
 
         const secondRun = timeService.getTimeCluster();
@@ -129,9 +130,10 @@ describe("TimeService", () => {
         expect(secondRun).toBe(firstRun);
     });
 
-    it("Should recalculate after expire", () => {
+    it("Should recalculate after expiry", () => {
         const firstRun = timeService.getTimeCluster();
 
+        // 24 hours
         vi.advanceTimersByTime(24 * 60 * 60 * 1000);
 
         const secondRun = timeService.getTimeCluster();
