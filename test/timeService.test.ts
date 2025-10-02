@@ -157,6 +157,7 @@ describe("TimeService", () => {
 
         const firstRun = timeService.getTimeClusterAttributes();
 
+        // 1 second later
         vi.advanceTimersByTime(1000);
 
         const secondRun = timeService.getTimeClusterAttributes();
@@ -171,7 +172,7 @@ describe("TimeService", () => {
 
         const firstRun = timeService.getTimeClusterAttributes();
 
-        // 1 hour
+        // 1 hour later
         const delta = 60 * 60;
         vi.advanceTimersByTime(delta * 1000);
 
@@ -188,8 +189,11 @@ describe("TimeService", () => {
 
         const firstRun = timeService.getTimeClusterAttributes();
 
-        // 23 hours
-        vi.advanceTimersByTime(23 * 60 * 60 * 1000);
+        // 23:59:59 later
+        const deltaHours = 23 * 60 * 60 * 1000;
+        const deltaMinutes = 59 * 60 * 1000;
+        const deltaSeconds = 59 * 1000;
+        vi.advanceTimersByTime(deltaHours + deltaMinutes + deltaSeconds);
 
         const secondRun = timeService.getTimeClusterAttributes();
 
@@ -202,7 +206,7 @@ describe("TimeService", () => {
 
         const firstRun = timeService.getTimeClusterAttributes();
 
-        // 24 hours
+        // 24 hours later
         vi.advanceTimersByTime(24 * 60 * 60 * 1000);
 
         const secondRun = timeService.getTimeClusterAttributes();
