@@ -2890,7 +2890,7 @@ describe("Controller", () => {
         async ({expectedTime, expectedTimeZone, expectedDstStart, expectedDstEnd, expectedDstShift, expectedStandardTime, expectedLocalTime}) => {
             // Mock the timeService, as we don't want to test that
             vi.mock("../src/utils/timeService");
-            vi.mocked(timeService.getTimeCluster).mockReturnValue({
+            vi.mocked(timeService.getTimeClusterAttributes).mockReturnValue({
                 time: expectedTime,
                 timeStatus: 3,
                 timeZone: expectedTimeZone,

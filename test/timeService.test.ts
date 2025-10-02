@@ -107,7 +107,7 @@ describe("TimeService", () => {
             vi.setSystemTime(new Date(localTime));
             vi.stubEnv("TZ", timeZone);
 
-            const timeCluster = timeService.getTimeCluster();
+            const timeCluster = timeService.getTimeClusterAttributes();
 
             expect(timeCluster.time).toBe(expectedTime);
             expect(timeCluster.timeStatus).toBe(3);
@@ -155,24 +155,24 @@ describe("TimeService", () => {
         vi.stubEnv("TZ", timeZone);
         vi.setSystemTime(Date.parse(localTime));
 
-        const firstRun = timeService.getTimeCluster();
+        const firstRun = timeService.getTimeClusterAttributes();
 
         vi.advanceTimersByTime(1000);
 
-        const secondRun = timeService.getTimeCluster();
+        const secondRun = timeService.getTimeClusterAttributes();
 
         expect(firstRun.localTime - firstRun.standardTime).toBe(expectedShiftBefore);
         expect(secondRun.localTime - secondRun.standardTime).toBe(expectedShiftAfter);
     });
 
     it("Should not use cached data for dynamic attributes", () => {
-        const firstRun = timeService.getTimeCluster();
+        const firstRun = timeService.getTimeClusterAttributes();
 
         // 1 hour
         const delta = 60 * 60;
         vi.advanceTimersByTime(delta * 1000);
 
-        const secondRun = timeService.getTimeCluster();
+        const secondRun = timeService.getTimeClusterAttributes();
 
         expect(secondRun.time).toBe(firstRun.time + delta);
         expect(secondRun.standardTime).toBe(firstRun.standardTime + delta);
@@ -180,23 +180,23 @@ describe("TimeService", () => {
     });
 
     it("Should return cached information within 24 hours", () => {
-        const firstRun = timeService.getTimeCluster();
+        const firstRun = timeService.getTimeClusterAttributes();
 
         // 23 hours
         vi.advanceTimersByTime(23 * 60 * 60 * 1000);
 
-        const secondRun = timeService.getTimeCluster();
+        const secondRun = timeService.getTimeClusterAttributes();
 
         expect(secondRun.lastSetTime).toBe(firstRun.lastSetTime);
     });
 
     it("Should recalculate the cache after 24 hours", () => {
-        const firstRun = timeService.getTimeCluster();
+        const firstRun = timeService.getTimeClusterAttributes();
 
         // 24 hours
         vi.advanceTimersByTime(24 * 60 * 60 * 1000);
 
-        const secondRun = timeService.getTimeCluster();
+        const secondRun = timeService.getTimeClusterAttributes();
 
         expect(secondRun.lastSetTime).not.toBe(firstRun.lastSetTime);
     });
