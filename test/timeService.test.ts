@@ -12,7 +12,7 @@ describe("TimeService", () => {
     });
 
     beforeEach(() => {
-        timeService.clearCachedTimeCluster();
+        timeService.clearCachedTimeData();
     });
 
     it.each([
@@ -37,8 +37,8 @@ describe("TimeService", () => {
             expectedDstStart: 796611600,
             expectedDstEnd: 814755600,
             expectedDstShift: 3600,
-            expectedStandardTime: 812659774,
-            expectedLocalTime: 812663374,
+            expectedStandardTime: 812656174,
+            expectedLocalTime: 812659774,
         },
         {
             testCase: "Northern Hemisphere, timezone with DST, DST inactive",
@@ -73,8 +73,8 @@ describe("TimeService", () => {
             expectedDstStart: 812908800,
             expectedDstEnd: 828633600,
             expectedDstShift: 3600,
-            expectedStandardTime: 815454469,
-            expectedLocalTime: 815458069,
+            expectedStandardTime: 815450869,
+            expectedLocalTime: 815454469,
         },
         {
             testCase: "Southern Hemisphere, timezone with DST, DST active with start in previous year",
@@ -85,8 +85,8 @@ describe("TimeService", () => {
             expectedDstStart: 812908800,
             expectedDstEnd: 828633600,
             expectedDstShift: 3600,
-            expectedStandardTime: 822107291,
-            expectedLocalTime: 822110891,
+            expectedStandardTime: 822103691,
+            expectedLocalTime: 822107291,
         },
     ])(
         "Should process daylight saving time correctly for $testCase",
@@ -119,7 +119,21 @@ describe("TimeService", () => {
         },
     );
 
-    it("Should return cached time cluster", () => {
+    it("Should not use cached data for attributes with datatype = UTC", () => {
+        const firstRun = timeService.getTimeCluster();
+
+        // 1 hour
+        const delta = 60 * 60;
+        vi.advanceTimersByTime(delta * 1000);
+
+        const secondRun = timeService.getTimeCluster();
+
+        expect(secondRun.time).toBe(firstRun.time + delta);
+        expect(secondRun.standardTime).toBe(firstRun.standardTime + delta);
+        expect(secondRun.localTime).toBe(firstRun.localTime + delta);
+    })
+
+    it("Should return cached time information within 24 hours", () => {
         const firstRun = timeService.getTimeCluster();
 
         // 23 hours
@@ -127,10 +141,10 @@ describe("TimeService", () => {
 
         const secondRun = timeService.getTimeCluster();
 
-        expect(secondRun).toBe(firstRun);
+        expect(secondRun.lastSetTime).toBe(firstRun.lastSetTime);
     });
 
-    it("Should recalculate after expiry", () => {
+    it("Should recalculate the cache after 24 hours", () => {
         const firstRun = timeService.getTimeCluster();
 
         // 24 hours
@@ -138,6 +152,6 @@ describe("TimeService", () => {
 
         const secondRun = timeService.getTimeCluster();
 
-        expect(secondRun).not.toBe(firstRun);
+        expect(secondRun.lastSetTime).not.toBe(firstRun.lastSetTime);
     });
 });
