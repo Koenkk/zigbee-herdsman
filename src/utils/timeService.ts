@@ -65,7 +65,7 @@ export function getTimeCluster(): TimeCluster {
         standardTime: toZigbeeUtcTime(standardTime),
         localTime: toZigbeeUtcTime(localTime),
         lastSetTime: cachedTimeData.lastSetTime,
-        validUntilTime: cachedTimeData.validUntilTime
+        validUntilTime: cachedTimeData.validUntilTime,
     };
 }
 
