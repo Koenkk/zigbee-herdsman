@@ -1,5 +1,5 @@
 import {afterAll, beforeAll, beforeEach, describe, expect, it, vi} from "vitest";
-import * as timeService from "../../src/utils/timeService";
+import * as timeService from "../src/utils/timeService";
 
 describe("TimeService", () => {
     beforeAll(() => {
