@@ -353,7 +353,7 @@ export class Device extends Entity<ControllerEventMap> {
             const isTimeReadRequest = dataPayload.clusterID === Zcl.Clusters.genTime.ID;
             if (isTimeReadRequest) {
                 attributes.genTime = {
-                    attributes: timeService.getTimeCluster(),
+                    attributes: timeService.getTimeClusterAttributes(),
                 };
             }
 

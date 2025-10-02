@@ -49,7 +49,7 @@ function cachedTimeDataIsValid(): boolean {
     return timestampToZigbeeUtcTime(Date.now()) < cachedTimeData.validUntilTime;
 }
 
-export function getTimeCluster(): TimeClusterAttributes {
+export function getTimeClusterAttributes(): TimeClusterAttributes {
     if (!cachedTimeDataIsValid()) {
         recalculateTimeData();
     }
