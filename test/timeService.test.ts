@@ -119,7 +119,7 @@ describe("TimeService", () => {
         },
     );
 
-    it("Should not use cached data for attributes with datatype = UTC", () => {
+    it("Should not use cached data for dynamic attributes", () => {
         const firstRun = timeService.getTimeCluster();
 
         // 1 hour
@@ -133,7 +133,7 @@ describe("TimeService", () => {
         expect(secondRun.localTime).toBe(firstRun.localTime + delta);
     });
 
-    it("Should return cached time information within 24 hours", () => {
+    it("Should return cached information within 24 hours", () => {
         const firstRun = timeService.getTimeCluster();
 
         // 23 hours
