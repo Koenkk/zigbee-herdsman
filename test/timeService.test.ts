@@ -131,7 +131,7 @@ describe("TimeService", () => {
         expect(secondRun.time).toBe(firstRun.time + delta);
         expect(secondRun.standardTime).toBe(firstRun.standardTime + delta);
         expect(secondRun.localTime).toBe(firstRun.localTime + delta);
-    })
+    });
 
     it("Should return cached time information within 24 hours", () => {
         const firstRun = timeService.getTimeCluster();
