@@ -83,6 +83,7 @@ function recalculateTimeData() {
     let dstStart = 0xffffffff;
     let dstEnd = 0xffffffff;
     let dstShift = 0;
+    dstActive = false;
     const validUntilTime = currentTime + OneDayInMilliseconds;
 
     const localTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -136,7 +137,6 @@ function recalculateTimeData() {
         }
 
         if (currentTime < dstStart) {
-            dstActive = false;
             const dstStartDelay = currentTime - dstStart;
             setTimeout(() => {
                 dstActive = true;
@@ -150,8 +150,6 @@ function recalculateTimeData() {
                 dstActive = false;
             }, dstEndDelay);
         }
-    } else {
-        dstActive = false;
     }
 
     cachedTimeData = {
