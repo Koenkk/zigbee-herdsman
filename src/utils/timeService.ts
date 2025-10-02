@@ -1,6 +1,6 @@
 import {tzScan} from "@date-fns/tz";
 
-interface TimeCluster {
+interface TimeClusterAttributes {
     time: number;
     timeStatus: number;
     timeZone: number;
@@ -49,7 +49,7 @@ function cachedTimeDataIsValid(): boolean {
     return timestampToZigbeeUtcTime(Date.now()) < cachedTimeData.validUntilTime;
 }
 
-export function getTimeCluster(): TimeCluster {
+export function getTimeCluster(): TimeClusterAttributes {
     if (!cachedTimeDataIsValid()) {
         recalculateTimeData();
     }
