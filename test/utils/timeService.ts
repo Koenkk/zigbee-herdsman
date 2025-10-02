@@ -1,4 +1,3 @@
-
 import {afterAll, beforeAll, beforeEach, describe, expect, it, vi} from "vitest";
 import * as timeService from "../../src/utils/timeService";
 
@@ -89,38 +88,41 @@ describe("TimeService", () => {
             expectedStandardTime: 822107291,
             expectedLocalTime: 822110891,
         },
-    ])("Should process daylight saving time correctly for $testCase", ({
-          timeZone,
-          localTime,
-          expectedTime,
-          expectedTimeZone,
-          expectedDstStart,
-          expectedDstEnd,
-          expectedDstShift,
-          expectedStandardTime,
-          expectedLocalTime,
-      }) => {
-        vi.setSystemTime(new Date(localTime));
-        vi.stubEnv("TZ", timeZone);
+    ])(
+        "Should process daylight saving time correctly for $testCase",
+        ({
+            timeZone,
+            localTime,
+            expectedTime,
+            expectedTimeZone,
+            expectedDstStart,
+            expectedDstEnd,
+            expectedDstShift,
+            expectedStandardTime,
+            expectedLocalTime,
+        }) => {
+            vi.setSystemTime(new Date(localTime));
+            vi.stubEnv("TZ", timeZone);
 
-        const timeCluster = timeService.getTimeCluster();
+            const timeCluster = timeService.getTimeCluster();
 
-        expect(timeCluster.time).toBe(expectedTime);
-        expect(timeCluster.timeStatus).toBe(3);
-        expect(timeCluster.timeZone).toBe(expectedTimeZone);
-        expect(timeCluster.dstStart).toBe(expectedDstStart);
-        expect(timeCluster.dstEnd).toBe(expectedDstEnd);
-        expect(timeCluster.dstShift).toBe(expectedDstShift);
-        expect(timeCluster.standardTime).toBe(expectedStandardTime);
-        expect(timeCluster.localTime).toBe(expectedLocalTime);
-        expect(timeCluster.lastSetTime).toBe(expectedTime);
-        expect(timeCluster.validUntilTime).toBe(expectedTime + 24 * 60 * 60);
-    });
+            expect(timeCluster.time).toBe(expectedTime);
+            expect(timeCluster.timeStatus).toBe(3);
+            expect(timeCluster.timeZone).toBe(expectedTimeZone);
+            expect(timeCluster.dstStart).toBe(expectedDstStart);
+            expect(timeCluster.dstEnd).toBe(expectedDstEnd);
+            expect(timeCluster.dstShift).toBe(expectedDstShift);
+            expect(timeCluster.standardTime).toBe(expectedStandardTime);
+            expect(timeCluster.localTime).toBe(expectedLocalTime);
+            expect(timeCluster.lastSetTime).toBe(expectedTime);
+            expect(timeCluster.validUntilTime).toBe(expectedTime + 24 * 60 * 60);
+        },
+    );
 
     it("Should return cached time cluster", () => {
         const firstRun = timeService.getTimeCluster();
 
-        vi.advanceTimersByTime(23*60*60*1000);
+        vi.advanceTimersByTime(23 * 60 * 60 * 1000);
 
         const secondRun = timeService.getTimeCluster();
 
@@ -130,7 +132,7 @@ describe("TimeService", () => {
     it("Should recalculate after expire", () => {
         const firstRun = timeService.getTimeCluster();
 
-        vi.advanceTimersByTime(24*60*60*1000);
+        vi.advanceTimersByTime(24 * 60 * 60 * 1000);
 
         const secondRun = timeService.getTimeCluster();
 
