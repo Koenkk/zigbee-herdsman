@@ -22,7 +22,6 @@ interface CachedTimeData {
     dstShiftInMilliseconds: number;
     lastSetTime: number;
     validUntilTime: number;
-    dstActive: boolean;
 }
 
 const OneJanuary2000 = new Date("January 01, 2000 00:00:00 UTC+00:00").getTime();
@@ -30,7 +29,7 @@ const OneDayInMilliseconds = 24 * 60 * 60 * 1000;
 
 let cachedTimeData: CachedTimeData = <CachedTimeData>{};
 
-function toZigbeeUtcTime(timestamp: number) {
+function timestampToZigbeeUtcTime(timestamp: number) {
     if (timestamp === 0xffffffff) {
         return timestamp;
     }
@@ -38,12 +37,16 @@ function toZigbeeUtcTime(timestamp: number) {
     return Math.round((timestamp - OneJanuary2000) / 1000);
 }
 
+function zigbeeUtcTimeToTimestamp(zigbeeTime: number) {
+    return zigbeeTime * 1000 + OneJanuary2000;
+}
+
 export function clearCachedTimeData() {
     cachedTimeData = <CachedTimeData>{};
 }
 
 function cachedTimeDataIsValid(): boolean {
-    return toZigbeeUtcTime(Date.now()) < cachedTimeData.validUntilTime;
+    return timestampToZigbeeUtcTime(Date.now()) < cachedTimeData.validUntilTime;
 }
 
 export function getTimeCluster(): TimeCluster {
@@ -53,17 +56,26 @@ export function getTimeCluster(): TimeCluster {
 
     const currentTime = Date.now();
     const standardTime = currentTime + cachedTimeData.timeZoneInMilliseconds;
-    const localTime = cachedTimeData.dstActive ? standardTime + cachedTimeData.dstShiftInMilliseconds : standardTime;
+    let localTime = standardTime;
+
+    // tzScan provides the first second where the change is being applied, not
+    // the last second before the change (as assumed in the ZCL documentation).
+    const dstActive =
+        currentTime >= zigbeeUtcTimeToTimestamp(cachedTimeData.dstStart) &&
+        currentTime < zigbeeUtcTimeToTimestamp(cachedTimeData.dstEnd);
+    if (dstActive) {
+        localTime = standardTime + cachedTimeData.dstShiftInMilliseconds;
+    }
 
     return {
-        time: toZigbeeUtcTime(currentTime),
+        time: timestampToZigbeeUtcTime(currentTime),
         timeStatus: 3,
         timeZone: cachedTimeData.timeZone,
         dstStart: cachedTimeData.dstStart,
         dstEnd: cachedTimeData.dstEnd,
         dstShift: cachedTimeData.dstShift,
-        standardTime: toZigbeeUtcTime(standardTime),
-        localTime: toZigbeeUtcTime(localTime),
+        standardTime: timestampToZigbeeUtcTime(standardTime),
+        localTime: timestampToZigbeeUtcTime(localTime),
         lastSetTime: cachedTimeData.lastSetTime,
         validUntilTime: cachedTimeData.validUntilTime,
     };
@@ -79,7 +91,6 @@ function recalculateTimeData() {
     let dstStart = 0xffffffff;
     let dstEnd = 0xffffffff;
     let dstChange = 0;
-    let dstActive = false;
     const validUntilTime = currentTime + OneDayInMilliseconds;
 
     const localTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -103,7 +114,7 @@ function recalculateTimeData() {
             dstEnd = dstChangesThisYear[1].date.getTime();
             dstChange = dstChangesThisYear[0].change * 60;
         } else {
-            const dstStartIsInPreviousYear = localTime < dstChangesThisYear[0].date.getTime();
+            const dstStartIsInPreviousYear = currentTime < dstChangesThisYear[0].date.getTime();
             if (dstStartIsInPreviousYear) {
                 const dstChangesLastYear = tzScan(localTimeZone, {
                     start: new Date(currentYear - 1, 1),
@@ -132,19 +143,16 @@ function recalculateTimeData() {
                 }
             }
         }
-
-        dstActive = localTime > dstStart && localTime < dstEnd;
     }
 
     cachedTimeData = {
         timeZone: timeZoneDifferenceToUtc,
         timeZoneInMilliseconds: timeZoneDifferenceToUtc * 1000,
-        dstStart: toZigbeeUtcTime(dstStart),
-        dstEnd: toZigbeeUtcTime(dstEnd),
+        dstStart: timestampToZigbeeUtcTime(dstStart),
+        dstEnd: timestampToZigbeeUtcTime(dstEnd),
         dstShift: dstChange,
         dstShiftInMilliseconds: dstChange * 1000,
-        dstActive: dstActive,
-        lastSetTime: toZigbeeUtcTime(currentTime),
-        validUntilTime: toZigbeeUtcTime(validUntilTime),
+        lastSetTime: timestampToZigbeeUtcTime(currentTime),
+        validUntilTime: timestampToZigbeeUtcTime(validUntilTime),
     };
 }
