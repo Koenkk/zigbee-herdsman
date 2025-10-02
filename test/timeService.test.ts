@@ -104,8 +104,8 @@ describe("TimeService", () => {
             expectedStandardTime,
             expectedLocalTime,
         }) => {
-            vi.setSystemTime(new Date(localTime));
             vi.stubEnv("TZ", timeZone);
+            vi.setSystemTime(new Date(localTime));
 
             const timeCluster = timeService.getTimeClusterAttributes();
 
