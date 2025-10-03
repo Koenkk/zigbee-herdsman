@@ -94,9 +94,7 @@ function recalculateTimeData() {
     // of changes is exactly 2.
     const hasRegularDst = dstChangesThisYear.length === 2;
     if (hasRegularDst) {
-        const firstDstChangeOfTheYear = dstChangesThisYear[0];
-
-        const isNorthernHemisphere = firstDstChangeOfTheYear.change > 0;
+        const isNorthernHemisphere = dstChangesThisYear[0].change > 0;
         if (isNorthernHemisphere) {
             timeZoneDifferenceToUtc = dstChangesThisYear[1].offset * 60;
             dstStart = dstChangesThisYear[0].date.getTime();
