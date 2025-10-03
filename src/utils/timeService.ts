@@ -14,7 +14,7 @@ interface TimeClusterAttributes {
 }
 
 interface CachedTimeData {
-    timeZone: number;
+    timeZoneDifferenceToUtc: number;
     dstStart: number;
     dstEnd: number;
     dstShift: number;
@@ -47,7 +47,7 @@ export function getTimeClusterAttributes(): TimeClusterAttributes {
         recalculateTimeData();
     }
 
-    const standardTime = currentTime + cachedTimeData.timeZone;
+    const standardTime = currentTime + cachedTimeData.timeZoneDifferenceToUtc;
     let localTime = standardTime;
 
     // tzScan returns the first second the change has to be applied.
@@ -60,7 +60,7 @@ export function getTimeClusterAttributes(): TimeClusterAttributes {
     return {
         time: currentTime,
         timeStatus: 3,
-        timeZone: cachedTimeData.timeZone,
+        timeZone: cachedTimeData.timeZoneDifferenceToUtc,
         dstStart: cachedTimeData.dstStart,
         dstEnd: cachedTimeData.dstEnd,
         dstShift: cachedTimeData.dstShift,
@@ -135,7 +135,7 @@ function recalculateTimeData() {
     }
 
     cachedTimeData = {
-        timeZone: timeZoneDifferenceToUtc,
+        timeZoneDifferenceToUtc: timeZoneDifferenceToUtc,
         dstStart: timestampToZigbeeUtcTime(dstStart),
         dstEnd: timestampToZigbeeUtcTime(dstEnd),
         dstShift: dstShift,
