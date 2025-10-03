@@ -1,17 +1,5 @@
 import {tzScan} from "@date-fns/tz";
-
-interface TimeClusterAttributes {
-    time: number;
-    timeStatus: number;
-    timeZone: number;
-    dstStart: number;
-    dstEnd: number;
-    dstShift: number;
-    standardTime: number;
-    localTime: number;
-    lastSetTime: number;
-    validUntilTime: number;
-}
+import type {TClusterAttributes} from "../zspec/zcl/definition/clusters-types";
 
 interface CachedTimeData {
     timeZoneDifferenceToUtc: number;
@@ -39,7 +27,7 @@ export function clearCachedTimeData() {
     cachedTimeData = <CachedTimeData>{};
 }
 
-export function getTimeClusterAttributes(): TimeClusterAttributes {
+export function getTimeClusterAttributes(): TClusterAttributes<"genTime"> {
     const currentTime = timestampToZigbeeUtcTime(Date.now());
 
     const cachedTimeDataIsValid = currentTime < cachedTimeData.validUntilTime;
