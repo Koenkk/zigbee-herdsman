@@ -2875,136 +2875,131 @@ describe("Controller", () => {
         expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(1);
     });
 
-    it.each([
-        {
-            expectedTime: 825789852,
-            expectedTimeZone: 3600,
-            expectedDstStart: 828061200,
-            expectedDstEnd: 846205200,
-            expectedDstShift: 3600,
-            expectedStandardTime: 825793452,
-            expectedLocalTime: 825793452,
-        },
-    ])(
-        "Respond to genTime read",
-        async ({expectedTime, expectedTimeZone, expectedDstStart, expectedDstEnd, expectedDstShift, expectedStandardTime, expectedLocalTime}) => {
-            // Mock the timeService, as we don't want to test that
-            vi.mock("../src/utils/timeService");
-            vi.mocked(timeService.getTimeClusterAttributes).mockReturnValue({
-                time: expectedTime,
-                timeStatus: 3,
-                timeZone: expectedTimeZone,
-                dstStart: expectedDstStart,
-                dstEnd: expectedDstEnd,
-                dstShift: expectedDstShift,
-                standardTime: expectedStandardTime,
-                localTime: expectedLocalTime,
-                lastSetTime: expectedTime,
-                validUntilTime: expectedTime + 24 * 60 * 60,
-            });
+    it("Respond to genTime read", async () => {
+        const expectedTime = 825789852;
+        const expectedTimeZone = 3600;
+        const expectedDstStart = 828061200;
+        const expectedDstEnd = 846205200;
+        const expectedDstShift = 3600;
+        const expectedStandardTime = 825793452;
+        const expectedLocalTime = 825793452;
 
-            const frame = Zcl.Frame.create(
-                0,
-                0,
-                true,
-                undefined,
-                40,
-                0,
-                10,
-                [{attrId: 0}, {attrId: 1}, {attrId: 2}, {attrId: 3}, {attrId: 4}, {attrId: 5}, {attrId: 6}, {attrId: 7}, {attrId: 8}, {attrId: 9}],
-                {},
-            );
-            await controller.start();
-            await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
-            mocksendZclFrameToEndpoint.mockClear();
-            await mockAdapterEvents.zclPayload({
-                wasBroadcast: false,
-                address: 129,
-                clusterID: frame.cluster.ID,
-                data: frame.toBuffer(),
-                header: frame.header,
-                endpoint: 1,
-                linkquality: 19,
-                groupID: 10,
-            });
+        // Mock the timeService, as we don't want to test that
+        vi.mock("../src/utils/timeService");
+        vi.mocked(timeService.getTimeClusterAttributes).mockReturnValue({
+            time: expectedTime,
+            timeStatus: 3,
+            timeZone: expectedTimeZone,
+            dstStart: expectedDstStart,
+            dstEnd: expectedDstEnd,
+            dstShift: expectedDstShift,
+            standardTime: expectedStandardTime,
+            localTime: expectedLocalTime,
+            lastSetTime: expectedTime,
+            validUntilTime: expectedTime + 24 * 60 * 60,
+        });
 
-            expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(1);
-            expect(mocksendZclFrameToEndpoint.mock.calls[0][0]).toBe("0x129");
-            expect(mocksendZclFrameToEndpoint.mock.calls[0][1]).toBe(129);
-            expect(mocksendZclFrameToEndpoint.mock.calls[0][2]).toBe(1);
-            const message = mocksendZclFrameToEndpoint.mock.calls[0][3];
-            expect(message.payload.length).toBe(10);
+        const frame = Zcl.Frame.create(
+            0,
+            0,
+            true,
+            undefined,
+            40,
+            0,
+            10,
+            [{attrId: 0}, {attrId: 1}, {attrId: 2}, {attrId: 3}, {attrId: 4}, {attrId: 5}, {attrId: 6}, {attrId: 7}, {attrId: 8}, {attrId: 9}],
+            {},
+        );
+        await controller.start();
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
+        mocksendZclFrameToEndpoint.mockClear();
+        await mockAdapterEvents.zclPayload({
+            wasBroadcast: false,
+            address: 129,
+            clusterID: frame.cluster.ID,
+            data: frame.toBuffer(),
+            header: frame.header,
+            endpoint: 1,
+            linkquality: 19,
+            groupID: 10,
+        });
 
-            // Time
-            expect(message.payload[0].attrId).toBe(Zcl.Clusters.genTime.attributes.time.ID);
-            expect(message.payload[0].dataType).toBe(Zcl.DataType.UTC);
-            expect(message.payload[0].status).toBe(Zcl.Status.SUCCESS);
-            expect(message.payload[0].attrData).toBe(expectedTime);
+        expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(1);
+        expect(mocksendZclFrameToEndpoint.mock.calls[0][0]).toBe("0x129");
+        expect(mocksendZclFrameToEndpoint.mock.calls[0][1]).toBe(129);
+        expect(mocksendZclFrameToEndpoint.mock.calls[0][2]).toBe(1);
+        const message = mocksendZclFrameToEndpoint.mock.calls[0][3];
+        expect(message.payload.length).toBe(10);
 
-            // TimeStatus
-            expect(message.payload[1].attrId).toBe(Zcl.Clusters.genTime.attributes.timeStatus.ID);
-            expect(message.payload[1].dataType).toBe(Zcl.DataType.BITMAP8);
-            expect(message.payload[1].status).toBe(Zcl.Status.SUCCESS);
-            expect(message.payload[1].attrData).toBe(3);
+        // Time
+        expect(message.payload[0].attrId).toBe(Zcl.Clusters.genTime.attributes.time.ID);
+        expect(message.payload[0].dataType).toBe(Zcl.DataType.UTC);
+        expect(message.payload[0].status).toBe(Zcl.Status.SUCCESS);
+        expect(message.payload[0].attrData).toBe(expectedTime);
 
-            // TimeZone
-            expect(message.payload[2].attrId).toBe(Zcl.Clusters.genTime.attributes.timeZone.ID);
-            expect(message.payload[2].dataType).toBe(Zcl.DataType.INT32);
-            expect(message.payload[2].status).toBe(Zcl.Status.SUCCESS);
-            expect(message.payload[2].attrData).toBe(expectedTimeZone);
+        // TimeStatus
+        expect(message.payload[1].attrId).toBe(Zcl.Clusters.genTime.attributes.timeStatus.ID);
+        expect(message.payload[1].dataType).toBe(Zcl.DataType.BITMAP8);
+        expect(message.payload[1].status).toBe(Zcl.Status.SUCCESS);
+        expect(message.payload[1].attrData).toBe(3);
 
-            // DstStart
-            expect(message.payload[3].attrId).toBe(Zcl.Clusters.genTime.attributes.dstStart.ID);
-            expect(message.payload[3].dataType).toBe(Zcl.DataType.UINT32);
-            expect(message.payload[3].status).toBe(Zcl.Status.SUCCESS);
-            expect(message.payload[3].attrData).toBe(expectedDstStart);
+        // TimeZone
+        expect(message.payload[2].attrId).toBe(Zcl.Clusters.genTime.attributes.timeZone.ID);
+        expect(message.payload[2].dataType).toBe(Zcl.DataType.INT32);
+        expect(message.payload[2].status).toBe(Zcl.Status.SUCCESS);
+        expect(message.payload[2].attrData).toBe(expectedTimeZone);
 
-            // DstEnd
-            expect(message.payload[4].attrId).toBe(Zcl.Clusters.genTime.attributes.dstEnd.ID);
-            expect(message.payload[4].dataType).toBe(Zcl.DataType.UINT32);
-            expect(message.payload[4].status).toBe(Zcl.Status.SUCCESS);
-            expect(message.payload[4].attrData).toBe(expectedDstEnd);
+        // DstStart
+        expect(message.payload[3].attrId).toBe(Zcl.Clusters.genTime.attributes.dstStart.ID);
+        expect(message.payload[3].dataType).toBe(Zcl.DataType.UINT32);
+        expect(message.payload[3].status).toBe(Zcl.Status.SUCCESS);
+        expect(message.payload[3].attrData).toBe(expectedDstStart);
 
-            // DstShift
-            expect(message.payload[5].attrId).toBe(Zcl.Clusters.genTime.attributes.dstShift.ID);
-            expect(message.payload[5].dataType).toBe(Zcl.DataType.INT32);
-            expect(message.payload[5].status).toBe(Zcl.Status.SUCCESS);
-            expect(message.payload[5].attrData).toBe(expectedDstShift);
+        // DstEnd
+        expect(message.payload[4].attrId).toBe(Zcl.Clusters.genTime.attributes.dstEnd.ID);
+        expect(message.payload[4].dataType).toBe(Zcl.DataType.UINT32);
+        expect(message.payload[4].status).toBe(Zcl.Status.SUCCESS);
+        expect(message.payload[4].attrData).toBe(expectedDstEnd);
 
-            // StandardTime
-            expect(message.payload[6].attrId).toBe(Zcl.Clusters.genTime.attributes.standardTime.ID);
-            expect(message.payload[6].dataType).toBe(Zcl.DataType.UINT32);
-            expect(message.payload[6].status).toBe(Zcl.Status.SUCCESS);
-            expect(message.payload[6].attrData).toBe(expectedStandardTime);
+        // DstShift
+        expect(message.payload[5].attrId).toBe(Zcl.Clusters.genTime.attributes.dstShift.ID);
+        expect(message.payload[5].dataType).toBe(Zcl.DataType.INT32);
+        expect(message.payload[5].status).toBe(Zcl.Status.SUCCESS);
+        expect(message.payload[5].attrData).toBe(expectedDstShift);
 
-            // LocalTime
-            expect(message.payload[7].attrId).toBe(Zcl.Clusters.genTime.attributes.localTime.ID);
-            expect(message.payload[7].dataType).toBe(Zcl.DataType.UINT32);
-            expect(message.payload[7].status).toBe(Zcl.Status.SUCCESS);
-            expect(message.payload[7].attrData).toBe(expectedLocalTime);
+        // StandardTime
+        expect(message.payload[6].attrId).toBe(Zcl.Clusters.genTime.attributes.standardTime.ID);
+        expect(message.payload[6].dataType).toBe(Zcl.DataType.UINT32);
+        expect(message.payload[6].status).toBe(Zcl.Status.SUCCESS);
+        expect(message.payload[6].attrData).toBe(expectedStandardTime);
 
-            // LastSetTime
-            expect(message.payload[8].attrId).toBe(Zcl.Clusters.genTime.attributes.lastSetTime.ID);
-            expect(message.payload[8].dataType).toBe(Zcl.DataType.UTC);
-            expect(message.payload[8].status).toBe(Zcl.Status.SUCCESS);
-            expect(message.payload[8].attrData).toBe(expectedTime);
+        // LocalTime
+        expect(message.payload[7].attrId).toBe(Zcl.Clusters.genTime.attributes.localTime.ID);
+        expect(message.payload[7].dataType).toBe(Zcl.DataType.UINT32);
+        expect(message.payload[7].status).toBe(Zcl.Status.SUCCESS);
+        expect(message.payload[7].attrData).toBe(expectedLocalTime);
 
-            // ValidUntilTime
-            expect(message.payload[9].attrId).toBe(Zcl.Clusters.genTime.attributes.validUntilTime.ID);
-            expect(message.payload[9].dataType).toBe(Zcl.DataType.UTC);
-            expect(message.payload[9].status).toBe(Zcl.Status.SUCCESS);
-            expect(message.payload[9].attrData).toBe(expectedTime + 24 * 60 * 60);
+        // LastSetTime
+        expect(message.payload[8].attrId).toBe(Zcl.Clusters.genTime.attributes.lastSetTime.ID);
+        expect(message.payload[8].dataType).toBe(Zcl.DataType.UTC);
+        expect(message.payload[8].status).toBe(Zcl.Status.SUCCESS);
+        expect(message.payload[8].attrData).toBe(expectedTime);
 
-            delete message.payload;
-            const call = mocksendZclFrameToEndpoint.mock.calls[0];
-            expect(call[0]).toBe("0x129");
-            expect(call[1]).toBe(129);
-            expect(call[2]).toBe(1);
-            expect(deepClone(call[3])).toStrictEqual(
-                deepClone(Zcl.Frame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.SERVER_TO_CLIENT, true, undefined, 40, "readRsp", 10, undefined, {})),
-            );
-        },
-    );
+        // ValidUntilTime
+        expect(message.payload[9].attrId).toBe(Zcl.Clusters.genTime.attributes.validUntilTime.ID);
+        expect(message.payload[9].dataType).toBe(Zcl.DataType.UTC);
+        expect(message.payload[9].status).toBe(Zcl.Status.SUCCESS);
+        expect(message.payload[9].attrData).toBe(expectedTime + 24 * 60 * 60);
+
+        delete message.payload;
+        const call = mocksendZclFrameToEndpoint.mock.calls[0];
+        expect(call[0]).toBe("0x129");
+        expect(call[1]).toBe(129);
+        expect(call[2]).toBe(1);
+        expect(deepClone(call[3])).toStrictEqual(
+            deepClone(Zcl.Frame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.SERVER_TO_CLIENT, true, undefined, 40, "readRsp", 10, undefined, {})),
+        );
+    });
 
     it("Allow to override read response through `device.customReadResponse", async () => {
         await controller.start();
