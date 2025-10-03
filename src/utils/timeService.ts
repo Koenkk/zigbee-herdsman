@@ -27,7 +27,6 @@ interface CachedTimeData {
 const OneJanuary2000 = new Date("January 01, 2000 00:00:00 UTC+00:00").getTime();
 const OneDayInMilliseconds = 24 * 60 * 60 * 1000;
 
-let dstActive: boolean;
 let cachedTimeData: CachedTimeData = <CachedTimeData>{};
 
 function timestampToZigbeeUtcTime(timestamp: number) {
@@ -55,7 +54,11 @@ export function getTimeClusterAttributes(): TimeClusterAttributes {
     const standardTime = currentTime + cachedTimeData.timeZoneInMilliseconds;
     let localTime = standardTime;
 
-    if (dstActive) {
+    // tzScan returns the first second the change has to be applied.
+    // Therefore, we have to use >= for the dstStart comparison and
+    // not for the dstEnd comparison.
+    const currentTimeInZigbeeUtcTime = timestampToZigbeeUtcTime(currentTime);
+    if (currentTimeInZigbeeUtcTime >= cachedTimeData.dstStart && currentTimeInZigbeeUtcTime < cachedTimeData.dstEnd) {
         localTime = standardTime + cachedTimeData.dstShiftInMilliseconds;
     }
 
@@ -83,7 +86,6 @@ function recalculateTimeData() {
     let dstStart = 0xffffffff;
     let dstEnd = 0xffffffff;
     let dstShift = 0;
-    dstActive = false;
     const validUntilTime = currentTime + OneDayInMilliseconds;
 
     const localTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -133,28 +135,6 @@ function recalculateTimeData() {
                     dstEnd = dstChangesNextYear[0].date.getTime();
                     dstShift = dstChangesThisYear[1].change * 60;
                 }
-            }
-        }
-
-        const nextUpdateDelay = validUntilTime - currentTime;
-        const dstStartDelay = currentTime - dstStart;
-        const dstStartsBeforeNextUpdate = dstStartDelay < nextUpdateDelay;
-
-        if (dstStartsBeforeNextUpdate) {
-            setTimeout(() => {
-                dstActive = true;
-            }, dstStartDelay);
-        }
-
-        if (currentTime < dstEnd && currentTime > dstStart) {
-            dstActive = true;
-
-            const dstEndDelay = currentTime - dstEnd;
-            const dstEndsBeforeNextUpdate = dstEndDelay < nextUpdateDelay;
-            if (dstEndsBeforeNextUpdate) {
-                setTimeout(() => {
-                    dstActive = false;
-                }, dstEndDelay);
             }
         }
     }
