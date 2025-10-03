@@ -15,11 +15,9 @@ interface TimeClusterAttributes {
 
 interface CachedTimeData {
     timeZone: number;
-    timeZoneInMilliseconds: number;
     dstStart: number;
     dstEnd: number;
     dstShift: number;
-    dstShiftInMilliseconds: number;
     lastSetTime: number;
     validUntilTime: number;
 }
@@ -27,7 +25,7 @@ interface CachedTimeData {
 const OneJanuary2000 = new Date("January 01, 2000 00:00:00 UTC+00:00").getTime();
 const OneDayInMilliseconds = 24 * 60 * 60 * 1000;
 
-let cachedTimeData: CachedTimeData = <CachedTimeData>{};
+let cachedTimeData = <CachedTimeData>{};
 
 function timestampToZigbeeUtcTime(timestamp: number) {
     if (timestamp === 0xffffffff) {
@@ -50,14 +48,14 @@ export function getTimeClusterAttributes(): TimeClusterAttributes {
         recalculateTimeData();
     }
 
-    const standardTime = currentTime + cachedTimeData.timeZoneInMilliseconds;
+    const standardTime = currentTimeInZigbeeUtcTime + cachedTimeData.timeZone;
     let localTime = standardTime;
 
     // tzScan returns the first second the change has to be applied.
     // Therefore, we have to use >= for the dstStart comparison and
     // not for the dstEnd comparison.
     if (currentTimeInZigbeeUtcTime >= cachedTimeData.dstStart && currentTimeInZigbeeUtcTime < cachedTimeData.dstEnd) {
-        localTime = standardTime + cachedTimeData.dstShiftInMilliseconds;
+        localTime = standardTime + cachedTimeData.dstShift;
     }
 
     return {
@@ -67,8 +65,8 @@ export function getTimeClusterAttributes(): TimeClusterAttributes {
         dstStart: cachedTimeData.dstStart,
         dstEnd: cachedTimeData.dstEnd,
         dstShift: cachedTimeData.dstShift,
-        standardTime: timestampToZigbeeUtcTime(standardTime),
-        localTime: timestampToZigbeeUtcTime(localTime),
+        standardTime: standardTime,
+        localTime: localTime,
         lastSetTime: cachedTimeData.lastSetTime,
         validUntilTime: cachedTimeData.validUntilTime,
     };
@@ -139,11 +137,9 @@ function recalculateTimeData() {
 
     cachedTimeData = {
         timeZone: timeZoneDifferenceToUtc,
-        timeZoneInMilliseconds: timeZoneDifferenceToUtc * 1000,
         dstStart: timestampToZigbeeUtcTime(dstStart),
         dstEnd: timestampToZigbeeUtcTime(dstEnd),
         dstShift: dstShift,
-        dstShiftInMilliseconds: dstShift * 1000,
         lastSetTime: timestampToZigbeeUtcTime(currentTime),
         validUntilTime: timestampToZigbeeUtcTime(validUntilTime),
     };
