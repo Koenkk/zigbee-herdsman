@@ -277,7 +277,14 @@ describe("Requests", () => {
                 endpoint,
             );
         },
-        BENCH_OPTIONS,
+        {
+            ...BENCH_OPTIONS,
+            setup: async (task, mode) => {
+                await BENCH_OPTIONS.setup!(task, mode);
+                // make sure we have cluster attributes so we take the full code path
+                endpoint.saveClusterAttributeKeyValue("genBasic", {modelId: "zh"});
+            },
+        },
     );
 
     bench(
@@ -302,6 +309,13 @@ describe("Requests", () => {
                 endpoint,
             );
         },
-        BENCH_OPTIONS,
+        {
+            ...BENCH_OPTIONS,
+            setup: async (task, mode) => {
+                await BENCH_OPTIONS.setup!(task, mode);
+                // make sure we have cluster attributes so we take the full code path
+                endpoint.saveClusterAttributeKeyValue("genBasic", {modelId: "zh"});
+            },
+        },
     );
 });
