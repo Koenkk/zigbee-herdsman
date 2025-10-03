@@ -109,16 +109,16 @@ describe("TimeService", () => {
 
             const timeCluster = timeService.getTimeClusterAttributes();
 
-            expect(timeCluster.time).toBe(expectedTime);
-            expect(timeCluster.timeStatus).toBe(3);
-            expect(timeCluster.timeZone).toBe(expectedTimeZone);
-            expect(timeCluster.dstStart).toBe(expectedDstStart);
-            expect(timeCluster.dstEnd).toBe(expectedDstEnd);
-            expect(timeCluster.dstShift).toBe(expectedDstShift);
-            expect(timeCluster.standardTime).toBe(expectedStandardTime);
-            expect(timeCluster.localTime).toBe(expectedLocalTime);
-            expect(timeCluster.lastSetTime).toBe(expectedTime);
-            expect(timeCluster.validUntilTime).toBe(expectedTime + 24 * 60 * 60);
+            expect(timeCluster.time).toStrictEqual(expectedTime);
+            expect(timeCluster.timeStatus).toStrictEqual(3);
+            expect(timeCluster.timeZone).toStrictEqual(expectedTimeZone);
+            expect(timeCluster.dstStart).toStrictEqual(expectedDstStart);
+            expect(timeCluster.dstEnd).toStrictEqual(expectedDstEnd);
+            expect(timeCluster.dstShift).toStrictEqual(expectedDstShift);
+            expect(timeCluster.standardTime).toStrictEqual(expectedStandardTime);
+            expect(timeCluster.localTime).toStrictEqual(expectedLocalTime);
+            expect(timeCluster.lastSetTime).toStrictEqual(expectedTime);
+            expect(timeCluster.validUntilTime).toStrictEqual(expectedTime + 24 * 60 * 60);
         },
     );
 
@@ -162,8 +162,8 @@ describe("TimeService", () => {
 
         const secondRun = timeService.getTimeClusterAttributes();
 
-        expect(firstRun.localTime - firstRun.standardTime).toBe(expectedShiftBefore);
-        expect(secondRun.localTime - secondRun.standardTime).toBe(expectedShiftAfter);
+        expect(firstRun.localTime - firstRun.standardTime).toStrictEqual(expectedShiftBefore);
+        expect(secondRun.localTime - secondRun.standardTime).toStrictEqual(expectedShiftAfter);
     });
 
     it("Should not use cached data for dynamic attributes", () => {
@@ -178,9 +178,9 @@ describe("TimeService", () => {
 
         const secondRun = timeService.getTimeClusterAttributes();
 
-        expect(secondRun.time).toBe(firstRun.time + delta);
-        expect(secondRun.standardTime).toBe(firstRun.standardTime + delta);
-        expect(secondRun.localTime).toBe(firstRun.localTime + delta);
+        expect(secondRun.time).toStrictEqual(firstRun.time + delta);
+        expect(secondRun.standardTime).toStrictEqual(firstRun.standardTime + delta);
+        expect(secondRun.localTime).toStrictEqual(firstRun.localTime + delta);
     });
 
     it("Should return cached information within 24 hours", () => {
@@ -197,7 +197,7 @@ describe("TimeService", () => {
 
         const secondRun = timeService.getTimeClusterAttributes();
 
-        expect(secondRun.lastSetTime).toBe(firstRun.lastSetTime);
+        expect(secondRun.lastSetTime).toStrictEqual(firstRun.lastSetTime);
     });
 
     it("Should recalculate the cache after 24 hours", () => {
@@ -211,6 +211,6 @@ describe("TimeService", () => {
 
         const secondRun = timeService.getTimeClusterAttributes();
 
-        expect(secondRun.lastSetTime).not.toBe(firstRun.lastSetTime);
+        expect(secondRun.lastSetTime).not.toStrictEqual(firstRun.lastSetTime);
     });
 });

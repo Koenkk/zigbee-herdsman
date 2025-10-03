@@ -2925,77 +2925,77 @@ describe("Controller", () => {
         });
 
         expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(1);
-        expect(mocksendZclFrameToEndpoint.mock.calls[0][0]).toBe("0x129");
-        expect(mocksendZclFrameToEndpoint.mock.calls[0][1]).toBe(129);
-        expect(mocksendZclFrameToEndpoint.mock.calls[0][2]).toBe(1);
+        expect(mocksendZclFrameToEndpoint.mock.calls[0][0]).toStrictEqual("0x129");
+        expect(mocksendZclFrameToEndpoint.mock.calls[0][1]).toStrictEqual(129);
+        expect(mocksendZclFrameToEndpoint.mock.calls[0][2]).toStrictEqual(1);
         const message = mocksendZclFrameToEndpoint.mock.calls[0][3];
-        expect(message.payload.length).toBe(10);
+        expect(message.payload.length).toStrictEqual(10);
 
         // Time
-        expect(message.payload[0].attrId).toBe(Zcl.Clusters.genTime.attributes.time.ID);
-        expect(message.payload[0].dataType).toBe(Zcl.DataType.UTC);
-        expect(message.payload[0].status).toBe(Zcl.Status.SUCCESS);
-        expect(message.payload[0].attrData).toBe(expectedTime);
+        expect(message.payload[0].attrId).toStrictEqual(Zcl.Clusters.genTime.attributes.time.ID);
+        expect(message.payload[0].dataType).toStrictEqual(Zcl.DataType.UTC);
+        expect(message.payload[0].status).toStrictEqual(Zcl.Status.SUCCESS);
+        expect(message.payload[0].attrData).toStrictEqual(expectedTime);
 
         // TimeStatus
-        expect(message.payload[1].attrId).toBe(Zcl.Clusters.genTime.attributes.timeStatus.ID);
-        expect(message.payload[1].dataType).toBe(Zcl.DataType.BITMAP8);
-        expect(message.payload[1].status).toBe(Zcl.Status.SUCCESS);
-        expect(message.payload[1].attrData).toBe(3);
+        expect(message.payload[1].attrId).toStrictEqual(Zcl.Clusters.genTime.attributes.timeStatus.ID);
+        expect(message.payload[1].dataType).toStrictEqual(Zcl.DataType.BITMAP8);
+        expect(message.payload[1].status).toStrictEqual(Zcl.Status.SUCCESS);
+        expect(message.payload[1].attrData).toStrictEqual(3);
 
         // TimeZone
-        expect(message.payload[2].attrId).toBe(Zcl.Clusters.genTime.attributes.timeZone.ID);
-        expect(message.payload[2].dataType).toBe(Zcl.DataType.INT32);
-        expect(message.payload[2].status).toBe(Zcl.Status.SUCCESS);
-        expect(message.payload[2].attrData).toBe(expectedTimeZone);
+        expect(message.payload[2].attrId).toStrictEqual(Zcl.Clusters.genTime.attributes.timeZone.ID);
+        expect(message.payload[2].dataType).toStrictEqual(Zcl.DataType.INT32);
+        expect(message.payload[2].status).toStrictEqual(Zcl.Status.SUCCESS);
+        expect(message.payload[2].attrData).toStrictEqual(expectedTimeZone);
 
         // DstStart
-        expect(message.payload[3].attrId).toBe(Zcl.Clusters.genTime.attributes.dstStart.ID);
-        expect(message.payload[3].dataType).toBe(Zcl.DataType.UINT32);
-        expect(message.payload[3].status).toBe(Zcl.Status.SUCCESS);
-        expect(message.payload[3].attrData).toBe(expectedDstStart);
+        expect(message.payload[3].attrId).toStrictEqual(Zcl.Clusters.genTime.attributes.dstStart.ID);
+        expect(message.payload[3].dataType).toStrictEqual(Zcl.DataType.UINT32);
+        expect(message.payload[3].status).toStrictEqual(Zcl.Status.SUCCESS);
+        expect(message.payload[3].attrData).toStrictEqual(expectedDstStart);
 
         // DstEnd
-        expect(message.payload[4].attrId).toBe(Zcl.Clusters.genTime.attributes.dstEnd.ID);
-        expect(message.payload[4].dataType).toBe(Zcl.DataType.UINT32);
-        expect(message.payload[4].status).toBe(Zcl.Status.SUCCESS);
-        expect(message.payload[4].attrData).toBe(expectedDstEnd);
+        expect(message.payload[4].attrId).toStrictEqual(Zcl.Clusters.genTime.attributes.dstEnd.ID);
+        expect(message.payload[4].dataType).toStrictEqual(Zcl.DataType.UINT32);
+        expect(message.payload[4].status).toStrictEqual(Zcl.Status.SUCCESS);
+        expect(message.payload[4].attrData).toStrictEqual(expectedDstEnd);
 
         // DstShift
-        expect(message.payload[5].attrId).toBe(Zcl.Clusters.genTime.attributes.dstShift.ID);
-        expect(message.payload[5].dataType).toBe(Zcl.DataType.INT32);
-        expect(message.payload[5].status).toBe(Zcl.Status.SUCCESS);
-        expect(message.payload[5].attrData).toBe(expectedDstShift);
+        expect(message.payload[5].attrId).toStrictEqual(Zcl.Clusters.genTime.attributes.dstShift.ID);
+        expect(message.payload[5].dataType).toStrictEqual(Zcl.DataType.INT32);
+        expect(message.payload[5].status).toStrictEqual(Zcl.Status.SUCCESS);
+        expect(message.payload[5].attrData).toStrictEqual(expectedDstShift);
 
         // StandardTime
-        expect(message.payload[6].attrId).toBe(Zcl.Clusters.genTime.attributes.standardTime.ID);
-        expect(message.payload[6].dataType).toBe(Zcl.DataType.UINT32);
-        expect(message.payload[6].status).toBe(Zcl.Status.SUCCESS);
-        expect(message.payload[6].attrData).toBe(expectedStandardTime);
+        expect(message.payload[6].attrId).toStrictEqual(Zcl.Clusters.genTime.attributes.standardTime.ID);
+        expect(message.payload[6].dataType).toStrictEqual(Zcl.DataType.UINT32);
+        expect(message.payload[6].status).toStrictEqual(Zcl.Status.SUCCESS);
+        expect(message.payload[6].attrData).toStrictEqual(expectedStandardTime);
 
         // LocalTime
-        expect(message.payload[7].attrId).toBe(Zcl.Clusters.genTime.attributes.localTime.ID);
-        expect(message.payload[7].dataType).toBe(Zcl.DataType.UINT32);
-        expect(message.payload[7].status).toBe(Zcl.Status.SUCCESS);
-        expect(message.payload[7].attrData).toBe(expectedLocalTime);
+        expect(message.payload[7].attrId).toStrictEqual(Zcl.Clusters.genTime.attributes.localTime.ID);
+        expect(message.payload[7].dataType).toStrictEqual(Zcl.DataType.UINT32);
+        expect(message.payload[7].status).toStrictEqual(Zcl.Status.SUCCESS);
+        expect(message.payload[7].attrData).toStrictEqual(expectedLocalTime);
 
         // LastSetTime
-        expect(message.payload[8].attrId).toBe(Zcl.Clusters.genTime.attributes.lastSetTime.ID);
-        expect(message.payload[8].dataType).toBe(Zcl.DataType.UTC);
-        expect(message.payload[8].status).toBe(Zcl.Status.SUCCESS);
-        expect(message.payload[8].attrData).toBe(expectedTime);
+        expect(message.payload[8].attrId).toStrictEqual(Zcl.Clusters.genTime.attributes.lastSetTime.ID);
+        expect(message.payload[8].dataType).toStrictEqual(Zcl.DataType.UTC);
+        expect(message.payload[8].status).toStrictEqual(Zcl.Status.SUCCESS);
+        expect(message.payload[8].attrData).toStrictEqual(expectedTime);
 
         // ValidUntilTime
-        expect(message.payload[9].attrId).toBe(Zcl.Clusters.genTime.attributes.validUntilTime.ID);
-        expect(message.payload[9].dataType).toBe(Zcl.DataType.UTC);
-        expect(message.payload[9].status).toBe(Zcl.Status.SUCCESS);
-        expect(message.payload[9].attrData).toBe(expectedTime + 24 * 60 * 60);
+        expect(message.payload[9].attrId).toStrictEqual(Zcl.Clusters.genTime.attributes.validUntilTime.ID);
+        expect(message.payload[9].dataType).toStrictEqual(Zcl.DataType.UTC);
+        expect(message.payload[9].status).toStrictEqual(Zcl.Status.SUCCESS);
+        expect(message.payload[9].attrData).toStrictEqual(expectedTime + 24 * 60 * 60);
 
         delete message.payload;
         const call = mocksendZclFrameToEndpoint.mock.calls[0];
-        expect(call[0]).toBe("0x129");
-        expect(call[1]).toBe(129);
-        expect(call[2]).toBe(1);
+        expect(call[0]).toStrictEqual("0x129");
+        expect(call[1]).toStrictEqual(129);
+        expect(call[2]).toStrictEqual(1);
         expect(deepClone(call[3])).toStrictEqual(
             deepClone(Zcl.Frame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.SERVER_TO_CLIENT, true, undefined, 40, "readRsp", 10, undefined, {})),
         );
