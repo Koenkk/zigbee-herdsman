@@ -41,23 +41,21 @@ export function clearCachedTimeData() {
     cachedTimeData = <CachedTimeData>{};
 }
 
-function cachedTimeDataIsValid(): boolean {
-    return timestampToZigbeeUtcTime(Date.now()) < cachedTimeData.validUntilTime;
-}
-
 export function getTimeClusterAttributes(): TimeClusterAttributes {
-    if (!cachedTimeDataIsValid()) {
+    const currentTime = Date.now();
+    const currentTimeInZigbeeUtcTime = timestampToZigbeeUtcTime(currentTime);
+
+    const cachedTimeDataIsValid = currentTimeInZigbeeUtcTime < cachedTimeData.validUntilTime;
+    if (!cachedTimeDataIsValid) {
         recalculateTimeData();
     }
 
-    const currentTime = Date.now();
     const standardTime = currentTime + cachedTimeData.timeZoneInMilliseconds;
     let localTime = standardTime;
 
     // tzScan returns the first second the change has to be applied.
     // Therefore, we have to use >= for the dstStart comparison and
     // not for the dstEnd comparison.
-    const currentTimeInZigbeeUtcTime = timestampToZigbeeUtcTime(currentTime);
     if (currentTimeInZigbeeUtcTime >= cachedTimeData.dstStart && currentTimeInZigbeeUtcTime < cachedTimeData.dstEnd) {
         localTime = standardTime + cachedTimeData.dstShiftInMilliseconds;
     }
