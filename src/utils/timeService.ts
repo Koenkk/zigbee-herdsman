@@ -63,7 +63,7 @@ export function getTimeClusterAttributes(): TimeClusterAttributes {
     }
 
     return {
-        time: timestampToZigbeeUtcTime(currentTime),
+        time: currentTimeInZigbeeUtcTime,
         timeStatus: 3,
         timeZone: cachedTimeData.timeZone,
         dstStart: cachedTimeData.dstStart,
