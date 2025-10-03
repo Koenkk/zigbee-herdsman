@@ -26,8 +26,8 @@ interface CachedTimeData {
 
 const OneJanuary2000 = new Date("January 01, 2000 00:00:00 UTC+00:00").getTime();
 const OneDayInMilliseconds = 24 * 60 * 60 * 1000;
-let dstActive: boolean;
 
+let dstActive: boolean;
 let cachedTimeData: CachedTimeData = <CachedTimeData>{};
 
 function timestampToZigbeeUtcTime(timestamp: number) {
@@ -136,8 +136,11 @@ function recalculateTimeData() {
             }
         }
 
-        if (currentTime < dstStart) {
-            const dstStartDelay = currentTime - dstStart;
+        const nextUpdateDelay = validUntilTime - currentTime;
+        const dstStartDelay = currentTime - dstStart;
+        const dstStartsBeforeNextUpdate = dstStartDelay < nextUpdateDelay;
+
+        if (dstStartsBeforeNextUpdate) {
             setTimeout(() => {
                 dstActive = true;
             }, dstStartDelay);
@@ -145,10 +148,14 @@ function recalculateTimeData() {
 
         if (currentTime < dstEnd && currentTime > dstStart) {
             dstActive = true;
+
             const dstEndDelay = currentTime - dstEnd;
-            setTimeout(() => {
-                dstActive = false;
-            }, dstEndDelay);
+            const dstEndsBeforeNextUpdate = dstEndDelay < nextUpdateDelay;
+            if (dstEndsBeforeNextUpdate) {
+                setTimeout(() => {
+                    dstActive = false;
+                }, dstEndDelay);
+            }
         }
     }
 
