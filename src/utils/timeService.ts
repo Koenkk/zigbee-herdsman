@@ -123,7 +123,7 @@ function recalculateTimeData() {
 
                 const hasRegularDstNextYear = dstChangesThisYear.length === 2;
                 if (hasRegularDstNextYear) {
-                    timeZoneDifferenceToUtc = dstChangesNextYear[0].offset * 60;
+                    timeZoneDifferenceToUtc = dstChangesThisYear[0].offset * 60;
                     dstStart = dstChangesThisYear[1].date.getTime();
                     dstEnd = dstChangesNextYear[0].date.getTime();
                     dstShift = dstChangesThisYear[1].change * 60;
