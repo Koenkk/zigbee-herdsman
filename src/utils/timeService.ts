@@ -72,8 +72,8 @@ export function getTimeClusterAttributes(): TimeClusterAttributes {
 }
 
 function recalculateTimeData() {
-    const currentTime = Date.now();
-    const currentDate = new Date(currentTime);
+    const currentDate = new Date();
+    const currentTime = currentDate.getTime();
     const currentYear = currentDate.getUTCFullYear();
 
     // Default values considering the timezone has no DST
