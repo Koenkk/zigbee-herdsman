@@ -181,6 +181,7 @@ describe("TimeService", () => {
         expect(secondRun.time).toStrictEqual(firstRun.time + delta);
         expect(secondRun.standardTime).toStrictEqual(firstRun.standardTime + delta);
         expect(secondRun.localTime).toStrictEqual(firstRun.localTime + delta);
+        expect(secondRun.lastSetTime).toStrictEqual(firstRun.lastSetTime + delta);
     });
 
     it("Should return cached information within 24 hours", () => {
