@@ -114,10 +114,10 @@ export function getTimeClusterAttributes(): TClusterAttributes<"genTime"> {
     return {
         time: currentZigbeeUtcTime,
         // Bit 0: Master clock
-        // Bit 1: Synchronized
+        // Bit 1: Not synchronized (as Master bit is 1)
         // Bit 2: Master for Time Zone and DST
         // Bit 3: Time synchronization SHOULD be superseded
-        timeStatus: 0b1111,
+        timeStatus: 0b1101,
         timeZone: cachedTimeData.timeZone,
         dstStart: cachedTimeData.dstStart,
         dstEnd: cachedTimeData.dstEnd,
