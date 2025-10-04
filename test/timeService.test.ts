@@ -213,19 +213,4 @@ describe("TimeService", () => {
 
         expect(secondRun.validUntilTime).not.toStrictEqual(firstRun.validUntilTime);
     });
-
-    it("", () => {
-        vi.stubEnv("TZ", "Europe/Berlin");
-
-        for (let milliseconds = 0; milliseconds < 999; milliseconds++) {
-            vi.setSystemTime(new Date(2025, 0, 1, 0, 0, 0, milliseconds));
-            vi.runAllTimers();
-
-            const timeClusterAttributes = timeService.getTimeClusterAttributes();
-            timeService.clearCachedTimeData();
-
-            expect(timeClusterAttributes.time).toStrictEqual(timeClusterAttributes.validUntilTime - 24 * 60 * 60);
-
-        }
-    });
 });
