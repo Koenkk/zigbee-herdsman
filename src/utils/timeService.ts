@@ -4,12 +4,11 @@ import type {TClusterAttributes} from "../zspec/zcl/definition/clusters-types";
 const OneJanuary2000 = new Date("January 01, 2000 00:00:00 UTC+00:00").getTime();
 const OneDayInMilliseconds = 24 * 60 * 60 * 1000;
 
-const cachedTimeData: Pick<TClusterAttributes<"genTime">, "timeZone" | "dstStart" | "dstEnd" | "dstShift" | "lastSetTime" | "validUntilTime"> = {
+const cachedTimeData: Pick<TClusterAttributes<"genTime">, "timeZone" | "dstStart" | "dstEnd" | "dstShift" | "validUntilTime"> = {
     timeZone: 0,
     dstStart: 0,
     dstEnd: 0,
     dstShift: 0,
-    lastSetTime: 0,
     validUntilTime: 0,
 };
 
@@ -93,7 +92,6 @@ function recalculateTimeData() {
     cachedTimeData.dstStart = timestampToZigbeeUtcTime(dstStart);
     cachedTimeData.dstEnd = timestampToZigbeeUtcTime(dstEnd);
     cachedTimeData.dstShift = dstShift;
-    cachedTimeData.lastSetTime = timestampToZigbeeUtcTime(currentTime);
     cachedTimeData.validUntilTime = timestampToZigbeeUtcTime(validUntilTime);
 }
 
@@ -120,7 +118,7 @@ export function getTimeClusterAttributes(): TClusterAttributes<"genTime"> {
         dstShift: cachedTimeData.dstShift,
         standardTime: standardTime,
         localTime: localTime,
-        lastSetTime: cachedTimeData.lastSetTime,
+        lastSetTime: currentTime,
         validUntilTime: cachedTimeData.validUntilTime,
     };
 }
@@ -131,6 +129,5 @@ export function clearCachedTimeData() {
     cachedTimeData.dstStart = 0;
     cachedTimeData.dstEnd = 0;
     cachedTimeData.dstShift = 0;
-    cachedTimeData.lastSetTime = 0;
     cachedTimeData.validUntilTime = 0;
 }

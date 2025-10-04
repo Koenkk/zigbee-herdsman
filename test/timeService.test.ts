@@ -197,7 +197,7 @@ describe("TimeService", () => {
 
         const secondRun = timeService.getTimeClusterAttributes();
 
-        expect(secondRun.lastSetTime).toStrictEqual(firstRun.lastSetTime);
+        expect(secondRun.validUntilTime).toStrictEqual(firstRun.validUntilTime);
     });
 
     it("Should recalculate the cache after 24 hours", () => {
@@ -211,6 +211,6 @@ describe("TimeService", () => {
 
         const secondRun = timeService.getTimeClusterAttributes();
 
-        expect(secondRun.lastSetTime).not.toStrictEqual(firstRun.lastSetTime);
+        expect(secondRun.validUntilTime).not.toStrictEqual(firstRun.validUntilTime);
     });
 });
