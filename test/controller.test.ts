@@ -2877,6 +2877,7 @@ describe("Controller", () => {
 
     it("Respond to genTime read", async () => {
         const expectedTime = 825789852;
+        const expectedTimeStatus = 0x1111;
         const expectedTimeZone = 3600;
         const expectedDstStart = 828061200;
         const expectedDstEnd = 846205200;
@@ -2888,7 +2889,7 @@ describe("Controller", () => {
         vi.mock("../src/utils/timeService");
         vi.mocked(timeService.getTimeClusterAttributes).mockReturnValue({
             time: expectedTime,
-            timeStatus: 3,
+            timeStatus: expectedTimeStatus,
             timeZone: expectedTimeZone,
             dstStart: expectedDstStart,
             dstEnd: expectedDstEnd,
@@ -2941,7 +2942,7 @@ describe("Controller", () => {
         expect(message.payload[1].attrId).toStrictEqual(Zcl.Clusters.genTime.attributes.timeStatus.ID);
         expect(message.payload[1].dataType).toStrictEqual(Zcl.DataType.BITMAP8);
         expect(message.payload[1].status).toStrictEqual(Zcl.Status.SUCCESS);
-        expect(message.payload[1].attrData).toStrictEqual(3);
+        expect(message.payload[1].attrData).toStrictEqual(expectedTimeStatus);
 
         // TimeZone
         expect(message.payload[2].attrId).toStrictEqual(Zcl.Clusters.genTime.attributes.timeZone.ID);

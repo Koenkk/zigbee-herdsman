@@ -110,7 +110,7 @@ describe("TimeService", () => {
             const timeClusterAttributes = timeService.getTimeClusterAttributes();
 
             expect(timeClusterAttributes.time).toStrictEqual(expectedTime);
-            expect(timeClusterAttributes.timeStatus).toStrictEqual(3);
+            expect(timeClusterAttributes.timeStatus).toStrictEqual(0x1111);
             expect(timeClusterAttributes.timeZone).toStrictEqual(expectedTimeZone);
             expect(timeClusterAttributes.dstStart).toStrictEqual(expectedDstStart);
             expect(timeClusterAttributes.dstEnd).toStrictEqual(expectedDstEnd);
@@ -212,5 +212,20 @@ describe("TimeService", () => {
         const secondRun = timeService.getTimeClusterAttributes();
 
         expect(secondRun.validUntilTime).not.toStrictEqual(firstRun.validUntilTime);
+    });
+
+    it("", () => {
+        vi.stubEnv("TZ", "Europe/Berlin");
+
+        for (let milliseconds = 0; milliseconds < 999; milliseconds++) {
+            vi.setSystemTime(new Date(2025, 0, 1, 0, 0, 0, milliseconds));
+            vi.runAllTimers();
+
+            const timeClusterAttributes = timeService.getTimeClusterAttributes();
+            timeService.clearCachedTimeData();
+
+            expect(timeClusterAttributes.time).toStrictEqual(timeClusterAttributes.validUntilTime - 24 * 60 * 60);
+
+        }
     });
 });

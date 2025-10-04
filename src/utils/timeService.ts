@@ -16,7 +16,8 @@ function timestampToZigbeeUtcTime(timestamp: number) {
     return timestamp === 0xffffffff ? timestamp : Math.round((timestamp - OneJanuary2000) / 1000);
 }
 
-function recalculateTimeData(currentDate: Date) {
+function recalculateTimeData() {
+    const currentDate = new Date();
     const currentTime = currentDate.getTime();
     const currentYear = currentDate.getUTCFullYear();
 
@@ -99,7 +100,7 @@ export function getTimeClusterAttributes(): TClusterAttributes<"genTime"> {
     const currentTime = timestampToZigbeeUtcTime(currentDate.getTime());
 
     if (currentTime >= cachedTimeData.validUntilTime) {
-        recalculateTimeData(currentDate);
+        recalculateTimeData();
     }
 
     const standardTime = currentTime + cachedTimeData.timeZone;
@@ -111,7 +112,11 @@ export function getTimeClusterAttributes(): TClusterAttributes<"genTime"> {
 
     return {
         time: currentTime,
-        timeStatus: 3,
+        // Bit 0: Master clock
+        // Bit 1: Synchronized
+        // Bit 2: Master for Time Zone and DST
+        // Bit 3: Time synchronization SHOULD be superseded
+        timeStatus: 0x1111,
         timeZone: cachedTimeData.timeZone,
         dstStart: cachedTimeData.dstStart,
         dstEnd: cachedTimeData.dstEnd,
