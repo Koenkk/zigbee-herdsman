@@ -46,7 +46,15 @@ function recalculateTimeData() {
         if (isNorthernHemisphere) {
             timeZoneDifferenceToUtc = dstChangesThisYear[1].offset * 60;
             dstStart = dstChangesThisYear[0].date.getTime();
-            dstEnd = dstChangesThisYear[1].date.getTime();
+            // tzScan returns the first second on which a new shift has to be applied.
+            // This is fine for dstStart, but dstEnd has to be the last second of the
+            // DST period. Otherwise, the following equation copied from the ZCL spec
+            // isn't met anymore:
+            //
+            // Local Time = Standard Time + DstShift (if DstStart <= Time <= DstEnd)
+            //
+            // Therefore, we have to remove one second on all dstEnd times below.
+            dstEnd = dstChangesThisYear[1].date.getTime() - 1000;
             dstShift = dstChangesThisYear[0].change * 60;
         } else {
             const dstStartIsInPreviousYear = currentTime < dstChangesThisYear[0].date.getTime();
@@ -61,7 +69,7 @@ function recalculateTimeData() {
                 if (hadRegularDstLastYear) {
                     timeZoneDifferenceToUtc = dstChangesThisYear[0].offset * 60;
                     dstStart = dstChangesLastYear[1].date.getTime();
-                    dstEnd = dstChangesThisYear[0].date.getTime();
+                    dstEnd = dstChangesThisYear[0].date.getTime() - 1000;
                     dstShift = dstChangesLastYear[1].change * 60;
                 }
             } else {
@@ -74,7 +82,7 @@ function recalculateTimeData() {
                 if (hasRegularDstNextYear) {
                     timeZoneDifferenceToUtc = dstChangesThisYear[0].offset * 60;
                     dstStart = dstChangesThisYear[1].date.getTime();
-                    dstEnd = dstChangesNextYear[0].date.getTime();
+                    dstEnd = dstChangesNextYear[0].date.getTime() - 1000;
                     dstShift = dstChangesThisYear[1].change * 60;
                 }
             }
@@ -99,10 +107,7 @@ export function getTimeClusterAttributes(): TClusterAttributes<"genTime"> {
     const standardTime = currentTime + cachedTimeData.timeZone;
     let localTime = standardTime;
 
-    // tzScan returns the first second the change has to be applied.
-    // Therefore, we have to use >= for the dstStart comparison and
-    // not for the dstEnd comparison.
-    if (currentTime >= cachedTimeData.dstStart && currentTime < cachedTimeData.dstEnd) {
+    if (currentTime >= cachedTimeData.dstStart && currentTime <= cachedTimeData.dstEnd) {
         localTime = standardTime + cachedTimeData.dstShift;
     }
 
