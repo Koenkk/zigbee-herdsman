@@ -2884,8 +2884,9 @@ describe("Controller", () => {
         const expectedDstShift = 3600;
         const expectedStandardTime = 825793452;
         const expectedLocalTime = 825793452;
+        const expectedValidUntilTime = expectedTime + 24 * 60 * 60;
 
-        // Mock the timeService, as we don't want to test that
+        // Mock the timeService response, as we don't want to test that
         vi.mock("../src/utils/timeService");
         vi.mocked(timeService.getTimeClusterAttributes).mockReturnValue({
             time: expectedTime,
@@ -2897,7 +2898,7 @@ describe("Controller", () => {
             standardTime: expectedStandardTime,
             localTime: expectedLocalTime,
             lastSetTime: expectedTime,
-            validUntilTime: expectedTime + 24 * 60 * 60,
+            validUntilTime: expectedValidUntilTime,
         });
 
         const frame = Zcl.Frame.create(
@@ -2990,7 +2991,7 @@ describe("Controller", () => {
         expect(message.payload[9].attrId).toStrictEqual(Zcl.Clusters.genTime.attributes.validUntilTime.ID);
         expect(message.payload[9].dataType).toStrictEqual(Zcl.DataType.UTC);
         expect(message.payload[9].status).toStrictEqual(Zcl.Status.SUCCESS);
-        expect(message.payload[9].attrData).toStrictEqual(expectedTime + 24 * 60 * 60);
+        expect(message.payload[9].attrData).toStrictEqual(expectedValidUntilTime);
 
         delete message.payload;
         const call = mocksendZclFrameToEndpoint.mock.calls[0];
