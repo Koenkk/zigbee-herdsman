@@ -2877,10 +2877,10 @@ describe("Controller", () => {
 
     it("Respond to genTime read", async () => {
         const expectedTime = 825789852;
-        const expectedTimeStatus = 0x1111;
+        const expectedTimeStatus = 0b1111;
         const expectedTimeZone = 3600;
         const expectedDstStart = 828061200;
-        const expectedDstEnd = 846205200;
+        const expectedDstEnd = 846205199;
         const expectedDstShift = 3600;
         const expectedStandardTime = 825793452;
         const expectedLocalTime = 825793452;
