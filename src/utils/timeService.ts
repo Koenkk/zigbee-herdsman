@@ -117,7 +117,7 @@ export function getTimeClusterAttributes(): TClusterAttributes<"genTime"> {
         // Bit 1: Synchronized
         // Bit 2: Master for Time Zone and DST
         // Bit 3: Time synchronization SHOULD be superseded
-        timeStatus: 0x1111,
+        timeStatus: 0b1111,
         timeZone: cachedTimeData.timeZone,
         dstStart: cachedTimeData.dstStart,
         dstEnd: cachedTimeData.dstEnd,
