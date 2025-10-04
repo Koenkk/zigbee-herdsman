@@ -16,16 +16,16 @@ function timestampToZigbeeUtcTime(timestamp: number) {
     return timestamp === 0xffffffff ? timestamp : Math.round((timestamp - OneJanuary2000) / 1000);
 }
 
-function recalculateTimeData(currentDate: Date) {
-    const currentTime = currentDate.getTime();
-    const currentYear = currentDate.getUTCFullYear();
+function recalculateTimeData(currentJavaScriptDate: Date) {
+    const currentJavaScriptUtcTime = currentJavaScriptDate.getTime();
+    const currentYear = currentJavaScriptDate.getUTCFullYear();
 
-    // Default values considering the timezone has no DST
-    let timeZoneDifferenceToUtc = currentDate.getTimezoneOffset() !== 0 ? currentDate.getTimezoneOffset() * -1 * 60 : 0;
+    // Default values considering the timezone has no DST.
+    let timeZoneDifferenceToUtc = currentJavaScriptDate.getTimezoneOffset() !== 0 ? currentJavaScriptDate.getTimezoneOffset() * -1 * 60 : 0;
     let dstStart = 0xffffffff;
     let dstEnd = 0xffffffff;
     let dstShift = 0;
-    const validUntilTime = currentTime + OneDayInMilliseconds;
+    const validUntilTime = currentJavaScriptUtcTime + OneDayInMilliseconds;
 
     const localTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
     const dstChangesThisYear = tzScan(localTimeZone, {
@@ -42,6 +42,8 @@ function recalculateTimeData(currentDate: Date) {
         const isNorthernHemisphere = dstChangesThisYear[0].change > 0;
 
         if (isNorthernHemisphere) {
+            // getTimezoneOffset() called before includes the DST
+            // offset, so, we can't use it when dstShift !== 0.
             timeZoneDifferenceToUtc = dstChangesThisYear[1].offset * 60;
             dstStart = dstChangesThisYear[0].date.getTime();
             // tzScan returns the first second on which a new shift has to be applied.
@@ -55,7 +57,7 @@ function recalculateTimeData(currentDate: Date) {
             dstEnd = dstChangesThisYear[1].date.getTime() - 1000;
             dstShift = dstChangesThisYear[0].change * 60;
         } else {
-            const dstStartIsInPreviousYear = currentTime < dstChangesThisYear[0].date.getTime();
+            const dstStartIsInPreviousYear = currentJavaScriptUtcTime < dstChangesThisYear[0].date.getTime();
 
             if (dstStartIsInPreviousYear) {
                 const dstChangesLastYear = tzScan(localTimeZone, {
@@ -95,22 +97,22 @@ function recalculateTimeData(currentDate: Date) {
 }
 
 export function getTimeClusterAttributes(): TClusterAttributes<"genTime"> {
-    const currentDate = new Date();
-    const currentTime = timestampToZigbeeUtcTime(currentDate.getTime());
+    const currentJavaScriptDate = new Date();
+    const currentZigbeeUtcTime = timestampToZigbeeUtcTime(currentJavaScriptDate.getTime());
 
-    if (currentTime >= cachedTimeData.validUntilTime) {
-        recalculateTimeData(currentDate);
+    if (currentZigbeeUtcTime >= cachedTimeData.validUntilTime) {
+        recalculateTimeData(currentJavaScriptDate);
     }
 
-    const standardTime = currentTime + cachedTimeData.timeZone;
+    const standardTime = currentZigbeeUtcTime + cachedTimeData.timeZone;
     let localTime = standardTime;
 
-    if (currentTime >= cachedTimeData.dstStart && currentTime <= cachedTimeData.dstEnd) {
+    if (currentZigbeeUtcTime >= cachedTimeData.dstStart && currentZigbeeUtcTime <= cachedTimeData.dstEnd) {
         localTime = standardTime + cachedTimeData.dstShift;
     }
 
     return {
-        time: currentTime,
+        time: currentZigbeeUtcTime,
         // Bit 0: Master clock
         // Bit 1: Synchronized
         // Bit 2: Master for Time Zone and DST
@@ -122,7 +124,7 @@ export function getTimeClusterAttributes(): TClusterAttributes<"genTime"> {
         dstShift: cachedTimeData.dstShift,
         standardTime: standardTime,
         localTime: localTime,
-        lastSetTime: currentTime,
+        lastSetTime: currentZigbeeUtcTime,
         validUntilTime: cachedTimeData.validUntilTime,
     };
 }
