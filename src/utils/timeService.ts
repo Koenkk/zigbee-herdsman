@@ -16,16 +16,16 @@ function timestampToZigbeeUtcTime(timestamp: number) {
     return timestamp === 0xffffffff ? timestamp : Math.round((timestamp - OneJanuary2000) / 1000);
 }
 
-function recalculateTimeData(currentJavaScriptDate: Date) {
-    const currentJavaScriptUtcTime = currentJavaScriptDate.getTime();
-    const currentYear = currentJavaScriptDate.getUTCFullYear();
+function recalculateTimeData(currentDate: Date) {
+    const currentTime = currentDate.getTime();
+    const currentYear = currentDate.getUTCFullYear();
 
     // Default values considering the timezone has no DST.
-    let timeZoneDifferenceToUtc = currentJavaScriptDate.getTimezoneOffset() !== 0 ? currentJavaScriptDate.getTimezoneOffset() * -1 * 60 : 0;
+    let timeZoneDifferenceToUtc = currentDate.getTimezoneOffset() !== 0 ? currentDate.getTimezoneOffset() * -1 * 60 : 0;
     let dstStart = 0xffffffff;
     let dstEnd = 0xffffffff;
     let dstShift = 0;
-    const validUntilTime = currentJavaScriptUtcTime + OneDayInMilliseconds;
+    const validUntilTime = currentTime + OneDayInMilliseconds;
 
     const localTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
     const dstChangesThisYear = tzScan(localTimeZone, {
@@ -57,7 +57,7 @@ function recalculateTimeData(currentJavaScriptDate: Date) {
             dstEnd = dstChangesThisYear[1].date.getTime() - 1000;
             dstShift = dstChangesThisYear[0].change * 60;
         } else {
-            const dstStartIsInPreviousYear = currentJavaScriptUtcTime < dstChangesThisYear[0].date.getTime();
+            const dstStartIsInPreviousYear = currentTime < dstChangesThisYear[0].date.getTime();
 
             if (dstStartIsInPreviousYear) {
                 const dstChangesLastYear = tzScan(localTimeZone, {
@@ -97,11 +97,11 @@ function recalculateTimeData(currentJavaScriptDate: Date) {
 }
 
 export function getTimeClusterAttributes(): TClusterAttributes<"genTime"> {
-    const currentJavaScriptDate = new Date();
-    const currentZigbeeUtcTime = timestampToZigbeeUtcTime(currentJavaScriptDate.getTime());
+    const currentDate = new Date();
+    const currentZigbeeUtcTime = timestampToZigbeeUtcTime(currentDate.getTime());
 
     if (currentZigbeeUtcTime >= cachedTimeData.validUntilTime) {
-        recalculateTimeData(currentJavaScriptDate);
+        recalculateTimeData(currentDate);
     }
 
     const standardTime = currentZigbeeUtcTime + cachedTimeData.timeZone;
