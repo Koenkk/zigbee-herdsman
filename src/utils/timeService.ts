@@ -1,62 +1,20 @@
 import {tzScan} from "@date-fns/tz";
 import type {TClusterAttributes} from "../zspec/zcl/definition/clusters-types";
 
-interface CachedTimeData {
-    timeZoneDifferenceToUtc: number;
-    dstStart: number;
-    dstEnd: number;
-    dstShift: number;
-    lastSetTime: number;
-    validUntilTime: number;
-}
-
 const OneJanuary2000 = new Date("January 01, 2000 00:00:00 UTC+00:00").getTime();
 const OneDayInMilliseconds = 24 * 60 * 60 * 1000;
 
-let cachedTimeData = <CachedTimeData>{};
+const cachedTimeData: Pick<TClusterAttributes<"genTime">, "timeZone" | "dstStart" | "dstEnd" | "dstShift" | "lastSetTime" | "validUntilTime"> = {
+    timeZone: 0,
+    dstStart: 0,
+    dstEnd: 0,
+    dstShift: 0,
+    lastSetTime: 0,
+    validUntilTime: 0,
+};
 
 function timestampToZigbeeUtcTime(timestamp: number) {
-    if (timestamp === 0xffffffff) {
-        return timestamp;
-    }
-
-    return Math.round((timestamp - OneJanuary2000) / 1000);
-}
-
-export function clearCachedTimeData() {
-    cachedTimeData = <CachedTimeData>{};
-}
-
-export function getTimeClusterAttributes(): TClusterAttributes<"genTime"> {
-    const currentTime = timestampToZigbeeUtcTime(Date.now());
-
-    const cachedTimeDataIsValid = currentTime < cachedTimeData.validUntilTime;
-    if (!cachedTimeDataIsValid) {
-        recalculateTimeData();
-    }
-
-    const standardTime = currentTime + cachedTimeData.timeZoneDifferenceToUtc;
-    let localTime = standardTime;
-
-    // tzScan returns the first second the change has to be applied.
-    // Therefore, we have to use >= for the dstStart comparison and
-    // not for the dstEnd comparison.
-    if (currentTime >= cachedTimeData.dstStart && currentTime < cachedTimeData.dstEnd) {
-        localTime = standardTime + cachedTimeData.dstShift;
-    }
-
-    return {
-        time: currentTime,
-        timeStatus: 3,
-        timeZone: cachedTimeData.timeZoneDifferenceToUtc,
-        dstStart: cachedTimeData.dstStart,
-        dstEnd: cachedTimeData.dstEnd,
-        dstShift: cachedTimeData.dstShift,
-        standardTime: standardTime,
-        localTime: localTime,
-        lastSetTime: cachedTimeData.lastSetTime,
-        validUntilTime: cachedTimeData.validUntilTime,
-    };
+    return timestamp === 0xffffffff ? timestamp : Math.round((timestamp - OneJanuary2000) / 1000);
 }
 
 function recalculateTimeData() {
@@ -81,8 +39,10 @@ function recalculateTimeData() {
     // Therefore, we always have to check that the returned number
     // of changes is exactly 2.
     const hasRegularDst = dstChangesThisYear.length === 2;
+
     if (hasRegularDst) {
         const isNorthernHemisphere = dstChangesThisYear[0].change > 0;
+
         if (isNorthernHemisphere) {
             timeZoneDifferenceToUtc = dstChangesThisYear[1].offset * 60;
             dstStart = dstChangesThisYear[0].date.getTime();
@@ -90,13 +50,14 @@ function recalculateTimeData() {
             dstShift = dstChangesThisYear[0].change * 60;
         } else {
             const dstStartIsInPreviousYear = currentTime < dstChangesThisYear[0].date.getTime();
+
             if (dstStartIsInPreviousYear) {
                 const dstChangesLastYear = tzScan(localTimeZone, {
                     start: new Date(currentYear - 1, 1),
                     end: new Date(currentYear - 1, 12),
                 });
-
                 const hadRegularDstLastYear = dstChangesLastYear.length === 2;
+
                 if (hadRegularDstLastYear) {
                     timeZoneDifferenceToUtc = dstChangesThisYear[0].offset * 60;
                     dstStart = dstChangesLastYear[1].date.getTime();
@@ -108,8 +69,8 @@ function recalculateTimeData() {
                     start: new Date(currentYear + 1, 1),
                     end: new Date(currentYear + 1, 12),
                 });
-
                 const hasRegularDstNextYear = dstChangesThisYear.length === 2;
+
                 if (hasRegularDstNextYear) {
                     timeZoneDifferenceToUtc = dstChangesThisYear[0].offset * 60;
                     dstStart = dstChangesThisYear[1].date.getTime();
@@ -120,12 +81,51 @@ function recalculateTimeData() {
         }
     }
 
-    cachedTimeData = {
-        timeZoneDifferenceToUtc: timeZoneDifferenceToUtc,
-        dstStart: timestampToZigbeeUtcTime(dstStart),
-        dstEnd: timestampToZigbeeUtcTime(dstEnd),
-        dstShift: dstShift,
-        lastSetTime: timestampToZigbeeUtcTime(currentTime),
-        validUntilTime: timestampToZigbeeUtcTime(validUntilTime),
+    cachedTimeData.timeZone = timeZoneDifferenceToUtc;
+    cachedTimeData.dstStart = timestampToZigbeeUtcTime(dstStart);
+    cachedTimeData.dstEnd = timestampToZigbeeUtcTime(dstEnd);
+    cachedTimeData.dstShift = dstShift;
+    cachedTimeData.lastSetTime = timestampToZigbeeUtcTime(currentTime);
+    cachedTimeData.validUntilTime = timestampToZigbeeUtcTime(validUntilTime);
+}
+
+export function getTimeClusterAttributes(): TClusterAttributes<"genTime"> {
+    const currentTime = timestampToZigbeeUtcTime(Date.now());
+
+    if (currentTime >= cachedTimeData.validUntilTime) {
+        recalculateTimeData();
+    }
+
+    const standardTime = currentTime + cachedTimeData.timeZone;
+    let localTime = standardTime;
+
+    // tzScan returns the first second the change has to be applied.
+    // Therefore, we have to use >= for the dstStart comparison and
+    // not for the dstEnd comparison.
+    if (currentTime >= cachedTimeData.dstStart && currentTime < cachedTimeData.dstEnd) {
+        localTime = standardTime + cachedTimeData.dstShift;
+    }
+
+    return {
+        time: currentTime,
+        timeStatus: 3,
+        timeZone: cachedTimeData.timeZone,
+        dstStart: cachedTimeData.dstStart,
+        dstEnd: cachedTimeData.dstEnd,
+        dstShift: cachedTimeData.dstShift,
+        standardTime: standardTime,
+        localTime: localTime,
+        lastSetTime: cachedTimeData.lastSetTime,
+        validUntilTime: cachedTimeData.validUntilTime,
     };
+}
+
+/** used by tests */
+export function clearCachedTimeData() {
+    cachedTimeData.timeZone = 0;
+    cachedTimeData.dstStart = 0;
+    cachedTimeData.dstEnd = 0;
+    cachedTimeData.dstShift = 0;
+    cachedTimeData.lastSetTime = 0;
+    cachedTimeData.validUntilTime = 0;
 }

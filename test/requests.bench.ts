@@ -83,13 +83,13 @@ const LQI_TABLE_RESPONSE = Buffer.from([
 ]);
 
 const BASIC_RESP = Zcl.Frame.create(
-    0,
-    1,
+    Zcl.FrameType.GLOBAL,
+    Zcl.Direction.SERVER_TO_CLIENT,
     true,
     undefined,
     10,
     "readRsp",
-    0,
+    Zcl.Clusters.genBasic.ID,
     [
         {
             attrId: 5,
@@ -106,6 +106,34 @@ const BASIC_RESP = Zcl.Frame.create(
     ],
     {},
 ).toBuffer();
+
+const BASIC_REQ_FRAME = Zcl.Frame.create(
+    Zcl.FrameType.GLOBAL,
+    Zcl.Direction.CLIENT_TO_SERVER,
+    true,
+    undefined,
+    10,
+    "read",
+    Zcl.Clusters.genBasic.ID,
+    [{attrId: Zcl.Clusters.genBasic.attributes.modelId.ID}],
+    {},
+);
+
+const BASIC_REQ = BASIC_REQ_FRAME.toBuffer();
+
+const TIME_REQ_FRAME = Zcl.Frame.create(
+    Zcl.FrameType.GLOBAL,
+    Zcl.Direction.CLIENT_TO_SERVER,
+    true,
+    undefined,
+    10,
+    "read",
+    Zcl.Clusters.genTime.ID,
+    [{attrId: Zcl.Clusters.genTime.attributes.localTime.ID}],
+    {},
+);
+
+const TIME_REQ = TIME_REQ_FRAME.toBuffer();
 
 describe("Requests", () => {
     bench(
@@ -225,5 +253,69 @@ describe("Requests", () => {
             await group.command("genRssiLocation", "getDeviceConfig", {targetAddr: IEEE_ADDRESS1}, {});
         },
         BENCH_OPTIONS,
+    );
+
+    bench(
+        "device receives read basic",
+        async () => {
+            sendZclFrameToEndpointResponse = undefined;
+            sendZdoResponse = undefined;
+
+            await device.onZclData(
+                {
+                    clusterID: Zcl.Clusters.genTime.ID,
+                    address: device.networkAddress,
+                    header: BASIC_REQ_FRAME.header,
+                    data: BASIC_REQ,
+                    endpoint: 1,
+                    linkquality: 100,
+                    groupID: 0,
+                    wasBroadcast: false,
+                    destinationEndpoint: endpoint.ID,
+                },
+                BASIC_REQ_FRAME,
+                endpoint,
+            );
+        },
+        {
+            ...BENCH_OPTIONS,
+            setup: async (task, mode) => {
+                await BENCH_OPTIONS.setup!(task, mode);
+                // make sure we have cluster attributes so we take the full code path
+                endpoint.saveClusterAttributeKeyValue("genBasic", {modelId: "zh"});
+            },
+        },
+    );
+
+    bench(
+        "device receives read time",
+        async () => {
+            sendZclFrameToEndpointResponse = undefined;
+            sendZdoResponse = undefined;
+
+            await device.onZclData(
+                {
+                    clusterID: Zcl.Clusters.genTime.ID,
+                    address: device.networkAddress,
+                    header: TIME_REQ_FRAME.header,
+                    data: TIME_REQ,
+                    endpoint: 1,
+                    linkquality: 100,
+                    groupID: 0,
+                    wasBroadcast: false,
+                    destinationEndpoint: endpoint.ID,
+                },
+                TIME_REQ_FRAME,
+                endpoint,
+            );
+        },
+        {
+            ...BENCH_OPTIONS,
+            setup: async (task, mode) => {
+                await BENCH_OPTIONS.setup!(task, mode);
+                // make sure we have cluster attributes so we take the full code path
+                endpoint.saveClusterAttributeKeyValue("genBasic", {modelId: "zh"});
+            },
+        },
     );
 });
