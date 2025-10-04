@@ -110,7 +110,7 @@ describe("TimeService", () => {
             const timeClusterAttributes = timeService.getTimeClusterAttributes();
 
             expect(timeClusterAttributes.time).toStrictEqual(expectedTime);
-            expect(timeClusterAttributes.timeStatus).toStrictEqual(0b1111);
+            expect(timeClusterAttributes.timeStatus).toStrictEqual(0b1101);
             expect(timeClusterAttributes.timeZone).toStrictEqual(expectedTimeZone);
             expect(timeClusterAttributes.dstStart).toStrictEqual(expectedDstStart);
             expect(timeClusterAttributes.dstEnd).toStrictEqual(expectedDstEnd);
