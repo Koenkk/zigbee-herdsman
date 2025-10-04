@@ -107,18 +107,18 @@ describe("TimeService", () => {
             vi.stubEnv("TZ", timeZone);
             vi.setSystemTime(new Date(localTime));
 
-            const timeCluster = timeService.getTimeClusterAttributes();
+            const timeClusterAttributes = timeService.getTimeClusterAttributes();
 
-            expect(timeCluster.time).toStrictEqual(expectedTime);
-            expect(timeCluster.timeStatus).toStrictEqual(3);
-            expect(timeCluster.timeZone).toStrictEqual(expectedTimeZone);
-            expect(timeCluster.dstStart).toStrictEqual(expectedDstStart);
-            expect(timeCluster.dstEnd).toStrictEqual(expectedDstEnd);
-            expect(timeCluster.dstShift).toStrictEqual(expectedDstShift);
-            expect(timeCluster.standardTime).toStrictEqual(expectedStandardTime);
-            expect(timeCluster.localTime).toStrictEqual(expectedLocalTime);
-            expect(timeCluster.lastSetTime).toStrictEqual(expectedTime);
-            expect(timeCluster.validUntilTime).toStrictEqual(expectedTime + 24 * 60 * 60);
+            expect(timeClusterAttributes.time).toStrictEqual(expectedTime);
+            expect(timeClusterAttributes.timeStatus).toStrictEqual(3);
+            expect(timeClusterAttributes.timeZone).toStrictEqual(expectedTimeZone);
+            expect(timeClusterAttributes.dstStart).toStrictEqual(expectedDstStart);
+            expect(timeClusterAttributes.dstEnd).toStrictEqual(expectedDstEnd);
+            expect(timeClusterAttributes.dstShift).toStrictEqual(expectedDstShift);
+            expect(timeClusterAttributes.standardTime).toStrictEqual(expectedStandardTime);
+            expect(timeClusterAttributes.localTime).toStrictEqual(expectedLocalTime);
+            expect(timeClusterAttributes.lastSetTime).toStrictEqual(expectedTime);
+            expect(timeClusterAttributes.validUntilTime).toStrictEqual(expectedTime + 24 * 60 * 60);
         },
     );
 
