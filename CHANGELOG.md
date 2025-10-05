@@ -1,5 +1,17 @@
 # Changelog
 
+## [6.2.0](https://github.com/Koenkk/zigbee-herdsman/compare/v6.1.5...v6.2.0) (2025-10-05)
+
+
+### Features
+
+* Support for EmberZNet 8.2.2 (EZSP v18 / v2025.6.2) ([#1522](https://github.com/Koenkk/zigbee-herdsman/issues/1522)) ([22c9a5c](https://github.com/Koenkk/zigbee-herdsman/commit/22c9a5c8d6ed6fab5a372ebd15bb0433af02325d))
+
+
+### Bug Fixes
+
+* Add tuyaWeatherSync and tuyaWeatherRequest commands to manuSpecificTuya cluster ([#1516](https://github.com/Koenkk/zigbee-herdsman/issues/1516)) ([eab014d](https://github.com/Koenkk/zigbee-herdsman/commit/eab014d48198888f01a64549b3aecd20e5ef8318))
+
 ## [6.1.5](https://github.com/Koenkk/zigbee-herdsman/compare/v6.1.4...v6.1.5) (2025-09-29)
 
 
