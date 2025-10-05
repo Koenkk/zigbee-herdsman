@@ -860,12 +860,18 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
                     };
                     const messageContents = this.callbackBuffalo.readPayload();
                     this.ezspMacFilterMatchMessageHandler(filterIndexMatch, legacyPassthroughType, packetInfo, messageContents);
-                } else {
+                } else if (this.version < 0x12) {
                     const filterIndexMatch = this.callbackBuffalo.readUInt8();
                     const legacyPassthroughType: EmberMacPassthroughType = this.callbackBuffalo.readUInt8();
                     const packetInfo = this.callbackBuffalo.readEmberRxPacketInfo();
                     const messageContents = this.callbackBuffalo.readPayload();
                     this.ezspMacFilterMatchMessageHandler(filterIndexMatch, legacyPassthroughType, packetInfo, messageContents);
+                } else {
+                    const filterValueMatch = this.callbackBuffalo.readUInt16();
+                    const legacyPassthroughType: EmberMacPassthroughType = this.callbackBuffalo.readUInt8();
+                    const packetInfo = this.callbackBuffalo.readEmberRxPacketInfo();
+                    const messageContents = this.callbackBuffalo.readPayload();
+                    this.ezspMacFilterMatchMessageHandler(filterValueMatch, legacyPassthroughType, packetInfo, messageContents);
                 }
                 break;
             }
@@ -5865,20 +5871,21 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
      * Callback
      * A callback invoked by the EmberZNet stack when a raw MAC message that has
      * matched one of the application's configured MAC filters.
-     * @param filterIndexMatch uint8_t The index of the filter that was matched.
+     * @param filterValueMatch uint16_t The value of the filter that was matched.
+     *   - < v18: uint8_t The index of the filter that was matched.
      * @param legacyPassthroughType The type of MAC passthrough message received.
      * @param packetInfo Information about the incoming packet.
      * @param messageContents uint8_t * The raw message that was received.
      */
     ezspMacFilterMatchMessageHandler(
-        filterIndexMatch: number,
+        filterValueMatch: number,
         legacyPassthroughType: EmberMacPassthroughType,
         packetInfo: EmberRxPacketInfo,
         messageContents: Buffer,
     ): void {
         logger.debug(
             () =>
-                `ezspMacFilterMatchMessageHandler: filterIndexMatch=${filterIndexMatch} legacyPassthroughType=${legacyPassthroughType} ` +
+                `ezspMacFilterMatchMessageHandler: filterValueMatch=${filterValueMatch} legacyPassthroughType=${legacyPassthroughType} ` +
                 `packetInfo=${JSON.stringify(packetInfo)} messageContents=${messageContents.toString("hex")}`,
             NS,
         );
@@ -8929,7 +8936,8 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
 
     /**
      * Gets the total number of tokens.
-     * @returns uint8_t Total number of tokens.
+     * @returns uint32_t Total number of tokens.
+     *   - < v18: uint8_t
      */
     async ezspGetTokenCount(): Promise<number> {
         const sendBuffalo = this.startCommand(EzspFrameID.GET_TOKEN_COUNT);
@@ -8940,7 +8948,7 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
             throw new EzspError(sendStatus);
         }
 
-        const count = this.buffalo.readUInt8();
+        const count = this.version < 0x12 ? this.buffalo.readUInt8() : this.buffalo.readUInt32();
 
         return count;
     }
