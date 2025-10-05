@@ -20,7 +20,7 @@ function recalculateTimeData(currentDate: Date) {
     const currentTime = currentDate.getTime();
     const currentYear = currentDate.getUTCFullYear();
 
-    // Default values considering the timezone has no DST.
+    // Default values considering the time zone has no DST.
     let timeZoneDifferenceToUtc = currentDate.getTimezoneOffset() !== 0 ? currentDate.getTimezoneOffset() * -1 * 60 : 0;
     let dstStart = 0xffffffff;
     let dstEnd = 0xffffffff;
