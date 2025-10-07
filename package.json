@@ -26,6 +26,7 @@
         }
     ],
     "dependencies": {
+        "@date-fns/tz": "^1.4.1",
         "@serialport/bindings-cpp": "^13.0.1",
         "@serialport/parser-delimiter": "^13.0.0",
         "@serialport/stream": "^13.0.0",
