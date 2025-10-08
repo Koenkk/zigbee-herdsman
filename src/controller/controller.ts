@@ -1,6 +1,7 @@
 import assert from "node:assert";
 import events from "node:events";
 import fs from "node:fs";
+import path from "node:path";
 import mixinDeep from "mixin-deep";
 import {Adapter, type Events as AdapterEvents, type TsType as AdapterTsType} from "../adapter";
 import {BackupUtils, wait} from "../utils";
@@ -166,8 +167,8 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
         this.adapter.on("deviceLeave", this.onDeviceLeave.bind(this));
 
         if (startResult === "reset") {
-            if (this.options.databaseBackupPath && fs.existsSync(this.options.databasePath)) {
-                fs.copyFileSync(this.options.databasePath, this.options.databaseBackupPath);
+            if (fs.existsSync(this.options.databasePath) || fs.existsSync(this.options.backupPath)) {
+                this.backupData();
             }
 
             logger.debug("Clearing database...", NS);
@@ -342,6 +343,22 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
 
         Device.resetCache();
         Group.resetCache();
+    }
+
+    private backupData(): void {
+        // follows similar to logic Z2M's log dirs
+        const timestamp = new Date().toISOString().slice(0, 19).replace("T", ".").replace(/:/g, "-");
+        // `databasePath` may not exist, but is always valid (i.e. dirname will always point to data path of Z2M)
+        const basePath = path.dirname(this.options.databasePath);
+        const destPath = path.join(basePath, `backup-${timestamp}`);
+
+        fs.mkdirSync(destPath, {recursive: true});
+
+        for (const entry of fs.readdirSync(basePath, {withFileTypes: true})) {
+            if (entry.isFile()) {
+                fs.copyFileSync(path.join(basePath, entry.name), path.join(destPath, entry.name));
+            }
+        }
     }
 
     private databaseSave(): void {
