@@ -1,7 +1,8 @@
 import {Clusters} from "./definition/cluster";
+import {ZCL_TYPE_INVALID_BY_TYPE} from "./definition/datatypes";
 import {DataType, DataTypeClass} from "./definition/enums";
 import {Foundation, type FoundationCommandName, type FoundationDefinition} from "./definition/foundation";
-import type {Attribute, Cluster, ClusterDefinition, ClusterName, Command, CustomClusters} from "./definition/tstype";
+import type {Attribute, Cluster, ClusterDefinition, ClusterName, Command, CustomClusters, Parameter} from "./definition/tstype";
 
 const DATA_TYPE_CLASS_DISCRETE = [
     DataType.DATA8,
@@ -318,4 +319,220 @@ export function getFoundationCommand(id: number): FoundationDefinition {
 
 export function isFoundationDiscoverRsp(id: number): boolean {
     return FOUNDATION_DISCOVER_RSP_IDS.includes(id);
+}
+
+/** Check if value is equal to either min, max, minRef or maxRef */
+function isMinOrMax<T>(entry: Attribute | Parameter, value: T, refs?: Record<string, unknown>): boolean {
+    if (value === entry.max || value === entry.min) {
+        return true;
+    }
+
+    if (refs !== undefined) {
+        if ((entry.maxRef !== undefined && value === refs[entry.maxRef]) || (entry.minRef !== undefined && value === refs[entry.minRef])) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+function processRestrictions<T>(entry: Attribute | Parameter, value: T, refs?: Record<string, unknown>): void {
+    // XXX: throw when missing needed ref?
+    if (refs !== undefined) {
+        // refs first since non-ref equivs are "absolute overrides"
+        if (entry.minRef !== undefined) {
+            const minRefValue = refs[entry.minRef] as number | undefined;
+
+            if (minRefValue !== undefined) {
+                if ((value as number) < minRefValue) {
+                    throw new Error(`${entry.name} requires min of ${minRefValue} from ref ${entry.minRef}`);
+                }
+            }
+        }
+
+        if (entry.minExclRef !== undefined) {
+            const minExclRefValue = refs[entry.minExclRef] as number | undefined;
+
+            if (minExclRefValue !== undefined) {
+                if ((value as number) <= minExclRefValue) {
+                    throw new Error(`${entry.name} requires min exclusive of ${minExclRefValue} from ref ${entry.minExclRef}`);
+                }
+            }
+        }
+
+        if (entry.maxRef !== undefined) {
+            const maxRefValue = refs[entry.maxRef] as number | undefined;
+
+            if (maxRefValue !== undefined) {
+                if ((value as number) > maxRefValue) {
+                    throw new Error(`${entry.name} requires max of ${maxRefValue} from ref ${entry.maxRef}`);
+                }
+            }
+        }
+
+        if (entry.maxExclRef !== undefined) {
+            const maxExclRefValue = refs[entry.maxExclRef] as number | undefined;
+
+            if (maxExclRefValue !== undefined) {
+                if ((value as number) >= maxExclRefValue) {
+                    throw new Error(`${entry.name} requires max exclusive of ${maxExclRefValue} from ref ${entry.maxExclRef}`);
+                }
+            }
+        }
+    }
+
+    if (entry.min !== undefined && (value as number) < entry.min) {
+        throw new Error(`${entry.name} requires min of ${entry.min}`);
+    }
+
+    if (entry.minExcl !== undefined && (value as number) <= entry.minExcl) {
+        throw new Error(`${entry.name} requires min exclusive of ${entry.minExcl}`);
+    }
+
+    if (entry.max !== undefined && (value as number) > entry.max) {
+        throw new Error(`${entry.name} requires max of ${entry.max}`);
+    }
+
+    if (entry.maxExcl !== undefined && (value as number) >= entry.maxExcl) {
+        throw new Error(`${entry.name} requires max exclusive of ${entry.maxExcl}`);
+    }
+
+    if (entry.length !== undefined && (value as string | unknown[] | Buffer).length !== entry.length) {
+        throw new Error(`${entry.name} requires length of ${entry.length}`);
+    }
+
+    if (entry.minLen !== undefined && (value as string | unknown[] | Buffer).length < entry.minLen) {
+        throw new Error(`${entry.name} requires min length of ${entry.minLen}`);
+    }
+
+    if (entry.maxLen !== undefined && (value as string | unknown[] | Buffer).length > entry.maxLen) {
+        throw new Error(`${entry.name} requires max length of ${entry.maxLen}`);
+    }
+}
+
+export function processAttributeWrite<T>(attribute: Attribute, value: T, refs?: Record<string, unknown>): T {
+    if (attribute.writable !== true) {
+        throw new Error(`Attribute ${attribute.name} (${attribute.ID}) is not writable`);
+    }
+
+    if (value == null) {
+        return attribute.default !== undefined ? (attribute.default as T) : value /* XXX: dangerous fallback */;
+    }
+
+    // if default, always valid
+    if (attribute.default === value) {
+        return value;
+    }
+
+    // if ref default, always valid
+    if (attribute.defaultRef !== undefined && refs !== undefined && value === refs[attribute.defaultRef]) {
+        return value;
+    }
+
+    if (Number.isNaN(value)) {
+        if (attribute.default === undefined) {
+            if (attribute.defaultRef !== undefined && refs !== undefined) {
+                const refValue = refs[attribute.defaultRef];
+
+                if (refValue !== undefined) {
+                    return refValue as T;
+                }
+            }
+
+            const nonValue = ZCL_TYPE_INVALID_BY_TYPE[attribute.type];
+
+            if (nonValue === undefined) {
+                throw new Error(`Attribute ${attribute.name} (${attribute.ID}) does not have a default nor a non-value`);
+            }
+
+            return nonValue as T;
+        }
+
+        return attribute.default as T;
+    }
+
+    processRestrictions(attribute, value, refs);
+
+    return value;
+}
+
+export function processAttributePreRead(attribute: Attribute): void {
+    if (attribute.readable === false) {
+        throw new Error(`Attribute ${attribute.name} (${attribute.ID}) is not readable`);
+    }
+}
+
+export function processAttributePostRead<T>(attribute: Attribute, value: T, refs?: Record<string, unknown>): T {
+    // should never happen?
+    if (value == null) {
+        return value;
+    }
+
+    // if default, always valid
+    if (attribute.default === value) {
+        return value;
+    }
+
+    // if ref default, always valid
+    if (attribute.defaultRef !== undefined && refs !== undefined && value === refs[attribute.defaultRef]) {
+        return value;
+    }
+
+    // if type does not have an `invalid` (undefined) it won't match since value is checked above
+    if (value === ZCL_TYPE_INVALID_BY_TYPE[attribute.type]) {
+        // if value is same as max or min, ignore invalid sentinel
+        if (isMinOrMax(attribute, value, refs)) {
+            return value;
+        }
+
+        // return NaN for both number & bigint to keep logic consistent
+        return Number.NaN as T;
+    }
+
+    processRestrictions(attribute, value, refs);
+
+    return value;
+}
+
+export function processParameterWrite<T>(parameter: Parameter, value: T, refs?: Record<string, unknown>): T {
+    // should never happen?
+    if (value == null) {
+        return value;
+    }
+
+    if (Number.isNaN(value)) {
+        const nonValue = ZCL_TYPE_INVALID_BY_TYPE[parameter.type];
+
+        if (nonValue === undefined) {
+            throw new Error(`Parameter ${parameter.name} does not have a non-value`);
+        }
+
+        return nonValue as T;
+    }
+
+    processRestrictions(parameter, value, refs);
+
+    return value;
+}
+
+export function processParameterRead<T>(parameter: Parameter, value: T, refs?: Record<string, unknown>): T {
+    // should never happen?
+    if (value == null) {
+        return value;
+    }
+
+    // if type does not have an `invalid` (undefined) it won't match since value is checked above
+    if (value === ZCL_TYPE_INVALID_BY_TYPE[parameter.type]) {
+        // if value is same as max or min, ignore invalid sentinel
+        if (isMinOrMax(parameter, value, refs)) {
+            return value;
+        }
+
+        // return NaN for both number & bigint to keep logic consistent
+        return Number.NaN as T;
+    }
+
+    processRestrictions(parameter, value, refs);
+
+    return value;
 }

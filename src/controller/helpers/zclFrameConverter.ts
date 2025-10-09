@@ -26,7 +26,16 @@ function attributeKeyValue<Cl extends number | string, Custom extends TCustomClu
 
     // TODO: remove this type once Zcl.Frame is typed
     for (const item of frame.payload as TFoundation["report" | "write" | "readRsp"]) {
-        payload[cluster.getAttribute(item.attrId)?.name ?? item.attrId] = item.attrData;
+        const attribute = cluster.getAttribute(item.attrId);
+
+        if (attribute) {
+            // XXX: refs that are "after this item" won't be populated (pre-loop?)
+            const attrData = Zcl.Utils.processAttributePostRead(attribute, item.attrData, payload);
+
+            payload[attribute.name] = attrData;
+        } else {
+            payload[item.attrId] = item.attrData;
+        }
     }
 
     return payload as ClusterOrRawWriteAttributes<Cl, Custom>;
@@ -38,7 +47,9 @@ function attributeList(frame: Zcl.Frame, deviceManufacturerID: number | undefine
 
     // TODO: remove this type once Zcl.Frame is typed
     for (const item of frame.payload as TFoundation["read"]) {
-        payload.push(cluster.getAttribute(item.attrId)?.name ?? item.attrId);
+        const attribute = cluster.getAttribute(item.attrId);
+
+        payload.push(attribute?.name ?? item.attrId);
     }
 
     return payload;
