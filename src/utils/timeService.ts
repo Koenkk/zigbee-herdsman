@@ -77,7 +77,7 @@ function recalculateTimeData(currentDate: Date) {
                     start: new Date(currentYear + 1, 1),
                     end: new Date(currentYear + 1, 12),
                 });
-                const hasRegularDstNextYear = dstChangesThisYear.length === 2;
+                const hasRegularDstNextYear = dstChangesNextYear.length === 2;
 
                 if (hasRegularDstNextYear) {
                     timeZoneDifferenceToUtc = dstChangesThisYear[0].offset * 60;
