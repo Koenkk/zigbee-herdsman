@@ -1012,7 +1012,7 @@ export class Device extends Entity<ControllerEventMap> {
             const rev = nodeDescriptor.serverMask.stackComplianceRevision < 21 ? "pre-21" : nodeDescriptor.serverMask.stackComplianceRevision;
 
             logger.info(
-                `Device '${this.ieeeAddr}' is only compliant to revision '${rev}' of the ZigBee specification (current revision: ${ZSpec.ZIGBEE_REVISION}).`,
+                `Device '${this.ieeeAddr}' is only compliant to revision '${rev}' of the Zigbee specification (current revision: ${ZSpec.ZIGBEE_REVISION}).`,
                 NS,
             );
         }

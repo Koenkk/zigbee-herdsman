@@ -73,7 +73,7 @@ const COMMON_RFD_MAC_CAP: MACCapabilities = {
     allocateAddress: true,
 };
 
-describe("ZigBee on Host", () => {
+describe("Zigbee on Host", () => {
     let adapter: ZoHAdapter;
     let nextTidFromStartup = 1;
 
@@ -335,7 +335,7 @@ describe("ZigBee on Host", () => {
         await expect(adapter.start()).resolves.toStrictEqual("reset");
         await expect(adapter.getCoordinatorIEEE()).resolves.toStrictEqual("0x4d325a6e6f486f5a");
         await expect(adapter.getCoordinatorVersion()).resolves.toStrictEqual({
-            type: "ZigBee on Host",
+            type: "Zigbee on Host",
             meta: {
                 major: 4,
                 minor: 3,

@@ -151,7 +151,7 @@ export function crc16X25(data: number[] | Uint8Array | Buffer): number {
  *
  * Shortcut for `calcCRC(data, 16, 0x1021)`
  *
- * Used for XMODEM transfers, often involved in ZigBee environments
+ * Used for XMODEM transfers, often involved in Zigbee environments
  */
 export function crc16XMODEM(data: number[] | Uint8Array | Buffer): number {
     return calcCRC(data, 16, 0x1021);

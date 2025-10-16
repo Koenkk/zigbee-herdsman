@@ -24,9 +24,9 @@ export const LQI_TABLE_ENTRY_DEFAULTS = {
     // nwkAddress: NodeId;
     /**
      * The type of the neighbor device:
-     * 0x00 = ZigBee coordinator
-     * 0x01 = ZigBee router
-     * 0x02 = ZigBee end device
+     * 0x00 = Zigbee coordinator
+     * 0x01 = Zigbee router
+     * 0x02 = Zigbee end device
      * 0x03 = Unknown
      *
      * 2-bit

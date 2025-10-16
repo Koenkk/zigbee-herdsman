@@ -2,7 +2,7 @@
  * ZDO response status.
  *
  * Most responses to ZDO commands contain a status byte.
- * The meaning of this byte is defined by the ZigBee Device Profile.
+ * The meaning of this byte is defined by the Zigbee Device Profile.
  *
  * Zigbee Document – 05-3474-23 - Table 2-129. ZDP Enumerations Description
  *

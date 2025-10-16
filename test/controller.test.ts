@@ -7934,7 +7934,7 @@ describe("Controller", () => {
         await mockAdapterEvents.deviceJoined({networkAddress: 162, ieeeAddr: "0x162"});
 
         expect(mockLogger.info).toHaveBeenCalledWith(
-            `Device '0x162' is only compliant to revision '21' of the ZigBee specification (current revision: ${ZSpec.ZIGBEE_REVISION}).`,
+            `Device '0x162' is only compliant to revision '21' of the Zigbee specification (current revision: ${ZSpec.ZIGBEE_REVISION}).`,
             "zh:controller:device",
         );
     });
@@ -7944,7 +7944,7 @@ describe("Controller", () => {
         await mockAdapterEvents.deviceJoined({networkAddress: 161, ieeeAddr: "0x161"});
 
         expect(mockLogger.info).toHaveBeenCalledWith(
-            `Device '0x161' is only compliant to revision 'pre-21' of the ZigBee specification (current revision: ${ZSpec.ZIGBEE_REVISION}).`,
+            `Device '0x161' is only compliant to revision 'pre-21' of the Zigbee specification (current revision: ${ZSpec.ZIGBEE_REVISION}).`,
             "zh:controller:device",
         );
     });

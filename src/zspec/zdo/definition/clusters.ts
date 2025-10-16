@@ -1,5 +1,5 @@
 /**
- * Defines for ZigBee device profile cluster IDs follow.
+ * Defines for Zigbee device profile cluster IDs follow.
  * These include descriptions of the formats of the messages.
  *
  * Note that each message starts with a 1-byte transaction sequence number.
@@ -82,7 +82,7 @@ export enum ClusterId {
      *           Server mask:                     16
      *           Maximum outgoing transfer size:  16
      *           Descriptor Capability Flags:      8
-     *    See ZigBee document 053474, Section 2.3.2.3 for more details.
+     *    See Zigbee document 053474, Section 2.3.2.3 for more details.
      */
     NODE_DESCRIPTOR_RESPONSE = 0x8002,
 
@@ -94,7 +94,7 @@ export enum ClusterId {
      * Response: [transaction sequence number: 1] [status:1] [node ID:2]
      *           [current power mode, available power sources:1]
      *           [current power source, current power source level:1]
-     *     See ZigBee document 053474, Section 2.3.2.4 for more details.
+     *     See Zigbee document 053474, Section 2.3.2.4 for more details.
      */
     POWER_DESCRIPTOR_RESPONSE = 0x8003,
 
