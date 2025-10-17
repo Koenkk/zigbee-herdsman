@@ -38,7 +38,7 @@
         "zigbee-on-host": "^0.1.13"
     },
     "deprecated": false,
-    "description": "An open source ZigBee gateway solution with node.js.",
+    "description": "An open source Zigbee gateway solution with node.js.",
     "devDependencies": {
         "@biomejs/biome": "^2.2.5",
         "@serialport/binding-mock": "^10.2.2",

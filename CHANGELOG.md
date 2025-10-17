@@ -417,7 +417,7 @@
 
 ### Features
 
-* Initial support for ZigBee on Host adapter ([#1308](https://github.com/Koenkk/zigbee-herdsman/issues/1308)) ([038085f](https://github.com/Koenkk/zigbee-herdsman/commit/038085fe9d9cb9644faf22d584711c339cfb2af3))
+* Initial support for Zigbee on Host adapter ([#1308](https://github.com/Koenkk/zigbee-herdsman/issues/1308)) ([038085f](https://github.com/Koenkk/zigbee-herdsman/commit/038085fe9d9cb9644faf22d584711c339cfb2af3))
 
 
 ### Bug Fixes

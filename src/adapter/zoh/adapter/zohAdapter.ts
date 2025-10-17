@@ -311,7 +311,7 @@ export class ZoHAdapter extends Adapter {
 
     public async getCoordinatorVersion(): Promise<TsType.CoordinatorVersion> {
         return await Promise.resolve({
-            type: "ZigBee on Host",
+            type: "Zigbee on Host",
             meta: {
                 major: this.driver.protocolVersionMajor,
                 minor: this.driver.protocolVersionMinor,
@@ -336,7 +336,7 @@ export class ZoHAdapter extends Adapter {
 
     /* v8 ignore start */
     public async backup(_ieeeAddressesInDatabase: string[]): Promise<Backup> {
-        return await Promise.reject(new Error("ZigBee on Host handles backup internally"));
+        return await Promise.reject(new Error("Zigbee on Host handles backup internally"));
     }
     /* v8 ignore stop */
 

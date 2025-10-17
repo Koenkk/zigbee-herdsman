@@ -1010,7 +1010,7 @@ export enum EmberLibraryStatus {
     LIBRARY_IS_STUB = 0x00,
     LIBRARY_ERROR = 0xff,
 
-    // The ZigBee Pro library uses the following to indicate additional functionality:
+    // The Zigbee Pro library uses the following to indicate additional functionality:
     /** no router capability */
     ZIGBEE_PRO_LIBRARY_END_DEVICE_ONLY = 0x00,
     ZIGBEE_PRO_LIBRARY_HAVE_ROUTER_CAPABILITY = 0x01,
@@ -1082,7 +1082,7 @@ export enum EmberJoinMethod {
      */
     MAC_ASSOCIATION = 0,
     /** For networks where the "permit joining" flag is never turned
-     *  on, devices will need to use a ZigBee NWK Rejoin.  This value causes the
+     *  on, devices will need to use a Zigbee NWK Rejoin.  This value causes the
      *  rejoin to be sent withOUT NWK security and the Trust Center will be
      *  asked to send the NWK key to the device.  The NWK key sent to the device
      *  can be encrypted with the device's corresponding Trust Center link key.
@@ -1334,7 +1334,7 @@ export enum EmberInterpanMessageType {
 export enum EmberCurrentSecurityBitmask {
     // These options are the same for Initial and Current Security state.
 
-    /** This denotes that the device is running in a network with ZigBee
+    /** This denotes that the device is running in a network with Zigbee
      *  Standard Security. */
     STANDARD_SECURITY_MODE = 0x0000,
     /** This denotes that the device is running in a network without
@@ -1397,7 +1397,7 @@ export enum SecManKeyType {
     APP_LINK = 4,
     /** This is the ZLL encryption key for use by algorithms that require it. */
     ZLL_ENCRYPTION_KEY = 5,
-    /** For ZLL, this is the pre-configured link key used during classical ZigBee commissioning. */
+    /** For ZLL, this is the pre-configured link key used during classical Zigbee commissioning. */
     ZLL_PRECONFIGURED_KEY = 6,
     /** This is a Green Power Device (GPD) key used on a Proxy device. */
     GREEN_POWER_PROXY_TABLE_KEY = 7,
@@ -1603,7 +1603,7 @@ export enum EmberZllState {
     LINK_INITIATOR = 0x0010,
     /** The device is requesting link priority. */
     LINK_PRIORITY_REQUEST = 0x0020,
-    /** The device is a ZigBee 3.0 device. */
+    /** The device is a Zigbee 3.0 device. */
     PROFILE_INTEROP = 0x0080,
     /** The device is on a non-ZLL network. */
     NON_ZLL_NETWORK = 0x0100,

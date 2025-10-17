@@ -554,9 +554,9 @@ export enum EzspConfigId {
     PAN_ID_CONFLICT_REPORT_THRESHOLD = 0x22,
     /**
      * The timeout value in minutes for how long the Trust Center or a normal node
-     * waits for the ZigBee Request Key to complete. On the Trust Center this
+     * waits for the Zigbee Request Key to complete. On the Trust Center this
      * controls whether or not the device buffers the request, waiting for a
-     * matching pair of ZigBee Request Key. If the value is non-zero, the Trust
+     * matching pair of Zigbee Request Key. If the value is non-zero, the Trust
      * Center buffers and waits for that amount of time. If the value is zero, the
      * Trust Center does not buffer the request and immediately responds to the
      * request. Zero is the most compliant behavior.
@@ -592,7 +592,7 @@ export enum EzspConfigId {
     /**
      * Whether multicasts are sent to the RxOnWhenIdle=true address (0xFFFD) or
      * the sleepy broadcast address (0xFFFF). The RxOnWhenIdle=true address is the
-     * ZigBee compliant destination for multicasts.
+     * Zigbee compliant destination for multicasts.
      */
     SEND_MULTICASTS_TO_SLEEPY_ADDRESS = 0x2e,
     /** ZLL group address initial configuration. */
@@ -796,7 +796,7 @@ export enum EzspPolicyId {
     /** Controls whether the Trust Center will respond to application link key requests. */
     APP_KEY_REQUEST_POLICY = 0x06,
     /**
-     * Controls whether ZigBee packets that appear invalid are automatically dropped by the stack.
+     * Controls whether Zigbee packets that appear invalid are automatically dropped by the stack.
      * A counter will be incremented when this occurs.
      */
     PACKET_VALIDATE_LIBRARY_POLICY = 0x07,
@@ -870,7 +870,7 @@ export enum EzspValueId {
      * If the NCP initiated a rejoin it will record this value internally for retrieval by ezspGetValue(REAL_REJOIN_REASON).
      */
     LAST_REJOIN_REASON = 0x13,
-    /** The next ZigBee sequence number. */
+    /** The next Zigbee sequence number. */
     NEXT_ZIGBEE_SEQUENCE_NUMBER = 0x14,
     /** CCA energy detect threshold for radio. */
     CCA_THRESHOLD = 0x15,
