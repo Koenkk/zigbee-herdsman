@@ -2404,11 +2404,7 @@ describe("Controller", () => {
                         ],
                         name: "enrollRsp",
                     },
-                    initNormalOpMode: {
-                        ID: 1,
-                        parameters: [],
-                        name: "initNormalOpMode",
-                    },
+                    initNormalOpMode: {ID: 1, parameters: [], name: "initNormalOpMode"},
                     initTestMode: {
                         ID: 2,
                         parameters: [
