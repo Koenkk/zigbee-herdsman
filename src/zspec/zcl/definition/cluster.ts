@@ -3290,7 +3290,10 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             },
             initTestMode: {
                 ID: 2,
-                parameters: [],
+                parameters: [
+                    {name: "testModeDuration", type: DataType.UINT8},
+                    {name: "currentZoneSensitivityLevel", type: DataType.UINT8},
+                ],
             },
         },
         commandsResponse: {
