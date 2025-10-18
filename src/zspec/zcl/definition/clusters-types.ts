@@ -7794,9 +7794,9 @@ export interface TClusters {
                 /** type=UINT8 | max=255 */
                 payload: number;
             };
-            /** ID: 96 */
-            tuyaWeatherRequest: {
-                /** Type: BUFFER */
+            /** ID=0x61 */
+            tuyaWeatherSync: {
+                /** type=BUFFER */
                 payload: Buffer;
             };
         };
@@ -7874,9 +7874,9 @@ export interface TClusters {
                 /** type=UINT16 | max=65535 */
                 payloadSize: number;
             };
-            /** ID: 97 */
-            tuyaWeatherSync: {
-                /** Type: BUFFER */
+            /** ID=0x60 */
+            tuyaWeatherRequest: {
+                /** type=BUFFER */
                 payload: Buffer;
             };
         };
@@ -8069,63 +8069,6 @@ export interface TClusters {
         commands: never;
         commandResponses: never;
     };
-    heimanSpecificAirQuality: {
-        attributes: {
-            /** ID=0xf000 | type=UINT8 | writable=true | max=255 */
-            language: number;
-            /** ID=0xf001 | type=UINT8 | writable=true | max=255 */
-            unitOfMeasure: number;
-            /** ID=0xf002 | type=UINT8 | writable=true | max=255 */
-            batteryState: number;
-            /** ID=0xf003 | type=UINT16 | writable=true | max=65535 */
-            pm10measuredValue: number;
-            /** ID=0xf004 | type=UINT16 | writable=true | max=65535 */
-            tvocMeasuredValue: number;
-            /** ID=0xf005 | type=UINT16 | writable=true | max=65535 */
-            aqiMeasuredValue: number;
-            /** ID=0xf006 | type=INT16 | writable=true | min=-32768 | max=32767 */
-            temperatureMeasuredMax: number;
-            /** ID=0xf007 | type=INT16 | writable=true | min=-32768 | max=32767 */
-            temperatureMeasuredMin: number;
-            /** ID=0xf008 | type=UINT16 | writable=true | max=65535 */
-            humidityMeasuredMax: number;
-            /** ID=0xf009 | type=UINT16 | writable=true | max=65535 */
-            humidityMeasuredMin: number;
-            /** ID=0xf00a | type=UINT16 | writable=true | max=65535 */
-            alarmEnable: number;
-        };
-        commands: {
-            /** ID=0x11b */
-            setLanguage: {
-                /** type=UINT8 | max=255 */
-                languageCode: number;
-            };
-            /** ID=0x11c */
-            setUnitOfTemperature: {
-                /** type=UINT8 | max=255 */
-                unitsCode: number;
-            };
-            /** ID=0x11d */
-            getTime: Record<string, never>;
-        };
-        commandResponses: never;
-    };
-    heimanSpecificScenes: {
-        attributes: never;
-        commands: {
-            /** ID=0xf0 */
-            cinema: Record<string, never>;
-            /** ID=0xf1 */
-            atHome: Record<string, never>;
-            /** ID=0xf2 */
-            sleep: Record<string, never>;
-            /** ID=0xf3 */
-            goOut: Record<string, never>;
-            /** ID=0xf4 */
-            repast: Record<string, never>;
-        };
-        commandResponses: never;
-    };
     tradfriButton: {
         attributes: never;
         commands: {
@@ -8156,68 +8099,6 @@ export interface TClusters {
             };
         };
         commandResponses: never;
-    };
-    heimanSpecificInfraRedRemote: {
-        attributes: never;
-        commands: {
-            /** ID=0xf0 */
-            sendKey: {
-                /** type=UINT8 | max=255 */
-                id: number;
-                /** type=UINT8 | max=255 */
-                keyCode: number;
-            };
-            /** ID=0xf1 */
-            studyKey: {
-                /** type=UINT8 | max=255 */
-                id: number;
-                /** type=UINT8 | max=255 */
-                keyCode: number;
-            };
-            /** ID=0xf3 */
-            deleteKey: {
-                /** type=UINT8 | max=255 */
-                id: number;
-                /** type=UINT8 | max=255 */
-                keyCode: number;
-            };
-            /** ID=0xf4 */
-            createId: {
-                /** type=UINT8 | max=255 */
-                modelType: number;
-            };
-            /** ID=0xf6 */
-            getIdAndKeyCodeList: Record<string, never>;
-        };
-        commandResponses: {
-            /** ID=0xf2 */
-            studyKeyRsp: {
-                /** type=UINT8 | max=255 */
-                id: number;
-                /** type=UINT8 | max=255 */
-                keyCode: number;
-                /** type=UINT8 | max=255 */
-                result: number;
-            };
-            /** ID=0xf5 */
-            createIdRsp: {
-                /** type=UINT8 | max=255 */
-                id: number;
-                /** type=UINT8 | max=255 */
-                modelType: number;
-            };
-            /** ID=0xf7 */
-            getIdAndKeyCodeListRsp: {
-                /** type=UINT8 | max=255 */
-                packetsTotal: number;
-                /** type=UINT8 | max=255 */
-                packetNumber: number;
-                /** type=UINT8 | max=255 */
-                packetLength: number;
-                /** type=LIST_UINT8 */
-                learnedDevicesList: number[];
-            };
-        };
     };
     schneiderSpecificPilotMode: {
         attributes: {
