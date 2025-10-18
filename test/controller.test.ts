@@ -13,6 +13,7 @@ import {InterviewState} from "../src/controller/model/device";
 import type * as Models from "../src/models";
 import * as Utils from "../src/utils";
 import {setLogger} from "../src/utils/logger";
+import * as timeService from "../src/utils/timeService";
 import * as ZSpec from "../src/zspec";
 import {BroadcastAddress} from "../src/zspec/enums";
 import * as Zcl from "../src/zspec/zcl";
@@ -2672,6 +2673,7 @@ describe("Controller", () => {
         const device = controller.getDeviceByIeeeAddr("0x129")!;
         expect(device.skipDefaultResponse).toBeFalsy();
         device.skipDefaultResponse = true;
+
         await mockAdapterEvents.zclPayload({
             wasBroadcast: false,
             address: 129,
@@ -2764,7 +2766,41 @@ describe("Controller", () => {
     });
 
     it("Respond to genTime read", async () => {
-        const frame = Zcl.Frame.create(0, 0, true, undefined, 40, 0, 10, [{attrId: 0}, {attrId: 1}, {attrId: 7}, {attrId: 4}], {});
+        const expectedTime = 825789852;
+        const expectedTimeStatus = 0b1101;
+        const expectedTimeZone = 3600;
+        const expectedDstStart = 828061200;
+        const expectedDstEnd = 846205199;
+        const expectedDstShift = 3600;
+        const expectedStandardTime = 825793452;
+        const expectedLocalTime = 825793452;
+        const expectedValidUntilTime = expectedTime + 24 * 60 * 60;
+
+        // Mock the timeService response, as we don't want to test that
+        const getTimeClusterAttributesSpy = vi.spyOn(timeService, "getTimeClusterAttributes").mockReturnValue({
+            time: expectedTime,
+            timeStatus: expectedTimeStatus,
+            timeZone: expectedTimeZone,
+            dstStart: expectedDstStart,
+            dstEnd: expectedDstEnd,
+            dstShift: expectedDstShift,
+            standardTime: expectedStandardTime,
+            localTime: expectedLocalTime,
+            lastSetTime: expectedTime,
+            validUntilTime: expectedValidUntilTime,
+        });
+
+        const frame = Zcl.Frame.create(
+            0,
+            0,
+            true,
+            undefined,
+            40,
+            0,
+            10,
+            [{attrId: 0}, {attrId: 1}, {attrId: 2}, {attrId: 3}, {attrId: 4}, {attrId: 5}, {attrId: 6}, {attrId: 7}, {attrId: 8}, {attrId: 9}],
+            {},
+        );
         await controller.start();
         await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
         mocksendZclFrameToEndpoint.mockClear();
@@ -2780,32 +2816,58 @@ describe("Controller", () => {
         });
 
         expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(1);
-        expect(mocksendZclFrameToEndpoint.mock.calls[0][0]).toBe("0x129");
-        expect(mocksendZclFrameToEndpoint.mock.calls[0][1]).toBe(129);
-        expect(mocksendZclFrameToEndpoint.mock.calls[0][2]).toBe(1);
+        expect(mocksendZclFrameToEndpoint.mock.calls[0][0]).toStrictEqual("0x129");
+        expect(mocksendZclFrameToEndpoint.mock.calls[0][1]).toStrictEqual(129);
+        expect(mocksendZclFrameToEndpoint.mock.calls[0][2]).toStrictEqual(1);
         const message = mocksendZclFrameToEndpoint.mock.calls[0][3];
-        // attrId 9 is not supported by controller.ts therefore should not be in the response
-        expect(message.payload.length).toBe(3);
-        expect(message.payload[0].attrId).toBe(0);
-        expect(message.payload[0].dataType).toBe(226);
-        expect(message.payload[0].status).toBe(0);
-        expect(message.payload[0].attrData).toBeGreaterThan(600822353);
-        expect(message.payload[1].attrId).toBe(1);
-        expect(message.payload[1].dataType).toBe(24);
-        expect(message.payload[1].status).toBe(0);
-        expect(message.payload[1].attrData).toBe(3);
-        expect(message.payload[2].attrId).toBe(7);
-        expect(message.payload[2].dataType).toBe(35);
-        expect(message.payload[2].status).toBe(0);
-        expect(message.payload[2].attrData).toBeGreaterThan(600822353);
+        expect(message.payload.length).toStrictEqual(10);
+        // Time
+        expect(message.payload[0].attrId).toStrictEqual(Zcl.Clusters.genTime.attributes.time.ID);
+        expect(message.payload[0].attrData).toStrictEqual(expectedTime);
+        // TimeStatus
+        expect(message.payload[1].attrId).toStrictEqual(Zcl.Clusters.genTime.attributes.timeStatus.ID);
+        expect(message.payload[1].attrData).toStrictEqual(expectedTimeStatus);
+        // TimeZone
+        expect(message.payload[2].attrId).toStrictEqual(Zcl.Clusters.genTime.attributes.timeZone.ID);
+        expect(message.payload[2].attrData).toStrictEqual(expectedTimeZone);
+        // DstStart
+        expect(message.payload[3].attrId).toStrictEqual(Zcl.Clusters.genTime.attributes.dstStart.ID);
+        expect(message.payload[3].attrData).toStrictEqual(expectedDstStart);
+        // DstEnd
+        expect(message.payload[4].attrId).toStrictEqual(Zcl.Clusters.genTime.attributes.dstEnd.ID);
+        expect(message.payload[4].attrData).toStrictEqual(expectedDstEnd);
+        // DstShift
+        expect(message.payload[5].attrId).toStrictEqual(Zcl.Clusters.genTime.attributes.dstShift.ID);
+        expect(message.payload[5].attrData).toStrictEqual(expectedDstShift);
+        // StandardTime
+        expect(message.payload[6].attrId).toStrictEqual(Zcl.Clusters.genTime.attributes.standardTime.ID);
+        expect(message.payload[6].attrData).toStrictEqual(expectedStandardTime);
+        // LocalTime
+        expect(message.payload[7].attrId).toStrictEqual(Zcl.Clusters.genTime.attributes.localTime.ID);
+        expect(message.payload[7].attrData).toStrictEqual(expectedLocalTime);
+        // LastSetTime
+        expect(message.payload[8].attrId).toStrictEqual(Zcl.Clusters.genTime.attributes.lastSetTime.ID);
+        expect(message.payload[8].attrData).toStrictEqual(expectedTime);
+        // ValidUntilTime
+        expect(message.payload[9].attrId).toStrictEqual(Zcl.Clusters.genTime.attributes.validUntilTime.ID);
+        expect(message.payload[9].attrData).toStrictEqual(expectedValidUntilTime);
+
+        for (const p of message.payload) {
+            expect(p.status).toStrictEqual(Zcl.Status.SUCCESS);
+        }
+
         delete message.payload;
         const call = mocksendZclFrameToEndpoint.mock.calls[0];
-        expect(call[0]).toBe("0x129");
-        expect(call[1]).toBe(129);
-        expect(call[2]).toBe(1);
+        expect(call[0]).toStrictEqual("0x129");
+        expect(call[1]).toStrictEqual(129);
+        expect(call[2]).toStrictEqual(1);
         expect(deepClone(call[3])).toStrictEqual(
             deepClone(Zcl.Frame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.SERVER_TO_CLIENT, true, undefined, 40, "readRsp", 10, undefined, {})),
         );
+        expect(getTimeClusterAttributesSpy).toHaveBeenCalledTimes(1);
+        expect(mockLogger.error).not.toHaveBeenCalled();
+
+        getTimeClusterAttributesSpy.mockRestore();
     });
 
     it("Allow to override read response through `device.customReadResponse", async () => {
@@ -7759,7 +7821,7 @@ describe("Controller", () => {
         await mockAdapterEvents.deviceJoined({networkAddress: 162, ieeeAddr: "0x162"});
 
         expect(mockLogger.info).toHaveBeenCalledWith(
-            `Device '0x162' is only compliant to revision '21' of the ZigBee specification (current revision: ${ZSpec.ZIGBEE_REVISION}).`,
+            `Device '0x162' is only compliant to revision '21' of the Zigbee specification (current revision: ${ZSpec.ZIGBEE_REVISION}).`,
             "zh:controller:device",
         );
     });
@@ -7769,7 +7831,7 @@ describe("Controller", () => {
         await mockAdapterEvents.deviceJoined({networkAddress: 161, ieeeAddr: "0x161"});
 
         expect(mockLogger.info).toHaveBeenCalledWith(
-            `Device '0x161' is only compliant to revision 'pre-21' of the ZigBee specification (current revision: ${ZSpec.ZIGBEE_REVISION}).`,
+            `Device '0x161' is only compliant to revision 'pre-21' of the Zigbee specification (current revision: ${ZSpec.ZIGBEE_REVISION}).`,
             "zh:controller:device",
         );
     });

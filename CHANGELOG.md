@@ -1,5 +1,45 @@
 # Changelog
 
+## [6.3.1](https://github.com/Koenkk/zigbee-herdsman/compare/v6.3.0...v6.3.1) (2025-10-18)
+
+
+### Bug Fixes
+
+* Add missing parameters to `ssIasZone.initTestMode` command ([#1530](https://github.com/Koenkk/zigbee-herdsman/issues/1530)) ([36673a9](https://github.com/Koenkk/zigbee-herdsman/commit/36673a9741173153f9400df132ae22e83be94445))
+* **ignore:** Rename `ZigBee` -&gt; `Zigbee` ([#1527](https://github.com/Koenkk/zigbee-herdsman/issues/1527)) ([42c6f6c](https://github.com/Koenkk/zigbee-herdsman/commit/42c6f6cd0b4531831ecc987b434ef6a92398f654))
+* Remove custom heiman clusters ([#1528](https://github.com/Koenkk/zigbee-herdsman/issues/1528)) ([a8789f7](https://github.com/Koenkk/zigbee-herdsman/commit/a8789f7bf2b23bd6e7775b4a127109f379e587c8))
+
+## [6.3.0](https://github.com/Koenkk/zigbee-herdsman/compare/v6.2.0...v6.3.0) (2025-10-15)
+
+
+### Features
+
+* Add support for daylight saving time in `genTime` cluster ([#1517](https://github.com/Koenkk/zigbee-herdsman/issues/1517)) ([4aa797c](https://github.com/Koenkk/zigbee-herdsman/commit/4aa797cad36896ccb599f9340f4fc96e53789d5a))
+
+
+### Bug Fixes
+
+* **ignore:** bump the minor-patch group with 2 updates ([#1524](https://github.com/Koenkk/zigbee-herdsman/issues/1524)) ([8fbc1eb](https://github.com/Koenkk/zigbee-herdsman/commit/8fbc1eb56b154880ee1bdc3990c70177c95f9553))
+
+## [6.2.0](https://github.com/Koenkk/zigbee-herdsman/compare/v6.1.5...v6.2.0) (2025-10-05)
+
+
+### Features
+
+* Support for EmberZNet 8.2.2 (EZSP v18 / v2025.6.2) ([#1522](https://github.com/Koenkk/zigbee-herdsman/issues/1522)) ([22c9a5c](https://github.com/Koenkk/zigbee-herdsman/commit/22c9a5c8d6ed6fab5a372ebd15bb0433af02325d))
+
+
+### Bug Fixes
+
+* Add tuyaWeatherSync and tuyaWeatherRequest commands to manuSpecificTuya cluster ([#1516](https://github.com/Koenkk/zigbee-herdsman/issues/1516)) ([eab014d](https://github.com/Koenkk/zigbee-herdsman/commit/eab014d48198888f01a64549b3aecd20e5ef8318))
+
+## [6.1.5](https://github.com/Koenkk/zigbee-herdsman/compare/v6.1.4...v6.1.5) (2025-09-29)
+
+
+### Bug Fixes
+
+* Performance: skip buffalo write if empty (str/arr) ([#1513](https://github.com/Koenkk/zigbee-herdsman/issues/1513)) ([4385acb](https://github.com/Koenkk/zigbee-herdsman/commit/4385acb3e91699995ad89fcd4046649a8dabf3f8))
+
 ## [6.1.4](https://github.com/Koenkk/zigbee-herdsman/compare/v6.1.3...v6.1.4) (2025-09-29)
 
 
@@ -386,7 +426,7 @@
 
 ### Features
 
-* Initial support for ZigBee on Host adapter ([#1308](https://github.com/Koenkk/zigbee-herdsman/issues/1308)) ([038085f](https://github.com/Koenkk/zigbee-herdsman/commit/038085fe9d9cb9644faf22d584711c339cfb2af3))
+* Initial support for Zigbee on Host adapter ([#1308](https://github.com/Koenkk/zigbee-herdsman/issues/1308)) ([038085f](https://github.com/Koenkk/zigbee-herdsman/commit/038085fe9d9cb9644faf22d584711c339cfb2af3))
 
 
 ### Bug Fixes

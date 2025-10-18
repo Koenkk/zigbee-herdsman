@@ -62,7 +62,7 @@ export class EmberNetworkParameters extends EzspStruct {
         // This may only be set at joining when using USE_NWK_COMMISSIONING as
         // the join method.
         ["nwkManagerId", named.EmberNodeId],
-        // NWK Update ID. The value of the ZigBee nwkUpdateId known by the
+        // NWK Update ID. The value of the Zigbee nwkUpdateId known by the
         // stack. This is used to determine the newest instance of the network
         // after a PAN ID or channel change. This may only be set at joining
         // when using USE_NWK_COMMISSIONING as the join method.
@@ -76,7 +76,7 @@ export class EmberNetworkParameters extends EzspStruct {
 }
 
 export class EmberZigbeeNetwork extends EzspStruct {
-    // The parameters of a ZigBee network.
+    // The parameters of a Zigbee network.
     static _fields = [
         // The 802.15.4 channel associated with the network.
         ["channel", basic.uint8_t],
@@ -107,7 +107,7 @@ export class EmberApsFrame extends EzspStruct {
     public groupId?: number;
     public options?: named.EmberApsOption;
 
-    // ZigBee APS frame parameters.
+    // Zigbee APS frame parameters.
     static _fields = [
         // The application profile ID that describes the format of the message.
         ["profileId", basic.uint16_t],
@@ -436,7 +436,7 @@ export class EmberZllSecurityAlgorithmData extends EzspStruct {
 export class EmberZllNetwork extends EzspStruct {
     // The parameters of a ZLL network.
     static _fields = [
-        // The parameters of a ZigBee network.
+        // The parameters of a Zigbee network.
         ["zigbeeNetwork", EmberZigbeeNetwork],
         // Data associated with the ZLL security algorithm.
         ["securityAlgorithm", EmberZllSecurityAlgorithmData],
@@ -467,7 +467,7 @@ export class EmberZllInitialSecurityState extends EzspStruct {
         ["keyIndex", named.EmberZllKeyIndex],
         // The encryption key for use by algorithms that require it.
         ["encryptionKey", EmberKeyData],
-        // The pre-configured link key used during classical ZigBee
+        // The pre-configured link key used during classical Zigbee
         // commissioning.
         ["preconfiguredKey", EmberKeyData],
     ];

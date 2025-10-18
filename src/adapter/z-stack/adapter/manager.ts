@@ -331,7 +331,7 @@ export class ZnpAdapterManager {
     }
 
     /**
-     * Internal method to perform new network commissioning. Network commissioning creates a new ZigBee
+     * Internal method to perform new network commissioning. Network commissioning creates a new Zigbee
      * network using the adapter.
      *
      * @param nwkOptions Options to configure the new network with.

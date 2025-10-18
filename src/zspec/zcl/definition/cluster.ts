@@ -7676,6 +7676,13 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                     {name: "payload", type: DataType.UINT8, max: 0xff},
                 ],
             },
+            /**
+             * Weather forecast synchronization (check requestWeatherInformation)
+             */
+            tuyaWeatherSync: {
+                ID: 0x61,
+                parameters: [{name: "payload", type: BuffaloZclDataType.BUFFER}],
+            },
         },
         commandsResponse: {
             /**
@@ -7769,6 +7776,17 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
              * Gateway connection status (bidirectional)
              */
             mcuGatewayConnectionStatus: {ID: 0x25, parameters: [{name: "payloadSize", type: DataType.UINT16, max: 0xffff}]},
+            /**
+             * Device can request weather forecast information and expects response respecting given parameters.
+             * This command ID seem to be device speciffic, because there is simmilar structure documented in Tuya Serial Communication Protocol,
+             * but with different ID (0x3a and 0x3b respectively). In this case, I'm not sure if the name should reflect the one from
+             * docs or be also speciffic (providing space for the implementation of the correct one in the future)?
+             *
+             */
+            tuyaWeatherRequest: {
+                ID: 0x60,
+                parameters: [{name: "payload", type: BuffaloZclDataType.BUFFER}],
+            },
         },
     },
     manuSpecificLumi: {
@@ -7894,56 +7912,6 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         commands: {},
         commandsResponse: {},
     },
-    heimanSpecificAirQuality: {
-        // from HS2AQ-3.0海曼智能空气质量检测仪API文档-V01
-        ID: 0xfc81,
-        manufacturerCode: ManufacturerCode.HEIMAN_TECHNOLOGY_CO_LTD,
-        attributes: {
-            language: {ID: 0xf000, type: DataType.UINT8, writable: true, max: 0xff},
-            unitOfMeasure: {ID: 0xf001, type: DataType.UINT8, writable: true, max: 0xff},
-            batteryState: {ID: 0xf002, type: DataType.UINT8, writable: true, max: 0xff}, //  (0 is not charged, 1 is charging, 2 is fully charged)
-            pm10measuredValue: {ID: 0xf003, type: DataType.UINT16, writable: true, max: 0xffff},
-            tvocMeasuredValue: {ID: 0xf004, type: DataType.UINT16, writable: true, max: 0xffff},
-            aqiMeasuredValue: {ID: 0xf005, type: DataType.UINT16, writable: true, max: 0xffff},
-            temperatureMeasuredMax: {ID: 0xf006, type: DataType.INT16, writable: true, min: -32768, max: 32767},
-            temperatureMeasuredMin: {ID: 0xf007, type: DataType.INT16, writable: true, min: -32768, max: 32767},
-            humidityMeasuredMax: {ID: 0xf008, type: DataType.UINT16, writable: true, max: 0xffff},
-            humidityMeasuredMin: {ID: 0xf009, type: DataType.UINT16, writable: true, max: 0xffff},
-            alarmEnable: {ID: 0xf00a, type: DataType.UINT16, writable: true, max: 0xffff},
-        },
-        commands: {
-            setLanguage: {
-                ID: 0x11b,
-                parameters: [
-                    // (1: English 0: Chinese)
-                    {name: "languageCode", type: DataType.UINT8, max: 0xff},
-                ],
-            },
-            setUnitOfTemperature: {
-                ID: 0x11c,
-                parameters: [
-                    // (0: ℉ 1: ℃)
-                    {name: "unitsCode", type: DataType.UINT8, max: 0xff},
-                ],
-            },
-            getTime: {ID: 0x11d, parameters: []},
-        },
-        commandsResponse: {},
-    },
-    heimanSpecificScenes: {
-        // from HS2SS-3.0海曼智能情景开关API文档-V01
-        ID: 0xfc80,
-        manufacturerCode: ManufacturerCode.HEIMAN_TECHNOLOGY_CO_LTD,
-        attributes: {},
-        commands: {
-            cinema: {ID: 0xf0, parameters: []},
-            atHome: {ID: 0xf1, parameters: []},
-            sleep: {ID: 0xf2, parameters: []},
-            goOut: {ID: 0xf3, parameters: []},
-            repast: {ID: 0xf4, parameters: []},
-        },
-        commandsResponse: {},
-    },
     tradfriButton: {
         ID: 0xfc80,
         manufacturerCode: ManufacturerCode.IKEA_OF_SWEDEN,
@@ -7956,84 +7924,6 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             action6: {ID: 0x06, parameters: [{name: "data", type: DataType.UINT8, max: 0xff}]},
         },
         commandsResponse: {},
-    },
-    heimanSpecificInfraRedRemote: {
-        // from HS2IRC-3.0海曼智能红外转发控制器API-V01文档
-        ID: 0xfc82,
-        manufacturerCode: ManufacturerCode.HEIMAN_TECHNOLOGY_CO_LTD,
-        attributes: {},
-        commands: {
-            sendKey: {
-                ID: 0xf0,
-                parameters: [
-                    {name: "id", type: DataType.UINT8, max: 0xff},
-                    {name: "keyCode", type: DataType.UINT8, max: 0xff},
-                ],
-            },
-            studyKey: {
-                // Total we can have 30 keycode for each device ID (1..30).
-                ID: 0xf1,
-                // response: 0xf2,
-                parameters: [
-                    {name: "id", type: DataType.UINT8, max: 0xff},
-                    {name: "keyCode", type: DataType.UINT8, max: 0xff},
-                ],
-            },
-            deleteKey: {
-                ID: 0xf3,
-                parameters: [
-                    // 1-15 - Delete specific ID, >= 16 - Delete All
-                    {name: "id", type: DataType.UINT8, max: 0xff},
-                    // 1-30 - Delete specific keycode, >= 31 - Delete All keycodes for the ID
-                    {name: "keyCode", type: DataType.UINT8, max: 0xff},
-                ],
-            },
-            createId: {
-                // Total we can have 15 device IDs (1..15).
-                ID: 0xf4,
-                // response: 0xf5,
-                parameters: [{name: "modelType", type: DataType.UINT8, max: 0xff}],
-            },
-            getIdAndKeyCodeList: {
-                ID: 0xf6,
-                // response: 0xf7,
-                parameters: [],
-            },
-        },
-        commandsResponse: {
-            studyKeyRsp: {
-                ID: 0xf2,
-                parameters: [
-                    {name: "id", type: DataType.UINT8, max: 0xff},
-                    {name: "keyCode", type: DataType.UINT8, max: 0xff},
-                    {name: "result", type: DataType.UINT8, max: 0xff}, // 0 - success, 1 - fail
-                ],
-            },
-            createIdRsp: {
-                ID: 0xf5,
-                parameters: [
-                    {name: "id", type: DataType.UINT8, max: 0xff}, // 0xFF - create failed
-                    {name: "modelType", type: DataType.UINT8, max: 0xff},
-                ],
-            },
-            getIdAndKeyCodeListRsp: {
-                ID: 0xf7,
-                parameters: [
-                    {name: "packetsTotal", type: DataType.UINT8, max: 0xff},
-                    {name: "packetNumber", type: DataType.UINT8, max: 0xff},
-                    {name: "packetLength", type: DataType.UINT8, max: 0xff}, // Max length is 70 bytes
-                    // HELP for learnedDevicesList data structure:
-                    //   struct structPacketPayload {
-                    //     uint8_t ID;
-                    //     uint8_t ModeType;
-                    //     uint8_t KeyNum;
-                    //     uint8_t KeyCode[KeyNum];
-                    //   } arayPacketPayload[CurentPacketLenght];
-                    // }
-                    {name: "learnedDevicesList", type: BuffaloZclDataType.LIST_UINT8},
-                ],
-            },
-        },
     },
     schneiderSpecificPilotMode: {
         ID: 0xff23,

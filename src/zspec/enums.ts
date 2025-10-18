@@ -1,7 +1,7 @@
 /**
- * ZigBee Broadcast Addresses
+ * Zigbee Broadcast Addresses
  *
- * ZigBee specifies three different broadcast addresses that reach different collections of nodes.
+ * Zigbee specifies three different broadcast addresses that reach different collections of nodes.
  * Broadcasts are normally sent only to routers.
  * Broadcasts can also be forwarded to end devices, either all of them or only those that do not sleep.
  * Broadcasting to end devices is both significantly more resource-intensive and significantly less reliable than broadcasting to routers.

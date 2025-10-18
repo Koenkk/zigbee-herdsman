@@ -3,6 +3,7 @@ import type {Events as AdapterEvents} from "../../adapter";
 import type {LQINeighbor, RoutingTableEntry} from "../../adapter/tstype";
 import {wait} from "../../utils";
 import {logger} from "../../utils/logger";
+import * as timeService from "../../utils/timeService";
 import * as ZSpec from "../../zspec";
 import {BroadcastAddress} from "../../zspec/enums";
 import type {Eui64} from "../../zspec/tstypes";
@@ -15,11 +16,6 @@ import zclTransactionSequenceNumber from "../helpers/zclTransactionSequenceNumbe
 import type {DatabaseEntry, DeviceType, KeyValue} from "../tstype";
 import Endpoint from "./endpoint";
 import Entity from "./entity";
-
-/**
- * @ignore
- */
-const OneJanuary2000 = new Date("January 01, 2000 00:00:00 UTC+00:00").getTime();
 
 const NS = "zh:controller:device";
 
@@ -348,22 +344,18 @@ export class Device extends Entity<ControllerEventMap> {
             await endpoint.command("ssIasZone", "enrollRsp", payload, {disableDefaultResponse: true});
         }
 
-        // Reponse to read requests
+        // Response to read requests
         if (frame.header.isGlobal && frame.isCommand("read") && !this._customReadResponse?.(frame, endpoint)) {
-            const time = Math.round((Date.now() - OneJanuary2000) / 1000);
             const attributes: {[s: string]: KeyValue} = {
                 ...endpoint.clusters,
-                genTime: {
-                    attributes: {
-                        timeStatus: 3, // Time-master + synchronised
-                        time: time,
-                        timeZone: new Date().getTimezoneOffset() * -1 * 60,
-                        localTime: time - new Date().getTimezoneOffset() * 60,
-                        lastSetTime: time,
-                        validUntilTime: time + 24 * 60 * 60, // valid for 24 hours
-                    },
-                },
             };
+
+            const isTimeReadRequest = dataPayload.clusterID === Zcl.Clusters.genTime.ID;
+            if (isTimeReadRequest) {
+                attributes.genTime = {
+                    attributes: timeService.getTimeClusterAttributes(),
+                };
+            }
 
             if (frame.cluster.name in attributes) {
                 const response: KeyValue = {};
@@ -1020,7 +1012,7 @@ export class Device extends Entity<ControllerEventMap> {
             const rev = nodeDescriptor.serverMask.stackComplianceRevision < 21 ? "pre-21" : nodeDescriptor.serverMask.stackComplianceRevision;
 
             logger.info(
-                `Device '${this.ieeeAddr}' is only compliant to revision '${rev}' of the ZigBee specification (current revision: ${ZSpec.ZIGBEE_REVISION}).`,
+                `Device '${this.ieeeAddr}' is only compliant to revision '${rev}' of the Zigbee specification (current revision: ${ZSpec.ZIGBEE_REVISION}).`,
                 NS,
             );
         }

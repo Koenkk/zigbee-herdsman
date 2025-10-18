@@ -3,7 +3,7 @@ import type {ExtendedPanId} from "./tstypes";
 /** Current supported Zigbee revision: https://csa-iot.org/wp-content/uploads/2023/04/05-3474-23-csg-zigbee-specification-compressed.pdf */
 export const ZIGBEE_REVISION = 23;
 
-/** The network ID of the coordinator in a ZigBee network is 0x0000. */
+/** The network ID of the coordinator in a Zigbee network is 0x0000. */
 export const COORDINATOR_ADDRESS = 0x0000;
 
 /** Endpoint profile ID for Zigbee 3.0. "Home Automation" */
@@ -12,7 +12,7 @@ export const HA_PROFILE_ID = 0x0104;
 export const SE_PROFILE_ID = 0x0109;
 /** Endpoint profile ID for Green Power */
 export const GP_PROFILE_ID = 0xa1e0;
-/** The touchlink (ZigBee Light Link/ZLL) Profile ID. */
+/** The touchlink (Zigbee Light Link/ZLL) Profile ID. */
 export const TOUCHLINK_PROFILE_ID = 0xc05e;
 /** The profile ID used to address all the public profiles. */
 export const WILDCARD_PROFILE_ID = 0xffff;
@@ -21,7 +21,7 @@ export const CUSTOM_SHELLY_PROFILE_ID = 0xc001;
 
 /** The default HA endpoint. */
 export const HA_ENDPOINT = 0x01;
-/** The GP endpoint, as defined in the ZigBee spec. */
+/** The GP endpoint, as defined in the Zigbee spec. */
 export const GP_ENDPOINT = 0xf2;
 
 export const GP_GROUP_ID = 0x0b84;

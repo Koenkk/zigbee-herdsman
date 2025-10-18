@@ -7,6 +7,7 @@ export type * as Events from "./controller/events";
 export type * as Models from "./controller/model";
 export type * as Types from "./controller/tstype";
 export {setLogger} from "./utils/logger";
+export {getTimeClusterAttributes} from "./utils/timeService";
 export * as ZSpec from "./zspec";
 export * as Zcl from "./zspec/zcl";
 export * as Zdo from "./zspec/zdo";

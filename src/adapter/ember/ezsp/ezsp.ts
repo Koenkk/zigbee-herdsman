@@ -860,12 +860,18 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
                     };
                     const messageContents = this.callbackBuffalo.readPayload();
                     this.ezspMacFilterMatchMessageHandler(filterIndexMatch, legacyPassthroughType, packetInfo, messageContents);
-                } else {
+                } else if (this.version < 0x12) {
                     const filterIndexMatch = this.callbackBuffalo.readUInt8();
                     const legacyPassthroughType: EmberMacPassthroughType = this.callbackBuffalo.readUInt8();
                     const packetInfo = this.callbackBuffalo.readEmberRxPacketInfo();
                     const messageContents = this.callbackBuffalo.readPayload();
                     this.ezspMacFilterMatchMessageHandler(filterIndexMatch, legacyPassthroughType, packetInfo, messageContents);
+                } else {
+                    const filterValueMatch = this.callbackBuffalo.readUInt16();
+                    const legacyPassthroughType: EmberMacPassthroughType = this.callbackBuffalo.readUInt8();
+                    const packetInfo = this.callbackBuffalo.readEmberRxPacketInfo();
+                    const messageContents = this.callbackBuffalo.readPayload();
+                    this.ezspMacFilterMatchMessageHandler(filterValueMatch, legacyPassthroughType, packetInfo, messageContents);
                 }
                 break;
             }
@@ -1115,7 +1121,7 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
      * @param indexOrDestination uint16_t Depending on the type of addressing used, this is either the NodeId of the destination,
      *     an index into the address table, or an index into the binding table.
      *     Unused for multicast types.
-     *     This must be one of the three ZigBee broadcast addresses for broadcast.
+     *     This must be one of the three Zigbee broadcast addresses for broadcast.
      * @param apsFrame [IN/OUT] EmberApsFrame * The APS frame which is to be added to the message.
      *        Sequence set in OUT as returned by ezspSend${x} command
      * @param message uint8_t * Content of the message.
@@ -3033,7 +3039,7 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
      * Network Key.  The stack will call ezspStackStatusHandler to indicate that the
      * network is down, then try to re-establish contact with the network by
      * performing an active scan, choosing a network with matching extended pan id,
-     * and sending a ZigBee network rejoin request. A second call to the
+     * and sending a Zigbee network rejoin request. A second call to the
      * ezspStackStatusHandler callback indicates either the success or the failure
      * of the attempt. The process takes approximately 150 milliseconds per channel
      * to complete.
@@ -4811,7 +4817,7 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
     }
 
     /**
-     * Sends a unicast message as per the ZigBee specification.
+     * Sends a unicast message as per the Zigbee specification.
      * The message will arrive at its destination only if there is a known route to the destination node.
      * Setting the ENABLE_ROUTE_DISCOVERY option will cause a route to be discovered if none is known.
      * Setting the FORCE_ROUTE_DISCOVERY option will force route discovery.
@@ -4870,10 +4876,10 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
     }
 
     /**
-     * Sends a broadcast message as per the ZigBee specification.
+     * Sends a broadcast message as per the Zigbee specification.
      * @param alias uint16_t (unused in v13-) The aliased source from which we send the broadcast.
      *        This must be SL_ZIGBEE_NULL_NODE_ID if we do not need an aliased source
-     * @param destination The destination to which to send the broadcast. This must be one of the three ZigBee broadcast addresses.
+     * @param destination The destination to which to send the broadcast. This must be one of the three Zigbee broadcast addresses.
      * @param nwkSequence uint8_t (unused in v13-) The alias nwk sequence number. This won't be used if there is no aliased source.
      * @param apsFrame EmberApsFrame * The APS frame for the message.
      * @param radius uint8_t The message will be delivered to all nodes within radius hops of the sender.
@@ -5082,7 +5088,7 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
      * that wishes to communicate with many nodes, for example, a gateway, central
      * monitor, or controller. A device using this function was referred to as an
      * 'aggregator' in EmberZNet 2.x and earlier, and is referred to as a
-     * 'concentrator' in the ZigBee specification and EmberZNet 3.  This function
+     * 'concentrator' in the Zigbee specification and EmberZNet 3.  This function
      * enables large scale networks, because the other devices do not have to
      * individually perform bandwidth-intensive route discoveries. Instead, when a
      * remote node sends an APS unicast to a concentrator, its network layer
@@ -5092,7 +5098,7 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
      * in which the entire route is listed in the network layer header.) This allows
      * the concentrator to communicate with thousands of devices without requiring
      * large route tables on neighboring nodes.  This function is only available in
-     * ZigBee Pro (stack profile 2), and cannot be called on end devices. Any router
+     * Zigbee Pro (stack profile 2), and cannot be called on end devices. Any router
      * can be a concentrator (not just the coordinator), and there can be multiple
      * concentrators on a network.  Note that a concentrator does not automatically
      * obtain routes to all network nodes after calling this function. Remote
@@ -5865,20 +5871,21 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
      * Callback
      * A callback invoked by the EmberZNet stack when a raw MAC message that has
      * matched one of the application's configured MAC filters.
-     * @param filterIndexMatch uint8_t The index of the filter that was matched.
+     * @param filterValueMatch uint16_t The value of the filter that was matched.
+     *   - < v18: uint8_t The index of the filter that was matched.
      * @param legacyPassthroughType The type of MAC passthrough message received.
      * @param packetInfo Information about the incoming packet.
      * @param messageContents uint8_t * The raw message that was received.
      */
     ezspMacFilterMatchMessageHandler(
-        filterIndexMatch: number,
+        filterValueMatch: number,
         legacyPassthroughType: EmberMacPassthroughType,
         packetInfo: EmberRxPacketInfo,
         messageContents: Buffer,
     ): void {
         logger.debug(
             () =>
-                `ezspMacFilterMatchMessageHandler: filterIndexMatch=${filterIndexMatch} legacyPassthroughType=${legacyPassthroughType} ` +
+                `ezspMacFilterMatchMessageHandler: filterValueMatch=${filterValueMatch} legacyPassthroughType=${legacyPassthroughType} ` +
                 `packetInfo=${JSON.stringify(packetInfo)} messageContents=${messageContents.toString("hex")}`,
             NS,
         );
@@ -6420,7 +6427,7 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
      * A function to request a Link Key from the Trust Center with another device on
      * the Network (which could be the Trust Center). A Link Key with the Trust
      * Center is possible but the requesting device cannot be the Trust Center. Link
-     * Keys are optional in ZigBee Standard Security and thus the stack cannot know
+     * Keys are optional in Zigbee Standard Security and thus the stack cannot know
      * whether the other device supports them. If EMBER_REQUEST_KEY_TIMEOUT is
      * non-zero on the Trust Center and the partner device is not the Trust Center,
      * both devices must request keys with their partner device within the time
@@ -7741,7 +7748,7 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
     /**
      * Transmits the given bootload message to a neighboring node using a specific
      * 802.15.4 header that allows the EmberZNet stack as well as the bootloader to
-     * recognize the message, but will not interfere with other ZigBee stacks.
+     * recognize the message, but will not interfere with other Zigbee stacks.
      * @param broadcast If true, the destination address and pan id are both set to the broadcast address.
      * @param destEui64 The EUI64 of the target node. Ignored if the broadcast field is set to true.
      * @param messageLength uint8_t The length of the messageContents parameter in bytes.
@@ -8550,7 +8557,7 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
 
     /**
      * Callback
-     * A callback invoked by the ZigBee GP stack when a GPDF is received.
+     * A callback invoked by the Zigbee GP stack when a GPDF is received.
      * @param status The status of the GPDF receive.
      * @param gpdLink uint8_t The gpdLink value of the received GPDF.
      * @param sequenceNumber uint8_t The GPDF sequence number.
@@ -8929,7 +8936,8 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
 
     /**
      * Gets the total number of tokens.
-     * @returns uint8_t Total number of tokens.
+     * @returns uint32_t Total number of tokens.
+     *   - < v18: uint8_t
      */
     async ezspGetTokenCount(): Promise<number> {
         const sendBuffalo = this.startCommand(EzspFrameID.GET_TOKEN_COUNT);
@@ -8940,7 +8948,7 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
             throw new EzspError(sendStatus);
         }
 
-        const count = this.buffalo.readUInt8();
+        const count = this.version < 0x12 ? this.buffalo.readUInt8() : this.buffalo.readUInt32();
 
         return count;
     }

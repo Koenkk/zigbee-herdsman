@@ -196,9 +196,9 @@ export class EzspConfigId extends basic.uint8_t {
     // network manager within one minute to trigger a PAN id change.
     static CONFIG_PAN_ID_CONFLICT_REPORT_THRESHOLD = 0x22;
     // The timeout value in minutes for how long the Trust Center or a normal
-    // node waits for the ZigBee Request Key to complete. On the Trust Center
+    // node waits for the Zigbee Request Key to complete. On the Trust Center
     // this controls whether or not the device buffers the request, waiting for
-    // a matching pair of ZigBee Request Key. If the value is non-zero, the
+    // a matching pair of Zigbee Request Key. If the value is non-zero, the
     // Trust Center buffers and waits for that amount of time. If the value is
     // zero, the Trust Center does not buffer the request and immediately
     // responds to the request.  Zero is the most compliant behavior.
@@ -225,7 +225,7 @@ export class EzspConfigId extends basic.uint8_t {
     static CONFIG_SUPPORTED_NETWORKS = 0x2d;
     // Whether multicasts are sent to the RxOnWhenIdle=true address (0xFFFD) or
     // the sleepy broadcast address (0xFFFF). The RxOnWhenIdle=true address is
-    // the ZigBee compliant destination for multicasts.
+    // the Zigbee compliant destination for multicasts.
     static CONFIG_SEND_MULTICASTS_TO_SLEEPY_ADDRESS = 0x2e;
     // ZLL group address initial configuration.
     static CONFIG_ZLL_GROUP_ADDRESSES = 0x2f;
@@ -320,7 +320,7 @@ export class EzspValueId extends basic.uint8_t {
     // initiated a rejoin it will record this value internally for retrieval by
     // ezspGetValue(VALUE_REAL_REJOIN_REASON).
     static VALUE_LAST_REJOIN_REASON = 0x13;
-    // The next ZigBee sequence number.
+    // The next Zigbee sequence number.
     static VALUE_NEXT_ZIGBEE_SEQUENCE_NUMBER = 0x14;
     // CCA energy detect threshold for radio.
     static VALUE_CCA_THRESHOLD = 0x15;
@@ -439,7 +439,7 @@ export class EzspPolicyId extends basic.uint8_t {
     // Controls whether the Trust Center will respond to application link key
     // requests.
     static APP_KEY_REQUEST_POLICY = 0x06;
-    // Controls whether ZigBee packets that appear invalid are automatically
+    // Controls whether Zigbee packets that appear invalid are automatically
     // dropped by the stack. A counter will be incremented when this occurs.
     static PACKET_VALIDATE_LIBRARY_POLICY = 0x07;
     // Controls whether the stack will process ZLL messages.
@@ -913,8 +913,8 @@ export class EmberStatus extends basic.uint8_t {
     // After moving, a mobile node's attempt to re-establish contact with the
     // network failed.
     static MOVE_FAILED = 0x96;
-    // An attempt to join as a router failed due to a ZigBee versus ZigBee Pro
-    // incompatibility. ZigBee devices joining ZigBee Pro networks (or vice
+    // An attempt to join as a router failed due to a Zigbee versus Zigbee Pro
+    // incompatibility. Zigbee devices joining Zigbee Pro networks (or vice
     // versa) must join as End Devices, not Routers.
     static CANNOT_JOIN_AS_ROUTER = 0x98;
     // The local node ID has changed. The application can obtain the new node ID
@@ -989,10 +989,10 @@ export class EmberStatus extends basic.uint8_t {
     static KEY_NOT_AUTHORIZED = 0xbb;
     // The security data provided was not valid, or an integrity check failed.
     static SECURITY_DATA_INVALID = 0xbd;
-    // A ZigBee route error command frame was received indicating that a source
+    // A Zigbee route error command frame was received indicating that a source
     // routed message from this node failed en route.
     static SOURCE_ROUTE_FAILURE = 0xa9;
-    // A ZigBee route error command frame was received indicating that a message
+    // A Zigbee route error command frame was received indicating that a message
     // sent to this node along a many-to-one route failed en route. The route
     // error frame was delivered by an ad-hoc search for a functioning route.
     static MANY_TO_ONE_ROUTE_FAILURE = 0xaa;
@@ -1835,7 +1835,7 @@ export class EmberInitialSecurityBitmask extends basic.uint16_t {
     // This is the Initial Security Bitmask that controls the use of various
     // security features.
 
-    // This enables ZigBee Standard Security on the node.
+    // This enables Zigbee Standard Security on the node.
     static STANDARD_SECURITY_MODE = 0x0000;
     // This enables Distributed Trust Center Mode for the device forming the
     // network. (Previously known as NO_TRUST_CENTER_MODE)
@@ -1897,10 +1897,10 @@ export class EmberCurrentSecurityBitmask extends basic.uint16_t {
     // This is the Current Security Bitmask that details the use of various
     // security features.
 
-    // This denotes that the device is running in a network with ZigBee Standard
+    // This denotes that the device is running in a network with Zigbee Standard
     // Security.
     static STANDARD_SECURITY_MODE = 0x0000;
-    // This denotes that the device is running in a network with ZigBee High
+    // This denotes that the device is running in a network with Zigbee High
     // Security.
     static HIGH_SECURITY_MODE = 0x0001;
     // This denotes that the device is running in a network without a
@@ -1916,7 +1916,7 @@ export class EmberCurrentSecurityBitmask extends basic.uint16_t {
 }
 
 export class EmberKeyType extends basic.uint8_t {
-    // Describes the type of ZigBee security key.
+    // Describes the type of Zigbee security key.
 
     // A shared key between the Trust Center and a device.
     static TRUST_CENTER_LINK_KEY = 0x01;
@@ -2094,7 +2094,7 @@ export class EmberJoinMethod extends basic.uint8_t {
     // equivalent to a MAC association. This value should be used by default.
     static USE_MAC_ASSOCIATION = 0x0;
     // For those networks where the "permit joining" flag is never turned on,
-    // they will need to use a ZigBee NWK Rejoin. This value causes the rejoin
+    // they will need to use a Zigbee NWK Rejoin. This value causes the rejoin
     // to be sent without NWK security and the Trust Center will be asked to
     // send the NWK key to the device. The NWK key sent to the device can be
     // encrypted with the device's corresponding Trust Center link key. That is

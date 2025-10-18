@@ -19,7 +19,7 @@ import type {
     SecManKeyType,
 } from "./enums";
 
-/** 16-bit ZigBee multicast group identifier. uint16_t */
+/** 16-bit Zigbee multicast group identifier. uint16_t */
 export type EmberMulticastId = number;
 /**
  * The percent of duty cycle for a limit.
@@ -68,7 +68,7 @@ export type EmberVersion = {
     patch: number;
     /**
      * Special version number
-     * (used to indicate superficial changes that don't require re-certification of the stack as a ZigBee-Compliant Platform,
+     * (used to indicate superficial changes that don't require re-certification of the stack as a Zigbee-Compliant Platform,
      * such as changes that only affect installer packaging, documentation, or comments in the code)
      *
      * a.b.c.D
@@ -104,7 +104,7 @@ export type EmberNetworkParameters = {
     radioChannel: number;
     /**
      * Join method: The protocol messages used to establish an initial parent.
-     * It is ignored when forming a ZigBee network, or when querying the stack for its network parameters.
+     * It is ignored when forming a Zigbee network, or when querying the stack for its network parameters.
      */
     joinMethod: EmberJoinMethod;
     /**
@@ -113,7 +113,7 @@ export type EmberNetworkParameters = {
      */
     nwkManagerId: NodeId;
     /**
-     * An NWK Update ID.  The value of the ZigBee nwkUpdateId known by the stack.
+     * An NWK Update ID.  The value of the Zigbee nwkUpdateId known by the stack.
      * It is used to determine the newest instance of the network after a PAN
      * ID or channel change.  This may only be set at joining when using
      * EMBER_USE_CONFIGURED_NWK_STATE as the join method.
@@ -330,7 +330,7 @@ export type EmberBindingTableEntry = {
     networkIndex: number;
 };
 
-/** An in-memory representation of a ZigBee APS frame of an incoming or outgoing message. */
+/** An in-memory representation of a Zigbee APS frame of an incoming or outgoing message. */
 export type EmberApsFrame = {
     /** The application profile ID that describes the format of the message. uint16_t */
     profileId: number;
@@ -551,7 +551,7 @@ export type EmberPrivateKeyData = {
     contents: Buffer;
 };
 
-/** Defines a ZigBee network and the associated parameters. */
+/** Defines a Zigbee network and the associated parameters. */
 export type EmberZigbeeNetwork = {
     /** uint16_t */
     panId: PanId;
@@ -593,7 +593,7 @@ export type EmberZllNetwork = {
     rssiCorrection: number;
 };
 
-/** Describe the Initial Security features and requirements that will be used when forming or joining ZigBee Light Link networks. */
+/** Describe the Initial Security features and requirements that will be used when forming or joining Zigbee Light Link networks. */
 export type EmberZllInitialSecurityState = {
     /** This bitmask is unused.  All values are reserved for future use. uint32_t */
     bitmask: number;
@@ -601,7 +601,7 @@ export type EmberZllInitialSecurityState = {
     keyIndex: EmberZllKeyIndex;
     /** The encryption key for use by algorithms that require it. */
     encryptionKey: EmberKeyData;
-    /** The pre-configured link key used during classical ZigBee commissioning. */
+    /** The pre-configured link key used during classical Zigbee commissioning. */
     preconfiguredKey: EmberKeyData;
 };
 
@@ -789,9 +789,9 @@ export type EmberTokenData = {
 };
 
 /**
- * Endpoint information (a ZigBee Simple Descriptor).
+ * Endpoint information (a Zigbee Simple Descriptor).
  *
- * This is a ZigBee Simple Descriptor and contains information about an endpoint.
+ * This is a Zigbee Simple Descriptor and contains information about an endpoint.
  * This information is shared with other nodes in the network by the ZDO.
  */
 export type EmberEndpointDescription = {

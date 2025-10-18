@@ -7794,6 +7794,11 @@ export interface TClusters {
                 /** type=UINT8 | max=255 */
                 payload: number;
             };
+            /** ID: 96 */
+            tuyaWeatherRequest: {
+                /** Type: BUFFER */
+                payload: Buffer;
+            };
         };
         commandResponses: {
             /** ID=0x01 */
@@ -7868,6 +7873,11 @@ export interface TClusters {
             mcuGatewayConnectionStatus: {
                 /** type=UINT16 | max=65535 */
                 payloadSize: number;
+            };
+            /** ID: 97 */
+            tuyaWeatherSync: {
+                /** Type: BUFFER */
+                payload: Buffer;
             };
         };
     };
