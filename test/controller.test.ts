@@ -2325,7 +2325,20 @@ describe("Controller", () => {
                         name: "enrollRsp",
                     },
                     initNormalOpMode: {ID: 1, parameters: [], name: "initNormalOpMode"},
-                    initTestMode: {ID: 2, parameters: [], name: "initTestMode"},
+                    initTestMode: {
+                        ID: 2,
+                        parameters: [
+                            {
+                                name: "testModeDuration",
+                                type: Zcl.DataType.UINT8,
+                            },
+                            {
+                                name: "currentZoneSensitivityLevel",
+                                type: Zcl.DataType.UINT8,
+                            },
+                        ],
+                        name: "initTestMode",
+                    },
                 },
                 commandsResponse: {
                     statusChangeNotification: {
@@ -2391,8 +2404,25 @@ describe("Controller", () => {
                         ],
                         name: "enrollRsp",
                     },
-                    initNormalOpMode: {ID: 1, parameters: [], name: "initNormalOpMode"},
-                    initTestMode: {ID: 2, parameters: [], name: "initTestMode"},
+                    initNormalOpMode: {
+                        ID: 1,
+                        parameters: [],
+                        name: "initNormalOpMode",
+                    },
+                    initTestMode: {
+                        ID: 2,
+                        parameters: [
+                            {
+                                name: "testModeDuration",
+                                type: Zcl.DataType.UINT8,
+                            },
+                            {
+                                name: "currentZoneSensitivityLevel",
+                                type: Zcl.DataType.UINT8,
+                            },
+                        ],
+                        name: "initTestMode",
+                    },
                 },
                 commandsResponse: {
                     statusChangeNotification: {
