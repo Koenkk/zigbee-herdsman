@@ -1,5 +1,14 @@
 # Changelog
 
+## [6.3.1](https://github.com/Koenkk/zigbee-herdsman/compare/v6.3.0...v6.3.1) (2025-10-18)
+
+
+### Bug Fixes
+
+* Add missing parameters to `ssIasZone.initTestMode` command ([#1530](https://github.com/Koenkk/zigbee-herdsman/issues/1530)) ([36673a9](https://github.com/Koenkk/zigbee-herdsman/commit/36673a9741173153f9400df132ae22e83be94445))
+* **ignore:** Rename `ZigBee` -&gt; `Zigbee` ([#1527](https://github.com/Koenkk/zigbee-herdsman/issues/1527)) ([42c6f6c](https://github.com/Koenkk/zigbee-herdsman/commit/42c6f6cd0b4531831ecc987b434ef6a92398f654))
+* Remove custom heiman clusters ([#1528](https://github.com/Koenkk/zigbee-herdsman/issues/1528)) ([a8789f7](https://github.com/Koenkk/zigbee-herdsman/commit/a8789f7bf2b23bd6e7775b4a127109f379e587c8))
+
 ## [6.3.0](https://github.com/Koenkk/zigbee-herdsman/compare/v6.2.0...v6.3.0) (2025-10-15)
 
 
