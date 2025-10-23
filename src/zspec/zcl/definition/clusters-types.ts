@@ -3841,7 +3841,12 @@ export interface TClusters {
             /** ID: 1 */
             initNormalOpMode: Record<string, never>;
             /** ID: 2 */
-            initTestMode: Record<string, never>;
+            initTestMode: {
+                /** Type: UINT8 */
+                testModeDuration: number;
+                /** Type: UINT8 */
+                currentZoneSensitivityLevel: number;
+            };
         };
         commandResponses: {
             /** ID: 0 */
