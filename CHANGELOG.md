@@ -1,5 +1,13 @@
 # Changelog
 
+## [6.3.2](https://github.com/Koenkk/zigbee-herdsman/compare/v6.3.1...v6.3.2) (2025-10-23)
+
+
+### Bug Fixes
+
+* Add missing parameters for `initTestMode` to `clusters-types.ts` ([#1534](https://github.com/Koenkk/zigbee-herdsman/issues/1534)) ([14449df](https://github.com/Koenkk/zigbee-herdsman/commit/14449dfcdb4331938246fd87d40b693173bfd51f))
+* **ignore:** bump the minor-patch group with 2 updates ([#1532](https://github.com/Koenkk/zigbee-herdsman/issues/1532)) ([091ed09](https://github.com/Koenkk/zigbee-herdsman/commit/091ed093c459bfffc66e2059b5661afa7498c2f9))
+
 ## [6.3.1](https://github.com/Koenkk/zigbee-herdsman/compare/v6.3.0...v6.3.1) (2025-10-18)
 
 
