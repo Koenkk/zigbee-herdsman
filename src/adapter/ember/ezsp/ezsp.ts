@@ -8608,8 +8608,9 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
 
         let commandIdentifier = Clusters.greenPower.commands.notification.ID;
         let options = 0;
+        const isCommissioning = gpdCommandId === 0xe0;
 
-        if (gpdCommandId === 0xe0) {
+        if (isCommissioning) {
             if (!gpdCommandPayload.length) {
                 // XXX: seem to be receiving duplicate commissioningNotification from some devices, second one with empty payload?
                 //      this will mess with the process no doubt, so dropping them
@@ -8650,8 +8651,15 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
 
         const messageContents = Buffer.concat([gpdHeader, gpdCommandPayload]);
 
-        // use broadcast type to match upstream codepath that does not expect `gppNwkAddr` (this from direct-to-coordinator)
-        this.emit("incomingMessage", EmberIncomingMessageType.BROADCAST, apsFrame, gpdLink, addr.sourceId & 0xffff, messageContents);
+        this.emit(
+            "incomingMessage",
+            // upper-levels will default to using COORDINATOR_ADDRESS for GPP if not present (as will be the case for UNICAST here)
+            isCommissioning ? EmberIncomingMessageType.UNICAST : EmberIncomingMessageType.BROADCAST,
+            apsFrame,
+            gpdLink,
+            addr.sourceId & 0xffff,
+            messageContents,
+        );
     }
 
     /**

@@ -1051,7 +1051,7 @@ export class Endpoint extends ZigbeeEntity {
 
             if (result) {
                 const resultFrame = Zcl.Frame.fromBuffer(result.clusterID, result.header, result.data, device.customClusters);
-                if (result && checkStatus && !optionsWithDefaults.disableResponse) {
+                if (checkStatus && !optionsWithDefaults.disableResponse) {
                     this.checkStatus(resultFrame.payload);
                 }
                 return resultFrame;
