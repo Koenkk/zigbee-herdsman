@@ -5940,10 +5940,10 @@ describe("Controller", () => {
         await controller.start();
         await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
         await mockAdapterEvents.deviceJoined({networkAddress: 170, ieeeAddr: "0x170"});
-        const endpoint = controller.getDeviceByIeeeAddr("0x129")?.getEndpoint(1)!;
-        const target = controller.getDeviceByIeeeAddr("0x170")?.getEndpoint(1)!;
+        const endpoint = controller.getDeviceByIeeeAddr("0x129")?.getEndpoint(1);
+        const target = controller.getDeviceByIeeeAddr("0x170")?.getEndpoint(1);
         mockAdapterSendZdo.mockClear();
-        await endpoint.unbind("genOnOff", target);
+        await endpoint!.unbind("genOnOff", target!);
         expect(mockAdapterSendZdo).toHaveBeenCalledTimes(0);
     });
 
