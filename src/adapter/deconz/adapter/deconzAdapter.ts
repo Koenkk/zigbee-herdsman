@@ -3,7 +3,7 @@
 //import Device from "../../../controller/model/device";
 import {existsSync, readFileSync} from "node:fs";
 import {dirname} from "node:path";
-import {readBackup} from "src/adapter/utils";
+import {readBackup} from "../../utils";
 import type * as Models from "../../../models";
 import type {Backup} from "../../../models";
 import {BackupUtils, Waitress} from "../../../utils";
