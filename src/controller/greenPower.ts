@@ -409,8 +409,7 @@ export class GreenPower extends EventEmitter<GreenPowerEventMap> {
                         );
                     } else {
                         const gpdKey = this.encryptSecurityKey(frame.payload.srcID, frame.payload.commandFrame.securityKey);
-
-                        await this.sendPairingCommand(
+                        const pairingRsp = await this.sendPairingCommand(
                             {
                                 appId: ZigbeeNWKGPAppId.Default,
                                 addSink: true,
@@ -437,6 +436,15 @@ export class GreenPower extends EventEmitter<GreenPowerEventMap> {
                             },
                             frame.payload.gppNwkAddr,
                         );
+
+                        // undefined if wasBroadcast
+                        if (pairingRsp) {
+                            const pairingRspFrame = Zcl.Frame.fromBuffer(pairingRsp.clusterID, pairingRsp.header, pairingRsp.data, {});
+
+                            if (pairingRspFrame.payload.statusCode !== Zcl.Status.SUCCESS) {
+                                throw new Zcl.StatusError(pairingRspFrame.payload.statusCode);
+                            }
+                        }
                     }
 
                     this.emit("deviceJoined", {

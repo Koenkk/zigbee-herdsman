@@ -6513,17 +6513,20 @@ describe("Controller", () => {
         expect(processCommandSpy).toHaveBeenCalledTimes(0);
     });
 
-    it("Should handle green power commissioning frame", async () => {
+    it("Should handle green power broadcast commissioning", async () => {
         await controller.start();
         mockLogger.error.mockClear();
+
+        const gpdNwkAddress = 22410362 & 0xffff;
         const buffer = Buffer.from(
             "11020400087af455012e000000e0330285f2c925821df46f458cf0e637aac3bab6aa45831a112e280000041610112223181914151213646562631e1f1c1d1a1b1617966fd7",
             "hex",
         );
         const frame = Zcl.Frame.fromBuffer(Zcl.Clusters.greenPower.ID, Zcl.Header.fromBuffer(buffer)!, buffer, {});
+
         await mockAdapterEvents.zclPayload({
             wasBroadcast: true,
-            address: 0xf4fe,
+            address: gpdNwkAddress,
             clusterID: frame.cluster.ID,
             data: buffer,
             header: frame.header,
@@ -6541,6 +6544,122 @@ describe("Controller", () => {
             "[COMMISSIONING] srcID=22410362 gpp=28566 rssi=23 linkQuality=Excellent",
             "zh:controller:greenpower",
         );
+
+        const gpDevice = controller.getDeviceByNetworkAddress(gpdNwkAddress)!;
+
+        expect(gpDevice).toBeDefined();
+        expect(gpDevice.type).toStrictEqual("GreenPower");
+    });
+
+    it("Should handle green power unicast commissioning success", async () => {
+        await controller.start();
+
+        await mockAdapterEvents.deviceJoined({networkAddress: 53934, ieeeAddr: "0x129"});
+
+        const gpdNwkAddress = 22410362 & 0xffff;
+        // const gppDevice = controller.getDeviceByIeeeAddr("0x129")!;
+
+        mockLogger.error.mockClear();
+
+        const buffer = Buffer.from("11770400087af45501e2000000e01f0785f2c925821df46f458cf0e637aac3bab6aa45831a11e22c000010020508aed2dd", "hex");
+        const frame = Zcl.Frame.fromBuffer(Zcl.Clusters.greenPower.ID, Zcl.Header.fromBuffer(buffer)!, buffer, {});
+
+        mocksendZclFrameToEndpoint.mockImplementationOnce((_ieeeAddr, networkAddress, _endpoint, _frame: Zcl.Frame) => {
+            const rspBuffer = Buffer.from("00060b0100", "hex");
+            const rspFrame = Zcl.Frame.fromBuffer(Zcl.Clusters.greenPower.ID, Zcl.Header.fromBuffer(rspBuffer)!, rspBuffer, {});
+
+            return {
+                wasBroadcast: false,
+                address: networkAddress,
+                clusterID: rspFrame.cluster.ID,
+                data: rspFrame.toBuffer(),
+                header: rspFrame.header,
+                endpoint: ZSpec.GP_ENDPOINT,
+                linkquality: 50,
+                groupID: 0,
+            };
+        });
+
+        await mockAdapterEvents.zclPayload({
+            wasBroadcast: false,
+            address: gpdNwkAddress,
+            clusterID: frame.cluster.ID,
+            data: buffer,
+            header: frame.header,
+            endpoint: ZSpec.GP_ENDPOINT,
+            linkquality: 50,
+            groupID: 0,
+        });
+
+        expect(mockLogger.info).toHaveBeenCalledWith(
+            "[COMMISSIONING] srcID=22410362 gpp=53934 rssi=29 linkQuality=Excellent",
+            "zh:controller:greenpower",
+        );
+        expect(mockLogger.debug).toHaveBeenCalledWith(
+            "[PAIRING] srcID=22410362 gpp=53934 options=58728 (addSink=true commMode=3)",
+            "zh:controller:greenpower",
+        );
+
+        const gpDevice = controller.getDeviceByNetworkAddress(gpdNwkAddress)!;
+
+        expect(gpDevice).toBeDefined();
+        expect(gpDevice.type).toStrictEqual("GreenPower");
+        expect(mockLogger.error).toHaveBeenCalledTimes(0);
+    });
+
+    it("Should handle green power unicast commissioning failure", async () => {
+        await controller.start();
+
+        await mockAdapterEvents.deviceJoined({networkAddress: 53934, ieeeAddr: "0x129"});
+
+        const gpdNwkAddress = 22410362 & 0xffff;
+        // const gppDevice = controller.getDeviceByIeeeAddr("0x129")!;
+
+        mockLogger.error.mockClear();
+
+        const buffer = Buffer.from("11770400087af45501e2000000e01f0785f2c925821df46f458cf0e637aac3bab6aa45831a11e22c000010020508aed2dd", "hex");
+        const frame = Zcl.Frame.fromBuffer(Zcl.Clusters.greenPower.ID, Zcl.Header.fromBuffer(buffer)!, buffer, {});
+
+        mocksendZclFrameToEndpoint.mockImplementationOnce((_ieeeAddr, networkAddress, _endpoint, _frame: Zcl.Frame) => {
+            const rspBuffer = Buffer.from("00060b0189", "hex");
+            const rspFrame = Zcl.Frame.fromBuffer(Zcl.Clusters.greenPower.ID, Zcl.Header.fromBuffer(rspBuffer)!, rspBuffer, {});
+
+            return {
+                wasBroadcast: false,
+                address: networkAddress,
+                clusterID: rspFrame.cluster.ID,
+                data: rspFrame.toBuffer(),
+                header: rspFrame.header,
+                endpoint: ZSpec.GP_ENDPOINT,
+                linkquality: 50,
+                groupID: 0,
+            };
+        });
+
+        await mockAdapterEvents.zclPayload({
+            wasBroadcast: false,
+            address: gpdNwkAddress,
+            clusterID: frame.cluster.ID,
+            data: buffer,
+            header: frame.header,
+            endpoint: ZSpec.GP_ENDPOINT,
+            linkquality: 50,
+            groupID: 0,
+        });
+
+        expect(mockLogger.info).toHaveBeenCalledWith(
+            "[COMMISSIONING] srcID=22410362 gpp=53934 rssi=29 linkQuality=Excellent",
+            "zh:controller:greenpower",
+        );
+        expect(mockLogger.debug).toHaveBeenCalledWith(
+            "[PAIRING] srcID=22410362 gpp=53934 options=58728 (addSink=true commMode=3)",
+            "zh:controller:greenpower",
+        );
+
+        const gpDevice = controller.getDeviceByNetworkAddress(gpdNwkAddress)!;
+
+        expect(gpDevice).toBeUndefined();
+        expect(mockLogger.error).toHaveBeenCalledWith(expect.stringContaining("Status 'INSUFFICIENT_SPACE'"), "zh:controller:greenpower");
     });
 
     it("Should handle green power commissioning frame with IEEE addressing gracefully", async () => {
