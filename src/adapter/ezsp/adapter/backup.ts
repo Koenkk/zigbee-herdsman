@@ -1,11 +1,10 @@
 /* v8 ignore start */
 
-import * as fs from "node:fs";
-
 import type * as Models from "../../../models";
 import {BackupUtils} from "../../../utils";
 import {logger} from "../../../utils/logger";
 import {uint32MaskToChannels} from "../../../zspec/utils";
+import {readBackup} from "../..//utils";
 import type {Driver} from "../driver";
 import {
     type EmberKeyData,
@@ -83,18 +82,10 @@ export class EZSPAdapterBackup {
      * Loads currently stored backup and returns it in internal backup model.
      */
     public getStoredBackup(): Models.Backup | undefined {
-        try {
-            fs.accessSync(this.defaultPath);
-        } catch {
-            return undefined;
-        }
-        let data: Models.UnifiedBackupStorage;
-        try {
-            data = JSON.parse(fs.readFileSync(this.defaultPath).toString());
-        } catch (error) {
-            throw new Error(`Coordinator backup is corrupted (${(error as Error).stack})`);
-        }
-        if (data.metadata?.format === "zigpy/open-coordinator-backup" && data.metadata?.version) {
+        const data = readBackup(this.defaultPath);
+        if (!data) return undefined;
+
+        if ("metadata" in data && data.metadata?.format === "zigpy/open-coordinator-backup" && data.metadata?.version) {
             if (data.metadata?.version !== 1) {
                 throw new Error(`Unsupported open coordinator backup version (version=${data.metadata?.version})`);
             }

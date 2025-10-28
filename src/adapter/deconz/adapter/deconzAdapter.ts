@@ -3,8 +3,9 @@
 //import Device from "../../../controller/model/device";
 import {existsSync, readFileSync} from "node:fs";
 import {dirname} from "node:path";
+import {readBackup} from "src/adapter/utils";
 import type * as Models from "../../../models";
-import type {Backup, UnifiedBackupStorage} from "../../../models";
+import type {Backup} from "../../../models";
 import {BackupUtils, Waitress} from "../../../utils";
 import {logger} from "../../../utils/logger";
 import * as ZSpec from "../../../zspec";
@@ -558,19 +559,10 @@ export class DeconzAdapter extends Adapter {
      * Loads currently stored backup and returns it in internal backup model.
      */
     private getStoredBackup(): Backup | undefined {
-        if (!existsSync(this.backupPath)) {
-            return undefined;
-        }
+        const data = readBackup(this.backupPath);
+        if (!data) return undefined;
 
-        let data: UnifiedBackupStorage;
-
-        try {
-            data = JSON.parse(readFileSync(this.backupPath).toString());
-        } catch (error) {
-            throw new Error(`[BACKUP] Coordinator backup is corrupted. (${(error as Error).stack})`);
-        }
-
-        if (data.metadata?.format === "zigpy/open-coordinator-backup" && data.metadata?.version) {
+        if ("metadata" in data && data.metadata?.format === "zigpy/open-coordinator-backup" && data.metadata?.version) {
             if (data.metadata?.version !== 1) {
                 throw new Error(`[BACKUP] Unsupported open coordinator backup version (version=${data.metadata?.version}).`);
             }
