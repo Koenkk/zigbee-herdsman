@@ -6,8 +6,8 @@ import {Socket} from "node:net";
 import {Queue, Waitress, wait} from "../../utils";
 import {logger} from "../../utils/logger";
 import {SerialPort} from "../serialPort";
-import SocketPortUtils from "../socketPortUtils";
 import type {SerialPortOptions} from "../tstype";
+import {isTcpPath, parseTcpPath} from "../utils";
 import {SIGNATURE, ZBOSS_FLAG_FIRST_FRAGMENT, ZBOSS_FLAG_LAST_FRAGMENT, ZBOSS_NCP_API_HL} from "./consts";
 import {readZBOSSFrame, writeZBOSSFrame, type ZBOSSFrame} from "./frame";
 import {ZBOSSReader} from "./reader";
@@ -68,7 +68,7 @@ export class ZBOSSUart extends EventEmitter {
             return false;
         }
         // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
-        if (SocketPortUtils.isTcpPath(this.portOptions.path!)) {
+        if (isTcpPath(this.portOptions.path!)) {
             return this.socketPort && !this.socketPort.closed;
         }
 
@@ -106,7 +106,7 @@ export class ZBOSSUart extends EventEmitter {
         await this.closePort();
 
         // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
-        if (!SocketPortUtils.isTcpPath(this.portOptions.path!)) {
+        if (!isTcpPath(this.portOptions.path!)) {
             const serialOpts = {
                 // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
                 path: this.portOptions.path!,
@@ -141,7 +141,7 @@ export class ZBOSSUart extends EventEmitter {
             }
         } else {
             // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
-            const info = SocketPortUtils.parseTcpPath(this.portOptions.path!);
+            const info = parseTcpPath(this.portOptions.path!);
             logger.debug(`Opening TCP socket with ${info.host}:${info.port}`, NS);
 
             this.socketPort = new Socket();

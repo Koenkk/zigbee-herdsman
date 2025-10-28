@@ -19,8 +19,8 @@ import type * as ZdoTypes from "../../../zspec/zdo/definition/tstypes";
 import {Adapter} from "../../adapter";
 import type {ZclPayload} from "../../events";
 import {SerialPort} from "../../serialPort";
-import {isTcpPath} from "../../socketPortUtils";
 import type * as TsType from "../../tstype";
+import {isTcpPath} from "../../utils";
 import {bigUInt64ToHexBE} from "./utils";
 
 const NS = "zh:zoh";
