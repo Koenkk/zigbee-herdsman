@@ -9,10 +9,12 @@ export function isTcpPath(path: string): boolean {
 }
 
 export function parseTcpPath(path: string): {host: string; port: number} {
-    const str = path.replace("tcp://", "");
+    // built-in extra validation
+    const info = new URL(path);
+
     return {
-        host: str.substring(0, str.indexOf(":")),
-        port: Number(str.substring(str.indexOf(":") + 1)),
+        host: info.hostname,
+        port: Number(info.port),
     };
 }
 
