@@ -71,6 +71,22 @@ export class ZoHAdapter extends Adapter {
         const channel = networkOptions.channelList[0];
         this.driver = new OTRCPDriver(
             {
+                /* v8 ignore start */
+                onFatalError: (message) => {
+                    logger.error(message, NS);
+                },
+                onMACFrame: () => undefined, // unused
+                /* v8 ignore stop */
+
+                onFrame: this.onFrame.bind(this),
+                onGPFrame: this.onGPFrame.bind(this),
+
+                onDeviceJoined: this.onDeviceJoined.bind(this),
+                onDeviceRejoined: this.onDeviceRejoined.bind(this),
+                onDeviceLeft: this.onDeviceLeft.bind(this),
+                onDeviceAuthorized: this.onDeviceAuthorized.bind(this),
+            },
+            {
                 txChannel: channel,
                 ccaBackoffAttempts: 1,
                 ccaRetries: 4,
@@ -88,7 +104,7 @@ export class ZoHAdapter extends Adapter {
                 eui64: Buffer.from([0x5a, 0x6f, 0x48, 0x6f, 0x6e, 0x5a, 0x32, 0x4d]).readBigUInt64LE(0),
                 panId: this.networkOptions.panID,
                 // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
-                extendedPANId: Buffer.from(this.networkOptions.extendedPanID!).readBigUInt64LE(0),
+                extendedPanId: Buffer.from(this.networkOptions.extendedPanID!).readBigUInt64LE(0),
                 channel,
                 nwkUpdateId: 0,
                 txPower: this.adapterOptions.transmitPower ?? /* v8 ignore next */ 5,
@@ -261,7 +277,7 @@ export class ZoHAdapter extends Adapter {
         await this.initPort();
 
         let result: TsType.StartResult = "resumed";
-        const currentNetParams = await this.driver.readNetworkState();
+        const currentNetParams = await this.driver.context.readNetworkState();
 
         if (currentNetParams) {
             // Note: channel change is handled by Controller
@@ -269,7 +285,7 @@ export class ZoHAdapter extends Adapter {
                 // TODO: add eui64 whenever added as configurable
                 this.networkOptions.panID !== currentNetParams.panId ||
                 // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
-                Buffer.from(this.networkOptions.extendedPanID!).readBigUInt64LE(0) !== currentNetParams.extendedPANId ||
+                Buffer.from(this.networkOptions.extendedPanID!).readBigUInt64LE(0) !== currentNetParams.extendedPanId ||
                 // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
                 !Buffer.from(this.networkOptions.networkKey!).equals(currentNetParams.networkKey)
             ) {
@@ -285,20 +301,12 @@ export class ZoHAdapter extends Adapter {
         await this.driver.start();
         await this.driver.formNetwork();
 
-        this.driver.on("frame", this.onFrame.bind(this));
-        this.driver.on("gpFrame", this.onGPFrame.bind(this));
-        this.driver.on("deviceJoined", this.onDeviceJoined.bind(this));
-        this.driver.on("deviceRejoined", this.onDeviceRejoined.bind(this));
-        this.driver.on("deviceLeft", this.onDeviceLeft.bind(this));
-        this.driver.on("deviceAuthorized", this.onDeviceAuthorized.bind(this));
-
         return result;
     }
 
     public async stop(): Promise<void> {
         this.closing = true;
 
-        this.driver.removeAllListeners();
         this.queue.clear();
         this.zclWaitress.clear();
         this.zdoWaitress.clear();
@@ -306,7 +314,7 @@ export class ZoHAdapter extends Adapter {
     }
 
     public async getCoordinatorIEEE(): Promise<string> {
-        return await Promise.resolve(`0x${bigUInt64ToHexBE(this.driver.netParams.eui64)}`);
+        return await Promise.resolve(`0x${bigUInt64ToHexBE(this.driver.context.netParams.eui64)}`);
     }
 
     public async getCoordinatorVersion(): Promise<TsType.CoordinatorVersion> {
@@ -342,10 +350,10 @@ export class ZoHAdapter extends Adapter {
 
     public async getNetworkParameters(): Promise<TsType.NetworkParameters> {
         return await Promise.resolve({
-            panID: this.driver.netParams.panId,
-            extendedPanID: `0x${bigUInt64ToHexBE(this.driver.netParams.extendedPANId)}`,
-            channel: this.driver.netParams.channel,
-            nwkUpdateID: this.driver.netParams.nwkUpdateId,
+            panID: this.driver.context.netParams.panId,
+            extendedPanID: `0x${bigUInt64ToHexBE(this.driver.context.netParams.extendedPanId)}`,
+            channel: this.driver.context.netParams.channel,
+            nwkUpdateID: this.driver.context.netParams.nwkUpdateId,
         });
     }
 
@@ -408,7 +416,7 @@ export class ZoHAdapter extends Adapter {
         if (networkAddress === ZSpec.COORDINATOR_ADDRESS) {
             // mock ZDO response using driver layer data for coordinator
             // seqNum doesn't matter since waitress bypassed, so don't bother doing any logic for it
-            const response = this.driver.getCoordinatorZDOResponse(clusterId, payload);
+            const response = this.driver.apsHandler.getCoordinatorZDOResponse(clusterId, payload);
 
             if (!response) {
                 throw new Error(`Coordinator does not support ZDO cluster ${clusterId}`);
@@ -458,8 +466,8 @@ export class ZoHAdapter extends Adapter {
     public async permitJoin(seconds: number, networkAddress?: number): Promise<void> {
         if (networkAddress === undefined) {
             // send ZDO BCAST
-            this.driver.allowJoins(seconds, true);
-            this.driver.gpEnterCommissioningMode(seconds);
+            this.driver.context.allowJoins(seconds, true);
+            this.driver.nwkGPHandler.enterCommissioningMode(seconds);
 
             const clusterId = Zdo.ClusterId.PERMIT_JOINING_REQUEST;
             // `authentication`: TC significance always 1 (zb specs)
@@ -467,11 +475,11 @@ export class ZoHAdapter extends Adapter {
 
             await this.sendZdo(ZSpec.BLANK_EUI64, ZSpec.BroadcastAddress.DEFAULT, clusterId, zdoPayload, true);
         } else if (networkAddress === ZSpec.COORDINATOR_ADDRESS) {
-            this.driver.allowJoins(seconds, true);
-            this.driver.gpEnterCommissioningMode(seconds);
+            this.driver.context.allowJoins(seconds, true);
+            this.driver.nwkGPHandler.enterCommissioningMode(seconds);
         } else {
             // send ZDO to networkAddress
-            this.driver.allowJoins(seconds, false);
+            this.driver.context.allowJoins(seconds, false);
 
             const clusterId = Zdo.ClusterId.PERMIT_JOINING_REQUEST;
             // `authentication`: TC significance always 1 (zb specs)
@@ -654,7 +662,7 @@ export class ZoHAdapter extends Adapter {
      * @param apsHeader
      * @param apsPayload
      */
-    private onFrame(
+    onFrame(
         sender16: number | undefined,
         sender64: bigint | undefined,
         apsHeader: ZigbeeAPSHeader,
@@ -715,7 +723,7 @@ export class ZoHAdapter extends Adapter {
         }
     }
 
-    private onGPFrame(cmdId: number, payload: Buffer, macHeader: MACHeader, nwkHeader: ZigbeeNWKGPHeader, rssi: number): void {
+    onGPFrame(cmdId: number, payload: Buffer, macHeader: MACHeader, nwkHeader: ZigbeeNWKGPHeader, rssi: number): void {
         // transform into a ZCL frame
         const data = Buffer.alloc((nwkHeader.frameControlExt?.appId === 0x02 /* ZGP */ ? /* v8 ignore next */ 20 : 15) + payload.byteLength);
         let offset = 0;
@@ -794,7 +802,7 @@ export class ZoHAdapter extends Adapter {
         this.emit("zclPayload", zclPayload);
     }
 
-    private onDeviceJoined(source16: number, source64: bigint, capabilities: MACCapabilities): void {
+    onDeviceJoined(source16: number, source64: bigint, capabilities: MACCapabilities): void {
         // XXX: don't delay if no cap? (joined through router)
         if (capabilities?.rxOnWhenIdle) {
             this.emit("deviceJoined", {networkAddress: source16, ieeeAddr: `0x${bigUInt64ToHexBE(source64)}`});
@@ -805,16 +813,17 @@ export class ZoHAdapter extends Adapter {
             }, 5000);
         }
     }
-    private onDeviceRejoined(source16: number, source64: bigint, _capabilities: MACCapabilities): void {
+
+    onDeviceRejoined(source16: number, source64: bigint, _capabilities: MACCapabilities): void {
         this.emit("deviceJoined", {networkAddress: source16, ieeeAddr: `0x${bigUInt64ToHexBE(source64)}`});
     }
 
-    private onDeviceLeft(source16: number, source64: bigint): void {
+    onDeviceLeft(source16: number, source64: bigint): void {
         this.emit("deviceLeave", {networkAddress: source16, ieeeAddr: `0x${bigUInt64ToHexBE(source64)}`});
     }
 
     /* v8 ignore start */
-    private onDeviceAuthorized(_source16: number, _source64: bigint): void {}
+    onDeviceAuthorized(_source16: number, _source64: bigint): void {}
     /* v8 ignore stop */
 
     private waitressTimeoutFormatter(matcher: WaitressMatcher, timeout: number): string {
