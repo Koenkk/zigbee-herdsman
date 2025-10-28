@@ -4,7 +4,7 @@ import type * as Models from "../../../models";
 import {BackupUtils} from "../../../utils";
 import {logger} from "../../../utils/logger";
 import {uint32MaskToChannels} from "../../../zspec/utils";
-import {readBackup} from "../..//utils";
+import {readBackup} from "../../utils";
 import type {Driver} from "../driver";
 import {
     type EmberKeyData,
