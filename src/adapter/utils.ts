@@ -25,8 +25,7 @@ export function readBackup(path: string): Models.UnifiedBackupStorage | Models.L
         return JSON.parse(readFileSync(path).toString());
     } catch (error) {
         throw new Error(
-            "[BACKUP] Coordinator backup is corrupted. This can happen due to filesystem corruption. " +
-                `To re-create the backup, delete '${path}' and start again. (${(error as Error).stack})`,
+            `[BACKUP] Coordinator backup is corrupted. This can happen due to filesystem corruption. To re-create the backup, delete '${path}' and start again. (${(error as Error).stack})`,
         );
     }
 }

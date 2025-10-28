@@ -3,7 +3,6 @@
 //import Device from "../../../controller/model/device";
 import {existsSync, readFileSync} from "node:fs";
 import {dirname} from "node:path";
-import {readBackup} from "../../utils";
 import type * as Models from "../../../models";
 import type {Backup} from "../../../models";
 import {BackupUtils, Waitress} from "../../../utils";
@@ -16,6 +15,7 @@ import type * as ZdoTypes from "../../../zspec/zdo/definition/tstypes";
 import Adapter from "../../adapter";
 import type * as Events from "../../events";
 import type {AdapterOptions, CoordinatorVersion, NetworkOptions, NetworkParameters, SerialPortOptions, StartResult} from "../../tstype";
+import {readBackup} from "../../utils";
 import PARAM, {
     ApsAddressMode,
     type ApsDataRequest,
