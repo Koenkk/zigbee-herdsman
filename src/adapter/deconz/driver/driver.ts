@@ -8,8 +8,8 @@ import {Buffalo} from "../../../buffalo";
 import type {Backup} from "../../../models";
 import {logger} from "../../../utils/logger";
 import {SerialPort} from "../../serialPort";
-import SocketPortUtils from "../../socketPortUtils";
 import type {NetworkOptions, SerialPortOptions} from "../../tstype";
+import {isTcpPath, parseTcpPath} from "../../utils";
 import PARAM, {
     ApsAddressMode,
     type ApsDataRequest,
@@ -362,7 +362,7 @@ class Driver extends events.EventEmitter {
             }
 
             let prom: Promise<void> | undefined;
-            if (SocketPortUtils.isTcpPath(this.serialPortOptions.path)) {
+            if (isTcpPath(this.serialPortOptions.path)) {
                 prom = this.openSocketPort();
             } else if (baudrate) {
                 prom = this.openSerialPort(baudrate);
@@ -893,7 +893,7 @@ class Driver extends events.EventEmitter {
             throw new Error("No serial port TCP path specified");
         }
 
-        const info = SocketPortUtils.parseTcpPath(this.serialPortOptions.path);
+        const info = parseTcpPath(this.serialPortOptions.path);
         logger.debug(`Opening TCP socket with ${info.host}:${info.port}`, NS);
         this.socketPort = new net.Socket();
         this.socketPort.setNoDelay(true);

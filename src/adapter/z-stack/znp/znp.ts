@@ -6,7 +6,7 @@ import {Queue, Waitress, wait} from "../../../utils";
 import {logger} from "../../../utils/logger";
 import {ClusterId as ZdoClusterId} from "../../../zspec/zdo";
 import {SerialPort} from "../../serialPort";
-import SocketPortUtils from "../../socketPortUtils";
+import {isTcpPath, parseTcpPath} from "../../utils";
 import * as Constants from "../constants";
 import {Frame as UnpiFrame, Parser as UnpiParser, Writer as UnpiWriter} from "../unpi";
 import {Subsystem, Type} from "../unpi/constants";
@@ -91,7 +91,7 @@ export class Znp extends events.EventEmitter {
     }
 
     public async open(): Promise<void> {
-        return SocketPortUtils.isTcpPath(this.path) ? await this.openSocketPort() : await this.openSerialPort();
+        return isTcpPath(this.path) ? await this.openSocketPort() : await this.openSerialPort();
     }
 
     private async openSerialPort(): Promise<void> {
@@ -126,7 +126,7 @@ export class Znp extends events.EventEmitter {
     }
 
     private async openSocketPort(): Promise<void> {
-        const info = SocketPortUtils.parseTcpPath(this.path);
+        const info = parseTcpPath(this.path);
         logger.info(`Opening TCP socket with ${info.host}:${info.port}`, NS);
 
         this.socketPort = new Socket();
