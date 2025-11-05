@@ -1072,7 +1072,7 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
                         senderLongId: ZSpec.BLANK_EUI64,
                         bindingIndex: ZSpec.NULL_BINDING,
                         addressIndex: 0xff,
-                        lastHopLqi: gpdLink,
+                        lastHopLqi: gpdLink, // technically not accurate (this is rssi + lqi[0..3] map)
                         lastHopRssi: 0,
                         lastHopTimestamp: 0,
                     };
@@ -8608,8 +8608,9 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
 
         let commandIdentifier = Clusters.greenPower.commands.notification.ID;
         let options = 0;
+        const isCommissioning = gpdCommandId === 0xe0;
 
-        if (gpdCommandId === 0xe0) {
+        if (isCommissioning) {
             if (!gpdCommandPayload.length) {
                 // XXX: seem to be receiving duplicate commissioningNotification from some devices, second one with empty payload?
                 //      this will mess with the process no doubt, so dropping them
@@ -8638,20 +8639,20 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
             sequence: 0, // not used
         };
         // this stuff is already parsed by EmberZNet stack, but Z2M expects the full buffer, so combine it back
-        const gpdHeader = Buffer.alloc(15); // addr.applicationId === EmberGpApplicationId.IEEE_ADDRESS ? 20 : 15
-        gpdHeader.writeUInt8(0b00000001, 0); // frameControl: FrameType.SPECIFIC + Direction.CLIENT_TO_SERVER + disableDefaultResponse=false
-        gpdHeader.writeUInt8(sequenceNumber, 1);
-        gpdHeader.writeUInt8(commandIdentifier, 2); // commandIdentifier
-        gpdHeader.writeUInt16LE(options, 3);
-        gpdHeader.writeUInt32LE(addr.sourceId, 5);
-        gpdHeader.writeUInt32LE(gpdSecurityFrameCounter, 9);
-        gpdHeader.writeUInt8(gpdCommandId, 13);
-        gpdHeader.writeUInt8(gpdCommandPayload.length, 14);
+        let offset = 0;
+        const messageContents = Buffer.alloc(15 + gpdCommandPayload.length);
+        offset = messageContents.writeUInt8(0b00000001, offset); // frameControl: FrameType.SPECIFIC + Direction.CLIENT_TO_SERVER + disableDefaultResponse=false
+        offset = messageContents.writeUInt8(sequenceNumber, offset);
+        offset = messageContents.writeUInt8(commandIdentifier, offset); // commandIdentifier
+        offset = messageContents.writeUInt16LE(options, offset);
+        offset = messageContents.writeUInt32LE(addr.sourceId, offset);
+        offset = messageContents.writeUInt32LE(gpdSecurityFrameCounter, offset);
+        offset = messageContents.writeUInt8(gpdCommandId, offset);
+        offset = messageContents.writeUInt8(gpdCommandPayload.length, offset);
+        offset = gpdCommandPayload.copy(messageContents, offset);
 
-        const messageContents = Buffer.concat([gpdHeader, gpdCommandPayload]);
-
-        // use broadcast type to match upstream codepath that does not expect `gppNwkAddr` (this from direct-to-coordinator)
-        this.emit("incomingMessage", EmberIncomingMessageType.BROADCAST, apsFrame, gpdLink, addr.sourceId & 0xffff, messageContents);
+        // upstream will use COORDINATOR_ADDRESS if GPP not present
+        this.emit("incomingMessage", EmberIncomingMessageType.UNICAST, apsFrame, packetInfo.lastHopLqi, addr.sourceId & 0xffff, messageContents);
     }
 
     /**
