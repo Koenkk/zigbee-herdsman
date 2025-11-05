@@ -36,8 +36,8 @@ importers:
         specifier: ^1.0.2
         version: 1.0.2
       zigbee-on-host:
-        specifier: ^0.1.13
-        version: 0.1.13
+        specifier: ^0.2.0
+        version: 0.2.0
     devDependencies:
       '@biomejs/biome':
         specifier: ^2.3.3
@@ -981,8 +981,8 @@ packages:
     engines: {node: '>= 14'}
     hasBin: true
 
-  zigbee-on-host@0.1.13:
-    resolution: {integrity: sha512-mL7s9ic7J85YI7wOG1/QlbRYE3haFzIHqgnM2+xLmjj8CazjhmGjop9TCfuY2JXyDI9ss7bNCLxuI9n6M+TXug==}
+  zigbee-on-host@0.2.0:
+    resolution: {integrity: sha512-w77v8G0BCNHHSWS6G+ZDq9LN2rA5gBWEUd8uW4/zdzVP0TD2AZ7/I2gsxmkMwpSqJa6GKjNe86A2uSmHiHHUZw==}
     engines: {node: ^20.19.0 || >=22.12.0}
 
 snapshots:
@@ -1787,4 +1787,4 @@ snapshots:
   yaml@2.7.0:
     optional: true
 
-  zigbee-on-host@0.1.13: {}
+  zigbee-on-host@0.2.0: {}
