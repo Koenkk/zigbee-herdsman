@@ -357,11 +357,11 @@ export class ZoHAdapter extends Adapter {
         });
     }
 
-    /* v8 ignore start */
-    public async addInstallCode(ieeeAddress: string, key: Buffer): Promise<void> {
-        await Promise.reject(new Error(`not supported ${ieeeAddress}, ${key.toString("hex")}`));
+    public async addInstallCode(ieeeAddress: string, key: Buffer, hashed: boolean): Promise<void> {
+        this.driver.context.addInstallCode(BigInt(ieeeAddress), key, hashed);
+
+        return await Promise.resolve();
     }
-    /* v8 ignore stop */
 
     /* v8 ignore start */
     public waitFor(

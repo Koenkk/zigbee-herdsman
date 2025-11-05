@@ -1,13 +1,11 @@
 import {randomBytes} from "node:crypto";
 import {mkdirSync, rmSync} from "node:fs";
 import {join} from "node:path";
-
 import {afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi} from "vitest";
 import {encodeSpinelFrame, SPINEL_HEADER_FLG_SPINEL} from "zigbee-on-host/dist/spinel/spinel";
 import {SpinelStatus} from "zigbee-on-host/dist/spinel/statuses";
 import type {MACCapabilities} from "zigbee-on-host/dist/zigbee/mac";
 import type {ZigbeeNWKLinkStatus} from "zigbee-on-host/dist/zigbee/zigbee-nwk";
-
 import {bigUInt64ToHexBE} from "../../../src/adapter/zoh/adapter/utils";
 import {ZoHAdapter} from "../../../src/adapter/zoh/adapter/zohAdapter";
 import * as ZSpec from "../../../src/zspec";
@@ -35,6 +33,7 @@ const DEFAULT_STATE: Awaited<ReturnType<ZoHAdapter["driver"]["context"]["readNet
     networkKeyFrameCounter: 0,
     networkKeySequenceNumber: 0,
     deviceEntries: [],
+    appLinkKeys: [],
 };
 
 // biome-ignore lint/correctness/noUnusedVariables: dev
@@ -1311,5 +1310,17 @@ describe("Zigbee on Host", () => {
         expect(readNetworkStateSpy).toHaveBeenCalledTimes(2);
 
         readNetworkStateSpy.mockRestore();
+    });
+
+    it("adds install code", async () => {
+        const codeVector = Buffer.from("83FED3407A939723A5C639B26916D505C3B5", "hex");
+
+        await expect(adapter.addInstallCode("0x1122334455667788", codeVector, false)).resolves.toStrictEqual(undefined);
+    });
+
+    it("adds hashed install code", async () => {
+        const linkKeyVector = Buffer.from("66B6900981E1EE3CA4206B6B861C02BB", "hex");
+
+        await expect(adapter.addInstallCode("0x1122334455667788", linkKeyVector, true)).resolves.toStrictEqual(undefined);
     });
 });
