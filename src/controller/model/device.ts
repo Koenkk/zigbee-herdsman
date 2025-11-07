@@ -1214,7 +1214,7 @@ export class Device extends Entity<ControllerEventMap> {
         // of a mandatory basic cluster attribute to keep it as lightweight as
         // possible.
         const endpoint = this.endpoints.find((ep) => ep.inputClusters.includes(0)) ?? this.endpoints[0];
-        await endpoint.read("genBasic", ["zclVersion"], {disableRecovery});
+        await endpoint.read("genBasic", ["zclVersion"], {disableRecovery, sendPolicy: "immediate"});
     }
 
     public addCustomCluster(name: string, cluster: ClusterDefinition): void {
