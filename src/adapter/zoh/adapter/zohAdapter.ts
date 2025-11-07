@@ -1,6 +1,6 @@
 import {readFileSync} from "node:fs";
 import {Socket} from "node:net";
-import path, {dirname} from "node:path";
+import {dirname, join} from "node:path";
 import {OTRCPDriver} from "zigbee-on-host";
 import {setLogger} from "zigbee-on-host/dist/utils/logger";
 import type {MACCapabilities, MACHeader} from "zigbee-on-host/dist/zigbee/mac";
@@ -153,7 +153,7 @@ export class ZoHAdapter extends Adapter {
 
     private loadStackConfig(): StackConfig {
         // store stack config in same dir as backup
-        const configPath = path.join(path.dirname(this.backupPath), "zoh_config.json");
+        const configPath = join(dirname(this.backupPath), "zoh_config.json");
         // use default as base (for all invalid/missing in JSON)
         const config: StackConfig = {...DEFAULT_STACK_CONFIG};
 
