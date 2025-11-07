@@ -863,11 +863,11 @@ describe("Zigbee on Host", () => {
         expect(custAdapter.stackConfig.enableCSMACA).toStrictEqual(false);
     });
 
-    it("use defaults when custom stack config invalid", () => {
+    it("uses defaults when custom stack config invalid", () => {
         // each is invalid
         const configJSON = {
             tiSerialSkipBootloader: "a",
-            eui64: null,
+            eui64: "0xxyz",
             ccaBackoffAttempts: 256,
             ccaRetries: -1,
             enableCSMACA: 1,
@@ -902,6 +902,43 @@ describe("Zigbee on Host", () => {
         expect(custAdapter.stackConfig.ccaBackoffAttempts).toStrictEqual(DEFAULT_STACK_CONFIG.ccaBackoffAttempts);
         expect(custAdapter.stackConfig.ccaRetries).toStrictEqual(DEFAULT_STACK_CONFIG.ccaRetries);
         expect(custAdapter.stackConfig.enableCSMACA).toStrictEqual(DEFAULT_STACK_CONFIG.enableCSMACA);
+    });
+
+    it("uses defaults when custom stack config partial", () => {
+        // each is invalid
+        const configJSON = {
+            enableCSMACA: false,
+        };
+
+        writeFileSync(TEMP_PATH_CONFIG, JSON.stringify(configJSON), "utf8");
+
+        const custAdapter = new ZoHAdapter(
+            {
+                panID: DEFAULT_PAN_ID,
+                extendedPanID: DEFAULT_EXT_PAN_ID,
+                channelList: [DEFAULT_CHANNEL],
+                networkKey: DEFAULT_NETWORK_KEY,
+                networkKeyDistribute: false,
+            },
+            {
+                baudRate: 921600,
+                rtscts: true,
+                path: "/dev/serial/by-id/mock-adapter",
+                adapter: "zoh",
+            },
+            join(TEMP_PATH, "coordinator_backup.json"),
+            {
+                concurrent: 8,
+                disableLED: false,
+                transmitPower: DEFAULT_TX_POWER,
+            },
+        );
+
+        expect(custAdapter.stackConfig.tiSerialSkipBootloader).toStrictEqual(DEFAULT_STACK_CONFIG.tiSerialSkipBootloader);
+        expect(custAdapter.stackConfig.eui64).toStrictEqual(DEFAULT_STACK_CONFIG.eui64);
+        expect(custAdapter.stackConfig.ccaBackoffAttempts).toStrictEqual(DEFAULT_STACK_CONFIG.ccaBackoffAttempts);
+        expect(custAdapter.stackConfig.ccaRetries).toStrictEqual(DEFAULT_STACK_CONFIG.ccaRetries);
+        expect(custAdapter.stackConfig.enableCSMACA).toStrictEqual(false);
     });
 
     it("receives ZDO frame", async () => {

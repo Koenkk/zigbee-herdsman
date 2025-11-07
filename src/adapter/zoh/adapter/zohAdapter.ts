@@ -52,9 +52,9 @@ interface StackConfig {
     enableCSMACA: boolean;
 }
 
-export interface StackConfigJSON extends Omit<StackConfig, "eui64"> {
+export interface StackConfigJSON extends Partial<Omit<StackConfig, "eui64">> {
     /** 0x${hex} format */
-    eui64: string;
+    eui64?: string;
 }
 
 const DEFAULT_REQUEST_TIMEOUT = 15000;
@@ -161,34 +161,44 @@ export class ZoHAdapter extends Adapter {
             const inRange = (value: number, min: number, max: number): boolean => !(value == null || value < min || value > max);
             const customConfig = JSON.parse(readFileSync(configPath, "utf8")) as StackConfigJSON;
 
-            if (customConfig.tiSerialSkipBootloader === true || customConfig.tiSerialSkipBootloader === false) {
-                config.tiSerialSkipBootloader = customConfig.tiSerialSkipBootloader;
-            } else {
-                logger.error("[STACK CONFIG] Invalid tiSerialSkipBootloader, using default.", NS);
+            if (customConfig.tiSerialSkipBootloader != null) {
+                if (customConfig.tiSerialSkipBootloader === true || customConfig.tiSerialSkipBootloader === false) {
+                    config.tiSerialSkipBootloader = customConfig.tiSerialSkipBootloader;
+                } else {
+                    logger.error("[STACK CONFIG] Invalid tiSerialSkipBootloader, using default.", NS);
+                }
             }
 
-            try {
-                config.eui64 = BigInt(customConfig.eui64);
-            } catch (error) {
-                logger.error(`[STACK CONFIG] Invalid eui64 (${error}), using default.`, NS);
+            if (customConfig.eui64 != null) {
+                try {
+                    config.eui64 = BigInt(customConfig.eui64);
+                } catch (error) {
+                    logger.error(`[STACK CONFIG] Invalid eui64 (${error}), using default.`, NS);
+                }
             }
 
-            if (inRange(customConfig.ccaBackoffAttempts, 0, 255)) {
-                config.ccaBackoffAttempts = customConfig.ccaBackoffAttempts;
-            } else {
-                logger.error("[STACK CONFIG] Invalid ccaBackoffAttempts, using default.", NS);
+            if (customConfig.ccaBackoffAttempts != null) {
+                if (inRange(customConfig.ccaBackoffAttempts, 0, 255)) {
+                    config.ccaBackoffAttempts = customConfig.ccaBackoffAttempts;
+                } else {
+                    logger.error("[STACK CONFIG] Invalid ccaBackoffAttempts, using default.", NS);
+                }
             }
 
-            if (inRange(customConfig.ccaRetries, 0, 255)) {
-                config.ccaRetries = customConfig.ccaRetries;
-            } else {
-                logger.error("[STACK CONFIG] Invalid ccaRetries, using default.", NS);
+            if (customConfig.ccaRetries != null) {
+                if (inRange(customConfig.ccaRetries, 0, 255)) {
+                    config.ccaRetries = customConfig.ccaRetries;
+                } else {
+                    logger.error("[STACK CONFIG] Invalid ccaRetries, using default.", NS);
+                }
             }
 
-            if (customConfig.enableCSMACA === true || customConfig.enableCSMACA === false) {
-                config.enableCSMACA = customConfig.enableCSMACA;
-            } else {
-                logger.error("[STACK CONFIG] Invalid enableCSMACA, using default.", NS);
+            if (customConfig.enableCSMACA != null) {
+                if (customConfig.enableCSMACA === true || customConfig.enableCSMACA === false) {
+                    config.enableCSMACA = customConfig.enableCSMACA;
+                } else {
+                    logger.error("[STACK CONFIG] Invalid enableCSMACA, using default.", NS);
+                }
             }
 
             logger.info(`Using stack config ${JSON.stringify(config)}.`, NS);
