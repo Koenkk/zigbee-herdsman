@@ -1,5 +1,5 @@
 import {randomBytes} from "node:crypto";
-import {mkdirSync, rmSync} from "node:fs";
+import {mkdirSync, rmSync, writeFileSync} from "node:fs";
 import {join} from "node:path";
 import {afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi} from "vitest";
 import {encodeSpinelFrame, SPINEL_HEADER_FLG_SPINEL} from "zigbee-on-host/dist/spinel/spinel";
@@ -7,13 +7,14 @@ import {SpinelStatus} from "zigbee-on-host/dist/spinel/statuses";
 import type {MACCapabilities} from "zigbee-on-host/dist/zigbee/mac";
 import type {ZigbeeNWKLinkStatus} from "zigbee-on-host/dist/zigbee/zigbee-nwk";
 import {bigUInt64ToHexBE} from "../../../src/adapter/zoh/adapter/utils";
-import {ZoHAdapter} from "../../../src/adapter/zoh/adapter/zohAdapter";
+import {DEFAULT_STACK_CONFIG, type StackConfigJSON, ZoHAdapter} from "../../../src/adapter/zoh/adapter/zohAdapter";
 import * as ZSpec from "../../../src/zspec";
 import * as Zcl from "../../../src/zspec/zcl";
 import * as Zdo from "../../../src/zspec/zdo";
 
 const TEMP_PATH = "zoh-tmp";
 const TEMP_PATH_SAVE = join(TEMP_PATH, "zoh.save");
+const TEMP_PATH_CONFIG = join(TEMP_PATH, "zoh_config.json");
 const DEFAULT_PAN_ID = 0x1a62;
 const DEFAULT_EXT_PAN_ID = [0xdd, 0x11, 0x22, 0xdd, 0xdd, 0x33, 0x44, 0xdd];
 const DEFAULT_CHANNEL = 11;
@@ -89,10 +90,6 @@ const COMMON_RFD_MAC_CAP: MACCapabilities = {
 describe("Zigbee on Host", () => {
     let adapter: ZoHAdapter;
     let nextTidFromStartup = 1;
-
-    const deleteZoHSave = () => {
-        rmSync(TEMP_PATH_SAVE, {force: true});
-    };
 
     const makeSpinelLastStatus = (tid: number, status: SpinelStatus = SpinelStatus.OK): Buffer => {
         const respSpinelFrame = {
@@ -296,7 +293,8 @@ describe("Zigbee on Host", () => {
     });
 
     beforeEach(() => {
-        deleteZoHSave();
+        rmSync(TEMP_PATH_CONFIG, {force: true});
+        rmSync(TEMP_PATH_SAVE, {force: true});
 
         adapter = new ZoHAdapter(
             {
@@ -312,7 +310,7 @@ describe("Zigbee on Host", () => {
                 path: "/dev/serial/by-id/mock-adapter",
                 adapter: "zoh",
             },
-            join(TEMP_PATH, "ember_coordinator_backup.json"),
+            join(TEMP_PATH, "coordinator_backup.json"),
             {
                 concurrent: 8,
                 disableLED: false,
@@ -814,6 +812,96 @@ describe("Zigbee on Host", () => {
             ZSpec.GP_ENDPOINT,
             ZSpec.GP_ENDPOINT,
         );
+    });
+
+    it("uses default stack config when JSON not present", () => {
+        expect(adapter.stackConfig.tiSerialSkipBootloader).toStrictEqual(DEFAULT_STACK_CONFIG.tiSerialSkipBootloader);
+        expect(adapter.stackConfig.eui64).toStrictEqual(DEFAULT_STACK_CONFIG.eui64);
+        expect(adapter.stackConfig.ccaBackoffAttempts).toStrictEqual(DEFAULT_STACK_CONFIG.ccaBackoffAttempts);
+        expect(adapter.stackConfig.ccaRetries).toStrictEqual(DEFAULT_STACK_CONFIG.ccaRetries);
+        expect(adapter.stackConfig.enableCSMACA).toStrictEqual(DEFAULT_STACK_CONFIG.enableCSMACA);
+    });
+
+    it("uses custom stack config", () => {
+        // each is different from default
+        const configJSON: StackConfigJSON = {
+            tiSerialSkipBootloader: true,
+            eui64: "0x1122334455667788",
+            ccaBackoffAttempts: 2,
+            ccaRetries: 3,
+            enableCSMACA: false,
+        };
+
+        writeFileSync(TEMP_PATH_CONFIG, JSON.stringify(configJSON), "utf8");
+
+        const custAdapter = new ZoHAdapter(
+            {
+                panID: DEFAULT_PAN_ID,
+                extendedPanID: DEFAULT_EXT_PAN_ID,
+                channelList: [DEFAULT_CHANNEL],
+                networkKey: DEFAULT_NETWORK_KEY,
+                networkKeyDistribute: false,
+            },
+            {
+                baudRate: 921600,
+                rtscts: true,
+                path: "/dev/serial/by-id/mock-adapter",
+                adapter: "zoh",
+            },
+            join(TEMP_PATH, "coordinator_backup.json"),
+            {
+                concurrent: 8,
+                disableLED: false,
+                transmitPower: DEFAULT_TX_POWER,
+            },
+        );
+
+        expect(custAdapter.stackConfig.tiSerialSkipBootloader).toStrictEqual(true);
+        expect(custAdapter.stackConfig.eui64).toStrictEqual(Buffer.from([0x88, 0x77, 0x66, 0x55, 0x44, 0x33, 0x22, 0x11]).readBigUInt64LE(0));
+        expect(custAdapter.stackConfig.ccaBackoffAttempts).toStrictEqual(2);
+        expect(custAdapter.stackConfig.ccaRetries).toStrictEqual(3);
+        expect(custAdapter.stackConfig.enableCSMACA).toStrictEqual(false);
+    });
+
+    it("use defaults when custom stack config invalid", () => {
+        // each is invalid
+        const configJSON = {
+            tiSerialSkipBootloader: "a",
+            eui64: null,
+            ccaBackoffAttempts: 256,
+            ccaRetries: -1,
+            enableCSMACA: 1,
+        };
+
+        writeFileSync(TEMP_PATH_CONFIG, JSON.stringify(configJSON), "utf8");
+
+        const custAdapter = new ZoHAdapter(
+            {
+                panID: DEFAULT_PAN_ID,
+                extendedPanID: DEFAULT_EXT_PAN_ID,
+                channelList: [DEFAULT_CHANNEL],
+                networkKey: DEFAULT_NETWORK_KEY,
+                networkKeyDistribute: false,
+            },
+            {
+                baudRate: 921600,
+                rtscts: true,
+                path: "/dev/serial/by-id/mock-adapter",
+                adapter: "zoh",
+            },
+            join(TEMP_PATH, "coordinator_backup.json"),
+            {
+                concurrent: 8,
+                disableLED: false,
+                transmitPower: DEFAULT_TX_POWER,
+            },
+        );
+
+        expect(custAdapter.stackConfig.tiSerialSkipBootloader).toStrictEqual(DEFAULT_STACK_CONFIG.tiSerialSkipBootloader);
+        expect(custAdapter.stackConfig.eui64).toStrictEqual(DEFAULT_STACK_CONFIG.eui64);
+        expect(custAdapter.stackConfig.ccaBackoffAttempts).toStrictEqual(DEFAULT_STACK_CONFIG.ccaBackoffAttempts);
+        expect(custAdapter.stackConfig.ccaRetries).toStrictEqual(DEFAULT_STACK_CONFIG.ccaRetries);
+        expect(custAdapter.stackConfig.enableCSMACA).toStrictEqual(DEFAULT_STACK_CONFIG.enableCSMACA);
     });
 
     it("receives ZDO frame", async () => {
