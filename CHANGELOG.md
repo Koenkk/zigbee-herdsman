@@ -1,5 +1,17 @@
 # Changelog
 
+## [6.4.0](https://github.com/Koenkk/zigbee-herdsman/compare/v6.3.3...v6.4.0) (2025-11-07)
+
+
+### Features
+
+* Support custom stack config for ZoH ([#1544](https://github.com/Koenkk/zigbee-herdsman/issues/1544)) ([4995e4d](https://github.com/Koenkk/zigbee-herdsman/commit/4995e4dde8fc35a0ab3852a6cc01d5379fe35fa6))
+
+
+### Bug Fixes
+
+* Send ping request immediately ([#1543](https://github.com/Koenkk/zigbee-herdsman/issues/1543)) ([3f3fafa](https://github.com/Koenkk/zigbee-herdsman/commit/3f3fafac11e92097820fe62a19c06c0f1166c9d0))
+
 ## [6.3.3](https://github.com/Koenkk/zigbee-herdsman/compare/v6.3.2...v6.3.3) (2025-11-05)
 
 
