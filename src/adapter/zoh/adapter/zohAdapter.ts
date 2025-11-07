@@ -1,12 +1,11 @@
+import {readFileSync} from "node:fs";
 import {Socket} from "node:net";
-import {dirname} from "node:path";
-
+import {dirname, join} from "node:path";
 import {OTRCPDriver} from "zigbee-on-host";
 import {setLogger} from "zigbee-on-host/dist/utils/logger";
 import type {MACCapabilities, MACHeader} from "zigbee-on-host/dist/zigbee/mac";
 import type {ZigbeeAPSHeader, ZigbeeAPSPayload} from "zigbee-on-host/dist/zigbee/zigbee-aps";
 import type {ZigbeeNWKGPHeader} from "zigbee-on-host/dist/zigbee/zigbee-nwkgp";
-
 import type {Backup} from "../../../models/backup";
 import {logger} from "../../../utils/logger";
 import {Queue} from "../../../utils/queue";
@@ -40,7 +39,33 @@ type ZdoResponse = {
     seqNum: number;
 };
 
+interface StackConfig {
+    /** if true, trigger serial dtr/rts flipping to skip bootloader (meant for TI hw) */
+    tiSerialSkipBootloader: boolean;
+    /** EUI64 used for the adapter */
+    eui64: bigint;
+    /** @see https://nerivec.github.io/zigbee-on-host/types/spinel_spinel.StreamRawConfig.html */
+    ccaBackoffAttempts: number;
+    /** @see https://nerivec.github.io/zigbee-on-host/types/spinel_spinel.StreamRawConfig.html */
+    ccaRetries: number;
+    /** @see https://nerivec.github.io/zigbee-on-host/types/spinel_spinel.StreamRawConfig.html */
+    enableCSMACA: boolean;
+}
+
+export interface StackConfigJSON extends Partial<Omit<StackConfig, "eui64">> {
+    /** 0x${hex} format */
+    eui64?: string;
+}
+
 const DEFAULT_REQUEST_TIMEOUT = 15000;
+
+export const DEFAULT_STACK_CONFIG: Readonly<StackConfig> = {
+    tiSerialSkipBootloader: false,
+    eui64: Buffer.from([0x5a, 0x6f, 0x48, 0x6f, 0x6e, 0x5a, 0x32, 0x4d]).readBigUInt64LE(0),
+    ccaBackoffAttempts: 1,
+    ccaRetries: 4,
+    enableCSMACA: true,
+};
 
 export class ZoHAdapter extends Adapter {
     private serialPort?: SerialPort;
@@ -51,6 +76,7 @@ export class ZoHAdapter extends Adapter {
 
     private interpanLock: boolean;
 
+    public readonly stackConfig: StackConfig;
     public readonly driver: OTRCPDriver;
     private readonly queue: Queue;
     private readonly zclWaitress: Waitress<ZclPayload, WaitressMatcher>;
@@ -67,6 +93,7 @@ export class ZoHAdapter extends Adapter {
         this.hasZdoMessageOverhead = true;
         this.manufacturerID = Zcl.ManufacturerCode.CONNECTIVITY_STANDARDS_ALLIANCE;
         this.closing = false;
+        this.stackConfig = this.loadStackConfig();
 
         const channel = networkOptions.channelList[0];
         this.driver = new OTRCPDriver(
@@ -88,9 +115,9 @@ export class ZoHAdapter extends Adapter {
             },
             {
                 txChannel: channel,
-                ccaBackoffAttempts: 1,
-                ccaRetries: 4,
-                enableCSMACA: true,
+                ccaBackoffAttempts: this.stackConfig.ccaBackoffAttempts,
+                ccaRetries: this.stackConfig.ccaRetries,
+                enableCSMACA: this.stackConfig.enableCSMACA,
                 headerUpdated: true,
                 reTx: false,
                 securityProcessed: true,
@@ -100,10 +127,9 @@ export class ZoHAdapter extends Adapter {
             },
             // NOTE: this information is overwritten on `start` if a save exists
             {
-                // TODO: make this configurable
-                eui64: Buffer.from([0x5a, 0x6f, 0x48, 0x6f, 0x6e, 0x5a, 0x32, 0x4d]).readBigUInt64LE(0),
+                eui64: this.stackConfig.eui64,
                 panId: this.networkOptions.panID,
-                // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
+                // biome-ignore lint/style/noNonNullAssertion: expected always valid at this point
                 extendedPanId: Buffer.from(this.networkOptions.extendedPanID!).readBigUInt64LE(0),
                 channel,
                 nwkUpdateId: 0,
@@ -111,7 +137,7 @@ export class ZoHAdapter extends Adapter {
                 // ZigBeeAlliance09
                 tcKey: Buffer.from([0x5a, 0x69, 0x67, 0x42, 0x65, 0x65, 0x41, 0x6c, 0x6c, 0x69, 0x61, 0x6e, 0x63, 0x65, 0x30, 0x39]),
                 tcKeyFrameCounter: 0,
-                // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
+                // biome-ignore lint/style/noNonNullAssertion: expected always valid at this point
                 networkKey: Buffer.from(this.networkOptions.networkKey!),
                 networkKeyFrameCounter: 0,
                 networkKeySequenceNumber: 0,
@@ -123,6 +149,64 @@ export class ZoHAdapter extends Adapter {
         this.zdoWaitress = new Waitress(this.zdoWaitressValidator, this.waitressTimeoutFormatter);
 
         this.interpanLock = false;
+    }
+
+    private loadStackConfig(): StackConfig {
+        // store stack config in same dir as backup
+        const configPath = join(dirname(this.backupPath), "zoh_config.json");
+        // use default as base (for all invalid/missing in JSON)
+        const config: StackConfig = {...DEFAULT_STACK_CONFIG};
+
+        try {
+            const inRange = (value: number, min: number, max: number): boolean => !(value == null || value < min || value > max);
+            const customConfig = JSON.parse(readFileSync(configPath, "utf8")) as StackConfigJSON;
+
+            if (customConfig.tiSerialSkipBootloader != null) {
+                if (customConfig.tiSerialSkipBootloader === true || customConfig.tiSerialSkipBootloader === false) {
+                    config.tiSerialSkipBootloader = customConfig.tiSerialSkipBootloader;
+                } else {
+                    logger.error("[STACK CONFIG] Invalid tiSerialSkipBootloader, using default.", NS);
+                }
+            }
+
+            if (customConfig.eui64 != null) {
+                try {
+                    config.eui64 = BigInt(customConfig.eui64);
+                } catch (error) {
+                    logger.error(`[STACK CONFIG] Invalid eui64 (${error}), using default.`, NS);
+                }
+            }
+
+            if (customConfig.ccaBackoffAttempts != null) {
+                if (inRange(customConfig.ccaBackoffAttempts, 0, 255)) {
+                    config.ccaBackoffAttempts = customConfig.ccaBackoffAttempts;
+                } else {
+                    logger.error("[STACK CONFIG] Invalid ccaBackoffAttempts, using default.", NS);
+                }
+            }
+
+            if (customConfig.ccaRetries != null) {
+                if (inRange(customConfig.ccaRetries, 0, 255)) {
+                    config.ccaRetries = customConfig.ccaRetries;
+                } else {
+                    logger.error("[STACK CONFIG] Invalid ccaRetries, using default.", NS);
+                }
+            }
+
+            if (customConfig.enableCSMACA != null) {
+                if (customConfig.enableCSMACA === true || customConfig.enableCSMACA === false) {
+                    config.enableCSMACA = customConfig.enableCSMACA;
+                } else {
+                    logger.error("[STACK CONFIG] Invalid enableCSMACA, using default.", NS);
+                }
+            }
+
+            logger.info(`Using stack config ${JSON.stringify(config)}.`, NS);
+        } catch {
+            logger.info("Using default stack config.", NS);
+        }
+
+        return config;
     }
 
     /**
@@ -216,6 +300,17 @@ export class ZoHAdapter extends Adapter {
 
             this.serialPort.once("close", this.onPortClose.bind(this));
             this.serialPort.on("error", this.onPortError.bind(this));
+
+            if (this.stackConfig.tiSerialSkipBootloader) {
+                // skipping bootloader is required for some CC2652/CC1352 devices (auto-entered)
+                logger.info("TI skip bootloader", NS);
+                await this.serialPort.asyncSet({dtr: false, rts: false});
+                await wait(150);
+                await this.serialPort.asyncSet({dtr: false, rts: true});
+                await wait(150);
+                await this.serialPort.asyncSet({dtr: false, rts: false});
+                await wait(150);
+            }
         } catch (error) {
             await this.stop();
 
@@ -230,11 +325,9 @@ export class ZoHAdapter extends Adapter {
      */
     /* v8 ignore start */
     private onPortClose(error: boolean | Error): void {
-        if (error) {
-            logger.error("Port closed unexpectedly.", NS);
-        } else {
-            logger.info("Port closed.", NS);
-        }
+        logger.info(`Port closed ${error}`, NS);
+
+        this.emit("disconnected");
     }
     /* v8 ignore stop */
 
@@ -245,8 +338,6 @@ export class ZoHAdapter extends Adapter {
     /* v8 ignore start */
     private onPortError(error: Error): void {
         logger.error(`Port ${error}`, NS);
-
-        this.emit("disconnected");
     }
     /* v8 ignore stop */
 
