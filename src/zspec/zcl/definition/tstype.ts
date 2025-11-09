@@ -349,7 +349,6 @@ export type ClusterName =
     | "wiserDeviceInfo"
     | "manuSpecificTuya"
     | "manuSpecificLumi"
-    | "liXeePrivate"
     | "manuSpecificTuya2"
     | "manuSpecificTuya3"
     | "manuSpecificCentraliteHumidity"
