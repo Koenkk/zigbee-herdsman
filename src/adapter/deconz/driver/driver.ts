@@ -997,14 +997,10 @@ class Driver extends events.EventEmitter {
 
         const payload = Buffer.alloc(7);
         let pos = 0;
-        payload.writeUInt8(zdpSeq, pos);
-        pos += 1;
-        payload.writeUInt32LE(scanChannels, pos);
-        pos += 4;
-        payload.writeUInt8(scanDuration, pos);
-        pos += 1;
-        payload.writeUInt8(this.paramNwkUpdateId, pos);
-        pos += 1;
+        pos = payload.writeUInt8(zdpSeq, pos);
+        pos = payload.writeUInt32LE(scanChannels, pos);
+        pos = payload.writeUInt8(scanDuration, pos);
+        pos = payload.writeUInt8(this.paramNwkUpdateId, pos);
 
         const req: ApsDataRequest = {
             requestId: this.nextTransactionID(),
@@ -1099,45 +1095,36 @@ class Driver extends events.EventEmitter {
 
         const buf = Buffer.alloc(128);
         let pos = 0;
-        buf.writeUInt8(FirmwareCommand.WriteParameter, pos);
-        pos += 1;
-        buf.writeUInt8(seqNumber, pos);
-        pos += 1;
-        buf.writeUInt8(0, pos); // status: not used
-        pos += 1;
+        pos = buf.writeUInt8(FirmwareCommand.WriteParameter, pos);
+        pos = buf.writeUInt8(seqNumber, pos);
+        pos = buf.writeUInt8(0, pos); // status: not used
 
         const posFrameLength = pos; // remember
-        buf.writeUInt16LE(0, pos); // dummy frame length
-        pos += 2;
+
+        pos = buf.writeUInt16LE(0, pos); // dummy frame length
         // -------------- actual data ---------------------------------------
         const posPayloadLength = pos; // remember
-        buf.writeUInt16LE(0, pos); // dummy payload length
-        pos += 2;
-        buf.writeUInt8(parameterId, pos);
-        pos += 1;
+
+        pos = buf.writeUInt16LE(0, pos); // dummy payload length
+        pos = buf.writeUInt8(parameterId, pos);
 
         if (value instanceof Buffer) {
             for (let i = 0; i < value.length; i++) {
-                buf.writeUInt8(value[i], pos);
-                pos += 1;
+                pos = buf.writeUInt8(value[i], pos);
             }
         } else if (typeof value === "number") {
             if (param.type === DataType.U8) {
-                buf.writeUInt8(value, pos);
-                pos += 1;
+                pos = buf.writeUInt8(value, pos);
             } else if (param.type === DataType.U16) {
-                buf.writeUInt16LE(value, pos);
-                pos += 2;
+                pos = buf.writeUInt16LE(value, pos);
             } else if (param.type === DataType.U32) {
-                buf.writeUInt32LE(value, pos);
-                pos += 4;
+                pos = buf.writeUInt32LE(value, pos);
             } else {
                 throw new Error("tried to write unknown parameter number type");
             }
         } else if (typeof value === "bigint") {
             if (param.type === DataType.U64) {
-                buf.writeBigUInt64LE(value, pos);
-                pos += 8;
+                pos = buf.writeBigUInt64LE(value, pos);
             } else {
                 throw new Error("tried to write unknown parameter number type");
             }
