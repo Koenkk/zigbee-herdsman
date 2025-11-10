@@ -88,7 +88,6 @@ const mocksendZclFrameInterPANBroadcast = vi.fn();
 const mockRestoreChannelInterPAN = vi.fn();
 const mockAdapterPermitJoin = vi.fn();
 const mockDiscoverRoute = vi.fn();
-const mockAdapterSupportsBackup = vi.fn().mockReturnValue(true);
 const mockAdapterReset = vi.fn();
 const mockAdapterStop = vi.fn();
 const mockAdapterStart = vi.fn().mockReturnValue("resumed");
@@ -354,11 +353,13 @@ vi.mock("../src/utils/wait", () => ({
     }),
 }));
 
+let adapterSupportsBackup = true;
 let dummyBackup: Models.UnifiedBackupStorage | undefined;
 
 vi.mock("../src/adapter/z-stack/adapter/zStackAdapter", () => ({
     ZStackAdapter: vi.fn(() => ({
         hasZdoMessageOverhead: false,
+        supportsBackup: adapterSupportsBackup,
         manufacturerID: 0x0007,
         on: (event: AdapterEvent, handler: (...args: unknown[]) => void) => {
             mockAdapterEvents[event] = handler;
@@ -367,7 +368,6 @@ vi.mock("../src/adapter/z-stack/adapter/zStackAdapter", () => ({
         start: mockAdapterStart,
         getCoordinatorIEEE: mockAdapterGetCoordinatorIEEE,
         reset: mockAdapterReset,
-        supportsBackup: mockAdapterSupportsBackup,
         backup: mockApaterBackup,
         getCoordinatorVersion: () => {
             return {type: "zStack", meta: {version: 1}};
@@ -444,8 +444,8 @@ const options = {
         disableLED: false,
     },
     databasePath: getTempFile("database.db"),
-    databaseBackupPath: getTempFile("database.db.backup"),
     backupPath,
+    dataArchivePath: path.join(TEMP_PATH, "backup-%TIMESTAMP%"),
     acceptJoiningDeviceHandler: mockAcceptJoiningDeviceHandler,
 };
 
@@ -471,6 +471,7 @@ describe("Controller", () => {
 
     beforeEach(() => {
         vi.setSystemTime(mockedDate);
+        adapterSupportsBackup = true;
         sendZdoResponseStatus = Zdo.Status.SUCCESS;
         for (const m of mocksRestore) m.mockRestore();
         for (const m of mocksClear) m.mockClear();
@@ -1841,20 +1842,6 @@ describe("Controller", () => {
         expect(fs.readFileSync(getTempFile(dbtmp[0])).toString().startsWith("Hello, World!")).toBeTruthy();
     });
 
-    it("Should create backup of databse before clearing when datbaseBackupPath is provided", async () => {
-        const databaseBackupPath = getTempFile("database.backup");
-        if (fs.existsSync(databaseBackupPath)) fs.unlinkSync(databaseBackupPath);
-        controller = new Controller({...options, databaseBackupPath});
-        expect(fs.existsSync(databaseBackupPath)).toBeFalsy();
-        await controller.start();
-        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
-        await controller.createGroup(1);
-        await controller.stop();
-        mockAdapterStart.mockReturnValueOnce("reset");
-        await controller.start();
-        expect(fs.existsSync(databaseBackupPath)).toBeTruthy();
-    });
-
     it("Add install code 18 byte", async () => {
         await controller.start();
         const code = "RB01SG0D831018264800400000000000000000009035EAFFFE424783DLKAE3B287281CF16F550733A0CEC38AA31E802";
@@ -2168,7 +2155,7 @@ describe("Controller", () => {
     });
 
     it("Shouldnt create backup when adapter doesnt support it", async () => {
-        mockAdapterSupportsBackup.mockReturnValue(false);
+        adapterSupportsBackup = false;
         if (fs.existsSync(options.backupPath)) fs.unlinkSync(options.backupPath);
         await controller.start();
         await controller.stop();
@@ -7865,7 +7852,7 @@ describe("Controller", () => {
     });
 
     it("Shouldnt throw error on coordinatorCheck when adapter doesnt support backups", async () => {
-        mockAdapterSupportsBackup.mockReturnValue(false);
+        adapterSupportsBackup = false;
         await controller.start();
         await expect(controller.coordinatorCheck()).rejects.toHaveProperty(
             "message",
@@ -7874,7 +7861,6 @@ describe("Controller", () => {
     });
 
     it("Should do a coordinator check", async () => {
-        mockAdapterSupportsBackup.mockReturnValue(true);
         await controller.start();
         await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
         const result = await controller.coordinatorCheck();

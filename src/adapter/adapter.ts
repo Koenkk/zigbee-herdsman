@@ -18,8 +18,9 @@ interface AdapterEventMap {
 }
 
 export abstract class Adapter extends events.EventEmitter<AdapterEventMap> {
-    public hasZdoMessageOverhead: boolean;
-    public manufacturerID: Zcl.ManufacturerCode;
+    public hasZdoMessageOverhead = true;
+    public supportsBackup = true;
+    public manufacturerID = Zcl.ManufacturerCode.RESERVED_10;
     protected networkOptions: TsType.NetworkOptions;
     protected adapterOptions: TsType.AdapterOptions;
     protected serialPortOptions: TsType.SerialPortOptions;
@@ -32,8 +33,6 @@ export abstract class Adapter extends events.EventEmitter<AdapterEventMap> {
         adapterOptions: TsType.AdapterOptions,
     ) {
         super();
-        this.hasZdoMessageOverhead = true;
-        this.manufacturerID = Zcl.ManufacturerCode.RESERVED_10;
         this.networkOptions = networkOptions;
         this.adapterOptions = adapterOptions;
         this.serialPortOptions = serialPortOptions;
@@ -106,8 +105,6 @@ export abstract class Adapter extends events.EventEmitter<AdapterEventMap> {
     public abstract getCoordinatorVersion(): Promise<TsType.CoordinatorVersion>;
 
     public abstract reset(type: "soft" | "hard"): Promise<void>;
-
-    public abstract supportsBackup(): Promise<boolean>;
 
     public abstract backup(ieeeAddressesInDatabase: string[]): Promise<Models.Backup>;
 
