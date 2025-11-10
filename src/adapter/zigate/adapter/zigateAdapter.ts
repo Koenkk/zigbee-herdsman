@@ -45,6 +45,8 @@ export class ZiGateAdapter extends Adapter {
         patchZdoBuffaloBE();
         super(networkOptions, serialPortOptions, backupPath, adapterOptions);
         this.hasZdoMessageOverhead = false; // false for requests, true for responses
+        // https://zigate.fr/documentation/deplacer-le-pdm-de-la-zigate/ pdm from host
+        this.supportsBackup = false;
         this.manufacturerID = Zcl.ManufacturerCode.RESERVED_10;
 
         this.joinPermitted = false;
@@ -179,14 +181,6 @@ export class ZiGateAdapter extends Adapter {
         } catch (error) {
             throw new Error(`Get network parameters failed ${error}`);
         }
-    }
-
-    /**
-     * https://zigate.fr/documentation/deplacer-le-pdm-de-la-zigate/
-     * pdm from host
-     */
-    public async supportsBackup(): Promise<boolean> {
-        return await Promise.resolve(false);
     }
 
     public async backup(): Promise<Models.Backup> {

@@ -39,6 +39,7 @@ export class ZBOSSAdapter extends Adapter {
     ) {
         super(networkOptions, serialPortOptions, backupPath, adapterOptions);
         this.hasZdoMessageOverhead = false;
+        this.supportsBackup = false;
         this.manufacturerID = Zcl.ManufacturerCode.NORDIC_SEMICONDUCTOR_ASA;
         this.currentManufacturerCode = Zcl.ManufacturerCode.NORDIC_SEMICONDUCTOR_ASA;
         const concurrent = adapterOptions?.concurrent ? adapterOptions.concurrent : 8;
@@ -159,10 +160,6 @@ export class ZBOSSAdapter extends Adapter {
 
     public async reset(type: "soft" | "hard"): Promise<void> {
         await Promise.reject(new Error(`This adapter does not reset '${type}'`));
-    }
-
-    public async supportsBackup(): Promise<boolean> {
-        return await Promise.resolve(false);
     }
 
     public async backup(_ieeeAddressesInDatabase: string[]): Promise<Backup> {

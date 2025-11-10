@@ -1,6 +1,7 @@
 import assert from "node:assert";
 import events from "node:events";
 import fs from "node:fs";
+import {basename} from "node:path";
 import mixinDeep from "mixin-deep";
 import {Adapter, type Events as AdapterEvents, type TsType as AdapterTsType} from "../adapter";
 import type {ZclPayload} from "../adapter/events";
@@ -32,8 +33,8 @@ interface Options {
     network: AdapterTsType.NetworkOptions;
     serialPort: AdapterTsType.SerialPortOptions;
     databasePath: string;
-    databaseBackupPath: string;
     backupPath: string;
+    dataArchivePath: string;
     adapter: AdapterTsType.AdapterOptions;
     /**
      * This lambda can be used by an application to explictly reject or accept an incoming device.
@@ -176,9 +177,7 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
         this.adapter.on("deviceLeave", this.onDeviceLeave.bind(this));
 
         if (startResult === "reset") {
-            if (this.options.databaseBackupPath && fs.existsSync(this.options.databasePath)) {
-                fs.copyFileSync(this.options.databasePath, this.options.databaseBackupPath);
-            }
+            this.archiveData();
 
             logger.debug("Clearing database...", NS);
             for (const group of Group.allIterator()) {
@@ -229,7 +228,7 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
         }
 
         // Set backup timer to 1 day.
-        this.backupTimer = setInterval(() => this.backup(), 86400000);
+        this.backupTimer = setInterval(() => this.backup(false), 86400000);
 
         // Set database save timer to 1 hour.
         this.databaseSaveTimer = setInterval(() => this.databaseSave(), 3600000);
@@ -466,21 +465,51 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
         this.database.write();
     }
 
-    public async backup(): Promise<void> {
+    public async backup(archive = true): Promise<void> {
+        if (archive) {
+            this.archiveData();
+        }
+
         this.databaseSave();
-        if (this.options.backupPath && (await this.adapter.supportsBackup())) {
+
+        if (this.options.backupPath && this.adapter.supportsBackup) {
             logger.debug("Creating coordinator backup", NS);
-            const backup = await this.adapter.backup(this.getDeviceIeeeAddresses());
-            const unifiedBackup = BackupUtils.toUnifiedBackup(backup);
-            const tmpBackupPath = `${this.options.backupPath}.tmp`;
-            fs.writeFileSync(tmpBackupPath, JSON.stringify(unifiedBackup, null, 2));
-            fs.renameSync(tmpBackupPath, this.options.backupPath);
-            logger.info(`Wrote coordinator backup to '${this.options.backupPath}'`, NS);
+
+            try {
+                const backup = await this.adapter.backup(this.getDeviceIeeeAddresses());
+                const unifiedBackup = BackupUtils.toUnifiedBackup(backup);
+                const tmpBackupPath = `${this.options.backupPath}.tmp`;
+
+                fs.writeFileSync(tmpBackupPath, JSON.stringify(unifiedBackup, null, 2));
+                fs.renameSync(tmpBackupPath, this.options.backupPath);
+                logger.info(`Wrote coordinator backup to '${this.options.backupPath}'`, NS);
+            } catch (error) {
+                logger.error(`Unable to backup ${error}`, NS);
+            }
+        }
+    }
+
+    public archiveData(): void {
+        const timestamp = new Date().toISOString().slice(0, 19).replace("T", ".").replace(/:/g, "-");
+        const destPath = this.options.dataArchivePath.replace("%TIMESTAMP%", timestamp);
+
+        try {
+            fs.mkdirSync(destPath, {recursive: true});
+
+            if (fs.existsSync(this.options.backupPath)) {
+                fs.copyFileSync(this.options.backupPath, `${destPath}/${basename(this.options.backupPath)}`);
+            }
+
+            if (fs.existsSync(this.options.databasePath)) {
+                fs.copyFileSync(this.options.databasePath, `${destPath}/${basename(this.options.databasePath)}`);
+            }
+        } catch (error) {
+            logger.error(`Unable to archive data ${error}`, NS);
         }
     }
 
     public async coordinatorCheck(): Promise<{missingRouters: Device[]}> {
-        if (await this.adapter.supportsBackup()) {
+        if (this.adapter.supportsBackup) {
             const backup = await this.adapter.backup(this.getDeviceIeeeAddresses());
             const devicesInBackup = backup.devices.map((d) => ZSpec.Utils.eui64BEBufferToHex(d.ieeeAddress));
             const missingRouters = [];

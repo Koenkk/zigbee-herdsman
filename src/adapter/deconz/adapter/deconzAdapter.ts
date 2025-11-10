@@ -551,10 +551,6 @@ export class DeconzAdapter extends Adapter {
         return await (this.driver.enqueueApsDataRequest(request) as Promise<void>);
     }
 
-    public async supportsBackup(): Promise<boolean> {
-        return await Promise.resolve(true);
-    }
-
     /**
      * Loads currently stored backup and returns it in internal backup model.
      */

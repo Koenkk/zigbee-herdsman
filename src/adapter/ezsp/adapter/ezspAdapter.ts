@@ -483,10 +483,6 @@ export class EZSPAdapter extends Adapter {
         });
     }
 
-    public async supportsBackup(): Promise<boolean> {
-        return await Promise.resolve(true);
-    }
-
     public async backup(): Promise<Models.Backup> {
         assert(this.driver.ezsp.isInitialized(), "Cannot make backup when ezsp is not initialized");
         return await this.driver.backupMan.createBackup();
