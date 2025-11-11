@@ -1209,7 +1209,7 @@ describe("Zigbee on Host", () => {
             groupID: ZSpec.GP_GROUP_ID,
             header,
             linkquality: 0,
-            wasBroadcast: true,
+            wasBroadcast: false,
         });
 
         const frame = Zcl.Frame.fromBuffer(Zcl.Clusters.greenPower.ID, header, data, {});
@@ -1318,7 +1318,7 @@ describe("Zigbee on Host", () => {
             groupID: ZSpec.GP_GROUP_ID,
             header: header2,
             linkquality: 0,
-            wasBroadcast: true,
+            wasBroadcast: false,
         });
 
         const frame2 = Zcl.Frame.fromBuffer(Zcl.Clusters.greenPower.ID, header2, data2, {});
