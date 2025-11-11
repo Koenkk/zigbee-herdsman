@@ -1,5 +1,14 @@
 # Changelog
 
+## [6.4.1](https://github.com/Koenkk/zigbee-herdsman/compare/v6.4.0...v6.4.1) (2025-11-11)
+
+
+### Bug Fixes
+
+* Cleanup buffer writing ([#1550](https://github.com/Koenkk/zigbee-herdsman/issues/1550)) ([9b3bd7e](https://github.com/Koenkk/zigbee-herdsman/commit/9b3bd7e7c0ef567ca618283c8ce146da24b0f8b5))
+* **ignore:** bump @biomejs/biome from 2.3.3 to 2.3.4 in the minor-patch group ([#1548](https://github.com/Koenkk/zigbee-herdsman/issues/1548)) ([fa0751a](https://github.com/Koenkk/zigbee-herdsman/commit/fa0751a2e0d8cf4bcabafe6baa8a33f8e88bc262))
+* zoh: use unicast for GP ([#1549](https://github.com/Koenkk/zigbee-herdsman/issues/1549)) ([c963ac2](https://github.com/Koenkk/zigbee-herdsman/commit/c963ac29894bb463c941a3f1bcd975d746c05b83))
+
 ## [6.4.0](https://github.com/Koenkk/zigbee-herdsman/compare/v6.3.3...v6.4.0) (2025-11-07)
 
 
