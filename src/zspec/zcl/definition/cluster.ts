@@ -575,8 +575,13 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 parameters: [
                     {name: "level", type: DataType.UINT8},
                     {name: "transtime", type: DataType.UINT16},
-                    {name: "optionsMask", type: DataType.BITMAP8},
-                    {name: "optionsOverride", type: DataType.BITMAP8},
+                    // XXX: behind bytes condition due to likely missing fields with many devices
+                    {name: "optionsMask", type: DataType.BITMAP8, conditions: [{type: ParameterCondition.MINIMUM_REMAINING_BUFFER_BYTES, value: 1}]},
+                    {
+                        name: "optionsOverride",
+                        type: DataType.BITMAP8,
+                        conditions: [{type: ParameterCondition.MINIMUM_REMAINING_BUFFER_BYTES, value: 1}],
+                    },
                 ],
                 required: true,
             },
@@ -585,8 +590,13 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 parameters: [
                     {name: "movemode", type: DataType.ENUM8},
                     {name: "rate", type: DataType.UINT8},
-                    {name: "optionsMask", type: DataType.BITMAP8},
-                    {name: "optionsOverride", type: DataType.BITMAP8},
+                    // XXX: behind bytes condition due to likely missing fields with many devices
+                    {name: "optionsMask", type: DataType.BITMAP8, conditions: [{type: ParameterCondition.MINIMUM_REMAINING_BUFFER_BYTES, value: 1}]},
+                    {
+                        name: "optionsOverride",
+                        type: DataType.BITMAP8,
+                        conditions: [{type: ParameterCondition.MINIMUM_REMAINING_BUFFER_BYTES, value: 1}],
+                    },
                 ],
                 required: true,
             },
@@ -596,16 +606,26 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                     {name: "stepmode", type: DataType.ENUM8},
                     {name: "stepsize", type: DataType.UINT8},
                     {name: "transtime", type: DataType.UINT16},
-                    {name: "optionsMask", type: DataType.BITMAP8},
-                    {name: "optionsOverride", type: DataType.BITMAP8},
+                    // XXX: behind bytes condition due to likely missing fields with many devices
+                    {name: "optionsMask", type: DataType.BITMAP8, conditions: [{type: ParameterCondition.MINIMUM_REMAINING_BUFFER_BYTES, value: 1}]},
+                    {
+                        name: "optionsOverride",
+                        type: DataType.BITMAP8,
+                        conditions: [{type: ParameterCondition.MINIMUM_REMAINING_BUFFER_BYTES, value: 1}],
+                    },
                 ],
                 required: true,
             },
             stop: {
                 ID: 0x03,
                 parameters: [
-                    {name: "optionsMask", type: DataType.BITMAP8},
-                    {name: "optionsOverride", type: DataType.BITMAP8},
+                    // XXX: behind bytes condition due to likely missing fields with many devices
+                    {name: "optionsMask", type: DataType.BITMAP8, conditions: [{type: ParameterCondition.MINIMUM_REMAINING_BUFFER_BYTES, value: 1}]},
+                    {
+                        name: "optionsOverride",
+                        type: DataType.BITMAP8,
+                        conditions: [{type: ParameterCondition.MINIMUM_REMAINING_BUFFER_BYTES, value: 1}],
+                    },
                 ],
                 required: true,
             },
@@ -614,8 +634,13 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 parameters: [
                     {name: "level", type: DataType.UINT8},
                     {name: "transtime", type: DataType.UINT16},
-                    {name: "optionsMask", type: DataType.BITMAP8},
-                    {name: "optionsOverride", type: DataType.BITMAP8},
+                    // XXX: behind bytes condition due to likely missing fields with many devices
+                    {name: "optionsMask", type: DataType.BITMAP8, conditions: [{type: ParameterCondition.MINIMUM_REMAINING_BUFFER_BYTES, value: 1}]},
+                    {
+                        name: "optionsOverride",
+                        type: DataType.BITMAP8,
+                        conditions: [{type: ParameterCondition.MINIMUM_REMAINING_BUFFER_BYTES, value: 1}],
+                    },
                 ],
                 required: true,
             },
@@ -624,8 +649,13 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 parameters: [
                     {name: "movemode", type: DataType.ENUM8},
                     {name: "rate", type: DataType.UINT8},
-                    {name: "optionsMask", type: DataType.BITMAP8},
-                    {name: "optionsOverride", type: DataType.BITMAP8},
+                    // XXX: behind bytes condition due to likely missing fields with many devices
+                    {name: "optionsMask", type: DataType.BITMAP8, conditions: [{type: ParameterCondition.MINIMUM_REMAINING_BUFFER_BYTES, value: 1}]},
+                    {
+                        name: "optionsOverride",
+                        type: DataType.BITMAP8,
+                        conditions: [{type: ParameterCondition.MINIMUM_REMAINING_BUFFER_BYTES, value: 1}],
+                    },
                 ],
                 required: true,
             },
@@ -635,16 +665,26 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                     {name: "stepmode", type: DataType.ENUM8},
                     {name: "stepsize", type: DataType.UINT8},
                     {name: "transtime", type: DataType.UINT16},
-                    {name: "optionsMask", type: DataType.BITMAP8},
-                    {name: "optionsOverride", type: DataType.BITMAP8},
+                    // XXX: behind bytes condition due to likely missing fields with many devices
+                    {name: "optionsMask", type: DataType.BITMAP8, conditions: [{type: ParameterCondition.MINIMUM_REMAINING_BUFFER_BYTES, value: 1}]},
+                    {
+                        name: "optionsOverride",
+                        type: DataType.BITMAP8,
+                        conditions: [{type: ParameterCondition.MINIMUM_REMAINING_BUFFER_BYTES, value: 1}],
+                    },
                 ],
                 required: true,
             },
             stopWithOnOff: {
                 ID: 0x07,
                 parameters: [
-                    {name: "optionsMask", type: DataType.BITMAP8},
-                    {name: "optionsOverride", type: DataType.BITMAP8},
+                    // XXX: behind bytes condition due to likely missing fields with many devices
+                    {name: "optionsMask", type: DataType.BITMAP8, conditions: [{type: ParameterCondition.MINIMUM_REMAINING_BUFFER_BYTES, value: 1}]},
+                    {
+                        name: "optionsOverride",
+                        type: DataType.BITMAP8,
+                        conditions: [{type: ParameterCondition.MINIMUM_REMAINING_BUFFER_BYTES, value: 1}],
+                    },
                 ],
                 required: true,
             },
@@ -716,8 +756,13 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 parameters: [
                     {name: "level", type: DataType.UINT8},
                     {name: "transtime", type: DataType.UINT16},
-                    {name: "optionsMask", type: DataType.BITMAP8},
-                    {name: "optionsOverride", type: DataType.BITMAP8},
+                    // XXX: behind bytes condition due to likely missing fields with many devices
+                    {name: "optionsMask", type: DataType.BITMAP8, conditions: [{type: ParameterCondition.MINIMUM_REMAINING_BUFFER_BYTES, value: 1}]},
+                    {
+                        name: "optionsOverride",
+                        type: DataType.BITMAP8,
+                        conditions: [{type: ParameterCondition.MINIMUM_REMAINING_BUFFER_BYTES, value: 1}],
+                    },
                 ],
                 required: true,
             },
@@ -726,8 +771,13 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 parameters: [
                     {name: "movemode", type: DataType.ENUM8},
                     {name: "rate", type: DataType.UINT8},
-                    {name: "optionsMask", type: DataType.BITMAP8},
-                    {name: "optionsOverride", type: DataType.BITMAP8},
+                    // XXX: behind bytes condition due to likely missing fields with many devices
+                    {name: "optionsMask", type: DataType.BITMAP8, conditions: [{type: ParameterCondition.MINIMUM_REMAINING_BUFFER_BYTES, value: 1}]},
+                    {
+                        name: "optionsOverride",
+                        type: DataType.BITMAP8,
+                        conditions: [{type: ParameterCondition.MINIMUM_REMAINING_BUFFER_BYTES, value: 1}],
+                    },
                 ],
                 required: true,
             },
@@ -737,16 +787,26 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                     {name: "stepmode", type: DataType.ENUM8},
                     {name: "stepsize", type: DataType.UINT8},
                     {name: "transtime", type: DataType.UINT16},
-                    {name: "optionsMask", type: DataType.BITMAP8},
-                    {name: "optionsOverride", type: DataType.BITMAP8},
+                    // XXX: behind bytes condition due to likely missing fields with many devices
+                    {name: "optionsMask", type: DataType.BITMAP8, conditions: [{type: ParameterCondition.MINIMUM_REMAINING_BUFFER_BYTES, value: 1}]},
+                    {
+                        name: "optionsOverride",
+                        type: DataType.BITMAP8,
+                        conditions: [{type: ParameterCondition.MINIMUM_REMAINING_BUFFER_BYTES, value: 1}],
+                    },
                 ],
                 required: true,
             },
             stop: {
                 ID: 0x03,
                 parameters: [
-                    {name: "optionsMask", type: DataType.BITMAP8},
-                    {name: "optionsOverride", type: DataType.BITMAP8},
+                    // XXX: behind bytes condition due to likely missing fields with many devices
+                    {name: "optionsMask", type: DataType.BITMAP8, conditions: [{type: ParameterCondition.MINIMUM_REMAINING_BUFFER_BYTES, value: 1}]},
+                    {
+                        name: "optionsOverride",
+                        type: DataType.BITMAP8,
+                        conditions: [{type: ParameterCondition.MINIMUM_REMAINING_BUFFER_BYTES, value: 1}],
+                    },
                 ],
                 required: true,
             },
@@ -755,8 +815,13 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 parameters: [
                     {name: "level", type: DataType.UINT8},
                     {name: "transtime", type: DataType.UINT16},
-                    {name: "optionsMask", type: DataType.BITMAP8},
-                    {name: "optionsOverride", type: DataType.BITMAP8},
+                    // XXX: behind bytes condition due to likely missing fields with many devices
+                    {name: "optionsMask", type: DataType.BITMAP8, conditions: [{type: ParameterCondition.MINIMUM_REMAINING_BUFFER_BYTES, value: 1}]},
+                    {
+                        name: "optionsOverride",
+                        type: DataType.BITMAP8,
+                        conditions: [{type: ParameterCondition.MINIMUM_REMAINING_BUFFER_BYTES, value: 1}],
+                    },
                 ],
                 required: true,
             },
@@ -765,8 +830,13 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 parameters: [
                     {name: "movemode", type: DataType.ENUM8},
                     {name: "rate", type: DataType.UINT8},
-                    {name: "optionsMask", type: DataType.BITMAP8},
-                    {name: "optionsOverride", type: DataType.BITMAP8},
+                    // XXX: behind bytes condition due to likely missing fields with many devices
+                    {name: "optionsMask", type: DataType.BITMAP8, conditions: [{type: ParameterCondition.MINIMUM_REMAINING_BUFFER_BYTES, value: 1}]},
+                    {
+                        name: "optionsOverride",
+                        type: DataType.BITMAP8,
+                        conditions: [{type: ParameterCondition.MINIMUM_REMAINING_BUFFER_BYTES, value: 1}],
+                    },
                 ],
                 required: true,
             },
@@ -776,16 +846,26 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                     {name: "stepmode", type: DataType.ENUM8},
                     {name: "stepsize", type: DataType.UINT8},
                     {name: "transtime", type: DataType.UINT16},
-                    {name: "optionsMask", type: DataType.BITMAP8},
-                    {name: "optionsOverride", type: DataType.BITMAP8},
+                    // XXX: behind bytes condition due to likely missing fields with many devices
+                    {name: "optionsMask", type: DataType.BITMAP8, conditions: [{type: ParameterCondition.MINIMUM_REMAINING_BUFFER_BYTES, value: 1}]},
+                    {
+                        name: "optionsOverride",
+                        type: DataType.BITMAP8,
+                        conditions: [{type: ParameterCondition.MINIMUM_REMAINING_BUFFER_BYTES, value: 1}],
+                    },
                 ],
                 required: true,
             },
             stopWithOnOff: {
                 ID: 0x07,
                 parameters: [
-                    {name: "optionsMask", type: DataType.BITMAP8},
-                    {name: "optionsOverride", type: DataType.BITMAP8},
+                    // XXX: behind bytes condition due to likely missing fields with many devices
+                    {name: "optionsMask", type: DataType.BITMAP8, conditions: [{type: ParameterCondition.MINIMUM_REMAINING_BUFFER_BYTES, value: 1}]},
+                    {
+                        name: "optionsOverride",
+                        type: DataType.BITMAP8,
+                        conditions: [{type: ParameterCondition.MINIMUM_REMAINING_BUFFER_BYTES, value: 1}],
+                    },
                 ],
                 required: true,
             },
@@ -2029,8 +2109,13 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 parameters: [
                     {name: "level", type: DataType.UINT8},
                     {name: "transtime", type: DataType.UINT16},
-                    {name: "optionsMask", type: DataType.BITMAP8},
-                    {name: "optionsOverride", type: DataType.BITMAP8},
+                    // XXX: behind bytes condition due to likely missing fields with many devices
+                    {name: "optionsMask", type: DataType.BITMAP8, conditions: [{type: ParameterCondition.MINIMUM_REMAINING_BUFFER_BYTES, value: 1}]},
+                    {
+                        name: "optionsOverride",
+                        type: DataType.BITMAP8,
+                        conditions: [{type: ParameterCondition.MINIMUM_REMAINING_BUFFER_BYTES, value: 1}],
+                    },
                 ],
                 required: true,
             },
@@ -2039,8 +2124,13 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 parameters: [
                     {name: "movemode", type: DataType.UINT8},
                     {name: "rate", type: DataType.UINT8},
-                    {name: "optionsMask", type: DataType.BITMAP8},
-                    {name: "optionsOverride", type: DataType.BITMAP8},
+                    // XXX: behind bytes condition due to likely missing fields with many devices
+                    {name: "optionsMask", type: DataType.BITMAP8, conditions: [{type: ParameterCondition.MINIMUM_REMAINING_BUFFER_BYTES, value: 1}]},
+                    {
+                        name: "optionsOverride",
+                        type: DataType.BITMAP8,
+                        conditions: [{type: ParameterCondition.MINIMUM_REMAINING_BUFFER_BYTES, value: 1}],
+                    },
                 ],
                 required: true,
             },
@@ -2050,16 +2140,26 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                     {name: "stepmode", type: DataType.UINT8},
                     {name: "stepsize", type: DataType.UINT8},
                     {name: "transtime", type: DataType.UINT16},
-                    {name: "optionsMask", type: DataType.BITMAP8},
-                    {name: "optionsOverride", type: DataType.BITMAP8},
+                    // XXX: behind bytes condition due to likely missing fields with many devices
+                    {name: "optionsMask", type: DataType.BITMAP8, conditions: [{type: ParameterCondition.MINIMUM_REMAINING_BUFFER_BYTES, value: 1}]},
+                    {
+                        name: "optionsOverride",
+                        type: DataType.BITMAP8,
+                        conditions: [{type: ParameterCondition.MINIMUM_REMAINING_BUFFER_BYTES, value: 1}],
+                    },
                 ],
                 required: true,
             },
             stop: {
                 ID: 0x03,
                 parameters: [
-                    {name: "optionsMask", type: DataType.BITMAP8},
-                    {name: "optionsOverride", type: DataType.BITMAP8},
+                    // XXX: behind bytes condition due to likely missing fields with many devices
+                    {name: "optionsMask", type: DataType.BITMAP8, conditions: [{type: ParameterCondition.MINIMUM_REMAINING_BUFFER_BYTES, value: 1}]},
+                    {
+                        name: "optionsOverride",
+                        type: DataType.BITMAP8,
+                        conditions: [{type: ParameterCondition.MINIMUM_REMAINING_BUFFER_BYTES, value: 1}],
+                    },
                 ],
                 required: true,
             },
@@ -2068,8 +2168,13 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 parameters: [
                     {name: "level", type: DataType.UINT8},
                     {name: "transtime", type: DataType.UINT16},
-                    {name: "optionsMask", type: DataType.BITMAP8},
-                    {name: "optionsOverride", type: DataType.BITMAP8},
+                    // XXX: behind bytes condition due to likely missing fields with many devices
+                    {name: "optionsMask", type: DataType.BITMAP8, conditions: [{type: ParameterCondition.MINIMUM_REMAINING_BUFFER_BYTES, value: 1}]},
+                    {
+                        name: "optionsOverride",
+                        type: DataType.BITMAP8,
+                        conditions: [{type: ParameterCondition.MINIMUM_REMAINING_BUFFER_BYTES, value: 1}],
+                    },
                 ],
                 required: true,
             },
@@ -2078,8 +2183,13 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 parameters: [
                     {name: "movemode", type: DataType.UINT8},
                     {name: "rate", type: DataType.UINT8},
-                    {name: "optionsMask", type: DataType.BITMAP8},
-                    {name: "optionsOverride", type: DataType.BITMAP8},
+                    // XXX: behind bytes condition due to likely missing fields with many devices
+                    {name: "optionsMask", type: DataType.BITMAP8, conditions: [{type: ParameterCondition.MINIMUM_REMAINING_BUFFER_BYTES, value: 1}]},
+                    {
+                        name: "optionsOverride",
+                        type: DataType.BITMAP8,
+                        conditions: [{type: ParameterCondition.MINIMUM_REMAINING_BUFFER_BYTES, value: 1}],
+                    },
                 ],
                 required: true,
             },
@@ -2089,16 +2199,26 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                     {name: "stepmode", type: DataType.UINT8},
                     {name: "stepsize", type: DataType.UINT8},
                     {name: "transtime", type: DataType.UINT16},
-                    {name: "optionsMask", type: DataType.BITMAP8},
-                    {name: "optionsOverride", type: DataType.BITMAP8},
+                    // XXX: behind bytes condition due to likely missing fields with many devices
+                    {name: "optionsMask", type: DataType.BITMAP8, conditions: [{type: ParameterCondition.MINIMUM_REMAINING_BUFFER_BYTES, value: 1}]},
+                    {
+                        name: "optionsOverride",
+                        type: DataType.BITMAP8,
+                        conditions: [{type: ParameterCondition.MINIMUM_REMAINING_BUFFER_BYTES, value: 1}],
+                    },
                 ],
                 required: true,
             },
             stopWithOnOff: {
                 ID: 0x07,
                 parameters: [
-                    {name: "optionsMask", type: DataType.BITMAP8},
-                    {name: "optionsOverride", type: DataType.BITMAP8},
+                    // XXX: behind bytes condition due to likely missing fields with many devices
+                    {name: "optionsMask", type: DataType.BITMAP8, conditions: [{type: ParameterCondition.MINIMUM_REMAINING_BUFFER_BYTES, value: 1}]},
+                    {
+                        name: "optionsOverride",
+                        type: DataType.BITMAP8,
+                        conditions: [{type: ParameterCondition.MINIMUM_REMAINING_BUFFER_BYTES, value: 1}],
+                    },
                 ],
                 required: true,
             },
@@ -3607,8 +3727,13 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                     {name: "hue", type: DataType.UINT8},
                     {name: "direction", type: DataType.ENUM8},
                     {name: "transtime", type: DataType.UINT16},
-                    {name: "optionsMask", type: DataType.BITMAP8},
-                    {name: "optionsOverride", type: DataType.BITMAP8},
+                    // XXX: behind bytes condition due to likely missing fields with many devices
+                    {name: "optionsMask", type: DataType.BITMAP8, conditions: [{type: ParameterCondition.MINIMUM_REMAINING_BUFFER_BYTES, value: 1}]},
+                    {
+                        name: "optionsOverride",
+                        type: DataType.BITMAP8,
+                        conditions: [{type: ParameterCondition.MINIMUM_REMAINING_BUFFER_BYTES, value: 1}],
+                    },
                 ],
                 // required: true only if bit 0 of colorCapabilities attribute is 1
             },
@@ -3617,8 +3742,13 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 parameters: [
                     {name: "movemode", type: DataType.ENUM8},
                     {name: "rate", type: DataType.UINT8},
-                    {name: "optionsMask", type: DataType.BITMAP8},
-                    {name: "optionsOverride", type: DataType.BITMAP8},
+                    // XXX: behind bytes condition due to likely missing fields with many devices
+                    {name: "optionsMask", type: DataType.BITMAP8, conditions: [{type: ParameterCondition.MINIMUM_REMAINING_BUFFER_BYTES, value: 1}]},
+                    {
+                        name: "optionsOverride",
+                        type: DataType.BITMAP8,
+                        conditions: [{type: ParameterCondition.MINIMUM_REMAINING_BUFFER_BYTES, value: 1}],
+                    },
                 ],
                 // required: true only if bit 0 of colorCapabilities attribute is 1
             },
@@ -3628,8 +3758,13 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                     {name: "stepmode", type: DataType.ENUM8},
                     {name: "stepsize", type: DataType.UINT8},
                     {name: "transtime", type: DataType.UINT8},
-                    {name: "optionsMask", type: DataType.BITMAP8},
-                    {name: "optionsOverride", type: DataType.BITMAP8},
+                    // XXX: behind bytes condition due to likely missing fields with many devices
+                    {name: "optionsMask", type: DataType.BITMAP8, conditions: [{type: ParameterCondition.MINIMUM_REMAINING_BUFFER_BYTES, value: 1}]},
+                    {
+                        name: "optionsOverride",
+                        type: DataType.BITMAP8,
+                        conditions: [{type: ParameterCondition.MINIMUM_REMAINING_BUFFER_BYTES, value: 1}],
+                    },
                 ],
                 // required: true only if bit 0 of colorCapabilities attribute is 1
             },
@@ -3638,8 +3773,13 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 parameters: [
                     {name: "saturation", type: DataType.UINT8},
                     {name: "transtime", type: DataType.UINT16},
-                    {name: "optionsMask", type: DataType.BITMAP8},
-                    {name: "optionsOverride", type: DataType.BITMAP8},
+                    // XXX: behind bytes condition due to likely missing fields with many devices
+                    {name: "optionsMask", type: DataType.BITMAP8, conditions: [{type: ParameterCondition.MINIMUM_REMAINING_BUFFER_BYTES, value: 1}]},
+                    {
+                        name: "optionsOverride",
+                        type: DataType.BITMAP8,
+                        conditions: [{type: ParameterCondition.MINIMUM_REMAINING_BUFFER_BYTES, value: 1}],
+                    },
                 ],
                 // required: true only if bit 0 of colorCapabilities attribute is 1
             },
@@ -3648,8 +3788,13 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 parameters: [
                     {name: "movemode", type: DataType.ENUM8},
                     {name: "rate", type: DataType.UINT8},
-                    {name: "optionsMask", type: DataType.BITMAP8},
-                    {name: "optionsOverride", type: DataType.BITMAP8},
+                    // XXX: behind bytes condition due to likely missing fields with many devices
+                    {name: "optionsMask", type: DataType.BITMAP8, conditions: [{type: ParameterCondition.MINIMUM_REMAINING_BUFFER_BYTES, value: 1}]},
+                    {
+                        name: "optionsOverride",
+                        type: DataType.BITMAP8,
+                        conditions: [{type: ParameterCondition.MINIMUM_REMAINING_BUFFER_BYTES, value: 1}],
+                    },
                 ],
                 // required: true only if bit 0 of colorCapabilities attribute is 1
             },
@@ -3659,8 +3804,13 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                     {name: "stepmode", type: DataType.ENUM8},
                     {name: "stepsize", type: DataType.UINT8},
                     {name: "transtime", type: DataType.UINT8},
-                    {name: "optionsMask", type: DataType.BITMAP8},
-                    {name: "optionsOverride", type: DataType.BITMAP8},
+                    // XXX: behind bytes condition due to likely missing fields with many devices
+                    {name: "optionsMask", type: DataType.BITMAP8, conditions: [{type: ParameterCondition.MINIMUM_REMAINING_BUFFER_BYTES, value: 1}]},
+                    {
+                        name: "optionsOverride",
+                        type: DataType.BITMAP8,
+                        conditions: [{type: ParameterCondition.MINIMUM_REMAINING_BUFFER_BYTES, value: 1}],
+                    },
                 ],
                 // required: true only if bit 0 of colorCapabilities attribute is 1
             },
@@ -3670,8 +3820,13 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                     {name: "hue", type: DataType.UINT8},
                     {name: "saturation", type: DataType.UINT8},
                     {name: "transtime", type: DataType.UINT16},
-                    {name: "optionsMask", type: DataType.BITMAP8},
-                    {name: "optionsOverride", type: DataType.BITMAP8},
+                    // XXX: behind bytes condition due to likely missing fields with many devices
+                    {name: "optionsMask", type: DataType.BITMAP8, conditions: [{type: ParameterCondition.MINIMUM_REMAINING_BUFFER_BYTES, value: 1}]},
+                    {
+                        name: "optionsOverride",
+                        type: DataType.BITMAP8,
+                        conditions: [{type: ParameterCondition.MINIMUM_REMAINING_BUFFER_BYTES, value: 1}],
+                    },
                 ],
                 // required: true only if bit 0 of colorCapabilities attribute is 1
             },
@@ -3681,8 +3836,13 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                     {name: "colorx", type: DataType.UINT16},
                     {name: "colory", type: DataType.UINT16},
                     {name: "transtime", type: DataType.UINT16},
-                    {name: "optionsMask", type: DataType.BITMAP8},
-                    {name: "optionsOverride", type: DataType.BITMAP8},
+                    // XXX: behind bytes condition due to likely missing fields with many devices
+                    {name: "optionsMask", type: DataType.BITMAP8, conditions: [{type: ParameterCondition.MINIMUM_REMAINING_BUFFER_BYTES, value: 1}]},
+                    {
+                        name: "optionsOverride",
+                        type: DataType.BITMAP8,
+                        conditions: [{type: ParameterCondition.MINIMUM_REMAINING_BUFFER_BYTES, value: 1}],
+                    },
                 ],
                 // required: true only if bit 3 of colorCapabilities attribute is 1
             },
@@ -3691,8 +3851,13 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 parameters: [
                     {name: "ratex", type: DataType.INT16},
                     {name: "ratey", type: DataType.INT16},
-                    {name: "optionsMask", type: DataType.BITMAP8},
-                    {name: "optionsOverride", type: DataType.BITMAP8},
+                    // XXX: behind bytes condition due to likely missing fields with many devices
+                    {name: "optionsMask", type: DataType.BITMAP8, conditions: [{type: ParameterCondition.MINIMUM_REMAINING_BUFFER_BYTES, value: 1}]},
+                    {
+                        name: "optionsOverride",
+                        type: DataType.BITMAP8,
+                        conditions: [{type: ParameterCondition.MINIMUM_REMAINING_BUFFER_BYTES, value: 1}],
+                    },
                 ],
                 // required: true only if bit 3 of colorCapabilities attribute is 1
             },
@@ -3702,8 +3867,13 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                     {name: "stepx", type: DataType.INT16},
                     {name: "stepy", type: DataType.INT16},
                     {name: "transtime", type: DataType.UINT16},
-                    {name: "optionsMask", type: DataType.BITMAP8},
-                    {name: "optionsOverride", type: DataType.BITMAP8},
+                    // XXX: behind bytes condition due to likely missing fields with many devices
+                    {name: "optionsMask", type: DataType.BITMAP8, conditions: [{type: ParameterCondition.MINIMUM_REMAINING_BUFFER_BYTES, value: 1}]},
+                    {
+                        name: "optionsOverride",
+                        type: DataType.BITMAP8,
+                        conditions: [{type: ParameterCondition.MINIMUM_REMAINING_BUFFER_BYTES, value: 1}],
+                    },
                 ],
                 // required: true only if bit 3 of colorCapabilities attribute is 1
             },
@@ -3712,8 +3882,13 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 parameters: [
                     {name: "colortemp", type: DataType.UINT16},
                     {name: "transtime", type: DataType.UINT16},
-                    {name: "optionsMask", type: DataType.BITMAP8},
-                    {name: "optionsOverride", type: DataType.BITMAP8},
+                    // XXX: behind bytes condition due to likely missing fields with many devices
+                    {name: "optionsMask", type: DataType.BITMAP8, conditions: [{type: ParameterCondition.MINIMUM_REMAINING_BUFFER_BYTES, value: 1}]},
+                    {
+                        name: "optionsOverride",
+                        type: DataType.BITMAP8,
+                        conditions: [{type: ParameterCondition.MINIMUM_REMAINING_BUFFER_BYTES, value: 1}],
+                    },
                 ],
                 // required: true only if bit 4 of colorCapabilities attribute is 1
             },
@@ -3723,8 +3898,13 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                     {name: "enhancehue", type: DataType.UINT16},
                     {name: "direction", type: DataType.ENUM8},
                     {name: "transtime", type: DataType.UINT16},
-                    {name: "optionsMask", type: DataType.BITMAP8},
-                    {name: "optionsOverride", type: DataType.BITMAP8},
+                    // XXX: behind bytes condition due to likely missing fields with many devices
+                    {name: "optionsMask", type: DataType.BITMAP8, conditions: [{type: ParameterCondition.MINIMUM_REMAINING_BUFFER_BYTES, value: 1}]},
+                    {
+                        name: "optionsOverride",
+                        type: DataType.BITMAP8,
+                        conditions: [{type: ParameterCondition.MINIMUM_REMAINING_BUFFER_BYTES, value: 1}],
+                    },
                 ],
                 // required: true only if bit 1 of colorCapabilities attribute is 1
             },
@@ -3733,8 +3913,13 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 parameters: [
                     {name: "movemode", type: DataType.ENUM8},
                     {name: "rate", type: DataType.UINT16},
-                    {name: "optionsMask", type: DataType.BITMAP8},
-                    {name: "optionsOverride", type: DataType.BITMAP8},
+                    // XXX: behind bytes condition due to likely missing fields with many devices
+                    {name: "optionsMask", type: DataType.BITMAP8, conditions: [{type: ParameterCondition.MINIMUM_REMAINING_BUFFER_BYTES, value: 1}]},
+                    {
+                        name: "optionsOverride",
+                        type: DataType.BITMAP8,
+                        conditions: [{type: ParameterCondition.MINIMUM_REMAINING_BUFFER_BYTES, value: 1}],
+                    },
                 ],
                 // required: true only if bit 1 of colorCapabilities attribute is 1
             },
@@ -3744,8 +3929,13 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                     {name: "stepmode", type: DataType.ENUM8},
                     {name: "stepsize", type: DataType.UINT16},
                     {name: "transtime", type: DataType.UINT16},
-                    {name: "optionsMask", type: DataType.BITMAP8},
-                    {name: "optionsOverride", type: DataType.BITMAP8},
+                    // XXX: behind bytes condition due to likely missing fields with many devices
+                    {name: "optionsMask", type: DataType.BITMAP8, conditions: [{type: ParameterCondition.MINIMUM_REMAINING_BUFFER_BYTES, value: 1}]},
+                    {
+                        name: "optionsOverride",
+                        type: DataType.BITMAP8,
+                        conditions: [{type: ParameterCondition.MINIMUM_REMAINING_BUFFER_BYTES, value: 1}],
+                    },
                 ],
                 // required: true only if bit 1 of colorCapabilities attribute is 1
             },
@@ -3755,8 +3945,13 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                     {name: "enhancehue", type: DataType.UINT16},
                     {name: "saturation", type: DataType.UINT8},
                     {name: "transtime", type: DataType.UINT16},
-                    {name: "optionsMask", type: DataType.BITMAP8},
-                    {name: "optionsOverride", type: DataType.BITMAP8},
+                    // XXX: behind bytes condition due to likely missing fields with many devices
+                    {name: "optionsMask", type: DataType.BITMAP8, conditions: [{type: ParameterCondition.MINIMUM_REMAINING_BUFFER_BYTES, value: 1}]},
+                    {
+                        name: "optionsOverride",
+                        type: DataType.BITMAP8,
+                        conditions: [{type: ParameterCondition.MINIMUM_REMAINING_BUFFER_BYTES, value: 1}],
+                    },
                 ],
                 // required: true only if bit 1 of colorCapabilities attribute is 1
             },
@@ -3768,16 +3963,26 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                     {name: "direction", type: DataType.ENUM8},
                     {name: "time", type: DataType.UINT16},
                     {name: "starthue", type: DataType.UINT16},
-                    {name: "optionsMask", type: DataType.BITMAP8},
-                    {name: "optionsOverride", type: DataType.BITMAP8},
+                    // XXX: behind bytes condition due to likely missing fields with many devices
+                    {name: "optionsMask", type: DataType.BITMAP8, conditions: [{type: ParameterCondition.MINIMUM_REMAINING_BUFFER_BYTES, value: 1}]},
+                    {
+                        name: "optionsOverride",
+                        type: DataType.BITMAP8,
+                        conditions: [{type: ParameterCondition.MINIMUM_REMAINING_BUFFER_BYTES, value: 1}],
+                    },
                 ],
                 // required: true only if bit 2 of colorCapabilities attribute is 1
             },
             stopMoveStep: {
                 ID: 0x47,
                 parameters: [
-                    {name: "optionsMask", type: DataType.BITMAP8},
-                    {name: "optionsOverride", type: DataType.BITMAP8},
+                    // XXX: behind bytes condition due to likely missing fields with many devices
+                    {name: "optionsMask", type: DataType.BITMAP8, conditions: [{type: ParameterCondition.MINIMUM_REMAINING_BUFFER_BYTES, value: 1}]},
+                    {
+                        name: "optionsOverride",
+                        type: DataType.BITMAP8,
+                        conditions: [{type: ParameterCondition.MINIMUM_REMAINING_BUFFER_BYTES, value: 1}],
+                    },
                 ],
                 // required: true only if bit 0, 1, 3 or 4 of colorCapabilities attribute is 1
             },
@@ -3788,8 +3993,13 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                     {name: "rate", type: DataType.UINT16},
                     {name: "minimum", type: DataType.UINT16},
                     {name: "maximum", type: DataType.UINT16},
-                    {name: "optionsMask", type: DataType.BITMAP8},
-                    {name: "optionsOverride", type: DataType.BITMAP8},
+                    // XXX: behind bytes condition due to likely missing fields with many devices
+                    {name: "optionsMask", type: DataType.BITMAP8, conditions: [{type: ParameterCondition.MINIMUM_REMAINING_BUFFER_BYTES, value: 1}]},
+                    {
+                        name: "optionsOverride",
+                        type: DataType.BITMAP8,
+                        conditions: [{type: ParameterCondition.MINIMUM_REMAINING_BUFFER_BYTES, value: 1}],
+                    },
                 ],
                 // required: true only if bit 4 of colorCapabilities attribute is 1
             },
@@ -3801,8 +4011,13 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                     {name: "transtime", type: DataType.UINT16},
                     {name: "minimum", type: DataType.UINT16},
                     {name: "maximum", type: DataType.UINT16},
-                    {name: "optionsMask", type: DataType.BITMAP8},
-                    {name: "optionsOverride", type: DataType.BITMAP8},
+                    // XXX: behind bytes condition due to likely missing fields with many devices
+                    {name: "optionsMask", type: DataType.BITMAP8, conditions: [{type: ParameterCondition.MINIMUM_REMAINING_BUFFER_BYTES, value: 1}]},
+                    {
+                        name: "optionsOverride",
+                        type: DataType.BITMAP8,
+                        conditions: [{type: ParameterCondition.MINIMUM_REMAINING_BUFFER_BYTES, value: 1}],
+                    },
                 ],
                 // required: true only if bit 0 of colorCapabilities attribute is 1
             },

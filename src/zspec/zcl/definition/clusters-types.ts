@@ -673,10 +673,10 @@ export interface TClusters {
                 level: number;
                 /** type=UINT16 */
                 transtime: number;
-                /** type=BITMAP8 */
-                optionsMask: number;
-                /** type=BITMAP8 */
-                optionsOverride: number;
+                /** type=BITMAP8 | conditions=[{minimumRemainingBufferBytes value=1}] */
+                optionsMask?: number;
+                /** type=BITMAP8 | conditions=[{minimumRemainingBufferBytes value=1}] */
+                optionsOverride?: number;
             };
             /** ID=0x01 | required=true */
             move: {
@@ -684,10 +684,10 @@ export interface TClusters {
                 movemode: number;
                 /** type=UINT8 */
                 rate: number;
-                /** type=BITMAP8 */
-                optionsMask: number;
-                /** type=BITMAP8 */
-                optionsOverride: number;
+                /** type=BITMAP8 | conditions=[{minimumRemainingBufferBytes value=1}] */
+                optionsMask?: number;
+                /** type=BITMAP8 | conditions=[{minimumRemainingBufferBytes value=1}] */
+                optionsOverride?: number;
             };
             /** ID=0x02 | required=true */
             step: {
@@ -697,17 +697,17 @@ export interface TClusters {
                 stepsize: number;
                 /** type=UINT16 */
                 transtime: number;
-                /** type=BITMAP8 */
-                optionsMask: number;
-                /** type=BITMAP8 */
-                optionsOverride: number;
+                /** type=BITMAP8 | conditions=[{minimumRemainingBufferBytes value=1}] */
+                optionsMask?: number;
+                /** type=BITMAP8 | conditions=[{minimumRemainingBufferBytes value=1}] */
+                optionsOverride?: number;
             };
             /** ID=0x03 | required=true */
             stop: {
-                /** type=BITMAP8 */
-                optionsMask: number;
-                /** type=BITMAP8 */
-                optionsOverride: number;
+                /** type=BITMAP8 | conditions=[{minimumRemainingBufferBytes value=1}] */
+                optionsMask?: number;
+                /** type=BITMAP8 | conditions=[{minimumRemainingBufferBytes value=1}] */
+                optionsOverride?: number;
             };
             /** ID=0x04 | required=true */
             moveToLevelWithOnOff: {
@@ -715,10 +715,10 @@ export interface TClusters {
                 level: number;
                 /** type=UINT16 */
                 transtime: number;
-                /** type=BITMAP8 */
-                optionsMask: number;
-                /** type=BITMAP8 */
-                optionsOverride: number;
+                /** type=BITMAP8 | conditions=[{minimumRemainingBufferBytes value=1}] */
+                optionsMask?: number;
+                /** type=BITMAP8 | conditions=[{minimumRemainingBufferBytes value=1}] */
+                optionsOverride?: number;
             };
             /** ID=0x05 | required=true */
             moveWithOnOff: {
@@ -726,10 +726,10 @@ export interface TClusters {
                 movemode: number;
                 /** type=UINT8 */
                 rate: number;
-                /** type=BITMAP8 */
-                optionsMask: number;
-                /** type=BITMAP8 */
-                optionsOverride: number;
+                /** type=BITMAP8 | conditions=[{minimumRemainingBufferBytes value=1}] */
+                optionsMask?: number;
+                /** type=BITMAP8 | conditions=[{minimumRemainingBufferBytes value=1}] */
+                optionsOverride?: number;
             };
             /** ID=0x06 | required=true */
             stepWithOnOff: {
@@ -739,17 +739,17 @@ export interface TClusters {
                 stepsize: number;
                 /** type=UINT16 */
                 transtime: number;
-                /** type=BITMAP8 */
-                optionsMask: number;
-                /** type=BITMAP8 */
-                optionsOverride: number;
+                /** type=BITMAP8 | conditions=[{minimumRemainingBufferBytes value=1}] */
+                optionsMask?: number;
+                /** type=BITMAP8 | conditions=[{minimumRemainingBufferBytes value=1}] */
+                optionsOverride?: number;
             };
             /** ID=0x07 | required=true */
             stopWithOnOff: {
-                /** type=BITMAP8 */
-                optionsMask: number;
-                /** type=BITMAP8 */
-                optionsOverride: number;
+                /** type=BITMAP8 | conditions=[{minimumRemainingBufferBytes value=1}] */
+                optionsMask?: number;
+                /** type=BITMAP8 | conditions=[{minimumRemainingBufferBytes value=1}] */
+                optionsOverride?: number;
             };
             /** ID=0x08 */
             moveToClosestFrequency: {
@@ -804,10 +804,10 @@ export interface TClusters {
                 level: number;
                 /** type=UINT16 */
                 transtime: number;
-                /** type=BITMAP8 */
-                optionsMask: number;
-                /** type=BITMAP8 */
-                optionsOverride: number;
+                /** type=BITMAP8 | conditions=[{minimumRemainingBufferBytes value=1}] */
+                optionsMask?: number;
+                /** type=BITMAP8 | conditions=[{minimumRemainingBufferBytes value=1}] */
+                optionsOverride?: number;
             };
             /** ID=0x01 | required=true */
             move: {
@@ -815,10 +815,10 @@ export interface TClusters {
                 movemode: number;
                 /** type=UINT8 */
                 rate: number;
-                /** type=BITMAP8 */
-                optionsMask: number;
-                /** type=BITMAP8 */
-                optionsOverride: number;
+                /** type=BITMAP8 | conditions=[{minimumRemainingBufferBytes value=1}] */
+                optionsMask?: number;
+                /** type=BITMAP8 | conditions=[{minimumRemainingBufferBytes value=1}] */
+                optionsOverride?: number;
             };
             /** ID=0x02 | required=true */
             step: {
@@ -828,17 +828,17 @@ export interface TClusters {
                 stepsize: number;
                 /** type=UINT16 */
                 transtime: number;
-                /** type=BITMAP8 */
-                optionsMask: number;
-                /** type=BITMAP8 */
-                optionsOverride: number;
+                /** type=BITMAP8 | conditions=[{minimumRemainingBufferBytes value=1}] */
+                optionsMask?: number;
+                /** type=BITMAP8 | conditions=[{minimumRemainingBufferBytes value=1}] */
+                optionsOverride?: number;
             };
             /** ID=0x03 | required=true */
             stop: {
-                /** type=BITMAP8 */
-                optionsMask: number;
-                /** type=BITMAP8 */
-                optionsOverride: number;
+                /** type=BITMAP8 | conditions=[{minimumRemainingBufferBytes value=1}] */
+                optionsMask?: number;
+                /** type=BITMAP8 | conditions=[{minimumRemainingBufferBytes value=1}] */
+                optionsOverride?: number;
             };
             /** ID=0x04 | required=true */
             moveToLevelWithOnOff: {
@@ -846,10 +846,10 @@ export interface TClusters {
                 level: number;
                 /** type=UINT16 */
                 transtime: number;
-                /** type=BITMAP8 */
-                optionsMask: number;
-                /** type=BITMAP8 */
-                optionsOverride: number;
+                /** type=BITMAP8 | conditions=[{minimumRemainingBufferBytes value=1}] */
+                optionsMask?: number;
+                /** type=BITMAP8 | conditions=[{minimumRemainingBufferBytes value=1}] */
+                optionsOverride?: number;
             };
             /** ID=0x05 | required=true */
             moveWithOnOff: {
@@ -857,10 +857,10 @@ export interface TClusters {
                 movemode: number;
                 /** type=UINT8 */
                 rate: number;
-                /** type=BITMAP8 */
-                optionsMask: number;
-                /** type=BITMAP8 */
-                optionsOverride: number;
+                /** type=BITMAP8 | conditions=[{minimumRemainingBufferBytes value=1}] */
+                optionsMask?: number;
+                /** type=BITMAP8 | conditions=[{minimumRemainingBufferBytes value=1}] */
+                optionsOverride?: number;
             };
             /** ID=0x06 | required=true */
             stepWithOnOff: {
@@ -870,17 +870,17 @@ export interface TClusters {
                 stepsize: number;
                 /** type=UINT16 */
                 transtime: number;
-                /** type=BITMAP8 */
-                optionsMask: number;
-                /** type=BITMAP8 */
-                optionsOverride: number;
+                /** type=BITMAP8 | conditions=[{minimumRemainingBufferBytes value=1}] */
+                optionsMask?: number;
+                /** type=BITMAP8 | conditions=[{minimumRemainingBufferBytes value=1}] */
+                optionsOverride?: number;
             };
             /** ID=0x07 | required=true */
             stopWithOnOff: {
-                /** type=BITMAP8 */
-                optionsMask: number;
-                /** type=BITMAP8 */
-                optionsOverride: number;
+                /** type=BITMAP8 | conditions=[{minimumRemainingBufferBytes value=1}] */
+                optionsMask?: number;
+                /** type=BITMAP8 | conditions=[{minimumRemainingBufferBytes value=1}] */
+                optionsOverride?: number;
             };
             /** ID=0x08 */
             moveToClosestFrequency: {
@@ -2007,10 +2007,10 @@ export interface TClusters {
                 level: number;
                 /** type=UINT16 */
                 transtime: number;
-                /** type=BITMAP8 */
-                optionsMask: number;
-                /** type=BITMAP8 */
-                optionsOverride: number;
+                /** type=BITMAP8 | conditions=[{minimumRemainingBufferBytes value=1}] */
+                optionsMask?: number;
+                /** type=BITMAP8 | conditions=[{minimumRemainingBufferBytes value=1}] */
+                optionsOverride?: number;
             };
             /** ID=0x01 | required=true */
             move: {
@@ -2018,10 +2018,10 @@ export interface TClusters {
                 movemode: number;
                 /** type=UINT8 */
                 rate: number;
-                /** type=BITMAP8 */
-                optionsMask: number;
-                /** type=BITMAP8 */
-                optionsOverride: number;
+                /** type=BITMAP8 | conditions=[{minimumRemainingBufferBytes value=1}] */
+                optionsMask?: number;
+                /** type=BITMAP8 | conditions=[{minimumRemainingBufferBytes value=1}] */
+                optionsOverride?: number;
             };
             /** ID=0x02 | required=true */
             step: {
@@ -2031,17 +2031,17 @@ export interface TClusters {
                 stepsize: number;
                 /** type=UINT16 */
                 transtime: number;
-                /** type=BITMAP8 */
-                optionsMask: number;
-                /** type=BITMAP8 */
-                optionsOverride: number;
+                /** type=BITMAP8 | conditions=[{minimumRemainingBufferBytes value=1}] */
+                optionsMask?: number;
+                /** type=BITMAP8 | conditions=[{minimumRemainingBufferBytes value=1}] */
+                optionsOverride?: number;
             };
             /** ID=0x03 | required=true */
             stop: {
-                /** type=BITMAP8 */
-                optionsMask: number;
-                /** type=BITMAP8 */
-                optionsOverride: number;
+                /** type=BITMAP8 | conditions=[{minimumRemainingBufferBytes value=1}] */
+                optionsMask?: number;
+                /** type=BITMAP8 | conditions=[{minimumRemainingBufferBytes value=1}] */
+                optionsOverride?: number;
             };
             /** ID=0x04 | required=true */
             moveToLevelWithOnOff: {
@@ -2049,10 +2049,10 @@ export interface TClusters {
                 level: number;
                 /** type=UINT16 */
                 transtime: number;
-                /** type=BITMAP8 */
-                optionsMask: number;
-                /** type=BITMAP8 */
-                optionsOverride: number;
+                /** type=BITMAP8 | conditions=[{minimumRemainingBufferBytes value=1}] */
+                optionsMask?: number;
+                /** type=BITMAP8 | conditions=[{minimumRemainingBufferBytes value=1}] */
+                optionsOverride?: number;
             };
             /** ID=0x05 | required=true */
             moveWithOnOff: {
@@ -2060,10 +2060,10 @@ export interface TClusters {
                 movemode: number;
                 /** type=UINT8 */
                 rate: number;
-                /** type=BITMAP8 */
-                optionsMask: number;
-                /** type=BITMAP8 */
-                optionsOverride: number;
+                /** type=BITMAP8 | conditions=[{minimumRemainingBufferBytes value=1}] */
+                optionsMask?: number;
+                /** type=BITMAP8 | conditions=[{minimumRemainingBufferBytes value=1}] */
+                optionsOverride?: number;
             };
             /** ID=0x06 | required=true */
             stepWithOnOff: {
@@ -2073,17 +2073,17 @@ export interface TClusters {
                 stepsize: number;
                 /** type=UINT16 */
                 transtime: number;
-                /** type=BITMAP8 */
-                optionsMask: number;
-                /** type=BITMAP8 */
-                optionsOverride: number;
+                /** type=BITMAP8 | conditions=[{minimumRemainingBufferBytes value=1}] */
+                optionsMask?: number;
+                /** type=BITMAP8 | conditions=[{minimumRemainingBufferBytes value=1}] */
+                optionsOverride?: number;
             };
             /** ID=0x07 | required=true */
             stopWithOnOff: {
-                /** type=BITMAP8 */
-                optionsMask: number;
-                /** type=BITMAP8 */
-                optionsOverride: number;
+                /** type=BITMAP8 | conditions=[{minimumRemainingBufferBytes value=1}] */
+                optionsMask?: number;
+                /** type=BITMAP8 | conditions=[{minimumRemainingBufferBytes value=1}] */
+                optionsOverride?: number;
             };
             /** ID=0x08 | required=true */
             moveToClosestFrequency: {
@@ -3696,10 +3696,10 @@ export interface TClusters {
                 direction: number;
                 /** type=UINT16 */
                 transtime: number;
-                /** type=BITMAP8 */
-                optionsMask: number;
-                /** type=BITMAP8 */
-                optionsOverride: number;
+                /** type=BITMAP8 | conditions=[{minimumRemainingBufferBytes value=1}] */
+                optionsMask?: number;
+                /** type=BITMAP8 | conditions=[{minimumRemainingBufferBytes value=1}] */
+                optionsOverride?: number;
             };
             /** ID=0x01 */
             moveHue: {
@@ -3707,10 +3707,10 @@ export interface TClusters {
                 movemode: number;
                 /** type=UINT8 */
                 rate: number;
-                /** type=BITMAP8 */
-                optionsMask: number;
-                /** type=BITMAP8 */
-                optionsOverride: number;
+                /** type=BITMAP8 | conditions=[{minimumRemainingBufferBytes value=1}] */
+                optionsMask?: number;
+                /** type=BITMAP8 | conditions=[{minimumRemainingBufferBytes value=1}] */
+                optionsOverride?: number;
             };
             /** ID=0x02 */
             stepHue: {
@@ -3720,10 +3720,10 @@ export interface TClusters {
                 stepsize: number;
                 /** type=UINT8 */
                 transtime: number;
-                /** type=BITMAP8 */
-                optionsMask: number;
-                /** type=BITMAP8 */
-                optionsOverride: number;
+                /** type=BITMAP8 | conditions=[{minimumRemainingBufferBytes value=1}] */
+                optionsMask?: number;
+                /** type=BITMAP8 | conditions=[{minimumRemainingBufferBytes value=1}] */
+                optionsOverride?: number;
             };
             /** ID=0x03 */
             moveToSaturation: {
@@ -3731,10 +3731,10 @@ export interface TClusters {
                 saturation: number;
                 /** type=UINT16 */
                 transtime: number;
-                /** type=BITMAP8 */
-                optionsMask: number;
-                /** type=BITMAP8 */
-                optionsOverride: number;
+                /** type=BITMAP8 | conditions=[{minimumRemainingBufferBytes value=1}] */
+                optionsMask?: number;
+                /** type=BITMAP8 | conditions=[{minimumRemainingBufferBytes value=1}] */
+                optionsOverride?: number;
             };
             /** ID=0x04 */
             moveSaturation: {
@@ -3742,10 +3742,10 @@ export interface TClusters {
                 movemode: number;
                 /** type=UINT8 */
                 rate: number;
-                /** type=BITMAP8 */
-                optionsMask: number;
-                /** type=BITMAP8 */
-                optionsOverride: number;
+                /** type=BITMAP8 | conditions=[{minimumRemainingBufferBytes value=1}] */
+                optionsMask?: number;
+                /** type=BITMAP8 | conditions=[{minimumRemainingBufferBytes value=1}] */
+                optionsOverride?: number;
             };
             /** ID=0x05 */
             stepSaturation: {
@@ -3755,10 +3755,10 @@ export interface TClusters {
                 stepsize: number;
                 /** type=UINT8 */
                 transtime: number;
-                /** type=BITMAP8 */
-                optionsMask: number;
-                /** type=BITMAP8 */
-                optionsOverride: number;
+                /** type=BITMAP8 | conditions=[{minimumRemainingBufferBytes value=1}] */
+                optionsMask?: number;
+                /** type=BITMAP8 | conditions=[{minimumRemainingBufferBytes value=1}] */
+                optionsOverride?: number;
             };
             /** ID=0x06 */
             moveToHueAndSaturation: {
@@ -3768,10 +3768,10 @@ export interface TClusters {
                 saturation: number;
                 /** type=UINT16 */
                 transtime: number;
-                /** type=BITMAP8 */
-                optionsMask: number;
-                /** type=BITMAP8 */
-                optionsOverride: number;
+                /** type=BITMAP8 | conditions=[{minimumRemainingBufferBytes value=1}] */
+                optionsMask?: number;
+                /** type=BITMAP8 | conditions=[{minimumRemainingBufferBytes value=1}] */
+                optionsOverride?: number;
             };
             /** ID=0x07 */
             moveToColor: {
@@ -3781,10 +3781,10 @@ export interface TClusters {
                 colory: number;
                 /** type=UINT16 */
                 transtime: number;
-                /** type=BITMAP8 */
-                optionsMask: number;
-                /** type=BITMAP8 */
-                optionsOverride: number;
+                /** type=BITMAP8 | conditions=[{minimumRemainingBufferBytes value=1}] */
+                optionsMask?: number;
+                /** type=BITMAP8 | conditions=[{minimumRemainingBufferBytes value=1}] */
+                optionsOverride?: number;
             };
             /** ID=0x08 */
             moveColor: {
@@ -3792,10 +3792,10 @@ export interface TClusters {
                 ratex: number;
                 /** type=INT16 */
                 ratey: number;
-                /** type=BITMAP8 */
-                optionsMask: number;
-                /** type=BITMAP8 */
-                optionsOverride: number;
+                /** type=BITMAP8 | conditions=[{minimumRemainingBufferBytes value=1}] */
+                optionsMask?: number;
+                /** type=BITMAP8 | conditions=[{minimumRemainingBufferBytes value=1}] */
+                optionsOverride?: number;
             };
             /** ID=0x09 */
             stepColor: {
@@ -3805,10 +3805,10 @@ export interface TClusters {
                 stepy: number;
                 /** type=UINT16 */
                 transtime: number;
-                /** type=BITMAP8 */
-                optionsMask: number;
-                /** type=BITMAP8 */
-                optionsOverride: number;
+                /** type=BITMAP8 | conditions=[{minimumRemainingBufferBytes value=1}] */
+                optionsMask?: number;
+                /** type=BITMAP8 | conditions=[{minimumRemainingBufferBytes value=1}] */
+                optionsOverride?: number;
             };
             /** ID=0x0a */
             moveToColorTemp: {
@@ -3816,10 +3816,10 @@ export interface TClusters {
                 colortemp: number;
                 /** type=UINT16 */
                 transtime: number;
-                /** type=BITMAP8 */
-                optionsMask: number;
-                /** type=BITMAP8 */
-                optionsOverride: number;
+                /** type=BITMAP8 | conditions=[{minimumRemainingBufferBytes value=1}] */
+                optionsMask?: number;
+                /** type=BITMAP8 | conditions=[{minimumRemainingBufferBytes value=1}] */
+                optionsOverride?: number;
             };
             /** ID=0x40 */
             enhancedMoveToHue: {
@@ -3829,10 +3829,10 @@ export interface TClusters {
                 direction: number;
                 /** type=UINT16 */
                 transtime: number;
-                /** type=BITMAP8 */
-                optionsMask: number;
-                /** type=BITMAP8 */
-                optionsOverride: number;
+                /** type=BITMAP8 | conditions=[{minimumRemainingBufferBytes value=1}] */
+                optionsMask?: number;
+                /** type=BITMAP8 | conditions=[{minimumRemainingBufferBytes value=1}] */
+                optionsOverride?: number;
             };
             /** ID=0x41 */
             enhancedMoveHue: {
@@ -3840,10 +3840,10 @@ export interface TClusters {
                 movemode: number;
                 /** type=UINT16 */
                 rate: number;
-                /** type=BITMAP8 */
-                optionsMask: number;
-                /** type=BITMAP8 */
-                optionsOverride: number;
+                /** type=BITMAP8 | conditions=[{minimumRemainingBufferBytes value=1}] */
+                optionsMask?: number;
+                /** type=BITMAP8 | conditions=[{minimumRemainingBufferBytes value=1}] */
+                optionsOverride?: number;
             };
             /** ID=0x42 */
             enhancedStepHue: {
@@ -3853,10 +3853,10 @@ export interface TClusters {
                 stepsize: number;
                 /** type=UINT16 */
                 transtime: number;
-                /** type=BITMAP8 */
-                optionsMask: number;
-                /** type=BITMAP8 */
-                optionsOverride: number;
+                /** type=BITMAP8 | conditions=[{minimumRemainingBufferBytes value=1}] */
+                optionsMask?: number;
+                /** type=BITMAP8 | conditions=[{minimumRemainingBufferBytes value=1}] */
+                optionsOverride?: number;
             };
             /** ID=0x43 */
             enhancedMoveToHueAndSaturation: {
@@ -3866,10 +3866,10 @@ export interface TClusters {
                 saturation: number;
                 /** type=UINT16 */
                 transtime: number;
-                /** type=BITMAP8 */
-                optionsMask: number;
-                /** type=BITMAP8 */
-                optionsOverride: number;
+                /** type=BITMAP8 | conditions=[{minimumRemainingBufferBytes value=1}] */
+                optionsMask?: number;
+                /** type=BITMAP8 | conditions=[{minimumRemainingBufferBytes value=1}] */
+                optionsOverride?: number;
             };
             /** ID=0x44 */
             colorLoopSet: {
@@ -3883,17 +3883,17 @@ export interface TClusters {
                 time: number;
                 /** type=UINT16 */
                 starthue: number;
-                /** type=BITMAP8 */
-                optionsMask: number;
-                /** type=BITMAP8 */
-                optionsOverride: number;
+                /** type=BITMAP8 | conditions=[{minimumRemainingBufferBytes value=1}] */
+                optionsMask?: number;
+                /** type=BITMAP8 | conditions=[{minimumRemainingBufferBytes value=1}] */
+                optionsOverride?: number;
             };
             /** ID=0x47 */
             stopMoveStep: {
-                /** type=BITMAP8 */
-                optionsMask: number;
-                /** type=BITMAP8 */
-                optionsOverride: number;
+                /** type=BITMAP8 | conditions=[{minimumRemainingBufferBytes value=1}] */
+                optionsMask?: number;
+                /** type=BITMAP8 | conditions=[{minimumRemainingBufferBytes value=1}] */
+                optionsOverride?: number;
             };
             /** ID=0x4b */
             moveColorTemp: {
@@ -3905,10 +3905,10 @@ export interface TClusters {
                 minimum: number;
                 /** type=UINT16 */
                 maximum: number;
-                /** type=BITMAP8 */
-                optionsMask: number;
-                /** type=BITMAP8 */
-                optionsOverride: number;
+                /** type=BITMAP8 | conditions=[{minimumRemainingBufferBytes value=1}] */
+                optionsMask?: number;
+                /** type=BITMAP8 | conditions=[{minimumRemainingBufferBytes value=1}] */
+                optionsOverride?: number;
             };
             /** ID=0x4c */
             stepColorTemp: {
@@ -3922,10 +3922,10 @@ export interface TClusters {
                 minimum: number;
                 /** type=UINT16 */
                 maximum: number;
-                /** type=BITMAP8 */
-                optionsMask: number;
-                /** type=BITMAP8 */
-                optionsOverride: number;
+                /** type=BITMAP8 | conditions=[{minimumRemainingBufferBytes value=1}] */
+                optionsMask?: number;
+                /** type=BITMAP8 | conditions=[{minimumRemainingBufferBytes value=1}] */
+                optionsOverride?: number;
             };
             /** ID=0x06 */
             tuyaMoveToHueAndSaturationBrightness: {
