@@ -1,5 +1,31 @@
 # Changelog
 
+## [6.4.0](https://github.com/Koenkk/zigbee-herdsman/compare/v6.3.3...v6.4.0) (2025-11-07)
+
+
+### Features
+
+* Support custom stack config for ZoH ([#1544](https://github.com/Koenkk/zigbee-herdsman/issues/1544)) ([4995e4d](https://github.com/Koenkk/zigbee-herdsman/commit/4995e4dde8fc35a0ab3852a6cc01d5379fe35fa6))
+
+
+### Bug Fixes
+
+* Send ping request immediately ([#1543](https://github.com/Koenkk/zigbee-herdsman/issues/1543)) ([3f3fafa](https://github.com/Koenkk/zigbee-herdsman/commit/3f3fafac11e92097820fe62a19c06c0f1166c9d0))
+
+## [6.3.3](https://github.com/Koenkk/zigbee-herdsman/compare/v6.3.2...v6.3.3) (2025-11-05)
+
+
+### Bug Fixes
+
+* Ember: always emit on port close ([#1539](https://github.com/Koenkk/zigbee-herdsman/issues/1539)) ([fb422ac](https://github.com/Koenkk/zigbee-herdsman/commit/fb422ace511a047c3d1f3063f5eac5cd75136258))
+* Fix interview failing for SNZB-01 https://github.com/Koenkk/zigbee2mqtt/issues/29474 ([89f13ee](https://github.com/Koenkk/zigbee-herdsman/commit/89f13ee56f2d0709a6111687483516a18071b5bf))
+* **ignore:** bump debounce from 2.2.0 to 3.0.0 ([#1541](https://github.com/Koenkk/zigbee-herdsman/issues/1541)) ([4be6d34](https://github.com/Koenkk/zigbee-herdsman/commit/4be6d34bad6a7411d6e4cc07b6d4ab4b994248a7))
+* **ignore:** bump the minor-patch group with 2 updates ([#1536](https://github.com/Koenkk/zigbee-herdsman/issues/1536)) ([8fc0a6f](https://github.com/Koenkk/zigbee-herdsman/commit/8fc0a6f27bd0521c337cf3772ea0564de79a71cf))
+* **ignore:** bump the minor-patch group with 3 updates ([#1540](https://github.com/Koenkk/zigbee-herdsman/issues/1540)) ([6c55b13](https://github.com/Koenkk/zigbee-herdsman/commit/6c55b1385145a490b1dae3020dcf1cd5433b40ce))
+* Improve backup corruption message ([#1538](https://github.com/Koenkk/zigbee-herdsman/issues/1538)) ([fab29b6](https://github.com/Koenkk/zigbee-herdsman/commit/fab29b6f0ec1a73a5bb0247c75a6d38b9ef66ce9))
+* Improve GP join handling ([#1535](https://github.com/Koenkk/zigbee-herdsman/issues/1535)) ([7a98dd2](https://github.com/Koenkk/zigbee-herdsman/commit/7a98dd261cf375c444e88a2772edb4adec207ac8))
+* update zigbee-on-host to 0.2.0 ([#1542](https://github.com/Koenkk/zigbee-herdsman/issues/1542)) ([a1680ba](https://github.com/Koenkk/zigbee-herdsman/commit/a1680ba616d04da7cb42d0bec422e86dfccef0e9))
+
 ## [6.3.2](https://github.com/Koenkk/zigbee-herdsman/compare/v6.3.1...v6.3.2) (2025-10-23)
 
 

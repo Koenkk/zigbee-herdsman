@@ -1,9 +1,9 @@
 import {randomBytes} from "node:crypto";
-import {existsSync, readFileSync, renameSync} from "node:fs";
+import {readFileSync, renameSync} from "node:fs";
 import path from "node:path";
 
 import equals from "fast-deep-equal/es6";
-import type {Backup, UnifiedBackupStorage} from "../../../models";
+import type {Backup} from "../../../models";
 import {BackupUtils, Queue, wait} from "../../../utils";
 import {logger} from "../../../utils/logger";
 import * as ZSpec from "../../../zspec";
@@ -14,6 +14,7 @@ import type * as ZdoTypes from "../../../zspec/zdo/definition/tstypes";
 import {Adapter, type TsType} from "../..";
 import {WORKAROUND_JOIN_MANUF_IEEE_PREFIX_TO_CODE} from "../../const";
 import type {DeviceJoinedPayload, DeviceLeavePayload, ZclPayload} from "../../events";
+import {readBackup} from "../../utils";
 import {
     EMBER_HIGH_RAM_CONCENTRATOR,
     EMBER_LOW_RAM_CONCENTRATOR,
@@ -1141,19 +1142,10 @@ export class EmberAdapter extends Adapter {
      * Loads currently stored backup and returns it in internal backup model.
      */
     private getStoredBackup(): Backup | undefined {
-        if (!existsSync(this.backupPath)) {
-            return undefined;
-        }
+        const data = readBackup(this.backupPath);
+        if (!data) return undefined;
 
-        let data: UnifiedBackupStorage;
-
-        try {
-            data = JSON.parse(readFileSync(this.backupPath).toString());
-        } catch (error) {
-            throw new Error(`[BACKUP] Coordinator backup is corrupted. (${(error as Error).stack})`);
-        }
-
-        if (data.metadata?.format === "zigpy/open-coordinator-backup" && data.metadata?.version) {
+        if ("metadata" in data && data.metadata?.format === "zigpy/open-coordinator-backup" && data.metadata?.version) {
             if (data.metadata?.version !== 1) {
                 throw new Error(`[BACKUP] Unsupported open coordinator backup version (version=${data.metadata?.version}).`);
             }

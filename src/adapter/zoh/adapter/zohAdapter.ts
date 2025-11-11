@@ -1,12 +1,11 @@
+import {readFileSync} from "node:fs";
 import {Socket} from "node:net";
-import {dirname} from "node:path";
-
+import {dirname, join} from "node:path";
 import {OTRCPDriver} from "zigbee-on-host";
 import {setLogger} from "zigbee-on-host/dist/utils/logger";
 import type {MACCapabilities, MACHeader} from "zigbee-on-host/dist/zigbee/mac";
 import type {ZigbeeAPSHeader, ZigbeeAPSPayload} from "zigbee-on-host/dist/zigbee/zigbee-aps";
 import type {ZigbeeNWKGPHeader} from "zigbee-on-host/dist/zigbee/zigbee-nwkgp";
-
 import type {Backup} from "../../../models/backup";
 import {logger} from "../../../utils/logger";
 import {Queue} from "../../../utils/queue";
@@ -19,8 +18,8 @@ import type * as ZdoTypes from "../../../zspec/zdo/definition/tstypes";
 import {Adapter} from "../../adapter";
 import type {ZclPayload} from "../../events";
 import {SerialPort} from "../../serialPort";
-import {isTcpPath} from "../../socketPortUtils";
 import type * as TsType from "../../tstype";
+import {isTcpPath} from "../../utils";
 import {bigUInt64ToHexBE} from "./utils";
 
 const NS = "zh:zoh";
@@ -40,7 +39,33 @@ type ZdoResponse = {
     seqNum: number;
 };
 
+interface StackConfig {
+    /** if true, trigger serial dtr/rts flipping to skip bootloader (meant for TI hw) */
+    tiSerialSkipBootloader: boolean;
+    /** EUI64 used for the adapter */
+    eui64: bigint;
+    /** @see https://nerivec.github.io/zigbee-on-host/types/spinel_spinel.StreamRawConfig.html */
+    ccaBackoffAttempts: number;
+    /** @see https://nerivec.github.io/zigbee-on-host/types/spinel_spinel.StreamRawConfig.html */
+    ccaRetries: number;
+    /** @see https://nerivec.github.io/zigbee-on-host/types/spinel_spinel.StreamRawConfig.html */
+    enableCSMACA: boolean;
+}
+
+export interface StackConfigJSON extends Partial<Omit<StackConfig, "eui64">> {
+    /** 0x${hex} format */
+    eui64?: string;
+}
+
 const DEFAULT_REQUEST_TIMEOUT = 15000;
+
+export const DEFAULT_STACK_CONFIG: Readonly<StackConfig> = {
+    tiSerialSkipBootloader: false,
+    eui64: Buffer.from([0x5a, 0x6f, 0x48, 0x6f, 0x6e, 0x5a, 0x32, 0x4d]).readBigUInt64LE(0),
+    ccaBackoffAttempts: 1,
+    ccaRetries: 4,
+    enableCSMACA: true,
+};
 
 export class ZoHAdapter extends Adapter {
     private serialPort?: SerialPort;
@@ -51,6 +76,7 @@ export class ZoHAdapter extends Adapter {
 
     private interpanLock: boolean;
 
+    public readonly stackConfig: StackConfig;
     public readonly driver: OTRCPDriver;
     private readonly queue: Queue;
     private readonly zclWaitress: Waitress<ZclPayload, WaitressMatcher>;
@@ -67,14 +93,31 @@ export class ZoHAdapter extends Adapter {
         this.hasZdoMessageOverhead = true;
         this.manufacturerID = Zcl.ManufacturerCode.CONNECTIVITY_STANDARDS_ALLIANCE;
         this.closing = false;
+        this.stackConfig = this.loadStackConfig();
 
         const channel = networkOptions.channelList[0];
         this.driver = new OTRCPDriver(
             {
+                /* v8 ignore start */
+                onFatalError: (message) => {
+                    logger.error(message, NS);
+                },
+                onMACFrame: () => undefined, // unused
+                /* v8 ignore stop */
+
+                onFrame: this.onFrame.bind(this),
+                onGPFrame: this.onGPFrame.bind(this),
+
+                onDeviceJoined: this.onDeviceJoined.bind(this),
+                onDeviceRejoined: this.onDeviceRejoined.bind(this),
+                onDeviceLeft: this.onDeviceLeft.bind(this),
+                onDeviceAuthorized: this.onDeviceAuthorized.bind(this),
+            },
+            {
                 txChannel: channel,
-                ccaBackoffAttempts: 1,
-                ccaRetries: 4,
-                enableCSMACA: true,
+                ccaBackoffAttempts: this.stackConfig.ccaBackoffAttempts,
+                ccaRetries: this.stackConfig.ccaRetries,
+                enableCSMACA: this.stackConfig.enableCSMACA,
                 headerUpdated: true,
                 reTx: false,
                 securityProcessed: true,
@@ -84,18 +127,17 @@ export class ZoHAdapter extends Adapter {
             },
             // NOTE: this information is overwritten on `start` if a save exists
             {
-                // TODO: make this configurable
-                eui64: Buffer.from([0x5a, 0x6f, 0x48, 0x6f, 0x6e, 0x5a, 0x32, 0x4d]).readBigUInt64LE(0),
+                eui64: this.stackConfig.eui64,
                 panId: this.networkOptions.panID,
-                // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
-                extendedPANId: Buffer.from(this.networkOptions.extendedPanID!).readBigUInt64LE(0),
+                // biome-ignore lint/style/noNonNullAssertion: expected always valid at this point
+                extendedPanId: Buffer.from(this.networkOptions.extendedPanID!).readBigUInt64LE(0),
                 channel,
                 nwkUpdateId: 0,
                 txPower: this.adapterOptions.transmitPower ?? /* v8 ignore next */ 5,
                 // ZigBeeAlliance09
                 tcKey: Buffer.from([0x5a, 0x69, 0x67, 0x42, 0x65, 0x65, 0x41, 0x6c, 0x6c, 0x69, 0x61, 0x6e, 0x63, 0x65, 0x30, 0x39]),
                 tcKeyFrameCounter: 0,
-                // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
+                // biome-ignore lint/style/noNonNullAssertion: expected always valid at this point
                 networkKey: Buffer.from(this.networkOptions.networkKey!),
                 networkKeyFrameCounter: 0,
                 networkKeySequenceNumber: 0,
@@ -107,6 +149,64 @@ export class ZoHAdapter extends Adapter {
         this.zdoWaitress = new Waitress(this.zdoWaitressValidator, this.waitressTimeoutFormatter);
 
         this.interpanLock = false;
+    }
+
+    private loadStackConfig(): StackConfig {
+        // store stack config in same dir as backup
+        const configPath = join(dirname(this.backupPath), "zoh_config.json");
+        // use default as base (for all invalid/missing in JSON)
+        const config: StackConfig = {...DEFAULT_STACK_CONFIG};
+
+        try {
+            const inRange = (value: number, min: number, max: number): boolean => !(value == null || value < min || value > max);
+            const customConfig = JSON.parse(readFileSync(configPath, "utf8")) as StackConfigJSON;
+
+            if (customConfig.tiSerialSkipBootloader != null) {
+                if (customConfig.tiSerialSkipBootloader === true || customConfig.tiSerialSkipBootloader === false) {
+                    config.tiSerialSkipBootloader = customConfig.tiSerialSkipBootloader;
+                } else {
+                    logger.error("[STACK CONFIG] Invalid tiSerialSkipBootloader, using default.", NS);
+                }
+            }
+
+            if (customConfig.eui64 != null) {
+                try {
+                    config.eui64 = BigInt(customConfig.eui64);
+                } catch (error) {
+                    logger.error(`[STACK CONFIG] Invalid eui64 (${error}), using default.`, NS);
+                }
+            }
+
+            if (customConfig.ccaBackoffAttempts != null) {
+                if (inRange(customConfig.ccaBackoffAttempts, 0, 255)) {
+                    config.ccaBackoffAttempts = customConfig.ccaBackoffAttempts;
+                } else {
+                    logger.error("[STACK CONFIG] Invalid ccaBackoffAttempts, using default.", NS);
+                }
+            }
+
+            if (customConfig.ccaRetries != null) {
+                if (inRange(customConfig.ccaRetries, 0, 255)) {
+                    config.ccaRetries = customConfig.ccaRetries;
+                } else {
+                    logger.error("[STACK CONFIG] Invalid ccaRetries, using default.", NS);
+                }
+            }
+
+            if (customConfig.enableCSMACA != null) {
+                if (customConfig.enableCSMACA === true || customConfig.enableCSMACA === false) {
+                    config.enableCSMACA = customConfig.enableCSMACA;
+                } else {
+                    logger.error("[STACK CONFIG] Invalid enableCSMACA, using default.", NS);
+                }
+            }
+
+            logger.info(`Using stack config ${JSON.stringify(config)}.`, NS);
+        } catch {
+            logger.info("Using default stack config.", NS);
+        }
+
+        return config;
     }
 
     /**
@@ -200,6 +300,17 @@ export class ZoHAdapter extends Adapter {
 
             this.serialPort.once("close", this.onPortClose.bind(this));
             this.serialPort.on("error", this.onPortError.bind(this));
+
+            if (this.stackConfig.tiSerialSkipBootloader) {
+                // skipping bootloader is required for some CC2652/CC1352 devices (auto-entered)
+                logger.info("TI skip bootloader", NS);
+                await this.serialPort.asyncSet({dtr: false, rts: false});
+                await wait(150);
+                await this.serialPort.asyncSet({dtr: false, rts: true});
+                await wait(150);
+                await this.serialPort.asyncSet({dtr: false, rts: false});
+                await wait(150);
+            }
         } catch (error) {
             await this.stop();
 
@@ -214,11 +325,9 @@ export class ZoHAdapter extends Adapter {
      */
     /* v8 ignore start */
     private onPortClose(error: boolean | Error): void {
-        if (error) {
-            logger.error("Port closed unexpectedly.", NS);
-        } else {
-            logger.info("Port closed.", NS);
-        }
+        logger.info(`Port closed ${error}`, NS);
+
+        this.emit("disconnected");
     }
     /* v8 ignore stop */
 
@@ -229,8 +338,6 @@ export class ZoHAdapter extends Adapter {
     /* v8 ignore start */
     private onPortError(error: Error): void {
         logger.error(`Port ${error}`, NS);
-
-        this.emit("disconnected");
     }
     /* v8 ignore stop */
 
@@ -261,7 +368,7 @@ export class ZoHAdapter extends Adapter {
         await this.initPort();
 
         let result: TsType.StartResult = "resumed";
-        const currentNetParams = await this.driver.readNetworkState();
+        const currentNetParams = await this.driver.context.readNetworkState();
 
         if (currentNetParams) {
             // Note: channel change is handled by Controller
@@ -269,7 +376,7 @@ export class ZoHAdapter extends Adapter {
                 // TODO: add eui64 whenever added as configurable
                 this.networkOptions.panID !== currentNetParams.panId ||
                 // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
-                Buffer.from(this.networkOptions.extendedPanID!).readBigUInt64LE(0) !== currentNetParams.extendedPANId ||
+                Buffer.from(this.networkOptions.extendedPanID!).readBigUInt64LE(0) !== currentNetParams.extendedPanId ||
                 // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
                 !Buffer.from(this.networkOptions.networkKey!).equals(currentNetParams.networkKey)
             ) {
@@ -285,20 +392,12 @@ export class ZoHAdapter extends Adapter {
         await this.driver.start();
         await this.driver.formNetwork();
 
-        this.driver.on("frame", this.onFrame.bind(this));
-        this.driver.on("gpFrame", this.onGPFrame.bind(this));
-        this.driver.on("deviceJoined", this.onDeviceJoined.bind(this));
-        this.driver.on("deviceRejoined", this.onDeviceRejoined.bind(this));
-        this.driver.on("deviceLeft", this.onDeviceLeft.bind(this));
-        this.driver.on("deviceAuthorized", this.onDeviceAuthorized.bind(this));
-
         return result;
     }
 
     public async stop(): Promise<void> {
         this.closing = true;
 
-        this.driver.removeAllListeners();
         this.queue.clear();
         this.zclWaitress.clear();
         this.zdoWaitress.clear();
@@ -306,7 +405,7 @@ export class ZoHAdapter extends Adapter {
     }
 
     public async getCoordinatorIEEE(): Promise<string> {
-        return await Promise.resolve(`0x${bigUInt64ToHexBE(this.driver.netParams.eui64)}`);
+        return await Promise.resolve(`0x${bigUInt64ToHexBE(this.driver.context.netParams.eui64)}`);
     }
 
     public async getCoordinatorVersion(): Promise<TsType.CoordinatorVersion> {
@@ -342,18 +441,18 @@ export class ZoHAdapter extends Adapter {
 
     public async getNetworkParameters(): Promise<TsType.NetworkParameters> {
         return await Promise.resolve({
-            panID: this.driver.netParams.panId,
-            extendedPanID: `0x${bigUInt64ToHexBE(this.driver.netParams.extendedPANId)}`,
-            channel: this.driver.netParams.channel,
-            nwkUpdateID: this.driver.netParams.nwkUpdateId,
+            panID: this.driver.context.netParams.panId,
+            extendedPanID: `0x${bigUInt64ToHexBE(this.driver.context.netParams.extendedPanId)}`,
+            channel: this.driver.context.netParams.channel,
+            nwkUpdateID: this.driver.context.netParams.nwkUpdateId,
         });
     }
 
-    /* v8 ignore start */
-    public async addInstallCode(ieeeAddress: string, key: Buffer): Promise<void> {
-        await Promise.reject(new Error(`not supported ${ieeeAddress}, ${key.toString("hex")}`));
+    public async addInstallCode(ieeeAddress: string, key: Buffer, hashed: boolean): Promise<void> {
+        this.driver.context.addInstallCode(BigInt(ieeeAddress), key, hashed);
+
+        return await Promise.resolve();
     }
-    /* v8 ignore stop */
 
     /* v8 ignore start */
     public waitFor(
@@ -408,7 +507,7 @@ export class ZoHAdapter extends Adapter {
         if (networkAddress === ZSpec.COORDINATOR_ADDRESS) {
             // mock ZDO response using driver layer data for coordinator
             // seqNum doesn't matter since waitress bypassed, so don't bother doing any logic for it
-            const response = this.driver.getCoordinatorZDOResponse(clusterId, payload);
+            const response = this.driver.apsHandler.getCoordinatorZDOResponse(clusterId, payload);
 
             if (!response) {
                 throw new Error(`Coordinator does not support ZDO cluster ${clusterId}`);
@@ -458,8 +557,8 @@ export class ZoHAdapter extends Adapter {
     public async permitJoin(seconds: number, networkAddress?: number): Promise<void> {
         if (networkAddress === undefined) {
             // send ZDO BCAST
-            this.driver.allowJoins(seconds, true);
-            this.driver.gpEnterCommissioningMode(seconds);
+            this.driver.context.allowJoins(seconds, true);
+            this.driver.nwkGPHandler.enterCommissioningMode(seconds);
 
             const clusterId = Zdo.ClusterId.PERMIT_JOINING_REQUEST;
             // `authentication`: TC significance always 1 (zb specs)
@@ -467,11 +566,11 @@ export class ZoHAdapter extends Adapter {
 
             await this.sendZdo(ZSpec.BLANK_EUI64, ZSpec.BroadcastAddress.DEFAULT, clusterId, zdoPayload, true);
         } else if (networkAddress === ZSpec.COORDINATOR_ADDRESS) {
-            this.driver.allowJoins(seconds, true);
-            this.driver.gpEnterCommissioningMode(seconds);
+            this.driver.context.allowJoins(seconds, true);
+            this.driver.nwkGPHandler.enterCommissioningMode(seconds);
         } else {
             // send ZDO to networkAddress
-            this.driver.allowJoins(seconds, false);
+            this.driver.context.allowJoins(seconds, false);
 
             const clusterId = Zdo.ClusterId.PERMIT_JOINING_REQUEST;
             // `authentication`: TC significance always 1 (zb specs)
@@ -654,7 +753,7 @@ export class ZoHAdapter extends Adapter {
      * @param apsHeader
      * @param apsPayload
      */
-    private onFrame(
+    onFrame(
         sender16: number | undefined,
         sender64: bigint | undefined,
         apsHeader: ZigbeeAPSHeader,
@@ -715,7 +814,7 @@ export class ZoHAdapter extends Adapter {
         }
     }
 
-    private onGPFrame(cmdId: number, payload: Buffer, macHeader: MACHeader, nwkHeader: ZigbeeNWKGPHeader, rssi: number): void {
+    onGPFrame(cmdId: number, payload: Buffer, macHeader: MACHeader, nwkHeader: ZigbeeNWKGPHeader, rssi: number): void {
         // transform into a ZCL frame
         const data = Buffer.alloc((nwkHeader.frameControlExt?.appId === 0x02 /* ZGP */ ? /* v8 ignore next */ 20 : 15) + payload.byteLength);
         let offset = 0;
@@ -794,7 +893,7 @@ export class ZoHAdapter extends Adapter {
         this.emit("zclPayload", zclPayload);
     }
 
-    private onDeviceJoined(source16: number, source64: bigint, capabilities: MACCapabilities): void {
+    onDeviceJoined(source16: number, source64: bigint, capabilities: MACCapabilities): void {
         // XXX: don't delay if no cap? (joined through router)
         if (capabilities?.rxOnWhenIdle) {
             this.emit("deviceJoined", {networkAddress: source16, ieeeAddr: `0x${bigUInt64ToHexBE(source64)}`});
@@ -805,16 +904,17 @@ export class ZoHAdapter extends Adapter {
             }, 5000);
         }
     }
-    private onDeviceRejoined(source16: number, source64: bigint, _capabilities: MACCapabilities): void {
+
+    onDeviceRejoined(source16: number, source64: bigint, _capabilities: MACCapabilities): void {
         this.emit("deviceJoined", {networkAddress: source16, ieeeAddr: `0x${bigUInt64ToHexBE(source64)}`});
     }
 
-    private onDeviceLeft(source16: number, source64: bigint): void {
+    onDeviceLeft(source16: number, source64: bigint): void {
         this.emit("deviceLeave", {networkAddress: source16, ieeeAddr: `0x${bigUInt64ToHexBE(source64)}`});
     }
 
     /* v8 ignore start */
-    private onDeviceAuthorized(_source16: number, _source64: bigint): void {}
+    onDeviceAuthorized(_source16: number, _source64: bigint): void {}
     /* v8 ignore stop */
 
     private waitressTimeoutFormatter(matcher: WaitressMatcher, timeout: number): string {

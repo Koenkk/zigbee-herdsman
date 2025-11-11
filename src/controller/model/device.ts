@@ -783,6 +783,7 @@ export class Device extends Entity<ControllerEventMap> {
             "C-ZB-SEDC": {}, //candeo device that doesn't follow IAS enrollment process correctly and therefore fails to complete interview
             "C-ZB-SEMO": {}, //candeo device that doesn't follow IAS enrollment process correctly and therefore fails to complete interview
             "CS-T9C-A0-BG": {}, // iAS enroll fails: https://github.com/Koenkk/zigbee2mqtt/issues/27822
+            "SNZB-01": {}, // iAS enroll fails: https://github.com/Koenkk/zigbee2mqtt/issues/29474
         };
 
         let match: string | undefined;
@@ -1213,7 +1214,7 @@ export class Device extends Entity<ControllerEventMap> {
         // of a mandatory basic cluster attribute to keep it as lightweight as
         // possible.
         const endpoint = this.endpoints.find((ep) => ep.inputClusters.includes(0)) ?? this.endpoints[0];
-        await endpoint.read("genBasic", ["zclVersion"], {disableRecovery});
+        await endpoint.read("genBasic", ["zclVersion"], {disableRecovery, sendPolicy: "immediate"});
     }
 
     public addCustomCluster(name: string, cluster: ClusterDefinition): void {
