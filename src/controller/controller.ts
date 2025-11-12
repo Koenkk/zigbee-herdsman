@@ -443,7 +443,12 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
                 logger.error(`Failed to disable join on stop: ${error}`, NS);
             }
 
-            await this.backup(); // always calls databaseSave()
+            try {
+                await this.backup(); // always calls databaseSave()
+            } catch (error) {
+                logger.error(`Failed to backup on stop ${error}`, NS);
+            }
+
             await this.adapter.stop();
 
             this.adapterDisconnected = true;
@@ -475,17 +480,13 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
         if (this.options.backupPath && this.adapter.supportsBackup) {
             logger.debug("Creating coordinator backup", NS);
 
-            try {
-                const backup = await this.adapter.backup(this.getDeviceIeeeAddresses());
-                const unifiedBackup = BackupUtils.toUnifiedBackup(backup);
-                const tmpBackupPath = `${this.options.backupPath}.tmp`;
+            const backup = await this.adapter.backup(this.getDeviceIeeeAddresses());
+            const unifiedBackup = BackupUtils.toUnifiedBackup(backup);
+            const tmpBackupPath = `${this.options.backupPath}.tmp`;
 
-                fs.writeFileSync(tmpBackupPath, JSON.stringify(unifiedBackup, null, 2));
-                fs.renameSync(tmpBackupPath, this.options.backupPath);
-                logger.info(`Wrote coordinator backup to '${this.options.backupPath}'`, NS);
-            } catch (error) {
-                logger.error(`Unable to backup ${error}`, NS);
-            }
+            fs.writeFileSync(tmpBackupPath, JSON.stringify(unifiedBackup, null, 2));
+            fs.renameSync(tmpBackupPath, this.options.backupPath);
+            logger.info(`Wrote coordinator backup to '${this.options.backupPath}'`, NS);
         }
     }
 
