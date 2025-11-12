@@ -4045,11 +4045,11 @@ describe("Controller", () => {
         mocksendZclFrameToEndpoint.mockClear();
 
         // @ts-expect-error private
-        endpoint._configuredReportings = [{cluster: 65382, attrId: 5, minRepIntval: 60, maxRepIntval: 900, repChange: 1}];
+        endpoint._configuredReportings = [{cluster: 65281, attrId: 269, minRepIntval: 60, maxRepIntval: 900, repChange: 1}];
 
-        await endpoint.configureReporting("liXeePrivate", [
+        await endpoint.configureReporting("manuSpecificSinope", [
             {
-                attribute: "warnDPS",
+                attribute: "roomTemperature",
                 minimumReportInterval: 1,
                 maximumReportInterval: 10,
                 reportableChange: 1,
@@ -4057,8 +4057,8 @@ describe("Controller", () => {
         ]);
 
         expect(endpoint.configuredReportings.length).toBe(1);
-        expect(endpoint.configuredReportings[0].attribute.name).toBe("warnDPS");
-        expect(endpoint.configuredReportings[0].cluster.name).toBe("liXeePrivate");
+        expect(endpoint.configuredReportings[0].attribute.name).toBe("roomTemperature");
+        expect(endpoint.configuredReportings[0].cluster.name).toBe("manuSpecificSinope");
     });
 
     it("Endpoint configure reporting for manufacturer specific attribute", async () => {
