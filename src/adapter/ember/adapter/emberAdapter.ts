@@ -1571,10 +1571,6 @@ export class EmberAdapter extends Adapter {
         await Promise.reject(new Error(`Not supported '${type}'.`));
     }
 
-    public async supportsBackup(): Promise<boolean> {
-        return await Promise.resolve(true);
-    }
-
     // queued
     public async backup(_ieeeAddressesInDatabase: string[]): Promise<Backup> {
         return await this.queue.execute<Backup>(async () => {
