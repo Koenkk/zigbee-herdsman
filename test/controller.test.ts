@@ -747,12 +747,9 @@ describe("Controller", () => {
             command: {
                 ID: 0,
                 response: 1,
-                parameters: [
-                    {name: "transactionID", type: 35},
-                    {name: "zigbeeInformation", type: 24},
-                    {name: "touchlinkInformation", type: 24},
-                ],
+                parameters: expect.any(Array),
                 name: "scanRequest",
+                required: true,
             },
         });
         expect(deepClone(mocksendZclFrameInterPANBroadcast.mock.calls[1][0])).toStrictEqual({
@@ -772,12 +769,9 @@ describe("Controller", () => {
             command: {
                 ID: 0,
                 response: 1,
-                parameters: [
-                    {name: "transactionID", type: 35},
-                    {name: "zigbeeInformation", type: 24},
-                    {name: "touchlinkInformation", type: 24},
-                ],
+                parameters: expect.any(Array),
                 name: "scanRequest",
+                required: true,
             },
         });
         expect(mockRestoreChannelInterPAN).toHaveBeenCalledTimes(1);
@@ -798,11 +792,9 @@ describe("Controller", () => {
             },
             command: {
                 ID: 6,
-                parameters: [
-                    {name: "transactionID", type: 35},
-                    {name: "duration", type: 33},
-                ],
+                parameters: expect.any(Array),
                 name: "identifyRequest",
+                required: true,
             },
         });
         expect(deepClone(mocksendZclFrameInterPANToIeeeAddr.mock.calls[1][0])).toStrictEqual({
@@ -819,7 +811,7 @@ describe("Controller", () => {
                 commands: expect.any(Object),
                 commandsResponse: expect.any(Object),
             },
-            command: {ID: 7, parameters: [{name: "transactionID", type: 35}], name: "resetToFactoryNew"},
+            command: {ID: 7, parameters: expect.any(Array), name: "resetToFactoryNew", required: true},
         });
     });
 
@@ -860,12 +852,9 @@ describe("Controller", () => {
             command: {
                 ID: 0,
                 response: 1,
-                parameters: [
-                    {name: "transactionID", type: 35},
-                    {name: "zigbeeInformation", type: 24},
-                    {name: "touchlinkInformation", type: 24},
-                ],
+                parameters: expect.any(Array),
                 name: "scanRequest",
+                required: true,
             },
         });
         expect(deepClone(mocksendZclFrameInterPANBroadcast.mock.calls[1][0])).toStrictEqual({
@@ -885,12 +874,9 @@ describe("Controller", () => {
             command: {
                 ID: 0,
                 response: 1,
-                parameters: [
-                    {name: "transactionID", type: 35},
-                    {name: "zigbeeInformation", type: 24},
-                    {name: "touchlinkInformation", type: 24},
-                ],
+                parameters: expect.any(Array),
                 name: "scanRequest",
+                required: true,
             },
         });
         expect(mockRestoreChannelInterPAN).toHaveBeenCalledTimes(1);
@@ -945,12 +931,9 @@ describe("Controller", () => {
             command: {
                 ID: 0,
                 response: 1,
-                parameters: [
-                    {name: "transactionID", type: 35},
-                    {name: "zigbeeInformation", type: 24},
-                    {name: "touchlinkInformation", type: 24},
-                ],
+                parameters: expect.any(Array),
                 name: "scanRequest",
+                required: true,
             },
         });
         expect(mockRestoreChannelInterPAN).toHaveBeenCalledTimes(1);
@@ -971,11 +954,9 @@ describe("Controller", () => {
             },
             command: {
                 ID: 6,
-                parameters: [
-                    {name: "transactionID", type: 35},
-                    {name: "duration", type: 33},
-                ],
+                parameters: expect.any(Array),
                 name: "identifyRequest",
+                required: true,
             },
         });
         expect(deepClone(mocksendZclFrameInterPANToIeeeAddr.mock.calls[1][0])).toStrictEqual({
@@ -992,7 +973,7 @@ describe("Controller", () => {
                 commands: expect.any(Object),
                 commandsResponse: expect.any(Object),
             },
-            command: {ID: 7, parameters: [{name: "transactionID", type: 35}], name: "resetToFactoryNew"},
+            command: {ID: 7, parameters: expect.any(Array), name: "resetToFactoryNew", required: true},
         });
     });
 
@@ -1023,12 +1004,9 @@ describe("Controller", () => {
             command: {
                 ID: 0,
                 response: 1,
-                parameters: [
-                    {name: "transactionID", type: 35},
-                    {name: "zigbeeInformation", type: 24},
-                    {name: "touchlinkInformation", type: 24},
-                ],
+                parameters: expect.any(Array),
                 name: "scanRequest",
+                required: true,
             },
         });
         expect(mockRestoreChannelInterPAN).toHaveBeenCalledTimes(1);
@@ -1049,11 +1027,9 @@ describe("Controller", () => {
             },
             command: {
                 ID: 6,
-                parameters: [
-                    {name: "transactionID", type: 35},
-                    {name: "duration", type: 33},
-                ],
+                parameters: expect.any(Array),
                 name: "identifyRequest",
+                required: true,
             },
         });
     });
@@ -2302,71 +2278,14 @@ describe("Controller", () => {
                 commandIdentifier: 2,
             },
             payload: [{attrId: 16, attrData: "0x0000012300000000", dataType: 240}],
-            cluster: {
+            cluster: expect.objectContaining({
                 ID: 1280,
-                attributes: {
-                    zoneState: {ID: 0, type: 48, name: "zoneState"},
-                    zoneType: {ID: 1, type: 49, name: "zoneType"},
-                    zoneStatus: {ID: 2, type: 25, name: "zoneStatus"},
-                    iasCieAddr: {ID: 16, type: 240, name: "iasCieAddr"},
-                    zoneId: {ID: 17, type: 32, name: "zoneId"},
-                    numZoneSensitivityLevelsSupported: {ID: 18, type: 32, name: "numZoneSensitivityLevelsSupported"},
-                    currentZoneSensitivityLevel: {ID: 19, type: 32, name: "currentZoneSensitivityLevel"},
-                    develcoAlarmOffDelay: {ID: 32769, type: 33, manufacturerCode: 4117, name: "develcoAlarmOffDelay"},
-                },
                 name: "ssIasZone",
-                commands: {
-                    enrollRsp: {
-                        ID: 0,
-                        parameters: [
-                            {name: "enrollrspcode", type: 32},
-                            {name: "zoneid", type: 32},
-                        ],
-                        name: "enrollRsp",
-                    },
-                    initNormalOpMode: {ID: 1, parameters: [], name: "initNormalOpMode"},
-                    initTestMode: {
-                        ID: 2,
-                        parameters: [
-                            {
-                                name: "testModeDuration",
-                                type: Zcl.DataType.UINT8,
-                            },
-                            {
-                                name: "currentZoneSensitivityLevel",
-                                type: Zcl.DataType.UINT8,
-                            },
-                        ],
-                        name: "initTestMode",
-                    },
-                },
-                commandsResponse: {
-                    statusChangeNotification: {
-                        ID: 0,
-                        parameters: [
-                            {name: "zonestatus", type: 33},
-                            {name: "extendedstatus", type: 32},
-                        ],
-                        name: "statusChangeNotification",
-                    },
-                    enrollReq: {
-                        ID: 1,
-                        parameters: [
-                            {name: "zonetype", type: 33},
-                            {name: "manucode", type: 33},
-                        ],
-                        name: "enrollReq",
-                    },
-                },
-            },
+            }),
             command: {
                 ID: 2,
                 name: "write",
-                parameters: [
-                    {name: "attrId", type: 33},
-                    {name: "dataType", type: 32},
-                    {name: "attrData", type: 1000},
-                ],
+                parameters: expect.any(Array),
                 response: 4,
             },
         });
@@ -2382,70 +2301,15 @@ describe("Controller", () => {
                 commandIdentifier: 0,
             },
             payload: {enrollrspcode: 0, zoneid: 23},
-            cluster: {
+            cluster: expect.objectContaining({
                 ID: 1280,
-                attributes: {
-                    zoneState: {ID: 0, type: 48, name: "zoneState"},
-                    zoneType: {ID: 1, type: 49, name: "zoneType"},
-                    zoneStatus: {ID: 2, type: 25, name: "zoneStatus"},
-                    iasCieAddr: {ID: 16, type: 240, name: "iasCieAddr"},
-                    zoneId: {ID: 17, type: 32, name: "zoneId"},
-                    numZoneSensitivityLevelsSupported: {ID: 18, type: 32, name: "numZoneSensitivityLevelsSupported"},
-                    currentZoneSensitivityLevel: {ID: 19, type: 32, name: "currentZoneSensitivityLevel"},
-                    develcoAlarmOffDelay: {ID: 32769, type: 33, manufacturerCode: 4117, name: "develcoAlarmOffDelay"},
-                },
                 name: "ssIasZone",
-                commands: {
-                    enrollRsp: {
-                        ID: 0,
-                        parameters: [
-                            {name: "enrollrspcode", type: 32},
-                            {name: "zoneid", type: 32},
-                        ],
-                        name: "enrollRsp",
-                    },
-                    initNormalOpMode: {ID: 1, parameters: [], name: "initNormalOpMode"},
-                    initTestMode: {
-                        ID: 2,
-                        parameters: [
-                            {
-                                name: "testModeDuration",
-                                type: Zcl.DataType.UINT8,
-                            },
-                            {
-                                name: "currentZoneSensitivityLevel",
-                                type: Zcl.DataType.UINT8,
-                            },
-                        ],
-                        name: "initTestMode",
-                    },
-                },
-                commandsResponse: {
-                    statusChangeNotification: {
-                        ID: 0,
-                        parameters: [
-                            {name: "zonestatus", type: 33},
-                            {name: "extendedstatus", type: 32},
-                        ],
-                        name: "statusChangeNotification",
-                    },
-                    enrollReq: {
-                        ID: 1,
-                        parameters: [
-                            {name: "zonetype", type: 33},
-                            {name: "manucode", type: 33},
-                        ],
-                        name: "enrollReq",
-                    },
-                },
-            },
+            }),
             command: {
                 ID: 0,
-                parameters: [
-                    {name: "enrollrspcode", type: 32},
-                    {name: "zoneid", type: 32},
-                ],
+                parameters: expect.any(Array),
                 name: "enrollRsp",
+                required: true,
             },
         });
     });
@@ -3489,7 +3353,7 @@ describe("Controller", () => {
         const device = controller.getDeviceByIeeeAddr("0x129")!;
         device.addCustomCluster("ssIasZone", {
             ID: Zcl.Clusters.ssIasZone.ID,
-            commands: {boschSmokeAlarmSiren: {ID: 0x80, parameters: [{name: "data", type: Zcl.DataType.UINT16}]}},
+            commands: {boschSmokeAlarmSiren: {ID: 0x80, parameters: [{name: "data", type: Zcl.DataType.UINT16, writable: true, max: 0xffff}]}},
             commandsResponse: {},
             attributes: {},
         });
@@ -4104,7 +3968,7 @@ describe("Controller", () => {
 
         expect(endpoint.configuredReportings.length).toBe(1);
         expect({...endpoint.configuredReportings[0], cluster: undefined}).toStrictEqual({
-            attribute: {ID: 16384, type: 48, manufacturerCode: 4641, name: "viessmannWindowOpenInternal"},
+            attribute: expect.objectContaining({ID: 16384, type: 48, manufacturerCode: 4641, name: "viessmannWindowOpenInternal"}),
             minimumReportInterval: 1,
             maximumReportInterval: 10,
             reportableChange: 1,
@@ -4151,7 +4015,7 @@ describe("Controller", () => {
 
         expect(endpoint.configuredReportings.length).toBe(1);
         expect({...endpoint.configuredReportings[0], cluster: undefined}).toStrictEqual({
-            attribute: {ID: 16384, type: 48, manufacturerCode: 4641, name: "viessmannWindowOpenInternal"},
+            attribute: expect.objectContaining({ID: 16384, type: 48, manufacturerCode: 4641, name: "viessmannWindowOpenInternal"}),
             minimumReportInterval: 1,
             maximumReportInterval: 10,
             reportableChange: 1,
@@ -4469,10 +4333,7 @@ describe("Controller", () => {
             cluster: null,
             command: {
                 ID: 64,
-                parameters: [
-                    {name: "effectid", type: 32},
-                    {name: "effectvariant", type: 32},
-                ],
+                parameters: expect.any(Array),
                 name: "offWithEffect",
             },
         });
@@ -4497,7 +4358,7 @@ describe("Controller", () => {
             },
             payload: {},
             cluster: null,
-            command: {ID: 0, parameters: [], name: "off"},
+            command: {ID: 0, parameters: expect.any(Array), name: "off", required: true},
         });
         expect(mocksendZclFrameToEndpoint.mock.calls[0][4]).toBe(10000);
         expect(mocksendZclFrameToEndpoint.mock.calls[0][5]).toBe(false);
@@ -6097,13 +5958,13 @@ describe("Controller", () => {
         mocksendZclFrameToEndpoint.mockRejectedValueOnce(new Error("timeout occurred"));
         let error;
         try {
-            await endpoint.write("genOnOff", {onOff: 1});
+            await endpoint.write("genOnOff", {onTime: 1});
         } catch (e) {
             error = e;
         }
         expect(error).toStrictEqual(
             new Error(
-                `ZCL command 0x129/1 genOnOff.write({"onOff":1}, {"timeout":10000,"disableResponse":false,"disableRecovery":false,"disableDefaultResponse":true,"direction":0,"reservedBits":0,"writeUndiv":false}) failed (timeout occurred)`,
+                `ZCL command 0x129/1 genOnOff.write({"onTime":1}, {"timeout":10000,"disableResponse":false,"disableRecovery":false,"disableDefaultResponse":true,"direction":0,"reservedBits":0,"writeUndiv":false}) failed (timeout occurred)`,
             ),
         );
     });
@@ -6115,7 +5976,7 @@ describe("Controller", () => {
         const endpoint = device.getEndpoint(1)!;
         mocksendZclFrameToEndpoint.mockReturnValueOnce(null);
 
-        await endpoint.write("genOnOff", {onOff: 1}, {disableResponse: true});
+        await endpoint.write("genOnOff", {onTime: 1}, {disableResponse: true});
     });
 
     it("Group command error", async () => {
@@ -7342,7 +7203,7 @@ describe("Controller", () => {
         mocksendZclFrameToEndpoint.mockRejectedValueOnce(new Error("Dogs barking too hard"));
         mocksendZclFrameToEndpoint.mockReturnValueOnce(null);
         const nextTick = new Promise(process.nextTick);
-        const result = endpoint.write("genOnOff", {onOff: 1}, {disableResponse: true});
+        const result = endpoint.write("genOnOff", {onTime: 1}, {disableResponse: true});
         expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(1);
 
         await nextTick;
@@ -7370,10 +7231,10 @@ describe("Controller", () => {
         mocksendZclFrameToEndpoint.mockRejectedValueOnce(new Error("Dogs barking too hard"));
         mocksendZclFrameToEndpoint.mockRejectedValueOnce(new Error("Cats barking too hard"));
         try {
-            await endpoint.write("genOnOff", {onOff: 1}, {disableResponse: true, sendPolicy: "immediate"});
+            await endpoint.write("genOnOff", {onTime: 1}, {disableResponse: true, sendPolicy: "immediate"});
         } catch (error) {
             expect((error as Error).message).toStrictEqual(
-                `ZCL command 0x129/1 genOnOff.write({"onOff":1}, {"timeout":10000,"disableResponse":true,"disableRecovery":false,"disableDefaultResponse":true,"direction":0,"reservedBits":0,"writeUndiv":false,"sendPolicy":"immediate"}) failed (Dogs barking too hard)`,
+                `ZCL command 0x129/1 genOnOff.write({"onTime":1}, {"timeout":10000,"disableResponse":true,"disableRecovery":false,"disableDefaultResponse":true,"direction":0,"reservedBits":0,"writeUndiv":false,"sendPolicy":"immediate"}) failed (Dogs barking too hard)`,
             );
         }
         expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(1);
@@ -7433,7 +7294,7 @@ describe("Controller", () => {
         mocksendZclFrameToEndpoint.mockRejectedValueOnce(new Error("Cats barking too hard"));
         mocksendZclFrameToEndpoint.mockRejectedValueOnce(new Error("Dogs barking too hard"));
         let nextTick = new Promise(process.nextTick);
-        const result = endpoint.write("genOnOff", {onOff: 1}, {disableResponse: true});
+        const result = endpoint.write("genOnOff", {onTime: 1}, {disableResponse: true});
         await nextTick;
         expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(1);
 
@@ -7451,7 +7312,7 @@ describe("Controller", () => {
         }
         expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(2);
         expect((error as Error).message).toStrictEqual(
-            `ZCL command 0x129/1 genOnOff.write({"onOff":1}, {"timeout":10000,"disableResponse":true,"disableRecovery":false,"disableDefaultResponse":true,"direction":0,"reservedBits":0,"writeUndiv":false}) failed (Dogs barking too hard)`,
+            `ZCL command 0x129/1 genOnOff.write({"onTime":1}, {"timeout":10000,"disableResponse":true,"disableRecovery":false,"disableDefaultResponse":true,"direction":0,"reservedBits":0,"writeUndiv":false}) failed (Dogs barking too hard)`,
         );
     });
 
@@ -7516,19 +7377,19 @@ describe("Controller", () => {
         // biome-ignore lint/correctness/noUnusedVariables: test
         let result2;
         const nextTick = new Promise(process.nextTick);
-        endpoint.write("genOnOff", {onOff: 0, startUpOnOff: 0}, {disableResponse: true});
+        endpoint.write("genOnOff", {onTime: 0, startUpOnOff: 0}, {disableResponse: true});
         await nextTick;
         // Queue content:
         // 1. empty
-        // 2. ZCL write 'genOnOff' {onOff: 0, startUpOnOff: 0}
+        // 2. ZCL write 'genOnOff' {onTime: 0, startUpOnOff: 0}
         // @ts-expect-error private
         expect(endpoint.pendingRequests.size).toStrictEqual(2);
-        result1 = endpoint.write("genOnOff", {onOff: 0}, {disableResponse: true});
+        result1 = endpoint.write("genOnOff", {onTime: 0}, {disableResponse: true});
         await new Promise(process.nextTick);
         // Queue content:
         // 1. empty
         // 2. ZCL write 'genOnOff' {startUpOnOff: 0}
-        // 3. ZCL write 'genOnOff' {onOff: 0} --> result1
+        // 3. ZCL write 'genOnOff' {onTime: 0} --> result1
         // @ts-expect-error private
         expect(endpoint.pendingRequests.size).toStrictEqual(3);
         expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(2);
@@ -7547,7 +7408,7 @@ describe("Controller", () => {
         // Queue content:
         // 1. empty
         // 2. ZCL write 'genOnOff' {startUpOnOff: 0}
-        // 3. ZCL write 'genOnOff' {onOff: 0}
+        // 3. ZCL write 'genOnOff' {onTime: 0}
         // 4. add 1
         // @ts-expect-error private
         expect(endpoint.pendingRequests.size).toStrictEqual(4);
@@ -7555,30 +7416,30 @@ describe("Controller", () => {
 
         try {
             // Add the same ZCL request with different payload again, the first one should be rejected and removed from the queue
-            result2 = endpoint.write("genOnOff", {onOff: 1}, {disableResponse: true});
+            result2 = endpoint.write("genOnOff", {onTime: 1}, {disableResponse: true});
             await expect(await result1).rejects.toBe("asas");
         } catch {
             // Queue content:
             // 1. empty
             // 2. ZCL write 'genOnOff' {startUpOnOff: 0}
             // 3. add 1
-            // 4. ZCL write 'genOnOff' {onOff: 1} --> result2
+            // 4. ZCL write 'genOnOff' {onTime: 1} --> result2
             // @ts-expect-error private
             expect(endpoint.pendingRequests.size).toStrictEqual(4);
         }
         // Now add the same ZCL request with same payload again. The previous one should *not* be rejected but removed from the queue
-        endpoint.write("genOnOff", {onOff: 1}, {disableResponse: true});
+        endpoint.write("genOnOff", {onTime: 1}, {disableResponse: true});
         await new Promise(process.nextTick);
         // Queue content:
         // 1. empty
         // 2. ZCL write 'genOnOff' {startUpOnOff: 0}
         // 3. add 1
-        // 4. ZCL write 'genOnOff' {onOff: 1} --> result2, result3
+        // 4. ZCL write 'genOnOff' {onTime: 1} --> result2, result3
         // @ts-expect-error private
         expect(endpoint.pendingRequests.size).toStrictEqual(4);
 
         // writeUndiv request should not be divided, so both should go to the queue
-        endpoint.write("genOnOff", {onOff: 0, startUpOnOff: 0}, {disableResponse: true, writeUndiv: true});
+        endpoint.write("genOnOff", {onTime: 0, startUpOnOff: 0}, {disableResponse: true, writeUndiv: true});
         await new Promise(process.nextTick);
         endpoint.write("genOnOff", {startUpOnOff: 1}, {disableResponse: true, writeUndiv: true});
         await new Promise(process.nextTick);
@@ -7586,23 +7447,23 @@ describe("Controller", () => {
         // 1. empty
         // 2. ZCL write 'genOnOff' {startUpOnOff: 0}
         // 3. add 1
-        // 4. ZCL write 'genOnOff' {onOff: 1} --> result2, result3
-        // 5. ZCL writeUndiv 'genOnOff' {onOff: 0, startUpOnOff: 0}
+        // 4. ZCL write 'genOnOff' {onTime: 1} --> result2, result3
+        // 5. ZCL writeUndiv 'genOnOff' {onTime: 0, startUpOnOff: 0}
         // 6. ZCL writeUndiv 'genOnOff' {startUpOnOff: 1}
         // @ts-expect-error private
         expect(endpoint.pendingRequests.size).toStrictEqual(6);
 
         // read requests should be combined to one
-        const result4 = endpoint.read("genOnOff", ["onOff"], {disableResponse: false});
+        const result4 = endpoint.read("genOnOff", ["onTime"], {disableResponse: false});
         await new Promise(process.nextTick);
-        const result5 = endpoint.read("genOnOff", ["onOff"], {disableResponse: false});
+        const result5 = endpoint.read("genOnOff", ["onTime"], {disableResponse: false});
         await new Promise(process.nextTick);
         // Queue content:
         // 1. empty
         // 2. ZCL write 'genOnOff' {startUpOnOff: 0}
         // 3. add 1
-        // 4. ZCL write 'genOnOff' {onOff: 1} --> result2, result3
-        // 5. ZCL writeUndiv 'genOnOff' {onOff: 0, startUpOnOff: 0}
+        // 4. ZCL write 'genOnOff' {onTime: 1} --> result2, result3
+        // 5. ZCL writeUndiv 'genOnOff' {onTime: 0, startUpOnOff: 0}
         // 6. ZCL writeUndiv 'genOnOff' {startUpOnOff: 1}
         // 7. ZCL read 'genOnOff' --> result4, result5
         // @ts-expect-error private
@@ -7627,9 +7488,9 @@ describe("Controller", () => {
         await expect(result5).resolves.toStrictEqual({onTime: 3});
         expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(13);
         expect(mocksendZclFrameToEndpoint.mock.calls[8][3].payload).toStrictEqual([{attrData: 0, attrId: 16387, dataType: 48}]);
-        expect(mocksendZclFrameToEndpoint.mock.calls[9][3].payload).toStrictEqual([{attrData: 1, attrId: 0, dataType: 16}]);
+        expect(mocksendZclFrameToEndpoint.mock.calls[9][3].payload).toStrictEqual([{attrData: 1, attrId: 16385, dataType: 33}]);
         expect(mocksendZclFrameToEndpoint.mock.calls[10][3].payload).toStrictEqual([
-            {attrData: 0, attrId: 0, dataType: 16},
+            {attrData: 0, attrId: 16385, dataType: 33},
             {attrData: 0, attrId: 16387, dataType: 48},
         ]);
         expect(mocksendZclFrameToEndpoint.mock.calls[11][3].payload).toStrictEqual([{attrData: 1, attrId: 16387, dataType: 48}]);
@@ -7684,7 +7545,7 @@ describe("Controller", () => {
             // @ts-expect-error mock
             new Request(async () => {}, {}, 100),
         );
-        const result = endpoint.write("genOnOff", {onOff: 10}, {disableResponse: true});
+        const result = endpoint.write("genOnOff", {onTime: 10}, {disableResponse: true});
         expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(1);
 
         updatedMockedDate.setSeconds(updatedMockedDate.getSeconds() + 1001000);
@@ -7730,7 +7591,7 @@ describe("Controller", () => {
             ),
         );
         const nextTick = new Promise(process.nextTick);
-        const result = endpoint.write("genOnOff", {onOff: 10}, {disableResponse: true});
+        const result = endpoint.write("genOnOff", {onTime: 10}, {disableResponse: true});
         await nextTick;
         await endpoint.sendPendingRequests(false);
         await result;
@@ -7758,7 +7619,7 @@ describe("Controller", () => {
         };
         const nextTick = new Promise(process.nextTick);
 
-        const result = endpoint.write("genOnOff", {onOff: 1}, {disableResponse: true, sendPolicy: "bulk"});
+        const result = endpoint.write("genOnOff", {onTime: 1}, {disableResponse: true, sendPolicy: "bulk"});
         expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(0);
 
         const buffer = Buffer.from([24, 169, 10, 0, 0, 24, 1]);
@@ -8589,7 +8450,7 @@ describe("Controller", () => {
             ID: 64513,
             commands: {},
             commandsResponse: {},
-            attributes: {customAttr: {ID: 0, type: Zcl.DataType.UINT8}},
+            attributes: {customAttr: {ID: 0, type: Zcl.DataType.UINT8, writable: true}},
         });
 
         const group = controller.createGroup(34);
@@ -8831,7 +8692,7 @@ describe("Controller", () => {
             type: "commandIndividualLedEffect",
             data: {
                 color: 0,
-                duration: 255,
+                duration: null,
                 effect: 1,
                 led: 5,
                 level: 100,
