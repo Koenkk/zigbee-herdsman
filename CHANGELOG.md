@@ -1,5 +1,12 @@
 # Changelog
 
+## [6.4.2](https://github.com/Koenkk/zigbee-herdsman/compare/v6.4.1...v6.4.2) (2025-11-12)
+
+
+### Bug Fixes
+
+* **ignore:** bump the minor-patch group with 3 updates ([#1553](https://github.com/Koenkk/zigbee-herdsman/issues/1553)) ([6384ef2](https://github.com/Koenkk/zigbee-herdsman/commit/6384ef24d23d777a9e08dbdd7878dbeaee5e918c))
+
 ## [6.4.1](https://github.com/Koenkk/zigbee-herdsman/compare/v6.4.0...v6.4.1) (2025-11-11)
 
 
