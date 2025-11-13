@@ -2179,6 +2179,41 @@ export class EmberAdapter extends Adapter {
     }
 
     // queued
+    public async sendZclFrameInterPANBroadcastWithoutResponse(zclFrame: Zcl.Frame): Promise<void> {
+        return await this.queue.execute<void>(async () => {
+            const msgBuffalo = new EzspBuffalo(Buffer.alloc(MAXIMUM_INTERPAN_LENGTH));
+
+            // cache-enabled getters
+            const sourcePanId = await this.emberGetPanId();
+            const sourceEui64 = await this.emberGetEui64();
+
+            msgBuffalo.writeUInt16(SHORT_DEST_FRAME_CONTROL); // macFrameControl
+            msgBuffalo.writeUInt8(0); // sequence Skip Sequence number, stack sets the sequence number.
+            msgBuffalo.writeUInt16(ZSpec.INVALID_PAN_ID); // destPanId
+            msgBuffalo.writeUInt16(ZSpec.BroadcastAddress.SLEEPY); // destAddress (longAddress)
+            msgBuffalo.writeUInt16(sourcePanId); // sourcePanId
+            msgBuffalo.writeIeeeAddr(sourceEui64); // sourceAddress
+            msgBuffalo.writeUInt16(STUB_NWK_FRAME_CONTROL); // nwkFrameControl
+            msgBuffalo.writeUInt8(EmberInterpanMessageType.BROADCAST | INTERPAN_APS_FRAME_TYPE); // apsFrameControl
+            msgBuffalo.writeUInt16(zclFrame.cluster.ID);
+            msgBuffalo.writeUInt16(ZSpec.TOUCHLINK_PROFILE_ID);
+
+            logger.debug(() => `~~~> [ZCL TOUCHLINK BROADCAST NOREPLY header=${JSON.stringify(zclFrame.header)}]`, NS);
+            const status = await this.ezsp.ezspSendRawMessage(
+                Buffer.concat([msgBuffalo.getWritten(), zclFrame.toBuffer()]),
+                EmberTransmitPriority.NORMAL,
+                true,
+            );
+
+            if (status !== SLStatus.OK) {
+                throw new Error(`~x~> [ZCL TOUCHLINK BROADCAST NOREPLY] Failed to send with status=${SLStatus[status]}.`);
+            }
+
+            // NOTE: can use ezspRawTransmitCompleteHandler if needed here
+        });
+    }
+
+    // queued
     public async sendZclFrameInterPANBroadcast(zclFrame: Zcl.Frame, timeout: number): Promise<ZclPayload> {
         const command = zclFrame.command;
 

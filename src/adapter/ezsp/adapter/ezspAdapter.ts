@@ -526,6 +526,25 @@ export class EZSPAdapter extends Adapter {
         });
     }
 
+    public async sendZclFrameInterPANBroadcastWithoutResponse(zclFrame: Zcl.Frame): Promise<void> {
+        return await this.queue.execute<void>(async () => {
+            logger.debug("sendZclFrameInterPANBroadcastWithoutResponse", NS);
+
+            const frame = this.driver.makeEmberRawFrame();
+            frame.ieeeFrameControl = 0xc801;
+            frame.destPanId = 0xffff;
+            frame.destNodeId = 0xffff;
+            frame.sourcePanId = this.driver.networkParams.panId;
+            frame.ieeeAddress = this.driver.ieee;
+            frame.nwkFrameControl = 0x000b;
+            frame.appFrameControl = 0x0b;
+            frame.clusterId = zclFrame.cluster.ID;
+            frame.profileId = 0xc05e;
+
+            await this.driver.rawrequest(frame, zclFrame.toBuffer());
+        });
+    }
+
     public async sendZclFrameInterPANBroadcast(zclFrame: Zcl.Frame, timeout: number): Promise<ZclPayload> {
         return await this.queue.execute<ZclPayload>(async () => {
             logger.debug("sendZclFrameInterPANBroadcast", NS);

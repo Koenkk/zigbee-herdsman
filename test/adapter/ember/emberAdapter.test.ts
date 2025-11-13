@@ -3386,6 +3386,46 @@ describe("Ember Adapter Layer", () => {
             expect(mockEzspSendRawMessage).toHaveBeenCalledWith(expect.any(Buffer), 1, true);
         });
 
+        it("Adapter impl: sendZclFrameInterPANBroadcastWithoutResponse", async () => {
+            const zclFrame = Zcl.Frame.create(
+                Zcl.FrameType.SPECIFIC,
+                Zcl.Direction.CLIENT_TO_SERVER,
+                true,
+                undefined,
+                0,
+                "scanRequest",
+                Zcl.Clusters.touchlink.ID,
+                {transactionID: 1, zigbeeInformation: 4, touchlinkInformation: 18},
+                {},
+            );
+
+            await adapter.sendZclFrameInterPANBroadcastWithoutResponse(zclFrame);
+
+            expect(mockEzspSendRawMessage).toHaveBeenCalledTimes(1);
+            expect(mockEzspSendRawMessage).toHaveBeenCalledWith(expect.any(Buffer), 1, true);
+        });
+
+        it("Adapter impl: sendZclFrameInterPANBroadcastWithoutResponse fails", async () => {
+            mockEzspSendRawMessage.mockResolvedValueOnce(SLStatus.BUSY);
+            const zclFrame = Zcl.Frame.create(
+                Zcl.FrameType.SPECIFIC,
+                Zcl.Direction.CLIENT_TO_SERVER,
+                true,
+                undefined,
+                0,
+                "scanRequest",
+                Zcl.Clusters.touchlink.ID,
+                {transactionID: 1, zigbeeInformation: 4, touchlinkInformation: 18},
+                {},
+            );
+
+            await expect(adapter.sendZclFrameInterPANBroadcastWithoutResponse(zclFrame)).rejects.toThrow(
+                `~x~> [ZCL TOUCHLINK BROADCAST NOREPLY] Failed to send with status=${SLStatus[SLStatus.BUSY]}.`,
+            );
+            expect(mockEzspSendRawMessage).toHaveBeenCalledTimes(1);
+            expect(mockEzspSendRawMessage).toHaveBeenCalledWith(expect.any(Buffer), 1, true);
+        });
+
         it("Adapter impl: throws when sendZclFrameInterPANBroadcast command has no response", async () => {
             const commandName = "readRsp";
             const zclFrame = Zcl.Frame.create(

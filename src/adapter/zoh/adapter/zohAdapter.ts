@@ -625,6 +625,12 @@ export class ZoHAdapter extends Adapter {
     /* v8 ignore stop */
 
     /* v8 ignore start */
+    public async sendZclFrameInterPANBroadcastWithoutResponse(zclFrame: Zcl.Frame): Promise<void> {
+        return await Promise.reject(new Error(`not supported ${JSON.stringify(zclFrame)}`));
+    }
+    /* v8 ignore stop */
+
+    /* v8 ignore start */
     public async sendZclFrameInterPANBroadcast(zclFrame: Zcl.Frame, timeout: number): Promise<ZclPayload> {
         return await Promise.reject(new Error(`not supported ${JSON.stringify(zclFrame)}, ${timeout}`));
     }

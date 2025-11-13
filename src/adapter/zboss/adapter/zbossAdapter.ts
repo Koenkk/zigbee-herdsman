@@ -464,6 +464,10 @@ export class ZBOSSAdapter extends Adapter {
         return;
     }
 
+    public async sendZclFrameInterPANBroadcastWithoutResponse(zclFrame: Zcl.Frame): Promise<void> {
+        return await Promise.reject(new Error(`NOT SUPPORTED: sendZclFrameInterPANBroadcastWithoutResponse(${JSON.stringify(zclFrame)})`));
+    }
+
     public async sendZclFrameInterPANBroadcast(zclFrame: Zcl.Frame, timeout: number): Promise<ZclPayload> {
         return await Promise.reject(new Error(`NOT SUPPORTED: sendZclFrameInterPANBroadcast(${JSON.stringify(zclFrame)},${timeout})`));
     }

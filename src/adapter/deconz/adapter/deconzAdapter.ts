@@ -647,10 +647,10 @@ export class DeconzAdapter extends Adapter {
     public async sendZclFrameInterPANToIeeeAddr(_zclFrame: Zcl.Frame, _ieeeAddr: string): Promise<void> {
         await Promise.reject(new Error("not supported"));
     }
-    public async sendZclFrameInterPANBroadcast(_zclFrame: Zcl.Frame, _timeout: number): Promise<Events.ZclPayload> {
+    public async sendZclFrameInterPANBroadcastWithoutResponse(_zclFrame: Zcl.Frame): Promise<void> {
         return await Promise.reject(new Error("not supported"));
     }
-    public async sendZclFrameInterPANBroadcastWithResponse(_zclFrame: Zcl.Frame, _timeout: number): Promise<Events.ZclPayload> {
+    public async sendZclFrameInterPANBroadcast(_zclFrame: Zcl.Frame, _timeout: number): Promise<Events.ZclPayload> {
         return await Promise.reject(new Error("not supported"));
     }
     public async setChannelInterPAN(_channel: number): Promise<void> {

@@ -3922,6 +3922,35 @@ describe("zstack-adapter", () => {
         });
     });
 
+    it("Send zcl frame interpan without response", async () => {
+        basicMocks();
+        await adapter.start();
+        mockZnpRequest.mockClear();
+        mockQueueExecute.mockClear();
+
+        await adapter.sendZclFrameInterPANBroadcastWithoutResponse(touchlinkScanRequest);
+
+        expect(mockZnpRequest).toHaveBeenCalledTimes(1);
+        expect(mockZnpRequest).toHaveBeenCalledWith(
+            4,
+            "dataRequestExt",
+            {
+                clusterid: 4096,
+                data: touchlinkScanRequest.toBuffer(),
+                destendpoint: 254,
+                dstaddr: "0x000000000000ffff",
+                len: 9,
+                options: 0,
+                radius: 30,
+                srcendpoint: 12,
+                transid: 1,
+                dstaddrmode: 2,
+                dstpanid: 65535,
+            },
+            undefined,
+        );
+    });
+
     it("Send zcl frame interpan throw exception when command has no response", async () => {
         basicMocks();
         await adapter.start();

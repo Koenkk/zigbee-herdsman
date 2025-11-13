@@ -1062,6 +1062,23 @@ export class ZStackAdapter extends Adapter {
         });
     }
 
+    public async sendZclFrameInterPANBroadcastWithoutResponse(zclFrame: Zcl.Frame): Promise<void> {
+        return await this.queue.execute<void>(async () => {
+            await this.dataRequestExtended(
+                AddressMode.ADDR_16BIT,
+                0xffff,
+                0xfe,
+                0xffff,
+                12,
+                zclFrame.cluster.ID,
+                30,
+                zclFrame.toBuffer(),
+                10000,
+                false,
+            );
+        });
+    }
+
     public async sendZclFrameInterPANBroadcast(zclFrame: Zcl.Frame, timeout: number): Promise<Events.ZclPayload> {
         return await this.queue.execute<Events.ZclPayload>(async () => {
             const command = zclFrame.command;
