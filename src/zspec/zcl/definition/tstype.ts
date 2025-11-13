@@ -342,6 +342,7 @@ export type ClusterName =
     | "manuSpecificOsram"
     | "manuSpecificPhilips"
     | "manuSpecificPhilips2"
+    | "manuSpecificPhilipsPairing"
     | "manuSpecificSinope"
     | "manuSpecificLegrandDevices"
     | "manuSpecificLegrandDevices2"

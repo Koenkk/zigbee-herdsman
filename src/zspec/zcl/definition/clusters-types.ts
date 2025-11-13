@@ -5993,6 +5993,21 @@ export interface TClusters {
         };
         commandResponses: never;
     };
+    manuSpecificPhilipsPairing: {
+        attributes: never;
+        commands: {
+            /** ID: 0 */
+            hueResetRequest: {
+                /** Type: IEEE_ADDR */
+                extendedPANID: string;
+                /** Type: UINT8 */
+                serialCount: number;
+                /** Type: LIST_UINT32 */
+                serialNumbers: number[];
+            };
+        };
+        commandResponses: never;
+    };
     manuSpecificSinope: {
         attributes: {
             /** ID: 2 | Type: ENUM8 */
@@ -6194,8 +6209,8 @@ export interface TClusters {
                 /** Type: UINT8 */
                 payload: number;
             };
-            /** ID: 96 */
-            tuyaWeatherRequest: {
+            /** ID: 97 */
+            tuyaWeatherSync: {
                 /** Type: BUFFER */
                 payload: Buffer;
             };
@@ -6274,8 +6289,8 @@ export interface TClusters {
                 /** Type: UINT16 */
                 payloadSize: number;
             };
-            /** ID: 97 */
-            tuyaWeatherSync: {
+            /** ID: 96 */
+            tuyaWeatherRequest: {
                 /** Type: BUFFER */
                 payload: Buffer;
             };

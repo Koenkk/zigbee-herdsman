@@ -84,6 +84,7 @@ const mockAdapterSupportsDiscoverRoute = vi.fn();
 const mockSetChannelInterPAN = vi.fn();
 const mocksendZclFrameInterPANToIeeeAddr = vi.fn();
 const mocksendZclFrameInterPANBroadcast = vi.fn();
+const mocksendZclFrameInterPANBroadcastWithoutResponse = vi.fn();
 const mockRestoreChannelInterPAN = vi.fn();
 const mockAdapterPermitJoin = vi.fn();
 const mockDiscoverRoute = vi.fn();
@@ -326,6 +327,7 @@ const mocksClear = [
     mockSetChannelInterPAN,
     mocksendZclFrameInterPANToIeeeAddr,
     mocksendZclFrameInterPANBroadcast,
+    mocksendZclFrameInterPANBroadcastWithoutResponse,
     mockRestoreChannelInterPAN,
     mockAddInstallCode,
     mockAdapterGetNetworkParameters,
@@ -384,6 +386,7 @@ vi.mock("../src/adapter/z-stack/adapter/zStackAdapter", () => ({
         setChannelInterPAN: mockSetChannelInterPAN,
         sendZclFrameInterPANToIeeeAddr: mocksendZclFrameInterPANToIeeeAddr,
         sendZclFrameInterPANBroadcast: mocksendZclFrameInterPANBroadcast,
+        sendZclFrameInterPANBroadcastWithoutResponse: mocksendZclFrameInterPANBroadcastWithoutResponse,
         restoreChannelInterPAN: mockRestoreChannelInterPAN,
         sendZdo: mockAdapterSendZdo,
     })),
@@ -993,6 +996,79 @@ describe("Controller", () => {
             },
             command: {ID: 7, parameters: [{name: "transactionID", type: 35}], name: "resetToFactoryNew"},
         });
+    });
+
+    it("Touchlink factory reset hue without serial numbers", async () => {
+        await controller.start();
+
+        let error;
+        try {
+            await controller.touchlinkFactoryResetHue([]);
+        } catch (e) {
+            error = e;
+        }
+        expect(error).toStrictEqual(new Error("An empty list of serial numbers was supplied to touchlinkFactoryResetHue"));
+
+        expect(mockSetChannelInterPAN).toHaveBeenCalledTimes(0);
+    });
+
+    it("Touchlink factory reset hue without epan", async () => {
+        controller.options.network.extendedPanID = undefined;
+        await controller.start();
+
+        let error;
+        try {
+            await controller.touchlinkFactoryResetHue([]);
+        } catch (e) {
+            error = e;
+        }
+        expect(error).toStrictEqual(new Error("Must supply an extendedPanID to use touchlinkFactoryResetHue"));
+
+        expect(mockSetChannelInterPAN).toHaveBeenCalledTimes(0);
+    });
+
+    it("Touchlink factory reset hue", async () => {
+        await controller.start();
+        let counter = 0;
+        mocksendZclFrameInterPANBroadcastWithoutResponse.mockImplementation(() => {
+            counter++;
+            if (counter === 4) {
+                throw new Error("idk");
+            }
+        });
+        await controller.touchlinkFactoryResetHue([0xabcdef, 0x123456]);
+
+        // 16 channels to scan
+        expect(mockSetChannelInterPAN).toHaveBeenCalledTimes(16);
+        expect(mockSetChannelInterPAN).toHaveBeenCalledWith(26);
+        expect(mocksendZclFrameInterPANBroadcastWithoutResponse).toHaveBeenCalledTimes(16);
+        expect(deepClone(mocksendZclFrameInterPANBroadcastWithoutResponse.mock.calls[0][0])).toStrictEqual({
+            header: {
+                frameControl: {reservedBits: 0, frameType: 1, direction: 0, disableDefaultResponse: true, manufacturerSpecific: true},
+                transactionSequenceNumber: 0,
+                commandIdentifier: 0,
+                manufacturerCode: 4107,
+            },
+            payload: {extendedPANID: "0xdddddddddddddddd", serialCount: 2, serialNumbers: [0xabcdef, 0x123456]},
+            cluster: {
+                ID: 4096,
+                attributes: {},
+                name: "manuSpecificPhilipsPairing",
+                commands: expect.any(Object),
+                commandsResponse: expect.any(Object),
+                manufacturerCode: 4107,
+            },
+            command: {
+                ID: 0,
+                parameters: [
+                    {name: "extendedPANID", type: 240},
+                    {name: "serialCount", type: 32},
+                    {name: "serialNumbers", type: 1004},
+                ],
+                name: "hueResetRequest",
+            },
+        });
+        expect(mockRestoreChannelInterPAN).toHaveBeenCalledTimes(1);
     });
 
     it("Touchlink identify", async () => {

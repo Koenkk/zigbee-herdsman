@@ -245,6 +245,17 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
         return await this.touchlink.factoryResetFirst();
     }
 
+    public async touchlinkFactoryResetHue(serialNumbers: number[]): Promise<void> {
+        const extendedPanID = this.options.network.extendedPanID;
+        if (!extendedPanID) {
+            throw new Error("Must supply an extendedPanID to use touchlinkFactoryResetHue");
+        }
+        if (!serialNumbers.length) {
+            throw new Error("An empty list of serial numbers was supplied to touchlinkFactoryResetHue");
+        }
+        return await this.touchlink.factoryResetHue(`0x${Buffer.from(extendedPanID).toString("hex")}`, serialNumbers);
+    }
+
     public async addInstallCode(installCode: string): Promise<void> {
         // will throw if code cannot be parsed
         const [ieeeAddr, keyStr] = parseInstallCode(installCode);

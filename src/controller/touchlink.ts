@@ -143,6 +143,48 @@ export class Touchlink {
         return done;
     }
 
+    public async factoryResetHue(extendedPanID: string, serialNumbers: number[]): Promise<void> {
+        this.lock(true);
+
+        try {
+            for (const channel of scanChannels) {
+                logger.info(`Set InterPAN channel to '${channel}'`, NS);
+                await this.adapter.setChannelInterPAN(channel);
+
+                try {
+                    await this.adapter.sendZclFrameInterPANBroadcastWithoutResponse(this.createHueResetRequestFrame(extendedPanID, serialNumbers));
+
+                    // Try not to completely flood the airspace
+                    await wait(1000);
+                } catch (error) {
+                    logger.warning(`Hue reset request failed to send: '${error}'`, NS);
+                }
+            }
+        } finally {
+            logger.info("Restore InterPAN channel", NS);
+            await this.adapter.restoreChannelInterPAN();
+            this.lock(false);
+        }
+    }
+
+    private createHueResetRequestFrame(extendedPanID: string, serialNumbers: number[]): Zcl.Frame {
+        return Zcl.Frame.create(
+            Zcl.FrameType.SPECIFIC,
+            Zcl.Direction.CLIENT_TO_SERVER,
+            // disableDefaultResponse:
+            true,
+            Zcl.ManufacturerCode.SIGNIFY_NETHERLANDS_B_V,
+            // transactionSequenceNumber:
+            0,
+            // commandKey: 0
+            "hueResetRequest",
+            // clusterId: 0x1000. Same as touchlink, but with manufacturerCode
+            "manuSpecificPhilipsPairing",
+            {extendedPANID: extendedPanID, serialCount: serialNumbers.length, serialNumbers},
+            {},
+        );
+    }
+
     private createScanRequestFrame(transaction: number): Zcl.Frame {
         return Zcl.Frame.create(
             Zcl.FrameType.SPECIFIC,

@@ -4909,6 +4909,23 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         },
         commandsResponse: {},
     },
+    // Used to pair lights by serial number. Same ID as touchlink, but different manufacturerCode.
+    manuSpecificPhilipsPairing: {
+        ID: 0x1000,
+        manufacturerCode: ManufacturerCode.SIGNIFY_NETHERLANDS_B_V,
+        attributes: {},
+        commands: {
+            hueResetRequest: {
+                ID: 0,
+                parameters: [
+                    {name: "extendedPANID", type: DataType.IEEE_ADDR},
+                    {name: "serialCount", type: DataType.UINT8},
+                    {name: "serialNumbers", type: BuffaloZclDataType.LIST_UINT32},
+                ],
+            },
+        },
+        commandsResponse: {},
+    },
     manuSpecificSinope: {
         ID: 65281,
         manufacturerCode: ManufacturerCode.SINOPE_TECHNOLOGIES,
