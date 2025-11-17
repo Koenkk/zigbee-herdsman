@@ -2154,10 +2154,6 @@ describe("Ember Adapter Layer", () => {
             await expect(adapter.reset("hard")).rejects.toThrow(`Not supported 'hard'.`);
         });
 
-        it("Adapter impl: supportsBackup", async () => {
-            await expect(adapter.supportsBackup()).resolves.toStrictEqual(true);
-        });
-
         it("Adapter impl: backup", async () => {
             await expect(adapter.backup([])).resolves.toStrictEqual({
                 networkOptions: {

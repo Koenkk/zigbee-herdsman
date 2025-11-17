@@ -41,8 +41,8 @@ const makeController = () => {
             adapter: "ember",
         },
         databasePath: "database.db",
-        databaseBackupPath: "database.db.backup",
         backupPath: "coordinator_backup.json",
+        dataArchivePath: "backup-%TIMESTAMP%",
         adapter: {
             // concurrent?: number;
             // delay?: number;
