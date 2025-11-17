@@ -1,5 +1,13 @@
 # Changelog
 
+## [6.4.2](https://github.com/Koenkk/zigbee-herdsman/compare/v6.4.1...v6.4.2) (2025-11-17)
+
+
+### Bug Fixes
+
+* **ignore:** bump the minor-patch group with 3 updates ([#1553](https://github.com/Koenkk/zigbee-herdsman/issues/1553)) ([6384ef2](https://github.com/Koenkk/zigbee-herdsman/commit/6384ef24d23d777a9e08dbdd7878dbeaee5e918c))
+* **ignore:** update zigbee-on-host to 0.2.2 ([#1558](https://github.com/Koenkk/zigbee-herdsman/issues/1558)) ([4ee3449](https://github.com/Koenkk/zigbee-herdsman/commit/4ee34498fa8626e7372717e5ff10780c2bf7cd34))
+
 ## [6.4.1](https://github.com/Koenkk/zigbee-herdsman/compare/v6.4.0...v6.4.1) (2025-11-11)
 
 
