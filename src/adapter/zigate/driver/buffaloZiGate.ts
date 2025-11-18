@@ -171,8 +171,7 @@ class BuffaloZiGate extends Buffalo {
         return value;
     }
     public writeUInt16BE(value: number): void {
-        this.buffer.writeUInt16BE(value, this.position);
-        this.position += 2;
+        this.position = this.buffer.writeUInt16BE(value, this.position);
     }
 
     public readUInt32BE(): number {
@@ -181,8 +180,7 @@ class BuffaloZiGate extends Buffalo {
         return value;
     }
     public writeUInt32BE(value: number): void {
-        this.buffer.writeUInt32BE(value, this.position);
-        this.position += 4;
+        this.position = this.buffer.writeUInt32BE(value, this.position);
     }
 
     public readListUInt16BE(length: number): number[] {

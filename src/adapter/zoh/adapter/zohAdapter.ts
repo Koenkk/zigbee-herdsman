@@ -818,17 +818,14 @@ export class ZoHAdapter extends Adapter {
         // transform into a ZCL frame
         const data = Buffer.alloc((nwkHeader.frameControlExt?.appId === 0x02 /* ZGP */ ? /* v8 ignore next */ 20 : 15) + payload.byteLength);
         let offset = 0;
-        data.writeUInt8(0b00000001, offset); // frameControl: FrameType.SPECIFIC + Direction.CLIENT_TO_SERVER + disableDefaultResponse=false
-        offset += 1;
-        data.writeUInt8(macHeader.sequenceNumber ?? /* v8 ignore next */ 0, offset);
-        offset += 1;
-        data.writeUInt8(cmdId === 0xe0 ? 0x04 /* commissioning notification */ : 0x00 /* notification */, offset);
-        offset += 1;
+        offset = data.writeUInt8(0b00000001, offset); // frameControl: FrameType.SPECIFIC + Direction.CLIENT_TO_SERVER + disableDefaultResponse=false
+        offset = data.writeUInt8(macHeader.sequenceNumber ?? /* v8 ignore next */ 0, offset);
+        offset = data.writeUInt8(cmdId === 0xe0 ? 0x04 /* commissioning notification */ : 0x00 /* notification */, offset);
 
         if (nwkHeader.frameControlExt) {
             /* v8 ignore start */
             if (cmdId === 0xe0) {
-                data.writeUInt16LE(
+                offset = data.writeUInt16LE(
                     (nwkHeader.frameControlExt.appId & 0x7) |
                         (((nwkHeader.frameControlExt.rxAfterTx ? 1 : 0) & 0x1) << 3) |
                         ((nwkHeader.frameControlExt.securityLevel & 0x3) << 4),
@@ -836,7 +833,7 @@ export class ZoHAdapter extends Adapter {
                 );
                 /* v8 ignore stop */
             } else {
-                data.writeUInt16LE(
+                offset = data.writeUInt16LE(
                     (nwkHeader.frameControlExt.appId & 0x7) |
                         ((nwkHeader.frameControlExt.securityLevel & 0x3) << 6) |
                         /* v8 ignore next */ (((nwkHeader.frameControlExt.rxAfterTx ? 1 : 0) & 0x3) << 11),
@@ -844,33 +841,25 @@ export class ZoHAdapter extends Adapter {
                 );
             }
         } else {
-            data.writeUInt16LE(0, offset); // options, only srcID present
+            offset = data.writeUInt16LE(0, offset); // options, only srcID present
         }
-
-        offset += 2;
 
         /* v8 ignore start */
         if (nwkHeader.frameControlExt?.appId === 0x02 /* ZGP */) {
             // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
-            data.writeBigUInt64LE(macHeader.source64!, offset);
-            offset += 8;
+            offset = data.writeBigUInt64LE(macHeader.source64!, offset);
             // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
-            data.writeUInt8(nwkHeader.endpoint!, offset);
-            offset += 1;
+            offset = data.writeUInt8(nwkHeader.endpoint!, offset);
             /* v8 ignore stop */
         } else {
             // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
-            data.writeUInt32LE(nwkHeader.sourceId!, offset);
-            offset += 4;
+            offset = data.writeUInt32LE(nwkHeader.sourceId!, offset);
         }
 
-        data.writeUInt32LE(nwkHeader.securityFrameCounter ?? 0, offset);
-        offset += 4;
-        data.writeUInt8(cmdId, offset);
-        offset += 1;
-        data.writeUInt8(payload.byteLength, offset);
-        offset += 1;
-        data.set(payload, offset);
+        offset = data.writeUInt32LE(nwkHeader.securityFrameCounter ?? 0, offset);
+        offset = data.writeUInt8(cmdId, offset);
+        offset = data.writeUInt8(payload.byteLength, offset);
+        payload.copy(data, offset);
 
         const zclPayload: ZclPayload = {
             clusterID: 0x21 /* Green Power */,
@@ -884,8 +873,7 @@ export class ZoHAdapter extends Adapter {
             endpoint: ZSpec.GP_ENDPOINT,
             linkquality: rssi, // TODO: convert RSSI to LQA
             groupID: ZSpec.GP_GROUP_ID,
-            // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
-            wasBroadcast: macHeader.destination64 === undefined && macHeader.destination16! >= 0xfff8,
+            wasBroadcast: false,
             destinationEndpoint: ZSpec.GP_ENDPOINT,
         };
 

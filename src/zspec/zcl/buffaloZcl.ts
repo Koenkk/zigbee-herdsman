@@ -611,8 +611,7 @@ export class BuffaloZcl extends Buffalo {
     }
 
     private writeBigEndianUInt24(value: number): void {
-        this.buffer.writeUIntBE(value, this.position, 3);
-        this.position += 3;
+        this.position = this.buffer.writeUIntBE(value, this.position, 3);
     }
 
     private readBigEndianUInt24(): number {
