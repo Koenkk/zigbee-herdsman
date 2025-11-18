@@ -135,7 +135,6 @@ export class ZclFrame {
                 throw new Error(`Parameter '${parameter.name}' is missing`);
             }
 
-            // TODO: refs (attributes)
             const valueToWrite = Utils.processParameterWrite(parameter, this.payload[parameter.name]);
 
             buffalo.write(parameter.type, valueToWrite, {});
@@ -199,7 +198,6 @@ export class ZclFrame {
 
             try {
                 const valueToProcess = buffalo.read(parameter.type, options);
-                // TODO: refs (attributes)
                 payload[parameter.name] = Utils.processParameterRead(parameter, valueToProcess);
             } catch (error) {
                 throw new Error(`Cannot parse '${command.name}:${parameter.name}' (${(error as Error).message})`);

@@ -271,8 +271,7 @@ export class Group extends ZigbeeEntity {
             const attribute = cluster.getAttribute(nameOrID);
 
             if (attribute) {
-                // TODO: refs are not processed (pre-loop?)
-                const attrData = Zcl.Utils.processAttributeWrite(attribute, attributes[nameOrID], attributes);
+                const attrData = Zcl.Utils.processAttributeWrite(attribute, attributes[nameOrID]);
 
                 payload.push({attrId: attribute.ID, attrData, dataType: attribute.type});
             } else if (!Number.isNaN(Number(nameOrID))) {

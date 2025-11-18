@@ -203,9 +203,9 @@ export interface TClusters {
             overTempTotalDwell: number;
             /** ID=0x0010 | type=BITMAP8 | writable=true | default=0 */
             devTempAlarmMask: number;
-            /** ID=0x0011 | type=INT16 | writable=true | min=-200 | max=200 | maxExclRef=highTempThres */
+            /** ID=0x0011 | type=INT16 | writable=true | min=-200 | max=200 */
             lowTempThres: number;
-            /** ID=0x0012 | type=INT16 | writable=true | min=-200 | max=200 | minExclRef=lowTempThres */
+            /** ID=0x0012 | type=INT16 | writable=true | min=-200 | max=200 */
             highTempThres: number;
             /** ID=0x0013 | type=UINT24 | writable=true | max=16777215 */
             lowTempDwellTripPoint: number;
@@ -635,25 +635,25 @@ export interface TClusters {
     };
     genLevelCtrl: {
         attributes: {
-            /** ID=0x0000 | type=UINT8 | reportRequired=true | sceneRequired=true | required=true | default=255 | minRef=minLevel | maxRef=maxLevel */
+            /** ID=0x0000 | type=UINT8 | reportRequired=true | sceneRequired=true | required=true | default=255 */
             currentLevel: number;
             /** ID=0x0001 | type=UINT16 | max=65535 | default=0 */
             remainingTime: number;
-            /** ID=0x0002 | type=UINT8 | default=0 | maxRef=maxLevel */
+            /** ID=0x0002 | type=UINT8 | default=0 */
             minLevel: number;
-            /** ID=0x0003 | type=UINT8 | max=255 | default=255 | minRef=minLevel */
+            /** ID=0x0003 | type=UINT8 | max=255 | default=255 */
             maxLevel: number;
-            /** ID=0x0004 | type=UINT16 | reportRequired=true | sceneRequired=true | default=0 | minRef=minFrequency | maxRef=maxFrequency */
+            /** ID=0x0004 | type=UINT16 | reportRequired=true | sceneRequired=true | default=0 */
             currentFrequency: number;
-            /** ID=0x0005 | type=UINT16 | default=0 | maxRef=maxFrequency */
+            /** ID=0x0005 | type=UINT16 | default=0 */
             minFrequency: number;
-            /** ID=0x0006 | type=UINT16 | max=65535 | default=0 | minRef=minFrequency */
+            /** ID=0x0006 | type=UINT16 | max=65535 | default=0 */
             maxFrequency: number;
             /** ID=0x000f | type=BITMAP8 | writable=true | default=0 */
             options: number;
             /** ID=0x0010 | type=UINT16 | writable=true | max=65535 | default=0 */
             onOffTransitionTime: number;
-            /** ID=0x0011 | type=UINT8 | writable=true | default=255 | minRef=minLevel | maxRef=maxLevel */
+            /** ID=0x0011 | type=UINT8 | writable=true | default=255 */
             onLevel: number;
             /** ID=0x0012 | type=UINT16 | writable=true | max=65534 | default=65535 */
             onTransitionTime: number;
@@ -768,25 +768,25 @@ export interface TClusters {
     };
     genLevelCtrlForLighting: {
         attributes: {
-            /** ID=0x0000 | type=UINT8 | reportRequired=true | sceneRequired=true | required=true | min=1 | max=254 | minRef=minLevel | maxRef=maxLevel */
+            /** ID=0x0000 | type=UINT8 | reportRequired=true | sceneRequired=true | required=true | min=1 | max=254 */
             currentLevel: number;
             /** ID=0x0001 | type=UINT16 | max=65535 | default=0 */
             remainingTime: number;
-            /** ID=0x0002 | type=UINT8 | default=0 | maxRef=maxLevel */
+            /** ID=0x0002 | type=UINT8 | default=0 */
             minLevel: number;
-            /** ID=0x0003 | type=UINT8 | max=255 | default=255 | minRef=minLevel */
+            /** ID=0x0003 | type=UINT8 | max=255 | default=255 */
             maxLevel: number;
-            /** ID=0x0004 | type=UINT16 | reportRequired=true | sceneRequired=true | default=0 | minRef=minFrequency | maxRef=maxFrequency | special=Unknown,0000 */
+            /** ID=0x0004 | type=UINT16 | reportRequired=true | sceneRequired=true | default=0 | special=Unknown,0000 */
             currentFrequency: number;
-            /** ID=0x0005 | type=UINT16 | default=0 | maxRef=maxFrequency */
+            /** ID=0x0005 | type=UINT16 | default=0 */
             minFrequency: number;
-            /** ID=0x0006 | type=UINT16 | max=65535 | default=0 | minRef=minFrequency */
+            /** ID=0x0006 | type=UINT16 | max=65535 | default=0 */
             maxFrequency: number;
             /** ID=0x000f | type=BITMAP8 | required=true | writable=true | default=0 */
             options: number;
             /** ID=0x0010 | type=UINT16 | writable=true | max=65535 | default=0 */
             onOffTransitionTime: number;
-            /** ID=0x0011 | type=UINT8 | writable=true | default=255 | minRef=minLevel | maxRef=maxLevel */
+            /** ID=0x0011 | type=UINT8 | writable=true | default=255 */
             onLevel: number;
             /** ID=0x0012 | type=UINT16 | writable=true | max=65534 | default=65535 */
             onTransitionTime: number;
@@ -1439,7 +1439,7 @@ export interface TClusters {
             scanAttempts: number;
             /** ID=0x0021 | type=UINT16 | writable=true | min=1 | max=65535 | default=100 */
             timeBetweenScans: number;
-            /** ID=0x0022 | type=UINT16 | writable=true | min=1 | default=60 | maxRef=maxRejoinInterval */
+            /** ID=0x0022 | type=UINT16 | writable=true | min=1 | default=60 */
             rejoinInterval: number;
             /** ID=0x0023 | type=UINT16 | writable=true | min=1 | max=65535 | default=3600 */
             maxRejoinInterval: number;
@@ -1971,25 +1971,25 @@ export interface TClusters {
     };
     pulseWidthModulation: {
         attributes: {
-            /** ID=0x0000 | type=UINT8 | reportRequired=true | sceneRequired=true | required=true | default=255 | minRef=minLevel | maxRef=maxLevel */
+            /** ID=0x0000 | type=UINT8 | reportRequired=true | sceneRequired=true | required=true | default=255 */
             currentLevel: number;
             /** ID=0x0001 | type=UINT16 | max=65535 | default=0 */
             remainingTime: number;
-            /** ID=0x0002 | type=UINT8 | default=0 | maxRef=maxLevel | required=true */
+            /** ID=0x0002 | type=UINT8 | default=0 | required=true */
             minLevel: number;
-            /** ID=0x0003 | type=UINT8 | max=100 | default=100 | minRef=minLevel | required=true */
+            /** ID=0x0003 | type=UINT8 | max=100 | default=100 | required=true */
             maxLevel: number;
-            /** ID=0x0004 | type=UINT16 | reportRequired=true | sceneRequired=true | default=0 | minRef=minFrequency | maxRef=maxFrequency | required=true */
+            /** ID=0x0004 | type=UINT16 | reportRequired=true | sceneRequired=true | default=0 | required=true */
             currentFrequency: number;
-            /** ID=0x0005 | type=UINT16 | default=0 | maxRef=maxFrequency | required=true */
+            /** ID=0x0005 | type=UINT16 | default=0 | required=true */
             minFrequency: number;
-            /** ID=0x0006 | type=UINT16 | max=65535 | default=0 | minRef=minFrequency | required=true */
+            /** ID=0x0006 | type=UINT16 | max=65535 | default=0 | required=true */
             maxFrequency: number;
             /** ID=0x000f | type=BITMAP8 | writable=true | default=0 */
             options: number;
             /** ID=0x0010 | type=UINT16 | writable=true | max=65535 | default=0 */
             onOffTransitionTime: number;
-            /** ID=0x0011 | type=UINT8 | writable=true | default=255 | minRef=minLevel | maxRef=maxLevel */
+            /** ID=0x0011 | type=UINT8 | writable=true | default=255 */
             onLevel: number;
             /** ID=0x0012 | type=UINT16 | writable=true | max=65534 | default=65535 */
             onTransitionTime: number;
@@ -2700,7 +2700,7 @@ export interface TClusters {
                 userid: number;
                 /** type=UINT32 */
                 zigbeelocalstarttime: number;
-                /** type=UINT32 | minExclRef=zigbeelocalstarttime */
+                /** type=UINT32 */
                 zigbeelocalendtime: number;
             };
             /** ID=0x0f | response=15 */
@@ -2723,7 +2723,7 @@ export interface TClusters {
                 holidayscheduleid: number;
                 /** type=UINT32 */
                 zigbeelocalstarttime: number;
-                /** type=UINT32 | minExclRef=zigbeelocalstarttime */
+                /** type=UINT32 */
                 zigbeelocalendtime: number;
                 /** type=ENUM8 */
                 opermodelduringholiday: number;
@@ -2894,7 +2894,7 @@ export interface TClusters {
                 status: number;
                 /** type=UINT32 */
                 zigbeelocalstarttime: number;
-                /** type=UINT32 | minExclRef=zigbeelocalstarttime */
+                /** type=UINT32 */
                 zigbeelocalendtime: number;
             };
             /** ID=0x10 */
@@ -2915,7 +2915,7 @@ export interface TClusters {
                 status: number;
                 /** type=UINT32 */
                 zigbeelocalstarttime: number;
-                /** type=UINT32 | minExclRef=zigbeelocalstarttime */
+                /** type=UINT32 */
                 zigbeelocalendtime: number;
                 /** type=ENUM8 */
                 opermodelduringholiday: number;
@@ -3089,7 +3089,7 @@ export interface TClusters {
             stop: Record<string, never>;
             /** ID=0x04 */
             goToLiftValue: {
-                /** type=UINT16 | minRef=installedClosedLimitLiftCm | maxRef=installedOpenLimitLiftCm */
+                /** type=UINT16 */
                 liftvalue: number;
             };
             /** ID=0x05 */
@@ -3099,7 +3099,7 @@ export interface TClusters {
             };
             /** ID=0x07 */
             goToTiltValue: {
-                /** type=UINT16 | minRef=installedClosedLimitTiltDdegree | maxRef=installedOpenLimitTiltDdegree */
+                /** type=UINT16 */
                 tiltvalue: number;
             };
             /** ID=0x08 */
@@ -3229,13 +3229,13 @@ export interface TClusters {
             systemTypeConfig: number;
             /** ID=0x0010 | type=INT8 | writable=true | min=-25 | max=25 | default=0 */
             localTemperatureCalibration: number;
-            /** ID=0x0011 | type=INT16 | writable=true | sceneRequired=true | default=2600 | minRef=minCoolSetpointLimit | maxRef=maxCoolSetpointLimit */
+            /** ID=0x0011 | type=INT16 | writable=true | sceneRequired=true | default=2600 */
             occupiedCoolingSetpoint: number;
-            /** ID=0x0012 | type=INT16 | writable=true | sceneRequired=true | default=2000 | minRef=minHeatSetpointLimit | maxRef=maxHeatSetpointLimit */
+            /** ID=0x0012 | type=INT16 | writable=true | sceneRequired=true | default=2000 */
             occupiedHeatingSetpoint: number;
-            /** ID=0x0013 | type=INT16 | writable=true | default=2600 | minRef=minCoolSetpointLimit | maxRef=maxCoolSetpointLimit */
+            /** ID=0x0013 | type=INT16 | writable=true | default=2600 */
             unoccupiedCoolingSetpoint: number;
-            /** ID=0x0014 | type=INT16 | writable=true | default=2000 | minRef=minHeatSetpointLimit | maxRef=maxHeatSetpointLimit */
+            /** ID=0x0014 | type=INT16 | writable=true | default=2000 */
             unoccupiedHeatingSetpoint: number;
             /** ID=0x0015 | type=INT16 | writable=true | min=-27315 | max=32767 | default=700 */
             minHeatSetpointLimit: number;
@@ -3277,17 +3277,17 @@ export interface TClusters {
             setpointChangeAmount: number;
             /** ID=0x0032 | type=UTC | max=4294967294 | default=0 */
             setpointChangeSourceTimeStamp: number;
-            /** ID=0x0034 | type=UINT8 | writable=true | minRef=occupiedSetbackMin | maxRef=occupiedSetbackMax */
+            /** ID=0x0034 | type=UINT8 | writable=true */
             occupiedSetback: number;
-            /** ID=0x0035 | type=UINT8 | min=0 | maxExclRef=occupiedSetbackMax */
+            /** ID=0x0035 | type=UINT8 | min=0 */
             occupiedSetbackMin: number;
-            /** ID=0x0036 | type=UINT8 | minExclRef=occupiedSetbackMin */
+            /** ID=0x0036 | type=UINT8 */
             occupiedSetbackMax: number;
-            /** ID=0x0037 | type=UINT8 | writable=true | minRef=unoccupiedSetbackMin | maxRef=unoccupiedSetbackMax */
+            /** ID=0x0037 | type=UINT8 | writable=true */
             unoccupiedSetback: number;
-            /** ID=0x0038 | type=UINT8 | min=0 | maxExclRef=unoccupiedSetbackMax */
+            /** ID=0x0038 | type=UINT8 | min=0 */
             unoccupiedSetbackMin: number;
-            /** ID=0x0039 | type=UINT8 | minExclRef=unoccupiedSetbackMin */
+            /** ID=0x0039 | type=UINT8 */
             unoccupiedSetbackMax: number;
             /** ID=0x003a | type=UINT8 | writable=true */
             emergencyHeatDelta: number;
@@ -3544,7 +3544,7 @@ export interface TClusters {
         attributes: {
             /** ID=0x0000 | type=UINT8 | max=100 */
             relativeHumidity: number;
-            /** ID=0x0001 | type=UINT8 | reportRequired=true | required=true | maxRef=dehumidMaxCool */
+            /** ID=0x0001 | type=UINT8 | reportRequired=true | required=true */
             dehumidCooling: number;
             /** ID=0x0010 | type=UINT8 | writable=true | required=true | min=30 | max=100 | default=50 */
             rhDehumidSetpoint: number;
@@ -3592,7 +3592,7 @@ export interface TClusters {
             driftCompensation: number;
             /** ID=0x0006 | type=CHAR_STR | maxLen=254 */
             compensationText: string;
-            /** ID=0x0007 | type=UINT16 | reportRequired=true | sceneRequired=true | max=65279 | default=250 | minRef=colorTempPhysicalMin | maxRef=colorTempPhysicalMax | special=Undefined,0000 */
+            /** ID=0x0007 | type=UINT16 | reportRequired=true | sceneRequired=true | max=65279 | default=250 | special=Undefined,0000 */
             colorTemperature: number;
             /** ID=0x0008 | type=ENUM8 | required=true | max=2 | default=1 */
             colorMode: number;
@@ -3674,11 +3674,11 @@ export interface TClusters {
             colorLoopStoredEnhancedHue: number;
             /** ID=0x400a | type=BITMAP16 | required=true | max=31 | default=0 */
             colorCapabilities: number;
-            /** ID=0x400b | type=UINT16 | max=65279 | default=0 | maxRef=colorTempPhysicalMax */
+            /** ID=0x400b | type=UINT16 | max=65279 | default=0 */
             colorTempPhysicalMin: number;
-            /** ID=0x400c | type=UINT16 | max=65279 | default=65279 | minRef=colorTempPhysicalMin */
+            /** ID=0x400c | type=UINT16 | max=65279 | default=65279 */
             colorTempPhysicalMax: number;
-            /** ID=0x400d | type=UINT16 | minRef=colorTempPhysicalMin | maxRef=colorTemperature */
+            /** ID=0x400d | type=UINT16 */
             coupleColorTempToLevelMin: number;
             /** ID=0x4010 | type=UINT16 | writable=true | max=65279 | special=SetColorTempToPreviousValue,ffff */
             startUpColorTemperature: number;
@@ -3989,11 +3989,11 @@ export interface TClusters {
             physicalMaxLevel: number;
             /** ID=0x0002 | type=BITMAP8 | default=0 */
             ballastStatus: number;
-            /** ID=0x0010 | type=UINT8 | writable=true | required=true | min=1 | max=254 | defaultRef=physicalMinLevel | minRef=physicalMinLevel | maxRef=maxLevel */
+            /** ID=0x0010 | type=UINT8 | writable=true | required=true | min=1 | max=254 */
             minLevel: number;
-            /** ID=0x0011 | type=UINT8 | writable=true | required=true | min=1 | max=254 | defaultRef=physicalMaxLevel | minRef=minLevel | maxRef=physicalMaxLevel */
+            /** ID=0x0011 | type=UINT8 | writable=true | required=true | min=1 | max=254 */
             maxLevel: number;
-            /** ID=0x0012 | type=UINT8 | writable=true | max=254 | defaultRef=physicalMaxLevel */
+            /** ID=0x0012 | type=UINT8 | writable=true | max=254 */
             powerOnLevel: number;
             /** ID=0x0013 | type=UINT16 | writable=true | max=65534 | default=0 */
             powerOnFadeTime: number;
@@ -4027,9 +4027,9 @@ export interface TClusters {
         attributes: {
             /** ID=0x0000 | type=UINT16 | reportRequired=true | required=true | max=65535 | default=0 | special=TooLowToBeMeasured,0000,Invalid,ffff */
             measuredValue: number;
-            /** ID=0x0001 | type=UINT16 | required=true | min=1 | max=65533 | maxExclRef=maxMeasuredValue */
+            /** ID=0x0001 | type=UINT16 | required=true | min=1 | max=65533 */
             minMeasuredValue: number;
-            /** ID=0x0002 | type=UINT16 | required=true | min=2 | max=65534 | minExclRef=minMeasuredValue */
+            /** ID=0x0002 | type=UINT16 | required=true | min=2 | max=65534 */
             maxMeasuredValue: number;
             /** ID=0x0003 | type=UINT16 | max=2048 */
             tolerance: number;
@@ -4053,11 +4053,11 @@ export interface TClusters {
     };
     msTemperatureMeasurement: {
         attributes: {
-            /** ID=0x0000 | type=INT16 | reportRequired=true | required=true | minRef=minMeasuredValue | maxRef=maxMeasuredValue */
+            /** ID=0x0000 | type=INT16 | reportRequired=true | required=true */
             measuredValue: number;
-            /** ID=0x0001 | type=INT16 | required=true | min=-27315 | max=32766 | maxExclRef=maxMeasuredValue */
+            /** ID=0x0001 | type=INT16 | required=true | min=-27315 | max=32766 */
             minMeasuredValue: number;
-            /** ID=0x0002 | type=INT16 | required=true | min=-27314 | max=32767 | minExclRef=minMeasuredValue */
+            /** ID=0x0002 | type=INT16 | required=true | min=-27314 | max=32767 */
             maxMeasuredValue: number;
             /** ID=0x0003 | type=UINT16 | max=2048 */
             tolerance: number;
@@ -4073,19 +4073,19 @@ export interface TClusters {
     };
     msPressureMeasurement: {
         attributes: {
-            /** ID=0x0000 | type=INT16 | reportRequired=true | required=true | minRef=minMeasuredValue | maxRef=maxMeasuredValue */
+            /** ID=0x0000 | type=INT16 | reportRequired=true | required=true */
             measuredValue: number;
-            /** ID=0x0001 | type=INT16 | required=true | min=-32767 | max=32766 | maxExclRef=maxMeasuredValue */
+            /** ID=0x0001 | type=INT16 | required=true | min=-32767 | max=32766 */
             minMeasuredValue: number;
-            /** ID=0x0002 | type=INT16 | required=true | min=-32766 | max=32767 | minExclRef=minMeasuredValue */
+            /** ID=0x0002 | type=INT16 | required=true | min=-32766 | max=32767 */
             maxMeasuredValue: number;
             /** ID=0x0003 | type=UINT16 | max=2048 */
             tolerance: number;
-            /** ID=0x0010 | type=INT16 | default=0 | minRef=minScaledValue | maxRef=maxScaledValue */
+            /** ID=0x0010 | type=INT16 | default=0 */
             scaledValue: number;
-            /** ID=0x0011 | type=INT16 | min=-32767 | max=32766 | maxExclRef=maxScaledValue */
+            /** ID=0x0011 | type=INT16 | min=-32767 | max=32766 */
             minScaledValue: number;
-            /** ID=0x0012 | type=INT16 | min=-32766 | max=32767 | minExclRef=minScaledValue */
+            /** ID=0x0012 | type=INT16 | min=-32766 | max=32767 */
             maxScaledValue: number;
             /** ID=0x0013 | type=UINT16 | max=2048 */
             scaledTolerance: number;
@@ -4097,11 +4097,11 @@ export interface TClusters {
     };
     msFlowMeasurement: {
         attributes: {
-            /** ID=0x0000 | type=UINT16 | reportRequired=true | required=true | minRef=minMeasuredValue | maxRef=maxMeasuredValue */
+            /** ID=0x0000 | type=UINT16 | reportRequired=true | required=true */
             measuredValue: number;
-            /** ID=0x0001 | type=UINT16 | required=true | max=65533 | maxExclRef=maxMeasuredValue */
+            /** ID=0x0001 | type=UINT16 | required=true | max=65533 */
             minMeasuredValue: number;
-            /** ID=0x0002 | type=UINT16 | required=true | min=1 | max=65534 | minExclRef=minMeasuredValue */
+            /** ID=0x0002 | type=UINT16 | required=true | min=1 | max=65534 */
             maxMeasuredValue: number;
             /** ID=0x0003 | type=UINT16 | max=2048 */
             tolerance: number;
@@ -4111,11 +4111,11 @@ export interface TClusters {
     };
     msRelativeHumidity: {
         attributes: {
-            /** ID=0x0000 | type=UINT16 | reportRequired=true | required=true | minRef=minMeasuredValue | maxRef=maxMeasuredValue */
+            /** ID=0x0000 | type=UINT16 | reportRequired=true | required=true */
             measuredValue: number;
-            /** ID=0x0001 | type=UINT16 | required=true | max=9999 | maxExclRef=maxMeasuredValue */
+            /** ID=0x0001 | type=UINT16 | required=true | max=9999 */
             minMeasuredValue: number;
-            /** ID=0x0002 | type=UINT16 | required=true | min=1 | max=10000 | minExclRef=minMeasuredValue */
+            /** ID=0x0002 | type=UINT16 | required=true | min=1 | max=10000 */
             maxMeasuredValue: number;
             /** ID=0x0003 | type=UINT16 | max=2048 */
             tolerance: number;
@@ -4169,11 +4169,11 @@ export interface TClusters {
     };
     msLeafWetness: {
         attributes: {
-            /** ID=0x0000 | type=UINT16 | reportRequired=true | required=true | minRef=minMeasuredValue | maxRef=maxMeasuredValue */
+            /** ID=0x0000 | type=UINT16 | reportRequired=true | required=true */
             measuredValue: number;
-            /** ID=0x0001 | type=UINT16 | required=true | max=9999 | maxExclRef=maxMeasuredValue */
+            /** ID=0x0001 | type=UINT16 | required=true | max=9999 */
             minMeasuredValue: number;
-            /** ID=0x0002 | type=UINT16 | required=true | min=1 | max=10000 | minExclRef=minMeasuredValue */
+            /** ID=0x0002 | type=UINT16 | required=true | min=1 | max=10000 */
             maxMeasuredValue: number;
             /** ID=0x0003 | type=UINT16 | max=2048 */
             tolerance: number;
@@ -4183,11 +4183,11 @@ export interface TClusters {
     };
     msSoilMoisture: {
         attributes: {
-            /** ID=0x0000 | type=UINT16 | reportRequired=true | required=true | minRef=minMeasuredValue | maxRef=maxMeasuredValue */
+            /** ID=0x0000 | type=UINT16 | reportRequired=true | required=true */
             measuredValue: number;
-            /** ID=0x0001 | type=UINT16 | required=true | max=9999 | maxExclRef=maxMeasuredValue */
+            /** ID=0x0001 | type=UINT16 | required=true | max=9999 */
             minMeasuredValue: number;
-            /** ID=0x0002 | type=UINT16 | required=true | min=1 | max=10000 | minExclRef=minMeasuredValue */
+            /** ID=0x0002 | type=UINT16 | required=true | min=1 | max=10000 */
             maxMeasuredValue: number;
             /** ID=0x0003 | type=UINT16 | max=2048 */
             tolerance: number;
@@ -4197,11 +4197,11 @@ export interface TClusters {
     };
     pHMeasurement: {
         attributes: {
-            /** ID=0x0000 | type=UINT16 | reportRequired=true | required=true | minRef=minMeasuredValue | maxRef=maxMeasuredValue */
+            /** ID=0x0000 | type=UINT16 | reportRequired=true | required=true */
             measuredValue: number;
-            /** ID=0x0001 | type=UINT16 | required=true | max=1399 | maxExclRef=maxMeasuredValue */
+            /** ID=0x0001 | type=UINT16 | required=true | max=1399 */
             minMeasuredValue: number;
-            /** ID=0x0002 | type=UINT16 | required=true | min=1 | max=1400 | minExclRef=minMeasuredValue */
+            /** ID=0x0002 | type=UINT16 | required=true | min=1 | max=1400 */
             maxMeasuredValue: number;
             /** ID=0x0003 | type=UINT16 | max=200 */
             tolerance: number;
@@ -4211,11 +4211,11 @@ export interface TClusters {
     };
     msElectricalConductivity: {
         attributes: {
-            /** ID=0x0000 | type=UINT16 | reportRequired=true | required=true | minRef=minMeasuredValue | maxRef=maxMeasuredValue */
+            /** ID=0x0000 | type=UINT16 | reportRequired=true | required=true */
             measuredValue: number;
-            /** ID=0x0001 | type=UINT16 | required=true | max=65533 | maxExclRef=maxMeasuredValue */
+            /** ID=0x0001 | type=UINT16 | required=true | max=65533 */
             minMeasuredValue: number;
-            /** ID=0x0002 | type=UINT16 | required=true | min=1 | max=65534 | minExclRef=minMeasuredValue */
+            /** ID=0x0002 | type=UINT16 | required=true | min=1 | max=65534 */
             maxMeasuredValue: number;
             /** ID=0x0003 | type=UINT16 | max=100 */
             tolerance: number;
@@ -4225,11 +4225,11 @@ export interface TClusters {
     };
     msWindSpeed: {
         attributes: {
-            /** ID=0x0000 | type=UINT16 | reportRequired=true | required=true | minRef=minMeasuredValue | maxRef=maxMeasuredValue */
+            /** ID=0x0000 | type=UINT16 | reportRequired=true | required=true */
             measuredValue: number;
-            /** ID=0x0001 | type=UINT16 | required=true | max=65533 | maxExclRef=maxMeasuredValue */
+            /** ID=0x0001 | type=UINT16 | required=true | max=65533 */
             minMeasuredValue: number;
-            /** ID=0x0002 | type=UINT16 | required=true | min=1 | max=65534 | minExclRef=minMeasuredValue */
+            /** ID=0x0002 | type=UINT16 | required=true | min=1 | max=65534 */
             maxMeasuredValue: number;
             /** ID=0x0003 | type=UINT16 | max=776 | default=0 */
             tolerance: number;
@@ -4239,11 +4239,11 @@ export interface TClusters {
     };
     msCarbonMonoxide: {
         attributes: {
-            /** ID=0x0000 | type=SINGLE_PREC | reportRequired=true | required=true | minRef=minMeasuredValue | maxRef=maxMeasuredValue */
+            /** ID=0x0000 | type=SINGLE_PREC | reportRequired=true | required=true */
             measuredValue: number;
-            /** ID=0x0001 | type=SINGLE_PREC | required=true | min=0 | maxExclRef=maxMeasuredValue */
+            /** ID=0x0001 | type=SINGLE_PREC | required=true | min=0 */
             minMeasuredValue: number;
-            /** ID=0x0002 | type=SINGLE_PREC | required=true | max=1 | minExclRef=minMeasuredValue */
+            /** ID=0x0002 | type=SINGLE_PREC | required=true | max=1 */
             maxMeasuredValue: number;
             /** ID=0x0003 | type=SINGLE_PREC */
             tolerance: number;
@@ -4253,11 +4253,11 @@ export interface TClusters {
     };
     msCO2: {
         attributes: {
-            /** ID=0x0000 | type=SINGLE_PREC | reportRequired=true | required=true | minRef=minMeasuredValue | maxRef=maxMeasuredValue */
+            /** ID=0x0000 | type=SINGLE_PREC | reportRequired=true | required=true */
             measuredValue: number;
-            /** ID=0x0001 | type=SINGLE_PREC | required=true | min=0 | maxExclRef=maxMeasuredValue */
+            /** ID=0x0001 | type=SINGLE_PREC | required=true | min=0 */
             minMeasuredValue: number;
-            /** ID=0x0002 | type=SINGLE_PREC | required=true | max=1 | minExclRef=minMeasuredValue */
+            /** ID=0x0002 | type=SINGLE_PREC | required=true | max=1 */
             maxMeasuredValue: number;
             /** ID=0x0003 | type=SINGLE_PREC */
             tolerance: number;
@@ -4271,11 +4271,11 @@ export interface TClusters {
     };
     msEthylene: {
         attributes: {
-            /** ID=0x0000 | type=SINGLE_PREC | reportRequired=true | required=true | minRef=minMeasuredValue | maxRef=maxMeasuredValue */
+            /** ID=0x0000 | type=SINGLE_PREC | reportRequired=true | required=true */
             measuredValue: number;
-            /** ID=0x0001 | type=SINGLE_PREC | required=true | min=0 | maxExclRef=maxMeasuredValue */
+            /** ID=0x0001 | type=SINGLE_PREC | required=true | min=0 */
             minMeasuredValue: number;
-            /** ID=0x0002 | type=SINGLE_PREC | required=true | max=1 | minExclRef=minMeasuredValue */
+            /** ID=0x0002 | type=SINGLE_PREC | required=true | max=1 */
             maxMeasuredValue: number;
             /** ID=0x0003 | type=SINGLE_PREC */
             tolerance: number;
@@ -4285,11 +4285,11 @@ export interface TClusters {
     };
     msEthyleneOxide: {
         attributes: {
-            /** ID=0x0000 | type=SINGLE_PREC | reportRequired=true | required=true | minRef=minMeasuredValue | maxRef=maxMeasuredValue */
+            /** ID=0x0000 | type=SINGLE_PREC | reportRequired=true | required=true */
             measuredValue: number;
-            /** ID=0x0001 | type=SINGLE_PREC | required=true | min=0 | maxExclRef=maxMeasuredValue */
+            /** ID=0x0001 | type=SINGLE_PREC | required=true | min=0 */
             minMeasuredValue: number;
-            /** ID=0x0002 | type=SINGLE_PREC | required=true | max=1 | minExclRef=minMeasuredValue */
+            /** ID=0x0002 | type=SINGLE_PREC | required=true | max=1 */
             maxMeasuredValue: number;
             /** ID=0x0003 | type=SINGLE_PREC */
             tolerance: number;
@@ -4299,11 +4299,11 @@ export interface TClusters {
     };
     msHydrogen: {
         attributes: {
-            /** ID=0x0000 | type=SINGLE_PREC | reportRequired=true | required=true | minRef=minMeasuredValue | maxRef=maxMeasuredValue */
+            /** ID=0x0000 | type=SINGLE_PREC | reportRequired=true | required=true */
             measuredValue: number;
-            /** ID=0x0001 | type=SINGLE_PREC | required=true | min=0 | maxExclRef=maxMeasuredValue */
+            /** ID=0x0001 | type=SINGLE_PREC | required=true | min=0 */
             minMeasuredValue: number;
-            /** ID=0x0002 | type=SINGLE_PREC | required=true | max=1 | minExclRef=minMeasuredValue */
+            /** ID=0x0002 | type=SINGLE_PREC | required=true | max=1 */
             maxMeasuredValue: number;
             /** ID=0x0003 | type=SINGLE_PREC */
             tolerance: number;
@@ -4313,11 +4313,11 @@ export interface TClusters {
     };
     msHydrogenSulfide: {
         attributes: {
-            /** ID=0x0000 | type=SINGLE_PREC | reportRequired=true | required=true | minRef=minMeasuredValue | maxRef=maxMeasuredValue */
+            /** ID=0x0000 | type=SINGLE_PREC | reportRequired=true | required=true */
             measuredValue: number;
-            /** ID=0x0001 | type=SINGLE_PREC | required=true | min=0 | maxExclRef=maxMeasuredValue */
+            /** ID=0x0001 | type=SINGLE_PREC | required=true | min=0 */
             minMeasuredValue: number;
-            /** ID=0x0002 | type=SINGLE_PREC | required=true | max=1 | minExclRef=minMeasuredValue */
+            /** ID=0x0002 | type=SINGLE_PREC | required=true | max=1 */
             maxMeasuredValue: number;
             /** ID=0x0003 | type=SINGLE_PREC */
             tolerance: number;
@@ -4327,11 +4327,11 @@ export interface TClusters {
     };
     msNitricOxide: {
         attributes: {
-            /** ID=0x0000 | type=SINGLE_PREC | reportRequired=true | required=true | minRef=minMeasuredValue | maxRef=maxMeasuredValue */
+            /** ID=0x0000 | type=SINGLE_PREC | reportRequired=true | required=true */
             measuredValue: number;
-            /** ID=0x0001 | type=SINGLE_PREC | required=true | min=0 | maxExclRef=maxMeasuredValue */
+            /** ID=0x0001 | type=SINGLE_PREC | required=true | min=0 */
             minMeasuredValue: number;
-            /** ID=0x0002 | type=SINGLE_PREC | required=true | max=1 | minExclRef=minMeasuredValue */
+            /** ID=0x0002 | type=SINGLE_PREC | required=true | max=1 */
             maxMeasuredValue: number;
             /** ID=0x0003 | type=SINGLE_PREC */
             tolerance: number;
@@ -4341,11 +4341,11 @@ export interface TClusters {
     };
     msNitrogenDioxide: {
         attributes: {
-            /** ID=0x0000 | type=SINGLE_PREC | reportRequired=true | required=true | minRef=minMeasuredValue | maxRef=maxMeasuredValue */
+            /** ID=0x0000 | type=SINGLE_PREC | reportRequired=true | required=true */
             measuredValue: number;
-            /** ID=0x0001 | type=SINGLE_PREC | required=true | min=0 | maxExclRef=maxMeasuredValue */
+            /** ID=0x0001 | type=SINGLE_PREC | required=true | min=0 */
             minMeasuredValue: number;
-            /** ID=0x0002 | type=SINGLE_PREC | required=true | max=1 | minExclRef=minMeasuredValue */
+            /** ID=0x0002 | type=SINGLE_PREC | required=true | max=1 */
             maxMeasuredValue: number;
             /** ID=0x0003 | type=SINGLE_PREC */
             tolerance: number;
@@ -4355,11 +4355,11 @@ export interface TClusters {
     };
     msOxygen: {
         attributes: {
-            /** ID=0x0000 | type=SINGLE_PREC | reportRequired=true | required=true | minRef=minMeasuredValue | maxRef=maxMeasuredValue */
+            /** ID=0x0000 | type=SINGLE_PREC | reportRequired=true | required=true */
             measuredValue: number;
-            /** ID=0x0001 | type=SINGLE_PREC | required=true | min=0 | maxExclRef=maxMeasuredValue */
+            /** ID=0x0001 | type=SINGLE_PREC | required=true | min=0 */
             minMeasuredValue: number;
-            /** ID=0x0002 | type=SINGLE_PREC | required=true | max=1 | minExclRef=minMeasuredValue */
+            /** ID=0x0002 | type=SINGLE_PREC | required=true | max=1 */
             maxMeasuredValue: number;
             /** ID=0x0003 | type=SINGLE_PREC */
             tolerance: number;
@@ -4369,11 +4369,11 @@ export interface TClusters {
     };
     msOzone: {
         attributes: {
-            /** ID=0x0000 | type=SINGLE_PREC | reportRequired=true | required=true | minRef=minMeasuredValue | maxRef=maxMeasuredValue */
+            /** ID=0x0000 | type=SINGLE_PREC | reportRequired=true | required=true */
             measuredValue: number;
-            /** ID=0x0001 | type=SINGLE_PREC | required=true | min=0 | maxExclRef=maxMeasuredValue */
+            /** ID=0x0001 | type=SINGLE_PREC | required=true | min=0 */
             minMeasuredValue: number;
-            /** ID=0x0002 | type=SINGLE_PREC | required=true | max=1 | minExclRef=minMeasuredValue */
+            /** ID=0x0002 | type=SINGLE_PREC | required=true | max=1 */
             maxMeasuredValue: number;
             /** ID=0x0003 | type=SINGLE_PREC */
             tolerance: number;
@@ -4383,11 +4383,11 @@ export interface TClusters {
     };
     msSulfurDioxide: {
         attributes: {
-            /** ID=0x0000 | type=SINGLE_PREC | reportRequired=true | required=true | minRef=minMeasuredValue | maxRef=maxMeasuredValue */
+            /** ID=0x0000 | type=SINGLE_PREC | reportRequired=true | required=true */
             measuredValue: number;
-            /** ID=0x0001 | type=SINGLE_PREC | required=true | min=0 | maxExclRef=maxMeasuredValue */
+            /** ID=0x0001 | type=SINGLE_PREC | required=true | min=0 */
             minMeasuredValue: number;
-            /** ID=0x0002 | type=SINGLE_PREC | required=true | max=1 | minExclRef=minMeasuredValue */
+            /** ID=0x0002 | type=SINGLE_PREC | required=true | max=1 */
             maxMeasuredValue: number;
             /** ID=0x0003 | type=SINGLE_PREC */
             tolerance: number;
@@ -4397,11 +4397,11 @@ export interface TClusters {
     };
     msDissolvedOxygen: {
         attributes: {
-            /** ID=0x0000 | type=SINGLE_PREC | reportRequired=true | required=true | minRef=minMeasuredValue | maxRef=maxMeasuredValue */
+            /** ID=0x0000 | type=SINGLE_PREC | reportRequired=true | required=true */
             measuredValue: number;
-            /** ID=0x0001 | type=SINGLE_PREC | required=true | min=0 | maxExclRef=maxMeasuredValue */
+            /** ID=0x0001 | type=SINGLE_PREC | required=true | min=0 */
             minMeasuredValue: number;
-            /** ID=0x0002 | type=SINGLE_PREC | required=true | max=1 | minExclRef=minMeasuredValue */
+            /** ID=0x0002 | type=SINGLE_PREC | required=true | max=1 */
             maxMeasuredValue: number;
             /** ID=0x0003 | type=SINGLE_PREC */
             tolerance: number;
@@ -4411,11 +4411,11 @@ export interface TClusters {
     };
     msBromate: {
         attributes: {
-            /** ID=0x0000 | type=SINGLE_PREC | reportRequired=true | required=true | minRef=minMeasuredValue | maxRef=maxMeasuredValue */
+            /** ID=0x0000 | type=SINGLE_PREC | reportRequired=true | required=true */
             measuredValue: number;
-            /** ID=0x0001 | type=SINGLE_PREC | required=true | min=0 | maxExclRef=maxMeasuredValue */
+            /** ID=0x0001 | type=SINGLE_PREC | required=true | min=0 */
             minMeasuredValue: number;
-            /** ID=0x0002 | type=SINGLE_PREC | required=true | max=1 | minExclRef=minMeasuredValue */
+            /** ID=0x0002 | type=SINGLE_PREC | required=true | max=1 */
             maxMeasuredValue: number;
             /** ID=0x0003 | type=SINGLE_PREC */
             tolerance: number;
@@ -4425,11 +4425,11 @@ export interface TClusters {
     };
     msChloramines: {
         attributes: {
-            /** ID=0x0000 | type=SINGLE_PREC | reportRequired=true | required=true | minRef=minMeasuredValue | maxRef=maxMeasuredValue */
+            /** ID=0x0000 | type=SINGLE_PREC | reportRequired=true | required=true */
             measuredValue: number;
-            /** ID=0x0001 | type=SINGLE_PREC | required=true | min=0 | maxExclRef=maxMeasuredValue */
+            /** ID=0x0001 | type=SINGLE_PREC | required=true | min=0 */
             minMeasuredValue: number;
-            /** ID=0x0002 | type=SINGLE_PREC | required=true | max=1 | minExclRef=minMeasuredValue */
+            /** ID=0x0002 | type=SINGLE_PREC | required=true | max=1 */
             maxMeasuredValue: number;
             /** ID=0x0003 | type=SINGLE_PREC */
             tolerance: number;
@@ -4439,11 +4439,11 @@ export interface TClusters {
     };
     msChlorine: {
         attributes: {
-            /** ID=0x0000 | type=SINGLE_PREC | reportRequired=true | required=true | minRef=minMeasuredValue | maxRef=maxMeasuredValue */
+            /** ID=0x0000 | type=SINGLE_PREC | reportRequired=true | required=true */
             measuredValue: number;
-            /** ID=0x0001 | type=SINGLE_PREC | required=true | min=0 | maxExclRef=maxMeasuredValue */
+            /** ID=0x0001 | type=SINGLE_PREC | required=true | min=0 */
             minMeasuredValue: number;
-            /** ID=0x0002 | type=SINGLE_PREC | required=true | max=1 | minExclRef=minMeasuredValue */
+            /** ID=0x0002 | type=SINGLE_PREC | required=true | max=1 */
             maxMeasuredValue: number;
             /** ID=0x0003 | type=SINGLE_PREC */
             tolerance: number;
@@ -4453,11 +4453,11 @@ export interface TClusters {
     };
     msFecalColiformAndEColi: {
         attributes: {
-            /** ID=0x0000 | type=SINGLE_PREC | reportRequired=true | required=true | minRef=minMeasuredValue | maxRef=maxMeasuredValue */
+            /** ID=0x0000 | type=SINGLE_PREC | reportRequired=true | required=true */
             measuredValue: number;
-            /** ID=0x0001 | type=SINGLE_PREC | required=true | min=0 | maxExclRef=maxMeasuredValue */
+            /** ID=0x0001 | type=SINGLE_PREC | required=true | min=0 */
             minMeasuredValue: number;
-            /** ID=0x0002 | type=SINGLE_PREC | required=true | max=1 | minExclRef=minMeasuredValue */
+            /** ID=0x0002 | type=SINGLE_PREC | required=true | max=1 */
             maxMeasuredValue: number;
             /** ID=0x0003 | type=SINGLE_PREC */
             tolerance: number;
@@ -4467,11 +4467,11 @@ export interface TClusters {
     };
     msFluoride: {
         attributes: {
-            /** ID=0x0000 | type=SINGLE_PREC | reportRequired=true | required=true | minRef=minMeasuredValue | maxRef=maxMeasuredValue */
+            /** ID=0x0000 | type=SINGLE_PREC | reportRequired=true | required=true */
             measuredValue: number;
-            /** ID=0x0001 | type=SINGLE_PREC | required=true | min=0 | maxExclRef=maxMeasuredValue */
+            /** ID=0x0001 | type=SINGLE_PREC | required=true | min=0 */
             minMeasuredValue: number;
-            /** ID=0x0002 | type=SINGLE_PREC | required=true | max=1 | minExclRef=minMeasuredValue */
+            /** ID=0x0002 | type=SINGLE_PREC | required=true | max=1 */
             maxMeasuredValue: number;
             /** ID=0x0003 | type=SINGLE_PREC */
             tolerance: number;
@@ -4481,11 +4481,11 @@ export interface TClusters {
     };
     msHaloaceticAcids: {
         attributes: {
-            /** ID=0x0000 | type=SINGLE_PREC | reportRequired=true | required=true | minRef=minMeasuredValue | maxRef=maxMeasuredValue */
+            /** ID=0x0000 | type=SINGLE_PREC | reportRequired=true | required=true */
             measuredValue: number;
-            /** ID=0x0001 | type=SINGLE_PREC | required=true | min=0 | maxExclRef=maxMeasuredValue */
+            /** ID=0x0001 | type=SINGLE_PREC | required=true | min=0 */
             minMeasuredValue: number;
-            /** ID=0x0002 | type=SINGLE_PREC | required=true | max=1 | minExclRef=minMeasuredValue */
+            /** ID=0x0002 | type=SINGLE_PREC | required=true | max=1 */
             maxMeasuredValue: number;
             /** ID=0x0003 | type=SINGLE_PREC */
             tolerance: number;
@@ -4495,11 +4495,11 @@ export interface TClusters {
     };
     msTotalTrihalomethanes: {
         attributes: {
-            /** ID=0x0000 | type=SINGLE_PREC | reportRequired=true | required=true | minRef=minMeasuredValue | maxRef=maxMeasuredValue */
+            /** ID=0x0000 | type=SINGLE_PREC | reportRequired=true | required=true */
             measuredValue: number;
-            /** ID=0x0001 | type=SINGLE_PREC | required=true | min=0 | maxExclRef=maxMeasuredValue */
+            /** ID=0x0001 | type=SINGLE_PREC | required=true | min=0 */
             minMeasuredValue: number;
-            /** ID=0x0002 | type=SINGLE_PREC | required=true | max=1 | minExclRef=minMeasuredValue */
+            /** ID=0x0002 | type=SINGLE_PREC | required=true | max=1 */
             maxMeasuredValue: number;
             /** ID=0x0003 | type=SINGLE_PREC */
             tolerance: number;
@@ -4509,11 +4509,11 @@ export interface TClusters {
     };
     msTotalColiformBacteria: {
         attributes: {
-            /** ID=0x0000 | type=SINGLE_PREC | reportRequired=true | required=true | minRef=minMeasuredValue | maxRef=maxMeasuredValue */
+            /** ID=0x0000 | type=SINGLE_PREC | reportRequired=true | required=true */
             measuredValue: number;
-            /** ID=0x0001 | type=SINGLE_PREC | required=true | min=0 | maxExclRef=maxMeasuredValue */
+            /** ID=0x0001 | type=SINGLE_PREC | required=true | min=0 */
             minMeasuredValue: number;
-            /** ID=0x0002 | type=SINGLE_PREC | required=true | max=1 | minExclRef=minMeasuredValue */
+            /** ID=0x0002 | type=SINGLE_PREC | required=true | max=1 */
             maxMeasuredValue: number;
             /** ID=0x0003 | type=SINGLE_PREC */
             tolerance: number;
@@ -4523,11 +4523,11 @@ export interface TClusters {
     };
     msTurbidity: {
         attributes: {
-            /** ID=0x0000 | type=SINGLE_PREC | reportRequired=true | required=true | minRef=minMeasuredValue | maxRef=maxMeasuredValue */
+            /** ID=0x0000 | type=SINGLE_PREC | reportRequired=true | required=true */
             measuredValue: number;
-            /** ID=0x0001 | type=SINGLE_PREC | required=true | min=0 | maxExclRef=maxMeasuredValue */
+            /** ID=0x0001 | type=SINGLE_PREC | required=true | min=0 */
             minMeasuredValue: number;
-            /** ID=0x0002 | type=SINGLE_PREC | required=true | max=1 | minExclRef=minMeasuredValue */
+            /** ID=0x0002 | type=SINGLE_PREC | required=true | max=1 */
             maxMeasuredValue: number;
             /** ID=0x0003 | type=SINGLE_PREC */
             tolerance: number;
@@ -4537,11 +4537,11 @@ export interface TClusters {
     };
     msCopper: {
         attributes: {
-            /** ID=0x0000 | type=SINGLE_PREC | reportRequired=true | required=true | minRef=minMeasuredValue | maxRef=maxMeasuredValue */
+            /** ID=0x0000 | type=SINGLE_PREC | reportRequired=true | required=true */
             measuredValue: number;
-            /** ID=0x0001 | type=SINGLE_PREC | required=true | min=0 | maxExclRef=maxMeasuredValue */
+            /** ID=0x0001 | type=SINGLE_PREC | required=true | min=0 */
             minMeasuredValue: number;
-            /** ID=0x0002 | type=SINGLE_PREC | required=true | max=1 | minExclRef=minMeasuredValue */
+            /** ID=0x0002 | type=SINGLE_PREC | required=true | max=1 */
             maxMeasuredValue: number;
             /** ID=0x0003 | type=SINGLE_PREC */
             tolerance: number;
@@ -4551,11 +4551,11 @@ export interface TClusters {
     };
     msLead: {
         attributes: {
-            /** ID=0x0000 | type=SINGLE_PREC | reportRequired=true | required=true | minRef=minMeasuredValue | maxRef=maxMeasuredValue */
+            /** ID=0x0000 | type=SINGLE_PREC | reportRequired=true | required=true */
             measuredValue: number;
-            /** ID=0x0001 | type=SINGLE_PREC | required=true | min=0 | maxExclRef=maxMeasuredValue */
+            /** ID=0x0001 | type=SINGLE_PREC | required=true | min=0 */
             minMeasuredValue: number;
-            /** ID=0x0002 | type=SINGLE_PREC | required=true | max=1 | minExclRef=minMeasuredValue */
+            /** ID=0x0002 | type=SINGLE_PREC | required=true | max=1 */
             maxMeasuredValue: number;
             /** ID=0x0003 | type=SINGLE_PREC */
             tolerance: number;
@@ -4565,11 +4565,11 @@ export interface TClusters {
     };
     msManganese: {
         attributes: {
-            /** ID=0x0000 | type=SINGLE_PREC | reportRequired=true | required=true | minRef=minMeasuredValue | maxRef=maxMeasuredValue */
+            /** ID=0x0000 | type=SINGLE_PREC | reportRequired=true | required=true */
             measuredValue: number;
-            /** ID=0x0001 | type=SINGLE_PREC | required=true | min=0 | maxExclRef=maxMeasuredValue */
+            /** ID=0x0001 | type=SINGLE_PREC | required=true | min=0 */
             minMeasuredValue: number;
-            /** ID=0x0002 | type=SINGLE_PREC | required=true | max=1 | minExclRef=minMeasuredValue */
+            /** ID=0x0002 | type=SINGLE_PREC | required=true | max=1 */
             maxMeasuredValue: number;
             /** ID=0x0003 | type=SINGLE_PREC */
             tolerance: number;
@@ -4579,11 +4579,11 @@ export interface TClusters {
     };
     msSulfate: {
         attributes: {
-            /** ID=0x0000 | type=SINGLE_PREC | reportRequired=true | required=true | minRef=minMeasuredValue | maxRef=maxMeasuredValue */
+            /** ID=0x0000 | type=SINGLE_PREC | reportRequired=true | required=true */
             measuredValue: number;
-            /** ID=0x0001 | type=SINGLE_PREC | required=true | min=0 | maxExclRef=maxMeasuredValue */
+            /** ID=0x0001 | type=SINGLE_PREC | required=true | min=0 */
             minMeasuredValue: number;
-            /** ID=0x0002 | type=SINGLE_PREC | required=true | max=1 | minExclRef=minMeasuredValue */
+            /** ID=0x0002 | type=SINGLE_PREC | required=true | max=1 */
             maxMeasuredValue: number;
             /** ID=0x0003 | type=SINGLE_PREC */
             tolerance: number;
@@ -4593,11 +4593,11 @@ export interface TClusters {
     };
     msBromodichloromethane: {
         attributes: {
-            /** ID=0x0000 | type=SINGLE_PREC | reportRequired=true | required=true | minRef=minMeasuredValue | maxRef=maxMeasuredValue */
+            /** ID=0x0000 | type=SINGLE_PREC | reportRequired=true | required=true */
             measuredValue: number;
-            /** ID=0x0001 | type=SINGLE_PREC | required=true | min=0 | maxExclRef=maxMeasuredValue */
+            /** ID=0x0001 | type=SINGLE_PREC | required=true | min=0 */
             minMeasuredValue: number;
-            /** ID=0x0002 | type=SINGLE_PREC | required=true | max=1 | minExclRef=minMeasuredValue */
+            /** ID=0x0002 | type=SINGLE_PREC | required=true | max=1 */
             maxMeasuredValue: number;
             /** ID=0x0003 | type=SINGLE_PREC */
             tolerance: number;
@@ -4607,11 +4607,11 @@ export interface TClusters {
     };
     msBromoform: {
         attributes: {
-            /** ID=0x0000 | type=SINGLE_PREC | reportRequired=true | required=true | minRef=minMeasuredValue | maxRef=maxMeasuredValue */
+            /** ID=0x0000 | type=SINGLE_PREC | reportRequired=true | required=true */
             measuredValue: number;
-            /** ID=0x0001 | type=SINGLE_PREC | required=true | min=0 | maxExclRef=maxMeasuredValue */
+            /** ID=0x0001 | type=SINGLE_PREC | required=true | min=0 */
             minMeasuredValue: number;
-            /** ID=0x0002 | type=SINGLE_PREC | required=true | max=1 | minExclRef=minMeasuredValue */
+            /** ID=0x0002 | type=SINGLE_PREC | required=true | max=1 */
             maxMeasuredValue: number;
             /** ID=0x0003 | type=SINGLE_PREC */
             tolerance: number;
@@ -4621,11 +4621,11 @@ export interface TClusters {
     };
     msChlorodibromomethane: {
         attributes: {
-            /** ID=0x0000 | type=SINGLE_PREC | reportRequired=true | required=true | minRef=minMeasuredValue | maxRef=maxMeasuredValue */
+            /** ID=0x0000 | type=SINGLE_PREC | reportRequired=true | required=true */
             measuredValue: number;
-            /** ID=0x0001 | type=SINGLE_PREC | required=true | min=0 | maxExclRef=maxMeasuredValue */
+            /** ID=0x0001 | type=SINGLE_PREC | required=true | min=0 */
             minMeasuredValue: number;
-            /** ID=0x0002 | type=SINGLE_PREC | required=true | max=1 | minExclRef=minMeasuredValue */
+            /** ID=0x0002 | type=SINGLE_PREC | required=true | max=1 */
             maxMeasuredValue: number;
             /** ID=0x0003 | type=SINGLE_PREC */
             tolerance: number;
@@ -4635,11 +4635,11 @@ export interface TClusters {
     };
     msChloroform: {
         attributes: {
-            /** ID=0x0000 | type=SINGLE_PREC | reportRequired=true | required=true | minRef=minMeasuredValue | maxRef=maxMeasuredValue */
+            /** ID=0x0000 | type=SINGLE_PREC | reportRequired=true | required=true */
             measuredValue: number;
-            /** ID=0x0001 | type=SINGLE_PREC | required=true | min=0 | maxExclRef=maxMeasuredValue */
+            /** ID=0x0001 | type=SINGLE_PREC | required=true | min=0 */
             minMeasuredValue: number;
-            /** ID=0x0002 | type=SINGLE_PREC | required=true | max=1 | minExclRef=minMeasuredValue */
+            /** ID=0x0002 | type=SINGLE_PREC | required=true | max=1 */
             maxMeasuredValue: number;
             /** ID=0x0003 | type=SINGLE_PREC */
             tolerance: number;
@@ -4649,11 +4649,11 @@ export interface TClusters {
     };
     msSodium: {
         attributes: {
-            /** ID=0x0000 | type=SINGLE_PREC | reportRequired=true | required=true | minRef=minMeasuredValue | maxRef=maxMeasuredValue */
+            /** ID=0x0000 | type=SINGLE_PREC | reportRequired=true | required=true */
             measuredValue: number;
-            /** ID=0x0001 | type=SINGLE_PREC | required=true | min=0 | maxExclRef=maxMeasuredValue */
+            /** ID=0x0001 | type=SINGLE_PREC | required=true | min=0 */
             minMeasuredValue: number;
-            /** ID=0x0002 | type=SINGLE_PREC | required=true | max=1 | minExclRef=minMeasuredValue */
+            /** ID=0x0002 | type=SINGLE_PREC | required=true | max=1 */
             maxMeasuredValue: number;
             /** ID=0x0003 | type=SINGLE_PREC */
             tolerance: number;
@@ -4663,11 +4663,11 @@ export interface TClusters {
     };
     pm25Measurement: {
         attributes: {
-            /** ID=0x0000 | type=SINGLE_PREC | reportRequired=true | required=true | minRef=minMeasuredValue | maxRef=maxMeasuredValue */
+            /** ID=0x0000 | type=SINGLE_PREC | reportRequired=true | required=true */
             measuredValue: number;
-            /** ID=0x0001 | type=SINGLE_PREC | required=true | min=0 | maxExclRef=maxMeasuredValue */
+            /** ID=0x0001 | type=SINGLE_PREC | required=true | min=0 */
             measuredMinValue: number;
-            /** ID=0x0002 | type=SINGLE_PREC | required=true | max=1 | minExclRef=minMeasuredValue */
+            /** ID=0x0002 | type=SINGLE_PREC | required=true | max=1 */
             measuredMaxValue: number;
             /** ID=0x0003 | type=SINGLE_PREC */
             tolerance: number;
@@ -4677,11 +4677,11 @@ export interface TClusters {
     };
     msFormaldehyde: {
         attributes: {
-            /** ID=0x0000 | type=SINGLE_PREC | reportRequired=true | required=true | minRef=minMeasuredValue | maxRef=maxMeasuredValue */
+            /** ID=0x0000 | type=SINGLE_PREC | reportRequired=true | required=true */
             measuredValue: number;
-            /** ID=0x0001 | type=SINGLE_PREC | required=true | min=0 | maxExclRef=maxMeasuredValue */
+            /** ID=0x0001 | type=SINGLE_PREC | required=true | min=0 */
             minMeasuredValue: number;
-            /** ID=0x0002 | type=SINGLE_PREC | required=true | max=1 | minExclRef=minMeasuredValue */
+            /** ID=0x0002 | type=SINGLE_PREC | required=true | max=1 */
             maxMeasuredValue: number;
             /** ID=0x0003 | type=SINGLE_PREC */
             tolerance: number;

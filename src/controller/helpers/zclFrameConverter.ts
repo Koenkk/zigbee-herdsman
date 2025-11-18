@@ -29,8 +29,7 @@ function attributeKeyValue<Cl extends number | string, Custom extends TCustomClu
         const attribute = cluster.getAttribute(item.attrId);
 
         if (attribute) {
-            // XXX: refs that are "after this item" won't be populated (pre-loop?)
-            const attrData = Zcl.Utils.processAttributePostRead(attribute, item.attrData, payload);
+            const attrData = Zcl.Utils.processAttributePostRead(attribute, item.attrData);
 
             payload[attribute.name] = attrData;
         } else {

@@ -309,25 +309,11 @@ describe("ZCL Utils", () => {
             expect(Zcl.Utils.processAttributeWrite(attr, Number.NaN)).toStrictEqual(7);
         });
 
-        it("NaN with default ref returns ref value", () => {
-            const attr = createAttribute({writable: true, defaultRef: "myRef"});
-            expect(Zcl.Utils.processAttributeWrite(attr, Number.NaN, {myRef: 9})).toStrictEqual(9);
-        });
-
         it("NaN without default returns non-value sentinel", () => {
             const type = Zcl.DataType.UINT8;
             const sentinel = ZCL_TYPE_INVALID_BY_TYPE[type];
             expect(sentinel).not.toBeUndefined();
             const attr = createAttribute({writable: true, type});
-            expect(Zcl.Utils.processAttributeWrite(attr, Number.NaN)).toStrictEqual(sentinel);
-        });
-
-        it("NaN with default ref value not available returns non-value sentinel", () => {
-            const type = Zcl.DataType.UINT8;
-            const sentinel = ZCL_TYPE_INVALID_BY_TYPE[type];
-            expect(sentinel).not.toBeUndefined();
-            const attr = createAttribute({writable: true, type, defaultRef: "myRef"});
-            expect(Zcl.Utils.processAttributeWrite(attr, Number.NaN, {notMyRef: 9})).toStrictEqual(sentinel);
             expect(Zcl.Utils.processAttributeWrite(attr, Number.NaN)).toStrictEqual(sentinel);
         });
 
@@ -398,15 +384,6 @@ describe("ZCL Utils", () => {
             expect(result).toStrictEqual(sentinel);
         });
 
-        it("returns invalid sentinel unchanged if same as min ref value (ignore invalid sentinel)", () => {
-            const type = Zcl.DataType.INT16;
-            const sentinel = ZCL_TYPE_INVALID_BY_TYPE[type];
-            expect(sentinel).not.toBeUndefined();
-            const attr = createAttribute({writable: true, type, minRef: "myRef"});
-            const result = Zcl.Utils.processAttributePostRead(attr, sentinel, {myRef: sentinel as number});
-            expect(result).toStrictEqual(sentinel);
-        });
-
         it("maps invalid sentinel to NaN with different max", () => {
             const type = Zcl.DataType.UINT16;
             const sentinel = ZCL_TYPE_INVALID_BY_TYPE[type];
@@ -422,15 +399,6 @@ describe("ZCL Utils", () => {
             expect(sentinel).not.toBeUndefined();
             const attr = createAttribute({writable: true, type, max: sentinel as number});
             const result = Zcl.Utils.processAttributePostRead(attr, sentinel);
-            expect(result).toStrictEqual(sentinel);
-        });
-
-        it("returns invalid sentinel unchanged if same as max ref value (ignore invalid sentinel)", () => {
-            const type = Zcl.DataType.UINT16;
-            const sentinel = ZCL_TYPE_INVALID_BY_TYPE[type];
-            expect(sentinel).not.toBeUndefined();
-            const attr = createAttribute({writable: true, type, maxRef: "myRef"});
-            const result = Zcl.Utils.processAttributePostRead(attr, sentinel, {myRef: sentinel as number});
             expect(result).toStrictEqual(sentinel);
         });
 
@@ -467,9 +435,6 @@ describe("ZCL Utils", () => {
             expect(result).toStrictEqual(0xfe);
             result = Zcl.Utils.processAttributePostRead(cluster.getAttribute("currentLevel")!, 200);
             expect(result).toStrictEqual(200);
-            expect(() => Zcl.Utils.processAttributePostRead(cluster.getAttribute("currentLevel")!, 201, {maxLevel: 200})).toThrow(
-                /requires max of 200 from ref maxLevel/i,
-            );
             result = Zcl.Utils.processAttributePostRead(cluster.getAttribute("options")!, 0x00);
             expect(result).toStrictEqual(0x00);
             result = Zcl.Utils.processAttributePostRead(cluster.getAttribute("options")!, 0xff);
@@ -532,15 +497,6 @@ describe("ZCL Utils", () => {
             expect(result).toStrictEqual(sentinel);
         });
 
-        it("returns invalid sentinel unchanged if same as min ref value (skips invalid sentinel)", () => {
-            const type = Zcl.DataType.INT16;
-            const sentinel = ZCL_TYPE_INVALID_BY_TYPE[type];
-            expect(sentinel).not.toBeUndefined();
-            const attr = createParameter({type, minRef: "myRef"});
-            const result = Zcl.Utils.processParameterRead(attr, sentinel, {myRef: sentinel as number});
-            expect(result).toStrictEqual(sentinel);
-        });
-
         it("maps invalid sentinel to NaN with different max", () => {
             const type = Zcl.DataType.UINT16;
             const sentinel = ZCL_TYPE_INVALID_BY_TYPE[type];
@@ -556,15 +512,6 @@ describe("ZCL Utils", () => {
             expect(sentinel).not.toBeUndefined();
             const attr = createParameter({type, max: sentinel as number});
             const result = Zcl.Utils.processParameterRead(attr, sentinel);
-            expect(result).toStrictEqual(sentinel);
-        });
-
-        it("returns invalid sentinel unchanged if same as max ref value (skips invalid sentinel)", () => {
-            const type = Zcl.DataType.UINT16;
-            const sentinel = ZCL_TYPE_INVALID_BY_TYPE[type];
-            expect(sentinel).not.toBeUndefined();
-            const attr = createParameter({type, maxRef: "myRef"});
-            const result = Zcl.Utils.processParameterRead(attr, sentinel, {myRef: sentinel as number});
             expect(result).toStrictEqual(sentinel);
         });
 
@@ -600,11 +547,6 @@ describe("ZCL Utils", () => {
             expect(fn(attr, 50)).toStrictEqual(50);
         });
 
-        it("returns value unchanged when it equals ref default (skips restrictions)", () => {
-            const attr = createAttribute({writable: true, defaultRef: "myRef", min: 60});
-            expect(fn(attr, 50, {myRef: 50})).toStrictEqual(50);
-        });
-
         it("throws below min", () => {
             const attr = createAttribute({writable: true, min: 10});
             expect(() => fn(attr, 5)).toThrow(/requires min/i);
@@ -633,41 +575,6 @@ describe("ZCL Utils", () => {
         it("throws at maxExcl", () => {
             const attr = createAttribute({writable: true, maxExcl: 20});
             expect(() => fn(attr, 20)).toThrow(/requires max exclusive/i);
-        });
-
-        it("throws below min ref value", () => {
-            const attr = createAttribute({writable: true, minRef: "myRef"});
-            expect(() => fn(attr, 5, {myRef: 10})).toThrow(/requires min.*from ref/i);
-        });
-
-        it("throws below minExcl ref value", () => {
-            const attr = createAttribute({writable: true, minExclRef: "myRef"});
-            expect(() => fn(attr, 5, {myRef: 10})).toThrow(/requires min exclusive.*from ref/i);
-        });
-
-        it("throws at minExcl ref value", () => {
-            const attr = createAttribute({writable: true, minExclRef: "myRef"});
-            expect(() => fn(attr, 10, {myRef: 10})).toThrow(/requires min exclusive.*from ref/i);
-        });
-
-        it("throws above max ref value", () => {
-            const attr = createAttribute({writable: true, maxRef: "myRef"});
-            expect(() => fn(attr, 30, {myRef: 20})).toThrow(/requires max.*from ref/i);
-        });
-
-        it("throws above maxExcl ref value", () => {
-            const attr = createAttribute({writable: true, maxExclRef: "myRef"});
-            expect(() => fn(attr, 30, {myRef: 20})).toThrow(/requires max exclusive.*from ref/i);
-        });
-
-        it("throws at maxExcl ref value", () => {
-            const attr = createAttribute({writable: true, maxExclRef: "myRef"});
-            expect(() => fn(attr, 20, {myRef: 20})).toThrow(/requires max exclusive.*from ref/i);
-        });
-
-        it("throws on non-ref even if ok with ref value", () => {
-            const attr = createAttribute({writable: true, min: 10, minRef: "myRef"});
-            expect(() => fn(attr, 5, {myRef: 4})).toThrow(/requires min of 10/i);
         });
 
         it("throws not length", () => {
@@ -723,41 +630,6 @@ describe("ZCL Utils", () => {
         it("throws at maxExcl", () => {
             const attr = createParameter({maxExcl: 20});
             expect(() => fn(attr, 20)).toThrow(/requires max exclusive/i);
-        });
-
-        it("throws below min ref value", () => {
-            const attr = createParameter({minRef: "myRef"});
-            expect(() => fn(attr, 5, {myRef: 10})).toThrow(/requires min.*from ref/i);
-        });
-
-        it("throws below minExcl ref value", () => {
-            const attr = createParameter({minExclRef: "myRef"});
-            expect(() => fn(attr, 5, {myRef: 10})).toThrow(/requires min exclusive.*from ref/i);
-        });
-
-        it("throws at minExcl ref value", () => {
-            const attr = createParameter({minExclRef: "myRef"});
-            expect(() => fn(attr, 10, {myRef: 10})).toThrow(/requires min exclusive.*from ref/i);
-        });
-
-        it("throws above max ref value", () => {
-            const attr = createParameter({maxRef: "myRef"});
-            expect(() => fn(attr, 30, {myRef: 20})).toThrow(/requires max.*from ref/i);
-        });
-
-        it("throws above maxExcl ref value", () => {
-            const attr = createParameter({maxExclRef: "myRef"});
-            expect(() => fn(attr, 30, {myRef: 20})).toThrow(/requires max exclusive.*from ref/i);
-        });
-
-        it("throws at maxExcl ref value", () => {
-            const attr = createParameter({maxExclRef: "myRef"});
-            expect(() => fn(attr, 20, {myRef: 20})).toThrow(/requires max exclusive.*from ref/i);
-        });
-
-        it("throws on non-ref even if ok with ref value", () => {
-            const attr = createParameter({min: 10, minRef: "myRef"});
-            expect(() => fn(attr, 5, {myRef: 4})).toThrow(/requires min of 10/i);
         });
 
         it("throws not length", () => {

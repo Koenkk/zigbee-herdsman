@@ -163,13 +163,13 @@ interface Restrictions {
     /** sets a maximum that includes the value specified, i.e. a field of this type must be less than or equal to the value */
     max?: number;
     /** sets a minimum that is based on the value of the referenced attribute. The value of the referenced attribute is included in the range */
-    minRef?: string;
+    // minRef?: string;
     /** sets a minimum that is based on the value of the referenced attribute. The value of the referenced attribute is excluded from the range */
-    minExclRef?: string;
+    // minExclRef?: string;
     /** sets a maximum that is based on the value of the referenced attribute. The value of the referenced attribute is included in the range */
-    maxRef?: string;
+    // maxRef?: string;
     /** sets a maximum that is based on the value of the referenced attribute. The value of the referenced attribute is excluded from the range */
-    maxExclRef?: string;
+    // maxExclRef?: string;
     /**
      * In some cases, a special value is defined by the Zigbee specification.
      * In these cases, the special value along with a descriptor should be defined using this tag.
@@ -212,7 +212,7 @@ export interface Attribute extends Restrictions {
      * Must be another attriibute in this cluster.
      * Referenced by name, schema forces this during validation.
      */
-    defaultRef?: string;
+    // defaultRef?: string;
     /** If attribute is client side */
     client?: true;
 }

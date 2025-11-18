@@ -322,65 +322,15 @@ export function isFoundationDiscoverRsp(id: number): boolean {
 }
 
 /** Check if value is equal to either min, max, minRef or maxRef */
-function isMinOrMax<T>(entry: Attribute | Parameter, value: T, refs?: Record<string, unknown>): boolean {
+function isMinOrMax<T>(entry: Attribute | Parameter, value: T): boolean {
     if (value === entry.max || value === entry.min) {
         return true;
-    }
-
-    if (refs !== undefined) {
-        if ((entry.maxRef !== undefined && value === refs[entry.maxRef]) || (entry.minRef !== undefined && value === refs[entry.minRef])) {
-            return true;
-        }
     }
 
     return false;
 }
 
-function processRestrictions<T>(entry: Attribute | Parameter, value: T, refs?: Record<string, unknown>): void {
-    // XXX: throw when missing needed ref?
-    if (refs !== undefined) {
-        // refs first since non-ref equivs are "absolute overrides"
-        if (entry.minRef !== undefined) {
-            const minRefValue = refs[entry.minRef] as number | undefined;
-
-            if (minRefValue !== undefined) {
-                if ((value as number) < minRefValue) {
-                    throw new Error(`${entry.name} requires min of ${minRefValue} from ref ${entry.minRef}`);
-                }
-            }
-        }
-
-        if (entry.minExclRef !== undefined) {
-            const minExclRefValue = refs[entry.minExclRef] as number | undefined;
-
-            if (minExclRefValue !== undefined) {
-                if ((value as number) <= minExclRefValue) {
-                    throw new Error(`${entry.name} requires min exclusive of ${minExclRefValue} from ref ${entry.minExclRef}`);
-                }
-            }
-        }
-
-        if (entry.maxRef !== undefined) {
-            const maxRefValue = refs[entry.maxRef] as number | undefined;
-
-            if (maxRefValue !== undefined) {
-                if ((value as number) > maxRefValue) {
-                    throw new Error(`${entry.name} requires max of ${maxRefValue} from ref ${entry.maxRef}`);
-                }
-            }
-        }
-
-        if (entry.maxExclRef !== undefined) {
-            const maxExclRefValue = refs[entry.maxExclRef] as number | undefined;
-
-            if (maxExclRefValue !== undefined) {
-                if ((value as number) >= maxExclRefValue) {
-                    throw new Error(`${entry.name} requires max exclusive of ${maxExclRefValue} from ref ${entry.maxExclRef}`);
-                }
-            }
-        }
-    }
-
+function processRestrictions<T>(entry: Attribute | Parameter, value: T): void {
     if (entry.min !== undefined && (value as number) < entry.min) {
         throw new Error(`${entry.name} requires min of ${entry.min}`);
     }
@@ -410,7 +360,7 @@ function processRestrictions<T>(entry: Attribute | Parameter, value: T, refs?: R
     }
 }
 
-export function processAttributeWrite<T>(attribute: Attribute, value: T, refs?: Record<string, unknown>): T {
+export function processAttributeWrite<T>(attribute: Attribute, value: T): T {
     if (attribute.writable !== true) {
         throw new Error(`Attribute ${attribute.name} (${attribute.ID}) is not writable`);
     }
@@ -424,21 +374,8 @@ export function processAttributeWrite<T>(attribute: Attribute, value: T, refs?: 
         return value;
     }
 
-    // if ref default, always valid
-    if (attribute.defaultRef !== undefined && refs !== undefined && value === refs[attribute.defaultRef]) {
-        return value;
-    }
-
     if (Number.isNaN(value)) {
         if (attribute.default === undefined) {
-            if (attribute.defaultRef !== undefined && refs !== undefined) {
-                const refValue = refs[attribute.defaultRef];
-
-                if (refValue !== undefined) {
-                    return refValue as T;
-                }
-            }
-
             const nonValue = ZCL_TYPE_INVALID_BY_TYPE[attribute.type];
 
             if (nonValue === undefined) {
@@ -451,7 +388,7 @@ export function processAttributeWrite<T>(attribute: Attribute, value: T, refs?: 
         return attribute.default as T;
     }
 
-    processRestrictions(attribute, value, refs);
+    processRestrictions(attribute, value);
 
     return value;
 }
@@ -462,7 +399,7 @@ export function processAttributePreRead(attribute: Attribute): void {
     }
 }
 
-export function processAttributePostRead<T>(attribute: Attribute, value: T, refs?: Record<string, unknown>): T {
+export function processAttributePostRead<T>(attribute: Attribute, value: T): T {
     // should never happen?
     if (value == null) {
         return value;
@@ -473,15 +410,10 @@ export function processAttributePostRead<T>(attribute: Attribute, value: T, refs
         return value;
     }
 
-    // if ref default, always valid
-    if (attribute.defaultRef !== undefined && refs !== undefined && value === refs[attribute.defaultRef]) {
-        return value;
-    }
-
     // if type does not have an `invalid` (undefined) it won't match since value is checked above
     if (value === ZCL_TYPE_INVALID_BY_TYPE[attribute.type]) {
         // if value is same as max or min, ignore invalid sentinel
-        if (isMinOrMax(attribute, value, refs)) {
+        if (isMinOrMax(attribute, value)) {
             return value;
         }
 
@@ -489,12 +421,12 @@ export function processAttributePostRead<T>(attribute: Attribute, value: T, refs
         return Number.NaN as T;
     }
 
-    processRestrictions(attribute, value, refs);
+    processRestrictions(attribute, value);
 
     return value;
 }
 
-export function processParameterWrite<T>(parameter: Parameter, value: T, refs?: Record<string, unknown>): T {
+export function processParameterWrite<T>(parameter: Parameter, value: T): T {
     // should never happen?
     if (value == null) {
         return value;
@@ -510,12 +442,12 @@ export function processParameterWrite<T>(parameter: Parameter, value: T, refs?: 
         return nonValue as T;
     }
 
-    processRestrictions(parameter, value, refs);
+    processRestrictions(parameter, value);
 
     return value;
 }
 
-export function processParameterRead<T>(parameter: Parameter, value: T, refs?: Record<string, unknown>): T {
+export function processParameterRead<T>(parameter: Parameter, value: T): T {
     // should never happen?
     if (value == null) {
         return value;
@@ -524,7 +456,7 @@ export function processParameterRead<T>(parameter: Parameter, value: T, refs?: R
     // if type does not have an `invalid` (undefined) it won't match since value is checked above
     if (value === ZCL_TYPE_INVALID_BY_TYPE[parameter.type]) {
         // if value is same as max or min, ignore invalid sentinel
-        if (isMinOrMax(parameter, value, refs)) {
+        if (isMinOrMax(parameter, value)) {
             return value;
         }
 
@@ -532,7 +464,7 @@ export function processParameterRead<T>(parameter: Parameter, value: T, refs?: R
         return Number.NaN as T;
     }
 
-    processRestrictions(parameter, value, refs);
+    processRestrictions(parameter, value);
 
     return value;
 }

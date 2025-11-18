@@ -431,9 +431,8 @@ export class Endpoint extends ZigbeeEntity {
             const attribute = cluster.getAttribute(nameOrID);
 
             if (attribute) {
-                // TODO: refs are not processed (pre-loop?)
                 // TODO: handle `attr.writeOptional !== true`
-                const attrData = Zcl.Utils.processAttributeWrite(attribute, attributes[nameOrID], attributes);
+                const attrData = Zcl.Utils.processAttributeWrite(attribute, attributes[nameOrID]);
 
                 payload.push({attrId: attribute.ID, attrData, dataType: attribute.type});
             } else if (!Number.isNaN(Number(nameOrID))) {
@@ -513,7 +512,6 @@ export class Endpoint extends ZigbeeEntity {
                 const attr = cluster.getAttribute(attribute);
 
                 if (attr) {
-                    // TODO: force to also read *Ref if attribute has any and not already present in array for PostRead refs?
                     Zcl.Utils.processAttributePreRead(attr);
                     payload.push({attrId: attr.ID});
                 } else {
