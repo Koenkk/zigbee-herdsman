@@ -97,27 +97,29 @@ export class Driver extends EventEmitter {
 
     /**
      * Converts BLZ hardware MAC address to IEEE EUI-64 format
-     * BLZ hardware returns 8 bytes in little-endian format where only the last 6 bytes are actual MAC address
-     * This function converts it to proper IEEE EUI-64 by reversing byte order and inserting FF FE
+     * BLZ hardware returns 8 bytes in little-endian format
+     * This function converts it to proper byte order by reversing
      * @param rawMacBuffer - Raw MAC buffer from BLZ hardware
      * @returns IEEE EUI-64 formatted buffer
      */
     private convertBlzMacToIeeeEui64(rawMacBuffer: Buffer): Buffer {
-        // BLZ hardware returns 8 bytes in little-endian format, only last 6 bytes are actual MAC address
-        // First reverse the entire buffer to get correct byte order
+        // BLZ hardware returns MAC address in little-endian format, need to reverse it
         const reversedBuffer = Buffer.from(rawMacBuffer).reverse();
+        return reversedBuffer;
+        
+        // TODO: IEEE EUI-64 expansion method (commented out for now)
         // Extract the 6-byte MAC address (first 6 bytes after reversal, skip last 2 bytes which were 0x0000)
-        const macBytes = reversedBuffer.subarray(0, 6);
-        
-        // Convert 6-byte MAC to 8-byte IEEE EUI-64 by inserting FF FE after 3rd byte
-        // IEEE standard: MAC[0:3] + FF FE + MAC[3:6] -> EUI-64
-        const ieeeEui64 = Buffer.alloc(8);
-        macBytes.copy(ieeeEui64, 0, 0, 3);  // Copy first 3 bytes of MAC
-        ieeeEui64[3] = 0xFF;                 // Insert FF
-        ieeeEui64[4] = 0xFE;                 // Insert FE  
-        macBytes.copy(ieeeEui64, 5, 3, 6);  // Copy last 3 bytes of MAC
-        
-        return ieeeEui64;
+        // const macBytes = reversedBuffer.subarray(0, 6);
+        // 
+        // // Convert 6-byte MAC to 8-byte IEEE EUI-64 by inserting FF FE after 3rd byte
+        // // IEEE standard: MAC[0:3] + FF FE + MAC[3:6] -> EUI-64
+        // const ieeeEui64 = Buffer.alloc(8);
+        // macBytes.copy(ieeeEui64, 0, 0, 3);  // Copy first 3 bytes of MAC
+        // ieeeEui64[3] = 0xFF;                 // Insert FF
+        // ieeeEui64[4] = 0xFE;                 // Insert FE  
+        // macBytes.copy(ieeeEui64, 5, 3, 6);  // Copy last 3 bytes of MAC
+        // 
+        // return ieeeEui64;
     }
 
     /**
