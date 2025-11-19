@@ -96,6 +96,31 @@ export class Driver extends EventEmitter {
     }
 
     /**
+     * Converts BLZ hardware MAC address to IEEE EUI-64 format
+     * BLZ hardware returns 8 bytes in little-endian format where only the last 6 bytes are actual MAC address
+     * This function converts it to proper IEEE EUI-64 by reversing byte order and inserting FF FE
+     * @param rawMacBuffer - Raw MAC buffer from BLZ hardware
+     * @returns IEEE EUI-64 formatted buffer
+     */
+    private convertBlzMacToIeeeEui64(rawMacBuffer: Buffer): Buffer {
+        // BLZ hardware returns 8 bytes in little-endian format, only last 6 bytes are actual MAC address
+        // First reverse the entire buffer to get correct byte order
+        const reversedBuffer = Buffer.from(rawMacBuffer).reverse();
+        // Extract the 6-byte MAC address (first 6 bytes after reversal, skip last 2 bytes which were 0x0000)
+        const macBytes = reversedBuffer.subarray(0, 6);
+        
+        // Convert 6-byte MAC to 8-byte IEEE EUI-64 by inserting FF FE after 3rd byte
+        // IEEE standard: MAC[0:3] + FF FE + MAC[3:6] -> EUI-64
+        const ieeeEui64 = Buffer.alloc(8);
+        macBytes.copy(ieeeEui64, 0, 0, 3);  // Copy first 3 bytes of MAC
+        ieeeEui64[3] = 0xFF;                 // Insert FF
+        ieeeEui64[4] = 0xFE;                 // Insert FE  
+        macBytes.copy(ieeeEui64, 5, 3, 6);  // Copy last 3 bytes of MAC
+        
+        return ieeeEui64;
+    }
+
+    /**
      * Requested by the BLZ watchdog after too many failures, or by UART layer after port closed unexpectedly.
      * Tries to stop the layers below and startup again.
      * @returns
@@ -235,7 +260,9 @@ export class Driver extends EventEmitter {
         logger.debug(`Node type: ${netParams.nodeType}, Network parameters: ${this.networkParams}`, NS);
 
         const ieee = (await this.blz.execCommand('getValue', {valueId: BlzValueId.BLZ_VALUE_ID_MAC_ADDRESS})).value; 
-        this.ieee = new BlzEUI64(ieee);
+        // Convert BLZ hardware MAC format to IEEE EUI-64 standard format
+        const ieeeEui64 = this.convertBlzMacToIeeeEui64(ieee);
+        this.ieee = new BlzEUI64(ieeeEui64);
         this.blz.on('frame', this.handleFrame.bind(this));
         logger.debug(`BLZ nodeid=0x0000, IEEE=0x${this.ieee}`, NS);
         logger.debug('Network ready', NS);
