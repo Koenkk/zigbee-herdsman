@@ -255,7 +255,7 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
             interPan = false,
             profileId = ZSpec.HA_PROFILE_ID,
             clusterKey,
-            zdoArgs,
+            zdoParams,
             zcl,
             disableResponse = false,
             timeout = 10000,
@@ -267,7 +267,7 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
             assert(clusterKey !== undefined && typeof clusterKey === "number");
 
             // will fail if args are incorrect for request
-            const buf = Zdo.Buffalo.buildRequest(this.adapter.hasZdoMessageOverhead, clusterKey, ...(zdoArgs ?? []));
+            const buf = Zdo.Buffalo.buildRequest(this.adapter.hasZdoMessageOverhead, clusterKey, ...(zdoParams ?? []));
 
             return (await this.adapter.sendZdo(ieeeAddress, networkAddress, clusterKey, buf, disableResponse)) as ZdoTypes.GenericZdoResponse;
         }

@@ -66,7 +66,7 @@ export interface RawPayload {
     /** Expected as `number` for ZDO */
     clusterKey?: number | string;
     /** Only used for ZDO */
-    zdoArgs?: unknown[];
+    zdoParams?: unknown[];
     /** Only used for ZCL */
     zcl?: {
         frameType?: FrameType;
