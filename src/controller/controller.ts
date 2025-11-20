@@ -74,8 +74,8 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
     private options: Options;
     private database!: Database;
     private adapter!: Adapter;
-    private greenPower!: GreenPower;
-    private touchlink!: Touchlink;
+    #greenPower!: GreenPower;
+    #touchlink!: Touchlink;
 
     private permitJoinTimer: NodeJS.Timeout | undefined;
     private permitJoinEnd?: number;
@@ -119,6 +119,14 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
         }
     }
 
+    get greenPower() {
+        return this.#greenPower;
+    }
+
+    get touchlink() {
+        return this.#touchlink;
+    }
+
     /**
      * Start the Herdsman controller
      */
@@ -156,9 +164,9 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
         // log injection
         logger.debug(`Injected database: ${this.database !== undefined}, adapter: ${this.adapter !== undefined}`, NS);
 
-        this.greenPower = new GreenPower(this.adapter);
-        this.greenPower.on("deviceJoined", this.onDeviceJoinedGreenPower.bind(this));
-        this.greenPower.on("deviceLeave", this.onDeviceLeaveGreenPower.bind(this));
+        this.#greenPower = new GreenPower(this.adapter);
+        this.#greenPower.on("deviceJoined", this.onDeviceJoinedGreenPower.bind(this));
+        this.#greenPower.on("deviceLeave", this.onDeviceLeaveGreenPower.bind(this));
 
         // Register adapter events
         this.adapter.on("deviceJoined", this.onDeviceJoined.bind(this));
@@ -226,7 +234,7 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
         // Set database save timer to 1 hour.
         this.databaseSaveTimer = setInterval(() => this.databaseSave(), 3600000);
 
-        this.touchlink = new Touchlink(this.adapter);
+        this.#touchlink = new Touchlink(this.adapter);
 
         return startResult;
     }
@@ -341,22 +349,6 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
         );
     }
 
-    public async touchlinkIdentify(ieeeAddr: string, channel: number): Promise<void> {
-        await this.touchlink.identify(ieeeAddr, channel);
-    }
-
-    public async touchlinkScan(): Promise<{ieeeAddr: string; channel: number}[]> {
-        return await this.touchlink.scan();
-    }
-
-    public async touchlinkFactoryReset(ieeeAddr: string, channel: number): Promise<boolean> {
-        return await this.touchlink.factoryReset(ieeeAddr, channel);
-    }
-
-    public async touchlinkFactoryResetFirst(): Promise<boolean> {
-        return await this.touchlink.factoryResetFirst();
-    }
-
     public async addInstallCode(installCode: string): Promise<void> {
         // will throw if code cannot be parsed
         const [ieeeAddr, keyStr] = parseInstallCode(installCode);
@@ -390,7 +382,7 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
             assert(time <= 254, "Cannot permit join for more than 254 seconds.");
 
             await this.adapter.permitJoin(time, device?.networkAddress);
-            await this.greenPower.permitJoin(time, device?.networkAddress);
+            await this.#greenPower.permitJoin(time, device?.networkAddress);
 
             const timeMs = time * 1000;
             this.permitJoinEnd = Date.now() + timeMs;
@@ -405,7 +397,7 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
         } else {
             logger.debug("Disable joining", NS);
 
-            await this.greenPower.permitJoin(0);
+            await this.#greenPower.permitJoin(0);
             await this.adapter.permitJoin(0);
 
             this.emit("permitJoinChanged", {permitted: false});
@@ -440,6 +432,12 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
         if (this.adapterDisconnected) {
             this.databaseSave();
         } else {
+            try {
+                await this.#touchlink.stop();
+            } catch (error) {
+                logger.error(`Failed to stop Touchlink: ${error}`, NS);
+            }
+
             try {
                 await this.permitJoin(0);
             } catch (error) {
@@ -955,7 +953,7 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
 
                 const ieeeAddr = GreenPower.sourceIdToIeeeAddress(frame.payload.srcID);
                 device = Device.byIeeeAddr(ieeeAddr);
-                frame = await this.greenPower.processCommand(payload, frame, device?.gpSecurityKey ? Buffer.from(device.gpSecurityKey) : undefined);
+                frame = await this.#greenPower.processCommand(payload, frame, device?.gpSecurityKey ? Buffer.from(device.gpSecurityKey) : undefined);
 
                 // lookup encapsulated gpDevice for further processing (re-fetch, may have been created by above call)
                 device = Device.byIeeeAddr(ieeeAddr);

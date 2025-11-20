@@ -723,7 +723,7 @@ describe("Controller", () => {
                 return {address: "0x0000012300000000"};
             }
         });
-        const result = await controller.touchlinkFactoryResetFirst();
+        const result = await controller.touchlink.factoryResetFirst();
         expect(result).toBeTruthy();
 
         expect(mockSetChannelInterPAN).toHaveBeenCalledTimes(2);
@@ -836,7 +836,7 @@ describe("Controller", () => {
                 return {address: "0x0000012300000000"};
             }
         });
-        const result = await controller.touchlinkScan();
+        const result = await controller.touchlink.scan();
         expect(result).toStrictEqual([{ieeeAddr: "0x0000012300000000", channel: 15}]);
 
         expect(mockSetChannelInterPAN).toHaveBeenCalledTimes(16);
@@ -905,11 +905,11 @@ describe("Controller", () => {
                 resolve = r;
             });
         });
-        const r1 = controller.touchlinkScan();
+        const r1 = controller.touchlink.scan();
 
         let error;
         try {
-            await controller.touchlinkScan();
+            await controller.touchlink.scan();
         } catch (e) {
             error = e;
         }
@@ -923,7 +923,7 @@ describe("Controller", () => {
         mocksendZclFrameInterPANBroadcast.mockImplementation(() => {
             return {address: "0x0000012300000000"};
         });
-        await controller.touchlinkFactoryReset("0x0000012300000000", 15);
+        await controller.touchlink.factoryReset("0x0000012300000000", 15);
 
         expect(mockSetChannelInterPAN).toHaveBeenCalledTimes(1);
         expect(mockSetChannelInterPAN).toHaveBeenCalledWith(15);
@@ -1001,7 +1001,7 @@ describe("Controller", () => {
         mocksendZclFrameInterPANBroadcast.mockImplementation(() => {
             return {address: "0x0000012300000000"};
         });
-        await controller.touchlinkIdentify("0x0000012300000000", 15);
+        await controller.touchlink.identify("0x0000012300000000", 15);
 
         expect(mockSetChannelInterPAN).toHaveBeenCalledTimes(1);
         expect(mockSetChannelInterPAN).toHaveBeenCalledWith(15);
@@ -6478,11 +6478,7 @@ describe("Controller", () => {
         await mockAdapterEvents.deviceJoined({networkAddress: gpdNwkAddress, ieeeAddr: gpdIeeeAddress});
 
         const gppDevice = controller.getDeviceByIeeeAddr("0x129")!;
-        const processCommandSpy = vi.spyOn(
-            // @ts-expect-error private
-            controller.greenPower,
-            "processCommand",
-        );
+        const processCommandSpy = vi.spyOn(controller.greenPower, "processCommand");
         mockLogger.error.mockClear();
         const commModeBuffer = Buffer.from([25, 10, 2, 11, 254, 0]);
         const commModeFrame = Zcl.Frame.fromBuffer(Zcl.Clusters.greenPower.ID, Zcl.Header.fromBuffer(commModeBuffer)!, commModeBuffer, {});
@@ -6666,11 +6662,7 @@ describe("Controller", () => {
         await controller.start();
         mockLogger.error.mockClear();
 
-        const processCommandSpy = vi.spyOn(
-            // @ts-expect-error private
-            controller.greenPower,
-            "processCommand",
-        );
+        const processCommandSpy = vi.spyOn(controller.greenPower, "processCommand");
 
         const buffer = Buffer.from(
             "11020402087af4550100000000012e000000e0330285f2c925821df46f458cf0e637aac3bab6aa45831a112e280000041610112223181914151213646562631e1f1c1d1a1b1617966fd7",
