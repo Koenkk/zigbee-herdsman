@@ -3,6 +3,7 @@ import events from "node:events";
 import fs from "node:fs";
 import mixinDeep from "mixin-deep";
 import {Adapter, type Events as AdapterEvents, type TsType as AdapterTsType} from "../adapter";
+import type {ZclPayload} from "../adapter/events";
 import {BackupUtils, wait} from "../utils";
 import {logger} from "../utils/logger";
 import {isNumberArrayOfLength} from "../utils/utils";
@@ -236,7 +237,7 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
      * @param customClusters Manually passed custom clusters used in ZCL serialization (if any, if matching)
      * @returns A response may or may not be returned depending on given payload (up to caller to verify)
      */
-    public async sendRaw(rawPayload: RawPayload, customClusters: CustomClusters = {}): Promise<unknown> {
+    public async sendRaw(rawPayload: RawPayload, customClusters: CustomClusters = {}): Promise<ZdoTypes.GenericZdoResponse | ZclPayload | undefined> {
         const {
             ieeeAddress,
             networkAddress,
@@ -260,7 +261,7 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
             // will fail if args are incorrect for request
             const buf = Zdo.Buffalo.buildRequest(this.adapter.hasZdoMessageOverhead, clusterKey, ...(zdoArgs ?? []));
 
-            return await this.adapter.sendZdo(ieeeAddress, networkAddress, clusterKey, buf, disableResponse);
+            return (await this.adapter.sendZdo(ieeeAddress, networkAddress, clusterKey, buf, disableResponse)) as ZdoTypes.GenericZdoResponse;
         }
 
         assert(zcl);
@@ -285,9 +286,12 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
                 customClusters,
             );
 
-            return ieeeAddress
-                ? await this.adapter.sendZclFrameInterPANToIeeeAddr(zclFrame, ieeeAddress)
-                : await this.adapter.sendZclFrameInterPANBroadcast(zclFrame, timeout, disableResponse);
+            if (ieeeAddress) {
+                await this.adapter.sendZclFrameInterPANToIeeeAddr(zclFrame, ieeeAddress);
+                return;
+            }
+
+            return await this.adapter.sendZclFrameInterPANBroadcast(zclFrame, timeout, disableResponse);
         }
 
         assert(clusterKey !== undefined);
@@ -309,7 +313,8 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
         if (groupId !== undefined) {
             assert(groupId >= 0x0000 && groupId <= 0xffff);
 
-            return await this.adapter.sendZclFrameToGroup(groupId, zclFrame, srcEndpoint, profileId);
+            await this.adapter.sendZclFrameToGroup(groupId, zclFrame, srcEndpoint, profileId);
+            return;
         }
 
         assert(dstEndpoint !== undefined && dstEndpoint >= 0x01 && dstEndpoint <= 0xff);
@@ -317,7 +322,8 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
         assert(networkAddress !== undefined && networkAddress >= 0x0000 && networkAddress <= 0xffff);
 
         if (networkAddress >= ZSpec.BROADCAST_MIN) {
-            return await this.adapter.sendZclFrameToAll(dstEndpoint, zclFrame, srcEndpoint, networkAddress, profileId);
+            await this.adapter.sendZclFrameToAll(dstEndpoint, zclFrame, srcEndpoint, networkAddress, profileId);
+            return;
         }
 
         assert(ieeeAddress);
