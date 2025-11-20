@@ -6,6 +6,9 @@ export const ZIGBEE_REVISION = 23;
 /** The network ID of the coordinator in a Zigbee network is 0x0000. */
 export const COORDINATOR_ADDRESS = 0x0000;
 
+/** Min network address reserved for broadcasting (up to 0xffff) */
+export const BROADCAST_MIN = 0xfff8;
+
 /** Endpoint profile ID for Zigbee 3.0. "Home Automation" */
 export const HA_PROFILE_ID = 0x0104;
 /** Endpoint profile ID for Smart Energy */

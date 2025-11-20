@@ -10,7 +10,7 @@ import * as ZSpec from "../zspec";
 import type {Eui64} from "../zspec/tstypes";
 import * as Zcl from "../zspec/zcl";
 import type {TPartialClusterAttributes} from "../zspec/zcl/definition/clusters-types";
-import type {FrameControl} from "../zspec/zcl/definition/tstype";
+import type {CustomClusters, FrameControl} from "../zspec/zcl/definition/tstype";
 import * as Zdo from "../zspec/zdo";
 import type * as ZdoTypes from "../zspec/zdo/definition/tstypes";
 import Database from "./database";
@@ -18,11 +18,12 @@ import type * as Events from "./events";
 import GreenPower from "./greenPower";
 import {ZclFrameConverter} from "./helpers";
 import {checkInstallCode, parseInstallCode} from "./helpers/installCodes";
+import zclTransactionSequenceNumber from "./helpers/zclTransactionSequenceNumber";
 import {Device, Entity} from "./model";
 import {InterviewState} from "./model/device";
 import Group from "./model/group";
 import Touchlink from "./touchlink";
-import type {DeviceType, GreenPowerDeviceJoinedPayload} from "./tstype";
+import type {DeviceType, GreenPowerDeviceJoinedPayload, RawPayload} from "./tstype";
 
 const NS = "zh:controller";
 
@@ -227,6 +228,111 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
         this.touchlink = new Touchlink(this.adapter);
 
         return startResult;
+    }
+
+    /**
+     * Send a request according to given payload.
+     * @param rawPayload Payload used to determine and build the request
+     * @param customClusters Manually passed custom clusters used in ZCL serialization (if any, if matching)
+     * @returns A response may or may not be returned depending on given payload (up to caller to verify)
+     */
+    public async sendRaw(rawPayload: RawPayload, customClusters: CustomClusters = {}): Promise<unknown> {
+        const {
+            ieeeAddress,
+            networkAddress,
+            groupId,
+            dstEndpoint,
+            srcEndpoint = ZSpec.HA_ENDPOINT,
+            interPan = false,
+            profileId = ZSpec.HA_PROFILE_ID,
+            clusterKey,
+            zdoArgs,
+            zcl,
+            disableResponse = false,
+            timeout = 10000,
+        } = rawPayload;
+
+        if (profileId === Zdo.ZDO_PROFILE_ID) {
+            assert(ieeeAddress);
+            assert(networkAddress !== undefined);
+            assert(clusterKey !== undefined && typeof clusterKey === "number");
+
+            // will fail if args are incorrect for request
+            const buf = Zdo.Buffalo.buildRequest(this.adapter.hasZdoMessageOverhead, clusterKey, ...(zdoArgs ?? []));
+
+            return await this.adapter.sendZdo(ieeeAddress, networkAddress, clusterKey, buf, disableResponse);
+        }
+
+        assert(zcl);
+
+        if (interPan) {
+            assert(zcl.commandKey);
+            assert(zcl.payload);
+            assert(zcl.frameType === undefined || zcl.frameType === Zcl.FrameType.GLOBAL || zcl.frameType === Zcl.FrameType.SPECIFIC);
+            assert(
+                zcl.direction === undefined || zcl.direction === Zcl.Direction.CLIENT_TO_SERVER || zcl.direction === Zcl.Direction.SERVER_TO_CLIENT,
+            );
+
+            const zclFrame = Zcl.Frame.create(
+                zcl.frameType ?? Zcl.FrameType.SPECIFIC,
+                zcl.direction ?? Zcl.Direction.CLIENT_TO_SERVER,
+                true,
+                zcl.manufacturerCode,
+                0,
+                zcl.commandKey,
+                clusterKey ?? Zcl.Clusters.touchlink.ID,
+                zcl.payload,
+                customClusters,
+            );
+
+            return ieeeAddress
+                ? await this.adapter.sendZclFrameInterPANToIeeeAddr(zclFrame, ieeeAddress)
+                : await this.adapter.sendZclFrameInterPANBroadcast(zclFrame, timeout, disableResponse);
+        }
+
+        assert(clusterKey !== undefined);
+        assert(zcl.frameType !== undefined);
+        assert(zcl.direction !== undefined);
+
+        const zclFrame = Zcl.Frame.create(
+            zcl.frameType,
+            zcl.direction,
+            zcl.disableDefaultResponse ?? false,
+            zcl.manufacturerCode,
+            zcl.tsn ?? zclTransactionSequenceNumber.next(),
+            zcl.commandKey,
+            clusterKey,
+            zcl.payload,
+            customClusters,
+        );
+
+        if (groupId !== undefined) {
+            assert(groupId >= 0x0000 && groupId <= 0xffff);
+
+            return await this.adapter.sendZclFrameToGroup(groupId, zclFrame, srcEndpoint, profileId);
+        }
+
+        assert(dstEndpoint !== undefined && dstEndpoint >= 0x01 && dstEndpoint <= 0xff);
+        assert(srcEndpoint >= 0x01 && srcEndpoint <= 0xff);
+        assert(networkAddress !== undefined && networkAddress >= 0x0000 && networkAddress <= 0xffff);
+
+        if (networkAddress >= ZSpec.BROADCAST_MIN) {
+            return await this.adapter.sendZclFrameToAll(dstEndpoint, zclFrame, srcEndpoint, networkAddress, profileId);
+        }
+
+        assert(ieeeAddress);
+
+        return await this.adapter.sendZclFrameToEndpoint(
+            ieeeAddress,
+            networkAddress,
+            dstEndpoint,
+            zclFrame,
+            timeout,
+            disableResponse,
+            false,
+            srcEndpoint,
+            profileId,
+        );
     }
 
     public async touchlinkIdentify(ieeeAddr: string, channel: number): Promise<void> {

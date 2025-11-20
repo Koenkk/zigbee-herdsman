@@ -526,8 +526,10 @@ export class EZSPAdapter extends Adapter {
         });
     }
 
-    public async sendZclFrameInterPANBroadcast(zclFrame: Zcl.Frame, timeout: number): Promise<ZclPayload> {
-        return await this.queue.execute<ZclPayload>(async () => {
+    public async sendZclFrameInterPANBroadcast(zclFrame: Zcl.Frame, timeout: number, disableResponse: false): Promise<ZclPayload>;
+    public async sendZclFrameInterPANBroadcast(zclFrame: Zcl.Frame, timeout: number, disableResponse: true): Promise<undefined>;
+    public async sendZclFrameInterPANBroadcast(zclFrame: Zcl.Frame, timeout: number, disableResponse: boolean): Promise<ZclPayload | undefined> {
+        return await this.queue.execute<ZclPayload | undefined>(async () => {
             logger.debug("sendZclFrameInterPANBroadcast", NS);
             const command = zclFrame.command;
 
@@ -535,7 +537,11 @@ export class EZSPAdapter extends Adapter {
                 throw new Error(`Command '${command.name}' has no response, cannot wait for response`);
             }
 
-            const response = this.waitForInternal(undefined, 0xfe, undefined, zclFrame.cluster.ID, command.response, timeout);
+            let response: ReturnType<typeof this.waitForInternal> | undefined;
+
+            if (!disableResponse) {
+                this.waitForInternal(undefined, 0xfe, undefined, zclFrame.cluster.ID, command.response, timeout);
+            }
 
             try {
                 const frame = this.driver.makeEmberRawFrame();
@@ -551,11 +557,13 @@ export class EZSPAdapter extends Adapter {
 
                 await this.driver.rawrequest(frame, zclFrame.toBuffer());
             } catch (error) {
-                response.cancel();
+                response?.cancel();
                 throw error;
             }
 
-            return await response.start().promise;
+            if (response) {
+                return await response.start().promise;
+            }
         });
     }
 

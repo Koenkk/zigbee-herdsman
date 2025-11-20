@@ -1062,23 +1062,33 @@ export class ZStackAdapter extends Adapter {
         });
     }
 
-    public async sendZclFrameInterPANBroadcast(zclFrame: Zcl.Frame, timeout: number): Promise<Events.ZclPayload> {
-        return await this.queue.execute<Events.ZclPayload>(async () => {
+    public async sendZclFrameInterPANBroadcast(zclFrame: Zcl.Frame, timeout: number, disableResponse: false): Promise<Events.ZclPayload>;
+    public async sendZclFrameInterPANBroadcast(zclFrame: Zcl.Frame, timeout: number, disableResponse: true): Promise<undefined>;
+    public async sendZclFrameInterPANBroadcast(
+        zclFrame: Zcl.Frame,
+        timeout: number,
+        disableResponse: boolean,
+    ): Promise<Events.ZclPayload | undefined> {
+        return await this.queue.execute<Events.ZclPayload | undefined>(async () => {
             const command = zclFrame.command;
             if (command.response === undefined) {
                 throw new Error(`Command '${command.name}' has no response, cannot wait for response`);
             }
 
-            const response = this.waitForInternal(
-                undefined,
-                0xfe,
-                zclFrame.header.frameControl.frameType,
-                Zcl.Direction.SERVER_TO_CLIENT,
-                undefined,
-                zclFrame.cluster.ID,
-                command.response,
-                timeout,
-            );
+            let response: ReturnType<typeof this.waitForInternal> | undefined;
+
+            if (!disableResponse) {
+                response = this.waitForInternal(
+                    undefined,
+                    0xfe,
+                    zclFrame.header.frameControl.frameType,
+                    Zcl.Direction.SERVER_TO_CLIENT,
+                    undefined,
+                    zclFrame.cluster.ID,
+                    command.response,
+                    timeout,
+                );
+            }
 
             try {
                 await this.dataRequestExtended(
@@ -1094,11 +1104,13 @@ export class ZStackAdapter extends Adapter {
                     false,
                 );
             } catch (error) {
-                response.cancel();
+                response?.cancel();
                 throw error;
             }
 
-            return await response.start().promise;
+            if (response) {
+                return await response.start().promise;
+            }
         });
     }
 

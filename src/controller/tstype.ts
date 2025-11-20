@@ -9,7 +9,7 @@ import type {
     TFoundationPayload,
     TPartialClusterAttributes,
 } from "../zspec/zcl/definition/clusters-types";
-import type {DataType} from "../zspec/zcl/definition/enums";
+import type {DataType, Direction, FrameType} from "../zspec/zcl/definition/enums";
 
 export interface KeyValue {
     // biome-ignore lint/suspicious/noExplicitAny: API
@@ -50,6 +50,38 @@ export interface GreenPowerDeviceJoinedPayload {
     deviceID: number;
     networkAddress: number;
     securityKey?: Buffer;
+}
+
+export interface RawPayload {
+    ieeeAddress?: string;
+    networkAddress?: number;
+    groupId?: number;
+    dstEndpoint?: number;
+    /** defaults to `ZSpec.HA_ENDPOINT` */
+    srcEndpoint?: number;
+    /** defaults to false */
+    interPan?: boolean;
+    /** defaults to `ZSpec.HA_PROFILE_ID` */
+    profileId?: number;
+    /** Expected as `number` for ZDO */
+    clusterKey?: number | string;
+    /** Only used for ZDO */
+    zdoArgs?: unknown[];
+    /** Only used for ZCL */
+    zcl?: {
+        frameType?: FrameType;
+        direction?: Direction;
+        disableDefaultResponse?: boolean;
+        manufacturerCode?: number;
+        tsn?: number;
+        commandKey: string;
+        /** TODO: zclFrame.ts `ZclPayload` should be refactor to this type */
+        payload?: Record<string, unknown> | Record<string, unknown>[];
+    };
+    /** defaults to false */
+    disableResponse?: boolean;
+    /** defaults to 10000 */
+    timeout?: number;
 }
 
 export interface TCustomCluster {

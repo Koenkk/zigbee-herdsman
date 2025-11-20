@@ -2171,7 +2171,9 @@ export class EmberAdapter extends Adapter {
     }
 
     // queued
-    public async sendZclFrameInterPANBroadcast(zclFrame: Zcl.Frame, timeout: number): Promise<ZclPayload> {
+    public async sendZclFrameInterPANBroadcast(zclFrame: Zcl.Frame, timeout: number, disableResponse: false): Promise<ZclPayload>;
+    public async sendZclFrameInterPANBroadcast(zclFrame: Zcl.Frame, timeout: number, disableResponse: true): Promise<undefined>;
+    public async sendZclFrameInterPANBroadcast(zclFrame: Zcl.Frame, timeout: number, disableResponse: boolean): Promise<ZclPayload | undefined> {
         const command = zclFrame.command;
 
         if (command.response === undefined) {
@@ -2190,7 +2192,7 @@ export class EmberAdapter extends Adapter {
             sequence: 0, // set by stack
         };
 
-        return await this.queue.execute<ZclPayload>(async () => {
+        return await this.queue.execute<ZclPayload | undefined>(async () => {
             const msgBuffalo = new EzspBuffalo(Buffer.alloc(MAXIMUM_INTERPAN_LENGTH));
 
             // cache-enabled getters
@@ -2219,17 +2221,19 @@ export class EmberAdapter extends Adapter {
 
             // NOTE: can use ezspRawTransmitCompleteHandler if needed here
 
-            const result = await this.oneWaitress.startWaitingFor<ZclPayload>(
-                {
-                    target: undefined,
-                    apsFrame: apsFrame,
-                    zclSequence: zclFrame.header.transactionSequenceNumber,
-                    commandIdentifier: command.response,
-                },
-                timeout,
-            );
+            if (!disableResponse) {
+                const result = await this.oneWaitress.startWaitingFor<ZclPayload>(
+                    {
+                        target: undefined,
+                        apsFrame: apsFrame,
+                        zclSequence: zclFrame.header.transactionSequenceNumber,
+                        commandIdentifier: command.response,
+                    },
+                    timeout,
+                );
 
-            return result;
+                return result;
+            }
         });
     }
 

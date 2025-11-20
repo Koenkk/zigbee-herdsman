@@ -39,7 +39,11 @@ export class Touchlink {
 
                 try {
                     // TODO: multiple responses are not handled yet.
-                    const response = await this.adapter.sendZclFrameInterPANBroadcast(this.createScanRequestFrame(this.transactionNumber()), 500);
+                    const response = await this.adapter.sendZclFrameInterPANBroadcast(
+                        this.createScanRequestFrame(this.transactionNumber()),
+                        500,
+                        false,
+                    );
                     logger.debug(`Got scan response on channel '${channel}' of '${response.address}'`, NS);
                     assertString(response.address);
                     result.push({ieeeAddr: response.address, channel});
@@ -65,7 +69,7 @@ export class Touchlink {
             logger.info(`Set InterPAN channel to '${channel}'`, NS);
             await this.adapter.setChannelInterPAN(channel);
 
-            await this.adapter.sendZclFrameInterPANBroadcast(this.createScanRequestFrame(transaction), 500);
+            await this.adapter.sendZclFrameInterPANBroadcast(this.createScanRequestFrame(transaction), 500, false);
             logger.debug(`Got scan response on channel '${channel}'`, NS);
 
             logger.debug(`Identifying '${ieeeAddr}'`, NS);
@@ -85,7 +89,7 @@ export class Touchlink {
             logger.info(`Set InterPAN channel to '${channel}'`, NS);
             await this.adapter.setChannelInterPAN(channel);
 
-            await this.adapter.sendZclFrameInterPANBroadcast(this.createScanRequestFrame(transaction), 500);
+            await this.adapter.sendZclFrameInterPANBroadcast(this.createScanRequestFrame(transaction), 500, false);
             logger.debug(`Got scan response on channel '${channel}'`, NS);
 
             logger.debug(`Identifying '${ieeeAddr}'`, NS);
@@ -115,7 +119,7 @@ export class Touchlink {
                 try {
                     const transaction = this.transactionNumber();
 
-                    const response = await this.adapter.sendZclFrameInterPANBroadcast(this.createScanRequestFrame(transaction), 500);
+                    const response = await this.adapter.sendZclFrameInterPANBroadcast(this.createScanRequestFrame(transaction), 500, false);
                     logger.debug(`Got scan response on channel '${channel}'`, NS);
                     assertString(response.address);
 
