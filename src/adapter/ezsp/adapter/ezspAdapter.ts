@@ -539,7 +539,7 @@ export class EZSPAdapter extends Adapter {
 
             let response: ReturnType<typeof this.waitForInternal> | undefined;
 
-            if (!disableResponse) {
+            if (!disableResponse && command.response !== undefined) {
                 this.waitForInternal(undefined, 0xfe, undefined, zclFrame.cluster.ID, command.response, timeout);
             }
 

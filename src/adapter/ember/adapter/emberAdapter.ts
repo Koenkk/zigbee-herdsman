@@ -2221,7 +2221,7 @@ export class EmberAdapter extends Adapter {
 
             // NOTE: can use ezspRawTransmitCompleteHandler if needed here
 
-            if (!disableResponse) {
+            if (!disableResponse && command.response !== undefined) {
                 const result = await this.oneWaitress.startWaitingFor<ZclPayload>(
                     {
                         target: undefined,

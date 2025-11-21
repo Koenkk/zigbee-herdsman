@@ -1077,7 +1077,7 @@ export class ZStackAdapter extends Adapter {
 
             let response: ReturnType<typeof this.waitForInternal> | undefined;
 
-            if (!disableResponse) {
+            if (!disableResponse && command.response !== undefined) {
                 response = this.waitForInternal(
                     undefined,
                     0xfe,
