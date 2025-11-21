@@ -145,7 +145,7 @@ describe("Requests", () => {
             sendZdoResponse = Zdo.Buffalo.readResponse(true, Zdo.ClusterId.LQI_TABLE_RESPONSE, LQI_TABLE_RESPONSE);
             const resp = await device.lqi();
 
-            if (resp.neighbors[0].ieeeAddr !== IEEE_ADDRESS1 || resp.neighbors[1].ieeeAddr !== IEEE_ADDRESS2) {
+            if (resp[0].eui64 !== IEEE_ADDRESS1 || resp[1].eui64 !== IEEE_ADDRESS2) {
                 throw new Error("Invalid response");
             }
         },
