@@ -57,6 +57,8 @@ export class Touchlink {
     async stop(): Promise<void> {
         if (this.locked) {
             await this.restoreChannelInterPAN();
+
+            this.locked = false;
         }
     }
 

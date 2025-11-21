@@ -265,9 +265,11 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
             assert(ieeeAddress);
             assert(networkAddress !== undefined);
             assert(clusterKey !== undefined && typeof clusterKey === "number");
+            // no ZDO request takes 0 params
+            assert(Array.isArray(zdoParams) && zdoParams.length > 0);
 
             // will fail if args are incorrect for request
-            const buf = Zdo.Buffalo.buildRequest(this.adapter.hasZdoMessageOverhead, clusterKey, ...(zdoParams ?? []));
+            const buf = Zdo.Buffalo.buildRequest(this.adapter.hasZdoMessageOverhead, clusterKey, ...zdoParams);
 
             return (await this.adapter.sendZdo(ieeeAddress, networkAddress, clusterKey, buf, disableResponse)) as ZdoTypes.GenericZdoResponse;
         }
@@ -277,10 +279,8 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
         if (interPan) {
             assert(zcl.commandKey);
             assert(zcl.payload);
-            assert(zcl.frameType === undefined || zcl.frameType === Zcl.FrameType.GLOBAL || zcl.frameType === Zcl.FrameType.SPECIFIC);
-            assert(
-                zcl.direction === undefined || zcl.direction === Zcl.Direction.CLIENT_TO_SERVER || zcl.direction === Zcl.Direction.SERVER_TO_CLIENT,
-            );
+            assert(zcl.frameType === undefined);
+            assert(zcl.direction === undefined);
 
             const zclFrame = Zcl.Frame.create(
                 zcl.frameType ?? Zcl.FrameType.SPECIFIC,
