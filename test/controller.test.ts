@@ -4370,6 +4370,334 @@ describe("Controller", () => {
         );
     });
 
+    it("Endpoint read reporting config", async () => {
+        await controller.start();
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
+        const device = controller.getDeviceByIeeeAddr("0x129")!;
+        const endpoint = device.getEndpoint(1)!;
+        const saveClusterAttributeReportConfigSpy = vi.spyOn(endpoint, "saveClusterAttributeReportConfig");
+        const genPowerCfg = Zcl.Utils.getCluster("genPowerCfg", undefined, {});
+
+        endpoint.saveClusterAttributeReportConfig(genPowerCfg.ID, undefined, [
+            {
+                status: Zcl.Status.SUCCESS,
+                direction: Zcl.Direction.CLIENT_TO_SERVER,
+                attrId: genPowerCfg.attributes.mainsFrequency.ID,
+                dataType: Zcl.DataType.UINT8,
+                minRepIntval: 60,
+                maxRepIntval: 3600,
+                repChange: 10,
+            },
+            {
+                status: Zcl.Status.SUCCESS,
+                direction: Zcl.Direction.CLIENT_TO_SERVER,
+                attrId: genPowerCfg.attributes.batteryAHrRating.ID,
+                dataType: Zcl.DataType.UINT16,
+                minRepIntval: 10,
+                maxRepIntval: 1800,
+                repChange: 1,
+            },
+        ]);
+
+        saveClusterAttributeReportConfigSpy.mockClear();
+        mocksendZclFrameToEndpoint.mockClear();
+        mocksendZclFrameToEndpoint.mockImplementationOnce((_ieeeAddr, _networkAddress, _endpoint, frame: Zcl.Frame) => {
+            const payload = [
+                {
+                    status: Zcl.Status.SUCCESS,
+                    direction: Zcl.Direction.CLIENT_TO_SERVER,
+                    attrId: genPowerCfg.attributes.mainsVoltage.ID,
+                    dataType: Zcl.DataType.UINT16,
+                    minRepIntval: 0,
+                    maxRepIntval: 30,
+                    repChange: 10,
+                },
+                {
+                    status: Zcl.Status.SUCCESS,
+                    direction: Zcl.Direction.SERVER_TO_CLIENT,
+                    attrId: genPowerCfg.attributes.mainsFrequency.ID,
+                    dataType: Zcl.DataType.UINT8,
+                    timeout: 0xffff,
+                },
+                {
+                    status: Zcl.Status.SUCCESS,
+                    direction: Zcl.Direction.CLIENT_TO_SERVER,
+                    attrId: genPowerCfg.attributes.mainsFrequency.ID,
+                    dataType: Zcl.DataType.UINT8,
+                    minRepIntval: 30,
+                    maxRepIntval: 600,
+                    repChange: 2,
+                },
+                {
+                    status: Zcl.Status.UNREPORTABLE_ATTRIBUTE,
+                    direction: Zcl.Direction.CLIENT_TO_SERVER,
+                    attrId: genPowerCfg.attributes.batteryManufacturer.ID,
+                },
+                {
+                    status: Zcl.Status.NOT_FOUND,
+                    direction: Zcl.Direction.CLIENT_TO_SERVER,
+                    attrId: genPowerCfg.attributes.batteryAHrRating.ID,
+                },
+            ];
+            const responseFrame = Zcl.Frame.create(
+                Zcl.FrameType.GLOBAL,
+                Zcl.Direction.CLIENT_TO_SERVER,
+                true,
+                undefined,
+                9,
+                "readReportConfigRsp",
+                frame.cluster.ID,
+                payload,
+                {},
+            );
+            return {header: responseFrame.header, data: responseFrame.toBuffer(), clusterID: frame.cluster.ID};
+        });
+
+        expect(deepClone(endpoint.configuredReportings)).toStrictEqual([
+            {
+                cluster: deepClone(genPowerCfg),
+                attribute: {ID: genPowerCfg.attributes.mainsFrequency.ID, name: "mainsFrequency", type: Zcl.DataType.UINT8},
+                minimumReportInterval: 60,
+                maximumReportInterval: 3600,
+                reportableChange: 10,
+            },
+            {
+                cluster: deepClone(genPowerCfg),
+                attribute: {ID: genPowerCfg.attributes.batteryAHrRating.ID, name: "batteryAHrRating", type: Zcl.DataType.UINT16},
+                minimumReportInterval: 10,
+                maximumReportInterval: 1800,
+                reportableChange: 1,
+            },
+        ]);
+
+        await endpoint.readReportingConfig("genPowerCfg", [
+            {attribute: "mainsVoltage"},
+            {direction: Zcl.Direction.SERVER_TO_CLIENT, attribute: "mainsFrequency"}, // coverage
+            {attribute: "mainsFrequency"},
+            {attribute: "batteryManufacturer"},
+            {attribute: {ID: genPowerCfg.attributes.batteryAHrRating.ID}}, // coverage
+        ]);
+
+        const call = mocksendZclFrameToEndpoint.mock.calls[0];
+        expect(call[0]).toBe("0x129");
+        expect(call[1]).toBe(129);
+        expect(call[2]).toBe(1);
+        expect(deepClone(call[3])).toStrictEqual(
+            deepClone(
+                Zcl.Frame.create(
+                    Zcl.FrameType.GLOBAL,
+                    Zcl.Direction.CLIENT_TO_SERVER,
+                    true,
+                    undefined,
+                    9,
+                    "readReportConfig",
+                    genPowerCfg.ID,
+                    [
+                        {direction: Zcl.Direction.CLIENT_TO_SERVER, attrId: genPowerCfg.attributes.mainsVoltage.ID},
+                        {direction: Zcl.Direction.SERVER_TO_CLIENT, attrId: genPowerCfg.attributes.mainsFrequency.ID},
+                        {direction: Zcl.Direction.CLIENT_TO_SERVER, attrId: genPowerCfg.attributes.mainsFrequency.ID},
+                        {direction: Zcl.Direction.CLIENT_TO_SERVER, attrId: genPowerCfg.attributes.batteryManufacturer.ID},
+                        {direction: Zcl.Direction.CLIENT_TO_SERVER, attrId: genPowerCfg.attributes.batteryAHrRating.ID},
+                    ],
+                    {},
+                ),
+            ),
+        );
+        expect(saveClusterAttributeReportConfigSpy).toHaveBeenCalledTimes(1);
+
+        expect(deepClone(endpoint.configuredReportings)).toStrictEqual([
+            {
+                cluster: deepClone(genPowerCfg),
+                attribute: {ID: genPowerCfg.attributes.mainsFrequency.ID, name: "mainsFrequency", type: Zcl.DataType.UINT8},
+                minimumReportInterval: 30,
+                maximumReportInterval: 600,
+                reportableChange: 2,
+            },
+            {
+                cluster: deepClone(genPowerCfg),
+                attribute: {ID: genPowerCfg.attributes.mainsVoltage.ID, name: "mainsVoltage", type: Zcl.DataType.UINT16},
+                minimumReportInterval: 0,
+                maximumReportInterval: 30,
+                reportableChange: 10,
+            },
+        ]);
+
+        saveClusterAttributeReportConfigSpy.mockRestore();
+    });
+
+    it("Endpoint throws without response to read reporting config", async () => {
+        await controller.start();
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
+        const device = controller.getDeviceByIeeeAddr("0x129")!;
+        const endpoint = device.getEndpoint(1)!;
+        mocksendZclFrameToEndpoint.mockClear();
+
+        await expect(endpoint.readReportingConfig("genPowerCfg", [{attribute: "mainsVoltage"}])).rejects.toThrow("No response received");
+    });
+
+    it("Endpoint ignores unknown attributes for read reporting config", async () => {
+        await controller.start();
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
+        const device = controller.getDeviceByIeeeAddr("0x129")!;
+        const endpoint = device.getEndpoint(1)!;
+        const genBasic = Zcl.Utils.getCluster("genBasic", undefined, {});
+        const saveClusterAttributeReportConfigSpy = vi.spyOn(endpoint, "saveClusterAttributeReportConfig");
+
+        mocksendZclFrameToEndpoint.mockClear();
+        mocksendZclFrameToEndpoint.mockImplementationOnce((_ieeeAddr, _networkAddress, _endpoint, frame: Zcl.Frame) => {
+            const payload = [
+                {
+                    status: Zcl.Status.UNREPORTABLE_ATTRIBUTE,
+                    direction: Zcl.Direction.CLIENT_TO_SERVER,
+                    attrId: genBasic.attributes.zclVersion.ID,
+                },
+            ];
+            const responseFrame = Zcl.Frame.create(
+                Zcl.FrameType.GLOBAL,
+                Zcl.Direction.CLIENT_TO_SERVER,
+                true,
+                undefined,
+                9,
+                "readReportConfigRsp",
+                frame.cluster.ID,
+                payload,
+                {},
+            );
+            return {header: responseFrame.header, data: responseFrame.toBuffer(), clusterID: frame.cluster.ID};
+        });
+        await endpoint.readReportingConfig("genBasic", [{attribute: "zclVersion"}, {attribute: "notanattr"}], {});
+
+        const call = mocksendZclFrameToEndpoint.mock.calls[0];
+        expect(call[0]).toBe("0x129");
+        expect(call[1]).toBe(129);
+        expect(call[2]).toBe(1);
+        expect(deepClone(call[3])).toStrictEqual(
+            deepClone(
+                Zcl.Frame.create(
+                    Zcl.FrameType.GLOBAL,
+                    Zcl.Direction.CLIENT_TO_SERVER,
+                    true,
+                    undefined,
+                    9,
+                    "readReportConfig",
+                    genBasic.ID,
+                    [{direction: Zcl.Direction.CLIENT_TO_SERVER, attrId: genBasic.attributes.zclVersion.ID}],
+                    {},
+                ),
+            ),
+        );
+        expect(saveClusterAttributeReportConfigSpy).toHaveBeenCalledTimes(1);
+        expect(mockLogger.warning).toHaveBeenCalledWith("Ignoring unknown attribute notanattr in cluster genBasic", "zh:controller:endpoint");
+
+        saveClusterAttributeReportConfigSpy.mockRestore();
+    });
+
+    it("Endpoint manuf-spec read reporting config", async () => {
+        await controller.start();
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
+        const device = controller.getDeviceByIeeeAddr("0x129")!;
+        const endpoint = device.getEndpoint(1)!;
+        const genBasic = Zcl.Utils.getCluster("genBasic", undefined, {});
+        const saveClusterAttributeReportConfigSpy = vi.spyOn(endpoint, "saveClusterAttributeReportConfig");
+
+        endpoint.saveClusterAttributeReportConfig(genBasic.ID, Zcl.ManufacturerCode.SCHNEIDER_ELECTRIC, [
+            {
+                status: Zcl.Status.SUCCESS,
+                direction: Zcl.Direction.CLIENT_TO_SERVER,
+                attrId: genBasic.attributes.schneiderMeterRadioPower.ID,
+                dataType: Zcl.DataType.INT8,
+                minRepIntval: 80,
+                maxRepIntval: 300,
+                repChange: 10,
+            },
+        ]);
+
+        mocksendZclFrameToEndpoint.mockClear();
+        saveClusterAttributeReportConfigSpy.mockClear();
+        mocksendZclFrameToEndpoint.mockImplementationOnce((_ieeeAddr, _networkAddress, _endpoint, frame: Zcl.Frame) => {
+            const payload = [
+                {
+                    status: Zcl.Status.SUCCESS,
+                    direction: Zcl.Direction.CLIENT_TO_SERVER,
+                    attrId: genBasic.attributes.schneiderMeterRadioPower.ID,
+                    dataType: Zcl.DataType.INT8,
+                    minRepIntval: 15,
+                    maxRepIntval: 213,
+                    repChange: 3,
+                },
+            ];
+            const responseFrame = Zcl.Frame.create(
+                Zcl.FrameType.GLOBAL,
+                Zcl.Direction.CLIENT_TO_SERVER,
+                true,
+                Zcl.ManufacturerCode.SCHNEIDER_ELECTRIC,
+                9,
+                "readReportConfigRsp",
+                frame.cluster.ID,
+                payload,
+                {},
+            );
+            return {header: responseFrame.header, data: responseFrame.toBuffer(), clusterID: frame.cluster.ID};
+        });
+
+        expect(deepClone(endpoint.configuredReportings)).toStrictEqual([
+            {
+                cluster: deepClone(genBasic),
+                attribute: {
+                    ID: genBasic.attributes.schneiderMeterRadioPower.ID,
+                    name: "schneiderMeterRadioPower",
+                    type: Zcl.DataType.INT8,
+                    manufacturerCode: Zcl.ManufacturerCode.SCHNEIDER_ELECTRIC,
+                },
+                minimumReportInterval: 80,
+                maximumReportInterval: 300,
+                reportableChange: 10,
+            },
+        ]);
+
+        await endpoint.readReportingConfig("genBasic", [{attribute: "schneiderMeterRadioPower"}], {
+            manufacturerCode: Zcl.ManufacturerCode.SCHNEIDER_ELECTRIC,
+        });
+
+        const call = mocksendZclFrameToEndpoint.mock.calls[0];
+        expect(call[0]).toBe("0x129");
+        expect(call[1]).toBe(129);
+        expect(call[2]).toBe(1);
+        expect(deepClone(call[3])).toStrictEqual(
+            deepClone(
+                Zcl.Frame.create(
+                    Zcl.FrameType.GLOBAL,
+                    Zcl.Direction.CLIENT_TO_SERVER,
+                    true,
+                    Zcl.ManufacturerCode.SCHNEIDER_ELECTRIC,
+                    9,
+                    "readReportConfig",
+                    genBasic.ID,
+                    [{direction: Zcl.Direction.CLIENT_TO_SERVER, attrId: genBasic.attributes.schneiderMeterRadioPower.ID}],
+                    {},
+                ),
+            ),
+        );
+        expect(saveClusterAttributeReportConfigSpy).toHaveBeenCalledTimes(1);
+
+        expect(deepClone(endpoint.configuredReportings)).toStrictEqual([
+            {
+                cluster: deepClone(genBasic),
+                attribute: {
+                    ID: genBasic.attributes.schneiderMeterRadioPower.ID,
+                    name: "schneiderMeterRadioPower",
+                    type: Zcl.DataType.INT8,
+                    manufacturerCode: Zcl.ManufacturerCode.SCHNEIDER_ELECTRIC,
+                },
+                minimumReportInterval: 15,
+                maximumReportInterval: 213,
+                reportableChange: 3,
+            },
+        ]);
+
+        saveClusterAttributeReportConfigSpy.mockRestore();
+    });
+
     it("Return group from databse when not in lookup", async () => {
         await controller.start();
         await controller.createGroup(2);

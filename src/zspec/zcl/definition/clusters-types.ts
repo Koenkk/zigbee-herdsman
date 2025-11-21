@@ -7197,15 +7197,15 @@ export interface TFoundation {
         direction: number;
         /** Type: UINT16 */
         attrId: number;
-        /** Type: UINT8, Conditions: [{fieldEquals field=direction value=0}] */
+        /** Type: UINT8, Conditions: [{fieldEquals field=status value=0}{fieldEquals field=direction value=0}] */
         dataType?: number;
-        /** Type: UINT16, Conditions: [{fieldEquals field=direction value=0}] */
+        /** Type: UINT16, Conditions: [{fieldEquals field=status value=0}{fieldEquals field=direction value=0}] */
         minRepIntval?: number;
-        /** Type: UINT16, Conditions: [{fieldEquals field=direction value=0}] */
+        /** Type: UINT16, Conditions: [{fieldEquals field=status value=0}{fieldEquals field=direction value=0}] */
         maxRepIntval?: number;
-        /** Type: USE_DATA_TYPE, Conditions: [{fieldEquals field=direction value=0}{dataTypeValueTypeEquals value=ANALOG}] */
+        /** Type: USE_DATA_TYPE, Conditions: [{fieldEquals field=status value=0}{fieldEquals field=direction value=0}{dataTypeValueTypeEquals value=ANALOG}] */
         repChange?: unknown;
-        /** Type: UINT16, Conditions: [{fieldEquals field=direction value=1}] */
+        /** Type: UINT16, Conditions: [{fieldEquals field=status value=0}{fieldEquals field=direction value=1}] */
         timeout?: number;
     }[];
     /** ID: 10 */
