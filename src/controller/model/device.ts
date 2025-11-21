@@ -1,6 +1,5 @@
 import assert from "node:assert";
 import type {Events as AdapterEvents} from "../../adapter";
-import type {LQINeighbor, RoutingTableEntry} from "../../adapter/tstype";
 import {wait} from "../../utils";
 import {logger} from "../../utils/logger";
 import * as timeService from "../../utils/timeService";
@@ -11,6 +10,7 @@ import * as Zcl from "../../zspec/zcl";
 import type {TPartialClusterAttributes} from "../../zspec/zcl/definition/clusters-types";
 import type {ClusterDefinition, CustomClusters} from "../../zspec/zcl/definition/tstype";
 import * as Zdo from "../../zspec/zdo";
+import type {BindingTableEntry, LQITableEntry, RoutingTableEntry} from "../../zspec/zdo/definition/tstypes";
 import type {ControllerEventMap} from "../controller";
 import zclTransactionSequenceNumber from "../helpers/zclTransactionSequenceNumber";
 import type {DatabaseEntry, DeviceType, KeyValue} from "../tstype";
@@ -30,20 +30,6 @@ const INTERVIEW_GENBASIC_ATTRIBUTES = [
     "dateCode",
     "swBuildId",
 ] as const;
-
-interface Lqi {
-    neighbors: {
-        ieeeAddr: string;
-        networkAddress: number;
-        linkquality: number;
-        relationship: number;
-        depth: number;
-    }[];
-}
-
-interface RoutingTable {
-    table: {destinationAddress: number; status: string; nextHop: number}[];
-}
 
 type CustomReadResponse = (frame: Zcl.Frame, endpoint: Endpoint) => boolean;
 
@@ -1129,10 +1115,9 @@ export class Device extends Entity<ControllerEventMap> {
         this._endpoints = newEndpoints;
     }
 
-    public async lqi(): Promise<Lqi> {
+    public async lqi(): Promise<LQITableEntry[]> {
         const clusterId = Zdo.ClusterId.LQI_TABLE_REQUEST;
-        // TODO return Zdo.LQITableEntry directly (requires updates in other repos)
-        const neighbors: LQINeighbor[] = [];
+        const table: LQITableEntry[] = [];
         const request = async (startIndex: number): Promise<[tableEntries: number, entryCount: number]> => {
             const zdoPayload = Zdo.Buffalo.buildRequest(Entity.adapter.hasZdoMessageOverhead, clusterId, startIndex);
             const response = await Entity.adapter.sendZdo(this.ieeeAddr, this.networkAddress, clusterId, zdoPayload, false);
@@ -1144,13 +1129,7 @@ export class Device extends Entity<ControllerEventMap> {
             const result = response[1];
 
             for (const entry of result.entryList) {
-                neighbors.push({
-                    ieeeAddr: entry.eui64,
-                    networkAddress: entry.nwkAddress,
-                    linkquality: entry.lqi,
-                    relationship: entry.relationship,
-                    depth: entry.depth,
-                });
+                table.push(entry);
             }
 
             return [result.neighborTableEntries, result.entryList.length];
@@ -1161,18 +1140,17 @@ export class Device extends Entity<ControllerEventMap> {
         const size = tableEntries;
         let nextStartIndex = entryCount;
 
-        while (neighbors.length < size) {
+        while (table.length < size) {
             [tableEntries, entryCount] = await request(nextStartIndex);
 
             nextStartIndex += entryCount;
         }
 
-        return {neighbors};
+        return table;
     }
 
-    public async routingTable(): Promise<RoutingTable> {
+    public async routingTable(): Promise<RoutingTableEntry[]> {
         const clusterId = Zdo.ClusterId.ROUTING_TABLE_REQUEST;
-        // TODO return Zdo.RoutingTableEntry directly (requires updates in other repos)
         const table: RoutingTableEntry[] = [];
         const request = async (startIndex: number): Promise<[tableEntries: number, entryCount: number]> => {
             const zdoPayload = Zdo.Buffalo.buildRequest(Entity.adapter.hasZdoMessageOverhead, clusterId, startIndex);
@@ -1185,11 +1163,7 @@ export class Device extends Entity<ControllerEventMap> {
             const result = response[1];
 
             for (const entry of result.entryList) {
-                table.push({
-                    destinationAddress: entry.destinationAddress,
-                    status: entry.status,
-                    nextHop: entry.nextHopAddress,
-                });
+                table.push(entry);
             }
 
             return [result.routingTableEntries, result.entryList.length];
@@ -1206,7 +1180,55 @@ export class Device extends Entity<ControllerEventMap> {
             nextStartIndex += entryCount;
         }
 
-        return {table};
+        return table;
+    }
+
+    public async bindingTable(): Promise<BindingTableEntry[]> {
+        const clusterId = Zdo.ClusterId.BINDING_TABLE_REQUEST;
+        const table: BindingTableEntry[] = [];
+        const request = async (startIndex: number): Promise<[tableEntries: number, entryCount: number]> => {
+            const zdoPayload = Zdo.Buffalo.buildRequest(Entity.adapter.hasZdoMessageOverhead, clusterId, startIndex);
+            const response = await Entity.adapter.sendZdo(this.ieeeAddr, this.networkAddress, clusterId, zdoPayload, false);
+
+            if (!Zdo.Buffalo.checkStatus<Zdo.ClusterId.BINDING_TABLE_RESPONSE>(response)) {
+                throw new Zdo.StatusError(response[0]);
+            }
+
+            const result = response[1];
+
+            for (const entry of result.entryList) {
+                table.push(entry);
+            }
+
+            return [result.bindingTableEntries, result.entryList.length];
+        };
+
+        let [tableEntries, entryCount] = await request(0);
+
+        const size = tableEntries;
+        let nextStartIndex = entryCount;
+
+        while (table.length < size) {
+            [tableEntries, entryCount] = await request(nextStartIndex);
+            nextStartIndex += entryCount;
+        }
+
+        return table;
+    }
+
+    /**
+     * Clear all the bindings of a device.
+     * Support of this command is optional (only mandatory if device has a binding table).
+     * @param eui64List list of bind entries to match and clear. Send `["0xffffffffffffffff"]` to clear all.
+     */
+    public async clearAllBindings(eui64List: Eui64[]): Promise<void> {
+        const clusterId = Zdo.ClusterId.CLEAR_ALL_BINDINGS_REQUEST;
+        const zdoPayload = Zdo.Buffalo.buildRequest(Entity.adapter.hasZdoMessageOverhead, clusterId, {eui64List});
+        const response = await Entity.adapter.sendZdo(this.ieeeAddr, this.networkAddress, clusterId, zdoPayload, false);
+
+        if (!Zdo.Buffalo.checkStatus<Zdo.ClusterId.CLEAR_ALL_BINDINGS_RESPONSE>(response)) {
+            throw new Zdo.StatusError(response[0]);
+        }
     }
 
     public async ping(disableRecovery = true): Promise<void> {

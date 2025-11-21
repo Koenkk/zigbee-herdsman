@@ -189,6 +189,14 @@ const mockAdapterSendZdo = vi
                     return device.routingTable;
                 }
 
+                case Zdo.ClusterId.BINDING_TABLE_REQUEST: {
+                    if (!device.bindingTable) {
+                        throw new Error("BINDING_TABLE_REQUEST timeout");
+                    }
+
+                    return device.bindingTable;
+                }
+
                 default: {
                     // Zdo.ClusterId.LEAVE_REQUEST, Zdo.ClusterId.BIND_REQUEST, Zdo.ClusterId.UNBIND_REQUEST
                     return [Zdo.Status.SUCCESS, undefined];
@@ -3643,12 +3651,10 @@ describe("Controller", () => {
         await mockAdapterEvents.deviceJoined({networkAddress: 140, ieeeAddr: "0x140"});
         const device = controller.getDeviceByIeeeAddr("0x140")!;
         const result = await device.lqi();
-        expect(result).toStrictEqual({
-            neighbors: [
-                {ieeeAddr: "0x160", networkAddress: 160, linkquality: 20, relationship: 2, depth: 5},
-                {ieeeAddr: "0x170", networkAddress: 170, linkquality: 21, relationship: 4, depth: 8},
-            ],
-        });
+        expect(result).toStrictEqual([
+            {eui64: "0x160", nwkAddress: 160, lqi: 20, relationship: 2, depth: 5, ...LQI_TABLE_ENTRY_DEFAULTS},
+            {eui64: "0x170", nwkAddress: 170, lqi: 21, relationship: 4, depth: 8, ...LQI_TABLE_ENTRY_DEFAULTS},
+        ]);
     });
 
     it("Device routing table", async () => {
@@ -3656,12 +3662,41 @@ describe("Controller", () => {
         await mockAdapterEvents.deviceJoined({networkAddress: 140, ieeeAddr: "0x140"});
         const device = controller.getDeviceByIeeeAddr("0x140")!;
         const result = await device.routingTable();
-        expect(result).toStrictEqual({
-            table: [
-                {destinationAddress: 120, status: "ACTIVE", nextHop: 1},
-                {destinationAddress: 130, status: "DISCOVERY_FAILED", nextHop: 2},
-            ],
-        });
+        expect(result).toStrictEqual([
+            {destinationAddress: 120, status: "ACTIVE", nextHopAddress: 1, ...ROUTING_TABLE_ENTRY_DEFAULTS},
+            {destinationAddress: 130, status: "DISCOVERY_FAILED", nextHopAddress: 2, ...ROUTING_TABLE_ENTRY_DEFAULTS},
+        ]);
+    });
+
+    it("Device binding table", async () => {
+        await controller.start();
+        await mockAdapterEvents.deviceJoined({networkAddress: 140, ieeeAddr: "0x140"});
+        const device = controller.getDeviceByIeeeAddr("0x140")!;
+        const result = await device.bindingTable();
+        expect(result).toStrictEqual([
+            {
+                sourceEui64: "0xf1f2f3f5f6f7f8",
+                sourceEndpoint: 1,
+                clusterId: Zcl.Clusters.genBasic,
+                destAddrMode: 0x03,
+                dest: "0xa1a2a3a4a5a6a7a8",
+                destEndpoint: 2,
+            },
+            {
+                sourceEui64: "0xe1e2e3e5e6e7e8",
+                sourceEndpoint: 3,
+                clusterId: Zcl.Clusters.genAlarms,
+                destAddrMode: 0x01,
+                dest: 0x1234,
+            },
+        ]);
+    });
+
+    it("Device clears all bindings", async () => {
+        await controller.start();
+        await mockAdapterEvents.deviceJoined({networkAddress: 140, ieeeAddr: "0x140"});
+        const device = controller.getDeviceByIeeeAddr("0x140")!;
+        await expect(device.clearAllBindings(["0xffffffffffffffff"])).resolves.toStrictEqual(undefined);
     });
 
     it("Device ping", async () => {
@@ -8203,6 +8238,32 @@ describe("Controller", () => {
         expect(controller.getDeviceByIeeeAddr("0x140")).toBeDefined();
     });
 
+    it("Device binding table fails", async () => {
+        await controller.start();
+        await mockAdapterEvents.deviceJoined({networkAddress: 140, ieeeAddr: "0x140"});
+        const device = controller.getDeviceByIeeeAddr("0x140")!;
+        sendZdoResponseStatus = Zdo.Status.INVALID_INDEX;
+
+        await expect(device.bindingTable()).rejects.toThrow(`Status 'INVALID_INDEX'`);
+
+        const zdoPayload = Zdo.Buffalo.buildRequest(false, Zdo.ClusterId.BINDING_TABLE_REQUEST, 0);
+        expect(mockAdapterSendZdo).toHaveBeenCalledWith("0x140", 140, Zdo.ClusterId.BINDING_TABLE_REQUEST, zdoPayload, false);
+        expect(controller.getDeviceByIeeeAddr("0x140")).toBeDefined();
+    });
+
+    it("Device clear all bindings fails", async () => {
+        await controller.start();
+        await mockAdapterEvents.deviceJoined({networkAddress: 140, ieeeAddr: "0x140"});
+        const device = controller.getDeviceByIeeeAddr("0x140")!;
+        sendZdoResponseStatus = Zdo.Status.INV_REQUESTTYPE;
+
+        await expect(device.clearAllBindings(["0xffffffffffffffff"])).rejects.toThrow(`Status 'INV_REQUESTTYPE'`);
+
+        const zdoPayload = Zdo.Buffalo.buildRequest(false, Zdo.ClusterId.CLEAR_ALL_BINDINGS_REQUEST, {eui64List: ["0xffffffffffffffff"]});
+        expect(mockAdapterSendZdo).toHaveBeenCalledWith("0x140", 140, Zdo.ClusterId.CLEAR_ALL_BINDINGS_REQUEST, zdoPayload, false);
+        expect(controller.getDeviceByIeeeAddr("0x140")).toBeDefined();
+    });
+
     it("Device LQI table with more than 1 request", async () => {
         await controller.start();
         await mockAdapterEvents.deviceJoined({networkAddress: 140, ieeeAddr: "0x140"});
@@ -8233,13 +8294,11 @@ describe("Controller", () => {
             });
 
         const result = await device.lqi();
-        expect(result).toStrictEqual({
-            neighbors: [
-                {ieeeAddr: "0x160", networkAddress: 160, linkquality: 20, relationship: 2, depth: 5},
-                {ieeeAddr: "0x170", networkAddress: 170, linkquality: 21, relationship: 4, depth: 8},
-                {ieeeAddr: "0x180", networkAddress: 180, linkquality: 200, relationship: 4, depth: 2},
-            ],
-        });
+        expect(result).toStrictEqual([
+            {...LQI_TABLE_ENTRY_DEFAULTS, eui64: "0x160", nwkAddress: 160, lqi: 20, relationship: 2, depth: 5},
+            {...LQI_TABLE_ENTRY_DEFAULTS, eui64: "0x170", nwkAddress: 170, lqi: 21, relationship: 4, depth: 8},
+            {...LQI_TABLE_ENTRY_DEFAULTS, eui64: "0x180", nwkAddress: 180, lqi: 200, relationship: 4, depth: 2},
+        ]);
     });
 
     it("Device routing table with more than 1 request", async () => {
@@ -8272,13 +8331,90 @@ describe("Controller", () => {
             });
 
         const result = await device.routingTable();
-        expect(result).toStrictEqual({
-            table: [
-                {destinationAddress: 120, status: "ACTIVE", nextHop: 1},
-                {destinationAddress: 130, status: "DISCOVERY_FAILED", nextHop: 2},
-                {destinationAddress: 140, status: "INACTIVE", nextHop: 3},
-            ],
-        });
+        expect(result).toStrictEqual([
+            {...ROUTING_TABLE_ENTRY_DEFAULTS, destinationAddress: 120, status: "ACTIVE", nextHopAddress: 1},
+            {...ROUTING_TABLE_ENTRY_DEFAULTS, destinationAddress: 130, status: "DISCOVERY_FAILED", nextHopAddress: 2},
+            {...ROUTING_TABLE_ENTRY_DEFAULTS, destinationAddress: 140, status: "INACTIVE", nextHopAddress: 3},
+        ]);
+    });
+
+    it("Device binding table with more than 1 request", async () => {
+        await controller.start();
+        await mockAdapterEvents.deviceJoined({networkAddress: 140, ieeeAddr: "0x140"});
+        const device = controller.getDeviceByIeeeAddr("0x140")!;
+        mockAdapterSendZdo
+            .mockImplementationOnce(() => {
+                return [
+                    Zdo.Status.SUCCESS,
+                    {
+                        bindingTableEntries: 3,
+                        startIndex: 0,
+                        entryList: [
+                            {
+                                sourceEui64: "0xf1f2f3f5f6f7f8",
+                                sourceEndpoint: 1,
+                                clusterId: Zcl.Clusters.genBasic,
+                                destAddrMode: 0x03,
+                                dest: "0xa1a2a3a4a5a6a7a8",
+                                destEndpoint: 2,
+                            },
+                            {
+                                sourceEui64: "0xe1e2e3e5e6e7e8",
+                                sourceEndpoint: 3,
+                                clusterId: Zcl.Clusters.genAlarms,
+                                destAddrMode: 0x01,
+                                dest: 0x1234,
+                            },
+                        ],
+                    },
+                ];
+            })
+            .mockImplementationOnce(() => {
+                return [
+                    Zdo.Status.SUCCESS,
+                    {
+                        bindingTableEntries: 3,
+                        startIndex: 2,
+                        entryList: [
+                            {
+                                sourceEui64: "0xc1c2c3c5c6c7c8",
+                                sourceEndpoint: 2,
+                                clusterId: Zcl.Clusters.genLevelCtrl,
+                                destAddrMode: 0x03,
+                                dest: "0xa1a2a3a4a5a6a7a8",
+                                destEndpoint: 3,
+                            },
+                        ],
+                    },
+                ];
+            });
+
+        const result = await device.bindingTable();
+        expect(result).toStrictEqual([
+            {
+                sourceEui64: "0xf1f2f3f5f6f7f8",
+                sourceEndpoint: 1,
+                clusterId: Zcl.Clusters.genBasic,
+                destAddrMode: 0x03,
+                dest: "0xa1a2a3a4a5a6a7a8",
+                destEndpoint: 2,
+            },
+            {
+                sourceEui64: "0xe1e2e3e5e6e7e8",
+                sourceEndpoint: 3,
+                clusterId: Zcl.Clusters.genAlarms,
+                destAddrMode: 0x01,
+                dest: 0x1234,
+            },
+            {
+                sourceEui64: "0xc1c2c3c5c6c7c8",
+                sourceEndpoint: 2,
+                clusterId: Zcl.Clusters.genLevelCtrl,
+                destAddrMode: 0x03,
+                dest: "0xa1a2a3a4a5a6a7a8",
+                destEndpoint: 3,
+            },
+        ]);
     });
 
     it("Touchlink stops during stop", async () => {
