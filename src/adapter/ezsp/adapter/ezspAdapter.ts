@@ -533,7 +533,7 @@ export class EZSPAdapter extends Adapter {
             logger.debug("sendZclFrameInterPANBroadcast", NS);
             const command = zclFrame.command;
 
-            if (command.response === undefined) {
+            if (!disableResponse && command.response === undefined) {
                 throw new Error(`Command '${command.name}' has no response, cannot wait for response`);
             }
 
