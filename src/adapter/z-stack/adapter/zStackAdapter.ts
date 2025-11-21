@@ -1071,7 +1071,7 @@ export class ZStackAdapter extends Adapter {
     ): Promise<Events.ZclPayload | undefined> {
         return await this.queue.execute<Events.ZclPayload | undefined>(async () => {
             const command = zclFrame.command;
-            if (command.response === undefined) {
+            if (!disableResponse && command.response === undefined) {
                 throw new Error(`Command '${command.name}' has no response, cannot wait for response`);
             }
 
