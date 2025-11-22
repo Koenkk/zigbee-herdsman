@@ -393,6 +393,8 @@ export class Endpoint extends ZigbeeEntity {
         const cluster = this.getCluster(clusterKey, undefined, options?.manufacturerCode);
         const payload: TFoundation["report"] = [];
 
+        // TODO: handle `attr.reportRequired !== true`
+
         for (const nameOrID in attributes) {
             const attribute = cluster.getAttribute(nameOrID);
 
@@ -429,7 +431,10 @@ export class Endpoint extends ZigbeeEntity {
             const attribute = cluster.getAttribute(nameOrID);
 
             if (attribute) {
-                payload.push({attrId: attribute.ID, attrData: attributes[nameOrID], dataType: attribute.type});
+                // TODO: handle `attr.writeOptional !== true`
+                const attrData = Zcl.Utils.processAttributeWrite(attribute, attributes[nameOrID]);
+
+                payload.push({attrId: attribute.ID, attrData, dataType: attribute.type});
             } else if (!Number.isNaN(Number(nameOrID))) {
                 const value = attributes[nameOrID];
 
@@ -498,6 +503,8 @@ export class Endpoint extends ZigbeeEntity {
         );
         const payload: TFoundation["read"] = [];
 
+        // TODO: handle `attr.required !== true` => should not throw
+
         for (const attribute of attributes) {
             if (typeof attribute === "number") {
                 payload.push({attrId: attribute});
@@ -505,6 +512,7 @@ export class Endpoint extends ZigbeeEntity {
                 const attr = cluster.getAttribute(attribute);
 
                 if (attr) {
+                    Zcl.Utils.processAttributePreRead(attr);
                     payload.push({attrId: attr.ID});
                 } else {
                     logger.warning(`Ignoring unknown attribute ${attribute} in cluster ${cluster.name}`, NS);

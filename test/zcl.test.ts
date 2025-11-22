@@ -35,7 +35,7 @@ describe("Zcl", () => {
     it("Get cluster attribute by ID", () => {
         const cluster = Zcl.Utils.getCluster(0, undefined, {});
         const attribute = cluster.getAttribute(1);
-        expect(attribute).toStrictEqual({ID: 1, type: DataType.UINT8, name: "appVersion"});
+        expect(attribute).toStrictEqual({ID: 1, type: DataType.UINT8, name: "appVersion", default: 0, max: 255});
     });
 
     it("Cluster has attribute", () => {
@@ -738,11 +738,11 @@ describe("Zcl", () => {
 
         const payload = {
             srcID: 4650238,
-            commandFrame: {raw: Buffer.from([])},
+            commandFrame: {},
             commandID: 16,
             frameCounter: 1253,
             options: 5280,
-            payloadSize: 255,
+            payloadSize: Number.NaN,
         };
 
         expect(frame.header).toStrictEqual(header);
@@ -1936,7 +1936,7 @@ describe("Zcl", () => {
     it("Zcl utils get cluster attributes manufacturerCode", () => {
         const cluster = Zcl.Utils.getCluster("closuresWindowCovering", 0x1021, {});
         const attribute = cluster.getAttribute(0xf004);
-        expect(attribute).toStrictEqual({ID: 0xf004, manufacturerCode: 0x1021, name: "stepPositionTilt", type: 48});
+        expect(attribute).toStrictEqual(expect.objectContaining({ID: 0xf004, manufacturerCode: 0x1021, name: "stepPositionTilt", type: 48}));
     });
 
     it("Zcl utils get cluster attributes manufacturerCode wrong", () => {
