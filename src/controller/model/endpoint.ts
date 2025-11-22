@@ -37,6 +37,11 @@ export interface ConfigureReportingItem<Cl extends string | number, Custom exten
     reportableChange: number;
 }
 
+export interface ReadReportConfigItem<Cl extends string | number, Custom extends TCustomCluster | undefined = undefined> {
+    direction?: Zcl.Direction;
+    attribute: ClusterOrRawAttributeKeys<Cl, Custom>[number] | {ID: number};
+}
+
 interface Options {
     manufacturerCode?: number;
     disableDefaultResponse?: boolean;
@@ -68,7 +73,7 @@ interface Clusters {
     };
 }
 
-interface BindInternal {
+export interface BindInternal {
     cluster: number;
     type: "endpoint" | "group";
     deviceIeeeAddress?: string;
@@ -299,6 +304,8 @@ export class Endpoint extends ZigbeeEntity {
         for (const attribute in list) {
             this.clusters[cluster.name].attributes[attribute] = list[attribute];
         }
+
+        this.save();
     }
 
     public getClusterAttributeValue(clusterKey: number | string, attributeKey: number | string): number | string | undefined {
@@ -314,6 +321,61 @@ export class Endpoint extends ZigbeeEntity {
         }
 
         return undefined;
+    }
+
+    public saveClusterAttributeReportConfig(
+        clusterId: number,
+        manufacturerCode: Zcl.ManufacturerCode | undefined,
+        reportConfigs: TFoundation["readReportConfigRsp"],
+    ): void {
+        for (const entry of reportConfigs) {
+            if (entry.direction === Zcl.Direction.SERVER_TO_CLIENT) {
+                continue;
+            }
+
+            const existingConfigIdx = this._configuredReportings.findIndex(
+                (r) =>
+                    r.cluster === clusterId &&
+                    r.attrId === entry.attrId &&
+                    (manufacturerCode === undefined || manufacturerCode === r.manufacturerCode),
+            );
+
+            if (entry.status === Zcl.Status.SUCCESS) {
+                if (existingConfigIdx > -1) {
+                    this._configuredReportings[existingConfigIdx].minRepIntval = entry.minRepIntval as number;
+                    this._configuredReportings[existingConfigIdx].maxRepIntval = entry.maxRepIntval as number;
+                    this._configuredReportings[existingConfigIdx].repChange = entry.repChange as number;
+                } else {
+                    this._configuredReportings.push({
+                        cluster: clusterId,
+                        attrId: entry.attrId,
+                        minRepIntval: entry.minRepIntval as number,
+                        maxRepIntval: entry.maxRepIntval as number,
+                        repChange: entry.repChange as number,
+                        manufacturerCode,
+                    });
+                }
+            } else {
+                // UNSUPPORTED_ATTRIBUTE, UNREPORTABLE_ATTRIBUTE, NOT_FOUND
+                if (existingConfigIdx > -1) {
+                    this._configuredReportings.splice(existingConfigIdx, 1);
+                }
+            }
+        }
+
+        this.save();
+    }
+
+    public saveBindings(binds: BindInternal[]): void {
+        this._binds = binds;
+
+        this.save();
+    }
+
+    public clearBindings(): void {
+        this._binds.length = 0;
+
+        this.save();
     }
 
     public hasPendingRequests(): boolean {
@@ -512,6 +574,7 @@ export class Endpoint extends ZigbeeEntity {
             }
         }
 
+        // TODO: could be sending empty array payload
         const resultFrame = await this.zclCommand(cluster, "read", payload, optionsWithDefaults, attributes, true);
 
         return resultFrame
@@ -795,6 +858,49 @@ export class Endpoint extends ZigbeeEntity {
         this.save();
     }
 
+    public async readReportingConfig<Cl extends number | string, Custom extends TCustomCluster | undefined = undefined>(
+        clusterKey: Cl,
+        items: ReadReportConfigItem<Cl, Custom>[],
+        options?: Options,
+    ): Promise<TFoundation["readReportConfigRsp"]> {
+        const cluster = this.getCluster(clusterKey, undefined, options?.manufacturerCode);
+        const optionsWithDefaults = this.getOptionsWithDefaults(options, true, Zcl.Direction.CLIENT_TO_SERVER, cluster.manufacturerCode);
+        optionsWithDefaults.manufacturerCode = this.ensureManufacturerCodeIsUniqueAndGet<Cl, Custom>(
+            cluster,
+            items,
+            optionsWithDefaults.manufacturerCode,
+            "readReportingConfig",
+        );
+
+        const payload: TFoundation["readReportConfig"] = [];
+
+        for (const item of items) {
+            if (typeof item.attribute === "object") {
+                payload.push({direction: item.direction ?? Zcl.Direction.CLIENT_TO_SERVER, attrId: item.attribute.ID});
+            } else {
+                const attribute = cluster.getAttribute(item.attribute);
+
+                if (attribute) {
+                    payload.push({direction: item.direction ?? Zcl.Direction.CLIENT_TO_SERVER, attrId: attribute.ID});
+                } else {
+                    logger.warning(`Ignoring unknown attribute ${item.attribute} in cluster ${cluster.name}`, NS);
+                }
+            }
+        }
+
+        // TODO: could be sending empty array payload
+        // don't check status otherwise whole command fails (we want to cherry-pick here)
+        const response = await this.zclCommand(cluster, "readReportConfig", payload, optionsWithDefaults, items, false);
+
+        if (response) {
+            this.saveClusterAttributeReportConfig(response.cluster.ID, optionsWithDefaults.manufacturerCode, response.payload);
+
+            return response.payload;
+        }
+
+        throw new Error("No response received");
+    }
+
     public async writeStructured<Cl extends number | string>(
         clusterKey: Cl,
         payload: TFoundation["writeStructured"],
@@ -927,7 +1033,7 @@ export class Endpoint extends ZigbeeEntity {
 
     private ensureManufacturerCodeIsUniqueAndGet<Cl extends string | number, Custom extends TCustomCluster | undefined = undefined>(
         cluster: ZclTypes.Cluster,
-        attributes: (string | number)[] | ConfigureReportingItem<Cl, Custom>[],
+        attributes: (string | number)[] | ConfigureReportingItem<Cl, Custom>[] | ReadReportConfigItem<Cl, Custom>[],
         fallbackManufacturerCode: number | undefined, // XXX: problematic undefined for a "fallback"?
         caller: string,
     ): number | undefined {

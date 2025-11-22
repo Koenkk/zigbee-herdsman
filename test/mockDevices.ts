@@ -92,6 +92,7 @@ export const MOCK_DEVICES: {
         simpleDescriptor?: {[key: number]: ZdoTypes.ResponseMap[Zdo.ClusterId.SIMPLE_DESCRIPTOR_RESPONSE] | undefined};
         lqiTable?: ZdoTypes.ResponseMap[Zdo.ClusterId.LQI_TABLE_RESPONSE];
         routingTable?: ZdoTypes.ResponseMap[Zdo.ClusterId.ROUTING_TABLE_RESPONSE];
+        bindingTable?: ZdoTypes.ResponseMap[Zdo.ClusterId.BINDING_TABLE_REQUEST];
         attributes?: {[key: number]: {[key: string]: unknown}};
         key?: "xiaomi";
     };
@@ -155,6 +156,30 @@ export const MOCK_DEVICES: {
                 entryList: [
                     {...ROUTING_TABLE_ENTRY_DEFAULTS, destinationAddress: 120, status: "ACTIVE", nextHopAddress: 1},
                     {...ROUTING_TABLE_ENTRY_DEFAULTS, destinationAddress: 130, status: "DISCOVERY_FAILED", nextHopAddress: 2},
+                ],
+            },
+        ],
+        bindingTable: [
+            Zdo.Status.SUCCESS,
+            {
+                bindingTableEntries: 2,
+                startIndex: 0,
+                entryList: [
+                    {
+                        sourceEui64: "0xf1f2f3f5f6f7f8",
+                        sourceEndpoint: 1,
+                        clusterId: Zcl.Clusters.genBasic.ID,
+                        destAddrMode: 0x03,
+                        dest: "0xa1a2a3a4a5a6a7a8",
+                        destEndpoint: 2,
+                    },
+                    {
+                        sourceEui64: "0xe1e2e3e5e6e7e8",
+                        sourceEndpoint: 3,
+                        clusterId: Zcl.Clusters.genAlarms.ID,
+                        destAddrMode: 0x01,
+                        dest: 0x1234,
+                    },
                 ],
             },
         ],
