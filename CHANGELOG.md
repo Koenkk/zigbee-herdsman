@@ -1,5 +1,12 @@
 # Changelog
 
+## [6.5.0](https://github.com/Koenkk/zigbee-herdsman/compare/v6.4.2...v6.5.0) (2025-11-22)
+
+
+### Features
+
+* add `sendRaw` API to Controller ([#1559](https://github.com/Koenkk/zigbee-herdsman/issues/1559)) ([0c49c79](https://github.com/Koenkk/zigbee-herdsman/commit/0c49c7959f182d01e9d19de8f236cf89665ca892))
+
 ## [6.4.2](https://github.com/Koenkk/zigbee-herdsman/compare/v6.4.1...v6.4.2) (2025-11-17)
 
 
