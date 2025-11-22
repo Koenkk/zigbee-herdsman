@@ -3677,7 +3677,7 @@ describe("Controller", () => {
             {
                 sourceEui64: "0xf1f2f3f5f6f7f8",
                 sourceEndpoint: 1,
-                clusterId: Zcl.Clusters.genBasic,
+                clusterId: Zcl.Clusters.genBasic.ID,
                 destAddrMode: 0x03,
                 dest: "0xa1a2a3a4a5a6a7a8",
                 destEndpoint: 2,
@@ -3685,18 +3685,189 @@ describe("Controller", () => {
             {
                 sourceEui64: "0xe1e2e3e5e6e7e8",
                 sourceEndpoint: 3,
-                clusterId: Zcl.Clusters.genAlarms,
+                clusterId: Zcl.Clusters.genAlarms.ID,
                 destAddrMode: 0x01,
                 dest: 0x1234,
             },
         ]);
     });
 
+    it("Device updates endpoint bindings from binding table", async () => {
+        await controller.start();
+        await mockAdapterEvents.deviceJoined({networkAddress: 162, ieeeAddr: "0x00000000000162"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 161, ieeeAddr: "0x00000000000161"});
+        const group = controller.createGroup(0x1234);
+        const targetDevice = controller.getDeviceByIeeeAddr("0x00000000000162")!;
+        const device = controller.getDeviceByIeeeAddr("0x00000000000161")!;
+        const ep1 = device.endpoints.find((ep) => ep.ID === 1)!;
+        const ep4 = device.endpoints.find((ep) => ep.ID === 4)!;
+
+        mockAdapterSendZdo.mockImplementationOnce(() => {
+            return [
+                Zdo.Status.SUCCESS,
+                {
+                    bindingTableEntries: 2,
+                    startIndex: 0,
+                    entryList: [
+                        {
+                            sourceEui64: "0x00000000000161",
+                            sourceEndpoint: 1,
+                            clusterId: Zcl.Clusters.genBasic.ID,
+                            destAddrMode: 0x03,
+                            dest: "0x00000000000162",
+                            destEndpoint: 2,
+                        },
+                        {
+                            sourceEui64: "0x00000000000161",
+                            sourceEndpoint: 4,
+                            clusterId: Zcl.Clusters.genAlarms.ID,
+                            destAddrMode: 0x01,
+                            dest: 0x1234,
+                        },
+                    ],
+                },
+            ];
+        });
+
+        const result = await device.bindingTable();
+
+        expect(result).toStrictEqual([
+            {
+                sourceEui64: "0x00000000000161",
+                sourceEndpoint: 1,
+                clusterId: Zcl.Clusters.genBasic.ID,
+                destAddrMode: 0x03,
+                dest: "0x00000000000162",
+                destEndpoint: 2,
+            },
+            {
+                sourceEui64: "0x00000000000161",
+                sourceEndpoint: 4,
+                clusterId: Zcl.Clusters.genAlarms.ID,
+                destAddrMode: 0x01,
+                dest: 0x1234,
+            },
+        ]);
+
+        expect(ep1.binds).toStrictEqual([
+            {target: targetDevice.endpoints.find((e) => e.ID === 2), cluster: expect.objectContaining({ID: Zcl.Clusters.genBasic.ID})},
+        ]);
+        expect(ep4.binds).toStrictEqual([{target: group, cluster: expect.objectContaining({ID: Zcl.Clusters.genAlarms.ID})}]);
+    });
+
+    it("Device updates existing endpoint bindings from binding table", async () => {
+        await controller.start();
+        await mockAdapterEvents.deviceJoined({networkAddress: 162, ieeeAddr: "0x00000000000162"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 161, ieeeAddr: "0x00000000000161"});
+        const group = controller.createGroup(0x1234);
+        const targetDevice = controller.getDeviceByIeeeAddr("0x00000000000162")!;
+        const device = controller.getDeviceByIeeeAddr("0x00000000000161")!;
+        const ep1 = device.endpoints.find((ep) => ep.ID === 1)!;
+        const ep4 = device.endpoints.find((ep) => ep.ID === 4)!;
+
+        ep1.addBinding(Zcl.Clusters.genAlarms.ID, 0x1234);
+
+        expect(ep1.binds).toStrictEqual([{target: group, cluster: expect.objectContaining({ID: Zcl.Clusters.genAlarms.ID})}]);
+
+        mockAdapterSendZdo.mockImplementationOnce(() => {
+            return [
+                Zdo.Status.SUCCESS,
+                {
+                    bindingTableEntries: 2,
+                    startIndex: 0,
+                    entryList: [
+                        {
+                            sourceEui64: "0x00000000000161",
+                            sourceEndpoint: 1,
+                            clusterId: Zcl.Clusters.genBasic.ID,
+                            destAddrMode: 0x03,
+                            dest: "0x00000000000162",
+                            destEndpoint: 2,
+                        },
+                        {
+                            sourceEui64: "0x00000000000161",
+                            sourceEndpoint: 4,
+                            clusterId: Zcl.Clusters.genAlarms.ID,
+                            destAddrMode: 0x01,
+                            dest: 0x1234,
+                        },
+                    ],
+                },
+            ];
+        });
+
+        const result = await device.bindingTable();
+
+        expect(result).toStrictEqual([
+            {
+                sourceEui64: "0x00000000000161",
+                sourceEndpoint: 1,
+                clusterId: Zcl.Clusters.genBasic.ID,
+                destAddrMode: 0x03,
+                dest: "0x00000000000162",
+                destEndpoint: 2,
+            },
+            {
+                sourceEui64: "0x00000000000161",
+                sourceEndpoint: 4,
+                clusterId: Zcl.Clusters.genAlarms.ID,
+                destAddrMode: 0x01,
+                dest: 0x1234,
+            },
+        ]);
+
+        expect(ep1.binds).toStrictEqual([
+            {target: targetDevice.endpoints.find((e) => e.ID === 2), cluster: expect.objectContaining({ID: Zcl.Clusters.genBasic.ID})},
+        ]);
+        expect(ep4.binds).toStrictEqual([{target: group, cluster: expect.objectContaining({ID: Zcl.Clusters.genAlarms.ID})}]);
+    });
+
     it("Device clears all bindings", async () => {
         await controller.start();
-        await mockAdapterEvents.deviceJoined({networkAddress: 140, ieeeAddr: "0x140"});
-        const device = controller.getDeviceByIeeeAddr("0x140")!;
+        await mockAdapterEvents.deviceJoined({networkAddress: 161, ieeeAddr: "0x00000000000161"});
+        const group = controller.createGroup(0x1234);
+        const device = controller.getDeviceByIeeeAddr("0x00000000000161")!;
+        const ep1 = device.endpoints.find((ep) => ep.ID === 1)!;
+
+        ep1.addBinding(Zcl.Clusters.genAlarms.ID, 0x1234);
+
+        expect(ep1.binds).toStrictEqual([{target: group, cluster: expect.objectContaining({ID: Zcl.Clusters.genAlarms.ID})}]);
+
         await expect(device.clearAllBindings(["0xffffffffffffffff"])).resolves.toStrictEqual(undefined);
+
+        expect(ep1.binds).toStrictEqual([]);
+    });
+
+    it("Device selectively clears target bindings", async () => {
+        await controller.start();
+        await mockAdapterEvents.deviceJoined({networkAddress: 161, ieeeAddr: "0x00000000000161"});
+        const group = controller.createGroup(0x1234);
+        const device = controller.getDeviceByIeeeAddr("0x00000000000161")!;
+        const ep1 = device.endpoints.find((ep) => ep.ID === 1)!;
+
+        ep1.addBinding(Zcl.Clusters.genAlarms.ID, 0x1234);
+
+        expect(ep1.binds).toStrictEqual([{target: group, cluster: expect.objectContaining({ID: Zcl.Clusters.genAlarms.ID})}]);
+
+        await expect(device.clearAllBindings(["0xf1f1f1f1f1f1f1f1"])).resolves.toStrictEqual(undefined);
+
+        expect(ep1.binds).toStrictEqual([{target: group, cluster: expect.objectContaining({ID: Zcl.Clusters.genAlarms.ID})}]);
+    });
+
+    it("Device selectively clears multi-target bindings", async () => {
+        await controller.start();
+        await mockAdapterEvents.deviceJoined({networkAddress: 161, ieeeAddr: "0x00000000000161"});
+        const group = controller.createGroup(0x1234);
+        const device = controller.getDeviceByIeeeAddr("0x00000000000161")!;
+        const ep1 = device.endpoints.find((ep) => ep.ID === 1)!;
+
+        ep1.addBinding(Zcl.Clusters.genAlarms.ID, 0x1234);
+
+        expect(ep1.binds).toStrictEqual([{target: group, cluster: expect.objectContaining({ID: Zcl.Clusters.genAlarms.ID})}]);
+
+        await expect(device.clearAllBindings(["0xf1f1f1f1f1f1f1f1", "0xa9a9a9a9a9a9a9a9"])).resolves.toStrictEqual(undefined);
+
+        expect(ep1.binds).toStrictEqual([{target: group, cluster: expect.objectContaining({ID: Zcl.Clusters.genAlarms.ID})}]);
     });
 
     it("Device ping", async () => {
@@ -8681,7 +8852,7 @@ describe("Controller", () => {
                             {
                                 sourceEui64: "0xf1f2f3f5f6f7f8",
                                 sourceEndpoint: 1,
-                                clusterId: Zcl.Clusters.genBasic,
+                                clusterId: Zcl.Clusters.genBasic.ID,
                                 destAddrMode: 0x03,
                                 dest: "0xa1a2a3a4a5a6a7a8",
                                 destEndpoint: 2,
@@ -8689,7 +8860,7 @@ describe("Controller", () => {
                             {
                                 sourceEui64: "0xe1e2e3e5e6e7e8",
                                 sourceEndpoint: 3,
-                                clusterId: Zcl.Clusters.genAlarms,
+                                clusterId: Zcl.Clusters.genAlarms.ID,
                                 destAddrMode: 0x01,
                                 dest: 0x1234,
                             },
@@ -8707,7 +8878,7 @@ describe("Controller", () => {
                             {
                                 sourceEui64: "0xc1c2c3c5c6c7c8",
                                 sourceEndpoint: 2,
-                                clusterId: Zcl.Clusters.genLevelCtrl,
+                                clusterId: Zcl.Clusters.genLevelCtrl.ID,
                                 destAddrMode: 0x03,
                                 dest: "0xa1a2a3a4a5a6a7a8",
                                 destEndpoint: 3,
@@ -8722,7 +8893,7 @@ describe("Controller", () => {
             {
                 sourceEui64: "0xf1f2f3f5f6f7f8",
                 sourceEndpoint: 1,
-                clusterId: Zcl.Clusters.genBasic,
+                clusterId: Zcl.Clusters.genBasic.ID,
                 destAddrMode: 0x03,
                 dest: "0xa1a2a3a4a5a6a7a8",
                 destEndpoint: 2,
@@ -8730,14 +8901,14 @@ describe("Controller", () => {
             {
                 sourceEui64: "0xe1e2e3e5e6e7e8",
                 sourceEndpoint: 3,
-                clusterId: Zcl.Clusters.genAlarms,
+                clusterId: Zcl.Clusters.genAlarms.ID,
                 destAddrMode: 0x01,
                 dest: 0x1234,
             },
             {
                 sourceEui64: "0xc1c2c3c5c6c7c8",
                 sourceEndpoint: 2,
-                clusterId: Zcl.Clusters.genLevelCtrl,
+                clusterId: Zcl.Clusters.genLevelCtrl.ID,
                 destAddrMode: 0x03,
                 dest: "0xa1a2a3a4a5a6a7a8",
                 destEndpoint: 3,

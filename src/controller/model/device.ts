@@ -14,7 +14,7 @@ import type {BindingTableEntry, LQITableEntry, RoutingTableEntry} from "../../zs
 import type {ControllerEventMap} from "../controller";
 import zclTransactionSequenceNumber from "../helpers/zclTransactionSequenceNumber";
 import type {DatabaseEntry, DeviceType, KeyValue} from "../tstype";
-import Endpoint from "./endpoint";
+import Endpoint, {type BindInternal} from "./endpoint";
 import Entity from "./entity";
 
 const NS = "zh:controller:device";
@@ -1128,9 +1128,7 @@ export class Device extends Entity<ControllerEventMap> {
 
             const result = response[1];
 
-            for (const entry of result.entryList) {
-                table.push(entry);
-            }
+            table.push(...result.entryList);
 
             return [result.neighborTableEntries, result.entryList.length];
         };
@@ -1162,9 +1160,7 @@ export class Device extends Entity<ControllerEventMap> {
 
             const result = response[1];
 
-            for (const entry of result.entryList) {
-                table.push(entry);
-            }
+            table.push(...result.entryList);
 
             return [result.routingTableEntries, result.entryList.length];
         };
@@ -1196,9 +1192,7 @@ export class Device extends Entity<ControllerEventMap> {
 
             const result = response[1];
 
-            for (const entry of result.entryList) {
-                table.push(entry);
-            }
+            table.push(...result.entryList);
 
             return [result.bindingTableEntries, result.entryList.length];
         };
@@ -1211,6 +1205,29 @@ export class Device extends Entity<ControllerEventMap> {
         while (table.length < size) {
             [tableEntries, entryCount] = await request(nextStartIndex);
             nextStartIndex += entryCount;
+        }
+
+        for (const ep of this._endpoints) {
+            const newBinds: BindInternal[] = [];
+
+            for (const entry of table) {
+                if (entry.sourceEui64 !== this.ieeeAddr || entry.sourceEndpoint !== ep.ID) {
+                    continue;
+                }
+
+                if (entry.destAddrMode === 0x01) {
+                    newBinds.push({type: "group", cluster: entry.clusterId, groupID: entry.dest as number});
+                } else {
+                    newBinds.push({
+                        type: "endpoint",
+                        cluster: entry.clusterId,
+                        deviceIeeeAddress: entry.dest as Eui64,
+                        endpointID: entry.destEndpoint as number,
+                    });
+                }
+            }
+
+            ep.saveBindings(newBinds);
         }
 
         return table;
@@ -1228,6 +1245,15 @@ export class Device extends Entity<ControllerEventMap> {
 
         if (!Zdo.Buffalo.checkStatus<Zdo.ClusterId.CLEAR_ALL_BINDINGS_RESPONSE>(response)) {
             throw new Zdo.StatusError(response[0]);
+        }
+
+        if (
+            (eui64List.length === 1 && eui64List[0].toLowerCase() === ZSpec.BLANK_EUI64) ||
+            eui64List.some((eui64) => eui64.toLowerCase() === this.ieeeAddr)
+        ) {
+            for (const ep of this._endpoints) {
+                ep.clearBindings();
+            }
         }
     }
 

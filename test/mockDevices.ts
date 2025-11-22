@@ -168,7 +168,7 @@ export const MOCK_DEVICES: {
                     {
                         sourceEui64: "0xf1f2f3f5f6f7f8",
                         sourceEndpoint: 1,
-                        clusterId: Zcl.Clusters.genBasic,
+                        clusterId: Zcl.Clusters.genBasic.ID,
                         destAddrMode: 0x03,
                         dest: "0xa1a2a3a4a5a6a7a8",
                         destEndpoint: 2,
@@ -176,7 +176,7 @@ export const MOCK_DEVICES: {
                     {
                         sourceEui64: "0xe1e2e3e5e6e7e8",
                         sourceEndpoint: 3,
-                        clusterId: Zcl.Clusters.genAlarms,
+                        clusterId: Zcl.Clusters.genAlarms.ID,
                         destAddrMode: 0x01,
                         dest: 0x1234,
                     },

@@ -73,7 +73,7 @@ interface Clusters {
     };
 }
 
-interface BindInternal {
+export interface BindInternal {
     cluster: number;
     type: "endpoint" | "group";
     deviceIeeeAddress?: string;
@@ -304,6 +304,8 @@ export class Endpoint extends ZigbeeEntity {
         for (const attribute in list) {
             this.clusters[cluster.name].attributes[attribute] = list[attribute];
         }
+
+        this.save();
     }
 
     public getClusterAttributeValue(clusterKey: number | string, attributeKey: number | string): number | string | undefined {
@@ -360,6 +362,20 @@ export class Endpoint extends ZigbeeEntity {
                 }
             }
         }
+
+        this.save();
+    }
+
+    public saveBindings(binds: BindInternal[]): void {
+        this._binds = binds;
+
+        this.save();
+    }
+
+    public clearBindings(): void {
+        this._binds.length = 0;
+
+        this.save();
     }
 
     public hasPendingRequests(): boolean {
