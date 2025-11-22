@@ -17,6 +17,7 @@ import * as timeService from "../src/utils/timeService";
 import * as ZSpec from "../src/zspec";
 import {BroadcastAddress} from "../src/zspec/enums";
 import * as Zcl from "../src/zspec/zcl";
+import type {CustomClusters} from "../src/zspec/zcl/definition/tstype";
 import * as Zdo from "../src/zspec/zdo";
 import type {IEEEAddressResponse, NetworkAddressResponse} from "../src/zspec/zdo/definition/tstypes";
 import {DEFAULT_184_CHECKIN_INTERVAL, LQI_TABLE_ENTRY_DEFAULTS, MOCK_DEVICES, ROUTING_TABLE_ENTRY_DEFAULTS} from "./mockDevices";
@@ -723,7 +724,7 @@ describe("Controller", () => {
                 return {address: "0x0000012300000000"};
             }
         });
-        const result = await controller.touchlinkFactoryResetFirst();
+        const result = await controller.touchlink.factoryResetFirst();
         expect(result).toBeTruthy();
 
         expect(mockSetChannelInterPAN).toHaveBeenCalledTimes(2);
@@ -836,7 +837,7 @@ describe("Controller", () => {
                 return {address: "0x0000012300000000"};
             }
         });
-        const result = await controller.touchlinkScan();
+        const result = await controller.touchlink.scan();
         expect(result).toStrictEqual([{ieeeAddr: "0x0000012300000000", channel: 15}]);
 
         expect(mockSetChannelInterPAN).toHaveBeenCalledTimes(16);
@@ -905,11 +906,11 @@ describe("Controller", () => {
                 resolve = r;
             });
         });
-        const r1 = controller.touchlinkScan();
+        const r1 = controller.touchlink.scan();
 
         let error;
         try {
-            await controller.touchlinkScan();
+            await controller.touchlink.scan();
         } catch (e) {
             error = e;
         }
@@ -923,7 +924,7 @@ describe("Controller", () => {
         mocksendZclFrameInterPANBroadcast.mockImplementation(() => {
             return {address: "0x0000012300000000"};
         });
-        await controller.touchlinkFactoryReset("0x0000012300000000", 15);
+        await controller.touchlink.factoryReset("0x0000012300000000", 15);
 
         expect(mockSetChannelInterPAN).toHaveBeenCalledTimes(1);
         expect(mockSetChannelInterPAN).toHaveBeenCalledWith(15);
@@ -1001,7 +1002,7 @@ describe("Controller", () => {
         mocksendZclFrameInterPANBroadcast.mockImplementation(() => {
             return {address: "0x0000012300000000"};
         });
-        await controller.touchlinkIdentify("0x0000012300000000", 15);
+        await controller.touchlink.identify("0x0000012300000000", 15);
 
         expect(mockSetChannelInterPAN).toHaveBeenCalledTimes(1);
         expect(mockSetChannelInterPAN).toHaveBeenCalledWith(15);
@@ -6478,11 +6479,7 @@ describe("Controller", () => {
         await mockAdapterEvents.deviceJoined({networkAddress: gpdNwkAddress, ieeeAddr: gpdIeeeAddress});
 
         const gppDevice = controller.getDeviceByIeeeAddr("0x129")!;
-        const processCommandSpy = vi.spyOn(
-            // @ts-expect-error private
-            controller.greenPower,
-            "processCommand",
-        );
+        const processCommandSpy = vi.spyOn(controller.greenPower, "processCommand");
         mockLogger.error.mockClear();
         const commModeBuffer = Buffer.from([25, 10, 2, 11, 254, 0]);
         const commModeFrame = Zcl.Frame.fromBuffer(Zcl.Clusters.greenPower.ID, Zcl.Header.fromBuffer(commModeBuffer)!, commModeBuffer, {});
@@ -6666,11 +6663,7 @@ describe("Controller", () => {
         await controller.start();
         mockLogger.error.mockClear();
 
-        const processCommandSpy = vi.spyOn(
-            // @ts-expect-error private
-            controller.greenPower,
-            "processCommand",
-        );
+        const processCommandSpy = vi.spyOn(controller.greenPower, "processCommand");
 
         const buffer = Buffer.from(
             "11020402087af4550100000000012e000000e0330285f2c925821df46f458cf0e637aac3bab6aa45831a112e280000041610112223181914151213646562631e1f1c1d1a1b1617966fd7",
@@ -8288,6 +8281,22 @@ describe("Controller", () => {
         });
     });
 
+    it("Touchlink stops during stop", async () => {
+        await controller.start();
+        controller.touchlink.lock(true);
+        await controller.stop();
+
+        expect(mockRestoreChannelInterPAN).toHaveBeenCalledTimes(1);
+    });
+
+    it("Touchlink fails to stop during stop", async () => {
+        await controller.start();
+        vi.spyOn(controller.touchlink, "stop").mockRejectedValueOnce(new Error("timeout"));
+        await controller.stop();
+
+        expect(mockLogger.error).toHaveBeenCalledWith("Failed to stop Touchlink: Error: timeout", "zh:controller");
+    });
+
     it("Adapter permitJoin fails during stop", async () => {
         await controller.start();
         mockAdapterPermitJoin.mockRejectedValueOnce(new Error("timeout"));
@@ -8905,5 +8914,255 @@ describe("Controller", () => {
         expect(device.genBasic.swBuildId).toStrictEqual("2.01");
         expect(device.genBasic.stackVersion).toStrictEqual(202);
         expect(device.genBasic.zclVersion).toStrictEqual(2);
+    });
+
+    it("triggers sendZdo on sendRaw", async () => {
+        await controller.start();
+        mockAdapterSendZdo.mockClear();
+
+        controller.sendRaw({
+            profileId: Zdo.ZDO_PROFILE_ID,
+            ieeeAddress: "0xf1f2f3f4f5f6f7f8",
+            networkAddress: 129,
+            clusterKey: Zdo.ClusterId.NETWORK_ADDRESS_REQUEST,
+            zdoParams: ["0xa1a2a3a4a5a6a7a8", false, 0],
+        });
+
+        const expectedFrame = Zdo.Buffalo.buildRequest(false, Zdo.ClusterId.NETWORK_ADDRESS_REQUEST, "0xa1a2a3a4a5a6a7a8", false, 0);
+        expect(mockAdapterSendZdo).toHaveBeenCalledTimes(1);
+        expect(mockAdapterSendZdo).toHaveBeenCalledWith("0xf1f2f3f4f5f6f7f8", 129, Zdo.ClusterId.NETWORK_ADDRESS_REQUEST, expectedFrame, false);
+    });
+
+    it("triggers sendZclFrameInterPANToIeeeAddr on sendRaw", async () => {
+        await controller.start();
+        mocksendZclFrameInterPANToIeeeAddr.mockClear();
+
+        controller.sendRaw({
+            interPan: true,
+            ieeeAddress: "0xf1f2f3f4f5f6f7f8",
+            networkAddress: 129,
+            clusterKey: Zcl.Clusters.touchlink.ID,
+            zcl: {
+                commandKey: "identifyRequest",
+                payload: {transactionID: 0, duration: 0xffff},
+            },
+            disableResponse: true,
+        });
+
+        const expectedFrame = Zcl.Frame.create(
+            Zcl.FrameType.SPECIFIC,
+            Zcl.Direction.CLIENT_TO_SERVER,
+            true,
+            undefined,
+            0,
+            "identifyRequest",
+            Zcl.Clusters.touchlink.ID,
+            {transactionID: 0, duration: 0xffff},
+            {},
+        );
+        expect(mocksendZclFrameInterPANToIeeeAddr).toHaveBeenCalledTimes(1);
+        expect(mocksendZclFrameInterPANToIeeeAddr).toHaveBeenCalledWith(expect.any(Object), "0xf1f2f3f4f5f6f7f8");
+        expect(deepClone(mocksendZclFrameInterPANToIeeeAddr.mock.calls[0][0])).toStrictEqual(deepClone(expectedFrame));
+    });
+
+    it("triggers sendZclFrameInterPANBroadcast on sendRaw", async () => {
+        await controller.start();
+        mocksendZclFrameInterPANBroadcast.mockClear();
+
+        controller.sendRaw({
+            interPan: true,
+            zcl: {
+                commandKey: "scanRequest",
+                payload: {transactionID: 0, zigbeeInformation: 5, touchlinkInformation: 20},
+            },
+            disableResponse: true,
+        });
+
+        const expectedFrame = Zcl.Frame.create(
+            Zcl.FrameType.SPECIFIC,
+            Zcl.Direction.CLIENT_TO_SERVER,
+            true,
+            undefined,
+            0,
+            "scanRequest",
+            Zcl.Clusters.touchlink.ID,
+            {transactionID: 0, zigbeeInformation: 5, touchlinkInformation: 20},
+            {},
+        );
+        expect(mocksendZclFrameInterPANBroadcast).toHaveBeenCalledTimes(1);
+        expect(mocksendZclFrameInterPANBroadcast).toHaveBeenCalledWith(expect.any(Object), 10000, true);
+        expect(deepClone(mocksendZclFrameInterPANBroadcast.mock.calls[0][0])).toStrictEqual(deepClone(expectedFrame));
+    });
+
+    it("triggers sendZclFrameToGroup on sendRaw", async () => {
+        await controller.start();
+        mocksendZclFrameToGroup.mockClear();
+
+        controller.sendRaw({
+            groupId: 123,
+            clusterKey: "genScenes",
+            srcEndpoint: 2,
+            zcl: {
+                frameType: Zcl.FrameType.SPECIFIC,
+                direction: Zcl.Direction.CLIENT_TO_SERVER,
+                commandKey: "recall",
+                payload: {groupid: 3, sceneid: 10},
+                tsn: 10,
+            },
+            profileId: 0x0105,
+        });
+
+        const expectedFrame = Zcl.Frame.create(
+            Zcl.FrameType.SPECIFIC,
+            Zcl.Direction.CLIENT_TO_SERVER,
+            false,
+            undefined,
+            10,
+            "recall",
+            "genScenes",
+            {groupid: 3, sceneid: 10},
+            {},
+        );
+        expect(mocksendZclFrameToGroup).toHaveBeenCalledTimes(1);
+        expect(mocksendZclFrameToGroup).toHaveBeenCalledWith(123, expect.any(Object), 2, 0x0105);
+        expect(deepClone(mocksendZclFrameToGroup.mock.calls[0][1])).toStrictEqual(deepClone(expectedFrame));
+    });
+
+    it("triggers sendZclFrameToAll on sendRaw", async () => {
+        await controller.start();
+        mocksendZclFrameToAll.mockClear();
+
+        controller.sendRaw({
+            networkAddress: 0xfff8,
+            clusterKey: Zcl.Clusters.genIdentify.ID,
+            srcEndpoint: 1,
+            dstEndpoint: 10,
+            zcl: {
+                frameType: Zcl.FrameType.SPECIFIC,
+                direction: Zcl.Direction.CLIENT_TO_SERVER,
+                commandKey: "identify",
+                payload: {identifytime: 30},
+            },
+        });
+
+        const expectedFrame = Zcl.Frame.create(
+            Zcl.FrameType.SPECIFIC,
+            Zcl.Direction.CLIENT_TO_SERVER,
+            false,
+            undefined,
+            0,
+            "identify",
+            Zcl.Clusters.genIdentify.ID,
+            {identifytime: 30},
+            {},
+        );
+        expect(mocksendZclFrameToAll).toHaveBeenCalledTimes(1);
+        expect(mocksendZclFrameToAll).toHaveBeenCalledWith(10, expect.any(Object), 1, 0xfff8, ZSpec.HA_PROFILE_ID);
+        expect(deepClone(mocksendZclFrameToAll.mock.calls[0][1])).toStrictEqual(deepClone(expectedFrame));
+    });
+
+    it("triggers sendZclFrameToEndpoint on sendRaw", async () => {
+        await controller.start();
+        mocksendZclFrameToEndpoint.mockClear();
+
+        controller.sendRaw({
+            ieeeAddress: "0xf1f2f3f4f5f6f7f8",
+            networkAddress: 129,
+            clusterKey: Zcl.Clusters.genIdentify.ID,
+            srcEndpoint: 1,
+            dstEndpoint: 3,
+            zcl: {
+                frameType: Zcl.FrameType.SPECIFIC,
+                direction: Zcl.Direction.CLIENT_TO_SERVER,
+                commandKey: "identify",
+                payload: {identifytime: 60},
+            },
+        });
+
+        const expectedFrame = Zcl.Frame.create(
+            Zcl.FrameType.SPECIFIC,
+            Zcl.Direction.CLIENT_TO_SERVER,
+            false,
+            undefined,
+            0,
+            "identify",
+            Zcl.Clusters.genIdentify.ID,
+            {identifytime: 60},
+            {},
+        );
+        expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(1);
+        expect(mocksendZclFrameToEndpoint).toHaveBeenCalledWith(
+            "0xf1f2f3f4f5f6f7f8",
+            129,
+            3,
+            expect.any(Object),
+            10000,
+            false,
+            false,
+            1,
+            ZSpec.HA_PROFILE_ID,
+        );
+        expect(deepClone(mocksendZclFrameToEndpoint.mock.calls[0][3])).toStrictEqual(deepClone(expectedFrame));
+    });
+
+    it("triggers sendZclFrameToEndpoint with custom cluster on sendRaw", async () => {
+        await controller.start();
+        mocksendZclFrameToEndpoint.mockClear();
+
+        const myCustomClusters: CustomClusters = {
+            zhSpe: {
+                ID: 0xffc1,
+                attributes: {},
+                commands: {
+                    readMe: {
+                        ID: 0,
+                        parameters: [{name: "size", type: Zcl.DataType.UINT8}],
+                    },
+                },
+                commandsResponse: {},
+            },
+        };
+
+        controller.sendRaw(
+            {
+                ieeeAddress: "0xf1f2f3f4f5f6f7f8",
+                networkAddress: 129,
+                clusterKey: "zhSpe",
+                srcEndpoint: 1,
+                dstEndpoint: 2,
+                zcl: {
+                    frameType: Zcl.FrameType.SPECIFIC,
+                    direction: Zcl.Direction.CLIENT_TO_SERVER,
+                    commandKey: "readMe",
+                    payload: {size: 10},
+                },
+            },
+            myCustomClusters,
+        );
+
+        const expectedFrame = Zcl.Frame.create(
+            Zcl.FrameType.SPECIFIC,
+            Zcl.Direction.CLIENT_TO_SERVER,
+            false,
+            undefined,
+            0,
+            "readMe",
+            "zhSpe",
+            {size: 10},
+            myCustomClusters,
+        );
+        expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(1);
+        expect(mocksendZclFrameToEndpoint).toHaveBeenCalledWith(
+            "0xf1f2f3f4f5f6f7f8",
+            129,
+            2,
+            expect.any(Object),
+            10000,
+            false,
+            false,
+            1,
+            ZSpec.HA_PROFILE_ID,
+        );
+        expect(deepClone(mocksendZclFrameToEndpoint.mock.calls[0][3])).toStrictEqual(deepClone(expectedFrame));
     });
 });

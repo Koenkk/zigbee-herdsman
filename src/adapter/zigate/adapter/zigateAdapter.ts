@@ -550,7 +550,13 @@ export class ZiGateAdapter extends Adapter {
     public async sendZclFrameInterPANToIeeeAddr(_zclFrame: Zcl.Frame, _ieeeAddress: string): Promise<void> {
         await Promise.reject(new Error("Not supported"));
     }
-    public async sendZclFrameInterPANBroadcast(_zclFrame: Zcl.Frame, _timeout: number): Promise<Events.ZclPayload> {
+    public async sendZclFrameInterPANBroadcast(zclFrame: Zcl.Frame, timeout: number, disableResponse: false): Promise<Events.ZclPayload>;
+    public async sendZclFrameInterPANBroadcast(zclFrame: Zcl.Frame, timeout: number, disableResponse: true): Promise<undefined>;
+    public async sendZclFrameInterPANBroadcast(
+        _zclFrame: Zcl.Frame,
+        _timeout: number,
+        _disableResponse: boolean,
+    ): Promise<Events.ZclPayload | undefined> {
         return await Promise.reject(new Error("Not supported"));
     }
 
