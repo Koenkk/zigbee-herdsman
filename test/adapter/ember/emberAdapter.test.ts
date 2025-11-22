@@ -2472,7 +2472,7 @@ describe("Ember Adapter Layer", () => {
             mockEzspSendUnicast.mockResolvedValueOnce([SLStatus.FAIL, 0]);
 
             await expect(adapter.permitJoin(250, 1234)).rejects.toThrow(
-                "~x~> [ZDO PERMIT_JOINING_REQUEST UNICAST to=0xFFFFFFFFFFFFFFFF:1234 messageTag=1] Failed to send request with status=FAIL.",
+                "~x~> [ZDO PERMIT_JOINING_REQUEST UNICAST to=0xffffffffffffffff:1234 messageTag=1] Failed to send request with status=FAIL.",
             );
         });
 

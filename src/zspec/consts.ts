@@ -45,7 +45,7 @@ export const ALL_802_15_4_CHANNELS = [11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21
 export const PREFERRED_802_15_4_CHANNELS = [11, 14, 15, 19, 20, 24, 25];
 
 /** A blank (also used as "wildcard") EUI64 hex string prefixed with 0x */
-export const BLANK_EUI64 = "0xFFFFFFFFFFFFFFFF";
+export const BLANK_EUI64 = "0xffffffffffffffff";
 /** A blank extended PAN ID. (null/not present) */
 export const BLANK_EXTENDED_PAN_ID: Readonly<ExtendedPanId> = [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00];
 

@@ -59,6 +59,7 @@ const makeController = () => {
         const db = dbOpen(path);
         // no-op
         db.write = () => {};
+        db.update = () => {};
 
         return db;
     };
