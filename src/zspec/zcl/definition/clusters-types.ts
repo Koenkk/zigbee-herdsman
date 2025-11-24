@@ -331,6 +331,8 @@ export interface TClusters {
                 groupid: number;
                 /** Type: UINT8 */
                 sceneid: number;
+                /** Type: UINT16, Conditions: [{minimumRemainingBufferBytes value=2}] */
+                transtime?: number;
             };
             /** ID: 6 | Response ID: 6 */
             getSceneMembership: {
@@ -6199,8 +6201,8 @@ export interface TClusters {
                 /** Type: UINT8 */
                 payload: number;
             };
-            /** ID: 96 */
-            tuyaWeatherRequest: {
+            /** ID: 97 */
+            tuyaWeatherSync: {
                 /** Type: BUFFER */
                 payload: Buffer;
             };
@@ -6279,8 +6281,8 @@ export interface TClusters {
                 /** Type: UINT16 */
                 payloadSize: number;
             };
-            /** ID: 97 */
-            tuyaWeatherSync: {
+            /** ID: 96 */
+            tuyaWeatherRequest: {
                 /** Type: BUFFER */
                 payload: Buffer;
             };
@@ -6388,63 +6390,6 @@ export interface TClusters {
         commands: never;
         commandResponses: never;
     };
-    heimanSpecificAirQuality: {
-        attributes: {
-            /** ID: 61440 | Type: UINT8 */
-            language: number;
-            /** ID: 61441 | Type: UINT8 */
-            unitOfMeasure: number;
-            /** ID: 61442 | Type: UINT8 */
-            batteryState: number;
-            /** ID: 61443 | Type: UINT16 */
-            pm10measuredValue: number;
-            /** ID: 61444 | Type: UINT16 */
-            tvocMeasuredValue: number;
-            /** ID: 61445 | Type: UINT16 */
-            aqiMeasuredValue: number;
-            /** ID: 61446 | Type: INT16 */
-            temperatureMeasuredMax: number;
-            /** ID: 61447 | Type: INT16 */
-            temperatureMeasuredMin: number;
-            /** ID: 61448 | Type: UINT16 */
-            humidityMeasuredMax: number;
-            /** ID: 61449 | Type: UINT16 */
-            humidityMeasuredMin: number;
-            /** ID: 61450 | Type: UINT16 */
-            alarmEnable: number;
-        };
-        commands: {
-            /** ID: 283 */
-            setLanguage: {
-                /** Type: UINT8 */
-                languageCode: number;
-            };
-            /** ID: 284 */
-            setUnitOfTemperature: {
-                /** Type: UINT8 */
-                unitsCode: number;
-            };
-            /** ID: 285 */
-            getTime: Record<string, never>;
-        };
-        commandResponses: never;
-    };
-    heimanSpecificScenes: {
-        attributes: never;
-        commands: {
-            /** ID: 240 */
-            cinema: Record<string, never>;
-            /** ID: 241 */
-            atHome: Record<string, never>;
-            /** ID: 242 */
-            sleep: Record<string, never>;
-            /** ID: 243 */
-            goOut: Record<string, never>;
-            /** ID: 244 */
-            repast: Record<string, never>;
-        };
-        commandResponses: never;
-    };
     tradfriButton: {
         attributes: never;
         commands: {
@@ -6475,68 +6420,6 @@ export interface TClusters {
             };
         };
         commandResponses: never;
-    };
-    heimanSpecificInfraRedRemote: {
-        attributes: never;
-        commands: {
-            /** ID: 240 */
-            sendKey: {
-                /** Type: UINT8 */
-                id: number;
-                /** Type: UINT8 */
-                keyCode: number;
-            };
-            /** ID: 241 */
-            studyKey: {
-                /** Type: UINT8 */
-                id: number;
-                /** Type: UINT8 */
-                keyCode: number;
-            };
-            /** ID: 243 */
-            deleteKey: {
-                /** Type: UINT8 */
-                id: number;
-                /** Type: UINT8 */
-                keyCode: number;
-            };
-            /** ID: 244 */
-            createId: {
-                /** Type: UINT8 */
-                modelType: number;
-            };
-            /** ID: 246 */
-            getIdAndKeyCodeList: Record<string, never>;
-        };
-        commandResponses: {
-            /** ID: 242 */
-            studyKeyRsp: {
-                /** Type: UINT8 */
-                id: number;
-                /** Type: UINT8 */
-                keyCode: number;
-                /** Type: UINT8 */
-                result: number;
-            };
-            /** ID: 245 */
-            createIdRsp: {
-                /** Type: UINT8 */
-                id: number;
-                /** Type: UINT8 */
-                modelType: number;
-            };
-            /** ID: 247 */
-            getIdAndKeyCodeListRsp: {
-                /** Type: UINT8 */
-                packetsTotal: number;
-                /** Type: UINT8 */
-                packetNumber: number;
-                /** Type: UINT8 */
-                packetLength: number;
-                /** Type: LIST_UINT8 */
-                learnedDevicesList: number[];
-            };
-        };
     };
     schneiderSpecificPilotMode: {
         attributes: {

@@ -1,6 +1,7 @@
 import {Buffalo} from "../../buffalo";
 import {logger} from "../../utils/logger";
 import {isNumberArray} from "../../utils/utils";
+import {Clusters} from "./definition/cluster";
 import {BuffaloZclDataType, DataType, StructuredIndicatorType} from "./definition/enums";
 import type {
     BuffaloZclOptions,
@@ -29,10 +30,28 @@ const NS = "zh:zcl:buffalo";
 const SEC_KEY_LENGTH = 16;
 
 const EXTENSION_FIELD_SETS_DATA_TYPE: {[key: number]: DataType[]} = {
-    6: [DataType.UINT8],
-    8: [DataType.UINT8],
-    258: [DataType.UINT8, DataType.UINT8],
-    768: [DataType.UINT16, DataType.UINT16, DataType.UINT16, DataType.UINT8, DataType.UINT8, DataType.UINT8, DataType.UINT16, DataType.UINT16],
+    [Clusters.genOnOff.ID]: [Clusters.genOnOff.attributes.onOff.type],
+    [Clusters.genLevelCtrl.ID]: [Clusters.genLevelCtrl.attributes.currentLevel.type],
+    [Clusters.closuresWindowCovering.ID]: [
+        Clusters.closuresWindowCovering.attributes.currentPositionLiftPercentage.type,
+        Clusters.closuresWindowCovering.attributes.currentPositionTiltPercentage.type,
+    ],
+    [Clusters.barrierControl.ID]: [Clusters.barrierControl.attributes.barrierPosition.type],
+    [Clusters.hvacThermostat.ID]: [
+        Clusters.hvacThermostat.attributes.occupiedCoolingSetpoint.type,
+        Clusters.hvacThermostat.attributes.occupiedHeatingSetpoint.type,
+        Clusters.hvacThermostat.attributes.systemMode.type,
+    ],
+    [Clusters.lightingColorCtrl.ID]: [
+        Clusters.lightingColorCtrl.attributes.currentX.type,
+        Clusters.lightingColorCtrl.attributes.currentY.type,
+        Clusters.lightingColorCtrl.attributes.enhancedCurrentHue.type,
+        Clusters.lightingColorCtrl.attributes.currentSaturation.type,
+        Clusters.lightingColorCtrl.attributes.colorLoopActive.type,
+        Clusters.lightingColorCtrl.attributes.colorLoopDirection.type,
+        Clusters.lightingColorCtrl.attributes.colorLoopTime.type,
+        Clusters.lightingColorCtrl.attributes.colorTemperature.type, // a.k.a. ColorTemperatureMireds
+    ],
 };
 
 // UINT8_TMP_FIX: temporary return 0xff instead of Number.NaN
@@ -407,7 +426,7 @@ export class BuffaloZcl extends Buffalo {
         return value;
     }
 
-    private writeExtensionFieldSets(values: {clstId: number; len: number; extField: number[]}[]): void {
+    private writeExtensionFieldSets(values: ExtensionFieldSet[]): void {
         for (const value of values) {
             this.writeUInt16(value.clstId);
             this.writeUInt8(value.len);
