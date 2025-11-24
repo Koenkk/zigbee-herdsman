@@ -1267,15 +1267,17 @@ describe("ZNP", () => {
         expect(value).toStrictEqual(ieeeaAddr2.string);
     });
 
-    it.each([ParameterType.BUFFER, ParameterType.LIST_UINT8, ParameterType.LIST_UINT16, ParameterType.LIST_NETWORK])(
-        "Throws when read is missing required length option - param %s",
-        (type) => {
-            expect(() => {
-                const buffalo = new BuffaloZnp(Buffer.alloc(1));
-                buffalo.read(type, {});
-            }).toThrow(`Cannot read ${ParameterType[type]} without length option specified`);
-        },
-    );
+    it.each([
+        ParameterType.BUFFER,
+        ParameterType.LIST_UINT8,
+        ParameterType.LIST_UINT16,
+        ParameterType.LIST_NETWORK,
+    ])("Throws when read is missing required length option - param %s", (type) => {
+        expect(() => {
+            const buffalo = new BuffaloZnp(Buffer.alloc(1));
+            buffalo.read(type, {});
+        }).toThrow(`Cannot read ${ParameterType[type]} without length option specified`);
+    });
 
     it("Coverage logger", () => {
         consoleLogger.warning(() => "Test warning", "TestNS");
