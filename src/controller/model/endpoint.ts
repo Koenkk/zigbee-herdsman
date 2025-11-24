@@ -5,7 +5,7 @@ import * as ZSpec from "../../zspec";
 import {BroadcastAddress} from "../../zspec/enums";
 import type {Eui64} from "../../zspec/tstypes";
 import * as Zcl from "../../zspec/zcl";
-import type {TFoundation} from "../../zspec/zcl/definition/clusters-types";
+import type {TClusterCommandResponsePayload, TFoundation} from "../../zspec/zcl/definition/clusters-types";
 import type * as ZclTypes from "../../zspec/zcl/definition/tstype";
 import * as Zdo from "../../zspec/zdo";
 import Request from "../helpers/request";
@@ -73,6 +73,42 @@ interface Clusters {
     };
 }
 
+export interface Scene {
+    name: string;
+    /**
+     * All entries are possibly undefined to conform with spec.
+     *   - cluster may not be present (if present, assumed to have at least first entry)
+     *   - attribute list (when sent/received) may be shorter than Spec's current full set.
+     */
+    state: {
+        genOnOff?: {onOff: number};
+        genLevelCtrl?: {currentLevel: number};
+        closuresWindowCovering?: {
+            currentPositionLiftPercentage: number;
+            currentPositionTiltPercentage?: number;
+        };
+        barrierControl?: {barrierPosition: number};
+        hvacThermostat?: {
+            occupiedCoolingSetpoint: number;
+            occupiedHeatingSetpoint?: number;
+            systemMode?: number;
+        };
+        lightingColorCtrl?: {
+            currentX: number;
+            currentY?: number;
+            enhancedCurrentHue?: number;
+            currentSaturation?: number;
+            colorLoopActive?: number;
+            colorLoopDirection?: number;
+            colorLoopTime?: number;
+            colorTemperature?: number;
+        };
+    };
+    /** if true, `transitionTime` is in tenths of a second rather than in seconds */
+    enhanced: boolean;
+    transitionTime: number;
+}
+
 export interface BindInternal {
     cluster: number;
     type: "endpoint" | "group";
@@ -111,6 +147,7 @@ export class Endpoint extends ZigbeeEntity {
     // biome-ignore lint/style/useNamingConvention: cross-repo impact
     public readonly ID: number;
     public readonly clusters: Clusters;
+    public readonly scenes: Map<string, Scene>;
     public deviceIeeeAddress: string;
     public deviceNetworkAddress: number;
     private _binds: BindInternal[];
@@ -167,6 +204,7 @@ export class Endpoint extends ZigbeeEntity {
         deviceNetworkAddress: number,
         deviceIeeeAddress: string,
         clusters: Clusters,
+        scenes: Map<string, Scene>,
         binds: BindInternal[],
         configuredReportings: ConfiguredReportingInternal[],
         meta: KeyValue,
@@ -180,6 +218,7 @@ export class Endpoint extends ZigbeeEntity {
         this.deviceNetworkAddress = deviceNetworkAddress;
         this.deviceIeeeAddress = deviceIeeeAddress;
         this.clusters = clusters;
+        this.scenes = scenes;
         this._binds = binds;
         this._configuredReportings = configuredReportings;
         this.meta = meta;
@@ -243,6 +282,7 @@ export class Endpoint extends ZigbeeEntity {
      */
 
     public static fromDatabaseRecord(record: KeyValue, deviceNetworkAddress: number, deviceIeeeAddress: string): Endpoint {
+        // @deprecated Z2M 3.0
         // Migrate attrs to attributes
         for (const entryKey in record.clusters) {
             const entry = record.clusters[entryKey];
@@ -269,6 +309,60 @@ export class Endpoint extends ZigbeeEntity {
         }
         /* v8 ignore stop */
 
+        // @deprecated Z2M 3.0
+        // Migrate scenes from meta (ZHC) to plain
+        if (record.meta.scenes) {
+            record.scenes = {};
+
+            for (const key in record.meta.scenes) {
+                const oldScene = record.meta.scenes[key];
+                record.scenes[key] = {
+                    name: oldScene.name,
+                    // ZHC only saved "state", "brightness", "color", "color_temp", "color_mode"
+                    state: {},
+                    // XXX: no way of knowing from ZHC dataset
+                    enhanced: false,
+                    transitionTime: 0xffff,
+                } satisfies Scene;
+                const newSceneState = record.scenes[key].state as Scene["state"];
+
+                if (oldScene.state.state !== undefined) {
+                    newSceneState.genOnOff = {onOff: oldScene.state.state};
+                }
+
+                if (oldScene.state.brightness !== undefined) {
+                    newSceneState.genLevelCtrl = {currentLevel: oldScene.state.brightness};
+                }
+
+                if (oldScene.state.color_mode === "xy") {
+                    newSceneState.lightingColorCtrl = {
+                        currentX: oldScene.state.color.x ?? 0,
+                        currentY: oldScene.state.color.y ?? 0,
+                    };
+                } else if (oldScene.state.color_mode === "hs") {
+                    newSceneState.lightingColorCtrl = {
+                        currentX: 0,
+                        currentY: 0,
+                        enhancedCurrentHue: oldScene.state.color.hue ?? 0,
+                        currentSaturation: oldScene.state.color.saturation ?? 0,
+                    };
+                } else if (oldScene.state.color_mode === "color_temp") {
+                    newSceneState.lightingColorCtrl = {
+                        currentX: 0,
+                        currentY: 0,
+                        enhancedCurrentHue: 0,
+                        currentSaturation: 0,
+                        colorLoopActive: 0,
+                        colorLoopDirection: 0,
+                        colorLoopTime: 0,
+                        colorTemperature: oldScene.state.color_temp ?? 0,
+                    };
+                }
+            }
+
+            delete record.meta.scenes;
+        }
+
         return new Endpoint(
             record.epId,
             record.profId,
@@ -278,6 +372,7 @@ export class Endpoint extends ZigbeeEntity {
             deviceNetworkAddress,
             deviceIeeeAddress,
             record.clusters,
+            record.scenes ? new Map(Object.entries(record.scenes)) : new Map(),
             record.binds || [],
             record.configuredReportings || [],
             record.meta || {},
@@ -293,6 +388,7 @@ export class Endpoint extends ZigbeeEntity {
             outClusterList: this.outputClusters,
             clusters: this.clusters,
             binds: this._binds,
+            scenes: this.scenes ? Object.fromEntries(this.scenes) : {},
             configuredReportings: this._configuredReportings,
             meta: this.meta,
         };
@@ -307,7 +403,20 @@ export class Endpoint extends ZigbeeEntity {
         deviceNetworkAddress: number,
         deviceIeeeAddress: string,
     ): Endpoint {
-        return new Endpoint(id, profileID, deviceID, inputClusters, outputClusters, deviceNetworkAddress, deviceIeeeAddress, {}, [], [], {});
+        return new Endpoint(
+            id,
+            profileID,
+            deviceID,
+            inputClusters,
+            outputClusters,
+            deviceNetworkAddress,
+            deviceIeeeAddress,
+            {},
+            new Map(),
+            [],
+            [],
+            {},
+        );
     }
 
     public saveClusterAttributeKeyValue(clusterKey: number | string, list: KeyValue): void {
@@ -1113,11 +1222,573 @@ export class Endpoint extends ZigbeeEntity {
     }
 
     public removeFromAllGroupsDatabase(): void {
-        for (const group of Group.allIterator()) {
-            if (group.hasMember(this)) {
-                group.removeMember(this);
+        for (const group of Group.allIterator((g) => g.hasMember(this))) {
+            group.removeMember(this);
+        }
+    }
+
+    /**
+     * Overwrite scenes cache with scene data received from Zigbee.
+     */
+    public syncSceneFromZigbee(payload: TClusterCommandResponsePayload<"genScenes", "viewRsp" | "enhancedViewRsp">, enhanced: boolean): Scene {
+        if (payload.scenename === undefined || payload.extensionfieldsets === undefined || payload.transtime === undefined) {
+            throw new Error("Missing data");
+        }
+
+        const sceneKey = `${payload.sceneid}_${payload.groupid}`;
+        const existing = this.scenes.get(sceneKey);
+        const state = ZclFrameConverter.sceneFromExtensionFieldSets(payload.extensionfieldsets);
+
+        if (existing) {
+            if (!existing.name && payload.scenename && payload.scenename !== "\u0000") {
+                // keep existing name if present and incoming not present
+                existing.name = payload.scenename;
+            }
+
+            existing.state = state;
+            existing.enhanced = enhanced;
+            existing.transitionTime = payload.transtime;
+
+            logger.debug(() => `Synchonized scene from Zigbee scene=${payload.sceneid}, group=${payload.groupid}`, NS);
+
+            return existing;
+        }
+
+        const scene: Scene = {
+            name: payload.scenename,
+            state,
+            enhanced,
+            transitionTime: payload.transtime,
+        };
+
+        this.scenes.set(sceneKey, scene);
+
+        logger.debug(() => `Added scene from Zigbee scene=${payload.sceneid}, group=${payload.groupid}`, NS);
+
+        return scene;
+    }
+
+    /**
+     * Overwrite scenes cache with clusters state cache.
+     */
+    public syncSceneFromState(groupId: number, sceneId: number, sceneName: string, enhanced: boolean, transTime: number): void {
+        const sceneKey = `${sceneId}_${groupId}`;
+        let existing = this.scenes.get(sceneKey);
+
+        if (!existing) {
+            existing = {
+                name: sceneName,
+                state: {},
+                enhanced,
+                transitionTime: transTime,
+            };
+
+            this.scenes.set(sceneKey, existing);
+        } else {
+            if (!existing.name && sceneName) {
+                // keep existing name if present and incoming not present
+                existing.name = sceneName;
+            }
+
+            existing.enhanced = enhanced;
+            existing.transitionTime = transTime;
+        }
+
+        if (this.clusters.genOnOff?.attributes !== undefined) {
+            existing.state.genOnOff = {onOff: (this.clusters.genOnOff.attributes.onOff as number | undefined) ?? 0};
+        }
+
+        if (this.clusters.genLevelCtrl?.attributes !== undefined) {
+            existing.state.genLevelCtrl = {currentLevel: (this.clusters.genLevelCtrl.attributes.currentLevel as number | undefined) ?? 0};
+        }
+
+        if (this.clusters.closuresWindowCovering?.attributes !== undefined) {
+            existing.state.closuresWindowCovering = {
+                currentPositionLiftPercentage:
+                    (this.clusters.closuresWindowCovering.attributes.currentPositionLiftPercentage as number | undefined) ?? 0,
+            };
+
+            const currentPositionTiltPercentage = this.clusters.closuresWindowCovering.attributes.currentPositionTiltPercentage as number | undefined;
+
+            if (currentPositionTiltPercentage !== undefined) {
+                existing.state.closuresWindowCovering.currentPositionTiltPercentage = currentPositionTiltPercentage as number;
             }
         }
+
+        if (this.clusters.barrierControl?.attributes !== undefined) {
+            existing.state.barrierControl = {
+                barrierPosition: (this.clusters.barrierControl?.attributes.barrierPosition as number | undefined) ?? 0,
+            };
+        }
+
+        if (this.clusters.hvacThermostat?.attributes !== undefined) {
+            existing.state.hvacThermostat = {
+                occupiedCoolingSetpoint: (this.clusters.hvacThermostat.attributes.occupiedCoolingSetpoint as number | undefined) ?? 0,
+            };
+            const occupiedHeatingSetpoint = this.clusters.hvacThermostat.attributes.occupiedHeatingSetpoint as number | undefined;
+
+            if (occupiedHeatingSetpoint !== undefined) {
+                existing.state.hvacThermostat.occupiedHeatingSetpoint = occupiedHeatingSetpoint;
+                const systemMode = this.clusters.hvacThermostat.attributes.systemMode as number | undefined;
+
+                if (systemMode !== undefined) {
+                    existing.state.hvacThermostat.systemMode = systemMode;
+                }
+            }
+        }
+
+        if (this.clusters.lightingColorCtrl?.attributes !== undefined) {
+            existing.state.lightingColorCtrl = {
+                currentX: (this.clusters.lightingColorCtrl.attributes.currentX as number | undefined) ?? 0,
+            };
+            const currentY = this.clusters.lightingColorCtrl?.attributes.currentY as number | undefined;
+
+            if (currentY !== undefined) {
+                existing.state.lightingColorCtrl.currentY = currentY;
+                const enhancedCurrentHue = this.clusters.lightingColorCtrl?.attributes.enhancedCurrentHue as number | undefined;
+
+                if (enhancedCurrentHue !== undefined) {
+                    existing.state.lightingColorCtrl.enhancedCurrentHue = enhancedCurrentHue;
+                    const currentSaturation = this.clusters.lightingColorCtrl?.attributes.currentSaturation as number | undefined;
+
+                    if (currentSaturation !== undefined) {
+                        existing.state.lightingColorCtrl.currentSaturation = currentSaturation;
+                        const colorLoopActive = this.clusters.lightingColorCtrl?.attributes.colorLoopActive as number | undefined;
+
+                        if (colorLoopActive !== undefined) {
+                            existing.state.lightingColorCtrl.colorLoopActive = colorLoopActive;
+                            const colorLoopDirection = this.clusters.lightingColorCtrl?.attributes.colorLoopDirection as number | undefined;
+
+                            if (colorLoopDirection !== undefined) {
+                                existing.state.lightingColorCtrl.colorLoopDirection = colorLoopDirection;
+                                const colorLoopTime = this.clusters.lightingColorCtrl?.attributes.colorLoopTime as number | undefined;
+
+                                if (colorLoopTime !== undefined) {
+                                    existing.state.lightingColorCtrl.colorLoopTime = colorLoopTime;
+                                    const colorTemperature = this.clusters.lightingColorCtrl?.attributes.colorTemperature as number | undefined;
+
+                                    if (colorTemperature !== undefined) {
+                                        existing.state.lightingColorCtrl.colorTemperature = colorTemperature;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Overwrite clusters state cache with scene cache
+     */
+    public syncStateFromScene(groupId: number, sceneId: number): void {
+        const sceneKey = `${sceneId}_${groupId}`;
+        const scene = this.scenes.get(sceneKey);
+
+        if (!scene) {
+            logger.warning(`Unable to sync state scene=${sceneId} group=${groupId}. Scene not found.`, NS);
+            return;
+        }
+
+        if (scene.state.genOnOff !== undefined) {
+            const onOff = (scene.state.genOnOff.onOff as number | undefined) ?? 0;
+
+            if (this.clusters.genOnOff?.attributes === undefined) {
+                this.clusters.genOnOff.attributes = {onOff};
+            } else {
+                this.clusters.genOnOff.attributes.onOff = onOff;
+            }
+        }
+
+        if (scene.state.genLevelCtrl !== undefined) {
+            const currentLevel = (scene.state.genLevelCtrl.currentLevel as number | undefined) ?? 0;
+
+            if (this.clusters.genLevelCtrl?.attributes === undefined) {
+                this.clusters.genLevelCtrl.attributes = {currentLevel};
+            } else {
+                this.clusters.genLevelCtrl.attributes.currentLevel = currentLevel;
+            }
+        }
+
+        if (scene.state.closuresWindowCovering !== undefined) {
+            const currentPositionLiftPercentage = (scene.state.closuresWindowCovering.currentPositionLiftPercentage as number | undefined) ?? 0;
+
+            if (this.clusters.closuresWindowCovering?.attributes === undefined) {
+                this.clusters.closuresWindowCovering.attributes = {currentPositionLiftPercentage};
+            } else {
+                this.clusters.closuresWindowCovering.attributes.currentPositionLiftPercentage = currentPositionLiftPercentage;
+            }
+
+            const currentPositionTiltPercentage = scene.state.closuresWindowCovering.currentPositionTiltPercentage as number | undefined;
+
+            if (currentPositionTiltPercentage !== undefined) {
+                this.clusters.closuresWindowCovering.attributes.currentPositionTiltPercentage = currentPositionTiltPercentage;
+            }
+        }
+
+        if (scene.state.barrierControl !== undefined) {
+            const barrierPosition = (scene.state.barrierControl.barrierPosition as number | undefined) ?? 0;
+
+            if (this.clusters.barrierControl?.attributes === undefined) {
+                this.clusters.barrierControl.attributes = {barrierPosition};
+            } else {
+                this.clusters.barrierControl.attributes.barrierPosition = barrierPosition;
+            }
+        }
+
+        if (scene.state.hvacThermostat !== undefined) {
+            const occupiedCoolingSetpoint = (scene.state.hvacThermostat.occupiedCoolingSetpoint as number | undefined) ?? 0;
+
+            if (this.clusters.hvacThermostat?.attributes === undefined) {
+                this.clusters.hvacThermostat.attributes = {occupiedCoolingSetpoint};
+            } else {
+                this.clusters.hvacThermostat.attributes.occupiedCoolingSetpoint = occupiedCoolingSetpoint;
+            }
+
+            const occupiedHeatingSetpoint = scene.state.hvacThermostat.occupiedHeatingSetpoint as number | undefined;
+
+            if (occupiedHeatingSetpoint !== undefined) {
+                this.clusters.hvacThermostat.attributes.occupiedHeatingSetpoint = occupiedHeatingSetpoint;
+                const systemMode = scene.state.hvacThermostat.systemMode as number | undefined;
+
+                if (systemMode !== undefined) {
+                    this.clusters.hvacThermostat.attributes.systemMode = systemMode;
+                }
+            }
+        }
+
+        if (scene.state.lightingColorCtrl !== undefined) {
+            const currentX = (scene.state.lightingColorCtrl.currentX as number | undefined) ?? 0;
+
+            if (this.clusters.lightingColorCtrl?.attributes === undefined) {
+                this.clusters.lightingColorCtrl.attributes = {currentX};
+            } else {
+                this.clusters.lightingColorCtrl.attributes.currentX = currentX;
+            }
+
+            const currentY = scene.state.lightingColorCtrl.currentY as number | undefined;
+
+            if (currentY !== undefined) {
+                this.clusters.lightingColorCtrl.attributes.currentY = currentY;
+                const enhancedCurrentHue = scene.state.lightingColorCtrl.enhancedCurrentHue as number | undefined;
+
+                if (enhancedCurrentHue !== undefined) {
+                    this.clusters.lightingColorCtrl.attributes.enhancedCurrentHue = enhancedCurrentHue;
+                    const currentSaturation = scene.state.lightingColorCtrl.currentSaturation as number | undefined;
+
+                    if (currentSaturation !== undefined) {
+                        this.clusters.lightingColorCtrl.attributes.currentSaturation = currentSaturation;
+                        const colorLoopActive = scene.state.lightingColorCtrl.colorLoopActive as number | undefined;
+
+                        if (colorLoopActive !== undefined) {
+                            this.clusters.lightingColorCtrl.attributes.colorLoopActive = colorLoopActive;
+                            const colorLoopDirection = scene.state.lightingColorCtrl.colorLoopDirection as number | undefined;
+
+                            if (colorLoopDirection !== undefined) {
+                                this.clusters.lightingColorCtrl.attributes.colorLoopDirection = colorLoopDirection;
+                                const colorLoopTime = scene.state.lightingColorCtrl.colorLoopTime as number | undefined;
+
+                                if (colorLoopTime !== undefined) {
+                                    this.clusters.lightingColorCtrl.attributes.colorLoopTime = colorLoopTime;
+                                    const colorTemperature = scene.state.lightingColorCtrl.colorTemperature as number | undefined;
+
+                                    if (colorTemperature !== undefined) {
+                                        this.clusters.lightingColorCtrl.attributes.colorTemperature = colorTemperature;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Deep-clone a Scene object
+     */
+    public cloneScene(existing: Scene): Scene {
+        const clonedScene: Scene = {name: existing.name, state: {}, enhanced: existing.enhanced, transitionTime: existing.transitionTime};
+
+        for (const cluster in existing.state) {
+            // @ts-expect-error dynamic cloning
+            clonedScene.state[cluster as keyof typeof existing.state] = {
+                ...existing.state[cluster as keyof typeof existing.state],
+            };
+        }
+
+        return clonedScene;
+    }
+
+    /**
+     * Retrieve a scene from the device and return said scene after synchronizing the internal cache
+     */
+    public async viewScene(groupId: number, sceneId: number, enhanced: boolean, options?: Options): Promise<Scene> {
+        const optionsWithDefaults = this.getOptionsWithDefaults(options, true, Zcl.Direction.CLIENT_TO_SERVER, undefined);
+        const viewFrame = await this.zclCommand(
+            "genScenes",
+            enhanced ? "view" : "enhancedView",
+            {groupid: groupId, sceneid: sceneId},
+            optionsWithDefaults,
+            undefined,
+            true,
+            Zcl.FrameType.SPECIFIC,
+        );
+
+        if (viewFrame) {
+            return this.syncSceneFromZigbee(viewFrame.payload, enhanced);
+        }
+
+        throw new Error("Unable to view scene");
+    }
+
+    /**
+     * Add a scene. Can be done without specifying extension field sets, to only "setup" a scene name/transition time (followed by a `storeScene`).
+     * Note: If name not supported by cluster, will be discarded by device (then returned as null string if requested).
+     * Returns the scene as saved on the device.
+     */
+    public async addScene(
+        groupId: number,
+        sceneId: number,
+        transTime: number,
+        sceneName: string,
+        extensionFieldSets?: ZclTypes.ExtensionFieldSet[],
+        options?: Options,
+    ): Promise<Scene> {
+        assert(groupId >= 0x0000 && groupId <= 0xfff7, "Invalid group ID");
+        assert(groupId !== 0x0000 || sceneId !== 0x00, "Invalid group/scene ID combination (reserved)");
+        assert(sceneName.length > 16, "Scene name too long");
+
+        const optionsWithDefaults = this.getOptionsWithDefaults(options, true, Zcl.Direction.CLIENT_TO_SERVER, undefined);
+        const enhanced = Number.isInteger(transTime);
+        const frame = await this.zclCommand(
+            "genScenes",
+            enhanced ? "add" : "enhancedAdd",
+            {groupid: groupId, sceneid: sceneId, transtime: transTime, scenename: sceneName, extensionfieldsets: extensionFieldSets ?? []},
+            optionsWithDefaults,
+            undefined,
+            true,
+            Zcl.FrameType.SPECIFIC,
+        );
+
+        if (frame) {
+            // retrieve the scene from the device to get actual saved state by device
+            return await this.viewScene(groupId, sceneId, enhanced, options);
+        }
+
+        throw new Error("No response received");
+    }
+
+    /**
+     * Store a scene, let the device determine the extension field sets based on its current state
+     * Returns the scene as saved on the device.
+     */
+    public async storeScene(groupId: number, sceneId: number, options?: Options): Promise<Scene> {
+        assert(groupId >= 0x0000 && groupId <= 0xfff7, "Invalid group ID");
+        assert(groupId !== 0x0000 || sceneId !== 0x00, "Invalid group/scene ID combination (reserved)");
+
+        const optionsWithDefaults = this.getOptionsWithDefaults(options, true, Zcl.Direction.CLIENT_TO_SERVER, undefined);
+        const frame = await this.zclCommand(
+            "genScenes",
+            "store",
+            {groupid: groupId, sceneid: sceneId},
+            optionsWithDefaults,
+            undefined,
+            true,
+            Zcl.FrameType.SPECIFIC,
+        );
+
+        if (frame) {
+            // retrieve the scene from the device to get actual saved state by device
+            const existing = this.scenes.get(`${sceneId}_${groupId}`);
+
+            return await this.viewScene(groupId, sceneId, existing?.enhanced ?? false, options);
+        }
+
+        throw new Error("No response received");
+    }
+
+    /**
+     * Copy all or specific scenes.
+     * If mode is `all`, `fromSceneId` and `toSceneId` will be ignored.
+     */
+    public async copyScene(
+        mode: "one",
+        fromGroupId: number,
+        fromSceneId: number,
+        toGroupId: number,
+        toSceneId: number,
+        options?: Options,
+    ): Promise<void>;
+    public async copyScene(mode: "all", fromGroupId: number, fromSceneId: 0xff, toGroupId: number, toSceneId: 0xff, options?: Options): Promise<void>;
+    public async copyScene(
+        mode: "one" | "all",
+        fromGroupId: number,
+        fromSceneId: number,
+        toGroupId: number,
+        toSceneId: number,
+        options?: Options,
+    ): Promise<void> {
+        assert(fromGroupId >= 0x0000 && fromGroupId <= 0xfff7, "Invalid from group ID");
+        assert(fromGroupId !== 0x0000 || fromSceneId !== 0x00, "Invalid from group/scene ID combination (reserved)");
+        assert(toGroupId >= 0x0000 && toGroupId <= 0xfff7, "Invalid to group ID");
+        assert(toGroupId !== 0x0000 || toSceneId !== 0x00, "Invalid to group/scene ID combination (reserved)");
+
+        const optionsWithDefaults = this.getOptionsWithDefaults(options, true, Zcl.Direction.CLIENT_TO_SERVER, undefined);
+        const frame = await this.zclCommand(
+            "genScenes",
+            "copy",
+            {mode: mode === "all" ? 1 : 0, groupidfrom: fromGroupId, sceneidfrom: fromSceneId, groupidto: toGroupId, sceneidto: toSceneId},
+            optionsWithDefaults,
+            undefined,
+            true,
+            Zcl.FrameType.SPECIFIC,
+        );
+
+        if (frame) {
+            if (mode === "all") {
+                const toCheckSceneIds = new Map<number, boolean>();
+
+                for (const [key, scene] of this.scenes) {
+                    if (key.endsWith(`_${fromGroupId}`)) {
+                        const sceneId = Number.parseInt(key.slice(0, key.indexOf("_")), 10);
+
+                        toCheckSceneIds.set(sceneId, scene.enhanced);
+                    }
+                }
+
+                // only want the sync side-effect (outside the `this.scenes` loop)
+                for (const [sceneId, sceneEnhanced] of toCheckSceneIds) {
+                    await this.viewScene(toGroupId, sceneId, sceneEnhanced ?? false, options);
+                }
+            } else {
+                const existing = this.scenes.get(`${fromSceneId}_${fromGroupId}`);
+
+                // only want the sync side-effect
+                await this.viewScene(toGroupId, toSceneId, existing?.enhanced ?? false, options);
+            }
+        } else {
+            throw new Error("No response received");
+        }
+    }
+
+    /**
+     * Recall the given scene with optional transition time override (0xffff to ignore).
+     * Returns the cached scene or trigger a sync if scene unknown and return it.
+     */
+    public async recallScene(groupId: number, sceneId: number, transTime: number, options?: Options): Promise<void> {
+        assert(groupId >= 0x0000 && groupId <= 0xfff7, "Invalid group ID");
+
+        const optionsWithDefaults = this.getOptionsWithDefaults(options, true, Zcl.Direction.CLIENT_TO_SERVER, undefined);
+
+        await this.zclCommand(
+            "genScenes",
+            "recall",
+            {groupid: groupId, sceneid: sceneId, transtime: transTime},
+            optionsWithDefaults,
+            undefined,
+            true, // only get defaultRsp if error occurred, or if requested defaultRsp
+            Zcl.FrameType.SPECIFIC,
+        );
+
+        this.syncStateFromScene(groupId, sceneId);
+    }
+
+    /**
+     * Remove given scene and sync cache.
+     */
+    public async removeScene(groupId: number, sceneId: number, options?: Options): Promise<void> {
+        assert(groupId >= 0x0000 && groupId <= 0xfff7, "Invalid group ID");
+        assert(groupId !== 0x0000 || sceneId !== 0x00, "Invalid group/scene ID combination (reserved)");
+
+        const optionsWithDefaults = this.getOptionsWithDefaults(options, true, Zcl.Direction.CLIENT_TO_SERVER, undefined);
+        const frame = await this.zclCommand(
+            "genScenes",
+            "remove",
+            {groupid: groupId, sceneid: sceneId},
+            optionsWithDefaults,
+            undefined,
+            true,
+            Zcl.FrameType.SPECIFIC,
+        );
+
+        if (frame) {
+            this.scenes.delete(`${sceneId}_${groupId}`);
+        } else {
+            throw new Error("No response received");
+        }
+    }
+
+    /**
+     * Remove all scenes and sync cache.
+     */
+    public async removeAllScenes(groupId: number, options?: Options): Promise<void> {
+        assert(groupId >= 0x0000 && groupId <= 0xfff7, "Invalid group ID");
+
+        const optionsWithDefaults = this.getOptionsWithDefaults(options, true, Zcl.Direction.CLIENT_TO_SERVER, undefined);
+        const frame = await this.zclCommand(
+            "genScenes",
+            "removeAll",
+            {groupid: groupId},
+            optionsWithDefaults,
+            undefined,
+            true,
+            Zcl.FrameType.SPECIFIC,
+        );
+
+        if (frame) {
+            for (const [key] of this.scenes) {
+                if (key.endsWith(`_${groupId}`)) {
+                    this.scenes.delete(key);
+                }
+            }
+        } else {
+            throw new Error("No response received");
+        }
+    }
+
+    /**
+     * Retrieves the scene membership. Use it to sync cache unless otherwise instructed.
+     * Capacity:
+     *   - 0: cannot accomodate more scenes
+     *   - 0xfe: can accomodate at least one more scene (exact number unknown)
+     *   - 0xff: unknown if can accomodate more scenes
+     */
+    public async retrieveScenes(groupId: number, skipSync = false, options?: Options): Promise<[capacity: number, sceneIds: number[]]> {
+        assert(groupId >= 0x0000 && groupId <= 0xfff7, "Invalid group ID");
+
+        const optionsWithDefaults = this.getOptionsWithDefaults(options, true, Zcl.Direction.CLIENT_TO_SERVER, undefined);
+        const frame = await this.zclCommand(
+            "genScenes",
+            "getSceneMembership",
+            {groupid: groupId},
+            optionsWithDefaults,
+            undefined,
+            true,
+            Zcl.FrameType.SPECIFIC,
+        );
+
+        if (frame) {
+            const payload = frame.payload as TClusterCommandResponsePayload<"genScenes", "getSceneMembershipRsp">;
+            // technically response could be truncated to fit within MAC frame, so we don't remove, only add on sync
+            // biome-ignore lint/style/noNonNullAssertion: `status` checked in zclCommand, `scenelist` always present here
+            const sceneIds = payload.scenelist!;
+
+            if (!skipSync) {
+                for (const sceneId of sceneIds) {
+                    if (this.scenes.has(`${sceneId}_${groupId}`)) {
+                        // only want the sync side-effect
+                        // will enforce `enhanced: false`, since we don't know better here
+                        await this.viewScene(groupId, sceneId, false, options);
+                    }
+                }
+            }
+
+            return [payload.capacity, sceneIds];
+        }
+
+        throw new Error("No response received");
     }
 
     public async zclCommand<Cl extends number | string, Co extends number | string, Custom extends TCustomCluster | undefined = undefined>(
