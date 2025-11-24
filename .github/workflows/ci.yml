@@ -21,7 +21,7 @@ jobs:
             actions: read # for Nerivec/action-ci-bench
             pull-requests: write # for Nerivec/action-ci-bench
         steps:
-            - uses: actions/checkout@v5
+            - uses: actions/checkout@v6
 
             - uses: pnpm/action-setup@v4
 
