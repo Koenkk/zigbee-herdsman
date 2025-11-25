@@ -763,6 +763,23 @@ describe("Adapter", () => {
                 });
             });
 
+            it("uses default serialPortOptions of adapter", async () => {
+                listSpy.mockReturnValueOnce([{...ZBT_2, path: "/dev/ttyUSB0"}]);
+
+                const adapter = await Adapter.create({panID: 0x1a62, channelList: [11]}, {adapter: "ember", path: "/dev/ttyUSB0"}, "test.db.backup", {
+                    disableLED: false,
+                });
+
+                expect(adapter).toBeInstanceOf(EmberAdapter);
+                // @ts-expect-error protected
+                expect(adapter.serialPortOptions).toStrictEqual({
+                    adapter: "ember",
+                    baudRate: 460800,
+                    path: "/dev/ttyUSB0",
+                    rtscts: true,
+                });
+            });
+
             it("detects with conflict vendor+product IDs", async () => {
                 listSpy.mockReturnValueOnce([{...EMBER_SKYCONNECT, manufacturer: undefined}]);
 
