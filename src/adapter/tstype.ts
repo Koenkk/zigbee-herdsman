@@ -6,6 +6,7 @@ export type UsbAdapterFingerprint = {
     productId: string;
     manufacturer?: string;
     pathRegex: string;
+    serialPortOptions?: Pick<SerialPortOptions, "baudRate" | "rtscts">;
 };
 
 export interface NetworkOptions {
