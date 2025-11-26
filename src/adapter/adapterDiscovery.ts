@@ -80,7 +80,7 @@ const USB_FINGERPRINTS: Record<DiscoverableUsbAdapter, UsbAdapterFingerprint[]> 
             manufacturer: "Nabu Casa",
             // /dev/serial/by-id/usb-Nabu_Casa_ZBT-2_10B41DE58D6C-if00
             pathRegex: ".*Nabu_Casa_ZBT-2.*",
-            serialPortOptions: {baudRate: 460800, rtscts: true},
+            options: {baudRate: 460800, rtscts: true},
         },
         // {
         //     // TODO: Home Assistant Yellow
@@ -486,8 +486,8 @@ export async function findUsbAdapter(adapter?: Adapter, path?: string): Promise<
             return {
                 adapter: bestMatch[0],
                 path: bestMatch[1][0],
-                rtscts: bestMatch[1][2].serialPortOptions?.rtscts,
-                baudRate: bestMatch[1][2].serialPortOptions?.baudRate,
+                rtscts: bestMatch[1][2].options?.rtscts,
+                baudRate: bestMatch[1][2].options?.baudRate,
             };
         }
     }
@@ -593,8 +593,8 @@ export async function discoverAdapter(adapter?: Adapter, path?: string): Promise
                 if (!matched) {
                     logger.debug(`Unable to match USB adapter: ${adapter} | ${path}`, NS);
                 } else {
-                    result.rtscts = matched.serialPortOptions?.rtscts;
-                    result.baudRate = matched.serialPortOptions?.baudRate;
+                    result.rtscts = matched.options?.rtscts;
+                    result.baudRate = matched.options?.baudRate;
                 }
             } catch (error) {
                 logger.debug(`Error while trying to match USB adapter (${(error as Error).message}).`, NS);
