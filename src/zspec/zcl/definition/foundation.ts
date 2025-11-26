@@ -172,22 +172,32 @@ export const Foundation: Readonly<Record<FoundationCommandName, Readonly<Foundat
             {
                 name: "dataType",
                 type: DataType.DATA8,
-                conditions: [{type: ParameterCondition.FIELD_EQUAL, field: "direction", value: Direction.CLIENT_TO_SERVER}],
+                conditions: [
+                    {type: ParameterCondition.FIELD_EQUAL, field: "status", value: Status.SUCCESS},
+                    {type: ParameterCondition.FIELD_EQUAL, field: "direction", value: Direction.CLIENT_TO_SERVER},
+                ],
             },
             {
                 name: "minRepIntval",
                 type: DataType.DATA16,
-                conditions: [{type: ParameterCondition.FIELD_EQUAL, field: "direction", value: Direction.CLIENT_TO_SERVER}],
+                conditions: [
+                    {type: ParameterCondition.FIELD_EQUAL, field: "status", value: Status.SUCCESS},
+                    {type: ParameterCondition.FIELD_EQUAL, field: "direction", value: Direction.CLIENT_TO_SERVER},
+                ],
             },
             {
                 name: "maxRepIntval",
                 type: DataType.DATA16,
-                conditions: [{type: ParameterCondition.FIELD_EQUAL, field: "direction", value: Direction.CLIENT_TO_SERVER}],
+                conditions: [
+                    {type: ParameterCondition.FIELD_EQUAL, field: "status", value: Status.SUCCESS},
+                    {type: ParameterCondition.FIELD_EQUAL, field: "direction", value: Direction.CLIENT_TO_SERVER},
+                ],
             },
             {
                 name: "repChange",
                 type: BuffaloZclDataType.USE_DATA_TYPE,
                 conditions: [
+                    {type: ParameterCondition.FIELD_EQUAL, field: "status", value: Status.SUCCESS},
                     {type: ParameterCondition.FIELD_EQUAL, field: "direction", value: Direction.CLIENT_TO_SERVER},
                     {type: ParameterCondition.DATA_TYPE_CLASS_EQUAL, value: DataTypeClass.ANALOG},
                 ],
@@ -195,7 +205,10 @@ export const Foundation: Readonly<Record<FoundationCommandName, Readonly<Foundat
             {
                 name: "timeout",
                 type: DataType.DATA16,
-                conditions: [{type: ParameterCondition.FIELD_EQUAL, field: "direction", value: Direction.SERVER_TO_CLIENT}],
+                conditions: [
+                    {type: ParameterCondition.FIELD_EQUAL, field: "status", value: Status.SUCCESS},
+                    {type: ParameterCondition.FIELD_EQUAL, field: "direction", value: Direction.SERVER_TO_CLIENT},
+                ],
             },
         ],
     },

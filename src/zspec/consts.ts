@@ -6,6 +6,9 @@ export const ZIGBEE_REVISION = 23;
 /** The network ID of the coordinator in a Zigbee network is 0x0000. */
 export const COORDINATOR_ADDRESS = 0x0000;
 
+/** Min network address reserved for broadcasting (up to 0xffff) */
+export const BROADCAST_MIN = 0xfff8;
+
 /** Endpoint profile ID for Zigbee 3.0. "Home Automation" */
 export const HA_PROFILE_ID = 0x0104;
 /** Endpoint profile ID for Smart Energy */
@@ -42,7 +45,7 @@ export const ALL_802_15_4_CHANNELS = [11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21
 export const PREFERRED_802_15_4_CHANNELS = [11, 14, 15, 19, 20, 24, 25];
 
 /** A blank (also used as "wildcard") EUI64 hex string prefixed with 0x */
-export const BLANK_EUI64 = "0xFFFFFFFFFFFFFFFF";
+export const BLANK_EUI64 = "0xffffffffffffffff";
 /** A blank extended PAN ID. (null/not present) */
 export const BLANK_EXTENDED_PAN_ID: Readonly<ExtendedPanId> = [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00];
 

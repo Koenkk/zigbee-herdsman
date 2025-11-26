@@ -8673,15 +8673,15 @@ export interface TFoundation {
         direction: number;
         /** Type: DATA16 */
         attrId: number;
-        /** Type: DATA8conditions=[{fieldEquals field=direction value=0}] */
+        /** Type: DATA8, Conditions: [{fieldEquals field=status value=0}{fieldEquals field=direction value=0}] */
         dataType?: number;
-        /** Type: DATA16conditions=[{fieldEquals field=direction value=0}] */
+        /** Type: DATA16, Conditions: [{fieldEquals field=status value=0}{fieldEquals field=direction value=0}] */
         minRepIntval?: number;
-        /** Type: DATA16conditions=[{fieldEquals field=direction value=0}] */
+        /** Type: DATA16, Conditions: [{fieldEquals field=status value=0}{fieldEquals field=direction value=0}] */
         maxRepIntval?: number;
-        /** Type: USE_DATA_TYPEconditions=[{fieldEquals field=direction value=0}{dataTypeValueTypeEquals value=ANALOG}] */
+        /** Type: USE_DATA_TYPE, Conditions: [{fieldEquals field=status value=0}{fieldEquals field=direction value=0}{dataTypeValueTypeEquals value=ANALOG}] */
         repChange?: unknown;
-        /** Type: DATA16conditions=[{fieldEquals field=direction value=1}] */
+        /** Type: DATA16, Conditions: [{fieldEquals field=status value=0}{fieldEquals field=direction value=1}] */
         timeout?: number;
     }[];
     /** ID: 10 */
