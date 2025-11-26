@@ -337,7 +337,7 @@ const addParameters = (foundation: Readonly<FoundationDefinition>): ts.TypeNode 
         ts.addSyntheticLeadingComment(
             element,
             ts.SyntaxKind.MultiLineCommentTrivia,
-            `* Type: ${DataType[parameter.type] ?? BuffaloZclDataType[parameter.type]}${conditionComment ?? ""} `,
+            `* Type: ${DataType[parameter.type] ?? BuffaloZclDataType[parameter.type]}${conditionComment ? ` ${conditionComment}` : ""} `,
             true,
         );
     }

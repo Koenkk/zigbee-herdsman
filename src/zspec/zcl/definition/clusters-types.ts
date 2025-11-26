@@ -8593,9 +8593,9 @@ export interface TFoundation {
         attrId: number;
         /** Type: DATA8 */
         status: number;
-        /** Type: DATA8conditions=[{fieldEquals field=status value=0}] */
+        /** Type: DATA8 conditions=[{fieldEquals field=status value=0}] */
         dataType?: number;
-        /** Type: USE_DATA_TYPEconditions=[{fieldEquals field=status value=0}] */
+        /** Type: USE_DATA_TYPE conditions=[{fieldEquals field=status value=0}] */
         attrData?: unknown;
     }[];
     /** ID: 2 */
@@ -8620,7 +8620,7 @@ export interface TFoundation {
     writeRsp: {
         /** Type: ENUM8 */
         status: number;
-        /** Type: DATA16conditions=[{fieldEquals field=status reversed=true value=0}] */
+        /** Type: DATA16 conditions=[{fieldEquals field=status reversed=true value=0}] */
         attrId?: number;
     }[];
     /** ID: 5 */
@@ -8638,24 +8638,24 @@ export interface TFoundation {
         direction: number;
         /** Type: DATA16 */
         attrId: number;
-        /** Type: DATA8conditions=[{fieldEquals field=direction value=0}] */
+        /** Type: DATA8 conditions=[{fieldEquals field=direction value=0}] */
         dataType?: number;
-        /** Type: DATA16conditions=[{fieldEquals field=direction value=0}] */
+        /** Type: DATA16 conditions=[{fieldEquals field=direction value=0}] */
         minRepIntval?: number;
-        /** Type: DATA16conditions=[{fieldEquals field=direction value=0}] */
+        /** Type: DATA16 conditions=[{fieldEquals field=direction value=0}] */
         maxRepIntval?: number;
-        /** Type: USE_DATA_TYPEconditions=[{fieldEquals field=direction value=0}{dataTypeValueTypeEquals value=ANALOG}] */
+        /** Type: USE_DATA_TYPE conditions=[{fieldEquals field=direction value=0}{dataTypeValueTypeEquals value=ANALOG}] */
         repChange?: unknown;
-        /** Type: DATA16conditions=[{fieldEquals field=direction value=1}] */
+        /** Type: DATA16 conditions=[{fieldEquals field=direction value=1}] */
         timeout?: number;
     }[];
     /** ID: 7 */
     configReportRsp: {
         /** Type: ENUM8 */
         status: number;
-        /** Type: DATA8conditions=[{minimumRemainingBufferBytes value=3}] */
+        /** Type: DATA8 conditions=[{minimumRemainingBufferBytes value=3}] */
         direction?: number;
-        /** Type: DATA16conditions=[{minimumRemainingBufferBytes value=2}] */
+        /** Type: DATA16 conditions=[{minimumRemainingBufferBytes value=2}] */
         attrId?: number;
     }[];
     /** ID: 8 */
@@ -8673,15 +8673,15 @@ export interface TFoundation {
         direction: number;
         /** Type: DATA16 */
         attrId: number;
-        /** Type: DATA8, Conditions: [{fieldEquals field=status value=0}{fieldEquals field=direction value=0}] */
+        /** Type: DATA8 conditions=[{fieldEquals field=status value=0}{fieldEquals field=direction value=0}] */
         dataType?: number;
-        /** Type: DATA16, Conditions: [{fieldEquals field=status value=0}{fieldEquals field=direction value=0}] */
+        /** Type: DATA16 conditions=[{fieldEquals field=status value=0}{fieldEquals field=direction value=0}] */
         minRepIntval?: number;
-        /** Type: DATA16, Conditions: [{fieldEquals field=status value=0}{fieldEquals field=direction value=0}] */
+        /** Type: DATA16 conditions=[{fieldEquals field=status value=0}{fieldEquals field=direction value=0}] */
         maxRepIntval?: number;
-        /** Type: USE_DATA_TYPE, Conditions: [{fieldEquals field=status value=0}{fieldEquals field=direction value=0}{dataTypeValueTypeEquals value=ANALOG}] */
+        /** Type: USE_DATA_TYPE conditions=[{fieldEquals field=status value=0}{fieldEquals field=direction value=0}{dataTypeValueTypeEquals value=ANALOG}] */
         repChange?: unknown;
-        /** Type: DATA16, Conditions: [{fieldEquals field=status value=0}{fieldEquals field=direction value=1}] */
+        /** Type: DATA16 conditions=[{fieldEquals field=status value=0}{fieldEquals field=direction value=1}] */
         timeout?: number;
     }[];
     /** ID: 10 */
@@ -8740,9 +8740,9 @@ export interface TFoundation {
     writeStructuredRsp: {
         /** Type: ENUM8 */
         status: number;
-        /** Type: DATA16conditions=[{fieldEquals field=status reversed=true value=0}] */
+        /** Type: DATA16 conditions=[{fieldEquals field=status reversed=true value=0}] */
         attrId?: number;
-        /** Type: STRUCTURED_SELECTORconditions=[{fieldEquals field=status reversed=true value=0}] */
+        /** Type: STRUCTURED_SELECTOR conditions=[{fieldEquals field=status reversed=true value=0}] */
         selector?: StructuredSelector;
     }[];
     /** ID: 17 */
