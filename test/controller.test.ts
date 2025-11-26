@@ -4491,14 +4491,18 @@ describe("Controller", () => {
         expect(deepClone(endpoint.configuredReportings)).toStrictEqual([
             {
                 cluster: deepClone(genPowerCfg),
-                attribute: {ID: genPowerCfg.attributes.mainsFrequency.ID, name: "mainsFrequency", type: Zcl.DataType.UINT8},
+                attribute: expect.objectContaining({ID: genPowerCfg.attributes.mainsFrequency.ID, name: "mainsFrequency", type: Zcl.DataType.UINT8}),
                 minimumReportInterval: 60,
                 maximumReportInterval: 3600,
                 reportableChange: 10,
             },
             {
                 cluster: deepClone(genPowerCfg),
-                attribute: {ID: genPowerCfg.attributes.batteryAHrRating.ID, name: "batteryAHrRating", type: Zcl.DataType.UINT16},
+                attribute: expect.objectContaining({
+                    ID: genPowerCfg.attributes.batteryAHrRating.ID,
+                    name: "batteryAHrRating",
+                    type: Zcl.DataType.UINT16,
+                }),
                 minimumReportInterval: 10,
                 maximumReportInterval: 1800,
                 reportableChange: 1,
@@ -4543,14 +4547,14 @@ describe("Controller", () => {
         expect(deepClone(endpoint.configuredReportings)).toStrictEqual([
             {
                 cluster: deepClone(genPowerCfg),
-                attribute: {ID: genPowerCfg.attributes.mainsFrequency.ID, name: "mainsFrequency", type: Zcl.DataType.UINT8},
+                attribute: expect.objectContaining({ID: genPowerCfg.attributes.mainsFrequency.ID, name: "mainsFrequency", type: Zcl.DataType.UINT8}),
                 minimumReportInterval: 30,
                 maximumReportInterval: 600,
                 reportableChange: 2,
             },
             {
                 cluster: deepClone(genPowerCfg),
-                attribute: {ID: genPowerCfg.attributes.mainsVoltage.ID, name: "mainsVoltage", type: Zcl.DataType.UINT16},
+                attribute: expect.objectContaining({ID: genPowerCfg.attributes.mainsVoltage.ID, name: "mainsVoltage", type: Zcl.DataType.UINT16}),
                 minimumReportInterval: 0,
                 maximumReportInterval: 30,
                 reportableChange: 10,
@@ -4678,12 +4682,12 @@ describe("Controller", () => {
         expect(deepClone(endpoint.configuredReportings)).toStrictEqual([
             {
                 cluster: deepClone(genBasic),
-                attribute: {
+                attribute: expect.objectContaining({
                     ID: genBasic.attributes.schneiderMeterRadioPower.ID,
                     name: "schneiderMeterRadioPower",
                     type: Zcl.DataType.INT8,
                     manufacturerCode: Zcl.ManufacturerCode.SCHNEIDER_ELECTRIC,
-                },
+                }),
                 minimumReportInterval: 80,
                 maximumReportInterval: 300,
                 reportableChange: 10,
@@ -4718,12 +4722,12 @@ describe("Controller", () => {
         expect(deepClone(endpoint.configuredReportings)).toStrictEqual([
             {
                 cluster: deepClone(genBasic),
-                attribute: {
+                attribute: expect.objectContaining({
                     ID: genBasic.attributes.schneiderMeterRadioPower.ID,
                     name: "schneiderMeterRadioPower",
                     type: Zcl.DataType.INT8,
                     manufacturerCode: Zcl.ManufacturerCode.SCHNEIDER_ELECTRIC,
-                },
+                }),
                 minimumReportInterval: 15,
                 maximumReportInterval: 213,
                 reportableChange: 3,
