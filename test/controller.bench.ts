@@ -42,7 +42,7 @@ const makeController = () => {
         },
         databasePath: "database.db",
         backupPath: "coordinator_backup.json",
-        dataArchivePath: "backup-%TIMESTAMP%",
+        dataArchivePath: "backup",
         adapter: {
             // concurrent?: number;
             // delay?: number;

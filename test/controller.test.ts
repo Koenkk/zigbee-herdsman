@@ -454,7 +454,7 @@ const options = {
     },
     databasePath: getTempFile("database.db"),
     backupPath,
-    dataArchivePath: path.join(TEMP_PATH, "backup-%TIMESTAMP%"),
+    dataArchivePath: path.join(TEMP_PATH, "backup"),
     acceptJoiningDeviceHandler: mockAcceptJoiningDeviceHandler,
 };
 

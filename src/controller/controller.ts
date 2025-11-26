@@ -1,7 +1,7 @@
 import assert from "node:assert";
 import events from "node:events";
 import fs from "node:fs";
-import {basename} from "node:path";
+import {basename, join} from "node:path";
 import mixinDeep from "mixin-deep";
 import {Adapter, type Events as AdapterEvents, type TsType as AdapterTsType} from "../adapter";
 import type {ZclPayload} from "../adapter/events";
@@ -43,6 +43,8 @@ interface Options {
      */
     acceptJoiningDeviceHandler: (ieeeAddr: string) => Promise<boolean>;
 }
+
+const ONE_WEEK_MS = 7 * 24 * 60 * 60 * 1000;
 
 const DefaultOptions: Pick<Options, "network" | "serialPort" | "adapter"> = {
     network: {
@@ -491,8 +493,29 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
     }
 
     public archiveData(): void {
-        const timestamp = new Date().toISOString().slice(0, 19).replace("T", ".").replace(/:/g, "-");
-        const destPath = this.options.dataArchivePath.replace("%TIMESTAMP%", timestamp);
+        // rotate
+        try {
+            const existing = fs.readdirSync(this.options.dataArchivePath, {withFileTypes: true}).filter((f) => f.isDirectory());
+
+            existing.sort((f1, f2) => f1.name.localeCompare(f2.name));
+
+            const oldest = existing[0];
+            const oldestDate = new Date(oldest.name.replaceAll("_", ":")).getTime();
+
+            // in case manual edits in dir
+            if (Number.isNaN(oldestDate)) {
+                throw new Error("Invalid folder name found");
+            }
+
+            if (oldestDate < Date.now() - ONE_WEEK_MS) {
+                fs.rmSync(join(oldest.parentPath, oldest.name), {recursive: true});
+            }
+        } catch (error) {
+            logger.error(`Unable to rotate archived data: ${error}`, NS);
+        }
+
+        const timestamp = new Date().toISOString().replaceAll(":", "_");
+        const destPath = join(this.options.dataArchivePath, timestamp);
 
         try {
             fs.mkdirSync(destPath, {recursive: true});
@@ -505,7 +528,7 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
                 fs.copyFileSync(this.options.databasePath, `${destPath}/${basename(this.options.databasePath)}`);
             }
         } catch (error) {
-            logger.error(`Unable to archive data ${error}`, NS);
+            logger.error(`Unable to archive data: ${error}`, NS);
         }
     }
 
