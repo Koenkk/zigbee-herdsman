@@ -1,5 +1,15 @@
 # Changelog
 
+## [7.0.1](https://github.com/Koenkk/zigbee-herdsman/compare/v7.0.0...v7.0.1) (2025-11-27)
+
+
+### Bug Fixes
+
+* **ignore:** bump the minor-patch group with 2 updates ([#1566](https://github.com/Koenkk/zigbee-herdsman/issues/1566)) ([d476b22](https://github.com/Koenkk/zigbee-herdsman/commit/d476b221e534503a9e56afc1cbcb143e5bc436a5))
+* **ignore:** LiXee ZLinky: remove cluster definition (moved to ZHC) ([#1547](https://github.com/Koenkk/zigbee-herdsman/issues/1547)) ([fe0d4a4](https://github.com/Koenkk/zigbee-herdsman/commit/fe0d4a428a05002e248a52af0ed87cfde3828e36))
+* **ignore:** proper configure typing ([#1569](https://github.com/Koenkk/zigbee-herdsman/issues/1569)) ([becc177](https://github.com/Koenkk/zigbee-herdsman/commit/becc1777e72318c0888d043ab8913740e67dc5ff))
+* Support ZBT-2 discovery ([#1568](https://github.com/Koenkk/zigbee-herdsman/issues/1568)) ([2e31d4c](https://github.com/Koenkk/zigbee-herdsman/commit/2e31d4c366bd1cf91de5ca0aab47721c0033a823))
+
 ## [7.0.0](https://github.com/Koenkk/zigbee-herdsman/compare/v6.4.2...v7.0.0) (2025-11-22)
 
 
