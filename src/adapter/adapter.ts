@@ -50,11 +50,17 @@ export abstract class Adapter extends events.EventEmitter<AdapterEventMap> {
         backupPath: string,
         adapterOptions: TsType.AdapterOptions,
     ): Promise<Adapter> {
-        const [adapter, path] = await discoverAdapter(serialPortOptions.adapter, serialPortOptions.path);
-        serialPortOptions.adapter = adapter;
-        serialPortOptions.path = path;
+        const discovered = await discoverAdapter(serialPortOptions.adapter, serialPortOptions.path);
+        serialPortOptions.adapter = discovered.adapter;
+        serialPortOptions.path = discovered.path;
+        if (serialPortOptions.baudRate === undefined && discovered.baudRate !== undefined) {
+            serialPortOptions.baudRate = discovered.baudRate;
+        }
+        if (serialPortOptions.rtscts === undefined && discovered.rtscts !== undefined) {
+            serialPortOptions.rtscts = discovered.rtscts;
+        }
 
-        switch (adapter) {
+        switch (discovered.adapter) {
             case "zstack": {
                 const {ZStackAdapter} = await import("./z-stack/adapter/zStackAdapter.js");
 
@@ -92,7 +98,7 @@ export abstract class Adapter extends events.EventEmitter<AdapterEventMap> {
                 return new EZSPAdapter(networkOptions, serialPortOptions, backupPath, adapterOptions);
             }
             default: {
-                throw new Error(`Adapter '${adapter}' does not exists, possible options: zstack, ember, deconz, zigate, zboss, zoh, ezsp`);
+                throw new Error(`Adapter '${discovered.adapter}' does not exists, possible options: zstack, ember, deconz, zigate, zboss, zoh, ezsp`);
             }
         }
     }

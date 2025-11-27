@@ -4,6 +4,7 @@ import type {PortInfo} from "@serialport/bindings-cpp";
 import {Bonjour, type Service} from "bonjour-service";
 import {wait} from "../utils";
 import {logger} from "../utils/logger";
+import type {TsType} from ".";
 import {SerialPort} from "./serialPort";
 import type {Adapter, DiscoverableUsbAdapter, UsbAdapterFingerprint} from "./tstype";
 
@@ -65,12 +66,21 @@ const USB_FINGERPRINTS: Record<DiscoverableUsbAdapter, UsbAdapterFingerprint[]> 
         //     pathRegex: '.*.*',
         // },
         {
-            // Home Assistant SkyConnect
+            // Home Assistant Connect ZBT-1
             vendorId: "10c4",
             productId: "ea60",
             manufacturer: "Nabu Casa",
             // /dev/serial/by-id/usb-Nabu_Casa_SkyConnect_v1.0_3abe54797c91ed118fc3cad13b20a111-if00-port0
             pathRegex: ".*Nabu_Casa_SkyConnect.*",
+        },
+        {
+            // Home Assistant Connect ZBT-2
+            vendorId: "303a",
+            productId: "4001",
+            manufacturer: "Nabu Casa",
+            // /dev/serial/by-id/usb-Nabu_Casa_ZBT-2_10B41DE58D6C-if00
+            pathRegex: ".*Nabu_Casa_ZBT-2.*",
+            options: {baudRate: 460800, rtscts: true},
         },
         // {
         //     // TODO: Home Assistant Yellow
@@ -323,7 +333,7 @@ function matchUsbFingerprint(
     entries: UsbAdapterFingerprint[],
     isWindows: boolean,
     conflictProne: boolean,
-): [path: PortInfo["path"], score: number] | undefined {
+): [path: PortInfo["path"], score: number, fingerprint: UsbAdapterFingerprint] | undefined {
     if (!portInfo.vendorId || !portInfo.productId) {
         // port info is missing essential information for proper matching, ignore it
         return undefined;
@@ -355,7 +365,7 @@ function matchUsbFingerprint(
             if (isWindows && !conflictProne) {
                 // path will never match on Windows (COMx), assume vendor+product+manufacturer is "exact match"
                 // except for conflict-prone, since it could easily return a mismatch (better to return no match and force manual config)
-                return [portInfo.path, score];
+                return [portInfo.path, score, match];
             }
         }
 
@@ -366,7 +376,7 @@ function matchUsbFingerprint(
         ) {
             if (score === UsbFingerprintMatchScore.VidPidManuf) {
                 // best possible match, return early
-                return [portInfo.path, UsbFingerprintMatchScore.VidPidManufPath];
+                return [portInfo.path, UsbFingerprintMatchScore.VidPidManufPath, entry];
             }
 
             match = entry;
@@ -383,18 +393,18 @@ function matchUsbFingerprint(
                 return undefined;
             }
 
-            return [portInfo.path, score];
+            return [portInfo.path, score, match];
         }
 
         if (!conflictProne) {
-            return [portInfo.path, score];
+            return [portInfo.path, score, match];
         }
     }
 
     return undefined;
 }
 
-export async function matchUsbAdapter(adapter: Adapter, path: string): Promise<boolean> {
+export async function matchUsbAdapter(adapter: Adapter, path: string): Promise<UsbAdapterFingerprint | false> {
     // no point in matching this
     if (adapter === "zoh") {
         return false;
@@ -415,7 +425,7 @@ export async function matchUsbAdapter(adapter: Adapter, path: string): Promise<b
 
         if (match) {
             logger.info(() => `Matched adapter: ${JSON.stringify(portInfo)} => ${adapter}: ${JSON.stringify(match[1])}`, NS);
-            return true;
+            return match[2];
         }
     }
 
@@ -452,10 +462,7 @@ export function findUsbAdapterBestMatch(
     return bestMatch;
 }
 
-export async function findUsbAdapter(
-    adapter?: Adapter,
-    path?: string,
-): Promise<[adapter: DiscoverableUsbAdapter, path: PortInfo["path"]] | undefined> {
+export async function findUsbAdapter(adapter?: Adapter, path?: string): Promise<TsType.SerialPortOptions | undefined> {
     const isWindows = platform() === "win32";
     // refine to DiscoverableUSBAdapter
     adapter = adapter && adapter === "ezsp" ? "ember" : adapter;
@@ -476,7 +483,12 @@ export async function findUsbAdapter(
                 () => `Matched adapter: ${JSON.stringify(portInfo)} => ${bestMatch[0]}: path=${bestMatch[1][0]}, score=${bestMatch[1][1]}`,
                 NS,
             );
-            return [bestMatch[0], bestMatch[1][0]];
+            return {
+                adapter: bestMatch[0],
+                path: bestMatch[1][0],
+                rtscts: bestMatch[1][2].options?.rtscts,
+                baudRate: bestMatch[1][2].options?.baudRate,
+            };
         }
     }
 }
@@ -492,7 +504,7 @@ function getMdnsRadioAdapter(radio: string): Adapter {
     }
 }
 
-export async function findMdnsAdapter(path: string): Promise<[adapter: Adapter, path: string]> {
+export async function findMdnsAdapter(path: string): Promise<TsType.SerialPortOptions> {
     const mdnsDevice = path.substring(7);
 
     if (mdnsDevice.length === 0) {
@@ -516,7 +528,7 @@ export async function findMdnsAdapter(path: string): Promise<[adapter: Adapter, 
                     logger.info(`Coordinator Radio: ${mdnsAdapter}`, NS);
                     bj.destroy();
 
-                    resolve([mdnsAdapter, `tcp://${mdnsAddress}:${mdnsPort}`]);
+                    resolve({adapter: mdnsAdapter, path: `tcp://${mdnsAddress}:${mdnsPort}`});
                 } else {
                     bj.destroy();
                     reject(
@@ -533,7 +545,7 @@ export async function findMdnsAdapter(path: string): Promise<[adapter: Adapter, 
     });
 }
 
-export function findTcpAdapter(path: string, adapter?: Adapter): [adapter: Adapter, path: string] {
+export function findTcpAdapter(path: string, adapter?: Adapter): TsType.SerialPortOptions {
     try {
         const url = new URL(path);
         assert(url.port !== "");
@@ -546,7 +558,7 @@ export function findTcpAdapter(path: string, adapter?: Adapter): [adapter: Adapt
     }
 
     // always use `tcp://` format
-    return [adapter, path.replace(/^socket/, "tcp")];
+    return {adapter, path: path.replace(/^socket/, "tcp")};
 }
 
 /**
@@ -563,7 +575,7 @@ export function findTcpAdapter(path: string, adapter?: Adapter): [adapter: Adapt
  * @returns adapter An adapter type supported by Z2M. While result is TS-typed, this should be validated against actual values before use.
  * @returns path Path to adapter.
  */
-export async function discoverAdapter(adapter?: Adapter, path?: string): Promise<[adapter: Adapter, path: string]> {
+export async function discoverAdapter(adapter?: Adapter, path?: string): Promise<TsType.SerialPortOptions> {
     if (path) {
         if (path.startsWith("mdns://")) {
             return await findMdnsAdapter(path);
@@ -574,17 +586,21 @@ export async function discoverAdapter(adapter?: Adapter, path?: string): Promise
         }
 
         if (adapter) {
+            const result: TsType.SerialPortOptions = {adapter, path};
             try {
                 const matched = await matchUsbAdapter(adapter, path);
 
                 if (!matched) {
                     logger.debug(`Unable to match USB adapter: ${adapter} | ${path}`, NS);
+                } else {
+                    result.rtscts = matched.options?.rtscts;
+                    result.baudRate = matched.options?.baudRate;
                 }
             } catch (error) {
                 logger.debug(`Error while trying to match USB adapter (${(error as Error).message}).`, NS);
             }
 
-            return [adapter, path];
+            return result;
         }
     }
 
@@ -597,7 +613,7 @@ export async function discoverAdapter(adapter?: Adapter, path?: string): Promise
         }
 
         // keep adapter if `ezsp` since findUSBAdapter returns DiscoverableUSBAdapter
-        return adapter && adapter === "ezsp" ? [adapter, match[1]] : match;
+        return adapter && adapter === "ezsp" ? {adapter, path: match.path, baudRate: match.baudRate, rtscts: match.rtscts} : match;
     } catch (error) {
         throw new Error(`USB adapter discovery error (${(error as Error).message}). Specify valid 'adapter' and 'port' in your configuration.`);
     }

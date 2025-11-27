@@ -18,6 +18,7 @@ import {
     EMBER_ZBDONGLE_E,
     EMBER_ZBDONGLE_E_CP,
     ZBOSS_NORDIC,
+    ZBT_2,
     ZIGATE_PLUSV2,
     ZSTACK_CC2538,
     ZSTACK_SMLIGHT_SLZB_06P10,
@@ -488,6 +489,38 @@ describe("Adapter", () => {
                 });
             });
 
+            it("uses default serialPortOptions of adapter", async () => {
+                listSpy.mockReturnValueOnce([ZBT_2]);
+
+                const adapter = await Adapter.create({panID: 0x1a62, channelList: [11]}, {}, "test.db.backup", {disableLED: false});
+
+                expect(adapter).toBeInstanceOf(EmberAdapter);
+                // @ts-expect-error protected
+                expect(adapter.serialPortOptions).toStrictEqual({
+                    adapter: "ember",
+                    baudRate: 460800,
+                    path: "/dev/serial/by-id/usb-Nabu_Casa_ZBT-2_10B41DE58D6C-if00",
+                    rtscts: true,
+                });
+            });
+
+            it("uses provided options instead of default serialPortOptions of adapter", async () => {
+                listSpy.mockReturnValueOnce([ZBT_2]);
+
+                const adapter = await Adapter.create({panID: 0x1a62, channelList: [11]}, {rtscts: false, baudRate: 1}, "test.db.backup", {
+                    disableLED: false,
+                });
+
+                expect(adapter).toBeInstanceOf(EmberAdapter);
+                // @ts-expect-error protected
+                expect(adapter.serialPortOptions).toStrictEqual({
+                    adapter: "ember",
+                    baudRate: 1,
+                    path: "/dev/serial/by-id/usb-Nabu_Casa_ZBT-2_10B41DE58D6C-if00",
+                    rtscts: false,
+                });
+            });
+
             it("detects with pnpId instead of path", async () => {
                 listSpy.mockReturnValueOnce([{...ZBOSS_NORDIC, path: "/dev/ttyUSB0", pnpId: "usb-ZEPHYR_Zigbee_NCP_54ACCFAFA6DADC49-if00"}]);
 
@@ -727,6 +760,23 @@ describe("Adapter", () => {
                 expect(adapter.serialPortOptions).toStrictEqual({
                     path: "/dev/ttyUSB0",
                     adapter: "zboss",
+                });
+            });
+
+            it("uses default serialPortOptions of adapter", async () => {
+                listSpy.mockReturnValueOnce([{...ZBT_2, path: "/dev/ttyUSB0"}]);
+
+                const adapter = await Adapter.create({panID: 0x1a62, channelList: [11]}, {adapter: "ember", path: "/dev/ttyUSB0"}, "test.db.backup", {
+                    disableLED: false,
+                });
+
+                expect(adapter).toBeInstanceOf(EmberAdapter);
+                // @ts-expect-error protected
+                expect(adapter.serialPortOptions).toStrictEqual({
+                    adapter: "ember",
+                    baudRate: 460800,
+                    path: "/dev/ttyUSB0",
+                    rtscts: true,
                 });
             });
 
