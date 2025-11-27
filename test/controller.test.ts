@@ -4214,6 +4214,41 @@ describe("Controller", () => {
         );
     });
 
+    it("handles configure reporting with non-Analog data type", async () => {
+        await controller.start();
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
+        const device = controller.getDeviceByIeeeAddr("0x129")!;
+        const endpoint = device.getEndpoint(1)!;
+        mocksendZclFrameToEndpoint.mockClear();
+        await endpoint.configureReporting("genOnOff", [
+            {
+                attribute: "onOff",
+                minimumReportInterval: 1,
+                maximumReportInterval: 10,
+            },
+        ]);
+
+        const call = mocksendZclFrameToEndpoint.mock.calls[0];
+        expect(call[0]).toBe("0x129");
+        expect(call[1]).toBe(129);
+        expect(call[2]).toBe(1);
+        expect(deepClone(call[3])).toStrictEqual(
+            deepClone(
+                Zcl.Frame.create(
+                    Zcl.FrameType.GLOBAL,
+                    Zcl.Direction.CLIENT_TO_SERVER,
+                    true,
+                    undefined,
+                    9,
+                    "configReport",
+                    Zcl.Clusters.genOnOff.ID,
+                    [{direction: 0, attrId: 0, dataType: 16, minRepIntval: 1, maxRepIntval: 10}],
+                    {},
+                ),
+            ),
+        );
+    });
+
     it("throws when trying to configure reporting on endpoint with bad attribute", async () => {
         await controller.start();
         await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
