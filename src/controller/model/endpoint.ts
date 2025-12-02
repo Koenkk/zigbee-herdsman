@@ -1073,7 +1073,7 @@ export class Endpoint extends ZigbeeEntity {
     }
 
     public async addToGroup(group: Group): Promise<void> {
-        await this.command("genGroups", "add", {groupid: group.groupID, groupname: ""});
+        await this.zclCommand("genGroups", "add", {groupid: group.groupID, groupname: ""}, undefined, undefined, true, Zcl.FrameType.SPECIFIC);
         group.addMember(this);
     }
 
@@ -1095,14 +1095,23 @@ export class Endpoint extends ZigbeeEntity {
      * to zigbee-herdsman.
      */
     public async removeFromGroup(group: Group | number): Promise<void> {
-        await this.command("genGroups", "remove", {groupid: group instanceof Group ? group.groupID : group});
+        await this.zclCommand(
+            "genGroups",
+            "remove",
+            {groupid: group instanceof Group ? group.groupID : group},
+            undefined,
+            undefined,
+            true,
+            Zcl.FrameType.SPECIFIC,
+        );
+
         if (group instanceof Group) {
             group.removeMember(this);
         }
     }
 
     public async removeFromAllGroups(): Promise<void> {
-        await this.command("genGroups", "removeAll", {}, {disableDefaultResponse: true});
+        await this.zclCommand("genGroups", "removeAll", {}, {disableDefaultResponse: true}, undefined, false, Zcl.FrameType.SPECIFIC);
         this.removeFromAllGroupsDatabase();
     }
 
