@@ -1201,24 +1201,31 @@ export class Endpoint extends ZigbeeEntity {
      * to zigbee-herdsman.
      */
     public async removeFromGroup(group: Group | number): Promise<void> {
-        await this.zclCommand(
-            "genGroups",
-            "remove",
-            {groupid: group instanceof Group ? group.groupID : group},
-            undefined,
-            undefined,
-            true,
-            Zcl.FrameType.SPECIFIC,
-        );
+        const groupId = group instanceof Group ? group.groupID : group;
+        await this.zclCommand("genGroups", "remove", {groupid: groupId}, undefined, undefined, true, Zcl.FrameType.SPECIFIC);
 
         if (group instanceof Group) {
             group.removeMember(this);
+        }
+
+        // per spec, remove associated scenes
+        for (const [key] of this.scenes) {
+            if (key.endsWith(`_${groupId}`)) {
+                this.scenes.delete(key);
+            }
         }
     }
 
     public async removeFromAllGroups(): Promise<void> {
         await this.zclCommand("genGroups", "removeAll", {}, {disableDefaultResponse: true}, undefined, false, Zcl.FrameType.SPECIFIC);
         this.removeFromAllGroupsDatabase();
+
+        // per spec, remove all scenes associated with a group
+        for (const [key] of this.scenes) {
+            if (!key.endsWith("_0")) {
+                this.scenes.delete(key);
+            }
+        }
     }
 
     public removeFromAllGroupsDatabase(): void {
