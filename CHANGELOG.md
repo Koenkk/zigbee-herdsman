@@ -1,5 +1,13 @@
 # Changelog
 
+## [7.0.2](https://github.com/Koenkk/zigbee-herdsman/compare/v7.0.1...v7.0.2) (2025-12-02)
+
+
+### Bug Fixes
+
+* Check status when handling groups ([#1573](https://github.com/Koenkk/zigbee-herdsman/issues/1573)) ([758fb38](https://github.com/Koenkk/zigbee-herdsman/commit/758fb38287b68e62bd02fa146a2dcdfa1adcf3b7))
+* **ignore:** bump the minor-patch group with 2 updates ([#1571](https://github.com/Koenkk/zigbee-herdsman/issues/1571)) ([4dd94ca](https://github.com/Koenkk/zigbee-herdsman/commit/4dd94cac7e153a0cadd243344a4e15453f929c16))
+
 ## [7.0.1](https://github.com/Koenkk/zigbee-herdsman/compare/v7.0.0...v7.0.1) (2025-11-27)
 
 
