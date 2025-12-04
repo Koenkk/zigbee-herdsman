@@ -1,5 +1,12 @@
 # Changelog
 
+## [7.0.3](https://github.com/Koenkk/zigbee-herdsman/compare/v7.0.2...v7.0.3) (2025-12-04)
+
+
+### Bug Fixes
+
+* Lower db save interval, remove save on attribute report ([#1576](https://github.com/Koenkk/zigbee-herdsman/issues/1576)) ([4a42758](https://github.com/Koenkk/zigbee-herdsman/commit/4a42758744d59bcf9aab007aefa0fb36ef59d359))
+
 ## [7.0.2](https://github.com/Koenkk/zigbee-herdsman/compare/v7.0.1...v7.0.2) (2025-12-02)
 
 
