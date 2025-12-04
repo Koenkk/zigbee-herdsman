@@ -291,6 +291,7 @@ export class ZiGateAdapter extends Adapter {
         disableResponse: boolean,
         disableRecovery: boolean,
         sourceEndpoint?: number,
+        profileId?: number,
     ): Promise<Events.ZclPayload | undefined> {
         return await this.queue.execute<Events.ZclPayload | undefined>(async () => {
             return await this.sendZclFrameToEndpointInternal(
@@ -306,6 +307,7 @@ export class ZiGateAdapter extends Adapter {
                 0,
                 false,
                 false,
+                profileId,
             );
         }, networkAddress);
     }
@@ -323,6 +325,7 @@ export class ZiGateAdapter extends Adapter {
         dataRequestAttempt: number,
         checkedNetworkAddress: boolean,
         discoveredRoute: boolean,
+        profileId?: number,
     ): Promise<Events.ZclPayload | undefined> {
         logger.debug(
             `sendZclFrameToEndpointInternal ${ieeeAddr}:${networkAddress}/${endpoint} (${responseAttempt},${dataRequestAttempt},${this.queue.count()})`,
@@ -337,7 +340,7 @@ export class ZiGateAdapter extends Adapter {
             targetShortAddress: networkAddress,
             sourceEndpoint: sourceEndpoint || ZSpec.HA_ENDPOINT,
             destinationEndpoint: endpoint,
-            profileID: ZSpec.HA_PROFILE_ID,
+            profileID: profileId ?? ZSpec.HA_PROFILE_ID,
             clusterID: zclFrame.cluster.ID,
             securityMode: 0x02,
             radius: 30,
@@ -422,7 +425,13 @@ export class ZiGateAdapter extends Adapter {
         }
     }
 
-    public async sendZclFrameToAll(endpoint: number, zclFrame: Zcl.Frame, sourceEndpoint: number, destination: BroadcastAddress): Promise<void> {
+    public async sendZclFrameToAll(
+        endpoint: number,
+        zclFrame: Zcl.Frame,
+        sourceEndpoint: number,
+        destination: BroadcastAddress,
+        profileId?: number,
+    ): Promise<void> {
         return await this.queue.execute<void>(async () => {
             if (sourceEndpoint !== 0x01 /*&& sourceEndpoint !== 242*/) {
                 // @todo on zigate firmware without gp causes hang
@@ -436,7 +445,7 @@ export class ZiGateAdapter extends Adapter {
                 targetShortAddress: destination,
                 sourceEndpoint: sourceEndpoint,
                 destinationEndpoint: endpoint,
-                profileID: /*sourceEndpoint === ZSpec.GP_ENDPOINT ? ZSpec.GP_PROFILE_ID :*/ ZSpec.HA_PROFILE_ID,
+                profileID: profileId ?? ZSpec.HA_PROFILE_ID,
                 clusterID: zclFrame.cluster.ID,
                 securityMode: 0x02,
                 radius: 30,
@@ -450,7 +459,7 @@ export class ZiGateAdapter extends Adapter {
         });
     }
 
-    public async sendZclFrameToGroup(groupID: number, zclFrame: Zcl.Frame, sourceEndpoint?: number): Promise<void> {
+    public async sendZclFrameToGroup(groupID: number, zclFrame: Zcl.Frame, sourceEndpoint?: number, profileId?: number): Promise<void> {
         return await this.queue.execute<void>(async () => {
             const data = zclFrame.toBuffer();
             const payload: RawAPSDataRequestPayload = {
@@ -458,7 +467,7 @@ export class ZiGateAdapter extends Adapter {
                 targetShortAddress: groupID,
                 sourceEndpoint: sourceEndpoint || ZSpec.HA_ENDPOINT,
                 destinationEndpoint: 0xff,
-                profileID: ZSpec.HA_PROFILE_ID,
+                profileID: profileId ?? ZSpec.HA_PROFILE_ID,
                 clusterID: zclFrame.cluster.ID,
                 securityMode: 0x02,
                 radius: 30,
@@ -541,7 +550,13 @@ export class ZiGateAdapter extends Adapter {
     public async sendZclFrameInterPANToIeeeAddr(_zclFrame: Zcl.Frame, _ieeeAddress: string): Promise<void> {
         await Promise.reject(new Error("Not supported"));
     }
-    public async sendZclFrameInterPANBroadcast(_zclFrame: Zcl.Frame, _timeout: number): Promise<Events.ZclPayload> {
+    public async sendZclFrameInterPANBroadcast(zclFrame: Zcl.Frame, timeout: number, disableResponse: false): Promise<Events.ZclPayload>;
+    public async sendZclFrameInterPANBroadcast(zclFrame: Zcl.Frame, timeout: number, disableResponse: true): Promise<undefined>;
+    public async sendZclFrameInterPANBroadcast(
+        _zclFrame: Zcl.Frame,
+        _timeout: number,
+        _disableResponse: boolean,
+    ): Promise<Events.ZclPayload | undefined> {
         return await Promise.reject(new Error("Not supported"));
     }
 
@@ -602,7 +617,7 @@ export class ZiGateAdapter extends Adapter {
             payload.header &&
                 (!matcher.address || payload.address === matcher.address) &&
                 matcher.endpoint === payload.endpoint &&
-                (!matcher.transactionSequenceNumber || payload.header.transactionSequenceNumber === matcher.transactionSequenceNumber) &&
+                (matcher.transactionSequenceNumber === undefined || payload.header.transactionSequenceNumber === matcher.transactionSequenceNumber) &&
                 matcher.clusterID === payload.clusterID &&
                 matcher.frameType === payload.header.frameControl.frameType &&
                 matcher.commandIdentifier === payload.header.commandIdentifier &&

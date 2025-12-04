@@ -1,7 +1,7 @@
-/** The endpoint where the ZigBee Device Object (ZDO) resides. */
+/** The endpoint where the Zigbee Device Object (ZDO) resides. */
 export const ZDO_ENDPOINT = 0;
 
-/** The profile ID used by the ZigBee Device Object (ZDO). */
+/** The profile ID used by the Zigbee Device Object (ZDO). */
 export const ZDO_PROFILE_ID = 0x0000;
 
 /** ZDO messages start with a sequence number. */

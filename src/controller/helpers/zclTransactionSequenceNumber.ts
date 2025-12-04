@@ -1,18 +1,14 @@
 class ZclTransactionSequenceNumber {
-    private number = 1;
+    private sequence = -1;
 
     get current() {
-        return this.number;
+        return this.sequence;
     }
 
     public next(): number {
-        this.number++;
+        this.sequence = (this.sequence + 1) % 256;
 
-        if (this.number > 255) {
-            this.number = 1;
-        }
-
-        return this.number;
+        return this.sequence;
     }
 }
 

@@ -55,6 +55,26 @@ describe("ZCL Buffalo", () => {
             expect(buffer).toStrictEqual(Buffer.from([0, 0, 0]));
             expect(buffalo.getPosition()).toStrictEqual(0);
         }
+
+        // what ZCL spec calls "empty string"
+        {
+            const buffer = Buffer.alloc(3);
+            const buffalo = new BuffaloZcl(buffer);
+
+            buffalo.write(Zcl.DataType.CHAR_STR, "", {});
+            expect(buffer).toStrictEqual(Buffer.from([0, 0, 0]));
+            expect(buffalo.getPosition()).toStrictEqual(1); // length
+        }
+
+        // what ZCL spec calls "empty string"
+        {
+            const buffer = Buffer.alloc(3);
+            const buffalo = new BuffaloZcl(buffer);
+
+            buffalo.write(Zcl.DataType.OCTET_STR, [], {});
+            expect(buffer).toStrictEqual(Buffer.from([0, 0, 0]));
+            expect(buffalo.getPosition()).toStrictEqual(1); // length
+        }
     });
 
     it("Reads nothing", () => {
@@ -63,6 +83,21 @@ describe("ZCL Buffalo", () => {
             const buffalo = new BuffaloZcl(buffer);
             expect(buffalo.read(type, {})).toStrictEqual(undefined);
             expect(buffalo.getPosition()).toStrictEqual(0);
+        }
+
+        // what ZCL spec calls "empty string"
+        {
+            const buffer = Buffer.from([0, 2, 3]);
+            const buffalo = new BuffaloZcl(buffer);
+            expect(buffalo.read(Zcl.DataType.CHAR_STR, {})).toStrictEqual("");
+            expect(buffalo.getPosition()).toStrictEqual(1); // length
+        }
+        // what ZCL spec calls "empty string"
+        {
+            const buffer = Buffer.from([0, 2, 3]);
+            const buffalo = new BuffaloZcl(buffer);
+            expect(buffalo.read(Zcl.DataType.OCTET_STR, {})).toStrictEqual(Buffer.from([]));
+            expect(buffalo.getPosition()).toStrictEqual(1); // length
         }
     });
 
@@ -167,12 +202,12 @@ describe("ZCL Buffalo", () => {
     });
 
     it.each([
-        ["boolean", {value: Number.NaN, types: [Zcl.DataType.BOOLEAN]}, {written: 0xff, position: 1, write: "writeUInt8", read: "readUInt8"}],
-        [
-            "uint8-like",
-            {value: Number.NaN, types: [Zcl.DataType.DATA8, Zcl.DataType.BITMAP8, Zcl.DataType.UINT8, Zcl.DataType.ENUM8]},
-            {written: 0xff, position: 1, write: "writeUInt8", read: "readUInt8"},
-        ],
+        // ["boolean", {value: Number.NaN, types: [Zcl.DataType.BOOLEAN]}, {written: 0xff, position: 1, write: "writeUInt8", read: "readUInt8"}],
+        // [
+        //     "uint8-like",
+        //     {value: Number.NaN, types: [Zcl.DataType.DATA8, Zcl.DataType.BITMAP8, Zcl.DataType.UINT8, Zcl.DataType.ENUM8]},
+        //     {written: 0xff, position: 1, write: "writeUInt8", read: "readUInt8"},
+        // ],
         [
             "uint16-like",
             {
@@ -418,6 +453,17 @@ describe("ZCL Buffalo", () => {
         expect(buffalo.getWritten()).toStrictEqual(Buffer.from(value)); // see above comment
     });
 
+    it.each([
+        ["char str", Zcl.DataType.CHAR_STR, [0], 1],
+        ["long char str", Zcl.DataType.LONG_CHAR_STR, [0, 0], 2],
+    ])("Writes empty %s", (_name, type, expectedWritten, expectedPosition) => {
+        const buffer = Buffer.alloc(10);
+        const buffalo = new BuffaloZcl(buffer);
+        buffalo.write(type, "", {});
+        expect(buffalo.getPosition()).toStrictEqual(expectedPosition);
+        expect(buffalo.getWritten()).toStrictEqual(Buffer.from(expectedWritten));
+    });
+
     it("Writes & Reads char str from string", () => {
         const value = "abcd";
         const expectedValue = [value.length, 0x61, 0x62, 0x63, 0x64];
@@ -660,14 +706,14 @@ describe("ZCL Buffalo", () => {
     });
 
     it.each([
-        [
-            "time of day",
-            {type: Zcl.DataType.TOD, position: 4, returned: {hours: Number.NaN, minutes: Number.NaN, seconds: Number.NaN, hundredths: Number.NaN}},
-        ],
-        [
-            "date",
-            {type: Zcl.DataType.DATE, position: 4, returned: {year: Number.NaN, month: Number.NaN, dayOfMonth: Number.NaN, dayOfWeek: Number.NaN}},
-        ],
+        // [
+        //     "time of day",
+        //     {type: Zcl.DataType.TOD, position: 4, returned: {hours: Number.NaN, minutes: Number.NaN, seconds: Number.NaN, hundredths: Number.NaN}},
+        // ],
+        // [
+        //     "date",
+        //     {type: Zcl.DataType.DATE, position: 4, returned: {year: Number.NaN, month: Number.NaN, dayOfMonth: Number.NaN, dayOfWeek: Number.NaN}},
+        // ],
         ["mi struct", {type: Zcl.BuffaloZclDataType.MI_STRUCT, position: 1, returned: {}}],
     ])("Reads Non-Value for %s", (_name, payload) => {
         const buffalo = new BuffaloZcl(Buffer.alloc(50, 0xff));
@@ -703,8 +749,8 @@ describe("ZCL Buffalo", () => {
     });
 
     it.each([
-        ["time of day", {type: Zcl.DataType.TOD, value: {hours: 1, minutes: 2, seconds: Number.NaN, hundredths: 3}, written: [1, 2, 0xff, 3]}],
-        ["date", {type: Zcl.DataType.DATE, value: {year: 1901, month: 2, dayOfMonth: Number.NaN, dayOfWeek: 3}, written: [1, 2, 0xff, 3]}],
+        ["time of day", {type: Zcl.DataType.TOD, value: {hours: 1, minutes: 2, seconds: 0xff, hundredths: 3}, written: [1, 2, 0xff, 3]}],
+        ["date", {type: Zcl.DataType.DATE, value: {year: 1901, month: 2, dayOfMonth: 0xff, dayOfWeek: 3}, written: [1, 2, 0xff, 3]}],
     ])("Writes & Reads partial Non-Value for %s", (_name, payload) => {
         const buffer = Buffer.alloc(10);
         const buffalo = new BuffaloZcl(buffer);

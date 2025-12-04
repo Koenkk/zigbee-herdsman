@@ -39,6 +39,13 @@ const DUMMY_NODE_DESC_RSP_CAPABILITIES = {
     securityCapability: 0,
 };
 
+const STR_500_BYTES =
+    "123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 " +
+    "123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 " +
+    "123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 " +
+    "123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 " +
+    "123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 ";
+
 const mockLogger = {
     debug: vi.fn(),
     info: vi.fn(),
@@ -694,6 +701,49 @@ const baseZnpRequestMock = new ZnpRequestMockBuilder()
             "hex",
         ),
     );
+
+let mockHugePayloadTimestamp: number | undefined;
+let mockHugePayloadIndex = 0;
+let mockHugePayload: Buffer = Buffer.alloc(0);
+let mockHugePayloadError = 0;
+
+/**
+ * @param mockError 0: none
+ *                  1: dataRetrieve error return
+ *                  2: dataRetrieve wrong data size return
+ */
+const mockIncomingMsgExtSetHugeData = (timestamp: number, data: Buffer, mockError = 0) => {
+    mockHugePayloadTimestamp = timestamp;
+    mockHugePayload = data;
+    mockHugePayloadIndex = 0;
+    mockHugePayloadError = mockError;
+};
+
+const incomingMsgExtHugeDataReqMock = baseZnpRequestMock.clone().handle(Subsystem.AF, "dataRetrieve", (payload) => {
+    if (payload.timestamp !== mockHugePayloadTimestamp) {
+        throw new Error("Payload timestamp doesnt match mock data timestamp. Did you call mockIncomingMsgExtSetHugeData?");
+    }
+    if (payload.length > mockHugePayload.length - mockHugePayloadIndex) {
+        // Unclear if ZNP returns error or just returns fewer bytes
+        // in this case, but handler should request the correct amount.
+        throw new Error("Requested data chunk exceeds available bytes");
+    }
+    const chunk = {
+        payload: {
+            status: mockHugePayloadError === 1 ? 0x01 : 0x00,
+            length: mockHugePayloadError === 2 ? payload.length + 1 : payload.length,
+            data: mockHugePayload.subarray(mockHugePayloadIndex, mockHugePayloadIndex + payload.length),
+        },
+    };
+    if (payload.length === 0) {
+        // dataRetrieve with length 0 closes the ZNP buffer
+        mockHugePayloadTimestamp = 0;
+        mockHugePayloadIndex = 0;
+    } else {
+        mockHugePayloadIndex += payload.length;
+    }
+    return chunk;
+});
 
 const empty3UnalignedRequestMock = baseZnpRequestMock
     .clone()
@@ -2685,6 +2735,60 @@ describe("zstack-adapter", () => {
         expect(mockZnpRequest).toHaveBeenCalledTimes(1);
     });
 
+    it("Send zcl frame network address fails because requested profileId is not configured", async () => {
+        basicMocks();
+        await adapter.start();
+
+        mockZnpRequest.mockClear();
+        mockQueueExecute.mockClear();
+        const frame = Zcl.Frame.create(
+            Zcl.FrameType.GLOBAL,
+            Zcl.Direction.CLIENT_TO_SERVER,
+            true,
+            undefined,
+            100,
+            "writeNoRsp",
+            0,
+            [{attrId: 0, dataType: 0, attrData: null}],
+            {},
+        );
+        const response = adapter.sendZclFrameToEndpoint("0x02", 2, 20, frame, 10000, false, false, undefined, 9999);
+        let error;
+        try {
+            await response;
+        } catch (e) {
+            error = e;
+        }
+
+        expect(error.message).toStrictEqual("Profile ID 9999 is not supported by this adapter.");
+    });
+
+    it("Source Endpoint is selected based on profileId", async () => {
+        basicMocks();
+        await adapter.start();
+
+        mockZnpRequest.mockClear();
+        mockQueueExecute.mockClear();
+        const frame = Zcl.Frame.create(
+            Zcl.FrameType.GLOBAL,
+            Zcl.Direction.CLIENT_TO_SERVER,
+            true,
+            undefined,
+            100,
+            "writeNoRsp",
+            0,
+            [{attrId: 0, dataType: 0, attrData: null}],
+            {},
+        );
+        await adapter.sendZclFrameToEndpoint("0x02", 2, 20, frame, 10000, false, false, undefined, 0x0109);
+        expect(mockZnpRequest).toHaveBeenCalledWith(
+            4,
+            "dataRequest",
+            {clusterid: 0, data: frame.toBuffer(), destendpoint: 20, dstaddr: 2, len: 6, options: 0, radius: 30, srcendpoint: 6, transid: 1},
+            99,
+        );
+    });
+
     it("Send zcl frame network address should retry on dataconfirm timeout", async () => {
         basicMocks();
         await adapter.start();
@@ -3312,7 +3416,10 @@ describe("zstack-adapter", () => {
         expect(await adapter.supportsBackup()).toBeTruthy();
     });
 
-    it("Incoming message extended", async () => {
+    it.each([
+        [2, "0x1234567812345678", 0x5678],
+        [3, "0x1234567812345678", "0x1234567812345678"],
+    ])("Incoming message extended (inter PAN) - 16/64-bit address", async (srcAddrMode, addr, expParsedAddr) => {
         basicMocks();
         await adapter.start();
         let zclData;
@@ -3327,13 +3434,22 @@ describe("zstack-adapter", () => {
             [{attrId: 0, attrData: 2, dataType: 32, status: 0}],
             {},
         );
+        const responseBuffer = responseFrame.toBuffer();
         const object = mockZpiObject(Type.AREQ, Subsystem.AF, "incomingMsgExt", {
-            clusterid: 0,
-            srcendpoint: 20,
-            srcaddr: 2,
-            linkquality: 101,
             groupid: 12,
-            data: responseFrame.toBuffer(),
+            clusterid: 0,
+            srcaddrmode: srcAddrMode,
+            srcaddr: addr,
+            srcendpoint: 20,
+            //srcpanid
+            dstendpoint: 1,
+            //wasbroadcast
+            linkquality: 101,
+            //securityuse
+            timestamp: 0x12345678,
+            //transseqnumber
+            len: responseBuffer.length,
+            data: responseBuffer,
         });
         adapter.on("zclPayload", (p) => {
             zclData = p;
@@ -3342,10 +3458,170 @@ describe("zstack-adapter", () => {
         expect(zclData.endpoint).toStrictEqual(20);
         expect(zclData.groupID).toStrictEqual(12);
         expect(zclData.linkquality).toStrictEqual(101);
-        expect(zclData.address).toStrictEqual(2);
+        expect(zclData.address).toStrictEqual(expParsedAddr);
         expect(zclData.groupID).toStrictEqual(12);
         expect(zclData.data).toStrictEqual(Buffer.from([24, 100, 1, 0, 0, 0, 32, 2]));
         expect(zclData.header.commandIdentifier).toBe(1);
+    });
+
+    it.each([
+        [2, "0x1234567812345678", 0x5678],
+        [3, "0x1234567812345678", "0x1234567812345678"],
+    ])("Incoming message extended (huge data byte count) - 16/64-bit address", async (srcAddrMode, addr, expParsedAddr) => {
+        mockZnpRequestWith(incomingMsgExtHugeDataReqMock);
+
+        await adapter.start();
+
+        const responseFrame = Zcl.Frame.create(
+            Zcl.FrameType.GLOBAL,
+            Zcl.Direction.SERVER_TO_CLIENT,
+            true,
+            undefined,
+            100,
+            "readRsp",
+            0,
+            [
+                {
+                    attrId: 0x1234,
+                    attrData: "", // can't put long string here - added below
+                    dataType: 0x44, // Long char string
+                    status: 0,
+                },
+            ],
+            {},
+        );
+
+        // Construct response frame manually as we exceed
+        // the 250-byte limit of Zcl.Frame.toBuffer
+
+        const rspFrameBuf = responseFrame.toBuffer();
+
+        const zclLongString = Buffer.alloc(STR_500_BYTES.length + 2);
+        zclLongString.writeUint16LE(Buffer.byteLength(STR_500_BYTES, "utf8"));
+        zclLongString.write(STR_500_BYTES, 2, "utf8");
+
+        const response = Buffer.concat([
+            rspFrameBuf.subarray(0, rspFrameBuf.length - 2), // remove existing ZCL long string len
+            zclLongString,
+        ]);
+
+        const object = mockZpiObject(Type.AREQ, Subsystem.AF, "incomingMsgExt", {
+            groupid: 12,
+            clusterid: 0,
+            srcaddrmode: srcAddrMode,
+            srcaddr: addr,
+            srcendpoint: 20,
+            //srcpanid
+            dstendpoint: 1,
+            //wasbroadcast
+            linkquality: 101,
+            //securityuse
+            timestamp: 0x12345678,
+            //transseqnumber
+            len: response.length,
+            data: Buffer.alloc(0),
+        });
+
+        let resolveReceivedPayload: () => void;
+        const receivedPayload = new Promise((resolve) => {
+            resolveReceivedPayload = resolve;
+        });
+        let zclData;
+        adapter.on("zclPayload", (p) => {
+            zclData = p;
+            resolveReceivedPayload();
+        });
+
+        mockIncomingMsgExtSetHugeData(object.payload.timestamp, response);
+        znpReceived(object);
+
+        await receivedPayload;
+        expect(zclData.endpoint).toStrictEqual(20);
+        expect(zclData.groupID).toStrictEqual(12);
+        expect(zclData.linkquality).toStrictEqual(101);
+        expect(zclData.address).toStrictEqual(expParsedAddr);
+        expect(zclData.groupID).toStrictEqual(12);
+        expect(zclData.data).toStrictEqual(
+            Buffer.concat([
+                Buffer.from([
+                    24, // frame ctrl
+                    100, // transseq
+                    1, // read attr rsp
+                    0x34, // attr id lsb
+                    0x12, // attr id msb
+                    0, // status
+                    0x44, // data type
+                ]),
+                zclLongString, // 16-bit len + char data
+            ]),
+        );
+        expect(zclData.header.commandIdentifier).toBe(1);
+    });
+
+    it.each([
+        [1, `dataRetrieve [timestamp: ${0x12345678}, index: ${0}, chunkSize: ${240}] error status: ${0x01}`],
+        [2, `dataRetrieve length mismatch [${240} requested, ${240 + 1} returned`],
+    ])("Incoming message extended (huge data byte count) with dataRetrieve error", async (mockErrType, expErrMsg) => {
+        mockZnpRequestWith(incomingMsgExtHugeDataReqMock);
+
+        await adapter.start();
+
+        const responseFrame = Zcl.Frame.create(
+            Zcl.FrameType.GLOBAL,
+            Zcl.Direction.SERVER_TO_CLIENT,
+            true,
+            undefined,
+            100,
+            "readRsp",
+            0,
+            [
+                {
+                    attrId: 0x1234,
+                    attrData: "", // can't put long string here - added below
+                    dataType: 0x44, // Long char string
+                    status: 0,
+                },
+            ],
+            {},
+        );
+
+        // Construct response frame manually as we exceed
+        // the 250-byte limit of Zcl.Frame.toBuffer
+
+        const rspFrameBuf = responseFrame.toBuffer();
+
+        const zclLongString = Buffer.alloc(STR_500_BYTES.length + 2);
+        zclLongString.writeUint16LE(Buffer.byteLength(STR_500_BYTES, "utf8"));
+        zclLongString.write(STR_500_BYTES, 2, "utf8");
+
+        const response = Buffer.concat([
+            rspFrameBuf.subarray(0, rspFrameBuf.length - 2), // remove existing ZCL long string len
+            zclLongString,
+        ]);
+
+        const object = mockZpiObject(Type.AREQ, Subsystem.AF, "incomingMsgExt", {
+            groupid: 12,
+            clusterid: 0,
+            srcaddrmode: 2,
+            srcaddr: "0x1234567812345678",
+            srcendpoint: 20,
+            //srcpanid
+            dstendpoint: 1,
+            //wasbroadcast
+            linkquality: 101,
+            //securityuse
+            timestamp: 0x12345678,
+            //transseqnumber
+            len: response.length,
+            data: Buffer.alloc(0),
+        });
+
+        mockIncomingMsgExtSetHugeData(object.payload.timestamp, response, mockErrType);
+        await znpReceived(object);
+
+        expect(mockLogger.error.mock.calls[0][0]).toBe(expErrMsg);
+        // not captured by mock logger
+        //expect(mockLogger.error.mock.calls[1][0]).toBe("Failed to retrieve chunked payload for incomingMsgExt");
     });
 
     it("Incoming message raw (not ZCL)", async () => {

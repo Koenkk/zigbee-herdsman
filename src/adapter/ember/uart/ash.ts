@@ -6,8 +6,8 @@ import {Socket} from "node:net";
 import {wait} from "../../../utils";
 import {logger} from "../../../utils/logger";
 import {SerialPort} from "../../serialPort";
-import SocketPortUtils from "../../socketPortUtils";
 import type {SerialPortOptions} from "../../tstype";
+import {isTcpPath, parseTcpPath} from "../../utils";
 import {EzspStatus} from "../enums";
 import {halCommonCrc16, inc8, mod8, withinRange} from "../utils/math";
 import {
@@ -410,7 +410,7 @@ export class UartAsh extends EventEmitter<UartAshEventMap> {
         }
 
         // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
-        if (SocketPortUtils.isTcpPath(this.portOptions.path!)) {
+        if (isTcpPath(this.portOptions.path!)) {
             return this.socketPort ? !this.socketPort.closed : false;
         }
 
@@ -463,7 +463,7 @@ export class UartAsh extends EventEmitter<UartAshEventMap> {
         await this.closePort(); // will do nothing if nothing's open
 
         // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
-        if (!SocketPortUtils.isTcpPath(this.portOptions.path!)) {
+        if (!isTcpPath(this.portOptions.path!)) {
             const serialOpts = {
                 // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
                 path: this.portOptions.path!,
@@ -509,7 +509,7 @@ export class UartAsh extends EventEmitter<UartAshEventMap> {
             }
         } else {
             // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
-            const info = SocketPortUtils.parseTcpPath(this.portOptions.path!);
+            const info = parseTcpPath(this.portOptions.path!);
             logger.debug(`Opening TCP socket with ${info.host}:${info.port}`, NS);
 
             this.socketPort = new Socket();
@@ -557,10 +557,9 @@ export class UartAsh extends EventEmitter<UartAshEventMap> {
      * @param err A boolean for Socket, an Error for serialport
      */
     private onPortClose(error: boolean | Error): void {
-        logger.info("Port closed.", NS);
+        logger.info(`Port closed, error=${error}`, NS);
 
-        if (error && this.flags !== 0) {
-            logger.info(`Port close ${error}`, NS);
+        if (this.flags !== 0) {
             this.flags = 0;
             this.emit("fatalError", EzspStatus.ERROR_SERIAL_INIT);
         }
@@ -572,8 +571,6 @@ export class UartAsh extends EventEmitter<UartAshEventMap> {
      */
     private onPortError(error: Error): void {
         logger.error(`Port ${error}`, NS);
-        this.flags = 0;
-        this.emit("fatalError", EzspStatus.ERROR_SERIAL_INIT);
     }
 
     /**

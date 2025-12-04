@@ -1,9 +1,9 @@
 import {randomBytes} from "node:crypto";
-import {existsSync, readFileSync, renameSync} from "node:fs";
+import {readFileSync, renameSync} from "node:fs";
 import path from "node:path";
 
 import equals from "fast-deep-equal/es6";
-import type {Backup, UnifiedBackupStorage} from "../../../models";
+import type {Backup} from "../../../models";
 import {BackupUtils, Queue, wait} from "../../../utils";
 import {logger} from "../../../utils/logger";
 import * as ZSpec from "../../../zspec";
@@ -14,6 +14,7 @@ import type * as ZdoTypes from "../../../zspec/zdo/definition/tstypes";
 import {Adapter, type TsType} from "../..";
 import {WORKAROUND_JOIN_MANUF_IEEE_PREFIX_TO_CODE} from "../../const";
 import type {DeviceJoinedPayload, DeviceLeavePayload, ZclPayload} from "../../events";
+import {readBackup} from "../../utils";
 import {
     EMBER_HIGH_RAM_CONCENTRATOR,
     EMBER_LOW_RAM_CONCENTRATOR,
@@ -1141,19 +1142,10 @@ export class EmberAdapter extends Adapter {
      * Loads currently stored backup and returns it in internal backup model.
      */
     private getStoredBackup(): Backup | undefined {
-        if (!existsSync(this.backupPath)) {
-            return undefined;
-        }
+        const data = readBackup(this.backupPath);
+        if (!data) return undefined;
 
-        let data: UnifiedBackupStorage;
-
-        try {
-            data = JSON.parse(readFileSync(this.backupPath).toString());
-        } catch (error) {
-            throw new Error(`[BACKUP] Coordinator backup is corrupted. (${(error as Error).stack})`);
-        }
-
-        if (data.metadata?.format === "zigpy/open-coordinator-backup" && data.metadata?.version) {
+        if ("metadata" in data && data.metadata?.format === "zigpy/open-coordinator-backup" && data.metadata?.version) {
             if (data.metadata?.version !== 1) {
                 throw new Error(`[BACKUP] Unsupported open coordinator backup version (version=${data.metadata?.version}).`);
             }
@@ -1940,8 +1932,8 @@ export class EmberAdapter extends Adapter {
         disableResponse: boolean,
         disableRecovery: boolean,
         sourceEndpoint?: number,
+        profileId?: number,
     ): Promise<ZclPayload | undefined> {
-        const sourceEndpointInfo = (sourceEndpoint && FIXED_ENDPOINTS.find((epi) => epi.endpoint === sourceEndpoint)) || FIXED_ENDPOINTS[0];
         const command = zclFrame.command;
         let commandResponseId: number | undefined;
 
@@ -1952,7 +1944,8 @@ export class EmberAdapter extends Adapter {
         }
 
         const apsFrame: EmberApsFrame = {
-            profileId: sourceEndpointInfo.profileId,
+            profileId:
+                profileId ?? ((sourceEndpoint && FIXED_ENDPOINTS.find((epi) => epi.endpoint === sourceEndpoint)) || FIXED_ENDPOINTS[0]).profileId,
             clusterId: zclFrame.cluster.ID,
             sourceEndpoint: sourceEndpoint || FIXED_ENDPOINTS[0].endpoint,
             destinationEndpoint: endpoint,
@@ -2048,10 +2041,10 @@ export class EmberAdapter extends Adapter {
     }
 
     // queued, non-InterPAN
-    public async sendZclFrameToGroup(groupID: number, zclFrame: Zcl.Frame, sourceEndpoint?: number): Promise<void> {
-        const sourceEndpointInfo = (sourceEndpoint && FIXED_ENDPOINTS.find((epi) => epi.endpoint === sourceEndpoint)) || FIXED_ENDPOINTS[0];
+    public async sendZclFrameToGroup(groupID: number, zclFrame: Zcl.Frame, sourceEndpoint?: number, profileId?: number): Promise<void> {
         const apsFrame: EmberApsFrame = {
-            profileId: sourceEndpointInfo.profileId,
+            profileId:
+                profileId ?? ((sourceEndpoint && FIXED_ENDPOINTS.find((epi) => epi.endpoint === sourceEndpoint)) || FIXED_ENDPOINTS[0]).profileId,
             clusterId: zclFrame.cluster.ID,
             sourceEndpoint: sourceEndpoint || FIXED_ENDPOINTS[0].endpoint,
             destinationEndpoint: 0xff,
@@ -2089,10 +2082,11 @@ export class EmberAdapter extends Adapter {
         zclFrame: Zcl.Frame,
         sourceEndpoint: number,
         destination: ZSpec.BroadcastAddress,
+        profileId?: number,
     ): Promise<void> {
-        const sourceEndpointInfo = FIXED_ENDPOINTS.find((epi) => epi.endpoint === sourceEndpoint) ?? FIXED_ENDPOINTS[0];
         const apsFrame: EmberApsFrame = {
-            profileId: sourceEndpointInfo.profileId,
+            profileId:
+                profileId ?? ((sourceEndpoint && FIXED_ENDPOINTS.find((epi) => epi.endpoint === sourceEndpoint)) || FIXED_ENDPOINTS[0]).profileId,
             clusterId: zclFrame.cluster.ID,
             sourceEndpoint,
             destinationEndpoint: endpoint,
@@ -2177,10 +2171,12 @@ export class EmberAdapter extends Adapter {
     }
 
     // queued
-    public async sendZclFrameInterPANBroadcast(zclFrame: Zcl.Frame, timeout: number): Promise<ZclPayload> {
+    public async sendZclFrameInterPANBroadcast(zclFrame: Zcl.Frame, timeout: number, disableResponse: false): Promise<ZclPayload>;
+    public async sendZclFrameInterPANBroadcast(zclFrame: Zcl.Frame, timeout: number, disableResponse: true): Promise<undefined>;
+    public async sendZclFrameInterPANBroadcast(zclFrame: Zcl.Frame, timeout: number, disableResponse: boolean): Promise<ZclPayload | undefined> {
         const command = zclFrame.command;
 
-        if (command.response === undefined) {
+        if (!disableResponse && command.response === undefined) {
             throw new Error(`Command '${command.name}' has no response, cannot wait for response.`);
         }
 
@@ -2196,7 +2192,7 @@ export class EmberAdapter extends Adapter {
             sequence: 0, // set by stack
         };
 
-        return await this.queue.execute<ZclPayload>(async () => {
+        return await this.queue.execute<ZclPayload | undefined>(async () => {
             const msgBuffalo = new EzspBuffalo(Buffer.alloc(MAXIMUM_INTERPAN_LENGTH));
 
             // cache-enabled getters
@@ -2225,17 +2221,19 @@ export class EmberAdapter extends Adapter {
 
             // NOTE: can use ezspRawTransmitCompleteHandler if needed here
 
-            const result = await this.oneWaitress.startWaitingFor<ZclPayload>(
-                {
-                    target: undefined,
-                    apsFrame: apsFrame,
-                    zclSequence: zclFrame.header.transactionSequenceNumber,
-                    commandIdentifier: command.response,
-                },
-                timeout,
-            );
+            if (!disableResponse && command.response !== undefined) {
+                const result = await this.oneWaitress.startWaitingFor<ZclPayload>(
+                    {
+                        target: undefined,
+                        apsFrame: apsFrame,
+                        zclSequence: zclFrame.header.transactionSequenceNumber,
+                        commandIdentifier: command.response,
+                    },
+                    timeout,
+                );
 
-            return result;
+                return result;
+            }
         });
     }
 

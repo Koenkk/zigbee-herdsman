@@ -1,8 +1,8 @@
 import assert from "node:assert";
 import type {Events as AdapterEvents} from "../../adapter";
-import type {LQINeighbor, RoutingTableEntry} from "../../adapter/tstype";
 import {wait} from "../../utils";
 import {logger} from "../../utils/logger";
+import * as timeService from "../../utils/timeService";
 import * as ZSpec from "../../zspec";
 import {BroadcastAddress} from "../../zspec/enums";
 import type {Eui64} from "../../zspec/tstypes";
@@ -10,16 +10,12 @@ import * as Zcl from "../../zspec/zcl";
 import type {TPartialClusterAttributes} from "../../zspec/zcl/definition/clusters-types";
 import type {ClusterDefinition, CustomClusters} from "../../zspec/zcl/definition/tstype";
 import * as Zdo from "../../zspec/zdo";
+import type {BindingTableEntry, LQITableEntry, RoutingTableEntry} from "../../zspec/zdo/definition/tstypes";
 import type {ControllerEventMap} from "../controller";
 import zclTransactionSequenceNumber from "../helpers/zclTransactionSequenceNumber";
 import type {DatabaseEntry, DeviceType, KeyValue} from "../tstype";
-import Endpoint from "./endpoint";
+import Endpoint, {type BindInternal} from "./endpoint";
 import Entity from "./entity";
-
-/**
- * @ignore
- */
-const OneJanuary2000 = new Date("January 01, 2000 00:00:00 UTC+00:00").getTime();
 
 const NS = "zh:controller:device";
 
@@ -34,20 +30,6 @@ const INTERVIEW_GENBASIC_ATTRIBUTES = [
     "dateCode",
     "swBuildId",
 ] as const;
-
-interface Lqi {
-    neighbors: {
-        ieeeAddr: string;
-        networkAddress: number;
-        linkquality: number;
-        relationship: number;
-        depth: number;
-    }[];
-}
-
-interface RoutingTable {
-    table: {destinationAddress: number; status: string; nextHop: number}[];
-}
 
 type CustomReadResponse = (frame: Zcl.Frame, endpoint: Endpoint) => boolean;
 
@@ -348,22 +330,18 @@ export class Device extends Entity<ControllerEventMap> {
             await endpoint.command("ssIasZone", "enrollRsp", payload, {disableDefaultResponse: true});
         }
 
-        // Reponse to read requests
+        // Response to read requests
         if (frame.header.isGlobal && frame.isCommand("read") && !this._customReadResponse?.(frame, endpoint)) {
-            const time = Math.round((Date.now() - OneJanuary2000) / 1000);
             const attributes: {[s: string]: KeyValue} = {
                 ...endpoint.clusters,
-                genTime: {
-                    attributes: {
-                        timeStatus: 3, // Time-master + synchronised
-                        time: time,
-                        timeZone: new Date().getTimezoneOffset() * -1 * 60,
-                        localTime: time - new Date().getTimezoneOffset() * 60,
-                        lastSetTime: time,
-                        validUntilTime: time + 24 * 60 * 60, // valid for 24 hours
-                    },
-                },
             };
+
+            const isTimeReadRequest = dataPayload.clusterID === Zcl.Clusters.genTime.ID;
+            if (isTimeReadRequest) {
+                attributes.genTime = {
+                    attributes: timeService.getTimeClusterAttributes(),
+                };
+            }
 
             if (frame.cluster.name in attributes) {
                 const response: KeyValue = {};
@@ -790,6 +768,8 @@ export class Device extends Entity<ControllerEventMap> {
             MOT003: {}, // https://github.com/Koenkk/zigbee2mqtt/issues/12471
             "C-ZB-SEDC": {}, //candeo device that doesn't follow IAS enrollment process correctly and therefore fails to complete interview
             "C-ZB-SEMO": {}, //candeo device that doesn't follow IAS enrollment process correctly and therefore fails to complete interview
+            "CS-T9C-A0-BG": {}, // iAS enroll fails: https://github.com/Koenkk/zigbee2mqtt/issues/27822
+            "SNZB-01": {}, // iAS enroll fails: https://github.com/Koenkk/zigbee2mqtt/issues/29474
         };
 
         let match: string | undefined;
@@ -1019,7 +999,7 @@ export class Device extends Entity<ControllerEventMap> {
             const rev = nodeDescriptor.serverMask.stackComplianceRevision < 21 ? "pre-21" : nodeDescriptor.serverMask.stackComplianceRevision;
 
             logger.info(
-                `Device '${this.ieeeAddr}' is only compliant to revision '${rev}' of the ZigBee specification (current revision: ${ZSpec.ZIGBEE_REVISION}).`,
+                `Device '${this.ieeeAddr}' is only compliant to revision '${rev}' of the Zigbee specification (current revision: ${ZSpec.ZIGBEE_REVISION}).`,
                 NS,
             );
         }
@@ -1135,10 +1115,9 @@ export class Device extends Entity<ControllerEventMap> {
         this._endpoints = newEndpoints;
     }
 
-    public async lqi(): Promise<Lqi> {
+    public async lqi(): Promise<LQITableEntry[]> {
         const clusterId = Zdo.ClusterId.LQI_TABLE_REQUEST;
-        // TODO return Zdo.LQITableEntry directly (requires updates in other repos)
-        const neighbors: LQINeighbor[] = [];
+        const table: LQITableEntry[] = [];
         const request = async (startIndex: number): Promise<[tableEntries: number, entryCount: number]> => {
             const zdoPayload = Zdo.Buffalo.buildRequest(Entity.adapter.hasZdoMessageOverhead, clusterId, startIndex);
             const response = await Entity.adapter.sendZdo(this.ieeeAddr, this.networkAddress, clusterId, zdoPayload, false);
@@ -1149,15 +1128,7 @@ export class Device extends Entity<ControllerEventMap> {
 
             const result = response[1];
 
-            for (const entry of result.entryList) {
-                neighbors.push({
-                    ieeeAddr: entry.eui64,
-                    networkAddress: entry.nwkAddress,
-                    linkquality: entry.lqi,
-                    relationship: entry.relationship,
-                    depth: entry.depth,
-                });
-            }
+            table.push(...result.entryList);
 
             return [result.neighborTableEntries, result.entryList.length];
         };
@@ -1167,18 +1138,17 @@ export class Device extends Entity<ControllerEventMap> {
         const size = tableEntries;
         let nextStartIndex = entryCount;
 
-        while (neighbors.length < size) {
+        while (table.length < size) {
             [tableEntries, entryCount] = await request(nextStartIndex);
 
             nextStartIndex += entryCount;
         }
 
-        return {neighbors};
+        return table;
     }
 
-    public async routingTable(): Promise<RoutingTable> {
+    public async routingTable(): Promise<RoutingTableEntry[]> {
         const clusterId = Zdo.ClusterId.ROUTING_TABLE_REQUEST;
-        // TODO return Zdo.RoutingTableEntry directly (requires updates in other repos)
         const table: RoutingTableEntry[] = [];
         const request = async (startIndex: number): Promise<[tableEntries: number, entryCount: number]> => {
             const zdoPayload = Zdo.Buffalo.buildRequest(Entity.adapter.hasZdoMessageOverhead, clusterId, startIndex);
@@ -1190,13 +1160,7 @@ export class Device extends Entity<ControllerEventMap> {
 
             const result = response[1];
 
-            for (const entry of result.entryList) {
-                table.push({
-                    destinationAddress: entry.destinationAddress,
-                    status: entry.status,
-                    nextHop: entry.nextHopAddress,
-                });
-            }
+            table.push(...result.entryList);
 
             return [result.routingTableEntries, result.entryList.length];
         };
@@ -1212,7 +1176,85 @@ export class Device extends Entity<ControllerEventMap> {
             nextStartIndex += entryCount;
         }
 
-        return {table};
+        return table;
+    }
+
+    public async bindingTable(): Promise<BindingTableEntry[]> {
+        const clusterId = Zdo.ClusterId.BINDING_TABLE_REQUEST;
+        const table: BindingTableEntry[] = [];
+        const request = async (startIndex: number): Promise<[tableEntries: number, entryCount: number]> => {
+            const zdoPayload = Zdo.Buffalo.buildRequest(Entity.adapter.hasZdoMessageOverhead, clusterId, startIndex);
+            const response = await Entity.adapter.sendZdo(this.ieeeAddr, this.networkAddress, clusterId, zdoPayload, false);
+
+            if (!Zdo.Buffalo.checkStatus<Zdo.ClusterId.BINDING_TABLE_RESPONSE>(response)) {
+                throw new Zdo.StatusError(response[0]);
+            }
+
+            const result = response[1];
+
+            table.push(...result.entryList);
+
+            return [result.bindingTableEntries, result.entryList.length];
+        };
+
+        let [tableEntries, entryCount] = await request(0);
+
+        const size = tableEntries;
+        let nextStartIndex = entryCount;
+
+        while (table.length < size) {
+            [tableEntries, entryCount] = await request(nextStartIndex);
+            nextStartIndex += entryCount;
+        }
+
+        for (const ep of this._endpoints) {
+            const newBinds: BindInternal[] = [];
+
+            for (const entry of table) {
+                if (entry.sourceEui64 !== this.ieeeAddr || entry.sourceEndpoint !== ep.ID) {
+                    continue;
+                }
+
+                if (entry.destAddrMode === 0x01) {
+                    newBinds.push({type: "group", cluster: entry.clusterId, groupID: entry.dest as number});
+                } else {
+                    newBinds.push({
+                        type: "endpoint",
+                        cluster: entry.clusterId,
+                        deviceIeeeAddress: entry.dest as Eui64,
+                        endpointID: entry.destEndpoint as number,
+                    });
+                }
+            }
+
+            ep.saveBindings(newBinds);
+        }
+
+        return table;
+    }
+
+    /**
+     * Clear all the bindings of a device.
+     * Support of this command is optional (only mandatory if device has a binding table).
+     * @param eui64List list of bind entries to match and clear. Send `["0xffffffffffffffff"]` to clear all.
+     */
+    public async clearAllBindings(eui64List: Eui64[]): Promise<void> {
+        const clusterId = Zdo.ClusterId.CLEAR_ALL_BINDINGS_REQUEST;
+        const zdoPayload = Zdo.Buffalo.buildRequest(Entity.adapter.hasZdoMessageOverhead, clusterId, {eui64List});
+        const response = await Entity.adapter.sendZdo(this.ieeeAddr, this.networkAddress, clusterId, zdoPayload, false);
+
+        if (!Zdo.Buffalo.checkStatus<Zdo.ClusterId.CLEAR_ALL_BINDINGS_RESPONSE>(response)) {
+            throw new Zdo.StatusError(response[0]);
+        }
+
+        if (
+            (eui64List.length === 1 && eui64List[0].toLowerCase() === ZSpec.BLANK_EUI64) ||
+            eui64List.some((eui64) => eui64.toLowerCase() === this.ieeeAddr)
+        ) {
+            for (const ep of this._endpoints) {
+                ep.clearBindings();
+            }
+        }
     }
 
     public async ping(disableRecovery = true): Promise<void> {
@@ -1220,7 +1262,7 @@ export class Device extends Entity<ControllerEventMap> {
         // of a mandatory basic cluster attribute to keep it as lightweight as
         // possible.
         const endpoint = this.endpoints.find((ep) => ep.inputClusters.includes(0)) ?? this.endpoints[0];
-        await endpoint.read("genBasic", ["zclVersion"], {disableRecovery});
+        await endpoint.read("genBasic", ["zclVersion"], {disableRecovery, sendPolicy: "immediate"});
     }
 
     public addCustomCluster(name: string, cluster: ClusterDefinition): void {

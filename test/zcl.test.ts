@@ -499,8 +499,8 @@ describe("Zcl", () => {
                         "12": 0,
                         "100": 1,
                         "101": 0,
-                        "110": Number.NaN,
-                        "111": Number.NaN,
+                        "110": 255,
+                        "111": 255,
                         "148": 4,
                         "149": 0.14562499523162842,
                         "150": 2335.614013671875,
@@ -738,11 +738,11 @@ describe("Zcl", () => {
 
         const payload = {
             srcID: 4650238,
-            commandFrame: {},
+            commandFrame: {raw: Buffer.from([])},
             commandID: 16,
             frameCounter: 1253,
             options: 5280,
-            payloadSize: Number.NaN,
+            payloadSize: 255,
         };
 
         expect(frame.header).toStrictEqual(header);
@@ -986,6 +986,33 @@ describe("Zcl", () => {
         const frame = Zcl.Frame.create(FrameType.GLOBAL, Direction.CLIENT_TO_SERVER, false, undefined, 8, "discover", 0, payload, {});
 
         expect(frame.toBuffer()).toStrictEqual(expected);
+    });
+
+    it("ZclFrame to buffer genScenes.add", () => {
+        const payload = {
+            groupid: 0,
+            sceneid: 3,
+            scenename: "",
+            transtime: 1,
+            extensionfieldsets: [
+                {clstId: 6, len: 1, extField: [1]},
+                {clstId: 768, len: 4, extField: [31260, 27110]},
+                {clstId: 8, len: 1, extField: [254]},
+            ],
+        };
+        const frame = Zcl.Frame.create(
+            FrameType.SPECIFIC,
+            Direction.CLIENT_TO_SERVER,
+            false,
+            undefined,
+            1,
+            "add",
+            Zcl.Clusters.genScenes.ID,
+            payload,
+            {},
+        );
+
+        expect(frame.toBuffer()).toStrictEqual(Buffer.from([1, 1, 0, 0, 0, 3, 1, 0, 0, 6, 0, 1, 1, 0, 3, 4, 28, 122, 230, 105, 8, 0, 1, 254]));
     });
 
     it("ZclFrame to buffer queryNextImageResponse with non zero status", () => {

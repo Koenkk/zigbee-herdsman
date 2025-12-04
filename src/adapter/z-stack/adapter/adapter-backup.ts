@@ -1,10 +1,9 @@
 import assert from "node:assert";
-import * as fs from "node:fs";
-
 import type * as Models from "../../../models";
 import {BackupUtils} from "../../../utils";
 import {logger} from "../../../utils/logger";
 import {NULL_NODE_ID, Utils as ZSpecUtils} from "../../../zspec";
+import {readBackup} from "../../utils";
 import {NvItemsIds, NvSystemIds} from "../constants/common";
 import * as Structs from "../structs";
 import {AddressManagerUser, SecurityManagerAuthenticationOption} from "../structs";
@@ -34,27 +33,18 @@ export class AdapterBackup {
      * Loads currently stored backup and returns it in internal backup model.
      */
     public getStoredBackup(): Models.Backup | undefined {
-        try {
-            fs.accessSync(this.defaultPath);
-        } catch {
-            return undefined;
-        }
-        let data: Models.UnifiedBackupStorage | Models.LegacyBackupStorage;
-        try {
-            data = JSON.parse(fs.readFileSync(this.defaultPath).toString());
-        } catch (error) {
-            throw new Error(`Coordinator backup is corrupted (${error})`);
-        }
+        const data = readBackup(this.defaultPath);
+        if (!data) return undefined;
 
         if ("adapterType" in data) {
-            return BackupUtils.fromLegacyBackup(data as Models.LegacyBackupStorage);
+            return BackupUtils.fromLegacyBackup(data);
         }
 
         if (data.metadata?.format === "zigpy/open-coordinator-backup" && data.metadata?.version) {
             if (data.metadata?.version !== 1) {
                 throw new Error(`Unsupported open coordinator backup version (version=${data.metadata?.version})`);
             }
-            return BackupUtils.fromUnifiedBackup(data as Models.UnifiedBackupStorage);
+            return BackupUtils.fromUnifiedBackup(data);
         }
 
         throw new Error("Unknown backup format");

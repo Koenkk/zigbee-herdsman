@@ -110,9 +110,9 @@ export type LQITableEntry = {
     nwkAddress: NodeId;
     /**
      * The type of the neighbor device:
-     * 0x00 = ZigBee coordinator
-     * 0x01 = ZigBee router
-     * 0x02 = ZigBee end device
+     * 0x00 = Zigbee coordinator
+     * 0x01 = Zigbee router
+     * 0x02 = Zigbee end device
      * 0x03 = Unknown
      *
      * 2-bit
@@ -153,7 +153,7 @@ export type LQITableEntry = {
     reserved2: number;
     /**
      * The tree depth of the neighbor device.
-     * A value of 0x00 indicates that the device is the ZigBee coordinator for the network
+     * A value of 0x00 indicates that the device is the Zigbee coordinator for the network
      *
      * 8-bit
      */

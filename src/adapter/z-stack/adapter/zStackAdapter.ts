@@ -19,6 +19,7 @@ import {Constants as UnpiConstants} from "../unpi";
 import {Znp, type ZpiObject} from "../znp";
 import Definition from "../znp/definition";
 import {isMtCmdAreqZdo} from "../znp/utils";
+import {Endpoints} from "./endpoints";
 import {ZnpAdapterManager} from "./manager";
 import {ZnpVersion} from "./tstype";
 
@@ -277,6 +278,55 @@ export class ZStackAdapter extends Adapter {
         }
     }
 
+    /**
+     * Retrieve all data for AF_INCOMING_MSG_EXT with huge data byte count.
+     *
+     * @param timestamp
+     * @param length full data length
+     *
+     * @returns Buffer containing the full data or undefined on error
+     */
+    private async dataRetrieveAll(timestamp: number, length: number): Promise<Buffer | undefined> {
+        const buf = Buffer.alloc(length);
+        const blockSize = 240;
+
+        const freeExtMessage = async () => {
+            // A length of zero is special and triggers the freeing of
+            // the corresponding incoming message.
+            await this.znp.requestWithReply(Subsystem.AF, "dataRetrieve", {timestamp: timestamp, index: 0, length: 0});
+        };
+        for (let index = 0; index < length; index += blockSize) {
+            const chunkSize = Math.min(blockSize, length - index);
+            const rsp = await this.znp.requestWithReply(
+                Subsystem.AF,
+                "dataRetrieve",
+                {
+                    timestamp: timestamp,
+                    index: index,
+                    length: chunkSize,
+                },
+                undefined,
+            );
+            // 0x00 = afStatus_SUCCESS
+            if (rsp.payload.status !== 0x00) {
+                logger.error(
+                    `dataRetrieve [timestamp: ${timestamp}, index: ${index}, chunkSize: ${chunkSize}] error status: ${rsp.payload.status}`,
+                    NS,
+                );
+                await freeExtMessage();
+                return undefined;
+            }
+            if (rsp.payload.length !== chunkSize) {
+                logger.error(`dataRetrieve length mismatch [${chunkSize} requested, ${rsp.payload.length} returned`, NS);
+                await freeExtMessage();
+                return undefined;
+            }
+            rsp.payload.data.copy(buf, index);
+        }
+        await freeExtMessage();
+        return buf;
+    }
+
     public async sendZdo(
         ieeeAddress: string,
         networkAddress: number,
@@ -433,14 +483,17 @@ export class ZStackAdapter extends Adapter {
         disableResponse: boolean,
         disableRecovery: boolean,
         sourceEndpoint?: number,
+        profileId?: number,
     ): Promise<Events.ZclPayload | undefined> {
+        const srcEndpoint = this.selectSourceEndpoint(sourceEndpoint, profileId);
+
         return await this.queue.execute<Events.ZclPayload | undefined>(async () => {
             this.checkInterpanLock();
             return await this.sendZclFrameToEndpointInternal(
                 ieeeAddr,
                 networkAddress,
                 endpoint,
-                sourceEndpoint || 1,
+                srcEndpoint,
                 zclFrame,
                 timeout,
                 disableResponse,
@@ -711,7 +764,9 @@ export class ZStackAdapter extends Adapter {
         }
     }
 
-    public async sendZclFrameToGroup(groupID: number, zclFrame: Zcl.Frame, sourceEndpoint?: number): Promise<void> {
+    public async sendZclFrameToGroup(groupID: number, zclFrame: Zcl.Frame, sourceEndpoint?: number, profileId?: number): Promise<void> {
+        const srcEndpoint = this.selectSourceEndpoint(sourceEndpoint, profileId);
+
         return await this.queue.execute<void>(async () => {
             this.checkInterpanLock();
             await this.dataRequestExtended(
@@ -719,7 +774,7 @@ export class ZStackAdapter extends Adapter {
                 groupID,
                 0xff,
                 0,
-                sourceEndpoint || 1,
+                srcEndpoint,
                 zclFrame.cluster.ID,
                 Constants.AF.DEFAULT_RADIUS,
                 zclFrame.toBuffer(),
@@ -736,7 +791,15 @@ export class ZStackAdapter extends Adapter {
         });
     }
 
-    public async sendZclFrameToAll(endpoint: number, zclFrame: Zcl.Frame, sourceEndpoint: number, destination: BroadcastAddress): Promise<void> {
+    public async sendZclFrameToAll(
+        endpoint: number,
+        zclFrame: Zcl.Frame,
+        sourceEndpoint: number,
+        destination: BroadcastAddress,
+        profileId?: number,
+    ): Promise<void> {
+        const srcEndpoint = this.selectSourceEndpoint(sourceEndpoint, profileId);
+
         return await this.queue.execute<void>(async () => {
             this.checkInterpanLock();
             await this.dataRequestExtended(
@@ -744,7 +807,7 @@ export class ZStackAdapter extends Adapter {
                 destination,
                 endpoint,
                 0,
-                sourceEndpoint,
+                srcEndpoint,
                 zclFrame.cluster.ID,
                 Constants.AF.DEFAULT_RADIUS,
                 zclFrame.toBuffer(),
@@ -860,20 +923,86 @@ export class ZStackAdapter extends Adapter {
         } else {
             if (object.subsystem === Subsystem.AF) {
                 if (object.command.name === "incomingMsg" || object.command.name === "incomingMsgExt") {
-                    const payload: Events.ZclPayload = {
-                        clusterID: object.payload.clusterid,
-                        data: object.payload.data,
-                        header: Zcl.Header.fromBuffer(object.payload.data),
-                        address: object.payload.srcaddr,
-                        endpoint: object.payload.srcendpoint,
-                        linkquality: object.payload.linkquality,
-                        groupID: object.payload.groupid,
-                        wasBroadcast: object.payload.wasbroadcast === 1,
-                        destinationEndpoint: object.payload.dstendpoint,
-                    };
+                    // TI ZNP API docs
+                    // ---------------
+                    // AF_INCOMING_MSG_EXT - SrcAddrMode
+                    // A value of 3 (i.e. the enumeration value for ‘afAddr64Bit’) indicates 8-
+                    // byte/64-bit address mode; otherwise, only the 2 LSB’s of the 8 bytes are
+                    // used to form a 2-byte short address.
 
-                    this.waitress.resolve(payload);
-                    this.emit("zclPayload", payload);
+                    // Addr is currently parsed by Buffalo as Eui64 (`0x${string}`), but it's
+                    // possible future changes could read srcaddrmode and parse accordingly.
+                    // Prior tests also passed an integer (e.g. 2), so best to handle all cases.
+                    // If type is not a string, we assume a 16-bit address.
+
+                    const isEui64Addr = typeof object.payload.srcaddr === "string";
+
+                    const srcaddr =
+                        object.command.name === "incomingMsgExt" && object.payload.srcaddrmode !== 0x03
+                            ? isEui64Addr
+                                ? Number.parseInt(object.payload.srcaddr.slice(-4), 16)
+                                : object.payload.srcaddr
+                            : object.payload.srcaddr;
+
+                    // TI ZNP API docs suggest that payload.data should be zero length for messages
+                    // with huge data, but testing shows it is 3-bytes, the first two of which are
+                    // the 16-bit srcAddr.
+                    // Possibly zh is not parsing incomingMsgExt correctly. Just compare len with
+                    // payload length for now.
+                    //if (object.command.name === "incomingMsgExt" && object.payload.len > 0 && object.payload.data.length === 0) {
+
+                    if (object.command.name === "incomingMsgExt" && object.payload.data.length < object.payload.len) {
+                        // The ZNP will send incomingMsgExt (AF_INCOMING_MSG_EXT)
+                        // when data length is > about 223 bytes (or if INTER_PAN network
+                        // is used).
+                        //
+                        // In the first case, the data is not included in the payload, but
+                        // must be retrieved block by block from the ZNP buffer using the
+                        // AF_DATA_RETRIEVE message.
+
+                        this.queue.execute<void>(async () => {
+                            const data = await this.dataRetrieveAll(object.payload.timestamp, object.payload.len);
+                            if (data === undefined) {
+                                logger.error("Failed to retrieve chunked payload for incomingMsgExt", NS);
+                            } else {
+                                logger.debug(
+                                    `Retrieved ${data.length} bytes from huge data buffer for msg with timestamp ${object.payload.timestamp}`,
+                                    NS,
+                                );
+                                const payload: Events.ZclPayload = {
+                                    clusterID: object.payload.clusterid,
+                                    data: data,
+                                    header: Zcl.Header.fromBuffer(data),
+                                    address: srcaddr,
+                                    endpoint: object.payload.srcendpoint,
+                                    linkquality: object.payload.linkquality,
+                                    groupID: object.payload.groupid,
+                                    wasBroadcast: object.payload.wasbroadcast === 1,
+                                    destinationEndpoint: object.payload.dstendpoint,
+                                };
+                                this.waitress.resolve(payload);
+                                this.emit("zclPayload", payload);
+                            }
+                        });
+                    } else {
+                        // incomingMsg OR incomingMsgExt with data
+                        // in the payload (i.e. INTER_PAN network)
+
+                        const payload: Events.ZclPayload = {
+                            clusterID: object.payload.clusterid,
+                            data: object.payload.data,
+                            header: Zcl.Header.fromBuffer(object.payload.data),
+                            address: srcaddr,
+                            endpoint: object.payload.srcendpoint,
+                            linkquality: object.payload.linkquality,
+                            groupID: object.payload.groupid,
+                            wasBroadcast: object.payload.wasbroadcast === 1,
+                            destinationEndpoint: object.payload.dstendpoint,
+                        };
+
+                        this.waitress.resolve(payload);
+                        this.emit("zclPayload", payload);
+                    }
                 }
             }
         }
@@ -933,23 +1062,33 @@ export class ZStackAdapter extends Adapter {
         });
     }
 
-    public async sendZclFrameInterPANBroadcast(zclFrame: Zcl.Frame, timeout: number): Promise<Events.ZclPayload> {
-        return await this.queue.execute<Events.ZclPayload>(async () => {
+    public async sendZclFrameInterPANBroadcast(zclFrame: Zcl.Frame, timeout: number, disableResponse: false): Promise<Events.ZclPayload>;
+    public async sendZclFrameInterPANBroadcast(zclFrame: Zcl.Frame, timeout: number, disableResponse: true): Promise<undefined>;
+    public async sendZclFrameInterPANBroadcast(
+        zclFrame: Zcl.Frame,
+        timeout: number,
+        disableResponse: boolean,
+    ): Promise<Events.ZclPayload | undefined> {
+        return await this.queue.execute<Events.ZclPayload | undefined>(async () => {
             const command = zclFrame.command;
-            if (command.response === undefined) {
+            if (!disableResponse && command.response === undefined) {
                 throw new Error(`Command '${command.name}' has no response, cannot wait for response`);
             }
 
-            const response = this.waitForInternal(
-                undefined,
-                0xfe,
-                zclFrame.header.frameControl.frameType,
-                Zcl.Direction.SERVER_TO_CLIENT,
-                undefined,
-                zclFrame.cluster.ID,
-                command.response,
-                timeout,
-            );
+            let response: ReturnType<typeof this.waitForInternal> | undefined;
+
+            if (!disableResponse && command.response !== undefined) {
+                response = this.waitForInternal(
+                    undefined,
+                    0xfe,
+                    zclFrame.header.frameControl.frameType,
+                    Zcl.Direction.SERVER_TO_CLIENT,
+                    undefined,
+                    zclFrame.cluster.ID,
+                    command.response,
+                    timeout,
+                );
+            }
 
             try {
                 await this.dataRequestExtended(
@@ -965,11 +1104,13 @@ export class ZStackAdapter extends Adapter {
                     false,
                 );
             } catch (error) {
-                response.cancel();
+                response?.cancel();
                 throw error;
             }
 
-            return await response.start().promise;
+            if (response) {
+                return await response.start().promise;
+            }
         });
     }
 
@@ -1174,7 +1315,7 @@ export class ZStackAdapter extends Adapter {
             payload.header &&
                 (!matcher.address || payload.address === matcher.address) &&
                 payload.endpoint === matcher.endpoint &&
-                (!matcher.transactionSequenceNumber || payload.header.transactionSequenceNumber === matcher.transactionSequenceNumber) &&
+                (matcher.transactionSequenceNumber === undefined || payload.header.transactionSequenceNumber === matcher.transactionSequenceNumber) &&
                 payload.clusterID === matcher.clusterID &&
                 matcher.frameType === payload.header.frameControl.frameType &&
                 matcher.commandIdentifier === payload.header.commandIdentifier &&
@@ -1186,5 +1327,25 @@ export class ZStackAdapter extends Adapter {
         if (this.interpanLock) {
             throw new Error("Cannot execute command, in Inter-PAN mode");
         }
+    }
+
+    private selectSourceEndpoint(sourceEndpoint?: number, profileId?: number): number {
+        // Use provided sourceEndpoint as the highest priority
+        let srcEndpoint = sourceEndpoint;
+        // If sourceEndpoint is not provided, try to select the source endpoint based on the profileId.
+        if (srcEndpoint === undefined && profileId !== undefined) {
+            srcEndpoint = Endpoints.find((e) => e.appprofid === profileId)?.endpoint;
+        }
+        //If no profileId is provided, or if no corresponding endpoint exists, use endpoint 1.
+        if (srcEndpoint === undefined) {
+            srcEndpoint = 1;
+        }
+
+        // Validate that the requested profileId can be satisfied by the adapter.
+        if (profileId !== undefined && Endpoints.find((e) => e.endpoint === srcEndpoint)?.appprofid !== profileId) {
+            throw new Error(`Profile ID ${profileId} is not supported by this adapter.`);
+        }
+
+        return srcEndpoint;
     }
 }

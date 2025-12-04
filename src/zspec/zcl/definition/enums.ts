@@ -201,3 +201,24 @@ export enum PowerSource {
     "Emergency mains constantly powered" = 5,
     "Emergency mains and transfer switch" = 6,
 }
+
+/** Used by the RSSI Location cluster */
+export enum LocationMethod {
+    /** A method based on RSSI measurements from three or more sources. */
+    Lateration = 0x00,
+    /** The location reported is the location of the neighboring device with the strongest received signal. */
+    Signposting = 0x01,
+    /**
+     * RSSI signatures are collected into a database at commissioning time.
+     * The location reported is the location taken from the RSSI signature database that most closely matches the device’s own RSSI signature.
+     */
+    RfFingerprinting = 0x02,
+    /** The location is obtained by accessing an out-of-band device (that is, the device providing the location is not part of the network). */
+    OutOfBand = 0x03,
+    /**
+     * The location is performed in a centralized way (e.g., by the GW) by a device on the network.
+     * Different from the above because the device performing the localization is part of the network.
+     */
+    Centralized = 0x04,
+    // 0x40 to 0xff - Reserved for manufacturer specific location methods.
+}

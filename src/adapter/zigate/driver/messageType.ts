@@ -42,7 +42,7 @@ export const ZiGateMessage: {[k: number]: ZiGateMessageType} = {
             // 3 = Command failed
             // 4 = Busy (Node is carrying out a lengthy operation and is currently unable to handle the incoming command)
             // 5 = Stack already started (no new configuration accepted)
-            // 128 – 244 = Failed (ZigBee event codes)
+            // 128 – 244 = Failed (Zigbee event codes)
             // Packet Type: The value of the initiating command request.
             {name: "sequence", parameterType: ParameterType.UINT8}, // <sequence number: uint8_t>
             {name: "packetType", parameterType: ParameterType.UINT16}, // <Packet Type: uint16_t>
@@ -177,7 +177,7 @@ export const ZiGateMessage: {[k: number]: ZiGateMessageType} = {
             // Status:
             // 0 = Joined existing network
             // 1 = Formed new network
-            // 128 – 244 = Failed (ZigBee event codes)
+            // 128 – 244 = Failed (Zigbee event codes)
             {name: "shortAddress", parameterType: ParameterType.UINT16}, // <short address: uint16_t>
             // {name: 'extendedAddress', parameterType: ParameterType.IEEEADDR}, // <extended address:uint64_t>
             // {name: 'channel', parameterType: ParameterType.UINT8}, // <channel: uint8_t>

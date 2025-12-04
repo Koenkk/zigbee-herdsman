@@ -4,7 +4,7 @@
 import {existsSync, readFileSync} from "node:fs";
 import {dirname} from "node:path";
 import type * as Models from "../../../models";
-import type {Backup, UnifiedBackupStorage} from "../../../models";
+import type {Backup} from "../../../models";
 import {BackupUtils, Waitress} from "../../../utils";
 import {logger} from "../../../utils/logger";
 import * as ZSpec from "../../../zspec";
@@ -15,6 +15,7 @@ import type * as ZdoTypes from "../../../zspec/zdo/definition/tstypes";
 import Adapter from "../../adapter";
 import type * as Events from "../../events";
 import type {AdapterOptions, CoordinatorVersion, NetworkOptions, NetworkParameters, SerialPortOptions, StartResult} from "../../tstype";
+import {readBackup} from "../../utils";
 import PARAM, {
     ApsAddressMode,
     type ApsDataRequest,
@@ -358,6 +359,7 @@ export class DeconzAdapter extends Adapter {
         // this is the only case where "recovery" makes sense. Other cases mean the request will never succeed (network offline, invalid request, ...).
         _disableRecovery: boolean,
         sourceEndpoint?: number,
+        profileId?: number,
     ): Promise<Events.ZclPayload | undefined> {
         const transactionID = this.nextTransactionID();
         const payload = zclFrame.toBuffer();
@@ -372,7 +374,7 @@ export class DeconzAdapter extends Adapter {
             destAddrMode: ApsAddressMode.Nwk,
             destAddr16: networkAddress,
             destEndpoint: endpoint,
-            profileId: sourceEndpoint === 242 && endpoint === 242 ? 0xa1e0 : 0x104,
+            profileId: profileId ?? (sourceEndpoint === 242 && endpoint === 242 ? 0xa1e0 : 0x104),
             clusterId: zclFrame.cluster.ID,
             srcEndpoint: sourceEndpoint || 1,
             asduLength: payload.length,
@@ -494,7 +496,7 @@ export class DeconzAdapter extends Adapter {
         }
     }
 
-    public async sendZclFrameToGroup(groupID: number, zclFrame: Zcl.Frame): Promise<void> {
+    public async sendZclFrameToGroup(groupID: number, zclFrame: Zcl.Frame, sourceEndpoint?: number, profileId?: number): Promise<void> {
         const transactionID = this.nextTransactionID();
         const payload = zclFrame.toBuffer();
 
@@ -504,9 +506,9 @@ export class DeconzAdapter extends Adapter {
             requestId: transactionID,
             destAddrMode: ApsAddressMode.Group,
             destAddr16: groupID,
-            profileId: 0x104,
+            profileId: profileId ?? 0x104,
             clusterId: zclFrame.cluster.ID,
-            srcEndpoint: 1,
+            srcEndpoint: sourceEndpoint ?? 1,
             asduLength: payload.length,
             asduPayload: payload,
             txOptions: 0,
@@ -518,7 +520,13 @@ export class DeconzAdapter extends Adapter {
         return await (this.driver.enqueueApsDataRequest(request) as Promise<void>);
     }
 
-    public async sendZclFrameToAll(endpoint: number, zclFrame: Zcl.Frame, sourceEndpoint: number, destination: BroadcastAddress): Promise<void> {
+    public async sendZclFrameToAll(
+        endpoint: number,
+        zclFrame: Zcl.Frame,
+        sourceEndpoint: number,
+        destination: BroadcastAddress,
+        profileId?: number,
+    ): Promise<void> {
         const transactionID = this.nextTransactionID();
         const payload = zclFrame.toBuffer();
 
@@ -529,7 +537,7 @@ export class DeconzAdapter extends Adapter {
             destAddrMode: ApsAddressMode.Nwk,
             destAddr16: destination,
             destEndpoint: endpoint,
-            profileId: sourceEndpoint === 242 && endpoint === 242 ? 0xa1e0 : 0x104,
+            profileId: profileId ?? (sourceEndpoint === 242 && endpoint === 242 ? 0xa1e0 : 0x104),
             clusterId: zclFrame.cluster.ID,
             srcEndpoint: sourceEndpoint,
             asduLength: payload.length,
@@ -551,19 +559,10 @@ export class DeconzAdapter extends Adapter {
      * Loads currently stored backup and returns it in internal backup model.
      */
     private getStoredBackup(): Backup | undefined {
-        if (!existsSync(this.backupPath)) {
-            return undefined;
-        }
+        const data = readBackup(this.backupPath);
+        if (!data) return undefined;
 
-        let data: UnifiedBackupStorage;
-
-        try {
-            data = JSON.parse(readFileSync(this.backupPath).toString());
-        } catch (error) {
-            throw new Error(`[BACKUP] Coordinator backup is corrupted. (${(error as Error).stack})`);
-        }
-
-        if (data.metadata?.format === "zigpy/open-coordinator-backup" && data.metadata?.version) {
+        if ("metadata" in data && data.metadata?.format === "zigpy/open-coordinator-backup" && data.metadata?.version) {
             if (data.metadata?.version !== 1) {
                 throw new Error(`[BACKUP] Unsupported open coordinator backup version (version=${data.metadata?.version}).`);
             }
@@ -640,7 +639,13 @@ export class DeconzAdapter extends Adapter {
     public async sendZclFrameInterPANToIeeeAddr(_zclFrame: Zcl.Frame, _ieeeAddr: string): Promise<void> {
         await Promise.reject(new Error("not supported"));
     }
-    public async sendZclFrameInterPANBroadcast(_zclFrame: Zcl.Frame, _timeout: number): Promise<Events.ZclPayload> {
+    public async sendZclFrameInterPANBroadcast(zclFrame: Zcl.Frame, timeout: number, disableResponse: false): Promise<Events.ZclPayload>;
+    public async sendZclFrameInterPANBroadcast(zclFrame: Zcl.Frame, timeout: number, disableResponse: true): Promise<undefined>;
+    public async sendZclFrameInterPANBroadcast(
+        _zclFrame: Zcl.Frame,
+        _timeout: number,
+        _disableResponse: boolean,
+    ): Promise<Events.ZclPayload | undefined> {
         return await Promise.reject(new Error("not supported"));
     }
     public async sendZclFrameInterPANBroadcastWithResponse(_zclFrame: Zcl.Frame, _timeout: number): Promise<Events.ZclPayload> {
@@ -867,7 +872,7 @@ export class DeconzAdapter extends Adapter {
             payload.header &&
                 (!matcher.address || payload.address === matcher.address) &&
                 payload.endpoint === matcher.endpoint &&
-                (!matcher.transactionSequenceNumber || payload.header.transactionSequenceNumber === matcher.transactionSequenceNumber) &&
+                (matcher.transactionSequenceNumber === undefined || payload.header.transactionSequenceNumber === matcher.transactionSequenceNumber) &&
                 payload.clusterID === matcher.clusterID &&
                 matcher.frameType === payload.header.frameControl.frameType &&
                 matcher.commandIdentifier === payload.header.commandIdentifier &&

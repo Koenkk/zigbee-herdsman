@@ -356,10 +356,9 @@ export class EmberTokensManager {
 
                 if (tiStatus === SLStatus.OK) {
                     const outputToken = Buffer.alloc(4 + 1 + 1 + tokenInfo.size * tokenInfo.arraySize);
-                    outputToken.writeUInt32LE(tokenInfo.nvm3Key, writeOffset); // 4 bytes
-                    writeOffset += 4;
-                    outputToken.writeUInt8(tokenInfo.size, writeOffset++); // 1 byte
-                    outputToken.writeUInt8(tokenInfo.arraySize, writeOffset++); // 1 byte
+                    writeOffset = outputToken.writeUInt32LE(tokenInfo.nvm3Key, writeOffset); // 4 bytes
+                    writeOffset = outputToken.writeUInt8(tokenInfo.size, writeOffset); // 1 byte
+                    writeOffset = outputToken.writeUInt8(tokenInfo.arraySize, writeOffset); // 1 byte
 
                     for (let arrayIndex = 0; arrayIndex < tokenInfo.arraySize; arrayIndex++) {
                         const [tdStatus, tokenData] = await ezsp.ezspGetTokenData(tokenInfo.nvm3Key, arrayIndex);
@@ -391,12 +390,11 @@ export class EmberTokensManager {
                                 tokenData.data.equals(BLANK_EUI64_BUF)
                             ) {
                                 // Special case : Save the node EUI64 on the restoredEui64 token while saving.
-                                tokenData.data.set(localEui64);
+                                localEui64.copy(tokenData.data);
                                 logger.debug("[TOKENS] Saved node EUI64 in place of blank RESTORED EUI64.", NS);
                             }
 
-                            outputToken.set(tokenData.data, writeOffset);
-                            writeOffset += tokenData.size;
+                            writeOffset += tokenData.data.copy(outputToken, writeOffset);
                         } else {
                             logger.error(`[TOKENS] Failed to get token data at index ${arrayIndex} with status=${SLStatus[tdStatus]}.`, NS);
                         }

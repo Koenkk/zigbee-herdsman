@@ -752,7 +752,7 @@ export interface TClusters {
             reportingPeriod: number;
             /** ID: 22 | Type: UINT16 */
             calcPeriod: number;
-            /** ID: 23 | Type: UINT16 */
+            /** ID: 23 | Type: UINT8 */
             numRSSIMeasurements: number;
         };
         commands: {
@@ -767,115 +767,164 @@ export interface TClusters {
                 /** Type: INT16 */
                 power: number;
                 /** Type: UINT16 */
-                pathlossexponent: number;
+                pathLossExponent: number;
             };
             /** ID: 1 */
-            setDevCfg: {
+            setDeviceConfig: {
                 /** Type: INT16 */
                 power: number;
                 /** Type: UINT16 */
-                pathlossexponent: number;
+                pathLossExponent: number;
                 /** Type: UINT16 */
-                calperiod: number;
+                calcPeriod: number;
                 /** Type: UINT8 */
-                numrssimeasurements: number;
+                numRssiMeasurements: number;
                 /** Type: UINT16 */
-                reportingperiod: number;
+                reportingPeriod: number;
             };
             /** ID: 2 */
-            getDevCfg: {
+            getDeviceConfig: {
                 /** Type: IEEE_ADDR */
-                targetaddr: string;
+                targetAddr: string;
             };
             /** ID: 3 */
-            getData: {
+            getLocationData: {
+                /** Type: BITMAP8 */
+                info: number;
                 /** Type: UINT8 */
-                getdatainfo: number;
-                /** Type: UINT8 */
-                numrsp: number;
+                numResponses: number;
+                /** Type: IEEE_ADDR, Conditions: [{bitMaskSet param=info mask=4 reversed=true}] */
+                targetAddr?: string;
+            };
+            /** ID: 4 */
+            rssiResponse: {
                 /** Type: IEEE_ADDR */
-                targetaddr: string;
+                replyingDevice: string;
+                /** Type: INT16 */
+                x: number;
+                /** Type: INT16 */
+                y: number;
+                /** Type: INT16 */
+                z: number;
+                /** Type: INT8 */
+                rssi: number;
+                /** Type: UINT8 */
+                numRssiMeasurements: number;
+            };
+            /** ID: 5 */
+            sendPings: {
+                /** Type: IEEE_ADDR */
+                targetAddr: string;
+                /** Type: UINT8 */
+                numRssiMeasurements: number;
+                /** Type: UINT16 */
+                calcPeriod: number;
+            };
+            /** ID: 6 */
+            anchorNodeAnnounce: {
+                /** Type: IEEE_ADDR */
+                anchorNodeAddr: string;
+                /** Type: INT16 */
+                x: number;
+                /** Type: INT16 */
+                y: number;
+                /** Type: INT16 */
+                z: number;
             };
         };
         commandResponses: {
             /** ID: 0 */
-            devCfgRsp: {
-                /** Type: UINT8 */
+            deviceConfigResponse: {
+                /** Type: ENUM8 */
                 status: number;
-                /** Type: INT16 */
-                power: number;
-                /** Type: UINT16 */
-                pathlossexp: number;
-                /** Type: UINT16 */
-                calperiod: number;
-                /** Type: UINT8 */
-                numrssimeasurements: number;
-                /** Type: UINT16 */
-                reportingperiod: number;
+                /** Type: INT16, Conditions: [{fieldEquals field=status value=0}] */
+                power?: number;
+                /** Type: UINT16, Conditions: [{fieldEquals field=status value=0}] */
+                pathLossExponent?: number;
+                /** Type: UINT16, Conditions: [{fieldEquals field=status value=0}] */
+                calcPeriod?: number;
+                /** Type: UINT8, Conditions: [{fieldEquals field=status value=0}] */
+                numRssiMeasurements?: number;
+                /** Type: UINT16, Conditions: [{fieldEquals field=status value=0}] */
+                reportingPeriod?: number;
             };
             /** ID: 1 */
-            dataRsp: {
-                /** Type: UINT8 */
+            locationDataResponse: {
+                /** Type: ENUM8 */
                 status: number;
-                /** Type: UINT8 */
-                locationtype: number;
-                /** Type: INT16 */
-                coord1: number;
-                /** Type: INT16 */
-                coord2: number;
-                /** Type: INT16 */
-                coord3: number;
-                /** Type: INT16 */
-                power: number;
-                /** Type: UINT16 */
-                pathlossexp: number;
-                /** Type: UINT8 */
-                locationmethod: number;
-                /** Type: UINT8 */
-                qualitymeasure: number;
-                /** Type: UINT16 */
-                locationage: number;
+                /** Type: DATA8, Conditions: [{fieldEquals field=status value=0}] */
+                type?: number;
+                /** Type: INT16, Conditions: [{fieldEquals field=status value=0}] */
+                coord1?: number;
+                /** Type: INT16, Conditions: [{fieldEquals field=status value=0}] */
+                coord2?: number;
+                /** Type: INT16, Conditions: [{fieldEquals field=status value=0}] */
+                coord3?: number;
+                /** Type: INT16, Conditions: [{fieldEquals field=status value=0}] */
+                power?: number;
+                /** Type: UINT16, Conditions: [{fieldEquals field=status value=0}] */
+                pathLossExponent?: number;
+                /** Type: ENUM8, Conditions: [{fieldEquals field=status value=0}] */
+                method?: number;
+                /** Type: UINT8, Conditions: [{fieldEquals field=status value=0}] */
+                qualityMeasure?: number;
+                /** Type: UINT16, Conditions: [{fieldEquals field=status value=0}] */
+                age?: number;
             };
             /** ID: 2 */
-            dataNotif: {
-                /** Type: UINT8 */
-                locationtype: number;
+            locationDataNotification: {
+                /** Type: DATA8 */
+                type: number;
                 /** Type: INT16 */
                 coord1: number;
                 /** Type: INT16 */
                 coord2: number;
-                /** Type: INT16 */
-                coord3: number;
+                /** Type: INT16, Conditions: [{bitMaskSet param=type mask=2 reversed=true}] */
+                coord3?: number;
                 /** Type: INT16 */
                 power: number;
                 /** Type: UINT16 */
-                pathlossexp: number;
-                /** Type: UINT8 */
-                locationmethod: number;
-                /** Type: UINT8 */
-                qualitymeasure: number;
-                /** Type: UINT16 */
-                locationage: number;
+                pathLossExponent: number;
+                /** Type: ENUM8, Conditions: [{bitMaskSet param=type mask=1 reversed=true}] */
+                method?: number;
+                /** Type: UINT8, Conditions: [{bitMaskSet param=type mask=1 reversed=true}] */
+                qualityMeasure?: number;
+                /** Type: UINT16, Conditions: [{bitMaskSet param=type mask=1 reversed=true}] */
+                age?: number;
             };
             /** ID: 3 */
-            compactDataNotif: {
-                /** Type: UINT8 */
-                locationtype: number;
+            compactLocationDataNotification: {
+                /** Type: DATA8 */
+                type: number;
                 /** Type: INT16 */
                 coord1: number;
                 /** Type: INT16 */
                 coord2: number;
-                /** Type: INT16 */
-                coord3: number;
-                /** Type: UINT8 */
-                qualitymeasure: number;
-                /** Type: UINT16 */
-                locationage: number;
+                /** Type: INT16, Conditions: [{bitMaskSet param=type mask=2 reversed=true}] */
+                coord3?: number;
+                /** Type: UINT8, Conditions: [{bitMaskSet param=type mask=1 reversed=true}] */
+                qualityMeasure?: number;
+                /** Type: UINT16, Conditions: [{bitMaskSet param=type mask=1 reversed=true}] */
+                age?: number;
             };
             /** ID: 4 */
             rssiPing: {
+                /** Type: DATA8 */
+                type: number;
+            };
+            /** ID: 5 */
+            rssiRequest: Record<string, never>;
+            /** ID: 6 */
+            reportRssiMeasurements: {
+                /** Type: IEEE_ADDR */
+                measuringDeviceAddr: string;
                 /** Type: UINT8 */
-                locationtype: number;
+                numNeighbors: number;
+            };
+            /** ID: 7 */
+            requestOwnLocation: {
+                /** Type: IEEE_ADDR */
+                blindNodeAddr: string;
             };
         };
     };
@@ -2556,7 +2605,7 @@ export interface TClusters {
                 /** Type: LIST_THERMO_TRANSITIONS */
                 transitions: ThermoTransition[];
             };
-            /** ID: 2 */
+            /** ID: 2 | Response ID: 0 */
             getWeeklySchedule: {
                 /** Type: UINT8 */
                 daystoreturn: number;
@@ -2565,7 +2614,7 @@ export interface TClusters {
             };
             /** ID: 3 */
             clearWeeklySchedule: Record<string, never>;
-            /** ID: 4 */
+            /** ID: 4 | Response ID: 1 */
             getRelayStatusLog: Record<string, never>;
             /** ID: 64 */
             danfossSetpointCommand: {
@@ -3792,7 +3841,12 @@ export interface TClusters {
             /** ID: 1 */
             initNormalOpMode: Record<string, never>;
             /** ID: 2 */
-            initTestMode: Record<string, never>;
+            initTestMode: {
+                /** Type: UINT8 */
+                testModeDuration: number;
+                /** Type: UINT8 */
+                currentZoneSensitivityLevel: number;
+            };
         };
         commandResponses: {
             /** ID: 0 */
@@ -6145,6 +6199,11 @@ export interface TClusters {
                 /** Type: UINT8 */
                 payload: number;
             };
+            /** ID: 96 */
+            tuyaWeatherRequest: {
+                /** Type: BUFFER */
+                payload: Buffer;
+            };
         };
         commandResponses: {
             /** ID: 1 */
@@ -6220,6 +6279,11 @@ export interface TClusters {
                 /** Type: UINT16 */
                 payloadSize: number;
             };
+            /** ID: 97 */
+            tuyaWeatherSync: {
+                /** Type: BUFFER */
+                payload: Buffer;
+            };
         };
     };
     manuSpecificLumi: {
@@ -6238,92 +6302,6 @@ export interface TClusters {
             curtainHandOpen: number;
             /** ID: 1026 | Type: BOOLEAN */
             curtainCalibrated: number;
-        };
-        commands: never;
-        commandResponses: never;
-    };
-    liXeePrivate: {
-        attributes: {
-            /** ID: 0 | Type: CHAR_STR */
-            currentTarif: string;
-            /** ID: 1 | Type: CHAR_STR */
-            tomorrowColor: string;
-            /** ID: 2 | Type: UINT8 */
-            scheduleHPHC: number;
-            /** ID: 3 | Type: UINT8 */
-            presencePotential: number;
-            /** ID: 4 | Type: UINT8 */
-            startNoticeEJP: number;
-            /** ID: 5 | Type: UINT16 */
-            warnDPS: number;
-            /** ID: 6 | Type: UINT16 */
-            warnDIR1: number;
-            /** ID: 7 | Type: UINT16 */
-            warnDIR2: number;
-            /** ID: 8 | Type: UINT16 */
-            warnDIR3: number;
-            /** ID: 9 | Type: CHAR_STR */
-            motDEtat: string;
-            /** ID: 512 | Type: CHAR_STR */
-            currentPrice: string;
-            /** ID: 513 | Type: UINT8 */
-            currentIndexTarif: number;
-            /** ID: 514 | Type: CHAR_STR */
-            currentDate: string;
-            /** ID: 515 | Type: UINT32 */
-            activeEnergyOutD01: number;
-            /** ID: 516 | Type: UINT32 */
-            activeEnergyOutD02: number;
-            /** ID: 517 | Type: UINT32 */
-            activeEnergyOutD03: number;
-            /** ID: 518 | Type: UINT32 */
-            activeEnergyOutD04: number;
-            /** ID: 519 | Type: UINT16 */
-            injectedVA: number;
-            /** ID: 520 | Type: INT16 */
-            injectedVAMaxN: number;
-            /** ID: 521 | Type: INT16 */
-            injectedVAMaxN1: number;
-            /** ID: 528 | Type: INT16 */
-            injectedActiveLoadN: number;
-            /** ID: 529 | Type: INT16 */
-            injectedActiveLoadN1: number;
-            /** ID: 530 | Type: INT16 */
-            drawnVAMaxN1: number;
-            /** ID: 531 | Type: INT16 */
-            drawnVAMaxN1P2: number;
-            /** ID: 532 | Type: INT16 */
-            drawnVAMaxN1P3: number;
-            /** ID: 533 | Type: CHAR_STR */
-            message1: string;
-            /** ID: 534 | Type: CHAR_STR */
-            message2: string;
-            /** ID: 535 | Type: OCTET_STR */
-            statusRegister: Buffer;
-            /** ID: 536 | Type: UINT8 */
-            startMobilePoint1: number;
-            /** ID: 537 | Type: UINT8 */
-            stopMobilePoint1: number;
-            /** ID: 544 | Type: UINT8 */
-            startMobilePoint2: number;
-            /** ID: 545 | Type: UINT8 */
-            stopMobilePoint2: number;
-            /** ID: 546 | Type: UINT8 */
-            startMobilePoint3: number;
-            /** ID: 547 | Type: UINT8 */
-            stopMobilePoint3: number;
-            /** ID: 548 | Type: UINT16 */
-            relais: number;
-            /** ID: 549 | Type: UINT8 */
-            daysNumberCurrentCalendar: number;
-            /** ID: 550 | Type: UINT8 */
-            daysNumberNextCalendar: number;
-            /** ID: 551 | Type: LONG_OCTET_STR */
-            daysProfileCurrentCalendar: Buffer;
-            /** ID: 552 | Type: LONG_OCTET_STR */
-            daysProfileNextCalendar: Buffer;
-            /** ID: 768 | Type: UINT8 */
-            linkyMode: number;
         };
         commands: never;
         commandResponses: never;
@@ -7133,15 +7111,15 @@ export interface TFoundation {
         direction: number;
         /** Type: UINT16 */
         attrId: number;
-        /** Type: UINT8, Conditions: [{fieldEquals field=direction value=0}] */
+        /** Type: UINT8, Conditions: [{fieldEquals field=status value=0}{fieldEquals field=direction value=0}] */
         dataType?: number;
-        /** Type: UINT16, Conditions: [{fieldEquals field=direction value=0}] */
+        /** Type: UINT16, Conditions: [{fieldEquals field=status value=0}{fieldEquals field=direction value=0}] */
         minRepIntval?: number;
-        /** Type: UINT16, Conditions: [{fieldEquals field=direction value=0}] */
+        /** Type: UINT16, Conditions: [{fieldEquals field=status value=0}{fieldEquals field=direction value=0}] */
         maxRepIntval?: number;
-        /** Type: USE_DATA_TYPE, Conditions: [{fieldEquals field=direction value=0}{dataTypeValueTypeEquals value=ANALOG}] */
+        /** Type: USE_DATA_TYPE, Conditions: [{fieldEquals field=status value=0}{fieldEquals field=direction value=0}{dataTypeValueTypeEquals value=ANALOG}] */
         repChange?: unknown;
-        /** Type: UINT16, Conditions: [{fieldEquals field=direction value=1}] */
+        /** Type: UINT16, Conditions: [{fieldEquals field=status value=0}{fieldEquals field=direction value=1}] */
         timeout?: number;
     }[];
     /** ID: 10 */

@@ -6,6 +6,7 @@ export type UsbAdapterFingerprint = {
     productId: string;
     manufacturer?: string;
     pathRegex: string;
+    options?: Pick<SerialPortOptions, "baudRate" | "rtscts">;
 };
 
 export interface NetworkOptions {
@@ -39,28 +40,6 @@ export interface CoordinatorVersion {
 export type DeviceType = "Coordinator" | "EndDevice" | "Router" | "Unknown";
 
 export type StartResult = "resumed" | "reset" | "restored";
-
-export interface LQINeighbor {
-    ieeeAddr: string;
-    networkAddress: number;
-    linkquality: number;
-    relationship: number;
-    depth: number;
-}
-
-export interface Lqi {
-    neighbors: LQINeighbor[];
-}
-
-export interface RoutingTableEntry {
-    destinationAddress: number;
-    status: string;
-    nextHop: number;
-}
-
-export interface RoutingTable {
-    table: RoutingTableEntry[];
-}
 
 export interface Backup {
     adapterType: "zStack";

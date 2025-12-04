@@ -2,13 +2,11 @@ import {BuffaloZdo} from "../../../zspec/zdo/buffaloZdo";
 
 class ZiGateZdoBuffalo extends BuffaloZdo {
     public override writeUInt16(value: number): void {
-        this.buffer.writeUInt16BE(value, this.position);
-        this.position += 2;
+        this.position = this.buffer.writeUInt16BE(value, this.position);
     }
 
     public override writeUInt32(value: number): void {
-        this.buffer.writeUInt32BE(value, this.position);
-        this.position += 4;
+        this.position = this.buffer.writeUInt32BE(value, this.position);
     }
 
     public override writeIeeeAddr(value: string /*TODO: EUI64*/): void {

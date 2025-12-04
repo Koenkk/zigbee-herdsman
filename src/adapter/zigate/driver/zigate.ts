@@ -13,8 +13,8 @@ import * as ZSpec from "../../../zspec";
 import * as Zdo from "../../../zspec/zdo";
 import type {EndDeviceAnnounce, GenericZdoResponse, ResponseMap as ZdoResponseMap} from "../../../zspec/zdo/definition/tstypes";
 import {SerialPort} from "../../serialPort";
-import SocketPortUtils from "../../socketPortUtils";
 import type {SerialPortOptions} from "../../tstype";
+import {isTcpPath, parseTcpPath} from "../../utils";
 import {equal, type ZiGateResponseMatcher, type ZiGateResponseMatcherRule} from "./commandType";
 import {Status, ZDO_REQ_CLUSTER_ID_TO_ZIGATE_COMMAND_ID, ZiGateCommandCode, ZiGateMessageCode, type ZiGateObjectPayload} from "./constants";
 import ZiGateFrame from "./frame";
@@ -195,7 +195,7 @@ export default class ZiGate extends EventEmitter<ZiGateEventMap> {
     }
 
     public open(): Promise<void> {
-        return SocketPortUtils.isTcpPath(this.path) ? this.openSocketPort() : this.openSerialPort();
+        return isTcpPath(this.path) ? this.openSocketPort() : this.openSerialPort();
     }
 
     public async close(): Promise<void> {
@@ -256,7 +256,7 @@ export default class ZiGate extends EventEmitter<ZiGateEventMap> {
     }
 
     private async openSocketPort(): Promise<void> {
-        const info = SocketPortUtils.parseTcpPath(this.path);
+        const info = parseTcpPath(this.path);
         logger.debug(`Opening TCP socket with ${info.host}:${info.port}`, NS);
 
         this.socketPort = new net.Socket();

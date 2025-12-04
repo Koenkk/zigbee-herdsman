@@ -3,7 +3,7 @@
 
 export const EZSP_MIN_PROTOCOL_VERSION = 0x0d;
 /** Latest EZSP protocol version */
-export const EZSP_PROTOCOL_VERSION = 0x11;
+export const EZSP_PROTOCOL_VERSION = 0x12;
 
 /** EZSP max length + Frame Control extra byte + Frame ID extra byte */
 export const EZSP_MAX_FRAME_LENGTH = 218 + 1 + 1;
@@ -136,7 +136,7 @@ export const EMBER_PRIVATE_KEY_SIZE = 21;
 export const EMBER_SMAC_SIZE = 16;
 /** Size of the DSA signature used in Elliptical Cryptography   Digital Signature Algorithms. */
 export const EMBER_SIGNATURE_SIZE = 42;
-/** The size of AES-128 MMO hash is 16-bytes.  This is defined in the core.  ZigBee specification. */
+/** The size of AES-128 MMO hash is 16-bytes.  This is defined in the core.  Zigbee specification. */
 export const EMBER_AES_HASH_BLOCK_SIZE = 16;
 /** Size of Implicit Certificates used for Certificate Based Key Exchange using the ECC283K1 curve in bytes. */
 export const EMBER_CERTIFICATE_283K1_SIZE = 74;

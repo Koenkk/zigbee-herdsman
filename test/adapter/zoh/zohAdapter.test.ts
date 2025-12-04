@@ -1,27 +1,41 @@
 import {randomBytes} from "node:crypto";
 import {mkdirSync, rmSync, writeFileSync} from "node:fs";
 import {join} from "node:path";
-
 import {afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi} from "vitest";
 import {encodeSpinelFrame, SPINEL_HEADER_FLG_SPINEL} from "zigbee-on-host/dist/spinel/spinel";
 import {SpinelStatus} from "zigbee-on-host/dist/spinel/statuses";
 import type {MACCapabilities} from "zigbee-on-host/dist/zigbee/mac";
 import type {ZigbeeNWKLinkStatus} from "zigbee-on-host/dist/zigbee/zigbee-nwk";
-
 import {bigUInt64ToHexBE} from "../../../src/adapter/zoh/adapter/utils";
-import {ZoHAdapter} from "../../../src/adapter/zoh/adapter/zohAdapter";
+import {DEFAULT_STACK_CONFIG, type StackConfigJSON, ZoHAdapter} from "../../../src/adapter/zoh/adapter/zohAdapter";
 import * as ZSpec from "../../../src/zspec";
 import * as Zcl from "../../../src/zspec/zcl";
 import * as Zdo from "../../../src/zspec/zdo";
 
 const TEMP_PATH = "zoh-tmp";
 const TEMP_PATH_SAVE = join(TEMP_PATH, "zoh.save");
+const TEMP_PATH_CONFIG = join(TEMP_PATH, "zoh_config.json");
 const DEFAULT_PAN_ID = 0x1a62;
 const DEFAULT_EXT_PAN_ID = [0xdd, 0x11, 0x22, 0xdd, 0xdd, 0x33, 0x44, 0xdd];
 const DEFAULT_CHANNEL = 11;
 const DEFAULT_NETWORK_KEY = [0x11, 0x03, 0x15, 0x07, 0x09, 0x0b, 0x0d, 0x0f, 0x00, 0x02, 0x04, 0x06, 0x08, 0x1a, 0x1c, 0x1d];
-const DEFAULT_STATE_FILE_HEX =
-    "5a6f486f6e5a324d621add1122dddd3344dd0b001311031507090b0d0f00020406081a1c1d00040000005a6967426565416c6c69616e636530390004000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000";
+const DEFAULT_TX_POWER = 19;
+const DEFAULT_STATE: Awaited<ReturnType<ZoHAdapter["driver"]["context"]["readNetworkState"]>> = {
+    eui64: Buffer.from([0x5a, 0x6f, 0x48, 0x6f, 0x6e, 0x5a, 0x32, 0x4d]).readBigUInt64LE(0),
+    panId: DEFAULT_PAN_ID,
+    extendedPanId: Buffer.from(DEFAULT_EXT_PAN_ID).readBigUInt64LE(0),
+    channel: DEFAULT_CHANNEL,
+    nwkUpdateId: 0,
+    txPower: DEFAULT_TX_POWER,
+    // ZigBeeAlliance09
+    tcKey: Buffer.from([0x5a, 0x69, 0x67, 0x42, 0x65, 0x65, 0x41, 0x6c, 0x6c, 0x69, 0x61, 0x6e, 0x63, 0x65, 0x30, 0x39]),
+    tcKeyFrameCounter: 0,
+    networkKey: Buffer.from(DEFAULT_NETWORK_KEY),
+    networkKeyFrameCounter: 0,
+    networkKeySequenceNumber: 0,
+    deviceEntries: [],
+    appLinkKeys: [],
+};
 
 // biome-ignore lint/correctness/noUnusedVariables: dev
 const randomBigInt = (): bigint => BigInt(`0x${randomBytes(8).toString("hex")}`);
@@ -73,13 +87,9 @@ const COMMON_RFD_MAC_CAP: MACCapabilities = {
     allocateAddress: true,
 };
 
-describe("ZigBee on Host", () => {
+describe("Zigbee on Host", () => {
     let adapter: ZoHAdapter;
     let nextTidFromStartup = 1;
-
-    const deleteZoHSave = () => {
-        rmSync(TEMP_PATH_SAVE, {force: true});
-    };
 
     const makeSpinelLastStatus = (tid: number, status: SpinelStatus = SpinelStatus.OK): Buffer => {
         const respSpinelFrame = {
@@ -123,7 +133,7 @@ describe("ZigBee on Host", () => {
             let loadStateSpy: ReturnType<typeof vi.spyOn> | undefined;
 
             if (!loadState) {
-                loadStateSpy = vi.spyOn(adapter.driver, "loadState").mockResolvedValue(undefined);
+                loadStateSpy = vi.spyOn(adapter.driver.context, "loadState").mockResolvedValue(undefined);
             }
 
             let i = -1;
@@ -214,9 +224,9 @@ describe("ZigBee on Host", () => {
             let registerTimersSpy: ReturnType<typeof vi.spyOn> | undefined;
 
             if (registerTimers) {
-                await mockRegisterTimers();
+                await mockStartStack();
             } else {
-                registerTimersSpy = vi.spyOn(adapter.driver, "registerTimers").mockResolvedValue();
+                registerTimersSpy = vi.spyOn(adapter.driver, "startStack").mockResolvedValue();
             }
 
             await adapter.driver.formNetwork();
@@ -229,39 +239,37 @@ describe("ZigBee on Host", () => {
         }
     };
 
-    const mockRegisterTimers = async () => {
+    const mockStartStack = async () => {
         if (adapter.driver) {
             let linksSpy: ZigbeeNWKLinkStatus[] | undefined;
             let manyToOneSpy: number | undefined;
             let destination16Spy: number | undefined;
 
             // creates a bottleneck with vitest & promises, noop it
-            const savePeriodicStateSpy = vi.spyOn(adapter.driver, "savePeriodicState").mockResolvedValue();
-            const sendZigbeeNWKLinkStatusSpy = vi.spyOn(adapter.driver, "sendZigbeeNWKLinkStatus").mockImplementationOnce(async (links) => {
+            const savePeriodicStateSpy = vi.spyOn(adapter.driver.context, "savePeriodicState").mockResolvedValue();
+            const sendLinkStatusSpy = vi.spyOn(adapter.driver.nwkHandler, "sendLinkStatus").mockImplementationOnce(async (links) => {
                 linksSpy = links;
-                const p = adapter.driver.sendZigbeeNWKLinkStatus(links);
+                const p = adapter.driver.nwkHandler.sendLinkStatus(links);
                 // LINK_STATUS => OK
                 adapter.driver.parser._transform(makeSpinelLastStatus(nextTidFromStartup), "utf8", () => {});
                 await vi.advanceTimersByTimeAsync(10);
                 await p;
             });
-            const sendZigbeeNWKRouteReqSpy = vi
-                .spyOn(adapter.driver, "sendZigbeeNWKRouteReq")
-                .mockImplementationOnce(async (manyToOne, destination16) => {
-                    manyToOneSpy = manyToOne;
-                    destination16Spy = destination16;
-                    const p = adapter.driver.sendZigbeeNWKRouteReq(manyToOne, destination16);
-                    // ROUTE_REQ => OK
-                    adapter.driver.parser._transform(makeSpinelLastStatus(nextTidFromStartup + 1), "utf8", () => {});
-                    await vi.advanceTimersByTimeAsync(10);
-                    return await p;
-                });
-            await adapter.driver.registerTimers();
+            const sendRouteReqSpy = vi.spyOn(adapter.driver.nwkHandler, "sendRouteReq").mockImplementationOnce(async (manyToOne, destination16) => {
+                manyToOneSpy = manyToOne;
+                destination16Spy = destination16;
+                const p = adapter.driver.nwkHandler.sendRouteReq(manyToOne, destination16);
+                // ROUTE_REQ => OK
+                adapter.driver.parser._transform(makeSpinelLastStatus(nextTidFromStartup + 1), "utf8", () => {});
+                await vi.advanceTimersByTimeAsync(10);
+                return await p;
+            });
+            await adapter.driver.startStack();
             await vi.advanceTimersByTimeAsync(100); // flush
 
             expect(savePeriodicStateSpy).toHaveBeenCalledTimes(1);
-            expect(sendZigbeeNWKLinkStatusSpy).toHaveBeenCalledTimes(1 + 1); // *2 by spy mock
-            expect(sendZigbeeNWKRouteReqSpy).toHaveBeenCalledTimes(1 + 1); // *2 by spy mock
+            expect(sendLinkStatusSpy).toHaveBeenCalledTimes(1 + 1); // *2 by spy mock
+            expect(sendRouteReqSpy).toHaveBeenCalledTimes(1 + 1); // *2 by spy mock
 
             nextTidFromStartup = adapter.driver.currentSpinelTID + 1;
 
@@ -285,7 +293,8 @@ describe("ZigBee on Host", () => {
     });
 
     beforeEach(() => {
-        deleteZoHSave();
+        rmSync(TEMP_PATH_CONFIG, {force: true});
+        rmSync(TEMP_PATH_SAVE, {force: true});
 
         adapter = new ZoHAdapter(
             {
@@ -296,16 +305,16 @@ describe("ZigBee on Host", () => {
                 networkKeyDistribute: false,
             },
             {
-                baudRate: 460800,
+                baudRate: 921600,
                 rtscts: true,
                 path: "/dev/serial/by-id/mock-adapter",
                 adapter: "zoh",
             },
-            join(TEMP_PATH, "ember_coordinator_backup.json"),
+            join(TEMP_PATH, "coordinator_backup.json"),
             {
                 concurrent: 8,
                 disableLED: false,
-                transmitPower: 19,
+                transmitPower: DEFAULT_TX_POWER,
             },
         );
 
@@ -335,7 +344,7 @@ describe("ZigBee on Host", () => {
         await expect(adapter.start()).resolves.toStrictEqual("reset");
         await expect(adapter.getCoordinatorIEEE()).resolves.toStrictEqual("0x4d325a6e6f486f5a");
         await expect(adapter.getCoordinatorVersion()).resolves.toStrictEqual({
-            type: "ZigBee on Host",
+            type: "Zigbee on Host",
             meta: {
                 major: 4,
                 minor: 3,
@@ -355,7 +364,7 @@ describe("ZigBee on Host", () => {
     it("Adapter impl: sendZdo to device", async () => {
         await adapter.start();
 
-        await adapter.driver.associate(0x2211, BigInt("0x0807060504030201"), true, structuredClone(COMMON_FFD_MAC_CAP), true, false, true);
+        await adapter.driver.context.associate(0x2211, BigInt("0x0807060504030201"), true, structuredClone(COMMON_FFD_MAC_CAP), true, false, true);
 
         const p1 = adapter.sendZdo(
             "0x0807060504030201",
@@ -368,8 +377,7 @@ describe("ZigBee on Host", () => {
         await vi.advanceTimersByTimeAsync(10);
         adapter.driver.parser._transform(makeSpinelLastStatus(nextTidFromStartup, SpinelStatus.OK), "utf8", () => {});
         await vi.advanceTimersByTimeAsync(10);
-        adapter.driver.emit(
-            "frame",
+        adapter.onFrame(
             0x2211,
             BigInt("0x0807060504030201"),
             {
@@ -412,8 +420,7 @@ describe("ZigBee on Host", () => {
         await vi.advanceTimersByTimeAsync(10);
         adapter.driver.parser._transform(makeSpinelLastStatus(nextTidFromStartup + 1, SpinelStatus.OK), "utf8", () => {});
         await vi.advanceTimersByTimeAsync(10);
-        adapter.driver.emit(
-            "frame",
+        adapter.onFrame(
             0x2211,
             BigInt("0x0807060504030201"),
             {
@@ -452,7 +459,7 @@ describe("ZigBee on Host", () => {
         const emitSpy = vi.spyOn(adapter, "emit");
 
         await adapter.sendZdo(
-            `0x${bigUInt64ToHexBE(adapter.driver.netParams.eui64)}`,
+            `0x${bigUInt64ToHexBE(adapter.driver.context.netParams.eui64)}`,
             0x0000,
             Zdo.ClusterId.NODE_DESCRIPTOR_REQUEST,
             Zdo.Buffalo.buildRequest(true, Zdo.ClusterId.NODE_DESCRIPTOR_REQUEST, 0x0000),
@@ -470,7 +477,7 @@ describe("ZigBee on Host", () => {
         ]);
 
         await adapter.sendZdo(
-            `0x${bigUInt64ToHexBE(adapter.driver.netParams.eui64)}`,
+            `0x${bigUInt64ToHexBE(adapter.driver.context.netParams.eui64)}`,
             0x0000,
             Zdo.ClusterId.POWER_DESCRIPTOR_REQUEST,
             Zdo.Buffalo.buildRequest(true, Zdo.ClusterId.POWER_DESCRIPTOR_REQUEST, 0x0000),
@@ -483,7 +490,7 @@ describe("ZigBee on Host", () => {
         ]);
 
         await adapter.sendZdo(
-            `0x${bigUInt64ToHexBE(adapter.driver.netParams.eui64)}`,
+            `0x${bigUInt64ToHexBE(adapter.driver.context.netParams.eui64)}`,
             0x0000,
             Zdo.ClusterId.SIMPLE_DESCRIPTOR_REQUEST,
             Zdo.Buffalo.buildRequest(true, Zdo.ClusterId.SIMPLE_DESCRIPTOR_REQUEST, 0x0000, 1),
@@ -496,7 +503,7 @@ describe("ZigBee on Host", () => {
         ]);
 
         await adapter.sendZdo(
-            `0x${bigUInt64ToHexBE(adapter.driver.netParams.eui64)}`,
+            `0x${bigUInt64ToHexBE(adapter.driver.context.netParams.eui64)}`,
             0x0000,
             Zdo.ClusterId.ACTIVE_ENDPOINTS_REQUEST,
             Zdo.Buffalo.buildRequest(true, Zdo.ClusterId.ACTIVE_ENDPOINTS_REQUEST, 0x0000),
@@ -510,7 +517,7 @@ describe("ZigBee on Host", () => {
 
         await expect(
             adapter.sendZdo(
-                `0x${bigUInt64ToHexBE(adapter.driver.netParams.eui64)}`,
+                `0x${bigUInt64ToHexBE(adapter.driver.context.netParams.eui64)}`,
                 0x0000,
                 Zdo.ClusterId.PARENT_ANNOUNCE,
                 Zdo.Buffalo.buildRequest(true, Zdo.ClusterId.PARENT_ANNOUNCE, []),
@@ -523,8 +530,8 @@ describe("ZigBee on Host", () => {
         await adapter.start();
 
         const sendZdoSpy = vi.spyOn(adapter, "sendZdo");
-        const allowJoinsSpy = vi.spyOn(adapter.driver, "allowJoins");
-        const gpEnterCommissioningModeSpy = vi.spyOn(adapter.driver, "gpEnterCommissioningMode");
+        const allowJoinsSpy = vi.spyOn(adapter.driver.context, "allowJoins");
+        const gpEnterCommissioningModeSpy = vi.spyOn(adapter.driver.nwkGPHandler, "enterCommissioningMode");
 
         sendZdoSpy.mockImplementationOnce(async () => [0, undefined]);
         await adapter.permitJoin(254);
@@ -561,7 +568,7 @@ describe("ZigBee on Host", () => {
     it("Adapter impl: sendZclFrameToEndpoint", async () => {
         await adapter.start();
 
-        await adapter.driver.associate(0x9876, BigInt("0x00000000000004d2"), true, structuredClone(COMMON_FFD_MAC_CAP), true, false, true);
+        await adapter.driver.context.associate(0x9876, BigInt("0x00000000000004d2"), true, structuredClone(COMMON_FFD_MAC_CAP), true, false, true);
 
         const sendUnicastSpy = vi.spyOn(adapter.driver, "sendUnicast");
 
@@ -573,8 +580,7 @@ describe("ZigBee on Host", () => {
         await vi.advanceTimersByTimeAsync(10);
         adapter.driver.parser._transform(makeSpinelLastStatus(nextTidFromStartup, SpinelStatus.OK), "utf8", () => {});
         await vi.advanceTimersByTimeAsync(10);
-        adapter.driver.emit(
-            "frame",
+        adapter.onFrame(
             0x9876,
             undefined,
             {
@@ -638,8 +644,7 @@ describe("ZigBee on Host", () => {
         await vi.advanceTimersByTimeAsync(10);
         adapter.driver.parser._transform(makeSpinelLastStatus(nextTidFromStartup + 2, SpinelStatus.OK), "utf8", () => {});
         await vi.advanceTimersByTimeAsync(10);
-        adapter.driver.emit(
-            "frame",
+        adapter.onFrame(
             0x9876,
             undefined,
             {
@@ -699,8 +704,7 @@ describe("ZigBee on Host", () => {
         await vi.advanceTimersByTimeAsync(10);
         adapter.driver.parser._transform(makeSpinelLastStatus(nextTidFromStartup + 3, SpinelStatus.OK), "utf8", () => {});
         await vi.advanceTimersByTimeAsync(10);
-        adapter.driver.emit(
-            "frame",
+        adapter.onFrame(
             0x9876,
             undefined,
             {
@@ -810,13 +814,139 @@ describe("ZigBee on Host", () => {
         );
     });
 
+    it("uses default stack config when JSON not present", () => {
+        expect(adapter.stackConfig.tiSerialSkipBootloader).toStrictEqual(DEFAULT_STACK_CONFIG.tiSerialSkipBootloader);
+        expect(adapter.stackConfig.eui64).toStrictEqual(DEFAULT_STACK_CONFIG.eui64);
+        expect(adapter.stackConfig.ccaBackoffAttempts).toStrictEqual(DEFAULT_STACK_CONFIG.ccaBackoffAttempts);
+        expect(adapter.stackConfig.ccaRetries).toStrictEqual(DEFAULT_STACK_CONFIG.ccaRetries);
+        expect(adapter.stackConfig.enableCSMACA).toStrictEqual(DEFAULT_STACK_CONFIG.enableCSMACA);
+    });
+
+    it("uses custom stack config", () => {
+        // each is different from default
+        const configJSON: StackConfigJSON = {
+            tiSerialSkipBootloader: true,
+            eui64: "0x1122334455667788",
+            ccaBackoffAttempts: 2,
+            ccaRetries: 3,
+            enableCSMACA: false,
+        };
+
+        writeFileSync(TEMP_PATH_CONFIG, JSON.stringify(configJSON), "utf8");
+
+        const custAdapter = new ZoHAdapter(
+            {
+                panID: DEFAULT_PAN_ID,
+                extendedPanID: DEFAULT_EXT_PAN_ID,
+                channelList: [DEFAULT_CHANNEL],
+                networkKey: DEFAULT_NETWORK_KEY,
+                networkKeyDistribute: false,
+            },
+            {
+                baudRate: 921600,
+                rtscts: true,
+                path: "/dev/serial/by-id/mock-adapter",
+                adapter: "zoh",
+            },
+            join(TEMP_PATH, "coordinator_backup.json"),
+            {
+                concurrent: 8,
+                disableLED: false,
+                transmitPower: DEFAULT_TX_POWER,
+            },
+        );
+
+        expect(custAdapter.stackConfig.tiSerialSkipBootloader).toStrictEqual(true);
+        expect(custAdapter.stackConfig.eui64).toStrictEqual(Buffer.from([0x88, 0x77, 0x66, 0x55, 0x44, 0x33, 0x22, 0x11]).readBigUInt64LE(0));
+        expect(custAdapter.stackConfig.ccaBackoffAttempts).toStrictEqual(2);
+        expect(custAdapter.stackConfig.ccaRetries).toStrictEqual(3);
+        expect(custAdapter.stackConfig.enableCSMACA).toStrictEqual(false);
+    });
+
+    it("uses defaults when custom stack config invalid", () => {
+        // each is invalid
+        const configJSON = {
+            tiSerialSkipBootloader: "a",
+            eui64: "0xxyz",
+            ccaBackoffAttempts: 256,
+            ccaRetries: -1,
+            enableCSMACA: 1,
+        };
+
+        writeFileSync(TEMP_PATH_CONFIG, JSON.stringify(configJSON), "utf8");
+
+        const custAdapter = new ZoHAdapter(
+            {
+                panID: DEFAULT_PAN_ID,
+                extendedPanID: DEFAULT_EXT_PAN_ID,
+                channelList: [DEFAULT_CHANNEL],
+                networkKey: DEFAULT_NETWORK_KEY,
+                networkKeyDistribute: false,
+            },
+            {
+                baudRate: 921600,
+                rtscts: true,
+                path: "/dev/serial/by-id/mock-adapter",
+                adapter: "zoh",
+            },
+            join(TEMP_PATH, "coordinator_backup.json"),
+            {
+                concurrent: 8,
+                disableLED: false,
+                transmitPower: DEFAULT_TX_POWER,
+            },
+        );
+
+        expect(custAdapter.stackConfig.tiSerialSkipBootloader).toStrictEqual(DEFAULT_STACK_CONFIG.tiSerialSkipBootloader);
+        expect(custAdapter.stackConfig.eui64).toStrictEqual(DEFAULT_STACK_CONFIG.eui64);
+        expect(custAdapter.stackConfig.ccaBackoffAttempts).toStrictEqual(DEFAULT_STACK_CONFIG.ccaBackoffAttempts);
+        expect(custAdapter.stackConfig.ccaRetries).toStrictEqual(DEFAULT_STACK_CONFIG.ccaRetries);
+        expect(custAdapter.stackConfig.enableCSMACA).toStrictEqual(DEFAULT_STACK_CONFIG.enableCSMACA);
+    });
+
+    it("uses defaults when custom stack config partial", () => {
+        // each is invalid
+        const configJSON = {
+            enableCSMACA: false,
+        };
+
+        writeFileSync(TEMP_PATH_CONFIG, JSON.stringify(configJSON), "utf8");
+
+        const custAdapter = new ZoHAdapter(
+            {
+                panID: DEFAULT_PAN_ID,
+                extendedPanID: DEFAULT_EXT_PAN_ID,
+                channelList: [DEFAULT_CHANNEL],
+                networkKey: DEFAULT_NETWORK_KEY,
+                networkKeyDistribute: false,
+            },
+            {
+                baudRate: 921600,
+                rtscts: true,
+                path: "/dev/serial/by-id/mock-adapter",
+                adapter: "zoh",
+            },
+            join(TEMP_PATH, "coordinator_backup.json"),
+            {
+                concurrent: 8,
+                disableLED: false,
+                transmitPower: DEFAULT_TX_POWER,
+            },
+        );
+
+        expect(custAdapter.stackConfig.tiSerialSkipBootloader).toStrictEqual(DEFAULT_STACK_CONFIG.tiSerialSkipBootloader);
+        expect(custAdapter.stackConfig.eui64).toStrictEqual(DEFAULT_STACK_CONFIG.eui64);
+        expect(custAdapter.stackConfig.ccaBackoffAttempts).toStrictEqual(DEFAULT_STACK_CONFIG.ccaBackoffAttempts);
+        expect(custAdapter.stackConfig.ccaRetries).toStrictEqual(DEFAULT_STACK_CONFIG.ccaRetries);
+        expect(custAdapter.stackConfig.enableCSMACA).toStrictEqual(false);
+    });
+
     it("receives ZDO frame", async () => {
         await adapter.start();
 
         const emitSpy = vi.spyOn(adapter, "emit");
 
-        adapter.driver.emit(
-            "frame",
+        adapter.onFrame(
             0x2211,
             578437695752307201n,
             {
@@ -848,8 +978,7 @@ describe("ZigBee on Host", () => {
         ]);
 
         // NETWORK_ADDRESS_RESPONSE codepath
-        adapter.driver.emit(
-            "frame",
+        adapter.onFrame(
             0x2211,
             578437695752307201n,
             {
@@ -886,8 +1015,7 @@ describe("ZigBee on Host", () => {
 
         const emitSpy = vi.spyOn(adapter, "emit");
 
-        adapter.driver.emit(
-            "frame",
+        adapter.onFrame(
             0x9876,
             undefined,
             {
@@ -931,8 +1059,7 @@ describe("ZigBee on Host", () => {
             wasBroadcast: false,
         });
 
-        adapter.driver.emit(
-            "frame",
+        adapter.onFrame(
             0x9876,
             1234n,
             {
@@ -976,8 +1103,7 @@ describe("ZigBee on Host", () => {
             wasBroadcast: false,
         });
 
-        adapter.driver.emit(
-            "frame",
+        adapter.onFrame(
             57129,
             undefined,
             {
@@ -1027,8 +1153,7 @@ describe("ZigBee on Host", () => {
 
         const emitSpy = vi.spyOn(adapter, "emit");
 
-        adapter.driver.emit(
-            "gpFrame",
+        adapter.onGPFrame(
             0xe0,
             Buffer.from([
                 0x2, 0x85, 0xf2, 0xc9, 0x25, 0x82, 0x1d, 0xf4, 0x6f, 0x45, 0x8c, 0xf0, 0xe6, 0x37, 0xaa, 0xc3, 0xba, 0xb6, 0xaa, 0x45, 0x83, 0x1a,
@@ -1084,7 +1209,7 @@ describe("ZigBee on Host", () => {
             groupID: ZSpec.GP_GROUP_ID,
             header,
             linkquality: 0,
-            wasBroadcast: true,
+            wasBroadcast: false,
         });
 
         const frame = Zcl.Frame.fromBuffer(Zcl.Clusters.greenPower.ID, header, data, {});
@@ -1136,8 +1261,7 @@ describe("ZigBee on Host", () => {
             },
         });
 
-        adapter.driver.emit(
-            "gpFrame",
+        adapter.onGPFrame(
             0x10,
             Buffer.from([]),
             {
@@ -1194,7 +1318,7 @@ describe("ZigBee on Host", () => {
             groupID: ZSpec.GP_GROUP_ID,
             header: header2,
             linkquality: 0,
-            wasBroadcast: true,
+            wasBroadcast: false,
         });
 
         const frame2 = Zcl.Frame.fromBuffer(Zcl.Clusters.greenPower.ID, header2, data2, {});
@@ -1236,72 +1360,92 @@ describe("ZigBee on Host", () => {
 
         const emitSpy = vi.spyOn(adapter, "emit");
 
-        adapter.driver.emit("deviceJoined", 0x123, 4321n, structuredClone(COMMON_FFD_MAC_CAP));
+        adapter.onDeviceJoined(0x123, 4321n, structuredClone(COMMON_FFD_MAC_CAP));
         expect(emitSpy).toHaveBeenNthCalledWith(1, "deviceJoined", {networkAddress: 0x123, ieeeAddr: "0x00000000000010e1"});
 
-        adapter.driver.emit("deviceJoined", 0x321, 1234n, structuredClone(COMMON_RFD_MAC_CAP));
+        adapter.onDeviceJoined(0x321, 1234n, structuredClone(COMMON_RFD_MAC_CAP));
         expect(emitSpy).toHaveBeenCalledTimes(1);
         await vi.advanceTimersByTimeAsync(5500);
         expect(emitSpy).toHaveBeenNthCalledWith(2, "deviceJoined", {networkAddress: 0x321, ieeeAddr: "0x00000000000004d2"});
 
-        adapter.driver.emit("deviceRejoined", 0x987, 4321n, structuredClone(COMMON_FFD_MAC_CAP));
+        adapter.onDeviceRejoined(0x987, 4321n, structuredClone(COMMON_FFD_MAC_CAP));
         expect(emitSpy).toHaveBeenLastCalledWith("deviceJoined", {networkAddress: 0x987, ieeeAddr: "0x00000000000010e1"});
 
-        adapter.driver.emit("deviceLeft", 0x123, 4321n);
+        adapter.onDeviceLeft(0x123, 4321n);
         expect(emitSpy).toHaveBeenLastCalledWith("deviceLeave", {networkAddress: 0x123, ieeeAddr: "0x00000000000010e1"});
 
         // adapter.driver.emit('deviceAuthorized', 0x123, 4321n);
     });
 
     it("resumes network", async () => {
-        // create default
-        writeFileSync(TEMP_PATH_SAVE, Buffer.from(DEFAULT_STATE_FILE_HEX, "hex"));
+        const defaultExtPanId = Buffer.from(DEFAULT_EXT_PAN_ID).readBigUInt64LE();
+        const defaultNetworkKey = Buffer.from(DEFAULT_NETWORK_KEY);
+        const readNetworkStateSpy = vi
+            .spyOn(adapter.driver.context, "readNetworkState")
+            .mockResolvedValueOnce(DEFAULT_STATE)
+            .mockResolvedValueOnce(DEFAULT_STATE);
 
         await expect(adapter.start()).resolves.toStrictEqual("resumed");
-        expect(adapter.driver.netParams.networkKeyFrameCounter).toStrictEqual(1024); // jump means it loaded from saved state
+        expect(adapter.driver.context.netParams.panId).toStrictEqual(DEFAULT_PAN_ID);
+        expect(adapter.driver.context.netParams.extendedPanId).toStrictEqual(defaultExtPanId);
+        expect(adapter.driver.context.netParams.networkKey).toStrictEqual(defaultNetworkKey);
+        // check against current + populate context
+        expect(readNetworkStateSpy).toHaveBeenCalledTimes(2);
+
+        readNetworkStateSpy.mockRestore();
     });
 
     it("resets network on mismatch PAN ID", async () => {
-        // create default
-        const state = Buffer.from(DEFAULT_STATE_FILE_HEX, "hex");
+        const oldPanId = 0x1234;
+        const readNetworkStateSpy = vi
+            .spyOn(adapter.driver.context, "readNetworkState")
+            .mockResolvedValueOnce({...DEFAULT_STATE, panId: oldPanId})
+            .mockResolvedValueOnce(DEFAULT_STATE);
 
-        state.writeUInt16LE(0x1234, 8); // right after EUI64
-        writeFileSync(TEMP_PATH_SAVE, state);
-
-        const currentNetParams = await adapter.driver.readNetworkState();
-
-        expect(currentNetParams?.panId).toStrictEqual(0x1234);
         await expect(adapter.start()).resolves.toStrictEqual("reset");
-        expect(adapter.driver.netParams.panId).toStrictEqual(DEFAULT_PAN_ID);
+        expect(adapter.driver.context.netParams.panId).toStrictEqual(DEFAULT_PAN_ID);
+        expect(readNetworkStateSpy).toHaveBeenCalledTimes(2);
+
+        readNetworkStateSpy.mockRestore();
     });
 
     it("resets network on mismatch extended PAN ID", async () => {
-        // create default
-        const state = Buffer.from(DEFAULT_STATE_FILE_HEX, "hex");
-
-        state.write("0011001100110011", 10, "hex"); // right after PAN ID
-        writeFileSync(TEMP_PATH_SAVE, state);
-
-        const currentNetParams = await adapter.driver.readNetworkState();
-
-        expect(currentNetParams?.extendedPANId).toStrictEqual(Buffer.from("0011001100110011", "hex").readBigUInt64LE());
+        const oldExtPanId = 0x1234123412341234n;
+        const readNetworkStateSpy = vi
+            .spyOn(adapter.driver.context, "readNetworkState")
+            .mockResolvedValueOnce({...DEFAULT_STATE, extendedPanId: oldExtPanId})
+            .mockResolvedValueOnce(DEFAULT_STATE);
 
         await expect(adapter.start()).resolves.toStrictEqual("reset");
-        expect(adapter.driver.netParams.extendedPANId).toStrictEqual(Buffer.from(DEFAULT_EXT_PAN_ID).readBigUInt64LE());
+        expect(adapter.driver.context.netParams.extendedPanId).toStrictEqual(Buffer.from(DEFAULT_EXT_PAN_ID).readBigUInt64LE());
+        expect(readNetworkStateSpy).toHaveBeenCalledTimes(2);
+
+        readNetworkStateSpy.mockRestore();
     });
 
     it("resets network on mismatch network key", async () => {
-        // create default
-        const state = Buffer.from(DEFAULT_STATE_FILE_HEX, "hex");
-
-        state.write("00110011001100110011001100110011", 21, "hex"); // right after tx power
-        writeFileSync(TEMP_PATH_SAVE, state);
-
-        const currentNetParams = await adapter.driver.readNetworkState();
-
-        expect(currentNetParams?.networkKey).toStrictEqual(Buffer.from("00110011001100110011001100110011", "hex"));
+        const oldNetworkKey = Buffer.from("00110011001100110011001100110011", "hex");
+        const readNetworkStateSpy = vi
+            .spyOn(adapter.driver.context, "readNetworkState")
+            .mockResolvedValueOnce({...DEFAULT_STATE, networkKey: oldNetworkKey})
+            .mockResolvedValueOnce(DEFAULT_STATE);
 
         await expect(adapter.start()).resolves.toStrictEqual("reset");
-        expect(adapter.driver.netParams.networkKey).toStrictEqual(Buffer.from(DEFAULT_NETWORK_KEY));
+        expect(adapter.driver.context.netParams.networkKey).toStrictEqual(Buffer.from(DEFAULT_NETWORK_KEY));
+        expect(readNetworkStateSpy).toHaveBeenCalledTimes(2);
+
+        readNetworkStateSpy.mockRestore();
+    });
+
+    it("adds install code", async () => {
+        const codeVector = Buffer.from("83FED3407A939723A5C639B26916D505C3B5", "hex");
+
+        await expect(adapter.addInstallCode("0x1122334455667788", codeVector, false)).resolves.toStrictEqual(undefined);
+    });
+
+    it("adds hashed install code", async () => {
+        const linkKeyVector = Buffer.from("66B6900981E1EE3CA4206B6B861C02BB", "hex");
+
+        await expect(adapter.addInstallCode("0x1122334455667788", linkKeyVector, true)).resolves.toStrictEqual(undefined);
     });
 });

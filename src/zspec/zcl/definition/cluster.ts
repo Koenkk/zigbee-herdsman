@@ -658,19 +658,30 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
     genRssiLocation: {
         ID: 11,
         attributes: {
+            /** read/write | [2: coordinator system, 1: 2-D, 1: absolute] */
             type: {ID: 0, type: DataType.DATA8},
+            /** read/write | @see LocationMethod */
             method: {ID: 1, type: DataType.ENUM8},
             age: {ID: 2, type: DataType.UINT16},
+            /** 0x00..0x64 i.e. zero..complete confidence */
             qualityMeasure: {ID: 3, type: DataType.UINT8},
             numOfDevices: {ID: 4, type: DataType.UINT8},
+            /** read/write | -0x8000..0x7fff */
             coordinate1: {ID: 16, type: DataType.INT16},
+            /** read/write | -0x8000..0x7fff */
             coordinate2: {ID: 17, type: DataType.INT16},
+            /** read/write | -0x8000..0x7fff | optional */
             coordinate3: {ID: 18, type: DataType.INT16},
+            /** read/write | -0x8000..0x7fff */
             power: {ID: 19, type: DataType.INT16},
+            /** read/write | 0x0000..0xffff */
             pathLossExponent: {ID: 20, type: DataType.UINT16},
+            /** read/write | 0x0000..0xffff | optional */
             reportingPeriod: {ID: 21, type: DataType.UINT16},
+            /** read/write | 0x0000..0xffff | optional */
             calcPeriod: {ID: 22, type: DataType.UINT16},
-            numRSSIMeasurements: {ID: 23, type: DataType.UINT16},
+            /** read/write | 0x01..0xff */
+            numRSSIMeasurements: {ID: 23, type: DataType.UINT8},
         },
         commands: {
             setAbsolute: {
@@ -680,87 +691,227 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                     {name: "coord2", type: DataType.INT16},
                     {name: "coord3", type: DataType.INT16},
                     {name: "power", type: DataType.INT16},
-                    {name: "pathlossexponent", type: DataType.UINT16},
+                    {name: "pathLossExponent", type: DataType.UINT16},
                 ],
             },
-            setDevCfg: {
+            setDeviceConfig: {
                 ID: 1,
                 parameters: [
                     {name: "power", type: DataType.INT16},
-                    {name: "pathlossexponent", type: DataType.UINT16},
-                    {name: "calperiod", type: DataType.UINT16},
-                    {name: "numrssimeasurements", type: DataType.UINT8},
-                    {name: "reportingperiod", type: DataType.UINT16},
+                    {name: "pathLossExponent", type: DataType.UINT16},
+                    {name: "calcPeriod", type: DataType.UINT16},
+                    {name: "numRssiMeasurements", type: DataType.UINT8},
+                    {name: "reportingPeriod", type: DataType.UINT16},
                 ],
             },
-            getDevCfg: {
+            getDeviceConfig: {
                 ID: 2,
-                parameters: [{name: "targetaddr", type: DataType.IEEE_ADDR}],
+                parameters: [{name: "targetAddr", type: DataType.IEEE_ADDR}],
             },
-            getData: {
+            getLocationData: {
                 ID: 3,
                 parameters: [
-                    {name: "getdatainfo", type: DataType.UINT8},
-                    {name: "numrsp", type: DataType.UINT8},
-                    {name: "targetaddr", type: DataType.IEEE_ADDR},
+                    /** [3: reserved, 1: compactResponse, 1: broadcastResponse, 1: broadcastIndicator, 1: recalculate, 1: absoluteOnly] */
+                    {name: "info", type: DataType.BITMAP8},
+                    {name: "numResponses", type: DataType.UINT8},
+                    {
+                        name: "targetAddr",
+                        type: DataType.IEEE_ADDR,
+                        conditions: [{type: ParameterCondition.BITMASK_SET, param: "info", mask: 0b100, reversed: true}],
+                    },
+                ],
+            },
+            rssiResponse: {
+                ID: 4,
+                parameters: [
+                    {name: "replyingDevice", type: DataType.IEEE_ADDR},
+                    {name: "x", type: DataType.INT16},
+                    {name: "y", type: DataType.INT16},
+                    {name: "z", type: DataType.INT16},
+                    {name: "rssi", type: DataType.INT8},
+                    {name: "numRssiMeasurements", type: DataType.UINT8},
+                ],
+            },
+            sendPings: {
+                ID: 5,
+                parameters: [
+                    {name: "targetAddr", type: DataType.IEEE_ADDR},
+                    {name: "numRssiMeasurements", type: DataType.UINT8},
+                    {name: "calcPeriod", type: DataType.UINT16},
+                ],
+            },
+            anchorNodeAnnounce: {
+                ID: 6,
+                parameters: [
+                    {name: "anchorNodeAddr", type: DataType.IEEE_ADDR},
+                    {name: "x", type: DataType.INT16},
+                    {name: "y", type: DataType.INT16},
+                    {name: "z", type: DataType.INT16},
                 ],
             },
         },
         commandsResponse: {
-            devCfgRsp: {
+            deviceConfigResponse: {
                 ID: 0,
                 parameters: [
-                    {name: "status", type: DataType.UINT8},
-                    {name: "power", type: DataType.INT16},
-                    {name: "pathlossexp", type: DataType.UINT16},
-                    {name: "calperiod", type: DataType.UINT16},
-                    {name: "numrssimeasurements", type: DataType.UINT8},
-                    {name: "reportingperiod", type: DataType.UINT16},
+                    {name: "status", type: DataType.ENUM8},
+                    {
+                        name: "power",
+                        type: DataType.INT16,
+                        conditions: [{type: ParameterCondition.FIELD_EQUAL, field: "status", value: Status.SUCCESS}],
+                    },
+                    {
+                        name: "pathLossExponent",
+                        type: DataType.UINT16,
+                        conditions: [{type: ParameterCondition.FIELD_EQUAL, field: "status", value: Status.SUCCESS}],
+                    },
+                    {
+                        name: "calcPeriod",
+                        type: DataType.UINT16,
+                        conditions: [{type: ParameterCondition.FIELD_EQUAL, field: "status", value: Status.SUCCESS}],
+                    },
+                    {
+                        name: "numRssiMeasurements",
+                        type: DataType.UINT8,
+                        conditions: [{type: ParameterCondition.FIELD_EQUAL, field: "status", value: Status.SUCCESS}],
+                    },
+                    {
+                        name: "reportingPeriod",
+                        type: DataType.UINT16,
+                        conditions: [{type: ParameterCondition.FIELD_EQUAL, field: "status", value: Status.SUCCESS}],
+                    },
                 ],
             },
-            dataRsp: {
+            locationDataResponse: {
                 ID: 1,
                 parameters: [
-                    {name: "status", type: DataType.UINT8},
-                    {name: "locationtype", type: DataType.UINT8},
-                    {name: "coord1", type: DataType.INT16},
-                    {name: "coord2", type: DataType.INT16},
-                    {name: "coord3", type: DataType.INT16},
-                    {name: "power", type: DataType.INT16},
-                    {name: "pathlossexp", type: DataType.UINT16},
-                    {name: "locationmethod", type: DataType.UINT8},
-                    {name: "qualitymeasure", type: DataType.UINT8},
-                    {name: "locationage", type: DataType.UINT16},
+                    {name: "status", type: DataType.ENUM8},
+                    {
+                        name: "type",
+                        type: DataType.DATA8,
+                        conditions: [{type: ParameterCondition.FIELD_EQUAL, field: "status", value: Status.SUCCESS}],
+                    },
+                    {
+                        name: "coord1",
+                        type: DataType.INT16,
+                        conditions: [{type: ParameterCondition.FIELD_EQUAL, field: "status", value: Status.SUCCESS}],
+                    },
+                    {
+                        name: "coord2",
+                        type: DataType.INT16,
+                        conditions: [{type: ParameterCondition.FIELD_EQUAL, field: "status", value: Status.SUCCESS}],
+                    },
+                    {
+                        name: "coord3",
+                        type: DataType.INT16,
+                        conditions: [{type: ParameterCondition.FIELD_EQUAL, field: "status", value: Status.SUCCESS}],
+                    },
+                    {
+                        name: "power",
+                        type: DataType.INT16,
+                        conditions: [{type: ParameterCondition.FIELD_EQUAL, field: "status", value: Status.SUCCESS}],
+                    },
+                    {
+                        name: "pathLossExponent",
+                        type: DataType.UINT16,
+                        conditions: [{type: ParameterCondition.FIELD_EQUAL, field: "status", value: Status.SUCCESS}],
+                    },
+                    {
+                        name: "method",
+                        type: DataType.ENUM8,
+                        conditions: [{type: ParameterCondition.FIELD_EQUAL, field: "status", value: Status.SUCCESS}],
+                    },
+                    {
+                        name: "qualityMeasure",
+                        type: DataType.UINT8,
+                        conditions: [{type: ParameterCondition.FIELD_EQUAL, field: "status", value: Status.SUCCESS}],
+                    },
+                    {
+                        name: "age",
+                        type: DataType.UINT16,
+                        conditions: [{type: ParameterCondition.FIELD_EQUAL, field: "status", value: Status.SUCCESS}],
+                    },
                 ],
             },
-            dataNotif: {
+            locationDataNotification: {
                 ID: 2,
                 parameters: [
-                    {name: "locationtype", type: DataType.UINT8},
+                    {name: "type", type: DataType.DATA8},
                     {name: "coord1", type: DataType.INT16},
                     {name: "coord2", type: DataType.INT16},
-                    {name: "coord3", type: DataType.INT16},
+                    {
+                        name: "coord3",
+                        type: DataType.INT16,
+                        conditions: [{type: ParameterCondition.BITMASK_SET, param: "type", mask: 0b10, reversed: true}],
+                    },
                     {name: "power", type: DataType.INT16},
-                    {name: "pathlossexp", type: DataType.UINT16},
-                    {name: "locationmethod", type: DataType.UINT8},
-                    {name: "qualitymeasure", type: DataType.UINT8},
-                    {name: "locationage", type: DataType.UINT16},
+                    {name: "pathLossExponent", type: DataType.UINT16},
+                    {
+                        name: "method",
+                        type: DataType.ENUM8,
+                        conditions: [{type: ParameterCondition.BITMASK_SET, param: "type", mask: 0b1, reversed: true}],
+                    },
+                    {
+                        name: "qualityMeasure",
+                        type: DataType.UINT8,
+                        conditions: [{type: ParameterCondition.BITMASK_SET, param: "type", mask: 0b1, reversed: true}],
+                    },
+                    {
+                        name: "age",
+                        type: DataType.UINT16,
+                        conditions: [{type: ParameterCondition.BITMASK_SET, param: "type", mask: 0b1, reversed: true}],
+                    },
                 ],
             },
-            compactDataNotif: {
+            compactLocationDataNotification: {
                 ID: 3,
                 parameters: [
-                    {name: "locationtype", type: DataType.UINT8},
+                    {name: "type", type: DataType.DATA8},
                     {name: "coord1", type: DataType.INT16},
                     {name: "coord2", type: DataType.INT16},
-                    {name: "coord3", type: DataType.INT16},
-                    {name: "qualitymeasure", type: DataType.UINT8},
-                    {name: "locationage", type: DataType.UINT16},
+                    {
+                        name: "coord3",
+                        type: DataType.INT16,
+                        conditions: [{type: ParameterCondition.BITMASK_SET, param: "type", mask: 0b10, reversed: true}],
+                    },
+                    {
+                        name: "qualityMeasure",
+                        type: DataType.UINT8,
+                        conditions: [{type: ParameterCondition.BITMASK_SET, param: "type", mask: 0b1, reversed: true}],
+                    },
+                    {
+                        name: "age",
+                        type: DataType.UINT16,
+                        conditions: [{type: ParameterCondition.BITMASK_SET, param: "type", mask: 0b1, reversed: true}],
+                    },
                 ],
             },
             rssiPing: {
                 ID: 4,
-                parameters: [{name: "locationtype", type: DataType.UINT8}],
+                parameters: [{name: "type", type: DataType.DATA8}],
+            },
+            rssiRequest: {
+                ID: 5,
+                parameters: [],
+            },
+            reportRssiMeasurements: {
+                ID: 6,
+                parameters: [
+                    {name: "measuringDeviceAddr", type: DataType.IEEE_ADDR},
+                    {name: "numNeighbors", type: DataType.UINT8},
+                    // TODO: needs special Buffalo read(/write)
+                    // {name: "neighborInfo", type: DataType.ARRAY},
+                    //   {name: "neighbor", type: DataType.IEEE_ADDR},
+                    //   {name: "x", type: DataType.INT16},
+                    //   {name: "y", type: DataType.INT16},
+                    //   {name: "z", type: DataType.INT16},
+                    //   {name: "rssi", type: DataType.INT8},
+                    //   {name: "numRssiMeasurements", type: DataType.UINT8},
+                ],
+            },
+            requestOwnLocation: {
+                ID: 7,
+                parameters: [{name: "blindNodeAddr", type: DataType.IEEE_ADDR}],
             },
         },
     },
@@ -3139,7 +3290,10 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             },
             initTestMode: {
                 ID: 2,
-                parameters: [],
+                parameters: [
+                    {name: "testModeDuration", type: DataType.UINT8},
+                    {name: "currentZoneSensitivityLevel", type: DataType.UINT8},
+                ],
             },
         },
         commandsResponse: {
@@ -4967,6 +5121,14 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                     {name: "payload", type: DataType.UINT8},
                 ],
             },
+
+            /**
+             * Weather forecast synchronization (check requestWeatherInformation)
+             */
+            tuyaWeatherSync: {
+                ID: 0x61,
+                parameters: [{name: "payload", type: BuffaloZclDataType.BUFFER}],
+            },
         },
         commandsResponse: {
             /**
@@ -5070,6 +5232,18 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 ID: 0x25,
                 parameters: [{name: "payloadSize", type: DataType.UINT16}],
             },
+
+            /**
+             * Device can request weather forecast information and expects response respecting given parameters.
+             * This command ID seem to be device speciffic, because there is simmilar structure documented in Tuya Serial Communication Protocol,
+             * but with different ID (0x3a and 0x3b respectively). In this case, I'm not sure if the name should reflect the one from
+             * docs or be also speciffic (providing space for the implementation of the correct one in the future)?
+             *
+             */
+            tuyaWeatherRequest: {
+                ID: 0x60,
+                parameters: [{name: "payload", type: BuffaloZclDataType.BUFFER}],
+            },
         },
     },
     manuSpecificLumi: {
@@ -5083,54 +5257,6 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             curtainReverse: {ID: 0x0400, type: DataType.BOOLEAN},
             curtainHandOpen: {ID: 0x0401, type: DataType.BOOLEAN},
             curtainCalibrated: {ID: 0x0402, type: DataType.BOOLEAN},
-        },
-        commands: {},
-        commandsResponse: {},
-    },
-    liXeePrivate: {
-        ID: 0xff66,
-        manufacturerCode: ManufacturerCode.NXP_SEMICONDUCTORS,
-        attributes: {
-            currentTarif: {ID: 0x0000, type: DataType.CHAR_STR},
-            tomorrowColor: {ID: 0x0001, type: DataType.CHAR_STR},
-            scheduleHPHC: {ID: 0x0002, type: DataType.UINT8},
-            presencePotential: {ID: 0x0003, type: DataType.UINT8},
-            startNoticeEJP: {ID: 0x0004, type: DataType.UINT8},
-            warnDPS: {ID: 0x0005, type: DataType.UINT16},
-            warnDIR1: {ID: 0x0006, type: DataType.UINT16},
-            warnDIR2: {ID: 0x0007, type: DataType.UINT16},
-            warnDIR3: {ID: 0x0008, type: DataType.UINT16},
-            motDEtat: {ID: 0x0009, type: DataType.CHAR_STR},
-            currentPrice: {ID: 0x0200, type: DataType.CHAR_STR},
-            currentIndexTarif: {ID: 0x0201, type: DataType.UINT8},
-            currentDate: {ID: 0x0202, type: DataType.CHAR_STR},
-            activeEnergyOutD01: {ID: 0x0203, type: DataType.UINT32},
-            activeEnergyOutD02: {ID: 0x0204, type: DataType.UINT32},
-            activeEnergyOutD03: {ID: 0x0205, type: DataType.UINT32},
-            activeEnergyOutD04: {ID: 0x0206, type: DataType.UINT32},
-            injectedVA: {ID: 0x0207, type: DataType.UINT16},
-            injectedVAMaxN: {ID: 0x0208, type: DataType.INT16},
-            injectedVAMaxN1: {ID: 0x0209, type: DataType.INT16},
-            injectedActiveLoadN: {ID: 0x0210, type: DataType.INT16},
-            injectedActiveLoadN1: {ID: 0x0211, type: DataType.INT16},
-            drawnVAMaxN1: {ID: 0x0212, type: DataType.INT16},
-            drawnVAMaxN1P2: {ID: 0x0213, type: DataType.INT16},
-            drawnVAMaxN1P3: {ID: 0x0214, type: DataType.INT16},
-            message1: {ID: 0x0215, type: DataType.CHAR_STR},
-            message2: {ID: 0x0216, type: DataType.CHAR_STR},
-            statusRegister: {ID: 0x0217, type: DataType.OCTET_STR},
-            startMobilePoint1: {ID: 0x0218, type: DataType.UINT8},
-            stopMobilePoint1: {ID: 0x0219, type: DataType.UINT8},
-            startMobilePoint2: {ID: 0x0220, type: DataType.UINT8},
-            stopMobilePoint2: {ID: 0x0221, type: DataType.UINT8},
-            startMobilePoint3: {ID: 0x0222, type: DataType.UINT8},
-            stopMobilePoint3: {ID: 0x0223, type: DataType.UINT8},
-            relais: {ID: 0x0224, type: DataType.UINT16},
-            daysNumberCurrentCalendar: {ID: 0x0225, type: DataType.UINT8},
-            daysNumberNextCalendar: {ID: 0x0226, type: DataType.UINT8},
-            daysProfileCurrentCalendar: {ID: 0x0227, type: DataType.LONG_OCTET_STR},
-            daysProfileNextCalendar: {ID: 0x0228, type: DataType.LONG_OCTET_STR},
-            linkyMode: {ID: 0x0300, type: DataType.UINT8},
         },
         commands: {},
         commandsResponse: {},
@@ -5207,74 +5333,6 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         commands: {},
         commandsResponse: {},
     },
-    heimanSpecificAirQuality: {
-        // from HS2AQ-3.0海曼智能空气质量检测仪API文档-V01
-        ID: 0xfc81,
-        manufacturerCode: ManufacturerCode.HEIMAN_TECHNOLOGY_CO_LTD,
-        attributes: {
-            language: {ID: 0xf000, type: DataType.UINT8},
-            unitOfMeasure: {ID: 0xf001, type: DataType.UINT8},
-            batteryState: {ID: 0xf002, type: DataType.UINT8}, //  (0 is not charged, 1 is charging, 2 is fully charged)
-            pm10measuredValue: {ID: 0xf003, type: DataType.UINT16},
-            tvocMeasuredValue: {ID: 0xf004, type: DataType.UINT16},
-            aqiMeasuredValue: {ID: 0xf005, type: DataType.UINT16},
-            temperatureMeasuredMax: {ID: 0xf006, type: DataType.INT16},
-            temperatureMeasuredMin: {ID: 0xf007, type: DataType.INT16},
-            humidityMeasuredMax: {ID: 0xf008, type: DataType.UINT16},
-            humidityMeasuredMin: {ID: 0xf009, type: DataType.UINT16},
-            alarmEnable: {ID: 0xf00a, type: DataType.UINT16},
-        },
-        commands: {
-            setLanguage: {
-                ID: 0x011b,
-                parameters: [
-                    // (1: English 0: Chinese)
-                    {name: "languageCode", type: DataType.UINT8},
-                ],
-            },
-            setUnitOfTemperature: {
-                ID: 0x011c,
-                parameters: [
-                    // (0: ℉ 1: ℃)
-                    {name: "unitsCode", type: DataType.UINT8},
-                ],
-            },
-            getTime: {
-                ID: 0x011d,
-                parameters: [],
-            },
-        },
-        commandsResponse: {},
-    },
-    heimanSpecificScenes: {
-        // from HS2SS-3.0海曼智能情景开关API文档-V01
-        ID: 0xfc80,
-        manufacturerCode: ManufacturerCode.HEIMAN_TECHNOLOGY_CO_LTD,
-        attributes: {},
-        commands: {
-            cinema: {
-                ID: 0xf0,
-                parameters: [],
-            },
-            atHome: {
-                ID: 0xf1,
-                parameters: [],
-            },
-            sleep: {
-                ID: 0xf2,
-                parameters: [],
-            },
-            goOut: {
-                ID: 0xf3,
-                parameters: [],
-            },
-            repast: {
-                ID: 0xf4,
-                parameters: [],
-            },
-        },
-        commandsResponse: {},
-    },
     tradfriButton: {
         ID: 0xfc80,
         manufacturerCode: ManufacturerCode.IKEA_OF_SWEDEN,
@@ -5302,84 +5360,6 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             },
         },
         commandsResponse: {},
-    },
-    heimanSpecificInfraRedRemote: {
-        // from HS2IRC-3.0海曼智能红外转发控制器API-V01文档
-        ID: 0xfc82,
-        manufacturerCode: ManufacturerCode.HEIMAN_TECHNOLOGY_CO_LTD,
-        attributes: {},
-        commands: {
-            sendKey: {
-                ID: 0xf0,
-                parameters: [
-                    {name: "id", type: DataType.UINT8},
-                    {name: "keyCode", type: DataType.UINT8},
-                ],
-            },
-            studyKey: {
-                // Total we can have 30 keycode for each device ID (1..30).
-                ID: 0xf1,
-                // response: 0xf2,
-                parameters: [
-                    {name: "id", type: DataType.UINT8},
-                    {name: "keyCode", type: DataType.UINT8},
-                ],
-            },
-            deleteKey: {
-                ID: 0xf3,
-                parameters: [
-                    // 1-15 - Delete specific ID, >= 16 - Delete All
-                    {name: "id", type: DataType.UINT8},
-                    // 1-30 - Delete specific keycode, >= 31 - Delete All keycodes for the ID
-                    {name: "keyCode", type: DataType.UINT8},
-                ],
-            },
-            createId: {
-                // Total we can have 15 device IDs (1..15).
-                ID: 0xf4,
-                // response: 0xf5,
-                parameters: [{name: "modelType", type: DataType.UINT8}],
-            },
-            getIdAndKeyCodeList: {
-                ID: 0xf6,
-                // response: 0xf7,
-                parameters: [],
-            },
-        },
-        commandsResponse: {
-            studyKeyRsp: {
-                ID: 0xf2,
-                parameters: [
-                    {name: "id", type: DataType.UINT8},
-                    {name: "keyCode", type: DataType.UINT8},
-                    {name: "result", type: DataType.UINT8}, // 0 - success, 1 - fail
-                ],
-            },
-            createIdRsp: {
-                ID: 0xf5,
-                parameters: [
-                    {name: "id", type: DataType.UINT8}, // 0xFF - create failed
-                    {name: "modelType", type: DataType.UINT8},
-                ],
-            },
-            getIdAndKeyCodeListRsp: {
-                ID: 0xf7,
-                parameters: [
-                    {name: "packetsTotal", type: DataType.UINT8},
-                    {name: "packetNumber", type: DataType.UINT8},
-                    {name: "packetLength", type: DataType.UINT8}, // Max length is 70 bytes
-                    // HELP for learnedDevicesList data structure:
-                    //   struct structPacketPayload {
-                    //     uint8_t ID;
-                    //     uint8_t ModeType;
-                    //     uint8_t KeyNum;
-                    //     uint8_t KeyCode[KeyNum];
-                    //   } arayPacketPayload[CurentPacketLenght];
-                    // }
-                    {name: "learnedDevicesList", type: BuffaloZclDataType.LIST_UINT8},
-                ],
-            },
-        },
     },
     schneiderSpecificPilotMode: {
         ID: 0xff23,

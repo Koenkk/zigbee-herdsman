@@ -35,26 +35,25 @@ const EXTENSION_FIELD_SETS_DATA_TYPE: {[key: number]: DataType[]} = {
     768: [DataType.UINT16, DataType.UINT16, DataType.UINT16, DataType.UINT8, DataType.UINT8, DataType.UINT8, DataType.UINT16, DataType.UINT16],
 };
 
+// UINT8_TMP_FIX: temporary return 0xff instead of Number.NaN
+// Will be replaced by https://github.com/Koenkk/zigbee-herdsman/pull/1503
+// https://github.com/Koenkk/zigbee-herdsman/issues/1498
+// https://github.com/Koenkk/zigbee-herdsman/pull/1510
+
 export class BuffaloZcl extends Buffalo {
-    // TODO: shuffles quite a lot of code (ZH is mostly typed `string | number` and ZHC requires lots of scrutiny)
-    // private writeZclBoolean(value: boolean | undefined): void {
-    //     this.writeUInt8(value === undefined ? 0xff : value ? 1 : 0);
-    // }
-
-    // private readZclBoolean(): boolean | undefined {
-    //     const value = this.readUInt8();
-
-    //     return value === 0xff ? undefined : !!value;
-    // }
-
     private writeZclUInt8(value: number): void {
-        this.writeUInt8(Number.isNaN(value) ? 0xff : value);
+        this.writeUInt8(value);
+        // See UINT8_TMP_FIX
+        // this.writeUInt8(Number.isNaN(value) ? 0xff : value);
     }
 
     private readZclUInt8(): number {
         const value = this.readUInt8();
 
-        return value === 0xff ? Number.NaN : value;
+        return value;
+
+        // See UINT8_TMP_FIX
+        // return value === 0xff ? Number.NaN : value;
     }
 
     private writeZclUInt16(value: number): void {
@@ -211,18 +210,27 @@ export class BuffaloZcl extends Buffalo {
         if (value) {
             this.writeUInt8(value.length);
             this.writeBuffer(value, value.length);
+            /* v8 ignore start */
         } else {
+            // ignore because of UINT8_TMP_FIX
             this.writeUInt8(0xff); // non-value
         }
+        /* v8 ignore stop */
     }
 
     private readOctetStr(): Buffer {
         const length = this.readZclUInt8();
-        return Number.isNaN(length) ? Buffer.from([]) : this.readBuffer(length);
+
+        // See UINT8_TMP_FIX
+        return length < 0xff ? this.readBuffer(length) : Buffer.from([]); // non-value
+        // return Number.isNaN(length) ? Buffer.from([]) : this.readBuffer(length);
     }
 
     private writeCharStr(value?: string | number[]): void {
-        if (value) {
+        // In case of an empty string, send 0 length, from the spec:
+        // "Setting this sub-field to 0x00 represents a character string with no character data (an “empty string”). Setting
+        // this sub-field to 0xff represents the non-value. In both cases the character data sub-field has zero length."
+        if (value != null) {
             if (typeof value === "string") {
                 this.writeUInt8(Buffer.byteLength(value, "utf8"));
                 this.writeUtf8String(value);
@@ -238,7 +246,9 @@ export class BuffaloZcl extends Buffalo {
     private readCharStr(): string {
         const length = this.readZclUInt8();
 
-        return Number.isNaN(length) ? "" : this.readUtf8String(length);
+        // See UINT8_TMP_FIX
+        return length < 0xff ? this.readUtf8String(length) : ""; // non-value
+        // return Number.isNaN(length) ? "" : this.readUtf8String(length);
     }
 
     private writeLongOctetStr(value?: number[]): void {
@@ -256,7 +266,11 @@ export class BuffaloZcl extends Buffalo {
     }
 
     private writeLongCharStr(value?: string): void {
-        if (value) {
+        // In case of an empty string, send 0 length, from the spec:
+        // "Setting this sub-field to 0x0000 represents a long character string with no character data (an “empty string”).
+        // Setting this sub-field to 0xffff represents an non-value long character string value. In both cases the character
+        // data sub-field has zero length"
+        if (value != null) {
             this.writeUInt16(Buffer.byteLength(value, "utf8"));
             this.writeUtf8String(value);
         } else {
@@ -540,18 +554,18 @@ export class BuffaloZcl extends Buffalo {
                 deviceID: this.readUInt8(),
                 options: this.readUInt8(),
                 extendedOptions: 0,
-                securityKey: Buffer.alloc(16),
+                securityKey: Buffer.alloc(16) as Buffer<ArrayBufferLike>,
                 keyMic: 0,
                 outgoingCounter: 0,
                 applicationInfo: 0,
                 manufacturerID: 0,
                 modelID: 0,
                 numGpdCommands: 0,
-                gpdCommandIdList: Buffer.alloc(0),
+                gpdCommandIdList: Buffer.alloc(0) as Buffer<ArrayBufferLike>,
                 numServerClusters: 0,
                 numClientClusters: 0,
-                gpdServerClusters: Buffer.alloc(0),
-                gpdClientClusters: Buffer.alloc(0),
+                gpdServerClusters: Buffer.alloc(0) as Buffer<ArrayBufferLike>,
+                gpdClientClusters: Buffer.alloc(0) as Buffer<ArrayBufferLike>,
                 genericSwitchConfig: 0,
                 currentContactStatus: 0,
             };
@@ -757,8 +771,7 @@ export class BuffaloZcl extends Buffalo {
     }
 
     private writeBigEndianUInt24(value: number): void {
-        this.buffer.writeUIntBE(value, this.position, 3);
-        this.position += 3;
+        this.position = this.buffer.writeUIntBE(value, this.position, 3);
     }
 
     private readBigEndianUInt24(): number {
