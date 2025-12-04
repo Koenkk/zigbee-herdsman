@@ -103,6 +103,8 @@ interface ConfiguredReporting {
     reportableChange: number;
 }
 
+const MAX_CLUSTER_ATTRIBUTES_SAVE_INTERVAL = 5000;
+
 export class Endpoint extends ZigbeeEntity {
     public deviceID?: number;
     public inputClusters: number[];
@@ -117,6 +119,7 @@ export class Endpoint extends ZigbeeEntity {
     private _configuredReportings: ConfiguredReportingInternal[];
     public meta: KeyValue;
     private pendingRequests: RequestQueue;
+    #lastClusterAttributesSave = 0;
 
     // Getters/setters
     get binds(): Bind[] {
@@ -305,7 +308,13 @@ export class Endpoint extends ZigbeeEntity {
             this.clusters[cluster.name].attributes[attribute] = list[attribute];
         }
 
-        this.save();
+        const now = Date.now();
+
+        if (this.#lastClusterAttributesSave + MAX_CLUSTER_ATTRIBUTES_SAVE_INTERVAL < now) {
+            this.#lastClusterAttributesSave = now;
+
+            this.save();
+        }
     }
 
     public getClusterAttributeValue(clusterKey: number | string, attributeKey: number | string): number | string | undefined {
