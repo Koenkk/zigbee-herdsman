@@ -231,8 +231,8 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
         // Set backup timer to 1 day.
         this.backupTimer = setInterval(() => this.backup(), 86400000);
 
-        // Set database save timer to 1 hour.
-        this.databaseSaveTimer = setInterval(() => this.databaseSave(), 3600000);
+        // Set database save timer to 5 minutes.
+        this.databaseSaveTimer = setInterval(() => this.databaseSave(), 300000);
 
         this.#touchlink = new Touchlink(this.adapter);
 

@@ -304,8 +304,6 @@ export class Endpoint extends ZigbeeEntity {
         for (const attribute in list) {
             this.clusters[cluster.name].attributes[attribute] = list[attribute];
         }
-
-        this.save();
     }
 
     public getClusterAttributeValue(clusterKey: number | string, attributeKey: number | string): number | string | undefined {
