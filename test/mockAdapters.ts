@@ -69,3 +69,17 @@ export const ZBT_2 = {
     productId: "4001",
     manufacturer: "Nabu Casa",
 };
+export const ZBT_1_PNPID = {
+    path: "/dev/ttyUSB0",
+    pnpId: "usb-Nabu_Casa_SkyConnect_v1.0_92390c41b6d8ed11a3436b6142c613ac-if00-port0",
+    vendorId: "10c4",
+    productId: "ea60",
+    manufacturer: "Nabu Casa",
+};
+export const ZWA_2_CONFLICT = {
+    path: "/dev/ttyACM0",
+    manufacturer: "Nabu Casa",
+    pnpId: "usb-Nabu_Casa_ZWA-2_81B53EF0C8EC-if00",
+    vendorId: "303a",
+    productId: "4001",
+};
