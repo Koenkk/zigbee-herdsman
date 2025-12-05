@@ -34,4 +34,9 @@ export interface Backup {
         version?: number;
         hashed_tclk?: Buffer;
     };
+    blz?: {
+        version?: number;
+        tclk?: Buffer;
+        tclkFrameCounter?: number;
+    };
 }

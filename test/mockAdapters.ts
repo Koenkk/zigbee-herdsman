@@ -63,6 +63,12 @@ export const ZIGATE_PLUSV2 = {
     vendorId: "0403",
     productId: "6015",
 };
+export const BLZ_THIRDREALITY = {
+    path: "/dev/serial/by-id/usb-1a86_USB_Serial-if00-port0",
+    vendorId: "1A86",
+    productId: "7523",
+    manufacturer: "wch.cn",
+};
 export const ZBT_2 = {
     path: "/dev/serial/by-id/usb-Nabu_Casa_ZBT-2_10B41DE58D6C-if00",
     vendorId: "303a",
