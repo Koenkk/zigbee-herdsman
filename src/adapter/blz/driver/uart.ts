@@ -6,7 +6,7 @@ import net from 'net';
 import {Queue, wait, Waitress} from '../../../utils';
 import {logger} from '../../../utils/logger';
 import {SerialPort} from '../../serialPort';
-import SocketPortUtils from '../../socketPortUtils';
+import {isTcpPath, parseTcpPath} from '../../utils';
 import {SerialPortOptions} from '../../tstype';
 import {Frame} from './frame';
 import {Parser} from './parser';
@@ -58,7 +58,7 @@ export class SerialDriver extends EventEmitter {
     }
 
     async connect(options: SerialPortOptions): Promise<void> {
-        if (SocketPortUtils.isTcpPath(options.path!)) {
+        if (isTcpPath(options.path!)) {
             await this.openSocketPort(options.path!);
         } else {
             await this.openSerialPort(options.path!, options.baudRate!, options.rtscts!);
@@ -105,7 +105,7 @@ export class SerialDriver extends EventEmitter {
     }
 
     private async openSocketPort(path: string): Promise<void> {
-        const info = SocketPortUtils.parseTcpPath(path);
+        const info = parseTcpPath(path);
         logger.debug(`Opening TCP socket with ${info.host}:${info.port}`, NS);
 
         this.socketPort = new net.Socket();
