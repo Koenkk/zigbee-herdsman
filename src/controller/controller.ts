@@ -991,7 +991,7 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
         }
 
         if (!device) {
-            if (typeof payload.address === "number") {
+            if (typeof payload.address === "number" && !Device.isDeletedByNetworkAddress(payload.address)) {
                 device = await this.identifyUnknownDevice(payload.address);
             }
 
