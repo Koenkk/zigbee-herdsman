@@ -1,5 +1,12 @@
 # Changelog
 
+## [7.0.4](https://github.com/Koenkk/zigbee-herdsman/compare/v7.0.3...v7.0.4) (2025-12-06)
+
+
+### Bug Fixes
+
+* Use best match for USB adapter discovery ([#1578](https://github.com/Koenkk/zigbee-herdsman/issues/1578)) ([1c5a249](https://github.com/Koenkk/zigbee-herdsman/commit/1c5a2495fcb0e7f7b3301004183e39fe0d240e14))
+
 ## [7.0.3](https://github.com/Koenkk/zigbee-herdsman/compare/v7.0.2...v7.0.3) (2025-12-04)
 
 
