@@ -72,6 +72,7 @@ const USB_FINGERPRINTS: Record<DiscoverableUsbAdapter, UsbAdapterFingerprint[]> 
             manufacturer: "Nabu Casa",
             // /dev/serial/by-id/usb-Nabu_Casa_SkyConnect_v1.0_3abe54797c91ed118fc3cad13b20a111-if00-port0
             pathRegex: ".*Nabu_Casa_SkyConnect.*",
+            options: {rtscts: true},
         },
         {
             // Home Assistant Connect ZBT-2
@@ -98,6 +99,7 @@ const USB_FINGERPRINTS: Record<DiscoverableUsbAdapter, UsbAdapterFingerprint[]> 
             // /dev/serial/by-id/usb-SMLIGHT_SMLIGHT_SLZB-07_be9faa0786e1ea11bd68dc2d9a583111-if00-port0
             // /dev/serial/by-id/usb-Silicon_Labs_CP2102N_USB_to_UART_Bridge_Controller_a215650c853bec119a079e957a0af111-if00-port0
             pathRegex: ".*slzb-07_.*", // `_` to not match 07p7
+            options: {rtscts: true},
         },
         {
             // SMLight slzb-07mg24
@@ -105,6 +107,7 @@ const USB_FINGERPRINTS: Record<DiscoverableUsbAdapter, UsbAdapterFingerprint[]> 
             productId: "ea60",
             manufacturer: "SMLIGHT",
             pathRegex: ".*slzb-07mg24.*",
+            options: {rtscts: true},
         },
         {
             // Sonoff ZBDongle-E V2 (CH variant)
@@ -470,26 +473,34 @@ export async function findUsbAdapter(adapter?: Adapter, path?: string): Promise<
 
     logger.debug(() => `Connected devices: ${JSON.stringify(portList)}`, NS);
 
+    let bestMatch: ReturnType<typeof findUsbAdapterBestMatch> | undefined;
+
     for (const portInfo of portList) {
         if (path && portInfo.path !== path) {
             continue;
         }
 
         const conflictProne = USB_FINGERPRINTS_CONFLICT_IDS.includes(`${portInfo.vendorId}:${portInfo.productId}`);
-        const bestMatch = findUsbAdapterBestMatch(adapter, portInfo, isWindows, conflictProne);
+        const match = findUsbAdapterBestMatch(adapter, portInfo, isWindows, conflictProne);
 
-        if (bestMatch) {
-            logger.info(
-                () => `Matched adapter: ${JSON.stringify(portInfo)} => ${bestMatch[0]}: path=${bestMatch[1][0]}, score=${bestMatch[1][1]}`,
-                NS,
-            );
-            return {
-                adapter: bestMatch[0],
-                path: bestMatch[1][0],
-                rtscts: bestMatch[1][2].options?.rtscts,
-                baudRate: bestMatch[1][2].options?.baudRate,
-            };
+        if (match && (!bestMatch || bestMatch[1][1] < match[1][1])) {
+            bestMatch = match;
+
+            if (match[1][1] === UsbFingerprintMatchScore.VidPidManufPath) {
+                // got best possible match, exit loop
+                break;
+            }
         }
+    }
+
+    if (bestMatch) {
+        logger.info(() => `Matched adapter=${bestMatch[0]} path=${bestMatch[1][0]}, score=${bestMatch[1][1]}`, NS);
+        return {
+            adapter: bestMatch[0],
+            path: bestMatch[1][0],
+            rtscts: bestMatch[1][2].options?.rtscts,
+            baudRate: bestMatch[1][2].options?.baudRate,
+        };
     }
 }
 
