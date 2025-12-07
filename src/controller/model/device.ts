@@ -323,6 +323,11 @@ export class Device extends Entity<ControllerEventMap> {
     }
 
     public async onZclData(dataPayload: AdapterEvents.ZclPayload, frame: Zcl.Frame, endpoint: Endpoint): Promise<void> {
+        if (!Device.devices.has(this.ieeeAddr)) {
+            // prevent race conditions where device gets deleted during processing
+            return;
+        }
+
         // Respond to enroll requests
         if (frame.header.isSpecific && frame.isCluster("ssIasZone") && frame.isCommand("enrollReq")) {
             logger.debug(`IAS - '${this.ieeeAddr}' responding to enroll response`, NS);
@@ -414,7 +419,7 @@ export class Device extends Entity<ControllerEventMap> {
         const commandHasResponse = frame.command.response !== undefined;
         const disableDefaultResponse = frame.header.frameControl.disableDefaultResponse;
         /* v8 ignore next */
-        const disableTuyaDefaultResponse = endpoint.getDevice().manufacturerName?.startsWith("_TZ") && process.env.DISABLE_TUYA_DEFAULT_RESPONSE;
+        const disableTuyaDefaultResponse = this.manufacturerName?.startsWith("_TZ") && process.env.DISABLE_TUYA_DEFAULT_RESPONSE;
         // Sometimes messages are received twice, prevent responding twice
         const alreadyResponded = this._lastDefaultResponseSequenceNumber === frame.header.transactionSequenceNumber;
 
@@ -601,6 +606,22 @@ export class Device extends Entity<ControllerEventMap> {
         }
 
         return devices;
+    }
+
+    /** Check if a device is explicitly deleted */
+    public static isDeletedByIeeeAddr(ieeeAddr: string): boolean {
+        Device.loadFromDatabaseIfNecessary();
+
+        return Device.deletedDevices.has(ieeeAddr);
+    }
+
+    /** Check if a device is explicitly deleted */
+    public static isDeletedByNetworkAddress(networkAddress: number): boolean {
+        Device.loadFromDatabaseIfNecessary();
+
+        const ieeeAddr = Device.nwkToIeeeCache.get(networkAddress);
+
+        return ieeeAddr ? Device.deletedDevices.has(ieeeAddr) : false;
     }
 
     /**
