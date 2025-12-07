@@ -3362,7 +3362,7 @@ describe("Controller", () => {
         const device = controller.getDeviceByIeeeAddr("0x129")!;
         device.addCustomCluster("ssIasZone", {
             ID: Zcl.Clusters.ssIasZone.ID,
-            commands: {boschSmokeAlarmSiren: {ID: 0x80, parameters: [{name: "data", type: Zcl.DataType.UINT16, writable: true, max: 0xffff}]}},
+            commands: {boschSmokeAlarmSiren: {ID: 0x80, parameters: [{name: "data", type: Zcl.DataType.UINT16, max: 0xffff}]}},
             commandsResponse: {},
             attributes: {},
         });
@@ -9098,7 +9098,7 @@ describe("Controller", () => {
             ID: 64513,
             commands: {},
             commandsResponse: {},
-            attributes: {customAttr: {ID: 0, type: Zcl.DataType.UINT8, writable: true}},
+            attributes: {customAttr: {ID: 0, type: Zcl.DataType.UINT8, write: true}},
         });
 
         const group = controller.createGroup(34);

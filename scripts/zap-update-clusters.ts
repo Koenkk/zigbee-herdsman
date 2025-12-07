@@ -918,24 +918,24 @@ function updateAttributes(
                 propsToAdd.push(factory.createPropertyAssignment("client", factory.createTrue()));
             }
 
-            if (meta.readable === "false" && !existingPropNames.has("readable")) {
-                propsToAdd.push(factory.createPropertyAssignment("readable", factory.createFalse()));
+            if (meta.readable === "false" && !existingPropNames.has("read")) {
+                propsToAdd.push(factory.createPropertyAssignment("read", factory.createFalse()));
             }
 
-            if (meta.writable === "true" && !existingPropNames.has("writable")) {
-                propsToAdd.push(factory.createPropertyAssignment("writable", factory.createTrue()));
+            if (meta.writable === "true" && !existingPropNames.has("write")) {
+                propsToAdd.push(factory.createPropertyAssignment("write", factory.createTrue()));
             }
 
             if (meta.writeOptional === "true" && !existingPropNames.has("writeOptional")) {
                 propsToAdd.push(factory.createPropertyAssignment("writeOptional", factory.createTrue()));
             }
 
-            if (meta.reportRequired === "true" && !existingPropNames.has("reportRequired")) {
-                propsToAdd.push(factory.createPropertyAssignment("reportRequired", factory.createTrue()));
+            if (meta.reportRequired === "true" && !existingPropNames.has("report")) {
+                propsToAdd.push(factory.createPropertyAssignment("report", factory.createTrue()));
             }
 
-            if (meta.sceneRequired === "true" && !existingPropNames.has("sceneRequired")) {
-                propsToAdd.push(factory.createPropertyAssignment("sceneRequired", factory.createTrue()));
+            if (meta.sceneRequired === "true" && !existingPropNames.has("scene")) {
+                propsToAdd.push(factory.createPropertyAssignment("scene", factory.createTrue()));
             }
 
             if (meta.required === "true" && !existingPropNames.has("required")) {

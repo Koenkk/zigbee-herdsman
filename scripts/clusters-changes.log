@@ -223,7 +223,6 @@ Found 582 changes.
 [CHANGED] Clusters > touchlink > commandsResponse > networkJoinRouter > parameters > status > type: ENUM8 -> UINT8
 [CHANGED] Clusters > touchlink > commandsResponse > networkJoinEndDevice > parameters > status > type: ENUM8 -> UINT8
 
-[ADDED]   Clusters > genLevelCtrlForLighting: 8 (0x0008)
 [ADDED]   Clusters > piPartition: 22 (0x0016)
 [ADDED]   Clusters > powerProfile: 26 (0x001a)
 [ADDED]   Clusters > haApplianceControl: 27 (0x001b)

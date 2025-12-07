@@ -194,15 +194,15 @@ export interface Attribute extends Restrictions {
     type: DataType;
     manufacturerCode?: number;
     /** If the attribute is readable OTA. Defaults to true. NOTE: marked as `R` in spec PDF */
-    readable?: false;
+    read?: false;
     /** If the attribute is writable OTA. Defaults to false. NOTE: marked as `W` in spec PDF */
-    writable?: true;
+    write?: true;
     /** If the attribute is specified as writable this indicates if the write is required (returns READ_ONLY if not). Defaults to false. */
     writeOptional?: true;
     /** If attribute is required to be reportable. Defaults to false. NOTE: marked as `P` in spec PDF */
-    reportRequired?: true;
+    report?: true;
     /** If attribute is required to be part of the scene extensions. Defaults to false. NOTE: marked as `S` in spec PDF */
-    sceneRequired?: true;
+    scene?: true;
     /** If the attribute is mandatory. Defaults to false */
     required?: true;
     /** Specifies the default value of an attribute. No Default */
@@ -302,7 +302,6 @@ export type ClusterName =
     | "genOnOff"
     | "genOnOffSwitchCfg"
     | "genLevelCtrl"
-    | "genLevelCtrlForLighting"
     | "genAlarms"
     | "genTime"
     | "genRssiLocation"

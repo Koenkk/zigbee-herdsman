@@ -361,7 +361,7 @@ function processRestrictions<T>(entry: Attribute | Parameter, value: T): void {
 }
 
 export function processAttributeWrite<T>(attribute: Attribute, value: T): T {
-    if (attribute.writable !== true) {
+    if (attribute.write !== true) {
         throw new Error(`Attribute ${attribute.name} (${attribute.ID}) is not writable`);
     }
 
@@ -394,7 +394,7 @@ export function processAttributeWrite<T>(attribute: Attribute, value: T): T {
 }
 
 export function processAttributePreRead(attribute: Attribute): void {
-    if (attribute.readable === false) {
+    if (attribute.read === false) {
         throw new Error(`Attribute ${attribute.name} (${attribute.ID}) is not readable`);
     }
 }

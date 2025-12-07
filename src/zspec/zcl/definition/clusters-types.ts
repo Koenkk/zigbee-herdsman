@@ -48,19 +48,19 @@ export interface TClusters {
             serialNumber: string;
             /** ID=0x000e | type=CHAR_STR | default= */
             productLabel: string;
-            /** ID=0x0010 | type=CHAR_STR | writable=true | default= | maxLen=16 */
+            /** ID=0x0010 | type=CHAR_STR | write=true | default= | maxLen=16 */
             locationDesc: string;
-            /** ID=0x0011 | type=ENUM8 | writable=true | default=0 */
+            /** ID=0x0011 | type=ENUM8 | write=true | default=0 */
             physicalEnv: number;
-            /** ID=0x0012 | type=BOOLEAN | writable=true | default=1 */
+            /** ID=0x0012 | type=BOOLEAN | write=true | default=1 */
             deviceEnabled: number;
-            /** ID=0x0013 | type=BITMAP8 | writable=true | default=0 */
+            /** ID=0x0013 | type=BITMAP8 | write=true | default=0 */
             alarmMask: number;
-            /** ID=0x0014 | type=BITMAP8 | writable=true | default=0 */
+            /** ID=0x0014 | type=BITMAP8 | write=true | default=0 */
             disableLocalConfig: number;
             /** ID=0x4000 | type=CHAR_STR | default= | maxLen=16 */
             swBuildId: string;
-            /** ID=0xe200 | type=INT8 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | writable=true | min=-128 | max=127 */
+            /** ID=0xe200 | type=INT8 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | min=-128 | max=127 */
             schneiderMeterRadioPower?: number;
         };
         commands: {
@@ -77,115 +77,115 @@ export interface TClusters {
             mainsVoltage: number;
             /** ID=0x0001 | type=UINT8 | max=255 */
             mainsFrequency: number;
-            /** ID=0x0010 | type=BITMAP8 | writable=true | default=0 */
+            /** ID=0x0010 | type=BITMAP8 | write=true | default=0 */
             mainsAlarmMask: number;
-            /** ID=0x0011 | type=UINT16 | writable=true | max=65535 | default=0 */
+            /** ID=0x0011 | type=UINT16 | write=true | max=65535 | default=0 */
             mainsVoltMinThres: number;
-            /** ID=0x0012 | type=UINT16 | writable=true | max=65535 | default=65535 */
+            /** ID=0x0012 | type=UINT16 | write=true | max=65535 | default=65535 */
             mainsVoltMaxThres: number;
-            /** ID=0x0013 | type=UINT16 | writable=true | max=65535 | default=0 */
+            /** ID=0x0013 | type=UINT16 | write=true | max=65535 | default=0 */
             mainsVoltageDwellTripPoint: number;
             /** ID=0x0020 | type=UINT8 | max=255 */
             batteryVoltage: number;
-            /** ID=0x0021 | type=UINT8 | reportRequired=true | max=255 | default=0 */
+            /** ID=0x0021 | type=UINT8 | report=true | max=255 | default=0 */
             batteryPercentageRemaining: number;
-            /** ID=0x0030 | type=CHAR_STR | writable=true | default= | maxLen=16 */
+            /** ID=0x0030 | type=CHAR_STR | write=true | default= | maxLen=16 */
             batteryManufacturer: string;
-            /** ID=0x0031 | type=ENUM8 | writable=true | default=255 */
+            /** ID=0x0031 | type=ENUM8 | write=true | default=255 */
             batterySize: number;
-            /** ID=0x0032 | type=UINT16 | writable=true | max=65535 */
+            /** ID=0x0032 | type=UINT16 | write=true | max=65535 */
             batteryAHrRating: number;
-            /** ID=0x0033 | type=UINT8 | writable=true | max=255 */
+            /** ID=0x0033 | type=UINT8 | write=true | max=255 */
             batteryQuantity: number;
-            /** ID=0x0034 | type=UINT8 | writable=true | max=255 */
+            /** ID=0x0034 | type=UINT8 | write=true | max=255 */
             batteryRatedVoltage: number;
-            /** ID=0x0035 | type=BITMAP8 | writable=true | default=0 */
+            /** ID=0x0035 | type=BITMAP8 | write=true | default=0 */
             batteryAlarmMask: number;
-            /** ID=0x0036 | type=UINT8 | writable=true | max=255 | default=0 */
+            /** ID=0x0036 | type=UINT8 | write=true | max=255 | default=0 */
             batteryVoltMinThres: number;
-            /** ID=0x0037 | type=UINT8 | writable=true | writeOptional=true | max=255 | default=0 */
+            /** ID=0x0037 | type=UINT8 | write=true | writeOptional=true | max=255 | default=0 */
             batteryVoltThres1: number;
-            /** ID=0x0038 | type=UINT8 | writable=true | writeOptional=true | max=255 | default=0 */
+            /** ID=0x0038 | type=UINT8 | write=true | writeOptional=true | max=255 | default=0 */
             batteryVoltThres2: number;
-            /** ID=0x0039 | type=UINT8 | writable=true | writeOptional=true | max=255 | default=0 */
+            /** ID=0x0039 | type=UINT8 | write=true | writeOptional=true | max=255 | default=0 */
             batteryVoltThres3: number;
-            /** ID=0x003a | type=UINT8 | writable=true | writeOptional=true | max=255 | default=0 */
+            /** ID=0x003a | type=UINT8 | write=true | writeOptional=true | max=255 | default=0 */
             batteryPercentMinThres: number;
-            /** ID=0x003b | type=UINT8 | writable=true | writeOptional=true | max=255 | default=0 */
+            /** ID=0x003b | type=UINT8 | write=true | writeOptional=true | max=255 | default=0 */
             batteryPercentThres1: number;
-            /** ID=0x003c | type=UINT8 | writable=true | writeOptional=true | max=255 | default=0 */
+            /** ID=0x003c | type=UINT8 | write=true | writeOptional=true | max=255 | default=0 */
             batteryPercentThres2: number;
-            /** ID=0x003d | type=UINT8 | writable=true | writeOptional=true | max=255 | default=0 */
+            /** ID=0x003d | type=UINT8 | write=true | writeOptional=true | max=255 | default=0 */
             batteryPercentThres3: number;
-            /** ID=0x003e | type=BITMAP32 | reportRequired=true | default=0 */
+            /** ID=0x003e | type=BITMAP32 | report=true | default=0 */
             batteryAlarmState: number;
             /** ID=0x0040 | type=UINT8 | max=255 */
             battery2Voltage: number;
-            /** ID=0x0041 | type=UINT8 | reportRequired=true | max=255 | default=0 */
+            /** ID=0x0041 | type=UINT8 | report=true | max=255 | default=0 */
             battery2PercentageRemaining: number;
-            /** ID=0x0050 | type=CHAR_STR | writable=true | default= | maxLen=16 */
+            /** ID=0x0050 | type=CHAR_STR | write=true | default= | maxLen=16 */
             battery2Manufacturer: string;
-            /** ID=0x0051 | type=ENUM8 | writable=true | default=255 */
+            /** ID=0x0051 | type=ENUM8 | write=true | default=255 */
             battery2Size: number;
-            /** ID=0x0052 | type=UINT16 | writable=true | max=65535 */
+            /** ID=0x0052 | type=UINT16 | write=true | max=65535 */
             battery2AHrRating: number;
-            /** ID=0x0053 | type=UINT8 | writable=true | max=255 */
+            /** ID=0x0053 | type=UINT8 | write=true | max=255 */
             battery2Quantity: number;
-            /** ID=0x0054 | type=UINT8 | writable=true | max=255 */
+            /** ID=0x0054 | type=UINT8 | write=true | max=255 */
             battery2RatedVoltage: number;
-            /** ID=0x0055 | type=BITMAP8 | writable=true | default=0 */
+            /** ID=0x0055 | type=BITMAP8 | write=true | default=0 */
             battery2AlarmMask: number;
-            /** ID=0x0056 | type=UINT8 | writable=true | max=255 | default=0 */
+            /** ID=0x0056 | type=UINT8 | write=true | max=255 | default=0 */
             battery2VoltageMinThreshold: number;
-            /** ID=0x0057 | type=UINT8 | writable=true | writeOptional=true | max=255 | default=0 */
+            /** ID=0x0057 | type=UINT8 | write=true | writeOptional=true | max=255 | default=0 */
             battery2VoltageThreshold1: number;
-            /** ID=0x0058 | type=UINT8 | writable=true | writeOptional=true | max=255 | default=0 */
+            /** ID=0x0058 | type=UINT8 | write=true | writeOptional=true | max=255 | default=0 */
             battery2VoltageThreshold2: number;
-            /** ID=0x0059 | type=UINT8 | writable=true | writeOptional=true | max=255 | default=0 */
+            /** ID=0x0059 | type=UINT8 | write=true | writeOptional=true | max=255 | default=0 */
             battery2VoltageThreshold3: number;
-            /** ID=0x005a | type=UINT8 | writable=true | writeOptional=true | max=255 | default=0 */
+            /** ID=0x005a | type=UINT8 | write=true | writeOptional=true | max=255 | default=0 */
             battery2PercentageMinThreshold: number;
-            /** ID=0x005b | type=UINT8 | writable=true | writeOptional=true | max=255 | default=0 */
+            /** ID=0x005b | type=UINT8 | write=true | writeOptional=true | max=255 | default=0 */
             battery2PercentageThreshold1: number;
-            /** ID=0x005c | type=UINT8 | writable=true | writeOptional=true | max=255 | default=0 */
+            /** ID=0x005c | type=UINT8 | write=true | writeOptional=true | max=255 | default=0 */
             battery2PercentageThreshold2: number;
-            /** ID=0x005d | type=UINT8 | writable=true | writeOptional=true | max=255 | default=0 */
+            /** ID=0x005d | type=UINT8 | write=true | writeOptional=true | max=255 | default=0 */
             battery2PercentageThreshold3: number;
-            /** ID=0x005e | type=BITMAP32 | reportRequired=true | default=0 */
+            /** ID=0x005e | type=BITMAP32 | report=true | default=0 */
             battery2AlarmState: number;
             /** ID=0x0060 | type=UINT8 | max=255 */
             battery3Voltage: number;
-            /** ID=0x0061 | type=UINT8 | reportRequired=true | max=255 | default=0 */
+            /** ID=0x0061 | type=UINT8 | report=true | max=255 | default=0 */
             battery3PercentageRemaining: number;
-            /** ID=0x0070 | type=CHAR_STR | writable=true | default= | maxLen=16 */
+            /** ID=0x0070 | type=CHAR_STR | write=true | default= | maxLen=16 */
             battery3Manufacturer: string;
-            /** ID=0x0071 | type=ENUM8 | writable=true | default=255 */
+            /** ID=0x0071 | type=ENUM8 | write=true | default=255 */
             battery3Size: number;
-            /** ID=0x0072 | type=UINT16 | writable=true | max=65535 */
+            /** ID=0x0072 | type=UINT16 | write=true | max=65535 */
             battery3AHrRating: number;
-            /** ID=0x0073 | type=UINT8 | writable=true | max=255 */
+            /** ID=0x0073 | type=UINT8 | write=true | max=255 */
             battery3Quantity: number;
-            /** ID=0x0074 | type=UINT8 | writable=true | max=255 */
+            /** ID=0x0074 | type=UINT8 | write=true | max=255 */
             battery3RatedVoltage: number;
-            /** ID=0x0075 | type=BITMAP8 | writable=true | default=0 */
+            /** ID=0x0075 | type=BITMAP8 | write=true | default=0 */
             battery3AlarmMask: number;
-            /** ID=0x0076 | type=UINT8 | writable=true | max=255 | default=0 */
+            /** ID=0x0076 | type=UINT8 | write=true | max=255 | default=0 */
             battery3VoltageMinThreshold: number;
-            /** ID=0x0077 | type=UINT8 | writable=true | writeOptional=true | max=255 | default=0 */
+            /** ID=0x0077 | type=UINT8 | write=true | writeOptional=true | max=255 | default=0 */
             battery3VoltageThreshold1: number;
-            /** ID=0x0078 | type=UINT8 | writable=true | writeOptional=true | max=255 | default=0 */
+            /** ID=0x0078 | type=UINT8 | write=true | writeOptional=true | max=255 | default=0 */
             battery3VoltageThreshold2: number;
-            /** ID=0x0079 | type=UINT8 | writable=true | writeOptional=true | max=255 | default=0 */
+            /** ID=0x0079 | type=UINT8 | write=true | writeOptional=true | max=255 | default=0 */
             battery3VoltageThreshold3: number;
-            /** ID=0x007a | type=UINT8 | writable=true | writeOptional=true | max=255 | default=0 */
+            /** ID=0x007a | type=UINT8 | write=true | writeOptional=true | max=255 | default=0 */
             battery3PercentageMinThreshold: number;
-            /** ID=0x007b | type=UINT8 | writable=true | writeOptional=true | max=255 | default=0 */
+            /** ID=0x007b | type=UINT8 | write=true | writeOptional=true | max=255 | default=0 */
             battery3PercentageThreshold1: number;
-            /** ID=0x007c | type=UINT8 | writable=true | writeOptional=true | max=255 | default=0 */
+            /** ID=0x007c | type=UINT8 | write=true | writeOptional=true | max=255 | default=0 */
             battery3PercentageThreshold2: number;
-            /** ID=0x007d | type=UINT8 | writable=true | writeOptional=true | max=255 | default=0 */
+            /** ID=0x007d | type=UINT8 | write=true | writeOptional=true | max=255 | default=0 */
             battery3PercentageThreshold3: number;
-            /** ID=0x007e | type=BITMAP32 | reportRequired=true | default=0 */
+            /** ID=0x007e | type=BITMAP32 | report=true | default=0 */
             battery3AlarmState: number;
         };
         commands: never;
@@ -201,15 +201,15 @@ export interface TClusters {
             maxTempExperienced: number;
             /** ID=0x0003 | type=UINT16 | max=65535 | default=0 */
             overTempTotalDwell: number;
-            /** ID=0x0010 | type=BITMAP8 | writable=true | default=0 */
+            /** ID=0x0010 | type=BITMAP8 | write=true | default=0 */
             devTempAlarmMask: number;
-            /** ID=0x0011 | type=INT16 | writable=true | min=-200 | max=200 */
+            /** ID=0x0011 | type=INT16 | write=true | min=-200 | max=200 */
             lowTempThres: number;
-            /** ID=0x0012 | type=INT16 | writable=true | min=-200 | max=200 */
+            /** ID=0x0012 | type=INT16 | write=true | min=-200 | max=200 */
             highTempThres: number;
-            /** ID=0x0013 | type=UINT24 | writable=true | max=16777215 */
+            /** ID=0x0013 | type=UINT24 | write=true | max=16777215 */
             lowTempDwellTripPoint: number;
-            /** ID=0x0014 | type=UINT24 | writable=true | max=16777215 */
+            /** ID=0x0014 | type=UINT24 | write=true | max=16777215 */
             highTempDwellTripPoint: number;
         };
         commands: never;
@@ -217,7 +217,7 @@ export interface TClusters {
     };
     genIdentify: {
         attributes: {
-            /** ID=0x0000 | type=UINT16 | writable=true | required=true | max=65535 | default=0 */
+            /** ID=0x0000 | type=UINT16 | write=true | required=true | max=65535 | default=0 */
             identifyTime: number;
         };
         commands: {
@@ -556,31 +556,31 @@ export interface TClusters {
     };
     genOnOff: {
         attributes: {
-            /** ID=0x0000 | type=BOOLEAN | reportRequired=true | sceneRequired=true | required=true | default=0 */
+            /** ID=0x0000 | type=BOOLEAN | report=true | scene=true | required=true | default=0 */
             onOff: number;
             /** ID=0x4000 | type=BOOLEAN | default=1 */
             globalSceneCtrl: number;
-            /** ID=0x4001 | type=UINT16 | writable=true | max=65535 | default=0 */
+            /** ID=0x4001 | type=UINT16 | write=true | max=65535 | default=0 */
             onTime: number;
-            /** ID=0x4002 | type=UINT16 | writable=true | max=65535 | default=0 */
+            /** ID=0x4002 | type=UINT16 | write=true | max=65535 | default=0 */
             offWaitTime: number;
-            /** ID=0x4003 | type=ENUM8 | writable=true | max=255 | special=SetToPreviousValue,ff */
+            /** ID=0x4003 | type=ENUM8 | write=true | max=255 | special=SetToPreviousValue,ff */
             startUpOnOff: number;
-            /** ID=0x0001 | type=UINT16 | manufacturerCode=NODON(0x128b) | writable=true | max=65535 */
+            /** ID=0x0001 | type=UINT16 | manufacturerCode=NODON(0x128b) | write=true | max=65535 */
             nodonTransitionTime?: number;
-            /** ID=0x5000 | type=ENUM8 | writable=true | max=255 */
+            /** ID=0x5000 | type=ENUM8 | write=true | max=255 */
             tuyaBacklightSwitch: number;
-            /** ID=0x8001 | type=ENUM8 | writable=true | max=255 */
+            /** ID=0x8001 | type=ENUM8 | write=true | max=255 */
             tuyaBacklightMode: number;
-            /** ID=0x8002 | type=ENUM8 | writable=true | max=255 */
+            /** ID=0x8002 | type=ENUM8 | write=true | max=255 */
             moesStartUpOnOff: number;
-            /** ID=0x8004 | type=ENUM8 | writable=true | max=255 */
+            /** ID=0x8004 | type=ENUM8 | write=true | max=255 */
             tuyaOperationMode: number;
-            /** ID=0xe000 | type=UINT16 | manufacturerCode=ADEO(0x1277) | writable=true | max=65535 */
+            /** ID=0xe000 | type=UINT16 | manufacturerCode=ADEO(0x1277) | write=true | max=65535 */
             elkoPreWarningTime?: number;
-            /** ID=0xe001 | type=UINT32 | manufacturerCode=ADEO(0x1277) | writable=true | max=4294967295 */
+            /** ID=0xe001 | type=UINT32 | manufacturerCode=ADEO(0x1277) | write=true | max=4294967295 */
             elkoOnTimeReload?: number;
-            /** ID=0xe002 | type=BITMAP8 | manufacturerCode=ADEO(0x1277) | writable=true */
+            /** ID=0xe002 | type=BITMAP8 | manufacturerCode=ADEO(0x1277) | write=true */
             elkoOnTimeReloadOptions?: number;
         };
         commands: {
@@ -627,7 +627,7 @@ export interface TClusters {
         attributes: {
             /** ID=0x0000 | type=ENUM8 | required=true | min=0 | max=2 */
             switchType: number;
-            /** ID=0x0010 | type=ENUM8 | required=true | writable=true | min=0 | max=2 */
+            /** ID=0x0010 | type=ENUM8 | required=true | write=true | min=0 | max=2 */
             switchActions: number;
         };
         commands: never;
@@ -635,7 +635,7 @@ export interface TClusters {
     };
     genLevelCtrl: {
         attributes: {
-            /** ID=0x0000 | type=UINT8 | reportRequired=true | sceneRequired=true | required=true | default=255 */
+            /** ID=0x0000 | type=UINT8 | report=true | scene=true | required=true | default=255 */
             currentLevel: number;
             /** ID=0x0001 | type=UINT16 | max=65535 | default=0 */
             remainingTime: number;
@@ -643,27 +643,27 @@ export interface TClusters {
             minLevel: number;
             /** ID=0x0003 | type=UINT8 | max=255 | default=255 */
             maxLevel: number;
-            /** ID=0x0004 | type=UINT16 | reportRequired=true | sceneRequired=true | default=0 */
+            /** ID=0x0004 | type=UINT16 | report=true | default=0 */
             currentFrequency: number;
             /** ID=0x0005 | type=UINT16 | default=0 */
             minFrequency: number;
             /** ID=0x0006 | type=UINT16 | max=65535 | default=0 */
             maxFrequency: number;
-            /** ID=0x000f | type=BITMAP8 | writable=true | default=0 */
+            /** ID=0x000f | type=BITMAP8 | write=true | default=0 */
             options: number;
-            /** ID=0x0010 | type=UINT16 | writable=true | max=65535 | default=0 */
+            /** ID=0x0010 | type=UINT16 | write=true | max=65535 | default=0 */
             onOffTransitionTime: number;
-            /** ID=0x0011 | type=UINT8 | writable=true | default=255 */
+            /** ID=0x0011 | type=UINT8 | write=true | default=255 */
             onLevel: number;
-            /** ID=0x0012 | type=UINT16 | writable=true | max=65534 | default=65535 */
+            /** ID=0x0012 | type=UINT16 | write=true | max=65534 | default=65535 */
             onTransitionTime: number;
-            /** ID=0x0013 | type=UINT16 | writable=true | max=65534 | default=65535 */
+            /** ID=0x0013 | type=UINT16 | write=true | max=65534 | default=65535 */
             offTransitionTime: number;
-            /** ID=0x0014 | type=UINT8 | writable=true | max=254 */
+            /** ID=0x0014 | type=UINT8 | write=true | max=254 */
             defaultMoveRate: number;
-            /** ID=0x4000 | type=UINT8 | writable=true | max=255 | special=MinimumDeviceValuePermitted,00,SetToPreviousValue,ff */
+            /** ID=0x4000 | type=UINT8 | write=true | max=255 | special=MinimumDeviceValuePermitted,00,SetToPreviousValue,ff */
             startUpCurrentLevel: number;
-            /** ID=0x4000 | type=UINT8 | manufacturerCode=ADEO(0x1277) | writable=true | max=255 */
+            /** ID=0x4000 | type=UINT8 | manufacturerCode=ADEO(0x1277) | write=true | max=255 */
             elkoStartUpCurrentLevel?: number;
         };
         commands: {
@@ -766,130 +766,6 @@ export interface TClusters {
         };
         commandResponses: never;
     };
-    genLevelCtrlForLighting: {
-        attributes: {
-            /** ID=0x0000 | type=UINT8 | reportRequired=true | sceneRequired=true | required=true | min=1 | max=254 */
-            currentLevel: number;
-            /** ID=0x0001 | type=UINT16 | max=65535 | default=0 */
-            remainingTime: number;
-            /** ID=0x0002 | type=UINT8 | default=0 */
-            minLevel: number;
-            /** ID=0x0003 | type=UINT8 | max=255 | default=255 */
-            maxLevel: number;
-            /** ID=0x0004 | type=UINT16 | reportRequired=true | sceneRequired=true | default=0 | special=Unknown,0000 */
-            currentFrequency: number;
-            /** ID=0x0005 | type=UINT16 | default=0 */
-            minFrequency: number;
-            /** ID=0x0006 | type=UINT16 | max=65535 | default=0 */
-            maxFrequency: number;
-            /** ID=0x000f | type=BITMAP8 | required=true | writable=true | default=0 */
-            options: number;
-            /** ID=0x0010 | type=UINT16 | writable=true | max=65535 | default=0 */
-            onOffTransitionTime: number;
-            /** ID=0x0011 | type=UINT8 | writable=true | default=255 */
-            onLevel: number;
-            /** ID=0x0012 | type=UINT16 | writable=true | max=65534 | default=65535 */
-            onTransitionTime: number;
-            /** ID=0x0013 | type=UINT16 | writable=true | max=65534 | default=65535 */
-            offTransitionTime: number;
-            /** ID=0x0014 | type=UINT8 | writable=true | max=254 */
-            defaultMoveRate: number;
-            /** ID=0x4000 | type=UINT8 | writable=true | max=255 | special=MinimumDeviceValuePermitted,00,SetToPreviousValue,ff */
-            startUpCurrentLevel: number;
-        };
-        commands: {
-            /** ID=0x00 | required=true */
-            moveToLevel: {
-                /** type=UINT8 */
-                level: number;
-                /** type=UINT16 */
-                transtime: number;
-                /** type=BITMAP8 | conditions=[{minimumRemainingBufferBytes value=1}] */
-                optionsMask?: number;
-                /** type=BITMAP8 | conditions=[{minimumRemainingBufferBytes value=1}] */
-                optionsOverride?: number;
-            };
-            /** ID=0x01 | required=true */
-            move: {
-                /** type=ENUM8 */
-                movemode: number;
-                /** type=UINT8 */
-                rate: number;
-                /** type=BITMAP8 | conditions=[{minimumRemainingBufferBytes value=1}] */
-                optionsMask?: number;
-                /** type=BITMAP8 | conditions=[{minimumRemainingBufferBytes value=1}] */
-                optionsOverride?: number;
-            };
-            /** ID=0x02 | required=true */
-            step: {
-                /** type=ENUM8 */
-                stepmode: number;
-                /** type=UINT8 */
-                stepsize: number;
-                /** type=UINT16 */
-                transtime: number;
-                /** type=BITMAP8 | conditions=[{minimumRemainingBufferBytes value=1}] */
-                optionsMask?: number;
-                /** type=BITMAP8 | conditions=[{minimumRemainingBufferBytes value=1}] */
-                optionsOverride?: number;
-            };
-            /** ID=0x03 | required=true */
-            stop: {
-                /** type=BITMAP8 | conditions=[{minimumRemainingBufferBytes value=1}] */
-                optionsMask?: number;
-                /** type=BITMAP8 | conditions=[{minimumRemainingBufferBytes value=1}] */
-                optionsOverride?: number;
-            };
-            /** ID=0x04 | required=true */
-            moveToLevelWithOnOff: {
-                /** type=UINT8 */
-                level: number;
-                /** type=UINT16 */
-                transtime: number;
-                /** type=BITMAP8 | conditions=[{minimumRemainingBufferBytes value=1}] */
-                optionsMask?: number;
-                /** type=BITMAP8 | conditions=[{minimumRemainingBufferBytes value=1}] */
-                optionsOverride?: number;
-            };
-            /** ID=0x05 | required=true */
-            moveWithOnOff: {
-                /** type=ENUM8 */
-                movemode: number;
-                /** type=UINT8 */
-                rate: number;
-                /** type=BITMAP8 | conditions=[{minimumRemainingBufferBytes value=1}] */
-                optionsMask?: number;
-                /** type=BITMAP8 | conditions=[{minimumRemainingBufferBytes value=1}] */
-                optionsOverride?: number;
-            };
-            /** ID=0x06 | required=true */
-            stepWithOnOff: {
-                /** type=ENUM8 */
-                stepmode: number;
-                /** type=UINT8 */
-                stepsize: number;
-                /** type=UINT16 */
-                transtime: number;
-                /** type=BITMAP8 | conditions=[{minimumRemainingBufferBytes value=1}] */
-                optionsMask?: number;
-                /** type=BITMAP8 | conditions=[{minimumRemainingBufferBytes value=1}] */
-                optionsOverride?: number;
-            };
-            /** ID=0x07 | required=true */
-            stopWithOnOff: {
-                /** type=BITMAP8 | conditions=[{minimumRemainingBufferBytes value=1}] */
-                optionsMask?: number;
-                /** type=BITMAP8 | conditions=[{minimumRemainingBufferBytes value=1}] */
-                optionsOverride?: number;
-            };
-            /** ID=0x08 */
-            moveToClosestFrequency: {
-                /** type=UINT16 */
-                frequency: number;
-            };
-        };
-        commandResponses: never;
-    };
     genAlarms: {
         attributes: {
             /** ID=0x0000 | type=UINT16 | max=65535 | default=0 */
@@ -937,17 +813,17 @@ export interface TClusters {
     };
     genTime: {
         attributes: {
-            /** ID=0x0000 | type=UTC | writable=true | required=true | max=4294967294 | default=4294967295 */
+            /** ID=0x0000 | type=UTC | write=true | required=true | max=4294967294 | default=4294967295 */
             time: number;
-            /** ID=0x0001 | type=BITMAP8 | writable=true | required=true | default=0 */
+            /** ID=0x0001 | type=BITMAP8 | write=true | required=true | default=0 */
             timeStatus: number;
-            /** ID=0x0002 | type=INT32 | writable=true | min=-86400 | max=86400 | default=0 */
+            /** ID=0x0002 | type=INT32 | write=true | min=-86400 | max=86400 | default=0 */
             timeZone: number;
-            /** ID=0x0003 | type=UINT32 | writable=true | max=4294967294 | default=4294967295 */
+            /** ID=0x0003 | type=UINT32 | write=true | max=4294967294 | default=4294967295 */
             dstStart: number;
-            /** ID=0x0004 | type=UINT32 | writable=true | max=4294967294 | default=4294967295 */
+            /** ID=0x0004 | type=UINT32 | write=true | max=4294967294 | default=4294967295 */
             dstEnd: number;
-            /** ID=0x0005 | type=INT32 | writable=true | min=-86400 | max=86400 | default=0 */
+            /** ID=0x0005 | type=INT32 | write=true | min=-86400 | max=86400 | default=0 */
             dstShift: number;
             /** ID=0x0006 | type=UINT32 | max=4294967294 | default=4294967295 */
             standardTime: number;
@@ -955,7 +831,7 @@ export interface TClusters {
             localTime: number;
             /** ID=0x0008 | type=UTC | default=4294967295 */
             lastSetTime: number;
-            /** ID=0x0009 | type=UTC | writable=true | default=4294967295 */
+            /** ID=0x0009 | type=UTC | write=true | default=4294967295 */
             validUntilTime: number;
         };
         commands: never;
@@ -963,9 +839,9 @@ export interface TClusters {
     };
     genRssiLocation: {
         attributes: {
-            /** ID=0x0000 | type=DATA8 | required=true | writable=true */
+            /** ID=0x0000 | type=DATA8 | required=true | write=true */
             type: number;
-            /** ID=0x0001 | type=ENUM8 | required=true | writable=true */
+            /** ID=0x0001 | type=ENUM8 | required=true | write=true */
             method: number;
             /** ID=0x0002 | type=UINT16 | max=65535 */
             age: number;
@@ -973,21 +849,21 @@ export interface TClusters {
             qualityMeasure: number;
             /** ID=0x0004 | type=UINT8 | max=255 */
             numOfDevices: number;
-            /** ID=0x0010 | type=INT16 | required=true | writable=true | min=-32768 | max=32767 */
+            /** ID=0x0010 | type=INT16 | required=true | write=true | min=-32768 | max=32767 */
             coordinate1: number;
-            /** ID=0x0011 | type=INT16 | required=true | writable=true | min=-32768 | max=32767 */
+            /** ID=0x0011 | type=INT16 | required=true | write=true | min=-32768 | max=32767 */
             coordinate2: number;
-            /** ID=0x0012 | type=INT16 | writable=true | min=-32768 | max=32767 */
+            /** ID=0x0012 | type=INT16 | write=true | min=-32768 | max=32767 */
             coordinate3: number;
-            /** ID=0x0013 | type=INT16 | required=true | writable=true | min=-32768 | max=32767 */
+            /** ID=0x0013 | type=INT16 | required=true | write=true | min=-32768 | max=32767 */
             power: number;
-            /** ID=0x0014 | type=UINT16 | required=true | writable=true */
+            /** ID=0x0014 | type=UINT16 | required=true | write=true */
             pathLossExponent: number;
-            /** ID=0x0015 | type=UINT16 | writable=true | max=65535 */
+            /** ID=0x0015 | type=UINT16 | write=true | max=65535 */
             reportingPeriod: number;
-            /** ID=0x0016 | type=UINT16 | writable=true | max=65535 */
+            /** ID=0x0016 | type=UINT16 | write=true | max=65535 */
             calcPeriod: number;
-            /** ID=0x0017 | type=UINT8 | required=true | writable=true | min=1 | max=255 */
+            /** ID=0x0017 | type=UINT8 | required=true | write=true | min=1 | max=255 */
             numRSSIMeasurements: number;
         };
         commands: {
@@ -1165,23 +1041,23 @@ export interface TClusters {
     };
     genAnalogInput: {
         attributes: {
-            /** ID=0x001c | type=CHAR_STR | writable=true | writeOptional=true | default=  */
+            /** ID=0x001c | type=CHAR_STR | write=true | writeOptional=true | default=  */
             description: string;
-            /** ID=0x0041 | type=SINGLE_PREC | writable=true | writeOptional=true */
+            /** ID=0x0041 | type=SINGLE_PREC | write=true | writeOptional=true */
             maxPresentValue: number;
-            /** ID=0x0045 | type=SINGLE_PREC | writable=true | writeOptional=true */
+            /** ID=0x0045 | type=SINGLE_PREC | write=true | writeOptional=true */
             minPresentValue: number;
-            /** ID=0x0051 | type=BOOLEAN | required=true | writable=true | writeOptional=true | default=0 */
+            /** ID=0x0051 | type=BOOLEAN | required=true | write=true | writeOptional=true | default=0 */
             outOfService: number;
-            /** ID=0x0055 | type=SINGLE_PREC | required=true | writable=true | reportRequired=true */
+            /** ID=0x0055 | type=SINGLE_PREC | required=true | write=true | report=true */
             presentValue: number;
-            /** ID=0x0067 | type=ENUM8 | writable=true | writeOptional=true | default=0 */
+            /** ID=0x0067 | type=ENUM8 | write=true | writeOptional=true | default=0 */
             reliability: number;
-            /** ID=0x006a | type=SINGLE_PREC | writable=true | writeOptional=true */
+            /** ID=0x006a | type=SINGLE_PREC | write=true | writeOptional=true */
             resolution: number;
-            /** ID=0x006f | type=BITMAP8 | required=true | reportRequired=true | max=15 | default=0 */
+            /** ID=0x006f | type=BITMAP8 | required=true | report=true | max=15 | default=0 */
             statusFlags: number;
-            /** ID=0x0075 | type=ENUM16 | writable=true | writeOptional=true | max=65535 */
+            /** ID=0x0075 | type=ENUM16 | write=true | writeOptional=true | max=65535 */
             engineeringUnits: number;
             /** ID=0x0100 | type=UINT32 | max=4294967295 */
             applicationType: number;
@@ -1191,27 +1067,27 @@ export interface TClusters {
     };
     genAnalogOutput: {
         attributes: {
-            /** ID=0x001c | type=CHAR_STR | writable=true | writeOptional=true | default=  */
+            /** ID=0x001c | type=CHAR_STR | write=true | writeOptional=true | default=  */
             description: string;
-            /** ID=0x0041 | type=SINGLE_PREC | writable=true | writeOptional=true */
+            /** ID=0x0041 | type=SINGLE_PREC | write=true | writeOptional=true */
             maxPresentValue: number;
-            /** ID=0x0045 | type=SINGLE_PREC | writable=true | writeOptional=true */
+            /** ID=0x0045 | type=SINGLE_PREC | write=true | writeOptional=true */
             minPresentValue: number;
-            /** ID=0x0051 | type=BOOLEAN | required=true | writable=true | writeOptional=true | default=0 */
+            /** ID=0x0051 | type=BOOLEAN | required=true | write=true | writeOptional=true | default=0 */
             outOfService: number;
-            /** ID=0x0055 | type=SINGLE_PREC | required=true | writable=true | reportRequired=true */
+            /** ID=0x0055 | type=SINGLE_PREC | required=true | write=true | report=true */
             presentValue: number;
-            /** ID=0x0057 | type=ARRAY | writable=true */
+            /** ID=0x0057 | type=ARRAY | write=true */
             priorityArray: ZclArray | unknown[];
-            /** ID=0x0067 | type=ENUM8 | writable=true | writeOptional=true | default=0 */
+            /** ID=0x0067 | type=ENUM8 | write=true | writeOptional=true | default=0 */
             reliability: number;
-            /** ID=0x0068 | type=SINGLE_PREC | writable=true | writeOptional=true */
+            /** ID=0x0068 | type=SINGLE_PREC | write=true | writeOptional=true */
             relinquishDefault: number;
-            /** ID=0x006a | type=SINGLE_PREC | writable=true | writeOptional=true */
+            /** ID=0x006a | type=SINGLE_PREC | write=true | writeOptional=true */
             resolution: number;
-            /** ID=0x006f | type=BITMAP8 | required=true | reportRequired=true | max=15 | default=0 */
+            /** ID=0x006f | type=BITMAP8 | required=true | report=true | max=15 | default=0 */
             statusFlags: number;
-            /** ID=0x0075 | type=ENUM16 | writable=true | writeOptional=true | max=65535 */
+            /** ID=0x0075 | type=ENUM16 | write=true | writeOptional=true | max=65535 */
             engineeringUnits: number;
             /** ID=0x0100 | type=UINT32 | max=4294967295 */
             applicationType: number;
@@ -1221,21 +1097,21 @@ export interface TClusters {
     };
     genAnalogValue: {
         attributes: {
-            /** ID=0x001c | type=CHAR_STR | writable=true | writeOptional=true | default=  */
+            /** ID=0x001c | type=CHAR_STR | write=true | writeOptional=true | default=  */
             description: string;
-            /** ID=0x0051 | type=BOOLEAN | required=true | writable=true | writeOptional=true | default=0 */
+            /** ID=0x0051 | type=BOOLEAN | required=true | write=true | writeOptional=true | default=0 */
             outOfService: number;
-            /** ID=0x0055 | type=SINGLE_PREC | required=true | writable=true */
+            /** ID=0x0055 | type=SINGLE_PREC | required=true | write=true */
             presentValue: number;
-            /** ID=0x0057 | type=ARRAY | writable=true */
+            /** ID=0x0057 | type=ARRAY | write=true */
             priorityArray: ZclArray | unknown[];
-            /** ID=0x0067 | type=ENUM8 | writable=true | writeOptional=true | default=0 */
+            /** ID=0x0067 | type=ENUM8 | write=true | writeOptional=true | default=0 */
             reliability: number;
-            /** ID=0x0068 | type=SINGLE_PREC | writable=true | writeOptional=true */
+            /** ID=0x0068 | type=SINGLE_PREC | write=true | writeOptional=true */
             relinquishDefault: number;
             /** ID=0x006f | type=BITMAP8 | required=true | max=15 | default=0 */
             statusFlags: number;
-            /** ID=0x0075 | type=ENUM16 | writable=true | writeOptional=true | max=65535 */
+            /** ID=0x0075 | type=ENUM16 | write=true | writeOptional=true | max=65535 */
             engineeringUnits: number;
             /** ID=0x0100 | type=UINT32 | max=4294967295 */
             applicationType: number;
@@ -1245,19 +1121,19 @@ export interface TClusters {
     };
     genBinaryInput: {
         attributes: {
-            /** ID=0x0004 | type=CHAR_STR | writable=true | writeOptional=true | default=  */
+            /** ID=0x0004 | type=CHAR_STR | write=true | writeOptional=true | default=  */
             activeText: string;
-            /** ID=0x001c | type=CHAR_STR | writable=true | writeOptional=true | default=  */
+            /** ID=0x001c | type=CHAR_STR | write=true | writeOptional=true | default=  */
             description: string;
-            /** ID=0x002e | type=CHAR_STR | writable=true | writeOptional=true | default=  */
+            /** ID=0x002e | type=CHAR_STR | write=true | writeOptional=true | default=  */
             inactiveText: string;
-            /** ID=0x0051 | type=BOOLEAN | required=true | writable=true | writeOptional=true | default=0 */
+            /** ID=0x0051 | type=BOOLEAN | required=true | write=true | writeOptional=true | default=0 */
             outOfService: number;
             /** ID=0x0054 | type=ENUM8 | default=0 */
             polarity: number;
-            /** ID=0x0055 | type=BOOLEAN | required=true | writable=true | writeOptional=true */
+            /** ID=0x0055 | type=BOOLEAN | required=true | write=true | writeOptional=true */
             presentValue: number;
-            /** ID=0x0067 | type=ENUM8 | writable=true | writeOptional=true | default=0 */
+            /** ID=0x0067 | type=ENUM8 | write=true | writeOptional=true | default=0 */
             reliability: number;
             /** ID=0x006f | type=BITMAP8 | required=true | max=15 | default=0 */
             statusFlags: number;
@@ -1269,27 +1145,27 @@ export interface TClusters {
     };
     genBinaryOutput: {
         attributes: {
-            /** ID=0x0004 | type=CHAR_STR | writable=true | writeOptional=true | default=  */
+            /** ID=0x0004 | type=CHAR_STR | write=true | writeOptional=true | default=  */
             activeText: string;
-            /** ID=0x001c | type=CHAR_STR | writable=true | writeOptional=true | default=  */
+            /** ID=0x001c | type=CHAR_STR | write=true | writeOptional=true | default=  */
             description: string;
-            /** ID=0x002e | type=CHAR_STR | writable=true | writeOptional=true | default=  */
+            /** ID=0x002e | type=CHAR_STR | write=true | writeOptional=true | default=  */
             inactiveText: string;
-            /** ID=0x0042 | type=UINT32 | writable=true | writeOptional=true | default=4294967295 */
+            /** ID=0x0042 | type=UINT32 | write=true | writeOptional=true | default=4294967295 */
             minimumOffTime: number;
-            /** ID=0x0043 | type=UINT32 | writable=true | writeOptional=true | default=4294967295 */
+            /** ID=0x0043 | type=UINT32 | write=true | writeOptional=true | default=4294967295 */
             minimumOnTime: number;
-            /** ID=0x0051 | type=BOOLEAN | required=true | writeOptional=true | writable=true | default=0 */
+            /** ID=0x0051 | type=BOOLEAN | required=true | writeOptional=true | write=true | default=0 */
             outOfService: number;
             /** ID=0x0054 | type=ENUM8 | default=0 */
             polarity: number;
-            /** ID=0x0055 | type=BOOLEAN | required=true | writable=true | writeOptional=true */
+            /** ID=0x0055 | type=BOOLEAN | required=true | write=true | writeOptional=true */
             presentValue: number;
-            /** ID=0x0057 | type=ARRAY | writable=true */
+            /** ID=0x0057 | type=ARRAY | write=true */
             priorityArray: ZclArray | unknown[];
-            /** ID=0x0067 | type=ENUM8 | writable=true | writeOptional=true */
+            /** ID=0x0067 | type=ENUM8 | write=true | writeOptional=true */
             reliability: number;
-            /** ID=0x0068 | type=BOOLEAN | writable=true | writeOptional=true */
+            /** ID=0x0068 | type=BOOLEAN | write=true | writeOptional=true */
             relinquishDefault: number;
             /** ID=0x006f | type=BITMAP8 | required=true | max=15 | default=0 */
             statusFlags: number;
@@ -1301,25 +1177,25 @@ export interface TClusters {
     };
     genBinaryValue: {
         attributes: {
-            /** ID=0x0004 | type=CHAR_STR | writable=true | writeOptional=true | default=  */
+            /** ID=0x0004 | type=CHAR_STR | write=true | writeOptional=true | default=  */
             activeText: string;
-            /** ID=0x001c | type=CHAR_STR | writable=true | writeOptional=true | default=  */
+            /** ID=0x001c | type=CHAR_STR | write=true | writeOptional=true | default=  */
             description: string;
-            /** ID=0x002e | type=CHAR_STR | writable=true | writeOptional=true | default=  */
+            /** ID=0x002e | type=CHAR_STR | write=true | writeOptional=true | default=  */
             inactiveText: string;
-            /** ID=0x0042 | type=UINT32 | writable=true | writeOptional=true | default=4294967295 */
+            /** ID=0x0042 | type=UINT32 | write=true | writeOptional=true | default=4294967295 */
             minimumOffTime: number;
-            /** ID=0x0043 | type=UINT32 | writable=true | writeOptional=true | default=4294967295 */
+            /** ID=0x0043 | type=UINT32 | write=true | writeOptional=true | default=4294967295 */
             minimumOnTime: number;
-            /** ID=0x0051 | type=BOOLEAN | required=true | writeOptional=true | writable=true | default=0 */
+            /** ID=0x0051 | type=BOOLEAN | required=true | writeOptional=true | write=true | default=0 */
             outOfService: number;
-            /** ID=0x0055 | type=BOOLEAN | required=true | writeOptional=true | writable=true */
+            /** ID=0x0055 | type=BOOLEAN | required=true | writeOptional=true | write=true */
             presentValue: number;
-            /** ID=0x0057 | type=ARRAY | writable=true */
+            /** ID=0x0057 | type=ARRAY | write=true */
             priorityArray: ZclArray | unknown[];
-            /** ID=0x0067 | type=ENUM8 | writable=true | writeOptional=true */
+            /** ID=0x0067 | type=ENUM8 | write=true | writeOptional=true */
             reliability: number;
-            /** ID=0x0068 | type=BOOLEAN | writable=true | writeOptional=true */
+            /** ID=0x0068 | type=BOOLEAN | write=true | writeOptional=true */
             relinquishDefault: number;
             /** ID=0x006f | type=BITMAP8 | required=true | max=15 | default=0 */
             statusFlags: number;
@@ -1331,17 +1207,17 @@ export interface TClusters {
     };
     genMultistateInput: {
         attributes: {
-            /** ID=0x000e | type=ARRAY | writable=true | writeOptional=true */
+            /** ID=0x000e | type=ARRAY | write=true | writeOptional=true */
             stateText: ZclArray | unknown[];
-            /** ID=0x001c | type=CHAR_STR | writable=true | writeOptional=true | default=  */
+            /** ID=0x001c | type=CHAR_STR | write=true | writeOptional=true | default=  */
             description: string;
-            /** ID=0x004a | type=UINT16 | required=true | writable=true | writeOptional=true | min=1 | max=65535 | default=0 */
+            /** ID=0x004a | type=UINT16 | required=true | write=true | writeOptional=true | min=1 | max=65535 | default=0 */
             numberOfStates: number;
-            /** ID=0x0051 | type=BOOLEAN | required=true | writable=true | writeOptional=true | default=0 */
+            /** ID=0x0051 | type=BOOLEAN | required=true | write=true | writeOptional=true | default=0 */
             outOfService: number;
-            /** ID=0x0055 | type=UINT16 | required=true | writable=true | writeOptional=true */
+            /** ID=0x0055 | type=UINT16 | required=true | write=true | writeOptional=true */
             presentValue: number;
-            /** ID=0x0067 | type=ENUM8 | writable=true | writeOptional=true | default=0 */
+            /** ID=0x0067 | type=ENUM8 | write=true | writeOptional=true | default=0 */
             reliability: number;
             /** ID=0x006f | type=BITMAP8 | required=true | max=15 | default=0 */
             statusFlags: number;
@@ -1353,21 +1229,21 @@ export interface TClusters {
     };
     genMultistateOutput: {
         attributes: {
-            /** ID=0x000e | type=ARRAY | writable=true | writeOptional=true */
+            /** ID=0x000e | type=ARRAY | write=true | writeOptional=true */
             stateText: ZclArray | unknown[];
-            /** ID=0x001c | type=CHAR_STR | writable=true | writeOptional=true | default=  */
+            /** ID=0x001c | type=CHAR_STR | write=true | writeOptional=true | default=  */
             description: string;
-            /** ID=0x004a | type=UINT16 | required=true | writable=true | writeOptional=true | min=1 | max=65535 | default=0 */
+            /** ID=0x004a | type=UINT16 | required=true | write=true | writeOptional=true | min=1 | max=65535 | default=0 */
             numberOfStates: number;
-            /** ID=0x0051 | type=BOOLEAN | required=true | writable=true | writeOptional=true | default=0 */
+            /** ID=0x0051 | type=BOOLEAN | required=true | write=true | writeOptional=true | default=0 */
             outOfService: number;
-            /** ID=0x0055 | type=UINT16 | required=true | writable=true */
+            /** ID=0x0055 | type=UINT16 | required=true | write=true */
             presentValue: number;
-            /** ID=0x0057 | type=ARRAY | writable=true */
+            /** ID=0x0057 | type=ARRAY | write=true */
             priorityArray: ZclArray | unknown[];
-            /** ID=0x0067 | type=ENUM8 | writable=true | writeOptional=true | default=0 */
+            /** ID=0x0067 | type=ENUM8 | write=true | writeOptional=true | default=0 */
             reliability: number;
-            /** ID=0x0068 | type=UINT16 | writable=true | writeOptional=true */
+            /** ID=0x0068 | type=UINT16 | write=true | writeOptional=true */
             relinquishDefault: number;
             /** ID=0x006f | type=BITMAP8 | required=true | max=15 | default=0 */
             statusFlags: number;
@@ -1379,21 +1255,21 @@ export interface TClusters {
     };
     genMultistateValue: {
         attributes: {
-            /** ID=0x000e | type=ARRAY | writable=true | writeOptional=true */
+            /** ID=0x000e | type=ARRAY | write=true | writeOptional=true */
             stateText: ZclArray | unknown[];
-            /** ID=0x001c | type=CHAR_STR | writable=true | writeOptional=true | default=  */
+            /** ID=0x001c | type=CHAR_STR | write=true | writeOptional=true | default=  */
             description: string;
-            /** ID=0x004a | type=UINT16 | required=true | writable=true | writeOptional=true | min=1 | max=65535 | default=0 */
+            /** ID=0x004a | type=UINT16 | required=true | write=true | writeOptional=true | min=1 | max=65535 | default=0 */
             numberOfStates: number;
-            /** ID=0x0051 | type=BOOLEAN | required=true | writable=true | writeOptional=true | default=0 */
+            /** ID=0x0051 | type=BOOLEAN | required=true | write=true | writeOptional=true | default=0 */
             outOfService: number;
-            /** ID=0x0055 | type=UINT16 | required=true | writable=true */
+            /** ID=0x0055 | type=UINT16 | required=true | write=true */
             presentValue: number;
-            /** ID=0x0057 | type=ARRAY | writable=true */
+            /** ID=0x0057 | type=ARRAY | write=true */
             priorityArray: ZclArray | unknown[];
-            /** ID=0x0067 | type=ENUM8 | writable=true | writeOptional=true | default=0 */
+            /** ID=0x0067 | type=ENUM8 | write=true | writeOptional=true | default=0 */
             reliability: number;
-            /** ID=0x0068 | type=UINT16 | writable=true | writeOptional=true */
+            /** ID=0x0068 | type=UINT16 | write=true | writeOptional=true */
             relinquishDefault: number;
             /** ID=0x006f | type=BITMAP8 | required=true | max=15 | default=0 */
             statusFlags: number;
@@ -1405,53 +1281,53 @@ export interface TClusters {
     };
     genCommissioning: {
         attributes: {
-            /** ID=0x0000 | type=UINT16 | writable=true | required=true | max=65527 */
+            /** ID=0x0000 | type=UINT16 | write=true | required=true | max=65527 */
             shortress: number;
-            /** ID=0x0001 | type=IEEE_ADDR | writable=true | required=true | default=0xffffffffffffffff | special=PANIdUnspecified,ffffffffffffffff */
+            /** ID=0x0001 | type=IEEE_ADDR | write=true | required=true | default=0xffffffffffffffff | special=PANIdUnspecified,ffffffffffffffff */
             extendedPANId: string;
-            /** ID=0x0002 | type=UINT16 | writable=true | required=true | max=65535 */
+            /** ID=0x0002 | type=UINT16 | write=true | required=true | max=65535 */
             panId: number;
-            /** ID=0x0003 | type=BITMAP32 | writable=true | required=true */
+            /** ID=0x0003 | type=BITMAP32 | write=true | required=true */
             channelmask: number;
-            /** ID=0x0004 | type=UINT8 | writable=true | required=true | min=2 | max=2 */
+            /** ID=0x0004 | type=UINT8 | write=true | required=true | min=2 | max=2 */
             protocolVersion: number;
-            /** ID=0x0005 | type=UINT8 | writable=true | required=true | min=1 | max=2 */
+            /** ID=0x0005 | type=UINT8 | write=true | required=true | min=1 | max=2 */
             stackProfile: number;
-            /** ID=0x0006 | type=ENUM8 | writable=true | required=true | max=3 */
+            /** ID=0x0006 | type=ENUM8 | write=true | required=true | max=3 */
             startupControl: number;
-            /** ID=0x0010 | type=IEEE_ADDR | writable=true | required=true | default=0x0000000000000000 | special=AddressUnspecified,0000000000000000 */
+            /** ID=0x0010 | type=IEEE_ADDR | write=true | required=true | default=0x0000000000000000 | special=AddressUnspecified,0000000000000000 */
             trustCenterress: string;
-            /** ID=0x0011 | type=SEC_KEY | writable=true */
+            /** ID=0x0011 | type=SEC_KEY | write=true */
             trustCenterMasterKey: Buffer;
-            /** ID=0x0012 | type=SEC_KEY | writable=true | required=true */
+            /** ID=0x0012 | type=SEC_KEY | write=true | required=true */
             networkKey: Buffer;
-            /** ID=0x0013 | type=BOOLEAN | writable=true | required=true | default=1 */
+            /** ID=0x0013 | type=BOOLEAN | write=true | required=true | default=1 */
             useInsecureJoin: number;
-            /** ID=0x0014 | type=SEC_KEY | writable=true | required=true */
+            /** ID=0x0014 | type=SEC_KEY | write=true | required=true */
             preconfiguredLinkKey: Buffer;
-            /** ID=0x0015 | type=UINT8 | writable=true | required=true | max=255 | default=0 */
+            /** ID=0x0015 | type=UINT8 | write=true | required=true | max=255 | default=0 */
             networkKeySeqNum: number;
-            /** ID=0x0016 | type=ENUM8 | writable=true | required=true */
+            /** ID=0x0016 | type=ENUM8 | write=true | required=true */
             networkKeyType: number;
-            /** ID=0x0017 | type=UINT16 | writable=true | required=true | default=0 */
+            /** ID=0x0017 | type=UINT16 | write=true | required=true | default=0 */
             networkManagerress: number;
-            /** ID=0x0020 | type=UINT8 | writable=true | min=1 | max=255 | default=5 */
+            /** ID=0x0020 | type=UINT8 | write=true | min=1 | max=255 | default=5 */
             scanAttempts: number;
-            /** ID=0x0021 | type=UINT16 | writable=true | min=1 | max=65535 | default=100 */
+            /** ID=0x0021 | type=UINT16 | write=true | min=1 | max=65535 | default=100 */
             timeBetweenScans: number;
-            /** ID=0x0022 | type=UINT16 | writable=true | min=1 | default=60 */
+            /** ID=0x0022 | type=UINT16 | write=true | min=1 | default=60 */
             rejoinInterval: number;
-            /** ID=0x0023 | type=UINT16 | writable=true | min=1 | max=65535 | default=3600 */
+            /** ID=0x0023 | type=UINT16 | write=true | min=1 | max=65535 | default=3600 */
             maxRejoinInterval: number;
-            /** ID=0x0030 | type=UINT16 | writable=true | max=65535 */
+            /** ID=0x0030 | type=UINT16 | write=true | max=65535 */
             indirectPollRate: number;
             /** ID=0x0031 | type=UINT8 | max=255 */
             parentRetryThreshold: number;
-            /** ID=0x0040 | type=BOOLEAN | writable=true | default=0 */
+            /** ID=0x0040 | type=BOOLEAN | write=true | default=0 */
             concentratorFlag: number;
-            /** ID=0x0041 | type=UINT8 | writable=true | max=255 | default=15 */
+            /** ID=0x0041 | type=UINT8 | write=true | max=255 | default=15 */
             concentratorRadius: number;
-            /** ID=0x0042 | type=UINT8 | writable=true | max=255 | default=0 */
+            /** ID=0x0042 | type=UINT8 | write=true | max=255 | default=0 */
             concentratorDiscoveryTime: number;
         };
         commands: {
@@ -1515,15 +1391,15 @@ export interface TClusters {
             maximumIncomingTransferSize: number;
             /** ID=0x0001 | type=UINT16 | required=true | max=65535 | default=1280 */
             maximumOutgoingTransferSize: number;
-            /** ID=0x0002 | type=UINT8 | required=true | writable=true | max=255 | default=80 */
+            /** ID=0x0002 | type=UINT8 | required=true | write=true | max=255 | default=80 */
             partionedFrameSize: number;
-            /** ID=0x0003 | type=UINT16 | required=true | writable=true | max=65535 | default=1280 */
+            /** ID=0x0003 | type=UINT16 | required=true | write=true | max=65535 | default=1280 */
             largeFrameSize: number;
-            /** ID=0x0004 | type=UINT8 | required=true | writable=true | max=255 | default=100 */
+            /** ID=0x0004 | type=UINT8 | required=true | write=true | max=255 | default=100 */
             numberOfAckFrame: number;
             /** ID=0x0005 | type=UINT16 | required=true | max=65535 */
             nackTimeout: number;
-            /** ID=0x0006 | type=UINT8 | required=true | writable=true | max=255 */
+            /** ID=0x0006 | type=UINT8 | required=true | write=true | max=255 */
             interframeDelay: number;
             /** ID=0x0007 | type=UINT8 | required=true | max=255 | default=3 */
             numberOfSendRetries: number;
@@ -1768,7 +1644,7 @@ export interface TClusters {
             energyFormatting: number;
             /** ID=0x0003 | type=BOOLEAN | required=true | default=0 */
             energyRemote: number;
-            /** ID=0x0004 | type=BITMAP8 | required=true | writable=true | reportRequired=true | default=0 */
+            /** ID=0x0004 | type=BITMAP8 | required=true | write=true | report=true | default=0 */
             scheduleMode: number;
         };
         commands: {
@@ -1921,11 +1797,11 @@ export interface TClusters {
     };
     haApplianceControl: {
         attributes: {
-            /** ID=0x0000 | type=UINT16 | required=true | reportRequired=true | max=65535 | default=0 */
+            /** ID=0x0000 | type=UINT16 | required=true | report=true | max=65535 | default=0 */
             startTime: number;
-            /** ID=0x0001 | type=UINT16 | required=true | reportRequired=true | max=65535 | default=0 */
+            /** ID=0x0001 | type=UINT16 | required=true | report=true | max=65535 | default=0 */
             finishTime: number;
-            /** ID=0x0002 | type=UINT16 | reportRequired=true | max=65535 | default=0 */
+            /** ID=0x0002 | type=UINT16 | report=true | max=65535 | default=0 */
             remainingTime: number;
         };
         commands: {
@@ -1971,7 +1847,7 @@ export interface TClusters {
     };
     pulseWidthModulation: {
         attributes: {
-            /** ID=0x0000 | type=UINT8 | reportRequired=true | sceneRequired=true | required=true | default=255 */
+            /** ID=0x0000 | type=UINT8 | report=true | scene=true | required=true | default=255 */
             currentLevel: number;
             /** ID=0x0001 | type=UINT16 | max=65535 | default=0 */
             remainingTime: number;
@@ -1979,25 +1855,25 @@ export interface TClusters {
             minLevel: number;
             /** ID=0x0003 | type=UINT8 | max=100 | default=100 | required=true */
             maxLevel: number;
-            /** ID=0x0004 | type=UINT16 | reportRequired=true | sceneRequired=true | default=0 | required=true */
+            /** ID=0x0004 | type=UINT16 | report=true | default=0 | required=true */
             currentFrequency: number;
             /** ID=0x0005 | type=UINT16 | default=0 | required=true */
             minFrequency: number;
             /** ID=0x0006 | type=UINT16 | max=65535 | default=0 | required=true */
             maxFrequency: number;
-            /** ID=0x000f | type=BITMAP8 | writable=true | default=0 */
+            /** ID=0x000f | type=BITMAP8 | write=true | default=0 */
             options: number;
-            /** ID=0x0010 | type=UINT16 | writable=true | max=65535 | default=0 */
+            /** ID=0x0010 | type=UINT16 | write=true | max=65535 | default=0 */
             onOffTransitionTime: number;
-            /** ID=0x0011 | type=UINT8 | writable=true | default=255 */
+            /** ID=0x0011 | type=UINT8 | write=true | default=255 */
             onLevel: number;
-            /** ID=0x0012 | type=UINT16 | writable=true | max=65534 | default=65535 */
+            /** ID=0x0012 | type=UINT16 | write=true | max=65534 | default=65535 */
             onTransitionTime: number;
-            /** ID=0x0013 | type=UINT16 | writable=true | max=65534 | default=65535 */
+            /** ID=0x0013 | type=UINT16 | write=true | max=65534 | default=65535 */
             offTransitionTime: number;
-            /** ID=0x0014 | type=UINT8 | writable=true | max=254 */
+            /** ID=0x0014 | type=UINT8 | write=true | max=254 */
             defaultMoveRate: number;
-            /** ID=0x4000 | type=UINT8 | writable=true | max=255 | special=MinimumDeviceValuePermitted,00,SetToPreviousValue,ff */
+            /** ID=0x4000 | type=UINT8 | write=true | max=255 | special=MinimumDeviceValuePermitted,00,SetToPreviousValue,ff */
             startUpCurrentLevel: number;
         };
         commands: {
@@ -2095,13 +1971,13 @@ export interface TClusters {
     };
     genPollCtrl: {
         attributes: {
-            /** ID=0x0000 | type=UINT32 | writable=true | required=true | max=7208960 | default=14400 */
+            /** ID=0x0000 | type=UINT32 | write=true | required=true | max=7208960 | default=14400 */
             checkinInterval: number;
             /** ID=0x0001 | type=UINT32 | required=true | min=4 | max=7208960 | default=20 */
             longPollInterval: number;
             /** ID=0x0002 | type=UINT16 | required=true | min=1 | max=65535 | default=2 */
             shortPollInterval: number;
-            /** ID=0x0003 | type=UINT16 | writable=true | required=true | min=1 | max=65535 | default=40 */
+            /** ID=0x0003 | type=UINT16 | write=true | required=true | min=1 | max=65535 | default=40 */
             fastPollTimeout: number;
             /** ID=0x0004 | type=UINT32 | default=0 */
             checkinIntervalMin: number;
@@ -2142,13 +2018,13 @@ export interface TClusters {
             gpsMaxSinkTableEntries: number;
             /** ID=0x0001 | type=LONG_OCTET_STR | required=true */
             sinkTable: Buffer;
-            /** ID=0x0002 | type=BITMAP8 | required=true | writable=true | default=1 */
+            /** ID=0x0002 | type=BITMAP8 | required=true | write=true | default=1 */
             gpsCommunicationMode: number;
-            /** ID=0x0003 | type=BITMAP8 | required=true | writable=true | default=2 */
+            /** ID=0x0003 | type=BITMAP8 | required=true | write=true | default=2 */
             gpsCommissioningExitMode: number;
-            /** ID=0x0004 | type=UINT16 | writable=true | max=65535 | default=180 */
+            /** ID=0x0004 | type=UINT16 | write=true | max=65535 | default=180 */
             gpsCommissioningWindow: number;
-            /** ID=0x0005 | type=BITMAP8 | required=true | writable=true | default=6 */
+            /** ID=0x0005 | type=BITMAP8 | required=true | write=true | default=6 */
             gpsSecurityLevel: number;
             /** ID=0x0006 | type=BITMAP24 | required=true */
             gpsFunctionality: number;
@@ -2158,11 +2034,11 @@ export interface TClusters {
             gpsMaxProxyTableEntries: number;
             /** ID=0x0011 | type=LONG_OCTET_STR | required=true | default=0 | client=true */
             proxyTable: Buffer;
-            /** ID=0x0012 | type=UINT8 | writable=true | max=5 | default=2 | client=true */
+            /** ID=0x0012 | type=UINT8 | write=true | max=5 | default=2 | client=true */
             gppNotificationRetryNumber: number;
-            /** ID=0x0013 | type=UINT8 | writable=true | max=255 | default=100 | client=true */
+            /** ID=0x0013 | type=UINT8 | write=true | max=255 | default=100 | client=true */
             gppNotificationRetryTimer: number;
-            /** ID=0x0014 | type=UINT8 | writable=true | max=255 | default=10 | client=true */
+            /** ID=0x0014 | type=UINT8 | write=true | max=255 | default=10 | client=true */
             gppMaxSearchCounter: number;
             /** ID=0x0015 | type=LONG_OCTET_STR | client=true */
             gppBlockGpdId: Buffer;
@@ -2170,11 +2046,11 @@ export interface TClusters {
             gppFunctionality: number;
             /** ID=0x0017 | type=BITMAP24 | required=true | client=true */
             gppActiveFunctionality: number;
-            /** ID=0x0020 | type=BITMAP8 | writable=true | max=7 | default=0 */
+            /** ID=0x0020 | type=BITMAP8 | write=true | max=7 | default=0 */
             gpSharedSecurityKeyType: number;
-            /** ID=0x0021 | type=SEC_KEY | writable=true */
+            /** ID=0x0021 | type=SEC_KEY | write=true */
             gpSharedSecurityKey: Buffer;
-            /** ID=0x0022 | type=SEC_KEY | writable=true */
+            /** ID=0x0022 | type=SEC_KEY | write=true */
             gpLinkKey: Buffer;
         };
         commands: {
@@ -2446,9 +2322,9 @@ export interface TClusters {
     };
     mobileDeviceCfg: {
         attributes: {
-            /** ID=0x0000 | type=UINT16 | required=true | writable=true | min=1 | max=65535 | default=15 */
+            /** ID=0x0000 | type=UINT16 | required=true | write=true | min=1 | max=65535 | default=15 */
             keepAliveTime: number;
-            /** ID=0x0001 | type=UINT16 | required=true | writable=true | max=65535 | default=65535 | special=Never,ffff */
+            /** ID=0x0001 | type=UINT16 | required=true | write=true | max=65535 | default=65535 | special=Never,ffff */
             rejoinTimeout: number;
         };
         commands: never;
@@ -2464,7 +2340,7 @@ export interface TClusters {
     };
     neighborCleaning: {
         attributes: {
-            /** ID=0x0000 | type=UINT16 | required=true | writable=true | min=1 | max=65535 | default=30 */
+            /** ID=0x0000 | type=UINT16 | required=true | write=true | min=1 | max=65535 | default=30 */
             neighborCleaningTimeout: number;
         };
         commands: {
@@ -2475,9 +2351,9 @@ export interface TClusters {
     };
     nearestGateway: {
         attributes: {
-            /** ID=0x0000 | type=UINT16 | required=true | writable=true | max=65528 | default=0 */
+            /** ID=0x0000 | type=UINT16 | required=true | write=true | max=65528 | default=0 */
             nearestGateway: number;
-            /** ID=0x0001 | type=UINT16 | required=true | readable=false | writable=true | max=65528 | default=0 */
+            /** ID=0x0001 | type=UINT16 | required=true | read=false | write=true | max=65528 | default=0 */
             newMobileNode: number;
         };
         commands: never;
@@ -2499,11 +2375,11 @@ export interface TClusters {
             physicalClosedLimit: number;
             /** ID=0x0001 | type=UINT8 | max=254 */
             motorStepSize: number;
-            /** ID=0x0002 | type=BITMAP8 | writable=true | required=true | default=0 */
+            /** ID=0x0002 | type=BITMAP8 | write=true | required=true | default=0 */
             status: number;
-            /** ID=0x0010 | type=UINT16 | writable=true | required=true | min=1 | max=65534 | default=1 */
+            /** ID=0x0010 | type=UINT16 | write=true | required=true | min=1 | max=65534 | default=1 */
             losedLimit: number;
-            /** ID=0x0011 | type=ENUM8 | writable=true | required=true | max=254 | default=0 */
+            /** ID=0x0011 | type=ENUM8 | write=true | required=true | max=254 | default=0 */
             mode: number;
         };
         commands: never;
@@ -2511,19 +2387,19 @@ export interface TClusters {
     };
     closuresDoorLock: {
         attributes: {
-            /** ID=0x0000 | type=ENUM8 | reportRequired=true | required=true */
+            /** ID=0x0000 | type=ENUM8 | report=true | required=true */
             lockState: number;
             /** ID=0x0001 | type=ENUM8 | required=true */
             lockType: number;
             /** ID=0x0002 | type=BOOLEAN | required=true */
             actuatorEnabled: number;
-            /** ID=0x0003 | type=ENUM8 | reportRequired=true */
+            /** ID=0x0003 | type=ENUM8 | report=true */
             doorState: number;
-            /** ID=0x0004 | type=UINT32 | writable=true */
+            /** ID=0x0004 | type=UINT32 | write=true */
             doorOpenEvents: number;
-            /** ID=0x0005 | type=UINT32 | writable=true */
+            /** ID=0x0005 | type=UINT32 | write=true */
             doorClosedEvents: number;
-            /** ID=0x0006 | type=UINT16 | writable=true */
+            /** ID=0x0006 | type=UINT16 | write=true */
             openPeriod: number;
             /** ID=0x0010 | type=UINT16 | default=0 */
             numOfLockRecordsSupported: number;
@@ -2547,55 +2423,55 @@ export interface TClusters {
             maxRfidLen: number;
             /** ID=0x001a | type=UINT8 | default=8 */
             minRfidLen: number;
-            /** ID=0x0020 | type=BOOLEAN | writable=true | writeOptional=true | reportRequired=true | default=0 */
+            /** ID=0x0020 | type=BOOLEAN | write=true | writeOptional=true | report=true | default=0 */
             enableLogging: number;
-            /** ID=0x0021 | type=CHAR_STR | writable=true | writeOptional=true | reportRequired=true | default= | length=2 */
+            /** ID=0x0021 | type=CHAR_STR | write=true | writeOptional=true | report=true | default= | length=2 */
             language: string;
-            /** ID=0x0022 | type=UINT8 | writable=true | writeOptional=true | reportRequired=true | default=0 */
+            /** ID=0x0022 | type=UINT8 | write=true | writeOptional=true | report=true | default=0 */
             ledSettings: number;
-            /** ID=0x0023 | type=UINT32 | writable=true | writeOptional=true | reportRequired=true | default=0 | special=Disabled,0 */
+            /** ID=0x0023 | type=UINT32 | write=true | writeOptional=true | report=true | default=0 | special=Disabled,0 */
             autoRelockTime: number;
-            /** ID=0x0024 | type=UINT8 | writable=true | writeOptional=true | reportRequired=true | default=0 */
+            /** ID=0x0024 | type=UINT8 | write=true | writeOptional=true | report=true | default=0 */
             soundVolume: number;
-            /** ID=0x0025 | type=ENUM8 | writable=true | writeOptional=true | reportRequired=true | default=0 */
+            /** ID=0x0025 | type=ENUM8 | write=true | writeOptional=true | report=true | default=0 */
             operatingMode: number;
             /** ID=0x0026 | type=BITMAP16 | default=1 */
             supportedOperatingModes: number;
-            /** ID=0x0027 | type=BITMAP16 | reportRequired=true | default=0 */
+            /** ID=0x0027 | type=BITMAP16 | report=true | default=0 */
             defaultConfigurationRegister: number;
-            /** ID=0x0028 | type=BOOLEAN | writable=true | writeOptional=true | reportRequired=true | default=1 */
+            /** ID=0x0028 | type=BOOLEAN | write=true | writeOptional=true | report=true | default=1 */
             enableLocalProgramming: number;
-            /** ID=0x0029 | type=BOOLEAN | writable=true | reportRequired=true | default=0 */
+            /** ID=0x0029 | type=BOOLEAN | write=true | report=true | default=0 */
             enableOneTouchLocking: number;
-            /** ID=0x002a | type=BOOLEAN | writable=true | reportRequired=true | default=0 */
+            /** ID=0x002a | type=BOOLEAN | write=true | report=true | default=0 */
             enableInsideStatusLed: number;
-            /** ID=0x002b | type=BOOLEAN | writable=true | reportRequired=true | default=0 */
+            /** ID=0x002b | type=BOOLEAN | write=true | report=true | default=0 */
             enablePrivacyModeButton: number;
-            /** ID=0x0030 | type=UINT8 | writable=true | writeOptional=true | reportRequired=true | default=0 */
+            /** ID=0x0030 | type=UINT8 | write=true | writeOptional=true | report=true | default=0 */
             wrongCodeEntryLimit: number;
-            /** ID=0x0031 | type=UINT8 | writable=true | writeOptional=true | reportRequired=true | default=0 */
+            /** ID=0x0031 | type=UINT8 | write=true | writeOptional=true | report=true | default=0 */
             userCodeTemporaryDisableTime: number;
-            /** ID=0x0032 | type=BOOLEAN | writable=true | writeOptional=true | reportRequired=true | default=0 */
+            /** ID=0x0032 | type=BOOLEAN | write=true | writeOptional=true | report=true | default=0 */
             sendPinOta: number;
-            /** ID=0x0033 | type=BOOLEAN | writable=true | writeOptional=true | reportRequired=true | default=0 */
+            /** ID=0x0033 | type=BOOLEAN | write=true | writeOptional=true | report=true | default=0 */
             requirePinForRfOperation: number;
-            /** ID=0x0034 | type=ENUM8 | reportRequired=true | default=0 */
+            /** ID=0x0034 | type=ENUM8 | report=true | default=0 */
             zigbeeSecurityLevel: number;
-            /** ID=0x0040 | type=BITMAP16 | writable=true | reportRequired=true | default=0 */
+            /** ID=0x0040 | type=BITMAP16 | write=true | report=true | default=0 */
             alarmMask: number;
-            /** ID=0x0041 | type=BITMAP16 | writable=true | reportRequired=true | default=0 */
+            /** ID=0x0041 | type=BITMAP16 | write=true | report=true | default=0 */
             keypadOperationEventMask: number;
-            /** ID=0x0042 | type=BITMAP16 | writable=true | reportRequired=true | default=0 */
+            /** ID=0x0042 | type=BITMAP16 | write=true | report=true | default=0 */
             rfOperationEventMask: number;
-            /** ID=0x0043 | type=BITMAP16 | writable=true | reportRequired=true | default=0 */
+            /** ID=0x0043 | type=BITMAP16 | write=true | report=true | default=0 */
             manualOperationEventMask: number;
-            /** ID=0x0044 | type=BITMAP16 | writable=true | reportRequired=true | default=0 */
+            /** ID=0x0044 | type=BITMAP16 | write=true | report=true | default=0 */
             rfidOperationEventMask: number;
-            /** ID=0x0045 | type=BITMAP16 | writable=true | reportRequired=true | default=0 */
+            /** ID=0x0045 | type=BITMAP16 | write=true | report=true | default=0 */
             keypadProgrammingEventMask: number;
-            /** ID=0x0046 | type=BITMAP16 | writable=true | reportRequired=true | default=0 */
+            /** ID=0x0046 | type=BITMAP16 | write=true | report=true | default=0 */
             rfProgrammingEventMask: number;
-            /** ID=0x0047 | type=BITMAP16 | writable=true | reportRequired=true | default=0 */
+            /** ID=0x0047 | type=BITMAP16 | write=true | report=true | default=0 */
             rfidProgrammingEventMask: number;
         };
         commands: {
@@ -3017,9 +2893,9 @@ export interface TClusters {
             numOfActuationsTilt: number;
             /** ID=0x0007 | type=BITMAP8 | required=true | default=3 */
             configStatus: number;
-            /** ID=0x0008 | type=UINT8 | reportRequired=true | sceneRequired=true | max=100 | default=0 */
+            /** ID=0x0008 | type=UINT8 | report=true | scene=true | max=100 | default=0 */
             currentPositionLiftPercentage: number;
-            /** ID=0x0009 | type=UINT8 | reportRequired=true | sceneRequired=true | max=100 | default=0 */
+            /** ID=0x0009 | type=UINT8 | report=true | scene=true | max=100 | default=0 */
             currentPositionTiltPercentage: number;
             /** ID=0x0010 | type=UINT16 | max=65535 | default=0 */
             installedOpenLimitLiftCm: number;
@@ -3029,11 +2905,11 @@ export interface TClusters {
             installedOpenLimitTiltDdegree: number;
             /** ID=0x0013 | type=UINT16 | max=65535 | default=65535 */
             installedClosedLimitTiltDdegree: number;
-            /** ID=0x0014 | type=UINT16 | writable=true | max=65535 | default=0 */
+            /** ID=0x0014 | type=UINT16 | write=true | max=65535 | default=0 */
             velocityLift: number;
-            /** ID=0x0015 | type=UINT16 | writable=true | max=65535 | default=0 */
+            /** ID=0x0015 | type=UINT16 | write=true | max=65535 | default=0 */
             accelerationTimeLift: number;
-            /** ID=0x0016 | type=UINT16 | writable=true | max=65535 | default=0 */
+            /** ID=0x0016 | type=UINT16 | write=true | max=65535 | default=0 */
             decelerationTimeLift: number;
             /** ID=0x0017 | type=BITMAP8 | required=true | default=4 */
             windowCoveringMode: number;
@@ -3043,41 +2919,41 @@ export interface TClusters {
             intermediateSetpointsTilt: Buffer;
             /** ID=0x000a | type=BITMAP8 */
             operationalStatus: number;
-            /** ID=0xe000 | type=UINT16 | manufacturerCode=ADEO(0x1277) | writable=true | max=65535 */
+            /** ID=0xe000 | type=UINT16 | manufacturerCode=ADEO(0x1277) | write=true | max=65535 */
             elkoDriveCloseDuration?: number;
-            /** ID=0xe010 | type=BITMAP8 | manufacturerCode=ADEO(0x1277) | writable=true */
+            /** ID=0xe010 | type=BITMAP8 | manufacturerCode=ADEO(0x1277) | write=true */
             elkoProtectionStatus?: number;
-            /** ID=0xe012 | type=UINT16 | manufacturerCode=ADEO(0x1277) | writable=true | max=65535 */
+            /** ID=0xe012 | type=UINT16 | manufacturerCode=ADEO(0x1277) | write=true | max=65535 */
             elkoSunProtectionIlluminanceThreshold?: number;
-            /** ID=0xe013 | type=BITMAP8 | manufacturerCode=ADEO(0x1277) | writable=true */
+            /** ID=0xe013 | type=BITMAP8 | manufacturerCode=ADEO(0x1277) | write=true */
             elkoProtectionSensor?: number;
-            /** ID=0xe014 | type=UINT16 | manufacturerCode=ADEO(0x1277) | writable=true | max=65535 */
+            /** ID=0xe014 | type=UINT16 | manufacturerCode=ADEO(0x1277) | write=true | max=65535 */
             elkoLiftDriveUpTime?: number;
-            /** ID=0xe015 | type=UINT16 | manufacturerCode=ADEO(0x1277) | writable=true | max=65535 */
+            /** ID=0xe015 | type=UINT16 | manufacturerCode=ADEO(0x1277) | write=true | max=65535 */
             elkoLiftDriveDownTime?: number;
-            /** ID=0xe016 | type=UINT16 | manufacturerCode=ADEO(0x1277) | writable=true | max=65535 */
+            /** ID=0xe016 | type=UINT16 | manufacturerCode=ADEO(0x1277) | write=true | max=65535 */
             elkoTiltOpenCloseAndStepTime?: number;
-            /** ID=0xe017 | type=UINT8 | manufacturerCode=ADEO(0x1277) | writable=true | max=255 */
+            /** ID=0xe017 | type=UINT8 | manufacturerCode=ADEO(0x1277) | write=true | max=255 */
             elkoTiltPositionPercentageAfterMoveToLevel?: number;
-            /** ID=0xf000 | type=ENUM8 | writable=true | max=255 */
+            /** ID=0xf000 | type=ENUM8 | write=true | max=255 */
             tuyaMovingState: number;
-            /** ID=0xf001 | type=ENUM8 | writable=true | max=255 */
+            /** ID=0xf001 | type=ENUM8 | write=true | max=255 */
             tuyaCalibration: number;
-            /** ID=0xf001 | type=ENUM8 | manufacturerCode=LEGRAND_GROUP(0x1021) | writable=true | max=255 */
+            /** ID=0xf001 | type=ENUM8 | manufacturerCode=LEGRAND_GROUP(0x1021) | write=true | max=255 */
             stepPositionLift?: number;
-            /** ID=0xf002 | type=ENUM8 | writable=true | max=255 */
+            /** ID=0xf002 | type=ENUM8 | write=true | max=255 */
             tuyaMotorReversal: number;
-            /** ID=0xf002 | type=ENUM8 | manufacturerCode=LEGRAND_GROUP(0x1021) | writable=true | max=255 */
+            /** ID=0xf002 | type=ENUM8 | manufacturerCode=LEGRAND_GROUP(0x1021) | write=true | max=255 */
             calibrationMode?: number;
-            /** ID=0xf003 | type=UINT16 | writable=true | max=65535 */
+            /** ID=0xf003 | type=UINT16 | write=true | max=65535 */
             moesCalibrationTime: number;
-            /** ID=0xf003 | type=ENUM8 | manufacturerCode=LEGRAND_GROUP(0x1021) | writable=true | max=255 */
+            /** ID=0xf003 | type=ENUM8 | manufacturerCode=LEGRAND_GROUP(0x1021) | write=true | max=255 */
             targetPositionTiltPercentage?: number;
-            /** ID=0xf004 | type=ENUM8 | manufacturerCode=LEGRAND_GROUP(0x1021) | writable=true | max=255 */
+            /** ID=0xf004 | type=ENUM8 | manufacturerCode=LEGRAND_GROUP(0x1021) | write=true | max=255 */
             stepPositionTilt?: number;
-            /** ID=0xfcc1 | type=UINT16 | manufacturerCode=NIKO_NV(0x125f) | writable=true | max=65535 */
+            /** ID=0xfcc1 | type=UINT16 | manufacturerCode=NIKO_NV(0x125f) | write=true | max=65535 */
             nikoCalibrationTimeUp?: number;
-            /** ID=0xfcc2 | type=UINT16 | manufacturerCode=NIKO_NV(0x125f) | writable=true | max=65535 */
+            /** ID=0xfcc2 | type=UINT16 | manufacturerCode=NIKO_NV(0x125f) | write=true | max=65535 */
             nikoCalibrationTimeDown?: number;
         };
         commands: {
@@ -3119,25 +2995,25 @@ export interface TClusters {
     };
     barrierControl: {
         attributes: {
-            /** ID=0x0001 | type=ENUM8 | reportRequired=true | required=true */
+            /** ID=0x0001 | type=ENUM8 | report=true | required=true */
             movingState: number;
-            /** ID=0x0002 | type=BITMAP16 | reportRequired=true | required=true */
+            /** ID=0x0002 | type=BITMAP16 | report=true | required=true */
             safetyStatus: number;
             /** ID=0x0003 | type=BITMAP8 | required=true */
             capabilities: number;
-            /** ID=0x0004 | type=UINT16 | writable=true | max=65534 | default=0 */
+            /** ID=0x0004 | type=UINT16 | write=true | max=65534 | default=0 */
             openEvents: number;
-            /** ID=0x0005 | type=UINT16 | writable=true | max=65534 | default=0 */
+            /** ID=0x0005 | type=UINT16 | write=true | max=65534 | default=0 */
             closeEvents: number;
-            /** ID=0x0006 | type=UINT16 | writable=true | max=65534 | default=0 */
+            /** ID=0x0006 | type=UINT16 | write=true | max=65534 | default=0 */
             commandOpenEvents: number;
-            /** ID=0x0007 | type=UINT16 | writable=true | max=65534 | default=0 */
+            /** ID=0x0007 | type=UINT16 | write=true | max=65534 | default=0 */
             commandCloseEvents: number;
-            /** ID=0x0008 | type=UINT16 | writable=true | max=65534 */
+            /** ID=0x0008 | type=UINT16 | write=true | max=65534 */
             openPeriod: number;
-            /** ID=0x0009 | type=UINT16 | writable=true | max=65534 */
+            /** ID=0x0009 | type=UINT16 | write=true | max=65534 */
             closePeriod: number;
-            /** ID=0x000a | type=UINT8 | reportRequired=true | sceneRequired=true | required=true | max=100 | special=PositionUnknown,ff */
+            /** ID=0x000a | type=UINT8 | report=true | scene=true | required=true | max=100 | special=PositionUnknown,ff */
             barrierPosition: number;
         };
         commands: {
@@ -3179,25 +3055,25 @@ export interface TClusters {
             minConstTemp: number;
             /** ID=0x000c | type=INT16 | min=-27315 | max=32767 */
             maxConstTemp: number;
-            /** ID=0x0010 | type=BITMAP16 | reportRequired=true */
+            /** ID=0x0010 | type=BITMAP16 | report=true */
             pumpStatus: number;
             /** ID=0x0011 | type=ENUM8 | required=true | max=254 */
             effectiveOperationMode: number;
             /** ID=0x0012 | type=ENUM8 | required=true | max=254 */
             effectiveControlMode: number;
-            /** ID=0x0013 | type=INT16 | reportRequired=true | required=true | min=0 | max=32767 */
+            /** ID=0x0013 | type=INT16 | report=true | required=true | min=0 | max=32767 */
             capacity: number;
             /** ID=0x0014 | type=UINT16 | max=65534 */
             speed: number;
-            /** ID=0x0015 | type=UINT24 | writable=true | max=16777214 | default=0 */
+            /** ID=0x0015 | type=UINT24 | write=true | max=16777214 | default=0 */
             lifetimeRunningHours: number;
-            /** ID=0x0016 | type=UINT24 | writable=true | max=16777214 */
+            /** ID=0x0016 | type=UINT24 | write=true | max=16777214 */
             power: number;
             /** ID=0x0017 | type=UINT32 | max=4294967294 | default=0 */
             lifetimeEnergyConsumed: number;
-            /** ID=0x0020 | type=ENUM8 | writable=true | required=true | max=254 | default=0 */
+            /** ID=0x0020 | type=ENUM8 | write=true | required=true | max=254 | default=0 */
             operationMode: number;
-            /** ID=0x0021 | type=ENUM8 | writable=true | max=254 | default=0 */
+            /** ID=0x0021 | type=ENUM8 | write=true | max=254 | default=0 */
             controlMode: number;
             /** ID=0x0022 | type=BITMAP16 */
             alarmMask: number;
@@ -3207,7 +3083,7 @@ export interface TClusters {
     };
     hvacThermostat: {
         attributes: {
-            /** ID=0x0000 | type=INT16 | reportRequired=true | required=true | min=-27315 | max=32767 */
+            /** ID=0x0000 | type=INT16 | report=true | required=true | min=-27315 | max=32767 */
             localTemp: number;
             /** ID=0x0001 | type=INT16 | min=-27315 | max=32767 */
             outdoorTemp: number;
@@ -3221,37 +3097,37 @@ export interface TClusters {
             absMinCoolSetpointLimit: number;
             /** ID=0x0006 | type=INT16 | min=-27315 | max=32767 | default=3200 */
             absMaxCoolSetpointLimit: number;
-            /** ID=0x0007 | type=UINT8 | reportRequired=true | max=100 */
+            /** ID=0x0007 | type=UINT8 | report=true | max=100 */
             pICoolingDemand: number;
-            /** ID=0x0008 | type=UINT8 | reportRequired=true | max=100 */
+            /** ID=0x0008 | type=UINT8 | report=true | max=100 */
             pIHeatingDemand: number;
-            /** ID=0x0009 | type=BITMAP8 | writable=true | writeOptional=true | default=0 */
+            /** ID=0x0009 | type=BITMAP8 | write=true | writeOptional=true | default=0 */
             systemTypeConfig: number;
-            /** ID=0x0010 | type=INT8 | writable=true | min=-25 | max=25 | default=0 */
+            /** ID=0x0010 | type=INT8 | write=true | min=-25 | max=25 | default=0 */
             localTemperatureCalibration: number;
-            /** ID=0x0011 | type=INT16 | writable=true | sceneRequired=true | default=2600 */
+            /** ID=0x0011 | type=INT16 | write=true | scene=true | default=2600 */
             occupiedCoolingSetpoint: number;
-            /** ID=0x0012 | type=INT16 | writable=true | sceneRequired=true | default=2000 */
+            /** ID=0x0012 | type=INT16 | write=true | scene=true | default=2000 */
             occupiedHeatingSetpoint: number;
-            /** ID=0x0013 | type=INT16 | writable=true | default=2600 */
+            /** ID=0x0013 | type=INT16 | write=true | default=2600 */
             unoccupiedCoolingSetpoint: number;
-            /** ID=0x0014 | type=INT16 | writable=true | default=2000 */
+            /** ID=0x0014 | type=INT16 | write=true | default=2000 */
             unoccupiedHeatingSetpoint: number;
-            /** ID=0x0015 | type=INT16 | writable=true | min=-27315 | max=32767 | default=700 */
+            /** ID=0x0015 | type=INT16 | write=true | min=-27315 | max=32767 | default=700 */
             minHeatSetpointLimit: number;
-            /** ID=0x0016 | type=INT16 | writable=true | min=-27315 | max=32767 | default=3000 */
+            /** ID=0x0016 | type=INT16 | write=true | min=-27315 | max=32767 | default=3000 */
             maxHeatSetpointLimit: number;
-            /** ID=0x0017 | type=INT16 | writable=true | min=-27315 | max=32767 | default=1600 */
+            /** ID=0x0017 | type=INT16 | write=true | min=-27315 | max=32767 | default=1600 */
             minCoolSetpointLimit: number;
-            /** ID=0x0018 | type=INT16 | writable=true | min=-27315 | max=32767 | default=3200 */
+            /** ID=0x0018 | type=INT16 | write=true | min=-27315 | max=32767 | default=3200 */
             maxCoolSetpointLimit: number;
-            /** ID=0x0019 | type=INT8 | writable=true | writeOptional=true | min=10 | max=25 | default=25 */
+            /** ID=0x0019 | type=INT8 | write=true | writeOptional=true | min=10 | max=25 | default=25 */
             minSetpointDeadBand: number;
-            /** ID=0x001a | type=BITMAP8 | writable=true | default=0 */
+            /** ID=0x001a | type=BITMAP8 | write=true | default=0 */
             remoteSensing: number;
-            /** ID=0x001b | type=ENUM8 | writable=true | required=true | default=4 */
+            /** ID=0x001b | type=ENUM8 | write=true | required=true | default=4 */
             ctrlSeqeOfOper: number;
-            /** ID=0x001c | type=ENUM8 | writable=true | required=true | default=1 */
+            /** ID=0x001c | type=ENUM8 | write=true | required=true | default=1 */
             systemMode: number;
             /** ID=0x001d | type=BITMAP8 | default=0 */
             alarmMask: number;
@@ -3263,11 +3139,11 @@ export interface TClusters {
             numberOfWeeklyTrans: number;
             /** ID=0x0022 | type=UINT8 | max=255 | default=0 */
             numberOfDailyTrans: number;
-            /** ID=0x0023 | type=ENUM8 | writable=true | default=0 */
+            /** ID=0x0023 | type=ENUM8 | write=true | default=0 */
             tempSetpointHold: number;
-            /** ID=0x0024 | type=UINT16 | writable=true | min=0 | max=1440 */
+            /** ID=0x0024 | type=UINT16 | write=true | min=0 | max=1440 */
             tempSetpointHoldDuration: number;
-            /** ID=0x0025 | type=BITMAP8 | writable=true | reportRequired=true | default=0 */
+            /** ID=0x0025 | type=BITMAP8 | write=true | report=true | default=0 */
             programingOperMode: number;
             /** ID=0x0029 | type=BITMAP16 */
             runningState: number;
@@ -3277,155 +3153,155 @@ export interface TClusters {
             setpointChangeAmount: number;
             /** ID=0x0032 | type=UTC | max=4294967294 | default=0 */
             setpointChangeSourceTimeStamp: number;
-            /** ID=0x0034 | type=UINT8 | writable=true */
+            /** ID=0x0034 | type=UINT8 | write=true */
             occupiedSetback: number;
             /** ID=0x0035 | type=UINT8 | min=0 */
             occupiedSetbackMin: number;
             /** ID=0x0036 | type=UINT8 */
             occupiedSetbackMax: number;
-            /** ID=0x0037 | type=UINT8 | writable=true */
+            /** ID=0x0037 | type=UINT8 | write=true */
             unoccupiedSetback: number;
             /** ID=0x0038 | type=UINT8 | min=0 */
             unoccupiedSetbackMin: number;
             /** ID=0x0039 | type=UINT8 */
             unoccupiedSetbackMax: number;
-            /** ID=0x003a | type=UINT8 | writable=true */
+            /** ID=0x003a | type=UINT8 | write=true */
             emergencyHeatDelta: number;
-            /** ID=0x0040 | type=ENUM8 | writable=true | default=0 */
+            /** ID=0x0040 | type=ENUM8 | write=true | default=0 */
             acType: number;
-            /** ID=0x0041 | type=UINT16 | writable=true | max=65535 | default=0 */
+            /** ID=0x0041 | type=UINT16 | write=true | max=65535 | default=0 */
             acCapacity: number;
-            /** ID=0x0042 | type=ENUM8 | writable=true | default=0 */
+            /** ID=0x0042 | type=ENUM8 | write=true | default=0 */
             acRefrigerantType: number;
-            /** ID=0x0043 | type=ENUM8 | writable=true | default=0 */
+            /** ID=0x0043 | type=ENUM8 | write=true | default=0 */
             acConpressorType: number;
-            /** ID=0x0044 | type=BITMAP32 | writable=true | max=4294967295 | default=0 */
+            /** ID=0x0044 | type=BITMAP32 | write=true | max=4294967295 | default=0 */
             acErrorCode: number;
-            /** ID=0x0045 | type=ENUM8 | writable=true | default=0 */
+            /** ID=0x0045 | type=ENUM8 | write=true | default=0 */
             acLouverPosition: number;
             /** ID=0x0046 | type=INT16 | min=-27315 | max=32767 */
             acCollTemp: number;
-            /** ID=0x0047 | type=ENUM8 | writable=true | default=0 */
+            /** ID=0x0047 | type=ENUM8 | write=true | default=0 */
             acCapacityFormat: number;
-            /** ID=0x0101 | type=UINT16 | manufacturerCode=ASTREL_GROUP_SRL(0x1071) | writable=true | max=65535 */
+            /** ID=0x0101 | type=UINT16 | manufacturerCode=ASTREL_GROUP_SRL(0x1071) | write=true | max=65535 */
             fourNoksHysteresisHigh?: number;
-            /** ID=0x0102 | type=UINT16 | manufacturerCode=ASTREL_GROUP_SRL(0x1071) | writable=true | max=65535 */
+            /** ID=0x0102 | type=UINT16 | manufacturerCode=ASTREL_GROUP_SRL(0x1071) | write=true | max=65535 */
             fourNoksHysteresisLow?: number;
-            /** ID=0x0400 | type=ENUM8 | manufacturerCode=SINOPE_TECHNOLOGIES(0x119c) | writable=true | max=255 */
+            /** ID=0x0400 | type=ENUM8 | manufacturerCode=SINOPE_TECHNOLOGIES(0x119c) | write=true | max=255 */
             SinopeOccupancy?: number;
-            /** ID=0x0401 | type=UINT16 | writable=true | max=65535 */
+            /** ID=0x0401 | type=UINT16 | write=true | max=65535 */
             elkoLoad: number;
-            /** ID=0x0401 | type=UINT16 | manufacturerCode=SINOPE_TECHNOLOGIES(0x119c) | writable=true | max=65535 */
+            /** ID=0x0401 | type=UINT16 | manufacturerCode=SINOPE_TECHNOLOGIES(0x119c) | write=true | max=65535 */
             SinopeMainCycleOutput?: number;
-            /** ID=0x0402 | type=CHAR_STR | writable=true */
+            /** ID=0x0402 | type=CHAR_STR | write=true */
             elkoDisplayText: string;
-            /** ID=0x0402 | type=ENUM8 | manufacturerCode=SINOPE_TECHNOLOGIES(0x119c) | writable=true | max=255 */
+            /** ID=0x0402 | type=ENUM8 | manufacturerCode=SINOPE_TECHNOLOGIES(0x119c) | write=true | max=255 */
             SinopeBacklight?: number;
-            /** ID=0x0403 | type=ENUM8 | writable=true | max=255 */
+            /** ID=0x0403 | type=ENUM8 | write=true | max=255 */
             elkoSensor: number;
-            /** ID=0x0404 | type=UINT8 | writable=true | max=255 */
+            /** ID=0x0404 | type=UINT8 | write=true | max=255 */
             elkoRegulatorTime: number;
-            /** ID=0x0404 | type=UINT16 | manufacturerCode=SINOPE_TECHNOLOGIES(0x119c) | writable=true | max=65535 */
+            /** ID=0x0404 | type=UINT16 | manufacturerCode=SINOPE_TECHNOLOGIES(0x119c) | write=true | max=65535 */
             SinopeAuxCycleOutput?: number;
-            /** ID=0x0405 | type=BOOLEAN | writable=true */
+            /** ID=0x0405 | type=BOOLEAN | write=true */
             elkoRegulatorMode: number;
-            /** ID=0x0406 | type=BOOLEAN | writable=true */
+            /** ID=0x0406 | type=BOOLEAN | write=true */
             elkoPowerStatus: number;
-            /** ID=0x0407 | type=OCTET_STR | writable=true */
+            /** ID=0x0407 | type=OCTET_STR | write=true */
             elkoDateTime: Buffer;
-            /** ID=0x0408 | type=UINT16 | writable=true | max=65535 */
+            /** ID=0x0408 | type=UINT16 | write=true | max=65535 */
             elkoMeanPower: number;
-            /** ID=0x0409 | type=INT16 | writable=true | min=-32768 | max=32767 */
+            /** ID=0x0409 | type=INT16 | write=true | min=-32768 | max=32767 */
             elkoExternalTemp: number;
-            /** ID=0x0411 | type=BOOLEAN | writable=true */
+            /** ID=0x0411 | type=BOOLEAN | write=true */
             elkoNightSwitching: number;
-            /** ID=0x0412 | type=BOOLEAN | writable=true */
+            /** ID=0x0412 | type=BOOLEAN | write=true */
             elkoFrostGuard: number;
-            /** ID=0x0413 | type=BOOLEAN | writable=true */
+            /** ID=0x0413 | type=BOOLEAN | write=true */
             elkoChildLock: number;
-            /** ID=0x0414 | type=UINT8 | writable=true | max=255 */
+            /** ID=0x0414 | type=UINT8 | write=true | max=255 */
             elkoMaxFloorTemp: number;
-            /** ID=0x0415 | type=BOOLEAN | writable=true */
+            /** ID=0x0415 | type=BOOLEAN | write=true */
             elkoRelayState: number;
-            /** ID=0x0416 | type=OCTET_STR | writable=true */
+            /** ID=0x0416 | type=OCTET_STR | write=true */
             elkoVersion: Buffer;
-            /** ID=0x0417 | type=INT8 | writable=true | min=-128 | max=127 */
+            /** ID=0x0417 | type=INT8 | write=true | min=-128 | max=127 */
             elkoCalibration: number;
-            /** ID=0x0418 | type=UINT8 | writable=true | max=255 */
+            /** ID=0x0418 | type=UINT8 | write=true | max=255 */
             elkoLastMessageId: number;
-            /** ID=0x0419 | type=UINT8 | writable=true | max=255 */
+            /** ID=0x0419 | type=UINT8 | write=true | max=255 */
             elkoLastMessageStatus: number;
-            /** ID=0x4000 | type=ENUM8 | manufacturerCode=VIESSMANN_ELEKTRONIK_GMBH(0x1221) | writable=true | max=255 */
+            /** ID=0x4000 | type=ENUM8 | manufacturerCode=VIESSMANN_ELEKTRONIK_GMBH(0x1221) | write=true | max=255 */
             viessmannWindowOpenInternal?: number;
-            /** ID=0x4000 | type=ENUM8 | manufacturerCode=DANFOSS_A_S(0x1246) | writable=true | max=255 */
+            /** ID=0x4000 | type=ENUM8 | manufacturerCode=DANFOSS_A_S(0x1246) | write=true | max=255 */
             danfossWindowOpenInternal?: number;
-            /** ID=0x4001 | type=INT16 | writable=true | min=-32768 | max=32767 */
+            /** ID=0x4001 | type=INT16 | write=true | min=-32768 | max=32767 */
             StelproOutdoorTemp: number;
-            /** ID=0x4003 | type=BOOLEAN | manufacturerCode=VIESSMANN_ELEKTRONIK_GMBH(0x1221) | writable=true */
+            /** ID=0x4003 | type=BOOLEAN | manufacturerCode=VIESSMANN_ELEKTRONIK_GMBH(0x1221) | write=true */
             viessmannWindowOpenForce?: number;
-            /** ID=0x4003 | type=BOOLEAN | manufacturerCode=DANFOSS_A_S(0x1246) | writable=true */
+            /** ID=0x4003 | type=BOOLEAN | manufacturerCode=DANFOSS_A_S(0x1246) | write=true */
             danfossWindowOpenExternal?: number;
-            /** ID=0x4010 | type=ENUM8 | manufacturerCode=DANFOSS_A_S(0x1246) | writable=true | max=255 */
+            /** ID=0x4010 | type=ENUM8 | manufacturerCode=DANFOSS_A_S(0x1246) | write=true | max=255 */
             danfossDayOfWeek?: number;
-            /** ID=0x4011 | type=UINT16 | manufacturerCode=DANFOSS_A_S(0x1246) | writable=true | max=65535 */
+            /** ID=0x4011 | type=UINT16 | manufacturerCode=DANFOSS_A_S(0x1246) | write=true | max=65535 */
             danfossTriggerTime?: number;
-            /** ID=0x4012 | type=BOOLEAN | manufacturerCode=VIESSMANN_ELEKTRONIK_GMBH(0x1221) | writable=true */
+            /** ID=0x4012 | type=BOOLEAN | manufacturerCode=VIESSMANN_ELEKTRONIK_GMBH(0x1221) | write=true */
             viessmannAssemblyMode?: number;
-            /** ID=0x4012 | type=BOOLEAN | manufacturerCode=DANFOSS_A_S(0x1246) | writable=true */
+            /** ID=0x4012 | type=BOOLEAN | manufacturerCode=DANFOSS_A_S(0x1246) | write=true */
             danfossMountedModeActive?: number;
-            /** ID=0x4013 | type=BOOLEAN | manufacturerCode=DANFOSS_A_S(0x1246) | writable=true */
+            /** ID=0x4013 | type=BOOLEAN | manufacturerCode=DANFOSS_A_S(0x1246) | write=true */
             danfossMountedModeControl?: number;
-            /** ID=0x4014 | type=BOOLEAN | manufacturerCode=DANFOSS_A_S(0x1246) | writable=true */
+            /** ID=0x4014 | type=BOOLEAN | manufacturerCode=DANFOSS_A_S(0x1246) | write=true */
             danfossThermostatOrientation?: number;
-            /** ID=0x4015 | type=INT16 | manufacturerCode=DANFOSS_A_S(0x1246) | writable=true | min=-32768 | max=32767 */
+            /** ID=0x4015 | type=INT16 | manufacturerCode=DANFOSS_A_S(0x1246) | write=true | min=-32768 | max=32767 */
             danfossExternalMeasuredRoomSensor?: number;
-            /** ID=0x4016 | type=BOOLEAN | manufacturerCode=DANFOSS_A_S(0x1246) | writable=true */
+            /** ID=0x4016 | type=BOOLEAN | manufacturerCode=DANFOSS_A_S(0x1246) | write=true */
             danfossRadiatorCovered?: number;
-            /** ID=0x401c | type=ENUM8 | writable=true | max=255 */
+            /** ID=0x401c | type=ENUM8 | write=true | max=255 */
             StelproSystemMode: number;
-            /** ID=0x4020 | type=UINT8 | manufacturerCode=DANFOSS_A_S(0x1246) | writable=true | max=255 */
+            /** ID=0x4020 | type=UINT8 | manufacturerCode=DANFOSS_A_S(0x1246) | write=true | max=255 */
             danfossAlgorithmScaleFactor?: number;
-            /** ID=0x4030 | type=BOOLEAN | manufacturerCode=DANFOSS_A_S(0x1246) | writable=true */
+            /** ID=0x4030 | type=BOOLEAN | manufacturerCode=DANFOSS_A_S(0x1246) | write=true */
             danfossHeatAvailable?: number;
-            /** ID=0x4031 | type=BOOLEAN | manufacturerCode=DANFOSS_A_S(0x1246) | writable=true */
+            /** ID=0x4031 | type=BOOLEAN | manufacturerCode=DANFOSS_A_S(0x1246) | write=true */
             danfossHeatRequired?: number;
-            /** ID=0x4032 | type=BOOLEAN | manufacturerCode=DANFOSS_A_S(0x1246) | writable=true */
+            /** ID=0x4032 | type=BOOLEAN | manufacturerCode=DANFOSS_A_S(0x1246) | write=true */
             danfossLoadBalancingEnable?: number;
-            /** ID=0x4040 | type=INT16 | manufacturerCode=DANFOSS_A_S(0x1246) | writable=true | min=-32768 | max=32767 */
+            /** ID=0x4040 | type=INT16 | manufacturerCode=DANFOSS_A_S(0x1246) | write=true | min=-32768 | max=32767 */
             danfossLoadRoomMean?: number;
-            /** ID=0x404a | type=INT16 | manufacturerCode=DANFOSS_A_S(0x1246) | writable=true | min=-32768 | max=32767 */
+            /** ID=0x404a | type=INT16 | manufacturerCode=DANFOSS_A_S(0x1246) | write=true | min=-32768 | max=32767 */
             danfossLoadEstimate?: number;
-            /** ID=0x404b | type=INT8 | manufacturerCode=DANFOSS_A_S(0x1246) | writable=true | min=-128 | max=127 */
+            /** ID=0x404b | type=INT8 | manufacturerCode=DANFOSS_A_S(0x1246) | write=true | min=-128 | max=127 */
             danfossRegulationSetpointOffset?: number;
-            /** ID=0x404c | type=ENUM8 | manufacturerCode=DANFOSS_A_S(0x1246) | writable=true | max=255 */
+            /** ID=0x404c | type=ENUM8 | manufacturerCode=DANFOSS_A_S(0x1246) | write=true | max=255 */
             danfossAdaptionRunControl?: number;
-            /** ID=0x404d | type=BITMAP8 | manufacturerCode=DANFOSS_A_S(0x1246) | writable=true */
+            /** ID=0x404d | type=BITMAP8 | manufacturerCode=DANFOSS_A_S(0x1246) | write=true */
             danfossAdaptionRunStatus?: number;
-            /** ID=0x404e | type=BITMAP8 | manufacturerCode=DANFOSS_A_S(0x1246) | writable=true */
+            /** ID=0x404e | type=BITMAP8 | manufacturerCode=DANFOSS_A_S(0x1246) | write=true */
             danfossAdaptionRunSettings?: number;
-            /** ID=0x404f | type=BOOLEAN | manufacturerCode=DANFOSS_A_S(0x1246) | writable=true */
+            /** ID=0x404f | type=BOOLEAN | manufacturerCode=DANFOSS_A_S(0x1246) | write=true */
             danfossPreheatStatus?: number;
-            /** ID=0x4050 | type=UINT32 | manufacturerCode=DANFOSS_A_S(0x1246) | writable=true */
+            /** ID=0x4050 | type=UINT32 | manufacturerCode=DANFOSS_A_S(0x1246) | write=true */
             danfossPreheatTime?: number;
-            /** ID=0x4051 | type=BOOLEAN | manufacturerCode=DANFOSS_A_S(0x1246) | writable=true */
+            /** ID=0x4051 | type=BOOLEAN | manufacturerCode=DANFOSS_A_S(0x1246) | write=true */
             danfossWindowOpenFeatureEnable?: number;
-            /** ID=0x4100 | type=BITMAP16 | manufacturerCode=DANFOSS_A_S(0x1246) | writable=true */
+            /** ID=0x4100 | type=BITMAP16 | manufacturerCode=DANFOSS_A_S(0x1246) | write=true */
             danfossRoomStatusCode?: number;
-            /** ID=0x4110 | type=ENUM8 | manufacturerCode=DANFOSS_A_S(0x1246) | writable=true | max=255 */
+            /** ID=0x4110 | type=ENUM8 | manufacturerCode=DANFOSS_A_S(0x1246) | write=true | max=255 */
             danfossOutputStatus?: number;
-            /** ID=0x4120 | type=ENUM8 | manufacturerCode=DANFOSS_A_S(0x1246) | writable=true | max=255 */
+            /** ID=0x4120 | type=ENUM8 | manufacturerCode=DANFOSS_A_S(0x1246) | write=true | max=255 */
             danfossRoomFloorSensorMode?: number;
-            /** ID=0x4121 | type=INT16 | manufacturerCode=DANFOSS_A_S(0x1246) | writable=true | min=-32768 | max=32767 */
+            /** ID=0x4121 | type=INT16 | manufacturerCode=DANFOSS_A_S(0x1246) | write=true | min=-32768 | max=32767 */
             danfossFloorMinSetpoint?: number;
-            /** ID=0x4122 | type=INT16 | manufacturerCode=DANFOSS_A_S(0x1246) | writable=true | min=-32768 | max=32767 */
+            /** ID=0x4122 | type=INT16 | manufacturerCode=DANFOSS_A_S(0x1246) | write=true | min=-32768 | max=32767 */
             danfossFloorMaxSetpoint?: number;
-            /** ID=0x4130 | type=ENUM8 | manufacturerCode=DANFOSS_A_S(0x1246) | writable=true | max=255 */
+            /** ID=0x4130 | type=ENUM8 | manufacturerCode=DANFOSS_A_S(0x1246) | write=true | max=255 */
             danfossScheduleTypeUsed?: number;
-            /** ID=0x4131 | type=ENUM8 | manufacturerCode=DANFOSS_A_S(0x1246) | writable=true | max=255 */
+            /** ID=0x4131 | type=ENUM8 | manufacturerCode=DANFOSS_A_S(0x1246) | write=true | max=255 */
             danfossIcon2PreHeat?: number;
-            /** ID=0x414f | type=ENUM8 | manufacturerCode=DANFOSS_A_S(0x1246) | writable=true | max=255 */
+            /** ID=0x414f | type=ENUM8 | manufacturerCode=DANFOSS_A_S(0x1246) | write=true | max=255 */
             danfossIcon2PreHeatStatus?: number;
-            /** ID=0xe110 | type=ENUM8 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | writable=true | max=255 */
+            /** ID=0xe110 | type=ENUM8 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | max=255 */
             schneiderWiserSpecific?: number;
         };
         commands: {
@@ -3532,9 +3408,9 @@ export interface TClusters {
     };
     hvacFanCtrl: {
         attributes: {
-            /** ID=0x0000 | type=ENUM8 | writable=true | required=true | max=6 | default=5 */
+            /** ID=0x0000 | type=ENUM8 | write=true | required=true | max=6 | default=5 */
             fanMode: number;
-            /** ID=0x0001 | type=ENUM8 | writable=true | required=true | max=4 | default=2 */
+            /** ID=0x0001 | type=ENUM8 | write=true | required=true | max=4 | default=2 */
             fanModeSequence: number;
         };
         commands: never;
@@ -3544,19 +3420,19 @@ export interface TClusters {
         attributes: {
             /** ID=0x0000 | type=UINT8 | max=100 */
             relativeHumidity: number;
-            /** ID=0x0001 | type=UINT8 | reportRequired=true | required=true */
+            /** ID=0x0001 | type=UINT8 | report=true | required=true */
             dehumidCooling: number;
-            /** ID=0x0010 | type=UINT8 | writable=true | required=true | min=30 | max=100 | default=50 */
+            /** ID=0x0010 | type=UINT8 | write=true | required=true | min=30 | max=100 | default=50 */
             rhDehumidSetpoint: number;
-            /** ID=0x0011 | type=ENUM8 | writable=true | default=0 */
+            /** ID=0x0011 | type=ENUM8 | write=true | default=0 */
             relativeHumidityMode: number;
-            /** ID=0x0012 | type=ENUM8 | writable=true | default=1 */
+            /** ID=0x0012 | type=ENUM8 | write=true | default=1 */
             dehumidLockout: number;
-            /** ID=0x0013 | type=UINT8 | writable=true | required=true | min=2 | max=20 | default=2 */
+            /** ID=0x0013 | type=UINT8 | write=true | required=true | min=2 | max=20 | default=2 */
             dehumidHysteresis: number;
-            /** ID=0x0014 | type=UINT8 | writable=true | required=true | min=20 | max=100 | default=20 */
+            /** ID=0x0014 | type=UINT8 | write=true | required=true | min=20 | max=100 | default=20 */
             dehumidMaxCool: number;
-            /** ID=0x0015 | type=ENUM8 | writable=true | max=1 | default=0 */
+            /** ID=0x0015 | type=ENUM8 | write=true | max=1 | default=0 */
             relativeHumidDisplay: number;
         };
         commands: never;
@@ -3564,13 +3440,13 @@ export interface TClusters {
     };
     hvacUserInterfaceCfg: {
         attributes: {
-            /** ID=0x0000 | type=ENUM8 | writable=true | required=true | max=1 | default=0 */
+            /** ID=0x0000 | type=ENUM8 | write=true | required=true | max=1 | default=0 */
             tempDisplayMode: number;
-            /** ID=0x0001 | type=ENUM8 | writable=true | required=true | max=5 | default=0 */
+            /** ID=0x0001 | type=ENUM8 | write=true | required=true | max=5 | default=0 */
             keypadLockout: number;
-            /** ID=0x0002 | type=ENUM8 | writable=true | max=1 | default=0 */
+            /** ID=0x0002 | type=ENUM8 | write=true | max=1 | default=0 */
             programmingVisibility: number;
-            /** ID=0x4000 | type=ENUM8 | manufacturerCode=DANFOSS_A_S(0x1246) | writable=true | max=255 */
+            /** ID=0x4000 | type=ENUM8 | manufacturerCode=DANFOSS_A_S(0x1246) | write=true | max=255 */
             danfossViewingDirection?: number;
         };
         commands: never;
@@ -3578,25 +3454,25 @@ export interface TClusters {
     };
     lightingColorCtrl: {
         attributes: {
-            /** ID=0x0000 | type=UINT8 | reportRequired=true | max=254 | default=0 */
+            /** ID=0x0000 | type=UINT8 | report=true | max=254 | default=0 */
             currentHue: number;
-            /** ID=0x0001 | type=UINT8 | reportRequired=true | sceneRequired=true | max=254 | default=0 */
+            /** ID=0x0001 | type=UINT8 | report=true | scene=true | max=254 | default=0 */
             currentSaturation: number;
             /** ID=0x0002 | type=UINT16 | max=65534 | default=0 */
             remainingTime: number;
-            /** ID=0x0003 | type=UINT16 | reportRequired=true | sceneRequired=true | max=65279 | default=24939 */
+            /** ID=0x0003 | type=UINT16 | report=true | scene=true | max=65279 | default=24939 */
             currentX: number;
-            /** ID=0x0004 | type=UINT16 | reportRequired=true | sceneRequired=true | max=65279 | default=24701 */
+            /** ID=0x0004 | type=UINT16 | report=true | scene=true | max=65279 | default=24701 */
             currentY: number;
             /** ID=0x0005 | type=ENUM8 | max=4 */
             driftCompensation: number;
             /** ID=0x0006 | type=CHAR_STR | maxLen=254 */
             compensationText: string;
-            /** ID=0x0007 | type=UINT16 | reportRequired=true | sceneRequired=true | max=65279 | default=250 | special=Undefined,0000 */
+            /** ID=0x0007 | type=UINT16 | report=true | scene=true | max=65279 | default=250 | special=Undefined,0000 */
             colorTemperature: number;
             /** ID=0x0008 | type=ENUM8 | required=true | max=2 | default=1 */
             colorMode: number;
-            /** ID=0x000f | type=BITMAP8 | writable=true | required=true | default=0 */
+            /** ID=0x000f | type=BITMAP8 | write=true | required=true | default=0 */
             options: number;
             /** ID=0x0010 | type=UINT8 | required=true | max=6 */
             numPrimaries: number;
@@ -3636,37 +3512,37 @@ export interface TClusters {
             primary6Y: number;
             /** ID=0x002a | type=UINT8 | max=255 */
             primary6Intensity: number;
-            /** ID=0x0030 | type=UINT16 | writable=true | max=65279 */
+            /** ID=0x0030 | type=UINT16 | write=true | max=65279 */
             whitePointX: number;
-            /** ID=0x0031 | type=UINT16 | writable=true | max=65279 */
+            /** ID=0x0031 | type=UINT16 | write=true | max=65279 */
             whitePointY: number;
-            /** ID=0x0032 | type=UINT16 | writable=true | max=65279 */
+            /** ID=0x0032 | type=UINT16 | write=true | max=65279 */
             colorPointRX: number;
-            /** ID=0x0033 | type=UINT16 | writable=true | max=65279 */
+            /** ID=0x0033 | type=UINT16 | write=true | max=65279 */
             colorPointRY: number;
-            /** ID=0x0034 | type=UINT8 | writable=true | max=255 */
+            /** ID=0x0034 | type=UINT8 | write=true | max=255 */
             colorPointRIntensity: number;
-            /** ID=0x0036 | type=UINT16 | writable=true | max=65279 */
+            /** ID=0x0036 | type=UINT16 | write=true | max=65279 */
             colorPointGX: number;
-            /** ID=0x0037 | type=UINT16 | writable=true | max=65279 */
+            /** ID=0x0037 | type=UINT16 | write=true | max=65279 */
             colorPointGY: number;
-            /** ID=0x0038 | type=UINT8 | writable=true | max=255 */
+            /** ID=0x0038 | type=UINT8 | write=true | max=255 */
             colorPointGIntensity: number;
-            /** ID=0x003a | type=UINT16 | writable=true | max=65279 */
+            /** ID=0x003a | type=UINT16 | write=true | max=65279 */
             colorPointBX: number;
-            /** ID=0x003b | type=UINT16 | writable=true | max=65279 */
+            /** ID=0x003b | type=UINT16 | write=true | max=65279 */
             colorPointBY: number;
-            /** ID=0x003c | type=UINT8 | writable=true | max=255 */
+            /** ID=0x003c | type=UINT8 | write=true | max=255 */
             colorPointBIntensity: number;
-            /** ID=0x4000 | type=UINT16 | sceneRequired=true | max=65535 | default=0 */
+            /** ID=0x4000 | type=UINT16 | scene=true | max=65535 | default=0 */
             enhancedCurrentHue: number;
             /** ID=0x4001 | type=ENUM8 | required=true | max=255 | default=1 */
             enhancedColorMode: number;
-            /** ID=0x4002 | type=UINT8 | sceneRequired=true | max=255 | default=0 */
+            /** ID=0x4002 | type=UINT8 | scene=true | max=255 | default=0 */
             colorLoopActive: number;
-            /** ID=0x4003 | type=UINT8 | sceneRequired=true | max=255 | default=0 */
+            /** ID=0x4003 | type=UINT8 | scene=true | max=255 | default=0 */
             colorLoopDirection: number;
-            /** ID=0x4004 | type=UINT16 | sceneRequired=true | max=65535 | default=25 */
+            /** ID=0x4004 | type=UINT16 | scene=true | max=65535 | default=25 */
             colorLoopTime: number;
             /** ID=0x4005 | type=UINT16 | max=65535 | default=8960 */
             colorLoopStartEnhancedHue: number;
@@ -3680,11 +3556,11 @@ export interface TClusters {
             colorTempPhysicalMax: number;
             /** ID=0x400d | type=UINT16 */
             coupleColorTempToLevelMin: number;
-            /** ID=0x4010 | type=UINT16 | writable=true | max=65279 | special=SetColorTempToPreviousValue,ffff */
+            /** ID=0x4010 | type=UINT16 | write=true | max=65279 | special=SetColorTempToPreviousValue,ffff */
             startUpColorTemperature: number;
-            /** ID=0xf000 | type=UINT8 | writable=true | max=255 */
+            /** ID=0xf000 | type=UINT8 | write=true | max=255 */
             tuyaRgbMode: number;
-            /** ID=0xf001 | type=UINT8 | writable=true | max=255 */
+            /** ID=0xf001 | type=UINT8 | write=true | max=255 */
             tuyaBrightness: number;
         };
         commands: {
@@ -3989,35 +3865,35 @@ export interface TClusters {
             physicalMaxLevel: number;
             /** ID=0x0002 | type=BITMAP8 | default=0 */
             ballastStatus: number;
-            /** ID=0x0010 | type=UINT8 | writable=true | required=true | min=1 | max=254 */
+            /** ID=0x0010 | type=UINT8 | write=true | required=true | min=1 | max=254 */
             minLevel: number;
-            /** ID=0x0011 | type=UINT8 | writable=true | required=true | min=1 | max=254 */
+            /** ID=0x0011 | type=UINT8 | write=true | required=true | min=1 | max=254 */
             maxLevel: number;
-            /** ID=0x0012 | type=UINT8 | writable=true | max=254 */
+            /** ID=0x0012 | type=UINT8 | write=true | max=254 */
             powerOnLevel: number;
-            /** ID=0x0013 | type=UINT16 | writable=true | max=65534 | default=0 */
+            /** ID=0x0013 | type=UINT16 | write=true | max=65534 | default=0 */
             powerOnFadeTime: number;
-            /** ID=0x0014 | type=UINT8 | writable=true | max=254 */
+            /** ID=0x0014 | type=UINT8 | write=true | max=254 */
             intrinsicBallastFactor: number;
-            /** ID=0x0015 | type=UINT8 | writable=true | min=100 | default=255 */
+            /** ID=0x0015 | type=UINT8 | write=true | min=100 | default=255 */
             ballastFactorAdjustment: number;
             /** ID=0x0020 | type=UINT8 | max=254 */
             lampQuantity: number;
-            /** ID=0x0030 | type=CHAR_STR | writable=true | default= | maxLen=16 */
+            /** ID=0x0030 | type=CHAR_STR | write=true | default= | maxLen=16 */
             lampType: string;
-            /** ID=0x0031 | type=CHAR_STR | writable=true | default= | maxLen=16 */
+            /** ID=0x0031 | type=CHAR_STR | write=true | default= | maxLen=16 */
             lampManufacturer: string;
-            /** ID=0x0032 | type=UINT24 | writable=true | max=16777214 | default=16777215 */
+            /** ID=0x0032 | type=UINT24 | write=true | max=16777214 | default=16777215 */
             lampRatedHours: number;
-            /** ID=0x0033 | type=UINT24 | writable=true | max=16777214 | default=0 */
+            /** ID=0x0033 | type=UINT24 | write=true | max=16777214 | default=0 */
             lampBurnHours: number;
-            /** ID=0x0034 | type=BITMAP8 | writable=true | default=0 */
+            /** ID=0x0034 | type=BITMAP8 | write=true | default=0 */
             lampAlarmMode: number;
-            /** ID=0x0035 | type=UINT24 | writable=true | max=16777214 | default=16777215 */
+            /** ID=0x0035 | type=UINT24 | write=true | max=16777214 | default=16777215 */
             lampBurnHoursTripPoint: number;
-            /** ID=0xe000 | type=ENUM8 | manufacturerCode=ADEO(0x1277) | writable=true | max=255 */
+            /** ID=0xe000 | type=ENUM8 | manufacturerCode=ADEO(0x1277) | write=true | max=255 */
             elkoControlMode?: number;
-            /** ID=0xe000 | type=ENUM8 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | writable=true | max=255 */
+            /** ID=0xe000 | type=ENUM8 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | max=255 */
             wiserControlMode?: number;
         };
         commands: never;
@@ -4025,7 +3901,7 @@ export interface TClusters {
     };
     msIlluminanceMeasurement: {
         attributes: {
-            /** ID=0x0000 | type=UINT16 | reportRequired=true | required=true | max=65535 | default=0 | special=TooLowToBeMeasured,0000,Invalid,ffff */
+            /** ID=0x0000 | type=UINT16 | report=true | required=true | max=65535 | default=0 | special=TooLowToBeMeasured,0000,Invalid,ffff */
             measuredValue: number;
             /** ID=0x0001 | type=UINT16 | required=true | min=1 | max=65533 */
             minMeasuredValue: number;
@@ -4041,11 +3917,11 @@ export interface TClusters {
     };
     msIlluminanceLevelSensing: {
         attributes: {
-            /** ID=0x0000 | type=ENUM8 | reportRequired=true | required=true | max=254 */
+            /** ID=0x0000 | type=ENUM8 | report=true | required=true | max=254 */
             levelStatus: number;
             /** ID=0x0001 | type=ENUM8 | max=254 */
             lightSensorType: number;
-            /** ID=0x0010 | type=UINT16 | writable=true | required=true | max=65534 */
+            /** ID=0x0010 | type=UINT16 | write=true | required=true | max=65534 */
             illuminanceTargetLevel: number;
         };
         commands: never;
@@ -4053,7 +3929,7 @@ export interface TClusters {
     };
     msTemperatureMeasurement: {
         attributes: {
-            /** ID=0x0000 | type=INT16 | reportRequired=true | required=true */
+            /** ID=0x0000 | type=INT16 | report=true | required=true */
             measuredValue: number;
             /** ID=0x0001 | type=INT16 | required=true | min=-27315 | max=32766 */
             minMeasuredValue: number;
@@ -4061,11 +3937,11 @@ export interface TClusters {
             maxMeasuredValue: number;
             /** ID=0x0003 | type=UINT16 | max=2048 */
             tolerance: number;
-            /** ID=0x0010 | type=UNKNOWN | writable=true */
+            /** ID=0x0010 | type=UNKNOWN | write=true */
             minPercentChange: never;
-            /** ID=0x0011 | type=UNKNOWN | writable=true */
+            /** ID=0x0011 | type=UNKNOWN | write=true */
             minAbsoluteChange: never;
-            /** ID=0x6600 | type=INT16 | manufacturerCode=CUSTOM_SPRUT_DEVICE(0x6666) | writable=true | min=-32768 | max=32767 */
+            /** ID=0x6600 | type=INT16 | manufacturerCode=CUSTOM_SPRUT_DEVICE(0x6666) | write=true | min=-32768 | max=32767 */
             sprutTemperatureOffset?: number;
         };
         commands: never;
@@ -4073,7 +3949,7 @@ export interface TClusters {
     };
     msPressureMeasurement: {
         attributes: {
-            /** ID=0x0000 | type=INT16 | reportRequired=true | required=true */
+            /** ID=0x0000 | type=INT16 | report=true | required=true */
             measuredValue: number;
             /** ID=0x0001 | type=INT16 | required=true | min=-32767 | max=32766 */
             minMeasuredValue: number;
@@ -4097,7 +3973,7 @@ export interface TClusters {
     };
     msFlowMeasurement: {
         attributes: {
-            /** ID=0x0000 | type=UINT16 | reportRequired=true | required=true */
+            /** ID=0x0000 | type=UINT16 | report=true | required=true */
             measuredValue: number;
             /** ID=0x0001 | type=UINT16 | required=true | max=65533 */
             minMeasuredValue: number;
@@ -4111,7 +3987,7 @@ export interface TClusters {
     };
     msRelativeHumidity: {
         attributes: {
-            /** ID=0x0000 | type=UINT16 | reportRequired=true | required=true */
+            /** ID=0x0000 | type=UINT16 | report=true | required=true */
             measuredValue: number;
             /** ID=0x0001 | type=UINT16 | required=true | max=9999 */
             minMeasuredValue: number;
@@ -4119,7 +3995,7 @@ export interface TClusters {
             maxMeasuredValue: number;
             /** ID=0x0003 | type=UINT16 | max=2048 */
             tolerance: number;
-            /** ID=0x6600 | type=BOOLEAN | manufacturerCode=CUSTOM_SPRUT_DEVICE(0x6666) | writable=true */
+            /** ID=0x6600 | type=BOOLEAN | manufacturerCode=CUSTOM_SPRUT_DEVICE(0x6666) | write=true */
             sprutHeater?: number;
         };
         commands: never;
@@ -4127,41 +4003,41 @@ export interface TClusters {
     };
     msOccupancySensing: {
         attributes: {
-            /** ID=0x0000 | type=BITMAP8 | reportRequired=true | required=true */
+            /** ID=0x0000 | type=BITMAP8 | report=true | required=true */
             occupancy: number;
             /** ID=0x0001 | type=ENUM8 | required=true | default=0 */
             occupancySensorType: number;
             /** ID=0x0002 | type=BITMAP8 | required=true */
             occupancySensorTypeBitmap: number;
-            /** ID=0x0010 | type=UINT16 | writable=true | max=65534 | default=0 */
+            /** ID=0x0010 | type=UINT16 | write=true | max=65534 | default=0 */
             pirOToUDelay: number;
-            /** ID=0x0011 | type=UINT16 | writable=true | max=65534 | default=0 */
+            /** ID=0x0011 | type=UINT16 | write=true | max=65534 | default=0 */
             pirUToODelay: number;
-            /** ID=0x0012 | type=UINT8 | writable=true | min=1 | max=254 | default=1 */
+            /** ID=0x0012 | type=UINT8 | write=true | min=1 | max=254 | default=1 */
             pirUToOThreshold: number;
-            /** ID=0x0020 | type=UINT16 | writable=true | max=65534 | default=0 */
+            /** ID=0x0020 | type=UINT16 | write=true | max=65534 | default=0 */
             ultrasonicOToUDelay: number;
-            /** ID=0x0021 | type=UINT16 | writable=true | max=65534 | default=0 */
+            /** ID=0x0021 | type=UINT16 | write=true | max=65534 | default=0 */
             ultrasonicUToODelay: number;
-            /** ID=0x0022 | type=UINT8 | writable=true | min=1 | max=254 | default=1 */
+            /** ID=0x0022 | type=UINT8 | write=true | min=1 | max=254 | default=1 */
             ultrasonicUToOThreshold: number;
-            /** ID=0x0030 | type=UINT16 | writable=true | max=65534 | default=0 */
+            /** ID=0x0030 | type=UINT16 | write=true | max=65534 | default=0 */
             contactOToUDelay: number;
-            /** ID=0x0031 | type=UINT16 | writable=true | max=65534 | default=0 */
+            /** ID=0x0031 | type=UINT16 | write=true | max=65534 | default=0 */
             contactUToODelay: number;
-            /** ID=0x0032 | type=UINT8 | writable=true | min=1 | max=254 | default=1 */
+            /** ID=0x0032 | type=UINT8 | write=true | min=1 | max=254 | default=1 */
             contactUToOThreshold: number;
-            /** ID=0x6600 | type=UINT16 | manufacturerCode=CUSTOM_SPRUT_DEVICE(0x6666) | writable=true | max=65535 */
+            /** ID=0x6600 | type=UINT16 | manufacturerCode=CUSTOM_SPRUT_DEVICE(0x6666) | write=true | max=65535 */
             sprutOccupancyLevel?: number;
-            /** ID=0x6601 | type=UINT16 | manufacturerCode=CUSTOM_SPRUT_DEVICE(0x6666) | writable=true | max=65535 */
+            /** ID=0x6601 | type=UINT16 | manufacturerCode=CUSTOM_SPRUT_DEVICE(0x6666) | write=true | max=65535 */
             sprutOccupancySensitivity?: number;
-            /** ID=0xe000 | type=ENUM8 | manufacturerCode=ADEO(0x1277) | writable=true | max=255 */
+            /** ID=0xe000 | type=ENUM8 | manufacturerCode=ADEO(0x1277) | write=true | max=255 */
             elkoOccupancyDfltOperationMode?: number;
-            /** ID=0xe001 | type=ENUM8 | manufacturerCode=ADEO(0x1277) | writable=true | max=255 */
+            /** ID=0xe001 | type=ENUM8 | manufacturerCode=ADEO(0x1277) | write=true | max=255 */
             elkoOccupancyOperationMode?: number;
-            /** ID=0xe002 | type=UINT16 | manufacturerCode=ADEO(0x1277) | writable=true | max=65535 */
+            /** ID=0xe002 | type=UINT16 | manufacturerCode=ADEO(0x1277) | write=true | max=65535 */
             elkoForceOffTimeout?: number;
-            /** ID=0xe003 | type=UINT8 | manufacturerCode=ADEO(0x1277) | writable=true | max=255 */
+            /** ID=0xe003 | type=UINT8 | manufacturerCode=ADEO(0x1277) | write=true | max=255 */
             elkoOccupancySensitivity?: number;
         };
         commands: never;
@@ -4169,7 +4045,7 @@ export interface TClusters {
     };
     msLeafWetness: {
         attributes: {
-            /** ID=0x0000 | type=UINT16 | reportRequired=true | required=true */
+            /** ID=0x0000 | type=UINT16 | report=true | required=true */
             measuredValue: number;
             /** ID=0x0001 | type=UINT16 | required=true | max=9999 */
             minMeasuredValue: number;
@@ -4183,7 +4059,7 @@ export interface TClusters {
     };
     msSoilMoisture: {
         attributes: {
-            /** ID=0x0000 | type=UINT16 | reportRequired=true | required=true */
+            /** ID=0x0000 | type=UINT16 | report=true | required=true */
             measuredValue: number;
             /** ID=0x0001 | type=UINT16 | required=true | max=9999 */
             minMeasuredValue: number;
@@ -4197,7 +4073,7 @@ export interface TClusters {
     };
     pHMeasurement: {
         attributes: {
-            /** ID=0x0000 | type=UINT16 | reportRequired=true | required=true */
+            /** ID=0x0000 | type=UINT16 | report=true | required=true */
             measuredValue: number;
             /** ID=0x0001 | type=UINT16 | required=true | max=1399 */
             minMeasuredValue: number;
@@ -4211,7 +4087,7 @@ export interface TClusters {
     };
     msElectricalConductivity: {
         attributes: {
-            /** ID=0x0000 | type=UINT16 | reportRequired=true | required=true */
+            /** ID=0x0000 | type=UINT16 | report=true | required=true */
             measuredValue: number;
             /** ID=0x0001 | type=UINT16 | required=true | max=65533 */
             minMeasuredValue: number;
@@ -4225,7 +4101,7 @@ export interface TClusters {
     };
     msWindSpeed: {
         attributes: {
-            /** ID=0x0000 | type=UINT16 | reportRequired=true | required=true */
+            /** ID=0x0000 | type=UINT16 | report=true | required=true */
             measuredValue: number;
             /** ID=0x0001 | type=UINT16 | required=true | max=65533 */
             minMeasuredValue: number;
@@ -4239,7 +4115,7 @@ export interface TClusters {
     };
     msCarbonMonoxide: {
         attributes: {
-            /** ID=0x0000 | type=SINGLE_PREC | reportRequired=true | required=true */
+            /** ID=0x0000 | type=SINGLE_PREC | report=true | required=true */
             measuredValue: number;
             /** ID=0x0001 | type=SINGLE_PREC | required=true | min=0 */
             minMeasuredValue: number;
@@ -4253,7 +4129,7 @@ export interface TClusters {
     };
     msCO2: {
         attributes: {
-            /** ID=0x0000 | type=SINGLE_PREC | reportRequired=true | required=true */
+            /** ID=0x0000 | type=SINGLE_PREC | report=true | required=true */
             measuredValue: number;
             /** ID=0x0001 | type=SINGLE_PREC | required=true | min=0 */
             minMeasuredValue: number;
@@ -4261,9 +4137,9 @@ export interface TClusters {
             maxMeasuredValue: number;
             /** ID=0x0003 | type=SINGLE_PREC */
             tolerance: number;
-            /** ID=0x6600 | type=BOOLEAN | manufacturerCode=CUSTOM_SPRUT_DEVICE(0x6666) | writable=true */
+            /** ID=0x6600 | type=BOOLEAN | manufacturerCode=CUSTOM_SPRUT_DEVICE(0x6666) | write=true */
             sprutCO2Calibration?: number;
-            /** ID=0x6601 | type=BOOLEAN | manufacturerCode=CUSTOM_SPRUT_DEVICE(0x6666) | writable=true */
+            /** ID=0x6601 | type=BOOLEAN | manufacturerCode=CUSTOM_SPRUT_DEVICE(0x6666) | write=true */
             sprutCO2AutoCalibration?: number;
         };
         commands: never;
@@ -4271,7 +4147,7 @@ export interface TClusters {
     };
     msEthylene: {
         attributes: {
-            /** ID=0x0000 | type=SINGLE_PREC | reportRequired=true | required=true */
+            /** ID=0x0000 | type=SINGLE_PREC | report=true | required=true */
             measuredValue: number;
             /** ID=0x0001 | type=SINGLE_PREC | required=true | min=0 */
             minMeasuredValue: number;
@@ -4285,7 +4161,7 @@ export interface TClusters {
     };
     msEthyleneOxide: {
         attributes: {
-            /** ID=0x0000 | type=SINGLE_PREC | reportRequired=true | required=true */
+            /** ID=0x0000 | type=SINGLE_PREC | report=true | required=true */
             measuredValue: number;
             /** ID=0x0001 | type=SINGLE_PREC | required=true | min=0 */
             minMeasuredValue: number;
@@ -4299,7 +4175,7 @@ export interface TClusters {
     };
     msHydrogen: {
         attributes: {
-            /** ID=0x0000 | type=SINGLE_PREC | reportRequired=true | required=true */
+            /** ID=0x0000 | type=SINGLE_PREC | report=true | required=true */
             measuredValue: number;
             /** ID=0x0001 | type=SINGLE_PREC | required=true | min=0 */
             minMeasuredValue: number;
@@ -4313,7 +4189,7 @@ export interface TClusters {
     };
     msHydrogenSulfide: {
         attributes: {
-            /** ID=0x0000 | type=SINGLE_PREC | reportRequired=true | required=true */
+            /** ID=0x0000 | type=SINGLE_PREC | report=true | required=true */
             measuredValue: number;
             /** ID=0x0001 | type=SINGLE_PREC | required=true | min=0 */
             minMeasuredValue: number;
@@ -4327,7 +4203,7 @@ export interface TClusters {
     };
     msNitricOxide: {
         attributes: {
-            /** ID=0x0000 | type=SINGLE_PREC | reportRequired=true | required=true */
+            /** ID=0x0000 | type=SINGLE_PREC | report=true | required=true */
             measuredValue: number;
             /** ID=0x0001 | type=SINGLE_PREC | required=true | min=0 */
             minMeasuredValue: number;
@@ -4341,7 +4217,7 @@ export interface TClusters {
     };
     msNitrogenDioxide: {
         attributes: {
-            /** ID=0x0000 | type=SINGLE_PREC | reportRequired=true | required=true */
+            /** ID=0x0000 | type=SINGLE_PREC | report=true | required=true */
             measuredValue: number;
             /** ID=0x0001 | type=SINGLE_PREC | required=true | min=0 */
             minMeasuredValue: number;
@@ -4355,7 +4231,7 @@ export interface TClusters {
     };
     msOxygen: {
         attributes: {
-            /** ID=0x0000 | type=SINGLE_PREC | reportRequired=true | required=true */
+            /** ID=0x0000 | type=SINGLE_PREC | report=true | required=true */
             measuredValue: number;
             /** ID=0x0001 | type=SINGLE_PREC | required=true | min=0 */
             minMeasuredValue: number;
@@ -4369,7 +4245,7 @@ export interface TClusters {
     };
     msOzone: {
         attributes: {
-            /** ID=0x0000 | type=SINGLE_PREC | reportRequired=true | required=true */
+            /** ID=0x0000 | type=SINGLE_PREC | report=true | required=true */
             measuredValue: number;
             /** ID=0x0001 | type=SINGLE_PREC | required=true | min=0 */
             minMeasuredValue: number;
@@ -4383,7 +4259,7 @@ export interface TClusters {
     };
     msSulfurDioxide: {
         attributes: {
-            /** ID=0x0000 | type=SINGLE_PREC | reportRequired=true | required=true */
+            /** ID=0x0000 | type=SINGLE_PREC | report=true | required=true */
             measuredValue: number;
             /** ID=0x0001 | type=SINGLE_PREC | required=true | min=0 */
             minMeasuredValue: number;
@@ -4397,7 +4273,7 @@ export interface TClusters {
     };
     msDissolvedOxygen: {
         attributes: {
-            /** ID=0x0000 | type=SINGLE_PREC | reportRequired=true | required=true */
+            /** ID=0x0000 | type=SINGLE_PREC | report=true | required=true */
             measuredValue: number;
             /** ID=0x0001 | type=SINGLE_PREC | required=true | min=0 */
             minMeasuredValue: number;
@@ -4411,7 +4287,7 @@ export interface TClusters {
     };
     msBromate: {
         attributes: {
-            /** ID=0x0000 | type=SINGLE_PREC | reportRequired=true | required=true */
+            /** ID=0x0000 | type=SINGLE_PREC | report=true | required=true */
             measuredValue: number;
             /** ID=0x0001 | type=SINGLE_PREC | required=true | min=0 */
             minMeasuredValue: number;
@@ -4425,7 +4301,7 @@ export interface TClusters {
     };
     msChloramines: {
         attributes: {
-            /** ID=0x0000 | type=SINGLE_PREC | reportRequired=true | required=true */
+            /** ID=0x0000 | type=SINGLE_PREC | report=true | required=true */
             measuredValue: number;
             /** ID=0x0001 | type=SINGLE_PREC | required=true | min=0 */
             minMeasuredValue: number;
@@ -4439,7 +4315,7 @@ export interface TClusters {
     };
     msChlorine: {
         attributes: {
-            /** ID=0x0000 | type=SINGLE_PREC | reportRequired=true | required=true */
+            /** ID=0x0000 | type=SINGLE_PREC | report=true | required=true */
             measuredValue: number;
             /** ID=0x0001 | type=SINGLE_PREC | required=true | min=0 */
             minMeasuredValue: number;
@@ -4453,7 +4329,7 @@ export interface TClusters {
     };
     msFecalColiformAndEColi: {
         attributes: {
-            /** ID=0x0000 | type=SINGLE_PREC | reportRequired=true | required=true */
+            /** ID=0x0000 | type=SINGLE_PREC | report=true | required=true */
             measuredValue: number;
             /** ID=0x0001 | type=SINGLE_PREC | required=true | min=0 */
             minMeasuredValue: number;
@@ -4467,7 +4343,7 @@ export interface TClusters {
     };
     msFluoride: {
         attributes: {
-            /** ID=0x0000 | type=SINGLE_PREC | reportRequired=true | required=true */
+            /** ID=0x0000 | type=SINGLE_PREC | report=true | required=true */
             measuredValue: number;
             /** ID=0x0001 | type=SINGLE_PREC | required=true | min=0 */
             minMeasuredValue: number;
@@ -4481,7 +4357,7 @@ export interface TClusters {
     };
     msHaloaceticAcids: {
         attributes: {
-            /** ID=0x0000 | type=SINGLE_PREC | reportRequired=true | required=true */
+            /** ID=0x0000 | type=SINGLE_PREC | report=true | required=true */
             measuredValue: number;
             /** ID=0x0001 | type=SINGLE_PREC | required=true | min=0 */
             minMeasuredValue: number;
@@ -4495,7 +4371,7 @@ export interface TClusters {
     };
     msTotalTrihalomethanes: {
         attributes: {
-            /** ID=0x0000 | type=SINGLE_PREC | reportRequired=true | required=true */
+            /** ID=0x0000 | type=SINGLE_PREC | report=true | required=true */
             measuredValue: number;
             /** ID=0x0001 | type=SINGLE_PREC | required=true | min=0 */
             minMeasuredValue: number;
@@ -4509,7 +4385,7 @@ export interface TClusters {
     };
     msTotalColiformBacteria: {
         attributes: {
-            /** ID=0x0000 | type=SINGLE_PREC | reportRequired=true | required=true */
+            /** ID=0x0000 | type=SINGLE_PREC | report=true | required=true */
             measuredValue: number;
             /** ID=0x0001 | type=SINGLE_PREC | required=true | min=0 */
             minMeasuredValue: number;
@@ -4523,7 +4399,7 @@ export interface TClusters {
     };
     msTurbidity: {
         attributes: {
-            /** ID=0x0000 | type=SINGLE_PREC | reportRequired=true | required=true */
+            /** ID=0x0000 | type=SINGLE_PREC | report=true | required=true */
             measuredValue: number;
             /** ID=0x0001 | type=SINGLE_PREC | required=true | min=0 */
             minMeasuredValue: number;
@@ -4537,7 +4413,7 @@ export interface TClusters {
     };
     msCopper: {
         attributes: {
-            /** ID=0x0000 | type=SINGLE_PREC | reportRequired=true | required=true */
+            /** ID=0x0000 | type=SINGLE_PREC | report=true | required=true */
             measuredValue: number;
             /** ID=0x0001 | type=SINGLE_PREC | required=true | min=0 */
             minMeasuredValue: number;
@@ -4551,7 +4427,7 @@ export interface TClusters {
     };
     msLead: {
         attributes: {
-            /** ID=0x0000 | type=SINGLE_PREC | reportRequired=true | required=true */
+            /** ID=0x0000 | type=SINGLE_PREC | report=true | required=true */
             measuredValue: number;
             /** ID=0x0001 | type=SINGLE_PREC | required=true | min=0 */
             minMeasuredValue: number;
@@ -4565,7 +4441,7 @@ export interface TClusters {
     };
     msManganese: {
         attributes: {
-            /** ID=0x0000 | type=SINGLE_PREC | reportRequired=true | required=true */
+            /** ID=0x0000 | type=SINGLE_PREC | report=true | required=true */
             measuredValue: number;
             /** ID=0x0001 | type=SINGLE_PREC | required=true | min=0 */
             minMeasuredValue: number;
@@ -4579,7 +4455,7 @@ export interface TClusters {
     };
     msSulfate: {
         attributes: {
-            /** ID=0x0000 | type=SINGLE_PREC | reportRequired=true | required=true */
+            /** ID=0x0000 | type=SINGLE_PREC | report=true | required=true */
             measuredValue: number;
             /** ID=0x0001 | type=SINGLE_PREC | required=true | min=0 */
             minMeasuredValue: number;
@@ -4593,7 +4469,7 @@ export interface TClusters {
     };
     msBromodichloromethane: {
         attributes: {
-            /** ID=0x0000 | type=SINGLE_PREC | reportRequired=true | required=true */
+            /** ID=0x0000 | type=SINGLE_PREC | report=true | required=true */
             measuredValue: number;
             /** ID=0x0001 | type=SINGLE_PREC | required=true | min=0 */
             minMeasuredValue: number;
@@ -4607,7 +4483,7 @@ export interface TClusters {
     };
     msBromoform: {
         attributes: {
-            /** ID=0x0000 | type=SINGLE_PREC | reportRequired=true | required=true */
+            /** ID=0x0000 | type=SINGLE_PREC | report=true | required=true */
             measuredValue: number;
             /** ID=0x0001 | type=SINGLE_PREC | required=true | min=0 */
             minMeasuredValue: number;
@@ -4621,7 +4497,7 @@ export interface TClusters {
     };
     msChlorodibromomethane: {
         attributes: {
-            /** ID=0x0000 | type=SINGLE_PREC | reportRequired=true | required=true */
+            /** ID=0x0000 | type=SINGLE_PREC | report=true | required=true */
             measuredValue: number;
             /** ID=0x0001 | type=SINGLE_PREC | required=true | min=0 */
             minMeasuredValue: number;
@@ -4635,7 +4511,7 @@ export interface TClusters {
     };
     msChloroform: {
         attributes: {
-            /** ID=0x0000 | type=SINGLE_PREC | reportRequired=true | required=true */
+            /** ID=0x0000 | type=SINGLE_PREC | report=true | required=true */
             measuredValue: number;
             /** ID=0x0001 | type=SINGLE_PREC | required=true | min=0 */
             minMeasuredValue: number;
@@ -4649,7 +4525,7 @@ export interface TClusters {
     };
     msSodium: {
         attributes: {
-            /** ID=0x0000 | type=SINGLE_PREC | reportRequired=true | required=true */
+            /** ID=0x0000 | type=SINGLE_PREC | report=true | required=true */
             measuredValue: number;
             /** ID=0x0001 | type=SINGLE_PREC | required=true | min=0 */
             minMeasuredValue: number;
@@ -4663,7 +4539,7 @@ export interface TClusters {
     };
     pm25Measurement: {
         attributes: {
-            /** ID=0x0000 | type=SINGLE_PREC | reportRequired=true | required=true */
+            /** ID=0x0000 | type=SINGLE_PREC | report=true | required=true */
             measuredValue: number;
             /** ID=0x0001 | type=SINGLE_PREC | required=true | min=0 */
             measuredMinValue: number;
@@ -4677,7 +4553,7 @@ export interface TClusters {
     };
     msFormaldehyde: {
         attributes: {
-            /** ID=0x0000 | type=SINGLE_PREC | reportRequired=true | required=true */
+            /** ID=0x0000 | type=SINGLE_PREC | report=true | required=true */
             measuredValue: number;
             /** ID=0x0001 | type=SINGLE_PREC | required=true | min=0 */
             minMeasuredValue: number;
@@ -4697,15 +4573,15 @@ export interface TClusters {
             zoneType: number;
             /** ID=0x0002 | type=BITMAP16 | required=true | default=0 */
             zoneStatus: number;
-            /** ID=0x0010 | type=IEEE_ADDR | writable=true | required=true */
+            /** ID=0x0010 | type=IEEE_ADDR | write=true | required=true */
             iasCieAddr: string;
             /** ID=0x0011 | type=UINT8 | required=true | max=255 | default=255 */
             zoneId: number;
             /** ID=0x0012 | type=UINT8 | min=2 | max=255 | default=2 */
             numZoneSensitivityLevelsSupported: number;
-            /** ID=0x0013 | type=UINT8 | writable=true | max=255 | default=0 */
+            /** ID=0x0013 | type=UINT8 | write=true | max=255 | default=0 */
             currentZoneSensitivityLevel: number;
-            /** ID=0x8001 | type=UINT16 | manufacturerCode=DEVELCO(0x1015) | writable=true | max=65535 */
+            /** ID=0x8001 | type=UINT16 | manufacturerCode=DEVELCO(0x1015) | write=true | max=65535 */
             develcoAlarmOffDelay?: number;
         };
         commands: {
@@ -4909,7 +4785,7 @@ export interface TClusters {
     };
     ssIasWd: {
         attributes: {
-            /** ID=0x0000 | type=UINT16 | writable=true | required=true | max=65534 | default=240 */
+            /** ID=0x0000 | type=UINT16 | write=true | required=true | max=65534 | default=240 */
             maxDuration: number;
         };
         commands: {
@@ -4976,7 +4852,7 @@ export interface TClusters {
     };
     piAnalogInputReg: {
         attributes: {
-            /** ID=0x0016 | type=SINGLE_PREC | writable=true | writeOptional=true */
+            /** ID=0x0016 | type=SINGLE_PREC | write=true | writeOptional=true */
             covIncrement: number;
             /** ID=0x001f | type=CHAR_STR | default=  */
             deviceType: string;
@@ -4986,9 +4862,9 @@ export interface TClusters {
             objectName: string;
             /** ID=0x004f | type=ENUM16 | required=true */
             objectType: number;
-            /** ID=0x0076 | type=UINT8 | writable=true | writeOptional=true */
+            /** ID=0x0076 | type=UINT8 | write=true | writeOptional=true */
             updateInterval: number;
-            /** ID=0x00a8 | type=CHAR_STR | writable=true | writeOptional=true | default=  */
+            /** ID=0x00a8 | type=CHAR_STR | write=true | writeOptional=true | default=  */
             profileName: string;
         };
         commands: never;
@@ -4996,25 +4872,25 @@ export interface TClusters {
     };
     piAnalogInputExt: {
         attributes: {
-            /** ID=0x0000 | type=BITMAP8 | required=true | writable=true | writeOptional=true | default=0 */
+            /** ID=0x0000 | type=BITMAP8 | required=true | write=true | writeOptional=true | default=0 */
             ackedTransitions: number;
-            /** ID=0x0011 | type=UINT16 | required=true | writable=true | writeOptional=true | max=65535 | default=0 */
+            /** ID=0x0011 | type=UINT16 | required=true | write=true | writeOptional=true | max=65535 | default=0 */
             notificationClass: number;
-            /** ID=0x0019 | type=SINGLE_PREC | required=true | writable=true | writeOptional=true | default=0 */
+            /** ID=0x0019 | type=SINGLE_PREC | required=true | write=true | writeOptional=true | default=0 */
             deadband: number;
-            /** ID=0x0023 | type=BITMAP8 | required=true | writable=true | writeOptional=true | default=0 */
+            /** ID=0x0023 | type=BITMAP8 | required=true | write=true | writeOptional=true | default=0 */
             eventEnable: number;
             /** ID=0x0024 | type=ENUM8 | default=0 */
             eventState: number;
-            /** ID=0x002d | type=SINGLE_PREC | required=true | writable=true | writeOptional=true | default=0 */
+            /** ID=0x002d | type=SINGLE_PREC | required=true | write=true | writeOptional=true | default=0 */
             highLimit: number;
-            /** ID=0x0034 | type=BITMAP8 | required=true | writable=true | writeOptional=true | max=17 | default=0 */
+            /** ID=0x0034 | type=BITMAP8 | required=true | write=true | writeOptional=true | max=17 | default=0 */
             limitEnable: number;
-            /** ID=0x003b | type=SINGLE_PREC | required=true | writable=true | writeOptional=true | default=0 */
+            /** ID=0x003b | type=SINGLE_PREC | required=true | write=true | writeOptional=true | default=0 */
             lowLimit: number;
-            /** ID=0x0048 | type=ENUM8 | required=true | writable=true | writeOptional=true | default=0 */
+            /** ID=0x0048 | type=ENUM8 | required=true | write=true | writeOptional=true | default=0 */
             notifyType: number;
-            /** ID=0x0071 | type=UINT8 | required=true | writable=true | writeOptional=true | default=0 */
+            /** ID=0x0071 | type=UINT8 | required=true | write=true | writeOptional=true | default=0 */
             timeDelay: number;
             /** ID=0x0082 | type=ARRAY */
             eventTimeStamps: ZclArray | unknown[];
@@ -5033,7 +4909,7 @@ export interface TClusters {
     };
     piAnalogOutputReg: {
         attributes: {
-            /** ID=0x0016 | type=SINGLE_PREC | writable=true | writeOptional=true | default=0 */
+            /** ID=0x0016 | type=SINGLE_PREC | write=true | writeOptional=true | default=0 */
             covIncrement: number;
             /** ID=0x001f | type=CHAR_STR | default=  */
             deviceType: string;
@@ -5043,7 +4919,7 @@ export interface TClusters {
             objectName: string;
             /** ID=0x004f | type=ENUM16 | required=true */
             objectType: number;
-            /** ID=0x00a8 | type=CHAR_STR | writable=true | writeOptional=true | default=  */
+            /** ID=0x00a8 | type=CHAR_STR | write=true | writeOptional=true | default=  */
             profileName: string;
         };
         commands: never;
@@ -5051,25 +4927,25 @@ export interface TClusters {
     };
     piAnalogOutputExt: {
         attributes: {
-            /** ID=0x0000 | type=BITMAP8 | required=true | writable=true | writeOptional=true | default=0 */
+            /** ID=0x0000 | type=BITMAP8 | required=true | write=true | writeOptional=true | default=0 */
             ackedTransitions: number;
-            /** ID=0x0011 | type=UINT16 | required=true | writable=true | writeOptional=true | max=65535 | default=0 */
+            /** ID=0x0011 | type=UINT16 | required=true | write=true | writeOptional=true | max=65535 | default=0 */
             notificationClass: number;
-            /** ID=0x0019 | type=SINGLE_PREC | required=true | writable=true | writeOptional=true | default=0 */
+            /** ID=0x0019 | type=SINGLE_PREC | required=true | write=true | writeOptional=true | default=0 */
             deadband: number;
-            /** ID=0x0023 | type=BITMAP8 | required=true | writable=true | writeOptional=true | default=0 */
+            /** ID=0x0023 | type=BITMAP8 | required=true | write=true | writeOptional=true | default=0 */
             eventEnable: number;
             /** ID=0x0024 | type=ENUM8 | default=0 */
             eventState: number;
-            /** ID=0x002d | type=SINGLE_PREC | required=true | writable=true | writeOptional=true | default=0 */
+            /** ID=0x002d | type=SINGLE_PREC | required=true | write=true | writeOptional=true | default=0 */
             highLimit: number;
-            /** ID=0x0034 | type=BITMAP8 | required=true | writable=true | writeOptional=true | max=17 | default=0 */
+            /** ID=0x0034 | type=BITMAP8 | required=true | write=true | writeOptional=true | max=17 | default=0 */
             limitEnable: number;
-            /** ID=0x003b | type=SINGLE_PREC | required=true | writable=true | writeOptional=true | default=0 */
+            /** ID=0x003b | type=SINGLE_PREC | required=true | write=true | writeOptional=true | default=0 */
             lowLimit: number;
-            /** ID=0x0048 | type=ENUM8 | required=true | writable=true | writeOptional=true | default=0 */
+            /** ID=0x0048 | type=ENUM8 | required=true | write=true | writeOptional=true | default=0 */
             notifyType: number;
-            /** ID=0x0071 | type=UINT8 | required=true | writable=true | writeOptional=true | default=0 */
+            /** ID=0x0071 | type=UINT8 | required=true | write=true | writeOptional=true | default=0 */
             timeDelay: number;
             /** ID=0x0082 | type=ARRAY */
             eventTimeStamps: ZclArray | unknown[];
@@ -5079,7 +4955,7 @@ export interface TClusters {
     };
     piAnalogValueReg: {
         attributes: {
-            /** ID=0x0016 | type=SINGLE_PREC | writable=true | writeOptional=true | default=0 */
+            /** ID=0x0016 | type=SINGLE_PREC | write=true | writeOptional=true | default=0 */
             covIncrement: number;
             /** ID=0x004b | type=BAC_OID | required=true | max=4294967295 */
             objectId: number;
@@ -5095,25 +4971,25 @@ export interface TClusters {
     };
     piAnalogValueExt: {
         attributes: {
-            /** ID=0x0000 | type=BITMAP8 | required=true | writable=true | writeOptional=true | default=0 */
+            /** ID=0x0000 | type=BITMAP8 | required=true | write=true | writeOptional=true | default=0 */
             ackedTransitions: number;
-            /** ID=0x0011 | type=UINT16 | required=true | writable=true | writeOptional=true | max=65535 | default=0 */
+            /** ID=0x0011 | type=UINT16 | required=true | write=true | writeOptional=true | max=65535 | default=0 */
             notificationClass: number;
-            /** ID=0x0019 | type=SINGLE_PREC | required=true | writable=true | writeOptional=true | default=0 */
+            /** ID=0x0019 | type=SINGLE_PREC | required=true | write=true | writeOptional=true | default=0 */
             deadband: number;
-            /** ID=0x0023 | type=BITMAP8 | required=true | writable=true | writeOptional=true | default=0 */
+            /** ID=0x0023 | type=BITMAP8 | required=true | write=true | writeOptional=true | default=0 */
             eventEnable: number;
             /** ID=0x0024 | type=ENUM8 | default=0 */
             eventState: number;
-            /** ID=0x002d | type=SINGLE_PREC | required=true | writable=true | writeOptional=true | default=0 */
+            /** ID=0x002d | type=SINGLE_PREC | required=true | write=true | writeOptional=true | default=0 */
             highLimit: number;
-            /** ID=0x0034 | type=BITMAP8 | required=true | writable=true | writeOptional=true | max=17 | default=0 */
+            /** ID=0x0034 | type=BITMAP8 | required=true | write=true | writeOptional=true | max=17 | default=0 */
             limitEnable: number;
-            /** ID=0x003b | type=SINGLE_PREC | required=true | writable=true | writeOptional=true | default=0 */
+            /** ID=0x003b | type=SINGLE_PREC | required=true | write=true | writeOptional=true | default=0 */
             lowLimit: number;
-            /** ID=0x0048 | type=ENUM8 | required=true | writable=true | writeOptional=true | default=0 */
+            /** ID=0x0048 | type=ENUM8 | required=true | write=true | writeOptional=true | default=0 */
             notifyType: number;
-            /** ID=0x0071 | type=UINT8 | required=true | writable=true | writeOptional=true | default=0 */
+            /** ID=0x0071 | type=UINT8 | required=true | write=true | writeOptional=true | default=0 */
             timeDelay: number;
             /** ID=0x0082 | type=ARRAY | required=true */
             eventTimeStamps: ZclArray | unknown[];
@@ -5123,13 +4999,13 @@ export interface TClusters {
     };
     piBinaryInputReg: {
         attributes: {
-            /** ID=0x000f | type=UINT32 | writable=true | writeOptional=true | default=4294967295 */
+            /** ID=0x000f | type=UINT32 | write=true | writeOptional=true | default=4294967295 */
             changeOfStateCount: number;
             /** ID=0x0010 | type=STRUCT */
             changeOfStateTime: Struct;
             /** ID=0x001f | type=CHAR_STR | default=  */
             deviceType: string;
-            /** ID=0x0021 | type=UINT32 | writable=true | writeOptional=true | default=4294967295 */
+            /** ID=0x0021 | type=UINT32 | write=true | writeOptional=true | default=4294967295 */
             elapsedActiveTime: number;
             /** ID=0x004b | type=BAC_OID | required=true | max=4294967295 */
             objectIdentifier: number;
@@ -5149,19 +5025,19 @@ export interface TClusters {
     };
     piBinaryInputExt: {
         attributes: {
-            /** ID=0x0000 | type=BITMAP8 | required=true | writable=true | writeOptional=true | default=0 */
+            /** ID=0x0000 | type=BITMAP8 | required=true | write=true | writeOptional=true | default=0 */
             ackedTransitions: number;
-            /** ID=0x0006 | type=BOOLEAN | required=true | writable=true | writeOptional=true */
+            /** ID=0x0006 | type=BOOLEAN | required=true | write=true | writeOptional=true */
             alarmValue: number;
-            /** ID=0x0011 | type=UINT16 | required=true | writable=true | writeOptional=true | default=0 */
+            /** ID=0x0011 | type=UINT16 | required=true | write=true | writeOptional=true | default=0 */
             notificationClass: number;
-            /** ID=0x0023 | type=BITMAP8 | required=true | writable=true | writeOptional=true | default=0 */
+            /** ID=0x0023 | type=BITMAP8 | required=true | write=true | writeOptional=true | default=0 */
             eventEnable: number;
             /** ID=0x0024 | type=ENUM8 */
             eventState: number;
-            /** ID=0x0048 | type=ENUM8 | required=true | writable=true | writeOptional=true | default=0 */
+            /** ID=0x0048 | type=ENUM8 | required=true | write=true | writeOptional=true | default=0 */
             notifyType: number;
-            /** ID=0x0071 | type=UINT8 | required=true | writable=true | writeOptional=true | default=0 */
+            /** ID=0x0071 | type=UINT8 | required=true | write=true | writeOptional=true | default=0 */
             timeDelay: number;
             /** ID=0x0082 | type=ARRAY | required=true */
             eventTimeStamps: ZclArray | unknown[];
@@ -5171,13 +5047,13 @@ export interface TClusters {
     };
     piBinaryOutputReg: {
         attributes: {
-            /** ID=0x000f | type=UINT32 | writable=true | writeOptional=true | default=4294967295 */
+            /** ID=0x000f | type=UINT32 | write=true | writeOptional=true | default=4294967295 */
             changeOfStateCount: number;
             /** ID=0x0010 | type=STRUCT */
             changeOfStateTime: Struct;
             /** ID=0x001f | type=CHAR_STR | default=  */
             deviceType: string;
-            /** ID=0x0021 | type=UINT32 | writable=true | writeOptional=true | default=4294967295 */
+            /** ID=0x0021 | type=UINT32 | write=true | writeOptional=true | default=4294967295 */
             elapsedActiveTime: number;
             /** ID=0x0028 | type=ENUM8 | max=1 | default=0 */
             feedBackValue: number;
@@ -5199,17 +5075,17 @@ export interface TClusters {
     };
     piBinaryOutputExt: {
         attributes: {
-            /** ID=0x0000 | type=BITMAP8 | required=true | writable=true | writeOptional=true | default=0 */
+            /** ID=0x0000 | type=BITMAP8 | required=true | write=true | writeOptional=true | default=0 */
             ackedTransitions: number;
-            /** ID=0x0011 | type=UINT16 | required=true | writable=true | writeOptional=true | default=0 */
+            /** ID=0x0011 | type=UINT16 | required=true | write=true | writeOptional=true | default=0 */
             notificationClass: number;
-            /** ID=0x0023 | type=BITMAP8 | required=true | writable=true | writeOptional=true | default=0 */
+            /** ID=0x0023 | type=BITMAP8 | required=true | write=true | writeOptional=true | default=0 */
             eventEnable: number;
             /** ID=0x0024 | type=ENUM8 | default=0 */
             eventState: number;
-            /** ID=0x0048 | type=ENUM8 | required=true | writable=true | writeOptional=true | default=0 */
+            /** ID=0x0048 | type=ENUM8 | required=true | write=true | writeOptional=true | default=0 */
             notifyType: number;
-            /** ID=0x0071 | type=UINT8 | required=true | writable=true | writeOptional=true | default=0 */
+            /** ID=0x0071 | type=UINT8 | required=true | write=true | writeOptional=true | default=0 */
             timeDelay: number;
             /** ID=0x0082 | type=ARRAY */
             eventTimeStamps: ZclArray | unknown[];
@@ -5219,11 +5095,11 @@ export interface TClusters {
     };
     piBinaryValueReg: {
         attributes: {
-            /** ID=0x000f | type=UINT32 | writable=true | writeOptional=true | default=4294967295 */
+            /** ID=0x000f | type=UINT32 | write=true | writeOptional=true | default=4294967295 */
             changeOfStateCount: number;
             /** ID=0x0010 | type=STRUCT */
             changeOfStateTime: Struct;
-            /** ID=0x0021 | type=UINT32 | writable=true | writeOptional=true | default=4294967295 */
+            /** ID=0x0021 | type=UINT32 | write=true | writeOptional=true | default=4294967295 */
             elapsedActiveTime: number;
             /** ID=0x004b | type=BAC_OID | required=true | max=4294967295 */
             objectIdentifier: number;
@@ -5243,19 +5119,19 @@ export interface TClusters {
     };
     piBinaryValueExt: {
         attributes: {
-            /** ID=0x0000 | type=BITMAP8 | required=true | writable=true | writeOptional=true | default=0 */
+            /** ID=0x0000 | type=BITMAP8 | required=true | write=true | writeOptional=true | default=0 */
             ackedTransitions: number;
-            /** ID=0x0006 | type=BOOLEAN | required=true | writable=true | writeOptional=true */
+            /** ID=0x0006 | type=BOOLEAN | required=true | write=true | writeOptional=true */
             alarmValue: number;
-            /** ID=0x0011 | type=UINT16 | required=true | writable=true | writeOptional=true | default=0 */
+            /** ID=0x0011 | type=UINT16 | required=true | write=true | writeOptional=true | default=0 */
             notificationClass: number;
-            /** ID=0x0023 | type=BITMAP8 | required=true | writable=true | writeOptional=true | default=0 */
+            /** ID=0x0023 | type=BITMAP8 | required=true | write=true | writeOptional=true | default=0 */
             eventEnable: number;
             /** ID=0x0024 | type=ENUM8 | default=0 */
             eventState: number;
-            /** ID=0x0048 | type=ENUM8 | required=true | writable=true | writeOptional=true | default=0 */
+            /** ID=0x0048 | type=ENUM8 | required=true | write=true | writeOptional=true | default=0 */
             notifyType: number;
-            /** ID=0x0071 | type=UINT8 | required=true | writable=true | writeOptional=true | default=0 */
+            /** ID=0x0071 | type=UINT8 | required=true | write=true | writeOptional=true | default=0 */
             timeDelay: number;
             /** ID=0x0082 | type=ARRAY | required=true */
             eventTimeStamps: ZclArray | unknown[];
@@ -5281,21 +5157,21 @@ export interface TClusters {
     };
     piMultistateInputExt: {
         attributes: {
-            /** ID=0x0000 | type=BITMAP8 | required=true | writable=true | writeOptional=true | default=0 */
+            /** ID=0x0000 | type=BITMAP8 | required=true | write=true | writeOptional=true | default=0 */
             ackedTransitions: number;
-            /** ID=0x0006 | type=SET | required=true | writable=true | writeOptional=true | max=65535 */
+            /** ID=0x0006 | type=SET | required=true | write=true | writeOptional=true | max=65535 */
             alarmValues: ZclArray | unknown[];
-            /** ID=0x0011 | type=UINT16 | required=true | writable=true | writeOptional=true | default=0 */
+            /** ID=0x0011 | type=UINT16 | required=true | write=true | writeOptional=true | default=0 */
             notificationClass: number;
-            /** ID=0x0023 | type=BITMAP8 | required=true | writable=true | writeOptional=true | default=0 */
+            /** ID=0x0023 | type=BITMAP8 | required=true | write=true | writeOptional=true | default=0 */
             eventEnable: number;
             /** ID=0x0024 | type=ENUM8 | default=0 */
             eventState: number;
-            /** ID=0x0025 | type=SET | required=true | writable=true | writeOptional=true | max=65535 | default=0 */
+            /** ID=0x0025 | type=SET | required=true | write=true | writeOptional=true | max=65535 | default=0 */
             faultValues: ZclArray | unknown[];
-            /** ID=0x0048 | type=ENUM8 | required=true | writable=true | writeOptional=true | default=0 */
+            /** ID=0x0048 | type=ENUM8 | required=true | write=true | writeOptional=true | default=0 */
             notifyType: number;
-            /** ID=0x0071 | type=UINT8 | required=true | writable=true | writeOptional=true | default=0 */
+            /** ID=0x0071 | type=UINT8 | required=true | write=true | writeOptional=true | default=0 */
             timeDelay: number;
             /** ID=0x0082 | type=ARRAY | required=true */
             eventTimeStamps: ZclArray | unknown[];
@@ -5307,7 +5183,7 @@ export interface TClusters {
         attributes: {
             /** ID=0x001f | type=CHAR_STR | default=  */
             deviceType: string;
-            /** ID=0x0028 | type=ENUM8 | writable=true | writeOptional=true | max=1 */
+            /** ID=0x0028 | type=ENUM8 | write=true | writeOptional=true | max=1 */
             feedBackValue: number;
             /** ID=0x004b | type=BAC_OID | required=true | max=4294967295 */
             objectIdentifier: number;
@@ -5323,17 +5199,17 @@ export interface TClusters {
     };
     piMultistateOutputExt: {
         attributes: {
-            /** ID=0x0000 | type=BITMAP8 | required=true | writable=true | writeOptional=true | default=0 */
+            /** ID=0x0000 | type=BITMAP8 | required=true | write=true | writeOptional=true | default=0 */
             ackedTransitions: number;
-            /** ID=0x0011 | type=UINT16 | required=true | writable=true | writeOptional=true | max=65535 | default=0 */
+            /** ID=0x0011 | type=UINT16 | required=true | write=true | writeOptional=true | max=65535 | default=0 */
             notificationClass: number;
-            /** ID=0x0023 | type=BITMAP8 | required=true | writable=true | writeOptional=true | default=0 */
+            /** ID=0x0023 | type=BITMAP8 | required=true | write=true | writeOptional=true | default=0 */
             eventEnable: number;
             /** ID=0x0024 | type=ENUM8 | default=0 */
             eventState: number;
-            /** ID=0x0048 | type=ENUM8 | required=true | writable=true | writeOptional=true | default=0 */
+            /** ID=0x0048 | type=ENUM8 | required=true | write=true | writeOptional=true | default=0 */
             notifyType: number;
-            /** ID=0x0071 | type=UINT8 | required=true | writable=true | writeOptional=true | default=0 */
+            /** ID=0x0071 | type=UINT8 | required=true | write=true | writeOptional=true | default=0 */
             timeDelay: number;
             /** ID=0x0082 | type=ARRAY | required=true */
             eventTimeStamps: ZclArray | unknown[];
@@ -5357,21 +5233,21 @@ export interface TClusters {
     };
     piMultistateValueExt: {
         attributes: {
-            /** ID=0x0000 | type=BITMAP8 | required=true | writable=true | writeOptional=true | default=0 */
+            /** ID=0x0000 | type=BITMAP8 | required=true | write=true | writeOptional=true | default=0 */
             ackedTransitions: number;
-            /** ID=0x0006 | type=SET | required=true | writable=true | writeOptional=true | max=65535 */
+            /** ID=0x0006 | type=SET | required=true | write=true | writeOptional=true | max=65535 */
             alarmValues: ZclArray | unknown[];
-            /** ID=0x0011 | type=UINT16 | required=true | writable=true | writeOptional=true | max=65535 | default=0 */
+            /** ID=0x0011 | type=UINT16 | required=true | write=true | writeOptional=true | max=65535 | default=0 */
             notificationClass: number;
-            /** ID=0x0023 | type=BITMAP8 | required=true | writable=true | writeOptional=true | default=0 */
+            /** ID=0x0023 | type=BITMAP8 | required=true | write=true | writeOptional=true | default=0 */
             eventEnable: number;
             /** ID=0x0024 | type=ENUM8 */
             eventState: number;
-            /** ID=0x0025 | type=SET | required=true | writable=true | writeOptional=true | max=65535 | default=0 */
+            /** ID=0x0025 | type=SET | required=true | write=true | writeOptional=true | max=65535 | default=0 */
             faultValues: ZclArray | unknown[];
-            /** ID=0x0048 | type=ENUM8 | required=true | writable=true | writeOptional=true | default=0 */
+            /** ID=0x0048 | type=ENUM8 | required=true | write=true | writeOptional=true | default=0 */
             notifyType: number;
-            /** ID=0x0071 | type=UINT8 | required=true | writable=true | writeOptional=true | default=0 */
+            /** ID=0x0071 | type=UINT8 | required=true | write=true | writeOptional=true | default=0 */
             timeDelay: number;
             /** ID=0x0082 | type=ARRAY | required=true */
             eventTimeStamps: ZclArray | unknown[];
@@ -5870,145 +5746,145 @@ export interface TClusters {
             projectedBillTimeStampReceived: number;
             /** ID=0x0a14 | type=BITMAP8 */
             billReceivedTrailingDigit: number;
-            /** ID=0x0300 | type=UINT16 | manufacturerCode=DEVELCO(0x1015) | writable=true | max=65535 */
+            /** ID=0x0300 | type=UINT16 | manufacturerCode=DEVELCO(0x1015) | write=true | max=65535 */
             develcoPulseConfiguration?: number;
-            /** ID=0x0301 | type=UINT48 | manufacturerCode=DEVELCO(0x1015) | writable=true | max=281474976710655 */
+            /** ID=0x0301 | type=UINT48 | manufacturerCode=DEVELCO(0x1015) | write=true | max=281474976710655 */
             develcoCurrentSummation?: number;
-            /** ID=0x0302 | type=ENUM16 | manufacturerCode=DEVELCO(0x1015) | writable=true | max=65535 */
+            /** ID=0x0302 | type=ENUM16 | manufacturerCode=DEVELCO(0x1015) | write=true | max=65535 */
             develcoInterfaceMode?: number;
-            /** ID=0x2000 | type=INT24 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) | writable=true | min=-8388608 | max=8388607 */
+            /** ID=0x2000 | type=INT24 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) | write=true | min=-8388608 | max=8388607 */
             owonL1PhasePower?: number;
-            /** ID=0x2001 | type=INT24 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) | writable=true | min=-8388608 | max=8388607 */
+            /** ID=0x2001 | type=INT24 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) | write=true | min=-8388608 | max=8388607 */
             owonL2PhasePower?: number;
-            /** ID=0x2002 | type=INT24 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) | writable=true | min=-8388608 | max=8388607 */
+            /** ID=0x2002 | type=INT24 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) | write=true | min=-8388608 | max=8388607 */
             owonL3PhasePower?: number;
-            /** ID=0x2100 | type=INT24 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) | writable=true | min=-8388608 | max=8388607 */
+            /** ID=0x2100 | type=INT24 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) | write=true | min=-8388608 | max=8388607 */
             owonL1PhaseReactivePower?: number;
-            /** ID=0x2101 | type=INT24 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) | writable=true | min=-8388608 | max=8388607 */
+            /** ID=0x2101 | type=INT24 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) | write=true | min=-8388608 | max=8388607 */
             owonL2PhaseReactivePower?: number;
-            /** ID=0x2102 | type=INT24 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) | writable=true | min=-8388608 | max=8388607 */
+            /** ID=0x2102 | type=INT24 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) | write=true | min=-8388608 | max=8388607 */
             owonL3PhaseReactivePower?: number;
-            /** ID=0x2103 | type=INT24 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) | writable=true | min=-8388608 | max=8388607 */
+            /** ID=0x2103 | type=INT24 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) | write=true | min=-8388608 | max=8388607 */
             owonReactivePowerSum?: number;
-            /** ID=0x3000 | type=UINT24 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) | writable=true | max=16777215 */
+            /** ID=0x3000 | type=UINT24 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) | write=true | max=16777215 */
             owonL1PhaseVoltage?: number;
-            /** ID=0x3001 | type=UINT24 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) | writable=true | max=16777215 */
+            /** ID=0x3001 | type=UINT24 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) | write=true | max=16777215 */
             owonL2PhaseVoltage?: number;
-            /** ID=0x3002 | type=UINT24 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) | writable=true | max=16777215 */
+            /** ID=0x3002 | type=UINT24 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) | write=true | max=16777215 */
             owonL3PhaseVoltage?: number;
-            /** ID=0x3100 | type=UINT24 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) | writable=true | max=16777215 */
+            /** ID=0x3100 | type=UINT24 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) | write=true | max=16777215 */
             owonL1PhaseCurrent?: number;
-            /** ID=0x3101 | type=UINT24 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) | writable=true | max=16777215 */
+            /** ID=0x3101 | type=UINT24 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) | write=true | max=16777215 */
             owonL2PhaseCurrent?: number;
-            /** ID=0x3102 | type=UINT24 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) | writable=true | max=16777215 */
+            /** ID=0x3102 | type=UINT24 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) | write=true | max=16777215 */
             owonL3PhaseCurrent?: number;
-            /** ID=0x3103 | type=UINT24 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) | writable=true | max=16777215 */
+            /** ID=0x3103 | type=UINT24 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) | write=true | max=16777215 */
             owonCurrentSum?: number;
-            /** ID=0x3104 | type=UINT24 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) | writable=true | max=16777215 */
+            /** ID=0x3104 | type=UINT24 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) | write=true | max=16777215 */
             owonLeakageCurrent?: number;
-            /** ID=0x4000 | type=UINT48 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) | writable=true | max=281474976710655 */
+            /** ID=0x4000 | type=UINT48 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) | write=true | max=281474976710655 */
             owonL1Energy?: number;
-            /** ID=0x4001 | type=UINT48 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) | writable=true | max=281474976710655 */
+            /** ID=0x4001 | type=UINT48 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) | write=true | max=281474976710655 */
             owonL2Energy?: number;
-            /** ID=0x4002 | type=UINT48 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) | writable=true | max=281474976710655 */
+            /** ID=0x4002 | type=UINT48 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) | write=true | max=281474976710655 */
             owonL3Energy?: number;
-            /** ID=0x4100 | type=UINT48 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) | writable=true | max=281474976710655 */
+            /** ID=0x4100 | type=UINT48 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) | write=true | max=281474976710655 */
             owonL1ReactiveEnergy?: number;
-            /** ID=0x4101 | type=UINT48 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) | writable=true | max=281474976710655 */
+            /** ID=0x4101 | type=UINT48 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) | write=true | max=281474976710655 */
             owonL2ReactiveEnergy?: number;
-            /** ID=0x4102 | type=UINT48 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) | writable=true | max=281474976710655 */
+            /** ID=0x4102 | type=UINT48 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) | write=true | max=281474976710655 */
             owonL3ReactiveEnergy?: number;
-            /** ID=0x4103 | type=UINT48 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) | writable=true | max=281474976710655 */
+            /** ID=0x4103 | type=UINT48 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) | write=true | max=281474976710655 */
             owonReactiveEnergySum?: number;
-            /** ID=0x4104 | type=INT8 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) | writable=true | min=-128 | max=127 */
+            /** ID=0x4104 | type=INT8 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) | write=true | min=-128 | max=127 */
             owonL1PowerFactor?: number;
-            /** ID=0x4105 | type=INT8 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) | writable=true | min=-128 | max=127 */
+            /** ID=0x4105 | type=INT8 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) | write=true | min=-128 | max=127 */
             owonL2PowerFactor?: number;
-            /** ID=0x4106 | type=INT8 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) | writable=true | min=-128 | max=127 */
+            /** ID=0x4106 | type=INT8 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) | write=true | min=-128 | max=127 */
             owonL3PowerFactor?: number;
-            /** ID=0x5005 | type=UINT8 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) | writable=true | max=255 */
+            /** ID=0x5005 | type=UINT8 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) | write=true | max=255 */
             owonFrequency?: number;
-            /** ID=0x1000 | type=BITMAP8 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) | writable=true */
+            /** ID=0x1000 | type=BITMAP8 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) | write=true */
             owonReportMap?: number;
-            /** ID=0x5000 | type=UINT32 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) | writable=true | max=4294967295 */
+            /** ID=0x5000 | type=UINT32 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) | write=true | max=4294967295 */
             owonLastHistoricalRecordTime?: number;
-            /** ID=0x5001 | type=UINT32 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) | writable=true | max=4294967295 */
+            /** ID=0x5001 | type=UINT32 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) | write=true | max=4294967295 */
             owonOldestHistoricalRecordTime?: number;
-            /** ID=0x5002 | type=UINT32 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) | writable=true | max=4294967295 */
+            /** ID=0x5002 | type=UINT32 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) | write=true | max=4294967295 */
             owonMinimumReportCycle?: number;
-            /** ID=0x5003 | type=UINT32 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) | writable=true | max=4294967295 */
+            /** ID=0x5003 | type=UINT32 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) | write=true | max=4294967295 */
             owonMaximumReportCycle?: number;
-            /** ID=0x5004 | type=UINT8 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) | writable=true | max=255 */
+            /** ID=0x5004 | type=UINT8 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) | write=true | max=255 */
             owonSentHistoricalRecordState?: number;
-            /** ID=0x5006 | type=UINT8 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) | writable=true | max=255 */
+            /** ID=0x5006 | type=UINT8 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) | write=true | max=255 */
             owonAccumulativeEnergyThreshold?: number;
-            /** ID=0x5007 | type=UINT8 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) | writable=true | max=255 */
+            /** ID=0x5007 | type=UINT8 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) | write=true | max=255 */
             owonReportMode?: number;
-            /** ID=0x5008 | type=UINT8 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) | writable=true | max=255 */
+            /** ID=0x5008 | type=UINT8 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) | write=true | max=255 */
             owonPercentChangeInPower?: number;
-            /** ID=0x4010 | type=INT48 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | writable=true | min=-140737488355328 | max=140737488355327 */
+            /** ID=0x4010 | type=INT48 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | min=-140737488355328 | max=140737488355327 */
             schneiderActiveEnergyTotal?: number;
-            /** ID=0x4011 | type=INT48 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | writable=true | min=-140737488355328 | max=140737488355327 */
+            /** ID=0x4011 | type=INT48 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | min=-140737488355328 | max=140737488355327 */
             schneiderReactiveEnergyTotal?: number;
-            /** ID=0x4012 | type=INT48 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | writable=true | min=-140737488355328 | max=140737488355327 */
+            /** ID=0x4012 | type=INT48 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | min=-140737488355328 | max=140737488355327 */
             schneiderApparentEnergyTotal?: number;
-            /** ID=0x4014 | type=INT48 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | writable=true | min=-140737488355328 | max=140737488355327 */
+            /** ID=0x4014 | type=INT48 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | min=-140737488355328 | max=140737488355327 */
             schneiderPartialActiveEnergyTotal?: number;
-            /** ID=0x4015 | type=INT48 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | writable=true | min=-140737488355328 | max=140737488355327 */
+            /** ID=0x4015 | type=INT48 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | min=-140737488355328 | max=140737488355327 */
             schneiderPartialReactiveEnergyTotal?: number;
-            /** ID=0x4016 | type=INT48 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | writable=true | min=-140737488355328 | max=140737488355327 */
+            /** ID=0x4016 | type=INT48 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | min=-140737488355328 | max=140737488355327 */
             schneiderPartialApparentEnergyTotal?: number;
-            /** ID=0x4100 | type=INT48 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | writable=true | min=-140737488355328 | max=140737488355327 */
+            /** ID=0x4100 | type=INT48 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | min=-140737488355328 | max=140737488355327 */
             schneiderPartialActiveEnergyL1Phase?: number;
-            /** ID=0x4101 | type=INT48 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | writable=true | min=-140737488355328 | max=140737488355327 */
+            /** ID=0x4101 | type=INT48 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | min=-140737488355328 | max=140737488355327 */
             schneiderPartialReactiveEnergyL1Phase?: number;
-            /** ID=0x4102 | type=INT48 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | writable=true | min=-140737488355328 | max=140737488355327 */
+            /** ID=0x4102 | type=INT48 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | min=-140737488355328 | max=140737488355327 */
             schneiderPartialApparentEnergyL1Phase?: number;
-            /** ID=0x4103 | type=INT48 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | writable=true | min=-140737488355328 | max=140737488355327 */
+            /** ID=0x4103 | type=INT48 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | min=-140737488355328 | max=140737488355327 */
             schneiderActiveEnergyL1Phase?: number;
-            /** ID=0x4104 | type=INT48 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | writable=true | min=-140737488355328 | max=140737488355327 */
+            /** ID=0x4104 | type=INT48 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | min=-140737488355328 | max=140737488355327 */
             schneiderReactiveEnergyL1Phase?: number;
-            /** ID=0x4105 | type=INT48 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | writable=true | min=-140737488355328 | max=140737488355327 */
+            /** ID=0x4105 | type=INT48 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | min=-140737488355328 | max=140737488355327 */
             schneiderApparentEnergyL1Phase?: number;
-            /** ID=0x4200 | type=INT48 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | writable=true | min=-140737488355328 | max=140737488355327 */
+            /** ID=0x4200 | type=INT48 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | min=-140737488355328 | max=140737488355327 */
             schneiderPartialActiveEnergyL2Phase?: number;
-            /** ID=0x4201 | type=INT48 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | writable=true | min=-140737488355328 | max=140737488355327 */
+            /** ID=0x4201 | type=INT48 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | min=-140737488355328 | max=140737488355327 */
             schneiderPartialReactiveEnergyL2Phase?: number;
-            /** ID=0x4202 | type=INT48 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | writable=true | min=-140737488355328 | max=140737488355327 */
+            /** ID=0x4202 | type=INT48 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | min=-140737488355328 | max=140737488355327 */
             schneiderPartialApparentEnergyL2Phase?: number;
-            /** ID=0x4203 | type=INT48 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | writable=true | min=-140737488355328 | max=140737488355327 */
+            /** ID=0x4203 | type=INT48 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | min=-140737488355328 | max=140737488355327 */
             schneiderActiveEnergyL2Phase?: number;
-            /** ID=0x4204 | type=INT48 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | writable=true | min=-140737488355328 | max=140737488355327 */
+            /** ID=0x4204 | type=INT48 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | min=-140737488355328 | max=140737488355327 */
             schneiderReactiveEnergyL2Phase?: number;
-            /** ID=0x4205 | type=INT48 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | writable=true | min=-140737488355328 | max=140737488355327 */
+            /** ID=0x4205 | type=INT48 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | min=-140737488355328 | max=140737488355327 */
             schneiderApparentEnergyL2Phase?: number;
-            /** ID=0x4300 | type=INT48 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | writable=true | min=-140737488355328 | max=140737488355327 */
+            /** ID=0x4300 | type=INT48 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | min=-140737488355328 | max=140737488355327 */
             schneiderPartialActiveEnergyL3Phase?: number;
-            /** ID=0x4301 | type=INT48 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | writable=true | min=-140737488355328 | max=140737488355327 */
+            /** ID=0x4301 | type=INT48 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | min=-140737488355328 | max=140737488355327 */
             schneiderPartialReactiveEnergyL3Phase?: number;
-            /** ID=0x4302 | type=INT48 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | writable=true | min=-140737488355328 | max=140737488355327 */
+            /** ID=0x4302 | type=INT48 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | min=-140737488355328 | max=140737488355327 */
             schneiderPartialApparentEnergyL3Phase?: number;
-            /** ID=0x4303 | type=INT48 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | writable=true | min=-140737488355328 | max=140737488355327 */
+            /** ID=0x4303 | type=INT48 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | min=-140737488355328 | max=140737488355327 */
             schneiderActiveEnergyL3Phase?: number;
-            /** ID=0x4304 | type=INT48 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | writable=true | min=-140737488355328 | max=140737488355327 */
+            /** ID=0x4304 | type=INT48 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | min=-140737488355328 | max=140737488355327 */
             schneiderReactiveEnergyL3Phase?: number;
-            /** ID=0x4305 | type=INT48 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | writable=true | min=-140737488355328 | max=140737488355327 */
+            /** ID=0x4305 | type=INT48 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | min=-140737488355328 | max=140737488355327 */
             schneiderApparentEnergyL3Phase?: number;
-            /** ID=0x4400 | type=UINT24 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | writable=true | max=16777215 */
+            /** ID=0x4400 | type=UINT24 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | max=16777215 */
             schneiderActiveEnergyMultiplier?: number;
-            /** ID=0x4401 | type=UINT24 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | writable=true | max=16777215 */
+            /** ID=0x4401 | type=UINT24 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | max=16777215 */
             schneiderActiveEnergyDivisor?: number;
-            /** ID=0x4402 | type=UINT24 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | writable=true | max=16777215 */
+            /** ID=0x4402 | type=UINT24 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | max=16777215 */
             schneiderReactiveEnergyMultiplier?: number;
-            /** ID=0x4403 | type=UINT24 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | writable=true | max=16777215 */
+            /** ID=0x4403 | type=UINT24 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | max=16777215 */
             schneiderReactiveEnergyDivisor?: number;
-            /** ID=0x4404 | type=UINT24 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | writable=true | max=16777215 */
+            /** ID=0x4404 | type=UINT24 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | max=16777215 */
             schneiderApparentEnergyMultiplier?: number;
-            /** ID=0x4405 | type=UINT24 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | writable=true | max=16777215 */
+            /** ID=0x4405 | type=UINT24 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | max=16777215 */
             schneiderApparentEnergyDivisor?: number;
-            /** ID=0x4501 | type=UTC | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | writable=true | max=4294967295 */
+            /** ID=0x4501 | type=UTC | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | max=4294967295 */
             schneiderEnergyResetDateTime?: number;
-            /** ID=0x4600 | type=UINT16 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | writable=true | max=65535 */
+            /** ID=0x4600 | type=UINT16 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | max=65535 */
             schneiderEnergyCountersReportingPeriod?: number;
         };
         commands: {
@@ -6457,27 +6333,27 @@ export interface TClusters {
     };
     telecommunicationsVoiceOverZigbee: {
         attributes: {
-            /** ID=0x0000 | type=ENUM8 | required=true | writable=true */
+            /** ID=0x0000 | type=ENUM8 | required=true | write=true */
             codecType: number;
-            /** ID=0x0001 | type=ENUM8 | required=true | writable=true */
+            /** ID=0x0001 | type=ENUM8 | required=true | write=true */
             samplingFrequency: number;
-            /** ID=0x0002 | type=ENUM8 | required=true | writable=true */
+            /** ID=0x0002 | type=ENUM8 | required=true | write=true */
             codecrate: number;
             /** ID=0x0003 | type=UINT8 | required=true | min=1 | max=255 */
             establishmentTimeout: number;
-            /** ID=0x0004 | type=ENUM8 | writable=true */
+            /** ID=0x0004 | type=ENUM8 | write=true */
             codecTypeSub1: number;
-            /** ID=0x0005 | type=ENUM8 | writable=true */
+            /** ID=0x0005 | type=ENUM8 | write=true */
             codecTypeSub2: number;
-            /** ID=0x0006 | type=ENUM8 | writable=true */
+            /** ID=0x0006 | type=ENUM8 | write=true */
             codecTypeSub3: number;
             /** ID=0x0007 | type=ENUM8 */
             compressionType: number;
             /** ID=0x0008 | type=ENUM8 */
             compressionRate: number;
-            /** ID=0x0009 | type=BITMAP8 | writable=true | max=255 */
+            /** ID=0x0009 | type=BITMAP8 | write=true | max=255 */
             optionFlags: number;
-            /** ID=0x000a | type=UINT8 | writable=true | max=255 */
+            /** ID=0x000a | type=UINT8 | write=true | max=255 */
             threshold: number;
         };
         commands: {
@@ -6725,7 +6601,7 @@ export interface TClusters {
             meterTypeId: number;
             /** ID=0x0004 | type=UINT16 | required=true | max=65535 */
             dataQualityId: number;
-            /** ID=0x0005 | type=CHAR_STR | writable=true | minLen=0 | maxLen=16 */
+            /** ID=0x0005 | type=CHAR_STR | write=true | minLen=0 | maxLen=16 */
             customerName: string;
             /** ID=0x0006 | type=OCTET_STR | minLen=0 | maxLen=16 */
             model: Buffer;
@@ -6836,153 +6712,153 @@ export interface TClusters {
         attributes: {
             /** ID=0x0000 | type=BITMAP32 | required=true | max=4294967295 | default=0 */
             measurementType: number;
-            /** ID=0x0100 | type=INT16 | reportRequired=true | min=-32767 */
+            /** ID=0x0100 | type=INT16 | report=true | min=-32767 */
             dcVoltage: number;
             /** ID=0x0101 | type=INT16 | min=-32767 */
             dcVoltageMin: number;
             /** ID=0x0102 | type=INT16 | min=-32767 */
             dcvoltagemax: number;
-            /** ID=0x0103 | type=INT16 | reportRequired=true | min=-32767 */
+            /** ID=0x0103 | type=INT16 | report=true | min=-32767 */
             dcCurrent: number;
             /** ID=0x0104 | type=INT16 | min=-32767 */
             dcCurrentMin: number;
             /** ID=0x0105 | type=INT16 | min=-32767 */
             dcCurrentMax: number;
-            /** ID=0x0106 | type=INT16 | reportRequired=true | min=-32767 */
+            /** ID=0x0106 | type=INT16 | report=true | min=-32767 */
             dcPower: number;
             /** ID=0x0107 | type=INT16 | min=-32767 */
             dcPowerMin: number;
             /** ID=0x0108 | type=INT16 | min=-32767 */
             dcPowerMax: number;
-            /** ID=0x0200 | type=UINT16 | reportRequired=true | min=1 | max=65535 | default=1 */
+            /** ID=0x0200 | type=UINT16 | report=true | min=1 | max=65535 | default=1 */
             dcVoltageMultiplier: number;
-            /** ID=0x0201 | type=UINT16 | reportRequired=true | min=1 | max=65535 | default=1 */
+            /** ID=0x0201 | type=UINT16 | report=true | min=1 | max=65535 | default=1 */
             dcVoltageDivisor: number;
-            /** ID=0x0202 | type=UINT16 | reportRequired=true | min=1 | max=65535 | default=1 */
+            /** ID=0x0202 | type=UINT16 | report=true | min=1 | max=65535 | default=1 */
             dcCurrentMultiplier: number;
-            /** ID=0x0203 | type=UINT16 | reportRequired=true | min=1 | max=65535 | default=1 */
+            /** ID=0x0203 | type=UINT16 | report=true | min=1 | max=65535 | default=1 */
             dcCurrentDivisor: number;
-            /** ID=0x0204 | type=UINT16 | reportRequired=true | min=1 | max=65535 | default=1 */
+            /** ID=0x0204 | type=UINT16 | report=true | min=1 | max=65535 | default=1 */
             dcPowerMultiplier: number;
-            /** ID=0x0205 | type=UINT16 | reportRequired=true | min=1 | max=65535 | default=1 */
+            /** ID=0x0205 | type=UINT16 | report=true | min=1 | max=65535 | default=1 */
             dcPowerDivisor: number;
-            /** ID=0x0300 | type=UINT16 | reportRequired=true */
+            /** ID=0x0300 | type=UINT16 | report=true */
             acFrequency: number;
             /** ID=0x0301 | type=UINT16 */
             acFrequencyMin: number;
             /** ID=0x0302 | type=UINT16 */
             acFrequencyMax: number;
-            /** ID=0x0303 | type=UINT16 | reportRequired=true */
+            /** ID=0x0303 | type=UINT16 | report=true */
             neutralCurrent: number;
-            /** ID=0x0304 | type=INT32 | reportRequired=true | min=-8388607 | max=8388607 */
+            /** ID=0x0304 | type=INT32 | report=true | min=-8388607 | max=8388607 */
             totalActivePower: number;
-            /** ID=0x0305 | type=INT32 | reportRequired=true | min=-8388607 | max=8388607 */
+            /** ID=0x0305 | type=INT32 | report=true | min=-8388607 | max=8388607 */
             totalReactivePower: number;
-            /** ID=0x0306 | type=UINT32 | reportRequired=true | max=16777215 */
+            /** ID=0x0306 | type=UINT32 | report=true | max=16777215 */
             totalApparentPower: number;
-            /** ID=0x0307 | type=INT16 | reportRequired=true */
+            /** ID=0x0307 | type=INT16 | report=true */
             meas1stHarmonicCurrent: number;
-            /** ID=0x0308 | type=INT16 | reportRequired=true */
+            /** ID=0x0308 | type=INT16 | report=true */
             meas3rdHarmonicCurrent: number;
-            /** ID=0x0309 | type=INT16 | reportRequired=true */
+            /** ID=0x0309 | type=INT16 | report=true */
             meas5thHarmonicCurrent: number;
-            /** ID=0x030a | type=INT16 | reportRequired=true */
+            /** ID=0x030a | type=INT16 | report=true */
             meas7thHarmonicCurrent: number;
-            /** ID=0x030b | type=INT16 | reportRequired=true */
+            /** ID=0x030b | type=INT16 | report=true */
             meas9thHarmonicCurrent: number;
-            /** ID=0x030c | type=INT16 | reportRequired=true */
+            /** ID=0x030c | type=INT16 | report=true */
             meas11thHarmonicCurrent: number;
-            /** ID=0x030d | type=INT16 | reportRequired=true */
+            /** ID=0x030d | type=INT16 | report=true */
             measPhase1stHarmonicCurrent: number;
-            /** ID=0x030e | type=INT16 | reportRequired=true */
+            /** ID=0x030e | type=INT16 | report=true */
             measPhase3rdHarmonicCurrent: number;
-            /** ID=0x030f | type=INT16 | reportRequired=true */
+            /** ID=0x030f | type=INT16 | report=true */
             measPhase5thHarmonicCurrent: number;
-            /** ID=0x0310 | type=INT16 | reportRequired=true */
+            /** ID=0x0310 | type=INT16 | report=true */
             measPhase7thHarmonicCurrent: number;
-            /** ID=0x0311 | type=INT16 | reportRequired=true */
+            /** ID=0x0311 | type=INT16 | report=true */
             measPhase9thHarmonicCurrent: number;
-            /** ID=0x0312 | type=INT16 | reportRequired=true */
+            /** ID=0x0312 | type=INT16 | report=true */
             measPhase11thHarmonicCurrent: number;
-            /** ID=0x0400 | type=UINT16 | reportRequired=true | min=1 | default=1 */
+            /** ID=0x0400 | type=UINT16 | report=true | min=1 | default=1 */
             acFrequencyMultiplier: number;
-            /** ID=0x0401 | type=UINT16 | reportRequired=true | min=1 | default=1 */
+            /** ID=0x0401 | type=UINT16 | report=true | min=1 | default=1 */
             acFrequencyDivisor: number;
-            /** ID=0x0402 | type=UINT32 | reportRequired=true | max=16777215 | default=1 */
+            /** ID=0x0402 | type=UINT32 | report=true | max=16777215 | default=1 */
             powerMultiplier: number;
-            /** ID=0x0403 | type=UINT32 | reportRequired=true | max=16777215 | default=1 */
+            /** ID=0x0403 | type=UINT32 | report=true | max=16777215 | default=1 */
             powerDivisor: number;
-            /** ID=0x0404 | type=INT8 | reportRequired=true | min=-127 | default=0 */
+            /** ID=0x0404 | type=INT8 | report=true | min=-127 | default=0 */
             harmonicCurrentMultiplier: number;
-            /** ID=0x0405 | type=INT8 | reportRequired=true | min=-127 | default=0 */
+            /** ID=0x0405 | type=INT8 | report=true | min=-127 | default=0 */
             phaseHarmonicCurrentMultiplier: number;
             /** ID=0x0500 | type=INT16 */
             instantaneousVoltage: number;
-            /** ID=0x0501 | type=UINT16 | reportRequired=true */
+            /** ID=0x0501 | type=UINT16 | report=true */
             instantaneousLineCurrent: number;
-            /** ID=0x0502 | type=INT16 | reportRequired=true */
+            /** ID=0x0502 | type=INT16 | report=true */
             instantaneousActiveCurrent: number;
-            /** ID=0x0503 | type=INT16 | reportRequired=true */
+            /** ID=0x0503 | type=INT16 | report=true */
             instantaneousReactiveCurrent: number;
             /** ID=0x0504 | type=INT16 */
             instantaneousPower: number;
-            /** ID=0x0505 | type=UINT16 | reportRequired=true */
+            /** ID=0x0505 | type=UINT16 | report=true */
             rmsVoltage: number;
             /** ID=0x0506 | type=UINT16 */
             rmsVoltageMin: number;
             /** ID=0x0507 | type=UINT16 */
             rmsVoltageMax: number;
-            /** ID=0x0508 | type=UINT16 | reportRequired=true */
+            /** ID=0x0508 | type=UINT16 | report=true */
             rmsCurrent: number;
             /** ID=0x0509 | type=UINT16 */
             rmsCurrentMin: number;
             /** ID=0x050a | type=UINT16 */
             rmsCurrentMax: number;
-            /** ID=0x050b | type=INT16 | reportRequired=true */
+            /** ID=0x050b | type=INT16 | report=true */
             activePower: number;
             /** ID=0x050c | type=INT16 */
             activePowerMin: number;
             /** ID=0x050d | type=INT16 */
             activePowerMax: number;
-            /** ID=0x050e | type=INT16 | reportRequired=true */
+            /** ID=0x050e | type=INT16 | report=true */
             reactivePower: number;
-            /** ID=0x050f | type=UINT16 | reportRequired=true */
+            /** ID=0x050f | type=UINT16 | report=true */
             apparentPower: number;
             /** ID=0x0510 | type=INT8 | min=-100 | max=100 | default=0 */
             powerFactor: number;
-            /** ID=0x0511 | type=UINT16 | writable=true | default=0 */
+            /** ID=0x0511 | type=UINT16 | write=true | default=0 */
             averageRmsVoltageMeasPeriod: number;
-            /** ID=0x0512 | type=UINT16 | writable=true | default=0 */
+            /** ID=0x0512 | type=UINT16 | write=true | default=0 */
             averageRmsOverVoltageCounter: number;
-            /** ID=0x0513 | type=UINT16 | writable=true | default=0 */
+            /** ID=0x0513 | type=UINT16 | write=true | default=0 */
             averageRmsUnderVoltageCounter: number;
-            /** ID=0x0514 | type=UINT16 | writable=true | default=0 */
+            /** ID=0x0514 | type=UINT16 | write=true | default=0 */
             rmsExtremeOverVoltagePeriod: number;
-            /** ID=0x0515 | type=UINT16 | writable=true | default=0 */
+            /** ID=0x0515 | type=UINT16 | write=true | default=0 */
             rmsExtremeUnderVoltagePeriod: number;
-            /** ID=0x0516 | type=UINT16 | writable=true | default=0 */
+            /** ID=0x0516 | type=UINT16 | write=true | default=0 */
             rmsVoltageSagPeriod: number;
-            /** ID=0x0517 | type=UINT16 | writable=true | default=0 */
+            /** ID=0x0517 | type=UINT16 | write=true | default=0 */
             rmsVoltageSwellPeriod: number;
-            /** ID=0x0600 | type=UINT16 | reportRequired=true | min=1 | default=1 */
+            /** ID=0x0600 | type=UINT16 | report=true | min=1 | default=1 */
             acVoltageMultiplier: number;
-            /** ID=0x0601 | type=UINT16 | reportRequired=true | min=1 | default=1 */
+            /** ID=0x0601 | type=UINT16 | report=true | min=1 | default=1 */
             acVoltageDivisor: number;
-            /** ID=0x0602 | type=UINT16 | reportRequired=true | min=1 | default=1 */
+            /** ID=0x0602 | type=UINT16 | report=true | min=1 | default=1 */
             acCurrentMultiplier: number;
-            /** ID=0x0603 | type=UINT16 | reportRequired=true | min=1 | default=1 */
+            /** ID=0x0603 | type=UINT16 | report=true | min=1 | default=1 */
             acCurrentDivisor: number;
-            /** ID=0x0604 | type=UINT16 | reportRequired=true | min=1 | default=1 */
+            /** ID=0x0604 | type=UINT16 | report=true | min=1 | default=1 */
             acPowerMultiplier: number;
-            /** ID=0x0605 | type=UINT16 | reportRequired=true | min=1 | default=1 */
+            /** ID=0x0605 | type=UINT16 | report=true | min=1 | default=1 */
             acPowerDivisor: number;
-            /** ID=0x0700 | type=BITMAP8 | writable=true | default=0 */
+            /** ID=0x0700 | type=BITMAP8 | write=true | default=0 */
             dcOverloadAlarmsMask: number;
             /** ID=0x0701 | type=INT16 */
             dcVoltageOverload: number;
             /** ID=0x0702 | type=INT16 */
             dcCurrentOverload: number;
-            /** ID=0x0800 | type=BITMAP16 | writable=true | default=0 */
+            /** ID=0x0800 | type=BITMAP16 | write=true | default=0 */
             acAlarmsMask: number;
             /** ID=0x0801 | type=INT16 */
             acVoltageOverload: number;
@@ -6996,143 +6872,143 @@ export interface TClusters {
             averageRmsOverVoltage: number;
             /** ID=0x0806 | type=INT16 */
             averageRmsUnderVoltage: number;
-            /** ID=0x0807 | type=INT16 | writable=true */
+            /** ID=0x0807 | type=INT16 | write=true */
             rmsExtremeOverVoltage: number;
-            /** ID=0x0808 | type=INT16 | writable=true */
+            /** ID=0x0808 | type=INT16 | write=true */
             rmsExtremeUnderVoltage: number;
-            /** ID=0x0809 | type=INT16 | writable=true */
+            /** ID=0x0809 | type=INT16 | write=true */
             rmsVoltageSag: number;
-            /** ID=0x080a | type=INT16 | writable=true */
+            /** ID=0x080a | type=INT16 | write=true */
             rmsVoltageSwell: number;
-            /** ID=0x0901 | type=UINT16 | reportRequired=true */
+            /** ID=0x0901 | type=UINT16 | report=true */
             lineCurrentPhB: number;
-            /** ID=0x0902 | type=INT16 | reportRequired=true */
+            /** ID=0x0902 | type=INT16 | report=true */
             activeCurrentPhB: number;
-            /** ID=0x0903 | type=INT16 | reportRequired=true */
+            /** ID=0x0903 | type=INT16 | report=true */
             reactiveCurrentPhB: number;
-            /** ID=0x0905 | type=UINT16 | reportRequired=true */
+            /** ID=0x0905 | type=UINT16 | report=true */
             rmsVoltagePhB: number;
             /** ID=0x0906 | type=UINT16 | default=32768 */
             rmsVoltageMinPhB: number;
             /** ID=0x0907 | type=UINT16 | default=32768 */
             rmsVoltageMaxPhB: number;
-            /** ID=0x0908 | type=UINT16 | reportRequired=true */
+            /** ID=0x0908 | type=UINT16 | report=true */
             rmsCurrentPhB: number;
             /** ID=0x0909 | type=UINT16 */
             rmsCurrentMinPhB: number;
             /** ID=0x090a | type=UINT16 */
             rmsCurrentMaxPhB: number;
-            /** ID=0x090b | type=INT16 | reportRequired=true */
+            /** ID=0x090b | type=INT16 | report=true */
             activePowerPhB: number;
             /** ID=0x090c | type=INT16 */
             activePowerMinPhB: number;
             /** ID=0x090d | type=INT16 */
             activePowerMaxPhB: number;
-            /** ID=0x090e | type=INT16 | reportRequired=true */
+            /** ID=0x090e | type=INT16 | report=true */
             reactivePowerPhB: number;
-            /** ID=0x090f | type=UINT16 | reportRequired=true */
+            /** ID=0x090f | type=UINT16 | report=true */
             apparentPowerPhB: number;
             /** ID=0x0910 | type=INT8 | min=-100 | max=100 | default=0 */
             powerFactorPhB: number;
-            /** ID=0x0911 | type=UINT16 | writable=true | default=0 */
+            /** ID=0x0911 | type=UINT16 | write=true | default=0 */
             averageRmsVoltageMeasurePeriodPhB: number;
-            /** ID=0x0912 | type=UINT16 | writable=true | default=0 */
+            /** ID=0x0912 | type=UINT16 | write=true | default=0 */
             averageRmsOverVoltageCounterPhB: number;
-            /** ID=0x0913 | type=UINT16 | writable=true | default=0 */
+            /** ID=0x0913 | type=UINT16 | write=true | default=0 */
             averageUnderVoltageCounterPhB: number;
-            /** ID=0x0914 | type=UINT16 | writable=true | default=0 */
+            /** ID=0x0914 | type=UINT16 | write=true | default=0 */
             rmsExtremeOverVoltagePeriodPhB: number;
-            /** ID=0x0915 | type=UINT16 | writable=true | default=0 */
+            /** ID=0x0915 | type=UINT16 | write=true | default=0 */
             rmsExtremeUnderVoltagePeriodPhB: number;
-            /** ID=0x0916 | type=UINT16 | writable=true | default=0 */
+            /** ID=0x0916 | type=UINT16 | write=true | default=0 */
             rmsVoltageSagPeriodPhB: number;
-            /** ID=0x0917 | type=UINT16 | writable=true | default=0 */
+            /** ID=0x0917 | type=UINT16 | write=true | default=0 */
             rmsVoltageSwellPeriodPhB: number;
-            /** ID=0x0a01 | type=UINT16 | reportRequired=true */
+            /** ID=0x0a01 | type=UINT16 | report=true */
             lineCurrentPhC: number;
-            /** ID=0x0a02 | type=INT16 | reportRequired=true */
+            /** ID=0x0a02 | type=INT16 | report=true */
             activeCurrentPhC: number;
-            /** ID=0x0a03 | type=INT16 | reportRequired=true */
+            /** ID=0x0a03 | type=INT16 | report=true */
             reactiveCurrentPhC: number;
-            /** ID=0x0a05 | type=UINT16 | reportRequired=true */
+            /** ID=0x0a05 | type=UINT16 | report=true */
             rmsVoltagePhC: number;
             /** ID=0x0a06 | type=UINT16 | default=32768 */
             rmsVoltageMinPhC: number;
             /** ID=0x0a07 | type=UINT16 | default=32768 */
             rmsVoltageMaxPhC: number;
-            /** ID=0x0a08 | type=UINT16 | reportRequired=true */
+            /** ID=0x0a08 | type=UINT16 | report=true */
             rmsCurrentPhC: number;
             /** ID=0x0a09 | type=UINT16 */
             rmsCurrentMinPhC: number;
             /** ID=0x0a0a | type=UINT16 */
             rmsCurrentMaxPhC: number;
-            /** ID=0x0a0b | type=INT16 | reportRequired=true */
+            /** ID=0x0a0b | type=INT16 | report=true */
             activePowerPhC: number;
             /** ID=0x0a0c | type=INT16 */
             activePowerMinPhC: number;
             /** ID=0x0a0d | type=INT16 */
             activePowerMaxPhC: number;
-            /** ID=0x0a0e | type=INT16 | reportRequired=true */
+            /** ID=0x0a0e | type=INT16 | report=true */
             reactivePowerPhC: number;
-            /** ID=0x0a0f | type=UINT16 | reportRequired=true */
+            /** ID=0x0a0f | type=UINT16 | report=true */
             apparentPowerPhC: number;
             /** ID=0x0a10 | type=INT8 | min=-100 | max=100 | default=0 */
             powerFactorPhC: number;
-            /** ID=0x0a11 | type=UINT16 | writable=true | default=0 */
+            /** ID=0x0a11 | type=UINT16 | write=true | default=0 */
             averageRmsVoltageMeasPeriodPhC: number;
-            /** ID=0x0a12 | type=UINT16 | writable=true | default=0 */
+            /** ID=0x0a12 | type=UINT16 | write=true | default=0 */
             averageRmsOverVoltageCounterPhC: number;
-            /** ID=0x0a13 | type=UINT16 | writable=true | default=0 */
+            /** ID=0x0a13 | type=UINT16 | write=true | default=0 */
             averageUnderVoltageCounterPhC: number;
-            /** ID=0x0a14 | type=UINT16 | writable=true | default=0 */
+            /** ID=0x0a14 | type=UINT16 | write=true | default=0 */
             rmsExtremeOverVoltagePeriodPhC: number;
-            /** ID=0x0a15 | type=UINT16 | writable=true | default=0 */
+            /** ID=0x0a15 | type=UINT16 | write=true | default=0 */
             rmsExtremeUnderVoltagePeriodPhC: number;
-            /** ID=0x0a16 | type=UINT16 | writable=true | default=0 */
+            /** ID=0x0a16 | type=UINT16 | write=true | default=0 */
             rmsVoltageSagPeriodPhC: number;
-            /** ID=0x0a17 | type=UINT16 | writable=true | default=0 */
+            /** ID=0x0a17 | type=UINT16 | write=true | default=0 */
             rmsVoltageSwellPeriodPhC: number;
-            /** ID=0x4300 | type=INT32 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | writable=true | min=-2147483648 | max=2147483647 */
+            /** ID=0x4300 | type=INT32 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | min=-2147483648 | max=2147483647 */
             schneiderActivePowerDemandTotal?: number;
-            /** ID=0x4303 | type=INT32 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | writable=true | min=-2147483648 | max=2147483647 */
+            /** ID=0x4303 | type=INT32 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | min=-2147483648 | max=2147483647 */
             schneiderReactivePowerDemandTotal?: number;
-            /** ID=0x4318 | type=INT32 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | writable=true | min=-2147483648 | max=2147483647 */
+            /** ID=0x4318 | type=INT32 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | min=-2147483648 | max=2147483647 */
             schneiderApparentPowerDemandTotal?: number;
-            /** ID=0x4319 | type=UINT24 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | writable=true | max=16777215 */
+            /** ID=0x4319 | type=UINT24 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | max=16777215 */
             schneiderDemandIntervalDuration?: number;
-            /** ID=0x4320 | type=UTC | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | writable=true | max=4294967295 */
+            /** ID=0x4320 | type=UTC | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | max=4294967295 */
             schneiderDemandDateTime?: number;
-            /** ID=0x4509 | type=INT32 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | writable=true | min=-2147483648 | max=2147483647 */
+            /** ID=0x4509 | type=INT32 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | min=-2147483648 | max=2147483647 */
             schneiderActivePowerDemandPhase1?: number;
-            /** ID=0x450a | type=INT32 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | writable=true | min=-2147483648 | max=2147483647 */
+            /** ID=0x450a | type=INT32 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | min=-2147483648 | max=2147483647 */
             schneiderReactivePowerDemandPhase1?: number;
-            /** ID=0x450b | type=INT32 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | writable=true | min=-2147483648 | max=2147483647 */
+            /** ID=0x450b | type=INT32 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | min=-2147483648 | max=2147483647 */
             schneiderApparentPowerDemandPhase1?: number;
-            /** ID=0x4510 | type=UINT16 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | writable=true | max=65535 */
+            /** ID=0x4510 | type=UINT16 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | max=65535 */
             schneiderDemandIntervalMinimalVoltageL1?: number;
-            /** ID=0x4513 | type=UINT16 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | writable=true | max=65535 */
+            /** ID=0x4513 | type=UINT16 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | max=65535 */
             schneiderDemandIntervalMaximalCurrentI1?: number;
-            /** ID=0x4909 | type=INT32 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | writable=true | min=-2147483648 | max=2147483647 */
+            /** ID=0x4909 | type=INT32 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | min=-2147483648 | max=2147483647 */
             schneiderActivePowerDemandPhase2?: number;
-            /** ID=0x490a | type=INT32 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | writable=true | min=-2147483648 | max=2147483647 */
+            /** ID=0x490a | type=INT32 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | min=-2147483648 | max=2147483647 */
             schneiderReactivePowerDemandPhase2?: number;
-            /** ID=0x490b | type=INT32 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | writable=true | min=-2147483648 | max=2147483647 */
+            /** ID=0x490b | type=INT32 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | min=-2147483648 | max=2147483647 */
             schneiderApparentPowerDemandPhase2?: number;
-            /** ID=0x4910 | type=UINT16 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | writable=true | max=65535 */
+            /** ID=0x4910 | type=UINT16 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | max=65535 */
             schneiderDemandIntervalMinimalVoltageL2?: number;
-            /** ID=0x4913 | type=UINT16 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | writable=true | max=65535 */
+            /** ID=0x4913 | type=UINT16 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | max=65535 */
             schneiderDemandIntervalMaximalCurrentI2?: number;
-            /** ID=0x4a09 | type=INT32 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | writable=true | min=-2147483648 | max=2147483647 */
+            /** ID=0x4a09 | type=INT32 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | min=-2147483648 | max=2147483647 */
             schneiderActivePowerDemandPhase3?: number;
-            /** ID=0x4a0a | type=INT32 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | writable=true | min=-2147483648 | max=2147483647 */
+            /** ID=0x4a0a | type=INT32 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | min=-2147483648 | max=2147483647 */
             schneiderReactivePowerDemandPhase3?: number;
-            /** ID=0x4a0b | type=INT32 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | writable=true | min=-2147483648 | max=2147483647 */
+            /** ID=0x4a0b | type=INT32 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | min=-2147483648 | max=2147483647 */
             schneiderApparentPowerDemandPhase3?: number;
-            /** ID=0x4a10 | type=UINT16 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | writable=true | max=65535 */
+            /** ID=0x4a10 | type=UINT16 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | max=65535 */
             schneiderDemandIntervalMinimalVoltageL3?: number;
-            /** ID=0x4a13 | type=UINT16 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | writable=true | max=65535 */
+            /** ID=0x4a13 | type=UINT16 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | max=65535 */
             schneiderDemandIntervalMaximalCurrentI3?: number;
-            /** ID=0x4e00 | type=UINT8 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | writable=true | max=255 */
+            /** ID=0x4e00 | type=UINT8 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | max=255 */
             schneiderCurrentSensorMultiplier?: number;
         };
         commands: {
@@ -7245,23 +7121,23 @@ export interface TClusters {
             lastMessageLqi: number;
             /** ID=0x011d | type=INT8 | min=-127 | max=127 | default=0 */
             lastMessageRssi: number;
-            /** ID=0x4000 | type=BITMAP16 | manufacturerCode=DANFOSS_A_S(0x1246) | writable=true */
+            /** ID=0x4000 | type=BITMAP16 | manufacturerCode=DANFOSS_A_S(0x1246) | write=true */
             danfossSystemStatusCode?: number;
-            /** ID=0x4000 | type=UINT8 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | writable=true | max=255 */
+            /** ID=0x4000 | type=UINT8 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | max=255 */
             schneiderCommunicationQuality?: number;
-            /** ID=0x4031 | type=ENUM8 | manufacturerCode=DANFOSS_A_S(0x1246) | writable=true | max=255 */
+            /** ID=0x4031 | type=ENUM8 | manufacturerCode=DANFOSS_A_S(0x1246) | write=true | max=255 */
             danfossHeatSupplyRequest?: number;
-            /** ID=0x4200 | type=ENUM8 | manufacturerCode=DANFOSS_A_S(0x1246) | writable=true | max=255 */
+            /** ID=0x4200 | type=ENUM8 | manufacturerCode=DANFOSS_A_S(0x1246) | write=true | max=255 */
             danfossSystemStatusWater?: number;
-            /** ID=0x4201 | type=ENUM8 | manufacturerCode=DANFOSS_A_S(0x1246) | writable=true | max=255 */
+            /** ID=0x4201 | type=ENUM8 | manufacturerCode=DANFOSS_A_S(0x1246) | write=true | max=255 */
             danfossMultimasterRole?: number;
-            /** ID=0x4210 | type=ENUM8 | manufacturerCode=DANFOSS_A_S(0x1246) | writable=true | max=255 */
+            /** ID=0x4210 | type=ENUM8 | manufacturerCode=DANFOSS_A_S(0x1246) | write=true | max=255 */
             danfossIconApplication?: number;
-            /** ID=0x4220 | type=ENUM8 | manufacturerCode=DANFOSS_A_S(0x1246) | writable=true | max=255 */
+            /** ID=0x4220 | type=ENUM8 | manufacturerCode=DANFOSS_A_S(0x1246) | write=true | max=255 */
             danfossIconForcedHeatingCooling?: number;
-            /** ID=0xff01 | type=UINT32 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | writable=true | max=4294967295 */
+            /** ID=0xff01 | type=UINT32 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | max=4294967295 */
             schneiderMeterStatus?: number;
-            /** ID=0xff02 | type=UINT32 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | writable=true | max=4294967295 */
+            /** ID=0xff02 | type=UINT32 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | max=4294967295 */
             schneiderDiagnosticRegister1?: number;
         };
         commands: never;
@@ -7557,7 +7433,7 @@ export interface TClusters {
     };
     manuSpecificPhilips: {
         attributes: {
-            /** ID=0x0031 | type=BITMAP16 | writable=true */
+            /** ID=0x0031 | type=BITMAP16 | write=true */
             config: number;
         };
         commands: never;
@@ -7581,7 +7457,7 @@ export interface TClusters {
     };
     manuSpecificPhilips2: {
         attributes: {
-            /** ID=0x0002 | type=OCTET_STR | writable=true */
+            /** ID=0x0002 | type=OCTET_STR | write=true */
             state: Buffer;
         };
         commands: {
@@ -7595,95 +7471,95 @@ export interface TClusters {
     };
     manuSpecificSinope: {
         attributes: {
-            /** ID=0x0002 | type=ENUM8 | writable=true | max=255 */
+            /** ID=0x0002 | type=ENUM8 | write=true | max=255 */
             keypadLockout: number;
-            /** ID=0x0004 | type=CHAR_STR | writable=true */
+            /** ID=0x0004 | type=CHAR_STR | write=true */
             firmwareVersion: string;
-            /** ID=0x0010 | type=INT16 | writable=true | max=65535 */
+            /** ID=0x0010 | type=INT16 | write=true | max=65535 */
             outdoorTempToDisplay: number;
-            /** ID=0x0011 | type=UINT16 | writable=true | max=65535 */
+            /** ID=0x0011 | type=UINT16 | write=true | max=65535 */
             outdoorTempToDisplayTimeout: number;
-            /** ID=0x0012 | type=ENUM8 | writable=true | max=255 */
+            /** ID=0x0012 | type=ENUM8 | write=true | max=255 */
             secondScreenBehavior: number;
-            /** ID=0x0020 | type=UINT32 | writable=true | max=4294967295 */
+            /** ID=0x0020 | type=UINT32 | write=true | max=4294967295 */
             currentTimeToDisplay: number;
-            /** ID=0x0052 | type=UINT8 | writable=true | max=255 */
+            /** ID=0x0052 | type=UINT8 | write=true | max=255 */
             ledIntensityOn: number;
-            /** ID=0x0053 | type=UINT8 | writable=true | max=255 */
+            /** ID=0x0053 | type=UINT8 | write=true | max=255 */
             ledIntensityOff: number;
-            /** ID=0x0050 | type=UINT24 | writable=true | max=16777215 */
+            /** ID=0x0050 | type=UINT24 | write=true | max=16777215 */
             ledColorOn: number;
-            /** ID=0x0051 | type=UINT24 | writable=true | max=16777215 */
+            /** ID=0x0051 | type=UINT24 | write=true | max=16777215 */
             ledColorOff: number;
-            /** ID=0x0052 | type=UINT8 | writable=true | max=255 */
+            /** ID=0x0052 | type=UINT8 | write=true | max=255 */
             onLedIntensity: number;
-            /** ID=0x0053 | type=UINT8 | writable=true | max=255 */
+            /** ID=0x0053 | type=UINT8 | write=true | max=255 */
             offLedIntensity: number;
-            /** ID=0x0054 | type=ENUM8 | writable=true | max=255 */
+            /** ID=0x0054 | type=ENUM8 | write=true | max=255 */
             actionReport: number;
-            /** ID=0x0055 | type=UINT16 | writable=true | max=65535 */
+            /** ID=0x0055 | type=UINT16 | write=true | max=65535 */
             minimumBrightness: number;
-            /** ID=0x0060 | type=UINT16 | writable=true | max=65535 */
+            /** ID=0x0060 | type=UINT16 | write=true | max=65535 */
             connectedLoadRM: number;
-            /** ID=0x0070 | type=BITMAP8 | writable=true */
+            /** ID=0x0070 | type=BITMAP8 | write=true */
             currentLoad: number;
-            /** ID=0x0071 | type=INT8 | writable=true | min=-128 | max=127 | default=-128 */
+            /** ID=0x0071 | type=INT8 | write=true | min=-128 | max=127 | default=-128 */
             ecoMode: number;
-            /** ID=0x0072 | type=UINT8 | writable=true | max=255 | default=255 */
+            /** ID=0x0072 | type=UINT8 | write=true | max=255 | default=255 */
             ecoMode1: number;
-            /** ID=0x0073 | type=UINT8 | writable=true | max=255 | default=255 */
+            /** ID=0x0073 | type=UINT8 | write=true | max=255 | default=255 */
             ecoMode2: number;
-            /** ID=0x0075 | type=BITMAP32 | writable=true | max=4294967295 */
+            /** ID=0x0075 | type=BITMAP32 | write=true | max=4294967295 */
             unknown: number;
-            /** ID=0x0076 | type=UINT8 | writable=true | max=255 */
+            /** ID=0x0076 | type=UINT8 | write=true | max=255 */
             drConfigWaterTempMin: number;
-            /** ID=0x0077 | type=UINT8 | writable=true | max=255 | default=2 */
+            /** ID=0x0077 | type=UINT8 | write=true | max=255 | default=2 */
             drConfigWaterTempTime: number;
-            /** ID=0x0078 | type=UINT16 | writable=true | max=65535 */
+            /** ID=0x0078 | type=UINT16 | write=true | max=65535 */
             drWTTimeOn: number;
             /** ID=0x0080 | type=UINT32 | max=4294967295 */
             unknown1: number;
-            /** ID=0x00a0 | type=UINT32 | writable=true | max=4294967295 */
+            /** ID=0x00a0 | type=UINT32 | write=true | max=4294967295 */
             dimmerTimmer: number;
             /** ID=0x0100 | type=UINT8 | max=255 */
             unknown2: number;
-            /** ID=0x0105 | type=ENUM8 | writable=true | max=255 */
+            /** ID=0x0105 | type=ENUM8 | write=true | max=255 */
             floorControlMode: number;
-            /** ID=0x0106 | type=ENUM8 | writable=true | max=255 */
+            /** ID=0x0106 | type=ENUM8 | write=true | max=255 */
             auxOutputMode: number;
-            /** ID=0x0107 | type=INT16 | writable=true | max=65535 */
+            /** ID=0x0107 | type=INT16 | write=true | max=65535 */
             floorTemperature: number;
-            /** ID=0x0108 | type=INT16 | writable=true | max=65535 */
+            /** ID=0x0108 | type=INT16 | write=true | max=65535 */
             ambiantMaxHeatSetpointLimit: number;
-            /** ID=0x0109 | type=INT16 | writable=true | max=65535 */
+            /** ID=0x0109 | type=INT16 | write=true | max=65535 */
             floorMinHeatSetpointLimit: number;
-            /** ID=0x010a | type=INT16 | writable=true | max=65535 */
+            /** ID=0x010a | type=INT16 | write=true | max=65535 */
             floorMaxHeatSetpointLimit: number;
-            /** ID=0x010b | type=ENUM8 | writable=true | max=255 */
+            /** ID=0x010b | type=ENUM8 | write=true | max=255 */
             temperatureSensor: number;
-            /** ID=0x010c | type=ENUM8 | writable=true | max=255 */
+            /** ID=0x010c | type=ENUM8 | write=true | max=255 */
             floorLimitStatus: number;
-            /** ID=0x010d | type=INT16 | writable=true | max=65535 */
+            /** ID=0x010d | type=INT16 | write=true | max=65535 */
             roomTemperature: number;
-            /** ID=0x0114 | type=ENUM8 | writable=true | max=255 */
+            /** ID=0x0114 | type=ENUM8 | write=true | max=255 */
             timeFormatToDisplay: number;
-            /** ID=0x0115 | type=ENUM8 | writable=true | max=255 */
+            /** ID=0x0115 | type=ENUM8 | write=true | max=255 */
             GFCiStatus: number;
-            /** ID=0x0118 | type=UINT16 | writable=true | max=255 */
+            /** ID=0x0118 | type=UINT16 | write=true | max=255 */
             auxConnectedLoad: number;
-            /** ID=0x0119 | type=UINT16 | writable=true | max=65535 */
+            /** ID=0x0119 | type=UINT16 | write=true | max=65535 */
             connectedLoad: number;
-            /** ID=0x0128 | type=UINT8 | writable=true | max=255 */
+            /** ID=0x0128 | type=UINT8 | write=true | max=255 */
             pumpProtection: number;
-            /** ID=0x012a | type=ENUM8 | writable=true | max=255 | default=60 */
+            /** ID=0x012a | type=ENUM8 | write=true | max=255 | default=60 */
             unknown3: number;
-            /** ID=0x012b | type=INT16 | writable=true | max=65535 */
+            /** ID=0x012b | type=INT16 | write=true | max=65535 */
             currentSetpoint: number;
-            /** ID=0x012d | type=INT16 | writable=true | min=-32768 | max=32767 */
+            /** ID=0x012d | type=INT16 | write=true | min=-32768 | max=32767 */
             reportLocalTemperature: number;
-            /** ID=0x0240 | type=ARRAY | writable=true */
+            /** ID=0x0240 | type=ARRAY | write=true */
             flowMeterConfig: ZclArray | unknown[];
-            /** ID=0x0283 | type=UINT8 | writable=true | max=255 */
+            /** ID=0x0283 | type=UINT8 | write=true | max=255 */
             coldLoadPickupStatus: number;
         };
         commands: never;
@@ -7718,7 +7594,7 @@ export interface TClusters {
     };
     wiserDeviceInfo: {
         attributes: {
-            /** ID=0x0020 | type=CHAR_STR | writable=true */
+            /** ID=0x0020 | type=CHAR_STR | write=true */
             deviceInfo: string;
         };
         commands: never;
@@ -7883,19 +7759,19 @@ export interface TClusters {
     };
     manuSpecificLumi: {
         attributes: {
-            /** ID=0x0009 | type=UINT8 | writable=true | max=255 */
+            /** ID=0x0009 | type=UINT8 | write=true | max=255 */
             mode: number;
-            /** ID=0x0112 | type=UINT32 | writable=true | max=4294967295 */
+            /** ID=0x0112 | type=UINT32 | write=true | max=4294967295 */
             illuminance: number;
-            /** ID=0x0114 | type=UINT8 | writable=true | max=255 */
+            /** ID=0x0114 | type=UINT8 | write=true | max=255 */
             displayUnit: number;
-            /** ID=0x0129 | type=UINT8 | writable=true | max=255 */
+            /** ID=0x0129 | type=UINT8 | write=true | max=255 */
             airQuality: number;
-            /** ID=0x0400 | type=BOOLEAN | writable=true */
+            /** ID=0x0400 | type=BOOLEAN | write=true */
             curtainReverse: number;
-            /** ID=0x0401 | type=BOOLEAN | writable=true */
+            /** ID=0x0401 | type=BOOLEAN | write=true */
             curtainHandOpen: number;
-            /** ID=0x0402 | type=BOOLEAN | writable=true */
+            /** ID=0x0402 | type=BOOLEAN | write=true */
             curtainCalibrated: number;
         };
         commands: never;
@@ -7903,85 +7779,85 @@ export interface TClusters {
     };
     liXeePrivate: {
         attributes: {
-            /** ID=0x0000 | type=CHAR_STR | writable=true */
+            /** ID=0x0000 | type=CHAR_STR | write=true */
             currentTarif: string;
-            /** ID=0x0001 | type=CHAR_STR | writable=true */
+            /** ID=0x0001 | type=CHAR_STR | write=true */
             tomorrowColor: string;
-            /** ID=0x0002 | type=UINT8 | writable=true | max=255 */
+            /** ID=0x0002 | type=UINT8 | write=true | max=255 */
             scheduleHPHC: number;
-            /** ID=0x0003 | type=UINT8 | writable=true | max=255 */
+            /** ID=0x0003 | type=UINT8 | write=true | max=255 */
             presencePotential: number;
-            /** ID=0x0004 | type=UINT8 | writable=true | max=255 */
+            /** ID=0x0004 | type=UINT8 | write=true | max=255 */
             startNoticeEJP: number;
-            /** ID=0x0005 | type=UINT16 | writable=true | max=65535 */
+            /** ID=0x0005 | type=UINT16 | write=true | max=65535 */
             warnDPS: number;
-            /** ID=0x0006 | type=UINT16 | writable=true | max=65535 */
+            /** ID=0x0006 | type=UINT16 | write=true | max=65535 */
             warnDIR1: number;
-            /** ID=0x0007 | type=UINT16 | writable=true | max=65535 */
+            /** ID=0x0007 | type=UINT16 | write=true | max=65535 */
             warnDIR2: number;
-            /** ID=0x0008 | type=UINT16 | writable=true | max=65535 */
+            /** ID=0x0008 | type=UINT16 | write=true | max=65535 */
             warnDIR3: number;
-            /** ID=0x0009 | type=CHAR_STR | writable=true */
+            /** ID=0x0009 | type=CHAR_STR | write=true */
             motDEtat: string;
-            /** ID=0x0200 | type=CHAR_STR | writable=true */
+            /** ID=0x0200 | type=CHAR_STR | write=true */
             currentPrice: string;
-            /** ID=0x0201 | type=UINT8 | writable=true | max=255 */
+            /** ID=0x0201 | type=UINT8 | write=true | max=255 */
             currentIndexTarif: number;
-            /** ID=0x0202 | type=CHAR_STR | writable=true */
+            /** ID=0x0202 | type=CHAR_STR | write=true */
             currentDate: string;
-            /** ID=0x0203 | type=UINT32 | writable=true | max=4294967295 */
+            /** ID=0x0203 | type=UINT32 | write=true | max=4294967295 */
             activeEnergyOutD01: number;
-            /** ID=0x0204 | type=UINT32 | writable=true | max=4294967295 */
+            /** ID=0x0204 | type=UINT32 | write=true | max=4294967295 */
             activeEnergyOutD02: number;
-            /** ID=0x0205 | type=UINT32 | writable=true | max=4294967295 */
+            /** ID=0x0205 | type=UINT32 | write=true | max=4294967295 */
             activeEnergyOutD03: number;
-            /** ID=0x0206 | type=UINT32 | writable=true | max=4294967295 */
+            /** ID=0x0206 | type=UINT32 | write=true | max=4294967295 */
             activeEnergyOutD04: number;
-            /** ID=0x0207 | type=UINT16 | writable=true | max=65535 */
+            /** ID=0x0207 | type=UINT16 | write=true | max=65535 */
             injectedVA: number;
-            /** ID=0x0208 | type=INT16 | writable=true | min=-32768 | max=32767 */
+            /** ID=0x0208 | type=INT16 | write=true | min=-32768 | max=32767 */
             injectedVAMaxN: number;
-            /** ID=0x0209 | type=INT16 | writable=true | min=-32768 | max=32767 */
+            /** ID=0x0209 | type=INT16 | write=true | min=-32768 | max=32767 */
             injectedVAMaxN1: number;
-            /** ID=0x0210 | type=INT16 | writable=true | min=-32768 | max=32767 */
+            /** ID=0x0210 | type=INT16 | write=true | min=-32768 | max=32767 */
             injectedActiveLoadN: number;
-            /** ID=0x0211 | type=INT16 | writable=true | min=-32768 | max=32767 */
+            /** ID=0x0211 | type=INT16 | write=true | min=-32768 | max=32767 */
             injectedActiveLoadN1: number;
-            /** ID=0x0212 | type=INT16 | writable=true | min=-32768 | max=32767 */
+            /** ID=0x0212 | type=INT16 | write=true | min=-32768 | max=32767 */
             drawnVAMaxN1: number;
-            /** ID=0x0213 | type=INT16 | writable=true | min=-32768 | max=32767 */
+            /** ID=0x0213 | type=INT16 | write=true | min=-32768 | max=32767 */
             drawnVAMaxN1P2: number;
-            /** ID=0x0214 | type=INT16 | writable=true | min=-32768 | max=32767 */
+            /** ID=0x0214 | type=INT16 | write=true | min=-32768 | max=32767 */
             drawnVAMaxN1P3: number;
-            /** ID=0x0215 | type=CHAR_STR | writable=true */
+            /** ID=0x0215 | type=CHAR_STR | write=true */
             message1: string;
-            /** ID=0x0216 | type=CHAR_STR | writable=true */
+            /** ID=0x0216 | type=CHAR_STR | write=true */
             message2: string;
-            /** ID=0x0217 | type=OCTET_STR | writable=true */
+            /** ID=0x0217 | type=OCTET_STR | write=true */
             statusRegister: Buffer;
-            /** ID=0x0218 | type=UINT8 | writable=true | max=255 */
+            /** ID=0x0218 | type=UINT8 | write=true | max=255 */
             startMobilePoint1: number;
-            /** ID=0x0219 | type=UINT8 | writable=true | max=255 */
+            /** ID=0x0219 | type=UINT8 | write=true | max=255 */
             stopMobilePoint1: number;
-            /** ID=0x0220 | type=UINT8 | writable=true | max=255 */
+            /** ID=0x0220 | type=UINT8 | write=true | max=255 */
             startMobilePoint2: number;
-            /** ID=0x0221 | type=UINT8 | writable=true | max=255 */
+            /** ID=0x0221 | type=UINT8 | write=true | max=255 */
             stopMobilePoint2: number;
-            /** ID=0x0222 | type=UINT8 | writable=true | max=255 */
+            /** ID=0x0222 | type=UINT8 | write=true | max=255 */
             startMobilePoint3: number;
-            /** ID=0x0223 | type=UINT8 | writable=true | max=255 */
+            /** ID=0x0223 | type=UINT8 | write=true | max=255 */
             stopMobilePoint3: number;
-            /** ID=0x0224 | type=UINT16 | writable=true | max=65535 */
+            /** ID=0x0224 | type=UINT16 | write=true | max=65535 */
             relais: number;
-            /** ID=0x0225 | type=UINT8 | writable=true | max=255 */
+            /** ID=0x0225 | type=UINT8 | write=true | max=255 */
             daysNumberCurrentCalendar: number;
-            /** ID=0x0226 | type=UINT8 | writable=true | max=255 */
+            /** ID=0x0226 | type=UINT8 | write=true | max=255 */
             daysNumberNextCalendar: number;
-            /** ID=0x0227 | type=LONG_OCTET_STR | writable=true */
+            /** ID=0x0227 | type=LONG_OCTET_STR | write=true */
             daysProfileCurrentCalendar: Buffer;
-            /** ID=0x0228 | type=LONG_OCTET_STR | writable=true */
+            /** ID=0x0228 | type=LONG_OCTET_STR | write=true */
             daysProfileNextCalendar: Buffer;
-            /** ID=0x0300 | type=UINT8 | writable=true | max=255 */
+            /** ID=0x0300 | type=UINT8 | write=true | max=255 */
             linkyMode: number;
         };
         commands: never;
@@ -7989,19 +7865,19 @@ export interface TClusters {
     };
     manuSpecificTuya2: {
         attributes: {
-            /** ID=0xd00a | type=INT16 | writable=true | min=-32768 | max=32767 */
+            /** ID=0xd00a | type=INT16 | write=true | min=-32768 | max=32767 */
             alarm_temperature_max: number;
-            /** ID=0xd00b | type=INT16 | writable=true | min=-32768 | max=32767 */
+            /** ID=0xd00b | type=INT16 | write=true | min=-32768 | max=32767 */
             alarm_temperature_min: number;
-            /** ID=0xd00d | type=INT16 | writable=true | min=-32768 | max=32767 */
+            /** ID=0xd00d | type=INT16 | write=true | min=-32768 | max=32767 */
             alarm_humidity_max: number;
-            /** ID=0xd00e | type=INT16 | writable=true | min=-32768 | max=32767 */
+            /** ID=0xd00e | type=INT16 | write=true | min=-32768 | max=32767 */
             alarm_humidity_min: number;
-            /** ID=0xd00f | type=ENUM8 | writable=true | max=255 */
+            /** ID=0xd00f | type=ENUM8 | write=true | max=255 */
             alarm_humidity: number;
-            /** ID=0xd006 | type=ENUM8 | writable=true | max=255 */
+            /** ID=0xd006 | type=ENUM8 | write=true | max=255 */
             alarm_temperature: number;
-            /** ID=0xd010 | type=UINT8 | writable=true | max=255 */
+            /** ID=0xd010 | type=UINT8 | write=true | max=255 */
             unknown: number;
         };
         commands: never;
@@ -8009,11 +7885,11 @@ export interface TClusters {
     };
     manuSpecificTuya3: {
         attributes: {
-            /** ID=0xd010 | type=ENUM8 | writable=true | max=255 */
+            /** ID=0xd010 | type=ENUM8 | write=true | max=255 */
             powerOnBehavior: number;
-            /** ID=0xd020 | type=ENUM8 | writable=true | max=255 */
+            /** ID=0xd020 | type=ENUM8 | write=true | max=255 */
             switchMode: number;
-            /** ID=0xd030 | type=ENUM8 | writable=true | max=255 */
+            /** ID=0xd030 | type=ENUM8 | write=true | max=255 */
             switchType: number;
         };
         commands: {
@@ -8037,7 +7913,7 @@ export interface TClusters {
     };
     manuSpecificCentraliteHumidity: {
         attributes: {
-            /** ID=0x0000 | type=UINT16 | writable=true | max=65535 */
+            /** ID=0x0000 | type=UINT16 | write=true | max=65535 */
             measuredValue: number;
         };
         commands: never;
@@ -8053,17 +7929,17 @@ export interface TClusters {
     };
     manuSpecificSamsungAccelerometer: {
         attributes: {
-            /** ID=0x0000 | type=UINT8 | writable=true | max=255 */
+            /** ID=0x0000 | type=UINT8 | write=true | max=255 */
             motion_threshold_multiplier: number;
-            /** ID=0x0002 | type=UINT16 | writable=true | max=65535 */
+            /** ID=0x0002 | type=UINT16 | write=true | max=65535 */
             motion_threshold: number;
-            /** ID=0x0010 | type=BITMAP8 | writable=true | max=255 */
+            /** ID=0x0010 | type=BITMAP8 | write=true | max=255 */
             acceleration: number;
-            /** ID=0x0012 | type=INT16 | writable=true | min=-32768 | max=32767 */
+            /** ID=0x0012 | type=INT16 | write=true | min=-32768 | max=32767 */
             x_axis: number;
-            /** ID=0x0013 | type=INT16 | writable=true | min=-32768 | max=32767 */
+            /** ID=0x0013 | type=INT16 | write=true | min=-32768 | max=32767 */
             y_axis: number;
-            /** ID=0x0014 | type=INT16 | writable=true | min=-32768 | max=32767 */
+            /** ID=0x0014 | type=INT16 | write=true | min=-32768 | max=32767 */
             z_axis: number;
         };
         commands: never;
@@ -8102,7 +7978,7 @@ export interface TClusters {
     };
     schneiderSpecificPilotMode: {
         attributes: {
-            /** ID=0x0031 | type=ENUM8 | writable=true | max=255 */
+            /** ID=0x0031 | type=ENUM8 | write=true | max=255 */
             pilotMode: number;
         };
         commands: never;
@@ -8110,13 +7986,13 @@ export interface TClusters {
     };
     elkoOccupancySettingClusterServer: {
         attributes: {
-            /** ID=0x0000 | type=UINT16 | writable=true | max=65535 */
+            /** ID=0x0000 | type=UINT16 | write=true | max=65535 */
             AmbienceLightThreshold: number;
-            /** ID=0x0001 | type=ENUM8 | writable=true | max=255 */
+            /** ID=0x0001 | type=ENUM8 | write=true | max=255 */
             OccupancyActions: number;
-            /** ID=0x0002 | type=UINT8 | writable=true | max=255 */
+            /** ID=0x0002 | type=UINT8 | write=true | max=255 */
             UnoccupiedLevelDflt: number;
-            /** ID=0x0003 | type=UINT8 | writable=true | max=255 */
+            /** ID=0x0003 | type=UINT8 | write=true | max=255 */
             UnoccupiedLevel: number;
         };
         commands: never;
@@ -8124,17 +8000,17 @@ export interface TClusters {
     };
     elkoSwitchConfigurationClusterServer: {
         attributes: {
-            /** ID=0x0000 | type=ENUM8 | writable=true | max=255 */
+            /** ID=0x0000 | type=ENUM8 | write=true | max=255 */
             SwitchIndication: number;
-            /** ID=0x0010 | type=UINT8 | writable=true | max=255 */
+            /** ID=0x0010 | type=UINT8 | write=true | max=255 */
             UpSceneID: number;
-            /** ID=0x0011 | type=UINT16 | writable=true | max=65535 */
+            /** ID=0x0011 | type=UINT16 | write=true | max=65535 */
             UpGroupID: number;
-            /** ID=0x0020 | type=UINT8 | writable=true | max=255 */
+            /** ID=0x0020 | type=UINT8 | write=true | max=255 */
             DownSceneID: number;
-            /** ID=0x0021 | type=UINT16 | writable=true | max=65535 */
+            /** ID=0x0021 | type=UINT16 | write=true | max=65535 */
             DownGroupID: number;
-            /** ID=0x0001 | type=ENUM8 | writable=true | max=255 */
+            /** ID=0x0001 | type=ENUM8 | write=true | max=255 */
             SwitchActions: number;
         };
         commands: never;
@@ -8142,17 +8018,17 @@ export interface TClusters {
     };
     manuSpecificSchneiderLightSwitchConfiguration: {
         attributes: {
-            /** ID=0x0000 | type=ENUM8 | writable=true | max=255 */
+            /** ID=0x0000 | type=ENUM8 | write=true | max=255 */
             ledIndication: number;
-            /** ID=0x0010 | type=UINT8 | writable=true | max=255 */
+            /** ID=0x0010 | type=UINT8 | write=true | max=255 */
             upSceneID: number;
-            /** ID=0x0011 | type=UINT16 | writable=true | max=65535 */
+            /** ID=0x0011 | type=UINT16 | write=true | max=65535 */
             upGroupID: number;
-            /** ID=0x0020 | type=UINT8 | writable=true | max=255 */
+            /** ID=0x0020 | type=UINT8 | write=true | max=255 */
             downSceneID: number;
-            /** ID=0x0021 | type=UINT16 | writable=true | max=65535 */
+            /** ID=0x0021 | type=UINT16 | write=true | max=65535 */
             downGroupID: number;
-            /** ID=0x0001 | type=ENUM8 | writable=true | max=255 */
+            /** ID=0x0001 | type=ENUM8 | write=true | max=255 */
             switchActions: number;
         };
         commands: never;
@@ -8160,9 +8036,9 @@ export interface TClusters {
     };
     manuSpecificSchneiderFanSwitchConfiguration: {
         attributes: {
-            /** ID=0x0002 | type=UINT8 | writable=true | max=255 */
+            /** ID=0x0002 | type=UINT8 | write=true | max=255 */
             ledIndication: number;
-            /** ID=0x0060 | type=UINT8 | writable=true | max=255 */
+            /** ID=0x0060 | type=UINT8 | write=true | max=255 */
             ledOrientation: number;
         };
         commands: never;
@@ -8170,7 +8046,7 @@ export interface TClusters {
     };
     sprutVoc: {
         attributes: {
-            /** ID=0x6600 | type=UINT16 | writable=true | max=65535 */
+            /** ID=0x6600 | type=UINT16 | write=true | max=65535 */
             voc: number;
         };
         commands: never;
@@ -8178,13 +8054,13 @@ export interface TClusters {
     };
     sprutNoise: {
         attributes: {
-            /** ID=0x6600 | type=SINGLE_PREC | writable=true */
+            /** ID=0x6600 | type=SINGLE_PREC | write=true */
             noise: number;
-            /** ID=0x6601 | type=BITMAP8 | writable=true */
+            /** ID=0x6601 | type=BITMAP8 | write=true */
             noiseDetected: number;
-            /** ID=0x6602 | type=SINGLE_PREC | writable=true */
+            /** ID=0x6602 | type=SINGLE_PREC | write=true */
             noiseDetectLevel: number;
-            /** ID=0x6603 | type=UINT16 | writable=true | max=65535 */
+            /** ID=0x6603 | type=UINT16 | write=true | max=65535 */
             noiseAfterDetectDelay: number;
         };
         commands: never;
@@ -8221,7 +8097,7 @@ export interface TClusters {
     };
     manuSpecificSiglisZigfred: {
         attributes: {
-            /** ID=0x0008 | type=UINT32 | writable=true | max=4294967295 */
+            /** ID=0x0008 | type=UINT32 | write=true | max=4294967295 */
             buttonEvent: number;
         };
         commands: {
@@ -8359,35 +8235,35 @@ export interface TClusters {
     };
     manuSpecificAssaDoorLock: {
         attributes: {
-            /** ID=0x0012 | type=UINT8 | writable=true | max=255 */
+            /** ID=0x0012 | type=UINT8 | write=true | max=255 */
             autoLockTime: number;
-            /** ID=0x0013 | type=UINT8 | writable=true | max=255 */
+            /** ID=0x0013 | type=UINT8 | write=true | max=255 */
             wrongCodeAttempts: number;
-            /** ID=0x0014 | type=UINT8 | writable=true | max=255 */
+            /** ID=0x0014 | type=UINT8 | write=true | max=255 */
             shutdownTime: number;
-            /** ID=0x0015 | type=UINT8 | writable=true | max=255 */
+            /** ID=0x0015 | type=UINT8 | write=true | max=255 */
             batteryLevel: number;
-            /** ID=0x0016 | type=UINT8 | writable=true | max=255 */
+            /** ID=0x0016 | type=UINT8 | write=true | max=255 */
             insideEscutcheonLED: number;
-            /** ID=0x0017 | type=UINT8 | writable=true | max=255 */
+            /** ID=0x0017 | type=UINT8 | write=true | max=255 */
             volume: number;
-            /** ID=0x0018 | type=UINT8 | writable=true | max=255 */
+            /** ID=0x0018 | type=UINT8 | write=true | max=255 */
             lockMode: number;
-            /** ID=0x0019 | type=UINT8 | writable=true | max=255 */
+            /** ID=0x0019 | type=UINT8 | write=true | max=255 */
             language: number;
-            /** ID=0x001a | type=BOOLEAN | writable=true */
+            /** ID=0x001a | type=BOOLEAN | write=true */
             allCodesLockout: number;
-            /** ID=0x001b | type=BOOLEAN | writable=true */
+            /** ID=0x001b | type=BOOLEAN | write=true */
             oneTouchLocking: number;
-            /** ID=0x001c | type=BOOLEAN | writable=true */
+            /** ID=0x001c | type=BOOLEAN | write=true */
             privacyButtonSetting: number;
-            /** ID=0x0021 | type=UINT16 | writable=true | max=65535 */
+            /** ID=0x0021 | type=UINT16 | write=true | max=65535 */
             numberLogRecordsSupported: number;
-            /** ID=0x0030 | type=UINT8 | writable=true | max=255 */
+            /** ID=0x0030 | type=UINT8 | write=true | max=255 */
             numberPinsSupported: number;
-            /** ID=0x0040 | type=UINT8 | writable=true | max=255 */
+            /** ID=0x0040 | type=UINT8 | write=true | max=255 */
             numberScheduleSlotsPerUser: number;
-            /** ID=0x0050 | type=UINT8 | writable=true | max=255 */
+            /** ID=0x0050 | type=UINT8 | write=true | max=255 */
             alarmMask: number;
         };
         commands: {
@@ -8526,7 +8402,7 @@ export interface TClusters {
     };
     manuSpecificProfalux1: {
         attributes: {
-            /** ID=0x0000 | type=UINT8 | writable=true | max=255 */
+            /** ID=0x0000 | type=UINT8 | write=true | max=255 */
             motorCoverType: number;
         };
         commands: never;
@@ -8534,43 +8410,43 @@ export interface TClusters {
     };
     manuSpecificAmazonWWAH: {
         attributes: {
-            /** ID=0x0002 | type=BOOLEAN | writable=true */
+            /** ID=0x0002 | type=BOOLEAN | write=true */
             disableOTADowngrades: number;
-            /** ID=0x0003 | type=BOOLEAN | writable=true */
+            /** ID=0x0003 | type=BOOLEAN | write=true */
             mgmtLeaveWithoutRejoinEnabled: number;
-            /** ID=0x0004 | type=UINT8 | writable=true | max=255 */
+            /** ID=0x0004 | type=UINT8 | write=true | max=255 */
             nwkRetryCount: number;
-            /** ID=0x0005 | type=UINT8 | writable=true | max=255 */
+            /** ID=0x0005 | type=UINT8 | write=true | max=255 */
             macRetryCount: number;
-            /** ID=0x0006 | type=BOOLEAN | writable=true */
+            /** ID=0x0006 | type=BOOLEAN | write=true */
             routerCheckInEnabled: number;
-            /** ID=0x0007 | type=BOOLEAN | writable=true */
+            /** ID=0x0007 | type=BOOLEAN | write=true */
             touchlinkInterpanEnabled: number;
-            /** ID=0x0008 | type=BOOLEAN | writable=true */
+            /** ID=0x0008 | type=BOOLEAN | write=true */
             wwahParentClassificationEnabled: number;
-            /** ID=0x0009 | type=BOOLEAN | writable=true */
+            /** ID=0x0009 | type=BOOLEAN | write=true */
             wwahAppEventRetryEnabled: number;
-            /** ID=0x000a | type=UINT8 | writable=true | max=255 */
+            /** ID=0x000a | type=UINT8 | write=true | max=255 */
             wwahAppEventRetryQueueSize: number;
-            /** ID=0x000b | type=BOOLEAN | writable=true */
+            /** ID=0x000b | type=BOOLEAN | write=true */
             wwahRejoinEnabled: number;
-            /** ID=0x000c | type=UINT8 | writable=true | max=255 */
+            /** ID=0x000c | type=UINT8 | write=true | max=255 */
             macPollFailureWaitTime: number;
-            /** ID=0x000d | type=BOOLEAN | writable=true */
+            /** ID=0x000d | type=BOOLEAN | write=true */
             configurationModeEnabled: number;
-            /** ID=0x000e | type=UINT8 | writable=true | max=255 */
+            /** ID=0x000e | type=UINT8 | write=true | max=255 */
             currentDebugReportID: number;
-            /** ID=0x000f | type=BOOLEAN | writable=true */
+            /** ID=0x000f | type=BOOLEAN | write=true */
             tcSecurityOnNwkKeyRotationEnabled: number;
-            /** ID=0x0010 | type=BOOLEAN | writable=true */
+            /** ID=0x0010 | type=BOOLEAN | write=true */
             wwahBadParentRecoveryEnabled: number;
-            /** ID=0x0011 | type=UINT8 | writable=true | max=255 */
+            /** ID=0x0011 | type=UINT8 | write=true | max=255 */
             pendingNetworkUpdateChannel: number;
-            /** ID=0x0012 | type=UINT16 | writable=true | max=65535 */
+            /** ID=0x0012 | type=UINT16 | write=true | max=65535 */
             pendingNetworkUpdatePANID: number;
-            /** ID=0x0013 | type=UINT16 | writable=true | max=65535 */
+            /** ID=0x0013 | type=UINT16 | write=true | max=65535 */
             otaMaxOfflineDuration: number;
-            /** ID=0xfffd | type=UINT16 | writable=true | max=65535 */
+            /** ID=0xfffd | type=UINT16 | write=true | max=65535 */
             clusterRevision: number;
         };
         commands: {

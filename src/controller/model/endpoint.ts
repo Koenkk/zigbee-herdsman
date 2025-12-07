@@ -455,7 +455,7 @@ export class Endpoint extends ZigbeeEntity {
         const cluster = this.getCluster(clusterKey, undefined, options?.manufacturerCode);
         const payload: TFoundation["report"] = [];
 
-        // TODO: handle `attr.reportRequired !== true`
+        // TODO: handle `attr.report !== true`
 
         for (const nameOrID in attributes) {
             const attribute = cluster.getAttribute(nameOrID);

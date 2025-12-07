@@ -300,12 +300,12 @@ describe("ZCL Utils", () => {
         });
 
         it("returns default when value is null and default exists", () => {
-            const attr = createAttribute({writable: true, default: 42});
+            const attr = createAttribute({write: true, default: 42});
             expect(Zcl.Utils.processAttributeWrite(attr, null)).toStrictEqual(42);
         });
 
         it("NaN with default returns default", () => {
-            const attr = createAttribute({writable: true, default: 7});
+            const attr = createAttribute({write: true, default: 7});
             expect(Zcl.Utils.processAttributeWrite(attr, Number.NaN)).toStrictEqual(7);
         });
 
@@ -313,7 +313,7 @@ describe("ZCL Utils", () => {
             const type = Zcl.DataType.UINT8;
             const sentinel = ZCL_TYPE_INVALID_BY_TYPE[type];
             expect(sentinel).not.toBeUndefined();
-            const attr = createAttribute({writable: true, type});
+            const attr = createAttribute({write: true, type});
             expect(Zcl.Utils.processAttributeWrite(attr, Number.NaN)).toStrictEqual(sentinel);
         });
 
@@ -321,12 +321,12 @@ describe("ZCL Utils", () => {
             const type = Zcl.DataType.DATA8;
             const sentinel = ZCL_TYPE_INVALID_BY_TYPE[type];
             expect(sentinel).toBeUndefined();
-            const attr = createAttribute({writable: true, type});
+            const attr = createAttribute({write: true, type});
             expect(() => Zcl.Utils.processAttributeWrite(attr, Number.NaN)).toThrow(/does not have a default nor a non-value/i);
         });
 
         it("level control for lighting attributes currentLevel and options", () => {
-            const cluster = Zcl.Utils.getCluster("genLevelCtrlForLighting");
+            const cluster = Zcl.Utils.getCluster("genLevelCtrl");
             let result = Zcl.Utils.processAttributeWrite(cluster.getAttribute("options")!, 0x00);
             expect(result).toStrictEqual(0x00);
             result = Zcl.Utils.processAttributeWrite(cluster.getAttribute("options")!, 0xff);
@@ -351,7 +351,7 @@ describe("ZCL Utils", () => {
 
     describe("processAttributePreRead specific", () => {
         it("throws when attribute not writable", () => {
-            const attr = createAttribute({readable: false});
+            const attr = createAttribute({read: false});
             expect(() => Zcl.Utils.processAttributePreRead(attr)).toThrow(/not readable/i);
         });
     });
@@ -361,7 +361,7 @@ describe("ZCL Utils", () => {
             const type = Zcl.DataType.UINT16;
             const sentinel = ZCL_TYPE_INVALID_BY_TYPE[type];
             expect(sentinel).not.toBeUndefined();
-            const attr = createAttribute({writable: true, type});
+            const attr = createAttribute({write: true, type});
             const result = Zcl.Utils.processAttributePostRead(attr, sentinel);
             expect(Number.isNaN(result)).toStrictEqual(true);
         });
@@ -370,7 +370,7 @@ describe("ZCL Utils", () => {
             const type = Zcl.DataType.INT16;
             const sentinel = ZCL_TYPE_INVALID_BY_TYPE[type];
             expect(sentinel).not.toBeUndefined();
-            const attr = createAttribute({writable: true, type, min: (sentinel as number) + 1});
+            const attr = createAttribute({write: true, type, min: (sentinel as number) + 1});
             const result = Zcl.Utils.processAttributePostRead(attr, sentinel);
             expect(Number.isNaN(result)).toStrictEqual(true);
         });
@@ -379,7 +379,7 @@ describe("ZCL Utils", () => {
             const type = Zcl.DataType.INT16;
             const sentinel = ZCL_TYPE_INVALID_BY_TYPE[type];
             expect(sentinel).not.toBeUndefined();
-            const attr = createAttribute({writable: true, type, min: sentinel as number});
+            const attr = createAttribute({write: true, type, min: sentinel as number});
             const result = Zcl.Utils.processAttributePostRead(attr, sentinel);
             expect(result).toStrictEqual(sentinel);
         });
@@ -388,7 +388,7 @@ describe("ZCL Utils", () => {
             const type = Zcl.DataType.UINT16;
             const sentinel = ZCL_TYPE_INVALID_BY_TYPE[type];
             expect(sentinel).not.toBeUndefined();
-            const attr = createAttribute({writable: true, type, max: (sentinel as number) - 1});
+            const attr = createAttribute({write: true, type, max: (sentinel as number) - 1});
             const result = Zcl.Utils.processAttributePostRead(attr, sentinel);
             expect(Number.isNaN(result)).toStrictEqual(true);
         });
@@ -397,7 +397,7 @@ describe("ZCL Utils", () => {
             const type = Zcl.DataType.UINT16;
             const sentinel = ZCL_TYPE_INVALID_BY_TYPE[type];
             expect(sentinel).not.toBeUndefined();
-            const attr = createAttribute({writable: true, type, max: sentinel as number});
+            const attr = createAttribute({write: true, type, max: sentinel as number});
             const result = Zcl.Utils.processAttributePostRead(attr, sentinel);
             expect(result).toStrictEqual(sentinel);
         });
@@ -428,9 +428,9 @@ describe("ZCL Utils", () => {
         });
 
         it("level control for lighting attributes currentLevel and options", () => {
-            const cluster = Zcl.Utils.getCluster("genLevelCtrlForLighting");
+            const cluster = Zcl.Utils.getCluster("genLevelCtrl");
             let result = Zcl.Utils.processAttributePostRead(cluster.getAttribute("currentLevel")!, 0xff);
-            expect(Number.isNaN(result)).toStrictEqual(true);
+            expect(Number.isNaN(result)).toStrictEqual(false); // technically should be true for genLevelCtrlForLighting but handling left to ZHC
             result = Zcl.Utils.processAttributePostRead(cluster.getAttribute("currentLevel")!, 0xfe);
             expect(result).toStrictEqual(0xfe);
             result = Zcl.Utils.processAttributePostRead(cluster.getAttribute("currentLevel")!, 200);
@@ -538,57 +538,57 @@ describe("ZCL Utils", () => {
         ["post read", Zcl.Utils.processAttributePostRead],
     ])("process attribute for %s", (_name, fn) => {
         it("returns null when value is null and no default", () => {
-            const attr = createAttribute({writable: true});
+            const attr = createAttribute({write: true});
             expect(fn(attr, null)).toBeNull();
         });
 
         it("returns value unchanged when it equals default (skips restrictions)", () => {
-            const attr = createAttribute({writable: true, default: 50, min: 60});
+            const attr = createAttribute({write: true, default: 50, min: 60});
             expect(fn(attr, 50)).toStrictEqual(50);
         });
 
         it("throws below min", () => {
-            const attr = createAttribute({writable: true, min: 10});
+            const attr = createAttribute({write: true, min: 10});
             expect(() => fn(attr, 5)).toThrow(/requires min/i);
         });
 
         it("throws below minExcl", () => {
-            const attr = createAttribute({writable: true, minExcl: 10});
+            const attr = createAttribute({write: true, minExcl: 10});
             expect(() => fn(attr, 5)).toThrow(/requires min exclusive/i);
         });
 
         it("throws at minExcl", () => {
-            const attr = createAttribute({writable: true, minExcl: 10});
+            const attr = createAttribute({write: true, minExcl: 10});
             expect(() => fn(attr, 10)).toThrow(/requires min exclusive/i);
         });
 
         it("throws above max", () => {
-            const attr = createAttribute({writable: true, max: 20});
+            const attr = createAttribute({write: true, max: 20});
             expect(() => fn(attr, 30)).toThrow(/requires max/i);
         });
 
         it("throws above maxExcl", () => {
-            const attr = createAttribute({writable: true, maxExcl: 20});
+            const attr = createAttribute({write: true, maxExcl: 20});
             expect(() => fn(attr, 30)).toThrow(/requires max exclusive/i);
         });
 
         it("throws at maxExcl", () => {
-            const attr = createAttribute({writable: true, maxExcl: 20});
+            const attr = createAttribute({write: true, maxExcl: 20});
             expect(() => fn(attr, 20)).toThrow(/requires max exclusive/i);
         });
 
         it("throws not length", () => {
-            const attr = createAttribute({writable: true, length: 10});
+            const attr = createAttribute({write: true, length: 10});
             expect(() => fn(attr, "abcde")).toThrow(/requires length/i);
         });
 
         it("throws below minLen", () => {
-            const attr = createAttribute({writable: true, minLen: 10});
+            const attr = createAttribute({write: true, minLen: 10});
             expect(() => fn(attr, "abcde")).toThrow(/requires min length/i);
         });
 
         it("throws above maxLen", () => {
-            const attr = createAttribute({writable: true, maxLen: 2});
+            const attr = createAttribute({write: true, maxLen: 2});
             expect(() => fn(attr, "xyz")).toThrow(/requires max length/i);
         });
     });
