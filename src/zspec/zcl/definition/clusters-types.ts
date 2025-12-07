@@ -1,4 +1,19 @@
-import type { ExtensionFieldSet, Gpd, GpdAttributeReport, GpdChannelConfiguration, GpdChannelRequest, GpdCommissioningReply, GpdCustomReply, MiboxerZone, Struct, StructuredSelector, ThermoTransition, TuyaDataPointValue, ZclArray, ZoneInfo } from "./tstype";
+import type {
+    ExtensionFieldSet,
+    Gpd,
+    GpdAttributeReport,
+    GpdChannelConfiguration,
+    GpdChannelRequest,
+    GpdCommissioningReply,
+    GpdCustomReply,
+    MiboxerZone,
+    Struct,
+    StructuredSelector,
+    ThermoTransition,
+    TuyaDataPointValue,
+    ZclArray,
+    ZoneInfo,
+} from "./tstype";
 
 export interface TClusters {
     genBasic: {
@@ -2056,9 +2071,17 @@ export interface TClusters {
                 /** type=UINT8 */
                 payloadSize: number;
                 /** type=GPD_FRAME | conditions=[{bitMaskSet param=options mask=192 reversed=true}] */
-                commandFrame?: Gpd | GpdChannelRequest | GpdAttributeReport | {
-                    raw: Buffer;
-                } | Record<string, never> | GpdCommissioningReply | GpdChannelConfiguration | GpdCustomReply;
+                commandFrame?:
+                    | Gpd
+                    | GpdChannelRequest
+                    | GpdAttributeReport
+                    | {
+                          raw: Buffer;
+                      }
+                    | Record<string, never>
+                    | GpdCommissioningReply
+                    | GpdChannelConfiguration
+                    | GpdCustomReply;
                 /** type=UINT16 | conditions=[{bitMaskSet param=options mask=16384}] */
                 gppNwkAddr?: number;
                 /** type=BITMAP8 | conditions=[{bitMaskSet param=options mask=16384}] */
@@ -2109,9 +2132,17 @@ export interface TClusters {
                 /** type=UINT8 */
                 payloadSize: number;
                 /** type=GPD_FRAME | conditions=[{bitMaskSet param=options mask=48 reversed=true}{bitMaskSet param=options mask=512 reversed=true}] */
-                commandFrame?: Gpd | GpdChannelRequest | GpdAttributeReport | {
-                    raw: Buffer;
-                } | Record<string, never> | GpdCommissioningReply | GpdChannelConfiguration | GpdCustomReply;
+                commandFrame?:
+                    | Gpd
+                    | GpdChannelRequest
+                    | GpdAttributeReport
+                    | {
+                          raw: Buffer;
+                      }
+                    | Record<string, never>
+                    | GpdCommissioningReply
+                    | GpdChannelConfiguration
+                    | GpdCustomReply;
                 /** type=UINT16 | conditions=[{bitMaskSet param=options mask=2048}] */
                 gppNwkAddr?: number;
                 /** type=BITMAP8 | conditions=[{bitMaskSet param=options mask=2048}] */
@@ -2238,9 +2269,17 @@ export interface TClusters {
                 /** type=UINT8 */
                 gpdCmd: number;
                 /** type=GPD_FRAME */
-                gpdPayload: Gpd | GpdChannelRequest | GpdAttributeReport | {
-                    raw: Buffer;
-                } | Record<string, never> | GpdCommissioningReply | GpdChannelConfiguration | GpdCustomReply;
+                gpdPayload:
+                    | Gpd
+                    | GpdChannelRequest
+                    | GpdAttributeReport
+                    | {
+                          raw: Buffer;
+                      }
+                    | Record<string, never>
+                    | GpdCommissioningReply
+                    | GpdChannelConfiguration
+                    | GpdCustomReply;
             };
             /** ID=0x08 */
             translationTableRsp: {
@@ -8550,30 +8589,68 @@ export interface TFoundation {
     };
 }
 
-export type TFoundationRepetitive = "read" | "readRsp" | "write" | "writeUndiv" | "writeRsp" | "writeNoRsp" | "configReport" | "configReportRsp" | "readReportConfig" | "readReportConfigRsp" | "report" | "readStructured" | "writeStructured" | "writeStructuredRsp";
+export type TFoundationRepetitive =
+    | "read"
+    | "readRsp"
+    | "write"
+    | "writeUndiv"
+    | "writeRsp"
+    | "writeNoRsp"
+    | "configReport"
+    | "configReportRsp"
+    | "readReportConfig"
+    | "readReportConfigRsp"
+    | "report"
+    | "readStructured"
+    | "writeStructured"
+    | "writeStructuredRsp";
 export type TFoundationFlat = "defaultRsp" | "discover" | "discoverCommands" | "discoverCommandsGen" | "discoverExt";
 export type TFoundationOneOf = "discoverRsp" | "discoverCommandsRsp" | "discoverCommandsGenRsp" | "discoverExtRsp";
 
 // Clusters
-export type TClusterAttributeKeys<Cl extends number | string> = Cl extends keyof TClusters ? (keyof TClusters[Cl]["attributes"])[] : (string | number)[];;
+export type TClusterAttributeKeys<Cl extends number | string> = Cl extends keyof TClusters
+    ? (keyof TClusters[Cl]["attributes"])[]
+    : (string | number)[];
 
 export type TClusterAttributes<Cl extends number | string> = Cl extends keyof TClusters ? TClusters[Cl]["attributes"] : never;
 
 export type TPartialClusterAttributes<Cl extends number | string> = Cl extends keyof TClusters ? Partial<TClusters[Cl]["attributes"]> : never;
 
-export type TClusterCommandKeys<Cl extends number | string> = Cl extends keyof TClusters ? (keyof TClusters[Cl]["commands"])[] : (string | number)[];;
+export type TClusterCommandKeys<Cl extends number | string> = Cl extends keyof TClusters ? (keyof TClusters[Cl]["commands"])[] : (string | number)[];
 
-export type TClusterCommandResponseKeys<Cl extends number | string> = Cl extends keyof TClusters ? (keyof TClusters[Cl]["commandResponses"])[] : (string | number)[];;
+export type TClusterCommandResponseKeys<Cl extends number | string> = Cl extends keyof TClusters
+    ? (keyof TClusters[Cl]["commandResponses"])[]
+    : (string | number)[];
 
 export type TClusterCommands<Cl extends number | string> = Cl extends keyof TClusters ? TClusters[Cl]["commands"] : never;
 
 export type TClusterCommandResponses<Cl extends number | string> = Cl extends keyof TClusters ? TClusters[Cl]["commandResponses"] : never;
 
-export type TClusterCommandPayload<Cl extends number | string, Co extends number | string> = Cl extends keyof TClusters ? Co extends keyof TClusters[Cl]["commands"] ? TClusters[Cl]["commands"][Co] : never : never;;
+export type TClusterCommandPayload<Cl extends number | string, Co extends number | string> = Cl extends keyof TClusters
+    ? Co extends keyof TClusters[Cl]["commands"]
+        ? TClusters[Cl]["commands"][Co]
+        : never
+    : never;
 
-export type TClusterCommandResponsePayload<Cl extends number | string, Co extends number | string> = Cl extends keyof TClusters ? Co extends keyof TClusters[Cl]["commandResponses"] ? TClusters[Cl]["commandResponses"][Co] : never : never;;
+export type TClusterCommandResponsePayload<Cl extends number | string, Co extends number | string> = Cl extends keyof TClusters
+    ? Co extends keyof TClusters[Cl]["commandResponses"]
+        ? TClusters[Cl]["commandResponses"][Co]
+        : never
+    : never;
 
-export type TClusterPayload<Cl extends number | string, Co extends number | string> = Cl extends keyof TClusters ? TClusters[Cl]["commands"] extends never ? TClusters[Cl]["commandResponses"] extends never ? never : Co extends keyof TClusters[Cl]["commandResponses"] ? TClusters[Cl]["commandResponses"][Co] : never : Co extends keyof TClusters[Cl]["commands"] ? TClusters[Cl]["commands"][Co] : Co extends keyof TClusters[Cl]["commandResponses"] ? TClusters[Cl]["commandResponses"][Co] : never : never;;
+export type TClusterPayload<Cl extends number | string, Co extends number | string> = Cl extends keyof TClusters
+    ? TClusters[Cl]["commands"] extends never
+        ? TClusters[Cl]["commandResponses"] extends never
+            ? never
+            : Co extends keyof TClusters[Cl]["commandResponses"]
+              ? TClusters[Cl]["commandResponses"][Co]
+              : never
+        : Co extends keyof TClusters[Cl]["commands"]
+          ? TClusters[Cl]["commands"][Co]
+          : Co extends keyof TClusters[Cl]["commandResponses"]
+            ? TClusters[Cl]["commandResponses"][Co]
+            : never
+    : never;
 
 // Foundation
 export type TFoundationGenericPayload = TFoundation[keyof TFoundation];
