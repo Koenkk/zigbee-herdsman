@@ -309,45 +309,46 @@ export class Endpoint extends ZigbeeEntity {
         }
         /* v8 ignore stop */
 
+        const scenes = record.scenes ? new Map(Object.entries(record.scenes)) : new Map();
+
         // @deprecated Z2M 3.0
         // Migrate scenes from meta (ZHC) to plain
-        if (record.meta.scenes) {
-            record.scenes = {};
-
+        if (record.meta?.scenes) {
             for (const key in record.meta.scenes) {
                 const oldScene = record.meta.scenes[key];
-                record.scenes[key] = {
+                const newScene: Scene = {
                     name: oldScene.name,
                     // ZHC only saved "state", "brightness", "color", "color_temp", "color_mode"
                     state: {},
                     // XXX: no way of knowing from ZHC dataset
                     enhanced: false,
                     transitionTime: 0xffff,
-                } satisfies Scene;
-                const newSceneState = record.scenes[key].state as Scene["state"];
+                };
+
+                scenes.set(key, newScene);
 
                 if (oldScene.state.state !== undefined) {
-                    newSceneState.genOnOff = {onOff: oldScene.state.state};
+                    newScene.state.genOnOff = {onOff: oldScene.state.state};
                 }
 
                 if (oldScene.state.brightness !== undefined) {
-                    newSceneState.genLevelCtrl = {currentLevel: oldScene.state.brightness};
+                    newScene.state.genLevelCtrl = {currentLevel: oldScene.state.brightness};
                 }
 
                 if (oldScene.state.color_mode === "xy") {
-                    newSceneState.lightingColorCtrl = {
+                    newScene.state.lightingColorCtrl = {
                         currentX: oldScene.state.color.x ?? 0,
                         currentY: oldScene.state.color.y ?? 0,
                     };
                 } else if (oldScene.state.color_mode === "hs") {
-                    newSceneState.lightingColorCtrl = {
+                    newScene.state.lightingColorCtrl = {
                         currentX: 0,
                         currentY: 0,
                         enhancedCurrentHue: oldScene.state.color.hue ?? 0,
                         currentSaturation: oldScene.state.color.saturation ?? 0,
                     };
                 } else if (oldScene.state.color_mode === "color_temp") {
-                    newSceneState.lightingColorCtrl = {
+                    newScene.state.lightingColorCtrl = {
                         currentX: 0,
                         currentY: 0,
                         enhancedCurrentHue: 0,
@@ -372,7 +373,7 @@ export class Endpoint extends ZigbeeEntity {
             deviceNetworkAddress,
             deviceIeeeAddress,
             record.clusters,
-            record.scenes ? new Map(Object.entries(record.scenes)) : new Map(),
+            scenes,
             record.binds || [],
             record.configuredReportings || [],
             record.meta || {},
