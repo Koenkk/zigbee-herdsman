@@ -18,12 +18,14 @@ import {
     EMBER_ZBDONGLE_E,
     EMBER_ZBDONGLE_E_CP,
     ZBOSS_NORDIC,
+    ZBT_1_PNPID,
     ZBT_2,
     ZIGATE_PLUSV2,
     ZSTACK_CC2538,
     ZSTACK_SMLIGHT_SLZB_06P10,
     ZSTACK_SMLIGHT_SLZB_07,
     ZSTACK_ZBDONGLE_P,
+    ZWA_2_CONFLICT,
 } from "../mockAdapters";
 
 const mockPlatform = vi.fn(() => "linux");
@@ -544,6 +546,7 @@ describe("Adapter", () => {
                 expect(adapter.serialPortOptions).toStrictEqual({
                     path: EMBER_SKYCONNECT.path,
                     adapter: "ember",
+                    rtscts: true,
                 });
 
                 listSpy.mockReturnValueOnce([{...ZSTACK_ZBDONGLE_P, path: "/dev/ttyACM0"}]);
@@ -607,6 +610,7 @@ describe("Adapter", () => {
                 expect(adapter.serialPortOptions).toStrictEqual({
                     path: ZSTACK_SMLIGHT_SLZB_07.path,
                     adapter: "ember",
+                    rtscts: true,
                 });
             });
 
@@ -640,6 +644,36 @@ describe("Adapter", () => {
                 await expect(Adapter.create({panID: 0x1a62, channelList: [11]}, {}, "test.db.backup", {disableLED: false})).rejects.toThrow(
                     `USB adapter discovery error (No valid USB adapter found). Specify valid 'adapter' and 'port' in your configuration.`,
                 );
+            });
+
+            it("detects SkyConnect ZBT-1 when ZWA-2 present", async () => {
+                listSpy.mockReturnValueOnce([ZWA_2_CONFLICT, ZBT_1_PNPID]);
+
+                const adapter = await Adapter.create({panID: 0x1a62, channelList: [11]}, {baudRate: 115200}, "test.db.backup", {disableLED: false});
+
+                expect(adapter).toBeInstanceOf(EmberAdapter);
+                // @ts-expect-error protected
+                expect(adapter.serialPortOptions).toStrictEqual({
+                    path: ZBT_1_PNPID.path,
+                    adapter: "ember",
+                    baudRate: 115200,
+                    rtscts: true,
+                });
+            });
+
+            it("detects SkyConnect ZBT-2 when ZWA-2 present", async () => {
+                listSpy.mockReturnValueOnce([ZWA_2_CONFLICT, ZBT_2]);
+
+                const adapter = await Adapter.create({panID: 0x1a62, channelList: [11]}, {}, "test.db.backup", {disableLED: false});
+
+                expect(adapter).toBeInstanceOf(EmberAdapter);
+                // @ts-expect-error protected
+                expect(adapter.serialPortOptions).toStrictEqual({
+                    path: ZBT_2.path,
+                    adapter: "ember",
+                    baudRate: 460800,
+                    rtscts: true,
+                });
             });
         });
 
@@ -795,6 +829,7 @@ describe("Adapter", () => {
                 expect(adapter.serialPortOptions).toStrictEqual({
                     path: EMBER_SKYCONNECT.path,
                     adapter: "ember",
+                    rtscts: true,
                 });
 
                 listSpy.mockReturnValueOnce([{...ZSTACK_ZBDONGLE_P, path: "/dev/ttyACM0"}]);

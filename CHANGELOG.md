@@ -1,5 +1,27 @@
 # Changelog
 
+## [7.0.4](https://github.com/Koenkk/zigbee-herdsman/compare/v7.0.3...v7.0.4) (2025-12-06)
+
+
+### Bug Fixes
+
+* Use best match for USB adapter discovery ([#1578](https://github.com/Koenkk/zigbee-herdsman/issues/1578)) ([1c5a249](https://github.com/Koenkk/zigbee-herdsman/commit/1c5a2495fcb0e7f7b3301004183e39fe0d240e14))
+
+## [7.0.3](https://github.com/Koenkk/zigbee-herdsman/compare/v7.0.2...v7.0.3) (2025-12-04)
+
+
+### Bug Fixes
+
+* Lower db save interval, remove save on attribute report ([#1576](https://github.com/Koenkk/zigbee-herdsman/issues/1576)) ([4a42758](https://github.com/Koenkk/zigbee-herdsman/commit/4a42758744d59bcf9aab007aefa0fb36ef59d359))
+
+## [7.0.2](https://github.com/Koenkk/zigbee-herdsman/compare/v7.0.1...v7.0.2) (2025-12-02)
+
+
+### Bug Fixes
+
+* Check status when handling groups ([#1573](https://github.com/Koenkk/zigbee-herdsman/issues/1573)) ([758fb38](https://github.com/Koenkk/zigbee-herdsman/commit/758fb38287b68e62bd02fa146a2dcdfa1adcf3b7))
+* **ignore:** bump the minor-patch group with 2 updates ([#1571](https://github.com/Koenkk/zigbee-herdsman/issues/1571)) ([4dd94ca](https://github.com/Koenkk/zigbee-herdsman/commit/4dd94cac7e153a0cadd243344a4e15453f929c16))
+
 ## [7.0.1](https://github.com/Koenkk/zigbee-herdsman/compare/v7.0.0...v7.0.1) (2025-11-27)
 
 

@@ -2479,6 +2479,51 @@ describe("Controller", () => {
         expect(events.message.length).toBe(0);
     });
 
+    it("Receive zclData with device deleted during processing (prevent race condition)", async () => {
+        const frame = Zcl.Frame.create(
+            Zcl.FrameType.GLOBAL,
+            Zcl.Direction.CLIENT_TO_SERVER,
+            true,
+            undefined,
+            40,
+            "read",
+            "genTime",
+            [{attrId: 0}, {attrId: 1}, {attrId: 2}, {attrId: 3}, {attrId: 4}, {attrId: 5}, {attrId: 6}, {attrId: 7}, {attrId: 8}, {attrId: 9}],
+            {},
+        );
+        await controller.start();
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
+        const device = controller.getDeviceByIeeeAddr("0x129")!;
+        const endpoint = device.getEndpoint(1)!;
+        const deviceOnZclDataSpy = vi.spyOn(device, "onZclData");
+        const endpointCommandSpy = vi.spyOn(endpoint, "command");
+        const endpointReadResponseSpy = vi.spyOn(endpoint, "readResponse");
+        const endpointReadSpy = vi.spyOn(endpoint, "read");
+        const endpointDefaultResponseSpy = vi.spyOn(endpoint, "defaultResponse");
+
+        deviceOnZclDataSpy.mockImplementationOnce(async (a, b, c) => {
+            await mockAdapterEvents.deviceLeave({networkAddress: 129, ieeeAddr: undefined});
+            await device.onZclData(a, b, c);
+        });
+
+        await mockAdapterEvents.zclPayload({
+            wasBroadcast: false,
+            address: "0x129",
+            clusterID: frame.cluster.ID,
+            data: frame.toBuffer(),
+            header: frame.header,
+            endpoint: 1,
+            linkquality: 50,
+            groupID: 1,
+        });
+
+        expect(deviceOnZclDataSpy).toHaveBeenCalledTimes(2); // once for wrapper mock, once for real
+        expect(endpointCommandSpy).toHaveBeenCalledTimes(0);
+        expect(endpointReadResponseSpy).toHaveBeenCalledTimes(0);
+        expect(endpointReadSpy).toHaveBeenCalledTimes(0);
+        expect(endpointDefaultResponseSpy).toHaveBeenCalledTimes(0);
+    });
+
     it("Receive readResponse from unknown endpoint", async () => {
         const buffer = Buffer.from([8, 1, 1, 1, 0, 0, 32, 3]);
         const frame = Zcl.Frame.fromBuffer(Zcl.Utils.getCluster("genBasic", undefined, {}).ID, Zcl.Header.fromBuffer(buffer), buffer, {});
@@ -9115,6 +9160,52 @@ describe("Controller", () => {
         expect(identifyUnknownDeviceSpy).toHaveBeenCalledTimes(2);
         expect(events.lastSeenChanged.length).toBe(0);
         expect(events.deviceNetworkAddressChanged.length).toBe(0);
+    });
+
+    it("does not try to identify unknown device when deleted", async () => {
+        const nwkAddr = 40369;
+        const database = `
+        {"id":1,"type":"Coordinator","ieeeAddr":"0x0000012300000000","nwkAddr":0,"manufId":0,"epList":[11,6,5,4,3,2,1],"endpoints":{"1":{"profId":260,"epId":1,"devId":5,"inClusterList":[],"meta":{},"outClusterList":[],"clusters":{}},"2":{"profId":257,"epId":2,"devId":5,"inClusterList":[],"meta":{},"outClusterList":[],"clusters":{}},"3":{"profId":261,"epId":3,"devId":5,"inClusterList":[],"meta":{},"outClusterList":[],"clusters":{}},"4":{"profId":263,"epId":4,"devId":5,"inClusterList":[],"meta":{},"outClusterList":[],"clusters":{}},"5":{"profId":264,"epId":5,"devId":5,"inClusterList":[],"meta":{},"outClusterList":[],"clusters":{}},"6":{"profId":265,"epId":6,"devId":5,"inClusterList":[],"meta":{},"outClusterList":[],"clusters":{}},"11":{"profId":260,"epId":11,"devId":1024,"inClusterList":[],"meta":{},"outClusterList":[1280],"clusters":{}}},"interviewCompleted":false,"meta":{},"_id":"aM341ldunExFmJ3u"}
+        {"id":4,"type":"EndDevice","ieeeAddr":"0x0017880104e45517","lastSeen":123,"nwkAddr":${nwkAddr},"manufId":4107,"manufName":"Philips","powerSource":"Battery","modelId":"RWL021","epList":[1,2],"endpoints":{"1":{"profId":49246,"epId":1,"devId":2096,"inClusterList":[0],"meta":{},"outClusterList":[0,3,4,6,8,5],"binds":[{"type":"endpoint","endpointID":1,"deviceIeeeAddr":"0x000b57fffec6a5b2"}],"configuredReportings":[{"cluster":1,"attrId":0,"minRepIntval":1,"maxRepIntval":20,"repChange":2}],"clusters":{"genBasic":{"dir":{"value":3},"attrs":{"modelId":"RWL021"}}}},"2":{"profId":260,"epId":2,"devId":12,"inClusterList":[0,1,3,15,64512],"meta":{},"outClusterList":[25],"clusters":{}}},"appVersion":2,"stackVersion":1,"hwVersion":1,"dateCode":"20160302","swBuildId":"5.45.1.17846","zclVersion":1,"interviewState":"SUCCESSFUL","meta":{"configured":1},"_id":"qxhymbX6H2GXDw8Z"}
+        `;
+        fs.writeFileSync(options.databasePath, database);
+        await controller.start();
+        events.lastSeenChanged = [];
+        events.deviceNetworkAddressChanged = [];
+        const identifyUnknownDeviceSpy = vi.spyOn(controller, "identifyUnknownDevice");
+
+        const device = controller.getDeviceByIeeeAddr("0x0017880104e45517")!;
+        expect(device.networkAddress).toStrictEqual(nwkAddr);
+
+        device.removeFromDatabase();
+        expect(device.isDeleted).toStrictEqual(true);
+        expect(Device.isDeletedByIeeeAddr("0x0017880104e45517")).toStrictEqual(true);
+        expect(Device.isDeletedByNetworkAddress(nwkAddr)).toStrictEqual(true);
+
+        const frame2 = Zcl.Frame.create(
+            0,
+            1,
+            true,
+            undefined,
+            10,
+            "readRsp",
+            0,
+            [{attrId: 5, status: 0, dataType: 66, attrData: "new.model.id2"}],
+            {},
+        );
+        await mockAdapterEvents.zclPayload({
+            wasBroadcast: false,
+            address: nwkAddr,
+            clusterID: frame2.cluster.ID,
+            data: frame2.toBuffer(),
+            header: frame2.header,
+            endpoint: 1,
+            linkquality: 50,
+            groupID: 1,
+        });
+
+        expect(identifyUnknownDeviceSpy).toHaveBeenCalledTimes(0);
+        expect(mockLogger.debug).toHaveBeenCalledWith(`Data is from unknown device with address '${nwkAddr}', skipping...`, "zh:controller");
     });
 
     it("reads/writes to group with custom cluster when common to all members", async () => {
