@@ -34,7 +34,7 @@ export interface ConfigureReportingItem<Cl extends string | number, Custom exten
     attribute: ClusterOrRawAttributeKeys<Cl, Custom>[number] | {ID: number; type: number};
     minimumReportInterval: number;
     maximumReportInterval: number;
-    reportableChange: number;
+    reportableChange?: number;
 }
 
 export interface ReadReportConfigItem<Cl extends string | number, Custom extends TCustomCluster | undefined = undefined> {

@@ -1,19 +1,4 @@
-import type {
-    ExtensionFieldSet,
-    Gpd,
-    GpdAttributeReport,
-    GpdChannelConfiguration,
-    GpdChannelRequest,
-    GpdCommissioningReply,
-    GpdCustomReply,
-    MiboxerZone,
-    Struct,
-    StructuredSelector,
-    ThermoTransition,
-    TuyaDataPointValue,
-    ZclArray,
-    ZoneInfo,
-} from "./tstype";
+import type { ExtensionFieldSet, Gpd, GpdAttributeReport, GpdChannelConfiguration, GpdChannelRequest, GpdCommissioningReply, GpdCustomReply, MiboxerZone, Struct, StructuredSelector, ThermoTransition, TuyaDataPointValue, ZclArray, ZoneInfo } from "./tstype";
 
 export interface TClusters {
     genBasic: {
@@ -2071,17 +2056,9 @@ export interface TClusters {
                 /** type=UINT8 */
                 payloadSize: number;
                 /** type=GPD_FRAME | conditions=[{bitMaskSet param=options mask=192 reversed=true}] */
-                commandFrame?:
-                    | Gpd
-                    | GpdChannelRequest
-                    | GpdAttributeReport
-                    | {
-                          raw: Buffer;
-                      }
-                    | Record<string, never>
-                    | GpdCommissioningReply
-                    | GpdChannelConfiguration
-                    | GpdCustomReply;
+                commandFrame?: Gpd | GpdChannelRequest | GpdAttributeReport | {
+                    raw: Buffer;
+                } | Record<string, never> | GpdCommissioningReply | GpdChannelConfiguration | GpdCustomReply;
                 /** type=UINT16 | conditions=[{bitMaskSet param=options mask=16384}] */
                 gppNwkAddr?: number;
                 /** type=BITMAP8 | conditions=[{bitMaskSet param=options mask=16384}] */
@@ -2132,17 +2109,9 @@ export interface TClusters {
                 /** type=UINT8 */
                 payloadSize: number;
                 /** type=GPD_FRAME | conditions=[{bitMaskSet param=options mask=48 reversed=true}{bitMaskSet param=options mask=512 reversed=true}] */
-                commandFrame?:
-                    | Gpd
-                    | GpdChannelRequest
-                    | GpdAttributeReport
-                    | {
-                          raw: Buffer;
-                      }
-                    | Record<string, never>
-                    | GpdCommissioningReply
-                    | GpdChannelConfiguration
-                    | GpdCustomReply;
+                commandFrame?: Gpd | GpdChannelRequest | GpdAttributeReport | {
+                    raw: Buffer;
+                } | Record<string, never> | GpdCommissioningReply | GpdChannelConfiguration | GpdCustomReply;
                 /** type=UINT16 | conditions=[{bitMaskSet param=options mask=2048}] */
                 gppNwkAddr?: number;
                 /** type=BITMAP8 | conditions=[{bitMaskSet param=options mask=2048}] */
@@ -2269,17 +2238,9 @@ export interface TClusters {
                 /** type=UINT8 */
                 gpdCmd: number;
                 /** type=GPD_FRAME */
-                gpdPayload:
-                    | Gpd
-                    | GpdChannelRequest
-                    | GpdAttributeReport
-                    | {
-                          raw: Buffer;
-                      }
-                    | Record<string, never>
-                    | GpdCommissioningReply
-                    | GpdChannelConfiguration
-                    | GpdCustomReply;
+                gpdPayload: Gpd | GpdChannelRequest | GpdAttributeReport | {
+                    raw: Buffer;
+                } | Record<string, never> | GpdCommissioningReply | GpdChannelConfiguration | GpdCustomReply;
             };
             /** ID=0x08 */
             translationTableRsp: {
@@ -7777,92 +7738,6 @@ export interface TClusters {
         commands: never;
         commandResponses: never;
     };
-    liXeePrivate: {
-        attributes: {
-            /** ID=0x0000 | type=CHAR_STR | write=true */
-            currentTarif: string;
-            /** ID=0x0001 | type=CHAR_STR | write=true */
-            tomorrowColor: string;
-            /** ID=0x0002 | type=UINT8 | write=true | max=255 */
-            scheduleHPHC: number;
-            /** ID=0x0003 | type=UINT8 | write=true | max=255 */
-            presencePotential: number;
-            /** ID=0x0004 | type=UINT8 | write=true | max=255 */
-            startNoticeEJP: number;
-            /** ID=0x0005 | type=UINT16 | write=true | max=65535 */
-            warnDPS: number;
-            /** ID=0x0006 | type=UINT16 | write=true | max=65535 */
-            warnDIR1: number;
-            /** ID=0x0007 | type=UINT16 | write=true | max=65535 */
-            warnDIR2: number;
-            /** ID=0x0008 | type=UINT16 | write=true | max=65535 */
-            warnDIR3: number;
-            /** ID=0x0009 | type=CHAR_STR | write=true */
-            motDEtat: string;
-            /** ID=0x0200 | type=CHAR_STR | write=true */
-            currentPrice: string;
-            /** ID=0x0201 | type=UINT8 | write=true | max=255 */
-            currentIndexTarif: number;
-            /** ID=0x0202 | type=CHAR_STR | write=true */
-            currentDate: string;
-            /** ID=0x0203 | type=UINT32 | write=true | max=4294967295 */
-            activeEnergyOutD01: number;
-            /** ID=0x0204 | type=UINT32 | write=true | max=4294967295 */
-            activeEnergyOutD02: number;
-            /** ID=0x0205 | type=UINT32 | write=true | max=4294967295 */
-            activeEnergyOutD03: number;
-            /** ID=0x0206 | type=UINT32 | write=true | max=4294967295 */
-            activeEnergyOutD04: number;
-            /** ID=0x0207 | type=UINT16 | write=true | max=65535 */
-            injectedVA: number;
-            /** ID=0x0208 | type=INT16 | write=true | min=-32768 | max=32767 */
-            injectedVAMaxN: number;
-            /** ID=0x0209 | type=INT16 | write=true | min=-32768 | max=32767 */
-            injectedVAMaxN1: number;
-            /** ID=0x0210 | type=INT16 | write=true | min=-32768 | max=32767 */
-            injectedActiveLoadN: number;
-            /** ID=0x0211 | type=INT16 | write=true | min=-32768 | max=32767 */
-            injectedActiveLoadN1: number;
-            /** ID=0x0212 | type=INT16 | write=true | min=-32768 | max=32767 */
-            drawnVAMaxN1: number;
-            /** ID=0x0213 | type=INT16 | write=true | min=-32768 | max=32767 */
-            drawnVAMaxN1P2: number;
-            /** ID=0x0214 | type=INT16 | write=true | min=-32768 | max=32767 */
-            drawnVAMaxN1P3: number;
-            /** ID=0x0215 | type=CHAR_STR | write=true */
-            message1: string;
-            /** ID=0x0216 | type=CHAR_STR | write=true */
-            message2: string;
-            /** ID=0x0217 | type=OCTET_STR | write=true */
-            statusRegister: Buffer;
-            /** ID=0x0218 | type=UINT8 | write=true | max=255 */
-            startMobilePoint1: number;
-            /** ID=0x0219 | type=UINT8 | write=true | max=255 */
-            stopMobilePoint1: number;
-            /** ID=0x0220 | type=UINT8 | write=true | max=255 */
-            startMobilePoint2: number;
-            /** ID=0x0221 | type=UINT8 | write=true | max=255 */
-            stopMobilePoint2: number;
-            /** ID=0x0222 | type=UINT8 | write=true | max=255 */
-            startMobilePoint3: number;
-            /** ID=0x0223 | type=UINT8 | write=true | max=255 */
-            stopMobilePoint3: number;
-            /** ID=0x0224 | type=UINT16 | write=true | max=65535 */
-            relais: number;
-            /** ID=0x0225 | type=UINT8 | write=true | max=255 */
-            daysNumberCurrentCalendar: number;
-            /** ID=0x0226 | type=UINT8 | write=true | max=255 */
-            daysNumberNextCalendar: number;
-            /** ID=0x0227 | type=LONG_OCTET_STR | write=true */
-            daysProfileCurrentCalendar: Buffer;
-            /** ID=0x0228 | type=LONG_OCTET_STR | write=true */
-            daysProfileNextCalendar: Buffer;
-            /** ID=0x0300 | type=UINT8 | write=true | max=255 */
-            linkyMode: number;
-        };
-        commands: never;
-        commandResponses: never;
-    };
     manuSpecificTuya2: {
         attributes: {
             /** ID=0xd00a | type=INT16 | write=true | min=-32768 | max=32767 */
@@ -8675,68 +8550,30 @@ export interface TFoundation {
     };
 }
 
-export type TFoundationRepetitive =
-    | "read"
-    | "readRsp"
-    | "write"
-    | "writeUndiv"
-    | "writeRsp"
-    | "writeNoRsp"
-    | "configReport"
-    | "configReportRsp"
-    | "readReportConfig"
-    | "readReportConfigRsp"
-    | "report"
-    | "readStructured"
-    | "writeStructured"
-    | "writeStructuredRsp";
+export type TFoundationRepetitive = "read" | "readRsp" | "write" | "writeUndiv" | "writeRsp" | "writeNoRsp" | "configReport" | "configReportRsp" | "readReportConfig" | "readReportConfigRsp" | "report" | "readStructured" | "writeStructured" | "writeStructuredRsp";
 export type TFoundationFlat = "defaultRsp" | "discover" | "discoverCommands" | "discoverCommandsGen" | "discoverExt";
 export type TFoundationOneOf = "discoverRsp" | "discoverCommandsRsp" | "discoverCommandsGenRsp" | "discoverExtRsp";
 
 // Clusters
-export type TClusterAttributeKeys<Cl extends number | string> = Cl extends keyof TClusters
-    ? (keyof TClusters[Cl]["attributes"])[]
-    : (string | number)[];
+export type TClusterAttributeKeys<Cl extends number | string> = Cl extends keyof TClusters ? (keyof TClusters[Cl]["attributes"])[] : (string | number)[];;
 
 export type TClusterAttributes<Cl extends number | string> = Cl extends keyof TClusters ? TClusters[Cl]["attributes"] : never;
 
 export type TPartialClusterAttributes<Cl extends number | string> = Cl extends keyof TClusters ? Partial<TClusters[Cl]["attributes"]> : never;
 
-export type TClusterCommandKeys<Cl extends number | string> = Cl extends keyof TClusters ? (keyof TClusters[Cl]["commands"])[] : (string | number)[];
+export type TClusterCommandKeys<Cl extends number | string> = Cl extends keyof TClusters ? (keyof TClusters[Cl]["commands"])[] : (string | number)[];;
 
-export type TClusterCommandResponseKeys<Cl extends number | string> = Cl extends keyof TClusters
-    ? (keyof TClusters[Cl]["commandResponses"])[]
-    : (string | number)[];
+export type TClusterCommandResponseKeys<Cl extends number | string> = Cl extends keyof TClusters ? (keyof TClusters[Cl]["commandResponses"])[] : (string | number)[];;
 
 export type TClusterCommands<Cl extends number | string> = Cl extends keyof TClusters ? TClusters[Cl]["commands"] : never;
 
 export type TClusterCommandResponses<Cl extends number | string> = Cl extends keyof TClusters ? TClusters[Cl]["commandResponses"] : never;
 
-export type TClusterCommandPayload<Cl extends number | string, Co extends number | string> = Cl extends keyof TClusters
-    ? Co extends keyof TClusters[Cl]["commands"]
-        ? TClusters[Cl]["commands"][Co]
-        : never
-    : never;
+export type TClusterCommandPayload<Cl extends number | string, Co extends number | string> = Cl extends keyof TClusters ? Co extends keyof TClusters[Cl]["commands"] ? TClusters[Cl]["commands"][Co] : never : never;;
 
-export type TClusterCommandResponsePayload<Cl extends number | string, Co extends number | string> = Cl extends keyof TClusters
-    ? Co extends keyof TClusters[Cl]["commandResponses"]
-        ? TClusters[Cl]["commandResponses"][Co]
-        : never
-    : never;
+export type TClusterCommandResponsePayload<Cl extends number | string, Co extends number | string> = Cl extends keyof TClusters ? Co extends keyof TClusters[Cl]["commandResponses"] ? TClusters[Cl]["commandResponses"][Co] : never : never;;
 
-export type TClusterPayload<Cl extends number | string, Co extends number | string> = Cl extends keyof TClusters
-    ? TClusters[Cl]["commands"] extends never
-        ? TClusters[Cl]["commandResponses"] extends never
-            ? never
-            : Co extends keyof TClusters[Cl]["commandResponses"]
-              ? TClusters[Cl]["commandResponses"][Co]
-              : never
-        : Co extends keyof TClusters[Cl]["commands"]
-          ? TClusters[Cl]["commands"][Co]
-          : Co extends keyof TClusters[Cl]["commandResponses"]
-            ? TClusters[Cl]["commandResponses"][Co]
-            : never
-    : never;
+export type TClusterPayload<Cl extends number | string, Co extends number | string> = Cl extends keyof TClusters ? TClusters[Cl]["commands"] extends never ? TClusters[Cl]["commandResponses"] extends never ? never : Co extends keyof TClusters[Cl]["commandResponses"] ? TClusters[Cl]["commandResponses"][Co] : never : Co extends keyof TClusters[Cl]["commands"] ? TClusters[Cl]["commands"][Co] : Co extends keyof TClusters[Cl]["commandResponses"] ? TClusters[Cl]["commandResponses"][Co] : never : never;;
 
 // Foundation
 export type TFoundationGenericPayload = TFoundation[keyof TFoundation];

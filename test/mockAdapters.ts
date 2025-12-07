@@ -63,3 +63,9 @@ export const ZIGATE_PLUSV2 = {
     vendorId: "0403",
     productId: "6015",
 };
+export const ZBT_2 = {
+    path: "/dev/serial/by-id/usb-Nabu_Casa_ZBT-2_10B41DE58D6C-if00",
+    vendorId: "303a",
+    productId: "4001",
+    manufacturer: "Nabu Casa",
+};
