@@ -1262,7 +1262,9 @@ export class UartAsh extends EventEmitter<UartAshEventMap> {
             this.rxDataBuffer = undefined;
         }
 
-        for (const inByte of buffer) {
+        for (let i = 0; i < buffer.length; i++) {
+            const inByte = buffer[i];
+
             // 0xFF byte signals a callback is pending when between frames in synchronous (polled) callback mode.
             if (!this.decodeInProgress && inByte === ASH_WAKE) {
                 if (this.ncpSleepEnabled) {
