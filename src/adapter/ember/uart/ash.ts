@@ -1679,7 +1679,7 @@ export class UartAsh extends EventEmitter<UartAshEventMap> {
      * On the NCP, if this times out the NCP resumes sending callbacks.
      */
     private startNrTimer(): void {
-        this.nrTimer = Date.now() + CONFIG_NR_TIME;
+        this.nrTimer = performance.now() + CONFIG_NR_TIME;
     }
 
     /**
@@ -1696,7 +1696,7 @@ export class UartAsh extends EventEmitter<UartAshEventMap> {
      */
     private nrTimerHasExpired(): boolean {
         if (this.nrTimer) {
-            if (Date.now() - this.nrTimer >= 0) {
+            if (performance.now() - this.nrTimer >= 0) {
                 this.nrTimer = 0;
             }
         }
@@ -1745,7 +1745,7 @@ export class UartAsh extends EventEmitter<UartAshEventMap> {
             // time elapsed since timer was started
             let temp: number = this.ackPeriod;
             // compute time to receive acknowledgement, then stop timer
-            const lastAckTime: number = Date.now() - this.ackTimer;
+            const lastAckTime: number = performance.now() - this.ackTimer;
             temp = (temp << 3) - temp;
             temp += lastAckTime << 2;
             temp >>= 3;
@@ -1766,7 +1766,7 @@ export class UartAsh extends EventEmitter<UartAshEventMap> {
      * Sets ACK Timer to the specified period and starts it running.
      */
     private startAckTimer(): void {
-        this.ackTimer = Date.now();
+        this.ackTimer = performance.now();
     }
 
     /**
@@ -1789,7 +1789,7 @@ export class UartAsh extends EventEmitter<UartAshEventMap> {
         }
 
         // return ((halCommonGetInt16uMillisecondTick() - this.ackTimer) >= this.ackPeriod);
-        return Date.now() - this.ackTimer >= this.ackPeriod;
+        return performance.now() - this.ackTimer >= this.ackPeriod;
     }
 
     /**
