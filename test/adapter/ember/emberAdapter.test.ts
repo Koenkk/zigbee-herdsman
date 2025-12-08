@@ -3365,7 +3365,7 @@ describe("Ember Adapter Layer", () => {
                 return SLStatus.OK;
             });
 
-            const p = adapter.sendZclFrameInterPANBroadcast(zclFrame, 10000);
+            const p = adapter.sendZclFrameInterPANBroadcast(zclFrame, 10000, false);
 
             await vi.advanceTimersByTimeAsync(5000);
 
@@ -3400,7 +3400,7 @@ describe("Ember Adapter Layer", () => {
                 {},
             );
 
-            await expect(adapter.sendZclFrameInterPANBroadcast(zclFrame, 10000)).rejects.toThrow(
+            await expect(adapter.sendZclFrameInterPANBroadcast(zclFrame, 10000, false)).rejects.toThrow(
                 `Command '${commandName}' has no response, cannot wait for response.`,
             );
             expect(mockEzspSendRawMessage).toHaveBeenCalledTimes(0);
@@ -3421,7 +3421,7 @@ describe("Ember Adapter Layer", () => {
                 {},
             );
 
-            await expect(adapter.sendZclFrameInterPANBroadcast(zclFrame, 10000)).rejects.toThrow(
+            await expect(adapter.sendZclFrameInterPANBroadcast(zclFrame, 10000, false)).rejects.toThrow(
                 `~x~> [ZCL TOUCHLINK BROADCAST] Failed to send with status=${SLStatus[SLStatus.BUSY]}.`,
             );
             expect(mockEzspSendRawMessage).toHaveBeenCalledTimes(1);

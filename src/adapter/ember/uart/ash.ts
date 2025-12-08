@@ -604,8 +604,7 @@ export class UartAsh extends EventEmitter<UartAshEventMap> {
         this.sendExec(); // always trigger to cover all cases
 
         if (status !== EzspStatus.SUCCESS && status !== EzspStatus.ASH_IN_PROGRESS && status !== EzspStatus.NO_RX_DATA) {
-            logger.error(`Error while parsing received frame, status=${EzspStatus[status]}.`, NS);
-            this.emit("fatalError", EzspStatus.HOST_FATAL_ERROR);
+            this.emit("fatalError", status);
             return;
         }
     }
