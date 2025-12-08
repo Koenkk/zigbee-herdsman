@@ -9,7 +9,7 @@ import {SerialPort} from "../../serialPort";
 import type {SerialPortOptions} from "../../tstype";
 import {isTcpPath, parseTcpPath} from "../../utils";
 import {EzspStatus} from "../enums";
-import {halCommonCrc16, inc8, mod8, withinRange} from "../utils/math";
+import {halCommonCrc16, inc8, withinRange} from "../utils/math";
 import {
     ASH_ACKNUM_BIT,
     ASH_ACKNUM_MASK,
@@ -46,15 +46,6 @@ import {EzspBuffer, EzspFreeList, EzspQueue} from "./queues";
 import {AshWriter} from "./writer";
 
 const NS = "zh:ember:uart:ash";
-
-/** ASH get rflag in control byte */
-// const ashGetRFlag = (ctrl: number): number => (ctrl & ASH_RFLAG_MASK) >> ASH_RFLAG_BIT;
-/** ASH get nflag in control byte */
-// const ashGetNFlag = (ctrl: number): number => (ctrl & ASH_NFLAG_MASK) >> ASH_NFLAG_BIT;
-/** ASH get frmnum in control byte */
-const ashGetFrmNum = (ctrl: number): number => (ctrl & ASH_FRMNUM_MASK) >> ASH_FRMNUM_BIT;
-/** ASH get acknum in control byte */
-const ashGetACKNum = (ctrl: number): number => (ctrl & ASH_ACKNUM_MASK) >> ASH_ACKNUM_BIT;
 
 type UartAshCounters = {
     /** DATA frame data fields bytes transmitted */
@@ -900,7 +891,7 @@ export class UartAsh extends EventEmitter<UartAshEventMap> {
                         // Retransmitting DATA frames for error recovery
                         // buffer assumed valid from loop logic
                         // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
-                        buffer = this.reTxQueue.getNthEntry(mod8(this.frmTx - this.frmReTx))!;
+                        buffer = this.reTxQueue.getNthEntry((this.frmTx - this.frmReTx) & 7)!;
                         len = buffer.len + 1;
                         this.txSHBuffer[0] = AshFrameType.DATA | (this.frmReTx << ASH_FRMNUM_BIT) | (this.frmRx << ASH_ACKNUM_BIT) | ASH_RFLAG_MASK;
                         this.sendState = SendState.RETX_DATA;
@@ -1063,7 +1054,7 @@ export class UartAsh extends EventEmitter<UartAshEventMap> {
         //    DATA frame, and not in the CONNECTED state
         //    not a DATA frame
         if (frameType === AshFrameType.DATA) {
-            if (!(this.flags & Flag.CONNECTED) || ashGetFrmNum(this.rxSHBuffer[0]) !== this.frmRx) {
+            if (!(this.flags & Flag.CONNECTED) || (this.rxSHBuffer[0] & ASH_FRMNUM_MASK) >> ASH_FRMNUM_BIT !== this.frmRx) {
                 this.freeAllocatedRxBuffer();
             }
         } else {
@@ -1114,7 +1105,7 @@ export class UartAsh extends EventEmitter<UartAshEventMap> {
 
         // Connected - process the ackNum in ACK, NAK and DATA frames
         if (frameType === AshFrameType.DATA || frameType === AshFrameType.ACK || frameType === AshFrameType.NAK) {
-            ackNum = ashGetACKNum(this.rxSHBuffer[0]);
+            ackNum = (this.rxSHBuffer[0] & ASH_ACKNUM_MASK) >> ASH_ACKNUM_BIT;
 
             logger.debug(() => `<--- [FRAME type=${AshFrameType[frameType]} ackNum=${ackNum}](ackRx=${this.ackRx} frmTx=${this.frmTx})`, NS);
 
@@ -1155,7 +1146,7 @@ export class UartAsh extends EventEmitter<UartAshEventMap> {
         // Process frames received while connected
         switch (frameType) {
             case AshFrameType.DATA: {
-                frmNum = ashGetFrmNum(this.rxSHBuffer[0]);
+                frmNum = (this.rxSHBuffer[0] & ASH_FRMNUM_MASK) >> ASH_FRMNUM_BIT;
                 const frameStr = `[FRAME type=${AshFrameType[frameType]} ackNum=${ackNum} frmNum=${frmNum}](frmRx=${this.frmRx})`;
 
                 if (frmNum === this.frmRx) {
