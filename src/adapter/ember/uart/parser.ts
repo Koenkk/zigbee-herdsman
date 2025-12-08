@@ -1,6 +1,6 @@
 /* v8 ignore start */
 
-import {Transform, type TransformCallback, type TransformOptions} from "node:stream";
+import {Transform, type TransformCallback} from "node:stream";
 
 // import {logger} from '../../../utils/logger';
 import {AshReservedByte} from "./enums";
@@ -8,16 +8,10 @@ import {AshReservedByte} from "./enums";
 // const NS = 'zh:ember:uart:ash:parser';
 
 export class AshParser extends Transform {
-    private buffer: Buffer;
-
-    public constructor(opts?: TransformOptions) {
-        super(opts);
-
-        this.buffer = Buffer.alloc(0);
-    }
+    #buffer = Buffer.alloc(0);
 
     override _transform(chunk: Buffer, _encoding: BufferEncoding, cb: TransformCallback): void {
-        let data = Buffer.concat([this.buffer, chunk]);
+        let data = Buffer.concat([this.#buffer, chunk]);
         let position: number;
 
         // biome-ignore lint/suspicious/noAssignInExpressions: shorter
@@ -33,15 +27,15 @@ export class AshParser extends Transform {
             data = data.subarray(position + 1);
         }
 
-        this.buffer = data;
+        this.#buffer = data;
 
         cb();
     }
 
     override _flush(cb: TransformCallback): void {
-        this.push(this.buffer);
+        this.push(this.#buffer);
 
-        this.buffer = Buffer.alloc(0);
+        this.#buffer = Buffer.alloc(0);
 
         cb();
     }
