@@ -150,8 +150,6 @@ const enum Flag {
 
 /** max frames sent without being ACKed (1-7) */
 export const CONFIG_TX_K = 3;
-/** enables randomizing DATA frame payloads */
-const CONFIG_RANDOMIZE = true;
 /** adaptive rec'd ACK timeout initial value */
 const CONFIG_ACK_TIME_INIT = 800;
 /**  "     "     "     "     " minimum value */
@@ -1435,45 +1433,24 @@ export class UartAsh extends EventEmitter<UartAshEventMap> {
     }
 
     /**
-     * Same as randomizeArray(0, buffer, len).
+     * Randomizes array contents by XORing with an 8-bit pseudo random sequence.
+     * This reduces the likelihood that byte-stuffing will greatly increase the size of the payload.
+     * (This could happen if a DATA frame contained repeated instances of the same reserved byte value.)
+     *
      * Returns buffer as-is if randomize is OFF.
      * @param buffer IN/OUT
      * @param len
      */
     public randomizeBuffer(buffer: Buffer, len: number): void {
-        // If enabled, exclusive-OR buffer data with a pseudo-random sequence
-        if (CONFIG_RANDOMIZE) {
-            this.randomizeArray(0, buffer, len); // zero inits the random sequence
-        }
-    }
-
-    /**
-     * Randomizes array contents by XORing with an 8-bit pseudo random sequence.
-     * This reduces the likelihood that byte-stuffing will greatly increase the size of the payload.
-     * (This could happen if a DATA frame contained repeated instances of the same reserved byte value.)
-     *
-     * @param seed  zero initializes the random sequence a non-zero value continues from a previous invocation
-     * @param buf IN/OUT pointer to the array whose contents will be randomized
-     * @param len  number of bytes in the array to modify
-     * @returns  last value of the sequence.
-     *           If a buffer is processed in two or more chunks, as with linked buffers,
-     *           this value should be passed back as the value of the seed argument
-     */
-    public randomizeArray(seed: number, buf: Buffer, len: number): number {
         let outIdx = 0;
-
-        if (seed === 0) {
-            seed = LFSR_SEED;
-        }
+        let seed = LFSR_SEED;
 
         while (len--) {
             // *buf++ ^= seed;
-            buf[outIdx++] ^= seed;
+            buffer[outIdx++] ^= seed;
 
             seed = seed & 1 ? (seed >> 1) ^ LFSR_POLY : seed >> 1;
         }
-
-        return seed;
     }
 
     /**
