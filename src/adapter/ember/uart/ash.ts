@@ -221,6 +221,7 @@ export class UartAsh extends EventEmitter<UartAshEventMap> {
     private decodeByte2: number;
     /** uint16_t */
     private decodeCrc: number;
+    private decodeOutByte = 0x00;
 
     /** outgoing short frames */
     private txSHBuffer: Buffer;
@@ -1254,7 +1255,7 @@ export class UartAsh extends EventEmitter<UartAshEventMap> {
         let status: EzspStatus = EzspStatus.ERROR_INVALID_CALL; // no actual data to read, something's very wrong
         let index = 0;
         // let inByte: number = 0x00;
-        let outByte = 0x00;
+        this.decodeOutByte = 0x00;
 
         if (!this.decodeInProgress) {
             this.rxLen = 0;
@@ -1275,7 +1276,7 @@ export class UartAsh extends EventEmitter<UartAshEventMap> {
             // Decode next input byte - note that many input bytes do not produce
             // an output byte. Return on any error in decoding.
             index = this.rxLen;
-            [status, outByte, this.rxLen] = this.decodeByte(inByte, outByte, this.rxLen);
+            status = this.decodeByte(inByte);
 
             // discard an invalid frame
             if (status !== EzspStatus.ASH_IN_PROGRESS && status !== EzspStatus.SUCCESS) {
@@ -1288,7 +1289,7 @@ export class UartAsh extends EventEmitter<UartAshEventMap> {
             if (this.rxLen !== index) {
                 if (this.rxLen <= SH_RX_BUFFER_LEN) {
                     // if a short frame, return in rxBuffer
-                    this.rxSHBuffer[index] = outByte;
+                    this.rxSHBuffer[index] = this.decodeOutByte;
                 } else {
                     // if a longer DATA frame, allocate an EzspBuffer for it.
                     // (Note the control byte is always returned in shRxBuffer[0].
@@ -1309,7 +1310,7 @@ export class UartAsh extends EventEmitter<UartAshEventMap> {
 
                     if (this.rxDataBuffer !== undefined) {
                         // copy next byte to buffer
-                        this.rxDataBuffer.data[index - 1] = outByte; // -1 since control is omitted
+                        this.rxDataBuffer.data[index - 1] = this.decodeOutByte; // -1 since control is omitted
                         this.rxDataBuffer.len = index;
                     }
                 }
@@ -1589,9 +1590,7 @@ export class UartAsh extends EventEmitter<UartAshEventMap> {
     /**
      * Decode received byte.
      * @param byte
-     * @param inByte IN/OUT
-     * @param inLen IN/OUT
-     * @returns  [EzspStatus, outByte, outLen]
+     * @returns
      * - EzspStatus.ASH_IN_PROGRESS
      * - EzspStatus.ASH_COMM_ERROR
      * - EzspStatus.ASH_BAD_CRC
@@ -1601,7 +1600,7 @@ export class UartAsh extends EventEmitter<UartAshEventMap> {
      * - EzspStatus.ASH_CANCELLED
      * - EzspStatus.ASH_ERROR_XON_XOFF
      */
-    private decodeByte(byte: number, inByte: number, inLen: number): [EzspStatus, outByte: number, outLen: number] {
+    private decodeByte(byte: number): EzspStatus {
         let status: EzspStatus = EzspStatus.ASH_IN_PROGRESS;
 
         if (!this.decodeInProgress) {
@@ -1671,8 +1670,8 @@ export class UartAsh extends EventEmitter<UartAshEventMap> {
 
                     if (this.decodeLen <= ASH_MAX_FRAME_WITH_CRC_LEN) {
                         // store to only max len
-                        inByte = this.decodeByte2;
-                        inLen = this.decodeLen - ASH_CRC_LEN; // CRC is not output, reduce length
+                        this.decodeOutByte = this.decodeByte2;
+                        this.rxLen = this.decodeLen - ASH_CRC_LEN; // CRC is not output, reduce length
                     }
                 }
 
@@ -1683,7 +1682,7 @@ export class UartAsh extends EventEmitter<UartAshEventMap> {
 
         this.decodeInProgress = status === EzspStatus.ASH_IN_PROGRESS;
 
-        return [status, inByte, inLen];
+        return status;
     }
 
     /**
