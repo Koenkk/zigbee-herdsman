@@ -122,7 +122,7 @@ export enum AshFrameType {
     ERROR = 0xc2, // 0b11000010
 }
 
-export enum AshReservedByte {
+export const enum AshReservedByte {
     /**
      * Marks the end of a frame.
      *

@@ -119,7 +119,7 @@ type UartAshCounters = {
     rxAckTimeouts: number;
 };
 
-enum SendState {
+const enum SendState {
     IDLE = 0,
     SHFRAME = 1,
     TX_DATA = 2,
@@ -127,7 +127,7 @@ enum SendState {
 }
 
 // Bits in ashFlags
-enum Flag {
+const enum Flag {
     /** Reject Condition */
     REJ = 0x01,
     /** Retransmit Condition */
@@ -1578,7 +1578,14 @@ export class UartAsh extends EventEmitter<UartAshEventMap> {
      * @returns
      */
     private encodeStuffByte(byte: number): number {
-        if (AshReservedByte[byte] != null) {
+        if (
+            byte === AshReservedByte.FLAG ||
+            byte === AshReservedByte.ESCAPE ||
+            byte === AshReservedByte.XON ||
+            byte === AshReservedByte.XOFF ||
+            byte === AshReservedByte.SUBSTITUTE ||
+            byte === AshReservedByte.CANCEL
+        ) {
             // is special byte
             this.encodeEscFlag = true;
             this.encodeFlip = byte ^ ASH_FLIP;
