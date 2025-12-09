@@ -253,6 +253,25 @@ export class Endpoint extends ZigbeeEntity {
             }
         }
 
+        // Migrate cluster renames from https://github.com/Koenkk/zigbee-herdsman/pull/1503 @deprecated 3.0
+        /* v8 ignore next */
+        if (record.clusters.piRetailTunnel) {
+            record.clusters.retailTunnel = record.clusters.piRetailTunnel;
+            delete record.clusters.piRetailTunnel;
+        }
+
+        /* v8 ignore next */
+        if (record.clusters.tunneling) {
+            record.clusters.seTunneling = record.clusters.tunneling;
+            delete record.clusters.tunneling;
+        }
+
+        /* v8 ignore next */
+        if (record.clusters.haMeterIdentification) {
+            record.clusters.seMeterIdentification = record.clusters.haMeterIdentification;
+            delete record.clusters.haMeterIdentification;
+        }
+
         return new Endpoint(
             record.epId,
             record.profId,
