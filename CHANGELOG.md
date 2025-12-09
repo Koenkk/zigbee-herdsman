@@ -1,5 +1,14 @@
 # Changelog
 
+## [7.0.5](https://github.com/Koenkk/zigbee-herdsman/compare/v7.0.4...v7.0.5) (2025-12-09)
+
+
+### Bug Fixes
+
+* Ember: ASH layer optimizations ([#1583](https://github.com/Koenkk/zigbee-herdsman/issues/1583)) ([cd0e306](https://github.com/Koenkk/zigbee-herdsman/commit/cd0e306c6bc7f84876ddc62d9e9bb5354cf245cd))
+* Ember: tweak error logging ([#1582](https://github.com/Koenkk/zigbee-herdsman/issues/1582)) ([e5c5d72](https://github.com/Koenkk/zigbee-herdsman/commit/e5c5d72582ea42f2f828dbeda2e640c033b0997c))
+* Guard against a `undefined` device on data receipt ([#1580](https://github.com/Koenkk/zigbee-herdsman/issues/1580)) ([069666f](https://github.com/Koenkk/zigbee-herdsman/commit/069666f014c480bf53f76a6230db3ad6a1a584ba))
+
 ## [7.0.4](https://github.com/Koenkk/zigbee-herdsman/compare/v7.0.3...v7.0.4) (2025-12-06)
 
 
