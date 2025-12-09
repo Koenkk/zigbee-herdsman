@@ -2,12 +2,10 @@
 //--------------------------------------------------------------
 // Define macros for handling 3-bit frame numbers modulo 8
 
-/** mask to frame number modulus */
-export const mod8 = (n: number): number => n & 7;
 /** increment in frame number modulus */
-export const inc8 = (n: number): number => mod8(n + 1);
+export const inc8 = (n: number): number => (n + 1) & 7;
 /** Return true if n is within the range lo through hi, computed (mod 8) */
-export const withinRange = (lo: number, n: number, hi: number): boolean => mod8(n - lo) <= mod8(hi - lo);
+export const withinRange = (lo: number, n: number, hi: number): boolean => ((n - lo) & 7) <= ((hi - lo) & 7);
 
 //--------------------------------------------------------------
 // CRC

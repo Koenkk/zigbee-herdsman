@@ -5,22 +5,6 @@ const ASH_CRC_INIT = 0xffff;
 const B32 = 0xbeefface;
 
 describe("Ember Math utils", () => {
-    it("mod8", () => {
-        let t = m.mod8(0x00);
-        expect(t).toStrictEqual(0);
-        t = m.mod8(0x03);
-        expect(t).toStrictEqual(3);
-        t = m.mod8(0x07);
-        expect(t).toStrictEqual(7);
-        t = m.mod8(0x08);
-        expect(t).toStrictEqual(0);
-        t = m.mod8(0x10);
-        expect(t).toStrictEqual(0);
-        t = m.mod8(0xfe);
-        expect(t).toStrictEqual(6);
-        t = m.mod8(0xff);
-        expect(t).toStrictEqual(7);
-    });
     it("inc8", () => {
         let t = m.inc8(0x00);
         expect(t).toStrictEqual(1);
