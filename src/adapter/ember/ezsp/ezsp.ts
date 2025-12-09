@@ -349,14 +349,15 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
     }
 
     /**
-     * Triggered by @see 'FATAL_ERROR'
+     * Triggered by ASH layer @see 'fatalError'
      */
     private onAshFatalError(status: EzspStatus): void {
+        logger.error(`Fatal error, status=${EzspStatus[status]}. Last Frame: ${this.frameToString}`, NS);
         this.emit("ncpNeedsResetAndInit", status);
     }
 
     /**
-     * Triggered by @see 'FRAME'
+     * Triggered by ASH layer @see 'frame'
      */
     private onAshFrame(): void {
         const buffer = this.ash.rxQueue.getPrecedingEntry();
