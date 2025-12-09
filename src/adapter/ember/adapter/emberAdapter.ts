@@ -1288,8 +1288,7 @@ export class EmberAdapter extends Adapter {
      * Received when EZSP layer alerts of a problem that needs the NCP to be reset.
      * @param status
      */
-    private onNcpNeedsResetAndInit(status: EzspStatus): void {
-        logger.error(`Adapter fatal error: ${EzspStatus[status]}`, NS);
+    private onNcpNeedsResetAndInit(_status: EzspStatus): void {
         this.emit("disconnected");
     }
 

@@ -210,8 +210,9 @@ describe("Ember Ezsp Layer", () => {
 
     it("Restarts ASH layer when received ERROR from port", async () => {
         let restart: () => Promise<EzspStatus>;
+        const emitSpy = vi.spyOn(ezsp, "emit");
         // @ts-expect-error private
-        const onAshFatalErrorSpy = vi.spyOn(ezsp, "onAshFatalError").mockImplementationOnce((_status: EzspStatus): void => {
+        const onAshFatalErrorSpy = vi.spyOn(ezsp, "onAshFatalError").mockImplementationOnce((status: EzspStatus): void => {
             // mimic EmberAdapter onNcpNeedsResetAndInit
             restart = async () => {
                 vi.useRealTimers();
@@ -225,6 +226,8 @@ describe("Ember Ezsp Layer", () => {
                 await emitFromSerial(ezsp, Buffer.from(RECD_RSTACK_BYTES));
                 return await Promise.resolve(startResult);
             };
+            // @ts-expect-error private
+            ezsp.onAshFatalError(status);
         });
         const startResult = ezsp.start();
 
@@ -257,7 +260,8 @@ describe("Ember Ezsp Layer", () => {
         await expect(restart()).resolves.toStrictEqual(EzspStatus.SUCCESS);
         //@ts-expect-error private
         expect(ezsp.ash.serialPort.port.recording).toStrictEqual(POST_RSTACK_SERIAL_BYTES);
-        expect(onAshFatalErrorSpy).toHaveBeenCalledWith(EzspStatus.HOST_FATAL_ERROR);
+        expect(onAshFatalErrorSpy).toHaveBeenCalledWith(EzspStatus.ASH_NCP_FATAL_ERROR);
+        expect(emitSpy).toHaveBeenCalledWith("ncpNeedsResetAndInit", EzspStatus.ASH_NCP_FATAL_ERROR);
         expect(ezsp.checkConnection()).toBeTruthy();
     });
 
