@@ -3410,12 +3410,6 @@ describe("zstack-adapter", () => {
         expect(error).toStrictEqual(null);
     });
 
-    it("Supports backup", async () => {
-        basicMocks();
-        await adapter.start();
-        expect(await adapter.supportsBackup()).toBeTruthy();
-    });
-
     it.each([
         [2, "0x1234567812345678", 0x5678],
         [3, "0x1234567812345678", "0x1234567812345678"],

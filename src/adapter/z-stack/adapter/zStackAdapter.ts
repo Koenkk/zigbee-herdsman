@@ -1024,10 +1024,6 @@ export class ZStackAdapter extends Adapter {
         };
     }
 
-    public async supportsBackup(): Promise<boolean> {
-        return await Promise.resolve(true);
-    }
-
     public async backup(ieeeAddressesInDatabase: string[]): Promise<Models.Backup> {
         return await this.adapterManager.backup.createBackup(ieeeAddressesInDatabase);
     }
