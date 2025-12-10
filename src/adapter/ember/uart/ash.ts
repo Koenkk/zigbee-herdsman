@@ -1176,7 +1176,7 @@ export class UartAsh extends EventEmitter<UartAshEventMap> {
 
                     this.counters.rxData += this.rxDataBuffer.len;
 
-                    queueMicrotask(() => this.emit("frame"));
+                    setImmediate(() => this.emit("frame"));
                     return EzspStatus.SUCCESS;
                 }
 
