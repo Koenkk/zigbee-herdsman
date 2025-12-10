@@ -1,5 +1,12 @@
 # Changelog
 
+## [7.0.6](https://github.com/Koenkk/zigbee-herdsman/compare/v7.0.5...v7.0.6) (2025-12-10)
+
+
+### Bug Fixes
+
+* ember: revert queueMicrotask change ([#1585](https://github.com/Koenkk/zigbee-herdsman/issues/1585)) ([1d6135c](https://github.com/Koenkk/zigbee-herdsman/commit/1d6135c5b78d22a67e74c222ca4c51cf8dc1ce51))
+
 ## [7.0.5](https://github.com/Koenkk/zigbee-herdsman/compare/v7.0.4...v7.0.5) (2025-12-09)
 
 
