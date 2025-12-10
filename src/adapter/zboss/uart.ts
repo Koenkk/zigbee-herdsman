@@ -2,8 +2,8 @@
 
 import EventEmitter from "node:events";
 import {Socket} from "node:net";
-import {AsyncMutex} from "src/utils/async-mutex";
 import {Waitress, wait} from "../../utils";
+import {AsyncMutex} from "../../utils/async-mutex";
 import {logger} from "../../utils/logger";
 import {SerialPort} from "../serialPort";
 import type {SerialPortOptions} from "../tstype";
