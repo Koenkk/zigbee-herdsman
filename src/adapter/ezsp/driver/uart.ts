@@ -2,8 +2,8 @@
 
 import {EventEmitter} from "node:events";
 import net from "node:net";
-
-import {Queue, Waitress, wait} from "../../../utils";
+import {Waitress, wait} from "../../../utils";
+import {AsyncMutex} from "../../../utils/async-mutex";
 import {logger} from "../../../utils/logger";
 import {SerialPort} from "../../serialPort";
 import type {SerialPortOptions} from "../../tstype";
@@ -45,12 +45,12 @@ export class SerialDriver extends EventEmitter {
     private ackSeq = 0; // next number after the last accepted frame
     private rejectCondition = false;
     private waitress: Waitress<EZSPPacket, EZSPPacketMatcher>;
-    private queue: Queue;
+    private queue: AsyncMutex;
 
     constructor() {
         super();
         this.initialized = false;
-        this.queue = new Queue(1);
+        this.queue = new AsyncMutex();
         this.waitress = new Waitress<EZSPPacket, EZSPPacketMatcher>(this.waitressValidator, this.waitressTimeoutFormatter);
         this.writer = new Writer();
         this.parser = new Parser();
@@ -332,7 +332,7 @@ export class SerialDriver extends EventEmitter {
         this.sendSeq = 0;
         this.recvSeq = 0;
 
-        return await this.queue.execute<void>(async (): Promise<void> => {
+        return await this.queue.run<void>(async (): Promise<void> => {
             try {
                 logger.debug("--> Write reset", NS);
                 const waiter = this.waitFor(-1, 10000);
@@ -410,7 +410,7 @@ export class SerialDriver extends EventEmitter {
         const nextSeq = this.sendSeq;
         const ackSeq = this.recvSeq;
 
-        return await this.queue.execute<void>(async (): Promise<void> => {
+        return await this.queue.run<void>(async (): Promise<void> => {
             const randData = NpiFrame.makeRandomizedBuffer(data);
 
             try {

@@ -1,6 +1,7 @@
 import {describe, expect, it, vi} from "vitest";
 import {checkInstallCode} from "../src/controller/helpers/installCodes";
 import {Queue, Utils, Waitress, wait} from "../src/utils";
+import {AsyncMutex} from "../src/utils/async-mutex";
 import {logger, setLogger} from "../src/utils/logger";
 
 const mockLogger = {
@@ -199,6 +200,52 @@ describe("Utils", () => {
         await job2Result;
         expect(finished).toEqual([4, 1, 2, 3]);
         expect(queue.count()).toBe(5);
+    });
+
+    it("Test async mutex", async () => {
+        vi.useFakeTimers();
+
+        const queue = new AsyncMutex();
+
+        void queue.run(async () => {
+            await new Promise((resolve) => setTimeout(resolve, 1000));
+        });
+
+        void queue.run(async () => {
+            await new Promise((resolve) => setTimeout(resolve, 1000));
+        });
+
+        await vi.advanceTimersByTimeAsync(500);
+        expect(queue.count).toStrictEqual(1); // first has ran but still pending return, second is queued
+
+        await vi.advanceTimersByTimeAsync(1000);
+        expect(queue.count).toStrictEqual(0);
+
+        void queue.run(async () => {
+            await new Promise((resolve) => setTimeout(resolve, 1000));
+        });
+
+        expect(queue.count).toStrictEqual(1); // second has ran but still pending return, third is queued
+        await vi.advanceTimersByTimeAsync(1600);
+        expect(queue.count).toStrictEqual(0);
+
+        //-- clear
+
+        void queue.run(async () => {
+            await new Promise((resolve) => setTimeout(resolve, 1000));
+        });
+        void queue.run(async () => {
+            await new Promise((resolve) => setTimeout(resolve, 1000));
+        });
+
+        expect(queue.count).toStrictEqual(1);
+
+        queue.clear();
+
+        expect(queue.count).toStrictEqual(0);
+        await vi.runOnlyPendingTimersAsync(); // cleanup
+
+        vi.useRealTimers();
     });
 
     it("Logs", () => {

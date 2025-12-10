@@ -3,10 +3,8 @@
 import assert from "node:assert";
 import {EventEmitter} from "node:events";
 import net from "node:net";
-
 import {DelimiterParser} from "@serialport/parser-delimiter";
-
-import {Queue} from "../../../utils";
+import {AsyncMutex} from "../../../utils/async-mutex";
 import {logger} from "../../../utils/logger";
 import {Waitress} from "../../../utils/waitress";
 import * as ZSpec from "../../../zspec";
@@ -79,7 +77,7 @@ export default class ZiGate extends EventEmitter<ZiGateEventMap> {
     private parser?: EventEmitter;
     private serialPort?: SerialPort;
     private socketPort?: net.Socket;
-    private queue: Queue;
+    private queue: AsyncMutex;
 
     public portWrite?: SerialPort | net.Socket;
     private waitress: Waitress<ZiGateObject, WaitressMatcher>;
@@ -92,7 +90,7 @@ export default class ZiGate extends EventEmitter<ZiGateEventMap> {
         // XXX: not used?
         // this.rtscts = typeof serialPortOptions.rtscts === 'boolean' ? serialPortOptions.rtscts : false;
         this.initialized = false;
-        this.queue = new Queue(1);
+        this.queue = new AsyncMutex();
 
         this.waitress = new Waitress<ZiGateObject, WaitressMatcher>(this.waitressValidator, this.waitressTimeoutFormatter);
         this.zdoWaitress = new Waitress<ZdoWaitressPayload, ZdoWaitressMatcher>(this.zdoWaitressValidator, this.waitressTimeoutFormatter);
@@ -107,7 +105,7 @@ export default class ZiGate extends EventEmitter<ZiGateEventMap> {
     ): Promise<ZiGateObject> {
         const waiters: Promise<ZiGateObject>[] = [];
         const waitersId: number[] = [];
-        return await this.queue.execute(async () => {
+        return await this.queue.run(async () => {
             try {
                 logger.debug(
                     () => `Send command \x1b[32m>>>> ${ZiGateCommandCode[code]} 0x${zeroPad(code)} <<<<\x1b[0m \nPayload: ${JSON.stringify(payload)}`,
@@ -163,7 +161,7 @@ export default class ZiGate extends EventEmitter<ZiGateEventMap> {
     }
 
     public async requestZdo(clusterId: Zdo.ClusterId, payload: Buffer): Promise<boolean> {
-        return await this.queue.execute(async () => {
+        return await this.queue.run(async () => {
             const commandCode = ZDO_REQ_CLUSTER_ID_TO_ZIGATE_COMMAND_ID[clusterId];
             assert(commandCode !== undefined, `ZDO cluster ID '${clusterId}' not supported.`);
             const ruleStatus: ZiGateResponseMatcher = [

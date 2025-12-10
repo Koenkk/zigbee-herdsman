@@ -2,8 +2,8 @@
 
 import EventEmitter from "node:events";
 import {Socket} from "node:net";
-
-import {Queue, Waitress, wait} from "../../utils";
+import {AsyncMutex} from "src/utils/async-mutex";
+import {Waitress, wait} from "../../utils";
 import {logger} from "../../utils/logger";
 import {SerialPort} from "../serialPort";
 import type {SerialPortOptions} from "../tstype";
@@ -27,7 +27,7 @@ export class ZBOSSUart extends EventEmitter {
     private recvSeq = 0; // next frame number to receive
     private ackSeq = 0; // next number after the last accepted frame
     private waitress: Waitress<number, number>;
-    private queue: Queue;
+    private queue: AsyncMutex;
     public inReset = false;
 
     constructor(options: SerialPortOptions) {
@@ -39,7 +39,7 @@ export class ZBOSSUart extends EventEmitter {
         this.writer = new ZBOSSWriter();
         this.reader = new ZBOSSReader();
         this.reader.on("data", this.onPackage.bind(this));
-        this.queue = new Queue(1);
+        this.queue = new AsyncMutex();
         this.waitress = new Waitress<number, number>(this.waitressValidator, this.waitressTimeoutFormatter);
     }
 
@@ -307,7 +307,7 @@ export class ZBOSSUart extends EventEmitter {
         const nextSeq = this.sendSeq;
         const ackSeq = this.recvSeq;
 
-        return await this.queue.execute<void>(async (): Promise<void> => {
+        return await this.queue.run<void>(async (): Promise<void> => {
             try {
                 logger.debug(`--> DATA (${seq},${ackSeq},0): ${data.toString("hex")}`, NS);
                 if (!isACK) {
