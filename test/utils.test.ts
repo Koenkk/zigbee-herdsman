@@ -42,7 +42,9 @@ describe("Utils", () => {
             // @ts-expect-error mocked
             () => {},
         );
-        wait(1000).then(() => {});
+        wait(1000)
+            .then(() => {})
+            .catch(() => {});
         expect(setTimeout).toHaveBeenCalledTimes(1);
         expect(setTimeout).toHaveBeenLastCalledWith(expect.any(Function), 1000);
         setTimeoutSpy.mockRestore();
@@ -95,9 +97,11 @@ describe("Utils", () => {
         // reject test
         const wait1b = waitress.waitFor(1, 5000).start();
         let error1_;
-        wait(1000).then(() => {
-            waitress.reject("one", "drop");
-        });
+        wait(1000)
+            .then(() => {
+                waitress.reject("one", "drop");
+            })
+            .catch(() => {});
         try {
             await wait1b.promise;
         } catch (e) {
@@ -120,8 +124,14 @@ describe("Utils", () => {
         const handled2 = waitress.reject("two", "drop");
         expect(handled2).toBe(false);
 
-        waitress.waitFor(2, 10000).start().promise;
-        waitress.waitFor(2, 10000).start().promise;
+        waitress
+            .waitFor(2, 10000)
+            .start()
+            .promise.catch(() => {});
+        waitress
+            .waitFor(2, 10000)
+            .start()
+            .promise.catch(() => {});
 
         await vi.advanceTimersByTimeAsync(2000);
         waitress.clear();
@@ -160,35 +170,47 @@ describe("Utils", () => {
             finished.push(2);
         }, "mykey");
 
-        queue.execute<void>(async () => {
-            finished.push(3);
-            await Promise.resolve();
-        }, "mykey");
+        queue
+            .execute<void>(async () => {
+                finished.push(3);
+                await Promise.resolve();
+            }, "mykey")
+            .catch(() => {});
 
-        queue.execute<void>(async () => {
-            finished.push(4);
-            await Promise.resolve();
-        }, "mykey2");
+        queue
+            .execute<void>(async () => {
+                finished.push(4);
+                await Promise.resolve();
+            }, "mykey2")
+            .catch(() => {});
 
-        queue.execute<void>(async () => {
-            await job5;
-            finished.push(5);
-        });
+        queue
+            .execute<void>(async () => {
+                await job5;
+                finished.push(5);
+            })
+            .catch(() => {});
 
-        queue.execute<void>(async () => {
-            await job6;
-            finished.push(6);
-        });
+        queue
+            .execute<void>(async () => {
+                await job6;
+                finished.push(6);
+            })
+            .catch(() => {});
 
-        queue.execute<void>(async () => {
-            await job7;
-            finished.push(7);
-        });
+        queue
+            .execute<void>(async () => {
+                await job7;
+                finished.push(7);
+            })
+            .catch(() => {});
 
-        queue.execute<void>(async () => {
-            finished.push(8);
-            await Promise.resolve();
-        });
+        queue
+            .execute<void>(async () => {
+                finished.push(8);
+                await Promise.resolve();
+            })
+            .catch(() => {});
 
         expect(finished).toEqual([4]);
         job1Promise?.();
