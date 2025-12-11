@@ -208,9 +208,13 @@ export class Group extends ZigbeeEntity {
         return this._members.includes(endpoint);
     }
 
-    public syncSceneFromZigbee(payload: TClusterCommandResponsePayload<"genScenes", "viewRsp" | "enhancedViewRsp">, enhanced: boolean): void {
+    public syncSceneFromZigbee(
+        payload: TClusterCommandResponsePayload<"genScenes", "viewRsp" | "enhancedViewRsp">,
+        overrideSceneName: string,
+        enhanced: boolean,
+    ): void {
         for (const member of this._members) {
-            member.syncSceneFromZigbee(payload, enhanced);
+            member.syncSceneFromZigbee(payload, overrideSceneName, enhanced);
         }
     }
 
@@ -227,7 +231,8 @@ export class Group extends ZigbeeEntity {
     }
 
     /**
-     * Add a scene. Can be done without specifying extension field sets, to only "setup" a scene name/transition time (followed by a `storeScene`).
+     * Add a scene.
+     * Can be done without specifying extension field sets (empty array), to only "setup" a scene name/transition time (followed by a `storeScene`).
      * Note: If name not supported by cluster, will be discarded by devices (then returned as null string if requested).
      * Syncing is done locally to avoid many requests.
      */
@@ -235,7 +240,7 @@ export class Group extends ZigbeeEntity {
         sceneId: number,
         transTime: number,
         sceneName: string,
-        extensionFieldSets?: ExtensionFieldSet[],
+        extensionFieldSets: ExtensionFieldSet[],
         options?: Options,
     ): Promise<void> {
         assert(sceneName.length > 16, "Scene name too long");
@@ -246,7 +251,7 @@ export class Group extends ZigbeeEntity {
         await this.command(
             "genScenes",
             enhanced ? "add" : "enhancedAdd",
-            {groupid: this.groupID, sceneid: sceneId, transtime: transTime, scenename: sceneName, extensionfieldsets: extensionFieldSets ?? []},
+            {groupid: this.groupID, sceneid: sceneId, transtime: transTime, scenename: sceneName, extensionfieldsets: extensionFieldSets},
             optionsWithDefaults,
         );
 
@@ -262,6 +267,7 @@ export class Group extends ZigbeeEntity {
                     extensionfieldsets: extensionFieldSets,
                     status: Zcl.Status.SUCCESS,
                 },
+                sceneName,
                 enhanced,
             );
         } else {
@@ -273,13 +279,13 @@ export class Group extends ZigbeeEntity {
      * Store a scene, let the device determine the extension field sets based on its current state
      * Syncing is done locally to avoid many requests.
      */
-    public async storeScene(sceneId: number, options?: Options): Promise<void> {
+    public async storeScene(sceneId: number, sceneName: string, options?: Options): Promise<void> {
         const optionsWithDefaults = this.getOptionsWithDefaults(options, Zcl.Direction.CLIENT_TO_SERVER, undefined);
 
         await this.command("genScenes", "store", {groupid: this.groupID, sceneid: sceneId}, optionsWithDefaults);
 
         // syncing from device's would be expensive for group
-        this.syncSceneFromState(sceneId, "", false, 0);
+        this.syncSceneFromState(sceneId, sceneName, false, 0);
     }
 
     /**

@@ -1238,7 +1238,11 @@ export class Endpoint extends ZigbeeEntity {
     /**
      * Overwrite scenes cache with scene data received from Zigbee.
      */
-    public syncSceneFromZigbee(payload: TClusterCommandResponsePayload<"genScenes", "viewRsp" | "enhancedViewRsp">, enhanced: boolean): Scene {
+    public syncSceneFromZigbee(
+        payload: TClusterCommandResponsePayload<"genScenes", "viewRsp" | "enhancedViewRsp">,
+        overrideSceneName: string | undefined,
+        enhanced: boolean,
+    ): Scene {
         if (payload.scenename === undefined || payload.extensionfieldsets === undefined || payload.transtime === undefined) {
             throw new Error("Missing data");
         }
@@ -1248,7 +1252,9 @@ export class Endpoint extends ZigbeeEntity {
         const state = ZclFrameConverter.sceneFromExtensionFieldSets(payload.extensionfieldsets);
 
         if (existing) {
-            if (!existing.name && payload.scenename && payload.scenename !== "\u0000") {
+            if (overrideSceneName) {
+                existing.name = overrideSceneName;
+            } else if (!existing.name && payload.scenename && payload.scenename !== "\u0000") {
                 // keep existing name if present and incoming not present
                 existing.name = payload.scenename;
             }
@@ -1532,7 +1538,13 @@ export class Endpoint extends ZigbeeEntity {
     /**
      * Retrieve a scene from the device and return said scene after synchronizing the internal cache
      */
-    public async viewScene(groupId: number, sceneId: number, enhanced: boolean, options?: Options): Promise<Scene> {
+    public async viewScene(
+        groupId: number,
+        sceneId: number,
+        overrideSceneName: string | undefined,
+        enhanced: boolean,
+        options?: Options,
+    ): Promise<Scene> {
         const optionsWithDefaults = this.getOptionsWithDefaults(options, true, Zcl.Direction.CLIENT_TO_SERVER, undefined);
         const viewFrame = await this.zclCommand(
             "genScenes",
@@ -1545,14 +1557,16 @@ export class Endpoint extends ZigbeeEntity {
         );
 
         if (viewFrame) {
-            return this.syncSceneFromZigbee(viewFrame.payload, enhanced);
+            return this.syncSceneFromZigbee(viewFrame.payload, overrideSceneName, enhanced);
         }
 
         throw new Error("Unable to view scene");
     }
 
     /**
-     * Add a scene. Can be done without specifying extension field sets, to only "setup" a scene name/transition time (followed by a `storeScene`).
+     * Add a scene.
+     * Can be done without specifying extension field sets (empty array), to only "setup" a scene name/transition time (followed by a `storeScene`).
+     * If extension field sets is undefined, derive from current state.
      * Note: If name not supported by cluster, will be discarded by device (then returned as null string if requested).
      * Returns the scene as saved on the device.
      */
@@ -1561,19 +1575,25 @@ export class Endpoint extends ZigbeeEntity {
         sceneId: number,
         transTime: number,
         sceneName: string,
-        extensionFieldSets?: ZclTypes.ExtensionFieldSet[],
+        extensionFieldSets: ZclTypes.ExtensionFieldSet[] | undefined,
         options?: Options,
     ): Promise<Scene> {
         assert(groupId >= 0x0000 && groupId <= 0xfff7, "Invalid group ID");
         assert(groupId !== 0x0000 || sceneId !== 0x00, "Invalid group/scene ID combination (reserved)");
         assert(sceneName.length > 16, "Scene name too long");
 
+        if (extensionFieldSets === undefined) {
+            extensionFieldSets = [];
+
+            // TODO: derive from current state
+        }
+
         const optionsWithDefaults = this.getOptionsWithDefaults(options, true, Zcl.Direction.CLIENT_TO_SERVER, undefined);
         const enhanced = Number.isInteger(transTime);
         const frame = await this.zclCommand(
             "genScenes",
             enhanced ? "add" : "enhancedAdd",
-            {groupid: groupId, sceneid: sceneId, transtime: transTime, scenename: sceneName, extensionfieldsets: extensionFieldSets ?? []},
+            {groupid: groupId, sceneid: sceneId, transtime: transTime, scenename: sceneName, extensionfieldsets: extensionFieldSets},
             optionsWithDefaults,
             undefined,
             true,
@@ -1582,7 +1602,7 @@ export class Endpoint extends ZigbeeEntity {
 
         if (frame) {
             // retrieve the scene from the device to get actual saved state by device
-            return await this.viewScene(groupId, sceneId, enhanced, options);
+            return await this.viewScene(groupId, sceneId, sceneName, enhanced, options);
         }
 
         throw new Error("No response received");
@@ -1592,7 +1612,7 @@ export class Endpoint extends ZigbeeEntity {
      * Store a scene, let the device determine the extension field sets based on its current state
      * Returns the scene as saved on the device.
      */
-    public async storeScene(groupId: number, sceneId: number, options?: Options): Promise<Scene> {
+    public async storeScene(groupId: number, sceneId: number, sceneName: string, options?: Options): Promise<Scene> {
         assert(groupId >= 0x0000 && groupId <= 0xfff7, "Invalid group ID");
         assert(groupId !== 0x0000 || sceneId !== 0x00, "Invalid group/scene ID combination (reserved)");
 
@@ -1611,7 +1631,7 @@ export class Endpoint extends ZigbeeEntity {
             // retrieve the scene from the device to get actual saved state by device
             const existing = this.scenes.get(`${sceneId}_${groupId}`);
 
-            return await this.viewScene(groupId, sceneId, existing?.enhanced ?? false, options);
+            return await this.viewScene(groupId, sceneId, sceneName, existing?.enhanced ?? false, options);
         }
 
         throw new Error("No response received");
@@ -1668,13 +1688,13 @@ export class Endpoint extends ZigbeeEntity {
 
                 // only want the sync side-effect (outside the `this.scenes` loop)
                 for (const [sceneId, sceneEnhanced] of toCheckSceneIds) {
-                    await this.viewScene(toGroupId, sceneId, sceneEnhanced ?? false, options);
+                    await this.viewScene(toGroupId, sceneId, undefined, sceneEnhanced ?? false, options);
                 }
             } else {
                 const existing = this.scenes.get(`${fromSceneId}_${fromGroupId}`);
 
                 // only want the sync side-effect
-                await this.viewScene(toGroupId, toSceneId, existing?.enhanced ?? false, options);
+                await this.viewScene(toGroupId, toSceneId, undefined, existing?.enhanced ?? false, options);
             }
         } else {
             throw new Error("No response received");
@@ -1788,7 +1808,7 @@ export class Endpoint extends ZigbeeEntity {
                     if (this.scenes.has(`${sceneId}_${groupId}`)) {
                         // only want the sync side-effect
                         // will enforce `enhanced: false`, since we don't know better here
-                        await this.viewScene(groupId, sceneId, false, options);
+                        await this.viewScene(groupId, sceneId, undefined, false, options);
                     }
                 }
             }
