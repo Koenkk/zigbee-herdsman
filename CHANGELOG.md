@@ -1,5 +1,20 @@
 # Changelog
 
+## [8.0.0](https://github.com/Koenkk/zigbee-herdsman/compare/v7.0.6...v8.0.0) (2025-12-13)
+
+
+### ⚠ BREAKING CHANGES
+
+* enhance ZCL specification ([#1503](https://github.com/Koenkk/zigbee-herdsman/issues/1503))
+
+### Bug Fixes
+
+* Biome floating promises detection ([#1584](https://github.com/Koenkk/zigbee-herdsman/issues/1584)) ([19e4cea](https://github.com/Koenkk/zigbee-herdsman/commit/19e4cead74c75f0d12f4dc14525872ae715676d5))
+* deCONZ: enable APS ACKs per request if the first request fails ([#1590](https://github.com/Koenkk/zigbee-herdsman/issues/1590)) ([aaddbc8](https://github.com/Koenkk/zigbee-herdsman/commit/aaddbc87f6c9541af63dfbc549dfa9c4438e6208))
+* enhance ZCL specification ([#1503](https://github.com/Koenkk/zigbee-herdsman/issues/1503)) ([685a781](https://github.com/Koenkk/zigbee-herdsman/commit/685a781be46c56afb5eb3c9e099998c62c2df7ea))
+* Improve some USB discovery ([#1589](https://github.com/Koenkk/zigbee-herdsman/issues/1589)) ([2f030b5](https://github.com/Koenkk/zigbee-herdsman/commit/2f030b5dffbd3c6dc4ac4de51d6b1a98109cc4b8))
+* Use cheaper async mutex in place of 1-queue ([#1587](https://github.com/Koenkk/zigbee-herdsman/issues/1587)) ([2a6900e](https://github.com/Koenkk/zigbee-herdsman/commit/2a6900e2901d177bcb7532cb1740878a2edeb0f0))
+
 ## [7.0.6](https://github.com/Koenkk/zigbee-herdsman/compare/v7.0.5...v7.0.6) (2025-12-10)
 
 
