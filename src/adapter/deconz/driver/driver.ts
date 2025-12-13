@@ -32,7 +32,7 @@ const NS = "zh:deconz:driver";
 
 const queue: Array<Request> = [];
 export const busyQueue: Array<Request> = [];
-const apsQueue: Array<ApsRequest> = [];
+export const apsQueue: Array<ApsRequest> = [];
 export const apsBusyQueue: Array<ApsRequest> = [];
 
 const DRIVER_EVENT = Symbol("drv_ev");

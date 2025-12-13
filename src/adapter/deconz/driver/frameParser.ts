@@ -17,7 +17,7 @@ import {
     type ReceivedDataResponse,
     type Request,
 } from "./constants";
-import {apsBusyQueue, busyQueue} from "./driver";
+import {apsBusyQueue, apsQueue, busyQueue} from "./driver";
 
 const NS = "zh:deconz:frameparser";
 
@@ -193,10 +193,13 @@ function parseApsConfirmResponse(view: DataView): DataStateResponse | null {
     const i = apsBusyQueue.findIndex((r: ApsRequest) => r.request && r.request.requestId === requestId);
 
     if (i < 0) {
+        logger.debug(`Response APS-DATA.confirm seq: ${seqNr} but no matching request`, NS);
         return null;
     }
 
     const req: ApsRequest = apsBusyQueue[i];
+    //remove from busyqueue
+    apsBusyQueue.splice(i, 1);
 
     let strstatus = "unknown";
     const hexstatus = `0x${confirmStatus.toString(16).padStart(2, "0")}`;
@@ -204,14 +207,24 @@ function parseApsConfirmResponse(view: DataView): DataStateResponse | null {
         strstatus = ApsStatusCode[confirmStatus];
     }
 
+    // TODO(mpi): This function should not change the queue and resolve/reject the request promise.
+    // It should only do what the name says and remaining parts handled in upper callframe.
+
     if (confirmStatus === ApsStatusCode.Success) {
         req.resolve(confirmStatus);
     } else {
-        req.reject(new Error(`Failed APS-DATA.request with confirm status: ${strstatus} (${hexstatus})`));
-    }
+        // if the request failed check if we can resend with APS ACK enabled
+        const hasTimeLeft = Date.now() - req.ts < req.request.timeout;
 
-    //remove from busyqueue
-    apsBusyQueue.splice(i, 1);
+        if (req.request.txOptions === 0 && hasTimeLeft && req.request.destAddrMode === ApsAddressMode.Nwk) {
+            req.request.txOptions = 0x04;
+
+            logger.debug(`Resend request with APS ACK enabled seq: ${seqNr}`, NS);
+            apsQueue.push(req);
+        } else {
+            req.reject(new Error(`Failed APS-DATA.request with confirm status: ${strstatus} (${hexstatus})`));
+        }
+    }
 
     logger.debug(`APS-DATA.confirm  destAddr: 0x${destAddr} APS request id: ${requestId} confirm status: ${strstatus} ${hexstatus}`, NS);
     frameParserEvents.emit("deviceStateUpdated", deviceState);
