@@ -39,7 +39,7 @@ export const Foundation: Readonly<Record<FoundationCommandName, Readonly<Foundat
     read: {
         ID: 0x00,
         parseStrategy: "repetitive",
-        parameters: [{name: "attrId", type: DataType.UINT16}],
+        parameters: [{name: "attrId", type: DataType.DATA16}],
         response: 0x01, // readRsp
     },
     /** Read Attributes Response */
@@ -47,9 +47,9 @@ export const Foundation: Readonly<Record<FoundationCommandName, Readonly<Foundat
         ID: 0x01,
         parseStrategy: "repetitive",
         parameters: [
-            {name: "attrId", type: DataType.UINT16},
-            {name: "status", type: DataType.UINT8},
-            {name: "dataType", type: DataType.UINT8, conditions: [{type: ParameterCondition.FIELD_EQUAL, field: "status", value: Status.SUCCESS}]},
+            {name: "attrId", type: DataType.DATA16},
+            {name: "status", type: DataType.DATA8},
+            {name: "dataType", type: DataType.DATA8, conditions: [{type: ParameterCondition.FIELD_EQUAL, field: "status", value: Status.SUCCESS}]},
             {
                 name: "attrData",
                 type: BuffaloZclDataType.USE_DATA_TYPE,
@@ -62,8 +62,8 @@ export const Foundation: Readonly<Record<FoundationCommandName, Readonly<Foundat
         ID: 0x02,
         parseStrategy: "repetitive",
         parameters: [
-            {name: "attrId", type: DataType.UINT16},
-            {name: "dataType", type: DataType.UINT8},
+            {name: "attrId", type: DataType.DATA16},
+            {name: "dataType", type: DataType.DATA8},
             {name: "attrData", type: BuffaloZclDataType.USE_DATA_TYPE},
         ],
         response: 0x04, // writeRsp
@@ -73,8 +73,8 @@ export const Foundation: Readonly<Record<FoundationCommandName, Readonly<Foundat
         ID: 0x03,
         parseStrategy: "repetitive",
         parameters: [
-            {name: "attrId", type: DataType.UINT16},
-            {name: "dataType", type: DataType.UINT8},
+            {name: "attrId", type: DataType.DATA16},
+            {name: "dataType", type: DataType.DATA8},
             {name: "attrData", type: BuffaloZclDataType.USE_DATA_TYPE},
         ],
     },
@@ -83,10 +83,10 @@ export const Foundation: Readonly<Record<FoundationCommandName, Readonly<Foundat
         ID: 0x04,
         parseStrategy: "repetitive",
         parameters: [
-            {name: "status", type: DataType.UINT8},
+            {name: "status", type: DataType.ENUM8},
             {
                 name: "attrId",
-                type: DataType.UINT16,
+                type: DataType.DATA16,
                 conditions: [{type: ParameterCondition.FIELD_EQUAL, field: "status", reversed: true, value: Status.SUCCESS}],
             },
         ],
@@ -96,8 +96,8 @@ export const Foundation: Readonly<Record<FoundationCommandName, Readonly<Foundat
         ID: 0x05,
         parseStrategy: "repetitive",
         parameters: [
-            {name: "attrId", type: DataType.UINT16},
-            {name: "dataType", type: DataType.UINT8},
+            {name: "attrId", type: DataType.DATA16},
+            {name: "dataType", type: DataType.DATA8},
             {name: "attrData", type: BuffaloZclDataType.USE_DATA_TYPE},
         ],
     },
@@ -106,21 +106,21 @@ export const Foundation: Readonly<Record<FoundationCommandName, Readonly<Foundat
         ID: 0x06,
         parseStrategy: "repetitive",
         parameters: [
-            {name: "direction", type: DataType.UINT8},
-            {name: "attrId", type: DataType.UINT16},
+            {name: "direction", type: DataType.DATA8},
+            {name: "attrId", type: DataType.DATA16},
             {
                 name: "dataType",
-                type: DataType.UINT8,
+                type: DataType.DATA8,
                 conditions: [{type: ParameterCondition.FIELD_EQUAL, field: "direction", value: Direction.CLIENT_TO_SERVER}],
             },
             {
                 name: "minRepIntval",
-                type: DataType.UINT16,
+                type: DataType.DATA16,
                 conditions: [{type: ParameterCondition.FIELD_EQUAL, field: "direction", value: Direction.CLIENT_TO_SERVER}],
             },
             {
                 name: "maxRepIntval",
-                type: DataType.UINT16,
+                type: DataType.DATA16,
                 conditions: [{type: ParameterCondition.FIELD_EQUAL, field: "direction", value: Direction.CLIENT_TO_SERVER}],
             },
             {
@@ -133,7 +133,7 @@ export const Foundation: Readonly<Record<FoundationCommandName, Readonly<Foundat
             },
             {
                 name: "timeout",
-                type: DataType.UINT16,
+                type: DataType.DATA16,
                 conditions: [{type: ParameterCondition.FIELD_EQUAL, field: "direction", value: Direction.SERVER_TO_CLIENT}],
             },
         ],
@@ -144,11 +144,11 @@ export const Foundation: Readonly<Record<FoundationCommandName, Readonly<Foundat
         ID: 0x07,
         parseStrategy: "repetitive",
         parameters: [
-            {name: "status", type: DataType.UINT8},
+            {name: "status", type: DataType.ENUM8},
             // minimumRemainingBufferBytes: if direction is present, attrId is also present
             // https://github.com/Koenkk/zigbee-herdsman/pull/115
-            {name: "direction", type: DataType.UINT8, conditions: [{type: ParameterCondition.MINIMUM_REMAINING_BUFFER_BYTES, value: 3}]},
-            {name: "attrId", type: DataType.UINT16, conditions: [{type: ParameterCondition.MINIMUM_REMAINING_BUFFER_BYTES, value: 2}]},
+            {name: "direction", type: DataType.DATA8, conditions: [{type: ParameterCondition.MINIMUM_REMAINING_BUFFER_BYTES, value: 3}]},
+            {name: "attrId", type: DataType.DATA16, conditions: [{type: ParameterCondition.MINIMUM_REMAINING_BUFFER_BYTES, value: 2}]},
         ],
     },
     /** Read Reporting Configuration */
@@ -156,8 +156,8 @@ export const Foundation: Readonly<Record<FoundationCommandName, Readonly<Foundat
         ID: 0x08,
         parseStrategy: "repetitive",
         parameters: [
-            {name: "direction", type: DataType.UINT8},
-            {name: "attrId", type: DataType.UINT16},
+            {name: "direction", type: DataType.DATA8},
+            {name: "attrId", type: DataType.DATA16},
         ],
         response: 0x09, // readReportConfigRsp
     },
@@ -166,12 +166,12 @@ export const Foundation: Readonly<Record<FoundationCommandName, Readonly<Foundat
         ID: 0x09,
         parseStrategy: "repetitive",
         parameters: [
-            {name: "status", type: DataType.UINT8},
-            {name: "direction", type: DataType.UINT8},
-            {name: "attrId", type: DataType.UINT16},
+            {name: "status", type: DataType.ENUM8},
+            {name: "direction", type: DataType.DATA8},
+            {name: "attrId", type: DataType.DATA16},
             {
                 name: "dataType",
-                type: DataType.UINT8,
+                type: DataType.DATA8,
                 conditions: [
                     {type: ParameterCondition.FIELD_EQUAL, field: "status", value: Status.SUCCESS},
                     {type: ParameterCondition.FIELD_EQUAL, field: "direction", value: Direction.CLIENT_TO_SERVER},
@@ -179,7 +179,7 @@ export const Foundation: Readonly<Record<FoundationCommandName, Readonly<Foundat
             },
             {
                 name: "minRepIntval",
-                type: DataType.UINT16,
+                type: DataType.DATA16,
                 conditions: [
                     {type: ParameterCondition.FIELD_EQUAL, field: "status", value: Status.SUCCESS},
                     {type: ParameterCondition.FIELD_EQUAL, field: "direction", value: Direction.CLIENT_TO_SERVER},
@@ -187,7 +187,7 @@ export const Foundation: Readonly<Record<FoundationCommandName, Readonly<Foundat
             },
             {
                 name: "maxRepIntval",
-                type: DataType.UINT16,
+                type: DataType.DATA16,
                 conditions: [
                     {type: ParameterCondition.FIELD_EQUAL, field: "status", value: Status.SUCCESS},
                     {type: ParameterCondition.FIELD_EQUAL, field: "direction", value: Direction.CLIENT_TO_SERVER},
@@ -204,7 +204,7 @@ export const Foundation: Readonly<Record<FoundationCommandName, Readonly<Foundat
             },
             {
                 name: "timeout",
-                type: DataType.UINT16,
+                type: DataType.DATA16,
                 conditions: [
                     {type: ParameterCondition.FIELD_EQUAL, field: "status", value: Status.SUCCESS},
                     {type: ParameterCondition.FIELD_EQUAL, field: "direction", value: Direction.SERVER_TO_CLIENT},
@@ -217,8 +217,8 @@ export const Foundation: Readonly<Record<FoundationCommandName, Readonly<Foundat
         ID: 0x0a,
         parseStrategy: "repetitive",
         parameters: [
-            {name: "attrId", type: DataType.UINT16},
-            {name: "dataType", type: DataType.UINT8},
+            {name: "attrId", type: DataType.DATA16},
+            {name: "dataType", type: DataType.DATA8},
             {name: "attrData", type: BuffaloZclDataType.USE_DATA_TYPE},
         ],
     },
@@ -227,8 +227,8 @@ export const Foundation: Readonly<Record<FoundationCommandName, Readonly<Foundat
         ID: 0x0b,
         parseStrategy: "flat",
         parameters: [
-            {name: "cmdId", type: DataType.UINT8},
-            {name: "statusCode", type: DataType.UINT8},
+            {name: "cmdId", type: DataType.DATA8},
+            {name: "statusCode", type: DataType.ENUM8},
         ],
     },
     /** Discover Attributes */
@@ -236,8 +236,8 @@ export const Foundation: Readonly<Record<FoundationCommandName, Readonly<Foundat
         ID: 0x0c,
         parseStrategy: "flat",
         parameters: [
-            {name: "startAttrId", type: DataType.UINT16},
-            {name: "maxAttrIds", type: DataType.UINT8},
+            {name: "startAttrId", type: DataType.DATA16},
+            {name: "maxAttrIds", type: DataType.DATA8},
         ],
     },
     /** Discover Attributes Response */
@@ -245,8 +245,8 @@ export const Foundation: Readonly<Record<FoundationCommandName, Readonly<Foundat
         ID: 0x0d,
         parseStrategy: "oneof",
         parameters: [
-            {name: "attrId", type: DataType.UINT16},
-            {name: "dataType", type: DataType.UINT8},
+            {name: "attrId", type: DataType.DATA16},
+            {name: "dataType", type: DataType.DATA8},
         ],
     },
     /** Read Attributes Structured */
@@ -254,7 +254,7 @@ export const Foundation: Readonly<Record<FoundationCommandName, Readonly<Foundat
         ID: 0x0e,
         parseStrategy: "repetitive",
         parameters: [
-            {name: "attrId", type: DataType.UINT16},
+            {name: "attrId", type: DataType.DATA16},
             {name: "selector", type: BuffaloZclDataType.STRUCTURED_SELECTOR},
         ],
     },
@@ -263,9 +263,9 @@ export const Foundation: Readonly<Record<FoundationCommandName, Readonly<Foundat
         ID: 0x0f,
         parseStrategy: "repetitive",
         parameters: [
-            {name: "attrId", type: DataType.UINT16},
+            {name: "attrId", type: DataType.DATA16},
             {name: "selector", type: BuffaloZclDataType.STRUCTURED_SELECTOR},
-            {name: "dataType", type: DataType.UINT8},
+            {name: "dataType", type: DataType.DATA8},
             {name: "elementData", type: BuffaloZclDataType.USE_DATA_TYPE},
         ],
         response: 0x10, // writeStructuredRsp
@@ -276,10 +276,10 @@ export const Foundation: Readonly<Record<FoundationCommandName, Readonly<Foundat
         parseStrategy: "repetitive",
         // contains only one SUCCESS record for all written attributes if all written successfully
         parameters: [
-            {name: "status", type: DataType.UINT8},
+            {name: "status", type: DataType.ENUM8},
             {
                 name: "attrId",
-                type: DataType.UINT16,
+                type: DataType.DATA16,
                 conditions: [{type: ParameterCondition.FIELD_EQUAL, field: "status", reversed: true, value: Status.SUCCESS}],
             },
             // always one zero-octet if failed attribute not of type array or structure, otherwise can also be zero if no info on which element caused failure
@@ -295,38 +295,38 @@ export const Foundation: Readonly<Record<FoundationCommandName, Readonly<Foundat
         ID: 0x11,
         parseStrategy: "flat",
         parameters: [
-            {name: "startCmdId", type: DataType.UINT8},
-            {name: "maxCmdIds", type: DataType.UINT8},
+            {name: "startCmdId", type: DataType.DATA8},
+            {name: "maxCmdIds", type: DataType.DATA8},
         ],
     },
     /** Discover Commands Received Response */
     discoverCommandsRsp: {
         ID: 0x12,
         parseStrategy: "oneof",
-        parameters: [{name: "cmdId", type: DataType.UINT8}],
+        parameters: [{name: "cmdId", type: DataType.DATA8}],
     },
     /** Discover Commands Generated */
     discoverCommandsGen: {
         ID: 0x13,
         parseStrategy: "flat",
         parameters: [
-            {name: "startCmdId", type: DataType.UINT8},
-            {name: "maxCmdIds", type: DataType.UINT8},
+            {name: "startCmdId", type: DataType.DATA8},
+            {name: "maxCmdIds", type: DataType.DATA8},
         ],
     },
     /** Discover Commands Generated Response */
     discoverCommandsGenRsp: {
         ID: 0x14,
         parseStrategy: "oneof",
-        parameters: [{name: "cmdId", type: DataType.UINT8}],
+        parameters: [{name: "cmdId", type: DataType.DATA8}],
     },
     /** Discover Attributes Extended */
     discoverExt: {
         ID: 0x15,
         parseStrategy: "flat",
         parameters: [
-            {name: "startAttrId", type: DataType.UINT16},
-            {name: "maxAttrIds", type: DataType.UINT8},
+            {name: "startAttrId", type: DataType.DATA16},
+            {name: "maxAttrIds", type: DataType.DATA8},
         ],
     },
     /** Discover Attributes Extended Response */
@@ -334,9 +334,9 @@ export const Foundation: Readonly<Record<FoundationCommandName, Readonly<Foundat
         ID: 0x16,
         parseStrategy: "oneof",
         parameters: [
-            {name: "attrId", type: DataType.UINT16},
-            {name: "dataType", type: DataType.UINT8},
-            {name: "access", type: DataType.UINT8},
+            {name: "attrId", type: DataType.DATA16},
+            {name: "dataType", type: DataType.DATA8},
+            {name: "access", type: DataType.DATA8},
         ],
     },
 };

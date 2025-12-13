@@ -1,6 +1,7 @@
 import {Buffalo} from "../../buffalo";
 import {logger} from "../../utils/logger";
 import {isNumberArray} from "../../utils/utils";
+import {ZCL_TYPE_INVALID_BY_TYPE, ZclType} from "./definition/datatypes";
 import {BuffaloZclDataType, DataType, StructuredIndicatorType} from "./definition/enums";
 import type {
     BuffaloZclOptions,
@@ -26,6 +27,9 @@ import * as Utils from "./utils";
 
 const NS = "zh:zcl:buffalo";
 
+const UINT8_NON_VALUE = ZCL_TYPE_INVALID_BY_TYPE[ZclType.Uint8] as number;
+const UINT16_NON_VALUE = ZCL_TYPE_INVALID_BY_TYPE[ZclType.Uint16] as number;
+
 const SEC_KEY_LENGTH = 16;
 
 const EXTENSION_FIELD_SETS_DATA_TYPE: {[key: number]: DataType[]} = {
@@ -35,197 +39,34 @@ const EXTENSION_FIELD_SETS_DATA_TYPE: {[key: number]: DataType[]} = {
     768: [DataType.UINT16, DataType.UINT16, DataType.UINT16, DataType.UINT8, DataType.UINT8, DataType.UINT8, DataType.UINT16, DataType.UINT16],
 };
 
-// UINT8_TMP_FIX: temporary return 0xff instead of Number.NaN
-// Will be replaced by https://github.com/Koenkk/zigbee-herdsman/pull/1503
-// https://github.com/Koenkk/zigbee-herdsman/issues/1498
-// https://github.com/Koenkk/zigbee-herdsman/pull/1510
-
 export class BuffaloZcl extends Buffalo {
-    private writeZclUInt8(value: number): void {
-        this.writeUInt8(value);
-        // See UINT8_TMP_FIX
-        // this.writeUInt8(Number.isNaN(value) ? 0xff : value);
-    }
-
-    private readZclUInt8(): number {
+    private readLengthUInt8(): number {
         const value = this.readUInt8();
 
-        return value;
-
-        // See UINT8_TMP_FIX
-        // return value === 0xff ? Number.NaN : value;
+        return value === UINT8_NON_VALUE ? Number.NaN : value;
     }
 
-    private writeZclUInt16(value: number): void {
-        this.writeUInt16(Number.isNaN(value) ? 0xffff : value);
-    }
-
-    private readZclUInt16(): number {
+    private readLengthUInt16(): number {
         const value = this.readUInt16();
 
-        return value === 0xffff ? Number.NaN : value;
-    }
-
-    private writeZclUInt24(value: number): void {
-        this.writeUInt24(Number.isNaN(value) ? 0xffffff : value);
-    }
-
-    private readZclUInt24(): number {
-        const value = this.readUInt24();
-
-        return value === 0xffffff ? Number.NaN : value;
-    }
-
-    private writeZclUInt32(value: number): void {
-        this.writeUInt32(Number.isNaN(value) ? 0xffffffff : value);
-    }
-
-    private readZclUInt32(): number {
-        const value = this.readUInt32();
-
-        return value === 0xffffffff ? Number.NaN : value;
-    }
-
-    private writeZclUInt40(value: number): void {
-        this.writeUInt40(Number.isNaN(value) ? 0xffffffffff : value);
-    }
-
-    private readZclUInt40(): number {
-        const value = this.readUInt40();
-
-        return value === 0xffffffffff ? Number.NaN : value;
-    }
-
-    private writeZclUInt48(value: number): void {
-        this.writeUInt48(Number.isNaN(value) ? 0xffffffffffff : value);
-    }
-
-    private readZclUInt48(): number {
-        const value = this.readUInt48();
-
-        return value === 0xffffffffffff ? Number.NaN : value;
-    }
-
-    private writeZclUInt56(value: bigint | undefined): void {
-        this.writeUInt56(value === undefined ? 0xffffffffffffffn : value);
-    }
-
-    private readZclUInt56(): bigint | undefined {
-        const value = this.readUInt56();
-
-        return value === 0xffffffffffffffn ? undefined : value;
-    }
-
-    private writeZclUInt64(value: bigint | undefined): void {
-        this.writeUInt64(value === undefined ? 0xffffffffffffffffn : value);
-    }
-
-    private readZclUInt64(): bigint | undefined {
-        const value = this.readUInt64();
-
-        return value === 0xffffffffffffffffn ? undefined : value;
-    }
-
-    private writeZclInt8(value: number): void {
-        this.writeInt8(Number.isNaN(value) ? -0x80 : value);
-    }
-
-    private readZclInt8(): number {
-        const value = this.readInt8();
-
-        return value === -0x80 ? Number.NaN : value;
-    }
-
-    private writeZclInt16(value: number): void {
-        this.writeInt16(Number.isNaN(value) ? -0x8000 : value);
-    }
-
-    private readZclInt16(): number {
-        const value = this.readInt16();
-
-        return value === -0x8000 ? Number.NaN : value;
-    }
-
-    private writeZclInt24(value: number): void {
-        this.writeInt24(Number.isNaN(value) ? -0x800000 : value);
-    }
-
-    private readZclInt24(): number {
-        const value = this.readInt24();
-
-        return value === -0x800000 ? Number.NaN : value;
-    }
-
-    private writeZclInt32(value: number): void {
-        this.writeInt32(Number.isNaN(value) ? -0x80000000 : value);
-    }
-
-    private readZclInt32(): number {
-        const value = this.readInt32();
-
-        return value === -0x80000000 ? Number.NaN : value;
-    }
-
-    private writeZclInt40(value: number): void {
-        this.writeInt40(Number.isNaN(value) ? -0x8000000000 : value);
-    }
-
-    private readZclInt40(): number {
-        const value = this.readInt40();
-
-        return value === -0x8000000000 ? Number.NaN : value;
-    }
-
-    private writeZclInt48(value: number): void {
-        this.writeInt48(Number.isNaN(value) ? -0x800000000000 : value);
-    }
-
-    private readZclInt48(): number {
-        const value = this.readInt48();
-
-        return value === -0x800000000000 ? Number.NaN : value;
-    }
-
-    private writeZclInt56(value: bigint | undefined): void {
-        this.writeInt56(value === undefined ? -0x80000000000000n : value);
-    }
-
-    private readZclInt56(): bigint | undefined {
-        const value = this.readInt56();
-
-        return value === -0x80000000000000n ? undefined : value;
-    }
-
-    private writeZclInt64(value: bigint | undefined): void {
-        this.writeInt64(value === undefined ? -0x8000000000000000n : value);
-    }
-
-    private readZclInt64(): bigint | undefined {
-        const value = this.readInt64();
-
-        return value === -0x8000000000000000n ? undefined : value;
+        return value === UINT16_NON_VALUE ? Number.NaN : value;
     }
 
     private writeOctetStr(value?: number[]): void {
         if (value) {
             this.writeUInt8(value.length);
             this.writeBuffer(value, value.length);
-            /* v8 ignore start */
         } else {
-            // ignore because of UINT8_TMP_FIX
-            this.writeUInt8(0xff); // non-value
+            this.writeUInt8(UINT8_NON_VALUE);
         }
-        /* v8 ignore stop */
     }
 
     private readOctetStr(): Buffer {
-        const length = this.readZclUInt8();
-
-        // See UINT8_TMP_FIX
-        return length < 0xff ? this.readBuffer(length) : Buffer.from([]); // non-value
-        // return Number.isNaN(length) ? Buffer.from([]) : this.readBuffer(length);
+        const length = this.readLengthUInt8();
+        return Number.isNaN(length) ? Buffer.from([]) : this.readBuffer(length);
     }
 
+    // TODO: support read/write with specific `length` from attribute metadata (CHAR_STR & LONG_CHAR_STR)
     private writeCharStr(value?: string | number[]): void {
         // In case of an empty string, send 0 length, from the spec:
         // "Setting this sub-field to 0x00 represents a character string with no character data (an “empty string”). Setting
@@ -239,16 +80,14 @@ export class BuffaloZcl extends Buffalo {
                 this.writeBuffer(value, value.length);
             }
         } else {
-            this.writeUInt8(0xff); // non-value
+            this.writeUInt8(UINT8_NON_VALUE);
         }
     }
 
     private readCharStr(): string {
-        const length = this.readZclUInt8();
+        const length = this.readLengthUInt8();
 
-        // See UINT8_TMP_FIX
-        return length < 0xff ? this.readUtf8String(length) : ""; // non-value
-        // return Number.isNaN(length) ? "" : this.readUtf8String(length);
+        return Number.isNaN(length) ? "" : this.readUtf8String(length);
     }
 
     private writeLongOctetStr(value?: number[]): void {
@@ -256,12 +95,12 @@ export class BuffaloZcl extends Buffalo {
             this.writeUInt16(value.length);
             this.writeBuffer(value, value.length);
         } else {
-            this.writeUInt16(0xffff); // non-value
+            this.writeUInt16(UINT16_NON_VALUE);
         }
     }
 
     private readLongOctetStr(): Buffer {
-        const length = this.readZclUInt16();
+        const length = this.readLengthUInt16();
         return Number.isNaN(length) ? Buffer.from([]) : this.readBuffer(length);
     }
 
@@ -274,12 +113,12 @@ export class BuffaloZcl extends Buffalo {
             this.writeUInt16(Buffer.byteLength(value, "utf8"));
             this.writeUtf8String(value);
         } else {
-            this.writeUInt16(0xffff); // non-value
+            this.writeUInt16(UINT16_NON_VALUE);
         }
     }
 
     private readLongCharStr(): string {
-        const length = this.readZclUInt16();
+        const length = this.readLengthUInt16();
         return Number.isNaN(length) ? "" : this.readUtf8String(length);
     }
 
@@ -294,15 +133,16 @@ export class BuffaloZcl extends Buffalo {
             }
         } else {
             this.writeUInt8(DataType.NO_DATA); // XXX: correct value?
-            this.writeUInt16(0xffff); // non-value
+            this.writeUInt16(UINT16_NON_VALUE);
         }
     }
 
+    // TODO: support read [] with specific length (`arrayLengthSize` & `arrayLengthField`) from parameter metadata
     private readArray(): unknown[] {
         const values: unknown[] = [];
 
         const elementType = this.readUInt8();
-        const numberOfElements = this.readZclUInt16();
+        const numberOfElements = this.readLengthUInt16();
 
         if (!Number.isNaN(numberOfElements)) {
             // not non-value
@@ -324,13 +164,13 @@ export class BuffaloZcl extends Buffalo {
                 this.write(v.elmType, v.elmVal, {});
             }
         } else {
-            this.writeUInt16(0xffff); // non-value
+            this.writeUInt16(UINT16_NON_VALUE);
         }
     }
 
     private readStruct(): Struct[] {
         const values: Struct[] = [];
-        const numberOfElements = this.readZclUInt16();
+        const numberOfElements = this.readLengthUInt16();
 
         if (!Number.isNaN(numberOfElements)) {
             // not non-value
@@ -345,17 +185,17 @@ export class BuffaloZcl extends Buffalo {
     }
 
     private writeToD(value: ZclTimeOfDay): void {
-        this.writeUInt8(value.hours == null || Number.isNaN(value.hours) ? 0xff : value.hours);
-        this.writeUInt8(value.minutes == null || Number.isNaN(value.minutes) ? 0xff : value.minutes);
-        this.writeUInt8(value.seconds == null || Number.isNaN(value.seconds) ? 0xff : value.seconds);
-        this.writeUInt8(value.hundredths == null || Number.isNaN(value.hundredths) ? 0xff : value.hundredths);
+        this.writeUInt8(value.hours == null || Number.isNaN(value.hours) ? UINT8_NON_VALUE : value.hours);
+        this.writeUInt8(value.minutes == null || Number.isNaN(value.minutes) ? UINT8_NON_VALUE : value.minutes);
+        this.writeUInt8(value.seconds == null || Number.isNaN(value.seconds) ? UINT8_NON_VALUE : value.seconds);
+        this.writeUInt8(value.hundredths == null || Number.isNaN(value.hundredths) ? UINT8_NON_VALUE : value.hundredths);
     }
 
     private readToD(): ZclTimeOfDay {
-        const hours = this.readZclUInt8();
-        const minutes = this.readZclUInt8();
-        const seconds = this.readZclUInt8();
-        const hundredths = this.readZclUInt8();
+        const hours = this.readLengthUInt8();
+        const minutes = this.readLengthUInt8();
+        const seconds = this.readLengthUInt8();
+        const hundredths = this.readLengthUInt8();
 
         return {
             hours,
@@ -366,17 +206,17 @@ export class BuffaloZcl extends Buffalo {
     }
 
     private writeDate(value: ZclDate): void {
-        this.writeUInt8(value.year == null || Number.isNaN(value.year) ? 0xff : value.year - 1900);
-        this.writeUInt8(value.month == null || Number.isNaN(value.month) ? 0xff : value.month);
-        this.writeUInt8(value.dayOfMonth == null || Number.isNaN(value.dayOfMonth) ? 0xff : value.dayOfMonth);
-        this.writeUInt8(value.dayOfWeek == null || Number.isNaN(value.dayOfWeek) ? 0xff : value.dayOfWeek);
+        this.writeUInt8(value.year == null || Number.isNaN(value.year) ? UINT8_NON_VALUE : value.year - 1900);
+        this.writeUInt8(value.month == null || Number.isNaN(value.month) ? UINT8_NON_VALUE : value.month);
+        this.writeUInt8(value.dayOfMonth == null || Number.isNaN(value.dayOfMonth) ? UINT8_NON_VALUE : value.dayOfMonth);
+        this.writeUInt8(value.dayOfWeek == null || Number.isNaN(value.dayOfWeek) ? UINT8_NON_VALUE : value.dayOfWeek);
     }
 
     private readDate(): ZclDate {
-        const year = this.readZclUInt8();
-        const month = this.readZclUInt8();
-        const dayOfMonth = this.readZclUInt8();
-        const dayOfWeek = this.readZclUInt8();
+        const year = this.readLengthUInt8();
+        const month = this.readLengthUInt8();
+        const dayOfMonth = this.readLengthUInt8();
+        const dayOfWeek = this.readLengthUInt8();
 
         return {
             year: year + 1900, // remains NaN if year is NaN
@@ -447,11 +287,11 @@ export class BuffaloZcl extends Buffalo {
             this.writeUInt16(entry.transitionTime);
 
             if (entry.heatSetpoint != null) {
-                this.writeUInt16(entry.heatSetpoint);
+                this.writeInt16(entry.heatSetpoint);
             }
 
             if (entry.coolSetpoint != null) {
-                this.writeUInt16(entry.coolSetpoint);
+                this.writeInt16(entry.coolSetpoint);
             }
         }
     }
@@ -471,11 +311,11 @@ export class BuffaloZcl extends Buffalo {
             };
 
             if (heat) {
-                entry.heatSetpoint = this.readUInt16();
+                entry.heatSetpoint = this.readInt16();
             }
 
             if (cool) {
-                entry.coolSetpoint = this.readUInt16();
+                entry.coolSetpoint = this.readInt16();
             }
 
             result.push(entry);
@@ -785,7 +625,7 @@ export class BuffaloZcl extends Buffalo {
         const length = this.readUInt8();
         const value: Record<number, number | number[]> = {};
 
-        if (length === 0xff) {
+        if (length === UINT8_NON_VALUE) {
             return value;
         }
 
@@ -818,7 +658,7 @@ export class BuffaloZcl extends Buffalo {
             case DataType.BITMAP8:
             case DataType.UINT8:
             case DataType.ENUM8: {
-                this.writeZclUInt8(value);
+                this.writeUInt8(value);
                 break;
             }
             case DataType.DATA16:
@@ -827,13 +667,13 @@ export class BuffaloZcl extends Buffalo {
             case DataType.ENUM16:
             case DataType.CLUSTER_ID:
             case DataType.ATTR_ID: {
-                this.writeZclUInt16(value);
+                this.writeUInt16(value);
                 break;
             }
             case DataType.DATA24:
             case DataType.BITMAP24:
             case DataType.UINT24: {
-                this.writeZclUInt24(value);
+                this.writeUInt24(value);
                 break;
             }
             case DataType.DATA32:
@@ -841,63 +681,63 @@ export class BuffaloZcl extends Buffalo {
             case DataType.UINT32:
             case DataType.UTC:
             case DataType.BAC_OID: {
-                this.writeZclUInt32(value);
+                this.writeUInt32(value);
                 break;
             }
             case DataType.DATA40:
             case DataType.BITMAP40:
             case DataType.UINT40: {
-                this.writeZclUInt40(value);
+                this.writeUInt40(value);
                 break;
             }
             case DataType.DATA48:
             case DataType.BITMAP48:
             case DataType.UINT48: {
-                this.writeZclUInt48(value);
+                this.writeUInt48(value);
                 break;
             }
             case DataType.DATA56:
             case DataType.BITMAP56:
             case DataType.UINT56: {
-                this.writeZclUInt56(value);
+                this.writeUInt56(value);
                 break;
             }
             case DataType.DATA64:
             case DataType.BITMAP64:
             case DataType.UINT64: {
-                this.writeZclUInt64(value);
+                this.writeUInt64(value);
                 break;
             }
             case DataType.INT8: {
-                this.writeZclInt8(value);
+                this.writeInt8(value);
                 break;
             }
             case DataType.INT16: {
-                this.writeZclInt16(value);
+                this.writeInt16(value);
                 break;
             }
             case DataType.INT24: {
-                this.writeZclInt24(value);
+                this.writeInt24(value);
                 break;
             }
             case DataType.INT32: {
-                this.writeZclInt32(value);
+                this.writeInt32(value);
                 break;
             }
             case DataType.INT40: {
-                this.writeZclInt40(value);
+                this.writeInt40(value);
                 break;
             }
             case DataType.INT48: {
-                this.writeZclInt48(value);
+                this.writeInt48(value);
                 break;
             }
             case DataType.INT56: {
-                this.writeZclInt56(value);
+                this.writeInt56(value);
                 break;
             }
             case DataType.INT64: {
-                this.writeZclInt64(value);
+                this.writeInt64(value);
                 break;
             }
             // case DataType.SEMI_PREC: {
@@ -1047,7 +887,7 @@ export class BuffaloZcl extends Buffalo {
             case DataType.BITMAP8:
             case DataType.UINT8:
             case DataType.ENUM8: {
-                return this.readZclUInt8();
+                return this.readUInt8();
             }
             case DataType.DATA16:
             case DataType.BITMAP16:
@@ -1055,63 +895,63 @@ export class BuffaloZcl extends Buffalo {
             case DataType.ENUM16:
             case DataType.CLUSTER_ID:
             case DataType.ATTR_ID: {
-                return this.readZclUInt16();
+                return this.readUInt16();
             }
             case DataType.DATA24:
             case DataType.BITMAP24:
             case DataType.UINT24: {
-                return this.readZclUInt24();
+                return this.readUInt24();
             }
             case DataType.DATA32:
             case DataType.BITMAP32:
             case DataType.UINT32:
             case DataType.UTC:
             case DataType.BAC_OID: {
-                return this.readZclUInt32();
+                return this.readUInt32();
             }
             case DataType.DATA40:
             case DataType.BITMAP40:
             case DataType.UINT40: {
-                return this.readZclUInt40();
+                return this.readUInt40();
             }
             case DataType.DATA48:
             case DataType.BITMAP48:
             case DataType.UINT48: {
-                return this.readZclUInt48();
+                return this.readUInt48();
             }
             case DataType.DATA56:
             case DataType.BITMAP56:
             case DataType.UINT56: {
-                return this.readZclUInt56();
+                return this.readUInt56();
             }
             case DataType.DATA64:
             case DataType.BITMAP64:
             case DataType.UINT64: {
-                return this.readZclUInt64();
+                return this.readUInt64();
             }
             case DataType.INT8: {
-                return this.readZclInt8();
+                return this.readInt8();
             }
             case DataType.INT16: {
-                return this.readZclInt16();
+                return this.readInt16();
             }
             case DataType.INT24: {
-                return this.readZclInt24();
+                return this.readInt24();
             }
             case DataType.INT32: {
-                return this.readZclInt32();
+                return this.readInt32();
             }
             case DataType.INT40: {
-                return this.readZclInt40();
+                return this.readInt40();
             }
             case DataType.INT48: {
-                return this.readZclInt48();
+                return this.readInt48();
             }
             case DataType.INT56: {
-                return this.readZclInt56();
+                return this.readInt56();
             }
             case DataType.INT64: {
-                return this.readZclInt64();
+                return this.readInt64();
             }
             // case DataType.SEMI_PREC: {
             //     // https://tc39.es/proposal-float16array/
