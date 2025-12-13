@@ -486,7 +486,7 @@ export class Driver extends EventEmitter {
                     if (msgType === EmberOutgoingMessageType.OUTGOING_MULTICAST) {
                         const apsFrame = frame.apsFrame;
                         if (apsFrame.destinationEndpoint === 255) {
-                            this.multicast.subscribe(apsFrame.groupId, 1);
+                            this.multicast.subscribe(apsFrame.groupId, 1).catch(() => {});
                         }
                     }
                 }
@@ -632,7 +632,7 @@ export class Driver extends EventEmitter {
             if (Buffer.from(ieee.value).indexOf(Buffer.from(rec.prefix)) === 0) {
                 // set ManufacturerCode
                 logger.debug(`handleNodeJoined: change ManufacturerCode for ieee ${ieee} to ${rec.mfgId}`, NS);
-                this.resetMfgId(rec.mfgId);
+                this.resetMfgId(rec.mfgId).catch(() => {});
                 break;
             }
         }

@@ -326,7 +326,7 @@ class Driver extends events.EventEmitter {
             this.handleApsQueueOnDeviceState();
         } else if (event === DriverEvent.Tick) {
             if (this.needWatchdogReset()) {
-                this.resetWatchdog();
+                this.resetWatchdog().catch(() => {});
             }
 
             this.processQueue();
@@ -748,7 +748,7 @@ class Driver extends events.EventEmitter {
                 // if the connection is open try to close it every second.
                 this.driverStateStart = Date.now();
                 if (this.isOpen()) {
-                    this.close();
+                    this.close().catch(() => {});
                 } else {
                     this.driverState = DriverState.WaitToReconnect;
                 }
