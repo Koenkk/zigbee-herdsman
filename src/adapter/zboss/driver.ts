@@ -2,10 +2,10 @@
 
 import assert from "node:assert";
 import EventEmitter from "node:events";
-
 import equals from "fast-deep-equal/es6";
 import type {KeyValue} from "../../controller/tstype";
-import {Queue, Waitress} from "../../utils";
+import {Waitress} from "../../utils";
+import {AsyncMutex} from "../../utils/async-mutex";
 import {logger} from "../../utils/logger";
 import type * as ZSpec from "../../zspec";
 import * as Zdo from "../../zspec/zdo";
@@ -38,7 +38,7 @@ type ZBOSSNetworkInfo = {
 export class ZBOSSDriver extends EventEmitter {
     public readonly port: ZBOSSUart;
     private waitress: Waitress<ZBOSSFrame, ZBOSSWaitressMatcher>;
-    private queue: Queue;
+    private queue: AsyncMutex;
     private tsn = 1; // command sequence
     private nwkOpt: TsType.NetworkOptions;
     public netInfo!: ZBOSSNetworkInfo; // expected valid upon startup of driver
@@ -46,7 +46,7 @@ export class ZBOSSDriver extends EventEmitter {
     constructor(options: TsType.SerialPortOptions, nwkOpt: TsType.NetworkOptions) {
         super();
         this.nwkOpt = nwkOpt;
-        this.queue = new Queue();
+        this.queue = new AsyncMutex();
         this.waitress = new Waitress<ZBOSSFrame, ZBOSSWaitressMatcher>(this.waitressValidator, this.waitressTimeoutFormatter);
 
         this.port = new ZBOSSUart(options);
@@ -266,7 +266,7 @@ export class ZBOSSDriver extends EventEmitter {
             throw new Error("Connection not initialized");
         }
 
-        return await this.queue.execute<ZBOSSFrame>(async (): Promise<ZBOSSFrame> => {
+        return await this.queue.run<ZBOSSFrame>(async (): Promise<ZBOSSFrame> => {
             const frame = makeFrame(FrameType.REQUEST, commandId, params);
             frame.tsn = this.tsn;
             const waiter = this.waitFor(commandId, commandId === CommandId.NCP_RESET ? undefined : this.tsn, timeout);
@@ -383,7 +383,7 @@ export class ZBOSSDriver extends EventEmitter {
         const cmdLog = `${Zdo.ClusterId[clusterId]}(cmd: ${commandId})`;
         logger.debug(() => `===> ZDO ${cmdLog}: ${payload.toString("hex")}`, NS);
 
-        return await this.queue.execute<ZBOSSFrame | undefined>(async () => {
+        return await this.queue.run<ZBOSSFrame | undefined>(async () => {
             const buf = Buffer.alloc(5 + payload.length);
             buf.writeInt8(0, 0);
             buf.writeInt8(FrameType.REQUEST, 1);

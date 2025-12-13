@@ -1,8 +1,7 @@
 /* v8 ignore start */
 
 import EventEmitter from "node:events";
-
-import {Queue} from "../../../utils";
+import {AsyncMutex} from "../../../utils/async-mutex";
 import {logger} from "../../../utils/logger";
 import * as ZSpec from "../../../zspec";
 import type {Eui64, ExtendedPanId, NodeId, PanId} from "../../../zspec/tstypes";
@@ -239,7 +238,7 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
     private frameSequence: number;
     /** Sequence used for EZSP send() tagging. static uint8_t */
     private sendSequence: number;
-    private readonly queue: Queue;
+    private readonly queue: AsyncMutex;
     /** Awaiting response resolve/timer struct. undefined if not waiting for response. */
     private responseWaiter?: EzspWaiter;
 
@@ -254,7 +253,7 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
         this.callbackFrameContents = Buffer.alloc(EZSP_MAX_FRAME_LENGTH);
         this.callbackBuffalo = new EzspBuffalo(this.callbackFrameContents, 0);
 
-        this.queue = new Queue(1);
+        this.queue = new AsyncMutex();
         this.ash = new UartAsh(options);
 
         this.version = 0;
@@ -535,7 +534,7 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
             return EzspStatus.ERROR_COMMAND_TOO_LONG;
         }
 
-        return await this.queue.execute<EzspStatus>(async () => {
+        return await this.queue.run<EzspStatus>(async () => {
             let status: EzspStatus = EzspStatus.ASH_ERROR_TIMEOUTS; // will be overwritten below as necessary
             const frameId = sendBuffalo.getFrameId();
             const frameString = `[FRAME: ID=${frameId}:"${EzspFrameID[frameId]}" Seq=${sequence} Len=${length}]`;

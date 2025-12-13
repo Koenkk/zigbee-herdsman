@@ -1,8 +1,8 @@
 import assert from "node:assert";
 import events from "node:events";
 import {Socket} from "node:net";
-
-import {Queue, Waitress, wait} from "../../../utils";
+import {Waitress, wait} from "../../../utils";
+import {AsyncMutex} from "../../../utils/async-mutex";
 import {logger} from "../../../utils/logger";
 import {ClusterId as ZdoClusterId} from "../../../zspec/zdo";
 import {SerialPort} from "../../serialPort";
@@ -47,7 +47,7 @@ export class Znp extends events.EventEmitter {
     private unpiWriter: UnpiWriter;
     private unpiParser: UnpiParser;
     private initialized: boolean;
-    private queue: Queue;
+    private queue: AsyncMutex;
     private waitress: Waitress<ZpiObject, WaitressMatcher>;
 
     public constructor(path: string, baudRate: number, rtscts: boolean) {
@@ -59,7 +59,7 @@ export class Znp extends events.EventEmitter {
 
         this.initialized = false;
 
-        this.queue = new Queue();
+        this.queue = new AsyncMutex();
         this.waitress = new Waitress<ZpiObject, WaitressMatcher>(this.waitressValidator, this.waitressTimeoutFormatter);
         this.unpiWriter = new UnpiWriter();
         this.unpiParser = new UnpiParser();
@@ -246,7 +246,7 @@ export class Znp extends events.EventEmitter {
 
         const object = ZpiObject.createRequest(subsystem, command, payload);
 
-        return this.queue.execute<ZpiObject | undefined>(async () => {
+        return this.queue.run<ZpiObject | undefined>(async () => {
             logger.debug(() => `--> ${object}`, NS);
 
             if (object.type === Type.SREQ) {
@@ -287,7 +287,7 @@ export class Znp extends events.EventEmitter {
     }
 
     public requestZdo(clusterId: ZdoClusterId, payload: Buffer, waiterID?: number): Promise<void> {
-        return this.queue.execute(async () => {
+        return this.queue.run(async () => {
             const cmd = Definition[Subsystem.ZDO].find((c) => isMtCmdSreqZdo(c) && c.zdoClusterId === clusterId);
             assert(cmd, `Command for ZDO cluster ID '${clusterId}' not supported.`);
 
