@@ -92,6 +92,14 @@ const USB_FINGERPRINTS: Record<DiscoverableUsbAdapter, UsbAdapterFingerprint[]> 
         //     pathRegex: '.*.*',
         // },
         {
+            // SMLight slzb-06m* (all variants) USB-mode
+            vendorId: "10c4",
+            productId: "ea60",
+            manufacturer: "SMLIGHT",
+            pathRegex: ".*slzb-06m.*",
+            options: {rtscts: false},
+        },
+        {
             // SMLight slzb-07
             vendorId: "10c4",
             productId: "ea60",
@@ -117,6 +125,7 @@ const USB_FINGERPRINTS: Record<DiscoverableUsbAdapter, UsbAdapterFingerprint[]> 
             // /dev/serial/by-id/usb-ITEAD_SONOFF_Zigbee_3.0_USB_Dongle_Plus_V2_20240122184111-if00
             // /dev/serial/by-id/usb-ITead_Sonoff_Zigbee_3.0_USB_Dongle_Plus_186ff44314e2ed11b891eb5162c61111-if00-port0
             pathRegex: ".*sonoff.*plus.*",
+            options: {rtscts: false},
         },
         {
             // Sonoff ZBDongle-E V2 (CP variant)
@@ -125,6 +134,7 @@ const USB_FINGERPRINTS: Record<DiscoverableUsbAdapter, UsbAdapterFingerprint[]> 
             manufacturer: "ITEAD",
             // /dev/serial/by-id/usb-Itead_Sonoff_Zigbee_3.0_USB_Dongle_Plus_V2_a6ee897e4d1fef11aa004ad0639e525b-if00-port0
             pathRegex: ".*sonoff.*plus_v2_.*",
+            options: {rtscts: false},
         },
         {
             // Sonoff ZBDongle-M
@@ -133,6 +143,7 @@ const USB_FINGERPRINTS: Record<DiscoverableUsbAdapter, UsbAdapterFingerprint[]> 
             manufacturer: "SONOFF",
             // /dev/serial/by-id/usb-SONOFF_SONOFF_Dongle_Max_MG24_08965d6b0674ef11b2f4e61e313510fd-if00-port0
             pathRegex: ".*sonoff.*max.*",
+            options: {rtscts: false},
         },
         {
             // SONOFF Dongle Plus MG24
@@ -141,6 +152,7 @@ const USB_FINGERPRINTS: Record<DiscoverableUsbAdapter, UsbAdapterFingerprint[]> 
             manufacturer: "SONOFF",
             // /dev/serial/by-id/usb-SONOFF_SONOFF_Dongle_Plus_MG24_b023a583a66bef118e30a3adc169b110-if00-port0
             pathRegex: ".*sonoff.*plus.*mg24.*",
+            options: {rtscts: false},
         },
         {
             // SONOFF Dongle Lite MG21
@@ -149,6 +161,7 @@ const USB_FINGERPRINTS: Record<DiscoverableUsbAdapter, UsbAdapterFingerprint[]> 
             manufacturer: "SONOFF",
             // /dev/serial/by-id/usb-SONOFF_SONOFF_Dongle_Lite_MG21_c82fc0a1a36bef11a026a1adc169b110-if00-port0
             pathRegex: ".*sonoff.*lite.*mg21.*",
+            options: {rtscts: false},
         },
         // {
         //     // TODO: Z-station by z-wave.me (EFR32MG21A020F1024IM32)

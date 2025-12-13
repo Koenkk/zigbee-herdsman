@@ -402,6 +402,7 @@ describe("Adapter", () => {
                     path: EMBER_ZBDONGLE_E.path,
                     adapter: "ember",
                     baudRate: 115200,
+                    rtscts: false,
                 });
 
                 listSpy.mockReturnValueOnce([ZSTACK_CC2538]);
@@ -461,6 +462,7 @@ describe("Adapter", () => {
                 expect(adapter.serialPortOptions).toStrictEqual({
                     path: "COM3",
                     adapter: "ember",
+                    rtscts: false,
                 });
             });
 
@@ -488,6 +490,7 @@ describe("Adapter", () => {
                 expect(adapter.serialPortOptions).toStrictEqual({
                     path: "COM3",
                     adapter: "ember",
+                    rtscts: false,
                 });
             });
 
@@ -588,6 +591,7 @@ describe("Adapter", () => {
                 expect(adapter.serialPortOptions).toStrictEqual({
                     path: EMBER_ZBDONGLE_E_CP.path,
                     adapter: "ember",
+                    rtscts: false,
                 });
 
                 listSpy.mockReturnValueOnce([ZSTACK_SMLIGHT_SLZB_06P10]);
@@ -627,6 +631,7 @@ describe("Adapter", () => {
                 expect(adapter.serialPortOptions).toStrictEqual({
                     path: EMBER_ZBDONGLE_E.path,
                     adapter: "ember",
+                    rtscts: false,
                 });
             });
 
@@ -709,6 +714,7 @@ describe("Adapter", () => {
                 expect(adapter.serialPortOptions).toStrictEqual({
                     path: EMBER_ZBDONGLE_E.path,
                     adapter: "ember",
+                    rtscts: false,
                 });
 
                 listSpy.mockReturnValueOnce([EMBER_ZBDONGLE_E]);
@@ -722,6 +728,7 @@ describe("Adapter", () => {
                 expect(adapter.serialPortOptions).toStrictEqual({
                     path: EMBER_ZBDONGLE_E.path,
                     adapter: "ezsp",
+                    rtscts: false,
                 });
 
                 listSpy.mockReturnValueOnce([ZSTACK_CC2538]);
@@ -935,6 +942,7 @@ describe("Adapter", () => {
                 expect(adapter.serialPortOptions).toStrictEqual({
                     path: EMBER_ZBDONGLE_E.path,
                     adapter: "ember",
+                    rtscts: false,
                 });
 
                 listSpy.mockReturnValueOnce([EMBER_ZBDONGLE_E]);
@@ -946,6 +954,7 @@ describe("Adapter", () => {
                 expect(adapter.serialPortOptions).toStrictEqual({
                     path: EMBER_ZBDONGLE_E.path,
                     adapter: "ezsp",
+                    rtscts: false,
                 });
 
                 listSpy.mockReturnValueOnce([ZSTACK_CC2538]);
@@ -1047,6 +1056,7 @@ describe("Adapter", () => {
                 expect(adapter.serialPortOptions).toStrictEqual({
                     path: EMBER_ZBDONGLE_E.path,
                     adapter: "ember",
+                    rtscts: false,
                 });
 
                 listSpy.mockReturnValueOnce([ZSTACK_CC2538]);
