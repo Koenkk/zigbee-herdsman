@@ -29,15 +29,6 @@ const Type = UnpiConstants.Type;
 const {ZnpCommandStatus, AddressMode} = Constants.COMMON;
 
 const DataConfirmTimeout = 9999; // Not an actual code
-const DataConfirmErrorCodeLookup: {[k: number]: string} = {
-    [DataConfirmTimeout]: "Timeout",
-    26: "MAC no resources",
-    183: "APS no ack",
-    205: "No network route",
-    225: "MAC channel access failure",
-    233: "MAC no ack",
-    240: "MAC transaction expired",
-};
 
 interface WaitressMatcher {
     address?: number | string;
@@ -52,7 +43,8 @@ interface WaitressMatcher {
 class DataConfirmError extends Error {
     public code: number;
     constructor(code: number) {
-        const message = `Data request failed with error: '${DataConfirmErrorCodeLookup[code]}' (${code})`;
+        const error = code === DataConfirmTimeout ? "'TIMEOUT'" : `'${ZnpCommandStatus[code]}' (0x${code.toString(16)})`;
+        const message = `Data request failed with error: ${error}`;
         super(message);
         this.code = code;
     }
