@@ -18,6 +18,16 @@ export const EMBER_ZBDONGLE_E_CP = {
     productId: "ea60",
     manufacturer: "ITEAD",
 };
+export const EMBER_ZBDONGLE_E_WIN = {
+    path: "COM6",
+    manufacturer: "Silicon Labs",
+    serialNumber: "F881C5D59D38E123456C317AF12345E5",
+    pnpId: "USB\\VID_10C4&PID_EA60\\F881C5D59D38E123456C317AF12345E5",
+    locationId: "Port_#0008.Hub_#0002",
+    friendlyName: "Silicon Labs CP210x USB to UART Bridge (COM6)",
+    vendorId: "10C4",
+    productId: "EA60",
+};
 // vendorId+productId conflict with all 10c4:ea60
 export const EMBER_SKYCONNECT = {
     path: "/dev/serial/by-id/usb-Nabu_Casa_SkyConnect_v1.0_3abe54797c91ed118fc3cad13b20a111-if00-port0",

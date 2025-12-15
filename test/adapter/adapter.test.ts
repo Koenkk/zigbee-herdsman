@@ -17,6 +17,7 @@ import {
     EMBER_SKYCONNECT,
     EMBER_ZBDONGLE_E,
     EMBER_ZBDONGLE_E_CP,
+    EMBER_ZBDONGLE_E_WIN,
     ZBOSS_NORDIC,
     ZBT_1_PNPID,
     ZBT_2,
@@ -455,7 +456,7 @@ describe("Adapter", () => {
                     },
                 ]);
 
-                const adapter = await Adapter.create({panID: 0x1a62, channelList: [11]}, {}, "test.db.backup", {disableLED: false});
+                let adapter = await Adapter.create({panID: 0x1a62, channelList: [11]}, {}, "test.db.backup", {disableLED: false});
 
                 expect(adapter).toBeInstanceOf(EmberAdapter);
                 // @ts-expect-error protected
@@ -463,6 +464,32 @@ describe("Adapter", () => {
                     path: "COM3",
                     adapter: "ember",
                     rtscts: false,
+                });
+
+                listSpy.mockReturnValueOnce([EMBER_ZBDONGLE_E_WIN]);
+
+                adapter = await Adapter.create({panID: 0x1a62, channelList: [11]}, {adapter: "ember", path: "COM6"}, "test.db.backup", {
+                    disableLED: false,
+                });
+
+                expect(adapter).toBeInstanceOf(EmberAdapter);
+                // @ts-expect-error protected
+                expect(adapter.serialPortOptions).toStrictEqual({
+                    path: EMBER_ZBDONGLE_E_WIN.path,
+                    adapter: "ember",
+                });
+
+                listSpy.mockReturnValueOnce([EMBER_ZBDONGLE_E_WIN]);
+
+                adapter = await Adapter.create({panID: 0x1a62, channelList: [11]}, {adapter: "ezsp", path: "COM6"}, "test.db.backup", {
+                    disableLED: false,
+                });
+
+                expect(adapter).toBeInstanceOf(EZSPAdapter);
+                // @ts-expect-error protected
+                expect(adapter.serialPortOptions).toStrictEqual({
+                    path: EMBER_ZBDONGLE_E_WIN.path,
+                    adapter: "ezsp",
                 });
             });
 
