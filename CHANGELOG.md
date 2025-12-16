@@ -1,5 +1,14 @@
 # Changelog
 
+## [8.0.1](https://github.com/Koenkk/zigbee-herdsman/compare/v8.0.0...v8.0.1) (2025-12-16)
+
+
+### Bug Fixes
+
+* Adapter detection lowercase vid/pid ([#1597](https://github.com/Koenkk/zigbee-herdsman/issues/1597)) ([9318068](https://github.com/Koenkk/zigbee-herdsman/commit/93180685738b62ff5bd0fcee36e45007bbc5fe91))
+* onZclPayload crash when invalid post read ([#1598](https://github.com/Koenkk/zigbee-herdsman/issues/1598)) ([b8c50cb](https://github.com/Koenkk/zigbee-herdsman/commit/b8c50cbe49ecdd93eacfba9f6ce71ced520898cb))
+* ZStack: map all data confirm errors ([#1593](https://github.com/Koenkk/zigbee-herdsman/issues/1593)) ([f4e9db4](https://github.com/Koenkk/zigbee-herdsman/commit/f4e9db45b63085e89e7525951aeeacf937147fd7))
+
 ## [8.0.0](https://github.com/Koenkk/zigbee-herdsman/compare/v7.0.6...v8.0.0) (2025-12-13)
 
 
