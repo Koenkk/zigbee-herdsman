@@ -302,11 +302,6 @@ const USB_FINGERPRINTS: Record<DiscoverableUsbAdapter, UsbAdapterFingerprint[]> 
     ],
 };
 
-/**
- * Vendor and Product IDs that are prone to conflict if only matching on vendorId+productId.
- */
-const USB_FINGERPRINTS_CONFLICT_IDS: ReadonlyArray<string /* vendorId:productId */> = ["10c4:ea60"];
-
 /** Time allotted for mDNS scanning */
 const MDNS_SCAN_TIME = 2000;
 
@@ -322,6 +317,24 @@ async function getSerialPortList(): Promise<PortInfo[]> {
     portInfos.sort((a, b) => (a.path < b.path ? -1 : 1));
 
     return portInfos;
+}
+
+/**
+ * Match on Vendor and Product IDs that are prone to conflict if only matching on vendorId+productId.
+ * @param vendorId
+ * @param productId
+ * @returns True if conflict-prone
+ */
+function matchConflictProne(vendorId: string | undefined, productId: string | undefined): boolean {
+    if (!vendorId || !productId) {
+        return true; // can't match, no point looking it up (logic is expected to handle this further down the chain)
+    }
+
+    const lcVendorId = vendorId.toLowerCase();
+    const lcProductId = productId.toLowerCase();
+
+    // can add more check-pairs as needed
+    return lcVendorId === "10c4" && lcProductId === "ea60";
 }
 
 /**
@@ -436,8 +449,12 @@ export async function matchUsbAdapter(adapter: Adapter, path: string): Promise<U
             continue;
         }
 
-        const conflictProne = USB_FINGERPRINTS_CONFLICT_IDS.includes(`${portInfo.vendorId}:${portInfo.productId}`);
-        const match = matchUsbFingerprint(portInfo, USB_FINGERPRINTS[adapter === "ezsp" ? "ember" : adapter], isWindows, conflictProne);
+        const match = matchUsbFingerprint(
+            portInfo,
+            USB_FINGERPRINTS[adapter === "ezsp" ? "ember" : adapter],
+            isWindows,
+            matchConflictProne(portInfo.vendorId, portInfo.productId),
+        );
 
         if (match) {
             logger.info(() => `Matched adapter: ${JSON.stringify(portInfo)} => ${adapter}: ${JSON.stringify(match[1])}`, NS);
@@ -452,9 +469,9 @@ export function findUsbAdapterBestMatch(
     adapter: Adapter | undefined,
     portInfo: PortInfo,
     isWindows: boolean,
-    conflictProne: boolean,
 ): [DiscoverableUsbAdapter, NonNullable<ReturnType<typeof matchUsbFingerprint>>] | undefined {
     let bestMatch: [DiscoverableUsbAdapter, NonNullable<ReturnType<typeof matchUsbFingerprint>>] | undefined;
+    const conflictProne = matchConflictProne(portInfo.vendorId, portInfo.productId);
 
     for (const key in USB_FINGERPRINTS) {
         if (adapter && adapter !== key) {
@@ -493,8 +510,7 @@ export async function findUsbAdapter(adapter?: Adapter, path?: string): Promise<
             continue;
         }
 
-        const conflictProne = USB_FINGERPRINTS_CONFLICT_IDS.includes(`${portInfo.vendorId}:${portInfo.productId}`);
-        const match = findUsbAdapterBestMatch(adapter, portInfo, isWindows, conflictProne);
+        const match = findUsbAdapterBestMatch(adapter, portInfo, isWindows);
 
         if (match && (!bestMatch || bestMatch[1][1] < match[1][1])) {
             bestMatch = match;
@@ -655,14 +671,7 @@ export async function findAllDevices(): Promise<{name: string; path: string; ada
 
         for (const portInfo of portList) {
             // override matching on Windows, too many chances of mismatch due to lacking data
-            const bestMatch = isWindows
-                ? undefined
-                : findUsbAdapterBestMatch(
-                      undefined,
-                      portInfo,
-                      isWindows,
-                      USB_FINGERPRINTS_CONFLICT_IDS.includes(`${portInfo.vendorId}:${portInfo.productId}`),
-                  );
+            const bestMatch = isWindows ? undefined : findUsbAdapterBestMatch(undefined, portInfo, isWindows);
             // @ts-expect-error friendlyName Windows only
             const friendlyName = portInfo.friendlyName ?? portInfo.pnpId;
 
