@@ -9791,4 +9791,41 @@ describe("Controller", () => {
         );
         expect(deepClone(mocksendZclFrameToEndpoint.mock.calls[0][3])).toStrictEqual(deepClone(expectedFrame));
     });
+
+    it("ignores invalid attributes when processing ZCL attribute", async () => {
+        await controller.start();
+        await mockAdapterEvents.deviceJoined({networkAddress: 178, ieeeAddr: "0x178"});
+        mockLogger.debug.mockClear();
+
+        const device = controller.getDeviceByIeeeAddr("0x178")!;
+        const frame = Zcl.Frame.create(
+            Zcl.FrameType.GLOBAL,
+            Zcl.Direction.CLIENT_TO_SERVER,
+            true,
+            undefined,
+            10,
+            "readRsp",
+            Zcl.Foundation.read.ID,
+            [{attrId: 0x0005, status: 0, dataType: 66, attrData: "a model id that is too long for spec"}],
+            {},
+        );
+
+        await mockAdapterEvents.zclPayload({
+            wasBroadcast: false,
+            address: "0x178",
+            clusterID: frame.cluster.ID,
+            data: frame.toBuffer(),
+            header: frame.header,
+            endpoint: 1,
+            linkquality: 50,
+            groupID: 0,
+        });
+
+        // coverage: prevent crash in onZclPayload when ZCL metadata validation fails
+        expect(mockLogger.debug).toHaveBeenCalledWith(
+            "Ignoring attribute modelId from response: Error: modelId requires max length of 32",
+            "zh:controller:zcl",
+        );
+        expect(device.genBasic.modelId).toStrictEqual(" other multi-endpoint device");
+    });
 });

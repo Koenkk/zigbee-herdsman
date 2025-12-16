@@ -1,7 +1,10 @@
+import {logger} from "../../utils/logger";
 import * as Zcl from "../../zspec/zcl";
 import type {TFoundation} from "../../zspec/zcl/definition/clusters-types";
 import type {Cluster, CustomClusters} from "../../zspec/zcl/definition/tstype";
 import type {ClusterOrRawWriteAttributes, TCustomCluster} from "../tstype";
+
+const NS = "zh:controller:zcl";
 
 // Legrand devices (e.g. 4129) fail to set the manufacturerSpecific flag and
 // manufacturerCode in the frame header, despite using specific attributes.
@@ -29,9 +32,13 @@ function attributeKeyValue<Cl extends number | string, Custom extends TCustomClu
         const attribute = cluster.getAttribute(item.attrId);
 
         if (attribute) {
-            const attrData = Zcl.Utils.processAttributePostRead(attribute, item.attrData);
+            try {
+                const attrData = Zcl.Utils.processAttributePostRead(attribute, item.attrData);
 
-            payload[attribute.name] = attrData;
+                payload[attribute.name] = attrData;
+            } catch (error) {
+                logger.debug(`Ignoring attribute ${attribute.name} from response: ${error}`, NS);
+            }
         } else {
             payload[item.attrId] = item.attrData;
         }

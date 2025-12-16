@@ -534,7 +534,7 @@ export const MOCK_DEVICES: {
         },
         attributes: {
             1: {
-                modelId: " some other multi-endpoint device",
+                modelId: " other multi-endpoint device",
                 manufacturerName: "Legrand",
                 zclVersion: 2,
                 appVersion: 0,
