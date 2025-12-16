@@ -2357,7 +2357,7 @@ describe("zstack-adapter", () => {
         } catch (e) {
             error = e;
         }
-        expect(error.message).toStrictEqual("Data request failed with error: 'undefined' (201)");
+        expect(error.message).toStrictEqual("Data request failed with error: 'NWK_UNSUPPORTED_ATTRIBUTE' (0xc9)");
     });
 
     it("Send zcl frame network address with default response", async () => {
@@ -2434,7 +2434,7 @@ describe("zstack-adapter", () => {
             error = e;
         }
 
-        expect(error.message).toStrictEqual("Data request failed with error: 'MAC transaction expired' (240)");
+        expect(error.message).toStrictEqual("Data request failed with error: 'MAC_TRANSACTION_EXPIRED' (0xf0)");
         expect(mockZnpRequest).toHaveBeenCalledTimes(9);
         expect(mockZnpRequestZdo).toHaveBeenCalledTimes(1);
         expect(mockZnpRequest).toHaveBeenNthCalledWith(
@@ -2511,7 +2511,7 @@ describe("zstack-adapter", () => {
             error = e;
         }
 
-        expect(error.message).toStrictEqual("Data request failed with error: 'MAC transaction expired' (240)");
+        expect(error.message).toStrictEqual("Data request failed with error: 'MAC_TRANSACTION_EXPIRED' (0xf0)");
         expect(mockZnpRequest).toHaveBeenCalledTimes(7);
         expect(mockZnpRequestZdo).toHaveBeenCalledTimes(1);
         expect(mockZnpRequest).toHaveBeenNthCalledWith(
@@ -2585,7 +2585,7 @@ describe("zstack-adapter", () => {
             error = e;
         }
 
-        expect(error.message).toStrictEqual("Data request failed with error: 'MAC no ack' (233)");
+        expect(error.message).toStrictEqual("Data request failed with error: 'MAC_NO_ACK' (0xe9)");
         expect(mockZnpRequest).toHaveBeenCalledTimes(6);
         expect(mockZnpRequestZdo).toHaveBeenCalledTimes(1);
         expect(mockZnpRequest).toHaveBeenNthCalledWith(
@@ -2658,7 +2658,7 @@ describe("zstack-adapter", () => {
             error = e;
         }
 
-        expect(error.message).toStrictEqual("Data request failed with error: 'MAC no ack' (233)");
+        expect(error.message).toStrictEqual("Data request failed with error: 'MAC_NO_ACK' (0xe9)");
         // expect(mockZnpRequest).toHaveBeenCalledTimes(7);
         // expect(mockZnpRequestZdo).toHaveBeenCalledTimes(1);
         expect(mockZnpRequest).toHaveBeenNthCalledWith(
@@ -2731,7 +2731,7 @@ describe("zstack-adapter", () => {
             error = e;
         }
 
-        expect(error.message).toStrictEqual("Data request failed with error: 'MAC no ack' (233)");
+        expect(error.message).toStrictEqual("Data request failed with error: 'MAC_NO_ACK' (0xe9)");
         expect(mockZnpRequest).toHaveBeenCalledTimes(1);
     });
 
@@ -2814,7 +2814,7 @@ describe("zstack-adapter", () => {
         } catch (e) {
             error = e;
         }
-        expect(error.message).toStrictEqual("Data request failed with error: 'Timeout' (9999)");
+        expect(error.message).toStrictEqual("Data request failed with error: 'TIMEOUT'");
         expect(mockZnpRequest).toHaveBeenCalledTimes(1);
         expect(mockZnpRequest).toHaveBeenNthCalledWith(
             1,
@@ -3059,7 +3059,7 @@ describe("zstack-adapter", () => {
             },
             99,
         );
-        expect(error.message).toStrictEqual("Data request failed with error: 'undefined' (184)");
+        expect(error.message).toStrictEqual("Data request failed with error: 'APS_DUPLICATE_ENTRY' (0xb8)");
     });
 
     it("Send zcl frame network address and default response", async () => {
@@ -3227,7 +3227,7 @@ describe("zstack-adapter", () => {
         } catch (e) {
             error = e;
         }
-        expect(error.message).toStrictEqual("Data request failed with error: 'undefined' (201)");
+        expect(error.message).toStrictEqual("Data request failed with error: 'NWK_UNSUPPORTED_ATTRIBUTE' (0xc9)");
     });
 
     it("Send zcl frame network address data confirm fails without default response", async () => {
@@ -3241,7 +3241,7 @@ describe("zstack-adapter", () => {
         } catch (e) {
             error = e;
         }
-        expect(error.message).toStrictEqual("Data request failed with error: 'undefined' (201)");
+        expect(error.message).toStrictEqual("Data request failed with error: 'NWK_UNSUPPORTED_ATTRIBUTE' (0xc9)");
     });
 
     it("Send zcl frame network address timeout should discover route and retry", async () => {
