@@ -1,20 +1,27 @@
+import assert from "node:assert";
 import {existsSync, readFileSync} from "node:fs";
 import {urlToHttpOptions} from "node:url";
 import type * as Models from "../models";
 
 export function isTcpPath(path: string): boolean {
-    // tcp path must be:
-    // tcp://<host>:<port>
-    const regex = /^(?:tcp:\/\/)\S+?[:]\d+$/gm;
-    return regex.test(path);
+    try {
+        // validation as side-effect
+        new URL(path);
+
+        return true;
+    } catch {
+        return false;
+    }
 }
 
 export function parseTcpPath(path: string): {host: string; port: number} {
-    // built-in extra validation
     const info = urlToHttpOptions(new URL(path));
 
+    // urlToHttpOptions has a weird return type, extra validation doesn't hurt
+    assert(info.hostname && info.port);
+
     return {
-        host: String(info.hostname),
+        host: info.hostname,
         port: Number(info.port),
     };
 }
