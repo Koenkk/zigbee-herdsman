@@ -3214,7 +3214,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             schneiderOpenWindowDetectionStatus: {ID: 0xe012, type: DataType.UINT8, manufacturerCode: ManufacturerCode.SCHNEIDER_ELECTRIC, write: true, max: 0x01},
             schneiderOpenWindowDetectionThreshold: {ID: 0xe013, type: DataType.UINT8, manufacturerCode: ManufacturerCode.SCHNEIDER_ELECTRIC, write: true, max: 0x0c},
             schneiderLocalTemperatureSourceSelect: {ID: 0xe212, type: DataType.UINT8, manufacturerCode: ManufacturerCode.SCHNEIDER_ELECTRIC, write: true, max: 0xfe},
-            schneiderControlType: {ID: 0xe213, type: DataType.ENUM8, manufacturerCode: ManufacturerCode.SCHNEIDER_ELECTRIC, write: true,
+            schneiderControlType: {ID: 0xe213, type: DataType.ENUM8, manufacturerCode: ManufacturerCode.SCHNEIDER_ELECTRIC, write: true},
             schneiderWiserSpecific: {ID: 0xe110, type: DataType.ENUM8, manufacturerCode: ManufacturerCode.SCHNEIDER_ELECTRIC, write: true, max: 0xff},
         },
         commands: {
