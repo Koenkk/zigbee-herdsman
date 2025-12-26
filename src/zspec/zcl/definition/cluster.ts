@@ -3211,6 +3211,10 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             danfossScheduleTypeUsed: {ID: 0x4130, type: DataType.ENUM8, manufacturerCode: ManufacturerCode.DANFOSS_A_S, write: true, max: 0xff},
             danfossIcon2PreHeat: {ID: 0x4131, type: DataType.ENUM8, manufacturerCode: ManufacturerCode.DANFOSS_A_S, write: true, max: 0xff},
             danfossIcon2PreHeatStatus: {ID: 0x414f, type: DataType.ENUM8, manufacturerCode: ManufacturerCode.DANFOSS_A_S, write: true, max: 0xff},
+            schneiderOpenWindowDetectionStatus: {ID: 0xe012, type: DataType.UINT8, manufacturerCode: ManufacturerCode.SCHNEIDER_ELECTRIC, write: true, max: 0x01},
+            schneiderOpenWindowDetectionThreshold: {ID: 0xe013, type: DataType.UINT8, manufacturerCode: ManufacturerCode.SCHNEIDER_ELECTRIC, write: true, max: 0x0c},
+            schneiderLocalTemperatureSourceSelect: {ID: 0xe212, type: DataType.UINT8, manufacturerCode: ManufacturerCode.SCHNEIDER_ELECTRIC, write: true, max: 0xfe},
+            schneiderControlType: {ID: 0xe213, type: DataType.ENUM8, manufacturerCode: ManufacturerCode.SCHNEIDER_ELECTRIC, write: true,
             schneiderWiserSpecific: {ID: 0xe110, type: DataType.ENUM8, manufacturerCode: ManufacturerCode.SCHNEIDER_ELECTRIC, write: true, max: 0xff},
         },
         commands: {
@@ -3334,6 +3338,9 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             programmingVisibility: {ID: 0x0002, type: DataType.ENUM8, write: true, max: 0x01, default: 0},
             // custom
             danfossViewingDirection: {ID: 0x4000, type: DataType.ENUM8, manufacturerCode: ManufacturerCode.DANFOSS_A_S, write: true, max: 0xff},
+            schneiderBrightness: {ID: 0xe000, type: DataType.UINT8, manufacturerCode: ManufacturerCode.SCHNEIDER_ELECTRIC, write: true, min: 1, max: 100, default: 100},
+            schneiderInactiveBrightness: {ID: 0xe001, type: DataType.UINT8, manufacturerCode: ManufacturerCode.SCHNEIDER_ELECTRIC, write: true, max: 100, default: 100},
+            schneiderActivityTimeout: {ID: 0xe002, type: DataType.UINT16, manufacturerCode: ManufacturerCode.SCHNEIDER_ELECTRIC, write: true, min: 5, max: 3600, default: 60},
         },
         commands: {},
         commandsResponse: {},
@@ -3854,6 +3861,11 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             // custom
             minPercentChange: {ID: 0x0010, type: DataType.UNKNOWN, write: true},
             minAbsoluteChange: {ID: 0x0011, type: DataType.UNKNOWN, write: true},
+            schneiderTemperatureSensorType: {
+                ID: 0xe021,
+                type: DataType.ENUM8,
+                manufacturerCode: ManufacturerCode.SCHNEIDER_ELECTRIC,
+                write: true,
             sprutTemperatureOffset: {
                 ID: 0x6600,
                 type: DataType.INT16,
@@ -5656,6 +5668,13 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 manufacturerCode: ManufacturerCode.SCHNEIDER_ELECTRIC,
                 write: true,
                 max: 0xffffffff,
+            },
+            schneiderFixedLoadDemand: {
+                ID: 0x4510,
+                type: DataType.UINT24,
+                manufacturerCode: ManufacturerCode.SCHNEIDER_ELECTRIC,
+                write: true,
+                max: 0x7fffff, 
             },
             schneiderEnergyCountersReportingPeriod: {
                 ID: 0x4600,
