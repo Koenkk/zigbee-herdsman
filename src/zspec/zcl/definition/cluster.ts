@@ -3866,6 +3866,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 type: DataType.ENUM8,
                 manufacturerCode: ManufacturerCode.SCHNEIDER_ELECTRIC,
                 write: true,
+            },
             sprutTemperatureOffset: {
                 ID: 0x6600,
                 type: DataType.INT16,
