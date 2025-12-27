@@ -3213,8 +3213,13 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             danfossIcon2PreHeatStatus: {ID: 0x414f, type: DataType.ENUM8, manufacturerCode: ManufacturerCode.DANFOSS_A_S, write: true, max: 0xff},
             schneiderOpenWindowDetectionStatus: {ID: 0xe012, type: DataType.UINT8, manufacturerCode: ManufacturerCode.SCHNEIDER_ELECTRIC, report: true, max: 0x01},
             schneiderOpenWindowDetectionThreshold: {ID: 0xe013, type: DataType.UINT8, manufacturerCode: ManufacturerCode.SCHNEIDER_ELECTRIC, write: true, max: 0x0c},
+            schneiderControlStatus: {ID: 0xe211, type: DataType.ENUM8, manufacturerCode: ManufacturerCode.SCHNEIDER_ELECTRIC, report: true},
             schneiderLocalTemperatureSourceSelect: {ID: 0xe212, type: DataType.UINT8, manufacturerCode: ManufacturerCode.SCHNEIDER_ELECTRIC, write: true, max: 0xfe},
             schneiderControlType: {ID: 0xe213, type: DataType.ENUM8, manufacturerCode: ManufacturerCode.SCHNEIDER_ELECTRIC, write: true},
+            schneiderThermostatApplication: {ID: 0xe216, type: DataType.ENUM8, manufacturerCode: ManufacturerCode.SCHNEIDER_ELECTRIC, write: true},
+            schneiderHeatingFuel: {ID: 0xe217, type: DataType.ENUM8, manufacturerCode: ManufacturerCode.SCHNEIDER_ELECTRIC, write: true},
+            schneiderHeatTransferMedium: {ID: 0xe218, type: DataType.ENUM8, manufacturerCode: ManufacturerCode.SCHNEIDER_ELECTRIC, write: true},
+            schneiderHeatingEmitter: {ID: 0xe21a, type: DataType.ENUM8, manufacturerCode: ManufacturerCode.SCHNEIDER_ELECTRIC, write: true},
             schneiderWiserSpecific: {ID: 0xe110, type: DataType.ENUM8, manufacturerCode: ManufacturerCode.SCHNEIDER_ELECTRIC, write: true, max: 0xff},
         },
         commands: {
