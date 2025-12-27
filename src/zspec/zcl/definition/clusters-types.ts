@@ -3301,6 +3301,14 @@ export interface TClusters {
             danfossIcon2PreHeat?: number;
             /** ID=0x414f | type=ENUM8 | manufacturerCode=DANFOSS_A_S(0x1246) | write=true | max=255 */
             danfossIcon2PreHeatStatus?: number;
+            /** ID=0xe012 | type=UINT8 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | max=1 */
+            schneiderOpenWindowDetectionStatus?: number;
+            /** ID=0xe013 | type=UINT8 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | max=12 */
+            schneiderOpenWindowDetectionThreshold?: number;
+            /** ID=0xe212 | type=UINT8 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | max=254 */
+            schneiderLocalTemperatureSourceSelect?: number;
+            /** ID=0xe213 | type=ENUM8 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true */
+            schneiderControlType?: number;
             /** ID=0xe110 | type=ENUM8 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | max=255 */
             schneiderWiserSpecific?: number;
         };
@@ -3448,6 +3456,12 @@ export interface TClusters {
             programmingVisibility: number;
             /** ID=0x4000 | type=ENUM8 | manufacturerCode=DANFOSS_A_S(0x1246) | write=true | max=255 */
             danfossViewingDirection?: number;
+            /** ID=0xe000 | type=UINT8 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | min=1 | max=100 | default=100 */
+            schneiderBrightness?: number;
+            /** ID=0xe001 | type=UINT8 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | max=100 | default=100 */
+            schneiderInactiveBrightness?: number;
+            /** ID=0xe002 | type=UINT16 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | min=5 | max=3600 | default=60 */
+            schneiderActivityTimeout?: number;
         };
         commands: never;
         commandResponses: never;
@@ -3941,6 +3955,8 @@ export interface TClusters {
             minPercentChange: never;
             /** ID=0x0011 | type=UNKNOWN | write=true */
             minAbsoluteChange: never;
+            /** ID=0xe021 | type=ENUM8 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true */
+            schneiderTemperatureSensorType: number;
             /** ID=0x6600 | type=INT16 | manufacturerCode=CUSTOM_SPRUT_DEVICE(0x6666) | write=true | min=-32768 | max=32767 */
             sprutTemperatureOffset?: number;
         };
@@ -5884,6 +5900,8 @@ export interface TClusters {
             schneiderApparentEnergyDivisor?: number;
             /** ID=0x4501 | type=UTC | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | max=4294967295 */
             schneiderEnergyResetDateTime?: number;
+            /** ID=0x4510 | type=UINT24 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | max=2147483647 */
+            schneiderFixedLoadDemand?: number;
             /** ID=0x4600 | type=UINT16 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | max=65535 */
             schneiderEnergyCountersReportingPeriod?: number;
         };
