@@ -3211,7 +3211,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             danfossScheduleTypeUsed: {ID: 0x4130, type: DataType.ENUM8, manufacturerCode: ManufacturerCode.DANFOSS_A_S, write: true, max: 0xff},
             danfossIcon2PreHeat: {ID: 0x4131, type: DataType.ENUM8, manufacturerCode: ManufacturerCode.DANFOSS_A_S, write: true, max: 0xff},
             danfossIcon2PreHeatStatus: {ID: 0x414f, type: DataType.ENUM8, manufacturerCode: ManufacturerCode.DANFOSS_A_S, write: true, max: 0xff},
-            schneiderOpenWindowDetectionStatus: {ID: 0xe012, type: DataType.UINT8, manufacturerCode: ManufacturerCode.SCHNEIDER_ELECTRIC, write: true, max: 0x01},
+            schneiderOpenWindowDetectionStatus: {ID: 0xe012, type: DataType.UINT8, manufacturerCode: ManufacturerCode.SCHNEIDER_ELECTRIC, report: true, max: 0x01},
             schneiderOpenWindowDetectionThreshold: {ID: 0xe013, type: DataType.UINT8, manufacturerCode: ManufacturerCode.SCHNEIDER_ELECTRIC, write: true, max: 0x0c},
             schneiderLocalTemperatureSourceSelect: {ID: 0xe212, type: DataType.UINT8, manufacturerCode: ManufacturerCode.SCHNEIDER_ELECTRIC, write: true, max: 0xfe},
             schneiderControlType: {ID: 0xe213, type: DataType.ENUM8, manufacturerCode: ManufacturerCode.SCHNEIDER_ELECTRIC, write: true},
