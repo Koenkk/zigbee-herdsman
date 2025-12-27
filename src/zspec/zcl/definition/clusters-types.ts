@@ -3301,14 +3301,24 @@ export interface TClusters {
             danfossIcon2PreHeat?: number;
             /** ID=0x414f | type=ENUM8 | manufacturerCode=DANFOSS_A_S(0x1246) | write=true | max=255 */
             danfossIcon2PreHeatStatus?: number;
-            /** ID=0xe012 | type=UINT8 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | max=1 */
+            /** ID=0xe012 | type=UINT8 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | report=true | max=1 */
             schneiderOpenWindowDetectionStatus?: number;
             /** ID=0xe013 | type=UINT8 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | max=12 */
             schneiderOpenWindowDetectionThreshold?: number;
+            /** ID=0xe211 | type=ENUM8 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | report=true */
+            schneiderControlStatus?: number;
             /** ID=0xe212 | type=UINT8 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | max=254 */
             schneiderLocalTemperatureSourceSelect?: number;
             /** ID=0xe213 | type=ENUM8 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true */
             schneiderControlType?: number;
+            /** ID=0xe216 | type=ENUM8 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true */
+            schneiderThermostatApplication?: number;
+            /** ID=0xe217 | type=ENUM8 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true */
+            schneiderHeatingFuel?: number;
+            /** ID=0xe218 | type=ENUM8 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true */
+            schneiderHeatTransferMedium?: number;
+            /** ID=0xe21a | type=ENUM8 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true */
+            schneiderHeatingEmitter?: number;
             /** ID=0xe110 | type=ENUM8 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | max=255 */
             schneiderWiserSpecific?: number;
         };
