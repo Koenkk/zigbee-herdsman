@@ -287,7 +287,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                 parameters: [
                     {name: "groupid", type: DataType.UINT16},
                     {name: "sceneid", type: DataType.UINT8},
-                    {name: "transitionTime", type: DataType.UINT16},
+                    {name: "transtime", type: DataType.UINT16, conditions: [{type: ParameterCondition.MINIMUM_REMAINING_BUFFER_BYTES, value: 2}]},
                 ],
                 required: true,
             },
