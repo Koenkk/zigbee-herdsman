@@ -288,7 +288,7 @@ export class BuffaloZcl extends Buffalo {
             const len = this.readUInt8();
             const end = this.getPosition() + len;
             let index = 0;
-            const extField: unknown[] = [];
+            const extField: number[] = [];
 
             while (this.getPosition() < end) {
                 extField.push(this.read(EXTENSION_FIELD_SETS_DATA_TYPE[clstId][index], {}));

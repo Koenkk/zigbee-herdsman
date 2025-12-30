@@ -10,6 +10,7 @@ import type * as ZclTypes from "../../zspec/zcl/definition/tstype";
 import * as Zdo from "../../zspec/zdo";
 import Request from "../helpers/request";
 import RequestQueue from "../helpers/requestQueue";
+import {makeExtensionFieldSets, makeSceneState} from "../helpers/scenes";
 import * as ZclFrameConverter from "../helpers/zclFrameConverter";
 import zclTransactionSequenceNumber from "../helpers/zclTransactionSequenceNumber";
 import type {
@@ -67,10 +68,38 @@ interface OptionsWithDefaults extends Options {
     writeUndiv: boolean;
 }
 
-interface Clusters {
-    [cluster: string]: {
-        attributes: {[attribute: string]: number | string};
-    };
+interface AttributesRecord {
+    [attribute: string]: number | string | undefined;
+}
+
+interface WithGenericAttributes<Known extends AttributesRecord> {
+    attributes: AttributesRecord & Partial<Known>;
+}
+
+// Provides overrides for Scene-related attributes for ease of use and better validation
+export interface Clusters extends Record<string, WithGenericAttributes<AttributesRecord> | undefined> {
+    genOnOff?: WithGenericAttributes<{onOff: number | undefined}>;
+    genLevelCtrl?: WithGenericAttributes<{currentLevel: number | undefined}>;
+    closuresWindowCovering?: WithGenericAttributes<{
+        currentPositionLiftPercentage: number | undefined;
+        currentPositionTiltPercentage: number | undefined;
+    }>;
+    barrierControl?: WithGenericAttributes<{barrierPosition: number | undefined}>;
+    hvacThermostat?: WithGenericAttributes<{
+        occupiedCoolingSetpoint: number | undefined;
+        occupiedHeatingSetpoint: number | undefined;
+        systemMode: number | undefined;
+    }>;
+    lightingColorCtrl?: WithGenericAttributes<{
+        currentX: number | undefined;
+        currentY: number | undefined;
+        enhancedCurrentHue: number | undefined;
+        currentSaturation: number | undefined;
+        colorLoopActive: number | undefined;
+        colorLoopDirection: number | undefined;
+        colorLoopTime: number | undefined;
+        colorTemperature: number | undefined;
+    }>;
 }
 
 export interface Scene {
@@ -422,25 +451,29 @@ export class Endpoint extends ZigbeeEntity {
 
     public saveClusterAttributeKeyValue(clusterKey: number | string, list: KeyValue): void {
         const cluster = this.getCluster(clusterKey);
+        let clusterEntry = this.clusters[cluster.name];
 
-        if (!this.clusters[cluster.name]) {
-            this.clusters[cluster.name] = {attributes: {}};
+        if (!clusterEntry) {
+            clusterEntry = {attributes: {}};
+            this.clusters[cluster.name] = clusterEntry;
         }
 
         for (const attribute in list) {
-            this.clusters[cluster.name].attributes[attribute] = list[attribute];
+            clusterEntry.attributes[attribute] = list[attribute];
         }
     }
 
     public getClusterAttributeValue(clusterKey: number | string, attributeKey: number | string): number | string | undefined {
         const cluster = this.getCluster(clusterKey);
 
-        if (this.clusters[cluster.name] && this.clusters[cluster.name].attributes) {
+        const clusterEntry = this.clusters[cluster.name];
+
+        if (clusterEntry) {
             // XXX: used to throw (behavior changed in #1455)
             const attribute = cluster.getAttribute(attributeKey);
 
             if (attribute) {
-                return this.clusters[cluster.name].attributes[attribute.name];
+                return clusterEntry.attributes[attribute.name];
             }
         }
 
@@ -1249,7 +1282,7 @@ export class Endpoint extends ZigbeeEntity {
 
         const sceneKey = `${payload.sceneid}_${payload.groupid}`;
         const existing = this.scenes.get(sceneKey);
-        const state = ZclFrameConverter.sceneFromExtensionFieldSets(payload.extensionfieldsets);
+        const state = makeSceneState(payload.extensionfieldsets);
 
         if (existing) {
             if (overrideSceneName) {
@@ -1309,41 +1342,40 @@ export class Endpoint extends ZigbeeEntity {
         }
 
         if (this.clusters.genOnOff?.attributes !== undefined) {
-            existing.state.genOnOff = {onOff: (this.clusters.genOnOff.attributes.onOff as number | undefined) ?? 0};
+            existing.state.genOnOff = {onOff: this.clusters.genOnOff.attributes.onOff ?? 0};
         }
 
         if (this.clusters.genLevelCtrl?.attributes !== undefined) {
-            existing.state.genLevelCtrl = {currentLevel: (this.clusters.genLevelCtrl.attributes.currentLevel as number | undefined) ?? 0};
+            existing.state.genLevelCtrl = {currentLevel: this.clusters.genLevelCtrl.attributes.currentLevel ?? 0};
         }
 
         if (this.clusters.closuresWindowCovering?.attributes !== undefined) {
             existing.state.closuresWindowCovering = {
-                currentPositionLiftPercentage:
-                    (this.clusters.closuresWindowCovering.attributes.currentPositionLiftPercentage as number | undefined) ?? 0,
+                currentPositionLiftPercentage: this.clusters.closuresWindowCovering.attributes.currentPositionLiftPercentage ?? 0,
             };
 
-            const currentPositionTiltPercentage = this.clusters.closuresWindowCovering.attributes.currentPositionTiltPercentage as number | undefined;
+            const currentPositionTiltPercentage = this.clusters.closuresWindowCovering.attributes.currentPositionTiltPercentage;
 
             if (currentPositionTiltPercentage !== undefined) {
-                existing.state.closuresWindowCovering.currentPositionTiltPercentage = currentPositionTiltPercentage as number;
+                existing.state.closuresWindowCovering.currentPositionTiltPercentage = currentPositionTiltPercentage;
             }
         }
 
         if (this.clusters.barrierControl?.attributes !== undefined) {
             existing.state.barrierControl = {
-                barrierPosition: (this.clusters.barrierControl.attributes.barrierPosition as number | undefined) ?? 0,
+                barrierPosition: this.clusters.barrierControl.attributes.barrierPosition ?? 0,
             };
         }
 
         if (this.clusters.hvacThermostat?.attributes !== undefined) {
             existing.state.hvacThermostat = {
-                occupiedCoolingSetpoint: (this.clusters.hvacThermostat.attributes.occupiedCoolingSetpoint as number | undefined) ?? 0,
+                occupiedCoolingSetpoint: this.clusters.hvacThermostat.attributes.occupiedCoolingSetpoint ?? 0,
             };
-            const occupiedHeatingSetpoint = this.clusters.hvacThermostat.attributes.occupiedHeatingSetpoint as number | undefined;
+            const occupiedHeatingSetpoint = this.clusters.hvacThermostat.attributes.occupiedHeatingSetpoint;
 
             if (occupiedHeatingSetpoint !== undefined) {
                 existing.state.hvacThermostat.occupiedHeatingSetpoint = occupiedHeatingSetpoint;
-                const systemMode = this.clusters.hvacThermostat.attributes.systemMode as number | undefined;
+                const systemMode = this.clusters.hvacThermostat.attributes.systemMode;
 
                 if (systemMode !== undefined) {
                     existing.state.hvacThermostat.systemMode = systemMode;
@@ -1353,33 +1385,33 @@ export class Endpoint extends ZigbeeEntity {
 
         if (this.clusters.lightingColorCtrl?.attributes !== undefined) {
             existing.state.lightingColorCtrl = {
-                currentX: (this.clusters.lightingColorCtrl.attributes.currentX as number | undefined) ?? 0,
+                currentX: this.clusters.lightingColorCtrl.attributes.currentX ?? 0,
             };
-            const currentY = this.clusters.lightingColorCtrl.attributes.currentY as number | undefined;
+            const currentY = this.clusters.lightingColorCtrl.attributes.currentY;
 
             if (currentY !== undefined) {
                 existing.state.lightingColorCtrl.currentY = currentY;
-                const enhancedCurrentHue = this.clusters.lightingColorCtrl.attributes.enhancedCurrentHue as number | undefined;
+                const enhancedCurrentHue = this.clusters.lightingColorCtrl.attributes.enhancedCurrentHue;
 
                 if (enhancedCurrentHue !== undefined) {
                     existing.state.lightingColorCtrl.enhancedCurrentHue = enhancedCurrentHue;
-                    const currentSaturation = this.clusters.lightingColorCtrl.attributes.currentSaturation as number | undefined;
+                    const currentSaturation = this.clusters.lightingColorCtrl.attributes.currentSaturation;
 
                     if (currentSaturation !== undefined) {
                         existing.state.lightingColorCtrl.currentSaturation = currentSaturation;
-                        const colorLoopActive = this.clusters.lightingColorCtrl.attributes.colorLoopActive as number | undefined;
+                        const colorLoopActive = this.clusters.lightingColorCtrl.attributes.colorLoopActive;
 
                         if (colorLoopActive !== undefined) {
                             existing.state.lightingColorCtrl.colorLoopActive = colorLoopActive;
-                            const colorLoopDirection = this.clusters.lightingColorCtrl.attributes.colorLoopDirection as number | undefined;
+                            const colorLoopDirection = this.clusters.lightingColorCtrl.attributes.colorLoopDirection;
 
                             if (colorLoopDirection !== undefined) {
                                 existing.state.lightingColorCtrl.colorLoopDirection = colorLoopDirection;
-                                const colorLoopTime = this.clusters.lightingColorCtrl.attributes.colorLoopTime as number | undefined;
+                                const colorLoopTime = this.clusters.lightingColorCtrl.attributes.colorLoopTime;
 
                                 if (colorLoopTime !== undefined) {
                                     existing.state.lightingColorCtrl.colorLoopTime = colorLoopTime;
-                                    const colorTemperature = this.clusters.lightingColorCtrl.attributes.colorTemperature as number | undefined;
+                                    const colorTemperature = this.clusters.lightingColorCtrl.attributes.colorTemperature;
 
                                     if (colorTemperature !== undefined) {
                                         existing.state.lightingColorCtrl.colorTemperature = colorTemperature;
@@ -1406,109 +1438,121 @@ export class Endpoint extends ZigbeeEntity {
         }
 
         if (scene.state.genOnOff !== undefined) {
-            const onOff = (scene.state.genOnOff.onOff as number | undefined) ?? 0;
+            const onOff = scene.state.genOnOff.onOff ?? 0;
+            let genOnOff = this.clusters.genOnOff;
 
-            if (this.clusters.genOnOff?.attributes === undefined) {
-                this.clusters.genOnOff.attributes = {onOff};
-            } else {
-                this.clusters.genOnOff.attributes.onOff = onOff;
+            if (!genOnOff) {
+                genOnOff = {attributes: {}};
+                this.clusters.genOnOff = genOnOff;
             }
+
+            genOnOff.attributes.onOff = onOff;
         }
 
         if (scene.state.genLevelCtrl !== undefined) {
-            const currentLevel = (scene.state.genLevelCtrl.currentLevel as number | undefined) ?? 0;
+            const currentLevel = scene.state.genLevelCtrl.currentLevel ?? 0;
+            let genLevelCtrl = this.clusters.genLevelCtrl;
 
-            if (this.clusters.genLevelCtrl?.attributes === undefined) {
-                this.clusters.genLevelCtrl.attributes = {currentLevel};
-            } else {
-                this.clusters.genLevelCtrl.attributes.currentLevel = currentLevel;
+            if (!genLevelCtrl) {
+                genLevelCtrl = {attributes: {}};
+                this.clusters.genLevelCtrl = genLevelCtrl;
             }
+
+            genLevelCtrl.attributes.currentLevel = currentLevel;
         }
 
         if (scene.state.closuresWindowCovering !== undefined) {
-            const currentPositionLiftPercentage = (scene.state.closuresWindowCovering.currentPositionLiftPercentage as number | undefined) ?? 0;
+            const currentPositionLiftPercentage = scene.state.closuresWindowCovering.currentPositionLiftPercentage ?? 0;
+            let closuresWindowCovering = this.clusters.closuresWindowCovering;
 
-            if (this.clusters.closuresWindowCovering?.attributes === undefined) {
-                this.clusters.closuresWindowCovering.attributes = {currentPositionLiftPercentage};
-            } else {
-                this.clusters.closuresWindowCovering.attributes.currentPositionLiftPercentage = currentPositionLiftPercentage;
+            if (!closuresWindowCovering) {
+                closuresWindowCovering = {attributes: {}};
+                this.clusters.closuresWindowCovering = closuresWindowCovering;
             }
 
-            const currentPositionTiltPercentage = scene.state.closuresWindowCovering.currentPositionTiltPercentage as number | undefined;
+            closuresWindowCovering.attributes.currentPositionLiftPercentage = currentPositionLiftPercentage;
+
+            const currentPositionTiltPercentage = scene.state.closuresWindowCovering.currentPositionTiltPercentage;
 
             if (currentPositionTiltPercentage !== undefined) {
-                this.clusters.closuresWindowCovering.attributes.currentPositionTiltPercentage = currentPositionTiltPercentage;
+                closuresWindowCovering.attributes.currentPositionTiltPercentage = currentPositionTiltPercentage;
             }
         }
 
         if (scene.state.barrierControl !== undefined) {
-            const barrierPosition = (scene.state.barrierControl.barrierPosition as number | undefined) ?? 0;
+            const barrierPosition = scene.state.barrierControl.barrierPosition ?? 0;
+            let barrierControl = this.clusters.barrierControl;
 
-            if (this.clusters.barrierControl?.attributes === undefined) {
-                this.clusters.barrierControl.attributes = {barrierPosition};
-            } else {
-                this.clusters.barrierControl.attributes.barrierPosition = barrierPosition;
+            if (!barrierControl) {
+                barrierControl = {attributes: {}};
+                this.clusters.barrierControl = barrierControl;
             }
+
+            barrierControl.attributes.barrierPosition = barrierPosition;
         }
 
         if (scene.state.hvacThermostat !== undefined) {
-            const occupiedCoolingSetpoint = (scene.state.hvacThermostat.occupiedCoolingSetpoint as number | undefined) ?? 0;
+            const occupiedCoolingSetpoint = scene.state.hvacThermostat.occupiedCoolingSetpoint ?? 0;
+            let hvacThermostat = this.clusters.hvacThermostat;
 
-            if (this.clusters.hvacThermostat?.attributes === undefined) {
-                this.clusters.hvacThermostat.attributes = {occupiedCoolingSetpoint};
-            } else {
-                this.clusters.hvacThermostat.attributes.occupiedCoolingSetpoint = occupiedCoolingSetpoint;
+            if (!hvacThermostat) {
+                hvacThermostat = {attributes: {}};
+                this.clusters.hvacThermostat = hvacThermostat;
             }
 
-            const occupiedHeatingSetpoint = scene.state.hvacThermostat.occupiedHeatingSetpoint as number | undefined;
+            hvacThermostat.attributes.occupiedCoolingSetpoint = occupiedCoolingSetpoint;
+
+            const occupiedHeatingSetpoint = scene.state.hvacThermostat.occupiedHeatingSetpoint;
 
             if (occupiedHeatingSetpoint !== undefined) {
-                this.clusters.hvacThermostat.attributes.occupiedHeatingSetpoint = occupiedHeatingSetpoint;
-                const systemMode = scene.state.hvacThermostat.systemMode as number | undefined;
+                hvacThermostat.attributes.occupiedHeatingSetpoint = occupiedHeatingSetpoint;
+                const systemMode = scene.state.hvacThermostat.systemMode;
 
                 if (systemMode !== undefined) {
-                    this.clusters.hvacThermostat.attributes.systemMode = systemMode;
+                    hvacThermostat.attributes.systemMode = systemMode;
                 }
             }
         }
 
         if (scene.state.lightingColorCtrl !== undefined) {
-            const currentX = (scene.state.lightingColorCtrl.currentX as number | undefined) ?? 0;
+            const currentX = scene.state.lightingColorCtrl.currentX ?? 0;
+            let lightingColorCtrl = this.clusters.lightingColorCtrl;
 
-            if (this.clusters.lightingColorCtrl?.attributes === undefined) {
-                this.clusters.lightingColorCtrl.attributes = {currentX};
-            } else {
-                this.clusters.lightingColorCtrl.attributes.currentX = currentX;
+            if (!lightingColorCtrl) {
+                lightingColorCtrl = {attributes: {}};
+                this.clusters.lightingColorCtrl = lightingColorCtrl;
             }
 
-            const currentY = scene.state.lightingColorCtrl.currentY as number | undefined;
+            lightingColorCtrl.attributes.currentX = currentX;
+
+            const currentY = scene.state.lightingColorCtrl.currentY;
 
             if (currentY !== undefined) {
-                this.clusters.lightingColorCtrl.attributes.currentY = currentY;
-                const enhancedCurrentHue = scene.state.lightingColorCtrl.enhancedCurrentHue as number | undefined;
+                lightingColorCtrl.attributes.currentY = currentY;
+                const enhancedCurrentHue = scene.state.lightingColorCtrl.enhancedCurrentHue;
 
                 if (enhancedCurrentHue !== undefined) {
-                    this.clusters.lightingColorCtrl.attributes.enhancedCurrentHue = enhancedCurrentHue;
-                    const currentSaturation = scene.state.lightingColorCtrl.currentSaturation as number | undefined;
+                    lightingColorCtrl.attributes.enhancedCurrentHue = enhancedCurrentHue;
+                    const currentSaturation = scene.state.lightingColorCtrl.currentSaturation;
 
                     if (currentSaturation !== undefined) {
-                        this.clusters.lightingColorCtrl.attributes.currentSaturation = currentSaturation;
-                        const colorLoopActive = scene.state.lightingColorCtrl.colorLoopActive as number | undefined;
+                        lightingColorCtrl.attributes.currentSaturation = currentSaturation;
+                        const colorLoopActive = scene.state.lightingColorCtrl.colorLoopActive;
 
                         if (colorLoopActive !== undefined) {
-                            this.clusters.lightingColorCtrl.attributes.colorLoopActive = colorLoopActive;
-                            const colorLoopDirection = scene.state.lightingColorCtrl.colorLoopDirection as number | undefined;
+                            lightingColorCtrl.attributes.colorLoopActive = colorLoopActive;
+                            const colorLoopDirection = scene.state.lightingColorCtrl.colorLoopDirection;
 
                             if (colorLoopDirection !== undefined) {
-                                this.clusters.lightingColorCtrl.attributes.colorLoopDirection = colorLoopDirection;
-                                const colorLoopTime = scene.state.lightingColorCtrl.colorLoopTime as number | undefined;
+                                lightingColorCtrl.attributes.colorLoopDirection = colorLoopDirection;
+                                const colorLoopTime = scene.state.lightingColorCtrl.colorLoopTime;
 
                                 if (colorLoopTime !== undefined) {
-                                    this.clusters.lightingColorCtrl.attributes.colorLoopTime = colorLoopTime;
-                                    const colorTemperature = scene.state.lightingColorCtrl.colorTemperature as number | undefined;
+                                    lightingColorCtrl.attributes.colorLoopTime = colorLoopTime;
+                                    const colorTemperature = scene.state.lightingColorCtrl.colorTemperature;
 
                                     if (colorTemperature !== undefined) {
-                                        this.clusters.lightingColorCtrl.attributes.colorTemperature = colorTemperature;
+                                        lightingColorCtrl.attributes.colorTemperature = colorTemperature;
                                     }
                                 }
                             }
@@ -1517,22 +1561,6 @@ export class Endpoint extends ZigbeeEntity {
                 }
             }
         }
-    }
-
-    /**
-     * Deep-clone a Scene object
-     */
-    public cloneScene(existing: Scene): Scene {
-        const clonedScene: Scene = {name: existing.name, state: {}, enhanced: existing.enhanced, transitionTime: existing.transitionTime};
-
-        for (const cluster in existing.state) {
-            // @ts-expect-error dynamic cloning
-            clonedScene.state[cluster as keyof typeof existing.state] = {
-                ...existing.state[cluster as keyof typeof existing.state],
-            };
-        }
-
-        return clonedScene;
     }
 
     /**
@@ -1584,124 +1612,7 @@ export class Endpoint extends ZigbeeEntity {
         assert(sceneName.length > 16, "Scene name too long");
 
         if (extensionFieldSets === undefined) {
-            extensionFieldSets = [];
-
-            if (this.clusters.genOnOff?.attributes !== undefined) {
-                extensionFieldSets.push({
-                    clstId: Zcl.Clusters.genOnOff.ID,
-                    len: 1,
-                    extField: [(this.clusters.genOnOff.attributes.onOff as number | undefined) ?? 0],
-                });
-            }
-
-            if (this.clusters.genLevelCtrl?.attributes !== undefined) {
-                extensionFieldSets.push({
-                    clstId: Zcl.Clusters.genLevelCtrl.ID,
-                    len: 1,
-                    extField: [(this.clusters.genLevelCtrl.attributes.currentLevel as number | undefined) ?? 0],
-                });
-            }
-
-            if (this.clusters.closuresWindowCovering?.attributes !== undefined) {
-                const fieldSet: ZclTypes.ExtensionFieldSet = {
-                    clstId: Zcl.Clusters.closuresWindowCovering.ID,
-                    len: 1,
-                    extField: [(this.clusters.closuresWindowCovering.attributes.currentPositionLiftPercentage as number | undefined) ?? 0],
-                };
-
-                const currentPositionTiltPercentage = this.clusters.closuresWindowCovering.attributes.currentPositionTiltPercentage as
-                    | number
-                    | undefined;
-
-                if (currentPositionTiltPercentage !== undefined) {
-                    fieldSet.extField.push(currentPositionTiltPercentage);
-                    fieldSet.len += 1;
-                }
-
-                extensionFieldSets.push(fieldSet);
-            }
-
-            if (this.clusters.barrierControl?.attributes !== undefined) {
-                extensionFieldSets.push({
-                    clstId: Zcl.Clusters.barrierControl.ID,
-                    len: 1,
-                    extField: [(this.clusters.barrierControl.attributes.barrierPosition as number | undefined) ?? 0],
-                });
-            }
-
-            if (this.clusters.hvacThermostat?.attributes !== undefined) {
-                const fieldSet: ZclTypes.ExtensionFieldSet = {
-                    clstId: Zcl.Clusters.hvacThermostat.ID,
-                    len: 2,
-                    extField: [(this.clusters.hvacThermostat.attributes.occupiedCoolingSetpoint as number | undefined) ?? 0],
-                };
-                const occupiedHeatingSetpoint = this.clusters.hvacThermostat.attributes.occupiedHeatingSetpoint as number | undefined;
-
-                if (occupiedHeatingSetpoint !== undefined) {
-                    fieldSet.extField.push(occupiedHeatingSetpoint);
-                    fieldSet.len += 2;
-                    const systemMode = this.clusters.hvacThermostat.attributes.systemMode as number | undefined;
-
-                    if (systemMode !== undefined) {
-                        fieldSet.extField.push(systemMode);
-                        fieldSet.len += 1;
-                    }
-                }
-
-                extensionFieldSets.push(fieldSet);
-            }
-
-            if (this.clusters.lightingColorCtrl?.attributes !== undefined) {
-                const fieldSet: ZclTypes.ExtensionFieldSet = {
-                    clstId: Zcl.Clusters.lightingColorCtrl.ID,
-                    len: 2,
-                    extField: [(this.clusters.lightingColorCtrl.attributes.currentX as number | undefined) ?? 0],
-                };
-                const currentY = this.clusters.lightingColorCtrl.attributes.currentY as number | undefined;
-
-                if (currentY !== undefined) {
-                    fieldSet.extField.push(currentY);
-                    fieldSet.len += 2;
-                    const enhancedCurrentHue = this.clusters.lightingColorCtrl.attributes.enhancedCurrentHue as number | undefined;
-
-                    if (enhancedCurrentHue !== undefined) {
-                        fieldSet.extField.push(enhancedCurrentHue);
-                        fieldSet.len += 2;
-                        const currentSaturation = this.clusters.lightingColorCtrl.attributes.currentSaturation as number | undefined;
-
-                        if (currentSaturation !== undefined) {
-                            fieldSet.extField.push(currentSaturation);
-                            fieldSet.len += 1;
-                            const colorLoopActive = this.clusters.lightingColorCtrl.attributes.colorLoopActive as number | undefined;
-
-                            if (colorLoopActive !== undefined) {
-                                fieldSet.extField.push(colorLoopActive);
-                                fieldSet.len += 1;
-                                const colorLoopDirection = this.clusters.lightingColorCtrl.attributes.colorLoopDirection as number | undefined;
-
-                                if (colorLoopDirection !== undefined) {
-                                    fieldSet.extField.push(colorLoopDirection);
-                                    fieldSet.len += 1;
-                                    const colorLoopTime = this.clusters.lightingColorCtrl.attributes.colorLoopTime as number | undefined;
-
-                                    if (colorLoopTime !== undefined) {
-                                        fieldSet.extField.push(colorLoopTime);
-                                        fieldSet.len += 2;
-                                        const colorTemperature = this.clusters.lightingColorCtrl.attributes.colorTemperature as number | undefined;
-
-                                        if (colorTemperature !== undefined) {
-                                            fieldSet.extField.push(colorTemperature);
-                                            fieldSet.len += 2;
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-
-                extensionFieldSets.push(fieldSet);
-            }
+            extensionFieldSets = makeExtensionFieldSets(this.clusters);
         }
 
         const optionsWithDefaults = this.getOptionsWithDefaults(options, true, Zcl.Direction.CLIENT_TO_SERVER, undefined);
