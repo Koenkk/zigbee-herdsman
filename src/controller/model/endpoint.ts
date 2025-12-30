@@ -1580,6 +1580,7 @@ export class Endpoint extends ZigbeeEntity {
     ): Promise<Scene> {
         assert(groupId >= 0x0000 && groupId <= 0xfff7, "Invalid group ID");
         assert(groupId !== 0x0000 || sceneId !== 0x00, "Invalid group/scene ID combination (reserved)");
+        assert(Number.isFinite(transTime), "Transition time must be integer or float");
         assert(sceneName.length > 16, "Scene name too long");
 
         if (extensionFieldSets === undefined) {
@@ -1822,6 +1823,7 @@ export class Endpoint extends ZigbeeEntity {
      */
     public async recallScene(groupId: number, sceneId: number, transTime: number, options?: Options): Promise<void> {
         assert(groupId >= 0x0000 && groupId <= 0xfff7, "Invalid group ID");
+        assert(Number.isFinite(transTime), "Transition time must be integer or float");
 
         const optionsWithDefaults = this.getOptionsWithDefaults(options, true, Zcl.Direction.CLIENT_TO_SERVER, undefined);
 
