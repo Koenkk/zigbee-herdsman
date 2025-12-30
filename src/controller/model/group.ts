@@ -3,6 +3,7 @@ import {logger} from "../../utils/logger";
 import * as Zcl from "../../zspec/zcl";
 import type {TClusterCommandResponsePayload, TFoundation} from "../../zspec/zcl/definition/clusters-types";
 import type {CustomClusters, ExtensionFieldSet} from "../../zspec/zcl/definition/tstype";
+import {cloneScene} from "../helpers/scenes";
 import zclTransactionSequenceNumber from "../helpers/zclTransactionSequenceNumber";
 import type {
     ClusterOrRawAttributeKeys,
@@ -319,13 +320,13 @@ export class Group extends ZigbeeEntity {
 
                     const sceneId = key.slice(0, key.indexOf("_"));
 
-                    member.scenes.set(`${sceneId}_${toGroupId}`, member.cloneScene(scene));
+                    member.scenes.set(`${sceneId}_${toGroupId}`, cloneScene(scene));
                 }
             } else if (mode === "one") {
                 const existing = member.scenes.get(`${fromSceneId}_${this.groupID}`);
 
                 if (existing) {
-                    member.scenes.set(`${toSceneId}_${toGroupId}`, member.cloneScene(existing));
+                    member.scenes.set(`${toSceneId}_${toGroupId}`, cloneScene(existing));
                 }
             }
         }
