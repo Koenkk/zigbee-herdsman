@@ -8,6 +8,7 @@ import {DeconzAdapter} from "../../src/adapter/deconz/adapter/deconzAdapter";
 import {EmberAdapter} from "../../src/adapter/ember/adapter/emberAdapter";
 import {EZSPAdapter} from "../../src/adapter/ezsp/adapter/ezspAdapter";
 import {SerialPort} from "../../src/adapter/serialPort";
+import {parseTcpPath} from "../../src/adapter/utils";
 import {ZStackAdapter} from "../../src/adapter/z-stack/adapter/zStackAdapter";
 import {ZBOSSAdapter} from "../../src/adapter/zboss/adapter/zbossAdapter";
 import {ZiGateAdapter} from "../../src/adapter/zigate/adapter/zigateAdapter";
@@ -368,6 +369,89 @@ describe("Adapter", () => {
                     disableLED: false,
                 }),
             ).rejects.toThrow(`Cannot discover TCP adapters at this time. Specify valid 'adapter' and 'port' in your configuration.`);
+        });
+
+        it("handles IPv4", async () => {
+            const adapter = await Adapter.create(
+                {panID: 0x1a62, channelList: [11]},
+                {path: "tcp://192.168.12.34:6638", adapter: "zstack"},
+                "test.db.backup",
+                {disableLED: false},
+            );
+
+            // @ts-expect-error protected
+            const adapterOptions = adapter.serialPortOptions;
+
+            expect(adapterOptions).toStrictEqual({
+                path: "tcp://192.168.12.34:6638",
+                adapter: "zstack",
+            });
+
+            const tcpPath = parseTcpPath(adapterOptions.path!);
+
+            expect(tcpPath).toStrictEqual({
+                host: "192.168.12.34",
+                port: 6638,
+            });
+        });
+
+        it("handles IPv6", async () => {
+            const adapter = await Adapter.create(
+                {panID: 0x1a62, channelList: [11]},
+                {path: "tcp://[fd73:5e46:b9f0:0:80b5:4eff:dead:beef]:6638", adapter: "zstack"},
+                "test.db.backup",
+                {disableLED: false},
+            );
+
+            // @ts-expect-error protected
+            const adapterOptions = adapter.serialPortOptions;
+
+            expect(adapterOptions).toStrictEqual({
+                path: "tcp://[fd73:5e46:b9f0:0:80b5:4eff:dead:beef]:6638",
+                adapter: "zstack",
+            });
+
+            const tcpPath = parseTcpPath(adapterOptions.path!);
+
+            expect(tcpPath).toStrictEqual({
+                host: "fd73:5e46:b9f0:0:80b5:4eff:dead:beef",
+                port: 6638,
+            });
+        });
+
+        it("handles domain name", async () => {
+            const adapter = await Adapter.create(
+                {panID: 0x1a62, channelList: [11]},
+                {path: "tcp://myadapter.local:6638", adapter: "zstack"},
+                "test.db.backup",
+                {disableLED: false},
+            );
+
+            // @ts-expect-error protected
+            const adapterOptions = adapter.serialPortOptions;
+
+            expect(adapterOptions).toStrictEqual({
+                path: "tcp://myadapter.local:6638",
+                adapter: "zstack",
+            });
+
+            const tcpPath = parseTcpPath(adapterOptions.path!);
+
+            expect(tcpPath).toStrictEqual({
+                host: "myadapter.local",
+                port: 6638,
+            });
+        });
+
+        it("handles invalid IPv6", async () => {
+            await expect(
+                Adapter.create(
+                    {panID: 0x1a62, channelList: [11]},
+                    {path: "tcp://fd73:5e46:b9f0:0:80b5:4eff:dead:beef:6638", adapter: "zstack"},
+                    "test.db.backup",
+                    {disableLED: false},
+                ),
+            ).rejects.toThrow("Invalid TCP path, expected format: tcp://<host>:<port>");
         });
     });
 
