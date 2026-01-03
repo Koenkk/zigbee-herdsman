@@ -1,5 +1,15 @@
 # Changelog
 
+## [8.0.2](https://github.com/Koenkk/zigbee-herdsman/compare/v8.0.1...v8.0.2) (2026-01-03)
+
+
+### Bug Fixes
+
+* Allow literal (RFC2732) IPv6 addresses in TCP URI ([#1601](https://github.com/Koenkk/zigbee-herdsman/issues/1601)) ([e46c0b0](https://github.com/Koenkk/zigbee-herdsman/commit/e46c0b0015b53b65abd78d0e5ba0ba5af202cbe7))
+* Fix transitionTime not always present in genScenes recall ([#1609](https://github.com/Koenkk/zigbee-herdsman/issues/1609)) ([c942010](https://github.com/Koenkk/zigbee-herdsman/commit/c942010649e03cad6f06d3ddef738edd9746e383))
+* **ignore:** bump @biomejs/biome from 2.3.8 to 2.3.10 in the minor-patch group ([#1602](https://github.com/Koenkk/zigbee-herdsman/issues/1602)) ([44cbf32](https://github.com/Koenkk/zigbee-herdsman/commit/44cbf321e91e99a27fface43fedeae1b801fd43a))
+* **ignore:** bump @types/node from 24.10.1 to 24.10.4 in the minor-patch group ([#1607](https://github.com/Koenkk/zigbee-herdsman/issues/1607)) ([824028c](https://github.com/Koenkk/zigbee-herdsman/commit/824028cb26ba58d6ce3612a48897008219e35e91))
+
 ## [8.0.1](https://github.com/Koenkk/zigbee-herdsman/compare/v8.0.0...v8.0.1) (2025-12-16)
 
 
