@@ -1741,7 +1741,7 @@ export class Endpoint extends ZigbeeEntity {
         await this.zclCommand(
             "genScenes",
             "recall",
-            {groupid: groupId, sceneid: sceneId, transtime: transTime},
+            {groupid: groupId, sceneid: sceneId, transitionTime: transTime},
             optionsWithDefaults,
             undefined,
             true, // only get defaultRsp if error occurred, or if requested defaultRsp
