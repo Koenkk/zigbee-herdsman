@@ -397,8 +397,8 @@ export interface TClusters {
                 groupid: number;
                 /** type=UINT8 */
                 sceneid: number;
-                /** type=UINT16 */
-                transitionTime: number;
+                /** type=UINT16 | conditions=[{minimumRemainingBufferBytes value=2}] */
+                transitionTime?: number;
             };
             /** ID=0x06 | response=6 | required=true */
             getSceneMembership: {
