@@ -339,7 +339,7 @@ export class Group extends ZigbeeEntity {
     public async recallScene(sceneId: number, transTime: number, options?: Options): Promise<void> {
         const optionsWithDefaults = this.getOptionsWithDefaults(options, Zcl.Direction.CLIENT_TO_SERVER, undefined);
 
-        await this.command("genScenes", "recall", {groupid: this.groupID, sceneid: sceneId, transtime: transTime}, optionsWithDefaults);
+        await this.command("genScenes", "recall", {groupid: this.groupID, sceneid: sceneId, transitionTime: transTime}, optionsWithDefaults);
 
         this.syncStateFromScene(sceneId);
     }
