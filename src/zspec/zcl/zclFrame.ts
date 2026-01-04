@@ -1,6 +1,7 @@
 import "../../utils/patchBigIntSerialization";
 
 import {BuffaloZcl} from "./buffaloZcl";
+import type {TClusterPayload, TFoundationPayload} from "./definition/clusters-types";
 import {BuffaloZclDataType, DataType, Direction, FrameType, ParameterCondition} from "./definition/enums";
 import type {FoundationCommandName} from "./definition/foundation";
 import type {BuffaloZclOptions, Cluster, ClusterName, Command, CustomClusters, ParameterDefinition} from "./definition/tstype";
@@ -356,4 +357,18 @@ export class ZclFrame {
     public isCommand(commandName: FoundationCommandName | "remove" | "add" | "write" | "enrollReq" | "checkin" | "getAlarm" | "arm"): boolean {
         return this.command.name === commandName;
     }
+}
+
+export interface TZclFrame<Cl extends string, Co extends string> {
+    readonly header: ZclHeader;
+    readonly payload: TClusterPayload<Cl, Co>;
+    readonly cluster: Cluster;
+    readonly command: Command;
+}
+
+export interface TFoundationZclFrame<Co extends string> {
+    readonly header: ZclHeader;
+    readonly payload: TFoundationPayload<Co>;
+    readonly cluster: Cluster;
+    readonly command: Command;
 }

@@ -9,10 +9,11 @@ import type {Eui64} from "../../zspec/tstypes";
 import * as Zcl from "../../zspec/zcl";
 import type {TClusterCommandPayload, TClusterPayload, TPartialClusterAttributes} from "../../zspec/zcl/definition/clusters-types";
 import type {ClusterDefinition, CustomClusters} from "../../zspec/zcl/definition/tstype";
+import type {TZclFrame} from "../../zspec/zcl/zclFrame";
 import * as Zdo from "../../zspec/zdo";
 import type {BindingTableEntry, LQITableEntry, RoutingTableEntry} from "../../zspec/zdo/definition/tstypes";
 import type {ControllerEventMap} from "../controller";
-import {getOtaFirmware, getOtaImageDataPayload, getOtaImageDataRequestTimeoutMs, getOtaIndex, parseOtaImage} from "../helpers/ota";
+import {getOtaFirmware, getOtaIndex, OtaSession, parseOtaImage} from "../helpers/ota";
 import zclTransactionSequenceNumber from "../helpers/zclTransactionSequenceNumber";
 import type {DatabaseEntry, DeviceType, KeyValue, OtaExtraMetas, OtaImage, OtaUpdateAvailableResult, ZigbeeOtaImageMeta} from "../tstype";
 import Endpoint, {type BindInternal} from "./endpoint";
@@ -1308,12 +1309,12 @@ export class Device extends Entity<ControllerEventMap> {
         this._customClusters[name] = cluster;
     }
 
-    #waitForOtaCommand<Co extends number | string>(
+    #waitForOtaCommand<Co extends string>(
         endpointId: number,
         commandId: number,
         transactionSequenceNumber: number | undefined,
         timeout: number,
-    ): {promise: Promise<{header: Zcl.Header; payload: TClusterPayload<"genOta", Co>}>; cancel: () => void} {
+    ): {promise: Promise<TZclFrame<"genOta", Co>>; cancel: () => void} {
         const waiter = Entity.adapter.waitFor(
             this.networkAddress,
             endpointId,
@@ -1324,12 +1325,13 @@ export class Device extends Entity<ControllerEventMap> {
             commandId,
             timeout,
         );
-        const promise = new Promise<{header: Zcl.Header; payload: TClusterPayload<"genOta", Co>}>((resolve, reject) => {
+        const promise = new Promise<Zcl.Frame & {payload: TClusterPayload<"genOta", Co>}>((resolve, reject) => {
             waiter.promise.then(
                 (payload) => {
                     try {
                         const frame = Zcl.Frame.fromBuffer(payload.clusterID, payload.header, payload.data, this.customClusters);
-                        resolve({header: frame.header, payload: frame.payload});
+
+                        resolve(frame);
                     } catch (error) {
                         reject(error);
                     }
@@ -1399,7 +1401,7 @@ export class Device extends Entity<ControllerEventMap> {
 
         if (current === undefined) {
             // Some devices (e.g. Insta) take a very long trying to discover the correct coordinator EP for OTA
-            const queryNextImageRequest = this.#waitForOtaCommand(
+            const queryNextImageRequest = this.#waitForOtaCommand<"queryNextImageRequest">(
                 endpoint.ID,
                 Zcl.Clusters.genOta.commands.queryNextImageRequest.ID,
                 undefined,
@@ -1464,20 +1466,13 @@ export class Device extends Entity<ControllerEventMap> {
         onProgress: (progress: number, remaining?: number) => void,
         requestTimeout: number | undefined,
         responseDelay: number,
-        initialMaximumDataSize: number,
+        baseDataSize: number,
     ): Promise<number | undefined> {
         const endpoint = this.endpoints.find((e) => e.supportsOutputCluster("genOta"));
 
         assert(endpoint !== undefined, `No endpoint found with OTA cluster support for ${this.ieeeAddr}`);
 
-        const {available, current, availableMeta} = await this.checkOta(
-            dataDir,
-            overrideIndexFileName,
-            requestPayload,
-            extraMetas,
-            previous,
-            endpoint,
-        );
+        const {available, availableMeta} = await this.checkOta(dataDir, overrideIndexFileName, requestPayload, extraMetas, previous, endpoint);
 
         let image: OtaImage | undefined;
 
@@ -1526,155 +1521,20 @@ export class Device extends Entity<ControllerEventMap> {
             return undefined;
         }
 
-        const waiters: {
-            imageBlockOrPageRequest?: {
-                cancel: () => void;
-                promise: Promise<{header: Zcl.Header; payload: TClusterPayload<"genOta", "imageBlockRequest" | "imagePageRequest">}>;
-            };
-            upgradeEndRequest?: {
-                cancel: () => void;
-                promise: Promise<{header: Zcl.Header; payload: TClusterPayload<"genOta", "upgradeEndRequest">}>;
-            };
-        } = {};
-        let lastBlockResponseTime = 0;
-        let lastBlockTimeout: NodeJS.Timeout;
-        let lastUpdate: number | undefined;
-        const startTime = performance.now();
-
-        const sendImageBlockResponse = async (
-            requestPayload: TClusterCommandPayload<"genOta", "imageBlockRequest">,
-            requestTsn: number,
-            pageOffset: number,
-            pageSize: number,
-        ): Promise<number> => {
-            // Reduce network congestion by throttling response if necessary
-            {
-                clearTimeout(lastBlockTimeout);
-
-                const now = performance.now();
-                const timeSinceLast = now - lastBlockResponseTime;
-                const delay = responseDelay - timeSinceLast;
-
-                if (delay <= 0) {
-                    lastBlockResponseTime = now;
-                } else {
-                    await new Promise<void>((resolve) => {
-                        lastBlockTimeout = setTimeout(() => {
-                            lastBlockResponseTime = performance.now();
-                            resolve();
-                        }, delay);
-                    });
-                }
-            }
-
-            try {
-                const blockPayload = getOtaImageDataPayload(image, requestPayload, pageOffset, pageSize, initialMaximumDataSize);
-
-                await endpoint.commandResponse("genOta", "imageBlockResponse", blockPayload, undefined, requestTsn);
-
-                pageOffset += blockPayload.dataSize;
-            } catch (error) {
-                // device will probably do a new imageBlockRequest, just log the error
-                logger.debug(() => `Image block response failed for ${this.ieeeAddr}: ${(error as Error).message}`, NS);
-            }
-
-            const now = performance.now();
-
-            if (lastUpdate === undefined || now - lastUpdate > 30000) {
-                // Call on progress every +- 30 seconds
-                const totalDuration = (now - startTime) / 1000; // in seconds
-                const bytesPerSecond = requestPayload.fileOffset / totalDuration;
-                const remaining = (image.header.totalImageSize - requestPayload.fileOffset) / bytesPerSecond;
-                let percentage = requestPayload.fileOffset / image.header.totalImageSize;
-                percentage = Math.round(percentage * 10000) / 100;
-
-                logger.debug(() => `OTA update of ${this.ieeeAddr} at ${percentage}%, remaining ${remaining} seconds`, NS);
-                onProgress(percentage, remaining === Number.POSITIVE_INFINITY ? undefined : remaining);
-
-                lastUpdate = now;
-            }
-
-            return pageOffset;
-        };
-
-        let done = false;
-        const imageBlockOrPageRequestTimeoutMs = getOtaImageDataRequestTimeoutMs(current, requestTimeout);
-
-        /** recursive, endless (expects `upgradeEndRequest` to stop it, or anything that sets done=true) */
-        const sendImageChunks = async (): Promise<void> => {
-            while (!done) {
-                const imageBlockRequest = this.#waitForOtaCommand(
-                    endpoint.ID,
-                    Zcl.Clusters.genOta.commands.imageBlockRequest.ID,
-                    undefined,
-                    imageBlockOrPageRequestTimeoutMs,
-                );
-                const imagePageRequest = this.#waitForOtaCommand(
-                    endpoint.ID,
-                    Zcl.Clusters.genOta.commands.imagePageRequest.ID,
-                    undefined,
-                    imageBlockOrPageRequestTimeoutMs,
-                );
-                waiters.imageBlockOrPageRequest = {
-                    promise: Promise.race([imageBlockRequest.promise, imagePageRequest.promise]),
-                    cancel: () => {
-                        imageBlockRequest.cancel();
-                        imagePageRequest.cancel();
-                    },
-                };
-
-                try {
-                    const result = await waiters.imageBlockOrPageRequest.promise;
-                    let pageSize = 0;
-                    let pageOffset = 0;
-
-                    if ("pageSize" in result.payload) {
-                        // TODO: `result.payload.responseSpacing` support?
-                        // imagePageRequest
-                        pageSize = result.payload.pageSize;
-
-                        while (pageOffset < pageSize) {
-                            // in case upgradeEndRequest resolves, bail early (quirks)
-                            if (done) {
-                                return;
-                            }
-
-                            pageOffset = await sendImageBlockResponse(result.payload, result.header.transactionSequenceNumber, pageOffset, pageSize);
-                        }
-                    } else {
-                        // imageBlockRequest
-                        pageOffset = await sendImageBlockResponse(result.payload, result.header.transactionSequenceNumber, pageOffset, pageSize);
-                    }
-                } catch (error) {
-                    waiters.imageBlockOrPageRequest?.cancel();
-                    waiters.upgradeEndRequest?.cancel();
-
-                    throw new Error(
-                        `Device ${this.ieeeAddr} did not start/finish firmware download after being notified. (${(error as Error).message})`,
-                    );
-                }
-            }
-        };
-
         logger.debug(() => `Starting OTA update for ${this.ieeeAddr}`, NS);
 
-        // some devices have crazy long timeouts... so go wide on this (25 days)
-        waiters.upgradeEndRequest = this.#waitForOtaCommand(endpoint.ID, Zcl.Clusters.genOta.commands.upgradeEndRequest.ID, undefined, 2160000000);
+        const session = new OtaSession(
+            this.ieeeAddr,
+            endpoint,
+            image,
+            onProgress,
+            requestTimeout,
+            responseDelay,
+            baseDataSize,
+            this.#waitForOtaCommand.bind(this),
+        );
 
-        await Promise.race([
-            sendImageChunks(),
-            waiters.upgradeEndRequest.promise.finally(() => {
-                clearTimeout(lastBlockResponseTime);
-                // always clear state
-                waiters.imageBlockOrPageRequest?.cancel();
-                waiters.upgradeEndRequest?.cancel();
-
-                done = true;
-            }),
-        ]);
-
-        // already resolved when this is reached
-        const endResult = await waiters.upgradeEndRequest.promise;
+        const endResult = await session.run();
 
         logger.debug(() => `Received upgrade end request for ${this.ieeeAddr}: ${JSON.stringify(endResult.payload)}`, NS);
 

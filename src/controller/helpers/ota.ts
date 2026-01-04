@@ -4,21 +4,12 @@ import {readFileSync} from "node:fs";
 import path from "node:path";
 import {logger} from "../../utils/logger";
 import * as Zcl from "../../zspec/zcl";
-import type {TClusterCommandPayload} from "../../zspec/zcl/definition/clusters-types";
+import type {TClusterCommandPayload, TClusterPayload} from "../../zspec/zcl/definition/clusters-types";
+import type {TZclFrame} from "../../zspec/zcl/zclFrame";
+import type Endpoint from "../model/endpoint";
 import type {OtaImage, OtaImageElement, OtaImageHeader, OtaImageMeta, ZigbeeOtaImageMeta} from "../tstype";
 
 const NS = "zh:controller:ota";
-
-export const ZIGBEE_OTA_LATEST_URL = "https://raw.githubusercontent.com/Koenkk/zigbee-OTA/master/index.json";
-export const ZIGBEE_OTA_PREVIOUS_URL = "https://raw.githubusercontent.com/Koenkk/zigbee-OTA/master/index1.json";
-
-/** When the data size is too big, OTA gets unstable, so default it to 50 bytes maximum. */
-export const DEFAULT_MAXIMUM_DATA_SIZE = 50;
-/** Use to reduce network congestion by throttling response if necessary */
-export const DEFAULT_IMAGE_BLOCK_RESPONSE_DELAY = 250;
-
-/** uint32 LE */
-export const UPGRADE_FILE_IDENTIFIER = 0x0beef11e;
 
 export enum OtaTagId {
     UpgradeImage = 0x0000,
@@ -42,9 +33,19 @@ export enum OtaTagId {
     TelinkAES = 0xf000,
 }
 
+const ZIGBEE_OTA_LATEST_URL = "https://raw.githubusercontent.com/Koenkk/zigbee-OTA/master/index.json";
+const ZIGBEE_OTA_PREVIOUS_URL = "https://raw.githubusercontent.com/Koenkk/zigbee-OTA/master/index1.json";
+
+const UPGRADE_END_REQUEST_ID = Zcl.Clusters.genOta.commands.upgradeEndRequest.ID;
+const IMAGE_BLOCK_REQUEST_ID = Zcl.Clusters.genOta.commands.imageBlockRequest.ID;
+const IMAGE_PAGE_REQUEST_ID = Zcl.Clusters.genOta.commands.imagePageRequest.ID;
+
+/** uint32 LE */
+export const UPGRADE_FILE_IDENTIFIER = 0x0beef11e;
+
 // #region General Utils
 
-export function isValidUrl(url: string): boolean {
+function isValidUrl(url: string): boolean {
     try {
         const parsed = new URL(url);
 
@@ -250,14 +251,14 @@ export function parseOtaImage(buffer: Buffer): OtaImage {
     return {header, elements, raw};
 }
 
-export function getOtaImageDataPayload(
+function buildImageBlockPayload(
     image: OtaImage,
     requestPayload: TClusterCommandPayload<"genOta", "imageBlockRequest" | "imagePageRequest">,
     pageOffset: number,
     pageSize: number,
-    initialMaximumDataSize: number,
+    baseDataSize: number,
 ) {
-    let dataSize = initialMaximumDataSize;
+    let dataSize = baseDataSize;
 
     if (requestPayload.manufacturerCode === Zcl.ManufacturerCode.INSTA_GMBH) {
         // Insta devices, OTA only works for data sizes 40 and smaller (= manufacturerCode 4474).
@@ -311,30 +312,185 @@ export function getOtaImageDataPayload(
     };
 }
 
-export function getOtaImageDataRequestTimeoutMs(
-    requestPayload: TClusterCommandPayload<"genOta", "queryNextImageRequest">,
-    initialResponseDelay = 150000,
-) {
-    // increase the upgradeEndReq wait time to solve the problem of OTA timeout failure of Sonoff Devices
-    // (https://github.com/Koenkk/zigbee-herdsman-converters/issues/6657)
-    if (requestPayload.manufacturerCode === Zcl.ManufacturerCode.SHENZHEN_COOLKIT_TECHNOLOGY_CO_LTD && requestPayload.imageType === 8199) {
-        return 3600000;
-    }
-
-    // Bosch transmits the firmware updates in the background in their native implementation.
-    // According to the app, this can take up to 2 days. Therefore, we assume to get at least
-    // one package request per hour from the device here.
-    if (requestPayload.manufacturerCode === Zcl.ManufacturerCode.ROBERT_BOSCH_GMBH) {
-        return 60 * 60 * 1000;
-    }
-
-    // Increase the timeout for Legrand devices, so that they will re-initiate and update themselves
-    // Newer firmwares have awkward behaviours when it comes to the handling of the last bytes of OTA updates
-    if (requestPayload.manufacturerCode === Zcl.ManufacturerCode.LEGRAND_GROUP) {
-        return 30 * 60 * 1000;
-    }
-
-    return initialResponseDelay;
-}
-
 // #endregion
+
+type OtaDataRequest = TZclFrame<"genOta", "imageBlockRequest"> | TZclFrame<"genOta", "imagePageRequest">;
+type OtaUpgradeEndRequest = TZclFrame<"genOta", "upgradeEndRequest">;
+
+export class OtaSession {
+    #lastBlockResponseTime = 0;
+    #lastProgressUpdate = 0;
+    readonly #startTime: number;
+    readonly #dataRequestTimeout: number;
+
+    constructor(
+        private readonly ieeeAddr: string,
+        private readonly endpoint: Endpoint,
+        private readonly image: OtaImage,
+        private readonly onProgress: (progress: number, remaining?: number) => void,
+        requestTimeout: number | undefined,
+        private readonly responseDelay: number,
+        private readonly baseDataSize: number,
+        private readonly waitForOtaCommand: <Co extends string>(
+            endpointId: number,
+            commandId: number,
+            transactionSequenceNumber: number | undefined,
+            timeout: number,
+        ) => {promise: Promise<TZclFrame<"genOta", Co>>; cancel: () => void},
+    ) {
+        this.#startTime = performance.now();
+        // TODO: should `requestTimeout` be override if non-zero?
+        //       to allow easier testing when devices misbehave otherwise potentially overridden by below switch
+        this.#dataRequestTimeout = requestTimeout || 150000;
+
+        // if (!requestTimeout) {
+        switch (image.header.manufacturerCode) {
+            case Zcl.ManufacturerCode.ROBERT_BOSCH_GMBH: {
+                // Bosch transmits the firmware updates in the background in their native implementation.
+                // According to the app, this can take up to 2 days. Therefore, we assume to get at least
+                // one package request per hour from the device here.
+                this.#dataRequestTimeout = 60 * 60 * 1000;
+                break;
+            }
+            case Zcl.ManufacturerCode.LEGRAND_GROUP: {
+                // Increase the timeout for Legrand devices, so that they will re-initiate and update themselves
+                // Newer firmwares have awkward behaviours when it comes to the handling of the last bytes of OTA updates
+                this.#dataRequestTimeout = 30 * 60 * 1000;
+                break;
+            }
+            case Zcl.ManufacturerCode.SHENZHEN_COOLKIT_TECHNOLOGY_CO_LTD: {
+                if (image.header.imageType === 8199) {
+                    // increase the upgradeEndReq wait time to solve the problem of OTA timeout failure of Sonoff Devices
+                    // (https://github.com/Koenkk/zigbee-herdsman-converters/issues/6657)
+                    this.#dataRequestTimeout = 3600000;
+                }
+                break;
+            }
+        }
+        // }
+    }
+
+    public async run(): Promise<TZclFrame<"genOta", "upgradeEndRequest">> {
+        // can take a long time, use max (int32 - 1), ~24 days
+        const upgradeEndRequest = this.waitForOtaCommand<"upgradeEndRequest">(this.endpoint.ID, UPGRADE_END_REQUEST_ID, undefined, 2147483647);
+
+        try {
+            for await (const request of this.commandStream(upgradeEndRequest)) {
+                if (request.command.ID === UPGRADE_END_REQUEST_ID) {
+                    return request as TZclFrame<"genOta", "upgradeEndRequest">;
+                }
+
+                if (request.command.ID === IMAGE_PAGE_REQUEST_ID) {
+                    const pagePayload = request.payload as TClusterPayload<"genOta", "imagePageRequest">;
+                    let pageOffset = 0;
+
+                    while (pageOffset < pagePayload.pageSize) {
+                        pageOffset = await this.sendImageBlockResponse(
+                            pagePayload,
+                            request.header.transactionSequenceNumber,
+                            pageOffset,
+                            pagePayload.pageSize,
+                        );
+                    }
+                } else {
+                    await this.sendImageBlockResponse(
+                        request.payload as TClusterPayload<"genOta", "imageBlockRequest">,
+                        request.header.transactionSequenceNumber,
+                        0,
+                        0,
+                    );
+                }
+            }
+
+            const endPayload = await upgradeEndRequest.promise.then((payload) => ({...payload, type: "upgradeEndRequest"}));
+
+            return endPayload;
+        } catch (error) {
+            const err = error as Error;
+            err.message = `Device ${this.ieeeAddr} did not start/finish firmware download after being notified. (${err.message})`;
+
+            throw err;
+        } finally {
+            upgradeEndRequest.cancel();
+        }
+    }
+
+    private async *commandStream(upgradeEndRequest: {
+        promise: Promise<TZclFrame<"genOta", "upgradeEndRequest">>;
+        cancel: () => void;
+    }): AsyncGenerator<OtaDataRequest | OtaUpgradeEndRequest> {
+        while (true) {
+            const imageBlockRequest = this.waitForOtaCommand<"imageBlockRequest">(
+                this.endpoint.ID,
+                IMAGE_BLOCK_REQUEST_ID,
+                undefined,
+                this.#dataRequestTimeout,
+            );
+            const imagePageRequest = this.waitForOtaCommand<"imagePageRequest">(
+                this.endpoint.ID,
+                IMAGE_PAGE_REQUEST_ID,
+                undefined,
+                this.#dataRequestTimeout,
+            );
+            const dataRequest = Promise.race([imageBlockRequest.promise, imagePageRequest.promise]);
+            const request = await Promise.race([dataRequest, upgradeEndRequest.promise]);
+
+            imageBlockRequest.cancel();
+            imagePageRequest.cancel();
+
+            yield request;
+
+            if (request.command.ID === UPGRADE_END_REQUEST_ID) {
+                break;
+            }
+        }
+    }
+
+    private async sendImageBlockResponse(
+        requestPayload: TClusterCommandPayload<"genOta", "imageBlockRequest">,
+        requestTsn: number,
+        pageOffset: number,
+        pageSize: number,
+    ): Promise<number> {
+        // throttle if needed
+        const now = performance.now();
+        const timeSinceLast = now - this.#lastBlockResponseTime;
+        const delayNeeded = this.responseDelay - timeSinceLast;
+
+        if (delayNeeded > 0) {
+            await new Promise((resolve) => setTimeout(resolve, delayNeeded));
+        }
+
+        this.#lastBlockResponseTime = performance.now();
+
+        try {
+            const blockPayload = buildImageBlockPayload(this.image, requestPayload, pageOffset, pageSize, this.baseDataSize);
+
+            await this.endpoint.commandResponse("genOta", "imageBlockResponse", blockPayload, undefined, requestTsn);
+
+            const nextOffset = pageOffset + blockPayload.dataSize;
+            const now = performance.now();
+
+            if (now - this.#lastProgressUpdate <= 30000) {
+                return nextOffset;
+            }
+
+            const bytesDelivered = requestPayload.fileOffset + nextOffset;
+            const totalDurationSeconds = Math.max((now - this.#startTime) / 1000, 0.001);
+            const bytesPerSecond = bytesDelivered / totalDurationSeconds;
+            const remainingSeconds = (this.image.header.totalImageSize - bytesDelivered) / bytesPerSecond;
+            const percentage = Math.round((bytesDelivered / this.image.header.totalImageSize) * 10000) / 100;
+
+            logger.debug(() => `OTA update of ${this.ieeeAddr} at ${percentage}%, remaining ${remainingSeconds} seconds`, NS);
+            this.onProgress(percentage, Number.isFinite(remainingSeconds) ? remainingSeconds : undefined);
+
+            this.#lastProgressUpdate = now;
+
+            return nextOffset;
+        } catch (error) {
+            logger.debug(() => `Image block response failed for ${this.ieeeAddr}: ${(error as Error).message}`, NS);
+
+            return pageOffset;
+        }
+    }
+}
