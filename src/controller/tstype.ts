@@ -1,5 +1,6 @@
 import type {
     TClusterAttributes,
+    TClusterCommandPayload,
     TClusterCommandResponses,
     TClusterCommands,
     TClusterPayload,
@@ -51,6 +52,75 @@ export interface GreenPowerDeviceJoinedPayload {
     networkAddress: number;
     securityKey?: Buffer;
 }
+
+// #region OTA
+export interface OtaUpdateAvailableResult {
+    /**
+     * - `0` means no firmware available, or same version
+     * - `-1` means available firmware is 'newer' than current one
+     * - `1` means available firmware is 'older' than current one
+     */
+    available: number;
+    current: TClusterCommandPayload<"genOta", "queryNextImageRequest">;
+    availableMeta?: ZigbeeOtaImageMeta;
+}
+
+export interface OtaImageHeader {
+    otaUpgradeFileIdentifier: number;
+    otaHeaderVersion: number;
+    otaHeaderLength: number;
+    otaHeaderFieldControl: number;
+    manufacturerCode: number;
+    imageType: number;
+    fileVersion: number;
+    zigbeeStackVersion: number;
+    otaHeaderString: string;
+    totalImageSize: number;
+    securityCredentialVersion?: number;
+    upgradeFileDestination?: Buffer;
+    minimumHardwareVersion?: number;
+    maximumHardwareVersion?: number;
+}
+
+export interface OtaImageElement {
+    tagId: number;
+    length: number;
+    data: Buffer;
+}
+
+export interface OtaImage {
+    header: OtaImageHeader;
+    elements: OtaImageElement[];
+    raw: Buffer;
+}
+
+export interface OtaImageMeta {
+    fileVersion: OtaImageHeader["fileVersion"];
+    fileSize?: OtaImageHeader["totalImageSize"];
+    url: string;
+    force?: boolean;
+    sha512?: string;
+    otaHeaderString?: OtaImageHeader["otaHeaderString"];
+    hardwareVersionMin?: OtaImageHeader["minimumHardwareVersion"];
+    hardwareVersionMax?: OtaImageHeader["maximumHardwareVersion"];
+}
+
+export interface ZigbeeOtaImageMeta extends TClusterCommandPayload<"genOta", "queryNextImageRequest">, OtaImageMeta {
+    fileName: string;
+    modelId?: string;
+    manufacturerName?: string[];
+    minFileVersion?: OtaImageHeader["fileVersion"];
+    maxFileVersion?: OtaImageHeader["fileVersion"];
+    originalUrl?: string;
+    releaseNotes?: string;
+}
+
+export type OtaExtraMetas = Pick<ZigbeeOtaImageMeta, "modelId" | "otaHeaderString" | "hardwareVersionMin" | "hardwareVersionMax"> & {
+    manufacturerName?: string;
+    suppressElementImageParseFailure?: boolean;
+};
+
+// #endregion
 
 export interface RawPayload {
     ieeeAddress?: string;

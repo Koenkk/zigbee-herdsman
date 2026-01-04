@@ -7,13 +7,14 @@ import * as ZSpec from "../../zspec";
 import {BroadcastAddress} from "../../zspec/enums";
 import type {Eui64} from "../../zspec/tstypes";
 import * as Zcl from "../../zspec/zcl";
-import type {TPartialClusterAttributes} from "../../zspec/zcl/definition/clusters-types";
+import type {TClusterCommandPayload, TClusterPayload, TPartialClusterAttributes} from "../../zspec/zcl/definition/clusters-types";
 import type {ClusterDefinition, CustomClusters} from "../../zspec/zcl/definition/tstype";
 import * as Zdo from "../../zspec/zdo";
 import type {BindingTableEntry, LQITableEntry, RoutingTableEntry} from "../../zspec/zdo/definition/tstypes";
 import type {ControllerEventMap} from "../controller";
+import {getOtaFirmware, getOtaImageDataPayload, getOtaImageDataRequestTimeoutMs, getOtaIndex, parseOtaImage} from "../helpers/ota";
 import zclTransactionSequenceNumber from "../helpers/zclTransactionSequenceNumber";
-import type {DatabaseEntry, DeviceType, KeyValue} from "../tstype";
+import type {DatabaseEntry, DeviceType, KeyValue, OtaExtraMetas, OtaImage, OtaUpdateAvailableResult, ZigbeeOtaImageMeta} from "../tstype";
 import Endpoint, {type BindInternal} from "./endpoint";
 import Entity from "./entity";
 
@@ -1305,6 +1306,442 @@ export class Device extends Entity<ControllerEventMap> {
             };
         }
         this._customClusters[name] = cluster;
+    }
+
+    #waitForOtaCommand<Co extends number | string>(
+        endpointId: number,
+        commandId: number,
+        transactionSequenceNumber: number | undefined,
+        timeout: number,
+    ): {promise: Promise<{header: Zcl.Header; payload: TClusterPayload<"genOta", Co>}>; cancel: () => void} {
+        const waiter = Entity.adapter.waitFor(
+            this.networkAddress,
+            endpointId,
+            Zcl.FrameType.SPECIFIC,
+            Zcl.Direction.CLIENT_TO_SERVER,
+            transactionSequenceNumber,
+            Zcl.Clusters.genOta.ID,
+            commandId,
+            timeout,
+        );
+        const promise = new Promise<{header: Zcl.Header; payload: TClusterPayload<"genOta", Co>}>((resolve, reject) => {
+            waiter.promise.then(
+                (payload) => {
+                    try {
+                        const frame = Zcl.Frame.fromBuffer(payload.clusterID, payload.header, payload.data, this.customClusters);
+                        resolve({header: frame.header, payload: frame.payload});
+                    } catch (error) {
+                        reject(error);
+                    }
+                },
+                (error) => reject(error),
+            );
+        });
+
+        return {promise, cancel: waiter.cancel};
+    }
+
+    async findMatchingOtaImage(
+        dataDir: string,
+        overrideIndexFileName: string | undefined,
+        current: TClusterCommandPayload<"genOta", "queryNextImageRequest">,
+        extraMetas: OtaExtraMetas,
+        previous: boolean,
+    ): Promise<ZigbeeOtaImageMeta | undefined> {
+        logger.debug(() => `Getting image metadata for ${this.ieeeAddr}...`, NS);
+
+        const images = await getOtaIndex(dataDir, overrideIndexFileName, previous);
+        // NOTE: Officially an image can be determined with a combination of manufacturerCode and imageType.
+        // However several manufacturers do not follow the spec properly.
+        // The index provides the needed extra metadata to prevent mismatches.
+        // e.g. Tuya must match on manufacturerName, Gledopto on modelId...
+        return images.find(
+            (i) =>
+                i.imageType === current.imageType &&
+                i.manufacturerCode === current.manufacturerCode &&
+                (i.minFileVersion === undefined || current.fileVersion >= i.minFileVersion) &&
+                (i.maxFileVersion === undefined || current.fileVersion <= i.maxFileVersion) &&
+                // let extra metas override the match from this.modelID, same for manufacturerName
+                (!i.modelId || i.modelId === this.modelID || i.modelId === extraMetas.modelId) &&
+                (!i.manufacturerName ||
+                    // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
+                    i.manufacturerName.includes(this.manufacturerName!) ||
+                    // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
+                    i.manufacturerName.includes(extraMetas.manufacturerName!)) &&
+                (!extraMetas.otaHeaderString || i.otaHeaderString === extraMetas.otaHeaderString) &&
+                (i.hardwareVersionMin === undefined ||
+                    (current.hardwareVersion !== undefined && current.hardwareVersion >= i.hardwareVersionMin) ||
+                    (extraMetas.hardwareVersionMin !== undefined && extraMetas.hardwareVersionMin >= i.hardwareVersionMin)) &&
+                (i.hardwareVersionMax === undefined ||
+                    (current.hardwareVersion !== undefined && current.hardwareVersion <= i.hardwareVersionMax) ||
+                    (extraMetas.hardwareVersionMax !== undefined && extraMetas.hardwareVersionMax <= i.hardwareVersionMax)),
+        );
+    }
+
+    async checkOta(
+        dataDir: string,
+        overrideIndexFileName: string | undefined,
+        current: TClusterCommandPayload<"genOta", "queryNextImageRequest"> | undefined,
+        extraMetas: OtaExtraMetas,
+        previous: boolean,
+        endpoint = this.endpoints.find((e) => e.supportsOutputCluster("genOta")),
+    ): Promise<OtaUpdateAvailableResult> {
+        assert(endpoint !== undefined, `No endpoint found with OTA cluster support for ${this.ieeeAddr}`);
+
+        if (this.modelID === "PP-WHT-US") {
+            // see https://github.com/Koenkk/zigbee-OTA/pull/14
+            const scenesEndpoint = this.endpoints.find((e) => e.supportsOutputCluster("genScenes"));
+
+            if (scenesEndpoint !== undefined) {
+                await scenesEndpoint.write("genScenes", {currentGroup: 49502});
+            }
+        }
+
+        if (current === undefined) {
+            // Some devices (e.g. Insta) take a very long trying to discover the correct coordinator EP for OTA
+            const queryNextImageRequest = this.#waitForOtaCommand(
+                endpoint.ID,
+                Zcl.Clusters.genOta.commands.queryNextImageRequest.ID,
+                undefined,
+                60000,
+            );
+
+            try {
+                await endpoint.commandResponse("genOta", "imageNotify", {payloadType: 0, queryJitter: 100}, {sendPolicy: "immediate"});
+
+                const response = await queryNextImageRequest.promise;
+                current = response.payload;
+            } catch {
+                queryNextImageRequest.cancel();
+
+                throw new Error(`Device didn't respond to OTA request`);
+            }
+        }
+
+        logger.debug(
+            () => `Checking OTA ${this.ieeeAddr} ${previous ? "previous" : "latest"} image availability, current=${JSON.stringify(current)}`,
+            NS,
+        );
+
+        if (
+            this.meta.lumiFileVersion &&
+            (this.modelID === "lumi.airrtc.agl001" || this.modelID === "lumi.curtain.acn003" || this.modelID === "lumi.curtain.agl001")
+        ) {
+            // The current.fileVersion which comes from the device is wrong.
+            // Use the `lumiFileVersion` which comes from the manuSpecificLumi.attributeReport instead.
+            // https://github.com/Koenkk/zigbee2mqtt/issues/16345#issuecomment-1454835056
+            // https://github.com/Koenkk/zigbee2mqtt/issues/16345 doesn't seem to be needed for all
+            // https://github.com/Koenkk/zigbee2mqtt/issues/15745
+            current = {...current, fileVersion: this.meta.lumiFileVersion};
+        }
+
+        const meta = await this.findMatchingOtaImage(dataDir, overrideIndexFileName, current, extraMetas, previous);
+
+        // Soft-fail because no images in repo/URL for specified device
+        if (!meta) {
+            return {
+                available: 0,
+                current,
+            };
+        }
+
+        logger.debug(() => `OTA ${previous ? "previous" : "latest"} image availability for ${this.ieeeAddr}, available=${JSON.stringify(meta)}`, NS);
+
+        return {
+            available: meta.force ? -1 : Math.sign(current.fileVersion - meta.fileVersion),
+            current,
+            availableMeta: meta,
+        };
+    }
+
+    async updateOta(
+        dataDir: string,
+        overrideIndexFileName: string | undefined,
+        requestPayload: TClusterCommandPayload<"genOta", "queryNextImageRequest"> | undefined,
+        requestTsn: number | undefined,
+        extraMetas: OtaExtraMetas,
+        previous: boolean,
+        onProgress: (progress: number, remaining?: number) => void,
+        requestTimeout: number | undefined,
+        responseDelay: number,
+        initialMaximumDataSize: number,
+    ): Promise<number | undefined> {
+        const endpoint = this.endpoints.find((e) => e.supportsOutputCluster("genOta"));
+
+        assert(endpoint !== undefined, `No endpoint found with OTA cluster support for ${this.ieeeAddr}`);
+
+        const {available, current, availableMeta} = await this.checkOta(
+            dataDir,
+            overrideIndexFileName,
+            requestPayload,
+            extraMetas,
+            previous,
+            endpoint,
+        );
+
+        let image: OtaImage | undefined;
+
+        if ((previous ? available === 1 : available === -1) && availableMeta) {
+            try {
+                const downloadedFile = await getOtaFirmware(availableMeta, dataDir);
+                image = parseOtaImage(downloadedFile);
+
+                logger.debug(
+                    // biome-ignore lint/style/noNonNullAssertion: valid from above, won't change after assignment
+                    () => `Parsed ${previous ? "previous" : "latest"} image for ${this.ieeeAddr}, header=${JSON.stringify(image!.header)}`,
+                    NS,
+                );
+            } catch (error) {
+                logger.error(`Failed to parse OTA image for ${this.ieeeAddr}, aborting (${(error as Error).message})`, NS);
+                // biome-ignore lint/style/noNonNullAssertion: expected valid
+                logger.debug((error as Error).stack!, NS);
+            }
+        } else {
+            logger.info(() => `No OTA ${previous ? "previous" : "latest"} image currently available for ${this.ieeeAddr}`, NS);
+        }
+
+        // reply to `queryNextImageRequest` now that we have the data for it,
+        // should trigger image block/page request from device
+        try {
+            await endpoint.commandResponse(
+                "genOta",
+                "queryNextImageResponse",
+                image
+                    ? {
+                          status: Zcl.Status.SUCCESS,
+                          manufacturerCode: image.header.manufacturerCode,
+                          imageType: image.header.imageType,
+                          fileVersion: image.header.fileVersion,
+                          imageSize: image.header.totalImageSize,
+                      }
+                    : {status: Zcl.Status.NO_IMAGE_AVAILABLE},
+                undefined,
+                requestTsn,
+            );
+        } catch {
+            /** handled upstream - just ignore error */
+        }
+
+        if (!image) {
+            return undefined;
+        }
+
+        const waiters: {
+            imageBlockOrPageRequest?: {
+                cancel: () => void;
+                promise: Promise<{header: Zcl.Header; payload: TClusterPayload<"genOta", "imageBlockRequest" | "imagePageRequest">}>;
+            };
+            upgradeEndRequest?: {
+                cancel: () => void;
+                promise: Promise<{header: Zcl.Header; payload: TClusterPayload<"genOta", "upgradeEndRequest">}>;
+            };
+        } = {};
+        let lastBlockResponseTime = 0;
+        let lastBlockTimeout: NodeJS.Timeout;
+        let lastUpdate: number | undefined;
+        const startTime = performance.now();
+
+        const sendImageBlockResponse = async (
+            requestPayload: TClusterCommandPayload<"genOta", "imageBlockRequest">,
+            requestTsn: number,
+            pageOffset: number,
+            pageSize: number,
+        ): Promise<number> => {
+            // Reduce network congestion by throttling response if necessary
+            {
+                clearTimeout(lastBlockTimeout);
+
+                const now = performance.now();
+                const timeSinceLast = now - lastBlockResponseTime;
+                const delay = responseDelay - timeSinceLast;
+
+                if (delay <= 0) {
+                    lastBlockResponseTime = now;
+                } else {
+                    await new Promise<void>((resolve) => {
+                        lastBlockTimeout = setTimeout(() => {
+                            lastBlockResponseTime = performance.now();
+                            resolve();
+                        }, delay);
+                    });
+                }
+            }
+
+            try {
+                const blockPayload = getOtaImageDataPayload(image, requestPayload, pageOffset, pageSize, initialMaximumDataSize);
+
+                await endpoint.commandResponse("genOta", "imageBlockResponse", blockPayload, undefined, requestTsn);
+
+                pageOffset += blockPayload.dataSize;
+            } catch (error) {
+                // device will probably do a new imageBlockRequest, just log the error
+                logger.debug(() => `Image block response failed for ${this.ieeeAddr}: ${(error as Error).message}`, NS);
+            }
+
+            const now = performance.now();
+
+            if (lastUpdate === undefined || now - lastUpdate > 30000) {
+                // Call on progress every +- 30 seconds
+                const totalDuration = (now - startTime) / 1000; // in seconds
+                const bytesPerSecond = requestPayload.fileOffset / totalDuration;
+                const remaining = (image.header.totalImageSize - requestPayload.fileOffset) / bytesPerSecond;
+                let percentage = requestPayload.fileOffset / image.header.totalImageSize;
+                percentage = Math.round(percentage * 10000) / 100;
+
+                logger.debug(() => `OTA update of ${this.ieeeAddr} at ${percentage}%, remaining ${remaining} seconds`, NS);
+                onProgress(percentage, remaining === Number.POSITIVE_INFINITY ? undefined : remaining);
+
+                lastUpdate = now;
+            }
+
+            return pageOffset;
+        };
+
+        let done = false;
+        const imageBlockOrPageRequestTimeoutMs = getOtaImageDataRequestTimeoutMs(current, requestTimeout);
+
+        /** recursive, endless (expects `upgradeEndRequest` to stop it, or anything that sets done=true) */
+        const sendImageChunks = async (): Promise<void> => {
+            while (!done) {
+                const imageBlockRequest = this.#waitForOtaCommand(
+                    endpoint.ID,
+                    Zcl.Clusters.genOta.commands.imageBlockRequest.ID,
+                    undefined,
+                    imageBlockOrPageRequestTimeoutMs,
+                );
+                const imagePageRequest = this.#waitForOtaCommand(
+                    endpoint.ID,
+                    Zcl.Clusters.genOta.commands.imagePageRequest.ID,
+                    undefined,
+                    imageBlockOrPageRequestTimeoutMs,
+                );
+                waiters.imageBlockOrPageRequest = {
+                    promise: Promise.race([imageBlockRequest.promise, imagePageRequest.promise]),
+                    cancel: () => {
+                        imageBlockRequest.cancel();
+                        imagePageRequest.cancel();
+                    },
+                };
+
+                try {
+                    const result = await waiters.imageBlockOrPageRequest.promise;
+                    let pageSize = 0;
+                    let pageOffset = 0;
+
+                    if ("pageSize" in result.payload) {
+                        // TODO: `result.payload.responseSpacing` support?
+                        // imagePageRequest
+                        pageSize = result.payload.pageSize;
+
+                        while (pageOffset < pageSize) {
+                            // in case upgradeEndRequest resolves, bail early (quirks)
+                            if (done) {
+                                return;
+                            }
+
+                            pageOffset = await sendImageBlockResponse(result.payload, result.header.transactionSequenceNumber, pageOffset, pageSize);
+                        }
+                    } else {
+                        // imageBlockRequest
+                        pageOffset = await sendImageBlockResponse(result.payload, result.header.transactionSequenceNumber, pageOffset, pageSize);
+                    }
+                } catch (error) {
+                    waiters.imageBlockOrPageRequest?.cancel();
+                    waiters.upgradeEndRequest?.cancel();
+
+                    throw new Error(
+                        `Device ${this.ieeeAddr} did not start/finish firmware download after being notified. (${(error as Error).message})`,
+                    );
+                }
+            }
+        };
+
+        logger.debug(() => `Starting OTA update for ${this.ieeeAddr}`, NS);
+
+        // some devices have crazy long timeouts... so go wide on this (25 days)
+        waiters.upgradeEndRequest = this.#waitForOtaCommand(endpoint.ID, Zcl.Clusters.genOta.commands.upgradeEndRequest.ID, undefined, 2160000000);
+
+        await Promise.race([
+            sendImageChunks(),
+            waiters.upgradeEndRequest.promise.finally(() => {
+                clearTimeout(lastBlockResponseTime);
+                // always clear state
+                waiters.imageBlockOrPageRequest?.cancel();
+                waiters.upgradeEndRequest?.cancel();
+
+                done = true;
+            }),
+        ]);
+
+        // already resolved when this is reached
+        const endResult = await waiters.upgradeEndRequest.promise;
+
+        logger.debug(() => `Received upgrade end request for ${this.ieeeAddr}: ${JSON.stringify(endResult.payload)}`, NS);
+
+        if (endResult.payload.status === Zcl.Status.SUCCESS) {
+            try {
+                const currentTime = timeService.timestampToZigbeeUtcTime(Date.now());
+
+                await endpoint.commandResponse(
+                    "genOta",
+                    "upgradeEndResponse",
+                    {
+                        manufacturerCode: image.header.manufacturerCode,
+                        imageType: image.header.imageType,
+                        fileVersion: image.header.fileVersion,
+                        currentTime,
+                        upgradeTime: currentTime + 1, // TODO: could this tiny offset be a problem for some stacks?
+                    },
+                    undefined,
+                    endResult.header.transactionSequenceNumber,
+                );
+
+                logger.debug(() => `Update of ${this.ieeeAddr} successful. Waiting for device announce...`, NS);
+
+                onProgress(100, undefined);
+
+                let timer: NodeJS.Timeout;
+                const newFileVersion = image.header.fileVersion;
+
+                return await new Promise<number>((resolve) => {
+                    // XXX: annoying to test since using fake timers, same result anyway
+                    const onDeviceAnnounce = () => {
+                        clearTimeout(timer);
+                        logger.debug(() => `Received device announce for ${this.ieeeAddr}, OTA update finished.`, NS);
+                        resolve(newFileVersion);
+                    };
+
+                    // force "finished" after given time
+                    timer = setTimeout(() => {
+                        this.removeListener("deviceAnnounce", onDeviceAnnounce);
+                        logger.debug(() => `Timed out waiting for device announce for ${this.ieeeAddr}, OTA update considered finished.`, NS);
+                        resolve(newFileVersion);
+                    }, 120000 /** consider "done" after timeout even if no announce seen */);
+
+                    this.once("deviceAnnounce", onDeviceAnnounce);
+                });
+            } catch (error) {
+                throw new Error(`OTA upgrade end response failed: ${(error as Error).message}`);
+            }
+        } else {
+            /**
+             * For other status value received such as INVALID_IMAGE, REQUIRE_MORE_IMAGE, or ABORT,
+             * the upgrade server SHALL not send Upgrade End Response command but it SHALL send default
+             * response command with status of success and it SHALL wait for the client to reinitiate the upgrade process.
+             */
+            try {
+                await endpoint.defaultResponse(
+                    Zcl.Clusters.genOta.commands.upgradeEndRequest.ID,
+                    Zcl.Status.SUCCESS,
+                    Zcl.Clusters.genOta.ID,
+                    endResult.header.transactionSequenceNumber,
+                );
+            } catch (error) {
+                logger.debug(() => `OTA upgrade end request default response for ${this.ieeeAddr} failed: ${(error as Error).message}`, NS);
+            }
+
+            throw new Error(`OTA update of ${this.ieeeAddr} failed with reason: ${Zcl.Status[endResult.payload.status]}`);
+        }
     }
 }
 
