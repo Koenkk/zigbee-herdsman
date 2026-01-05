@@ -339,7 +339,7 @@ describe("ZNP", () => {
         errorCb();
     });
 
-    it("znp receive", () => {
+    it("znp receive", async () => {
         let parsedCb;
         const received = vi.fn();
 
@@ -351,7 +351,7 @@ describe("ZNP", () => {
             }
         });
 
-        znp.open();
+        await znp.open();
         parsedCb(
             new UnpiFrame(
                 UnpiConstants.Type.SRSP,
@@ -371,7 +371,7 @@ describe("ZNP", () => {
         expect(obj.type).toBe(UnpiConstants.Type.SRSP);
     });
 
-    it("znp receive malformed", () => {
+    it("znp receive malformed", async () => {
         let parsedCb;
         const received = vi.fn();
 
@@ -383,7 +383,7 @@ describe("ZNP", () => {
             }
         });
 
-        znp.open();
+        await znp.open();
         parsedCb(new UnpiFrame(UnpiConstants.Type.SRSP, UnpiConstants.Subsystem.SYS, 0x02, Buffer.from([0x01, 0x02, 0x03, 0x04])));
 
         expect(received).toHaveBeenCalledTimes(0);
@@ -676,6 +676,7 @@ describe("ZNP", () => {
         requestSpy.mockRestore();
 
         const waiter = znp.waitFor(UnpiConstants.Type.SRSP, UnpiConstants.Subsystem.SYS, "osalNvRead");
+        // biome-ignore lint/nursery/noFloatingPromises: ignore
         znp.request(UnpiConstants.Subsystem.SYS, "osalNvRead", {id: 1, offset: 2});
 
         parsedCb(new UnpiFrame(UnpiConstants.Type.SRSP, UnpiConstants.Subsystem.SYS, 0x08, Buffer.from([0x00, 0x02, 0x01, 0x02])));
@@ -723,6 +724,7 @@ describe("ZNP", () => {
 
         const waiter = znp.waitFor(UnpiConstants.Type.SRSP, UnpiConstants.Subsystem.ZDO, "nodeDescReq");
         const zdoPayload = Buffer.from([2 & 0xff, (2 >> 8) & 0xff, ...Zdo.Buffalo.buildRequest(false, Zdo.ClusterId.NODE_DESCRIPTOR_REQUEST, 2)]);
+        // biome-ignore lint/nursery/noFloatingPromises: ignore
         znp.requestZdo(Zdo.ClusterId.NODE_DESCRIPTOR_REQUEST, zdoPayload, 1);
 
         parsedCb(new UnpiFrame(UnpiConstants.Type.SRSP, UnpiConstants.Subsystem.ZDO, 2, Buffer.from([0x00])));

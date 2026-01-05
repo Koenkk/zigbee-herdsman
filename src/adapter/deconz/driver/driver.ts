@@ -372,6 +372,7 @@ class Driver extends events.EventEmitter {
                 this.driverState = DriverState.WaitToReconnect;
             }
 
+            // biome-ignore lint/nursery/noMisusedPromises: ignore
             if (prom) {
                 prom.catch((err) => {
                     logger.debug(`${err}`, NS);
