@@ -7,7 +7,7 @@ import * as Zcl from "../../zspec/zcl";
 import type {TClusterCommandPayload, TClusterPayload} from "../../zspec/zcl/definition/clusters-types";
 import type {TZclFrame} from "../../zspec/zcl/zclFrame";
 import type Endpoint from "../model/endpoint";
-import type {OtaImage, OtaImageElement, OtaImageHeader, OtaImageMeta, ZigbeeOtaImageMeta} from "../tstype";
+import type {OtaImage, OtaImageElement, OtaImageHeader, OtaSource, ZigbeeOtaImageMeta} from "../tstype";
 
 const NS = "zh:controller:ota";
 
@@ -44,6 +44,14 @@ const IMAGE_PAGE_REQUEST_ID = Zcl.Clusters.genOta.commands.imagePageRequest.ID;
 export const UPGRADE_FILE_IDENTIFIER = 0x0beef11e;
 
 // #region General Utils
+
+let dataDir: string | undefined;
+let overrideIndexLocation: string | undefined;
+
+export function setOtaConfiguration(settings: {dataDir: string; overrideIndexLocation: string}): void {
+    dataDir = settings.dataDir;
+    overrideIndexLocation = settings.overrideIndexLocation;
+}
 
 function isValidUrl(url: string): boolean {
     try {
@@ -98,10 +106,10 @@ async function fetchFirmware(url: string, sha512: string | undefined): Promise<B
     return validateFirmware(fileBuffer, sha512);
 }
 
-function readFirmware(filePath: string, dataDir: string, sha512: string | undefined): Buffer {
+function readFirmware(filePath: string, sha512: string | undefined): Buffer {
     logger.debug(() => `Reading firmware image from '${filePath}'`, NS);
 
-    if (!path.isAbsolute(filePath) && dataDir) {
+    if (dataDir && !path.isAbsolute(filePath)) {
         // If the file name is not a full path, then treat it as a relative to the data directory
         filePath = path.join(dataDir, filePath);
     }
@@ -111,21 +119,21 @@ function readFirmware(filePath: string, dataDir: string, sha512: string | undefi
     return validateFirmware(fileBuffer, sha512);
 }
 
-export async function getOtaFirmware(meta: OtaImageMeta, dataDir: string): Promise<Buffer> {
-    return isValidUrl(meta.url) ? await fetchFirmware(meta.url, meta.sha512) : readFirmware(meta.url, dataDir, meta.sha512);
+export async function getOtaFirmware(url: string, sha512: string | undefined): Promise<Buffer> {
+    return isValidUrl(url) ? await fetchFirmware(url, sha512) : readFirmware(url, sha512);
 }
 
-export async function getOtaIndex(dataDir: string, overrideIndexFileName: string | undefined, previous: boolean): Promise<ZigbeeOtaImageMeta[]> {
-    const mainIndex = await getJson<ZigbeeOtaImageMeta[]>(previous ? ZIGBEE_OTA_PREVIOUS_URL : ZIGBEE_OTA_LATEST_URL);
+export async function getOtaIndex(source: OtaSource): Promise<ZigbeeOtaImageMeta[]> {
+    const mainIndex = await getJson<ZigbeeOtaImageMeta[]>(source.url ?? (source.downgrade ? ZIGBEE_OTA_PREVIOUS_URL : ZIGBEE_OTA_LATEST_URL));
 
     logger.debug("Downloaded main index", NS);
 
-    if (overrideIndexFileName) {
-        logger.debug(`Loading override index '${overrideIndexFileName}'`, NS);
+    if (overrideIndexLocation) {
+        logger.debug(`Loading override index '${overrideIndexLocation}'`, NS);
 
-        const localIndex = isValidUrl(overrideIndexFileName)
-            ? await getJson<ZigbeeOtaImageMeta[]>(overrideIndexFileName)
-            : (JSON.parse(readFileSync(overrideIndexFileName, "utf-8")) as ZigbeeOtaImageMeta[]);
+        const localIndex = isValidUrl(overrideIndexLocation)
+            ? await getJson<ZigbeeOtaImageMeta[]>(overrideIndexLocation)
+            : (JSON.parse(readFileSync(overrideIndexLocation, "utf-8")) as ZigbeeOtaImageMeta[]);
 
         // Resulting index will have overridden items first
         return localIndex
@@ -136,7 +144,7 @@ export async function getOtaIndex(dataDir: string, overrideIndexFileName: string
                     return meta;
                 }
 
-                const image = parseOtaImage(readFirmware(meta.url, dataDir, meta.sha512));
+                const image = parseOtaImage(readFirmware(meta.url, meta.sha512));
                 meta.imageType = image.header.imageType;
                 meta.manufacturerCode = image.header.manufacturerCode;
                 meta.fileVersion = image.header.fileVersion;
@@ -328,8 +336,8 @@ export class OtaSession {
         private readonly endpoint: Endpoint,
         private readonly image: OtaImage,
         private readonly onProgress: (progress: number, remaining?: number) => void,
-        requestTimeout: number | undefined,
-        private readonly responseDelay: number,
+        dataRequestTimeout: number | undefined,
+        private readonly dataResponseDelay: number,
         private readonly baseDataSize: number,
         private readonly waitForOtaCommand: <Co extends string>(
             endpointId: number,
@@ -341,7 +349,7 @@ export class OtaSession {
         this.#startTime = performance.now();
         // TODO: should `requestTimeout` be override if non-zero?
         //       to allow easier testing when devices misbehave otherwise potentially overridden by below switch
-        this.#dataRequestTimeout = requestTimeout || 150000;
+        this.#dataRequestTimeout = dataRequestTimeout || 150000;
 
         // if (!requestTimeout) {
         switch (image.header.manufacturerCode) {
@@ -455,7 +463,7 @@ export class OtaSession {
         // throttle if needed
         const now = performance.now();
         const timeSinceLast = now - this.#lastBlockResponseTime;
-        const delayNeeded = this.responseDelay - timeSinceLast;
+        const delayNeeded = this.dataResponseDelay - timeSinceLast;
 
         if (delayNeeded > 0) {
             await new Promise((resolve) => setTimeout(resolve, delayNeeded));
@@ -480,9 +488,14 @@ export class OtaSession {
             const bytesPerSecond = bytesDelivered / totalDurationSeconds;
             const remainingSeconds = (this.image.header.totalImageSize - bytesDelivered) / bytesPerSecond;
             const percentage = Math.round((bytesDelivered / this.image.header.totalImageSize) * 10000) / 100;
+            const hasRemainingSeconds = Number.isFinite(remainingSeconds);
 
-            logger.debug(() => `OTA update of ${this.ieeeAddr} at ${percentage}%, remaining ${remainingSeconds} seconds`, NS);
-            this.onProgress(percentage, Number.isFinite(remainingSeconds) ? remainingSeconds : undefined);
+            logger.info(
+                () =>
+                    `Update of '${this.ieeeAddr}' at ${percentage.toFixed(2)}%${hasRemainingSeconds ? `, ${remainingSeconds} seconds remaining` : ""}`,
+                NS,
+            );
+            this.onProgress(percentage, hasRemainingSeconds ? remainingSeconds : undefined);
 
             this.#lastProgressUpdate = now;
 

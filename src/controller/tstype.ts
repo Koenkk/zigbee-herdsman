@@ -54,6 +54,11 @@ export interface GreenPowerDeviceJoinedPayload {
 }
 
 // #region OTA
+export interface OtaSource {
+    url?: string;
+    downgrade?: boolean;
+}
+
 export interface OtaUpdateAvailableResult {
     /**
      * - `0` means no firmware available, or same version

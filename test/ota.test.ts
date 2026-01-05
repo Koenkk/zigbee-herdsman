@@ -5,7 +5,7 @@ import * as otaHelpers from "../src/controller/helpers/ota";
 import {OtaSession} from "../src/controller/helpers/ota";
 import Device from "../src/controller/model/device";
 import type Endpoint from "../src/controller/model/endpoint";
-import type {KeyValue, OtaImage, OtaImageHeader, ZigbeeOtaImageMeta} from "../src/controller/tstype";
+import type {KeyValue, OtaImage, OtaImageHeader, OtaSource, ZigbeeOtaImageMeta} from "../src/controller/tstype";
 import {logger} from "../src/utils/logger";
 import * as Zcl from "../src/zspec/zcl";
 import type {TClusterCommandPayload} from "../src/zspec/zcl/definition/clusters-types";
@@ -118,9 +118,9 @@ describe("OtaSession", () => {
     const runSession = (
         image: OtaImage,
         waitForCommand: ReturnType<typeof createWaitForCommand>,
-        responseDelay: number,
+        dataResponseDelay: number,
         baseDataSize: number,
-        requestTimeout?: number,
+        dataRequestTimeout?: number,
     ) => {
         const onProgress = vi.fn<(progress: number, remaining?: number) => void>();
         const commandResponse = vi
@@ -132,8 +132,8 @@ describe("OtaSession", () => {
             endpoint,
             image,
             onProgress,
-            requestTimeout,
-            responseDelay,
+            dataRequestTimeout,
+            dataResponseDelay,
             baseDataSize,
             waitForCommand,
         );
@@ -495,11 +495,9 @@ describe("checkOta matching", () => {
             manufacturerName?: string;
             meta: {lumiFileVersion?: number};
         },
-        dataDir: string,
-        overrideIndexFileName: string | undefined,
+        source: OtaSource,
         current: TClusterCommandPayload<"genOta", "queryNextImageRequest">,
         extraMetas: {modelId?: string; otaHeaderString?: string; hardwareVersionMin?: number; hardwareVersionMax?: number; manufacturerName?: string},
-        previous: boolean,
     ) => Promise<ZigbeeOtaImageMeta | undefined>;
 
     it("matches image based on manufacturer and type", async () => {
@@ -515,8 +513,7 @@ describe("checkOta matching", () => {
         const indexSpy = vi.spyOn(otaHelpers, "getOtaIndex").mockResolvedValue([meta]);
         const result = await findMatching.call(
             {modelID: "any", manufacturerName: "any", meta: {}},
-            "",
-            undefined,
+            {},
             {
                 fieldControl: 0,
                 manufacturerCode: image.header.manufacturerCode,
@@ -524,7 +521,6 @@ describe("checkOta matching", () => {
                 fileVersion: image.header.fileVersion,
             },
             {},
-            false,
         );
 
         expect(result).toEqual(meta);
@@ -547,8 +543,7 @@ describe("checkOta matching", () => {
         const indexSpy = vi.spyOn(otaHelpers, "getOtaIndex").mockResolvedValue([meta]);
         const result = await findMatching.call(
             {modelID: "any", manufacturerName: "any", meta: {}},
-            "",
-            undefined,
+            {},
             {
                 fieldControl: 0,
                 manufacturerCode: image.header.manufacturerCode,
@@ -557,7 +552,6 @@ describe("checkOta matching", () => {
                 hardwareVersion: 15,
             },
             {},
-            false,
         );
 
         expect(result).toEqual(meta);
