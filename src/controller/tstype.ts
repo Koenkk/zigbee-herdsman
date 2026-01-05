@@ -59,6 +59,12 @@ export interface OtaSource {
     downgrade?: boolean;
 }
 
+export interface OtaDataSettings {
+    requestTimeout: number;
+    responseDelay: number;
+    baseSize: number;
+}
+
 export interface OtaUpdateAvailableResult {
     /**
      * - `0` means no firmware available, or same version
@@ -110,7 +116,9 @@ export interface OtaImageMeta {
     hardwareVersionMax?: OtaImageHeader["maximumHardwareVersion"];
 }
 
-export interface ZigbeeOtaImageMeta extends TClusterCommandPayload<"genOta", "queryNextImageRequest">, OtaImageMeta {
+export interface ZigbeeOtaImageMeta
+    extends Omit<TClusterCommandPayload<"genOta", "queryNextImageRequest">, "fieldControl" | "hardwareVersion">,
+        OtaImageMeta {
     fileName: string;
     modelId?: string;
     manufacturerName?: string[];

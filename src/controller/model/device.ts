@@ -15,7 +15,17 @@ import type {BindingTableEntry, LQITableEntry, RoutingTableEntry} from "../../zs
 import type {ControllerEventMap} from "../controller";
 import {getOtaFirmware, getOtaIndex, OtaSession, parseOtaImage} from "../helpers/ota";
 import zclTransactionSequenceNumber from "../helpers/zclTransactionSequenceNumber";
-import type {DatabaseEntry, DeviceType, KeyValue, OtaExtraMetas, OtaImage, OtaSource, OtaUpdateAvailableResult, ZigbeeOtaImageMeta} from "../tstype";
+import type {
+    DatabaseEntry,
+    DeviceType,
+    KeyValue,
+    OtaDataSettings,
+    OtaExtraMetas,
+    OtaImage,
+    OtaSource,
+    OtaUpdateAvailableResult,
+    ZigbeeOtaImageMeta,
+} from "../tstype";
 import Endpoint, {type BindInternal} from "./endpoint";
 import Entity from "./entity";
 
@@ -1399,6 +1409,28 @@ export class Device extends Entity<ControllerEventMap> {
         );
     }
 
+    async #notifyOta(endpoint: Endpoint): Promise<TClusterCommandPayload<"genOta", "queryNextImageRequest">> {
+        // Some devices (e.g. Insta) take a very long trying to discover the correct coordinator EP for OTA
+        const queryNextImageRequest = this.#waitForOtaCommand<"queryNextImageRequest">(
+            endpoint.ID,
+            Zcl.Clusters.genOta.commands.queryNextImageRequest.ID,
+            undefined,
+            60000,
+        );
+
+        try {
+            await endpoint.commandResponse("genOta", "imageNotify", {payloadType: 0, queryJitter: 100}, {sendPolicy: "immediate"});
+
+            const response = await queryNextImageRequest.promise;
+
+            return response.payload;
+        } catch {
+            queryNextImageRequest.cancel();
+
+            throw new Error(`Device didn't respond to OTA request`);
+        }
+    }
+
     async checkOta(
         source: OtaSource,
         current: TClusterCommandPayload<"genOta", "queryNextImageRequest"> | undefined,
@@ -1417,24 +1449,7 @@ export class Device extends Entity<ControllerEventMap> {
         }
 
         if (current === undefined) {
-            // Some devices (e.g. Insta) take a very long trying to discover the correct coordinator EP for OTA
-            const queryNextImageRequest = this.#waitForOtaCommand<"queryNextImageRequest">(
-                endpoint.ID,
-                Zcl.Clusters.genOta.commands.queryNextImageRequest.ID,
-                undefined,
-                60000,
-            );
-
-            try {
-                await endpoint.commandResponse("genOta", "imageNotify", {payloadType: 0, queryJitter: 100}, {sendPolicy: "immediate"});
-
-                const response = await queryNextImageRequest.promise;
-                current = response.payload;
-            } catch {
-                queryNextImageRequest.cancel();
-
-                throw new Error(`Device didn't respond to OTA request`);
-            }
+            current = await this.#notifyOta(endpoint);
         }
 
         logger.debug(
@@ -1482,37 +1497,40 @@ export class Device extends Entity<ControllerEventMap> {
         requestPayload: TClusterCommandPayload<"genOta", "queryNextImageRequest"> | undefined,
         requestTsn: number | undefined,
         extraMetas: OtaExtraMetas,
-        onProgress: (progress: number, remaining?: number) => void,
-        requestTimeout: number | undefined,
-        responseDelay: number,
-        baseDataSize: number,
-    ): Promise<number | undefined> {
-        const endpoint = this.endpoints.find((e) => e.supportsOutputCluster("genOta"));
-
+        onProgress: (progress: number, remaining: number) => void,
+        dataSettings: OtaDataSettings,
+        endpoint = this.endpoints.find((e) => e.supportsOutputCluster("genOta")),
+    ): Promise<[from: OtaUpdateAvailableResult["current"], to: OtaUpdateAvailableResult["current"] | undefined]> {
         assert(endpoint !== undefined, `No endpoint found with OTA cluster support for ${this.ieeeAddr}`);
 
         let image: OtaImage | undefined;
+        let available: OtaUpdateAvailableResult["available"] = 0;
+        let current: OtaUpdateAvailableResult["current"];
 
         if (source.url && !source.url.endsWith(".json")) {
+            current = requestPayload ? requestPayload : await this.#notifyOta(endpoint);
+
             // firmware file at `source.url`
             try {
                 const downloadedFile = await getOtaFirmware(source.url, undefined);
                 image = parseOtaImage(downloadedFile);
+                available = Math.sign(current.fileVersion - image.header.fileVersion);
 
                 logger.debug(
                     () =>
                         // biome-ignore lint/style/noNonNullAssertion: valid from above, won't change after assignment
-                        `Parsed ${source.downgrade ? "downgrade" : "upgrade"} image from ${source.url} for ${this.ieeeAddr}, header=${JSON.stringify(image!.header)}`,
+                        `Parsed image from '${source.url}' for ${this.ieeeAddr}, header=${JSON.stringify(image!.header)}`,
                     NS,
                 );
             } catch (error) {
-                logger.error(`Failed to parse OTA image from ${source.url} for ${this.ieeeAddr}, aborting (${(error as Error).message})`, NS);
+                logger.error(`Failed to parse OTA image from '${source.url}' for ${this.ieeeAddr}, aborting (${(error as Error).message})`, NS);
                 // biome-ignore lint/style/noNonNullAssertion: expected valid
                 logger.debug((error as Error).stack!, NS);
             }
         } else {
+            let availableMeta: OtaUpdateAvailableResult["availableMeta"];
             // index file at `source.url` (or undefined to use defaults)
-            const {available, availableMeta} = await this.checkOta(source, requestPayload, extraMetas, endpoint);
+            ({available, current, availableMeta} = await this.checkOta(source, requestPayload, extraMetas, endpoint));
 
             if ((source.downgrade ? available === 1 : available === -1) && availableMeta) {
                 try {
@@ -1522,7 +1540,7 @@ export class Device extends Entity<ControllerEventMap> {
                     logger.debug(
                         () =>
                             // biome-ignore lint/style/noNonNullAssertion: valid from above, won't change after assignment
-                            `Parsed ${source.downgrade ? "downgrade" : "upgrade"} image for ${this.ieeeAddr}, header=${JSON.stringify(image!.header)}`,
+                            `Parsed image from '${availableMeta.url}' for ${this.ieeeAddr}, header=${JSON.stringify(image!.header)}`,
                         NS,
                     );
                 } catch (error) {
@@ -1537,28 +1555,25 @@ export class Device extends Entity<ControllerEventMap> {
 
         // reply to `queryNextImageRequest` now that we have the data for it,
         // should trigger image block/page request from device
-        try {
-            await endpoint.commandResponse(
-                "genOta",
-                "queryNextImageResponse",
-                image
-                    ? {
-                          status: Zcl.Status.SUCCESS,
-                          manufacturerCode: image.header.manufacturerCode,
-                          imageType: image.header.imageType,
-                          fileVersion: image.header.fileVersion,
-                          imageSize: image.header.totalImageSize,
-                      }
-                    : {status: Zcl.Status.NO_IMAGE_AVAILABLE},
-                undefined,
-                requestTsn,
-            );
-        } catch {
-            /** handled upstream - just ignore error */
-        }
+        // NOTE: previous code had try/catch wrapping with ignored error, but that doesn't look good (would fail to start OTA from device side)
+        await endpoint.commandResponse(
+            "genOta",
+            "queryNextImageResponse",
+            image && available !== 0
+                ? {
+                      status: Zcl.Status.SUCCESS,
+                      manufacturerCode: image.header.manufacturerCode,
+                      imageType: image.header.imageType,
+                      fileVersion: image.header.fileVersion,
+                      imageSize: image.header.totalImageSize,
+                  }
+                : {status: Zcl.Status.NO_IMAGE_AVAILABLE},
+            undefined,
+            requestTsn,
+        );
 
-        if (!image) {
-            return undefined;
+        if (!image || available === 0) {
+            return [current, undefined];
         }
 
         const scheduled = this.#otaScheduled;
@@ -1566,16 +1581,7 @@ export class Device extends Entity<ControllerEventMap> {
 
         logger.debug(() => `Starting OTA update for ${this.ieeeAddr}`, NS);
 
-        const session = new OtaSession(
-            this.ieeeAddr,
-            endpoint,
-            image,
-            onProgress,
-            requestTimeout,
-            responseDelay,
-            baseDataSize,
-            this.#waitForOtaCommand.bind(this),
-        );
+        const session = new OtaSession(this.ieeeAddr, endpoint, image, onProgress, dataSettings, this.#waitForOtaCommand.bind(this));
 
         const endResult = await session.run();
 
@@ -1599,9 +1605,12 @@ export class Device extends Entity<ControllerEventMap> {
                     endResult.header.transactionSequenceNumber,
                 );
 
-                logger.debug(() => `Update of ${this.ieeeAddr} successful. Waiting for device announce...`, NS);
-
-                onProgress(100, undefined);
+                onProgress(100, 0);
+                logger.info(
+                    () =>
+                        `Update of ${this.ieeeAddr} successful (${Math.round((performance.now() - session.startTime) / 1000)} seconds). Waiting for device announce...`,
+                    NS,
+                );
 
                 let timer: NodeJS.Timeout;
 
@@ -1622,7 +1631,15 @@ export class Device extends Entity<ControllerEventMap> {
                     this.once("deviceAnnounce", onDeviceAnnounce);
                 });
 
-                return image.header.fileVersion;
+                return [
+                    current,
+                    {
+                        fieldControl: 0,
+                        manufacturerCode: image.header.manufacturerCode,
+                        imageType: image.header.imageType,
+                        fileVersion: image.header.fileVersion,
+                    },
+                ];
             } catch (error) {
                 // restore scheduled
                 this.#otaScheduled = scheduled;
@@ -1660,26 +1677,19 @@ export class Device extends Entity<ControllerEventMap> {
         );
 
         if (this.#otaScheduled) {
-            logger.info(
-                `Previously scheduled '${this.ieeeAddr}' ${this.#otaScheduled.downgrade ? "downgrade" : "upgrade"} was cancelled in favor of new scheduled request`,
-                NS,
-            );
+            logger.info(`Previously scheduled OTA update for '${this.ieeeAddr}' was cancelled in favor of new schedule request`, NS);
         }
 
         this.#otaScheduled = source;
 
-        logger.info(
-            `Scheduled '${this.ieeeAddr}' to ${this.#otaScheduled.downgrade ? "downgrade" : "upgrade"} firmware on next request from device`,
-            NS,
-        );
+        logger.info(`Scheduled OTA update for '${this.ieeeAddr}' on next request from device`, NS);
     }
 
     unscheduleOta(): void {
         if (this.#otaScheduled) {
-            const wasDowngrade = this.#otaScheduled.downgrade;
             this.#otaScheduled = undefined;
 
-            logger.info(`Previously scheduled '${this.ieeeAddr}' ${wasDowngrade ? "downgrade" : "upgrade"} was cancelled`, NS);
+            logger.info(`Previously scheduled OTA update for '${this.ieeeAddr}' was cancelled`, NS);
         }
     }
 }

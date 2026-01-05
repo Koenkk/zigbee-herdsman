@@ -2,14 +2,31 @@ import assert from "node:assert";
 import crypto from "node:crypto";
 import {readFileSync} from "node:fs";
 import path from "node:path";
+import {performance} from "node:perf_hooks";
 import {logger} from "../../utils/logger";
 import * as Zcl from "../../zspec/zcl";
 import type {TClusterCommandPayload, TClusterPayload} from "../../zspec/zcl/definition/clusters-types";
 import type {TZclFrame} from "../../zspec/zcl/zclFrame";
 import type Endpoint from "../model/endpoint";
-import type {OtaImage, OtaImageElement, OtaImageHeader, OtaSource, ZigbeeOtaImageMeta} from "../tstype";
+import type {OtaDataSettings, OtaImage, OtaImageElement, OtaImageHeader, OtaSource, ZigbeeOtaImageMeta} from "../tstype";
 
 const NS = "zh:controller:ota";
+
+// OTA_HEADER_VERSION_ZIGBEE  0x0100
+
+// ZIGBEE_2006_STACK_VERSION  0x0000
+// ZIGBEE_2007_STACK_VERSION  0x0001
+// ZIGBEE_PRO_STACK_VERSION   0x0002
+// ZIGBEE_IP_STACK_VERSION    0x0003
+
+// MANUFACTURE_CODE_WILD_CARD 0xFFFF
+
+// IMAGE_TYPE_WILD_CARD       0xFFFF
+// IMAGE_TYPE_SECURITY        0xFFC0
+// IMAGE_TYPE_CONFIG          0xFFC1
+// IMAGE_TYPE_LOG             0xFFC2
+
+// FILE_VERSION_WILD_CARD     0xFFFFFFFF
 
 export enum OtaTagId {
     UpgradeImage = 0x0000,
@@ -31,6 +48,8 @@ export enum OtaTagId {
      * see https://github.com/telink-semi/telink_zigbee_sdk/blob/d5bc2f7b0c1f8536fe21c8127ca680ea8214bc8e/tl_zigbee_sdk/zigbee/ota/ota.h#L38
      */
     TelinkAES = 0xf000,
+    // IkeaUnknown1 = 0xffbf, // parse fine as regular tag
+    // IkeaUnknown2 = 0xffbe, // parse fine as regular tag (custom ECDSA?)
 }
 
 const ZIGBEE_OTA_LATEST_URL = "https://raw.githubusercontent.com/Koenkk/zigbee-OTA/master/index.json";
@@ -48,9 +67,17 @@ export const UPGRADE_FILE_IDENTIFIER = 0x0beef11e;
 let dataDir: string | undefined;
 let overrideIndexLocation: string | undefined;
 
-export function setOtaConfiguration(settings: {dataDir: string; overrideIndexLocation: string}): void {
-    dataDir = settings.dataDir;
-    overrideIndexLocation = settings.overrideIndexLocation;
+/**
+ * Set the dataDir for relative path needs (firmware file, index) as well as override index if any.
+ */
+export function setOtaConfiguration(inDataDir: string, inOverrideIndexLocation: string | undefined): void {
+    dataDir = inDataDir;
+
+    // If the file name is not a full path, then treat it as a relative to the data directory
+    overrideIndexLocation =
+        inOverrideIndexLocation && !isValidUrl(inOverrideIndexLocation) && !path.isAbsolute(inOverrideIndexLocation)
+            ? path.join(dataDir, inOverrideIndexLocation)
+            : inOverrideIndexLocation;
 }
 
 function isValidUrl(url: string): boolean {
@@ -67,7 +94,7 @@ async function getJson<T>(pageUrl: string): Promise<T> {
     const response = await fetch(pageUrl);
 
     if (!response.ok || !response.body) {
-        throw new Error(`Invalid response from ${pageUrl} status=${response.status}.`);
+        throw new Error(`Invalid response from ${pageUrl} status=${response.status}`);
     }
 
     return (await response.json()) as T;
@@ -98,7 +125,7 @@ async function fetchFirmware(url: string, sha512: string | undefined): Promise<B
     const firmwareFileRsp = await fetch(url);
 
     if (!firmwareFileRsp.ok || !firmwareFileRsp.body) {
-        throw new Error(`Invalid response from ${url} status=${firmwareFileRsp.status}.`);
+        throw new Error(`Invalid response from ${url} status=${firmwareFileRsp.status}`);
     }
 
     const fileBuffer = Buffer.from(await firmwareFileRsp.arrayBuffer());
@@ -124,9 +151,7 @@ export async function getOtaFirmware(url: string, sha512: string | undefined): P
 }
 
 export async function getOtaIndex(source: OtaSource): Promise<ZigbeeOtaImageMeta[]> {
-    const mainIndex = await getJson<ZigbeeOtaImageMeta[]>(source.url ?? (source.downgrade ? ZIGBEE_OTA_PREVIOUS_URL : ZIGBEE_OTA_LATEST_URL));
-
-    logger.debug("Downloaded main index", NS);
+    const mainIndexUrl = source.url ?? (source.downgrade ? ZIGBEE_OTA_PREVIOUS_URL : ZIGBEE_OTA_LATEST_URL);
 
     if (overrideIndexLocation) {
         logger.debug(`Loading override index '${overrideIndexLocation}'`, NS);
@@ -136,25 +161,35 @@ export async function getOtaIndex(source: OtaSource): Promise<ZigbeeOtaImageMeta
             : (JSON.parse(readFileSync(overrideIndexLocation, "utf-8")) as ZigbeeOtaImageMeta[]);
 
         // Resulting index will have overridden items first
-        return localIndex
-            .map((meta) => {
-                // Web-hosted images must come with all fields filled already
-                // Nothing to do if needed fields were filled already
-                if (isValidUrl(meta.url) || (meta.imageType !== undefined && meta.manufacturerCode !== undefined && meta.fileVersion !== undefined)) {
-                    return meta;
-                }
-
-                const image = parseOtaImage(readFirmware(meta.url, meta.sha512));
-                meta.imageType = image.header.imageType;
-                meta.manufacturerCode = image.header.manufacturerCode;
-                meta.fileVersion = image.header.fileVersion;
-
+        const mappedLocalIndex = localIndex.map((meta) => {
+            // Web-hosted images must come with all fields filled already
+            // Nothing to do if needed fields were filled already
+            if (isValidUrl(meta.url) || (meta.imageType !== undefined && meta.manufacturerCode !== undefined && meta.fileVersion !== undefined)) {
                 return meta;
-            })
-            .concat(mainIndex);
+            }
+
+            const image = parseOtaImage(readFirmware(meta.url, meta.sha512));
+            meta.imageType = image.header.imageType;
+            meta.manufacturerCode = image.header.manufacturerCode;
+            meta.fileVersion = image.header.fileVersion;
+
+            return meta;
+        });
+
+        try {
+            const mainIndex = await getJson<ZigbeeOtaImageMeta[]>(mainIndexUrl);
+
+            logger.debug("Downloaded main index", NS);
+
+            return mappedLocalIndex.concat(mainIndex);
+        } catch {
+            logger.info("Failed to download main index, only override index is loaded", NS);
+
+            return mappedLocalIndex;
+        }
     }
 
-    return mainIndex;
+    return await getJson<ZigbeeOtaImageMeta[]>(mainIndexUrl);
 }
 
 // #endregion
@@ -162,7 +197,7 @@ export async function getOtaIndex(source: OtaSource): Promise<ZigbeeOtaImageMeta
 // #region OTA Utils
 
 export function parseOtaHeader(buffer: Buffer): OtaImageHeader {
-    const otaUpgradeFileIdentifier = buffer.readUint32LE(0);
+    const otaUpgradeFileIdentifier = buffer.readUInt32LE(0);
 
     assert(UPGRADE_FILE_IDENTIFIER === otaUpgradeFileIdentifier, "Not a valid OTA file");
 
@@ -214,31 +249,18 @@ export function parseOtaSubElement(buffer: Buffer, position: number): [OtaImageE
     const tagId = buffer.readUInt16LE(position);
     const length = buffer.readUInt32LE(position + 2);
 
-    switch (tagId) {
-        case OtaTagId.UpgradeImage:
-        case OtaTagId.ECDSASignatureCryptoSuite1:
-        case OtaTagId.ECDSASigningCertificateCryptoSuite1:
-        case OtaTagId.ImageIntegrityCode:
-        case OtaTagId.PictureData:
-        case OtaTagId.ECDSASignatureCryptoSuite2:
-        case OtaTagId.ECDSASigningCertificateCryptoSuite2: {
-            const data = buffer.subarray(position + 6, position + 6 + length);
+    // this is fine for now, no known other uses of this tag
+    if (tagId === OtaTagId.TelinkAES) {
+        // OTA_FLAG_IMAGE_ELEM_INFO1 (1-byte) + OTA_FLAG_IMAGE_ELEM_INFO2 (1-byte)
+        //   buffer.subarray(position + 6, position + 8);
+        const data = buffer.subarray(position + 8, position + 8 + length);
 
-            return [{tagId, length, data}, 6];
-        }
-        // this is fine for now, no known other users of this tag
-        case OtaTagId.TelinkAES: {
-            // OTA_FLAG_IMAGE_ELEM_INFO1 (1-byte) + OTA_FLAG_IMAGE_ELEM_INFO2 (1-byte)
-            //   buffer.subarray(position + 6, position + 8);
-            const data = buffer.subarray(position + 8, position + 8 + length);
-
-            return [{tagId, length, data}, 8];
-        }
-        default: {
-            // always throw if we don't know the tag ID to prevent potentially undesirable behavior
-            throw new Error(`Unknown tag ID=${tagId} length=${length}`);
-        }
+        return [{tagId, length, data}, 8];
     }
+
+    const data = buffer.subarray(position + 6, position + 6 + length);
+
+    return [{tagId, length, data}, 6];
 }
 
 export function parseOtaImage(buffer: Buffer): OtaImage {
@@ -281,6 +303,7 @@ function buildImageBlockPayload(
     dataSize = Math.min(dataSize, requestPayload.maximumDataSize);
     let start = requestPayload.fileOffset + pageOffset;
 
+    /* v8 ignore start */
     if (
         requestPayload.manufacturerCode === Zcl.ManufacturerCode.LEGRAND_GROUP &&
         requestPayload.fileOffset === 50 &&
@@ -292,6 +315,7 @@ function buildImageBlockPayload(
         start = 78;
         dataSize = 64;
     }
+    /* v8 ignore stop */
 
     if (pageSize) {
         dataSize = Math.min(dataSize, pageSize - pageOffset);
@@ -329,16 +353,17 @@ export class OtaSession {
     #lastBlockResponseTime = 0;
     #lastProgressUpdate = 0;
     readonly #startTime: number;
-    readonly #dataRequestTimeout: number;
+
+    get startTime() {
+        return this.#startTime;
+    }
 
     constructor(
         private readonly ieeeAddr: string,
         private readonly endpoint: Endpoint,
         private readonly image: OtaImage,
-        private readonly onProgress: (progress: number, remaining?: number) => void,
-        dataRequestTimeout: number | undefined,
-        private readonly dataResponseDelay: number,
-        private readonly baseDataSize: number,
+        private readonly onProgress: (progress: number, remaining: number) => void,
+        private readonly dataSettings: OtaDataSettings,
         private readonly waitForOtaCommand: <Co extends string>(
             endpointId: number,
             commandId: number,
@@ -347,35 +372,54 @@ export class OtaSession {
         ) => {promise: Promise<TZclFrame<"genOta", Co>>; cancel: () => void},
     ) {
         this.#startTime = performance.now();
-        // TODO: should `requestTimeout` be override if non-zero?
-        //       to allow easier testing when devices misbehave otherwise potentially overridden by below switch
-        this.#dataRequestTimeout = dataRequestTimeout || 150000;
 
-        // if (!requestTimeout) {
+        // TODO: should `dataSettings.requestTimeout` be override if >0?
+        //       to allow easier testing when devices misbehave otherwise potentially overridden by below switch
+        // if (!this.dataSettings.requestTimeout) {
         switch (image.header.manufacturerCode) {
             case Zcl.ManufacturerCode.ROBERT_BOSCH_GMBH: {
                 // Bosch transmits the firmware updates in the background in their native implementation.
                 // According to the app, this can take up to 2 days. Therefore, we assume to get at least
                 // one package request per hour from the device here.
-                this.#dataRequestTimeout = 60 * 60 * 1000;
+                this.dataSettings.requestTimeout = 60 * 60 * 1000;
                 break;
             }
             case Zcl.ManufacturerCode.LEGRAND_GROUP: {
                 // Increase the timeout for Legrand devices, so that they will re-initiate and update themselves
                 // Newer firmwares have awkward behaviours when it comes to the handling of the last bytes of OTA updates
-                this.#dataRequestTimeout = 30 * 60 * 1000;
+                this.dataSettings.requestTimeout = 30 * 60 * 1000;
                 break;
             }
             case Zcl.ManufacturerCode.SHENZHEN_COOLKIT_TECHNOLOGY_CO_LTD: {
                 if (image.header.imageType === 8199) {
                     // increase the upgradeEndReq wait time to solve the problem of OTA timeout failure of Sonoff Devices
                     // (https://github.com/Koenkk/zigbee-herdsman-converters/issues/6657)
-                    this.#dataRequestTimeout = 3600000;
+                    this.dataSettings.requestTimeout = 3600000;
                 }
                 break;
             }
         }
         // }
+
+        if (!this.dataSettings.requestTimeout) {
+            this.dataSettings.requestTimeout = 150000; // ensures never zero
+        }
+
+        if (!this.dataSettings.baseSize) {
+            this.dataSettings.baseSize = 50; // ensures never zero
+        }
+
+        // report initial progress with estimated time
+        const expectedBlocks = Math.ceil(image.header.totalImageSize / dataSettings.baseSize);
+        const blocksPerSec = dataSettings.responseDelay > 0 ? Math.round((dataSettings.responseDelay / 1000) * 100) / 100 : 20; // (1000 / 50)
+        const estimatedRemainingSeconds = expectedBlocks / blocksPerSec;
+
+        onProgress(0, estimatedRemainingSeconds);
+        logger.info(
+            () =>
+                `OTA update of '${this.ieeeAddr}' estimated at ${estimatedRemainingSeconds} seconds (${expectedBlocks} chunks, ${blocksPerSec} per second)`,
+            NS,
+        );
     }
 
     public async run(): Promise<TZclFrame<"genOta", "upgradeEndRequest">> {
@@ -408,18 +452,23 @@ export class OtaSession {
                         0,
                     );
                 }
+                /* v8 ignore start */
             }
 
-            const endPayload = await upgradeEndRequest.promise.then((payload) => ({...payload, type: "upgradeEndRequest"}));
+            // this code is logically unreachable
+            // the generator always yields `UPGRADE_END_REQUEST_ID` before completing or it will eventually throw a timeout
+            // but TypeScript can't detect this and requires a return statement
+            const endPayload = await upgradeEndRequest.promise;
 
             return endPayload;
+            /* v8 ignore stop */
         } catch (error) {
+            upgradeEndRequest.cancel();
+
             const err = error as Error;
             err.message = `Device ${this.ieeeAddr} did not start/finish firmware download after being notified. (${err.message})`;
 
             throw err;
-        } finally {
-            upgradeEndRequest.cancel();
         }
     }
 
@@ -432,13 +481,13 @@ export class OtaSession {
                 this.endpoint.ID,
                 IMAGE_BLOCK_REQUEST_ID,
                 undefined,
-                this.#dataRequestTimeout,
+                this.dataSettings.requestTimeout,
             );
             const imagePageRequest = this.waitForOtaCommand<"imagePageRequest">(
                 this.endpoint.ID,
                 IMAGE_PAGE_REQUEST_ID,
                 undefined,
-                this.#dataRequestTimeout,
+                this.dataSettings.requestTimeout,
             );
             const dataRequest = Promise.race([imageBlockRequest.promise, imagePageRequest.promise]);
             const request = await Promise.race([dataRequest, upgradeEndRequest.promise]);
@@ -446,11 +495,8 @@ export class OtaSession {
             imageBlockRequest.cancel();
             imagePageRequest.cancel();
 
+            // if this is `UPGRADE_END_REQUEST_ID`, `run()` will return and thus terminate the generator (no endless loop possible)
             yield request;
-
-            if (request.command.ID === UPGRADE_END_REQUEST_ID) {
-                break;
-            }
         }
     }
 
@@ -461,43 +507,43 @@ export class OtaSession {
         pageSize: number,
     ): Promise<number> {
         // throttle if needed
-        const now = performance.now();
-        const timeSinceLast = now - this.#lastBlockResponseTime;
-        const delayNeeded = this.dataResponseDelay - timeSinceLast;
+        let callNow = performance.now();
+        const timeSinceLast = callNow - this.#lastBlockResponseTime;
+        const delayNeeded = this.dataSettings.responseDelay - timeSinceLast;
 
         if (delayNeeded > 0) {
             await new Promise((resolve) => setTimeout(resolve, delayNeeded));
+
+            // avoids a second call to `performance.now()`
+            callNow += delayNeeded;
         }
 
-        this.#lastBlockResponseTime = performance.now();
+        this.#lastBlockResponseTime = callNow;
 
         try {
-            const blockPayload = buildImageBlockPayload(this.image, requestPayload, pageOffset, pageSize, this.baseDataSize);
+            const blockPayload = buildImageBlockPayload(this.image, requestPayload, pageOffset, pageSize, this.dataSettings.baseSize);
 
             await this.endpoint.commandResponse("genOta", "imageBlockResponse", blockPayload, undefined, requestTsn);
 
             const nextOffset = pageOffset + blockPayload.dataSize;
             const now = performance.now();
 
-            if (now - this.#lastProgressUpdate <= 30000) {
-                return nextOffset;
+            if (now - this.#lastProgressUpdate > 30000) {
+                const totalDurationSeconds = (now - this.#startTime) / 1000;
+                const bytesPerSecond = requestPayload.fileOffset / totalDurationSeconds;
+
+                // first 30 seconds will be ignored due to first fileOffset being 0
+                // remain on ctor progress estimate until then (more reliable)
+                if (bytesPerSecond > 0) {
+                    const percentage = Math.round((requestPayload.fileOffset / this.image.header.totalImageSize) * 10000) / 100;
+                    const remainingSeconds = Math.round((this.image.header.totalImageSize - requestPayload.fileOffset) / bytesPerSecond);
+
+                    logger.info(() => `OTA update of '${this.ieeeAddr}' at ${percentage}%, ${remainingSeconds} seconds remaining`, NS);
+                    this.onProgress(percentage, remainingSeconds);
+                }
+
+                this.#lastProgressUpdate = now;
             }
-
-            const bytesDelivered = requestPayload.fileOffset + nextOffset;
-            const totalDurationSeconds = Math.max((now - this.#startTime) / 1000, 0.001);
-            const bytesPerSecond = bytesDelivered / totalDurationSeconds;
-            const remainingSeconds = (this.image.header.totalImageSize - bytesDelivered) / bytesPerSecond;
-            const percentage = Math.round((bytesDelivered / this.image.header.totalImageSize) * 10000) / 100;
-            const hasRemainingSeconds = Number.isFinite(remainingSeconds);
-
-            logger.info(
-                () =>
-                    `Update of '${this.ieeeAddr}' at ${percentage.toFixed(2)}%${hasRemainingSeconds ? `, ${remainingSeconds} seconds remaining` : ""}`,
-                NS,
-            );
-            this.onProgress(percentage, hasRemainingSeconds ? remainingSeconds : undefined);
-
-            this.#lastProgressUpdate = now;
 
             return nextOffset;
         } catch (error) {
