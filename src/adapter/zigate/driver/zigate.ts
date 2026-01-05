@@ -141,6 +141,7 @@ export default class ZiGate extends EventEmitter<ZiGateEventMap> {
                 // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
                 this.portWrite!.write(sendBuffer);
 
+                // biome-ignore lint/nursery/noMisusedPromises: ignore
                 if (ziGateObject.command.waitStatus !== false && resultPromise) {
                     const statusResponse: ZiGateObject = await resultPromise;
                     if (statusResponse.payload.status !== Status.E_SL_MSG_STATUS_SUCCESS) {
