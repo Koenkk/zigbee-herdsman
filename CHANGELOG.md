@@ -1,5 +1,12 @@
 # Changelog
 
+## [8.0.3](https://github.com/Koenkk/zigbee-herdsman/compare/v8.0.2...v8.0.3) (2026-01-05)
+
+
+### Bug Fixes
+
+* **ignore:** bump @biomejs/biome from 2.3.10 to 2.3.11 in the minor-patch group ([#1610](https://github.com/Koenkk/zigbee-herdsman/issues/1610)) ([ef9438b](https://github.com/Koenkk/zigbee-herdsman/commit/ef9438b8d35407c0002e7eb335971fc3795dd4a5))
+
 ## [8.0.2](https://github.com/Koenkk/zigbee-herdsman/compare/v8.0.1...v8.0.2) (2026-01-03)
 
 
