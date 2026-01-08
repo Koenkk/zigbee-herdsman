@@ -71,7 +71,8 @@ export class Device extends Entity<ControllerEventMap> {
     private _pendingRequestTimeout: number;
     private _customClusters: CustomClusters = {};
     private _gpSecurityKey?: number[];
-    #otaScheduled: OtaSource | undefined;
+    #scheduledOta: OtaSource | undefined;
+    #otaInProgress = false;
 
     // Getters/setters
     get ieeeAddr(): string {
@@ -221,8 +222,11 @@ export class Device extends Entity<ControllerEventMap> {
     get genBasic(): TPartialClusterAttributes<"genBasic"> {
         return this.#genBasic;
     }
-    get otaScheduled(): OtaSource | undefined {
-        return this.#otaScheduled;
+    get scheduledOta(): OtaSource | undefined {
+        return this.#scheduledOta;
+    }
+    get otaInProgress(): boolean {
+        return this.#otaInProgress;
     }
 
     public meta: KeyValue;
@@ -256,7 +260,7 @@ export class Device extends Entity<ControllerEventMap> {
         checkinInterval: number | undefined,
         pendingRequestTimeout: number,
         gpSecurityKey: number[] | undefined,
-        otaScheduled: OtaSource | undefined,
+        scheduledOta: OtaSource | undefined,
     ) {
         super();
         this.ID = id;
@@ -281,7 +285,7 @@ export class Device extends Entity<ControllerEventMap> {
         this._checkinInterval = checkinInterval;
         this._pendingRequestTimeout = pendingRequestTimeout;
         this._gpSecurityKey = gpSecurityKey;
-        this.#otaScheduled = otaScheduled;
+        this.#scheduledOta = scheduledOta;
     }
 
     public createEndpoint(id: number): Endpoint {
@@ -553,7 +557,7 @@ export class Device extends Entity<ControllerEventMap> {
             entry.checkinInterval,
             pendingRequestTimeout,
             entry.gpSecurityKey,
-            entry.otaScheduled,
+            entry.scheduledOta,
         );
     }
 
@@ -589,7 +593,7 @@ export class Device extends Entity<ControllerEventMap> {
             lastSeen: this.lastSeen,
             checkinInterval: this.checkinInterval,
             gpSecurityKey: this.gpSecurityKey,
-            otaScheduled: this.otaScheduled,
+            scheduledOta: this.scheduledOta,
         };
     }
 
@@ -1472,8 +1476,8 @@ export class Device extends Entity<ControllerEventMap> {
 
         const meta = await this.findMatchingOtaImage(source, current, extraMetas);
 
-        // Soft-fail because no images in repo/URL for specified device
         if (!meta) {
+            // no image in repo/URL for specified device
             return {
                 available: 0,
                 current,
@@ -1493,16 +1497,24 @@ export class Device extends Entity<ControllerEventMap> {
     }
 
     async updateOta(
-        source: OtaSource,
+        source: Readonly<OtaSource> | undefined,
         requestPayload: TClusterCommandPayload<"genOta", "queryNextImageRequest"> | undefined,
         requestTsn: number | undefined,
-        extraMetas: OtaExtraMetas,
+        extraMetas: Readonly<OtaExtraMetas>,
         onProgress: (progress: number, remaining: number) => void,
         dataSettings: OtaDataSettings,
         endpoint = this.endpoints.find((e) => e.supportsOutputCluster("genOta")),
     ): Promise<[from: OtaUpdateAvailableResult["current"], to: OtaUpdateAvailableResult["current"] | undefined]> {
+        assert(this.#otaInProgress === false, `OTA already in progress for ${this.ieeeAddr}`);
         assert(endpoint !== undefined, `No endpoint found with OTA cluster support for ${this.ieeeAddr}`);
 
+        if (source === undefined) {
+            assert(this.#scheduledOta !== undefined, `No currently scheduled OTA for ${this.ieeeAddr}`);
+
+            source = this.#scheduledOta;
+        }
+
+        this.#otaInProgress = true;
         let image: OtaImage | undefined;
         let available: OtaUpdateAvailableResult["available"] = 0;
         let current: OtaUpdateAvailableResult["current"];
@@ -1556,34 +1568,43 @@ export class Device extends Entity<ControllerEventMap> {
         // reply to `queryNextImageRequest` now that we have the data for it,
         // should trigger image block/page request from device
         // NOTE: previous code had try/catch wrapping with ignored error, but that doesn't look good (would fail to start OTA from device side)
-        await endpoint.commandResponse(
-            "genOta",
-            "queryNextImageResponse",
-            image && available !== 0
-                ? {
-                      status: Zcl.Status.SUCCESS,
-                      manufacturerCode: image.header.manufacturerCode,
-                      imageType: image.header.imageType,
-                      fileVersion: image.header.fileVersion,
-                      imageSize: image.header.totalImageSize,
-                  }
-                : {status: Zcl.Status.NO_IMAGE_AVAILABLE},
-            undefined,
-            requestTsn,
-        );
-
-        if (!image || available === 0) {
-            return [current, undefined];
+        try {
+            await endpoint.commandResponse(
+                "genOta",
+                "queryNextImageResponse",
+                image && available !== 0
+                    ? {
+                          status: Zcl.Status.SUCCESS,
+                          manufacturerCode: image.header.manufacturerCode,
+                          imageType: image.header.imageType,
+                          fileVersion: image.header.fileVersion,
+                          imageSize: image.header.totalImageSize,
+                      }
+                    : {status: Zcl.Status.NO_IMAGE_AVAILABLE},
+                undefined,
+                requestTsn,
+            );
+        } finally {
+            this.#otaInProgress = false;
         }
 
-        const scheduled = this.#otaScheduled;
-        this.#otaScheduled = undefined;
+        if (!image || available === 0) {
+            this.#otaInProgress = false;
+
+            return [current, undefined];
+        }
 
         logger.debug(() => `Starting OTA update for ${this.ieeeAddr}`, NS);
 
         const session = new OtaSession(this.ieeeAddr, endpoint, image, onProgress, dataSettings, this.#waitForOtaCommand.bind(this));
 
-        const endResult = await session.run();
+        let endResult: TZclFrame<"genOta", "upgradeEndRequest">;
+
+        try {
+            endResult = await session.run();
+        } finally {
+            this.#otaInProgress = false;
+        }
 
         logger.debug(() => `Received upgrade end request for ${this.ieeeAddr}: ${JSON.stringify(endResult.payload)}`, NS);
 
@@ -1631,6 +1652,10 @@ export class Device extends Entity<ControllerEventMap> {
                     this.once("deviceAnnounce", onDeviceAnnounce);
                 });
 
+                // only "cancel" possible scheduled OTA when successful
+                this.#scheduledOta = undefined;
+                this.#otaInProgress = false;
+
                 return [
                     current,
                     {
@@ -1641,8 +1666,7 @@ export class Device extends Entity<ControllerEventMap> {
                     },
                 ];
             } catch (error) {
-                // restore scheduled
-                this.#otaScheduled = scheduled;
+                this.#otaInProgress = false;
 
                 throw new Error(`OTA upgrade end response failed: ${(error as Error).message}`);
             }
@@ -1663,8 +1687,7 @@ export class Device extends Entity<ControllerEventMap> {
                 logger.debug(() => `OTA upgrade end request default response for ${this.ieeeAddr} failed: ${(error as Error).message}`, NS);
             }
 
-            // restore scheduled
-            this.#otaScheduled = scheduled;
+            this.#otaInProgress = false;
 
             throw new Error(`OTA update of ${this.ieeeAddr} failed with reason: ${Zcl.Status[endResult.payload.status]}`);
         }
@@ -1676,18 +1699,18 @@ export class Device extends Entity<ControllerEventMap> {
             `No endpoint found with OTA cluster support for ${this.ieeeAddr}`,
         );
 
-        if (this.#otaScheduled) {
+        if (this.#scheduledOta) {
             logger.info(`Previously scheduled OTA update for '${this.ieeeAddr}' was cancelled in favor of new schedule request`, NS);
         }
 
-        this.#otaScheduled = source;
+        this.#scheduledOta = source;
 
         logger.info(`Scheduled OTA update for '${this.ieeeAddr}' on next request from device`, NS);
     }
 
     unscheduleOta(): void {
-        if (this.#otaScheduled) {
-            this.#otaScheduled = undefined;
+        if (this.#scheduledOta !== undefined) {
+            this.#scheduledOta = undefined;
 
             logger.info(`Previously scheduled OTA update for '${this.ieeeAddr}' was cancelled`, NS);
         }

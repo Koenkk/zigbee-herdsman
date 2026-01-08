@@ -474,7 +474,7 @@ const writeMockImage = (image: OtaImage, fileName: string, tempDir?: string) => 
 type CreateDeviceOptions = {
     image: OtaImage;
     behavior?: Partial<OtaDeviceBehavior>;
-    source?: OtaSource;
+    source: OtaSource | undefined;
     requestPayload?: TClusterCommandPayload<"genOta", "queryNextImageRequest">;
     dataSettings?: OtaDataSettings;
     onProgress?: (progress: number, remaining?: number) => void;
@@ -512,7 +512,7 @@ const createSimpleDevice = ({modelID, manufacturerName, meta}: Pick<CreateDevice
 const createDevice = ({
     image,
     behavior,
-    source = {},
+    source,
     requestPayload,
     dataSettings = {requestTimeout: 100, responseDelay: 0, baseSize: 64},
     onProgress = vi.fn(),
@@ -534,7 +534,7 @@ const createDevice = ({
         fieldControl: 0,
         manufacturerCode: image.header.manufacturerCode,
         imageType: image.header.imageType,
-        fileVersion: image.header.fileVersion + (source.downgrade ? 1 : -1),
+        fileVersion: image.header.fileVersion + (source?.downgrade ? 1 : -1),
     };
     const waitFor = createOtaDeviceWaitFor(endpoint, image, currentPayload, {baseSize: dataSettings.baseSize ?? 64, ...behavior});
     const adapter = {waitFor, hasZdoMessageOverhead: false} as unknown as Adapter;
@@ -651,7 +651,7 @@ describe("Device OTA", () => {
         it("performs notify flow when current payload is missing", async () => {
             const fileName = OTA_FILES[1];
             const [image, filePath] = loadImage(fileName);
-            const {device, endpoint} = createDevice({image, requestPayload: undefined});
+            const {device, endpoint} = createDevice({image, source: {}, requestPayload: undefined});
             const result = await device.checkOta({}, undefined, {});
 
             expect(endpoint.commandResponse).toHaveBeenCalledWith(
@@ -751,7 +751,7 @@ describe("Device OTA", () => {
 
         it("handles failures when waiting for OTA notify response", async () => {
             const [image] = loadImage(OTA_FILES[0]);
-            const {device} = createDevice({image, requestPayload: undefined});
+            const {device} = createDevice({image, source: {}, requestPayload: undefined});
             // just need to trigger something called inside the right code path
             const frameSpy = vi.spyOn(Zcl.Frame, "fromBuffer").mockImplementationOnce(() => {
                 throw new Error("corrupt-frame");
@@ -892,7 +892,7 @@ describe("Device OTA", () => {
             const fileName = OTA_FILES[1];
             const [image] = loadImage(fileName);
             firmwareBuffer = image.raw;
-            const {device, endpoint, tempDir} = createDevice({image, requestPayload: undefined});
+            const {device, endpoint, tempDir} = createDevice({image, source: {}, requestPayload: undefined});
             const infoSpy = vi.spyOn(logger, "info");
             const getOtaIndexSpy = vi.spyOn(otaHelpers, "getOtaIndex");
             const indexMeta = buildIndexEntry(fileName, image, undefined, path.join(tempDir, fileName));
@@ -993,8 +993,9 @@ describe("Device OTA", () => {
             const baseSize = 64;
             const expectedBlocks = Math.ceil(image.header.totalImageSize / baseSize);
 
-            const {endpoint, run, onProgress} = createDevice({
+            const {device, endpoint, run, onProgress} = createDevice({
                 image,
+                source: {},
                 requestPayload,
                 dataSettings: {requestTimeout: 1000, responseDelay: 0, baseSize},
                 behavior: {baseSize, sendUpgradeEnd: true},
@@ -1027,6 +1028,7 @@ describe("Device OTA", () => {
             );
             expect(getResponses(endpoint, "upgradeEndResponse").length).toStrictEqual(1);
             expect(onProgress).toHaveBeenCalled();
+            expect(device.otaInProgress).toStrictEqual(false);
         });
 
         it("applies a downgrade image end-to-end", async () => {
@@ -1043,7 +1045,7 @@ describe("Device OTA", () => {
             const expectedBlocks = Math.ceil(image.header.totalImageSize / baseSize);
             const logDebugSpy = vi.spyOn(logger, "debug");
 
-            const {endpoint, run, onProgress} = createDevice({
+            const {device, endpoint, run, onProgress} = createDevice({
                 image,
                 source: {downgrade: true},
                 requestPayload,
@@ -1085,6 +1087,7 @@ describe("Device OTA", () => {
             expect(debugCalls[2]).toMatch("OTA downgrade image availability for 0x1");
             expect(debugCalls[3]).toMatch(`Reading firmware image from '${filePath}'`);
             expect(debugCalls[4]).toMatch(`Parsed image from '${filePath}' for 0x1`);
+            expect(device.otaInProgress).toStrictEqual(false);
         });
 
         it("considers an upgrade successful even if no device announce", async () => {
@@ -1096,8 +1099,9 @@ describe("Device OTA", () => {
             vi.useFakeTimers();
 
             try {
-                const {run} = createDevice({
+                const {run, device} = createDevice({
                     image,
+                    source: {},
                     dataSettings: {requestTimeout: 1000, responseDelay: 0, baseSize},
                     behavior: {baseSize, sendUpgradeEnd: true},
                     autoAnnounce: false,
@@ -1110,6 +1114,7 @@ describe("Device OTA", () => {
 
                 expect(from.fileVersion).toStrictEqual(image.header.fileVersion - 1);
                 expect(to?.fileVersion).toStrictEqual(image.header.fileVersion);
+                expect(device.otaInProgress).toStrictEqual(false);
             } finally {
                 vi.useRealTimers();
             }
@@ -1128,8 +1133,9 @@ describe("Device OTA", () => {
             const baseSize = 50;
             const expectedBlocks = Math.ceil(image.header.totalImageSize / baseSize);
 
-            const {endpoint, run, onProgress} = createDevice({
+            const {device, endpoint, run, onProgress} = createDevice({
                 image,
+                source: {},
                 requestPayload,
                 dataSettings: {requestTimeout: 1000, responseDelay: 0, baseSize},
                 behavior: {baseSize, sendUpgradeEnd: true, shuffleOffsets: true},
@@ -1166,6 +1172,7 @@ describe("Device OTA", () => {
             );
             expect(getResponses(endpoint, "upgradeEndResponse").length).toStrictEqual(1);
             expect(onProgress).toHaveBeenCalled();
+            expect(device.otaInProgress).toStrictEqual(false);
         });
 
         it("handles negative misaligned block offset - resends portion already sent", async () => {
@@ -1182,8 +1189,9 @@ describe("Device OTA", () => {
             const misalignedOffset = -15;
             const expectedBlocks = Math.ceil((image.header.totalImageSize - misalignedOffset) / baseSize);
 
-            const {endpoint, run, onProgress} = createDevice({
+            const {device, endpoint, run, onProgress} = createDevice({
                 image,
+                source: {},
                 requestPayload,
                 dataSettings: {requestTimeout: 1000, responseDelay: 0, baseSize},
                 behavior: {baseSize, sendUpgradeEnd: true, misalignedOffset},
@@ -1224,6 +1232,7 @@ describe("Device OTA", () => {
             );
             expect(getResponses(endpoint, "upgradeEndResponse").length).toStrictEqual(1);
             expect(onProgress).toHaveBeenCalled();
+            expect(device.otaInProgress).toStrictEqual(false);
         });
 
         it("handles positive misaligned block offset - skips portion", async () => {
@@ -1240,8 +1249,9 @@ describe("Device OTA", () => {
             const misalignedOffset = 17;
             const expectedBlocks = Math.ceil((image.header.totalImageSize - misalignedOffset) / baseSize);
 
-            const {endpoint, run, onProgress} = createDevice({
+            const {device, endpoint, run, onProgress} = createDevice({
                 image,
+                source: {},
                 requestPayload,
                 dataSettings: {requestTimeout: 1000, responseDelay: 0, baseSize},
                 behavior: {baseSize, sendUpgradeEnd: true, misalignedOffset},
@@ -1282,6 +1292,7 @@ describe("Device OTA", () => {
             );
             expect(getResponses(endpoint, "upgradeEndResponse").length).toStrictEqual(1);
             expect(onProgress).toHaveBeenCalled();
+            expect(device.otaInProgress).toStrictEqual(false);
         });
 
         it("handles page requests and reports progress", async () => {
@@ -1309,8 +1320,9 @@ describe("Device OTA", () => {
                 return blocks;
             })();
 
-            const {endpoint, run, onProgress} = createDevice({
+            const {device, endpoint, run, onProgress} = createDevice({
                 image,
+                source: {},
                 requestPayload,
                 dataSettings: {requestTimeout: 1000, responseDelay: 0, baseSize},
                 behavior: {baseSize, sendUpgradeEnd: true, usePageRequests: true, pageSize},
@@ -1351,6 +1363,7 @@ describe("Device OTA", () => {
             );
             expect(getResponses(endpoint, "upgradeEndResponse").length).toStrictEqual(1);
             expect(onProgress).toHaveBeenCalled();
+            expect(device.otaInProgress).toStrictEqual(false);
         });
 
         it("applies manufacturer-specific timeout", async () => {
@@ -1375,7 +1388,7 @@ describe("Device OTA", () => {
             const baseSize = 50;
             const expectedBlocks = Math.ceil(image.header.totalImageSize / baseSize);
             const dataSettings: OtaDataSettings = {requestTimeout: 150000, responseDelay: 0, baseSize};
-            const {run, endpoint} = createDevice({
+            const {run, device, endpoint} = createDevice({
                 image,
                 source: {},
                 requestPayload,
@@ -1396,6 +1409,7 @@ describe("Device OTA", () => {
             expect(getResponses(endpoint, "imageBlockResponse").length).toStrictEqual(expectedBlocks);
             expect(dataSettings.requestTimeout).toStrictEqual(60 * 60 * 1000);
             expect(dataSettings.responseDelay).toStrictEqual(0);
+            expect(device.otaInProgress).toStrictEqual(false);
         });
 
         it("applies manufacturer-specific and imageType-specific timeout", async () => {
@@ -1420,7 +1434,7 @@ describe("Device OTA", () => {
             const baseSize = 50;
             const expectedBlocks = Math.ceil(image.header.totalImageSize / baseSize);
             const dataSettings: OtaDataSettings = {requestTimeout: 150000, responseDelay: 0, baseSize};
-            const {run, endpoint} = createDevice({
+            const {run, device, endpoint} = createDevice({
                 image,
                 source: {},
                 requestPayload,
@@ -1441,6 +1455,7 @@ describe("Device OTA", () => {
             expect(getResponses(endpoint, "imageBlockResponse").length).toStrictEqual(expectedBlocks);
             expect(dataSettings.requestTimeout).toStrictEqual(3600000);
             expect(dataSettings.responseDelay).toStrictEqual(0);
+            expect(device.otaInProgress).toStrictEqual(false);
         });
 
         it("applies manufacturer-specific data size", async () => {
@@ -1464,7 +1479,7 @@ describe("Device OTA", () => {
             };
             const baseSize = 64;
             const dataSettings: OtaDataSettings = {requestTimeout: 150000, responseDelay: 0, baseSize};
-            const {run, endpoint} = createDevice({
+            const {run, device, endpoint} = createDevice({
                 image,
                 source: {},
                 requestPayload,
@@ -1485,9 +1500,10 @@ describe("Device OTA", () => {
             const responses = getResponses(endpoint, "imageBlockResponse");
             expect(responses[0][2]).toStrictEqual(expect.objectContaining({dataSize: 40}));
             expect(responses[1][2]).toStrictEqual(expect.objectContaining({dataSize: 40}));
+            expect(device.otaInProgress).toStrictEqual(false);
         });
 
-        it("handles firmware URL from source URL", async () => {
+        it("handles URL as source URL", async () => {
             const fileName = "custom.ota";
             // coverage for more manufacturer-specific timeout
             const image = mockImage(400, Zcl.ManufacturerCode.LEGRAND_GROUP, 1000);
@@ -1510,7 +1526,7 @@ describe("Device OTA", () => {
             const baseSize = 50;
             const expectedBlocks = Math.ceil(image.header.totalImageSize / baseSize);
             const dataSettings: OtaDataSettings = {requestTimeout: 150000, responseDelay: 0, baseSize};
-            const {run, endpoint} = createDevice({
+            const {run, device, endpoint} = createDevice({
                 image,
                 source: {url: "https://example.com/fw.ota"},
                 requestPayload,
@@ -1531,9 +1547,10 @@ describe("Device OTA", () => {
             expect(getResponses(endpoint, "imageBlockResponse").length).toStrictEqual(expectedBlocks);
             expect(dataSettings.requestTimeout).toStrictEqual(30 * 60 * 1000);
             expect(dataSettings.responseDelay).toStrictEqual(0);
+            expect(device.otaInProgress).toStrictEqual(false);
         });
 
-        it("handles firmware file from source URL", async () => {
+        it("handles filesystem as source URL", async () => {
             const fileName = "custom.ota";
             const image = mockImage(400);
             const filePath = writeMockImage(image, fileName);
@@ -1555,7 +1572,7 @@ describe("Device OTA", () => {
             const baseSize = 60;
             const expectedBlocks = Math.ceil(image.header.totalImageSize / baseSize);
             const dataSettings: OtaDataSettings = {requestTimeout: 150000, responseDelay: 0, baseSize};
-            const {run, endpoint} = createDevice({
+            const {run, device, endpoint} = createDevice({
                 image,
                 source: {url: filePath, downgrade: true},
                 requestPayload,
@@ -1576,6 +1593,7 @@ describe("Device OTA", () => {
             expect(getResponses(endpoint, "imageBlockResponse").length).toStrictEqual(expectedBlocks);
             expect(dataSettings.requestTimeout).toStrictEqual(150000);
             expect(dataSettings.responseDelay).toStrictEqual(0);
+            expect(device.otaInProgress).toStrictEqual(false);
         });
 
         it("applies fallback timeouts when manufacturer is unknown", async () => {
@@ -1588,7 +1606,7 @@ describe("Device OTA", () => {
                 fileVersion: image.header.fileVersion - 1,
             };
             const dataSettings: OtaDataSettings = {requestTimeout: 0, responseDelay: 0, baseSize: 0};
-            const {run, endpoint} = createDevice({
+            const {run, device, endpoint} = createDevice({
                 image,
                 source: {url: "https://example.com/fw.ota"},
                 requestPayload,
@@ -1609,6 +1627,7 @@ describe("Device OTA", () => {
             expect(dataSettings.requestTimeout).toStrictEqual(150000);
             expect(dataSettings.baseSize).toStrictEqual(50);
             expect(dataSettings.responseDelay).toStrictEqual(0);
+            expect(device.otaInProgress).toStrictEqual(false);
         });
 
         it("calls onProgress with round blocks", async () => {
@@ -1632,7 +1651,6 @@ describe("Device OTA", () => {
             };
             const baseSize = 40;
             const dataSettings: OtaDataSettings = {requestTimeout: 10, responseDelay: 0, baseSize};
-
             // Mock time to ensure progress is reported at regular intervals
             let currentTime = 0;
             const timeDelays = [
@@ -1654,7 +1672,6 @@ describe("Device OTA", () => {
                 30100, // eighth block request (offset 280, triggers 87.5% progress)
                 100,
             ];
-
             const nowSpy = vi.spyOn(performance, "now").mockImplementation(() => {
                 const next = timeDelays.shift();
                 // For any additional calls, add small time
@@ -1663,7 +1680,7 @@ describe("Device OTA", () => {
                 return currentTime;
             });
 
-            const {run, onProgress} = createDevice({
+            const {run, device, onProgress} = createDevice({
                 image,
                 source: {url: "https://example.com/fw.ota"},
                 requestPayload,
@@ -1687,6 +1704,7 @@ describe("Device OTA", () => {
             expect(onProgress).toHaveBeenNthCalledWith(7, 75, 60); // After 6th block sent (240/320)
             expect(onProgress).toHaveBeenNthCalledWith(8, 87.5, 30); // After 7th block sent (280/320)
             expect(onProgress).toHaveBeenNthCalledWith(9, 100, 0); // Final completion
+            expect(device.otaInProgress).toStrictEqual(false);
         });
 
         it("calls onProgress with response delay (changes estimate)", async () => {
@@ -1710,7 +1728,6 @@ describe("Device OTA", () => {
             };
             const baseSize = 40;
             const dataSettings: OtaDataSettings = {requestTimeout: 10, responseDelay: 250, baseSize};
-
             // Mock time to ensure progress is reported at regular intervals
             let currentTime = 0;
             const timeDelays = [
@@ -1732,7 +1749,6 @@ describe("Device OTA", () => {
                 30100, // eighth block request (offset 280, triggers 87.5% progress)
                 100,
             ];
-
             const nowSpy = vi.spyOn(performance, "now").mockImplementation(() => {
                 const next = timeDelays.shift();
                 // For any additional calls, add small time
@@ -1741,7 +1757,7 @@ describe("Device OTA", () => {
                 return currentTime;
             });
 
-            const {run, onProgress} = createDevice({
+            const {run, device, onProgress} = createDevice({
                 image,
                 source: {url: "https://example.com/fw.ota"},
                 requestPayload,
@@ -1765,6 +1781,7 @@ describe("Device OTA", () => {
             expect(onProgress).toHaveBeenNthCalledWith(7, 75, 60); // After 6th block sent (240/320)
             expect(onProgress).toHaveBeenNthCalledWith(8, 87.5, 30); // After 7th block sent (280/320)
             expect(onProgress).toHaveBeenNthCalledWith(9, 100, 0); // Final completion
+            expect(device.otaInProgress).toStrictEqual(false);
         });
 
         it("calls onProgress with non-round blocks", async () => {
@@ -1788,7 +1805,6 @@ describe("Device OTA", () => {
             };
             const baseSize = 64;
             const dataSettings: OtaDataSettings = {requestTimeout: 10, responseDelay: 0, baseSize};
-
             // Mock time to ensure progress is reported at regular intervals
             let currentTime = 0;
             const timeDelays = [
@@ -1812,7 +1828,6 @@ describe("Device OTA", () => {
                 30100, // ninth block request (offset 512, triggers 87.5% progress)
                 100,
             ];
-
             const nowSpy = vi.spyOn(performance, "now").mockImplementation(() => {
                 const next = timeDelays.shift();
                 // For any additional calls, add small time
@@ -1821,7 +1836,7 @@ describe("Device OTA", () => {
                 return currentTime;
             });
 
-            const {run, onProgress} = createDevice({
+            const {run, device, onProgress} = createDevice({
                 image,
                 source: {url: "https://example.com/fw.ota"},
                 requestPayload,
@@ -1846,6 +1861,7 @@ describe("Device OTA", () => {
             expect(onProgress).toHaveBeenNthCalledWith(8, 85.99, 34); // After 7th block sent (448/521)
             expect(onProgress).toHaveBeenNthCalledWith(9, 98.27, 4); // After 7th block sent (512/521)
             expect(onProgress).toHaveBeenNthCalledWith(10, 100, 0); // Final completion
+            expect(device.otaInProgress).toStrictEqual(false);
         });
 
         it("throttles when response delay is configured", async () => {
@@ -1871,7 +1887,7 @@ describe("Device OTA", () => {
             const responseDelay = 25; // keep this low so we don't have to mock it
             const dataSettings: OtaDataSettings = {requestTimeout: 1000, responseDelay, baseSize};
             const startTime = performance.now();
-            const {run} = createDevice({
+            const {run, device} = createDevice({
                 image,
                 source: {url: "https://example.com/fw.ota"},
                 requestPayload,
@@ -1889,6 +1905,89 @@ describe("Device OTA", () => {
             const minimumExpectedTime = (expectedBlocks - 1) * responseDelay;
 
             expect(elapsedTime).toBeGreaterThanOrEqual(minimumExpectedTime);
+            expect(device.otaInProgress).toStrictEqual(false);
+        });
+
+        it("cancels scheduled OTA when completed", async () => {
+            const fileName = "custom.ota";
+            const image = mockImage(320);
+            const filePath = writeMockImage(image, fileName);
+            const meta: ZigbeeOtaImageMeta = {
+                fileName,
+                url: filePath,
+                manufacturerCode: image.header.manufacturerCode,
+                imageType: image.header.imageType,
+                fileVersion: image.header.fileVersion,
+            };
+            fetchIndexEntries = [meta];
+            firmwareBuffer = image.raw;
+            const requestPayload: TClusterCommandPayload<"genOta", "queryNextImageRequest"> = {
+                fieldControl: 0,
+                manufacturerCode: image.header.manufacturerCode,
+                imageType: image.header.imageType,
+                fileVersion: image.header.fileVersion - 1,
+            };
+            const baseSize = 40;
+            const dataSettings: OtaDataSettings = {requestTimeout: 10, responseDelay: 0, baseSize};
+
+            const {run, device} = createDevice({
+                image,
+                source: undefined,
+                requestPayload,
+                dataSettings,
+                behavior: {baseSize, sendUpgradeEnd: true},
+            });
+
+            device.scheduleOta({url: filePath});
+
+            expect(device.scheduledOta).toStrictEqual({url: filePath});
+
+            const [from, to] = await run();
+
+            expect(from.fileVersion).toStrictEqual(requestPayload.fileVersion);
+            expect(to?.fileVersion).toStrictEqual(image.header.fileVersion);
+            expect(device.scheduledOta).toStrictEqual(undefined);
+            expect(device.otaInProgress).toStrictEqual(false);
+        });
+
+        it("keeps scheduled OTA on failure", async () => {
+            const fileName = "custom.ota";
+            const image = mockImage(320);
+            const filePath = writeMockImage(image, fileName);
+            const meta: ZigbeeOtaImageMeta = {
+                fileName,
+                url: filePath,
+                manufacturerCode: image.header.manufacturerCode,
+                imageType: image.header.imageType,
+                fileVersion: image.header.fileVersion,
+            };
+            fetchIndexEntries = [meta];
+            firmwareBuffer = image.raw;
+            const requestPayload: TClusterCommandPayload<"genOta", "queryNextImageRequest"> = {
+                fieldControl: 0,
+                manufacturerCode: image.header.manufacturerCode,
+                imageType: image.header.imageType,
+                fileVersion: image.header.fileVersion - 1,
+            };
+            const baseSize = 40;
+            const dataSettings: OtaDataSettings = {requestTimeout: 10, responseDelay: 0, baseSize};
+
+            const {run, device} = createDevice({
+                image,
+                source: undefined,
+                requestPayload,
+                dataSettings,
+                behavior: {baseSize, stopAfterBlocks: 1, sendUpgradeEnd: false},
+            });
+
+            device.scheduleOta({url: filePath, downgrade: true});
+
+            expect(device.scheduledOta).toStrictEqual({url: filePath, downgrade: true});
+
+            await expect(run()).rejects.toThrow(/did not start\/finish firmware download/);
+
+            expect(device.scheduledOta).toStrictEqual({url: filePath, downgrade: true});
+            expect(device.otaInProgress).toStrictEqual(false);
         });
 
         it("uses custom firmware in dataDir", async () => {
@@ -1902,7 +2001,7 @@ describe("Device OTA", () => {
                 fileVersion: image.header.fileVersion + 1,
             };
             const baseSize = 41;
-            const {run} = createDevice({
+            const {run, device} = createDevice({
                 image,
                 source: {url: "mycustom.ota", downgrade: true},
                 requestPayload,
@@ -1919,6 +2018,7 @@ describe("Device OTA", () => {
 
             expect(from.fileVersion).toStrictEqual(requestPayload.fileVersion);
             expect(to?.fileVersion).toStrictEqual(image.header.fileVersion);
+            expect(device.otaInProgress).toStrictEqual(false);
         });
 
         it("recovers from image block response failures", async () => {
@@ -1927,8 +2027,9 @@ describe("Device OTA", () => {
             const baseSize = 64;
             const expectedBlocks = Math.ceil(image.header.totalImageSize / baseSize);
             const dataSettings: OtaDataSettings = {requestTimeout: 100, responseDelay: 0, baseSize};
-            const {run, endpoint, onProgress} = createDevice({
+            const {run, device, endpoint, onProgress} = createDevice({
                 image,
+                source: {},
                 dataSettings,
                 behavior: {baseSize, sendUpgradeEnd: true, failBlockResponse: true},
             });
@@ -1955,6 +2056,50 @@ describe("Device OTA", () => {
             );
             expect(getResponses(endpoint, "upgradeEndResponse").length).toStrictEqual(1);
             expect(onProgress).toHaveBeenCalled();
+            expect(device.otaInProgress).toStrictEqual(false);
+        });
+
+        it("prevents running two OTAs on same device", async () => {
+            const fileName = "custom.ota";
+            const image = mockImage(320);
+            const filePath = writeMockImage(image, fileName);
+            const meta: ZigbeeOtaImageMeta = {
+                fileName,
+                url: filePath,
+                manufacturerCode: image.header.manufacturerCode,
+                imageType: image.header.imageType,
+                fileVersion: image.header.fileVersion,
+            };
+            fetchIndexEntries = [meta];
+            firmwareBuffer = image.raw;
+            const requestPayload: TClusterCommandPayload<"genOta", "queryNextImageRequest"> = {
+                fieldControl: 0,
+                manufacturerCode: image.header.manufacturerCode,
+                imageType: image.header.imageType,
+                fileVersion: image.header.fileVersion - 1,
+            };
+            const baseSize = 40;
+            const dataSettings: OtaDataSettings = {requestTimeout: 10, responseDelay: 0, baseSize};
+
+            const {run, device} = createDevice({
+                image,
+                source: {url: filePath},
+                requestPayload,
+                dataSettings,
+                behavior: {baseSize, sendUpgradeEnd: true},
+            });
+
+            const p1 = run();
+
+            expect(device.otaInProgress).toStrictEqual(true);
+
+            const p2 = run();
+            const [from, to] = await p1;
+
+            await expect(p2).rejects.toThrow("OTA already in progress for 0x1");
+            expect(from.fileVersion).toStrictEqual(requestPayload.fileVersion);
+            expect(to?.fileVersion).toStrictEqual(image.header.fileVersion);
+            expect(device.otaInProgress).toStrictEqual(false);
         });
 
         it("fails when device stops sending data requests", async () => {
@@ -1969,9 +2114,9 @@ describe("Device OTA", () => {
             };
             const baseSize = 50;
             const expectedBlocks = 1;
-
-            const {run, endpoint} = createDevice({
+            const {run, device, endpoint} = createDevice({
                 image,
+                source: {},
                 requestPayload,
                 dataSettings: {requestTimeout: 30, responseDelay: 0, baseSize},
                 behavior: {baseSize, stopAfterBlocks: 1, sendUpgradeEnd: false},
@@ -1979,6 +2124,7 @@ describe("Device OTA", () => {
 
             await expect(run()).rejects.toThrow(/did not start\/finish firmware download/);
             expect(getResponses(endpoint, "imageBlockResponse").length).toStrictEqual(expectedBlocks);
+            expect(device.otaInProgress).toStrictEqual(false);
         });
 
         it("fails when upgrade end never arrives", async () => {
@@ -1994,8 +2140,9 @@ describe("Device OTA", () => {
             const baseSize = 30;
             const expectedBlocks = Math.ceil(image.header.totalImageSize / baseSize);
 
-            const {run, endpoint} = createDevice({
+            const {run, device, endpoint} = createDevice({
                 image,
+                source: {},
                 requestPayload,
                 dataSettings: {requestTimeout: 1000, responseDelay: 0, baseSize},
                 behavior: {baseSize, sendUpgradeEnd: false},
@@ -2003,6 +2150,7 @@ describe("Device OTA", () => {
 
             await expect(run()).rejects.toThrow(/did not start\/finish firmware download/);
             expect(getResponses(endpoint, "imageBlockResponse").length).toStrictEqual(expectedBlocks);
+            expect(device.otaInProgress).toStrictEqual(false);
         });
 
         it("fails when device sends upgrade end request with INVALID_IMAGE after image fully sent", async () => {
@@ -2010,8 +2158,9 @@ describe("Device OTA", () => {
             const [image] = loadImage(fileName);
             firmwareBuffer = image.raw;
             const baseSize = 64;
-            const {run, endpoint} = createDevice({
+            const {run, device, endpoint} = createDevice({
                 image,
+                source: {},
                 dataSettings: {requestTimeout: 1000, responseDelay: 0, baseSize},
                 behavior: {baseSize, sendUpgradeEnd: true, upgradeEndStatus: Zcl.Status.INVALID_IMAGE},
             });
@@ -2023,6 +2172,7 @@ describe("Device OTA", () => {
                 Zcl.Clusters.genOta.ID,
                 expect.any(Number),
             );
+            expect(device.otaInProgress).toStrictEqual(false);
         });
 
         it("fails when device sends upgrade end request with ABORT after a certain number of blocks", async () => {
@@ -2030,8 +2180,9 @@ describe("Device OTA", () => {
             const [image] = loadImage(fileName);
             firmwareBuffer = image.raw;
             const baseSize = 64;
-            const {run, endpoint} = createDevice({
+            const {run, device, endpoint} = createDevice({
                 image,
+                source: {},
                 dataSettings: {requestTimeout: 1000, responseDelay: 0, baseSize},
                 behavior: {
                     baseSize,
@@ -2048,6 +2199,7 @@ describe("Device OTA", () => {
                 Zcl.Clusters.genOta.ID,
                 expect.any(Number),
             );
+            expect(device.otaInProgress).toStrictEqual(false);
         });
 
         it("fails when upgrade end response fails", async () => {
@@ -2055,8 +2207,9 @@ describe("Device OTA", () => {
             const [image] = loadImage(fileName);
             firmwareBuffer = image.raw;
             const baseSize = 64;
-            const {run, endpoint} = createDevice({
+            const {run, device, endpoint} = createDevice({
                 image,
+                source: {},
                 dataSettings: {requestTimeout: 1000, responseDelay: 0, baseSize},
                 behavior: {baseSize, sendUpgradeEnd: true},
             });
@@ -2069,16 +2222,17 @@ describe("Device OTA", () => {
             });
 
             await expect(run()).rejects.toThrow(/upgrade end response failed/i);
+            expect(device.otaInProgress).toStrictEqual(false);
         });
 
         it("fails when query next image response fails", async () => {
-            // TODO: mock rejection for `endpoint.commandResponse` with commandKey `queryNextImageResponse`
             const fileName = OTA_FILES[0];
             const [image] = loadImage(fileName);
             firmwareBuffer = image.raw;
             const baseSize = 50;
-            const {run, endpoint} = createDevice({
+            const {run, device, endpoint} = createDevice({
                 image,
+                source: {},
                 dataSettings: {requestTimeout: 1000, responseDelay: 0, baseSize},
                 behavior: {baseSize, sendUpgradeEnd: true},
             });
@@ -2091,6 +2245,7 @@ describe("Device OTA", () => {
             });
 
             await expect(run()).rejects.toThrow("query-next-image-fail");
+            expect(device.otaInProgress).toStrictEqual(false);
         });
 
         it("does not throw on failed default response after non-success upgrade end request", async () => {
@@ -2098,8 +2253,9 @@ describe("Device OTA", () => {
             const [image] = loadImage(fileName);
             firmwareBuffer = image.raw;
             const baseSize = 64;
-            const {run, endpoint} = createDevice({
+            const {run, device, endpoint} = createDevice({
                 image,
+                source: {},
                 dataSettings: {requestTimeout: 1000, responseDelay: 0, baseSize},
                 behavior: {baseSize, sendUpgradeEnd: true, upgradeEndStatus: Zcl.Status.ABORT},
             });
@@ -2110,6 +2266,7 @@ describe("Device OTA", () => {
             await expect(run()).rejects.toThrow(/ABORT/);
             expect(epDefaultResponse).toHaveBeenCalledTimes(1);
             expect(epDefaultResponse.mock.settledResults[0]).toStrictEqual({type: "rejected", value: new Error("default-response-failed")});
+            expect(device.otaInProgress).toStrictEqual(false);
         });
 
         it("allows bypassing version check with force meta", async () => {
@@ -2134,7 +2291,7 @@ describe("Device OTA", () => {
             };
             const baseSize = 25;
             const dataSettings: OtaDataSettings = {requestTimeout: 150000, responseDelay: 0, baseSize};
-            const {run} = createDevice({
+            const {run, device} = createDevice({
                 image,
                 source: {},
                 requestPayload,
@@ -2145,6 +2302,7 @@ describe("Device OTA", () => {
 
             expect(from.fileVersion).toStrictEqual(requestPayload.fileVersion);
             expect(to?.fileVersion).toStrictEqual(requestPayload.fileVersion);
+            expect(device.otaInProgress).toStrictEqual(false);
         });
 
         it("returns NO_IMAGE_AVAILABLE when device version matches available in repo", async () => {
@@ -2159,7 +2317,7 @@ describe("Device OTA", () => {
             const baseSize = 16;
             const logErrorSpy = vi.spyOn(logger, "error");
             const dataSettings: OtaDataSettings = {requestTimeout: 150000, responseDelay: 0, baseSize};
-            const {run, endpoint} = createDevice({
+            const {run, device, endpoint} = createDevice({
                 image,
                 source: {},
                 requestPayload,
@@ -2178,6 +2336,7 @@ describe("Device OTA", () => {
                 1,
             );
             expect(logErrorSpy).not.toHaveBeenCalled();
+            expect(device.otaInProgress).toStrictEqual(false);
         });
 
         it("returns NO_IMAGE_AVAILABLE when device version is above available in repo (upgrade)", async () => {
@@ -2192,7 +2351,7 @@ describe("Device OTA", () => {
             const baseSize = 16;
             const logErrorSpy = vi.spyOn(logger, "error");
             const dataSettings: OtaDataSettings = {requestTimeout: 150000, responseDelay: 0, baseSize};
-            const {run, endpoint} = createDevice({
+            const {run, device, endpoint} = createDevice({
                 image,
                 source: {},
                 requestPayload,
@@ -2211,6 +2370,7 @@ describe("Device OTA", () => {
                 1,
             );
             expect(logErrorSpy).not.toHaveBeenCalled();
+            expect(device.otaInProgress).toStrictEqual(false);
         });
 
         it("returns NO_IMAGE_AVAILABLE when device version is below available in repo (downgrade)", async () => {
@@ -2225,7 +2385,7 @@ describe("Device OTA", () => {
             const baseSize = 16;
             const logErrorSpy = vi.spyOn(logger, "error");
             const dataSettings: OtaDataSettings = {requestTimeout: 150000, responseDelay: 0, baseSize};
-            const {run, endpoint} = createDevice({
+            const {run, device, endpoint} = createDevice({
                 image,
                 source: {downgrade: true},
                 requestPayload,
@@ -2244,6 +2404,7 @@ describe("Device OTA", () => {
                 1,
             );
             expect(logErrorSpy).not.toHaveBeenCalled();
+            expect(device.otaInProgress).toStrictEqual(false);
         });
 
         it("returns NO_IMAGE_AVAILABLE when device version matches available at given URL", async () => {
@@ -2259,7 +2420,7 @@ describe("Device OTA", () => {
             const logErrorSpy = vi.spyOn(logger, "error");
             const logDebugSpy = vi.spyOn(logger, "debug");
             const dataSettings: OtaDataSettings = {requestTimeout: 150000, responseDelay: 0, baseSize};
-            const {run, endpoint} = createDevice({
+            const {run, device, endpoint} = createDevice({
                 image,
                 source: {url: "https://example.com/fw.ota"},
                 requestPayload,
@@ -2281,6 +2442,7 @@ describe("Device OTA", () => {
             const calls = logDebugSpy.mock.calls.map((c) => (typeof c[0] === "string" ? c[0] : c[0]()));
             expect(calls[0]).toMatch("Downloading firmware image from 'https://example.com/fw.ota'");
             expect(calls[1]).toMatch("Parsed image from 'https://example.com/fw.ota' for 0x1");
+            expect(device.otaInProgress).toStrictEqual(false);
         });
 
         it("returns NO_IMAGE_AVAILABLE when parsing repo firmware fails", async () => {
@@ -2298,7 +2460,7 @@ describe("Device OTA", () => {
                 throw new Error("fail");
             });
             const dataSettings: OtaDataSettings = {requestTimeout: 150000, responseDelay: 0, baseSize};
-            const {run, endpoint} = createDevice({
+            const {run, device, endpoint} = createDevice({
                 image,
                 source: {},
                 requestPayload,
@@ -2317,6 +2479,7 @@ describe("Device OTA", () => {
                 1,
             );
             expect(logErrorSpy).toHaveBeenCalledWith(expect.stringContaining("Failed to parse OTA image"), "zh:controller:device");
+            expect(device.otaInProgress).toStrictEqual(false);
 
             parseOtaImageSpy.mockRestore();
         });
@@ -2334,7 +2497,7 @@ describe("Device OTA", () => {
             const baseSize = 16;
             const logErrorSpy = vi.spyOn(logger, "error");
             const dataSettings: OtaDataSettings = {requestTimeout: 150000, responseDelay: 0, baseSize};
-            const {run, endpoint} = createDevice({
+            const {run, device, endpoint} = createDevice({
                 image,
                 source: {url: "https://example.com/fw.ota"},
                 requestPayload,
@@ -2353,6 +2516,7 @@ describe("Device OTA", () => {
                 1,
             );
             expect(logErrorSpy).toHaveBeenCalledWith(expect.stringContaining("Failed to parse OTA image"), "zh:controller:device");
+            expect(device.otaInProgress).toStrictEqual(false);
         });
 
         it("returns NO_IMAGE_AVAILABLE when parsing custom firmware in dataDir fails", async () => {
@@ -2362,7 +2526,7 @@ describe("Device OTA", () => {
             firmwareBuffer[0] = 0xff;
             const baseSize = 41;
             const logErrorSpy = vi.spyOn(logger, "error");
-            const {run, endpoint} = createDevice({
+            const {run, device, endpoint} = createDevice({
                 image,
                 source: {url: "mycustom.ota", downgrade: true},
                 requestPayload: undefined,
@@ -2387,6 +2551,7 @@ describe("Device OTA", () => {
                 1,
             );
             expect(logErrorSpy).toHaveBeenCalledWith(expect.stringContaining("Failed to parse OTA image"), "zh:controller:device");
+            expect(device.otaInProgress).toStrictEqual(false);
         });
 
         it("returns NO_IMAGE_AVAILABLE when firmware fetching fails", async () => {
@@ -2412,7 +2577,7 @@ describe("Device OTA", () => {
             const baseSize = 16;
             const logErrorSpy = vi.spyOn(logger, "error");
             const dataSettings: OtaDataSettings = {requestTimeout: 150000, responseDelay: 0, baseSize};
-            const {run, endpoint} = createDevice({
+            const {run, device, endpoint} = createDevice({
                 image,
                 source: {},
                 requestPayload,
@@ -2434,6 +2599,7 @@ describe("Device OTA", () => {
                 expect.stringContaining("Invalid response from https://example.com/custom.ota status=403"),
                 "zh:controller:device",
             );
+            expect(device.otaInProgress).toStrictEqual(false);
         });
 
         it("returns NO_IMAGE_AVAILABLE when custom file fails checksum", async () => {
@@ -2458,7 +2624,7 @@ describe("Device OTA", () => {
             const baseSize = 43;
             const logErrorSpy = vi.spyOn(logger, "error");
             const dataSettings: OtaDataSettings = {requestTimeout: 150000, responseDelay: 0, baseSize};
-            const {run, endpoint} = createDevice({
+            const {run, device, endpoint} = createDevice({
                 image,
                 source: {},
                 requestPayload,
@@ -2477,6 +2643,7 @@ describe("Device OTA", () => {
                 1,
             );
             expect(logErrorSpy).toHaveBeenCalledWith(expect.stringContaining("File checksum validation failed"), "zh:controller:device");
+            expect(device.otaInProgress).toStrictEqual(false);
         });
 
         it("returns NO_IMAGE_AVAILABLE when index has no entries", async () => {
@@ -2484,8 +2651,9 @@ describe("Device OTA", () => {
             const [image] = loadImage(OTA_FILES[1]);
             firmwareBuffer = image.raw;
             const dataSettings: OtaDataSettings = {requestTimeout: 0, responseDelay: 0, baseSize: 32};
-            const {run, endpoint} = createDevice({
+            const {run, device, endpoint} = createDevice({
                 image,
+                source: {},
                 dataSettings,
                 behavior: {baseSize: 32, sendUpgradeEnd: true},
             });
@@ -2501,20 +2669,29 @@ describe("Device OTA", () => {
                 undefined,
                 1,
             );
+            expect(device.otaInProgress).toStrictEqual(false);
         });
     });
 
     describe("Schedules / Unschedules", () => {
-        it("schedules and replaces OTA requests", () => {
+        it("schedules OTA request", () => {
             const {device} = createSimpleDevice({});
 
             device.scheduleOta({url: "first"});
 
-            expect(device.otaScheduled).toStrictEqual({url: "first"});
+            expect(device.scheduledOta).toStrictEqual({url: "first"});
+        });
+
+        it("replaces previously-scheduled OTA request", () => {
+            const {device} = createSimpleDevice({});
+
+            device.scheduleOta({url: "first"});
+
+            expect(device.scheduledOta).toStrictEqual({url: "first"});
 
             device.scheduleOta({url: "second", downgrade: true});
 
-            expect(device.otaScheduled).toStrictEqual({url: "second", downgrade: true});
+            expect(device.scheduledOta).toStrictEqual({url: "second", downgrade: true});
         });
 
         it("unschedules OTA when present", () => {
@@ -2522,11 +2699,19 @@ describe("Device OTA", () => {
 
             device.scheduleOta({url: "upgrade"});
 
-            expect(device.otaScheduled).toStrictEqual({url: "upgrade"});
+            expect(device.scheduledOta).toStrictEqual({url: "upgrade"});
 
             device.unscheduleOta();
 
-            expect(device.otaScheduled).toStrictEqual(undefined);
+            expect(device.scheduledOta).toStrictEqual(undefined);
+        });
+
+        it("handles unscheduling when scheduled not present", () => {
+            const {device} = createSimpleDevice({});
+
+            device.unscheduleOta();
+
+            expect(device.scheduledOta).toStrictEqual(undefined);
         });
     });
 
