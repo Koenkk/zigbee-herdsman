@@ -4087,6 +4087,28 @@ describe("Controller", () => {
         expect(endpoint.binds.length).toBe(0);
     });
 
+    it("Group unbind by number, non-existing group and non-existing bind with force=true", async () => {
+        await controller.start();
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
+        const device = controller.getDeviceByIeeeAddr("0x129")!;
+        const endpoint = device.getEndpoint(1)!;
+        expect(endpoint.binds.length).toBe(0);
+        await endpoint.unbind("genPowerCfg", 5, true);
+        const zdoPayload = Zdo.Buffalo.buildRequest(
+            false,
+            Zdo.ClusterId.UNBIND_REQUEST,
+            "0x129",
+            1,
+            1,
+            Zdo.MULTICAST_BINDING,
+            ZSpec.BLANK_EUI64,
+            5,
+            0xff,
+        );
+        expect(mockAdapterSendZdo).toHaveBeenCalledWith("0x129", 129, Zdo.ClusterId.UNBIND_REQUEST, zdoPayload, false);
+        expect(endpoint.binds.length).toBe(0);
+    });
+
     it("Endpoint configure reporting", async () => {
         await controller.start();
         await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
