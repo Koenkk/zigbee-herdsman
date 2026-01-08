@@ -1565,8 +1565,7 @@ export class Device extends Entity<ControllerEventMap> {
             }
         }
 
-        // reply to `queryNextImageRequest` now that we have the data for it,
-        // should trigger image block/page request from device
+        // reply to `queryNextImageRequest` now that we have the data for it, should trigger image block/page request from device
         // NOTE: previous code had try/catch wrapping with ignored error, but that doesn't look good (would fail to start OTA from device side)
         try {
             await endpoint.commandResponse(

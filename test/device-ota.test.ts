@@ -1295,7 +1295,7 @@ describe("Device OTA", () => {
             expect(device.otaInProgress).toStrictEqual(false);
         });
 
-        it("handles page requests and reports progress", async () => {
+        it("handles page requests", async () => {
             const fileName = OTA_FILES[0];
             const [image] = loadImage(fileName);
             firmwareBuffer = image.raw;
