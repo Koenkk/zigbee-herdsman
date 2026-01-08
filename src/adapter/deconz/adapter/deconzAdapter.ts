@@ -297,6 +297,7 @@ export class DeconzAdapter extends Adapter {
         try {
             await confirm;
 
+            // biome-ignore lint/nursery/noMisusedPromises: ignore
             if (indication) {
                 const indicationIndex = this.openRequestsQueue.findIndex(
                     (x) => x.clusterId === responseClusterId && x.transactionSequenceNumber === transactionID,
@@ -308,6 +309,7 @@ export class DeconzAdapter extends Adapter {
             }
         } catch (err) {
             // no need to wait for indication, remove waiter from queue
+            // biome-ignore lint/nursery/noMisusedPromises: ignore
             if (indication) {
                 const indicationIndex = this.openRequestsQueue.findIndex(
                     (x) => x.clusterId === responseClusterId && x.transactionSequenceNumber === transactionID,
@@ -321,6 +323,7 @@ export class DeconzAdapter extends Adapter {
             throw new Error(`failed to send ZDO request seq: (${transactionID}) ${err}`);
         }
 
+        // biome-ignore lint/nursery/noMisusedPromises: ignore
         if (indication) {
             try {
                 const data = await indication;
@@ -440,6 +443,7 @@ export class DeconzAdapter extends Adapter {
         try {
             await confirm;
 
+            // biome-ignore lint/nursery/noMisusedPromises: ignore
             if (indication) {
                 const indicationIndex = this.openRequestsQueue.findIndex(
                     (x) => x.clusterId === zclFrame.cluster.ID && x.transactionSequenceNumber === zclFrame.header.transactionSequenceNumber,
@@ -451,6 +455,7 @@ export class DeconzAdapter extends Adapter {
             }
         } catch (err) {
             // no need to wait for indication, remove waiter from queue
+            // biome-ignore lint/nursery/noMisusedPromises: ignore
             if (indication) {
                 const indicationIndex = this.openRequestsQueue.findIndex(
                     (x) => x.clusterId === zclFrame.cluster.ID && x.transactionSequenceNumber === zclFrame.header.transactionSequenceNumber,
@@ -464,6 +469,7 @@ export class DeconzAdapter extends Adapter {
             throw new Error(`failed to send ZCL request (${zclFrame.header.transactionSequenceNumber}) ${err}`);
         }
 
+        // biome-ignore lint/nursery/noMisusedPromises: ignore
         if (indication) {
             try {
                 const data = await indication;
