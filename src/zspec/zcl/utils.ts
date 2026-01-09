@@ -331,7 +331,6 @@ function isMinOrMax<T>(entry: Attribute | Parameter, value: T): boolean {
 }
 
 function processRestrictions<T>(entry: Attribute | Parameter, value: T): void {
-
     const errorCategory = "(outside Zigbee spec)";
 
     if (entry.min !== undefined && (value as number) < entry.min) {
