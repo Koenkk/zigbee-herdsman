@@ -331,33 +331,36 @@ function isMinOrMax<T>(entry: Attribute | Parameter, value: T): boolean {
 }
 
 function processRestrictions<T>(entry: Attribute | Parameter, value: T): void {
+
+    const errorCategory = "(outside Zigbee spec)";
+
     if (entry.min !== undefined && (value as number) < entry.min) {
-        throw new Error(`${entry.name} requires min of ${entry.min}`);
+        throw new Error(`${errorCategory} ${entry.name} requires min of ${entry.min}`);
     }
 
     if (entry.minExcl !== undefined && (value as number) <= entry.minExcl) {
-        throw new Error(`${entry.name} requires min exclusive of ${entry.minExcl}`);
+        throw new Error(`${errorCategory} ${entry.name} requires min exclusive of ${entry.minExcl}`);
     }
 
     // Restore in Z2M 2.7.4
     // if (entry.max !== undefined && (value as number) > entry.max) {
-    //     throw new Error(`${entry.name} requires max of ${entry.max}`);
+    //     throw new Error(`${errorCategory} ${entry.name} requires max of ${entry.max}`);
     // }
 
     if (entry.maxExcl !== undefined && (value as number) >= entry.maxExcl) {
-        throw new Error(`${entry.name} requires max exclusive of ${entry.maxExcl}`);
+        throw new Error(`${errorCategory} ${entry.name} requires max exclusive of ${entry.maxExcl}`);
     }
 
     if (entry.length !== undefined && (value as string | unknown[] | Buffer).length !== entry.length) {
-        throw new Error(`${entry.name} requires length of ${entry.length}`);
+        throw new Error(`${errorCategory} ${entry.name} requires length of ${entry.length}`);
     }
 
     if (entry.minLen !== undefined && (value as string | unknown[] | Buffer).length < entry.minLen) {
-        throw new Error(`${entry.name} requires min length of ${entry.minLen}`);
+        throw new Error(`${errorCategory} ${entry.name} requires min length of ${entry.minLen}`);
     }
 
     if (entry.maxLen !== undefined && (value as string | unknown[] | Buffer).length > entry.maxLen) {
-        throw new Error(`${entry.name} requires max length of ${entry.maxLen}`);
+        throw new Error(`${errorCategory} ${entry.name} requires max length of ${entry.maxLen}`);
     }
 }
 
