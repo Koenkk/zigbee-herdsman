@@ -339,9 +339,10 @@ function processRestrictions<T>(entry: Attribute | Parameter, value: T): void {
         throw new Error(`${entry.name} requires min exclusive of ${entry.minExcl}`);
     }
 
-    if (entry.max !== undefined && (value as number) > entry.max) {
-        throw new Error(`${entry.name} requires max of ${entry.max}`);
-    }
+    // Restore in Z2M 2.7.4
+    // if (entry.max !== undefined && (value as number) > entry.max) {
+    //     throw new Error(`${entry.name} requires max of ${entry.max}`);
+    // }
 
     if (entry.maxExcl !== undefined && (value as number) >= entry.maxExcl) {
         throw new Error(`${entry.name} requires max exclusive of ${entry.maxExcl}`);
