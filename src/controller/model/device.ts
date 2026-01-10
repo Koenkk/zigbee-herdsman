@@ -1413,7 +1413,7 @@ export class Device extends Entity<ControllerEventMap> {
         );
     }
 
-    async #notifyOta(endpoint: Endpoint): Promise<TClusterCommandPayload<"genOta", "queryNextImageRequest">> {
+    async #notifyOta(endpoint: Endpoint): Promise<[payload: TClusterCommandPayload<"genOta", "queryNextImageRequest">, tsn: number]> {
         // Some devices (e.g. Insta) take a very long trying to discover the correct coordinator EP for OTA
         const queryNextImageRequest = this.#waitForOtaCommand<"queryNextImageRequest">(
             endpoint.ID,
@@ -1427,7 +1427,7 @@ export class Device extends Entity<ControllerEventMap> {
 
             const response = await queryNextImageRequest.promise;
 
-            return response.payload;
+            return [response.payload, response.header.transactionSequenceNumber];
         } catch {
             queryNextImageRequest.cancel();
 
@@ -1435,6 +1435,9 @@ export class Device extends Entity<ControllerEventMap> {
         }
     }
 
+    /**
+     * If `current` is undefined, will automatically notify and reply to query with `NO_IMAGE_AVAILABLE` (stops device from doing further requests).
+     */
     async checkOta(
         source: OtaSource,
         current: TClusterCommandPayload<"genOta", "queryNextImageRequest"> | undefined,
@@ -1453,7 +1456,10 @@ export class Device extends Entity<ControllerEventMap> {
         }
 
         if (current === undefined) {
-            current = await this.#notifyOta(endpoint);
+            let queryTsn: number;
+            [current, queryTsn] = await this.#notifyOta(endpoint);
+
+            await endpoint.commandResponse("genOta", "queryNextImageResponse", {status: Zcl.Status.NO_IMAGE_AVAILABLE}, undefined, queryTsn);
         }
 
         logger.debug(
@@ -1515,18 +1521,25 @@ export class Device extends Entity<ControllerEventMap> {
         }
 
         this.#otaInProgress = true;
-        let image: OtaImage | undefined;
+
+        // always expected both undefined if one is, but just in case
+        if (requestPayload === undefined || requestTsn === undefined) {
+            try {
+                [requestPayload, requestTsn] = await this.#notifyOta(endpoint);
+            } finally {
+                this.#otaInProgress = false;
+            }
+        }
+
         let available: OtaUpdateAvailableResult["available"] = 0;
-        let current: OtaUpdateAvailableResult["current"];
+        let image: OtaImage | undefined;
 
         if (source.url && !source.url.endsWith(".json")) {
-            current = requestPayload ? requestPayload : await this.#notifyOta(endpoint);
-
             // firmware file at `source.url`
             try {
                 const downloadedFile = await getOtaFirmware(source.url, undefined);
                 image = parseOtaImage(downloadedFile);
-                available = Math.sign(current.fileVersion - image.header.fileVersion);
+                available = Math.sign(requestPayload.fileVersion - image.header.fileVersion);
 
                 logger.debug(
                     () =>
@@ -1541,8 +1554,13 @@ export class Device extends Entity<ControllerEventMap> {
             }
         } else {
             let availableMeta: OtaUpdateAvailableResult["availableMeta"];
-            // index file at `source.url` (or undefined to use defaults)
-            ({available, current, availableMeta} = await this.checkOta(source, requestPayload, extraMetas, endpoint));
+
+            try {
+                // index file at `source.url` (or undefined to use defaults)
+                ({available, availableMeta} = await this.checkOta(source, requestPayload, extraMetas, endpoint));
+            } finally {
+                this.#otaInProgress = false;
+            }
 
             if ((source.downgrade ? available === 1 : available === -1) && availableMeta) {
                 try {
@@ -1590,7 +1608,7 @@ export class Device extends Entity<ControllerEventMap> {
         if (!image || available === 0) {
             this.#otaInProgress = false;
 
-            return [current, undefined];
+            return [requestPayload, undefined];
         }
 
         logger.debug(() => `Starting OTA update for ${this.ieeeAddr}`, NS);
@@ -1656,7 +1674,7 @@ export class Device extends Entity<ControllerEventMap> {
                 this.#otaInProgress = false;
 
                 return [
-                    current,
+                    requestPayload,
                     {
                         fieldControl: 0,
                         manufacturerCode: image.header.manufacturerCode,

@@ -564,7 +564,13 @@ const createDevice = ({
         device,
         endpoint,
         onProgress,
-        run: () => device.updateOta(source, requestPayload, 1, {}, onProgress, dataSettings, endpoint),
+        run: async () => {
+            if (requestPayload === undefined) {
+                return await device.updateOta(source, undefined, undefined, {}, onProgress, dataSettings, endpoint);
+            }
+
+            return await device.updateOta(source, requestPayload, 1, {}, onProgress, dataSettings, endpoint);
+        },
         tempDir,
     };
 };
@@ -659,6 +665,14 @@ describe("Device OTA", () => {
                 "imageNotify",
                 {payloadType: 0, queryJitter: 100},
                 {sendPolicy: "immediate"},
+            );
+            expect(getResponses(endpoint, "queryNextImageResponse").length).toStrictEqual(1);
+            expect(endpoint.commandResponse).toHaveBeenCalledWith(
+                "genOta",
+                "queryNextImageResponse",
+                {status: Zcl.Status.NO_IMAGE_AVAILABLE},
+                undefined,
+                1,
             );
             expect(result).toStrictEqual({
                 available: -1,
@@ -1005,6 +1019,7 @@ describe("Device OTA", () => {
 
             expect(from.fileVersion).toStrictEqual(requestPayload.fileVersion);
             expect(to?.fileVersion).toStrictEqual(image.header.fileVersion);
+            expect(getResponses(endpoint, "queryNextImageResponse").length).toStrictEqual(1);
             expect(endpoint.commandResponse).toHaveBeenCalledWith(
                 "genOta",
                 "queryNextImageResponse",
@@ -1057,6 +1072,7 @@ describe("Device OTA", () => {
 
             expect(from.fileVersion).toStrictEqual(requestPayload.fileVersion);
             expect(to?.fileVersion).toStrictEqual(image.header.fileVersion);
+            expect(getResponses(endpoint, "queryNextImageResponse").length).toStrictEqual(1);
             expect(endpoint.commandResponse).toHaveBeenCalledWith(
                 "genOta",
                 "queryNextImageResponse",
@@ -1099,7 +1115,7 @@ describe("Device OTA", () => {
             vi.useFakeTimers();
 
             try {
-                const {run, device} = createDevice({
+                const {run, device, endpoint} = createDevice({
                     image,
                     source: {},
                     dataSettings: {requestTimeout: 1000, responseDelay: 0, baseSize},
@@ -1114,6 +1130,7 @@ describe("Device OTA", () => {
 
                 expect(from.fileVersion).toStrictEqual(image.header.fileVersion - 1);
                 expect(to?.fileVersion).toStrictEqual(image.header.fileVersion);
+                expect(getResponses(endpoint, "queryNextImageResponse").length).toStrictEqual(1);
                 expect(device.otaInProgress).toStrictEqual(false);
             } finally {
                 vi.useRealTimers();
@@ -2038,6 +2055,14 @@ describe("Device OTA", () => {
 
             expect(from.fileVersion).toStrictEqual(image.header.fileVersion - 1);
             expect(to?.fileVersion).toStrictEqual(image.header.fileVersion);
+            expect(getResponses(endpoint, "queryNextImageResponse").length).toStrictEqual(1);
+            expect(endpoint.commandResponse).toHaveBeenCalledWith(
+                "genOta",
+                "queryNextImageResponse",
+                expect.objectContaining({status: Zcl.Status.SUCCESS}),
+                undefined,
+                1,
+            );
             expect(getResponses(endpoint, "imageBlockResponse").length).toStrictEqual(expectedBlocks + 1 /* 1 retried */);
             const calls = getResponses(endpoint, "imageBlockResponse");
             const lastOffset = (expectedBlocks - 1) * baseSize;
@@ -2099,6 +2124,31 @@ describe("Device OTA", () => {
             await expect(p2).rejects.toThrow("OTA already in progress for 0x1");
             expect(from.fileVersion).toStrictEqual(requestPayload.fileVersion);
             expect(to?.fileVersion).toStrictEqual(image.header.fileVersion);
+            expect(device.otaInProgress).toStrictEqual(false);
+        });
+
+        it("fails when check fails", async () => {
+            const fileName = OTA_FILES[0];
+            const [image] = loadImage(fileName);
+            firmwareBuffer = image.raw;
+            const requestPayload: TClusterCommandPayload<"genOta", "queryNextImageRequest"> = {
+                fieldControl: 0,
+                manufacturerCode: image.header.manufacturerCode,
+                imageType: image.header.imageType,
+                fileVersion: image.header.fileVersion + 1,
+            };
+            const baseSize = 64;
+            const {device, run} = createDevice({
+                image,
+                source: {downgrade: true},
+                requestPayload,
+                dataSettings: {requestTimeout: 1000, responseDelay: 0, baseSize},
+                behavior: {baseSize, sendUpgradeEnd: true},
+            });
+
+            vi.spyOn(device, "checkOta").mockRejectedValueOnce(new Error("check-fail"));
+
+            await expect(run()).rejects.toThrow("check-fail");
             expect(device.otaInProgress).toStrictEqual(false);
         });
 
@@ -2199,6 +2249,29 @@ describe("Device OTA", () => {
                 Zcl.Clusters.genOta.ID,
                 expect.any(Number),
             );
+            expect(device.otaInProgress).toStrictEqual(false);
+        });
+
+        it("fails when image notify fails", async () => {
+            const fileName = OTA_FILES[0];
+            const [image] = loadImage(fileName);
+            firmwareBuffer = image.raw;
+            const baseSize = 64;
+            const {run, device, endpoint} = createDevice({
+                image,
+                source: {},
+                dataSettings: {requestTimeout: 1000, responseDelay: 0, baseSize},
+                behavior: {baseSize, sendUpgradeEnd: true},
+            });
+            endpoint.commandResponse = vi.fn((_cluster, command) => {
+                if (command === "imageNotify") {
+                    return Promise.reject(new Error("image-notify-fail"));
+                }
+
+                return Promise.resolve();
+            });
+
+            await expect(run()).rejects.toThrow("Device didn't respond to OTA request");
             expect(device.otaInProgress).toStrictEqual(false);
         });
 
