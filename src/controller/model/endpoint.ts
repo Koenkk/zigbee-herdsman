@@ -995,43 +995,6 @@ export class Endpoint extends ZigbeeEntity {
         }
     }
 
-    public waitForCommand(
-        clusterKey: number | string,
-        commandKey: number | string,
-        transactionSequenceNumber: number | undefined,
-        timeout: number,
-    ): {promise: Promise<{header: Zcl.Header; payload: KeyValue}>; cancel: () => void} {
-        const device = this.getDevice();
-        const cluster = this.getCluster(clusterKey, device);
-        const command = cluster.getCommand(commandKey);
-        const waiter = Entity.adapter.waitFor(
-            this.deviceNetworkAddress,
-            this.ID,
-            Zcl.FrameType.SPECIFIC,
-            Zcl.Direction.CLIENT_TO_SERVER,
-            transactionSequenceNumber,
-            cluster.ID,
-            command.ID,
-            timeout,
-        );
-
-        const promise = new Promise<{header: Zcl.Header; payload: KeyValue}>((resolve, reject) => {
-            waiter.promise.then(
-                (payload) => {
-                    try {
-                        const frame = Zcl.Frame.fromBuffer(payload.clusterID, payload.header, payload.data, device.customClusters);
-                        resolve({header: frame.header, payload: frame.payload});
-                    } catch (error) {
-                        reject(error);
-                    }
-                },
-                (error) => reject(error),
-            );
-        });
-
-        return {promise, cancel: waiter.cancel};
-    }
-
     private getOptionsWithDefaults(
         options: Options | undefined,
         disableDefaultResponse: boolean,

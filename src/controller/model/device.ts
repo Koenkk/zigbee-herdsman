@@ -7,13 +7,25 @@ import * as ZSpec from "../../zspec";
 import {BroadcastAddress} from "../../zspec/enums";
 import type {Eui64} from "../../zspec/tstypes";
 import * as Zcl from "../../zspec/zcl";
-import type {TPartialClusterAttributes} from "../../zspec/zcl/definition/clusters-types";
+import type {TClusterCommandPayload, TClusterPayload, TPartialClusterAttributes} from "../../zspec/zcl/definition/clusters-types";
 import type {ClusterDefinition, CustomClusters} from "../../zspec/zcl/definition/tstype";
+import type {TZclFrame} from "../../zspec/zcl/zclFrame";
 import * as Zdo from "../../zspec/zdo";
 import type {BindingTableEntry, LQITableEntry, RoutingTableEntry} from "../../zspec/zdo/definition/tstypes";
 import type {ControllerEventMap} from "../controller";
+import {getOtaFirmware, getOtaIndex, OtaSession, parseOtaImage} from "../helpers/ota";
 import zclTransactionSequenceNumber from "../helpers/zclTransactionSequenceNumber";
-import type {DatabaseEntry, DeviceType, KeyValue} from "../tstype";
+import type {
+    DatabaseEntry,
+    DeviceType,
+    KeyValue,
+    OtaDataSettings,
+    OtaExtraMetas,
+    OtaImage,
+    OtaSource,
+    OtaUpdateAvailableResult,
+    ZigbeeOtaImageMeta,
+} from "../tstype";
 import Endpoint, {type BindInternal} from "./endpoint";
 import Entity from "./entity";
 
@@ -59,6 +71,8 @@ export class Device extends Entity<ControllerEventMap> {
     private _pendingRequestTimeout: number;
     private _customClusters: CustomClusters = {};
     private _gpSecurityKey?: number[];
+    #scheduledOta: OtaSource | undefined;
+    #otaInProgress = false;
 
     // Getters/setters
     get ieeeAddr(): string {
@@ -208,6 +222,12 @@ export class Device extends Entity<ControllerEventMap> {
     get genBasic(): TPartialClusterAttributes<"genBasic"> {
         return this.#genBasic;
     }
+    get scheduledOta(): OtaSource | undefined {
+        return this.#scheduledOta;
+    }
+    get otaInProgress(): boolean {
+        return this.#otaInProgress;
+    }
 
     public meta: KeyValue;
 
@@ -240,6 +260,7 @@ export class Device extends Entity<ControllerEventMap> {
         checkinInterval: number | undefined,
         pendingRequestTimeout: number,
         gpSecurityKey: number[] | undefined,
+        scheduledOta: OtaSource | undefined,
     ) {
         super();
         this.ID = id;
@@ -264,6 +285,7 @@ export class Device extends Entity<ControllerEventMap> {
         this._checkinInterval = checkinInterval;
         this._pendingRequestTimeout = pendingRequestTimeout;
         this._gpSecurityKey = gpSecurityKey;
+        this.#scheduledOta = scheduledOta;
     }
 
     public createEndpoint(id: number): Endpoint {
@@ -328,89 +350,101 @@ export class Device extends Entity<ControllerEventMap> {
             return;
         }
 
-        // Respond to enroll requests
-        if (frame.header.isSpecific && frame.isCluster("ssIasZone") && frame.isCommand("enrollReq")) {
-            logger.debug(`IAS - '${this.ieeeAddr}' responding to enroll response`, NS);
-            const payload = {enrollrspcode: 0, zoneid: 23};
-            await endpoint.command("ssIasZone", "enrollRsp", payload, {disableDefaultResponse: true});
-        }
-
-        // Response to read requests
-        if (frame.header.isGlobal && frame.isCommand("read") && !this._customReadResponse?.(frame, endpoint)) {
-            const attributes: {[s: string]: KeyValue} = {
-                ...endpoint.clusters,
-            };
-
-            const isTimeReadRequest = dataPayload.clusterID === Zcl.Clusters.genTime.ID;
-            if (isTimeReadRequest) {
-                attributes.genTime = {
-                    attributes: timeService.getTimeClusterAttributes(),
+        if (frame.header.isGlobal) {
+            // Response to read requests
+            if (frame.command.name === "read" && !this._customReadResponse?.(frame, endpoint)) {
+                const attributes: {[s: string]: KeyValue} = {
+                    ...endpoint.clusters,
                 };
-            }
 
-            if (frame.cluster.name in attributes) {
-                const response: KeyValue = {};
-
-                for (const entry of frame.payload) {
-                    const name = frame.cluster.getAttribute(entry.attrId)?.name;
-
-                    if (name && name in attributes[frame.cluster.name].attributes) {
-                        response[name] = attributes[frame.cluster.name].attributes[name];
-                    }
+                const isTimeReadRequest = dataPayload.clusterID === Zcl.Clusters.genTime.ID;
+                if (isTimeReadRequest) {
+                    attributes.genTime = {
+                        attributes: timeService.getTimeClusterAttributes(),
+                    };
                 }
 
-                try {
-                    await endpoint.readResponse(frame.cluster.ID, frame.header.transactionSequenceNumber, response, {
-                        srcEndpoint: dataPayload.destinationEndpoint,
-                    });
-                } catch (error) {
-                    logger.error(`Read response to ${this.ieeeAddr} failed (${(error as Error).message})`, NS);
-                }
-            }
-        }
+                if (frame.cluster.name in attributes) {
+                    const response: KeyValue = {};
 
-        // Handle check-in from sleeping end devices
-        if (frame.header.isSpecific && frame.isCluster("genPollCtrl") && frame.isCommand("checkin")) {
-            try {
-                if (this.hasPendingRequests() || this._checkinInterval === undefined) {
-                    logger.debug(`check-in from ${this.ieeeAddr}: accepting fast-poll`, NS);
-                    await endpoint.command(
-                        frame.cluster.name as "genPollCtrl",
-                        "checkinRsp",
-                        {
-                            startFastPolling: 1,
-                            fastPollTimeout: 0,
-                        },
-                        {sendPolicy: "immediate"},
-                    );
+                    for (const entry of frame.payload) {
+                        const name = frame.cluster.getAttribute(entry.attrId)?.name;
 
-                    // This is a good time to read the checkin interval if we haven't stored it previously
-                    if (this._checkinInterval === undefined) {
-                        const pollPeriod = await endpoint.read("genPollCtrl", ["checkinInterval"], {sendPolicy: "immediate"});
-                        this._checkinInterval = pollPeriod.checkinInterval / 4; // convert to seconds
-                        this.resetPendingRequestTimeout();
-                        logger.debug(`Request Queue (${this.ieeeAddr}): default expiration timeout set to ${this.pendingRequestTimeout}`, NS);
+                        if (name && name in attributes[frame.cluster.name].attributes) {
+                            response[name] = attributes[frame.cluster.name].attributes[name];
+                        }
                     }
 
-                    await Promise.all(this.endpoints.map(async (e) => await e.sendPendingRequests(true)));
-                    // We *must* end fast-poll when we're done sending things. Otherwise
-                    // we cause undue power-drain.
-                    logger.debug(`check-in from ${this.ieeeAddr}: stopping fast-poll`, NS);
-                    await endpoint.command(frame.cluster.name as "genPollCtrl", "fastPollStop", {}, {sendPolicy: "immediate"});
-                } else {
-                    logger.debug(`check-in from ${this.ieeeAddr}: declining fast-poll`, NS);
-                    await endpoint.command(
-                        frame.cluster.name as "genPollCtrl",
-                        "checkinRsp",
-                        {
-                            startFastPolling: 0,
-                            fastPollTimeout: 0,
-                        },
-                        {sendPolicy: "immediate"},
-                    );
+                    try {
+                        await endpoint.readResponse(frame.cluster.ID, frame.header.transactionSequenceNumber, response, {
+                            srcEndpoint: dataPayload.destinationEndpoint,
+                        });
+                    } catch (error) {
+                        logger.error(`Read response to ${this.ieeeAddr} failed (${(error as Error).message})`, NS);
+                    }
                 }
-            } catch (error) {
-                logger.error(`Handling of poll check-in from ${this.ieeeAddr} failed (${(error as Error).message})`, NS);
+            }
+        } else if (frame.header.isSpecific) {
+            switch (frame.cluster.name) {
+                case "ssIasZone": {
+                    if (frame.command.name === "enrollReq") {
+                        // Respond to enroll requests
+                        logger.debug(`IAS - '${this.ieeeAddr}' responding to enroll response`, NS);
+
+                        await endpoint.command("ssIasZone", "enrollRsp", {enrollrspcode: 0, zoneid: 23}, {disableDefaultResponse: true});
+                    }
+                    break;
+                }
+                case "genPollCtrl": {
+                    if (frame.command.name === "checkin") {
+                        // Handle check-in from sleeping end devices
+                        try {
+                            if (this.hasPendingRequests() || this._checkinInterval === undefined) {
+                                logger.debug(`check-in from ${this.ieeeAddr}: accepting fast-poll`, NS);
+                                await endpoint.command(
+                                    frame.cluster.name as "genPollCtrl",
+                                    "checkinRsp",
+                                    {
+                                        startFastPolling: 1,
+                                        fastPollTimeout: 0,
+                                    },
+                                    {sendPolicy: "immediate"},
+                                );
+
+                                // This is a good time to read the checkin interval if we haven't stored it previously
+                                if (this._checkinInterval === undefined) {
+                                    const pollPeriod = await endpoint.read("genPollCtrl", ["checkinInterval"], {sendPolicy: "immediate"});
+                                    this._checkinInterval = pollPeriod.checkinInterval / 4; // convert to seconds
+                                    this.resetPendingRequestTimeout();
+                                    logger.debug(
+                                        `Request Queue (${this.ieeeAddr}): default expiration timeout set to ${this.pendingRequestTimeout}`,
+                                        NS,
+                                    );
+                                }
+
+                                await Promise.all(this.endpoints.map(async (e) => await e.sendPendingRequests(true)));
+                                // We *must* end fast-poll when we're done sending things. Otherwise
+                                // we cause undue power-drain.
+                                logger.debug(`check-in from ${this.ieeeAddr}: stopping fast-poll`, NS);
+                                await endpoint.command(frame.cluster.name as "genPollCtrl", "fastPollStop", {}, {sendPolicy: "immediate"});
+                            } else {
+                                logger.debug(`check-in from ${this.ieeeAddr}: declining fast-poll`, NS);
+                                await endpoint.command(
+                                    frame.cluster.name as "genPollCtrl",
+                                    "checkinRsp",
+                                    {
+                                        startFastPolling: 0,
+                                        fastPollTimeout: 0,
+                                    },
+                                    {sendPolicy: "immediate"},
+                                );
+                            }
+                        } catch (error) {
+                            logger.error(`Handling of poll check-in from ${this.ieeeAddr} failed (${(error as Error).message})`, NS);
+                        }
+                    }
+                    break;
+                }
             }
         }
 
@@ -523,6 +557,7 @@ export class Device extends Entity<ControllerEventMap> {
             entry.checkinInterval,
             pendingRequestTimeout,
             entry.gpSecurityKey,
+            entry.scheduledOta,
         );
     }
 
@@ -558,6 +593,7 @@ export class Device extends Entity<ControllerEventMap> {
             lastSeen: this.lastSeen,
             checkinInterval: this.checkinInterval,
             gpSecurityKey: this.gpSecurityKey,
+            scheduledOta: this.scheduledOta,
         };
     }
 
@@ -692,6 +728,7 @@ export class Device extends Entity<ControllerEventMap> {
             undefined,
             0,
             gpSecurityKey,
+            undefined,
         );
 
         Entity.database.insert(device.toDatabaseEntry());
@@ -1305,6 +1342,395 @@ export class Device extends Entity<ControllerEventMap> {
             };
         }
         this._customClusters[name] = cluster;
+    }
+
+    #waitForOtaCommand<Co extends string>(
+        endpointId: number,
+        commandId: number,
+        transactionSequenceNumber: number | undefined,
+        timeout: number,
+    ): {promise: Promise<TZclFrame<"genOta", Co>>; cancel: () => void} {
+        const waiter = Entity.adapter.waitFor(
+            this.networkAddress,
+            endpointId,
+            Zcl.FrameType.SPECIFIC,
+            Zcl.Direction.CLIENT_TO_SERVER,
+            transactionSequenceNumber,
+            Zcl.Clusters.genOta.ID,
+            commandId,
+            timeout,
+        );
+        const promise = new Promise<Zcl.Frame & {payload: TClusterPayload<"genOta", Co>}>((resolve, reject) => {
+            waiter.promise.then(
+                (payload) => {
+                    try {
+                        const frame = Zcl.Frame.fromBuffer(payload.clusterID, payload.header, payload.data, this.customClusters);
+
+                        resolve(frame);
+                    } catch (error) {
+                        reject(error);
+                    }
+                },
+                (error) => reject(error),
+            );
+        });
+
+        return {promise, cancel: waiter.cancel};
+    }
+
+    async findMatchingOtaImage(
+        source: OtaSource,
+        current: TClusterCommandPayload<"genOta", "queryNextImageRequest">,
+        extraMetas: OtaExtraMetas,
+    ): Promise<ZigbeeOtaImageMeta | undefined> {
+        logger.debug(() => `Getting image metadata for ${this.ieeeAddr}...`, NS);
+
+        const images = await getOtaIndex(source);
+        // NOTE: Officially an image can be determined with a combination of manufacturerCode and imageType.
+        // However several manufacturers do not follow the spec properly.
+        // The index provides the needed extra metadata to prevent mismatches.
+        // e.g. Tuya must match on manufacturerName, Gledopto on modelId...
+        return images.find(
+            (i) =>
+                i.imageType === current.imageType &&
+                i.manufacturerCode === current.manufacturerCode &&
+                (i.minFileVersion === undefined || current.fileVersion >= i.minFileVersion) &&
+                (i.maxFileVersion === undefined || current.fileVersion <= i.maxFileVersion) &&
+                // let extra metas override the match from this.modelID, same for manufacturerName
+                (!i.modelId || i.modelId === this.modelID || i.modelId === extraMetas.modelId) &&
+                (!i.manufacturerName ||
+                    // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
+                    i.manufacturerName.includes(this.manufacturerName!) ||
+                    // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
+                    i.manufacturerName.includes(extraMetas.manufacturerName!)) &&
+                (!extraMetas.otaHeaderString || i.otaHeaderString === extraMetas.otaHeaderString) &&
+                (i.hardwareVersionMin === undefined ||
+                    (current.hardwareVersion !== undefined && current.hardwareVersion >= i.hardwareVersionMin) ||
+                    (extraMetas.hardwareVersionMin !== undefined && extraMetas.hardwareVersionMin >= i.hardwareVersionMin)) &&
+                (i.hardwareVersionMax === undefined ||
+                    (current.hardwareVersion !== undefined && current.hardwareVersion <= i.hardwareVersionMax) ||
+                    (extraMetas.hardwareVersionMax !== undefined && extraMetas.hardwareVersionMax <= i.hardwareVersionMax)),
+        );
+    }
+
+    async #notifyOta(endpoint: Endpoint): Promise<[payload: TClusterCommandPayload<"genOta", "queryNextImageRequest">, tsn: number]> {
+        // Some devices (e.g. Insta) take a very long trying to discover the correct coordinator EP for OTA
+        const queryNextImageRequest = this.#waitForOtaCommand<"queryNextImageRequest">(
+            endpoint.ID,
+            Zcl.Clusters.genOta.commands.queryNextImageRequest.ID,
+            undefined,
+            60000,
+        );
+
+        try {
+            await endpoint.commandResponse("genOta", "imageNotify", {payloadType: 0, queryJitter: 100}, {sendPolicy: "immediate"});
+
+            const response = await queryNextImageRequest.promise;
+
+            return [response.payload, response.header.transactionSequenceNumber];
+        } catch {
+            queryNextImageRequest.cancel();
+
+            throw new Error(`Device didn't respond to OTA request`);
+        }
+    }
+
+    /**
+     * If `current` is undefined, will automatically notify and reply to query with `NO_IMAGE_AVAILABLE` (stops device from doing further requests).
+     */
+    async checkOta(
+        source: OtaSource,
+        current: TClusterCommandPayload<"genOta", "queryNextImageRequest"> | undefined,
+        extraMetas: OtaExtraMetas,
+        endpoint = this.endpoints.find((e) => e.supportsOutputCluster("genOta")),
+    ): Promise<OtaUpdateAvailableResult> {
+        assert(endpoint !== undefined, `No endpoint found with OTA cluster support for ${this.ieeeAddr}`);
+
+        if (this.modelID === "PP-WHT-US") {
+            // see https://github.com/Koenkk/zigbee-OTA/pull/14
+            const scenesEndpoint = this.endpoints.find((e) => e.supportsOutputCluster("genScenes"));
+
+            if (scenesEndpoint !== undefined) {
+                await scenesEndpoint.write("genScenes", {currentGroup: 49502});
+            }
+        }
+
+        if (current === undefined) {
+            let queryTsn: number;
+            [current, queryTsn] = await this.#notifyOta(endpoint);
+
+            await endpoint.commandResponse("genOta", "queryNextImageResponse", {status: Zcl.Status.NO_IMAGE_AVAILABLE}, undefined, queryTsn);
+        }
+
+        logger.debug(
+            () =>
+                `Checking OTA ${this.ieeeAddr} ${source.downgrade ? "downgrade" : "upgrade"} image availability, current=${JSON.stringify(current)}`,
+            NS,
+        );
+
+        if (
+            this.meta.lumiFileVersion &&
+            (this.modelID === "lumi.airrtc.agl001" || this.modelID === "lumi.curtain.acn003" || this.modelID === "lumi.curtain.agl001")
+        ) {
+            // The current.fileVersion which comes from the device is wrong.
+            // Use the `lumiFileVersion` which comes from the manuSpecificLumi.attributeReport instead.
+            // https://github.com/Koenkk/zigbee2mqtt/issues/16345#issuecomment-1454835056
+            // https://github.com/Koenkk/zigbee2mqtt/issues/16345 doesn't seem to be needed for all
+            // https://github.com/Koenkk/zigbee2mqtt/issues/15745
+            current = {...current, fileVersion: this.meta.lumiFileVersion};
+        }
+
+        const meta = await this.findMatchingOtaImage(source, current, extraMetas);
+
+        if (!meta) {
+            // no image in repo/URL for specified device
+            return {
+                available: 0,
+                current,
+            };
+        }
+
+        logger.debug(
+            () => `OTA ${source.downgrade ? "downgrade" : "upgrade"} image availability for ${this.ieeeAddr}, available=${JSON.stringify(meta)}`,
+            NS,
+        );
+
+        return {
+            available: meta.force ? -1 : Math.sign(current.fileVersion - meta.fileVersion),
+            current,
+            availableMeta: meta,
+        };
+    }
+
+    async updateOta(
+        source: Readonly<OtaSource> | undefined,
+        requestPayload: TClusterCommandPayload<"genOta", "queryNextImageRequest"> | undefined,
+        requestTsn: number | undefined,
+        extraMetas: Readonly<OtaExtraMetas>,
+        onProgress: (progress: number, remaining: number) => void,
+        dataSettings: OtaDataSettings,
+        endpoint = this.endpoints.find((e) => e.supportsOutputCluster("genOta")),
+    ): Promise<[from: OtaUpdateAvailableResult["current"], to: OtaUpdateAvailableResult["current"] | undefined]> {
+        assert(this.#otaInProgress === false, `OTA already in progress for ${this.ieeeAddr}`);
+        assert(endpoint !== undefined, `No endpoint found with OTA cluster support for ${this.ieeeAddr}`);
+
+        if (source === undefined) {
+            assert(this.#scheduledOta !== undefined, `No currently scheduled OTA for ${this.ieeeAddr}`);
+
+            source = this.#scheduledOta;
+        }
+
+        this.#otaInProgress = true;
+
+        // always expected both undefined if one is, but just in case
+        if (requestPayload === undefined || requestTsn === undefined) {
+            try {
+                [requestPayload, requestTsn] = await this.#notifyOta(endpoint);
+            } finally {
+                this.#otaInProgress = false;
+            }
+        }
+
+        let available: OtaUpdateAvailableResult["available"] = 0;
+        let image: OtaImage | undefined;
+
+        if (source.url && !source.url.endsWith(".json")) {
+            // firmware file at `source.url`
+            try {
+                const downloadedFile = await getOtaFirmware(source.url, undefined);
+                image = parseOtaImage(downloadedFile);
+                available = Math.sign(requestPayload.fileVersion - image.header.fileVersion);
+
+                logger.debug(
+                    () =>
+                        // biome-ignore lint/style/noNonNullAssertion: valid from above, won't change after assignment
+                        `Parsed image from '${source.url}' for ${this.ieeeAddr}, header=${JSON.stringify(image!.header)}`,
+                    NS,
+                );
+            } catch (error) {
+                logger.error(`Failed to parse OTA image from '${source.url}' for ${this.ieeeAddr}, aborting (${(error as Error).message})`, NS);
+                // biome-ignore lint/style/noNonNullAssertion: expected valid
+                logger.debug((error as Error).stack!, NS);
+            }
+        } else {
+            let availableMeta: OtaUpdateAvailableResult["availableMeta"];
+
+            try {
+                // index file at `source.url` (or undefined to use defaults)
+                ({available, availableMeta} = await this.checkOta(source, requestPayload, extraMetas, endpoint));
+            } finally {
+                this.#otaInProgress = false;
+            }
+
+            if ((source.downgrade ? available === 1 : available === -1) && availableMeta) {
+                try {
+                    const downloadedFile = await getOtaFirmware(availableMeta.url, availableMeta.sha512);
+                    image = parseOtaImage(downloadedFile);
+
+                    logger.debug(
+                        () =>
+                            // biome-ignore lint/style/noNonNullAssertion: valid from above, won't change after assignment
+                            `Parsed image from '${availableMeta.url}' for ${this.ieeeAddr}, header=${JSON.stringify(image!.header)}`,
+                        NS,
+                    );
+                } catch (error) {
+                    logger.error(`Failed to parse OTA image for ${this.ieeeAddr}, aborting (${(error as Error).message})`, NS);
+                    // biome-ignore lint/style/noNonNullAssertion: expected valid
+                    logger.debug((error as Error).stack!, NS);
+                }
+            } else {
+                logger.info(() => `No OTA ${source.downgrade ? "downgrade" : "upgrade"} image currently available for ${this.ieeeAddr}`, NS);
+            }
+        }
+
+        // reply to `queryNextImageRequest` now that we have the data for it, should trigger image block/page request from device
+        // NOTE: previous code had try/catch wrapping with ignored error, but that doesn't look good (would fail to start OTA from device side)
+        try {
+            await endpoint.commandResponse(
+                "genOta",
+                "queryNextImageResponse",
+                image && available !== 0
+                    ? {
+                          status: Zcl.Status.SUCCESS,
+                          manufacturerCode: image.header.manufacturerCode,
+                          imageType: image.header.imageType,
+                          fileVersion: image.header.fileVersion,
+                          imageSize: image.header.totalImageSize,
+                      }
+                    : {status: Zcl.Status.NO_IMAGE_AVAILABLE},
+                undefined,
+                requestTsn,
+            );
+        } finally {
+            this.#otaInProgress = false;
+        }
+
+        if (!image || available === 0) {
+            this.#otaInProgress = false;
+
+            return [requestPayload, undefined];
+        }
+
+        logger.debug(() => `Starting OTA update for ${this.ieeeAddr}`, NS);
+
+        const session = new OtaSession(this.ieeeAddr, endpoint, image, onProgress, dataSettings, this.#waitForOtaCommand.bind(this));
+
+        let endResult: TZclFrame<"genOta", "upgradeEndRequest">;
+
+        try {
+            endResult = await session.run();
+        } finally {
+            this.#otaInProgress = false;
+        }
+
+        logger.debug(() => `Received upgrade end request for ${this.ieeeAddr}: ${JSON.stringify(endResult.payload)}`, NS);
+
+        if (endResult.payload.status === Zcl.Status.SUCCESS) {
+            try {
+                const currentTime = timeService.timestampToZigbeeUtcTime(Date.now());
+
+                await endpoint.commandResponse(
+                    "genOta",
+                    "upgradeEndResponse",
+                    {
+                        manufacturerCode: image.header.manufacturerCode,
+                        imageType: image.header.imageType,
+                        fileVersion: image.header.fileVersion,
+                        currentTime,
+                        upgradeTime: currentTime + 1, // TODO: could this tiny offset be a problem for some stacks?
+                    },
+                    undefined,
+                    endResult.header.transactionSequenceNumber,
+                );
+
+                onProgress(100, 0);
+                logger.info(
+                    () =>
+                        `Update of ${this.ieeeAddr} successful (${Math.round((performance.now() - session.startTime) / 1000)} seconds). Waiting for device announce...`,
+                    NS,
+                );
+
+                let timer: NodeJS.Timeout;
+
+                await new Promise<void>((resolve) => {
+                    const onDeviceAnnounce = () => {
+                        clearTimeout(timer);
+                        logger.debug(() => `Received device announce for ${this.ieeeAddr}, OTA update finished.`, NS);
+                        resolve();
+                    };
+
+                    // force "finished" after given time
+                    timer = setTimeout(() => {
+                        this.removeListener("deviceAnnounce", onDeviceAnnounce);
+                        logger.debug(() => `Timed out waiting for device announce for ${this.ieeeAddr}, OTA update considered finished.`, NS);
+                        resolve();
+                    }, 120000 /** consider "done" after timeout even if no announce seen */);
+
+                    this.once("deviceAnnounce", onDeviceAnnounce);
+                });
+
+                // only "cancel" possible scheduled OTA when successful
+                this.#scheduledOta = undefined;
+                this.#otaInProgress = false;
+
+                return [
+                    requestPayload,
+                    {
+                        fieldControl: 0,
+                        manufacturerCode: image.header.manufacturerCode,
+                        imageType: image.header.imageType,
+                        fileVersion: image.header.fileVersion,
+                    },
+                ];
+            } catch (error) {
+                this.#otaInProgress = false;
+
+                throw new Error(`OTA upgrade end response failed: ${(error as Error).message}`);
+            }
+        } else {
+            /**
+             * For other status value received such as INVALID_IMAGE, REQUIRE_MORE_IMAGE, or ABORT,
+             * the upgrade server SHALL not send Upgrade End Response command but it SHALL send default
+             * response command with status of success and it SHALL wait for the client to reinitiate the upgrade process.
+             */
+            try {
+                await endpoint.defaultResponse(
+                    Zcl.Clusters.genOta.commands.upgradeEndRequest.ID,
+                    Zcl.Status.SUCCESS,
+                    Zcl.Clusters.genOta.ID,
+                    endResult.header.transactionSequenceNumber,
+                );
+            } catch (error) {
+                logger.debug(() => `OTA upgrade end request default response for ${this.ieeeAddr} failed: ${(error as Error).message}`, NS);
+            }
+
+            this.#otaInProgress = false;
+
+            throw new Error(`OTA update of ${this.ieeeAddr} failed with reason: ${Zcl.Status[endResult.payload.status]}`);
+        }
+    }
+
+    scheduleOta(source: OtaSource): void {
+        assert(
+            this.endpoints.some((e) => e.supportsOutputCluster("genOta")),
+            `No endpoint found with OTA cluster support for ${this.ieeeAddr}`,
+        );
+
+        if (this.#scheduledOta) {
+            logger.info(`Previously scheduled OTA update for '${this.ieeeAddr}' was cancelled in favor of new schedule request`, NS);
+        }
+
+        this.#scheduledOta = source;
+
+        logger.info(`Scheduled OTA update for '${this.ieeeAddr}' on next request from device`, NS);
+    }
+
+    unscheduleOta(): void {
+        if (this.#scheduledOta !== undefined) {
+            this.#scheduledOta = undefined;
+
+            logger.info(`Previously scheduled OTA update for '${this.ieeeAddr}' was cancelled`, NS);
+        }
     }
 }
 
