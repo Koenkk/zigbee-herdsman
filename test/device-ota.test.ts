@@ -27,6 +27,8 @@ type OtaDeviceBehavior = {
     /** Mimick the device sending image page requests instead of image block requests */
     usePageRequests?: boolean;
     pageSize?: number;
+    /** Mimick the device sending non-value (0xff) as `maximumDataSize` */
+    useNonValueDataSize?: boolean;
     /** Mimick the device stopping image block/page requests at specified block (i.e. stalling) */
     stopAfterBlocks?: number;
     /** Mimick the device sending out-of-order offset for block/page request, block 2 swapped with block 3 */
@@ -168,7 +170,7 @@ const createOtaDeviceWaitFor = (
             imageType: image.header.imageType,
             fileVersion: image.header.fileVersion,
             fileOffset,
-            maximumDataSize: settings.baseSize,
+            maximumDataSize: settings.useNonValueDataSize ? Number.NaN : settings.baseSize,
         };
 
         blocksServed += 1;
@@ -536,7 +538,7 @@ const createDevice = ({
         imageType: image.header.imageType,
         fileVersion: image.header.fileVersion + (source?.downgrade ? 1 : -1),
     };
-    const waitFor = createOtaDeviceWaitFor(endpoint, image, currentPayload, {baseSize: dataSettings.baseSize ?? 64, ...behavior});
+    const waitFor = createOtaDeviceWaitFor(endpoint, image, currentPayload, {baseSize: dataSettings.baseSize, ...behavior});
     const adapter = {waitFor, hasZdoMessageOverhead: false} as unknown as Adapter;
     Entity.injectAdapter(adapter);
 
@@ -1135,6 +1137,36 @@ describe("Device OTA", () => {
             } finally {
                 vi.useRealTimers();
             }
+        });
+
+        it("handles receiving non-value for data size", async () => {
+            const fileName = OTA_FILES[0];
+            const [image] = loadImage(fileName);
+            firmwareBuffer = image.raw;
+            const requestPayload: TClusterCommandPayload<"genOta", "queryNextImageRequest"> = {
+                fieldControl: 0,
+                manufacturerCode: image.header.manufacturerCode,
+                imageType: image.header.imageType,
+                fileVersion: image.header.fileVersion - 1,
+            };
+            const baseSize = 55;
+            const expectedBlocks = Math.ceil(image.header.totalImageSize / baseSize);
+
+            const {device, endpoint, run} = createDevice({
+                image,
+                source: {},
+                requestPayload,
+                dataSettings: {requestTimeout: 1000, responseDelay: 0, baseSize},
+                behavior: {baseSize, sendUpgradeEnd: true, useNonValueDataSize: true},
+            });
+
+            const [from, to] = await run();
+
+            expect(from.fileVersion).toStrictEqual(requestPayload.fileVersion);
+            expect(to?.fileVersion).toStrictEqual(image.header.fileVersion);
+            expect(getResponses(endpoint, "imageBlockResponse").length).toStrictEqual(expectedBlocks);
+            expect(getResponses(endpoint, "upgradeEndResponse").length).toStrictEqual(1);
+            expect(device.otaInProgress).toStrictEqual(false);
         });
 
         it("handles out-of-order block offsets", async () => {

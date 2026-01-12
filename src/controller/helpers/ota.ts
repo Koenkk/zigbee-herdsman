@@ -300,7 +300,10 @@ function buildImageBlockPayload(
         dataSize = requestPayload.maximumDataSize;
     }
 
-    dataSize = Math.min(dataSize, requestPayload.maximumDataSize);
+    if (Number.isFinite(requestPayload.maximumDataSize)) {
+        dataSize = Math.min(dataSize, requestPayload.maximumDataSize);
+    }
+
     let start = requestPayload.fileOffset + pageOffset;
 
     /* v8 ignore start */
