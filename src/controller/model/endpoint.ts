@@ -736,25 +736,26 @@ export class Endpoint extends ZigbeeEntity {
         this.getDevice().save();
     }
 
-    public async unbind(clusterKey: number | string, target: Endpoint | Group | number): Promise<void> {
+    public async unbind(clusterKey: number | string, target: Endpoint | Group | number, force = false): Promise<void> {
+        // When force is true the unbind is done even when the bind is not in the bind list, additionally when the target is a number
+        // it will not check if the group exists.
         const cluster = this.getCluster(clusterKey);
         const action = `Unbind ${this.deviceIeeeAddress}/${this.ID} ${cluster.name}`;
 
         if (typeof target === "number") {
             const groupTarget = Group.byGroupID(target);
-
-            if (!groupTarget) {
+            if (groupTarget) {
+                target = groupTarget;
+            } else if (!force) {
                 throw new Error(`${action} invalid target '${target}' (no group with this ID exists).`);
             }
-
-            target = groupTarget;
         }
 
-        const destinationAddress = target instanceof Endpoint ? target.deviceIeeeAddress : target.groupID;
+        const destinationAddress = target instanceof Endpoint ? target.deviceIeeeAddress : target instanceof Group ? target.groupID : target;
         const log = `${action} from '${target instanceof Endpoint ? `${destinationAddress}/${target.ID}` : destinationAddress}'`;
-        const index = this.getBindIndex(cluster.ID, target);
+        const index = target instanceof Endpoint || target instanceof Group ? this.getBindIndex(cluster.ID, target) : -1;
 
-        if (index === -1) {
+        if (index === -1 && !force) {
             logger.debug(`${log} no bind present, skipping.`, NS);
             return;
         }
@@ -771,7 +772,7 @@ export class Endpoint extends ZigbeeEntity {
                 cluster.ID,
                 target instanceof Endpoint ? Zdo.UNICAST_BINDING : Zdo.MULTICAST_BINDING,
                 target instanceof Endpoint ? (target.deviceIeeeAddress as Eui64) : ZSpec.BLANK_EUI64,
-                target instanceof Group ? target.groupID : 0,
+                target instanceof Group ? target.groupID : typeof target === "number" ? target : 0,
                 target instanceof Endpoint ? target.ID : 0xff,
             );
 
@@ -785,8 +786,10 @@ export class Endpoint extends ZigbeeEntity {
                 }
             }
 
-            this._binds.splice(index, 1);
-            this.save();
+            if (index !== -1) {
+                this._binds.splice(index, 1);
+                this.save();
+            }
         } catch (error) {
             const err = error as Error;
             err.message = `${log} failed (${err.message})`;
