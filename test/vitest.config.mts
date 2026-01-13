@@ -1,8 +1,11 @@
+import path from "node:path";
 import {defineConfig} from "vitest/config";
 
 export default defineConfig({
     plugins: [],
     test: {
+        root: path.join(import.meta.dirname, ".."),
+        setupFiles: ["test/vitest.ts"],
         onConsoleLog(_log: string, _type: "stdout" | "stderr"): boolean | undefined {
             return false;
         },
