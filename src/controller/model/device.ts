@@ -14,7 +14,7 @@ import type {BindingTableEntry, LQITableEntry, RoutingTableEntry} from "../../zs
 import type {ControllerEventMap} from "../controller";
 import zclTransactionSequenceNumber from "../helpers/zclTransactionSequenceNumber";
 import type {DatabaseEntry, DeviceType, KeyValue} from "../tstype";
-import Endpoint, {type BindInternal} from "./endpoint";
+import Endpoint, {type BindInternal, type Clusters} from "./endpoint";
 import Entity from "./entity";
 
 const NS = "zh:controller:device";
@@ -337,25 +337,21 @@ export class Device extends Entity<ControllerEventMap> {
 
         // Response to read requests
         if (frame.header.isGlobal && frame.isCommand("read") && !this._customReadResponse?.(frame, endpoint)) {
-            const attributes: {[s: string]: KeyValue} = {
-                ...endpoint.clusters,
-            };
+            const cluster: Clusters[string] =
+                dataPayload.clusterID === Zcl.Clusters.genTime.ID
+                    ? {
+                          attributes: timeService.getTimeClusterAttributes(),
+                      }
+                    : endpoint.clusters[frame.cluster.name];
 
-            const isTimeReadRequest = dataPayload.clusterID === Zcl.Clusters.genTime.ID;
-            if (isTimeReadRequest) {
-                attributes.genTime = {
-                    attributes: timeService.getTimeClusterAttributes(),
-                };
-            }
-
-            if (frame.cluster.name in attributes) {
+            if (cluster) {
                 const response: KeyValue = {};
 
                 for (const entry of frame.payload) {
                     const name = frame.cluster.getAttribute(entry.attrId)?.name;
 
-                    if (name && name in attributes[frame.cluster.name].attributes) {
-                        response[name] = attributes[frame.cluster.name].attributes[name];
+                    if (name && name in cluster.attributes) {
+                        response[name] = cluster.attributes[name];
                     }
                 }
 
