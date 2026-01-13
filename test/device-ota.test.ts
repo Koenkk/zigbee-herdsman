@@ -1821,7 +1821,7 @@ describe("Device OTA", () => {
             expect(to?.fileVersion).toStrictEqual(image.header.fileVersion);
 
             // With 320 bytes and 40-byte chunks, we have 8 blocks
-            expect(onProgress).toHaveBeenNthCalledWith(1, 0, 32); // Initial call with estimate (non-mocked time, so tiny due to tiny # of blocks)
+            expect(onProgress).toHaveBeenNthCalledWith(1, 0, 2); // Initial call with estimate (non-mocked time, so tiny due to tiny # of blocks)
             expect(onProgress).toHaveBeenNthCalledWith(2, 12.5, 213); // After 1st block sent (40/320)
             expect(onProgress).toHaveBeenNthCalledWith(3, 25, 182); // After 2nd block sent (80/320)
             expect(onProgress).toHaveBeenNthCalledWith(4, 37.5, 151); // After 3rd block sent (120/320)

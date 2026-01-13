@@ -414,7 +414,7 @@ export class OtaSession {
 
         // report initial progress with estimated time
         const expectedBlocks = Math.ceil(image.header.totalImageSize / dataSettings.baseSize);
-        const blocksPerSec = dataSettings.responseDelay > 0 ? Math.round((dataSettings.responseDelay / 1000) * 100) / 100 : 20; // (1000 / 50)
+        const blocksPerSec = dataSettings.responseDelay > 0 ? Math.round((1000 / dataSettings.responseDelay) * 100) / 100 : 20; // (1000 / 50)
         const estimatedRemainingSeconds = expectedBlocks / blocksPerSec;
 
         onProgress(0, estimatedRemainingSeconds);
