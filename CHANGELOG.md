@@ -1,5 +1,14 @@
 # Changelog
 
+## [8.0.3](https://github.com/Koenkk/zigbee-herdsman/compare/v8.0.2...v8.0.3) (2026-01-13)
+
+
+### Bug Fixes
+
+* Allow unbinding from non-existing group and bind ([#1613](https://github.com/Koenkk/zigbee-herdsman/issues/1613)) ([5c8f27b](https://github.com/Koenkk/zigbee-herdsman/commit/5c8f27b197df11bb922dc2c69a09604c02ad025e))
+* **ignore:** bump @biomejs/biome from 2.3.10 to 2.3.11 in the minor-patch group ([#1610](https://github.com/Koenkk/zigbee-herdsman/issues/1610)) ([ef9438b](https://github.com/Koenkk/zigbee-herdsman/commit/ef9438b8d35407c0002e7eb335971fc3795dd4a5))
+* **ignore:** bump @types/node from 24.10.4 to 24.10.7 in the minor-patch group ([#1616](https://github.com/Koenkk/zigbee-herdsman/issues/1616)) ([cf82101](https://github.com/Koenkk/zigbee-herdsman/commit/cf82101eeefe5416bab65f54c102b289c5711a3a))
+
 ## [8.0.2](https://github.com/Koenkk/zigbee-herdsman/compare/v8.0.1...v8.0.2) (2026-01-03)
 
 
