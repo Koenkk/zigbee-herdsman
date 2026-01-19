@@ -126,13 +126,34 @@ export class ZclFrame {
 
     private writePayloadCluster(buffalo: BuffaloZcl): void {
         for (const parameter of this.command.parameters) {
-            if (!ZclFrame.conditionsValid(parameter, this.payload, undefined)) {
+            // V4: Allow parameters with conditions to be omitted when conditions are false
+            // Cast needed because Command.parameters is typed as Parameter[] but runtime provides ParameterDefinition[]
+            const paramDef = parameter as ParameterDefinition;
+
+            // Evaluate conditions first to determine if parameter is expected
+            const conditionsValid = paramDef.conditions ? ZclFrame.conditionsValid(paramDef, this.payload, undefined) : true;
+
+            // If conditions are false (parameter not expected), allow omission
+            if (paramDef.conditions && !conditionsValid && this.payload[parameter.name] === undefined) {
                 continue;
             }
 
-            // TODO: biome migration - safer
+            // If conditions are true OR parameter has no conditions, enforce presence
+            // BUT: allow MINIMUM_REMAINING_BUFFER_BYTES parameters to be omitted even when conditions are true
+            const hasBufferSizeCondition = paramDef.conditions?.some((c) => c.type === ParameterCondition.MINIMUM_REMAINING_BUFFER_BYTES);
+
+            if (hasBufferSizeCondition && this.payload[parameter.name] === undefined) {
+                continue; // Allow omitting buffer-size-conditional parameters
+            }
+
+            // Enforce presence for all other scenarios
             if (this.payload[parameter.name] == null) {
                 throw new Error(`Parameter '${parameter.name}' is missing`);
+            }
+
+            // Write to buffer only if conditions are valid
+            if (!conditionsValid) {
+                continue;
             }
 
             const valueToWrite = Utils.processParameterWrite(parameter, this.payload[parameter.name]);
