@@ -958,8 +958,27 @@ describe("ZCL Frame", () => {
         });
     });
 
+    it("Keeps MINIMUM_REMAINING_BUFFER_BYTES parameters when present", () => {
+        // moveToLevelWithOnOff with optionsMask/optionsOverride
+        const payload = {level: 150, transtime: 0, optionsMask: 0, optionsOverride: 1};
+        const frame = Zcl.Frame.create(
+            Zcl.FrameType.SPECIFIC,
+            Zcl.Direction.CLIENT_TO_SERVER,
+            false,
+            undefined,
+            1,
+            "moveToLevelWithOnOff",
+            Zcl.Clusters.genLevelCtrl.ID,
+            payload,
+            {},
+        );
+
+        const buffer = frame.toBuffer();
+        expect(buffer).toStrictEqual(Buffer.from([0x01, 0x01, 0x04, 0x96, 0x00, 0x00, 0x00, 0x01]));
+    });
+
     it("Allows omitting MINIMUM_REMAINING_BUFFER_BYTES parameters", () => {
-        // moveToLevelWithOnOff without optionsMask/optionsOverride (strict ZCL v1 compatibility)
+        // moveToLevelWithOnOff without optionsMask/optionsOverride
         const payload = {level: 150, transtime: 0};
         const frame = Zcl.Frame.create(
             Zcl.FrameType.SPECIFIC,
@@ -974,9 +993,7 @@ describe("ZCL Frame", () => {
         );
 
         const buffer = frame.toBuffer();
-        expect(buffer).toBeDefined();
-        // Header (3) + level (1) + transtime (2) = 6 bytes (short form without optional params)
-        expect(buffer.length).toBe(6);
+        expect(buffer).toStrictEqual(Buffer.from([0x01, 0x01, 0x04, 0x96, 0x00, 0x00]));
     });
 
     it("Allows omitting parameters with false conditions", () => {
@@ -1010,7 +1027,12 @@ describe("ZCL Frame", () => {
         );
 
         const buffer = frame.toBuffer();
-        expect(buffer).toBeDefined();
+        expect(buffer).toStrictEqual(
+            Buffer.from([
+                0x09, 0x02, 0x01, 0x01, 0x00, 0x00, 0x00, 0x0a, 0x05, 0x03, 0x0f, 0x00, 0x64, 0x00, 0x00, 0x00, 0x77, 0x66, 0x55, 0x44, 0x33, 0x22,
+                0x11, 0x00, 0x01, 0x0b, 0x34, 0x12, 0x78, 0x56, 0x00, 0x00,
+            ]),
+        );
     });
 
     it("Requires parameters when conditions are true", () => {

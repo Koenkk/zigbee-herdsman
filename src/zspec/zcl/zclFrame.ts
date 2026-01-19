@@ -3,7 +3,7 @@ import "../../utils/patchBigIntSerialization";
 import {BuffaloZcl} from "./buffaloZcl";
 import {BuffaloZclDataType, DataType, Direction, FrameType, ParameterCondition} from "./definition/enums";
 import type {FoundationCommandName} from "./definition/foundation";
-import type {BuffaloZclOptions, Cluster, ClusterName, Command, CustomClusters, ParameterDefinition} from "./definition/tstype";
+import type {BuffaloZclOptions, Cluster, ClusterName, Command, CustomClusters, Parameter} from "./definition/tstype";
 import * as Utils from "./utils";
 import {ZclHeader} from "./zclHeader";
 
@@ -126,37 +126,23 @@ export class ZclFrame {
 
     private writePayloadCluster(buffalo: BuffaloZcl): void {
         for (const parameter of this.command.parameters) {
-            // V4: Allow parameters with conditions to be omitted when conditions are false
-            // Cast needed because Command.parameters is typed as Parameter[] but runtime provides ParameterDefinition[]
-            const paramDef = parameter as ParameterDefinition;
-
-            // Evaluate conditions first to determine if parameter is expected
-            const conditionsValid = paramDef.conditions ? ZclFrame.conditionsValid(paramDef, this.payload, undefined) : true;
-
-            // If conditions are false (parameter not expected), allow omission
-            if (paramDef.conditions && !conditionsValid && this.payload[parameter.name] === undefined) {
+            if (!ZclFrame.conditionsValid(parameter, this.payload, undefined)) {
                 continue;
             }
 
-            // If conditions are true OR parameter has no conditions, enforce presence
-            // BUT: allow MINIMUM_REMAINING_BUFFER_BYTES parameters to be omitted even when conditions are true
-            const hasBufferSizeCondition = paramDef.conditions?.some((c) => c.type === ParameterCondition.MINIMUM_REMAINING_BUFFER_BYTES);
+            const paramPayload = this.payload[parameter.name];
 
-            if (hasBufferSizeCondition && this.payload[parameter.name] === undefined) {
-                continue; // Allow omitting buffer-size-conditional parameters
-            }
+            if (paramPayload == null) {
+                // allow parameters with MINIMUM_REMAINING_BUFFER_BYTES conditions to be omitted similar to reception logic (without the value check)
+                // should be needed only for off-spec handling (usually around backwards-compat issues)
+                if (parameter.conditions?.some((c) => c.type === ParameterCondition.MINIMUM_REMAINING_BUFFER_BYTES)) {
+                    continue;
+                }
 
-            // Enforce presence for all other scenarios
-            if (this.payload[parameter.name] == null) {
                 throw new Error(`Parameter '${parameter.name}' is missing`);
             }
 
-            // Write to buffer only if conditions are valid
-            if (!conditionsValid) {
-                continue;
-            }
-
-            const valueToWrite = Utils.processParameterWrite(parameter, this.payload[parameter.name]);
+            const valueToWrite = Utils.processParameterWrite(parameter, paramPayload);
 
             buffalo.write(parameter.type, valueToWrite, {});
         }
@@ -309,7 +295,7 @@ export class ZclFrame {
      * Utils
      */
 
-    public static conditionsValid(parameter: ParameterDefinition, entry: ZclPayload, remainingBufferBytes: number | undefined): boolean {
+    public static conditionsValid(parameter: Parameter, entry: ZclPayload, remainingBufferBytes: number | undefined): boolean {
         if (parameter.conditions) {
             for (const condition of parameter.conditions) {
                 switch (condition.type) {
