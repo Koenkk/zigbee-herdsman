@@ -1,5 +1,17 @@
 # Changelog
 
+## [8.1.0](https://github.com/Koenkk/zigbee-herdsman/compare/v8.0.3...v8.1.0) (2026-01-20)
+
+
+### Features
+
+* Allow omitting parameters with MINIMUM_REMAINING_BUFFER_BYTES ([#1619](https://github.com/Koenkk/zigbee-herdsman/issues/1619)) ([2670e25](https://github.com/Koenkk/zigbee-herdsman/commit/2670e25c1badad038371dc42e1287938c49dcd46))
+
+
+### Bug Fixes
+
+* **ignore:** bump @types/node from 24.10.7 to 24.10.9 in the minor-patch group ([#1618](https://github.com/Koenkk/zigbee-herdsman/issues/1618)) ([bb50af7](https://github.com/Koenkk/zigbee-herdsman/commit/bb50af7918d3309deab0eb03350b4546e72fbac9))
+
 ## [8.0.3](https://github.com/Koenkk/zigbee-herdsman/compare/v8.0.2...v8.0.3) (2026-01-13)
 
 
