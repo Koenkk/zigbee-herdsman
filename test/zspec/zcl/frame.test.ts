@@ -957,4 +957,100 @@ describe("ZCL Frame", () => {
             maximumDataSize: 8,
         });
     });
+
+    it("Keeps MINIMUM_REMAINING_BUFFER_BYTES parameters when present", () => {
+        // moveToLevelWithOnOff with optionsMask/optionsOverride
+        const payload = {level: 150, transtime: 0, optionsMask: 0, optionsOverride: 1};
+        const frame = Zcl.Frame.create(
+            Zcl.FrameType.SPECIFIC,
+            Zcl.Direction.CLIENT_TO_SERVER,
+            false,
+            undefined,
+            1,
+            "moveToLevelWithOnOff",
+            Zcl.Clusters.genLevelCtrl.ID,
+            payload,
+            {},
+        );
+
+        const buffer = frame.toBuffer();
+        expect(buffer).toStrictEqual(Buffer.from([0x01, 0x01, 0x04, 0x96, 0x00, 0x00, 0x00, 0x01]));
+    });
+
+    it("Allows omitting MINIMUM_REMAINING_BUFFER_BYTES parameters", () => {
+        // moveToLevelWithOnOff without optionsMask/optionsOverride
+        const payload = {level: 150, transtime: 0};
+        const frame = Zcl.Frame.create(
+            Zcl.FrameType.SPECIFIC,
+            Zcl.Direction.CLIENT_TO_SERVER,
+            false,
+            undefined,
+            1,
+            "moveToLevelWithOnOff",
+            Zcl.Clusters.genLevelCtrl.ID,
+            payload,
+            {},
+        );
+
+        const buffer = frame.toBuffer();
+        expect(buffer).toStrictEqual(Buffer.from([0x01, 0x01, 0x04, 0x96, 0x00, 0x00]));
+    });
+
+    it("Allows omitting parameters with false conditions", () => {
+        // Touchlink scanResponse without sub-device fields when numberOfSubDevices != 1
+        const payload = {
+            transactionID: 1,
+            rssiCorrection: 10,
+            zigbeeInformation: 5,
+            touchlinkInformation: 3,
+            keyBitmask: 15,
+            responseID: 100,
+            extendedPanID: "0x0011223344556677",
+            networkUpdateID: 1,
+            logicalChannel: 11,
+            panID: 0x1234,
+            networkAddress: 0x5678,
+            numberOfSubDevices: 0,
+            totalGroupIdentifiers: 0,
+        };
+
+        const frame = Zcl.Frame.create(
+            Zcl.FrameType.SPECIFIC,
+            Zcl.Direction.SERVER_TO_CLIENT,
+            false,
+            undefined,
+            2,
+            "scanResponse",
+            Zcl.Clusters.touchlink.ID,
+            payload,
+            {},
+        );
+
+        const buffer = frame.toBuffer();
+        expect(buffer).toStrictEqual(
+            Buffer.from([
+                0x09, 0x02, 0x01, 0x01, 0x00, 0x00, 0x00, 0x0a, 0x05, 0x03, 0x0f, 0x00, 0x64, 0x00, 0x00, 0x00, 0x77, 0x66, 0x55, 0x44, 0x33, 0x22,
+                0x11, 0x00, 0x01, 0x0b, 0x34, 0x12, 0x78, 0x56, 0x00, 0x00,
+            ]),
+        );
+    });
+
+    it("Requires parameters when conditions are true", () => {
+        // queryNextImageResponse with status=SUCCESS requires manufacturerCode
+        const payload = {status: 0}; // SUCCESS but missing required fields
+
+        expect(() => {
+            Zcl.Frame.create(
+                Zcl.FrameType.SPECIFIC,
+                Zcl.Direction.SERVER_TO_CLIENT,
+                false,
+                undefined,
+                3,
+                "queryNextImageResponse",
+                Zcl.Clusters.genOta.ID,
+                payload,
+                {},
+            ).toBuffer();
+        }).toThrow("Parameter 'manufacturerCode' is missing");
+    });
 });

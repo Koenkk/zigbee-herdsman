@@ -3,7 +3,7 @@ import "../../utils/patchBigIntSerialization";
 import {BuffaloZcl} from "./buffaloZcl";
 import {BuffaloZclDataType, DataType, Direction, FrameType, ParameterCondition} from "./definition/enums";
 import type {FoundationCommandName} from "./definition/foundation";
-import type {BuffaloZclOptions, Cluster, ClusterName, Command, CustomClusters, ParameterDefinition} from "./definition/tstype";
+import type {BuffaloZclOptions, Cluster, ClusterName, Command, CustomClusters, Parameter} from "./definition/tstype";
 import * as Utils from "./utils";
 import {ZclHeader} from "./zclHeader";
 
@@ -130,12 +130,19 @@ export class ZclFrame {
                 continue;
             }
 
-            // TODO: biome migration - safer
-            if (this.payload[parameter.name] == null) {
+            const paramPayload = this.payload[parameter.name];
+
+            if (paramPayload == null) {
+                // allow parameters with MINIMUM_REMAINING_BUFFER_BYTES conditions to be omitted similar to reception logic (without the value check)
+                // should be needed only for off-spec handling (usually around backwards-compat issues)
+                if (parameter.conditions?.some((c) => c.type === ParameterCondition.MINIMUM_REMAINING_BUFFER_BYTES)) {
+                    continue;
+                }
+
                 throw new Error(`Parameter '${parameter.name}' is missing`);
             }
 
-            const valueToWrite = Utils.processParameterWrite(parameter, this.payload[parameter.name]);
+            const valueToWrite = Utils.processParameterWrite(parameter, paramPayload);
 
             buffalo.write(parameter.type, valueToWrite, {});
         }
@@ -288,7 +295,7 @@ export class ZclFrame {
      * Utils
      */
 
-    public static conditionsValid(parameter: ParameterDefinition, entry: ZclPayload, remainingBufferBytes: number | undefined): boolean {
+    public static conditionsValid(parameter: Parameter, entry: ZclPayload, remainingBufferBytes: number | undefined): boolean {
         if (parameter.conditions) {
             for (const condition of parameter.conditions) {
                 switch (condition.type) {
