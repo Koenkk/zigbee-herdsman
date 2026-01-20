@@ -91,6 +91,7 @@ export class ZoHAdapter extends Adapter {
         super(networkOptions, serialPortOptions, backupPath, adapterOptions);
 
         this.hasZdoMessageOverhead = true;
+        this.supportsBackup = false; // handled internally by zoh.save, no need for extra layer
         this.manufacturerID = Zcl.ManufacturerCode.CONNECTIVITY_STANDARDS_ALLIANCE;
         this.closing = false;
         this.stackConfig = this.loadStackConfig();
@@ -424,12 +425,6 @@ export class ZoHAdapter extends Adapter {
     /* v8 ignore start */
     public async reset(type: "soft" | "hard"): Promise<void> {
         await Promise.reject(new Error(`Reset ${type} not support`));
-    }
-    /* v8 ignore stop */
-
-    /* v8 ignore start */
-    public async supportsBackup(): Promise<boolean> {
-        return await Promise.resolve(false);
     }
     /* v8 ignore stop */
 
