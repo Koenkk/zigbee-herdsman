@@ -1,5 +1,16 @@
 # Changelog
 
+## [9.0.0](https://github.com/Koenkk/zigbee-herdsman/compare/v8.1.0...v9.0.0) (2026-01-23)
+
+
+### ⚠ BREAKING CHANGES
+
+* OTA refactor ([#1612](https://github.com/Koenkk/zigbee-herdsman/issues/1612))
+
+### Features
+
+* OTA refactor ([#1612](https://github.com/Koenkk/zigbee-herdsman/issues/1612)) ([1ec439c](https://github.com/Koenkk/zigbee-herdsman/commit/1ec439c5301e90d5f8b25a2e465ec79397101099))
+
 ## [8.1.0](https://github.com/Koenkk/zigbee-herdsman/compare/v8.0.3...v8.1.0) (2026-01-20)
 
 
