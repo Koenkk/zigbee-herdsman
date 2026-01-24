@@ -88,17 +88,11 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
             network: {
                 networkKeyDistribute: false,
                 networkKey: [0x01, 0x03, 0x05, 0x07, 0x09, 0x0b, 0x0d, 0x0f, 0x00, 0x02, 0x04, 0x06, 0x08, 0x0a, 0x0c, 0x0d],
-                // @ts-expect-error typing detecting not needed, kept for safety
-                panID: 0x1a62,
                 extendedPanID: [0xdd, 0xdd, 0xdd, 0xdd, 0xdd, 0xdd, 0xdd, 0xdd],
-                // @ts-expect-error typing detecting not needed, kept for safety
-                channelList: [11],
                 ...networkOpts,
             },
             serialPort: {...serialPortOpts},
             adapter: {
-                // @ts-expect-error typing detecting not needed, kept for safety
-                disableLED: false,
                 ...adapterOpts,
             },
             ...restOpts,
