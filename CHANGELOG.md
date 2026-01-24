@@ -1,5 +1,12 @@
 # Changelog
 
+## [9.0.1](https://github.com/Koenkk/zigbee-herdsman/compare/v9.0.0...v9.0.1) (2026-01-24)
+
+
+### Bug Fixes
+
+* Performance nitpicks ([#1624](https://github.com/Koenkk/zigbee-herdsman/issues/1624)) ([48f9084](https://github.com/Koenkk/zigbee-herdsman/commit/48f9084567d1c12bbc25026653e5ecf5052b3938))
+
 ## [9.0.0](https://github.com/Koenkk/zigbee-herdsman/compare/v8.1.0...v9.0.0) (2026-01-23)
 
 
