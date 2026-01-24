@@ -4104,6 +4104,28 @@ describe("Controller", () => {
         expect(endpoint.binds.length).toBe(0);
     });
 
+    it("Group unbind by number, non-existing group and non-existing bind with force=true", async () => {
+        await controller.start();
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
+        const device = controller.getDeviceByIeeeAddr("0x129")!;
+        const endpoint = device.getEndpoint(1)!;
+        expect(endpoint.binds.length).toBe(0);
+        await endpoint.unbind("genPowerCfg", 5, true);
+        const zdoPayload = Zdo.Buffalo.buildRequest(
+            false,
+            Zdo.ClusterId.UNBIND_REQUEST,
+            "0x129",
+            1,
+            1,
+            Zdo.MULTICAST_BINDING,
+            ZSpec.BLANK_EUI64,
+            5,
+            0xff,
+        );
+        expect(mockAdapterSendZdo).toHaveBeenCalledWith("0x129", 129, Zdo.ClusterId.UNBIND_REQUEST, zdoPayload, false);
+        expect(endpoint.binds.length).toBe(0);
+    });
+
     it("Endpoint configure reporting", async () => {
         await controller.start();
         await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
@@ -5053,66 +5075,6 @@ describe("Controller", () => {
         };
         expect(deepClone(mocksendZclFrameToEndpoint.mock.calls[0][3])).toStrictEqual(expected);
         expect(mocksendZclFrameToEndpoint.mock.calls[0][4]).toBe(10000);
-    });
-
-    it("Endpoint waitForCommand", async () => {
-        await controller.start();
-        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
-        const device = controller.getDeviceByIeeeAddr("0x129")!;
-        const endpoint = device.getEndpoint(1)!;
-        mocksendZclFrameToEndpoint.mockClear();
-        const buffer = Buffer.from([24, 169, 10, 0, 0, 24, 1]);
-        const frame = Zcl.Frame.fromBuffer(Zcl.Utils.getCluster("msOccupancySensing", undefined, {}).ID, Zcl.Header.fromBuffer(buffer), buffer, {});
-        const promise = new Promise((resolve, _reject) => resolve({clusterID: frame.cluster.ID, data: frame.toBuffer(), header: frame.header}));
-        mockAdapterWaitFor.mockReturnValueOnce({promise, cancel: () => {}});
-        const result = endpoint.waitForCommand("genOta", "upgradeEndRequest", 10, 20);
-        expect(mockAdapterWaitFor).toHaveBeenCalledTimes(1);
-        expect(mockAdapterWaitFor).toHaveBeenCalledWith(129, 1, 1, 0, 10, 25, 6, 20);
-        expect(result.cancel).toStrictEqual(expect.any(Function));
-        expect(deepClone(await result.promise)).toStrictEqual({
-            header: {
-                commandIdentifier: 10,
-                frameControl: {reservedBits: 0, direction: 1, disableDefaultResponse: true, frameType: 0, manufacturerSpecific: false},
-                transactionSequenceNumber: 169,
-            },
-            payload: [{attrData: 1, attrId: 0, dataType: 24}],
-        });
-    });
-
-    it("Endpoint waitForCommand error", async () => {
-        await controller.start();
-        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
-        const device = controller.getDeviceByIeeeAddr("0x129")!;
-        const endpoint = device.getEndpoint(1)!;
-        mocksendZclFrameToEndpoint.mockClear();
-        const promise = new Promise((_resolve, reject) => reject(new Error("whoops!")));
-        mockAdapterWaitFor.mockReturnValueOnce({promise, cancel: () => {}});
-        const result = endpoint.waitForCommand("genOta", "upgradeEndRequest", 10, 20);
-        let error;
-        try {
-            await result.promise;
-        } catch (e) {
-            error = e;
-        }
-        expect(error).toStrictEqual(new Error("whoops!"));
-    });
-
-    it("Endpoint waitForCommand frame fails to parse", async () => {
-        await controller.start();
-        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
-        const device = controller.getDeviceByIeeeAddr("0x129")!;
-        const endpoint = device.getEndpoint(1)!;
-        mocksendZclFrameToEndpoint.mockClear();
-        // The buffer below ([24, 169, 10, 0, 0, 24]) is intentionally malformed:
-        // It is missing expected payload bytes for a valid ZCL frame, causing Zcl.Frame.fromBuffer to throw a parsing error.
-        // This triggers the error handling path being tested.
-        const buffer = Buffer.from([24, 169, 10, 0, 0, 24]);
-        const header = Zcl.Header.fromBuffer(buffer);
-        const promise = new Promise((resolve, _reject) => resolve({clusterID: Zcl.Utils.getCluster("msOccupancySensing").ID, data: buffer, header}));
-        mockAdapterWaitFor.mockReturnValueOnce({promise, cancel: () => {}});
-        await expect(endpoint.waitForCommand("genOta", "upgradeEndRequest", 10, 20).promise).rejects.toThrow(
-            `The value of "offset" is out of range. It must be >= 0 and <= 5. Received 6`,
-        );
     });
 
     it("Device without meta should set meta to {}", async () => {

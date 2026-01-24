@@ -1,6 +1,6 @@
 import {BuffaloZclDataType, DataType, DataTypeClass, Direction, ParameterCondition} from "./enums";
 import {Status} from "./status";
-import type {ParameterDefinition} from "./tstype";
+import type {Parameter} from "./tstype";
 
 export type FoundationCommandName =
     | "read"
@@ -30,7 +30,7 @@ export type FoundationCommandName =
 export interface FoundationDefinition {
     ID: number;
     parseStrategy: "repetitive" | "flat" | "oneof";
-    parameters: readonly ParameterDefinition[];
+    parameters: readonly Parameter[];
     response?: number;
 }
 

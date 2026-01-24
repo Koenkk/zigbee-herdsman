@@ -1011,7 +1011,7 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
         device.updateLastSeen();
 
         //no implicit checkin for genPollCtrl data because it might interfere with the explicit checkin
-        if (!frame?.isCluster("genPollCtrl")) {
+        if (frame?.cluster.name !== "genPollCtrl") {
             device.implicitCheckin();
         }
 
@@ -1085,7 +1085,7 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
 
                 if (type === "readResponse" || type === "attributeReport") {
                     // devices report attributes through readRsp or attributeReport
-                    if (frame.isCluster("genBasic")) {
+                    if (frame.cluster.name === "genBasic") {
                         device.updateGenBasic(data as TPartialClusterAttributes<"genBasic">);
                     }
 

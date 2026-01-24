@@ -1,9 +1,10 @@
 import "../../utils/patchBigIntSerialization";
 
 import {BuffaloZcl} from "./buffaloZcl";
+import type {TClusterPayload, TFoundationPayload} from "./definition/clusters-types";
 import {BuffaloZclDataType, DataType, Direction, FrameType, ParameterCondition} from "./definition/enums";
 import type {FoundationCommandName} from "./definition/foundation";
-import type {BuffaloZclOptions, Cluster, ClusterName, Command, CustomClusters, ParameterDefinition} from "./definition/tstype";
+import type {BuffaloZclOptions, Cluster, ClusterName, Command, CustomClusters, Parameter} from "./definition/tstype";
 import * as Utils from "./utils";
 import {ZclHeader} from "./zclHeader";
 
@@ -130,12 +131,19 @@ export class ZclFrame {
                 continue;
             }
 
-            // TODO: biome migration - safer
-            if (this.payload[parameter.name] == null) {
+            const paramPayload = this.payload[parameter.name];
+
+            if (paramPayload == null) {
+                // allow parameters with MINIMUM_REMAINING_BUFFER_BYTES conditions to be omitted similar to reception logic (without the value check)
+                // should be needed only for off-spec handling (usually around backwards-compat issues)
+                if (parameter.conditions?.some((c) => c.type === ParameterCondition.MINIMUM_REMAINING_BUFFER_BYTES)) {
+                    continue;
+                }
+
                 throw new Error(`Parameter '${parameter.name}' is missing`);
             }
 
-            const valueToWrite = Utils.processParameterWrite(parameter, this.payload[parameter.name]);
+            const valueToWrite = Utils.processParameterWrite(parameter, paramPayload);
 
             buffalo.write(parameter.type, valueToWrite, {});
         }
@@ -288,7 +296,7 @@ export class ZclFrame {
      * Utils
      */
 
-    public static conditionsValid(parameter: ParameterDefinition, entry: ZclPayload, remainingBufferBytes: number | undefined): boolean {
+    public static conditionsValid(parameter: Parameter, entry: ZclPayload, remainingBufferBytes: number | undefined): boolean {
         if (parameter.conditions) {
             for (const condition of parameter.conditions) {
                 switch (condition.type) {
@@ -353,7 +361,23 @@ export class ZclFrame {
     }
 
     // List of commands is not completed, feel free to add more.
-    public isCommand(commandName: FoundationCommandName | "remove" | "add" | "write" | "enrollReq" | "checkin" | "getAlarm" | "arm"): boolean {
+    public isCommand(
+        commandName: FoundationCommandName | "remove" | "add" | "write" | "enrollReq" | "checkin" | "getAlarm" | "arm" | "queryNextImageRequest",
+    ): boolean {
         return this.command.name === commandName;
     }
+}
+
+export interface TZclFrame<Cl extends string, Co extends string> {
+    readonly header: ZclHeader;
+    readonly payload: TClusterPayload<Cl, Co>;
+    readonly cluster: Cluster;
+    readonly command: Command;
+}
+
+export interface TFoundationZclFrame<Co extends string> {
+    readonly header: ZclHeader;
+    readonly payload: TFoundationPayload<Co>;
+    readonly cluster: Cluster;
+    readonly command: Command;
 }
