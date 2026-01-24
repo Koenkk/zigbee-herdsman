@@ -222,6 +222,10 @@ describe("Utils", () => {
         await job2Result;
         expect(finished).toEqual([4, 1, 2, 3]);
         expect(queue.count()).toBe(5);
+
+        queue.clear();
+
+        expect(queue.count()).toBe(0);
     });
 
     it("Test async mutex", async () => {

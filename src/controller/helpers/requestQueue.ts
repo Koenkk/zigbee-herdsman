@@ -1,3 +1,4 @@
+import equal from "fast-deep-equal/es6";
 import {logger} from "../../utils/logger";
 import type * as Zcl from "../../zspec/zcl";
 import type {Endpoint} from "../model";
@@ -91,7 +92,7 @@ export class RequestQueue extends Set<Request> {
             }
 
             if (request.frame.cluster.ID === clusterID && request.frame.command.ID === commandID) {
-                if (newRequest.sendPolicy === "keep-payload" && JSON.stringify(request.frame.payload) === JSON.stringify(payload)) {
+                if (newRequest.sendPolicy === "keep-payload" && equal(request.frame.payload, payload)) {
                     logger.debug(`Request Queue (${this.deviceIeeeAddress}/${this.id}): Merge duplicate request`, NS);
                     this.delete(request);
                     newRequest.moveCallbacks(request);
@@ -104,7 +105,7 @@ export class RequestQueue extends Set<Request> {
                     );
                     if (filteredPayload.length === 0) {
                         logger.debug(`Request Queue (${this.deviceIeeeAddress}/${this.id}): Remove & reject request`, NS);
-                        if (JSON.stringify(request.frame.payload) === JSON.stringify(payload)) {
+                        if (equal(request.frame.payload, payload)) {
                             newRequest.moveCallbacks(request);
                         } else {
                             request.reject();

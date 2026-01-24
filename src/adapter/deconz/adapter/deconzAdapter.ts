@@ -224,7 +224,7 @@ export class DeconzAdapter extends Adapter {
             transactionSequenceNumber,
         };
 
-        logger.debug(`waitFor() called ${JSON.stringify(payload)}`, NS);
+        logger.debug(() => `waitFor() called ${JSON.stringify(payload)}`, NS);
 
         const waiter = this.waitress.waitFor(payload, timeout);
         const cancel = (): void => this.waitress.remove(waiter.ID);

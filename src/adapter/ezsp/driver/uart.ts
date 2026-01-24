@@ -86,7 +86,7 @@ export class SerialDriver extends EventEmitter {
             options.xoff = true;
         }
 
-        logger.debug(`Opening SerialPort with ${JSON.stringify(options)}`, NS);
+        logger.debug(() => `Opening SerialPort with ${JSON.stringify(options)}`, NS);
         // @ts-expect-error
         this.serialPort = new SerialPort(options);
 

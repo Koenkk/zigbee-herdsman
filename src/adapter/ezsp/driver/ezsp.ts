@@ -475,7 +475,7 @@ export class Ezsp extends EventEmitter {
         const waiter = this.waitFor("stackStatusHandler", null);
         const result = await this.execCommand("networkInit");
 
-        logger.debug(`Network init result: ${JSON.stringify(result)}`, NS);
+        logger.debug(() => `Network init result: ${JSON.stringify(result)}`, NS);
 
         if (result.status !== EmberStatus.SUCCESS) {
             this.waitress.remove(waiter.ID);
@@ -492,7 +492,7 @@ export class Ezsp extends EventEmitter {
         const waiter = this.waitFor("stackStatusHandler", null);
         const result = await this.execCommand("leaveNetwork");
 
-        logger.debug(`Network init result: ${JSON.stringify(result)}`, NS);
+        logger.debug(() => `Network init result: ${JSON.stringify(result)}`, NS);
 
         if (result.status !== EmberStatus.SUCCESS) {
             this.waitress.remove(waiter.ID);
@@ -737,7 +737,7 @@ export class Ezsp extends EventEmitter {
             maxHops: 0,
         });
 
-        logger.debug(`Set concentrator type: ${JSON.stringify(res)}`, NS);
+        logger.debug(() => `Set concentrator type: ${JSON.stringify(res)}`, NS);
 
         if (res.status !== EmberStatus.SUCCESS) {
             logger.error(`Couldn't set concentrator ${JSON.stringify(res)}`, NS);

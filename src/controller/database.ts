@@ -10,14 +10,15 @@ export class Database {
     private path: string;
     private maxId: number;
 
-    private constructor(entries: {[id: number]: DatabaseEntry}, path: string) {
+    private constructor(entries: {[id: number]: DatabaseEntry}, path: string, maxId: number) {
         this.entries = entries;
-        this.maxId = Math.max(...Object.keys(entries).map((t) => Number(t)), 0);
         this.path = path;
+        this.maxId = maxId;
     }
 
     public static open(path: string): Database {
         const entries: {[id: number]: DatabaseEntry} = {};
+        let maxId = 0;
 
         if (fs.existsSync(path)) {
             const file = fs.readFileSync(path, "utf-8");
@@ -30,8 +31,12 @@ export class Database {
                 try {
                     const json = JSON.parse(row);
 
-                    if (json.id != null) {
+                    if (Number.isFinite(json.id)) {
                         entries[json.id] = json;
+
+                        if (json.id > maxId) {
+                            maxId = json.id;
+                        }
                     }
                 } catch (error) {
                     logger.error(`Corrupted database line, ignoring. ${error}`, NS);
@@ -39,7 +44,7 @@ export class Database {
             }
         }
 
-        return new Database(entries, path);
+        return new Database(entries, path, maxId);
     }
 
     public *getEntriesIterator(type: EntityType[]): Generator<DatabaseEntry> {
