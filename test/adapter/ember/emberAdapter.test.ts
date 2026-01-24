@@ -572,8 +572,6 @@ describe("Ember Adapter Layer", () => {
             backupPath,
             Object.assign({}, DEFAULT_ADAPTER_OPTIONS, {concurrent: undefined}),
         );
-        // @ts-expect-error private
-        expect(adapter.queue.concurrent).toStrictEqual(16);
     });
 
     it("Starts with resumed when everything matches", async () => {

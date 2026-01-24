@@ -965,7 +965,7 @@ export class Device extends Entity<ControllerEventMap> {
                 logger.debug(`Interview - IAS - enrolling '${this.ieeeAddr}' endpoint '${endpoint.ID}'`, NS);
 
                 const stateBefore = await endpoint.read("ssIasZone", ["iasCieAddr", "zoneState"], {sendPolicy: "immediate"});
-                logger.debug(`Interview - IAS - before enrolling state: '${JSON.stringify(stateBefore)}'`, NS);
+                logger.debug(() => `Interview - IAS - before enrolling state: '${JSON.stringify(stateBefore)}'`, NS);
 
                 // Do not enroll when device has already been enrolled
                 if (stateBefore.zoneState !== 1 || stateBefore.iasCieAddr !== coordinator.ieeeAddr) {
@@ -989,7 +989,7 @@ export class Device extends Entity<ControllerEventMap> {
                     for (let attempt = 0; attempt < 20; attempt++) {
                         await wait(500);
                         const stateAfter = await endpoint.read("ssIasZone", ["iasCieAddr", "zoneState"], {sendPolicy: "immediate"});
-                        logger.debug(`Interview - IAS - after enrolling state (${attempt}): '${JSON.stringify(stateAfter)}'`, NS);
+                        logger.debug(() => `Interview - IAS - after enrolling state (${attempt}): '${JSON.stringify(stateAfter)}'`, NS);
                         if (stateAfter.zoneState === 1) {
                             enrolled = true;
                             break;

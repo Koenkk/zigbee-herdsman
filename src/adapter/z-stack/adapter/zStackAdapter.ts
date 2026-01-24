@@ -123,7 +123,7 @@ export class ZStackAdapter extends Adapter {
 
         this.queue = new Queue(concurrent);
 
-        logger.debug(`Detected znp version '${ZnpVersion[this.version.product]}' (${JSON.stringify(this.version)})`, NS);
+        logger.debug(() => `Detected znp version '${ZnpVersion[this.version.product]}' (${JSON.stringify(this.version)})`, NS);
         this.adapterManager = new ZnpAdapterManager(this, this.znp, {
             backupPath: this.backupPath,
             version: this.version.product,

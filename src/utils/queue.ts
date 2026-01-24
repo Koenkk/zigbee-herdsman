@@ -5,60 +5,62 @@ interface Job {
 }
 
 export class Queue {
-    private jobs: Job[];
-    private readonly concurrent: number;
+    readonly #concurrent: number;
+    readonly #jobs: Job[] = [];
+    #running = 0;
 
     constructor(concurrent = 1) {
-        this.jobs = [];
-        this.concurrent = concurrent;
+        this.#concurrent = concurrent;
     }
 
     public async execute<T>(func: () => Promise<T>, key?: string | number): Promise<T> {
         const job: Job = {key, running: false};
-        this.jobs.push(job);
+        this.#jobs.push(job);
 
         // Minor optimization/workaround: various tests like the idea that a job that is immediately runnable is run without an event loop spin.
         // This also helps with stack traces in some cases, so avoid an `await` if we can help it.
-        if (this.getNext() !== job) {
+        if (this.#getNext() !== job) {
             await new Promise<void>((resolve): void => {
                 job.start = (): void => {
                     job.running = true;
+                    this.#running += 1;
                     resolve();
                 };
 
-                this.executeNext();
+                this.#executeNext();
             });
         } else {
             job.running = true;
+            this.#running += 1;
         }
 
         try {
             return await func();
         } finally {
-            this.jobs.splice(this.jobs.indexOf(job), 1);
-            this.executeNext();
+            this.#jobs.splice(this.#jobs.indexOf(job), 1);
+            this.#running = Math.max(this.#running - 1, 0);
+            this.#executeNext();
         }
     }
 
-    private executeNext(): void {
-        const job = this.getNext();
+    #executeNext(): void {
+        const job = this.#getNext();
 
         if (job) {
-            // if we get here, start is always defined for job
-            // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
+            // biome-ignore lint/style/noNonNullAssertion: if we get here, start is always defined for job
             job.start!();
         }
     }
 
-    private getNext(): Job | undefined {
-        if (this.jobs.filter((j) => j.running).length > this.concurrent - 1) {
+    #getNext(): Job | undefined {
+        if (this.#running > this.#concurrent - 1) {
             return undefined;
         }
 
-        for (let i = 0; i < this.jobs.length; i++) {
-            const job = this.jobs[i];
+        for (let i = 0; i < this.#jobs.length; i++) {
+            const job = this.#jobs[i];
 
-            if (!job.running && (!job.key || !this.jobs.find((j) => j.key === job.key && j.running))) {
+            if (!job.running && (!job.key || !this.#jobs.find((j) => j.key === job.key && j.running))) {
                 return job;
             }
         }
@@ -67,10 +69,11 @@ export class Queue {
     }
 
     public clear(): void {
-        this.jobs = [];
+        this.#running = 0;
+        this.#jobs.length = 0;
     }
 
     public count(): number {
-        return this.jobs.length;
+        return this.#jobs.length;
     }
 }

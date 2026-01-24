@@ -1,7 +1,6 @@
 import assert from "node:assert";
 import events from "node:events";
 import fs from "node:fs";
-import mixinDeep from "mixin-deep";
 import {Adapter, type Events as AdapterEvents, type TsType as AdapterTsType} from "../adapter";
 import type {ZclPayload} from "../adapter/events";
 import {BackupUtils, wait} from "../utils";
@@ -42,18 +41,6 @@ interface Options {
      */
     acceptJoiningDeviceHandler: (ieeeAddr: string) => Promise<boolean>;
 }
-
-const DefaultOptions: Pick<Options, "network" | "serialPort" | "adapter"> = {
-    network: {
-        networkKeyDistribute: false,
-        networkKey: [0x01, 0x03, 0x05, 0x07, 0x09, 0x0b, 0x0d, 0x0f, 0x00, 0x02, 0x04, 0x06, 0x08, 0x0a, 0x0c, 0x0d],
-        panID: 0x1a62,
-        extendedPanID: [0xdd, 0xdd, 0xdd, 0xdd, 0xdd, 0xdd, 0xdd, 0xdd],
-        channelList: [11],
-    },
-    serialPort: {},
-    adapter: {disableLED: false},
-};
 
 export interface ControllerEventMap {
     message: [data: Events.MessagePayload];
@@ -96,7 +83,26 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
         super();
         this.stopping = false;
         this.adapterDisconnected = true; // set false after adapter.start() is successfully called
-        this.options = mixinDeep(JSON.parse(JSON.stringify(DefaultOptions)), options);
+        const {network: networkOpts, serialPort: serialPortOpts, adapter: adapterOpts, ...restOpts} = options;
+        this.options = {
+            network: {
+                networkKeyDistribute: false,
+                networkKey: [0x01, 0x03, 0x05, 0x07, 0x09, 0x0b, 0x0d, 0x0f, 0x00, 0x02, 0x04, 0x06, 0x08, 0x0a, 0x0c, 0x0d],
+                // @ts-expect-error typing detecting not needed, kept for safety
+                panID: 0x1a62,
+                extendedPanID: [0xdd, 0xdd, 0xdd, 0xdd, 0xdd, 0xdd, 0xdd, 0xdd],
+                // @ts-expect-error typing detecting not needed, kept for safety
+                channelList: [11],
+                ...networkOpts,
+            },
+            serialPort: {...serialPortOpts},
+            adapter: {
+                // @ts-expect-error typing detecting not needed, kept for safety
+                disableLED: false,
+                ...adapterOpts,
+            },
+            ...restOpts,
+        };
         this.unknownDevices = new Set();
 
         // Validate options

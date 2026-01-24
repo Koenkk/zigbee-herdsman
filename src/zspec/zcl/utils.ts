@@ -68,6 +68,25 @@ const FOUNDATION_DISCOVER_RSP_IDS = [
     Foundation.discoverExtRsp.ID,
 ];
 
+/** Runtime fast lookup */
+const ZCL_CLUSTERS_ID_TO_NAMES = (() => {
+    const map = new Map<number, string[]>();
+
+    for (const clusterName in Clusters) {
+        const cluster = Clusters[clusterName as ClusterName];
+
+        const mapEntry = map.get(cluster.ID);
+
+        if (mapEntry) {
+            mapEntry.push(clusterName);
+        } else {
+            map.set(cluster.ID, [clusterName]);
+        }
+    }
+
+    return map;
+})();
+
 export function getDataTypeClass(dataType: DataType): DataTypeClass {
     if (DATA_TYPE_CLASS_DISCRETE.includes(dataType)) {
         return DataTypeClass.DISCRETE;
@@ -87,33 +106,65 @@ function hasCustomClusters(customClusters: CustomClusters): boolean {
     return false;
 }
 
+/**
+ * This can be greatly optimized when `clusters==ZCL` once these have been moved out of ZH (can just use fast lookup <id, name>):
+ * - 'manuSpecificPhilips', 'manuSpecificAssaDoorLock'
+ * - 'elkoSwitchConfigurationClusterServer', 'manuSpecificSchneiderLightSwitchConfiguration'
+ */
 function findClusterNameByID(
     id: number,
     manufacturerCode: number | undefined,
-    clusters: CustomClusters,
+    clusters: typeof Clusters | CustomClusters,
+    zcl: boolean,
 ): [name: string | undefined, partialMatch: boolean] {
     let name: string | undefined;
     // if manufacturer code is given, consider partial match if didn't match against manufacturer code
     let partialMatch = Boolean(manufacturerCode);
 
-    for (const clusterName in clusters) {
-        const cluster = clusters[clusterName as ClusterName];
+    if (zcl) {
+        const zclNames = ZCL_CLUSTERS_ID_TO_NAMES.get(id);
 
-        if (cluster.ID === id) {
-            // priority on first match when matching only ID
-            if (name === undefined) {
-                name = clusterName;
+        if (zclNames) {
+            for (const zclName of zclNames) {
+                const cluster = clusters[zclName as ClusterName];
+
+                // priority on first match when matching only ID
+                if (name === undefined) {
+                    name = zclName;
+                }
+
+                if (manufacturerCode && cluster.manufacturerCode === manufacturerCode) {
+                    name = zclName;
+                    partialMatch = false;
+                    break;
+                }
+
+                if (!cluster.manufacturerCode) {
+                    name = zclName;
+                    break;
+                }
             }
+        }
+    } else {
+        for (const clusterName in clusters) {
+            const cluster = clusters[clusterName as ClusterName];
 
-            if (manufacturerCode && cluster.manufacturerCode === manufacturerCode) {
-                name = clusterName;
-                partialMatch = false;
-                break;
-            }
+            if (cluster.ID === id) {
+                // priority on first match when matching only ID
+                if (name === undefined) {
+                    name = clusterName;
+                }
 
-            if (!cluster.manufacturerCode) {
-                name = clusterName;
-                break;
+                if (manufacturerCode && cluster.manufacturerCode === manufacturerCode) {
+                    name = clusterName;
+                    partialMatch = false;
+                    break;
+                }
+
+                if (!cluster.manufacturerCode) {
+                    name = clusterName;
+                    break;
+                }
             }
         }
     }
@@ -132,13 +183,13 @@ function getClusterDefinition(
         let partialMatch: boolean;
 
         // custom clusters have priority over Zcl clusters, except in case of better match (see below)
-        [name, partialMatch] = findClusterNameByID(key, manufacturerCode, customClusters);
+        [name, partialMatch] = findClusterNameByID(key, manufacturerCode, customClusters, false);
 
         if (!name) {
-            [name, partialMatch] = findClusterNameByID(key, manufacturerCode, Clusters);
+            [name, partialMatch] = findClusterNameByID(key, manufacturerCode, Clusters, true);
         } else if (partialMatch) {
             let zclName: string | undefined;
-            [zclName, partialMatch] = findClusterNameByID(key, manufacturerCode, Clusters);
+            [zclName, partialMatch] = findClusterNameByID(key, manufacturerCode, Clusters, true);
 
             // Zcl clusters contain a better match, use that one
             if (zclName !== undefined && !partialMatch) {
