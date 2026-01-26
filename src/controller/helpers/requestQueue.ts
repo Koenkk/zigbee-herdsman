@@ -108,7 +108,10 @@ export class RequestQueue extends Set<Request> {
                         if (equal(request.frame.payload, payload)) {
                             newRequest.moveCallbacks(request);
                         } else {
-                            request.reject();
+                            const error = new Error("Request superseded by newer request");
+                            // biome-ignore lint/suspicious/noExplicitAny: Adding error code property
+                            (error as any).code = "ERR_REQUEST_SUPERSEDED";
+                            request.reject(error);
                         }
                         this.delete(request);
                     } else if (newRequest.sendPolicy !== "keep-cmd-undiv") {
