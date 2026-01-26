@@ -1485,7 +1485,7 @@ export class Device extends Entity<ControllerEventMap> {
         if (!meta) {
             // no image in repo/URL for specified device
             return {
-                available: 0,
+                available: false,
                 current,
             };
         }
@@ -1496,7 +1496,7 @@ export class Device extends Entity<ControllerEventMap> {
         );
 
         return {
-            available: meta.force ? -1 : Math.sign(current.fileVersion - meta.fileVersion),
+            available: meta.force ? true : source.downgrade ? current.fileVersion > meta.fileVersion : current.fileVersion < meta.fileVersion,
             current,
             availableMeta: meta,
         };
@@ -1531,7 +1531,7 @@ export class Device extends Entity<ControllerEventMap> {
             }
         }
 
-        let available: OtaUpdateAvailableResult["available"] = 0;
+        let available: OtaUpdateAvailableResult["available"] = false;
         let image: OtaImage | undefined;
 
         if (source.url && !source.url.endsWith(".json")) {
@@ -1539,7 +1539,9 @@ export class Device extends Entity<ControllerEventMap> {
             try {
                 const downloadedFile = await getOtaFirmware(source.url, undefined);
                 image = parseOtaImage(downloadedFile);
-                available = Math.sign(requestPayload.fileVersion - image.header.fileVersion);
+                available = source.downgrade
+                    ? requestPayload.fileVersion > image.header.fileVersion
+                    : requestPayload.fileVersion < image.header.fileVersion;
 
                 logger.debug(
                     () =>
@@ -1562,7 +1564,7 @@ export class Device extends Entity<ControllerEventMap> {
                 this.#otaInProgress = false;
             }
 
-            if ((source.downgrade ? available === 1 : available === -1) && availableMeta) {
+            if (available && availableMeta) {
                 try {
                     const downloadedFile = await getOtaFirmware(availableMeta.url, availableMeta.sha512);
                     image = parseOtaImage(downloadedFile);
@@ -1589,7 +1591,7 @@ export class Device extends Entity<ControllerEventMap> {
             await endpoint.commandResponse(
                 "genOta",
                 "queryNextImageResponse",
-                image && available !== 0
+                image && available
                     ? {
                           status: Zcl.Status.SUCCESS,
                           manufacturerCode: image.header.manufacturerCode,
@@ -1605,7 +1607,7 @@ export class Device extends Entity<ControllerEventMap> {
             this.#otaInProgress = false;
         }
 
-        if (!image || available === 0) {
+        if (!image || !available) {
             this.#otaInProgress = false;
 
             return [requestPayload, undefined];

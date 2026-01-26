@@ -66,12 +66,8 @@ export interface OtaDataSettings {
 }
 
 export interface OtaUpdateAvailableResult {
-    /**
-     * - `0` means no firmware available, or same version
-     * - `-1` means available firmware is 'newer' than current one
-     * - `1` means available firmware is 'older' than current one
-     */
-    available: number;
+    /** based on `source.downgrade` */
+    available: boolean;
     current: TClusterCommandPayload<"genOta", "queryNextImageRequest">;
     availableMeta?: ZigbeeOtaImageMeta;
 }

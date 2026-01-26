@@ -150,15 +150,31 @@ export async function getOtaFirmware(url: string, sha512: string | undefined): P
     return isValidUrl(url) ? await fetchFirmware(url, sha512) : readFirmware(url, sha512);
 }
 
+async function getOtaIndexInternal(url: string): Promise<ZigbeeOtaImageMeta[]> {
+    return isValidUrl(url) ? await getJson<ZigbeeOtaImageMeta[]>(url) : (JSON.parse(readFileSync(url, "utf-8")) as ZigbeeOtaImageMeta[]);
+}
+
 export async function getOtaIndex(source: OtaSource): Promise<ZigbeeOtaImageMeta[]> {
-    const mainIndexUrl = source.url ?? (source.downgrade ? ZIGBEE_OTA_PREVIOUS_URL : ZIGBEE_OTA_LATEST_URL);
+    let mainIndexUrl: string;
+
+    if (source.url) {
+        if (!isValidUrl(source.url) && !path.isAbsolute(source.url)) {
+            if (!dataDir) {
+                throw new Error("Invalid OTA configuration");
+            }
+
+            mainIndexUrl = path.join(dataDir, source.url);
+        } else {
+            mainIndexUrl = source.url;
+        }
+    } else {
+        mainIndexUrl = source.downgrade ? ZIGBEE_OTA_PREVIOUS_URL : ZIGBEE_OTA_LATEST_URL;
+    }
 
     if (overrideIndexLocation) {
         logger.debug(`Loading override index '${overrideIndexLocation}'`, NS);
 
-        const localIndex = isValidUrl(overrideIndexLocation)
-            ? await getJson<ZigbeeOtaImageMeta[]>(overrideIndexLocation)
-            : (JSON.parse(readFileSync(overrideIndexLocation, "utf-8")) as ZigbeeOtaImageMeta[]);
+        const localIndex = await getOtaIndexInternal(overrideIndexLocation);
 
         // Resulting index will have overridden items first
         const mappedLocalIndex = localIndex.map((meta) => {
@@ -177,9 +193,9 @@ export async function getOtaIndex(source: OtaSource): Promise<ZigbeeOtaImageMeta
         });
 
         try {
-            const mainIndex = await getJson<ZigbeeOtaImageMeta[]>(mainIndexUrl);
+            const mainIndex = await getOtaIndexInternal(mainIndexUrl);
 
-            logger.debug("Downloaded main index", NS);
+            logger.debug("Retrieved main index", NS);
 
             return mappedLocalIndex.concat(mainIndex);
         } catch {
@@ -189,7 +205,7 @@ export async function getOtaIndex(source: OtaSource): Promise<ZigbeeOtaImageMeta
         }
     }
 
-    return await getJson<ZigbeeOtaImageMeta[]>(mainIndexUrl);
+    return await getOtaIndexInternal(mainIndexUrl);
 }
 
 // #endregion
