@@ -652,7 +652,7 @@ describe("Device OTA", () => {
             };
             const result = await device.checkOta({}, current, {});
 
-            expect(result).toStrictEqual({available: 0, current});
+            expect(result).toStrictEqual({available: false, current});
             expect(fetchMock).toHaveBeenCalledTimes(1);
         });
 
@@ -677,7 +677,7 @@ describe("Device OTA", () => {
                 1,
             );
             expect(result).toStrictEqual({
-                available: -1,
+                available: true,
                 availableMeta: expect.objectContaining({url: filePath}),
                 current: {
                     fieldControl: 0,
@@ -708,7 +708,7 @@ describe("Device OTA", () => {
             };
             const result = await device.checkOta({}, current, {modelId: "MatchedModel"});
 
-            expect(result.available).toStrictEqual(-1);
+            expect(result.available).toStrictEqual(true);
             expect(result.availableMeta?.fileName).toStrictEqual(meta.fileName);
         });
 
@@ -735,7 +735,7 @@ describe("Device OTA", () => {
             const {device} = createSimpleDevice({manufacturerName: "BrandA device", modelID: "ModelY"});
             const result = await device.checkOta({}, current, {});
 
-            expect(result.available).toStrictEqual(-1);
+            expect(result.available).toStrictEqual(true);
             expect(result.availableMeta?.fileName).toStrictEqual("match.ota");
         });
 
@@ -761,8 +761,60 @@ describe("Device OTA", () => {
             const {device} = createSimpleDevice({manufacturerName: "Mismatch", modelID: "ModelZ"});
             const result = await device.checkOta({}, current, {manufacturerName: "AltBrand", hardwareVersionMin: 12, hardwareVersionMax: 18});
 
-            expect(result.available).toStrictEqual(-1);
+            expect(result.available).toStrictEqual(true);
             expect(result.availableMeta?.fileName).toStrictEqual("extra-match.ota");
+        });
+
+        it("handles custom index as absolute path", async () => {
+            const fileName = OTA_FILES[0];
+            const [image] = loadImage(fileName);
+            const requestPayload: TClusterCommandPayload<"genOta", "queryNextImageRequest"> = {
+                fieldControl: 0,
+                manufacturerCode: image.header.manufacturerCode,
+                imageType: image.header.imageType,
+                fileVersion: image.header.fileVersion - 1,
+            };
+            const {device, tempDir} = createDevice({image, source: {}, requestPayload: undefined});
+            const indexMeta = buildIndexEntry(fileName, image, undefined, path.join(tempDir, fileName));
+            const getOtaIndexSpy = vi.spyOn(otaHelpers, "getOtaIndex");
+
+            fs.writeFileSync(path.join(tempDir, "my_index.json"), JSON.stringify([indexMeta]), "utf8");
+
+            const result = await device.checkOta({url: path.resolve(tempDir, "my_index.json")}, undefined, {});
+
+            expect(result.available).toStrictEqual(true);
+            expect(result.availableMeta?.fileVersion).toStrictEqual(requestPayload.fileVersion + 1);
+            expect(getOtaIndexSpy).toHaveResolvedWith([indexMeta]);
+        });
+
+        it("handles custom index as relative path", async () => {
+            const fileName = OTA_FILES[0];
+            const [image] = loadImage(fileName);
+            const requestPayload: TClusterCommandPayload<"genOta", "queryNextImageRequest"> = {
+                fieldControl: 0,
+                manufacturerCode: image.header.manufacturerCode,
+                imageType: image.header.imageType,
+                fileVersion: image.header.fileVersion - 1,
+            };
+            const {device, tempDir} = createDevice({image, source: {}, requestPayload: undefined});
+            const indexMeta = buildIndexEntry(fileName, image, undefined, path.join(tempDir, fileName));
+            const getOtaIndexSpy = vi.spyOn(otaHelpers, "getOtaIndex");
+
+            fs.writeFileSync(path.join(tempDir, "my_index.json"), JSON.stringify([indexMeta]), "utf8");
+            otaHelpers.setOtaConfiguration(tempDir, undefined);
+
+            const result = await device.checkOta({url: "my_index.json"}, undefined, {});
+
+            expect(result.available).toStrictEqual(true);
+            expect(result.availableMeta?.fileVersion).toStrictEqual(requestPayload.fileVersion + 1);
+            expect(getOtaIndexSpy).toHaveResolvedWith([indexMeta]);
+        });
+
+        it("throws with custom index as relative path when OTA not configured properly", async () => {
+            const [image] = loadImage(OTA_FILES[0]);
+            const {device} = createDevice({image, source: {}, requestPayload: undefined});
+
+            await expect(device.checkOta({url: "my_index.json"}, undefined, {})).rejects.toThrow(/Invalid OTA configuration/);
         });
 
         it("handles failures when waiting for OTA notify response", async () => {
@@ -813,7 +865,7 @@ describe("Device OTA", () => {
 
             const result = await device.checkOta({}, requestPayload, {}, endpoint);
 
-            expect(result.available).toStrictEqual(-1);
+            expect(result.available).toStrictEqual(true);
             expect(result.availableMeta?.fileVersion).toStrictEqual(image.header.fileVersion);
             expect(getOtaIndexSpy).toHaveResolvedWith([indexMeta, ...fetchIndexEntries]);
         });
@@ -838,7 +890,7 @@ describe("Device OTA", () => {
 
             const result = await device.checkOta({}, requestPayload, {}, endpoint);
 
-            expect(result.available).toStrictEqual(-1);
+            expect(result.available).toStrictEqual(true);
             expect(result.availableMeta?.fileVersion).toStrictEqual(image.header.fileVersion);
             expect(getOtaIndexSpy).toHaveResolvedWith([
                 {
@@ -868,7 +920,7 @@ describe("Device OTA", () => {
 
             const result = await device.checkOta({}, requestPayload, {}, endpoint);
 
-            expect(result.available).toStrictEqual(-1);
+            expect(result.available).toStrictEqual(true);
             expect(result.availableMeta?.fileVersion).toStrictEqual(requestPayload.fileVersion + 1);
             expect(infoSpy).toHaveBeenCalledWith("Failed to download main index, only override index is loaded", "zh:controller:ota");
         });
@@ -895,7 +947,7 @@ describe("Device OTA", () => {
 
             const result = await device.checkOta({}, requestPayload, {}, endpoint);
 
-            expect(result.available).toStrictEqual(-1);
+            expect(result.available).toStrictEqual(true);
             expect(result.availableMeta?.fileVersion).toStrictEqual(requestPayload.fileVersion + 1);
             expect(fetchMock).toHaveBeenCalledWith("https://raw.githubusercontent.com/Koenkk/zigbee-OTA/master/index.json");
             expect(infoSpy).toHaveBeenCalledWith("Failed to download main index, only override index is loaded", "zh:controller:ota");
@@ -918,7 +970,7 @@ describe("Device OTA", () => {
 
             const result = await device.checkOta({url: "https://example.com/index.json"}, undefined, {}, endpoint);
 
-            expect(result.available).toStrictEqual(-1);
+            expect(result.available).toStrictEqual(true);
             expect(result.availableMeta?.fileVersion).toStrictEqual(image.header.fileVersion);
             expect(fetchMock).toHaveBeenCalledWith("https://example.com/index.json");
             expect(infoSpy).toHaveBeenCalledWith("Failed to download main index, only override index is loaded", "zh:controller:ota");
@@ -947,7 +999,7 @@ describe("Device OTA", () => {
 
             expect(result).toStrictEqual({
                 current: {...current, fileVersion: image.header.fileVersion - 1},
-                available: -1,
+                available: true,
                 availableMeta: {
                     fileName,
                     fileVersion: image.header.fileVersion,
@@ -2016,7 +2068,7 @@ describe("Device OTA", () => {
                 fieldControl: 0,
                 manufacturerCode: image.header.manufacturerCode,
                 imageType: image.header.imageType,
-                fileVersion: image.header.fileVersion - 1,
+                fileVersion: image.header.fileVersion + 1,
             };
             const baseSize = 40;
             const dataSettings: OtaDataSettings = {requestTimeout: 10, responseDelay: 0, baseSize};
