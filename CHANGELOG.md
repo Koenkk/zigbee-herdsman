@@ -1,5 +1,13 @@
 # Changelog
 
+## [9.0.2](https://github.com/Koenkk/zigbee-herdsman/compare/v9.0.1...v9.0.2) (2026-01-27)
+
+
+### Bug Fixes
+
+* **ignore:** bump @biomejs/biome from 2.3.11 to 2.3.13 in the minor-patch group ([#1628](https://github.com/Koenkk/zigbee-herdsman/issues/1628)) ([4fa973c](https://github.com/Koenkk/zigbee-herdsman/commit/4fa973c335016dc3a5776e0b4688d6be8c01598f))
+* OTA detection & filesystem index ([#1630](https://github.com/Koenkk/zigbee-herdsman/issues/1630)) ([964a5a7](https://github.com/Koenkk/zigbee-herdsman/commit/964a5a7f00794d38b99d74d0572c1acc39e18088))
+
 ## [9.0.1](https://github.com/Koenkk/zigbee-herdsman/compare/v9.0.0...v9.0.1) (2026-01-24)
 
 
