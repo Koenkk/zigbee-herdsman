@@ -1,6 +1,6 @@
 # zigbee-herdsman
 
-![npm](https://img.shields.io/npm/v/zigbee-herdsman)
+[![npm](https://img.shields.io/npm/v/zigbee-herdsman)](https://www.npmjs.com/package/zigbee-herdsman)
 
 zigbee-herdsman is an open source Zigbee gateway solution with Node.js JavaScript runtime back-end.
 
