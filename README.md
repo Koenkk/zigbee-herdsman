@@ -12,38 +12,7 @@ For automatically generated API reference documentation, see: https://koenkk.git
 
 # Changelog
 
-## 0.14.0 breaking changes
-
-- `sendWhenActive` has been replaced with `sendWhen: 'active'`
-
-## 0.13.0 breaking changes
-
-- `controller.touchlinkFactoryReset` has been renamed to `controller.touchlinkFactoryResetFirst()`
-
-## 0.12.0 breaking changes
-
-- options.network.extenedPanID -> options.network.extendedPanID (typo fix)
-
-## 0.11.0 breaking changes
-
-- endpoint.bind[].cluster will now return cluster object instead of cluster number
-
-## 0.10.0 breaking changes
-
-- controller.start() renamed `resetted` start result to `reset`
-
-## 0.9.0 breaking changes
-
-- Removed controller.softReset() -> use controller.reset('soft') now
-- Removed group.get('groupID') -> use group.groupID now
-
-## 0.8.0 breaking changes
-
-- Removed device.getEndpoints() -> use device.endpoints now
-- Removed device/endpoint.set() -> directly set properties now (e.g. device.modelID = 'newmodelid')
-- Removed device/endpoint.get() -> directly get properties now (e.g. device.modelID)
-- Removed group.getMembers() -> use group.members now
-- Removed endpoint.deviceIeeeAddress -> use endpoint.getDevice().ieeeAddr
+For complete release notes, including breaking changes, see: [CHANGELOG.md](./CHANGELOG.md)
 
 # Related projects
 
