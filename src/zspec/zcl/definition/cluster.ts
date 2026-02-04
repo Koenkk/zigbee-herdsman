@@ -2554,7 +2554,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             motorStepSize: {ID: 0x0001, type: DataType.UINT8, max: 0xfe},
             status: {ID: 0x0002, type: DataType.BITMAP8, write: true, required: true, default: 0},
 
-            losedLimit: {ID: 0x0010, type: DataType.UINT16, write: true, required: true, min: 1, max: 0xfffe, default: 1},
+            closedLimit: {ID: 0x0010, type: DataType.UINT16, write: true, required: true, min: 1, max: 0xfffe, default: 1},
             mode: {ID: 0x0011, type: DataType.ENUM8, write: true, required: true, max: 0xfe, default: 0},
         },
         commands: {},
