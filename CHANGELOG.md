@@ -1,5 +1,12 @@
 # Changelog
 
+## [9.0.3](https://github.com/Koenkk/zigbee-herdsman/compare/v9.0.2...v9.0.3) (2026-02-05)
+
+
+### Bug Fixes
+
+* ZCL cluster definition issues ([#1633](https://github.com/Koenkk/zigbee-herdsman/issues/1633)) ([4b7d9e5](https://github.com/Koenkk/zigbee-herdsman/commit/4b7d9e57f4aff10ad84e441fac1df32c314e7809))
+
 ## [9.0.2](https://github.com/Koenkk/zigbee-herdsman/compare/v9.0.1...v9.0.2) (2026-01-27)
 
 
