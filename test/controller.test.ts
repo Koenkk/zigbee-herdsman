@@ -3309,19 +3309,25 @@ describe("Controller", () => {
         });
         const buffer = Buffer.from([24, 169, 10, 0, 1, 24, 3, 0, 0, 24, 1, 2, 0, 24, 1]);
         const header = Zcl.Header.fromBuffer(buffer);
-        await mockAdapterEvents.zclPayload({
-            wasBroadcast: false,
-            address: 129,
-            clusterID: 0,
-            data: buffer,
-            header,
-            endpoint: 1,
-            linkquality: 50,
-            groupID: 1,
-        });
+        const payload = {wasBroadcast: false, address: 129, clusterID: 0, data: buffer, header, endpoint: 1, linkquality: 50, groupID: 1};
+        await mockAdapterEvents.zclPayload(payload);
         expect(events.message.length).toBe(1);
         expect(events.message[0].data).toStrictEqual({customAttr: 3, aDifferentZclVersion: 1, stackVersion: 1});
         expect(events.message[0].cluster).toBe("genBasic");
+
+        // Should allow to extend an already extended cluster again.
+        device.addCustomCluster("genBasic", {
+            ID: 0,
+            commands: {},
+            commandsResponse: {},
+            attributes: {
+                customAttrSecondOverride: {ID: 256, type: Zcl.DataType.UINT8},
+            },
+        });
+        await mockAdapterEvents.zclPayload(payload);
+        expect(events.message.length).toBe(2);
+        expect(events.message[1].data).toStrictEqual({customAttrSecondOverride: 3, aDifferentZclVersion: 1, stackVersion: 1});
+        expect(events.message[1].cluster).toBe("genBasic");
     });
 
     it("Should allow to specify custom cluster", async () => {

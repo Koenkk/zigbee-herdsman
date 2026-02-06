@@ -1329,7 +1329,7 @@ export class Device extends Entity<ControllerEventMap> {
             "Overriding of greenPower or touchlink cluster is not supported",
         );
         if (Zcl.Utils.isClusterName(name)) {
-            const existingCluster = Zcl.Clusters[name];
+            const existingCluster = this._customClusters[name] ?? Zcl.Clusters[name];
 
             // Extend existing cluster
             assert(existingCluster.ID === cluster.ID, `Custom cluster ID (${cluster.ID}) should match existing cluster ID (${existingCluster.ID})`);
