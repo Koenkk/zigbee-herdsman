@@ -1,5 +1,13 @@
 # Changelog
 
+## [9.0.4](https://github.com/Koenkk/zigbee-herdsman/compare/v9.0.3...v9.0.4) (2026-02-08)
+
+
+### Bug Fixes
+
+* Fix custom cluster lost when calling `device.addCustomCluster` multiple times for the same cluster ([#1635](https://github.com/Koenkk/zigbee-herdsman/issues/1635)) ([cb66a4d](https://github.com/Koenkk/zigbee-herdsman/commit/cb66a4d4458b1ed2775263b323357021561498c6))
+* OTA padding skip ([#1636](https://github.com/Koenkk/zigbee-herdsman/issues/1636)) ([f4311c2](https://github.com/Koenkk/zigbee-herdsman/commit/f4311c2a436e9c4052458cc590cc46b0007084fc))
+
 ## [9.0.3](https://github.com/Koenkk/zigbee-herdsman/compare/v9.0.2...v9.0.3) (2026-02-05)
 
 
