@@ -61,6 +61,7 @@ const IMAGE_PAGE_REQUEST_ID = Zcl.Clusters.genOta.commands.imagePageRequest.ID;
 
 /** uint32 LE */
 export const UPGRADE_FILE_IDENTIFIER = 0x0beef11e;
+export const UPGRADE_FILE_IDENTIFIER_BUF = Buffer.from([0x1e, 0xf1, 0xee, 0x0b]);
 
 // #region General Utils
 
@@ -104,7 +105,7 @@ async function getJson<T>(pageUrl: string): Promise<T> {
  * Validates a firmware file and returns the appropriate buffer (without possible manufacturer-specific header)
  */
 function validateFirmware(fileBuffer: Buffer, sha512: string | undefined): Buffer {
-    const otaIdentifier = fileBuffer.indexOf(UPGRADE_FILE_IDENTIFIER);
+    const otaIdentifier = fileBuffer.indexOf(UPGRADE_FILE_IDENTIFIER_BUF);
 
     assert(otaIdentifier !== -1, "Not a valid OTA file");
 

@@ -354,12 +354,14 @@ const OTA_FILES = [
     "telink-aes-A60_RGBW_T-0x00B6-0x03483712-MF_DIS.OTA",
     "integrity-code-1166-012B-24031511-upgradeMe-RB 249 T.zigbee",
     "manuf-tags-tradfri-cv-cct-unified_release_prod_v587757105_33e34452-9267-4665-bc5a-844c8f61f063.ota",
+    "padded-tretakt_smart_plug_soc-0x1100-2.4.25-prod.ota.ota.signed",
 ];
 const OTA_FILES_SHA512 = [
     "051912851dffed4b49d3caece8d67b0fec9987dcbdf4d6db45c4e23f4ea0c9be867491758af12f153bc9672d4205129a9270be79e781d150734be295c44971bf",
     "6696fe6707686d9586cdfa045bb3ce24ef960b6cb664a09096e6e11025143373528760f525f5bd2c715d590a2891bd1a69f24227dfe62290aa80e3fcc7e1949d",
     "d3c86737e3a9de6102c013b00b69ea37c551debb898c25f5ce67bfdab4c52b8acca5932e34953d06087dd078d77d83d5d8654c695af6a18440fc2acea0c07f5f",
     "98d8be5b4dcd9692cb6ff87531513023c0116cb9137c5690105ce2077765f35ae2651bdd2aa80ce0363f6db4ef3b9795449252c6c0ff8a8b0e6e05789fdb03be",
+    "cd2f88f3f47f459218dd23d1317e76f413cea8a4eedee047a7a6627a595e742f47ec2783eeb2b33e634435cda3f219fa7b540dde6d67876f05d3fdf6feb636d2",
 ];
 
 const getResponses = (endpoint: Endpoint, command: string) => {
@@ -368,9 +370,9 @@ const getResponses = (endpoint: Endpoint, command: string) => {
     return mock.mock.calls.filter((call) => call[1] === command);
 };
 
-const loadImage = (fileName: string): [image: OtaImage, path: string] => {
+const loadImage = async (fileName: string): Promise<[image: OtaImage, path: string]> => {
     const filePath = path.join(__dirname, "data", fileName);
-    const buffer = fs.readFileSync(filePath);
+    const buffer = await otaHelpers.getOtaFirmware(filePath, undefined);
 
     return [otaHelpers.parseOtaImage(buffer), filePath];
 };
@@ -616,15 +618,19 @@ describe("Device OTA", () => {
         return fetchMockFirmware;
     });
 
-    beforeEach(() => {
+    beforeEach(async () => {
         Device.resetCache();
         vi.stubGlobal("fetch", fetchMock);
 
-        fetchIndexEntries = OTA_FILES.map((fileName, i) => {
-            const [image] = loadImage(fileName);
+        fetchIndexEntries = [];
 
-            return buildIndexEntry(fileName, image, i);
-        });
+        for (let i = 0; i < OTA_FILES.length; i++) {
+            const fileName = OTA_FILES[i];
+            const [image] = await loadImage(fileName);
+
+            fetchIndexEntries.push(buildIndexEntry(fileName, image, i));
+        }
+
         firmwareBuffer = undefined;
 
         // @ts-expect-error not proper API, but here we just want to reset to default
@@ -658,7 +664,7 @@ describe("Device OTA", () => {
 
         it("performs notify flow when current payload is missing", async () => {
             const fileName = OTA_FILES[1];
-            const [image, filePath] = loadImage(fileName);
+            const [image, filePath] = await loadImage(fileName);
             const {device, endpoint} = createDevice({image, source: {}, requestPayload: undefined});
             const result = await device.checkOta({}, undefined, {});
 
@@ -767,7 +773,7 @@ describe("Device OTA", () => {
 
         it("handles custom index as absolute path", async () => {
             const fileName = OTA_FILES[0];
-            const [image] = loadImage(fileName);
+            const [image] = await loadImage(fileName);
             const requestPayload: TClusterCommandPayload<"genOta", "queryNextImageRequest"> = {
                 fieldControl: 0,
                 manufacturerCode: image.header.manufacturerCode,
@@ -789,7 +795,7 @@ describe("Device OTA", () => {
 
         it("handles custom index as relative path", async () => {
             const fileName = OTA_FILES[0];
-            const [image] = loadImage(fileName);
+            const [image] = await loadImage(fileName);
             const requestPayload: TClusterCommandPayload<"genOta", "queryNextImageRequest"> = {
                 fieldControl: 0,
                 manufacturerCode: image.header.manufacturerCode,
@@ -811,14 +817,14 @@ describe("Device OTA", () => {
         });
 
         it("throws with custom index as relative path when OTA not configured properly", async () => {
-            const [image] = loadImage(OTA_FILES[0]);
+            const [image] = await loadImage(OTA_FILES[0]);
             const {device} = createDevice({image, source: {}, requestPayload: undefined});
 
             await expect(device.checkOta({url: "my_index.json"}, undefined, {})).rejects.toThrow(/Invalid OTA configuration/);
         });
 
         it("handles failures when waiting for OTA notify response", async () => {
-            const [image] = loadImage(OTA_FILES[0]);
+            const [image] = await loadImage(OTA_FILES[0]);
             const {device} = createDevice({image, source: {}, requestPayload: undefined});
             // just need to trigger something called inside the right code path
             const frameSpy = vi.spyOn(Zcl.Frame, "fromBuffer").mockImplementationOnce(() => {
@@ -832,7 +838,7 @@ describe("Device OTA", () => {
         it("fails when remote index fetching fails", async () => {
             fetchMock.mockResolvedValueOnce(fetchMockFail);
 
-            const [image] = loadImage(OTA_FILES[0]);
+            const [image] = await loadImage(OTA_FILES[0]);
             firmwareBuffer = image.raw;
             const requestPayload: TClusterCommandPayload<"genOta", "queryNextImageRequest"> = {
                 fieldControl: 0,
@@ -905,7 +911,7 @@ describe("Device OTA", () => {
 
         it("allows use of remote override index even if URL index fetching fails", async () => {
             fetchMock.mockResolvedValueOnce(fetchMockIndex).mockResolvedValueOnce(fetchMockFail);
-            const [image] = loadImage(OTA_FILES[0]);
+            const [image] = await loadImage(OTA_FILES[0]);
             firmwareBuffer = image.raw;
             const requestPayload: TClusterCommandPayload<"genOta", "queryNextImageRequest"> = {
                 fieldControl: 0,
@@ -929,7 +935,7 @@ describe("Device OTA", () => {
             fetchMock.mockResolvedValueOnce(fetchMockFail);
 
             const fileName = OTA_FILES[0];
-            const [image] = loadImage(fileName);
+            const [image] = await loadImage(fileName);
             firmwareBuffer = image.raw;
             const requestPayload: TClusterCommandPayload<"genOta", "queryNextImageRequest"> = {
                 fieldControl: 0,
@@ -958,7 +964,7 @@ describe("Device OTA", () => {
             fetchMock.mockResolvedValueOnce(fetchMockFail);
 
             const fileName = OTA_FILES[1];
-            const [image] = loadImage(fileName);
+            const [image] = await loadImage(fileName);
             firmwareBuffer = image.raw;
             const {device, endpoint, tempDir} = createDevice({image, source: {}, requestPayload: undefined});
             const infoSpy = vi.spyOn(logger, "info");
@@ -983,7 +989,7 @@ describe("Device OTA", () => {
             "lumi.curtain.agl001",
         ])("overrides %s file version with meta and reports upgrade availability", async (modelID) => {
             const fileName = OTA_FILES[0];
-            const [image, filePath] = loadImage(fileName);
+            const [image, filePath] = await loadImage(fileName);
             const {device} = createSimpleDevice({
                 modelID,
                 manufacturerName: "Aqara",
@@ -1014,7 +1020,7 @@ describe("Device OTA", () => {
 
         it("writes scenes group before checking OTA for PP-WHT-US", async () => {
             const fileName = OTA_FILES[2];
-            const [image, filePath] = loadImage(fileName);
+            const [image, filePath] = await loadImage(fileName);
             const {device} = createSimpleDevice({modelID: "PP-WHT-US", manufacturerName: "Lutron"});
             const scenesEndpoint = {
                 ID: 2,
@@ -1050,7 +1056,7 @@ describe("Device OTA", () => {
         });
 
         it.each(OTA_FILES)("applies an upgrade image end-to-end (%s)", async (fileName) => {
-            const [image] = loadImage(fileName);
+            const [image] = await loadImage(fileName);
             firmwareBuffer = image.raw;
             const requestPayload: TClusterCommandPayload<"genOta", "queryNextImageRequest"> = {
                 fieldControl: 0,
@@ -1102,7 +1108,7 @@ describe("Device OTA", () => {
 
         it("applies a downgrade image end-to-end", async () => {
             const fileName = OTA_FILES[0];
-            const [image, filePath] = loadImage(fileName);
+            const [image, filePath] = await loadImage(fileName);
             firmwareBuffer = image.raw;
             const requestPayload: TClusterCommandPayload<"genOta", "queryNextImageRequest"> = {
                 fieldControl: 0,
@@ -1162,7 +1168,7 @@ describe("Device OTA", () => {
 
         it("considers an upgrade successful even if no device announce", async () => {
             const fileName = OTA_FILES[0];
-            const [image] = loadImage(fileName);
+            const [image] = await loadImage(fileName);
             firmwareBuffer = image.raw;
             const baseSize = 64;
 
@@ -1193,7 +1199,7 @@ describe("Device OTA", () => {
 
         it("handles receiving non-value for data size", async () => {
             const fileName = OTA_FILES[0];
-            const [image] = loadImage(fileName);
+            const [image] = await loadImage(fileName);
             firmwareBuffer = image.raw;
             const requestPayload: TClusterCommandPayload<"genOta", "queryNextImageRequest"> = {
                 fieldControl: 0,
@@ -1223,7 +1229,7 @@ describe("Device OTA", () => {
 
         it("handles out-of-order block offsets", async () => {
             const fileName = OTA_FILES[0];
-            const [image] = loadImage(fileName);
+            const [image] = await loadImage(fileName);
             firmwareBuffer = image.raw;
             const requestPayload: TClusterCommandPayload<"genOta", "queryNextImageRequest"> = {
                 fieldControl: 0,
@@ -1278,7 +1284,7 @@ describe("Device OTA", () => {
 
         it("handles negative misaligned block offset - resends portion already sent", async () => {
             const fileName = OTA_FILES[0];
-            const [image] = loadImage(fileName);
+            const [image] = await loadImage(fileName);
             firmwareBuffer = image.raw;
             const requestPayload: TClusterCommandPayload<"genOta", "queryNextImageRequest"> = {
                 fieldControl: 0,
@@ -1338,7 +1344,7 @@ describe("Device OTA", () => {
 
         it("handles positive misaligned block offset - skips portion", async () => {
             const fileName = OTA_FILES[0];
-            const [image] = loadImage(fileName);
+            const [image] = await loadImage(fileName);
             firmwareBuffer = image.raw;
             const requestPayload: TClusterCommandPayload<"genOta", "queryNextImageRequest"> = {
                 fieldControl: 0,
@@ -1398,7 +1404,7 @@ describe("Device OTA", () => {
 
         it("handles page requests", async () => {
             const fileName = OTA_FILES[0];
-            const [image] = loadImage(fileName);
+            const [image] = await loadImage(fileName);
             firmwareBuffer = image.raw;
             const requestPayload: TClusterCommandPayload<"genOta", "queryNextImageRequest"> = {
                 fieldControl: 0,
@@ -2123,7 +2129,7 @@ describe("Device OTA", () => {
         });
 
         it("recovers from image block response failures", async () => {
-            const [image] = loadImage(OTA_FILES[2]);
+            const [image] = await loadImage(OTA_FILES[2]);
             firmwareBuffer = image.raw;
             const baseSize = 64;
             const expectedBlocks = Math.ceil(image.header.totalImageSize / baseSize);
@@ -2213,7 +2219,7 @@ describe("Device OTA", () => {
 
         it("fails when check fails", async () => {
             const fileName = OTA_FILES[0];
-            const [image] = loadImage(fileName);
+            const [image] = await loadImage(fileName);
             firmwareBuffer = image.raw;
             const requestPayload: TClusterCommandPayload<"genOta", "queryNextImageRequest"> = {
                 fieldControl: 0,
@@ -2238,7 +2244,7 @@ describe("Device OTA", () => {
 
         it("fails when device stops sending data requests", async () => {
             const fileName = OTA_FILES[0];
-            const [image] = loadImage(fileName);
+            const [image] = await loadImage(fileName);
             firmwareBuffer = image.raw;
             const requestPayload: TClusterCommandPayload<"genOta", "queryNextImageRequest"> = {
                 fieldControl: 0,
@@ -2263,7 +2269,7 @@ describe("Device OTA", () => {
 
         it("fails when upgrade end never arrives", async () => {
             const fileName = OTA_FILES[0];
-            const [image] = loadImage(fileName);
+            const [image] = await loadImage(fileName);
             firmwareBuffer = image.raw;
             const requestPayload: TClusterCommandPayload<"genOta", "queryNextImageRequest"> = {
                 fieldControl: 0,
@@ -2289,7 +2295,7 @@ describe("Device OTA", () => {
 
         it("fails when device sends upgrade end request with INVALID_IMAGE after image fully sent", async () => {
             const fileName = OTA_FILES[1];
-            const [image] = loadImage(fileName);
+            const [image] = await loadImage(fileName);
             firmwareBuffer = image.raw;
             const baseSize = 64;
             const {run, device, endpoint} = createDevice({
@@ -2311,7 +2317,7 @@ describe("Device OTA", () => {
 
         it("fails when device sends upgrade end request with ABORT after a certain number of blocks", async () => {
             const fileName = OTA_FILES[0];
-            const [image] = loadImage(fileName);
+            const [image] = await loadImage(fileName);
             firmwareBuffer = image.raw;
             const baseSize = 64;
             const {run, device, endpoint} = createDevice({
@@ -2338,7 +2344,7 @@ describe("Device OTA", () => {
 
         it("fails when image notify fails", async () => {
             const fileName = OTA_FILES[0];
-            const [image] = loadImage(fileName);
+            const [image] = await loadImage(fileName);
             firmwareBuffer = image.raw;
             const baseSize = 64;
             const {run, device, endpoint} = createDevice({
@@ -2361,7 +2367,7 @@ describe("Device OTA", () => {
 
         it("fails when upgrade end response fails", async () => {
             const fileName = OTA_FILES[0];
-            const [image] = loadImage(fileName);
+            const [image] = await loadImage(fileName);
             firmwareBuffer = image.raw;
             const baseSize = 64;
             const {run, device, endpoint} = createDevice({
@@ -2384,7 +2390,7 @@ describe("Device OTA", () => {
 
         it("fails when query next image response fails", async () => {
             const fileName = OTA_FILES[0];
-            const [image] = loadImage(fileName);
+            const [image] = await loadImage(fileName);
             firmwareBuffer = image.raw;
             const baseSize = 50;
             const {run, device, endpoint} = createDevice({
@@ -2407,7 +2413,7 @@ describe("Device OTA", () => {
 
         it("does not throw on failed default response after non-success upgrade end request", async () => {
             const fileName = OTA_FILES[0];
-            const [image] = loadImage(fileName);
+            const [image] = await loadImage(fileName);
             firmwareBuffer = image.raw;
             const baseSize = 64;
             const {run, device, endpoint} = createDevice({
@@ -2463,7 +2469,7 @@ describe("Device OTA", () => {
         });
 
         it("returns NO_IMAGE_AVAILABLE when device version matches available in repo", async () => {
-            const [image] = loadImage(OTA_FILES[0]);
+            const [image] = await loadImage(OTA_FILES[0]);
             firmwareBuffer = image.raw;
             const requestPayload: TClusterCommandPayload<"genOta", "queryNextImageRequest"> = {
                 fieldControl: 0,
@@ -2497,7 +2503,7 @@ describe("Device OTA", () => {
         });
 
         it("returns NO_IMAGE_AVAILABLE when device version is above available in repo (upgrade)", async () => {
-            const [image] = loadImage(OTA_FILES[0]);
+            const [image] = await loadImage(OTA_FILES[0]);
             firmwareBuffer = image.raw;
             const requestPayload: TClusterCommandPayload<"genOta", "queryNextImageRequest"> = {
                 fieldControl: 0,
@@ -2531,7 +2537,7 @@ describe("Device OTA", () => {
         });
 
         it("returns NO_IMAGE_AVAILABLE when device version is below available in repo (downgrade)", async () => {
-            const [image] = loadImage(OTA_FILES[0]);
+            const [image] = await loadImage(OTA_FILES[0]);
             firmwareBuffer = image.raw;
             const requestPayload: TClusterCommandPayload<"genOta", "queryNextImageRequest"> = {
                 fieldControl: 0,
@@ -2565,7 +2571,7 @@ describe("Device OTA", () => {
         });
 
         it("returns NO_IMAGE_AVAILABLE when device version matches available at given URL", async () => {
-            const [image] = loadImage(OTA_FILES[0]);
+            const [image] = await loadImage(OTA_FILES[0]);
             firmwareBuffer = image.raw;
             const requestPayload: TClusterCommandPayload<"genOta", "queryNextImageRequest"> = {
                 fieldControl: 0,
@@ -2603,7 +2609,7 @@ describe("Device OTA", () => {
         });
 
         it("returns NO_IMAGE_AVAILABLE when parsing repo firmware fails", async () => {
-            const [image] = loadImage(OTA_FILES[0]);
+            const [image] = await loadImage(OTA_FILES[0]);
             firmwareBuffer = image.raw;
             const requestPayload: TClusterCommandPayload<"genOta", "queryNextImageRequest"> = {
                 fieldControl: 0,
@@ -2642,7 +2648,7 @@ describe("Device OTA", () => {
         });
 
         it("returns NO_IMAGE_AVAILABLE when parsing custom firmware fails", async () => {
-            const [image] = loadImage(OTA_FILES[0]);
+            const [image] = await loadImage(OTA_FILES[0]);
             firmwareBuffer = Buffer.from(image.raw);
             firmwareBuffer[0] = 0xff;
             const requestPayload: TClusterCommandPayload<"genOta", "queryNextImageRequest"> = {
@@ -2715,7 +2721,7 @@ describe("Device OTA", () => {
             fetchMock.mockResolvedValueOnce(fetchMockIndex).mockResolvedValueOnce(fetchMockFail);
 
             const fileName = OTA_FILES[0];
-            const [image] = loadImage(fileName);
+            const [image] = await loadImage(fileName);
             const meta: ZigbeeOtaImageMeta = {
                 fileName,
                 url: "https://example.com/custom.ota",
@@ -2761,7 +2767,7 @@ describe("Device OTA", () => {
 
         it("returns NO_IMAGE_AVAILABLE when custom file fails checksum", async () => {
             const fileName = OTA_FILES[0];
-            const [image, filePath] = loadImage(fileName);
+            const [image, filePath] = await loadImage(fileName);
             const meta: ZigbeeOtaImageMeta = {
                 fileName,
                 url: filePath,
@@ -2805,7 +2811,7 @@ describe("Device OTA", () => {
 
         it("returns NO_IMAGE_AVAILABLE when index has no entries", async () => {
             fetchIndexEntries = [];
-            const [image] = loadImage(OTA_FILES[1]);
+            const [image] = await loadImage(OTA_FILES[1]);
             firmwareBuffer = image.raw;
             const dataSettings: OtaDataSettings = {requestTimeout: 0, responseDelay: 0, baseSize: 32};
             const {run, device, endpoint} = createDevice({
@@ -2876,7 +2882,7 @@ describe("Device OTA", () => {
         // tests for each possibility in `findMatchingOtaImage`
 
         it.each(OTA_FILES)("finds match by spec (%s)", async (fileName) => {
-            const [image] = loadImage(fileName);
+            const [image] = await loadImage(fileName);
             const current: TClusterCommandPayload<"genOta", "queryNextImageRequest"> = {
                 fieldControl: 0,
                 manufacturerCode: image.header.manufacturerCode,
