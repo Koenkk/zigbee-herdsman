@@ -356,8 +356,8 @@ export class Device extends Entity<ControllerEventMap> {
                 const cluster: Clusters[string] =
                     dataPayload.clusterID === Zcl.Clusters.genTime.ID
                         ? {
-                            attributes: timeService.getTimeClusterAttributes(),
-                        }
+                              attributes: timeService.getTimeClusterAttributes(),
+                          }
                         : endpoint.clusters[frame.cluster.name];
 
                 if (cluster) {
