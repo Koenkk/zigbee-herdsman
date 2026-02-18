@@ -3384,6 +3384,188 @@ describe("Controller", () => {
         expect(events.message[0].cluster).toBe("myCustomCluster");
     });
 
+    it("merges added custom clusters definitions", async () => {
+        await controller.start();
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
+        const device = controller.getDeviceByIeeeAddr("0x129")!;
+        const endpoint = device.endpoints[0]!;
+
+        interface BoschThermostatCluster {
+            attributes: {
+                /** ID: 16391 | Type: ENUM8 */
+                operatingMode: number;
+                /** ID: 16416 | Type: ENUM8 | Only used on BTH-RA */
+                heatingDemand: number;
+                /** ID: 16418 | Type: ENUM8 | Only used on BTH-RA */
+                valveAdaptStatus: number;
+                /** ID: 16421 | Type: ENUM8 | Only used on BTH-RM230Z with value depending on heaterType */
+                unknownAttribute0: number;
+                /** ID: 16448 | Type: INT16 | Only used on BTH-RA */
+                remoteTemperature: number;
+                /** ID: 16449 | Type: ENUM8 | Only used on BTH-RA with default value 0x01 */
+                unknownAttribute1: number;
+                /** ID: 16450 | Type: ENUM8 */
+                windowOpenMode: number;
+                /** ID: 16451 | Type: ENUM8 */
+                boostHeating: number;
+                /** ID: 16466 | Type: INT16 | Only used on BTH-RM and BTH-RM230Z */
+                cableSensorTemperature: number;
+                /** ID: 16480 | Type: ENUM8 | Only used on BTH-RM230Z */
+                valveType: number;
+                /** ID: 16481 | Type: ENUM8 | Read-only on BTH-RM230Z with value depending on heaterType */
+                unknownAttribute2: number;
+                /** ID: 16482 | Type: ENUM8 | Only used on BTH-RM and BTH-RM230Z */
+                cableSensorMode: number;
+                /** ID: 16483 | Type: ENUM8 | Only used on BTH-RM230Z */
+                heaterType: number;
+                /** ID: 20480 | Type: BITMAP8 */
+                errorState: number;
+                /** ID: 20496 | Type: ENUM8 | Only used on BTH-RA */
+                automaticValveAdapt: number;
+            };
+            commands: {
+                /** ID: 65 | Only used on BTH-RA */
+                calibrateValve: Record<string, never>;
+            };
+            commandResponses: never;
+        }
+
+        device.addCustomCluster("hvacThermostat", {
+            ID: 0x0201,
+            attributes: {
+                localTemperatureCalibration: {ID: 0x0010, type: Zcl.DataType.INT8, write: true, min: -50, max: 50, default: 0},
+            },
+            commands: {},
+            commandsResponse: {},
+        });
+        device.addCustomCluster("hvacThermostat", {
+            ID: Zcl.Clusters.hvacThermostat.ID,
+            attributes: {
+                operatingMode: {
+                    ID: 0x4007,
+                    type: Zcl.DataType.ENUM8,
+                    manufacturerCode: Zcl.ManufacturerCode.ROBERT_BOSCH_GMBH,
+                    write: true,
+                    max: 0xff,
+                },
+                heatingDemand: {
+                    ID: 0x4020,
+                    type: Zcl.DataType.ENUM8,
+                    manufacturerCode: Zcl.ManufacturerCode.ROBERT_BOSCH_GMBH,
+                    write: true,
+                    max: 0xff,
+                },
+                valveAdaptStatus: {
+                    ID: 0x4022,
+                    type: Zcl.DataType.ENUM8,
+                    manufacturerCode: Zcl.ManufacturerCode.ROBERT_BOSCH_GMBH,
+                    write: true,
+                    max: 0xff,
+                },
+                unknownAttribute0: {
+                    ID: 0x4025,
+                    type: Zcl.DataType.ENUM8,
+                    manufacturerCode: Zcl.ManufacturerCode.ROBERT_BOSCH_GMBH,
+                    write: true,
+                    max: 0xff,
+                },
+                remoteTemperature: {
+                    ID: 0x4040,
+                    type: Zcl.DataType.INT16,
+                    manufacturerCode: Zcl.ManufacturerCode.ROBERT_BOSCH_GMBH,
+                    write: true,
+                    min: -32768,
+                },
+                unknownAttribute1: {
+                    ID: 0x4041,
+                    type: Zcl.DataType.ENUM8,
+                    manufacturerCode: Zcl.ManufacturerCode.ROBERT_BOSCH_GMBH,
+                    write: true,
+                    max: 0xff,
+                },
+                windowOpenMode: {
+                    ID: 0x4042,
+                    type: Zcl.DataType.ENUM8,
+                    manufacturerCode: Zcl.ManufacturerCode.ROBERT_BOSCH_GMBH,
+                    write: true,
+                    max: 0xff,
+                },
+                boostHeating: {
+                    ID: 0x4043,
+                    type: Zcl.DataType.ENUM8,
+                    manufacturerCode: Zcl.ManufacturerCode.ROBERT_BOSCH_GMBH,
+                    write: true,
+                    max: 0xff,
+                },
+                cableSensorTemperature: {
+                    ID: 0x4052,
+                    type: Zcl.DataType.INT16,
+                    manufacturerCode: Zcl.ManufacturerCode.ROBERT_BOSCH_GMBH,
+                    write: true,
+                    min: -32768,
+                },
+                valveType: {ID: 0x4060, type: Zcl.DataType.ENUM8, manufacturerCode: Zcl.ManufacturerCode.ROBERT_BOSCH_GMBH, write: true, max: 0xff},
+                unknownAttribute2: {
+                    ID: 0x4061,
+                    type: Zcl.DataType.ENUM8,
+                    manufacturerCode: Zcl.ManufacturerCode.ROBERT_BOSCH_GMBH,
+                    write: true,
+                    max: 0xff,
+                },
+                cableSensorMode: {
+                    ID: 0x4062,
+                    type: Zcl.DataType.ENUM8,
+                    manufacturerCode: Zcl.ManufacturerCode.ROBERT_BOSCH_GMBH,
+                    write: true,
+                    max: 0xff,
+                },
+                heaterType: {ID: 0x4063, type: Zcl.DataType.ENUM8, manufacturerCode: Zcl.ManufacturerCode.ROBERT_BOSCH_GMBH, write: true, max: 0xff},
+                errorState: {ID: 0x5000, type: Zcl.DataType.BITMAP8, manufacturerCode: Zcl.ManufacturerCode.ROBERT_BOSCH_GMBH, write: true},
+                automaticValveAdapt: {
+                    ID: 0x5010,
+                    type: Zcl.DataType.ENUM8,
+                    manufacturerCode: Zcl.ManufacturerCode.ROBERT_BOSCH_GMBH,
+                    write: true,
+                    max: 0xff,
+                },
+            },
+            commands: {
+                calibrateValve: {ID: 0x41, parameters: []},
+            },
+            commandsResponse: {},
+        });
+
+        await expect(
+            endpoint.write<"hvacThermostat", BoschThermostatCluster>(
+                "hvacThermostat",
+                {localTemperatureCalibration: -47, cableSensorMode: 0x02},
+                {manufacturerCode: Zcl.ManufacturerCode.ROBERT_BOSCH_GMBH},
+            ),
+        ).resolves.toStrictEqual(undefined);
+
+        await expect(
+            endpoint.write<"hvacThermostat", BoschThermostatCluster>(
+                "hvacThermostat",
+                {localTemperatureCalibration: 50, heatingDemand: 0x01},
+                {manufacturerCode: Zcl.ManufacturerCode.ROBERT_BOSCH_GMBH},
+            ),
+        ).resolves.toStrictEqual(undefined);
+
+        await expect(
+            endpoint.write<"hvacThermostat", BoschThermostatCluster>(
+                "hvacThermostat",
+                {localTemperatureCalibration: 51},
+                {manufacturerCode: Zcl.ManufacturerCode.ROBERT_BOSCH_GMBH},
+            ),
+        ).rejects.toThrow("localTemperatureCalibration requires max of 50");
+
+        await expect(
+            endpoint.read<"hvacThermostat", BoschThermostatCluster>("hvacThermostat", ["boostHeating", "operatingMode"], {
+                manufacturerCode: Zcl.ManufacturerCode.ROBERT_BOSCH_GMBH,
+            }),
+        ).resolves.toStrictEqual({16391: 0, 16451: 0});
+    });
+
     it("Send zcl command to all no options", async () => {
         await controller.start();
         await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
