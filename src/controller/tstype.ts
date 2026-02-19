@@ -163,6 +163,35 @@ export interface RawPayload {
     timeout?: number;
 }
 
+export interface NetworkScanOptions {
+    /** Channels to scan, defaults to all channels 11-26. */
+    channels?: number[];
+    /** Zigbee scan duration exponent (0-5). */
+    duration?: number;
+    /** Number of scans per channel (1-8). */
+    count?: number;
+    /** Target network address, defaults to coordinator (0x0000). */
+    target?: number;
+}
+
+export interface NetworkScanEnergy {
+    channel: number;
+    energy: number;
+}
+
+export interface NetworkScanResult {
+    target: number;
+    channels: number[];
+    duration: number;
+    count: number;
+    scannedChannelsMask: number;
+    scannedChannels: number[];
+    totalTransmissions: number;
+    totalFailures: number;
+    entryList: number[];
+    energy: NetworkScanEnergy[];
+}
+
 export interface TCustomCluster {
     attributes: Record<string, unknown> | never;
     commands: Record<string, Record<string, unknown | never>> | never;

@@ -9692,6 +9692,56 @@ describe("Controller", () => {
         expect(device.genBasic.zclVersion).toStrictEqual(2);
     });
 
+    it("Controller networkScan requests and parses NWK_UPDATE response", async () => {
+        await controller.start();
+        mockAdapterSendZdo.mockClear();
+
+        mockAdapterSendZdo.mockImplementationOnce(() => {
+            return [
+                Zdo.Status.SUCCESS,
+                {
+                    scannedChannels: ZSpec.Utils.channelsToUInt32Mask([11, 15]),
+                    totalTransmissions: 12,
+                    totalFailures: 3,
+                    entryList: [189, 141],
+                },
+            ];
+        });
+
+        const result = await controller.networkScan({channels: [15, 11], duration: 3, count: 2, target: 0x0000});
+
+        const expectedPayload = Zdo.Buffalo.buildRequest(false, Zdo.ClusterId.NWK_UPDATE_REQUEST, [11, 15], 3, 2, undefined, undefined);
+        expect(mockAdapterSendZdo).toHaveBeenCalledTimes(1);
+        expect(mockAdapterSendZdo).toHaveBeenCalledWith(ZSpec.BLANK_EUI64, 0x0000, Zdo.ClusterId.NWK_UPDATE_REQUEST, expectedPayload, false);
+        expect(result).toStrictEqual({
+            target: 0x0000,
+            channels: [11, 15],
+            duration: 3,
+            count: 2,
+            scannedChannelsMask: ZSpec.Utils.channelsToUInt32Mask([11, 15]),
+            scannedChannels: [11, 15],
+            totalTransmissions: 12,
+            totalFailures: 3,
+            entryList: [189, 141],
+            energy: [
+                {channel: 11, energy: 189},
+                {channel: 15, energy: 141},
+            ],
+        });
+    });
+
+    it("Controller networkScan throws on failed NWK_UPDATE status", async () => {
+        await controller.start();
+        mockAdapterSendZdo.mockClear();
+
+        mockAdapterSendZdo.mockImplementationOnce(() => {
+            return [Zdo.Status.NOT_SUPPORTED, undefined];
+        });
+
+        await expect(controller.networkScan()).rejects.toThrow();
+        expect(mockAdapterSendZdo).toHaveBeenCalledTimes(1);
+    });
+
     it("triggers sendZdo on sendRaw", async () => {
         await controller.start();
         mockAdapterSendZdo.mockClear();
