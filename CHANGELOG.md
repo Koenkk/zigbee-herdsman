@@ -1,5 +1,15 @@
 # Changelog
 
+## [9.0.5](https://github.com/Koenkk/zigbee-herdsman/compare/v9.0.4...v9.0.5) (2026-02-19)
+
+
+### Bug Fixes
+
+* **ignore:** add test for merging of custom clusters ([#1643](https://github.com/Koenkk/zigbee-herdsman/issues/1643)) ([cf07da8](https://github.com/Koenkk/zigbee-herdsman/commit/cf07da8585d4c39aeb23893570635819c0d9418f))
+* **ignore:** bump the minor-patch group with 2 updates ([#1638](https://github.com/Koenkk/zigbee-herdsman/issues/1638)) ([1117c36](https://github.com/Koenkk/zigbee-herdsman/commit/1117c36a4844f0a5cf9b64260485d96405d35e57))
+* **ignore:** bump the minor-patch group with 3 updates ([#1641](https://github.com/Koenkk/zigbee-herdsman/issues/1641)) ([51cd68b](https://github.com/Koenkk/zigbee-herdsman/commit/51cd68bce73e362992f568fa82e1d10b9160f339))
+* Improve `Request superseded` error ([#1626](https://github.com/Koenkk/zigbee-herdsman/issues/1626)) ([1c978ad](https://github.com/Koenkk/zigbee-herdsman/commit/1c978ad7446f2ca2f53eac9b17875520509bc38a))
+
 ## [9.0.4](https://github.com/Koenkk/zigbee-herdsman/compare/v9.0.3...v9.0.4) (2026-02-08)
 
 
