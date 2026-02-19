@@ -108,7 +108,7 @@ export class RequestQueue extends Set<Request> {
                         if (equal(request.frame.payload, payload)) {
                             newRequest.moveCallbacks(request);
                         } else {
-                            request.reject();
+                            request.reject(new Error("Request superseded"));
                         }
                         this.delete(request);
                     } else if (newRequest.sendPolicy !== "keep-cmd-undiv") {
