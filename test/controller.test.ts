@@ -9742,6 +9742,29 @@ describe("Controller", () => {
         expect(mockAdapterSendZdo).toHaveBeenCalledTimes(1);
     });
 
+    it("Controller networkScan warns when scan entries do not match scanned channel count", async () => {
+        await controller.start();
+        mockAdapterSendZdo.mockClear();
+        mockLogger.warning.mockClear();
+
+        mockAdapterSendZdo.mockImplementationOnce(() => {
+            return [
+                Zdo.Status.SUCCESS,
+                {
+                    scannedChannels: ZSpec.Utils.channelsToUInt32Mask([11, 15]),
+                    totalTransmissions: 12,
+                    totalFailures: 3,
+                    entryList: [189],
+                },
+            ];
+        });
+
+        const result = await controller.networkScan({channels: [11, 15], duration: 3, count: 2, target: 0x0000});
+
+        expect(mockLogger.warning).toHaveBeenCalledWith("Network scan entry count (1) does not match scanned channel count (2).", "zh:controller");
+        expect(result.energy).toStrictEqual([{channel: 11, energy: 189}]);
+    });
+
     it("triggers sendZdo on sendRaw", async () => {
         await controller.start();
         mockAdapterSendZdo.mockClear();
