@@ -1,5 +1,12 @@
 # Changelog
 
+## [9.0.6](https://github.com/Koenkk/zigbee-herdsman/compare/v9.0.5...v9.0.6) (2026-02-20)
+
+
+### Bug Fixes
+
+* perf: ensure manuf code unique ([#1645](https://github.com/Koenkk/zigbee-herdsman/issues/1645)) ([ab30563](https://github.com/Koenkk/zigbee-herdsman/commit/ab30563675c9f88084037601820d0d087b3f274c))
+
 ## [9.0.5](https://github.com/Koenkk/zigbee-herdsman/compare/v9.0.4...v9.0.5) (2026-02-19)
 
 
