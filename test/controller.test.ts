@@ -4520,36 +4520,6 @@ describe("Controller", () => {
         });
     });
 
-    it("Endpoint configure reporting with manufacturer attribute should throw exception", async () => {
-        await controller.start();
-        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
-        const device = controller.getDeviceByIeeeAddr("0x129")!;
-        // @ts-expect-error private
-        device._manufacturerID = Zcl.ManufacturerCode.VIESSMANN_ELEKTRONIK_GMBH;
-        const endpoint = device.getEndpoint(1)!;
-        mocksendZclFrameToEndpoint.mockClear();
-        let error;
-        try {
-            await endpoint.configureReporting("hvacThermostat", [
-                {
-                    attribute: "localTemp",
-                    minimumReportInterval: 1,
-                    maximumReportInterval: 10,
-                    reportableChange: 1,
-                },
-                {
-                    attribute: "viessmannWindowOpenInternal",
-                    minimumReportInterval: 1,
-                    maximumReportInterval: 10,
-                    reportableChange: 1,
-                },
-            ]);
-        } catch (e) {
-            error = e;
-        }
-        expect(error).toStrictEqual(new Error("Cannot have attributes with different manufacturerCode in single 'configureReporting' call"));
-    });
-
     it("Save endpoint configure reporting", async () => {
         await controller.start();
         await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
@@ -5538,23 +5508,6 @@ describe("Controller", () => {
         expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(0);
     });
 
-    it("Write to endpoint with mixed manufacturer attributes", async () => {
-        await controller.start();
-        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
-        mocksendZclFrameToEndpoint.mockClear();
-        const device = controller.getDeviceByIeeeAddr("0x129")!;
-        // @ts-expect-error private
-        device._manufacturerID = Zcl.ManufacturerCode.VIESSMANN_ELEKTRONIK_GMBH;
-        const endpoint = device.getEndpoint(1)!;
-        let error;
-        try {
-            await endpoint.write("hvacThermostat", {occupiedHeatingSetpoint: 2000, viessmannWindowOpenInternal: 1});
-        } catch (e) {
-            error = e;
-        }
-        expect(error).toStrictEqual(new Error("Cannot have attributes with different manufacturerCode in single 'write' call"));
-    });
-
     it("Write response to endpoint with non ZCL attribute", async () => {
         await controller.start();
         await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
@@ -5767,23 +5720,6 @@ describe("Controller", () => {
             deepClone(Zcl.Frame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, true, 4641, 9, "read", 513, [{attrId: 16384}], {})),
         );
         expect(call[4]).toBe(10000);
-    });
-
-    it("Read mixed manufacturer attributes from endpoint", async () => {
-        await controller.start();
-        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
-        mocksendZclFrameToEndpoint.mockClear();
-        const device = controller.getDeviceByIeeeAddr("0x129")!;
-        // @ts-expect-error private
-        device._manufacturerID = Zcl.ManufacturerCode.VIESSMANN_ELEKTRONIK_GMBH;
-        const endpoint = device.getEndpoint(1)!;
-        let error;
-        try {
-            await endpoint.read("hvacThermostat", ["localTemp", "viessmannWindowOpenInternal"]);
-        } catch (e) {
-            error = e;
-        }
-        expect(error).toStrictEqual(new Error("Cannot have attributes with different manufacturerCode in single 'read' call"));
     });
 
     it("Read from endpoint unknown attribute with options", async () => {
@@ -9977,5 +9913,86 @@ describe("Controller", () => {
             "zh:controller:zcl",
         );
         expect(device.genBasic.modelId).toStrictEqual(" other multi-endpoint device");
+    });
+
+    it("ensures manufacturer code is always unique in a single call", async () => {
+        await controller.start();
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
+        const device = controller.getDeviceByIeeeAddr("0x129")!;
+        const endpoint = device.getEndpoint(1)!;
+        const zclCommandSpy = vi.spyOn(endpoint, "zclCommand");
+
+        const writePayload = {occupiedHeatingSetpoint: 2000, viessmannWindowOpenInternal: 1};
+        const writePayloadRaw = {viessmannWindowOpenInternal: 1, 0: {value: 1, type: Zcl.DataType.UINT16}};
+        const readPayload = ["localTemp" as const, "viessmannWindowOpenInternal" as const];
+        const readPayloadRaw = ["viessmannWindowOpenInternal" as const, 0];
+        const configureReportingPayload = [
+            {attribute: "localTemp" as const, minimumReportInterval: 1, maximumReportInterval: 10, reportableChange: 1},
+            {attribute: "viessmannWindowOpenInternal" as const, minimumReportInterval: 1, maximumReportInterval: 10, reportableChange: 1},
+        ];
+        const configureReportingPayloadRaw = [
+            {attribute: "viessmannWindowOpenInternal" as const, minimumReportInterval: 1, maximumReportInterval: 10, reportableChange: 1},
+            {attribute: {ID: 0, type: Zcl.DataType.UINT16}, minimumReportInterval: 1, maximumReportInterval: 10, reportableChange: 1},
+        ];
+        const readReportingConfigPayload = [{attribute: "localTemp" as const}, {attribute: "viessmannWindowOpenInternal" as const}];
+        const readReportingConfigPayloadRaw = [{attribute: "viessmannWindowOpenInternal" as const}, {attribute: {ID: 0}}];
+
+        //-- with internal manufacturer codes
+
+        await expect(endpoint.write("hvacThermostat", writePayload)).rejects.toThrow(
+            "Cannot have attributes with different manufacturerCode in single 'write' call",
+        );
+        await expect(endpoint.write("hvacThermostat", writePayloadRaw)).rejects.toThrow(
+            "Cannot have attributes with different manufacturerCode in single 'write' call",
+        );
+        await expect(endpoint.read("hvacThermostat", readPayload)).rejects.toThrow(
+            "Cannot have attributes with different manufacturerCode in single 'read' call",
+        );
+        await expect(endpoint.read("hvacThermostat", readPayloadRaw)).rejects.toThrow(
+            "Cannot have attributes with different manufacturerCode in single 'read' call",
+        );
+        await expect(endpoint.configureReporting("hvacThermostat", configureReportingPayload)).rejects.toThrow(
+            "Cannot have attributes with different manufacturerCode in single 'configureReporting' call",
+        );
+        await expect(endpoint.configureReporting("hvacThermostat", configureReportingPayloadRaw)).rejects.toThrow(
+            "Cannot have attributes with different manufacturerCode in single 'configureReporting' call",
+        );
+        await expect(endpoint.readReportingConfig("hvacThermostat", readReportingConfigPayload)).rejects.toThrow(
+            "Cannot have attributes with different manufacturerCode in single 'readReportingConfig' call",
+        );
+        await expect(endpoint.readReportingConfig("hvacThermostat", readReportingConfigPayloadRaw)).rejects.toThrow(
+            "Cannot have attributes with different manufacturerCode in single 'readReportingConfig' call",
+        );
+
+        //-- with override manufacturer code
+
+        const manufOpts = {manufacturerCode: Zcl.ManufacturerCode.ROBERT_BOSCH_GMBH};
+
+        await expect(endpoint.write("hvacThermostat", writePayload, manufOpts)).rejects.toThrow(
+            "Cannot have attributes with different manufacturerCode in single 'write' call",
+        );
+        await expect(endpoint.write("hvacThermostat", writePayloadRaw, manufOpts)).rejects.toThrow(
+            "Cannot have attributes with different manufacturerCode in single 'write' call",
+        );
+        await expect(endpoint.read("hvacThermostat", readPayload, manufOpts)).rejects.toThrow(
+            "Cannot have attributes with different manufacturerCode in single 'read' call",
+        );
+        await expect(endpoint.read("hvacThermostat", readPayloadRaw, manufOpts)).rejects.toThrow(
+            "Cannot have attributes with different manufacturerCode in single 'read' call",
+        );
+        await expect(endpoint.configureReporting("hvacThermostat", configureReportingPayload, manufOpts)).rejects.toThrow(
+            "Cannot have attributes with different manufacturerCode in single 'configureReporting' call",
+        );
+        await expect(endpoint.configureReporting("hvacThermostat", configureReportingPayloadRaw, manufOpts)).rejects.toThrow(
+            "Cannot have attributes with different manufacturerCode in single 'configureReporting' call",
+        );
+        await expect(endpoint.readReportingConfig("hvacThermostat", readReportingConfigPayload, manufOpts)).rejects.toThrow(
+            "Cannot have attributes with different manufacturerCode in single 'readReportingConfig' call",
+        );
+        await expect(endpoint.readReportingConfig("hvacThermostat", readReportingConfigPayloadRaw, manufOpts)).rejects.toThrow(
+            "Cannot have attributes with different manufacturerCode in single 'readReportingConfig' call",
+        );
+
+        expect(zclCommandSpy).toHaveBeenCalledTimes(0);
     });
 });

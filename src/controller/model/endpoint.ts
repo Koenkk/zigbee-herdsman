@@ -1025,39 +1025,48 @@ export class Endpoint extends ZigbeeEntity {
         fallbackManufacturerCode: number | undefined, // XXX: problematic undefined for a "fallback"?
         caller: string,
     ): number | undefined {
-        const manufacturerCodes = new Set(
-            attributes.map((nameOrID): number | undefined => {
-                let attributeID: number | string;
+        let firstManufacturerCode: number | undefined;
+        let codeSet = false;
 
-                if (typeof nameOrID === "object") {
-                    // ConfigureReportingItem
-                    if (typeof nameOrID.attribute !== "object") {
-                        attributeID = nameOrID.attribute;
-                    } else {
-                        return fallbackManufacturerCode;
-                    }
+        for (const nameOrID of attributes) {
+            let attributeID: number | string;
+
+            if (typeof nameOrID === "object") {
+                // ConfigureReportingItem
+                if (typeof nameOrID.attribute !== "object") {
+                    attributeID = nameOrID.attribute;
                 } else {
-                    // string || number
-                    attributeID = nameOrID;
+                    if (!codeSet) {
+                        firstManufacturerCode = fallbackManufacturerCode;
+                        codeSet = true;
+                    } else if (firstManufacturerCode !== fallbackManufacturerCode) {
+                        throw new Error(`Cannot have attributes with different manufacturerCode in single '${caller}' call`);
+                    }
+
+                    continue;
                 }
+            } else {
+                // string || number
+                attributeID = nameOrID;
+            }
 
-                // we fall back to caller|cluster provided manufacturerCode
-                const attribute = cluster.getAttribute(attributeID);
+            // we fall back to caller|cluster provided manufacturerCode
+            const attribute = cluster.getAttribute(attributeID);
+            const manufacturerCode = attribute
+                ? attribute.manufacturerCode === undefined
+                    ? fallbackManufacturerCode
+                    : attribute.manufacturerCode
+                : fallbackManufacturerCode;
 
-                if (attribute) {
-                    return attribute.manufacturerCode === undefined ? fallbackManufacturerCode : attribute.manufacturerCode;
-                }
-
-                // unknown attribute, we should not fail on this here
-                return fallbackManufacturerCode;
-            }),
-        );
-
-        if (manufacturerCodes.size === 1) {
-            return manufacturerCodes.values().next().value;
+            if (!codeSet) {
+                firstManufacturerCode = manufacturerCode;
+                codeSet = true;
+            } else if (firstManufacturerCode !== manufacturerCode) {
+                throw new Error(`Cannot have attributes with different manufacturerCode in single '${caller}' call`);
+            }
         }
 
-        throw new Error(`Cannot have attributes with different manufacturerCode in single '${caller}' call`);
+        return firstManufacturerCode;
     }
 
     public async addToGroup(group: Group): Promise<void> {
