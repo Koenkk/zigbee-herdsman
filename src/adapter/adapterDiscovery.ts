@@ -659,11 +659,13 @@ export async function discoverAdapter(adapter?: Adapter, path?: string): Promise
     }
 }
 
+type AllDevices = (TsType.SerialPortOptions & {name: string; path: string})[];
+
 /**
  * @returns List of all serial and mDNS devices found, with matching `adapter` if available
  */
-export async function findAllDevices(): Promise<{name: string; path: string; adapter?: Adapter}[]> {
-    const devices: {name: string; path: string; adapter?: Adapter}[] = [];
+export async function findAllDevices(): Promise<AllDevices> {
+    const devices: AllDevices = [];
     const isWindows = platform() === "win32";
 
     try {
@@ -674,12 +676,31 @@ export async function findAllDevices(): Promise<{name: string; path: string; ada
             const bestMatch = isWindows ? undefined : findUsbAdapterBestMatch(undefined, portInfo, isWindows);
             // @ts-expect-error friendlyName Windows only
             const friendlyName = portInfo.friendlyName ?? portInfo.pnpId;
-
-            devices.push({
+            const device: AllDevices[number] = {
                 name: `${friendlyName} (${portInfo.manufacturer})`,
                 path: portInfo.path,
-                adapter: bestMatch ? bestMatch[0] : undefined,
-            });
+            };
+
+            if (bestMatch) {
+                const adapter = bestMatch[0];
+                const options = bestMatch[1][2].options;
+
+                if (adapter) {
+                    device.adapter = adapter;
+                }
+
+                if (options) {
+                    if (options.baudRate !== undefined) {
+                        device.baudRate = options.baudRate;
+                    }
+
+                    if (options.rtscts !== undefined) {
+                        device.rtscts = options.rtscts;
+                    }
+                }
+            }
+
+            devices.push(device);
         }
         /* v8 ignore start */
     } catch (error) {

@@ -118,6 +118,7 @@ describe("Adapter", () => {
             Object.assign({pnpId: "cc2538", serialNumber: "", locationId: ""}, ZSTACK_CC2538),
             Object.assign({pnpId: "nordic", serialNumber: "", locationId: ""}, ZBOSS_NORDIC),
             Object.assign({pnpId: "zigate-plus-v2", serialNumber: "", locationId: "", manufacturer: ""}, ZIGATE_PLUSV2),
+            Object.assign({pnpId: "zbt-2", serialNumber: "", locationId: ""}, ZBT_2),
         ]);
 
         const p = findAllDevices();
@@ -127,27 +128,35 @@ describe("Adapter", () => {
         await expect(p).resolves.toStrictEqual([
             {
                 name: "zigate-plus-v2 ()",
-                path: "/dev/serial/by-id/usb-FTDI_ZiGate_ZIGATE+-if00-port0",
+                path: ZIGATE_PLUSV2.path,
                 adapter: "zigate",
             },
             {
                 name: "zbdongle-e (ITEAD)",
-                path: "/dev/serial/by-id/usb-ITEAD_SONOFF_Zigbee_3.0_USB_Dongle_Plus_V2_20240122184111-if00",
+                path: EMBER_ZBDONGLE_E.path,
+                adapter: "ember",
+                rtscts: false,
+            },
+            {
+                name: "zbt-2 (Nabu Casa)",
+                path: ZBT_2.path,
+                baudRate: 460800,
+                rtscts: true,
                 adapter: "ember",
             },
             {
                 name: "cc2538 (Texas Instruments)",
-                path: "/dev/serial/by-id/usb-Texas_Instruments_CC2538_USB_CDC-if00",
+                path: ZSTACK_CC2538.path,
                 adapter: "zstack",
             },
             {
                 name: "nordic (ZEPHYR)",
-                path: "/dev/serial/by-id/usb-ZEPHYR_Zigbee_NCP_54ACCFAFA6DADC49-if00",
+                path: ZBOSS_NORDIC.path,
                 adapter: "zboss",
             },
             {
                 name: "deconz conbee ii (dresden elektronik ingenieurtechnik GmbH)",
-                path: "/dev/serial/by-id/usb-dresden_elektronik_ingenieurtechnik_GmbH_ConBee_II_DE2132111-if00",
+                path: DECONZ_CONBEE_II.path,
                 adapter: "deconz",
             },
             {
@@ -203,7 +212,6 @@ describe("Adapter", () => {
             {
                 name: "silicon labs cp210x (ITEAD)",
                 path: EMBER_ZBDONGLE_E_CP.path,
-                adapter: undefined,
             },
             {
                 name: "Mock Adapter (tcp://mock_adapter.local:1122)",
