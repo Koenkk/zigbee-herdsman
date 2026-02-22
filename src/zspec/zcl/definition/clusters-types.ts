@@ -510,7 +510,7 @@ export interface TClusters {
             getSceneMembershipRsp: {
                 /** type=ENUM8 */
                 status: number;
-                /** type=UINT8 | min=1 | max=255 | special=NoFurtherScenesMayBeAdded,00,AtLeastOneFurtherSceneMayBeAdded,fe,Unknown,ff */
+                /** type=UINT8 | min=0 | max=255 | special=NoFurtherScenesMayBeAdded,00,AtLeastOneFurtherSceneMayBeAdded,fe,Unknown,ff */
                 capacity: number;
                 /** type=UINT16 */
                 groupid: number;
