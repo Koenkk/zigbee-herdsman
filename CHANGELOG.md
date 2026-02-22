@@ -1,5 +1,13 @@
 # Changelog
 
+## [9.0.6](https://github.com/Koenkk/zigbee-herdsman/compare/v9.0.5...v9.0.6) (2026-02-22)
+
+
+### Bug Fixes
+
+* add serial options to `findAllDevices` return items ([#1647](https://github.com/Koenkk/zigbee-herdsman/issues/1647)) ([5cc4837](https://github.com/Koenkk/zigbee-herdsman/commit/5cc483705e75e69cd28d5be58ed8a4035294bd6a))
+* perf: ensure manuf code unique ([#1645](https://github.com/Koenkk/zigbee-herdsman/issues/1645)) ([ab30563](https://github.com/Koenkk/zigbee-herdsman/commit/ab30563675c9f88084037601820d0d087b3f274c))
+
 ## [9.0.5](https://github.com/Koenkk/zigbee-herdsman/compare/v9.0.4...v9.0.5) (2026-02-19)
 
 
