@@ -7898,24 +7898,6 @@ export interface TClusters {
         commands: never;
         commandResponses: never;
     };
-    elkoSwitchConfigurationClusterServer: {
-        attributes: {
-            /** ID=0x0000 | type=ENUM8 | write=true | max=255 */
-            SwitchIndication: number;
-            /** ID=0x0010 | type=UINT8 | write=true | max=255 */
-            UpSceneID: number;
-            /** ID=0x0011 | type=UINT16 | write=true | max=65535 */
-            UpGroupID: number;
-            /** ID=0x0020 | type=UINT8 | write=true | max=255 */
-            DownSceneID: number;
-            /** ID=0x0021 | type=UINT16 | write=true | max=65535 */
-            DownGroupID: number;
-            /** ID=0x0001 | type=ENUM8 | write=true | max=255 */
-            SwitchActions: number;
-        };
-        commands: never;
-        commandResponses: never;
-    };
     manuSpecificSchneiderLightSwitchConfiguration: {
         attributes: {
             /** ID=0x0000 | type=ENUM8 | write=true | max=255 */
