@@ -434,7 +434,6 @@ export type ClusterName =
     | "manuSpecificSamsungAccelerometer"
     | "tradfriButton"
     | "schneiderSpecificPilotMode"
-    | "elkoOccupancySettingClusterServer"
     | "manuSpecificSchneiderLightSwitchConfiguration"
     | "manuSpecificSchneiderFanSwitchConfiguration"
     | "sprutVoc"
