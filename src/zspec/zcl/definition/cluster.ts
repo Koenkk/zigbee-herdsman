@@ -7505,18 +7505,6 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         commands: {},
         commandsResponse: {},
     },
-    elkoOccupancySettingClusterServer: {
-        ID: 0xff19,
-        manufacturerCode: ManufacturerCode.ADEO,
-        attributes: {
-            AmbienceLightThreshold: {ID: 0x0000, type: DataType.UINT16, write: true, max: 0xffff},
-            OccupancyActions: {ID: 0x0001, type: DataType.ENUM8, write: true, max: 0xff},
-            UnoccupiedLevelDflt: {ID: 0x0002, type: DataType.UINT8, write: true, max: 0xff},
-            UnoccupiedLevel: {ID: 0x0003, type: DataType.UINT8, write: true, max: 0xff},
-        },
-        commands: {},
-        commandsResponse: {},
-    },
     elkoSwitchConfigurationClusterServer: {
         ID: 0xff17,
         manufacturerCode: ManufacturerCode.ADEO,
