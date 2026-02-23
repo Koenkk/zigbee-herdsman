@@ -7898,24 +7898,6 @@ export interface TClusters {
         commands: never;
         commandResponses: never;
     };
-    manuSpecificSchneiderLightSwitchConfiguration: {
-        attributes: {
-            /** ID=0x0000 | type=ENUM8 | write=true | max=255 */
-            ledIndication: number;
-            /** ID=0x0010 | type=UINT8 | write=true | max=255 */
-            upSceneID: number;
-            /** ID=0x0011 | type=UINT16 | write=true | max=65535 */
-            upGroupID: number;
-            /** ID=0x0020 | type=UINT8 | write=true | max=255 */
-            downSceneID: number;
-            /** ID=0x0021 | type=UINT16 | write=true | max=65535 */
-            downGroupID: number;
-            /** ID=0x0001 | type=ENUM8 | write=true | max=255 */
-            switchActions: number;
-        };
-        commands: never;
-        commandResponses: never;
-    };
     manuSpecificSchneiderFanSwitchConfiguration: {
         attributes: {
             /** ID=0x0002 | type=UINT8 | write=true | max=255 */
