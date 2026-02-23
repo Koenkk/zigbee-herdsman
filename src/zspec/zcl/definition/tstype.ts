@@ -435,7 +435,6 @@ export type ClusterName =
     | "tradfriButton"
     | "schneiderSpecificPilotMode"
     | "elkoOccupancySettingClusterServer"
-    | "elkoSwitchConfigurationClusterServer"
     | "manuSpecificSchneiderLightSwitchConfiguration"
     | "manuSpecificSchneiderFanSwitchConfiguration"
     | "sprutVoc"
