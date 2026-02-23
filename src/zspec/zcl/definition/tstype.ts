@@ -434,7 +434,6 @@ export type ClusterName =
     | "manuSpecificSamsungAccelerometer"
     | "tradfriButton"
     | "schneiderSpecificPilotMode"
-    | "manuSpecificSchneiderLightSwitchConfiguration"
     | "manuSpecificSchneiderFanSwitchConfiguration"
     | "sprutVoc"
     | "sprutNoise"
