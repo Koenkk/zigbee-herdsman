@@ -404,7 +404,7 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
                     {
                         name: "capacity",
                         type: DataType.UINT8,
-                        min: 1,
+                        min: 0,
                         max: 0xff,
                         special: [
                             ["NoFurtherScenesMayBeAdded", "00"],
