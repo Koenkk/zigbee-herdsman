@@ -7517,20 +7517,6 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         commands: {},
         commandsResponse: {},
     },
-    elkoSwitchConfigurationClusterServer: {
-        ID: 0xff17,
-        manufacturerCode: ManufacturerCode.ADEO,
-        attributes: {
-            SwitchIndication: {ID: 0x0000, type: DataType.ENUM8, write: true, max: 0xff},
-            UpSceneID: {ID: 0x0010, type: DataType.UINT8, write: true, max: 0xff},
-            UpGroupID: {ID: 0x0011, type: DataType.UINT16, write: true, max: 0xffff},
-            DownSceneID: {ID: 0x0020, type: DataType.UINT8, write: true, max: 0xff},
-            DownGroupID: {ID: 0x0021, type: DataType.UINT16, write: true, max: 0xffff},
-            SwitchActions: {ID: 0x0001, type: DataType.ENUM8, write: true, max: 0xff},
-        },
-        commands: {},
-        commandsResponse: {},
-    },
     manuSpecificSchneiderLightSwitchConfiguration: {
         ID: 0xff17,
         manufacturerCode: ManufacturerCode.SCHNEIDER_ELECTRIC,
