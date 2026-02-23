@@ -7898,20 +7898,6 @@ export interface TClusters {
         commands: never;
         commandResponses: never;
     };
-    elkoOccupancySettingClusterServer: {
-        attributes: {
-            /** ID=0x0000 | type=UINT16 | write=true | max=65535 */
-            AmbienceLightThreshold: number;
-            /** ID=0x0001 | type=ENUM8 | write=true | max=255 */
-            OccupancyActions: number;
-            /** ID=0x0002 | type=UINT8 | write=true | max=255 */
-            UnoccupiedLevelDflt: number;
-            /** ID=0x0003 | type=UINT8 | write=true | max=255 */
-            UnoccupiedLevel: number;
-        };
-        commands: never;
-        commandResponses: never;
-    };
     elkoSwitchConfigurationClusterServer: {
         attributes: {
             /** ID=0x0000 | type=ENUM8 | write=true | max=255 */
