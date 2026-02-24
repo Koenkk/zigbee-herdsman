@@ -1,5 +1,18 @@
 # Changelog
 
+## [9.0.7](https://github.com/Koenkk/zigbee-herdsman/compare/v9.0.6...v9.0.7) (2026-02-24)
+
+
+### Bug Fixes
+
+* Capacity field in Get Scene Membership Response can be 0 ([#1649](https://github.com/Koenkk/zigbee-herdsman/issues/1649)) ([785b87b](https://github.com/Koenkk/zigbee-herdsman/commit/785b87b63cbf696c811139503c7895146fb2b7b3))
+* **ignore:** bump @biomejs/biome from 2.4.1 to 2.4.4 in the minor-patch group ([#1651](https://github.com/Koenkk/zigbee-herdsman/issues/1651)) ([2880f09](https://github.com/Koenkk/zigbee-herdsman/commit/2880f09f0f7027c06b94f6c06b110c841783deb9))
+* Move manuSpecificDoorman from ZH to ZHC ([#1655](https://github.com/Koenkk/zigbee-herdsman/issues/1655)) ([44ae58f](https://github.com/Koenkk/zigbee-herdsman/commit/44ae58f27b511eb128082c12a45c7cb0e2d30830))
+* Move manuSpecificSchneiderLightSwitchConfiguration to ZHC ([#1654](https://github.com/Koenkk/zigbee-herdsman/issues/1654)) ([e41b4d1](https://github.com/Koenkk/zigbee-herdsman/commit/e41b4d1fd5c9499a221aa986be32f22e65f2d2a1))
+* Pass abort signal to controller start ([#1656](https://github.com/Koenkk/zigbee-herdsman/issues/1656)) ([e35afa7](https://github.com/Koenkk/zigbee-herdsman/commit/e35afa776eae52e88ef2a62306d000d28b097ba2))
+* Remove elkoOccupancySettingClusterServer (moved to ZHC) ([#1650](https://github.com/Koenkk/zigbee-herdsman/issues/1650)) ([4f4f3fc](https://github.com/Koenkk/zigbee-herdsman/commit/4f4f3fcbc242f4a772e472bb4e29590246f1c7e9))
+* Remove elkoSwitchConfigurationClusterServer (moved to ZHC) ([#1652](https://github.com/Koenkk/zigbee-herdsman/issues/1652)) ([8673881](https://github.com/Koenkk/zigbee-herdsman/commit/867388113c05994663c9987e36b66516bfaa5791))
+
 ## [9.0.6](https://github.com/Koenkk/zigbee-herdsman/compare/v9.0.5...v9.0.6) (2026-02-22)
 
 
