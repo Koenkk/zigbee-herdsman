@@ -444,6 +444,5 @@ export type ClusterName =
     | "zosungIRTransmit"
     | "zosungIRControl"
     | "manuSpecificAssaDoorLock"
-    | "manuSpecificDoorman"
     | "manuSpecificProfalux1"
     | "manuSpecificAmazonWWAH";
