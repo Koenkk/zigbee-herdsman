@@ -7592,14 +7592,6 @@ export interface TClusters {
         };
         commandResponses: never;
     };
-    wiserDeviceInfo: {
-        attributes: {
-            /** ID=0x0020 | type=CHAR_STR | write=true */
-            deviceInfo: string;
-        };
-        commands: never;
-        commandResponses: never;
-    };
     manuSpecificTuya: {
         attributes: never;
         commands: {
