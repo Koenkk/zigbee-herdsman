@@ -8256,32 +8256,6 @@ export interface TClusters {
             };
         };
     };
-    manuSpecificDoorman: {
-        attributes: never;
-        commands: {
-            /** ID=0xfc */
-            getConfigurationParameter: {
-                /** type=CHAR_STR */
-                payload: string;
-            };
-            /** ID=0xfd */
-            setConfigurationParameter: {
-                /** type=CHAR_STR */
-                payload: string;
-            };
-            /** ID=0x25 */
-            integrationModeActivation: {
-                /** type=CHAR_STR */
-                payload: string;
-            };
-            /** ID=0x4e */
-            armDisarm: {
-                /** type=CHAR_STR */
-                payload: string;
-            };
-        };
-        commandResponses: never;
-    };
     manuSpecificProfalux1: {
         attributes: {
             /** ID=0x0000 | type=UINT8 | write=true | max=255 */
