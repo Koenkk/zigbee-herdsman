@@ -7193,14 +7193,6 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         },
         commandsResponse: {},
     },
-    wiserDeviceInfo: {
-        ID: 0xfe03, // 65027
-        attributes: {
-            deviceInfo: {ID: 0x0020, type: DataType.CHAR_STR, write: true},
-        },
-        commands: {},
-        commandsResponse: {},
-    },
     /**
      * Tuya cluster
      *
