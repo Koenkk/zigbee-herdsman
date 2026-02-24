@@ -130,7 +130,7 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
     /**
      * Start the Herdsman controller
      */
-    public async start(): Promise<AdapterTsType.StartResult> {
+    public async start(abortSignal?: AbortSignal): Promise<AdapterTsType.StartResult> {
         // Database (create end inject)
         this.database = Database.open(this.options.databasePath);
         Entity.injectDatabase(this.database);
@@ -138,11 +138,15 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
         // Adapter (create and inject)
         this.adapter = await Adapter.create(this.options.network, this.options.serialPort, this.options.backupPath, this.options.adapter);
 
+        abortSignal?.throwIfAborted();
+
         const stringifiedOptions = JSON.stringify(this.options).replaceAll(JSON.stringify(this.options.network.networkKey), '"HIDDEN"');
         logger.debug(`Starting with options '${stringifiedOptions}'`, NS);
         const startResult = await this.adapter.start();
         logger.debug(`Started with result '${startResult}'`, NS);
         this.adapterDisconnected = false;
+
+        abortSignal?.throwIfAborted();
 
         // Check if we have to change the channel, only do this when adapter `resumed` because:
         // - `getNetworkParameters` might be return wrong info because it needs to propogate after backup restore
@@ -156,6 +160,8 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
             if (configuredChannel !== adapterChannel) {
                 logger.info(`Configured channel '${configuredChannel}' does not match adapter channel '${adapterChannel}', changing channel`, NS);
                 await this.changeChannel(adapterChannel, configuredChannel, nwkUpdateID);
+
+                abortSignal?.throwIfAborted();
             }
         }
 
@@ -180,19 +186,17 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
                 fs.copyFileSync(this.options.databasePath, this.options.databaseBackupPath);
             }
 
-            logger.debug("Clearing database...", NS);
-            for (const group of Group.allIterator()) {
-                group.removeFromDatabase();
-            }
-
-            for (const device of Device.allIterator()) {
-                device.removeFromDatabase();
-            }
+            this.database.clear();
+            Group.resetCache();
             Device.resetCache();
+
+            abortSignal?.throwIfAborted();
         }
 
         if (startResult === "reset" || (this.options.backupPath && !fs.existsSync(this.options.backupPath))) {
             await this.backup();
+
+            abortSignal?.throwIfAborted();
         }
 
         // Add coordinator to the database if it is not there yet.
@@ -214,8 +218,12 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
 
             await coordinator.updateActiveEndpoints();
 
+            abortSignal?.throwIfAborted();
+
             for (const endpoint of coordinator.endpoints) {
                 await endpoint.updateSimpleDescriptor();
+
+                abortSignal?.throwIfAborted();
             }
 
             coordinator.save();
