@@ -7505,20 +7505,6 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         commands: {},
         commandsResponse: {},
     },
-    manuSpecificSchneiderLightSwitchConfiguration: {
-        ID: 0xff17,
-        manufacturerCode: ManufacturerCode.SCHNEIDER_ELECTRIC,
-        attributes: {
-            ledIndication: {ID: 0x0000, type: DataType.ENUM8, write: true, max: 0xff},
-            upSceneID: {ID: 0x0010, type: DataType.UINT8, write: true, max: 0xff},
-            upGroupID: {ID: 0x0011, type: DataType.UINT16, write: true, max: 0xffff},
-            downSceneID: {ID: 0x0020, type: DataType.UINT8, write: true, max: 0xff},
-            downGroupID: {ID: 0x0021, type: DataType.UINT16, write: true, max: 0xffff},
-            switchActions: {ID: 0x0001, type: DataType.ENUM8, write: true, max: 0xff},
-        },
-        commands: {},
-        commandsResponse: {},
-    },
     manuSpecificSchneiderFanSwitchConfiguration: {
         ID: 0xfc04,
         manufacturerCode: ManufacturerCode.SCHNEIDER_ELECTRIC,
