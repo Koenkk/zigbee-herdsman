@@ -7826,41 +7826,6 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             },*/ // C4 driver has this response yet there is no command - maybe a non-specific cluster response?
         },
     },
-    manuSpecificDoorman: {
-        ID: 0xeacc,
-        attributes: {},
-        commands: {
-            getConfigurationParameter: {
-                ID: 0xfc,
-                parameters: [
-                    // bit pack ("bbb", 0x00, 0x00, configurationId)
-                    {name: "payload", type: DataType.CHAR_STR},
-                ],
-            },
-            setConfigurationParameter: {
-                ID: 0xfd,
-                parameters: [
-                    // bit pack ("bbbb", 0x00, 0x00, configurationId, value)
-                    {name: "payload", type: DataType.CHAR_STR},
-                ],
-            },
-            integrationModeActivation: {
-                ID: 0x25,
-                parameters: [
-                    // bit pack ("bbbbb", slot, codeType, string sub (userCode, 1, 2), string sub (userCode, 3, 4), string sub (userCode, 5, 6)) .. String duplicate (0xff, 12)
-                    {name: "payload", type: DataType.CHAR_STR},
-                ],
-            },
-            armDisarm: {
-                ID: 0x4e,
-                parameters: [
-                    // bit pack ("bb", lockSequenceNumber, operatingParameter)
-                    {name: "payload", type: DataType.CHAR_STR},
-                ],
-            },
-        },
-        commandsResponse: {},
-    },
     manuSpecificProfalux1: {
         ID: 0xfc21, // Config cluster, 0xfc20 mostly for commands it seems
         manufacturerCode: ManufacturerCode.PROFALUX,
