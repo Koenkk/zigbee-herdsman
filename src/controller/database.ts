@@ -6,18 +6,18 @@ import type {DatabaseEntry, EntityType} from "./tstype";
 const NS = "zh:controller:database";
 
 export class Database {
-    private entries: {[id: number]: DatabaseEntry};
+    private entries: Map<number, DatabaseEntry>;
     private path: string;
     private maxId: number;
 
-    private constructor(entries: {[id: number]: DatabaseEntry}, path: string, maxId: number) {
+    private constructor(entries: Map<number, DatabaseEntry>, path: string, maxId: number) {
         this.entries = entries;
         this.path = path;
         this.maxId = maxId;
     }
 
     public static open(path: string): Database {
-        const entries: {[id: number]: DatabaseEntry} = {};
+        const entries = new Map<number, DatabaseEntry>();
         let maxId = 0;
 
         if (fs.existsSync(path)) {
@@ -32,7 +32,7 @@ export class Database {
                     const json = JSON.parse(row);
 
                     if (Number.isFinite(json.id)) {
-                        entries[json.id] = json;
+                        entries.set(json.id, json);
 
                         if (json.id > maxId) {
                             maxId = json.id;
@@ -48,9 +48,7 @@ export class Database {
     }
 
     public *getEntriesIterator(type: EntityType[]): Generator<DatabaseEntry> {
-        for (const id in this.entries) {
-            const entry = this.entries[id];
-
+        for (const entry of this.entries.values()) {
             if (type.includes(entry.type)) {
                 yield entry;
             }
@@ -58,20 +56,20 @@ export class Database {
     }
 
     public insert(databaseEntry: DatabaseEntry): void {
-        if (this.entries[databaseEntry.id]) {
+        if (this.entries.has(databaseEntry.id)) {
             throw new Error(`DatabaseEntry with ID '${databaseEntry.id}' already exists`);
         }
 
-        this.entries[databaseEntry.id] = databaseEntry;
+        this.entries.set(databaseEntry.id, databaseEntry);
         this.write();
     }
 
     public update(databaseEntry: DatabaseEntry, write: boolean): void {
-        if (!this.entries[databaseEntry.id]) {
+        if (!this.entries.has(databaseEntry.id)) {
             throw new Error(`DatabaseEntry with ID '${databaseEntry.id}' does not exist`);
         }
 
-        this.entries[databaseEntry.id] = databaseEntry;
+        this.entries.set(databaseEntry.id, databaseEntry);
 
         if (write) {
             this.write();
@@ -79,16 +77,15 @@ export class Database {
     }
 
     public remove(id: number): void {
-        if (!this.entries[id]) {
+        if (this.entries.delete(id)) {
+            this.write();
+        } else {
             throw new Error(`DatabaseEntry with ID '${id}' does not exist`);
         }
-
-        delete this.entries[id];
-        this.write();
     }
 
     public has(id: number): boolean {
-        return Boolean(this.entries[id]);
+        return this.entries.has(id);
     }
 
     public newID(): number {
@@ -100,8 +97,8 @@ export class Database {
         logger.debug(`Writing database to '${this.path}'`, NS);
         let lines = "";
 
-        for (const id in this.entries) {
-            lines += `${JSON.stringify(this.entries[id])}\n`;
+        for (const entry of this.entries.values()) {
+            lines += `${JSON.stringify(entry)}\n`;
         }
 
         const tmpPath = `${this.path}.tmp`;
@@ -123,6 +120,12 @@ export class Database {
         fs.fsyncSync(fd);
         fs.closeSync(fd);
         fs.renameSync(tmpPath, this.path);
+    }
+
+    public clear(): void {
+        logger.debug(`Clearing database '${this.path}'...`, NS);
+        this.entries.clear();
+        this.write();
     }
 }
 

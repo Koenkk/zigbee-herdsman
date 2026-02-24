@@ -648,7 +648,8 @@ describe("Controller", () => {
     });
 
     it("Controller start", async () => {
-        await controller.start();
+        const abortController = new AbortController();
+        await controller.start(abortController.signal);
         expect(mockAdapterStart).toHaveBeenCalledTimes(1);
         expect(deepClone(controller.getDevicesByType("Coordinator")[0])).toStrictEqual({
             ID: 1,
@@ -708,6 +709,33 @@ describe("Controller", () => {
         });
         expect(JSON.parse(fs.readFileSync(options.backupPath).toString())).toStrictEqual(JSON.parse(JSON.stringify(dummyBackup)));
         vi.advanceTimersByTime(86500000);
+    });
+
+    it("aborts start on signal", async () => {
+        const abortController = new AbortController();
+        mockAdapterStart.mockImplementationOnce(async () => {
+            abortController.abort();
+
+            return await Promise.resolve("resumed");
+        });
+        const getNetworkParametersSpy = vi.spyOn(controller, "getNetworkParameters");
+        const backupSpy = vi.spyOn(controller, "backup");
+        const deviceResetCacheSpy = vi.spyOn(Device, "resetCache");
+        const groupResetCacheSpy = vi.spyOn(Group, "resetCache");
+
+        try {
+            await expect(controller.start(abortController.signal)).rejects.toThrow("This operation was aborted");
+            expect(mockAdapterStart).toHaveBeenCalledTimes(1);
+            expect(getNetworkParametersSpy).toHaveBeenCalledTimes(0);
+            expect(backupSpy).toHaveBeenCalledTimes(0);
+            expect(deviceResetCacheSpy).toHaveBeenCalledTimes(0);
+            expect(groupResetCacheSpy).toHaveBeenCalledTimes(0);
+        } finally {
+            getNetworkParametersSpy.mockRestore();
+            backupSpy.mockRestore();
+            deviceResetCacheSpy.mockRestore();
+            groupResetCacheSpy.mockRestore();
+        }
     });
 
     it("Controller update ieeeAddr if changed", async () => {
@@ -1110,7 +1138,8 @@ describe("Controller", () => {
         mockAdapterGetNetworkParameters.mockReturnValueOnce({panID: 1, extendedPanID: "0x64c5fd698daf0c00", channel: 25, nwkUpdateID: 0});
         // @ts-expect-error private
         const changeChannelSpy = vi.spyOn(controller, "changeChannel");
-        await controller.start();
+        const abortController = new AbortController();
+        await controller.start(abortController.signal);
         expect(mockAdapterGetNetworkParameters).toHaveBeenCalledTimes(1);
         const zdoPayload = Zdo.Buffalo.buildRequest(false, Zdo.ClusterId.NWK_UPDATE_REQUEST, [15], 0xfe, undefined, 1, undefined);
         expect(mockAdapterSendZdo).toHaveBeenCalledWith(
@@ -1798,8 +1827,10 @@ describe("Controller", () => {
         await controller.stop();
 
         mockAdapterStart.mockReturnValueOnce("reset");
-        await controller.start();
+        const abortController = new AbortController();
+        await controller.start(abortController.signal);
         expect(controller.getDevices().length).toBe(1);
+        expect(controller.getGroupsIterator().next().value).toBeUndefined();
         expect(controller.getDevicesByType("Coordinator")[0].type).toBe("Coordinator");
         expect(controller.getDeviceByIeeeAddr("0x129")).toBeUndefined();
         expect(controller.getGroupByID(1)).toBeUndefined();
