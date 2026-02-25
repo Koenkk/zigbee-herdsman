@@ -7846,16 +7846,6 @@ export interface TClusters {
         };
         commandResponses: never;
     };
-    manuSpecificSchneiderFanSwitchConfiguration: {
-        attributes: {
-            /** ID=0x0002 | type=UINT8 | write=true | max=255 */
-            ledIndication: number;
-            /** ID=0x0060 | type=UINT8 | write=true | max=255 */
-            ledOrientation: number;
-        };
-        commands: never;
-        commandResponses: never;
-    };
     sprutVoc: {
         attributes: {
             /** ID=0x6600 | type=UINT16 | write=true | max=65535 */
