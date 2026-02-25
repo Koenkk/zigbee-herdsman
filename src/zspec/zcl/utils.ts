@@ -99,107 +99,69 @@ export function getDataTypeClass(dataType: DataType): DataTypeClass {
     throw new Error(`Don't know value type for '${DataType[dataType]}'`);
 }
 
-/**
- * This can be greatly optimized when `clusters==ZCL` once these have been moved out of ZH (can just use fast lookup <id, name>):
- * - 'manuSpecificPhilips', 'manuSpecificAssaDoorLock'
- * - 'elkoSwitchConfigurationClusterServer', 'manuSpecificSchneiderLightSwitchConfiguration'
- */
-function findZclClusterById(id: number, manufacturerCode: number | undefined): [cluster: Cluster | undefined, partialMatch: boolean] {
-    let cluster: Cluster | undefined;
-    // if manufacturer code is given, consider partial match if didn't match against manufacturer code
-    let partialMatch = !!manufacturerCode;
-
-    const zclNames = ZCL_CLUSTERS_ID_TO_NAMES.get(id);
-
-    if (zclNames) {
-        for (const zclName of zclNames) {
-            const foundCluster = Clusters[zclName as ClusterName];
-
-            // priority on first match when matching only ID
-            if (cluster === undefined) {
-                cluster = foundCluster;
-            }
-
-            if (manufacturerCode && foundCluster.manufacturerCode === manufacturerCode) {
-                cluster = foundCluster;
-                partialMatch = false;
-                break;
-            }
-
-            if (!foundCluster.manufacturerCode) {
-                cluster = foundCluster;
-                break;
-            }
-        }
-    }
-
-    return [cluster, partialMatch];
-}
-
-function findCustomClusterByID(
-    id: number,
-    manufacturerCode: number | undefined,
-    customClusters: CustomClusters,
-): [cluster: Cluster | undefined, partialMatch: boolean] {
-    let cluster: Cluster | undefined;
-    // if manufacturer code is given, consider partial match if didn't match against manufacturer code
-    let partialMatch = !!manufacturerCode;
-
-    for (const clusterName in customClusters) {
-        const foundCluster = customClusters[clusterName as ClusterName];
-
-        if (foundCluster.ID === id) {
-            // priority on first match when matching only ID
-            if (cluster === undefined) {
-                cluster = foundCluster;
-            }
-
-            if (manufacturerCode && foundCluster.manufacturerCode === manufacturerCode) {
-                cluster = foundCluster;
-                partialMatch = false;
-                break;
-            }
-
-            if (!foundCluster.manufacturerCode) {
-                cluster = foundCluster;
-                break;
-            }
-        }
-    }
-
-    return [cluster, partialMatch];
-}
-
 export function getCluster(key: string | number, manufacturerCode: number | undefined = undefined, customClusters: CustomClusters = {}): Cluster {
     let cluster: Cluster | undefined;
 
     if (typeof key === "number") {
-        let partialMatch: boolean;
-
         // custom clusters have priority over Zcl clusters, except in case of better match (see below)
-        [cluster, partialMatch] = findCustomClusterByID(key, manufacturerCode, customClusters);
+        for (const clusterName in customClusters) {
+            const foundCluster = customClusters[clusterName as ClusterName];
+
+            if (foundCluster.ID === key) {
+                // priority on first match when matching only ID
+                if (cluster === undefined) {
+                    cluster = foundCluster;
+                }
+
+                if (manufacturerCode && foundCluster.manufacturerCode === manufacturerCode) {
+                    cluster = foundCluster;
+                    break;
+                }
+
+                if (!foundCluster.manufacturerCode) {
+                    cluster = foundCluster;
+                    break;
+                }
+            }
+        }
 
         if (!cluster) {
-            [cluster, partialMatch] = findZclClusterById(key, manufacturerCode);
-        } else if (partialMatch) {
-            // TODO: remove block once custom clusters fully migrated to ZHC
-            let zclCluster: Cluster | undefined;
-            [zclCluster, partialMatch] = findZclClusterById(key, manufacturerCode);
+            // This can be greatly optimized when `clusters==ZCL` once these have been moved out of ZH (can just use fast lookup <id, name>):
+            // - 'manuSpecificPhilips', 'manuSpecificAssaDoorLock'
+            // - 'elkoSwitchConfigurationClusterServer', 'manuSpecificSchneiderLightSwitchConfiguration'
+            const zclNames = ZCL_CLUSTERS_ID_TO_NAMES.get(key);
 
-            // Zcl clusters contain a better match, use that one
-            if (zclCluster !== undefined && !partialMatch) {
-                cluster = zclCluster;
+            if (zclNames) {
+                for (const zclName of zclNames) {
+                    const foundCluster = Clusters[zclName];
+
+                    // priority on first match when matching only ID
+                    if (cluster === undefined) {
+                        cluster = foundCluster;
+                    }
+
+                    if (manufacturerCode && foundCluster.manufacturerCode === manufacturerCode) {
+                        cluster = foundCluster;
+                        break;
+                    }
+
+                    if (!foundCluster.manufacturerCode) {
+                        cluster = foundCluster;
+                        break;
+                    }
+                }
             }
+        }
+
+        // TODO: cluster.ID can't be undefined?
+        if (!cluster || cluster.ID === undefined) {
+            cluster = {name: `${key}`, ID: key, attributes: {}, commands: {}, commandsResponse: {}};
         }
     } else {
         cluster = key in customClusters ? customClusters[key] : Clusters[key as ClusterName];
-    }
 
-    // TODO: cluster.ID can't be undefined?
-    if (!cluster || cluster.ID === undefined) {
-        if (typeof key === "number") {
-            cluster = {name: `${key}`, ID: key, attributes: {}, commands: {}, commandsResponse: {}};
-        } else {
+        // TODO: cluster.ID can't be undefined?
+        if (!cluster || cluster.ID === undefined) {
             throw new Error(`Cluster '${key}' does not exist`);
         }
     }

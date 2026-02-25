@@ -8525,111 +8525,218 @@ describe("Controller", () => {
         expect(result.missingRouters[0].ieeeAddr).toBe("0x129");
     });
 
-    // ZCLFrame with manufacturer specific flag and manufacturer code defined, to generic device
-    // ZCLFrameConverter should not modify specific frames!
-    it("Should resolve manufacturer specific cluster attribute names on specific ZCL frames: generic target device", async () => {
-        const buffer = Buffer.from([28, 33, 16, 13, 1, 2, 240, 0, 48, 4]);
-        await controller.start();
-        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
+    describe("ZCL frame converter attributeKeyValue", () => {
+        // ZCLFrame with manufacturer specific flag and manufacturer code defined, to generic device
+        // ZCLFrameConverter should not modify specific frames!
+        it("Should resolve manufacturer specific cluster attribute names on specific ZCL frames: generic target device", async () => {
+            const buffer = Buffer.from([28, 33, 16, 13, 1, 2, 240, 0, 48, 4]);
+            await controller.start();
+            await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
 
-        const frame = Zcl.Frame.fromBuffer(
-            Zcl.Utils.getCluster("closuresWindowCovering", undefined, {}).ID,
-            Zcl.Header.fromBuffer(buffer),
-            buffer,
-            {},
-        );
-        await mockAdapterEvents.zclPayload({
-            wasBroadcast: false,
-            address: "0x129",
-            clusterID: frame.cluster.ID,
-            data: frame.toBuffer(),
-            header: frame.header,
-            endpoint: 1,
-            linkquality: 50,
-            groupID: 0,
+            const frame = Zcl.Frame.fromBuffer(
+                Zcl.Utils.getCluster("closuresWindowCovering", undefined, {}).ID,
+                Zcl.Header.fromBuffer(buffer),
+                buffer,
+                {},
+            );
+            await mockAdapterEvents.zclPayload({
+                wasBroadcast: false,
+                address: "0x129",
+                clusterID: frame.cluster.ID,
+                data: frame.toBuffer(),
+                header: frame.header,
+                endpoint: 1,
+                linkquality: 50,
+                groupID: 0,
+            });
+            expect(events.message.length).toBe(1);
+            expect(events.message[0].data).toMatchObject({calibrationMode: 4});
+            expect(events.message[0].data).not.toMatchObject({tuyaMotorReversal: 4});
         });
-        expect(events.message.length).toBe(1);
-        expect(events.message[0].data).toMatchObject({calibrationMode: 4});
-        expect(events.message[0].data).not.toMatchObject({tuyaMotorReversal: 4});
+
+        // ZCLFrame with manufacturer specific flag and manufacturer code defined, to specific device
+        // ZCLFrameConverter should not modify specific frames!
+        it("Should resolve manufacturer specific cluster attribute names on specific ZCL frames: specific target device", async () => {
+            const buffer = Buffer.from([28, 33, 16, 13, 1, 2, 240, 0, 48, 4]);
+            await controller.start();
+            await mockAdapterEvents.deviceJoined({networkAddress: 177, ieeeAddr: "0x177"});
+            const frame = Zcl.Frame.fromBuffer(
+                Zcl.Utils.getCluster("closuresWindowCovering", undefined, {}).ID,
+                Zcl.Header.fromBuffer(buffer),
+                buffer,
+                {},
+            );
+            await mockAdapterEvents.zclPayload({
+                wasBroadcast: false,
+                address: "0x177",
+                clusterID: frame.cluster.ID,
+                data: frame.toBuffer(),
+                header: frame.header,
+                endpoint: 1,
+                linkquality: 50,
+                groupID: 0,
+            });
+            expect(events.message.length).toBe(1);
+            expect(events.message[0].data).toMatchObject({calibrationMode: 4});
+            expect(events.message[0].data).not.toMatchObject({tuyaMotorReversal: 4});
+        });
+
+        // ZCLFrame without manufacturer specific flag or manufacturer code set, to generic device
+        it("Should resolve generic cluster attribute names on generic ZCL frames: generic target device", async () => {
+            const buffer = Buffer.from([24, 242, 10, 2, 240, 48, 4]);
+            await controller.start();
+            await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
+            const frame = Zcl.Frame.fromBuffer(
+                Zcl.Utils.getCluster("closuresWindowCovering", undefined, {}).ID,
+                Zcl.Header.fromBuffer(buffer),
+                buffer,
+                {},
+            );
+            await mockAdapterEvents.zclPayload({
+                wasBroadcast: false,
+                address: "0x129",
+                clusterID: frame.cluster.ID,
+                data: frame.toBuffer(),
+                header: frame.header,
+                endpoint: 1,
+                linkquality: 50,
+                groupID: 0,
+            });
+            expect(events.message.length).toBe(1);
+            expect(events.message[0].data).toMatchObject({tuyaMotorReversal: 4});
+            expect(events.message[0].data).not.toMatchObject({calibrationMode: 4});
+        });
+
+        // ZCLFrame without manufacturer specific flag set or manufacturer code set, to specific device (Legrand only)
+        it("Should resolve manufacturer specific cluster attribute names on generic ZCL frames: Legrand target device", async () => {
+            const buffer = Buffer.from([24, 242, 10, 2, 240, 48, 4]);
+            await controller.start();
+            await mockAdapterEvents.deviceJoined({networkAddress: 177, ieeeAddr: "0x177"});
+            const frame = Zcl.Frame.fromBuffer(
+                Zcl.Utils.getCluster("closuresWindowCovering", undefined, {}).ID,
+                Zcl.Header.fromBuffer(buffer),
+                buffer,
+                {},
+            );
+            await mockAdapterEvents.zclPayload({
+                wasBroadcast: false,
+                address: "0x177",
+                clusterID: frame.cluster.ID,
+                data: frame.toBuffer(),
+                header: frame.header,
+                endpoint: 1,
+                linkquality: 50,
+                groupID: 0,
+            });
+            expect(events.message.length).toBe(1);
+            expect(events.message[0].data).toMatchObject({calibrationMode: 4});
+            expect(events.message[0].data).not.toMatchObject({tuyaMotorReversal: 4});
+        });
     });
 
-    // ZCLFrame with manufacturer specific flag and manufacturer code defined, to specific device
-    // ZCLFrameConverter should not modify specific frames!
-    it("Should resolve manufacturer specific cluster attribute names on specific ZCL frames: specific target device", async () => {
-        const buffer = Buffer.from([28, 33, 16, 13, 1, 2, 240, 0, 48, 4]);
-        await controller.start();
-        await mockAdapterEvents.deviceJoined({networkAddress: 177, ieeeAddr: "0x177"});
-        const frame = Zcl.Frame.fromBuffer(
-            Zcl.Utils.getCluster("closuresWindowCovering", undefined, {}).ID,
-            Zcl.Header.fromBuffer(buffer),
-            buffer,
-            {},
-        );
-        await mockAdapterEvents.zclPayload({
-            wasBroadcast: false,
-            address: "0x177",
-            clusterID: frame.cluster.ID,
-            data: frame.toBuffer(),
-            header: frame.header,
-            endpoint: 1,
-            linkquality: 50,
-            groupID: 0,
-        });
-        expect(events.message.length).toBe(1);
-        expect(events.message[0].data).toMatchObject({calibrationMode: 4});
-        expect(events.message[0].data).not.toMatchObject({tuyaMotorReversal: 4});
-    });
+    describe("ZCL frame converter attributeList", () => {
+        // ZCLFrame with manufacturer specific flag and manufacturer code defined, to generic device
+        // ZCLFrameConverter should not modify specific frames!
+        it("Should resolve manufacturer specific cluster attribute names on specific ZCL frames: generic target device", async () => {
+            const buffer = Buffer.from([28, 33, 16, 13, 0, 2, 240]);
+            await controller.start();
+            await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
 
-    // ZCLFrame without manufacturer specific flag or manufacturer code set, to generic device
-    it("Should resolve generic cluster attribute names on generic ZCL frames: generic target device", async () => {
-        const buffer = Buffer.from([24, 242, 10, 2, 240, 48, 4]);
-        await controller.start();
-        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
-        const frame = Zcl.Frame.fromBuffer(
-            Zcl.Utils.getCluster("closuresWindowCovering", undefined, {}).ID,
-            Zcl.Header.fromBuffer(buffer),
-            buffer,
-            {},
-        );
-        await mockAdapterEvents.zclPayload({
-            wasBroadcast: false,
-            address: "0x129",
-            clusterID: frame.cluster.ID,
-            data: frame.toBuffer(),
-            header: frame.header,
-            endpoint: 1,
-            linkquality: 50,
-            groupID: 0,
+            const frame = Zcl.Frame.fromBuffer(
+                Zcl.Utils.getCluster("closuresWindowCovering", undefined, {}).ID,
+                Zcl.Header.fromBuffer(buffer),
+                buffer,
+                {},
+            );
+            await mockAdapterEvents.zclPayload({
+                wasBroadcast: false,
+                address: "0x129",
+                clusterID: frame.cluster.ID,
+                data: frame.toBuffer(),
+                header: frame.header,
+                endpoint: 1,
+                linkquality: 50,
+                groupID: 0,
+            });
+            expect(events.message.length).toBe(1);
+            expect(events.message[0].data).toStrictEqual(["calibrationMode"]);
         });
-        expect(events.message.length).toBe(1);
-        expect(events.message[0].data).toMatchObject({tuyaMotorReversal: 4});
-        expect(events.message[0].data).not.toMatchObject({calibrationMode: 4});
-    });
 
-    // ZCLFrame without manufacturer specific flag set or manufacturer code set, to specific device (Legrand only)
-    it("Should resolve manufacturer specific cluster attribute names on generic ZCL frames: Legrand target device", async () => {
-        const buffer = Buffer.from([24, 242, 10, 2, 240, 48, 4]);
-        await controller.start();
-        await mockAdapterEvents.deviceJoined({networkAddress: 177, ieeeAddr: "0x177"});
-        const frame = Zcl.Frame.fromBuffer(
-            Zcl.Utils.getCluster("closuresWindowCovering", undefined, {}).ID,
-            Zcl.Header.fromBuffer(buffer),
-            buffer,
-            {},
-        );
-        await mockAdapterEvents.zclPayload({
-            wasBroadcast: false,
-            address: "0x177",
-            clusterID: frame.cluster.ID,
-            data: frame.toBuffer(),
-            header: frame.header,
-            endpoint: 1,
-            linkquality: 50,
-            groupID: 0,
+        // ZCLFrame with manufacturer specific flag and manufacturer code defined, to specific device
+        // ZCLFrameConverter should not modify specific frames!
+        it("Should resolve manufacturer specific cluster attribute names on specific ZCL frames: specific target device", async () => {
+            const buffer = Buffer.from([28, 33, 16, 13, 0, 2, 240]);
+            await controller.start();
+            await mockAdapterEvents.deviceJoined({networkAddress: 177, ieeeAddr: "0x177"});
+            const frame = Zcl.Frame.fromBuffer(
+                Zcl.Utils.getCluster("closuresWindowCovering", undefined, {}).ID,
+                Zcl.Header.fromBuffer(buffer),
+                buffer,
+                {},
+            );
+            await mockAdapterEvents.zclPayload({
+                wasBroadcast: false,
+                address: "0x177",
+                clusterID: frame.cluster.ID,
+                data: frame.toBuffer(),
+                header: frame.header,
+                endpoint: 1,
+                linkquality: 50,
+                groupID: 0,
+            });
+            expect(events.message.length).toBe(1);
+            expect(events.message[0].data).toStrictEqual(["calibrationMode"]);
         });
-        expect(events.message.length).toBe(1);
-        expect(events.message[0].data).toMatchObject({calibrationMode: 4});
-        expect(events.message[0].data).not.toMatchObject({tuyaMotorReversal: 4});
+
+        // ZCLFrame without manufacturer specific flag or manufacturer code set, to generic device
+        it("Should resolve generic cluster attribute names on generic ZCL frames: generic target device", async () => {
+            const buffer = Buffer.from([24, 242, 0, 2, 240]);
+            await controller.start();
+            await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
+            const frame = Zcl.Frame.fromBuffer(
+                Zcl.Utils.getCluster("closuresWindowCovering", undefined, {}).ID,
+                Zcl.Header.fromBuffer(buffer),
+                buffer,
+                {},
+            );
+            await mockAdapterEvents.zclPayload({
+                wasBroadcast: false,
+                address: "0x129",
+                clusterID: frame.cluster.ID,
+                data: frame.toBuffer(),
+                header: frame.header,
+                endpoint: 1,
+                linkquality: 50,
+                groupID: 0,
+            });
+            expect(events.message.length).toBe(1);
+            expect(events.message[0].data).toStrictEqual(["tuyaMotorReversal"]);
+        });
+
+        // ZCLFrame without manufacturer specific flag set or manufacturer code set, to specific device (Legrand only)
+        it("Should resolve manufacturer specific cluster attribute names on generic ZCL frames: Legrand target device", async () => {
+            const buffer = Buffer.from([24, 242, 0, 2, 240]);
+            await controller.start();
+            await mockAdapterEvents.deviceJoined({networkAddress: 177, ieeeAddr: "0x177"});
+            const frame = Zcl.Frame.fromBuffer(
+                Zcl.Utils.getCluster("closuresWindowCovering", undefined, {}).ID,
+                Zcl.Header.fromBuffer(buffer),
+                buffer,
+                {},
+            );
+            await mockAdapterEvents.zclPayload({
+                wasBroadcast: false,
+                address: "0x177",
+                clusterID: frame.cluster.ID,
+                data: frame.toBuffer(),
+                header: frame.header,
+                endpoint: 1,
+                linkquality: 50,
+                groupID: 0,
+            });
+            expect(events.message.length).toBe(1);
+            expect(events.message[0].data).toStrictEqual(["calibrationMode"]);
+        });
     });
 
     it("zclCommand", async () => {
