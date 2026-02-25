@@ -1338,14 +1338,11 @@ export class Device extends Entity<ControllerEventMap> {
             const extendedCluster: Cluster = {
                 name: cluster.name,
                 ID: cluster.ID,
+                manufacturerCode: cluster.manufacturerCode,
                 attributes: {...existingCluster.attributes, ...cluster.attributes},
                 commands: {...existingCluster.commands, ...cluster.commands},
                 commandsResponse: {...existingCluster.commandsResponse, ...cluster.commandsResponse},
             };
-
-            if (cluster.manufacturerCode !== undefined) {
-                extendedCluster.manufacturerCode = cluster.manufacturerCode;
-            }
 
             this._customClusters[name] = extendedCluster;
         } else {

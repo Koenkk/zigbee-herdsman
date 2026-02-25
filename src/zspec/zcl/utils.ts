@@ -104,8 +104,8 @@ export function getDataTypeClass(dataType: DataType): DataTypeClass {
  * - 'manuSpecificPhilips', 'manuSpecificAssaDoorLock'
  * - 'elkoSwitchConfigurationClusterServer', 'manuSpecificSchneiderLightSwitchConfiguration'
  */
-function findZclClusterById(id: number, manufacturerCode: number | undefined): [cluster: Readonly<Cluster> | undefined, partialMatch: boolean] {
-    let cluster: Readonly<Cluster> | undefined;
+function findZclClusterById(id: number, manufacturerCode: number | undefined): [cluster: Cluster | undefined, partialMatch: boolean] {
+    let cluster: Cluster | undefined;
     // if manufacturer code is given, consider partial match if didn't match against manufacturer code
     let partialMatch = !!manufacturerCode;
 
@@ -140,8 +140,8 @@ function findCustomClusterByID(
     id: number,
     manufacturerCode: number | undefined,
     customClusters: CustomClusters,
-): [cluster: Readonly<Cluster> | undefined, partialMatch: boolean] {
-    let cluster: Readonly<Cluster> | undefined;
+): [cluster: Cluster | undefined, partialMatch: boolean] {
+    let cluster: Cluster | undefined;
     // if manufacturer code is given, consider partial match if didn't match against manufacturer code
     let partialMatch = !!manufacturerCode;
 
@@ -171,7 +171,7 @@ function findCustomClusterByID(
 }
 
 export function getCluster(key: string | number, manufacturerCode: number | undefined = undefined, customClusters: CustomClusters = {}): Cluster {
-    let cluster: Readonly<Cluster> | undefined;
+    let cluster: Cluster | undefined;
 
     if (typeof key === "number") {
         let partialMatch: boolean;
@@ -183,7 +183,7 @@ export function getCluster(key: string | number, manufacturerCode: number | unde
             [cluster, partialMatch] = findZclClusterById(key, manufacturerCode);
         } else if (partialMatch) {
             // TODO: remove block once custom clusters fully migrated to ZHC
-            let zclCluster: Readonly<Cluster> | undefined;
+            let zclCluster: Cluster | undefined;
             [zclCluster, partialMatch] = findZclClusterById(key, manufacturerCode);
 
             // Zcl clusters contain a better match, use that one
@@ -295,17 +295,18 @@ export function getGlobalCommand(key: number | string): Command {
         throw new Error(`Global command with key '${key}' does not exist`);
     }
 
-    const result: Command = {
-        ID: command.ID,
-        name,
-        parameters: command.parameters,
-    };
-
-    if (command.response !== undefined) {
-        result.response = command.response;
-    }
-
-    return result;
+    return command.response !== undefined
+        ? {
+              ID: command.ID,
+              name,
+              parameters: command.parameters,
+              response: command.response,
+          }
+        : {
+              ID: command.ID,
+              name,
+              parameters: command.parameters,
+          };
 }
 
 export function isClusterName(name: string): name is ClusterName {

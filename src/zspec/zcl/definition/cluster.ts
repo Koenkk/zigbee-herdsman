@@ -7813,4 +7813,4 @@ for (const clusterKey in RawClusters) {
     }
 }
 
-export const Clusters = RawClusters as Readonly<Record<ClusterName, Readonly<Cluster>>>;
+export const Clusters = RawClusters as Readonly<Record<ClusterName, Cluster>>;
