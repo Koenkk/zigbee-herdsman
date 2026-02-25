@@ -7882,14 +7882,6 @@ export interface TClusters {
         };
         commandResponses: never;
     };
-    schneiderSpecificPilotMode: {
-        attributes: {
-            /** ID=0x0031 | type=ENUM8 | write=true | max=255 */
-            pilotMode: number;
-        };
-        commands: never;
-        commandResponses: never;
-    };
     manuSpecificSchneiderFanSwitchConfiguration: {
         attributes: {
             /** ID=0x0002 | type=UINT8 | write=true | max=255 */
