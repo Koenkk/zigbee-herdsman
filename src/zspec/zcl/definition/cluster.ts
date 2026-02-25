@@ -7471,16 +7471,6 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         },
         commandsResponse: {},
     },
-    manuSpecificSchneiderFanSwitchConfiguration: {
-        ID: 0xfc04,
-        manufacturerCode: ManufacturerCode.SCHNEIDER_ELECTRIC,
-        attributes: {
-            ledIndication: {ID: 0x0002, type: DataType.UINT8, write: true, max: 0xff},
-            ledOrientation: {ID: 0x0060, type: DataType.UINT8, write: true, max: 0xff},
-        },
-        commands: {},
-        commandsResponse: {},
-    },
     sprutVoc: {
         ID: 0x6601,
         manufacturerCode: 26214,
