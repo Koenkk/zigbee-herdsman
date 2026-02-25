@@ -6,17 +6,13 @@ import type {ClusterOrRawWriteAttributes, TCustomCluster} from "../tstype";
 
 const NS = "zh:controller:zcl";
 
-// Legrand devices (e.g. 4129) fail to set the manufacturerSpecific flag and
-// manufacturerCode in the frame header, despite using specific attributes.
+// Legrand devices fail to set the manufacturerSpecific flag and manufacturerCode in the frame header, despite using specific attributes.
 // This leads to incorrect reported attribute names.
-// Remap the attributes using the target device's manufacturer ID
-// if the header is lacking the information.
+// Remap the attributes using the target device's manufacturer ID if the header is lacking the information.
 function getCluster(frame: Zcl.Frame, deviceManufacturerID: number | undefined, customClusters: CustomClusters): Cluster {
-    let cluster = frame.cluster;
-    if (!frame?.header?.manufacturerCode && frame?.cluster && deviceManufacturerID === Zcl.ManufacturerCode.LEGRAND_GROUP) {
-        cluster = Zcl.Utils.getCluster(frame.cluster.ID, deviceManufacturerID, customClusters);
-    }
-    return cluster;
+    return frame.header?.manufacturerCode === undefined && deviceManufacturerID === Zcl.ManufacturerCode.LEGRAND_GROUP
+        ? Zcl.Utils.getCluster(frame.cluster.name, deviceManufacturerID, customClusters)
+        : frame.cluster;
 }
 
 function attributeKeyValue<Cl extends number | string, Custom extends TCustomCluster | undefined = undefined>(

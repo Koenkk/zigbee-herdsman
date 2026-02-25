@@ -257,9 +257,7 @@ export interface Command {
 
 export interface AttributeDefinition extends Omit<Attribute, "name"> {}
 
-export interface CommandDefinition extends Omit<Command, "name"> {
-    parameters: readonly Parameter[];
-}
+export interface CommandDefinition extends Omit<Command, "name"> {}
 
 export interface Cluster {
     ID: number;

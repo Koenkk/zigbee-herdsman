@@ -1325,23 +1325,30 @@ export class Device extends Entity<ControllerEventMap> {
 
     public addCustomCluster(name: string, cluster: ClusterDefinition): void {
         assert(
-            ![Zcl.Clusters.touchlink.ID, Zcl.Clusters.greenPower.ID].includes(cluster.ID),
+            cluster.ID !== Zcl.Clusters.touchlink.ID && cluster.ID !== Zcl.Clusters.greenPower.ID,
             "Overriding of greenPower or touchlink cluster is not supported",
         );
-        if (Zcl.Utils.isClusterName(name)) {
-            const existingCluster = this._customClusters[name] ?? Zcl.Clusters[name];
 
+        if (Zcl.Utils.isClusterName(name)) {
             // Extend existing cluster
+            const existingCluster = this._customClusters[name] ?? Zcl.Clusters[name];
             assert(existingCluster.ID === cluster.ID, `Custom cluster ID (${cluster.ID}) should match existing cluster ID (${existingCluster.ID})`);
-            cluster = {
+
+            const extendedCluster: ClusterDefinition = {
                 ID: cluster.ID,
-                manufacturerCode: cluster.manufacturerCode,
                 attributes: {...existingCluster.attributes, ...cluster.attributes},
                 commands: {...existingCluster.commands, ...cluster.commands},
                 commandsResponse: {...existingCluster.commandsResponse, ...cluster.commandsResponse},
             };
+
+            if (cluster.manufacturerCode !== undefined) {
+                extendedCluster.manufacturerCode = cluster.manufacturerCode;
+            }
+
+            this._customClusters[name] = extendedCluster;
+        } else {
+            this._customClusters[name] = cluster;
         }
-        this._customClusters[name] = cluster;
     }
 
     #waitForOtaCommand<Co extends string>(

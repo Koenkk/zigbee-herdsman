@@ -70,7 +70,7 @@ const FOUNDATION_DISCOVER_RSP_IDS = [
 
 /** Runtime fast lookup */
 const ZCL_CLUSTERS_ID_TO_NAMES = (() => {
-    const map = new Map<number, string[]>();
+    const map = new Map<number, ClusterName[]>();
 
     for (const clusterName in Clusters) {
         const cluster = Clusters[clusterName as ClusterName];
@@ -78,9 +78,9 @@ const ZCL_CLUSTERS_ID_TO_NAMES = (() => {
         const mapEntry = map.get(cluster.ID);
 
         if (mapEntry) {
-            mapEntry.push(clusterName);
+            mapEntry.push(clusterName as ClusterName);
         } else {
-            map.set(cluster.ID, [clusterName]);
+            map.set(cluster.ID, [clusterName as ClusterName]);
         }
     }
 
@@ -111,60 +111,65 @@ function hasCustomClusters(customClusters: CustomClusters): boolean {
  * - 'manuSpecificPhilips', 'manuSpecificAssaDoorLock'
  * - 'elkoSwitchConfigurationClusterServer', 'manuSpecificSchneiderLightSwitchConfiguration'
  */
-function findClusterNameByID(
+function findZclClusterNameById(id: number, manufacturerCode: number | undefined): [name: string | undefined, partialMatch: boolean] {
+    let name: string | undefined;
+    // if manufacturer code is given, consider partial match if didn't match against manufacturer code
+    let partialMatch = Boolean(manufacturerCode);
+
+    const zclNames = ZCL_CLUSTERS_ID_TO_NAMES.get(id);
+
+    if (zclNames) {
+        for (const zclName of zclNames) {
+            const cluster = Clusters[zclName as ClusterName];
+
+            // priority on first match when matching only ID
+            if (name === undefined) {
+                name = zclName;
+            }
+
+            if (manufacturerCode && cluster.manufacturerCode === manufacturerCode) {
+                name = zclName;
+                partialMatch = false;
+                break;
+            }
+
+            if (!cluster.manufacturerCode) {
+                name = zclName;
+                break;
+            }
+        }
+    }
+
+    return [name, partialMatch];
+}
+
+function findCustomClusterNameByID(
     id: number,
     manufacturerCode: number | undefined,
-    clusters: typeof Clusters | CustomClusters,
-    zcl: boolean,
+    customClusters: CustomClusters,
 ): [name: string | undefined, partialMatch: boolean] {
     let name: string | undefined;
     // if manufacturer code is given, consider partial match if didn't match against manufacturer code
     let partialMatch = Boolean(manufacturerCode);
 
-    if (zcl) {
-        const zclNames = ZCL_CLUSTERS_ID_TO_NAMES.get(id);
+    for (const clusterName in customClusters) {
+        const cluster = customClusters[clusterName as ClusterName];
 
-        if (zclNames) {
-            for (const zclName of zclNames) {
-                const cluster = clusters[zclName as ClusterName];
-
-                // priority on first match when matching only ID
-                if (name === undefined) {
-                    name = zclName;
-                }
-
-                if (manufacturerCode && cluster.manufacturerCode === manufacturerCode) {
-                    name = zclName;
-                    partialMatch = false;
-                    break;
-                }
-
-                if (!cluster.manufacturerCode) {
-                    name = zclName;
-                    break;
-                }
+        if (cluster.ID === id) {
+            // priority on first match when matching only ID
+            if (name === undefined) {
+                name = clusterName;
             }
-        }
-    } else {
-        for (const clusterName in clusters) {
-            const cluster = clusters[clusterName as ClusterName];
 
-            if (cluster.ID === id) {
-                // priority on first match when matching only ID
-                if (name === undefined) {
-                    name = clusterName;
-                }
+            if (manufacturerCode && cluster.manufacturerCode === manufacturerCode) {
+                name = clusterName;
+                partialMatch = false;
+                break;
+            }
 
-                if (manufacturerCode && cluster.manufacturerCode === manufacturerCode) {
-                    name = clusterName;
-                    partialMatch = false;
-                    break;
-                }
-
-                if (!cluster.manufacturerCode) {
-                    name = clusterName;
-                    break;
-                }
+            if (!cluster.manufacturerCode) {
+                name = clusterName;
+                break;
             }
         }
     }
@@ -183,13 +188,14 @@ function getClusterDefinition(
         let partialMatch: boolean;
 
         // custom clusters have priority over Zcl clusters, except in case of better match (see below)
-        [name, partialMatch] = findClusterNameByID(key, manufacturerCode, customClusters, false);
+        [name, partialMatch] = findCustomClusterNameByID(key, manufacturerCode, customClusters);
 
         if (!name) {
-            [name, partialMatch] = findClusterNameByID(key, manufacturerCode, Clusters, true);
+            [name, partialMatch] = findZclClusterNameById(key, manufacturerCode);
         } else if (partialMatch) {
+            // TODO: remove block once custom clusters fully migrated to ZHC
             let zclName: string | undefined;
-            [zclName, partialMatch] = findClusterNameByID(key, manufacturerCode, Clusters, true);
+            [zclName, partialMatch] = findZclClusterNameById(key, manufacturerCode);
 
             // Zcl clusters contain a better match, use that one
             if (zclName !== undefined && !partialMatch) {
@@ -200,13 +206,7 @@ function getClusterDefinition(
         name = key;
     }
 
-    let cluster =
-        name !== undefined && hasCustomClusters(customClusters)
-            ? {
-                  ...Clusters[name as ClusterName],
-                  ...customClusters[name], // should override Zcl clusters
-              }
-            : Clusters[name as ClusterName];
+    let cluster = name !== undefined && hasCustomClusters(customClusters) ? customClusters[name] : Clusters[name as ClusterName];
 
     if (!cluster || cluster.ID === undefined) {
         if (typeof key === "number") {

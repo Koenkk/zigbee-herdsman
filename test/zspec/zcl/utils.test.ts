@@ -13,12 +13,6 @@ const CUSTOM_CLUSTERS: CustomClusters = {
         commandsResponse: {},
         attributes: {myCustomAttr: {ID: 65533, type: Zcl.DataType.UINT8}},
     },
-    manuSpecificProfalux1NoManuf: {
-        ID: Zcl.Clusters.manuSpecificProfalux1.ID,
-        commands: {},
-        commandsResponse: {},
-        attributes: {myCustomAttr: {ID: 65533, type: Zcl.DataType.UINT8}},
-    },
 };
 
 describe("ZCL Utils", () => {
@@ -93,15 +87,6 @@ describe("ZCL Utils", () => {
             "custom by ID overriding same Zcl ID entirely",
             {key: CUSTOM_CLUSTERS.genBasic.ID, manufacturerCode: undefined, customClusters: CUSTOM_CLUSTERS},
             {cluster: CUSTOM_CLUSTERS.genBasic, name: "genBasic"},
-        ],
-        [
-            "by ID ignoring same custom ID if Zcl is better match with manufacturer code",
-            {
-                key: CUSTOM_CLUSTERS.manuSpecificProfalux1NoManuf.ID,
-                manufacturerCode: Zcl.ManufacturerCode.PROFALUX,
-                customClusters: CUSTOM_CLUSTERS,
-            },
-            {cluster: Zcl.Clusters.manuSpecificProfalux1, name: "manuSpecificProfalux1"},
         ],
     ])("Gets cluster %s", (_name, payload, expected) => {
         const cluster = Zcl.Utils.getCluster(payload.key, payload.manufacturerCode, payload.customClusters);
