@@ -7488,15 +7488,6 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         },
         commandsResponse: {},
     },
-    schneiderSpecificPilotMode: {
-        ID: 0xff23,
-        manufacturerCode: ManufacturerCode.SCHNEIDER_ELECTRIC,
-        attributes: {
-            pilotMode: {ID: 0x0031, type: DataType.ENUM8, write: true, max: 0xff},
-        },
-        commands: {},
-        commandsResponse: {},
-    },
     manuSpecificSchneiderFanSwitchConfiguration: {
         ID: 0xfc04,
         manufacturerCode: ManufacturerCode.SCHNEIDER_ELECTRIC,
