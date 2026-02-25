@@ -3189,48 +3189,12 @@ export interface TClusters {
             fourNoksHysteresisLow?: number;
             /** ID=0x0400 | type=ENUM8 | manufacturerCode=SINOPE_TECHNOLOGIES(0x119c) | write=true | max=255 */
             SinopeOccupancy?: number;
-            /** ID=0x0401 | type=UINT16 | write=true | max=65535 */
-            elkoLoad: number;
             /** ID=0x0401 | type=UINT16 | manufacturerCode=SINOPE_TECHNOLOGIES(0x119c) | write=true | max=65535 */
             SinopeMainCycleOutput?: number;
-            /** ID=0x0402 | type=CHAR_STR | write=true */
-            elkoDisplayText: string;
             /** ID=0x0402 | type=ENUM8 | manufacturerCode=SINOPE_TECHNOLOGIES(0x119c) | write=true | max=255 */
             SinopeBacklight?: number;
-            /** ID=0x0403 | type=ENUM8 | write=true | max=255 */
-            elkoSensor: number;
-            /** ID=0x0404 | type=UINT8 | write=true | max=255 */
-            elkoRegulatorTime: number;
             /** ID=0x0404 | type=UINT16 | manufacturerCode=SINOPE_TECHNOLOGIES(0x119c) | write=true | max=65535 */
             SinopeAuxCycleOutput?: number;
-            /** ID=0x0405 | type=BOOLEAN | write=true */
-            elkoRegulatorMode: number;
-            /** ID=0x0406 | type=BOOLEAN | write=true */
-            elkoPowerStatus: number;
-            /** ID=0x0407 | type=OCTET_STR | write=true */
-            elkoDateTime: Buffer;
-            /** ID=0x0408 | type=UINT16 | write=true | max=65535 */
-            elkoMeanPower: number;
-            /** ID=0x0409 | type=INT16 | write=true | min=-32768 | max=32767 */
-            elkoExternalTemp: number;
-            /** ID=0x0411 | type=BOOLEAN | write=true */
-            elkoNightSwitching: number;
-            /** ID=0x0412 | type=BOOLEAN | write=true */
-            elkoFrostGuard: number;
-            /** ID=0x0413 | type=BOOLEAN | write=true */
-            elkoChildLock: number;
-            /** ID=0x0414 | type=UINT8 | write=true | max=255 */
-            elkoMaxFloorTemp: number;
-            /** ID=0x0415 | type=BOOLEAN | write=true */
-            elkoRelayState: number;
-            /** ID=0x0416 | type=OCTET_STR | write=true */
-            elkoVersion: Buffer;
-            /** ID=0x0417 | type=INT8 | write=true | min=-128 | max=127 */
-            elkoCalibration: number;
-            /** ID=0x0418 | type=UINT8 | write=true | max=255 */
-            elkoLastMessageId: number;
-            /** ID=0x0419 | type=UINT8 | write=true | max=255 */
-            elkoLastMessageStatus: number;
             /** ID=0x4000 | type=ENUM8 | manufacturerCode=VIESSMANN_ELEKTRONIK_GMBH(0x1221) | write=true | max=255 */
             viessmannWindowOpenInternal?: number;
             /** ID=0x4000 | type=ENUM8 | manufacturerCode=DANFOSS_A_S(0x1246) | write=true | max=255 */
