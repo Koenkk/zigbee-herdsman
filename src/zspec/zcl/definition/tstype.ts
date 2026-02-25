@@ -432,7 +432,6 @@ export type ClusterName =
     | "manuSpecificSmartThingsArrivalSensor"
     | "manuSpecificSamsungAccelerometer"
     | "tradfriButton"
-    | "schneiderSpecificPilotMode"
     | "manuSpecificSchneiderFanSwitchConfiguration"
     | "sprutVoc"
     | "sprutNoise"
