@@ -255,10 +255,6 @@ export interface Command {
     required?: true;
 }
 
-export interface AttributeDefinition extends Omit<Attribute, "name"> {}
-
-export interface CommandDefinition extends Omit<Command, "name"> {}
-
 export interface Cluster {
     ID: number;
     name: string;
@@ -270,21 +266,10 @@ export interface Cluster {
     commandsResponse: {
         [s: string]: Command;
     };
-    getAttribute: (key: number | string) => Attribute | undefined;
-    getCommand: (key: number | string) => Command;
-    getCommandResponse: (key: number | string) => Command;
-}
-
-export interface ClusterDefinition {
-    ID: number;
-    manufacturerCode?: number;
-    attributes: Readonly<Record<string, Readonly<AttributeDefinition>>>;
-    commands: Readonly<Record<string, Readonly<CommandDefinition>>>;
-    commandsResponse: Readonly<Record<string, Readonly<CommandDefinition>>>;
 }
 
 export interface CustomClusters {
-    [k: string]: ClusterDefinition;
+    [k: string]: Cluster;
 }
 
 export type ClusterName =

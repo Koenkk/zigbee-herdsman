@@ -58,8 +58,8 @@ export class ZclFrame {
                 : frameType === FrameType.GLOBAL
                   ? Utils.getGlobalCommand(commandKey)
                   : direction === Direction.CLIENT_TO_SERVER
-                    ? cluster.getCommand(commandKey)
-                    : cluster.getCommandResponse(commandKey);
+                    ? Utils.getClusterCommand(cluster, commandKey)
+                    : Utils.getClusterCommandResponse(cluster, commandKey);
 
         const header = new ZclHeader(
             {reservedBits, frameType, direction, disableDefaultResponse, manufacturerSpecific: manufacturerCode != null},
@@ -162,8 +162,8 @@ export class ZclFrame {
         const command: Command = header.isGlobal
             ? Utils.getGlobalCommand(header.commandIdentifier)
             : header.frameControl.direction === Direction.CLIENT_TO_SERVER
-              ? cluster.getCommand(header.commandIdentifier)
-              : cluster.getCommandResponse(header.commandIdentifier);
+              ? Utils.getClusterCommand(cluster, header.commandIdentifier)
+              : Utils.getClusterCommandResponse(cluster, header.commandIdentifier);
         const payload = ZclFrame.parsePayload(header, cluster, buffalo);
 
         return new ZclFrame(header, payload, cluster, command);
@@ -184,8 +184,8 @@ export class ZclFrame {
     private static parsePayloadCluster(header: ZclHeader, cluster: Cluster, buffalo: BuffaloZcl): ZclPayload {
         const command =
             header.frameControl.direction === Direction.CLIENT_TO_SERVER
-                ? cluster.getCommand(header.commandIdentifier)
-                : cluster.getCommandResponse(header.commandIdentifier);
+                ? Utils.getClusterCommand(cluster, header.commandIdentifier)
+                : Utils.getClusterCommandResponse(cluster, header.commandIdentifier);
         const payload: ZclPayload = {};
 
         for (const parameter of command.parameters) {

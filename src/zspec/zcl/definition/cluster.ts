@@ -1,9 +1,19 @@
 import {BuffaloZclDataType, DataType, ParameterCondition} from "./enums";
 import {ManufacturerCode} from "./manufacturerCode";
 import {Status} from "./status";
-import type {ClusterDefinition, ClusterName} from "./tstype";
+import type {Attribute, Cluster, ClusterName, Command} from "./tstype";
 
-export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>> = {
+interface AttributeDefinition extends Omit<Attribute, "name"> {}
+
+interface CommandDefinition extends Omit<Command, "name"> {}
+
+interface ClusterDefinition extends Omit<Cluster, "name" | "attributes" | "commands" | "commandsResponse"> {
+    attributes: Readonly<Record<string, Readonly<AttributeDefinition>>>;
+    commands: Readonly<Record<string, Readonly<CommandDefinition>>>;
+    commandsResponse: Readonly<Record<string, Readonly<CommandDefinition>>>;
+}
+
+const RawClusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>> = {
     genBasic: {
         ID: 0x0000,
         attributes: {
@@ -7780,3 +7790,27 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         commandsResponse: {},
     },
 };
+
+// TODO: tmp, should just add `name` prop directly
+for (const clusterKey in RawClusters) {
+    const cluster = RawClusters[clusterKey as ClusterName];
+    // @ts-expect-error tmp
+    cluster.name = clusterKey;
+
+    for (const attributeKey in cluster.attributes) {
+        // @ts-expect-error tmp
+        cluster.attributes[attributeKey].name = attributeKey;
+    }
+
+    for (const commandKey in cluster.commands) {
+        // @ts-expect-error tmp
+        cluster.commands[commandKey].name = commandKey;
+    }
+
+    for (const commandResponseKey in cluster.commandsResponse) {
+        // @ts-expect-error tmp
+        cluster.commandsResponse[commandResponseKey].name = commandResponseKey;
+    }
+}
+
+export const Clusters = RawClusters as Readonly<Record<ClusterName, Readonly<Cluster>>>;

@@ -141,7 +141,7 @@ export class Endpoint extends ZigbeeEntity {
 
         return this._configuredReportings.map((entry, index) => {
             const cluster = Zcl.Utils.getCluster(entry.cluster, entry.manufacturerCode, device.customClusters);
-            const attribute: ZclTypes.Attribute = cluster.getAttribute(entry.attrId) ?? {
+            const attribute: ZclTypes.Attribute = Zcl.Utils.getClusterAttribute(cluster, entry.attrId, entry.manufacturerCode) ?? {
                 ID: entry.attrId,
                 name: `attr${index}`,
                 type: Zcl.DataType.UNKNOWN,
@@ -327,7 +327,7 @@ export class Endpoint extends ZigbeeEntity {
 
         if (this.clusters[cluster.name] && this.clusters[cluster.name].attributes) {
             // XXX: used to throw (behavior changed in #1455)
-            const attribute = cluster.getAttribute(attributeKey);
+            const attribute = Zcl.Utils.getClusterAttribute(cluster, attributeKey, undefined);
 
             if (attribute) {
                 return this.clusters[cluster.name].attributes[attribute.name];
@@ -472,7 +472,7 @@ export class Endpoint extends ZigbeeEntity {
         // TODO: handle `attr.report !== true`
 
         for (const nameOrID in attributes) {
-            const attribute = cluster.getAttribute(nameOrID);
+            const attribute = Zcl.Utils.getClusterAttribute(cluster, nameOrID, options?.manufacturerCode);
 
             if (attribute) {
                 payload.push({attrId: attribute.ID, attrData: attributes[nameOrID], dataType: attribute.type});
@@ -504,7 +504,7 @@ export class Endpoint extends ZigbeeEntity {
         const payload: TFoundation["write"] = [];
 
         for (const nameOrID in attributes) {
-            const attribute = cluster.getAttribute(nameOrID);
+            const attribute = Zcl.Utils.getClusterAttribute(cluster, nameOrID, options?.manufacturerCode);
 
             if (attribute) {
                 // TODO: handle `attr.writeOptional !== true`
@@ -539,7 +539,7 @@ export class Endpoint extends ZigbeeEntity {
             const value = attributes[nameOrID]!;
 
             if (value.status !== undefined) {
-                const attribute = cluster.getAttribute(nameOrID);
+                const attribute = Zcl.Utils.getClusterAttribute(cluster, nameOrID, options?.manufacturerCode);
 
                 if (attribute) {
                     payload.push({attrId: attribute.ID, status: value.status});
@@ -585,7 +585,7 @@ export class Endpoint extends ZigbeeEntity {
             if (typeof attribute === "number") {
                 payload.push({attrId: attribute});
             } else {
-                const attr = cluster.getAttribute(attribute);
+                const attr = Zcl.Utils.getClusterAttribute(cluster, attribute, options?.manufacturerCode);
 
                 if (attr) {
                     Zcl.Utils.processAttributePreRead(attr);
@@ -616,7 +616,7 @@ export class Endpoint extends ZigbeeEntity {
         const payload: TFoundation["readRsp"] = [];
 
         for (const nameOrID in attributes) {
-            const attribute = cluster.getAttribute(nameOrID);
+            const attribute = Zcl.Utils.getClusterAttribute(cluster, nameOrID, options?.manufacturerCode);
 
             if (attribute) {
                 payload.push({attrId: attribute.ID, attrData: attributes[nameOrID], dataType: attribute.type, status: 0});
@@ -833,7 +833,7 @@ export class Endpoint extends ZigbeeEntity {
                 dataType = item.attribute.type;
                 attrId = item.attribute.ID;
             } else {
-                const attribute = cluster.getAttribute(item.attribute);
+                const attribute = Zcl.Utils.getClusterAttribute(cluster, item.attribute, optionsWithDefaults.manufacturerCode);
 
                 if (attribute) {
                     dataType = attribute.type;
@@ -903,7 +903,7 @@ export class Endpoint extends ZigbeeEntity {
             if (typeof item.attribute === "object") {
                 payload.push({direction: item.direction ?? Zcl.Direction.CLIENT_TO_SERVER, attrId: item.attribute.ID});
             } else {
-                const attribute = cluster.getAttribute(item.attribute);
+                const attribute = Zcl.Utils.getClusterAttribute(cluster, item.attribute, optionsWithDefaults.manufacturerCode);
 
                 if (attribute) {
                     payload.push({direction: item.direction ?? Zcl.Direction.CLIENT_TO_SERVER, attrId: attribute.ID});
@@ -958,7 +958,7 @@ export class Endpoint extends ZigbeeEntity {
 
         const device = this.getDevice();
         const cluster = this.getCluster(clusterKey, device, options?.manufacturerCode);
-        const command = cluster.getCommandResponse(commandKey);
+        const command = Zcl.Utils.getClusterCommandResponse(cluster, commandKey);
         transactionSequenceNumber = transactionSequenceNumber ?? zclTransactionSequenceNumber.next();
         const optionsWithDefaults = this.getOptionsWithDefaults(options, true, Zcl.Direction.SERVER_TO_CLIENT, cluster.manufacturerCode);
 
@@ -1051,7 +1051,7 @@ export class Endpoint extends ZigbeeEntity {
             }
 
             // we fall back to caller|cluster provided manufacturerCode
-            const attribute = cluster.getAttribute(attributeID);
+            const attribute = Zcl.Utils.getClusterAttribute(cluster, attributeID, undefined);
             const manufacturerCode = attribute
                 ? attribute.manufacturerCode === undefined
                     ? fallbackManufacturerCode
@@ -1136,7 +1136,7 @@ export class Endpoint extends ZigbeeEntity {
                 ? commandKey
                 : frameType === Zcl.FrameType.GLOBAL
                   ? Zcl.Utils.getGlobalCommand(commandKey)
-                  : cluster.getCommand(commandKey);
+                  : Zcl.Utils.getClusterCommand(cluster, commandKey);
         const hasResponse = frameType === Zcl.FrameType.GLOBAL ? true : command.response !== undefined;
         const optionsWithDefaults = this.getOptionsWithDefaults(options, hasResponse, Zcl.Direction.CLIENT_TO_SERVER, cluster.manufacturerCode);
 
@@ -1187,7 +1187,7 @@ export class Endpoint extends ZigbeeEntity {
     ): Promise<void> {
         const device = this.getDevice();
         const cluster = this.getCluster(clusterKey, device, options?.manufacturerCode);
-        const command = cluster.getCommand(commandKey);
+        const command = Zcl.Utils.getClusterCommand(cluster, commandKey);
         const optionsWithDefaults = this.getOptionsWithDefaults(options, true, Zcl.Direction.CLIENT_TO_SERVER, cluster.manufacturerCode);
         const sourceEndpoint = optionsWithDefaults.srcEndpoint ?? this.ID;
 

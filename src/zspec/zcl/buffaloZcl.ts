@@ -24,6 +24,7 @@ import type {
     ZoneInfo,
 } from "./definition/tstype";
 import * as Utils from "./utils";
+import {getClusterAttribute} from "./utils";
 
 const NS = "zh:zcl:buffalo";
 
@@ -496,7 +497,7 @@ export class BuffaloZcl extends Buffalo {
                 const attributeID = this.readUInt16();
                 const type = this.readUInt8();
                 /* v8 ignore next */
-                let attribute: string | undefined | number = cluster.getAttribute(attributeID)?.name;
+                let attribute: string | undefined | number = getClusterAttribute(cluster, attributeID, frame.manufacturerCode)?.name;
 
                 // number type is only used when going into this if
                 if (!attribute) {

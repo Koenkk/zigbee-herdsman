@@ -210,6 +210,7 @@ let enroll170 = true;
 let configureReportStatus = 0;
 let configureReportDefaultRsp = false;
 let lastSentZclFrameToEndpoint: Buffer | undefined;
+let readManufacturerCode: number | undefined;
 
 const restoreMocksendZclFrameToEndpoint = () => {
     mocksendZclFrameToEndpoint.mockImplementation((_ieeeAddr, networkAddress, endpoint, frame: Zcl.Frame) => {
@@ -224,7 +225,7 @@ const restoreMocksendZclFrameToEndpoint = () => {
             const cluster = frame.cluster;
             for (const item of frame.payload) {
                 if (item.attrId !== 65314) {
-                    const attribute = cluster.getAttribute(item.attrId);
+                    const attribute = Zcl.Utils.getClusterAttribute(cluster, item.attrId, readManufacturerCode);
 
                     if (attribute) {
                         if (frame.isCluster("ssIasZone") && item.attrId === 0) {
@@ -480,6 +481,7 @@ describe("Controller", () => {
 
     beforeEach(() => {
         vi.setSystemTime(mockedDate);
+        readManufacturerCode = undefined;
         sendZdoResponseStatus = Zdo.Status.SUCCESS;
         for (const m of mocksRestore) m.mockRestore();
         for (const m of mocksClear) m.mockClear();
@@ -3330,12 +3332,13 @@ describe("Controller", () => {
         await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
         const device = controller.getDeviceByIeeeAddr("0x129")!;
         device.addCustomCluster("genBasic", {
+            name: "genBasic",
             ID: 0,
             commands: {},
             commandsResponse: {},
             attributes: {
-                customAttr: {ID: 256, type: Zcl.DataType.UINT8},
-                aDifferentZclVersion: {ID: 0, type: Zcl.DataType.UINT8},
+                customAttr: {name: "customAttr", ID: 256, type: Zcl.DataType.UINT8},
+                aDifferentZclVersion: {name: "aDifferentZclVersion", ID: 0, type: Zcl.DataType.UINT8},
             },
         });
         const buffer = Buffer.from([24, 169, 10, 0, 1, 24, 3, 0, 0, 24, 1, 2, 0, 24, 1]);
@@ -3348,11 +3351,12 @@ describe("Controller", () => {
 
         // Should allow to extend an already extended cluster again.
         device.addCustomCluster("genBasic", {
+            name: "genBasic",
             ID: 0,
             commands: {},
             commandsResponse: {},
             attributes: {
-                customAttrSecondOverride: {ID: 256, type: Zcl.DataType.UINT8},
+                customAttrSecondOverride: {name: "customAttrSecondOverride", ID: 256, type: Zcl.DataType.UINT8},
             },
         });
         await mockAdapterEvents.zclPayload(payload);
@@ -3366,10 +3370,11 @@ describe("Controller", () => {
         await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
         const device = controller.getDeviceByIeeeAddr("0x129")!;
         device.addCustomCluster("myCustomCluster", {
+            name: "myCustomCluster",
             ID: 9123,
             commands: {},
             commandsResponse: {},
-            attributes: {superAttribute: {ID: 0, type: Zcl.DataType.UINT8}},
+            attributes: {superAttribute: {name: "superAttribute", ID: 0, type: Zcl.DataType.UINT8}},
         });
         const buffer = Buffer.from([24, 169, 10, 0, 1, 24, 3, 0, 0, 24, 1]);
         const header = Zcl.Header.fromBuffer(buffer);
@@ -3393,10 +3398,11 @@ describe("Controller", () => {
         await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
         const device = controller.getDeviceByIeeeAddr("0x129")!;
         device.addCustomCluster("myCustomCluster", {
+            name: "myCustomCluster",
             ID: Zcl.Clusters.genBasic.ID,
             commands: {},
             commandsResponse: {},
-            attributes: {customAttr: {ID: 256, type: Zcl.DataType.UINT8}},
+            attributes: {customAttr: {name: "customAttr", ID: 256, type: Zcl.DataType.UINT8}},
         });
         const buffer = Buffer.from([24, 169, 10, 0, 1, 24, 3, 0, 0, 24, 1]);
         const header = Zcl.Header.fromBuffer(buffer);
@@ -3462,17 +3468,28 @@ describe("Controller", () => {
         }
 
         device.addCustomCluster("hvacThermostat", {
+            name: "hvacThermostat",
             ID: 0x0201,
             attributes: {
-                localTemperatureCalibration: {ID: 0x0010, type: Zcl.DataType.INT8, write: true, min: -50, max: 50, default: 0},
+                localTemperatureCalibration: {
+                    name: "localTemperatureCalibration",
+                    ID: 0x0010,
+                    type: Zcl.DataType.INT8,
+                    write: true,
+                    min: -50,
+                    max: 50,
+                    default: 0,
+                },
             },
             commands: {},
             commandsResponse: {},
         });
         device.addCustomCluster("hvacThermostat", {
+            name: "hvacThermostat",
             ID: Zcl.Clusters.hvacThermostat.ID,
             attributes: {
                 operatingMode: {
+                    name: "operatingMode",
                     ID: 0x4007,
                     type: Zcl.DataType.ENUM8,
                     manufacturerCode: Zcl.ManufacturerCode.ROBERT_BOSCH_GMBH,
@@ -3480,6 +3497,7 @@ describe("Controller", () => {
                     max: 0xff,
                 },
                 heatingDemand: {
+                    name: "heatingDemand",
                     ID: 0x4020,
                     type: Zcl.DataType.ENUM8,
                     manufacturerCode: Zcl.ManufacturerCode.ROBERT_BOSCH_GMBH,
@@ -3487,6 +3505,7 @@ describe("Controller", () => {
                     max: 0xff,
                 },
                 valveAdaptStatus: {
+                    name: "valveAdaptStatus",
                     ID: 0x4022,
                     type: Zcl.DataType.ENUM8,
                     manufacturerCode: Zcl.ManufacturerCode.ROBERT_BOSCH_GMBH,
@@ -3494,6 +3513,7 @@ describe("Controller", () => {
                     max: 0xff,
                 },
                 unknownAttribute0: {
+                    name: "unknownAttribute0",
                     ID: 0x4025,
                     type: Zcl.DataType.ENUM8,
                     manufacturerCode: Zcl.ManufacturerCode.ROBERT_BOSCH_GMBH,
@@ -3501,6 +3521,7 @@ describe("Controller", () => {
                     max: 0xff,
                 },
                 remoteTemperature: {
+                    name: "remoteTemperature",
                     ID: 0x4040,
                     type: Zcl.DataType.INT16,
                     manufacturerCode: Zcl.ManufacturerCode.ROBERT_BOSCH_GMBH,
@@ -3508,6 +3529,7 @@ describe("Controller", () => {
                     min: -32768,
                 },
                 unknownAttribute1: {
+                    name: "unknownAttribute1",
                     ID: 0x4041,
                     type: Zcl.DataType.ENUM8,
                     manufacturerCode: Zcl.ManufacturerCode.ROBERT_BOSCH_GMBH,
@@ -3515,6 +3537,7 @@ describe("Controller", () => {
                     max: 0xff,
                 },
                 windowOpenMode: {
+                    name: "windowOpenMode",
                     ID: 0x4042,
                     type: Zcl.DataType.ENUM8,
                     manufacturerCode: Zcl.ManufacturerCode.ROBERT_BOSCH_GMBH,
@@ -3522,6 +3545,7 @@ describe("Controller", () => {
                     max: 0xff,
                 },
                 boostHeating: {
+                    name: "boostHeating",
                     ID: 0x4043,
                     type: Zcl.DataType.ENUM8,
                     manufacturerCode: Zcl.ManufacturerCode.ROBERT_BOSCH_GMBH,
@@ -3529,14 +3553,23 @@ describe("Controller", () => {
                     max: 0xff,
                 },
                 cableSensorTemperature: {
+                    name: "cableSensorTemperature",
                     ID: 0x4052,
                     type: Zcl.DataType.INT16,
                     manufacturerCode: Zcl.ManufacturerCode.ROBERT_BOSCH_GMBH,
                     write: true,
                     min: -32768,
                 },
-                valveType: {ID: 0x4060, type: Zcl.DataType.ENUM8, manufacturerCode: Zcl.ManufacturerCode.ROBERT_BOSCH_GMBH, write: true, max: 0xff},
+                valveType: {
+                    name: "valveType",
+                    ID: 0x4060,
+                    type: Zcl.DataType.ENUM8,
+                    manufacturerCode: Zcl.ManufacturerCode.ROBERT_BOSCH_GMBH,
+                    write: true,
+                    max: 0xff,
+                },
                 unknownAttribute2: {
+                    name: "unknownAttribute2",
                     ID: 0x4061,
                     type: Zcl.DataType.ENUM8,
                     manufacturerCode: Zcl.ManufacturerCode.ROBERT_BOSCH_GMBH,
@@ -3544,15 +3577,30 @@ describe("Controller", () => {
                     max: 0xff,
                 },
                 cableSensorMode: {
+                    name: "cableSensorMode",
                     ID: 0x4062,
                     type: Zcl.DataType.ENUM8,
                     manufacturerCode: Zcl.ManufacturerCode.ROBERT_BOSCH_GMBH,
                     write: true,
                     max: 0xff,
                 },
-                heaterType: {ID: 0x4063, type: Zcl.DataType.ENUM8, manufacturerCode: Zcl.ManufacturerCode.ROBERT_BOSCH_GMBH, write: true, max: 0xff},
-                errorState: {ID: 0x5000, type: Zcl.DataType.BITMAP8, manufacturerCode: Zcl.ManufacturerCode.ROBERT_BOSCH_GMBH, write: true},
+                heaterType: {
+                    name: "heaterType",
+                    ID: 0x4063,
+                    type: Zcl.DataType.ENUM8,
+                    manufacturerCode: Zcl.ManufacturerCode.ROBERT_BOSCH_GMBH,
+                    write: true,
+                    max: 0xff,
+                },
+                errorState: {
+                    name: "errorState",
+                    ID: 0x5000,
+                    type: Zcl.DataType.BITMAP8,
+                    manufacturerCode: Zcl.ManufacturerCode.ROBERT_BOSCH_GMBH,
+                    write: true,
+                },
                 automaticValveAdapt: {
+                    name: "automaticValveAdapt",
                     ID: 0x5010,
                     type: Zcl.DataType.ENUM8,
                     manufacturerCode: Zcl.ManufacturerCode.ROBERT_BOSCH_GMBH,
@@ -3561,7 +3609,7 @@ describe("Controller", () => {
                 },
             },
             commands: {
-                calibrateValve: {ID: 0x41, parameters: []},
+                calibrateValve: {name: "calibrateValve", ID: 0x41, parameters: []},
             },
             commandsResponse: {},
         });
@@ -3590,11 +3638,13 @@ describe("Controller", () => {
             ),
         ).rejects.toThrow("localTemperatureCalibration requires max of 50");
 
+        readManufacturerCode = Zcl.ManufacturerCode.ROBERT_BOSCH_GMBH;
         await expect(
             endpoint.read<"hvacThermostat", BoschThermostatCluster>("hvacThermostat", ["boostHeating", "operatingMode"], {
                 manufacturerCode: Zcl.ManufacturerCode.ROBERT_BOSCH_GMBH,
             }),
         ).resolves.toStrictEqual({16391: 0, 16451: 0});
+        readManufacturerCode = undefined;
     });
 
     it("Send zcl command to all no options", async () => {
@@ -3625,8 +3675,11 @@ describe("Controller", () => {
         await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
         const device = controller.getDeviceByIeeeAddr("0x129")!;
         device.addCustomCluster("ssIasZone", {
+            name: "ssIasZone",
             ID: Zcl.Clusters.ssIasZone.ID,
-            commands: {boschSmokeAlarmSiren: {ID: 0x80, parameters: [{name: "data", type: Zcl.DataType.UINT16, max: 0xffff}]}},
+            commands: {
+                boschSmokeAlarmSiren: {name: "boschSmokeAlarmSiren", ID: 0x80, parameters: [{name: "data", type: Zcl.DataType.UINT16, max: 0xffff}]},
+            },
             commandsResponse: {},
             attributes: {},
         });
@@ -4565,7 +4618,7 @@ describe("Controller", () => {
         expect(deepClone(endpoint.configuredReportings)).toStrictEqual([
             {
                 cluster: deepClone(genPowerCfg),
-                attribute: genPowerCfg.getAttribute("mainsFrequency"),
+                attribute: Zcl.Utils.getClusterAttribute(genPowerCfg, "mainsFrequency", undefined),
                 minimumReportInterval: 1,
                 maximumReportInterval: 10,
                 reportableChange: 1,
@@ -4578,7 +4631,7 @@ describe("Controller", () => {
         expect(deepClone(endpoint.configuredReportings)).toStrictEqual([
             {
                 cluster: deepClone(genPowerCfg),
-                attribute: genPowerCfg.getAttribute("mainsFrequency"),
+                attribute: Zcl.Utils.getClusterAttribute(genPowerCfg, "mainsFrequency", undefined),
                 minimumReportInterval: 3,
                 maximumReportInterval: 100,
                 reportableChange: 2,
@@ -4591,14 +4644,14 @@ describe("Controller", () => {
         expect(deepClone(endpoint.configuredReportings)).toStrictEqual([
             {
                 cluster: deepClone(genPowerCfg),
-                attribute: genPowerCfg.getAttribute("mainsFrequency"),
+                attribute: Zcl.Utils.getClusterAttribute(genPowerCfg, "mainsFrequency", undefined),
                 minimumReportInterval: 3,
                 maximumReportInterval: 100,
                 reportableChange: 2,
             },
             {
                 cluster: deepClone(msOccupancySensing),
-                attribute: msOccupancySensing.getAttribute("occupancy"),
+                attribute: Zcl.Utils.getClusterAttribute(msOccupancySensing, "occupancy", undefined),
                 minimumReportInterval: 3,
                 maximumReportInterval: 100,
                 reportableChange: 2,
@@ -4611,7 +4664,7 @@ describe("Controller", () => {
         expect(deepClone(endpoint.configuredReportings)).toStrictEqual([
             {
                 cluster: deepClone(genPowerCfg),
-                attribute: genPowerCfg.getAttribute("mainsFrequency"),
+                attribute: Zcl.Utils.getClusterAttribute(genPowerCfg, "mainsFrequency", undefined),
                 minimumReportInterval: 3,
                 maximumReportInterval: 100,
                 reportableChange: 2,
@@ -7315,10 +7368,11 @@ describe("Controller", () => {
         await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
         const device = controller.getDeviceByIeeeAddr("0x129")!;
         device.addCustomCluster("myCustomCluster", {
+            name: "myCustomCluster",
             ID: 9123,
             commands: {},
             commandsResponse: {},
-            attributes: {superAttribute: {ID: 0, type: Zcl.DataType.UINT8}},
+            attributes: {superAttribute: {name: "superAttribute", ID: 0, type: Zcl.DataType.UINT8}},
         });
         const buffer = Buffer.from([24, 169, 99, 0, 1, 24, 3, 0, 0, 24, 1]);
         const header = Zcl.Header.fromBuffer(buffer);
@@ -9338,10 +9392,11 @@ describe("Controller", () => {
         const device = controller.getDeviceByIeeeAddr("0x177")!;
 
         device.addCustomCluster("manuHerdsman", {
+            name: "manuHerdsman",
             ID: 64513,
             commands: {},
             commandsResponse: {},
-            attributes: {customAttr: {ID: 0, type: Zcl.DataType.UINT8, write: true}},
+            attributes: {customAttr: {name: "customAttr", ID: 0, type: Zcl.DataType.UINT8, write: true}},
         });
 
         const group = controller.createGroup(34);
@@ -9393,20 +9448,21 @@ describe("Controller", () => {
 
         const device2 = controller.getDeviceByIeeeAddr("0x178")!;
         device2.addCustomCluster("manuHerdsman", {
+            name: "manuHerdsman",
             ID: 64513,
             commands: {},
             commandsResponse: {},
-            attributes: {customAttr: {ID: 0, type: Zcl.DataType.UINT8}},
+            attributes: {customAttr: {name: "customAttr", ID: 0, type: Zcl.DataType.UINT8}},
         });
         group.addMember(device2.getEndpoint(2)!);
 
         await expect(async () => {
             await group.write("manuHerdsman", {customAttr: 14}, {});
-        }).rejects.toThrow(new Error(`Cluster with name 'manuHerdsman' does not exist`));
+        }).rejects.toThrow(new Error(`Cluster 'manuHerdsman' does not exist`));
 
         await expect(async () => {
             await group.read("manuHerdsman", ["customAttr"], {});
-        }).rejects.toThrow(new Error(`Cluster with name 'manuHerdsman' does not exist`));
+        }).rejects.toThrow(new Error(`Cluster 'manuHerdsman' does not exist`));
 
         await group.write<"manuHerdsman", CustomManuHerdsman>("manuHerdsman", {customAttr: 14}, {direction: Zcl.Direction.SERVER_TO_CLIENT});
         await group.read<"manuHerdsman", CustomManuHerdsman>("manuHerdsman", ["customAttr"], {direction: Zcl.Direction.SERVER_TO_CLIENT});
@@ -9432,20 +9488,21 @@ describe("Controller", () => {
 
         const device3 = controller.getDeviceByIeeeAddr("0x176")!;
         device3.addCustomCluster("manuHerdsman", {
+            name: "manuHerdsman",
             ID: 64513,
             commands: {},
             commandsResponse: {},
-            attributes: {customAttr: {ID: 0, type: Zcl.DataType.UINT8}},
+            attributes: {customAttr: {name: "customAttr", ID: 0, type: Zcl.DataType.UINT8}},
         });
         group.addMember(device3.getEndpoint(1)!);
 
         await expect(async () => {
             await group.write("manuHerdsman", {customAttr: 56}, {});
-        }).rejects.toThrow(new Error(`Cluster with name 'manuHerdsman' does not exist`));
+        }).rejects.toThrow(new Error(`Cluster 'manuHerdsman' does not exist`));
 
         await expect(async () => {
             await group.read("manuHerdsman", ["customAttr"], {});
-        }).rejects.toThrow(new Error(`Cluster with name 'manuHerdsman' does not exist`));
+        }).rejects.toThrow(new Error(`Cluster 'manuHerdsman' does not exist`));
     });
 
     it("does not read/write to group with non-common custom clusters", async () => {
@@ -9455,10 +9512,11 @@ describe("Controller", () => {
         const device = controller.getDeviceByIeeeAddr("0x177")!;
 
         device.addCustomCluster("manuHerdsman", {
+            name: "manuHerdsman",
             ID: 64513,
             commands: {},
             commandsResponse: {},
-            attributes: {customAttr: {ID: 0, type: Zcl.DataType.UINT8}},
+            attributes: {customAttr: {name: "customAttr", ID: 0, type: Zcl.DataType.UINT8}},
         });
 
         const group = controller.createGroup(34);
@@ -9472,11 +9530,11 @@ describe("Controller", () => {
 
         await expect(async () => {
             await group.write("manuHerdsman", {customAttr: 34}, {});
-        }).rejects.toThrow(new Error(`Cluster with name 'manuHerdsman' does not exist`));
+        }).rejects.toThrow(new Error(`Cluster 'manuHerdsman' does not exist`));
 
         await expect(async () => {
             await group.read("manuHerdsman", ["customAttr"], {});
-        }).rejects.toThrow(new Error(`Cluster with name 'manuHerdsman' does not exist`));
+        }).rejects.toThrow(new Error(`Cluster 'manuHerdsman' does not exist`));
     });
 
     it("sends & receives command to group with custom cluster when common to all members", async () => {
@@ -9486,12 +9544,14 @@ describe("Controller", () => {
         const device = controller.getDeviceByIeeeAddr("0x179")!;
 
         device.addCustomCluster("manuSpecificInovelli", {
+            name: "manuSpecificInovelli",
             ID: 64561,
             manufacturerCode: Zcl.ManufacturerCode.V_MARK_ENTERPRISES_INC,
             // omitted for brevity (unused here)
             attributes: {},
             commands: {
                 ledEffect: {
+                    name: "ledEffect",
                     ID: 1,
                     parameters: [
                         {name: "effect", type: Zcl.DataType.UINT8},
@@ -9501,6 +9561,7 @@ describe("Controller", () => {
                     ],
                 },
                 individualLedEffect: {
+                    name: "individualLedEffect",
                     ID: 3,
                     parameters: [
                         {name: "led", type: Zcl.DataType.UINT8},
@@ -9512,10 +9573,7 @@ describe("Controller", () => {
                 },
             },
             commandsResponse: {
-                bogus: {
-                    ID: 1,
-                    parameters: [{name: "xyz", type: Zcl.DataType.UINT8}],
-                },
+                bogus: {name: "bogus", ID: 1, parameters: [{name: "xyz", type: Zcl.DataType.UINT8}]},
             },
         });
 
@@ -9608,7 +9666,7 @@ describe("Controller", () => {
                 level: 200,
                 duration: 15,
             });
-        }).rejects.toThrow(new Error(`Cluster with name 'manuSpecificInovelli' does not exist`));
+        }).rejects.toThrow(new Error(`Cluster 'manuSpecificInovelli' does not exist`));
     });
 
     it("Updates a device genBasic properties", async () => {
@@ -9854,10 +9912,12 @@ describe("Controller", () => {
 
         const myCustomClusters: CustomClusters = {
             zhSpe: {
+                name: "zhSpe",
                 ID: 0xffc1,
                 attributes: {},
                 commands: {
                     readMe: {
+                        name: "readMe",
                         ID: 0,
                         parameters: [{name: "size", type: Zcl.DataType.UINT8}],
                     },

@@ -2,7 +2,7 @@ import {Clusters} from "./definition/cluster";
 import {ZCL_TYPE_INVALID_BY_TYPE} from "./definition/datatypes";
 import {DataType, DataTypeClass} from "./definition/enums";
 import {Foundation, type FoundationCommandName, type FoundationDefinition} from "./definition/foundation";
-import type {Attribute, Cluster, ClusterDefinition, ClusterName, Command, CustomClusters, Parameter} from "./definition/tstype";
+import type {Attribute, Cluster, ClusterName, Command, CustomClusters, Parameter} from "./definition/tstype";
 
 const DATA_TYPE_CLASS_DISCRETE = [
     DataType.DATA8,
@@ -99,226 +99,182 @@ export function getDataTypeClass(dataType: DataType): DataTypeClass {
     throw new Error(`Don't know value type for '${DataType[dataType]}'`);
 }
 
-function hasCustomClusters(customClusters: CustomClusters): boolean {
-    // XXX: was there a good reason to not set the parameter `customClusters` optional? it would allow simple undefined check
-    // below is twice faster than checking `Object.keys(customClusters).length`
-    for (const _k in customClusters) return true;
-    return false;
-}
-
 /**
  * This can be greatly optimized when `clusters==ZCL` once these have been moved out of ZH (can just use fast lookup <id, name>):
  * - 'manuSpecificPhilips', 'manuSpecificAssaDoorLock'
  * - 'elkoSwitchConfigurationClusterServer', 'manuSpecificSchneiderLightSwitchConfiguration'
  */
-function findZclClusterNameById(id: number, manufacturerCode: number | undefined): [name: string | undefined, partialMatch: boolean] {
-    let name: string | undefined;
+function findZclClusterById(id: number, manufacturerCode: number | undefined): [cluster: Readonly<Cluster> | undefined, partialMatch: boolean] {
+    let cluster: Readonly<Cluster> | undefined;
     // if manufacturer code is given, consider partial match if didn't match against manufacturer code
-    let partialMatch = Boolean(manufacturerCode);
+    let partialMatch = !!manufacturerCode;
 
     const zclNames = ZCL_CLUSTERS_ID_TO_NAMES.get(id);
 
     if (zclNames) {
         for (const zclName of zclNames) {
-            const cluster = Clusters[zclName as ClusterName];
+            const foundCluster = Clusters[zclName as ClusterName];
 
             // priority on first match when matching only ID
-            if (name === undefined) {
-                name = zclName;
+            if (cluster === undefined) {
+                cluster = foundCluster;
             }
 
-            if (manufacturerCode && cluster.manufacturerCode === manufacturerCode) {
-                name = zclName;
+            if (manufacturerCode && foundCluster.manufacturerCode === manufacturerCode) {
+                cluster = foundCluster;
                 partialMatch = false;
                 break;
             }
 
-            if (!cluster.manufacturerCode) {
-                name = zclName;
+            if (!foundCluster.manufacturerCode) {
+                cluster = foundCluster;
                 break;
             }
         }
     }
 
-    return [name, partialMatch];
+    return [cluster, partialMatch];
 }
 
-function findCustomClusterNameByID(
+function findCustomClusterByID(
     id: number,
     manufacturerCode: number | undefined,
     customClusters: CustomClusters,
-): [name: string | undefined, partialMatch: boolean] {
-    let name: string | undefined;
+): [cluster: Readonly<Cluster> | undefined, partialMatch: boolean] {
+    let cluster: Readonly<Cluster> | undefined;
     // if manufacturer code is given, consider partial match if didn't match against manufacturer code
-    let partialMatch = Boolean(manufacturerCode);
+    let partialMatch = !!manufacturerCode;
 
     for (const clusterName in customClusters) {
-        const cluster = customClusters[clusterName as ClusterName];
+        const foundCluster = customClusters[clusterName as ClusterName];
 
-        if (cluster.ID === id) {
+        if (foundCluster.ID === id) {
             // priority on first match when matching only ID
-            if (name === undefined) {
-                name = clusterName;
+            if (cluster === undefined) {
+                cluster = foundCluster;
             }
 
-            if (manufacturerCode && cluster.manufacturerCode === manufacturerCode) {
-                name = clusterName;
+            if (manufacturerCode && foundCluster.manufacturerCode === manufacturerCode) {
+                cluster = foundCluster;
                 partialMatch = false;
                 break;
             }
 
-            if (!cluster.manufacturerCode) {
-                name = clusterName;
+            if (!foundCluster.manufacturerCode) {
+                cluster = foundCluster;
                 break;
             }
         }
     }
 
-    return [name, partialMatch];
+    return [cluster, partialMatch];
 }
 
-function getClusterDefinition(
-    key: string | number,
-    manufacturerCode: number | undefined,
-    customClusters: CustomClusters,
-): {name: string; cluster: ClusterDefinition} {
-    let name: string | undefined;
+export function getCluster(key: string | number, manufacturerCode: number | undefined = undefined, customClusters: CustomClusters = {}): Cluster {
+    let cluster: Readonly<Cluster> | undefined;
 
     if (typeof key === "number") {
         let partialMatch: boolean;
 
         // custom clusters have priority over Zcl clusters, except in case of better match (see below)
-        [name, partialMatch] = findCustomClusterNameByID(key, manufacturerCode, customClusters);
+        [cluster, partialMatch] = findCustomClusterByID(key, manufacturerCode, customClusters);
 
-        if (!name) {
-            [name, partialMatch] = findZclClusterNameById(key, manufacturerCode);
+        if (!cluster) {
+            [cluster, partialMatch] = findZclClusterById(key, manufacturerCode);
         } else if (partialMatch) {
             // TODO: remove block once custom clusters fully migrated to ZHC
-            let zclName: string | undefined;
-            [zclName, partialMatch] = findZclClusterNameById(key, manufacturerCode);
+            let zclCluster: Readonly<Cluster> | undefined;
+            [zclCluster, partialMatch] = findZclClusterById(key, manufacturerCode);
 
             // Zcl clusters contain a better match, use that one
-            if (zclName !== undefined && !partialMatch) {
-                name = zclName;
+            if (zclCluster !== undefined && !partialMatch) {
+                cluster = zclCluster;
             }
         }
     } else {
-        name = key;
+        cluster = key in customClusters ? customClusters[key] : Clusters[key as ClusterName];
     }
 
-    let cluster = name !== undefined && hasCustomClusters(customClusters) ? customClusters[name] : Clusters[name as ClusterName];
-
+    // TODO: cluster.ID can't be undefined?
     if (!cluster || cluster.ID === undefined) {
         if (typeof key === "number") {
-            name = key.toString();
-            cluster = {attributes: {}, commands: {}, commandsResponse: {}, manufacturerCode: undefined, ID: key};
+            cluster = {name: `${key}`, ID: key, attributes: {}, commands: {}, commandsResponse: {}};
         } else {
-            name = undefined;
+            throw new Error(`Cluster '${key}' does not exist`);
         }
     }
 
-    if (!name) {
-        throw new Error(`Cluster with name '${key}' does not exist`);
-    }
-
-    return {name, cluster};
+    return cluster;
 }
 
-function cloneClusterEntriesWithName<T extends Record<string, unknown>>(entries: Record<string, T>): Record<string, {name: string} & T> {
-    const clone: Record<string, {name: string} & T> = {};
+export function getClusterAttribute(cluster: Cluster, key: number | string, manufacturerCode: number | undefined): Attribute | undefined {
+    const attributes = cluster.attributes;
 
-    for (const key in entries) {
-        clone[key] = {...entries[key], name: key};
-    }
+    if (typeof key === "number") {
+        let partialMatchAttr: Attribute | undefined;
 
-    return clone;
-}
+        for (const attrKey in attributes) {
+            const attr = attributes[attrKey];
 
-function createCluster(name: string, cluster: ClusterDefinition, manufacturerCode?: number): Cluster {
-    const attributes: Record<string, Attribute> = cloneClusterEntriesWithName(cluster.attributes);
-    const commands: Record<string, Command> = cloneClusterEntriesWithName(cluster.commands);
-    const commandsResponse: Record<string, Command> = cloneClusterEntriesWithName(cluster.commandsResponse);
+            if (attr.ID === key) {
+                if (manufacturerCode !== undefined && attr.manufacturerCode === manufacturerCode) {
+                    return attr;
+                }
 
-    const getAttribute = (key: number | string): Attribute | undefined => {
-        if (typeof key === "number") {
-            let partialMatchAttr: Attribute | undefined;
-
-            for (const attrKey in attributes) {
-                const attr = attributes[attrKey];
-
-                if (attr.ID === key) {
-                    if (manufacturerCode && attr.manufacturerCode === manufacturerCode) {
-                        return attr;
-                    }
-
-                    if (attr.manufacturerCode === undefined) {
-                        partialMatchAttr = attr;
-                    }
+                if (attr.manufacturerCode === undefined) {
+                    partialMatchAttr = attr;
                 }
             }
-
-            return partialMatchAttr;
         }
 
-        return attributes[key];
-    };
+        return partialMatchAttr;
+    }
 
-    const getCommand = (key: number | string): Command => {
-        if (typeof key === "number") {
-            for (const cmdKey in commands) {
-                const cmd = commands[cmdKey];
+    return attributes[key];
+}
 
-                if (cmd.ID === key) {
-                    return cmd;
-                }
-            }
-        } else {
-            const cmd = commands[key];
+export function getClusterCommand(cluster: Cluster, key: number | string): Command {
+    const commands = cluster.commands;
 
-            if (cmd) {
+    if (typeof key === "number") {
+        for (const cmdKey in commands) {
+            const cmd = commands[cmdKey];
+
+            if (cmd.ID === key) {
                 return cmd;
             }
         }
+    } else {
+        const cmd = commands[key];
 
-        throw new Error(`Cluster '${name}' has no command '${key}'`);
-    };
+        if (cmd) {
+            return cmd;
+        }
+    }
 
-    const getCommandResponse = (key: number | string): Command => {
-        if (typeof key === "number") {
-            for (const cmdKey in commandsResponse) {
-                const cmd = commandsResponse[cmdKey];
+    throw new Error(`Cluster '${cluster.name}' has no command '${key}'`);
+}
 
-                if (cmd.ID === key) {
-                    return cmd;
-                }
-            }
-        } else {
-            const cmd = commandsResponse[key];
+export function getClusterCommandResponse(cluster: Cluster, key: number | string): Command {
+    const commandResponses = cluster.commandsResponse;
 
-            if (cmd) {
+    if (typeof key === "number") {
+        for (const cmdKey in commandResponses) {
+            const cmd = commandResponses[cmdKey];
+
+            if (cmd.ID === key) {
                 return cmd;
             }
         }
+    } else {
+        const cmd = commandResponses[key];
 
-        throw new Error(`Cluster '${name}' has no command response '${key}'`);
-    };
+        if (cmd) {
+            return cmd;
+        }
+    }
 
-    return {
-        ID: cluster.ID,
-        attributes,
-        manufacturerCode: cluster.manufacturerCode,
-        name,
-        commands,
-        commandsResponse,
-        getAttribute,
-        getCommand,
-        getCommandResponse,
-    };
-}
-
-export function getCluster(key: string | number, manufacturerCode: number | undefined = undefined, customClusters: CustomClusters = {}): Cluster {
-    const {name, cluster} = getClusterDefinition(key, manufacturerCode, customClusters);
-    return createCluster(name, cluster, manufacturerCode);
+    throw new Error(`Cluster '${cluster.name}' has no command response '${key}'`);
 }
 
 function getGlobalCommandNameById(id: number): FoundationCommandName {

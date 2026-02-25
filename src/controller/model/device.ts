@@ -8,7 +8,7 @@ import {BroadcastAddress} from "../../zspec/enums";
 import type {Eui64} from "../../zspec/tstypes";
 import * as Zcl from "../../zspec/zcl";
 import type {TClusterCommandPayload, TClusterPayload, TPartialClusterAttributes} from "../../zspec/zcl/definition/clusters-types";
-import type {ClusterDefinition, CustomClusters} from "../../zspec/zcl/definition/tstype";
+import type {Cluster, CustomClusters} from "../../zspec/zcl/definition/tstype";
 import type {TZclFrame} from "../../zspec/zcl/zclFrame";
 import * as Zdo from "../../zspec/zdo";
 import type {BindingTableEntry, LQITableEntry, RoutingTableEntry} from "../../zspec/zdo/definition/tstypes";
@@ -368,7 +368,8 @@ export class Device extends Entity<ControllerEventMap> {
                     const response: KeyValue = {};
 
                     for (const entry of frame.payload) {
-                        const name = frame.cluster.getAttribute(entry.attrId)?.name;
+                        // TODO: this.manufacturerID or frame.header.manufacturerCode
+                        const name = Zcl.Utils.getClusterAttribute(frame.cluster, entry.attrId, this.manufacturerID)?.name;
 
                         if (name && name in attributes[frame.cluster.name].attributes) {
                             response[name] = attributes[frame.cluster.name].attributes[name];
@@ -1323,7 +1324,7 @@ export class Device extends Entity<ControllerEventMap> {
         await endpoint.read("genBasic", ["zclVersion"], {disableRecovery, sendPolicy: "immediate"});
     }
 
-    public addCustomCluster(name: string, cluster: ClusterDefinition): void {
+    public addCustomCluster(name: string, cluster: Cluster): void {
         assert(
             cluster.ID !== Zcl.Clusters.touchlink.ID && cluster.ID !== Zcl.Clusters.greenPower.ID,
             "Overriding of greenPower or touchlink cluster is not supported",
@@ -1334,7 +1335,8 @@ export class Device extends Entity<ControllerEventMap> {
             const existingCluster = this._customClusters[name] ?? Zcl.Clusters[name];
             assert(existingCluster.ID === cluster.ID, `Custom cluster ID (${cluster.ID}) should match existing cluster ID (${existingCluster.ID})`);
 
-            const extendedCluster: ClusterDefinition = {
+            const extendedCluster: Cluster = {
+                name: cluster.name,
                 ID: cluster.ID,
                 attributes: {...existingCluster.attributes, ...cluster.attributes},
                 commands: {...existingCluster.commands, ...cluster.commands},
