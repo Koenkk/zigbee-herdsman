@@ -7788,37 +7788,7 @@ export interface TClusters {
         commands: never;
         commandResponses: never;
     };
-    tradfriButton: {
-        attributes: never;
-        commands: {
-            /** ID=0x01 */
-            action1: {
-                /** type=UINT8 | max=255 */
-                data: number;
-            };
-            /** ID=0x02 */
-            action2: {
-                /** type=UINT8 | max=255 */
-                data: number;
-            };
-            /** ID=0x03 */
-            action3: {
-                /** type=UINT8 | max=255 */
-                data: number;
-            };
-            /** ID=0x04 */
-            action4: {
-                /** type=UINT8 | max=255 */
-                data: number;
-            };
-            /** ID=0x06 */
-            action6: {
-                /** type=UINT8 | max=255 */
-                data: number;
-            };
-        };
-        commandResponses: never;
-    };
+
     sprutVoc: {
         attributes: {
             /** ID=0x6600 | type=UINT16 | write=true | max=65535 */
