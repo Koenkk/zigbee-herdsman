@@ -7529,33 +7529,6 @@ export interface TClusters {
         commands: never;
         commandResponses: never;
     };
-    manuSpecificLegrandDevices: {
-        attributes: never;
-        commands: never;
-        commandResponses: never;
-    };
-    manuSpecificLegrandDevices2: {
-        attributes: never;
-        commands: {
-            /** ID=0x00 */
-            command0: {
-                /** type=BUFFER */
-                data: Buffer;
-            };
-        };
-        commandResponses: never;
-    };
-    manuSpecificLegrandDevices3: {
-        attributes: never;
-        commands: {
-            /** ID=0x00 */
-            command0: {
-                /** type=BUFFER */
-                data: Buffer;
-            };
-        };
-        commandResponses: never;
-    };
     manuSpecificTuya: {
         attributes: never;
         commands: {
