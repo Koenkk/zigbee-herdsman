@@ -82,7 +82,7 @@
         "clean": "rimraf temp coverage dist tsconfig.tsbuildinfo",
         "prepack": "pnpm run clean && pnpm run build"
     },
-    "version": "9.0.7",
+    "version": "9.0.8",
     "pnpm": {
         "onlyBuiltDependencies": [
             "@biomejs/biome",
