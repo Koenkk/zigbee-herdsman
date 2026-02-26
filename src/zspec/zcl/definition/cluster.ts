@@ -7149,33 +7149,6 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         commands: {},
         commandsResponse: {},
     },
-    manuSpecificLegrandDevices: {
-        ID: 0xfc01,
-        manufacturerCode: ManufacturerCode.LEGRAND_GROUP,
-        attributes: {
-            // attributes seems to vary depending on the device. Can't be static
-        },
-        commands: {},
-        commandsResponse: {},
-    },
-    manuSpecificLegrandDevices2: {
-        ID: 0xfc40,
-        manufacturerCode: ManufacturerCode.LEGRAND_GROUP,
-        attributes: {},
-        commands: {
-            command0: {ID: 0x00, parameters: [{name: "data", type: BuffaloZclDataType.BUFFER}]},
-        },
-        commandsResponse: {},
-    },
-    manuSpecificLegrandDevices3: {
-        ID: 0xfc41,
-        manufacturerCode: ManufacturerCode.LEGRAND_GROUP,
-        attributes: {},
-        commands: {
-            command0: {ID: 0x00, parameters: [{name: "data", type: BuffaloZclDataType.BUFFER}]},
-        },
-        commandsResponse: {},
-    },
     /**
      * Tuya cluster
      *
