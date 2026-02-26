@@ -128,7 +128,6 @@ export function getCluster(key: string | number, manufacturerCode: number | unde
         if (!cluster) {
             // This can be greatly optimized when `clusters==ZCL` once these have been moved out of ZH (can just use fast lookup <id, name>):
             // - 'manuSpecificPhilips', 'manuSpecificAssaDoorLock'
-            // - 'elkoSwitchConfigurationClusterServer', 'manuSpecificSchneiderLightSwitchConfiguration'
             const zclNames = ZCL_CLUSTERS_ID_TO_NAMES.get(key);
 
             if (zclNames) {
