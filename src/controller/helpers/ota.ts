@@ -307,8 +307,11 @@ function buildImageBlockPayload(
 ) {
     let dataSize = baseDataSize;
 
-    if (requestPayload.manufacturerCode === Zcl.ManufacturerCode.INSTA_GMBH) {
-        // Insta devices, OTA only works for data sizes 40 and smaller (= manufacturerCode 4474).
+    if (
+        requestPayload.manufacturerCode === Zcl.ManufacturerCode.INSTA_GMBH ||
+        requestPayload.manufacturerCode === Zcl.ManufacturerCode.DRESDEN_ELEKTRONIK_INGENIEURTECHNIK_GMBH
+    ) {
+        // Insta and some Dresden Elektronik devices, OTA only works for data sizes 40 and smaller (= manufacturerCode 4474 [Insta], 4405 [Dresden Elektronik]).
         dataSize = 40;
     }
 
