@@ -15,7 +15,7 @@ const createScanRequestFrame = (transaction: number): Zcl.Frame =>
         undefined,
         0,
         "scanRequest",
-        Zcl.Clusters.touchlink.ID,
+        "touchlink",
         {transactionID: transaction, zigbeeInformation: 4, touchlinkInformation: 18},
         {},
     );
@@ -28,7 +28,7 @@ const createIdentifyRequestFrame = (transaction: number): Zcl.Frame =>
         undefined,
         0,
         "identifyRequest",
-        Zcl.Clusters.touchlink.ID,
+        "touchlink",
         {transactionID: transaction, duration: 65535},
         {},
     );
@@ -41,7 +41,7 @@ const createResetFactoryNewRequestFrame = (transaction: number): Zcl.Frame =>
         undefined,
         0,
         "resetToFactoryNew",
-        Zcl.Clusters.touchlink.ID,
+        "touchlink",
         {transactionID: transaction},
         {},
     );

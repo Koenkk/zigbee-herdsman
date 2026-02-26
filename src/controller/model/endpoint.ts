@@ -224,18 +224,14 @@ export class Endpoint extends ZigbeeEntity {
      * @returns {ZclTypes.Cluster[]}
      */
     public getInputClusters(): ZclTypes.Cluster[] {
-        return this.clusterNumbersToClusters(this.inputClusters);
+        return this.inputClusters.map((c) => this.getCluster(c));
     }
 
     /**
      * @returns {ZclTypes.Cluster[]}
      */
     public getOutputClusters(): ZclTypes.Cluster[] {
-        return this.clusterNumbersToClusters(this.outputClusters);
-    }
-
-    private clusterNumbersToClusters(clusterNumbers: number[]): ZclTypes.Cluster[] {
-        return clusterNumbers.map((c) => this.getCluster(c));
+        return this.outputClusters.map((c) => this.getCluster(c));
     }
 
     /*

@@ -107,6 +107,8 @@ interface GreenPowerEventMap {
     deviceLeave: [sourceID: number];
 }
 
+const COMMISSIONING_NOTIFICATION_COMMAND_ID = Zcl.Clusters.greenPower.commands.commissioningNotification.ID;
+
 export class GreenPower extends EventEmitter<GreenPowerEventMap> {
     private adapter: Adapter;
 
@@ -217,7 +219,7 @@ export class GreenPower extends EventEmitter<GreenPowerEventMap> {
             undefined,
             zclTransactionSequenceNumber.next(),
             "pairing",
-            Zcl.Clusters.greenPower.ID,
+            "greenPower",
             payload,
             {},
         );
@@ -246,7 +248,7 @@ export class GreenPower extends EventEmitter<GreenPowerEventMap> {
         try {
             // notification: A.3.3.4.1
             // commissioningNotification: A.3.3.4.3
-            const isCommissioningNotification = frame.header.commandIdentifier === Zcl.Clusters.greenPower.commands.commissioningNotification.ID;
+            const isCommissioningNotification = frame.header.commandIdentifier === COMMISSIONING_NOTIFICATION_COMMAND_ID;
             const securityLevel = isCommissioningNotification ? (frame.payload.options >> 4) & 0x3 : (frame.payload.options >> 6) & 0x3;
 
             if (
@@ -378,7 +380,7 @@ export class GreenPower extends EventEmitter<GreenPowerEventMap> {
                             undefined,
                             zclTransactionSequenceNumber.next(),
                             "response",
-                            Zcl.Clusters.greenPower.ID,
+                            "greenPower",
                             payloadResponse,
                             {},
                         );
@@ -520,7 +522,7 @@ export class GreenPower extends EventEmitter<GreenPowerEventMap> {
                         undefined,
                         zclTransactionSequenceNumber.next(),
                         "response",
-                        Zcl.Clusters.greenPower.ID,
+                        "greenPower",
                         payload,
                         {},
                     );
@@ -592,7 +594,7 @@ export class GreenPower extends EventEmitter<GreenPowerEventMap> {
             undefined,
             zclTransactionSequenceNumber.next(),
             "commisioningMode",
-            Zcl.Clusters.greenPower.ID,
+            "greenPower",
             payload,
             {},
         );
