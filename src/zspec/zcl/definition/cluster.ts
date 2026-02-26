@@ -7431,19 +7431,6 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         commands: {},
         commandsResponse: {},
     },
-    tradfriButton: {
-        ID: 0xfc80,
-        manufacturerCode: ManufacturerCode.IKEA_OF_SWEDEN,
-        attributes: {},
-        commands: {
-            action1: {ID: 0x01, parameters: [{name: "data", type: DataType.UINT8, max: 0xff}]},
-            action2: {ID: 0x02, parameters: [{name: "data", type: DataType.UINT8, max: 0xff}]},
-            action3: {ID: 0x03, parameters: [{name: "data", type: DataType.UINT8, max: 0xff}]},
-            action4: {ID: 0x04, parameters: [{name: "data", type: DataType.UINT8, max: 0xff}]},
-            action6: {ID: 0x06, parameters: [{name: "data", type: DataType.UINT8, max: 0xff}]},
-        },
-        commandsResponse: {},
-    },
     sprutVoc: {
         ID: 0x6601,
         manufacturerCode: 26214,
