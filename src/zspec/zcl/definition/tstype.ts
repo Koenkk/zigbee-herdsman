@@ -428,7 +428,6 @@ export type ClusterName =
     | "manuSpecificCentraliteHumidity"
     | "manuSpecificSmartThingsArrivalSensor"
     | "manuSpecificSamsungAccelerometer"
-    | "tradfriButton"
     | "sprutVoc"
     | "sprutNoise"
     | "sprutIrBlaster"
