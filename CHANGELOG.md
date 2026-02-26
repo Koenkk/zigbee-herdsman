@@ -1,5 +1,15 @@
 # Changelog
 
+## [9.0.8](https://github.com/Koenkk/zigbee-herdsman/compare/v9.0.7...v9.0.8) (2026-02-26)
+
+
+### Bug Fixes
+
+* Move cluster manuSpecificSchneiderFanSwitchConfiguration from ZH to ZHC. ([#1662](https://github.com/Koenkk/zigbee-herdsman/issues/1662)) ([fd4d585](https://github.com/Koenkk/zigbee-herdsman/commit/fd4d58526d685fd75bc1425df4f2d05ba234fd9d))
+* Move Elko attributes in hvacThermostat cluster to ZHC ([#1658](https://github.com/Koenkk/zigbee-herdsman/issues/1658)) ([71646d2](https://github.com/Koenkk/zigbee-herdsman/commit/71646d2a41e1dae8bfe6d410b2b64b8eb7d94e65))
+* Move legrand clusters to ZHC ([#1665](https://github.com/Koenkk/zigbee-herdsman/issues/1665)) ([ecca834](https://github.com/Koenkk/zigbee-herdsman/commit/ecca83464541b98ced1eed62cf87309a80e467bf))
+* Remove schneiderSpecificPilotMode from ZH ([#1659](https://github.com/Koenkk/zigbee-herdsman/issues/1659)) ([7394cf7](https://github.com/Koenkk/zigbee-herdsman/commit/7394cf7073b24f6d1c917afbb3fdbb180386faf7))
+
 ## [9.0.7](https://github.com/Koenkk/zigbee-herdsman/compare/v9.0.6...v9.0.7) (2026-02-24)
 
 
