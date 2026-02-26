@@ -16,39 +16,27 @@ describe("Zcl", () => {
 
     it("Get cluster by ID", () => {
         const cluster1 = Zcl.Utils.getCluster(0, undefined, {});
-        // @ts-expect-error testing
-        delete cluster1.getAttribute;
-        // @ts-expect-error testing
-        delete cluster1.getCommand;
-        // @ts-expect-error testing
-        delete cluster1.getCommandResponse;
         const cluster2 = Zcl.Utils.getCluster("genBasic", undefined, {});
-        // @ts-expect-error testing
-        delete cluster2.getAttribute;
-        // @ts-expect-error testing
-        delete cluster2.getCommand;
-        // @ts-expect-error testing
-        delete cluster2.getCommandResponse;
         expect(cluster1).toStrictEqual(cluster2);
     });
 
     it("Get cluster attribute by ID", () => {
         const cluster = Zcl.Utils.getCluster(0, undefined, {});
-        const attribute = cluster.getAttribute(1);
+        const attribute = Zcl.Utils.getClusterAttribute(cluster, 1, undefined);
         expect(attribute).toStrictEqual({ID: 1, type: DataType.UINT8, name: "appVersion", default: 0, max: 255});
     });
 
     it("Cluster has attribute", () => {
         const cluster = Zcl.Utils.getCluster(0, undefined, {});
-        expect(cluster.getAttribute("zclVersion")).not.toBeUndefined();
-        expect(cluster.getAttribute("NOTEXISTING")).toBeUndefined();
-        expect(cluster.getAttribute(0)).not.toBeUndefined();
-        expect(cluster.getAttribute(910293)).toBeUndefined();
+        expect(Zcl.Utils.getClusterAttribute(cluster, "zclVersion", undefined)).not.toBeUndefined();
+        expect(Zcl.Utils.getClusterAttribute(cluster, "NOTEXISTING", undefined)).toBeUndefined();
+        expect(Zcl.Utils.getClusterAttribute(cluster, 0, undefined)).not.toBeUndefined();
+        expect(Zcl.Utils.getClusterAttribute(cluster, 910293, undefined)).toBeUndefined();
     });
 
     it("Get specific command by name", () => {
         const cluster = Zcl.Utils.getCluster("genIdentify", undefined, {});
-        const command = cluster.getCommand("ezmodeInvoke");
+        const command = Zcl.Utils.getClusterCommand(cluster, "ezmodeInvoke");
         expect(command.ID).toBe(2);
         expect(command.name).toBe("ezmodeInvoke");
     });
@@ -68,7 +56,7 @@ describe("Zcl", () => {
     it("Get cluster by name non-existing", () => {
         expect(() => {
             Zcl.Utils.getCluster("notExisting", undefined, {});
-        }).toThrow("Cluster with name 'notExisting' does not exist");
+        }).toThrow("Cluster 'notExisting' does not exist");
     });
 
     it("Get cluster by id non-existing", () => {
@@ -83,13 +71,13 @@ describe("Zcl", () => {
 
     it("Get specific command by ID", () => {
         const cluster = Zcl.Utils.getCluster("genIdentify", undefined, {});
-        const command = cluster.getCommand(2);
-        expect(command).toStrictEqual(cluster.getCommand("ezmodeInvoke"));
+        const command = Zcl.Utils.getClusterCommand(cluster, 2);
+        expect(command).toStrictEqual(Zcl.Utils.getClusterCommand(cluster, "ezmodeInvoke"));
     });
 
     it("Get specific command by name server to client", () => {
         const cluster = Zcl.Utils.getCluster("genIdentify", undefined, {});
-        const command = cluster.getCommandResponse(0);
+        const command = Zcl.Utils.getClusterCommandResponse(cluster, 0);
         expect(command.ID).toBe(0);
         expect(command.name).toBe("identifyQueryRsp");
     });
@@ -97,7 +85,7 @@ describe("Zcl", () => {
     it("Get specific command by name non existing", () => {
         expect(() => {
             const cluster = Zcl.Utils.getCluster("genIdentify", undefined, {});
-            cluster.getCommandResponse("nonexisting");
+            Zcl.Utils.getClusterCommandResponse(cluster, "nonexisting");
         }).toThrow("Cluster 'genIdentify' has no command response 'nonexisting'");
     });
 
@@ -1935,37 +1923,37 @@ describe("Zcl", () => {
 
     it("Zcl utils get cluster attributes manufacturerCode", () => {
         const cluster = Zcl.Utils.getCluster("closuresWindowCovering", 0x1021, {});
-        const attribute = cluster.getAttribute(0xf004);
+        const attribute = Zcl.Utils.getClusterAttribute(cluster, 0xf004, 0x1021);
         expect(attribute).toStrictEqual(expect.objectContaining({ID: 0xf004, manufacturerCode: 0x1021, name: "stepPositionTilt", type: 48}));
     });
 
     it("Zcl utils get cluster attributes manufacturerCode wrong", () => {
         const cluster = Zcl.Utils.getCluster("closuresWindowCovering", 123, {});
-        expect(cluster.getAttribute(0x1000)).toBeUndefined();
+        expect(Zcl.Utils.getClusterAttribute(cluster, 0x1000, 123)).toBeUndefined();
     });
 
     it("Zcl utils get command", () => {
         const cluster = Zcl.Utils.getCluster("genOnOff", undefined, {});
-        const command = cluster.getCommand(0);
+        const command = Zcl.Utils.getClusterCommand(cluster, 0);
         expect(command.name).toStrictEqual("off");
-        expect(cluster.getCommand("off")).toStrictEqual(command);
+        expect(Zcl.Utils.getClusterCommand(cluster, "off")).toStrictEqual(command);
     });
 
     it("Zcl utils get attribute", () => {
         const cluster = Zcl.Utils.getCluster("genOnOff", undefined, {});
-        const attribute = cluster.getAttribute(16385);
+        const attribute = Zcl.Utils.getClusterAttribute(cluster, 16385, undefined);
         expect(attribute?.name).toStrictEqual("onTime");
-        expect(cluster.getAttribute("onTime")).toStrictEqual(attribute);
+        expect(Zcl.Utils.getClusterAttribute(cluster, "onTime", undefined)).toStrictEqual(attribute);
     });
 
     it("Zcl utils get attribute non-existing", () => {
         const cluster = Zcl.Utils.getCluster("genOnOff", undefined, {});
-        expect(cluster.getAttribute("notExisting")).toBeUndefined();
+        expect(Zcl.Utils.getClusterAttribute(cluster, "notExisting", undefined)).toBeUndefined();
     });
 
     it("Zcl utils get command non-existing", () => {
         const cluster = Zcl.Utils.getCluster("genOnOff", undefined, {});
-        expect(() => cluster.getCommand("notExisting")).toThrow("Cluster 'genOnOff' has no command 'notExisting'");
+        expect(() => Zcl.Utils.getClusterCommand(cluster, "notExisting")).toThrow("Cluster 'genOnOff' has no command 'notExisting'");
     });
 
     it("Zcl green power readGpd commissioning", () => {

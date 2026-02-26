@@ -1,23 +1,17 @@
 import {logger} from "../../utils/logger";
 import * as Zcl from "../../zspec/zcl";
 import type {TFoundation} from "../../zspec/zcl/definition/clusters-types";
-import type {Cluster, CustomClusters} from "../../zspec/zcl/definition/tstype";
+import type {CustomClusters} from "../../zspec/zcl/definition/tstype";
 import type {ClusterOrRawWriteAttributes, TCustomCluster} from "../tstype";
 
 const NS = "zh:controller:zcl";
 
-// Legrand devices (e.g. 4129) fail to set the manufacturerSpecific flag and
-// manufacturerCode in the frame header, despite using specific attributes.
-// This leads to incorrect reported attribute names.
-// Remap the attributes using the target device's manufacturer ID
-// if the header is lacking the information.
-function getCluster(frame: Zcl.Frame, deviceManufacturerID: number | undefined, customClusters: CustomClusters): Cluster {
-    let cluster = frame.cluster;
-    if (!frame?.header?.manufacturerCode && frame?.cluster && deviceManufacturerID === Zcl.ManufacturerCode.LEGRAND_GROUP) {
-        cluster = Zcl.Utils.getCluster(frame.cluster.ID, deviceManufacturerID, customClusters);
-    }
-    return cluster;
-}
+const LEGRAND_GROUP_MANUF_CODE = Zcl.ManufacturerCode.LEGRAND_GROUP;
+
+// NOTE: `legrandWorkaround`:
+//   Legrand devices fail to set the manufacturerSpecific flag and manufacturerCode in the frame header, despite using specific attributes.
+//   This leads to incorrect reported attribute names.
+//   Remap the attributes using the target device's manufacturer ID if the header is lacking the information.
 
 function attributeKeyValue<Cl extends number | string, Custom extends TCustomCluster | undefined = undefined>(
     frame: Zcl.Frame,
@@ -25,11 +19,13 @@ function attributeKeyValue<Cl extends number | string, Custom extends TCustomClu
     customClusters: CustomClusters,
 ): ClusterOrRawWriteAttributes<Cl, Custom> {
     const payload: Record<string | number, unknown> = {};
-    const cluster = getCluster(frame, deviceManufacturerID, customClusters);
+    const legrandWorkaround = frame.header?.manufacturerCode === undefined && deviceManufacturerID === LEGRAND_GROUP_MANUF_CODE;
+    const cluster = legrandWorkaround ? Zcl.Utils.getCluster(frame.cluster.name, deviceManufacturerID, customClusters) : frame.cluster;
+    const manufacturerCode = legrandWorkaround ? deviceManufacturerID : frame.header.manufacturerCode;
 
     // TODO: remove this type once Zcl.Frame is typed
     for (const item of frame.payload as TFoundation["report" | "write" | "readRsp"]) {
-        const attribute = cluster.getAttribute(item.attrId);
+        const attribute = Zcl.Utils.getClusterAttribute(cluster, item.attrId, manufacturerCode);
 
         if (attribute) {
             try {
@@ -49,11 +45,13 @@ function attributeKeyValue<Cl extends number | string, Custom extends TCustomClu
 
 function attributeList(frame: Zcl.Frame, deviceManufacturerID: number | undefined, customClusters: CustomClusters): Array<string | number> {
     const payload: Array<string | number> = [];
-    const cluster = getCluster(frame, deviceManufacturerID, customClusters);
+    const legrandWorkaround = frame.header?.manufacturerCode === undefined && deviceManufacturerID === LEGRAND_GROUP_MANUF_CODE;
+    const cluster = legrandWorkaround ? Zcl.Utils.getCluster(frame.cluster.name, deviceManufacturerID, customClusters) : frame.cluster;
+    const manufacturerCode = legrandWorkaround ? deviceManufacturerID : frame.header.manufacturerCode;
 
     // TODO: remove this type once Zcl.Frame is typed
     for (const item of frame.payload as TFoundation["read"]) {
-        const attribute = cluster.getAttribute(item.attrId);
+        const attribute = Zcl.Utils.getClusterAttribute(cluster, item.attrId, manufacturerCode);
 
         payload.push(attribute?.name ?? item.attrId);
     }
