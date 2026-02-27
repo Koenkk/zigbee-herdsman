@@ -70,18 +70,12 @@ const FOUNDATION_DISCOVER_RSP_IDS = [
 
 /** Runtime fast lookup */
 const ZCL_CLUSTERS_ID_TO_NAMES = (() => {
-    const map = new Map<number, ClusterName[]>();
+    const map = new Map<number, ClusterName>();
 
     for (const clusterName in Clusters) {
         const cluster = Clusters[clusterName as ClusterName];
 
-        const mapEntry = map.get(cluster.ID);
-
-        if (mapEntry) {
-            mapEntry.push(clusterName as ClusterName);
-        } else {
-            map.set(cluster.ID, [clusterName as ClusterName]);
-        }
+        map.set(cluster.ID, clusterName as ClusterName);
     }
 
     return map;
@@ -126,28 +120,22 @@ export function getCluster(key: string | number, manufacturerCode: number | unde
         }
 
         if (!cluster) {
-            // This can be greatly optimized when `clusters==ZCL` once these have been moved out of ZH (can just use fast lookup <id, name>):
-            // - 'manuSpecificPhilips', 'manuSpecificAssaDoorLock'
-            const zclNames = ZCL_CLUSTERS_ID_TO_NAMES.get(key);
+            const zclName = ZCL_CLUSTERS_ID_TO_NAMES.get(key);
 
-            if (zclNames) {
-                for (const zclName of zclNames) {
-                    const foundCluster = Clusters[zclName];
+            if (zclName) {
+                const foundCluster = Clusters[zclName];
 
-                    // priority on first match when matching only ID
-                    if (cluster === undefined) {
-                        cluster = foundCluster;
-                    }
+                // TODO: can remove all below once all manuf-specific moved to ZHC
 
-                    if (manufacturerCode && foundCluster.manufacturerCode === manufacturerCode) {
-                        cluster = foundCluster;
-                        break;
-                    }
+                // priority on first match when matching only ID
+                if (cluster === undefined) {
+                    cluster = foundCluster;
+                }
 
-                    if (!foundCluster.manufacturerCode) {
-                        cluster = foundCluster;
-                        break;
-                    }
+                if (manufacturerCode && foundCluster.manufacturerCode === manufacturerCode) {
+                    cluster = foundCluster;
+                } else if (foundCluster.manufacturerCode === undefined) {
+                    cluster = foundCluster;
                 }
             }
         }
