@@ -3,6 +3,15 @@ import * as Zcl from "../src/zspec/zcl";
 import {BuffaloZcl} from "../src/zspec/zcl/buffaloZcl";
 import {BuffaloZclDataType, DataType, Direction, FrameType, StructuredIndicatorType} from "../src/zspec/zcl/definition/enums";
 
+const MANU_SPE_CUSTOM_CLUSTERS = {
+    manuSpecificAssaDoorLock: {
+        ID: 0xfc00,
+        attributes: {},
+        commands: {},
+        commandsResponse: {},
+    },
+};
+
 describe("Zcl", () => {
     it("Get cluster by name", () => {
         const cluster = Zcl.Utils.getCluster("genIdentify", undefined, {});
