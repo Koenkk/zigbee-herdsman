@@ -70,18 +70,12 @@ const FOUNDATION_DISCOVER_RSP_IDS = [
 
 /** Runtime fast lookup */
 const ZCL_CLUSTERS_ID_TO_NAMES = (() => {
-    const map = new Map<number, string[]>();
+    const map = new Map<number, ClusterName>();
 
     for (const clusterName in Clusters) {
         const cluster = Clusters[clusterName as ClusterName];
 
-        const mapEntry = map.get(cluster.ID);
-
-        if (mapEntry) {
-            mapEntry.push(clusterName);
-        } else {
-            map.set(cluster.ID, [clusterName]);
-        }
+        map.set(cluster.ID, clusterName as ClusterName);
     }
 
     return map;
@@ -106,11 +100,6 @@ function hasCustomClusters(customClusters: CustomClusters): boolean {
     return false;
 }
 
-/**
- * This can be greatly optimized when `clusters==ZCL` once these have been moved out of ZH (can just use fast lookup <id, name>):
- * - 'manuSpecificPhilips', 'manuSpecificAssaDoorLock'
- * - 'elkoSwitchConfigurationClusterServer', 'manuSpecificSchneiderLightSwitchConfiguration'
- */
 function findClusterNameByID(
     id: number,
     manufacturerCode: number | undefined,
@@ -122,27 +111,21 @@ function findClusterNameByID(
     let partialMatch = Boolean(manufacturerCode);
 
     if (zcl) {
-        const zclNames = ZCL_CLUSTERS_ID_TO_NAMES.get(id);
+        const zclName = ZCL_CLUSTERS_ID_TO_NAMES.get(id);
 
-        if (zclNames) {
-            for (const zclName of zclNames) {
-                const cluster = clusters[zclName as ClusterName];
+        if (zclName) {
+            const cluster = clusters[zclName];
 
-                // priority on first match when matching only ID
-                if (name === undefined) {
-                    name = zclName;
-                }
+            // priority on first match when matching only ID
+            if (name === undefined) {
+                name = zclName;
+            }
 
-                if (manufacturerCode && cluster.manufacturerCode === manufacturerCode) {
-                    name = zclName;
-                    partialMatch = false;
-                    break;
-                }
-
-                if (!cluster.manufacturerCode) {
-                    name = zclName;
-                    break;
-                }
+            if (manufacturerCode && cluster.manufacturerCode === manufacturerCode) {
+                name = zclName;
+                partialMatch = false;
+            } else if (!cluster.manufacturerCode) {
+                name = zclName;
             }
         }
     } else {

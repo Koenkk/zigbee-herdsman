@@ -5202,6 +5202,14 @@ describe("Controller", () => {
         const device = controller.getDeviceByIeeeAddr("0x129")!;
         const endpoint = device.getEndpoint(1)!;
         mocksendZclFrameToEndpoint.mockClear();
+        device.addCustomCluster("manuSpecificAssaDoorLock", {
+            ID: 0xfc00,
+            attributes: {},
+            commands: {
+                getBatteryLevel: {ID: 0x12, parameters: []},
+            },
+            commandsResponse: {},
+        });
         await endpoint.command("manuSpecificAssaDoorLock", "getBatteryLevel", {});
         expect(mocksendZclFrameToEndpoint.mock.calls[0][0]).toBe("0x129");
         expect(mocksendZclFrameToEndpoint.mock.calls[0][1]).toBe(129);

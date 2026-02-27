@@ -3,6 +3,15 @@ import * as Zcl from "../src/zspec/zcl";
 import {BuffaloZcl} from "../src/zspec/zcl/buffaloZcl";
 import {BuffaloZclDataType, DataType, Direction, FrameType, StructuredIndicatorType} from "../src/zspec/zcl/definition/enums";
 
+const MANU_SPE_CUSTOM_CLUSTERS = {
+    manuSpecificAssaDoorLock: {
+        ID: 0xfc00,
+        attributes: {},
+        commands: {},
+        commandsResponse: {},
+    },
+};
+
 describe("Zcl", () => {
     it("Get cluster by name", () => {
         const cluster = Zcl.Utils.getCluster("genIdentify", undefined, {});
@@ -932,21 +941,41 @@ describe("Zcl", () => {
 
     it("ZclFrame with Assa (manufacturer specific) cluster create", () => {
         const payload = [{attrId: 0x0012, status: 0, attrData: 1, dataType: 32}];
-        const frame = Zcl.Frame.create(FrameType.GLOBAL, Direction.CLIENT_TO_SERVER, false, 0x101d, 8, "readRsp", 0xfc00, payload, {});
+        const frame = Zcl.Frame.create(
+            FrameType.GLOBAL,
+            Direction.CLIENT_TO_SERVER,
+            false,
+            0x101d,
+            8,
+            "readRsp",
+            0xfc00,
+            payload,
+            MANU_SPE_CUSTOM_CLUSTERS,
+        );
 
         expect(frame.cluster.name).toBe("manuSpecificAssaDoorLock");
     });
 
     it("ZclFrame with Assa (manufacturer specific) cluster create with non Assamanufcode", () => {
         const payload = [{attrId: 0x0012, status: 0, attrData: 1, dataType: 32}];
-        const frame = Zcl.Frame.create(FrameType.GLOBAL, Direction.CLIENT_TO_SERVER, false, 0x10f3, 8, "readRsp", 0xfc00, payload, {});
+        const frame = Zcl.Frame.create(
+            FrameType.GLOBAL,
+            Direction.CLIENT_TO_SERVER,
+            false,
+            0x10f3,
+            8,
+            "readRsp",
+            0xfc00,
+            payload,
+            MANU_SPE_CUSTOM_CLUSTERS,
+        );
 
         expect(frame.cluster.name).toBe("manuSpecificAssaDoorLock");
     });
 
     it("ZclFrame with Assa (manufacturer specific) cluster fromBuffer", () => {
         const buffer = Buffer.from([0x04, 0xf2, 0x10, 0x08, 0x01, 0x00, 0x00, 0x00, 0x20, 0x01]);
-        const frame = Zcl.Frame.fromBuffer(0xfc00, Zcl.Header.fromBuffer(buffer)!, buffer, {});
+        const frame = Zcl.Frame.fromBuffer(0xfc00, Zcl.Header.fromBuffer(buffer)!, buffer, MANU_SPE_CUSTOM_CLUSTERS);
         expect(frame.cluster.name).toBe("manuSpecificAssaDoorLock");
     });
 
@@ -1910,25 +1939,25 @@ describe("Zcl", () => {
     });
 
     it("Zcl utils get cluster without manufacturerCode", () => {
-        const cluster = Zcl.Utils.getCluster(0xfc00, undefined, {});
+        const cluster = Zcl.Utils.getCluster(0xfc00, undefined, MANU_SPE_CUSTOM_CLUSTERS);
         expect(cluster.ID).toBe(0xfc00);
         expect(cluster.name).toBe("manuSpecificAssaDoorLock");
     });
 
     it("Zcl utils get cluster with manufacturerCode", () => {
-        const cluster = Zcl.Utils.getCluster(0xfc00, 0x100b, {});
+        const cluster = Zcl.Utils.getCluster(0xfc00, 0x100b, MANU_SPE_CUSTOM_CLUSTERS);
         expect(cluster.ID).toBe(0xfc00);
         expect(cluster.name).toBe("manuSpecificPhilips");
     });
 
     it("Zcl utils get cluster manufacturerCode", () => {
-        const cluster = Zcl.Utils.getCluster(0xfc00, 0x10f2, {});
+        const cluster = Zcl.Utils.getCluster(0xfc00, 0x10f2, MANU_SPE_CUSTOM_CLUSTERS);
         expect(cluster.ID).toBe(0xfc00);
         expect(cluster.name).toBe("manuSpecificAssaDoorLock");
     });
 
     it("Zcl utils get cluster manufacturerCode wrong", () => {
-        const cluster = Zcl.Utils.getCluster(0xfc00, 123, {});
+        const cluster = Zcl.Utils.getCluster(0xfc00, 123, MANU_SPE_CUSTOM_CLUSTERS);
         expect(cluster.ID).toBe(0xfc00);
         expect(cluster.name).toBe("manuSpecificAssaDoorLock");
     });
