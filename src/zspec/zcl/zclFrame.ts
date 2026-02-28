@@ -11,7 +11,7 @@ import {ZclHeader} from "./zclHeader";
 // biome-ignore lint/suspicious/noExplicitAny: API
 type ZclPayload = any;
 
-const ListTypes: number[] = [
+const LIST_TYPES: readonly (DataType | BuffaloZclDataType)[] = [
     BuffaloZclDataType.LIST_UINT8,
     BuffaloZclDataType.LIST_UINT16,
     BuffaloZclDataType.LIST_UINT24,
@@ -195,7 +195,7 @@ export class ZclFrame {
                 continue;
             }
 
-            if (ListTypes.includes(parameter.type)) {
+            if (LIST_TYPES.includes(parameter.type)) {
                 const lengthParameter = command.parameters[command.parameters.indexOf(parameter) - 1];
                 const length = payload[lengthParameter.name];
 

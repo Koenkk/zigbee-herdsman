@@ -278,6 +278,33 @@ const MANUF_SPE_FRAME = Zcl.Frame.create(
 const MANUF_SPE_FRAME_BUFFER = Buffer.concat([MANUF_SPE_HEADER_BUFFER, Buffer.from(uint16To8Array(256))]);
 const MANUF_SPE_FRAME_STRING = `{"header":{"frameControl":{"reservedBits":0,"frameType":0,"direction":0,"disableDefaultResponse":false,"manufacturerSpecific":true},"manufacturerCode":4344,"transactionSequenceNumber":234,"commandIdentifier":0},"payload":[{"attrId":256}],"command":{"ID":0,"name":"read","parameters":[{"name":"attrId","type":9}],"response":1}}`;
 
+const LIST_HEADER = new Zcl.Header(
+    {
+        frameType: Zcl.FrameType.SPECIFIC,
+        manufacturerSpecific: false,
+        direction: Zcl.Direction.CLIENT_TO_SERVER,
+        disableDefaultResponse: false,
+        reservedBits: 0,
+    },
+    undefined,
+    43,
+    Zcl.Clusters.genGroups.commands.getMembership.ID,
+);
+const LIST_BUFFER = Buffer.from([1, 43, Zcl.Clusters.genGroups.commands.getMembership.ID, 2, 10, 0, 20, 0]);
+const LIST_FRAME = Zcl.Frame.create(
+    LIST_HEADER.frameControl.frameType,
+    LIST_HEADER.frameControl.direction,
+    LIST_HEADER.frameControl.disableDefaultResponse,
+    LIST_HEADER.manufacturerCode,
+    LIST_HEADER.transactionSequenceNumber,
+    LIST_HEADER.commandIdentifier,
+    Zcl.Clusters.genGroups.ID,
+    {groupcount: 2, grouplist: [10, 20]} /*payload*/,
+    {} /*custom clusters*/,
+    LIST_HEADER.frameControl.reservedBits,
+);
+const LIST_STRING = `{"header":{"frameControl":{"reservedBits":0,"frameType":1,"direction":0,"disableDefaultResponse":false,"manufacturerSpecific":false},"transactionSequenceNumber":43,"commandIdentifier":2},"payload":{"groupcount":2,"grouplist":[10,20]},"command":{"ID":2,"response":2,"parameters":[{"name":"groupcount","type":32},{"name":"grouplist","type":1002}],"required":true,"name":"getMembership"}}`;
+
 describe("ZCL Frame", () => {
     describe("Validates Parameter Condition", () => {
         it("MINIMUM_REMAINING_BUFFER_BYTES", () => {
@@ -552,6 +579,7 @@ describe("ZCL Frame", () => {
             {string: SPECIFIC_CONDITION_FRAME_STRING, header: SPECIFIC_CONDITION_HEADER, written: SPECIFIC_CONDITION_FRAME_BUFFER},
         ],
         ["manufacturer-specific", MANUF_SPE_FRAME, {string: MANUF_SPE_FRAME_STRING, header: MANUF_SPE_HEADER, written: MANUF_SPE_FRAME_BUFFER}],
+        ["list", LIST_FRAME, {string: LIST_STRING, header: LIST_HEADER, written: LIST_BUFFER}],
     ])("Writes & Reads frame %s", (_name, frame, expected) => {
         expect(frame).toBeDefined();
         expect(frame.toString()).toStrictEqual(expected.string);
