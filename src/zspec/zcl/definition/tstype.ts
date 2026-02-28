@@ -409,7 +409,6 @@ export type ClusterName =
     | "manuSpecificCentraliteHumidity"
     | "manuSpecificSmartThingsArrivalSensor"
     | "manuSpecificSamsungAccelerometer"
-    | "tradfriButton"
     | "sprutVoc"
     | "sprutNoise"
     | "sprutIrBlaster"
@@ -417,6 +416,5 @@ export type ClusterName =
     | "owonClearMetering"
     | "zosungIRTransmit"
     | "zosungIRControl"
-    | "manuSpecificAssaDoorLock"
     | "manuSpecificProfalux1"
     | "manuSpecificAmazonWWAH";

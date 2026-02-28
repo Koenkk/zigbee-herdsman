@@ -2378,7 +2378,7 @@ export interface TClusters {
             /** ID=0x0002 | type=BITMAP8 | write=true | required=true | default=0 */
             status: number;
             /** ID=0x0010 | type=UINT16 | write=true | required=true | min=1 | max=65534 | default=1 */
-            losedLimit: number;
+            closedLimit: number;
             /** ID=0x0011 | type=ENUM8 | write=true | required=true | max=254 | default=0 */
             mode: number;
         };
@@ -2911,11 +2911,11 @@ export interface TClusters {
             accelerationTimeLift: number;
             /** ID=0x0016 | type=UINT16 | write=true | max=65535 | default=0 */
             decelerationTimeLift: number;
-            /** ID=0x0017 | type=BITMAP8 | required=true | default=4 */
+            /** ID=0x0017 | type=BITMAP8 | write=true | required=true | default=4 */
             windowCoveringMode: number;
-            /** ID=0x0018 | type=OCTET_STR | default=1,0x0000 */
+            /** ID=0x0018 | type=OCTET_STR | write=true | default=1,0x0000 */
             intermediateSetpointsLift: Buffer;
-            /** ID=0x0019 | type=OCTET_STR | default=1,0x0000 */
+            /** ID=0x0019 | type=OCTET_STR | write=true | default=1,0x0000 */
             intermediateSetpointsTilt: Buffer;
             /** ID=0x000a | type=BITMAP8 */
             operationalStatus: number;
@@ -3191,6 +3191,8 @@ export interface TClusters {
             SinopeOccupancy?: number;
             /** ID=0x0401 | type=UINT16 | manufacturerCode=SINOPE_TECHNOLOGIES(0x119c) | write=true | max=65535 */
             SinopeMainCycleOutput?: number;
+            /** ID=0x0402 | type=CHAR_STR | write=true */
+            elkoDisplayText: string;
             /** ID=0x0402 | type=ENUM8 | manufacturerCode=SINOPE_TECHNOLOGIES(0x119c) | write=true | max=255 */
             SinopeBacklight?: number;
             /** ID=0x0404 | type=UINT16 | manufacturerCode=SINOPE_TECHNOLOGIES(0x119c) | write=true | max=65535 */
@@ -6571,9 +6573,9 @@ export interface TClusters {
             model: Buffer;
             /** ID=0x0007 | type=OCTET_STR | minLen=0 | maxLen=16 */
             partNumber: Buffer;
-            /** ID=0x0008 | type=OCTET_STR | minLen=0 | maxLen=16 */
+            /** ID=0x0008 | type=OCTET_STR | minLen=0 | maxLen=6 */
             productRevision: Buffer;
-            /** ID=0x000a | type=OCTET_STR | minLen=0 | maxLen=16 */
+            /** ID=0x000a | type=OCTET_STR | minLen=0 | maxLen=6 */
             softwareRevision: Buffer;
             /** ID=0x000b | type=CHAR_STR | minLen=0 | maxLen=16 */
             utilityName: string;
@@ -7788,37 +7790,7 @@ export interface TClusters {
         commands: never;
         commandResponses: never;
     };
-    tradfriButton: {
-        attributes: never;
-        commands: {
-            /** ID=0x01 */
-            action1: {
-                /** type=UINT8 | max=255 */
-                data: number;
-            };
-            /** ID=0x02 */
-            action2: {
-                /** type=UINT8 | max=255 */
-                data: number;
-            };
-            /** ID=0x03 */
-            action3: {
-                /** type=UINT8 | max=255 */
-                data: number;
-            };
-            /** ID=0x04 */
-            action4: {
-                /** type=UINT8 | max=255 */
-                data: number;
-            };
-            /** ID=0x06 */
-            action6: {
-                /** type=UINT8 | max=255 */
-                data: number;
-            };
-        };
-        commandResponses: never;
-    };
+
     sprutVoc: {
         attributes: {
             /** ID=0x6600 | type=UINT16 | write=true | max=65535 */
@@ -8007,147 +7979,6 @@ export interface TClusters {
             };
         };
         commandResponses: never;
-    };
-    manuSpecificAssaDoorLock: {
-        attributes: {
-            /** ID=0x0012 | type=UINT8 | write=true | max=255 */
-            autoLockTime: number;
-            /** ID=0x0013 | type=UINT8 | write=true | max=255 */
-            wrongCodeAttempts: number;
-            /** ID=0x0014 | type=UINT8 | write=true | max=255 */
-            shutdownTime: number;
-            /** ID=0x0015 | type=UINT8 | write=true | max=255 */
-            batteryLevel: number;
-            /** ID=0x0016 | type=UINT8 | write=true | max=255 */
-            insideEscutcheonLED: number;
-            /** ID=0x0017 | type=UINT8 | write=true | max=255 */
-            volume: number;
-            /** ID=0x0018 | type=UINT8 | write=true | max=255 */
-            lockMode: number;
-            /** ID=0x0019 | type=UINT8 | write=true | max=255 */
-            language: number;
-            /** ID=0x001a | type=BOOLEAN | write=true */
-            allCodesLockout: number;
-            /** ID=0x001b | type=BOOLEAN | write=true */
-            oneTouchLocking: number;
-            /** ID=0x001c | type=BOOLEAN | write=true */
-            privacyButtonSetting: number;
-            /** ID=0x0021 | type=UINT16 | write=true | max=65535 */
-            numberLogRecordsSupported: number;
-            /** ID=0x0030 | type=UINT8 | write=true | max=255 */
-            numberPinsSupported: number;
-            /** ID=0x0040 | type=UINT8 | write=true | max=255 */
-            numberScheduleSlotsPerUser: number;
-            /** ID=0x0050 | type=UINT8 | write=true | max=255 */
-            alarmMask: number;
-        };
-        commands: {
-            /** ID=0x10 | response=0 */
-            getLockStatus: Record<string, never>;
-            /** ID=0x12 */
-            getBatteryLevel: Record<string, never>;
-            /** ID=0x13 */
-            setRFLockoutTime: Record<string, never>;
-            /** ID=0x30 */
-            userCodeSet: {
-                /** type=CHAR_STR */
-                payload: string;
-            };
-            /** ID=0x31 */
-            userCodeGet: {
-                /** type=CHAR_STR */
-                payload: string;
-            };
-            /** ID=0x32 */
-            userCodeClear: {
-                /** type=CHAR_STR */
-                payload: string;
-            };
-            /** ID=0x33 */
-            clearAllUserCodes: Record<string, never>;
-            /** ID=0x34 */
-            setUserCodeStatus: Record<string, never>;
-            /** ID=0x35 */
-            getUserCodeStatus: Record<string, never>;
-            /** ID=0x36 */
-            getLastUserIdEntered: Record<string, never>;
-            /** ID=0x37 */
-            userAdded: Record<string, never>;
-            /** ID=0x38 */
-            userDeleted: Record<string, never>;
-            /** ID=0x40 */
-            setScheduleSlot: {
-                /** type=CHAR_STR */
-                payload: string;
-            };
-            /** ID=0x41 */
-            getScheduleSlot: {
-                /** type=CHAR_STR */
-                payload: string;
-            };
-            /** ID=0x42 */
-            setScheduleSlotStatus: {
-                /** type=CHAR_STR */
-                payload: string;
-            };
-            /** ID=0x60 | response=1 */
-            reflash: {
-                /** type=CHAR_STR */
-                payload: string;
-            };
-            /** ID=0x61 | response=2 */
-            reflashData: {
-                /** type=CHAR_STR */
-                payload: string;
-            };
-            /** ID=0x62 | response=3 */
-            reflashStatus: {
-                /** type=CHAR_STR */
-                payload: string;
-            };
-            /** ID=0x90 */
-            getReflashLock: Record<string, never>;
-            /** ID=0xa0 */
-            getHistory: Record<string, never>;
-            /** ID=0xa1 */
-            getLogin: Record<string, never>;
-            /** ID=0xa2 */
-            getUser: Record<string, never>;
-            /** ID=0xa3 */
-            getUsers: Record<string, never>;
-            /** ID=0xb0 */
-            getMandatoryAttributes: Record<string, never>;
-            /** ID=0xb1 */
-            readAttribute: Record<string, never>;
-            /** ID=0xb2 */
-            writeAttribute: Record<string, never>;
-            /** ID=0xb3 */
-            configureReporting: Record<string, never>;
-            /** ID=0xb4 */
-            getBasicClusterAttributes: Record<string, never>;
-        };
-        commandResponses: {
-            /** ID=0x00 */
-            getLockStatusRsp: {
-                /** type=UINT8 | max=255 */
-                status: number;
-            };
-            /** ID=0x01 */
-            reflashRsp: {
-                /** type=UINT8 | max=255 */
-                status: number;
-            };
-            /** ID=0x02 */
-            reflashDataRsp: {
-                /** type=UINT8 | max=255 */
-                status: number;
-            };
-            /** ID=0x03 */
-            reflashStatusRsp: {
-                /** type=UINT8 | max=255 */
-                status: number;
-            };
-        };
     };
     manuSpecificProfalux1: {
         attributes: {
