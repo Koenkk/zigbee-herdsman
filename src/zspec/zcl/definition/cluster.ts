@@ -2893,9 +2893,9 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             velocityLift: {ID: 0x0014, type: DataType.UINT16, write: true, max: 0xffff, default: 0},
             accelerationTimeLift: {ID: 0x0015, type: DataType.UINT16, write: true, max: 0xffff, default: 0},
             decelerationTimeLift: {ID: 0x0016, type: DataType.UINT16, write: true, max: 0xffff, default: 0},
-            windowCoveringMode: {ID: 0x0017, type: DataType.BITMAP8, required: true, default: 4},
-            intermediateSetpointsLift: {ID: 0x0018, type: DataType.OCTET_STR, default: "1,0x0000"},
-            intermediateSetpointsTilt: {ID: 0x0019, type: DataType.OCTET_STR, default: "1,0x0000"},
+            windowCoveringMode: {ID: 0x0017, type: DataType.BITMAP8, write: true, required: true, default: 4},
+            intermediateSetpointsLift: {ID: 0x0018, type: DataType.OCTET_STR, write: true, default: "1,0x0000"},
+            intermediateSetpointsTilt: {ID: 0x0019, type: DataType.OCTET_STR, write: true, default: "1,0x0000"},
             // custom
             // XXX: doesn't exist?
             operationalStatus: {ID: 0x000a, type: DataType.BITMAP8},
