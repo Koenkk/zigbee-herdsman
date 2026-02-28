@@ -1934,7 +1934,7 @@ describe("Zcl", () => {
     });
 
     it("Zcl utils get cluster with manufacturerCode", () => {
-        const cluster = Zcl.Utils.getCluster(0xfc00, Zcl.ManufacturerCode.SIGNIFY_NETHERLANDS_B_V, MANU_SPE_CUSTOM_CLUSTERS);
+        const cluster = Zcl.Utils.getCluster(0xfc00, Zcl.ManufacturerCode.SIGNIFY_NETHERLANDS_B_V, {});
         expect(cluster.ID).toBe(0xfc00);
         expect(cluster.name).toBe("manuSpecificPhilips");
     });
