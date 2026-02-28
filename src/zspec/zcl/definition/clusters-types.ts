@@ -2378,7 +2378,7 @@ export interface TClusters {
             /** ID=0x0002 | type=BITMAP8 | write=true | required=true | default=0 */
             status: number;
             /** ID=0x0010 | type=UINT16 | write=true | required=true | min=1 | max=65534 | default=1 */
-            losedLimit: number;
+            closedLimit: number;
             /** ID=0x0011 | type=ENUM8 | write=true | required=true | max=254 | default=0 */
             mode: number;
         };
@@ -2911,11 +2911,11 @@ export interface TClusters {
             accelerationTimeLift: number;
             /** ID=0x0016 | type=UINT16 | write=true | max=65535 | default=0 */
             decelerationTimeLift: number;
-            /** ID=0x0017 | type=BITMAP8 | required=true | default=4 */
+            /** ID=0x0017 | type=BITMAP8 | write=true | required=true | default=4 */
             windowCoveringMode: number;
-            /** ID=0x0018 | type=OCTET_STR | default=1,0x0000 */
+            /** ID=0x0018 | type=OCTET_STR | write=true | default=1,0x0000 */
             intermediateSetpointsLift: Buffer;
-            /** ID=0x0019 | type=OCTET_STR | default=1,0x0000 */
+            /** ID=0x0019 | type=OCTET_STR | write=true | default=1,0x0000 */
             intermediateSetpointsTilt: Buffer;
             /** ID=0x000a | type=BITMAP8 */
             operationalStatus: number;
@@ -3191,6 +3191,8 @@ export interface TClusters {
             SinopeOccupancy?: number;
             /** ID=0x0401 | type=UINT16 | manufacturerCode=SINOPE_TECHNOLOGIES(0x119c) | write=true | max=65535 */
             SinopeMainCycleOutput?: number;
+            /** ID=0x0402 | type=CHAR_STR | write=true */
+            elkoDisplayText: string;
             /** ID=0x0402 | type=ENUM8 | manufacturerCode=SINOPE_TECHNOLOGIES(0x119c) | write=true | max=255 */
             SinopeBacklight?: number;
             /** ID=0x0404 | type=UINT16 | manufacturerCode=SINOPE_TECHNOLOGIES(0x119c) | write=true | max=65535 */
@@ -6571,9 +6573,9 @@ export interface TClusters {
             model: Buffer;
             /** ID=0x0007 | type=OCTET_STR | minLen=0 | maxLen=16 */
             partNumber: Buffer;
-            /** ID=0x0008 | type=OCTET_STR | minLen=0 | maxLen=16 */
+            /** ID=0x0008 | type=OCTET_STR | minLen=0 | maxLen=6 */
             productRevision: Buffer;
-            /** ID=0x000a | type=OCTET_STR | minLen=0 | maxLen=16 */
+            /** ID=0x000a | type=OCTET_STR | minLen=0 | maxLen=6 */
             softwareRevision: Buffer;
             /** ID=0x000b | type=CHAR_STR | minLen=0 | maxLen=16 */
             utilityName: string;
