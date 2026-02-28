@@ -5256,10 +5256,11 @@ describe("Controller", () => {
         const endpoint = device.getEndpoint(1)!;
         mocksendZclFrameToEndpoint.mockClear();
         device.addCustomCluster("manuSpecificAssaDoorLock", {
+            name: "manuSpecificAssaDoorLock",
             ID: 0xfc00,
             attributes: {},
             commands: {
-                getBatteryLevel: {ID: 0x12, parameters: []},
+                getBatteryLevel: {name: "getBatteryLevel", ID: 0x12, parameters: []},
             },
             commandsResponse: {},
         });
