@@ -921,7 +921,7 @@ class Driver extends events.EventEmitter {
             });
 
             // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
-            this.socketPort!.once("close", this.onPortClose);
+            this.socketPort!.once("close", this.onPortClose.bind(this));
 
             // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
             this.socketPort!.on("error", (error) => {
