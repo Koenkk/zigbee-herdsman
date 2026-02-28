@@ -1,5 +1,18 @@
 # Changelog
 
+## [9.0.8](https://github.com/Koenkk/zigbee-herdsman/compare/v9.0.7...v9.0.8) (2026-02-28)
+
+
+### Bug Fixes
+
+* Missing `write` on some closuresWindowCovering attrs ([#1669](https://github.com/Koenkk/zigbee-herdsman/issues/1669)) ([41f2121](https://github.com/Koenkk/zigbee-herdsman/commit/41f2121d804bc3685bd3518cc29ec38e062560da))
+* Move cluster manuSpecificSchneiderFanSwitchConfiguration from ZH to ZHC. ([#1662](https://github.com/Koenkk/zigbee-herdsman/issues/1662)) ([fd4d585](https://github.com/Koenkk/zigbee-herdsman/commit/fd4d58526d685fd75bc1425df4f2d05ba234fd9d))
+* Move cluster tradfriButton to ZHC ([#1666](https://github.com/Koenkk/zigbee-herdsman/issues/1666)) ([79709b1](https://github.com/Koenkk/zigbee-herdsman/commit/79709b15f7e57ddb16e5def951148771ec5e337b))
+* Move Elko attributes in hvacThermostat cluster to ZHC ([#1658](https://github.com/Koenkk/zigbee-herdsman/issues/1658)) ([71646d2](https://github.com/Koenkk/zigbee-herdsman/commit/71646d2a41e1dae8bfe6d410b2b64b8eb7d94e65))
+* Move legrand clusters to ZHC ([#1665](https://github.com/Koenkk/zigbee-herdsman/issues/1665)) ([ecca834](https://github.com/Koenkk/zigbee-herdsman/commit/ecca83464541b98ced1eed62cf87309a80e467bf))
+* Move manuSpecificAssaDoorLock cluster to ZHC ([#1667](https://github.com/Koenkk/zigbee-herdsman/issues/1667)) ([00b95a0](https://github.com/Koenkk/zigbee-herdsman/commit/00b95a00eb9db8061b6c2240f847cdebeaef7e28))
+* Remove schneiderSpecificPilotMode from ZH ([#1659](https://github.com/Koenkk/zigbee-herdsman/issues/1659)) ([7394cf7](https://github.com/Koenkk/zigbee-herdsman/commit/7394cf7073b24f6d1c917afbb3fdbb180386faf7))
+
 ## [9.0.7](https://github.com/Koenkk/zigbee-herdsman/compare/v9.0.6...v9.0.7) (2026-02-24)
 
 
