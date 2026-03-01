@@ -425,7 +425,6 @@ export type ClusterName =
     | "manuSpecificLumi"
     | "manuSpecificTuya2"
     | "manuSpecificTuya3"
-    | "manuSpecificCentraliteHumidity"
     | "manuSpecificSmartThingsArrivalSensor"
     | "manuSpecificSamsungAccelerometer"
     | "sprutVoc"
