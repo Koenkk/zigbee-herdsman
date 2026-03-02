@@ -7774,58 +7774,6 @@ export interface TClusters {
         commands: never;
         commandResponses: never;
     };
-
-    sprutVoc: {
-        attributes: {
-            /** ID=0x6600 | type=UINT16 | write=true | max=65535 */
-            voc: number;
-        };
-        commands: never;
-        commandResponses: never;
-    };
-    sprutNoise: {
-        attributes: {
-            /** ID=0x6600 | type=SINGLE_PREC | write=true */
-            noise: number;
-            /** ID=0x6601 | type=BITMAP8 | write=true */
-            noiseDetected: number;
-            /** ID=0x6602 | type=SINGLE_PREC | write=true */
-            noiseDetectLevel: number;
-            /** ID=0x6603 | type=UINT16 | write=true | max=65535 */
-            noiseAfterDetectDelay: number;
-        };
-        commands: never;
-        commandResponses: never;
-    };
-    sprutIrBlaster: {
-        attributes: never;
-        commands: {
-            /** ID=0x00 */
-            playStore: {
-                /** type=UINT8 | max=255 */
-                param: number;
-            };
-            /** ID=0x01 */
-            learnStart: {
-                /** type=UINT8 | max=255 */
-                value: number;
-            };
-            /** ID=0x02 */
-            learnStop: {
-                /** type=UINT8 | max=255 */
-                value: number;
-            };
-            /** ID=0x03 */
-            clearStore: Record<string, never>;
-            /** ID=0x04 */
-            playRam: Record<string, never>;
-            /** ID=0x05 */
-            learnRamStart: Record<string, never>;
-            /** ID=0x06 */
-            learnRamStop: Record<string, never>;
-        };
-        commandResponses: never;
-    };
     manuSpecificSiglisZigfred: {
         attributes: {
             /** ID=0x0008 | type=UINT32 | write=true | max=4294967295 */
