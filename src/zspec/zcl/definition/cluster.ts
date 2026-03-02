@@ -7041,14 +7041,6 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             },
         },
     },
-    manuSpecificClusterAduroSmart: {
-        ID: 0xfccc,
-        attributes: {},
-        commands: {
-            cmd0: {ID: 0x00, parameters: []},
-        },
-        commandsResponse: {},
-    },
     manuSpecificOsram: {
         ID: 0xfc0f,
         attributes: {},

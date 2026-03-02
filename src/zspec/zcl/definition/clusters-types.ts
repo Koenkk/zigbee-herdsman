@@ -7376,14 +7376,6 @@ export interface TClusters {
             };
         };
     };
-    manuSpecificClusterAduroSmart: {
-        attributes: never;
-        commands: {
-            /** ID=0x00 */
-            cmd0: Record<string, never>;
-        };
-        commandResponses: never;
-    };
     manuSpecificOsram: {
         attributes: never;
         commands: {
