@@ -7391,15 +7391,6 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         },
         commandsResponse: {},
     },
-    manuSpecificCentraliteHumidity: {
-        ID: 0xfc45,
-        manufacturerCode: ManufacturerCode.CENTRALITE_SYSTEMS_INC,
-        attributes: {
-            measuredValue: {ID: 0x0000, type: DataType.UINT16, write: true, max: 0xffff},
-        },
-        commands: {},
-        commandsResponse: {},
-    },
     manuSpecificSmartThingsArrivalSensor: {
         ID: 0xfc05,
         manufacturerCode: ManufacturerCode.SMARTTHINGS_INC,
