@@ -416,7 +416,6 @@ export type ClusterName =
     | "haElectricalMeasurement"
     | "haDiagnostic"
     | "touchlink"
-    | "manuSpecificOsram"
     | "manuSpecificPhilips"
     | "manuSpecificPhilips2"
     | "manuSpecificSinope"
