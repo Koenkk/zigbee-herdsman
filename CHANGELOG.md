@@ -1,5 +1,12 @@
 # Changelog
 
+## [9.0.9](https://github.com/Koenkk/zigbee-herdsman/compare/v9.0.8...v9.0.9) (2026-02-28)
+
+
+### Bug Fixes
+
+* Fix for Dresden Elektronik OTA updates ([#1664](https://github.com/Koenkk/zigbee-herdsman/issues/1664)) ([8d96a5c](https://github.com/Koenkk/zigbee-herdsman/commit/8d96a5c4f4601f4753315a7db35627620f99a196))
+
 ## [9.0.8](https://github.com/Koenkk/zigbee-herdsman/compare/v9.0.7...v9.0.8) (2026-02-28)
 
 

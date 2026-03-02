@@ -7743,14 +7743,6 @@ export interface TClusters {
         };
         commandResponses: never;
     };
-    manuSpecificCentraliteHumidity: {
-        attributes: {
-            /** ID=0x0000 | type=UINT16 | write=true | max=65535 */
-            measuredValue: number;
-        };
-        commands: never;
-        commandResponses: never;
-    };
     manuSpecificSmartThingsArrivalSensor: {
         attributes: never;
         commands: never;
