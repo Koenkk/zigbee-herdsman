@@ -23,7 +23,7 @@ import {Device, Entity} from "./model";
 import {InterviewState} from "./model/device";
 import Group from "./model/group";
 import Touchlink from "./touchlink";
-import type {DeviceType, GreenPowerDeviceJoinedPayload, RawPayload} from "./tstype";
+import type {DeviceType, GreenPowerDeviceJoinedPayload, NetworkScanOptions, NetworkScanResult, RawPayload} from "./tstype";
 
 const NS = "zh:controller";
 
@@ -418,6 +418,76 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
 
     public getPermitJoinEnd(): number | undefined {
         return this.permitJoinEnd;
+    }
+
+    /**
+     * Trigger a ZDO Mgmt_NWK_Update energy scan on the target node.
+     *
+     * This uses `NWK_UPDATE_REQUEST` with `duration` in range 0-5 and includes `count`,
+     * which requests an energy scan result in the corresponding `NWK_UPDATE_RESPONSE`.
+     */
+    public async networkScan(options: NetworkScanOptions = {}): Promise<NetworkScanResult> {
+        const channels = options.channels ? [...new Set(options.channels)] : [11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26];
+        assert(channels.length > 0, "At least one channel must be provided.");
+
+        for (const channel of channels) {
+            assert(Number.isInteger(channel), `Channel must be an integer, got '${channel}'.`);
+            assert(channel >= 11 && channel <= 26, `Channel '${channel}' is invalid, use a channel between 11 - 26.`);
+        }
+
+        channels.sort((a, b) => a - b);
+
+        const duration = options.duration ?? 3;
+        assert(Number.isInteger(duration), `Duration must be an integer, got '${duration}'.`);
+        assert(duration >= 0 && duration <= 5, `Duration '${duration}' is invalid, use a value between 0 - 5.`);
+
+        const count = options.count ?? 1;
+        assert(Number.isInteger(count), `Count must be an integer, got '${count}'.`);
+        assert(count >= 1 && count <= 8, `Count '${count}' is invalid, use a value between 1 - 8.`);
+
+        const target = options.target ?? ZSpec.COORDINATOR_ADDRESS;
+        assert(Number.isInteger(target), `Target must be an integer, got '${target}'.`);
+        assert(target >= 0x0000 && target <= 0xffff, `Target '${target}' is invalid, use a value between 0x0000 - 0xFFFF.`);
+
+        const clusterId = Zdo.ClusterId.NWK_UPDATE_REQUEST;
+        const zdoPayload = Zdo.Buffalo.buildRequest(this.adapter.hasZdoMessageOverhead, clusterId, channels, duration, count, undefined, undefined);
+        const response = await this.adapter.sendZdo(ZSpec.BLANK_EUI64, target, clusterId, zdoPayload, false);
+
+        if (!Zdo.Buffalo.checkStatus<Zdo.ClusterId.NWK_UPDATE_RESPONSE>(response)) {
+            throw new Zdo.StatusError(response[0]);
+        }
+
+        assert(response[1], "NWK_UPDATE_RESPONSE payload is missing.");
+        const payload = response[1];
+        const scannedChannels = ZSpec.Utils.uint32MaskToChannels(payload.scannedChannels).filter((channel) => channel >= 11 && channel <= 26);
+
+        if (payload.entryList.length !== scannedChannels.length) {
+            logger.warning(
+                `Network scan entry count (${payload.entryList.length}) does not match scanned channel count (${scannedChannels.length}).`,
+                NS,
+            );
+        }
+
+        const energy: NetworkScanResult["energy"] = [];
+        for (let i = 0; i < scannedChannels.length; i++) {
+            const sample = payload.entryList[i];
+            if (sample !== undefined) {
+                energy.push({channel: scannedChannels[i], energy: sample});
+            }
+        }
+
+        return {
+            target,
+            channels,
+            duration,
+            count,
+            scannedChannelsMask: payload.scannedChannels,
+            scannedChannels,
+            totalTransmissions: payload.totalTransmissions,
+            totalFailures: payload.totalFailures,
+            entryList: [...payload.entryList],
+            energy,
+        };
     }
 
     public isStopping(): boolean {
