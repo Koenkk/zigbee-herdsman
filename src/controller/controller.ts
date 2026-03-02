@@ -1099,11 +1099,9 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
 
                     endpoint.saveClusterAttributeKeyValue(frame.cluster.ID, data);
                 }
-            } else {
-                if (frame.header.isSpecific) {
-                    type = `command${command.name.charAt(0).toUpperCase()}${command.name.slice(1)}`;
-                    data = frame.payload;
-                }
+            } else if (frame.header.isSpecific) {
+                type = `command${command.name.charAt(0).toUpperCase()}${command.name.slice(1)}`;
+                data = frame.payload;
             }
         } else {
             type = "raw";
