@@ -7041,17 +7041,6 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             },
         },
     },
-    manuSpecificOsram: {
-        ID: 0xfc0f,
-        attributes: {},
-        commands: {
-            saveStartupParams: {ID: 0x01, parameters: []},
-            resetStartupParams: {ID: 0x02, parameters: []},
-        },
-        commandsResponse: {
-            saveStartupParamsRsp: {ID: 0x00, parameters: []},
-        },
-    },
     manuSpecificPhilips: {
         ID: 0xfc00,
         manufacturerCode: ManufacturerCode.SIGNIFY_NETHERLANDS_B_V,
