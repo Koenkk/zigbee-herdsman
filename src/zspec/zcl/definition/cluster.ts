@@ -7414,42 +7414,6 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         commands: {},
         commandsResponse: {},
     },
-    sprutVoc: {
-        ID: 0x6601,
-        manufacturerCode: 26214,
-        attributes: {
-            voc: {ID: 0x6600, type: DataType.UINT16, write: true, max: 0xffff},
-        },
-        commands: {},
-        commandsResponse: {},
-    },
-    sprutNoise: {
-        ID: 0x6602,
-        manufacturerCode: 26214,
-        attributes: {
-            noise: {ID: 0x6600, type: DataType.SINGLE_PREC, write: true},
-            noiseDetected: {ID: 0x6601, type: DataType.BITMAP8, write: true},
-            noiseDetectLevel: {ID: 0x6602, type: DataType.SINGLE_PREC, write: true},
-            noiseAfterDetectDelay: {ID: 0x6603, type: DataType.UINT16, write: true, max: 0xffff},
-        },
-        commands: {},
-        commandsResponse: {},
-    },
-    sprutIrBlaster: {
-        ID: 0x6603,
-        manufacturerCode: 26214,
-        attributes: {},
-        commands: {
-            playStore: {ID: 0x00, parameters: [{name: "param", type: DataType.UINT8, max: 0xff}]},
-            learnStart: {ID: 0x01, parameters: [{name: "value", type: DataType.UINT8, max: 0xff}]},
-            learnStop: {ID: 0x02, parameters: [{name: "value", type: DataType.UINT8, max: 0xff}]},
-            clearStore: {ID: 0x03, parameters: []},
-            playRam: {ID: 0x04, parameters: []},
-            learnRamStart: {ID: 0x05, parameters: []},
-            learnRamStop: {ID: 0x06, parameters: []},
-        },
-        commandsResponse: {},
-    },
     manuSpecificSiglisZigfred: {
         ID: 0xfc42,
         manufacturerCode: 0x129c,
