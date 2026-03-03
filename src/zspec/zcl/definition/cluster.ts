@@ -7389,20 +7389,6 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             arrivalSensorNotify: {ID: 0x01, parameters: []},
         },
     },
-    manuSpecificSamsungAccelerometer: {
-        ID: 0xfc02,
-        manufacturerCode: ManufacturerCode.SMARTTHINGS_INC,
-        attributes: {
-            motion_threshold_multiplier: {ID: 0x0000, type: DataType.UINT8, write: true, max: 0xff},
-            motion_threshold: {ID: 0x0002, type: DataType.UINT16, write: true, max: 0xffff},
-            acceleration: {ID: 0x0010, type: DataType.BITMAP8, write: true, max: 0xff},
-            x_axis: {ID: 0x0012, type: DataType.INT16, write: true, min: -32768, max: 32767},
-            y_axis: {ID: 0x0013, type: DataType.INT16, write: true, min: -32768, max: 32767},
-            z_axis: {ID: 0x0014, type: DataType.INT16, write: true, min: -32768, max: 32767},
-        },
-        commands: {},
-        commandsResponse: {},
-    },
     manuSpecificSiglisZigfred: {
         ID: 0xfc42,
         manufacturerCode: 0x129c,
