@@ -7743,24 +7743,6 @@ export interface TClusters {
             arrivalSensorNotify: Record<string, never>;
         };
     };
-    manuSpecificSamsungAccelerometer: {
-        attributes: {
-            /** ID=0x0000 | type=UINT8 | write=true | max=255 */
-            motion_threshold_multiplier: number;
-            /** ID=0x0002 | type=UINT16 | write=true | max=65535 */
-            motion_threshold: number;
-            /** ID=0x0010 | type=BITMAP8 | write=true | max=255 */
-            acceleration: number;
-            /** ID=0x0012 | type=INT16 | write=true | min=-32768 | max=32767 */
-            x_axis: number;
-            /** ID=0x0013 | type=INT16 | write=true | min=-32768 | max=32767 */
-            y_axis: number;
-            /** ID=0x0014 | type=INT16 | write=true | min=-32768 | max=32767 */
-            z_axis: number;
-        };
-        commands: never;
-        commandResponses: never;
-    };
     manuSpecificSiglisZigfred: {
         attributes: {
             /** ID=0x0008 | type=UINT32 | write=true | max=4294967295 */
