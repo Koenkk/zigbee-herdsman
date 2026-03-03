@@ -1,5 +1,12 @@
 # Changelog
 
+## [9.0.11](https://github.com/Koenkk/zigbee-herdsman/compare/v9.0.10...v9.0.11) (2026-03-03)
+
+
+### Bug Fixes
+
+* Move manuSpecificSamsungAccelerometer from ZH to ZHC ([#1680](https://github.com/Koenkk/zigbee-herdsman/issues/1680)) ([7ab5e70](https://github.com/Koenkk/zigbee-herdsman/commit/7ab5e708a490c6a18f9f27da3fbfaa3d83e7f925))
+
 ## [9.0.10](https://github.com/Koenkk/zigbee-herdsman/compare/v9.0.9...v9.0.10) (2026-03-03)
 
 
