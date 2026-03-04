@@ -7376,27 +7376,6 @@ export interface TClusters {
             };
         };
     };
-    manuSpecificClusterAduroSmart: {
-        attributes: never;
-        commands: {
-            /** ID=0x00 */
-            cmd0: Record<string, never>;
-        };
-        commandResponses: never;
-    };
-    manuSpecificOsram: {
-        attributes: never;
-        commands: {
-            /** ID=0x01 */
-            saveStartupParams: Record<string, never>;
-            /** ID=0x02 */
-            resetStartupParams: Record<string, never>;
-        };
-        commandResponses: {
-            /** ID=0x00 */
-            saveStartupParamsRsp: Record<string, never>;
-        };
-    };
     manuSpecificPhilips: {
         attributes: {
             /** ID=0x0031 | type=BITMAP16 | write=true */
@@ -7756,14 +7735,6 @@ export interface TClusters {
         };
         commandResponses: never;
     };
-    manuSpecificCentraliteHumidity: {
-        attributes: {
-            /** ID=0x0000 | type=UINT16 | write=true | max=65535 */
-            measuredValue: number;
-        };
-        commands: never;
-        commandResponses: never;
-    };
     manuSpecificSmartThingsArrivalSensor: {
         attributes: never;
         commands: never;
@@ -7771,76 +7742,6 @@ export interface TClusters {
             /** ID=0x01 */
             arrivalSensorNotify: Record<string, never>;
         };
-    };
-    manuSpecificSamsungAccelerometer: {
-        attributes: {
-            /** ID=0x0000 | type=UINT8 | write=true | max=255 */
-            motion_threshold_multiplier: number;
-            /** ID=0x0002 | type=UINT16 | write=true | max=65535 */
-            motion_threshold: number;
-            /** ID=0x0010 | type=BITMAP8 | write=true | max=255 */
-            acceleration: number;
-            /** ID=0x0012 | type=INT16 | write=true | min=-32768 | max=32767 */
-            x_axis: number;
-            /** ID=0x0013 | type=INT16 | write=true | min=-32768 | max=32767 */
-            y_axis: number;
-            /** ID=0x0014 | type=INT16 | write=true | min=-32768 | max=32767 */
-            z_axis: number;
-        };
-        commands: never;
-        commandResponses: never;
-    };
-
-    sprutVoc: {
-        attributes: {
-            /** ID=0x6600 | type=UINT16 | write=true | max=65535 */
-            voc: number;
-        };
-        commands: never;
-        commandResponses: never;
-    };
-    sprutNoise: {
-        attributes: {
-            /** ID=0x6600 | type=SINGLE_PREC | write=true */
-            noise: number;
-            /** ID=0x6601 | type=BITMAP8 | write=true */
-            noiseDetected: number;
-            /** ID=0x6602 | type=SINGLE_PREC | write=true */
-            noiseDetectLevel: number;
-            /** ID=0x6603 | type=UINT16 | write=true | max=65535 */
-            noiseAfterDetectDelay: number;
-        };
-        commands: never;
-        commandResponses: never;
-    };
-    sprutIrBlaster: {
-        attributes: never;
-        commands: {
-            /** ID=0x00 */
-            playStore: {
-                /** type=UINT8 | max=255 */
-                param: number;
-            };
-            /** ID=0x01 */
-            learnStart: {
-                /** type=UINT8 | max=255 */
-                value: number;
-            };
-            /** ID=0x02 */
-            learnStop: {
-                /** type=UINT8 | max=255 */
-                value: number;
-            };
-            /** ID=0x03 */
-            clearStore: Record<string, never>;
-            /** ID=0x04 */
-            playRam: Record<string, never>;
-            /** ID=0x05 */
-            learnRamStart: Record<string, never>;
-            /** ID=0x06 */
-            learnRamStop: Record<string, never>;
-        };
-        commandResponses: never;
     };
     manuSpecificSiglisZigfred: {
         attributes: {

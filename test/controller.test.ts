@@ -633,7 +633,7 @@ describe("Controller", () => {
         expect(Group.byGroupID(2)).toBeUndefined();
 
         const group2 = controller.createGroup(2);
-        group2.removeFromNetwork();
+        await group2.removeFromNetwork();
         // @ts-expect-error private
         expect(Group.groups.size).toStrictEqual(1);
         expect(Group.byGroupID(1)).toBeInstanceOf(Group);
@@ -9837,7 +9837,7 @@ describe("Controller", () => {
         await controller.start();
         mockAdapterSendZdo.mockClear();
 
-        controller.sendRaw({
+        await controller.sendRaw({
             profileId: Zdo.ZDO_PROFILE_ID,
             ieeeAddress: "0xf1f2f3f4f5f6f7f8",
             networkAddress: 129,
@@ -9854,7 +9854,7 @@ describe("Controller", () => {
         await controller.start();
         mocksendZclFrameInterPANToIeeeAddr.mockClear();
 
-        controller.sendRaw({
+        await controller.sendRaw({
             interPan: true,
             ieeeAddress: "0xf1f2f3f4f5f6f7f8",
             networkAddress: 129,
@@ -9886,7 +9886,7 @@ describe("Controller", () => {
         await controller.start();
         mocksendZclFrameInterPANBroadcast.mockClear();
 
-        controller.sendRaw({
+        await controller.sendRaw({
             interPan: true,
             zcl: {
                 commandKey: "scanRequest",
@@ -9915,7 +9915,7 @@ describe("Controller", () => {
         await controller.start();
         mocksendZclFrameToGroup.mockClear();
 
-        controller.sendRaw({
+        await controller.sendRaw({
             groupId: 123,
             clusterKey: "genScenes",
             srcEndpoint: 2,
@@ -9949,7 +9949,7 @@ describe("Controller", () => {
         await controller.start();
         mocksendZclFrameToAll.mockClear();
 
-        controller.sendRaw({
+        await controller.sendRaw({
             networkAddress: 0xfff8,
             clusterKey: Zcl.Clusters.genIdentify.ID,
             srcEndpoint: 1,
@@ -9982,7 +9982,7 @@ describe("Controller", () => {
         await controller.start();
         mocksendZclFrameToEndpoint.mockClear();
 
-        controller.sendRaw({
+        await controller.sendRaw({
             ieeeAddress: "0xf1f2f3f4f5f6f7f8",
             networkAddress: 129,
             clusterKey: Zcl.Clusters.genIdentify.ID,
@@ -10042,7 +10042,7 @@ describe("Controller", () => {
             },
         };
 
-        controller.sendRaw(
+        await controller.sendRaw(
             {
                 ieeeAddress: "0xf1f2f3f4f5f6f7f8",
                 networkAddress: 129,
