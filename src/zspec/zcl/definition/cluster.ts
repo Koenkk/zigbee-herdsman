@@ -7041,63 +7041,6 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             },
         },
     },
-    manuSpecificSinope: {
-        ID: 0xff01,
-        manufacturerCode: ManufacturerCode.SINOPE_TECHNOLOGIES,
-        attributes: {
-            // attribute ID :1's readable
-            keypadLockout: {ID: 0x0002, type: DataType.ENUM8, write: true, max: 0xff},
-            // 'firmware number': {ID: 3, type: DataType.UNKNOWN}, write: true,
-            firmwareVersion: {ID: 0x0004, type: DataType.CHAR_STR, write: true},
-            outdoorTempToDisplay: {ID: 0x0010, type: DataType.INT16, write: true, max: 0xffff},
-            outdoorTempToDisplayTimeout: {ID: 0x0011, type: DataType.UINT16, write: true, max: 0xffff},
-            secondScreenBehavior: {ID: 0x0012, type: DataType.ENUM8, write: true, max: 0xff}, // auto:0,setpoint:1,outside:2
-            currentTimeToDisplay: {ID: 0x0020, type: DataType.UINT32, write: true, max: 0xffffffff},
-            ledIntensityOn: {ID: 0x0052, type: DataType.UINT8, write: true, max: 0xff},
-            ledIntensityOff: {ID: 0x0053, type: DataType.UINT8, write: true, max: 0xff},
-            ledColorOn: {ID: 0x0050, type: DataType.UINT24, write: true, max: 0xffffff}, // inversed hex BBGGRR
-            ledColorOff: {ID: 0x0051, type: DataType.UINT24, write: true, max: 0xffffff},
-            onLedIntensity: {ID: 0x0052, type: DataType.UINT8, write: true, max: 0xff}, // percent
-            offLedIntensity: {ID: 0x0053, type: DataType.UINT8, write: true, max: 0xff}, // percent
-            actionReport: {ID: 0x0054, type: DataType.ENUM8, write: true, max: 0xff}, // singleTapUp: 1,2, doubleTapUp: 1,4, singleTapDown: 17,18, doubleTapDown: 17,20
-            minimumBrightness: {ID: 0x0055, type: DataType.UINT16, write: true, max: 0xffff},
-            connectedLoadRM: {ID: 0x0060, type: DataType.UINT16, write: true, max: 0xffff}, // unit watt/hr for Calypso RM3500 & Load Controller RM3250
-            currentLoad: {ID: 0x0070, type: DataType.BITMAP8, write: true}, // related to ecoMode(s)
-            ecoMode: {ID: 0x0071, type: DataType.INT8, write: true, min: -128, max: 127, default: -128}, // -100-0-100%
-            ecoMode1: {ID: 0x0072, type: DataType.UINT8, write: true, max: 0xff, default: 0xff}, // 0-99
-            ecoMode2: {ID: 0x0073, type: DataType.UINT8, write: true, max: 0xff, default: 0xff}, // 0-100
-            unknown: {ID: 0x0075, type: DataType.BITMAP32, write: true, max: 0xffffffff}, // RW *testing*
-            drConfigWaterTempMin: {ID: 0x0076, type: DataType.UINT8, write: true, max: 0xff}, // value 45 or 0
-            drConfigWaterTempTime: {ID: 0x0077, type: DataType.UINT8, write: true, max: 0xff, default: 2}, // default 2
-            drWTTimeOn: {ID: 0x0078, type: DataType.UINT16, write: true, max: 0xffff},
-            unknown1: {ID: 0x0080, type: DataType.UINT32, max: 0xffffffff}, // readOnly stringNumber *testing*
-            dimmerTimmer: {ID: 0x00a0, type: DataType.UINT32, write: true, max: 0xffffffff},
-            unknown2: {ID: 0x0100, type: DataType.UINT8, max: 0xff}, // readOnly *testing*
-            floorControlMode: {ID: 0x0105, type: DataType.ENUM8, write: true, max: 0xff}, // airFloorMode
-            auxOutputMode: {ID: 0x0106, type: DataType.ENUM8, write: true, max: 0xff},
-            floorTemperature: {ID: 0x0107, type: DataType.INT16, write: true, max: 0xffff},
-            ambiantMaxHeatSetpointLimit: {ID: 0x0108, type: DataType.INT16, write: true, max: 0xffff},
-            floorMinHeatSetpointLimit: {ID: 0x0109, type: DataType.INT16, write: true, max: 0xffff},
-            floorMaxHeatSetpointLimit: {ID: 0x010a, type: DataType.INT16, write: true, max: 0xffff},
-            temperatureSensor: {ID: 0x010b, type: DataType.ENUM8, write: true, max: 0xff},
-            floorLimitStatus: {ID: 0x010c, type: DataType.ENUM8, write: true, max: 0xff},
-            roomTemperature: {ID: 0x010d, type: DataType.INT16, write: true, max: 0xffff},
-            timeFormatToDisplay: {ID: 0x0114, type: DataType.ENUM8, write: true, max: 0xff},
-            GFCiStatus: {ID: 0x0115, type: DataType.ENUM8, write: true, max: 0xff},
-            auxConnectedLoad: {ID: 0x0118, type: DataType.UINT16, write: true, max: 0xff},
-            connectedLoad: {ID: 0x0119, type: DataType.UINT16, write: true, max: 0xffff},
-            pumpProtection: {ID: 0x0128, type: DataType.UINT8, write: true, max: 0xff},
-            unknown3: {ID: 0x012a, type: DataType.ENUM8, write: true, max: 0xff, default: 60}, // RW 5,10,15,20,30,60 *testing*
-            currentSetpoint: {ID: 0x012b, type: DataType.INT16, write: true, max: 0xffff}, // W:to ocuppiedHeatSetpoint, R:depends of SinopeOccupancy
-            // attribute ID: 300's readable, returns a buffer
-            reportLocalTemperature: {ID: 0x012d, type: DataType.INT16, write: true, min: -32768, max: 32767},
-            // attribute ID: 512's readable
-            flowMeterConfig: {ID: 0x0240, type: DataType.ARRAY, write: true},
-            coldLoadPickupStatus: {ID: 0x0283, type: DataType.UINT8, write: true, max: 0xff},
-        },
-        commands: {},
-        commandsResponse: {},
-    },
     /**
      * Tuya cluster
      *
