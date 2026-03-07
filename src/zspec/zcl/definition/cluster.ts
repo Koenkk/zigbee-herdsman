@@ -7348,15 +7348,6 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         },
         commandsResponse: {},
     },
-    manuSpecificSmartThingsArrivalSensor: {
-        ID: 0xfc05,
-        manufacturerCode: ManufacturerCode.SMARTTHINGS_INC,
-        attributes: {},
-        commands: {},
-        commandsResponse: {
-            arrivalSensorNotify: {ID: 0x01, parameters: []},
-        },
-    },
     manuSpecificSiglisZigfred: {
         ID: 0xfc42,
         manufacturerCode: 0x129c,
