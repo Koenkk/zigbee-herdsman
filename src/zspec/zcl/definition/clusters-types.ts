@@ -7705,24 +7705,6 @@ export interface TClusters {
             arrivalSensorNotify: Record<string, never>;
         };
     };
-    manuSpecificSiglisZigfred: {
-        attributes: {
-            /** ID=0x0008 | type=UINT32 | write=true | max=4294967295 */
-            buttonEvent: number;
-        };
-        commands: {
-            /** ID=0x02 */
-            siglisZigfredButtonEvent: {
-                /** type=UINT8 | max=255 */
-                button: number;
-                /** type=UINT8 | max=255 */
-                type: number;
-                /** type=UINT16 | max=65535 */
-                duration: number;
-            };
-        };
-        commandResponses: never;
-    };
     owonClearMetering: {
         attributes: never;
         commands: {
