@@ -7376,44 +7376,6 @@ export interface TClusters {
             };
         };
     };
-    manuSpecificPhilips: {
-        attributes: {
-            /** ID=0x0031 | type=BITMAP16 | write=true */
-            config: number;
-        };
-        commands: never;
-        commandResponses: {
-            /** ID=0x00 */
-            hueNotification: {
-                /** type=UINT8 | max=255 */
-                button: number;
-                /** type=UINT24 | max=16777215 */
-                unknown1: number;
-                /** type=UINT8 | max=255 */
-                type: number;
-                /** type=UINT8 | max=255 */
-                unknown2: number;
-                /** type=UINT8 | max=255 */
-                time: number;
-                /** type=UINT8 | max=255 */
-                unknown3: number;
-            };
-        };
-    };
-    manuSpecificPhilips2: {
-        attributes: {
-            /** ID=0x0002 | type=OCTET_STR | write=true */
-            state: Buffer;
-        };
-        commands: {
-            /** ID=0x00 */
-            multiColor: {
-                /** type=BUFFER */
-                data: Buffer;
-            };
-        };
-        commandResponses: never;
-    };
     manuSpecificSinope: {
         attributes: {
             /** ID=0x0002 | type=ENUM8 | write=true | max=255 */
