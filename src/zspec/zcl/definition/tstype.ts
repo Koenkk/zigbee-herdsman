@@ -426,5 +426,4 @@ export type ClusterName =
     | "owonClearMetering"
     | "zosungIRTransmit"
     | "zosungIRControl"
-    | "manuSpecificProfalux1"
     | "manuSpecificAmazonWWAH";

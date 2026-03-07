@@ -7843,14 +7843,6 @@ export interface TClusters {
         };
         commandResponses: never;
     };
-    manuSpecificProfalux1: {
-        attributes: {
-            /** ID=0x0000 | type=UINT8 | write=true | max=255 */
-            motorCoverType: number;
-        };
-        commands: never;
-        commandResponses: never;
-    };
     manuSpecificAmazonWWAH: {
         attributes: {
             /** ID=0x0002 | type=BOOLEAN | write=true */

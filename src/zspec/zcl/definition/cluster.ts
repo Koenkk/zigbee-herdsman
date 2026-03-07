@@ -7481,15 +7481,6 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         },
         commandsResponse: {},
     },
-    manuSpecificProfalux1: {
-        ID: 0xfc21, // Config cluster, 0xfc20 mostly for commands it seems
-        manufacturerCode: ManufacturerCode.PROFALUX,
-        attributes: {
-            motorCoverType: {ID: 0x0000, type: DataType.UINT8, write: true, max: 0xff}, // 0 : rolling shutters (volet), 1 : rolling shutters with tilt (BSO), 2: shade (store)
-        },
-        commands: {},
-        commandsResponse: {},
-    },
     manuSpecificAmazonWWAH: {
         ID: 0xfc57,
         manufacturerCode: ManufacturerCode.AMAZON_LAB126,
