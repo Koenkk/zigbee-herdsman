@@ -424,7 +424,5 @@ export type ClusterName =
     | "manuSpecificSmartThingsArrivalSensor"
     | "manuSpecificSiglisZigfred"
     | "owonClearMetering"
-    | "zosungIRTransmit"
-    | "zosungIRControl"
     | "manuSpecificProfalux1"
     | "manuSpecificAmazonWWAH";
