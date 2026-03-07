@@ -422,7 +422,6 @@ export type ClusterName =
     | "manuSpecificTuya2"
     | "manuSpecificTuya3"
     | "manuSpecificSmartThingsArrivalSensor"
-    | "manuSpecificSiglisZigfred"
     | "owonClearMetering"
     | "zosungIRTransmit"
     | "zosungIRControl"
