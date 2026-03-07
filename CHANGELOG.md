@@ -1,5 +1,12 @@
 # Changelog
 
+## [9.0.12](https://github.com/Koenkk/zigbee-herdsman/compare/v9.0.11...v9.0.12) (2026-03-07)
+
+
+### Bug Fixes
+
+* Move manuSpecificPhilips and manuSpecificPhilips2 from ZH to ZHC ([#1682](https://github.com/Koenkk/zigbee-herdsman/issues/1682)) ([e6f67ef](https://github.com/Koenkk/zigbee-herdsman/commit/e6f67ef5e5247c80cd6902011e6064b76cf888d9))
+
 ## [9.0.11](https://github.com/Koenkk/zigbee-herdsman/compare/v9.0.10...v9.0.11) (2026-03-03)
 
 
