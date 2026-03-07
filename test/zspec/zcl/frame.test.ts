@@ -228,7 +228,7 @@ const SPECIFIC_FRAME = Zcl.Frame.create(
     SPECIFIC_HEADER.frameControl.reservedBits,
 );
 const SPECIFIC_FRAME_BUFFER = Buffer.concat([SPECIFIC_HEADER_BUFFER]);
-const SPECIFIC_FRAME_STRING = `{"header":{"frameControl":{"reservedBits":0,"frameType":1,"direction":0,"disableDefaultResponse":false,"manufacturerSpecific":false},"transactionSequenceNumber":44,"commandIdentifier":2},"payload":{},"command":{"ID":2,"parameters":[],"name":"getAlarm"}}`;
+const SPECIFIC_FRAME_STRING = `{"header":{"frameControl":{"reservedBits":0,"frameType":1,"direction":0,"disableDefaultResponse":false,"manufacturerSpecific":false},"transactionSequenceNumber":44,"commandIdentifier":2},"payload":{},"command":{"name":"getAlarm","ID":2,"parameters":[]}}`;
 
 /** Frame of Specific type and response command */
 const SPECIFIC_RSP_FRAME = Zcl.Frame.create(
@@ -244,7 +244,7 @@ const SPECIFIC_RSP_FRAME = Zcl.Frame.create(
     SPECIFIC_RSP_HEADER.frameControl.reservedBits,
 );
 const SPECIFIC_RSP_FRAME_BUFFER = Buffer.concat([SPECIFIC_RSP_HEADER_BUFFER, Buffer.from([246, ...uint16To8Array(3456)])]);
-const SPECIFIC_RSP_FRAME_STRING = `{"header":{"frameControl":{"reservedBits":0,"frameType":1,"direction":1,"disableDefaultResponse":false,"manufacturerSpecific":false},"transactionSequenceNumber":53,"commandIdentifier":0},"payload":{"alarmcode":246,"clusterid":3456},"command":{"ID":0,"parameters":[{"name":"alarmcode","type":48},{"name":"clusterid","type":232}],"required":true,"name":"alarm"}}`;
+const SPECIFIC_RSP_FRAME_STRING = `{"header":{"frameControl":{"reservedBits":0,"frameType":1,"direction":1,"disableDefaultResponse":false,"manufacturerSpecific":false},"transactionSequenceNumber":53,"commandIdentifier":0},"payload":{"alarmcode":246,"clusterid":3456},"command":{"name":"alarm","ID":0,"parameters":[{"name":"alarmcode","type":48},{"name":"clusterid","type":232}],"required":true}}`;
 
 /** Frame of Specific type with condition-based parameters */
 const SPECIFIC_CONDITION_FRAME = Zcl.Frame.create(
@@ -260,7 +260,7 @@ const SPECIFIC_CONDITION_FRAME = Zcl.Frame.create(
     SPECIFIC_CONDITION_HEADER.frameControl.reservedBits,
 );
 const SPECIFIC_CONDITION_FRAME_BUFFER = Buffer.concat([SPECIFIC_CONDITION_HEADER_BUFFER, Buffer.from([149])]);
-const SPECIFIC_CONDITION_FRAME_STRING = `{"header":{"frameControl":{"reservedBits":0,"frameType":1,"direction":1,"disableDefaultResponse":false,"manufacturerSpecific":false},"transactionSequenceNumber":45,"commandIdentifier":2},"payload":{"status":149},"command":{"ID":2,"parameters":[{"name":"status","type":48},{"name":"manufacturerCode","type":33,"conditions":[{"type":"fieldEquals","field":"status","value":0}]},{"name":"imageType","type":33,"conditions":[{"type":"fieldEquals","field":"status","value":0}],"max":65471},{"name":"fileVersion","type":35,"conditions":[{"type":"fieldEquals","field":"status","value":0}]},{"name":"imageSize","type":35,"conditions":[{"type":"fieldEquals","field":"status","value":0}]}],"required":true,"name":"queryNextImageResponse"}}`;
+const SPECIFIC_CONDITION_FRAME_STRING = `{"header":{"frameControl":{"reservedBits":0,"frameType":1,"direction":1,"disableDefaultResponse":false,"manufacturerSpecific":false},"transactionSequenceNumber":45,"commandIdentifier":2},"payload":{"status":149},"command":{"name":"queryNextImageResponse","ID":2,"parameters":[{"name":"status","type":48},{"name":"manufacturerCode","type":33,"conditions":[{"type":"fieldEquals","field":"status","value":0}]},{"name":"imageType","type":33,"conditions":[{"type":"fieldEquals","field":"status","value":0}],"max":65471},{"name":"fileVersion","type":35,"conditions":[{"type":"fieldEquals","field":"status","value":0}]},{"name":"imageSize","type":35,"conditions":[{"type":"fieldEquals","field":"status","value":0}]}],"required":true}}`;
 
 /** Frame manufacturer-specific */
 const MANUF_SPE_FRAME = Zcl.Frame.create(
@@ -303,7 +303,7 @@ const LIST_FRAME = Zcl.Frame.create(
     {} /*custom clusters*/,
     LIST_HEADER.frameControl.reservedBits,
 );
-const LIST_STRING = `{"header":{"frameControl":{"reservedBits":0,"frameType":1,"direction":0,"disableDefaultResponse":false,"manufacturerSpecific":false},"transactionSequenceNumber":43,"commandIdentifier":2},"payload":{"groupcount":2,"grouplist":[10,20]},"command":{"ID":2,"response":2,"parameters":[{"name":"groupcount","type":32},{"name":"grouplist","type":1002}],"required":true,"name":"getMembership"}}`;
+const LIST_STRING = `{"header":{"frameControl":{"reservedBits":0,"frameType":1,"direction":0,"disableDefaultResponse":false,"manufacturerSpecific":false},"transactionSequenceNumber":43,"commandIdentifier":2},"payload":{"groupcount":2,"grouplist":[10,20]},"command":{"name":"getMembership","ID":2,"response":2,"parameters":[{"name":"groupcount","type":32},{"name":"grouplist","type":1002}],"required":true}}`;
 
 describe("ZCL Frame", () => {
     describe("Validates Parameter Condition", () => {
