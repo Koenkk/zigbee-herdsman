@@ -418,7 +418,6 @@ export type ClusterName =
     | "touchlink"
     | "manuSpecificSinope"
     | "manuSpecificTuya"
-    | "manuSpecificLumi"
     | "manuSpecificTuya2"
     | "manuSpecificTuya3"
     | "manuSpecificSmartThingsArrivalSensor"
