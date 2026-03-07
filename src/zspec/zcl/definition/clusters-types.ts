@@ -7629,26 +7629,6 @@ export interface TClusters {
             };
         };
     };
-    manuSpecificLumi: {
-        attributes: {
-            /** ID=0x0009 | type=UINT8 | write=true | max=255 */
-            mode: number;
-            /** ID=0x0112 | type=UINT32 | write=true | max=4294967295 */
-            illuminance: number;
-            /** ID=0x0114 | type=UINT8 | write=true | max=255 */
-            displayUnit: number;
-            /** ID=0x0129 | type=UINT8 | write=true | max=255 */
-            airQuality: number;
-            /** ID=0x0400 | type=BOOLEAN | write=true */
-            curtainReverse: number;
-            /** ID=0x0401 | type=BOOLEAN | write=true */
-            curtainHandOpen: number;
-            /** ID=0x0402 | type=BOOLEAN | write=true */
-            curtainCalibrated: number;
-        };
-        commands: never;
-        commandResponses: never;
-    };
     manuSpecificTuya2: {
         attributes: {
             /** ID=0xd00a | type=INT16 | write=true | min=-32768 | max=32767 */
