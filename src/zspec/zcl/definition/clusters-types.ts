@@ -7697,14 +7697,6 @@ export interface TClusters {
         };
         commandResponses: never;
     };
-    manuSpecificSmartThingsArrivalSensor: {
-        attributes: never;
-        commands: never;
-        commandResponses: {
-            /** ID=0x01 */
-            arrivalSensorNotify: Record<string, never>;
-        };
-    };
     manuSpecificSiglisZigfred: {
         attributes: {
             /** ID=0x0008 | type=UINT32 | write=true | max=4294967295 */
