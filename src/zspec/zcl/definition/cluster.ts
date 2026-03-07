@@ -7375,15 +7375,6 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
         },
         commandsResponse: {},
     },
-    owonClearMetering: {
-        ID: 0xffe0,
-        manufacturerCode: ManufacturerCode.OWON_TECHNOLOGY_INC,
-        attributes: {},
-        commands: {
-            owonClearMeasurementData: {ID: 0x00, parameters: []},
-        },
-        commandsResponse: {},
-    },
     zosungIRTransmit: {
         ID: 0xed00,
         attributes: {},
