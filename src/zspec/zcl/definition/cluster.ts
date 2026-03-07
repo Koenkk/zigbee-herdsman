@@ -7357,24 +7357,6 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             arrivalSensorNotify: {ID: 0x01, parameters: []},
         },
     },
-    manuSpecificSiglisZigfred: {
-        ID: 0xfc42,
-        manufacturerCode: 0x129c,
-        attributes: {
-            buttonEvent: {ID: 0x0008, type: DataType.UINT32, write: true, max: 0xffffffff},
-        },
-        commands: {
-            siglisZigfredButtonEvent: {
-                ID: 0x02,
-                parameters: [
-                    {name: "button", type: DataType.UINT8, max: 0xff},
-                    {name: "type", type: DataType.UINT8, max: 0xff},
-                    {name: "duration", type: DataType.UINT16, max: 0xffff},
-                ],
-            },
-        },
-        commandsResponse: {},
-    },
     owonClearMetering: {
         ID: 0xffe0,
         manufacturerCode: ManufacturerCode.OWON_TECHNOLOGY_INC,
