@@ -7305,21 +7305,6 @@ export const Clusters: Readonly<Record<ClusterName, Readonly<ClusterDefinition>>
             tuyaWeatherRequest: {ID: 0x60, parameters: [{name: "payload", type: BuffaloZclDataType.BUFFER}]},
         },
     },
-    manuSpecificLumi: {
-        ID: 0xfcc0,
-        manufacturerCode: ManufacturerCode.LUMI_UNITED_TECHOLOGY_LTD_SHENZHEN,
-        attributes: {
-            mode: {ID: 0x0009, type: DataType.UINT8, write: true, max: 0xff},
-            illuminance: {ID: 0x0112, type: DataType.UINT32, write: true, max: 0xffffffff},
-            displayUnit: {ID: 0x0114, type: DataType.UINT8, write: true, max: 0xff},
-            airQuality: {ID: 0x0129, type: DataType.UINT8, write: true, max: 0xff},
-            curtainReverse: {ID: 0x0400, type: DataType.BOOLEAN, write: true},
-            curtainHandOpen: {ID: 0x0401, type: DataType.BOOLEAN, write: true},
-            curtainCalibrated: {ID: 0x0402, type: DataType.BOOLEAN, write: true},
-        },
-        commands: {},
-        commandsResponse: {},
-    },
     manuSpecificTuya2: {
         ID: 0xe002,
         attributes: {
