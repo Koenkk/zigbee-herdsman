@@ -3,7 +3,7 @@ import {ManufacturerCode} from "./manufacturerCode";
 import {Status} from "./status";
 import type {Cluster, ClusterName} from "./tstype";
 
-export const Clusters: Readonly<Record<ClusterName, Readonly<Cluster>>> = {
+export const Clusters: Readonly<Record<ClusterName, Cluster>> = {
     genBasic: {
         name: "genBasic",
         ID: 0x0000,
